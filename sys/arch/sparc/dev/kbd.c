@@ -42,7 +42,7 @@
  *	@(#)kbd.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: kbd.c,v 1.16 92/11/26 01:28:44 torek Exp  (LBL)
- * $Id: kbd.c,v 1.1 1993/10/02 10:22:40 deraadt Exp $
+ * $Id: kbd.c,v 1.2 1993/10/11 02:36:42 deraadt Exp $
  */
 
 /*
@@ -293,7 +293,7 @@ kbd_getid(void *arg)
 		(*tp->t_oproc)(tp);
 		retry = 2 * hz;
 	}
-	timeout(kbd_getid, NULL, retry);
+	timeout((timeout_t)kbd_getid, (caddr_t)NULL, retry);
 }
 
 void

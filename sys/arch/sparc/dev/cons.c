@@ -42,7 +42,7 @@
  *	@(#)cons.c	8.1 (Berkeley) 7/19/93
  *
  * from: Header: cons.c,v 1.12 93/07/20 00:49:45 torek Exp 
- * $Id: cons.c,v 1.1 1993/10/02 10:22:36 deraadt Exp $
+ * $Id: cons.c,v 1.2 1993/10/11 02:36:38 deraadt Exp $
  */
 
 /*
@@ -81,6 +81,7 @@ static void cnfbdma __P((void *));
 
 extern char partab[];
 
+void
 consinit()
 {
 	register struct tty *tp = &cons;
@@ -131,13 +132,13 @@ consinit()
 	case PROMDEV_SCREEN:
 		fbconstty = tp;
 		tp->t_oproc = cnfbstart;
-		tp->t_stop = cnfbstop;
+		/*tp->t_stop = cnfbstop;*/
 		break;
 
 	default:
 		printf("unknown console output sink %d; using rom\n", out);
 		tp->t_oproc = cnstart;
-		tp->t_stop = (void (*)(struct tty *, int))nullop;
+		/*tp->t_stop = (void (*)(struct tty *, int))nullop;*/
 		break;
 	}
 }
@@ -227,7 +228,7 @@ cnioctl(dev, cmd, data, flag, p)
 		return (0);
 	}
 	tp = &cons;
-	if ((error = linesw[tp->t_line].l_ioctl(tp, cmd, data, flag, p)) >= 0)
+	if ((error = linesw[tp->t_line].l_ioctl(tp, cmd, data, flag)) >= 0)
 		return (error);
 	if ((error = ttioctl(tp, cmd, data, flag)) >= 0)
 		return (error);
@@ -315,7 +316,7 @@ cnfbstart(tp)
 			(void) splsoftclock();
 			cnfbdma((void *)tp);
 		} else
-			timeout(cnfbdma, tp, 1);
+			timeout((timeout_t)cnfbdma, (caddr_t)tp, 1);
 	}
 	splx(s);
 }
