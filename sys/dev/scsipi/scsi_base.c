@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_base.c,v 1.71 2000/01/17 17:59:48 bouyer Exp $	*/
+/*	$NetBSD: scsi_base.c,v 1.72 2000/03/17 11:45:50 soren Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -171,4 +171,22 @@ scsi_kill_pending(sc_link)
 		xs->error = XS_DRIVER_STUFFUP;
 		scsipi_done(xs);
 	}
+}
+
+int
+scsiprint(aux, pnp)
+	void *aux;
+	const char *pnp;
+{
+	struct scsipi_link *l = aux;
+
+	/* only "scsibus"es can attach to "scsi"s; easy. */
+	if (pnp)
+		printf("scsibus at %s", pnp);
+
+	/* don't print channel if the controller says there can be only one. */
+	if (l->scsipi_scsi.channel != SCSI_CHANNEL_ONLY_ONE)
+		printf(" channel %d", l->scsipi_scsi.channel);
+
+	return (UNCONF);
 }
