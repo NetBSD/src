@@ -29,7 +29,16 @@
 /*
  * HISTORY
  * $Log: boot.c,v $
- * Revision 1.4  1993/05/04 10:22:39  deraadt
+ * Revision 1.5  1993/06/05 22:52:11  cgd
+ * make sure kernel is small enough; this is a really weird fix from
+ * rod, pk patch #159.  the comment is:
+ *
+ * The +28672 is for memory allocated by locore.s that must fit in the bss!
+ *
+ * this seems way wrong to me, but i'm not going to fix it in locore right
+ * now...
+ *
+ * Revision 1.4  1993/05/04  10:22:39  deraadt
  * if we timeout asking for kernel name, print a \n before proceeding.
  * Funny how one character can bug ya so much, eh?
  *
@@ -164,7 +173,11 @@ loadprog(howto)
 			printf("kernel will not fit below loader\n");
 			return;
 		}
-		if((addr + head.a_text + head.a_data + head.a_bss) > 0xa0000)
+		/*
+		 * The +28672 is for memory allocated by locore.s that must
+		 * fit in the bss! (XXX - cgd)
+		 */
+		if((addr + head.a_text + head.a_data + head.a_bss + 28672) > 0xa
 		{
 			printf("kernel too big, won't fit in 640K with bss\n");
 			printf("Only hope is to link the kernel for > 1MB\n");
