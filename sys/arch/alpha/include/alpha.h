@@ -1,4 +1,4 @@
-/* $NetBSD: alpha.h,v 1.4 1999/06/29 07:18:23 ross Exp $ */
+/* $NetBSD: alpha.h,v 1.5 1999/07/11 22:39:21 ross Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -102,7 +102,7 @@ void	ast __P((struct trapframe *));
 int	badaddr	__P((void *, size_t));
 int	badaddr_read __P((void *, size_t, void *));
 void	child_return __P((void *));
-u_int64_t console_restart __P((u_int64_t, u_int64_t, u_int64_t));
+u_int64_t console_restart __P((struct trapframe *));
 void	do_sir __P((void));
 void	dumpconf __P((void));
 void	exception_return __P((void));				/* MAGIC */
