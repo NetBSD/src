@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.227 2000/05/28 10:25:25 drochner Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.228 2000/05/30 00:21:10 matt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.223 2000/05/28 10:24:57 drochner Exp 
+ *	NetBSD: pcidevs,v 1.224 2000/05/30 00:20:41 matt Exp 
  */
 
 /*
@@ -2545,19 +2545,19 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_NEC, PCI_PRODUCT_NEC_PD72872,
 	    0,
 	    "NEC",
-	    "uPD72872 IEEE 1394 OHCI PCI Controller",
+	    "uPD72872 IEEE 1394 OHCI Host Controller",
 	},
 	{
 	    PCI_VENDOR_NEC, PCI_PRODUCT_NEC_PD72870,
 	    0,
 	    "NEC",
-	    "uPD72870 IEEE 1394 OHCI PCI Controller",
+	    "uPD72870 IEEE 1394 OHCI Host Controller",
 	},
 	{
 	    PCI_VENDOR_NEC, PCI_PRODUCT_NEC_PD72871,
 	    0,
 	    "NEC",
-	    "uPD72871 IEEE 1394 OHCI PCI Controller",
+	    "uPD72871 IEEE 1394 OHCI Host Controller",
 	},
 	{
 	    PCI_VENDOR_NEOMAGIC, PCI_PRODUCT_NEOMAGIC_NMMG128ZV,
@@ -3295,13 +3295,13 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_SONY, PCI_PRODUCT_SONY_CXD1947A,
 	    0,
 	    "Sony",
-	    "CXD1947A FireWire Host Controller",
+	    "CXD1947A IEEE 1394 Host Controller",
 	},
 	{
 	    PCI_VENDOR_SONY, PCI_PRODUCT_SONY_CXD32222,
 	    0,
 	    "Sony",
-	    "CXD3222 OHCI i.LINK(IEEE 1394) PCI controller",
+	    "CXD3222 OHCI IEEE 1394 Host Controller",
 	},
 	{
 	    PCI_VENDOR_SONY, PCI_PRODUCT_SONY_MEMSTICK,
@@ -3400,10 +3400,28 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "TVP4020 Permedia 2",
 	},
 	{
-	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCILYNX,
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_TSB12LV21,
 	    0,
 	    "Texas Instruments",
-	    "LYNX FireWire Host Controller",
+	    "TSB12LV21 IEEE 1394 Host Controller",
+	},
+	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_TSB12LV22,
+	    0,
+	    "Texas Instruments",
+	    "TSB12LV22 OHCI IEEE 1394 Host Controller",
+	},
+	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_TSB12LV23,
+	    0,
+	    "Texas Instruments",
+	    "TSB12LV23 OHCI IEEE 1394 Host Controller",
+	},
+	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_TSB12LV26,
+	    0,
+	    "Texas Instruments",
+	    "TSB12LV26 OHCI IEEE 1394 Host Controller",
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1130,
