@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2001/05/28 16:22:17 thorpej Exp $
+#	$NetBSD: Makefile,v 1.2 2001/05/28 22:34:25 thorpej Exp $
 
 KDIR=	/sys/arch/algor/include
 INCSDIR=/usr/include/algor
@@ -22,3 +22,5 @@ INCS=	ansi.h aout_machdep.h asm.h autoconf.h \
 	setjmp.h signal.h stdarg.h \
 	trap.h types.h \
 	varargs.h vmparam.h
+
+.include <bsd.kinc.mk>
