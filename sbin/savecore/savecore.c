@@ -1,4 +1,4 @@
-/*	$NetBSD: savecore.c,v 1.29 1997/04/21 12:50:43 mrg Exp $	*/
+/*	$NetBSD: savecore.c,v 1.30 1997/05/19 16:28:03 pk Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1992, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)savecore.c	8.3 (Berkeley) 1/2/94";
 #else
-static char rcsid[] = "$NetBSD: savecore.c,v 1.29 1997/04/21 12:50:43 mrg Exp $";
+static char rcsid[] = "$NetBSD: savecore.c,v 1.30 1997/05/19 16:28:03 pk Exp $";
 #endif
 #endif /* not lint */
 
@@ -237,17 +237,29 @@ kmem_setup()
 			exit(1);
 		}
 
-	KREAD(kd_kern, current_nl[X_DUMPDEV].n_value, &dumpdev);
+	if (KREAD(kd_kern, current_nl[X_DUMPDEV].n_value, &dumpdev) != 0) {
+		if (verbose)
+		    syslog(LOG_WARNING, "kvm_read: %s", kvm_geterr(kd_kern));
+		exit(1);
+	}
 	if (dumpdev == NODEV) {
 		syslog(LOG_WARNING, "no core dump (no dumpdev)");
 		exit(1);
 	}
-	KREAD(kd_kern, current_nl[X_DUMPLO].n_value, &dumplo);
+	if (KREAD(kd_kern, current_nl[X_DUMPLO].n_value, &dumplo) != 0) {
+		if (verbose)
+		    syslog(LOG_WARNING, "kvm_read: %s", kvm_geterr(kd_kern));
+		exit(1);
+	}
 	dumplo *= DEV_BSIZE;
 	if (verbose)
 		(void)printf("dumplo = %d (%d * %d)\n",
 		    dumplo, dumplo / DEV_BSIZE, DEV_BSIZE);
-	KREAD(kd_kern, current_nl[X_DUMPMAG].n_value, &dumpmag);
+	if (KREAD(kd_kern, current_nl[X_DUMPMAG].n_value, &dumpmag) != 0) {
+		if (verbose)
+		    syslog(LOG_WARNING, "kvm_read: %s", kvm_geterr(kd_kern));
+		exit(1);
+	}
 
 	if (kernel == NULL) {
 		(void)kvm_read(kd_kern, current_nl[X_VERSION].n_value,
@@ -311,14 +323,24 @@ check_kmem()
 		    "warning: %s version mismatch:\n\t%s\nand\t%s\n",
 		    _PATH_UNIX, vers, core_vers);
 
-	KREAD(kd_dump, dump_nl[X_PANICSTR].n_value, &panicstr);
+	if (KREAD(kd_dump, dump_nl[X_PANICSTR].n_value, &panicstr) != 0) {
+		if (verbose)
+		    syslog(LOG_WARNING, "kvm_read: %s", kvm_geterr(kd_dump));
+		return;
+	}
 	if (panicstr) {
 		cp       = panic_mesg;
 		panicloc = panicstr;
 		do {
-			KREAD(kd_dump, panicloc, cp);
+			if (KREAD(kd_dump, panicloc, cp) != 0) {
+				if (verbose)
+				    syslog(LOG_WARNING, "kvm_read: %s",
+					   kvm_geterr(kd_dump));
+				break;
+			}
 			panicloc++;
-		} while (*cp++ && cp < &panic_mesg[sizeof(panic_mesg)]);
+		} while (*cp++ && cp < &panic_mesg[sizeof(panic_mesg)-1]);
+		panic_mesg[sizeof(panic_mesg) - 1] = '\0';
 	}
 }
 
@@ -327,10 +349,18 @@ dump_exists()
 {
 	int newdumpmag;
 
-	KREAD(kd_dump, dump_nl[X_DUMPMAG].n_value, &newdumpmag);
+	if (KREAD(kd_dump, dump_nl[X_DUMPMAG].n_value, &newdumpmag) != 0) {
+		if (verbose)
+		    syslog(LOG_WARNING, "kvm_read: %s", kvm_geterr(kd_dump));
+		return (0);
+	}
 
 	/* Read the dump size. */
-	KREAD(kd_dump, dump_nl[X_DUMPSIZE].n_value, &dumpsize);
+	if (KREAD(kd_dump, dump_nl[X_DUMPSIZE].n_value, &dumpsize) != 0) {
+		if (verbose)
+		    syslog(LOG_WARNING, "kvm_read: %s", kvm_geterr(kd_dump));
+		return (0);
+	}
 	dumpsize *= getpagesize();
 
 	/*
@@ -551,7 +581,11 @@ get_crashtime()
 {
 	time_t dumptime;			/* Time the dump was taken. */
 
-	KREAD(kd_dump, dump_nl[X_TIME].n_value, &dumptime);
+	if (KREAD(kd_dump, dump_nl[X_TIME].n_value, &dumptime) != 0) {
+		if (verbose)
+		    syslog(LOG_WARNING, "kvm_read: %s", kvm_geterr(kd_dump));
+		return (0);
+	}
 	if (dumptime == 0) {
 		if (verbose)
 			syslog(LOG_ERR, "dump time is zero");
