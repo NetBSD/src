@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.68 1996/02/09 21:52:44 gwr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.69 1996/02/13 19:40:22 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -98,6 +98,7 @@ extern char *cpu_string;
 extern char version[];
 extern short exframesize[];
 extern vm_offset_t vmmap;	/* XXX - poor name.  See mem.c */
+extern int cold;
 
 int physmem;
 int fpu_type;
@@ -758,6 +759,8 @@ static void reboot_sync()
 	vfs_shutdown();
 }
 
+struct pcb dumppcb;
+
 /*
  * Common part of the BSD and SunOS reboot system calls.
  */
@@ -768,9 +771,9 @@ int reboot2(howto, user_boot_string)
 	char *bs, *p;
 	char default_boot_string[8];
 
-	/* take a snap shot before clobbering any registers */
-	if (curproc && curproc->p_addr)
-		savectx(curproc->p_addr);
+	/* If system is cold, just halt. (early panic?) */
+	if (cold)
+		goto haltsys;
 
 	if ((howto & RB_NOSYNC) == 0) {
 		reboot_sync();
@@ -785,12 +788,20 @@ int reboot2(howto, user_boot_string)
 		/* resettodr(); */
 	}
 
-	/* Write out a crash dump if asked. */
+	/* Disable interrupts. */
 	splhigh();
-	if (howto & RB_DUMP)
+
+	/* Write out a crash dump if asked. */
+	if (howto & RB_DUMP) {
+		savectx(&dumppcb);
 		dumpsys();
+	}
+
+	/* run any shutdown hooks */
+	doshutdownhooks();
 
 	if (howto & RB_HALT) {
+	haltsys:
 		printf("Kernel halted.\n");
 		sun3_mon_halt();
 	}
@@ -938,7 +949,7 @@ peek_word(addr)
 	register int x;
 
 	nofault = (long*)&faultbuf;
-	if (setjmp(nofault)) {
+	if (setjmp(&faultbuf)) {
 		nofault = NULL;
 		return(-1);
 	}
@@ -956,7 +967,7 @@ peek_byte(addr)
 	register int x;
 
 	nofault = (long*)&faultbuf;
-	if (setjmp(nofault)) {
+	if (setjmp(&faultbuf)) {
 		nofault = NULL;
 		return(-1);
 	}
