@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.113 2004/06/25 14:07:27 mycroft Exp $	*/
+/*	$NetBSD: umass.c,v 1.114 2004/06/25 14:14:34 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -131,7 +131,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.113 2004/06/25 14:07:27 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.114 2004/06/25 14:14:34 mycroft Exp $");
 
 #include "atapibus.h"
 #include "scsibus.h"
@@ -1489,7 +1489,7 @@ umass_cbi_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 		sc->transfer_state = TSTATE_CBI_DATA;
 		if (sc->transfer_dir == DIR_IN) {
 			if (umass_setup_transfer(sc, sc->sc_pipe[UMASS_BULKIN],
-					sc->transfer_data, sc->transfer_datalen,
+					sc->data_buffer, sc->transfer_datalen,
 					USBD_SHORT_XFER_OK | USBD_NO_COPY,
 					sc->transfer_xfer[XFER_CBI_DATA]))
 				umass_cbi_reset(sc, STATUS_WIRE_FAILED);
@@ -1499,7 +1499,7 @@ umass_cbi_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 			memcpy(sc->data_buffer, sc->transfer_data,
 			       sc->transfer_datalen);
 			if (umass_setup_transfer(sc, sc->sc_pipe[UMASS_BULKOUT],
-					sc->transfer_data, sc->transfer_datalen,
+					sc->data_buffer, sc->transfer_datalen,
 					USBD_NO_COPY,/* fixed length transfer */
 					sc->transfer_xfer[XFER_CBI_DATA]))
 				umass_cbi_reset(sc, STATUS_WIRE_FAILED);
