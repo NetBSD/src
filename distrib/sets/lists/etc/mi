@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.91 2002/02/11 10:20:04 martti Exp $
+# $NetBSD: mi,v 1.92 2002/02/12 01:29:19 thorpej Exp $
 ./.cshrc				etc-util-etc
 ./.profile				etc-util-etc
 ./dev/MAKEDEV.local			etc-sys-etc
@@ -58,6 +58,8 @@
 ./etc/postfix/README			etc-postfix-etc
 ./etc/postfix/main.cf			etc-postfix-etc
 ./etc/postfix/master.cf			etc-postfix-etc
+./etc/postfix/post-install		etc-postfix-etc
+./etc/postfix/postfix-files		etc-postfix-etc
 ./etc/postfix/postfix-script		etc-postfix-etc
 ./etc/printcap				etc-lpr-etc
 ./etc/profile				etc-util-etc
