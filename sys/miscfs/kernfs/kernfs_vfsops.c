@@ -33,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: kernfs_vfsops.c,v 1.2 1993/03/25 06:00:23 cgd Exp $
+ *	$Id: kernfs_vfsops.c,v 1.3 1993/03/27 00:37:09 cgd Exp $
  */
 
 /*
@@ -49,13 +49,38 @@
 #include "mount.h"
 #include "namei.h"
 #include "malloc.h"
+#include "conf.h"
 #include "miscfs/kernfs/kernfs.h"
+
+struct vnode *rrootdevvp;
 
 kernfs_init()
 {
+  int error, bmaj, cmaj;
+
 #ifdef KERNFS_DIAGNOSTIC
-	printf("kernfs_init\n");		/* printed during system boot */
+  printf("kernfs_init\n");                 /* printed during system boot */
 #endif
+
+  bmaj = major(rootdev);
+
+  /* hunt for the raw root device by looking in cdevsw for a matching
+   * open routine...
+   */
+  for (cmaj = 0; cmaj < nchrdev; cmaj++) {
+    if (cdevsw[cmaj].d_open == bdevsw[bmaj].d_open) {
+      dev_t cdev = makedev(cmaj, minor(rootdev));
+      error = cdevvp(cdev, &rrootdevvp);
+      if (error == 0)
+	break;
+    }
+  }
+
+  /* this isn't fatal... */
+  if (error) {
+    printf("kernfs: no raw boot device\n");
+    rrootdevvp = 0;
+  }
 }
 
 /*
