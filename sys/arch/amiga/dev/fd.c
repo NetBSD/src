@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.19 1995/07/24 07:25:46 cgd Exp $	*/
+/*	$NetBSD: fd.c,v 1.20 1995/07/26 14:22:43 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -1578,7 +1578,7 @@ fdminphys(bp)
 #ifdef FDDEBUG
 	printf(" after %d\n", bp->b_bcount);
 #endif
-	return (minphys(bp);
+	return (minphys(bp));
 }
 
 /*
