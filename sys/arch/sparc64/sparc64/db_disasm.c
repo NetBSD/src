@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.7 2000/06/19 23:30:35 eeh Exp $ */
+/*	$NetBSD: db_disasm.c,v 1.8 2000/07/20 20:43:21 eeh Exp $ */
 
 /*
  * Copyright (c) 1994 David S. Miller, davem@nadzieja.rutgers.edu
@@ -43,6 +43,15 @@
 #ifndef V9
 #define V9
 #endif
+
+/* Sign extend values */
+#ifdef	V9
+#define	SIGNEX(v,width)		((((long long)(v))<<(64-width))>>(64-width))
+#else
+#define	SIGNEX(v,width)		((((int)(v))<<(32-width))>>(32-width))
+#endif
+#define SIGN(v)			(((v)<0)?"-":"")
+
 /*
  * All Sparc instructions are 32-bits, with the one exception being
  * the set instruction which is actually a macro which expands into
@@ -57,6 +66,7 @@
  * 0000 0001 1100 0000 0000 0000 0000 0000 op2 field, format 2 only
  * 0000 0001 1111 1000 0000 0000 0000 0000 op3 field, format 3 only
  * 0000 0000 0000 0000 0010 0000 0000 0000 f3i bit, format 3 only
+ * 0000 0000 0000 0000 0001 0000 0000 0000 X bit, format 3 only
  */
 
 #define OP(x)	(((x) & 0x3) << 30)
@@ -99,7 +109,7 @@
 #define OPF_X(x,y)	((((x) & 0x1f) << 4) | ((y) & 0xf))
 
 /* COND condition codes field... */
-#define COND2(x)	(((x) & 0xf) << 14)
+#define COND2(y,x)	(((((y)<<4) & 1)|((x) & 0xf)) << 14)
 
 struct sparc_insn {
 	  unsigned int match;
@@ -170,6 +180,7 @@ Codes:
 	8 -- [reg_addr rs1+simm13] %asi
 	9 -- logical or of the cmask and mmask fields (membar insn)
 	0 -- icc or xcc condition codes register
+	. -- %fcc, %icc, or %xcc in opf_cc field
 	r -- prefection function stored in fcn field
 	A -- privileged register encoded in rs1
 	B -- state register encoded in rs1
@@ -204,7 +215,7 @@ struct sparc_insn sparc_i[] = {
 	/* Note: if imm22 is zero then this is actually a "nop" grrr... */
 	{(FORMAT2(0, 0x4)), "sethi", "Cd"},
 
-	/* Branch on Integer Condition Codes "Bicc" */
+	/* Branch on Integer Co`ndition Codes "Bicc" */
 	{(FORMAT2(0, 2) | COND(8)), "ba", "a,m"},
 	{(FORMAT2(0, 2) | COND(0)), "bn", "a,m"},
 	{(FORMAT2(0, 2) | COND(9)), "bne", "a,m"},
@@ -359,8 +370,8 @@ struct sparc_insn sparc_i[] = {
 	{FORMAT3(2, OP3_X(1,5), 1), "andncc", "1id"},
 	{FORMAT3(2, OP3_X(2,5), 0), "sll", "12d"},
 	{FORMAT3(2, OP3_X(2,5), 1), "sll", "1Dd"},
-	{FORMAT3(2, OP3_X(2,5)|X(1), 0), "sllx", "12d"},
-	{FORMAT3(2, OP3_X(2,5)|X(1), 1), "sllx", "1Ed"},
+	{FORMAT3(2, OP3_X(2,5), 0)|X(1), "sllx", "12d"},
+	{FORMAT3(2, OP3_X(2,5), 1)|X(1), "sllx", "1Ed"},
 	{FORMAT3(2, OP3_X(3,5), 1), "FPop2", ""},	/* see below */
 
 	{FORMAT3(2, OP3_X(0,6), 0), "orn", "12d"},
@@ -369,8 +380,8 @@ struct sparc_insn sparc_i[] = {
 	{FORMAT3(2, OP3_X(1,6), 1), "orncc", "1id"},
 	{FORMAT3(2, OP3_X(2,6), 0), "srl", "12d"},
 	{FORMAT3(2, OP3_X(2,6), 1), "srl", "1Dd"},
-	{FORMAT3(2, OP3_X(2,6)|X(1), 0), "srlx", "12d"},
-	{FORMAT3(2, OP3_X(2,6)|X(1), 1), "srlx", "1Ed"},
+	{FORMAT3(2, OP3_X(2,6), 0)|X(1), "srlx", "12d"},
+	{FORMAT3(2, OP3_X(2,6), 1)|X(1), "srlx", "1Ed"},
 	{FORMAT3(2, OP3_X(3,6), 1), "impdep1", ""},
 
 	{FORMAT3(2, OP3_X(0,7), 0), "xorn", "12d"},
@@ -379,8 +390,8 @@ struct sparc_insn sparc_i[] = {
 	{FORMAT3(2, OP3_X(1,7), 1), "xorncc", "1id"},
 	{FORMAT3(2, OP3_X(2,7), 0), "sra", "12d"},
 	{FORMAT3(2, OP3_X(2,7), 1), "sra", "1Dd"},
-	{FORMAT3(2, OP3_X(2,7)|X(1), 0), "srax", "12d"},
-	{FORMAT3(2, OP3_X(2,7)|X(1), 1), "srax", "1Ed"},
+	{FORMAT3(2, OP3_X(2,7), 0)|X(1), "srax", "12d"},
+	{FORMAT3(2, OP3_X(2,7), 1)|X(1), "srax", "1Ed"},
 	{FORMAT3(2, OP3_X(3,7), 1), "impdep2", ""},
 
 	{FORMAT3(2, OP3_X(0,8), 0), "addc", "12d"},
@@ -474,40 +485,72 @@ struct sparc_insn sparc_i[] = {
 		 * OP3 = (2,12): MOVcc, Move Integer Register on Condition
 		 */
 		/* For Integer Condition Codes */
-		{(FORMAT3(2, OP3_X(2,12), 1) | COND(8)), "mova", "0jd"},
-		{(FORMAT3(2, OP3_X(2,12), 1) | COND(0)), "movn", "0jd"},
-		{(FORMAT3(2, OP3_X(2,12), 1) | COND(9)), "movne", "0jd"},
-		{(FORMAT3(2, OP3_X(2,12), 1) | COND(1)), "move", "0jd"},
-		{(FORMAT3(2, OP3_X(2,12), 1) | COND(10)), "movg", "0jd"},
-		{(FORMAT3(2, OP3_X(2,12), 1) | COND(2)), "movle", "0jd"},
-		{(FORMAT3(2, OP3_X(2,12), 1) | COND(11)), "movge", "0jd"},
-		{(FORMAT3(2, OP3_X(2,12), 1) | COND(3)), "movl", "0jd"},
-		{(FORMAT3(2, OP3_X(2,12), 1) | COND(12)), "movgu", "0jd"},
-		{(FORMAT3(2, OP3_X(2,12), 1) | COND(4)), "movleu", "0jd"},
-		{(FORMAT3(2, OP3_X(2,12), 1) | COND(13)), "movcc", "0jd"},
-		{(FORMAT3(2, OP3_X(2,12), 1) | COND(5)), "movcs", "0jd"},
-		{(FORMAT3(2, OP3_X(2,12), 1) | COND(14)), "movpos", "0jd"},
-		{(FORMAT3(2, OP3_X(2,12), 1) | COND(6)), "movneg", "0jd"},
-		{(FORMAT3(2, OP3_X(2,12), 1) | COND(15)), "movvc", "0jd"},
-		{(FORMAT3(2, OP3_X(2,12), 1) | COND(7)), "movvs", "0jd"},
+		{(FORMAT3(2, OP3_X(2,12), 1) | COND2(1,8)), "mova", "0jd"},
+		{(FORMAT3(2, OP3_X(2,12), 0) | COND2(1,8)), "mova", "02d"},
+		{(FORMAT3(2, OP3_X(2,12), 1) | COND2(1,0)), "movn", "0jd"},
+		{(FORMAT3(2, OP3_X(2,12), 0) | COND2(1,0)), "movn", "02d"},
+		{(FORMAT3(2, OP3_X(2,12), 1) | COND2(1,9)), "movne", "0jd"},
+		{(FORMAT3(2, OP3_X(2,12), 0) | COND2(1,9)), "movne", "02d"},
+		{(FORMAT3(2, OP3_X(2,12), 1) | COND2(1,1)), "move", "0jd"},
+		{(FORMAT3(2, OP3_X(2,12), 0) | COND2(1,1)), "move", "02d"},
+		{(FORMAT3(2, OP3_X(2,12), 1) | COND2(1,10)), "movg", "0jd"},
+		{(FORMAT3(2, OP3_X(2,12), 0) | COND2(1,10)), "movg", "02d"},
+		{(FORMAT3(2, OP3_X(2,12), 1) | COND2(1,2)), "movle", "0jd"},
+		{(FORMAT3(2, OP3_X(2,12), 0) | COND2(1,2)), "movle", "02d"},
+		{(FORMAT3(2, OP3_X(2,12), 1) | COND2(1,11)), "movge", "0jd"},
+		{(FORMAT3(2, OP3_X(2,12), 0) | COND2(1,11)), "movge", "02d"},
+		{(FORMAT3(2, OP3_X(2,12), 1) | COND2(1,3)), "movl", "0jd"},
+		{(FORMAT3(2, OP3_X(2,12), 0) | COND2(1,3)), "movl", "02d"},
+		{(FORMAT3(2, OP3_X(2,12), 1) | COND2(1,12)), "movgu", "0jd"},
+		{(FORMAT3(2, OP3_X(2,12), 0) | COND2(1,12)), "movgu", "02d"},
+		{(FORMAT3(2, OP3_X(2,12), 1) | COND2(1,4)), "movleu", "0jd"},
+		{(FORMAT3(2, OP3_X(2,12), 0) | COND2(1,4)), "movleu", "02d"},
+		{(FORMAT3(2, OP3_X(2,12), 1) | COND2(1,13)), "movcc", "0jd"},
+		{(FORMAT3(2, OP3_X(2,12), 0) | COND2(1,13)), "movcc", "02d"},
+		{(FORMAT3(2, OP3_X(2,12), 1) | COND2(1,5)), "movcs", "0jd"},
+		{(FORMAT3(2, OP3_X(2,12), 0) | COND2(1,5)), "movcs", "02d"},
+		{(FORMAT3(2, OP3_X(2,12), 1) | COND2(1,14)), "movpos", "0jd"},
+		{(FORMAT3(2, OP3_X(2,12), 0) | COND2(1,14)), "movpos", "02d"},
+		{(FORMAT3(2, OP3_X(2,12), 1) | COND2(1,6)), "movneg", "0jd"},
+		{(FORMAT3(2, OP3_X(2,12), 0) | COND2(1,6)), "movneg", "02d"},
+		{(FORMAT3(2, OP3_X(2,12), 1) | COND2(1,15)), "movvc", "0jd"},
+		{(FORMAT3(2, OP3_X(2,12), 0) | COND2(1,15)), "movvc", "02d"},
+		{(FORMAT3(2, OP3_X(2,12), 1) | COND2(1,7)), "movvs", "0jd"},
+		{(FORMAT3(2, OP3_X(2,12), 0) | COND2(1,7)), "movvs", "02d"},
 
 		/* For Floating-Point Condition Codes */
-		{(FORMAT3(2, OP3_X(2,12), 1) | COND(8)), "mova", "ojd"},
-		{(FORMAT3(2, OP3_X(2,12), 1) | COND(0)), "movn", "ojd"},
-		{(FORMAT3(2, OP3_X(2,12), 1) | COND(7)), "movu", "ojd"},
-		{(FORMAT3(2, OP3_X(2,12), 1) | COND(6)), "movg", "ojd"},
-		{(FORMAT3(2, OP3_X(2,12), 1) | COND(5)), "movug", "ojd"},
-		{(FORMAT3(2, OP3_X(2,12), 1) | COND(4)), "movl", "ojd"},
-		{(FORMAT3(2, OP3_X(2,12), 1) | COND(3)), "movul", "ojd"},
-		{(FORMAT3(2, OP3_X(2,12), 1) | COND(2)), "movlg", "ojd"},
-		{(FORMAT3(2, OP3_X(2,12), 1) | COND(1)), "movne", "ojd"},
-		{(FORMAT3(2, OP3_X(2,12), 1) | COND(9)), "move", "ojd"},
-		{(FORMAT3(2, OP3_X(2,12), 1) | COND(10)), "movue", "ojd"},
-		{(FORMAT3(2, OP3_X(2,12), 1) | COND(11)), "movge", "ojd"},
-		{(FORMAT3(2, OP3_X(2,12), 1) | COND(12)), "movuge", "ojd"},
-		{(FORMAT3(2, OP3_X(2,12), 1) | COND(13)), "movle", "ojd"},
-		{(FORMAT3(2, OP3_X(2,12), 1) | COND(14)), "movule", "ojd"},
-		{(FORMAT3(2, OP3_X(2,12), 1) | COND(15)), "movo", "ojd"},
+		{(FORMAT3(2, OP3_X(2,12), 1) | COND2(0,8)), "mova", "ojd"},
+		{(FORMAT3(2, OP3_X(2,12), 0) | COND2(0,8)), "mova", "o2d"},
+		{(FORMAT3(2, OP3_X(2,12), 1) | COND2(0,0)), "movn", "ojd"},
+		{(FORMAT3(2, OP3_X(2,12), 0) | COND2(0,0)), "movn", "o2d"},
+		{(FORMAT3(2, OP3_X(2,12), 1) | COND2(0,7)), "movu", "ojd"},
+		{(FORMAT3(2, OP3_X(2,12), 0) | COND2(0,7)), "movu", "o2d"},
+		{(FORMAT3(2, OP3_X(2,12), 1) | COND2(0,6)), "movg", "ojd"},
+		{(FORMAT3(2, OP3_X(2,12), 0) | COND2(0,6)), "movg", "o2d"},
+		{(FORMAT3(2, OP3_X(2,12), 1) | COND2(0,5)), "movug", "ojd"},
+		{(FORMAT3(2, OP3_X(2,12), 0) | COND2(0,5)), "movug", "o2d"},
+		{(FORMAT3(2, OP3_X(2,12), 1) | COND2(0,4)), "movl", "ojd"},
+		{(FORMAT3(2, OP3_X(2,12), 0) | COND2(0,4)), "movl", "o2d"},
+		{(FORMAT3(2, OP3_X(2,12), 1) | COND2(0,3)), "movul", "ojd"},
+		{(FORMAT3(2, OP3_X(2,12), 0) | COND2(0,3)), "movul", "o2d"},
+		{(FORMAT3(2, OP3_X(2,12), 1) | COND2(0,2)), "movlg", "ojd"},
+		{(FORMAT3(2, OP3_X(2,12), 0) | COND2(0,2)), "movlg", "o2d"},
+		{(FORMAT3(2, OP3_X(2,12), 1) | COND2(0,1)), "movne", "ojd"},
+		{(FORMAT3(2, OP3_X(2,12), 0) | COND2(0,1)), "movne", "o2d"},
+		{(FORMAT3(2, OP3_X(2,12), 1) | COND2(0,9)), "move", "ojd"},
+		{(FORMAT3(2, OP3_X(2,12), 0) | COND2(0,9)), "move", "o2d"},
+		{(FORMAT3(2, OP3_X(2,12), 1) | COND2(0,10)), "movue", "ojd"},
+		{(FORMAT3(2, OP3_X(2,12), 0) | COND2(0,10)), "movue", "o2d"},
+		{(FORMAT3(2, OP3_X(2,12), 1) | COND2(0,11)), "movge", "ojd"},
+		{(FORMAT3(2, OP3_X(2,12), 0) | COND2(0,11)), "movge", "o2d"},
+		{(FORMAT3(2, OP3_X(2,12), 1) | COND2(0,12)), "movuge", "ojd"},
+		{(FORMAT3(2, OP3_X(2,12), 0) | COND2(0,12)), "movuge", "o2d"},
+		{(FORMAT3(2, OP3_X(2,12), 1) | COND2(0,13)), "movle", "ojd"},
+		{(FORMAT3(2, OP3_X(2,12), 0) | COND2(0,13)), "movle", "o2d"},
+		{(FORMAT3(2, OP3_X(2,12), 1) | COND2(0,14)), "movule", "ojd"},
+		{(FORMAT3(2, OP3_X(2,12), 0) | COND2(0,14)), "movule", "o2d"},
+		{(FORMAT3(2, OP3_X(2,12), 1) | COND2(0,15)), "movo", "ojd"},
+		{(FORMAT3(2, OP3_X(2,12), 0) | COND2(0,15)), "movo", "o2d"},
 
 	{FORMAT3(2, OP3_X(3,12), 0), "save", "12d"},
 	{FORMAT3(2, OP3_X(3,12), 1), "save", "1id"},
@@ -680,9 +723,9 @@ struct sparc_insn sparc_i[] = {
 	/*
 	 * OP3 = (3,4): FPop1 (table 34)
 	 */
-	{(FORMAT3F(2, OP3_X(3,4), OPF_X(0,1))), "fmovs", "4e"},
-	{(FORMAT3F(2, OP3_X(3,4), OPF_X(0,2))), "fmovd", "4e"},
-	{(FORMAT3F(2, OP3_X(3,4), OPF_X(0,3))), "fmovq", "4e"},
+	{(FORMAT3F(2, OP3_X(3,4), OPF_X(0,1))), "fmovs", ".4e"},
+	{(FORMAT3F(2, OP3_X(3,4), OPF_X(0,2))), "fmovd", ".4e"},
+	{(FORMAT3F(2, OP3_X(3,4), OPF_X(0,3))), "fmovq", ".4e"},
 	{(FORMAT3F(2, OP3_X(3,4), OPF_X(0,5))), "fnegs", "4e"},
 	{(FORMAT3F(2, OP3_X(3,4), OPF_X(0,6))), "fnegd", "4e"},
 	{(FORMAT3F(2, OP3_X(3,4), OPF_X(0,7))), "fnegq", "4e"},
@@ -746,40 +789,40 @@ struct sparc_insn sparc_i[] = {
 	/* Move Floating-Point Register on Condition "FMOVcc" */
 	/* FIXME should check for single, double, and quad movements */
 	/* Integer Condition Codes */
-	{(FORMAT3(2, OP3_X(3,5), 0) | COND2(8)), "fmova", "04e"},
-	{(FORMAT3(2, OP3_X(3,5), 0) | COND2(0)), "fmovn", "04e"},
-	{(FORMAT3(2, OP3_X(3,5), 0) | COND2(9)), "fmovne", "04e"},
-	{(FORMAT3(2, OP3_X(3,5), 0) | COND2(1)), "fmove", "04e"},
-	{(FORMAT3(2, OP3_X(3,5), 0) | COND2(10)), "fmovg", "04e"},
-	{(FORMAT3(2, OP3_X(3,5), 0) | COND2(2)), "fmovle", "04e"},
-	{(FORMAT3(2, OP3_X(3,5), 0) | COND2(11)), "fmovge", "04e"},
-	{(FORMAT3(2, OP3_X(3,5), 0) | COND2(3)), "fmovl", "04e"},
-	{(FORMAT3(2, OP3_X(3,5), 0) | COND2(12)), "fmovgu", "04e"},
-	{(FORMAT3(2, OP3_X(3,5), 0) | COND2(4)), "fmovleu", "04e"},
-	{(FORMAT3(2, OP3_X(3,5), 0) | COND2(13)), "fmovcc", "04e"},
-	{(FORMAT3(2, OP3_X(3,5), 0) | COND2(5)), "fmovcs", "04e"},
-	{(FORMAT3(2, OP3_X(3,5), 0) | COND2(14)), "fmovpos", "04e"},
-	{(FORMAT3(2, OP3_X(3,5), 0) | COND2(6)), "fmovneg", "04e"},
-	{(FORMAT3(2, OP3_X(3,5), 0) | COND2(15)), "fmovvc", "04e"},
-	{(FORMAT3(2, OP3_X(3,5), 0) | COND2(7)), "fmovvs", "04e"},
+	{(FORMAT3(2, OP3_X(3,5), 0) | COND2(0,8)), "fmova", "04e"},
+	{(FORMAT3(2, OP3_X(3,5), 0) | COND2(0,0)), "fmovn", "04e"},
+	{(FORMAT3(2, OP3_X(3,5), 0) | COND2(0,9)), "fmovne", "04e"},
+	{(FORMAT3(2, OP3_X(3,5), 0) | COND2(0,1)), "fmove", "04e"},
+	{(FORMAT3(2, OP3_X(3,5), 0) | COND2(0,10)), "fmovg", "04e"},
+	{(FORMAT3(2, OP3_X(3,5), 0) | COND2(0,2)), "fmovle", "04e"},
+	{(FORMAT3(2, OP3_X(3,5), 0) | COND2(0,11)), "fmovge", "04e"},
+	{(FORMAT3(2, OP3_X(3,5), 0) | COND2(0,3)), "fmovl", "04e"},
+	{(FORMAT3(2, OP3_X(3,5), 0) | COND2(0,12)), "fmovgu", "04e"},
+	{(FORMAT3(2, OP3_X(3,5), 0) | COND2(0,4)), "fmovleu", "04e"},
+	{(FORMAT3(2, OP3_X(3,5), 0) | COND2(0,13)), "fmovcc", "04e"},
+	{(FORMAT3(2, OP3_X(3,5), 0) | COND2(0,5)), "fmovcs", "04e"},
+	{(FORMAT3(2, OP3_X(3,5), 0) | COND2(0,14)), "fmovpos", "04e"},
+	{(FORMAT3(2, OP3_X(3,5), 0) | COND2(0,6)), "fmovneg", "04e"},
+	{(FORMAT3(2, OP3_X(3,5), 0) | COND2(0,15)), "fmovvc", "04e"},
+	{(FORMAT3(2, OP3_X(3,5), 0) | COND2(0,7)), "fmovvs", "04e"},
 
 	/* Floating-Point Condition Codes */
-	{(FORMAT3(2, OP3_X(3,5), 0) | COND2(8)), "fmova", "o4e"},
-	{(FORMAT3(2, OP3_X(3,5), 0) | COND2(0)), "fmovn", "o4e"},
-	{(FORMAT3(2, OP3_X(3,5), 0) | COND2(7)), "fmovu", "o4e"},
-	{(FORMAT3(2, OP3_X(3,5), 0) | COND2(6)), "fmovg", "o4e"},
-	{(FORMAT3(2, OP3_X(3,5), 0) | COND2(5)), "fmovug", "o4e"},
-	{(FORMAT3(2, OP3_X(3,5), 0) | COND2(4)), "fmovk", "o4e"},
-	{(FORMAT3(2, OP3_X(3,5), 0) | COND2(3)), "fmovul", "o4e"},
-	{(FORMAT3(2, OP3_X(3,5), 0) | COND2(2)), "fmovlg", "o4e"},
-	{(FORMAT3(2, OP3_X(3,5), 0) | COND2(1)), "fmovne", "o4e"},
-	{(FORMAT3(2, OP3_X(3,5), 0) | COND2(9)), "fmove", "o4e"},
-	{(FORMAT3(2, OP3_X(3,5), 0) | COND2(10)), "fmovue", "o4e"},
-	{(FORMAT3(2, OP3_X(3,5), 0) | COND2(11)), "fmovge", "o4e"},
-	{(FORMAT3(2, OP3_X(3,5), 0) | COND2(12)), "fmovuge", "o4e"},
-	{(FORMAT3(2, OP3_X(3,5), 0) | COND2(13)), "fmovle", "o4e"},
-	{(FORMAT3(2, OP3_X(3,5), 0) | COND2(14)), "fmovule", "o4e"},
-	{(FORMAT3(2, OP3_X(3,5), 0) | COND2(15)), "fmovo", "o4e"},
+	{(FORMAT3(2, OP3_X(3,5), 0) | COND2(0,8)), "fmova", "o4e"},
+	{(FORMAT3(2, OP3_X(3,5), 0) | COND2(0,0)), "fmovn", "o4e"},
+	{(FORMAT3(2, OP3_X(3,5), 0) | COND2(0,7)), "fmovu", "o4e"},
+	{(FORMAT3(2, OP3_X(3,5), 0) | COND2(0,6)), "fmovg", "o4e"},
+	{(FORMAT3(2, OP3_X(3,5), 0) | COND2(0,5)), "fmovug", "o4e"},
+	{(FORMAT3(2, OP3_X(3,5), 0) | COND2(0,4)), "fmovk", "o4e"},
+	{(FORMAT3(2, OP3_X(3,5), 0) | COND2(0,3)), "fmovul", "o4e"},
+	{(FORMAT3(2, OP3_X(3,5), 0) | COND2(0,2)), "fmovlg", "o4e"},
+	{(FORMAT3(2, OP3_X(3,5), 0) | COND2(0,1)), "fmovne", "o4e"},
+	{(FORMAT3(2, OP3_X(3,5), 0) | COND2(0,9)), "fmove", "o4e"},
+	{(FORMAT3(2, OP3_X(3,5), 0) | COND2(0,10)), "fmovue", "o4e"},
+	{(FORMAT3(2, OP3_X(3,5), 0) | COND2(0,11)), "fmovge", "o4e"},
+	{(FORMAT3(2, OP3_X(3,5), 0) | COND2(0,12)), "fmovuge", "o4e"},
+	{(FORMAT3(2, OP3_X(3,5), 0) | COND2(0,13)), "fmovle", "o4e"},
+	{(FORMAT3(2, OP3_X(3,5), 0) | COND2(0,14)), "fmovule", "o4e"},
+	{(FORMAT3(2, OP3_X(3,5), 0) | COND2(0,15)), "fmovo", "o4e"},
 
 	/* Move F-P Register on Integer Register Condition "FMOVr" */
 	/* FIXME: check for short, double, and quad's */
@@ -873,6 +916,19 @@ db_disasm(loc, altfmt)
 			   ((bitmask>>19) & 0x3f) == 0x3a) /* XXX */ {
 			/* Tcc */
 			you_lose &= (FORMAT3(0x3,0x3f,0x1) | COND(0xf));
+		} else if (((bitmask>>30) & 0x3) == 0x2 &&
+			   ((bitmask>>21) & 0xf) == 0x9 &&
+			   ((bitmask>>19) & 0x3) != 0) /* XXX */ {
+			/* shifts */
+			you_lose &= (FORMAT3(0x3,0x3f,0x1))|X(1);
+		} else if (((bitmask>>30) & 0x3) == 0x2 &&
+			   ((bitmask>>19) & 0x3f) == 0x2c) /* XXX */ {
+			/* cmov */
+			you_lose &= (FORMAT3(0x3,0x3f,0x1) | COND2(1,0xf));
+		} else if (((bitmask>>30) & 0x3) == 0x2 &&
+			   ((bitmask>>19) & 0x3f) == 0x35) /* XXX */ {
+			/* fmov */
+			you_lose &= (FORMAT3(0x3,0x3f,0x1) | COND2(1,0xf));
 		} else {
 			you_lose &= (FORMAT3(0x3,0x3f,0x1));
 		}
@@ -916,6 +972,7 @@ db_disasm(loc, altfmt)
 
 	while (*f_ptr) {
 		switch (*f_ptr) {
+			int64_t val;
 		case '1':
 			db_printf("%%%s", regs[((insn >> 14) & 0x1f)]);
 			break;
@@ -935,30 +992,31 @@ db_disasm(loc, altfmt)
 			db_printf("%%f%d", ((insn >> 25) & 0x1f));
 			break;
 		case 'i':
-			db_printf("0x%x", (insn & 0x1fff));
+			/* simm13 -- signed */
+			val = SIGNEX(insn, 13);
+			db_printf("%s0x%x", SIGN(val), (int)abs(val));
 			break;
 		case 'j':
-			db_printf("0x%x", (insn & 0x7ff));
+			/* simm11 -- signed */
+			val = SIGNEX(insn, 11);
+			db_printf("%s0x%x", SIGN(val), (int)abs(val));
 			break;
 		case 'l':
-			db_printsym(
-			    (db_addr_t)(loc + (int)(4 * ((insn & 0x1fff) |
-				((insn >> 20) & 0x3)))),
+			val = (((insn>>20)&0x3)<<13)|(insn & 0x1fff);
+			val = SIGNEX(val, 16);
+			db_printsym((db_addr_t)(loc + (4 * val)),
 			    DB_STGY_ANY, db_printf);
 			break;
 		case 'm':
-			db_printsym(
-			    (db_addr_t)(loc + (int)(4 * (insn & 0x3fffff))),
-			    DB_STGY_ANY, db_printf);
+			db_printsym((db_addr_t)(loc + (4 * SIGNEX(insn, 22))),
+				DB_STGY_ANY, db_printf);
 			break;
 		case 'u':
-			db_printsym(
-			    (db_addr_t)(loc + (int)(4 * (insn & 0x7ffff))),
+			db_printsym((db_addr_t)(loc + (4 * SIGNEX(insn, 19))),
 			    DB_STGY_ANY, db_printf);
 			break;
 		case 'n':
-			db_printsym(
-			    (db_addr_t)(loc + (int)(4 * (insn & 0x3fffffff))),
+			db_printsym((db_addr_t)(loc + (4 * SIGNEX(insn, 30))),
 			    DB_STGY_PROC, db_printf);
 			break;
 		case 's':
@@ -980,10 +1038,11 @@ db_disasm(loc, altfmt)
 			break;
 		case 'q':
 		case '8':
+			val = SIGNEX(insn, 13);
 			db_printf("[%%%s %c 0x%x]",
-				  regs[((insn >> 14) & 0x1f)],
-				  (int)((insn & 0x1000)?'-':'+'),
-				  (insn & 0x1000)?((insn+1) & 0xfff):(insn & 0xfff));
+				regs[((insn >> 14) & 0x1f)],
+				(int)((val<0)?'-':'+'),
+				(int)abs(val));
 			if (*f_ptr == '8')
 				db_printf(" %%asi");
 			break;
@@ -998,6 +1057,9 @@ db_disasm(loc, altfmt)
 				  ((insn & 0xf) | ((insn >> 4) & 0x7)));
 			break;
 		case '0':
+			db_printf("%%%s", ccodes[((insn >> 11) & 0x3) + 4]);
+			break;
+		case '.':
 			db_printf("%%%s", ccodes[((insn >> 11) & 0x7)]);
 			break;
 		case 'r':
@@ -1016,10 +1078,10 @@ db_disasm(loc, altfmt)
 			db_printf("0x%x", (insn & 0x1f));
 			break;
 		case 'E':
-			db_printf("0x%x", (insn & 0x3f));
+			db_printf("%d", (insn & 0x3f));
 			break;
 		case 'F':
-			db_printf("0x%x", (insn & 0x3f));
+			db_printf("%d", (insn & 0x3f));
 			break;
 		case 'G':
 			db_printf("%%%s", priv_regs[((insn >> 25) & 0x1f)]);
