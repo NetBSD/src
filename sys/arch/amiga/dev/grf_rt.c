@@ -633,8 +633,9 @@ static int rt_load_mon (struct grf_softc *gp, struct MonDef *md)
 	}
 	
 
-	gi->gd_regaddr  = (caddr_t) md; /* XXX */
-	gi->gd_regsize  = 0;
+	gp->g_data	= (caddr_t) md;
+	gi->gd_regaddr  = (long)ba - (long)ZORRO2ADDR + (long)ZORRO2BASE;;
+	gi->gd_regsize  = 64*1024;
 
 	gi->gd_fbaddr   = (long)fb - (long)ZORRO2ADDR + (long)ZORRO2BASE;
 	gi->gd_fbsize   = 64*1024;	/* larger, but that's whats mappable */
