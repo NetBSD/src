@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2003/07/24 15:31:57 itojun Exp $
+#	$NetBSD: Makefile,v 1.17 2003/08/23 23:03:44 lha Exp $
 
 .include <bsd.own.mk>
 
@@ -16,9 +16,14 @@ CPPFLAGS+=-DKRB5 -DAFS -I${DESTDIR}/usr/include/krb5
 LDADD+=	-lkrb5 -lkafs -lasn1
 DPADD+=	${LIBKRB5} ${LIBKAFS} ${LIBASN1}
 
+.if ${MKKERBEROS4} != "no"
 CPPFLAGS+=-DKRB4 -I${DESTDIR}/usr/include/kerberosIV
-LDADD+=	-lkrb -lcom_err -lroken
-DPADD+=	${LIBKRB} ${LIBCOM_ERR} ${LIBROKEN}
+LDADD+=	-lkrb -ldes
+DPADD+=	${LIBKRB} ${LIBDES}
+.endif
+
+LDADD+=	-lcom_err -lroken
+DPADD+=	${LIBCOM_ERR} ${LIBROKEN}
 .endif
 
 .include <bsd.prog.mk>

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.14 2003/07/23 08:01:29 itojun Exp $
+# $NetBSD: Makefile,v 1.15 2003/08/23 23:03:42 lha Exp $
 
 NOLINT=		# defined
 
@@ -17,8 +17,8 @@ CPPFLAGS+= -DKRB4
 CPPFLAGS+= -I${DESTDIR}/usr/include/kerberosIV
 SRCS+= 	version4.c
 
-KRB4LDADD= -lkadm -lkrb
-KRB4DPADD= ${LIBKADM} ${LIBKRB}
+KRB4LDADD= -lkadm -lkrb -ldes
+KRB4DPADD= ${LIBKADM} ${LIBKRB} ${LIBDES}
 .endif
 
 SRCS+= 	kadmind.c				\
