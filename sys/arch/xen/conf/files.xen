@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.6 2004/04/24 18:24:14 cl Exp $
+#	$NetBSD: files.xen,v 1.7 2004/04/24 19:18:01 cl Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -85,7 +85,7 @@ file	dev/md_root.c			memory_disk_hooks
 define  mainbus { [apid = -1] }
 
 file	arch/x86/x86/bus_dma.c
-file	arch/x86/x86/bus_space.c
+file	arch/xen/x86/bus_space.c
 file	arch/x86/x86/cacheinfo.c
 file	arch/xen/x86/consinit.c
 file	arch/xen/x86/intr.c

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.2 2004/04/10 23:47:24 cl Exp $	*/
+/*	$NetBSD: pmap.h,v 1.3 2004/04/24 19:18:01 cl Exp $	*/
 /*	NetBSD: pmap.h,v 1.79 2004/02/20 17:35:01 yamt Exp 	*/
 
 /*
@@ -352,6 +352,8 @@ void		pmap_write_protect(struct pmap *, vaddr_t, vaddr_t, vm_prot_t);
 int		pmap_exec_fixup(struct vm_map *, struct trapframe *,
 		    struct pcb *);
 void		pmap_load(void);
+int		pmap_enter_ma(struct pmap *, vaddr_t, paddr_t, vm_prot_t,
+		    int);
 
 vaddr_t reserve_dumppages(vaddr_t); /* XXX: not a pmap fn */
 
