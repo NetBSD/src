@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.23.2.5 2001/04/06 00:34:38 he Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.23.2.6 2001/04/24 21:36:30 he Exp $	*/
 /*	$KAME: ipsec.c,v 1.83 2000/11/09 17:45:30 itojun Exp $	*/
 
 /*
@@ -1992,6 +1992,7 @@ ipsec4_encapsulate(m, sav)
 		&ip->ip_src, sizeof(ip->ip_src));
 	bcopy(&((struct sockaddr_in *)&sav->sah->saidx.dst)->sin_addr,
 		&ip->ip_dst, sizeof(ip->ip_dst));
+	ip->ip_ttl = IPDEFTTL;
 
 	/* XXX Should ip_src be updated later ? */
 
@@ -2071,6 +2072,7 @@ ipsec6_encapsulate(m, sav)
 		&ip6->ip6_src, sizeof(ip6->ip6_src));
 	bcopy(&((struct sockaddr_in6 *)&sav->sah->saidx.dst)->sin6_addr,
 		&ip6->ip6_dst, sizeof(ip6->ip6_dst));
+	ip6->ip6_hlim = IPV6_DEFHLIM;
 
 	/* XXX Should ip6_src be updated later ? */
 
