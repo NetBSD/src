@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.2.10.2 2001/11/08 05:07:18 briggs Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.2.10.3 2001/11/13 20:00:30 briggs Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -289,7 +289,7 @@ ENTRY(cpu_switch)
 	mtmsr	3
 
 #if !defined(MULTIPROCESSOR)		/* XXX */
-	li	3,0			/* if it is the same lwp, return 0 */
+	xor	3,3,3			/* if it is the same lwp, return 0 */
 	cmpl	0,31,30			/* is it the same lwp? */
 	beq	switch_return
 

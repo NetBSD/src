@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.2.26.1 2001/11/05 19:46:16 briggs Exp $	*/
+/*	$NetBSD: frame.h,v 1.2.26.2 2001/11/13 20:00:30 briggs Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -87,6 +87,12 @@ struct callframe {
 	register_t lr;
 	register_t r30;
 	register_t r31;
+};
+
+struct saframe {
+	register_t r1;		/* stack pointer */
+	register_t lr;		/* Callee lr save area */
+	register_t fill[2];	/* Pad to multiple of 16 bytes */
 };
 
 #endif	/* _MACHINE_FRAME_H_ */
