@@ -1,4 +1,4 @@
-/*	$NetBSD: lastlogin.c,v 1.7 2003/08/28 15:54:41 elric Exp $	*/
+/*	$NetBSD: lastlogin.c,v 1.8 2003/12/16 15:40:29 wulf Exp $	*/
 /*
  * Copyright (c) 1996 John M. Vinopal
  * All rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: lastlogin.c,v 1.7 2003/08/28 15:54:41 elric Exp $");
+__RCSID("$NetBSD: lastlogin.c,v 1.8 2003/12/16 15:40:29 wulf Exp $");
 #endif
 
 #include <sys/types.h>
@@ -104,9 +104,9 @@ main(argc, argv)
 	setpassent(1);	/* Keep passwd file pointers open */
 
 	/* Process usernames given on the command line. */
-	if (argc > 1) {
+	if (argc > 0) {
 		long offset;
-		for (i = 1; i < argc; ++i) {
+		for (i = 0; i < argc; i++) {
 			if ((passwd = getpwnam(argv[i])) == NULL) {
 				warnx("user '%s' not found", argv[i]);
 				continue;
