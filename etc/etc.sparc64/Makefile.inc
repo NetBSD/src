@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.7 2001/07/21 05:58:28 eeh Exp $
+#	$NetBSD: Makefile.inc,v 1.8 2001/08/19 14:18:39 mrg Exp $
 #
 #	etc.sparc64/Makefile.inc -- sparc64-specific etc Makefile targets
 #
@@ -13,8 +13,8 @@ BUILD_KERNELS+= INSTALL
 
 # Add sparc64 installation directories
 MD_INSTALLATION_DIRS= \
-	installation/xminiroot installation/netboot installation/misc
-INSTALLATION_DIRS+=$(MD_INSTALLATION_DIRS) 
+	installation/miniroot installation/netboot installation/misc
+INSTALLATION_DIRS=$(MD_INSTALLATION_DIRS) 
 
 snap_pre_md:
 .ifndef UPDATE
