@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_fifo.c,v 1.3 1999/02/05 00:06:11 oster Exp $	*/
+/*	$NetBSD: rf_fifo.c,v 1.4 2000/01/08 23:45:05 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -43,8 +43,9 @@
 #include "rf_fifo.h"
 #include "rf_debugMem.h"
 #include "rf_general.h"
-#include "rf_threadid.h"
 #include "rf_options.h"
+#include "rf_raid.h"
+#include "rf_types.h"
 
 /* just malloc a header, zero it (via calloc), and return it */
 /*ARGSUSED*/
@@ -85,9 +86,8 @@ rf_FifoEnqueue(q_in, elem, priority)
 	} else {
 		RF_ASSERT(elem->next == NULL);
 		if (rf_fifoDebug) {
-			int     tid;
-			rf_get_threadid(tid);
-			printf("[%d] fifo: ENQ lopri\n", tid);
+			printf("raid%d: fifo: ENQ lopri\n", 
+			       elem->raidPtr->raidid);
 		}
 		if (!q->lq_tail) {
 			RF_ASSERT(q->lq_count == 0 && q->lq_head == NULL);
@@ -137,9 +137,8 @@ rf_FifoDequeue(q_in)
 			nd->next = NULL;
 			q->lq_count--;
 			if (rf_fifoDebug) {
-				int     tid;
-				rf_get_threadid(tid);
-				printf("[%d] fifo: DEQ lopri %lx\n", tid, (long) nd);
+				printf("raid%d: fifo: DEQ lopri %lx\n", 
+				       nd->raidPtr->raidid, (long) nd);
 			}
 		} else {
 			RF_ASSERT(q->hq_count == 0 && q->lq_count == 0 && q->hq_tail == NULL && q->lq_tail == NULL);
@@ -318,10 +317,5 @@ rf_FifoPromote(q_in, parityStripeID, which_ru)
 	/* sanity check.  delete this if you ever put more than one entry in
 	 * the low-pri queue */
 	RF_ASSERT(retval == 0 || retval == 1);
-	if (rf_fifoDebug) {
-		int     tid;
-		rf_get_threadid(tid);
-		printf("[%d] fifo: promote %d\n", tid, retval);
-	}
 	return (retval);
 }
