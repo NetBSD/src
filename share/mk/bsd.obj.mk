@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.obj.mk,v 1.22 1999/12/04 02:44:07 sommerfeld Exp $
+#	$NetBSD: bsd.obj.mk,v 1.23 2000/02/08 12:38:16 sjg Exp $
 
 .if !target(__initialized_obj__)
 __initialized_obj__:
@@ -8,10 +8,26 @@ __initialized_obj__:
 .if ${MKOBJ} == "no"
 obj:
 .else
-
-.if defined(MAKEOBJDIR)
-__objdir=	${MAKEOBJDIR}
-.elif defined(OBJMACHINE)
+.if defined(MAKEOBJDIRPREFIX) || defined(MAKOBJDIR)
+.if defined(MAKEOBJDIRPREFIX)
+__objdir:= ${MAKEOBJDIRPREFIX}${.CURDIR}
+.else
+__objdir:= ${MAKEOBJDIR}
+.endif
+# MAKEOBJDIR and MAKEOBJDIRPREFIX are env variables supported
+# by make(1).  We simply mkdir -p the specified path.
+# If that fails - we do a mkdir to get the appropriate error message
+# before bailing out.
+obj:
+	@if ! test -d ${__objdir}; then \
+		mkdir -p ${__objdir}; \
+		if ! test -d ${__objdir}; then \
+			mkdir ${__objdir}; exit 1; \
+		fi; \
+		echo "${.CURDIR} -> ${__objdir}"; \
+	fi
+.else
+.if defined(OBJMACHINE)
 __objdir=	obj.${MACHINE}
 .else
 __objdir=	obj
@@ -64,6 +80,7 @@ obj:
 			mkdir $$dest; \
 		fi ; \
 	fi;
+.endif
 .endif
 
 print-objdir:
