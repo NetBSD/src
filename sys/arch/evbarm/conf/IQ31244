@@ -1,4 +1,4 @@
-#	$NetBSD: IQ31244,v 1.13 2003/12/14 01:33:15 thorpej Exp $
+#	$NetBSD: IQ31244,v 1.14 2004/02/13 10:10:18 wiz Exp $
 #
 #	IQ31244 -- Intel IQ31244 Evaluation Board Kernel
 #
@@ -140,7 +140,7 @@ config		netbsd-wm0	root on wm0 type nfs
 # The main bus device
 mainbus0	at root
 
-# The boot cpu
+# The boot CPU
 cpu0		at mainbus?
 
 # On-board device support
