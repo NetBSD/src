@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile.c,v 1.4 1999/01/30 17:51:52 christos Exp $ */
+/* $NetBSD: loadfile.c,v 1.5 1999/03/04 20:46:23 christos Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -536,8 +536,7 @@ aout_exec(fd, x, marks, flags)
 		if (flags & LOAD_SYM) {
 			PROGRESS(("+[%ld", x->a_syms));
 
-			if (READ(fd, maxp, x->a_syms) !=
-			    x->a_syms) {
+			if (READ(fd, maxp, x->a_syms) != x->a_syms) {
 				WARN(("read symbols"));
 				return 1;
 			}
@@ -550,7 +549,10 @@ aout_exec(fd, x, marks, flags)
 		if (flags & (LOAD_SYM|COUNT_SYM))
 			maxp += x->a_syms;
 
-		read(fd, &cc, sizeof(cc));
+		if (READ(fd, &cc, sizeof(cc)) != sizeof(cc)) {
+			WARN(("read string table"));
+			return 1;
+		}
 
 		if (flags & LOAD_SYM) {
 			BCOPY(&cc, maxp, sizeof(cc));
