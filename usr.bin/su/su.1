@@ -26,7 +26,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)su.1	8.2 (Berkeley) 4/18/94
-.\"	$NetBSD: su.1,v 1.39 2005/02/01 22:54:33 christos Exp $
+.\"	$NetBSD: su.1,v 1.40 2005/02/28 02:30:54 christos Exp $
 .\"
 .Dd August 20, 2003
 .Dt SU 1
@@ -225,11 +225,11 @@ and
 groups are treated as indirect groups.
 The group members of those two groups are treated as groups themselves.
 .\" This option is not supported under pam.
+.El
 .Sh EXIT STATUS
 .Nm
 returns the exit status of the executed subshell, or 1 if any error
 occurred while switching privileges.
-.El
 .Sh ENVIRONMENT
 Environment variables used by
 .Nm :
