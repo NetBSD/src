@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.55 1999/02/23 02:56:03 ross Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.56 1999/02/28 18:14:57 ross Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -723,21 +723,22 @@ resetpriority(p)
 }
 
 /*
- * We adjust the priority of the current process.  The priority of
- * a process gets worse as it accumulates CPU time.  The cpu usage
- * estimator (p_estcpu) is increased here.  The formula for computing
- * priorities (in kern_synch.c) will compute a different value each
- * time p_estcpu increases by 4.  The cpu usage estimator ramps up
- * quite quickly when the process is running (linearly), and decays
- * away exponentially, at a rate which is proportionally slower when
- * the system is busy.  The basic principal is that the system will
- * 90% forget that the process used a lot of CPU time in 5 * loadav
- * seconds.  This causes the system to favor processes which haven't
- * run much recently, and to round-robin among other processes.
+ * We adjust the priority of the current process.  The priority of a process
+ * gets worse as it accumulates CPU time.  The cpu usage estimator (p_estcpu)
+ * is increased here.  The formula for computing priorities (in kern_synch.c)
+ * will compute a different value each time p_estcpu increases. This can
+ * cause a switch, but unless the priority crosses a PPQ boundary the actual
+ * queue will not change.  The cpu usage estimator ramps up quite quickly
+ * when the process is running (linearly), and decays away exponentially, at
+ * a rate which is proportionally slower when the system is busy.  The basic
+ * principal is that the system will 90% forget that the process used a lot
+ * of CPU time in 5 * loadav seconds.  This causes the system to favor
+ * processes which haven't run much recently, and to round-robin among other
+ * processes.
  */
 
 void
-schedclk(p)
+schedclock(p)
 	struct proc *p;
 {
 	p->p_estcpu = ESTCPULIM(p->p_estcpu + 1);

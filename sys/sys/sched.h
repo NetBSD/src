@@ -1,4 +1,4 @@
-/* $NetBSD: sched.h,v 1.1 1999/02/23 02:56:04 ross Exp $ */
+/* $NetBSD: sched.h,v 1.2 1999/02/28 18:14:58 ross Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -92,7 +92,7 @@
 int	schedhz;			/* ideally: 16 */
 
 #ifdef	_SYS_PROC_H_
-void schedclk __P((struct proc *p));
+void schedclock __P((struct proc *p));
 static __inline void scheduler_fork_hook __P((
 	struct proc *parent, struct proc *child));
 static __inline void scheduler_wait_hook __P((

@@ -1,4 +1,4 @@
-/* $NetBSD: interrupt.c,v 1.37 1999/02/24 23:35:25 thorpej Exp $ */
+/* $NetBSD: interrupt.c,v 1.38 1999/02/28 18:14:57 ross Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.37 1999/02/24 23:35:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.38 1999/02/28 18:14:57 ross Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -130,7 +130,7 @@ interrupt(a0, a1, a2, framep)
 			if((++schedclk2 & 0x3f) == 0
 			&& (p = curproc) != NULL
 			&& schedhz)
-				schedclk(p);
+				schedclock(p);
 		}
 		break;
 
