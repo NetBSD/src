@@ -1,4 +1,4 @@
-/*	$NetBSD: getnetent.c,v 1.14 2000/04/25 13:26:03 itojun Exp $	*/
+/*	$NetBSD: getnetent.c,v 1.15 2003/08/07 16:43:08 agc Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -48,7 +44,7 @@
 static char sccsid[] = "@(#)getnetent.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: getnetent.c,v 8.4 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: getnetent.c,v 1.14 2000/04/25 13:26:03 itojun Exp $");
+__RCSID("$NetBSD: getnetent.c,v 1.15 2003/08/07 16:43:08 agc Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 

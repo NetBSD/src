@@ -1,4 +1,4 @@
-/*	$NetBSD: __sigtramp1.S,v 1.3 2002/10/29 00:22:18 petrov Exp $	*/
+/*	$NetBSD: __sigtramp1.S,v 1.4 2003/08/07 16:42:29 agc Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -28,8 +28,6 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
  *	This product includes software developed by Harvard University.
  *	This product includes software developed by Paul Kranenburg.
  * 4. Neither the name of the University nor the names of its contributors

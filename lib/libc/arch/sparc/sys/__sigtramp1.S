@@ -1,4 +1,4 @@
-/*	$NetBSD: __sigtramp1.S,v 1.2 2002/07/11 17:47:11 thorpej Exp $	*/
+/*	$NetBSD: __sigtramp1.S,v 1.3 2003/08/07 16:42:25 agc Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -27,8 +27,6 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
  *	This product includes software developed by Harvard University.
  *	This product includes software developed by Paul Kranenburg.
  * 4. Neither the name of the University nor the names of its contributors
