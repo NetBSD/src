@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.107 2001/01/10 23:48:55 ichiro Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.108 2001/01/11 11:33:19 ichiro Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.108 2001/01/10 23:47:56 ichiro Exp 
+ *	NetBSD: pcmciadevs,v 1.109 2001/01/11 11:32:56 ichiro Exp 
  */
 
 /*-
@@ -911,6 +911,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Standard Microsystems Corporation",
 	    "SMC 2632 EZ Connect Wireless PC Card"	},
+	},
+	{
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_NANOSPEED_PRISM2,
+	    PCMCIA_CIS_NANOSPEED_PRISM2,
+	    0,
+	    "",
+	    "NANOSPEED ROOT-RZ2000 WLAN Card"	},
 	},
 	{
 	    PCMCIA_VENDOR_FUJITSU, 0,
