@@ -1,4 +1,4 @@
-/*	$NetBSD: eisareg.h,v 1.3 1996/04/09 22:46:13 cgd Exp $	*/
+/*	$NetBSD: eisareg.h,v 1.3.40.1 2000/08/11 18:00:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -36,7 +36,7 @@
 
 /*
  * Register (etc.) descriptions for the EISA bus.
-
+ *
  * Mostly culled from EISA chipset descriptions in:
  *	Intel Peripheral Components Databook (1992)
  */
