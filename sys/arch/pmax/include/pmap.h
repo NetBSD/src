@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.7 1995/04/10 12:42:18 mycroft Exp $	*/
+/*	$NetBSD: pmap.h,v 1.8 1995/04/12 01:55:35 mellon Exp $	*/
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -94,7 +94,7 @@ typedef struct pmap {
 #define PMAP_ATTR_MOD	0x01	/* page has been modified */
 #define PMAP_ATTR_REF	0x02	/* page has been referenced */
 
-#ifdef	KERNEL
+#ifdef	_KERNEL
 char *pmap_attributes;		/* reference and modify bits */
 struct pmap kernel_pmap_store;
 
