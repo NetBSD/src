@@ -19,6 +19,6 @@ You will also need to collect the MacOS tools:
 	NetBSD/mac68k Booter.
 
 These three are compacted and in binhex form as mkfs.cpt.hqx,
-Installer1.1.sea.hqx, and Booter1.9.3b3.sit.bin, respectively.
+Installer1.1.sea.hqx, and Booter1.9.4.sit.bin, respectively.
 Extract them as you would any other Macintosh applications.  If
 you need them, the sources are in the "src" subdirectory.
