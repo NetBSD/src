@@ -1,4 +1,4 @@
-/*	$NetBSD: rapide.c,v 1.3 2002/05/22 22:43:19 bjh21 Exp $	*/
+/*	$NetBSD: rapide.c,v 1.4 2002/09/27 15:35:31 provos Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe
@@ -221,7 +221,7 @@ rapide_attach(parent, self, aux)
 
 	if (bus_space_map(iot, pa->pa_podule->easi_base +
 	    CONTROL_REGISTERS_OFFSET, CONTROL_REGISTER_SPACE, 0, &ctlioh))
-		panic("%s: Cannot map control registers\n", self->dv_xname);
+		panic("%s: Cannot map control registers", self->dv_xname);
 
 	sc->sc_ctlioh = ctlioh;
 	sc->sc_version = bus_space_read_1(iot, ctlioh, VERSION_REGISTER_OFFSET) & VERSION_REGISTER_MASK;
@@ -296,7 +296,7 @@ rapide_attach(parent, self, aux)
 		ihp->ih_maskaddr = pa->pa_podule->irq_addr;
 		ihp->ih_maskbits = rcp->rc_irqmask;
 		if (irq_claim(sc->sc_podule->interrupt, ihp))
-			panic("%s: Cannot claim interrupt %d\n",
+			panic("%s: Cannot claim interrupt %d",
 			    self->dv_xname, sc->sc_podule->interrupt);
 		/* clear any pending interrupts and enable interrupts */
 		sc->sc_intr_enable_mask |= rcp->rc_irqmask;

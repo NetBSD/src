@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.63 2002/09/06 13:18:43 gehenna Exp $ */
+/*	$NetBSD: ser.c,v 1.64 2002/09/27 15:35:41 provos Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -43,7 +43,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.63 2002/09/06 13:18:43 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.64 2002/09/27 15:35:41 provos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -901,7 +901,7 @@ serstart(struct tty *tp)
 #ifdef DIAGNOSTIC
 	unit = SERUNIT(tp->t_dev);
 	if (unit)
-		panic("serstart: unit is %d\n", unit);
+		panic("serstart: unit is %d", unit);
 #endif
 
 	s = spltty();

@@ -1,4 +1,4 @@
-/*	$NetBSD: txcsbus.c,v 1.10 2002/09/27 03:17:55 thorpej Exp $ */
+/*	$NetBSD: txcsbus.c,v 1.11 2002/09/27 15:36:06 provos Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -243,7 +243,7 @@ __txcsbus_alloc_cstag(struct txcsbus_softc *sc, struct cs_handle *csh)
 	txreg_t reg;
 
  	if (!TX39_ISCS(cs) && !TX39_ISMCS(cs) && !TX39_ISCARD(cs)) {
-		panic("txcsbus_alloc_tag: bogus chip select %d\n", cs);
+		panic("txcsbus_alloc_tag: bogus chip select %d", cs);
 	}
 
 	/* Already setuped chip select */
@@ -259,7 +259,7 @@ __txcsbus_alloc_cstag(struct txcsbus_softc *sc, struct cs_handle *csh)
 	/* CS bus-width (configurationable) */
 	switch (width) {
 	default:
-		panic("txcsbus_alloc_tag: bogus bus width %d\n", width);
+		panic("txcsbus_alloc_tag: bogus bus width %d", width);
 
 	case 32:
 		if (TX39_ISCS(cs)) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ex_cardbus.c,v 1.23 2001/11/13 12:51:13 lukem Exp $	*/
+/*	$NetBSD: if_ex_cardbus.c,v 1.24 2002/09/27 15:37:11 provos Exp $	*/
 
 /*
  * CardBus specific routines for 3Com 3C575-family CardBus ethernet adapter
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ex_cardbus.c,v 1.23 2001/11/13 12:51:13 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ex_cardbus.c,v 1.24 2002/09/27 15:37:11 provos Exp $");
 
 /* #define EX_DEBUG 4 */	/* define to report information for debugging */
 
@@ -311,7 +311,7 @@ ex_cardbus_detach(self, arg)
 
 #if defined(DIAGNOSTIC)
 	if (ct == NULL) {
-		panic("%s: data structure lacks\n", sc->sc_dev.dv_xname);
+		panic("%s: data structure lacks", sc->sc_dev.dv_xname);
 	}
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.75 2002/09/23 13:16:53 itojun Exp $	*/
+/*	$NetBSD: nd6.c,v 1.76 2002/09/27 15:37:54 provos Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.75 2002/09/23 13:16:53 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.76 2002/09/27 15:37:54 provos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -248,9 +248,9 @@ nd6_option(ndopts)
 	int olen;
 
 	if (!ndopts)
-		panic("ndopts == NULL in nd6_option\n");
+		panic("ndopts == NULL in nd6_option");
 	if (!ndopts->nd_opts_last)
-		panic("uninitialized ndopts in nd6_option\n");
+		panic("uninitialized ndopts in nd6_option");
 	if (!ndopts->nd_opts_search)
 		return NULL;
 	if (ndopts->nd_opts_done)
@@ -300,9 +300,9 @@ nd6_options(ndopts)
 	int i = 0;
 
 	if (!ndopts)
-		panic("ndopts == NULL in nd6_options\n");
+		panic("ndopts == NULL in nd6_options");
 	if (!ndopts->nd_opts_last)
-		panic("uninitialized ndopts in nd6_options\n");
+		panic("uninitialized ndopts in nd6_options");
 	if (!ndopts->nd_opts_search)
 		return 0;
 
@@ -415,12 +415,12 @@ nd6_timer(ignored_arg)
 
 		/* sanity check */
 		if (!rt)
-			panic("rt=0 in nd6_timer(ln=%p)\n", ln);
+			panic("rt=0 in nd6_timer(ln=%p)", ln);
 		if (rt->rt_llinfo && (struct llinfo_nd6 *)rt->rt_llinfo != ln)
-			panic("rt_llinfo(%p) is not equal to ln(%p)\n",
+			panic("rt_llinfo(%p) is not equal to ln(%p)",
 			      rt->rt_llinfo, ln);
 		if (!dst)
-			panic("dst=0 in nd6_timer(ln=%p)\n", ln);
+			panic("dst=0 in nd6_timer(ln=%p)", ln);
 
 		switch (ln->ln_state) {
 		case ND6_LLINFO_INCOMPLETE:

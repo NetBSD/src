@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_fal.c,v 1.14 2002/03/04 15:35:57 wiz Exp $	*/
+/*	$NetBSD: grfabs_fal.c,v 1.15 2002/09/27 15:35:52 provos Exp $	*/
 
 /*
  * Copyright (c) 1995 Thomas Gerner.
@@ -411,7 +411,7 @@ view_t *v;
 	if (mode->current_view == v) {
 #if 0
 		if (v->flags & VF_DISPLAY)
-			panic("Cannot shutdown display\n"); /* XXX */
+			panic("Cannot shutdown display"); /* XXX */
 #endif
 		mode->current_view = NULL;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.3 2002/09/25 22:21:14 thorpej Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.4 2002/09/27 15:36:28 provos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -174,7 +174,7 @@ news68k_bus_space_probe(t, bsh, offset, sz)
 		break;
 
 	default:
-		panic("bus_space_probe: unupported data size %d\n", sz);
+		panic("bus_space_probe: unupported data size %d", sz);
 		/* NOTREACHED */
 	}
 

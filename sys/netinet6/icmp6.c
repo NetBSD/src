@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.87 2002/09/23 05:51:13 simonb Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.88 2002/09/27 15:37:52 provos Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.87 2002/09/23 05:51:13 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.88 2002/09/27 15:37:52 provos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -2679,7 +2679,7 @@ icmp6_redirect_output(m0, rt)
 	 * and truncates if not.
 	 */
 	if (m0->m_next || m0->m_pkthdr.len != m0->m_len)
-		panic("assumption failed in %s:%d\n", __FILE__, __LINE__);
+		panic("assumption failed in %s:%d", __FILE__, __LINE__);
 
 	if (len - sizeof(*nd_opt_rh) < m0->m_pkthdr.len) {
 		/* not enough room, truncate */

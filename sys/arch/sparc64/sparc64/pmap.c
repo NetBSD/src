@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.127 2002/09/22 07:19:51 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.128 2002/09/27 15:36:51 provos Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
 /*
@@ -774,7 +774,7 @@ remap_data:
 		if (prom_map[i].vstart == ktext)
 			break;
 	if (i == prom_map_size) 
-		panic("No kernel text segment!\r\n");
+		panic("No kernel text segment!\r");
 	ktsize = prom_map[i].vsize;
 	ektext = ktext + ktsize;
 
@@ -953,7 +953,7 @@ remap_data:
 		prom_printf("TSB alloc fixup failed\r\n");
 		prom_printf("frobbed i, firstaddr before TSB=%x, %lx\r\n",
 		    (int)i, (u_long)firstaddr);
-		panic("TSB alloc\n");
+		panic("TSB alloc");
 		OF_exit();
 	}
 #endif
@@ -1801,7 +1801,7 @@ pmap_kremove(va, size)
 		 * Is this part of the permanent 4MB mapping?
 		 */
 		if (va >= ktext && va < roundup(ekdata, 4*MEG))
-			panic("pmap_kremove: va=%08x in locked TLB\r\n", 
+			panic("pmap_kremove: va=%08x in locked TLB\r", 
 				(u_int)va);
 #endif
 
@@ -2143,7 +2143,7 @@ pmap_remove(pm, va, endva)
 		 */
 		if (pm == pmap_kernel() && va >= ktext && 
 			va < roundup(ekdata, 4*MEG))
-			panic("pmap_remove: va=%08llx in locked TLB\r\n",
+			panic("pmap_remove: va=%08llx in locked TLB\r",
 			      (long long)va);
 #endif
 

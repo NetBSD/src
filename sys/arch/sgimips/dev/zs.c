@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.12 2002/09/27 02:24:22 thorpej Exp $	*/
+/*	$NetBSD: zs.c,v 1.13 2002/09/27 15:36:40 provos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
@@ -709,11 +709,11 @@ zscninit(cn)
 	char* consdev;
 
 	if ((consdev = ARCBIOS->GetEnvironmentVariable("ConsoleOut")) == NULL)
-		panic("zscninit without valid ARCS ConsoleOut setting!\n");
+		panic("zscninit without valid ARCS ConsoleOut setting!");
 
 	if (strlen(consdev) != 9 ||
 	    strncmp(consdev, "serial", 6) != 0)
-		panic("zscninit with ARCS console not set to serial!\n");
+		panic("zscninit with ARCS console not set to serial!");
 
 	cons_port = consdev[7] - '0';
 

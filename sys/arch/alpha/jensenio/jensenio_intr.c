@@ -1,4 +1,4 @@
-/* $NetBSD: jensenio_intr.c,v 1.3 2001/07/27 00:25:19 thorpej Exp $ */
+/* $NetBSD: jensenio_intr.c,v 1.4 2002/09/27 15:35:36 provos Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: jensenio_intr.c,v 1.3 2001/07/27 00:25:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jensenio_intr.c,v 1.4 2002/09/27 15:35:36 provos Exp $");
 
 #include <sys/types.h> 
 #include <sys/param.h> 
@@ -168,7 +168,7 @@ jensenio_eisa_intr_map(void *v, u_int eirq, eisa_intr_handle_t *ihp)
 {
 
 	if (*ihp >= JENSEN_MAX_IRQ)
-		panic("jensenio_eisa_intr_map: bogus IRQ %d\n", *ihp);
+		panic("jensenio_eisa_intr_map: bogus IRQ %d", *ihp);
 
 	if (jensenio_intr_deftype[eirq] == IST_UNUSABLE) {
 		printf("jensenio_eisa_intr_map: unusable irq %d\n",
@@ -187,7 +187,7 @@ jensenio_eisa_intr_string(void *v, int eirq)
 	static char irqstr[64];
 
 	if (eirq >= JENSEN_MAX_IRQ)
-		panic("jensenio_eisa_intr_string: bogus IRQ %d\n", eirq);
+		panic("jensenio_eisa_intr_string: bogus IRQ %d", eirq);
 
 	sprintf(irqstr, "eisa irq %d", eirq);
 
@@ -199,7 +199,7 @@ jensenio_eisa_intr_evcnt(void *v, int eirq)
 {
 
 	if (eirq >= JENSEN_MAX_IRQ)
-		panic("jensenio_eisa_intr_evcnt: bogus IRQ %d\n", eirq);
+		panic("jensenio_eisa_intr_evcnt: bogus IRQ %d", eirq);
 
 	return (alpha_shared_intr_evcnt(jensenio_eisa_intr, eirq));
 }

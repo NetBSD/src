@@ -1,4 +1,4 @@
-/*	$NetBSD: leo.c,v 1.4 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: leo.c,v 1.5 2002/09/27 15:35:54 provos Exp $	*/
 
 /*-
  * Copyright (c) 1997 maximum entropy <entropy@zippy.bernstein.com>
@@ -230,10 +230,10 @@ leo_attach(parent, self, aux)
 
 	printf("\n");
 	if (bus_space_map(va->va_iot, va->va_iobase, va->va_iosize, 0, &ioh))
-		panic("leo_attach: cannot map io area\n");
+		panic("leo_attach: cannot map io area");
 	if (bus_space_map(va->va_memt, va->va_maddr, va->va_msize,
 			  BUS_SPACE_MAP_LINEAR|BUS_SPACE_MAP_CACHEABLE, &memh))
-		panic("leo_attach: cannot map memory area\n");
+		panic("leo_attach: cannot map memory area");
 #ifdef SET_REGION /* XXX seems to be unimplemented on atari? */
 	bus_space_set_region_4(va->va_memt, memh, 0, 0, va->va_msize >> 2);
 #else

@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.54 2002/07/26 01:00:44 wiz Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.55 2002/09/27 15:37:33 provos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.54 2002/07/26 01:00:44 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.55 2002/09/27 15:37:33 provos Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -505,7 +505,7 @@ wdc_atapi_intr(chp, xfer, irq)
 		printf("%s:%d:%d: bad state %d in wdc_atapi_intr\n",
 		    chp->wdc->sc_dev.dv_xname, chp->channel, xfer->drive,
 		    drvp->state);
-		panic("wdc_atapi_intr: bad state\n");
+		panic("wdc_atapi_intr: bad state");
 	}
 	/*
 	 * If we missed an interrupt in a PIO transfer, reset and restart.

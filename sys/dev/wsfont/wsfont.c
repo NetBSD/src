@@ -1,4 +1,4 @@
-/* 	$NetBSD: wsfont.c,v 1.28 2002/03/21 03:26:55 enami Exp $	*/
+/* 	$NetBSD: wsfont.c,v 1.29 2002/09/27 15:37:41 provos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.28 2002/03/21 03:26:55 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.29 2002/09/27 15:37:41 provos Exp $");
 
 #include "opt_wsfont.h"
 
@@ -452,7 +452,7 @@ wsfont_unlock(int cookie)
 		return (ENOENT);
 
 	if (ent->lockcount == 0)
-		panic("wsfont_unlock: font not locked\n");
+		panic("wsfont_unlock: font not locked");
 
 	if (--ent->lockcount == 0 && (ent->flags & WSFONT_COPY) != 0)
 		wsfont_remove(cookie);

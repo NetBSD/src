@@ -1,4 +1,4 @@
-/*      $NetBSD: sa11x0_com.c,v 1.7 2002/09/06 13:18:43 gehenna Exp $        */
+/*      $NetBSD: sa11x0_com.c,v 1.8 2002/09/27 15:35:49 provos Exp $        */
 
 /*-
  * Copyright (c) 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -1472,7 +1472,7 @@ sacomintr(arg)
 			}
 		} else {
 #ifdef DIAGNOSTIC
-			panic("sacomintr: we shouldn't reach here\n");
+			panic("sacomintr: we shouldn't reach here");
 #endif
 			CLR(sc->sc_cr3, CR3_RIE);
 			bus_space_write_4(iot, ioh, SACOM_CR3, sc->sc_cr3);

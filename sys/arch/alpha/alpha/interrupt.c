@@ -1,4 +1,4 @@
-/* $NetBSD: interrupt.c,v 1.63 2001/07/27 00:25:18 thorpej Exp $ */
+/* $NetBSD: interrupt.c,v 1.64 2002/09/27 15:35:36 provos Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.63 2001/07/27 00:25:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.64 2002/09/27 15:35:36 provos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -439,7 +439,7 @@ badaddr_read(void *addr, size_t size, void *rptr)
 		break;
 
 	default:
-		panic("badaddr: invalid size (%ld)\n", size);
+		panic("badaddr: invalid size (%ld)", size);
 	}
 	alpha_mb();
 	alpha_mb();	/* MAGIC ON SOME SYSTEMS */

@@ -1,4 +1,4 @@
-/*	$NetBSD: auvia.c,v 1.17 2002/04/02 16:02:38 fvdl Exp $	*/
+/*	$NetBSD: auvia.c,v 1.18 2002/09/27 15:37:24 provos Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.17 2002/04/02 16:02:38 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.18 2002/09/27 15:37:24 provos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -887,7 +887,7 @@ auvia_trigger_output(void *addr, void *start, void *end,
 
 	if (!p)
 		panic("auvia_trigger_output: request with bad start "
-			"address (%p)\n", start);
+			"address (%p)", start);
 
 	if (auvia_build_dma_ops(sc, ch, p, start, end, blksize)) {
 		return 1;
@@ -923,7 +923,7 @@ auvia_trigger_input(void *addr, void *start, void *end,
 
 	if (!p)
 		panic("auvia_trigger_input: request with bad start "
-			"address (%p)\n", start);
+			"address (%p)", start);
 
 	if (auvia_build_dma_ops(sc, ch, p, start, end, blksize)) {
 		return 1;

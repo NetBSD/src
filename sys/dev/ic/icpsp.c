@@ -1,4 +1,4 @@
-/*	$NetBSD: icpsp.c,v 1.2 2002/04/25 18:45:35 ad Exp $	*/
+/*	$NetBSD: icpsp.c,v 1.3 2002/09/27 15:37:17 provos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icpsp.c,v 1.2 2002/04/25 18:45:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icpsp.c,v 1.3 2002/09/27 15:37:17 provos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -157,7 +157,7 @@ icpsp_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 
 #if defined(ICP_DEBUG) || defined(SCSIDEBUG)
 		if (xs->cmdlen > sizeof(rc->rc_cdb))
-			panic("%s: CDB too large\n", sc->sc_dv.dv_xname);
+			panic("%s: CDB too large", sc->sc_dv.dv_xname);
 #endif
 
 		/*

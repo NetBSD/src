@@ -1,4 +1,4 @@
-/*	$NetBSD: sw.c,v 1.6 2002/03/11 16:27:02 pk Exp $	*/
+/*	$NetBSD: sw.c,v 1.7 2002/09/27 15:36:46 provos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -345,7 +345,7 @@ sw_attach(parent, self, aux)
 	i = SCI_OPENINGS * sizeof(struct sw_dma_handle);
 	sc->sc_dma = (struct sw_dma_handle *)malloc(i, M_DEVBUF, M_NOWAIT);
 	if (sc->sc_dma == NULL)
-		panic("sw: dma handle malloc failed\n");
+		panic("sw: dma handle malloc failed");
 
 	for (i = 0; i < SCI_OPENINGS; i++) {
 		sc->sc_dma[i].dh_flags = 0;
@@ -515,7 +515,7 @@ sw_dma_alloc(ncr_sc)
 
 	/* Make sure our caller checked sc_min_dma_len. */
 	if (xlen < MIN_DMA_LEN)
-		panic("sw_dma_alloc: xlen=0x%x\n", xlen);
+		panic("sw_dma_alloc: xlen=0x%x", xlen);
 
 	/* Find free DMA handle.  Guaranteed to find one since we have
 	   as many DMA handles as the driver has processes. */

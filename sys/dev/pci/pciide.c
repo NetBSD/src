@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.169 2002/09/15 20:27:09 bouyer Exp $	*/
+/*	$NetBSD: pciide.c,v 1.170 2002/09/27 15:37:27 provos Exp $	*/
 
 
 /*
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.169 2002/09/15 20:27:09 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.170 2002/09/27 15:37:27 provos Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -951,7 +951,7 @@ pciide_compat_intr(arg)
 #ifdef DIAGNOSTIC
 	/* should only be called for a compat channel */
 	if (cp->compat == 0)
-		panic("pciide compat intr called for non-compat chan %p\n", cp);
+		panic("pciide compat intr called for non-compat chan %p", cp);
 #endif
 	return (wdcintr(&cp->wdc_channel));
 }

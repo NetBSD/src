@@ -1,4 +1,4 @@
-/*	$NetBSD: et4000.c,v 1.6 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: et4000.c,v 1.7 2002/09/27 15:35:54 provos Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -360,9 +360,9 @@ et_vme_attach(parent, self, aux)
 	printf("\n");
 
 	if (bus_space_map(va->va_iot, va->va_iobase, va->va_iosize, 0, &ioh))
-		panic("et attach: cannot map io area\n");
+		panic("et attach: cannot map io area");
 	if (bus_space_map(va->va_memt, va->va_maddr, va->va_msize, 0, &memh))
-		panic("et attach: cannot map mem area\n");
+		panic("et attach: cannot map mem area");
 
 	sc->sc_iot = va->va_iot;
 	sc->sc_ioh = ioh;

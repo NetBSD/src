@@ -1,4 +1,4 @@
-/*	$NetBSD: opms_iomd.c,v 1.1 2002/04/19 01:04:40 wiz Exp $	*/
+/*	$NetBSD: opms_iomd.c,v 1.2 2002/09/27 15:35:46 provos Exp $	*/
 
 /*-
  * Copyright (c) 1996 D.C. Tsen
@@ -104,10 +104,10 @@ opms_iomd_intenable(sc, enable)
 	if (enable) {
 		sc->sc_ih = intr_claim(sc->sc_irqnum, IPL_TTY, "opms", opmsintr, sc);
 		if (!sc->sc_ih)
-			panic("%s: Cannot claim interrupt\n", sc->sc_dev.dv_xname);
+			panic("%s: Cannot claim interrupt", sc->sc_dev.dv_xname);
 	} else {
 		if (intr_release(sc->sc_ih) != 0)
-			panic("%s: Cannot release IRQ\n", sc->sc_dev.dv_xname);
+			panic("%s: Cannot release IRQ", sc->sc_dev.dv_xname);
 	}
 }
 

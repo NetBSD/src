@@ -27,7 +27,7 @@
  *	i4b_l4mgmt.c - layer 4 calldescriptor management utilites
  *	-----------------------------------------------------------
  *
- *	$Id: i4b_l4mgmt.c,v 1.9 2002/03/30 11:43:33 martin Exp $ 
+ *	$Id: i4b_l4mgmt.c,v 1.10 2002/09/27 15:37:56 provos Exp $ 
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_l4mgmt.c,v 1.9 2002/03/30 11:43:33 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_l4mgmt.c,v 1.10 2002/09/27 15:37:56 provos Exp $");
 
 #include "isdn.h"
 
@@ -204,7 +204,7 @@ freecd_by_cd(call_desc_t *cd)
 	}
 
 	if(i == N_CALL_DESC)
-		panic("freecd_by_cd: ERROR, cd not found, cr = %d\n", cd->cr);
+		panic("freecd_by_cd: ERROR, cd not found, cr = %d", cd->cr);
 
 	splx(x);		
 }

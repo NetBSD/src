@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.114 2002/09/27 04:08:40 onoe Exp $	*/
+/*	$NetBSD: if.c,v 1.115 2002/09/27 15:37:50 provos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.114 2002/09/27 04:08:40 onoe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.115 2002/09/27 15:37:50 provos Exp $");
 
 #include "opt_inet.h"
 
@@ -595,7 +595,7 @@ if_detach(ifp)
 			dp = pffinddomain(family);
 #ifdef DIAGNOSTIC
 			if (dp == NULL)
-				panic("if_detach: no domain for AF %d\n",
+				panic("if_detach: no domain for AF %d",
 				    family);
 #endif
 			purged = 0;

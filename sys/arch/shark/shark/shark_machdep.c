@@ -1,4 +1,4 @@
-/*	$NetBSD: shark_machdep.c,v 1.5 2002/09/27 02:24:23 thorpej Exp $	*/
+/*	$NetBSD: shark_machdep.c,v 1.6 2002/09/27 15:36:45 provos Exp $	*/
 
 /*
  * Copyright 1997
@@ -289,7 +289,7 @@ initarm(ofw_handle)
 	shark_fiqregs.fr_r13  = 0; /* must set a stack when r9 is set! */
 
 	if (fiq_claim(&shark_fiqhandler))
-		panic("Cannot claim FIQ vector.\n");
+		panic("Cannot claim FIQ vector.");
 
 #ifdef DDB
 	db_machine_init();

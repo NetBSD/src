@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.128 2002/09/25 22:21:22 thorpej Exp $ */
+/*	$NetBSD: machdep.c,v 1.129 2002/09/27 15:36:51 provos Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -1827,7 +1827,7 @@ sparc_bus_map(t, addr, size, flags, unused, hp)
 
 	if ((err = extent_alloc(io_space, size, NBPG,
 		0, EX_NOWAIT|EX_BOUNDZERO, (u_long *)&v)))
-			panic("sparc_bus_map: cannot allocate io_space: %d\n", err);
+			panic("sparc_bus_map: cannot allocate io_space: %d", err);
 
 	/* note: preserve page offset */
 	hp->_ptr = (v | ((u_long)addr & PGOFSET));

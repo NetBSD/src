@@ -35,14 +35,14 @@
  *	Fritz!Card PCI driver
  *	------------------------------------------------
  *
- *	$Id: ifpci.c,v 1.9 2002/05/21 10:31:12 martin Exp $
+ *	$Id: ifpci.c,v 1.10 2002/09/27 15:37:27 provos Exp $
  *
  *      last edit-date: [Fri Jan  5 11:38:58 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ifpci.c,v 1.9 2002/05/21 10:31:12 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ifpci.c,v 1.10 2002/09/27 15:37:27 provos Exp $");
 
 
 #include <sys/param.h>
@@ -702,7 +702,7 @@ avma1pp_hscx_intr(int h_chan, u_int stat, struct isic_softc *sc)
 			if(chan->in_mbuf == NULL)
 			{
 				if((chan->in_mbuf = i4b_Bgetmbuf(BCH_MAX_DATALEN)) == NULL)
-					panic("L1 avma1pp_hscx_intr: RME, cannot allocate mbuf!\n");
+					panic("L1 avma1pp_hscx_intr: RME, cannot allocate mbuf!");
 				chan->in_cbptr = chan->in_mbuf->m_data;
 				chan->in_len = 0;
 			}
@@ -793,7 +793,7 @@ avma1pp_hscx_intr(int h_chan, u_int stat, struct isic_softc *sc)
 					  /* alloc new buffer */
 				
 					  if((chan->in_mbuf = i4b_Bgetmbuf(BCH_MAX_DATALEN)) == NULL)
-						 panic("L1 avma1pp_hscx_intr: RPF, cannot allocate new mbuf!\n");
+						 panic("L1 avma1pp_hscx_intr: RPF, cannot allocate new mbuf!");
 	
 					  /* setup new data ptr */
 				

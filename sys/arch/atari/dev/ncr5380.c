@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380.c,v 1.40 2001/04/25 17:53:13 bouyer Exp $	*/
+/*	$NetBSD: ncr5380.c,v 1.41 2002/09/27 15:35:53 provos Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -692,7 +692,7 @@ struct ncr_softc *sc;
 #else
 			    if (pdma_ready())
 				return;
-			    panic("Got DMA interrupt without DMA\n");
+			    panic("Got DMA interrupt without DMA");
 #endif
 			}
 			scsi_clr_ipend();

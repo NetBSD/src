@@ -1,4 +1,4 @@
-/*	$NetBSD: iopsp.c,v 1.12 2002/01/12 16:49:45 tsutsui Exp $	*/
+/*	$NetBSD: iopsp.c,v 1.13 2002/09/27 15:37:13 provos Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iopsp.c,v 1.12 2002/01/12 16:49:45 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iopsp.c,v 1.13 2002/09/27 15:37:13 provos Exp $");
 
 #include "opt_i2o.h"
 
@@ -452,7 +452,7 @@ iopsp_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 
 #if defined(I2ODEBUG) || defined(SCSIDEBUG)
 		if (xs->cmdlen > sizeof(mf->cdb))
-			panic("%s: CDB too large\n", sc->sc_dv.dv_xname);
+			panic("%s: CDB too large", sc->sc_dv.dv_xname);
 #endif
 
 		im = iop_msg_alloc(iop, IM_POLL_INTR |

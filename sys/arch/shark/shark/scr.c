@@ -1,4 +1,4 @@
-/*	$NetBSD: scr.c,v 1.3 2002/09/27 02:24:23 thorpej Exp $	*/
+/*	$NetBSD: scr.c,v 1.4 2002/09/27 15:36:44 provos Exp $	*/
 
 /*
  * Copyright 1997
@@ -128,7 +128,7 @@
     #ifdef DDB
         #define DEBUGGER printf("file = %s, line = %d\n",__FILE__,__LINE__);Debugger()        
     #else
-        #define DEBUGGER panic("file = %s, line = %d\n",__FILE__,__LINE__);
+        #define DEBUGGER panic("file = %s, line = %d",__FILE__,__LINE__);
     #endif
 #else
     #define DEBUGGER
@@ -179,7 +179,7 @@
 #else
     #define ASSERT(f)
     #define TOGGLE_TEST_PIN()
-    //#define INVALID_STATE_CMD(sc,state,cmd)  panic("scr: invalid state/cmd, sc = %X, state = %X, cmd = %X, line = %d\n",sc,state,cmd,__LINE__);
+    //#define INVALID_STATE_CMD(sc,state,cmd)  panic("scr: invalid state/cmd, sc = %X, state = %X, cmd = %X, line = %d",sc,state,cmd,__LINE__);
     #define INVALID_STATE_CMD(sc,state,cmd)  sc->bigTrouble = TRUE;
 
 #endif

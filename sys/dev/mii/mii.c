@@ -1,4 +1,4 @@
-/*	$NetBSD: mii.c,v 1.30 2002/09/27 03:18:16 thorpej Exp $	*/
+/*	$NetBSD: mii.c,v 1.31 2002/09/27 15:37:23 provos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mii.c,v 1.30 2002/09/27 03:18:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mii.c,v 1.31 2002/09/27 15:37:23 provos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -181,7 +181,7 @@ mii_activate(struct mii_data *mii, enum devact act, int phyloc, int offloc)
 
 		case DVACT_DEACTIVATE:
 			if (config_deactivate(&child->mii_dev) != 0)
-				panic("%s: config_activate(%d) failed\n",
+				panic("%s: config_activate(%d) failed",
 				    child->mii_dev.dv_xname, act);
 		}
 	}
