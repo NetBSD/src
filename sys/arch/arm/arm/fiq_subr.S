@@ -1,4 +1,4 @@
-/*	$NetBSD: fiq_subr.S,v 1.1 2001/12/20 01:20:22 thorpej Exp $	*/
+/*	$NetBSD: fiq_subr.S,v 1.2 2002/01/01 16:24:33 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -92,7 +92,7 @@ ENTRY(fiq_getregs)
 /*
  * fiq_setregs:
  *
- *	Load teh FIQ mode banked registers from the fiqhandler
+ *	Load the FIQ mode banked registers from the fiqhandler
  *	structure.
  */
 ENTRY(fiq_setregs)
