@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 1997/09/26 02:38:49 gwr Exp $
+#	$NetBSD: Makefile,v 1.2 1997/10/10 16:06:22 gwr Exp $
 
 LIB=	bfd
 
@@ -89,8 +89,22 @@ elf64-target.h : $(dist)/bfd/elfxx-target.h
 	sed -e s/NN/64/g < $(dist)/bfd/elfxx-target.h > $@
 
 # Some dependencies, by hand.
-${OBJS} : bfd.h config.h
-elf64-alpha.o : elf64-target.h
-elf32-alpha.o : elf32-target.h
+argv.o : alloca-conf.h
+${OBJS} : ansidecl.h bfd.h config.h libiberty.h
 targets.o : targmatch.h
+
+# Make sure we build elf32-target.h when needed.
+elf32-gen.o   : elf32-target.h
+elf32-i386.o  : elf32-target.h
+elf32-m68k.o  : elf32-target.h
+elf32-mips.o  : elf32-target.h
+elf32-ppc.o   : elf32-target.h
+elf32-sparc.o : elf32-target.h
+
+# Make sure we build elf64-target.h when needed.
+elf64-alpha.o : elf64-target.h
+elf64-gen.o   : elf64-target.h
+elf64-mips.o  : elf64-target.h
+elf64-sparc.o : elf64-target.h
+
 
