@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.620 2004/04/22 11:27:45 skd Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.621 2004/05/07 13:02:50 sekiya Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.619 2004/04/17 01:56:10 matt Exp 
+ *	NetBSD: pcidevs,v 1.621 2004/05/07 13:01:49 sekiya Exp 
  */
 
 /*
@@ -1172,6 +1172,7 @@
 #define	PCI_PRODUCT_CMDTECH_673	0x0673		/* USB0673 */
 #define	PCI_PRODUCT_CMDTECH_680	0x0680		/* SiI0680 */
 #define	PCI_PRODUCT_CMDTECH_3112	0x3112		/* SiI3112 SATALink */
+#define	PCI_PRODUCT_CMDTECH_3512	0x3512		/* SiI3512 SATALink */
 #define	PCI_PRODUCT_CMDTECH_3114	0x3114		/* SiI3114 SATALink */
 #define	PCI_PRODUCT_CMDTECH_3124	0x3124		/* SiI3124 SATALink */
 
