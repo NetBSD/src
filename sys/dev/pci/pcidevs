@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.313 2001/03/31 09:06:45 minoura Exp $
+$NetBSD: pcidevs,v 1.314 2001/04/09 11:51:30 ad Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1641,6 +1641,7 @@ product TEKRAM DC290		0xdc29	DC-290(M)
 
 /* Tekram Technology products (2nd PCI Vendor ID) */
 product TEKRAM2	DC690C		0x690c	DC-690C
+product	TEKRAM2	DC315		0x0391	DC-315/DC-395
 
 /* Texas Instruments products */
 product	TI	TLAN		0x0500	TLAN
