@@ -1,4 +1,4 @@
-/* $NetBSD: db_trace.c,v 1.3 1996/04/26 20:30:57 mark Exp $ */
+/* $NetBSD: db_trace.c,v 1.4 1996/10/15 01:33:50 mark Exp $ */
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -74,9 +74,15 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 		char		*name;
 		db_addr_t	pc;
 
-/*		db_printf("fp=%08x: fp=%08x sp=%08x lr=%08x pc=%08x\n", (u_int)frame, frame->fr_fp, frame->fr_sp, frame->fr_lr, frame->fr_pc);*/
+/*		db_printf("fp=%08x: fp=%08x sp=%08x lr=%08x pc=%08x\n",
+		    (u_int)frame, frame->fr_fp, frame->fr_sp, frame->fr_lr,
+		    frame->fr_pc);*/
 
 		pc = frame->fr_pc;
+#ifdef CPU_SA110
+		/* Adjust the PC so the same address is printed no matter what CPU */
+		pc += 4;
+#endif	/* CPU_SA110 */
 		if (!INKERNEL(pc))
 			break;
 
