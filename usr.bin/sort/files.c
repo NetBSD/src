@@ -1,4 +1,4 @@
-/*	$NetBSD: files.c,v 1.7 2001/01/08 19:16:50 jdolecek Exp $	*/
+/*	$NetBSD: files.c,v 1.8 2001/01/11 14:05:24 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -40,7 +40,7 @@
 #include "fsort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: files.c,v 1.7 2001/01/08 19:16:50 jdolecek Exp $");
+__RCSID("$NetBSD: files.c,v 1.8 2001/01/11 14:05:24 jdolecek Exp $");
 __SCCSID("@(#)files.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -53,9 +53,10 @@ static int seq __P((FILE *, DBT *, DBT *));
  * It keeps the buffers for all temporary files.
  */
 int
-getnext(binno, infl0, nfiles, pos, end, dummy)
-	int binno, nfiles;
-	union f_handle infl0;
+getnext(binno, infl0, filelist, nfiles, pos, end, dummy)
+	int binno, infl0;
+	struct filelist *filelist;
+	int nfiles;
 	struct recheader *pos;
 	u_char *end;
 	struct field *dummy;
@@ -70,27 +71,27 @@ getnext(binno, infl0, nfiles, pos, end, dummy)
 	if (nleft == 0) {
 		if (binno < 0)	/* reset files. */ {
 			for (i = 0; i < nfiles; i++) {
-				rewind(fstack[infl0.top + i].fp);
-				fstack[infl0.top + i].max_o = 0;
+				rewind(fstack[infl0 + i].fp);
+				fstack[infl0 + i].max_o = 0;
 			}
 			flag = -1;
 			nleft = cnt = 0;
 			return(-1);
 		}
-		maxb = fstack[infl0.top].maxb;
+		maxb = fstack[infl0].maxb;
 		for (; nleft == 0; cnt++) {
 			if (cnt >= nfiles) {
 				cnt = 0;
 				return (EOF);
 			}
-			fp = fstack[infl0.top + cnt].fp;
+			fp = fstack[infl0 + cnt].fp;
 			fread(&nleft, sizeof(nleft), 1, fp);
 			if (binno < maxb)
-				fstack[infl0.top+cnt].max_o
+				fstack[infl0+cnt].max_o
 					+= sizeof(nleft) + nleft;
 			else if (binno == maxb) {
-				if (binno != fstack[infl0.top].lastb) {
-					fseek(fp, fstack[infl0.top+
+				if (binno != fstack[infl0].lastb) {
+					fseek(fp, fstack[infl0+
 						cnt].max_o, SEEK_SET);
 					fread(&nleft, sizeof(nleft), 1, fp);
 				}
@@ -114,7 +115,7 @@ getnext(binno, infl0, nfiles, pos, end, dummy)
 	}
 	fread(pos->data, pos->length, 1, fp);
 	nleft -= pos->length + sizeof(TRECHEADER);
-	if (nleft == 0 && binno == fstack[infl0.top].maxb)
+	if (nleft == 0 && binno == fstack[infl0].maxb)
 		fclose(fp);
 	return (0);
 }
@@ -124,9 +125,10 @@ getnext(binno, infl0, nfiles, pos, end, dummy)
  * in the first fsort pass.
  */
 int
-makeline(flno, filelist, nfiles, buffer, bufend, dummy2)
-	int flno, nfiles;
-	union f_handle filelist;
+makeline(flno, top, filelist, nfiles, buffer, bufend, dummy2)
+	int flno, top;
+	struct filelist *filelist;
+	int nfiles;
 	struct recheader *buffer;
 	u_char *bufend;
 	struct field *dummy2;
@@ -148,8 +150,8 @@ makeline(flno, filelist, nfiles, buffer, bufend, dummy2)
 				return (EOF);
 		} else if (!fp) {
 			if (fileno  >= nfiles) return(EOF);
-			if (!(fp = fopen(filelist.names[fileno], "r")))
-				err(2, "%s", filelist.names[fileno]);
+			if (!(fp = fopen(filelist->names[fileno], "r")))
+				err(2, "%s", filelist->names[fileno]);
 			++fileno;
 		}
 		while ((pos < (char *)bufend) && ((c = getc(fp)) != EOF)) {
@@ -195,9 +197,10 @@ makeline(flno, filelist, nfiles, buffer, bufend, dummy2)
  * This generates keys. It's only called in the first fsort pass
  */
 int
-makekey(flno, filelist, nfiles, buffer, bufend, ftbl)
-	int flno, nfiles;
-	union f_handle filelist;
+makekey(flno, top, filelist, nfiles, buffer, bufend, ftbl)
+	int flno, top;
+	struct filelist *filelist;
+	int nfiles;
 	struct recheader *buffer;
 	u_char *bufend;
 	struct field *ftbl;
@@ -222,9 +225,9 @@ makekey(flno, filelist, nfiles, buffer, bufend, ftbl)
 		} else if (!dbdesc) {
 			if (fileno  >= nfiles)
 				return (EOF);
-			dbdesc = fopen(filelist.names[fileno], "r");
+			dbdesc = fopen(filelist->names[fileno], "r");
 			if (!dbdesc)
-				err(2, "%s", filelist.names[fileno]);
+				err(2, "%s", filelist->names[fileno]);
 			++fileno;
 		}
 		if (!(c = seq(dbdesc, line, dbkey))) {
@@ -331,9 +334,10 @@ putline(rec, fp)
  * get a record from a temporary file. (Used by merge sort.)
  */
 int
-geteasy(flno, filelist, nfiles, rec, end, dummy2)
-	int flno, nfiles;
-	union f_handle filelist;
+geteasy(flno, top, filelist, nfiles, rec, end, dummy2)
+	int flno, top;
+	struct filelist *filelist;
+	int nfiles;
 	struct recheader *rec;
 	u_char *end;
 	struct field *dummy2;
