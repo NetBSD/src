@@ -1,4 +1,4 @@
-/*	$NetBSD: multilink.c,v 1.2 2002/05/29 19:06:32 christos Exp $	*/
+/*	$NetBSD: multilink.c,v 1.3 2004/05/13 17:02:32 christos Exp $	*/
 
 /*
  * multilink.c - support routines for multilink.
@@ -379,7 +379,7 @@ str_to_epdisc(ep, str)
 		if (*str == 0)
 			break;
 		if (p <= str)
-			for (p = str; isxdigit(*p); ++p)
+			for (p = str; isxdigit((unsigned char)*p); ++p)
 				;
 		i = p - str;
 		if (i == 0)
