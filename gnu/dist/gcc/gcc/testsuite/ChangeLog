@@ -1,3 +1,48 @@
+2003-08-04  Release Manager
+
+	* GCC 3.3.1 Released.
+
+2003-08-04  Release Manager
+
+	* GCC 3.3.1 Released.
+
+2003-08-04  Mark Mitchell  <mark@codesourcery.com>
+
+	* g++.dg/overload/operator1.C: New test.
+
+2003-07-24  Alexandre Oliva  <aoliva@redhat.com>
+
+	* g++.dg/init/enum2.C: New.
+
+2003-07-24  Mark Mitchell  <mark@codesourcery.com>
+
+	* g++.dg/inherit/access5.C: New test.
+
+2003-07-24  Kriang Lerdsuwanakij  <lerdsuwa@users.sourceforge.net>
+
+	PR c++/11513
+	* g++.dg/template/crash8.C: New test.
+
+2003-07-23  Mark Mitchell  <mark@codesourcery.com>
+
+	PR c++/11645
+	* g++.dg/inherit/access4.C: New test.
+
+2003-07-23  Nathan Sidwell  <nathan@codesourcery.com>
+
+	PR c++/11282
+	* g++.dg/parse/crash7.C: New test.
+
+2003-07-23  Mark Mitchell  <mark@codesourcery.com>
+
+	PR optimization/10679
+	* g++.dg/opt/inline4.C: New test.
+
+2003-07-21  Eric Botcazou  <ebotcazou@libertysurf.fr>
+
+        PR optimization/11536
+	* gcc.dg/20030721-1.c: New test.
+
 2003-07-19  Mark Mitchell  <mark@codesourcery.com>
 
 	PR c++/11546
