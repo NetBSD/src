@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2003/07/25 16:32:45 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2003/07/28 02:53:24 mrg Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -18,6 +18,7 @@ SHLIB_MINOR=	0
 LIBGCCOBJ!=    cd ${.CURDIR}/../libgcc3 && ${PRINTOBJDIR}
 
 DIST=		${NETBSDSRCDIR}/gnu/dist/gcc
+GNUHOSTDIST=	${NETBSDSRCDIR}/gnu/dist/gcc
 GCCARCH=	${NETBSDSRCDIR}/gnu/usr.bin/gcc3/arch/${MACHINE_ARCH}
 
 SRCS=		${G_OBJS:N[A-Z]*:Nlinking.lo:.lo=.c} ${G_OBJS:M[A-Z]*:.lo=.m} linking.m
