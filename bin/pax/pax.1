@@ -1,4 +1,4 @@
-.\"	$NetBSD: pax.1,v 1.33.2.1 2003/01/05 08:54:37 jmc Exp $
+.\"    $NetBSD: pax.1,v 1.33.2.2 2004/04/07 06:58:22 jmc Exp $
 .\"
 .\" Copyright (c) 1992 Keith Muller.
 .\" Copyright (c) 1992, 1993
@@ -15,11 +15,7 @@
 .\" 2. Redistributions in binary form must reproduce the above copyright
 .\"    notice, this list of conditions and the following disclaimer in the
 .\"    documentation and/or other materials provided with the distribution.
-.\" 3. All advertising materials mentioning features or use of this software
-.\"    must display the following acknowledgement:
-.\"	This product includes software developed by the University of
-.\"	California, Berkeley and its contributors.
-.\" 4. Neither the name of the University nor the names of its contributors
+.\" 3. Neither the name of the University nor the names of its contributors
 .\"    may be used to endorse or promote products derived from this software
 .\"    without specific prior written permission.
 .\"
@@ -37,15 +33,15 @@
 .\"
 .\"	@(#)pax.1	8.4 (Berkeley) 4/18/94
 .\"
-.Dd April 21, 2002
+.Dd March 31, 2003
 .Dt PAX 1
 .Os
 .Sh NAME
 .Nm pax
 .Nd read and write file archives and copy directory hierarchies
 .Sh SYNOPSIS
-.Nm ""
-.Op Fl cdnvzO
+.Nm
+.Op Fl cdjnvzO
 .Bk -words
 .Op Fl E Ar limit
 .Ek
@@ -78,9 +74,9 @@
 .Ar ...\&
 .Ek
 .Op Ar pattern ...\&
-.Nm ""
+.Nm
 .Fl r
-.Op Fl cdiknuvzADOYZ
+.Op Fl cdijknuvzADOYZ
 .Bk -words
 .Op Fl E Ar limit
 .Ek
@@ -121,9 +117,9 @@
 .Ar ...\&
 .Ek
 .Op Ar pattern ...\&
-.Nm ""
+.Nm
 .Fl w
-.Op Fl dituvzAHLMOPX
+.Op Fl dijtuvzAHLMOPX
 .Bk -words
 .Op Fl b Ar blocksize
 .Ek
@@ -168,10 +164,10 @@
 .Ar ...\&
 .Ek
 .Op Ar file ...\&
-.Nm ""
+.Nm
 .Fl r
 .Fl w
-.Op Fl diklntuvzADHLMOPXYZ
+.Op Fl dijklntuvzADHLMOPXYZ
 .Bk -words
 .Op Fl N Ar dbdir
 .Ek
@@ -210,6 +206,11 @@
 .Nm
 will read, write, and list the members of an archive file,
 and will copy directory hierarchies.
+If the archive file is of the form:
+.Ar [[user@]host:]file
+then the archive will be processed using
+.Xr rmt 8 .
+.Pp
 .Nm
 operation is independent of the specific archive format,
 and supports a wide variety of different archive formats.
@@ -503,10 +504,15 @@ will immediately exit with a non-zero exit status if
 is encountered when reading a response or if
 .Pa /dev/tty
 cannot be opened for reading and writing.
+.It Fl j
+Use
+.Xr bzip2 1
+for compression when reading or writing archive files.
 .It Fl k
 Do not overwrite existing files.
 .It Fl l
-Link files. (The letter ell).
+Link files.
+(The letter ell).
 In the
 .Em copy
 mode
@@ -578,7 +584,7 @@ Preserve the user ID and group ID.
 .It Cm p
 .Sq Preserve
 the file mode bits.
-This intended to be used by a
+This is intended to be used by a
 .Em user
 with regular privileges who wants to preserve all aspects of the file other
 than the ownership.
@@ -653,7 +659,8 @@ The optional trailing
 .Cm g
 continues to apply the substitution expression to the pathname substring
 which starts with the first character following the end of the last successful
-substitution. The first unsuccessful substitution stops the operation of the
+substitution.
+The first unsuccessful substitution stops the operation of the
 .Cm g
 option.
 The optional trailing
@@ -668,7 +675,7 @@ are not selected and will be skipped.
 Reset the access times of any file or directory read or accessed by
 .Nm
 to be the same as they were before being read or accessed by
-.Nm "" ,
+.Nm ,
 if the user has the appropriate permissions required by
 .Xr utime 3 .
 .It Fl u
@@ -939,9 +946,11 @@ and
 .Xr getgrnam 3
 (and related) library calls.
 .It Fl O
-Force the archive to be one volume.  If a volume ends prematurely,
+Force the archive to be one volume.
+If a volume ends prematurely,
 .Nm
-will not prompt for a new volume.  This option can be useful for
+will not prompt for a new volume.
+This option can be useful for
 automated tasks where error recovery cannot be performed by a human.
 .It Fl P
 Do not follow symbolic links, perform a physical file system traversal.
@@ -1069,6 +1078,13 @@ This option is the same as the
 .Fl u
 option, except that the modification time is checked using the
 pathname created after all the file name modifications have completed.
+.It Fl -force-local
+Do not interpret filenames that contain a `:' as remote files.
+.It Fl -insecure
+Normally
+.Nm
+ignores filenames that contain `..' as a path component. With this option,
+files that contain `..' can be processed.
 .El
 .Pp
 The options that operate on the names of files or archive members
@@ -1177,8 +1193,8 @@ directory hierarchy to
 preserving permissions and access times.
 .Pp
 When running as root, one may also wish to preserve file
-ownership when copying directory trees. This can
-be done with the following commands:
+ownership when copying directory trees.
+This can be done with the following commands:
 .Dl cd olddir
 .Dl pax -rw -pe .\ .../newdir
 which will copy the contents of
@@ -1287,6 +1303,7 @@ The options
 .Fl U ,
 .Fl Y ,
 .Fl Z ,
+.Fl z ,
 the archive formats
 .Ar bcpio ,
 .Ar sv4cpio ,
