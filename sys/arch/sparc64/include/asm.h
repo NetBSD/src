@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.13 2000/07/23 06:57:55 eeh Exp $ */
+/*	$NetBSD: asm.h,v 1.14 2000/08/01 00:25:02 eeh Exp $ */
 
 /*
  * Copyright (c) 1994 Allen Briggs
@@ -54,6 +54,12 @@
 #define __ELF__
 #endif
 #endif
+
+/* Pull in CCFSZ, CC64FSZ, and BIAS from frame.h */
+#ifndef _LOCORE
+#define _LOCORE
+#endif
+#include <machine/frame.h>
 
 #ifdef __ELF__
 #define	_C_LABEL(name)		name
