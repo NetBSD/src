@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.in,v 1.19.4.2 2002/08/01 04:17:48 lukem Exp $
+#	$NetBSD: GENERIC.in,v 1.19.4.3 2002/10/24 09:34:16 lukem Exp $
 #
 # Generic atari
 #
@@ -77,7 +77,7 @@ options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 #ifndef INSTALL_KERNEL
 options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
-#options 	IPFILTER_DEFAULT_BLOCK	# block packages by default
+#options  	IPFILTER_DEFAULT_BLOCK	# block packages by default
 
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 #endif

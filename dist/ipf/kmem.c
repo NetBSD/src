@@ -1,4 +1,4 @@
-/*	$NetBSD: kmem.c,v 1.7 2002/05/02 17:11:38 martti Exp $	*/
+/*	$NetBSD: kmem.c,v 1.7.2.1 2002/10/24 09:33:30 lukem Exp $	*/
 
 /*
  * Copyright (C) 1993-2002 by Darren Reed.
@@ -47,8 +47,10 @@
 #endif
 
 #if !defined(lint)
-static const char sccsid[] = "@(#)kmem.c	1.4 1/12/96 (C) 1992 Darren Reed";
-static const char rcsid[] = "@(#)Id: kmem.c,v 2.2.2.14 2002/04/17 17:44:44 darrenr Exp";
+static const char sccsid[] __attribute__((__unused__)) =
+    "@(#)kmem.c	1.4 1/12/96 (C) 1992 Darren Reed";
+static const char rcsid[] __attribute__((__unused__)) =
+    "@(#)Id: kmem.c,v 2.2.2.15 2002/07/27 15:59:37 darrenr Exp";
 #endif
 
 #ifdef	__sgi
@@ -57,7 +59,7 @@ typedef	int 	kvm_t;
 static	int	kvm_fd = -1;
 static	char	*kvm_errstr;
 
-kvm_t kvm_open(kernel, core, swap, mode, errstr)
+kvm_t *kvm_open(kernel, core, swap, mode, errstr)
 char *kernel, *core, *swap;
 int mode;
 char *errstr;
@@ -67,17 +69,18 @@ char *errstr;
 	if (core == NULL)
 		core = "/dev/kmem";
 	kvm_fd = open(core, mode);
-	return (kvm_fd >= 0) ? (kvm_t)&kvm_fd : NULL;
+	return (kvm_fd >= 0) ? (kvm_t *)&kvm_fd : NULL;
 }
 
 int kvm_read(kvm, pos, buffer, size)
-kvm_t kvm;
+kvm_t *kvm;
 u_long pos;
 char *buffer;
 size_t size;
 {
-	int r, left;
+	size_t left;
 	char *bufp;
+	int r;
 
 	if (lseek(*kvm, pos, 0) == -1) {
 		fprintf(stderr, "%s", kvm_errstr);
@@ -99,13 +102,19 @@ static	kvm_t	*kvm_f = NULL;
 int	openkmem(kern, core)
 char	*kern, *core;
 {
+	union {
+		int ui;
+		kvm_t *uk;
+	} k;
+
 	kvm_f = kvm_open(kern, core, NULL, O_RDONLY, "");
 	if (kvm_f == NULL)
 	    {
 		perror("openkmem:open");
 		return -1;
 	    }
-	return 0;
+	k.uk = kvm_f;
+	return k.ui;
 }
 
 int	kmemcpy(buf, pos, n)
@@ -122,7 +131,7 @@ register int	n;
 		if (openkmem(NULL, NULL) == -1)
 			return -1;
 
-	while ((r = kvm_read(kvm_f, pos, buf, n)) < n)
+	while ((r = kvm_read(kvm_f, pos, buf, (size_t)n)) < n)
 		if (r <= 0)
 		    {
 			fprintf(stderr, "pos=0x%x ", (u_int)pos);
@@ -154,7 +163,7 @@ register int	n;
 
 	while (n > 0)
 	    {
-		r = kvm_read(kvm_f, pos, buf, 1);
+		r = kvm_read(kvm_f, pos, buf, (size_t)1);
 		if (r <= 0)
 		    {
 			fprintf(stderr, "pos=0x%x ", (u_int)pos);

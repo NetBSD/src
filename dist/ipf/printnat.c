@@ -1,4 +1,4 @@
-/*	$NetBSD: printnat.c,v 1.7 2002/05/03 08:27:10 martti Exp $	*/
+/*	$NetBSD: printnat.c,v 1.7.2.1 2002/10/24 09:33:30 lukem Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -60,7 +60,8 @@ extern	char	*sys_errlist[];
 #endif
 
 #if !defined(lint)
-static const char rcsid[] = "@(#)Id: printnat.c,v 1.1.2.8 2002/04/25 16:44:13 darrenr Exp";
+static const char rcsid[] __attribute__((__unused__)) =
+    "@(#)Id: printnat.c,v 1.1.2.10 2002/08/28 12:45:51 darrenr Exp";
 #endif
 
 
@@ -147,14 +148,18 @@ int opts;
 		ftp.ftp_side[0].ftps_buf[FTP_BUFSZ - 1] = '\0';
 		ftp.ftp_side[1].ftps_buf[FTP_BUFSZ - 1] = '\0';
 		printf("\tClient:\n");
-		printf("\t\tseq %x len %d junk %d cmds %d\n",
-			ftp.ftp_side[0].ftps_seq, ftp.ftp_side[0].ftps_len,
+		printf("\t\tseq %08x%08x len %d junk %d cmds %d\n",
+			ftp.ftp_side[0].ftps_seq[1],
+			ftp.ftp_side[0].ftps_seq[0],
+			ftp.ftp_side[0].ftps_len,
 			ftp.ftp_side[0].ftps_junk, ftp.ftp_side[0].ftps_cmds);
 		printf("\t\tbuf [");
 		printbuf(ftp.ftp_side[0].ftps_buf, FTP_BUFSZ, 1);
 		printf("]\n\tServer:\n");
-		printf("\t\tseq %x len %d junk %d cmds %d\n",
-			ftp.ftp_side[1].ftps_seq, ftp.ftp_side[1].ftps_len,
+		printf("\t\tseq %08x%08x len %d junk %d cmds %d\n",
+			ftp.ftp_side[1].ftps_seq[1],
+			ftp.ftp_side[1].ftps_seq[0],
+			ftp.ftp_side[1].ftps_len,
 			ftp.ftp_side[1].ftps_junk, ftp.ftp_side[1].ftps_cmds);
 		printf("\t\tbuf [");
 		printbuf(ftp.ftp_side[1].ftps_buf, FTP_BUFSZ, 1);
@@ -244,9 +249,10 @@ int opts;
 				  0xffffffff),
 		hv2 = NAT_HASH_FN(nat->nat_oip.s_addr, hv2 + nat->nat_oport,
 				  NAT_TABLE_SZ),
-		printf("%s pr %u bkt %d/%d flags %x\n",
+		printf("%s pr %u bkt %d/%d flags %x drop %d/%d\n",
 			getsumd(nat->nat_sumd[1]), nat->nat_p,
-			hv1, hv2, nat->nat_flags);
+			hv1, hv2, nat->nat_flags,
+			nat->nat_drop[0], nat->nat_drop[1]);
 		printf("\tifp %s ", getifname(nat->nat_ifp));
 #ifdef	USE_QUAD_T
 		printf("bytes %qu pkts %qu",

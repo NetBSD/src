@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_compat.h,v 1.28 2002/05/02 17:12:03 martti Exp $	*/
+/*	$NetBSD: ip_compat.h,v 1.28.4.1 2002/10/24 09:33:54 lukem Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -6,7 +6,7 @@
  * See the IPFILTER.LICENCE file for details on licencing.
  *
  * @(#)ip_compat.h	1.8 1/14/96
- * Id: ip_compat.h,v 2.26.2.44 2002/04/25 16:32:15 darrenr Exp
+ * Id: ip_compat.h,v 2.26.2.46 2002/06/27 14:39:40 darrenr Exp
  */
 
 #ifndef _NETINET_IP_COMPAT_H_
@@ -188,6 +188,9 @@ typedef	struct	qif	{
 	 */
 	size_t	qf_hl;	/* header length */
 	int	qf_sap;
+# if SOLARIS2 >= 8
+	int	qf_tunoff;	/* tunnel offset */
+#endif
 	size_t	qf_incnt;
 	size_t	qf_outcnt;
 } qif_t;
@@ -215,7 +218,11 @@ typedef	 int	minor_t;
 #if defined(__FreeBSD__) && (defined(KERNEL) || defined(_KERNEL))
 # include <sys/param.h>
 # ifndef __FreeBSD_version
-#  include <sys/osreldate.h>
+#  ifdef IPFILTER_LKM
+#   include <osreldate.h>
+#  else
+#   include <sys/osreldate.h>
+#  endif
 # endif
 # ifdef IPFILTER_LKM
 #  define       ACTUALLY_LKM_NOT_KERNEL

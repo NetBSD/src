@@ -1,4 +1,4 @@
-/*	$NetBSD: relay.c,v 1.4 2002/01/24 08:21:36 martti Exp $	*/
+/*	$NetBSD: relay.c,v 1.4.2.1 2002/10/24 09:33:38 lukem Exp $	*/
 
 /*
  * Sample program to be used as a transparent proxy.
@@ -18,6 +18,10 @@
 #include <netinet/in.h>
 #include <net/if.h>
 #include <sys/socket.h>
+#if defined(__NetBSD_Version__) && (__NetBSD_Version__ >= 105000000)
+# include <poll.h>
+# define USE_POLL
+#endif
 #include "ip_nat.h"
 
 #define	RELAY_BUFSZ	8192
@@ -28,10 +32,14 @@ char	obuff[RELAY_BUFSZ];
 int relay(ifd, ofd, rfd)
 int ifd, ofd, rfd;
 {
-	fd_set	rfds, wfds;
 	char	*irh, *irt, *rrh, *rrt;
 	char	*iwh, *iwt, *rwh, *rwt;
 	int	nfd, n, rw;
+#ifdef USE_POLL
+	struct pollfd set[3];
+#else
+	fd_set	rfds, wfds;
+#endif
 
 	irh = irt = ibuff;
 	iwh = iwt = obuff;
@@ -41,7 +49,18 @@ int ifd, ofd, rfd;
 	if (nfd < rfd)
 		nfd = rfd;
 
+#ifdef USE_POLL
+	set[0].fd = rfd;
+	set[1].fd = ifd;
+	set[2].fd = ofd;
+#endif
 	while (1) {
+#ifdef USE_POLL
+		set[0].events = (iwh < (obuff + RELAY_BUFSZ) ? POLLIN : 0) |
+		    (irh > irt ? POLLOUT : 0);
+		set[1].events = (irh < (ibuff + RELAY_BUFSZ) ? POLLIN : 0);
+		set[2].events = (iwh > iwt ? POLLOUT : 0);
+#else
 		FD_ZERO(&rfds);
 		FD_ZERO(&wfds);
 		if (irh > irt)
@@ -52,44 +71,61 @@ int ifd, ofd, rfd;
 			FD_SET(ofd, &wfds);
 		if (iwh < (obuff + RELAY_BUFSZ))
 			FD_SET(rfd, &rfds);
+#endif
 
+#ifdef USE_POLL
+		switch ((n = poll(set, 3, INFTIM)))
+#else
 		switch ((n = select(nfd + 1, &rfds, &wfds, NULL, NULL)))
+#endif
 		{
 		case -1 :
 		case 0 :
 			return -1;
 		default :
+#ifdef USE_POLL
+			if (set[1].revents & POLLIN) {
+#else
 			if (FD_ISSET(ifd, &rfds)) {
+#endif
 				rw = read(ifd, irh, ibuff + RELAY_BUFSZ - irh);
 				if (rw == -1)
 					return -1;
 				if (rw == 0)
 					return 0;
 				irh += rw;
-				n--;
 			}
-			if (n && FD_ISSET(ofd, &wfds)) {
+#ifdef USE_POLL
+			if (set[2].revents & POLLOUT) {
+#else
+			if (FD_ISSET(ofd, &wfds)) {
+#endif
 				rw = write(ofd, iwt, iwh  - iwt);
 				if (rw == -1)
 					return -1;
 				iwt += rw;
-				n--;
 			}
-			if (n && FD_ISSET(rfd, &rfds)) {
+#ifdef USE_POLL
+			if (set[0].revents & POLLIN) {
+#else
+			if (FD_ISSET(rfd, &rfds)) {
+#endif
 				rw = read(rfd, iwh, obuff + RELAY_BUFSZ - iwh);
 				if (rw == -1)
 					return -1;
 				if (rw == 0)
 					return 0;
 				iwh += rw;
-				n--;
 			}
-			if (n && FD_ISSET(rfd, &wfds)) {
+#ifdef USE_POLL
+			if (set[0].revents & POLLOUT) {
+#else
+			if (FD_ISSET(rfd, &wfds)) {
+#endif
 				rw = write(rfd, irt, irh  - irt);
 				if (rw == -1)
 					return -1;
 				irt += rw;
-				n--;
 			}
 			if (irh == irt)
 				irh = irt = ibuff;
