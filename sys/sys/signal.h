@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.47 2002/04/12 17:37:30 manu Exp $	*/
+/*	$NetBSD: signal.h,v 1.48 2002/11/26 19:07:14 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -136,10 +136,10 @@ typedef unsigned int sigset13_t;
  * Signal vector "template" used in sigaction call.
  */
 struct	sigaction13 {
-	void	(*sa_handler)		/* signal handler */
+	void	(*osa_handler)		/* signal handler */
 			    __P((int));
-	sigset13_t sa_mask;		/* signal mask to apply */
-	int	sa_flags;		/* see signal options below */
+	sigset13_t osa_mask;		/* signal mask to apply */
+	int	osa_flags;		/* see signal options below */
 };
 #endif
 
@@ -186,15 +186,22 @@ typedef struct {
 	} while (/* CONSTCOND */ 0)
 #endif /* _KERNEL */
 
+#include <sys/siginfo.h>
+
 /*
  * Signal vector "template" used in sigaction call.
  */
 struct	sigaction {
-	void	(*sa_handler)		/* signal handler */
-			    __P((int));
+	union {
+		void (*_sa_handler) __P((int));
+		void (*_sa_sigaction) __P((int, siginfo_t *, void *));
+	} _sa_u;	/* signal handler */
 	sigset_t sa_mask;		/* signal mask to apply */
 	int	sa_flags;		/* see signal options below */
 };
+
+#define sa_handler _sa_u._sa_handler
+#define sa_sigaction _sa_u._sa_sigaction
 
 #if (!defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)) || \
     (defined(_XOPEN_SOURCE) && defined(_XOPEN_SOURCE_EXTENDED)) || \
