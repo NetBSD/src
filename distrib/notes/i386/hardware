@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.71.2.14 2001/05/21 02:13:55 jhawk Exp $
+.\"	$NetBSD: hardware,v 1.71.2.15 2001/05/26 22:30:06 he Exp $
 .
 .Nx \*V
 runs on ISA (AT-Bus), EISA, PCI, and VL-bus systems
@@ -525,8 +525,6 @@ PCMCIA slots for desktops.
 .It
 RAID Controllers
 .(bullet -compact
-3ware Escalade family of controllers
-.It
 Compaq Integrated Array (PCI) [b]
 .It
 Compaq IAES (EISA)
