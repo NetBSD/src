@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.28 1999/03/25 21:39:19 perseant Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.28.2.1 1999/04/13 21:33:57 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -212,9 +212,11 @@ lfs_mount(mp, path, data, ndp, p)
 	if (error)
 		return (error);
 
+#if 0
 	/* Until LFS can do NFS right.		XXX */
 	if (args.export.ex_flags & MNT_EXPORTED)
 		return (EINVAL);
+#endif
 
 	/*
 	 * If updating, check whether changing from read-only to
@@ -222,6 +224,7 @@ lfs_mount(mp, path, data, ndp, p)
 	 */
 	if (mp->mnt_flag & MNT_UPDATE) {
 		ump = VFSTOUFS(mp);
+		fs = ump->um_lfs;
 		if (fs->lfs_ronly && (mp->mnt_flag & MNT_WANTRDWR)) {
 			/*
 			 * If upgrade to read-write by non-root, then verify
@@ -319,6 +322,7 @@ lfs_mountfs(devvp, mp, p)
 	dev_t dev;
 	int error, i, ronly, size;
 	struct ucred *cred;
+        SEGUSE *sup;
 
 	cred = p ? p->p_ucred : NOCRED;
 	/*
@@ -338,12 +342,10 @@ lfs_mountfs(devvp, mp, p)
 	error = VOP_OPEN(devvp, ronly ? FREAD : FREAD|FWRITE, FSCRED, p);
 	if (error)
 		return (error);
-
 	if (VOP_IOCTL(devvp, DIOCGPART, (caddr_t)&dpart, FREAD, cred, p) != 0)
 		size = DEV_BSIZE;
-	else {
+	else
 		size = dpart.disklab->d_secsize;
-	}
 
 	/* Don't free random space on error. */
 	bp = NULL;
@@ -364,20 +366,24 @@ lfs_mountfs(devvp, mp, p)
 	if (error)
 		goto out;
 	adfs = (struct dlfs *)abp->b_data;
-	if(adfs->dlfs_tstamp < dfs->dlfs_tstamp) /* XXX KS - 1s resolution? */
+
+	if (adfs->dlfs_tstamp < dfs->dlfs_tstamp) /* XXX KS - 1s resolution? */
 		dfs = adfs;
 
 	/* Check the basics. */
 	if (dfs->dlfs_magic != LFS_MAGIC || dfs->dlfs_bsize > MAXBSIZE ||
+	    dfs->dlfs_version > LFS_VERSION ||
 	    dfs->dlfs_bsize < sizeof(struct dlfs)) {
 		error = EINVAL;		/* XXX needs translation */
 		goto out;
 	}
 
 	/* Allocate the mount structure, copy the superblock into it. */
-	ump = (struct ufsmount *)malloc(sizeof *ump, M_UFSMNT, M_WAITOK);
-	fs = ump->um_lfs = malloc(sizeof(struct lfs), M_UFSMNT, M_WAITOK);
-	bcopy(bp->b_data, &(fs->lfs_dlfs), sizeof(struct dlfs));
+	fs = malloc(sizeof(struct lfs), M_UFSMNT, M_WAITOK);
+	memcpy(&fs->lfs_dlfs, dfs, sizeof(struct dlfs));
+	ump = malloc(sizeof *ump, M_UFSMNT, M_WAITOK);
+	memset((caddr_t)ump, 0, sizeof *ump);
+	ump->um_lfs = fs;
 	if (sizeof(struct lfs) < LFS_SBPAD)			/* XXX why? */
 		bp->b_flags |= B_INVAL;
 	brelse(bp);
@@ -393,7 +399,7 @@ lfs_mountfs(devvp, mp, p)
 	fs->lfs_sbactive = NULL;
 #endif
 #ifdef LFS_TRACK_IOS
-	for(i=0;i<LFS_THROTTLE;i++)
+	for (i=0;i<LFS_THROTTLE;i++)
 		fs->lfs_pending[i] = LFS_UNUSED_DADDR;
 #endif
 
@@ -437,6 +443,14 @@ lfs_mountfs(devvp, mp, p)
 	fs->lfs_ivnode = vp;
 	VREF(vp);
 	vput(vp);
+
+	/*
+	 * Mark the current segment as ACTIVE, since we're going to 
+	 * be writing to it.
+	 */
+        LFS_SEGENTRY(sup, fs, datosn(fs, fs->lfs_offset), bp); 
+        sup->su_flags |= SEGUSE_DIRTY | SEGUSE_ACTIVE;
+        (void) VOP_BWRITE(bp); 
 
 	return (0);
 out:
@@ -557,8 +571,8 @@ lfs_statfs(mp, sbp, p)
 		- (u_int64_t)(fs->lfs_dsize - fs->lfs_bfree);
 #endif
 	sbp->f_bavail = dbtofrags(fs, sbp->f_bavail);
-	sbp->f_files = fs->lfs_nfiles;
-	sbp->f_ffree = sbp->f_bfree * INOPB(fs);
+	sbp->f_files = dbtofsb(fs,fs->lfs_bfree) * INOPB(fs);
+	sbp->f_ffree = sbp->f_files - fs->lfs_nfiles;
 	if (sbp != &mp->mnt_stat) {
 		bcopy(mp->mnt_stat.f_mntonname, sbp->f_mntonname, MNAMELEN);
 		bcopy(mp->mnt_stat.f_mntfromname, sbp->f_mntfromname, MNAMELEN);
