@@ -1,4 +1,4 @@
-/*	$NetBSD: tstp.c,v 1.27 2003/05/18 10:02:07 dsl Exp $	*/
+/*	$NetBSD: tstp.c,v 1.28 2003/05/28 20:19:42 dsl Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tstp.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: tstp.c,v 1.27 2003/05/18 10:02:07 dsl Exp $");
+__RCSID("$NetBSD: tstp.c,v 1.28 2003/05/28 20:19:42 dsl Exp $");
 #endif
 #endif				/* not lint */
 
@@ -154,6 +154,9 @@ __stopwin(void)
 void
 __restartwin(void)
 {
+	if (!_cursesi_screen->endwin)
+		return;
+
 	/* Reset the curses SIGTSTP signal handler. */
 	__set_stophandler();
 
