@@ -1,4 +1,4 @@
-/*	$NetBSD: be.c,v 1.40 2003/10/16 07:20:54 pk Exp $	*/
+/*	$NetBSD: be.c,v 1.41 2004/03/15 23:51:11 pk Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.40 2003/10/16 07:20:54 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.41 2004/03/15 23:51:11 pk Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -248,7 +248,6 @@ beattach(parent, self, aux)
 	int instance;
 	int rseg, error;
 	u_int32_t v;
-	extern void myetheraddr __P((u_char *));
 
 	if (sa->sa_nreg < 3) {
 		printf("%s: only %d register sets\n",
@@ -311,7 +310,7 @@ beattach(parent, self, aux)
 		(void)bus_intr_establish(sa->sa_bustag, sa->sa_pri, IPL_NET,
 					 beintr, sc);
 
-	myetheraddr(sc->sc_enaddr);
+	prom_getether(node, sc->sc_enaddr);
 	printf(" address %s\n", ether_sprintf(sc->sc_enaddr));
 
 	/*
