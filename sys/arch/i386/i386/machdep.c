@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.552 2004/03/24 15:34:49 atatat Exp $	*/
+/*	$NetBSD: machdep.c,v 1.552.2.1 2004/07/04 13:09:00 he Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.552 2004/03/24 15:34:49 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.552.2.1 2004/07/04 13:09:00 he Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -2032,6 +2032,7 @@ lookup_bootinfo(int type)
 void
 cpu_reset()
 {
+	struct region_descriptor region;
 
 	disable_intr();
 
@@ -2057,6 +2058,8 @@ cpu_reset()
 	 * invalid and causing a fault.
 	 */
 	memset((caddr_t)idt, 0, NIDT * sizeof(idt[0]));
+	setregion(&region, idt, NIDT * sizeof(idt[0]) - 1);
+        lidt(&region);
 	__asm __volatile("divl %0,%1" : : "q" (0), "a" (0));
 
 #if 0
