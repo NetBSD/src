@@ -1,4 +1,4 @@
-/* $NetBSD: mkdep.c,v 1.21 2003/12/07 20:22:49 dsl Exp $ */
+/* $NetBSD: mkdep.c,v 1.22 2004/01/26 21:47:04 dsl Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 #if !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1999 The NetBSD Foundation, Inc.\n\
 	All rights reserved.\n");
-__RCSID("$NetBSD: mkdep.c,v 1.21 2003/12/07 20:22:49 dsl Exp $");
+__RCSID("$NetBSD: mkdep.c,v 1.22 2004/01/26 21:47:04 dsl Exp $");
 #endif /* not lint */
 
 #include <sys/mman.h>
@@ -71,6 +71,11 @@ struct opt {
 	int	count;
 	char	name[4];
 };
+
+typedef struct {
+	int	len;
+	char	suff[12];
+} suff_list_t;
 
 /* tree of includes for -o processing */
 opt_t *opt;
@@ -166,7 +171,8 @@ main(int argc, char **argv)
 	int	sz;
 	int	fd;
 	const char *fname;
-	const char *suffixes = NULL, *s, *s1;
+	const char *suffixes = NULL, *s;
+	suff_list_t *suff_list = NULL, *sl;
 
 	setlocale(LC_ALL, "");
 	setprogname(argv[0]);
@@ -222,6 +228,25 @@ main(int argc, char **argv)
 	if (argc == 0 && !dflag)
 		usage();
 
+	if (suffixes != NULL) {
+		/* parse list once and save names and lengths */
+		/* allocate an extra entry to mark end of list */
+		for (sz = 1, s = suffixes; *s != 0; s++)
+			if (*s == '.')
+			    sz++;
+		suff_list = calloc(sz, sizeof *suff_list);
+		if (suff_list == NULL)
+			err(2, "malloc");
+		sl = suff_list;
+		for (s = suffixes; (s = strchr(s, '.')); s += sz, sl++ ) {
+			sz = strcspn(s, ", ");
+			if (sz > sizeof sl->suff)
+				errx(2, "suffix too long");
+			sl->len = sz;
+			memcpy(sl->suff, s, sz);
+		}
+	}
+
 	dependfile = open(filename, aflag, 0666);
 	if (dependfile == -1)
 		err(EXIT_FAILURE, "unable to %s to file %s\n",
@@ -265,6 +290,7 @@ main(int argc, char **argv)
 
 		for (line = eol = buf; eol <= lim;) {
 			while (eol <= lim && *eol++ != '\n')
+				/* Find end of this line */
 				continue;
 			if (line == eol - 1) {
 				/* empty line - ignore */
@@ -280,38 +306,33 @@ main(int argc, char **argv)
 					break;
 				}
 			}
-			if (colon == NULL) {
+			if (isspace((unsigned char)*line) || colon == NULL) {
 				/* No dependency - just transcribe line */
 				write(dependfile, line, eol - line);
 				line = eol;
 				continue;
 			}
-			s = suffixes;
-			if (s != NULL) {
+			if (suff_list != NULL) {
 				/* Find the .o: */
-				for (suf = colon - 2; ; suf--) {
-					if (suf <= line) {
-						colon = NULL;
+				/* First allow for any whitespace */
+				for (suf = colon; ; suf--) {
+					if (!isspace((unsigned char)suf[-1]))
 						break;
-					}
-					if (isspace((unsigned char)suf[1]))
-						continue;
-					if (suf[0] != '.' || suf[1] != 'o')
-						/* not a file.o: line */
-						s = NULL;
-					break;
+				}
+				/* Then look for any valid suffix */
+				for (sl = suff_list; sl->len != 0; sl++) {
+					if (!memcmp(suf - sl->len, sl->suff,
+						    sl->len))
+						break;
 				}
 			}
-			if (s != NULL) {
-				for (; ; s = s1 + 1) {
-					s1 = strpbrk(s, ", ");
-					if (s1 == NULL)
-						s1 = s + strlen(s);
+			if (suff_list != NULL && sl->len != 0) {
+				suf -= sl->len;
+				for (sl = suff_list; sl->len != 0; sl++) {
+					if (sl != suff_list)
+						write(dependfile, " ", 1);
 					write(dependfile, line, suf - line);
-					write(dependfile, s, s1 - s);
-					if (*s1 == 0)
-						break;
-					write(dependfile, " ", 1);
+					write(dependfile, sl->suff, sl->len);
 				}
 				write(dependfile, colon, eol - colon);
 			} else
