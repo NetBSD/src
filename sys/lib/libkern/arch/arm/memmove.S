@@ -1,11 +1,11 @@
-/*	$NetBSD: byte_swap_4.S,v 1.4 2000/12/16 14:38:50 bjh21 Exp $	*/
+/*	$NetBSD: memmove.S,v 1.1 2000/12/29 20:51:57 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Neil A. Carson
+ * by Neil A. Carson and Mark Brinicombe
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -38,16 +38,11 @@
 
 #include <machine/asm.h>
 
-_ENTRY(_C_LABEL(bswap32))
-_ENTRY(_C_LABEL(ntohl))
-_ENTRY(_C_LABEL(htonl))
-_PROF_PROLOGUE
-	eor		r1, r0, r0, ror #16
-	bic		r1, r1, #0x00FF0000
-	mov		r0, r0, ror #8
-	eor		r0, r0, r1, lsr #8
+ENTRY(memmove)
+	stmfd	sp!, {r0, lr}
+	bl	_C_LABEL(_memcpy)
 #ifdef __APCS_26__
-	movs		pc,lr
+	ldmfd	sp!, {r0, pc}^
 #else
-	mov		pc, lr
+	ldmfd	sp!, {r0, pc}
 #endif
