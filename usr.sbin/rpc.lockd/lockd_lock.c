@@ -1,4 +1,4 @@
-/*	$NetBSD: lockd_lock.c,v 1.2 2000/06/09 14:00:53 fvdl Exp $	*/
+/*	$NetBSD: lockd_lock.c,v 1.2.2.1 2000/07/07 11:33:34 itojun Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -465,7 +465,7 @@ do_lock(fl, block)
 			 * Attempt a blocking lock. Will have to call
 			 * NLM_GRANTED later.
 			 */
-			setproctitle(fl->client_name);
+			setproctitle("%s", fl->client_name);
 			lflags &= ~LOCK_NB;
 			if(flock(fl->fd, lflags) != 0) {
 				syslog(LOG_NOTICE, "flock failed: %s",
