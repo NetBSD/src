@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.20 1995/06/12 06:49:55 mycroft Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.21 1995/06/18 20:01:08 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -64,7 +64,7 @@ in_pcbinit(table)
 	struct inpcbtable *table;
 {
 
-	LIST_INIT(&table->inpt_list);
+	CIRCLEQ_INIT(&table->inpt_queue);
 	table->inpt_lastport = 0;
 }
 
@@ -81,7 +81,7 @@ in_pcballoc(so, table)
 	bzero((caddr_t)inp, sizeof(*inp));
 	inp->inp_table = table;
 	inp->inp_socket = so;
-	LIST_INSERT_HEAD(&table->inpt_list, inp, inp_list);
+	CIRCLEQ_INSERT_HEAD(&table->inpt_queue, inp, inp_queue);
 	so->so_pcb = (caddr_t)inp;
 	return (0);
 }
@@ -306,7 +306,7 @@ in_pcbdetach(inp)
 	if (inp->inp_route.ro_rt)
 		rtfree(inp->inp_route.ro_rt);
 	ip_freemoptions(inp->inp_moptions);
-	LIST_REMOVE(inp, inp_list);
+	CIRCLEQ_REMOVE(&inp->inp_table->inpt_queue, inp, inp_queue);
 	FREE(inp, M_PCB);
 }
 
@@ -372,17 +372,18 @@ in_pcbnotify(table, dst, fport_arg, laddr, lport_arg, errno, notify)
 	if (faddr.s_addr == INADDR_ANY)
 		return;
 
-	for (inp = table->inpt_list.lh_first; inp != 0;) {
+	for (inp = table->inpt_queue.cqh_first;
+	    inp != (struct inpcb *)&table->inpt_queue;) {
 		if (inp->inp_faddr.s_addr != faddr.s_addr ||
 		    inp->inp_socket == 0 ||
 		    inp->inp_fport != fport ||
 		    inp->inp_lport != lport ||
 		    inp->inp_laddr.s_addr != laddr.s_addr) {
-			inp = inp->inp_list.le_next;
+			inp = inp->inp_queue.cqe_next;
 			continue;
 		}
 		oinp = inp;
-		inp = inp->inp_list.le_next;
+		inp = inp->inp_queue.cqe_next;
 		if (notify)
 			(*notify)(oinp, errno);
 	}
@@ -404,14 +405,15 @@ in_pcbnotifyall(table, dst, errno, notify)
 	if (faddr.s_addr == INADDR_ANY)
 		return;
 
-	for (inp = table->inpt_list.lh_first; inp != 0;) {
+	for (inp = table->inpt_queue.cqh_first;
+	    inp != (struct inpcb *)&table->inpt_queue;) {
 		if (inp->inp_faddr.s_addr != faddr.s_addr ||
 		    inp->inp_socket == 0) {
-			inp = inp->inp_list.le_next;
+			inp = inp->inp_queue.cqe_next;
 			continue;
 		}
 		oinp = inp;
-		inp = inp->inp_list.le_next;
+		inp = inp->inp_queue.cqe_next;
 		if (notify)
 			(*notify)(oinp, errno);
 	}
@@ -480,8 +482,9 @@ in_pcblookup(table, faddr, fport_arg, laddr, lport_arg, flags)
 	int matchwild = 3, wildcard;
 	u_int16_t fport = fport_arg, lport = lport_arg;
 
-	for (inp = table->inpt_list.lh_first; inp != 0;
-	    inp = inp->inp_list.le_next) {
+	for (inp = table->inpt_queue.cqh_first;
+	    inp != (struct inpcb *)&table->inpt_queue;
+	    inp = inp->inp_queue.cqe_next) {
 		if (inp->inp_lport != lport)
 			continue;
 		wildcard = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_timer.c,v 1.11 1995/06/12 00:47:58 mycroft Exp $	*/
+/*	$NetBSD: tcp_timer.c,v 1.12 1995/06/18 20:01:17 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -75,8 +75,10 @@ tcp_fasttimo()
 	int s;
 
 	s = splnet();
-	for (inp = tcbtable.inpt_list.lh_first; inp != 0;
-	    inp = inp->inp_list.le_next) {
+	inp = tcbtable.inpt_queue.cqh_first;
+	if (inp)						/* XXX */
+	for (; inp != (struct inpcb *)&tcbtable.inpt_queue;
+	    inp = inp->inp_queue.cqe_next) {
 		if ((tp = (struct tcpcb *)inp->inp_ppcb) &&
 		    (tp->t_flags & TF_DELACK)) {
 			tp->t_flags &= ~TF_DELACK;
@@ -106,8 +108,13 @@ tcp_slowtimo()
 	/*
 	 * Search through tcb's and update active timers.
 	 */
-	for (ip = tcbtable.inpt_list.lh_first; ip != 0; ip = ipnxt) {
-		ipnxt = ip->inp_list.le_next;
+	ip = tcbtable.inpt_queue.cqh_first;
+	if (ip == (struct inpcb *)0) {				/* XXX */
+		splx(s);
+		return;
+	}
+	for (; ip != (struct inpcb *)&tcbtable.inpt_queue; ip = ipnxt) {
+		ipnxt = ip->inp_queue.cqe_next;
 		tp = intotcpcb(ip);
 		if (tp == 0)
 			continue;
@@ -116,8 +123,10 @@ tcp_slowtimo()
 				(void) tcp_usrreq(tp->t_inpcb->inp_socket,
 				    PRU_SLOWTIMO, (struct mbuf *)0,
 				    (struct mbuf *)i, (struct mbuf *)0);
-				if (ipnxt->inp_list.le_prev !=
-				    &ip->inp_list.le_next)
+				/* XXX NOT MP SAFE */
+				if ((ipnxt == (void *)&tcbtable.inpt_queue &&
+				    tcbtable.inpt_queue.cqh_last != ip) ||
+				    ipnxt->inp_queue.cqe_prev != ip)
 					goto tpgone;
 			}
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.h,v 1.11 1995/06/12 06:49:56 mycroft Exp $	*/
+/*	$NetBSD: in_pcb.h,v 1.12 1995/06/18 20:01:13 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -45,7 +45,7 @@
  * control block.
  */
 struct inpcb {
-	LIST_ENTRY(inpcb) inp_list;
+	CIRCLEQ_ENTRY(inpcb) inp_queue;
 	struct	  inpcbtable *inp_table;
 	struct	  in_addr inp_faddr;	/* foreign host table entry */
 	struct	  in_addr inp_laddr;	/* local host table entry */
@@ -61,7 +61,7 @@ struct inpcb {
 };
 
 struct inpcbtable {
-	LIST_HEAD(inpcbhead, inpcb) inpt_list;
+	CIRCLEQ_HEAD(inpcbhead, inpcb) inpt_queue;
 	u_int16_t inpt_lastport;
 };
 
