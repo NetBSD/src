@@ -1,3 +1,5 @@
+./dev/mouse
+./dev/pow
 ./usr/bin/bellctrl
 ./usr/bin/loadfont
 ./usr/bin/loadkmap
