@@ -1,4 +1,4 @@
-#	$NetBSD: dot.profile,v 1.1.2.1 1997/11/09 20:16:45 mellon Exp $
+#	$NetBSD: dot.profile,v 1.1.2.2 1997/11/21 21:46:14 is Exp $
 #
 # Copyright (c) 1995 Jason R. Thorpe
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -76,7 +76,8 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 		# Got a valid answer, activate the map...
 		set -- $_maps
 		shift $_ans
-		/usr/sbin/loadkmap /usr/share/keymaps/amiga/$1.map
+		export __keymap__=/usr/share/keymaps/amiga/$1.map
+		/usr/sbin/loadkmap ${__keymap__}
 		break
 	done
 
