@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.131 2003/09/23 14:34:07 christos Exp $
+	$NetBSD: syscalls.master,v 1.132 2003/09/26 23:08:24 matt Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -685,7 +685,7 @@
 340	STD		{ int sys___sigaction_sigtramp(int signum, \
 			    const struct sigaction *nsa, \
 			    struct sigaction *osa, \
-			    void *tramp, int vers); }
+			    const void *tramp, int vers); }
 341	STD		{ int sys_pmc_get_info(int ctr, int op, void *args); }
 342	STD		{ int sys_pmc_control(int ctr, int op, void *args); }
 343	STD		{ int sys_rasctl(caddr_t addr, size_t len, int op); }
