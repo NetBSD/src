@@ -25,6 +25,10 @@
  *	- Initial distribution.
  */
 
+#ifndef lint
+static char rcsid[] = "$Id: pppstats.c,v 1.3 1993/11/10 01:35:21 paulus Exp $";
+#endif
+
 #include <sys/param.h>
 #include <sys/mbuf.h>
 #include <sys/types.h>
