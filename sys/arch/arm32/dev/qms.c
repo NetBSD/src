@@ -1,4 +1,4 @@
-/* $NetBSD: qms.c,v 1.6 1996/04/26 22:02:01 mark Exp $ */
+/* $NetBSD: qms.c,v 1.7 1996/06/12 20:30:59 mark Exp $ */
 
 /*
  * Copyright (c) Scott Stevens 1995 All rights reserved
@@ -67,6 +67,7 @@
 struct quadmouse_softc {
 	struct device sc_device;
 	irqhandler_t sc_ih;
+	int sc_irqnum;
 	int sc_iobase;
 	struct selinfo sc_rsel;
 #define QMOUSE_OPEN 0x01
@@ -137,12 +138,20 @@ quadmouseattach(parent, self, aux)
     
 	sc->sc_iobase = mb->mb_iobase;
     
-/* Check for a known IOMD chip */
+/* Set up the IRQ information */
 
+	if (mb->mb_irq != IRQUNK)
+		sc->sc_irqnum = mb->mb_irq;
+	else
+		sc->sc_irqnum = IRQ_TIMER1;
+		
 	sc->sc_ih.ih_func = quadmouseintr;
 	sc->sc_ih.ih_arg = sc;
 	sc->sc_ih.ih_level = IPL_TTY;
-	sc->sc_ih.ih_name = "TMR1 qmouse";
+	if (sc->sc_irqnum == IRQ_TIMER1)
+		sc->sc_ih.ih_name = "TMR1 qmouse";
+	else
+		sc->sc_ih.ih_name = "qmouse";
 
 /* Set up origin and multipliers */
 
@@ -198,12 +207,14 @@ quadmouseopen(dev, flag, mode, p)
 
 	sc->sc_state |= QMOUSE_OPEN;
 
-	WriteByte(IOMD_T1LOW, (TIMER1_COUNT >> 0) & 0xff);
-	WriteByte(IOMD_T1HIGH, (TIMER1_COUNT >> 8) & 0xff);
-	WriteByte(IOMD_T1GO, 0);
-	
-	if (irq_claim(IRQ_TIMER1, &sc->sc_ih))
-		panic("Cannot claim TIMER1 IRQ for quadmouse%d\n", sc->sc_device.dv_unit);
+	if (sc->sc_irqnum == IRQ_TIMER1) {
+		WriteByte(IOMD_T1LOW, (TIMER1_COUNT >> 0) & 0xff);
+		WriteByte(IOMD_T1HIGH, (TIMER1_COUNT >> 8) & 0xff);
+		WriteByte(IOMD_T1GO, 0);
+	}
+	if (irq_claim(sc->sc_irqnum, &sc->sc_ih))
+		panic("Cannot claim IRQ %d for quadmouse%d\n", sc->sc_irqnum,
+		    sc->sc_device.dv_unit);
 
 	return(0);
 }
@@ -219,8 +230,8 @@ quadmouseclose(dev, flag, mode, p)
 	int unit = minor (dev);
 	struct quadmouse_softc *sc = quadmouse_cd.cd_devs[unit];
     
-	if (irq_release(IRQ_TIMER1, &sc->sc_ih) != 0)
-		panic("Cannot release IRA\n");
+	if (irq_release(sc->sc_irqnum, &sc->sc_ih) != 0)
+		panic("Cannot release IRQ %d\n", sc->sc_irqnum);
 
 	sc->proc = NULL;
 	sc->sc_state = 0;
@@ -412,7 +423,7 @@ quadmouseintr(sc)
 	}
 
 	FMT_END
-	return(0);
+	return(0);	/* Pass interrupt on down the chain */
 }
 
 int
