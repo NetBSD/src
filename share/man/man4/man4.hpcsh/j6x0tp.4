@@ -1,4 +1,4 @@
-.\"	$NetBSD: j6x0tp.4,v 1.1 2003/11/05 02:23:45 uwe Exp $
+.\"	$NetBSD: j6x0tp.4,v 1.2 2003/11/05 02:38:23 uwe Exp $
 .\"
 .\" Copyright (c) 2003 Valeriy E. Ushakov
 .\" All rights reserved.
@@ -46,7 +46,7 @@ Pen movements are passed to the
 as mouse clicks and drags.
 .Pp
 Taps on the on-screen
-.Qq HP hard icons
+.Dq HP hard icons
 are passed to the
 .Xr wskbd 4
 as key presses.
@@ -66,9 +66,21 @@ device is opened.
 .It Cd options J6X0TP_PGDN_ICON_KEYSYM=keysym
 .It Cd options J6X0TP_SWITCH_ICON_KEYSYM=keysym
 Customize the mapping of on-screen
-.Qq HP hard icons
+.Dq HP hard icons
 to keys.
-Default keymap assigns Home, Prior, Next, and End respectively.
+Default keymap assigns
+.Dv KS_Home ,
+.Dv KS_Prior ,
+.Dv KS_Next ,
+and
+.Dv KS_End
+respectively.
+It is possible to change the mapping at run time with
+.Xr wsconsctl 8 ,
+but for
+.Dq keyboard
+as small as this one it is convenient to be able to change the
+defaults at compile time.
 .El
 .Sh SEE ALSO
 .Xr adc 4 ,
