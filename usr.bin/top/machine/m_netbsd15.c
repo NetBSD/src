@@ -1,4 +1,4 @@
-/*	$NetBSD: m_netbsd15.c,v 1.4 2000/05/29 11:52:37 simonb Exp $	*/
+/*	$NetBSD: m_netbsd15.c,v 1.5 2000/06/04 02:11:11 perry Exp $	*/
 
 /*
  * top - a top users display for Unix
@@ -34,12 +34,13 @@
  *		Simon Burge <simonb@netbsd.org>
  *
  *
- * $Id: m_netbsd15.c,v 1.4 2000/05/29 11:52:37 simonb Exp $
+ * $Id: m_netbsd15.c,v 1.5 2000/06/04 02:11:11 perry Exp $
  */
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
 #include <sys/dkstat.h>
+#include <sys/sched.h>
 #include <sys/swap.h>
 
 #include <uvm/uvm_extern.h>
