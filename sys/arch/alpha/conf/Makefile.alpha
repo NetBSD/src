@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.alpha,v 1.23 1996/08/31 21:40:47 mycroft Exp $
+#	$NetBSD: Makefile.alpha,v 1.24 1996/09/09 21:06:55 mycroft Exp $
 
 # Makefile for NetBSD
 #
@@ -24,8 +24,7 @@
 CC?=	cc
 LD?=	ld
 MKDEP?=	mkdep
-STRIP?=	strip -g -X -x
-TOUCH?=	touch -f -c
+STRIP?=	strip
 
 # source tree is located via $S relative to the compilation directory
 .ifndef S
@@ -40,6 +39,11 @@ CWARNFLAGS?=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes
 CFLAGS=		${DEBUG} ${CWARNFLAGS} -O2 -mno-fp-regs
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-N -Ttext fffffc0000230000 -e __start -G 4
+STRIPFLAGS=	-g -X -x
+
+HOSTED_CC=	${CC}
+HOSTED_CPPFLAGS=${CPPFLAGS:S/^-nostdinc$//}
+HOSTED_CFLAGS=	${CFLAGS}
 
 ### find out what to use for libkern
 .include "$S/lib/libkern/Makefile.inc"
@@ -63,7 +67,7 @@ LIBCOMPAT=	${COMPATLIB_PROF}
 NORMAL_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
 NORMAL_S=	${CC} ${AFLAGS} ${CPPFLAGS} -c $<
 
-HOSTED_C=	${NORMAL_C:S/^-pg$//:S/^-p$//:S/^-nostdinc$//}
+HOSTED_C=	${HOSTED_CC} ${HOSTED_CFLAGS} ${HOSTED_CPPFLAGS} -c $<
 
 %OBJS
 
@@ -89,7 +93,7 @@ DEBUG?=
 LINKFLAGS+=	-X
 SYSTEM_LD_TAIL+=; \
 		echo cp $@ $@.gdb; rm -f $@.gdb; cp $@ $@.gdb; \
-		echo ${STRIP} $@; ${STRIP} $@
+		echo ${STRIP} ${STRIPFLAGS} $@; ${STRIP} ${STRIPFLAGS} $@
 .else
 LINKFLAGS+=	-S
 .endif
@@ -148,7 +152,8 @@ depend:: .depend
 	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${ALPHA}/alpha/locore.s
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
 	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
-	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} ${ALPHA}/alpha/genassym.c
+	${MKDEP} -a ${HOSTED_CFLAGS} ${HOSTED_CPPFLAGS} \
+	    ${ALPHA}/alpha/genassym.c
 
 
 # depend on root or device configuration
