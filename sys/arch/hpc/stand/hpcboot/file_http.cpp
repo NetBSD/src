@@ -1,4 +1,4 @@
-/*	$NetBSD: file_http.cpp,v 1.1 2001/02/09 18:34:38 uch Exp $	*/
+/*	$NetBSD: file_http.cpp,v 1.2 2001/03/04 16:59:47 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,6 +39,11 @@
 #include <file.h>
 #include <file_http.h>
 #include <console.h>
+
+#if _WIN32_WCE < 210
+#define tolower(c)	((c) - 'A' + 'a')
+#define wcsicmp		_wcsicmp
+#endif
 
 static int __stricmp(const char *, const char *);
 
