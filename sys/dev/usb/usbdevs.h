@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs.h,v 1.43 1999/09/14 22:06:44 augustss Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.44 1999/09/15 12:31:28 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.43 1999/09/14 22:06:21 augustss Exp 
+ *	NetBSD: usbdevs,v 1.44 1999/09/15 12:30:59 augustss Exp 
  */
 
 /*
@@ -48,10 +48,12 @@
  * List of known USB vendors
  */
 
+#define	USB_VENDOR_HP	0x03f0		/* Hewlett Packard */
 #define	USB_VENDOR_NEC	0x0409		/* NEC */
 #define	USB_VENDOR_KODAK	0x040a		/* Eastman Kodak Corp. */
 #define	USB_VENDOR_CATC	0x0423		/* Computer Access Technology Corp. */
 #define	USB_VENDOR_GRAVIS	0x0428		/* Advanced Gravis Computer Tech. Ltd. */
+#define	USB_VENDOR_LEXMARK	0x043d		/* Lexmark International Inc. */
 #define	USB_VENDOR_NANAO	0x0440		/* NANAO Corp. */
 #define	USB_VENDOR_THRUST	0x044f		/* Thrustmaster */
 #define	USB_VENDOR_TI	0x0451		/* Texas Instruments */
@@ -71,12 +73,15 @@
 #define	USB_VENDOR_3COM	0x04c1		/* U.S. Robotics */
 #define	USB_VENDOR_KONICA	0x04c8		/* Konica Corp. */
 #define	USB_VENDOR_SHUTTLE	0x04e6		/* Shuttle Technology */
+#define	USB_VENDOR_CHICONY	0x04f2		/* Chicony Electronics Co., Ltd. */
 #define	USB_VENDOR_BROTHER	0x04f9		/* Brother Industries Corp. */
 #define	USB_VENDOR_JAZZ	0x04fa		/* Dallas Semiconductor */
 #define	USB_VENDOR_BELKIN	0x050d		/* Belkin Components */
 #define	USB_VENDOR_KAWATSU	0x050f		/* Kawatsu Semiconductor, Inc. */
+#define	USB_VENDOR_APC	0x051d		/* American Power Conversion */
 #define	USB_VENDOR_AKS	0x0529		/* Fast Security AG */
-#define	USB_VENDOR_VISION	0x0533		/* Alcatel Mobile Phones */
+#define	USB_VENDOR_ANCHOR	0x0547		/* Anchor Chips Inc. */
+#define	USB_VENDOR_VISION	0x0553		/* VLSI Vision Ltd. */
 #define	USB_VENDOR_ATEN	0x0557		/* ATEN International Corp. Ltd. */
 #define	USB_VENDOR_PERACOM	0x0565		/* Peracom Networks Inc. */
 #define	USB_VENDOR_WACOM	0x056a		/* WACOM Corp. Ltd. */
@@ -88,6 +93,7 @@
 #define	USB_VENDOR_OMNIVISION	0x05a9		/* OmniVision */
 #define	USB_VENDOR_INSYSTEM	0x05ab		/* In-System Design */
 #define	USB_VENDOR_APPLE	0x05ac		/* Apple Computer */
+#define	USB_VENDOR_QTRONIX	0x05c7		/* Qtronix Corp */
 #define	USB_VENDOR_EIZONANAO	0x05e7		/* EIZO Nanao */
 #define	USB_VENDOR_PIENGINEERING	0x05f3		/* P.I. Engineering */
 #define	USB_VENDOR_CHIC	0x05fe		/* Chic Technology */
@@ -103,6 +109,10 @@
  * List of known products.  Grouped by vendor.
  */
 
+/* HP products */
+#define	USB_PRODUCT_HP_4100C	0x0101		/* Scanjet 4100C */
+#define	USB_PRODUCT_HP_6300C	0x0601		/* Scanjet 6300C */
+
 /* NEC products */
 #define	USB_PRODUCT_NEC_HUB	0x55aa		/* hub */
 #define	USB_PRODUCT_NEC_HUB_B	0x55ab		/* hub */
@@ -115,6 +125,9 @@
 
 /* Gravis products */
 #define	USB_PRODUCT_GRAVIS_GAMEPADPRO	0x4001		/* GamePad Pro */
+
+/* Lexmark products */
+#define	USB_PRODUCT_LEXMARK_S2450	0x0009		/* Optra S 2450 */
 
 /* Thrustmaster products */
 #define	USB_PRODUCT_THRUST_FUSION_PAD	0xa0a3		/* Fusion Digital Gamepad */
@@ -143,7 +156,8 @@
 #define	USB_PRODUCT_BTC_BTC7932	0x6782		/* Keyboard with mouse port */
 
 /* Philips products */
-#define	USB_PRODUCT_PHILIPS_DSS	0x0101		/* DSS 350 Digital Speaker System */
+#define	USB_PRODUCT_PHILIPS_DSS350	0x0101		/* DSS 350 Digital Speaker System */
+#define	USB_PRODUCT_PHILIPS_DSS	0x0104		/* DSS XXX Digital Speaker System */
 #define	USB_PRODUCT_PHILIPS_HUB	0x0201		/* hub */
 
 /* Connectix products */
@@ -160,6 +174,7 @@
 
 /* Cypress Semiconductor products */
 #define	USB_PRODUCT_CYPRESS_MOUSE	0x0001		/* mouse */
+#define	USB_PRODUCT_CYPRESS_THERMO	0x0002		/* thermometer */
 
 /* Epson products */
 #define	USB_PRODUCT_EPSON_PRINTER3	0x0003		/* ISD USB Smart Cable */
@@ -173,6 +188,9 @@
 /* Shuttle Technology products */
 #define	USB_PRODUCT_SHUTTLE_EUSB	0x0001		/* E-USB Bridge */
 
+/* Chicony products */
+#define	USB_PRODUCT_CHICONY_KB8933	0x0001		/* KB-8933 keyboard */
+
 /* Brother Industries products */
 #define	USB_PRODUCT_BROTHER_HL1050	0x0002		/* HL-1050 laser printer */
 
@@ -182,8 +200,14 @@
 /* Kawatsu products */
 #define	USB_PRODUCT_KAWATSU_MH4000P	0x0003		/* MiniHub 4000P */
 
+/* American Power Conversion products */
+#define	USB_PRODUCT_APC_UPSPRO500	0x0002		/* Back-UPS Pro 500 */
+
 /* AKS products */
 #define	USB_PRODUCT_AKS_USBHASP	0x0001		/* USB-HASP 0.06 */
+
+/* Anchor products */
+#define	USB_PRODUCT_ANCHOR_EZUSB	0x2131		/* EZUSB */
 
 /* Vision products */
 #define	USB_PRODUCT_VISION_VC6452V002	0x0002		/* VC6452V002 Camera */
@@ -219,11 +243,15 @@
 /* In-System products */
 #define	USB_PRODUCT_INSYSTEM_F5U002	0x0002		/* Parallel printer adapter */
 
+/* Qtronix products */
+#define	USB_PRODUCT_QTRONIX_980N	0x2011		/* Scorpion-980N keyboard */
+
 /* Logitech products */
 #define	USB_PRODUCT_LOGITECH_M2452	0x0203		/* M2452 keyboard */
 #define	USB_PRODUCT_LOGITECH_M4848	0x0301		/* M4848 mouse */
 #define	USB_PRODUCT_LOGITECH_QUICKCAM	0x0801		/* QuickCam */
-#define	USB_PRODUCT_LOGITECH_USBPS2	0xc001		/* USB-PS/2 mouse */
+#define	USB_PRODUCT_LOGITECH_N48	0xc001		/* N48 mouse */
+#define	USB_PRODUCT_LOGITECH_MBA47	0xc002		/* M-BA47 mouse */
 
 /* P.I. Engineering products */
 #define	USB_PRODUCT_PIENGINEERING_PS2USB	0x020b		/* PS2 to Mac USB Adapter */
