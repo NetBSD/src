@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.2 2002/07/29 16:14:05 simonb Exp $	*/
+/*	$NetBSD: intr.h,v 1.3 2002/11/10 15:21:52 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -168,8 +168,6 @@ do {									\
 extern struct evbmips_soft_intrhand *softnet_intrhand;
 
 #define	setsoftnet()	softintr_schedule(softnet_intrhand)
-
-extern struct evcnt mips_int5_evcnt;	/* XXX clock XXX */
 
 void	evbmips_intr_init(void);
 void	intr_init(void);

@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.3 2002/07/29 16:21:03 simonb Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.4 2002/11/10 15:21:51 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -60,6 +60,7 @@ void
 intr_init(void)
 {
 
+	evcnt_attach_static(&mips_int5_evcnt);
 	evbmips_intr_init();	/* board specific stuff */
 
 	softintr_init();
@@ -89,7 +90,7 @@ cpu_intr(u_int32_t status, u_int32_t cause, u_int32_t pc, u_int32_t ipending)
 		 * counting again from the current value.
 		 */
 		if ((next_cp0_clk_intr - new_cnt) & 0x80000000) {
-#if 0
+#if 0	/* XXX - should add an event counter for this */
 			missed_clk_intrs++;
 #endif
 
