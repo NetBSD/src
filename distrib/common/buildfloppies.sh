@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: buildfloppies.sh,v 1.1 2002/04/16 04:28:23 lukem Exp $
+# $NetBSD: buildfloppies.sh,v 1.2 2002/04/17 20:42:34 tv Exp $
 #
 # Copyright (c) 2002 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -102,7 +102,7 @@ ${PAX} -w ${files} >> ${floppy} || exit 1
 if [ -n "$instboot" ]; then
 	instboot=$( echo $instboot | sed -e s/@IMAGE@/${floppy}/ )
 	echo "Running instboot: ${instboot}"
-	eval ${instboot}
+	eval ${instboot} || exit 1
 fi
 
 #	check size against available number of disks
