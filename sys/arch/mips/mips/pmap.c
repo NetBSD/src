@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.123 2001/04/22 23:42:15 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.124 2001/04/23 17:14:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.123 2001/04/22 23:42:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.124 2001/04/23 17:14:17 thorpej Exp $");
 
 /*
  *	Manages physical address maps.
@@ -172,7 +172,6 @@ struct pmap	kernel_pmap_store;
 
 paddr_t avail_start;	/* PA of first available physical page */
 paddr_t avail_end;	/* PA of last available physical page */
-vaddr_t virtual_avail;	/* VA of first avail page (after kernel bss)*/
 vaddr_t virtual_end;	/* VA of last avail page (end of kernel AS) */
 
 struct pv_entry	*pv_table;
@@ -277,6 +276,21 @@ pmap_bootstrap()
 #ifdef KSEG2IOBUFSIZE
 	Sysmapsize += (KSEG2IOBUFSIZE >> PGSHIFT);
 #endif
+
+	/*
+	 * Initialize `FYI' variables.	Note we're relying on
+	 * the fact that BSEARCH sorts the vm_physmem[] array
+	 * for us.  Must do this before uvm_pageboot_alloc()
+	 * can be called.
+	 */
+	avail_start = ptoa(vm_physmem[0].start);
+	avail_end = ptoa(vm_physmem[vm_nphysseg - 1].end);
+	virtual_end = VM_MIN_KERNEL_ADDRESS + Sysmapsize * NBPG;
+
+	/*
+	 * Now actually allocate the kernel PTE array (must be done
+	 * after virtual_end is initialized).
+	 */
 	Sysmap = (pt_entry_t *)
 	    uvm_pageboot_alloc(sizeof(pt_entry_t) * Sysmapsize);
 
@@ -292,16 +306,6 @@ pmap_bootstrap()
 	pv_table_npages = physmem;
 	pv_table = (struct pv_entry *)
 	    uvm_pageboot_alloc(sizeof(struct pv_entry) * pv_table_npages);
-
-	/*
-	 * Initialize `FYI' variables.	Note we're relying on
-	 * the fact that BSEARCH sorts the vm_physmem[] array
-	 * for us.
-	 */
-	avail_start = ptoa(vm_physmem[0].start);
-	avail_end = ptoa(vm_physmem[vm_nphysseg - 1].end);
-	virtual_avail = VM_MIN_KERNEL_ADDRESS;
-	virtual_end = VM_MIN_KERNEL_ADDRESS + Sysmapsize * NBPG;
 
 	/*
 	 * Initialize the kernel pmap.
@@ -342,8 +346,8 @@ void
 pmap_virtual_space(vaddr_t *vstartp, vaddr_t *vendp)
 {
 
-	*vstartp = round_page(virtual_avail);
-	*vendp = trunc_page(virtual_end);
+	*vstartp = VM_MIN_KERNEL_ADDRESS;	/* kernel is in K0SEG */
+	*vendp = trunc_page(virtual_end);	/* XXX need pmap_growkernel() */
 }
 
 /*
