@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.sun3x,v 1.10 1997/03/17 20:59:48 gwr Exp $
+#	$NetBSD: Makefile.sun3x,v 1.11 1997/09/12 07:55:23 mycroft Exp $
 
 # Makefile for NetBSD
 #
@@ -154,8 +154,7 @@ cleankernel:
 
 lint:
 	@lint -hbxncez -Dvolatile= ${CPPFLAGS} -UKGDB \
-	    ${SUN3X}/sun3x/Locore.c ${CFILES} \
-	    ioconf.c param.c | \
+	    ${CFILES} ioconf.c param.c | \
 	    grep -v 'static function .* unused'
 
 tags:
