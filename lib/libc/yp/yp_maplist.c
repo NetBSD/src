@@ -1,4 +1,4 @@
-/*	$NetBSD: yp_maplist.c,v 1.1 1996/05/18 19:06:39 jtc Exp $	 */
+/*	$NetBSD: yp_maplist.c,v 1.2 1996/05/23 13:49:00 christos Exp $	 */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: yp_maplist.c,v 1.1 1996/05/18 19:06:39 jtc Exp $";
+static char rcsid[] = "$NetBSD: yp_maplist.c,v 1.2 1996/05/23 13:49:00 christos Exp $";
 #endif
 
 #include <rpc/rpc.h>
@@ -40,6 +40,7 @@ static char rcsid[] = "$NetBSD: yp_maplist.c,v 1.1 1996/05/18 19:06:39 jtc Exp $
 #include <rpcsvc/ypclnt.h>
 
 extern struct timeval _yplib_timeout;
+extern int _yplib_nerrs;
 
 int
 yp_maplist(indomain, outmaplist)
@@ -48,7 +49,7 @@ yp_maplist(indomain, outmaplist)
 {
 	struct dom_binding *ysd;
 	struct ypresp_maplist ypml;
-	int             r;
+	int r, nerrs = 0;
 
 again:
 	if (_yp_dobind(indomain, &ysd) != 0)
@@ -60,7 +61,10 @@ again:
 		   xdr_domainname, indomain, xdr_ypresp_maplist, &ypml, 
 		   _yplib_timeout);
 	if (r != RPC_SUCCESS) {
-		clnt_perror(ysd->dom_client, "yp_maplist: clnt_call");
+		if (++nerrs == _yplib_nerrs) {
+			clnt_perror(ysd->dom_client, "yp_maplist: clnt_call");
+			nerrs = 0;
+		}
 		ysd->dom_vers = -1;
 		goto again;
 	}
