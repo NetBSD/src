@@ -1,4 +1,4 @@
-/*	$NetBSD: tcx.c,v 1.1 2000/08/20 22:27:07 pk Exp $ */
+/*	$NetBSD: tcx.c,v 1.2 2000/08/22 21:18:57 pk Exp $ */
 
 /*
  *  Copyright (c) 1996,1998 The NetBSD Foundation, Inc.
@@ -62,14 +62,13 @@
 #include <machine/bus.h>
 #include <machine/autoconf.h>
 
-#include <dev/sbus/sbusvar.h>
-
 #include <dev/sun/fbio.h>
 #include <dev/sun/fbvar.h>
-
 #include <dev/sun/btreg.h>
 #include <dev/sun/btvar.h>
-#include <dev/sun/tcxreg.h>
+
+#include <dev/sbus/sbusvar.h>
+#include <dev/sbus/tcxreg.h>
 
 #include <machine/conf.h>
 
