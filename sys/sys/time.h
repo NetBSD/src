@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.33 2001/12/09 16:10:43 manu Exp $	*/
+/*	$NetBSD: time.h,v 1.34 2002/01/31 00:13:08 simonb Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -36,7 +36,7 @@
  */
 
 #ifndef _SYS_TIME_H_
-#define _SYS_TIME_H_
+#define	_SYS_TIME_H_
 
 #include <sys/types.h>
 
@@ -151,12 +151,13 @@ struct clockinfo {
 	int	profhz;		/* profiling clock frequency */
 };
 
-#define CLOCK_REALTIME	0
-#define CLOCK_VIRTUAL	1
-#define CLOCK_PROF	2
+#define	CLOCK_REALTIME	0
+#define	CLOCK_VIRTUAL	1
+#define	CLOCK_PROF	2
+#define	CLOCK_MONOTONIC	3
 
-#define TIMER_RELTIME	0x0	/* relative timer */
-#define TIMER_ABSTIME	0x1	/* absolute timer */
+#define	TIMER_RELTIME	0x0	/* relative timer */
+#define	TIMER_ABSTIME	0x1	/* absolute timer */
 
 #ifdef _KERNEL
 int	itimerfix __P((struct timeval *tv));
