@@ -1,4 +1,4 @@
-/*	$NetBSD: stdhosts.c,v 1.3 1997/07/18 21:57:10 thorpej Exp $	 */
+/*	$NetBSD: stdhosts.c,v 1.4 1997/10/07 14:56:11 lukem Exp $	 */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -78,7 +78,7 @@ main(argc, argv)
 		line_no++;
 		len = strlen(data_line);
 
-		if (len < 1 || data_line[0] == '#')
+		if (len <= 1 || data_line[0] == '#')
 			continue;
 
 		/*
