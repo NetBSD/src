@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.214 2001/12/26 04:32:39 cjs Exp $
+$NetBSD: usbdevs,v 1.215 2001/12/29 14:07:45 augustss Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -842,7 +842,7 @@ product NEC HUB			0x55aa	hub
 product NEC HUB_B		0x55ab	hub
 
 /* NEC2 products */
-product NEC2 HUB2_0		0x0058	USB2.0 Hub Controller(
+product NEC2 HUB2_0		0x0058	USB2.0 Hub Controller
 
 /* NetChip Technology Products */
 product NETCHIP TURBOCONNECT	0x1080	Turbo-Connect
