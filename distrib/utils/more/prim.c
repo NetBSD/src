@@ -56,12 +56,13 @@ extern int top_scroll;
 extern int sc_width, sc_height;
 extern int caseless;
 extern int linenums;
-extern int tagoption;
 extern char *line;
 extern int retain_below;
 
 off_t position(), forw_line(), back_line(), forw_raw_line(), back_raw_line();
 off_t ch_length(), ch_tell();
+
+static match(char *, char *);
 
 /*
  * Check to see if the end of file is currently "displayed".
@@ -178,11 +179,8 @@ forw(n, pos, only_last)
 		 * If this is the first screen displayed and we hit an early
 		 * EOF (i.e. before the requested number of lines), we
 		 * "squish" the display down at the bottom of the screen.
-		 * But don't do this if a -t option was given; it can cause
-		 * us to start the display after the beginning of the file,
-		 * and it is not appropriate to squish in that case.
 		 */
-		if (first_time && line == NULL && !top_scroll && !tagoption) {
+		if (first_time && line == NULL && !top_scroll) {
 			squished = 1;
 			continue;
 		}
