@@ -1,4 +1,4 @@
-/*	$NetBSD: ums.c,v 1.32 1999/09/12 08:21:49 augustss Exp $	*/
+/*	$NetBSD: ums.c,v 1.33 1999/10/13 08:10:57 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -317,15 +317,13 @@ ums_activate(self, act)
 	return (rv);
 }
 
-int
-ums_detach(self, flags)
-	device_ptr_t self;
-	int flags;
+USB_DETACH(ums)
 {
-	struct ums_softc *sc = (struct ums_softc *)self;
+	USB_DETACH_START(ums, sc);
 	int rv = 0;
 
 	DPRINTF(("ums_detach: sc=%p flags=%d\n", sc, flags));
+
 	/* No need to do reference counting of ums, wsmouse has all the goo. */
 	if (sc->sc_wsmousedev)
 		rv = config_detach(sc->sc_wsmousedev, flags);

@@ -1,4 +1,4 @@
-/*	$NetBSD: hid.c,v 1.8 1999/08/14 14:49:31 augustss Exp $	*/
+/*	$NetBSD: hid.c,v 1.9 1999/10/13 08:10:55 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
 
 #include <dev/usb/hid.h>
 
-#ifdef USB_DEBUG
+#ifdef UHID_DEBUG
 #define DPRINTF(x)	if (usbdebug) logprintf x
 #define DPRINTFN(n,x)	if (usbdebug>(n)) logprintf x
 extern int usbdebug;

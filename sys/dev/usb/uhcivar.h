@@ -1,4 +1,4 @@
-/*	$NetBSD: uhcivar.h,v 1.15 1999/10/12 11:21:26 augustss Exp $	*/
+/*	$NetBSD: uhcivar.h,v 1.16 1999/10/13 08:10:56 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -170,13 +170,4 @@ usbd_status	uhci_init __P((uhci_softc_t *));
 int		uhci_intr __P((void *));
 int		uhci_detach __P((uhci_softc_t *, int));
 int		uhci_activate __P((device_ptr_t, enum devact));
-
-#ifdef USB_DEBUG
-#define DPRINTF(x)	if (uhcidebug) printf x
-#define DPRINTFN(n,x)	if (uhcidebug>(n)) printf x
-extern int uhcidebug;
-#else
-#define DPRINTF(x)
-#define DPRINTFN(n,x)
-#endif
 

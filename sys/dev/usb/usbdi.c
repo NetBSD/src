@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.44 1999/10/12 11:54:56 augustss Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.45 1999/10/13 08:10:58 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,10 +42,11 @@
 #include <sys/kernel.h>
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 #include <sys/device.h>
-#else
+#elif defined(__FreeBSD__)
 #include <sys/module.h>
 #include <sys/bus.h>
 #include <sys/conf.h>
+#include "usb_if.h"
 #endif
 #include <sys/malloc.h>
 #include <sys/proc.h>
@@ -58,10 +59,6 @@
 #include <dev/usb/usbdivar.h>
 #include <dev/usb/usb_mem.h>
 
-#if defined(__FreeBSD__)
-#include "usb_if.h"
-#endif
- 
 #ifdef USB_DEBUG
 #define DPRINTF(x)	if (usbdebug) logprintf x
 #define DPRINTFN(n,x)	if (usbdebug>(n)) logprintf x
@@ -76,13 +73,33 @@ void usbd_do_request_async_cb
 	__P((usbd_request_handle, usbd_private_handle, usbd_status));
 void usbd_start_next __P((usbd_pipe_handle pipe));
 
-static SIMPLEQ_HEAD(, usbd_request) usbd_free_requests;
+static SIMPLEQ_HEAD(, usbd_request) usbd_free_requests =
+	SIMPLEQ_HEAD_INITIALIZER(usbd_free_requests);
 
-#if defined(__FreeBSD__)
-#define USB_CDEV_MAJOR	108
+static int usbd_nbuses = 0;
 
-extern struct cdevsw usb_cdevsw;
-#endif
+void
+usbd_init()
+{
+	usbd_nbuses++;
+}
+
+void
+usbd_finish()
+{
+	usbd_request_handle reqh;
+
+	if (--usbd_nbuses == 0) {
+		/* Last controller is gone, free all requests. */
+		for (;;) {
+			reqh = SIMPLEQ_FIRST(&usbd_free_requests);
+			if (reqh == NULL)
+				break;
+			SIMPLEQ_REMOVE_HEAD(&usbd_free_requests, reqh, next);
+			free(reqh, M_USB);
+		}			
+	}
+}
 
 static __inline int usbd_reqh_isread __P((usbd_request_handle reqh));
 static __inline int
@@ -698,46 +715,6 @@ usbd_ar_pipe(pipe)
 	return (USBD_NORMAL_COMPLETION);
 }
 
-static int usbd_nbuses = 0;
-
-void
-usbd_init()
-{
-#if defined(__FreeBSD__)
-	static int usbd_global_init_done = 0;
-	dev_t dev;
-	
-	if (!usbd_global_init_done) {
-		usbd_global_init_done = 1;
-		dev = makedev(USB_CDEV_MAJOR, 0);
-		cdevsw_add(&dev, &usb_cdevsw, NULL);
-
-	}
-#endif
-
-	if (usbd_nbuses == 0)
-		SIMPLEQ_INIT(&usbd_free_requests);
-	usbd_nbuses++;
-}
-
-void
-usbd_finish()
-{
-	usbd_request_handle reqh;
-
-	usbd_nbuses--;
-	if (usbd_nbuses == 0) {
-		/* Last controller is gone, free all requests. */
-		for (;;) {
-			reqh = SIMPLEQ_FIRST(&usbd_free_requests);
-			if (reqh == NULL)
-				break;
-			SIMPLEQ_REMOVE_HEAD(&usbd_free_requests, reqh, next);
-			free(reqh, M_USB);
-		}			
-	}
-}
-
 /* Called at splusb() */
 void
 usb_transfer_complete(reqh)
@@ -788,6 +765,10 @@ usb_transfer_complete(reqh)
 		pipe->methods->done(reqh);
 
 	/* Remove request from queue. */
+#ifdef DIAGNOSTIC
+	if (reqh != SIMPLEQ_FIRST(&pipe->queue))
+		printf("usb_transfer_complete: bad dequeue\n");
+#endif
 	SIMPLEQ_REMOVE_HEAD(&pipe->queue, reqh, next);
 
 	/* Count completed transfers. */
@@ -1062,100 +1043,12 @@ usbd_get_endpoint_descriptor(iface, address)
 }
 
 #if defined(__FreeBSD__)
-void
-usbd_print_child(device_t parent, device_t child)
-{
-	/*
-	struct usb_softc *sc = device_get_softc(child);
-	*/
-
-	printf(" at %s%d", device_get_name(parent), device_get_unit(parent));
-
-	/* XXX How do we get to the usbd_device_handle???
-	usbd_device_handle dev = invalidadosch;
-
-	printf(" addr %d", dev->addr);
-
-	if (bootverbose) {
-		if (dev->lowspeed)
-			printf(", lowspeed");
-		if (dev->self_powered)
-			printf(", self powered");
-		else
-			printf(", %dmA", dev->power);
-		printf(", config %d", dev->config);
-	}
-	 */
-}
-
-/* Reconfigure all the USB busses in the system. */
 int
 usbd_driver_load(module_t mod, int what, void *arg)
 {
-	devclass_t usb_devclass = devclass_find("usb");
-	devclass_t ugen_devclass = devclass_find("ugen");
-	device_t *devlist;
-	int devcount;
-	int error;
-
-	switch (what) { 
-	case MOD_LOAD:
-	case MOD_UNLOAD:
-		if (!usb_devclass)
-			return 0;	/* just ignore call */
-
-		if (ugen_devclass) {
-			/* detach devices from generic driver if possible */
-			error = devclass_get_devices(ugen_devclass, &devlist,
-						     &devcount);
-			if (!error)
-				for (devcount--; devcount >= 0; devcount--)
-					(void)DEVICE_DETACH(devlist[devcount]);
-		}
-
-		error = devclass_get_devices(usb_devclass, &devlist, &devcount);
-		if (error)
-			return 0;	/* XXX maybe transient, or error? */
-
-		for (devcount--; devcount >= 0; devcount--)
-			USB_RECONFIGURE(devlist[devcount]);
-
-		free(devlist, M_TEMP);
-		return 0;
-	}
-
-	return 0;			/* nothing to do by us */
-}
-
-/* Set the description of the device including a malloc and copy. */
-void
-usbd_device_set_desc(device_t device, char *devinfo)
-{
-	size_t l;
-	char *desc;
-
-	if ( devinfo ) {
-		l = strlen(devinfo);
-		desc = malloc(l+1, M_USB, M_NOWAIT);
-		if (desc)
-			memcpy(desc, devinfo, l+1);
-	} else
-		desc = NULL;
-
-	device_set_desc(device, desc);
-}
-
-char *
-usbd_devname(device_t bdev)
-{
-	static char buf[20];
-	/* 
-	 * A static buffer is a loss if this routine is used from an interrupt,
-	 * but it's not fatal.
-	 */
-
-	sprintf(buf, "%s%d", device_get_name(bdev), device_get_unit(bdev));
-	return (buf);
+	/* XXX should implement something like a function that removes all generic devices */
+ 
+ 	return 0;
 }
 
 #endif

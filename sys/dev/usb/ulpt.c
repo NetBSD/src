@@ -1,4 +1,4 @@
-/*	$NetBSD: ulpt.c,v 1.26 1999/10/12 11:54:56 augustss Exp $	*/
+/*	$NetBSD: ulpt.c,v 1.27 1999/10/13 08:10:57 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,6 +41,8 @@
  * Printer Class spec: http://www.usb.org/developers/data/usbprn10.pdf
  */
 
+/* XXX Note in the manpage the ULPT_NOPRIME version of the printer */
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
@@ -70,7 +72,7 @@
 #define	LPTPRI		(PZERO+8)
 #define	ULPT_BSIZE	16384
 
-#ifdef USB_DEBUG
+#ifdef ULPT_DEBUG
 #define DPRINTF(x)	if (ulptdebug) logprintf x
 #define DPRINTFN(n,x)	if (ulptdebug>(n)) logprintf x
 int	ulptdebug = 0;
@@ -107,12 +109,44 @@ struct ulpt_softc {
 
 	int sc_refcnt;
 	u_char sc_dying;
+
+#if defined(__FreeBSD__)
+	dev_t dev;
+	dev_t dev_noprime;
+#endif
 };
 
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 int ulptopen __P((dev_t, int, int, struct proc *));
 int ulptclose __P((dev_t, int, int, struct proc *p));
 int ulptwrite __P((dev_t, struct uio *uio, int));
 int ulptioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
+#elif defined(__FreeBSD__)
+static d_open_t ulptopen;
+static d_close_t ulptclose;
+static d_write_t ulptwrite;
+static d_ioctl_t ulptioctl;
+
+#define ULPT_CDEV_MAJOR 113
+
+static struct cdevsw ulpt_cdevsw = {
+	/* open */	ulptopen,
+	/* close */	ulptclose,
+	/* read */	noread,
+	/* write */	ulptwrite,
+	/* ioctl */	ulptioctl,
+	/* poll */	nopoll,
+	/* mmap */	nommap,
+	/* strategy */	nostrategy,
+	/* name */	"ulpt",
+	/* maj */	ULPT_CDEV_MAJOR,
+	/* dump */	nodump,
+	/* psize */	nopsize,
+	/* flags */	0,
+	/* bmaj */	-1
+};
+#endif
+
 void ulpt_disco __P((void *));
 
 int ulpt_do_write __P((struct ulpt_softc *, struct uio *uio, int));
@@ -124,6 +158,7 @@ void ieee1284_print_id __P((char *));
 
 #define	ULPTUNIT(s)	(minor(s) & 0x1f)
 #define	ULPTFLAGS(s)	(minor(s) & 0xe0)
+
 
 USB_DECLARE_DRIVER(ulpt);
 
@@ -221,6 +256,14 @@ USB_ATTACH(ulpt)
 	}
 #endif
 
+#if defined(__FreeBSD__)
+	sc->dev = make_dev(&ulpt_cdevsw, device_get_unit(self),
+		UID_ROOT, GID_OPERATOR, 0644, "ulpt%d", device_get_unit(self));
+	sc->dev_noprime = make_dev(&ulpt_cdevsw,
+		device_get_unit(self)|ULPT_NOPRIME,
+		UID_ROOT, GID_OPERATOR, 0644, "unlpt%d", device_get_unit(self));
+#endif
+
 	USB_ATTACH_SUCCESS_RETURN;
 
  nobulk:
@@ -229,6 +272,7 @@ USB_ATTACH(ulpt)
 	USB_ATTACH_ERROR_RETURN;
 }
 
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 int
 ulpt_activate(self, act)
 	device_ptr_t self;
@@ -247,17 +291,19 @@ ulpt_activate(self, act)
 	}
 	return (0);
 }
+#endif
 
-int
-ulpt_detach(self, flags)
-	device_ptr_t self;
-	int flags;
+USB_DETACH(ulpt)
 {
-	struct ulpt_softc *sc = (struct ulpt_softc *)self;
-	int maj, mn;
+	USB_DETACH_START(ulpt, sc);
 	int s;
+#if defined(__NetBSD__) || defined(__OpenBSD__)
+	int maj, mn;
 
 	DPRINTF(("ulpt_detach: sc=%p flags=%d\n", sc, flags));
+#elif defined(__FreeBSD__)
+	DPRINTF(("ulpt_detach: sc=%p\n", sc));
+#endif
 
 	sc->sc_dying = 1;
 	if (sc->sc_bulkpipe)
@@ -271,6 +317,7 @@ ulpt_detach(self, flags)
 	}
 	splx(s);
 
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 	/* locate the major number */
 	for (maj = 0; maj < nchrdev; maj++)
 		if (cdevsw[maj].d_open == ulptopen)
@@ -279,6 +326,12 @@ ulpt_detach(self, flags)
 	/* Nuke the vnodes for any open instances (calls close). */
 	mn = self->dv_unit;
 	vdevgone(maj, mn, mn, VCHR);
+#elif defined(__FreeBSD__)
+	/* XXX not implemented yet */
+
+	remove_dev(sc->dev);
+	remove_dev(sc->dev_noprime);
+#endif
 
 	return (0);
 }
@@ -345,6 +398,14 @@ ulptopen(dev, flag, mode, p)
 	sc->sc_state = ULPT_INIT;
 	sc->sc_flags = flags;
 	DPRINTF(("ulptopen: flags=0x%x\n", (unsigned)flags));
+
+#if defined(ULPT_DEBUG) && defined(__FreeBSD__)
+	/* Ignoring these flags might not be a good idea */
+	if ((flags & ~ULPT_NOPRIME) != 0)
+		printf("ulptopen: flags ignored: %b\n", flags,
+			"\20\3POS_INIT\4POS_ACK\6PRIME_OPEN\7AUTOLF\10BYPASS");
+#endif
+
 
 	if ((flags & ULPT_NOPRIME) == 0)
 		ulpt_reset(sc);
@@ -448,7 +509,7 @@ ulpt_do_write(sc, uio, flags)
 			break;
 		DPRINTFN(1, ("ulptwrite: transfer %d bytes\n", n));
 		r = usbd_bulk_transfer(reqh, sc->sc_bulkpipe, USBD_NO_COPY, 
-				       USBD_NO_TIMEOUT, buf, &n, "ulptwr");
+				       USBD_NO_TIMEOUT, bufp, &n, "ulptwr");
 		if (r != USBD_NORMAL_COMPLETION) {
 			DPRINTF(("ulptwrite: error=%d\n", r));
 			error = EIO;
@@ -525,5 +586,6 @@ ieee1284_print_id(str)
 #endif
 
 #if defined(__FreeBSD__)
-DRIVER_MODULE(ulpt, usb, ulpt_driver, ulpt_devclass, usbd_driver_load, 0);
+DEV_DRIVER_MODULE(ulpt, uhub, ulpt_driver, ulpt_devclass,
+	ulpt_cdevsw, usbd_driver_load, 0);
 #endif

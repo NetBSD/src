@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.24 1999/10/12 11:54:56 augustss Exp $	*/
+/*	$NetBSD: ugen.c,v 1.25 1999/10/13 08:10:55 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdi_util.h>
 
-#ifdef USB_DEBUG
+#ifdef UGEN_DEBUG
 #define DPRINTF(x)	if (ugendebug) logprintf x
 #define DPRINTFN(n,x)	if (ugendebug>(n)) logprintf x
 int	ugendebug = 0;
@@ -303,23 +303,15 @@ ugenopen(dev, flag, mode, p)
 			sce->ibuf = malloc(isize, M_USBDEV, M_WAITOK);
 			DPRINTFN(5, ("ugenopen: intr endpt=%d,isize=%d\n", 
 				     endpt, isize));
-#if defined(__NetBSD__) || defined(__OpenBSD__)
                         if (clalloc(&sce->q, UGEN_IBSIZE, 0) == -1)
                                 return (ENOMEM);
-#elif defined(__FreeBSD__)
-			clist_alloc_cblocks(&sce->q, UGEN_IBSIZE, 0);
-#endif
 			r = usbd_open_pipe_intr(sce->iface, 
 				edesc->bEndpointAddress, 
 				USBD_SHORT_XFER_OK, &sce->pipeh, sce, 
 				sce->ibuf, isize, ugenintr);
 			if (r != USBD_NORMAL_COMPLETION) {
 				free(sce->ibuf, M_USBDEV);
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 				clfree(&sce->q);
-#elif defined(__FreeBSD__)
-				clist_free_cblocks(&sce->q);
-#endif
 				return (EIO);
 			}
 			DPRINTFN(5, ("ugenopen: interrupt open done\n"));
@@ -591,6 +583,7 @@ ugenwrite(dev, uio, flag)
 	return (error);
 }
 
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 int
 ugen_activate(self, act)
 	device_ptr_t self;
@@ -609,19 +602,21 @@ ugen_activate(self, act)
 	}
 	return (0);
 }
+#endif
 
-int
-ugen_detach(self, flags)
-	device_ptr_t self;
-	int flags;
+USB_DETACH(ugen)
 {
-	struct ugen_softc *sc = (struct ugen_softc *)self;
+	USB_DETACH_START(ugen, sc);
 	struct ugen_endpoint *sce;
-	int maj, mn;
 	int i, dir;
 	int s;
+#if defined(__NetBSD__) || defined(__OpenBSD__)
+	int maj, mn;
 
 	DPRINTF(("ugen_detach: sc=%p flags=%d\n", sc, flags));
+#elif defined(__FreeBSD__)
+	DPRINTF(("ugen_detach: sc=%p\n", sc));
+#endif
 
 	sc->sc_dying = 1;
 	/* Abort all pipes.  Causes processes waiting for transfer to wake. */
@@ -643,6 +638,7 @@ ugen_detach(self, flags)
 	}
 	splx(s);
 
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 	/* locate the major number */
 	for (maj = 0; maj < nchrdev; maj++)
 		if (cdevsw[maj].d_open == ugenopen)
@@ -651,6 +647,9 @@ ugen_detach(self, flags)
 	/* Nuke the vnodes for any open instances (calls close). */
 	mn = self->dv_unit * USB_MAX_ENDPOINTS;
 	vdevgone(maj, mn, mn + USB_MAX_ENDPOINTS - 1, VCHR);
+#elif defined(__FreeBSD__)
+	/* XXX not implemented yet */
+#endif
 
 	return (0);
 }
@@ -987,7 +986,7 @@ ugen_do_ioctl(sc, endpt, cmd, addr, flag, p)
 		uio.uio_segflg = UIO_USERSPACE;
 		uio.uio_rw = UIO_READ;
 		uio.uio_procp = p;
-		error = uiomove((caddr_t)cdesc, len, &uio);
+		error = uiomove(cdesc, len, &uio);
 		free(cdesc, M_TEMP);
 		return (error);
 	}
