@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.24 1997/05/02 22:19:13 thorpej Exp $	*/
+/*	$NetBSD: socket.h,v 1.25 1997/05/02 22:23:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1985, 1986, 1988, 1993, 1994
@@ -132,13 +132,13 @@ struct	linger {
 
 /*
  * Structure used by kernel to store most addresses.
- * Force this to have the host's natural alignment.
+ * Force this to have 4-byte alignment.
  */
 struct sockaddr {
 	u_char	sa_len;			/* total length */
 	u_char	sa_family;		/* address family */
 	char	sa_data[14];		/* actually longer; address value */
-} __attribute__((aligned(sizeof(long))));
+} __attribute__((aligned(4)));
 
 /*
  * Structure used by kernel to pass protocol
