@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.139 1999/07/01 18:58:16 wrstuden Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.140 1999/07/04 06:16:29 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -457,6 +457,7 @@ dounmount(mp, flags, p)
 {
 	struct vnode *coveredvp;
 	int error;
+	int async;
 
 	simple_lock(&mountlist_slock);
 	mp->mnt_flag |= MNT_UNMOUNT;
@@ -464,6 +465,7 @@ dounmount(mp, flags, p)
 	lockmgr(&mp->mnt_lock, LK_DRAIN | LK_INTERLOCK, &mountlist_slock);
 	if (mp->mnt_flag & MNT_EXPUBLIC)
 		vfs_setpublicfs(NULL, NULL, NULL);
+	async = mp->mnt_flag & ASYNC;
 	mp->mnt_flag &=~ MNT_ASYNC;
 	cache_purgevfs(mp);	/* remove cache entries for this file sys */
 	if (((mp->mnt_flag & MNT_RDONLY) ||
@@ -473,6 +475,7 @@ dounmount(mp, flags, p)
 	simple_lock(&mountlist_slock);
 	if (error) {
 		mp->mnt_flag &= ~MNT_UNMOUNT;
+		mp->mnt_flag |= async;
 		lockmgr(&mp->mnt_lock, LK_RELEASE | LK_INTERLOCK | LK_REENABLE,
 		    &mountlist_slock);
 		if (mp->mnt_flag & MNT_MWAIT)
