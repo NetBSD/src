@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)wd.c	7.2 (Berkeley) 5/9/91
- *	$Id: wd.c,v 1.48 1994/02/26 17:59:46 mycroft Exp $
+ *	$Id: wd.c,v 1.49 1994/02/26 19:00:51 mycroft Exp $
  */
 
 #define	QUIETWORKS	/* define this to make wdopen() set DKFL_QUIET */
@@ -162,10 +162,11 @@ static int wdgetctlr(int, struct disk *);
 static void bad144intern(struct disk *);
 static int wdreset(int, int, int);
 static int wdtimeout(caddr_t);
-int wdc_wait(int, int, int, int);
-#define	wait_for_drq(p, u)	wdc_wait((p)+wd_status, u, 0, WDCS_DRQ)
-#define	wait_for_ready(p, u)	wdc_wait((p)+wd_status, u, 0, WDCS_READY)
-#define	wait_for_unbusy(p, u)	wdc_wait((p)+wd_status, u, WDCS_BUSY, 0)
+void wddisksort(struct buf *dp, struct buf *bp);
+int wdc_wait(int, int, int);
+#define	wait_for_drq(p, u)	wdc_wait(p, u, WDCS_DRQ)
+#define	wait_for_ready(p, u)	wdc_wait(p, u, WDCS_READY)
+#define	wait_for_unbusy(p, u)	wdc_wait(p, u, 0)
 
 /*
  * Probe for controller.
@@ -198,10 +199,9 @@ wdprobe(struct isa_device *dvp)
 	wdreset(dvp->id_unit, wdc, 0);
 
 	/* execute a controller only command */
-	if (wdcommand(du, WDCC_DIAGNOSE) < 0)
+	if (wdcommand(du, WDCC_DIAGNOSE) < 0 ||
+	    wait_for_unbusy(wdc, du->dk_ctrlr) < 0)
 		goto nodevice;
-
-	bzero(&wdtab[du->dk_ctrlr], sizeof(struct buf));
 
 	free(du, M_TEMP);
 	return 8;
@@ -334,7 +334,7 @@ wdstrategy(register struct buf *bp)
 	/* queue transfer on drive, activate drive and controller if idle */
 	dp = &wdutab[lunit];
 	s = splbio();
-	disksort(dp, bp);
+	wddisksort(dp, bp);
 	if (dp->b_active == 0)
 		wdustart(du);		/* start drive */
 	if (wdtab[du->dk_ctrlr].b_active == 0)
@@ -345,6 +345,19 @@ wdstrategy(register struct buf *bp)
 done:
 	/* toss transfer, we're done early */
 	biodone(bp);
+}
+
+/*
+ * Need to skip over multitransfer bufs.
+ */
+void
+wddisksort(struct buf *dp, struct buf *bp)
+{
+	register struct buf *ap;
+
+	while ((ap = dp->b_actf) && ap->b_flags & B_XXX)
+		dp = ap;
+	disksort(dp, bp);
 }
 
 /*
@@ -449,7 +462,7 @@ loop:
 			if ((du->dk_bct + nextbp->b_bcount) / DEV_BSIZE >= 240)
 				break;
 			du->dk_bct += nextbp->b_bcount; 
-			oldbp->b_flags |= B_XXX;
+			nextbp->b_flags |= B_XXX;
 			oldbp = nextbp;
 			nextbp = nextbp->b_actf;
 		}
@@ -504,7 +517,7 @@ loop:
 	pg("c%d h%d s%d ", cylin, head, sector);
 #endif
 
-	sector += 1;	/* sectors begin with 1, not 0 */
+	sector++;	/* sectors begin with 1, not 0 */
     
 	wdtab[ctrlr].b_active = 1;		/* mark controller active */
 	wdc = du->dk_port;
@@ -596,11 +609,11 @@ retry:
 	}
     
 	/* then send it! */
-outagain:
 	outsw(wdc+wd_data, addr + du->dk_skip * DEV_BSIZE,
 	    DEV_BSIZE / sizeof(short));
 	du->dk_bc -= DEV_BSIZE;
 	du->dk_bct -= DEV_BSIZE;
+
 	wdtimeoutstatus[lunit] = 2;
 }
 
@@ -682,6 +695,7 @@ wdintr(struct intrframe wdif)
 					    WDERR_BITS);
 #endif
 				}
+				bp->b_error = EIO;
 				bp->b_flags |= B_ERROR;	/* flag the error */
 			}
 		} else if ((du->dk_flags & DKFL_QUIET) == 0)
@@ -731,13 +745,14 @@ outt:
 				diskerr(bp, "wd", "soft error", 0, du->dk_skip,
 				    &du->dk_dd);
 			wdtab[ctrlr].b_errcnt = 0;
-			wdtab[ctrlr].b_active = 0;
 	    
 			/* see if more to transfer */
 			if (du->dk_bc > 0 && (du->dk_flags & DKFL_ERROR) == 0) {
+				wdtab[ctrlr].b_active = 0;
 				wdstart(ctrlr);
 				return;	/* next chunk is started */
 			} else if ((du->dk_flags & (DKFL_SINGLE | DKFL_ERROR)) == DKFL_ERROR) {
+				wdtab[ctrlr].b_active = 0;
 				du->dk_skip = 0;
 				du->dk_skipm = 0;
 				du->dk_flags &= ~DKFL_ERROR;
@@ -763,7 +778,8 @@ done:
 		bp->b_flags &= ~B_XXX;
 		biodone(bp);
 	}
-    
+
+	/* controller now idle */
 	wdtab[ctrlr].b_active = 0;
 
 	/* anything more on drive queue? */
@@ -998,7 +1014,7 @@ wdcommand(struct disk *du, int cmd)
 		return stat;
     
 	/* is controller ready to return data? */
-	return wdc_wait(wdc+wd_status, du->dk_ctrlr, 0, WDCS_ERR | WDCS_DRQ);
+	return wdc_wait(wdc, du->dk_ctrlr, WDCS_ERR | WDCS_DRQ);
 }
 
 /*
@@ -1507,16 +1523,16 @@ wdreset(int ctrlr, int wdc, int err)
 }
 
 int
-wdc_wait(port, ctrlr, on, off)
-	int port, ctrlr;
-	int on, off;
+wdc_wait(wdc, ctrlr, mask)
+	int wdc, ctrlr;
+	int mask;
 {
 	int timeout = 0;
 	int stat;
 
 	for (;;) {
-		stat = inb(port);
-		if ((stat & on) != on || (stat & off) != 0)
+		stat = inb(wdc+wd_status);
+		if ((stat & WDCS_BUSY) == 0 && (stat & mask) != 0)
 			break;
 		DELAY(WDCDELAY);
 		if (++timeout > WDCNDELAY)
