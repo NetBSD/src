@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.114 1998/04/19 01:48:35 jonathan Exp $	*/
+/*	$NetBSD: machdep.c,v 1.115 1998/04/19 08:22:22 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.114 1998/04/19 01:48:35 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.115 1998/04/19 08:22:22 jonathan Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -825,9 +825,10 @@ haltsys:
 
 /* XXX clock hacks */
 #include "opt_dec_3maxplus.h"
+#include "opt_dec_3min.h"
 #include "opt_dec_maxine.h"
 
-#if !(defined(DEC_3MAXPLUS) || defined(DEC_MAXINE))
+#if !(defined(DEC_3MAXPLUS) || defined(DEC_MAXINE) ||defined(DEC_3MIN))
 #define	clkread()	(0)
 #else /* (defined(DEC_3MAXPLUS) || defined(DEC_MAXINE)) */
 
@@ -862,8 +863,8 @@ clkread()
 		extern u_int32_t mips3_cycle_count __P((void));
 		register u_int32_t mips3_cycles =
 		    mips3_cycle_count() - (u_int32_t)latched_cycle_cnt;
-		return ((mips3_cycles / cpu_mhz);
-	else
+		return (mips3_cycles / cpu_mhz);
+	} else
 #endif
 #ifdef DEC_MAXINE
 	if (systype == DS_MAXINE)
@@ -978,6 +979,17 @@ initcpu()
 	}
 	return (i);
 #endif
+}
+
+
+/*
+ * Wait "n" microseconds. (scsi code needs this).
+ */
+void
+delay(n)
+        int n;
+{
+        DELAY(n);
 }
 
 
