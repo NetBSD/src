@@ -1,4 +1,4 @@
-/*	$NetBSD: promlib.c,v 1.4 1999/04/14 09:12:46 pk Exp $ */
+/*	$NetBSD: promlib.c,v 1.5 1999/04/16 08:55:37 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -787,6 +787,7 @@ prom_init_oldmon()
 	promops.po_putchar = oldpvec->putChar;
 	promops.po_getchar = oldpvec->getChar;
 	promops.po_peekchar = oldpvec->mayGet;
+	promops.po_putstr = oldpvec->fbWriteStr;
 	promops.po_reboot = oldpvec->reBoot;
 	promops.po_abort = oldpvec->abortEntry;
 	promops.po_halt = oldpvec->exitToMon;
