@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.45 2000/11/27 08:39:55 chs Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.46 2000/12/03 05:56:27 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
