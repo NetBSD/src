@@ -1,4 +1,4 @@
-/*	$NetBSD: boot26.c,v 1.2 2002/05/27 20:17:11 bjh21 Exp $	*/
+/*	$NetBSD: boot26.c,v 1.3 2003/09/21 06:28:39 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 Ben Harris
@@ -27,6 +27,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <lib/libkern/libkern.h>
 #include <lib/libsa/stand.h>
 #include <lib/libsa/loadfile.h>
 #include <riscoscalls.h>
