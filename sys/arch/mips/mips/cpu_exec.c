@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_exec.c,v 1.31 2002/03/05 14:15:31 simonb Exp $	*/
+/*	$NetBSD: cpu_exec.c,v 1.32 2002/03/06 00:22:09 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -52,8 +52,10 @@
 
 #include <uvm/uvm_extern.h>
 
+#ifdef EXEC_ECOFF
 #include <sys/exec_ecoff.h>
-#include <sys/exec_elf.h>
+#endif
+#include <sys/exec_elf.h>			/* mandatory */
 #ifdef COMPAT_09
 #include <machine/bsd-aout.h>
 #endif
