@@ -1,4 +1,4 @@
-#	$NetBSD: RAMDISK,v 1.19 2002/09/18 02:44:03 lukem Exp $
+#	$NetBSD: RAMDISK,v 1.20 2004/05/21 15:25:18 he Exp $
 
 #
 # RAMDISK: Root/swap on ramdisk
@@ -42,7 +42,7 @@ options 	INET6		# IPV6
 # Enable the hooks used for initializing the ram-disk.
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT
-options 	MEMORY_DISK_ROOT_SIZE=1600
+options 	MEMORY_DISK_ROOT_SIZE=1800
 
 options 	USERCONF	# userconf(4) support
 options		PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
