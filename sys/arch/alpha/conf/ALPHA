@@ -1,4 +1,4 @@
-# $NetBSD: ALPHA,v 1.101 1999/08/29 16:55:48 thorpej Exp $
+# $NetBSD: ALPHA,v 1.102 1999/09/01 00:05:01 thorpej Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
@@ -305,6 +305,10 @@ cd*	at	atapibus? drive ?		# ATAPI CD-ROM devices
 
 # Floppy drives
 fd*	at	fdc? drive ?
+
+# USB bus support
+usb*	at uhci?
+usb*	at ohci?
 
 # USB Hubs
 uhub*	at usb?
