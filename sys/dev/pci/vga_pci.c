@@ -1,4 +1,4 @@
-/* $NetBSD: vga_pci.c,v 1.13 2002/06/27 06:26:55 junyoung Exp $ */
+/*	$NetBSD: vga_pci.c,v 1.14 2002/06/27 06:44:17 junyoung Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_pci.c,v 1.13 2002/06/27 06:26:55 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_pci.c,v 1.14 2002/06/27 06:44:17 junyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -188,6 +188,7 @@ int
 vga_pci_cnattach(bus_space_tag_t iot, bus_space_tag_t memt, 
     pci_chipset_tag_t pc, int bus, int device, int function)
 {
+
 	return (vga_cnattach(iot, memt, WSDISPLAY_TYPE_PCIVGA, 0));
 }
 
