@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 2002/03/22 18:10:25 thorpej Exp $
+#	$NetBSD: Makefile,v 1.22 2002/09/11 18:19:42 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -28,3 +28,6 @@ bootparam_prot.h: ${DESTDIR}/usr/include/rpcsvc/bootparam_prot.h
 
 bootparam_prot_svc.c: bootparam_prot.x bootparam_prot.h
 	${RPCGEN} -C -L -m -o ${.TARGET} bootparam_prot.x
+
+test: test.c
+	cc -o test ${.ALLSRC} -lrpcsvc
