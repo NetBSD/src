@@ -1,4 +1,4 @@
-/*	$NetBSD: strfile.h,v 1.4 1999/08/21 07:02:46 simonb Exp $	*/
+/*	$NetBSD: strfile.h,v 1.5 1999/12/30 01:26:44 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -39,7 +39,6 @@
  */
 
 #include <sys/types.h>
-#include <sys/endian.h>
 
 #define	STR_ENDSTRING(line,tbl) \
 	((line)[0] == (tbl).str_delim && (line)[1] == '\n')
