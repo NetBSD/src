@@ -1,4 +1,4 @@
-/*	$NetBSD: irframevar.h,v 1.2 2001/12/02 16:29:26 augustss Exp $	*/
+/*	$NetBSD: irframevar.h,v 1.3 2001/12/02 20:06:00 augustss Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -53,7 +53,6 @@ struct irframe_softc {
 	struct	irframe_methods	*sc_methods;
 	void			*sc_handle;
 	char			sc_open;
-	u_int			sc_rdframes;
 	struct	selinfo		sc_rdsel;
 };
 
