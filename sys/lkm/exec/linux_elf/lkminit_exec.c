@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_exec.c,v 1.1 2000/12/08 23:05:41 jdolecek Exp $ */
+/* $NetBSD: lkminit_exec.c,v 1.2 2001/05/15 02:00:13 lukem Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@ int exec_linux_elf_lkmentry __P((struct lkm_table *, int, int));
 
 static struct execsw exec_linux_elf =
 	{ sizeof (Elf_Ehdr), ELFNAME2(exec,makecmds),
-	  { elf_probe_func: ELFNAME2(linux,probe) },
+	  { ELFNAME2(linux,probe) },
 	  NULL,	/* will be set by exec_add() */
 	  EXECSW_PRIO_ANY,
 	  LINUX_ELF_AUX_ARGSIZ,
