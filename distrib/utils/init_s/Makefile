@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.8 1999/06/21 01:19:36 cgd Exp $
+# $NetBSD: Makefile,v 1.9 2000/05/18 00:43:05 matt Exp $
 # Build a "small init" (i.e. for boot media)
 
 PROG=	init
@@ -10,6 +10,7 @@ LDADD=	-lutil
 
 SRCDIR= ${.CURDIR}/../../../sbin/init
 CPPFLAGS+= -DLETS_GET_SMALL -I${SRCDIR}
+COPTS+= -Os
 
 all: ${PROG}
 

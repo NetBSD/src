@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2000/01/04 08:14:12 itojun Exp $
+# $NetBSD: Makefile,v 1.2 2000/05/18 00:43:08 matt Exp $
 # Build ping6 without IPSEC
 
 SRCDIR= ${.CURDIR}/../../../sbin/ping6
@@ -7,6 +7,7 @@ NOMAN=	yes
 
 CPPFLAGS+=-I${SRCDIR}
 CPPFLAGS+=-DINET6
+COPTS+= -Os
 
 # KAME scope id hack
 CPPFLAGS+=-DKAME_SCOPEID
