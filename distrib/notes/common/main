@@ -1,4 +1,4 @@
-.\" $NetBSD: main,v 1.6.2.19 2000/02/13 18:01:11 he Exp $
+.\" $NetBSD: main,v 1.6.2.20 2000/02/13 20:14:52 he Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -141,29 +141,33 @@ you need to know which versions you can upgrade with
 .Nx
 such as versions 1.3.3, 1.2 etc.
 .Pp
-The intermediate versions of code available in the main development
+The intermediate development versions of code available on the main
 trunk in our CVS repository (also known as ``NetBSD-current'') from
-after the point where the release cycle for 1.4 was started, are
-designated by version identifiers such as 1.4A, 1.4B, 1.4P etc.
-These identifiers do not designate a release, but try to indicate
-major changes in internal kernel APIs.  Note that the kernel from
+.Em after
+the point where the release cycle for 1.4 was started are designated
+by version identifiers such as 1.4A, 1.4B, 1.4P etc.  These
+identifiers do not designate releases, but indicate major changes
+in internal kernel APIs.  Note that the kernel from
 .Nx
 \*V can
 .Em not
-be used to upgrade a system running one of those development
-versions.  Trying to use the
+be used to upgrade a system running one of those intermediate
+development versions.  Trying to use the
 .Nx \*V
 kernel on such a system
 .Em will
 in all probability result in problems.
 .Pp
-Please also note that it is not possible to do a direct ``feature-wise''
-comparison between \*V and any of the intermediate development
-versions mentioned above.  During the relese cycles for 1.4.1 and
-\*V, selective fixes (with minor impact on the stability of the
-1.4 release branch) have been imported from the main development
-trunk.  So, there may be features in \*V which were not in e.g. 1.4H,
-but the reverse is also true.
+Please also note that it is not possible to do a direct ``version''
+comparison between any of the intermediate development versions
+mentioned above and \*V to determine if a given feature is present
+or absent in \*V.  The development of 1.4, 1.4.1 and \*V is done
+on a separate branch in the CVS repository which was created when
+the release cylcle for 1.4 was started, and during the release
+cycles for all these versions selective fixes (with minor impact on
+the stability of the code on the release branch) have been imported
+from the main development trunk.  So, there are features in \*V
+which were not in e.g. 1.4H, but the reverse is also true.
 .Ss Major Changes Between 1.4.1 and 1.4.2
 The complete list of changes between
 .Nx
