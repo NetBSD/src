@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.h,v 1.11 1998/03/01 02:23:36 fvdl Exp $	*/
+/*	$NetBSD: inode.h,v 1.12 1999/03/09 23:57:14 perseant Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -156,6 +156,7 @@ struct inode {
 #define	IN_RENAME	0x0010		/* Inode is being renamed. */
 #define	IN_SHLOCK	0x0020		/* File has shared lock. */
 #define	IN_EXLOCK	0x0040		/* File has exclusive lock. */
+#define IN_CLEANING     0x0080		/* LFS: file is being cleaned */
 
 #ifdef _KERNEL
 /*
