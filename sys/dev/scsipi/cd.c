@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.150 2001/05/20 21:07:58 christos Exp $	*/
+/*	$NetBSD: cd.c,v 1.151 2001/06/26 15:32:03 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -366,11 +366,15 @@ cdopen(dev, flag, fmt, p)
 		/* Check that it is still responding and ok. */
 		error = scsipi_test_unit_ready(periph,
 		    XS_CTL_IGNORE_ILLEGAL_REQUEST | XS_CTL_IGNORE_MEDIA_CHANGE |
-		    XS_CTL_IGNORE_NOT_READY);
+		    XS_CTL_SILENT_NODEV);
 		SC_DEBUG(periph, SCSIPI_DB1,
 		    ("cdopen: scsipi_test_unit_ready, error=%d\n", error));
-		if (error)
-			goto bad3;
+		if (error) {
+			if (part != RAW_PART || fmt != S_IFCHR)
+				goto bad3;
+			else
+				goto out;
+		}
 
 		/*
 		 * Start the pack spinning if necessary. Always allow the
