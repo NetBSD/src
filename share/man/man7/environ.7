@@ -1,4 +1,4 @@
-.\"	$NetBSD: environ.7,v 1.14 2002/06/12 00:19:48 wiz Exp $
+.\"	$NetBSD: environ.7,v 1.15 2003/04/02 16:41:50 perry Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -113,6 +113,13 @@ for more information.
 .It Ev MIXERDEVICE
 The name of the audio mixer device to be used by
 .Xr mixerctl 1 .
+.It Ev PAGER
+The program used for paginating the output of several commands
+such as
+.Xr man 1 .
+If null or not set, the standard pagination program
+.Xr more 1
+will be used.
 .It Ev PATH
 The sequence of directories, separated by colons, searched by
 .Xr csh 1 ,
@@ -220,6 +227,8 @@ unless you know what you are doing.
 .Xr csh 1 ,
 .Xr ex 1 ,
 .Xr login 1 ,
+.Xr man 1 ,
+.Xr more 1 ,
 .Xr sh 1 ,
 .Xr execve 2 ,
 .Xr _DIAGASSERT 3 ,
