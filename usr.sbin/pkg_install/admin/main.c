@@ -1,8 +1,8 @@
-/*	$NetBSD: main.c,v 1.1 1999/01/19 17:01:58 hubertf Exp $	*/
+/*	$NetBSD: main.c,v 1.2 1999/03/03 00:35:16 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.1 1999/01/19 17:01:58 hubertf Exp $");
+__RCSID("$NetBSD: main.c,v 1.2 1999/03/03 00:35:16 hubertf Exp $");
 #endif
 
 /*
@@ -383,7 +383,7 @@ int main(int argc, char *argv[])
 	    if (errno)
 		perror ("pkgdb_remove");
 	    else
-		printf("Key not present.\n");
+		printf("Key not present in pkgdb.\n");
 	}
 	
 	pkgdb_close();
