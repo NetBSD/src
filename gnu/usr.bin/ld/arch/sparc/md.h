@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.15 1998/10/19 03:09:33 matt Exp $	*/
+/*	$NetBSD: md.h,v 1.16 1998/12/15 21:22:52 pk Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 #define	MAX_ALIGNMENT	(sizeof (double))
 
-#ifdef NetBSD
+#ifdef __NetBSD__
 #define PAGSIZ			__LDPGSZ
 
 #define N_SET_FLAG(ex,f)	N_SETMAGIC(ex,N_GETMAGIC(ex), \
@@ -56,7 +56,7 @@
 #define TEXT_START(ex)		(N_TXTADDR(ex) + N_ADJUST(ex))
 #define DATA_START(ex)		(N_DATADDR(ex) + N_ADJUST(ex))
 
-#else
+#else /* __NetBSD__ */
 
 /* Get the SunOS a.out and relocation nomenclature */
 #define EX_DYNAMIC		1
@@ -70,7 +70,7 @@
 #undef  relocation_info
 #define relocation_info	                reloc_info_sparc
 #define r_symbolnum			r_index
-#endif /* NetBSD */
+#endif /* __NetBSD__ */
 
 #define N_BADMID(ex) \
 	(N_GETMID(ex) != 0 && N_GETMID(ex) != MID_MACHINE && \
