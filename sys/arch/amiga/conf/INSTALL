@@ -1,9 +1,9 @@
-# $NetBSD: INSTALL,v 1.50 2005/02/18 21:05:50 dsl Exp $
+# $NetBSD: INSTALL,v 1.51 2005/02/20 17:57:39 jdolecek Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
 #
-# Created from: # NetBSD: GENERIC.in,v 1.30 2005/01/31 16:54:33 hannken Exp $
+# Created from: # NetBSD: GENERIC.in,v 1.33 2005/02/20 17:57:02 jdolecek Exp $
 #
 # GENERIC machine description file
 #
@@ -28,7 +28,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.50 $"
+#ident 		"GENERIC-$Revision: 1.51 $"
 
 makeoptions	COPTS="-Os"
 
@@ -106,7 +106,6 @@ file-system 	KERNFS		# kernel data-structure filesystem
 # Filesystem options
 
 #options 	FFS_EI		# FFS Endian Independant support
-options 	FFS_NO_SNAPSHOT	# ffs snapshots
 
 
 options 	VNODE_OP_NOINLINE	# Not inlining vnode op calls saves mem
