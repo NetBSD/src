@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.18 2004/08/20 14:12:52 wennmach Exp $	*/
+/*	$NetBSD: intr.c,v 1.19 2004/10/23 21:24:05 yamt Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -104,7 +104,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.18 2004/08/20 14:12:52 wennmach Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.19 2004/10/23 21:24:05 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -516,6 +516,29 @@ found:
 	return 0;
 }
 
+#ifdef MULTIPROCESSOR
+static int intr_biglock_wrapper(void *);
+
+/*
+ * intr_biglock_wrapper: grab biglock and call a real interrupt handler.
+ */
+
+static int
+intr_biglock_wrapper(void *vp)
+{
+	struct intrhand *ih = vp;
+	int ret;
+
+	KERNEL_LOCK(LK_EXCLUSIVE|LK_CANRECURSE);
+
+	ret = (*ih->ih_realfun)(ih->ih_realarg);
+
+	KERNEL_UNLOCK();
+
+	return ret;
+}
+#endif /* MULTIPROCESSOR */
+
 void *
 intr_establish(int legacy_irq, struct pic *pic, int pin, int type, int level,
 	       int (*handler)(void *), void *arg)
@@ -525,6 +548,9 @@ intr_establish(int legacy_irq, struct pic *pic, int pin, int type, int level,
 	int slot, error, idt_vec;
 	struct intrsource *source;
 	struct intrstub *stubp;
+#ifdef MULTIPROCESSOR
+	boolean_t mpsafe = level >= IPL_SCHED;
+#endif /* MULTIPROCESSOR */
 
 #ifdef DIAGNOSTIC
 	if (legacy_irq != -1 && (legacy_irq < 0 || legacy_irq > 15))
@@ -602,13 +628,19 @@ intr_establish(int legacy_irq, struct pic *pic, int pin, int type, int level,
 	     p = &q->ih_next)
 		;
 
-	ih->ih_fun = handler;
-	ih->ih_arg = arg;
+	ih->ih_fun = ih->ih_realfun = handler;
+	ih->ih_arg = ih->ih_realarg = arg;
 	ih->ih_next = *p;
 	ih->ih_level = level;
 	ih->ih_pin = pin;
 	ih->ih_cpu = ci;
 	ih->ih_slot = slot;
+#ifdef MULTIPROCESSOR
+	if (!mpsafe) {
+		ih->ih_fun = intr_biglock_wrapper;
+		ih->ih_arg = ih;
+	}
+#endif /* MULTIPROCESSOR */
 	*p = ih;
 
 	intr_calculatemasks(ci);
@@ -837,20 +869,6 @@ cpu_intr_init(struct cpu_info *ci)
 }
 
 #ifdef MULTIPROCESSOR
-void
-x86_intlock(struct intrframe *iframe)
-{
-	if (iframe->if_ppl < IPL_SCHED)
-		spinlockmgr(&kernel_lock, LK_EXCLUSIVE|LK_CANRECURSE, 0);
-}
-
-void
-x86_intunlock(struct intrframe *iframe)
-{
-	if (iframe->if_ppl < IPL_SCHED)
-		spinlockmgr(&kernel_lock, LK_RELEASE, 0);
-}
-
 void
 x86_softintlock(void)
 {
