@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.156.2.2 2001/09/18 19:13:54 fvdl Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.156.2.3 2001/09/21 15:00:12 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -1113,6 +1113,19 @@ loop:
 		}
 		break;
 	}
+	/*
+	 * This if() statement seems a little confusing. Here is what
+	 * it means:
+	 *
+	 * Create a new vnode, if it is a cloning device, if no vnode for
+	 * this device was found, or if a dead vnode for this device was
+	 * found. Do not create aliases for block devices (unless it was
+	 * explicitly marked as cloning).
+	 *
+	 * If a (possibly dead) vnode was found, add the new vnode to
+	 * the hash chain that contains all vnodes describing the same
+	 * device.
+	 */
 	if (vp == NULL || vp->v_tag != VT_NON || vp->v_type != VBLK ||
 	    iscloningvnode(vp)) {
 		MALLOC(nvp->v_specinfo, struct specinfo *,
