@@ -1,4 +1,4 @@
-/*	$NetBSD: sbp2.c,v 1.9 2002/12/09 23:42:53 jmc Exp $	*/
+/*	$NetBSD: sbp2.c,v 1.10 2002/12/13 07:47:54 jmc Exp $	*/
 
 /*
  * Copyright (c) 2001,2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbp2.c,v 1.9 2002/12/09 23:42:53 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbp2.c,v 1.10 2002/12/13 07:47:54 jmc Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -94,7 +94,7 @@ static struct simplelock sbp2_maps_lock = SIMPLELOCK_INITIALIZER;
 #ifdef SBP2_DEBUG
 #define DPRINTF(x)      if (sbp2debug) printf x
 #define DPRINTFN(n,x)   if (sbp2debug>(n)) printf x
-int     sbp2debug = 1;
+int     sbp2debug = 3;
 #else
 #define DPRINTF(x)
 #define DPRINTFN(n,x)
@@ -219,14 +219,15 @@ sbp2_init(struct ieee1394_softc *sc, struct p1212_dir *udir)
 		
 		status_orb.cmd.ab_addr = sbp2_alloc_addr(sbp2);
 		status_orb.cmd.ab_length = SBP2_STATUS_SIZE;
+		status_orb.cmd.ab_data = malloc(SBP2_STATUS_SIZE, M_1394DATA,
+		    M_WAITOK|M_ZERO);
 		status_orb.cmd.ab_req = sc;
 		status_orb.cmd.ab_cb = sbp2_orb_resp;
 		status_orb.cmd.ab_cbarg = &status_orb;
 		status_orb.cmd.ab_tcode = IEEE1394_TCODE_WRITE_REQ_BLOCK;
 		status_orb.state = SBP2_ORB_STATUS_STATE;
 		status_orb.sbp2 = sbp2;
-		sc->sc1394_callback.sc1394_inreg(&status_orb.cmd, 1);
-		
+		sc->sc1394_callback.sc1394_inreg(&status_orb.cmd, 0);
 	} 
 	
 	TAILQ_INIT(&sbp2->luns);
@@ -454,14 +455,17 @@ sbp2_login(struct sbp2 *sbp2, struct sbp2_lun *lun)
 	
 	lun->doorbell.ab_addr = respaddr;
 	lun->doorbell.ab_length = SBP2_LOGIN_MAX_RESP;
+	lun->doorbell.ab_data = malloc (SBP2_LOGIN_MAX_RESP, M_1394DATA,
+	    M_WAITOK|M_ZERO);
 	lun->doorbell.ab_req = sbp2->sc;
 	lun->doorbell.ab_cb = sbp2_login_resp;
 	lun->doorbell.ab_cbarg = lun;
 	lun->doorbell.ab_tcode = IEEE1394_TCODE_WRITE_REQ_BLOCK;
 	
 	sbp2->sc->sc1394_callback.sc1394_inreg(&orb->cmd, 0);
-	sbp2->sc->sc1394_callback.sc1394_inreg(&lun->doorbell, 1);
+	sbp2->sc->sc1394_callback.sc1394_inreg(&lun->doorbell, 0);
 	sbp2->sc->sc1394_callback.sc1394_write(&lun->command);
+
 	
 	simple_lock(&sbp2->orblist_lock);
 	orb = sbp2_alloc_orb();
@@ -670,6 +674,7 @@ sbp2_free(struct sbp2 *sbp2)
 	}
 	simple_unlock(&sbp2_maps_lock);
 	sbp2->sc->sc1394_callback.sc1394_unreg(&status_orb.cmd, 1);
+	free (status_orb.cmd.ab_data, M_1394DATA);
 }
 
 #ifdef FW_DEBUG
@@ -985,19 +990,21 @@ sbp2_data_resp(struct ieee1394_abuf *abuf, int rcode)
 	u_int32_t offset;
 	unsigned char *addr;
 	
-	orb = abuf->ab_cbarg;
-	
-	simple_lock(&orb->orb_lock);
-
-	addr = orb->data_map.laddr;
-	offset = abuf->ab_addr - orb->data_map.fwaddr;
 	switch (abuf->ab_tcode) {
+
+	case IEEE1394_TCODE_READ_RESP_BLOCK:
 	case IEEE1394_TCODE_WRITE_REQ_BLOCK:
-		memcpy(addr + offset, abuf->ab_data, abuf->ab_retlen);
-		free(abuf->ab_data, M_1394DATA);
+		return;
 		break;
 	case IEEE1394_TCODE_READ_REQ_BLOCK:
-		orb->resp.ab_addr = abuf->ab_addr;
+		orb = abuf->ab_cbarg;
+	
+		simple_lock(&orb->orb_lock);
+
+		addr = orb->data_map.laddr;
+		offset = abuf->ab_retaddr - orb->data_map.fwaddr;
+
+		orb->resp.ab_addr = abuf->ab_retaddr;
 		orb->resp.ab_tcode = IEEE1394_TCODE_READ_RESP_BLOCK;
 		orb->resp.ab_tlabel = abuf->ab_tlabel;
 		orb->resp.ab_length = abuf->ab_retlen;
@@ -1006,14 +1013,11 @@ sbp2_data_resp(struct ieee1394_abuf *abuf, int rcode)
 		orb->resp.ab_cb = sbp2_data_resp;
 		orb->resp.ab_cbarg = orb;
 		orb->sbp2->sc->sc1394_callback.sc1394_write(&orb->resp);
-		break;
-	case IEEE1394_TCODE_READ_RESP_BLOCK:
+		simple_unlock(&orb->orb_lock);
 		break;
 	default:
 		panic("Invalid tcode: 0x%0x\n", abuf->ab_tcode);
 	}
-	
-	simple_unlock(&orb->orb_lock);
 }
 
 void *
@@ -1102,6 +1106,7 @@ static void
 sbp2_free_orb(struct sbp2_orb *orb)
 {
 	simple_lock(&orb->orb_lock);
+	DPRINTFN(2, ("Freeing orb at addr: 0x%016qx\n", orb->cmd.ab_addr));
 	if (orb->data_map.laddr) {
 		orb->sbp2->sc->sc1394_callback.sc1394_unreg(&orb->data, 1);
 		sbp2_free_data_mapping(orb->sbp2, &orb->data_map);
