@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  * from: Header: brk.s,v 1.3 92/06/25 12:56:05 mccanne Exp
- * $Id: brk.S,v 1.1 1993/10/07 00:22:13 cgd Exp $
+ * $Id: brk.S,v 1.2 1994/02/10 20:15:56 pk Exp $
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
@@ -51,6 +51,25 @@
 minbrk:	.long	_end			! lower brk limit; also for gmon code
 	.text
 
+#ifdef PIC
+ENTRY(brk)
+	PIC_PROLOGUE(%o5,%o4)
+	ld	[%o5 + minbrk], %o4
+	ld	[%o4], %o1		! %o1 = minbrk
+	cmp	%o1, %o0		! if (minbrk > %o0)
+	bg,a	0f
+	 mov	%o1, %o0		!	%o0 = minbrk
+0:
+	mov	%o0, %o2		! save argument to syscall
+	mov	SYS_break, %g1
+	t	ST_SYSCALL
+	bcc,a	1f
+	ld	[%o5 + curbrk], %o4
+	ERROR()
+1:
+	retl				! success, return 0 & record new break
+	 st	%o2, [%o4]
+#else
 ENTRY(brk)
 	sethi	%hi(minbrk), %o1	! %o1 = minbrk
 	ld	[%o1 + %lo(minbrk)], %o1
@@ -67,3 +86,4 @@ ENTRY(brk)
 1:
 	retl				! success, return 0 & record new break
 	 st	%o2, [%g1 + %lo(curbrk)]
+#endif

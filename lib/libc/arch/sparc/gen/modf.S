@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  * from: Header: modf.s,v 1.3 92/06/20 00:00:54 torek Exp
- * $Id: modf.S,v 1.2 1993/12/08 18:33:43 pk Exp $
+ * $Id: modf.S,v 1.3 1994/02/10 20:15:47 pk Exp $
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
@@ -102,8 +102,13 @@ ENTRY(modf)
 	sethi	%hi(0x80000000), %l1	! sign bit
 	andn	%i0, %l1, %l0
 	st	%l0, [%fp - 16]
+#ifdef PIC
+	PICCY_SET(Lmagic, %l0, %o7)
+	ldd	[%l0], %f2
+#else
 	sethi	%hi(Lmagic), %l0
 	ldd	[%l0 + %lo(Lmagic)], %f2
+#endif
 	st	%i1, [%fp - 12]
 	ldd	[%fp - 16], %f4		! %f4:f5 = v
 
@@ -178,8 +183,14 @@ Lbig:
 	 * case the integer part is the original value, and the
 	 * fractional part is 0.
 	 */
+#ifdef PIC
+	PICCY_SET(L0, %l0, %o7)
+	std	%f0, [%i2]		! *ival = val;
+	ldd	[%l0], %f0		! return 0.0;
+#else
 	sethi	%hi(L0), %l0
 	std	%f0, [%i2]		! *ival = val;
 	ldd	[%l0 + %lo(L0)], %f0	! return 0.0;
+#endif
 	ret
 	restore
