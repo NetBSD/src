@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: dmresrc.c - Resource Descriptor disassembly
- *              xRevision: 9 $
+ *              xRevision: 10 $
  *
  ******************************************************************************/
 
@@ -116,7 +116,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmresrc.c,v 1.5 2003/11/09 11:51:00 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dmresrc.c,v 1.6 2003/12/13 18:11:00 kochi Exp $");
 
 #include "acpi.h"
 #include "amlcode.h"
@@ -438,7 +438,7 @@ AcpiDmIsResourceDescriptor (
 
     /* The list must have a valid END_TAG */
 
-    if (ByteData[ByteCount-2] != (ACPI_RDESC_TYPE_END_TAG | 1))
+    if (ByteData[ByteCount-1] != (ACPI_RDESC_TYPE_END_TAG | 1))
     {
         return FALSE;
     }

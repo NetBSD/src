@@ -116,7 +116,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbinput.c,v 1.10 2003/11/09 11:50:59 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbinput.c,v 1.11 2003/12/13 18:11:00 kochi Exp $");
 
 #include "acpi.h"
 #include "acdebug.h"

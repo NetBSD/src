@@ -1,4 +1,4 @@
-#	$NetBSD: files.acpica,v 1.8 2003/11/26 16:06:12 kochi Exp $
+#	$NetBSD: files.acpica,v 1.9 2003/12/13 18:10:59 kochi Exp $
 
 file	dev/acpi/acpica/Osd/OsdEnvironment.c		acpi
 file	dev/acpi/acpica/Osd/OsdHardware.c		acpi

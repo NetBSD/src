@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Name: acnetbsd.h - OS specific defines, etc.
- *       $Revision: 1.10 $
+ *       $Revision: 1.11 $
  *
  *****************************************************************************/
 
@@ -161,7 +161,6 @@
 
 #ifdef ACPI_DEBUG
 #define ACPI_DEBUG_OUTPUT
-#define	ACPI_DISASSEMBLER
 #define ACPI_DBG_TRACK_ALLOCATIONS
 #ifdef DEBUGGER_THREADING
 #undef DEBUGGER_THREADING
@@ -169,6 +168,7 @@
 #define DEBUGGER_THREADING 0	/* integrated with DDB */
 #include "opt_ddb.h"
 #ifdef DDB
+#define ACPI_DISASSEMBLER
 #define ACPI_DEBUGGER
 #endif /* DDB */
 #endif /* ACPI_DEBUG */
