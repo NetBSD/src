@@ -48,14 +48,27 @@ static char sccsid[] = "@(#)config.c	5.6 (Berkeley) 3/1/91";
 #include <string.h>
 #include <stdlib.h>
 #include <pwd.h>
+#include <err.h>
 #include "pathnames.h"
 
-#define	MAXLINE		1024
-
+extern void enomem();
 extern char *progname;
 char *pathbuf, **arorder;
 
 static FILE *cfp;
+
+static void
+openconfig()
+{
+	if (cfp) {
+		rewind(cfp);
+		return;
+	}
+	if (!(cfp = fopen(_PATH_MANCONF, "r"))) {
+		err (1, "can't open configuration file %s.", _PATH_MANCONF);
+	}
+}
+
 
 /*
  * getpath --
@@ -68,16 +81,10 @@ getpath(sects)
 {
 	register char **av, *p;
 	size_t len;
-	char line[MAXLINE];
-	static int openconfig();
+	char *line;
 
 	openconfig();
-	while (fgets(line, sizeof(line), cfp)) {
-		if (!index(line, '\n')) {
-			(void)fprintf(stderr, "%s: config line too long.\n",
-			    progname);
-			exit(1);
-		}
+	while ((line = fgetline (cfp, (size_t *) 0))) {
 		p = strtok(line, " \t\n");
 		if (!p || *p == '#')
 			continue;
@@ -86,7 +93,7 @@ getpath(sects)
 				break;
 		if (!*av)
 			continue;
-		while (p = strtok((char *)NULL, " \t\n")) {
+		while (p = strtok((char *)NULL, " \t")) {
 			len = strlen(p);
 			if (p[len - 1] == '/')
 				for (av = arorder; *av; ++av)
@@ -125,42 +132,24 @@ register size_t len1;
 	*bp = '\0';
 }
 
-static
-openconfig()
-{
-	if (cfp) {
-		rewind(cfp);
-		return;
-	}
-	if (!(cfp = fopen(_PATH_MANCONF, "r"))) {
-		(void)fprintf(stderr, "%s: no configuration file %s.\n",
-		    progname, _PATH_MANCONF);
-		exit(1);
-	}
-}
-
 char **
 getdb()
 {
 	register char *p;
 	int cnt, num;
-	char **ar, line[MAXLINE];
+	char **ar, *line;
 
 	ar = NULL;
 	num = 0;
 	cnt = -1;
+
 	openconfig();
-	while (fgets(line, sizeof(line), cfp)) {
-		if (!index(line, '\n')) {
-			(void)fprintf(stderr, "%s: config line too long.\n",
-			    progname);
-			exit(1);
-		}
-		p = strtok(line, " \t\n");
+	while ((line = fgetline(cfp, (size_t *) 0))) {
+		p = strtok(line, " \t");
 #define	WHATDB	"_whatdb"
 		if (!p || *p == '#' || strcmp(p, WHATDB))
 			continue;
-		while (p = strtok((char *)NULL, " \t\n")) {
+		while (p = strtok((char *)NULL, " \t")) {
 			if (cnt == num - 1 &&
 			    !(ar = realloc(ar, (num += 30) * sizeof(char **))))
 				enomem();
@@ -182,23 +171,19 @@ getorder()
 {
 	register char *p;
 	int cnt, num;
-	char **ar, line[MAXLINE];
+	char **ar, *line;
 
 	ar = NULL;
 	num = 0;
 	cnt = -1;
+
 	openconfig();
-	while (fgets(line, sizeof(line), cfp)) {
-		if (!index(line, '\n')) {
-			(void)fprintf(stderr, "%s: config line too long.\n",
-			    progname);
-			exit(1);
-		}
-		p = strtok(line, " \t\n");
+	while ((line = fgetline(cfp, (size_t *) 0))) {
+		p = strtok(line, " \t");
 #define	SUBDIR	"_subdir"
 		if (!p || *p == '#' || strcmp(p, SUBDIR))
 			continue;
-		while (p = strtok((char *)NULL, " \t\n")) {
+		while (p = strtok((char *)NULL, " \t")) {
 			if (cnt == num - 1 &&
 			    !(ar = realloc(ar, (num += 30) * sizeof(char **))))
 				enomem();
@@ -219,16 +204,11 @@ getsection(sect)
 	char *sect;
 {
 	register char *p;
-	char line[MAXLINE];
+	char *line;
 
 	openconfig();
-	while (fgets(line, sizeof(line), cfp)) {
-		if (!index(line, '\n')) {
-			(void)fprintf(stderr, "%s: config line too long.\n",
-			    progname);
-			exit(1);
-		}
-		p = strtok(line, " \t\n");
+	while ((line = fgetline(cfp, (size_t *) 0))) {
+		p = strtok(line, " \t");
 		if (!p || *p == '#')
 			continue;
 		if (!strcmp(p, sect))
@@ -237,6 +217,7 @@ getsection(sect)
 	return(0);
 }
 
+void
 enomem()
 {
 	(void)fprintf(stderr, "%s: %s\n", progname, strerror(ENOMEM));
