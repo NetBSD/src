@@ -1,10 +1,14 @@
 #!/bin/sh
 #
-# $NetBSD: isdnd,v 1.3 2001/01/08 12:45:40 martin Exp $
+# $NetBSD: isdnd,v 1.4 2001/04/26 03:54:38 lukem Exp $
 #
 
 # PROVIDE: isdnd
 # REQUIRE: NETWORK syslogd mountcritremote
+#
+#	Note that this means that syslogd will not be listening on
+#	any isdn addresses.  This is considered a feature.
+#
 
 . /etc/rc.subr
 
@@ -27,15 +31,15 @@ if checkyesno isdnd && checkyesno isdn_autoupdown; then
 	# down them (for symetry, and effectively they are down).
 
 	case "$_arg" in
-	  start)
+	start)
 		ifflag="-d"
 		ifcmd="up"
 		;;
-	  stop)
+	stop)
 		ifflag="-u"
 		ifcmd="down"
 		;;
-	  *)
+	*)
 		exit 0
 		;;
 	esac
@@ -63,4 +67,3 @@ if checkyesno isdnd && checkyesno isdn_autoupdown; then
 		ifconfig $int $ifcmd
 	done
 fi
-
