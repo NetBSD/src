@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.155 2003/04/10 22:07:00 christos Exp $
+# $NetBSD: GENERIC,v 1.156 2003/04/26 14:10:10 ragge Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.155 $"
+#ident 		"GENERIC-$Revision: 1.156 $"
 
 maxusers	32
 
@@ -438,3 +438,4 @@ pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	openfirm		# /dev/openfirm
 pseudo-device	wsmux			# mouse and keyboard multiplexor
 pseudo-device	clockctl		# user control of clock subsystem
+pseudo-device	ksyms			# /dev/ksyms
