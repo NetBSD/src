@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.2 1998/07/16 12:55:19 is Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.3 1998/07/22 12:22:09 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -357,10 +357,9 @@ usbd_free_iface_data(dev, ifcno)
 }
 
 usbd_status
-usbd_set_config_no(dev, no, confp)
+usbd_set_config_no(dev, no)
 	usbd_device_handle dev;
 	int no;
-	int *confp;
 {
 	usb_status_t ds;
 	usb_hub_status_t hs;
@@ -440,8 +439,6 @@ usbd_set_config_no(dev, no, confp)
 	dev->power = power;
 	dev->self_powered = selfpowered;
 
-	if (confp)
-		*confp = cdp->bConfigurationValue;
 	r = usbd_set_config(dev, cdp->bConfigurationValue);
 	if (r != USBD_NORMAL_COMPLETION) {
 		DPRINTF(("usbd_set_config_no: setting config=%d failed, error=%d\n",
@@ -555,7 +552,7 @@ usbd_new_device(parent, bus, depth, lowspeed, port, up)
 	usbd_status r;
 	struct usb_attach_arg uaa;
 	int addr;
-	int found, i;
+	int found, i, confi;
 
 	DPRINTF(("usbd_new_device bus=%p depth=%d lowspeed=%d\n",
 		 bus, depth, lowspeed));
@@ -652,19 +649,26 @@ usbd_new_device(parent, bus, depth, lowspeed, port, up)
 	DPRINTF(("usbd_new_device: no device driver found\n"));
 	/* Next try with interface drivers. */
 	/* XXX should we try all configurations? */
-	r = usbd_set_config_no(dev, 0, 0);
-	if (r != USBD_NORMAL_COMPLETION) {
-		printf("%s: set config at addr %d failed, error=%d\n",
-		       parent->dv_xname, addr, r);
-		goto bad;
+
+	for (confi = 0; confi < d->bNumConfigurations; confi++) {
+		r = usbd_set_config_no(dev, confi);
+		if (r != USBD_NORMAL_COMPLETION) {
+			printf("%s: set config at addr %d failed, error=%d\n",
+			       parent->dv_xname, addr, r);
+			goto bad;
+		}
+		for (found = i = 0; i < dev->cdesc->bNumInterface; i++) {
+			uaa.iface = &dev->ifaces[i];
+			if (config_found_sm(parent, &uaa, usbd_print, 
+					    usbd_submatch))
+				found++;
+		}
+		if (found != 0)
+			return (USBD_NORMAL_COMPLETION);
 	}
-	for (found = i = 0; i < dev->cdesc->bNumInterface; i++) {
-		uaa.iface = &dev->ifaces[i];
-		if (config_found_sm(parent, &uaa, usbd_print, usbd_submatch))
-			found++;
-	}
-	if (found != 0)
-		return (USBD_NORMAL_COMPLETION);
+	/* No interfaces were attach in any of the configurations. */
+	if (d->bNumConfigurations > 0)
+		usbd_set_config_no(dev, 0);
 
 	DPRINTF(("usbd_new_device: no interface drivers found\n"));
 
