@@ -1,4 +1,4 @@
-/*	$NetBSD: uio.h,v 1.16 1998/06/30 19:48:56 thorpej Exp $	*/
+/*	$NetBSD: uio.h,v 1.17 1998/07/28 17:55:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993, 1994
@@ -56,7 +56,7 @@ struct uio {
 	struct	iovec *uio_iov;
 	int	uio_iovcnt;
 	off_t	uio_offset;
-	int	uio_resid;
+	size_t	uio_resid;
 	enum	uio_seg uio_segflg;
 	enum	uio_rw uio_rw;
 	struct	proc *uio_procp;
