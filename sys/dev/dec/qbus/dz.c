@@ -1,4 +1,4 @@
-/*	$NetBSD: dz.c,v 1.9 1998/05/23 12:49:30 ragge Exp $	*/
+/*	$NetBSD: dz.c,v 1.10 1998/06/14 11:52:35 ragge Exp $	*/
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
  * Copyright (c) 1992, 1993
@@ -165,6 +165,10 @@ dzrint(cntlr)
 		line = DZ_PORT(c>>8);
 		tp = sc->sc_dz[line].dz_tty;
 
+		/* Must be caught early */
+		if (sc->sc_catch && (*sc->sc_catch)(line, cc))
+			continue;
+
 		if (!(tp->t_state & TS_ISOPEN)) {
 			wakeup((caddr_t)&tp->t_rawq);
 			continue;
@@ -175,6 +179,7 @@ dzrint(cntlr)
 			    sc->sc_dev.dv_xname, line);
 			overrun = 1;
 		}
+
 		/* A BREAK key will appear as a NULL with a framing error */
 		if (c & DZ_RBUF_FRAMING_ERR)
 			cc |= TTY_FE;
