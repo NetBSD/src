@@ -34,8 +34,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)union_vnops.c	8.6 (Berkeley) 2/17/94
- *	$Id: union_vnops.c,v 1.1 1994/06/08 11:34:03 mycroft Exp $
+ *	from: @(#)union_vnops.c	8.15 (Berkeley) 6/4/94
+ *	$Id: union_vnops.c,v 1.2 1994/06/15 23:08:04 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -68,15 +68,18 @@ union_fixup(un)
 }
 
 static int
-union_lookup1(udvp, dvp, vpp, cnp)
+union_lookup1(udvp, dvpp, vpp, cnp)
 	struct vnode *udvp;
-	struct vnode *dvp;
+	struct vnode **dvpp;
 	struct vnode **vpp;
 	struct componentname *cnp;
 {
 	int error;
 	struct vnode *tdvp;
+	struct vnode *dvp;
 	struct mount *mp;
+
+	dvp = *dvpp;
 
 	/*
 	 * If stepping up the directory tree, check for going
@@ -85,18 +88,15 @@ union_lookup1(udvp, dvp, vpp, cnp)
 	 * hierarchy.
 	 */
 	if (cnp->cn_flags & ISDOTDOT) {
-		for (;;) {
+		while ((dvp != udvp) && (dvp->v_flag & VROOT)) {
 			/*
 			 * Don't do the NOCROSSMOUNT check
 			 * at this level.  By definition,
 			 * union fs deals with namespaces, not
 			 * filesystems.
 			 */
-			if ((dvp->v_flag & VROOT) == 0)
-				break;
-
 			tdvp = dvp;
-			dvp = dvp->v_mount->mnt_vnodecovered;
+			*dvpp = dvp = dvp->v_mount->mnt_vnodecovered;
 			vput(tdvp);
 			VREF(dvp);
 			VOP_LOCK(dvp);
@@ -178,9 +178,9 @@ union_lookup(ap)
 	 * then assume that something special is going
 	 * on and just return that vnode.
 	 */
-	if (upperdvp) {
+	if (upperdvp != NULLVP) {
 		FIXUP(dun);
-		uerror = union_lookup1(um->um_uppervp, upperdvp,
+		uerror = union_lookup1(um->um_uppervp, &upperdvp,
 					&uppervp, cnp);
 		/*if (uppervp == upperdvp)
 			dun->un_flags |= UN_KLOCK;*/
@@ -202,7 +202,7 @@ union_lookup(ap)
 	 * back from the upper layer and return the lower vnode
 	 * instead.
 	 */
-	if (lowerdvp) {
+	if (lowerdvp != NULLVP) {
 		int nameiop;
 
 		VOP_LOCK(lowerdvp);
@@ -217,7 +217,7 @@ union_lookup(ap)
 			saved_cred = cnp->cn_cred;
 			cnp->cn_cred = um->um_cred;
 		}
-		lerror = union_lookup1(um->um_lowervp, lowerdvp,
+		lerror = union_lookup1(um->um_lowervp, &lowerdvp,
 				&lowervp, cnp);
 		if (um->um_op == UNMNT_BELOW)
 			cnp->cn_cred = saved_cred;
@@ -227,7 +227,7 @@ union_lookup(ap)
 			VOP_UNLOCK(lowerdvp);
 
 		if (cnp->cn_consume != 0) {
-			if (uppervp) {
+			if (uppervp != NULLVP) {
 				if (uppervp == upperdvp)
 					vrele(uppervp);
 				else
@@ -287,7 +287,7 @@ union_lookup(ap)
 			dun->un_flags |= UN_ULOCK;
 
 			if (uerror) {
-				if (lowervp) {
+				if (lowervp != NULLVP) {
 					vput(lowervp);
 					lowervp = NULLVP;
 				}
@@ -296,16 +296,16 @@ union_lookup(ap)
 		}
 	}
 
-	if (lowervp)
+	if (lowervp != NULLVP)
 		VOP_UNLOCK(lowervp);
 
 	error = union_allocvp(ap->a_vpp, dvp->v_mount, dvp, upperdvp, cnp,
 			      uppervp, lowervp);
 
 	if (error) {
-		if (uppervp)
+		if (uppervp != NULLVP)
 			vput(uppervp);
-		if (lowervp)
+		if (lowervp != NULLVP)
 			vrele(lowervp);
 	} else {
 		if (*ap->a_vpp != dvp)
@@ -328,7 +328,7 @@ union_create(ap)
 	struct union_node *un = VTOUNION(ap->a_dvp);
 	struct vnode *dvp = un->un_uppervp;
 
-	if (dvp) {
+	if (dvp != NULLVP) {
 		int error;
 		struct vnode *vp;
 
@@ -370,7 +370,7 @@ union_mknod(ap)
 	struct union_node *un = VTOUNION(ap->a_dvp);
 	struct vnode *dvp = un->un_uppervp;
 
-	if (dvp) {
+	if (dvp != NULLVP) {
 		int error;
 		struct vnode *vp;
 
@@ -383,7 +383,7 @@ union_mknod(ap)
 		if (error)
 			return (error);
 
-		if (vp) {
+		if (vp != NULLVP) {
 			error = union_allocvp(
 					ap->a_vpp,
 					ap->a_dvp->v_mount,
@@ -431,77 +431,7 @@ union_open(ap)
 		 */
 		tvp = un->un_lowervp;
 		if ((ap->a_mode & FWRITE) && (tvp->v_type == VREG)) {
-			struct vnode *vp;
-			int i;
-
-			/*
-			 * Open the named file in the upper layer.  Note that
-			 * the file may have come into existence *since* the
-			 * lookup was done, since the upper layer may really
-			 * be a loopback mount of some other filesystem...
-			 * so open the file with exclusive create and barf if
-			 * it already exists.
-			 * XXX - perhaps should re-lookup the node (once more
-			 * with feeling) and simply open that.  Who knows.
-			 */
-			error = union_vn_create(&vp, un, p);
-			if (error)
-				return (error);
-
-			/* at this point, uppervp is locked */
-			union_newupper(un, vp);
-			un->un_flags |= UN_ULOCK;
-
-			/*
-			 * Now, if the file is being opened with truncation,
-			 * then the (new) upper vnode is ready to fly,
-			 * otherwise the data from the lower vnode must be
-			 * copied to the upper layer first.  This only works
-			 * for regular files (check is made above).
-			 */
-			if ((mode & O_TRUNC) == 0) {
-				/*
-				 * XXX - should not ignore errors
-				 * from VOP_CLOSE
-				 */
-				VOP_LOCK(tvp);
-				error = VOP_OPEN(tvp, FREAD, cred, p);
-				if (error == 0) {
-					error = union_copyfile(p, cred,
-						       tvp, un->un_uppervp);
-					VOP_UNLOCK(tvp);
-					(void) VOP_CLOSE(tvp, FREAD);
-				} else {
-					VOP_UNLOCK(tvp);
-				}
-
-#ifdef UNION_DIAGNOSTIC
-				if (!error)
-					uprintf("union: copied up %s\n",
-								un->un_path);
-#endif
-			}
-
-			un->un_flags &= ~UN_ULOCK;
-			VOP_UNLOCK(un->un_uppervp);
-			union_vn_close(un->un_uppervp, FWRITE, cred, p);
-			VOP_LOCK(un->un_uppervp);
-			un->un_flags |= UN_ULOCK;
-
-			/*
-			 * Subsequent IOs will go to the top layer, so
-			 * call close on the lower vnode and open on the
-			 * upper vnode to ensure that the filesystem keeps
-			 * its references counts right.  This doesn't do
-			 * the right thing with (cred) and (FREAD) though.
-			 * Ignoring error returns is not righ, either.
-			 */
-			for (i = 0; i < un->un_openl; i++) {
-				(void) VOP_CLOSE(tvp, FREAD);
-				(void) VOP_OPEN(un->un_uppervp, FREAD, cred, p);
-			}
-			un->un_openl = 0;
-
+			error = union_copyup(un, (mode&O_TRUNC) == 0, cred, p);
 			if (error == 0)
 				error = VOP_OPEN(un->un_uppervp, mode, cred, p);
 			return (error);
@@ -537,7 +467,7 @@ union_close(ap)
 	struct union_node *un = VTOUNION(ap->a_vp);
 	struct vnode *vp;
 
-	if (un->un_uppervp) {
+	if (un->un_uppervp != NULLVP) {
 		vp = un->un_uppervp;
 	} else {
 #ifdef UNION_DIAGNOSTIC
@@ -573,12 +503,12 @@ union_access(ap)
 	int error = EACCES;
 	struct vnode *vp;
 
-	if (vp = un->un_uppervp) {
+	if ((vp = un->un_uppervp) != NULLVP) {
 		FIXUP(un);
 		return (VOP_ACCESS(vp, ap->a_mode, ap->a_cred, ap->a_p));
 	}
 
-	if (vp = un->un_lowervp) {
+	if ((vp = un->un_lowervp) != NULLVP) {
 		VOP_LOCK(vp);
 		error = VOP_ACCESS(vp, ap->a_mode, ap->a_cred, ap->a_p);
 		if (error == 0) {
@@ -597,7 +527,8 @@ union_access(ap)
 }
 
 /*
- *  We handle getattr only to change the fsid.
+ * We handle getattr only to change the fsid and
+ * track object sizes
  */
 int
 union_getattr(ap)
@@ -628,10 +559,21 @@ union_getattr(ap)
 
 	vp = un->un_uppervp;
 	if (vp != NULLVP) {
-		FIXUP(un);
+		/*
+		 * It's not clear whether VOP_GETATTR is to be
+		 * called with the vnode locked or not.  stat() calls
+		 * it with (vp) locked, and fstat calls it with
+		 * (vp) unlocked.
+		 * In the mean time, compensate here by checking
+		 * the union_node's lock flag.
+		 */
+		if (un->un_flags & UN_LOCKED)
+			FIXUP(un);
+
 		error = VOP_GETATTR(vp, vap, ap->a_cred, ap->a_p);
 		if (error)
 			return (error);
+		union_newsize(ap->a_vp, vap->va_size, VNOVAL);
 	}
 
 	if (vp == NULLVP) {
@@ -649,6 +591,7 @@ union_getattr(ap)
 		VOP_UNLOCK(vp);
 		if (error)
 			return (error);
+		union_newsize(ap->a_vp, VNOVAL, vap->va_size);
 	}
 
 	if ((vap != ap->a_vap) && (vap->va_type == VDIR))
@@ -702,6 +645,8 @@ union_setattr(ap)
 		FIXUP(un);
 		error = VOP_SETATTR(un->un_uppervp, ap->a_vap,
 					ap->a_cred, ap->a_p);
+		if ((error == 0) && (ap->a_vap->va_size != VNOVAL))
+			union_newsize(ap->a_vp, ap->a_vap->va_size, VNOVAL);
 	} else {
 		error = EROFS;
 	}
@@ -730,6 +675,25 @@ union_read(ap)
 	if (dolock)
 		VOP_UNLOCK(vp);
 
+	/*
+	 * XXX
+	 * perhaps the size of the underlying object has changed under
+	 * our feet.  take advantage of the offset information present
+	 * in the uio structure.
+	 */
+	if (error == 0) {
+		struct union_node *un = VTOUNION(ap->a_vp);
+		off_t cur = ap->a_uio->uio_offset;
+
+		if (vp == un->un_uppervp) {
+			if (cur > un->un_uppersz)
+				union_newsize(ap->a_vp, cur, VNOVAL);
+		} else {
+			if (cur > un->un_lowersz)
+				union_newsize(ap->a_vp, VNOVAL, cur);
+		}
+	}
+
 	return (error);
 }
 
@@ -753,6 +717,23 @@ union_write(ap)
 	error = VOP_WRITE(vp, ap->a_uio, ap->a_ioflag, ap->a_cred);
 	if (dolock)
 		VOP_UNLOCK(vp);
+
+	/*
+	 * the size of the underlying object may be changed by the
+	 * write.
+	 */
+	if (error == 0) {
+		struct union_node *un = VTOUNION(ap->a_vp);
+		off_t cur = ap->a_uio->uio_offset;
+
+		if (vp == un->un_uppervp) {
+			if (cur > un->un_uppersz)
+				union_newsize(ap->a_vp, cur, VNOVAL);
+		} else {
+			if (cur > un->un_lowersz)
+				union_newsize(ap->a_vp, VNOVAL, cur);
+		}
+	}
 
 	return (error);
 }
@@ -814,7 +795,7 @@ union_fsync(ap)
 	int error = 0;
 	struct vnode *targetvp = OTHERVP(ap->a_vp);
 
-	if (targetvp) {
+	if (targetvp != NULLVP) {
 		int dolock = (targetvp == LOWERVP(ap->a_vp));
 
 		if (dolock)
@@ -855,7 +836,7 @@ union_remove(ap)
 	struct union_node *dun = VTOUNION(ap->a_dvp);
 	struct union_node *un = VTOUNION(ap->a_vp);
 
-	if (dun->un_uppervp && un->un_uppervp) {
+	if (dun->un_uppervp != NULLVP && un->un_uppervp != NULLVP) {
 		struct vnode *dvp = dun->un_uppervp;
 		struct vnode *vp = un->un_uppervp;
 
@@ -895,34 +876,49 @@ union_link(ap)
 		struct componentname *a_cnp;
 	} */ *ap;
 {
-	int error;
-	struct union_node *dun = VTOUNION(ap->a_vp);
-	struct union_node *un = VTOUNION(ap->a_tdvp);
+	int error = 0;
+	struct union_node *un;
+	struct vnode *vp;
+	struct vnode *tdvp;
 
-	if (dun->un_uppervp && un->un_uppervp) {
-		struct vnode *dvp = dun->un_uppervp;
-		struct vnode *vp = un->un_uppervp;
+	un = VTOUNION(ap->a_vp);
 
-		FIXUP(dun);
-		VREF(dvp);
-		dun->un_flags |= UN_KLOCK;
-		vput(ap->a_vp);
-		FIXUP(un);
-		VREF(vp);
-		vrele(ap->a_tdvp);
-
-		error = VOP_LINK(dvp, vp, ap->a_cnp);
+	if (ap->a_vp->v_op != ap->a_tdvp->v_op) {
+		tdvp = ap->a_tdvp;
 	} else {
-		/*
-		 * XXX: need to copy to upper layer
-		 * and do the link there.
-		 */
-		vput(ap->a_vp);
-		vrele(ap->a_tdvp);
-		error = EROFS;
+		struct union_node *tdun = VTOUNION(ap->a_tdvp);
+		if (tdun->un_uppervp == NULLVP) {
+			VOP_LOCK(ap->a_tdvp);
+			if (un->un_uppervp == tdun->un_dirvp) {
+				un->un_flags &= ~UN_ULOCK;
+				VOP_UNLOCK(un->un_uppervp);
+			}
+			error = union_copyup(tdun, 1, ap->a_cnp->cn_cred,
+						ap->a_cnp->cn_proc);
+			if (un->un_uppervp == tdun->un_dirvp) {
+				VOP_LOCK(un->un_uppervp);
+				un->un_flags |= UN_ULOCK;
+			}
+			VOP_UNLOCK(ap->a_tdvp);
+		}
+		tdvp = tdun->un_uppervp;
 	}
 
-	return (error);
+	vp = un->un_uppervp;
+	if (vp == NULLVP)
+		error = EROFS;
+
+	if (error) {
+		vput(ap->a_vp);
+		return (error);
+	}
+
+	FIXUP(un);
+	VREF(vp);
+	un->un_flags |= UN_KLOCK;
+	vput(ap->a_vp);
+
+	return (VOP_LINK(vp, tdvp, ap->a_cnp));
 }
 
 int
@@ -950,7 +946,6 @@ union_rename(ap)
 			goto bad;
 		}
 
-		FIXUP(un);
 		fdvp = un->un_uppervp;
 		VREF(fdvp);
 		vrele(ap->a_fdvp);
@@ -963,7 +958,6 @@ union_rename(ap)
 			goto bad;
 		}
 
-		FIXUP(un);
 		fvp = un->un_uppervp;
 		VREF(fvp);
 		vrele(ap->a_fvp);
@@ -972,6 +966,12 @@ union_rename(ap)
 	if (tdvp->v_op == union_vnodeop_p) {
 		struct union_node *un = VTOUNION(tdvp);
 		if (un->un_uppervp == NULLVP) {
+			/*
+			 * this should never happen in normal
+			 * operation but might if there was
+			 * a problem creating the top-level shadow
+			 * directory.
+			 */
 			error = EROFS;
 			goto bad;
 		}
@@ -982,16 +982,14 @@ union_rename(ap)
 		vput(ap->a_tdvp);
 	}
 
-	if (tvp && tvp->v_op == union_vnodeop_p) {
+	if (tvp != NULLVP && tvp->v_op == union_vnodeop_p) {
 		struct union_node *un = VTOUNION(tvp);
-		if (un->un_uppervp == NULLVP) {
-			error = EROFS;
-			goto bad;
-		}
 
 		tvp = un->un_uppervp;
-		VREF(tvp);
-		un->un_flags |= UN_KLOCK;
+		if (tvp != NULLVP) {
+			VREF(tvp);
+			un->un_flags |= UN_KLOCK;
+		}
 		vput(ap->a_tvp);
 	}
 
@@ -1001,7 +999,7 @@ bad:
 	vrele(fdvp);
 	vrele(fvp);
 	vput(tdvp);
-	if (tvp)
+	if (tvp != NULLVP)
 		vput(tvp);
 
 	return (error);
@@ -1019,7 +1017,7 @@ union_mkdir(ap)
 	struct union_node *un = VTOUNION(ap->a_dvp);
 	struct vnode *dvp = un->un_uppervp;
 
-	if (dvp) {
+	if (dvp != NULLVP) {
 		int error;
 		struct vnode *vp;
 
@@ -1060,7 +1058,7 @@ union_rmdir(ap)
 	struct union_node *dun = VTOUNION(ap->a_dvp);
 	struct union_node *un = VTOUNION(ap->a_vp);
 
-	if (dun->un_uppervp && un->un_uppervp) {
+	if (dun->un_uppervp != NULLVP && un->un_uppervp != NULLVP) {
 		struct vnode *dvp = dun->un_uppervp;
 		struct vnode *vp = un->un_uppervp;
 
@@ -1105,7 +1103,7 @@ union_symlink(ap)
 	struct union_node *un = VTOUNION(ap->a_dvp);
 	struct vnode *dvp = un->un_uppervp;
 
-	if (dvp) {
+	if (dvp != NULLVP) {
 		int error;
 		struct vnode *vp;
 		struct mount *mp = ap->a_dvp->v_mount;
@@ -1209,6 +1207,7 @@ union_inactive(ap)
 		struct vnode *a_vp;
 	} */ *ap;
 {
+	struct union_node *un = VTOUNION(ap->a_vp);
 
 	/*
 	 * Do nothing (and _don't_ bypass).
@@ -1224,11 +1223,14 @@ union_inactive(ap)
 	 */
 
 #ifdef UNION_DIAGNOSTIC
-	struct union_node *un = VTOUNION(ap->a_vp);
-
 	if (un->un_flags & UN_LOCKED)
 		panic("union: inactivating locked node");
+	if (un->un_flags & UN_ULOCK)
+		panic("union: inactivating w/locked upper node");
 #endif
+
+	if ((un->un_flags & UN_CACHED) == 0)
+		vgone(ap->a_vp);
 
 	return (0);
 }
@@ -1260,8 +1262,9 @@ start:
 
 	un = VTOUNION(vp);
 
-	if (un->un_uppervp) {
-		if ((un->un_flags & UN_ULOCK) == 0) {
+	if (un->un_uppervp != NULLVP) {
+		if (((un->un_flags & UN_ULOCK) == 0) &&
+		    (vp->v_usecount != 0)) {
 			un->un_flags |= UN_ULOCK;
 			VOP_LOCK(un->un_uppervp);
 		}
