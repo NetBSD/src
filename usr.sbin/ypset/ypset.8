@@ -29,36 +29,46 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     $Id: yppoll.8,v 1.2 1994/10/28 16:49:52 deraadt Exp $
+.\"     $Id: ypset.8,v 1.1 1994/10/28 16:49:56 deraadt Exp $
 .\"
 .Dd October 25, 1994
-.Dt YPPOLL 8
+.Dt YPSET 8
 .Os
 .Sh NAME
-.Nm yppoll
-.Nd ask version of YP map from YP server
+.Nm ypset
+.Nd tell
+.Xr ypbind 8
+which YP server process to use
 .Sh SYNOPSIS
-.Nm yppoll
+.Nm ypset
 .Op Fl h Ar host
 .Op Fl d Ar domain
-.Ar mapname
+.Ar server
 .Sh DESCRIPTION
-.Nm Yppoll
-asks a YP server process for the order number and which host is the master
-server for
-.Ar mapname .
+.Nm Ypset
+tells the
+.Xr ypbind 8
+process on the current machine which YP server process to communicate with.
+If
+.Ar server
+is down or is not running a YP server process, it is not discovered until
+a YP client process attempts to access a YP map, at which time
+.Xr ypbind 8
+tests the binding and takes appropriate action.
+.Pp
+.Nm Ypset
+is most useful for binding a YP client that is not on the same broadcast
+network as the closest YP server, but can also be used for debugging
+a local network's YP configuration, testing specific YP client
+programs, or binding to a specific server when there are many servers on
+the local network supplying YP maps.
 .Pp
 The options are as follows:
 .Bl -tag -width indent
 .It Fl h Ar host
-Ask the YP server process running on
+Set the YP binding on
 .Ar host
-for information about
-.Ar mapname .
-If
-.Ar host
-is not specified, the server polled is the default server returned by
-.Xr ypwhich 1 .
+instead of the local machine.
 .It Fl d Ar domain
 Use the YP domain
 .Ar domain
@@ -70,8 +80,8 @@ instead of the default domain as returned by
 .Xr ypbind 8 ,
 .Xr ypcat 1 ,
 .Xr ypmatch 1 ,
-.Xr ypset 8 ,
+.Xr yppoll 8 ,
 .Xr ypwhich 1 ,
 .Xr yp 8
-.Sh AUTHORS
-Theo De Raadt and John Brezak
+.Sh AUTHOR
+Theo De Raadt
