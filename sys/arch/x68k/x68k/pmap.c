@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.7 1997/06/10 19:51:47 veego Exp $	*/
+/*	$NetBSD: pmap.c,v 1.8 1997/10/10 12:55:26 oki Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -303,6 +303,15 @@ int		pmap_aliasmask;	/* seperation at which VA aliasing ok */
 #if defined(M68040) || defined(M68060)
 int		protostfree;	/* prototype (default) free ST map */
 #endif
+
+struct pv_entry *pmap_alloc_pv __P((void));
+void	pmap_free_pv __P((struct pv_entry *));
+void	pmap_collect_pv __P((void));
+void	pmap_activate __P((pmap_t, struct pcb *));
+void	pmap_deactivate __P((pmap_t, struct pcb *));
+#ifdef COMPAT_HPUX
+int	pmap_mapmulti __P((pmap_t, vm_offset_t));
+#endif /* COMPAT_HPUX */
 
 /*
  * Internal routines

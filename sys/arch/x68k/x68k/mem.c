@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.6 1997/06/10 19:50:23 veego Exp $	*/
+/*	$NetBSD: mem.c,v 1.7 1997/10/10 12:55:31 oki Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -58,6 +58,11 @@
 
 extern u_int lowram;
 static caddr_t devzeropage;
+
+int	mmopen __P((dev_t, int, int));
+int	mmclose __P((dev_t, int, int));
+int	mmrw __P((dev_t, struct uio *, int));
+int	mmmmap __P((dev_t, int, int));
 
 /*ARGSUSED*/
 int
