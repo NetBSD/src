@@ -1,4 +1,4 @@
-#	$NetBSD: TOKOCHAN,v 1.17 2001/05/02 13:15:24 minoura Exp $
+#	$NetBSD: TOKOCHAN,v 1.18 2001/05/06 01:54:20 hubertf Exp $
 
 #
 #	TOKOCHAN -- Believe in the BSD power; Toko to issyo-ni make all!
@@ -6,7 +6,7 @@
 
 include "arch/x68k/conf/std.x68k"
 
-#ident 		"TOKOCHAN-$Revision: 1.17 $"
+#ident 		"TOKOCHAN-$Revision: 1.18 $"
 
 maxusers	10
 
@@ -307,7 +307,9 @@ pseudo-device	ipfilter
 #pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
 #pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
-#pseudo-device	vlan			# IEEE 802.1q encapsulation
+
+## IEEE 802.1Q Virtual LAN encapsulation, see vlan(4).
+#pseudo-device	vlan
 
 #### Other device configuration
 
