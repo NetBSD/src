@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.327 2004/07/10 13:57:37 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.328 2004/07/10 14:38:13 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -5326,4 +5326,16 @@ sys/kern/kern_sa.c				1.52
 	per-vp data. it matters when an application using SA does exec()
 	an application which also uses SA. (firefox 0.9 seems to do this.)
 	[yamt, ticket #635]
+
+sys/kern/kern_descrip.c				1.124
+sys/kern/vfs_cache.c				1.55
+sys/nfs/nfs_node.c				1.74-1.75
+sys/nfs/nfs_var.h				1.43
+sys/nfs/nfs_vnops.c				1.187-1.191
+sys/nfs/nfsm_subs.h				1.35-1.36
+sys/sys/namei.h					1.35
+
+	Resolve longstanding issue with the NFS client code and certain
+	servers which caused hangs.
+	[tls, ticket #634]
 
