@@ -1,4 +1,4 @@
-/*	$NetBSD: irqhandler.h,v 1.14 1998/08/08 23:39:39 mycroft Exp $	*/
+/*	$NetBSD: irqhandler.h,v 1.15 1998/09/05 03:51:01 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -17,15 +17,16 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by Brini.
+ *	This product includes software developed by Mark Brinicombe
+ *	for the NetBSD Project.
  * 4. The name of the company nor the name of the author may be used to
  *    endorse or promote products derived from this software without specific
  *    prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY BRINI ``AS IS'' AND ANY EXPRESS OR IMPLIED
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED
  * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL BRINI OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+ * IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
  * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
  * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
  * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
@@ -34,11 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * RiscBSD kernel project
- *
- * irqhandler.h
- *
- * IRQ related stuff
+ * IRQ related stuff (defines + structures)
  *
  * Created      : 30/09/94
  */
@@ -54,10 +51,15 @@
 
 /* Define the IRQ bits */
 
+/*
+ * XXX this is really getting rather horrible.
+ * Shortly to be replaced with system specific interrupt tables and handling
+ */
+
+#if defined(RISCPC) || defined(CPU_ARM7500)
+
 #ifdef CPU_ARM7500
 
-#ifdef RC7500
-
 /*#define IRQ_PRINTER	0x00*/
 #define IRQ_RESERVED0	0x01
 #define IRQ_BUTTON	0x02
@@ -65,61 +67,13 @@
 #define IRQ_POR		0x04
 #define IRQ_TIMER0	0x05
 #define IRQ_TIMER1 	0x06
-#define IRQ_FIQDOWN	0x07
 
 #define IRQ_DREQ3	0x08
-/*#define IRQ_HD1		0x09*/
-/*#define IRQ_HD		IRQ_HD1*/
+/*#define IRQ_HD1	0x09*/
+/*#define IRQ_HD	IRQ_HD1*/
 #define IRQ_DREQ2	0x0A
-#define IRQ_ETHERNET	0x0B
 /*#define IRQ_FLOPPY	0x0C*/
 /*#define IRQ_SERIAL	0x0D*/
-#define IRQ_KBDTX	0x0E
-#define IRQ_KBDRX	0x0F
-
-#define IRQ_IRQ3	0x10
-#define IRQ_IRQ4	0x11
-#define IRQ_IRQ5	0x12
-#define IRQ_IRQ6	0x13
-#define IRQ_IRQ7	0x14
-#define IRQ_IRQ9	0x15
-#define IRQ_IRQ10	0x16
-#define IRQ_HD2		0x17
-
-#define IRQ_MSDRX	0x18
-#define IRQ_MSDTX	0x19
-#define IRQ_ATOD	0x1A
-#define IRQ_CLOCK	0x1B
-#define IRQ_PANIC	0x1C
-#define IRQ_RESERVED2	0x1D
-#define IRQ_RESERVED3	0x1E
-#define IRQ_RESERVED1	IRQ_RESERVED2
-
-/*
- * Note that Sound DMA IRQ is on the 31st vector.
- * It's not part of the IRQD.
- */
-#define IRQ_SDMA	0x1F
-
-#else
-
-/*#define IRQ_PRINTER	0x00*/
-#define IRQ_RESERVED0	0x01
-#define IRQ_BUTTON	0x02
-#define IRQ_FLYBACK	0x03
-#define IRQ_POR		0x04
-#define IRQ_TIMER0	0x05
-#define IRQ_TIMER1 	0x06
-#define IRQ_RESERVED1	0x07
-
-#define IRQ_DREQ3	0x08
-/*#define IRQ_HD1		0x09*/
-/*#define IRQ_HD		IRQ_HD1*/
-#define IRQ_DREQ2	0x0A
-#define IRQ_EXTENDED	0x0B
-/*#define IRQ_FLOPPY	0x0C*/
-/*#define IRQ_SERIAL	0x0D*/
-#define IRQ_PODULE	0x0D
 #define IRQ_KBDTX	0x0E
 #define IRQ_KBDRX	0x0F
 
@@ -146,6 +100,19 @@
  */
 #define IRQ_SDMA	0x1F
 
+/* Several interrupts are different between the A7000 and RC7500 */
+#ifdef RC7500
+
+#define IRQ_FIQDOWN	0x07
+#define IRQ_ETHERNET	0x0B
+#define IRQ_HD2		IRQ_IRQ11
+
+#else	/* RC7500 */
+
+#define IRQ_RESERVED1	0x07
+#define IRQ_EXTENDED	0x0B
+#define IRQ_PODULE	0x0D
+
 #define IRQ_EXPCARD0	0x20
 #define IRQ_EXPCARD1	0x21
 #define IRQ_EXPCARD2	0x22
@@ -155,8 +122,8 @@
 #define IRQ_EXPCARD6	0x26
 #define IRQ_EXPCARD7	0x27
 
-
 #endif	/* RC7500 */
+
 #else	/* CPU_ARM7500 */
 
 #ifdef	RISCPC
@@ -170,7 +137,7 @@
 #define IRQ_RESERVED1	0x07
 
 #define IRQ_RESERVED2	0x08
-/*#define IRQ_HD		0x09*/
+/*#define IRQ_HD	0x09*/
 /*#define IRQ_SERIAL	0x0A*/
 #define IRQ_EXTENDED	0x0B
 /*#define IRQ_FLOPPY	0x0C*/
@@ -197,42 +164,42 @@
 #define IRQ_EXPCARD7	0x1F
 #endif	/* RISCPC */
 
+#endif	/* CPU_ARM7500 */
+
+#endif	/* RISPC || CPU_ARM7500 */
+
 #ifdef  OFWGENCFG
 /* These are just made up for now!  -JJK */
 #define IRQ_TIMER0      0
-
-#define IRQ_RESERVED0   0x08
-#define IRQ_RESERVED1   0x09
-#define IRQ_RESERVED2   0x0A
-#define IRQ_RESERVED3   0x0B
 #endif
 
 /* XXX why is this in ARM7500? */
 #ifdef SHARK
-/* shark hardware requirements for IRQ's:
-   IDE:       14                (hardwired)
-   PCI:        5, 9, 10, 11, 15 (mapped to UMIPCI inta, intb, intc, intd)
-   UMIISA:     10, 11, 12
-   SuperIO:    1, 3..12, 14, 15 (all may be remapped.  defaults as follows.)
-    KBC:       1
-    USI:       3                (UART with Slow Infrared support)
-    UART:      4
-    FLOPPY:    6                (not currently used on shark)
-    PARALLEL:  7
-    RTC:       8                (not used on shark: RTC in sequoia used)
-    MOUSE:    12
-   Sequoia:    8                (internal RTC hardwired to irq 8)
-   Codec:      5, 7, 9, 10, 15  (irqe, connected to 15, has special status.)
-   CS8900:     5, 10, 11, 12    (P.14 of datasheet sez only 1 used/time)
-   FERR#:     13                (unconnected floating point error)
-
-total of 15 irqs:
-  timer, ide, 2 umi = isa/pci, ethernet, 2 codec, kb, usi, uart, floppy, 
-  parallel, rtc, mouse, ferr (irq 13)
-
-eventually, need to read the OFW dev info tree, and allocate IRQs.
-hardcoded for now.
-*/
+/*
+ * shark hardware requirements for IRQ's:
+ *	IDE:		14		(hardwired)
+ *	PCI:		5, 9, 10, 11, 15(mapped to UMIPCI inta, intb, intc, intd)
+ *	UMIISA:		10, 11, 12
+ *	SuperIO:	1, 3..12, 14, 15(all may be remapped. defaults as follows.)
+ *	KBC:		1
+ *	USI:		3		(UART with Slow Infrared support)
+ *	UART:		4
+ *	FLOPPY:		6		(not currently used on shark)
+ *	PARALLEL:	7
+ *	RTC:		8		(not used on shark: RTC in sequoia used)
+ *	MOUSE:		12
+ *	Sequoia:	8		(internal RTC hardwired to irq 8)
+ *	Codec:		5, 7, 9, 10, 15	(irqe, connected to 15, has special status.)
+ *	CS8900:		5, 10, 11, 12	(P.14 of datasheet sez only 1 used/time)
+ *	FERR#:		13		(unconnected floating point error)
+ *
+ * total of 15 irqs:
+ * timer, ide, 2 umi = isa/pci, ethernet, 2 codec, kb, usi, uart, floppy, 
+ * parallel, rtc, mouse, ferr (irq 13)
+ *
+ * eventually, need to read the OFW dev info tree, and allocate IRQs.
+ * hardcoded for now.
+ */
 #define IRQ_TIMER0	0x00  /* hardwired to 8254 counter 0 in sequoia */
 #define IRQ_KEYBOARD    0x01
 #define IRQ_CASCADE     0x02  /* hardwired IRQ for second 8259 = IRQ_SLAVE */
@@ -252,11 +219,6 @@ hardcoded for now.
 #define IRQ_IDE         0x0E  /* hardwired to the IDE connector */
 #define IRQ_CODEC2      0x0F  /* special interrupt on codec */
 
-#define IRQ_RESERVED0   0x10
-#define IRQ_RESERVED1   0x11
-#define IRQ_RESERVED2   0x12
-#define IRQ_RESERVED3   0x13
-
 /* XXX should this go into isa_machdep.h.  Somewhere else? */
 /* Interrupt sharing types. */
 #define	IST_NONE	0	/* none */
@@ -266,16 +228,8 @@ hardcoded for now.
 
 #endif /* SHARK */
 
-#endif	/* CPU_ARM7500 */
-
 #define IRQ_VSYNC	IRQ_FLYBACK	/* Aliased */
 #define IRQ_NETSLOT	IRQ_EXTENDED
-
-#define IRQ_SOFTNET	IRQ_RESERVED0	/* Emulated */
-#define IRQMASK_SOFTNET	(1 << IRQ_SOFTNET)
-#define IRQ_SOFTCLOCK	IRQ_RESERVED1	/* Emulated */
-#define IRQMASK_SOFTCLOCK	(1 << IRQ_SOFTCLOCK)
-#define IRQMASK_ALLSOFT (IRQMASK_SOFTNET | IRQMASK_SOFTCLOCK)
 
 #define IRQ_INSTRUCT	-1
 #define NIRQS		0x20
