@@ -1,6 +1,7 @@
-# $NetBSD: Makefile,v 1.1 2002/02/23 21:44:00 gmcgarry Exp $
+# $NetBSD: Makefile,v 1.2 2003/12/14 22:57:54 he Exp $
 
 SECONDARY_PROG=	netboot
+STRIPFLAG=
 
 SRCS=		start.S boot.c
 SRCS+=		bootinfo.c callvec.c clock.c conf.c devopen.c dev_net.c
