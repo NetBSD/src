@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.217 2000/05/18 08:02:19 garbled Exp $
+$NetBSD: pcidevs,v 1.218 2000/05/18 13:03:31 drochner Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -985,7 +985,7 @@ product IBM SERVERAID	0x002e	ServeRAID
 product IBM OLYMPIC	0x003e	Token Ring
 product IBM MIAMI	0x0036	Miami/PCI
 product IBM TURBOWAYS25	0x0053	Turboways 25 ATM
-produce IBM MPIC2	0xffff	MPIC-II
+product IBM MPIC2	0xffff	MPIC-II
 
 /* IDT products */
 product IDT 77201	0x0001	77201/77211 ATM (\"NICStAR\")
