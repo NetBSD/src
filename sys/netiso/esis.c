@@ -1,4 +1,4 @@
-/*	$NetBSD: esis.c,v 1.9 1995/06/13 07:58:17 mycroft Exp $	*/
+/*	$NetBSD: esis.c,v 1.10 1995/06/13 08:12:33 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -141,7 +141,6 @@ esis_init()
 	extern struct clnl_protosw clnl_protox[256];
 
 	LIST_INIT(&esis_pcb);
-	llinfo_llc.lc_next = llinfo_llc.lc_prev = &llinfo_llc;
 
 	timeout(snpac_age, (caddr_t)0, hz);
 	timeout(esis_config, (caddr_t)0, hz);

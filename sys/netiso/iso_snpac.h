@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_snpac.h,v 1.7 1995/03/29 22:09:47 briggs Exp $	*/
+/*	$NetBSD: iso_snpac.h,v 1.8 1995/06/13 08:12:46 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -95,8 +95,7 @@ struct esis_req {
  */
 
 struct llinfo_llc {
-	struct	llinfo_llc *lc_next;	/* keep all llc routes linked */
-	struct	llinfo_llc *lc_prev;	/* keep all llc routes linked */
+	LIST_ENTRY(llinfo_llc) lc_list;
 	struct	rtentry *lc_rt;			/* backpointer to route */
 	struct	esis_req lc_er;			/* holding time, etc */
 #define lc_ht		lc_er.er_ht
@@ -108,7 +107,3 @@ struct llinfo_llc {
 
 #define	SIOCSSTYPE 	_IOW('a', 39, struct systype_req) /* set system type */
 #define	SIOCGSTYPE 	_IOR('a', 40, struct systype_req) /* get system type */
-
-#ifdef	_KERNEL
-struct llinfo_llc llinfo_llc;	/* head for linked lists */
-#endif	/* _KERNEL */
