@@ -1,4 +1,4 @@
-/*	$NetBSD: adbsys.h,v 1.11 1998/08/11 20:07:59 briggs Exp $	*/
+/*	$NetBSD: adbsys.h,v 1.12 1998/10/23 01:16:24 ender Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994	Allen K. Briggs, Chris P. Caputo,
@@ -160,7 +160,5 @@ typedef struct adb_listencmd_s{
 	u_char bytes[8];	/* bytes */
 } adb_listencmd_t;
 #define ADBIOC_LISTENCMD	_IOW('A', 133, adb_listencmd_t)
-
-void	adb_init __P((void));
 
 #endif /* _ADBSYS_MACHINE_ */

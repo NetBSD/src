@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.45 1998/10/10 02:00:54 thorpej Exp $	*/
+/*	$NetBSD: conf.c,v 1.46 1998/10/23 01:16:25 ender Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -90,6 +90,7 @@ struct bdevsw	bdevsw[] =
 int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 
 #define NADB 1 /* #include "adb.h" */
+#include "aed.h"
 #include "asc.h"
 #include "bpfilter.h"
 #include "ch.h"
@@ -102,11 +103,15 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 #include "ss.h"
 #include "tun.h"
 #include "uk.h"
+#if 0
+#include "wskbd.h"
+#include "wsmouse.h"
+#endif
 #include "zsc.h"
 #include "zstty.h"
 #include "scsibus.h"
 
-cdev_decl(adb);
+cdev_decl(aed);
 cdev_decl(asc);
 cdev_decl(bpf);
 cdev_decl(ccd);
@@ -117,11 +122,13 @@ cdev_decl(fd);
 cdev_decl(grf);
 cdev_decl(ipl);
 cdev_decl(ite);
+cdev_decl(kbd);
 cdev_decl(log);
 cdev_decl(md);
 #define mmread	mmrw
 #define mmwrite	mmrw
 cdev_decl(mm);
+cdev_decl(ms);
 #define	ptcioctl	ptyioctl
 #define	ptctty		ptytty
 cdev_decl(ptc);
@@ -136,6 +143,10 @@ cdev_decl(sw);
 cdev_decl(tun);
 cdev_decl(uk);
 cdev_decl(vnd);
+#if 0
+cdev_decl(wskbd);
+cdev_decl(wsmouse);
+#endif
 cdev_decl(zs);
 cdev_decl(zsc);
 cdev_decl(scsibus);
@@ -167,7 +178,7 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(NCCD,ccd),	/* 20: concatenated disk driver */
 	cdev_fd_init(1,filedesc),	/* 21: file descriptor pseudo-device */
 	cdev_bpftun_init(NBPFILTER,bpf),/* 22: Berkeley packet filter */
-	cdev_mouse_init(NADB,adb),	/* 23: ADB event interface */
+	cdev_mouse_init(NAED,aed),	/* 23: ADB event device */
 	cdev_bpftun_init(NTUN,tun),	/* 24: network tunnel */
 	cdev_lkm_init(NLKM,lkm),	/* 25: loadable module driver */
 	cdev_lkm_dummy(),		/* 26 */
@@ -184,6 +195,11 @@ struct cdevsw	cdevsw[] =
 	cdev_se_init(NSE, se),		/* 37: SCSI ethernet */
 	cdev_rnd_init(NRND, rnd),	/* 38: random source pseudo-device */
 	cdev_scsibus_init(NSCSIBUS,scsibus), /* 39: SCSI bus */
+#if 0
+	cdev_mouse_init(NWSKBD, wskbd),	/* 40: wscons keyboard driver */
+	cdev_mouse_init(NWSMOUSE,
+	    wsmouse),			/* 41: wscons mouse driver */
+#endif
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -265,6 +281,8 @@ static int chrtoblktab[] = {
 	/* 37 */	NODEV,
 	/* 38 */	NODEV,
 	/* 39 */	NODEV,
+	/* 40 */	NODEV,
+	/* 41 */	NODEV,
 };
 
 dev_t

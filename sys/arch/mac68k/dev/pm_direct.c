@@ -1,4 +1,4 @@
-/*	$NetBSD: pm_direct.c,v 1.6 1998/08/12 05:42:44 scottr Exp $	*/
+/*	$NetBSD: pm_direct.c,v 1.7 1998/10/23 01:16:24 ender Exp $	*/
 
 /*
  * Copyright (C) 1997 Takashi Hamada
@@ -220,6 +220,7 @@ struct adbCommand {
 };
 extern	void	adb_pass_up __P((struct adbCommand *));
 
+extern int ite_polling;		/* Are we polling?  (Debugger mode) */
 
 #if 0
 /*
@@ -1028,9 +1029,9 @@ pm_adb_op(buffer, compRout, data, command)
 		packet.cmd = command;
 		packet.unsol = 0;
 		packet.ack_only = 1;
-		adb_polling = 1;
+		ite_polling = 1;
 		adb_pass_up(&packet);
-		adb_polling = 0;
+		ite_polling = 0;
 	}
 
 	rval = pmgrop(&pmdata);
@@ -1102,9 +1103,9 @@ pm_adb_get_TALK_result(pmdata)
 	packet.compData = adbCompData;
 	packet.unsol = 0;
 	packet.ack_only = 0;
-	adb_polling = 1;
+	ite_polling = 1;
 	adb_pass_up(&packet);
-	adb_polling = 0;
+	ite_polling = 0;
 
 	adbWaiting = 0;
 	adbBuffer = (long)0;

@@ -1,6 +1,6 @@
-/*	$NetBSD: adbvar.h,v 1.10 1998/02/23 03:11:26 scottr Exp $	*/
+/*	$NetBSD: adbvar.h,v 1.11 1998/10/23 01:16:23 ender Exp $	*/
 
-/*-
+/*
  * Copyright (C) 1994	Bradley A. Grantham
  * All rights reserved.
  *
@@ -32,6 +32,15 @@
 
 #include <machine/adbsys.h>
 
+/*
+ * Arguments used to attach a device to the Apple Desktop Bus
+ */
+struct adb_attach_args {
+	unsigned char	origaddr;
+	unsigned char	adbaddr;
+	unsigned char	handler_id;
+};
+
 typedef struct adb_trace_xlate_s {
 	int     params;
 	char   *string;
@@ -50,11 +59,6 @@ extern int	adb_debug;
 
 /* adb.c */
 void	adb_enqevent __P((adb_event_t *event));
-void	adb_handoff __P((adb_event_t *event));
-void	adb_autorepeat __P((void *keyp));
-void	adb_dokeyupdown __P((adb_event_t *event));
-void	adb_keymaybemouse __P((adb_event_t *event));
-void	adb_processevent __P((adb_event_t *event));
 int	adbopen __P((dev_t dev, int flag, int mode, struct proc *p));
 int	adbclose __P((dev_t dev, int flag, int mode, struct proc *p));
 int	adbread __P((dev_t dev, struct uio *uio, int flag));
@@ -63,24 +67,18 @@ int	adbioctl __P((dev_t , int , caddr_t , int , struct proc *));
 int	adbpoll __P((dev_t dev, int events, struct proc *p));
 
 /* adbsysasm.s */
-void	adb_asmcomplete __P((void));
-void	adb_msa3_asmcomplete __P((void));
-void	adb_mm_nonemp_asmcomplete __P((void));
+void	adb_kbd_asmcomplete __P((void));
+void	adb_ms_asmcomplete __P((void));
 void	extdms_complete __P((void));
-
-/* adbsys.c */
-void	adb_complete __P((caddr_t buffer, caddr_t data_area, int adb_command));
-void	adb_msa3_complete __P((caddr_t buffer, caddr_t data_area, int adb_command));
-void	adb_mm_nonemp_complete __P((caddr_t buffer, caddr_t data_area, int adb_command));
-void	extdms_init __P((int));
 
 #ifndef MRG_ADB
 /* types of adb hardware that we (will eventually) support */
-#define ADB_HW_UNKNOWN		0x01	/* don't know */
-#define ADB_HW_II		0x02	/* Mac II series */
-#define ADB_HW_IISI		0x03	/* Mac IIsi series */
-#define ADB_HW_PB		0x04	/* PowerBook series */
-#define ADB_HW_CUDA		0x05	/* Machines with a Cuda chip */
+#define ADB_HW_UNKNOWN		0x0	/* don't know */
+#define ADB_HW_II		0x1	/* Mac II series */
+#define ADB_HW_IISI		0x2	/* Mac IIsi series */
+#define ADB_HW_PB		0x3	/* PowerBook series */
+#define ADB_HW_CUDA		0x4	/* Machines with a Cuda chip */
+#define	MAX_ADB_HW		4	/* Number of ADB hardware types */
 
 /* adb_direct.c */
 int	adb_poweroff __P((void));

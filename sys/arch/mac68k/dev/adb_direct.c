@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.15 1998/08/12 05:42:44 scottr Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.16 1998/10/23 01:16:23 ender Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -72,12 +72,18 @@
 #include <machine/adbsys.h>			/* required for adbvar.h */
 
 #include <mac68k/mac68k/macrom.h>
-#include <mac68k/dev/adb_direct.h>
 #include <mac68k/dev/adbvar.h>
 #define printf_intr printf
 #else /* !__NetBSD__, i.e. Mac OS */
 #include "via.h"				/* for macos based testing */
 /* #define ADB_DEBUG */				/* more verbose for testing */
+
+/* Types of ADB hardware that we support */
+#define ADB_HW_UNKNOWN		0x0	/* don't know */
+#define ADB_HW_II		0x1	/* Mac II series */
+#define ADB_HW_IISI		0x2	/* Mac IIsi series */
+#define ADB_HW_PB		0x3	/* PowerBook series */
+#define ADB_HW_CUDA		0x4	/* Machines with a Cuda chip */
 #endif /* __NetBSD__ */
 
 #ifdef DEBUG
@@ -94,32 +100,25 @@
 #define vSR_INT		0x04
 #define vSR_OUT		0x10
 
-/* types of adb hardware that we (will eventually) support */
-#define ADB_HW_UNKNOWN		0x01	/* don't know */
-#define ADB_HW_II		0x02	/* Mac II series */
-#define ADB_HW_IISI		0x03	/* Mac IIsi series */
-#define ADB_HW_PB		0x04	/* PowerBook series */
-#define ADB_HW_CUDA		0x05	/* Machines with a Cuda chip */
-
 /* the type of ADB action that we are currently preforming */
-#define ADB_ACTION_NOTREADY	0x01	/* has not been initialized yet */
-#define ADB_ACTION_IDLE		0x02	/* the bus is currently idle */
-#define ADB_ACTION_OUT		0x03	/* sending out a command */
-#define ADB_ACTION_IN		0x04	/* receiving data */
-#define ADB_ACTION_POLLING	0x05	/* polling - II only */
+#define ADB_ACTION_NOTREADY	0x1	/* has not been initialized yet */
+#define ADB_ACTION_IDLE		0x2	/* the bus is currently idle */
+#define ADB_ACTION_OUT		0x3	/* sending out a command */
+#define ADB_ACTION_IN		0x4	/* receiving data */
+#define ADB_ACTION_POLLING	0x5	/* polling - II only */
 
 /*
  * These describe the state of the ADB bus itself, although they
  * don't necessarily correspond directly to ADB states.
  * Note: these are not really used in the IIsi code.
  */
-#define ADB_BUS_UNKNOWN		0x01	/* we don't know yet - all models */
-#define ADB_BUS_IDLE		0x02	/* bus is idle - all models */
-#define ADB_BUS_CMD		0x03	/* starting a command - II models */
-#define ADB_BUS_ODD		0x04	/* the "odd" state - II models */
-#define ADB_BUS_EVEN		0x05	/* the "even" state - II models */
-#define ADB_BUS_ACTIVE		0x06	/* active state - IIsi models */
-#define ADB_BUS_ACK		0x07	/* currently ACKing - IIsi models */
+#define ADB_BUS_UNKNOWN		0x1	/* we don't know yet - all models */
+#define ADB_BUS_IDLE		0x2	/* bus is idle - all models */
+#define ADB_BUS_CMD		0x3	/* starting a command - II models */
+#define ADB_BUS_ODD		0x4	/* the "odd" state - II models */
+#define ADB_BUS_EVEN		0x5	/* the "even" state - II models */
+#define ADB_BUS_ACTIVE		0x6	/* active state - IIsi models */
+#define ADB_BUS_ACK		0x7	/* currently ACKing - IIsi models */
 
 /*
  * Shortcuts for setting or testing the VIA bit states.
@@ -209,6 +208,17 @@ struct adbCommand {
 };
 
 /*
+ * Text representations of each hardware class
+ */
+char	*adbHardwareDescr[MAX_ADB_HW + 1] = {
+	"unknown",
+	"II series",
+	"IIsi series",
+	"PowerBook",
+	"Cuda",
+};
+
+/*
  * A few variables that we need and their initial values.
  */
 int	adbHardware = ADB_HW_UNKNOWN;
@@ -258,10 +268,7 @@ int	tickle_serial = 0;		/* the last packet tickled */
 int	adb_cuda_serial = 0;		/* the current packet */
 
 extern struct mac68k_machine_S mac68k_machine;
-
-#if 0
-int	zshard __P((int));
-#endif
+extern int ite_polling;			/* Are we polling?  (Debugger mode) */
 
 void	pm_setup_adb __P((void));
 void	pm_check_adb_devices __P((int));
@@ -272,7 +279,9 @@ void	pm_init_adb_device __P((void));
 /*
  * The following are private routines.
  */
+#ifdef ADB_DEBUG
 void	print_single __P((u_char *));
+#endif
 void	adb_intr __P((void));
 void	adb_intr_II __P((void));
 void	adb_intr_IIsi __P((void));
@@ -305,6 +314,7 @@ int	adb_prog_switch_disable __P((void));
 /* we should create this and it will be the public version */
 int	send_adb __P((u_char *, void *, void *));
 
+#ifdef ADB_DEBUG
 /*
  * print_single
  * Diagnostic display routine. Displays the hex values of the
@@ -334,6 +344,7 @@ print_single(thestring)
 		printf_intr("  0x%02x", thestring[x + 1]);
 	printf_intr("\n");
 }
+#endif
 
 void
 adb_cuda_tickle(void)
@@ -365,7 +376,8 @@ adb_cuda_tickle(void)
  * called when when an adb interrupt happens
  *
  * Cuda version of adb_intr
- * TO DO: do we want to add some zshard calls in here?
+ * TO DO: do we want to add some calls to intr_dispatch() here to
+ * grab serial interrupts?
  */
 void
 adb_intr_cuda(void)
@@ -572,11 +584,17 @@ switch_start:
 		break;
 
 	case ADB_ACTION_NOTREADY:
-		printf_intr("adb: not yet initialized\n");
+#ifdef ADB_DEBUG
+		if (adb_debug)
+			printf_intr("adb: not yet initialized\n");
+#endif
 		break;
 
 	default:
-		printf_intr("intr: unknown ADB state\n");
+#ifdef ADB_DEBUG
+		if (adb_debug)
+			printf_intr("intr: unknown ADB state\n");
+#endif
 	}
 
 	ADB_VIA_INTR_ENABLE();	/* enable ADB interrupt on IIs. */
@@ -694,11 +712,7 @@ adb_intr_II(void)
 	ADB_VIA_INTR_DISABLE();	/* disable ADB interrupt on IIs. */
 
 	delay(ADB_DELAY);	/* yuck (don't remove) */
-#if 0
-	zshard(0);		/* grab any serial interrupts */
-#else
-	(void)intr_dispatch(0x70);
-#endif
+	(void)intr_dispatch(0x70); /* grab any serial interrupts */
 
 	if (ADB_INTR_IS_ON)
 		intr_on = 1;	/* save for later */
@@ -745,11 +759,7 @@ switch_start:
 			adbActionState = ADB_ACTION_IN;
 		}
 		delay(ADB_DELAY);
-#if 0
-		zshard(0);		/* grab any serial interrupts */
-#else
-		(void)intr_dispatch(0x70);
-#endif
+		(void)intr_dispatch(0x70); /* grab any serial interrupts */
 		goto switch_start;
 		break;
 	case ADB_ACTION_IDLE:
@@ -1013,13 +1023,20 @@ switch_start:
 			break;
 
 		default:
-			printf_intr("strange state!!! (0x%x)\n", adbBusState);
+#ifdef ADB_DEBUG
+			if (adb_debug) {
+				printf_intr("strange state!!! (0x%x)\n",
+				    adbBusState);
+#endif
 			break;
 		}
 		break;
 
 	default:
-		printf_intr("adb: unknown ADB state (during intr)\n");
+#ifdef ADB_DEBUG
+		if (adb_debug)
+			printf_intr("adb: unknown ADB state (during intr)\n");
+#endif
 	}
 
 	ADB_VIA_INTR_ENABLE();	/* enable ADB interrupt on IIs. */
@@ -1234,11 +1251,7 @@ switch_start:
 		ADB_SET_STATE_ACKON();	/* start ACK to ADB chip */
 		delay(ADB_DELAY);	/* delay */
 		ADB_SET_STATE_ACKOFF();	/* end ACK to ADB chip */
-#if 0
-		zshard(0);	/* grab any serial interrupts */
-#else
-		(void)intr_dispatch(0x70);
-#endif
+		(void)intr_dispatch(0x70); /* grab any serial interrupts */
 		break;
 
 	case ADB_ACTION_IN:
@@ -1252,11 +1265,7 @@ switch_start:
 		ADB_SET_STATE_ACKON();	/* start ACK to ADB chip */
 		delay(ADB_DELAY);	/* delay */
 		ADB_SET_STATE_ACKOFF();	/* end ACK to ADB chip */
-#if 0
-		zshard(0);	/* grab any serial interrupts */
-#else
-		(void)intr_dispatch(0x70);
-#endif
+		(void)intr_dispatch(0x70); /* grab any serial interrupts */
 
 		if (1 == ending) {	/* end of message? */
 			ADB_SET_STATE_INACTIVE();	/* signal end of frame */
@@ -1304,11 +1313,7 @@ switch_start:
 				adbActionState = ADB_ACTION_OUT;	/* set next state */
 
 				delay(ADB_DELAY);	/* delay */
-#if 0
-				zshard(0);	/* grab any serial interrupts */
-#else
-				(void)intr_dispatch(0x70);
-#endif
+				(void)intr_dispatch(0x70); /* grab any serial interrupts */
 
 				if (ADB_INTR_IS_ON) {	/* ADB intr low during
 							 * write */
@@ -1349,21 +1354,13 @@ switch_start:
 			adbWriteDelay = 1;	/* must retry when done with
 						 * read */
 			delay(ADB_DELAY);	/* delay */
-#if 0
-			zshard(0);		/* grab any serial interrupts */
-#else
-			(void)intr_dispatch(0x70);
-#endif
+			(void)intr_dispatch(0x70); /* grab any serial interrupts */
 			goto switch_start;	/* process next state right
 						 * now */
 			break;
 		}
 		delay(ADB_DELAY);	/* required delay */
-#if 0
-		zshard(0);	/* grab any serial interrupts */
-#else
-		(void)intr_dispatch(0x70);
-#endif
+		(void)intr_dispatch(0x70); /* grab any serial interrupts */
 
 		if (adbOutputBuffer[0] == adbSentChars) {	/* check for done */
 			if (0 == adb_cmd_result(adbOutputBuffer)) {	/* do we expect data
@@ -1400,11 +1397,17 @@ switch_start:
 		break;
 
 	case ADB_ACTION_NOTREADY:
-		printf_intr("adb: not yet initialized\n");
+#ifdef ADB_DEBUG
+		if (adb_debug)
+			printf_intr("adb: not yet initialized\n");
+#endif
 		break;
 
 	default:
-		printf_intr("intr: unknown ADB state\n");
+#ifdef ADB_DEBUG
+		if (adb_debug)
+			printf_intr("intr: unknown ADB state\n");
+#endif
 	}
 
 	ADB_VIA_INTR_ENABLE();	/* enable ADB interrupt on IIs. */
@@ -1548,7 +1551,10 @@ adb_pass_up(struct adbCommand *in)
 	/*u_char *comprout = 0;*/
 
 	if (adbInCount >= ADB_QUEUE) {
-		printf_intr("adb: ring buffer overflow\n");
+#ifdef ADB_DEBUG
+		if (adb_debug)
+			printf_intr("adb: ring buffer overflow\n");
+#endif
 		return;
 	}
 
@@ -1646,7 +1652,7 @@ adb_pass_up(struct adbCommand *in)
 	 * If the debugger is running, call upper half manually.
 	 * Otherwise, trigger a soft interrupt to handle the rest later.
 	 */
-	if (adb_polling)
+	if (ite_polling)
 		adb_soft_intr();
 	else
 		setsoftadb();
@@ -1864,8 +1870,12 @@ adb_hw_setup(void)
 		for (i = 0; i < 30; i++) {
 			delay(ADB_DELAY);
 			adb_hw_setup_IIsi(send_string);
-			printf_intr("adb: cleanup: ");
-			print_single(send_string);
+#ifdef ADB_DEBUG
+			if (adb_debug) {
+				printf_intr("adb: cleanup: ");
+				print_single(send_string);
+			}
+#endif
 			delay(ADB_DELAY);
 			if (ADB_INTR_IS_OFF)
 				break;
@@ -2175,11 +2185,18 @@ adb_reinit(void)
 	/* enable the programmer's switch, if we have one */
 	adb_prog_switch_enable();
 
-	if (0 == ADBNumDevices)	/* tell user if no devices found */
-		printf_intr("adb: no devices found\n");
+#ifdef ADB_DEBUG
+	if (adb_debug) {
+		if (0 == ADBNumDevices)	/* tell user if no devices found */
+			printf_intr("adb: no devices found\n");
+	}
+#endif
 
 	adbStarting = 0;	/* not starting anymore */
-	printf_intr("adb: ADBReInit complete\n");
+#ifdef ADB_DEBUG
+	if (adb_debug)
+		printf_intr("adb: ADBReInit complete\n");
+#endif
 
 	if (adbHardware == ADB_HW_CUDA)
 		timeout((void *)adb_cuda_tickle, 0, ADB_TICKLE_TICKS);
@@ -2372,7 +2389,10 @@ adb_setup_hw_type(void)
 	case 52:	/* Centris 610 */
 	case 53:	/* Quadra 610 */
 		adbHardware = ADB_HW_II;
-		printf_intr("adb: using II series hardware support\n");
+#ifdef ADB_DEBUG
+		if (adb_debug)
+			printf_intr("adb: using II series hardware support\n");
+#endif
 		break;
 	case 18:	/* IIsi */
 	case 20:	/* Quadra 900 - not sure if IIsi or not */
@@ -2385,7 +2405,10 @@ adb_setup_hw_type(void)
 	case 48:	/* IIvx */
 	case 62:	/* Performa 460/465/467 */
 		adbHardware = ADB_HW_IISI;
-		printf_intr("adb: using IIsi series hardware support\n");
+#ifdef ADB_DEBUG
+		if (adb_debug)
+			printf_intr("adb: using IIsi series hardware support\n");
+#endif
 		break;
 	case 21:	/* PowerBook 170 */
 	case 25:	/* PowerBook 140 */
@@ -2398,7 +2421,10 @@ adb_setup_hw_type(void)
 	case 115:	/* PowerBook 150 */
 		adbHardware = ADB_HW_PB;
 		pm_setup_adb();
-		printf_intr("adb: using PowerBook 100-series hardware support\n");
+#ifdef ADB_DEBUG
+		if (adb_debug)
+			printf_intr("adb: using PowerBook 100-series hardware support\n");
+#endif
 		break;
 	case 29:	/* PowerBook Duo 210 */
 	case 32:	/* PowerBook Duo 230 */
@@ -2409,7 +2435,10 @@ adb_setup_hw_type(void)
 	case 103:	/* PowerBook Duo 280c */
 		adbHardware = ADB_HW_PB;
 		pm_setup_adb();
-		printf_intr("adb: using PowerBook Duo-series and PowerBook 500-series hardware support\n");
+#ifdef ADB_DEBUG
+		if (adb_debug)
+			printf_intr("adb: using PowerBook Duo-series and PowerBook 500-series hardware support\n");
+#endif
 		break;
 	case 49:	/* Color Classic */
 	case 56:	/* LC 520 */
@@ -2423,12 +2452,19 @@ adb_setup_hw_type(void)
 	case 98:	/* LC 630, Performa 630, Quadra 630 */
 	case 99:	/* Performa 580(?)/588 */
 		adbHardware = ADB_HW_CUDA;
-		printf_intr("adb: using Cuda series hardware support\n");
+#ifdef ADB_DEBUG
+		if (adb_debug)
+			printf_intr("adb: using Cuda series hardware support\n");
+#endif
 		break;
 	default:
 		adbHardware = ADB_HW_UNKNOWN;
-		printf_intr("adb: hardware type unknown for this machine\n");
-		printf_intr("adb: ADB support is disabled\n");
+#ifdef ADB_DEBUG
+		if (adb_debug) {
+			printf_intr("adb: hardware type unknown for this machine\n");
+			printf_intr("adb: ADB support is disabled\n");
+		}
+#endif
 		break;
 	}
 
