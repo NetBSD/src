@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_stat.h,v 1.24 2002/03/05 05:45:54 simonb Exp $	*/
+/*	$NetBSD: uvm_stat.h,v 1.24.2.1 2002/03/12 02:40:45 thorpej Exp $	*/
 
 /*
  *
@@ -41,6 +41,7 @@
 #include "opt_uvmhist.h"
 #endif
 
+#include <sys/mutex.h>
 #include <sys/queue.h>
 
 /*
@@ -116,7 +117,7 @@ struct uvm_history {
 	LIST_ENTRY(uvm_history) list;	/* link on list of all histories */
 	int n;				/* number of entries */
 	int f; 				/* next free one */
-	struct simplelock l;		/* lock on this history */
+	kmutex_t mtx;			/* mutex on this history */
 	struct uvm_history_ent *e;	/* the malloc'd entries */
 };
 
@@ -151,7 +152,9 @@ LIST_HEAD(uvm_history_head, uvm_history);
 #define UVMHIST_FUNC(FNAME)
 #define uvmhist_dump(NAME)
 #else
+
 #include <sys/kernel.h>		/* for "cold" variable */
+#include <machine/intr.h>	/* for IPL_* constants */
 
 extern	struct uvm_history_head uvm_histories;
 
@@ -163,7 +166,7 @@ do { \
 	(NAME).namelen = strlen((NAME).name); \
 	(NAME).n = (N); \
 	(NAME).f = 0; \
-	simple_lock_init(&(NAME).l); \
+	mutex_init(&(NAME).mtx, MUTEX_SPIN, IPL_HIGH); \
 	(NAME).e = (struct uvm_history_ent *) \
 		malloc(sizeof(struct uvm_history_ent) * (N), M_TEMP, \
 		    M_WAITOK); \
@@ -177,7 +180,7 @@ do { \
 	(NAME).namelen = strlen((NAME).name); \
 	(NAME).n = sizeof(BUF) / sizeof(struct uvm_history_ent); \
 	(NAME).f = 0; \
-	simple_lock_init(&(NAME).l); \
+	mutex_init(&(NAME).mtx, MUTEX_SPIN, IPL_HIGH); \
 	(NAME).e = (struct uvm_history_ent *) (BUF); \
 	memset((NAME).e, 0, sizeof(struct uvm_history_ent) * (NAME).n); \
 	LIST_INSERT_HEAD(&uvm_histories, &(NAME), list); \
@@ -198,12 +201,11 @@ do { \
 
 #define UVMHIST_LOG(NAME,FMT,A,B,C,D) \
 do { \
-	int _i_, _s_ = splhigh(); \
-	simple_lock(&(NAME).l); \
+	int _i_; \
+	mutex_enter(&(NAME).mtx); \
 	_i_ = (NAME).f; \
 	(NAME).f = (_i_ + 1) % (NAME).n; \
-	simple_unlock(&(NAME).l); \
-	splx(_s_); \
+	mutex_exit(&(NAME).mtx); \
 	if (!cold) \
 		microtime(&(NAME).e[_i_].tv); \
 	(NAME).e[_i_].fmt = (FMT); \
@@ -221,11 +223,9 @@ do { \
 #define UVMHIST_CALLED(NAME) \
 do { \
 	{ \
-		int s = splhigh(); \
-		simple_lock(&(NAME).l); \
+		mutex_enter(&(NAME).mtx); \
 		_uvmhist_call = _uvmhist_cnt++; \
-		simple_unlock(&(NAME).l); \
-		splx(s); \
+		mutex_exit(&(NAME).mtx); \
 	} \
 	UVMHIST_LOG(NAME,"called!", 0, 0, 0, 0); \
 } while (0)
