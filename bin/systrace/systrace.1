@@ -1,5 +1,5 @@
-.\"	$NetBSD: systrace.1,v 1.5 2002/06/26 15:29:43 wiz Exp $
-.\"	$OpenBSD: systrace.1,v 1.16 2002/06/13 00:15:00 provos Exp $
+.\"	$NetBSD: systrace.1,v 1.6 2002/07/30 16:29:31 itojun Exp $
+.\"	$OpenBSD: systrace.1,v 1.23 2002/07/30 16:27:21 itojun Exp $
 .\"
 .\" Copyright 2002 Niels Provos <provos@citi.umich.edu>
 .\" All rights reserved.
@@ -39,7 +39,7 @@
 .Nd generates and enforces system call policies
 .Sh SYNOPSIS
 .Nm systrace
-.Op Fl aAitU
+.Op Fl aAituU
 .Op Fl g Ar gui
 .Op Fl f Ar file
 .Op Fl p Ar pid
@@ -47,30 +47,34 @@
 .Sh DESCRIPTION
 The
 .Nm
-utility monitors and controls an application's access to the system by
-enforcing access policies for system calls.  The
-.Nm
-utility might be used to trace an untrusted application's access to
-the system.  Alternatively, it might be used to protect the system
-from software bugs (such as buffer overflows) by constraining a
-daemon's access to the system.
+utility enforces system call policies for applications by
+constraining the application's access to the system.
+The policy is generated interactively.
+Operations not covered by the policy raise an
+alarm and allow an user to refine the currently configured policy.
 .Pp
-The access policy can be generated interactively or obtained from a
-policy file.  Operations not covered by the policy raise an alarm and
-allow an user to refine the currently configured policy.
-.Pp
-The following options are available:
+The options are as follows:
 .Bl -tag -width Dfxfile
 .It Fl a
-Enables automatic enforcement of configured policies.  An operation
-not covered by a policy is denied and logged via
+Enables automatic enforcement of configured policies.
+An operation not covered by policy is denied and logged via
 .Xr syslog 3 .
 .It Fl A
 Automatically generate a policy that allows every operation the
 application executes.
 The created policy functions as a base that can be refined.
+.It Fl u
+Do not perform aliasing on system call names.  Aliasing is enabled
+by default to group similar system calls into a single compound
+name.  For example, system calls that read from the file system
+like
+.Fn lstat
+and
+.Fn access
+are translated to
+.Fn fsread .
 .It Fl i
-All child processes inherit the policy of the parent binary.
+Inherits the policy of the first executed binary to all children.
 .It Fl t
 Uses text mode to ask for interactive policy generation.
 .It Fl U
@@ -115,16 +119,34 @@ is used to return an
 .Xr errno 2
 value to the system call when using a
 .Va deny
-action.  The value
+action.  The values
 .Do
 inherit
 .Dc
-has a special meaning when used with a
+and
+.Do
+detach
+.Dc
+have special meanings when used with a
 .Va permit
 rule for the
 .Va execve
 system call.
-In that case, the current policy is inherited for the new binary.
+When using
+.Do
+inherit,
+.Dc
+the current policy is inherited for the new binary.
+With
+.Do
+detach,
+.Dc
+.Nm
+detaches from a process after successfully
+completing
+the
+.Va execve
+system call.
 .Pp
 The filter operations have the following meaning:
 .Bl -hang -width Dinpath -offset AAA
@@ -192,6 +214,12 @@ utility first appeared in
 .Ox 3.2 .
 It appeared in
 .Nx 1.7 .
+.Sh BUGS
+Applications that use clone()-like system calls to share the complete
+address space between processes may be able to replace system call
+arguments after they have been evaluated by
+.Nm
+and escape policy enforcement.
 .Sh AUTHORS
 The
 .Nm

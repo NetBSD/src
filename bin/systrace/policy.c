@@ -1,6 +1,5 @@
-/*	$NetBSD: policy.c,v 1.1 2002/06/17 16:29:10 christos Exp $	*/
-/*	$OpenBSD: policy.c,v 1.9 2002/06/11 05:30:28 provos Exp $	*/
-
+/*	$NetBSD: policy.c,v 1.2 2002/07/30 16:29:31 itojun Exp $	*/
+/*	$OpenBSD: policy.c,v 1.13 2002/07/19 14:38:58 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -31,13 +30,13 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: policy.c,v 1.1 2002/06/17 16:29:10 christos Exp $");
+__RCSID("$NetBSD: policy.c,v 1.2 2002/07/30 16:29:31 itojun Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
-
 #include <sys/stat.h>
 #include <sys/tree.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -49,7 +48,6 @@ __RCSID("$NetBSD: policy.c,v 1.1 2002/06/17 16:29:10 christos Exp $");
 
 #include "intercept.h"
 #include "systrace.h"
-
 
 static int psccompare(struct policy_syscall *, struct policy_syscall *);
 static int policycompare(struct policy *, struct policy *);
@@ -75,13 +73,13 @@ SPLAY_GENERATE(syscalltree, policy_syscall, node, psccompare);
 static SPLAY_HEAD(policytree, policy) policyroot;
 static SPLAY_HEAD(polnrtree, policy) polnrroot;
 
-static int
+int
 policycompare(struct policy *a, struct policy *b)
 {
 	return (strcmp(a->name, b->name));
 }
 
-static int
+int
 polnrcompare(struct policy *a, struct policy *b)
 {
 	int diff = a->policynr - b->policynr;
@@ -105,7 +103,7 @@ static char policydir[MAXPATHLEN];
 static char *groupnames[NGROUPS_MAX];
 static int ngroups;
 
-static void
+void
 systrace_setupdir(void)
 {
 	char *home;
@@ -150,8 +148,8 @@ systrace_initpolicy(char *file)
 			if ((groupnames[i] = strdup(gr->gr_name)) == NULL)
 				err(1, "strdup(%s)", gr->gr_name);
 		} else {
-			snprintf(gidbuf, sizeof(gidbuf), "%lu",
-			    (u_long)groups[i]);
+			snprintf(gidbuf, sizeof(gidbuf), "%u",
+			    groups[i]);
 			if ((groupnames[i] = strdup(gidbuf)) == NULL)
 				err(1, "strdup(%s)", gidbuf);
 		}
@@ -264,12 +262,12 @@ systrace_modifypolicy(int fd, int policynr, const char *name, short action)
 		return (-1);
 
 	res = intercept_modifypolicy(fd, policynr, policy->emulation,
-		    name, action);
+	    name, action);
 
 	return (res);
 }
 
-static char *
+char *
 systrace_policyfilename(char *dirname, const char *name)
 {
 	static char file[2*MAXPATHLEN];
@@ -321,7 +319,7 @@ systrace_addpolicy(const char *name)
 	return (systrace_readpolicy(file));
 }
 
-static int
+int
 systrace_predicatematch(char *p)
 {
 	extern char *username;
@@ -379,7 +377,7 @@ systrace_readpolicy(char *filename)
 {
 	FILE *fp;
 	struct policy *policy;
-	char line[1024], *p;
+	char line[_POSIX2_LINE_MAX], *p;
 	int linenumber = 0;
 	char *name, *emulation, *rule;
 	struct filter *filter, *parsed;
@@ -474,6 +472,9 @@ systrace_readpolicy(char *filename)
 			err(1, "%s:%d: calloc", __func__, __LINE__);
 
 		filter->rule = strdup(rule);
+		if (filter->rule == NULL)
+			err(1, "%s:%d: strdup", __func__, __LINE__);
+
 		strlcpy(filter->name, name, sizeof(filter->name));
 		strlcpy(filter->emulation,emulation,sizeof(filter->emulation));
 
@@ -491,7 +492,7 @@ systrace_readpolicy(char *filename)
 	goto out;
 }
 
-static int
+int
 systrace_writepolicy(struct policy *policy)
 {
 	FILE *fp;

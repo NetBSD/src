@@ -1,5 +1,5 @@
-/*	$NetBSD: parse.y,v 1.1 2002/06/17 16:29:10 christos Exp $	*/
-/*	$OpenBSD: parse.y,v 1.4 2002/06/05 17:22:38 mickey Exp $	*/
+/*	$NetBSD: parse.y,v 1.2 2002/07/30 16:29:31 itojun Exp $	*/
+/*	$OpenBSD: parse.y,v 1.8 2002/07/30 05:37:21 itojun Exp $	*/
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -32,7 +32,7 @@
  */
 %{
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: parse.y,v 1.1 2002/06/17 16:29:10 christos Exp $");
+__RCSID("$NetBSD: parse.y,v 1.2 2002/07/30 16:29:31 itojun Exp $");
 
 #include <sys/types.h>
 
@@ -103,6 +103,10 @@ fullexpression	: expression THEN action errorcode
 				break;
 			if (!strcasecmp($4, "inherit"))
 				flags = PROCESS_INHERIT_POLICY;
+			else if (!strcasecmp($4, "detach"))
+				flags = PROCESS_DETACH;
+			else
+				yyerror("Unknown flag: %s", $4);
 			break;
 		}
 
@@ -316,6 +320,7 @@ parse_newsymbol(char *type, int typeoff, char *data)
 int
 parse_filter(char *name, struct filter **pfilter)
 {
+
 	errors = 0;
 
 	myfilter = NULL;
