@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.47 1999/12/05 11:56:31 ragge Exp $	*/
+/*	$NetBSD: trap.c,v 1.48 2000/03/30 13:28:28 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -187,8 +187,6 @@ int mmupid   = -1;
 #define MDB_WBFOLLOW	2
 #define MDB_WBFAILED	4
 #define MDB_ISPID(pid)	((pid) == mmupid)
-static void dumpwb __P((int, u_short, u_int, u_int));
-static void dumpssw __P((u_short));
 #endif
 
 extern struct pcb *curpcb;
@@ -376,9 +374,6 @@ trap(type, code, v, frame)
 		p->p_md.md_regs = frame.f_regs;
 	}
 	switch (type) {
-#ifdef DEBUG
-	dopanic:
-#endif /* DEBUG */
 	default:
 		panictrap(type, code, v, &frame);
 	/*
@@ -709,6 +704,9 @@ char *f7tm[] = { "d-push", "u-data", "u-code", "M-data",
 		 "M-code", "k-data", "k-code", "RES" };
 char wberrstr[] =
     "WARNING: pid %d(%s) writeback [%s] failed, pc=%x fa=%x wba=%x wbd=%x\n";
+
+static void dumpwb __P((int, u_short, u_int, u_int));
+static void dumpssw __P((u_short));
 #endif /* DEBUG */
 
 static int
