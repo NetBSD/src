@@ -1,4 +1,4 @@
-/*	$NetBSD: internals.c,v 1.4 2001/01/18 05:42:23 blymn Exp $	*/
+/*	$NetBSD: internals.c,v 1.5 2001/01/18 23:53:10 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -836,6 +836,14 @@ _formi_add_char(FIELD *field, unsigned int pos, char c)
 	unsigned int new_size;
 	int status;
 
+	  /*
+	   * If buffer has not had a string before, set it to a blank
+	   * string.  Everything should flow from there....
+	   */
+	if (field->buffers[0].string == NULL) {
+		set_field_buffer(field, 0, "");
+	}
+	
 #ifdef DEBUG
 	fprintf(dbg, "add_char: pos=%d, char=%c\n", pos, c);
 	fprintf(dbg,
