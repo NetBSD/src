@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.38 2002/02/01 13:35:41 martin Exp $	*/
+/*	$NetBSD: wi.c,v 1.39 2002/02/13 22:06:17 itojun Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.38 2002/02/01 13:35:41 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.39 2002/02/13 22:06:17 itojun Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -589,7 +589,7 @@ void wi_update_stats(sc)
 		 * trying to find a peer. Don't bother the user with this
 		 * unless he is debugging.
 		 */
-		if (t > 2 || (ifp->if_flags & IFF_DEBUG))
+		if (ifp->if_flags & IFF_DEBUG)
 			printf("%s: %s\n", sc->sc_dev.dv_xname, msg[t - 1]);
 		break;
 		}
