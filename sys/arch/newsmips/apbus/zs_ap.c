@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_ap.c,v 1.11 2003/02/11 17:25:15 tsutsui Exp $	*/
+/*	$NetBSD: zs_ap.c,v 1.12 2003/04/19 14:56:05 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
 #define PORTA_OFFSET	0x00050000
 #define   PORT_CTL		2
 #define     PORTCTL_RI		0x01
-#define     PORTCTL_DSR		0x02	
+#define     PORTCTL_DSR		0x02
 #define     PORTCTL_DTR		0x04
 #define   PORT_SEL		3
 #define     PORTSEL_LOCALTALK	0x01
