@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stream.c,v 1.26 1998/08/09 20:37:56 perry Exp $	 */
+/*	$NetBSD: svr4_stream.c,v 1.27 1998/08/27 07:04:31 christos Exp $	 */
 /*
  * Copyright (c) 1994, 1996 Christos Zoulas.  All rights reserved.
  *
@@ -84,15 +84,19 @@ static void netaddr_to_sockaddr_un __P((struct sockaddr_un *,
 
 /* stream ioctls */
 static int i_nread __P((struct file *, struct proc *, register_t *, int,
-			u_long, caddr_t));
+    u_long, caddr_t));
 static int i_fdinsert __P((struct file *, struct proc *, register_t *, int,
-			   u_long, caddr_t));
-static int i_str   __P((struct file *, struct proc *, register_t *, int,
-			u_long, caddr_t));
+    u_long, caddr_t));
+static int i_str __P((struct file *, struct proc *, register_t *, int,
+    u_long, caddr_t));
+static int i_setsig __P((struct file *, struct proc *, register_t *, int,
+    u_long, caddr_t));
+static int i_getsig __P((struct file *, struct proc *, register_t *, int,
+    u_long, caddr_t));
 static int _i_bind_rsvd __P((struct file *, struct proc *, register_t *, int,
-			     u_long, caddr_t));
+    u_long, caddr_t));
 static int _i_rele_rsvd __P((struct file *, struct proc *, register_t *, int,
-			     u_long, caddr_t));
+    u_long, caddr_t));
 
 /* i_str sockmod calls */
 static int sockmod       __P((struct file *, int, struct svr4_strioctl *,
@@ -1175,6 +1179,101 @@ i_str(fp, p, retval, fd, cmd, dat)
 	return copyout(&ioc, dat, sizeof(ioc));
 }
 
+static int
+i_setsig(fp, p, retval, fd, cmd, dat)
+	struct file *fp;
+	struct proc *p;
+	register_t *retval;
+	int fd;
+	u_long cmd;
+	caddr_t dat;
+{
+	/* 
+	 * This is the best we can do for now; we cannot generate
+	 * signals only for specific events so the signal mask gets
+	 * ignored; we save it just to pass it to a possible I_GETSIG...
+	 *
+	 * We alse have to fix the O_ASYNC fcntl bit, so the
+	 * process will get SIGPOLLs.
+	 */
+	struct sys_fcntl_args fa;
+	int error;
+	register_t oflags, flags;
+	struct svr4_strm *st = svr4_stream_get(fp);
+
+	if (st == NULL) {
+		DPRINTF(("i_setsig: bad file descriptor\n"));
+		return EINVAL;
+	}
+	/* get old status flags */
+	SCARG(&fa, fd) = fd;
+	SCARG(&fa, cmd) = F_GETFL;
+	if ((error = sys_fcntl(p, &fa, &oflags)) != 0)
+		return error;
+
+	/* update the flags */
+	if (dat != NULL) {
+		int mask;
+
+		flags = oflags | O_ASYNC;
+		if ((error = copyin(dat, &mask, sizeof(mask))) != 0) {
+			DPRINTF(("i_setsig: bad eventmask pointer\n"));
+			return error;
+		}
+		if (mask & SVR4_S_ALLMASK) {
+			DPRINTF(("i_setsig: bad eventmask data %x\n", mask));
+			return EINVAL;
+		}
+		st->s_eventmask = mask;
+	}
+	else {
+		flags = oflags & ~O_ASYNC;
+		st->s_eventmask = 0;
+	}
+
+	/* set the new flags, if changed */
+	if (flags != oflags) {
+		SCARG(&fa, cmd) = F_SETFL;
+		SCARG(&fa, arg) = (void *) flags;
+		if ((error = sys_fcntl(p, &fa, &flags)) != 0)
+			return error;
+	}
+
+	/* set up SIGIO receiver if needed */
+	if (dat != NULL) {
+		SCARG(&fa, cmd) = F_SETOWN;
+		SCARG(&fa, arg) = (void *) p->p_pid;
+		return sys_fcntl(p, &fa, retval);
+	}
+	return 0;
+}
+
+static int
+i_getsig(fp, p, retval, fd, cmd, dat)
+	struct file *fp;
+	struct proc *p;
+	register_t *retval;
+	int fd;
+	u_long cmd;
+	caddr_t dat;
+{
+	int error;
+
+	if (dat != NULL) {
+		struct svr4_strm *st = svr4_stream_get(fp);
+
+		if (st == NULL) {
+			DPRINTF(("i_getsig: bad file descriptor\n"));
+			return EINVAL;
+		}
+		if ((error = copyout(&st->s_eventmask, dat, 
+		    sizeof(st->s_eventmask))) != 0) {
+			DPRINTF(("i_getsig: bad eventmask pointer\n"));
+			return error;
+		}
+	}
+	return 0;
+}
 
 int
 svr4_stream_ioctl(fp, p, retval, fd, cmd, dat)
@@ -1225,49 +1324,11 @@ svr4_stream_ioctl(fp, p, retval, fd, cmd, dat)
 
 	case SVR4_I_SETSIG:
 		DPRINTF(("I_SETSIG\n"));
-		/* 
-		 * This is the best we can do for now; we cannot generate
-		 * signals only for specific events so the signal mask gets
-		 * ignored.
-		 *
-		 * We alse have to fix the O_ASYNC fcntl bit, so the
-		 * process will get SIGPOLLs. */
-		{
-			struct sys_fcntl_args fa;
-			int error;
-			register_t oflags, flags;
-
-			/* get old status flags */
-			SCARG(&fa, fd) = fd;
-			SCARG(&fa, cmd) = F_GETFL;
-			if ((error = sys_fcntl(p, &fa, &oflags)) != 0)
-				return error;
-
-			/* update the flags */
-			if ((long) dat != 0)
-				flags = oflags | O_ASYNC;
-			else
-				flags = oflags & ~O_ASYNC;
-
-			/* set the new flags, if changed */
-			if (flags != oflags) {
-				SCARG(&fa, cmd) = F_SETFL;
-				SCARG(&fa, arg) = (void *) flags;
-				if ((error = sys_fcntl(p, &fa, &flags)) != 0)
-					return error;
-			}
-
-			/* set up SIGIO receiver if needed */
-			if ((long) dat != 0) {
-				SCARG(&fa, cmd) = F_SETOWN;
-				SCARG(&fa, arg) = (void *) p->p_pid;
-				return sys_fcntl(p, &fa, retval);
-			}
-		}
+		return i_setsig(fp, p, retval, fd, cmd, dat);
 
 	case SVR4_I_GETSIG:
 		DPRINTF(("I_GETSIG\n"));
-		return EINVAL;
+		return i_getsig(fp, p, retval, fd, cmd, dat);
 
 	case SVR4_I_FIND:
 		DPRINTF(("I_FIND\n"));
