@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.6 1994/06/29 06:36:44 cgd Exp $	*/
+/*	$NetBSD: route.h,v 1.7 1995/03/08 02:57:14 cgd Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -109,13 +109,13 @@ struct rtentry {
  * We should eventually move it to a compat file.
  */
 struct ortentry {
-	u_long	rt_hash;		/* to speed lookups */
-	struct	sockaddr rt_dst;	/* key */
-	struct	sockaddr rt_gateway;	/* value */
-	short	rt_flags;		/* up/down?, host/net */
-	short	rt_refcnt;		/* # held references */
-	u_long	rt_use;			/* raw # packets forwarded */
-	struct	ifnet *rt_ifp;		/* the answer: interface to use */
+	u_int32_t rt_hash;		/* to speed lookups */
+	struct sockaddr rt_dst;		/* key */
+	struct sockaddr rt_gateway;	/* value */
+	int16_t	  rt_flags;		/* up/down?, host/net */
+	int16_t	  rt_refcnt;		/* # held references */
+	u_int32_t rt_use;		/* raw # packets forwarded */
+	struct ifnet *rt_ifp;		/* the answer: interface to use */
 };
 
 #define	RTF_UP		0x1		/* route usable */
@@ -256,7 +256,7 @@ struct rtentry *
 	 rtalloc1 __P((struct sockaddr *, int));
 void	 rtfree __P((struct rtentry *));
 int	 rtinit __P((struct ifaddr *, int, int));
-int	 rtioctl __P((int, caddr_t, struct proc *));
+int	 rtioctl __P((u_long, caddr_t, struct proc *));
 int	 rtredirect __P((struct sockaddr *, struct sockaddr *,
 	    struct sockaddr *, int, struct sockaddr *, struct rtentry **));
 int	 rtrequest __P((int, struct sockaddr *,

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.11 1994/06/29 06:36:46 cgd Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.12 1995/03/08 02:57:16 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988, 1991, 1993
@@ -139,8 +139,8 @@ route_output(m, so)
 	struct ifaddr *ifa = 0;
 
 #define senderr(e) { error = e; goto flush;}
-	if (m == 0 || ((m->m_len < sizeof(long)) &&
-		       (m = m_pullup(m, sizeof(long))) == 0))
+	if (m == 0 || ((m->m_len < sizeof(int32_t)) &&
+		       (m = m_pullup(m, sizeof(int32_t))) == 0))
 		return (ENOBUFS);
 	if ((m->m_flags & M_PKTHDR) == 0)
 		panic("route_output");

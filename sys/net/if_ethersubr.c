@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.9 1994/06/29 06:36:11 cgd Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.10 1995/03/08 02:56:55 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -100,7 +100,7 @@ ether_output(ifp, m0, dst, rt0)
 	struct sockaddr *dst;
 	struct rtentry *rt0;
 {
-	u_short etype;
+	u_int16_t etype;
 	int s, error = 0;
  	u_char edst[6];
 	register struct mbuf *m = m0;
@@ -312,7 +312,7 @@ ether_input(ifp, eh, m)
 {
 	register struct ifqueue *inq;
 	register struct llc *l;
-	u_short etype;
+	u_int16_t etype;
 	struct arpcom *ac = (struct arpcom *)ifp;
 	int s;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.20 1994/10/30 21:48:52 cgd Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.21 1995/03/08 02:56:58 cgd Exp $	*/
 
 /*
  * if_ppp.c - Point-to-Point Protocol (PPP) Asynchronous driver.
@@ -143,7 +143,7 @@ int	pppioctl __P((struct ifnet *ifp, u_long cmd, caddr_t data));
 void	pppstart __P((struct tty *tp));
 
 static int	pppasyncstart __P((struct ppp_softc *));
-static u_short	pppfcs __P((u_short fcs, u_char *cp, int len));
+static u_int16_t pppfcs __P((u_int fcs, u_char *cp, int len));
 static int	pppgetm __P((struct ppp_softc *sc));
 static void	pppdumpm __P((struct mbuf *m0, int pktlen));
 static void	pppdumpb __P((u_char *b, int l));
@@ -166,7 +166,7 @@ static void	ppplogchar __P((struct ppp_softc *, int));
  * priority queue.  To decide if traffic is interactive, we check that
  * a) it is TCP and b) one of its ports is telnet, rlogin or ftp control.
  */
-static u_short interactive_ports[8] = {
+static u_int16_t interactive_ports[8] = {
 	0,	513,	0,	0,
 	0,	21,	0,	23,
 };
@@ -487,21 +487,21 @@ ppptioctl(tp, cmd, data, flag, p)
     case PPPIOCSASYNCMAP:
 	if (error = suser(p->p_ucred, &p->p_acflag))
 	    return (error);
-	sc->sc_asyncmap[0] = *(u_int *)data;
+	sc->sc_asyncmap[0] = *(u_int32_t *)data;
 	break;
 
     case PPPIOCGASYNCMAP:
-	*(u_int *)data = sc->sc_asyncmap[0];
+	*(u_int32_t *)data = sc->sc_asyncmap[0];
 	break;
 
     case PPPIOCSRASYNCMAP:
 	if (error = suser(p->p_ucred, &p->p_acflag))
 	    return (error);
-	sc->sc_rasyncmap = *(u_int *)data;
+	sc->sc_rasyncmap = *(u_int32_t *)data;
 	break;
 
     case PPPIOCGRASYNCMAP:
-	*(u_int *)data = sc->sc_rasyncmap;
+	*(u_int32_t *)data = sc->sc_rasyncmap;
 	break;
 
     case PPPIOCSXASYNCMAP:
@@ -554,7 +554,7 @@ ppptioctl(tp, cmd, data, flag, p)
 /*
  * FCS lookup table as calculated by genfcstab.
  */
-static u_short fcstab[256] = {
+static u_int16_t fcstab[256] = {
 	0x0000,	0x1189,	0x2312,	0x329b,	0x4624,	0x57ad,	0x6536,	0x74bf,
 	0x8c48,	0x9dc1,	0xaf5a,	0xbed3,	0xca6c,	0xdbe5,	0xe97e,	0xf8f7,
 	0x1081,	0x0108,	0x3393,	0x221a,	0x56a5,	0x472c,	0x75b7,	0x643e,
@@ -592,9 +592,9 @@ static u_short fcstab[256] = {
 /*
  * Calculate a new FCS given the current FCS and the new data.
  */
-static u_short
+static u_int16_t
 pppfcs(fcs, cp, len)
-    register u_short fcs;
+    register u_int fcs;
     register u_char *cp;
     register int len;
 {
@@ -648,7 +648,7 @@ pppoutput(ifp, m0, dst, rtp)
 	 * put the packet on the fastq instead.
 	 */
 	if ((ip = mtod(m0, struct ip *))->ip_p == IPPROTO_TCP) {
-	    register int p = ntohl(((int *)ip)[ip->ip_hl]);
+	    register int32_t p = ntohl(((int32_t *)ip)[ip->ip_hl]);
 	    if (INTERACTIVE(p & 0xffff) || INTERACTIVE(p >> 16))
 		ifq = &sc->sc_fastq;
 	}

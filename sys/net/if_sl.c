@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.33 1994/12/11 21:39:05 mycroft Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.34 1995/03/08 02:57:05 cgd Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -671,7 +671,7 @@ sl_btom(sc, len)
 		}
 		sc->sc_ep = mtod(m, u_char *) + SLBUFSIZE;
 		m->m_data = (caddr_t)sc->sc_buf;
-		m->m_ext.ext_buf = (caddr_t)((int)sc->sc_buf &~ MCLOFSET);
+		m->m_ext.ext_buf = (caddr_t)((long)sc->sc_buf &~ MCLOFSET);
 	} else
 		bcopy((caddr_t)sc->sc_buf, mtod(m, caddr_t), len);
 

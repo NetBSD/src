@@ -1,4 +1,4 @@
-/*	$NetBSD: if_llc.h,v 1.5 1994/06/29 06:36:13 cgd Exp $	*/
+/*	$NetBSD: if_llc.h,v 1.6 1995/03/08 02:56:57 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -44,41 +44,41 @@
  */
 
 struct llc {
-	u_char	llc_dsap;
-	u_char	llc_ssap;
+	u_int8_t llc_dsap;
+	u_int8_t llc_ssap;
 	union {
 	    struct {
-		u_char control;
-		u_char format_id;
-		u_char class;
-		u_char window_x2;
+		u_int8_t control;
+		u_int8_t format_id;
+		u_int8_t class;
+		u_int8_t window_x2;
 	    } type_u;
 	    struct {
-		u_char num_snd_x2;
-		u_char num_rcv_x2;
+		u_int8_t num_snd_x2;
+		u_int8_t num_rcv_x2;
 	    } type_i;
 	    struct {
-		u_char control;
-		u_char num_rcv_x2;
+		u_int8_t control;
+		u_int8_t num_rcv_x2;
 	    } type_s;
 	    struct {
-	        u_char control;
+	        u_int8_t control;
 		struct frmrinfo {
-			u_char rej_pdu_0;
-			u_char rej_pdu_1;
-			u_char frmr_control;
-			u_char frmr_control_ext;
-			u_char frmr_cause;
+			u_int8_t rej_pdu_0;
+			u_int8_t rej_pdu_1;
+			u_int8_t frmr_control;
+			u_int8_t frmr_control_ext;
+			u_int8_t frmr_cause;
 		} frmrinfo;
 	    } type_frmr;
 	    struct {
-		u_char control;
-		u_char org_code[3];
-		u_short ether_type;
+		u_int8_t  control;
+		u_int8_t  org_code[3];
+		u_int16_t ether_type;
 	    } type_snap;
 	    struct {
-		u_char control;
-		u_char control_ext;
+		u_int8_t control;
+		u_int8_t control_ext;
 	    } type_raw;
 	} llc_un;
 };

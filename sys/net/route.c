@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.11 1994/06/29 06:36:42 cgd Exp $	*/
+/*	$NetBSD: route.c,v 1.12 1995/03/08 02:57:11 cgd Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -175,7 +175,6 @@ ifafree(ifa)
  * message from the network layer.
  *
  * N.B.: must be called at splnet
- *
  */
 int
 rtredirect(dst, gateway, netmask, flags, src, rtp)
@@ -270,7 +269,7 @@ out:
 */
 int
 rtioctl(req, data, p)
-	int req;
+	u_long req;
 	caddr_t data;
 	struct proc *p;
 {
