@@ -1,18 +1,19 @@
-#	@(#)Makefile	5.9 (Berkeley) 7/1/91
+#	@(#)Makefile	8.2 (Berkeley) 4/16/94
 
-SUBDIR=	man1 man3 man4 man5 man7 man8
+SUBDIR=	man1 man3 man3f man4 man5 man7 man8
+SEDF= /usr/share/man/makewhatis.sed
 
 afterinstall:
 	install -c -o ${BINOWN} -g ${BINGRP} -m 444 makewhatis.sed \
-	    ${DESTDIR}/usr/share/man/makewhatis.sed
-	install -c -o ${BINOWN} -g ${BINGRP} -m 444 man0/COPYRIGHT \
-	    ${DESTDIR}/usr/share/man/COPYRIGHT
+	    ${DESTDIR}${SEDF}
 
 makedb:
-	for file in `find /usr/share/man -type f -name '*.0' -print`; do \
-		sed -n -f /usr/share/man/makewhatis.sed $$file; \
-	done | sort -u > whatis.db
-	install -o ${BINOWN} -g ${BINGRP} -m 444 whatis.db \
+	find /usr/share/man -type f -name '*.0' -print | \
+	while read file; \
+	do \
+		sed -n -f ${SEDF} $$file; \
+	done | col -b | sort -u > /tmp/whatis.db
+	install -o ${BINOWN} -g ${BINGRP} -m 444 /tmp/whatis.db \
 	    ${DESTDIR}/usr/share/man
 
 .include <bsd.subdir.mk>
