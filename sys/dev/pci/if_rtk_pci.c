@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtk_pci.c,v 1.4 2000/12/28 22:59:13 sommerfeld Exp $	*/
+/*	$NetBSD: if_rtk_pci.c,v 1.5 2001/01/31 07:44:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -138,7 +138,9 @@
  * on the part of RealTek. Memory mapped mode does appear to work on
  * uniprocessor systems though.
  */
+#ifndef dreamcast		/* XXX */
 #define RTK_USEIOSPACE
+#endif
 
 #include <dev/ic/rtl81x9reg.h>
 #include <dev/ic/rtl81x9var.h>
@@ -167,6 +169,9 @@ static const struct rtk_type rtk_pci_devs[] = {
 		RTK_8139 },
 	{ PCI_VENDOR_ADDTRON, PCI_PRODUCT_ADDTRON_8139,
 		"Addtron Technology 8139 10/100BaseTX",
+		RTK_8139 },
+	{ PCI_VENDOR_SEGA, PCI_PRODUCT_SEGA_BROADBAND,
+		"SEGA Broadband Adapter",
 		RTK_8139 },
 	{ 0, 0, NULL, 0 }
 };
@@ -280,7 +285,7 @@ rtk_pci_attach(parent, self, aux)
 #else
 	if (pci_mapreg_map(pa, RTK_PCI_LOMEM, PCI_MAPREG_TYPE_MEM, 0,
 	    &sc->rtk_btag, &sc->rtk_bhandle, NULL, NULL)) {
-		printf("%s: can't map i/o space\n", sc->sc_dev.dv_xname);
+		printf("%s: can't map mem space\n", sc->sc_dev.dv_xname);
 		return;
 	}
 #endif
