@@ -11,6 +11,7 @@
 ./usr/bin/vttest
 ./usr/lib/libg2c.so.0.0
 ./usr/lib/libi386.so.0.2
+./usr/lib/libkeycap.so.0.0
 ./usr/lib/libobjc.so.0.0
 ./usr/lib/libstdc++.so.2.0
 ./usr/libexec/ld.so
