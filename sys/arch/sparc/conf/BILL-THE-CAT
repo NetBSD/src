@@ -1,4 +1,4 @@
-# 	$NetBSD: BILL-THE-CAT,v 1.16 2002/01/27 13:23:26 jdolecek Exp $
+# 	$NetBSD: BILL-THE-CAT,v 1.17 2002/02/10 17:37:01 wiz Exp $
 # 	From: NetBSD: GENERIC,v 1.84 1999/06/06 13:00:03 mrg Exp
 
 include "arch/sparc/conf/std.sparc"
@@ -432,7 +432,7 @@ le0		at ledma0				# sun4m on-board
 
 # MII/PHY support
 #exphy*	at mii? phy ?			# 3Com internal PHYs
-#icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS1890
+#icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS189x
 #inphy*	at mii? phy ?			# Intel 82555 PHYs
 #lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs
 #nsphy*	at mii? phy ?			# NS83840 PHYs

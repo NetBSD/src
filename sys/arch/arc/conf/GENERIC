@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.61 2002/01/27 13:23:11 jdolecek Exp $
+# $NetBSD: GENERIC,v 1.62 2002/02/10 17:36:54 wiz Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include		"arch/arc/conf/std.arc"
 
-#ident		"GENERIC-$Revision: 1.61 $"
+#ident		"GENERIC-$Revision: 1.62 $"
 
 maxusers	32		# estimated number of users
 
@@ -321,7 +321,7 @@ atapibus*	at pciide? channel ?
 #### MII/PHY support
 
 exphy*		at mii? phy ?		# 3Com internal PHYs
-icsphy*		at mii? phy ?		# Integrated Circuit Systems ICS1890
+icsphy*		at mii? phy ?		# Integrated Circuit Systems ICS189x
 inphy*		at mii? phy ?		# Intel 82555 PHYs
 iophy*		at mii? phy ?		# Intel 82553 PHYs
 lxtphy*		at mii? phy ?		# Level One LXT-970 PHYs

@@ -1,4 +1,4 @@
-#	$NetBSD: MIMORI,v 1.11 2002/01/27 13:23:12 jdolecek Exp $
+#	$NetBSD: MIMORI,v 1.12 2002/02/10 17:36:55 wiz Exp $
 #	NetBSD: GENERIC,v 1.31 2000/06/09 05:33:02 soda Exp
 #
 #	MIMORI -- My NEC RISCstation 2250 (ur)
@@ -192,7 +192,7 @@ atapibus*	at pciide? channel ?
 #### MII/PHY support
 
 exphy*		at mii? phy ?		# 3Com internal PHYs
-icsphy*		at mii? phy ?		# Integrated Circuit Systems ICS1890
+icsphy*		at mii? phy ?		# Integrated Circuit Systems ICS189x
 inphy*		at mii? phy ?		# Intel 82555 PHYs
 iophy*		at mii? phy ?		# Intel 82553 PHYs
 lxtphy*		at mii? phy ?		# Level One LXT-970 PHYs

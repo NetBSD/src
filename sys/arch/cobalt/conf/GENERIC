@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.26 2002/01/27 13:23:14 jdolecek Exp $
+# $NetBSD: GENERIC,v 1.27 2002/02/10 17:36:56 wiz Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include 	"arch/cobalt/conf/std.cobalt"
 
-#ident 		"GENERIC-$Revision: 1.26 $"
+#ident 		"GENERIC-$Revision: 1.27 $"
 
 maxusers	32
 
@@ -213,7 +213,7 @@ options 	TLP_MATCH_21142
 
 # MII/PHY support
 #exphy*		at mii? phy ?			# 3Com internal PHYs
-#icsphy*		at mii? phy ?			# ICS1890 PHYs
+#icsphy*		at mii? phy ?			# ICS189x PHYs
 #inphy*		at mii? phy ?			# Intel 82555 PHYs
 #iophy*		at mii? phy ?			# Intel 82553 PHYs
 lxtphy*		at mii? phy ?			# Level One LXT-970 PHYs
