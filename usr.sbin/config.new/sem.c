@@ -40,7 +40,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)sem.c	8.1 (Berkeley) 6/6/93
- *	$Id: sem.c,v 1.4 1994/06/22 10:44:24 pk Exp $
+ *	$Id: sem.c,v 1.5 1994/06/22 11:39:07 pk Exp $
  */
 
 #include <sys/param.h>
@@ -443,7 +443,10 @@ resolve(nvp, name, what, dflt, part)
 	if ((nv = *nvp) == NULL) {
 		/*
 		 * Apply default.  Easiest to do this by number.
+		 * Make sure to retain NODEVness, if this is dflt's disposition.
 		 */
+		if (dflt->nv_int == NODEV)
+			part = 7;
 		maj = major(dflt->nv_int);
 		min = (minor(dflt->nv_int) & ~7) | part;
 		*nvp = nv = newnv(NULL, NULL, NULL, makedev(maj, min));
@@ -466,6 +469,12 @@ resolve(nvp, name, what, dflt, part)
 		nv->nv_str = intern(buf);
 		return (0);
 	}
+
+	if (nv->nv_str == NULL || nv->nv_str == s_nfs)
+		/*
+		 * NFS spec. Leave as NODEV.
+		 */
+		return (0);
 
 	/*
 	 * The normal case: things like "ra2b".  Check for partition
@@ -533,36 +542,28 @@ addconf(cf0)
 	 * Look for "swap generic".
 	 */
 	for (nv = cf->cf_swap; nv != NULL; nv = nv->nv_next)
-	    if ((nv->nv_str == s_generic) || (nv->nv_str == s_nfs))
+	    if (nv->nv_str == s_generic)
 		break;
 	if (nv != NULL) {
 		/*
 		 * Make sure no root or dump device specified, and no
 		 * other swap devices.  Note single | here (check all).
 		 */
-	        nv = cf->cf_swap;
-	        if (nv->nv_str == s_generic) {
-		    if (exclude(cf->cf_root, name, "root device") |
-			exclude(nv->nv_next, name, "additional swap devices") |
-			exclude(cf->cf_dump, name, "dump device"))
+		nv = cf->cf_swap;
+		if (exclude(cf->cf_root, name, "root device") |
+		    exclude(nv->nv_next, name, "additional swap devices") |
+		    exclude(cf->cf_dump, name, "dump device"))
 			goto bad;
-		}
-		else {
-		    if (exclude(cf->cf_root, name, "root device") |
-			exclude(nv->nv_next, name, "additional swap devices") |
-			exclude(cf->cf_dump, name, "dump device"))
-			goto bad;
-		}
 	} else {
-	    nv = cf->cf_root;
-	    if (nv == NULL) {
-		error("%s: no root device specified", name);
-		goto bad;
-	    }
-	    if (resolve(&cf->cf_root, name, "root", nv, 'a') |
-		lresolve(&cf->cf_swap, name, "swap", nv, 'b') |
-		resolve(&cf->cf_dump, name, "dumps", nv, 'b'))
-		goto bad;
+		nv = cf->cf_root;
+		if (nv == NULL) {
+			error("%s: no root device specified", name);
+			goto bad;
+		}
+		if (resolve(&cf->cf_root, name, "root", nv, 'a') |
+		    lresolve(&cf->cf_swap, name, "swap", nv, 'b') |
+		    resolve(&cf->cf_dump, name, "dumps", nv, 'b'))
+			goto bad;
 	}
 	*nextcf = cf;
 	nextcf = &cf->cf_next;
