@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.72 2004/02/13 22:47:04 snj Exp $	*/
+/*	$NetBSD: iommu.c,v 1.73 2004/03/22 12:20:52 nakayama Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Eduardo Horvath
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.72 2004/02/13 22:47:04 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.73 2004/03/22 12:20:52 nakayama Exp $");
 
 #include "opt_ddb.h"
 
@@ -987,7 +987,8 @@ iommu_dvmamap_sync(t, sb, map, offset, len, ops)
 		}
 #ifdef DIAGNOSTIC
 		if (i == map->dm_nsegs && len > 0)
-			panic("iommu_dvmamap_sync: leftover %lu", len);
+			panic("iommu_dvmamap_sync: leftover %llu",
+			    (unsigned long long)len);
 #endif
 
 		if (needsflush)
