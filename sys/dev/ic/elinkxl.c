@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.70.2.6 2005/02/04 11:45:25 skrll Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.70.2.7 2005/02/06 08:59:23 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.70.2.6 2005/02/04 11:45:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.70.2.7 2005/02/06 08:59:23 skrll Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -427,6 +427,7 @@ ex_config(sc)
 	ifp->if_stop = ex_stop;
 	ifp->if_flags =
 	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
+	sc->sc_if_flags = ifp->if_flags;
 	IFQ_SET_READY(&ifp->if_snd);
 
 	/*
@@ -697,6 +698,7 @@ ex_init(ifp)
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
 	ex_start(ifp);
+	sc->sc_if_flags = ifp->if_flags;
 
 	GO_WINDOW(1);
 
@@ -1382,7 +1384,21 @@ ex_ioctl(ifp, cmd, data)
 	case SIOCGIFMEDIA:
 		error = ifmedia_ioctl(ifp, ifr, &sc->ex_mii.mii_media, cmd);
 		break;
-
+	case SIOCSIFFLAGS:
+		/* If the interface is up and running, only modify the receive
+		 * filter when setting promiscuous or debug mode.  Otherwise
+		 * fall through to ether_ioctl, which will reset the chip.
+		 */
+#define RESETIGN (IFF_CANTCHANGE|IFF_DEBUG)
+		if (((ifp->if_flags & (IFF_UP|IFF_RUNNING))
+		    == (IFF_UP|IFF_RUNNING))
+		    && ((ifp->if_flags & (~RESETIGN))
+		    == (sc->sc_if_flags & (~RESETIGN)))) {
+			ex_set_mc(sc);
+			break;
+#undef RESETIGN
+		}
+		/* FALLTHROUGH */
 	default:
 		error = ether_ioctl(ifp, cmd, data);
 		if (error == ENETRESET) {
@@ -1397,6 +1413,7 @@ ex_ioctl(ifp, cmd, data)
 		break;
 	}
 
+	sc->sc_if_flags = ifp->if_flags;
 	splx(s);
 	return (error);
 }
@@ -1569,6 +1586,7 @@ ex_stop(ifp, disable)
 		ex_disable(sc);
 
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	sc->sc_if_flags = ifp->if_flags;
 	ifp->if_timer = 0;
 }
 

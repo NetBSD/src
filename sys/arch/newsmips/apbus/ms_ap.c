@@ -1,4 +1,4 @@
-/*	$NetBSD: ms_ap.c,v 1.4.6.4 2005/01/27 09:02:48 skrll Exp $	*/
+/*	$NetBSD: ms_ap.c,v 1.4.6.5 2005/02/06 08:59:22 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ms_ap.c,v 1.4.6.4 2005/01/27 09:02:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ms_ap.c,v 1.4.6.5 2005/02/06 08:59:22 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -73,10 +73,7 @@ struct wsmouse_accessops ms_ap_accessops = {
 };
 
 int
-ms_ap_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+ms_ap_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct apbus_attach_args *apa = aux;
 
@@ -87,9 +84,7 @@ ms_ap_match(parent, cf, aux)
 }
 
 void
-ms_ap_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+ms_ap_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ms_ap_softc *sc = (void *)self;
 	struct apbus_attach_args *apa = aux;
@@ -113,8 +108,7 @@ ms_ap_attach(parent, self, aux)
 }
 
 int
-ms_ap_intr(v)
-	void *v;
+ms_ap_intr(void *v)
 {
 	struct ms_ap_softc *sc = v;
 	volatile struct msreg *reg = sc->sc_reg;
@@ -179,8 +173,7 @@ ms_ap_intr(v)
 }
 
 int
-ms_ap_enable(v)
-	void *v;
+ms_ap_enable(void *v)
 {
 	struct ms_ap_softc *sc = v;
 	volatile struct msreg *reg = sc->sc_reg;
@@ -190,8 +183,7 @@ ms_ap_enable(v)
 }
 
 void
-ms_ap_disable(v)
-	void *v;
+ms_ap_disable(void *v)
 {
 	struct ms_ap_softc *sc = v;
 	volatile struct msreg *reg = sc->sc_reg;
@@ -200,12 +192,8 @@ ms_ap_disable(v)
 }
 
 int
-ms_ap_ioctl(v, cmd, data, flag, l)
-	void *v;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct lwp *l;
+ms_ap_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
+
 	return EPASSTHROUGH;
 }

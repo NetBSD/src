@@ -1,4 +1,4 @@
-/*	$NetBSD: news5000.c,v 1.10.2.3 2004/09/21 13:19:33 skrll Exp $	*/
+/*	$NetBSD: news5000.c,v 1.10.2.4 2005/02/06 08:59:22 skrll Exp $	*/
 
 /*-
  * Copyright (C) 1999 SHIMIZU Ryo.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: news5000.c,v 1.10.2.3 2004/09/21 13:19:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: news5000.c,v 1.10.2.4 2005/02/06 08:59:22 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,7 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: news5000.c,v 1.10.2.3 2004/09/21 13:19:33 skrll Exp 
 #include <newsmips/apbus/apbusvar.h>
 #include <newsmips/newsmips/machid.h>
 
-extern void (*readmicrotime) (struct timeval *tvp);
+extern void (*readmicrotime)(struct timeval *tvp);
 
 static void news5000_level1_intr(void);
 static void news5000_level0_intr(void);
@@ -49,7 +49,7 @@ static void news5000_enable_intr(void);
 static void news5000_disable_intr(void);
 static void news5000_enable_timer(void);
 static void news5000_readmicrotime(struct timeval *);
-static void news5000_readidrom(u_char *);
+static void news5000_readidrom(uint8_t *);
 
 static u_int freerun_off;
 
@@ -57,35 +57,31 @@ static u_int freerun_off;
  * Handle news5000 interrupts.
  */
 void
-news5000_intr(status, cause, pc, ipending)
-	u_int status;	/* status register at time of the exception */
-	u_int cause;	/* cause register at time of exception */
-	u_int pc;	/* program counter where to continue */
-	u_int ipending;
+news5000_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 {
 	if (ipending & MIPS_INT_MASK_2) {
 #ifdef DEBUG
 		static int l2cnt = 0;
 #endif
-		u_int int2stat;
+		uint32_t int2stat;
 		struct clockframe cf;
 
-		int2stat = *(volatile u_int *)NEWS5000_INTST2;
+		int2stat = *(volatile uint32_t *)NEWS5000_INTST2;
 
 #ifdef DEBUG
 		l2cnt++;
 		if (l2cnt == 50) {
-			*(volatile u_int *)NEWS5000_LED_SEC = 1;
+			*(volatile uint32_t *)NEWS5000_LED_SEC = 1;
 		}
 		if (l2cnt == 100) {
-			*(volatile u_int *)NEWS5000_LED_SEC = 0;
+			*(volatile uint32_t *)NEWS5000_LED_SEC = 0;
 			l2cnt = 0;
 		}
 #endif
 
 		if (int2stat & NEWS5000_INT2_TIMER0) {
-			*(volatile u_int *)NEWS5000_TIMER0 = 1;
-			freerun_off = *(volatile u_int *)NEWS5000_FREERUN;
+			*(volatile uint32_t *)NEWS5000_TIMER0 = 1;
+			freerun_off = *(volatile uint32_t *)NEWS5000_FREERUN;
 
 			cf.pc = pc;
 			cf.sr = status;
@@ -101,7 +97,9 @@ news5000_intr(status, cause, pc, ipending)
 	_splset(MIPS_SR_INT_IE | (status & MIPS_INT_MASK_2));
 
 	if (ipending & MIPS_INT_MASK_5) {
-		u_int int5stat = *(volatile u_int *)NEWS5000_INTST5;
+		uint32_t int5stat;
+
+		int5stat = *(volatile u_int *)NEWS5000_INTST5;
 		printf("level5 interrupt (%08x)\n", int5stat);
 
 		apbus_wbflush();
@@ -109,24 +107,28 @@ news5000_intr(status, cause, pc, ipending)
 	}
 
 	if (ipending & MIPS_INT_MASK_4) {
-		u_int int4stat = *(volatile u_int *)NEWS5000_INTST4;
+		uint32_t int4stat;
+
+		int4stat = *(volatile uint32_t *)NEWS5000_INTST4;
 		printf("level4 interrupt (%08x)\n", int4stat);
 		if (int4stat & NEWS5000_INT4_APBUS) {
-			u_int stat = *(volatile u_int *)NEWS5000_APBUS_INTST;
+			uint32_t stat;
+
+			stat = *(volatile uint32_t *)NEWS5000_APBUS_INTST;
 			printf("APbus error 0x%04x\n", stat & 0xffff);
 			if (stat & NEWS5000_APBUS_INT_DMAADDR) {
 				printf("DMA Address Error: "
 				    "slot=%x, addr=0x%08x\n",
-				    *(volatile u_int *)NEWS5000_APBUS_DER_S,
-				    *(volatile u_int *)NEWS5000_APBUS_DER_A);
+				    *(volatile uint32_t *)NEWS5000_APBUS_DER_S,
+				    *(volatile uint32_t *)NEWS5000_APBUS_DER_A);
 			}
 			if (stat & NEWS5000_APBUS_INT_RDTIMEO)
 				printf("IO Read Timeout: addr=0x%08x\n",
-				    *(volatile u_int *)NEWS5000_APBUS_BER_A);
+				    *(volatile uint32_t *)NEWS5000_APBUS_BER_A);
 			if (stat & NEWS5000_APBUS_INT_WRTIMEO)
 				printf("IO Write Timeout: addr=0x%08x\n",
-				    *(volatile u_int *)NEWS5000_APBUS_BER_A);
-			*(volatile u_int *)0xb4c00014 = stat;
+				    *(volatile uint32_t *)NEWS5000_APBUS_BER_A);
+			*(volatile uint32_t *)0xb4c00014 = stat;
 		}
 
 		apbus_wbflush();
@@ -134,7 +136,9 @@ news5000_intr(status, cause, pc, ipending)
 	}
 
 	if (ipending & MIPS_INT_MASK_3) {
-		u_int int3stat = *(volatile u_int *)NEWS5000_INTST3;
+		uint32_t int3stat;
+
+		int3stat = *(volatile uint32_t *)NEWS5000_INTST3;
 		printf("level3 interrupt (%08x)\n", int3stat);
 
 		apbus_wbflush();
@@ -160,9 +164,9 @@ news5000_intr(status, cause, pc, ipending)
 static void
 news5000_level1_intr(void)
 {
-	u_int int1stat;
+	uint32_t int1stat;
 
-	int1stat = *(volatile u_int *)NEWS5000_INTST1;
+	int1stat = *(volatile uint32_t *)NEWS5000_INTST1;
 
 	if (int1stat) {
 		if (apbus_intr_dispatch(1, int1stat) == 0)
@@ -175,9 +179,9 @@ news5000_level1_intr(void)
 static void
 news5000_level0_intr(void)
 {
-	u_int int0stat;
+	uint32_t int0stat;
 
-	int0stat = *(volatile u_int *)NEWS5000_INTST0;
+	int0stat = *(volatile uint32_t *)NEWS5000_INTST0;
 
 	if (int0stat) {
 		if (apbus_intr_dispatch(0, int0stat) == 0)
@@ -195,23 +199,23 @@ news5000_enable_intr(void)
 	/* INT2 -- It's not a time to enable timer yet. */
 	/* INT3 -- not used for NWS-5000 */
 
-	*(volatile u_int *)NEWS5000_INTEN4 = NEWS5000_INT4_APBUS;
-	*(volatile u_int *)NEWS5000_APBUS_INTMSK = 0xffff;
+	*(volatile uint32_t *)NEWS5000_INTEN4 = NEWS5000_INT4_APBUS;
+	*(volatile uint32_t *)NEWS5000_APBUS_INTMSK = 0xffff;
 
 	/* INT5 -- currently ignored */
-	*(volatile u_int *)NEWS5000_INTEN5 = 0;
+	*(volatile uint32_t *)NEWS5000_INTEN5 = 0;
 }
 
 static void
 news5000_disable_intr(void)
 {
 
-	*(volatile u_int *)NEWS5000_INTEN0 = 0;
-	*(volatile u_int *)NEWS5000_INTEN1 = 0;
-	*(volatile u_int *)NEWS5000_INTEN2 = 0;
-	*(volatile u_int *)NEWS5000_INTEN3 = 0;
-	*(volatile u_int *)NEWS5000_INTEN4 = 0;
-	*(volatile u_int *)NEWS5000_INTEN5 = 0;
+	*(volatile uint32_t *)NEWS5000_INTEN0 = 0;
+	*(volatile uint32_t *)NEWS5000_INTEN1 = 0;
+	*(volatile uint32_t *)NEWS5000_INTEN2 = 0;
+	*(volatile uint32_t *)NEWS5000_INTEN3 = 0;
+	*(volatile uint32_t *)NEWS5000_INTEN4 = 0;
+	*(volatile uint32_t *)NEWS5000_INTEN5 = 0;
 }
 
 static void
@@ -219,17 +223,16 @@ news5000_enable_timer(void)
 {
 
 	/* enable timer interrpt */
-	*(volatile u_int32_t *)NEWS5000_INTEN2 = NEWS5000_INT2_TIMER0;
+	*(volatile uint32_t *)NEWS5000_INTEN2 = NEWS5000_INT2_TIMER0;
 }
 
 static void
-news5000_readmicrotime(tvp)
-	struct timeval *tvp;
+news5000_readmicrotime(struct timeval *tvp)
 {
-	u_int freerun;
+	uint32_t freerun;
 
 	*tvp = time;
-	freerun = *(volatile u_int *)NEWS5000_FREERUN;
+	freerun = *(volatile uint32_t *)NEWS5000_FREERUN;
 	freerun -= freerun_off;
 	if (freerun > 1000000)
 		freerun = 1000000;
@@ -241,13 +244,12 @@ news5000_readmicrotime(tvp)
 }
 
 static void
-news5000_readidrom(rom)
-	u_char *rom;
+news5000_readidrom(uint8_t *rom)
 {
-	u_int32_t *p = (void *)NEWS5000_IDROM;
+	uint32_t *p = (void *)NEWS5000_IDROM;
 	int i;
 
-	for (i = 0; i < sizeof (struct idrom); i++, p += 2)
+	for (i = 0; i < sizeof(struct idrom); i++, p += 2)
 		*rom++ = ((*p & 0x0f) << 4) + (*(p + 1) & 0x0f);
 }
 
@@ -261,12 +263,12 @@ news5000_init(void)
 	disable_intr = news5000_disable_intr;
 	enable_timer = news5000_enable_timer;
 
-	news5000_readidrom((u_char *)&idrom);
+	news5000_readidrom((uint8_t *)&idrom);
 	readmicrotime = news5000_readmicrotime;
 	hostid = idrom.id_serial;
 
 	/* XXX reset uPD72067 FDC to avoid spurious interrupts */
 #define NEWS5000_FDC_FDOUT 0xbed20000
 #define FDO_FRST 0x04
-	*(volatile u_int8_t *)NEWS5000_FDC_FDOUT = FDO_FRST;
+	*(volatile uint8_t *)NEWS5000_FDC_FDOUT = FDO_FRST;
 }

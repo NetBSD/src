@@ -1,4 +1,4 @@
-/*	$NetBSD: news3400.c,v 1.11.2.3 2004/09/21 13:19:33 skrll Exp $	*/
+/*	$NetBSD: news3400.c,v 1.11.2.4 2005/02/06 08:59:22 skrll Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: news3400.c,v 1.11.2.3 2004/09/21 13:19:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: news3400.c,v 1.11.2.4 2005/02/06 08:59:22 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -53,7 +53,7 @@ static void news3400_level1_intr(void);
 static void news3400_enable_intr(void);
 static void news3400_disable_intr(void);
 static void news3400_enable_timer(void);
-static void news3400_readidrom(u_char *);
+static void news3400_readidrom(uint8_t *);
 
 static int badaddr_flag;
 
@@ -63,11 +63,7 @@ static int badaddr_flag;
  * Handle news3400 interrupts.
  */
 void
-news3400_intr(status, cause, pc, ipending)
-	u_int status;	/* status register at time of the exception */
-	u_int cause;	/* cause register at time of exception */
-	u_int pc;	/* program counter where to continue */
-	u_int ipending;
+news3400_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 {
 	struct clockframe cf;
 
@@ -75,10 +71,10 @@ news3400_intr(status, cause, pc, ipending)
 	if (ipending & MIPS_INT_MASK_2) {
 		int stat;
 
-		stat = *(volatile u_char *)INTST0;
+		stat = *(volatile uint8_t *)INTST0;
 		stat &= INTST0_TIMINT|INTST0_KBDINT|INTST0_MSINT;
 
-		*(volatile u_char *)INTCLR0 = stat;
+		*(volatile uint8_t *)INTCLR0 = stat;
 		if (stat & INTST0_TIMINT) {
 			cf.pc = pc;
 			cf.sr = status;
@@ -96,14 +92,14 @@ news3400_intr(status, cause, pc, ipending)
 	_splset(MIPS_SR_INT_IE | (status & MIPS_INT_MASK_2));
 
 	if (ipending & MIPS_INT_MASK_5) {
-		*(volatile char *)INTCLR0 = INTCLR0_PERR;
+		*(volatile uint8_t *)INTCLR0 = INTCLR0_PERR;
 		printf("Memory error interrupt(?) at 0x%x\n", pc);
 		cause &= ~MIPS_INT_MASK_5;
 	}
 
 	/* asynchronous bus error */
 	if (ipending & MIPS_INT_MASK_4) {
-		*(volatile char *)INTCLR0 = INTCLR0_BERR;
+		*(volatile uint8_t *)INTCLR0 = INTCLR0_BERR;
 		cause &= ~MIPS_INT_MASK_4;
 		badaddr_flag = 1;
 	}
@@ -137,11 +133,11 @@ news3400_intr(status, cause, pc, ipending)
 	(INTST1_DMA|INTST1_SLOT1|INTST1_SLOT3|INTST1_EXT1|INTST1_EXT3)
 
 static void
-news3400_level0_intr()
+news3400_level0_intr(void)
 {
-	volatile u_char *intst1 = (void *)INTST1;
-	volatile u_char *intclr1 = (void *)INTCLR1;
-	int stat;
+	volatile uint8_t *intst1 = (void *)INTST1;
+	volatile uint8_t *intclr1 = (void *)INTCLR1;
+	uint8_t stat;
 
 	stat = *intst1 & LEVEL0_MASK;
 	*intclr1 = stat;
@@ -158,12 +154,12 @@ news3400_level0_intr()
 #define LEVEL1_MASK1	(INTST1_BEEP|INTST1_SCC|INTST1_LANCE)
 
 static void
-news3400_level1_intr()
+news3400_level1_intr(void)
 {
-	volatile u_char *inten1 = (void *)INTEN1;
-	volatile u_char *intst1 = (void *)INTST1;
-	volatile u_char *intclr1 = (void *)INTCLR1;
-	int stat1, saved_inten1;
+	volatile uint8_t *inten1 = (void *)INTEN1;
+	volatile uint8_t *intst1 = (void *)INTST1;
+	volatile uint8_t *intclr1 = (void *)INTCLR1;
+	uint8_t stat1, saved_inten1;
 
 	saved_inten1 = *inten1;
 
@@ -185,9 +181,7 @@ news3400_level1_intr()
 }
 
 int
-news3400_badaddr(addr, size)
-	void *addr;
-	u_int size;
+news3400_badaddr(void *addr, u_int size)
 {
 	volatile int x;
 
@@ -211,10 +205,10 @@ news3400_badaddr(addr, size)
 static void
 news3400_enable_intr(void)
 {
-	volatile u_int8_t *inten0 = (void *)INTEN0;
-	volatile u_int8_t *inten1 = (void *)INTEN1;
-	volatile u_int8_t *intclr0 = (void *)INTCLR0;
-	volatile u_int8_t *intclr1 = (void *)INTCLR1;
+	volatile uint8_t *inten0 = (void *)INTEN0;
+	volatile uint8_t *inten1 = (void *)INTEN1;
+	volatile uint8_t *intclr0 = (void *)INTCLR0;
+	volatile uint8_t *intclr1 = (void *)INTCLR1;
 
 	/* clear all interrupts */
 	*intclr0 = 0xff;
@@ -240,8 +234,8 @@ static void
 news3400_disable_intr(void)
 {
 
-	volatile u_int8_t *inten0 = (void *)INTEN0;
-	volatile u_int8_t *inten1 = (void *)INTEN1;
+	volatile uint8_t *inten0 = (void *)INTEN0;
+	volatile uint8_t *inten1 = (void *)INTEN1;
 
 	*inten0 = 0;
 	*inten1 = 0;
@@ -252,17 +246,16 @@ news3400_enable_timer(void)
 {
 
 	/* initialize interval timer */
-	*(volatile u_int8_t *)ITIMER = IOCLOCK / 6144 / 100 - 1;
+	*(volatile uint8_t *)ITIMER = IOCLOCK / 6144 / 100 - 1;
 
 	/* enable timer interrupt */
-	*(volatile u_int8_t *)INTEN0 |= (u_int8_t)INTEN0_TIMINT;
+	*(volatile uint8_t *)INTEN0 |= (uint8_t)INTEN0_TIMINT;
 }
 
 static void
-news3400_readidrom(rom)
-	u_char *rom;
+news3400_readidrom(uint8_t *rom)
 {
-	u_char *p = (u_char *)IDROM;
+	uint8_t *p = (uint8_t *)IDROM;
 	int i;
 
 	for (i = 0; i < sizeof (struct idrom); i++, p += 2)
@@ -272,13 +265,13 @@ news3400_readidrom(rom)
 extern struct idrom idrom;
 
 void
-news3400_init()
+news3400_init(void)
 {
 
 	enable_intr = news3400_enable_intr;
 	disable_intr = news3400_disable_intr;
 	enable_timer = news3400_enable_timer;
 
-	news3400_readidrom((u_char *)&idrom);
+	news3400_readidrom((uint8_t *)&idrom);
 	hostid = idrom.id_serial;
 }

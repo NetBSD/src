@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.122.2.7 2005/02/04 11:45:27 skrll Exp $	*/
+/*	$NetBSD: tulip.c,v 1.122.2.8 2005/02/06 08:59:23 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.122.2.7 2005/02/04 11:45:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.122.2.8 2005/02/06 08:59:23 skrll Exp $");
 
 #include "bpfilter.h"
 
@@ -497,6 +497,7 @@ tlp_attach(sc, enaddr)
 	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
+	sc->sc_if_flags = ifp->if_flags;
 	ifp->if_ioctl = tlp_ioctl;
 	ifp->if_start = tlp_start;
 	ifp->if_watchdog = tlp_watchdog;
@@ -1001,7 +1002,22 @@ tlp_ioctl(ifp, cmd, data)
 	case SIOCGIFMEDIA:
 		error = ifmedia_ioctl(ifp, ifr, &sc->sc_mii.mii_media, cmd);
 		break;
-
+	case SIOCSIFFLAGS:
+		/* If the interface is up and running, only modify the receive
+		 * filter when setting promiscuous or debug mode.  Otherwise
+		 * fall through to ether_ioctl, which will reset the chip.
+		 */
+#define RESETIGN (IFF_CANTCHANGE|IFF_DEBUG)
+		if (((ifp->if_flags & (IFF_UP|IFF_RUNNING))
+		    == (IFF_UP|IFF_RUNNING))
+		    && ((ifp->if_flags & (~RESETIGN))
+		    == (sc->sc_if_flags & (~RESETIGN)))) {
+			/* Set up the receive filter. */
+			(*sc->sc_filter_setup)(sc);
+			break;
+#undef RESETIGN
+		}
+		/* FALLTHROUGH */
 	default:
 		error = ether_ioctl(ifp, cmd, data);
 		if (error == ENETRESET) {
@@ -1021,6 +1037,7 @@ tlp_ioctl(ifp, cmd, data)
 	if (TULIP_IS_ENABLED(sc))
 		tlp_start(ifp);
 
+	sc->sc_if_flags = ifp->if_flags;
 	splx(s);
 	return (error);
 }
@@ -1930,6 +1947,7 @@ tlp_init(ifp)
 	 */
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
+	sc->sc_if_flags = ifp->if_flags;
 
  out:
 	if (error) {
@@ -2094,6 +2112,7 @@ tlp_stop(ifp, disable)
 	 * Mark the interface down and cancel the watchdog timer.
 	 */
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	sc->sc_if_flags = ifp->if_flags;
 	ifp->if_timer = 0;
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.70.2.3 2004/09/21 13:19:33 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.70.2.4 2005/02/06 08:59:22 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.70.2.3 2004/09/21 13:19:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.70.2.4 2005/02/06 08:59:22 skrll Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -162,25 +162,25 @@ phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
 int mem_cluster_cnt;
 
 struct idrom idrom;
-void (*readmicrotime) __P((struct timeval *tvp));
-void (*hardware_intr) __P((u_int, u_int, u_int, u_int));
-void (*enable_intr) __P((void));
-void (*disable_intr) __P((void));
-void (*enable_timer) __P((void));
+void (*readmicrotime)(struct timeval *tvp);
+void (*hardware_intr)(uint32_t, uint32_t, uint32_t, uint32_t);
+void (*enable_intr)(void);
+void (*disable_intr)(void);
+void (*enable_timer)(void);
 
 /*
  *  Local functions.
  */
 
 /* initialize bss, etc. from kernel start, before main() is called. */
-void mach_init __P((int, int, int, int));
+void mach_init(int, int, int, int);
 
-void prom_halt __P((int)) __attribute__((__noreturn__));
-void to_monitor __P((int)) __attribute__((__noreturn__));
+void prom_halt(int) __attribute__((__noreturn__));
+void to_monitor(int) __attribute__((__noreturn__));
 
 #ifdef DEBUG
 /* stacktrace code violates prototypes to get callee's registers */
-extern void stacktrace __P((void)); /*XXX*/
+extern void stacktrace(void); /*XXX*/
 #endif
 
 /*
@@ -195,7 +195,7 @@ int safepri = MIPS3_PSL_LOWIPL;		/* XXX */
  * This is a mask of bits to clear in the SR when we go to a
  * given interrupt priority level.
  */
-const u_int32_t ipl_sr_bits[_IPL_N] = {
+const uint32_t ipl_sr_bits[_IPL_N] = {
 	0,					/* IPL_NONE */
 
 	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFT */
@@ -229,7 +229,7 @@ const u_int32_t ipl_sr_bits[_IPL_N] = {
 		MIPS_INT_MASK_2,		/* IPL_{CLOCK,HIGH} */
 };
 
-const u_int32_t mips_ipl_si_to_sr[_IPL_NSOFT] = {
+const uint32_t mips_ipl_si_to_sr[_IPL_NSOFT] = {
 	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFT */
 	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFTCLOCK */
 	MIPS_SOFT_INT_MASK_1,			/* IPL_SOFTNET */
@@ -246,11 +246,7 @@ extern char edata[], end[];
  * Return the first page address following the system.
  */
 void
-mach_init(x_boothowto, x_bootdev, x_bootname, x_maxmem)
-	int x_boothowto;
-	int x_bootdev;
-	int x_bootname;
-	int x_maxmem;
+mach_init(int x_boothowto, int x_bootdev, int x_bootname, int x_maxmem)
 {
 	u_long first, last;
 	caddr_t kernend, v;
@@ -267,7 +263,7 @@ mach_init(x_boothowto, x_bootdev, x_bootname, x_maxmem)
 	bi_arg = NULL;
 
 	/* clear the BSS segment */
-	bzero(edata, end - edata);
+	memset(edata, 0, end - edata);
 
 	systype = NEWS3400;			/* XXX compatibility */
 
@@ -475,7 +471,7 @@ mips_machdep_cache_config(void)
  * initialize CPU, and do autoconfiguration.
  */
 void
-cpu_startup()
+cpu_startup(void)
 {
 	vaddr_t minaddr, maxaddr;
 	char pbuf[9];
@@ -499,12 +495,12 @@ cpu_startup()
 	 * limits the number of processes exec'ing at any time.
 	 */
 	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				   16 * NCARGS, VM_MAP_PAGEABLE, FALSE, NULL);
+	    16 * NCARGS, VM_MAP_PAGEABLE, FALSE, NULL);
 	/*
 	 * Allocate a submap for physio
 	 */
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				   VM_PHYS_SIZE, 0, FALSE, NULL);
+	    VM_PHYS_SIZE, 0, FALSE, NULL);
 
 	/*
 	 * No need to allocate an mbuf cluster submap.  Mbuf clusters
@@ -524,33 +520,31 @@ cpu_startup()
  * Look up information in bootinfo of boot loader.
  */
 void *
-lookup_bootinfo(type)
-	int type;
+lookup_bootinfo(int type)
 {
 	struct btinfo_common *bt;
 	char *help = bootinfo;
 
 	/* Check for a bootinfo record first. */
 	if (help == NULL)
-		return (NULL);
+		return NULL;
 
 	do {
 		bt = (struct btinfo_common *)help;
 		if (bt->type == type)
-			return ((void *)help);
+			return (void *)help;
 		help += bt->next;
 	} while (bt->next != 0 &&
 		(size_t)help < (size_t)bootinfo + BOOTINFO_SIZE);
 
-	return (NULL);
+	return NULL;
 }
 
 /*
  * call PROM to halt or reboot.
  */
 void
-prom_halt(howto)
-	int howto;
+prom_halt(int howto)
 
 {
 #ifdef news5000
@@ -567,9 +561,7 @@ prom_halt(howto)
 int	waittime = -1;
 
 void
-cpu_reboot(howto, bootstr)
-	volatile int howto;
-	char *bootstr;
+cpu_reboot(volatile int howto, char *bootstr)
 {
 
 	/* take a snap shot before clobbering any registers */
@@ -640,8 +632,7 @@ haltsys:
  * previous call.
  */
 void
-microtime(tvp)
-	register struct timeval *tvp;
+microtime(struct timeval *tvp)
 {
 	int s = splclock();
 	static struct timeval lasttime;
@@ -662,18 +653,14 @@ microtime(tvp)
 }
 
 void
-delay(n)
-	int n;
+delay(int n)
 {
+
 	DELAY(n);
 }
 
 void
-cpu_intr(status, cause, pc, ipending)
-	u_int32_t status;
-	u_int32_t cause;
-	u_int32_t pc;
-	u_int32_t ipending;
+cpu_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 {
 
 	uvmexp.intrs++;
