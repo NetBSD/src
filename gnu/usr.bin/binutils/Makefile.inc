@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.5 1998/08/22 20:08:21 tv Exp $
+#	$NetBSD: Makefile.inc,v 1.6 1999/02/06 05:27:42 tv Exp $
 
 .if !defined(__MAKEFILE_INC_INCLUDED__)
 __MAKEFILE_INC_INCLUDED__=1
@@ -11,11 +11,6 @@ BFDOBJ!=cd ${TOP}/lib/bfd; \
 
 .PATH:	${srcdir}
 
-# Distribution version
-VERSION=2.8.1
-# Distribution name
-DIST_NAME=binutils-${VERSION}
-
 .include <bsd.own.mk>
 TARGET=${MACHINE_GNU_ARCH}--netbsd
 
@@ -26,7 +21,7 @@ INCLS+=	-I${dist}/bfd
 INCLS+=	-I${dist}/binutils
 INCLS+=	-I${dist}/include
 
-CPPFLAGS+=${INCLS}
+CPPFLAGS+=${INCLS} -DHAVE_CONFIG_H
 
 LIBCOMMONDIR != cd ${.CURDIR}/../common; \
     printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}\n" | ${MAKE} -s -f-
