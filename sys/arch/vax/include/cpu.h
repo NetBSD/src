@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.30 1998/10/05 22:12:40 thorpej Exp $      */
+/*      $NetBSD: cpu.h,v 1.31 1998/10/06 20:50:18 thorpej Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -111,7 +111,6 @@ int	badaddr __P((caddr_t, int));
 void	cpu_swapin __P((struct proc *));
 int	hp_getdev __P((int, int, struct device **));
 int	ra_getdev __P((int, int, int, struct device **));
-void	configure __P((void));
 void	dumpconf __P((void));
 void	dumpsys __P((void));
 void	swapconf __P((void));

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.2 1998/06/24 14:20:50 tsubai Exp $	*/
+/*	$NetBSD: cpu.h,v 1.3 1998/10/06 20:50:16 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995-1997 Wolfgang Solfrank.
@@ -102,8 +102,4 @@ flushcache(from, len)
 
 extern char *bootpath;
 
-#ifdef _KERNEL
-void configure __P((void));
-
-#endif /* _KERNEL */
 #endif	/* _MACHINE_CPU_H_ */

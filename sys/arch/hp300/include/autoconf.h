@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.5 1997/10/09 08:58:45 jtc Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.6 1998/10/06 20:50:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -43,7 +43,6 @@ extern	caddr_t conaddr;		/* KVA of console device */
 extern	int convasize;			/* size of mapping at conaddr */
 extern	int conforced;			/* console has been forced */
 
-void	configure __P((void));
 void	hp300_cninit __P((void));
 void	console_scan __P((int (*)(int, caddr_t, void *), void *));
 caddr_t	iomap __P((caddr_t, int));

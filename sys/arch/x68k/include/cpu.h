@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.9 1998/08/22 14:38:38 minoura Exp $	*/
+/*	$NetBSD: cpu.h,v 1.10 1998/10/06 20:50:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -153,7 +153,6 @@ extern int machineid;
 extern char *intiolimit;
 
 /* autoconf.c functions */
-void	configure __P((void));
 void	config_console __P((void));
 
 /* fpu.c functions */
@@ -199,6 +198,9 @@ int	dma_cachectl __P((caddr_t, int));
 void	physaccess __P((caddr_t, caddr_t, int, int));
 void	physunaccess __P((caddr_t, int));
 int	kvtop __P((caddr_t));
+
+/* trap.c functions */
+void	child_return __P((struct proc *, void *));
 
 #endif
 

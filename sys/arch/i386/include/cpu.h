@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.44 1998/01/22 00:39:35 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.45 1998/10/06 20:50:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -128,9 +128,6 @@ extern int cpuid_level;
 extern struct cpu_nocpuid_nameclass i386_nocpuid_cpus[];
 extern struct cpu_cpuid_nameclass i386_cpuid_cpus[];
 
-/* autoconf.c */
-void	configure __P((void));
-
 /* machdep.c */
 void	delay __P((int));
 void	dumpconf __P((void));
@@ -187,7 +184,7 @@ void	vm86_gpfault __P((struct proc *, int));
 #endif /* VM86 */
 
 /* trap.c */
-void	child_return __P((struct proc *, struct trapframe));
+void	child_return __P((struct proc *, void *));
 
 #endif /* _KERNEL */
 

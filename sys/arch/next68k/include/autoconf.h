@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.1.1.1 1998/06/09 07:53:05 dbj Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.2 1998/10/06 20:50:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -42,7 +42,6 @@
 
 /* autoconf.c */
 void	setconf __P((void));
-void	configure __P((void));
 
 /* machdep.c */
 void	cpu_dumpconf __P((void));
