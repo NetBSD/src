@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.58 2000/04/02 19:02:34 thorpej Exp $	*/
+/*	$NetBSD: tulip.c,v 1.59 2000/04/02 23:38:05 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -2102,11 +2102,12 @@ tlp_srom_size(sc)
 	/* Deselect the SROM. */
 	SROM_EMIT(sc, 0);
 
-	if (x > 12) {
-		printf("%s: failed to find SROM size\n", sc->sc_dev.dv_xname);
-		return (0);
+	if (x < 4 || x > 12) {
+		printf("%s: broken MicroWire interface detected; setting SROM size to 1Kb\n",
+		    sc->sc_dev.dv_xname);
+		return (6);
 	} else {
-#ifdef TLP_DEBUG
+#if 0
 		printf("%s: SROM size is 2^%d*16 bits (%d bytes)\n",
 			sc->sc_dev.dv_xname, x, (1 << (x + 4)) >> 3);
 #endif
