@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.4,v 1.1.2.154 2004/05/12 04:22:58 jmc Exp $
+#	$NetBSD: CHANGES-1.5.4,v 1.1.2.155 2004/08/13 04:46:17 jmc Exp $
 
 A complete list of changes from NetBSD 1.5.3 to NetBSD 1.5.4:
 
@@ -2634,3 +2634,9 @@ bin/csh/dir.c					patch
 
 	Use readlink with bufsize - 1.
 	[kleink, ticket #147]
+
+distrib/mac68k/instkernel/ramdisk/Makefile	1.11
+
+	We cannot apply to newfs no disklabel device, so must 
+	write temporary disklabel. refer to i386.
+	[fredb, ticket #152]
