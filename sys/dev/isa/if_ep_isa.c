@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_isa.c,v 1.2 1996/04/30 22:27:58 thorpej Exp $	*/
+/*	$NetBSD: if_ep_isa.c,v 1.3 1996/05/03 19:06:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe <thorpej@beer.org>
@@ -34,6 +34,7 @@
 #include "bpfilter.h"
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
@@ -172,7 +173,7 @@ ep_isa_probe(parent, match, aux)
 	 */
 	if (bus_io_map(bc, ELINK_ID_PORT, 1, &ioh)) {
 		printf("ep_isa_probe: can't map Etherlink ID port\n");
-		return;
+		return 0;
 	}
 
 	for (slot = 0; slot < MAXEPCARDS; slot++) {

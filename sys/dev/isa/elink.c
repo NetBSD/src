@@ -1,4 +1,4 @@
-/*	$NetBSD: elink.c,v 1.8 1996/04/30 22:16:27 thorpej Exp $	*/
+/*	$NetBSD: elink.c,v 1.9 1996/05/03 19:06:27 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -35,6 +35,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/queue.h>
 
