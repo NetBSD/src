@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)icu.s	7.2 (Berkeley) 5/21/91
- *	$Id: icu.s,v 1.33 1994/05/05 08:44:57 mycroft Exp $
+ *	$Id: icu.s,v 1.34 1994/05/13 11:11:42 mycroft Exp $
  */
 
 /*
@@ -53,6 +53,24 @@ _imen:
 
 	.text
 
+#if defined(PROF) || defined(GPROF)
+	.globl	_splhigh, _splx
+
+	ALIGN_TEXT
+_splhigh:
+	movl	$-1,%eax
+	xchgl	%eax,_cpl
+	ret
+
+	ALIGN_TEXT
+_splx:
+	movl	4(%esp),%eax
+	movl	%eax,_cpl
+	testl	%eax,%eax
+	jnz	_Xspllower
+	ret
+#endif /* PROF || GPROF */
+	
 /*
  * Process pending interrupts.
  *
@@ -62,6 +80,7 @@ _imen:
  *   edi - scratch for Xsoftnet
  */
 ENTRY(spllower)
+IDTVEC(spllower)
 	pushl	%ebx
 	pushl	%esi
 	pushl	%edi
@@ -155,11 +174,8 @@ IDTVEC(softnet)
 #ifdef ISO
 	DONET(NETISR_ISO, _clnlintr)
 #endif
-#ifdef notyet
 #ifdef CCITT
-	DONET(NETISR_X25, _pkintr)
-	DONET(NETISR_HDLC, _hdintr)
-#endif
+	DONET(NETISR_CCITT, _ccittintr)
 #endif
 	movl	%ebx,_cpl
 	jmp	%esi
