@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.53 2003/08/08 20:19:56 yamt Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.54 2003/09/01 12:13:55 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.53 2003/08/08 20:19:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.54 2003/09/01 12:13:55 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_revcache.h"
@@ -272,8 +272,7 @@ cache_lookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp)
 	}
 
 	/*
-	 * Check that the lock succeeded, and that the capability number did
-	 * not change while we were waiting for the lock.
+	 * Check that the lock succeeded.
 	 */
 	if (error) {
 		/* XXXSMP - updating stats without lock; do we care? */
