@@ -3,8 +3,11 @@
 ipnat \- Network Address Translation kernel interface
 .SH SYNOPSIS
 #include <netinet/ip_compat.h>
+.br
 #include <netinet/ip_fil.h>
+.br
 #include <netinet/ip_proxy.h>
+.br
 #include <netinet/ip_nat.h>
 .SH IOCTLS
 .PP
@@ -88,4 +91,4 @@ typedef struct  natstat {
 It would be nice if there were more flexibility when adding and deleting
 filter rules.
 .SH SEE ALSO
-ipfstat(1), ipf(1), ipf(4), ipnat(5)
+ipf(4), ipf(8), ipnat(8), ipnat(5), ipfstat(8)
