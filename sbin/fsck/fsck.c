@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck.c,v 1.7 1996/10/03 20:06:30 christos Exp $	*/
+/*	$NetBSD: fsck.c,v 1.8 1996/12/05 18:30:23 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas. All rights reserved.
@@ -38,16 +38,20 @@
  *
  */
 
-static char rcsid[] = "$NetBSD: fsck.c,v 1.7 1996/10/03 20:06:30 christos Exp $";
+static char rcsid[] = "$NetBSD: fsck.c,v 1.8 1996/12/05 18:30:23 christos Exp $";
 
 #include <sys/param.h>
 #include <sys/mount.h>
 #include <sys/queue.h>
 #include <sys/wait.h>
+#define DKTYPENAMES
+#include <sys/disklabel.h>
+#include <sys/ioctl.h>
 
 #include <err.h>
 #include <errno.h>
 #include <fstab.h>
+#include <fcntl.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -82,9 +86,9 @@ static void addentry __P((struct fstypelist *, const char *, const char *));
 static void maketypelist __P((char *));
 static char *catopt __P((char *, const char *, int));
 static void mangle __P((char *, int *, const char ***, int *));
+static char *getfslab __P((const char *));
 static void usage __P((void));
 static void *isok __P((struct fstab *));
-
 
 int
 main(argc, argv)
@@ -162,9 +166,7 @@ main(argc, argv)
 		if ((fs = getfsfile(*argv)) == NULL &&
 		    (fs = getfsspec(*argv)) == NULL) {
 			if (vfstype == NULL)
-				errx(1,
-				    "%s: unknown special file or file system.",
-				    *argv);
+				vfstype = getfslab(*argv);
 			spec = *argv;
 			type = vfstype;
 		}
@@ -212,25 +214,33 @@ checkfs(vfstype, spec, mntpt, auxarg, pidp)
 		_PATH_USRSBIN,
 		NULL
 	};
+	char execbase[MAXPATHLEN];
 	const char **argv, **edir;
 	pid_t pid;
-	int argc, i, status, maxargc;
+	int argc = 1, i, status, maxargc;
 	char *optbuf = NULL, execname[MAXPATHLEN + 1];
 	const char *extra = getoptions(vfstype);
+
 
 #ifdef __GNUC__
 	/* Avoid vfork clobbering */
 	(void) &optbuf;
+	(void) &vfstype;
 #endif
 
 	if (strcmp(vfstype, "ufs") == 0)
 		vfstype = MOUNT_UFS;
 
+	(void) snprintf(execbase, sizeof(execbase), "fsck_%s", vfstype);
+
 	maxargc = 100;
 	argv = emalloc(sizeof(char *) * maxargc);
 
-	argc = 0;
-	argv[argc++] = vfstype;
+	/* construct basename of executable and argv[0] simultaneously */
+	(void)strncat(execbase,
+		     (const char *)vfstype,
+		     sizeof(execbase) - 6); /* strlen("fsck_") + \0 */ 
+	argv[0] = vfstype;
 
 	if (options) {
 		if (extra != NULL)
@@ -248,9 +258,9 @@ checkfs(vfstype, spec, mntpt, auxarg, pidp)
 	argv[argc] = NULL;
 
 	if (flags & (CHECK_DEBUG|CHECK_VERBOSE)) {
-		(void)printf("start %s %swait fsck_%s", mntpt, 
-			pidp ? "no" : "", vfstype);
-		for (i = 1; i < argc; i++)
+		(void)printf("start %s %swait", mntpt, 
+			pidp ? "no" : "");
+		for (i = 0; i < argc; i++)
 			(void)printf(" %s", argv[i]);
 		(void)printf("\n");
 	}
@@ -270,7 +280,7 @@ checkfs(vfstype, spec, mntpt, auxarg, pidp)
 		edir = edirs;
 		do {
 			(void)snprintf(execname,
-			    sizeof(execname), "%s/fsck_%s", *edir, vfstype);
+			    sizeof(execname), "%s/%s", *edir, execbase);
 			execv(execname, (char * const *)argv);
 			if (errno != ENOENT)
 				if (spec)
@@ -284,7 +294,7 @@ checkfs(vfstype, spec, mntpt, auxarg, pidp)
 				warn("exec %s for %s", execname, spec);
 			else
 				warn("exec %s", execname);
-		exit(1);
+		_exit(1);
 		/* NOTREACHED */
 
 	default:				/* Parent. */
@@ -464,6 +474,65 @@ mangle(opts, argcp, argvp, maxargcp)
 	*argvp = argv;
 	*maxargcp = maxargc;
 }
+
+
+/* Maybe this belongs to <sys/disklabel.h> */
+static char *fscknames[] = {
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	"ffs",
+	"msdos",
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL
+};
+
+
+static char *
+getfslab(str)
+	const char *str;
+{
+	struct disklabel dl;
+	int fd;
+	char p, *vfstype;
+	u_char t;
+
+	/* deduce the filesystem type from the disk label */
+	if ((fd = open(str, O_RDONLY)) == -1)
+		err(1, "cannot open `%s'", str);
+
+	if (ioctl(fd, DIOCGDINFO, &dl) == -1)
+		err(1, "cannot get disklabel for `%s'", str);
+
+	(void) close(fd);
+
+	p = str[strlen(str) - 1];
+
+	if ((p - 'a') >= dl.d_npartitions)
+		errx(1, "partition `%s' is not defined on disk", str);
+
+	if ((t = dl.d_partitions[p - 'a'].p_fstype) >= DKMAXTYPES) 
+		errx(1, "partition `%s' is not of a legal vfstype",
+		    p, str);
+
+	if ((vfstype = fscknames[t]) == NULL)
+		errx(1, "vfstype `%s' on partition `%s' is not supported",
+		    fstypenames[t], str);
+
+	return vfstype;
+}
+
 
 
 static void
