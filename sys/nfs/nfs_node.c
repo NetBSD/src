@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.74 2004/04/05 10:40:56 yamt Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.75 2004/04/05 10:44:09 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.74 2004/04/05 10:40:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.75 2004/04/05 10:44:09 yamt Exp $");
 
 #include "opt_nfs.h"
 
@@ -150,11 +150,12 @@ nfs_nhdone()
  * nfsnode structure is returned.
  */
 int
-nfs_nget(mntp, fhp, fhsize, npp)
+nfs_nget1(mntp, fhp, fhsize, npp, lkflags)
 	struct mount *mntp;
 	nfsfh_t *fhp;
 	int fhsize;
 	struct nfsnode **npp;
+	int lkflags;
 {
 	struct nfsnode *np;
 	struct nfsnodehashhead *nhpp;
@@ -168,7 +169,10 @@ loop:
 		    memcmp(fhp, np->n_fhp, fhsize))
 			continue;
 		vp = NFSTOV(np);
-		if (vget(vp, LK_EXCLUSIVE))
+		error = vget(vp, LK_EXCLUSIVE | lkflags);
+		if (error == EBUSY)
+			return error;
+		if (error)
 			goto loop;
 		*npp = np;
 		return(0);
