@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.27 2003/05/23 00:57:24 ichiro Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.28 2003/09/06 09:04:52 rearnsha Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -475,19 +475,19 @@ void cpu_reset		__P((void)) __attribute__((__noreturn__));
  */
 
 /* PRIMARY CACHE VARIABLES */
-int	arm_picache_size;
-int	arm_picache_line_size;
-int	arm_picache_ways;
+extern int	arm_picache_size;
+extern int	arm_picache_line_size;
+extern int	arm_picache_ways;
 
-int	arm_pdcache_size;	/* and unified */
-int	arm_pdcache_line_size;
-int	arm_pdcache_ways; 
+extern int	arm_pdcache_size;	/* and unified */
+extern int	arm_pdcache_line_size;
+extern int	arm_pdcache_ways; 
 
-int	arm_pcache_type;
-int	arm_pcache_unified;
+extern int	arm_pcache_type;
+extern int	arm_pcache_unified;
 
-int	arm_dcache_align;
-int	arm_dcache_align_mask;
+extern int	arm_dcache_align;
+extern int	arm_dcache_align_mask;
 
 #endif	/* _KERNEL */
 #endif	/* _ARM32_CPUFUNC_H_ */
