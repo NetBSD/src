@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lmc_media.c,v 1.3 2000/06/26 14:21:12 mrg Exp $	*/
+/*	$NetBSD: if_lmc_media.c,v 1.4 2000/06/28 16:08:45 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 LAN Media Corporation (LMC)
@@ -70,8 +70,6 @@
 #include <net/bpfdesc.h>
 #endif
 
-#include <vm/vm.h>
-
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include <net/if_sppp.h>
 #endif
@@ -92,6 +90,7 @@
 #endif
 
 #if defined(__FreeBSD__)
+#include <vm/vm.h>
 #include <vm/pmap.h>
 #include <pci.h>
 #if NPCI > 0
@@ -101,6 +100,7 @@
 #endif /* __FreeBSD__ */
 
 #if defined(__bsdi__)
+#include <vm/vm.h>
 #include <i386/pci/ic/dc21040.h>
 #include <i386/isa/isa.h>
 #include <i386/isa/icu.h>
