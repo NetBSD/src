@@ -1,4 +1,4 @@
-.\"	$NetBSD: aac.4,v 1.1 2002/04/26 02:05:07 ad Exp $
+.\"	$NetBSD: aac.4,v 1.2 2002/04/26 02:28:32 wiz Exp $
 .\"
 .\" Copyright (c) 2000 Scott Long
 .\" All rights reserved.
@@ -83,10 +83,6 @@ The
 .Nm
 driver first appeared in
 .Nx 1.6 .
-.Sh BUGS
-This driver is not compatible with controllers that have version 1.x firmware.
-The firmware version is the same as the kernel version printed in the BIOS
-POST and driver attach messages.
 .Sh AUTHORS
 Mike Smith
 .Aq msmith@freebsd.org
@@ -102,3 +98,7 @@ Andrew Doran
 .Aq ad@netbsd.org
 ported it to
 .Nx .
+.Sh BUGS
+This driver is not compatible with controllers that have version 1.x firmware.
+The firmware version is the same as the kernel version printed in the BIOS
+POST and driver attach messages.
