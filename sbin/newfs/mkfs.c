@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.61 2002/01/18 08:59:18 lukem Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.62 2002/04/10 08:27:23 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.61 2002/01/18 08:59:18 lukem Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.62 2002/04/10 08:27:23 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -483,7 +483,7 @@ mkfs(struct partition *pp, const char *fsys, int fi, int fo,
 	for (cylno = 0; cylno < sblock.fs_cpc; cylno++)
 		for (rpos = 0; rpos < sblock.fs_nrpos; rpos++)
 			fs_postbl(&sblock, cylno)[rpos] = -1;
-	for (i = (rotblsize - 1) * sblock.fs_frag;
+	for (i = (rotblsize - 1) << sblock.fs_fragshift;
 	     i >= 0; i -= sblock.fs_frag) {
 		cylno = cbtocylno(&sblock, i);
 		rpos = cbtorpos(&sblock, i);
@@ -505,8 +505,9 @@ next:
 	i = MIN(~sblock.fs_cgmask, sblock.fs_ncg - 1);
 	if (cgdmin(&sblock, i) - cgbase(&sblock, i) >= sblock.fs_fpg) {
 		printf("inode blocks/cyl group (%d) >= data blocks (%d)\n",
-		    cgdmin(&sblock, i) - cgbase(&sblock, i) / sblock.fs_frag,
-		    sblock.fs_fpg / sblock.fs_frag);
+		    cgdmin(&sblock, i) -
+		    (cgbase(&sblock, i) >> sblock.fs_fragshift),
+		    sblock.fs_fpg >> sblock.fs_fragshift);
 		printf("number of cylinders per cylinder group (%d) %s.\n",
 		    sblock.fs_cpg, "must be increased");
 		exit(29);
@@ -517,13 +518,14 @@ next:
 		if (j == 0) {
 			printf("File system must have at least %d sectors\n",
 			    NSPF(&sblock) *
-			    (cgdmin(&sblock, 0) + 3 * sblock.fs_frag));
+			    (cgdmin(&sblock, 0) + (3 << sblock.fs_fragshift)));
 			exit(30);
 		}
 		printf("Warning: inode blocks/cyl group (%d) >= "
 			"data blocks (%d) in last\n",
-		    (cgdmin(&sblock, j) - cgbase(&sblock, j)) / sblock.fs_frag,
-		    i / sblock.fs_frag);
+		    (cgdmin(&sblock, j) -
+		     cgbase(&sblock, j)) >> sblock.fs_fragshift,
+		    i >> sblock.fs_fragshift);
 		printf("    cylinder group. This implies %d sector(s) "
 			"cannot be allocated.\n",
 		    i * NSPF(&sblock));
@@ -697,7 +699,7 @@ initcg(int cylno, time_t utime)
 	acg.cg_niblk = sblock.fs_ipg;
 	acg.cg_ndblk = dmax - cbase;
 	if (sblock.fs_contigsumsize > 0)
-		acg.cg_nclusterblks = acg.cg_ndblk / sblock.fs_frag;
+		acg.cg_nclusterblks = acg.cg_ndblk >> sblock.fs_fragshift;
 	acg.cg_btotoff = &acg.cg_space[0] - (u_char *)(&acg.cg_firstfield);
 	acg.cg_boff = acg.cg_btotoff + sblock.fs_cpg * sizeof(int32_t);
 	acg.cg_iusedoff = acg.cg_boff + 
@@ -705,18 +707,19 @@ initcg(int cylno, time_t utime)
 	acg.cg_freeoff = acg.cg_iusedoff + howmany(sblock.fs_ipg, NBBY);
 	if (sblock.fs_contigsumsize <= 0) {
 		acg.cg_nextfreeoff = acg.cg_freeoff +
-		   howmany(sblock.fs_cpg * sblock.fs_spc / NSPF(&sblock), NBBY);
+		   howmany(sblock.fs_fpg, NBBY);
 	} else {
-		acg.cg_clustersumoff = acg.cg_freeoff + howmany
-		    (sblock.fs_cpg * sblock.fs_spc / NSPF(&sblock), NBBY) -
-		    sizeof(int32_t);
+		acg.cg_clustersumoff = acg.cg_freeoff +
+		    howmany(sblock.fs_fpg, NBBY) - sizeof(int32_t);
 		acg.cg_clustersumoff =
 		    roundup(acg.cg_clustersumoff, sizeof(int32_t));
 		acg.cg_clusteroff = acg.cg_clustersumoff +
 		    (sblock.fs_contigsumsize + 1) * sizeof(int32_t);
-		acg.cg_nextfreeoff = acg.cg_clusteroff + howmany
-		    (sblock.fs_cpg * sblock.fs_spc / NSPB(&sblock), NBBY);
+		acg.cg_nextfreeoff = acg.cg_clusteroff +
+		    howmany(fragstoblks(&sblock, sblock.fs_fpg), NBBY);
 	}
+	printf("%d %d %d\n", acg.cg_clustersumoff, acg.cg_clusteroff,
+	    acg.cg_nextfreeoff);
 	if (acg.cg_nextfreeoff > sblock.fs_cgsize) {
 		printf("Panic: cylinder group too big\n");
 		exit(37);
@@ -736,7 +739,7 @@ initcg(int cylno, time_t utime)
 		 * for boot and super blocks.
 		 */
 		for (d = 0; d < dlower; d += sblock.fs_frag) {
-			blkno = d / sblock.fs_frag;
+			blkno = d >> sblock.fs_fragshift;
 			setblock(&sblock, cg_blksfree(&acg, 0), blkno);
 			if (sblock.fs_contigsumsize > 0)
 				setbit(cg_clustersfree(&acg, 0), blkno);
@@ -748,7 +751,7 @@ initcg(int cylno, time_t utime)
 		sblock.fs_dsize += dlower;
 	}
 	sblock.fs_dsize += acg.cg_ndblk - dupper;
-	if ((i = (dupper % sblock.fs_frag)) != 0) {
+	if ((i = (dupper & (sblock.fs_frag - 1))) != 0) {
 		acg.cg_frsum[sblock.fs_frag - i]++;
 		for (d = dupper + sblock.fs_frag - i; dupper < d; dupper++) {
 			setbit(cg_blksfree(&acg, 0), dupper);
@@ -756,7 +759,7 @@ initcg(int cylno, time_t utime)
 		}
 	}
 	for (d = dupper; d + sblock.fs_frag <= dmax - cbase; ) {
-		blkno = d / sblock.fs_frag;
+		blkno = d >> sblock.fs_fragshift;
 		setblock(&sblock, cg_blksfree(&acg, 0), blkno);
 		if (sblock.fs_contigsumsize > 0)
 			setbit(cg_clustersfree(&acg, 0), blkno);
@@ -968,7 +971,8 @@ alloc(int size, int mode)
 		return (0);
 	}
 	for (d = 0; d < acg.cg_ndblk; d += sblock.fs_frag)
-		if (isblock(&sblock, cg_blksfree(&acg, 0), d / sblock.fs_frag))
+		if (isblock(&sblock, cg_blksfree(&acg, 0),
+		    d >> sblock.fs_fragshift))
 			goto goth;
 	printf("internal error: can't find block in cyl 0\n");
 	return (0);
@@ -1155,23 +1159,24 @@ isblock(struct fs *fs, unsigned char *cp, int h)
 {
 	unsigned char mask;
 
-	switch (fs->fs_frag) {
-	case 8:
+	switch (fs->fs_fragshift) {
+	case 3:
 		return (cp[h] == 0xff);
-	case 4:
+	case 2:
 		mask = 0x0f << ((h & 0x1) << 2);
 		return ((cp[h >> 1] & mask) == mask);
-	case 2:
+	case 1:
 		mask = 0x03 << ((h & 0x3) << 1);
 		return ((cp[h >> 2] & mask) == mask);
-	case 1:
+	case 0:
 		mask = 0x01 << (h & 0x7);
 		return ((cp[h >> 3] & mask) == mask);
 	default:
 #ifdef STANDALONE
-		printf("isblock bad fs_frag %d\n", fs->fs_frag);
+		printf("isblock bad fs_fragshift %d\n", fs->fs_fragshift);
 #else
-		fprintf(stderr, "isblock bad fs_frag %d\n", fs->fs_frag);
+		fprintf(stderr, "isblock bad fs_fragshift %d\n",
+		    fs->fs_fragshift);
 #endif
 		return (0);
 	}
@@ -1183,24 +1188,25 @@ isblock(struct fs *fs, unsigned char *cp, int h)
 void
 clrblock(struct fs *fs, unsigned char *cp, int h)
 {
-	switch ((fs)->fs_frag) {
-	case 8:
+	switch ((fs)->fs_fragshift) {
+	case 3:
 		cp[h] = 0;
 		return;
-	case 4:
+	case 2:
 		cp[h >> 1] &= ~(0x0f << ((h & 0x1) << 2));
 		return;
-	case 2:
+	case 1:
 		cp[h >> 2] &= ~(0x03 << ((h & 0x3) << 1));
 		return;
-	case 1:
+	case 0:
 		cp[h >> 3] &= ~(0x01 << (h & 0x7));
 		return;
 	default:
 #ifdef STANDALONE
-		printf("clrblock bad fs_frag %d\n", fs->fs_frag);
+		printf("clrblock bad fs_fragshift %d\n", fs->fs_fragshift);
 #else
-		fprintf(stderr, "clrblock bad fs_frag %d\n", fs->fs_frag);
+		fprintf(stderr, "clrblock bad fs_fragshift %d\n",
+		    fs->fs_fragshift);
 #endif
 		return;
 	}
@@ -1212,24 +1218,25 @@ clrblock(struct fs *fs, unsigned char *cp, int h)
 void
 setblock(struct fs *fs, unsigned char *cp, int h)
 {
-	switch (fs->fs_frag) {
-	case 8:
+	switch (fs->fs_fragshift) {
+	case 3:
 		cp[h] = 0xff;
 		return;
-	case 4:
+	case 2:
 		cp[h >> 1] |= (0x0f << ((h & 0x1) << 2));
 		return;
-	case 2:
+	case 1:
 		cp[h >> 2] |= (0x03 << ((h & 0x3) << 1));
 		return;
-	case 1:
+	case 0:
 		cp[h >> 3] |= (0x01 << (h & 0x7));
 		return;
 	default:
 #ifdef STANDALONE
-		printf("setblock bad fs_frag %d\n", fs->fs_frag);
+		printf("setblock bad fs_frag %d\n", fs->fs_fragshift);
 #else
-		fprintf(stderr, "setblock bad fs_frag %d\n", fs->fs_frag);
+		fprintf(stderr, "setblock bad fs_fragshift %d\n",
+		    fs->fs_fragshift);
 #endif
 		return;
 	}
