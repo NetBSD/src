@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.50 2001/12/18 06:50:28 chs Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.51 2001/12/18 10:57:21 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.50 2001/12/18 06:50:28 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.51 2001/12/18 10:57:21 fvdl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -299,6 +299,8 @@ ffs_truncate(v)
 			    0, 0, ap->a_p)) != 0) {
 				lockmgr(&gp->g_glock, LK_RELEASE, NULL);
 				return (error);
+			if (oip->i_flag & IN_SPACECOUNTED)
+				fs->fs_pendingblocks -= oip->i_ffs_blocks;
 			}
 		} else {
 			uvm_vnp_setsize(ovp, length);
@@ -312,10 +314,6 @@ ffs_truncate(v)
 			return (VOP_UPDATE(ovp, NULL, NULL, 0));
 		}
 	}
-
-	/*
-	 * Reduce the size of the file.
-	 */
 	oip->i_ffs_size = length;
 	uvm_vnp_setsize(ovp, length);
 	/*
