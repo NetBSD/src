@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd_zs.c,v 1.7 2001/06/12 15:17:26 wiz Exp $	*/
+/*	$NetBSD: kbd_zs.c,v 1.8 2001/09/28 14:34:49 pk Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -102,6 +102,9 @@ struct cfattach kbd_zs_ca = {
 	sizeof(struct kbd_softc), kbd_zs_match, kbd_zs_attach
 };
 
+/* Fall-back baud rate */
+int	kbd_zs_bps = KBD_BPS;
+
 /*
  * kbd_zs_match: how is this zs channel configured?
  */
@@ -133,6 +136,7 @@ kbd_zs_attach(parent, self, aux)
 	struct cfdata *cf;
 	int channel, kbd_unit;
 	int reset, s;
+	int bps;
 
 	cf = k->k_dev.dv_cfdata;
 	kbd_unit = k->k_dev.dv_unit;
@@ -142,6 +146,10 @@ kbd_zs_attach(parent, self, aux)
 	cs->cs_ops = &zsops_kbd;
 	k->k_cs = cs;
 	k->k_write_data = kbd_zs_write_data;
+	if ((bps = cs->cs_defspeed) == 0)
+		bps = kbd_zs_bps;
+
+	printf(": baud rate %d", bps);
 
 	if ((args->hwflags & ZS_HWFLAG_CONSOLE_INPUT) != 0) {
 		/*
@@ -176,7 +184,7 @@ kbd_zs_attach(parent, self, aux)
 	/* These are OK as set by zscc: WR3, WR4, WR5 */
 	/* We don't care about status interrupts. */
 	cs->cs_preg[1] = ZSWR1_RIE | ZSWR1_TIE;
-	(void) zs_set_speed(cs, KBD_BPS);
+	(void) zs_set_speed(cs, bps);
 	zs_loadchannelregs(cs);
 	splx(s);
 
