@@ -1,4 +1,4 @@
-#	$NetBSD: files.iq80321,v 1.4 2003/04/18 12:01:32 scw Exp $
+#	$NetBSD: files.iq80321,v 1.5 2003/04/19 08:18:12 scw Exp $
 #
 # Intel IQ80321 evaluation board configuration info
 #
@@ -6,8 +6,9 @@
 # Use the generic ARM soft interrupt code.
 file	arch/arm/arm/softintr.c
 
-# Use the shared initarm_common() code
-file	arch/evbarm/evbarm/initarm_common.c
+# Use the shared initarm_common() code.
+# XXX: Not yet ready for prime-time
+#file	arch/evbarm/evbarm/initarm_common.c
 
 file	arch/evbarm/iq80321/iq80321_7seg.c
 file	arch/evbarm/iq80321/iq80321_machdep.c
