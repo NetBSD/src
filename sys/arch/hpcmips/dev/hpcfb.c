@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfb.c,v 1.31 2001/01/04 03:03:04 enami Exp $	*/
+/*	$NetBSD: hpcfb.c,v 1.32 2001/01/04 06:07:43 sato Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -46,7 +46,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1999 Shin Takemura.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$Id: hpcfb.c,v 1.31 2001/01/04 03:03:04 enami Exp $";
+    "$Id: hpcfb.c,v 1.32 2001/01/04 06:07:43 sato Exp $";
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1329,10 +1329,12 @@ hpcfb_do_scroll(v)
 	dc->dc_state |= HPCFB_DC_SCRTHREAD;	
 	if (dc->dc_state&(HPCFB_DC_DRAWING|HPCFB_DC_TDRAWING))
 		dc->dc_state |= HPCFB_DC_SCRDELAY;
-	else if (dc->dc_sc->sc_thread)
+	else if (dc->dc_sc != NULL && dc->dc_sc->sc_thread)
 		wakeup(dc->dc_sc);
-	else if (!dc->dc_sc->sc_mapping) /* draw only EMUL mode */
+	else if (dc->dc_sc != NULL && !dc->dc_sc->sc_mapping) {
+		/* draw only EMUL mode */
 		hpcfb_scroll_update(v);
+	}
 	dc->dc_state &= ~HPCFB_DC_SCRTHREAD;	
 }
 
@@ -1342,7 +1344,9 @@ hpcfb_check_scroll(v)
 {
 	struct hpcfb_devconfig *dc = (struct hpcfb_devconfig *)v;
 
-	if (dc->dc_sc->sc_polling && (dc->dc_state&HPCFB_DC_SCROLLPENDING)){
+	if (dc->dc_sc != NULL 
+		&& dc->dc_sc->sc_polling 
+		&& (dc->dc_state&HPCFB_DC_SCROLLPENDING)){
 		callout_stop(&dc->dc_scroll_ch);
 		dc->dc_state &= ~HPCFB_DC_SCRDELAY;
 		hpcfb_scroll_update(v);
@@ -1385,7 +1389,7 @@ hpcfb_copyrows(cookie, src, dst, num)
 	}
 	else {
 #ifdef HPCFB_JUMP
-		if (dc->dc_sc->sc_polling) {
+		if (sc && sc->sc_polling) {
 			hpcfb_check_scroll(dc);
 		} else if ((dc->dc_state&HPCFB_DC_SCROLLPENDING) == 0) {
 			dc->dc_state |= HPCFB_DC_SCROLLPENDING;
