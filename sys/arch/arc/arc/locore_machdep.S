@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_machdep.S,v 1.5 2000/01/23 21:01:51 soda Exp $	*/
+/*	$NetBSD: locore_machdep.S,v 1.6 2000/02/01 02:30:20 nisimura Exp $	*/
 /*	$OpenBSD: locore.S,v 1.12 1997/04/19 17:19:43 pefo Exp $	*/
 
 /*
@@ -337,6 +337,7 @@ LEAF(mdbpanic)
 END(mdbpanic)
 #endif /* DEBUG */
 
+	.set	mips3
 
 /*--------------------------------------------------------------------------
  *
