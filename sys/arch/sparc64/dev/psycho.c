@@ -1,6 +1,7 @@
-/*	$NetBSD: psycho.c,v 1.45 2002/03/20 18:54:47 eeh Exp $	*/
+/*	$NetBSD: psycho.c,v 1.46 2002/05/06 22:29:22 eeh Exp $	*/
 
 /*
+ * Copyright (c) 2001, 2002 Eduardo E. Horvath
  * Copyright (c) 1999, 2000 Matthew R. Green
  * All rights reserved.
  *
@@ -62,6 +63,8 @@ int psycho_debug = 0x0;
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
 
+#include <sparc64/dev/ofpcivar.h>
+
 #include <sparc64/dev/iommureg.h>
 #include <sparc64/dev/iommuvar.h>
 #include <sparc64/dev/psychoreg.h>
@@ -69,6 +72,7 @@ int psycho_debug = 0x0;
 #include <sparc64/sparc64/cache.h>
 
 #include "ioconf.h"
+#include "ofpci.h"
 
 static pci_chipset_tag_t psycho_alloc_chipset __P((struct psycho_pbm *, int,
 						   pci_chipset_tag_t));
@@ -224,7 +228,7 @@ psycho_attach(parent, self, aux)
 	struct psycho_softc *sc = (struct psycho_softc *)self;
 	struct psycho_softc *osc = NULL;
 	struct psycho_pbm *pp;
-	struct pcibus_attach_args pba;
+	struct ofpcibus_attach_args pba;
 	struct mainbus_attach_args *ma = aux;
 	bus_space_handle_t bh;
 	u_int64_t csr;
@@ -396,7 +400,7 @@ found:
 	/* get the bus-range for the psycho */
 	psycho_get_bus_range(sc->sc_node, psycho_br);
 
-	pba.pba_bus = psycho_br[0];
+	pba.opba_pba.pba_bus = psycho_br[0];
 
 	printf("bus range %u to %u", psycho_br[0], psycho_br[1]);
 	printf("; PCI bus %d", psycho_br[0]);
@@ -414,7 +418,7 @@ found:
 	pp->pp_pc = psycho_alloc_chipset(pp, sc->sc_node, &_sparc_pci_chipset);
 
 	/* setup the rest of the psycho pbm */
-	pba.pba_pc = psycho_alloc_chipset(pp, sc->sc_node, pp->pp_pc);
+	pba.opba_pba.pba_pc = psycho_alloc_chipset(pp, sc->sc_node, pp->pp_pc);
 
 	printf("\n");
 
@@ -529,11 +533,16 @@ found:
 	/*
 	 * attach the pci.. note we pass PCI A tags, etc., for the sabre here.
 	 */
-	pba.pba_busname = "pci";
-	pba.pba_flags = sc->sc_psycho_this->pp_flags;
-	pba.pba_dmat = sc->sc_psycho_this->pp_dmat;
-	pba.pba_iot = sc->sc_psycho_this->pp_iot;
-	pba.pba_memt = sc->sc_psycho_this->pp_memt;
+#if NOFPCI > 0
+	pba.opba_pba.pba_busname = "ofpci";
+#else
+	pba.opba_pba.pba_busname = "pci";
+#endif
+	pba.opba_pba.pba_flags = sc->sc_psycho_this->pp_flags;
+	pba.opba_pba.pba_dmat = sc->sc_psycho_this->pp_dmat;
+	pba.opba_pba.pba_iot = sc->sc_psycho_this->pp_iot;
+	pba.opba_pba.pba_memt = sc->sc_psycho_this->pp_memt;
+	pba.opba_node = sc->sc_node;
 
 	config_found(self, &pba, psycho_print);
 }
@@ -645,7 +654,7 @@ psycho_ue(arg)
 	/*
 	 * It's uncorrectable.  Dump the regs and panic.
 	 */
-	printf("%s: uncorrectable DMA error AFAR %llx pa %llx AFSR %llx:\n%s",
+	printf("%s: uncorrectable DMA error AFAR %llx pa %llx AFSR %llx:\n%s\n",
 		sc->sc_dev.dv_xname, afar, 
 		(long long)iommu_extract(is, (vaddr_t)afar), afsr,
 		bitmask_snprintf(afsr, PSYCHO_UE_AFSR_BITS,
