@@ -1,4 +1,4 @@
-/*	$NetBSD: pdqvar.h,v 1.20 1998/05/25 21:24:21 matt Exp $	*/
+/*	$NetBSD: pdqvar.h,v 1.21 1998/05/27 01:17:53 matt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -185,10 +185,10 @@ typedef bus_addr_t pdq_bus_memoffset_t;
 			(u_int8_t *) (what) - (u_int8_t *) (pdq)->pdq_dbp, \
 			(length), (why))
 #define	PDQ_OS_CONSUMER_PRESYNC(pdq) \
-	PDQ_OS_DESCBLOCK_SYNC((pdq), (pdq)->pdq_cbp, sizeof((pdq)->pdq_cbp), \
+	pdq_os_consumer_block_sync((pdq)->pdq_os_ctx, \
 			      BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE)
 #define	PDQ_OS_CONSUMER_POSTSYNC(pdq) \
-	PDQ_OS_DESCBLOCK_SYNC((pdq), (pdq)->pdq_cbp, sizeof((pdq)->pdq_cbp), \
+	pdq_os_consumer_block_sync((pdq)->pdq_os_ctx, \
 			      BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE)
 #define	PDQ_OS_DESC_PRESYNC(pdq, d, s) \
 	PDQ_OS_DESCBLOCK_SYNC((pdq), (d), (s), BUS_DMASYNC_PREWRITE)
@@ -222,6 +222,7 @@ typedef bus_addr_t pdq_bus_memoffset_t;
 struct _pdq_os_ctx_t;
 extern void pdq_os_descriptor_block_sync(struct _pdq_os_ctx_t *osctx, size_t offset,
 					 size_t length, int ops);
+extern void pdq_os_consumer_block_sync(struct _pdq_os_ctx_t *osctx, int ops);
 extern void pdq_os_unsolicited_event_sync(struct _pdq_os_ctx_t *osctx, size_t offset,
 				 	  size_t length, int ops);
 extern struct mbuf *pdq_os_databuf_alloc(struct _pdq_os_ctx_t *osctx);
