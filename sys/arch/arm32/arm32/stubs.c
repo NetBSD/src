@@ -1,4 +1,4 @@
-/*	$NetBSD: stubs.c,v 1.30 2000/06/29 08:52:58 mrg Exp $	*/
+/*	$NetBSD: stubs.c,v 1.31 2001/02/19 13:29:40 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -51,10 +51,6 @@
 #include <machine/irqhandler.h>
 #include <machine/bootconfig.h>
 #include <machine/pcb.h>
-
-#ifdef HYDRA
-#include "hydrabus.h"
-#endif
 
 extern dev_t dumpdev;
 extern BootConfig bootconfig;
@@ -203,10 +199,6 @@ dumpsys()
 
 	for (block = 0; block < bootconfig.dramblocks && error == 0; ++block) {
 		addr = bootconfig.dram[block].address;
-#if NHYDRABUS > 0
-		if (block == 0)
-			addr += NBPG;
-#endif	/* NHYDRABUS */
 		for (;addr < (bootconfig.dram[block].address
 		    + (bootconfig.dram[block].pages * NBPG)); addr += NBPG) {
 		    	if ((len % (1024*1024)) == 0)
