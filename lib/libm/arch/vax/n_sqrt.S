@@ -1,4 +1,4 @@
-/*	$NetBSD: n_sqrt.S,v 1.1 1995/10/10 23:40:29 ragge Exp $	*/
+/*	$NetBSD: n_sqrt.S,v 1.2 1998/10/31 02:06:02 matt Exp $	*/
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -48,8 +48,11 @@
 	.text
 	.align	1
 	.globl	_sqrt
+	.type	_sqrt,@function
 	.globl	_d_sqrt
+	.type	_d_sqrt,@function
 	.globl	libm$dsqrt_r5
+	.type	libm$dsqrt_r5,@label
 	.set	EDOM,33
 
 _d_sqrt:
