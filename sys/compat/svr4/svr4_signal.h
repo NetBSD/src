@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_signal.h,v 1.8 1995/08/13 22:57:12 mycroft Exp $	 */
+/*	$NetBSD: svr4_signal.h,v 1.9 1995/08/13 23:37:56 mycroft Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -76,13 +76,13 @@
 #define	SVR4_SIGIGNORE_MASK	0x0800
 #define	SVR4_SIGPAUSE_MASK	0x1000
 
-#define	SVR4_SIG_DFL	(void(*)())	 0
-#define	SVR4_SIG_ERR	(void(*)())	-1
-#define	SVR4_SIG_IGN	(void (*)())	 1
-#define	SVR4_SIG_HOLD	(void(*)())	 2
+#define SVR4_SIGNO(x)		((x) & SVR4_SIGNO_MASK)
+#define SVR4_SIGCALL(x)		((x) & ~SVR4_SIGNO_MASK)
 
-#define SVR4_SIGNO(a)	((a) & SVR4_SIGNO_MASK)
-#define SVR4_SIGCALL(a) ((a) & ~SVR4_SIGNO_MASK)
+#define	SVR4_SIG_DFL		(void(*)())0
+#define	SVR4_SIG_ERR		(void(*)())-1
+#define	SVR4_SIG_IGN		(void(*)())1
+#define	SVR4_SIG_HOLD		(void(*)())2
 
 #define SVR4_SIG_BLOCK		1
 #define SVR4_SIG_UNBLOCK	2
@@ -117,10 +117,5 @@ typedef struct svr4_sigaltstack {
 /* ss_flags */
 #define SVR4_SS_ONSTACK		0x00000001
 #define SVR4_SS_DISABLE		0x00000002
-
-void bsd_to_svr4_sigset __P((const sigset_t *, svr4_sigset_t *));
-void svr4_to_bsd_sigset __P((const svr4_sigset_t *, sigset_t *));
-void bsd_to_svr4_sigaltstack __P((const struct sigaltstack *, svr4_stack_t *));
-void svr4_to_bsd_sigaltstack __P((const svr4_stack_t *, struct sigaltstack *));
 
 #endif /* !_SVR4_SIGNAL_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_signal.h,v 1.3 1995/03/14 15:12:34 scottb Exp $	*/
+/*	$NetBSD: ibcs2_signal.h,v 1.4 1995/08/13 23:38:59 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -33,8 +33,6 @@
 #ifndef	_IBCS2_SIGNAL_H
 #define	_IBCS2_SIGNAL_H
 
-#define IBCS2_NSIG		32
-
 #define IBCS2_SIGHUP		1
 #define IBCS2_SIGINT		2
 #define IBCS2_SIGQUIT		3
@@ -57,6 +55,7 @@
 #define IBCS2_SIGPWR		19
 #define IBCS2_SIGWINCH		20
 #define IBCS2_SIGPOLL		22
+#define IBCS2_NSIG		32
 
 /*
  * SCO-specific
@@ -68,6 +67,17 @@
 #define IBCS2_SIGTTOU		27
 #define IBCS2_SIGVTALRM		28
 #define IBCS2_SIGPROF		29
+
+#define IBCS2_SIGNO_MASK	0x00FF
+#define IBCS2_SIGNAL_MASK	0x0000
+#define IBCS2_SIGSET_MASK	0x0100
+#define IBCS2_SIGHOLD_MASK	0x0200
+#define IBCS2_SIGRELSE_MASK	0x0400
+#define IBCS2_SIGIGNORE_MASK	0x0800
+#define IBCS2_SIGPAUSE_MASK	0x1000
+
+#define IBCS2_SIGNO(x)		((x) & IBCS2_SIGNO_MASK)
+#define IBCS2_SIGCALL(x)	((x) & ~IBCS2_SIGNO_MASK)
 
 #define IBCS2_SIG_DFL		(void(*)())0
 #define IBCS2_SIG_ERR		(void(*)())-1
@@ -86,16 +96,7 @@ struct ibcs2_sigaction {
 	int	sa_flags;
 };
 
+/* sa_flags */
 #define IBCS2_SA_NOCLDSTOP	1
-
-#define IBCS2_SIGNAL_MASK	0x0000
-#define IBCS2_SIGSET_MASK	0x0100
-#define IBCS2_SIGHOLD_MASK	0x0200
-#define IBCS2_SIGRELSE_MASK	0x0400
-#define IBCS2_SIGIGNORE_MASK	0x0800
-#define IBCS2_SIGPAUSE_MASK	0x1000
-
-#define IBCS2_SIGNO(x)		((x) & 0xff)
-#define IBCS2_SIGCALL(x)	((x) & ~0xff)
 
 #endif /* _IBCS2_SIGNAL_H */
