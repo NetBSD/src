@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.23 1997/10/08 20:31:52 christos Exp $	*/
+/*	$NetBSD: jobs.c,v 1.24 1998/02/04 20:10:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: jobs.c,v 1.23 1997/10/08 20:31:52 christos Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.24 1998/02/04 20:10:16 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -810,7 +810,7 @@ dowait(block, job)
 				outfmt(out2, "%d: ", pid);
 #if JOBS
 			if (sig == SIGTSTP && rootshell && iflag)
-				outfmt(out2, "%%%d ", job - jobtab + 1);
+				outfmt(out2, "%%%ld ", job - jobtab + 1);
 #endif
 			if (sig < NSIG && sys_siglist[sig])
 				out2str(sys_siglist[sig]);
