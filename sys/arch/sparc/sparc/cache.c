@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.76 2003/01/20 21:56:34 pk Exp $ */
+/*	$NetBSD: cache.c,v 1.77 2003/01/20 22:15:54 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -797,9 +797,11 @@ srmmu_cache_flush(base, len, ctx)
 			sta(p, ASI_IDCACHELFP, 0);
 #if defined(MULTIPROCESSOR)
 		if (cpuinfo.cpu_type == CPUTYP_HS_MBUS) {
-			/* Just flush the segment from the TLB */
+			/* Just flush the segment(s) from the TLB */
+			/* XXX - assumes CACHE_FLUSH_MAGIC <= NBPSG */
 			int va = (int)base & ~SGOFSET;
 			sta(va | ASI_SRMMUFP_L2, ASI_SRMMUFP, 0);
+			sta((va+NBPSG) | ASI_SRMMUFP_L2, ASI_SRMMUFP, 0);
 		}
 #endif
 		setcontext4m(octx);
