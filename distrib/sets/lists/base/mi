@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.169.2.13 2000/10/20 17:02:52 tv Exp $
+# $NetBSD: mi,v 1.169.2.14 2001/01/25 17:54:17 jhawk Exp $
 .
 ./altroot
 ./bin
@@ -49,7 +49,6 @@
 ./etc/mtree
 ./etc/namedb
 ./etc/openssl
-./etc/openssl/cert.pem
 ./etc/openssl/certs
 ./etc/openssl/misc
 ./etc/openssl/private
