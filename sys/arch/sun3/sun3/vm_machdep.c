@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.29 1995/05/26 17:20:30 gwr Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.30 1995/05/30 15:36:58 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -82,11 +82,20 @@ cpu_fork(p1, p2)
 	register struct switchframe *p2sf;
 	extern void proc_do_uret(), child_return();
 
+	/*
+	 * Before copying the PCB from the current process,
+	 * make sure it is up-to-date.  (p1 == curproc)
+	 */
+	savectx(curproc->p_addr);
+
 	/* copy over the machdep part of struct proc */
 	p2->p_md.md_flags = p1->p_md.md_flags;
 
 	/* Copy pcb from proc p1 to p2. */
 	bcopy(&p1->p_addr->u_pcb, pcb2, sizeof(*pcb2));
+
+	/* Child can start with low IPL (XXX - right?) */
+	pcb2->pcb_ps = PSL_LOWIPL;
 
 	/*
 	 * Our cpu_switch MUST always call PMAP_ACTIVATE on a
