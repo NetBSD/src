@@ -1,4 +1,4 @@
-#	$NetBSD: dot.profile,v 1.2 1999/01/20 14:02:53 tsubai Exp $
+#	$NetBSD: dot.profile,v 1.3 1999/01/27 13:18:30 tsubai Exp $
 #
 # Copyright (c) 1995 Jason R. Thorpe
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -48,6 +48,12 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 
 	# mount root read-write
 	mount -u /dev/md0a /
+
+	# mount a /tmp on mfs, to avoid filling the md
+	mount -t mfs swap /tmp
+
+	# mount the kern_fs so that we can examine the dmesg state
+	mount -t kernfs kern /kern
 
 	# run update, so that installed software is written as it goes.
 	update
