@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.42 1999/05/18 23:57:20 thorpej Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.43 1999/06/17 17:27:13 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -249,7 +249,7 @@ ether_output(ifp, m0, dst, rt0)
 		if (aa->aa_flags & AFA_PHASE2) {
 			struct llc llc;
 
-			M_PREPEND(m, sizeof(struct llc), M_WAIT);
+			M_PREPEND(m, sizeof(struct llc), M_DONTWAIT);
 			llc.llc_dsap = llc.llc_ssap = LLC_SNAP_LSAP;
 			llc.llc_control = LLC_UI;
 			bcopy(at_org_code, llc.llc_snap_org_code,
