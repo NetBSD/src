@@ -1,4 +1,4 @@
-#	$NetBSD: files.sh3,v 1.27 2002/05/09 12:24:19 uch Exp $
+#	$NetBSD: files.sh3,v 1.28 2002/05/10 15:25:13 uch Exp $
 #
 
 defflag	opt_cputype.h		SH3 SH4
@@ -10,7 +10,6 @@ file	arch/sh3/sh3/db_disasm.c	ddb
 file	arch/sh3/sh3/db_interface.c	ddb | kgdb
 file	arch/sh3/sh3/db_memrw.c		ddb | kgdb
 file	arch/sh3/sh3/db_trace.c		ddb
-file	arch/sh3/sh3/sh3disasm.c	ddb
 file	arch/sh3/sh3/in_cksum.S		inet
 file	netinet/in4_cksum.c		inet
 file	arch/sh3/sh3/kgdb_machdep.c	kgdb
@@ -41,13 +40,6 @@ file	dev/cons.c
 file	arch/sh3/sh3/procfs_machdep.c	procfs
 
 #
-# Compatibility modules
-#
-
-# Binary compatibility with previous NetBSD releases (COMPAT_XX)
-file	arch/sh3/sh3/compat_13_machdep.c	compat_13
-
-#
 # Executable file format
 #
-file arch/sh3/sh3/coff_exec.c	exec_coff
+file arch/sh3/sh3/coff_exec.c		exec_coff
