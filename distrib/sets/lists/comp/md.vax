@@ -1,13 +1,15 @@
-# $NetBSD: md.vax,v 1.20 2002/03/30 22:17:55 matt Exp $
+# $NetBSD: md.vax,v 1.21 2002/04/06 18:24:23 bjh21 Exp $
 ./usr/include/vax	comp-c-include
 ./usr/include/vax/_G_config.h	comp-c-include
 ./usr/include/vax/ansi.h	comp-c-include
 ./usr/include/vax/aout_machdep.h	comp-c-include
 ./usr/include/vax/asm.h	comp-c-include
 ./usr/include/vax/bswap.h	comp-c-include
+./usr/include/vax/bus.h		comp-c-include
 ./usr/include/vax/byte_swap.h	comp-c-include
 ./usr/include/vax/cdefs.h	comp-c-include
 ./usr/include/vax/clock.h	comp-c-include
+./usr/include/vax/coff_machdep.h	comp-c-include
 ./usr/include/vax/cpu.h	comp-c-include
 ./usr/include/vax/db_machdep.h	comp-c-include
 ./usr/include/vax/disklabel.h	comp-c-include
@@ -31,6 +33,7 @@
 ./usr/include/vax/ka750.h	comp-c-include
 ./usr/include/vax/ka820.h	comp-c-include
 ./usr/include/vax/lcgreg.h	comp-c-include
+./usr/include/vax/leds.h	comp-c-include
 ./usr/include/vax/limits.h	comp-c-include
 ./usr/include/vax/lock.h	comp-c-include
 ./usr/include/vax/macros.h	comp-c-include
@@ -45,6 +48,10 @@
 ./usr/include/vax/psl.h	comp-c-include
 ./usr/include/vax/pte.h	comp-c-include
 ./usr/include/vax/ptrace.h	comp-c-include
+./usr/include/vax/qdioctl.h	comp-c-include
+./usr/include/vax/qdreg.h	comp-c-include
+./usr/include/vax/qduser.h	comp-c-include
+./usr/include/vax/qevent.h	comp-c-include
 ./usr/include/vax/reg.h	comp-c-include
 ./usr/include/vax/rpb.h	comp-c-include
 ./usr/include/vax/rsp.h	comp-c-include
