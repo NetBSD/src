@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.5 1996/05/26 20:42:58 chuck Exp $	*/
+/*	$NetBSD: zs.c,v 1.6 1996/08/26 06:39:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -143,7 +143,7 @@ zs_config(zsc, chan_addr)
 			cs->cs_reg_data = &zc->zc_data;
 
 			/* Define BAUD rate clock for the MI code. */
-			cs->cs_pclk_div16 = PCLK / 16;
+			cs->cs_brg_clk = PCLK / 16;
 
 			cs->cs_defspeed = zs_defspeed[zsc_unit][channel];
 
@@ -416,7 +416,7 @@ zs_cnconfig(zsc_unit, channel, zcp)
 	cs->cs_ops = &zsops_null;
 
 	/* Define BAUD rate clock for the MI code. */
-	cs->cs_pclk_div16 = PCLK / 16;
+	cs->cs_brg_clk = PCLK / 16;
 
 	cs->cs_defspeed = zs_defspeed[zsc_unit][channel];
 
