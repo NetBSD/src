@@ -1,4 +1,4 @@
-/*	$NetBSD: tulipreg.h,v 1.22 2000/08/25 08:03:10 jeffs Exp $	*/
+/*	$NetBSD: tulipreg.h,v 1.23 2000/10/03 04:32:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -105,6 +105,10 @@
  *		- Not all registers have the pad word between them,
  *		  but luckily, there are all AL981-specific registers,
  *		  so this is easy to deal with.
+ *
+ *	- ADMtek AN983 and AN985
+ *
+ *	  Similar to the ADMtek AL981, but with a few differences.
  *
  *	- Xircom X3201-3
  *
@@ -1463,6 +1467,15 @@ struct tulip_desc {
 						   1 == 1.4 VPP */
 #define	ADM_100CTR_ANC		0x1000		/* autoneg completed */
 #define	ADM_100CTR_DISRER	0x2000		/* disable Rx error counter */
+
+/* Operation Mode Register (AN983) */
+#define	CSR_ADM983_OPMODE	0xfc
+#define	ADM983_OPMODE_SPEED	0x80000000	/* 1 == 100, 0 == 10 */
+#define	ADM983_OPMODE_FD	0x40000000	/* 1 == fd, 0 == hd */
+#define	ADM983_OPMODE_LINK	0x20000000	/* 1 == link, 0 == no link */
+#define	ADM983_OPMODE_EERLOD	0x04000000	/* reload from EEPROM */
+#define	ADM983_OPMODE_SingleChip 0x00000007	/* single-chip mode */
+#define	ADM983_OPMODE_MacOnly	 0x00000004	/* MAC-only mode */
 
 /*
  * Xircom X3201-3 registers
