@@ -1,4 +1,4 @@
-/*      $NetBSD: ac97.c,v 1.1 1999/10/27 13:18:03 augustss Exp $ */
+/*      $NetBSD: ac97.c,v 1.2 1999/11/02 05:41:27 soren Exp $ */
 /*      $OpenBSD: ac97.c,v 1.2 1999/09/21 16:06:27 csapuntz Exp $ */
 
 /*
@@ -305,7 +305,7 @@ static struct ac97_codecid {
 };
 
 static char *ac97enhancement[] = {
-	"No 3D Stereo",
+	"no 3D stereo",
 	"Analog Devices Phat Stereo",
 	"Creative"
 	"National Semi 3D",
@@ -479,13 +479,15 @@ ac97_attach(hostIf)
 	struct ac97_host_if *hostIf;
 {
 	struct ac97_softc *as;
+	struct device *sc_dev = (struct device *)hostIf->arg;
 	int error, i, j;
 	u_int16_t id1, id2, caps;
 	u_int32_t id;
 	
 	as = malloc(sizeof(struct ac97_softc), M_DEVBUF, M_WAITOK);
 
-	if (!as) return (ENOMEM);
+	if (as == NULL)
+		return (ENOMEM);
 
 	as->codecIf.vtbl = &ac97civ;
 	as->hostIf = hostIf;
@@ -513,12 +515,19 @@ ac97_attach(hostIf)
 
 	id = (id1 << 16) | id2;
 
-	printf("ac97: codec id 0x%8x", id);
-	for (i = 0; ac97codecid[i].id; i++) {
-		if (ac97codecid[i].id == id) 
-			printf(" (%s)", ac97codecid[i].name);
+	printf("%s: ", sc_dev->dv_xname);
+
+	for (i = 0; ; i++) {
+		if (ac97codecid[i].id == id) {
+			printf("%s", ac97codecid[i].name);
+			break;
+		}
+		if (ac97codecid[i].id == 0) {
+			printf("unknown (0x%8x)", id);
+			break;
+		}
 	}
-	printf("\nac97: codec features ");
+	printf(" codec; ");
 	for (i = j = 0; i < 10; i++) {
 		if (caps & (1 << i)) {
 			printf("%s%s", j? ", " : "", ac97feature[i]);
