@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.1.1.7 1997/10/30 05:27:21 mrg Exp $	*/
+/*	$NetBSD: parse.c,v 1.1.1.8 1997/11/14 08:02:59 mrg Exp $	*/
 
 /*
  * Copyright (C) 1993-1997 by Darren Reed.

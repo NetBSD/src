@@ -1,4 +1,4 @@
-/*	$NetBSD: iptests.c,v 1.1.1.4 1997/10/30 05:30:35 mrg Exp $	*/
+/*	$NetBSD: iptests.c,v 1.1.1.5 1997/11/14 08:04:51 mrg Exp $	*/
 
 /*
  * Copyright (C) 1993-1997 by Darren Reed.

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipt.h,v 1.1.1.7 1997/10/30 05:28:12 mrg Exp $	*/
+/*	$NetBSD: ipt.h,v 1.1.1.8 1997/11/14 08:03:28 mrg Exp $	*/
 
 /*
  * Copyright (C) 1993-1997 by Darren Reed.

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.7 1997/10/30 05:29:27 mrg Exp $
+#	$NetBSD: Makefile,v 1.1.1.8 1997/11/14 08:04:17 mrg Exp $
 
 PROG=	ipmon
 MAN=	ipmon.8
