@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.82 1997/01/28 03:38:40 mikel Exp $
+#	$NetBSD: bsd.lib.mk,v 1.83 1997/02/17 19:24:47 cgd Exp $
 #	@(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
 
 .if exists(${.CURDIR}/../Makefile.inc)
@@ -131,10 +131,9 @@ lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}: lib${LIB}_pic.a ${DPADD}
 	    -o lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR} lib${LIB}_pic.a ${LDADD}
 .else
 	$(LD) -shared -o lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
-	    -soname lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
-	    /usr/lib/crtbegin.o \
+	    -soname lib${LIB}.so.${SHLIB_MAJOR} /usr/lib/crtbeginS.o \
 	    --whole-archive lib${LIB}_pic.a --no-whole-archive ${LDADD} \
-	    /usr/lib/crtend.o
+	    /usr/lib/crtendS.o
 .endif
 
 LOBJS+=	${LSRCS:.c=.ln} ${SRCS:M*.c:.c=.ln}
@@ -194,6 +193,14 @@ realinstall:
 .if !defined(NOPIC) && defined(SHLIB_MAJOR) && defined(SHLIB_MINOR)
 	${INSTALL} ${COPY} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
 	    lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR} ${DESTDIR}${LIBDIR}
+.if (${MACHINE_ARCH} == "alpha")
+	rm -f ${DESTDIR}${LIBDIR}/lib${LIB}.so.${SHLIB_MAJOR}
+	ln -s lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
+	    ${DESTDIR}${LIBDIR}/lib${LIB}.so.${SHLIB_MAJOR}
+	rm -f ${DESTDIR}${LIBDIR}/lib${LIB}.so
+	ln -s lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
+	    ${DESTDIR}${LIBDIR}/lib${LIB}.so
+.endif
 .endif
 .if !defined(NOLINT)
 	${INSTALL} ${COPY} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
