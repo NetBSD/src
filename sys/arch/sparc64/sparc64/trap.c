@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.61 2001/02/05 12:45:38 mrg Exp $ */
+/*	$NetBSD: trap.c,v 1.62 2001/02/11 00:39:38 eeh Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -86,6 +86,9 @@
 #endif
 #ifdef COMPAT_SVR4
 #include <machine/svr4_machdep.h>
+#endif
+#ifdef COMPAT_SVR4_32
+#include <machine/svr4_32_machdep.h>
 #endif
 
 #include <sparc/fpu/fpu_extern.h>
@@ -641,7 +644,7 @@ dopanic:
 			}
 			/* NOTREACHED */
 		}
-#if defined(COMPAT_SVR4) || defined(SUN4M)
+#if defined(COMPAT_SVR4) || defined(COMPAT_SVR4_32)
 badtrap:
 #endif
 		/* the following message is gratuitous */
@@ -651,7 +654,7 @@ badtrap:
 		trapsignal(p, SIGILL, type);
 		break;
 
-#ifdef COMPAT_SVR4
+#if defined(COMPAT_SVR4) || defined(COMPAT_SVR4_32)
 	case T_SVR4_GETCC:
 	case T_SVR4_SETCC:
 	case T_SVR4_GETPSR:
@@ -659,9 +662,15 @@ badtrap:
 	case T_SVR4_GETHRTIME:
 	case T_SVR4_GETHRVTIME:
 	case T_SVR4_GETHRESTIME:
-		if (!svr4_trap(type, p))
-			goto badtrap;
-		break;
+#if defined(COMPAT_SVR4_32)
+		if (svr4_32_trap(type, p))
+			break;
+#endif
+#if defined(COMPAT_SVR4)
+		if (svr4_trap(type, p))
+			break;
+#endif
+		goto badtrap;
 #endif
 
 	case T_AST:
@@ -673,8 +682,9 @@ badtrap:
 		/* This is not an MMU issue!!!! */
 		printf("trap: textfault at %lx!! sending SIGILL due to trap %d: %s\n", 
 		       pc, type, type < N_TRAP_TYPES ? trap_type[type] : T);
-#ifdef DDB
-		Debugger();
+#if defined(DDB) && defined(DEBUG)
+		if (trapdebug & TDB_STOPSIG)
+			Debugger();
 #endif
 		trapsignal(p, SIGILL, 0);	/* XXX code?? */
 		break;
