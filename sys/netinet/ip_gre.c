@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_gre.c,v 1.18 2002/06/09 16:33:40 itojun Exp $ */
+/*	$NetBSD: ip_gre.c,v 1.19 2002/06/09 19:49:49 itojun Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_gre.c,v 1.18 2002/06/09 16:33:40 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_gre.c,v 1.19 2002/06/09 19:49:49 itojun Exp $");
 
 #include "gre.h"
 #if NGRE > 0
@@ -128,13 +128,13 @@ gre_input(m, va_alist)
 	hlen = va_arg(ap, int);
 	va_end(ap);
 
-	ret=gre_input2(m,hlen,IPPROTO_GRE);
+	ret = gre_input2(m,hlen,IPPROTO_GRE);
 	/*
 	 * ret == 0 : packet not processed, but input from here
 	 * means no matching tunnel that is up is found,
 	 * so we can just free the mbuf and return
 	 */
-	if (ret==0)
+	if (ret == 0)
 		m_freem(m);
 }
 
@@ -262,11 +262,11 @@ gre_mobile_input(m, va_alist)
 	struct gre_softc *sc;
 	int hlen,s;
 	va_list ap;
-	u_char osrc=0;
+	u_char osrc = 0;
 	int msiz;
 
 	va_start(ap,m);
-	hlen=va_arg(ap, int);
+	hlen = va_arg(ap, int);
 	va_end(ap);
 
 	if ((sc = gre_lookup(m, IPPROTO_MOBILE)) == NULL) {
@@ -279,29 +279,29 @@ gre_mobile_input(m, va_alist)
 	sc->sc_if.if_ibytes += m->m_pkthdr.len;
 
 	if(ntohs(mip->mh.proto) & MOB_H_SBIT) {
-		osrc=1;
-		msiz=MOB_H_SIZ_L;
-		mip->mi.ip_src.s_addr=mip->mh.osrc;
+		osrc = 1;
+		msiz = MOB_H_SIZ_L;
+		mip->mi.ip_src.s_addr = mip->mh.osrc;
 	} else {
-		msiz=MOB_H_SIZ_S;
+		msiz = MOB_H_SIZ_S;
 	}
-	mip->mi.ip_dst.s_addr=mip->mh.odst;
-	mip->mi.ip_p=(ntohs(mip->mh.proto) >> 8);
+	mip->mi.ip_dst.s_addr = mip->mh.odst;
+	mip->mi.ip_p = (ntohs(mip->mh.proto) >> 8);
 
-	if (gre_in_cksum((u_short*)&mip->mh,msiz)!=0) {
+	if (gre_in_cksum((u_short*)&mip->mh,msiz) != 0) {
 		m_freem(m);
 		return;
 	}
 
-	memmove(ip+(ip->ip_hl<<2),ip+(ip->ip_hl<<2)+msiz,
-		m->m_len-msiz-(ip->ip_hl<<2));
-	m->m_len-=msiz;
-	ip->ip_len-=msiz;
+	memmove(ip + (ip->ip_hl << 2), ip + (ip->ip_hl << 2) + msiz,
+		m->m_len - msiz - (ip->ip_hl << 2));
+	m->m_len -= msiz;
+	ip->ip_len -= msiz;
 	HTONS(ip->ip_len);
-	m->m_pkthdr.len-=msiz;
+	m->m_pkthdr.len -= msiz;
 
-	ip->ip_sum=0;
-	ip->ip_sum=in_cksum(m,(ip->ip_hl << 2));
+	ip->ip_sum = 0;
+	ip->ip_sum = in_cksum(m, (ip->ip_hl << 2));
 
 #if NBPFILTER > 0
 	if (sc->sc_if.if_bpf) {
