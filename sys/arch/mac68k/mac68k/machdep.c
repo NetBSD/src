@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.162 1997/09/12 07:00:41 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.163 1997/09/12 10:29:28 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -521,8 +521,6 @@ void via_shutdown __P((void));
 
 /*
  * Set registers on exec.
- * XXX Should clear registers except sp, pc,
- * but would break init; should be fixed soon.
  */
 void
 setregs(p, pack, stack)
@@ -532,6 +530,7 @@ setregs(p, pack, stack)
 {
 	struct frame *frame = (struct frame *)p->p_md.md_regs;
 
+	frame->f_sr = PSL_USERSET;
 	frame->f_pc = pack->ep_entry & ~1;
 	frame->f_regs[D0] = 0;
 	frame->f_regs[D1] = 0;
