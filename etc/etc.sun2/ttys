@@ -1,11 +1,11 @@
 #
 #	@(#)ttys	5.1 (Berkeley) 4/17/89
-#	$NetBSD: ttys,v 1.2 2002/02/13 09:46:14 martti Exp $
+#	$NetBSD: ttys,v 1.3 2003/10/03 14:54:21 dsl Exp $
 #
 # name	getty				type	status		comments
 #
 # Note: the console redirects to one of: kd, ttya, ttyb
-console	"/usr/libexec/getty suncons"	unknown	off secure
+constty	"/usr/libexec/getty suncons"	unknown	off secure
 kd	"/usr/libexec/getty suncons"	sun	on  secure
 ttya	"/usr/libexec/getty std.9600"	unknown	on  secure
 ttyb	"/usr/libexec/getty std.9600"	unknown	off secure

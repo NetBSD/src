@@ -1,10 +1,10 @@
 #
-#	$NetBSD: ttys,v 1.1 2002/04/13 00:07:25 toshii Exp $
+#	$NetBSD: ttys,v 1.2 2003/10/03 14:54:21 dsl Exp $
 #
 # name	getty				type	status		comments
 
 # serial port
-console	"/usr/libexec/getty std.9600"	vt100	off secure
+constty	"/usr/libexec/getty std.9600"	vt100	off secure
 
 # Workstation console (framebuffer) ttys
 ttyE0	"/usr/libexec/getty std.9600"	vt100	on secure

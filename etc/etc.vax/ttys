@@ -1,4 +1,4 @@
-#	$NetBSD: ttys,v 1.5 2002/02/13 09:46:15 martti Exp $
+#	$NetBSD: ttys,v 1.6 2003/10/03 14:54:22 dsl Exp $
 #
 #	@(#)ttys	5.2 (Berkeley) 6/10/93
 #
@@ -6,7 +6,7 @@
 #
 # If the console is marked insecure, single-user requires
 # the root password.
-console	"/usr/libexec/getty std.9600"	unknown	on secure
+constty	"/usr/libexec/getty std.9600"	unknown	on secure
 
 # Virtual terminals on VS3100 with "glass tty"
 #ttyw0	"/usr/libexec/getty std.9600"	sun on secure
