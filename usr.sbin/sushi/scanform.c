@@ -1,4 +1,4 @@
-/*      $NetBSD: scanform.c,v 1.9 2001/01/24 08:29:56 garbled Exp $       */
+/*      $NetBSD: scanform.c,v 1.10 2001/01/24 09:30:30 garbled Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -929,9 +929,9 @@ gen_list(FTREE_ENTRY *ftp, int max, char **args)
 }
 
 static void
-gen_func(FTREE_ENTRY *ftp)
+gen_func(FTREE_ENTRY *ftp, int max, char **args)
 {
-	int i;
+	int i, cur;
 	char *p, *q;
 
 	p = strsep(&ftp->data, ",");
@@ -944,7 +944,11 @@ gen_func(FTREE_ENTRY *ftp)
 		bailout("%s: %s",
 		    catgets(catalog, 1, 5, "function not found"), p);
 
-	ftp->list = func_map[i].function(q);
+	cur = tstring(max, q);
+	if (cur)
+		ftp->list = func_map[i].function(args[cur-1]);
+	else
+		ftp->list = func_map[i].function(q);
 }
 
 static void
@@ -1117,7 +1121,7 @@ form_generate(struct cqForm *cqf, char *basedir, char **args)
 			case DATAT_FUNC:
 				F[i].type = ENUM;
 				F[i].v = strdup(ftp->data);
-				gen_func(ftp);
+				gen_func(ftp, max, args);
 				F[i].list = ftp->list;
 				break;
 			case DATAT_SCRIPT:
@@ -1135,7 +1139,7 @@ form_generate(struct cqForm *cqf, char *basedir, char **args)
 			case DATAT_MFUNC:
 				F[i].type = MULTI;
 				F[i].v = strdup(ftp->data);
-				gen_func(ftp);
+				gen_func(ftp, max, args);
 				F[i].list = ftp->list;
 				break;
 			case DATAT_MSCRIPT:

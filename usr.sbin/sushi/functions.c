@@ -1,4 +1,4 @@
-/*      $NetBSD: functions.c,v 1.1 2001/01/05 01:28:35 garbled Exp $       */
+/*      $NetBSD: functions.c,v 1.2 2001/01/24 09:30:30 garbled Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -69,6 +69,7 @@ void	ftp_stop(void);
 func_record func_map[] = 
 {
 	{ "ftp_pkglist", ftp_pkglist },
+	{ "ftp_pkgcats", ftp_pkgcats },
 	{ "script_do", script_do },
 	{ "log_do", log_do },
 	{(char *)NULL, (char **(*)(char *))NULL},
@@ -214,6 +215,94 @@ ftp_pkglist(char *subdir)
 		/* XXX 5 to get .tgz */
 		list[nlines][strlen(list[nlines])-5] = '\0';
 		nlines++;
+	}
+	list[nlines] = NULL;
+	
+	fclose(f);
+	unlink(tmpname);
+	
+	/*
+	 * Stop FTP coprocess
+	 */
+	ftp_stop();
+
+	return list;
+}
+
+/*
+ *   Return list of package categories available at the given url
+ *   or NULL on error. Returned pointer can be free(3)d
+ *   later.
+ */
+/* ARGSUSED */
+char **
+ftp_pkgcats(char *subdir)
+{
+	int rc, tfd;
+	char tmpname[FILENAME_MAX];
+	char buf[FILENAME_MAX];
+	char url[FILENAME_MAX];
+	char **list;
+	FILE *f;
+	int nlines;
+
+	extern int ftp_start(char *url);	/* pkg_install/lib stuff */
+	extern int Verbose;			/* pkg_install/lib stuff */
+	Verbose=0; /* debugging */
+
+	/* ftp(1) must have a trailing '/' for directories */
+	snprintf(url, sizeof(url), "%s/", ftp_base(0));
+
+	/*
+	 * Start FTP coprocess
+	 */
+	rc = ftp_start(url);
+	if (rc == -1)
+		bailout(catgets(catalog, 1, 3, "ftp_start failed"));
+
+	/*
+	 * Generate tmp file
+	 */
+	strcpy(tmpname, TMPFILE_NAME);
+	tfd=mkstemp(tmpname);
+	if (tfd == -1)
+		bailout("mkstemp: %s", strerror(errno));
+
+	close(tfd); /* We don't need the file descriptor, but will use 
+		       the file in a second */
+	/*
+	 * Setup & run the command for ftp(1)
+	 */
+	(void) snprintf(buf, sizeof(buf), "ls -1F %s\n",
+	    tmpname);
+	rc = ftp_cmd(buf, "\n(550|226).*\n"); /* catch errors */
+	if (rc != 226) {
+		unlink(tmpname);	/* remove clutter */
+		bailout(catgets(catalog, 1, 4, "nlist failed"));
+	}
+
+	f = fopen(tmpname, "r");
+	if (!f)
+		bailout("fopen: %s", strerror(errno));
+
+	/* Read through file once to find out how many lines it has */
+	nlines=0;
+	while(fgets(buf, sizeof(buf), f))
+		nlines++;
+	rewind(f);
+
+	list = malloc((nlines + 1) * sizeof(char *));
+	if (list == NULL)
+		bailout("malloc: %s", strerror(errno));
+
+	/* alloc space for each line now */
+	nlines = 0;
+	while(fgets(buf, sizeof(buf), f)) {
+		list[nlines] = strdup(buf);
+		if (list[nlines][strlen(list[nlines])-2] == '/') {
+			list[nlines][strlen(list[nlines])-2] = '\0';
+			nlines++;
+		}
 	}
 	list[nlines] = NULL;
 	
