@@ -1,4 +1,4 @@
-/*	$NetBSD: cats_machdep.c,v 1.6 2001/11/23 17:23:43 thorpej Exp $	*/
+/*	$NetBSD: cats_machdep.c,v 1.7 2001/11/23 21:18:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -63,7 +63,7 @@
 #include <machine/cpu.h>
 #include <machine/frame.h>
 #include <machine/intr.h>
-#include <machine/undefined.h>
+#include <arm/undefined.h>
 
 #include <machine/cyclone_boot.h>
 #include <arm/footbridge/dc21285mem.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: netwinder_machdep.c,v 1.13 2001/11/23 17:23:44 thorpej Exp $	*/
+/*	$NetBSD: netwinder_machdep.c,v 1.14 2001/11/23 21:18:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -63,7 +63,7 @@
 #include <machine/cpu.h>
 #include <machine/frame.h>
 #include <machine/intr.h>
-#include <machine/undefined.h>
+#include <arm/undefined.h>
 
 #include <machine/netwinder_boot.h>
 #include <arm/footbridge/dc21285mem.h>
