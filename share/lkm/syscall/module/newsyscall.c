@@ -34,7 +34,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: newsyscall.c,v 1.1 1993/06/08 03:53:38 cgd Exp $
+ *	$Id: newsyscall.c,v 1.2 1994/07/24 02:43:10 mycroft Exp $
  */
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -43,7 +43,6 @@
 #include <sys/mount.h>
 #include <sys/exec.h>
 #include <sys/lkm.h>
-#include <a.out.h>
 #include <sys/file.h>
 #include <sys/errno.h>
 
