@@ -1,4 +1,40 @@
-/*	$NetBSD: arc4random.c,v 1.6 2002/10/04 07:33:26 itojun Exp $	*/
+/*	$NetBSD: arc4random.c,v 1.7 2002/10/06 06:47:40 tls Exp $	*/
+
+/*-
+ * Copyright (c) 2002 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Thor Lancelot Simon.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*-
  * THE BEER-WARE LICENSE
@@ -40,7 +76,7 @@ static int arc4_numruns = 0;
 static u_int8_t arc4_sbox[256];
 static struct timeval arc4_tv_nextreseed;
 
-static u_int8_t arc4_randbyte(void);
+static inline u_int8_t arc4_randbyte(void);
 
 static __inline void
 arc4_swap(u_int8_t *a, u_int8_t *b)
@@ -56,22 +92,43 @@ arc4_swap(u_int8_t *a, u_int8_t *b)
  * Stir our S-box.
  */
 static void
-arc4_randomstir(void)
+arc4_randrekey(void)
 {
 	u_int8_t key[256];
-	int r, n;
+	static int cur_keybytes;
+	int r, n, byteswanted;
 
-#if NRND > 0
-	r = rnd_extract_data(key, ARC4_KEYBYTES, RND_EXTRACT_ANY);
-#else
-	r = 0;	/*XXX*/
-#endif
-	/* If r == 0 || -1, just use what was on the stack. */
-	if (r > 0) {
-		for (n = r; n < sizeof(key); n++)
-			key[n] = key[n % r];
+	if(!arc4_initialized)
+		/* The first time through, we must take what we can get */
+		byteswanted = 0;
+	else
+		/* Don't rekey with less entropy than we already have */
+		byteswanted = cur_keybytes;
+
+#if NRND > 0	/* XXX without rnd, we will key from the stack, ouch! */
+	r = rnd_extract_data(key, ARC4_KEYBYTES, RND_EXTRACT_GOOD);
+
+	if (r < ARC4_KEYBYTES) {
+		if (r >= byteswanted) {
+			(void)rnd_extract_data(key + r,
+					       ARC4_KEYBYTES - r,
+					       RND_EXTRACT_ANY);
+		} else {
+			/* don't replace a good key with a bad one! */
+			arc4_tv_nextreseed = mono_time;
+			arc4_tv_nextreseed.tv_sec += ARC4_RESEED_SECONDS;
+			arc4_numruns = 0;
+			/* we should just ask rnd(4) to rekey us when
+			   it can, but for now, we'll just try later. */
+			return;
+		}
 	}
 
+	cur_keybytes = r;
+
+	for (n = ARC4_KEYBYTES; n < sizeof(key); n++)
+			key[n] = key[n % ARC4_KEYBYTES];
+#endif
 	for (n = 0; n < 256; n++) {
 		arc4_j = (arc4_j + arc4_sbox[n] + key[n]) % 256;
 		arc4_swap(&arc4_sbox[n], &arc4_sbox[arc4_j]);
@@ -103,14 +160,14 @@ arc4_init(void)
 	for (n = 0; n < 256; n++)
 		arc4_sbox[n] = (u_int8_t) n;
 
-	arc4_randomstir();
+	arc4_randrekey();
 	arc4_initialized = 1;
 }
 
 /*
  * Generate a random byte.
  */
-static u_int8_t
+static __inline u_int8_t
 arc4_randbyte(void)
 {
 	u_int8_t arc4_t;
@@ -128,6 +185,7 @@ u_int32_t
 arc4random(void)
 {
 	u_int32_t ret;
+	int i;
 
 	/* Initialize array if needed. */
 	if (!arc4_initialized)
@@ -135,13 +193,9 @@ arc4random(void)
 
 	if ((++arc4_numruns > ARC4_MAXRUNS) || 
 	    (mono_time.tv_sec > arc4_tv_nextreseed.tv_sec)) {
-		arc4_randomstir();
+		arc4_randrekey();
 	}
 
-	ret = arc4_randbyte();
-	ret |= arc4_randbyte() << 8;
-	ret |= arc4_randbyte() << 16;
-	ret |= arc4_randbyte() << 24;
-
+	for(i = 0, ret = 0; i < 24; ret |= arc4_randbyte() << i, i += 8);
 	return ret;
 }
