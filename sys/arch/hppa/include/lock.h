@@ -1,4 +1,4 @@
-/* 	$NetBSD: lock.h,v 1.3 2003/09/20 22:28:19 matt Exp $	*/
+/* 	$NetBSD: lock.h,v 1.4 2003/10/06 05:27:19 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -121,13 +121,6 @@ __cpu_simple_unlock(__cpu_simple_lock_t *alp)
 		: "+m" (*alp->sem)
 		: "r" (__SIMPLELOCK_UNLOCKED));
 }
-
-#else	/* !MULTIPROCESSOR */
-
-typedef	__volatile int		__cpu_simple_lock_t;
-
-#define	__SIMPLELOCK_LOCKED	1
-#define	__SIMPLELOCK_UNLOCKED	0
 
 #endif	/* !MULTIPROCESSOR */
 

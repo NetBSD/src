@@ -1,4 +1,4 @@
-/*	$NetBSD: byte_swap.h,v 1.1 2002/06/05 01:04:21 fredette Exp $	*/
+/*	$NetBSD: byte_swap.h,v 1.2 2003/10/06 05:27:19 matt Exp $	*/
 
 /*	$OpenBSD: endian.h,v 1.7 2001/06/29 20:28:54 mickey Exp $	*/
 
@@ -43,12 +43,12 @@ __byte_swap_long(u_int32_t x)
 {
 	register in_addr_t __swap32md_x;	\
 						\
-	__asm  ("extru	%1, 7,8,%%r19\n\t"	\
+	__asm  ("extru	%1, 7,8,%%r22\n\t"	\
 		"shd	%1,%1,8,%0\n\t"		\
 		"dep	%0,15,8,%0\n\t"		\
-		"dep	%%r19,31,8,%0"		\
+		"dep	%%r22,31,8,%0"		\
 		: "=&r" (__swap32md_x)		\
-		: "r" (x) : "r19");		\
+		: "r" (x) : "r22");		\
 	return(__swap32md_x);
 }
 

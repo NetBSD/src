@@ -1,4 +1,4 @@
-/*	$NetBSD: ansi.h,v 1.3 2003/08/07 16:27:51 agc Exp $	*/
+/*	$NetBSD: ansi.h,v 1.4 2003/10/06 05:27:19 matt Exp $	*/
 
 /*	$OpenBSD: ansi.h,v 1.4 2000/02/22 17:29:12 millert Exp $	*/
 
@@ -36,6 +36,9 @@
 #ifndef	_ANSI_H_
 #define	_ANSI_H_
 
+#include <sys/cdefs.h>
+#include <machine/int_types.h>
+
 /*
  * Types which are fundamental to the implementation and may appear in
  * more than one standard header are defined here.  Standard headers
@@ -45,10 +48,10 @@
  *	#undef	_BSD_SIZE_T_
  *	#endif
  */
-#define	_BSD_CLOCK_T_	unsigned long		/* clock() */
-#define	_BSD_PTRDIFF_T_	int			/* ptr1 - ptr2 */
-#define	_BSD_SIZE_T_	unsigned int		/* sizeof() */
-#define	_BSD_SSIZE_T_	int			/* byte count or error */
+#define	_BSD_CLOCK_T_	unsigned long int	/* clock() */
+#define	_BSD_PTRDIFF_T_	long int		/* ptr1 - ptr2 */
+#define	_BSD_SIZE_T_	unsigned long int	/* sizeof() */
+#define	_BSD_SSIZE_T_	long int		/* byte count or error */
 #define	_BSD_TIME_T_	int			/* time() */
 #define	_BSD_VA_LIST_	double *		/* va_list */
 #define	_BSD_CLOCKID_T_	int
