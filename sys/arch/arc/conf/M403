@@ -1,4 +1,4 @@
-#	$NetBSD: M403,v 1.12 2001/05/21 03:37:31 soda Exp $
+#	$NetBSD: M403,v 1.13 2001/06/13 15:37:27 soda Exp $
 #
 #	configuration file for MIPS Magnum 4000 system
 #
@@ -6,6 +6,9 @@
 include		"arch/arc/conf/std.arc"
 
 maxusers	32		# estimated number of users
+
+# Platform support
+options 	PLATFORM_MICROSOFT_JAZZ		# MIPS Magnum
 
 # Standard system options
 
@@ -118,11 +121,19 @@ cpu*		at mainbus0
 
 #### Jazz-Internal bus devices
 
-jazzio*		at mainbus0	# Jazz-Internal bus.
-aclock0 	at jazzio?
+# PLATFORM_ACER_PICA_61
+# PLATFORM_MICROSOFT_JAZZ
+# PLATFORM_NEC_JC94
+# PLATFORM_NEC_R94
+# PLATFORM_NEC_R96
+# PLATFORM_NEC_RAX94
+# PLATFORM_NEC_RD94
+jazzio*		at mainbus0	# Jazz-Internal bus host bridge.
+
+timer0		at jazzio?
+mcclock0 	at jazzio?
 #pc0		at jazzio?
 #opms0		at jazzio?
-vga0		at jazzio?	# Jazz localbus VGA
 pckbc0		at jazzio?	# PC keyboard controller
 options		COM_FREQ_MAGNUM=8192000	# 8.192 MHz - NEC M403
 com0		at jazzio?
@@ -138,8 +149,12 @@ scsibus* 	at asc?
 
 #### ISA bus devices
 
-isabr*		at mainbus0	# ISA Bus bridge (std ISA bus).
-isa*		at isabr?
+# PLATFORM_ACER_PICA_61
+# PLATFORM_MICROSOFT_JAZZ
+# PLATFORM_NEC_R94
+# PLATFORM_NEC_R96
+jazzisabr*	at mainbus0	# Jazz-(E)ISA bus bridge.
+isa*		at jazzisabr?
 
 com2		at isa? port 0x3f8 irq 4
 com3		at isa? port 0x2f8 irq 3
@@ -155,8 +170,6 @@ uk*		at scsibus? target ? lun ?
 
 #### Workstation Console attachments
 
-wsdisplay*	at vga?
-#wsdisplay*	at tga?
 pckbd*		at pckbc?	# PC keyboard (kbd port)
 wskbd*		at pckbd?
 pms*		at pckbc?	# PS/2-style mouse (aux port)

@@ -1,4 +1,4 @@
-#	$NetBSD: PCCONS,v 1.6 2001/05/21 03:37:31 soda Exp $
+#	$NetBSD: PCCONS,v 1.7 2001/06/13 15:37:27 soda Exp $
 #	$OpenBSD: GENERIC,v 1.29 1999/08/29 12:14:03 niklas Exp $
 #
 #	PCCONS -- generic but pccons rather than wscons
@@ -7,6 +7,18 @@
 include		"arch/arc/conf/std.arc"
 
 maxusers	32		# estimated number of users
+
+# Platform support
+options 	PLATFORM_ACER_PICA_61		# Pica, NEC ImageRISCstation
+options 	PLATFORM_DESKTECH_ARCSTATION_I	# DESKstation rPC44
+options 	PLATFORM_DESKTECH_TYNE		# DESKstation Tyne
+options 	PLATFORM_MICROSOFT_JAZZ		# MIPS Magnum
+options 	PLATFORM_NEC_JC94		# NEC Express 5800/230 PCI R4K
+options 	PLATFORM_NEC_R94		# NEC RISCstation 2200 EISA
+options 	PLATFORM_NEC_R96      # NEC Express RISCserver, RISCserver 2200
+options 	PLATFORM_NEC_RAX94		# NEC RISCstation 2200 PCI
+options 	PLATFORM_NEC_RD94		# NEC RISCstation 2250
+options 	PLATFORM_SNI_RM200PCI
 
 # Standard system options
 
@@ -121,8 +133,17 @@ cpu*		at mainbus0
 
 #### Jazz-Internal bus devices
 
-jazzio*		at mainbus0	# Jazz-Internal bus.
-aclock0 	at jazzio?
+# PLATFORM_ACER_PICA_61
+# PLATFORM_MICROSOFT_JAZZ
+# PLATFORM_NEC_JC94
+# PLATFORM_NEC_R94
+# PLATFORM_NEC_R96
+# PLATFORM_NEC_RAX94
+# PLATFORM_NEC_RD94
+jazzio*		at mainbus0	# Jazz-Internal bus host bridge.
+
+timer0		at jazzio?
+mcclock0 	at jazzio?
 pc0		at jazzio?
 opms0		at jazzio?
 com0		at jazzio?
@@ -146,13 +167,28 @@ scsibus* 	at osiop?
 
 #### ISA bus devices
 
-isabr*		at mainbus0	# ISA Bus bridge (std ISA bus).
-isa*		at isabr?
+# PLATFORM_ACER_PICA_61
+# PLATFORM_MICROSOFT_JAZZ
+# PLATFORM_NEC_R94
+# PLATFORM_NEC_R96
+jazzisabr*	at mainbus0	# Jazz-(E)ISA bus bridge.
+isa*		at jazzisabr?
+
+# PLATFORM_DESKTECH_ARCSTATION_I
+arcsisabr*	at mainbus0	# DESKstation rPC44 ISA host bridge.
+isa*		at arcsisabr?
+
+# PLATFORM_DESKTECH_TYNE
+tyneisabr*	at mainbus0	# DESKstation Tyne ISA host bridge.
+isa*		at tyneisabr?
+
 #isadma0 	at isa?
 
-aclock0 	at isa? port 0x70 irq 0
+timer0		at isa? port 0x40 irq 0
+mcclock0 	at isa? port 0x70
 
-pc0		at isa? port 0x60 irq 1		# generic PC console device
+pc0		at isa? irq 1			# generic PC console device
+opms0		at isa? irq 12			# PS/2 auxiliary port mouse
 #vga0		at isa?
 #pckbc0		at isa?				# PC keyboard controller
 com0		at isa? port 0x3f8 irq 4
@@ -210,28 +246,27 @@ lpt0		at isa? port 0x378 irq 7
 #btl0		at isa? port 0x330 irq ? drq ?
 #scsibus*	at btl?
 
-#### Algor bus devices
-
-#algor*		at mainbus0	# Algorithmics local bus.
-
-#aclock0 	at algor?
-#com0		at algor?
-#com1		at algor?
-#lpt0		at algor?
-
 #### PCI bus devices
 
+# PLATFORM_NEC_JC94
+# PLATFORM_NEC_RAX94
+# PLATFORM_NEC_RD94
 necpb*		at mainbus0	# NEC RISCstation PCI host bridge.
 pci*		at necpb?
 
-#pbcpcibr*	at mainbus0	# Algorithmics PCI bus bridge.
-#pci*		at pbcpcibr?
-
 #pcivga* 	at pci? dev ? function ?
-#siop*		at pci? dev ? function ?
-#scsibus* 	at siop?
-#de*		at pci? dev ? function ?
+tga*		at pci? dev ? function ?	# DEC ZLXp-E[123] Graphics
 
+ahc*		at pci? dev ? function ?	# Adaptec [23]94x, aic78x0 SCSI
+scsibus*	at ahc?
+
+iha*		at pci? dev ? function ?	# Initio INIC-940/950 SCSI
+scsibus*	at iha?
+
+#siop*		at pci? dev ? function ?	# NCR/Symbios 53c8xx SCSI
+#scsibus* 	at siop?
+
+#de*		at pci? dev ? function ?
 ex*		at pci? dev ? function ?	# 3Com 90x[B]
 fxp*		at pci? dev ? function ?	# Intel EtherExpress PRO
 le*		at pci? dev ? function ?	# PCnet-PCI
@@ -250,10 +285,6 @@ tlp*		at pci? dev ? function ?	# DECchip 21x4x (and clones)
 pciide*		at pci ? dev ? function ? flags 0x0000
 wd*		at pciide? channel ? drive ? flags 0x0000
 atapibus*	at pciide? channel ?
-
-tga*		at pci? dev ? function ?	# DEC ZLXp-E[123] Graphics
-ahc*		at pci? dev ? function ?	# Adaptec [23]94x, aic78x0 SCSI
-scsibus*	at ahc?
 
 #### MII/PHY support
 
