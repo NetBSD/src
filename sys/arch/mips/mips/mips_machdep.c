@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.127 2002/04/03 03:47:53 simonb Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.128 2002/04/05 01:22:17 simonb Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -120,7 +120,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.127 2002/04/03 03:47:53 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.128 2002/04/05 01:22:17 simonb Exp $");
 
 #include "opt_cputype.h"
 #include "opt_compat_netbsd.h"
@@ -247,20 +247,25 @@ static const struct pridtab cputab[] = {
 	  MIPS_NOT_SUPP,			"MIPS R6000 CPU"	},
 
 	/*
-	 * rev 0x00 and 0x30 are R4000, 0x40 and 0x50 are R4400.
+	 * rev 0x00 and 0x30 are R4000, 0x40, 0x50 and 0x60 are R4400.
 	 * should we allow ranges and use 0x00 - 0x3f for R4000 and
 	 * 0x40 - 0xff for R4400?
 	 */
 	{ 0, MIPS_R4000, MIPS_REV_R4000_A,	CPU_ARCH_MIPS3, 48,
-	  CPU_MIPS_R4K_MMU,			"MIPS R4000 CPU"	},
+	  CPU_MIPS_R4K_MMU | CPU_MIPS_DOUBLE_COUNT,
+						"MIPS R4000 CPU"	},
 	{ 0, MIPS_R4000, MIPS_REV_R4000_B,	CPU_ARCH_MIPS3, 48,
-	  CPU_MIPS_R4K_MMU,			"MIPS R4000 CPU"	},
+	  CPU_MIPS_R4K_MMU | CPU_MIPS_DOUBLE_COUNT,
+						"MIPS R4000 CPU"	},
 	{ 0, MIPS_R4000, MIPS_REV_R4400_A,	CPU_ARCH_MIPS3, 48,
-	  CPU_MIPS_R4K_MMU,			"MIPS R4400 CPU"	},
+	  CPU_MIPS_R4K_MMU | CPU_MIPS_DOUBLE_COUNT,
+						"MIPS R4400 CPU"	},
 	{ 0, MIPS_R4000, MIPS_REV_R4400_B,	CPU_ARCH_MIPS3, 48,
-	  CPU_MIPS_R4K_MMU,			"MIPS R4400 CPU"	},
+	  CPU_MIPS_R4K_MMU | CPU_MIPS_DOUBLE_COUNT,
+						"MIPS R4400 CPU"	},
 	{ 0, MIPS_R4000, MIPS_REV_R4400_C,	CPU_ARCH_MIPS3, 48,
-	  CPU_MIPS_R4K_MMU,			"MIPS R4400 CPU"	},
+	  CPU_MIPS_R4K_MMU | CPU_MIPS_DOUBLE_COUNT,
+						"MIPS R4400 CPU"	},
 
 	{ 0, MIPS_R3LSI, -1,			CPU_ARCH_MIPS1, -1,
 	  MIPS_NOT_SUPP,			"LSI Logic R3000 derivative" },
@@ -306,7 +311,8 @@ static const struct pridtab cputab[] = {
 	{ 0, MIPS_R5000, -1,			CPU_ARCH_MIPS4, 48,
 	  CPU_MIPS_R4K_MMU,			"MIPS R5000 CPU"	},
 	{ 0, MIPS_RM5200, -1,			CPU_ARCH_MIPS4, 48,
-	  CPU_MIPS_R4K_MMU | CPU_MIPS_CAUSE_IV,	"QED RM5200 CPU"	},
+	  CPU_MIPS_R4K_MMU | CPU_MIPS_CAUSE_IV | CPU_MIPS_DOUBLE_COUNT,
+						"QED RM5200 CPU"	},
 
 	/* XXX
 	 * The rm7000 rev 2.0 can have 64 tlbs, and has 6 extra interrupts.  See
@@ -314,7 +320,8 @@ static const struct pridtab cputab[] = {
 	 * for more details.
 	 */
 	{ 0, MIPS_RM7000, -1,			CPU_ARCH_MIPS4, 48,
-	  MIPS_NOT_SUPP | CPU_MIPS_CAUSE_IV,	"QED RM7000 CPU"	},
+	  MIPS_NOT_SUPP | CPU_MIPS_CAUSE_IV | CPU_MIPS_DOUBLE_COUNT,
+						"QED RM7000 CPU"	},
 
 	/* 
 	 * IDT RC32300 core is a 32 bit MIPS2 processor with
@@ -346,13 +353,13 @@ static const struct pridtab cputab[] = {
 #endif
 
 	{ MIPS_PRID_CID_MTI, MIPS_4Kc, -1,	-1, 0,
-	  MIPS32_FLAGS,				"4Kc"			},
+	  MIPS32_FLAGS | CPU_MIPS_DOUBLE_COUNT,	"4Kc"			},
 	{ MIPS_PRID_CID_MTI, MIPS_4KEc, -1,	-1, 0,
-	  MIPS32_FLAGS,				"4KEc"			},
+	  MIPS32_FLAGS | CPU_MIPS_DOUBLE_COUNT,	"4KEc"			},
 	{ MIPS_PRID_CID_MTI, MIPS_4KSc, -1,	-1, 0,
-	  MIPS32_FLAGS,				"4KSc"			},
+	  MIPS32_FLAGS | CPU_MIPS_DOUBLE_COUNT,	"4KSc"			},
 	{ MIPS_PRID_CID_MTI, MIPS_5Kc, -1,	-1, 0,
-	  MIPS64_FLAGS,				"5Kc"			},
+	  MIPS64_FLAGS | CPU_MIPS_DOUBLE_COUNT,	"5Kc"			},
 
 	{ MIPS_PRID_CID_ALCHEMY, MIPS_AU1000_R1, -1, -1, 0,
 	  MIPS32_FLAGS,				"Au1000 (Rev 1)"	},
@@ -793,8 +800,9 @@ mips_vector_init(void)
 	/*
 	 * Check cpu-specific flags.
 	 */
-	mips_has_r4k_mmu = mycpu->cpu_flags & CPU_MIPS_R4K_MMU;
-	mips_has_llsc = !(mycpu->cpu_flags & CPU_MIPS_NO_LLSC);
+	mips_cpu_flags = mycpu->cpu_flags;
+	mips_has_r4k_mmu = mips_cpu_flags & CPU_MIPS_R4K_MMU;
+	mips_has_llsc = !(mips_cpu_flags & CPU_MIPS_NO_LLSC);
 
 	if (mycpu->cpu_flags & CPU_MIPS_HAVE_SPECIAL_CCA) {
 		uint32_t cca;

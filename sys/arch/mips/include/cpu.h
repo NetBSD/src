@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.61 2002/04/03 03:48:33 simonb Exp $	*/
+/*	$NetBSD: cpu.h,v 1.62 2002/04/05 01:22:16 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -132,6 +132,7 @@ extern int mips3_pg_cached;
 #define	CPU_MIPS_HAVE_SPECIAL_CCA	0x0008	/* Defaults to '3' if not set. */
 #define	CPU_MIPS_CACHED_CCA_MASK	0x0070
 #define	CPU_MIPS_CACHED_CCA_SHIFT	 4
+#define	CPU_MIPS_DOUBLE_COUNT		0x0080	/* 1 cp0 count == 2 clock cycles */
 #define	MIPS_NOT_SUPP			0x8000
 
 #ifdef _LKM
