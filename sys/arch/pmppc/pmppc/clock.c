@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.2 2002/08/06 06:14:35 chs Exp $	*/
+/*	$NetBSD: clock.c,v 1.3 2003/02/12 17:55:58 matt Exp $	*/
 /*      $OpenBSD: clock.c,v 1.3 1997/10/13 13:42:53 pefo Exp $  */
 
 /*
@@ -123,6 +123,7 @@ cpu_initclocks(void)
 {
 	ticks_per_intr = ticks_per_sec / hz;
 	ns_per_tick = 1000000000 / ticks_per_sec;
+	cpu_timebase = ticks_per_sec;
 	asm volatile ("mftb %0" : "=r"(lasttb));
 	asm volatile ("mtdec %0" :: "r"(ticks_per_intr));
 }
