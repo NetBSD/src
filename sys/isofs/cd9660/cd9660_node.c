@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_node.c,v 1.6 1994/07/13 22:30:09 mycroft Exp $	*/
+/*	$NetBSD: cd9660_node.c,v 1.7 1994/07/19 14:14:12 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1994
@@ -274,7 +274,7 @@ cd9660_reclaim(ap)
  * File attributes
  */
 void
-cd9660_defattr(isodir,inop,bp)
+cd9660_defattr(isodir, inop, bp)
 	struct iso_directory_record *isodir;
 	struct iso_node *inop;
 	struct buf *bp;
@@ -296,9 +296,9 @@ cd9660_defattr(isodir,inop,bp)
 		inop->inode.iso_links = 1;
 	}
 	if (!bp
-	    && ((imp = inop->i_mnt)->im_flags&ISOFSMNT_EXTATT)
+	    && ((imp = inop->i_mnt)->im_flags & ISOFSMNT_EXTATT)
 	    && (off = isonum_711(isodir->ext_attr_length))) {
-		iso_blkatoff(inop,-off * imp->logical_block_size,&bp2);
+		VOP_BLKATOFF(ITOV(inop), -off << imp->im_bshift, NULL, &bp2);
 		bp = bp2;
 	}
 	if (bp) {
@@ -346,9 +346,9 @@ cd9660_deftstamp(isodir,inop,bp)
 	int off;
 	
 	if (!bp
-	    && ((imp = inop->i_mnt)->im_flags&ISOFSMNT_EXTATT)
+	    && ((imp = inop->i_mnt)->im_flags & ISOFSMNT_EXTATT)
 	    && (off = isonum_711(isodir->ext_attr_length))) {
-		iso_blkatoff(inop,-off * imp->logical_block_size,&bp2);
+		VOP_BLKATOFF(ITOV(inop), -off << imp->im_bshift, NULL, &bp2);
 		bp = bp2;
 	}
 	if (bp) {
@@ -462,12 +462,14 @@ cd9660_tstamp_conv17(pi,pu)
 	return cd9660_tstamp_conv7(buf,pu);
 }
 
-void
-isodirino(inump,isodir,imp)
-	ino_t *inump;
+ino_t
+isodirino(isodir, imp)
 	struct iso_directory_record *isodir;
 	struct iso_mnt *imp;
 {
-	*inump = (isonum_733(isodir->extent) + isonum_711(isodir->ext_attr_length))
-		 * imp->logical_block_size;
+	ino_t ino;
+
+	ino = (isonum_733(isodir->extent) + isonum_711(isodir->ext_attr_length))
+	      << imp->im_bshift;
+	return (ino);
 }

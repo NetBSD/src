@@ -1,4 +1,4 @@
-/*	$NetBSD: iso.h,v 1.5 1994/07/13 22:30:17 mycroft Exp $	*/
+/*	$NetBSD: iso.h,v 1.6 1994/07/19 14:14:20 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -162,10 +162,10 @@ struct iso_mnt {
 
 #define VFSTOISOFS(mp)	((struct iso_mnt *)((mp)->mnt_data))
 
-#define iso_blkoff(imp, loc) ((loc) & (imp)->im_bmask)
-#define iso_lblkno(imp, loc) ((loc) >> (imp)->im_bshift)
-#define iso_blksize(imp, ip, lbn) ((imp)->logical_block_size)
-#define iso_lblktosize(imp, blk) ((blk) << (imp)->im_bshift)
+#define blkoff(imp, loc)	((loc) & (imp)->im_bmask)
+#define lblktosize(imp, blk)	((blk) << (imp)->im_bshift)
+#define lblkno(imp, loc)	((loc) >> (imp)->im_bshift)
+#define blksize(imp, ip, lbn)	((imp)->logical_block_size)
 
 int cd9660_mount __P((struct mount *,
 	    char *, caddr_t, struct nameidata *, struct proc *));
@@ -181,8 +181,6 @@ int cd9660_fhtovp __P((struct mount *, struct fid *, struct mbuf *,
 int cd9660_vptofh __P((struct vnode *, struct fid *));
 int cd9660_init __P(());
 
-struct iso_node;
-int iso_blkatoff __P((struct iso_node *ip, long offset, struct buf **bpp)); 
 int cd9660_mountroot __P((void)); 
 
 extern int (**cd9660_vnodeop_p)();
@@ -249,6 +247,7 @@ isonum_733(p)
 
 int isofncmp __P((u_char *, int, u_char *, int));
 void isofntrans __P((u_char *, int, u_char *, u_short *, int, int));
+ino_t isodirino __P((struct iso_directory_record *, struct iso_mnt *));
 
 /*
  * Associated files have a leading '='.

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_rrip.c,v 1.5 1994/07/03 09:52:08 mycroft Exp $	*/
+/*	$NetBSD: cd9660_rrip.c,v 1.6 1994/07/19 14:14:14 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -526,8 +526,9 @@ cd9660_rrip_loop(isodir,ana,table)
 			if (ana->iso_ce_blk >= ana->imp->volume_space_size
 			    || ana->iso_ce_off + ana->iso_ce_len > ana->imp->logical_block_size
 			    || bread(ana->imp->im_devvp,
-				     ana->iso_ce_blk * ana->imp->logical_block_size / DEV_BSIZE,
-				     ana->imp->logical_block_size,NOCRED,&bp))
+				     ana->iso_ce_blk <<
+				     (ana->imp->im_bshift - DEV_BSHIFT),
+				     ana->imp->logical_block_size, NOCRED, &bp))
 				/* what to do now? */
 				break;
 			phead = (ISO_SUSP_HEADER *)(bp->b_data + ana->iso_ce_off);
