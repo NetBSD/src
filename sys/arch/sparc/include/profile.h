@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.8 1997/02/01 20:56:40 mrg Exp $ */
+/*	$NetBSD: profile.h,v 1.9 1998/07/01 20:55:45 tv Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,6 +44,12 @@
  *	@(#)profile.h	8.1 (Berkeley) 6/11/93
  */
 
+#ifdef ELF
+#define _MCOUNT_SYM "_mcount"
+#else
+#define _MCOUNT_SYM "__mcount"
+#endif
+
 #ifdef PIC
 /* Inline expansion of PICCY_SET() (see <machine/asm.h>). */
 #define MCOUNT \
@@ -51,7 +57,7 @@
 	__asm__("mcount:");\
 	__asm__("add %o7, 8, %o1");\
 	__asm__("1: call 2f; nop; 2:");\
-	__asm__("add %o7,__mcount-1b, %o2");\
+	__asm__("add %o7," _MCOUNT_SYM "-1b, %o2");\
 	__asm__("ld [%o2], %o2");\
 	__asm__("jmpl %o2, %g0");\
 	__asm__("add %i7, 8, %o0");
@@ -60,8 +66,8 @@
 	__asm__(".global mcount");\
 	__asm__("mcount:");\
 	__asm__("add %i7, 8, %o0");\
-	__asm__("sethi %hi(__mcount), %o2");\
-	__asm__("jmpl %o2 + %lo(__mcount), %g0");\
+	__asm__("sethi %hi(" _MCOUNT_SYM "), %o2");\
+	__asm__("jmpl %o2 + %lo(" _MCOUNT_SYM "), %g0");\
 	__asm__("add %o7, 8, %o1");
 #endif
 
