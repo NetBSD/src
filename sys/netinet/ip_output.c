@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.123 2003/10/03 20:56:11 itojun Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.124 2003/10/14 03:38:49 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.123 2003/10/03 20:56:11 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.124 2003/10/14 03:38:49 itojun Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_ipsec.h"
@@ -801,8 +801,10 @@ spd_done:
 	}
 
 	error = ip_fragment(m, ifp, mtu);
-	if (error)
+	if (error) {
+		m = NULL;
 		goto bad;
+	}
 
 	for (; m; m = m0) {
 		m0 = m->m_nextpkt;
@@ -875,8 +877,10 @@ ip_fragment(struct mbuf *m, struct ifnet *ifp, u_long mtu)
 	sw_csum = m->m_pkthdr.csum_flags & ~ifp->if_csum_flags_tx;
 
 	len = (mtu - hlen) &~ 7;
-	if (len < 8)
+	if (len < 8) {
+		m_freem(m);
 		return (EMSGSIZE);
+	}
 
 	firstlen = len;
 	mnext = &m->m_nextpkt;
@@ -960,6 +964,13 @@ sendorfree:
 	if (ifp->if_snd.ifq_maxlen - ifp->if_snd.ifq_len < fragments)
 		error = ENOBUFS;
 	splx(s);
+	if (error) {
+		for (; m; m = m0) {
+			m0 = m->m_nextpkt;
+			m->m_nextpkt = NULL;
+			m_freem(m);
+		}
+	}
 	return (error);
 }
 
