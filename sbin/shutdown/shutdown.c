@@ -1,4 +1,4 @@
-/*	$NetBSD: shutdown.c,v 1.30 1998/08/25 19:18:17 ross Exp $	*/
+/*	$NetBSD: shutdown.c,v 1.31 1998/10/09 02:26:17 enami Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)shutdown.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: shutdown.c,v 1.30 1998/08/25 19:18:17 ross Exp $");
+__RCSID("$NetBSD: shutdown.c,v 1.31 1998/10/09 02:26:17 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -535,6 +535,6 @@ usage()
 {
 
 	(void)fprintf(stderr,
-	    "usage: shutdown [-Ddfhknr] time [message ... | -]\n");
+	    "usage: shutdown [-Ddfhknpr] time [message ... | -]\n");
 	exit(1);
 }
