@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2002/05/31 20:57:42 thorpej Exp $
+#	$NetBSD: Makefile,v 1.5 2003/02/03 07:17:13 mhitch Exp $
 
 ### what we need:
 
@@ -53,6 +53,9 @@ CFLAGS= -ffreestanding ${COPTIM} ${INCPATH} ${DEFS} -Wall #-Wstrict-prototypes
 
 NETBSD_VERS!=	sh ${.CURDIR}/../../../../../conf/osrelease.sh
 DEFS+=	-DNETBSD_VERS='"${NETBSD_VERS}"'
+
+# Use small daddr_t to avoid code bloat
+DEFS+=	-D__daddr_t=int32_t
 
 .c.o:
 	${CC} ${CFLAGS} -S $< -o $*.s
