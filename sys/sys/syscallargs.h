@@ -741,6 +741,14 @@ struct compat_10_sys_shmsys_args {
 	syscallarg(int) a4;
 };
 
+struct ntp_gettime_args {
+	syscallarg(struct timex *) tp;
+};
+
+struct ntp_adjtime_args {
+	syscallarg(struct timex *) tp;
+};
+
 struct sys_setgid_args {
 	syscallarg(gid_t) gid;
 };
@@ -1118,6 +1126,8 @@ int	compat_10_sys_msgsys	__P((struct proc *, void *, register_t *));
 int	compat_10_sys_shmsys	__P((struct proc *, void *, register_t *));
 #else
 #endif
+int	ntp_gettime	__P((struct proc *, void *, register_t *));
+int	ntp_adjtime	__P((struct proc *, void *, register_t *));
 int	sys_setgid	__P((struct proc *, void *, register_t *));
 int	sys_setegid	__P((struct proc *, void *, register_t *));
 int	sys_seteuid	__P((struct proc *, void *, register_t *));
