@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mips,v 1.19 2001/10/08 10:14:20 simonb Exp $
+#	$NetBSD: Makefile.mips,v 1.20 2001/10/16 16:31:32 uch Exp $
 
 # Makefile for NetBSD
 #
@@ -115,6 +115,9 @@ SYSTEM_OBJ+=	locore_mips1.o
 .if !empty(IDENT:M-DMIPS3)
 SYSTEM_OBJ+=	locore_mips3.o
 .endif
+.if !empty(IDENT:M-DMIPS3_5900)
+SYSTEM_OBJ+=	locore_r5900.o r5900_machdep.o
+.endif
 .if empty(IDENT:M-DNOFPU)
 SYSTEM_OBJ+=	fp.o
 .endif
@@ -202,6 +205,9 @@ SFILES+=${MIPS}/mips/locore_mips1.S
 .if !empty(IDENT:M-DMIPS3)
 SFILES+=${MIPS}/mips/locore_mips3.S
 .endif
+.if !empty(IDENT:M-DMIPS3_5900)
+SRCS+=	${MIPS}/mips/r5900/locore_r5900.S ${MIPS}/mips/r5900/r5900_machdep.c
+.endif
 .if empty(IDENT:M-DNOFPU)
 SFILES+=${MIPS}/mips/fp.S
 .endif
@@ -244,6 +250,12 @@ locore_mips1.o: ${MIPS}/mips/locore_mips1.S assym.h
 
 locore_mips3.o: ${MIPS}/mips/locore_mips3.S assym.h
 	${NORMAL_S}
+
+locore_r5900.o: ${MIPS}/mips/r5900/locore_r5900.S assym.h
+	${NORMAL_S}
+
+r5900_machdep.o: ${MIPS}/mips/r5900/r5900_machdep.c
+	${NORMAL_C}
 
 .if empty(IDENT:M-DNOFPU)
 fp.o: ${MIPS}/mips/fp.S assym.h
