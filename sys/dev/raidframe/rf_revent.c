@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_revent.c,v 1.3 1999/02/05 00:06:17 oster Exp $	*/
+/*	$NetBSD: rf_revent.c,v 1.4 1999/03/14 21:53:31 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -50,7 +50,7 @@ static RF_FreeList_t *rf_revent_freelist;
 
 extern int hz;
 
-#define DO_WAIT(_rc)   tsleep(&(_rc)->eventQueue, PRIBIO | PCATCH, "raidframe eventq", 0)
+#define DO_WAIT(_rc)   tsleep(&(_rc)->eventQueue, PRIBIO, "raidframe eventq", 0)
 
 #define DO_SIGNAL(_rc)     wakeup(&(_rc)->eventQueue)
 
@@ -145,7 +145,7 @@ rf_GetNextReconEvent(reconDesc, row, continueFunc, continueArg)
 #if RF_RECON_STATS > 0
 			reconDesc->numReconExecDelays++;
 #endif				/* RF_RECON_STATS > 0 */
-			status = tsleep(&reconDesc->reconExecTicks, PRIBIO | PCATCH, "recon delay", RECON_TIMO);
+			status = tsleep(&reconDesc->reconExecTicks, PRIBIO, "recon delay", RECON_TIMO);
 			RF_ASSERT(status == EWOULDBLOCK);
 			reconDesc->reconExecTicks = 0;
 		}

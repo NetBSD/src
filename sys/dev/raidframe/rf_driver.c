@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.10 1999/03/09 02:57:29 oster Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.11 1999/03/14 21:53:31 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -162,7 +162,7 @@ RF_DECLARE_GLOBAL_THREADID	/* declarations for threadid.h */
 
 #define SIGNAL_QUIESCENT_COND(_raid_)  wakeup(&((_raid_)->accesses_suspended))
 #define WAIT_FOR_QUIESCENCE(_raid_) \
-	tsleep(&((_raid_)->accesses_suspended),PRIBIO|PCATCH,"raidframe quiesce", 0);
+	tsleep(&((_raid_)->accesses_suspended),PRIBIO,"raidframe quiesce", 0);
 
 #if DKUSAGE > 0
 #define IO_BUF_ERR(bp, err, unit) { \
