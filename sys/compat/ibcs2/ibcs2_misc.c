@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.40.4.1 1999/06/21 01:07:12 thorpej Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.40.4.2 1999/10/22 22:57:58 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -1517,7 +1517,7 @@ ibcs2_sys_mmap(p, v, retval)
 	SCARG(&mm, addr) = SCARG(uap, addr);
 	SCARG(&mm, pos) = SCARG(uap, off);
 
-	rp = (void *) round_page(p->p_vmspace->vm_daddr + MAXDSIZ);
+	rp = (void *) round_page((vaddr_t)(p->p_vmspace->vm_daddr + MAXDSIZ));
 	if ((SCARG(&mm, flags) & MAP_FIXED) == 0 &&
 	    SCARG(&mm, addr) != 0 && SCARG(&mm, addr) < rp)
 		SCARG(&mm, addr) = rp;
