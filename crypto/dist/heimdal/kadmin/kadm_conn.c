@@ -36,7 +36,7 @@
 #include <sys/wait.h>
 #endif
 
-RCSID("$Id: kadm_conn.c,v 1.2 2000/08/06 06:48:50 thorpej Exp $");
+RCSID("$Id: kadm_conn.c,v 1.3 2001/02/04 22:55:26 christos Exp $");
 
 struct kadm_port {
     char *port;
@@ -91,7 +91,6 @@ parse_ports(krb5_context context, const char *str)
 }
 
 static pid_t pgrp;
-sig_atomic_t term_flag, doing_useful_work;
 
 static RETSIGTYPE
 sigchld(int sig)
