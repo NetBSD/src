@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.26 2002/02/20 20:41:16 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.27 2002/02/21 02:52:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -188,6 +188,8 @@ pt_entry_t *pmap_pte __P((struct pmap *, vaddr_t));
 /* Bootstrapping routines. */
 void	pmap_map_section(vaddr_t, vaddr_t, paddr_t, int, int);
 void	pmap_map_entry(vaddr_t, vaddr_t, paddr_t, int, int);
+vsize_t	pmap_map_chunk(vaddr_t, vaddr_t, vaddr_t, paddr_t, vsize_t,
+	    int, int);
 void	pmap_link_l2pt(vaddr_t, vaddr_t, paddr_t);
 
 /*
