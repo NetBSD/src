@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.15.2.2 2001/08/30 23:43:44 nathanw Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.15.2.3 2001/09/13 18:51:02 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -344,10 +344,10 @@ linux_sendsig(catcher, sig, mask, code)
 
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
-		printf("sendsig(%d): pc %lx, catcher %lx\n", p->p_pid,
+		printf("sendsig(%d): pc %lx, catcher %lx\n", l->l_proc->p_pid,
 		    tf->tf_regs[FRAME_PC], tf->tf_regs[FRAME_A3]);
-	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
-		printf("sendsig(%d): sig %d returns\n", p->p_pid, sig);
+	if ((sigdebug & SDB_KSTACK) && l->l_proc->p_pid == sigpid)
+		printf("sendsig(%d): sig %d returns\n", l->l_proc->p_pid, sig);
 #endif
 }
 
