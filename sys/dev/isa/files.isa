@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.50 1998/01/15 00:35:38 cgd Exp $
+#	$NetBSD: files.isa,v 1.51 1998/01/19 22:18:28 augustss Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -256,8 +256,10 @@ file	dev/isa/pss.c			pss needs-flag
 
 # Microsoft Windows Sound System
 device	wss class dull: audio, isadma, ad1848, auconv
-attach	wss at isa
 file	dev/isa/wss.c			wss needs-flag
+
+attach	wss at isa with wss_isa
+file	dev/isa/wss_isa.c		wss_isa needs-flag
 
 # Gravis UltraSound & UltraSound MAX.
 # Use the "flags" keyword in a config file to specify an extra DMA

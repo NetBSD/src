@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848var.h,v 1.21 1997/10/19 07:42:22 augustss Exp $	*/
+/*	$NetBSD: ad1848var.h,v 1.22 1998/01/19 22:18:26 augustss Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -48,6 +48,7 @@ struct ad1848_softc {
 	void	*sc_ih;			/* interrupt vectoring */
 	bus_space_tag_t sc_iot;		/* tag */
 	bus_space_handle_t sc_ioh;	/* handle */
+	int	sc_iooffs;		/* offset from handle */
 
 	void	*parent;
 	struct	device *sc_isa;		/* ISA bus's device */
@@ -68,7 +69,6 @@ struct ad1848_softc {
 #define DMARUNNING 1
 #define PCMRUNNING 2
 
-	int	sc_iobase;		/* I/O port base address */
 	int	sc_irq;			/* interrupt */
 	int	sc_drq;			/* DMA */
 	int	sc_recdrq;		/* record/capture DMA */
@@ -95,6 +95,9 @@ struct ad1848_softc {
 	u_long	sc_interrupts;		/* number of interrupts taken */
 	void	(*sc_intr)(void *);	/* dma completion intr handler */
 	void	*sc_arg;		/* arg for sc_intr() */
+
+	/* Only used by pss XXX */
+	int	sc_iobase;
 };
 
 /*
@@ -106,6 +109,7 @@ struct ad1848_softc {
 #define DAC_IN_PORT	3
 
 #ifdef _KERNEL
+int	ad1848_mapprobe __P((struct ad1848_softc *, int));
 int	ad1848_probe __P((struct ad1848_softc *));
 void	ad1848_unmap __P((struct ad1848_softc *));
 void	ad1848_attach __P((struct ad1848_softc *));
