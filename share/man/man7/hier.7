@@ -1,4 +1,4 @@
-.\"	$NetBSD: hier.7,v 1.65 2004/10/14 01:28:19 snj Exp $
+.\"	$NetBSD: hier.7,v 1.66 2004/11/17 16:56:16 yamt Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)hier.7	8.5 (Berkeley) 6/1/94
 .\"
-.Dd April 3, 2004
+.Dd November 18, 2004
 .Dt HIER 7
 .Os
 .Sh NAME
@@ -554,8 +554,16 @@ from the
 association)
 .It Sy games/
 text files used by various games
+.It Sy i18n/
+internationalization databases; see
+.Xr iconv 3
 .It Sy lkm/
 documentation on the loadable kernel modules interface
+.It Sy locale/
+locale databases and gettext message catalogs; see
+.Xr setlocale 3
+and
+.Xr gettext 3
 .It Sy man/
 formatted manual pages
 .It Sy me/
@@ -579,6 +587,9 @@ include files for
 macros for use with the
 .Xr ms 7
 macro package
+.It Sy nls/
+message catalogs; see
+.Xr catgets 3
 .It Sy skel/
 sample initialization files for new user accounts
 .It Sy tabset/
