@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_oncore.c,v 1.4 2003/12/04 17:10:34 drochner Exp $	*/
+/*	$NetBSD: refclock_oncore.c,v 1.5 2004/10/30 15:01:32 dsl Exp $	*/
 
 /*
  * ----------------------------------------------------------------------------
@@ -1184,7 +1184,7 @@ oncore_read_config(
 		for (ca = cc; *ca; ca++) {
 			if (isascii((int)*ca)) {
 				if (islower((int)*ca)) {
-					*ca = toupper(*ca);
+					*ca = toupper((int)*ca);
 				} else if (isspace((int)*ca) || (*ca == '='))
 					break;
 			}
@@ -1204,7 +1204,7 @@ oncore_read_config(
 		/* Uppercase argument as well */
 		for (cp = ca; *cp; cp++)
 			if (isascii((int)*cp) && islower((int)*cp))
-				*cp = toupper(*cp);
+				*cp = toupper((int)*cp);
 
 		if (!strncmp(cc, "LAT", (size_t) 3)) {
 			f1 = f2 = f3 = 0;
