@@ -1,4 +1,4 @@
-/*	$NetBSD: stdarg.h,v 1.10 1996/12/27 20:55:28 pk Exp $ */
+/*	$NetBSD: stdarg.h,v 1.10.14.1 1999/02/01 07:03:53 cgd Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -106,6 +106,6 @@ typedef _BSD_VA_LIST_	va_list;
 	 *__va_arg(ap, type *) : __va_size(type) == 8 ?			\
 	 __va_8byte(ap, type) : __va_arg(ap, type))
 
-#define va_end(ap)	((void)0)
+#define va_end(ap)	
 
 #endif /* !_SPARC_STDARG_H_ */
