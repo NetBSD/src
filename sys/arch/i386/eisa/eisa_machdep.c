@@ -1,4 +1,4 @@
-/*	$NetBSD: eisa_machdep.c,v 1.10.22.5 2001/05/23 03:13:37 sommerfeld Exp $	*/
+/*	$NetBSD: eisa_machdep.c,v 1.10.22.6 2001/12/29 21:09:05 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -70,6 +70,9 @@
 /*
  * Machine-specific functions for EISA autoconfiguration.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: eisa_machdep.c,v 1.10.22.6 2001/12/29 21:09:05 sommerfeld Exp $");
 
 #include "ioapic.h"
 

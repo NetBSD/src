@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.147.2.19 2001/12/11 21:52:05 fvdl Exp $
+#	$NetBSD: files.i386,v 1.147.2.20 2001/12/29 21:09:04 sommerfeld Exp $
 #
 # new style config file for i386 architecture
 #
@@ -18,45 +18,46 @@ defparam opt_apm.h	APMDEBUG_VALUE APM_DISABLE_INTERRUPTS
 defflag	opt_cputype.h	I386_CPU I486_CPU I586_CPU I686_CPU
 
 # delay before cpu_reset() for reboot.
-defparam	CPURESET_DELAY
+defparam		CPURESET_DELAY
 
 # VM86 emulation
-defflag	VM86
+defflag			VM86
 
 # Floating point emulation
-defflag	MATH_EMULATE
+defflag			MATH_EMULATE
 
 # User-settable LDT (used by WINE)
-defflag	USER_LDT
+defflag			USER_LDT
 
 # Speed hack; make NOPs dummies (might break on some machines)
-defflag	DUMMY_NOPS
+defflag			DUMMY_NOPS
 
 # Performance counter support
-defflag	PERFCTRS
+defflag			PERFCTRS
 
 # MTRR support
-defflag	MTRR
+defflag			MTRR
 
 # X server support in console drivers
 defflag	opt_xserver.h	XSERVER XSERVER_DDB
 
 # The REAL{BASE,EXT}MEM options
-defparam	opt_realmem.h	REALBASEMEM REALEXTMEM
+defparam opt_realmem.h	REALBASEMEM REALEXTMEM
 
 # understand boot device passed by pre-1.3 bootblocks
-defflag	COMPAT_OLDBOOT
+defflag			COMPAT_OLDBOOT
 
 defflag	opt_mpbios.h MPVERBOSE MPDEBUG
 
 # PCI BIOS options
 defflag	opt_pcibios.h	PCIBIOS PCIBIOSVERBOSE
-defflag	opt_pcibios.h	PCIBIOS_ADDR_FIXUP PCIBIOS_BUS_FIXUP
+			PCIBIOS_ADDR_FIXUP PCIBIOS_BUS_FIXUP
 			PCIBIOS_INTR_FIXUP PCIBIOS_INTR_FIXUP_FORCE
-			PCIBIOS_INTR_GUESS PCIBIOS_IRQS_HINT PCIINTR_DEBUG
+			PCIBIOS_INTR_GUESS PCIINTR_DEBUG
+defparam opt_pcibios.h	PCIBIOS_IRQS_HINT
 
 # Large page size
-defflag	LARGEPAGES
+defflag			LARGEPAGES
 
 file	arch/i386/i386/autoconf.c
 file	arch/i386/i386/bus_machdep.c
@@ -69,7 +70,7 @@ file	arch/i386/i386/db_memrw.c	ddb | kgdb
 file	arch/i386/i386/db_trace.c	ddb
 file	arch/i386/i386/disksubr.c	disk
 file	arch/i386/i386/gdt.c
-file	arch/i386/i386/in_cksum.s	inet
+file	arch/i386/i386/in_cksum.s	inet | inet6
 file	arch/i386/i386/ipkdb_glue.c	ipkdb
 file	arch/i386/i386/kgdb_machdep.c	kgdb
 file	arch/i386/i386/machdep.c
@@ -147,7 +148,7 @@ file	arch/i386/i386/bios32.c		bios32 needs-flag
 
 define	mainbus { [apid = -1] }
 # XXX BIOS32 only if something that uses it is configured!
-device	mainbus: isabus, eisabus, mcabus, pcibus, mainbus, bios32
+device	mainbus: isabus, eisabus, mcabus, pcibus, mainbus, bios32, acpibus
 attach	mainbus at root
 file	arch/i386/i386/mainbus.c	mainbus
 
@@ -172,7 +173,7 @@ file	arch/i386/pci/amd756.c		pcibios & pcibios_intr_fixup
 file	arch/i386/pci/ali1543.c		pcibios & pcibios_intr_fixup
 file	arch/i386/pci/pci_bus_fixup.c	pcibios & pcibios_bus_fixup
 file	arch/i386/pci/pci_addr_fixup.c	pcibios & pcibios_addr_fixup
-defparam	PCI_CONF_MODE
+defparam		PCI_CONF_MODE
 file	arch/i386/pci/pciide_machdep.c	pciide
 file	arch/i386/pci/pcic_pci_machdep.c	pcic_pci
 
@@ -421,9 +422,9 @@ file	arch/i386/i386/rbus_machdep.c	cardbus
 # XXX this needs to be done very late, so it's done here.  This feels
 # like a kludge, but it might be for the best.
 
-defparam	PCIC_ISA_ALLOC_IOBASE
-defparam	PCIC_ISA_ALLOC_IOSIZE
-defparam	PCIC_ISA_INTR_ALLOC_MASK
+defparam		PCIC_ISA_ALLOC_IOBASE
+defparam		PCIC_ISA_ALLOC_IOSIZE
+defparam		PCIC_ISA_INTR_ALLOC_MASK
 
 device	pcic: pcmciabus
 file	dev/ic/i82365.c			pcic
@@ -452,9 +453,9 @@ file	dev/isa/i82365_isasubr.c	pcic_isa | pcic_isapnp | pcic_pci
 # XXX this needs to be done very late, so it's done here.  This feels
 # like a kludge, but it might be for the best.
 
-defparam	TCIC_ISA_ALLOC_IOBASE
-defparam	TCIC_ISA_ALLOC_IOSIZE
-defparam	TCIC_ISA_INTR_ALLOC_MASK
+defparam		TCIC_ISA_ALLOC_IOBASE
+defparam		TCIC_ISA_ALLOC_IOSIZE
+defparam		TCIC_ISA_INTR_ALLOC_MASK
 
 device	tcic: pcmciabus
 file	dev/ic/tcic2.c			tcic
@@ -475,3 +476,6 @@ include	"dev/usb/files.usb"
 include	"dev/ieee1394/files.ieee1394"
 
 include	"arch/i386/pnpbios/files.pnpbios"
+
+include "dev/acpi/files.acpi"
+file	arch/i386/i386/acpi_machdep.c	acpi

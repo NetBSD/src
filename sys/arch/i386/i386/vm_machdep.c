@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.86.2.16 2001/09/22 23:01:16 sommerfeld Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.86.2.17 2001/12/29 21:09:08 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -44,6 +44,9 @@
 /*
  *	Utah $Hdr: vm_machdep.c 1.16.1.1 89/06/23$
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.86.2.17 2001/12/29 21:09:08 sommerfeld Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_largepages.h"

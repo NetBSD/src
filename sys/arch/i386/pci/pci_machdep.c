@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.35.2.9 2001/12/11 23:54:59 sommerfeld Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.35.2.10 2001/12/29 21:09:10 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,6 +78,9 @@
  * using `options PCI_CONF_MODE=N', where `N' is the configuration mode
  * as defined section 3.6.4.1, `Generating Configuration Cycles'.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.35.2.10 2001/12/29 21:09:10 sommerfeld Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

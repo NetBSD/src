@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.376.2.29 2001/09/22 23:01:08 sommerfeld Exp $	*/
+/*	$NetBSD: machdep.c,v 1.376.2.30 2001/12/29 21:09:06 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -74,6 +74,9 @@
  *
  *	@(#)machdep.c	7.4 (Berkeley) 6/3/91
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.376.2.30 2001/12/29 21:09:06 sommerfeld Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -203,6 +206,8 @@ int	i386_use_fxsave;
 int	i386_has_sse;
 int	i386_has_sse2;
 
+int	tmx86_has_longrun;
+
 #define	CPUID2FAMILY(cpuid)	(((cpuid) >> 8) & 15)
 #define	CPUID2MODEL(cpuid)	(((cpuid) >> 4) & 15)
 #define	CPUID2STEPPING(cpuid)	((cpuid) & 15)
@@ -305,7 +310,9 @@ static int exec_nomid	__P((struct proc *, struct exec_package *));
 void cyrix6x86_cpu_setup __P((struct cpu_info *));
 void winchip_cpu_setup __P((struct cpu_info *));
 void amd_family5_setup __P((struct cpu_info *));
+void transmeta_cpu_setup __P((struct cpu_info *));
 
+static void transmeta_cpu_info __P((struct cpu_info *));
 static void amd_cpuid_cpu_cacheinfo __P((struct cpu_info *));
 
 static __inline u_char
@@ -457,7 +464,6 @@ cpu_startup()
 	}
 #endif
 #endif
-
 	format_bytes(pbuf, sizeof(pbuf), ptoa(physmem));
 	printf("total memory = %s\n", pbuf);
 
@@ -694,6 +700,7 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			},
 			NULL,
 			NULL,
+			NULL,
 		},
 		/* Family 5 */
 		{
@@ -708,6 +715,7 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			},
 			NULL,
 			NULL,
+			NULL,
 		},
 		/* Family 6 */
 		{
@@ -719,10 +727,11 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				"Celeron (Mendocino)",
 				"Pentium III (Katmai)",
 				"Pentium III (Coppermine)",
-				0, "Pentium III (Cascades)", 0, 0,
-				0, 0,
+				0, "Pentium III (Cascades)",
+				"Pentium III (Tualatin)", 0, 0, 0, 0,
 				"Pentium Pro, II or III"	/* Default */
 			},
+			NULL,
 			NULL,
 			NULL,
 		},
@@ -730,10 +739,11 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 		{
 			CPUCLASS_686,
 			{
-				0, 0, 0, 0, 0, 0, 0,
-				0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0,
 				"Pentium 4"	/* Default */
 			},
+			NULL,
 			NULL,
 			NULL,
 		} }
@@ -756,6 +766,7 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			},
 			NULL,
 			NULL,
+			NULL,
 		},
 		/* Family 5 */
 		{
@@ -768,6 +779,7 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			},
 			amd_family5_setup,
 			amd_cpuid_cpu_cacheinfo,
+			NULL,
 		},
 		/* Family 6 */
 		{
@@ -780,17 +792,19 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			},
 			NULL,
 			amd_cpuid_cpu_cacheinfo,
+			NULL,
 		},
 		/* Family > 6 */
 		{
 			CPUCLASS_686,
 			{
-				0, 0, 0, 0, 0, 0, 0,
-				0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0,
 				"Unknown K7 (Athlon)"	/* Default */
 			},
 			NULL,
 			amd_cpuid_cpu_cacheinfo,
+			NULL,
 		} }
 	},
 	{
@@ -803,10 +817,11 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			{
 				0, 0, 0,
 				"MediaGX",
-				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 				"486"		/* Default */
 			},
 			cyrix6x86_cpu_setup, /* XXX ?? */
+			NULL,
 			NULL,
 		},
 		/* Family 5 */
@@ -820,24 +835,29 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			},
 			cyrix6x86_cpu_setup,
 			NULL,
+			NULL,
 		},
 		/* Family 6 */
 		{
 			CPUCLASS_686,
 			{
-				"6x86MX", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				"6x86MX", 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0,
 				"6x86MX"		/* Default */
 			},
 			cyrix6x86_cpu_setup,
+			NULL,
 			NULL,
 		},
 		/* Family > 6 */
 		{
 			CPUCLASS_686,
 			{
-				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0,
 				"Unknown 6x86MX"		/* Default */
 			},
+			NULL,
 			NULL,
 			NULL,
 		} }
@@ -850,10 +870,11 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 		{ {
 			CPUCLASS_486,
 			{
-				0, 0, 0, 0, 0, 0, 0,
-				0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0,
 				"486 compatible"	/* Default */
 			},
+			NULL,
 			NULL,
 			NULL,
 		},
@@ -867,15 +888,17 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			},
 			winchip_cpu_setup,
 			NULL,
+			NULL,
 		},
 		/* Family 6, not yet available from IDT */
 		{
 			CPUCLASS_686,
 			{
-				0, 0, 0, 0, 0, 0, 0,
-				0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0,
 				"Pentium Pro compatible"	/* Default */
 			},
+			NULL,
 			NULL,
 			NULL,
 		},
@@ -883,10 +906,64 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 		{
 			CPUCLASS_686,
 			{
-				0, 0, 0, 0, 0, 0, 0,
-				0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0,
 				"Pentium Pro compatible"	/* Default */
 			},
+			NULL,
+			NULL,
+			NULL,
+		} }
+	},
+	{
+		"GenuineTMx86",
+		CPUVENDOR_TRANSMETA,
+		"Transmeta",
+		/* Family 4, Transmeta never had any of these */
+		{ {
+			CPUCLASS_486, 
+			{
+				0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0,
+				"486 compatible"	/* Default */
+			},
+			NULL,
+			NULL,
+			NULL,
+		},
+		/* Family 5 */
+		{
+			CPUCLASS_586,
+			{
+				0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0,
+				"Crusoe"		/* Default */
+			},
+			transmeta_cpu_setup,
+			NULL,
+			transmeta_cpu_info,
+		},
+		/* Family 6, not yet available from Transmeta */
+		{
+			CPUCLASS_686,
+			{
+				0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0,
+				"Pentium Pro compatible"	/* Default */
+			},
+			NULL,
+			NULL,
+			NULL,
+		},
+		/* Family > 6, not yet available from Transmeta */
+		{
+			CPUCLASS_686,
+			{
+				0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0,
+				"Pentium Pro compatible"	/* Default */
+			},
+			NULL,
 			NULL,
 			NULL,
 		} }
@@ -1085,6 +1162,194 @@ amd_family5_setup(struct cpu_info *ci)
 		break;
 	}
 }
+
+/*
+ * Transmeta Crusoe LongRun Support by Tamotsu Hattori.
+ * Port from FreeBSD-current(August, 2001) to NetBSD by tshiozak.
+ */
+
+#define	MSR_TMx86_LONGRUN		0x80868010
+#define	MSR_TMx86_LONGRUN_FLAGS		0x80868011
+
+#define	LONGRUN_MODE_MASK(x)		((x) & 0x000000007f)
+#define	LONGRUN_MODE_RESERVED(x)	((x) & 0xffffff80)
+#define	LONGRUN_MODE_WRITE(x, y)	(LONGRUN_MODE_RESERVED(x) | \
+					    LONGRUN_MODE_MASK(y))
+
+#define	LONGRUN_MODE_MINFREQUENCY	0x00
+#define	LONGRUN_MODE_ECONOMY		0x01
+#define	LONGRUN_MODE_PERFORMANCE	0x02
+#define	LONGRUN_MODE_MAXFREQUENCY	0x03
+#define	LONGRUN_MODE_UNKNOWN		0x04
+#define	LONGRUN_MODE_MAX		0x04
+
+union msrinfo {
+	u_int64_t	msr;
+	u_int32_t	regs[2];
+};
+
+u_int32_t longrun_modes[LONGRUN_MODE_MAX][3] = {
+	/*  MSR low, MSR high, flags bit0 */
+	{	  0,	  0,		0},	/* LONGRUN_MODE_MINFREQUENCY */
+	{	  0,	100,		0},	/* LONGRUN_MODE_ECONOMY */
+	{	  0,	100,		1},	/* LONGRUN_MODE_PERFORMANCE */
+	{	100,	100,		1},	/* LONGRUN_MODE_MAXFREQUENCY */
+};
+
+static u_int 
+tmx86_get_longrun_mode(void)
+{
+	u_long		eflags;
+	union msrinfo	msrinfo;
+	u_int		low, high, flags, mode;
+
+	eflags = read_eflags();
+	disable_intr();
+
+	msrinfo.msr = rdmsr(MSR_TMx86_LONGRUN);
+	low = LONGRUN_MODE_MASK(msrinfo.regs[0]);
+	high = LONGRUN_MODE_MASK(msrinfo.regs[1]);
+	flags = rdmsr(MSR_TMx86_LONGRUN_FLAGS) & 0x01;
+
+	for (mode = 0; mode < LONGRUN_MODE_MAX; mode++) {
+		if (low   == longrun_modes[mode][0] &&
+		    high  == longrun_modes[mode][1] &&
+		    flags == longrun_modes[mode][2]) {
+			goto out;
+		}
+	}
+	mode = LONGRUN_MODE_UNKNOWN;
+out:
+	write_eflags(eflags);
+	return (mode);
+}
+
+static u_int 
+tmx86_get_longrun_status(u_int *frequency, u_int *voltage, u_int *percentage)
+{
+	u_long		eflags;
+	u_int		eax, ebx, ecx, edx;
+
+	eflags = read_eflags();
+	disable_intr();
+
+	CPUID(0x80860007, eax, ebx, ecx, edx);
+	*frequency = eax;
+	*voltage = ebx;
+	*percentage = ecx;
+
+	write_eflags(eflags);
+	return (1);
+}
+
+static u_int 
+tmx86_set_longrun_mode(u_int mode)
+{
+	u_long		eflags;
+	union msrinfo	msrinfo;
+
+	if (mode >= LONGRUN_MODE_UNKNOWN) {
+		return (0);
+	}
+
+	eflags = read_eflags();
+	disable_intr();
+
+	/* Write LongRun mode values to Model Specific Register. */
+	msrinfo.msr = rdmsr(MSR_TMx86_LONGRUN);
+	msrinfo.regs[0] = LONGRUN_MODE_WRITE(msrinfo.regs[0],
+	    longrun_modes[mode][0]);
+	msrinfo.regs[1] = LONGRUN_MODE_WRITE(msrinfo.regs[1],
+	    longrun_modes[mode][1]);
+	wrmsr(MSR_TMx86_LONGRUN, msrinfo.msr);
+
+	/* Write LongRun mode flags to Model Specific Register. */
+	msrinfo.msr = rdmsr(MSR_TMx86_LONGRUN_FLAGS);
+	msrinfo.regs[0] = (msrinfo.regs[0] & ~0x01) | longrun_modes[mode][2];
+	wrmsr(MSR_TMx86_LONGRUN_FLAGS, msrinfo.msr);
+
+	write_eflags(eflags);
+	return (1);
+}
+
+static u_int			 crusoe_longrun;
+static u_int			 crusoe_frequency;
+static u_int	 		 crusoe_voltage;
+static u_int	 		 crusoe_percentage;
+
+static void
+tmx86_get_longrun_status_all(void)
+{
+
+	tmx86_get_longrun_status(&crusoe_frequency,
+	    &crusoe_voltage, &crusoe_percentage);
+}
+
+
+static void
+transmeta_cpu_info(struct cpu_info *ci)
+{
+	u_int eax, ebx, ecx, edx, nreg = 0;
+
+	CPUID(0x80860000, eax, ebx, ecx, edx);
+	nreg = eax;
+	if (nreg >= 0x80860001) {
+		CPUID(0x80860001, eax, ebx, ecx, edx);		
+		printf("%s: Processor revision %u.%u.%u.%u\n",
+		    ci->ci_dev->dv_xname,
+		    (ebx >> 24) & 0xff,
+		    (ebx >> 16) & 0xff,
+		    (ebx >> 8) & 0xff,
+		    ebx & 0xff);
+	}
+	if (nreg >= 0x80860002) {
+		CPUID(0x80860002, eax, ebx, ecx, edx);				
+		printf("%s: Code Morphing Software Rev: %u.%u.%u-%u-%u\n",
+		    ci->ci_dev->dv_xname, (ebx >> 24) & 0xff,
+		    (ebx >> 16) & 0xff,
+		    (ebx >> 8) & 0xff,
+		    ebx & 0xff,
+		    ecx);
+	}
+	if (nreg >= 0x80860006) {
+		union {
+			char text[65];
+			struct 
+			{
+				u_int eax;
+				u_int ebx;
+				u_int ecx;
+				u_int edx;
+			} regs[4];
+		} info;
+		int i;
+
+		for (i=0; i<4; i++) {
+			CPUID(0x80860003 + i,
+			    info.regs[i].eax, info.regs[i].ebx,
+			    info.regs[i].ecx, info.regs[i].edx);
+		}
+		info.text[64] = 0;
+		printf("%s: %s\n", ci->ci_dev->dv_xname, info.text);
+	}
+
+	crusoe_longrun = tmx86_get_longrun_mode();
+	tmx86_get_longrun_status(&crusoe_frequency,
+	    &crusoe_voltage, &crusoe_percentage);
+	printf("%s: LongRun mode: %d  <%dMHz %dmV %d%%>\n", ci->ci_dev->dv_xname,
+	    crusoe_longrun, crusoe_frequency, crusoe_voltage,
+	    crusoe_percentage);
+}
+
+void
+transmeta_cpu_setup(struct cpu_info *ci)
+{
+
+	tmx86_has_longrun = 1;
+}
+
+
+/* ---------------------------------------------------------------------- */
 
 static const struct i386_cache_info *
 cache_info_lookup(const struct i386_cache_info *cai, u_int8_t desc)
@@ -1308,6 +1573,7 @@ identifycpu(struct cpu_info *ci)
 		vendorname = i386_nocpuid_cpus[cpu].cpu_vendorname;
 		class = i386_nocpuid_cpus[cpu].cpu_class;
 		ci->cpu_setup = i386_nocpuid_cpus[cpu].cpu_setup;
+		ci->ci_info = i386_nocpuid_cpus[cpu].cpu_info;
 		modifier = "";
 	} else {
 		max = sizeof (i386_cpuid_cpus) / sizeof (i386_cpuid_cpus[0]);
@@ -1342,6 +1608,7 @@ identifycpu(struct cpu_info *ci)
 			modifier = "";
 			name = "";
 			ci->cpu_setup = NULL;
+			ci->ci_info = NULL;
 		} else {
 			vendor = cpup->cpu_vendor;
 			vendorname = cpup->cpu_vendorname;
@@ -1357,6 +1624,7 @@ identifycpu(struct cpu_info *ci)
 			    name = cpufam->cpu_models[CPU_DEFMODEL];
 			class = cpufam->cpu_class;
 			ci->cpu_setup = cpufam->cpu_setup;
+			ci->ci_info = cpufam->cpu_info;
 
 			/*
 			 * Intel processors family >= 6, model 8 allow to
@@ -1402,6 +1670,9 @@ identifycpu(struct cpu_info *ci)
 		    ((ci->ci_tsc_freq + 4999) / 10000) % 100);
 	printf("\n");
 
+	if (ci->ci_info)
+		(*ci->ci_info)(ci);
+	
 	if (ci->ci_feature_flags) {
 		if ((ci->ci_feature_flags & CPUID_MASK1) != 0) {
 			bitmask_snprintf(ci->ci_feature_flags, CPUID_FLAGS1,
@@ -1567,6 +1838,7 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 {
 	dev_t consdev;
 	struct btinfo_bootpath *bibp;
+	int error, mode;
 
 	/* all sysctl names at this level are terminal */
 	if (namelen != 1)
@@ -1610,7 +1882,34 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		return (sysctl_rdint(oldp, oldlenp, newp, i386_has_sse));
 	case CPU_SSE2:
 		return (sysctl_rdint(oldp, oldlenp, newp, i386_has_sse2));
-
+	case CPU_TMLR_MODE:
+		if (!tmx86_has_longrun)
+			return (EOPNOTSUPP);
+		mode = (int)(crusoe_longrun = tmx86_get_longrun_mode());
+		error = sysctl_int(oldp, oldlenp, newp, newlen, &mode);
+		if (!error && (u_int)mode != crusoe_longrun) {
+			if (tmx86_set_longrun_mode(mode)) {
+				crusoe_longrun = (u_int)mode;
+			} else {
+				error = EINVAL;
+			}
+		}
+		return (error);
+	case CPU_TMLR_FREQUENCY:
+		if (!tmx86_has_longrun)
+			return (EOPNOTSUPP);
+		tmx86_get_longrun_status_all();
+		return (sysctl_rdint(oldp, oldlenp, newp, crusoe_frequency));
+	case CPU_TMLR_VOLTAGE:
+		if (!tmx86_has_longrun)
+			return (EOPNOTSUPP);
+		tmx86_get_longrun_status_all();
+		return (sysctl_rdint(oldp, oldlenp, newp, crusoe_voltage));
+	case CPU_TMLR_PERCENTAGE:
+		if (!tmx86_has_longrun)
+			return (EOPNOTSUPP);
+		tmx86_get_longrun_status_all();
+		return (sysctl_rdint(oldp, oldlenp, newp, crusoe_percentage));
 	default:
 		return (EOPNOTSUPP);
 	}

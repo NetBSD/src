@@ -1,11 +1,11 @@
-/*	$NetBSD: mtrr_i686.c,v 1.2.4.2 2001/09/22 23:01:11 sommerfeld Exp $ */
+/*	$NetBSD: mtrr_i686.c,v 1.2.4.3 2001/12/29 21:09:07 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Bill Sommerfeld
+ * by Bill Sommerfeld.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mtrr_i686.c,v 1.2.4.3 2001/12/29 21:09:07 sommerfeld Exp $");
 
 #include "opt_multiprocessor.h"
 

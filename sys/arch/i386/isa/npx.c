@@ -1,10 +1,4 @@
-/*	$NetBSD: npx.c,v 1.70.8.14 2001/09/03 19:48:12 sommerfeld Exp $	*/
-
-#if 0
-#define IPRINTF(x)	printf x
-#else
-#define	IPRINTF(x)
-#endif
+/*	$NetBSD: npx.c,v 1.70.8.15 2001/12/29 21:09:10 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995, 1998 Charles M. Hannum.  All rights reserved.
@@ -42,6 +36,15 @@
  *
  *	@(#)npx.c	7.2 (Berkeley) 5/12/91
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.70.8.15 2001/12/29 21:09:10 sommerfeld Exp $");
+
+#if 0
+#define IPRINTF(x)	printf x
+#else
+#define	IPRINTF(x)
+#endif
 
 #include "opt_cputype.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.56.2.6 2001/09/22 23:01:00 sommerfeld Exp $ */
+/*	$NetBSD: apm.c,v 1.56.2.7 2001/12/29 21:09:05 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.56.2.7 2001/12/29 21:09:05 sommerfeld Exp $");
 
 #include "apm.h"
 #if NAPM > 1
@@ -94,7 +97,7 @@
 #define	APMDEBUG_PROBE		0x10
 #define	APMDEBUG_ATTACH		0x40
 #define	APMDEBUG_DEVICE		0x20
-#define	APMDEBUG_ANOM		0x40
+#define	APMDEBUG_ANOM		0x80
 
 #ifdef APMDEBUG_VALUE
 int	apmdebug = APMDEBUG_VALUE;

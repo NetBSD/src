@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_syscall.c,v 1.14.2.3 2001/06/18 03:33:28 sommerfeld Exp $	*/
+/*	$NetBSD: ibcs2_syscall.c,v 1.14.2.4 2001/12/29 21:09:06 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_syscall.c,v 1.14.2.4 2001/12/29 21:09:06 sommerfeld Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"

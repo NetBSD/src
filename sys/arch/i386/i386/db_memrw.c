@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.8.2.4 2001/01/07 22:59:23 sommerfeld Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.8.2.5 2001/12/29 21:09:06 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
@@ -54,6 +54,9 @@
  * Modified for i386 from hp300 version by
  * Jason R. Thorpe <thorpej@zembu.com>.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.8.2.5 2001/12/29 21:09:06 sommerfeld Exp $");
 
 #include "opt_largepages.h"
 

@@ -1,3 +1,16 @@
+Last Synchronized: Sat Dec 29 14:45:06 EST 2001
+
+Yet another mergeup.  
+
+New work:
+ - Frank van der Linden's tlb shootdown fix.
+Mainline functionality merged:
+ - IrDA
+ - Kernel RCSID's
+ - Transmeta CPU support
+ - ACPI
+ - XMM register access through procfs
+
 Last Synchronized: Sun Sep 23 21:12:12 EDT 2001
 
 Now using new toolchain.  Most (but not all) of the new assembler
