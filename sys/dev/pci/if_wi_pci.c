@@ -1,4 +1,4 @@
-/*      $NetBSD: if_wi_pci.c,v 1.4 2002/01/13 19:40:51 augustss Exp $  */
+/*      $NetBSD: if_wi_pci.c,v 1.5 2002/01/15 13:50:59 augustss Exp $  */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pci.c,v 1.4 2002/01/13 19:40:51 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pci.c,v 1.5 2002/01/15 13:50:59 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -196,6 +196,14 @@ wi_pci_attach(parent, self, aux)
 
 	psc->psc_pa = pa;
 
+	wpp = wi_pci_lookup(pa);
+#ifdef DIAGNOSTIC
+	if (wpp == NULL) {
+		printf("\n");
+		panic("wi_pci_attach: impossible");
+	}
+#endif
+
 	if (wpp->wpp_plx) {
 		/* Map memory and I/O registers. */
 		if (pci_mapreg_map(pa, WI_PCI_LOMEM, PCI_MAPREG_TYPE_MEM, 0,
@@ -220,14 +228,6 @@ wi_pci_attach(parent, self, aux)
 		memh = ioh;
 		sc->sc_pci = 1;
 	}
-
-	wpp = wi_pci_lookup(pa);
-#ifdef DIAGNOSTIC
-	if (wpp == NULL) {
-		printf("\n");
-		panic("wi_pci_attach: impossible");
-	}
-#endif
 
 	if (wpp->wpp_name != NULL) {
 		printf(": %s Wireless Lan\n", wpp->wpp_name);
