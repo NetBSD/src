@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2002/09/14 05:35:13 thorpej Exp $
+#	$NetBSD: Makefile,v 1.15 2003/01/05 19:24:08 sommerfeld Exp $
 
 .include <bsd.own.mk>
 
@@ -17,24 +17,16 @@ SRCS=	pcnfsd_v1.c pcnfsd_v2.c pcnfsd_misc.c \
 DPADD=	${LIBRPCSVC} ${LIBCRYPT} ${LIBUTIL}
 LDADD=	-lrpcsvc -lcrypt -lutil
 
-# Resolve rpcgen's path, to allow it to be a dependency.
-_RPCGEN:=	${RPCGEN:M*rpcgen}
-.if ${_RPCGEN:M/*} == ""
-_RPCGEN!=	type ${RPCGEN} | awk '{print $$NF}'
-.endif
+RPC_INCS=	pcnfsd.h
+RPC_XDRFILES=	pcnfsd_xdr.c
+RPC_SVCFILES=	pcnfsd_svc.c
+RPC_SVCCLASS=	udp tcp
+RPC_SVCFLAGS=	-I
 
-pcnfsd_svc.c: pcnfsd.x ${_RPCGEN}
-	${RPCGEN} -C -s udp -s tcp -I ${.CURDIR}/pcnfsd.x -o $@
+.include <bsd.rpc.mk>
 
-pcnfsd_xdr.c: pcnfsd.x ${_RPCGEN}
-	${RPCGEN} -C -c ${.CURDIR}/pcnfsd.x -o $@
-
-pcnfsd.h: pcnfsd.x ${_RPCGEN}
-	${RPCGEN} -C -h ${.CURDIR}/pcnfsd.x -o $@
-
-CLEANFILES += pcnfsd_svc.c pcnfsd_xdr.c pcnfsd.h
 CLEANFILES += clnt.pcnfsd pcnfsd_test.o pcnfsd_test.ln pcnfsd_clnt.*
 
 .include <bsd.prog.mk>
 
-.depend ${OBJS}: pcnfsd.h
+${OBJS}: pcnfsd.h
