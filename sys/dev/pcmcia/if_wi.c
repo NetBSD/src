@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wi.c,v 1.4 2000/02/04 07:48:29 explorer Exp $	*/
+/*	$NetBSD: if_wi.c,v 1.5 2000/02/12 16:08:04 itojun Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -31,7 +31,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: if_wi.c,v 1.4 2000/02/04 07:48:29 explorer Exp $
+ *	$Id: if_wi.c,v 1.5 2000/02/12 16:08:04 itojun Exp $
  */
 
 /*
@@ -115,7 +115,7 @@
 
 #if !defined(lint)
 static const char rcsid[] =
-	"$Id: if_wi.c,v 1.4 2000/02/04 07:48:29 explorer Exp $";
+	"$Id: if_wi.c,v 1.5 2000/02/12 16:08:04 itojun Exp $";
 #endif
 
 #ifdef foo
@@ -124,7 +124,8 @@ static u_int8_t	wi_mcast_addr[6] = { 0x01, 0x60, 0x1D, 0x00, 0x01, 0x00 };
 
 static int wi_match		__P((struct device *, struct cfdata *, void *));
 static void wi_attach		__P((struct device *, struct device *, void *));
-
+static int wi_detach		__P((struct device *, int));
+static int wi_activate		__P((struct device *, enum devact));
 
 static int wi_intr __P((void *arg));
 
@@ -159,7 +160,7 @@ static int wi_disable __P((struct wi_softc *));
 
 struct cfattach wi_ca =
 {
-	sizeof(struct wi_softc), wi_match, wi_attach
+	sizeof(struct wi_softc), wi_match, wi_attach, wi_detach, wi_activate
 };
 
 static int
@@ -244,11 +245,14 @@ wi_attach(parent, self, aux)
 	if (pcmcia_io_alloc(sc->sc_pf, 0, WI_IOSIZ, WI_IOSIZ,
 	    &sc->sc_pcioh) != 0) {
 		printf(": can't allocate i/o space\n");
+		pcmcia_function_disable(sc->sc_pf);
 		return;
 	}
 	if (pcmcia_io_map(sc->sc_pf, PCMCIA_WIDTH_IO16, 0,
 	    WI_IOSIZ, &sc->sc_pcioh, &sc->sc_iowin) != 0) {
 		printf(": can't map i/o space\n");
+		pcmcia_io_free(sc->sc_pf, &sc->sc_pcioh);
+		pcmcia_function_disable(sc->sc_pf);
 		return;
 	}
 	sc->wi_btag = sc->sc_pcioh.iot;
@@ -337,6 +341,9 @@ wi_attach(parent, self, aux)
 #endif
 
 	sc->sc_sdhook = shutdownhook_establish(wi_shutdown, sc);
+
+	/* Disable the card now, and turn it on when the interface goes up */
+	pcmcia_function_disable(sc->sc_pf);
 }
 
 static void wi_rxeof(sc)
@@ -1392,4 +1399,51 @@ static void wi_shutdown(arg)
 	sc = arg;
 	wi_disable(sc);
 	return;
+}
+
+static int
+wi_activate(self, act)
+	struct device *self;
+	enum devact act;
+{
+	struct wi_softc *sc = (struct wi_softc *)self;
+	int rv = 0, s;
+
+	s = splnet();
+	switch (act) {
+	case DVACT_ACTIVATE:
+		rv = EOPNOTSUPP;
+		break;
+
+	case DVACT_DEACTIVATE:
+		if_deactivate(&sc->sc_ethercom.ec_if);
+		break;
+	}
+	splx(s);
+	return (rv);
+}
+
+static int
+wi_detach(self, flags)
+	struct device *self;
+	int flags;
+{
+	struct wi_softc *sc = (struct wi_softc *)self;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+
+	if (ifp->if_flags & IFF_RUNNING)
+		untimeout(wi_inquire, sc);
+	wi_disable(sc);
+
+#if NBPFILTER > 0
+	bpfdetach(ifp);
+#endif
+	ether_ifdetach(ifp);
+	if_detach(ifp);
+
+	/* unmap and free our i/o windows */
+	pcmcia_io_unmap(sc->sc_pf, sc->sc_iowin);
+	pcmcia_io_free(sc->sc_pf, &sc->sc_pcioh);
+
+	return (0);
 }
