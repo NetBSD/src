@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.12 1999/07/28 23:23:39 hubertf Exp $	*/
+/*	$NetBSD: init.c,v 1.13 2001/02/05 00:20:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)init.c	8.1 (Berkeley) 6/2/93";
 #else
-__RCSID("$NetBSD: init.c,v 1.12 1999/07/28 23:23:39 hubertf Exp $");
+__RCSID("$NetBSD: init.c,v 1.13 2001/02/05 00:20:05 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -127,7 +127,7 @@ int     turns, lmwarn, iwest, knfloc, detail,	/* various flags and
         abbnum, maxdie, numdie, holdng, dkill, foobar, bonus, clock1,
         clock2, saved, closng, panic, closed, scorng;
 
-int     demo, newloc, limit;
+int     demo, limit;
 
 void
 init()			/* everything for 1st time run */
