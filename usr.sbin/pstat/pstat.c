@@ -1,4 +1,4 @@
-/*	$NetBSD: pstat.c,v 1.48 1999/11/18 03:08:38 enami Exp $	*/
+/*	$NetBSD: pstat.c,v 1.49 1999/11/18 08:27:39 enami Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)pstat.c	8.16 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: pstat.c,v 1.48 1999/11/18 03:08:38 enami Exp $");
+__RCSID("$NetBSD: pstat.c,v 1.49 1999/11/18 08:27:39 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -90,16 +90,16 @@ __RCSID("$NetBSD: pstat.c,v 1.48 1999/11/18 03:08:38 enami Exp $");
 struct nlist nl[] = {
 #define	V_MOUNTLIST	0
 	{ "_mountlist" },	/* address of head of mount list. */
-#define V_NUMV		1
+#define	V_NUMV		1
 	{ "_numvnodes" },
 #define	FNL_NFILE	2
-	{"_nfiles"},
+	{ "_nfiles" },
 #define FNL_MAXFILE	3
-	{"_maxfiles"},
+	{ "_maxfiles" },
 #define TTY_NTTY	4
-	{"_tty_count"},
+	{ "_tty_count" },
 #define TTY_TTYLIST	5
-	{"_ttylist"},
+	{ "_ttylist" },
 #define NLMANDATORY TTY_TTYLIST	/* names up to here are mandatory */
 	{ "" }
 };
@@ -141,7 +141,6 @@ struct {
 	{ 0 }
 };
 
-
 #define	SVAR(var) __STRING(var)	/* to force expansion */
 #define	KGET(idx, var)							\
 	KGET1(idx, &var, sizeof(var), SVAR(var))
@@ -173,7 +172,7 @@ void	ttyprt __P((struct tty *));
 void	ufs_getflags __P((struct vnode *, struct inode *, char *));
 void	ufs_header __P((void));
 int	ufs_print __P((struct vnode *));
-int		ext2fs_print __P((struct vnode *));
+int	ext2fs_print __P((struct vnode *));
 void	union_header __P((void));
 int	union_print __P((struct vnode *));
 void	usage __P((void));
@@ -294,8 +293,7 @@ vnodemode()
 	endvnode = e_vnodebase + numvnodes;
 	(void)printf("%d active vnodes\n", numvnodes);
 
-
-#define ST	mp->mnt_stat
+#define	ST	mp->mnt_stat
 	maddr = NULL;
 	for (evp = e_vnodebase; evp < endvnode; evp++) {
 		vp = &evp->vnode;
@@ -338,6 +336,7 @@ vnodemode()
 void
 vnode_header()
 {
+
 	(void)printf("ADDR     TYP VFLAG  USE HOLD TAG");
 }
 
@@ -346,7 +345,7 @@ vnode_print(avnode, vp)
 	struct vnode *avnode;
 	struct vnode *vp;
 {
-	char *type, flags[16]; 
+	char *type, flags[16];
 	char *fp = flags;
 	int flag;
 
@@ -372,7 +371,7 @@ vnode_print(avnode, vp)
 		type = "fif"; break;
 	case VBAD:
 		type = "bad"; break;
-	default: 
+	default:
 		type = "unk"; break;
 	}
 	/*
@@ -439,13 +438,14 @@ ufs_getflags(vp, ip, flags)
 }
 
 void
-ufs_header() 
+ufs_header()
 {
+
 	(void)printf(" FILEID IFLAG RDEV|SZ");
 }
 
 int
-ufs_print(vp) 
+ufs_print(vp)
 	struct vnode *vp;
 {
 	struct inode inode, *ip = &inode;
@@ -458,8 +458,9 @@ ufs_print(vp)
 	(void)printf(" %6d %5s", ip->i_number, flagbuf);
 	type = ip->i_ffs_mode & S_IFMT;
 	if (S_ISCHR(ip->i_ffs_mode) || S_ISBLK(ip->i_ffs_mode))
-		if (usenumflag || ((name = devname(ip->i_ffs_rdev, type)) == NULL))
-			(void)printf("   %2d,%-2d", 
+		if (usenumflag ||
+		    ((name = devname(ip->i_ffs_rdev, type)) == NULL))
+			(void)printf("   %2d,%-2d",
 			    major(ip->i_ffs_rdev), minor(ip->i_ffs_rdev));
 		else
 			(void)printf(" %7s", name);
@@ -469,7 +470,7 @@ ufs_print(vp)
 }
 
 int
-ext2fs_print(vp) 
+ext2fs_print(vp)
 	struct vnode *vp;
 {
 	struct inode inode, *ip = &inode;
@@ -482,11 +483,12 @@ ext2fs_print(vp)
 	(void)printf(" %6d %5s", ip->i_number, flagbuf);
 	type = ip->i_e2fs_mode & S_IFMT;
 	if (S_ISCHR(ip->i_e2fs_mode) || S_ISBLK(ip->i_e2fs_mode))
-		if (usenumflag || ((name = devname(ip->i_din.e2fs_din.e2di_rdev,
-			type)) == NULL))
-			(void)printf("   %2d,%-2d", 
+		if (usenumflag ||
+		    ((name = devname(ip->i_din.e2fs_din.e2di_rdev, type)) ==
+			NULL))
+			(void)printf("   %2d,%-2d",
 			    major(ip->i_din.e2fs_din.e2di_rdev),
-						minor(ip->i_din.e2fs_din.e2di_rdev));
+			    minor(ip->i_din.e2fs_din.e2di_rdev));
 		else
 			(void)printf(" %7s", name);
 	else
@@ -495,13 +497,14 @@ ext2fs_print(vp)
 }
 
 void
-nfs_header() 
+nfs_header()
 {
+
 	(void)printf(" FILEID NFLAG RDEV|SZ");
 }
 
 int
-nfs_print(vp) 
+nfs_print(vp)
 	struct vnode *vp;
 {
 	struct nfsnode nfsnode, *np = &nfsnode;
@@ -536,7 +539,7 @@ nfs_print(vp)
 	type = va.va_mode & S_IFMT;
 	if (S_ISCHR(va.va_mode) || S_ISBLK(va.va_mode))
 		if (usenumflag || ((name = devname(va.va_rdev, type)) == NULL))
-			(void)printf("   %2d,%-2d", 
+			(void)printf("   %2d,%-2d",
 			    major(va.va_rdev), minor(va.va_rdev));
 		else
 			(void)printf(" %7s", name);
@@ -546,13 +549,14 @@ nfs_print(vp)
 }
 
 void
-union_header() 
+union_header()
 {
+
 	(void)printf("    UPPER    LOWER");
 }
 
 int
-union_print(vp) 
+union_print(vp)
 	struct vnode *vp;
 {
 	struct union_node unode, *up = &unode;
@@ -562,7 +566,7 @@ union_print(vp)
 	(void)printf(" %8lx %8lx", (long)up->un_uppervp, (long)up->un_lowervp);
 	return (0);
 }
-	
+
 /*
  * Given a pointer to a mount structure in kernel space,
  * read it in and return a usable pointer to it.
@@ -608,9 +612,9 @@ mount_print(mp)
 				flags &= ~mnt_flags[i].m_flag;
 				sep = ",";
 			}
-  		}
-  		if (flags)
- 			(void)printf("%sunknown_flags:%x", sep, flags);
+		}
+		if (flags)
+			(void)printf("%sunknown_flags:%x", sep, flags);
 		(void)printf(")");
 	}
 	(void)printf("\n");
@@ -667,7 +671,8 @@ kinfo_vnodes(avnodes)
 	bp = vbuf;
 	evbuf = vbuf + (numvnodes + 20) * (VPTRSZ + VNODESZ);
 	KGET(V_MOUNTLIST, mountlist);
-	for (num = 0, mp = mountlist.cqh_first; ; mp = mount.mnt_list.cqe_next) {
+	for (num = 0, mp = mountlist.cqh_first;;
+	    mp = mount.mnt_list.cqe_next) {
 		KGET2(mp, &mount, sizeof(mount), "mount entry");
 		for (vp = mount.mnt_vnodelist.lh_first;
 		    vp != NULL; vp = vnode.v_mntvnodes.le_next) {
@@ -687,7 +692,7 @@ kinfo_vnodes(avnodes)
 	*avnodes = num;
 	return ((struct e_vnode *)vbuf);
 }
-	
+
 char hdr[]="  LINE RAW CAN OUT  HWT LWT     COL STATE  SESS      PGID DISC\n";
 int ttyspace = 128;
 
@@ -740,11 +745,11 @@ ttyprt(tp)
 	char *name, state[20];
 
 	if (usenumflag || (name = devname(tp->t_dev, S_IFCHR)) == NULL)
-		(void)printf("0x%3x:%1x ", major(tp->t_dev), minor(tp->t_dev)); 
+		(void)printf("0x%3x:%1x ", major(tp->t_dev), minor(tp->t_dev));
 	else
 		(void)printf("%-7s ", name);
 	(void)printf("%2d %3d ", tp->t_rawq.c_cc, tp->t_canq.c_cc);
-	(void)printf("%3d %4d %3d %7d ", tp->t_outq.c_cc, 
+	(void)printf("%3d %4d %3d %7d ", tp->t_outq.c_cc,
 		tp->t_hiwat, tp->t_lowat, tp->t_column);
 	for (i = j = 0; ttystates[i].flag; i++)
 		if (tp->t_state&ttystates[i].flag)
@@ -806,7 +811,7 @@ filemode()
 	addr = ((struct filelist *)buf)->lh_first;
 	fp = (struct file *)(buf + sizeof(struct filelist));
 	nfile = (len - sizeof(struct filelist)) / sizeof(struct file);
-	
+
 	(void)printf("%d/%d open files\n", nfile, maxfile);
 	(void)printf("   LOC   TYPE    FLG     CNT  MSG    DATA    OFFSET\n");
 	for (; (char *)fp < buf + len; addr = fp->f_list.le_next, fp++) {
@@ -877,6 +882,7 @@ getfiles(abuf, alen)
 void
 usage()
 {
+
 	(void)fprintf(stderr,
 	    "usage: pstat [-T|-f|-s|-t|-v] [-kn] [-M core] [-N system]\n");
 	exit(1);
