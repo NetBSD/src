@@ -1,4 +1,4 @@
-/*	$NetBSD: intio.c,v 1.5 1999/03/24 14:07:38 minoura Exp $	*/
+/*	$NetBSD: intio.c,v 1.5.2.1 1999/06/21 14:02:43 perry Exp $	*/
 
 /*
  *
@@ -172,6 +172,7 @@ static struct intio_attach_args initial_ia = {
 
 	"mfp",			/* ia_name */
 	MFP_ADDR,		/* ia_addr */
+	0x30,			/* ia_size */
 	MFP_INTR,		/* ia_intr */
 	-1			/* ia_dma */
 	-1,			/* ia_dmaintr */
