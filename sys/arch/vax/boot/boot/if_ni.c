@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ni.c,v 1.1 2000/06/15 19:53:23 ragge Exp $ */
+/*	$NetBSD: if_ni.c,v 1.2 2000/07/10 10:40:38 ragge Exp $ */
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -198,7 +198,7 @@ niopen(struct open_file *f, int adapt, int ctlr, int unit, int part)
 	if (beenhere++ && askname == 0)
 		return 0;
 
-	niaddr = nexaddr & ~(NODESIZE - 1);
+	niaddr = nexaddr & ~(BI_NODESIZE - 1);
 	bootrpb.csrphy = niaddr;
 	if (adapt >= 0)
 		bootrpb.adpphy = adapt;
