@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.6 2003/05/21 10:05:21 dsl Exp $	*/
+/*	$NetBSD: md.c,v 1.7 2003/05/29 17:51:26 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -302,6 +302,7 @@ int md_make_bsd_partitions (void)
 	char isize[20];
 	int maxpart = getmaxpartitions();
 	struct disklabel l;
+	int partstart, partsize;
 
 	/*
 	 * Initialize global variables that track  space used on this disk.
