@@ -1,4 +1,4 @@
-/*	$NetBSD: atexit.h,v 1.7 1998/10/18 14:36:30 kleink Exp $	*/
+/*	$NetBSD: atexit.h,v 1.8 1999/03/22 19:09:10 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -35,8 +35,13 @@
  *	from: @(#)atexit.h	8.2 (Berkeley) 7/3/94
  */
 
-/* must be at least 32 to guarantee ANSI conformance */
-#define	ATEXIT_SIZE	32
+/*
+ * Must be at least 32 to guarantee ANSI conformance, plus three additional
+ * ones for the benefit of the startup code, which may use them up to register
+ * the dynamical loader's cleanup routine, the profiling cleanup routine,
+ * and global destructor execution.
+ */
+#define	ATEXIT_SIZE	35
 
 struct atexit {
 	struct atexit *next;		/* next in list */
