@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.76 2004/04/12 04:51:30 jmc Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.77 2004/04/12 05:22:43 jmc Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -541,3 +541,8 @@ etc/etc.sparc64/MAKEDEV				patch
 	Fix ugen issue from latest shell changes that treat numeric constants
 	differently depending on their prefix.
 	[taca, ticket #1664]
+
+sys/arch/hp300/stand/common/clock.c		1.5
+
+	Fix yet another y2k+1 bug.
+	[tsutsui, ticket #1665]
