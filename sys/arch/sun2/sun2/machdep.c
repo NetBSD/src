@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.4 2001/04/24 04:31:13 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.5 2001/05/14 15:36:42 fredette Exp $	*/
 
 /*
  * Copyright (c) 2001 Matthew Fredette.
@@ -259,14 +259,14 @@ cpu_startup()
 
 	/*
 	 * Initialize message buffer (for kernel printf).
-	 * This is put in physical page four so it will
-	 * always be in the same place after a reboot.
-	 * (physical pages 0-3 are reserved by the PROM
+	 * This is put in physical pages four through seven
+	 * so it will always be in the same place after a 
+	 * reboot. (physical pages 0-3 are reserved by the PROM
 	 * for its vector table and other stuff.)
 	 * Its mapping was prepared in pmap_bootstrap().
 	 * Also, offset some to avoid PROM scribbles.
 	 */
-	v = (caddr_t) KERNBASE + (NBPG * 4);
+	v = (caddr_t) (NBPG * 4);
 	msgbufaddr = (caddr_t)(v + MSGBUFOFF);
 	initmsgbuf(msgbufaddr, MSGBUFSIZE);
 
@@ -284,7 +284,12 @@ cpu_startup()
 	 */
 	printf(version);
 	identifycpu();
-	initfpu();	/* also prints FPU type */
+	fputype = FPU_NONE;
+#ifdef  FPU_EMULATE
+	printf("fpu: emulator\n");
+#else
+	printf("fpu: no math support\n");
+#endif
 
 	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
 	printf("total memory = %s\n", pbuf);
@@ -451,8 +456,6 @@ setregs(p, pack, stack)
 
 	/* restore a null state frame */
 	p->p_addr->u_pcb.pcb_fpregs.fpf_null = 0;
-	if (fputype)
-		m68881_restore(&p->p_addr->u_pcb.pcb_fpregs);
 
 	p->p_md.md_flags = 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.1 2001/04/06 15:05:56 fredette Exp $	*/
+/*	$NetBSD: machdep.h,v 1.2 2001/05/14 15:36:42 fredette Exp $	*/
 
 /*
  * Copyright (c) 2001 Matthew Fredette
@@ -90,9 +90,6 @@ int 	getsfc __P((void));
 void**	getvbr __P((void));
 
 void	initfpu __P((void));
-
-void	m68881_save __P((struct fpframe *));
-void	m68881_restore __P((struct fpframe *));
 
 void	set_clk_mode __P((int, int));
 
