@@ -37,7 +37,7 @@
  * From:
  *	Id: procfs.h,v 4.1 1993/12/17 10:47:45 jsp Rel
  *
- *	$Id: procfs.h,v 1.6 1994/01/28 07:03:16 cgd Exp $
+ *	$Id: procfs.h,v 1.7 1994/02/06 14:01:16 ws Exp $
  */
 
 /*
@@ -96,7 +96,7 @@ struct pfsdent {
 #define PROCFS_FILENO(pid, type) \
 	(((type) == Proot) ? \
 			((pid) + 2) : \
-			((((pid)+1) << 3) + ((int) (type))))
+			((((pid)+1) << 4) + ((int) (type))))
 
 /*
  * Convert between pfsnode vnode
