@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)kdump.c	5.3 (Berkeley) 1/17/91"; */
-static char rcsid[] = "$Id: kdump.c,v 1.3 1993/05/20 10:37:33 cgd Exp $";
+static char rcsid[] = "$Id: kdump.c,v 1.4 1993/06/22 00:49:03 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -227,7 +227,7 @@ dumpheader(kth)
 
 #include <sys/syscall.h>
 #define KTRACE
-#include "/sys/kern/syscalls.c"
+#include "kern/syscalls.c"
 #undef KTRACE
 int nsyscalls = sizeof (syscallnames) / sizeof (syscallnames[0]);
 
