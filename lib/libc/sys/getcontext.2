@@ -1,4 +1,4 @@
-.\"	$NetBSD: getcontext.2,v 1.1.2.1 2001/03/05 23:34:40 nathanw Exp $
+.\"	$NetBSD: getcontext.2,v 1.1.2.2 2003/01/17 10:09:24 wiz Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
 .\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
 .\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS 
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
 .\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
 .\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
 .\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
@@ -62,12 +62,12 @@ and its current execution stack.
 .Pp
 The
 .Fn setcontext
-restores the user context defined in the object pointed to by
+function restores the user context defined in the object pointed to by
 .Fa ucp
 as most recently initialized by a previous call to either
 .Fn getcontext
 or
-.Xr makecontext(3) .
+.Xr makecontext 3 .
 .\" TODO: signal handler
 If successful, execution of the program resumes as defined in the
 .Fa ucp
@@ -122,8 +122,8 @@ are invalid.
 .Sh SEE ALSO
 .Xr sigprocmask 2 ,
 .Xr longjmp 3 ,
-.Xr setjmp 3 ,
 .Xr makecontext 3 ,
+.Xr setjmp 3 ,
 .Xr swapcontext 3
 .Sh STANDARDS
 The
