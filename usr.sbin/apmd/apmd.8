@@ -1,4 +1,4 @@
-.\"	$NetBSD: apmd.8,v 1.8 1998/11/19 19:39:14 kenh Exp $
+.\"	$NetBSD: apmd.8,v 1.9 1998/12/19 15:27:58 christos Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -45,6 +45,7 @@
 .Op Fl d
 .Op Fl s
 .Op Fl a
+.Op Fl l
 .Op Fl q
 .Op Fl t Ar seconds
 .Op Fl S Ar sockname
@@ -100,6 +101,11 @@ If the
 flag is specified, any BIOS-initiated suspend or standby requests are
 ignored if the system is connected to line current and not running from
 batteries (user requests are still honored).
+.Pp
+If the
+.Fl l
+flag is specified, then a low-battery event causes a suspend request
+to occur.
 .Pp
 If the
 .Fl d
