@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.6 1996/10/13 03:34:54 christos Exp $	*/
+/*	$NetBSD: ite.c,v 1.7 1997/01/26 12:17:59 oki Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -93,7 +93,7 @@ inline static char *index __P((const char *cp, char ch));
 void ite_reset __P((struct ite_softc *ip));
 
 struct itesw itesw[] = {
-	0,	view_init,	view_deinit,	0,
+	0,	tv_init,	tv_deinit,	0,
 	0,	0,		0,
 };
 int	nitesw = sizeof(itesw) / sizeof(itesw[0]);
