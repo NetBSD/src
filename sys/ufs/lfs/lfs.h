@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.43 2003/01/24 21:55:25 fvdl Exp $	*/
+/*	$NetBSD: lfs.h,v 1.44 2003/01/27 23:17:56 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -628,7 +628,7 @@ struct segsum {
 			   (fs)->lfs_ssize << (fs)->lfs_blktodb :       \
 			   btofsb((fs), (fs)->lfs_ssize)) * (seg))
 #define	dtosn(fs, daddr)	/* block address to segment number */	\
-	(((daddr) - (fs)->lfs_start) / segtod((fs), 1))
+	((uint32_t)(((daddr) - (fs)->lfs_start) / segtod((fs), 1)))
 #define sntod(fs, sn) 		/* segment number to disk address */	\
 	((daddr_t)(segtod((fs), (sn)) + (fs)->lfs_start))
 
