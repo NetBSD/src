@@ -1,4 +1,4 @@
-/*	$NetBSD: wss_isa.c,v 1.7 1999/02/17 23:05:29 mycroft Exp $	*/
+/*	$NetBSD: wss_isa.c,v 1.8 1999/08/14 21:19:29 augustss Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -299,7 +299,7 @@ madprobe(sc, iobase)
         goto bad1;
     if (bus_space_map(sc->sc_iot, MAD_REG2, MAD_LEN2, 0, &sc->mad_ioh2))
         goto bad2;
-    if (bus_space_map(sc->sc_iot, MAD_REG3, MAD_LEN3, 0, &sc->mad_ioh3))
+    if (bus_space_map(sc->sc_iot, MAD_REG3, MAD_LEN3, 0, &sc->sc_opl_ioh))
         goto bad3;
 
     DPRINTF(("mad: Detect using password = 0xE2\n"));
@@ -343,7 +343,7 @@ madprobe(sc, iobase)
     return;
 
 bad:
-    bus_space_unmap(sc->sc_iot, sc->mad_ioh3, MAD_LEN3);
+    bus_space_unmap(sc->sc_iot, sc->sc_opl_ioh, MAD_LEN3);
 bad3:
     bus_space_unmap(sc->sc_iot, sc->mad_ioh2, MAD_LEN2);
 bad2:
@@ -363,5 +363,5 @@ madunmap(sc)
     bus_space_unmap(sc->sc_iot, sc->mad_ioh, MAD_NPORT);
     bus_space_unmap(sc->sc_iot, sc->mad_ioh1, MAD_LEN1);
     bus_space_unmap(sc->sc_iot, sc->mad_ioh2, MAD_LEN2);
-    bus_space_unmap(sc->sc_iot, sc->mad_ioh3, MAD_LEN3);
+    bus_space_unmap(sc->sc_iot, sc->sc_opl_ioh, MAD_LEN3);
 }

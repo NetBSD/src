@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.87 1999/08/02 17:37:42 augustss Exp $
+#	$NetBSD: files.isa,v 1.88 1999/08/14 21:19:29 augustss Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -303,11 +303,14 @@ attach	sp at pss
 file	dev/isa/pss.c			pss needs-flag
 
 # Microsoft Windows Sound System
-device	wss: audio, isadma, ad1848, auconv
+device	wss { } : audio, isadma, ad1848, auconv
 file	dev/isa/wss.c			wss needs-flag
 
 attach	wss at isa with wss_isa
 file	dev/isa/wss_isa.c		wss_isa needs-flag
+
+attach	opl at wss with opl_wss
+file	dev/isa/opl_wss.c		opl_wss
 
 # ESS Technology ES1887/ES888/ES1888
 device	ess { } : audio, isadma, mulaw, auconv, midibus
