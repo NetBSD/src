@@ -1,8 +1,9 @@
-#	$NetBSD: Makefile,v 1.7 2001/04/11 17:32:57 wiz Exp $
+#	$NetBSD: Makefile,v 1.8 2001/05/09 16:28:10 nsmrtks Exp $
 
 .include <bsd.own.mk>
 .include <bsd.obj.mk>
 .include <bsd.depall.mk>
+.include <bsd.prog.mk>
 .MAIN:	all
 
 realall: inst.fs.gz
