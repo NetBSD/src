@@ -27,7 +27,7 @@ To prepare for installing via a tape:
 	way to do this is with the dd(1) command.  Make sure you
 	use a `no-rewind-on-close' tape device.  For example:
 
-		for file in base12.tar.gz etc12.tar.gz; do
+		for file in base.tgz etc.tgz; do
 			dd if=${file} of=/dev/nrst0
 		done
 
@@ -77,8 +77,8 @@ To prepare for installing via FTP:
 		IP Address: ftp.NetBSD.ORG
 		Login: anonymous
 		Password: <your e-mail address>
-		Server path: /pub/NetBSD/NetBSD-_VER/hp300/binary
+		Server path: /pub/NetBSD/NetBSD-_VER/hp300/binary/sets
 
 	Note: if you're not using a nameserver duing installation,
 	you might find 206.86.8.12 handy; it's the IP address of
-	ftp.NetBSD.ORG as of September 2, 1996.
+	ftp.NetBSD.ORG as of Dezember, 23, 1997.

@@ -4,8 +4,8 @@ run X, more RAM is recommended.
 
 Here is a table of recommended HD partition sizes for a full install:
 	partition:	advise		needed
-	root (/)	15M		10M
-	user (/usr)	80M		45M
+	root (/)	25M		15M
+	user (/usr)    150M	       100M
 	swap		(2 or 3 * RAM)	 6M	(see note below)
 	Anything else is up to you!
 
