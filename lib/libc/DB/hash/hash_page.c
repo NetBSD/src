@@ -719,7 +719,7 @@ overflow_page(hashp)
 		hashp->OVFL_POINT = splitnum;
 		hashp->SPARES[splitnum] = hashp->SPARES[splitnum-1];
 		hashp->SPARES[splitnum-1]--;
-		offset = 0;
+		offset = 1;
 	}
 
 	/* Check if we need to allocate a new bitmap page */
