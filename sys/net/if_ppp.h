@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.h,v 1.20 2003/09/01 16:51:26 christos Exp $	*/
+/*	$NetBSD: if_ppp.h,v 1.21 2003/09/04 07:46:47 christos Exp $	*/
 /*	Id: if_ppp.h,v 1.16 1997/04/30 05:46:04 paulus Exp 	*/
 
 /*
@@ -111,7 +111,7 @@ struct ifpppcstatsreq {
 };
 
 struct ppp_rawin {
-    u_char buf[19];
+    u_char buf[63];
     u_char count;
 };
 
