@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_quirks.c,v 1.63 2003/10/22 05:38:16 augustss Exp $	*/
+/*	$NetBSD: umass_quirks.c,v 1.64 2003/11/07 01:04:27 kivinen Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_quirks.c,v 1.63 2003/10/22 05:38:16 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_quirks.c,v 1.64 2003/11/07 01:04:27 kivinen Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,6 +118,14 @@ Static const struct umass_quirk umass_quirks[] = {
 	  UMASS_QUIRK_WRONG_CSWTAG,
 	  0,
 	  UMATCH_DEVCLASS_DEVSUBCLASS_DEVPROTO,
+	  NULL, NULL
+	},
+
+	{ { USB_VENDOR_SHUTTLE, USB_PRODUCT_SHUTTLE_ORCA },
+	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
+	  UMASS_QUIRK_WRONG_CSWTAG,
+	  0,
+	  UMATCH_VENDOR_PRODUCT,
 	  NULL, NULL
 	},
 
