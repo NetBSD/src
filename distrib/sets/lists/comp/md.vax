@@ -1,4 +1,4 @@
-# $NetBSD: md.vax,v 1.12 2000/03/17 22:54:07 tron Exp $
+# $NetBSD: md.vax,v 1.13 2000/04/29 03:46:31 thorpej Exp $
 ./usr/include/vax	comp-c-include
 ./usr/include/vax/_G_config.h	comp-c-include
 ./usr/include/vax/ansi.h	comp-c-include
@@ -24,6 +24,7 @@
 ./usr/include/vax/ka750.h	comp-c-include
 ./usr/include/vax/ka820.h	comp-c-include
 ./usr/include/vax/limits.h	comp-c-include
+./usr/include/vax/lock.h	comp-c-include
 ./usr/include/vax/macros.h	comp-c-include
 ./usr/include/vax/math.h	comp-c-include
 ./usr/include/vax/mtpr.h	comp-c-include

@@ -1,4 +1,4 @@
-# $NetBSD: md.bebox,v 1.7 2000/03/17 22:54:05 tron Exp $
+# $NetBSD: md.bebox,v 1.8 2000/04/29 03:46:27 thorpej Exp $
 ./usr/include/bebox	comp-c-include
 ./usr/include/bebox/_G_config.h	comp-c-include
 ./usr/include/bebox/ansi.h	comp-c-include
@@ -28,6 +28,7 @@
 ./usr/include/bebox/kcore.h	comp-c-include
 ./usr/include/bebox/kgdb.h	comp-c-include
 ./usr/include/bebox/limits.h	comp-c-include
+./usr/include/bebox/lock.h	comp-c-include
 ./usr/include/bebox/machine_type.h	comp-c-include
 ./usr/include/bebox/math.h	comp-c-include
 ./usr/include/bebox/mouse.h	comp-c-include

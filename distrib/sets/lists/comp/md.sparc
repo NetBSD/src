@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc,v 1.40 2000/03/17 22:54:06 tron Exp $
+# $NetBSD: md.sparc,v 1.41 2000/04/29 03:46:30 thorpej Exp $
 ./usr/include/sparc	comp-c-include
 ./usr/include/sparc/_G_config.h	comp-c-include
 ./usr/include/sparc/ansi.h	comp-c-include
@@ -28,6 +28,7 @@
 ./usr/include/sparc/kbio.h	comp-c-include
 ./usr/include/sparc/kcore.h	comp-c-include
 ./usr/include/sparc/limits.h	comp-c-include
+./usr/include/sparc/lock.h	comp-c-include
 ./usr/include/sparc/math.h	comp-c-include
 ./usr/include/sparc/oldmon.h	comp-c-include
 ./usr/include/sparc/openpromio.h	comp-c-include
