@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.61 2000/12/03 23:25:24 eeh Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.62 2000/12/04 11:18:49 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -888,7 +888,7 @@ ncr53c9x_ioctl(link, cmd, arg, flag, p)
 	struct proc *p;
 {
 	struct ncr53c9x_softc *sc = link->adapter_softc;
-	int s, error;
+	int s, error = 0;
 
 	s = splbio();
 
