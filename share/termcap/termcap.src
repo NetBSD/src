@@ -643,6 +643,26 @@ pc6300plus|AT&T 6300 plus:\
 	:se=\E[m:sf=^J:so=\E[7m:st=\EH:ue=\E[m:up=\E[A:us=\E[4m:\
 	:ve=\E[=1C:vi=\E[=C:
 
+# <tv@pobox.com>:
+# Entry for the DNARD OpenFirmware console, close to ANSI but not quite.
+#
+# (still unfinished, but good enough so far.)
+ofcons:\
+	:bs:bw:co#80:li#30:\
+	:ku=\233A:kd=\233B:kr=\233C:kl=\233D:kb=^H:kD=\233P:\
+	:k1=\2330P:k2=\2330Q:k3=\2330W:k4=\2330x:k5=\2330t:k6=\2330u:\
+	:k7=\2330q:k8=\2330r:k9=\2330p:k;=\2330M:\
+	:kN=\233/:kP=\233?:\
+        :mb=\2337;2m:se=\2330m:ue=\2330m:\
+        :md=\2331m:me=\2330m:mh=\2332m:mk=\2338m:mr=\2337m:\
+        :..sa=\2330%?%p6%t;1%;%?%p2%t;4%;%?%p1%p3%|%t;7%;m:\
+	:UP=\233%dA:DO=\233%dB:RI=\233%dC:LE=\233%dD:\
+	:DC=\233%dP:IC=\233%d@:dc=\233P:ic=\233@:\
+	:DL=\233%dM:dl=\233M:AL=\233%dL:al=\233L:\
+	:le=\233D:nd=\233C:do=\233B:up=\233A:\
+	:cl=^L:cr=^M:ta=^I:bl=^G:vb=^G:\
+	:cm=\233%i%d;%dH:cd=\233J:ce=\233K:
+
 #
 #	Terminfo entry for the AT&T Unix PC 7300
 #	from escape(7) in Unix PC 7300 Manual.
