@@ -1,4 +1,4 @@
-/*	$NetBSD: pidfile.c,v 1.6 2001/10/20 09:20:28 taca Exp $	*/
+/*	$NetBSD: pidfile.c,v 1.7 2002/05/22 07:31:45 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: pidfile.c,v 1.6 2001/10/20 09:20:28 taca Exp $");
+__RCSID("$NetBSD: pidfile.c,v 1.7 2002/05/22 07:31:45 itojun Exp $");
 #endif
 
 #include <sys/param.h>
@@ -56,7 +56,7 @@ static char *pidfile_path;
 
 static void pidfile_cleanup(void);
 
-void
+int
 pidfile(const char *basename)
 {
 	FILE *f;
@@ -66,7 +66,7 @@ pidfile(const char *basename)
 	 */
 	if (!pidfile_atexit_done) {
 		if (atexit(pidfile_cleanup) < 0)
-			return;
+			return -1;
 		pidfile_atexit_done = 1;
 	}
 
@@ -79,7 +79,7 @@ pidfile(const char *basename)
 	 */
 	if (pidfile_path != NULL) {
 		if (strcmp(pidfile_basename, basename) == 0)
-			return;
+			return 0;
 		/*
 		 * Remove existing pidfile if it was created by this process.
 		 */
@@ -95,14 +95,14 @@ pidfile(const char *basename)
 
 	pidfile_basename = strdup(basename);
 	if (pidfile_basename == NULL)
-		return;
+		return -1;
 
 	/* _PATH_VARRUN includes trailing / */
 	(void) asprintf(&pidfile_path, "%s%s.pid", _PATH_VARRUN, basename);
 	if (pidfile_path == NULL) {
 		free(pidfile_basename);
 		pidfile_basename = NULL;
-		return;
+		return -1;
 	}
 
 	if ((f = fopen(pidfile_path, "w")) == NULL) {
@@ -110,11 +110,12 @@ pidfile(const char *basename)
 		pidfile_path = NULL;
 		free(pidfile_basename);
 		pidfile_basename = NULL;
-		return;
+		return -1;
 	}
 
 	(void) fprintf(f, "%d\n", pidfile_pid);
 	(void) fclose(f);
+	return 0;
 }
 
 static void

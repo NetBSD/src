@@ -1,4 +1,4 @@
-.\"	$NetBSD: pidfile.3,v 1.4 2002/02/07 07:00:52 ross Exp $
+.\"	$NetBSD: pidfile.3,v 1.5 2002/05/22 07:31:44 itojun Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -44,7 +44,7 @@
 .Lb libutil
 .Sh SYNOPSIS
 .Fd #include \*[Lt]util.h\*[Gt]
-.Ft void
+.Ft int
 .Fn pidfile "const char *basename"
 .Sh DESCRIPTION
 .Fn pidfile
@@ -69,6 +69,9 @@ causes a pid file to be written; subsequent invocations have no effect
 unless a new
 .Ar basename
 is supplied.
+.Sh RETURN VALUES
+.Fn pidfile
+returns 0 on success and -1 on failure.
 .Sh SEE ALSO
 .Xr atexit 3
 .Sh HISTORY
@@ -76,3 +79,18 @@ The
 .Nm
 function call appeared in
 .Nx 1.5 .
+.Sh BUGS
+If
+.Fn pidfile
+is called multiple times with different
+.Ar basename ,
+only the last pidfile will be removed upon exit.
+.Pp
+.Fn pidfile
+uses
+.Xr atexit 3
+to ensure the pidfile is unlinked at program exit.
+However, programs that use the
+.Xr _exit 2
+function (for example, in signal handlers)
+will not trigger this behaviour.
