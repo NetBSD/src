@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm.h,v 1.15.4.4 1999/07/04 01:57:20 chs Exp $	*/
+/*	$NetBSD: uvm.h,v 1.15.4.5 1999/07/31 18:53:59 chs Exp $	*/
 
 /*
  *
@@ -122,15 +122,6 @@ struct uvm {
 	/* kernel object: to support anonymous pageable kernel memory */
 	struct uvm_object *kernel_object;
 };
-
-/*
- * historys
- */
-
-#ifdef _KERNEL
-UVMHIST_DECL(maphist);
-UVMHIST_DECL(pdhist);
-#endif /* _KERNEL */
 
 /*
  * vm_map_entry etype bits:
