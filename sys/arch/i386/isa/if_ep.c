@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: if_ep.c,v 1.42.2.2 1994/07/29 01:12:56 cgd Exp $
+ *	$Id: if_ep.c,v 1.42.2.3 1994/08/05 22:47:15 mycroft Exp $
  */
 
 #include "bpfilter.h"
@@ -193,7 +193,7 @@ epprobe(parent, self, aux)
 			k = (k & 0x1f) * 0x10 + 0x200;
 			k2 = inw(iobase + EP_W0_RESOURCE_CFG);
 			k2 >>= 12;
-			epaddcard(iobase, k2, 0);
+			epaddcard(iobase, k2, 1);
 		}
 
 		/* find all isa cards */
@@ -355,7 +355,7 @@ epinit(sc)
 	register struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	int     s, i;
 
-	if (ifp->if_addrlist == 0)
+	if (ifp->if_addrlist == NULL)
 		return;
 
 	s = splimp();
@@ -454,7 +454,7 @@ epstart(ifp)
 	struct ifnet *ifp;
 {
 	register struct ep_softc *sc = epcd.cd_devs[ifp->if_unit];
-	struct mbuf *m, *top;
+	struct mbuf *m, *m0;
 	int     s, sh, len, pad;
 
 	s = splimp();
@@ -465,15 +465,15 @@ epstart(ifp)
 
 startagain:
 	/* Sneak a peek at the next packet */
-	m = sc->sc_arpcom.ac_if.if_snd.ifq_head;
-	if (m == 0) {
+	m0 = sc->sc_arpcom.ac_if.if_snd.ifq_head;
+	if (m0 == NULL) {
 		splx(s);
 		return (0);
 	}
 #if 0
-	len = m->m_pkthdr.len;
+	len = m0->m_pkthdr.len;
 #else
-	for (len = 0, top = m; m; m = m->m_next)
+	for (len = 0, m = m0; m; m = m->m_next)
 		len += m->m_len;
 #endif
 
@@ -487,8 +487,8 @@ startagain:
 	if (len + pad > ETHER_MAX_LEN) {
 		/* packet is obviously too large: toss it */
 		+sc->sc_arpcom.ac_if.if_oerrors;
-		IF_DEQUEUE(&sc->sc_arpcom.ac_if.if_snd, m);
-		m_freem(m);
+		IF_DEQUEUE(&sc->sc_arpcom.ac_if.if_snd, m0);
+		m_freem(m0);
 		goto readcheck;
 	}
 
@@ -502,46 +502,49 @@ startagain:
 		outw(BASE + EP_COMMAND, SET_TX_AVAIL_THRESH | 2044);
 	}
 
-	IF_DEQUEUE(&sc->sc_arpcom.ac_if.if_snd, m);
-	if (m == 0) {		/* not really needed */
+	IF_DEQUEUE(&sc->sc_arpcom.ac_if.if_snd, m0);
+	if (m0 == NULL) {		/* not really needed */
 		splx(s);
 		return (0);
 	}
 	outw(BASE + EP_COMMAND, SET_TX_START_THRESH |
 	    (len / 4 + sc->tx_start_thresh));
 
-	outw(BASE + EP_W1_TX_PIO_WR_1, len);
-	outw(BASE + EP_W1_TX_PIO_WR_1, 0xffff);	/* Second dword meaningless */
+#if NBPFILTER > 0
+	if (sc->sc_arpcom.ac_if.if_bpf)
+		bpf_mtap(sc->sc_arpcom.ac_if.if_bpf, m0);
+#endif
 
 	sh = splhigh();
-
-	for (top = m; m != 0; m = m->m_next) {
-		if (sc->bus32bit) {
-			outsl(BASE + EP_W1_TX_PIO_WR_1, mtod(m, caddr_t),
-			    m->m_len/4);
+	outw(BASE + EP_W1_TX_PIO_WR_1, len);
+	outw(BASE + EP_W1_TX_PIO_WR_1, 0xffff);	/* Second dword meaningless */
+	if (sc->bus32bit) {
+		for (m = m0; m; ) {
+			if (m->m_len > 3)
+				outsl(BASE + EP_W1_TX_PIO_WR_1, mtod(m, caddr_t),
+				    m->m_len/4);
 			if (m->m_len & 3)
 				outsb(BASE + EP_W1_TX_PIO_WR_1,
-				    mtod(m, caddr_t) + m->m_len/4,
-				    m->m_len & 3);
-		} else {
-			outsw(BASE + EP_W1_TX_PIO_WR_1, mtod(m, caddr_t), m->m_len/2);
+				    mtod(m, caddr_t) + (m->m_len & ~3), m->m_len & 3);
+			MFREE(m, m0);
+			m = m0;
+		}
+	} else {
+		for (m = m0; m; ) {
+			if (m->m_len > 1)
+				outsw(BASE + EP_W1_TX_PIO_WR_1, mtod(m, caddr_t),
+				    m->m_len/2);
 			if (m->m_len & 1)
 				outb(BASE + EP_W1_TX_PIO_WR_1,
 				    *(mtod(m, caddr_t) + m->m_len - 1));
+			MFREE(m, m0);
+			m = m0;
 		}
 	}
-
 	while (pad--)
-		outb(BASE + EP_W1_TX_PIO_WR_1, 0);	/* Padding */
-
+		outb(BASE + EP_W1_TX_PIO_WR_1, 0);
 	splx(sh);
 
-#if NBPFILTER > 0
-	if (sc->sc_arpcom.ac_if.if_bpf)
-		bpf_mtap(sc->sc_arpcom.ac_if.if_bpf, top);
-#endif
-
-	m_freem(top);
 	++sc->sc_arpcom.ac_if.if_opackets;
 
 	/*
@@ -643,12 +646,12 @@ epread(sc)
 	register struct ep_softc *sc;
 {
 	struct ether_header *eh;
-	struct mbuf *mcur, *m, *m0, *top;
+	struct mbuf *mcur, *m, *m0;
 	int     totlen, lenthisone;
 	int     save_totlen, sh;
 
 	totlen = inw(BASE + EP_W1_RX_STATUS);
-	top = 0;
+	m0 = NULL;
 
 	if (sc->sc_arpcom.ac_if.if_flags & IFF_DEBUG) {
 		int err = totlen & ERR_MASK;
@@ -681,11 +684,11 @@ epread(sc)
 	save_totlen = totlen &= RX_BYTES_MASK;	/* Lower 11 bits = RX bytes. */
 
 	m = sc->mb[sc->next_mb];
-	sc->mb[sc->next_mb] = 0;
+	sc->mb[sc->next_mb] = NULL;
 
-	if (m == 0) {
+	if (m == NULL) {
 		MGETHDR(m, M_DONTWAIT, MT_DATA);
-		if (m == 0)
+		if (m == NULL)
 			goto out;
 	} else {		/* Convert one of our saved mbuf's */
 		sc->next_mb = (sc->next_mb + 1) % MAX_MBS;
@@ -693,7 +696,7 @@ epread(sc)
 		m->m_flags = M_PKTHDR;
 	}
 
-	top = m0 = m;		/* We assign top so we can "goto out" */
+	m0 = m;
 #define EROUND  ((sizeof(struct ether_header) + 3) & ~3)
 #define EOFF    (EROUND - sizeof(struct ether_header))
 	m0->m_data += EOFF;
@@ -708,13 +711,14 @@ epread(sc)
 	eh = mtod(m, struct ether_header *);
 	while (totlen > 0) {
 		lenthisone = min(totlen, M_TRAILINGSPACE(m));
-		if (lenthisone == 0) {	/* no room in this one */
+		if (lenthisone < 4) {
+			/* not enough room in this mbuf */
 			mcur = m;
 			m = sc->mb[sc->next_mb];
 			sc->mb[sc->next_mb] = 0;
 			if (!m) {
 				MGET(m, M_DONTWAIT, MT_DATA);
-				if (m == 0) {
+				if (!m) {
 					splx(sh);
 					goto out;
 				}
@@ -729,26 +733,29 @@ epread(sc)
 			lenthisone = min(totlen, M_TRAILINGSPACE(m));
 		}
 		if (sc->bus32bit) {
-			insl(BASE + EP_W1_RX_PIO_RD_1, mtod(m, caddr_t) + m->m_len,
-			    lenthisone / 4);
-			m->m_len += (lenthisone & ~3);
-			if (lenthisone & 3)
+			if (totlen > 3) {
+				lenthisone &= ~3;
+				insl(BASE + EP_W1_RX_PIO_RD_1,
+				    mtod(m, caddr_t) + m->m_len, lenthisone/4);
+			} else
 				insb(BASE + EP_W1_RX_PIO_RD_1,
-				    mtod(m, caddr_t) + m->m_len,
-				    lenthisone & 3);
-			m->m_len += (lenthisone & 3);
-		} else {
-			insw(BASE + EP_W1_RX_PIO_RD_1, mtod(m, caddr_t) + m->m_len,
-			    lenthisone / 2);
+				    mtod(m, caddr_t) + m->m_len, lenthisone);
 			m->m_len += lenthisone;
-			if (lenthisone & 1)
-				*(mtod(m, caddr_t) + m->m_len - 1) = inb(BASE + EP_W1_RX_PIO_RD_1);
+			totlen -= lenthisone;
+		} else {
+			if (totlen > 1) {
+				lenthisone &= ~1;
+				insw(BASE + EP_W1_RX_PIO_RD_1,
+				    mtod(m, caddr_t) + m->m_len, lenthisone / 2);
+			} else
+				*(mtod(m, caddr_t) + m->m_len) =
+				    inb(BASE + EP_W1_RX_PIO_RD_1);
+			m->m_len += lenthisone;
+			totlen -= lenthisone;
 		}
-		totlen -= lenthisone;
 	}
-	top = m0;
-	top->m_pkthdr.len = save_totlen;
-	top->m_pkthdr.rcvif = &sc->sc_arpcom.ac_if;
+	m0->m_pkthdr.len = save_totlen;
+	m0->m_pkthdr.rcvif = &sc->sc_arpcom.ac_if;
 	outw(BASE + EP_COMMAND, RX_DISCARD_TOP_PACK);
 	splx(sh);
 	while (inw(BASE + EP_STATUS) & S_COMMAND_IN_PROGRESS)
@@ -756,7 +763,7 @@ epread(sc)
 	++sc->sc_arpcom.ac_if.if_ipackets;
 #if NBPFILTER > 0
 	if (sc->sc_arpcom.ac_if.if_bpf) {
-		bpf_mtap(sc->sc_arpcom.ac_if.if_bpf, top);
+		bpf_mtap(sc->sc_arpcom.ac_if.if_bpf, m0);
 
 		/*
 		 * Note that the interface cannot be in promiscuous mode if
@@ -767,20 +774,20 @@ epread(sc)
 		    (eh->ether_dhost[0] & 1) == 0 &&
 		    bcmp(eh->ether_dhost, sc->sc_arpcom.ac_enaddr,
 			 sizeof(eh->ether_dhost)) != 0) {
-			m_freem(top);
+			m_freem(m0);
 			return;
 		}
 	}
 #endif
-	m_adj(top, sizeof(struct ether_header));
-	ether_input(&sc->sc_arpcom.ac_if, eh, top);
+	m_adj(m0, sizeof(struct ether_header));
+	ether_input(&sc->sc_arpcom.ac_if, eh, m0);
 	return;
 
 out:	outw(BASE + EP_COMMAND, RX_DISCARD_TOP_PACK);
 	while (inw(BASE + EP_STATUS) & S_COMMAND_IN_PROGRESS)
 		;
-	if (top)
-		m_freem(top);
+	if (m0)
+		m_freem(m0);
 }
 
 

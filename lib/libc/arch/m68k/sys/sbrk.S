@@ -38,7 +38,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 	.text
 	/*.asciz "from: @(#)sbrk.s	5.1 (Berkeley) 5/12/90"*/
-	.asciz "$Id: sbrk.S,v 1.3 1994/01/27 15:09:18 mycroft Exp $"
+	.asciz "$Id: sbrk.S,v 1.3.2.1 1994/08/05 22:40:49 mycroft Exp $"
 #endif /* LIBC_SCCS and not lint */
 
 #include "SYS.h"
@@ -72,7 +72,4 @@ ENTRY(sbrk)
 #endif
 	rts
 err:
-#ifdef	PIC
-	movl	d0,sp@-
-#endif
 	jra	cerror
