@@ -1,6 +1,7 @@
-/*	$NetBSD: iommu.c,v 1.47 2002/02/08 20:03:45 eeh Exp $	*/
+/*	$NetBSD: iommu.c,v 1.48 2002/02/21 02:42:27 eeh Exp $	*/
 
 /*
+ * Copyright (c) 2001, 2002 Eduardo Horvath
  * Copyright (c) 1999, 2000 Matthew R. Green
  * All rights reserved.
  *
@@ -26,87 +27,6 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- */
-
-/*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
- * All rights reserved.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Paul Kranenburg.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
- * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
- * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
- * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
- */
-
-/*
- * Copyright (c) 1992, 1993
- *	The Regents of the University of California.  All rights reserved.
- *
- * This software was developed by the Computer Systems Engineering group
- * at Lawrence Berkeley Laboratory under DARPA contract BG 91-66 and
- * contributed to Berkeley.
- *
- * All advertising materials mentioning features or use of this software
- * must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Lawrence Berkeley Laboratory.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- *	from: NetBSD: sbus.c,v 1.13 1999/05/23 07:24:02 mrg Exp
- *	from: @(#)sbus.c	8.1 (Berkeley) 6/11/93
  */
 
 /*
@@ -604,7 +524,8 @@ iommu_dvmamap_load(t, is, map, buf, buflen, p, flags)
 		/* Oops.  We crossed a boundary.  Split the xfer. */
 		DPRINTF(IDB_INFO, ("iommu_dvmamap_load: "
 			"seg %d start %lx size %lx\n", seg,
-			map->dm_segs[seg].ds_addr, map->dm_segs[seg].ds_len));
+			(long)map->dm_segs[seg].ds_addr, 
+			map->dm_segs[seg].ds_len));
 		map->dm_segs[seg].ds_len = sgstart & (boundary - 1);
 		if (++seg > map->_dm_segcnt) {
 			/* Too many segments.  Fail the operation. */
@@ -625,7 +546,7 @@ iommu_dvmamap_load(t, is, map, buf, buflen, p, flags)
 	map->dm_segs[seg].ds_len = sgend - sgstart + 1;
 	DPRINTF(IDB_INFO, ("iommu_dvmamap_load: "
 		"seg %d start %lx size %lx\n", seg,
-		map->dm_segs[seg].ds_addr, map->dm_segs[seg].ds_len));
+		(long)map->dm_segs[seg].ds_addr, map->dm_segs[seg].ds_len));
 	map->dm_nsegs = seg+1;
 	map->dm_mapsize = buflen;
 
@@ -667,7 +588,7 @@ iommu_dvmamap_load(t, is, map, buf, buflen, p, flags)
 		if (map->dm_segs[seg].ds_addr < is->is_dvmabase ||
 			map->dm_segs[seg].ds_addr > is->is_dvmaend) {
 			printf("seg %d dvmaddr %lx out of range %x - %x\n",
-				seg, map->dm_segs[seg].ds_addr, 
+				seg, (long)map->dm_segs[seg].ds_addr, 
 				is->is_dvmabase, is->is_dvmaend);
 			Debugger();
 		}
@@ -826,7 +747,7 @@ iommu_dvmamap_load_raw(t, is, map, segs, nsegs, flags, size)
 
 			DPRINTF(IDB_INFO, ("iommu_dvmamap_load_raw: converting "
 				"physseg %d start %lx size %lx\n", i, 
-				segs[i].ds_addr, segs[i].ds_len));
+				(long)segs[i].ds_addr, segs[i].ds_len));
 
 			if ((pa == prev_pa) && 
 				((offset != 0) || (end != offset))) {
@@ -842,7 +763,7 @@ if (iommudebug & 0x10) printf("reusing dva %lx prev %lx pa %lx prev %lx\n",
 			sgend = sgstart + left - 1;
 
 			/* Are the segments virtually adjacent? */
-			if ((end == offset) && 
+			if ((j > 0) && (end == offset) && 
 				((offset == 0) || (pa == prev_pa))) {
 				/* Just append to the previous segment. */
 #ifdef DEBUG
@@ -855,14 +776,14 @@ printf("appending: offset %x pa %lx prev %lx dva %lx prev %lx\n",
 				map->dm_segs[--j].ds_len += left;
 				DPRINTF(IDB_INFO, ("iommu_dvmamap_load_raw: "
 					"appending seg %d start %lx size %lx\n", j,
-					map->dm_segs[j].ds_addr, 
+					(long)map->dm_segs[j].ds_addr, 
 					map->dm_segs[j].ds_len));
 			} else {
 				map->dm_segs[j].ds_addr = sgstart;
 				map->dm_segs[j].ds_len = left;
 				DPRINTF(IDB_INFO, ("iommu_dvmamap_load_raw: "
 					"seg %d start %lx size %lx\n", j,
-					map->dm_segs[j].ds_addr,
+					(long)map->dm_segs[j].ds_addr,
 					map->dm_segs[j].ds_len));
 			}
 			end = (offset + left) & PGOFSET;
@@ -875,7 +796,7 @@ printf("appending: offset %x pa %lx prev %lx dva %lx prev %lx\n",
 					sgstart & (boundary - 1);
 				DPRINTF(IDB_INFO, ("iommu_dvmamap_load_raw: "
 					"seg %d start %lx size %lx\n", j,
-					map->dm_segs[j].ds_addr, 
+					(long)map->dm_segs[j].ds_addr, 
 					map->dm_segs[j].ds_len));
 				if (++j > map->_dm_segcnt) {
 					iommu_dvmamap_unload(t, is, map);
@@ -923,7 +844,7 @@ printf("appending: offset %x pa %lx prev %lx dva %lx prev %lx\n",
 		if (map->dm_segs[seg].ds_addr < is->is_dvmabase ||
 			map->dm_segs[seg].ds_addr > is->is_dvmaend) {
 			printf("seg %d dvmaddr %lx out of range %x - %x\n",
-				seg, map->dm_segs[seg].ds_addr, 
+				seg, (long)map->dm_segs[seg].ds_addr, 
 				is->is_dvmabase, is->is_dvmaend);
 			Debugger();
 		}
@@ -946,7 +867,7 @@ printf("appending: offset %x pa %lx prev %lx dva %lx prev %lx\n",
 		map->dm_segs[i].ds_len = sgstart & (boundary - 1);
 		DPRINTF(IDB_INFO, ("iommu_dvmamap_load_raw: "
 			"seg %d start %lx size %lx\n", i,
-			map->dm_segs[i].ds_addr,
+			(long)map->dm_segs[i].ds_addr,
 			map->dm_segs[i].ds_len));
 		if (++i > map->_dm_segcnt) {
 			/* Too many segments.  Fail the operation. */
@@ -964,7 +885,7 @@ printf("appending: offset %x pa %lx prev %lx dva %lx prev %lx\n",
 	}
 	DPRINTF(IDB_INFO, ("iommu_dvmamap_load_raw: "
 			"seg %d start %lx size %lx\n", i,
-			map->dm_segs[i].ds_addr, map->dm_segs[i].ds_len));
+			(long)map->dm_segs[i].ds_addr, map->dm_segs[i].ds_len));
 	map->dm_segs[i].ds_len = sgend - sgstart + 1;
 
 	for (m = TAILQ_FIRST(mlist); m != NULL; m = TAILQ_NEXT(m,pageq)) {
@@ -988,7 +909,7 @@ printf("appending: offset %x pa %lx prev %lx dva %lx prev %lx\n",
 		if (map->dm_segs[seg].ds_addr < is->is_dvmabase ||
 			map->dm_segs[seg].ds_addr > is->is_dvmaend) {
 			printf("seg %d dvmaddr %lx out of range %x - %x\n",
-				seg, map->dm_segs[seg].ds_addr, 
+				seg, (long)map->dm_segs[seg].ds_addr, 
 				is->is_dvmabase, is->is_dvmaend);
 			Debugger();
 		}
