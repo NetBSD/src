@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_14.c,v 1.3 2000/07/09 13:39:31 mrg Exp $	*/
+/*	$NetBSD: netbsd32_compat_14.c,v 1.4 2000/11/18 02:00:50 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999 Eduardo E. Horvath
@@ -198,7 +198,7 @@ native_to_netbsd32_shmid_ds14(shmbuf, oshmbuf)
 	struct netbsd32_shmid_ds14 *oshmbuf;
 {
 
-	native_to_ipc_perm14(&shmbuf->shm_perm, &oshmbuf->shm_perm);
+	native_to_netbsd32_ipc_perm14(&shmbuf->shm_perm, &oshmbuf->shm_perm);
 
 #define	CVT(x)	oshmbuf->x = shmbuf->x
 	CVT(shm_segsz);
@@ -317,10 +317,10 @@ compat_14_netbsd32_shmctl(p, v, retval)
 	struct compat_14_netbsd32_shmctl_args /* {
 		syscallarg(int) shmid;
 		syscallarg(int) cmd;
-		syscallarg(struct shmid_ds14 *) buf;
+		syscallarg(struct netbsd32_shmid_ds14 *) buf;
 	} */ *uap = v;
 	struct shmid_ds shmbuf;
-	struct shmid_ds14 oshmbuf;
+	struct netbsd32_shmid_ds14 oshmbuf;
 	int cmd, error;
 
 	cmd = SCARG(uap, cmd);
