@@ -12,7 +12,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: aha1742.c,v 1.12 1993/06/09 22:36:46 deraadt Exp $
+ *	$Id: aha1742.c,v 1.13 1993/07/17 16:20:24 mycroft Exp $
  */
 
 #include "ahb.h"
@@ -660,7 +660,7 @@ ahb_free_ecb(int unit, struct ecb *ecb, int flags)
 	 * one to come free, starting with queued entries*
 	 */
 	if (!ecb->next)
-		wakeup(&ahb_data[unit].free_ecb);
+		wakeup((caddr_t)&ahb_data[unit].free_ecb);
 
 	if (!(flags & SCSI_NOMASK)) 
 		splx(opri);
@@ -685,7 +685,7 @@ ahb_get_ecb(int unit, int flags)
 	 * to come free
 	 */
 	while ((!(rc = ahb_data[unit].free_ecb)) && (!(flags & SCSI_NOSLEEP)))
-		sleep(&ahb_data[unit].free_ecb, PRIBIO);
+		sleep((caddr_t)&ahb_data[unit].free_ecb, PRIBIO);
 
 	if (rc) {
 		ahb_data[unit].free_ecb = rc->next;
@@ -1164,7 +1164,7 @@ ahb_timeout(int arg)
 		}
 	}
 	splx(s);
-	timeout(ahb_timeout,arg,SLEEPTIME);
+	timeout((timeout_t)ahb_timeout,(caddr_t)arg,SLEEPTIME);
 }
 
 void
