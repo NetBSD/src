@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_iokit.c,v 1.15 2003/05/13 20:48:16 manu Exp $ */
+/*	$NetBSD: mach_iokit.c,v 1.16 2003/05/14 14:41:04 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "opt_compat_darwin.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_iokit.c,v 1.15 2003/05/13 20:48:16 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_iokit.c,v 1.16 2003/05/14 14:41:04 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -602,7 +602,7 @@ mach_io_registry_entry_get_properties(args)
 	mid = mr->mr_port->mp_data;
 	if (mid->mid_properties == NULL)
 		return mach_iokit_error(args, MACH_IOKIT_EINVAL);
-	size = strlen(mid->mid_properties);
+	size = strlen(mid->mid_properties) + 1; /* Include trailing zero */
 
 	va = vm_map_min(&l->l_proc->p_vmspace->vm_map);
 	if ((error = uvm_map(&l->l_proc->p_vmspace->vm_map, &va, 
@@ -659,19 +659,24 @@ mach_io_registry_entry_get_property(args)
 	struct mach_iokit_devclass *mid;
 	struct mach_iokit_property *mip;
 
-	/* We do not handle non zero offset and multiple names yet */
+#ifdef DEBUG_MACH
+	/* 
+	 * We do not handle non zero offset and multiple names,
+	 * but it seems that Darwin binaries just jold random values
+	 * in theses fields. We have yet to see a real use of 
+	 * non null offset / multiple names.
+	 */
 	if (req->req_property_nameoffset != 0) {
 		printf("pid %d.%d: mach_io_registry_entry_get_property "
-		    "offset = %d\n", l->l_proc->p_pid, l->l_lid,
+		    "offset = %d (ignoring)\n", l->l_proc->p_pid, l->l_lid,
 		    req->req_property_nameoffset);
-		return mach_iokit_error(args, MACH_IOKIT_EINVAL);
 	}
 	if (req->req_property_namecount != 1) {
 		printf("pid %d.%d: mach_io_registry_entry_get_property "
-		    "count = %d\n", l->l_proc->p_pid, l->l_lid, 
+		    "count = %d (ignoring)\n", l->l_proc->p_pid, l->l_lid, 
 		    req->req_property_namecount);
-		return mach_iokit_error(args, MACH_IOKIT_EINVAL);
 	}
+#endif
 
 	/* Find the port */
 	mn = req->req_msgh.msgh_remote_port;
@@ -697,7 +702,7 @@ mach_io_registry_entry_get_property(args)
 
 	/* And copyout its associated value */
 	va = vm_map_min(&l->l_proc->p_vmspace->vm_map);
-	size = strlen(mip->mip_value);
+	size = strlen(mip->mip_value) + 1; /* Include trailing zero */
 
 	if ((error = uvm_map(&l->l_proc->p_vmspace->vm_map, &va, 
 	    round_page(size), NULL, UVM_UNKNOWN_OFFSET, 0, 
@@ -729,7 +734,7 @@ mach_io_registry_entry_get_property(args)
 	rep->rep_properties.copy = 2; /* XXX */
 	rep->rep_properties.pad1 = 0; /* XXX */
 	rep->rep_properties.type = 0; /* XXX */
-	rep->rep_properties_count = 1;
+	rep->rep_properties_count = size;
 	rep->rep_trailer.msgh_trailer_size = 8;
 
 	*msglen = sizeof(*rep);
@@ -860,3 +865,98 @@ mach_io_iterator_reset(args)
 	return 0;
 }
 
+int
+mach_io_connect_method_scalari_structo(args)
+	struct mach_trap_args *args;
+{
+	mach_io_connect_method_scalari_structo_request_t *req = args->smsg;
+	mach_io_connect_method_scalari_structo_reply_t *rep = args->rmsg;
+	size_t *msglen = args->rsize; 
+	struct lwp *l = args->l;
+	mach_port_t mn;
+	struct mach_right *mr;
+	struct mach_iokit_devclass *mid;
+
+	mn = req->req_msgh.msgh_remote_port;
+	if ((mr = mach_right_check(mn, l, MACH_PORT_TYPE_ALL_RIGHTS)) == NULL)
+		return mach_iokit_error(args, MACH_IOKIT_EPERM);
+	
+	if (mr->mr_port->mp_datatype == MACH_MP_IOKIT_DEVCLASS) {
+		mid = mr->mr_port->mp_data;
+		if (mid->mid_connect_method_scalari_structo == NULL)
+			printf("no connect_method_scalari_structo method "
+			    "for darwin_iokit_class %s\n", mid->mid_name);
+		else
+			return (mid->mid_connect_method_scalari_structo)(args);
+	}
+
+	rep->rep_msgh.msgh_bits = 
+	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
+	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
+	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
+	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
+	rep->rep_outcount = 0;
+	rep->rep_out[rep->rep_outcount + 1] = 8; /* XXX Trailer */
+
+	*msglen = sizeof(*rep) - ((4096 + rep->rep_outcount) * sizeof(int));
+	return 0;
+}
+
+int
+mach_io_connect_method_structi_structo(args)
+	struct mach_trap_args *args;
+{
+	mach_io_connect_method_structi_structo_request_t *req = args->smsg;
+	mach_io_connect_method_structi_structo_reply_t *rep = args->rmsg;
+	size_t *msglen = args->rsize; 
+	struct lwp *l = args->l;
+	mach_port_t mn;
+	struct mach_right *mr;
+	struct mach_iokit_devclass *mid;
+
+	mn = req->req_msgh.msgh_remote_port;
+	if ((mr = mach_right_check(mn, l, MACH_PORT_TYPE_ALL_RIGHTS)) == NULL)
+		return mach_iokit_error(args, MACH_IOKIT_EPERM);
+	
+	if (mr->mr_port->mp_datatype == MACH_MP_IOKIT_DEVCLASS) {
+		mid = mr->mr_port->mp_data;
+		if (mid->mid_connect_method_structi_structo == NULL)
+			printf("no connect_method_structi_structo method "
+			    "for darwin_iokit_class %s\n", mid->mid_name);
+		else
+			return (mid->mid_connect_method_structi_structo)(args);
+	}
+
+	rep->rep_msgh.msgh_bits = 
+	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
+	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
+	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
+	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
+	rep->rep_outcount = 0;
+	rep->rep_out[rep->rep_outcount + 1] = 8; /* XXX Trailer */
+
+	*msglen = sizeof(*rep) - ((4096 + rep->rep_outcount) * sizeof(int));
+	return 0;
+}
+
+int
+mach_io_connect_set_properties(args)
+	struct mach_trap_args *args;
+{
+	mach_io_connect_set_properties_request_t *req = args->smsg;
+	mach_io_connect_set_properties_reply_t *rep = args->rmsg;
+	size_t *msglen = args->rsize; 
+	struct lwp *l = args->l;
+
+	printf("pid %d.%d: mach_io_connect_set_properties\n",
+	    l->l_proc->p_pid, l->l_lid);
+	rep->rep_msgh.msgh_bits = 
+	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
+	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
+	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
+	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
+	rep->rep_trailer.msgh_trailer_size = 8;
+
+	*msglen = sizeof(*rep); 
+	return 0;
+}
