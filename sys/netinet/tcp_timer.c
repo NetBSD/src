@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_timer.c,v 1.33 1998/04/29 03:44:12 kml Exp $	*/
+/*	$NetBSD: tcp_timer.c,v 1.34 1998/04/29 05:16:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,8 +71,6 @@
  *
  *	@(#)tcp_timer.c	8.2 (Berkeley) 5/24/95
  */
-
-#include "opt_tcp_compat_42.h"
 
 #ifndef TUBA_INCLUDE
 #include <sys/param.h>
@@ -185,10 +183,9 @@ tpgone:
 	}
 #if NRND == 0 /* Do we need to do this when using random() ? */
 	tcp_iss_seq += TCP_ISSINCR;			/* increment iss */
-#ifdef TCP_COMPAT_42
-	if ((int)tcp_iss_seq < 0)
-		tcp_iss_seq = 0;			/* XXX */
-#endif
+	if (tcp_compat_42)
+		if ((int)tcp_iss_seq < 0)
+			tcp_iss_seq = 0;		/* XXX */
 #endif
 	tcp_now++;					/* for timestamps */
 	if (++syn_cache_last >= tcp_syn_cache_interval) {
@@ -391,19 +388,19 @@ tcp_timers(tp, timer)
 			 * correspondent TCP to respond.
 			 */
 			tcpstat.tcps_keepprobe++;
-#ifdef TCP_COMPAT_42
-			/*
-			 * The keepalive packet must have nonzero length
-			 * to get a 4.2 host to respond.
-			 */
-			(void)tcp_respond(tp, tp->t_template,
-			    (struct mbuf *)NULL, tp->rcv_nxt - 1,
-			    tp->snd_una - 1, 0);
-#else
-			(void)tcp_respond(tp, tp->t_template,
-			    (struct mbuf *)NULL, tp->rcv_nxt,
-			    tp->snd_una - 1, 0);
-#endif
+			if (tcp_compat_42) {
+				/*
+				 * The keepalive packet must have nonzero
+				 * length to get a 4.2 host to respond.
+				 */
+				(void)tcp_respond(tp, tp->t_template,
+				    (struct mbuf *)NULL, tp->rcv_nxt - 1,
+				    tp->snd_una - 1, 0);
+			} else {
+				(void)tcp_respond(tp, tp->t_template,
+				    (struct mbuf *)NULL, tp->rcv_nxt,
+				    tp->snd_una - 1, 0);
+			}
 			tp->t_timer[TCPT_KEEP] = tcp_keepintvl;
 		} else
 			tp->t_timer[TCPT_KEEP] = tcp_keepidle;
