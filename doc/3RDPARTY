@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.27 2002/12/07 13:09:56 taca Exp $
+#	$NetBSD: 3RDPARTY,v 1.28 2002/12/11 03:09:00 taca Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -335,7 +335,7 @@ Notes:
 
 Package:	ip-filter
 Version:	3.4.29
-Current Vers:	3.4.30
+Current Vers:	3.4.31
 Maintainer:	Darren Reed
 Archive Site:	http://www.ipfilter.org/
 Mailing List:	ipfilter@postbox.anu.edu.au
