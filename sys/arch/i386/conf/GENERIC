@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.430 2001/10/04 15:51:32 augustss Exp $
+#	$NetBSD: GENERIC,v 1.431 2001/10/13 15:06:12 ichiro Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.430 $"
+#ident 		"GENERIC-$Revision: 1.431 $"
 
 maxusers	32		# estimated number of users
 
@@ -601,6 +601,7 @@ tlp*	at pci? dev ? function ?	# DECchip 21x4x (and clones) Ethernet
 #options 	TLP_MATCH_21140
 #options 	TLP_MATCH_21142
 vr*	at pci? dev ? function ?	# VIA Rhine Fast Ethernet
+wi*	at pci? dev ? function ?	# Intersil Prism Mini-PCI (802.11b)
 
 # EISA network interfaces
 ep*	at eisa? slot ?			# 3Com 3c579 Ethernet
