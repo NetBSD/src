@@ -1,4 +1,4 @@
-/*	$NetBSD: cur_hash.c,v 1.9 2000/04/15 13:17:03 blymn Exp $	*/
+/*	$NetBSD: cur_hash.c,v 1.10 2002/06/26 18:14:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cur_hash.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: cur_hash.c,v 1.9 2000/04/15 13:17:03 blymn Exp $");
+__RCSID("$NetBSD: cur_hash.c,v 1.10 2002/06/26 18:14:03 christos Exp $");
 #endif
 #endif				/* not lint */
 
@@ -48,15 +48,14 @@ __RCSID("$NetBSD: cur_hash.c,v 1.9 2000/04/15 13:17:03 blymn Exp $");
 #include "curses_private.h"
 
 /*
- * __hash() is "hashpjw" from the Dragon Book, Aho, Sethi & Ullman, p.436.
+ * __hash_more() is "hashpjw" from the Dragon Book, Aho, Sethi & Ullman, p.436.
  */
 u_int
-__hash(char *s, int len)
+__hash_more(char *s, size_t len, u_int h)
 {
-	u_int   h, g, i;
+	u_int g;
+	size_t i = 0;
 
-	h = 0;
-	i = 0;
 	while (i < len) {
 		h = (h << 4) + s[i];
 		if ((g = h & 0xf0000000) != 0) {
