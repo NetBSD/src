@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.48 2002/02/25 07:35:12 atatat Exp $
+#	$NetBSD: MAKEDEV,v 1.49 2002/03/03 14:16:08 toshii Exp $
 #
 #	from: @(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
@@ -33,7 +33,7 @@
 #	pty*	set of 62 master and slave pseudo terminals
 #	opty	first 16 ptys, to save inodes on install media
 # Special purpose devices:
-#       clockctl clock control for non root users
+#	clockctl clock control for non root users
 #	audio*	phone-quality audio on Personal DECstations
 #	bpf*	packet filter
 #	ch*	SCSI media changer
