@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.4 1996/01/29 22:52:26 jonathan Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.5 1996/03/18 01:47:08 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -42,8 +42,12 @@ typedef int (*intr_handler_t) __P((intr_arg_t));
 
 #define KN02_ASIC_NAME "KN02    "	/* ROM name in 3max system slot */
 	
-#define	BUS_INTR_ESTABLISH(ca, handler, val)				\
-	    generic_intr_establish((ca), (handler), (val))
+#define	INTR_ESTABLISH(parent, cookie, level, handler, val)			\
+    generic_intr_establish((parent), (cookie), (level), (handler), (val))
+
+#define	BUS_INTR_ESTABLISH(ca,  handler, val)			\
+    generic_intr_establish( ((struct device*)(val))->dv_parent, \
+    			   (ca)->ca_slotpri, 0, (handler), (val))
 
 
 struct confargs {

@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.7 1996/03/17 01:47:06 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.8 1996/03/18 01:47:06 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -34,9 +34,8 @@
 #include <sys/reboot.h>
 
 #include <machine/autoconf.h>
-/*#include <machine/rpb.h>*/
-#include "pmaxtype.h"
 #include <machine/machConst.h>
+#include "pmaxtype.h"
 #include "nameglue.h"
 #include "kn01.h"
 
@@ -63,7 +62,8 @@ void	mb_intr_establish __P((struct confargs *ca,
 void	mb_intr_disestablish __P((struct confargs *));
 
 /* KN01 has devices directly on the system bus */
-void	kn01_intr_establish __P((struct confargs *ca,
+void	kn01_intr_establish __P((struct device *parent, void *cookie,
+				 int level,
 			       int (*handler)(intr_arg_t),
 			       intr_arg_t val ));
 void	kn01_intr_disestablish __P((struct confargs *));
@@ -127,34 +127,18 @@ mbattach(parent, self, aux)
 		if (config_found(self, &nca, mbprint))
 			cpuattachcnt++;
 	}
-#endif
 
 	if (ncpus != cpuattachcnt)
 		printf("WARNING: %d cpus in machine, %d attached\n",
 			ncpus, cpuattachcnt);
+#endif
 
 #if	defined(DS_5000) || defined(DS5000_240) || defined(DS_5000_100) || \
 	defined(DS_5000_25)
 
-	if (cputype == DS_3MAXPLUS ||
-	    cputype == DS_3MAX ||
-	    cputype == DS_3MIN ||
-	    cputype == DS_MAXINE) {
-
-	    if (cputype == DS_3MIN || cputype == DS_MAXINE)
-		printf("UNTESTED autoconfiguration!!\n");	/*XXX*/
-
-#if 0
-		/* we have a TurboChannel bus! */
-		strcpy(nca.ca_name, "tc");
-		nca.ca_slot = 0;
-		nca.ca_offset = 0;
-		
-		config_found(self, &nca, mbprint);
-#else
+	if (cputype == DS_3MAXPLUS || cputype == DS_3MAX ||
+	    cputype == DS_3MIN || cputype == DS_MAXINE) {
 		config_tcbus(self, &nca, mbprint);
-#endif
-
 	}
 #endif /*Turbochannel*/
 
@@ -163,24 +147,34 @@ mbattach(parent, self, aux)
 	 * which really only has a mainbus, baseboard devices, and an
 	 * optional framebuffer.
 	 */
-#if defined(DS3100)
-	/* XXX mipsfair: just a guess */
-	if (cputype == DS_PMAX || cputype == DS_MIPSFAIR) {
-		kn01_attach(parent, self, aux);
+#if 1 /*defined(DS3100)*/
+	/* XXX mipsmate: just a guess */
+	if (cputype == DS_PMAX || cputype == DS_MIPSMATE) {
+		kn01_attach(self, (void*)0, aux);
 	}
 #endif /*DS3100*/
 
 }
 
 
-#define KN01_MAXDEVS 5
+#define KN01_MAXDEVS 8
 struct confargs kn01_devs[KN01_MAXDEVS] = {
 	/*   name       slot  offset 		   addr intpri  */
 	{ "pm",		0,   0,  (u_int)KV(KN01_PHYS_FBUF_START), 3,  },
 	{ "dc",  	1,   0,  (u_int)KV(KN01_SYS_DZ),	  2,  },
 	{ "lance", 	2,   0,  (u_int)KV(KN01_SYS_LANCE),       1,  },
 	{ "sii",	3,   0,  (u_int)KV(KN01_SYS_SII),	  0,  },
-	{ "mc146818",	4,   0,  (u_int)KV(KN01_SYS_CLOCK),       16, }
+	{ "mc146818",	4,   0,  (u_int)KV(KN01_SYS_CLOCK),       16, },
+	{ "dc",  	5,   0,  (u_int)KV(0x15000000),	  	  4,  },
+	{ "dc",  	6,   0,  (u_int)KV(0x15200000),	 	  5,  },
+#ifdef notyet
+	/*
+	 * XXX Ultrix configures at 0x86400400. the first 0x400 byte are
+	 * used for NVRAM state??
+	 */
+	{ "nvram",	6,   0,  (u_int)KV(0x86400000),	  -1, },
+#endif
+	0
 };
 
 /*
@@ -192,9 +186,12 @@ kn01_attach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
-	struct mainbus_softc *sc = (struct mainbus_softc *)self;
 	struct confargs *nca;
 	register int i;
+
+#ifdef DEBUG
+/*XXX*/ printf("(configuring kn01/5100 baseboard devices)\n");
+#endif
 
 	/* Try to configure each KN01 mainbus device */
 	for (i = 0; i < KN01_MAXDEVS; i++) {
@@ -205,6 +202,10 @@ kn01_attach(parent, self, aux)
 			break;
 		}
 
+		if (nca->ca_name == NULL) {
+			panic("No name for mainbus device\n");
+		}
+
 #if defined(DIAGNOSTIC) || defined(DEBUG)
 		if (nca->ca_slot > KN01_MAXDEVS)
 			panic("kn01 mbattach: \
@@ -212,23 +213,23 @@ dev slot > number of slots for %s",
 			    nca->ca_name);
 #endif
 
-		if (nca->ca_name == NULL) {
-			panic("No name for mainbus device\n");
-		}
+#ifdef DEBUG
+		printf("configuring %s at %x interrupt number %d\n",
+		       nca->ca_name, nca->ca_addr, (u_int)nca->ca_slotpri);
+#endif
 
 		/* Tell the autoconfig machinery we've found the hardware. */
-		config_found(self, nca, mbprint);
+		config_found(parent, nca, mbprint);
 	}
 
 	/*
-	 * The Decstation 5100 has an sii, clock, ethernet, and dc,
-	 * like  the 3100 and presumably at the same address. The
-	 * 5100 also has a slot for PrestoServe NVRAM and for
-	 * an additional `mbc' dc-like serial option.
-	 * If we supported those devices, we would attempt to configure
-	 * them now.
+	 * The Decstation 5100, like the 3100, has an sii, clock, ethernet,
+	 * and dc, presumably at the same addresses.   If so, the
+	 * code above will configure them.  The  5100 also
+	 * has a slot for PrestoServe NVRAM and for an additional
+	 * `mdc' dc-like, eigh-port serial option. If we supported
+	 * those devices, this is the right place to configure them.
 	 */
-
 }
 
 static int
@@ -261,13 +262,16 @@ mb_intr_disestablish(ca)
 }
 
 void
-kn01_intr_establish(ca, handler, val)
-	struct confargs *ca;
+kn01_intr_establish(parent, cookie, level, handler, arg)
+	struct device *parent;
+	void * cookie;
+	int level;
 	int (*handler) __P((intr_arg_t));
-	intr_arg_t val;
+	intr_arg_t arg;
 {
 	/* Interrupts on the KN01 are currently hardcoded. */
 	printf(" (kn01: intr_establish hardcoded) ");
+	kn01_enable_intr((u_int) cookie, handler, arg, 1);
 }
 
 void
@@ -280,27 +284,33 @@ kn01_intr_disestablish(ca)
 /*
  * An  interrupt-establish method.  This should somehow be folded
  * back into the autoconfiguration machinery. Until the TC machine
- * portmasters agree on how to do that, it's a separate function
- */
+ * portmasters agree on how to do that, it's a separate function.
+ *
+ * XXX since all drivers should be passign a softc for "arg",
+ * why not make that explicit and use (struct device*)arg->dv_parent,
+ * instead of explicitly passign the parent?
+*/
 void
-generic_intr_establish(ca, handler, arg)
-	struct confargs *ca;
+generic_intr_establish(parent, cookie, level, handler, arg)
+	void * parent;
+	void * cookie;
+	int level;
 	intr_handler_t handler;
 	intr_arg_t arg;
 {
 	struct device *dev = arg;
 
-	extern struct cfdriver ioasiccd, tccd;
+	extern struct cfdriver ioasic_cd, tc_cd;
 
-	if (dev->dv_parent->dv_cfdata->cf_driver == &ioasiccd) {
-		/*XXX*/ printf("ioasic interrupt for %d\n", ca->ca_slotpri);
-		asic_intr_establish(ca, handler, arg);
+	if (dev->dv_parent->dv_cfdata->cf_driver == &ioasic_cd) {
+		/*XXX*/ printf("ioasic interrupt for %d\n", (u_int)cookie);
+		ioasic_intr_establish(parent, cookie, level, handler, arg);
 	} else
-	if (dev->dv_parent->dv_cfdata->cf_driver == &tccd) {
-		tc_intr_establish(dev->dv_parent, ca->ca_slotpri, 0, handler, arg);
+	if (dev->dv_parent->dv_cfdata->cf_driver == &tc_cd) {
+		tc_intr_establish(parent, cookie, level, handler, arg);
 	} else
 	if (dev->dv_parent->dv_cfdata->cf_driver == &mainbus_cd) {
-		kn01_intr_establish(ca, handler, arg);
+		kn01_intr_establish(parent, cookie, level, handler, arg);
 	}
 	else {
 		printf("intr_establish: unknown parent bustype for %s\n",
