@@ -1,3 +1,4 @@
+/*	$NetBSD: pfctl_table.c,v 1.2 2004/06/22 15:16:30 itojun Exp $	*/
 /*	$OpenBSD: pfctl_table.c,v 1.59 2004/03/15 15:25:44 dhartmei Exp $ */
 
 /*
@@ -33,6 +34,10 @@
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
+
+#ifdef __NetBSD__
+#include <netinet/in.h>
+#endif
 
 #include <net/if.h>
 #include <net/pfvar.h>
