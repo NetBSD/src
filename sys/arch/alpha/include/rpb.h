@@ -1,4 +1,4 @@
-/* $NetBSD: rpb.h,v 1.31 1999/04/14 23:55:35 thorpej Exp $ */
+/* $NetBSD: rpb.h,v 1.32 1999/06/29 07:22:25 ross Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -76,7 +76,7 @@ struct rpb {
 #define	ST_DEC_550		30		/* "Miata" (PCI/ISA) */
 #define	ST_DEC_EV56_PBP		32		/* "Takara" */
 #define	ST_DEC_ALPHAVME_320	33		/* "Yukon" (VME) */
-#define	ST_DEC_6600		34		/* EV6-Typhoon based systems */
+#define	ST_DEC_6600		34		/* EV6-Tsunami based systems */
 
 	u_int64_t	rpb_type;		/*  50: */
 

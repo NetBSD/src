@@ -1,4 +1,4 @@
-/* $NetBSD: intrcnt.h,v 1.17 1998/11/19 01:48:04 ross Exp $ */
+/* $NetBSD: intrcnt.h,v 1.18 1999/06/29 07:22:25 ross Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -31,7 +31,7 @@
 #define	INTRCNT_ISA_IRQ		(INTRCNT_CLOCK + 1)
 #define	INTRCNT_ISA_IRQ_LEN	16
 #define	INTRCNT_OTHER_BASE	(INTRCNT_ISA_IRQ + INTRCNT_ISA_IRQ_LEN)
-#define	INTRCNT_OTHER_LEN	48
+#define	INTRCNT_OTHER_LEN	64
 #define	INTRCNT_COUNT (INTRCNT_OTHER_BASE + INTRCNT_OTHER_LEN)
 
 #define	INTRCNT_A12_IRQ			INTRCNT_OTHER_BASE
