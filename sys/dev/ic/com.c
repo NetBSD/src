@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)com.c	7.5 (Berkeley) 5/16/91
- *	$Id: com.c,v 1.15 1994/01/13 14:58:12 mycroft Exp $
+ *	$Id: com.c,v 1.16 1994/01/30 16:41:27 ws Exp $
  */
 
 #include "com.h"
@@ -203,13 +203,11 @@ comopen(dev_t dev, int flag, int mode, struct proc *p)
 	if ((tp->t_state & TS_ISOPEN) == 0) {
 		tp->t_state |= TS_WOPEN;
 		ttychars(tp);
-		if (tp->t_ispeed == 0) {
-			tp->t_iflag = TTYDEF_IFLAG;
-			tp->t_oflag = TTYDEF_OFLAG;
-			tp->t_cflag = TTYDEF_CFLAG;
-			tp->t_lflag = TTYDEF_LFLAG;
-			tp->t_ispeed = tp->t_ospeed = comdefaultrate;
-		}
+		tp->t_iflag = TTYDEF_IFLAG;
+		tp->t_oflag = TTYDEF_OFLAG;
+		tp->t_cflag = TTYDEF_CFLAG;
+		tp->t_lflag = TTYDEF_LFLAG;
+		tp->t_ispeed = tp->t_ospeed = comdefaultrate;
 		comparam(tp, &tp->t_termios);
 		ttsetwater(tp);
 	} else if (tp->t_state&TS_XCLUDE && p->p_ucred->cr_uid != 0)
@@ -296,7 +294,6 @@ comintr(unit)
 	register u_char code;
 	register struct tty *tp;
 
-	unit;
 	com = com_addr[unit];
 	while (1) {
 		code = inb(com+com_iir);
