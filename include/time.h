@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.21 1998/09/10 18:37:28 kleink Exp $	*/
+/*	$NetBSD: time.h,v 1.22 1998/09/15 12:24:28 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -148,7 +148,6 @@ time_t time2posix __P((time_t));
 time_t posix2time __P((time_t));
 time_t timegm __P((struct tm *const));
 time_t timeoff __P((struct tm *const, const long));
-long gtime __P((struct tm *const));
 time_t timelocal __P((struct tm *const));
 char *timezone __P((int, int));
 void tzsetwall __P((void));
