@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.108 2001/06/02 16:17:06 thorpej Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.109 2001/06/21 13:36:24 onoe Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.108 2001/06/02 16:17:06 thorpej Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.109 2001/06/21 13:36:24 onoe Exp $");
 #endif
 #endif /* not lint */
 
@@ -1301,7 +1301,7 @@ setifnwkey(val, d)
 	int i;
 	u_int8_t keybuf[IEEE80211_WEP_NKID][16];
 
-	nwkey.i_wepon = 1;
+	nwkey.i_wepon = IEEE80211_NWKEY_WEP;
 	nwkey.i_defkid = 1;
 	for (i = 0; i < IEEE80211_WEP_NKID; i++) {
 		nwkey.i_key[i].i_keylen = sizeof(keybuf[i]);
@@ -1311,26 +1311,40 @@ setifnwkey(val, d)
 		/* disable WEP encryption */
 		nwkey.i_wepon = 0;
 		i = 0;
-	} else if (isdigit(val[0]) && val[1] == ':') {
-		/* specifying a full set of four keys */
-		nwkey.i_defkid = val[0] - '0';
-		val += 2;
-		for (i = 0; i < IEEE80211_WEP_NKID; i++) {
-			val = get_string(val, ",", keybuf[i],
-			    &nwkey.i_key[i].i_keylen);
+	} else if (strcasecmp("persist", val) == 0) {
+		/* use all values from persistent memory */
+		nwkey.i_wepon |= IEEE80211_NWKEY_PERSIST;
+		nwkey.i_defkid = 0;
+		for (i = 0; i < IEEE80211_WEP_NKID; i++)
+			nwkey.i_key[i].i_keylen = -1;
+	} else if (strncasecmp("persist:", val, 8) == 0) {
+		val += 8;
+		/* program keys in persistent memory */
+		nwkey.i_wepon |= IEEE80211_NWKEY_PERSIST;
+		goto set_nwkey;
+	} else {
+  set_nwkey:
+		if (isdigit(val[0]) && val[1] == ':') {
+			/* specifying a full set of four keys */
+			nwkey.i_defkid = val[0] - '0';
+			val += 2;
+			for (i = 0; i < IEEE80211_WEP_NKID; i++) {
+				val = get_string(val, ",", keybuf[i],
+				    &nwkey.i_key[i].i_keylen);
+				if (val == NULL)
+					return;
+			}
+			if (*val != '\0') {
+				warnx("SIOCS80211NWKEY: too many keys.");
+				return;
+			}
+		} else {
+			val = get_string(val, NULL, keybuf[0],
+			    &nwkey.i_key[0].i_keylen);
 			if (val == NULL)
 				return;
+			i = 1;
 		}
-		if (*val != '\0') {
-			warnx("SIOCS80211NWKEY: too many keys.");
-			return;
-		}
-	} else {
-		val = get_string(val, NULL, keybuf[0],
-		    &nwkey.i_key[0].i_keylen);
-		if (val == NULL)
-			return;
-		i = 1;
 	}
 	for (; i < IEEE80211_WEP_NKID; i++)
 		nwkey.i_key[i].i_keylen = 0;
@@ -1378,7 +1392,7 @@ setifpowersavesleep(val, d)
 void
 ieee80211_status()
 {
-	int i;
+	int i, nwkey_verbose;
 	struct ieee80211_nwid nwid;
 	struct ieee80211_nwkey nwkey;
 	struct ieee80211_power power;
@@ -1413,32 +1427,41 @@ ieee80211_status()
 	if (ioctl(s, SIOCG80211NWKEY, (caddr_t)&nwkey) != 0) {
 		printf("*****");
 	} else {
+		nwkey_verbose = 0;
+		/* check to see non default key or multiple keys defined */
 		if (nwkey.i_defkid != 1) {
-			/* non default key or multiple keys defined */
-			i = 0;
-		} else if (nwkey.i_key[0].i_keylen >= 2 &&
-		    isdigit(nwkey.i_key[0].i_keydat[0]) &&
-		    nwkey.i_key[0].i_keydat[1] == ':') {
-			/* ambiguous */
-			i = 0;
+			nwkey_verbose = 1;
 		} else {
 			for (i = 1; i < IEEE80211_WEP_NKID; i++) {
-				if (nwkey.i_key[i].i_keylen != 0)
+				if (nwkey.i_key[i].i_keylen != 0) {
+					nwkey_verbose = 1;
 					break;
+				}
 			}
 		}
-		if (i == IEEE80211_WEP_NKID) {
-			/* only show the first key */
-			print_string(nwkey.i_key[0].i_keydat,
-			    nwkey.i_key[0].i_keylen);
-		} else {
+		/* check extra ambiguity with keywords */
+		if (!nwkey_verbose) {
+			if (nwkey.i_key[0].i_keylen >= 2 &&
+			    isdigit(nwkey.i_key[0].i_keydat[0]) &&
+			    nwkey.i_key[0].i_keydat[1] == ':')
+				nwkey_verbose = 1;
+			else if (nwkey.i_key[0].i_keylen >= 7 &&
+			    strncasecmp("persist", nwkey.i_key[0].i_keydat, 7)
+			    == 0)
+				nwkey_verbose = 1;
+		}
+		if (nwkey_verbose)
 			printf("%d:", nwkey.i_defkid);
-			for (i = 0; i < IEEE80211_WEP_NKID; i++) {
-				if (i > 0)
-					printf(",");
+		for (i = 0; i < IEEE80211_WEP_NKID; i++) {
+			if (i > 0)
+				printf(",");
+			if (nwkey.i_key[i].i_keylen < 0)
+				printf("persist");
+			else
 				print_string(nwkey.i_key[i].i_keydat,
 				    nwkey.i_key[i].i_keylen);
-			}
+			if (!nwkey_verbose)
+				break;
 		}
 	}
 	printf("\n");
