@@ -1,4 +1,4 @@
-/*	$NetBSD: bcmp.S,v 1.2 1997/05/08 13:38:46 matthias Exp $	*/
+/*	$NetBSD: bcmp.S,v 1.3 1998/04/03 22:58:09 matthias Exp $	*/
 
 /* 
  * Written by Matthias Pfaller, 1996
@@ -8,14 +8,14 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: bcmp.S,v 1.2 1997/05/08 13:38:46 matthias Exp $")
+	RCSID("$NetBSD: bcmp.S,v 1.3 1998/04/03 22:58:09 matthias Exp $")
 #endif
 
 /*
  * int
  * bcmp (const void *b1, const void *b2, size_t len)
  */
-ENTRY(bcmp)
+KENTRY(bcmp, 12)
 	enter	[],0
 	movd	B_ARG2,r0
 	movd	B_ARG0,r1
@@ -27,4 +27,4 @@ ENTRY(bcmp)
 	andd	B_ARG2,r0
 	cmpsb
 0:	exit	[]
-	ret	0
+	ret	ARGS

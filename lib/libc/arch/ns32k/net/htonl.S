@@ -1,4 +1,4 @@
-/*	$NetBSD: htonl.S,v 1.2 1997/05/08 13:38:42 matthias Exp $	*/
+/*	$NetBSD: htonl.S,v 1.3 1998/04/03 22:58:08 matthias Exp $	*/
 
 /* 
  * Mach Operating System
@@ -36,12 +36,12 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: htonl.S,v 1.2 1997/05/08 13:38:42 matthias Exp $")
+	RCSID("$NetBSD: htonl.S,v 1.3 1998/04/03 22:58:08 matthias Exp $")
 #endif
 
-ENTRY(htonl)
+KKENTRY(htonl, 4)
 	movd	S_ARG0,r0
 	rotw	8,r0
 	rotd	16,r0
 	rotw	8,r0
-	ret	0
+	ret	ARGS

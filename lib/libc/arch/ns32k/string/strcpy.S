@@ -1,4 +1,4 @@
-/*	$NetBSD: strcpy.S,v 1.2 1997/05/08 13:38:57 matthias Exp $	*/
+/*	$NetBSD: strcpy.S,v 1.3 1998/04/03 22:58:10 matthias Exp $	*/
 
 /* 
  * Written by Randy Hyde, 1993
@@ -8,7 +8,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: strcpy.S,v 1.2 1997/05/08 13:38:57 matthias Exp $")
+	RCSID("$NetBSD: strcpy.S,v 1.3 1998/04/03 22:58:10 matthias Exp $")
 #endif
 
 /*
@@ -17,7 +17,7 @@
  *	copy string s to d.
  */
 
-ENTRY(strcpy)
+KENTRY(strcpy, 8)
 	enter	[r3,r4,r5],0
 	movd	B_ARG1,r1
 	movd	B_ARG0,r2
@@ -119,4 +119,4 @@ ENTRY(strcpy)
 	movb	3(r1),3(r2)		/* This one must be a zero byte */
 9:	movd	B_ARG0,r0
 	exit	[r3,r4,r5]
-	ret	0
+	ret	ARGS
