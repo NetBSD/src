@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_bswap.c,v 1.9 2000/12/23 14:09:52 enami Exp $	*/
+/*	$NetBSD: ffs_bswap.c,v 1.10 2000/12/23 14:42:06 enami Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -52,6 +52,8 @@ ffs_sb_swap(o, n, ns)
 	int i;
 	u_int32_t *o32, *n32;
 	u_int16_t *o16, *n16;
+	u_int32_t postbloff = ufs_rw32(o->fs_postbloff, ns);
+	u_int32_t postblfmt = ufs_rw32(o->fs_postblformat, ns);
 	
 	/*
 	 * In order to avoid a lot of lines, as the first 52 fields of
@@ -77,17 +79,13 @@ ffs_sb_swap(o, n, ns)
 	n->fs_rotbloff = bswap32(o->fs_rotbloff);
 	n->fs_magic = bswap32(o->fs_magic);
 	/* byteswap the postbl */
-	o16 = (ufs_rw32(o->fs_postblformat, ns) == FS_42POSTBLFMT)
-	    ? o->fs_opostbl[0]
-	    : (int16_t *)((u_int8_t *)o + ufs_rw32(o->fs_postbloff, ns));
-	n16 = (ufs_rw32(o->fs_postblformat, ns) == FS_42POSTBLFMT)
-	    ? n->fs_opostbl[0]
-	    : (int16_t *)((u_int8_t *)n + ufs_rw32(n->fs_postbloff, ns));
-	for (i = 0; i < (
-	         (ufs_rw32(o->fs_postblformat, ns) == FS_42POSTBLFMT) ?
-	         168 : /* fs_opostbl[16][8] */
-	         ufs_rw32(o->fs_cpc, ns) * ufs_rw32(o->fs_nrpos, ns));
-	     i++)
+	o16 = (postblfmt == FS_42POSTBLFMT) ? o->fs_opostbl[0] :
+	    (int16_t *)((u_int8_t *)o + postbloff);
+	n16 = (postblfmt == FS_42POSTBLFMT) ? n->fs_opostbl[0] :
+	    (int16_t *)((u_int8_t *)n + postbloff);
+	for (i = 0; i < (postblfmt == FS_42POSTBLFMT ?
+	    128 /* fs_opostbl[16][8] */ :
+	    ufs_rw32(o->fs_cpc, ns) * ufs_rw32(o->fs_nrpos, ns)); i++)
 		n16[i] = bswap16(o16[i]);
 }
 
