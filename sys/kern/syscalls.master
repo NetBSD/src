@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.58 1997/10/15 17:04:20 mycroft Exp $
+	$NetBSD: syscalls.master,v 1.59 1997/10/15 17:27:53 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -101,7 +101,7 @@
 38	COMPAT_43	{ int sys_stat(char *path, struct ostat *ub); } ostat
 39	STD		{ pid_t sys_getppid(void); }
 40	COMPAT_43	{ int sys_lstat(char *path, struct ostat *ub); } olstat
-41	STD		{ int sys_dup(u_int fd); }
+41	STD		{ int sys_dup(int fd); }
 42	STD		{ int sys_pipe(void); }
 43	STD		{ gid_t sys_getegid(void); }
 44	STD		{ int sys_profil(caddr_t samples, size_t size, \
@@ -157,7 +157,8 @@
 77	OBSOL		vlimit
 78	STD		{ int sys_mincore(caddr_t addr, size_t len, \
 			    char *vec); }
-79	STD		{ int sys_getgroups(u_int gidsetsize, gid_t *gidset); }
+79	STD		{ int sys_getgroups(u_int gidsetsize, \
+			    gid_t *gidset); }
 80	STD		{ int sys_setgroups(u_int gidsetsize, \
 			    const gid_t *gidset); }
 81	STD		{ int sys_getpgrp(void); }
@@ -174,7 +175,7 @@
 88	COMPAT_43	{ int sys_sethostname(char *hostname, u_int len); } \
 			    osethostname
 89	COMPAT_43	{ int sys_getdtablesize(void); } ogetdtablesize
-90	STD		{ int sys_dup2(u_int from, u_int to); }
+90	STD		{ int sys_dup2(int from, int to); }
 91	UNIMPL		getdopt
 92	STD		{ int sys_fcntl(int fd, int cmd, ... void *arg); }
 93	STD		{ int sys_select(u_int nd, fd_set *in, fd_set *ou, \
