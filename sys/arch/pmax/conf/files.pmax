@@ -1,5 +1,5 @@
 #
-#	$NetBSD: files.pmax,v 1.56.2.4 1998/10/20 02:46:42 nisimura Exp $
+#	$NetBSD: files.pmax,v 1.56.2.5 1998/10/22 19:08:37 drochner Exp $
 #
 # DECstation-specific configuration info
 
@@ -120,9 +120,7 @@ file	dev/ic/z8530tty.c		zstty needs-flag
 
 device	zskbd: wskbddev
 attach	zskbd at zsc
-file	arch/pmax/tc/zskbd.c		zskbd needs-flag
-file	dev/dec/lk201_ws.c		zskbd
-file	dev/dec/wskbdmap_lk201.c	zskbd
+file	dev/dec/zskbd.c		zskbd needs-flag
 
 # ACCESS.bus (desktop bus) for MAXINE keyboard and mouse
 device	dtop: tty
