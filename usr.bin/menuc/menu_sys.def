@@ -1,4 +1,4 @@
-/*	$NetBSD: menu_sys.def,v 1.7 1998/06/25 09:58:57 phil Exp $	*/
+/*	$NetBSD: menu_sys.def,v 1.8 1998/06/25 19:57:10 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -402,7 +402,13 @@ static void process_req (struct menudesc *m, int num, int req)
 			m->cursel = m->numopts;
 			refresh = 1;
 		} else {
-			ch = ch - 'a';
+			if (ch > 'z')
+				ch = 255;
+			if (ch >= 'a') {
+				if (ch > 'x') ch--;
+				ch = ch - 'a';
+			} else
+				ch = 25 + ch - 'A';
 			if (ch < 0 || ch >= m->numopts)
 				mbeep();
 			else {
