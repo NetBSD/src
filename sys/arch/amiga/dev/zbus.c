@@ -1,4 +1,4 @@
-/*	$NetBSD: zbus.c,v 1.13 1995/12/27 07:31:58 chopps Exp $	*/
+/*	$NetBSD: zbus.c,v 1.14 1996/03/02 14:02:59 veego Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,6 +31,7 @@
  */
 #include <sys/param.h>
 #include <sys/device.h>
+#include <sys/systm.h>
 #include <machine/cpu.h>
 #include <machine/pte.h>
 #include <amiga/amiga/cfdev.h>
@@ -142,7 +143,8 @@ static struct preconfdata preconftab[] = {
 	{2193,	1, 0},	/* Spectrum regs */
 	{2195,	5, 0},	/* Piccolo mem */
 	{2195,	6, 0},	/* Piccolo regs */
-	{1030,	0, 0}	/* Ulwl board */
+	{1030,	0, 0},	/* Ulwl board */
+	{8512,	34, 0}	/* Cybervison 64 */
 };
 static int npreconfent = sizeof(preconftab) / sizeof(struct preconfdata);
 
@@ -212,7 +214,7 @@ zbusattach(pdp, dp, auxp)
 	ecdp = &cfdev[ncfdev];
 	if (amiga_realconfig) {
 		if (ZTWOMEMADDR)
-			printf(": mem 0x%08x-0x%08x",
+			printf(": mem 0x%08lx-0x%08lx",
 			    ZTWOMEMADDR, ZTWOMEMADDR + NBPG * NZTWOMEMPG - 1);
 		if (ZBUSAVAIL)
 			printf (": i/o size 0x%08x", ZBUSAVAIL);
@@ -277,7 +279,7 @@ zbusprint(auxp, pnp)
 		if (zap->manid == -1)
 			rv = UNSUPP;
 	}
-	printf(" rom 0x%x man/pro %d/%d", zap->pa, zap->manid, zap->prodid);
+	printf(" rom %p man/pro %d/%d", zap->pa, zap->manid, zap->prodid);
 	return(rv);
 }
 
