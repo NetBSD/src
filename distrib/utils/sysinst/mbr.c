@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.33 2003/05/07 19:02:52 dsl Exp $ */
+/*	$NetBSD: mbr.c,v 1.34 2003/05/16 19:44:23 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -110,6 +110,10 @@ static int get_mapping (struct mbr_partition *, int, int *, int *, int *,
 static void convert_mbr_chs (int, int, int, u_int8_t *, u_int8_t *,
 				 u_int8_t *, u_int32_t);
 
+#ifdef BOOTSEL
+static int defbootselpart, defbootseldisk;
+struct mbr_bootsel *mbs;
+#endif
 
 #ifdef notdef
 /*
@@ -409,11 +413,14 @@ get_partname(i)
 	int i;
 {
 	int j;
+	static char unknown[32];
 
-	for (j = 0; part_ids[j].id != -1 &&
-		    part_ids[j].id != part[i].mbrp_typ; j++);
+	for (j = 0; part_ids[j].id != -1; j++)
+		if (part_ids[j].id == part[i].mbrp_typ)
+			return part_ids[j].name;
 
-	return part_ids[j].name;
+	snprintf(unknown, sizeof unknown, "Unknown (%d)", part[i].mbrp_typ);
+	return unknown;
 }
 
 void
@@ -701,7 +708,7 @@ disp_bootsel(void)
 
 	msg_display(MSG_configbootsel);
 	msg_table_add(MSG_bootsel_header);
-	for (i = 0; i < 4; i++) {
+	for (i = 0; i < NMBRPART; i++) {
 		msg_table_add(MSG_bootsel_row, i, get_partname(i),
 			mbs->mbrb_nametab[i]);
 	}
@@ -711,7 +718,7 @@ disp_bootsel(void)
 	msg_display_add(MSG_defbootselopt);
 	if (mbs->mbrb_defkey == SCAN_ENTER)
 		msg_display_add(MSG_defbootseloptactive);
-	else if (mbs->mbrb_defkey < (SCAN_F1 + 4))
+	else if (mbs->mbrb_defkey < (SCAN_1 + 10))
 		msg_display_add(MSG_defbootseloptpart, defbootselpart);
 	else
 		msg_display_add(MSG_defbootseloptdisk, defbootseldisk);
@@ -761,4 +768,54 @@ edit_bootsel_default_disk(int disk)
 	mbs->mbrb_defkey = SCAN_F1 + disk;
 	defbootseldisk = disk;
 }
+
+void
+configure_bootsel(void)
+{
+	struct mbr_partition *parts = &mbr.mbr_parts[0];
+	int i;
+	const char *name, *cp;
+
+	mbs = &mbr.mbr_bootsel;
+
+	/*
+	 * Setup default labels for partitions, since if not done by user
+	 * they don't get set and bootselector doesn't 'appear' when
+	 * it's loaded.
+	 */
+	for (i = 0; i < NMBRPART; i++) {
+		if (parts[i].mbrp_typ == MBR_PTYPE_NETBSD &&
+		    mbs->mbrb_nametab[i][0] != 0)
+			goto labels_ok;
+	}
+
+	for (i = 0; i < NMBRPART; i++) {
+		if (parts[i].mbrp_typ == 0 ||
+		    parts[i].mbrp_typ == MBR_PTYPE_LNXSWAP ||
+		    MBR_IS_EXTENDED(parts[i].mbrp_typ) ||
+		    mbs->mbrb_nametab[i][0] != '\0')
+			continue;
+		/* Default to first word of partition name */
+		name = get_partname(i);
+		cp = strchr(name, ' ');
+		snprintf(mbs->mbrb_nametab[i], sizeof(mbs->mbrb_nametab[0]),
+			 "%.*s", cp != NULL ? cp - name : 256, name);
+	}
+
+    labels_ok:
+	process_menu(MENU_configbootsel);
+
+#if 0
+	/* The current bootselect code doesn't need this... */
+	mbs->mbrb_flags &= ~BFL_EXTINT13;
+	for (i = 0; i < NMBRPART; i++) {
+		if (parts[i].mbrp_typ != 0 &&
+		   parts[i].mbrp_start >= (bcyl * bhead * bsec)) {
+			mbs->mbrb_flags |= BFL_EXTINT13;
+			break;
+		}
+	}
+#endif
+}
+
 #endif
