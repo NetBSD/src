@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.460 2002/07/31 11:16:50 bouyer Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.461 2002/08/02 12:45:24 ad Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.458 2002/07/31 11:16:17 bouyer Exp 
+ *	NetBSD: pcidevs,v 1.459 2002/08/02 12:44:42 ad Exp 
  */
 
 /*
@@ -2584,6 +2584,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "PERC 3/Di",
 	},
 	{
+	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_3DI_3,
+	    0,
+	    "Dell Computer",
+	    "PERC 3/Di",
+	},
+	{
 	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_3SI,
 	    0,
 	    "Dell Computer",
@@ -2609,6 +2615,24 @@ const struct pci_knowndev pci_knowndevs[] = {
 	},
 	{
 	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_3DI_SUB3,
+	    0,
+	    "Dell Computer",
+	    "PERC 3/Di",
+	},
+	{
+	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_3DI_3_SUB,
+	    0,
+	    "Dell Computer",
+	    "PERC 3/Di",
+	},
+	{
+	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_3DI_3_SUB2,
+	    0,
+	    "Dell Computer",
+	    "PERC 3/Di",
+	},
+	{
+	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_3DI_3_SUB3,
 	    0,
 	    "Dell Computer",
 	    "PERC 3/Di",
