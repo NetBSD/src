@@ -1,4 +1,4 @@
-/* $NetBSD: lptctl.c,v 1.5 2004/01/28 17:54:03 jdolecek Exp $ */
+/* $NetBSD: lptctl.c,v 1.6 2004/02/03 20:00:22 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -49,13 +49,12 @@
 
 /* Prototypes */
 static void usage(int status);
-static void print_lpt_info(int);
+static void print_lpt_info(int, int);
 
 int
 main(const int argc, const char * const * argv) {
-	unsigned long ioctl_cmd = 0;
-	int fd;
-	int i;
+	int fd, i;
+	int omode, mode, oflags, flags;
 
 	setprogname(argv[0]);
 
@@ -67,82 +66,80 @@ main(const int argc, const char * const * argv) {
 	if ((fd = open(argv[1], O_RDONLY, 0)) == -1)
 		err(2, "device open");
 
+	/* get current settings */
+	if (ioctl(fd, LPTGFLAGS, &flags) == -1)
+		err(2, "ioctl(LPTGFLAGS)");
+	oflags = flags;
+
+	if (ioctl(fd, LPTGMODE, &mode) == -1)
+		err(2, "ioctl(LPTGMODE)");
+	omode = mode;
+
 	/* Get command and arg pairs (if any) and do an ioctl for each */
 	for(i = 2; i < argc; i += 2) {
 		if (strcmp("dma", argv[i]) == 0) {
-			if (strcmp("on", argv[i + 1]) == 0) {
-				printf("Enabling DMA...\n");
-				ioctl_cmd = LPTIO_ENABLE_DMA;
-			} else if (strcmp("off", argv[i + 1]) == 0) {
-				printf("Disabling DMA...\n");
-				ioctl_cmd = LPTIO_DISABLE_DMA;
-			} else {
+			if (strcmp("on", argv[i + 1]) == 0)
+				flags |= LPT_DMA;
+			else if (strcmp("off", argv[i + 1]) == 0)
+				flags &= ~LPT_DMA;
+			else {
 				errx(2, "invalid '%s' command argument '%s'",
 					argv[i], argv[i + 1]);
 			}
 		} else if (strcmp("mode", argv[i]) == 0) {
-			if (strcmp("standard", argv[i + 1]) == 0) {
-				printf("Using standard mode...\n");
-				ioctl_cmd = LPTIO_MODE_STD;
-			} else if (strcmp("ps2", argv[i + 1]) == 0) {
-				printf("Using ps2 mode...\n");
-				ioctl_cmd = LPTIO_MODE_PS2;
-			} else if (strcmp("nibble", argv[i + 1]) == 0) {
-				printf("Using nibble mode...\n");
-				ioctl_cmd = LPTIO_MODE_NIBBLE;
-			} else if (strcmp("fast", argv[i + 1]) == 0) {
-				printf("Using fast centronics mode...\n");
-				ioctl_cmd = LPTIO_MODE_FAST;
-			} else if (strcmp("ecp", argv[i + 1]) == 0) {
-				printf("Using ecp mode...\n");
-				ioctl_cmd = LPTIO_MODE_ECP;
-			} else if (strcmp("epp", argv[i + 1]) == 0) {
-				printf("Using epp mode...\n");
-				ioctl_cmd = LPTIO_MODE_EPP;
-			} else {
+			if (strcmp("standard", argv[i + 1]) == 0)
+				mode = standard;
+			else if (strcmp("ps2", argv[i + 1]) == 0)
+				mode = ps2;
+			else if (strcmp("nibble", argv[i + 1]) == 0)
+				mode = nibble;
+			else if (strcmp("fast", argv[i + 1]) == 0)
+				mode = fast;
+			else if (strcmp("ecp", argv[i + 1]) == 0)
+				mode = ecp;
+			else if (strcmp("epp", argv[i + 1]) == 0)
+				mode = epp;
+			else {
 				errx(2, "invalid '%s' command argument '%s'",
 					argv[i], argv[i+1]);
 			}
 		} else if (strcmp("ieee", argv[i]) == 0) {
-			if (strcmp("yes", argv[i + 1]) == 0) {
-				printf("Using IEEE...\n");
-				ioctl_cmd = LPTIO_ENABLE_IEEE;
-			} else if (strcmp("no", argv[i + 1]) == 0) {
-				printf("Not using IEEE...\n");
-				ioctl_cmd = LPTIO_DISABLE_IEEE;
-			} else {
+			if (strcmp("yes", argv[i + 1]) == 0)
+				flags |= LPT_IEEE;
+			else if (strcmp("no", argv[i + 1]) == 0)
+				flags &= ~LPT_IEEE;
+			else {
 				errx(2, "invalid '%s' command argument '%s'",
 					argv[i], argv[i+1]);
 			}
 		} else {
 			errx(2, "invalid command '%s'", argv[i]);
 		}
+	}
 
-		/* Do the command */
-		if (ioctl(fd, ioctl_cmd, NULL) == -1)
-			err(2, "%s: ioctl", __func__);
+	/* update mode and flags */
+	if (flags != oflags) {
+		if (ioctl(fd, LPTSFLAGS, &flags) == -1)
+			err(2, "ioctl(LPTSFLAGS)");
+	}
+	if (mode != omode) {
+		if (ioctl(fd, LPTSMODE, &mode) == -1)
+			err(2, "ioctl(LPTSMODE)");
 	}
 
 	/* Print out information on device */
-	print_lpt_info(fd);
+	print_lpt_info(mode, flags);
 
 	exit(0);
 	/* NOTREACHED */
 }
 
 static void 
-print_lpt_info(int fd) {
-	LPT_INFO_T lpt_info;
-
-	if (ioctl(fd, LPTIO_GET_STATUS, &lpt_info) == -1) {
-		warnx("%s: ioctl", __func__);
-		return;
-	}
-
-	printf("dma=%s ", (lpt_info.dma_status) ? "on" : "off");
+print_lpt_info(int mode, int flags) {
+	printf("dma=%s ", (flags & LPT_DMA) ? "on" : "off");
 		
 	printf("mode=");
-	switch(lpt_info.mode_status) {
+	switch(mode) {
 	case standard:
 		printf("standard ");
 		break;
@@ -161,10 +158,13 @@ print_lpt_info(int fd) {
 	case epp:
 		printf("epp ");
 		break;
+	default:
+		printf("<unknown> ");
+		break;
 	}
 		
-	printf("ieee=%s ", (lpt_info.ieee_status) ? "yes" : "no");
-		
+	printf("ieee=%s ", (flags & LPT_IEEE) ? "yes" : "no");
+
 	printf("\n");
 }
 
