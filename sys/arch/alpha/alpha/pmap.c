@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.137 2000/06/29 09:02:55 mrg Exp $ */
+/* $NetBSD: pmap.c,v 1.138 2000/08/13 18:22:21 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -154,7 +154,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.137 2000/06/29 09:02:55 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.138 2000/08/13 18:22:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -630,12 +630,23 @@ do {									\
  *	Synchronize the I-stream for the specified pmap.  For user
  *	pmaps, this is deferred until a process using the pmap returns
  *	to userspace.
- *
- *	XXX Need MULTIPROCESSOR versions of these.
  */
-#define	PMAP_SYNC_ISTREAM_KERNEL()	alpha_pal_imb()
+#if defined(MULTIPROCESSOR)
+#define	PMAP_SYNC_ISTREAM_KERNEL()					\
+do {									\
+	alpha_pal_imb();						\
+	alpha_broadcast_ipi(ALPHA_IPI_IMB);				\
+} while (0)
 
+#define	PMAP_SYNC_ISTREAM_USER(pmap)					\
+do {									\
+	(pmap)->pm_needisync = ~0UL;					\
+	alpha_multicast_ipi((pmap)->pm_cpus, ALPHA_IPI_AST);		\
+} while (0)
+#else
+#define	PMAP_SYNC_ISTREAM_KERNEL()	alpha_pal_imb()
 #define	PMAP_SYNC_ISTREAM_USER(pmap)	(pmap)->pm_needisync = ~0UL
+#endif /* MULTIPROCESSOR */
 
 #define	PMAP_SYNC_ISTREAM(pmap)						\
 do {									\
