@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.12.6.1 2000/01/09 20:43:23 jdc Exp $	*/
+/*	$NetBSD: tty.c,v 1.12.6.2 2000/03/05 23:21:38 jdc Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -38,13 +38,11 @@
 #if 0
 static char sccsid[] = "@(#)tty.c	8.6 (Berkeley) 1/10/95";
 #else
-__RCSID("$NetBSD: tty.c,v 1.12.6.1 2000/01/09 20:43:23 jdc Exp $");
+__RCSID("$NetBSD: tty.c,v 1.12.6.2 2000/03/05 23:21:38 jdc Exp $");
 #endif
 #endif				/* not lint */
 
 #include <sys/types.h>
-#include <sys/fcntl.h>
-#include <sys/ioctl.h>
 
 #include <stdlib.h>
 #include <termios.h>
@@ -430,8 +428,7 @@ isendwin()
 int
 flushinp()
 {
-	int what = FREAD;
-	(void) ioctl(STDIN_FILENO, TIOCFLUSH, &what);
+	(void) fpurge(stdin);
 	return (OK);
 }
 
