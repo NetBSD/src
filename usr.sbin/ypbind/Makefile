@@ -3,6 +3,6 @@
 PROG=	ypbind
 NOMAN=
 CFLAGS+=-DDAEMON
-DESTDIR=/usr/sbin
+BINDIR=/usr/sbin
 
 .include <bsd.prog.mk>
