@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.92 1997/06/12 15:46:23 mrg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.93 1997/06/29 13:49:45 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1243,33 +1243,35 @@ microtime(tvp)
 void
 initcpu()
 {
+	typedef void trapfun __P((void));
+
 	/* XXX should init '40 vecs here, too */
 #if defined(M68060) || defined(M68040) || defined(DRACO)
-	extern caddr_t vectab[256];
+	extern trapfun *vectab[256];
 #endif
 
 #if defined(M68060) || defined(M68040)
-	extern u_int8_t addrerr4060;
+	extern trapfun addrerr4060;
 #endif
 
 #ifdef M68060
-	extern u_int8_t buserr60;
+	extern trapfun buserr60;
 #if defined(M060SP)
 	/*extern u_int8_t I_CALL_TOP[];*/
-	extern u_int8_t intemu60, fpiemu60, fpdemu60, fpeaemu60;
+	extern trapfun intemu60, fpiemu60, fpdemu60, fpeaemu60;
 	extern u_int8_t FP_CALL_TOP[];
 #else
-	extern u_int8_t illinst;
+	extern trapfun illinst;
 #endif
-	extern u_int8_t fpfault;
+	extern trapfun fpfault;
 #endif
 
 #ifdef M68040
-	extern u_int8_t buserr40;
+	extern trapfun buserr40;
 #endif
 
 #ifdef DRACO
-	extern u_int8_t DraCoIntr, DraCoLev1intr, DraCoLev2intr;
+	extern trapfun DraCoIntr, DraCoLev1intr, DraCoLev2intr;
 	u_char dracorev;
 #endif
 
@@ -1279,34 +1281,34 @@ initcpu()
 			"d"(m68060_pcr_init):"d0" );
 
 		/* bus/addrerr vectors */
-		vectab[2] = &buserr60;
-		vectab[3] = &addrerr4060;
+		vectab[2] = buserr60;
+		vectab[3] = addrerr4060;
 #if defined(M060SP)
 
 		/* integer support */
-		vectab[61] = &intemu60/*&I_CALL_TOP[128 + 0x00]*/;
+		vectab[61] = intemu60/*(trapfun *)&I_CALL_TOP[128 + 0x00]*/;
 
 		/* floating point support */
 		/*
 		 * XXX maybe we really should run-time check for the
 		 * stack frame format here:
 		 */
-		vectab[11] = &fpiemu60/*&FP_CALL_TOP[128 + 0x30]*/;
+		vectab[11] = fpiemu60/*(trapfun *)&FP_CALL_TOP[128 + 0x30]*/;
 
-		vectab[55] = &fpdemu60/*&FP_CALL_TOP[128 + 0x38]*/;
-		vectab[60] = &fpeaemu60/*&FP_CALL_TOP[128 + 0x40]*/;
+		vectab[55] = fpdemu60/*(trapfun *)&FP_CALL_TOP[128 + 0x38]*/;
+		vectab[60] = fpeaemu60/*(trapfun *)&FP_CALL_TOP[128 + 0x40]*/;
 
-		vectab[54] = &FP_CALL_TOP[128 + 0x00];
-		vectab[52] = &FP_CALL_TOP[128 + 0x08];
-		vectab[53] = &FP_CALL_TOP[128 + 0x10];
-		vectab[51] = &FP_CALL_TOP[128 + 0x18];
-		vectab[50] = &FP_CALL_TOP[128 + 0x20];
-		vectab[49] = &FP_CALL_TOP[128 + 0x28];
+		vectab[54] = (trapfun *)&FP_CALL_TOP[128 + 0x00];
+		vectab[52] = (trapfun *)&FP_CALL_TOP[128 + 0x08];
+		vectab[53] = (trapfun *)&FP_CALL_TOP[128 + 0x10];
+		vectab[51] = (trapfun *)&FP_CALL_TOP[128 + 0x18];
+		vectab[50] = (trapfun *)&FP_CALL_TOP[128 + 0x20];
+		vectab[49] = (trapfun *)&FP_CALL_TOP[128 + 0x28];
 
 #else
-		vectab[61] = &illinst;
+		vectab[61] = illinst;
 #endif
-		vectab[48] = &fpfault;
+		vectab[48] = fpfault;
 	}
 #endif
 
@@ -1319,8 +1321,8 @@ initcpu()
 #endif
 	if (machineid & AMIGA_68040) {
 		/* addrerr vector */
-		vectab[2] = &buserr40;
-		vectab[3] = &addrerr4060;
+		vectab[2] = buserr40;
+		vectab[3] = addrerr4060;
 	}
 #endif
 
@@ -1328,16 +1330,16 @@ initcpu()
 	dracorev = is_draco();
 	if (dracorev) {
 		if (dracorev >= 4) {
-			vectab[24+1] = &DraCoLev1intr;
-			vectab[24+2] = &DraCoIntr;
+			vectab[24+1] = DraCoLev1intr;
+			vectab[24+2] = DraCoIntr;
 		} else {
-			vectab[24+1] = &DraCoIntr;
-			vectab[24+2] = &DraCoLev2intr;
+			vectab[24+1] = DraCoIntr;
+			vectab[24+2] = DraCoLev2intr;
 		}
-		vectab[24+3] = &DraCoIntr;
-		vectab[24+4] = &DraCoIntr;
-		vectab[24+5] = &DraCoIntr;
-		vectab[24+6] = &DraCoIntr;
+		vectab[24+3] = DraCoIntr;
+		vectab[24+4] = DraCoIntr;
+		vectab[24+5] = DraCoIntr;
+		vectab[24+6] = DraCoIntr;
 	}
 #endif
 	DCIS();
