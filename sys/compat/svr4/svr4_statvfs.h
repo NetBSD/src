@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_wait.h,v 1.2 1995/01/08 21:31:49 christos Exp $	 */
+/*	$NetBSD: svr4_statvfs.h,v 1.1 1995/01/08 21:31:39 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -27,70 +27,28 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	_SVR4_WAIT_H_
-#define	_SVR4_WAIT_H_
+#ifndef	_SVR4_STATVFS_H_
+#define	_SVR4_STATVFS_H_
 
+typedef struct svr4_statvfs {
+	u_long	f_bsize;
+	u_long	f_frsize;
+	u_long	f_blocks;
+	u_long	f_bfree;
+	u_long	f_bavail;
+	u_long	f_files;
+	u_long	f_ffree;
+	u_long	f_favail;
+	u_long	f_fsid;
+	char	f_basetype[16];
+	u_long	f_flag;
+	u_long	f_namemax;
+	char	f_fstr[32];
+	u_long	f_filler[16];
+} svr4_statvfs_t;
 
-#define SVR4_P_PID	0
-#define SVR4_P_PPID	1
-#define SVR4_P_PGID	2
-#define SVR4_P_SID	3
-#define SVR4_P_CID	4
-#define SVR4_P_UID	5
-#define SVR4_P_GID	6
-#define SVR4_P_ALL	7
+#define	SVR4_ST_RDONLY	0x01
+#define	SVR4_ST_NOSUID	0x02
+#define	SVR4_ST_NOTRUNC	0x04
 
-#define SVR4_WEXITED	0x01
-#define SVR4_WTRAPPED	0x02
-#define SVR4_WSTOPPED	0x04
-#define SVR4_WCONTINUED	0x08
-#define SVR4_WUNDEF1	0x10
-#define SVR4_WUNDEF2	0x20
-#define SVR4_WNOHANG	0x40
-#define SVR4_WNOWAIT	0x80
-
-#define SVR4_WOPTMASK   (SVR4_WEXITED|SVR4_WTRAPPED|SVR4_WSTOPPED|\
-			 SVR4_WCONTINUED|SVR4_WNOHANG|SVR4_WNOWAIT)
-
-struct svr4_siginfo {
-	int	si_signo;
-	int	si_code;
-	int	si_errno;
-
-	union {
-		int	_pad[(128 / sizeof(int)) - 3];
-		struct {
-			svr4_pid_t	_pid;
-			union {
-				struct {
-					svr4_uid_t	_uid;
-				} _kill;
-				struct {
-					svr4_clock_t	_utime;
-					int		_status;
-					svr4_clock_t	_stime;
-				} _cld;
-			} _pdata;
-		} _proc;
-
-		struct {
-			svr4_caddr_t _addr;
-		} _fault;
-
-		struct {
-			int	_fd;
-			long	_band;
-		} _file;
-	} _data;
-};
-
-#define si_band		_data._file._band
-#define si_fd		_data._file._fd
-#define si_addr		_data._fault._addr
-#define si_stime	_data._proc._pdata._cld._stime
-#define si_status	_data._proc._pdata._cld._status
-#define si_utime	_data._proc._pdata._cld._utime
-#define si_uid		_data._proc._pdata._kill._uid
-#define si_pid		_data._proc._pid
-
-#endif /* !_SVR4_WAIT_H_ */
+#endif /* !_SVR4_STATVFS_H_ */

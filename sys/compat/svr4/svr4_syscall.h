@@ -28,10 +28,11 @@
 #define	SVR4_SYS_getpid	20
 #define	SVR4_SYS_setuid	23
 #define	SVR4_SYS_getuid	24
+#define	SVR4_SYS_svr4_alarm	27
 #define	SVR4_SYS_svr4_fstat	28
 #define	SVR4_SYS_svr4_access	33
 #define	SVR4_SYS_sync	36
-#define	SVR4_SYS_kill	37
+#define	SVR4_SYS_svr4_kill	37
 #define	SVR4_SYS_svr4_pgrpsys	39
 #define	SVR4_SYS_dup	41
 #define	SVR4_SYS_pipe	42
@@ -73,8 +74,11 @@
 #define	SVR4_SYS_svr4_sigprocmask	95
 #define	SVR4_SYS_sigaltstack	96
 #define	SVR4_SYS_sigsuspend	97
-#define	SVR4_SYS_sigaction	98
+#define	SVR4_SYS_svr4_sigaction	98
 #define	SVR4_SYS_svr4_sigpending	99
+#define	SVR4_SYS_svr4_context	100
+#define	SVR4_SYS_svr4_statvfs	103
+#define	SVR4_SYS_svr4_fstatvfs	104
 #define	SVR4_SYS_svr4_waitsys	107
 #define	SVR4_SYS_svr4_hrtsys	109
 #define	SVR4_SYS_svr4_mmap	115
