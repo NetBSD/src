@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.4 1999/09/17 15:20:54 tsubai Exp $	*/
+/*	$NetBSD: locore.s,v 1.5 1999/09/22 08:57:49 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1997
@@ -39,6 +39,8 @@
  *
  *	@(#)locore.s	7.3 (Berkeley) 5/13/91
  */
+
+#define DIAGNOSTIC 1
 
 #include "opt_ddb.h"
 
@@ -452,7 +454,7 @@ ENTRY(longjmp)
  * actually to shrink the 0-127 range of priorities into the 32 available
  * queues.
  */
-	.globl	_whichqs,_qs,_panic
+	.globl	_C_LABEL(whichqs), _C_LABEL(qs)
 
 /*
  * When no processes are on the runq, cpu_switch() branches to here to wait for
@@ -460,7 +462,6 @@ ENTRY(longjmp)
  */
 
 ENTRY(idle)
-	CLI
 	ECLI
 	mov.l	XLwhichqs, r0
 	mov.l	@r0, r0
@@ -468,12 +469,11 @@ ENTRY(idle)
 	tst	r0, r0
 	bf	sw1
 	nop
-	STI
 	ESTI
 
 	sleep
 
-	bra	_idle
+	bra	_C_LABEL(idle)
 	nop
 
 #define	PUSHALL	\
@@ -542,7 +542,6 @@ ENTRY(idle)
 	mov.l	@r15+, r2	; \
 	mov.l	@r15+, r1
 
-#define DIAGNOSTIC 1
 #ifdef DIAGNOSTIC
 switch_error:
 	mova	1f, r0
@@ -553,7 +552,8 @@ switch_error:
 
 1:	.asciz	"cpu_swicth"
 	.align	2
-XL_panic:	.long	_panic
+XL_panic:
+	.long	_C_LABEL(panic)
 #endif
 
 /*
@@ -566,8 +566,8 @@ ENTRY(cpu_switch)
 	sts.l	pr, @-r15
 	mov.l	r8, @-r15
 	mov.l	r9, @-r15
-	mov.l	r10, @-r15
-	mov.l	r11, @-r15
+	mov.l	r10, @-r15	/* XXX unused */
+	mov.l	r11, @-r15	/* XXX unused */
 	mov.l	r12, @-r15
 	mov.l	r13, @-r15
 	mov.l	r14, @-r15
@@ -579,23 +579,13 @@ ENTRY(cpu_switch)
 	mov.l	@r12, r12
 	tst	r12, r12
 	bt	1f
-	nop
 
 	/* Save stack pointers. */
-	mov	r12, r4
-	mov.l	XLP_ADDR, r1
-	add	r1, r4
-	mov.l	XL_ConvVtoP, r0
-	jsr	@r0
-	nop
-	mov.l	@r0, r4		/* r4 = oldCurproc->p_addr */
-	add	#PCB_R15, r4
-	mov.l	XL_ConvVtoP, r0
-	jsr	@r0
-	nop
-	mov.l	r15, @r0
-1:
+	mov.l	XLP_ADDR, r0
+	mov.l	@(r0, r12), r4		/* r4 = oldCurproc->p_addr */
+	mov.l	r15, @(PCB_R15, r4)
 
+1:
 	/*
 	 * Clear curproc so that we don't accumulate system time while idle.
 	 * This also insures that schedcpu() will move the old process to
@@ -625,8 +615,8 @@ ENTRY(cpu_switch)
 	nop
 
 	.align	2
-XXLcpl:		.long	_cpl
-XXLXspllower:	.long	_Xspllower
+XXLcpl:		.long	_C_LABEL(cpl)
+XXLXspllower:	.long	_C_LABEL(Xspllower)
 XXLKernelStack:	.long	KernelStack
 XXLKernelSp:	.long	KernelSp
 
@@ -635,28 +625,26 @@ switch_search:
 	 * First phase: find new process.
 	 *
 	 * Registers:
-	 *   %eax - queue head, scratch, then zero
-	 *   %ebx - queue number
-	 *   %ecx - cached value of whichqs
-	 *   %edx - next process in queue
-	 *   %esi - old process
-	 *   %edi - new process
+	 *   r0  - queue head, scratch, then zero
+	 *   r13 - queue number
+	 *   r14 - cached value of whichqs
+	 *   r9  - next process in queue
+	 *   r12 - old process
+	 *   r8  - new process
 	 */
 
 	/* Wait for new process. */
-	CLI				/* splhigh doesn't do a cli */
+	ECLI				/* splhigh doesn't do a cli */
 	mov.l	XLwhichqs, r0
 	mov.l	@r0, r0
 	mov	r0, r14
 
 #define TESTANDSHIFT \
-	tst	r1, r0		; \
-	bf	1f		; \
-	shll	r1		; \
+	rotr	r0		; /* LSB -> T */ \
+	bt	1f		; \
 	add	#1, r2
 
-sw1:	mov	#1, r1
-	xor	r2, r2
+sw1:	mov	#0, r2
 	TESTANDSHIFT	/* bit 0 */
 	TESTANDSHIFT	/* bit 1 */
 	TESTANDSHIFT	/* bit 2 */
@@ -690,64 +678,32 @@ sw1:	mov	#1, r1
 	TESTANDSHIFT	/* bit 30 */
 	TESTANDSHIFT	/* bit 31 */
 
-	bra	_idle			/* if none, idle */
+	bra	_C_LABEL(idle)		/* if none, idle */
 	nop
 
 1:	mov.l	XLqs, r0
 	mov	r2, r13
 	shll2	r2
 	shll	r2
-	add	r2, r0		/* r0 = &qs[i] */
+	add	r2, r0			/* r0 = &qs[i] */
 
-	mov	r0, r2
-	mov	#P_FORW, r1
-	add	r1, r2
-
-	ldc	r0, r0_bank	/* save r0 = &qs[i] */
-	mov	r2, r4
-	mov.l	XL_ConvVtoP, r0
-	jsr	@r0
-	nop
-	mov	r0, r2
-
-	mov.l	@r2, r8		/* r8 = qs[i].p_forw */
+	mov.l	@(P_FORW, r0), r8	/* r8 = qs[i].p_forw */
 
 #ifdef DIAGNOSTIC
-	stc	r0_bank, r0
 	cmp/eq	r0, r8		/* linked to self (i.e. nothing queued)? */
 	bf	10f
-	nop
 	mov.l	XL_switch_error, r0
 	jmp	@r0
 	nop
 10:
 #endif
 
-	mov	r8, r4
-	add	r1, r4
-	mov.l	XL_ConvVtoP, r0
-	jsr	@r0
-	nop
-	mov	r0, r3
+	mov.l	@(P_FORW, r8), r9	/* r9 = qs[i].p_forw->p_forw */
+	mov.l	r9, @(P_FORW, r0)	/* qs[i].p_forw = r9 */
+	mov.l	r0, @(P_BACK, r9)	/* r9->p_back = &qs[i] */
 
-	mov.l	@r3, r9		/* r9 = qs[i].p_forw->p_forw */
-
-	mov.l	r9, @r2		/* qs[i].p_forw = qs[i].p_forw->p_forw */
-
-	mov	r9, r4
-	add	#P_BACK, r4
-	mov.l	XL_ConvVtoP, r0
-	jsr	@r0
-	nop
-	mov	r0, r10
-	stc	r0_bank, r0
-
-	mov.l	r0, @r10	/* qs[i].p_forw->p_forw->p_back = &qs[i] */
-
-	mov	r0, r11
-	sub	r9, r11
-	tst	r11, r11
-	bf	3f		/* if r0 != r9 then goto 3f */
+	cmp/eq	r0, r9
+	bf	3f
 
 	mov	#1, r0
 	shld	r13, r0
@@ -755,22 +711,21 @@ sw1:	mov	#1, r1
 	and	r0, r14
 	mov.l	XLwhichqs, r0
 	mov.l	r14, @r0
-/* #define sh3_debug */
+
 #ifdef sh3_debug
-	mova	XL_fmt, r0
+	mova	1f, r0
 	mov	r0, r4
-	mov	r14, r6
 	mov	r13, r5
-	mov.l	XL_printf, r0
+	mov	r14, r6
+	mov.l	2f, r0
 	jsr	@r0
 	nop
 	bra	3f
 	nop
 
-XL_fmt:	.asciz	"switch[i=%d,whichqs=0x%0x]\n"
+1:	.asciz	"switch[i=%d,whichqs=0x%0x]\n"
 	.align	2
-XL_printf:
-	.long	_printf
+2:	.long	_C_LABEL(printf)
 #endif
 
 3:
@@ -779,142 +734,97 @@ XL_printf:
 	mov.l	r0, @r1
 
 #ifdef DIAGNOSTIC
-	mov	r8, r4
-	add	#P_WCHAN, r4
-	mov.l	XL_ConvVtoP, r0
-	jsr	@r0
-	nop
-	mov.l	@r0, r0
+	mov	#P_WCHAN, r0
+	mov.l	@(r0, r8), r0
 	tst	r0, r0
 	bt	11f
-	nop
 
-	mov	r8, r4
-	add	#P_STAT, r4
-	mov.l	XL_ConvVtoP, r0
-	jsr	@r0
-	nop
-	mov.b	@r0, r0
+	mov	#P_STAT, r0
+	mov.b	@(r0, r8), r0
 	extu.b	r0, r0
 	cmp/eq	#SRUN, r0
 	bt	11f
-	nop
 
 	mov.l	XL_switch_error, r0
 	jmp	@r0
 	nop
 
 	.align	2
-XL_switch_error:	.long	switch_error
+XL_switch_error:
+	.long	switch_error
 11:
 #endif
 
 	/* Isolate process.  XXX Is this necessary? */
-	mov	r8, r4
-	add	#P_BACK, r4
-
-	mov.l	XL_ConvVtoP, r0
-	jsr	@r0
-	nop
-	mov	r0, r1
-
 	xor	r0, r0
-	mov.l	r0, @r1		/* r8->p_back = 0 */
+	mov.l	r0, @(P_BACK, r8)	/* r8->p_back = 0 */
 
 	/* Record new process. */
 	mov.l	XXLcurproc, r0
 	mov.l	r8, @r0
 
 	/* It's okay to take interrupts here. */
-#if 1 /* 1998.10.19 */
-	ECLI
-#endif
-	STI
+	/* ESTI */
 
 	/* Skip context switch if same process. */
-	mov	r12, r0		/* r12 = oldCurproc */
-	sub	r8, r0		/* r8 = qs[i]->p_forw */
-	tst	r0, r0
+					/* r12 = oldCurproc */
+					/* r8 = qs[i]->p_forw */
+	cmp/eq	r8, r12
 	bt	switch_return
 
 	/* If old process exited, don't bother. */
 	tst	r12, r12
 	bt	switch_exited
-	nop
 
 	/*
 	 * Second phase: save old context.
 	 *
 	 * Registers:
-	 *   %eax, %ecx - scratch
-	 *   %esi - old process, then old pcb
-	 *   %edi - new process
+	 *   r0  - scratch
+	 *   r12 - old process, then old pcb
+	 *   r8  - new process
 	 */
-	mov	r12, r0
-	mov.l	XLP_ADDR, r1
-	add	r1, r0
-	mov.l	@r0, r12	/* r12 = oldCurproc->p_addr */
+	mov.l	XLP_ADDR, r0
+	mov.l	@(r0, r12), r12		/* r12 = oldCurproc->p_addr */
 
 	/* Save stack pointers. */
-	mov	r12, r0
-	add	#PCB_R15, r0
-	mov.l	r15, @r0
+	mov.l	r15, @(PCB_R15, r12)
 
 switch_exited:
 	/*
 	 * Third phase: restore saved context.
 	 *
 	 * Registers:
-	 *   %eax, %ecx, %edx - scratch
-	 *   %esi - new pcb
-	 *   %edi - new process
+	 *   r0, r1 - scratch
+	 *   r12 - new pcb
+	 *   r8  - new process
 	 */
 
 	/* No interrupts while loading new state. */
-	CLI
-	mov	r8, r4		/* r8 = qs[i]->p_forw */
-	mov.l	XLP_ADDR, r1
-	add	r1, r4
-	mov.l	XL_ConvVtoP, r0
-	jsr	@r0
-	nop
-	mov.l	@r0, r12
+	ECLI
+	mov.l	XLP_ADDR, r0
+	mov.l	@(r0, r8), r12		/* r8 = qs[i]->p_forw */
 
 	/* Restore stack pointers. */
-	mov	r12, r4
-	add	#PCB_R15, r4
-	mov.l	XL_ConvVtoP, r0
-	jsr	@r0
-	nop
-	mov.l	@r0, r15
+	mov.l	@(PCB_R15, r12), r15
 
 	/* Store new kernel mode stack pointer */
-	mov	r12, r4
-	add	#PCB_KR15, r4
-	mov.l	XL_ConvVtoP, r0
-	jsr	@r0
-	nop
-	mov.l	@r0, r0
+	mov	#PCB_KR15, r0
+	mov.l	@(r0, r12), r0
 	mov.l	XL_KernelSp, r1
 	mov.l	r0, @r1
 
 	/* Switch address space. */
-	mov	r12, r4
-	add	#PCB_PAGEDIRREG, r4
-	mov.l	XL_ConvVtoP, r0
-	jsr	@r0
-	nop
-
-	mov.l	@r0, r0
-	mov	#SHREG_TTB, r2
-	mov.l	r0, @r2
+	mov	#PCB_PAGEDIRREG, r0
+	mov.l	@(r0, r12), r0
+	mov	#SHREG_TTB, r1
+	mov.l	r0, @r1
 
 	/* flush TLB */
-	mov	#SHREG_MMUCR, r0
-	mov	#4, r1
-	mov.l	@r0, r2
-	or	r1, r2
-	mov.l	r2, @r0
+	mov	#SHREG_MMUCR, r1
+	mov.l	@r1, r0
+	or	#4, r0
+	mov.l	r0, @r1
 
 switch_restored:
 	/* Record new pcb. */
@@ -922,10 +832,7 @@ switch_restored:
 	mov.l	r12, @r0
 
 	/* Interrupts are okay again. */
-#if 1 /* 1998.10.19 */
-	ECLI
-#endif
-	STI
+	/* ESTI */
 
 switch_return:
 	/*
@@ -950,18 +857,18 @@ switch_return:
 	nop
 
 	.align	2
-XLqs:		.long	_qs
-XLwhichqs:	.long	_whichqs
-XLwant_resched:	.long	_want_resched
-XXLcurproc:	.long	_curproc
-XL_ConvVtoP:	.long	_ConvVtoP
+XLqs:		.long	_C_LABEL(qs)
+XLwhichqs:	.long	_C_LABEL(whichqs)
+XLwant_resched:	.long	_C_LABEL(want_resched)
+XXLcurproc:	.long	_C_LABEL(curproc)
 XL_KernelSp:	.long	KernelSp
+
 /*
  * switch_exit(struct proc *p);
  * Switch to proc0's saved context and deallocate the address space and kernel
  * stack for p.  Then jump into cpu_switch(), as if we were in proc0 all along.
  */
-	.globl	_proc0,_kernel_map
+	.globl	_proc0
 ENTRY(switch_exit)
 	mov	r4, r8			/* old process */
 	mov.l	XLproc0, r9
@@ -972,41 +879,31 @@ ENTRY(switch_exit)
 	mov.l	r0, @r1
 
 	/* Restore proc0's context. */
-	CLI
-	mov	r9, r0
-	mov.l	XLP_ADDR, r1
-	add	r1, r0
-	mov.l	@r0, r10
+	ECLI
+	mov.l	XLP_ADDR, r0
+	mov.l	@(r0, r9), r10
 
 	/* Restore stack pointers. */
-	mov	r10, r0
-	mov	#PCB_R15, r1
-	add	r1, r0
-	mov.l	@r0, r15
+	mov.l	@(PCB_R15, r10), r15
 
 	/* Switch address space. */
-	mov	r10, r0
-	add	#PCB_PAGEDIRREG, r0
-	mov.l	@r0, r2
+	mov	#PCB_PAGEDIRREG, r0
+	mov.l	@(r0, r10), r2
 	mov	#SHREG_TTB, r1
 	mov.l	r2, @r1
 
 	/* flush TLB */
-	mov	#SHREG_MMUCR, r0
-	mov	#4, r1
-	mov.l	@r0, r2
-	or	r1, r2
-	mov.l	r2, @r0
+	mov	#SHREG_MMUCR, r1
+	mov.l	@r1, r0
+	or	#4, r0
+	mov.l	r0, @r1
 
 	/* Record new pcb. */
 	mov.l	XL_curpcb, r0
 	mov.l	r10, @r0
 
 	/* Interrupts are okay again. */
-#if 1 /* 1998.10.19 */
-	ECLI
-#endif
-	STI
+	/* ESTI */
 
 	mov	r8, r4
 	mov.l	XLexit2, r0
@@ -1024,7 +921,7 @@ ENTRY(switch_exit)
 
 	.align	2
 XLexit2:
-	.long	_exit2
+	.long	_C_LABEL(exit2)
 XLP_ADDR:
 	.long	P_ADDR
 
@@ -1060,7 +957,6 @@ ENTRY(savectx)
 	.text
 
 NENTRY(exphandler)
-/* #define	CHECK_SP */
 #ifdef CHECK_SP
 	mov.l	XL_splimit3, r0
 	cmp/hs	r15, r0
@@ -1109,18 +1005,15 @@ NENTRY(exphandler)
 	mov.l	@r0, r0
 	tst	r0, r0
 	bt	1f
-	nop
 
 	/* If trap occurred in kernel , skip AST proc */
-	mov	r15, r0
-	add	#TF_SPC-4, r0
-	mov.l	@r0, r0
+	mov.l	@(TF_SPC-4, r15), r0
 	mov	#1, r1
 	mov	#31, r2
 	shld	r2, r1
 	tst	r1, r0	/* test MSB of TF_SPC */
 	bf	1f
-	nop
+
 5:	xor	r0, r0
 	mov.l	XL_astpending, r1
 	mov.l	r0, @r1
@@ -1140,16 +1033,17 @@ NENTRY(exphandler)
 XL_TLBPROTWR:
 	.long	0x000000c0
 
-	.globl	_tlbmisshandler_stub, _tlbmisshandler_stub_end
+	.globl	_C_LABEL(tlbmisshandler_stub)
+	.globl	_C_LABEL(tlbmisshandler_stub_end)
 
-_tlbmisshandler_stub:
+_C_LABEL(tlbmisshandler_stub):
 	mov.l	XL_tlbmisshandler, r0
 	jmp	@r0
 	nop
 	.align	2
 XL_tlbmisshandler:
-	.long	_tlbmisshandler
-_tlbmisshandler_stub_end:
+	.long	_C_LABEL(tlbmisshandler)
+_C_LABEL(tlbmisshandler_stub_end):
 
 	.align	2
 NENTRY(tlbmisshandler)
@@ -1158,7 +1052,6 @@ NENTRY(tlbmisshandler)
 	mov.l	XL_splimit3, r0
 	cmp/hs	r15, r0
 	bf	100f
-	nop
 	mov.l	XL_splimit_low3, r0
 	cmp/hs	r0, r15
 	bf	100f
@@ -1183,42 +1076,39 @@ XL_splimit_low3:	.long	0x80000000
 	INTRFASTEXIT
 
 	.align	2
-	.globl	_MonTrap100, _MonTrap100_end
-_MonTrap100:
+	.globl	_C_LABEL(MonTrap100), _C_LABEL(MonTrap100_end)
+_C_LABEL(MonTrap100):
 	mov.l	1f, r0
 	jmp	@r0
 	nop
 
 	.align	2
-1:
-	.long	_exphandler
-_MonTrap100_end:
+1:	.long	_C_LABEL(exphandler)
+_C_LABEL(MonTrap100_end):
 
 	.align	2
-	.globl	_MonTrap600, _MonTrap600_end
-_MonTrap600:
+	.globl	_C_LABEL(MonTrap600), _C_LABEL(MonTrap600_end)
+_C_LABEL(MonTrap600):
 	mov.l	1f, r0
 	jmp	@r0
 	nop
 
 	.align	2
-1:
-	.long	_ihandler
-_MonTrap600_end:
+1:	.long	_C_LABEL(ihandler)
+_C_LABEL(MonTrap600_end):
 
 /************************************************************************/
 /*	Immediate Data							*/
 /************************************************************************/
 		.align	2
 
-XL_curpcb:	.long	_curpcb
-XLcurproc:	.long	_curproc
-XLcpl:		.long	_cpl
-XLproc0:	.long	_proc0
+XL_curpcb:	.long	_C_LABEL(curpcb)
+XLcurproc:	.long	_C_LABEL(curproc)
+XLcpl:		.long	_C_LABEL(cpl)
+XLproc0:	.long	_C_LABEL(proc0)
+XL_tlb_handler:	.long	_C_LABEL(tlb_handler)
 
-XL_tlb_handler:	.long	_tlb_handler
-XLexphandler:	.long	_exphandler
-
+#if 0
 	/*
 	 *	Convert Virtual address to Physical Address
 	 *	r4 = Virtual Address
@@ -1272,6 +1162,7 @@ XL_PT_MASK:	.long	PT_MASK
 XL_PG_FRAME:	.long	PG_FRAME
 XL_CSMASK:	.long	0xc0000000
 XL_KCSAREA:	.long	0x80000000
+#endif
 
 Xrecurse:
 	stc	sr, r0
@@ -1309,11 +1200,9 @@ XL_splimit_low2:	.long	0x80000000
 	jsr	@r0
 	nop
 	add	#4, r15
-	nop
 
 	tst	r0, r0
 	bt	1f
-	nop
 
 	mov.l	XL_check_ipending, r0
 	jsr	@r0
@@ -1321,7 +1210,6 @@ XL_splimit_low2:	.long	0x80000000
 
 	tst	r0, r0
 	bf	7b
-	nop
 
 2:	/* Check for ASTs on exit to user mode. */
 	CLI
@@ -1329,18 +1217,14 @@ XL_splimit_low2:	.long	0x80000000
 	mov.l	@r0, r0
 	tst	r0, r0
 	bt	1f
-	nop
 
 	/* If trap occurred in kernel , skip AST proc */
-	mov	r15, r0
-	add	#TF_SPC-4, r0
-	mov.l	@r0, r0
+	mov.l	@(TF_SPC-4, r15), r0
 	mov	#1, r1
 	mov	#31, r2
 	shld	r2, r1
 	tst	r1, r0		/* test MSB of TF_SPC */
 	bf	1f
-	nop
 5:	xor	r0, r0
 	mov.l	XL_astpending, r1
 	mov.l	r0, @r1
@@ -1356,10 +1240,10 @@ XL_splimit_low2:	.long	0x80000000
 1:	INTRFASTEXIT
 
 	.align	2
-XL_intrhandler:		.long	_intrhandler
-XL_astpending:		.long	_astpending
+XL_intrhandler:		.long	_C_LABEL(intrhandler)
+XL_astpending:		.long	_C_LABEL(astpending)
 XLT_ASTFLT:		.long	T_ASTFLT
-XL_trap:		.long	_trap
+XL_trap:		.long	_C_LABEL(trap)
 
 NENTRY(Xspllower)
 	sts.l	pr, @-r15
@@ -1372,7 +1256,6 @@ Xrestart:
 
 	tst	r0, r0
 	bt	1f
-	nop
 
 	mov.l	XL_restart, r1
 	mov.l	XL_Xrecurse, r0
@@ -1387,26 +1270,27 @@ Xrestart:
 
 	.align	2
 XL_check_ipending:
-		.long	_check_ipending
+		.long	_C_LABEL(check_ipending)
 XL_Xrecurse:	.long	Xrecurse
 XL_restart:	.long	Xrestart
 
+#if 0
 ENTRY(cpu_printR15)
 	sts.l	pr, @-r15
-	mova	XL_fmt, r0
+	mova	1f, r0
 	mov	r0, r4
 	mov	r15, r5
-	mov.l	XL_printf, r0
+	mov.l	2f, r0
 	jsr	@r0
 	nop
 	lds.l	@r15+, pr
 	rts
 	nop
 
-XL_fmt:	.asciz	"sp=0x%x\n"
+1:	.asciz	"sp=0x%x\n"
 	.align	2
-XL_printf:
-	.long	_printf
+2:	.long	_C_LABEL(printf)
+#endif
 
 load_and_reset:
 	mov.l	XL_start_address, r0
@@ -1463,14 +1347,17 @@ ENTRY(Sh3Reset)
 XL_reset_vector:
 	.long	0xa0000000
 
-	.globl	_intrcnt, _eintrcnt, _intrnames, _eintrnames
-_intrcnt:
+	.data
+	.align	2
+	.globl	_C_LABEL(intrcnt), _C_LABEL(eintrcnt)
+	.globl	_C_LABEL(intrnames), _C_LABEL(eintrnames)
+_C_LABEL(intrcnt):
 	.long	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
-_eintrcnt:
+_C_LABEL(eintrcnt):
 
-_intrnames:
+_C_LABEL(intrnames):
 	.asciz	"irq0", "irq1", "irq2", "irq3"
 	.asciz	"irq4", "irq5", "irq6", "irq7"
 	.asciz	"irq8", "irq9", "irq10", "irq11"
 	.asciz	"irq12", "irq13", "irq14", "irq15"
-_eintrnames:
+_C_LABEL(eintrnames):
