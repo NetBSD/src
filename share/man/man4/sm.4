@@ -1,4 +1,4 @@
-.\"	$NetBSD: sm.4,v 1.4 1999/03/16 01:19:18 garbled Exp $
+.\"	$NetBSD: sm.4,v 1.5 1999/11/14 22:40:13 augustss Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -43,6 +43,7 @@
 .Nd device driver for SMC91C9x-based Ethernet interfaces
 .Sh SYNOPSIS
 .Cd "sm0 at isa? port 0x300 irq 10"
+,Cd "sm* at mhzc?"
 .Cd "sm* at pcmcia? function ?"
 .Sh DESCRIPTION
 The
@@ -86,4 +87,5 @@ corrupted.
 .Xr ifconfig 8 ,
 .Xr intro 4 ,
 .Xr isa 4 ,
+.Xr mhzc 4 ,
 .Xr pcmcia 4
