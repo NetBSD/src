@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_flow.c,v 1.13 1999/03/26 08:51:35 proff Exp $	*/
+/*	$NetBSD: ip_flow.c,v 1.13.2.1 1999/10/18 00:00:05 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -154,6 +154,14 @@ ipflow_fastforward(
 	 */
 	if (!ipforwarding || ipflow_inuse == 0 || m->m_len < sizeof(struct ip))
 		return 0;
+
+	/*
+	 * Was packet recieved as a link-level multicast or broadcast?
+	 * If so, don't try to fast forward..
+	 */
+	if ((m->m_flags & (M_BCAST|M_MCAST)) != 0)
+		return 0;
+	
 	/*
 	 * IP header with no option and valid version and length
 	 */
