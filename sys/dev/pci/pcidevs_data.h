@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.65 1998/05/13 15:51:36 augustss Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.66 1998/05/14 21:46:53 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.60 1998/05/13 15:50:58 augustss Exp 
+ *	NetBSD: pcidevs,v 1.61 1998/05/14 21:45:18 augustss Exp 
  */
 
 /*
@@ -596,6 +596,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Compaq",
 	    "Triflex Host-PCI Bridge",
+	},
+	{
+	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_USB,
+	    0,
+	    "Compaq",
+	    "USB Controller",
 	},
 	{
 	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_N100TX,

@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.66 1998/05/13 15:51:36 augustss Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.67 1998/05/14 21:46:53 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.60 1998/05/13 15:50:58 augustss Exp 
+ *	NetBSD: pcidevs,v 1.61 1998/05/14 21:45:18 augustss Exp 
  */
 
 /*
@@ -663,6 +663,7 @@
 #define	PCI_PRODUCT_COMPAQ_QVISION_1280P	0x3033		/* QVision 1280/p */
 #define	PCI_PRODUCT_COMPAQ_QVISION_V2	0x3034		/* QVision */
 #define	PCI_PRODUCT_COMPAQ_TRIFLEX4	0x4000		/* Triflex Host-PCI Bridge */
+#define	PCI_PRODUCT_COMPAQ_USB	0x7020		/* USB Controller */
 #define	PCI_PRODUCT_COMPAQ_N100TX	0xae32		/* Netelligent 10/100 TX */
 #define	PCI_PRODUCT_COMPAQ_N10T	0xae34		/* Netelligent 10 T */
 #define	PCI_PRODUCT_COMPAQ_IntNF3P	0xae35		/* Integrated NetFlex 3/P */
