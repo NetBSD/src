@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2000/02/12 10:03:30 itojun Exp $
+#	$NetBSD: Makefile,v 1.13 2000/06/11 15:37:51 mycroft Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 PROG=	sail
@@ -10,12 +10,5 @@ DPADD=	${LIBCURSES}
 LDADD=	-lcurses
 HIDEGAME=hidegame
 SETGIDGAME=yes
-
-afterinstall:
-.if !defined(UNPRIVILEGED)
-	mkdir -p ${DESTDIR}/var/games/sail
-	chown root.games ${DESTDIR}/var/games/sail
-	chmod 2770 ${DESTDIR}/var/games/sail
-.endif
 
 .include <bsd.prog.mk>
