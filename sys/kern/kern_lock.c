@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.29 2000/05/03 13:53:59 sommerfeld Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.30 2000/05/23 05:17:11 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -116,7 +116,7 @@ int	lock_debug_syslog = 0;	/* defaults to printf, but can be patched */
 #if defined(MULTIPROCESSOR) /* { */
 #if defined(__HAVE_ATOMIC_OPERATIONS) /* { */
 #define	COUNT_CPU(cpu_id, x)						\
-	atomic_add_ulong(&curcpu().ci_spin_locks, (x))
+	atomic_add_ulong(&curcpu()->ci_spin_locks, (x))
 #else
 #define	COUNT_CPU(cpu_id, x)	/* not safe */
 #endif /* __HAVE_ATOMIC_OPERATIONS */ /* } */
@@ -131,7 +131,7 @@ do {									\
 		COUNT_CPU((cpu_id), (x));				\
 	else								\
 		(p)->p_locks += (x);					\
-} while (0)
+} while (/*CONSTCOND*/0)
 #else
 #define COUNT(lkp, p, cpu_id, x)
 #endif /* LOCKDEBUG || DIAGNOSTIC */ /* } */
@@ -191,7 +191,7 @@ do {									\
 		(lkp)->lk_cpu = cpu_id;					\
 	else								\
 		(lkp)->lk_lockholder = pid;				\
-} while (0)
+} while (/*CONSTCOND*/0)
 
 #define	WEHOLDIT(lkp, pid, cpu_id)					\
 	(((lkp)->lk_flags & LK_SPIN) != 0 ?				\
@@ -203,7 +203,7 @@ do {									\
 		/* XXX Cast away volatile. */				\
 		wakeup_one((void *)(lkp));				\
 	}								\
-} while (0)
+} while (/*CONSTCOND*/0)
 
 #if defined(LOCKDEBUG) /* { */
 #if defined(MULTIPROCESSOR) /* { */
@@ -234,7 +234,7 @@ do {									\
 		SPINLOCK_LIST_UNLOCK();					\
 		splx(s);						\
 	}								\
-} while (0)
+} while (/*CONSTCOND*/0)
 
 #define	DONTHAVEIT(lkp)							\
 do {									\
@@ -247,7 +247,7 @@ do {									\
 		SPINLOCK_LIST_UNLOCK();					\
 		splx(s);						\
 	}								\
-} while (0)
+} while (/*CONSTCOND*/0)
 #else
 #define	HAVEIT(lkp)		/* nothing */
 
@@ -721,7 +721,7 @@ do {									\
 		lock_printf("last unlocked: %s:%d\n", (alp)->unlock_file, \
 		    (alp)->unlock_line);				\
 	SLOCK_DEBUGGER();						\
-} while (0)
+} while (/*CONSTCOND*/0)
 
 /*
  * Simple lock functions so that the debugger can see from whence
