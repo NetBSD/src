@@ -1,4 +1,4 @@
-/*	$NetBSD: eap.c,v 1.13 1998/08/12 18:55:03 mycroft Exp $	*/
+/*	$NetBSD: eap.c,v 1.14 1998/08/12 19:09:55 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1176,7 +1176,7 @@ eap_query_devinfo(addr, dip)
 		dip->type = AUDIO_MIXER_VALUE;
 		dip->mixer_class = EAP_INPUT_CLASS;
 		dip->prev = AUDIO_MIXER_LAST;
-		dip->next = AUDIO_MIXER_LAST;
+		dip->next = EAP_MIC_PREAMP;
 		strcpy(dip->label.name, AudioNmicrophone);
 		dip->un.v.num_channels = 1;
 		strcpy(dip->un.v.units.name, AudioNvolume);
@@ -1221,8 +1221,9 @@ eap_query_devinfo(addr, dip)
 		return (0);
 	case EAP_MIC_PREAMP:
 		dip->type = AUDIO_MIXER_ENUM;
-		dip->mixer_class = EAP_RECORD_CLASS;
-		dip->next = dip->prev = AUDIO_MIXER_LAST;
+		dip->mixer_class = EAP_INPUT_CLASS;
+		dip->prev = EAP_MIC_VOL;
+		dip->next = AUDIO_MIXER_LAST;
 		strcpy(dip->label.name, AudioNpreamp);
 		dip->un.e.num_mem = 2;
 		strcpy(dip->un.e.member[0].label.name, AudioNoff);
