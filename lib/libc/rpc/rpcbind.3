@@ -1,16 +1,16 @@
 .\" @(#)rpcbind.3n 1.25 93/05/07 SMI; from SVr4
 .\" Copyright 1989 AT&T
 .\" Copyright (c) 1988 Sun Microsystem's, Inc. - All Right's Reserved.
-.\"	$NetBSD: rpcbind.3,v 1.2 2000/06/03 18:47:28 fvdl Exp $
+.\"	$NetBSD: rpcbind.3,v 1.2.2.1 2001/04/26 12:19:34 he Exp $
 .Dd May 7, 1993
 .Dt RPCBIND 3
 .Os
 .Sh NAME
-.Nm rpcb_getmaps,
-.Nm rpcb_getaddr,
-.Nm rpcb_gettime,
-.Nm rpcb_rmtcall,
-.Nm rpcb_set,
+.Nm rpcb_getmaps ,
+.Nm rpcb_getaddr ,
+.Nm rpcb_gettime ,
+.Nm rpcb_rmtcall ,
+.Nm rpcb_set ,
 .Nm rpcb_unset
 .Nd library routines for RPC bind service
 .Sh LIBRARY
@@ -41,7 +41,7 @@ and their universal addresses.
 .It Fn rpcb_getmaps
 An interface to the rpcbind service,
 which returns a list of the current
-RPC program-to-address mappings on 
+RPC program-to-address mappings on
 .Fa host .
 It uses the transport specified through
 .Fa netconf
@@ -99,7 +99,7 @@ if it succeeds,
 if it fails.
 .Fn rpcb_gettime
 can be used to synchronize the time between the
-client and the remote server.  
+client and the remote server.
 .Pp
 .It Fn rpcb_rmtcall
 An interface to the rpcbind service, which instructs
@@ -113,7 +113,7 @@ structure should correspond to a connectionless transport.
 The parameter
 .Fa svcaddr
 will be modified to the server's address if the procedure succeeds
-(see 
+(see
 .Fn rpc_call
 and
 .Fn clnt_call
@@ -166,15 +166,15 @@ will fail.
 An interface to the rpcbind
 service, which destroys the mapping between the triple
 [
-.Fa prognum , 
-.Fa versnum , 
+.Fa prognum ,
+.Fa versnum ,
 .Fa netconf->nc_netid ]
 and the address on the machine's rpcbind
 service.
-If 
+If
 .Fa netconf
 is
-.Dv NULL,
+.Dv NULL ,
 .Fn rpcb_unset
 destroys all mapping between the triple
 [
@@ -184,7 +184,7 @@ destroys all mapping between the triple
 and the addresses on the machine's rpcbind service.
 This routine returns
 .Dv TRUE
-if it succeeds, 
+if it succeeds,
 .Dv FALSE
 otherwise.
 Only the owner of the service or the super-user can destroy the mapping.
@@ -194,7 +194,7 @@ in
 .Xr rpc_svc_calls 3 .
 .El
 .Sh SEE ALSO
+.Xr rpc_clnt_calls 3 ,
+.Xr rpc_svc_calls 3 ,
 .Xr rpcbind 8 ,
-.Xr rpcinfo 8 ,
-.Xr rpc_clnt_calls 8 ,
-.Xr rpc_svc_calls 8
+.Xr rpcinfo 8
