@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.99 2001/11/24 06:53:17 isaki Exp $	*/
+/*	$NetBSD: pmap.c,v 1.100 2001/12/08 03:55:23 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -730,7 +730,7 @@ pmap_create()
 	    ("pmap_create\n"));
 
 	pmap = pool_get(&pmap_pmap_pool, PR_WAITOK);
-	bzero(pmap, sizeof(*pmap));
+	memset(pmap, 0, sizeof(*pmap));
 	pmap_pinit(pmap);
 	return (pmap);
 }
@@ -1865,7 +1865,7 @@ ok:
  * pmap_zero_page:		[ INTERFACE ]
  *
  *	Zero the specified (machine independent) page by mapping the page
- *	into virtual memory and using bzero to clear its contents, one
+ *	into virtual memory and using memset to clear its contents, one
  *	machine dependent page at a time.
  *
  *	Note: WE DO NOT CURRENTLY LOCK THE TEMPORARY ADDRESSES!
@@ -1915,7 +1915,7 @@ pmap_zero_page(phys)
  * pmap_copy_page:		[ INTERFACE ]
  *
  *	Copy the specified (machine independent) page by mapping the page
- *	into virtual memory and using bcopy to copy the page, one machine
+ *	into virtual memory and using memcpy to copy the page, one machine
  *	dependent page at a time.
  *
  *	Note: WE DO NOT CURRENTLY LOCK THE TEMPORARY ADDRESSES!
@@ -2634,7 +2634,7 @@ pmap_enter_ptpage(pmap, va)
 				panic("enter: out of address space"); /* XXX */
 			pmap->pm_stfree &= ~l2tobm(ix);
 			addr = (caddr_t)&pmap->pm_stab[ix*SG4_LEV2SIZE];
-			bzero(addr, SG4_LEV2SIZE*sizeof(st_entry_t));
+			memset(addr, 0, SG4_LEV2SIZE*sizeof(st_entry_t));
 			addr = (caddr_t)&pmap->pm_stpa[ix*SG4_LEV2SIZE];
 			*ste = (u_int)addr | SG_RW | SG_U | SG_V;
 
@@ -2682,7 +2682,7 @@ pmap_enter_ptpage(pmap, va)
 		kpt->kpt_next = kpt_used_list;
 		kpt_used_list = kpt;
 		ptpa = kpt->kpt_pa;
-		bzero((caddr_t)kpt->kpt_va, NBPG);
+		memset((caddr_t)kpt->kpt_va, 0, NBPG);
 		pmap_enter(pmap, va, ptpa, VM_PROT_READ | VM_PROT_WRITE,
 		    VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED);
 		pmap_update(pmap);

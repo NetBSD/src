@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.50 2001/11/17 23:53:38 gmcgarry Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.51 2001/12/08 03:55:22 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -372,7 +372,7 @@ device_register(dev, aux)
 	    M_DEVBUF, M_NOWAIT);
 	if (dd == NULL)
 		panic("device_register: can't allocate dev_data");
-	bzero(dd, sizeof(struct dev_data));
+	memset(dd, 0, sizeof(struct dev_data));
 
 	dd->dd_dev = dev;
 
@@ -389,16 +389,16 @@ device_register(dev, aux)
 		goto linkup;
 	}
 
-	if (bcmp(dev->dv_xname, "fhpib", 5) == 0 ||
-	    bcmp(dev->dv_xname, "nhpib", 5) == 0 ||
-	    bcmp(dev->dv_xname, "oscsi", 5) == 0) {
+	if (memcmp(dev->dv_xname, "fhpib", 5) == 0 ||
+	    memcmp(dev->dv_xname, "nhpib", 5) == 0 ||
+	    memcmp(dev->dv_xname, "oscsi", 5) == 0) {
 		struct dio_attach_args *da = aux;
 
 		dd->dd_scode = da->da_scode;
 		goto linkup;
 	}
 
-	if (bcmp(dev->dv_xname, "rd", 2) == 0) {
+	if (memcmp(dev->dv_xname, "rd", 2) == 0) {
 		struct hpibbus_attach_args *ha = aux;
 
 		dd->dd_slave = ha->ha_slave;
@@ -406,7 +406,7 @@ device_register(dev, aux)
 		goto linkup;
 	}
 
-	if (bcmp(dev->dv_xname, "sd", 2) == 0) {
+	if (memcmp(dev->dv_xname, "sd", 2) == 0) {
 		struct oscsi_attach_args *osa = aux;
 
 		dd->dd_slave = osa->osa_target;
@@ -423,13 +423,13 @@ device_register(dev, aux)
  linkup:
 	LIST_INSERT_HEAD(&dev_data_list, dd, dd_list);
 
-	if (bcmp(dev->dv_xname, "fhpib", 5) == 0 ||
-	    bcmp(dev->dv_xname, "nhpib", 5) == 0) {
+	if (memcmp(dev->dv_xname, "fhpib", 5) == 0 ||
+	    memcmp(dev->dv_xname, "nhpib", 5) == 0) {
 		dev_data_insert(dd, &dev_data_list_hpib);
 		return;
 	}
 
-	if (bcmp(dev->dv_xname, "oscsi", 5) == 0) {
+	if (memcmp(dev->dv_xname, "oscsi", 5) == 0) {
 		dev_data_insert(dd, &dev_data_list_scsi);
 		return;
 	}
@@ -493,8 +493,8 @@ findbootdev()
 		/*
 		 * Sanity check.
 		 */
-		if ((type == 0 && bcmp(booted_device->dv_xname, "ct", 2)) ||
-		    (type == 2 && bcmp(booted_device->dv_xname, "rd", 2))) {
+		if ((type == 0 && memcmp(booted_device->dv_xname, "ct", 2)) ||
+		    (type == 2 && memcmp(booted_device->dv_xname, "rd", 2))) {
 			printf("WARNING: boot device/type mismatch!\n");
 			printf("device = %s, type = %d\n",
 			    booted_device->dv_xname, type);
@@ -515,7 +515,7 @@ findbootdev()
 		/*
 		 * Sanity check.
 		 */
-		if ((type == 4 && bcmp(booted_device->dv_xname, "sd", 2))) {
+		if ((type == 4 && memcmp(booted_device->dv_xname, "sd", 2))) {
 			printf("WARNING: boot device/type mismatch!\n");
 			printf("device = %s, type = %d\n",
 			    booted_device->dv_xname, type);
@@ -563,7 +563,7 @@ findbootdev_slave(ddlist, ctlr, slave, punit)
 		 * XXX for SCSI, so we have to do a little bit of
 		 * XXX extra work.
 		 */
-		if (bcmp(dd->dd_dev->dv_xname, "sd", 2) == 0) {
+		if (memcmp(dd->dd_dev->dv_xname, "sd", 2) == 0) {
 			/*
 			 * "sd" -> "oscsi"
 			 */
@@ -627,9 +627,9 @@ setbootdev()
 	/*
 	 * Determine device type.
 	 */
-	if (bcmp(root_device->dv_xname, "rd", 2) == 0)
+	if (memcmp(root_device->dv_xname, "rd", 2) == 0)
 		type = 2;
-	else if (bcmp(root_device->dv_xname, "sd", 2) == 0)
+	else if (memcmp(root_device->dv_xname, "sd", 2) == 0)
 		type = 4;
 	else {
 		printf("WARNING: strange root device!\n");
