@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2001/12/12 01:50:02 tv Exp $
+#	$NetBSD: Makefile,v 1.7 2001/12/15 23:02:34 fredette Exp $
 
 LIB=sa
 
@@ -54,7 +54,7 @@ libinstall::
 .if defined(MACHINE_ARCH) && (${MACHINE_ARCH} == "m68000")
 LIBGCC_OBJS=   _mulsi3.o _divsi3.o _udivsi3.o _modsi3.o _umodsi3.o _muldi3.o
 ${LIBGCC_OBJS}:
-	@${AR} xv `${CC} --print-libgcc-file-name` $@
+	@${AR} xv ${DESTDIR}/usr/lib/libgcc.a $@
 OBJS+= ${LIBGCC_OBJS}
 .endif
 
