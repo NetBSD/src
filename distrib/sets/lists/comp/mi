@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.686 2004/03/26 21:49:35 drochner Exp $
+#	$NetBSD: mi,v 1.687 2004/03/28 08:59:54 jdc Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -2653,6 +2653,7 @@
 ./usr/share/man/cat3/curses_default_colors.0	comp-c-catman		.cat
 ./usr/share/man/cat3/curses_delch.0		comp-c-catman		.cat
 ./usr/share/man/cat3/curses_deleteln.0		comp-c-catman		.cat
+./usr/share/man/cat3/curses_echochar.0		comp-c-catman		.cat
 ./usr/share/man/cat3/curses_inch.0		comp-c-catman		.cat
 ./usr/share/man/cat3/curses_input.0		comp-c-catman		.cat
 ./usr/share/man/cat3/curses_insdelln.0		comp-c-catman		.cat
@@ -2764,6 +2765,7 @@
 ./usr/share/man/cat3/dupwin.0			comp-c-catman		.cat
 ./usr/share/man/cat3/dynamic_field_info.0	comp-c-catman		.cat
 ./usr/share/man/cat3/echo.0			comp-c-catman		.cat
+./usr/share/man/cat3/echochar.0			comp-c-catman		.cat
 ./usr/share/man/cat3/edata.0			comp-c-catman		.cat
 ./usr/share/man/cat3/editline.0			comp-c-catman		.cat
 ./usr/share/man/cat3/el_deletestr.0		comp-c-catman		.cat
@@ -3742,6 +3744,7 @@
 ./usr/share/man/cat3/pcidev_conf_read.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pcidev_conf_write.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pclose.0			comp-c-catman		.cat
+./usr/share/man/cat3/pechochar.0		comp-c-catman		.cat
 ./usr/share/man/cat3/perror.0			comp-c-catman		.cat
 ./usr/share/man/cat3/pidfile.0			comp-c-catman		.cat
 ./usr/share/man/cat3/pidlock.0			comp-c-catman		.cat
@@ -4393,6 +4396,7 @@
 ./usr/share/man/cat3/wctype.0			comp-c-catman		.cat
 ./usr/share/man/cat3/wdelch.0			comp-c-catman		.cat
 ./usr/share/man/cat3/wdeleteln.0		comp-c-catman		.cat
+./usr/share/man/cat3/wechochar.0		comp-c-catman		.cat
 ./usr/share/man/cat3/werase.0			comp-c-catman		.cat
 ./usr/share/man/cat3/wgetch.0			comp-c-catman		.cat
 ./usr/share/man/cat3/wgetnstr.0			comp-c-catman		.cat
@@ -6298,6 +6302,7 @@
 ./usr/share/man/man3/curses_default_colors.3	comp-c-man		.man
 ./usr/share/man/man3/curses_delch.3		comp-c-man		.man
 ./usr/share/man/man3/curses_deleteln.3		comp-c-man		.man
+./usr/share/man/man3/curses_echochar.3		comp-c-man		.man
 ./usr/share/man/man3/curses_inch.3		comp-c-man		.man
 ./usr/share/man/man3/curses_input.3		comp-c-man		.man
 ./usr/share/man/man3/curses_insdelln.3		comp-c-man		.man
@@ -6409,6 +6414,7 @@
 ./usr/share/man/man3/dupwin.3			comp-c-man		.man
 ./usr/share/man/man3/dynamic_field_info.3	comp-c-man		.man
 ./usr/share/man/man3/echo.3			comp-c-man		.man
+./usr/share/man/man3/echochar.3			comp-c-man		.man
 ./usr/share/man/man3/edata.3			comp-c-man		.man
 ./usr/share/man/man3/editline.3			comp-c-man		.man
 ./usr/share/man/man3/el_deletestr.3		comp-c-man		.man
@@ -7387,6 +7393,7 @@
 ./usr/share/man/man3/pcidev_conf_read.3		comp-c-man		.man
 ./usr/share/man/man3/pcidev_conf_write.3	comp-c-man		.man
 ./usr/share/man/man3/pclose.3			comp-c-man		.man
+./usr/share/man/man3/pechochar.3		comp-c-man		.man
 ./usr/share/man/man3/perror.3			comp-c-man		.man
 ./usr/share/man/man3/pidfile.3			comp-c-man		.man
 ./usr/share/man/man3/pidlock.3			comp-c-man		.man
@@ -8034,6 +8041,7 @@
 ./usr/share/man/man3/wctype.3			comp-c-man		.man
 ./usr/share/man/man3/wdelch.3			comp-c-man		.man
 ./usr/share/man/man3/wdeleteln.3		comp-c-man		.man
+./usr/share/man/man3/wechochar.3		comp-c-man		.man
 ./usr/share/man/man3/werase.3			comp-c-man		.man
 ./usr/share/man/man3/wgetch.3			comp-c-man		.man
 ./usr/share/man/man3/wgetnstr.3			comp-c-man		.man
