@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.337 2001/06/20 05:46:24 imp Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.338 2001/06/20 16:33:10 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.331 2001/06/20 05:44:33 imp Exp 
+ *	NetBSD: pcidevs,v 1.332 2001/06/20 16:32:32 thorpej Exp 
  */
 
 /*
@@ -1684,6 +1684,7 @@
 
 /* Schneider & Koch (really SysKonnect) products */
 #define	PCI_PRODUCT_SCHNEIDERKOCH_SKNET_FDDI	0x4000		/* SK-NET FDDI-xP */
+#define	PCI_PRODUCT_SCHNEIDERKOCH_SKNET_GE	0x4300		/* SK-NET GE */
 
 /* Tekram Technology products (1st PCI Vendor ID)*/
 #define	PCI_PRODUCT_TEKRAM_DC290	0xdc29		/* DC-290(M) */
