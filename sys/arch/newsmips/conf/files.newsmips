@@ -1,4 +1,4 @@
-#	$NetBSD: files.newsmips,v 1.7 1999/12/22 05:55:25 tsubai Exp $
+#	$NetBSD: files.newsmips,v 1.8 2000/03/14 15:56:56 oster Exp $
 
 # NEWSMIPS-specific configuration info
 
@@ -125,3 +125,8 @@ major { sd = 0 }
 major { fd = 1 }
 major { md = 2 }
 major { cd = 16 }
+
+#
+# RAIDframe
+#
+major { raid = 32 }

@@ -1,4 +1,4 @@
-# $NetBSD: files.next68k,v 1.14 1999/08/03 09:02:10 dbj Exp $
+# $NetBSD: files.next68k,v 1.15 2000/03/14 15:56:56 oster Exp $
 
 # next68k-specific configuration info
 
@@ -93,6 +93,8 @@ major	{sd = 4}
 major	{cd = 6}
 major	{md = 13}
 
+# RAIDframe
+major	{raid = 20}
 
 # SunOS Binary Compatibility (COMPAT_SUNOS)
 include "compat/sunos/files.sunos"

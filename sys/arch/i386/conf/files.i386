@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.148 2000/03/04 21:37:23 mycroft Exp $
+#	$NetBSD: files.i386,v 1.149 2000/03/14 15:56:54 oster Exp $
 #
 # new style config file for i386 architecture
 #
@@ -85,6 +85,9 @@ major	{wd = 0}
 # Memory Disk for install floppy
 file arch/i386/i386/md_root.c	memory_disk_hooks
 major	{md = 17}
+
+# RAIDframe
+major	{raid = 18}
 
 # attribute used to bring in BIOS trampoline code for real-mode probing
 # of certain devices/BIOS features
