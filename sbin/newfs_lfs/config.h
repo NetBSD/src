@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.4 2000/07/04 22:35:04 perseant Exp $	*/
+/*	$NetBSD: config.h,v 1.5 2000/09/09 04:49:56 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -54,10 +54,9 @@
 
 /*
  * 1/DFL_MIN_FREE_SEGS gives the fraction of segments to be reserved for
- * the cleaner.  Experimental data show this number should be around
- * 5-10.
+ * the cleaner.
  */
-#define DFL_MIN_FREE_SEGS 10
+#define DFL_MIN_FREE_SEGS 20
 
 /*
  * MINFREE gives the minimum acceptable percentage of file system
