@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.55 2001/10/02 21:31:01 tv Exp $	*/
+/*	$NetBSD: config.h,v 1.56 2001/12/17 15:39:43 atatat Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -56,6 +56,7 @@
 #include <paths.h>
 #endif
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 
@@ -415,6 +416,8 @@ void	setupdirs(void);
 #define OPT_DEFPARAM(n)	(ht_lookup(defparamtab, (n)) != NULL)
 #define DEFINED_OPTION(n) (find_declared_option((n)) != NULL)
 
+/* main.c */
+void	logconfig_include(FILE *, const char *);
 
 /* mkheaders.c */
 int	mkheaders(void);
@@ -434,7 +437,7 @@ void	pack(void);
 /* scan.l */
 int	currentline(void);
 int	firstfile(const char *);
-int	include(const char *, int, int);
+int	include(const char *, int, int, int);
 
 /* sem.c, other than for yacc actions */
 void	initsem(void);

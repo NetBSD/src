@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.30 2001/06/08 12:47:06 fredette Exp $	*/
+/*	$NetBSD: gram.y,v 1.31 2001/12/17 15:39:43 atatat Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -227,8 +227,8 @@ rule:
 	/* empty */			{ $$ = NULL; };
 
 include:
-	INCLUDE WORD			{ (void) include($2, 0, 0); } |
-	CINCLUDE WORD			{ (void) include($2, 0, 1); };
+	INCLUDE WORD			{ (void) include($2, 0, 0, 1); } |
+	CINCLUDE WORD			{ (void) include($2, 0, 1, 1); };
 
 prefix:
 	PREFIX PATHNAME			{ prefix_push($2); } |
@@ -522,19 +522,19 @@ setmachine(const char *mch, const char *mcharch, struct nvlist *mchsubarches)
 	 * the parser there are no more device definitions coming.
 	 */
 	strcpy(buf, _PATH_DEVNULL);
-	if (include(buf, ENDDEFS, 0) != 0)
+	if (include(buf, ENDDEFS, 0, 0) != 0)
 		exit(1);
 
 	/* Include arch/${MACHINE}/conf/files.${MACHINE} */
 	(void)sprintf(buf, "arch/%s/conf/files.%s", machine, machine);
-	if (include(buf, ENDFILE, 0) != 0)
+	if (include(buf, ENDFILE, 0, 0) != 0)
 		exit(1);
 
 	/* Include any arch/${MACHINE_SUBARCH}/conf/files.${MACHINE_SUBARCH} */
 	for (nv = machinesubarches; nv != NULL; nv = nv->nv_next) {
 		(void)sprintf(buf, "arch/%s/conf/files.%s",
 		    nv->nv_name, nv->nv_name);
-		if (include(buf, ENDFILE, 0) != 0)
+		if (include(buf, ENDFILE, 0, 0) != 0)
 			exit(1);
 	}
 
@@ -544,14 +544,14 @@ setmachine(const char *mch, const char *mcharch, struct nvlist *mchsubarches)
 		    machinearch, machinearch);
 	else
 		strcpy(buf, _PATH_DEVNULL);
-	if (include(buf, ENDFILE, 0) != 0)
+	if (include(buf, ENDFILE, 0, 0) != 0)
 		exit(1);
 
 	/*
 	 * Include the global conf/files.  As the last thing
 	 * pushed on the stack, it will be processed first.
 	 */
-	if (include("conf/files", ENDFILE, 0) != 0)
+	if (include("conf/files", ENDFILE, 0, 0) != 0)
 		exit(1);
 }
 
