@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_fcntl.c,v 1.12 2001/11/13 02:08:24 lukem Exp $	*/
+/*	$NetBSD: ibcs2_fcntl.c,v 1.13 2002/03/16 20:43:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Bartram
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_fcntl.c,v 1.12 2001/11/13 02:08:24 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_fcntl.c,v 1.13 2002/03/16 20:43:51 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -175,7 +175,7 @@ ibcs2_sys_open(p, v, retval)
 	} */ *uap = v;
 	int noctty = SCARG(uap, flags) & IBCS2_O_NOCTTY;
 	int ret;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 
 	SCARG(uap, flags) = cvt_o_flags(SCARG(uap, flags));
 	if (SCARG(uap, flags) & O_CREAT)
@@ -208,7 +208,7 @@ ibcs2_sys_creat(p, v, retval)
 		syscallarg(int) mode;
 	} */ *uap = v;
 	struct sys_open_args cup;   
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 
 	CHECK_ALT_CREAT(p, &sg, SCARG(uap, path));
 	SCARG(&cup, path) = SCARG(uap, path);
@@ -228,7 +228,7 @@ ibcs2_sys_access(p, v, retval)
 		syscallarg(int) flags;
 	} */ *uap = v;
         struct sys_access_args cup;
-        caddr_t sg = stackgap_init(p->p_emul);
+        caddr_t sg = stackgap_init(p, 0);
 
         CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
         SCARG(&cup, path) = SCARG(uap, path);
@@ -250,7 +250,7 @@ ibcs2_sys_eaccess(p, v, retval)
 	struct vnode *vp;
         int error, flags;
         struct nameidata nd;
-        caddr_t sg = stackgap_init(p->p_emul);
+        caddr_t sg = stackgap_init(p, 0);
 
         CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
@@ -325,8 +325,8 @@ ibcs2_sys_fcntl(p, v, retval)
 
 	case IBCS2_F_GETLK:
 	    {
-		caddr_t sg = stackgap_init(p->p_emul);
-		flp = stackgap_alloc(&sg, sizeof(*flp));
+		caddr_t sg = stackgap_init(p, 0);
+		flp = stackgap_alloc(p, &sg, sizeof(*flp));
 		error = copyin((caddr_t)SCARG(uap, arg), (caddr_t)&ifl,
 			       ibcs2_flock_len);
 		if (error)
@@ -345,8 +345,8 @@ ibcs2_sys_fcntl(p, v, retval)
 
 	case IBCS2_F_SETLK:
 	    {
-		caddr_t sg = stackgap_init(p->p_emul);
-		flp = stackgap_alloc(&sg, sizeof(*flp));
+		caddr_t sg = stackgap_init(p, 0);
+		flp = stackgap_alloc(p, &sg, sizeof(*flp));
 		error = copyin((caddr_t)SCARG(uap, arg), (caddr_t)&ifl,
 			       ibcs2_flock_len);
 		if (error)
@@ -360,8 +360,8 @@ ibcs2_sys_fcntl(p, v, retval)
 
 	case IBCS2_F_SETLKW:
 	    {
-		caddr_t sg = stackgap_init(p->p_emul);
-		flp = stackgap_alloc(&sg, sizeof(*flp));
+		caddr_t sg = stackgap_init(p, 0);
+		flp = stackgap_alloc(p, &sg, sizeof(*flp));
 		error = copyin((caddr_t)SCARG(uap, arg), (caddr_t)&ifl,
 			       ibcs2_flock_len);
 		if (error)

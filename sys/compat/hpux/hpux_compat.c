@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_compat.c,v 1.58 2001/11/13 02:08:12 lukem Exp $	*/
+/*	$NetBSD: hpux_compat.c,v 1.59 2002/03/16 20:43:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_compat.c,v 1.58 2001/11/13 02:08:12 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_compat.c,v 1.59 2002/03/16 20:43:50 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -180,8 +180,8 @@ hpux_sys_wait(p, v, retval)
 	SCARG(&w4, options) = 0;
 
 	if (SCARG(uap, status) == NULL) {
-		caddr_t sg = stackgap_init(p->p_emul);
-		SCARG(&w4, status) = stackgap_alloc(&sg, sz);
+		caddr_t sg = stackgap_init(p, 0);
+		SCARG(&w4, status) = stackgap_alloc(p, &sg, sz);
 	}
 	else
 		SCARG(&w4, status) = SCARG(uap, status);

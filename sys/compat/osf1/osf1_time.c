@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_time.c,v 1.4 2001/11/13 02:09:16 lukem Exp $ */
+/* $NetBSD: osf1_time.c,v 1.5 2002/03/16 20:43:55 christos Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_time.c,v 1.4 2001/11/13 02:09:16 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_time.c,v 1.5 2002/03/16 20:43:55 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,15 +60,15 @@ osf1_sys_gettimeofday(p, v, retval)
 	int error;
 	caddr_t sg;
 
-	sg = stackgap_init(p->p_emul);
+	sg = stackgap_init(p, 0);
 	if (SCARG(uap, tp) == NULL)
 		SCARG(&a, tp) = NULL;
 	else
-		SCARG(&a, tp) = stackgap_alloc(&sg, sizeof tv);
+		SCARG(&a, tp) = stackgap_alloc(p, &sg, sizeof tv);
 	if (SCARG(uap, tzp) == NULL)
 		SCARG(&a, tzp) = NULL;
 	else
-		SCARG(&a, tzp) = stackgap_alloc(&sg, sizeof tz);
+		SCARG(&a, tzp) = stackgap_alloc(p, &sg, sizeof tz);
 
 	error = sys_gettimeofday(p, &a, retval);
 
@@ -129,9 +129,9 @@ osf1_sys_setitimer(p, v, retval)
 		return (EINVAL);
 	}
 
-	sg = stackgap_init(p->p_emul);
+	sg = stackgap_init(p, 0);
 
-	SCARG(&a, itv) = stackgap_alloc(&sg, sizeof b_itv);
+	SCARG(&a, itv) = stackgap_alloc(p, &sg, sizeof b_itv);
 
 	/* get the OSF/1 itimerval argument */
 	error = copyin((caddr_t)SCARG(uap, itv), (caddr_t)&o_itv,
@@ -152,7 +152,7 @@ osf1_sys_setitimer(p, v, retval)
 	if (SCARG(uap, oitv) == NULL)
 		SCARG(&a, oitv) = NULL;
 	else
-		SCARG(&a, oitv) = stackgap_alloc(&sg, sizeof b_oitv);
+		SCARG(&a, oitv) = stackgap_alloc(p, &sg, sizeof b_oitv);
 
 	if (error == 0)
 		error = sys_setitimer(p, &a, retval);
@@ -203,8 +203,8 @@ osf1_sys_getitimer(p, v, retval)
 	default:
 		return (EINVAL);
 	}
-	sg = stackgap_init(p->p_emul);
-	SCARG(&a, itv) = stackgap_alloc(&sg, sizeof b_oitv);
+	sg = stackgap_init(p, 0);
+	SCARG(&a, itv) = stackgap_alloc(p, &sg, sizeof b_oitv);
 	if (error == 0)
 		error = sys_getitimer(p, &a, retval);
 	if (error == 0 && SCARG(uap, itv) != NULL) {
@@ -240,11 +240,11 @@ osf1_sys_settimeofday(p, v, retval)
 	int error;
 	caddr_t sg;
 
-	sg = stackgap_init(p->p_emul);
+	sg = stackgap_init(p, 0);
 	if (SCARG(uap, tv) == NULL)
 		SCARG(&a, tv) = NULL;
 	else {
-		SCARG(&a, tv) = stackgap_alloc(&sg, sizeof tv);
+		SCARG(&a, tv) = stackgap_alloc(p, &sg, sizeof tv);
 
 		/* get the OSF/1 timeval argument */
 		error = copyin((caddr_t)SCARG(uap, tv),
@@ -264,7 +264,7 @@ osf1_sys_settimeofday(p, v, retval)
 	if (SCARG(uap, tzp) == NULL)
 		SCARG(&a, tzp) = NULL;
 	else {
-		SCARG(&a, tzp) = stackgap_alloc(&sg, sizeof tz);
+		SCARG(&a, tzp) = stackgap_alloc(p, &sg, sizeof tz);
 
 		/* get the OSF/1 timeval argument */
 		error = copyin((caddr_t)SCARG(uap, tzp),
