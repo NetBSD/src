@@ -30,15 +30,16 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)proc.h	7.1 (Berkeley) 5/15/91
- *	$Id: proc.h,v 1.2 1993/08/01 19:23:39 mycroft Exp $
+ *	@(#)proc.h	7.1 (Berkeley) 5/15/91
  */
 
 /*
  * Machine-dependent part of the proc structure for amiga.
  */
 struct mdproc {
-	int	md_flags;		/* machine-dependent flags */
+	short	md_flags;		/* machine-dependent flags */
+	short	md_emul;		/* emulating a different OS, see 
+					   defines below */
 #ifdef notyet
 	int	*p_regs;		/* registers on current frame */
 #endif
@@ -46,3 +47,14 @@ struct mdproc {
 
 /* md_flags */
 #define	MDP_AST		0x0001	/* async trap pending */
+
+/* currently defined (not necessarily supported yet...) OS-emulators.
+   These are *NOT* flags, they're values (you can't have a simulatanous
+   SunOS and ADOS process, for example..) */
+#define MDPE_NETBSD	0x0000	/* default */
+#define MDPE_SUNOS	0x0001	/* SunOS 4.x for sun3 */
+#define MDPE_SVR40	0x0002	/* Amiga Unix System V R4.0 */
+#define MDPE_HPUX	0x0003	/* if someone *really* wants to... */
+#define MDPE_ADOS	0x0004	/* AmigaDOS process */
+#define MDPE_LINUX	0x0005	/* lets see who can first run the others
+				   binaries :-)) */
