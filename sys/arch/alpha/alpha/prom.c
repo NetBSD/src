@@ -1,4 +1,4 @@
-/*	$NetBSD: prom.c,v 1.10 1996/08/20 22:40:13 cgd Exp $	*/
+/*	$NetBSD: prom.c,v 1.11 1996/10/16 00:00:40 cgd Exp $	*/
 
 /* 
  * Copyright (c) 1992, 1994, 1995, 1996 Carnegie Mellon University
@@ -26,12 +26,12 @@
  */
 
 #include <sys/param.h>
+#include <sys/proc.h>
+#include <sys/user.h>
 
 #include <machine/rpb.h>
 #include <machine/prom.h>
-#ifndef NEW_PMAP
-#include <machine/pte.h>
-#else
+#ifdef NEW_PMAP
 #include <vm/vm.h>
 #include <vm/pmap.h>
 #endif
@@ -240,8 +240,7 @@ prom_halt(halt)
 	 * we want to happen when we halt.
 	 */
 	p = (struct pcs *)((char *)hwrpb + hwrpb->rpb_pcs_off);
-	/* XXX BIP should have been cleared long ago. */
-	p->pcs_flags &= ~(PCS_RC | PCS_HALT_REQ | PCS_BIP);
+	p->pcs_flags &= ~(PCS_RC | PCS_HALT_REQ);
 	if (halt)
 		p->pcs_flags |= PCS_HALT_STAY_HALTED;
 	else
@@ -251,4 +250,65 @@ prom_halt(halt)
 	 * Halt the machine.
 	 */
 	alpha_pal_halt();
+}
+
+u_int64_t
+hwrpb_checksum()
+{
+	u_int64_t *p, sum;
+	int i;
+
+#define	offsetof(type, member)	((size_t)(&((type *)0)->member)) /* XXX */
+
+	for (i = 0, p = (u_int64_t *)hwrpb, sum = 0;
+	    i < (offsetof(struct rpb, rpb_checksum) / sizeof (u_int64_t));
+	    i++, p++)
+		sum += *p;
+
+	return (sum);
+}
+
+void XentRestart __P((void));
+
+void
+hwrbp_restart_setup()
+{
+	struct pcs *p;
+
+	/* Clear bootstrap-in-progress flag since we're done bootstrapping */
+	p = (struct pcs *)((char *)hwrpb + hwrpb->rpb_pcs_off);
+	p->pcs_flags &= ~PCS_BIP;
+
+	bcopy(&proc0.p_addr->u_pcb.pcb_hw, p->pcs_hwpcb,
+	    sizeof proc0.p_addr->u_pcb.pcb_hw);
+	hwrpb->rpb_vptb = VPTBASE;
+
+	/* when 'c'ontinuing from console halt, do a dump */
+	hwrpb->rpb_rest_term = (long (*)())&XentRestart;
+	hwrpb->rpb_rest_term_val = 0x1;
+
+#if 0
+	/* don't know what this is really used by, so don't mess with it. */
+	hwrpb->rpb_restart = (long (*)())&XentRestart;
+	hwrpb->rpb_restart_val = 0x2;
+#endif
+
+	hwrpb->rpb_checksum = hwrpb_checksum();
+
+	p->pcs_flags |= (PCS_RC | PCS_CV);
+}
+
+long
+console_restart(ra, ai, pv)
+	u_int64_t ra, ai, pv;
+{
+	struct pcs *p;
+
+	/* Clear restart-capable flag, since we can no longer restart. */
+	p = (struct pcs *)((char *)hwrpb + hwrpb->rpb_pcs_off);
+	p->pcs_flags &= ~PCS_RC;
+
+	panic("user requested console halt");
+
+	return (1);
 }
