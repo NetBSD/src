@@ -1,4 +1,4 @@
-.\" $NetBSD: doc2html,v 1.2 1999/01/17 12:17:11 ross Exp $
+.\" $NetBSD: doc2html,v 1.3 1999/01/28 00:11:07 ross Exp $
 .\"
 .\" Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -645,6 +645,7 @@ Unknown .Bl list type \\$1 (#\\n(.c)
 .make-mode em <em> </em>
 .make-mode i <i> </i>
 .make-mode caps <font\ size="-1"> <font\ size="+0">
+.make-mode null \& \&
 .am mode-i-on
 .	ds sepstring \~&nbsp;&nbsp;
 ..
@@ -774,7 +775,9 @@ AT&T UNIX\\$*
 ..
 .de Ns
 .	nr doc-dosep 0
+.	mode-null-on
 .	recurse \\$@
+.	mode-null-off
 .	pc-fin
 ..
 .
