@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_stub.c,v 1.13 2003/08/07 16:29:51 agc Exp $ */
+/*	$NetBSD: kgdb_stub.c,v 1.14 2003/11/25 05:14:58 cdi Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_stub.c,v 1.13 2003/08/07 16:29:51 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_stub.c,v 1.14 2003/11/25 05:14:58 cdi Exp $");
 
 #include "opt_kgdb.h"
 
@@ -646,7 +646,6 @@ kgdb_trap(type, tf)
 }
 
 extern char *kernel_map;			/* XXX! */
-extern char *curlwp;				/* XXX! */
 
 /*
  * XXX do kernacc and useracc calls if safe, otherwise use PTE protections.

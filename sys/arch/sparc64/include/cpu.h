@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.39 2003/11/20 08:04:04 petrov Exp $ */
+/*	$NetBSD: cpu.h,v 1.40 2003/11/25 05:14:58 cdi Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -123,13 +123,12 @@ struct cpu_info {
 };
 
 extern struct cpu_info *cpus;
-extern struct cpu_info cpu_info_store;
 
-#if defined(MULTIPROCESSOR)
 #define	curcpu()	((struct cpu_info *)CPUINFO_VA)
-#else
-#define	curcpu()	(&cpu_info_store)
-#endif
+
+#define curlwp		curcpu()->ci_curlwp
+#define fplwp		curcpu()->ci_fplwp
+#define curpcb		curcpu()->ci_cpcb
 
 /*
  * definitions of cpu-dependent requirements
@@ -251,13 +250,6 @@ int	want_resched;		/* resched() was called */
  * process as soon as possible.
  */
 #define	signotify(p)		(want_ast = 1)
-
-/*
- * Only one process may own the FPU state.
- *
- * XXX this must be per-cpu (eventually)
- */
-struct	lwp *fplwp;		/* FPU owner */
 
 /*
  * Interrupt handler chains.  Interrupt handlers should return 0 for
