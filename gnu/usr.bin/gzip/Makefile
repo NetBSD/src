@@ -1,5 +1,5 @@
 #	from: @(#)Makefile    5.3 (Berkeley) 5/12/90
-#	$Id: Makefile,v 1.3 1993/08/01 05:42:42 mycroft Exp $
+#	$Id: Makefile,v 1.4 1993/08/10 00:02:45 mycroft Exp $
 
 PROG=	gzip
 SRCS=	gzip.c zip.c deflate.c trees.c bits.c unzip.c inflate.c util.c \
@@ -7,9 +7,9 @@ SRCS=	gzip.c zip.c deflate.c trees.c bits.c unzip.c inflate.c util.c \
 MAN1=	gzexe.0 gzip.0 zdiff.0 zforce.0 zmore.0 znew.0
 CFLAGS+=-DASMV -DHAVE_UNISTD_H=1 -DDIRENT=1
 MLINKS= gzip.1 gunzip.1  gzip.1 zcat.1  gzip.1 gzcat.1
-LINKS+= ${DESTDIR}${BINDIR}/gzip ${DESTDIR}${BINDIR}/gunzip
-LINKS+= ${DESTDIR}${BINDIR}/gzip ${DESTDIR}${BINDIR}/gzcat
-LINKS+= ${DESTDIR}${BINDIR}/gzip ${DESTDIR}${BINDIR}/zcat
+LINKS+= ${BINDIR}/gzip ${BINDIR}/gunzip
+LINKS+= ${BINDIR}/gzip ${BINDIR}/gzcat
+LINKS+= ${BINDIR}/gzip ${BINDIR}/zcat
 
 afterinstall:
 	install -c -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
