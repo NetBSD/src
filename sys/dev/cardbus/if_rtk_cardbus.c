@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtk_cardbus.c,v 1.16 2003/10/25 23:48:45 fvdl Exp $	*/
+/*	$NetBSD: if_rtk_cardbus.c,v 1.17 2003/11/02 09:56:38 wiz Exp $	*/
 
 /*
  * Copyright (c) 2000 Masanori Kanaoka
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtk_cardbus.c,v 1.16 2003/10/25 23:48:45 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtk_cardbus.c,v 1.17 2003/11/02 09:56:38 wiz Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -283,7 +283,7 @@ rtk_cardbus_detach(self, flags)
 	if (rv)
 		return (rv);
 	/*
-	 * Unhook the interrut handler.
+	 * Unhook the interrupt handler.
 	 */
 	if (csc->sc_ih != NULL)
 		cardbus_intr_disestablish(ct->ct_cc, ct->ct_cf, csc->sc_ih);
