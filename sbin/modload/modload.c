@@ -1,4 +1,4 @@
-/*	$NetBSD: modload.c,v 1.25 1999/06/13 12:54:40 mrg Exp $	*/
+/*	$NetBSD: modload.c,v 1.26 2000/02/27 00:20:20 deberg Exp $	*/
 
 /*
  * Copyright (c) 1993 Terrence R. Lambert.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: modload.c,v 1.25 1999/06/13 12:54:40 mrg Exp $");
+__RCSID("$NetBSD: modload.c,v 1.26 2000/02/27 00:20:20 deberg Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -229,7 +229,7 @@ main(int argc, char **argv)
 	void* modentry;	/* XXX */
 	int noready = 0, old = 0;
 
-	while ((c = getopt(argc, argv, "dnvsAS:e:p:o:")) != -1) {
+	while ((c = getopt(argc, argv, "dnvsASe:p:o:")) != -1) {
 		switch (c) {
 		case 'd':
 			debug = 1;
