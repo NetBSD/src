@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: wscons,v 1.8 2002/03/22 04:34:00 thorpej Exp $
+# $NetBSD: wscons,v 1.9 2002/04/26 00:06:54 lukem Exp $
 #
 
 # PROVIDE: wscons
@@ -57,6 +57,7 @@ wscons_start()
 			\#*|"")
 				continue
 				;;
+
 			font)
 				name=$arg1
 				width=$arg2
@@ -89,6 +90,7 @@ wscons_start()
 				cmd="$cmd -N $name $file"
 				eval $DOIT $cmd
 				;;
+
 			screen)
 				idx=$arg1
 				scr=$arg2
@@ -112,6 +114,7 @@ wscons_start()
 				cmd="$cmd $idx"
 				eval $DOIT $cmd
 				;;
+
 			keyboard)
 				kbd=$arg1
 				cmd=$wscfg
@@ -125,12 +128,13 @@ wscons_start()
 				esac
 				eval $DOIT $cmd
 				;;
+
 			encoding)
 				map=$arg1
-				cmd=$wsctl
-				cmd="$cmd -w \"encoding=$map\""
+				cmd="$wsctl -w \"encoding=$map\""
 				eval $DOIT $cmd
 				;;
+
 			mapfile)
 				mapfile=$arg1
 				( while read entry; do
@@ -139,18 +143,24 @@ wscons_start()
 					    continue
 					    ;;
 					*)
-					    cmd=$wsctl
-					    cmd="$cmd -w \"map+=$entry\""
+					    cmd="$wsctl -w \"map+=$entry\""
 					    cmd="$cmd >/dev/null"
 					    eval $DOIT $cmd
 					    ;;
 				    esac
 				done ) < $mapfile
 				;;
+
 			mux)
 				cmd="$wscfg -m $arg1"
 				eval $DOIT $cmd
 				;;
+
+			setvar)
+				cmd="$wsctl -w $arg1"
+				eval $DOIT $cmd
+				;;
+
 		esac
 	done ) < $config
 }
