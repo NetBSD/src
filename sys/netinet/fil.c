@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.11 1997/07/05 05:38:14 darrenr Exp $	*/
+/*	$NetBSD: fil.c,v 1.12 1997/07/06 05:10:41 thorpej Exp $	*/
 
 /*
  * (C)opyright 1993-1996 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 #if !defined(lint) && defined(LIBC_SCCS)
 static	char	sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-1996 Darren Reed";
-static	char	rcsid[] = "$Id: fil.c,v 1.11 1997/07/05 05:38:14 darrenr Exp $";
+static	char	rcsid[] = "$Id: fil.c,v 1.12 1997/07/06 05:10:41 thorpej Exp $";
 #endif
 
 #include <sys/errno.h>
@@ -577,8 +577,8 @@ int out;
 			frstats[0].fr_acct++;
 	}
 
-	if (apass || !(pass = ipfr_knownfrag(ip, fin)) &&
-	    !(pass = fr_checkstate(ip, fin))) {
+	if (apass || (!(pass = ipfr_knownfrag(ip, fin)) &&
+	    !(pass = fr_checkstate(ip, fin)))) {
 		/*
 		 * If a packet is found in the auth table, then skip checking
 		 * the access lists for permission but we do need to consider
