@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.8 1996/09/17 22:00:26 cgd Exp $	*/
+/*	$NetBSD: boot.c,v 1.9 1997/01/18 00:59:46 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -58,6 +58,8 @@ char boot_flags[128];
 extern char bootprog_name[], bootprog_rev[], bootprog_date[], bootprog_maker[];
 
 vm_offset_t ffp_save, ptbr_save;
+
+int debug;
 
 void
 main()
