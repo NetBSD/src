@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopy.S,v 1.6 2001/07/05 06:29:49 eeh Exp $	*/
+/*	$NetBSD: bcopy.S,v 1.7 2001/07/05 19:09:24 eeh Exp $	*/
 
 /*
  * Copyright (c) 2001	Eduardo E. Horvath
@@ -46,7 +46,7 @@
 #include <machine/psl.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: bcopy.S,v 1.6 2001/07/05 06:29:49 eeh Exp $")
+	RCSID("$NetBSD: bcopy.S,v 1.7 2001/07/05 19:09:24 eeh Exp $")
 #endif  /* LIBC_SCCS and not lint */
 
 #define	EMPTY	nop
@@ -814,7 +814,10 @@ Lbcopy_block:
 	 mov	-7, %o4					! Lowest src addr possible
 	alignaddr %o0, %o4, %o3				! Base addr for load.
 	
-	ldd	[%o3], %f0				! Load word -1
+	cmp	%o0, %o3
+	bge,a,pt	%xcc, 2f			! Prevent segv
+	 ldd	[%o3], %f0				! Load word -1
+2:	
 	mov	1, %g1					! Data loaded
 	ldd	[%o3+8], %f2				! Load word 0
 
@@ -838,7 +841,9 @@ Lbcopy_block:
 	ba,pt	%xcc, 2f				! Load 1 word and
 	fmovd	%f2, %f0				! Shuffle data
 1:	
-	ldd	[%o4], %f0				! Load word -1
+	cmp	%o0, %o4
+	bge,a,pt	%xcc, 2f			! Prevent segv
+	 ldd	[%o4], %f0				! Load word -1
 2:	
 	mov	%o4, %o3
 	ldd	[%o3+8], %f2				! Load word 0
@@ -865,7 +870,9 @@ Lbcopy_block:
 	ba,pt	%xcc, 2f				! Load 1 word and
 	fmovd	%f2, %f0				! Shuffle data
 1:	
-	ldd	[%o4], %f0				! Load word -1
+	cmp	%o0, %o4
+	bge,a,pt	%xcc, 2f			! Prevent segv
+	 ldd	[%o4], %f0				! Load word -1
 2:	
 	mov	%o4, %o3
 	ldd	[%o3+8], %f2				! Load word 0
@@ -893,7 +900,9 @@ Lbcopy_block_common:
 	ba,pt	%xcc, 2f				! Load 1 word and
 	fmovd	%f2, %f0				! Shuffle data
 1:	
-	ldd	[%o4], %f0				! Load word -1
+	cmp	%o0, %o4
+	bge,a,pt	%xcc, 2f			! Prevent segv
+	 ldd	[%o4], %f0				! Load word -1
 2:	
 	mov	%o4, %o3
 	ldd	[%o3+8], %f2				! Load word 0
