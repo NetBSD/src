@@ -1,4 +1,4 @@
-/*	$NetBSD: tcx.c,v 1.7 1997/05/24 20:16:32 pk Exp $ */
+/*	$NetBSD: tcx.c,v 1.8 1997/07/29 09:58:14 fair Exp $ */
 
 /* 
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -205,7 +205,7 @@ tcxattach(parent, self, args)
 
 	case BUS_OBIO:
 	default:
-		printf("TCX on bus %x?\n", ca->ca_bustype);
+		printf("TCX on bus 0x%x?\n", ca->ca_bustype);
 		return;
 	}
 
@@ -344,7 +344,7 @@ tcxioctl(dev, cmd, data, flags, p)
 
 	default:
 #ifdef DEBUG
-		log(LOG_NOTICE, "tcxioctl(%lx) (%s[%d])\n", cmd,
+		log(LOG_NOTICE, "tcxioctl(0x%lx) (%s[%d])\n", cmd,
 		    p->p_comm, p->p_pid);
 #endif
 		return (ENOTTY);
@@ -498,7 +498,7 @@ tcxmmap(dev, off, prot)
 #ifdef DEBUG
 	{
 	  register struct proc *p = curproc;	/* XXX */
-	  log(LOG_NOTICE, "tcxmmap(%x) (%s[%d])\n", off, p->p_comm, p->p_pid);
+	  log(LOG_NOTICE, "tcxmmap(0x%x) (%s[%d])\n", off, p->p_comm, p->p_pid);
 	}
 #endif
 	return (-1);	/* not a user-map offset */

@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.36 1997/06/10 20:57:48 pk Exp $	*/
+/*	$NetBSD: obio.c,v 1.37 1997/07/29 09:58:11 fair Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Theo de Raadt
@@ -365,7 +365,7 @@ vmeattach(parent, self, aux)
 	}
 
 	vmebus_sc = sc;
-	printf(": version %x\n",
+	printf(": version 0x%x\n",
 	       sc->sc_reg->vmebus_cr & VMEBUS_CR_IMPL);
 
 	if (ra->ra_bp != NULL && strcmp(ra->ra_bp->name, "vme") == 0)

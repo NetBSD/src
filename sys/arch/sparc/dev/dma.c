@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.44 1997/06/26 00:31:20 thorpej Exp $ */
+/*	$NetBSD: dma.c,v 1.45 1997/07/29 09:58:06 fair Exp $ */
 
 /*
  * Copyright (c) 1994 Paul Kranenburg.  All rights reserved.
@@ -274,7 +274,7 @@ espsearch:
 	int count = 500000;						\
 	while ((COND) && --count > 0) DELAY(1);				\
 	if (count == 0) {						\
-		printf("%s: line %d: CSR = %lx\n", __FILE__, __LINE__,	\
+		printf("%s: line %d: CSR = 0x%lx\n", __FILE__, __LINE__, \
 			(SC)->sc_regs->csr);				\
 		if (DONTPANIC)						\
 			printf(MSG);					\
