@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.28 2000/05/31 16:24:24 mycroft Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.29 2001/01/18 10:54:27 jdolecek Exp $	*/
 
 /* 
  * Mach Operating System
@@ -42,7 +42,7 @@
 /*
  * Machine register set.
  */
-struct db_variable db_regs[] = {
+const struct db_variable db_regs[] = {
 	{ "es",		(long *)&ddb_regs.tf_es,     FCN_NULL },
 	{ "ds",		(long *)&ddb_regs.tf_ds,     FCN_NULL },
 	{ "edi",	(long *)&ddb_regs.tf_edi,    FCN_NULL },
@@ -58,7 +58,7 @@ struct db_variable db_regs[] = {
 	{ "esp",	(long *)&ddb_regs.tf_esp,    FCN_NULL },
 	{ "ss",		(long *)&ddb_regs.tf_ss,     FCN_NULL },
 };
-struct db_variable *db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
+const struct db_variable * const db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
 
 /*
  * Stack trace.

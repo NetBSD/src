@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.16 2000/09/19 06:22:51 jeffs Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.17 2001/01/18 10:54:28 jdolecek Exp $	*/
 
 /*
  * Mach Operating System
@@ -87,7 +87,7 @@ int db_mips_variable_func __P((struct db_variable *vp, db_expr_t *valuep,
 #define DB_SETF_REGS db_mips_variable_func
 #define DBREGS_REG()
 
-struct db_variable db_regs[] = {
+const struct db_variable db_regs[] = {
 	{ "at",	(long *)&ddb_regs.f_regs[AST],  DB_SETF_REGS },
 	{ "v0",	(long *)&ddb_regs.f_regs[V0],  DB_SETF_REGS },
 	{ "v1",	(long *)&ddb_regs.f_regs[V1],  DB_SETF_REGS },
@@ -126,7 +126,7 @@ struct db_variable db_regs[] = {
 	{ "cs",	(long *)&ddb_regs.f_regs[CAUSE],  DB_SETF_REGS },
 	{ "pc",	(long *)&ddb_regs.f_regs[PC],  DB_SETF_REGS },
 };
-struct db_variable *db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
+const struct db_variable * const db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
 
 void
 db_stack_trace_print(addr, have_addr, count, modif, pr)

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.25 2000/12/31 05:52:48 matt Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.26 2001/01/18 10:54:29 jdolecek Exp $	*/
 
 /* 
  * :set tabs=4
@@ -214,7 +214,7 @@ Debugger()
 /*
  * Machine register set.
  */
-struct db_variable db_regs[] = {
+const struct db_variable db_regs[] = {
 	{"r0",	&ddb_regs.r0,	FCN_NULL},
 	{"r1",	&ddb_regs.r1,	FCN_NULL},
 	{"r2",	&ddb_regs.r2,	FCN_NULL},
@@ -233,7 +233,7 @@ struct db_variable db_regs[] = {
 	{"pc",	&ddb_regs.pc,	FCN_NULL},
 	{"psl",	&ddb_regs.psl,	FCN_NULL},
 };
-struct db_variable *db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
+const struct db_variable * const db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
 
 #define IN_USERLAND(x)	(((u_int)(x) & 0x80000000) == 0)
 

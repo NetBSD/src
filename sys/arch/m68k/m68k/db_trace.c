@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.30 2001/01/18 09:49:02 scw Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.31 2001/01/18 10:54:28 jdolecek Exp $	*/
 
 /* 
  * Mach Operating System
@@ -46,7 +46,7 @@ extern label_t	*db_recover;
  */
 static int db_var_short __P((const struct db_variable *, db_expr_t *, int));
 
-struct db_variable db_regs[] = {
+const struct db_variable db_regs[] = {
 	/* D0-D7 */
 	{ "d0",	(long *)&ddb_regs.tf_regs[0],	FCN_NULL },
 	{ "d1",	(long *)&ddb_regs.tf_regs[1],	FCN_NULL },
@@ -69,7 +69,7 @@ struct db_variable db_regs[] = {
 	{ "pc",	(long *)&ddb_regs.tf_pc, 	FCN_NULL },
 	{ "sr",	(long *)&ddb_regs.tf_sr,	db_var_short }
 };
-struct db_variable *db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
+const struct db_variable * const db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
 
 static int
 db_var_short(varp, valp, op)
