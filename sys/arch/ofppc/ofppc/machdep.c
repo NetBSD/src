@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.77 2002/07/09 19:21:05 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.78 2002/09/18 01:44:13 chs Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -73,7 +73,7 @@
 /*
  * Global variables used here and there
  */
-char *bootpath;
+char bootpath[256];
 
 int lcsplx(int);			/* called from locore.S */
 
@@ -136,7 +136,7 @@ initppc(startkernel, endkernel, args)
 	/*
 	 * Parse arg string.
 	 */
-	bootpath = args;
+	strcpy(bootpath, args);
 	while (*++args && *args != ' ');
 	if (*args) {
 		for(*args++ = 0; *args; args++)
@@ -174,30 +174,30 @@ initppc(startkernel, endkernel, args)
 void
 cpu_startup()
 {
-	int msr;
+
 	mpc6xx_startup(NULL);
 
 	/*
 	 * Now allow hardware interrupts.
 	 */
 	splhigh();
-	asm volatile ("mfmsr %0; ori %0,%0,%1; mtmsr %0"
-	    :	"=r"(msr)
-	    :	"K"((u_short)(PSL_EE|PSL_RI)));
+	mtmsr(mfmsr() | PSL_EE | PSL_RI);
+	(*platform.softintr_init)();
 }
 
 void
 consinit()
 {
 
-	/* Nothing to do; console is already initialized. */
+	(*cn_tab->cn_probe)(cn_tab);
 }
 
+void	ofcons_cnprobe(struct consdev *);
 int	ofppc_cngetc(dev_t);
 void	ofppc_cnputc(dev_t, int);
 
 struct consdev ofppc_bootcons = {
-	NULL, NULL, ofppc_cngetc, ofppc_cnputc, nullcnpollc, NULL,
+	ofcons_cnprobe, NULL, ofppc_cngetc, ofppc_cnputc, nullcnpollc, NULL,
 	    makedev(0,0), 1,
 };
 
