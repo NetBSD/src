@@ -1,4 +1,4 @@
-/*	$NetBSD: dz_ibus.c,v 1.1.2.1 2002/03/15 14:22:42 ad Exp $	*/
+/*	$NetBSD: dz_ibus.c,v 1.1.2.2 2002/09/18 16:53:13 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -89,6 +89,7 @@
 #include <dev/dec/dzkbdvar.h>
 
 #include <pmax/ibus/ibusvar.h>
+#include <pmax/pmax/pmaxtype.h>
 
 #define	DZ_LINE_KBD	0
 #define	DZ_LINE_MOUSE	1
@@ -196,27 +197,30 @@ dz_ibus_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_dsr = 0x0f; /* XXX check if VS has modem ctrl bits */
 
-	printf(": DC-7805\n");
+	printf(": DC-7805");
 	ibus_intr_establish(parent, (void *)iba->ia_cookie, IPL_TTY,
 	    dz_ibus_intr, sc);
 	dzattach(sc, NULL);
 	DELAY(10000);
 
+	if (systype == DS_PMAX || systype == DS_3MAX) {
 #if NDZKBD > 0
-	if (!dz_ibus_iscn)
-		dz->rbuf = DZ_LPR_RX_ENABLE | (DZ_LPR_B4800 << 8) |
-		    DZ_LPR_8_BIT_CHAR;
-	daa.daa_line = DZ_LINE_KBD;
-	daa.daa_flags = (dz_ibus_iscn ? 0 : DZKBD_CONSOLE);
-	config_found(self, &daa, dz_ibus_print);
+		if (!dz_ibus_iscn)
+			dz->rbuf = DZ_LPR_RX_ENABLE | (DZ_LPR_B4800 << 8) |
+			    DZ_LPR_8_BIT_CHAR | DZ_LINE_KBD;
+		daa.daa_line = DZ_LINE_KBD;
+		daa.daa_flags = (dz_ibus_iscn ? 0 : DZKBD_CONSOLE);
+		config_found(self, &daa, dz_ibus_print);
 #endif
 #if NDZMS > 0
-	dz->rbuf = DZ_LPR_RX_ENABLE | (DZ_LPR_B4800 << 8) | DZ_LPR_7_BIT_CHAR
-	    | DZ_LPR_PARENB | DZ_LPR_OPAR | 1 /* line */;
-	daa.daa_line = DZ_LINE_MOUSE;
-	daa.daa_flags = 0;
-	config_found(self, &daa, dz_ibus_print);
+		dz->rbuf = DZ_LPR_RX_ENABLE | (DZ_LPR_B4800 << 8) |
+		    DZ_LPR_8_BIT_CHAR | DZ_LPR_PARENB | DZ_LPR_OPAR |
+		    DZ_LINE_MOUSE;
+		daa.daa_line = DZ_LINE_MOUSE;
+		daa.daa_flags = 0;
+		config_found(self, &daa, dz_ibus_print);
 #endif
+	}
 }
 
 int
@@ -266,8 +270,6 @@ void
 dz_ibus_cnattach(void)
 {
 
-	printf("dz_ibus_cnattach: 0\n");
-
 	dz_ibus_iscn = 1;
 
 	/* Disable scanning until init is done. */
@@ -279,16 +281,12 @@ dz_ibus_cnattach(void)
 	/* Turn scanning back on. */
 	dzcn->csr = 0x20;
 
-	printf("dz_ibus_cnattach: 1\n");
-
 	/*
 	 * Point the console at the DZ-11.
 	 */
 	cn_tab = &dz_ibus_consdev;
 	cn_tab->cn_pri = CN_REMOTE;
 	cn_tab->cn_dev = makedev(dz_ibus_getmajor(), DZ_LINE_CONSOLE);
-
-	printf("dz_ibus_cnattach: 2\n");
 }
 
 int
