@@ -42,7 +42,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)nfsd.c	8.7 (Berkeley) 2/22/94";*/
-static char *rcsid = "$Id: nfsd.c,v 1.14 1994/10/18 16:00:17 mycroft Exp $";
+static char *rcsid = "$Id: nfsd.c,v 1.15 1994/10/18 16:38:12 mycroft Exp $";
 #endif not lint
 
 #include <sys/param.h>
@@ -544,7 +544,8 @@ main(argc, argv, envp)
 void
 usage()
 {
-	(void)fprintf(stderr, "nfsd %s\n", USAGE);
+
+	(void)fprintf(stderr, "usage: nfsd %s\n", USAGE);
 	exit(1);
 }
 
@@ -552,6 +553,7 @@ void
 nonfs(signo)
 	int signo;
 {
+
 	syslog(LOG_ERR, "missing system call: NFS not available.");
 }
 
@@ -560,8 +562,5 @@ reapchild(signo)
 	int signo;
 {
 
-	for (;;) {
-		if (wait3(NULL, WNOHANG, NULL) < 0 && errno != EINTR)
-			break;
-	}
+	while (wait3((int *)0, WNOHANG, (struct rusage *)0) > 0);
 }
