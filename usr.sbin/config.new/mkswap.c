@@ -40,7 +40,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)mkswap.c	8.1 (Berkeley) 6/6/93
- *	$Id: mkswap.c,v 1.6 1994/06/22 11:39:06 pk Exp $
+ *	$Id: mkswap.c,v 1.7 1994/07/01 09:15:49 pk Exp $
  */
 
 #include <sys/param.h>
@@ -67,6 +67,19 @@ mkswap()
 	return (0);
 }
 
+static char *
+mkdevstr(d)
+dev_t d;
+{
+	static char buf[32];
+
+	if (d == NODEV)
+		(void)sprintf(buf, "NODEV");
+	else
+		(void)sprintf(buf, "makedev(%d, %d)", major(d), minor(d));
+	return buf;
+}
+
 static int
 mkoneswap(cf)
 	register struct config *cf;
@@ -89,18 +102,18 @@ mkoneswap(cf)
 #include <sys/conf.h>\n\n", fp) < 0)
 		goto wrerror;
 	nv = cf->cf_root;
-	if (fprintf(fp, "dev_t\trootdev = makedev(%d, %d);\t/* %s */\n",
-	    major(nv->nv_int), minor(nv->nv_int), nv->nv_str) < 0)
+	if (fprintf(fp, "dev_t\trootdev = %s;\t/* %s */\n",
+	    mkdevstr(nv->nv_int), nv->nv_str) < 0)
 		goto wrerror;
 	nv = cf->cf_dump;
-	if (fprintf(fp, "dev_t\tdumpdev = makedev(%d, %d);\t/* %s */\n",
-	    major(nv->nv_int), minor(nv->nv_int), nv->nv_str) < 0)
+	if (fprintf(fp, "dev_t\tdumpdev = %s;\t/* %s */\n",
+	    mkdevstr(nv->nv_int), nv->nv_str) < 0)
 		goto wrerror;
 	if (fputs("\nstruct\tswdevt swdevt[] = {\n", fp) < 0)
 		goto wrerror;
 	for (nv = cf->cf_swap; nv != NULL; nv = nv->nv_next)
-		if (fprintf(fp, "\t{ makedev(%d, %d),\t0,\t0 },\t/* %s */\n",
-		    major(nv->nv_int), minor(nv->nv_int), nv->nv_str) < 0)
+		if (fprintf(fp, "\t{ %s,\t0,\t0 },\t/* %s */\n",
+		    mkdevstr(nv->nv_int), nv->nv_str) < 0)
 			goto wrerror;
 	if (fputs("\t{ NODEV, 0, 0 }\n};\n\n", fp) < 0)
 		goto wrerror;
