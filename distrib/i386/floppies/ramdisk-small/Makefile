@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2001/01/24 18:18:57 jmc Exp $
+#	$NetBSD: Makefile,v 1.6 2001/02/25 03:54:25 jmc Exp $
 
 TOP=		${.CURDIR}/..
 WARNS=1
@@ -57,7 +57,7 @@ unconfig:
 	-/bin/rm -f ${IMAGE} ${IMAGE}.tmp
 
 ${CBIN}.mk ${CBIN}.cache ${CBIN}.c! ${CRUNCHCONF}
-	${CRUNCHGEN} -D ${TOP}/../../.. -L ${DESTDIR}/usr/lib ${.ALLSRC}
+	${CRUNCHGEN} -f -D ${TOP}/../../.. -L ${DESTDIR}/usr/lib ${.ALLSRC}
 
 ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
 	${MAKE} -f ${CBIN}.mk all
