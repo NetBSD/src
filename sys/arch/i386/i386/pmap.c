@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.85 2000/04/02 20:39:16 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.86 2000/04/10 01:21:06 chs Exp $	*/
 
 /*
  *
@@ -2681,7 +2681,7 @@ pmap_change_attrs(pg, setbits, clearbits)
 	for (pve = pvh->pvh_list; pve != NULL; pve = pve->pv_next) {
 #ifdef DIAGNOSTIC
 		if (pve->pv_va >= uvm.pager_sva && pve->pv_va < uvm.pager_eva) {
-			printf("pmap_change_attrs: found pager VA on pv_list");
+			printf("pmap_change_attrs: found pager VA on pv_list\n");
 		}
 		if (!pmap_valid_entry(pve->pv_pmap->pm_pdir[pdei(pve->pv_va)]))
 			panic("pmap_change_attrs: mapping without PTP "
