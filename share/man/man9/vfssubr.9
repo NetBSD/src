@@ -1,4 +1,4 @@
-.\"     $NetBSD: vfssubr.9,v 1.8 2004/01/10 17:16:38 hannken Exp $
+.\"     $NetBSD: vfssubr.9,v 1.9 2004/01/10 17:41:52 wiz Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -206,7 +206,7 @@ If
 is less than zero
 .Er EWOULDBLOCK
 is returned.
-If the operation is successful zero is returned, otherwise an
+If the operation is successful, zero is returned, otherwise an
 appropriate error code is returned.
 .It Fn vfs_write_resume "mp"
 Request a mounted file system to resume write operations.
