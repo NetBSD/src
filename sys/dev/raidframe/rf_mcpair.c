@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_mcpair.c,v 1.14 2004/03/02 19:36:21 oster Exp $	*/
+/*	$NetBSD: rf_mcpair.c,v 1.15 2004/03/04 03:02:01 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_mcpair.c,v 1.14 2004/03/02 19:36:21 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_mcpair.c,v 1.15 2004/03/04 03:02:01 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -82,7 +82,6 @@ rf_AllocMCPair()
 	simple_lock_init(&t->mutex);
 	t->cond = 0;
 	t->flag = 0;
-	t->next = NULL;
 
 	return (t);
 }
