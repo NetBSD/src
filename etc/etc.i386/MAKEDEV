@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.52 1997/07/13 19:16:59 hpeyerl Exp $
+#	$NetBSD: MAKEDEV,v 1.53 1997/07/22 23:13:18 phil Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -138,8 +138,9 @@ ttyv*)
 fd)
 	rm -f fd/*
 	mkdir fd > /dev/null 2>&1
-	n=0; while [ $n -lt 64 ]; do
-		mknod fd/$n	c 22 $n
+	n=0
+	while [ $n -lt 64 ]; do
+		mknod fd/$n c 22 $n
 		n=$(($n + 1))
 	done
 	chown -R bin.bin fd
