@@ -4,7 +4,7 @@
 ./usr/bin/palette
 ./usr/bin/rtcalarm
 ./usr/bin/tvctrl
-./usr/lib/libc.so.12.17
+./usr/lib/libc.so.12.20
 ./usr/lib/libamu.so.0.0
 ./usr/lib/libcrypt.so.0.0
 ./usr/lib/libcurses.so.2.1
