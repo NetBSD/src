@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.30 2000/04/03 12:12:38 augustss Exp $	*/
+/*	$NetBSD: umass.c,v 1.31 2000/04/03 12:31:34 augustss Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
  *		      Nick Hibma <n_hibma@freebsd.org>
@@ -714,6 +714,7 @@ umass_match_proto(sc, iface, dev)
 		break;
 	case UISUBCLASS_SFF8020I:
 	case UISUBCLASS_SFF8070I:
+	case UISUBCLASS_QIC157:
 		sc->proto |= PROTO_8070;
 		break;
 	default:
