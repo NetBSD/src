@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.4 2002/10/02 03:25:47 thorpej Exp $	*/
+/*	$NetBSD: rtc.c,v 1.5 2003/07/14 15:17:19 lukem Exp $	*/
 
 /*
  * Copyright (c) 2000 Ben Harris
@@ -45,7 +45,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: rtc.c,v 1.4 2002/10/02 03:25:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.5 2003/07/14 15:17:19 lukem Exp $");
 
 #include <sys/errno.h>
 #include <sys/systm.h>

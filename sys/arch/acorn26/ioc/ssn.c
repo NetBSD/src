@@ -1,4 +1,4 @@
-/*	$NetBSD: ssn.c,v 1.5 2002/10/02 03:25:47 thorpej Exp $	*/
+/*	$NetBSD: ssn.c,v 1.6 2003/07/14 15:17:20 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2002 Ben Harris
@@ -29,7 +29,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: ssn.c,v 1.5 2002/10/02 03:25:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ssn.c,v 1.6 2003/07/14 15:17:20 lukem Exp $");
 
 #include <sys/device.h>
 #include <sys/systm.h>

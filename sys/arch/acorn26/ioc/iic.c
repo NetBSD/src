@@ -1,4 +1,4 @@
-/*	$NetBSD: iic.c,v 1.6 2003/01/01 00:34:05 thorpej Exp $	*/
+/*	$NetBSD: iic.c,v 1.7 2003/07/14 15:17:19 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -47,7 +47,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: iic.c,v 1.6 2003/01/01 00:34:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iic.c,v 1.7 2003/07/14 15:17:19 lukem Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: esc.c,v 1.11 2003/05/03 18:10:41 wiz Exp $	*/
+/*	$NetBSD: esc.c,v 1.12 2003/07/14 15:17:22 lukem Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Stevens
@@ -55,7 +55,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: esc.c,v 1.11 2003/05/03 18:10:41 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esc.c,v 1.12 2003/07/14 15:17:22 lukem Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>
