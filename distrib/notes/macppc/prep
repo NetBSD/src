@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.7 2000/11/01 23:35:23 lukem Exp $
+.\"	$NetBSD: prep,v 1.8 2000/11/01 23:55:39 lukem Exp $
 .
 .Ss2 Open Firmware System Preparation
 .
@@ -772,33 +772,48 @@ Now, set up your
 .Ic dhcpd
 server.  Make sure the following lines are in
 .Pa /etc/dhcpd.conf :
-.Pp
-.Dl allow bootp;                        # allow bootp requests, thus the dhcp
-.Dl                                     # server will act as a bootp server
-.Dl ""
-.Dl # which network interface the server will listen on
-.Dl subnet 192.168.1.0 netmask 255.255.255.0 {
-.Dl                                     # the zeros indicate which range of
-.Dl }                                   # addresses are allowed to connect
-.Dl ""
-.Dl #set of parameters common to all clients
-.Dl group {                                
-.Dl  option broadcast-address 192.168.1.255;
-.Dl  option domain-name "test.net";
-.Dl  option domain-name-servers dns.test.net;
-.Dl  option routers router.test.net;
-.Dl  option subnet-mask 255.255.255.0;
-.Dl ""
-.Dl  host client.test.net {
-.Dl   hardware ethernet CC:CC:CC:CC:CC:CC;
-.Dl   fixed-address 192.168.1.10;
-.Dl   option host-name "client";        #name of the host (if the fixed address
-.Dl                                     #doesn't resolve to a simple name)
-.Dl   filename "ofwboot.xcf";           #name of the bootloader or kernel
-.Dl                                     #to download via tftp
-.Dl   option root-path "/export/client/root"; #the path on the NFS server.
-.Dl  }
-.Dl }
+.(disp
+allow bootp;	# Allow bootp requests, thus the dhcp server
+		# will act as a bootp server.
+
+subnet 192.168.1.0 netmask 255.255.255.0 {
+		# Which network interface the server will
+		# listen on.  The zeros indicate which
+		# range of addresses are allowed to connect.
+}
+
+group {                                
+		# Set of parameters common to all clients
+		# in this "group".
+		#
+	option broadcast-address	192.168.1.255;
+	option domain-name		"test.net";
+	option domain-name-servers	dns.test.net;
+	option routers			router.test.net;
+	option subnet-mask		255.255.255.0;
+
+		# An individual client.
+		#
+	host client.test.net {
+		hardware ethernet	CC:CC:CC:CC:CC:CC;
+		fixed-address		192.168.1.10;
+
+		# Name of the host (if the fixed address
+		# doesn't resolve to a simple name).
+		#
+		option host-name	"client";
+
+		# Name of the bootloader or kernel
+		# to download via tftp.
+		#
+		filename		"ofwboot.xcf";
+
+		# The path on the NFS server.
+		#
+		option	root-path	"/export/client/root";
+	}
+}
+.disp)
 .Pp
 You will need to make sure that the
 .Pa dhcpd.leases
@@ -811,8 +826,11 @@ You will need to
 the
 .Ic dhcpd
 and restart it to get it to re-read its configuration file.
+If the server is running
+.Nx 1.5 ,
+you can achieve this with:
 .Pp
-.Dl # Ic "usr/sbin/dhcpd"
+.Dl # Ic "/etc/rc.d/dhcpd restart"
 .Pp
 Now, place a copy of the
 .Pa installation/ofwboot.xcf
