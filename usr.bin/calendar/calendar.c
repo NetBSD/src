@@ -1,4 +1,4 @@
-/*	$NetBSD: calendar.c,v 1.35 2004/12/06 20:38:43 jwise Exp $	*/
+/*	$NetBSD: calendar.c,v 1.36 2004/12/07 16:47:32 jwise Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)calendar.c	8.4 (Berkeley) 1/7/95";
 #endif
-__RCSID("$NetBSD: calendar.c,v 1.35 2004/12/06 20:38:43 jwise Exp $");
+__RCSID("$NetBSD: calendar.c,v 1.36 2004/12/07 16:47:32 jwise Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -71,7 +71,7 @@ __RCSID("$NetBSD: calendar.c,v 1.35 2004/12/06 20:38:43 jwise Exp $");
 
 static unsigned short lookahead = 1, weekend = 2;
 static char *fname = NULL, *datestr = NULL;
-static char *defaultnames[] = {"calendar", ".calendar", "/etc/calendar", NULL};
+static char *defaultnames[] = {"calendar", ".calendar", _PATH_SYSTEM_CALENDAR, NULL};
 static struct passwd *pw;
 static int doall;
 static char path[MAXPATHLEN + 1];
