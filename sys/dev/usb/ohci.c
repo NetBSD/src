@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.34 1999/08/14 08:56:09 augustss Exp $	*/
+/*	$NetBSD: ohci.c,v 1.35 1999/08/16 20:24:33 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -785,13 +785,15 @@ ohci_done(sc, reqh)
 	ohci_softc_t *sc;
 	usbd_request_handle reqh;
 {
+	usbd_pipe_handle pipe = reqh->pipe;
+
 #ifdef DIAGNOSTIC
 	if (!reqh->hcpriv)
 		printf("ohci_done: reqh=%p, no hcpriv\n", reqh);
 #endif
 	reqh->hcpriv = 0;
 
-	switch (reqh->pipe->endpoint->edesc->bmAttributes & UE_XFERTYPE) {
+	switch (pipe->endpoint->edesc->bmAttributes & UE_XFERTYPE) {
 	case UE_CONTROL:
 		ohci_ctrl_done(sc, reqh);
 		break;
@@ -805,6 +807,9 @@ ohci_done(sc, reqh)
 		printf("ohci_process_done: ISO done?\n");
 		break;
 	}
+
+	/* Remove request from queue. */
+	SIMPLEQ_REMOVE_HEAD(&pipe->queue, reqh, next);
 
 	/* And finally execute callback. */
 	reqh->xfercb(reqh);
@@ -1349,6 +1354,9 @@ ohci_open(pipe)
 			s = splusb();
 			ohci_add_ed(sed, sc->sc_bulk_head);
 			splx(s);
+			/* XXX is the right place and/or time */
+			/* Make sure DATA0 toggle will be used next. */
+			usbd_clear_endpoint_stall(pipe);
 			break;
 		}
 	}
@@ -1856,6 +1864,7 @@ ohci_root_ctrl_start(reqh)
 	reqh->actlen = totlen;
 	r = USBD_NORMAL_COMPLETION;
  ret:
+	SIMPLEQ_REMOVE_HEAD(&reqh->pipe->queue, reqh, next);
 	reqh->status = r;
 	reqh->xfercb(reqh);
 	usb_start_next(reqh->pipe);
