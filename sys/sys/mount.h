@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)mount.h	7.22 (Berkeley) 6/3/91
- *	$Id: mount.h,v 1.27 1994/04/21 07:49:23 cgd Exp $
+ *	$Id: mount.h,v 1.28 1994/04/23 07:55:23 cgd Exp $
  */
 
 #ifndef _SYS_MOUNT_H_
@@ -306,10 +306,12 @@ struct msdosfs_args {
 /*
  * exported vnode operations
  */
+struct	mount *getvfs __P((fsid_t *fsid));  /* return vfs given fsid */
+void	getnewfsid __P((struct mount *mp, int mtype)); /* get a uniqe fsid */
+long	makefstype __P((char *type));	    /* mnt type -> 'unique' number */
 void	vfs_remove __P((struct mount *mp)); /* remove a vfs from mount list */
 int	vfs_lock __P((struct mount *mp));   /* lock a vfs */
 void	vfs_unlock __P((struct mount *mp)); /* unlock a vfs */
-struct	mount *getvfs __P((fsid_t *fsid));  /* return vfs given fsid */
 struct	mount *rootfs;			    /* ptr to root mount structure */
 extern TAILQ_HEAD(mntlist, mount) mountlist;	/* mounted filesystem list */
 extern struct vfsops *vfssw[];		    /* mount filesystem type table */

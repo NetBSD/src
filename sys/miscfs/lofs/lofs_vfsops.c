@@ -37,7 +37,7 @@
  * From:
  *	Id: lofs_vfsops.c,v 4.1 1993/12/17 10:47:45 jsp Rel
  *
- *	$Id: lofs_vfsops.c,v 1.4 1994/04/21 07:48:45 cgd Exp $
+ *	$Id: lofs_vfsops.c,v 1.5 1994/04/23 07:54:58 cgd Exp $
  */
 
 /*
@@ -153,7 +153,7 @@ lofs_mount(mp, path, data, ndp, p)
 	if (LOFSVP(rootvp)->v_mount->mnt_flag & MNT_LOCAL)
 		mp->mnt_flag |= MNT_LOCAL;
 	mp->mnt_data = (qaddr_t) amp;
-	getnewfsid(mp, (int)MOUNT_LOFS);
+	getnewfsid(mp, makefstype(MOUNT_LOFS));
 
 	(void) copyinstr(path, mp->mnt_stat.f_mntonname, MNAMELEN - 1, &size);
 	bzero(mp->mnt_stat.f_mntonname + size, MNAMELEN - size);

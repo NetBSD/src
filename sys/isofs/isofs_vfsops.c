@@ -1,5 +1,5 @@
 /*
- *	$Id: isofs_vfsops.c,v 1.12 1994/04/21 07:47:31 cgd Exp $
+ *	$Id: isofs_vfsops.c,v 1.13 1994/04/23 07:54:38 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -280,7 +280,7 @@ static iso_mountfs(devvp, mp, p, argp)
 	
 	mp->mnt_data = (qaddr_t)isomp;
 	mp->mnt_stat.f_fsid.val[0] = (long)dev;
-	mp->mnt_stat.f_fsid.val[1] = (long)MOUNT_ISOFS;
+	mp->mnt_stat.f_fsid.val[1] = makefstype(MOUNT_ISOFS);
 	mp->mnt_flag |= MNT_LOCAL;
 	isomp->im_mountp = mp;
 	isomp->im_dev = dev;
