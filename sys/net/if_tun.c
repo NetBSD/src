@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.47 2001/11/05 18:02:16 matt Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.48 2001/11/12 23:49:45 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -13,6 +13,9 @@
  * UCL. This driver is based much more on read/write/poll mode of
  * operation though.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.48 2001/11/12 23:49:45 lukem Exp $");
 
 #include "tun.h"
 #if NTUN > 0
