@@ -1,4 +1,4 @@
-.\"	$NetBSD: wiconfig.8,v 1.5 2000/02/04 08:01:43 explorer Exp $
+.\"	$NetBSD: wiconfig.8,v 1.6 2000/06/28 10:07:05 onoe Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu> All rights reserved.
@@ -216,19 +216,19 @@ in the table are specified in Mhz.
 .Bd -filled -offset indent
 .Bl -column "Channel ID " "FCC " "ETSI " "France " "Japan "
 .Em "Channel ID	FCC	ETSI	France	Japan"
-1	2412	2412	-	-
-2	2417	2417	-	-
-3	2422	2422	-	-
-4	2427	2427	-	-
-5	2432	2432	-	-
-6	2437	2437	-	-
-7	2442	2442	-	-
-8	2447	2447	-	-
-9	2452	2452	-	-
-10	2457	2457	2457	-
-11	2462	2462	2462	-
-12	-	2467	2467	-
-13	-	2472	2472	-
+1	2412	2412	-	2412
+2	2417	2417	-	2417
+3	2422	2422	-	2422
+4	2427	2427	-	2427
+5	2432	2432	-	2432
+6	2437	2437	-	2437
+7	2442	2442	-	2442
+8	2447	2447	-	2447
+9	2452	2452	-	2452
+10	2457	2457	2457	2457
+11	2462	2462	2462	2462
+12	-	2467	2467	2467
+13	-	2472	2472	2472
 14	-	-	-	2484
 .El
 .Ed
@@ -236,7 +236,8 @@ in the table are specified in Mhz.
 If an illegal channel is specified, the
 NIC will revert to its default channel. For NICs sold in the United States
 and Europe, the default channel is 3. For NICs sold in France, the default
-channel is 11. For NICs sold in Japan, the only available channel is 14.
+channel is 11. For NICs sold in Japan, the default channel is 14, and
+it is the only available channel for pre-11Mbps NICs.
 Note that two stations must be set to the same channel in order to
 communicate.
 .It Fl P Ar 0|1
