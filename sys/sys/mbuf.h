@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.84 2003/06/26 09:55:10 itojun Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.85 2003/07/27 04:16:23 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001 The NetBSD Foundation, Inc.
@@ -175,6 +175,12 @@ struct	pkthdr {
 #define	M_CSUM_UDPv6		0x00000020	/* IPv6 UDP header/payload */
 #define	M_CSUM_IPv4		0x00000040	/* IPv4 header */
 #define	M_CSUM_IPv4_BAD		0x00000080	/* IPv4 header checksum bad */
+
+/* Checksum-assist quirks: keep separate from jump-table bits. */
+#define	M_CSUM_NO_PSEUDOHDR	0x80000000	/* Rx M_CSUM_DATA does not include
+						 * the UDP/TCP pseudo-hdr, and
+						 * is not yet 1s-complemented.
+						 */
 
 /*
  * Max # of pages we can attach to m_ext.  This is carefully chosen
