@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.old.c,v 1.63 1998/03/18 23:11:44 thorpej Exp $ */
+/* $NetBSD: pmap.old.c,v 1.64 1998/03/18 23:55:25 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -155,7 +155,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.old.c,v 1.63 1998/03/18 23:11:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.old.c,v 1.64 1998/03/18 23:55:25 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -375,8 +375,7 @@ void	pmap_pvdump __P((vm_offset_t));
  *	Check to see if a pmap is active on the current processor.
  */
 #define	active_pmap(pm)							\
-	((pm) == pmap_kernel() ||	/* XXX */			\
-	 ((pm)->pm_cpus & (1UL << alpha_pal_whami())) != 0)
+	(((pm)->pm_cpus & (1UL << alpha_pal_whami())) != 0)
 
 /*
  * PMAP_ACTIVATE:
@@ -400,6 +399,24 @@ do {									\
 		/* XXX These go away if we use ASNs. */			\
 		ALPHA_TBIAP();						\
 		alpha_pal_imb();					\
+	}								\
+} while (0)
+
+/*
+ * PMAP_INVALIDATE_TLB:
+ *
+ *	Invalidate the TLB entry for the pmap/va pair.
+ */
+#define	PMAP_INVALIDATE_TLB(pmap, va, hadasm, isactive, doimb)		\
+do {									\
+	if ((hadasm) || (isactive)) {					\
+		/*							\
+		 * Simply invalidating the TLB entry and I-stream	\
+		 * works in this case.					\
+		 */							\
+		ALPHA_TBIS((va));					\
+		if ((doimb))						\
+			alpha_pal_imb();				\
 	}								\
 } while (0)
 
@@ -1056,7 +1073,8 @@ pmap_protect(pmap, sva, eva, prot)
 	vm_prot_t prot;
 {
 	register pt_entry_t *pte, bits;
-	boolean_t needtflush;
+	boolean_t isactive;
+	boolean_t hadasm;
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_PROTECT))
@@ -1080,7 +1098,7 @@ pmap_protect(pmap, sva, eva, prot)
 		return;
 
 	bits = pte_prot(pmap, prot);
-	needtflush = active_pmap(pmap);
+	isactive = active_pmap(pmap);
 
 	while (sva < eva) {
 		/*
@@ -1105,12 +1123,10 @@ pmap_protect(pmap, sva, eva, prot)
 		 */
 		pte = pmap_l3pte(pmap, sva);
 		if (pmap_pte_v(pte) && pmap_pte_prot_chg(pte, bits)) {
+			hadasm = (pmap_pte_asm(pte) != 0);
 			pmap_pte_set_prot(pte, bits);
-			if (needtflush) {
-				ALPHA_TBIS(sva);
-				if (prot & VM_PROT_EXECUTE)
-					alpha_pal_imb();
-			}
+			PMAP_INVALIDATE_TLB(pmap, sva, hadasm, isactive,
+			    (prot & VM_PROT_EXECUTE) != 0);
 #ifdef PMAPSTATS
 			protect_stats.changed++;
 #endif
@@ -1152,6 +1168,7 @@ pmap_enter(pmap, va, pa, prot, wired)
 	pt_entry_t *pte, npte;
 	vm_offset_t opa;
 	boolean_t tflush = TRUE;
+	boolean_t hadasm = FALSE;	/* XXX gcc -Wuninitialized */
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_ENTER))
@@ -1271,6 +1288,8 @@ pmap_enter(pmap, va, pa, prot, wired)
 	}
 
 	opa = pmap_pte_pa(pte);
+	hadasm = (pmap_pte_asm(pte) != 0);
+
 	if (opa == pa) {
 		/*
 		 * Mapping has not changed; must be a protection or
@@ -1394,14 +1413,11 @@ pmap_enter(pmap, va, pa, prot, wired)
 
 	/*
 	 * Invalidate the TLB entry for this VA and any appropriate
-	 * caches.  Note that this is not necessary for wiring-only
-	 * changes.
+	 * caches.
 	 */
-	if (tflush && active_pmap(pmap)) {
-		ALPHA_TBIS(va);
-		if (prot & VM_PROT_EXECUTE)
-			alpha_pal_imb();
-	}
+	if (tflush)
+		PMAP_INVALIDATE_TLB(pmap, va, hadasm, active_pmap(pmap),
+		    (prot & VM_PROT_EXECUTE) != 0);
 }
 
 #if defined(PMAP_NEW)
@@ -1463,9 +1479,8 @@ pmap_kenter_pa(va, pa, prot)
 	 * Invalidate the TLB entry for this VA and any appropriate
 	 * caches.
 	 */
-	ALPHA_TBIS(va);
-	if (prot & VM_PROT_EXECUTE)
-		alpha_pal_imb();
+	PMAP_INVALIDATE_TLB(pmap_kernel(), va, TRUE, TRUE,
+	    (prot & VM_PROT_EXECUTE) != 0);
 }
 
 /*
@@ -2101,6 +2116,7 @@ pmap_remove_mapping(pmap, va, pte)
 	vm_offset_t pa;
 	int s;
 	boolean_t onpv;
+	boolean_t hadasm;
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_REMOVE|PDB_PROTECT))
@@ -2119,6 +2135,7 @@ pmap_remove_mapping(pmap, va, pte)
 
 	pa = pmap_pte_pa(pte);
 	onpv = (pmap_pte_pv(pte) != 0);
+	hadasm = (pmap_pte_asm(pte) != 0);
 
 #ifdef PMAPSTATS
 	remove_stats.removes++;
@@ -2139,10 +2156,7 @@ pmap_remove_mapping(pmap, va, pte)
 #endif
 	*pte = PG_NV;
 
-	if (active_pmap(pmap)) {
-		ALPHA_TBIS(va);
-		alpha_pal_imb();
-	}
+	PMAP_INVALIDATE_TLB(pmap, va, hadasm, active_pmap(pmap), TRUE);
 
 	/*
 	 * If we're removing a user mapping, check to see if we
@@ -2244,6 +2258,7 @@ pmap_changebit(pa, bit, setem)
 	pv_entry_t pv;
 	pt_entry_t *pte, npte;
 	vm_offset_t va;
+	boolean_t hadasm;
 	int s;
 #ifdef PMAPSTATS
 	struct chgstats *chgp;
@@ -2294,9 +2309,10 @@ pmap_changebit(pa, bit, setem)
 		else
 			npte = *pte & ~bit;
 		if (*pte != npte) {
+			hadasm = (pmap_pte_asm(pte) != 0);
 			*pte = npte;
-			if (active_pmap(pv->pv_pmap))
-				ALPHA_TBIS(va);
+			PMAP_INVALIDATE_TLB(pv->pv_pmap, va, hadasm,
+			    active_pmap(pv->pv_pmap), TRUE);
 #ifdef PMAPSTATS
 			if (setem)
 				chgp->sethits++;
