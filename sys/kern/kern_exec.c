@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.95 1998/08/13 02:10:57 eeh Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.96 1998/09/11 12:50:10 mycroft Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -418,10 +418,12 @@ sys_execve(p, v, retval)
 		goto exec_abort;
 
 	/* copy out the process's signal trapoline code */
-	if (szsigcode && copyout((char *) pack.ep_emul->e_sigcode,
-				 ((char *) PS_STRINGS) - szsigcode,
-				 szsigcode))
+	if (szsigcode) {
+		if (copyout((char *)pack.ep_emul->e_sigcode,
+		    p->p_sigacts->ps_sigcode = (char *)PS_STRINGS - szsigcode,
+		    szsigcode))
 		goto exec_abort;
+	}
 
 	fdcloseexec(p);		/* handle close on exec */
 	execsigs(p);		/* reset catched signals */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_signal.h,v 1.8 1996/05/03 17:05:28 christos Exp $	*/
+/*	$NetBSD: ibcs2_signal.h,v 1.9 1998/09/11 12:50:08 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -54,6 +54,7 @@
 #define IBCS2_SIGCLD		18
 #define IBCS2_SIGPWR		19
 #define IBCS2_SIGWINCH		20
+/*#define IBCS2_SIGPHONE	21*/
 #define IBCS2_SIGPOLL		22
 #define IBCS2_NSIG		32
 
@@ -67,6 +68,8 @@
 #define IBCS2_SIGTTOU		27
 #define IBCS2_SIGVTALRM		28
 #define IBCS2_SIGPROF		29
+#define IBCS2_SIGXCPU		30
+#define IBCS2_SIGXFSZ		31
 
 #define IBCS2_SIGNO_MASK	0x00FF
 #define IBCS2_SIGNAL_MASK	0x0000
@@ -98,8 +101,28 @@ struct ibcs2_sigaction {
 };
 
 /* sa_flags */
-#define IBCS2_SA_NOCLDSTOP	1
+#define IBCS2_SA_NOCLDSTOP	0x00000001
+#define IBCS2_SA_RESETHAND	0x00000002
+#define IBCS2_SA_RESTART	0x00000004
+#define IBCS2_SA_SIGINFO	0x00000008
+#define IBCS2_SA_NODEFER	0x00000010
+#define IBCS2_SA_ONSTACK	0x00000200
+#define IBCS2_SA_NOCLDWAIT	0x00010000
+#define	IBCS2_SA_ALLBITS	0x0001021f
 
-extern int bsd_to_ibcs2_sig[];
+struct ibcs2_sigaltstack {
+	void		*ss_sp;
+	ibcs2_size_t	ss_size;
+	int		ss_flags;
+};
+
+/* ss_flags */
+#define	IBCS2_SS_ONSTACK	0x00000001
+#define	IBCS2_SS_DISABLE	0x00000002
+#define	IBCS2_SS_ALLBITS	0x00000003
+
+extern int native_to_ibcs2_sig[];
+void ibcs2_to_native_sigset __P((const ibcs2_sigset_t *, sigset_t *));
+void native_to_ibcs2_sigset __P((const sigset_t *, ibcs2_sigset_t *));
 
 #endif /* _IBCS2_SIGNAL_H */

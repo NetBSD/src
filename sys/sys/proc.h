@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.64 1998/09/08 23:47:49 thorpej Exp $	*/
+/*	$NetBSD: proc.h,v 1.65 1998/09/11 12:50:13 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -83,7 +83,7 @@ struct	emul {
 	char	e_name[8];		/* Symbolic name */
 	int	*e_errno;		/* Errno array */
 					/* Signal sending function */
-	void	(*e_sendsig) __P((sig_t, int, int, u_long));
+	void	(*e_sendsig) __P((sig_t, int, sigset_t *, u_long));
 	int	e_nosys;		/* Offset of the nosys() syscall */
 	int	e_nsysent;		/* Number of system call entries */
 	struct sysent *e_sysent;	/* System call array */
@@ -162,7 +162,8 @@ struct	proc {
 	int	p_traceflag;		/* Kernel trace points. */
 	void	*p_tracep;		/* Trace to vnode or file */
 
-	int	p_siglist;		/* Signals arrived but not delivered. */
+	sigset_t p_siglist;		/* Signals arrived but not delivered. */
+	char	p_sigcheck;		/* May have deliverable signals. */
 
 	struct	vnode *p_textvp;	/* Vnode of executable. */
 
@@ -171,9 +172,6 @@ struct	proc {
 
 	int	p_holdcnt;		/* If non-zero, don't swap. */
 	struct	emul *p_emul;		/* Emulation information */
-
-	long	p_spare[1];		/* pad to 256, avoid shifting eproc. */
-
 
 /* End area that is zeroed on creation. */
 #define	p_endzero	p_startcopy

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.32 1998/08/04 04:03:12 perry Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.33 1998/09/11 12:50:10 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -248,7 +248,8 @@ ktrpsig(v, sig, action, mask, code)
 	void *v;
 	int sig;
 	sig_t action;
-	int mask, code;
+	sigset_t *mask;
+	int code;
 {
 	struct ktr_header *kth;
 	struct ktr_psig	kp;
@@ -258,7 +259,7 @@ ktrpsig(v, sig, action, mask, code)
 	kth = ktrgetheader(KTR_PSIG);
 	kp.signo = (char)sig;
 	kp.action = action;
-	kp.mask = mask;
+	kp.mask = *mask;
 	kp.code = code;
 	kth->ktr_buf = (caddr_t)&kp;
 	kth->ktr_len = sizeof(struct ktr_psig);

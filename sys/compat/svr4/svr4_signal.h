@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_signal.h,v 1.15 1998/09/04 19:54:39 christos Exp $	 */
+/*	$NetBSD: svr4_signal.h,v 1.16 1998/09/11 12:50:09 mycroft Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -109,12 +109,6 @@ struct svr4_sigaction {
 	int 		sa_reserved[2];
 };
 
-struct svr4_sigaltstack {
-	char		*ss_sp;
-	int		ss_size;
-	int		ss_flags;
-};
-
 /* sa_flags */
 #define SVR4_SA_ONSTACK		0x00000001
 #define SVR4_SA_RESETHAND	0x00000002
@@ -123,15 +117,23 @@ struct svr4_sigaltstack {
 #define SVR4_SA_NODEFER		0x00000010
 #define SVR4_SA_NOCLDWAIT	0x00010000	/* No zombies 	*/
 #define SVR4_SA_NOCLDSTOP	0x00020000	/* No jcl	*/
+#define	SVR4_SA_ALLBITS		0x0003001f
+
+struct svr4_sigaltstack {
+	char		*ss_sp;
+	int		ss_size;
+	int		ss_flags;
+};
 
 /* ss_flags */
 #define SVR4_SS_ONSTACK		0x00000001
 #define SVR4_SS_DISABLE		0x00000002
+#define SVR4_SS_ALLBITS		0x00000003
 
-extern int bsd_to_svr4_sig[];
-void bsd_to_svr4_sigaltstack __P((const struct sigaltstack *, struct svr4_sigaltstack *));
-void bsd_to_svr4_sigset __P((const sigset_t *, svr4_sigset_t *));
-void svr4_to_bsd_sigaltstack __P((const struct svr4_sigaltstack *, struct sigaltstack *));
-void svr4_to_bsd_sigset __P((const svr4_sigset_t *, sigset_t *));
+extern int native_to_svr4_sig[];
+void native_to_svr4_sigset __P((const sigset_t *, svr4_sigset_t *));
+void svr4_to_native_sigset __P((const svr4_sigset_t *, sigset_t *));
+void native_to_svr4_sigaltstack __P((const struct sigaltstack *, struct svr4_sigaltstack *));
+void svr4_to_native_sigaltstack __P((const struct svr4_sigaltstack *, struct sigaltstack *));
 
 #endif /* !_SVR4_SIGNAL_H_ */

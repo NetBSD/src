@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.h,v 1.6 1998/06/11 22:26:13 drochner Exp $	*/
+/*	$NetBSD: linux_machdep.h,v 1.7 1998/09/11 12:50:07 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -41,25 +41,25 @@
 struct linux_sigcontext {
 	int	sc_gs;
 	int	sc_fs;
-	int     sc_es;
-	int     sc_ds;
-	int     sc_edi;
-	int     sc_esi;
-	int     sc_ebp;
+	int	sc_es;
+	int	sc_ds;
+	int	sc_edi;
+	int	sc_esi;
+	int	sc_ebp;
 	int	sc_esp;
-	int     sc_ebx;
-	int     sc_edx;
-	int     sc_ecx;
-	int     sc_eax;
-	int     sc_trapno;
-	int     sc_err;
-	int     sc_eip;
-	int     sc_cs;
-	int     sc_eflags;
-	int     sc_esp_at_signal;
-	int     sc_ss;
+	int	sc_ebx;
+	int	sc_edx;
+	int	sc_ecx;
+	int	sc_eax;
+	int	sc_trapno;
+	int	sc_err;
+	int	sc_eip;
+	int	sc_cs;
+	int	sc_eflags;
+	int	sc_esp_at_signal;
+	int	sc_ss;
 	int	sc_387;
-	int	sc_mask;
+	linux_sigset_t sc_mask;
 	int	sc_cr2;
 };
 
@@ -76,7 +76,7 @@ struct linux_sigframe {
 	sig_t	sf_handler;
 };
 
-void linux_sendsig __P((sig_t, int, int, u_long));
+void linux_sendsig __P((sig_t, int, sigset_t *, u_long));
 dev_t linux_fakedev __P((dev_t));
 
 /*

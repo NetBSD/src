@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.318 1998/08/18 07:53:47 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.319 1998/09/11 12:50:06 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -1106,47 +1106,38 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 void
 sendsig(catcher, sig, mask, code)
 	sig_t catcher;
-	int sig, mask;
+	int sig;
+	sigset_t *mask;
 	u_long code;
 {
 	struct proc *p = curproc;
 	struct trapframe *tf;
 	struct sigframe *fp, frame;
 	struct sigacts *psp = p->p_sigacts;
-	int oonstack;
-	extern char sigcode[], esigcode[];
-
-	/* 
-	 * Build the argument list for the signal handler.
-	 */
-	frame.sf_signum = sig;
+	int onstack;
 
 	tf = p->p_md.md_regs;
-	oonstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
 
-	/*
-	 * Allocate space for the signal handler context.
-	 */
-	if ((psp->ps_flags & SAS_ALTSTACK) && !oonstack &&
-	    (psp->ps_sigonstack & sigmask(sig))) {
+	/* Do we need to jump onto the signal stack? */
+	onstack =
+	    (psp->ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
+	    (psp->ps_sigact[sig].sa_flags & SA_ONSTACK) != 0;
+
+	/* Allocate space for the signal handler context. */
+	if (onstack)
 		fp = (struct sigframe *)((caddr_t)psp->ps_sigstk.ss_sp +
-		    psp->ps_sigstk.ss_size - sizeof(struct sigframe));
-		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
-	} else {
-		fp = (struct sigframe *)tf->tf_esp - 1;
-	}
+		    psp->ps_sigstk.ss_size);
+	else
+		fp = (struct sigframe *)tf->tf_esp;
+	fp--;
 
+	/* Build stack frame for signal trampoline. */
+	frame.sf_signum = sig;
 	frame.sf_code = code;
 	frame.sf_scp = &fp->sf_sc;
 	frame.sf_handler = catcher;
 
-	/*
-	 * Build the signal context to be used by sigreturn.
-	 */
-	frame.sf_sc.sc_err = tf->tf_err;
-	frame.sf_sc.sc_trapno = tf->tf_trapno;
-	frame.sf_sc.sc_onstack = oonstack;
-	frame.sf_sc.sc_mask = mask;
+	/* Save register context. */
 #ifdef VM86
 	if (tf->tf_eflags & PSL_VM) {
 		frame.sf_sc.sc_gs = tf->tf_vm86_gs;
@@ -1174,6 +1165,14 @@ sendsig(catcher, sig, mask, code)
 	frame.sf_sc.sc_cs = tf->tf_cs;
 	frame.sf_sc.sc_esp = tf->tf_esp;
 	frame.sf_sc.sc_ss = tf->tf_ss;
+	frame.sf_sc.sc_trapno = tf->tf_trapno;
+	frame.sf_sc.sc_err = tf->tf_err;
+
+	/* Save signal stack. */
+	frame.sf_sc.sc_onstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
+
+	/* Save signal mask. */
+	frame.sf_sc.sc_mask = *mask;
 
 	if (copyout(&frame, fp, sizeof(frame)) != 0) {
 		/*
@@ -1191,11 +1190,15 @@ sendsig(catcher, sig, mask, code)
 	__asm("movl %w0,%%fs" : : "r" (GSEL(GUDATA_SEL, SEL_UPL)));
 	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
-	tf->tf_eip = (int)(((char *)PS_STRINGS) - (esigcode - sigcode));
+	tf->tf_eip = (int)psp->ps_sigcode;
 	tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
 	tf->tf_eflags &= ~(PSL_T|PSL_VM|PSL_AC);
 	tf->tf_esp = (int)fp;
 	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
+
+	/* Remember that we're now on the signal stack. */
+	if (onstack)
+		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
 }
 
 /*
@@ -1220,8 +1223,6 @@ sys_sigreturn(p, v, retval)
 	struct sigcontext *scp, context;
 	struct trapframe *tf;
 
-	tf = p->p_md.md_regs;
-
 	/*
 	 * The trampoline code hands us the context.
 	 * It is unsafe to keep track of it ourselves, in the event that a
@@ -1231,9 +1232,8 @@ sys_sigreturn(p, v, retval)
 	if (copyin((caddr_t)scp, &context, sizeof(*scp)) != 0)
 		return (EFAULT);
 
-	/*
-	 * Restore signal context.
-	 */
+	/* Restore register context. */
+	tf = p->p_md.md_regs;
 #ifdef VM86
 	if (context.sc_eflags & PSL_VM) {
 		tf->tf_vm86_gs = context.sc_gs;
@@ -1271,11 +1271,14 @@ sys_sigreturn(p, v, retval)
 	tf->tf_esp = context.sc_esp;
 	tf->tf_ss = context.sc_ss;
 
-	if (context.sc_onstack & 01)
+	/* Restore signal stack. */
+	if (context.sc_onstack & SS_ONSTACK)
 		p->p_sigacts->ps_sigstk.ss_flags |= SS_ONSTACK;
 	else
 		p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
-	p->p_sigmask = context.sc_mask & ~sigcantmask;
+
+	/* Restore signal mask. */
+	(void) sigprocmask1(p, SIG_SETMASK, &context.sc_mask, 0);
 
 	return (EJUSTRETURN);
 }

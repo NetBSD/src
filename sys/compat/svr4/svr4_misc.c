@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.65 1998/09/08 20:02:52 rvb Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.66 1998/09/11 12:50:09 mycroft Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -1191,16 +1191,15 @@ svr4_setinfo(p, st, s)
 	if (WIFEXITED(st)) {
 		i.si_status = WEXITSTATUS(st);
 		i.si_code = SVR4_CLD_EXITED;
-	}
-	else if (WIFSTOPPED(st)) {
-		i.si_status = bsd_to_svr4_sig[WSTOPSIG(st)];
+	} else if (WIFSTOPPED(st)) {
+		i.si_status = native_to_svr4_sig[WSTOPSIG(st)];
 
 		if (i.si_status == SVR4_SIGCONT)
 			i.si_code = SVR4_CLD_CONTINUED;
 		else
 			i.si_code = SVR4_CLD_STOPPED;
 	} else {
-		i.si_status = bsd_to_svr4_sig[WTERMSIG(st)];
+		i.si_status = native_to_svr4_sig[WTERMSIG(st)];
 
 		if (WCOREDUMP(st))
 			i.si_code = SVR4_CLD_DUMPED;

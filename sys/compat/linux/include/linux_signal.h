@@ -1,4 +1,4 @@
-/* 	$NetBSD: linux_signal.h,v 1.4 1995/08/27 20:51:51 fvdl Exp $	*/
+/* 	$NetBSD: linux_signal.h,v 1.5 1998/09/11 12:50:09 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -65,6 +65,7 @@
 #define LINUX_SIGWINCH	28
 #define LINUX_SIGIO	29
 #define LINUX_SIGPWR	30
+#define LINUX_SIGUNUSED	31
 #define LINUX_NSIG	32
 
 #define LINUX_SIG_BLOCK		0
@@ -88,8 +89,11 @@ struct linux_sigaction {
 #define LINUX_SA_INTERRUPT	0x20000000
 #define LINUX_SA_NOMASK		0x40000000
 #define LINUX_SA_ONESHOT	0x80000000
+#define	LINUX_SA_ALLBITS	0xf8000001
 
-extern int bsd_to_linux_sig[];
-extern int linux_to_bsd_sig[];
+extern int native_to_linux_sig[];
+extern int linux_to_native_sig[];
+void linux_to_native_sigset __P((const linux_sigset_t *, sigset_t *));
+void native_to_linux_sigset __P((const sigset_t *, linux_sigset_t *));
 
 #endif /* !_LINUX_SIGNAL_H */
