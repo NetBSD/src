@@ -1,4 +1,4 @@
-# $NetBSD: md.macppc,v 1.7 2004/01/08 14:43:54 rtr Exp $
+# $NetBSD: md.macppc,v 1.8 2004/01/09 12:34:58 rtr Exp $
 ./usr/X11R6/bin/X
 ./usr/X11R6/bin/XFree86
 ./usr/X11R6/bin/Xnest
@@ -149,8 +149,6 @@
 ./usr/X11R6/lib/modules/libxf4bpp.a
 ./usr/X11R6/lib/modules/libxf8_16bpp.a
 ./usr/X11R6/lib/modules/libxf8_32bpp.a
-./usr/X11R6/lib/modules/v10002d.uc
-./usr/X11R6/lib/modules/v20002d.uc
 ./usr/X11R6/man/cat1/Xnest.0
 ./usr/X11R6/man/cat1/Xvfb.0
 ./usr/X11R6/man/cat1/xf86cfg.0
