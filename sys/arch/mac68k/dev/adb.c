@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.c,v 1.27.2.1 1999/03/05 08:24:24 scottr Exp $	*/
+/*	$NetBSD: adb.c,v 1.27.2.2 1999/11/09 01:44:07 scottr Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -57,6 +57,7 @@
 static int	adbmatch __P((struct device *, struct cfdata *, void *));
 static void	adbattach __P((struct device *, struct device *, void *));
 static int	adbprint __P((void *, const char *));
+void		adb_config_interrupts __P((struct device *));
 
 extern void	adb_jadbproc __P((void));
 
@@ -64,7 +65,6 @@ extern void	adb_jadbproc __P((void));
  * Global variables.
  */
 int	adb_polling = 0;	/* Are we polling?  (Debugger mode) */
-int	adb_initted = 0;	/* adb_init() has completed successfully */
 #ifdef ADB_DEBUG
 int	adb_debug = 0;		/* Output debugging messages */
 #endif /* ADB_DEBUG */
@@ -97,14 +97,29 @@ adbmatch(parent, cf, aux)
 }
 
 static void
-adbattach(parent, dev, aux)
-	struct device *parent, *dev;
+adbattach(parent, self, aux)
+	struct device *parent, *self;
 	void *aux;
+{
+	printf("\n");
+
+	/*
+	 * Defer configuration until interrupts are enabled.
+	 */
+	config_interrupts(self, adb_config_interrupts);
+}
+
+void
+adb_config_interrupts(self)
+	struct device *self;
 {
 	ADBDataBlock adbdata;
 	struct adb_attach_args aa_args;
 	int totaladbs;
 	int adbindex, adbaddr;
+
+	printf("%s", self->dv_xname);
+	adb_polling = 1;
 
 #ifdef MRG_ADB
 	/* 
@@ -112,12 +127,12 @@ adbattach(parent, dev, aux)
 	 * ADB in order to get the date/time and do soft power.
 	 */
 	if ((mac68k_machine.serial_console & 0x03)) {
-		printf(": using serial console");
+		printf(": using serial console\n");
 		return;
 	}
 
 	if (!mrg_romready()) {
-		printf(": no ROM ADB driver in this kernel for this machine");
+		printf(": no ROM ADB driver in this kernel for this machine\n");
 		return;
 	}
 
@@ -141,7 +156,7 @@ adbattach(parent, dev, aux)
 		printf("adb: calling ADBAlternateInit.\n");
 #endif
 
-	printf(" (mrg)  ");
+	printf(" (mrg)");
 	ADBAlternateInit();
 #else
 	ADBReInit();
@@ -162,7 +177,7 @@ adbattach(parent, dev, aux)
 	aa_args.origaddr = 0;
 	aa_args.adbaddr = 0;
 	aa_args.handler_id = 0;
-	(void)config_found(dev, &aa_args, adbprint);
+	(void)config_found(self, &aa_args, adbprint);
 #endif
 
 	/* for each ADB device */
@@ -174,8 +189,9 @@ adbattach(parent, dev, aux)
 		aa_args.adbaddr = adbaddr;
 		aa_args.handler_id = (int)(adbdata.devType);
 
-		(void)config_found(dev, &aa_args, adbprint);
+		(void)config_found(self, &aa_args, adbprint);
 	}
+	adb_polling = 0;
 }
 
 
