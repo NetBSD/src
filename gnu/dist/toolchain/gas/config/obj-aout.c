@@ -27,6 +27,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "aout/aout64.h"
 #endif
 #include "obstack.h"
+#include "struc-symbol.h"
 
 #ifndef BFD_ASSEMBLER
 /* in: segT   out: N_TYPE bits */
