@@ -1,4 +1,4 @@
-/*	$NetBSD: timezone.c,v 1.8 1997/07/21 14:07:40 jtc Exp $	*/
+/*	$NetBSD: timezone.c,v 1.9 1997/10/16 23:02:16 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -38,22 +38,16 @@
 #if 0
 static char sccsid[] = "@(#)timezone.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: timezone.c,v 1.8 1997/07/21 14:07:40 jtc Exp $");
+__RCSID("$NetBSD: timezone.c,v 1.9 1997/10/16 23:02:16 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
-#include "namespace.h"
 #include <sys/types.h>
 #include <sys/time.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <tzfile.h>
-#include "extern.h"
-
-#ifdef __weak_alias
-__weak_alias(timezone,_timezone);
-#endif
 
 /*
  * timezone --
@@ -62,6 +56,8 @@ __weak_alias(timezone,_timezone);
  *	giving the name of the local timezone.  Should be replaced, in the
  *	application code, by a call to localtime.
  */
+
+char *_tztab __P((int, int));
 
 static char	czone[TZ_MAX_CHARS];		/* space for zone name */
 
