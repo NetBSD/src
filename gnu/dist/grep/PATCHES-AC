@@ -1,0 +1,234 @@
+--------------------------------------------------------------------
+> François Pinard mailto:pinard@iro.umontreal.ca
+> I have a collection of DOS-abling patches for Autoconf which came from
+> Eli, I think, and which you may fetch from:
+>
+>   http://www.iro.umontreal.ca/contrib/paxutils/dist/PATCHES-AC
+>
+> if I'm not mistaken.  There are a few other mods not related to DOS ports.
+--------------------------------------------------------------------
+> On Sun, 22 Nov 1998, Tim Rice(tim@trr.metro.net  wrote:
+> Here is a patch for Autoconf version 2.12 to address a couple of
+> issues on SVR4.2 machines.
+>
+> It was failing the test for opendir() because opendir() is in libc
+> not in libdir. The patch now checks libc first then libdir.
+>
+> It was failing on gethostbyname(). I added a third test for gethostbynane()
+> in libsocket.
+>
+--------------------------------------------------------------------
+1999-01-27
+	* acgeneral.m4: added support for DJGPP
+	- "test -f" should be replaced by "test -x" where the script
+	looks for an executable binary which will be called gcc.exe
+	etc. on DOS/Windows.  A simple test for $COMSPEC being not
+	defined is suggested as a means to determine which option is
+	required.  (You cannot use "test -x" on all systems because some
+	variants of Unix shell don't support -x.)
+
+	- File patterns used to distinguish between absolute and relative
+	file names need to be changed as follows:
+
+		/*)    -->  /*|[A-z]:/*)
+		[/$]*  -->  [/$]*/[A-z]:/*)
+
+	This is because absolute file names on DOS/Windows may include a
+	drive letter and a colon before the leading slash.  Note that the
+	lower-case `z' in [A-z] is intentional, since some network
+	clients allow filesystems to be identified by the six letters
+	between the uppercase `Z' and lowercase `a', and because the
+	drive letter can come in either letter-case.
+
+	- The line which computes ac_file_inputs by replacing the colon in
+	foo:foo.in needs its two Sed commands to be swapped, because
+	once you put in the $ac_given_srcdir part, the colon after the
+	drive letter in it will be replaced instead of the original
+	colon.
+	From Eli Zarestskii.
+
+	* acspecific.m4: check opendir in libc before -ldir
+	gethosbyname/connect check in -lsocket also
+	From Tim Rice.
+
+diff -ur ../autoconf-2.13.orig/acgeneral.m4 ./acgeneral.m4
+--- ../autoconf-2.13.orig/acgeneral.m4	Tue Jan  5 08:27:37 1999
++++ ./acgeneral.m4	Wed Jan 27 22:50:54 1999
+@@ -636,6 +636,9 @@
+   esac
+ done
+ 
++# Support of DJGPP port of bash.
++if test -n "$COMSPEC$ComSpec"; then ac_x=-x; else ac_x=-f; fi
++
+ # NLS nuisances.
+ # Only set these to C if already set.  These must not be set unconditionally
+ # because not all systems understand e.g. LANG=C (notably SCO).
+@@ -1213,7 +1216,7 @@
+ 
+ dnl AC_MSG_WARN(PROBLEM-DESCRIPTION)
+ define(AC_MSG_WARN,
+-[echo "configure: warning: $1" 1>&2])
++[echo "configure: WARNING: $1" 1>&2])
+ 
+ dnl AC_MSG_ERROR(ERROR-DESCRIPTION)
+ define(AC_MSG_ERROR,
+@@ -1304,7 +1307,7 @@
+ 
+ dnl AC_OBSOLETE(THIS-MACRO-NAME [, SUGGESTION])
+ define(AC_OBSOLETE,
+-[errprint(__file__:__line__: warning: [$1] is obsolete[$2]
++[errprint(__file__:__line__: WARNING: [$1] is obsolete[$2]
+ )])
+ 
+ 
+@@ -1330,7 +1333,7 @@
+   ac_dummy="ifelse([$5], , $PATH, [$5])"
+   for ac_dir in $ac_dummy; do
+     test -z "$ac_dir" && ac_dir=.
+-    if test -f $ac_dir/$ac_word; then
++    if test $ac_x $ac_dir/$ac_word; then
+ ifelse([$6], , , dnl
+ [      if test "[$ac_dir/$ac_word]" = "$6"; then
+         ac_prog_rejected=yes
+@@ -1384,7 +1387,9 @@
+ AC_MSG_CHECKING([for $ac_word])
+ AC_CACHE_VAL(ac_cv_path_$1,
+ [case "[$]$1" in
+-  /*)
++changequote(, )dnl
++  /*|[A-z]:/*)
++changequote([, ])dnl
+   ac_cv_path_$1="[$]$1" # Let the user override the test with a path.
+   ;;
+   ?:/*)			 
+@@ -1398,7 +1403,7 @@
+   ac_dummy="ifelse([$4], , $PATH, [$4])"
+   for ac_dir in $ac_dummy; do 
+     test -z "$ac_dir" && ac_dir=.
+-    if test -f $ac_dir/$ac_word; then
++    if test $ac_x $ac_dir/$ac_word; then
+       ac_cv_path_$1="$ac_dir/$ac_word"
+       break
+     fi
+@@ -1802,7 +1807,7 @@
+ AC_DEFUN(AC_TRY_RUN,
+ [if test "$cross_compiling" = yes; then
+   ifelse([$4], ,
+-    [errprint(__file__:__line__: warning: [AC_TRY_RUN] called without default to allow cross compiling
++    [errprint(__file__:__line__: WARNING: [AC_TRY_RUN] called without default to allow cross compiling
+ )dnl
+   AC_MSG_ERROR(can not run test program while cross compiling)],
+   [$4])
+@@ -2267,7 +2272,10 @@
+   .)  srcdir=.
+       if test -z "$ac_dots"; then top_srcdir=.
+       else top_srcdir=`echo $ac_dots|sed 's%/$%%'`; fi ;;
+-  /*) srcdir="$ac_given_srcdir$ac_dir_suffix"; top_srcdir="$ac_given_srcdir" ;;
++changequote(, )dnl
++  /*|[A-z]:/*)
++changequote([, ])dnl
++    srcdir="$ac_given_srcdir$ac_dir_suffix"; top_srcdir="$ac_given_srcdir" ;;
+   *) # Relative path.
+     srcdir="$ac_dots$ac_given_srcdir$ac_dir_suffix"
+     top_srcdir="$ac_dots$ac_given_srcdir" ;;
+@@ -2276,7 +2284,7 @@
+ ifdef([AC_PROVIDE_AC_PROG_INSTALL],
+ [  case "$ac_given_INSTALL" in
+ changequote(, )dnl
+-  [/$]*) INSTALL="$ac_given_INSTALL" ;;
++  [/$]*|[A-z]:/*) INSTALL="$ac_given_INSTALL" ;;
+ changequote([, ])dnl
+   *) INSTALL="$ac_dots$ac_given_INSTALL" ;;
+   esac
+@@ -2291,7 +2299,7 @@
+   *) ac_comsub= ;;
+   esac
+ 
+-  ac_file_inputs=`echo $ac_file_in|sed -e "s%^%$ac_given_srcdir/%" -e "s%:% $ac_given_srcdir/%g"`
++  ac_file_inputs=`echo $ac_file_in|sed -e "s%:% $ac_given_srcdir/%g" -e "s%^%$ac_given_srcdir/%"`
+   sed -e "$ac_comsub
+ s%@configure_input@%$configure_input%g
+ s%@srcdir@%$srcdir%g
+@@ -2483,7 +2491,7 @@
+ 
+   case "$srcdir" in
+ changequote(, )dnl
+-  [/$]*) ac_rel_source="$srcdir/$ac_source" ;;
++  [/$]*|[A-z]:/*) ac_rel_source="$srcdir/$ac_source" ;;
+ changequote([, ])dnl
+   *) ac_rel_source="$ac_dots$srcdir/$ac_source" ;;
+   esac
+@@ -2558,7 +2566,9 @@
+     case "$srcdir" in
+     .) # No --srcdir option.  We are building in place.
+       ac_sub_srcdir=$srcdir ;;
+-    /*) # Absolute path.
++changequote(, )dnl
++    /*|[A-z]:/*) # Absolute path.
++changequote([, ])dnl
+       ac_sub_srcdir=$srcdir/$ac_config_dir ;;
+     *) # Relative path.
+       ac_sub_srcdir=$ac_dots$srcdir/$ac_config_dir ;;
+@@ -2579,14 +2589,16 @@
+ 
+       # Make the cache file name correct relative to the subdirectory.
+       case "$cache_file" in
+-      /*) ac_sub_cache_file=$cache_file ;;
++changequote(, )dnl
++      /*|[A-z]:/*) ac_sub_cache_file=$cache_file ;;
++changequote([, ])dnl
+       *) # Relative path.
+         ac_sub_cache_file="$ac_dots$cache_file" ;;
+       esac
+ ifdef([AC_PROVIDE_AC_PROG_INSTALL],
+       [  case "$ac_given_INSTALL" in
+ changequote(, )dnl
+-        [/$]*) INSTALL="$ac_given_INSTALL" ;;
++        [/$]*|[A-z]:/*) INSTALL="$ac_given_INSTALL" ;;
+ changequote([, ])dnl
+         *) INSTALL="$ac_dots$ac_given_INSTALL" ;;
+         esac
+diff -ur ../autoconf-2.13.orig/acspecific.m4 ./acspecific.m4
+--- ../autoconf-2.13.orig/acspecific.m4	Tue Jan  5 08:27:52 1999
++++ ./acspecific.m4	Thu Jan 28 23:01:41 1999
+@@ -615,7 +615,7 @@
+       # Don't use installbsd from OSF since it installs stuff as root
+       # by default.
+       for ac_prog in ginstall scoinst install; do
+-        if test -f $ac_dir/$ac_prog; then
++        if test $ac_x $ac_dir/$ac_prog; then
+ 	  if test $ac_prog = install &&
+             grep dspmsg $ac_dir/$ac_prog >/dev/null 2>&1; then
+ 	    # AIX install.  It has an incompatible calling convention.
+@@ -765,7 +765,10 @@
+   [ac_header_dirent=$ac_hdr; break])
+ # Two versions of opendir et al. are in -ldir and -lx on SCO Xenix.
+ if test $ac_header_dirent = dirent.h; then
+-AC_CHECK_LIB(dir, opendir, LIBS="$LIBS -ldir")
++AC_CHECK_FUNC(opendir)
++if test $ac_cv_func_opendir = no; then
++ AC_CHECK_LIB(dir, opendir, LIBS="$LIBS -ldir")
++fi
+ else
+ AC_CHECK_LIB(x, opendir, LIBS="$LIBS -lx")
+ fi
+@@ -2564,6 +2567,9 @@
+     AC_CHECK_FUNC(gethostbyname)
+     if test $ac_cv_func_gethostbyname = no; then
+       AC_CHECK_LIB(nsl, gethostbyname, X_EXTRA_LIBS="$X_EXTRA_LIBS -lnsl")
++      if test $ac_cv_func_gethostbyname = no; then
++        AC_CHECK_LIB(socket, gethostbyname, X_EXTRA_LIBS="$X_EXTRA_LIBS -lsocket -lnsl", , -lnsl)
++      fi
+     fi
+ 
+     # lieder@skyler.mavd.honeywell.com says without -lsocket,
+@@ -2575,7 +2581,7 @@
+     # We assume that if connect needs -lnsl, so does gethostbyname.
+     AC_CHECK_FUNC(connect)
+     if test $ac_cv_func_connect = no; then
+-      AC_CHECK_LIB(socket, connect, X_EXTRA_LIBS="-lsocket $X_EXTRA_LIBS", ,
++      AC_CHECK_LIB(socket, connect, X_EXTRA_LIBS="-lsocket -lnsl $X_EXTRA_LIBS", ,
+ 	$X_EXTRA_LIBS)
+     fi
+ 
