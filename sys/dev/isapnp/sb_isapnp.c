@@ -1,4 +1,4 @@
-/*	$NetBSD: sb_isapnp.c,v 1.29 1998/08/17 21:16:16 augustss Exp $	*/
+/*	$NetBSD: sb_isapnp.c,v 1.30 1999/02/19 16:10:44 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -107,14 +107,15 @@ sb_isapnp_attach(parent, self, aux)
 		return;
 	}
 
-	sc->sc_iot = ipa->ipa_iot;
-	sc->sc_ioh = ipa->ipa_io[0].h;
 	sc->sc_ic = ipa->ipa_ic;
 
-	sc->sc_iobase = ipa->ipa_io[0].base;
+	sc->sc_iot = ipa->ipa_iot;
+	sc->sc_ioh = ipa->ipa_io[0].h;
 
+	/* XXX These are only for setting chip configuration registers. */
+	sc->sc_iobase = ipa->ipa_io[0].base;
 	sc->sc_irq = ipa->ipa_irq[0].num;
-	sc->sc_ist = ipa->ipa_irq[0].type;
+
 	sc->sc_drq8 = ipa->ipa_drq[0].num;
         if (ipa->ipa_ndrq > 1 && ipa->ipa_drq[0].num != ipa->ipa_drq[1].num) {
         	/* Some cards have the 16 bit drq first */
@@ -138,6 +139,9 @@ sb_isapnp_attach(parent, self, aux)
 		printf("%s: sbmatch failed\n", sc->sc_dev.dv_xname);
 		return;
 	}
+
+	sc->sc_ih = isa_intr_establish(ipa->ipa_ic, ipa->ipa_irq[0].num,
+	    ipa->ipa_irq[0].type, IPL_AUDIO, sbdsp_intr, sc);
 
 	printf("%s: %s %s", sc->sc_dev.dv_xname, ipa->ipa_devident,
 	       ipa->ipa_devclass);
