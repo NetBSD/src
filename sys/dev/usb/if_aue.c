@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.58 2001/06/15 18:05:36 nathanw Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.59 2001/07/04 16:38:09 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -178,6 +178,7 @@ Static const struct aue_type aue_devs[] = {
   { USB_VENDOR_COREGA,		USB_PRODUCT_COREGA_FETHER_USB_TX, 0 },
   { USB_VENDOR_IODATA,		USB_PRODUCT_IODATA_USBETTX,	0 },
   { USB_VENDOR_KINGSTON,	USB_PRODUCT_KINGSTON_KNU101TX,  0 },
+  { USB_VENDOR_ABOCOM,		USB_PRODUCT_ABOCOM_DSB650TX_PNA, 0 },
   { 0, 0, 0 }
 };
 
