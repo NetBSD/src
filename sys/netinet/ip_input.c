@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.33 1996/09/06 05:07:44 mrg Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.34 1996/09/08 15:49:43 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -1075,10 +1075,10 @@ ip_forward(m, srcrt)
 	}
 
 	/*
-	 * Save at most 64 bytes of the packet in case
+	 * Save at most 68 bytes of the packet in case
 	 * we need to generate an ICMP message to the src.
 	 */
-	mcopy = m_copy(m, 0, imin((int)ip->ip_len, 64));
+	mcopy = m_copy(m, 0, imin((int)ip->ip_len, 68));
 
 	/*
 	 * If forwarding packet using same interface that it came in on,
