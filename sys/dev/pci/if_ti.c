@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.22 2001/06/03 03:29:44 thorpej Exp $ */
+/* $NetBSD: if_ti.c,v 1.23 2001/06/03 03:46:43 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -2387,13 +2387,12 @@ static void ti_init2(sc)
 
 	/* Specify MTU and interface index. */
 	CSR_WRITE_4(sc, TI_GCR_IFINDEX, sc->sc_dev.dv_unit); /* ??? */
-	if ((sc->ethercom.ec_capenable & ETHERCAP_VLAN_MTU) &&
-	    ifp->if_mtu < ETHERMTU + ETHER_VLAN_ENCAP_LEN)
-		CSR_WRITE_4(sc, TI_GCR_IFMTU, ETHER_MAX_LEN +
-		    ETHER_VLAN_ENCAP_LEN);
-	else
-		CSR_WRITE_4(sc, TI_GCR_IFMTU, ifp->if_mtu +
-		    ETHER_HDR_LEN + ETHER_CRC_LEN);
+
+	tmp = ifp->if_mtu + ETHER_HDR_LEN + ETHER_CRC_LEN;
+	if (sc->ethercom.ec_capenable & ETHERCAP_VLAN_MTU)
+		tmp += ETHER_VLAN_ENCAP_LEN;
+	CSR_WRITE_4(sc, TI_GCR_IFMTU, tmp);
+
 	TI_DO_CMD(TI_CMD_UPDATE_GENCOM, 0, 0);
 
 	/* Load our MAC address. */
