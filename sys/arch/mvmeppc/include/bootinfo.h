@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.h,v 1.1 2002/02/27 21:02:14 scw Exp $	*/
+/*	$NetBSD: bootinfo.h,v 1.2 2003/07/28 09:22:56 scw Exp $	*/
 
 #ifndef _MVMEPPC_BOOTINFO
 #define _MVMEPPC_BOOTINFO
@@ -22,7 +22,7 @@ struct mvmeppc_bootinfo {
 	u_int32_t	bi_mpuspeed;
 	u_int32_t	bi_busspeed;
 	u_int32_t	bi_clocktps;
-};
+} __attribute__((packed));
 
 #ifdef _KERNEL
 extern struct mvmeppc_bootinfo bootinfo;
