@@ -1,4 +1,4 @@
-/* $NetBSD: vt220.c,v 1.1 1996/01/31 23:19:54 mark Exp $ */
+/* $NetBSD: vt220.c,v 1.2 1996/02/01 23:50:20 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1995 Melvyn Tang-Richardson
@@ -41,7 +41,7 @@
  * Created      : 17/09/94
  * Last updated : 15/11/95
  *
- *    $Id: vt220.c,v 1.1 1996/01/31 23:19:54 mark Exp $
+ *    $Id: vt220.c,v 1.2 1996/02/01 23:50:20 mark Exp $
  */
 
 #include <sys/cdefs.h>
@@ -169,6 +169,8 @@ mapped_cls(vc)
 	struct vconsole *vc;
 {
 	int ptr;
+	if (vc->charmap == NULL)
+		return -1;
 	for ( ptr=0; ptr<(vc->xchars*vc->ychars); ptr++ )
 		vc->charmap[ptr]=0x20;
 	return 0;
@@ -609,6 +611,10 @@ vt_str(vc)
 {
     struct vt220_info *cdata = (struct vt220_info *)vc->data;
     int counter;
+
+    if (cdata == NULL) {
+    	return;
+    }
 
     clr_params ( cdata );
 
@@ -1955,17 +1961,25 @@ int
 vt220_modechange(vc)
 	struct vconsole *vc;
 {
+	if (vc->number >= 64)
+		return(0);
+
+	if (vc == NULL) {
+		return(EINVAL);
+	}
 	vt_str ( vc );
 	if (vc->charmap)
+        {
 		free ( vc->charmap, M_DEVBUF );
 
-	MALLOC (vc->charmap, int *, sizeof(int)*((vc->xchars)*(vc->ychars)), M_DEVBUF, M_NOWAIT );
-	if ((vc->flags&LOSSY)==0)
-		mapped_cls(vc);
-	if (vc==vconsole_current)
-	     vc->CLS(vc);
+		MALLOC (vc->charmap, int *, sizeof(int)*((vc->xchars)*(vc->ychars)), M_DEVBUF, M_NOWAIT );
+		if ((vc->flags&LOSSY)==0)
+			mapped_cls(vc);
+		if (vc==vconsole_current)
+	     		vc->CLS(vc);
 	vc->xcur=0;
 	vc->ycur=0;
+	}
 
 	return 0;
 }
