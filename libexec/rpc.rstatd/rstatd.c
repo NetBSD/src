@@ -65,7 +65,7 @@ main(argc, argv)
                 closedown = atoi(argv[1]);
         if (closedown <= 0)
                 closedown = 20;
-#if 1
+
         /*
          * See if inetd started us
          */
@@ -81,8 +81,11 @@ main(argc, argv)
                 (void)pmap_unset(RSTATPROG, RSTATVERS_TIME);
                 (void)pmap_unset(RSTATPROG, RSTATVERS_SWTCH);
                 (void)pmap_unset(RSTATPROG, RSTATVERS_ORIG);
+
+		(void) signal(SIGINT, cleanup);
+		(void) signal(SIGTERM, cleanup);
+		(void) signal(SIGHUP, cleanup);
         }
-#endif
         
         openlog("rpc.rusersd", LOG_PID, LOG_DAEMON);
 
@@ -103,9 +106,6 @@ main(argc, argv)
 		syslog(LOG_ERR, "unable to register (RSTATPROG, RSTATVERS_ORIG, udp).");
 		exit(1);
 	}
-        (void) signal(SIGINT, cleanup);
-        (void) signal(SIGTERM, cleanup);
-        (void) signal(SIGHUP, cleanup);
 
         svc_run();
 	syslog(LOG_ERR, "svc_run returned");
