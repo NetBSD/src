@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.2 1994/06/29 06:46:26 cgd Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.3 1994/07/04 21:06:07 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -304,11 +304,12 @@ nospace:
  * Note that the error return is not reflected back to the user. Rather
  * the previous block allocation will be used.
  */
+#ifdef DEBUG
 #include <sys/sysctl.h>
 int doasyncfree = 1;
-
-#ifdef DEBUG
 struct ctldebug debug14 = { "doasyncfree", &doasyncfree };
+#else
+#define doasyncfree 1
 #endif
 
 int
