@@ -1,4 +1,4 @@
-/*	$NetBSD: sh5_clock.c,v 1.5 2003/07/15 03:36:00 lukem Exp $	*/
+/*	$NetBSD: sh5_clock.c,v 1.6 2003/07/18 21:41:24 thorpej Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sh5_clock.c,v 1.5 2003/07/15 03:36:00 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sh5_clock.c,v 1.6 2003/07/18 21:41:24 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -126,11 +126,11 @@ clock_config(struct device *dev, struct clock_attach_args *ca, struct evcnt *ev)
 }
 
 void
-clock_rtc_config(todr_chip_handle_t todr)
+todr_attach(todr_chip_handle_t todr)
 {
 
 	if (todr_handle)
-		panic("clock_rtc_config: rtc already configured");
+		panic("todr_attach: rtc already configured");
 
 	todr_handle = todr;
 }

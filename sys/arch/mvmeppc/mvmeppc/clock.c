@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.5 2003/07/18 19:20:56 thorpej Exp $	*/
+/*	$NetBSD: clock.c,v 1.6 2003/07/18 21:41:23 thorpej Exp $	*/
 /*      $OpenBSD: clock.c,v 1.3 1997/10/13 13:42:53 pefo Exp $  */
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.5 2003/07/18 19:20:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.6 2003/07/18 21:41:23 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -179,11 +179,11 @@ setstatclockrate(arg)
 }
 
 void
-clock_rtc_config(todr)
+todr_attach(todr)
 	todr_chip_handle_t todr;
 {
 	if (clock_handle)
-		panic("clock_rtc_config: multiple clocks!");
+		panic("todr_attach: multiple clocks!");
 
 	clock_handle = todr;
 }
