@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.518 2005/01/11 22:27:44 tron Exp $
+# $NetBSD: mi,v 1.519 2005/01/20 04:26:00 ginsbach Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -578,6 +578,7 @@
 ./usr/bin/sed					base-util-bin
 ./usr/bin/send-pr				base-gnats-bin
 ./usr/bin/setextattr				base-util-bin
+./usr/bin/seq					base-util-bin
 ./usr/bin/sftp					base-secsh-bin		crypto
 ./usr/bin/sha1					base-util-bin
 ./usr/bin/shar					base-util-bin

@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.409 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.410 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -180,3 +180,5 @@ Changes from NetBSD 2.0 to NetBSD 3.0:
 		visible changes at this moment.  [kent 20050111]
 	auixp(4): Add driver for the audio part of the ATI IXP series of
 		chipsets. [reinoud 20050112]
+	seq(1): Add BSD licensed version this Plan 9 and GNU/Linux command,
+		which prints sequences of numbers.  [ginsbach 20050120]
