@@ -1,4 +1,4 @@
-/* $NetBSD: scireg.h,v 1.3 2001/06/12 15:17:20 wiz Exp $ */
+/* $NetBSD: scireg.h,v 1.4 2002/03/24 18:04:40 uch Exp $ */
 
 /*-
  * Copyright (C) 1999 SAITOH Masanobu.  All rights reserved.
@@ -43,6 +43,7 @@
 #define SHREG_SCTDR	(*(volatile unsigned char *)	0xFFFFFE86)
 #define SHREG_SCSSR	(*(volatile unsigned char *)	0xFFFFFE88)
 #define SHREG_SCRDR	(*(volatile unsigned char *)	0xFFFFFE8A)
+#define SHREG_SCSPTR	(*(volatile unsigned char *)	0xffffff7c)
 
 #else
 
@@ -71,5 +72,10 @@
 #define SCSSR_ORER	0x20
 #define SCSSR_FER	0x10
 #define SCSSR_PER	0x08
+
+#define	SCSPTR_SPB1IO	0x08
+#define	SCSPTR_SPB1DT	0x04
+#define	SCSPTR_SPB0IO	0x02
+#define	SCSPTR_SPB0DT	0x01
 
 #endif /* !_SH3_SCIREG_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.13 2002/03/17 14:03:55 uch Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.14 2002/03/24 18:04:40 uch Exp $	*/
 
 /*-
  * Copyright (C) 2002 UCHIYAMA Yasushi.  All rights reserved.
@@ -462,7 +462,7 @@ db_frame_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 	db_printf("[switch frame]\n");
 #define	SF(x)	db_printf("sf_" #x "\t\t0x%08x\t", sf->sf_ ## x);	\
 	__db_print_symbol(sf->sf_ ## x)
-	SF(ppl);
+	SF(sr);
 	SF(r15);
 	SF(r14);
 	SF(r13);

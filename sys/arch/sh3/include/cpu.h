@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.25 2002/03/17 17:55:24 uch Exp $	*/
+/*	$NetBSD: cpu.h,v 1.26 2002/03/24 18:04:40 uch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -56,6 +56,7 @@
 #include <sh3/psl.h>
 #include <sh3/frame.h>
 
+#ifdef _KERNEL
 struct cpu_info {
 	struct schedstate_percpu ci_schedstate; /* scheduler state */
 #if defined(DIAGNOSTIC) || defined(LOCKDEBUG)
@@ -64,11 +65,8 @@ struct cpu_info {
 #endif
 };
 
-#ifdef _KERNEL
 extern struct cpu_info cpu_info_store;
-
 #define	curcpu()			(&cpu_info_store)
-#endif
 
 /*
  * definitions of cpu-dependent requirements
@@ -84,20 +82,19 @@ extern struct cpu_info cpu_info_store;
 #define	cpu_swapout(p)			panic("cpu_swapout: can't get here");
 
 /*
- * Arguments to hardclock, softclock and statclock
- * encapsulate the previous machine state in an opaque
- * clockframe; for now, use generic intrframe.
- *
- * XXX intrframe has a lot of gunk we don't need.
+ * Arguments to hardclock and gatherstats encapsulate the previous
+ * machine state in an opaque clockframe.
  */
-#define clockframe trapframe
+struct clockframe {
+	int	spc;	/* program counter at time of interrupt */
+	int	ssr;	/* status register at time of interrupt */
+	int	ssp;	/* stack pointer at time of interrupt */
+};
 
-#define	CLKF_USERMODE(frame)	(!KERNELMODE((frame)->tf_ssr))
-/* XXX we should fix this */
-#define	CLKF_BASEPRI(frame)	(0)
-#define	CLKF_PC(frame)		((frame)->tf_spc)
-/* XXX we should have an interrupt stack */
-#define	CLKF_INTR(frame)	(0)
+#define	CLKF_USERMODE(cf)	(!KERNELMODE((cf)->ssr))
+#define	CLKF_BASEPRI(cf)	(((cf)->ssr & 0xf0) == 0)
+#define	CLKF_PC(cf)		((cf)->spc)
+#define	CLKF_INTR(cf)		((cf)->ssp < 0)
 
 /*
  * This is used during profiling to integrate system time.  It can safely
@@ -142,6 +139,7 @@ extern int want_resched;		/* need_resched() was called */
  * We need a machine-independent name for this.
  */
 #define	DELAY(x)		delay(x)
+#endif /* _KERNEL */
 
 /*
  * Logical address space of SH3/SH4 CPU.
@@ -171,7 +169,7 @@ do {									\
 	u_int32_t p;							\
 	p = (u_int32_t)&&P2;						\
 	goto *(u_int32_t *)(p | 0x20000000);				\
- P2:									\
+ P2:	(void)0;							\
 } while (/*CONSTCOND*/0)
 
 /* run on P1 */
@@ -181,7 +179,7 @@ do {									\
 	p = (u_int32_t)&&P1;						\
 	__asm__ __volatile__("nop;nop;nop;nop;nop;nop;nop;nop");	\
 	goto *(u_int32_t *)(p & ~0x20000000);				\
- P1:									\
+ P1:	(void)0;							\
 } while (/*CONSTCOND*/0)
 
 /*

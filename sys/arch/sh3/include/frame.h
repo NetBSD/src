@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.5 2002/03/17 17:55:25 uch Exp $	*/
+/*	$NetBSD: frame.h,v 1.6 2002/03/24 18:04:39 uch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -80,7 +80,6 @@ struct trapframe {
  * Stack frame inside cpu_switch()
  */
 struct switchframe {
-	int	sf_ppl;
 	int	sf_r15;
 	int	sf_r14;
 	int	sf_r13;
@@ -91,6 +90,7 @@ struct switchframe {
 	int	sf_r8;
 	int	sf_pr;
 	int	sf_r6_bank;
+	int	sf_sr;
 };
 
 /*
