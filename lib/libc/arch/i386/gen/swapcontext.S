@@ -1,4 +1,4 @@
-/*	$NetBSD: swapcontext.S,v 1.4 2003/04/07 19:44:40 kleink Exp $	*/
+/*	$NetBSD: swapcontext.S,v 1.5 2003/04/07 21:04:20 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <machine/asm.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: swapcontext.S,v 1.4 2003/04/07 19:44:40 kleink Exp $")
+	RCSID("$NetBSD: swapcontext.S,v 1.5 2003/04/07 21:04:20 kleink Exp $")
 #endif /* LIBC_SCCS && !lint */
 
 ENTRY(swapcontext)
@@ -46,9 +46,9 @@ ENTRY(swapcontext)
 	PIC_PROLOGUE
 	pushl	%ecx			/* push oucp */
 #ifdef PIC
-	call	PIC_PLT(_C_LABEL(getcontext))
+	call	PIC_PLT(_C_LABEL(_getcontext))
 #else
-	call	_C_LABEL(getcontext)
+	call	_C_LABEL(_getcontext)
 #endif
 	addl	$4,%esp			/* pop oucp */
 	PIC_EPILOGUE

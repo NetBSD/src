@@ -1,4 +1,4 @@
-/*	$NetBSD: _lwp.c,v 1.1 2003/01/30 02:07:30 fvdl Exp $	*/
+/*	$NetBSD: _lwp.c,v 1.2 2003/04/07 21:04:23 kleink Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -36,6 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "namespace.h"
 #include <sys/types.h>
 #include <inttypes.h>
 #include <ucontext.h>
