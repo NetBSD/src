@@ -1,4 +1,4 @@
-.\"	$NetBSD: ip6.4,v 1.8 2001/09/22 00:57:41 wiz Exp $
+.\"	$NetBSD: ip6.4,v 1.9 2001/10/15 09:51:16 itojun Exp $
 .\"	$KAME: ip6.4,v 1.11 2000/05/07 06:21:41 itojun Exp $
 .\"
 .\" Copyright (C) 1999 WIDE Project.
@@ -240,14 +240,14 @@ int range = IPV6_PORTRANGE_LOW;       /* see <netinet/in.h> */
 setsockopt(s, IPPROTO_IPV6, IPV6_PORTRANGE, &range, sizeof(range));
 .Ed
 .Pp
-.Dv IPV6_BINDV6ONLY
+.Dv IPV6_V6ONLY
 controls behavior of
 .Dv AF_INET6
 wildcard listening socket.
 The following example sets the option to 1:
 .Bd -literal -offset indent
 int on = 1;
-setsockopt(s, IPPROTO_IPV6, IPV6_BINDV6ONLY, &on, sizeof(on));
+setsockopt(s, IPPROTO_IPV6, IPV6_V6ONLY, &on, sizeof(on));
 .Ed
 .Pp
 If set to 1,
@@ -684,8 +684,7 @@ The ancillary data items were improperly formed, or option name was unknown.
 .Sh STANDARDS
 Most of the socket options are defined in
 RFC2292 and/or RFC2553.
-.Dv IPV6_PORTRANGE ,
-.Dv IPV6_BINDV6ONLY
+.Dv IPV6_PORTRANGE
 and
 conflict resolution rule
 are not defined in the RFCs and should be considered implementation dependent.

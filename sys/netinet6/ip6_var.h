@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_var.h,v 1.15 2000/08/26 11:03:46 itojun Exp $	*/
+/*	$NetBSD: ip6_var.h,v 1.16 2001/10/15 09:51:17 itojun Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -214,9 +214,7 @@ extern int	ip6_gif_hlim;		/* Hop limit for gif encap packet */
 extern int	ip6_use_deprecated;	/* allow deprecated addr as source */
 extern int	ip6_rr_prune;		/* router renumbering prefix
 					 * walk list every 5 sec.    */
-#ifndef INET6_BINDV6ONLY
-extern int	ip6_bindv6only;
-#endif
+extern int	ip6_v6only;
 
 extern struct socket *ip6_mrouter; 	/* multicast routing daemon */
 extern int	ip6_sendredirects;	/* send IP redirects when forwarding? */

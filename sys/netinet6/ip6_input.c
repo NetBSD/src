@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.42 2001/08/06 10:25:01 itojun Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.43 2001/10/15 09:51:17 itojun Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -1453,10 +1453,11 @@ ip6_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 				&ip6_use_deprecated);
 	case IPV6CTL_RR_PRUNE:
 		return sysctl_int(oldp, oldlenp, newp, newlen, &ip6_rr_prune);
-#ifndef INET6_BINDV6ONLY
-	case IPV6CTL_BINDV6ONLY:
-		return sysctl_int(oldp, oldlenp, newp, newlen,
-				&ip6_bindv6only);
+	case IPV6CTL_V6ONLY:
+#ifdef INET6_BINDV6ONLY
+		return sysctl_rdint(oldp, oldlenp, newp, ip6_v6only);
+#else
+		return sysctl_int(oldp, oldlenp, newp, newlen, &ip6_v6only);
 #endif
 	case IPV6CTL_ANONPORTMIN:
 		old = ip6_anonportmin;

@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_usrreq.c,v 1.45 2001/07/25 23:28:04 itojun Exp $	*/
+/*	$NetBSD: udp6_usrreq.c,v 1.46 2001/10/15 09:51:17 itojun Exp $	*/
 /*	$KAME: udp6_usrreq.c,v 1.86 2001/05/27 17:33:00 itojun Exp $	*/
 
 /*
@@ -266,7 +266,7 @@ udp6_input(mp, offp, proto)
 		    m->m_pkthdr.rcvif);
 
 		/*
-		 * KAME note: usually we drop udphdr from mbuf here.
+		 * KAME note: traditionally we dropped udpiphdr from mbuf here.
 		 * We need udphdr for IPsec processing so we do that later.
 		 */
 
@@ -557,7 +557,7 @@ udp6_ctlinput(cmd, sa, d)
 			/*
 			 * Depending on the value of "valid" and routing table
 			 * size (mtudisc_{hi,lo}wat), we will:
-			 * - recalcurate the new MTU and create the
+			 * - recalculate the new MTU and create the
 			 *   corresponding routing entry, or
 			 * - ignore the MTU change notification.
 			 */
