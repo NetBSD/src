@@ -1,4 +1,4 @@
-/* $Id: pxa2x0_lcd.c,v 1.4 2003/06/17 09:32:38 bsh Exp $ */
+/* $Id: pxa2x0_lcd.c,v 1.5 2003/06/17 09:43:14 bsh Exp $ */
 
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
@@ -59,6 +59,7 @@
 #include <arm/xscale/pxa2x0var.h>
 #include <arm/xscale/pxa2x0reg.h>
 #include <arm/xscale/pxa2x0_lcd.h>
+#include <arm/xscale/pxa2x0_gpio.h>
 
 #include "wsdisplay.h"
 
@@ -114,16 +115,12 @@ pxa2x0_lcd_geometry(struct pxa2x0_lcd_softc *sc,
 }
 
 void
-pxa2x0_lcd_attach_sub(struct pxa2x0_softc *parent, 
-    struct pxa2x0_lcd_softc *sc,
-    const struct lcd_panel_geometry *geom)
+pxa2x0_lcd_attach_sub(struct pxa2x0_lcd_softc *sc, 
+    struct pxaip_attach_args *pxa, const struct lcd_panel_geometry *geom)
 {
-	bus_space_tag_t iot;
+	bus_space_tag_t iot = pxa->pxa_iot;
 	bus_space_handle_t ioh;
-	uint32_t tmp;
 	int error, nldd;
-
-	iot = parent->saip.sc_iot;
 
 	sc->n_screens = 0;
 	LIST_INIT(&sc->screens);
@@ -148,9 +145,7 @@ pxa2x0_lcd_attach_sub(struct pxa2x0_softc *parent,
 	/* Initialize LCD controller */
 
 	/* enable clock */
-	tmp = bus_space_read_4(iot, parent->sc_clkman_ioh, CLKMAN_CKEN);
-	bus_space_write_4(iot, parent->sc_clkman_ioh, CLKMAN_CKEN,
-			   tmp | (1U<<16));
+	pxa2x0_clkman_config(CKEN_LCD, 1);
 
 	bus_space_write_4(iot, ioh, LCDC_LCCR0, LCCR0_IMASK);
 
@@ -247,6 +242,7 @@ pxa2x0_lcd_start_dma(struct pxa2x0_lcd_softc *sc,
 }
 
 
+#if NWSDISPLAY > 0
 static void
 pxa2x0_lcd_stop_dma(struct pxa2x0_lcd_softc *sc)
 {
@@ -265,6 +261,7 @@ pxa2x0_lcd_stop_dma(struct pxa2x0_lcd_softc *sc)
 	    ~LCCR0_DIS &
 	    bus_space_read_4(sc->iot, sc->ioh, LCDC_LCCR0));
 }
+#endif
 
 #define _rgb(r,g,b)	(((r)<<11) | ((g)<<5) | b)
 #define rgb(r,g,b)	_rgb((r)>>1,g,(b)>>1)
