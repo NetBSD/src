@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.55 1999/02/21 15:17:14 drochner Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.56 1999/03/22 22:30:42 bad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -98,6 +98,8 @@
 #include <net/ethertypes.h>
 #include <net/if.h>
 #include <net/if_dl.h>
+#include <net/if_token.h>
+#include <net/if_types.h>
 #include <net/route.h>
 
 #include <netinet/in.h>
@@ -107,6 +109,7 @@
 #include <netinet/if_inarp.h>
 
 #include "loop.h"
+#include "token.h"
 
 #define SIN(s) ((struct sockaddr_in *)s)
 #define SDL(s) ((struct sockaddr_dl *)s)
@@ -223,6 +226,7 @@ arp_rtrequest(req, rt, sa)
 	register struct sockaddr *gate = rt->rt_gateway;
 	register struct llinfo_arp *la = (struct llinfo_arp *)rt->rt_llinfo;
 	static struct sockaddr_dl null_sdl = {sizeof(null_sdl), AF_LINK};
+	size_t allocsize;
 
 	if (!arpinit_done) {
 		arpinit_done = 1;
@@ -286,14 +290,23 @@ arp_rtrequest(req, rt, sa)
 		 * Case 2:  This route may come from cloning, or a manual route
 		 * add with a LL address.
 		 */
-		R_Malloc(la, struct llinfo_arp *, sizeof(*la));
+		switch (SDL(gate)->sdl_type) {
+#if NTOKEN > 0
+		case IFT_ISO88025:
+			allocsize = sizeof(*la) + sizeof(struct token_rif);
+			break;
+#endif /* NTOKEN > 0 */
+		default:
+			allocsize = sizeof(*la);
+		}
+		R_Malloc(la, struct llinfo_arp *, allocsize);
 		rt->rt_llinfo = (caddr_t)la;
 		if (la == 0) {
 			log(LOG_DEBUG, "arp_rtrequest: malloc failed\n");
 			break;
 		}
 		arp_inuse++, arp_allocated++;
-		Bzero(la, sizeof(*la));
+		Bzero(la, allocsize);
 		la->la_rt = rt;
 		rt->rt_flags |= RTF_LLINFO;
 		LIST_INSERT_HEAD(&llinfo_arp, la, la_list);
@@ -601,6 +614,27 @@ in_arpinput(m)
 			    ifp->if_data.ifi_addrlen);
 			goto reply;
 		}
+#if NTOKEN > 0
+		/*
+		 * XXX uses m_pktdat and assumes the complete answer including
+		 * XXX token-ring headers is in the same buf
+		 */
+		if (ifp->if_type == IFT_ISO88025 &&
+			m->m_pktdat[8] & TOKEN_RI_PRESENT) {
+			struct token_rif	*rif;
+			size_t	riflen;
+
+			rif = TOKEN_RIF((struct token_header *) m->m_pktdat);
+			riflen = (ntohs(rif->tr_rcf) & TOKEN_RCF_LEN_MASK) >> 8;
+
+			if (riflen > 2 && riflen < sizeof(struct token_rif) &&
+				(riflen & 1) == 0) {
+				rif->tr_rcf ^= htons(TOKEN_RCF_DIRECTION);
+				rif->tr_rcf &= htons(~TOKEN_RCF_BROADCAST_MASK);
+				bcopy(rif, TOKEN_RIF(la), riflen);
+			}
+		}
+#endif /* NTOKEN > 0 */
 		bcopy((caddr_t)ar_sha(ah), LLADDR(sdl),
 		    sdl->sdl_alen = ah->ar_hln);
 		if (rt->rt_expire)
