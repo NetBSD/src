@@ -1,4 +1,4 @@
-/*	$NetBSD: pciconf.c,v 1.19 2002/11/25 05:25:00 thorpej Exp $	*/
+/*	$NetBSD: pciconf.c,v 1.20 2002/11/27 02:53:10 simonb Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.19 2002/11/25 05:25:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.20 2002/11/27 02:53:10 simonb Exp $");
 
 #include "opt_pci.h"
 
@@ -927,6 +927,11 @@ configure_bus(pciconf_bus_t *pb)
 	pciconf_dev_t	*pd;
 	int		def_ltim, max_ltim, band, bus_mhz;
 
+	if (pb->ndevs == 0) {
+		if (pci_conf_debug)
+			printf("PCI bus %d - no devices\n", pb->busno);
+		return (1);
+	}
 	bus_mhz = pb->freq_66 ? 66 : 33;
 	max_ltim = pb->max_mingnt * bus_mhz / 4;	/* cvt to cycle count */
 	band = 40000000;			/* 0.25us cycles/sec */
