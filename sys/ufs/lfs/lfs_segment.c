@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.23.2.3 1999/09/03 09:00:13 he Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.23.2.4 1999/10/10 20:51:48 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -244,7 +244,7 @@ lfs_vflush(vp)
 		/* panic("VDIROP being flushed...this can\'t happen"); */
 	}
 	if(vp->v_usecount<0) {
-		printf("usecount=%d\n",vp->v_usecount);
+		printf("usecount=%ld\n",vp->v_usecount);
 		panic("lfs_vflush: usecount<0");
 	}
 #endif
@@ -1579,7 +1579,7 @@ lfs_vunref(vp)
 #ifdef DIAGNOSTIC
 	if(vp->v_usecount<=0) {
 		printf("lfs_vunref: flags are 0x%lx\n", vp->v_flag);
-		printf("lfs_vunref: usecount = %d\n", vp->v_usecount);
+		printf("lfs_vunref: usecount = %ld\n", vp->v_usecount);
 		panic("lfs_vunref: v_usecount<0");
 	}
 #endif
