@@ -1,4 +1,4 @@
-# $NetBSD: do_subst.sh,v 1.1 2000/01/12 02:33:54 cgd Exp $
+# $NetBSD: do_subst.sh,v 1.2 2000/02/03 19:16:47 cgd Exp $
 #
 # Copyright (c) 1999, 2000 Christopher G. Demetriou.  All rights reserved.
 #
@@ -60,8 +60,11 @@ BEGIN {
 	NAME=ENVIRON["NAME"]
 
 	SRCFILES=""
-	sz = split(ENVIRON["SRCFILE_LIST"], a);
+	sz = split(ENVIRON["SRCFILE_LIST"], a, "[ \t\n]+");
 	for (i = 1; i <= sz; i++) {
+		if (a[i] == "") {
+			continue
+		}
 		if (SRCFILES != "") {
 			SRCFILES=SRCFILES "\n"
 		}
@@ -72,15 +75,21 @@ BEGIN {
 	}
 
 	CPPDEFS=""
-	sz = split(ENVIRON["STD_CPPDEF_LIST"], a);
+	sz = split(ENVIRON["STD_CPPDEF_LIST"], a, "[ \t\n]+");
 	for (i = 1; i <= sz; i++) {
+		if (a[i] == "") {
+			continue
+		}
 		if (CPPDEFS != "") {
 			CPPDEFS=CPPDEFS " "
 		}
 		CPPDEFS=CPPDEFS "/D \"" a[i] "\""
 	}
-	sz = split(ENVIRON["CPPDEF_LIST"], a);
+	sz = split(ENVIRON["CPPDEF_LIST"], a, "[ \t\n]+");
 	for (i = 1; i <= sz; i++) {
+		if (a[i] == "") {
+			continue
+		}
 		if (CPPDEFS != "") {
 			CPPDEFS=CPPDEFS " "
 		}
@@ -88,22 +97,31 @@ BEGIN {
 	}
 
 	INCDIRS=""
-	sz = split(ENVIRON["STD_INCDIR_LIST"], a);
+	sz = split(ENVIRON["STD_INCDIR_LIST"], a, "[ \t\n]+");
 	for (i = 1; i <= sz; i++) {
+		if (a[i] == "") {
+			continue
+		}
 		if (INCDIRS != "") {
 			INCDIRS=INCDIRS " "
 		}
 		INCDIRS=INCDIRS "/I \"" a[i] "\""
 	}
-	sz = split(ENVIRON["INCDIR_LIST"], a);
+	sz = split(ENVIRON["INCDIR_LIST"], a, "[ \t\n]+");
 	for (i = 1; i <= sz; i++) {
+		if (a[i] == "") {
+			continue
+		}
 		if (INCDIRS != "") {
 			INCDIRS=INCDIRS " "
 		}
 		INCDIRS=INCDIRS "/I \"" a[i] "\""
 	}
-	sz = split(ENVIRON["LIBDEP_LIST"], a);
+	sz = split(ENVIRON["LIBDEP_LIST"], a, "[ \t\n]+");
 	for (i = 1; i <= sz; i++) {
+		if (a[i] == "") {
+			continue
+		}
 		if (INCDIRS != "") {
 			INCDIRS=INCDIRS " "
 		}
@@ -111,32 +129,44 @@ BEGIN {
         }
 
 	LIBRARIES=""
-	sz = split(ENVIRON["STD_LIBRARY_LIST"], a);
+	sz = split(ENVIRON["STD_LIBRARY_LIST"], a, "[ \t\n]+");
 	for (i = 1; i <= sz; i++) {
+		if (a[i] == "") {
+			continue
+		}
 		if (LIBRARIES != "") {
 			LIBRARIES=LIBRARIES " "
 		}
 		LIBRARIES=LIBRARIES a[i] ".lib"
 	}
-	sz = split(ENVIRON["LIBRARY_LIST"], a);
+	sz = split(ENVIRON["LIBRARY_LIST"], a, "[ \t\n]+");
 	for (i = 1; i <= sz; i++) {
+		if (a[i] == "") {
+			continue
+		}
 		if (LIBRARIES != "") {
 			LIBRARIES=LIBRARIES " "
 		}
 		LIBRARIES=LIBRARIES a[i] ".lib"
         }
-	sz = split(ENVIRON["LIBDEP_LIST"], a);
+	sz = split(ENVIRON["LIBDEP_LIST"], a, "[ \t\n]+");
 	for (i = 1; i <= sz; i++) {
+		if (a[i] == "") {
+			continue
+		}
 		if (LIBRARIES != "") {
 			LIBRARIES=LIBRARIES " "
 		}
 		LIBRARIES=LIBRARIES a[i] ".lib"
 	}
 
-	sz = split(ENVIRON["LIBDEP_LIST"], a);
+	sz = split(ENVIRON["LIBDEP_LIST"], a, "[ \t\n]+");
 	DEBUG_LIBPATH=""
 	RELEASE_LIBPATH=""
 	for (i = 1; i <= sz; i++) {
+		if (a[i] == "") {
+			continue
+		}
 		if (i > 1) {
 			DEBUG_LIBPATH=DEBUG_LIBPATH " "
 			RELEASE_LIBPATH=RELEASE_LIBPATH " "
