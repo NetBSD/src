@@ -1,10 +1,11 @@
-#	$NetBSD: Makefile,v 1.1 2004/11/11 20:04:17 nathanw Exp $
+#	$NetBSD: Makefile,v 1.2 2004/11/14 02:47:26 nathanw Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules/drivers
 
 .include "../../../../Makefile.serverlib"
 
-MODULE=	wsfb
+MODULE=	wsfb_drv
+MAN=	wsfb.4
 .PATH:	${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/drivers/wsfb
 
 SRCS=	wsfb_driver.c
