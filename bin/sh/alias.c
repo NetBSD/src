@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)alias.c	8.1 (Berkeley) 5/31/93";*/
-static char *rcsid = "$Id: alias.c,v 1.2 1994/06/11 16:11:38 mycroft Exp $";
+static char *rcsid = "$Id: alias.c,v 1.3 1994/09/23 11:28:39 mycroft Exp $";
 #endif /* not lint */
 
 #include "shell.h"
@@ -97,7 +97,7 @@ setalias(name, val)
 	{
 	int len = strlen(val);
 	ap->val = ckmalloc(len + 2);
-	bcopy(val, ap->val, len);
+	memcpy(ap->val, val, len);
 	ap->val[len] = ' ';	/* fluff */
 	ap->val[len+1] = '\0';
 	}
