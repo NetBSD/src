@@ -1,4 +1,4 @@
-/*	$NetBSD: nsphyter.c,v 1.2 2000/02/02 08:05:33 thorpej Exp $	*/
+/*	$NetBSD: nsphyter.c,v 1.3 2000/02/02 17:09:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -130,6 +130,7 @@ nsphyterattach(parent, self, aux)
 	sc->mii_phy = ma->mii_phyno;
 	sc->mii_service = nsphyter_service;
 	sc->mii_pdata = mii;
+	sc->mii_flags = mii->mii_flags;
 
 	mii_phy_reset(sc);
 

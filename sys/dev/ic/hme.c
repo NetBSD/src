@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.6 2000/02/02 08:05:26 thorpej Exp $	*/
+/*	$NetBSD: hme.c,v 1.7 2000/02/02 17:09:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -247,7 +247,7 @@ hme_config(sc)
 	hme_mifinit(sc);
 
 	mii_attach(&sc->sc_dev, mii, 0xffffffff,
-			MII_PHY_ANY, MII_OFFSET_ANY);
+			MII_PHY_ANY, MII_OFFSET_ANY, 0);
 
 	child = LIST_FIRST(&mii->mii_phys);
 	if (child == NULL) {

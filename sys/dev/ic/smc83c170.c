@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170.c,v 1.24 2000/02/02 08:05:27 thorpej Exp $	*/
+/*	$NetBSD: smc83c170.c,v 1.25 2000/02/02 17:09:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -230,7 +230,7 @@ epic_attach(sc)
 	ifmedia_init(&sc->sc_mii.mii_media, 0, epic_mediachange,
 	    epic_mediastatus);
 	mii_attach(&sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
-	    MII_OFFSET_ANY);
+	    MII_OFFSET_ANY, 0);
 	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
 		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE, 0, NULL);
 		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE);
