@@ -114,6 +114,11 @@ CONFIGURATION
      wise specified, these variables may be set in either the process environ-
      ment or the make(1) configuration file specified by MAKECONF.
 
+     BUILDID     Identifier for the build.  The identifier will be appended to
+                 object directory names, and can be consulted in the make(1)
+                 configuration file in order to set additional build parame-
+                 ters, such as compiler flags.
+
      DESTDIR     Directory to contain the built NetBSD system.  If set, spe-
                  cial options are passed to the compilation tools to prevent
                  their default use of the host system's /usr/include,
@@ -424,6 +429,12 @@ BUILDING
      build.sh:
 
      -a arch   Set the value of MACHINE_ARCH to arch.
+
+     -B buildid
+               Set the value of BUILDID to buildid.  This will also append the
+               build idenfitier to the name of the ``make'' wrapper script so
+               that the resulting name is of the form ``nbmake-MACHINE-
+               BUILDID''.
 
      -b        Bootstrap ``make'' and create a nbmake-MACHINE script (see be-
                low).

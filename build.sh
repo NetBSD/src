@@ -1,5 +1,5 @@
 #! /bin/sh
-#  $NetBSD: build.sh,v 1.51 2002/03/07 14:59:04 simonb Exp $
+#  $NetBSD: build.sh,v 1.52 2002/03/14 18:33:04 thorpej Exp $
 #
 # Top level build wrapper, for a system containing no tools.
 #
@@ -84,10 +84,11 @@ resolvepath () {
 
 usage () {
 	echo "Usage:"
-	echo "$0 [-bdorUu] [-a arch] [-j njob] [-m mach] [-w wrapper]"
-	echo "   [-D dest] [-O obj] [-R release] [-T tools]"
+	echo "$0 [-bdorUu] [-a arch] [-B buildid] [-j njob] [-m mach] "
+	echo "   [-w wrapper] [-D dest] [-O obj] [-R release] [-T tools]"
 	echo ""
 	echo "    -a: set MACHINE_ARCH to arch (otherwise deduced from MACHINE)"
+	echo "    -B: set BUILDID to buildid"
 	echo "    -b: build nbmake and nbmake wrapper script, if needed"
 	echo "    -D: set DESTDIR to dest"
 	echo "    -d: build a full distribution into DESTDIR (including etc files)"
@@ -120,7 +121,7 @@ do_removedirs=false
 makeenv=
 makewrapper=
 opt_a=no
-opts='a:bdhj:m:nortuw:D:O:R:T:U'
+opts='a:B:bdhj:m:nortuw:D:O:R:T:U'
 runcmd=
 
 if type getopts >/dev/null 2>&1; then
@@ -143,6 +144,9 @@ fi
 while eval $getoptcmd; do case $opt in
 	-a)	eval $optargcmd
 		MACHINE_ARCH=$OPTARG; opt_a=yes;;
+
+	-B)	eval $optargcmd
+		BUILDID=$OPTARG;;
 
 	-b)	do_buildsystem=false;;
 
@@ -206,6 +210,9 @@ validatearch
 
 # Set up default make(1) environment.
 makeenv="$makeenv TOOLDIR MACHINE MACHINE_ARCH MAKEFLAGS"
+if [ ! -z "$BUILDID" ]; then
+	makeenv="$makeenv BUILDID"
+fi
 MAKEFLAGS="-m $cwd/share/mk $MAKEFLAGS MKOBJDIRS=${MKOBJDIRS-yes}"
 export MAKEFLAGS MACHINE MACHINE_ARCH
 
@@ -336,6 +343,9 @@ fi
 # Build a nbmake wrapper script, usable by hand as well as by build.sh.
 if [ -z "$makewrapper" ]; then
 	makewrapper=$TOOLDIR/bin/nbmake-$MACHINE
+	if [ ! -z "$BUILDID" ]; then
+		makewrapper=$makewrapper-$BUILDID
+	fi
 fi
 
 $runcmd rm -f $makewrapper
@@ -349,7 +359,7 @@ fi
 eval cat <<EOF $makewrapout
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.51 2002/03/07 14:59:04 simonb Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.52 2002/03/14 18:33:04 thorpej Exp $
 #
 
 EOF
