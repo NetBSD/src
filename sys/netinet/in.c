@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)in.c	7.17 (Berkeley) 4/20/91
- *	$Id: in.c,v 1.8 1994/01/09 01:06:05 mycroft Exp $
+ *	$Id: in.c,v 1.9 1994/02/02 05:59:13 hpeyerl Exp $
  */
 
 #include <sys/param.h>
@@ -94,10 +94,8 @@ in_netof(in)
 		net = i & IN_CLASSA_NET;
 	else if (IN_CLASSB(i))
 		net = i & IN_CLASSB_NET;
-#ifdef MULTICAST
 	else if (IN_CLASSD(i))
 		net = i & IN_CLASSD_NET;
-#endif
 	else if (IN_CLASSC(i))
 		net = i & IN_CLASSC_NET;
 	else
@@ -181,11 +179,9 @@ in_lnaof(in)
 	} else if (IN_CLASSC(i)) {
 		net = i & IN_CLASSC_NET;
 		host = i & IN_CLASSC_HOST;
-#ifdef MULTICAST
 	} else if (IN_CLASSD(i)) {
 		net = i & IN_CLASSD_NET;
 		host = i & IN_CLASSD_HOST;
-#endif
 	} else
 		return (i);
 
@@ -571,7 +567,6 @@ in_ifinit(ifp, ia, sin, scrub)
 	}
 	if ((error = rtinit(&(ia->ia_ifa), (int)RTM_ADD, flags)) == 0)
 		ia->ia_flags |= IFA_ROUTE;
-#ifdef MULTICAST
 	/*
 	 * If the interface supports multicast, join the "all hosts"
 	 * multicast group on that interface.
@@ -582,7 +577,6 @@ in_ifinit(ifp, ia, sin, scrub)
 		addr.s_addr = htonl(INADDR_ALLHOSTS_GROUP);
 		in_addmulti(&addr, ifp);
 	}
-#endif
 	return (error);
 }
 
@@ -630,7 +624,6 @@ in_broadcast(in)
 	return (0);
 }
 
-#ifdef MULTICAST
 /*
  * Add an address to the list of IP multicast addresses for a given interface.
  */
@@ -737,5 +730,4 @@ in_delmulti(inm)
 	}
 	splx(s);
 }
-#endif
 #endif
