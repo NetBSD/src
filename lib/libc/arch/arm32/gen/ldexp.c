@@ -1,4 +1,4 @@
-/*	$NetBSD: ldexp.c,v 1.5 1999/03/10 08:15:43 mycroft Exp $	*/
+/*	$NetBSD: ldexp.c,v 1.6 1999/08/29 18:35:52 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: ldexp.c,v 1.1 1993/10/07 00:21:36 cgd Exp $
+ * from: Header: ldexp.c,v 1.1 91/07/07 04:28:19 torek Exp
  */
 
 #include <sys/cdefs.h>
@@ -44,7 +44,7 @@
 #if 0
 static const char sccsid[] = "@(#)ldexp.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: ldexp.c,v 1.5 1999/03/10 08:15:43 mycroft Exp $");
+__RCSID("$NetBSD: ldexp.c,v 1.6 1999/08/29 18:35:52 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
