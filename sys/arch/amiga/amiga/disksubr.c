@@ -1,5 +1,5 @@
 /*
- *	$Id: disksubr.c,v 1.10 1994/05/25 21:48:53 chopps Exp $
+ *	$Id: disksubr.c,v 1.11 1994/06/23 05:33:20 chopps Exp $
  */
 
 #include <sys/param.h>
@@ -537,7 +537,7 @@ getadostype(dostype)
 		return(adt);
 	case DOST_XXXBSD:
 #ifdef DIAGNOSTIC
-		printf("found dostype: 0x%x which is depricated", dostype);
+		printf("found dostype: 0x%x which is deprecated", dostype);
 #endif
 		if (b1 == 'S') {
 			dostype = DOST_NBS;
