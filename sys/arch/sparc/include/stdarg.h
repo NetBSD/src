@@ -1,4 +1,4 @@
-/*	$NetBSD: stdarg.h,v 1.17 2000/10/13 03:53:26 christos Exp $ */
+/*	$NetBSD: stdarg.h,v 1.18 2002/07/20 08:37:30 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -56,13 +56,51 @@ typedef _BSD_VA_LIST_	va_list;
 #define __builtin_saveregs()		(0)
 #define __builtin_classify_type(t)	(0)
 #define __builtin_next_arg(t)		((t) ? 0 : 0)
+#define __alignof__(t)			(0)
 #endif
-
-#define	__va_size(type) \
-	(((sizeof(type) + sizeof(long) - 1) / sizeof(long)) * sizeof(long))
 
 #define	va_start(ap, last) \
 	(void)(__builtin_next_arg(last), (ap) = (va_list)__builtin_saveregs())
+
+#if !defined(_ANSI_SOURCE) && \
+    (!defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE) || \
+     defined(_ISOC99_SOURCE) || (__STDC_VERSION__ - 0) >= 199901L)
+# define va_copy(dest, src) \
+	((dest) = (src))
+#endif
+
+#define va_end(ap)	
+
+#ifdef __arch64__
+/*
+ * For sparcv9 code.
+ */
+#define __va_arg8(ap, type) \
+	(*(type *)(void *)((ap) += 8, (ap) - 8))
+#define __va_arg16(ap, type) \
+	(*(type *)(void *)((ap) = (va_list)(((unsigned long)(ap) + 31) & -16),\
+			   (ap) - 16))
+#define __va_int(ap, type) \
+	(*(type *)(void *)((ap) += 8, (ap) - sizeof(type)))
+
+#define __REAL_TYPE_CLASS	8
+#define	__RECORD_TYPE_CLASS	12
+#define va_arg(ap, type) \
+	(__builtin_classify_type(*(type *)0) == __REAL_TYPE_CLASS ?	\
+	 (__alignof__(type) == 16 ? __va_arg16(ap, type) :		\
+	  __va_arg8(ap, type)) :					\
+	 (__builtin_classify_type(*(type *)0) < __RECORD_TYPE_CLASS ?	\
+	  __va_int(ap, type) :						\
+	  (sizeof(type) <= 8 ? __va_arg8(ap, type) :			\
+	   (sizeof(type) <= 16 ? __va_arg16(ap, type) :			\
+	    *__va_arg8(ap, type *)))))
+
+#else /* __arch64__ */
+/* 
+ * For sparcv8 code.
+ */
+#define	__va_size(type) \
+	(((sizeof(type) + sizeof(long) - 1) / sizeof(long)) * sizeof(long))
 
 /*
  * va_arg picks up the next argument of type `type'.  Appending an
@@ -84,7 +122,7 @@ typedef _BSD_VA_LIST_	va_list;
 # define va_arg(ap, type)	(*(type *)(void *)(ap)) 
 #else /* !__lint__ */
 # if __GNUC__ < 2
-#  define __extension__
+#  define __extension__		/* delete __extension__ if non-gcc or gcc1 */
 # endif
 # define __va_8byte(ap, type) \
 	__extension__ ({						\
@@ -107,13 +145,6 @@ typedef _BSD_VA_LIST_	va_list;
 	 __va_8byte(ap, type) : __va_arg(ap, type))
 #endif /* __lint__ */
 
-#if !defined(_ANSI_SOURCE) && \
-    (!defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE) || \
-     defined(_ISOC99_SOURCE) || (__STDC_VERSION__ - 0) >= 199901L)
-# define va_copy(dest, src) \
-	((dest) = (src))
-#endif
-
-#define va_end(ap)	
+#endif /* __arch64__ */
 
 #endif /* !_SPARC_STDARG_H_ */
