@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus_map.c,v 1.8 2000/02/04 07:59:20 haya Exp $	*/
+/*	$NetBSD: cardbus_map.c,v 1.9 2000/02/09 07:57:52 itohy Exp $	*/
 
 /*
  * Copyright (c) 1999 and 2000
@@ -360,11 +360,11 @@ cardbus_mapreg_unmap(sc, func, reg, tag, handle, size)
 
 	if (sc->sc_iot == tag) {
 		/* bus space is io space */
-		DPRINTF(("%s: unmap i/o space\n", sc->sc_dev.xname));
+		DPRINTF(("%s: unmap i/o space\n", sc->sc_dev.dv_xname));
 		rb = sc->sc_rbus_iot;
 	} if (sc->sc_memt == tag) {
 		/* bus space is memory space */
-		DPRINTF(("%s: unmap mem space\n", sc->sc_dev.xname));
+		DPRINTF(("%s: unmap mem space\n", sc->sc_dev.dv_xname));
 		rb = sc->sc_rbus_memt;
 	} else {
 		return 1;
