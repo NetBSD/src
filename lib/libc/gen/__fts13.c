@@ -1,4 +1,4 @@
-/*	$NetBSD: __fts13.c,v 1.9 1998/11/05 12:52:56 frueauf Exp $	*/
+/*	$NetBSD: __fts13.c,v 1.10 1998/11/05 13:57:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fts.c	8.6 (Berkeley) 8/14/94";
 #else
-__RCSID("$NetBSD: __fts13.c,v 1.9 1998/11/05 12:52:56 frueauf Exp $");
+__RCSID("$NetBSD: __fts13.c,v 1.10 1998/11/05 13:57:22 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -689,20 +689,20 @@ fts_build(sp, type)
 	/* Read the directory, attaching each entry to the `link' pointer. */
 	adjaddr = NULL;
 	for (head = tail = NULL, nitems = 0; (dp = readdir(dirp)) != NULL;) {
-		size_t len;
+		size_t dlen;
 
-#if defined(__svr4) || defined(__SVR4)
-		len = strlen(dp->d_name);
+#if defined(__svr4__) || defined(__SVR4)
+		dlen = strlen(dp->d_name);
 #else
-		len = dp->d_namlen;
+		dlen = dp->d_namlen;
 #endif
 		if (!ISSET(FTS_SEEDOT) && ISDOT(dp->d_name))
 			continue;
 
-		if ((p = fts_alloc(sp, dp->d_name, len)) == NULL)
+		if ((p = fts_alloc(sp, dp->d_name, dlen)) == NULL)
 			goto mem1;
-		if (len > maxlen) {
-			if (fts_palloc(sp, len)) {
+		if (dlen > maxlen) {
+			if (fts_palloc(sp, dlen)) {
 				/*
 				 * No more memory for path or structures.  Save
 				 * errno, free up the current structure and the
@@ -722,7 +722,7 @@ mem1:				saved_errno = errno;
 			maxlen = sp->fts_pathlen - sp->fts_cur->fts_pathlen - 1;
 		}
 
-		p->fts_pathlen = len + len + 1;
+		p->fts_pathlen = len + dlen + 1;
 		p->fts_parent = sp->fts_cur;
 		p->fts_level = level;
 
