@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.512 2003/03/02 00:36:11 salo Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.513 2003/03/03 10:58:45 soren Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.509 2003/03/02 00:33:10 salo Exp 
+ *	NetBSD: pcidevs,v 1.510 2003/03/03 10:57:36 soren Exp 
  */
 
 /*
@@ -891,6 +891,7 @@
 #define	PCI_PRODUCT_ATI_RAGE_MOBILITY	0x4c4d		/* Rage Mobility */
 #define	PCI_PRODUCT_ATI_RAGE_LT_PRO	0x4c50		/* 3D Rage LT Pro */
 #define	PCI_PRODUCT_ATI_RAGE_MOB_M1_PCI	0x4c52		/* Rage Mobility M1 */
+#define	PCI_PRODUCT_ATI_RADEON_M9	0x4c66		/* Radeon Mobility M9 */
 #define	PCI_PRODUCT_ATI_RAGE1PCI	0x5041		/* Rage 128 Pro PCI */
 #define	PCI_PRODUCT_ATI_RAGE1AGP2X	0x5042		/* Rage 128 Pro AGP 2x */
 #define	PCI_PRODUCT_ATI_RAGE1AGP4X	0x5043		/* Rage 128 Pro AGP 4x */
