@@ -1,4 +1,4 @@
-.\"	$NetBSD: netid.5,v 1.1.1.1 1996/08/09 10:14:55 thorpej Exp $
+.\"	$NetBSD: netid.5,v 1.2 1997/10/02 14:16:29 lukem Exp $
 .\"
 .\" Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
 .\" All rights reserved.
@@ -35,19 +35,16 @@
 .Sh NAME
 .Nm netid
 .Nd 
-.Nm YP
-network credential file
+YP network credential file
 .Sh DESCRIPTION
 Files in
-.Nm netid
-format is rare. One lives in the
-.Nm YP
-map
-.Nm netid.byname .
+.Nm
+format are rare. One lives in the YP map
+.Pa netid.byname .
 The format is rather simple. Each row consists of two
 items, a key and a value. When created by
 .Xr mknetid 8
-there is three kind of records.
+there are three kind of records.
 .Pp
 The first type is information about which gids a uid has:
 .Bd -literal
@@ -72,11 +69,11 @@ unix.jodie@kaka 0:jodie
 .Sh FILES
 .Bl -tag -width /etc/netid -compact
 .It Pa /etc/netid
-A file for lines not generated automatic by
+A file for lines not generated automatically by
 .Xr mknetid 8 .
 .El
 .Sh SEE ALSO
-.Xr yp 8 ,
-.Xr mknetid 8
+.Xr mknetid 8 ,
+.Xr yp 8
 .Sh AUTHOR
 Mats O Jansson <moj@stacken.kth.se>
