@@ -1,4 +1,4 @@
-# $NetBSD: rc.subr,v 1.30 2001/02/28 16:49:19 lukem Exp $
+# $NetBSD: rc.subr,v 1.31 2001/04/04 03:17:19 atatat Exp $
 #
 # Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -590,4 +590,83 @@ warn()
 {
 	logger "$0: WARNING: $*"
 	echo 1>&2 "$0: WARNING: $*"
+}
+
+#
+# backup_file action file cur backup
+#	Make a backup copy of `file' into `cur', and save the previous
+#	version of `cur' as `backup' or use rcs for archiving.
+#
+#	This routine checks the value of the backup_uses_rcs variable,
+#	which can be either YES or NO.
+#
+#	The `action' keyword can be one of the following:
+#
+#	add		`file' is now being backed up (and is possibly
+#			being reentered into the backups system).  `cur'
+#			is created and RCS files, if necessary, are
+#			created as well.
+#
+#	update		`file' has changed and needs to be backed up.
+#			If `cur' exists, it is copied to to `back' or
+#			checked into RCS (if the repository file is old),
+#			and then `file' is copied to `cur'.  Another RCS
+#			check in done here if RCS is being used.
+#
+#	remove		`file' is no longer being tracked by the backups
+#			system.  If RCS is not being used, `cur' is moved
+#			to `back', otherwise an empty file is checked in,
+#			and then `cur' is removed.
+#
+#
+backup_file()
+{
+	_action=$1
+	_file=$2
+	_cur=$3
+	_back=$4
+
+	if checkyesno backup_uses_rcs; then
+		_msg0="backup archive"
+		_msg1="update"
+
+		# ensure after switching to rcs that the
+		# current backup is not lost
+		if [ -f $_cur ]; then
+			# no archive, or current newer than archive
+			if [ ! -f $_cur,v -o $_cur -nt $_cur,v ]; then
+				ci -q -f -l -t-"$_msg0" -m"$_msg1" $_cur
+				rcs -q -kb $_cur
+			fi
+		fi
+
+		case $_action in
+		add|update)
+			cp -p $_file $_cur
+			ci -q -f -l -t-"$_msg0" -m"$_msg1" $_cur
+			rcs -q -kb $_cur
+			chown root:wheel $_cur $_cur,v
+			;;
+		remove)
+			cp /dev/null $_cur
+			ci -q -f -l -t-"$_msg0" -m"$_msg1" $_cur
+			rcs -q -kb $_cur
+			chown root:wheel $_cur $_cur,v
+			rm $_cur
+			;;
+		esac
+	else
+		case $_action in
+		add|update)
+			if [ -f $_cur ]; then
+				cp -p $_cur $_back
+			fi
+			cp -p $_file $_cur
+			chown root:wheel $_cur
+			;;
+		remove)
+			mv -f $_cur $_back
+			;;
+		esac
+	fi
 }
