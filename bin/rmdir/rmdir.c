@@ -1,4 +1,4 @@
-/* $NetBSD: rmdir.c,v 1.17 2001/09/16 21:21:14 wiz Exp $ */
+/* $NetBSD: rmdir.c,v 1.18 2003/08/04 22:31:25 jschauma Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -43,9 +43,11 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)rmdir.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: rmdir.c,v 1.17 2001/09/16 21:21:14 wiz Exp $");
+__RCSID("$NetBSD: rmdir.c,v 1.18 2003/08/04 22:31:25 jschauma Exp $");
 #endif
 #endif /* not lint */
+
+#include <sys/param.h>
 
 #include <err.h>
 #include <errno.h>
@@ -54,10 +56,14 @@ __RCSID("$NetBSD: rmdir.c,v 1.17 2001/09/16 21:21:14 wiz Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <vis.h>
 
-int rm_path(char *);
-void usage(void);
-int main(int, char *[]);
+int	stdout_ok;			/* stdout connected to a terminal */
+
+int	rm_path(char *);
+void	usage(void);
+int	main(int, char *[]);
+char	*printescaped(const char *);
 
 int
 main(int argc, char *argv[])
@@ -83,6 +89,8 @@ main(int argc, char *argv[])
 	if (argc == 0)
 		usage();
 
+	stdout_ok = isatty(STDIN_FILENO);
+
 	for (errors = 0; *argv; argv++) {
 		char *p;
 
@@ -93,7 +101,10 @@ main(int argc, char *argv[])
 		*++p = '\0';
 
 		if (rmdir(*argv) < 0) {
-			warn("%s", *argv);
+			char *dn;
+			dn = printescaped(*argv);
+			warn("%s", dn);
+			free(dn);
 			errors = 1;
 		} else if (pflag)
 			errors |= rm_path(*argv);
@@ -115,7 +126,10 @@ rm_path(char *path)
 		*++p = '\0';
 
 		if (rmdir(path) < 0) {
-			warn("%s", path);
+			char *pn;
+			pn = printescaped(path);
+			warn("%s", pn);
+			free(pn);
 			return (1);
 		}
 	}
@@ -129,4 +143,28 @@ usage(void)
 	(void)fprintf(stderr, "usage: %s [-p] directory ...\n", getprogname());
 	exit(1);
 	/* NOTREACHED */
+}
+
+char *
+printescaped(const char *src)
+{
+	size_t len;
+	char *retval;
+
+	len = strlen(src);
+	if (len != 0 && SIZE_T_MAX/len <= 4) {
+		errx(EXIT_FAILURE, "%s: name too long", src);
+		/* NOTREACHED */
+	}
+
+	retval = (char *)malloc(4*len+1);
+	if (retval != NULL) {
+		if (stdout_ok)
+			(void)strvis(retval, src, VIS_NL | VIS_CSTYLE);
+		else
+			(void)strcpy(retval, src);
+		return retval;
+	} else
+		errx(EXIT_FAILURE, "out of memory!");
+		/* NOTREACHED */
 }
