@@ -1,11 +1,11 @@
-/*	$NetBSD: file.c,v 1.68 2003/10/04 00:50:34 wiz Exp $	*/
+/*	$NetBSD: file.c,v 1.69 2003/11/21 22:04:32 wiz Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: file.c,v 1.29 1997/10/08 07:47:54 charnier Exp";
 #else
-__RCSID("$NetBSD: file.c,v 1.68 2003/10/04 00:50:34 wiz Exp $");
+__RCSID("$NetBSD: file.c,v 1.69 2003/11/21 22:04:32 wiz Exp $");
 #endif
 #endif
 
@@ -563,8 +563,9 @@ unpack(const char *pkg, const char *extra1, const char *extra2)
 	const char *decompress_cmd[3];
 	const char *suf;
 	int     pipefds[2];
-	pid_t   pid;
+	pid_t   tarpid, gzpid;
 	int	state;
+	int	ret;
 
 	if (!IS_STDIN(pkg)) {
 		suf = suffix_of(pkg);
@@ -596,12 +597,12 @@ unpack(const char *pkg, const char *extra1, const char *extra2)
 		warnx("cannot create pipe -- %s extract of %s failed!", TAR_CMD, pkg);
 		return 1;
 	}
-	if ((pid = fork()) == -1) {
+	if ((gzpid = fork()) == -1) {
 		warnx("cannot fork process for %s -- %s extract of %s failed!",
 		      decompress_cmd[0], TAR_CMD, pkg);
 		return 1;
 	}
-	if (pid == 0) {		/* The child */
+	if (gzpid == 0) {		/* The child */
 		if (dup2(pipefds[1], STDOUT_FILENO) == -1) {
 			warnx("dup2 failed before executing %s command",
 			      decompress_cmd[0]);
@@ -622,12 +623,12 @@ unpack(const char *pkg, const char *extra1, const char *extra2)
 
 	/* Meanwhile, back in the parent process ... */
 	/* fork off an untar process */
-	if ((pid = fork()) == -1) {
+	if ((tarpid = fork()) == -1) {
 		warnx("cannot fork process for %s -- %s extract of %s failed!",
 		      TAR_CMD, TAR_CMD, pkg);
 		return 1;
 	}
-	if (pid == 0) {		/* The child */
+	if (tarpid == 0) {		/* The child */
 		if (dup2(pipefds[0], STDIN_FILENO) == -1) {
 			warnx("dup2 failed before executing %s command",
 			      TAR_CMD);
@@ -644,13 +645,20 @@ unpack(const char *pkg, const char *extra1, const char *extra2)
 	close(pipefds[0]);
 	close(pipefds[1]);
 
-	/* wait for tar exit so we are sure the needed files exist */
-	if (waitpid(pid, &state, 0) < 0) {
+	ret = 0;
+	/* wait for decompress process ... */
+	if (waitpid(gzpid, &state, 0) < 0) {
 		/* error has been reported by child */
-		return 1;
+		ret = 1;
 	}
 
-	return 0;
+	/* ... and for tar exit so we are sure the needed files exist */
+	if (waitpid(tarpid, &state, 0) < 0) {
+		/* error has been reported by child */
+		ret = 1;
+	}
+
+	return ret;
 }
 
 /*
