@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.9 2001/11/22 06:58:03 simonb Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.10 2002/02/22 16:18:36 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -190,6 +190,10 @@ db_disasm_insn(int insn, db_addr_t loc, boolean_t altfmt)
 			db_printf("nop");
 			break;
 		}
+		/* XXX
+		 * "addu" is a "move" only in 32-bit mode.  What's the correct
+		 * answer - never decode addu/daddu as "move"?
+		 */
 		if (i.RType.func == OP_ADDU && i.RType.rt == 0) {
 			db_printf("move\t%s,%s",
 			    reg_name[i.RType.rd],
