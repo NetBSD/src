@@ -1,4 +1,4 @@
-/*	$NetBSD: qop_hfsc.c,v 1.6 2002/09/08 09:28:23 itojun Exp $	*/
+/*	$NetBSD: qop_hfsc.c,v 1.7 2003/10/26 08:08:06 lukem Exp $	*/
 /*	$KAME: qop_hfsc.c,v 1.8 2002/09/08 09:08:13 kjc Exp $	*/
 /*
  * Copyright (C) 1999-2000
@@ -669,7 +669,6 @@ validate_sc(struct service_curve *sc)
 /*
  * admission control using generalized service curve
  */
-#define	INFINITY	HUGE_VAL  /* positive infinity defined in <math.h> */
 
 /* add a new service curve to a generilized service curve */
 static void
@@ -679,7 +678,7 @@ gsc_add_sc(struct gen_sc *gsc, struct service_curve *sc)
 		return;
 	if (sc->d != 0)
 		gsc_add_seg(gsc, 0, 0, (double)sc->d, (double)sc->m1);
-	gsc_add_seg(gsc, (double)sc->d, 0, INFINITY, (double)sc->m2);
+	gsc_add_seg(gsc, (double)sc->d, 0, HUGE_VAL, (double)sc->m2);
 }
 
 /* subtract a service curve from a generilized service curve */
@@ -690,7 +689,7 @@ gsc_sub_sc(struct gen_sc *gsc, struct service_curve *sc)
 		return;
 	if (sc->d != 0)
 		gsc_sub_seg(gsc, 0, 0, (double)sc->d, (double)sc->m1);
-	gsc_sub_seg(gsc, (double)sc->d, 0, INFINITY, (double)sc->m2);
+	gsc_sub_seg(gsc, (double)sc->d, 0, HUGE_VAL, (double)sc->m2);
 }
 
 /*
@@ -714,10 +713,10 @@ is_gsc_under_sc(struct gen_sc *gsc, struct service_curve *sc)
 		return (1);
 	}
 	/*
-	 * gsc has a dummy entry at the end with x = INFINITY.
+	 * gsc has a dummy entry at the end with x = HUGE_VAL.
 	 * loop through up to this dummy entry.
 	 */
-	end = gsc_getentry(gsc, INFINITY);
+	end = gsc_getentry(gsc, HUGE_VAL);
 	if (end == NULL)
 		return (1);
 	last = NULL;
@@ -774,10 +773,10 @@ gsc_getentry(struct gen_sc *gsc, double x)
 		return (NULL);
 
 	new->x = x;
-	if (x == INFINITY || s == NULL)
+	if (x == HUGE_VAL || s == NULL)
 		new->d = 0;
-	else if (s->x == INFINITY)
-		new->d = INFINITY;
+	else if (s->x == HUGE_VAL)
+		new->d = HUGE_VAL;
 	else
 		new->d = s->x - x;
 	if (prev == NULL) {
@@ -790,12 +789,12 @@ gsc_getentry(struct gen_sc *gsc, double x)
 		 * the start point intersects with the segment pointed by
 		 * prev.  divide prev into 2 segments
 		 */
-		if (x == INFINITY) {
-			prev->d = INFINITY;
+		if (x == HUGE_VAL) {
+			prev->d = HUGE_VAL;
 			if (prev->m == 0)
 				new->y = prev->y;
 			else
-				new->y = INFINITY;
+				new->y = HUGE_VAL;
 		} else {
 			prev->d = x - prev->x;
 			new->y = prev->d * prev->m + prev->y;
@@ -813,8 +812,8 @@ gsc_add_seg(struct gen_sc *gsc, double x, double y, double d, double m)
 	struct segment *start, *end, *s;
 	double x2;
 
-	if (d == INFINITY)
-		x2 = INFINITY;
+	if (d == HUGE_VAL)
+		x2 = HUGE_VAL;
 	else
 		x2 = x + d;
 	start = gsc_getentry(gsc, x);
@@ -827,7 +826,7 @@ gsc_add_seg(struct gen_sc *gsc, double x, double y, double d, double m)
 		s->y += y + (s->x - x) * m;
 	}
 
-	end = gsc_getentry(gsc, INFINITY);
+	end = gsc_getentry(gsc, HUGE_VAL);
 	for (; s != end; s = LIST_NEXT(s, _next)) {
 		s->y += m * d;
 	}
@@ -876,7 +875,7 @@ gsc_compress(struct gen_sc *gsc)
 			goto again;
 		} else if (s->m == next->m) {
 			/* join the two entries */
-			if (s->d != INFINITY && next->d != INFINITY)
+			if (s->d != HUGE_VAL && next->d != HUGE_VAL)
 				s->d += next->d;
 			LIST_REMOVE(next, _next);
 			free(next);
