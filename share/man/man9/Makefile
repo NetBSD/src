@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.134 2003/01/11 22:45:41 lha Exp $
+#       $NetBSD: Makefile,v 1.135 2003/02/01 06:27:23 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -239,8 +239,11 @@ MLINKS+=lock.9 simple_lock_init.9 lock.9 simple_lock.9 \
 	lock.9 lockstatus.9 lock.9 lockmgr_printinfo.9 \
 	lock.9 spinlockinit.9 lock.9 spinlockmgr.9
 MLINKS+=ltsleep.9 wakeup.9 ltsleep.9 tsleep.9
-MLINKS+=malloc.9 free.9 malloc.9 malloc_roundup.9
-MLINKS+=malloc.9 MALLOC.9 malloc.9 FREE.9
+MLINKS+=malloc.9 MALLOC.9 malloc.9 realloc.9 malloc.9 free.9 malloc.9 FREE.9
+MLINKS+=malloc.9 malloc_roundup.9 malloc.9 malloc_type_attach.9
+MLINKS+=malloc.9 malloc_type_detach.9 malloc.9 malloc_type_setlimit.9
+MLINKS+=malloc.9 MALLOC_DEFINE_LIMIT.9 malloc.9 MALLOC_DEFINE.9
+MLINKS+=malloc.9 MALLOC_DECLARE.9
 MLINKS+=mbuf.9 m_get.9 mbuf.9 m_getclr.9 mbuf.9 m_gethdr.9 mbuf.9 m_devget.9 \
 	mbuf.9 m_copym.9 mbuf.9 m_copypacket.9 mbuf.9 m_copydata.9 \
 	mbuf.9 m_copyback.9 mbuf.9 m_cat.9 mbuf.9 m_dup.9 mbuf.9 m_prepend.9 \
@@ -579,6 +582,3 @@ SUBDIR= man9.i386 man9.sun3
 
 .include <bsd.man.mk>
 .include <bsd.subdir.mk>
-
-
-
