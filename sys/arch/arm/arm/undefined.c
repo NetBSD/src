@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.c,v 1.19 2003/10/08 00:28:41 thorpej Exp $	*/
+/*	$NetBSD: undefined.c,v 1.20 2003/10/31 16:44:35 cl Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris.
@@ -54,7 +54,7 @@
 #include <sys/kgdb.h>
 #endif
 
-__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.19 2003/10/08 00:28:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.20 2003/10/31 16:44:35 cl Exp $");
 
 #include <sys/malloc.h>
 #include <sys/queue.h>
@@ -68,6 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.19 2003/10/08 00:28:41 thorpej Exp $
 #ifdef FAST_FPE
 #include <sys/acct.h>
 #endif
+#include <sys/userret.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -298,7 +299,6 @@ undefinedinstruction(trapframe_t *frame)
 #ifdef FAST_FPE
 	/* Optimised exit code */
 	{
-		int sig;
 
 		/*
 		 * Check for reschedule request, at the moment there is only
@@ -312,18 +312,8 @@ undefinedinstruction(trapframe_t *frame)
 			preempt(0);
 		}
 
-		/* take pending signals */
-		while ((sig = (CURSIG(l))) != 0) {
-			postsig(sig);
-		}
-
-		/* Invoke per-process kernel-exit handling, if any */
-		if (p->p_userret)
-			(p->p_userret)(l, p->p_userret_arg);
-
-		/* Invoke any pending upcalls. */
-		while (l->l_flag & L_SA_UPCALL)
-			sa_upcall_userret(l);
+		/* Invoke MI userret code */
+		mi_userret(l);
 
 		l->l_priority = l->l_usrpri;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.30 2003/10/21 00:49:34 fvdl Exp $	*/
+/*	$NetBSD: trap.c,v 1.31 2003/10/31 16:44:35 cl Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.30 2003/10/21 00:49:34 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.31 2003/10/31 16:44:35 cl Exp $");
 
 #include "opt_ddb.h"
 
@@ -122,6 +122,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.30 2003/10/21 00:49:34 fvdl Exp $");
 #include <sys/systm.h>
 #include <sys/sa.h>
 #include <sys/savar.h>
+#include <sys/userret.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -147,19 +148,9 @@ int sh5_trap_debug;
 void
 userret(struct lwp *l)
 {
-	struct proc *p = l->l_proc;
-	int sig;
 
-	while ((sig = CURSIG(l)) != 0)
-		postsig(sig);
-
-	/* Invoke per-process kernel-exit handling, if any */
-	if (p->p_userret)
-		(p->p_userret)(l, p->p_userret_arg);
-
-	/* Invoke any pending upcalls. */
-	while (l->l_flag & L_SA_UPCALL)
-		sa_upcall_userret(l);
+	/* Invoke MI userret code */
+	mi_userret(l);
 
 	l->l_md.md_flags &= ~MDP_FPSAVED;
 	curcpu()->ci_schedstate.spc_curpriority = l->l_priority = l->l_usrpri;

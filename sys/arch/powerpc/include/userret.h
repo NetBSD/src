@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.4 2003/01/18 06:23:30 thorpej Exp $	*/
+/*	$NetBSD: userret.h,v 1.5 2003/10/31 16:44:35 cl Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -33,6 +33,8 @@
 
 #include "opt_altivec.h"
 
+#include <sys/userret.h>
+
 #include <powerpc/fpu.h>
 
 /*
@@ -44,20 +46,9 @@ userret(struct lwp *l, struct trapframe *frame)
 {
 	struct cpu_info *ci = curcpu();
 	struct pcb *pcb;
-	int sig;
 
-	/* Take pending signals. */
-	while ((sig = CURSIG(l)) != 0) {
-		postsig(sig);
-	}
-
-	/* Invoke per-process kernel-exit handling, if any */
-	if (l->l_proc->p_userret)
-		(l->l_proc->p_userret)(l, l->l_proc->p_userret_arg);
-
-	/* Invoke any pending upcalls */
-	while (l->l_flag & L_SA_UPCALL)
-		sa_upcall_userret(l);
+	/* Invoke MI userret code */
+	mi_userret(l);
 
 	pcb = &l->l_addr->u_pcb;
 

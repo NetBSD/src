@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.7 2003/08/07 16:28:29 agc Exp $	*/
+/*	$NetBSD: userret.h,v 1.8 2003/10/31 16:44:35 cl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -79,23 +79,14 @@
 #ifndef _MIPS_USERRET_H_
 #define	_MIPS_USERRET_H_
 
+#include <sys/userret.h>
+
 static __inline void
 userret(struct lwp *l)
 {
-	int sig;
-	struct proc *p = l->l_proc;
 
-	/* Take pending signals. */
-	while ((sig = CURSIG(l)) != 0)
-		postsig(sig);
-
-	/* Invoke per-process kernel-exit handling, if any */
-	if (p->p_userret)
-		(p->p_userret)(l, p->p_userret_arg);
-
-	/* Invoke any pending upcalls. */
-	while (l->l_flag & L_SA_UPCALL)
-		sa_upcall_userret(l);
+	/* Invoke MI userret code */
+	mi_userret(l);
 
 	curcpu()->ci_schedstate.spc_curpriority = l->l_priority = l->l_usrpri;
 }
