@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.63 2003/11/08 04:39:00 dbj Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.64 2003/11/08 06:00:39 dbj Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.63 2003/11/08 04:39:00 dbj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.64 2003/11/08 06:00:39 dbj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -255,7 +255,8 @@ ffs_fsync(v)
 	/*
 	 * XXX no easy way to sync a range in a file with softdep.
 	 */
-	if ((ap->a_offlo == 0 && ap->a_offhi == 0) || DOINGSOFTDEP(ap->a_vp))
+	if ((ap->a_offlo == 0 && ap->a_offhi == 0) || DOINGSOFTDEP(ap->a_vp) ||
+			(vp->v_type != VREG))
 		return ffs_full_fsync(v);
 
 	vp = ap->a_vp;
@@ -269,13 +270,12 @@ ffs_fsync(v)
 	 * First, flush all pages in range.
 	 */
 
-	if (vp->v_type == VREG) {
-		simple_lock(&vp->v_interlock);
-		error = VOP_PUTPAGES(vp, trunc_page(ap->a_offlo),
-		    round_page(ap->a_offhi), PGO_CLEANIT|PGO_SYNCIO);
-		if (error) {
-			return error;
-		}
+	simple_lock(&vp->v_interlock);
+	error = VOP_PUTPAGES(vp, trunc_page(ap->a_offlo),
+	    round_page(ap->a_offhi), PGO_CLEANIT |
+	    ((ap->a_flags & FSYNC_WAIT) ? PGO_SYNCIO : 0));
+	if (error) {
+		return error;
 	}
 
 	/*
