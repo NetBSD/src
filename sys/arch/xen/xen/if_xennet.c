@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xennet.c,v 1.11.4.1 2004/12/13 17:52:21 bouyer Exp $	*/
+/*	$NetBSD: if_xennet.c,v 1.11.4.2 2004/12/17 12:24:39 bouyer Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.11.4.1 2004/12/13 17:52:21 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.11.4.2 2004/12/17 12:24:39 bouyer Exp $");
 
 #include "opt_inet.h"
 #include "rnd.h"
@@ -291,6 +291,7 @@ static void
 xennet_ctrlif_rx(ctrl_msg_t *msg, unsigned long id)
 {
 	int respond = 1;
+	printf("xennet_ctrlif_rx(): msg->subtype %d\n", msg->subtype);
 
 	DPRINTFN(XEDB_EVENT, ("> ctrlif_rx=%d\n", msg->subtype));
 	switch (msg->subtype) {
