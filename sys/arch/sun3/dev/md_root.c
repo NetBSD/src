@@ -1,4 +1,4 @@
-/*	$NetBSD: md_root.c,v 1.11 1999/05/08 18:46:17 gwr Exp $	*/
+/*	$NetBSD: md_root.c,v 1.12 2000/06/10 04:15:59 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -54,13 +54,13 @@ extern int boothowto;
 
 /*
  * This array will be patched to contain a file-system image.
- * See the program:  src/distrib/sun3/common/rdsetroot.c
+ * See the program mdsetimage(8) for details.
  */
-int md_root_size = ROOTBYTES;
+u_int32_t md_root_size = ROOTBYTES;
 char md_root_image[ROOTBYTES] = "|This is the root ramdisk!\n";
 
 /*
- * This is called during autoconfig.
+ * This is called during pseudo-device attachment.
  */
 void
 md_attach_hook(unit, md)
@@ -72,7 +72,8 @@ md_attach_hook(unit, md)
 		md->md_addr = (caddr_t) md_root_image;
 		md->md_size = (size_t)  md_root_size;
 		md->md_type = MD_KMEM_FIXED;
-		printf(" fixed, %d blocks", MINIROOTSIZE);
+		printf("md%d: internal %dK image area\n", unit,
+		    ROOTBYTES / 1024);
 	}
 }
 
