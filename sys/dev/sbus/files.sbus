@@ -1,4 +1,4 @@
-#	$NetBSD: files.sbus,v 1.7 1998/09/21 21:02:23 pk Exp $
+#	$NetBSD: files.sbus,v 1.8 1998/09/23 08:48:25 pk Exp $
 #
 # Config file and device description for machine-independent SBUS code.
 # Included by ports that need it.
@@ -22,7 +22,7 @@ device	dma {}: lsi64854
 attach	dma at sbus with dma_sbus
 device	ledma {}: lsi64854
 attach	ledma at sbus
-file	dev/sbus/dma_sbus.c		dma | ledma
+file	dev/sbus/dma_sbus.c		dma_sbus | ledma
 
 device	lebuffer {}
 attach	lebuffer at sbus
