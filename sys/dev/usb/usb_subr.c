@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.41 1999/08/28 21:42:35 augustss Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.42 1999/08/29 19:41:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -105,8 +105,7 @@ struct usb_knowndev {
 #include <dev/usb/usbdevs_data.h>
 #endif /* USBVERBOSE */
 
-#ifdef USB_DEBUG
-char *usbd_error_strs[] = {
+const char *usbd_error_strs[] = {
 	"NORMAL_COMPLETION",
 	"IN_PROGRESS",
 	"PENDING_REQUESTS",
@@ -128,25 +127,19 @@ char *usbd_error_strs[] = {
 	"INTERRUPTED",
 	"XXX",
 };
-#endif
 
-char *
+const char *
 usbd_errstr(err)
 	usbd_status err;
 {
 	static char buffer[5];
 
-#ifdef  USB_DEBUG
-	if ( err < USBD_ERROR_MAX ) {
+	if (err < USBD_ERROR_MAX) {
 		return usbd_error_strs[err];
 	} else {
 		snprintf(buffer, sizeof buffer, "%d", err);
 		return buffer;
 	}
-#else
-	snprintf(buffer, sizeof buffer, "%d", err);
-	return buffer;
-#endif
 }
 
 usbd_status
