@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.104.2.3 2002/08/01 06:16:14 lukem Exp $
+.\"	$NetBSD: hardware,v 1.104.2.4 2002/08/02 05:58:52 lukem Exp $
 .
 .Nx \*V
 runs on ISA (AT-Bus), EISA, MCA, PCI, and VL-bus systems
@@ -48,7 +48,8 @@ PDC20268 (Ultra/100TX2 and Ultra/100TX2v2) and Ultra/133.
 .It
 Silicon Integrated System 5597/5598 IDE controller
 .It
-VIA Technologies VT82C586, VT82C586A, VT82C596A and VT82C686A IDE Controllers
+VIA Technologies VT82C586, VT82C586A, VT82C596A, VT82C686A and VT8233A IDE
+Controllers
 .bullet)
 .Pp
 Most of these controllers are only available in multifunction PCI chips.
