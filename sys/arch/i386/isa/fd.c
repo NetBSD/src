@@ -35,14 +35,17 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fd.c	7.4 (Berkeley) 5/25/91
- *	$Id: fd.c,v 1.16 1993/06/21 09:39:52 deraadt Exp $
+ *	$Id: fd.c,v 1.17 1993/06/29 19:12:44 deraadt Exp $
  *
  * Largely rewritten to handle multiple controllers and drives
  * By Julian Elischer, Sun Apr  4 16:34:33 WST 1993
  */
 /*
  * $Log: fd.c,v $
- * Revision 1.16  1993/06/21 09:39:52  deraadt
+ * Revision 1.17  1993/06/29 19:12:44  deraadt
+ * uninitialized variable reported by <jfw@ksr.com>
+ *
+ * Revision 1.16  1993/06/21  09:39:52  deraadt
  * I don't know what I did that was so critical, but now the floppy driver
  * works on my machine (it did not before). Big voodoo.
  *
@@ -275,7 +278,7 @@ struct isa_device *dev;
 	fdcu_t	fdcu = dev->id_masunit;
 	fdc_p	fdc = &fdc_data[dev->id_masunit];
 	fd_p	fd = &fd_data[dev->id_unit];
-	int	fdsu;
+	int	fdsu = dev->id_physid;
 
 	if(dev->id_physid < 0 || dev->id_physid > 1) {
 		printf("fdc%d: cannot support physical unit %d\n",
