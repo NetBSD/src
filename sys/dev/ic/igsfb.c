@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfb.c,v 1.15 2003/08/31 14:41:15 uwe Exp $ */
+/*	$NetBSD: igsfb.c,v 1.16 2003/11/07 15:02:28 uwe Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Valeriy E. Ushakov
@@ -31,7 +31,7 @@
  * Integraphics Systems IGA 168x and CyberPro series.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.15 2003/08/31 14:41:15 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.16 2003/11/07 15:02:28 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -900,6 +900,8 @@ igsfb_set_cursor(dc, p)
 	cc = &dc->dc_cursor;
 	v = p->which;
 
+	index =  count = icount = iwidth = 0;	/* XXX: gcc */
+
 	/* verify that the new cursor colormap is valid */
 	if (v & WSDISPLAY_CURSOR_DOCMAP) {
 		index = p->cmap.index;
@@ -1052,6 +1054,8 @@ igsfb_update_cursor(dc, which)
 	bus_space_tag_t iot = dc->dc_iot;
 	bus_space_handle_t ioh = dc->dc_ioh;
 	u_int8_t curctl;
+
+	curctl = 0;		/* XXX: gcc */
 
 	/*
 	 * We will need to tweak sprite control register for cursor
