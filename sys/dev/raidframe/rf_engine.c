@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_engine.c,v 1.32 2004/02/29 04:03:50 oster Exp $	*/
+/*	$NetBSD: rf_engine.c,v 1.33 2004/03/01 23:30:59 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -55,7 +55,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_engine.c,v 1.32 2004/02/29 04:03:50 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_engine.c,v 1.33 2004/03/01 23:30:59 oster Exp $");
 
 #include <sys/errno.h>
 
@@ -684,9 +684,11 @@ rf_DispatchDAG(RF_DagHeader_t *dag, void (*cbFunc) (void *),
 	RF_Raid_t *raidPtr;
 
 	raidPtr = dag->raidPtr;
+#if RF_ACC_TRACE > 0
 	if (dag->tracerec) {
 		RF_ETIMER_START(dag->tracerec->timer);
 	}
+#endif
 #if DEBUG
 #if RF_DEBUG_VALIDATE_DAG
 	if (rf_engineDebug || rf_validateDAGDebug) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.66 2004/02/29 04:03:50 oster Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.67 2004/03/01 23:30:58 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.66 2004/02/29 04:03:50 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.67 2004/03/01 23:30:58 oster Exp $");
 
 #include <sys/time.h>
 #include <sys/buf.h>
@@ -570,9 +570,10 @@ rf_ContinueReconstructFailedDisk(RF_RaidReconDesc_t *reconDesc)
 	case 0:
 
 		raidPtr->accumXorTimeUs = 0;
-
+#if RF_ACC_TRACE > 0
 		/* create one trace record per physical disk */
 		RF_Malloc(raidPtr->recon_tracerecs, raidPtr->numCol * sizeof(RF_AccTraceEntry_t), (RF_AccTraceEntry_t *));
+#endif
 
 		/* quiesce the array prior to starting recon.  this is needed
 		 * to assure no nasty interactions with pending user writes.
@@ -741,7 +742,9 @@ rf_ContinueReconstructFailedDisk(RF_RaidReconDesc_t *reconDesc)
 		       raidPtr->raidid, (int) reconDesc->hsStallCount);
 #endif				/* RF_RECON_STATS > 0 */
 		rf_FreeReconControl(raidPtr);
+#if RF_ACC_TRACE > 0
 		RF_Free(raidPtr->recon_tracerecs, raidPtr->numCol * sizeof(RF_AccTraceEntry_t));
+#endif
 		FreeReconDesc(reconDesc);
 
 	}
@@ -943,10 +946,12 @@ IssueNextReadRequest(RF_Raid_t *raidPtr, RF_RowCol_t col)
 	 * only to see if we can actually do it now */
 	rbuf->parityStripeID = ctrl->curPSID;
 	rbuf->which_ru = ctrl->ru_count;
+#if RF_ACC_TRACE > 0
 	memset((char *) &raidPtr->recon_tracerecs[col], 0,
 	    sizeof(raidPtr->recon_tracerecs[col]));
 	raidPtr->recon_tracerecs[col].reconacc = 1;
 	RF_ETIMER_START(raidPtr->recon_tracerecs[col].recon_timer);
+#endif
 	retcode = TryToRead(raidPtr, col);
 	return (retcode);
 }
@@ -1007,16 +1012,23 @@ TryToRead(RF_Raid_t *raidPtr, RF_RowCol_t col)
 	/* found something to read.  issue the I/O */
 	Dprintf4("RECON: Read for psid %ld on col %d offset %ld buf %lx\n",
 	    psid, col, ctrl->diskOffset, ctrl->rbuf->buffer);
+#if RF_ACC_TRACE > 0
 	RF_ETIMER_STOP(raidPtr->recon_tracerecs[col].recon_timer);
 	RF_ETIMER_EVAL(raidPtr->recon_tracerecs[col].recon_timer);
 	raidPtr->recon_tracerecs[col].specific.recon.recon_start_to_fetch_us =
 	    RF_ETIMER_VAL_US(raidPtr->recon_tracerecs[col].recon_timer);
 	RF_ETIMER_START(raidPtr->recon_tracerecs[col].recon_timer);
-
+#endif
 	/* should be ok to use a NULL proc pointer here, all the bufs we use
 	 * should be in kernel space */
 	req = rf_CreateDiskQueueData(RF_IO_TYPE_READ, ctrl->diskOffset, sectorsPerRU, ctrl->rbuf->buffer, psid, which_ru,
-	    ReconReadDoneProc, (void *) ctrl, NULL, &raidPtr->recon_tracerecs[col], (void *) raidPtr, 0, NULL);
+	    ReconReadDoneProc, (void *) ctrl, NULL, 
+#if RF_ACC_TRACE > 0
+				     &raidPtr->recon_tracerecs[col],
+#else
+				     NULL,
+#endif
+				     (void *) raidPtr, 0, NULL);
 
 	RF_ASSERT(req);		/* XXX -- fix this -- XXX */
 
@@ -1171,7 +1183,9 @@ IssueNextWriteRequest(RF_Raid_t *raidPtr)
 {
 	RF_RaidLayout_t *layoutPtr = &raidPtr->Layout;
 	RF_SectorCount_t sectorsPerRU = layoutPtr->sectorsPerStripeUnit * layoutPtr->SUsPerRU;
+#if RF_ACC_TRACE > 0
 	RF_RowCol_t fcol = raidPtr->reconControl->fcol;
+#endif
 	RF_ReconBuffer_t *rbuf;
 	RF_DiskQueueData_t *req;
 
@@ -1196,7 +1210,11 @@ IssueNextWriteRequest(RF_Raid_t *raidPtr)
 	    sectorsPerRU, rbuf->buffer,
 	    rbuf->parityStripeID, rbuf->which_ru,
 	    ReconWriteDoneProc, (void *) rbuf, NULL,
+#if RF_ACC_TRACE > 0
 	    &raidPtr->recon_tracerecs[fcol],
+#else
+				     NULL, 
+#endif
 	    (void *) raidPtr, 0, NULL);
 
 	RF_ASSERT(req);		/* XXX -- fix this -- XXX */
@@ -1228,12 +1246,13 @@ ReconReadDoneProc(void *arg, int status)
 		printf("Recon read failed!\n");
 		RF_PANIC();
 	}
+#if RF_ACC_TRACE > 0
 	RF_ETIMER_STOP(raidPtr->recon_tracerecs[ctrl->col].recon_timer);
 	RF_ETIMER_EVAL(raidPtr->recon_tracerecs[ctrl->col].recon_timer);
 	raidPtr->recon_tracerecs[ctrl->col].specific.recon.recon_fetch_to_return_us =
 	    RF_ETIMER_VAL_US(raidPtr->recon_tracerecs[ctrl->col].recon_timer);
 	RF_ETIMER_START(raidPtr->recon_tracerecs[ctrl->col].recon_timer);
-
+#endif
 	rf_CauseReconEvent(raidPtr, ctrl->col, NULL, RF_REVENT_READDONE);
 	return (0);
 }

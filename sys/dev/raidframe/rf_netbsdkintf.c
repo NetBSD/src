@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.174 2004/02/08 04:37:56 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.175 2004/03/01 23:30:58 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -146,7 +146,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.174 2004/02/08 04:37:56 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.175 2004/03/01 23:30:58 oster Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -1616,7 +1616,6 @@ raidinit(RF_Raid_t *raidPtr)
 	 * protectedSectors, as used in RAIDframe.  */
 
 	rs->sc_size = raidPtr->totalSectors;
-
 }
 #if (RF_INCLUDE_PARITY_DECLUSTERING_DS > 0)
 /* wake up the daemon & tell it to get us a spare table
@@ -1848,10 +1847,11 @@ rf_DispatchKernelIO(RF_DiskQueue_t *queue, RF_DiskQueueData_t *req)
 
 	case RF_IO_TYPE_READ:
 	case RF_IO_TYPE_WRITE:
-
+#if RF_ACC_TRACE > 0
 		if (req->tracerec) {
 			RF_ETIMER_START(req->tracerec->timer);
 		}
+#endif
 		InitBP(&raidbp->rf_buf, queue->rf_cinfo->ci_vp,
 		    op | bp->b_flags, queue->rf_cinfo->ci_dev,
 		    req->sectorOffset, req->numSector,
@@ -1920,7 +1920,7 @@ KernelWakeupFunc(struct buf *vbp)
 #if 1
 	bp->b_resid = raidbp->rf_buf.b_resid;
 #endif
-
+#if RF_ACC_TRACE > 0
 	if (req->tracerec) {
 		RF_ETIMER_STOP(req->tracerec->timer);
 		RF_ETIMER_EVAL(req->tracerec->timer);
@@ -1930,6 +1930,7 @@ KernelWakeupFunc(struct buf *vbp)
 		req->tracerec->num_phys_ios++;
 		RF_UNLOCK_MUTEX(rf_tracing_mutex);
 	}
+#endif
 	bp->b_bcount = raidbp->rf_buf.b_bcount;	/* XXXX ?? */
 
 	/* XXX Ok, let's get aggressive... If B_ERROR is set, let's go

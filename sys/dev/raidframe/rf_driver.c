@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.86 2004/02/29 04:03:50 oster Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.87 2004/03/01 23:30:58 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -73,7 +73,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.86 2004/02/29 04:03:50 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.87 2004/03/01 23:30:58 oster Exp $");
 
 #include "opt_raid_diagnostic.h"
 
@@ -304,7 +304,9 @@ rf_Configure(RF_Raid_t *raidPtr, RF_Config_t *cfgPtr, RF_AutoConfig_t *ac)
 		 */
 		rf_ConfigureDebug(cfgPtr);
 		DO_INIT_CONFIGURE(rf_ConfigureDebugMem);
+#if RF_ACC_TRACE > 0
 		DO_INIT_CONFIGURE(rf_ConfigureAccessTrace);
+#endif
 		DO_INIT_CONFIGURE(rf_ConfigureMapModule);
 		DO_INIT_CONFIGURE(rf_ConfigureReconEvent);
 		DO_INIT_CONFIGURE(rf_ConfigureCallback);
@@ -479,7 +481,9 @@ rf_AllocRaidAccDesc(RF_Raid_t *raidPtr, RF_IoType_t type,
 	desc->state = 0;
 
 	desc->status = 0;
+#if RF_ACC_TRACE > 0
 	memset((char *) &desc->tracerec, 0, sizeof(RF_AccTraceEntry_t));
+#endif
 	desc->callbackFunc = NULL;
 	desc->callbackArg = NULL;
 	desc->next = NULL;
@@ -567,8 +571,9 @@ rf_DoAccess(RF_Raid_t * raidPtr, RF_IoType_t type, int async_flag,
 	if (desc == NULL) {
 		return (ENOMEM);
 	}
+#if RF_ACC_TRACE > 0
 	RF_ETIMER_START(desc->tracerec.tot_timer);
-
+#endif
 	desc->async_flag = async_flag;
 
 	rf_ContinueRaidAccess(desc);
