@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.16 2002/08/17 01:08:21 thorpej Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.17 2002/08/17 16:36:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -77,10 +77,10 @@
 
 	.text
 
-Lwhichqs:
+.Lwhichqs:
 	.word	_C_LABEL(sched_whichqs)
 
-Lqs:
+.Lqs:
 	.word	_C_LABEL(sched_qs)
 
 /*
@@ -111,7 +111,7 @@ ENTRY(setrunqueue)
 	ldrb	r1, [r0, #(P_PRIORITY)]
 
 	/* Indicate that there is a process on this queue */
-	ldr	r12, Lwhichqs
+	ldr	r12, .Lwhichqs
 	mov	r1, r1, lsr #2
 	ldr	r2, [r12]
 	mov	r3, #0x00000001
@@ -120,7 +120,7 @@ ENTRY(setrunqueue)
 	str	r2, [r12]
 
 	/* Get the address of the queue */
-	ldr	r2, Lqs
+	ldr	r2, .Lqs
 	add	r1, r2, r1, lsl # 3
 
 	/* Hook the process in */
@@ -141,17 +141,17 @@ ENTRY(setrunqueue)
 .Lsetrunqueue_erg:
 	mov	r2, r1
 	mov	r1, r0
-	add	r0, pc, #Ltext1 - . - 8
+	add	r0, pc, #.Ltext1 - . - 8
 	bl	_C_LABEL(printf)
 
-	ldr	r2, Lqs
+	ldr	r2, .Lqs
 	ldr	r1, [r2]
-	add	r0, pc, #Ltext2 - . - 8
+	add	r0, pc, #.Ltext2 - . - 8
 	b	_C_LABEL(panic)	
 
-Ltext1:
+.Ltext1:
 	.asciz	"setrunqueue : %08x %08x\n"
-Ltext2:
+.Ltext2:
 	.asciz	"setrunqueue : [qs]=%08x qs=%08x\n"
 	.align	0
 #endif
@@ -186,7 +186,7 @@ ENTRY(remrunqueue)
 	teq	r2, r3
 
 	/* This could be reworked to avoid the use of r4 */
-	ldreq	r12, Lwhichqs
+	ldreq	r12, .Lwhichqs
 	moveq	r3, #0x00000001
 	ldreq	r2, [r12]
 	moveq	r3, r3, lsl r1
@@ -207,16 +207,16 @@ ENTRY(remrunqueue)
  * This function has several entry points
  */
 
-Lcurproc:
+.Lcurproc:
 	.word	_C_LABEL(curproc)
 
-Lcurpcb:
+.Lcurpcb:
 	.word	_C_LABEL(curpcb)
 
-Lwant_resched:
+.Lwant_resched:
 	.word	_C_LABEL(want_resched)
 
-Lcpufuncs:	
+.Lcpufuncs:	
 	.word	_C_LABEL(cpufuncs)
 	
 	.data
@@ -225,7 +225,7 @@ _C_LABEL(curpcb):
 	.word	0x00000000
 	.text
 
-Lblock_userspace_access:
+.Lblock_userspace_access:
 	.word	_C_LABEL(block_userspace_access)
 
 .Lcpu_do_powersave:
@@ -261,7 +261,7 @@ ASENTRY_NP(idle)
 	b	1b
 
 2:	/* Powersave idle. */
-	ldr	r4, Lcpufuncs
+	ldr	r4, .Lcpufuncs
 3:	ldr	r3, [r7]		/* r3 = whichqs */
 	teq	r3, #0x00000000
 	bne	.Lswitch_search
@@ -296,8 +296,8 @@ ENTRY(cpu_switch)
 	 * a valid process (curproc = 0).  Zero the current PCB pointer
 	 * while we're at it.
 	 */
-	ldr	r7, Lcurproc
-	ldr	r6, Lcurpcb
+	ldr	r7, .Lcurproc
+	ldr	r6, .Lcurpcb
 	mov	r0, #0x00000000
 	ldr	r1, [r7]		/* r1 = curproc */
 	str	r0, [r7]		/* curproc = NULL */
@@ -329,7 +329,7 @@ ENTRY(cpu_switch)
 
 	/* First phase : find a new process */
 
-	ldr	r7, Lwhichqs
+	ldr	r7, .Lwhichqs
 
 	/* rem: r5 = old proc */
 	/* rem: r7 = &whichqs */
@@ -364,7 +364,7 @@ ENTRY(cpu_switch)
  	rsb	r5, r3, #0
  	ands	r0, r3, r5
 	
-	adr	r5, Lcpu_switch_ffs_table
+	adr	r5, .Lcpu_switch_ffs_table
 	
 				    /* X = R0 */
 	orr	r4, r0, r0, lsl #4  /* r4 = X * 0x11 */ 
@@ -372,7 +372,7 @@ ENTRY(cpu_switch)
 	rsb	r4, r4, r4, lsl #16 /* r4 = X * 0x0450fbaf */
 	
 	/* used further down, saves SA stall */
-	ldr	r6, Lqs
+	ldr	r6, .Lqs
               
 	/* now lookup in table indexed on top 6 bits of a4 */
 	ldrb	r4, [ r5, r4, lsr #26 ]
@@ -414,7 +414,7 @@ ENTRY(cpu_switch)
 	str	r0, [r7, #(P_BACK)]
 
 	/* Update the RAM copy of the queue not empty flags word. */
-	ldr	r7, Lwhichqs
+	ldr	r7, .Lwhichqs
 	str	r3, [r7]
 
 	/* rem: r1 = old proc */
@@ -424,7 +424,7 @@ ENTRY(cpu_switch)
 	/* rem: interrupts are disabled */
 
 	/* Clear the want_resched flag */
-	ldr	r7, Lwant_resched
+	ldr	r7, .Lwant_resched
 	mov	r0, #0x00000000
 	str	r0, [r7]
 
@@ -450,11 +450,11 @@ ENTRY(cpu_switch)
 	strb	r0, [r6, #(P_STAT)]
 
 	/* We have a new curproc now so make a note it */
-	ldr	r7, Lcurproc
+	ldr	r7, .Lcurproc
 	str	r6, [r7]
 
 	/* Hook in a new pcb */
-	ldr	r7, Lcurpcb
+	ldr	r7, .Lcurpcb
 	ldr	r0, [r6, #(P_ADDR)]
 	str	r0, [r7]
 
@@ -531,13 +531,13 @@ ENTRY(cpu_switch)
 	/*
 	 * Don't allow user space access between the purge and the switch.
 	 */
-	ldr	r3, Lblock_userspace_access
+	ldr	r3, .Lblock_userspace_access
 	mov	r1, #0x00000001
 	mov	r2, #0x00000000
 	str	r1, [r3]
 
 	stmfd	sp!, {r0-r3}
-	ldr	r1, Lcpufuncs
+	ldr	r1, .Lcpufuncs
 	add	lr, pc, #.Lcs_cache_purged - . - 8
 	ldr	pc, [r1, #CF_IDCACHE_WBINV_ALL]
 
@@ -562,7 +562,7 @@ ENTRY(cpu_switch)
 	ldr	r0, [r1, #(PCB_PAGEDIR)]
 
 	/* Switch the memory to the new process */
-	ldr	r3, Lcpufuncs
+	ldr	r3, .Lcpufuncs
 	add	lr, pc, #.Lcs_context_switched - . - 8
 	ldr	pc, [r3, #CF_CONTEXT_SWITCH]
        
@@ -614,15 +614,9 @@ ENTRY(cpu_switch)
 	 * it.  Load up registers the way Lcs_cache_purge_skipped
 	 * expects.  Userspace access already blocked in switch_exit().
 	 */
-	ldr	r3, Lblock_userspace_access
+	ldr	r3, .Lblock_userspace_access
 	mov	r2, #0x00000000
 	b	.Lcs_cache_purge_skipped
-
-Lproc0:
-	.word	_C_LABEL(proc0)
-
-Lkernel_map:
-	.word	_C_LABEL(kernel_map)
 
 /*
  * void switch_exit(struct proc *p, struct proc *p0);
@@ -640,17 +634,17 @@ ENTRY(switch_exit)
 	mov	r3, r0
 
 	/* In case we fault */
-	ldr	r0, Lcurproc
+	ldr	r0, .Lcurproc
 	mov	r2, #0x00000000
 	str	r2, [r0]
 
-/*	ldr	r0, Lcurpcb
+/*	ldr	r0, .Lcurpcb
 	str	r2, [r0]*/
 
 	/*
 	 * Don't allow user space access between the purge and the switch.
 	 */
-	ldr	r0, Lblock_userspace_access
+	ldr	r0, .Lblock_userspace_access
 	mov	r2, #0x00000001
 	str	r2, [r0]
 
@@ -658,7 +652,7 @@ ENTRY(switch_exit)
 
 	stmfd	sp!, {r0-r3}
 
-	ldr	r0, Lcpufuncs
+	ldr	r0, .Lcpufuncs
 	add	lr, pc, #.Lse_cache_purged - . - 8
 	ldr	pc, [r0, #CF_IDCACHE_WBINV_ALL]
 
@@ -671,7 +665,7 @@ ENTRY(switch_exit)
 	ldr	r0, [r2, #(PCB_PAGEDIR)]
 
 	/* Switch the memory to the new process */
-	ldr	r4, Lcpufuncs
+	ldr	r4, .Lcpufuncs
 	add	lr, pc, #.Lse_context_switched - . - 8
 	ldr	pc, [r4, #CF_CONTEXT_SWITCH]
        
@@ -682,7 +676,7 @@ ENTRY(switch_exit)
 
 	/* This is not really needed ! */
 	/* Yes it is for the su and fu routines */
-	ldr	r0, Lcurpcb
+	ldr	r0, .Lcurpcb
 	str	r2, [r0]
 
 	IRQenable
@@ -696,11 +690,11 @@ ENTRY(switch_exit)
 	bl	_C_LABEL(exit2)
 
 	/* Paranoia */
-	ldr	r1, Lcurproc
+	ldr	r1, .Lcurproc
 	mov	r0, #0x00000000
 	str	r0, [r1]
 
-	ldr	r7, Lwhichqs		/* r7 = &whichqs */
+	ldr	r7, .Lwhichqs		/* r7 = &whichqs */
 	mov	r5, #0x00000000		/* r5 = old proc = NULL */
 	b	.Lswitch_search
 
@@ -736,8 +730,8 @@ ENTRY(proc_trampoline)
 
 	movs	pc, lr			/* Exit */
 
-	.type Lcpu_switch_ffs_table, _ASM_TYPE_OBJECT;
-Lcpu_switch_ffs_table:
+	.type .Lcpu_switch_ffs_table, _ASM_TYPE_OBJECT;
+.Lcpu_switch_ffs_table:
 /* same as ffs table but all nums are -1 from that */
 /*               0   1   2   3   4   5   6   7           */
 	.byte	 0,  0,  1, 12,  2,  6,  0, 13  /*  0- 7 */
