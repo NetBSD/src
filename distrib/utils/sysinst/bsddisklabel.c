@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.31 2004/08/14 16:06:36 dsl Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.32 2005/01/20 21:59:35 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -114,7 +114,8 @@ static int
 save_ptn(int ptn, int start, int size, int fstype, const char *mountpt)
 {
 	static int maxptn;
-	int p;
+	partinfo *p;
+	int pp;
 
 	if (maxptn == 0)
 		maxptn = getmaxpartitions();
@@ -138,23 +139,18 @@ save_ptn(int ptn, int start, int size, int fstype, const char *mountpt)
 	if (fstype == FS_UNUSED)
 		return ptn;
 
-	bsdlabel[ptn].pi_fstype = fstype;
-	bsdlabel[ptn].pi_offset = start;
-	bsdlabel[ptn].pi_size = size;
-	if (fstype == FS_BSDFFS) {
-		bsdlabel[ptn].pi_frag = 8;
-		bsdlabel[ptn].pi_fsize = 1024;
-		bsdlabel[ptn].pi_flags |= PIF_NEWFS;
-	}
+	p = bsdlabel + ptn;
+	p->pi_offset = start;
+	p->pi_size = size;
+	set_ptype(p, fstype, PIF_NEWFS);
 
 	if (mountpt != NULL) {
-		for (p = 0; p < maxptn; p++) {
-			if (strcmp(bsdlabel[p].pi_mount, mountpt) == 0)
-				bsdlabel[p].pi_flags &= ~PIF_MOUNT;
+		for (pp = 0; pp < maxptn; pp++) {
+			if (strcmp(bsdlabel[pp].pi_mount, mountpt) == 0)
+				bsdlabel[pp].pi_flags &= ~PIF_MOUNT;
 		}
-		strlcpy(bsdlabel[ptn].pi_mount, mountpt,
-			sizeof bsdlabel[0].pi_mount);
-		bsdlabel[ptn].pi_flags |= PIF_MOUNT;
+		strlcpy(p->pi_mount, mountpt, sizeof p->pi_mount);
+		p->pi_flags |= PIF_MOUNT;
 	}
 
 	return ptn;

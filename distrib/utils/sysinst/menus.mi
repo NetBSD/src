@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi,v 1.19 2004/11/11 21:24:40 dsl Exp $	*/
+/*	$NetBSD: menus.mi,v 1.20 2005/01/20 21:59:36 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -79,16 +79,11 @@ menu selfskind, title MSG_Select_the_type, exitstring MSG_unchanged, y=6, x=30;
 	};
 	option "unused", exit, action 
 	    { memset(arg, 0, sizeof (partinfo)); };
-	option "FFSv1", exit, action 
-	    { set_ptype(arg, FS_BSDFFS, 0, 8192); };
-	option "FFSv2", exit, action 
-	    { set_ptype(arg, FS_BSDFFS, PIF_FFSv2, 8192); };
-	option "swap", exit, action 
-	    { set_ptype(arg, FS_SWAP, 0, 0); };
-	option "msdos", exit, action 
-	    { set_ptype(arg, FS_MSDOS, 0, 0); };
-	option "LFS", exit, action 
-	    { set_ptype(arg, FS_BSDLFS, 0, 8192); };
+	option "FFSv1", exit, action { set_ptype(arg, FS_BSDFFS, 0); };
+	option "FFSv2", exit, action { set_ptype(arg, FS_BSDFFS, PIF_FFSv2); };
+	option "swap",  exit, action { set_ptype(arg, FS_SWAP, 0); };
+	option "msdos", exit, action { set_ptype(arg, FS_MSDOS, 0); };
+	option "LFS",   exit, action { set_ptype(arg, FS_BSDLFS, 0); };
 	option MSG_other_types, action 
 	    { extern int all_fstype_menu;
 	      m->opts[m->cursel].opt_menu = all_fstype_menu; };
