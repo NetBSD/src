@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_loan.c,v 1.19 1999/09/12 01:17:36 chs Exp $	*/
+/*	$NetBSD: uvm_loan.c,v 1.20 2000/04/10 00:32:46 thorpej Exp $	*/
 
 /*
  *
@@ -620,7 +620,8 @@ uvm_loanzero(ufi, output, flags)
 
 	if ((flags & UVM_LOAN_TOANON) == 0) {	/* loaning to kernel-page */
 
-		while ((pg = uvm_pagealloc(NULL, 0, NULL, 0)) == NULL) {
+		while ((pg = uvm_pagealloc(NULL, 0, NULL,
+		    UVM_PGA_ZERO)) == NULL) {
 			uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, 
 			    ufi->entry->object.uvm_obj, NULL);
 			uvm_wait("loanzero1");
@@ -634,8 +635,7 @@ uvm_loanzero(ufi, output, flags)
 			/* ... and try again */
 		}
 		
-		/* got a page, zero it and return */
-		uvm_pagezero(pg);		/* clears PG_CLEAN */
+		/* got a zero'd page; return */
 		pg->flags &= ~(PG_BUSY|PG_FAKE);
 		UVM_PAGE_OWN(pg, NULL);
 		**output = pg;
@@ -650,7 +650,7 @@ uvm_loanzero(ufi, output, flags)
 
 	/* loaning to an anon */
 	while ((anon = uvm_analloc()) == NULL || 
-	    (pg = uvm_pagealloc(NULL, 0, anon, 0)) == NULL) {
+	    (pg = uvm_pagealloc(NULL, 0, anon, UVM_PGA_ZERO)) == NULL) {
 		
 		/* unlock everything */
 		uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap,
@@ -675,8 +675,7 @@ uvm_loanzero(ufi, output, flags)
 		/* ... and try again */
 	}
 
-	/* got a page, zero it and return */
-	uvm_pagezero(pg);		/* clears PG_CLEAN */
+	/* got a zero'd page; return */
 	pg->flags &= ~(PG_BUSY|PG_FAKE);
 	UVM_PAGE_OWN(pg, NULL);
 	uvm_lock_pageq();
