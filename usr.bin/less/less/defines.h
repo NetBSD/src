@@ -1,3 +1,5 @@
+/*	$NetBSD: defines.h,v 1.1.1.2 1997/04/22 13:45:15 mrg Exp $	*/
+
 /* defines.h.  Generated automatically by configure.  */
 /* defines.h.in.  Generated automatically from configure.in by autoheader.  */
 /* Unix definition file for less.  -*- C -*-
@@ -112,14 +114,24 @@
 /* Settings always true on Unix.  */
 
 /*
- * Define MSOFTC if compiling under Microsoft C.
+ * Define MSDOS_COMPILER if compiling under Microsoft C.
  */
-#define	MSOFTC	0
+#define	MSDOS_COMPILER	0
+
+/*
+ * Pathname separator character.
+ */
+#define	PATHNAME_SEP	"/"
 
 /*
  * HAVE_SYS_TYPES_H is 1 if your system has <sys/types.h>.
  */
 #define HAVE_SYS_TYPES_H	1
+
+/*
+ * Define if you have the <sgstat.h> header file.
+ */
+/* #undef HAVE_SGSTAT_H */
 
 /*
  * HAVE_STAT is 1 if your system has the stat() call.
@@ -141,6 +153,23 @@
  * HAVE_SHELL is 1 if your system supports a SHELL command interpreter.
  */
 #define	HAVE_SHELL	1
+
+/* 
+ * HAVE_DUP is 1 if your system has the dup() call.
+ */
+#define	HAVE_DUP	1
+
+/*
+ * Sizes of various buffers.
+ */
+#define	CMDBUF_SIZE	512	/* Buffer for multichar commands */
+#define	UNGOT_SIZE	100	/* Max chars to unget() */
+#define	LINEBUF_SIZE	1024	/* Max size of line in input file */
+#define	OUTBUF_SIZE	1024	/* Output buffer */
+#define	PROMPT_SIZE	200	/* Max size of prompt string */
+#define	TERMBUF_SIZE	2048	/* Termcap buffer for tgetent */
+#define	TERMSBUF_SIZE	1024	/* Buffer to hold termcap strings */
+#define	TAGLINE_SIZE	512	/* Max size of line in tags file */
 
 /* Settings automatically determined by configure.  */
 
@@ -174,6 +203,9 @@
 /* Define HAVE_VOID if your compiler supports the "void" type. */
 #define HAVE_VOID 1
 
+/* Define HAVE_CONST if your compiler supports the "const" modifier. */
+#define HAVE_CONST 1
+
 /* Define HAVE_TIME_T if your system supports the "time_t" type. */
 #define HAVE_TIME_T 1
 
@@ -184,15 +216,18 @@
 #define HAVE_FILENO 1
 
 /* Define HAVE_ERRNO if you have the errno variable */
+/* Define MUST_DEFINE_ERRNO if you have errno but it is not define 
+ * in errno.h */
 #define HAVE_ERRNO 1
+/* #undef MUST_DEFINE_ERRNO */
 
 /* Define HAVE_SYS_ERRLIST if you have the sys_errlist[] variable */
 #define HAVE_SYS_ERRLIST 1
 
 /* Define HAVE_OSPEED if your termcap library has the ospeed variable */
-#define HAVE_OSPEED 1
 /* Define MUST_DEFINE_OSPEED if you have ospeed but it is not defined
  * in termcap.h. */
+#define HAVE_OSPEED 1
 #define MUST_DEFINE_OSPEED 1
 
 /* Define HAVE_LOCALE if you have locale.h and setlocale. */
@@ -228,8 +263,14 @@
 /* Define if you have the <fcntl.h> header file.  */
 #define HAVE_FCNTL_H 1
 
+/* Define if you have the <limits.h> header file.  */
+#define HAVE_LIMITS_H 1
+
 /* Define if you have the <stdio.h> header file.  */
 #define HAVE_STDIO_H 1
+
+/* Define if you have the <string.h> header file.  */
+#define HAVE_STRING_H 1
 
 /* Define if you have the <sys/ioctl.h> header file.  */
 #define HAVE_SYS_IOCTL_H 1
