@@ -1,4 +1,4 @@
-/*	$NetBSD: nwmmu.S,v 1.3 2001/11/23 17:39:06 thorpej Exp $	*/
+/*	$NetBSD: nwmmu.S,v 1.4 2002/02/15 17:05:20 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -48,7 +48,6 @@ ENTRY_NP(kernel_text)
 ASENTRY_NP(nwstart)
 	mov	r6, #0x7c000000
 	add	r6, r6, #0x3f8
-	mov	r3, #0
 	mov	r3, #(AP_KRW << AP_SECTION_SHIFT)
 	add	r3, r3, #(L1_SECTION|PT_B|PT_C)
 	mov	r2, #0x100000		/* advance by 1MB */
