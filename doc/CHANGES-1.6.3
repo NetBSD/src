@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.101 2004/05/29 21:14:56 tron Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.102 2004/05/29 21:15:26 tron Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -868,8 +868,8 @@ usr.bin/ldd/ldd_elf/ldd.c			patch
 
 sys/dev/pcmcia/if_ne_pcmcia.c			1.113
 
-My incarnation of the RPTI 400 card tells 0:0:0:0:0:0 when using the ASIC
-to read the Ethernet address. However, as other OS's drivers suggest,
-something which looks right is at offset 0x110.
-[is, ticket #1703]
+	My incarnation of the RPTI 400 card tells 0:0:0:0:0:0 when using the
+	ASIC to read the Ethernet address. However, as other OS's drivers
+	suggest, something which looks right is at offset 0x110.
+	[is, ticket #1703]
 
