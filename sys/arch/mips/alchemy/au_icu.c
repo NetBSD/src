@@ -1,4 +1,4 @@
-/*	$NetBSD: au_icu.c,v 1.4 2002/11/17 04:56:57 simonb Exp $	*/
+/*	$NetBSD: au_icu.c,v 1.5 2003/04/01 17:28:24 hpeyerl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -268,10 +268,18 @@ au_intr_establish(int irq, int req, int level, int type,
 		case IST_PULSE:
 		case IST_EDGE:
 			panic("unsupported irq type %d", type);
+			/* NOTREACHED */
 		case IST_LEVEL:
+		case IST_LEVEL_HIGH:
 			REGVAL(icu_base + IC_CONFIG2_SET) = irq;
 			REGVAL(icu_base + IC_CONFIG1_CLEAR) = irq;
 			REGVAL(icu_base + IC_CONFIG0_SET) = irq;
+			break;
+		case IST_LEVEL_LOW:
+			REGVAL(icu_base + IC_CONFIG2_SET) = irq;
+			REGVAL(icu_base + IC_CONFIG1_SET) = irq;
+			REGVAL(icu_base + IC_CONFIG0_CLEAR) = irq;
+			break;
 		}
 
 		/* XXX handle GPIO interrupts - not done at all yet */
