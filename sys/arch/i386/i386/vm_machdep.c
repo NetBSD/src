@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.86 2000/01/20 22:18:56 sommerfeld Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.86.2.1 2000/02/20 18:03:42 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -338,6 +338,7 @@ pagemove(from, to, size)
 				pmap_update_pg((vaddr_t) to);
 			if (ofpte & PG_V)
 				pmap_update_pg((vaddr_t) from);
+			/* XXX MP tlb shootdown! */
 		}
 		from += NBPG;
 		to += NBPG;
