@@ -7,4 +7,10 @@
 
 #ifdef __indr_reference
 __indr_reference(_vwarnx, vwarnx);
+#else
+
+#define _vwarnx	vwarnx
+#define rcsid   _rcsid
+#include "vwarnx.c"
+
 #endif
