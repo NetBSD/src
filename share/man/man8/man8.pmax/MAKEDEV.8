@@ -6,7 +6,7 @@
 .\" *** DO NOT EDIT - any changes will be lost!!!
 .\" *** ------------------------------------------------------------------
 .\"
-.\"	$NetBSD: MAKEDEV.8,v 1.1 1999/09/18 00:31:03 hubertf Exp $
+.\"	$NetBSD: MAKEDEV.8,v 1.2 2000/05/02 00:31:00 hubertf Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -92,21 +92,33 @@ by a unit number.
 . It Ar tz#
 SCSI tapes, DEC TK50 cartridge tape, see
 .Xr tz 4 
+. It Ar st#
+MI SCSI tape drives, see
+.Xr st 4 
 . El
 .It Disks:
 . Bl -tag -width 0123456789 -compact
 . It Ar rz#
 SCSI disks, see
 .Xr rz 4 
-. It Ar vnd#
-``file'' pseudo-disks, see
-.Xr vnd 4 
 . It Ar ccd#
 Concatenated disk driver, see
 .Xr ccd 4 
+. It Ar cd#
+MI SCSI cdroms, see
+.Xr cd 4 
+. It Ar md#
+Memory pseudo-disk devices, see
+.Xr md 4 
 . It Ar raid#
 RAIDframe disk driver, see
 .Xr raid 4 
+. It Ar sd#
+MI SCSI disks, see
+.Xr sd 4 
+. It Ar vnd#
+``file'' pseudo-disks, see
+.Xr vnd 4 
 . El
 .It Terminal multiplexors:
 . Bl -tag -width 0123456789 -compact
@@ -128,16 +140,31 @@ Set of 16 master and slave pseudo terminals, see
 . It Ar bpf#
 Packet filter, see
 .Xr bpf 4 
+. It Ar ch#
+SCSI media changer, see
+.Xr ch 4 
+. It Ar fd
+File descriptors (/dev/fd/*)
+. It Ar ipl
+IP packet filter
 . It Ar lkm
 Loadable kernel modules interface (unsupported in 1.3_ALPHA), see
 .Xr lkm 4 
+. It Ar random
+Random number generator
+. It Ar scsibus#
+SCSI busses, see
+.Xr scsictl 8 ,
+.Xr scsi 4 
+. It Ar ss#
+MI scsi scanners, see
+.Xr ss 4 
 . It Ar tun#
 Network tunnel driver, see
 .Xr tun 4 
-. It Ar ipl
-IP packet filter
-. It Ar random
-Random number generator
+. It Ar uk#
+MI unknown scsi devices, see
+.Xr uk 4 
 . El
 .It Platform-specific devices:
 . Bl -tag -width 0123456789 -compact
@@ -151,38 +178,13 @@ PixelStamp Xserver access, see
 . El
 .It The following names are reserved for future use:
 . Bl -tag -width 0123456789 -compact
-. It Ar pm#
-Raw interface to PMAX graphics devices
-. It Ar cfb#
-Raw interface to turbochannel PMAG-BA color frame buffer
-. It Ar xcfb#
-Raw interface to maxine graphics devices
-. It Ar mfb#
-Raw interface to mono graphics devices
-. It Ar scsibus#
-SCSI busses, see
-.Xr scsictl 8 ,
-.Xr scsi 4 
-. It Ar sd#
-MI SCSI disks, see
-.Xr sd 4 
-. It Ar st#
-MI SCSI tape drives, see
-.Xr st 4 
-. It Ar cd#
-MI SCSI cdroms, see
-.Xr cd 4 
-. It Ar ss#
-MI scsi scanners, see
-.Xr ss 4 
-. It Ar uk#
-MI unknown scsi devices, see
-.Xr uk 4 
-. It Ar fdc#
-Baseboard 2.88 floppy disk on Personal DECstations
 . It Ar audio#
 Phone-quality audio on Personal DECstations, see
 .Xr audio 4 
+. It Ar fdc#
+Baseboard 2.88 floppy disk on Personal DECstations
+. It Ar ttyE?
+Workstation console (``wscons'') glass-tty emulators
 . El
 .El
 .Pp

@@ -6,7 +6,7 @@
 .\" *** DO NOT EDIT - any changes will be lost!!!
 .\" *** ------------------------------------------------------------------
 .\"
-.\"	$NetBSD: MAKEDEV.8,v 1.7 1999/09/18 00:31:04 hubertf Exp $
+.\"	$NetBSD: MAKEDEV.8,v 1.8 2000/05/02 00:31:01 hubertf Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -121,7 +121,8 @@ MSCP disks (ra??, rd??)
 MSCP floppy disk (rx33/50/...), see
 .Xr rx 4 
 . It Ar rl#
-Unibus rl02
+Unibus rl02, see
+.Xr rl 4 
 . It Ar rb#
 730 idc w/ rb80 and/or rb02
 . It Ar ccd#
@@ -142,7 +143,7 @@ SCSI disks, see
 SCSI CD-ROM, see
 .Xr cd 4 
 . It Ar md#
-Memory virtual disk, see
+Memory pseudo-disk devices, see
 .Xr md 4 
 . El
 .It Terminal multiplexors:

@@ -38,7 +38,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)MAKEDEV.8	5.2 (Berkeley) 3/22/91
-.\"	$NetBSD: MAKEDEV.8,v 1.6 1999/09/18 00:31:03 hubertf Exp $
+.\"	$NetBSD: MAKEDEV.8,v 1.7 2000/05/02 00:31:00 hubertf Exp $
 .\"
 .Dd Feburary 21, 1994
 .Dt MAKEDEV 8 sparc
@@ -115,6 +115,9 @@ Concatenated disk devices, see
 . It Ar raid#
 RAIDframe disk driver, see
 .Xr raid 4 
+. It Ar md#
+Memory pseudo-disk devices, see
+.Xr md 4 
 . El
 .It Pseudo terminals:
 . Bl -tag -width 0123456789 -compact
@@ -160,9 +163,6 @@ Loadable kernel modules interface, see
 . It Ar tun#
 Network tunnel driver, see
 .Xr tun 4 
-. It Ar md#
-Memory pseudo-disk driver, see
-.Xr md 4 
 . It Ar ipl
 IP filter
 . It Ar random

@@ -6,7 +6,7 @@
 .\" *** DO NOT EDIT - any changes will be lost!!!
 .\" *** ------------------------------------------------------------------
 .\"
-.\"	$NetBSD: MAKEDEV.8,v 1.1 1999/09/20 03:46:30 sakamoto Exp $
+.\"	$NetBSD: MAKEDEV.8,v 1.2 2000/05/02 00:30:57 hubertf Exp $
 .\"
 .\" Copyright (c) 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -114,7 +114,7 @@ SCSI CD-ROM, see
 ``file'' pseudo-disks, see
 .Xr vnd 4 
 . It Ar md#
-Memory pseudo-disks, see
+Memory pseudo-disk devices, see
 .Xr md 4 
 . It Ar ccd#
 Contatenated disk devices, see
@@ -182,7 +182,8 @@ Ip filter
 . It Ar random
 Random number generator
 . It Ar speaker
-Pc speaker
+Pc speaker, see
+.Xr speaker 4 
 . It Ar lkm
 Loadable kernel modules interface, see
 .Xr lkm 4 
