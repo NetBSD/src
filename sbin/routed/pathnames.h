@@ -36,3 +36,10 @@
 #include <paths.h>
 
 #define	_PATH_GATEWAYS	"/etc/gateways"
+
+/* All remotely requested trace files must either start with this prefix
+ * or be the same as the tracefile specified when the daemon was started.
+ * If this is a directory, routed will create log files in it.  That
+ * might be a security problem.
+ */
+#define _PATH_TRACE	"/tmp/routed.log"
