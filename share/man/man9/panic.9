@@ -1,4 +1,4 @@
-.\"     $NetBSD: panic.9,v 1.9 2001/09/04 02:51:16 wiz Exp $
+.\"     $NetBSD: panic.9,v 1.10 2001/12/04 19:56:55 jdolecek Exp $
 .\"
 .\" Copyright (c) 1996 Michael Graff.
 .\" All rights reserved.
@@ -72,7 +72,7 @@ to
 If control remains in
 .Fn panic ,
 an attempt is made to save an image of system memory on the
-dump device that was configured at the time the kernel was compiled.
+configured dump device.
 .Pp
 If during the process of handling the panic,
 .Fn panic
@@ -89,4 +89,5 @@ function does not return.
 .Xr ipkdb 4 ,
 .Xr options 4 ,
 .Xr savecore 8 ,
-.Xr sysctl 8
+.Xr sysctl 8 ,
+.Xr swapctl 8
