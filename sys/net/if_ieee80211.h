@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee80211.h,v 1.32 2003/05/16 01:26:17 dyoung Exp $	*/
+/*	$NetBSD: if_ieee80211.h,v 1.33 2003/07/06 07:54:43 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -515,9 +515,14 @@ struct ieee80211com {
 	u_int8_t		ic_sup_rates[IEEE80211_RATE_SIZE];
 	u_char			ic_chan_avail[roundup(IEEE80211_CHAN_MAX,NBBY)];
 	u_char			ic_chan_active[roundup(IEEE80211_CHAN_MAX, NBBY)];
+	u_char			ic_chan_scan[roundup(IEEE80211_CHAN_MAX, NBBY)];
 	struct ifqueue		ic_mgtq;
 	struct ifqueue		ic_pwrsaveq;
 	int			ic_flags;
+	int                     ic_hdrlen;	/* either 0 or extended header
+						 * length, e.g. for addr4
+						 */
+
 	enum ieee80211_phytype	ic_phytype;
 	enum ieee80211_opmode	ic_opmode;
 	enum ieee80211_state	ic_state;
@@ -544,6 +549,7 @@ struct ieee80211com {
 	u_int32_t		ic_iv;		/* initial vector for wep */
 	u_int32_t		ic_aid_bitmap[IEEE80211_MAX_AID / 32 + 1];
 	u_int16_t		ic_max_aid;
+	struct ifmedia		ic_media;
 };
 #ifdef __NetBSD__
 #define	ic_if		ic_ec.ec_if
@@ -552,6 +558,9 @@ struct ieee80211com {
 #define	ic_if		ic_ac.ac_if
 #endif
 #define	ic_softc	ic_if.if_softc
+
+#define IEEE80211_HEADER_LEN(ic) (((ic)->ic_hdrlen > 0) \
+	? (ic)->ic_hdrlen : sizeof(struct ieee80211_frame))
 
 #define	IEEE80211_SEND_MGMT(ic,ni,type,arg)	do {			      \
 	if ((ic)->ic_send_mgmt[(type)>>IEEE80211_FC0_SUBTYPE_SHIFT] != NULL)  \
