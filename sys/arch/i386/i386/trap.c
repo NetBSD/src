@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.100 1997/03/19 03:19:01 mycroft Exp $	*/
+/*	$NetBSD: trap.c,v 1.101 1997/04/09 23:35:07 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -387,27 +387,19 @@ trap(frame)
 			}
 		}
 
-		/* check if page table is mapped, if not, fault it first */
+		/* Create a page table page if necessary, and wire it. */
 		if ((PTD[pdei(va)] & PG_V) == 0) {
 			v = trunc_page(vtopte(va));
-			rv = vm_fault(map, v, ftype, FALSE);
+			rv = vm_map_pageable(map, v, v + NBPG, FALSE);
 			if (rv != KERN_SUCCESS)
 				goto nogo;
-			/* check if page table fault, increment wiring */
-			vm_map_pageable(map, v, round_page(v+1), FALSE);
-		} else
-			v = 0;
+		}
 
+		/* Fault the original page in. */
 		rv = vm_fault(map, va, ftype, FALSE);
 		if (rv == KERN_SUCCESS) {
 			if (nss > vm->vm_ssize)
 				vm->vm_ssize = nss;
-			va = trunc_page(vtopte(va));
-			/* for page table, increment wiring as long as
-			   not a page table fault as well */
-			if (!v && map != kernel_map)
-				vm_map_pageable(map, va, round_page(va+1),
-				    FALSE);
 			if (type == T_PAGEFLT)
 				return;
 			goto out;
