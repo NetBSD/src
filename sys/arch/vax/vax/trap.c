@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.34 1998/03/02 17:00:01 ragge Exp $     */
+/*	$NetBSD: trap.c,v 1.35 1998/05/03 13:22:01 ragge Exp $     */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -130,7 +130,7 @@ arithflt(frame)
 
 #ifdef TRAPDEBUG
 if(frame->trap==7) goto fram;
-if(faultdebug)printf("Trap: type %x, code %x, pc %x, psl %x\n",
+if(faultdebug)printf("Trap: type %lx, code %lx, pc %lx, psl %lx\n",
 		frame->trap, frame->code, frame->pc, frame->psl);
 fram:
 #endif
@@ -170,7 +170,7 @@ fram:
 		}
 	case T_ACCFLT:
 #ifdef TRAPDEBUG
-if(faultdebug)printf("trap accflt type %x, code %x, pc %x, psl %x\n",
+if(faultdebug)printf("trap accflt type %lx, code %lx, pc %lx, psl %lx\n",
 			frame->trap, frame->code, frame->pc, frame->psl);
 #endif
 #ifdef DIAGNOSTIC
@@ -237,8 +237,10 @@ ufault:			if (rv == KERN_RESOURCE_SHORTAGE)
 		break;
 
 	case T_PTELEN:
-		FAULTCHK;
-		panic("ptelen fault in system space");
+		if (p->p_addr)
+			FAULTCHK;
+		panic("ptelen fault in system space: addr %lx pc %lx",
+		    frame->code, frame->pc);
 
 	case T_PTELEN|T_USER:	/* Page table length exceeded */
 		sig = SIGSEGV;
@@ -332,7 +334,7 @@ syscall(frame)
 	struct proc *p = curproc;
 
 #ifdef TRAPDEBUG
-if(startsysc)printf("trap syscall %s pc %x, psl %x, sp %x, pid %d, frame %x\n",
+if(startsysc)printf("trap syscall %s pc %lx, psl %lx, sp %lx, pid %d, frame %p\n",
 	       syscallnames[frame->code], frame->pc, frame->psl,frame->sp,
 		curproc->p_pid,frame);
 #endif
@@ -382,7 +384,7 @@ if(startsysc)printf("trap syscall %s pc %x, psl %x, sp %x, pid %d, frame %x\n",
 
 #ifdef TRAPDEBUG
 if(startsysc)
-	printf("retur %s pc %x, psl %x, sp %x, pid %d, v{rde %d r0 %d, r1 %d, frame %x\n",
+	printf("retur %s pc %lx, psl %lx, sp %lx, pid %d, v{rde %d r0 %d, r1 %d, frame %p\n",
 	       syscallnames[exptr->code], exptr->pc, exptr->psl,exptr->sp,
 		curproc->p_pid,err,rval[0],rval[1],exptr);
 #endif
