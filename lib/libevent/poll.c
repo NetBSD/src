@@ -1,3 +1,4 @@
+/*	$NetBSD: poll.c,v 1.3 2003/06/13 04:11:31 itojun Exp $	*/
 /*	$OpenBSD: poll.c,v 1.2 2002/06/25 15:50:15 mickey Exp $	*/
 
 /*

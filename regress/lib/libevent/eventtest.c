@@ -1,3 +1,5 @@
+/*	$NetBSD: eventtest.c,v 1.2 2003/06/13 04:09:18 itojun Exp $	*/
+
 /*
  * Copyright 2003 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
