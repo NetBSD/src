@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.68 2000/07/03 17:56:08 eeh Exp $	*/
+/*	$NetBSD: locore.s,v 1.69 2000/07/07 19:59:36 eeh Exp $	*/
 /*
  * Copyright (c) 1996-1999 Eduardo Horvath
  * Copyright (c) 1996 Paul Kranenburg
@@ -4138,6 +4138,9 @@ _C_LABEL(sparc_interrupt):
 	 set	_C_LABEL(intrlev), %g3
 	wr	%g0, 1, CLEAR_SOFTINT
 	DLFLUSH(%g3, %g2)
+#ifndef TICK_IS_TIME
+	wrpr	%g0, 0, %tick	! Reset %tick so we'll get another interrupt
+#endif
 	ba,pt	%icc, setup_sparcintr
 	 LDPTR	[%g3 + PTRSZ], %g5	! intrlev[1] is reserved for %tick intr.
 0:	
