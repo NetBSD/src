@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.4,v 1.1.2.95 2003/03/15 22:18:33 he Exp $
+#	$NetBSD: CHANGES-1.5.4,v 1.1.2.96 2003/03/17 16:13:34 itojun Exp $
 
 A complete list of changes from NetBSD 1.5.3 to NetBSD 1.5.4:
 
@@ -1994,3 +1994,8 @@ share/tmac/doc					1.28
 
   Make .Nm without arguments, but with punctuation, work.
   [wiz, ticket #26]
+
+usr.sbin/rtadvd/rtadvd.c			1.27-1.28 (via patch)
+
+  Add missing ND option length validation.  From KAME.
+  [itojun, ticket #32]
