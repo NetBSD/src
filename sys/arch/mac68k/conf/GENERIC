@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.85.2.11 1999/11/21 21:23:26 scottr Exp $
+#	$NetBSD: GENERIC,v 1.85.2.12 1999/11/23 01:58:42 scottr Exp $
 #
 # GENERIC
 
@@ -106,11 +106,15 @@ options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	SCSIVERBOSE	# human readable SCSI error messages
 
 # wscons options
-options         RCONS_16BPP		# support for 16-bit console
 #options 	WSEMUL_SUN		# sun terminal emulation
 options 	WSEMUL_VT100		# VT100 / VT220 emulation
 options 	WSDISPLAY_COMPAT_ITE	# ite compatibility
 options 	WSDISPLAY_COMPAT_ITEFONT # use ite font (6x10)
+
+# rcons options; note that 1-bit and 8-bit displays are supported by default.
+options         RCONS_2BPP		# Support for 2-bit display
+options         RCONS_4BPP		# Support for 4-bit display
+options         RCONS_16BPP		# Support for 16-bit display
 
 # Mac-specific options
 #options 	ALTXBUTTONS	# Map Opt-{1,2,3} to mouse buttons
