@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_serv.c	7.40 (Berkeley) 5/15/91
- *	$Id: nfs_serv.c,v 1.6 1993/07/16 00:52:50 cgd Exp $
+ *	$Id: nfs_serv.c,v 1.7 1993/09/03 23:57:25 jtc Exp $
  */
 
 /*
@@ -56,6 +56,7 @@
  */
 
 #include "param.h"
+#include "systm.h"
 #include "proc.h"
 #include "file.h"
 #include "namei.h"
