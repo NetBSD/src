@@ -1,4 +1,4 @@
-/*	$NetBSD: attributes.c,v 1.12 2003/03/30 07:38:42 jdc Exp $	*/
+/*	$NetBSD: attributes.c,v 1.13 2003/10/21 00:20:28 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: attributes.c,v 1.12 2003/03/30 07:38:42 jdc Exp $");
+__RCSID("$NetBSD: attributes.c,v 1.13 2003/10/21 00:20:28 fvdl Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -225,7 +225,7 @@ wattr_off(WINDOW *win, attr_t attr, void *opt)
 	if (attr & __UNDERSCORE)
 		wunderend(win);
 	if ((attr_t) attr & __COLOR) {
-		if (__tc_Co != NULL)
+		if (__tc_Co != 0)
 			win->wattr &= ~__COLOR;
 	}
 	return OK;
@@ -336,6 +336,6 @@ __wcolor_set(WINDOW *win, attr_t attr)
 	/* If another color pair is set, turn that off first. */
 	win->wattr &= ~__COLOR;
 	/* If can do color video, set the color pair bits. */
-	if (__tc_Co != NULL && attr & __COLOR)
+	if (__tc_Co != 0 && attr & __COLOR)
 		win->wattr |= attr & __COLOR;
 }
