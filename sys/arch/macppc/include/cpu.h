@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.1 1998/05/15 10:15:52 tsubai Exp $	*/
+/*	$NetBSD: cpu.h,v 1.2 1998/06/24 14:20:50 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995-1997 Wolfgang Solfrank.
@@ -40,7 +40,7 @@
 #define	CLKF_USERMODE(frame)	(((frame)->srr1 & PSL_PR) != 0)
 #define	CLKF_BASEPRI(frame)	((frame)->pri == 0)
 #define	CLKF_PC(frame)		((frame)->srr0)
-#define	CLKF_INTR(frame)	((frame)->depth >= 0)
+#define	CLKF_INTR(frame)	((frame)->depth > 0)
 
 #define	cpu_swapout(p)
 #define cpu_wait(p)
