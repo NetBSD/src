@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)tty_pty.c	7.21 (Berkeley) 5/30/91
- *	$Id: tty_pty.c,v 1.8 1993/07/12 11:33:54 mycroft Exp $
+ *	$Id: tty_pty.c,v 1.9 1993/07/19 05:10:30 mycroft Exp $
  */
 
 /*
@@ -633,8 +633,7 @@ ptyioctl(dev, cmd, data, flag)
 		case TIOCSETA:
 		case TIOCSETAW:
 		case TIOCSETAF:
-			while (getc(&tp->t_outq) >= 0)
-				;
+			ndflush(&tp->t_outq, tp->t_outq.c_cc);
 			break;
 
 		case TIOCSIG:
