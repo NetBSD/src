@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.6 1998/09/05 13:08:39 pk Exp $	*/
+/*	$NetBSD: md.h,v 1.7 1998/10/12 01:33:35 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,13 +42,13 @@
 
 #define	MAX_ALIGNMENT		(sizeof (long))
 
-#ifdef NetBSD
+#ifdef __NetBSD__
 #define PAGSIZ			__LDPGSZ
 #else
 #define PAGSIZ			1024
 #endif
 
-#if defined(NetBSD) || defined(CROSS_LINKER)
+#if defined(__NetBSD__) || defined(CROSS_LINKER)
 
 #define N_SET_FLAG(ex,f)	(oldmagic || N_GETMAGIC(ex)==QMAGIC ? (0) : \
 					N_SETMAGIC(ex,			\
@@ -59,7 +59,8 @@
 #define N_IS_DYNAMIC(ex)	((N_GETFLAG(ex) & EX_DYNAMIC))
 
 #define N_BADMID(ex) \
-	(N_GETMID(ex) != 0 && N_GETMID(ex) != MID_MACHINE)
+	(N_GETMID(ex) != 0 && N_GETMID(ex) != MID_MACHINE \
+	 && N_GETMID(ex) != MID_VAX1K)
 
 #endif
 
@@ -113,6 +114,7 @@ typedef struct jmpslot {
 	u_short	reloc_index;
 } jmpslot_t;
 
+#define	JMPSLOT_RELOC_MASK	0xffff
 /*
  * following defines are untested since VAX doesn't support PIC (yet?)
  */
