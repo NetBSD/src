@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.6.2.2 2001/06/29 03:56:44 perseant Exp $	*/
+/*	$NetBSD: newfs.c,v 1.6.2.3 2001/07/13 05:14:23 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.6.2.2 2001/06/29 03:56:44 perseant Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.6.2.3 2001/07/13 05:14:23 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -78,7 +78,7 @@ __RCSID("$NetBSD: newfs.c,v 1.6.2.2 2001/06/29 03:56:44 perseant Exp $");
 
 #define	COMPAT			/* allow non-labeled disks */
 
-int	version = 1;		/* what version of lfs to make */
+int	version = DFL_VERSION;	/* what version of lfs to make */
 int	Nflag = 0;		/* run without writing file system */
 int	fssize;			/* file system size */
 int	sectorsize;		/* bytes/sector */
@@ -179,7 +179,7 @@ main(int argc, char **argv)
 	if (maxpartitions > 26)
 		fatal("insane maxpartitions value %d", maxpartitions);
 
-	opstring = "AB:DFI:LNb:f:M:O:i:m:r:s:v:";
+	opstring = "AB:b:DFf:I:i:LM:m:NO:r:s:v:";
 
 	debug = force = segsize = start = 0;
 	while ((ch = getopt(argc, argv, opstring)) != -1)
