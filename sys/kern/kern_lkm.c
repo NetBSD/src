@@ -36,7 +36,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: kern_lkm.c,v 1.5 1993/09/05 00:55:57 cgd Exp $
+ *	$Id: kern_lkm.c,v 1.6 1993/09/05 01:36:28 cgd Exp $
  */
 
 #include "param.h"
@@ -759,7 +759,6 @@ int			cmd;
 }
 #endif	/* STREAMS*/
 
-#ifdef LKM_EXEC /* XXX NOTDEF YET!!! - cgd */
 /*
  * For the loadable execution class described by the structure pointed to
  * by lkmtp, load/unload/stat it depending on the cmd requested.
@@ -783,7 +782,7 @@ int			cmd;
 			 * Search the table looking for a slot...
 			 */
 			for( i = 0; i < nexecs; i++)
-				if( execsw[ i].m_size == 0)
+				if( execsw[ i].check == NULL)
 					break;		/* found it!*/
 			/* out of allocable slots?*/
 			if( i == nexecs) {
@@ -823,7 +822,6 @@ int			cmd;
 
 	return( err);
 }
-#endif /* LKM_EXEC */
 
 /*
  * This code handles the per-module type "wiring-in" of loadable modules
@@ -859,11 +857,9 @@ int			cmd;
 
 #endif	/* STREAMS*/
 
-#ifdef LKM_EXEC
 	case LM_EXEC:
 		err = _lkm_exec( lkmtp, cmd);
 		break;
-#endif /* LKM_EXEC */
 
 	case LM_MISC:	/* ignore content -- no "misc-specific" procedure*/
 	    break;
