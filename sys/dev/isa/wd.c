@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.116 1994/11/23 01:35:43 mycroft Exp $	*/
+/*	$NetBSD: wd.c,v 1.117 1994/11/23 03:11:01 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -584,18 +584,14 @@ loop:
 		blkno = bp->b_blkno / (lp->d_secsize / DEV_BSIZE) + wd->sc_skip;
 		if (WDPART(bp->b_dev) != RAW_PART)
 			blkno += lp->d_partitions[WDPART(bp->b_dev)].p_offset;
-		if (wdc->sc_flags & WDCF_SINGLE)
+		if ((wdc->sc_flags & WDCF_SINGLE) != 0)
 			nblks = 1;
+		else if (wd->sc_mode != WDM_DMA)
+			nblks = wd->sc_bcount / DEV_BSIZE;
 		else
-			nblks = howmany(wd->sc_bcount, lp->d_secsize);
-		if (wd->sc_mode == WDM_DMA && nblks > 8)
-			nblks = 8;
+			nblks = min(wd->sc_bcount / DEV_BSIZE, 8);
 
-		/*
-		 * Check for bad sectors if we have them, and not formatting.  Only do
-		 * this in single-sector mode, or when starting a multiple-sector
-		 * transfer.
-		 */
+		/* Check for bad sectors and adjust transfer, if necessary. */
 		if ((lp->d_flags & D_BADSECT) != 0
 #ifdef B_FORMAT
 		    && (bp->b_flags & B_FORMAT) == 0
@@ -626,7 +622,7 @@ loop:
 		if ((wd->sc_params.wdp_capabilities & WD_CAP_LBA) != 0) {
 			sector = (blkno >> 0) & 0xff;
 			cylin = (blkno >> 8) & 0xffff;
-			head = (blkno >> 24) & 0xff;
+			head = (blkno >> 24) & 0xf;
 			head |= WDSD_LBA;
 		} else {
 			sector = blkno % lp->d_nsectors;
@@ -683,7 +679,7 @@ loop:
 	if (wd->sc_mode == WDM_PIOSINGLE ||
 	    (wdc->sc_flags & WDCF_SINGLE) != 0)
 		nblks = 1;
-	else if (wd->sc_mode == WDM_PIOMULTI)
+	else if (wd->sc_mode != WDM_DMA)
 		nblks = min(wd->sc_bcount / DEV_BSIZE, wd->sc_multiple);
 	else
 		nblks = min(wd->sc_bcount / DEV_BSIZE, 8);
@@ -1499,7 +1495,7 @@ wddump(dev)
 		if ((wd->sc_params.wdp_capabilities & WD_CAP_LBA) != 0) {
 			sector = (blkno >> 0) & 0xff;
 			cylin = (blkno >> 8) & 0xffff;
-			head = (blkno >> 24) & 0xff;
+			head = (blkno >> 24) & 0xf;
 			head |= WDSD_LBA;
 		} else {
 			sector = blkno % lp->d_nsectors;
