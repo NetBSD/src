@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.132 1999/03/24 05:51:26 mrg Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.133 1999/03/31 19:18:45 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -671,8 +671,10 @@ sys_getfsstat(p, v, retval)
 			}
 			sp->f_flags = mp->mnt_flag & MNT_VISFLAGMASK;
 			error = copyout(sp, sfsp, sizeof(*sp));
-			if (error)
+			if (error) {
+				vfs_unbusy(mp);
 				return (error);
+			}
 			sfsp += sizeof(*sp);
 		}
 		count++;
