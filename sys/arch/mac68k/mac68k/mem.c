@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.15 1998/05/07 21:01:42 kleink Exp $	*/
+/*	$NetBSD: mem.c,v 1.16 1998/11/10 07:29:59 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -61,6 +61,7 @@
 #include <uvm/uvm_extern.h>
 #endif  
 
+extern u_long maxaddr;
 static caddr_t devzeropage;
 
 #define mmread	mmrw
@@ -127,6 +128,15 @@ mmrw(dev, uio, flags)
 /* minor device 0 is physical memory */
 		case 0:
 			v = uio->uio_offset;
+
+			/*
+			 * Only allow reads in physical RAM.
+			 */
+			if (v >= maxaddr || v < 0) {
+				error = EFAULT;
+				goto unlock;
+			}
+
 			pmap_enter(pmap_kernel(), (vm_offset_t)vmmap,
 			    trunc_page(v), uio->uio_rw == UIO_READ ?
 			    VM_PROT_READ : VM_PROT_WRITE, TRUE);
@@ -165,6 +175,10 @@ mmrw(dev, uio, flags)
 				c = iov->iov_len;
 				break;
 			}
+			/*
+			 * On the first call, allocate and zero a page
+			 * of memory for use with /dev/zero.
+			 */
 			if (devzeropage == NULL) {
 				devzeropage = (caddr_t)
 				    malloc(CLBYTES, M_TEMP, M_WAITOK);
@@ -185,6 +199,7 @@ mmrw(dev, uio, flags)
 		uio->uio_resid -= c;
 	}
 	if (minor(dev) == 0) {
+unlock:
 		if (physlock > 1)
 			wakeup((caddr_t)&physlock);
 		physlock = 0;
@@ -207,13 +222,12 @@ mmmmap(dev, off, prot)
 	 */
 	if (minor(dev) != 0)
 		return (-1);
+
 	/*
-	 * Allow access only in RAM.
-	 *
-	 * XXX could be extended to allow access to IO space but must
-	 * be very careful.
-	if ((unsigned)off < lowram || (unsigned)off >= 0xFFFFFFFC)
-		return (-1);
+	 * Only allow access to physical RAM.
 	 */
+	if ((unsigned)off >= maxaddr)
+		return (-1);
+
 	return (m68k_btop(off));
 }
