@@ -259,7 +259,6 @@
 ./usr/X11R6/lib/X11/locale/zh_TW/XLC_LOCALE
 ./usr/X11R6/lib/X11/proxymngr
 ./usr/X11R6/lib/X11/proxymngr/pmconfig
-./usr/X11R6/lib/X11/rgb.db
 ./usr/X11R6/lib/X11/rgb.txt
 ./usr/X11R6/lib/X11/rstart
 ./usr/X11R6/lib/X11/rstart/commands
