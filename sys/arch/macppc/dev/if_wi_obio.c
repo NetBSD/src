@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wi_obio.c,v 1.4 2002/10/02 20:13:48 jdolecek Exp $	*/
+/*	$NetBSD: if_wi_obio.c,v 1.5 2003/07/09 14:30:29 he Exp $	*/
 
 /*-
  * Copyright (c) 2001 Tsubai Masanari.  All rights reserved.
@@ -37,8 +37,8 @@
 #ifdef INET
 #include <net/if.h>
 #include <net/if_ether.h>
-#include <net/if_ieee80211.h>
 #include <net/if_media.h>
+#include <net/if_ieee80211.h>
 #endif
 
 #include <machine/autoconf.h>
