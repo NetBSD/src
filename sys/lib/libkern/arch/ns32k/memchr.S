@@ -1,6 +1,6 @@
-/*	$NetBSD: memchr.S,v 1.2 1998/04/03 22:59:29 matthias Exp $	*/
+/*	$NetBSD: memchr.S,v 1.3 2005/02/26 22:58:56 perry Exp $	*/
 
-/* 
+/*
  * Written by Matthias Pfaller, 1996
  * Public domain.
  */
@@ -8,7 +8,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: memchr.S,v 1.2 1998/04/03 22:59:29 matthias Exp $")
+	RCSID("$NetBSD: memchr.S,v 1.3 2005/02/26 22:58:56 perry Exp $")
 #endif
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: des_ecb.c,v 1.7 2002/11/02 07:19:51 perry Exp $	*/
+/*	$NetBSD: des_ecb.c,v 1.8 2005/02/26 23:04:17 perry Exp $	*/
 /*	$KAME: des_ecb.c,v 1.5 2000/11/06 13:58:08 itojun Exp $	*/
 
 /* crypto/des/ecb_enc.c */
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: des_ecb.c,v 1.7 2002/11/02 07:19:51 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: des_ecb.c,v 1.8 2005/02/26 23:04:17 perry Exp $");
 
 #include <sys/param.h>
 #ifdef _KERNEL
@@ -103,7 +103,7 @@ char *des_options(void)
                 }
         return(buf);
 }
-void des_ecb_encrypt(des_cblock *input, des_cblock *output, 
+void des_ecb_encrypt(des_cblock *input, des_cblock *output,
 		     des_key_schedule ks, int enc)
 {
 	register DES_LONG l;
@@ -127,10 +127,10 @@ void des_ecb3_encrypt(des_cblock *input, des_cblock *output,
 	DES_LONG ll[2];
 	const unsigned char *in = &(*input)[0];
 	unsigned char *out = &(*output)[0];
- 
-	c2l(in,l0); 
+
+	c2l(in,l0);
 	c2l(in,l1);
-	ll[0]=l0; 
+	ll[0]=l0;
 	ll[1]=l1;
 
 	if (enc)

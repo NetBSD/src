@@ -1,4 +1,4 @@
-/*      $NetBSD: procfs_linux.c,v 1.19 2004/09/20 17:53:08 jdolecek Exp $      */
+/*      $NetBSD: procfs_linux.c,v 1.20 2005/02/26 22:59:00 perry Exp $      */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.19 2004/09/20 17:53:08 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.20 2005/02/26 22:59:00 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,7 +82,7 @@ procfs_domeminfo(struct proc *curp, struct proc *p, struct pfsnode *pfs,
 		"MemShared: %8lu kB\n"
 		"Buffers:   %8lu kB\n"
 		"Cached:    %8lu kB\n"
-		"SwapTotal: %8lu kB\n" 
+		"SwapTotal: %8lu kB\n"
 		"SwapFree:  %8lu kB\n",
 		PGTOB(uvmexp.npages),
 		PGTOB(uvmexp.npages - uvmexp.free),
@@ -149,7 +149,7 @@ procfs_do_pid_stat(struct proc *curp, struct lwp *l, struct pfsnode *pfs,
 	if (map != &curproc->p_vmspace->vm_map)
 		vm_map_unlock_read(map);
 
-	len = snprintf(buf, sizeof(buf), 
+	len = snprintf(buf, sizeof(buf),
 	    "%d (%s) %c %d %d %d %d %d "
 	    "%u "
 	    "%lu %lu %lu %lu %lu %lu %lu %lu "
@@ -279,7 +279,7 @@ procfs_domounts(struct proc *curp, struct proc *p, struct pfsnode *pfs,
 			fsname = "proc";
 		else if (strcmp(fsname, "ext2fs") == 0)
 			fsname = "ext2";
-		
+
 		len = snprintf(buf, sizeof(buf), "%s %s %s %s%s%s%s%s%s 0 0\n",
 			sfs->f_mntfromname,
 			sfs->f_mntonname,

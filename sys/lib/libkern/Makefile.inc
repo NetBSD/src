@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.37 2003/11/07 23:34:28 dsl Exp $
+#	$NetBSD: Makefile.inc,v 1.38 2005/02/26 22:58:56 perry Exp $
 #
 #	Configuration variables (default values are below):
 #
@@ -70,12 +70,12 @@ ${KERNLIBLN}:		.NOTMAIN .MAKE __always_make_kernlib
 	@${KERNMAKE} ${LIBKERNLNBN}
 
 clean:			.NOTMAIN cleankernlib
-cleankernlib:		.NOTMAIN 
+cleankernlib:		.NOTMAIN
 	@echo cleaning the kern library objects
 	@if [ -d "${KERNDST}" ]; then ${KERNMAKE} clean; fi
 
 cleandir distclean:	.NOTMAIN cleandirkernlib
-cleandirkernlib:	.NOTMAIN 
+cleandirkernlib:	.NOTMAIN
 	@echo cleandiring the kern library objects
 	@if [ -d "${KERNDST}" ]; then ${KERNMAKE} cleandir; fi
 

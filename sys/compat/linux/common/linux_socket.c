@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.54 2005/02/24 08:15:53 martin Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.55 2005/02/26 23:10:19 perry Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.54 2005/02/24 08:15:53 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.55 2005/02/26 23:10:19 perry Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -70,7 +70,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.54 2005/02/24 08:15:53 martin Exp
 #include <sys/proc.h>
 #include <sys/vnode.h>
 #include <sys/device.h>
-#include <sys/protosw.h> 
+#include <sys/protosw.h>
 #include <sys/mbuf.h>
 #include <sys/syslog.h>
 #include <sys/exec.h>
@@ -147,7 +147,7 @@ static const int linux_to_bsd_domain_[LINUX_AF_MAX] = {
 	/* rest up to LINUX_AF_MAX-1 is not allocated */
 	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
 };
-	
+
 static const int bsd_to_linux_domain_[AF_MAX] = {
 	LINUX_AF_UNSPEC,
 	LINUX_AF_UNIX,
@@ -778,7 +778,7 @@ linux_sys_recvmsg(l, v, retval)
 				case SCM_RIGHTS:
 					/* Linux SCM_RIGHTS is same as NetBSD */
 					break;
-					
+
 				default:
 					/* other types not supported */
 					error = EINVAL;
@@ -876,7 +876,7 @@ linux_to_bsd_so_sockopt(lopt)
 	case LINUX_SO_DEBUG:
 		return SO_DEBUG;
 	case LINUX_SO_REUSEADDR:
-		/* 
+		/*
 		 * Linux does not implement SO_REUSEPORT, but allows reuse of a
 		 * host:port pair through SO_REUSEADDR even if the address is not a
 		 * multicast-address.  Effectively, this means that we should use
@@ -1125,7 +1125,7 @@ linux_getifhwaddr(p, retval, fd, data)
 		if (strcmp(lreq.if_name, ifp->if_xname))
 			/* not this interface */
 			continue;
-		found=1;           
+		found=1;
 		if ((ifa = ifp->if_addrlist.tqh_first) != 0) {
 			for (; ifa != 0; ifa = ifa->ifa_list.tqe_next) {
 				sadl = (struct sockaddr_dl *)ifa->ifa_addr;
@@ -1142,7 +1142,7 @@ linux_getifhwaddr(p, retval, fd, data)
 					sadl->sdl_family;
 				error = copyout((caddr_t)&lreq, data,
 						sizeof(lreq));
-				goto out; 
+				goto out;
 			}
 		} else {
 			error = ENODEV;
@@ -1167,7 +1167,7 @@ linux_getifhwaddr(p, retval, fd, data)
 			if ((ifa = ifp->if_addrlist.tqh_first) == 0)
 				/* no addresses on this interface */
 				continue;
-			else 
+			else
 				for (; ifa != 0; ifa = ifa->ifa_list.tqe_next) {
 					sadl = (struct sockaddr_dl *)ifa->ifa_addr;
 					/* only return ethernet addresses */
@@ -1194,7 +1194,7 @@ linux_getifhwaddr(p, retval, fd, data)
 		/* unknown interface, not even an "eth*" name */
 		error = ENODEV;
 	}
-    
+
 out:
 	FILE_UNUSE(fp, p);
 	return error;
@@ -1245,7 +1245,7 @@ linux_ioctl_socket(p, uap, retval)
 		pt.data = SCARG(uap, data);
 		error = ioctlf(fp, PTIOCLINUX, (caddr_t)&pt, p);
 		/*
-		 * XXX hack: if the function returns EJUSTRETURN,       
+		 * XXX hack: if the function returns EJUSTRETURN,
 		 * it has stuffed a sysctl return value in pt.data.
 		 */
 		if (error == EJUSTRETURN) {
@@ -1331,7 +1331,7 @@ linux_sys_connect(l, v, retval)
 	    SCARG(uap, name), &namlen);
 	if (error)
 		return (error);
-	
+
 	SCARG(&bca, s) = SCARG(uap, s);
 	SCARG(&bca, name) = sa;
 	SCARG(&bca, namelen) = (unsigned int) namlen;
@@ -1342,7 +1342,7 @@ linux_sys_connect(l, v, retval)
 		struct file *fp;
 		struct socket *so;
 		int s, state, prflags;
-		
+
 		/* getsock() will use the descriptor for us */
 	    	if (getsock(p->p_fd, SCARG(uap, s), &fp) != 0)
 		    	return EISCONN;
@@ -1518,7 +1518,7 @@ linux_sa_get(p, s, sgp, sap, osa, osalen)
 		     !IN6_IS_ADDR_MULTICAST(&sin6->sin6_addr))) {
 			sin6->sin6_scope_id = 0;
 		} else {
-			int uid = p->p_cred && p->p_ucred ? 
+			int uid = p->p_cred && p->p_ucred ?
 					p->p_ucred->cr_uid : -1;
 
 			log(LOG_DEBUG,

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ipccall.c,v 1.24 2004/09/28 19:05:19 jdolecek Exp $	*/
+/*	$NetBSD: linux_ipccall.c,v 1.25 2005/02/26 23:10:19 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ipccall.c,v 1.24 2004/09/28 19:05:19 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ipccall.c,v 1.25 2005/02/26 23:10:19 perry Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -142,7 +142,7 @@ linux_sys_ipc(l, v, retval)
 #ifdef SYSVSHM
 	case LINUX_SYS_shmat: {
 		struct linux_sys_shmat_args bsa;
-	
+
 		SCARG(&bsa, shmid) = SCARG(uap, a1);
 		SCARG(&bsa, shmaddr) = (void *)SCARG(uap, ptr);
 		SCARG(&bsa, shmflg) = SCARG(uap, a2);

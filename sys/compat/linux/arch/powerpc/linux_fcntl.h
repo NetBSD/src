@@ -1,4 +1,4 @@
-/* $NetBSD: linux_fcntl.h,v 1.4 2001/09/30 16:04:04 manu Exp $ */
+/* $NetBSD: linux_fcntl.h,v 1.5 2005/02/26 23:10:19 perry Exp $ */
 
 /*-
  * Copyright (c) 1995, 1998, 2001 The NetBSD Foundation, Inc.
@@ -43,17 +43,17 @@
 #ifndef _POWERPC_LINUX_FCNTL_H
 #define _POWERPC_LINUX_FCNTL_H
 
-/* 
+/*
  * read/write mode for open(2) are defined in common/linux_fcntl.h
  */
 
-/* 
- * flags used in open(2) 
- * From Linux's include/asm-ppc/fcntl.h 
+/*
+ * flags used in open(2)
+ * From Linux's include/asm-ppc/fcntl.h
  * Theses are octal values (remember 0100 != 100 in C)
  */
 #define LINUX_O_CREAT		0100
-#define LINUX_O_EXCL		0200	
+#define LINUX_O_EXCL		0200
 #define LINUX_O_NOCTTY		0400
 #define LINUX_O_TRUNC		01000
 #define LINUX_O_APPEND		02000
@@ -63,9 +63,9 @@
 
 #define LINUX_FASYNC		020000
 
-/* 
- * fcntl(2) operations 
- * From Linux's include/asm-ppc/fcntl.h 
+/*
+ * fcntl(2) operations
+ * From Linux's include/asm-ppc/fcntl.h
  */
 #define LINUX_F_DUPFD		0
 #define LINUX_F_GETFD		1

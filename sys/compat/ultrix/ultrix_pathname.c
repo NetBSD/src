@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_pathname.c,v 1.22 2004/04/21 07:05:07 simonb Exp $	*/
+/*	$NetBSD: ultrix_pathname.c,v 1.23 2005/02/26 23:10:22 perry Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@
  *
  *	@(#)sun_misc.c	8.1 (Berkeley) 6/18/93
  *
- * from: Header: sun_misc.c,v 1.16 93/04/07 02:46:27 torek Exp 
+ * from: Header: sun_misc.c,v 1.16 93/04/07 02:46:27 torek Exp
  */
 
 
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_pathname.c,v 1.22 2004/04/21 07:05:07 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_pathname.c,v 1.23 2005/02/26 23:10:22 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -181,7 +181,7 @@ ultrix_sys_open(struct lwp *l, void *v, register_t *retval)
 	int q, r;
 	int noctty;
 	int ret;
-	
+
 	caddr_t sg = stackgap_init(p, 0);
 
 	/* convert open flags into NetBSD flags */
@@ -227,10 +227,10 @@ struct ultrix_statfs {
 };
 
 /*
- * Custruct ultrix statfs result from native. 
+ * Custruct ultrix statfs result from native.
  * XXX should this be the same as returned by Ultrix getmnt(2)?
  * XXX Ultrix predates DEV_BSIZE.  Is  conversion of disk space from 1k
- *  block units to DEV_BSIZE necessary? 
+ *  block units to DEV_BSIZE necessary?
  */
 static int
 ultrixstatfs(struct statvfs *sp, caddr_t buf)

@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vnops.c,v 1.45 2004/10/27 19:17:13 peter Exp $	*/
+/*	$NetBSD: smbfs_vnops.c,v 1.46 2005/02/26 22:58:55 perry Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.45 2004/10/27 19:17:13 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.46 2005/02/26 22:58:55 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -231,7 +231,7 @@ smbfs_open(v)
 
 	SMBVDEBUG("%.*s,%d\n", (int) np->n_nmlen, np->n_name,
 	    (np->n_flag & NOPEN) != 0);
-	if (vp->v_type != VREG && vp->v_type != VDIR) { 
+	if (vp->v_type != VREG && vp->v_type != VDIR) {
 		SMBFSERR("open eacces vtype=%d\n", vp->v_type);
 		return EACCES;
 	}
@@ -286,7 +286,7 @@ do_open:
 		if (error) {
 			if (ap->a_mode & FWRITE)
 				return EACCES;
-		
+
 			error = smbfs_smb_open(np,
 			    SMB_SM_DENYNONE|SMB_AM_OPENREAD, &scred);
 		}
@@ -407,7 +407,7 @@ smbfs_setattr(v)
 	/*
 	 * Disallow write attempts if the filesystem is mounted read-only.
 	 */
-  	if ((vap->va_uid != (uid_t)VNOVAL || vap->va_gid != (gid_t)VNOVAL || 
+  	if ((vap->va_uid != (uid_t)VNOVAL || vap->va_gid != (gid_t)VNOVAL ||
 	     vap->va_atime.tv_sec != VNOVAL || vap->va_mtime.tv_sec != VNOVAL ||
 	     vap->va_mode != (mode_t)VNOVAL) && isreadonly)
 		return EROFS;
@@ -572,7 +572,7 @@ smbfs_create(v)
 	const char *name = cnp->cn_nameptr;
 	int nmlen = cnp->cn_namelen;
 	int error = EINVAL;
-	
+
 
 	if (vap->va_type != VREG)
 		goto out;
@@ -804,7 +804,7 @@ smbfs_mkdir(v)
 		PNBUF_PUT(cnp->cn_pnbuf);
 	VN_KNOTE(dvp, NOTE_WRITE | NOTE_LINK);
 	vput(dvp);
-	
+
 	return (error);
 }
 
@@ -917,7 +917,7 @@ smbfs_pathconf(v)
 	} */ *ap = v;
 	register_t *retval = ap->a_retval;
 	int error = 0;
-	
+
 	switch (ap->a_name) {
 	case _PC_PIPE_BUF:
 		*retval = PIPE_BUF;
@@ -1006,7 +1006,7 @@ smbfs_getextattr(struct vop_getextattr_args *ap)
 			buf[i] = (attr & 1) ? smbfs_atl[i] : '-';
 		buf[i] = 0;
 		error = uiomove(buf, i, uio);
-		
+
 	} else
 		error = EINVAL;
 	return error;
@@ -1192,7 +1192,7 @@ smbfs_lookup(v)
 	int nameiop = cnp->cn_nameiop;
 	int nmlen = cnp->cn_namelen;
 	int lockparent, wantparent, error, islastcn, isdot;
-	
+
 	/*
 	 * Check accessiblity of directory.
 	 */
@@ -1205,7 +1205,7 @@ smbfs_lookup(v)
 	    (cnp->cn_nameiop == DELETE || cnp->cn_nameiop == RENAME))
 		return (EROFS);
 
-	SMBVDEBUG("%d '%.*s' in '%.*s'\n", nameiop, nmlen, name, 
+	SMBVDEBUG("%d '%.*s' in '%.*s'\n", nameiop, nmlen, name,
 	    (int) VTOSMB(dvp)->n_nmlen, VTOSMB(dvp)->n_name);
 
 	islastcn = flags & ISLASTCN;
@@ -1269,7 +1269,7 @@ smbfs_lookup(v)
 			if (cnp->cn_nameiop != LOOKUP && islastcn)
 				cnp->cn_flags |= SAVENAME;
 
-			if ((!lockparent || !islastcn) &&	
+			if ((!lockparent || !islastcn) &&
 			     newvp != dvp) {
 				VOP_UNLOCK(dvp, 0);
 				cnp->cn_flags |= PDIRUNLOCK;
@@ -1292,7 +1292,7 @@ smbfs_lookup(v)
 	if (nameiop != LOOKUP) {
 		error = smbfs_pathcheck(VFSTOSMBFS(mp), cnp->cn_nameptr,
 					cnp->cn_namelen);
-		if (error) 
+		if (error)
 			return (error);
 	}
 
@@ -1300,7 +1300,7 @@ smbfs_lookup(v)
 	dnp = VTOSMB(dvp);
 	isdot = (nmlen == 1 && name[0] == '.');
 
-	/* 
+	/*
 	 * entry is not in the cache or has been expired
 	 */
 	smb_makescred(&scred, cnp->cn_proc, cnp->cn_cred);

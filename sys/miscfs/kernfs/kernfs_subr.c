@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_subr.c,v 1.6 2004/05/07 15:20:29 cl Exp $	*/
+/*	$NetBSD: kernfs_subr.c,v 1.7 2005/02/26 22:59:00 perry Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_subr.c,v 1.6 2004/05/07 15:20:29 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_subr.c,v 1.7 2005/02/26 22:59:00 perry Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -193,7 +193,7 @@ kernfs_allocvp(mp, vpp, kfs_type, kt, value)
 	MALLOC(kfs, void *, sizeof(struct kernfs_node), M_TEMP, M_WAITOK);
 	memset(kfs, 0, sizeof(*kfs));
 	vp->v_data = kfs;
-	cookie = &(VFSTOKERNFS(mp)->fileno_cookie); 
+	cookie = &(VFSTOKERNFS(mp)->fileno_cookie);
 again:
 	TAILQ_FOREACH(kfsp, &VFSTOKERNFS(mp)->nodelist, kfs_list) {
 		if (kfsp->kfs_cookie == *cookie) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_task.h,v 1.13 2003/11/30 20:42:03 manu Exp $ */
+/*	$NetBSD: mach_task.h,v 1.14 2005/02/26 23:10:20 perry Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #ifndef	_MACH_TASK_H_
 #define	_MACH_TASK_H_
 
-/* task_get_special_port */ 
+/* task_get_special_port */
 
 #define MACH_TASK_KERNEL_PORT		1
 #define MACH_TASK_HOST_PORT		2

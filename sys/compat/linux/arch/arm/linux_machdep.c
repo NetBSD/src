@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.13 2003/10/10 14:44:42 matt Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.14 2005/02/26 23:10:19 perry Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.13 2003/10/10 14:44:42 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.14 2005/02/26 23:10:19 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -276,7 +276,7 @@ linux_sys_sigreturn(l, v, retval)
 	return (EJUSTRETURN);
 }
 
-/* 
+/*
  * major device numbers remapping
  */
 dev_t
@@ -296,7 +296,7 @@ linux_machdepioctl(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
-{ 
+{
 	struct linux_sys_ioctl_args /* {
 		syscallarg(int) fd;
 		syscallarg(u_long) com;
@@ -304,11 +304,11 @@ linux_machdepioctl(p, v, retval)
 	} */ *uap = v;
 	struct sys_ioctl_args bia;
 	u_long com;
-	
+
 	SCARG(&bia, fd) = SCARG(uap, fd);
 	SCARG(&bia, data) = SCARG(uap, data);
 	com = SCARG(uap, com);
-	
+
 	switch (com) {
 	default:
 		printf("linux_machdepioctl: invalid ioctl %08lx\n", com);

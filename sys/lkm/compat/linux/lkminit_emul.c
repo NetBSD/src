@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_emul.c,v 1.4 2004/05/20 06:34:27 atatat Exp $ */
+/* $NetBSD: lkminit_emul.c,v 1.5 2005/02/26 22:58:57 perry Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_emul.c,v 1.4 2004/05/20 06:34:27 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_emul.c,v 1.5 2005/02/26 22:58:57 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -71,7 +71,7 @@ extern struct sysctlnode linux_sysctl_root;
  */
 int
 compat_linux_lkmentry(lkmtp, cmd, ver)
-	struct lkm_table *lkmtp;	
+	struct lkm_table *lkmtp;
 	int cmd;
 	int ver;
 {
@@ -81,7 +81,7 @@ compat_linux_lkmentry(lkmtp, cmd, ver)
 
 int
 load(lkmtp, cmd)
-	struct lkm_table *lkmtp;	
+	struct lkm_table *lkmtp;
 	int cmd;
 {
 
@@ -92,7 +92,7 @@ load(lkmtp, cmd)
 
 int
 unload(lkmtp, cmd)
-	struct lkm_table *lkmtp;	
+	struct lkm_table *lkmtp;
 	int cmd;
 {
 

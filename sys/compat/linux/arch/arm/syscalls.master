@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.19 2004/09/20 18:41:07 jdolecek Exp $
+	$NetBSD: syscalls.master,v 1.20 2005/02/26 23:10:19 perry Exp $
 
 ; Derived from sys/compat/linux/arch/*/syscalls.master
 ; and from Linux 2.4.12 arch/arm/kernel/calls.S
@@ -141,7 +141,7 @@
 			    struct linux_old_sigaction *osa); }
 68	STD		{ int linux_sys_siggetmask(void); }
 69	STD		{ int linux_sys_sigsetmask(linux_old_sigset_t mask); }
-70	NOARGS		{ int sys_setreuid(uid_t ruid, uid_t euid); } 
+70	NOARGS		{ int sys_setreuid(uid_t ruid, uid_t euid); }
 71	NOARGS		{ int sys_setregid(gid_t rgid, gid_t egid); }
 72	STD		{ int linux_sys_sigsuspend(caddr_t restart, \
 			    int oldmask, int mask); }
@@ -220,7 +220,7 @@
 121	STD		{ int linux_sys_setdomainname(char *domainname, \
 			    int len); }
 122	STD		{ int linux_sys_uname(struct linux_utsname *up); }
-123	UNIMPL		modify_ldt	
+123	UNIMPL		modify_ldt
 124	UNIMPL		adjtimex
 125	STD		{ int linux_sys_mprotect(const void *start, \
 			    unsigned long len, int prot); }

@@ -1,4 +1,4 @@
-/* $NetBSD: linux_signal.h,v 1.8 2002/11/26 18:43:21 christos Exp $ */
+/* $NetBSD: linux_signal.h,v 1.9 2005/02/26 23:10:19 perry Exp $ */
 
 /*-
  * Copyright (c) 1995, 1998, 2001 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #define _MIPS_LINUX_SIGNAL_H
 
 /*
- * From Linux's include/asm-mips/ptrace.h 
+ * From Linux's include/asm-mips/ptrace.h
  */
 struct linux_pt_regs {
 	unsigned long lpad0[6];
@@ -53,8 +53,8 @@ struct linux_pt_regs {
 	unsigned long lcp0_cause;
 };
 
-/* 
- * Everything is from Linux's include/asm-mips/signal.h 
+/*
+ * Everything is from Linux's include/asm-mips/signal.h
  */
 #define LINUX_SIGHUP	 	1
 #define LINUX_SIGINT		2
@@ -111,7 +111,7 @@ struct linux_pt_regs {
 #define LINUX_SA_NOCLDSTOP	0x00000001
 #define LINUX_SA_SIGINFO	0x00000008
 #define LINUX_SA_NOCLDWAIT	0x00010000
-#define LINUX_SA_RESTORER	0x04000000    
+#define LINUX_SA_RESTORER	0x04000000
 #define LINUX_SA_ONSTACK	0x08000000
 #define LINUX_SA_RESTART	0x10000000
 #define LINUX_SA_INTERRUPT	0x20000000

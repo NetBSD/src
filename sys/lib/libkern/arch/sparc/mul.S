@@ -1,4 +1,4 @@
-/*	$NetBSD: mul.S,v 1.6 2003/08/07 16:32:20 agc Exp $	*/
+/*	$NetBSD: mul.S,v 1.7 2005/02/26 22:58:56 perry Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@
 #if 0
 	.asciz "@(#)mul.s	8.1 (Berkeley) 6/4/93"
 #else
-	RCSID("$NetBSD: mul.S,v 1.6 2003/08/07 16:32:20 agc Exp $")
+	RCSID("$NetBSD: mul.S,v 1.7 2005/02/26 22:58:56 perry Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -105,7 +105,7 @@ FUNC(.mul)
 	bge	1f
 	rd	%y, %o0
 
-	! %o0 was indeed negative; fix upper 32 bits of result by subtracting 
+	! %o0 was indeed negative; fix upper 32 bits of result by subtracting
 	! %o1 (i.e., return %o4 - %o1 in %o1).
 	retl
 	sub	%o4, %o1, %o1

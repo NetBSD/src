@@ -1,4 +1,4 @@
-/*	$NetBSD: overlay_vfsops.c,v 1.28 2005/01/02 16:08:30 thorpej Exp $	*/
+/*	$NetBSD: overlay_vfsops.c,v 1.29 2005/02/26 22:59:00 perry Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 National Aeronautics & Space Administration
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: overlay_vfsops.c,v 1.28 2005/01/02 16:08:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: overlay_vfsops.c,v 1.29 2005/02/26 22:59:00 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -236,7 +236,7 @@ ov_unmount(mp, mntflags, p)
 	 * moment, but who knows...
 	 */
 #if 0
-	mntflushbuf(mp, 0); 
+	mntflushbuf(mp, 0);
 	if (mntinvalbuf(mp, 1))
 		return (EBUSY);
 #endif
@@ -247,7 +247,7 @@ ov_unmount(mp, mntflags, p)
 
 #ifdef OVERLAYFS_DIAGNOSTIC
 	vprint("alias root of lower", overlay_rootvp);
-#endif	 
+#endif
 	/*
 	 * Release reference on underlying root vnode
 	 */

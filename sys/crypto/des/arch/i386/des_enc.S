@@ -1,4 +1,4 @@
-/* $NetBSD: des_enc.S,v 1.2 2003/11/28 08:56:48 keihan Exp $ */
+/* $NetBSD: des_enc.S,v 1.3 2005/02/26 23:04:17 perry Exp $ */
 
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 /*
- * Modified from the output of `perl des686.pl elf' by 
+ * Modified from the output of `perl des686.pl elf' by
  * Thor Lancelot Simon <tls@NetBSD.org>
  */
 
@@ -68,7 +68,7 @@ ENTRY(des_encrypt1)
 	pushl	%esi
 	pushl	%edi
 
-	# Load the 2 words 
+	# Load the 2 words
 	movl	12(%esp),	%esi
 	xorl	%ecx,		%ecx
 	pushl	%ebx
@@ -77,7 +77,7 @@ ENTRY(des_encrypt1)
 	movl	28(%esp),	%ebx
 	movl	4(%esi),	%edi
 
-	# IP 
+	# IP
 	roll	$4,		%eax
 	movl	%eax,		%esi
 	xorl	%edi,		%eax
@@ -114,12 +114,12 @@ ENTRY(des_encrypt1)
 	xorl	%eax,		%edi
 
 .byte 209
-.byte 199		# roll $1 %edi 
+.byte 199		# roll $1 %edi
 	movl	24(%esp),	%ebp
 	cmpl	$0,		%ebx
 	je	.L000start_decrypt
 
-	# Round 0 
+	# Round 0
 	movl	(%ebp),		%eax
 	xorl	%ebx,		%ebx
 	movl	4(%ebp),	%edx
@@ -156,7 +156,7 @@ ENTRY(des_encrypt1)
 	movl	0x500+_C_LABEL(des_SPtrans)(%edx),%ebx
 	xorl	%ebx,		%edi
 
-	# Round 1 
+	# Round 1
 	movl	8(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	12(%ebp),	%edx
@@ -193,7 +193,7 @@ ENTRY(des_encrypt1)
 	movl	0x500+_C_LABEL(des_SPtrans)(%edx),%ebx
 	xorl	%ebx,		%esi
 
-	# Round 2 
+	# Round 2
 	movl	16(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	20(%ebp),	%edx
@@ -230,7 +230,7 @@ ENTRY(des_encrypt1)
 	movl	0x500+_C_LABEL(des_SPtrans)(%edx),%ebx
 	xorl	%ebx,		%edi
 
-	# Round 3 
+	# Round 3
 	movl	24(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	28(%ebp),	%edx
@@ -267,7 +267,7 @@ ENTRY(des_encrypt1)
 	movl	0x500+_C_LABEL(des_SPtrans)(%edx),%ebx
 	xorl	%ebx,		%esi
 
-	# Round 4 
+	# Round 4
 	movl	32(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	36(%ebp),	%edx
@@ -304,7 +304,7 @@ ENTRY(des_encrypt1)
 	movl	0x500+_C_LABEL(des_SPtrans)(%edx),%ebx
 	xorl	%ebx,		%edi
 
-	# Round 5 
+	# Round 5
 	movl	40(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	44(%ebp),	%edx
@@ -341,7 +341,7 @@ ENTRY(des_encrypt1)
 	movl	0x500+_C_LABEL(des_SPtrans)(%edx),%ebx
 	xorl	%ebx,		%esi
 
-	# Round 6 
+	# Round 6
 	movl	48(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	52(%ebp),	%edx
@@ -378,7 +378,7 @@ ENTRY(des_encrypt1)
 	movl	0x500+_C_LABEL(des_SPtrans)(%edx),%ebx
 	xorl	%ebx,		%edi
 
-	# Round 7 
+	# Round 7
 	movl	56(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	60(%ebp),	%edx
@@ -415,7 +415,7 @@ ENTRY(des_encrypt1)
 	movl	0x500+_C_LABEL(des_SPtrans)(%edx),%ebx
 	xorl	%ebx,		%esi
 
-	# Round 8 
+	# Round 8
 	movl	64(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	68(%ebp),	%edx
@@ -452,7 +452,7 @@ ENTRY(des_encrypt1)
 	movl	0x500+_C_LABEL(des_SPtrans)(%edx),%ebx
 	xorl	%ebx,		%edi
 
-	# Round 9 
+	# Round 9
 	movl	72(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	76(%ebp),	%edx
@@ -489,7 +489,7 @@ ENTRY(des_encrypt1)
 	movl	0x500+_C_LABEL(des_SPtrans)(%edx),%ebx
 	xorl	%ebx,		%esi
 
-	# Round 10 
+	# Round 10
 	movl	80(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	84(%ebp),	%edx
@@ -526,7 +526,7 @@ ENTRY(des_encrypt1)
 	movl	0x500+_C_LABEL(des_SPtrans)(%edx),%ebx
 	xorl	%ebx,		%edi
 
-	# Round 11 
+	# Round 11
 	movl	88(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	92(%ebp),	%edx
@@ -563,7 +563,7 @@ ENTRY(des_encrypt1)
 	movl	0x500+_C_LABEL(des_SPtrans)(%edx),%ebx
 	xorl	%ebx,		%esi
 
-	# Round 12 
+	# Round 12
 	movl	96(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	100(%ebp),	%edx
@@ -600,7 +600,7 @@ ENTRY(des_encrypt1)
 	movl	0x500+_C_LABEL(des_SPtrans)(%edx),%ebx
 	xorl	%ebx,		%edi
 
-	# Round 13 
+	# Round 13
 	movl	104(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	108(%ebp),	%edx
@@ -637,7 +637,7 @@ ENTRY(des_encrypt1)
 	movl	0x500+_C_LABEL(des_SPtrans)(%edx),%ebx
 	xorl	%ebx,		%esi
 
-	# Round 14 
+	# Round 14
 	movl	112(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	116(%ebp),	%edx
@@ -674,7 +674,7 @@ ENTRY(des_encrypt1)
 	movl	0x500+_C_LABEL(des_SPtrans)(%edx),%ebx
 	xorl	%ebx,		%edi
 
-	# Round 15 
+	# Round 15
 	movl	120(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	124(%ebp),	%edx
@@ -713,7 +713,7 @@ ENTRY(des_encrypt1)
 	jmp	.L001end
 .L000start_decrypt:
 
-	# Round 15 
+	# Round 15
 	movl	120(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	124(%ebp),	%edx
@@ -750,7 +750,7 @@ ENTRY(des_encrypt1)
 	movl	0x500+_C_LABEL(des_SPtrans)(%edx),%ebx
 	xorl	%ebx,		%edi
 
-	# Round 14 
+	# Round 14
 	movl	112(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	116(%ebp),	%edx
@@ -787,7 +787,7 @@ ENTRY(des_encrypt1)
 	movl	0x500+_C_LABEL(des_SPtrans)(%edx),%ebx
 	xorl	%ebx,		%esi
 
-	# Round 13 
+	# Round 13
 	movl	104(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	108(%ebp),	%edx
@@ -824,7 +824,7 @@ ENTRY(des_encrypt1)
 	movl	0x500+_C_LABEL(des_SPtrans)(%edx),%ebx
 	xorl	%ebx,		%edi
 
-	# Round 12 
+	# Round 12
 	movl	96(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	100(%ebp),	%edx
@@ -861,7 +861,7 @@ ENTRY(des_encrypt1)
 	movl	0x500+_C_LABEL(des_SPtrans)(%edx),%ebx
 	xorl	%ebx,		%esi
 
-	# Round 11 
+	# Round 11
 	movl	88(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	92(%ebp),	%edx
@@ -898,7 +898,7 @@ ENTRY(des_encrypt1)
 	movl	0x500+_C_LABEL(des_SPtrans)(%edx),%ebx
 	xorl	%ebx,		%edi
 
-	# Round 10 
+	# Round 10
 	movl	80(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	84(%ebp),	%edx
@@ -935,7 +935,7 @@ ENTRY(des_encrypt1)
 	movl	0x500+_C_LABEL(des_SPtrans)(%edx),%ebx
 	xorl	%ebx,		%esi
 
-	# Round 9 
+	# Round 9
 	movl	72(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	76(%ebp),	%edx
@@ -972,7 +972,7 @@ ENTRY(des_encrypt1)
 	movl	0x500+_C_LABEL(des_SPtrans)(%edx),%ebx
 	xorl	%ebx,		%edi
 
-	# Round 8 
+	# Round 8
 	movl	64(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	68(%ebp),	%edx
@@ -1009,7 +1009,7 @@ ENTRY(des_encrypt1)
 	movl	0x500+_C_LABEL(des_SPtrans)(%edx),%ebx
 	xorl	%ebx,		%esi
 
-	# Round 7 
+	# Round 7
 	movl	56(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	60(%ebp),	%edx
@@ -1046,7 +1046,7 @@ ENTRY(des_encrypt1)
 	movl	0x500+_C_LABEL(des_SPtrans)(%edx),%ebx
 	xorl	%ebx,		%edi
 
-	# Round 6 
+	# Round 6
 	movl	48(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	52(%ebp),	%edx
@@ -1083,7 +1083,7 @@ ENTRY(des_encrypt1)
 	movl	0x500+_C_LABEL(des_SPtrans)(%edx),%ebx
 	xorl	%ebx,		%esi
 
-	# Round 5 
+	# Round 5
 	movl	40(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	44(%ebp),	%edx
@@ -1120,7 +1120,7 @@ ENTRY(des_encrypt1)
 	movl	0x500+_C_LABEL(des_SPtrans)(%edx),%ebx
 	xorl	%ebx,		%edi
 
-	# Round 4 
+	# Round 4
 	movl	32(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	36(%ebp),	%edx
@@ -1157,7 +1157,7 @@ ENTRY(des_encrypt1)
 	movl	0x500+_C_LABEL(des_SPtrans)(%edx),%ebx
 	xorl	%ebx,		%esi
 
-	# Round 3 
+	# Round 3
 	movl	24(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	28(%ebp),	%edx
@@ -1194,7 +1194,7 @@ ENTRY(des_encrypt1)
 	movl	0x500+_C_LABEL(des_SPtrans)(%edx),%ebx
 	xorl	%ebx,		%edi
 
-	# Round 2 
+	# Round 2
 	movl	16(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	20(%ebp),	%edx
@@ -1231,7 +1231,7 @@ ENTRY(des_encrypt1)
 	movl	0x500+_C_LABEL(des_SPtrans)(%edx),%ebx
 	xorl	%ebx,		%esi
 
-	# Round 1 
+	# Round 1
 	movl	8(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	12(%ebp),	%edx
@@ -1268,7 +1268,7 @@ ENTRY(des_encrypt1)
 	movl	0x500+_C_LABEL(des_SPtrans)(%edx),%ebx
 	xorl	%ebx,		%edi
 
-	# Round 0 
+	# Round 0
 	movl	(%ebp),		%eax
 	xorl	%ebx,		%ebx
 	movl	4(%ebp),	%edx
@@ -1306,10 +1306,10 @@ ENTRY(des_encrypt1)
 	xorl	%ebx,		%esi
 .L001end:
 
-	# FP 
+	# FP
 	movl	20(%esp),	%edx
 .byte 209
-.byte 206		# rorl $1 %esi 
+.byte 206		# rorl $1 %esi
 	movl	%edi,		%eax
 	xorl	%esi,		%edi
 	andl	$0xaaaaaaaa,	%edi
@@ -1359,7 +1359,7 @@ ENTRY(des_encrypt2)
 	pushl	%esi
 	pushl	%edi
 
-	# Load the 2 words 
+	# Load the 2 words
 	movl	12(%esp),	%eax
 	xorl	%ecx,		%ecx
 	pushl	%ebx
@@ -1373,7 +1373,7 @@ ENTRY(des_encrypt2)
 	cmpl	$0,		%ebx
 	je	.L002start_decrypt
 
-	# Round 0 
+	# Round 0
 	movl	(%ebp),		%eax
 	xorl	%ebx,		%ebx
 	movl	4(%ebp),	%edx
@@ -1410,7 +1410,7 @@ ENTRY(des_encrypt2)
 	movl	0x500+_C_LABEL(des_SPtrans)(%edx),%ebx
 	xorl	%ebx,		%edi
 
-	# Round 1 
+	# Round 1
 	movl	8(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	12(%ebp),	%edx
@@ -1447,7 +1447,7 @@ ENTRY(des_encrypt2)
 	movl	0x500+_C_LABEL(des_SPtrans)(%edx),%ebx
 	xorl	%ebx,		%esi
 
-	# Round 2 
+	# Round 2
 	movl	16(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	20(%ebp),	%edx
@@ -1484,7 +1484,7 @@ ENTRY(des_encrypt2)
 	movl	0x500+_C_LABEL(des_SPtrans)(%edx),%ebx
 	xorl	%ebx,		%edi
 
-	# Round 3 
+	# Round 3
 	movl	24(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	28(%ebp),	%edx
@@ -1521,7 +1521,7 @@ ENTRY(des_encrypt2)
 	movl	0x500+_C_LABEL(des_SPtrans)(%edx),%ebx
 	xorl	%ebx,		%esi
 
-	# Round 4 
+	# Round 4
 	movl	32(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	36(%ebp),	%edx
@@ -1558,7 +1558,7 @@ ENTRY(des_encrypt2)
 	movl	0x500+_C_LABEL(des_SPtrans)(%edx),%ebx
 	xorl	%ebx,		%edi
 
-	# Round 5 
+	# Round 5
 	movl	40(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	44(%ebp),	%edx
@@ -1595,7 +1595,7 @@ ENTRY(des_encrypt2)
 	movl	0x500+_C_LABEL(des_SPtrans)(%edx),%ebx
 	xorl	%ebx,		%esi
 
-	# Round 6 
+	# Round 6
 	movl	48(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	52(%ebp),	%edx
@@ -1632,7 +1632,7 @@ ENTRY(des_encrypt2)
 	movl	0x500+_C_LABEL(des_SPtrans)(%edx),%ebx
 	xorl	%ebx,		%edi
 
-	# Round 7 
+	# Round 7
 	movl	56(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	60(%ebp),	%edx
@@ -1669,7 +1669,7 @@ ENTRY(des_encrypt2)
 	movl	0x500+_C_LABEL(des_SPtrans)(%edx),%ebx
 	xorl	%ebx,		%esi
 
-	# Round 8 
+	# Round 8
 	movl	64(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	68(%ebp),	%edx
@@ -1706,7 +1706,7 @@ ENTRY(des_encrypt2)
 	movl	0x500+_C_LABEL(des_SPtrans)(%edx),%ebx
 	xorl	%ebx,		%edi
 
-	# Round 9 
+	# Round 9
 	movl	72(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	76(%ebp),	%edx
@@ -1743,7 +1743,7 @@ ENTRY(des_encrypt2)
 	movl	0x500+_C_LABEL(des_SPtrans)(%edx),%ebx
 	xorl	%ebx,		%esi
 
-	# Round 10 
+	# Round 10
 	movl	80(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	84(%ebp),	%edx
@@ -1780,7 +1780,7 @@ ENTRY(des_encrypt2)
 	movl	0x500+_C_LABEL(des_SPtrans)(%edx),%ebx
 	xorl	%ebx,		%edi
 
-	# Round 11 
+	# Round 11
 	movl	88(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	92(%ebp),	%edx
@@ -1817,7 +1817,7 @@ ENTRY(des_encrypt2)
 	movl	0x500+_C_LABEL(des_SPtrans)(%edx),%ebx
 	xorl	%ebx,		%esi
 
-	# Round 12 
+	# Round 12
 	movl	96(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	100(%ebp),	%edx
@@ -1854,7 +1854,7 @@ ENTRY(des_encrypt2)
 	movl	0x500+_C_LABEL(des_SPtrans)(%edx),%ebx
 	xorl	%ebx,		%edi
 
-	# Round 13 
+	# Round 13
 	movl	104(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	108(%ebp),	%edx
@@ -1891,7 +1891,7 @@ ENTRY(des_encrypt2)
 	movl	0x500+_C_LABEL(des_SPtrans)(%edx),%ebx
 	xorl	%ebx,		%esi
 
-	# Round 14 
+	# Round 14
 	movl	112(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	116(%ebp),	%edx
@@ -1928,7 +1928,7 @@ ENTRY(des_encrypt2)
 	movl	0x500+_C_LABEL(des_SPtrans)(%edx),%ebx
 	xorl	%ebx,		%edi
 
-	# Round 15 
+	# Round 15
 	movl	120(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	124(%ebp),	%edx
@@ -1967,7 +1967,7 @@ ENTRY(des_encrypt2)
 	jmp	.L003end
 .L002start_decrypt:
 
-	# Round 15 
+	# Round 15
 	movl	120(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	124(%ebp),	%edx
@@ -2004,7 +2004,7 @@ ENTRY(des_encrypt2)
 	movl	0x500+_C_LABEL(des_SPtrans)(%edx),%ebx
 	xorl	%ebx,		%edi
 
-	# Round 14 
+	# Round 14
 	movl	112(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	116(%ebp),	%edx
@@ -2041,7 +2041,7 @@ ENTRY(des_encrypt2)
 	movl	0x500+_C_LABEL(des_SPtrans)(%edx),%ebx
 	xorl	%ebx,		%esi
 
-	# Round 13 
+	# Round 13
 	movl	104(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	108(%ebp),	%edx
@@ -2078,7 +2078,7 @@ ENTRY(des_encrypt2)
 	movl	0x500+_C_LABEL(des_SPtrans)(%edx),%ebx
 	xorl	%ebx,		%edi
 
-	# Round 12 
+	# Round 12
 	movl	96(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	100(%ebp),	%edx
@@ -2115,7 +2115,7 @@ ENTRY(des_encrypt2)
 	movl	0x500+_C_LABEL(des_SPtrans)(%edx),%ebx
 	xorl	%ebx,		%esi
 
-	# Round 11 
+	# Round 11
 	movl	88(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	92(%ebp),	%edx
@@ -2152,7 +2152,7 @@ ENTRY(des_encrypt2)
 	movl	0x500+_C_LABEL(des_SPtrans)(%edx),%ebx
 	xorl	%ebx,		%edi
 
-	# Round 10 
+	# Round 10
 	movl	80(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	84(%ebp),	%edx
@@ -2189,7 +2189,7 @@ ENTRY(des_encrypt2)
 	movl	0x500+_C_LABEL(des_SPtrans)(%edx),%ebx
 	xorl	%ebx,		%esi
 
-	# Round 9 
+	# Round 9
 	movl	72(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	76(%ebp),	%edx
@@ -2226,7 +2226,7 @@ ENTRY(des_encrypt2)
 	movl	0x500+_C_LABEL(des_SPtrans)(%edx),%ebx
 	xorl	%ebx,		%edi
 
-	# Round 8 
+	# Round 8
 	movl	64(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	68(%ebp),	%edx
@@ -2263,7 +2263,7 @@ ENTRY(des_encrypt2)
 	movl	0x500+_C_LABEL(des_SPtrans)(%edx),%ebx
 	xorl	%ebx,		%esi
 
-	# Round 7 
+	# Round 7
 	movl	56(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	60(%ebp),	%edx
@@ -2300,7 +2300,7 @@ ENTRY(des_encrypt2)
 	movl	0x500+_C_LABEL(des_SPtrans)(%edx),%ebx
 	xorl	%ebx,		%edi
 
-	# Round 6 
+	# Round 6
 	movl	48(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	52(%ebp),	%edx
@@ -2337,7 +2337,7 @@ ENTRY(des_encrypt2)
 	movl	0x500+_C_LABEL(des_SPtrans)(%edx),%ebx
 	xorl	%ebx,		%esi
 
-	# Round 5 
+	# Round 5
 	movl	40(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	44(%ebp),	%edx
@@ -2374,7 +2374,7 @@ ENTRY(des_encrypt2)
 	movl	0x500+_C_LABEL(des_SPtrans)(%edx),%ebx
 	xorl	%ebx,		%edi
 
-	# Round 4 
+	# Round 4
 	movl	32(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	36(%ebp),	%edx
@@ -2411,7 +2411,7 @@ ENTRY(des_encrypt2)
 	movl	0x500+_C_LABEL(des_SPtrans)(%edx),%ebx
 	xorl	%ebx,		%esi
 
-	# Round 3 
+	# Round 3
 	movl	24(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	28(%ebp),	%edx
@@ -2448,7 +2448,7 @@ ENTRY(des_encrypt2)
 	movl	0x500+_C_LABEL(des_SPtrans)(%edx),%ebx
 	xorl	%ebx,		%edi
 
-	# Round 2 
+	# Round 2
 	movl	16(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	20(%ebp),	%edx
@@ -2485,7 +2485,7 @@ ENTRY(des_encrypt2)
 	movl	0x500+_C_LABEL(des_SPtrans)(%edx),%ebx
 	xorl	%ebx,		%esi
 
-	# Round 1 
+	# Round 1
 	movl	8(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	12(%ebp),	%edx
@@ -2522,7 +2522,7 @@ ENTRY(des_encrypt2)
 	movl	0x500+_C_LABEL(des_SPtrans)(%edx),%ebx
 	xorl	%ebx,		%edi
 
-	# Round 0 
+	# Round 0
 	movl	(%ebp),		%eax
 	xorl	%ebx,		%ebx
 	movl	4(%ebp),	%edx
@@ -2560,7 +2560,7 @@ ENTRY(des_encrypt2)
 	xorl	%ebx,		%esi
 .L003end:
 
-	# Fixup 
+	# Fixup
 	rorl	$3,		%edi
 	movl	20(%esp),	%eax
 	rorl	$3,		%esi
@@ -2581,12 +2581,12 @@ ENTRY(des_encrypt3)
 	pushl   %esi
 	pushl   %edi
 
-	# Load the data words 
+	# Load the data words
 	movl    (%ebx),         %edi
 	movl    4(%ebx),        %esi
 	subl    $12,            %esp
 
-	# IP 
+	# IP
 	roll    $4,             %edi
 	movl    %edi,           %edx
 	xorl    %esi,           %edi
@@ -2645,7 +2645,7 @@ ENTRY(des_encrypt3)
 	movl    (%ebx),         %edi
 	movl    4(%ebx),        %esi
 
-	# FP 
+	# FP
 	roll    $2,             %esi
 	roll    $3,             %edi
 	movl    %edi,           %eax
@@ -2700,12 +2700,12 @@ ENTRY(des_decrypt3)
 	pushl   %esi
 	pushl   %edi
 
-	# Load the data words 
+	# Load the data words
 	movl    (%ebx),         %edi
 	movl    4(%ebx),        %esi
 	subl    $12,            %esp
 
-	# IP 
+	# IP
 	roll    $4,             %edi
 	movl    %edi,           %edx
 	xorl    %esi,           %edi
@@ -2764,7 +2764,7 @@ ENTRY(des_decrypt3)
 	movl    (%ebx),         %edi
 	movl    4(%ebx),        %esi
 
-	# FP 
+	# FP
 	roll    $2,             %esi
 	roll    $3,             %edi
 	movl    %edi,           %eax

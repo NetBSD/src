@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_ipc.h,v 1.2 1998/09/04 19:54:38 christos Exp $	*/
+/*	$NetBSD: svr4_ipc.h,v 1.3 2005/02/26 23:10:21 perry Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ struct svr4_ipc_perm {
 struct svr4_msg {
 	struct svr4_msg	*msg_next;
 	long		msg_type;
-	u_short		msg_ts;	
+	u_short		msg_ts;
 	short		msg_spot;
 };
 
@@ -82,7 +82,7 @@ struct svr4_msqid_ds {
 	svr4_pid_t	msg_lspid;
 	svr4_pid_t	msg_lrpid;
 	svr4_time_t	msg_stime;
-	long		msg_pad1;	
+	long		msg_pad1;
 	svr4_time_t	msg_rtime;
 	long		msg_pad2;
 	svr4_time_t	msg_ctime;

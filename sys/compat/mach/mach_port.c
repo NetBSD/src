@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_port.c,v 1.55 2004/10/01 16:30:52 yamt Exp $ */
+/*	$NetBSD: mach_port.c,v 1.56 2005/02/26 23:10:20 perry Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include "opt_compat_darwin.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.55 2004/10/01 16:30:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.56 2005/02/26 23:10:20 perry Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -78,7 +78,7 @@ int
 mach_sys_reply_port(l, v, retval)
 	struct lwp *l;
 	void *v;
-	register_t *retval; 
+	register_t *retval;
 {
 	struct mach_right *mr;
 
@@ -138,7 +138,7 @@ mach_sys_host_self_trap(l, v, retval)
 	return 0;
 }
 
-int 
+int
 mach_port_deallocate(args)
 	struct mach_trap_args *args;
 {
@@ -150,7 +150,7 @@ mach_port_deallocate(args)
 	struct mach_right *mr;
 
 	mn = req->req_name;
-	if ((mr = mach_right_check(mn, l, MACH_PORT_TYPE_REF_RIGHTS)) != NULL) 
+	if ((mr = mach_right_check(mn, l, MACH_PORT_TYPE_REF_RIGHTS)) != NULL)
 		mach_right_put(mr, MACH_PORT_TYPE_REF_RIGHTS);
 
 	*msglen = sizeof(*rep);
@@ -163,7 +163,7 @@ mach_port_deallocate(args)
 	return 0;
 }
 
-int 
+int
 mach_port_destroy(args)
 	struct mach_trap_args *args;
 {
@@ -178,8 +178,8 @@ mach_port_destroy(args)
 	printf("mach_port_destroy mn = %x\n", req->req_name);
 #endif
 	mn = req->req_name;
-	if ((mr = mach_right_check(mn, 
-	    l, MACH_PORT_TYPE_ALL_RIGHTS)) != NULL) { 
+	if ((mr = mach_right_check(mn,
+	    l, MACH_PORT_TYPE_ALL_RIGHTS)) != NULL) {
 		MACH_PORT_UNREF(mr->mr_port);
 		mr->mr_port = NULL;
 		mach_right_put(mr, MACH_PORT_TYPE_ALL_RIGHTS);
@@ -195,7 +195,7 @@ mach_port_destroy(args)
 	return 0;
 }
 
-int 
+int
 mach_port_allocate(args)
 	struct mach_trap_args *args;
 {
@@ -221,7 +221,7 @@ mach_port_allocate(args)
 		break;
 
 	default:
-		uprintf("mach_port_allocate: unknown right %x\n", 
+		uprintf("mach_port_allocate: unknown right %x\n",
 		    req->req_right);
 		return mach_msg_error(args, EINVAL);
 		break;
@@ -229,7 +229,7 @@ mach_port_allocate(args)
 
 	*msglen = sizeof(*rep);
 	mach_set_header(rep, req, *msglen);
-	
+
 	rep->rep_retval = 0;
 	rep->rep_name = (mach_port_name_t)mr->mr_name;
 
@@ -238,7 +238,7 @@ mach_port_allocate(args)
 	return 0;
 }
 
-int 
+int
 mach_port_insert_right(args)
 	struct mach_trap_args *args;
 {
@@ -258,23 +258,23 @@ mach_port_insert_right(args)
 	mr = mach_right_check(right, l, MACH_PORT_TYPE_ALL_RIGHTS);
 	if (mr == NULL)
 		return mach_msg_error(args, EPERM);
-		
+
 	switch (req->req_poly.disposition) {
 	case MACH_MSG_TYPE_MAKE_SEND:
 	case MACH_MSG_TYPE_MOVE_SEND:
 	case MACH_MSG_TYPE_COPY_SEND:
-		nmr = mach_right_get(mr->mr_port, 
+		nmr = mach_right_get(mr->mr_port,
 		    l, MACH_PORT_TYPE_SEND, name);
 		break;
 
 	case MACH_MSG_TYPE_MAKE_SEND_ONCE:
 	case MACH_MSG_TYPE_MOVE_SEND_ONCE:
-		nmr = mach_right_get(mr->mr_port, 
+		nmr = mach_right_get(mr->mr_port,
 		    l, MACH_PORT_TYPE_SEND_ONCE, name);
 		break;
 
 	case MACH_MSG_TYPE_MOVE_RECEIVE:
-		nmr = mach_right_get(mr->mr_port, 
+		nmr = mach_right_get(mr->mr_port,
 		    l, MACH_PORT_TYPE_RECEIVE, name);
 		break;
 
@@ -294,7 +294,7 @@ mach_port_insert_right(args)
 	return 0;
 }
 
-int 
+int
 mach_port_type(args)
 	struct mach_trap_args *args;
 {
@@ -320,7 +320,7 @@ mach_port_type(args)
 	return 0;
 }
 
-int 
+int
 mach_port_set_attributes(args)
 	struct mach_trap_args *args;
 {
@@ -355,7 +355,7 @@ mach_port_set_attributes(args)
 	return 0;
 }
 
-int 
+int
 mach_port_get_attributes(args)
 	struct mach_trap_args *args;
 {
@@ -441,7 +441,7 @@ mach_port_get_attributes(args)
 }
 
 /* XXX insert a recv right into a port set without removing it from another */
-int 
+int
 mach_port_insert_member(args)
 	struct mach_trap_args *args;
 {
@@ -461,7 +461,7 @@ mach_port_insert_member(args)
 	return 0;
 }
 
-int 
+int
 mach_port_move_member(args)
 	struct mach_trap_args *args;
 {
@@ -482,7 +482,7 @@ mach_port_move_member(args)
 	mrs = mach_right_check(after, l, MACH_PORT_TYPE_PORT_SET);
 	if (mrs == NULL)
 		return mach_msg_error(args, EPERM);
-		
+
 	lockmgr(&med->med_rightlock, LK_EXCLUSIVE, NULL);
 
 	/* Remove it from an existing port set */
@@ -505,7 +505,7 @@ mach_port_move_member(args)
 	return 0;
 }
 
-int 
+int
 mach_port_request_notification(args)
 	struct mach_trap_args *args;
 {
@@ -523,7 +523,7 @@ mach_port_request_notification(args)
 	printf("mach_port_request_notification, notify = %08x, target = %08x\n",
 	    req->req_notify.name, mn = req->req_name);
 #endif
-	mn = req->req_notify.name;	
+	mn = req->req_notify.name;
 	if ((nmr = mach_right_check(mn, l, MACH_PORT_TYPE_ALL_RIGHTS)) == NULL)
 		return mach_msg_error(args, EINVAL);
 
@@ -552,7 +552,7 @@ mach_port_request_notification(args)
 		oldnmr = tmr->mr_notify_no_senders;
 		tmr->mr_notify_no_senders = mach_right_get(nmr->mr_port,
 		    l, MACH_PORT_TYPE_SEND_ONCE, req->req_notify.name);
-		tmr->mr_notify_no_senders->mr_port->mp_datatype = 
+		tmr->mr_notify_no_senders->mr_port->mp_datatype =
 		    MACH_MP_NOTIFY_SYNC;
 		(int)tmr->mr_notify_no_senders->mr_port->mp_data =
 		    req->req_count;
@@ -589,7 +589,7 @@ mach_port_request_notification(args)
 	return 0;
 }
 
-int 
+int
 mach_port_get_refs(args)
 	struct mach_trap_args *args;
 {
@@ -602,7 +602,7 @@ mach_port_get_refs(args)
 	mach_port_right_t right = req->req_right;
 
 	mn = req->req_name;
-	if ((mr = mach_right_check(mn, l, right)) == NULL) 
+	if ((mr = mach_right_check(mn, l, right)) == NULL)
 		return mach_msg_error(args, EINVAL);
 
 	*msglen = sizeof(*rep);
@@ -616,7 +616,7 @@ mach_port_get_refs(args)
 	return 0;
 }
 
-int 
+int
 mach_port_mod_refs(args)
 	struct mach_trap_args *args;
 {
@@ -630,10 +630,10 @@ mach_port_mod_refs(args)
 	mach_port_right_t right = req->req_right;
 
 	mn = req->req_name;
-	if ((mr = mach_right_check(mn, l, right)) == NULL) 
+	if ((mr = mach_right_check(mn, l, right)) == NULL)
 		return mach_msg_error(args, EINVAL);
 
-	/* 
+	/*
 	 * Changing the refcount is likely to cause crashes,
 	 * as we will free a right which might still be referenced
 	 * within the kernel. Add a user refcount field?
@@ -653,8 +653,8 @@ mach_port_mod_refs(args)
 	return 0;
 }
 
-void 
-mach_port_init(void) 
+void
+mach_port_init(void)
 {
 	pool_init(&mach_port_pool, sizeof (struct mach_port),
 	    0, 0, 0, "mach_port_pool", NULL);
@@ -710,7 +710,7 @@ mach_port_put(mp)
 		mach_message_put_exclocked(mm);
 	lockmgr(&mp->mp_msglock, LK_RELEASE, NULL);
 	lockmgr(&mp->mp_msglock, LK_DRAIN, NULL);
-	
+
 	if (mp->mp_flags & MACH_MP_DATA_ALLOCATED)
 		free(mp->mp_data, M_EMULDATA);
 
@@ -756,13 +756,13 @@ mach_right_get(mp, l, type, hint)
 			goto rcvck;
 		}
 	}
-	
+
 	mr = pool_get(&mach_right_pool, PR_WAITOK);
 
 	mr->mr_port = mp;
 	mr->mr_lwp = l;
 	mr->mr_type = type;
-	mr->mr_sethead = mr; 
+	mr->mr_sethead = mr;
 	mr->mr_refcount = 1;
 	mr->mr_notify_destroyed = NULL;
 	mr->mr_notify_dead_name = NULL;
@@ -775,28 +775,28 @@ mach_right_get(mp, l, type, hint)
 		lockmgr(&med->med_rightlock, LK_EXCLUSIVE, NULL);
 		mr->mr_name = mach_right_newname(l, hint);
 #ifdef DEBUG_MACH_RIGHT
-		printf("mach_right_get: insert right %x(%x)\n", 
+		printf("mach_right_get: insert right %x(%x)\n",
 		    mr->mr_name, mr->mr_type);
 #endif
 		LIST_INSERT_HEAD(&med->med_right, mr, mr_list);
 		lockmgr(&med->med_rightlock, LK_RELEASE, NULL);
 	}
-		
+
 rcvck:
 	if (type & MACH_PORT_TYPE_RECEIVE) {
-		/* 
+		/*
 		 * Destroy the former receive right on this port, and
 		 * register the new right.
 		 */
 		if (mr->mr_port->mp_recv != NULL)
-			mach_right_put(mr->mr_port->mp_recv, 
+			mach_right_put(mr->mr_port->mp_recv,
 			    MACH_PORT_TYPE_RECEIVE);
 		mr->mr_port->mp_recv = mr;
 	}
 	return mr;
 }
 
-void 
+void
 mach_right_put(mr, right)
 	struct mach_right *mr;
 	int right;
@@ -840,10 +840,10 @@ mach_right_put_exclocked(mr, right)
 	printf("mach_right_put: mr = %p\n", mr);
 	printf("right %x(%x) refcount %d, deallocate %x\n",
 	    mr->mr_name, mr->mr_type, mr->mr_refcount, right);
-	if ((mr->mr_type & right) == 0) 
-		printf("mach_right_put: dropping nonexistant right %x on %x\n", 
+	if ((mr->mr_type & right) == 0)
+		printf("mach_right_put: dropping nonexistant right %x on %x\n",
 		    right, mr->mr_name);
-	LIST_FOREACH(cmr, &med->med_right, mr_list) 
+	LIST_FOREACH(cmr, &med->med_right, mr_list)
 		if (cmr == mr)
 			break;
 	if (cmr == NULL) {
@@ -922,7 +922,7 @@ mach_right_put_exclocked(mr, right)
 	return;
 }
 
-/* 
+/*
  * Check that a process has a given right.
  */
 struct mach_right *
@@ -946,7 +946,7 @@ mach_right_check(mn, l, type)
 #endif
 	LIST_FOREACH(cmr, &med->med_right, mr_list) {
 #ifdef DEBUG_MACH_RIGHT
-		printf("cmr = %p, cmr->mr_name = %x, cmr->mr_type = %x\n", 
+		printf("cmr = %p, cmr->mr_name = %x, cmr->mr_type = %x\n",
 		    cmr, cmr->mr_name, cmr->mr_type);
 #endif
 		if (cmr->mr_name != mn)
@@ -961,8 +961,8 @@ mach_right_check(mn, l, type)
 }
 
 
-/* 
- * Find an usnused port name in a given lwp. 
+/*
+ * Find an usnused port name in a given lwp.
  * Right lists should be locked.
  */
 mach_port_t
@@ -994,7 +994,7 @@ mach_right_newname(l, hint)
 }
 
 #ifdef DEBUG_MACH
-void 
+void
 mach_debug_port(void)
 {
 	struct mach_emuldata *med;
@@ -1011,31 +1011,31 @@ mach_debug_port(void)
 			continue;
 
 		med = p->p_emuldata;
-		LIST_FOREACH(mr, &med->med_right, mr_list) {		
+		LIST_FOREACH(mr, &med->med_right, mr_list) {
 			if ((mr->mr_type & MACH_PORT_TYPE_PORT_SET) == 0) {
-				printf("pid %d: %p(%x)=>%p", 
+				printf("pid %d: %p(%x)=>%p",
 				    p->p_pid, mr, mr->mr_type, mr->mr_port);
 				if (mr->mr_port && mr->mr_port->mp_recv)
-					printf("[%p]\n", 
+					printf("[%p]\n",
 					    mr->mr_port->mp_recv->mr_sethead);
 				else
 					printf("[NULL]\n");
-				
+
 				continue;
 			}
 
 			/* Port set... */
-			printf("pid %d: set %p(%x) ", 
+			printf("pid %d: set %p(%x) ",
 			    p->p_pid, mr, mr->mr_type);
 			LIST_FOREACH(mrs, &mr->mr_set, mr_setlist) {
-				printf("%p(%x)=>%p", 
+				printf("%p(%x)=>%p",
 				    mrs, mrs->mr_type, mrs->mr_port);
-				if (mrs->mr_port && mrs->mr_port->mp_recv) 
-					printf("[%p]", 
+				if (mrs->mr_port && mrs->mr_port->mp_recv)
+					printf("[%p]",
 					    mrs->mr_port->mp_recv->mr_sethead);
 				else
 					printf("[NULL]");
-				
+
 				printf(" ");
 			}
 			printf("\n");

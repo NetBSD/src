@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.120 2004/10/04 08:40:18 yamt Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.121 2005/02/26 22:59:00 perry Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.120 2004/10/04 08:40:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.121 2005/02/26 22:59:00 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -454,15 +454,15 @@ procfs_print(v)
 }
 
 int
-procfs_link(v) 
+procfs_link(v)
 	void *v;
 {
 	struct vop_link_args /* {
 		struct vnode *a_dvp;
-		struct vnode *a_vp;  
+		struct vnode *a_vp;
 		struct componentname *a_cnp;
 	} */ *ap = v;
- 
+
 	VOP_ABORTOP(ap->a_dvp, ap->a_cnp);
 	vput(ap->a_dvp);
 	return (EROFS);
@@ -479,7 +479,7 @@ procfs_symlink(v)
 		struct vattr *a_vap;
 		char *a_target;
 	} */ *ap = v;
-  
+
 	VOP_ABORTOP(ap->a_dvp, ap->a_cnp);
 	vput(ap->a_dvp);
 	return (EROFS);
@@ -539,7 +539,7 @@ procfs_getattr(v)
 	/*
 	 * Make all times be current TOD.  Avoid microtime(9), it's slow.
 	 * We don't guard the read from time(9) with splclock(9) since we
-	 * don't actually need to be THAT sure the access is atomic. 
+	 * don't actually need to be THAT sure the access is atomic.
 	 *
 	 * It would be possible to get the process start
 	 * time from the p_stat structure, but there's
@@ -769,7 +769,7 @@ procfs_access(v)
  *
  * Locking isn't hard here, just poorly documented.
  *
- * If we're looking up ".", just vref the parent & return it. 
+ * If we're looking up ".", just vref the parent & return it.
  *
  * If we're looking up "..", unlock the parent, and lock "..". If everything
  * went ok, and we're on the last component and the caller requested the
@@ -821,7 +821,7 @@ procfs_lookup(v)
 		/*
 		 * Shouldn't get here with .. in the root node.
 		 */
-		if (cnp->cn_flags & ISDOTDOT) 
+		if (cnp->cn_flags & ISDOTDOT)
 			return (EIO);
 
 		iscurproc = CNEQ(cnp, "curproc", 7);
@@ -956,7 +956,7 @@ procfs_lookup(v)
 
 			VREF(fvp);
 			FILE_UNUSE(fp, p);
-			vn_lock(fvp, LK_EXCLUSIVE | LK_RETRY | 
+			vn_lock(fvp, LK_EXCLUSIVE | LK_RETRY |
 			    (p == curproc ? LK_CANRECURSE : 0));
 			*vpp = fvp;
 			error = 0;
@@ -1127,7 +1127,7 @@ procfs_readdir(v)
 			if (pt->pt_valid &&
 			    (*pt->pt_valid)(p, vp->v_mount) == 0)
 				continue;
-			
+
 			d.d_fileno = PROCFS_FILENO(pfs->pfs_pid,
 			    pt->pt_pfstype, -1);
 			d.d_namlen = pt->pt_namlen;

@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_ioctl.c,v 1.2 2004/07/28 22:24:06 manu Exp $ */
+/*	$NetBSD: darwin_ioctl.c,v 1.3 2005/02/26 23:10:18 perry Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_ioctl.c,v 1.2 2004/07/28 22:24:06 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_ioctl.c,v 1.3 2005/02/26 23:10:18 perry Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -96,7 +96,7 @@ darwin_sys_ioctl(l, v, retval)
 		return error;
 		break;
 	}
-		
+
 	default:
 		/* Try native ioctl */
 		break;
@@ -116,31 +116,31 @@ vtype_to_dtype(dtype)
 	int dtype;
 {
 	switch (dtype) {
-	case VNON: 	
+	case VNON:
 		return DT_UNKNOWN;
 		break;
-	case VREG: 
+	case VREG:
 		return DT_REG;
 		break;
-	case VDIR: 	
+	case VDIR:
 		return DT_DIR;
 		break;
-	case VBLK: 
+	case VBLK:
 		return DT_BLK;
 		break;
-	case VCHR: 
+	case VCHR:
 		return DT_CHR;
 		break;
-	case VLNK: 
+	case VLNK:
 		return DT_LNK;
 		break;
-	case VSOCK: 
+	case VSOCK:
 		return DT_SOCK;
 		break;
-	case VFIFO: 
+	case VFIFO:
 		return DT_FIFO;
 		break;
-	case VBAD: 
+	case VBAD:
 		return DT_WHT;
 		break;
 	default:
