@@ -1,4 +1,4 @@
-/*	$NetBSD: aarp.c,v 1.2 1997/04/03 18:38:21 christos Exp $	*/
+/*	$NetBSD: aarp.c,v 1.3 1998/10/13 02:34:32 kim Exp $	*/
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -172,7 +172,7 @@ aarpwhohas(ifp, sat)
 	bzero(ea, sizeof(*ea));
 
 	ea->aarp_hrd = htons(AARPHRD_ETHER);
-	ea->aarp_pro = htons(ETHERTYPE_AT);
+	ea->aarp_pro = htons(ETHERTYPE_ATALK);
 	ea->aarp_hln = sizeof(ea->aarp_sha);
 	ea->aarp_pln = sizeof(ea->aarp_spu);
 	ea->aarp_op = htons(AARPOP_REQUEST);
@@ -307,7 +307,7 @@ aarpinput(ifp, m)
 		goto out;
 
 	switch (ntohs(ar->ar_pro)) {
-	case ETHERTYPE_AT:
+	case ETHERTYPE_ATALK:
 		at_aarpinput(ifp, m);
 		return;
 
@@ -577,7 +577,7 @@ aarpprobe(arp)
 	bzero(ea, sizeof(*ea));
 
 	ea->aarp_hrd = htons(AARPHRD_ETHER);
-	ea->aarp_pro = htons(ETHERTYPE_AT);
+	ea->aarp_pro = htons(ETHERTYPE_ATALK);
 	ea->aarp_hln = sizeof(ea->aarp_sha);
 	ea->aarp_pln = sizeof(ea->aarp_spu);
 	ea->aarp_op = htons(AARPOP_PROBE);

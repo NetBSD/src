@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.19 1998/09/25 21:50:38 is Exp $	*/
+/*	$NetBSD: if_se.c,v 1.20 1998/10/13 02:34:31 kim Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -855,7 +855,7 @@ se_init(sc)
 		return (error);
 #ifdef NETATALK
 	if ((sc->protos & PROTO_AT) &&
-	    (error = se_add_proto(sc, ETHERTYPE_AT)) != 0)
+	    (error = se_add_proto(sc, ETHERTYPE_ATALK)) != 0)
 		return (error);
 	if ((sc->protos & PROTO_AARP) &&
 	    (error = se_add_proto(sc, ETHERTYPE_AARP)) != 0)
