@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: dmesg,v 1.1.1.1 2000/03/10 11:53:25 lukem Exp $
+# $NetBSD: dmesg,v 1.2 2000/04/30 12:39:56 lukem Exp $
 #
 
 # PROVIDE: dmesg
@@ -11,7 +11,13 @@
 
 name="dmesg"
 start_precmd="checkyesno dmesg"
-start_cmd="dmesg $dmesg_flags > /var/run/dmesg.boot"
+start_cmd="do_dmesg"
 stop_cmd=":"
+
+do_dmesg()
+{
+	rm -f /var/run/dmesg.boot
+	dmesg $dmesg_flags > /var/run/dmesg.boot
+}
 
 run_rc_command "$1"
