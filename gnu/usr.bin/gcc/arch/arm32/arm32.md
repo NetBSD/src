@@ -1297,7 +1297,7 @@
 
 (define_insn ""
   [(set (match_operand:SI 0 "s_register_operand" "=r,r")
-	(match_operator:SI 4 "shiftable_operator"
+	(match_operator:SI 4 "shiftable_operator_not_plus"
 	 [(match_operator:SI 5 "minmax_operator"
 	   [(match_operand:SI 2 "s_register_operand" "r,r")
 	    (match_operand:SI 3 "arm_rhs_operand" "rI,rI")])
