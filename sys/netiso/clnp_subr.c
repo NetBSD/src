@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_subr.c,v 1.5 1994/06/29 06:39:22 cgd Exp $	*/
+/*	$NetBSD: clnp_subr.c,v 1.6 1995/06/13 07:13:22 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -204,7 +204,7 @@ register struct iso_addr *dst;		/* ptr to destination address */
 {
 	register struct iso_ifaddr *ia;	/* scan through interface addresses */
 
-	for (ia = iso_ifaddr; ia; ia = ia->ia_next) {
+	for (ia = iso_ifaddr.tqh_first; ia != 0; ia = ia->ia_list.tqe_next) {
 		IFDEBUG(D_ROUTE)
 			printf("clnp_ours: ia_sis x%x, dst x%x\n", &ia->ia_addr, 
 				dst);
@@ -313,7 +313,7 @@ struct snpa_hdr		*inbound_shp;	/* subnetwork header of inbound packet */
 
 	IFDEBUG(D_FORWARD)
 		printf("clnp_forward: packet routed to %s\n", 
-			clnp_iso_addrp(&((struct sockaddr_iso *)next_hop)->siso_addr));
+			clnp_iso_addrp(&satosiso(next_hop)->siso_addr));
 	ENDDEBUG
 
 	INCSTAT(cns_forward);
@@ -459,7 +459,7 @@ clnp_route(dst, ro, flags, first_hop, ifa)
 		if (ifa)
 			*ifa = ia;
 		if (first_hop)
-			*first_hop = (struct sockaddr *)&ro->ro_dst;
+			*first_hop = sisotosa(&ro->ro_dst);
 		return 0;
 	}
 	/*
@@ -507,7 +507,7 @@ clnp_route(dst, ro, flags, first_hop, ifa)
 		if (ro->ro_rt->rt_flags & RTF_GATEWAY)
 			*first_hop = ro->ro_rt->rt_gateway;
 		else
-			*first_hop = (struct sockaddr *)&ro->ro_dst;
+			*first_hop = sisotosa(&ro->ro_dst);
 	}
 	return(0);
 }
@@ -566,7 +566,7 @@ struct iso_addr		*final_dst;		/* final destination */
 	 *	If complete src rt, first hop must be equal to dst
 	 */
 	if ((CLNPSRCRT_TYPE(oidx, options) == CLNPOVAL_COMPRT) &&
-	 (!iso_addrmatch1(&(*(struct sockaddr_iso **)first_hop)->siso_addr,&dst))){
+	 (!iso_addrmatch1(&satosiso(*first_hop)->siso_addr, &dst))){
 		IFDEBUG(D_OPTIONS)
 			printf("clnp_srcroute: complete src route failed\n");
 		ENDDEBUG

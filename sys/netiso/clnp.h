@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp.h,v 1.8 1995/03/29 22:09:39 briggs Exp $	*/
+/*	$NetBSD: clnp.h,v 1.9 1995/06/13 07:13:14 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -447,11 +447,6 @@ struct clnp_cache {
 	struct iso_ifaddr	*clc_ifa;		/* ptr to interface address */
 	struct mbuf 		*clc_hdr;		/* cached pkt hdr (finally)! */
 };
-
-#ifndef	satosiso
-#define	satosiso(sa)\
-	((struct sockaddr_iso *)(sa))
-#endif
 
 #ifdef	_KERNEL
 caddr_t			clnp_insert_addr();

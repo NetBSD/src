@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eon.c,v 1.10 1995/06/13 05:52:46 mycroft Exp $	*/
+/*	$NetBSD: if_eon.c,v 1.11 1995/06/13 07:13:28 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -206,7 +206,7 @@ register struct eon_iphdr *hdr;
 caddr_t loc;
 {
 	struct mbuf mhead;
-	register struct sockaddr_in *sin = (struct sockaddr_in *)&ro->ro_dst;
+	register struct sockaddr_in *sin = satosin(&ro->ro_dst);
 	if (zero) {
 		bzero((caddr_t)hdr, sizeof (*hdr));
 		bzero((caddr_t)ro, sizeof (*ro));
@@ -220,8 +220,7 @@ caddr_t loc;
 	 * and is still up.  If not, free it and try again.
 	 */
 	if (ro->ro_rt) {
-		struct sockaddr_in *dst =
-			(struct sockaddr_in *)rt_key(ro->ro_rt);
+		struct sockaddr_in *dst = satosin(rt_key(ro->ro_rt));
 		if ((ro->ro_rt->rt_flags & RTF_UP) == 0 ||
 		   sin->sin_addr.s_addr != dst->sin_addr.s_addr) {
 			RTFREE(ro->ro_rt);
@@ -300,8 +299,7 @@ register struct sockaddr *gate;
 				ipaddrloc = LLADDR(SDL(gate));
 			break;
 		case AF_INET:
-#define SIN(x) ((struct sockaddr_in *)x)
-			ipaddrloc = (caddr_t) &SIN(gate)->sin_addr;
+			ipaddrloc = (caddr_t) &satosin(gate)->sin_addr;
 			break;
 		default:
 			return;
