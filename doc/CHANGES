@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.60 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.61 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -216,3 +216,5 @@ Changes from NetBSD 1.6 to NetBSD 1.7:
 		[lukem 20021221]
 	vis(1): Add `-e extra', to provide a list of extra characters to
 		encode (per svis(3)).  [lukem 20021223]
+	mtree(8): Add -C, which acts like -D except that the pathname
+		is printed first instead of last.  [lukem 20021223]
