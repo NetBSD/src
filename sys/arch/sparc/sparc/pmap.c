@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.88 1997/07/08 20:02:47 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.89 1997/07/09 21:51:26 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -3525,7 +3525,7 @@ pmap_pinit(pm)
 		 * We must allocate and initialize hardware-readable (MMU)
 		 * pagetables. We must also map the kernel regions into this
 		 * pmap's pagetables, so that we can access the kernel from
-		 * user mode!
+		 * this user context.
 		 *
 		 * Note: pm->pm_regmap's have been zeroed already, so we don't
 		 * need to explicitly mark them as invalid (a null
@@ -3544,7 +3544,8 @@ pmap_pinit(pm)
 #endif
 		pm->pm_reg_ptps = urp;
 		pm->pm_reg_ptps_pa = VA2PA(urp);
-		qzero(urp, SRMMU_L1SIZE * sizeof(int));
+		for (i = 0; i < NUREG; i++)
+			setpgt4m(&pm->pm_reg_ptps[i], SRMMU_TEINVALID);
 
 		/* Copy kernel regions */
 		for (i = 0; i < NKREG; i++) {
