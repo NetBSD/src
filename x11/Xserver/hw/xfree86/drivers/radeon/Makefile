@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2004/02/07 06:52:06 lukem Exp $
+#	$NetBSD: Makefile,v 1.7 2004/03/06 03:31:07 rtr Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules/drivers
 
@@ -40,6 +40,16 @@ CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/drivers/ati \
 		-I${DESTDIR}${X11INCDIR}/X11 \
 		-I${DESTDIR}${X11INCDIR}/X11/extensions \
 		-I${XSERVERINCDIR}
+
+.if ${X11DRI} != "no"
+SRCS+=		radeon_dri.c
+
+CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/GL/dri \
+		-I${X11SRCDIR.xc}/lib/GL/dri \
+		-I${X11SRCDIR.xc}/include
+
+CPPFLAGS+=	${X11FLAGS.DRI}
+.endif
 		
 .include <bsd.x11.mk>
 LIBDIR=	${XMODULEDIR}

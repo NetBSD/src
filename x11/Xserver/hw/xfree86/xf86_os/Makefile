@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2004/02/21 01:51:43 sekiya Exp $
+#	$NetBSD: Makefile,v 1.7 2004/03/06 03:31:08 rtr Exp $
 
 .include "../../../Makefile.serverlib"
 
@@ -95,6 +95,9 @@ CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/common \
 		-I${X11SRCDIR.xc}/programs/Xserver/mi \
 		-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/os-support/shared \
 		-I${XSERVERINCDIR}
+.if ${X11DRI} != "no"
+CPPFLAGS+=	${X11FLAGS.DRI}
+.endif
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>

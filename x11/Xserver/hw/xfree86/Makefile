@@ -1,14 +1,12 @@
-#	$NetBSD: Makefile,v 1.10 2004/01/08 05:07:41 lukem Exp $
+#	$NetBSD: Makefile,v 1.11 2004/03/06 03:31:06 rtr Exp $
 
 .include <bsd.own.mk>
 
-SUBDIR=	ddc doc drivers dummy etc fbdevhw \
-	i2c input int10 loader pcidata \
-	rac ramdac scanpci shadowfb vbe vgahw \
-	xaa xf1bpp xf24_32bpp xf4bpp xf86 xf86_os \
-	xf86config xf8_16bpp xf8_32bpp xloader \
-	.WAIT \
-	bin
+SUBDIR=	ddc doc drivers dummy etc fbdevhw i2c input int10 loader \
+	pcidata rac ramdac scanpci shadowfb vbe vgahw xaa xf1bpp \
+	xf24_32bpp xf4bpp xf86 xf86_os xf86config xf8_16bpp \
+	xf8_32bpp xloader \
+	.WAIT bin
 
 .PATH:	${X11SRCDIR.xc}/programs/Xserver/hw/xfree86
 

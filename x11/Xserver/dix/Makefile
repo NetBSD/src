@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2004/02/07 06:52:05 lukem Exp $
+#	$NetBSD: Makefile,v 1.9 2004/03/06 03:31:06 rtr Exp $
 
 .include "../Makefile.serverlib"
 
@@ -26,10 +26,6 @@ CPPFLAGS.globals.c=	-DCOMPILEDDEFAULTFONTPATH=\"${X11FONTDIR}/misc/,${X11FONTDIR
 
 CPPFLAGS.main.c=	-DVENDOR_STRING="\"The XFree86 Project, Inc\"" \
 			-DVENDOR_RELEASE="${XVERSION}"
-
-COPTS.gc.c=	-Wno-error	# XXX gcc 3.3
-COPTS.window.c=	-Wno-error	# XXX gcc 3.3
-
 
 .include <bsd.x11.mk>
 XVERSION!=	${PRINTX11VERSION}

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2003/12/23 03:36:44 rtr Exp $
+#	$NetBSD: Makefile,v 1.2 2004/03/06 03:31:06 rtr Exp $
 
 .include "../Makefile.serverlib"
 
@@ -6,11 +6,13 @@
 
 LIB=	fontbase
 
-SRCS.fontfile=  bitsource.c bufio.c decompress.c defaults.c dirfile.c \
-                encparse.c ffcheck.c fileio.c filewr.c fontdir.c \
-                fontenc.c fontencc.c fontfile.c fontscale.c gunzip.c \
-                printerfont.c register.c renderers.c
-.PATH:          ${X11SRCDIR.xc}/lib/font/fontfile
+
+# fontfile
+.PATH:		${X11SRCDIR.xc}/lib/font/fontfile
+SRCS.fontfile=	dirfile.c fontdir.c fontfile.c fileio.c fontscale.c \
+		defaults.c bitsource.c register.c renderers.c bufio.c \
+		decompress.c filewr.c printerfont.c ffcheck.c \
+		fontenc.c encparse.c fontencc.c gunzip.c
 .for fn in ${SRCS.fontfile}
 CPPFLAGS.${fn}= -I${X11SRCDIR.xc}/include/fonts \
                 -I${X11SRCDIR.xc}/lib/font/include \
@@ -22,9 +24,12 @@ CPPFLAGS.${fn}= -I${X11SRCDIR.xc}/include/fonts \
 CPPFLAGS.ffcheck.c+=	-DLOADABLEFONTS
 CPPFLAGS.register.c+=	-DLOADABLEFONTS
 
-SRCS.fc=        fsconvert.c fserve.c fsio.c transport.c
-.PATH:          ${X11SRCDIR.xc}/lib/font/fc
+
+# fc 
+.PATH:		${X11SRCDIR.xc}/lib/font/fc
+SRCS.fc=	fsconvert.c fserve.c fsio.c
 .PATH:          ${X11SRCDIR.xc}/lib/xtrans
+SRCS.fc+=	transport.c
 .for fn in ${SRCS.fc}
 CPPFLAGS.${fn}= -I${X11SRCDIR.xc}/include/fonts \
                 -I${X11SRCDIR.xc}/lib/font/include \
@@ -34,8 +39,10 @@ CPPFLAGS.${fn}= -I${X11SRCDIR.xc}/include/fonts \
                 -DBSD44SOCKETS
 .endfor
 
-SRCS.fontcache= fontcache.c
+
+# fontcache
 .PATH:          ${X11SRCDIR.xc}/lib/font/fontcache
+SRCS.fontcache= fontcache.c
 .for fn in ${SRCS.fontcache}
 CPPFLAGS.${fn}= -I${X11SRCDIR.xc}/lib/font/fontcache \
                 -I${X11SRCDIR.xc}/include/fonts \
@@ -45,9 +52,10 @@ CPPFLAGS.${fn}= -I${X11SRCDIR.xc}/lib/font/fontcache \
 .endfor
 
 
-SRCS.util=      atom.c fontaccel.c fontnames.c fontutil.c fontxlfd.c \
-                format.c miscutil.c patcache.c private.c utilbitmap.c
+# util
 .PATH:          ${X11SRCDIR.xc}/lib/font/util
+SRCS.util=	utilbitmap.c fontnames.c fontutil.c fontxlfd.c format.c \
+		fontaccel.c atom.c miscutil.c private.c patcache.c
 .for fn in ${SRCS.util}
 CPPFLAGS.${fn}= -I${X11SRCDIR.xc}/include/fonts \
                 -I${X11SRCDIR.xc}/lib/font/include

@@ -1,10 +1,9 @@
-#	$NetBSD: Makefile,v 1.2 2003/12/21 03:07:01 rtr Exp $
+#	$NetBSD: Makefile,v 1.3 2004/03/06 03:31:05 rtr Exp $
 
 LIB=		extmod
-SRCS=		modinit.c shape.c mitmisc.c bigreq.c sync.c saver.c xcmisc.c \
-		xf86vmode.c xf86misc.c xf86dga.c xf86dga2.c cup.c dpms.c \
-		fontcache.c EVI.c sampleEVI.c xvmain.c xvdisp.c xvmod.c \
-		xvmc.c xres.c
+SRCS=	shape.c mitmisc.c bigreq.c sync.c saver.c xcmisc.c xf86vmode.c \
+	xf86misc.c xf86dga.c xf86dga2.c cup.c dpms.c EVI.c fontcache.c \
+	sampleEVI.c xvmain.c xvdisp.c xvmod.c xvmc.c modinit.c xres.c
 
 CPPFLAGS+=	-DEXTMODULE
 

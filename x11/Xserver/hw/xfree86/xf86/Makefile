@@ -1,20 +1,21 @@
-#	$NetBSD: Makefile,v 1.4 2004/02/09 04:18:24 lukem Exp $
-
-.include "../../../Makefile.serverlib"
+#	$NetBSD: Makefile,v 1.5 2004/03/06 03:31:08 rtr Exp $
 
 .include <bsd.sys.mk> # for HOST_SH
 
+.include "../../../Makefile.serverlib"
+
 LIB=	xf86
-.PATH:	${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/common
 
 # XXX xf86Init.c & xf86IniExt.c should not be linked into libxf86.a
-SRCS=	xf86Configure.c xf86Bus.c xf86isaBus.c xf86pciBus.c xf86fbBus.c \
-	xf86noBus.c xf86IniExt.c xf86Config.c xf86Cursor.c xf86DGA.c \
-	xf86DPMS.c xf86DefModeSet.c xf86DoProbe.c xf86DoScanPci.c \
-	xf86Events.c xf86Globals.c xf86Helper.c xf86Init.c xf86Io.c \
-	xf86MiscExt.c xf86Mode.c xf86Option.c xf86VidMode.c xf86fbman.c \
-	xf86xv.c xf86xvmc.c xf86cmap.c xf86PM.c xf86Debug.c xf86KbdBSD.c \
-	xf86Xinput.c xisb.c xf86XKB.c xf86RandR.c
+.PATH:	${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/common
+SRCS=	xf86Configure.c xf86Bus.c xf86isaBus.c xf86pciBus.c \
+	xf86fbBus.c xf86noBus.c xf86IniExt.c xf86Config.c \
+	xf86AutoConfig.c xf86Cursor.c xf86DGA.c xf86DPMS.c \
+	xf86DefModeSet.c xf86DoProbe.c xf86DoScanPci.c xf86Events.c \
+	xf86Globals.c xf86Helper.c xf86Init.c xf86Io.c xf86MiscExt.c \
+	xf86Mode.c xf86Option.c xf86VidMode.c xf86fbman.c xf86xv.c \
+	xf86xvmc.c xf86cmap.c xf86PM.c xf86Versions.c xf86Debug.c \
+	xf86KbdBSD.c xf86Xinput.c xisb.c xf86XKB.c xf86RandR.c
 
 # Rebuild xf86Build.h on every make
 #
@@ -68,23 +69,35 @@ BUILDSYMLINKS=	xf86DefModes.c xf86DefModeSet.c \
 
 OS_RELEASE!=	${HOST_SH} ${NETBSDSRCDIR}/sys/conf/osrelease.sh
 
-CPPFLAGS.xf86Bus.c=	-DBUILDERADDR='"xfree86@xfree86.org"'
-CPPFLAGS.xf86Init.c=	-DOSNAME='"NetBSD/${MACHINE} ${OS_RELEASE} -"' \
-			-DXORG_RELEASE='"Release 6.6"' \
-			-DBUILDERADDR='"xfree86@xfree86.org"' \
-			-DOSVENDOR='" The NetBSD Foundation, Inc."'
-CPPFLAGS.xf86Globals.c=	-DDEFAULT_MODULE_PATH='"${X11USRLIBDIR}/modules"' \
-			-DDEFAULT_LOGPREFIX='"/var/log/XFree86."'
-CPPFLAGS.xf86Configure.c= -DXF86CONFIGFILE='"XF86Config"'
-CPPFLAGS.xf86Config.c=	-DDRIVERS='"mga glint nv tga s3 s3virge sis \
-			rendition neomagic i740 tdfx savage cirrus \
-			vmware tseng trident chips apm fbdev i128 nsc \
-			ati i810 ark cyrix s iliconmotion vesa vga dummy"' \
-			-DIDRIVERS='"mouse keyboard calcomp citron digital \
-			edge dmc dynapro elographics tek4957 microtouch \
-			mutouch penmount spaceorb summa wacom void magellan \
-			hyperpen jamstudio fpit palmax"' \
-			-DPROJECTROOT='"${X11ROOTDIR}"'
+DRIVERS=	mga glint nv tga s3 s3virge sis rendition neomagic \
+		i740 tdfx savage cirrus vmware tseng trident chips \
+		apm i128
+.if ${MACHINE_ARCH} != "x86_64"
+DRIVERS+=	nsc
+.endif
+DRIVERS+=	ati i810 ark cyrix siliconmotion via fbdev vesa vga \
+		dummy
+
+IDRIVERS=	mouse keyboard acecad calcomp citron digitaledge \
+		dmc dynapro elographics tek4957 microtouch \
+		mutouch penmount spaceorb summa wacom void \
+		magellan hyperpen jamstudio fpit palmax
+
+CPPFLAGS.xf86Bus.c=		-DBUILDERADDR='"xfree86@xfree86.org"'
+CPPFLAGS.xf86Init.c=		-DOSNAME='"NetBSD/${MACHINE} ${OS_RELEASE} -"' \
+				-DXORG_RELEASE='"Release 6.6"' \
+				-DBUILDERADDR='"xfree86@xfree86.org"' \
+				-DOSVENDOR='" The NetBSD Foundation, Inc."'
+CPPFLAGS.xf86Globals.c=		-DDEFAULT_LOGPREFIX='"/var/log/XFree86."' \
+				-DDEFAULT_MODULE_PATH='"${X11USRLIBDIR}/modules"'
+CPPFLAGS.xf86Configure.c=	-DXF86CONFIGFILE='"XF86Config"'
+CPPFLAGS.xf86Config.c=		-DDRIVERS='"${DRIVERS}"' \
+				-DIDRIVERS='"${IDRIVERS}"' \
+				-DPROJECTROOT='"${X11ROOTDIR}"'
+CPPFLAGS.xf86AutoConfig.c=	-DPROJECTROOT='"${X11ROOTDIR}"' \
+				-DBINDIR='"${X11BINDIR}"' \
+				-DDRIVERS='"${DRIVERS}"' \
+				-DIDRIVERS='"${IDRIVERS}"'
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>

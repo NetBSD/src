@@ -1,11 +1,10 @@
-#	$NetBSD: Makefile,v 1.2 2004/02/07 06:52:04 lukem Exp $
+#	$NetBSD: Makefile,v 1.3 2004/03/06 03:31:06 rtr Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules/fonts
 
 .include "../../Makefile.serverlib"
 
 LIB=	xtt
-.PATH:	${X11SRCDIR.xc}/lib/font/X-TrueType
 .PATH:	${X11SRCDIR.xc}/extras/X-TrueType
 .PATH:	${X11SRCDIR.xc}/extras/FreeType/lib/arch/unix
 .PATH:	${X11SRCDIR.xc}/extras/FreeType/lib/extend
@@ -16,6 +15,7 @@ SRCS=	xttprop.c xttfuncs.c xttcconv.c xttcap.c xttmisc.c xttblit.c \
 	freetype.c ftxcmap.c ftxsbit.c xttmodule.c
 
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11/fonts/codeconv \
+		-I${X11SRCDIR.xc}/lib/font/X-TrueType \
 		-I${X11SRCDIR.xc}/extras/FreeType/lib \
 		-I${X11SRCDIR.xc}/extras/FreeType/lib/extend \
 		-I${X11SRCDIR.xc}/lib/font/FreeType \

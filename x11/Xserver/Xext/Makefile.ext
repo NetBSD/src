@@ -1,8 +1,9 @@
-#	$NetBSD: Makefile.ext,v 1.7 2004/02/07 06:52:04 lukem Exp $
+#	$NetBSD: Makefile.ext,v 1.8 2004/03/06 03:31:05 rtr Exp $
 
 .PATH:		${X11SRCDIR.xc}/programs/Xserver/Xext
 
 CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/Xext \
+		-I${X11SRCDIR.xc}/programs/Xserver/Xext/extmod \
 		-I${X11SRCDIR.xc}/programs/Xserver/include \
 		-I${XSERVERINCDIR} \
 		-I${DESTDIR}${X11INCDIR}/X11 \
