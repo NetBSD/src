@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.24 1997/04/01 08:17:47 leo Exp $	*/
+/*	$NetBSD: conf.c,v 1.25 1997/04/01 20:14:06 leo Exp $	*/
 
 /*
  * Copyright (c) 1991 The Regents of the University of California.
@@ -174,6 +174,7 @@ dev_decl(filedesc,open);
 cdev_decl(bpf);
 #include "tun.h"
 cdev_decl(tun);
+#include "lpt.h"
 cdev_decl(lpt);
 cdev_decl(wd);
 
@@ -208,7 +209,7 @@ struct cdevsw	cdevsw[] =
 	cdev_lkm_dummy(),		/* 26 */
 	cdev_disk_init(NCCD,ccd),	/* 27: concatenated disk driver */
 	cdev_bpftun_init(NTUN,tun),	/* 28: network tunnel */
-	cdev_lpt_init(1, lpt),		/* 29: Centronics */
+	cdev_lpt_init(NLPT, lpt),	/* 29: Centronics */
 	cdev_ch_init(NCH,ch),		/* 30: SCSI autochanger	*/
 	cdev_uk_init(NUK,uk),		/* 31: SCSI unknown	*/
 	cdev_ss_init(NSS,ss),		/* 32: SCSI scanner	*/
