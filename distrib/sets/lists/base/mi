@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.270 2001/08/03 14:21:27 drochner Exp $
+# $NetBSD: mi,v 1.271 2001/08/06 06:51:10 garbled Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -1553,17 +1553,17 @@
 ./usr/share/sushi/system/securityconf/form	base-sysutil-share
 ./usr/share/sushi/system/securityconf/help	base-sysutil-share
 ./usr/share/sushi/system/securityconf/script2	base-sysutil-share
-./usr/share/sushi/system/securityconf		base-sysutil-share
-./usr/share/sushi/system/securityconf/form		base-sysutil-share
-./usr/share/sushi/system/securityconf/help		base-sysutil-share
-./usr/share/sushi/system/securityconf/defaults		base-sysutil-share
-./usr/share/sushi/system/securityconf/script		base-sysutil-share
-./usr/share/sushi/system/securityconf/script1		base-sysutil-share
-./usr/share/sushi/system/securityconf/script2		base-sysutil-share
-./usr/share/sushi/system/securityconf/script3		base-sysutil-share
-./usr/share/sushi/system/securityconf/script4		base-sysutil-share
-./usr/share/sushi/system/securityconf/script5		base-sysutil-share
-./usr/share/sushi/system/securityconf/script6		base-sysutil-share
+./usr/share/sushi/system/sshdconf		base-sysutil-share
+./usr/share/sushi/system/sshdconf/form		base-sysutil-share
+./usr/share/sushi/system/sshdconf/help		base-sysutil-share
+./usr/share/sushi/system/sshdconf/defaults		base-sysutil-share
+./usr/share/sushi/system/sshdconf/script		base-sysutil-share
+./usr/share/sushi/system/sshdconf/script1		base-sysutil-share
+./usr/share/sushi/system/sshdconf/script2		base-sysutil-share
+./usr/share/sushi/system/sshdconf/script3		base-sysutil-share
+./usr/share/sushi/system/sshdconf/script4		base-sysutil-share
+./usr/share/sushi/system/sshdconf/script5		base-sysutil-share
+./usr/share/sushi/system/sshdconf/script6		base-sysutil-share
 ./usr/share/sushi/system/sysctl			base-sysutil-share
 ./usr/share/sushi/system/sysctl/form		base-sysutil-share
 ./usr/share/sushi/system/sysctl/help		base-sysutil-share
