@@ -1,4 +1,4 @@
-#	$NetBSD: std.sun3,v 1.12 1995/03/24 17:27:15 gwr Exp $
+#	$NetBSD: std.sun3,v 1.13 1995/10/08 23:38:46 gwr Exp $
 
 # Standard information for sun3's.
 machine	sun3 m68k
@@ -32,6 +32,12 @@ clock0 at obio? addr ?
 
 # Standard defines
 
+# XXX - Still needed?
 options 	NEWCONFIG
 options 	MACHINE_NONCONTIG
+
+# These are used ONLY when reading the hardware time/date clock.
+# All Sun machines keep the hardware time/date clock on GMT.
+options		TIMEZONE=0		# minutes west of GMT (for param.c)
+options 	DST=0			# daylight savings rules (for param.c)
 

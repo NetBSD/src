@@ -1,67 +1,61 @@
-#	$NetBSD: GENERIC,v 1.24 1995/10/08 23:38:43 gwr Exp $
+#	$NetBSD: RAMDISK,v 1.1 1995/10/08 23:38:44 gwr Exp $
 
 #
-# GENERIC Sun3 (3/50, 3/60, 3/110, 3/160, 3/260)
-# Supports root on: ie0, le0, sd*, ...
+# RAMDISK: Root/swap on ramdisk
+# This kernel is used to:
+#	format the disk (not yet implemented)
+#	partition the disk (disklabel)
+#	install the miniroot in the swap partition
 #
 
 include "std.sun3"
 
 # Machines to be supported by this kernel
-options		GENERIC
-options 	FPU_EMULATE
 options 	HAVECACHE		# Sun3/260 VAC
 
+# Enable the hooks used for initializing the ram-disk.
+options 	RAMDISK_HOOKS
+options 	MINIROOTSIZE=512	# 256K
+
 # Needs to be set per system.  i.e change these as you see fit
-maxusers	4
+maxusers	2
 
 # Standard system options
 options		SWAPPAGER, VNODEPAGER, DEVPAGER	# paging
-options		KTRACE				# system call tracing support
-#makeoptions	DEBUG="-g"			# symbols for kgdb + nm
-options		DDB
 
 # Filesystem options
-options 	NFSSERVER			# nfs server support
+# May need NFSCLIENT to get miniroot image
 options 	NFSCLIENT			# nfs client support
+# Need FFS for the ramdisk image
 options 	FFS				# ufs file system
-#
-options		CD9660		# ISO 9660 + Rock Ridge file system
-options 	FDESC		# /dev/fd/*
 options		FIFO		# FIFOs; RECOMMENDED
-options		KERNFS		# /kern
-options		NULLFS		# loopback file system
-options 	PROCFS		# /proc
-options 	UNION		# union file system
 
 # Networking options
 options		INET				# IP prototol stack support
 # XXX - Work-around for slow SunOS/Sun3 servers (sigh...)
 options 	NFS_BOOT_RWSIZE=1024
 
-# Compatability options
-options 	COMPAT_SUNOS	# can run SunOS 4.1.1 executables
-options 	COMPAT_09	# NetBSD 0.9,
+# Compatability options (XXX - Need these?)
+#options 	COMPAT_SUNOS	# can run SunOS 4.1.1 executables
+#options 	COMPAT_09	# NetBSD 0.9,
 options 	COMPAT_10	# NetBSD 1.0,
 options 	COMPAT_43	# and 4.3BSD
 options 	TCP_COMPAT_42	# TCP bug compatibility with 4.2BSD
 
 # Sun3-specific debugging options
-options 	CONTEXT_DEBUG
-options 	PMAP_DEBUG
-#options 	VMFAULT_TRACE
-#options 	SYSCALL_DEBUG
-options 	EXEC_DEBUG
+# options 	DDB
 options 	DIAGNOSTIC
-options 	SCSIDEBUG
 
-config		netbsd swap generic
+# The config program assumes all devices have partions...
+# Is it OK to put swap on a non-existent partition?
+config		netbsd root on rd0a swap on rd0b
 
 # Devices
 
-bwtwo0 at obmem0 addr ?
-cgtwo0 at vmes0 addr 0xff400000 level 4 vect 0xA8
-cgfour0 at obmem0 addr ?
+# RAM Disk (root for install tape)
+rd0 at mainbus?
+
+# No frame-buffer devices.
 
 ie0 at obio0 addr ? level ?
 ie1 at vmes0 addr 0xffe88000 level 3 vect 0x75
@@ -70,7 +64,6 @@ le0 at obio0 addr ? level ?
 
 si0 at obio0 addr ? level ?
 si0 at vmes0 addr 0xff200000 level 2 vect 0x40
-si1 at vmes0 addr 0xff204000 level 2 vect 0x41
 
 scsibus* at scsi?
 
@@ -90,14 +83,5 @@ cd* at scsibus? target ? lun ?
 
 #ch* at scsibus? target ? lun ?
 
-rd0 at mainbus?
-rd1 at mainbus?
-
 pseudo-device	loop	1		# network loopback
-pseudo-device	bpfilter 8		# packet filter
-pseudo-device	sl	2		# CSLIP
-pseudo-device	ppp	2		# PPP
-pseudo-device	tun	2		# network tunneling over tty
 
-pseudo-device	pty	64		# pseudo-terminals
-#pseudo-device	vnd	4		# paging to files
