@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kernobj.mk,v 1.2 2000/05/03 00:10:33 sjg Exp $
+#	$NetBSD: bsd.kernobj.mk,v 1.3 2000/05/06 07:41:59 sjg Exp $
 
 #   KERNSRCDIR points to kernel source; it is set by default to ../sys,
 #	but can be overridden.
@@ -17,7 +17,7 @@ KERNSRCDIR?=	${BSDSRCDIR}/sys
 # just incase ${MACHINE} is not always correct
 KERNARCHDIR?=	arch/${MACHINE}
 
-.if exists(${MAKEOBJDIRPREFIX}${KERNSRCDIR}/${KERNARCHDIR}/compile)
+.if make(obj) || exists(${MAKEOBJDIRPREFIX}${KERNSRCDIR}/${KERNARCHDIR}/compile)
 KERNOBJDIR?=	${MAKEOBJDIRPREFIX}${KERNSRCDIR}/${KERNARCHDIR}/compile
 .else
 KERNOBJDIR?=	${KERNSRCDIR}/${KERNARCHDIR}/compile
