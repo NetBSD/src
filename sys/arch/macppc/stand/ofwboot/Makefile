@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.29 2002/03/29 18:21:38 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.30 2002/03/29 20:26:06 tsutsui Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -45,7 +45,7 @@ ENTRY=		_start
 CLEANFILES+=	vers.c ${PROG}.elf ${PROG}.el1 ${PROG}.mrg ${PROG}.xcf
 CLEANFILES+=	machine powerpc
 
-CPPFLAGS+=	-I${.CURDIR} -I${.CURDIR}/../../.. -I${.CURDIR}/../../../..
+CPPFLAGS+=	-I. -I${.CURDIR} -I${.CURDIR}/../../.. -I${.CURDIR}/../../../..
 CPPFLAGS+=	-DRELOC=0x${RELOC} -DRELOC_FLATFILE=0x${RELOC_FLATFILE}
 #CPPFLAGS+=	-DXCOFF_GLUE		# for booting PCI Powermacs
 
