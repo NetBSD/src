@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.106 2004/08/04 22:25:45 bouyer Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.107 2004/08/18 11:50:59 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.106 2004/08/04 22:25:45 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.107 2004/08/18 11:50:59 drochner Exp $");
 
 #include "opt_scsi.h"
 
@@ -2580,8 +2580,6 @@ scsipi_target_detach(chan, target, lun, flags)
 			error = config_detach(periph->periph_dev, flags);
 			if (error)
 				return (error);
-			scsipi_remove_periph(chan, periph);
-			free(periph, M_DEVBUF);
 		}
 	}
 	return(0);
