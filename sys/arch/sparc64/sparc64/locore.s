@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.167 2003/02/01 09:31:23 martin Exp $	*/
+/*	$NetBSD: locore.s,v 1.168 2003/02/01 22:43:04 martin Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -8844,9 +8844,9 @@ ENTRY(pseg_set)
 	sll	%o5, 3, %o5
 	add	%o4, %o5, %o4
 0:
-	DLFLUSH(%o4,%g6)
+	DLFLUSH(%o4,%g5)
 	ldxa	[%o4] ASI_PHYS_CACHED, %o5		! Load page directory pointer
-	DLFLUSH2(%g6)
+	DLFLUSH2(%g5)
 
 	brnz,a,pt %o5, 0f				! Null pointer?
 	 mov	%o5, %o4
@@ -8864,9 +8864,9 @@ ENTRY(pseg_set)
 	sll	%o5, 3, %o5
 	add	%o4, %o5, %o4
 0:
-	DLFLUSH(%o4,%g6)
+	DLFLUSH(%o4,%g5)
 	ldxa	[%o4] ASI_PHYS_CACHED, %o5		! Load table directory pointer
-	DLFLUSH2(%g6)
+	DLFLUSH2(%g5)
 
 	brnz,a,pt %o5, 0f				! Null pointer?
 	 mov	%o5, %o4
@@ -8883,20 +8883,20 @@ ENTRY(pseg_set)
 	sll	%o5, 3, %o5
 	add	%o5, %o4, %o4
 
-	DLFLUSH(%o4,%g6)
-	ldxa	[%o4] ASI_PHYS_CACHED, %g4		! save old value in %g4
+	DLFLUSH(%o4,%g5)
+	ldxa	[%o4] ASI_PHYS_CACHED, %o5		! save old value in %o5
 	stxa	%o2, [%o4] ASI_PHYS_CACHED		! Easier than shift+or
-	DLFLUSH2(%g6)
+	DLFLUSH2(%g5)
 
 	!! at this point we have:
 	!!  %g1 = return value
 	!!  %o0 = struct pmap * (where the counts are)
 	!!  %o2 = new TTE
-	!!  %g4 = old TTE
+	!!  %o5 = old TTE
 
 	!! see if stats needs an update
 	set	A_TLB_TSB_LOCK, %g5
-	xor	%o2, %g4, %o3			! %o3 - what changed
+	xor	%o2, %o5, %o3			! %o3 - what changed
 
 	brgez,pn %o3, 5f			! has resident changed? (we predict it has)
 	 btst	%g5, %o3			! has wired changed?
