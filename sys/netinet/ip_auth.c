@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_auth.c,v 1.18 2000/08/09 21:00:40 veego Exp $	*/
+/*	$NetBSD: ip_auth.c,v 1.19 2001/03/26 06:13:12 mike Exp $	*/
 
 /*
  * Copyright (C) 1998-2000 by Darren Reed & Guido van Rooij.
@@ -9,9 +9,9 @@
  */
 #if !defined(lint)
 #if defined(__NetBSD__)
-static const char rcsid[] = "$NetBSD: ip_auth.c,v 1.18 2000/08/09 21:00:40 veego Exp $";
+static const char rcsid[] = "$NetBSD: ip_auth.c,v 1.19 2001/03/26 06:13:12 mike Exp $";
 #else
-static const char rcsid[] = "@(#)Id: ip_auth.c,v 2.11.2.4 2000/08/05 14:48:50 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_auth.c,v 2.11.2.5 2001/01/10 06:18:35 darrenr Exp";
 #endif
 #endif
 
@@ -358,7 +358,7 @@ fr_authioctlloop:
 		READ_ENTER(&ipf_auth);
 		if ((fr_authnext != fr_authend) && fr_authpkts[fr_authnext]) {
 			error = IWCOPYPTR((char *)&fr_auth[fr_authnext], data,
-					  sizeof(fr_info_t));
+					  sizeof(frauth_t));
 			RWLOCK_EXIT(&ipf_auth);
 			if (error)
 				break;

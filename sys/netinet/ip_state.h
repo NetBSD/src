@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_state.h,v 1.17 2000/08/09 21:00:45 veego Exp $	*/
+/*	$NetBSD: ip_state.h,v 1.18 2001/03/26 06:13:14 mike Exp $	*/
 
 /*
  * Copyright (C) 1995-2000 by Darren Reed.
@@ -8,7 +8,7 @@
  * to the original author and the contributors.
  *
  * @(#)ip_state.h	1.3 1/12/96 (C) 1995 Darren Reed
- * Id: ip_state.h,v 2.13.2.1 2000/07/08 02:15:35 darrenr Exp
+ * Id: ip_state.h,v 2.13.2.2 2000/08/23 11:01:31 darrenr Exp
  */
 
 #ifndef _NETINET_IP_STATE_H_
@@ -176,6 +176,7 @@ extern	u_long	fr_tcpclosewait;
 extern	u_long	fr_tcplastack;
 extern	u_long	fr_tcptimeout;
 extern	u_long	fr_tcpclosed;
+extern	u_long	fr_tcphalfclosed;
 extern	u_long	fr_udptimeout;
 extern	u_long	fr_icmptimeout;
 extern	int	fr_state_lock;

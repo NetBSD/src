@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmon.c,v 1.5 2000/08/09 21:03:02 veego Exp $	*/
+/*	$NetBSD: ipmon.c,v 1.6 2001/03/26 06:11:46 mike Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ipmon.c	1.21 6/5/96 (C)1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ipmon.c,v 2.12.2.4 2000/08/07 12:32:22 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ipmon.c,v 2.12.2.8 2001/01/10 06:18:08 darrenr Exp";
 #endif
 
 #ifndef SOLARIS
@@ -93,6 +93,8 @@ struct	flags	tcpfl[] = {
 	{ TH_FIN, 'F' },
 	{ TH_URG, 'U' },
 	{ TH_PUSH,'P' },
+	{ TH_ECN, 'E' },
+	{ TH_CWR, 'C' },
 	{ 0, '\0' }
 };
 
@@ -146,6 +148,7 @@ static	char	**tcp_ports = NULL;
 #define	OPT_FILTER	0x200
 #define	OPT_PORTNUM	0x400
 #define	OPT_LOGALL	(OPT_NAT|OPT_STATE|OPT_FILTER)
+#define	OPT_LOGBODY	0x800
 
 #define	HOSTNAME_V4(a,b)	hostname((a), 4, (u_32_t *)&(b))
 
@@ -403,6 +406,8 @@ int	blen;
 		strcpy(t, "NAT:RDR ");
 	else if (nl->nl_type == NL_EXPIRE)
 		strcpy(t, "NAT:EXPIRE ");
+	else if (nl->nl_type == NL_FLUSH)
+		strcpy(t, "NAT:FLUSH ");
 	else if (nl->nl_type == NL_NEWBIMAP)
 		strcpy(t, "NAT:BIMAP ");
 	else if (nl->nl_type == NL_NEWBLOCK)
@@ -694,7 +699,7 @@ int	blen;
 		p = (u_short)ip->ip_p;
 		s = (u_32_t *)&ip->ip_src;
 		d = (u_32_t *)&ip->ip_dst;
-		plen = ntohs(ip->ip_len);
+		plen = ip->ip_len;
 	} else {
 		goto printipflog;
 	}
@@ -836,6 +841,8 @@ printipflog:
 		dumphex(log, (u_char *)buf, sizeof(iplog_t) + sizeof(*ipf));
 	if (opts & OPT_HEXBODY)
 		dumphex(log, (u_char *)ip, ipf->fl_plen + ipf->fl_hlen);
+	else if ((opts & OPT_LOGBODY) && (ipf->fl_flags & FR_LOGBODY))
+		dumphex(log, (u_char *)ip + ipf->fl_hlen, ipf->fl_plen);
 }
 
 
@@ -947,7 +954,7 @@ char *argv[];
 	iplfile[1] = IPNAT_NAME;
 	iplfile[2] = IPSTATE_NAME;
 
-	while ((c = getopt(argc, argv, "?aDf:FhnN:o:O:pP:sS:tvxX")) != -1)
+	while ((c = getopt(argc, argv, "?abDf:FhnN:o:O:pP:sS:tvxX")) != -1)
 		switch (c)
 		{
 		case 'a' :
@@ -955,6 +962,9 @@ char *argv[];
 			fdt[0] = IPL_LOGIPF;
 			fdt[1] = IPL_LOGNAT;
 			fdt[2] = IPL_LOGSTATE;
+			break;
+		case 'b' :
+			opts |= OPT_LOGBODY;
 			break;
 		case 'D' :
 			make_daemon = 1;

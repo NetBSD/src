@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.5 2000/08/09 21:03:03 veego Exp $	*/
+/*	$NetBSD: parse.c,v 1.6 2001/03/26 06:11:46 mike Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 by Darren Reed.
@@ -673,8 +673,8 @@ int     linenum;
 		return -1;
 
 	while (**cp && (!strncasecmp(**cp, "ipopt", 5) ||
-	       !strncasecmp(**cp, "not", 3) || !strncasecmp(**cp, "opt", 4) ||
-	       !strncasecmp(**cp, "frag", 3) || !strncasecmp(**cp, "no", 2) ||
+	       !strncasecmp(**cp, "not", 3) || !strncasecmp(**cp, "opt", 3) ||
+	       !strncasecmp(**cp, "frag", 4) || !strncasecmp(**cp, "no", 2) ||
 	       !strncasecmp(**cp, "short", 5))) {
 		if (***cp == 'n' || ***cp == 'N') {
 			notopt = 1;

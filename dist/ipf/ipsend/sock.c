@@ -1,4 +1,4 @@
-/*	$NetBSD: sock.c,v 1.1.1.2 2001/03/26 03:54:57 mike Exp $	*/
+/*	$NetBSD: sock.c,v 1.2 2001/03/26 06:11:47 mike Exp $	*/
 
 /*
  * sock.c (C) 1995-1998 Darren Reed
