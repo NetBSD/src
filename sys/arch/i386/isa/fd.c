@@ -35,14 +35,19 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fd.c	7.4 (Berkeley) 5/25/91
- *	$Id: fd.c,v 1.19 1993/07/16 15:44:22 mycroft Exp $
+ *	$Id: fd.c,v 1.19.2.1 1993/07/28 00:11:21 deraadt Exp $
  *
  * Largely rewritten to handle multiple controllers and drives
  * By Julian Elischer, Sun Apr  4 16:34:33 WST 1993
  */
 /*
  * $Log: fd.c,v $
- * Revision 1.19  1993/07/16 15:44:22  mycroft
+ * Revision 1.19.2.1  1993/07/28 00:11:21  deraadt
+ * wd.c: fixes 1 drive systems
+ * fd.c: improves reliability
+ * changes from wolfgang
+ *
+ * Revision 1.19  1993/07/16  15:44:22  mycroft
  * #include cpufunc,h so inb() and outb() are inlined.
  *
  * Revision 1.18  1993/07/06  06:06:29  deraadt
@@ -251,6 +256,10 @@ struct isa_device *dev;
 
 	fdc->baseport = dev->id_iobase;
 
+	/* Try a reset, don't change motor on */
+	set_motor(fdcu,0,1);
+	DELAY(100);
+	set_motor(fdcu,0,0);
 	/* see if it can handle a command */
 	if (out_fdc(fdcu,NE7CMD_SPECIFY) < 0)
 	{
