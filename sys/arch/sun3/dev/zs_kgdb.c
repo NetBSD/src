@@ -1,3 +1,4 @@
+/*	$NetBSD: zs_kgdb.c,v 1.5 1996/05/17 19:39:30 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
