@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons_kern.c,v 1.10 1999/05/23 17:59:40 ad Exp $ */
+/*	$NetBSD: rcons_kern.c,v 1.11 2000/03/20 11:24:46 pk Exp $ */
 
 /*
  * Copyright (c) 1991, 1993
@@ -54,8 +54,6 @@
 
 #include <dev/rcons/raster.h>
 #include <dev/rcons/rcons.h>
-
-extern struct tty *fbconstty;
 
 static void rcons_belltmr(void *);
 
@@ -175,18 +173,8 @@ rcons_init(rc, clear)
 	struct rconsole *rc;
 	int clear;
 {
-	/* XXX this should go away */
-	struct winsize *ws;
-
 	mydevicep = rc;
 	
-	/* Let the system know how big the console is */
-	ws = &fbconstty->t_winsize;
-	ws->ws_row = rc->rc_maxrow;
-	ws->ws_col = rc->rc_maxcol;
-	ws->ws_xpixel = rc->rc_width;
-	ws->ws_ypixel = rc->rc_height;
-
 	/* Initialize operations set, clear screen and turn cursor on */
 	rcons_init_ops(rc);
 	if (clear) {
@@ -195,8 +183,27 @@ rcons_init(rc, clear)
 		rcons_clear2eop(rc);
 	}
 	rcons_cursor(rc);
+}
+
+void
+rcons_ttyinit(tp)
+	struct tty *tp;
+{
+	/* XXX this should go away */
+	struct rconsole *rc = mydevicep;
+	struct winsize *ws;
+
+	if (rc == NULL)
+		return;
+
+	/* Let the system know how big the console is */
+	ws = &tp->t_winsize;
+	ws->ws_row = rc->rc_maxrow;
+	ws->ws_col = rc->rc_maxcol;
+	ws->ws_xpixel = rc->rc_width;
+	ws->ws_ypixel = rc->rc_height;
 
 	/* Initialization done; hook us up */
-	fbconstty->t_oproc = rcons_output;
-	/*fbconstty->t_stop = (void (*)()) nullop;*/
+	tp->t_oproc = rcons_output;
+	/*tp->t_stop = (void (*)()) nullop;*/
 }
