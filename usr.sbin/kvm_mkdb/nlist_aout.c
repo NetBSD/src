@@ -1,4 +1,4 @@
-/*	$NetBSD: nlist_aout.c,v 1.2 1996/09/30 18:27:03 thorpej Exp $	*/
+/*	$NetBSD: nlist_aout.c,v 1.3 1996/10/03 23:06:44 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)nlist.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$NetBSD: nlist_aout.c,v 1.2 1996/09/30 18:27:03 thorpej Exp $";
+static char *rcsid = "$NetBSD: nlist_aout.c,v 1.3 1996/10/03 23:06:44 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -70,7 +70,8 @@ typedef struct nlist NLIST;
 		punt();							\
 	} while (0)
 
-static void badread __P((int, char *));
+static void	badread __P((int, char *));
+static u_long	get_kerntext __P((const char *kfn));
 
 static const char *kfile;
 
@@ -222,4 +223,31 @@ badread(nr, p)
 	badfmt(p);
 }
 
+/*
+ * XXX: Using this value from machine/param.h introduces a
+ * XXX: machine dependency on this program, so /usr can not
+ * XXX: be shared between (i.e.) several m68k machines.
+ * Instead of compiling in KERNTEXTOFF or KERNBASE, try to
+ * determine the text start address from a standard symbol.
+ * For backward compatibility, use the old compiled-in way
+ * when the standard symbol name is not found.
+ */
+#ifndef KERNTEXTOFF
+#define KERNTEXTOFF KERNBASE
+#endif
+
+static u_long
+get_kerntext(name)
+	const char *name;
+{
+	struct nlist nl[2];
+
+	bzero((caddr_t)nl, sizeof(nl));
+	nl[0].n_un.n_name = "_kernel_text";
+
+	if (nlist(name, nl) != 0)
+		return (KERNTEXTOFF);
+
+	return (nl[0].n_value);
+}
 #endif /* NLIST_AOUT */
