@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_autoconf.c,v 1.12 1994/11/03 22:01:09 mycroft Exp $	*/
+/*	$NetBSD: subr_autoconf.c,v 1.13 1994/11/04 00:14:04 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -72,7 +72,7 @@ struct matchinfo {
 	int	pri;
 };
 
-struct device *config_make_softc __P((struct cfdata *cf));
+struct device *config_make_softc __P((struct device *, struct cfdata *));
 
 /*
  * Apply the matching function and choose the best.  This is used
@@ -87,9 +87,9 @@ mapply(m, cf)
 	void *match;
 	int indirect;
 
-	indirect = m->parent && m->parent->cf_driver->cd_indirect;
+	indirect = m->parent && m->parent->dv_cfdata->cf_driver->cd_indirect;
 	if (indirect) {
-		match = config_make_softc(cf);
+		match = config_make_softc(m->parent, cf);
 		cf->cf_driver->cd_devs[cf->cf_unit] = match;
 	} else
 		match = cf;
@@ -263,17 +263,19 @@ config_attach(parent, match, aux, print)
 {
 	register struct cfdata *cf;
 	register struct device *dev;
+	register struct cfdriver *cd;
 	static struct device **nextp = &alldevs;
 
-	if (parent && parent->cf_driver->cd_indirect) {
+	if (parent && parent->dv_cfdata->cf_driver->cd_indirect) {
 		dev = match;
 		cf = dev->dv_cfdata;
 	} else {
 		cf = match;
-		dev = config_make_softc(cf);
+		dev = config_make_softc(parent, cf);
 	}
 
-	cf->cf_driver->cd_devs[cf->cf_unit] = dev;
+	cd = cf->cf_driver;
+	cd->cd_devs[cf->cf_unit] = dev;
 
 	if (cf->cf_fstate == FSTATE_STAR)
 		cf->cf_unit++;
@@ -303,7 +305,8 @@ config_attach(parent, match, aux, print)
 }
 
 struct device *
-config_make_softc(cf)
+config_make_softc(parent, cf)
+	struct device *parent;
 	struct cfdata *cf;
 {
 	register struct device *dev;
