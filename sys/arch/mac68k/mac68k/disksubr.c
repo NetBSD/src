@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.29 1999/01/27 21:25:45 thorpej Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.30 1999/01/30 17:34:31 scottr Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -83,6 +83,7 @@
 #include <sys/buf.h>
 #include <sys/disk.h>
 #include <sys/disklabel.h>
+#include <sys/disklabel_mbr.h>
 #include <sys/syslog.h>
 
 #include <machine/bswap.h>
@@ -507,18 +508,18 @@ read_dos_label(dev, strat, lp, osdep)
 		/* XXX */
 		dp = (struct mbr_partition *)(bp->b_data + MBR_PARTOFF);
 		for (i = 0; i < NMBRPART; i++, dp++) {
-			if (dp->dp_typ != 0) {
+			if (dp->mbrp_typ != 0) {
 				slot = getFreeLabelEntry(lp);
 				if (slot > maxslot)
 					maxslot = slot;
 
 				pp = &lp->d_partitions[slot];
 				pp->p_fstype = FS_OTHER;
-				pp->p_offset = bswap32(dp->dp_start);
-				pp->p_size = bswap32(dp->dp_size);
+				pp->p_offset = bswap32(dp->mbrp_start);
+				pp->p_size = bswap32(dp->mbrp_size);
 
 				for (ip = fat_types; *ip != -1; ip++) {
-					if (dp->dp_typ == *ip) {
+					if (dp->mbrp_typ == *ip) {
 						pp->p_fstype = FS_MSDOS;
 						break;
 					}
@@ -582,7 +583,7 @@ readdisklabel(dev, strat, lp, osdep)
 		if (*sbSigp == 0x4552) {
 			msg = read_mac_label(dev, strat, lp, osdep);
 		} else if (bswap16(*(u_int16_t *)(bp->b_data + MBR_MAGICOFF))
-			   == MBRSIG) {
+			   == MBR_MAGIC) {
 			msg = read_dos_label(dev, strat, lp, osdep);
 		} else {
 			dlp = (struct disklabel *)(bp->b_un.b_addr + 0);
