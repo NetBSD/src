@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530var.h,v 1.1 1997/10/18 00:01:30 gwr Exp $	*/
+/*	$NetBSD: z8530var.h,v 1.2 1998/03/21 19:43:17 pk Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,14 +44,18 @@
  *	@(#)zsvar.h	8.1 (Berkeley) 6/11/93
  */
 
+#include <machine/bus.h>
 #include <dev/ic/z8530sc.h>
 
 struct zsc_softc {
-	struct	device zsc_dev;		/* required first: base device */
-	struct	zs_chanstate *zsc_cs[2];	/* channel A and B soft state */
+	struct device		zsc_dev;	/* base device */
+	bus_space_tag_t		zsc_bustag;	/* bus space/dma tags */
+	bus_dma_tag_t		zsc_dmatag;
+	struct zs_chanstate	*zsc_cs[2];	/* channel A and B soft state */
+
 	/* Machine-dependent part follows... */
-	struct	evcnt zsc_intrcnt;		/* count interrupts */
-	struct zs_chanstate  zsc_cs_store[2];
+	struct evcnt		zsc_intrcnt;	/* count interrupts */
+	struct zs_chanstate	zsc_cs_store[2];
 };
 
 /*
