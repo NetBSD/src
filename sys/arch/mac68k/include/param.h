@@ -72,7 +72,7 @@
  * from: Utah $Hdr: machparam.h 1.11 89/08/14$
  *
  *	from: @(#)param.h	7.8 (Berkeley) 6/28/91
- *	$Id: param.h,v 1.5 1993/12/06 04:09:28 briggs Exp $
+ *	$Id: param.h,v 1.6 1993/12/06 04:11:47 briggs Exp $
  */
 
 #ifndef PSL_IPL
@@ -91,7 +91,7 @@
  */
 #define	MACHINE		"mac68k"
 #define	MACHINE_ARCH	"m68k"
-#define	MACHINE_MID	MID_M68K
+#define	MID_MACHINE	MID_M68K
 
 /*
  * Round p (pointer or byte index) up to a correctly-aligned value
