@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.h,v 1.3 1998/10/07 23:35:19 thorpej Exp $ */
+/*	$NetBSD: if_gre.h,v 1.4 1998/12/22 01:33:45 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -108,12 +108,6 @@ struct gre_sre {
 	u_char  *sre_rtinfo;	/* the routing information */
 };
 
- 
-void greattach __P((void));
-int     gre_ioctl __P((struct ifnet *, u_long, caddr_t));
-int     gre_output __P((struct ifnet *, struct mbuf *, struct sockaddr *,
-                       struct rtentry *rt));
-
 struct greioctl {
 	int unit;
 	struct    in_addr addr;
@@ -150,11 +144,14 @@ struct mobip_h {
 #define GRESPROTO       _IOW('i' , 105, struct ifreq)
 #define GREGPROTO       _IOWR('i', 106, struct ifreq)
 
-/*
- * do a checksum of a buffer - much like in_cksum, which operates on
- * mbufs.
- */
+#ifdef _KERNEL
+extern	struct gre_softc gre_softc[];
 
-u_short gre_in_cksum(u_short *p, u_int len);
+void	greattach __P((void));
+int     gre_ioctl __P((struct ifnet *, u_long, caddr_t));
+int     gre_output __P((struct ifnet *, struct mbuf *, struct sockaddr *,
+	    struct rtentry *rt));
+u_short	gre_in_cksum(u_short *p, u_int len);
+#endif /* _KERNEL */
 
 #endif
