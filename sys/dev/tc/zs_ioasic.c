@@ -1,4 +1,4 @@
-/* $NetBSD: zs_ioasic.c,v 1.7 2001/05/30 15:24:25 lukem Exp $ */
+/* $NetBSD: zs_ioasic.c,v 1.8 2001/09/14 11:58:39 ad Exp $ */
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.7 2001/05/30 15:24:25 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.8 2001/09/14 11:58:39 ad Exp $");
 
 /*
  * Zilog Z8530 Dual UART driver (machine-dependent part).  This driver
@@ -284,6 +284,7 @@ zs_ioasic_attach(parent, self, aux)
 		} else {
 			cs = malloc(sizeof(struct zs_chanstate),
 					M_DEVBUF, M_NOWAIT);
+			memset(cs, 0, sizeof(struct zs_chanstate));
 			zc = zs_ioasic_get_chan_addr(d->iada_addr, channel);
 			cs->cs_reg_csr = (void *)&zc->zc_csr;
 
