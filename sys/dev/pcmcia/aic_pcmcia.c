@@ -1,4 +1,4 @@
-/*	$NetBSD: aic_pcmcia.c,v 1.26 2004/08/10 06:23:50 mycroft Exp $	*/
+/*	$NetBSD: aic_pcmcia.c,v 1.27 2004/08/10 15:29:56 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic_pcmcia.c,v 1.26 2004/08/10 06:23:50 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic_pcmcia.c,v 1.27 2004/08/10 15:29:56 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -138,11 +138,8 @@ aic_pcmcia_attach(parent, self, aux)
 	sc->sc_ioh = cfe->iospace[0].handle.ioh;
 
 	error = aic_pcmcia_enable(self, 1);
-	if (error) {
-		aprint_error("%s: enable failed, error=%d\n", self->dv_xname,
-		    error);
+	if (error)
 		goto fail;
-	}
 
 	if (!aic_find(sc->sc_iot, sc->sc_ioh)) {
 		aprint_error("%s: unable to detect chip!\n", self->dv_xname);
@@ -191,6 +188,7 @@ aic_pcmcia_enable(self, onoff)
 	int onoff;
 {
 	struct aic_pcmcia_softc *sc = (void *)self;
+	int error;
 
 	if (onoff) {
 		/*
@@ -203,17 +201,13 @@ aic_pcmcia_enable(self, onoff)
 			/* Establish the interrupt handler. */
 			sc->sc_ih = pcmcia_intr_establish(sc->sc_pf, IPL_BIO,
 			    aicintr, &sc->sc_aic);
-			if (sc->sc_ih == NULL) {
-				printf("%s: couldn't establish interrupt handler\n",
-				    sc->sc_aic.sc_dev.dv_xname);
+			if (!sc->sc_ih)
 				return (EIO);
-			}
 
-			if (pcmcia_function_enable(sc->sc_pf)) {
-				printf("%s: couldn't enable PCMCIA function\n",
-				    sc->sc_aic.sc_dev.dv_xname);
+			error = pcmcia_function_enable(sc->sc_pf);
+			if (error) {
 				pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
-				return (EIO);
+				return (error);
 			}
 
 			/* Initialize only chip.  */

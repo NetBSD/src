@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_pcmcia.c,v 1.48 2004/08/10 08:56:08 mycroft Exp $	*/
+/*	$NetBSD: if_ep_pcmcia.c,v 1.49 2004/08/10 15:29:56 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ep_pcmcia.c,v 1.48 2004/08/10 08:56:08 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ep_pcmcia.c,v 1.49 2004/08/10 15:29:56 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -181,13 +181,11 @@ ep_pcmcia_enable(sc)
 
 	/* establish the interrupt. */
 	sc->sc_ih = pcmcia_intr_establish(pf, IPL_NET, epintr, sc);
-	if (sc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt\n",
-		    sc->sc_dev.dv_xname);
-		return (1);
-	}
+	if (!sc->sc_ih)
+		return (EIO);
 
-	if ((error = pcmcia_function_enable(pf))) {
+	error = pcmcia_function_enable(pf);
+	if (error) {
 		pcmcia_intr_disestablish(pf, sc->sc_ih);
 		return (error);
 	}
@@ -218,6 +216,7 @@ ep_pcmcia_disable(sc)
 
 	pcmcia_function_disable(psc->sc_pf);
 	pcmcia_intr_disestablish(psc->sc_pf, sc->sc_ih);
+	sc->sc_ih = 0;
 }
 
 void
@@ -233,6 +232,7 @@ ep_pcmcia_attach(parent, self, aux)
 	u_int8_t myla[ETHER_ADDR_LEN];
 	u_int8_t *enaddr = NULL;
 	int i;
+	int error;
 
 	aprint_normal("\n");
 	psc->sc_pf = pa->pf;
@@ -297,10 +297,9 @@ ep_pcmcia_attach(parent, self, aux)
 		goto iomap_failed;
 	}
 
-	if (ep_pcmcia_enable(sc)) {
-		aprint_error("%s: function enable failed\n", self->dv_xname);
+	error = ep_pcmcia_enable(sc);
+	if (error)
 		goto enable_failed;
-	}
 	sc->enabled = 1;
 
 	switch (pa->product) {

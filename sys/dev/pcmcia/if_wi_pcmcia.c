@@ -1,4 +1,4 @@
-/* $NetBSD: if_wi_pcmcia.c,v 1.53 2004/08/10 06:10:38 mycroft Exp $ */
+/* $NetBSD: if_wi_pcmcia.c,v 1.54 2004/08/10 15:29:56 mycroft Exp $ */
 
 /*-
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.53 2004/08/10 06:10:38 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.54 2004/08/10 15:29:56 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -284,6 +284,7 @@ wi_pcmcia_enable(sc)
 {
 	struct wi_pcmcia_softc *psc = (struct wi_pcmcia_softc *)sc;
 	struct pcmcia_function *pf = psc->sc_pf;
+	int error;
 
 	if (psc->sc_state == WI_PCMCIA_ATTACH1) {
 		psc->sc_state = WI_PCMCIA_ATTACH2;
@@ -292,16 +293,15 @@ wi_pcmcia_enable(sc)
 
 	/* establish the interrupt. */
 	sc->sc_ih = pcmcia_intr_establish(pf, IPL_NET, wi_intr, sc);
-	if (sc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt\n",
-		    sc->sc_dev.dv_xname);
+	if (!sc->sc_ih)
 		return (EIO);
-	}
-	if (pcmcia_function_enable(pf) != 0) {
-		printf("%s: couldn't enable card\n", sc->sc_dev.dv_xname);
+
+	error = pcmcia_function_enable(pf);
+	if (error) {
 		pcmcia_intr_disestablish(pf, sc->sc_ih);
 		return (EIO);
 	}
+
 	DELAY(1000);
 	if (psc->sc_symbol_cf) {
 		if (wi_pcmcia_load_firm(sc,
@@ -324,6 +324,7 @@ wi_pcmcia_disable(sc)
 
 	pcmcia_function_disable(psc->sc_pf);
 	pcmcia_intr_disestablish(psc->sc_pf, sc->sc_ih);
+	sc->sc_ih = 0;
 }
 
 static int
@@ -382,11 +383,9 @@ wi_pcmcia_attach(parent, self, aux)
 	    CSR_READ_2(sc, WI_COR) == WI_COR_IOMODE)
 		psc->sc_symbol_cf = 1;
 
-	if (wi_pcmcia_enable(sc)) {
-		aprint_error("%s: enable failed, error=%d\n", self->dv_xname,
-		    error);
+	error = wi_pcmcia_enable(sc);
+	if (error)
 		goto fail;
-	}
 	
 	sc->sc_pci = 0;
 	sc->sc_enable = wi_pcmcia_enable;

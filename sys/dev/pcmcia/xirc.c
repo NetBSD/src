@@ -1,4 +1,4 @@
-/*	$NetBSD: xirc.c,v 1.8 2004/08/09 22:24:37 mycroft Exp $	*/
+/*	$NetBSD: xirc.c,v 1.9 2004/08/10 15:29:56 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xirc.c,v 1.8 2004/08/09 22:24:37 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xirc.c,v 1.9 2004/08/10 15:29:56 mycroft Exp $");
 
 #include "opt_inet.h" 
 #include "opt_ns.h"
@@ -190,6 +190,7 @@ xirc_attach(parent, self, aux)
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
 	int rv;
+	int error;
 
 	aprint_normal("\n");
 	sc->sc_pf = pa->pf;
@@ -274,11 +275,10 @@ xirc_attach(parent, self, aux)
 		sc->sc_flags |= XIRC_ETHERNET_MAPPED;
 	}
 
-	if (xirc_enable(sc, XIRC_MODEM_ENABLED|XIRC_ETHERNET_ENABLED,
-	    sc->sc_id & (XIMEDIA_MODEM|XIMEDIA_ETHER))) {
-		aprint_error("%s: enable failed\n", self->dv_xname);
+	error = xirc_enable(sc, XIRC_MODEM_ENABLED|XIRC_ETHERNET_ENABLED,
+	    sc->sc_id & (XIMEDIA_MODEM|XIMEDIA_ETHER));
+	if (error)
 		goto fail;
-	}
 
 	sc->sc_mako_intmask = 0xee;
 
@@ -505,6 +505,7 @@ xirc_enable(sc, flag, media)
 	struct xirc_softc *sc;
 	int flag, media;
 {
+	int error;
 
 	if ((sc->sc_flags & flag) == flag) {
 		printf("%s: already enabled\n", sc->sc_dev.dv_xname);
@@ -526,17 +527,14 @@ xirc_enable(sc, flag, media)
 	 * XXX Eventually we should use the `enabled' bits in the
 	 * XXX flags word to determine which level we should be at.
 	 */
-	sc->sc_ih = pcmcia_intr_establish(sc->sc_pf, IPL_NET,
-	    xirc_intr, sc);
-	if (sc->sc_ih == NULL) {
-		printf("%s: unable to establish interrupt\n",
-		    sc->sc_dev.dv_xname);
+	sc->sc_ih = pcmcia_intr_establish(sc->sc_pf, IPL_NET, xirc_intr, sc);
+	if (!sc->sc_ih)
 		return (EIO);
-	}
 
-	if (pcmcia_function_enable(sc->sc_pf)) {
+	error = pcmcia_function_enable(sc->sc_pf);
+	if (error) {
 		pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
-		return (EIO);
+		return (error);
 	}
 
 	sc->sc_flags |= flag;
@@ -575,6 +573,7 @@ xirc_disable(sc, flag, media)
 
 	pcmcia_function_disable(sc->sc_pf);
 	pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
+	sc->sc_ih = 0;
 }
 
 /****** Here begins the com attachment code. ******/
