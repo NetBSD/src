@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 2002/08/19 09:56:02 lukem Exp $
+#	$NetBSD: Makefile,v 1.22 2003/07/23 08:01:24 itojun Exp $
 #	@(#)Makefile	8.1 (Berkeley) 7/19/93
 
 .include <bsd.own.mk>
@@ -7,9 +7,9 @@ PROG=		rcp
 SRCS=		rcp.c util.c
 
 # XXX Kerberos support broken right now.
-USE_KERBEROS=	no
+USE_KERBEROS4=	no
 
-.if (${USE_KERBEROS} != "no")
+.if (${USE_KERBEROS4} != "no")
 RLOGIN= 	${NETBSDSRCDIR}/usr.bin/rlogin
 .PATH:		${RLOGIN}
 

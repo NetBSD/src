@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.13 2002/10/23 01:04:25 itojun Exp $
+# $NetBSD: Makefile,v 1.14 2003/07/23 08:01:29 itojun Exp $
 
 NOLINT=		# defined
 
@@ -12,9 +12,17 @@ WARNS?=		1
 PROG=		kadmind
 MAN=		kadmind.8
 
-SRCS= 	kadmind.c				\
+.if ${MKKERBEROS4} != "no"
+CPPFLAGS+= -DKRB4
+CPPFLAGS+= -I${DESTDIR}/usr/include/kerberosIV
+SRCS+= 	version4.c
+
+KRB4LDADD= -lkadm -lkrb
+KRB4DPADD= ${LIBKADM} ${LIBKRB}
+.endif
+
+SRCS+= 	kadmind.c				\
 	server.c				\
-	version4.c				\
 	kadm_conn.c
 
 CPPFLAGS+= -I.					\
@@ -23,16 +31,15 @@ CPPFLAGS+= -I.					\
 	-I${DIST}/heimdal/lib/asn1		\
 	-I${NETBSDSRCDIR}/include/heimdal	\
 	-I${DESTDIR}/usr/include/kadm5		\
-	-I${DESTDIR}/usr/include/kerberosIV	\
 	-I${DESTDIR}/usr/include/krb5		\
 	-DHAVE_CONFIG_H
 
 VERS!=		cd ${NETBSDSRCDIR}/lib/libvers && ${PRINTOBJDIR}
 
-LDADD+=		-lkadm5srv -lhdb -lkrb5 -lkadm -lkrb \
+LDADD+=		-lkadm5srv -lhdb -lkrb5 ${KRB4LDADD} \
 		-lcrypto -lasn1 -lcom_err -L${VERS} -lvers \
 		-lroken -lcrypt -lutil
-DPADD+=		${LIBKADM5SRV} ${LIBHDB} ${LIBKRB5} ${LIBKADM} ${LIBKRB} \
+DPADD+=		${LIBKADM5SRV} ${LIBHDB} ${LIBKRB5} ${KRB4DPADD} \
 		${LIBCRYPTO} ${LIBASN1} ${LIBCOM_ERR} ${VERS}/libvers.a \
 		${LIBROKEN} ${LIBCRYPT} ${LIBUTIL}
 

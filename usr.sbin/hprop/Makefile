@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.8 2002/10/23 01:14:16 itojun Exp $
+# $NetBSD: Makefile,v 1.9 2003/07/23 08:01:40 itojun Exp $
 
 NOLINT= # defined
 
@@ -11,9 +11,17 @@ WARNS?=  1
 
 PROG= hprop
 
-SRCS= 	hprop.c					\
-	mit_dump.c				\
-	v4_dump.c
+.if ${MKKERBEROS4} != "no"
+CPPFLAGS+= -DKRB4
+CPPFLAGS+= -I${DESTDIR}/usr/include/kerberosIV
+KRB4LDADD= -lkdb -lkrb
+KRB4DPADD= ${LIBKDB} ${LIBKRB}
+.endif
+
+
+SRCS+= 	hprop.c					\
+	v4_dump.c				\
+	mit_dump.c
 
 CPPFLAGS+= -I.					\
 	-I${DIST}/heimdal/kdc			\
@@ -21,15 +29,14 @@ CPPFLAGS+= -I.					\
 	-I${DIST}/heimdal/lib/krb5		\
 	-I${NETBSDSRCDIR}/include/heimdal	\
 	-I${DIST}/heimdal/lib/asn1		\
-	-I${DESTDIR}/usr/include/kerberosIV	\
 	-I${DESTDIR}/usr/include/krb5		\
 	-DHAVE_CONFIG_H
 
 VERS!=	cd ${NETBSDSRCDIR}/lib/libvers && ${PRINTOBJDIR}
 
-LDADD+=	-lhdb -lkrb5 -lkdb -lkrb -lcrypto -lasn1 \
+LDADD+=	-lhdb -lkrb5 ${KRB4LDADD} -lcrypto -lasn1 \
 	-lcom_err -L${VERS} -lvers -lroken -lcrypt
-DPADD+=	${LIBHDB} ${LIBKRB5} ${LIBKDB} ${LIBKRB} ${LIBCRYPTO} ${LIBASN1} \
+DPADD+=	${LIBHDB} ${LIBKRB5} ${KRB4DPADD} ${LIBCRYPTO} ${LIBASN1} \
 	${LIBCOM_ERR} ${VERS}/libvers.a ${LIBROKEN} ${LIBCRYPT}
 
 MAN=	hprop.8

@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.343 2003/07/22 11:48:59 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.344 2003/07/23 08:01:46 itojun Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -512,7 +512,8 @@ MK${var}:=	yes
 # MK* options which default to "yes".
 #
 .for var in BFD CATPAGES CRYPTO DOC GCC GDB HESIOD HTML IEEEFP INFO KERBEROS \
-	LINKLIB LINT MAN NLS OBJ PIC PICINSTALL PICLIB PROFILE SHARE SKEY YP
+	KERBEROS4 LINKLIB LINT MAN NLS OBJ PIC PICINSTALL PICLIB PROFILE \
+	SHARE SKEY YP
 MK${var}?=	yes
 .endfor
 
@@ -529,6 +530,7 @@ MK${var}?=	no
 #
 
 .if ${MKCRYPTO} == "no"
+MKKERBEROS4:=	no
 MKKERBEROS:=	no
 .endif
 
@@ -598,7 +600,7 @@ HOST_INSTALL_FILE?=	${INSTALL} ${COPY} ${PRESERVE} ${RENAME}
 # Set defaults for the USE_xxx variables.  They all default to "yes"
 # unless the corresponding MKxxx variable is set to "no".
 #
-.for var in HESIOD KERBEROS SKEY YP
+.for var in HESIOD KERBEROS KERBEROS4 SKEY YP
 .if (${MK${var}} == "no")
 USE_${var}:= no
 .else
