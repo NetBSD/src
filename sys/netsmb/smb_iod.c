@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_iod.c,v 1.15 2003/03/30 11:27:45 jdolecek Exp $	*/
+/*	$NetBSD: smb_iod.c,v 1.16 2003/03/30 11:58:17 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_iod.c,v 1.15 2003/03/30 11:27:45 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_iod.c,v 1.16 2003/03/30 11:58:17 jdolecek Exp $");
  
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,7 +80,14 @@ smb_iod_rqprocessed(struct smb_rq *rqp, int error)
 	rqp->sr_rpgen++;
 	rqp->sr_state = SMBRQ_NOTIFIED;
 	wakeup(&rqp->sr_state);
+	callout_stop(&rqp->sr_timo_ch);
 	SMBRQ_SUNLOCK(rqp);
+}
+
+static void
+smb_iod_rqtimedout(void *arg)
+{
+	smb_iod_rqprocessed((struct smb_rq *)arg, ETIMEDOUT);
 }
 
 static void
@@ -254,14 +261,11 @@ smb_iod_sendrq(struct smbiod *iod, struct smb_rq *rqp)
 	m = m_copym(rqp->sr_rq.mb_top, 0, M_COPYALL, M_WAIT);
 	error = rqp->sr_lerror = (m) ? SMB_TRAN_SEND(vcp, m, p) : ENOBUFS;
 	if (error == 0) {
-		int s;
-		struct timeval ts, tstimeout;
-
-		SMB_TRAN_GETPARAM(vcp, SMBTP_TIMEOUT, &tstimeout);
-		s = splclock();
-		ts = mono_time;
-		splx(s);
-		timeradd(&ts, &tstimeout, &rqp->sr_sendtimo);
+		if (rqp->sr_timo > 0) {
+			callout_init(&rqp->sr_timo_ch);
+			callout_reset(&rqp->sr_timo_ch, rqp->sr_timo,
+				smb_iod_rqtimedout, rqp);
+		}
 #if 0
 		iod->iod_lastrqsent = ts;
 #endif
@@ -542,8 +546,7 @@ static void
 smb_iod_sendall(struct smbiod *iod)
 {
 	struct smb_rq *rqp;
-	struct timeval ts;
-	int herror, s;
+	int herror;
 
 	herror = 0;
 	/*
@@ -551,8 +554,7 @@ smb_iod_sendall(struct smbiod *iod)
 	 */
 	SMB_IOD_RQLOCK(iod);
 	SIMPLEQ_FOREACH(rqp, &iod->iod_rqlist, sr_link) {
-		switch (rqp->sr_state) {
-		case SMBRQ_NOTSENT:
+		if (__predict_false(rqp->sr_state == SMBRQ_NOTSENT)) {
 			rqp->sr_flags |= SMBR_XLOCK;
 			SMB_IOD_RQUNLOCK(iod);
 			herror = smb_iod_sendrq(iod, rqp);
@@ -562,20 +564,10 @@ smb_iod_sendall(struct smbiod *iod)
 				rqp->sr_flags &= ~SMBR_XLOCKWANT;
 				wakeup(rqp);
 			}
-			break;
-		case SMBRQ_SENT:
-			s = splclock();
-			ts = mono_time;
-			splx(s);
-			if (timercmp(&ts, &rqp->sr_sendtimo, >)) {
-				smb_iod_rqprocessed(rqp, ETIMEDOUT);
-			}
-			break;
-		default:
-			break;
+
+			if (__predict_false(herror != 0))
+				break;
 		}
-		if (herror)
-			break;
 	}
 	SMB_IOD_RQUNLOCK(iod);
 	if (herror == ENOTCONN)
