@@ -1,4 +1,4 @@
-/*	$NetBSD: if_epic_pci.c,v 1.7 1999/07/27 00:37:34 thorpej Exp $	*/
+/*	$NetBSD: if_epic_pci.c,v 1.7.12.1 2000/07/14 22:05:34 tron Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -163,7 +163,26 @@ epic_pci_attach(parent, self, aux)
 	const struct epic_pci_product *epp;
 	bus_space_tag_t iot, memt;
 	bus_space_handle_t ioh, memh;
-	int ioh_valid, memh_valid;
+	pcireg_t reg;
+	int pmreg, ioh_valid, memh_valid;
+
+	if (pci_get_capability(pc, pa->pa_tag, PCI_CAP_PWRMGMT, &pmreg, 0)) {
+		reg = pci_conf_read(pc, pa->pa_tag, pmreg + 4) & 0x3;
+		if (reg == 3) {
+			/*
+			 * The card has lost all configuration data in
+			 * this state, so punt.
+			 */
+			printf("%s: unable to wake up from power state D3\n",
+			    sc->sc_dev.dv_xname);
+			return;
+		}
+		if (reg != 0) {
+			printf("%s: waking up from power state D%d\n",
+			    sc->sc_dev.dv_xname, reg);
+			pci_conf_write(pc, pa->pa_tag, pmreg + 4, 0);
+		}
+	}
 
 	/*
 	 * Map the device.
