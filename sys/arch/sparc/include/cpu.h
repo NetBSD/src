@@ -42,7 +42,7 @@
  *	@(#)cpu.h	8.1 (Berkeley) 6/11/93
  *
  * from: Header: cpu.h,v 1.12 93/05/25 10:36:34 torek Exp  (LBL)
- * $Id: cpu.h,v 1.4 1994/03/22 08:08:43 deraadt Exp $
+ * $Id: cpu.h,v 1.5 1994/05/05 05:55:00 deraadt Exp $
  */
 
 #ifndef _CPU_H_
@@ -126,7 +126,7 @@ int	want_resched;		/* resched() was called */
  * buffer pages are invalid.  On the sparc, request an ast to send us 
  * through trap(), marking the proc as needing a profiling tick.
  */
-#define	profile_tick(p, framep)	((p)->p_flag |= SOWEUPC, want_ast = 1)
+#define	profile_tick(p, framep)	((p)->p_flag |= P_OWEUPC, want_ast = 1)
 
 /*
  * Notify the current process (p) that it has a signal pending,
