@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.2.10.9 2002/12/31 01:03:48 thorpej Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.2.10.10 2003/01/05 18:55:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -136,32 +136,7 @@ ASENTRY(Idle)
 	b	_ASM_LABEL(Idle)
 
 /*
- * switch_lwp_exit(struct lwp *l)
- * switch_lwp_exit gets called from cpu_exit to complete the exit procedure.
- */
-ENTRY(switch_lwp_exit)
-/* First switch to the idle pcb/kernel stack */
-#if defined(MULTIPROCESSOR)
-	GET_CPUINFO(7)
-	lwz	6,CI_IDLE_PCB(7)
-	stw	6,CI_CURPCB(7)
-#else
-	lis	6,idle_u@ha
-	lwz	6,idle_u@l(6)
-	lis	7,_C_LABEL(curpcb)@ha
-	stw	6,_C_LABEL(curpcb)@l(7)
-#endif
-	addi	1,6,USPACE-20		/* 16 bytes are reserved at stack top */
-	/*
-	 * Schedule the vmspace and stack to be freed (the proc arg is
-	 * already in r3).
-	 */
-	bl	_C_LABEL(lwp_exit2)
-
-	b	finish_switch_exit
-
-/*
- * switch_exit(struct lwp *l)
+ * switch_exit(struct lwp *l, void (*exit)(struct lwp *))
  * switch_exit gets called from cpu_exit to complete the exit procedure.
  */
 ENTRY(switch_exit)
@@ -176,14 +151,17 @@ ENTRY(switch_exit)
 	lis	7,_C_LABEL(curpcb)@ha
 	stw	6,_C_LABEL(curpcb)@l(7)
 #endif
-	addi	1,6,USPACE-20		/* 16 bytes are reserved at stack top */
+	/*
+	 * Adjust the stack to provide space for the callee to save LR.
+	 */
+	addi	1,6,USPACE-16
 	/*
 	 * Schedule the vmspace and stack to be freed (the proc arg is
-	 * already in r3).
+	 * already in r3).  Function to call is in r4.
 	 */
-	bl	_C_LABEL(exit2)
+	mtctr	4
+	bctrl
 
-finish_switch_exit:
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	bl	_C_LABEL(sched_lock_idle)
 #endif
@@ -218,7 +196,7 @@ ENTRY_NOPROFILE(cpu_switch)
 	stw	1,PCB_SP(3)		/* save SP */
 
 	lwz	6,CI_IDLE_PCB(7)
-	addi	1,6,USPACE-20		/* 16 bytes are reserved at stack top */
+	addi	1,6,USPACE-16		/* 16 bytes are reserved at stack top */
 
 1:
 	xor	31,31,31
@@ -461,7 +439,7 @@ ENTRY(cpu_switchto)
 	stw	1,PCB_SP(3)		/* save SP */
 
 	lwz	6,CI_IDLE_PCB(7)
-	addi	1,6,USPACE-20		/* 16 bytes are reserved at stack top */
+	addi	1,6,USPACE-16		/* 16 bytes are reserved at stack top */
 
 1:
 	xor	31,31,31
