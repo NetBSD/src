@@ -126,6 +126,7 @@
 ./usr/share/man/cat1/id.0
 ./usr/share/man/cat1/ident.0
 ./usr/share/man/cat1/indent.0
+./usr/share/man/cat1/innetgr.0
 ./usr/share/man/cat1/install.0
 ./usr/share/man/cat1/intro.0
 ./usr/share/man/cat1/ipcrm.0
@@ -187,6 +188,7 @@
 ./usr/share/man/cat1/msgs.0
 ./usr/share/man/cat1/mt.0
 ./usr/share/man/cat1/mv.0
+./usr/share/man/cat1/netgroup.0
 ./usr/share/man/cat1/netstat.0
 ./usr/share/man/cat1/newaliases.0
 ./usr/share/man/cat1/nfsstat.0
@@ -1208,6 +1210,7 @@
 ./usr/share/man/man1/id.1
 ./usr/share/man/man1/ident.1
 ./usr/share/man/man1/indent.1
+./usr/share/man/man1/innetgr.1
 ./usr/share/man/man1/install.1
 ./usr/share/man/man1/intro.1
 ./usr/share/man/man1/ipcrm.1
@@ -1269,6 +1272,7 @@
 ./usr/share/man/man1/msgs.1
 ./usr/share/man/man1/mt.1
 ./usr/share/man/man1/mv.1
+./usr/share/man/man1/netgroup.1
 ./usr/share/man/man1/netstat.1
 ./usr/share/man/man1/newaliases.1
 ./usr/share/man/man1/nfsstat.1
