@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.40 1999/03/31 02:00:42 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.41 1999/05/17 04:26:45 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.40 1999/03/31 02:00:42 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.41 1999/05/17 04:26:45 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -177,10 +177,11 @@ main(argc, argv)
 	fromatty = isatty(fileno(stdin));
 	ttyout = stdout;
 	if (isatty(fileno(ttyout))) {
-		verbose = 1;		/* verbose if from a tty */
+		verbose = 1;		/* verbose if to a tty */
 #ifndef SMALL
 		if (! dumbterm) {
-			editing = 1;	/* editing mode on if tty is usable */
+			if (fromatty)	/* editing mode on if tty is usable */
+				editing = 1;
 			if (foregroundproc())
 				progress = 1;	/* progress bar on if fg */
 		}
