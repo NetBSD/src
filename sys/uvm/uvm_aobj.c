@@ -1,6 +1,9 @@
-/*	$NetBSD: uvm_aobj.c,v 1.3 1998/02/07 02:32:37 chs Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.4 1998/02/07 11:08:08 mrg Exp $	*/
 
 /* copyright here */
+/*
+ * from: Id: uvm_aobj.c,v 1.1.2.5 1998/02/06 05:14:38 chs Exp
+ */
 
 #include <sys/param.h>
 #include <sys/systm.h>

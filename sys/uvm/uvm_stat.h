@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_stat.h,v 1.3 1998/02/07 02:16:52 chs Exp $	*/
+/*	$NetBSD: uvm_stat.h,v 1.4 1998/02/07 11:09:43 mrg Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -34,6 +34,8 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * from: Id: uvm_stat.h,v 1.1.2.4 1998/02/07 01:16:56 chs Exp
  */
 /*
  * uvm_stat: monitor what is going on with uvm (or whatever)
