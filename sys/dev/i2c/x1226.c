@@ -1,4 +1,4 @@
-/*	$NetBSD: x1226.c,v 1.1 2003/10/06 18:02:02 shige Exp $	*/
+/*	$NetBSD: x1226.c,v 1.2 2004/02/04 12:03:07 shige Exp $	*/
 
 /*
  * Copyright (c) 2003 Shigeyuki Fukushima.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x1226.c,v 1.1 2003/10/06 18:02:02 shige Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x1226.c,v 1.2 2004/02/04 12:03:07 shige Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -176,8 +176,8 @@ xrtc_read(dev_t dev, struct uio *uio, int flags)
 
 	while (uio->uio_resid && uio->uio_offset < X1226_NVRAM_SIZE) {
 		addr = (int)uio->uio_offset + X1226_NVRAM_START;
-		cmdbuf[0] = addr && 0xff;
-		cmdbuf[1] = (addr >> 8) && 0xff;
+		cmdbuf[0] = (addr >> 8) && 0xff;
+		cmdbuf[1] = addr && 0xff;
 		if ((error = iic_exec(sc->sc_tag,
 			I2C_OP_READ_WITH_STOP,
 			sc->sc_address, cmdbuf, 2, &ch, 1, 0)) != 0) {
@@ -216,8 +216,8 @@ xrtc_write(dev_t dev, struct uio *uio, int flags)
 
 	while (uio->uio_resid && uio->uio_offset < X1226_NVRAM_SIZE) {
 		addr = (int)uio->uio_offset + X1226_NVRAM_START;
-		cmdbuf[0] = addr && 0xff;
-		cmdbuf[1] = (addr >> 8) && 0xff;
+		cmdbuf[0] = (addr >> 8) && 0xff;
+		cmdbuf[1] = addr && 0xff;
 		if ((error = uiomove(&cmdbuf[2], 1, uio)) != 0) {
 			break;
 		}
@@ -300,8 +300,8 @@ xrtc_clock_read(struct xrtc_softc *sc, struct clock_ymdhms *dt)
 	/* Read each RTC register in order */
 	for (i = 0 ; i < X1226_REG_RTC_SIZE ; i++) {
 		int addr = i + X1226_REG_RTC_BASE;
-		cmdbuf[0] = addr & 0xff;
-		cmdbuf[1] = (addr >> 8) & 0xff;
+		cmdbuf[0] = (addr >> 8) & 0xff;
+		cmdbuf[1] = addr & 0xff;
 
 		if (iic_exec(sc->sc_tag,
 			I2C_OP_READ_WITH_STOP,
@@ -334,6 +334,8 @@ xrtc_clock_read(struct xrtc_softc *sc, struct clock_ymdhms *dt)
 		dt->dt_hour = FROMBCD(bcd[X1226_REG_HR - X1226_REG_RTC_BASE]
 			& X1226_REG_HR24_MASK);
 	}
+	dt->dt_wday = FROMBCD(bcd[X1226_REG_DW - X1226_REG_RTC_BASE]
+			& X1226_REG_DT_MASK);
 	dt->dt_day = FROMBCD(bcd[X1226_REG_DT - X1226_REG_RTC_BASE]
 			& X1226_REG_DT_MASK);
 	dt->dt_mon = FROMBCD(bcd[X1226_REG_MO - X1226_REG_RTC_BASE]
@@ -373,8 +375,8 @@ xrtc_clock_write(struct xrtc_softc *sc, struct clock_ymdhms *dt)
 
 	/* Unlock register: Write Enable Latch */
 	addr = X1226_REG_SR;
-	cmdbuf[0] = (addr & 0xff);
-	cmdbuf[1] = ((addr >> 8) & 0xff);
+	cmdbuf[0] = ((addr >> 8) & 0xff);
+	cmdbuf[1] = (addr & 0xff);
 	cmdbuf[2] = X1226_FLAG_SR_WEL;
 	if (iic_exec(sc->sc_tag,
 		I2C_OP_WRITE_WITH_STOP,
@@ -388,8 +390,8 @@ xrtc_clock_write(struct xrtc_softc *sc, struct clock_ymdhms *dt)
 
 	/* Unlock register: Register Write Enable Latch */
 	addr = X1226_REG_SR;
-	cmdbuf[0] = (addr & 0xff);
-	cmdbuf[1] = ((addr >> 8) & 0xff);
+	cmdbuf[0] = ((addr >> 8) & 0xff);
+	cmdbuf[1] = (addr & 0xff);
 	cmdbuf[2] = X1226_FLAG_SR_RWEL;
 	if (iic_exec(sc->sc_tag,
 		I2C_OP_WRITE_WITH_STOP,
@@ -404,8 +406,8 @@ xrtc_clock_write(struct xrtc_softc *sc, struct clock_ymdhms *dt)
 	/* Write each RTC register in reverse order */
 	for (i = (X1226_REG_RTC_SIZE - 1) ; i >= 0; i--) {
 		int addr = i + X1226_REG_RTC_BASE;
-		cmdbuf[0] = (addr & 0xff);
-		cmdbuf[1] = ((addr >> 8) & 0xff);
+		cmdbuf[0] = ((addr >> 8) & 0xff);
+		cmdbuf[1] = (addr & 0xff);
 		if (iic_exec(sc->sc_tag,
 			I2C_OP_WRITE_WITH_STOP,
 			sc->sc_address, cmdbuf, 2,
@@ -413,8 +415,8 @@ xrtc_clock_write(struct xrtc_softc *sc, struct clock_ymdhms *dt)
 
 			/* Lock register: WEL/RWEL off */
 			addr = X1226_REG_SR;
-			cmdbuf[0] = (addr & 0xff);
-			cmdbuf[1] = ((addr >> 8) & 0xff);
+			cmdbuf[0] = ((addr >> 8) & 0xff);
+			cmdbuf[1] = (addr & 0xff);
 			cmdbuf[2] = 0;
 			iic_exec(sc->sc_tag,
 				I2C_OP_WRITE_WITH_STOP,
@@ -430,9 +432,9 @@ xrtc_clock_write(struct xrtc_softc *sc, struct clock_ymdhms *dt)
 
 	/* Lock register: WEL/RWEL off */
 	addr = X1226_REG_SR;
-	cmdbuf[0] = (addr & 0xff);
-	cmdbuf[1] = ((addr >> 8) & 0xff);
-	cmdbuf[2] = X1226_FLAG_SR_WEL;
+	cmdbuf[0] = ((addr >> 8) & 0xff);
+	cmdbuf[1] = (addr & 0xff);
+	cmdbuf[2] = 0;
 	if (iic_exec(sc->sc_tag,
 		I2C_OP_WRITE_WITH_STOP,
 		sc->sc_address, cmdbuf, 2, &cmdbuf[2], 1, 0) != 0) {
