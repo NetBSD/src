@@ -1,5 +1,5 @@
-/*	$NetBSD: in6.c,v 1.29 2000/04/12 10:36:44 itojun Exp $	*/
-/*	$KAME: in6.c,v 1.63 2000/03/21 05:18:38 itojun Exp $	*/
+/*	$NetBSD: in6.c,v 1.30 2000/04/16 15:00:56 itojun Exp $	*/
+/*	$KAME: in6.c,v 1.75 2000/04/12 03:51:29 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -325,7 +325,7 @@ in6_control(so, cmd, data, ifp, p)
 	struct	in6_aliasreq *ifra = (struct in6_aliasreq *)data;
 	struct	sockaddr_in6 oldaddr;
 #ifdef COMPAT_IN6IFIOCTL
-	struct sockaddr_in6 net;
+	struct	sockaddr_in6 net;
 #endif
 	int error = 0, hostIsNew, prefixIsNew;
 	int newifaddr;
@@ -412,8 +412,7 @@ in6_control(so, cmd, data, ifp, p)
 				/* interface ID is not embedded by the user */
 				sa6->sin6_addr.s6_addr16[1] =
 					htons(ifp->if_index);
-			}
-			else if (sa6->sin6_addr.s6_addr16[1] !=
+			} else if (sa6->sin6_addr.s6_addr16[1] !=
 				    htons(ifp->if_index)) {
 				return(EINVAL);	/* ifid is contradict */
 			}
@@ -450,7 +449,7 @@ in6_control(so, cmd, data, ifp, p)
 		 * on a single interface, SIOCSIFxxx ioctls are not suitable
 		 * and should be unused.
 		 */
-#endif 
+#endif
 		if (ifra->ifra_addr.sin6_family != AF_INET6)
 			return(EAFNOSUPPORT);
 		if (!privileged)
@@ -461,7 +460,6 @@ in6_control(so, cmd, data, ifp, p)
 			if (ia == NULL)
 				return (ENOBUFS);
 			bzero((caddr_t)ia, sizeof(*ia));
-
 			/* Initialize the address and masks */
 			ia->ia_ifa.ifa_addr = (struct sockaddr *)&ia->ia_addr;
 			ia->ia_addr.sin6_family = AF_INET6;
@@ -601,8 +599,7 @@ in6_control(so, cmd, data, ifp, p)
 				/* interface ID is not embedded by the user */
 				ia->ia_dstaddr.sin6_addr.s6_addr16[1]
 					= htons(ifp->if_index);
-			}
-			else if (ia->ia_dstaddr.sin6_addr.s6_addr16[1] !=
+			} else if (ia->ia_dstaddr.sin6_addr.s6_addr16[1] !=
 				    htons(ifp->if_index)) {
 				ia->ia_dstaddr = oldaddr;
 				return(EINVAL);	/* ifid is contradict */
@@ -623,7 +620,7 @@ in6_control(so, cmd, data, ifp, p)
 		}
 		break;
 
-#endif 
+#endif
 	case SIOCGIFALIFETIME_IN6:
 		ifr->ifr_ifru.ifru_lifetime = ia->ia6_lifetime;
 		break;
@@ -698,7 +695,7 @@ in6_control(so, cmd, data, ifp, p)
 				ia->ia_prefixmask.sin6_addr.s6_addr32[3];
 		ia->ia_net = net;
 		break;
-#endif 
+#endif
 
 	case SIOCAIFADDR_IN6:
 		prefixIsNew = 0;
@@ -1309,8 +1306,7 @@ in6_savemkludge(oia)
 
 		if (mk->mk_head.lh_first != NULL) {
 			LIST_INSERT_HEAD(&in6_mk, mk, mk_entry);
-		}
-		else {
+		} else {
 			FREE(mk, M_IPMADDR);
 		}
 	}
@@ -1335,7 +1331,7 @@ in6_restoremkludge(ia, ifp)
 			for (in6m = mk->mk_head.lh_first; in6m; in6m = next){
 				next = in6m->in6m_entry.le_next;
 				in6m->in6m_ia = ia;
-				IFAREF(&ia->ia_ifa);	/* gain a reference */
+				IFAREF(&ia->ia_ifa);
 				LIST_INSERT_HEAD(&ia->ia6_multiaddrs,
 						 in6m, in6m_entry);
 			}
@@ -1772,7 +1768,7 @@ in6_ifawithscope(oifp, dst)
 	register struct ifnet *oifp;
 	register struct in6_addr *dst;
 {
-	int dst_scope =	in6_addrscope(dst), src_scope, best_scope;
+	int dst_scope =	in6_addrscope(dst), src_scope, best_scope = 0;
 	int blen = -1;
 	struct ifaddr *ifa;
 	struct ifnet *ifp;
@@ -2113,7 +2109,6 @@ in6_if_up(ifp)
 	/*
 	 * special cases, like 6to4, are handled in in6_ifattach
 	 */
-
 	in6_ifattach(ifp, NULL);
 
 	dad_delay = 0;

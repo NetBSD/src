@@ -1,5 +1,5 @@
-/*	$NetBSD: in6_ifattach.c,v 1.26 2000/04/13 16:21:25 itojun Exp $	*/
-/*	$KAME: in6_ifattach.c,v 1.48 2000/04/12 03:51:29 itojun Exp $	*/
+/*	$NetBSD: in6_ifattach.c,v 1.27 2000/04/16 15:00:57 itojun Exp $	*/
+/*	$KAME: in6_ifattach.c,v 1.53 2000/04/16 14:01:42 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -201,6 +201,9 @@ found:
 		bzero(&in6->s6_addr[8], 8);
 		in6->s6_addr[15] = addr[0];
 
+		/*
+		 * due to insufficient bitwidth, we mark it local.
+		 */
 		in6->s6_addr[8] &= ~EUI64_GBIT;	/* g bit to "individual" */
 		in6->s6_addr[8] |= EUI64_UBIT;	/* u bit to "local" */
 		break;
@@ -210,9 +213,10 @@ found:
 	case IFT_STF:
 #endif
 		/*
-		 * mech-05/6to4-05: use IPv4 address as ifid source.
-		 * the specification does not survive IPv4 renumbering.
-		 * I'd rather not implement it, or make it optional (itojun).
+		 * mech-06 says: "SHOULD use IPv4 address as ifid source".
+		 * however, IPv4 address is not very suitable as unique
+		 * identifier source (can be renumbered).
+		 * we don't do this.
 		 */
 		return -1;
 
@@ -277,6 +281,7 @@ get_ifid(ifp0, altifp, in6)
 			continue;
 		if (get_hw_ifid(ifp, in6) != 0)
 			continue;
+
 		/*
 		 * to borrow ifid from other interface, ifid needs to be
 		 * globally unique
@@ -342,7 +347,7 @@ in6_ifattach_addaddr(ifp, ia)
 	 * link the interface address to global list
 	 */
 	TAILQ_INSERT_TAIL(&ifp->if_addrlist, (struct ifaddr *)ia, ifa_list);
-	ia->ia_ifa.ifa_refcnt++;
+	IFAREF(&ia->ia_ifa);
 
 	/*
 	 * Also link into the IPv6 address chain beginning with in6_ifaddr.
@@ -354,7 +359,7 @@ in6_ifattach_addaddr(ifp, ia)
 		oia->ia_next = ia;
 	} else
 		in6_ifaddr = ia;
-	ia->ia_ifa.ifa_refcnt++;
+	IFAREF(&ia->ia_ifa);
 
 	/*
 	 * give the interface a chance to initialize, in case this
@@ -390,6 +395,7 @@ in6_ifattach_addaddr(ifp, ia)
 	}
 
 	/* configure link-layer address resolution */
+	rtflag = 0;
 	if (IN6_ARE_ADDR_EQUAL(&ia->ia_prefixmask.sin6_addr, &in6mask128))
 		rtflag = RTF_HOST;
 	else {
