@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_lookup.c,v 1.10 1994/07/20 06:09:38 mycroft Exp $	*/
+/*	$NetBSD: cd9660_lookup.c,v 1.11 1994/07/22 23:17:59 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993, 1994
@@ -155,7 +155,7 @@ cd9660_lookup(ap)
 			return (error);
 #ifdef PARANOID
 		if ((vdp->v_flag & VROOT) && (flags & ISDOTDOT))
-			panic("ufs_lookup: .. through root");
+			panic("cd9660_lookup: .. through root");
 #endif
 		/*
 		 * Get the next vnode in the path.
@@ -290,8 +290,7 @@ searchloop:
 					    && ep->name[0] == ((flags & ISDOTDOT) ? 1 : 0)) {
 						/*
 						 * Save directory entry's inode number and
-						 * reclen in ndp->ni_ufs area, and release
-						 * directory buffer.
+						 * release directory buffer.
 						 */
 						dp->i_ino = isodirino(ep, imp);
 						goto found;
@@ -365,6 +364,7 @@ notfound:
 	}
 	if (bp != NULL)
 		brelse(bp);
+
 	/*
 	 * Insert name into cache (as non-existent) if appropriate.
 	 */
@@ -377,8 +377,6 @@ notfound:
 found:
 	if (numdirpasses == 2)
 		iso_nchstats.ncs_pass2++;
-	if (bp != NULL)
-		brelse(bp);
 	
 	/*
 	 * Found component in pathname.
@@ -414,8 +412,10 @@ found:
 	 */
 	if (flags & ISDOTDOT) {
 		VOP_UNLOCK(pdp);	/* race to get the inode */
-		if (error = cd9660_vget_internal(vdp->v_mount, dp->i_ino, &tdp,
-						 dp->i_ino != ino, ep)) {
+		error = cd9660_vget_internal(vdp->v_mount, dp->i_ino, &tdp,
+					     dp->i_ino != ino, ep);
+		brelse(bp);
+		if (error) {
 			VOP_LOCK(pdp);
 			return (error);
 		}
@@ -426,11 +426,14 @@ found:
 		}
 		*vpp = tdp;
 	} else if (dp->i_number == dp->i_ino) {
+		brelse(bp);
 		VREF(vdp);	/* we want ourself, ie "." */
 		*vpp = vdp;
 	} else {
-		if (error = cd9660_vget_internal(vdp->v_mount, dp->i_ino, &tdp,
-						 dp->i_ino != ino, ep))
+		error = cd9660_vget_internal(vdp->v_mount, dp->i_ino, &tdp,
+					     dp->i_ino != ino, ep);
+		brelse(bp);
+		if (error)
 			return (error);
 		if (!lockparent || !(flags & ISLASTCN))
 			VOP_UNLOCK(pdp);
