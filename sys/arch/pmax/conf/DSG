@@ -1,7 +1,7 @@
 #
 # Stanford DSG Decstation (any  model) kernel config file
 #
-# 	$NetBSD: DSG,v 1.9 1997/08/20 04:21:33 jonathan Exp $
+# 	$NetBSD: DSG,v 1.10 1997/08/20 04:33:04 jonathan Exp $
 #
 include		"arch/pmax/conf/std.pmax"
 
@@ -78,9 +78,8 @@ options 	COMPAT_ULTRIX	# ultrix compatibility
 options 	EXEC_ECOFF	# Ultrix RISC binaries are ECOFF format
 options 	"HZ=256"	# RTC rate required
 
-# Note that this configuration is unlikely to work, yet...
-config		netbsd root on rz0a type ffs  dumps on rz0b
-#config		gennetbsd	root on ? type ?
+config		netbsd 		root on rz0a type ffs  dumps on rz0b
+config		nfsnetbsd	root on ? type nfs
 
 
 
