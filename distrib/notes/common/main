@@ -1,4 +1,4 @@
-.\" $NetBSD: main,v 1.6.2.16 2000/02/11 00:35:57 he Exp $
+.\" $NetBSD: main,v 1.6.2.17 2000/02/12 19:49:24 he Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -244,6 +244,16 @@ As part of fixing a kernel bug, ``struct vfsnode'' needed to change
 size.  This will unfortunately, and contrary to tradition for patch
 releases, cause incompatibilities for users of file system LKMs
 compiled for 1.4 and 1.4.1.
+.if r_i386 \{\
+.It
+If the disk you are going to install on currently has LILO from
+Linux installed as the boot loader, the
+.Nx
+sysinst tool may not properly replace the boot code, and you will
+have problems booting from the disk.  To work around this problem,
+do ``fdisk -i diskname'' after sysinst is done but before trying
+to boot from the disk.
+.\}
 .It
 Although LFS has been improved between 1.4.1 and 1.4.2, it can
 probably still be characterized as being of ``beta test'' quality,
