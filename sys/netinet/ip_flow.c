@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_flow.c,v 1.2 1998/05/04 05:46:04 thorpej Exp $	*/
+/*	$NetBSD: ip_flow.c,v 1.3 1998/05/04 19:24:53 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -68,9 +68,10 @@
 #define	IPFLOW_HASHSIZE		(1 << IPFLOW_HASHBITS)
 static LIST_HEAD(ipflowhead, ipflow) ipflows[IPFLOW_HASHSIZE];
 static int ipflow_inuse;
+#ifndef IPFLOW_MAX
 #define	IPFLOW_MAX		256
-
-static int ipflow_active = 0;
+#endif
+int ip_maxflows = IPFLOW_MAX;
 
 static unsigned
 ipflow_hash(
@@ -117,7 +118,7 @@ ipflow_fastforward(
 	/*
 	 * Are we forwarding packets?  Big enough for an IP packet?
 	 */
-	if (!ipforwarding || !ipflow_active || m->m_len < sizeof(struct ip))
+	if (!ipforwarding || ipflow_inuse == 0 || m->m_len < sizeof(struct ip))
 		return 0;
 	/*
 	 * IP header with no option and valid version and length
@@ -210,49 +211,55 @@ ipflow_free(
 	FREE(ipf, M_IPFLOW);
 }
 
-static struct ipflow *
+struct ipflow *
 ipflow_reap(
-	void)
+	int just_one)
 {
-	struct ipflow *ipf, *maybe_ipf = NULL;
-	int idx;
-	int s;
+	while (just_one || ipflow_inuse > ip_maxflows) {
+		struct ipflow *ipf, *maybe_ipf = NULL;
+		int idx;
+		int s;
 
-	for (idx = 0; idx < IPFLOW_HASHSIZE; idx++) {
-		ipf = LIST_FIRST(&ipflows[idx]);
-		while (ipf != NULL) {
-			/*
-			 * If this no longer points to a valid route
-			 * reclaim it.
-			 */
-			if ((ipf->ipf_ro.ro_rt->rt_flags & RTF_UP) == 0)
-				goto done;
-			/*
-			 * choose the one that's been least recently used
-			 * or has had the least uses in the last 1.5 
-			 * intervals.
-			 */
-			if (ipf == NULL
-			    || ipf->ipf_timer < maybe_ipf->ipf_timer
-			    || (ipf->ipf_timer == maybe_ipf->ipf_timer
-				&& ipf->ipf_last_uses + ipf->ipf_uses <
-				      maybe_ipf->ipf_last_uses +
-					maybe_ipf->ipf_uses))
-				maybe_ipf = ipf;
-			ipf = LIST_NEXT(ipf, ipf_next);
+		for (idx = 0; idx < IPFLOW_HASHSIZE; idx++) {
+			ipf = LIST_FIRST(&ipflows[idx]);
+			while (ipf != NULL) {
+				/*
+				 * If this no longer points to a valid route
+				 * reclaim it.
+				 */
+				if ((ipf->ipf_ro.ro_rt->rt_flags & RTF_UP) == 0)
+					goto done;
+				/*
+				 * choose the one that's been least recently
+				 * used or has had the least uses in the
+				 * last 1.5 intervals.
+				 */
+				if (ipf == NULL
+				    || ipf->ipf_timer < maybe_ipf->ipf_timer
+				    || (ipf->ipf_timer == maybe_ipf->ipf_timer
+					&& ipf->ipf_last_uses + ipf->ipf_uses <
+					      maybe_ipf->ipf_last_uses +
+						maybe_ipf->ipf_uses))
+					maybe_ipf = ipf;
+				ipf = LIST_NEXT(ipf, ipf_next);
+			}
 		}
+		ipf = maybe_ipf;
+	    done:
+		/*
+		 * Remove the entry from the flow table.
+		 */
+		s = splimp();
+		LIST_REMOVE(ipf, ipf_next);
+		splx(s);
+		ipflow_addstats(ipf);
+		RTFREE(ipf->ipf_ro.ro_rt);
+		if (just_one)
+			return ipf;
+		FREE(ipf, M_IPFLOW);
+		ipflow_inuse--;
 	}
-	ipf = maybe_ipf;
-    done:
-	/*
-	 * Remove the entry from the flow table.
-	 */
-	s = splimp();
-	LIST_REMOVE(ipf, ipf_next);
-	splx(s);
-	ipflow_addstats(ipf);
-	RTFREE(ipf->ipf_ro.ro_rt);
-	return ipf;
+	return NULL;
 }
 
 void
@@ -261,14 +268,12 @@ ipflow_slowtimo(
 {
 	struct ipflow *ipf;
 	int idx;
+	int inuse = ipflow_inuse;
 
 	/*
 	 * Save ourselves some work if we know there aren't any flows.
 	 */
-	if (ipflow_inuse == 0)
-		return;
-
-	for (idx = 0; idx < IPFLOW_HASHSIZE; idx++) {
+	for (idx = 0; inuse > 0 && idx < IPFLOW_HASHSIZE; idx++) {
 		ipf = LIST_FIRST(&ipflows[idx]);
 		while (ipf != NULL) {
 			struct ipflow *next_ipf = LIST_NEXT(ipf, ipf_next);
@@ -280,6 +285,7 @@ ipflow_slowtimo(
 				ipstat.ips_forward += ipf->ipf_uses;
 				ipstat.ips_fastforward += ipf->ipf_uses;
 				ipf->ipf_uses = 0;
+				inuse--;
 			}
 			ipf = next_ipf;
 		}
@@ -299,7 +305,7 @@ ipflow_create(
 	/*
 	 * Don't create cache entries for ICMP messages.
 	 */
-	if (!ipflow_active || ip->ip_p == IPPROTO_ICMP)
+	if (ip_maxflows == 0 || ip->ip_p == IPPROTO_ICMP)
 		return;
 	/*
 	 * See if an existing flow struct exists.  If so remove it from it's
@@ -308,8 +314,8 @@ ipflow_create(
 	 */
 	ipf = ipflow_lookup(ip);
 	if (ipf == NULL) {
-		if (ipflow_inuse == IPFLOW_MAX) {
-			ipf = ipflow_reap();
+		if (ipflow_inuse >= ip_maxflows) {
+			ipf = ipflow_reap(1);
 		} else {
 			ipf = (struct ipflow *) malloc(sizeof(*ipf), M_IPFLOW,
 						       M_NOWAIT);
