@@ -1,12 +1,12 @@
 // -*- C++ -*-
-/* Copyright (C) 1989, 1990 Free Software Foundation, Inc.
-     Written by James Clark (jjc@jclark.uucp)
+/* Copyright (C) 1989, 1990, 1991, 1992 Free Software Foundation, Inc.
+     Written by James Clark (jjc@jclark.com)
 
 This file is part of groff.
 
 groff is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free
-Software Foundation; either version 1, or (at your option) any later
+Software Foundation; either version 2, or (at your option) any later
 version.
 
 groff is distributed in the hope that it will be useful, but WITHOUT ANY
@@ -15,16 +15,17 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License along
-with groff; see the file LICENSE.  If not, write to the Free Software
+with groff; see the file COPYING.  If not, write to the Free Software
 Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
 
 #include "driver.h"
+#include "device.h"
 
 const char *current_filename;
 int current_lineno;
+const char *device = 0;
 FILE *current_file;
 
-int get_char();
 int get_integer();		// don't read the newline
 int possibly_get_integer(int *);
 char *get_string(int is_long = 0);
@@ -42,6 +43,11 @@ environment_list::environment_list(const environment &e, environment_list *p)
 {
 }
 
+inline int get_char()
+{
+  return getc(current_file);
+}
+
 void do_file(const char *filename)
 {
   int npages = 0;
@@ -50,6 +56,7 @@ void do_file(const char *filename)
     current_file = stdin;
   }
   else {
+    errno = 0;
     current_file = fopen(filename, "r");
     if (current_file == 0) {
       error("can't open `%1'", filename);
@@ -77,13 +84,12 @@ void do_file(const char *filename)
     fatal("the first command must be `x T'");
   char *dev = get_string();
   if (pr == 0) {
-    font::set_device_name(dev);
+    device = strsave(dev);
     if (!font::load_desc())
       fatal("sorry, I can't continue");
   }
   else {
-    const char *d = font::get_device_name();
-    if (d == 0 || strcmp(d, dev) != 0)
+    if (device == 0 || strcmp(device, dev) != 0)
       fatal("all files must use the same device");
   }
   skip_line();
@@ -186,11 +192,13 @@ void do_file(const char *filename)
       break;
     case 'w':
     case ' ':
+      break;
     case '\n':
+      current_lineno++;
       break;
     case 'p':
       if (npages)
-	pr->end_page();
+	pr->end_page(env.vpos);
       npages++;
       pr->begin_page(get_integer());
       env.vpos = 0;
@@ -217,11 +225,17 @@ void do_file(const char *filename)
 	int c = get_char();
 	while (c == ' ')
 	  c = get_char();
-	while (c != EOF && c != ' ' && c != '\n') {
+	while (c != EOF) {
+	  if (c == '\n') {
+	    current_lineno++;
+	    break;
+	  }
 	  int w;
 	  pr->set_ascii_char(c, &env, &w);
 	  env.hpos += w + kern;
 	  c = get_char();
+	  if (c == ' ')
+	    break;
 	}
       }
       break;
@@ -230,7 +244,11 @@ void do_file(const char *filename)
 	if (npages == 0)
 	  fatal("`t' command illegal before first `p' command");
 	int c;
-	while ((c = get_char()) != EOF && c != ' ' && c != '\n') {
+	while ((c = get_char()) != EOF && c != ' ') {
+	  if (c == '\n') {
+	    current_lineno++;
+	    break;
+	  }
 	  int w;
 	  pr->set_ascii_char(c, &env, &w);
 	  env.hpos += w;
@@ -239,6 +257,7 @@ void do_file(const char *filename)
       break;
     case '#':
       skip_line();
+      break;
     case 'D':
       {
 	if (npages == 0)
@@ -260,7 +279,7 @@ void do_file(const char *filename)
 	      p = new int[szp*2];
 	      memcpy(p, oldp, szp*sizeof(int));
 	      szp *= 2;
-	      delete oldp;
+	      a_delete oldp;
 	    }
 	  }
 	  p[np] = n;
@@ -279,7 +298,7 @@ void do_file(const char *filename)
 	  if (i*2 < np)
 	    env.hpos += p[i*2];
 	}
-	delete p;
+	a_delete p;
 	skip_line();
       }
       break;
@@ -338,26 +357,18 @@ void do_file(const char *filename)
     }
   }
   if (npages)
-    pr->end_page();
-}
-
-int get_char()
-{
-  int c = getc(current_file);
-  if (c == '\n')
-    current_lineno++;
-  return c;
+    pr->end_page(env.vpos);
 }
 
 int get_integer()
 {
-  int c = getc(current_file);
+  int c = get_char();
   while (c == ' ')
-    c = getc(current_file);
+    c = get_char();
   int neg = 0;
   if (c == '-') {
     neg = 1;
-    c = getc(current_file);
+    c = get_char();
   }
   if (!isascii(c) || !isdigit(c))
     fatal("integer expected");
@@ -368,7 +379,7 @@ int get_integer()
       total -= c - '0';
     else
       total += c - '0';
-    c = getc(current_file);
+    c = get_char();
   }  while (isascii(c) && isdigit(c));
   if (c != EOF)
     ungetc(c, current_file);
@@ -377,13 +388,13 @@ int get_integer()
 
 int possibly_get_integer(int *res)
 {
-  int c = getc(current_file);
+  int c = get_char();
   while (c == ' ')
-    c = getc(current_file);
+    c = get_char();
   int neg = 0;
   if (c == '-') {
     neg = 1;
-    c = getc(current_file);
+    c = get_char();
   }
   if (!isascii(c) || !isdigit(c)) {
     if (c != EOF)
@@ -397,7 +408,7 @@ int possibly_get_integer(int *res)
       total -= c - '0';
     else
       total += c - '0';
-    c = getc(current_file);
+    c = get_char();
   }  while (isascii(c) && isdigit(c));
   if (c != EOF)
     ungetc(c, current_file);
@@ -410,9 +421,9 @@ char *get_string(int is_long)
 {
   static char *buf;
   static int buf_size;
-  int c = getc(current_file);
+  int c = get_char();
   while (c == ' ')
-    c = getc(current_file);
+    c = get_char();
   for (int i = 0;; i++) {
     if (i >= buf_size) {
       if (buf_size == 0) {
@@ -425,7 +436,7 @@ char *get_string(int is_long)
 	buf_size *= 2;
 	buf = new char[buf_size];
 	memcpy(buf, old_buf, old_size);
-	delete old_buf;
+	a_delete old_buf;
       }
     }
     if ((!is_long && (c == ' ' || c == '\n')) || c == EOF) {
@@ -434,7 +445,7 @@ char *get_string(int is_long)
     }
     if (is_long && c == '\n') {
       current_lineno++;
-      c = getc(current_file);
+      c = get_char();
       if (c == '+')
 	c = '\n';
       else {
@@ -443,7 +454,7 @@ char *get_string(int is_long)
       }
     }  
     buf[i] = c;
-    c = getc(current_file);
+    c = get_char();
   }
   if (c != EOF)
     ungetc(c, current_file);
@@ -453,7 +464,10 @@ char *get_string(int is_long)
 void skip_line()
 {
   int c;
-  while ((c = get_char()) != EOF && c != '\n')
-    ;
+  while ((c = get_char()) != EOF)
+    if (c == '\n') {
+      current_lineno++;
+      break;
+    }
 }
 
