@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.98 1999/04/30 00:58:31 ross Exp $
+#	$NetBSD: Makefile.inc,v 1.99 1999/05/01 22:45:57 ross Exp $
 #	from: @(#)Makefile.inc	8.6 (Berkeley) 5/4/95
 
 # gen sources
@@ -53,7 +53,9 @@ MAN+=	alarm.3 basename.3 bswap.3 clock.3 confstr.3 ctermid.3 ctype.3 \
 	timezone.3 toascii.3 tolower.3 toupper.3 ttyname.3 \
 	ualarm.3 uname.3 unvis.3 usleep.3 utime.3 valloc.3 vis.3
 
-MLINKS+=fpgetround.3 fpgetsticky.3 fpsetmask.3 fpsetround.3 fpsetsticky.3
+MLINKS+=fpgetmask.3 fpgetround.3 fpgetmask.3 fpgetsticky.3 \
+	fpgetmask.3 fpsetmask.3  fpgetmask.3 fpsetround.3 \
+	fpgetmask.3 fpsetsticky.3
 MLINKS+=bswap.3 bswap16.3
 MLINKS+=bswap.3 bswap32.3
 MLINKS+=bswap.3 bswap64.3
