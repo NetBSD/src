@@ -1,4 +1,4 @@
-/* $NetBSD: dwlpx_dma.c,v 1.5 1998/01/17 21:53:58 thorpej Exp $ */
+/* $NetBSD: dwlpx_dma.c,v 1.6 1998/02/04 07:37:29 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dwlpx_dma.c,v 1.5 1998/01/17 21:53:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwlpx_dma.c,v 1.6 1998/02/04 07:37:29 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,7 +116,7 @@ dwlpx_dma_init(ccp)
 	t->_dmamap_load_uio = dwlpx_bus_dmamap_load_uio_direct;
 	t->_dmamap_load_raw = dwlpx_bus_dmamap_load_raw_direct;
 	t->_dmamap_unload = _bus_dmamap_unload;
-	t->_dmamap_sync = NULL;		/* Nothing to do. */
+	t->_dmamap_sync = _bus_dmamap_sync;
 
 	t->_dmamem_alloc = _bus_dmamem_alloc;
 	t->_dmamem_free = _bus_dmamem_free;
@@ -137,7 +137,7 @@ dwlpx_dma_init(ccp)
 	t->_dmamap_load_uio = dwlpx_bus_dmamap_load_uio_sgmap;
 	t->_dmamap_load_raw = dwlpx_bus_dmamap_load_raw_sgmap;
 	t->_dmamap_unload = dwlpx_bus_dmamap_unload_sgmap;
-	t->_dmamap_sync = NULL;		/* Nothing to do. */
+	t->_dmamap_sync = _bus_dmamap_sync;
 
 	t->_dmamem_alloc = _bus_dmamem_alloc;
 	t->_dmamem_free = _bus_dmamem_free;
