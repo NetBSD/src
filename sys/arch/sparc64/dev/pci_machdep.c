@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.43 2004/03/21 14:28:47 pk Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.44 2004/03/21 16:09:13 pk Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.43 2004/03/21 14:28:47 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.44 2004/03/21 16:09:13 pk Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -120,10 +120,9 @@ pci_make_tag(pc, b, d, f)
 	int f;
 {
 	struct psycho_pbm *pp = pc->cookie;
-	struct ofw_pci_register reg;
+	struct ofw_pci_register reg, *regp;
 	pcitag_t tag;
 	int (*valid) __P((void *));
-	int busrange[2];
 	int node, len;
 #ifdef DEBUG
 	char name[80];
@@ -202,21 +201,26 @@ pci_make_tag(pc, b, d, f)
 		 * Check for PCI-PCI bridges.  If the device we want is
 		 * in the bus-range for that bridge, work our way down.
 		 */
-		while ((OF_getprop(node, "bus-range", (void *)&busrange,
-			sizeof(busrange)) == sizeof(busrange)) &&
-			(b >= busrange[0] && b <= busrange[1])) {
+		while (1) {
+			int busrange[2], *brp;
+			len = 2;
+			brp = busrange;
+			if (prom_getprop(node, "bus-range", sizeof(busrange),
+				 &len, &brp) != 0)
+				break;
+			if (len != 2 || b < busrange[0] || b > busrange[1])
+				break;
 			/* Go down 1 level */
 			node = prom_firstchild(node);
 #ifdef DEBUG
 			if (sparc_pci_debug & SPDB_PROBE) {
-				OF_getprop(node, "name", &name, sizeof(name));
 				printf("going down to node %x %s\n", node,
 					prom_getpropstringA(node, "name",
 							name, sizeof(name)));
 			}
 #endif
 		}
-#endif
+#endif /*1*/
 		/* 
 		 * We only really need the first `reg' property. 
 		 *
@@ -224,11 +228,16 @@ pci_make_tag(pc, b, d, f)
 		 * need it.  Otherwise we could malloc() it, but
 		 * that gets more complicated.
 		 */
-		len = prom_getproplen(node, "reg");
-		if (len < sizeof(reg))
-			continue;
-		if (OF_getprop(node, "reg", (void *)&reg, sizeof(reg)) != len)
+		regp = &reg;
+		len = sizeof reg;
+		switch (prom_getprop(node, "reg", sizeof(reg), &len, &regp)) {
+		default:
 			panic("pci_probe_bus: OF_getprop len botch");
+		case ENOENT:
+			continue;
+		case 0:
+			break;
+		}
 
 		if (b != OFW_PCI_PHYS_HI_BUS(reg.phys_hi))
 			continue;
@@ -485,18 +494,14 @@ pci_intr_map(pa, ihp)
 	pci_intr_handle_t *ihp;
 {
 	pcitag_t tag = pa->pa_tag;
-	int interrupts;
+	int interrupts, *intp;
 	int len, node = PCITAG_NODE(tag);
 	char devtype[30];
 
-	len = OF_getproplen(node, "interrupts");
-	if (len < sizeof(interrupts)) {
-		DPRINTF(SPDB_INTMAP,
-			("pci_intr_map: interrupts len %d too small\n", len));
-		return (ENODEV);
-	}
-	if (OF_getprop(node, "interrupts", (void *)&interrupts, 
-		sizeof(interrupts)) != len) {
+	intp = &interrupts;
+	len = 1;
+	if (prom_getprop(node, "interrupts", sizeof(interrupts),
+			&len, &intp) != 0 || len != 1) {
 		DPRINTF(SPDB_INTMAP,
 			("pci_intr_map: could not read interrupts\n"));
 		return (ENODEV);
@@ -507,14 +512,14 @@ pci_intr_map(pa, ihp)
 		printf("OF_mapintr failed\n");
 		pci_find_ino(pa, &interrupts);
 	}
+
 	/* Try to find an IPL for this type of device. */
-	if (OF_getprop(node, "device_type", &devtype, sizeof(devtype)) > 0) {
-		for (len = 0;  intrmap[len].in_class; len++)
-			if (strcmp(intrmap[len].in_class, devtype) == 0) {
-				interrupts |= INTLEVENCODE(intrmap[len].in_lev);
-				break;
-			}
-	}
+	prom_getpropstringA(node, "device_type", devtype, sizeof(devtype));
+	for (len = 0; intrmap[len].in_class != NULL; len++)
+		if (strcmp(intrmap[len].in_class, devtype) == 0) {
+			interrupts |= INTLEVENCODE(intrmap[len].in_lev);
+			break;
+		}
 
 	/* XXXX -- we use the ino.  What if there is a valid IGN? */
 	*ihp = interrupts;
