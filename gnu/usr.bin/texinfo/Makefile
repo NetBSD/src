@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2003/02/13 09:01:13 wiz Exp $
+#	$NetBSD: Makefile,v 1.17 2003/07/03 15:17:47 wiz Exp $
 
 .include <bsd.own.mk>
 
@@ -11,7 +11,7 @@ FILES=		epsf.tex texinfo.dtd texinfo.tex texinfo.xsl
 
 .if ${MKNLS} != "no"
 .for F in cs.gmo da.gmo de.gmo de_AT.gmo eo.gmo fr.gmo he.gmo hr.gmo ja.gmo \
-	nl.gmo no.gmo ru.gmo sv.gmo tr.gmo zh_CN.gmo zh_TW.gmo
+	nl.gmo no.gmo ro.gmo ru.gmo sv.gmo tr.gmo zh_CN.gmo zh_TW.gmo
 FILES+=		${F}
 FILESDIR_${F}=  /usr/share/locale/${F:.gmo=}/LC_MESSAGES
 FILESNAME_${F}= texinfo.mo
