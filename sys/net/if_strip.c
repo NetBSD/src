@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.9 1997/03/27 20:36:18 thorpej Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.10 1997/05/07 04:47:15 mikel Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -381,7 +381,7 @@ stripinit(sc)
 		 */
 		sc->sc_xxx = (u_char *)malloc(MCLBYTES, M_MBUF, M_WAITOK);
 		if (sc->sc_xxx)
-			sc->sc_ep = sc_xxx + SLBUFSIZE;
+			sc->sc_ep = sc->sc_xxx + SLBUFSIZE;
 		else {
 			printf("%s: can't allocate buffer\n",
 			    sc->sc_if.if_xname);
@@ -1057,6 +1057,7 @@ strip_btom(sc, len)
 	register int len;
 {
 	register struct mbuf *m;
+	register u_char *p;
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL)
