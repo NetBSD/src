@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.21.2.2 2002/03/16 15:56:50 jdolecek Exp $	*/
+/*	$NetBSD: mem.c,v 1.21.2.3 2002/06/17 18:46:28 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -59,6 +59,8 @@
 #include <machine/pmap.h>
 
 #include "nvr.h"
+
+#define	DEV_NVRAM	11	/* Nvram minor-number */
 
 extern u_int lowram;
 static caddr_t devzeropage;
