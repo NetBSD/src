@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.9 2002/09/19 03:09:43 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.10 2002/12/24 19:47:47 perry Exp $
 
 .include <bsd.own.mk>
 
@@ -28,6 +28,7 @@ LIBPUTIL=	${UOBJDIR}/libutil.a
 PFIX_LIBEXECDIR=/usr/libexec/postfix
 PFIX_ETCDIR=	/etc/postfix
 PFIX_EXAMPLEDIR=/usr/share/examples/postfix
+PFIX_HTMLDIR=	/usr/share/doc/html/postfix
 PFIX_SBINDIR=	/usr/sbin
 
 # postfix check wants a lot of files to be owned by root
