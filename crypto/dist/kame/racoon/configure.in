@@ -664,7 +664,7 @@ AC_EGREP_CPP(yes, [#include <openssl/opensslv.h>
 yes
 #endif],
 [AC_MSG_RESULT(no)
-        echo "WARNING: missing/crypto/sha2 is not compatible with this openssl."
+        echo "WARNING: racoon sha2 library is not compatible with recent openssl(0.9.6b or above)."
         echo "WARNING: sha2 disabled."],
 [AC_MSG_RESULT(yes)
  AC_DEFINE(WITH_SHA2)
