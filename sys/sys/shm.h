@@ -1,4 +1,4 @@
-/*	$NetBSD: shm.h,v 1.33 2003/05/30 20:31:34 kleink Exp $	*/
+/*	$NetBSD: shm.h,v 1.34 2003/05/31 11:49:26 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -85,10 +85,13 @@
 #if defined(_KERNEL) || defined(_STANDALONE) || defined(_LKM)
 #define	SHMLBA		PAGE_SIZE
 #else
-/* Use libc's internal __sysconf() to retrieve the machine's page size */
-#include <sys/unistd.h> /* for _SC_PAGESIZE */
-long			__sysconf __P((int));
-#define	SHMLBA		(__sysconf(_SC_PAGESIZE))
+/*
+ * SHMLBA uses libc's internal __sysconf() to retrieve the machine's
+ * page size. The value of _SC_PAGESIZE is 28 -- we hard code it so we do not
+ * need to include unistd.h
+ */
+long __sysconf __P((int));
+#define	SHMLBA		(__sysconf(28))
 #endif
 
 typedef unsigned int	shmatt_t;
