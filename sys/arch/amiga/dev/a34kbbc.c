@@ -1,4 +1,4 @@
-/*	$NetBSD: a34kbbc.c,v 1.3 1999/03/14 22:42:12 is Exp $	*/
+/*	$NetBSD: a34kbbc.c,v 1.3.2.1 2000/01/08 18:16:54 he Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -127,15 +127,19 @@ a34kugettod(tvp)
 	dt.dt_year  = rt->year1   * 10 + rt->year2;
 
 	dt.dt_year += CLOCK_BASE_YEAR;
-
 	/* let it run again.. */
 	rt->control1 = A3CONTROL1_FREE_CLOCK;
+
+	printf("year read: %d.\n", dt.dt_year);
+	if (dt.dt_year < STARTOFTIME)
+		dt.dt_year += 100;
+
 
 	if ((dt.dt_hour > 23) ||
 	    (dt.dt_wday > 6) || 
 	    (dt.dt_day  > 31) || 
 	    (dt.dt_mon  > 12) ||
-	    (dt.dt_year < STARTOFTIME) || (dt.dt_year > 2036))
+	    /* (dt.dt_year < STARTOFTIME) || */ (dt.dt_year > 2036))
 		return (0);
 
 	secs = clock_ymdhms_to_secs(&dt);
@@ -163,7 +167,6 @@ a34kusettod(tvp)
 		return (0);
 
 	clock_secs_to_ymdhms(secs, &dt);
-	dt.dt_year -= CLOCK_BASE_YEAR;
 
 	rt->control1 = A3CONTROL1_HOLD_CLOCK;
 	rt->second1 = dt.dt_sec / 10;
@@ -177,7 +180,7 @@ a34kusettod(tvp)
 	rt->day2    = dt.dt_day % 10;
 	rt->month1  = dt.dt_mon / 10;
 	rt->month2  = dt.dt_mon % 10;
-	rt->year1   = dt.dt_year / 10;
+	rt->year1   = (dt.dt_year / 10) % 10;
 	rt->year2   = dt.dt_year % 10;
 	rt->control1 = A3CONTROL1_FREE_CLOCK;
 
