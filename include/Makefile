@@ -15,7 +15,7 @@ FILES=	a.out.h ar.h assert.h bitstring.h ctype.h db.h dirent.h disktab.h \
 	memory.h mpool.h ndbm.h netdb.h nlist.h paths.h pwd.h ranlib.h \
 	regexp.h resolv.h setjmp.h sgtty.h stab.h stdarg.h stddef.h stdio.h \
 	stdlib.h string.h strings.h struct.h sysexits.h time.h ttyent.h \
-	tzfile.h unistd.h utime.h utmp.h varargs.h vis.h
+	tzfile.h unistd.h utime.h utmp.h varargs.h vis.h malloc.h
 
 MFILES=	float.h frame.h
 LFILES=	errno.h fcntl.h signal.h syslog.h termios.h
