@@ -1,4 +1,4 @@
-/*	$NetBSD: netstat.c,v 1.16 2000/01/07 04:47:24 itojun Exp $	*/
+/*	$NetBSD: netstat.c,v 1.17 2000/01/10 21:06:16 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)netstat.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: netstat.c,v 1.16 2000/01/07 04:47:24 itojun Exp $");
+__RCSID("$NetBSD: netstat.c,v 1.17 2000/01/10 21:06:16 itojun Exp $");
 #endif /* not lint */
 
 /*
@@ -84,10 +84,12 @@ __RCSID("$NetBSD: netstat.c,v 1.16 2000/01/07 04:47:24 itojun Exp $");
 #include "systat.h"
 #include "extern.h"
 
+static void fetchnetstat4 __P((void *, int));
 static void enter __P((struct inpcb *, struct socket *, int, char *));
 static const char *inetname __P((struct in_addr));
 static void inetprint __P((struct in_addr *, int, char *));
 #ifdef INET6
+static void fetchnetstat6 __P((void *, int));
 static void enter6 __P((struct in6pcb *, struct socket *, int, char *));
 static const char *inet6name __P((struct in6_addr *));
 static void inet6print __P((struct in6_addr *, int, char *));
@@ -175,14 +177,17 @@ static struct nlist namelist[] = {
 int
 initnetstat()
 {
-	if (kvm_nlist(kd, namelist)) {
+	int n;
+
+	n = kvm_nlist(kd, namelist);
+	if (n < 0) {
 		nlisterr(namelist);
 		return(0);
-	}
-	if (namelist[X_TCBTABLE].n_value == 0) {
+	} else if (n == sizeof(namelist) / sizeof(namelist[0]) - 1) {
 		error("No symbols in namelist");
 		return(0);
 	}
+
 	netcb.ni_forw = netcb.ni_prev = (struct netinfo *)&netcb;
 	protos = TCP|UDP;
 	return(1);
@@ -191,36 +196,41 @@ initnetstat()
 void
 fetchnetstat()
 {
+	struct netinfo *p;
+
+	if (namelist[X_TCBTABLE].n_value == 0)
+		return;
+	for (p = netcb.ni_forw; p != (struct netinfo *)&netcb; p = p->ni_forw)
+		p->ni_seen = 0;
+
+	if ((protos & (TCP | UDP)) == 0) {
+		error("No protocols to display");
+		return;
+	}
+	if ((protos & TCP) && namelist[X_TCBTABLE].n_type)
+		fetchnetstat4(NPTR(X_TCBTABLE), 1);
+	if ((protos & UDP) && namelist[X_UDBTABLE].n_type)
+		fetchnetstat4(NPTR(X_UDBTABLE), 0);
+#ifdef INET6
+	if ((protos & TCP) && namelist[X_TCB6].n_type)
+		fetchnetstat6(NPTR(X_TCB6), 1);
+	if ((protos & UDP) && namelist[X_UDB6].n_type)
+		fetchnetstat6(NPTR(X_UDB6), 0);
+#endif
+}
+
+static void
+fetchnetstat4(off, istcp)
+	void *off;
+	int istcp;
+{
 	struct inpcbtable pcbtable;
 	struct inpcb *head, *prev, *next;
 	struct netinfo *p;
 	struct inpcb inpcb;
 	struct socket sockb;
 	struct tcpcb tcpcb;
-#ifdef INET6
-	struct in6pcb in6pcb;
-	struct in6pcb *head6, *prev6, *next6;
-#endif
-	void *off;
-	int istcp;
 
-	if (namelist[X_TCBTABLE].n_value == 0)
-		return;
-	for (p = netcb.ni_forw; p != (struct netinfo *)&netcb; p = p->ni_forw)
-		p->ni_seen = 0;
-	if (protos&TCP) {
-		off = NPTR(X_TCBTABLE); 
-		istcp = 1;
-	}
-	else if (protos&UDP) {
-		off = NPTR(X_UDBTABLE); 
-		istcp = 0;
-	}
-	else {
-		error("No protocols to display");
-		return;
-	}
-again:
 	KREAD(off, &pcbtable, sizeof pcbtable);
 	prev = head = (struct inpcb *)&((struct inpcbtable *)off)->inpt_queue;
 	next = pcbtable.inpt_queue.cqh_first;
@@ -250,33 +260,27 @@ printf("prev = %p, head = %p, next = %p, inpcb...prev = %p\n", prev, head, next,
 		} else
 			enter(&inpcb, &sockb, 0, "udp");
 	}
-	if (istcp && (protos&UDP)) {
-		istcp = 0;
-		off = NPTR(X_UDBTABLE);
-		goto again;
-	}
+}
 
 #ifdef INET6
-	if (protos&TCP) {
-		off = NPTR(X_TCB6); 
-		istcp = 1;
-	}
-	else if (protos&UDP) {
-		off = NPTR(X_UDB6); 
-		istcp = 0;
-	}
-	else {
-		error("No protocols to display");
-		return;
-	}
-again6:
+static void
+fetchnetstat6(off, istcp)
+	void *off;
+	int istcp;
+{
+	struct netinfo *p;
+	struct socket sockb;
+	struct tcpcb tcpcb;
+	struct in6pcb in6pcb;
+	struct in6pcb *head6, *prev6, *next6;
+
 	KREAD(off, &in6pcb, sizeof (struct in6pcb));
 	prev6 = head6 = (struct in6pcb *)off;
 	next6 = in6pcb.in6p_next;
 	while (next6 != head6) {
 		KREAD(next6, &in6pcb, sizeof (in6pcb));
 		if (in6pcb.in6p_prev != prev6) {
-printf("prev = %p, head = %p, next = %p, inpcb...prev = %p\n", prev6, head6, next6, in6pcb.in6p_prev);
+printf("prev = %p, head = %p, next = %p, in6pcb...prev = %p\n", prev6, head6, next6, in6pcb.in6p_prev);
 			p = netcb.ni_forw;
 			for (; p != (struct netinfo *)&netcb; p = p->ni_forw)
 				p->ni_seen = 1;
@@ -299,13 +303,8 @@ printf("prev = %p, head = %p, next = %p, inpcb...prev = %p\n", prev6, head6, nex
 		} else
 			enter6(&in6pcb, &sockb, 0, "udp");
 	}
-	if (istcp && (protos&UDP)) {
-		istcp = 0;
-		off = NPTR(X_UDB6);
-		goto again6;
-	}
-#endif /*INET6*/
 }
+#endif /*INET6*/
 
 static void
 enter(inp, so, state, proto)

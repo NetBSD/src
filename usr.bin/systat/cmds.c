@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.18 1999/12/20 23:11:50 jwise Exp $	*/
+/*	$NetBSD: cmds.c,v 1.19 2000/01/10 21:06:15 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.2 (Berkeley) 4/29/95";
 #endif
-__RCSID("$NetBSD: cmds.c,v 1.18 1999/12/20 23:11:50 jwise Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.19 2000/01/10 21:06:15 itojun Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -104,6 +104,10 @@ void
 switch_mode(p)
 	struct mode *p;
 {
+	int switchfail;
+
+	switchfail = 0;
+
 	if (curmode == p)
 		return;
 
@@ -111,7 +115,6 @@ switch_mode(p)
 	(*curmode->c_close)(wnd);
 	wnd = (*p->c_open)();
 	if (wnd == 0) {
-		error("Couldn't open new display");
 		wnd = (*curmode->c_open)();
 		if (wnd == 0) {
 			error("Couldn't change back to previous mode");
@@ -119,19 +122,27 @@ switch_mode(p)
 		}
 
 		p = curmode;
+		switchfail++;
 	}
 
 	if ((p->c_flags & CF_INIT) == 0) {
 		if ((*p->c_init)())
 			p->c_flags |= CF_INIT;
-		else
-			return;
+		else {
+			(*p->c_close)(wnd);
+			wnd = (*curmode->c_open)();
+			p = curmode;
+			switchfail++;
+		}
 	}
 
 	curmode = p;
 	labels();
 	display(0);
-	status();
+	if (switchfail)
+		error("Couldn't switch mode, back to %s", curmode->c_name);
+	else
+		status();
 }
 
 void
