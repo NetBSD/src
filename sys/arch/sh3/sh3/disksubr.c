@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.16 2003/10/08 04:25:46 lukem Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.17 2003/10/31 17:04:12 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.16 2003/10/08 04:25:46 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.17 2003/10/31 17:04:12 tsutsui Exp $");
 
 #include "opt_mbr.h"
 
@@ -76,7 +76,11 @@ swap_endian_disklabel(struct disklabel *nlp, struct disklabel *olp)
 	SW16(d_type);
 	SW16(d_subtype);
 
-	/* XXX What should we do for d_un (an union of char and pointer) ? */
+	/* no need to swap char strings */
+	memcpy(nlp->d_typename, olp->d_typename, sizeof(nlp->d_typename));
+
+	/* XXX What should we do for d_un (an union of char and pointers) ? */
+	memcpy(nlp->d_packname, olp->d_packname, sizeof(nlp->d_packname));
 
 	SW32(d_secsize);
 	SW32(d_nsectors);
@@ -116,6 +120,7 @@ swap_endian_disklabel(struct disklabel *nlp, struct disklabel *olp)
 		SW32(d_partitions[i].p_size);
 		SW32(d_partitions[i].p_offset);
 		SW32(d_partitions[i].p_fsize);
+		/* p_fstype and p_frag is uint8_t, so no need to swap */
 		nlp->d_partitions[i].p_fstype = olp->d_partitions[i].p_fstype;
 		nlp->d_partitions[i].p_frag = olp->d_partitions[i].p_frag;
 		SW16(d_partitions[i].p_cpg);
