@@ -335,6 +335,7 @@
 ./usr/share/man/cat4/fd.0
 ./usr/share/man/cat4/fea.0
 ./usr/share/man/cat4/fpa.0
+./usr/share/man/cat4/fta.0
 ./usr/share/man/cat4/gus.0
 ./usr/share/man/cat4/guspnp.0
 ./usr/share/man/cat4/icmp.0
@@ -1336,6 +1337,7 @@
 ./usr/share/man/man4/fd.4
 ./usr/share/man/man4/fea.4
 ./usr/share/man/man4/fpa.4
+./usr/share/man/man4/fta.4
 ./usr/share/man/man4/gus.4
 ./usr/share/man/man4/guspnp.4
 ./usr/share/man/man4/icmp.4
