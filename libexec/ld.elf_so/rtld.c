@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.85 2002/10/04 03:59:41 mycroft Exp $	 */
+/*	$NetBSD: rtld.c,v 1.86 2002/10/04 18:50:43 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -138,14 +138,11 @@ static void
 _rtld_init(mapbase, relocbase)
 	caddr_t mapbase, relocbase;
 {
-	const Elf_Ehdr *hdr = (Elf_Ehdr *) mapbase;
-
 	/* Conjure up an Obj_Entry structure for the dynamic linker. */
 	_rtld_objself.path = _rtld_path;
 	_rtld_objself.rtld = true;
 	_rtld_objself.mapbase = mapbase;
 	_rtld_objself.relocbase = relocbase;
-	_rtld_objself.phdr = (Elf_Phdr *) (mapbase + hdr->e_phoff);
 	_rtld_objself.dynamic = (Elf_Dyn *) &_DYNAMIC;
 
 #ifdef RTLD_RELOCATE_SELF
