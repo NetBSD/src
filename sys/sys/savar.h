@@ -1,4 +1,4 @@
-/*	$Id: savar.h,v 1.1.2.8 2001/11/27 04:35:33 thorpej Exp $	*/
+/*	$Id: savar.h,v 1.1.2.9 2001/12/17 20:38:40 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -47,25 +47,26 @@
 #include <sys/queue.h>
 
 struct sadata_upcall {
-	LIST_ENTRY(sadata_upcall)	sau_next;
+	SIMPLEQ_ENTRY(sadata_upcall)	sau_next;
 	int	sau_type;
 	size_t	sau_argsize;
 	void	*sau_arg;
 	stack_t	sau_stack;
-	struct lwp	*sau_event;
-	struct lwp	*sau_interrupted;
+	struct sa_t	sau_event;
+	struct sa_t	sau_interrupted;
 };
 
 struct sadata {
 	struct simplelock sa_lock;	/* lock on these fields */
 	sa_upcall_t	sa_upcall;	/* upcall entry point */
 	int	sa_concurrency;		/* desired concurrency */
+	struct lwp *sa_preempted; 	/* preempted LWP */
 	LIST_HEAD(, lwp)	sa_lwpcache;	/* list of avaliable lwps */
 	int	sa_ncached;		/* list length */
 	stack_t	*sa_stacks;		/* pointer to array of upcall stacks */
 	int	sa_nstackentries;	/* size of the array */
 	int	sa_nstacks;		/* number of valid stacks */
-	LIST_HEAD(, sadata_upcall)	sa_upcalls; /* pending upcalls */
+	SIMPLEQ_HEAD(, sadata_upcall)	sa_upcalls; /* pending upcalls */
 };
 
 extern struct pool sadata_pool;		/* memory pool for sadata structures */
@@ -79,7 +80,9 @@ void	sadata_upcall_free(struct sadata_upcall *);
 void	sa_switch(struct lwp *, int);
 void	sa_switchcall(void *);
 int	sa_upcall(struct lwp *, int, struct lwp *, struct lwp *, size_t, void *);
-void	cpu_upcall(struct lwp *);
+void	sa_upcall_userret(struct lwp *);
+void	cpu_upcall(struct lwp *, int, int, int, void *, void *, void *, sa_upcall_t);
+
 ucontext_t *cpu_stashcontext(struct lwp *);
 
 
