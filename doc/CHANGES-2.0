@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.292 2004/06/22 11:08:36 grant Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.293 2004/06/22 14:21:02 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -4384,3 +4384,10 @@ xsrc/local/programs/x11-ssh-askpass/Imakefile	1.5
 
 	Remove leftover files in clean and cleandir targets. PR #25852.
 	[tron, ticket #499]
+
+distrib/sets/lists/man/mi			1.700
+gnu/usr.bin/groff/doc/Makefile			1.5
+
+	Install GNU `troff' (or `groff') info manual.
+	[uebayasi, ticket #536]
+
