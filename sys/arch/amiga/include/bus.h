@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.7 1998/11/07 22:44:36 is Exp $	*/
+/*	$NetBSD: bus.h,v 1.8 1998/11/07 22:50:25 is Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -239,8 +239,8 @@ bus_space_write_region_stream_1(t, h, o, a, c)
  * Macro definition of _2 functions as indirect method array calls
  */
 
-#define bus_space_read_2(t, h, o)	((t)->bsr2)((t), (h), (o))
-#define bus_space_write_2(t, h, o, v)	((t)->bsw2)((t), (h), (o), (v))
+#define bus_space_read_2(t, h, o)	((t)->absm->bsr2)((t), (h), (o))
+#define bus_space_write_2(t, h, o, v)	((t)->absm->bsw2)((t), (h), (o), (v))
 
 #define bus_space_read_multi_2(t, h, o, p, c) \
 	((t)->absm->bsrm2)((t), (h), (o), (p), (c))
