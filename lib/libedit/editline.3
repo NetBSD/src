@@ -1,4 +1,4 @@
-.\"	$NetBSD: editline.3,v 1.6 1997/10/14 15:05:49 christos Exp $
+.\"	$NetBSD: editline.3,v 1.7 1997/11/09 00:13:52 lukem Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -507,16 +507,16 @@ Load the history list stored in
 Save the history list to
 .Fa file .
 .El
+.Pp
+.Fn history
+returns 0 if the operation
+.Fa op
+succeeds. Otherwise, -1 is returned and
+.Fa ev
+is updated to contain more details about the error.
 .El
 .\"XXX.Sh EXAMPLES
 .\"XXX: provide some examples
-.Sh RETURN VALUES
-.Ft history
-function returns 0 if the operation
-.Ft op
-succeeds, otherwise -1 is returned and
-.Ft ev
-is updated to contain more detailes about error.
 .Sh SEE ALSO
 .Xr editrc 5 ,
 .Xr sh 1 ,
