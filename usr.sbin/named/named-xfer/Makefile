@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 1996/02/02 15:29:37 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 1996/02/04 12:02:12 mrg Exp $
 # from: $Id: Makefile,v 8.2 1995/12/31 23:28:01 vixie Exp 
 
 .PATH:	${.CURDIR}/../named \
@@ -8,8 +8,7 @@ PROG=	named-xfer
 SRCS=	named-xfer.c db_glue.c storage.c dmalloc.c version.c
 CFLAGS+=	-I${.CURDIR}/../named
 MAN=	named-xfer.8
-#LDADD+=	-lutil
-#DPADD+=	${LIBUTIL}
+BINDIR=	/usr/libexec
 
 .include <bsd.prog.mk>
 .include "../../Makefile.inc"
