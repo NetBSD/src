@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.38 1996/02/26 14:48:30 pk Exp $ */
+/*	$NetBSD: esp.c,v 1.39 1996/02/29 23:33:48 pk Exp $ */
 
 /*
  * Copyright (c) 1994 Peter Galbavy
@@ -1909,7 +1909,6 @@ again:
 	if (ecb->flags & ECB_ABORTED) {
 		/* abort timed out */
 		printf(" AGAIN\n");
-		xs->retries = 0;
 		esp_init(sc, 1);
 	} else {
 		/* abort the operation that has timed out */
