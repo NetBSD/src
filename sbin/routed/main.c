@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.36 2004/03/27 20:50:43 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.37 2004/05/13 00:21:47 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\n"
 	    "The Regents of the University of California."
 	    "  All rights reserved.\n");
 #ifdef __NetBSD__
-__RCSID("$NetBSD: main.c,v 1.36 2004/03/27 20:50:43 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.37 2004/05/13 00:21:47 wiz Exp $");
 #elif defined(__FreeBSD__)
 __RCSID("$FreeBSD$");
 #else
@@ -140,7 +140,7 @@ main(int argc,
 	(void)gethostname(myname, sizeof(myname) - 1);
 	(void)gethost(myname, &myaddr);
 
-	while ((n = getopt(argc, argv, "sqdghmpAtvT:F:P:")) != -1) {
+	while ((n = getopt(argc, argv, "sqdghmAtvT:F:P:")) != -1) {
 		switch (n) {
 		case 's':
 			supplier = 1;
