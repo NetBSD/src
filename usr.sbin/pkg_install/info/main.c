@@ -1,11 +1,11 @@
-/*	$NetBSD: main.c,v 1.27.2.2 2002/07/21 04:41:47 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.27.2.3 2002/08/06 00:28:36 lukem Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char *rcsid = "from FreeBSD Id: main.c,v 1.14 1997/10/08 07:47:26 charnier Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.27.2.2 2002/07/21 04:41:47 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.27.2.3 2002/08/06 00:28:36 lukem Exp $");
 #endif
 #endif
 
@@ -179,7 +179,7 @@ main(int argc, char **argv)
 	argc -= optind;
 	argv += optind;
 
-	if (argc == 0 && !Flags) {
+	if (argc == 0 && !Flags && !CheckPkg) {
 		/* No argument or flags specified - assume -Ia */
 		Flags = SHOW_INDEX;
 		AllInstalled = TRUE;
