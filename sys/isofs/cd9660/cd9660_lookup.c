@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_lookup.c,v 1.20 1998/08/09 20:42:54 perry Exp $	*/
+/*	$NetBSD: cd9660_lookup.c,v 1.20.6.1 1999/04/07 23:03:17 tron Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993, 1994
@@ -381,7 +381,7 @@ notfound:
 	if (cnp->cn_flags & MAKEENTRY)
 		cache_enter(vdp, *vpp, cnp);
 	if (nameiop == CREATE || nameiop == RENAME)
-		return (EJUSTRETURN);
+		return (EROFS);
 	return (ENOENT);
 	
 found:
