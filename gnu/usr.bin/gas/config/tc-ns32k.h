@@ -23,8 +23,6 @@
 
 #define LOCAL_LABELS_FB
 
-#define NO_LISTING
-
 #define AOUT_MACHTYPE 137
 
 #define tc_aout_pre_write_hook(x)	{;} /* not used */
