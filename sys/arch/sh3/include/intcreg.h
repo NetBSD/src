@@ -1,4 +1,4 @@
-/*	$NetBSD: intcreg.h,v 1.6 2002/04/28 17:10:35 uch Exp $	*/
+/*	$NetBSD: intcreg.h,v 1.7 2003/10/07 01:24:32 uwe Exp $	*/
 
 /*-
  * Copyright (C) 1999 SAITOH Masanobu.  All rights reserved.
@@ -63,6 +63,15 @@
 #define	IPRE_IRDA_MASK		0x0f00
 #define	IPRE_SCIF_MASK		0x00f0
 #define	IPRE_ADC_MASK		0x000f
+
+#define IRR0_PINT8F		0x80
+#define IRR0_PINT07		0x40
+#define IRR0_IRQ5		0x20
+#define IRR0_IRQ4		0x10
+#define IRR0_IRQ3		0x08
+#define IRR0_IRQ2		0x04
+#define IRR0_IRQ1		0x02
+#define IRR0_IRQ0		0x01
 
 
 /* SH4 */
