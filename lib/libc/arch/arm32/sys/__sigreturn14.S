@@ -1,4 +1,4 @@
-/*	$NetBSD: sigpending.S,v 1.4 1998/09/29 20:23:26 thorpej Exp $	*/
+/*	$NetBSD: __sigreturn14.S,v 1.1 1998/09/29 20:23:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -32,15 +32,14 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)sigpending.s	5.1 (Berkeley) 7/1/90
+ *	from: @(#)sigreturn.s	5.2 (Berkeley) 12/17/90"
  */
 
 #include "SYS.h"
 
-ENTRY(sigpending)
-	mov	r2, r0
-	swi	SYS_compat_13_sigpending13
-	bcs	cerror
-	str	r0, [r2]
-	mov	r0, #0x00000000
+/*
+ * We must preserve the state of the registers as the user has set them up.
+ */
+
+SYSCALL(__sigreturn14)
 	mov	r15, r14
