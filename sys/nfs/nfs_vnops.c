@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.211 2004/10/03 10:17:33 yamt Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.212 2004/12/14 09:13:13 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.211 2004/10/03 10:17:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.212 2004/12/14 09:13:13 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_nfs.h"
@@ -463,7 +463,6 @@ nfs_open(v)
 	struct vnode *vp = ap->a_vp;
 	struct nfsnode *np = VTONFS(vp);
 	struct nfsmount *nmp = VFSTONFS(vp->v_mount);
-	struct vattr vattr;
 	int error;
 
 	if (vp->v_type != VREG && vp->v_type != VDIR && vp->v_type != VLNK) {
@@ -506,34 +505,9 @@ nfs_open(v)
 	} else
 #endif
 	{
-		if (np->n_flag & NMODIFIED) {
-			if ((error = nfs_vinvalbuf(vp, V_SAVE, ap->a_cred,
-				ap->a_p, 1)) == EINTR)
-				return (error);
-			NFS_INVALIDATE_ATTRCACHE(np);
-			if (vp->v_type == VDIR) {
-				nfs_invaldircache(vp, 0);
-				np->n_direofoffset = 0;
-			}
-			error = VOP_GETATTR(vp, &vattr, ap->a_cred, ap->a_p);
-			if (error)
-				return (error);
-			np->n_mtime = vattr.va_mtime;
-		} else {
-			error = VOP_GETATTR(vp, &vattr, ap->a_cred, ap->a_p);
-			if (error)
-				return (error);
-			if (timespeccmp(&np->n_mtime, &vattr.va_mtime, !=)) {
-				if (vp->v_type == VDIR) {
-					nfs_invaldircache(vp, 0);
-					np->n_direofoffset = 0;
-				}
-				if ((error = nfs_vinvalbuf(vp, V_SAVE,
-					ap->a_cred, ap->a_p, 1)) == EINTR)
-					return (error);
-				np->n_mtime = vattr.va_mtime;
-			}
-		}
+		error = nfs_flushstalebuf(vp, ap->a_cred, ap->a_p, 0);
+		if (error)
+			return error;
 	}
 	if ((nmp->nm_flag & NFSMNT_NQNFS) == 0)
 		NFS_INVALIDATE_ATTRCACHE(np); /* For Open/Close consistency */

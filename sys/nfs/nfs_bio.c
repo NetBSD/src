@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.122 2004/10/26 04:34:46 yamt Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.123 2004/12/14 09:13:13 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.122 2004/10/26 04:34:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.123 2004/12/14 09:13:13 yamt Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -85,7 +85,6 @@ nfs_bioread(vp, uio, ioflag, cred, cflag)
 {
 	struct nfsnode *np = VTONFS(vp);
 	struct buf *bp = NULL, *rabp;
-	struct vattr vattr;
 	struct proc *p;
 	struct nfsmount *nmp = VFSTONFS(vp->v_mount);
 	struct nfsdircache *ndp = NULL, *nndp = NULL;
@@ -132,36 +131,10 @@ nfs_bioread(vp, uio, ioflag, cred, cflag)
 	 */
 
 	if ((nmp->nm_flag & NFSMNT_NQNFS) == 0 && vp->v_type != VLNK) {
-		if (np->n_flag & NMODIFIED) {
-			if (vp->v_type != VREG) {
-				if (vp->v_type != VDIR)
-					panic("nfs: bioread, not dir");
-				nfs_invaldircache(vp, 0);
-				np->n_direofoffset = 0;
-				error = nfs_vinvalbuf(vp, V_SAVE, cred, p, 1);
-				if (error)
-					return (error);
-			}
-			NFS_INVALIDATE_ATTRCACHE(np);
-			error = VOP_GETATTR(vp, &vattr, cred, p);
-			if (error)
-				return (error);
-			np->n_mtime = vattr.va_mtime;
-		} else {
-			error = VOP_GETATTR(vp, &vattr, cred, p);
-			if (error)
-				return (error);
-			if (timespeccmp(&np->n_mtime, &vattr.va_mtime, !=)) {
-				if (vp->v_type == VDIR) {
-					nfs_invaldircache(vp, 0);
-					np->n_direofoffset = 0;
-				}
-				error = nfs_vinvalbuf(vp, V_SAVE, cred, p, 1);
-				if (error)
-					return (error);
-				np->n_mtime = vattr.va_mtime;
-			}
-		}
+		error = nfs_flushstalebuf(vp, cred, p,
+		    NFS_FLUSHSTALEBUF_MYWRITE);
+		if (error)
+			return error;
 	}
 
 	do {
@@ -758,6 +731,59 @@ nfs_vinvalbuf(vp, flags, cred, p, intrflg)
 		wakeup(&np->n_flag);
 	}
 	simple_unlock(&vp->v_interlock);
+	return error;
+}
+
+/*
+ * nfs_flushstalebuf: flush cache if it's stale. 
+ *
+ * => caller shouldn't own any pages or buffers which belong to the vnode.
+ */
+
+int
+nfs_flushstalebuf(struct vnode *vp, struct ucred *cred, struct proc *p,
+    int flags)
+{
+	struct nfsnode *np = VTONFS(vp);
+	struct vattr vattr;
+	int error;
+
+	if (np->n_flag & NMODIFIED) {
+		if ((flags & NFS_FLUSHSTALEBUF_MYWRITE) == 0
+		    || vp->v_type != VREG) {
+			error = nfs_vinvalbuf(vp, V_SAVE, cred, p, 1);
+			if (error)
+				return error;
+			if (vp->v_type == VDIR) {
+				nfs_invaldircache(vp, 0);
+				np->n_direofoffset = 0;
+			}
+		} else {
+			/*
+			 * XXX assuming writes are ours.
+			 */
+		}
+		NFS_INVALIDATE_ATTRCACHE(np);
+		error = VOP_GETATTR(vp, &vattr, cred, p);
+		if (error)
+			return error;
+		np->n_mtime = vattr.va_mtime;
+	} else {
+		error = VOP_GETATTR(vp, &vattr, cred, p);
+		if (error)
+			return error;
+		if (timespeccmp(&np->n_mtime, &vattr.va_mtime, !=)) {
+			if (vp->v_type == VDIR) {
+				nfs_invaldircache(vp, 0);
+				np->n_direofoffset = 0;
+			}
+			error = nfs_vinvalbuf(vp, V_SAVE, cred, p, 1);
+			if (error)
+				return error;
+			np->n_mtime = vattr.va_mtime;
+		}
+	}
+
 	return error;
 }
 
