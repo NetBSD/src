@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 1997/10/25 09:27:04 lukem Exp $
+#	$NetBSD: Makefile,v 1.7 1997/11/14 04:33:10 gwr Exp $
 
 LIB=	bfd
 
@@ -39,7 +39,7 @@ BFD_SRCS= \
 	$(BFD_BACKENDS) $(BFD_MACHINES) netbsd-core.c
 
 # From $(dist)/opcodes: BFD_MACHINES, dis*
-OPCODE_SRCS= $(OPCODE_MACHINES) dis-buf.o disassemble.o
+OPCODE_SRCS= $(OPCODE_MACHINES) dis-buf.c disassemble.c
 
 # From $(dist)/libiberty: REQUIRED_OFILES, HOST_OFILES
 IBERTY_SRCS= argv.c basename.c choose-temp.c concat.c cplus-dem.c \
