@@ -1,4 +1,4 @@
-#	$NetBSD: configure.ac,v 1.34 2003/03/13 04:30:39 thorpej Exp $
+#	$NetBSD: configure.ac,v 1.35 2003/03/13 16:27:04 thorpej Exp $
 #
 # Autoconf definition file for libnbcompat.
 #
@@ -52,7 +52,10 @@ AC_CHECK_HEADERS(rpc/types.h getopt.h netconfig.h,,
 
 # Typedefs.
 AC_TYPE_SIZE_T
-AC_CHECK_TYPES([id_t, long long, u_quad_t, socklen_t])
+AC_CHECK_TYPES([id_t, long long, u_quad_t])
+AC_CHECK_TYPE(socklen_t, [AC_DEFINE(HAVE_SOCKLEN_T)],,
+[#include <sys/types.h>
+#include <sys/socket.h>])
 
 dnl XXX - This is UGLY.  Need a better way to homogenize the bitsized types,
 dnl including use of compiler primitive types via AC_CHECK_SIZEOF.
