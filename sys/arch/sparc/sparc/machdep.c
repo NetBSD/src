@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.204 2002/11/26 14:36:10 pk Exp $ */
+/*	$NetBSD: machdep.c,v 1.205 2002/11/28 15:29:54 pk Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -490,8 +490,7 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		return (sysctl_rdstring(oldp, oldlenp, newp, cp));
 	case CPU_ARCH:
 		/* CPU architecture version */
-		return (sysctl_rdint(oldp, oldlenp, newp,
-			(CPU_ISSUN4 || CPU_ISSUN4C) ? 7 : 8));
+		return (sysctl_rdint(oldp, oldlenp, newp, cpu_arch));
 	default:
 		return (EOPNOTSUPP);
 	}
