@@ -1,4 +1,4 @@
-/*	$NetBSD: auth.c,v 1.17 2003/03/24 18:25:21 lukem Exp $	*/
+/*	$NetBSD: auth.c,v 1.18 2003/03/24 18:31:39 lukem Exp $	*/
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -141,6 +141,7 @@ allowed_user(struct passwd * pw)
 			}
 			if (match_name > 0 || match_ip > 0)
 				break;
+			hp = strtok(NULL, ",");
 		}
 		free(cap_hlist);
 		if (hp == NULL) {
