@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.56 2001/05/26 16:32:44 chs Exp $ */
+/*	$NetBSD: pmap.h,v 1.57 2001/06/18 15:42:06 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -372,6 +372,24 @@ extern void	(*pmap_changeprot_p) __P((pmap_t, vaddr_t, vm_prot_t, int));
 /* pmap_{zero,copy}_page() may be assisted by specialized hardware */
 #define		pmap_zero_page		(*cpuinfo.zero_page)
 #define		pmap_copy_page		(*cpuinfo.copy_page)
+
+#if defined(SUN4M)
+/*
+ * Macros which implement SRMMU TLB flushing/invalidation
+ */
+#define tlb_flush_page_real(va)    \
+	sta(((vaddr_t)(va) & ~0xfff) | ASI_SRMMUFP_L3, ASI_SRMMUFP, 0)
+
+#define tlb_flush_segment_real(vr, vs) \
+	sta(((vr)<<RGSHIFT) | ((vs)<<SGSHIFT) | ASI_SRMMUFP_L2, ASI_SRMMUFP,0)
+
+#define tlb_flush_region_real(vr) \
+	sta(((vr) << RGSHIFT) | ASI_SRMMUFP_L1, ASI_SRMMUFP, 0)
+
+#define tlb_flush_context_real()	sta(ASI_SRMMUFP_L0, ASI_SRMMUFP, 0)
+#define tlb_flush_all_real()		sta(ASI_SRMMUFP_LN, ASI_SRMMUFP, 0)
+
+#endif /* SUN4M */
 
 #endif /* _KERNEL */
 
