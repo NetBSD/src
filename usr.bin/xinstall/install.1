@@ -1,4 +1,4 @@
-.\"	$NetBSD: install.1,v 1.5 1997/03/08 14:26:31 mouse Exp $
+.\"	$NetBSD: install.1,v 1.6 1997/03/16 19:43:19 christos Exp $
 .\"
 .\" Copyright (c) 1987, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -44,6 +44,7 @@
 .Op Fl cs
 .Op Fl f Ar flags
 .Op Fl g Ar group
+.Op Fl l Ar linkflags
 .Op Fl m Ar mode
 .Op Fl o Ar owner
 .Ar file1 file2
@@ -51,6 +52,7 @@
 .Op Fl cs
 .Op Fl f Ar flags
 .Op Fl g Ar group
+.Op Fl l Ar linkflags
 .Op Fl m Ar mode
 .Op Fl o Ar owner
 .Ar file1
@@ -64,9 +66,10 @@
 .Ar directory
 \&...
 .Sh DESCRIPTION
-The file(s) are moved (or copied if the
+The file(s) are moved (copied if the
 .Fl c
-option is specified) to the target file or directory.
+option is specified, or linked if the
+.Fl l option is specified) to the target file or directory.
 If the destination is a directory, then the
 .Ar file
 is moved into
@@ -94,6 +97,24 @@ The default mode is set to rwxr-xr-x (0755).
 The specified mode may be either an octal or symbolic value; see
 .Xr chmod  1
 for a description of possible mode values.
+.It Fl l Ar linkflags
+Instead of copying the file make a link to the source. The type of the
+link is determined by the 
+.Ar linkflags
+argument. Valid
+.Ar linkflags
+are:
+.Ar a
+(absolute),
+.Ar r
+(relative),
+.Ar h
+(hard),
+.Ar s
+(symbolic),
+.Ar m
+(mixed). Absolute and relative have effect only for symbolic links. Mixed links
+are hard links for files on the same filesystem, symbolic otherwise.
 .It Fl o
 Specify an owner.
 .It Fl s
