@@ -1,4 +1,4 @@
-/*	$NetBSD: wss.c,v 1.52 1998/08/25 22:34:31 pk Exp $	*/
+/*	$NetBSD: wss.c,v 1.53 1998/09/06 11:05:21 pk Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -82,8 +82,8 @@ int	wss_query_devinfo __P((void *, mixer_devinfo_t *));
  */
 
 struct audio_hw_if wss_hw_if = {
-	ad1848_open,
-	ad1848_close,
+	ad1848_isa_open,
+	ad1848_isa_close,
 	NULL,
 	ad1848_query_encoding,
 	ad1848_set_params,
