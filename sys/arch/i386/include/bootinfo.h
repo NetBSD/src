@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.h,v 1.3 1999/01/28 20:10:55 christos Exp $	*/
+/*	$NetBSD: bootinfo.h,v 1.4 1999/03/08 00:10:42 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -91,7 +91,15 @@ struct btinfo_symtab {
 #include <sys/disklabel_mbr.h>
 
 struct bi_biosgeom_entry {
-	int spc, spt;
+	int sec, head, cyl;
+	u_int64_t totsec;
+	int flags, dev;
+#define BI_GEOM_INVALID		0x01
+#define BI_GEOM_EXTINT13	0x02
+#define BI_GEOM_MATCHED		0x04
+#define BI_GEOM_MULTIPLE	0x08
+	unsigned int cksum;
+	char devname[16];
 	struct mbr_partition dosparts[NMBRPART];
 };
 
@@ -107,5 +115,5 @@ void *lookup_bootinfo __P((int));
 #endif /* _LOCORE */
 
 #ifdef _KERNEL
-#define BOOTINFO_MAXSIZE 1000
+#define BOOTINFO_MAXSIZE 4096
 #endif

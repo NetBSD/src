@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.49 1998/11/11 06:41:26 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.50 1999/03/08 00:10:42 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -197,7 +197,8 @@ void	child_return __P((void *));
 #define	CPU_BIOSEXTMEM		3	/* int: bios-reported ext. mem (K) */
 #define	CPU_NKPDE		4	/* int: number of kernel PDEs */
 #define	CPU_BOOTED_KERNEL	5	/* string: booted kernel name */
-#define	CPU_MAXID		6	/* number of valid machdep ids */
+#define CPU_BIOS_GEOM		6	/* bios disk geometry information */
+#define	CPU_MAXID		7	/* number of valid machdep ids */
 
 #define	CTL_MACHDEP_NAMES { \
 	{ 0, 0 }, \
@@ -206,6 +207,7 @@ void	child_return __P((void *));
 	{ "biosextmem", CTLTYPE_INT }, \
 	{ "nkpde", CTLTYPE_INT }, \
 	{ "booted_kernel", CTLTYPE_STRING }, \
+	{ "biosdiskgeom", CTLTYPE_STRUCT }, \
 }
 
 #endif /* !_I386_CPU_H_ */
