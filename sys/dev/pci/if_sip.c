@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.16 2000/10/01 23:32:43 thorpej Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.17 2000/10/11 16:58:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 Network Computer, Inc.
@@ -255,12 +255,12 @@ do {									\
 void	sip_start __P((struct ifnet *));
 void	sip_watchdog __P((struct ifnet *));
 int	sip_ioctl __P((struct ifnet *, u_long, caddr_t));
+int	sip_init __P((struct ifnet *));
+void	sip_stop __P((struct ifnet *, int));
 
 void	sip_shutdown __P((void *));
 
 void	sip_reset __P((struct sip_softc *));
-int	sip_init __P((struct sip_softc *));
-void	sip_stop __P((struct sip_softc *, int));
 void	sip_rxdrain __P((struct sip_softc *));
 int	sip_add_rxbuf __P((struct sip_softc *, int));
 void	sip_read_eeprom __P((struct sip_softc *, int, int, u_int16_t *));
@@ -580,6 +580,8 @@ sip_attach(parent, self, aux)
 	ifp->if_ioctl = sip_ioctl;
 	ifp->if_start = sip_start;
 	ifp->if_watchdog = sip_watchdog;
+	ifp->if_init = sip_init;
+	ifp->if_stop = sip_stop;
 
 	/*
 	 * Attach the interface.
@@ -639,7 +641,7 @@ sip_shutdown(arg)
 {
 	struct sip_softc *sc = arg;
 
-	sip_stop(sc, 1);
+	sip_stop(&sc->sc_ethercom.ec_if, 1);
 }
 
 /*
@@ -868,7 +870,7 @@ sip_watchdog(ifp)
 		ifp->if_oerrors++;
 
 		/* Reset the interface. */
-		(void) sip_init(sc);
+		(void) sip_init(ifp);
 	} else if (ifp->if_flags & IFF_DEBUG)
 		printf("%s: recovered from device timeout\n",
 		    sc->sc_dev.dv_xname);
@@ -890,81 +892,18 @@ sip_ioctl(ifp, cmd, data)
 {
 	struct sip_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *)data;
-	struct ifaddr *ifa = (struct ifaddr *)data;
-	int s, error = 0;
+	int s, error;
 
 	s = splnet();
 
 	switch (cmd) {
-	case SIOCSIFADDR:
-		ifp->if_flags |= IFF_UP;
-
-		switch (ifa->ifa_addr->sa_family) {
-#ifdef INET
-		case AF_INET:
-			if ((error = sip_init(sc)) != 0)
-				break;
-			arp_ifinit(ifp, ifa);
-			break;
-#endif /* INET */
-#ifdef NS
-		case AF_NS:
-		    {
-			struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
-
-			if (ns_nullhost(*ina))
-				ina->x_host = *(union ns_host *)
-				    LLADDR(ifp->if_sadl);
-			else
-				memcpy(LLADDR(ifp->if_sadl),
-				    ina->x_host.c_host, ifp->if_addrlen);
-			error = sip_init(sc);
-			break;
-		    }
-#endif /* NS */
-		default:
-			error = sip_init(sc);
-			break;
-		}
+	case SIOCSIFMEDIA:
+	case SIOCGIFMEDIA:
+		error = ifmedia_ioctl(ifp, ifr, &sc->sc_mii.mii_media, cmd);
 		break;
 
-	case SIOCSIFMTU:
-		if (ifr->ifr_mtu > ETHERMTU)
-			error = EINVAL;
-		else
-			ifp->if_mtu = ifr->ifr_mtu;
-		break;
-
-	case SIOCSIFFLAGS:
-		if ((ifp->if_flags & IFF_UP) == 0 &&
-		    (ifp->if_flags & IFF_RUNNING) != 0) {
-			/*
-			 * If interface is marked down and it is running, then
-			 * stop it.
-			 */
-			sip_stop(sc, 1);
-		} else if ((ifp->if_flags & IFF_UP) != 0 &&
-			   (ifp->if_flags & IFF_RUNNING) == 0) {
-			/*
-			 * If interfase it marked up and it is stopped, then
-			 * start it.
-			 */
-			error = sip_init(sc);
-		} else if ((ifp->if_flags & IFF_UP) != 0) {
-			/*
-			 * Reset the interface to pick up changes in any other
-			 * flags that affect the hardware state.
-			 */
-			error = sip_init(sc);
-		}
-		break;
-	
-	case SIOCADDMULTI:
-	case SIOCDELMULTI:
-		error = (cmd == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->sc_ethercom) :
-		    ether_delmulti(ifr, &sc->sc_ethercom);
-
+	default:
+		error = ether_ioctl(ifp, cmd, data);
 		if (error == ENETRESET) { 
 			/*
 			 * Multicast list has changed; set the hardware filter
@@ -973,15 +912,6 @@ sip_ioctl(ifp, cmd, data)
 			(*sc->sc_model->sip_variant->sipv_set_filter)(sc);
 			error = 0;
 		}
-		break;
-
-	case SIOCSIFMEDIA:
-	case SIOCGIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &sc->sc_mii.mii_media, cmd);
-		break;
-
-	default:
-		error = EINVAL;
 		break;
 	}
 
@@ -1055,9 +985,9 @@ sip_intr(arg)
 					    "threshold to %u bytes\n",
 					    thresh * 32);
 					sc->sc_tx_drain_thresh = thresh;
-					(void) sip_init(sc);
+					(void) sip_init(ifp);
 				} else {
-					(void) sip_init(sc);
+					(void) sip_init(ifp);
 					printf("\n");
 				}
 			}
@@ -1083,7 +1013,7 @@ sip_intr(arg)
 			PRINTERR(ISR_RMABT, "master abort");
 			PRINTERR(ISR_RTABT, "target abort");
 			PRINTERR(ISR_RXSOVR, "receive status FIFO overrun");
-			(void) sip_init(sc);
+			(void) sip_init(ifp);
 #undef PRINTERR
 		}
 	}
@@ -1380,17 +1310,17 @@ sip_reset(sc)
 }
 
 /*
- * sip_init:
+ * sip_init:		[ ifnet interface function ]
  *
  *	Initialize the interface.  Must be called at splnet().
  */
 int
-sip_init(sc)
-	struct sip_softc *sc;
+sip_init(ifp)
+	struct ifnet *ifp;
 {
+	struct sip_softc *sc = ifp->if_softc;
 	bus_space_tag_t st = sc->sc_st;
 	bus_space_handle_t sh = sc->sc_sh;
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct sip_txsoft *txs;
 	struct sip_rxsoft *rxs;
 	struct sip_desc *sipd;
@@ -1400,7 +1330,7 @@ sip_init(sc)
 	/*
 	 * Cancel any pending I/O.
 	 */
-	sip_stop(sc, 0);
+	sip_stop(ifp, 0);
 
 	/*
 	 * Reset the chip to a known state.
@@ -1599,17 +1529,18 @@ sip_rxdrain(sc)
 }
 
 /*
- * sip_stop:
+ * sip_stop:		[ ifnet interface function ]
  *
  *	Stop transmission on the interface.
  */
 void
-sip_stop(sc, drain)
-	struct sip_softc *sc;
+sip_stop(ifp, disable)
+	struct ifnet *ifp;
+	int disable;
 {
+	struct sip_softc *sc = ifp->if_softc;
 	bus_space_tag_t st = sc->sc_st;
 	bus_space_handle_t sh = sc->sc_sh;
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct sip_txsoft *txs;
 	u_int32_t cmdsts = 0;		/* DEBUG */
 
@@ -1657,12 +1588,8 @@ sip_stop(sc, drain)
 		SIMPLEQ_INSERT_TAIL(&sc->sc_txfreeq, txs, txs_q);
 	}
 
-	if (drain) {
-		/*
-		 * Release the receive buffers.
-		 */
+	if (disable)
 		sip_rxdrain(sc);
-	}
 
 	/*
 	 * Mark the interface down and cancel the watchdog timer.
