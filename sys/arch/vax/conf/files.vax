@@ -1,4 +1,4 @@
-#       $NetBSD: files.vax,v 1.50 1999/05/23 22:56:53 ragge Exp $
+#       $NetBSD: files.vax,v 1.51 1999/05/24 20:10:31 ragge Exp $
 #
 # new style config file for vax architecture
 #
@@ -67,11 +67,14 @@ device	kdb: mscp
 attach	kdb at bi
 file	arch/vax/bi/kdb.c		kdb
 
-device	uba { csr }
+# Unibus/Q22 bus definitions
+include "dev/dec/uba/files.uba"
+
 attach	uba at mainbus with uba_mainbus
+file	arch/vax/uba/uba_mainbus.c	uba_mainbus & new_uba
 attach	uba at sbi with uba_sbi
 attach	uba at cmi with uba_cmi
-file	arch/vax/uba/uba.c		uba
+file	arch/vax/uba/uba.c		uba & !new_uba
 
 device	mtc: mscp
 attach	mtc at uba
@@ -334,6 +337,7 @@ file	arch/vax/vax/urem.s
 file	arch/vax/vax/udiv.s
 file	arch/vax/vax/trap.c
 file	arch/vax/vax/bus_dma.c
+file	arch/vax/vax/bus_mem.c
 
 file	arch/vax/vax/vm_machdep.c
 file	arch/vax/vax/findcpu.c
