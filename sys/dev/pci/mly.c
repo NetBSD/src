@@ -1,4 +1,4 @@
-/*	$NetBSD: mly.c,v 1.3 2001/07/30 23:46:28 ad Exp $	*/
+/*	$NetBSD: mly.c,v 1.4 2001/07/30 23:49:51 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -1181,14 +1181,11 @@ mly_process_event(struct mly_softc *mly, struct mly_event *me)
 	case 'm':
 		/*
 		 * Error on logical unit, or message about logical unit.
-		 *
-		 * XXX Splitting me->lun as we do in the following can't possibly
-		 * be correct.  Where should we get this value?
 	 	 */
 		bus = MLY_LOGDEV_BUS(mly, me->lun);
 		target = MLY_LOGDEV_TARGET(mly, me->lun);
-		printf("%s: logical device %d %s\n", mly->mly_dv.dv_xname,
-		    me->lun, tp);
+		printf("%s: logical device %d:%d %s\n", mly->mly_dv.dv_xname,
+		    bus, target, tp);
 		if (action == 'r')
 			mly->mly_btl[bus][target].mb_flags |= MLY_BTL_RESCAN;
 		break;
