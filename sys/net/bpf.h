@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.h,v 1.15 1996/12/13 07:57:33 mikel Exp $	*/
+/*	$NetBSD: bpf.h,v 1.16 1997/10/03 16:24:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -173,6 +173,9 @@ struct bpf_hdr {
 #define DLT_PPP		9	/* Point-to-point Protocol */
 #define DLT_FDDI	10	/* FDDI */
 #define DLT_ATM_RFC1483	11	/* LLC/SNAP encapsulated atm */
+#define DLT_RAW		12	/* raw IP */
+#define DLT_SLIP_BSDOS	13	/* BSD/OS Serial Line IP */
+#define DLT_PPP_BSDOS	14	/* BSD/OS Point-to-point Protocol */
 
 /*
  * The instruction encondings.
@@ -252,8 +255,9 @@ void	 bpf_tap __P((caddr_t, u_char *, u_int));
 void	 bpf_mtap __P((caddr_t, struct mbuf *));
 void	 bpfattach __P((caddr_t *, struct ifnet *, u_int, u_int));
 void	 bpfilterattach __P((int));
-u_int	 bpf_filter __P((struct bpf_insn *, u_char *, u_int, u_int));
 #endif
+
+u_int	 bpf_filter __P((struct bpf_insn *, u_char *, u_int, u_int));
 
 /*
  * Number of scratch memory words (for BPF_LD|BPF_MEM and BPF_ST).
