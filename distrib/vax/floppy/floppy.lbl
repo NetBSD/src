@@ -1,0 +1,23 @@
+# /dev/rvnd0c:
+type: floppy
+disk: rx23
+label: 
+flags: removable
+bytes/sector: 512
+sectors/track: 18
+tracks/cylinder: 2
+sectors/cylinder: 36
+cylinders: 80
+total sectors: 2880
+rpm: 300
+interleave: 1
+trackskew: 0
+cylinderskew: 0
+headswitch: 0		# microseconds
+track-to-track seek: 0	# microseconds
+drivedata: 0 
+
+3 partitions:
+#        size   offset     fstype   [fsize bsize   cpg]
+  a:     2880        0     4.2BSD      512  4096   32    # (Cyl.    0 - 79)
+  c:     2880        0     unused      512  4096         # (Cyl.    0 - 79)
