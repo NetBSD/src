@@ -1,4 +1,4 @@
-/* $NetBSD: boot.h,v 1.1 2000/05/09 21:55:58 bjh21 Exp $ */
+/* $NetBSD: boot.h,v 1.2 2001/07/28 12:53:06 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998 Ben Harris
  * All rights reserved.
@@ -79,8 +79,9 @@ struct bootconfig {
 	/* Version 0 ends here */
 };
 
+#ifdef _KERNEL
 void start __P((struct bootconfig *));
 
 extern struct bootconfig bootconfig;
-
+#endif
 #endif
