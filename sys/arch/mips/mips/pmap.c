@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.79 1999/11/29 11:14:49 uch Exp $	*/
+/*	$NetBSD: pmap.c,v 1.80 1999/12/11 14:05:04 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.79 1999/11/29 11:14:49 uch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.80 1999/12/11 14:05:04 simonb Exp $");
 
 /*
  *	Manages physical address maps.
@@ -238,6 +238,7 @@ static void
 mips_flushcache_allpvh(paddr_t pa)
 {
 	struct pv_entry *pv = pa_to_pvh(pa);
+
 	while (pv) {
 		MachFlushDCache(pv->pv_va, NBPG);
 		pv = pv->pv_next;
@@ -252,7 +253,6 @@ mips_flushcache_allpvh(paddr_t pa)
 void
 pmap_bootstrap()
 {
-	extern int physmem;
 
 	/*
 	 * Figure out how many PTE's are necessary to map the kernel.
