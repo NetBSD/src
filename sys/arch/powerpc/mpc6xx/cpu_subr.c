@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.11 2002/03/03 07:31:33 nathanw Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.12 2002/03/04 00:55:04 kleink Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -35,6 +35,7 @@
 
 #include "opt_l2cr_config.h"
 #include "opt_multiprocessor.h"
+#include "sysmon_envsys.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,11 +50,13 @@
 
 static void cpu_config_l2cr(int);
 static void cpu_print_speed(void);
+#if NSYSMON_ENVSYS > 0
 static void cpu_tau_setup(struct cpu_info *);
 static int cpu_tau_gtredata __P((struct sysmon_envsys *,
     struct envsys_tre_data *));
 static int cpu_tau_streinfo __P((struct sysmon_envsys *,
     struct envsys_basic_info *));
+#endif
 
 int cpu;
 int ncpus;
@@ -219,6 +222,7 @@ cpu_attach_common(struct device *self, int id)
 		cpu_config_l2cr(vers);
 	}
 
+#if NSYSMON_ENVSYS > 0
 	/*
 	 * Attach MPC750 temperature sensor to the envsys subsystem.
 	 * XXX the 74xx series also has this sensor, but it is not
@@ -227,6 +231,7 @@ cpu_attach_common(struct device *self, int id)
 	 */
 	if (vers == MPC750)
 		cpu_tau_setup(ci);
+#endif
 
 	evcnt_attach_dynamic(&ci->ci_ev_traps, EVCNT_TYPE_TRAP,
 		NULL, self->dv_xname, "traps");
@@ -404,6 +409,7 @@ cpu_print_speed(void)
 	printf(": %qd.%02qd MHz\n", cps / 1000000, (cps / 10000) % 100);
 }
 
+#if NSYSMON_ENVSYS > 0
 const struct envsys_range cpu_tau_ranges[] = {
 	{ 0, 0, ENVSYS_STEMP}
 };
@@ -507,3 +513,4 @@ cpu_tau_streinfo(sme, binfo)
 	/* There is nothing to set here. */
 	return (EINVAL);
 }
+#endif /* NSYSMON_ENVSYS > 0 */
