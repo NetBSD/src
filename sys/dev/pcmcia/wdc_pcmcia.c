@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.12 1998/10/12 16:09:22 bouyer Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.13 1998/10/29 09:42:45 enami Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@ struct wdc_pcmcia_product {
 	  -1,			/* XXX */
 	  WDC_PCMCIA_FORCE_16BIT_IO,
 	  { NULL, NULL, NULL, NULL },
-	 "Hagiwara SYS-COM ComactFlash Card" },
+	  "Hagiwara SYS-COM CompactFlash Card" },
 
 	/* CANON FC-8M is also matches.  */
 	{ PCMCIA_VENDOR_SANDISK,
@@ -148,7 +148,7 @@ wdc_pcmcia_lookup(pa)
 					cis_match = 0;
 			}
 			if (cis_match)
-				return(wpp);
+				return (wpp);
 		}
 
 	return (NULL);
@@ -228,9 +228,9 @@ wdc_pcmcia_attach(parent, self, aux)
 		panic("wdc_pcmcia_attach: impossible");
 
 	if (pcmcia_io_map(pa->pf,
-			  wpp->wpp_quirk_flag & WDC_PCMCIA_FORCE_16BIT_IO ?
-			  PCMCIA_WIDTH_IO16 : PCMCIA_WIDTH_AUTO, 0,
-			  sc->sc_pioh.size, &sc->sc_pioh, &sc->sc_iowindow)) {
+	    wpp->wpp_quirk_flag & WDC_PCMCIA_FORCE_16BIT_IO ?
+	    PCMCIA_WIDTH_IO16 : PCMCIA_WIDTH_AUTO, 0,
+	    sc->sc_pioh.size, &sc->sc_pioh, &sc->sc_iowindow)) {
 		printf(": can't map first I/O space\n");
 		return;
 	} 
@@ -270,9 +270,9 @@ wdc_pcmcia_attach(parent, self, aux)
 	sc->wdc_channel.ch_queue = malloc(sizeof(struct channel_queue),
 	    M_DEVBUF, M_NOWAIT);
 	if (sc->wdc_channel.ch_queue == NULL) {
-	    printf("%s: can't allocate memory for command queue",
-		sc->sc_wdcdev.sc_dev.dv_xname);
-	    return;
+		printf("%s: can't allocate memory for command queue",
+		    sc->sc_wdcdev.sc_dev.dv_xname);
+		return;
 	}
 	if (wpp->wpp_quirk_flag & WDC_PCMCIA_NO_EXTRA_RESETS)
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_NO_EXTRA_RESETS;
