@@ -22,27 +22,39 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .Dd November 29, 1994
-.Dt BT 4 i386
+.Dt BHA 4 i386
 .Os NetBSD 
 .Sh NAME
-.Nm bt
+.Nm bha
 .Nd Buslogic SCSI adapter driver
 .Sh SYNOPSIS
-.Cd "bt0 at isa? port 0x330 irq ? drq ?"
-.Cd "scsibus* at bt?"
+.Cd "bha0 at isa? port 0x330 irq ? drq ?"
+.Cd "bha* at eisa? slot ?"
+.Cd "bha* at pci? dev ? function ?"
+.Cd "scsibus* at bha?"
 .Sh DESCRIPTION
 The
-.Nm bt
+.Nm bha
 driver supports the following Buslogic SCSI adapters:
 .Pp
 .Bl -tag -width -offset indent -compact
 .It Buslogic BT-445
 .It Buslogic BT-74x 
-.It Buslogic BT-9xx 
+.It Buslogic BT-9[45][68]
 .El
+.Sh BUGS
+The Buslogic BT-930 is not supported in this driver.
 .Sh SEE ALSO
 .Xr intro 4 ,
 .Xr sd 4 ,
 .Xr st 4 ,
 .Xr cd 4 ,
 .Xr ch 4  
+.Sh HISTORY
+In
+.Nx 1.2
+and earlier, this driver was named
+.Nm bt
+but was renamed to
+.Nm bha
+in later releases.
