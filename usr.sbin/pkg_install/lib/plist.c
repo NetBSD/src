@@ -1,11 +1,11 @@
-/*	$NetBSD: plist.c,v 1.15 1998/10/13 10:00:10 agc Exp $	*/
+/*	$NetBSD: plist.c,v 1.16 1999/01/19 17:02:02 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: plist.c,v 1.24 1997/10/08 07:48:15 charnier Exp";
 #else
-__RCSID("$NetBSD: plist.c,v 1.15 1998/10/13 10:00:10 agc Exp $");
+__RCSID("$NetBSD: plist.c,v 1.16 1999/01/19 17:02:02 hubertf Exp $");
 #endif
 #endif
 
@@ -30,6 +30,7 @@ __RCSID("$NetBSD: plist.c,v 1.15 1998/10/13 10:00:10 agc Exp $");
  */
 
 #include "lib.h"
+#include <errno.h>
 #include <err.h>
 #include <md5.h>
 
@@ -304,6 +305,10 @@ delete_package(Boolean ign_err, Boolean nukedirs, package_t *pkg)
     Boolean preserve;
     char tmp[FILENAME_MAX], *name = NULL;
 
+    if (pkgdb_open(0)==-1) {
+	err(1, "cannot open pkgdb");
+    }
+    
     preserve = find_plist_option(pkg, "preserve") ? TRUE : FALSE;
     for (p = pkg->head; p; p = p->next) {
 	switch (p->type)  {
@@ -340,8 +345,8 @@ delete_package(Boolean ign_err, Boolean nukedirs, package_t *pkg)
 	    }
 	    else {
 		if (p->next &&
-		    p->next->type == PLIST_COMMENT &&
-		    strncmp(p->next->name, CHECKSUM_HEADER, ChecksumHeaderLen) == 0) {
+		    p->next->type == PLIST_COMMENT &&  
+		    strncmp(p->next->name, CHECKSUM_HEADER, ChecksumHeaderLen) == 0) { /* || PLIST_MD5 - HF */
 		    char *cp, buf[LegibleChecksumLen];
 
 		    if ((cp = MD5File(tmp, buf)) != NULL) {
@@ -361,6 +366,8 @@ delete_package(Boolean ign_err, Boolean nukedirs, package_t *pkg)
 		if (Verbose)
 		    printf("Delete file %s\n", tmp);
 		if (!Fake) {
+		    int restored=0; /* restored from preserve? */
+		    
 		    if (delete_hierarchy(tmp, ign_err, nukedirs))
 			    fail = FAIL;
 		    if (preserve && name) {
@@ -371,7 +378,26 @@ delete_package(Boolean ign_err, Boolean nukedirs, package_t *pkg)
 				if (rename(tmp2, tmp))
 				   warn("preserve: unable to restore %s as %s",
 					tmp2, tmp);
+				else
+				    restored=1; 
 			    }
+			}
+		    }
+
+		    if (!restored) {
+#ifdef PKGDB_DEBUG
+			printf("pkgdb_remove(\"%s\")\n", tmp); /*HF*/
+#endif
+			if (pkgdb_remove(tmp)) {
+			    if (errno) {
+				perror ("pkgdb_remove");
+			    } else {
+				printf("Key not present.\n");
+			    }
+			} else {
+#ifdef PKGDB_DEBUG
+			    printf("pkgdb_remove: ok\n");
+#endif			    
 			}
 		    }
 		}
@@ -398,6 +424,7 @@ delete_package(Boolean ign_err, Boolean nukedirs, package_t *pkg)
 	    break;
 	}
     }
+    pkgdb_close();
     return fail;
 }
 
