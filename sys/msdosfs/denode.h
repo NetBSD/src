@@ -1,4 +1,4 @@
-/*	$NetBSD: denode.h,v 1.4 1994/06/29 06:35:30 cgd Exp $	*/
+/*	$NetBSD: denode.h,v 1.5 1994/07/16 21:33:17 cgd Exp $	*/
 
 /*
  * Written by Paul Popelka (paulp@uts.amdahl.com)
@@ -17,36 +17,46 @@
  */
 
 /*
- * This is the pc filesystem specific portion of the vnode structure. To
- * describe a file uniquely the de_dirclust, de_diroffset, and
- * de_StartCluster fields are used.  de_dirclust contains the cluster
- * number of the directory cluster containing the entry for a file or
- * directory.  de_diroffset is the index into the cluster for the entry
- * describing a file or directory.  de_StartCluster is the number of
- * the first cluster of the file or directory.  Now to describe the quirks
- * of the pc filesystem. - Clusters 0 and 1 are reserved. - The first
- * allocatable cluster is 2. - The root directory is of fixed size and all
- * blocks that make it up are contiguous. - Cluster 0 refers to the root
- * directory when it is found in the startcluster field of a directory
- * entry that points to another directory. - Cluster 0 implies a 0 length
- * file when found in the start cluster field of a directory entry that
- * points to a file. - You can't use the cluster number 0 to derive the
- * address of the root directory. - Multiple directory entries can point to
- * a directory. The entry in the parent directory points to a child
- * directory.  Any directories in the child directory contain a ".." entry
- * that points back to the child.  The child directory itself contains a
- * "." entry that points to itself. - The root directory does not contain a
- * "." or ".." entry. - Directory entries for directories are never changed
- * once they are created (except when removed).  The size stays 0, and the
- * last modification time is never changed.  This is because so many
- * directory entries can point to the physical clusters that make up a
- * directory.  It would lead to an update nightmare. - The length field in
- * a directory entry pointing to a directory contains 0 (always).  The only
- * way to find the end of a directory is to follow the cluster chain until
- * the "last cluster" marker is found. My extensions to make this house of
- * cards work.  These apply only to the in memory copy of the directory
- * entry. - A reference count for each denode will be kept since dos
- * doesn't keep such things.
+ * This is the pc filesystem specific portion of the vnode structure.
+ *
+ * To describe a file uniquely the de_dirclust, de_diroffset, and
+ * de_StartCluster fields are used.
+ *
+ * de_dirclust contains the cluster number of the directory cluster
+ *	containing the entry for a file or directory.
+ * de_diroffset is the index into the cluster for the entry describing
+ *	a file or directory.
+ * de_StartCluster is the number of the first cluster of the file or directory.
+ *
+ * Now to describe the quirks of the pc filesystem.
+ * - Clusters 0 and 1 are reserved.
+ * - The first allocatable cluster is 2.
+ * - The root directory is of fixed size and all blocks that make it up
+ *   are contiguous.
+ * - Cluster 0 refers to the root directory when it is found in the
+ *   startcluster field of a directory entry that points to another directory.
+ * - Cluster 0 implies a 0 length file when found in the start cluster field
+ *   of a directory entry that points to a file.
+ * - You can't use the cluster number 0 to derive the address of the root
+ *   directory.
+ * - Multiple directory entries can point to a directory. The entry in the
+ *   parent directory points to a child directory.  Any directories in the
+ *   child directory contain a ".." entry that points back to the parent.
+ *   The child directory itself contains a "." entry that points to itself.
+ * - The root directory does not contain a "." or ".." entry.
+ * - Directory entries for directories are never changed once they are created
+ *   (except when removed).  The size stays 0, and the last modification time
+ *   is never changed.  This is because so many directory entries can point to
+ *   the physical clusters that make up a directory.  It would lead to an
+ *   update nightmare.
+ * - The length field in a directory entry pointing to a directory contains 0
+ *   (always).  The only way to find the end of a directory is to follow the
+ *   cluster chain until the "last cluster" marker is found.
+ *
+ * My extensions to make this house of cards work.  These apply only to the in
+ * memory copy of the directory entry.
+ * - A reference count for each denode will be kept since dos doesn't keep such
+ *   things.
  */
 
 /*
@@ -93,18 +103,21 @@ struct fatcache {
  * contained within a vnode.
  */
 struct denode {
-	struct denode *de_chain[2];	/* hash chain ptrs */
+	struct denode *de_next;	/* Hash chain forward */
+	struct denode **de_prev; /* Hash chain back */
 	struct vnode *de_vnode;	/* addr of vnode we are part of */
 	struct vnode *de_devvp;	/* vnode of blk dev we live on */
 	u_long de_flag;		/* flag bits */
 	dev_t de_dev;		/* device where direntry lives */
 	u_long de_dirclust;	/* cluster of the directory file containing this entry */
 	u_long de_diroffset;	/* ordinal of this entry in the directory */
+	u_long de_fndclust;	/* cluster of found dir entry */
+	u_long de_fndoffset;	/* offset of found dir entry */
 	long de_refcnt;		/* reference count */
 	struct msdosfsmount *de_pmp;	/* addr of our mount struct */
 	struct lockf *de_lockf;	/* byte level lock list */
-	long de_spare0;		/* current lock holder */
-	long de_spare1;		/* lock wanter */
+	pid_t de_lockholder;	/* current lock holder */
+	pid_t de_lockwaiter;	/* lock wanter */
 	/* the next two fields must be contiguous in memory... */
 	u_char de_Name[8];	/* name, from directory entry */
 	u_char de_Extension[3];	/* extension, from directory entry */
@@ -187,43 +200,50 @@ struct defid {
 /*
  * Prototypes for MSDOSFS vnode operations
  */
-int msdosfs_lookup __P((struct vnode * vp, struct nameidata * ndp, struct proc * p));
-int msdosfs_create __P((struct nameidata * ndp, struct vattr * vap, struct proc * p));
-int msdosfs_mknod __P((struct nameidata * ndp, struct vattr * vap, struct ucred * cred, struct proc * p));
-int msdosfs_open __P((struct vnode * vp, int mode, struct ucred * cred, struct proc * p));
-int msdosfs_close __P((struct vnode * vp, int fflag, struct ucred * cred, struct proc * p));
-int msdosfs_access __P((struct vnode * vp, int mode, struct ucred * cred, struct proc * p));
-int msdosfs_getattr __P((struct vnode * vp, struct vattr * vap, struct ucred * cred, struct proc * p));
-int msdosfs_setattr __P((struct vnode * vp, struct vattr * vap, struct ucred * cred, struct proc * p));
-int msdosfs_read __P((struct vnode * vp, struct uio * uio, int ioflag, struct ucred * cred));
-int msdosfs_write __P((struct vnode * vp, struct uio * uio, int ioflag, struct ucred * cred));
-int msdosfs_ioctl __P((struct vnode * vp, int command, caddr_t data, int fflag, struct ucred * cred, struct proc * p));
-int msdosfs_select __P((struct vnode * vp, int which, int fflags, struct ucred * cred, struct proc * p));
-int msdosfs_mmap __P((struct vnode * vp, int fflags, struct ucred * cred, struct proc * p));
-int msdosfs_fsync __P((struct vnode * vp, int fflags, struct ucred * cred, int waitfor, struct proc * p));
-int msdosfs_seek __P((struct vnode * vp, off_t oldoff, off_t newoff, struct ucred * cred));
-int msdosfs_remove __P((struct nameidata * ndp, struct proc * p));
-int msdosfs_link __P((struct vnode * vp, struct nameidata * ndp, struct proc * p));
-int msdosfs_rename __P((struct nameidata * fndp, struct nameidata * tdnp, struct proc * p));
-int msdosfs_mkdir __P((struct nameidata * ndp, struct vattr * vap, struct proc * p));
-int msdosfs_rmdir __P((struct nameidata * ndp, struct proc * p));
-int msdosfs_symlink __P((struct nameidata * ndp, struct vattr * vap, char *target, struct proc * p));
-int msdosfs_readdir __P((struct vnode * vp, struct uio * uio, struct ucred * cred, int *eofflagp, u_int * cookies, int ncookies));
-int msdosfs_readlink __P((struct vnode * vp, struct uio * uio, struct ucred * cred));
-int msdosfs_abortop __P((struct nameidata * ndp));
-int msdosfs_inactive __P((struct vnode * vp, struct proc * p));
-int msdosfs_reclaim __P((struct vnode * vp));
-int msdosfs_lock __P((struct vnode * vp));
-int msdosfs_unlock __P((struct vnode * vp));
-int msdosfs_bmap __P((struct vnode * vp, daddr_t bn, struct vnode ** vpp, daddr_t * bnp));
-int msdosfs_strategy __P((struct buf * bp));
-int msdosfs_print __P((struct vnode * vp));
-int msdosfs_islocked __P((struct vnode * vp));
-int msdosfs_advlock __P((struct vnode * vp, caddr_t id, int op, struct flock * fl, int flags));
+int msdosfs_lookup __P((struct vop_lookup_args *));
+int msdosfs_create __P((struct vop_create_args *));
+int msdosfs_mknod __P((struct vop_mknod_args *));
+int msdosfs_open __P((struct vop_open_args *));
+int msdosfs_close __P((struct vop_close_args *));
+int msdosfs_access __P((struct vop_access_args *));
+int msdosfs_getattr __P((struct vop_getattr_args *));
+int msdosfs_setattr __P((struct vop_setattr_args *));
+int msdosfs_read __P((struct vop_read_args *));
+int msdosfs_write __P((struct vop_write_args *));
+int msdosfs_ioctl __P((struct vop_ioctl_args *));
+int msdosfs_select __P((struct vop_select_args *));
+int msdosfs_mmap __P((struct vop_mmap_args *));
+int msdosfs_fsync __P((struct vop_fsync_args *));
+int msdosfs_seek __P((struct vop_seek_args *));
+int msdosfs_remove __P((struct vop_remove_args *));
+int msdosfs_link __P((struct vop_link_args *));
+int msdosfs_rename __P((struct vop_rename_args *));
+int msdosfs_mkdir __P((struct vop_mkdir_args *));
+int msdosfs_rmdir __P((struct vop_rmdir_args *));
+int msdosfs_symlink __P((struct vop_symlink_args *));
+int msdosfs_readdir __P((struct vop_readdir_args *));
+int msdosfs_readlink __P((struct vop_readlink_args *));
+int msdosfs_abortop __P((struct vop_abortop_args *));
+int msdosfs_inactive __P((struct vop_inactive_args *));
+int msdosfs_reclaim __P((struct vop_reclaim_args *));
+int msdosfs_lock __P((struct vop_lock_args *));
+int msdosfs_unlock __P((struct vop_unlock_args *));
+int msdosfs_bmap __P((struct vop_bmap_args *));
+int msdosfs_strategy __P((struct vop_strategy_args *));
+int msdosfs_print __P((struct vop_print_args *));
+int msdosfs_islocked __P((struct vop_islocked_args *));
+int msdosfs_advlock __P((struct vop_advlock_args *));
+int msdosfs_reallocblks __P((struct vop_reallocblks_args *));
 
 /*
  * Internal service routine prototypes.
  */
 int deget __P((struct msdosfsmount * pmp, u_long dirclust, u_long diroffset, struct direntry * direntptr, struct denode ** depp));
 
+static void deput __P((struct denode *dep));
+static __inline void deput(dep)
+struct denode *dep;
+{
+	vput(DETOV(dep));
+}
 #endif				/* defined(KERNEL) */
