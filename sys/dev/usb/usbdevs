@@ -1,4 +1,4 @@
-a$NetBSD: usbdevs,v 1.41 1999/09/02 19:13:43 augustss Exp $
+a$NetBSD: usbdevs,v 1.42 1999/09/02 22:07:29 augustss Exp $
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -211,6 +211,7 @@ product BELKIN 1COM		0x8007	Serial port
 /* Logitech products */
 product LOGITECH M2452		0x0203	M2452 keyboard
 product LOGITECH M4848		0x0301	M4848 mouse
+product LOGITECH QUICKCAM	0x0801	QuickCam
 product LOGITECH USBPS2		0xc001	USB-PS/2 mouse
 
 /* P.I. Engineering products */
