@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.74 1998/04/11 17:44:11 matthias Exp $	*/
+/*	$NetBSD: machdep.c,v 1.75 1998/04/21 20:12:18 matthias Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -677,7 +677,6 @@ cpu_reboot(howto, bootstr)
 	char *bootstr;
 {
 	extern int cold;
-	extern const char *panicstr;
 	int s;
 
 	/* If system is cold, just halt. */
@@ -1124,8 +1123,11 @@ init532()
 	if (maxphysmem != 0 && avail_end > maxphysmem)
 		avail_end = maxphysmem;
 	physmem     = btoc(avail_end);
-#ifndef NKPDE
-	nkpde = min(NKPDE_MAX,
+#if defined(PMAP_NEW)
+	nkpde = max(min(nkpde, NKPTP_MAX), NKPTP_MIN);
+#else
+	if (nkpde == 0)
+		nkpde = min(NKPDE_MAX,
 			NKPDE_BASE + ((u_int) avail_end >> 20) * NKPDE_SCALE);
 #endif
 
@@ -1144,7 +1146,11 @@ init532()
 	pd = (pd_entry_t *) alloc_pages(1);
 
 	/* Recursively map in the page directory */
+#if defined(PMAP_NEW)
+	pd[PDSLOT_PTE] = (pd_entry_t)pd | PG_V | PG_KW;
+#else
 	pd[PTDPTDI] = (pd_entry_t)pd | PG_V | PG_KW;
+#endif
 
 	/* Map interrupt stack. */
 	map(pd, 0xffc00000, alloc_pages(1), PG_KW, 0x001000);
@@ -1312,7 +1318,11 @@ cpu_reset()
 	di();
 
 	/* Alias kernel memory at 0. */
+#if defined(PMAP_NEW)
+	PDP_BASE[0] = PDP_BASE[pdei(KERNBASE)];
+#else
 	PTD[0] = PTD[pdei(KERNBASE)];
+#endif
 	pmap_update();
 
 	/* Jump to low memory. */
