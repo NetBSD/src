@@ -1,4 +1,4 @@
-/*	$NetBSD: if_x25subr.c,v 1.8 1995/06/13 05:38:47 mycroft Exp $	*/
+/*	$NetBSD: if_x25subr.c,v 1.9 1995/06/13 05:41:43 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -589,9 +589,9 @@ register struct x25_ifaddr *ia;
 		 * First determine our IP addr for network
 		 */
 		register struct in_ifaddr *ina;
-		extern struct in_ifaddr *in_ifaddr;
 
-		for (ina = in_ifaddr; ina; ina = ina->ia_next)
+		for (ina = in_ifaddr.tqh_first; ina != 0;
+		    ina = ina->ia_list.tqe_next)
 			if (ina->ia_ifp == ia->ia_ifp) {
 				my_addr = ina->ia_addr.sin_addr;
 				break;
