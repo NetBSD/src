@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.8 1996/07/11 03:47:46 cgd Exp $	*/
+/*	$NetBSD: mem.c,v 1.9 1996/08/20 23:00:25 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -152,7 +152,7 @@ kmemphys:
 			 * is a global zeroed page, the null segment table.
 			 */
 			if (zeropage == NULL) {
-#if (CLBYTES == NBPG) && defined(OLD_PMAP)
+#if (CLBYTES == NBPG) && !defined(NEW_PMAP)
 				extern caddr_t Segtabzero;
 				zeropage = Segtabzero;
 #else
