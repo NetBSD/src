@@ -47,7 +47,8 @@ FILS=fils.o parse.o kmem.o opt.o facpri.o
 build all: ipf ipfstat ipftest ipmon ipnat if_ipl.o
 
 ipfstat: $(FILS)
-	$(CC) $(DEBUG) $(CFLAGS) $(FILS) -o $@ $(LIBS)
+	$(CC) $(DEBUG) $(CFLAGS) $(STATETOP_CFLAGS) $(STATETOP_INC) $(FILS) \
+	-o $@ $(LIBS) $(STATETOP_LIB)
 
 ipf: $(IPF)
 	$(CC) $(DEBUG) $(CFLAGS) $(IPF) -o $@ $(LIBS)
@@ -66,8 +67,9 @@ tests:
 	(cd test; make )
 
 fils.o: $(TOP)/fils.c $(TOP)/ip_fil.h $(TOP)/ipf.h $(TOP)/ip_frag.h \
-	$(TOP)/ip_compat.h $(TOP)/ip_state.h
-	$(CC) $(DEBUG) $(CFLAGS) -c $(TOP)/fils.c -o $@
+	$(TOP)/ip_compat.h $(TOP)/ip_state.h $(TOP)/ip_nat.h
+	$(CC) $(DEBUG) $(CFLAGS) $(STATETOP_CFLAGS) $(STATETOP_INC) \
+	-c $(TOP)/fils.c -o $@
 
 fil.o: $(TOP)/fil.c $(TOP)/ip_fil.h $(TOP)/ipf.h $(TOP)/ip_compat.h
 	$(CC) $(DEBUG) $(CFLAGS) -c $(TOP)/fil.c -o $@
@@ -121,7 +123,7 @@ ip_frag_u.o: $(TOP)/ip_frag.c $(TOP)/ip_frag.h $(TOP)/ip_compat.h \
 	$(CC) $(DEBUG) $(CFLAGS) -c $(TOP)/ip_frag.c -o $@
 
 ip_state_u.o: $(TOP)/ip_state.c $(TOP)/ip_state.h $(TOP)/ip_compat.h \
-	$(TOP)/ip_fil.h
+	$(TOP)/ip_fil.h $(TOP)/ip_nat.h
 	$(CC) $(DEBUG) $(CFLAGS) -c $(TOP)/ip_state.c -o $@
 
 ip_auth_u.o: $(TOP)/ip_auth.c $(TOP)/ip_auth.h $(TOP)/ip_compat.h \
@@ -142,7 +144,7 @@ ip_frag.o: $(TOP)/ip_frag.c $(TOP)/ip_frag.h $(TOP)/ip_compat.h $(TOP)/ip_fil.h
 	$(CC) $(DEBUG) $(CFLAGS) $(DFLAGS) -c $(TOP)/ip_frag.c -o $@
 
 ip_state.o: $(TOP)/ip_state.c $(TOP)/ip_state.h $(TOP)/ip_compat.h \
-	$(TOP)/ip_fil.h
+	$(TOP)/ip_fil.h $(TOP)/ip_nat.h
 	$(CC) $(DEBUG) $(CFLAGS) $(DFLAGS) -c $(TOP)/ip_state.c -o $@
 
 ip_proxy.o: $(TOP)/ip_proxy.c $(TOP)/ip_proxy.h $(TOP)/ip_compat.h \

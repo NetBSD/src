@@ -3,7 +3,7 @@ if [ ! -f netinet/done ] ; then
 	echo "Do NOT run this script directly, do 'make solaris'!"
 	exit 1
 fi
-# Id: buildsunos,v 2.1.2.2 1999/12/28 05:08:14 darrenr Exp
+# Id: buildsunos,v 2.5.2.1 2000/04/28 11:13:51 darrenr Exp
 :
 rev=`uname -r | sed -e 's/^\([^\.]*\)\..*/\1/'`
 if [ -d /usr/ccs/bin ] ; then
@@ -31,11 +31,13 @@ if [ $rev = 5 ] ; then
 	fi
 	if [ -d /opt/SUNWspro/bin ] ; then
 		CC="/opt/SUNWspro/bin/cc  ${CFL}"
+		XARCH="-Xa -xF -xildoff"
 		export CC
 		/bin/optisa sparcv9 >/dev/null 2>&1
 		if [ $? -eq 0 ] ; then
 			ARCHINC="-I/usr/include/v9"
-			XARCH="-xarch=v9 -xchip=ultra -dalign -xcode=abs32"
+			XARCH="${XARCH} -xarch=v9 -xchip=ultra -dalign"
+			XARCH="${XARCH} -xcode=abs32"
 		fi
 	else
 		CC=gcc

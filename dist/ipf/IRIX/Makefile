@@ -61,16 +61,18 @@ INSTALL=/sbin/install
 MODOBJS=ip_fil.o fil_k.o ml_ipl.o ip_nat.o ip_frag.o ip_state.o ip_proxy.o \
 	ip_auth.o ip_log.o
 DFLAGS=$(IPFLKM) $(IPFLOG) $(KFLAGS) $(MLFLAGS) -jalr #-D_MP_NETLOCKS -DMP
-IPF=ipf.o parse.o opt.o inet_addr.o facpri.o
-IPT=ipt.o parse.o fil.o ipft_sn.o ipft_ef.o ipft_td.o ipft_pc.o opt.o \
-    ipft_tx.o misc.o ip_frag_u.o ip_state_u.o ip_nat_u.o ip_proxy_u.o \
+IPF=ipf.o parse.o common.o opt.o inet_addr.o facpri.o
+IPT=ipt.o parse.o common.o fil.o ipft_sn.o ipft_ef.o ipft_td.o ipft_pc.o \
+    opt.o ipft_tx.o misc.o ip_frag_u.o ip_state_u.o ip_nat_u.o ip_proxy_u.o \
     ip_auth_u.o ipft_hx.o ip_fil_u.o inet_addr.o natparse.o facpri.o
-FILS=fils.o parse.o kmem.o opt.o inet_addr.o facpri.o
+IPNAT=ipnat.o kmem.o natparse.o common.o inet_addr.o
+FILS=fils.o parse.o common.o kmem.o opt.o inet_addr.o facpri.o
 
 build all: ipf ipfstat ipftest ipmon ipnat $(LKM)
 
 ipfstat: $(FILS)
-	$(CC) $(DEBUG) $(CFLAGS) $(FILS) -o $@ $(LIBS)
+	$(CC) $(DEBUG) $(CFLAGS) $(STATETOP_CFLAGS) $(STATETOP_INC) $(FILS) \
+	-o $@ $(LIBS) $(STATETOP_LIB)
 
 ipf: $(IPF)
 	$(CC) $(DEBUG) $(CFLAGS) $(IPF) -o $@ $(LIBS)
@@ -82,15 +84,16 @@ ipftest: $(IPT)
 	${RM} -f $(TOP)/ipftest
 	ln -s `pwd`/ipftest $(TOP)
 
-ipnat: ipnat.o kmem.o natparse.o
-	$(CC) $(DEBUG) $(CFLAGS) ipnat.o kmem.o natparse.o -o $@ $(LIBS)
+ipnat: $(IPNAT)
+	$(CC) $(DEBUG) $(CFLAGS) $(IPNAT) -o $@ $(LIBS)
 
 tests:
 	(cd test; make )
 
 fils.o: $(TOP)/fils.c $(TOP)/ip_fil.h $(TOP)/ipf.h $(TOP)/ip_frag.h \
-	$(TOP)/ip_compat.h $(TOP)/ip_state.h
-	$(CC) $(DEBUG) $(CFLAGS) -c $(TOP)/fils.c -o $@
+	$(TOP)/ip_compat.h $(TOP)/ip_state.h $(TOP)/ip_nat.h
+	$(CC) $(DEBUG) $(CFLAGS) $(STATETOP_CFLAGS) $(STATETOP_INC) \
+	-c $(TOP)/fils.c -o $@
 
 fil.o: $(TOP)/fil.c $(TOP)/ip_fil.h $(TOP)/ipf.h $(TOP)/ip_compat.h
 	$(CC) $(DEBUG) $(CFLAGS) -c $(TOP)/fil.c -o $@
@@ -147,7 +150,7 @@ ip_frag_u.o: $(TOP)/ip_frag.c $(TOP)/ip_frag.h $(TOP)/ip_compat.h \
 	$(CC) $(DEBUG) $(CFLAGS) -c $(TOP)/ip_frag.c -o $@
 
 ip_state_u.o: $(TOP)/ip_state.c $(TOP)/ip_state.h $(TOP)/ip_compat.h \
-	$(TOP)/ip_fil.h
+	$(TOP)/ip_fil.h $(TOP)/ip_nat.h
 	$(CC) $(DEBUG) $(CFLAGS) -c $(TOP)/ip_state.c -o $@
 
 ip_auth_u.o: $(TOP)/ip_auth.c $(TOP)/ip_auth.h $(TOP)/ip_compat.h \
@@ -167,7 +170,7 @@ ip_frag.o: $(TOP)/ip_frag.c $(TOP)/ip_frag.h $(TOP)/ip_compat.h $(TOP)/ip_fil.h
 	$(CC) $(DEBUG) $(CFLAGS) $(DFLAGS) -c $(TOP)/ip_frag.c -o $@
 
 ip_state.o: $(TOP)/ip_state.c $(TOP)/ip_state.h $(TOP)/ip_compat.h \
-	$(TOP)/ip_fil.h
+	$(TOP)/ip_fil.h $(TOP)/ip_nat.h
 	$(CC) $(DEBUG) $(CFLAGS) $(DFLAGS) -c $(TOP)/ip_state.c -o $@
 
 ip_proxy.o: $(TOP)/ip_proxy.c $(TOP)/ip_proxy.h $(TOP)/ip_compat.h \
@@ -192,6 +195,9 @@ kmem.o: $(TOP)/kmem.c
 
 parse.o: $(TOP)/parse.c $(TOP)/ip_fil.h
 	$(CC) $(DEBUG) $(CFLAGS) -c $(TOP)/parse.c -o $@
+
+common.o: $(TOP)/common.c $(TOP)/ip_fil.h
+	$(CC) $(DEBUG) $(CFLAGS) -c $(TOP)/common.c -o $@
 
 facpri.o: $(TOP)/facpri.c $(TOP)/facpri.h
 	$(CC) $(DEBUG) $(CFLAGS) -c $(TOP)/facpri.c -o $@
@@ -242,6 +248,7 @@ install:
 	-$(INSTALL) -F $(MANDIR)/man5 -m 444 -src $(TOP)/man/ipnat.5 -O ipnat.5
 	-$(INSTALL) -F $(MANDIR)/man5 -m 444 -src $(TOP)/man/ipfilter.5 -O ipfilter.5
 	-$(INSTALL) -F $(MANDIR)/man8 -m 444 -src $(TOP)/man/ipf.8 -O ipf.8
+	-$(INSTALL) -F $(MANDIR)/man8 -m 444 -src $(TOP)/man/ipfs.8 -O ipfs.8
 	-$(INSTALL) -F $(MANDIR)/man8 -m 444 -src $(TOP)/man/ipfstat.8 -O ipfstat.8
 	-$(INSTALL) -F $(MANDIR)/man8 -m 444 -src $(TOP)/man/ipmon.8 -O ipmon.8
 	-$(INSTALL) -F /etc/init.d -m 755 -src ipfboot -O ipf

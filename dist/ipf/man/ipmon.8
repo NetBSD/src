@@ -1,4 +1,4 @@
-.\"	$NetBSD: ipmon.8,v 1.1.1.3 2000/02/01 20:12:14 veego Exp $
+.\"	$NetBSD: ipmon.8,v 1.1.1.4 2000/05/03 10:57:13 veego Exp $
 .\"
 .TH ipmon 8
 .SH NAME
@@ -6,13 +6,15 @@ ipmon \- monitors /dev/ipl for logged packets
 .SH SYNOPSIS
 .B ipmon
 [
-.B \-aFhnstvxX
+.B \-aDFhnpstvxX
+] [
+.B "\-N <device>"
 ] [
 .B "\-o [NSI]"
 ] [
 .B "\-O [NSI]"
 ] [
-.B "\-N <device>"
+.B "\-P <pidfile>"
 ] [
 .B "\-S <device>"
 ] [
@@ -76,6 +78,10 @@ In order for \fBipmon\fP to properly work, the kernel option
 Open all of the device logfiles for reading log entries from.  All entries
 are displayed to the same output 'device' (stderr or syslog).
 .TP
+.B \-D
+Cause ipmon to turn itself into a daemon.  Using subshells or backgrounding
+of ipmon is not required to turn it into an orphan so it can run indefinately.
+.TP
 .B "\-f <device>"
 specify an alternative device/file from which to read the log information
 for normal IP Filter log records.
@@ -100,6 +106,15 @@ equivalent to using \fB-o NSI\fP.
 Specify which log files you do not wish to read from.  This is most sensibly
 used with the \fB-a\fP.  Letters available as paramters to this are the same
 as for \fB-o\fP.
+.TP
+.B \-p
+Cause the port number in log messages to always be printed as a number and
+never attempt to look it up as from \fI/etc/services\fP, etc.
+.TP
+.B \-P <pidfile>
+Write the pid of the ipmon process to a file.  By default this is
+\fI//etc/opt/ipf/ipmon.pid\fP (Solaris), \fI/var/run/ipmon.pid\fP (44BSD
+or later) or \fI/etc/ipmon.pid\fP for all others.
 .TP
 .B \-s
 Packet information read in will be sent through syslogd rather than
@@ -145,6 +160,8 @@ recorded data.
 /dev/ipnat
 .br
 /dev/ipstate
+.br
+/etc/services
 .SH SEE ALSO
 ipl(4), ipf(8), ipfstat(8), ipnat(8)
 .SH BUGS

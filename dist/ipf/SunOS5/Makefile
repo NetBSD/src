@@ -19,6 +19,8 @@ PKGBIN=$(PKGDIR)/bin
 #
 TOP=..
 TMP=/tmp
+#CPU:sh=uname -p
+#REV:sh=uname -r
 CPUDIR=`uname -p`-`uname -r`
 BITS=`optisa sparcv9 >/dev/null 2>&1; if [ $$? -eq 0 ] ; then echo "64"; else echo "32"; fi`
 CC=gcc -Wall
@@ -45,13 +47,14 @@ DFLAGS=$(IPFLKM) $(IPFLOG) $(DEF) -DIPFILTER_LOG $(SOLARIS2)
 #-DIPFDEBUG
 MODOBJS=ip_sfil.o fil_k.o solaris.o ip_state.o ip_frag.o ip_nat.o ip_proxy.o \
 	ip_auth.o ip_log.o
-IPF=ipf.o parse.o opt.o inet_addr.o facpri.o
-IPT=ipt.o parse.o fil.o ipft_sn.o ipft_ef.o ipft_td.o ipft_pc.o opt.o \
-    ipft_tx.o misc.o ip_state_u.o ip_frag_u.o ip_nat_u.o inet_addr.o \
+IPF=ipf.o parse.o common.o opt.o inet_addr.o facpri.o
+IPT=ipt.o parse.o common.o fil.o ipft_sn.o ipft_ef.o ipft_td.o ipft_pc.o \
+    opt.o ipft_tx.o misc.o ip_state_u.o ip_frag_u.o ip_nat_u.o inet_addr.o \
     ip_fil_u.o ipft_hx.o ip_proxy_u.o ip_auth_u.o natparse.o facpri.o
-FILS=fils.o parse.o kmem.o opt.o inet_addr.o facpri.o
+IPNAT=ipnat.o kmem.o natparse.o inet_addr.o common.o
+FILS=fils.o parse.o kmem.o opt.o inet_addr.o facpri.o common.o
 
-sunos5 solaris2 build: ipf.exe ipfstat ipftest ipmon ipnat ipf
+sunos5 solaris2 build: ipf.exe ipfstat ipftest ipmon ipnat ipf ipfs
 
 pkg: ipf.pkg
 
@@ -68,14 +71,21 @@ ipftest: $(IPT)
 	/bin/rm -f $(TOP)/ipftest
 	ln -s `pwd`/ipftest $(TOP)/ipftest
 
-ipnat: ipnat.o kmem.o natparse.o
-	$(CC) $(CFLAGS) ipnat.o kmem.o natparse.o -o $@ $(LIBS)
+ipnat: $(IPNAT)
+	$(CC) $(CFLAGS) $(IPNAT) -o $@ $(LIBS)
+
+ipfs: ipfs.o
+	$(CC) $(DEBUG) $(CFLAGS) ipfs.o -o $@ $(LIBS)
 
 tests:
 	(cd test; make )
 
 fils.o: $(TOP)/fils.c $(TOP)/ip_fil.h $(TOP)/ipf.h
 	$(CC) $(DEBUG) $(CFLAGS) -c $(TOP)/fils.c -o $@
+
+ipfs.o: $(TOP)/ipfs.c $(TOP)/ip_fil.h $(TOP)/ipf.h $(TOP)/ip_state.h \
+		$(TOP)/ip_nat.h
+	$(CC) $(DEBUG) $(CFLAGS) -c $(TOP)/ipfs.c -o $@
 
 fil.o: $(TOP)/fil.c $(TOP)/ip_fil.h $(TOP)/ipf.h
 	$(CC) $(DEBUG) $(CFLAGS) -c $(TOP)/fil.c -o $@
@@ -101,10 +111,12 @@ opt.o: $(TOP)/opt.c $(TOP)/ip_fil.h $(TOP)/ipf.h
 ipnat.o: $(TOP)/ipnat.c $(TOP)/ip_fil.h $(TOP)/ipf.h $(TOP)/ip_nat.h
 	$(CC) $(DEBUG) $(CFLAGS) -c $(TOP)/ipnat.c -o $@
 
-natparse.o: $(TOP)/natparse.c $(TOP)/ip_fil.h $(TOP)/ipf.h $(TOP)/ip_nat.h
+natparse.o: $(TOP)/natparse.c $(TOP)/ip_fil.h $(TOP)/ipf.h $(TOP)/ip_nat.h \
+		$(TOP)/ip_compat.h
 	$(CC) $(DEBUG) $(CFLAGS) -c $(TOP)/natparse.c -o $@
 
-ipft_sn.o: $(TOP)/ipft_sn.c $(TOP)/ipt.h $(TOP)/ipf.h $(TOP)/ip_fil.h $(TOP)/snoop.h
+ipft_sn.o: $(TOP)/ipft_sn.c $(TOP)/ipt.h $(TOP)/ipf.h $(TOP)/ip_fil.h \
+		$(TOP)/snoop.h
 	$(CC) $(DEBUG) $(CFLAGS) -c $(TOP)/ipft_sn.c -o $@
 
 ipft_ef.o: $(TOP)/ipft_ef.c $(TOP)/ipf.h $(TOP)/ip_fil.h $(TOP)/ipt.h
@@ -175,6 +187,9 @@ kmem.o: $(TOP)/kmem.c
 parse.o: $(TOP)/parse.c $(TOP)/ip_fil.h
 	$(CC) $(DEBUG) $(CFLAGS) -c $(TOP)/parse.c -o $@
 
+common.o: $(TOP)/common.c $(TOP)/ip_fil.h
+	$(CC) $(DEBUG) $(CFLAGS) -c $(TOP)/common.c -o $@
+
 facpri.o: $(TOP)/facpri.c $(TOP)/facpri.h
 	$(CC) $(DEBUG) $(CFLAGS) -c $(TOP)/facpri.c -o $@
 
@@ -183,9 +198,10 @@ ipmon: $(TOP)/ipmon.c
 
 clean:
 	if [ `basename \`pwd\`` != SunOS5 ] ; then \
-		${RM} -f core *.o ipt fils ipf ipfstat ipftest ipmon ipnat ipf.exe; \
+		${RM} -f core *.o ipt fils ipf ipfstat ipftest ipmon ipnat ipf.exe ipfs; \
 		${RM} -f ipnat.5 ipnat.4 ipnat.1 ipfilter.5; \
 		${RM} -f prototype pkginfo postinstall postremove copyright; \
+		${RM} -f  y.tab.? lex.yy.c; \
 	fi
 	/bin/rm -rf */root ipf.pkg
 	make -f Makefile.ipsend clean
@@ -208,12 +224,14 @@ ipf.pkg:
 	-$(INSTALL) -c $(TOP)/mkfilters $(PKGBIN)/mkfilters
 	-$(INSTALL) -c $(CPUDIR)/ipf $(ROOT)/usr/kernel/drv/ipf
 	-$(INSTALL) -c ipf.conf $(ROOT)/usr/kernel/drv
+	-$(INSTALL) -c -s $(CPUDIR)/ipfs $(ROOT)/$(SBINDEST)/ipfs
 	-$(INSTALL) -c -s $(CPUDIR)/ipnat $(ROOT)/$(SBINDEST)/ipnat
 	-$(INSTALL) -c -s $(CPUDIR)/ipf.exe $(ROOT)/$(SBINDEST)/ipf
 	-$(INSTALL) -c -s $(CPUDIR)/ipfstat $(ROOT)/$(SBINDEST)/ipfstat
 	-$(INSTALL) -c ipfboot $(ROOT)/etc/init.d
 	-cp $(TOP)/man/*.[0-9] .
 	-$(INSTALL) ipf.8 $(PKGMAN)/man8
+	-$(INSTALL) ipfs.8 $(PKGMAN)/man8
 	-$(INSTALL) ipnat.1 $(PKGMAN)/man1
 	-$(INSTALL) ipftest.1 $(PKGMAN)/man1
 	-$(INSTALL) mkfilters.1 $(PKGMAN)/man1

@@ -1,7 +1,7 @@
-/*	$NetBSD: mlf_ipl.c,v 1.1.1.2 2000/02/01 20:11:24 veego Exp $	*/
+/*	$NetBSD: mlf_ipl.c,v 1.1.1.3 2000/05/03 10:55:52 veego Exp $	*/
 
 /*
- * Copyright (C) 1993-1998 by Darren Reed.
+ * Copyright (C) 1993-2000 by Darren Reed.
  *
  * Redistribution and use in source and binary forms are permitted
  * provided that this notice is preserved and due credit is given
@@ -76,6 +76,7 @@
 #include "netinet/ip_nat.h"
 #include "netinet/ip_auth.h"
 #include "netinet/ip_frag.h"
+#include "netinet/ip_proxy.h"
 
 
 #if !defined(VOP_LEASE) && defined(LEASE_CHECK)
@@ -93,6 +94,7 @@ SYSCTL_NODE(_net_inet, OID_AUTO, ipf, CTLFLAG_RW, 0, "IPF");
 SYSCTL_INT(_net_inet_ipf, OID_AUTO, fr_flags, CTLFLAG_RW, &fr_flags, 0, "");
 SYSCTL_INT(_net_inet_ipf, OID_AUTO, fr_pass, CTLFLAG_RW, &fr_pass, 0, "");
 SYSCTL_INT(_net_inet_ipf, OID_AUTO, fr_active, CTLFLAG_RD, &fr_active, 0, "");
+SYSCTL_INT(_net_inet_ipf, OID_AUTO, fr_chksrc, CTLFLAG_RW, &fr_chksrc, 0, "");
 SYSCTL_INT(_net_inet_ipf, OID_AUTO, fr_tcpidletimeout, CTLFLAG_RW,
 	   &fr_tcpidletimeout, 0, "");
 SYSCTL_INT(_net_inet_ipf, OID_AUTO, fr_tcpclosewait, CTLFLAG_RW,
@@ -121,6 +123,8 @@ SYSCTL_INT(_net_inet_ipf, OID_AUTO, fr_authused, CTLFLAG_RD,
 	   &fr_authused, 0, "");
 SYSCTL_INT(_net_inet_ipf, OID_AUTO, fr_defaultauthage, CTLFLAG_RW,
 	   &fr_defaultauthage, 0, "");
+SYSCTL_INT(_net_inet_ipf, OID_AUTO, ippr_ftp_pasvonly, CTLFLAG_RW,
+	   &ippr_ftp_pasvonly, 0, "");
 #endif
 
 #ifdef DEVFS

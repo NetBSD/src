@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.1.1.1 1999/12/11 22:24:05 veego Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.1.1.2 2000/05/03 10:56:44 veego Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -69,7 +69,7 @@ struct	in_ifaddr *in_ifaddr;			/* first inet address */
 extern	int	ip_forwarding, ip_dirbroadcast;
 int	ipprintfs = 0;
 int	in_interfaces;
-int	ipsendredirects;
+extern	int	ip_sendredirects;
 #if defined(IPFILTER_LKM) || defined(IPFILTER)
 int	(*fr_checkp)() = NULL, fr_check();
 #endif
@@ -674,6 +674,7 @@ ip_dooptions(m, ifp)
 	register struct in_ifaddr *ia;
 	int opt, optlen, cnt, off, code, type = ICMP_PARAMPROB, forward = 0;
 	struct in_addr *sin;
+	struct in_addr dest;
 	n_time ntime;
 
 	cp = (u_char *)(ip + 1);
@@ -842,7 +843,8 @@ ip_dooptions(m, ifp)
 	}
 	return (0);
 bad:
-	icmp_error(ip, type, code, ifp);
+	dest.s_addr = 0;
+	icmp_error(ip, type, code, ifp, dest);
 	return (1);
 }
 
@@ -1034,10 +1036,9 @@ ip_forward(m, srcrt, ifp)
 	register struct rtentry *rt;
 	int error, type = 0, code;
 	struct mbuf *mcopy;
-	n_long dest;
-	struct ifnet *destifp;
+	struct in_addr dest;
 
-	dest = 0;
+	dest.s_addr = 0;
 	if (in_canforward(ip->ip_dst) == 0) {
 		ipstat.ips_cantforward++;
 		m_freem(m);
@@ -1045,7 +1046,7 @@ ip_forward(m, srcrt, ifp)
 	}
 /*	HTONS(ip->ip_id);	*/
 	if (ip->ip_ttl <= IPTTLDEC) {
-		icmp_error(ip, ICMP_TIMXCEED, ICMP_TIMXCEED_INTRANS, ifp, 0);
+		icmp_error(ip, ICMP_TIMXCEED, ICMP_TIMXCEED_INTRANS, ifp, dest);
 		return;
 	}
 	ip->ip_ttl -= IPTTLDEC;
@@ -1063,7 +1064,7 @@ ip_forward(m, srcrt, ifp)
 		rtalloc(&ipforward_rt);
 		if (ipforward_rt.ro_rt == 0) {
 			icmp_error(ip, ICMP_UNREACH, ICMP_UNREACH_HOST,
-				   ifp, 0);
+				   ifp, dest);
 			return;
 		}
 		rt = ipforward_rt.ro_rt;
@@ -1087,18 +1088,20 @@ ip_forward(m, srcrt, ifp)
 	if (rt->rt_ifp == ifp &&
 	    (rt->rt_flags & (RTF_DYNAMIC|RTF_MODIFIED)) == 0 &&
 	    satosin(&rt->rt_dst)->sin_addr.s_addr != 0 &&
-	    ipsendredirects && !srcrt) {
+	    ip_sendredirects && !srcrt) {
 		struct in_ifaddr *ia = ifptoia(ifp);
 		u_long src = ntohl(ip->ip_src.s_addr);
 
 		if (ia && (src & ia->ia_subnetmask) == ia->ia_subnet) {
 		    if (rt->rt_flags & RTF_GATEWAY)
-			dest = satosin(&rt->rt_gateway)->sin_addr.s_addr;
+			dest = satosin(&rt->rt_gateway)->sin_addr;
 		    else
-			dest = ip->ip_dst.s_addr;
+			dest = ip->ip_dst;
 		    /* Router requirements says to only send host redirects */
 		    type = ICMP_REDIRECT;
 		    code = ICMP_REDIRECT_HOST;
+		    if (ipprintfs)
+			printf("ip_forward: redirect (%d) to %x\n", code, dest.s_addr);
 		}
 	}
 
@@ -1118,7 +1121,6 @@ ip_forward(m, srcrt, ifp)
 	}
 	if (mcopy == NULL)
 		return;
-	destifp = NULL;
 
 	switch (error) {
 
@@ -1139,7 +1141,7 @@ ip_forward(m, srcrt, ifp)
 		type = ICMP_UNREACH;
 		code = ICMP_UNREACH_NEEDFRAG;
 		if (ipforward_rt.ro_rt)
-			destifp = ipforward_rt.ro_rt->rt_ifp;
+			ifp = ipforward_rt.ro_rt->rt_ifp;
 		break;
 
 	case ENOBUFS:
@@ -1147,7 +1149,7 @@ ip_forward(m, srcrt, ifp)
 		code = 0;
 		break;
 	}
-	icmp_error(mtod(mcopy, struct ip *), type, code, destifp, dest);
+	icmp_error(mtod(mcopy, struct ip *), type, code, ifp, dest);
 }
 
 #ifdef RSVP_ISI

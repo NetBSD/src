@@ -39,38 +39,48 @@ INSTALL=install
 MODOBJS=ip_fil.o fil_k.o mls_ipl.o ip_nat.o ip_state.o ip_frag.o ip_proxy.o \
 	ip_auth.o ip_log.o
 DFLAGS=$(IPFLKM) $(IPFLOG) $(DEF)
-IPF=ipf.o parse.o opt.o inet_addr.o facpri.o
-IPT=ipt.o parse.o fil.o ipft_sn.o ipft_ef.o ipft_td.o ipft_pc.o opt.o \
-    ipft_tx.o misc.o ip_nat_u.o ip_frag_u.o ip_state_u.o inet_addr.o \
-    ipft_hx.o ip_fil_u.o ip_proxy_u.o ip_auth_u.o natparse.o facpri.o
-FILS=fils.o parse.o kmem.o opt.o inet_addr.o facpri.o
+IPF=ipf.o common.o parse.o opt.o inet_addr.o facpri.o
+IPT=ipt.o common.o parse.o fil.o opt.o ipft_sn.o ipft_ef.o ipft_td.o \
+    ipft_pc.o ipft_tx.o misc.o ip_nat_u.o ip_frag_u.o ip_state_u.o \
+    inet_addr.o ipft_hx.o ip_fil_u.o ip_proxy_u.o ip_auth_u.o natparse.o \
+    facpri.o
+IPNAT=ipnat.o kmem.o common.o natparse.o inet_addr.o
+FILS=fils.o parse.o common.o kmem.o opt.o inet_addr.o facpri.o
 
 all:
 	(cd ..; $(MAKE) $(MFLAGS) sunos4; )
 
-sunos4 solaris1 build: ipf ipfstat ipftest ipmon ipnat if_ipl.o
+sunos4 solaris1 build: ipf ipfstat ipftest ipmon ipnat ipfs if_ipl.o
 
 ipfstat: $(FILS)
-	$(CC) $(DEBUG) $(CFLAGS) $(FILS) -o $@ $(LIBS)
+	$(CC) $(DEBUG) $(CFLAGS) $(STATETOP_CFLAGS) $(STATETOP_INC) $(FILS) \
+	-o $@ $(LIBS) $(STATETOP_LIB)
 
 ipf: $(IPF)
 	$(CC) $(DEBUG) $(CFLAGS) $(IPF) -o $@ $(LIBS)
 	/bin/rm -f ../ipf
 	ln -s `pwd`/ipf ..
 
+ipfs: ipfs.o
+	$(CC) $(DEBUG) $(CFLAGS) ipfs.o -o $@ $(LIBS)
+
 ipftest: $(IPT)
 	$(CC) $(DEBUG) $(CFLAGS) $(IPT) -o $@ $(LIBS)
 	/bin/rm -f ../ipftest
 	ln -s `pwd`/ipftest ..
 
-ipnat: ipnat.o kmem.o natparse.o
-	$(CC) $(DEBUG) $(CFLAGS) ipnat.o kmem.o natparse.o -o $@ $(LIBS)
+ipnat: $(IPNAT)
+	$(CC) $(DEBUG) $(CFLAGS) $(IPNAT) -o $@ $(LIBS)
 
 tests:
 	(cd test; make )
 
+ipfs.o: ../ipfs.c ../ip_fil.h ../ipf.h ../ip_state.h ../ip_nat.h
+	$(CC) $(DEBUG) $(CFLAGS) -c ../ipfs.c -o $@
+
 fils.o: ../fils.c ../ip_fil.h ../ipf.h
-	$(CC) $(DEBUG) $(CFLAGS) -c ../fils.c -o $@
+	$(CC) $(DEBUG) $(CFLAGS) $(STATETOP_CFLAGS) $(STATETOP_INC) \
+	-c ../fils.c -o $@
 
 fil.o: ../fil.c ../ip_fil.h ../ipf.h
 	$(CC) $(DEBUG) $(CFLAGS) -c ../fil.c -o $@
@@ -96,7 +106,8 @@ opt.o: ../opt.c
 ipnat.o: ../ipnat.c ../ip_fil.h ../ipf.h ../ip_nat.h
 	$(CC) $(DEBUG) $(CFLAGS) -c ../ipnat.c -o $@
 
-natparse.o: ../natparse.c ../ip_fil.h ../ipf.h ../ip_nat.h
+natparse.o: ../natparse.c ../ip_fil.h ../ipf.h ../ip_nat.h \
+	$(TOP)/ip_compat.h
 	$(CC) $(DEBUG) $(CFLAGS) -c ../natparse.c -o $@
 
 ipft_sn.o: ../ipft_sn.c ../ipt.h ../ipf.h ../ip_fil.h ../snoop.h
@@ -178,6 +189,9 @@ kmem.o: ../kmem.c
 parse.o: ../parse.c ../ip_fil.h
 	$(CC) $(DEBUG) $(CFLAGS) -c ../parse.c -o $@
 
+common.o: ../common.c ../ip_fil.h
+	$(CC) $(DEBUG) $(CFLAGS) -c ../common.c -o $@
+
 facpri.o: ../facpri.c ../facpri.h
 	$(CC) $(DEBUG) $(CFLAGS) -c ../facpri.c -o $@
 
@@ -186,16 +200,17 @@ ipmon: ../ipmon.c
 
 clean:
 	${RM} -f core *.o ipt fils ipf ipfstat ipftest ipmon if_ipl ipnat \
-		$(LKM)
+		$(LKM) y.tab.? lex.yy.c
 	${MAKE} -f Makefile.ipsend clean
 
 
 install: all ../ip_fil.h
 	-$(CP) ../ip_fil.h /usr/include/netinet/ip_fil.h
 	-$(CHMOD) 444 /usr/include/netinet/ip_fil.h
-	-$(INSTALL) -cs -g wheel -m 755 -o root ipfstat ipf ipnat $(SBINDEST)
-	-$(INSTALL) -cs -g wheel -m 755 -o root ipmon ipftest $(BINDEST)
-	-$(INSTALL) -cs -g wheel -m 755 -o root ipftest ipftest $(BINDEST)
-	-$(INSTALL) -cs -g wheel -m 755 -o root ipf ipftest $(SBINDEST)
-	-$(INSTALL) -cs -g wheel -m 755 -o root ipnat ipftest $(SBINDEST)
+	-$(INSTALL) -cs -g wheel -m 755 -o root ipf $(SBINDEST)
+	-$(INSTALL) -cs -g wheel -m 755 -o root ipfs $(SBINDEST)
+	-$(INSTALL) -cs -g wheel -m 755 -o root ipnat $(SBINDEST)
+	-$(INSTALL) -cs -g wheel -m 755 -o root ipftest $(BINDEST)
+	-$(INSTALL) -cs -g wheel -m 755 -o root ipfstat $(SBINDEST)
+	-$(INSTALL) -cs -g wheel -m 755 -o root ipmon $(BINDEST)
 	(cd ../man; make INSTALL=$(INSTALL) MANDIR=$(MANDIR) install; cd ..)

@@ -1,5 +1,8 @@
-/*	$NetBSD: ip_raudio_pxy.c,v 1.1.1.3 2000/02/01 20:35:55 veego Exp $	*/
+/*	$NetBSD: ip_raudio_pxy.c,v 1.1.1.4 2000/05/03 10:58:34 veego Exp $	*/
 
+/*
+ * Id: ip_raudio_pxy.c,v 1.7 2000/03/16 01:38:07 darrenr Exp
+ */
 #if SOLARIS && defined(_KERNEL)
 extern	kmutex_t	ipf_rw;
 #endif
@@ -40,12 +43,13 @@ nat_t *nat;
 
 
 	KMALLOCS(aps->aps_data, void *, sizeof(raudio_t));
-	if (aps->aps_data != NULL) {
-		bzero(aps->aps_data, sizeof(raudio_t));
-		rap = aps->aps_data;
-		aps->aps_psiz = sizeof(raudio_t);
-		rap->rap_mode = RAP_M_TCP;	/* default is for TCP */
-	}
+	if (aps->aps_data == NULL)
+		return -1;
+
+	bzero(aps->aps_data, sizeof(raudio_t));
+	rap = aps->aps_data;
+	aps->aps_psiz = sizeof(raudio_t);
+	rap->rap_mode = RAP_M_TCP;	/* default is for TCP */
 	return 0;
 }
 

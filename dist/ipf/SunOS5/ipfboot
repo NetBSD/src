@@ -5,6 +5,19 @@ PATH=${PATH}:/sbin:/opt/ipf/bin
 IPFILCONF=/etc/opt/ipf/ipf.conf
 IPNATCONF=/etc/opt/ipf/ipnat.conf
 
+block_default_workaround() {
+      ipf -F a
+      echo "constructing minimal name resolution rules..."
+      NAMESERVERS=`cat /etc/resolv.conf | nawk '/nameserver/ {printf "%s ", $2}'`
+      for NS in $NAMESERVERS
+      do
+	      IF_TO_NS=`/usr/sbin/route -n get $NS | nawk '/interface/ {print $NF}'`
+	      IP_TO_NS=`ifconfig hme0 | head -2 | tail -1 | nawk '{print $2}'`
+	      echo "pass out quick proto udp from $IP_TO_NS to $NS port = 53 keep state" | \
+		      ipf -f -
+      done
+}
+
 case "$1" in
 	start)
 		if [ x$pid != x ] ; then
@@ -15,6 +28,10 @@ case "$1" in
 		fi
 		modload /usr/kernel/drv/ipf
 		if [ -r ${IPFILCONF} ]; then
+			BLOCK_DEFAULT=`/sbin/ipf -V | grep Default | nawk '{print $2}'`
+			if [ x$BLOCK_DEFAULT = "xblock" ] ; then
+				block_default_workaround
+			fi
 			ipf -IFa -f ${IPFILCONF}
 			if [ $? != 0 ]; then
 				echo "$0: load of ${IPFILCONF} into alternate set failed"
