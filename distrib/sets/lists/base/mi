@@ -551,6 +551,7 @@
 ./usr/sbin/pac
 ./usr/sbin/pawd
 ./usr/sbin/pkg_add
+./usr/sbin/pkg_admin
 ./usr/sbin/pkg_create
 ./usr/sbin/pkg_delete
 ./usr/sbin/pkg_info
