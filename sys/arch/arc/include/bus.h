@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.11 2001/07/19 15:32:11 thorpej Exp $	*/
+/*	$NetBSD: bus.h,v 1.12 2001/09/04 06:57:27 thorpej Exp $	*/
 /*	NetBSD: bus.h,v 1.27 2000/03/15 16:44:50 drochner Exp 	*/
 /*	$OpenBSD: bus.h,v 1.15 1999/08/11 23:15:21 niklas Exp $	*/
 
@@ -158,6 +158,7 @@ struct arc_bus_space {
 				bus_size_t));
 	int	(*bs_subregion) __P((bus_space_tag_t, bus_space_handle_t,
 				bus_size_t, bus_size_t,	bus_space_handle_t *));
+	paddr_t	(*bs_mmap) __P((bus_space_tag_t, bus_addr_t, off_t, int, int));
 
 	/* allocation/deallocation */
 	int	(*bs_alloc) __P((bus_space_tag_t, bus_addr_t, bus_addr_t,
@@ -208,6 +209,7 @@ void	arc_bus_space_unmap __P((bus_space_tag_t, bus_space_handle_t,
 	    bus_size_t));
 int	arc_bus_space_subregion __P((bus_space_tag_t, bus_space_handle_t,
 	    bus_size_t, bus_size_t, bus_space_handle_t *));
+paddr_t	arc_bus_space_mmap __P((bus_space_tag_t, bus_addr_t, off_t, int, int));
 int	arc_bus_space_alloc __P((bus_space_tag_t, bus_addr_t, bus_addr_t,
 	    bus_size_t, bus_size_t, bus_size_t, int, bus_addr_t *,
 	    bus_space_handle_t *));
@@ -242,7 +244,7 @@ int	arc_bus_space_alloc __P((bus_space_tag_t, bus_addr_t, bus_addr_t,
  * MACHINE DEPENDENT, NOT PORTABLE INTERFACE:
  * (cannot be implemented on e.g. I/O space on i386, non-linear space on alpha)
  * Return physical address of a region.
- * A helper function for device mmap entry.
+ * A helper function for machine-dependent device mmap entry.
  */
 #define bus_space_paddr(bst, bsh, pap)					\
 	(*(bst)->bs_paddr)(bst, bsh, pap)
@@ -256,6 +258,15 @@ int	arc_bus_space_alloc __P((bus_space_tag_t, bus_addr_t, bus_addr_t,
  */
 #define bus_space_vaddr(bst, bsh)					\
 	((void *)(bsh))
+
+/*
+ *	paddr_t bus_space_mmap __P((bus_space_tag_t, bus_addr_t, off_t,
+ *	    int, int));
+ *
+ * Mmap bus space on behalf of the user.
+ */
+#define	bus_space_mmap(bst, addr, off, prot, flags)			\
+	(*(bst)->bs_mmap)((bst), (addr), (off), (prot), (flags))
 
 /*
  *	int bus_space_map __P((bus_space_tag_t t, bus_addr_t addr,
