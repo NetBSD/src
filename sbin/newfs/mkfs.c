@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.39 2000/12/01 11:52:54 simonb Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.40 2000/12/01 12:03:27 simonb Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.39 2000/12/01 11:52:54 simonb Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.40 2000/12/01 12:03:27 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -57,11 +57,10 @@ __RCSID("$NetBSD: mkfs.c,v 1.39 2000/12/01 11:52:54 simonb Exp $");
 #include <stdlib.h>
 
 #ifndef STANDALONE
-#include <a.out.h>
 #include <stdio.h>
-#include <time.h>
 #endif
-#include <extern.h>
+
+#include "extern.h"
 
 
 static void initcg(int, time_t);
@@ -95,40 +94,6 @@ static int count_digits(int);
 #define UMASK		0755
 #define MAXINOPB	(MAXBSIZE / DINODE_SIZE)
 #define POWEROF2(num)	(((num) & ((num) - 1)) == 0)
-
-/*
- * variables set up by front end.
- */
-extern int	mfs;		/* run as the memory based filesystem */
-extern int	Nflag;		/* run mkfs without writing file system */
-extern int	Oflag;		/* format as an 4.3BSD file system */
-extern int	fssize;		/* file system size */
-extern int	ntracks;	/* # tracks/cylinder */
-extern int	nsectors;	/* # sectors/track */
-extern int	nphyssectors;	/* # sectors/track including spares */
-extern int	secpercyl;	/* sectors per cylinder */
-extern int	sectorsize;	/* bytes/sector */
-extern int	rpm;		/* revolutions/minute of drive */
-extern int	interleave;	/* hardware sector interleave */
-extern int	trackskew;	/* sector 0 skew, per track */
-extern int	headswitch;	/* head switch time, usec */
-extern int	trackseek;	/* track-to-track seek, usec */
-extern int	fsize;		/* fragment size */
-extern int	bsize;		/* block size */
-extern int	cpg;		/* cylinders/cylinder group */
-extern int	cpgflg;		/* cylinders/cylinder group flag was given */
-extern int	minfree;	/* free space threshold */
-extern int	opt;		/* optimization preference (space or time) */
-extern int	density;	/* number of bytes per inode */
-extern int	maxcontig;	/* max contiguous blocks to allocate */
-extern int	rotdelay;	/* rotational delay between blocks */
-extern int	maxbpg;		/* maximum blocks per file in a cyl group */
-extern int	nrpos;		/* # of distinguished rotational positions */
-extern int	bbsize;		/* boot block size */
-extern int	sbsize;		/* superblock size */
-extern u_long	memleft;	/* virtual memory available */
-extern caddr_t	membase;	/* start address of memory based filesystem */
-extern int needswap;		/* Filesystem not in native byte order */
 
 union {
 	struct fs fs;
