@@ -30,31 +30,13 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: adbsys.c,v 1.5 1994/09/12 03:54:05 briggs Exp $
+ * $Id: adbsys.c,v 1.6 1994/09/12 21:56:36 briggs Exp $
  *
- */
-
-/*
- * $Log: adbsys.c,v $
- * Revision 1.5  1994/09/12 03:54:05  briggs
- * Remove need for "bounds.h."  Brad can still use it if he wants ;-)
- *
- * Revision 1.4  1994/07/30  04:21:42  lkestel
- * Moved adbsys.h grfioctl.h and keyboard.h to include to make desktop
- * and X compile more cleanly.
- *
- * Revision 1.3  1994/07/21  06:36:51  lkestel
- * Fixed a few bugs in the key-repeat function and disabled key-repeat
- * when /dev/adb is closed to avoid infinite repeat problem.  Brad claims
- * that he's got this solved in his version...
- *
- * 
- * 12/22/93 ~10PM I wrote a new ADB system.
  */
 
 /* I can't believe how much SOFTWARE these guys expected to write */
 /* just to get the damn events from the keyboard and mouse!!! */
-/* Why couldn't the data just arrive at my doorstep gift-wrapped? */
+/* Why couldn't the data just arrive at my doorstep gift-wrapped? -- BG */
 
 
 #include <sys/types.h>
