@@ -1,4 +1,4 @@
-.\"	$NetBSD: donations,v 1.15 2000/10/10 11:57:42 lukem Exp $
+.\"	$NetBSD: donations,v 1.16 2000/10/22 20:25:31 agc Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -111,4 +111,5 @@ Numerical Aerospace Simulation Facility, NASA Ames Research Center
 Piermont Information Systems Inc.
 VMC Harald Frank, Germany
 Warped Communications, Inc.
+Whitecross Database Systems Ltd.
 .Ed
