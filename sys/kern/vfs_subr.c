@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.153 2001/06/26 22:52:03 thorpej Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.154 2001/06/28 08:12:08 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -1882,9 +1882,6 @@ printlockedvnodes()
 }
 #endif
 
-extern const char *mountcompatnames[];
-extern const int nmountcompatnames;
-
 /*
  * Top level filesystem related information gathering.
  */
@@ -1900,6 +1897,8 @@ vfs_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 {
 #if defined(COMPAT_09) || defined(COMPAT_43) || defined(COMPAT_44)
 	struct vfsconf vfc;
+	extern const char * const mountcompatnames[];
+	extern int nmountcompatnames;
 #endif
 	struct vfsops *vfsp;
 
@@ -1909,10 +1908,14 @@ vfs_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 
 	/* Not generic: goes to file system. */
 	if (name[0] != VFS_GENERIC) {
-		if (name[0] >= nmountcompatnames || name[0] < 0 ||
-		    mountcompatnames[name[0]] == NULL)
+		static const struct ctlname vfsnames[] = CTL_VFS_NAMES;
+		const char *vfsname;
+
+		if (name[0] < 0 || name[0] > VFS_MAXID
+		    || (vfsname = vfsnames[name[0]].ctl_name) == NULL)
 			return (EOPNOTSUPP);
-		vfsp = vfs_getopsbyname(mountcompatnames[name[0]]);
+
+		vfsp = vfs_getopsbyname(vfsname);
 		if (vfsp == NULL || vfsp->vfs_sysctl == NULL)
 			return (EOPNOTSUPP);
 		return ((*vfsp->vfs_sysctl)(&name[1], namelen - 1,
