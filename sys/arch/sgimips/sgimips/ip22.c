@@ -1,4 +1,4 @@
-/*	$NetBSD: ip22.c,v 1.20 2003/12/14 07:53:10 sekiya Exp $	*/
+/*	$NetBSD: ip22.c,v 1.21 2003/12/15 10:24:47 sekiya Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Rafal K. Boni
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip22.c,v 1.20 2003/12/14 07:53:10 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip22.c,v 1.21 2003/12/15 10:24:47 sekiya Exp $");
 
 #include "opt_cputype.h"
 #include "opt_machtypes.h"
@@ -55,9 +55,6 @@ static struct evcnt mips_int5_evcnt =
 
 static struct evcnt mips_spurint_evcnt =
     EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "mips", "spurious interrupts");
-
-static u_int32_t iocwrite;	/* IOC write register: read-only */
-static u_int32_t iocreset;	/* IOC reset register: read-only */
 
 void		ip22_init(void);
 void 		ip22_bus_reset(void);
@@ -105,37 +102,6 @@ ip22_init(void)
 
 		mach_boardrev = (sysid >> 1) & 0x0f;
 
-		printf("IOC rev %d, machine %s, board rev %d\n",
-			(sysid >> 5) & 0x07,
-	    		(sysid & 1) ? "Indigo2 (Fullhouse)" : "Indy (Guiness)",
-	    		(sysid >> 1) & 0x0f);
-
-		/*
-	 	 * Reset Parallel port, Keyboard/mouse and EISA.  Turn LED off.
-	 	 * For Fullhouse, toggle magic GIO reset bit.
-	 	 */
-
-		iocreset = 0x17;
-		if (mach_subtype == MACH_SGI_IP22_FULLHOUSE)
-			iocreset |= 0x08;
-
-		*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1fbd9870) = iocreset;
-
-		/*
-	 	 * Set the 10BaseT port to use UTP cable, set autoselect mode
-		 * for the ethernet interface (AUI vs. TP), set the two serial
-		 * ports to PC mode.
-		 */
-
-		iocwrite = 0x3a;
-		*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1fbd9878) = iocwrite;
-
-		/* Set the general control registers for Guiness */
-		if (mach_subtype == MACH_SGI_IP22_GUINESS) {
-			*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1fbd9848) = 0xff;
-			*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1fbd984c) = 0xff;
-		}
-
 		/* Hardcode interrupts 7, 11 to mappable interrupt 0,1 handlers */
 		intrtab[7].ih_fun = ip22_mappable_intr;
 		intrtab[7].ih_arg	= (void*) 0;
@@ -156,11 +122,8 @@ ip22_init(void)
 	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1fa00004) |= 0x100;
 	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1fa00014) = 0;
 
-
 	/* Reset timer interrupts */
 	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(int23addr + 0x20) = 3;
-
-
 
 	platform.iointr = ip22_intr;
 	platform.bus_reset = ip22_bus_reset;
