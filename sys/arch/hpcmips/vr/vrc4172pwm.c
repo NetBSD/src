@@ -1,7 +1,7 @@
-/*	$Id: vrc4172pwm.c,v 1.7 2001/02/26 09:33:03 sato Exp $	*/
+/*	$Id: vrc4172pwm.c,v 1.8 2001/02/27 08:48:38 sato Exp $	*/
 
 /*
- * Copyright (c) 2000 SATO Kazumi. All rights reserved.
+ * Copyright (c) 2000,2001 SATO Kazumi. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -84,8 +84,15 @@ struct cfattach vrc4172pwm_ca = {
  * platform related parameters
  */
 struct vrc4172pwm_param vrc4172pwm_mcr530_param = {
+	0,
 	8,
 	{ 0x16, 0x1b, 0x20, 0x25, 0x2a, 0x30, 0x37, 0x3f }
+};
+
+struct vrc4172pwm_param vrc4172pwm_mcr700_param = {
+	1, /* probe broken */
+	8,
+	{ 0x12, 0x15, 0x18, 0x1d, 0x24, 0x2d, 0x38, 0x3f }
 };
 
 struct platid_data vrc4172pwm_platid_param_table[] = {
@@ -97,6 +104,10 @@ struct platid_data vrc4172pwm_platid_param_table[] = {
 		&vrc4172pwm_mcr530_param},
 	{ &platid_mask_MACH_NEC_MCR_SIGMARION, 
 		&vrc4172pwm_mcr530_param},
+	{ &platid_mask_MACH_NEC_MCR_700, 
+		&vrc4172pwm_mcr700_param},
+	{ &platid_mask_MACH_NEC_MCR_700A, 
+		&vrc4172pwm_mcr700_param},
 	{ NULL, NULL}
 };
 
@@ -128,7 +139,14 @@ vrc4172pwmprobe(parent, cf, aux)
 	platid_mask_t mask;
 	struct vrip_attach_args *va = aux;
 	bus_space_handle_t ioh;
+#ifdef VRC4172PWM_BROKEN_PROBE
+	int probe = 0;
+#else /* VRC4172PWM_BROKEN_PROBE */
+	int probe = 1;
+#endif /* VRC4172PWM_BROKEN_PROBE */
 	int data;
+	int data2;
+	struct vrc4172pwm_param *param;
 	int ret = 0;
 
 	if (va->va_addr == VRIPCF_ADDR_DEFAULT)
@@ -138,24 +156,31 @@ vrc4172pwmprobe(parent, cf, aux)
 		return 0;
 	if (cf->cf_loc[VRIPCF_PLATFORM] != -1) { /* if specify */
 		mask = PLATID_DEREF(cf->cf_loc[VRIPCF_PLATFORM]);
-		DPRINTF(("vrc4172pwmprobe: check platid\n"));
+		VPRINTF(("vrc4172pwmprobe: check platid\n"));
 		if (platid_match(&platid, &mask) == 0)	
 			return 0;
+		param = vrc4172pwm_getparam();
+		if (param != NULL && param->brokenprobe)
+			probe = 0;
 	}
-	if (bus_space_map(va->va_iot, va->va_addr, va->va_size, 0, &ioh)) {
-		return 0;
-	}
-	data =  bus_space_read_2(va->va_iot, ioh, VRC2_PWM_LCDDUTYEN);
-	bus_space_write_2(va->va_iot, ioh, VRC2_PWM_LCDDUTYEN, 0xff);
-	if (bus_space_read_2(va->va_iot, ioh, VRC2_PWM_LCDDUTYEN) 
-		== VRC2_PWM_LCDEN_MASK) {
-		DPRINTF(("vrc4172pwmprobe: VRC2_PWM_LCDDUTYEN found\n"));
+	if (probe) {
+		if (bus_space_map(va->va_iot, va->va_addr, va->va_size, 0, &ioh)) {
+			return 0;
+		}
+		data =  bus_space_read_2(va->va_iot, ioh, VRC2_PWM_LCDDUTYEN);
+		bus_space_write_2(va->va_iot, ioh, VRC2_PWM_LCDDUTYEN, 0xff);
+		if ((data2 = bus_space_read_2(va->va_iot, ioh, VRC2_PWM_LCDDUTYEN))
+			== VRC2_PWM_LCDEN_MASK) {
+			VPRINTF(("vrc4172pwmprobe: VRC2_PWM_LCDDUTYEN found\n"));
+			ret = 1;
+		} else {
+			VPRINTF(("vrc4172pwmprobe: VRC2_PWM_LCDDUTYEN not found org=%x, data=%x!=%x\n", data, data2, VRC2_PWM_LCDEN_MASK));
+		}
+		bus_space_write_2(va->va_iot, ioh, VRC2_PWM_LCDDUTYEN, data);
+		bus_space_unmap(va->va_iot, ioh, va->va_size);
+	} else
 		ret = 1;
-	}
-	bus_space_write_2(va->va_iot, ioh, VRC2_PWM_LCDDUTYEN, data);
-	bus_space_unmap(va->va_iot, ioh, va->va_size);
-
-	DPRINTF(("vrc4172pwmprobe: return %d\n", ret));
+	VPRINTF(("vrc4172pwmprobe: return %d\n", ret));
 	return ret;
 }
 
@@ -321,7 +346,7 @@ struct vrc4172pwm_softc *sc;
 	if (sc->sc_param == NULL)
 		return VRC2_PWM_MAX_BRIGHTNESS;
 	for (i = 0; i < sc->sc_param->n_brightness; i++) {
-		if (sc->sc_raw_duty <= sc->sc_param->values[i])
+		if (sc->sc_raw_duty <= sc->sc_param->bvalues[i])
 			break;
 	}
 	if (i >= sc->sc_param->n_brightness-1)
@@ -340,7 +365,7 @@ struct vrc4172pwm_softc *sc;
 {
 	if (sc->sc_param == NULL)
 		return VRC2_PWM_LCDDUTY_MASK;
-	return sc->sc_param->values[sc->sc_brightness];
+	return sc->sc_param->bvalues[sc->sc_brightness];
 }
 
 
