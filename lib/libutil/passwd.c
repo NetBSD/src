@@ -1,4 +1,4 @@
-/*	$NetBSD: passwd.c,v 1.16 1999/09/16 11:45:51 lukem Exp $	*/
+/*	$NetBSD: passwd.c,v 1.17 1999/09/17 01:28:12 lukem Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: passwd.c,v 1.16 1999/09/16 11:45:51 lukem Exp $");
+__RCSID("$NetBSD: passwd.c,v 1.17 1999/09/17 01:28:12 lukem Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -352,12 +352,6 @@ pw_error(name, err, eval)
 	const char *name;
 	int err, eval;
 {
-
-	_DIAGASSERT(name != NULL);
-#ifdef _DIAGNOSTIC
-	if (name == NULL)
-		name = "ERROR: pw_error() called with name == NULL";
-#endif
 
 	if (err)
 		warn(name);
