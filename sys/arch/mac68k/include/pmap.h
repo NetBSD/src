@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.12 1996/05/05 06:17:53 briggs Exp $	*/
+/*	$NetBSD: pmap.h,v 1.13 1996/05/18 18:52:41 briggs Exp $	*/
 
 /*
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -203,9 +203,6 @@ void	pmap_deactivate __P((register pmap_t, struct pcb *));
 /* pmap_bootstrap.c */
 void	pmap_bootstrap __P((vm_offset_t, register vm_offset_t));
 void	bootstrap_mac68k __P((int));
-
-/* machdep.c */
-void	mac68k_set_io_offsets __P((vm_offset_t));
 
 /* locore.s */
 void	loadustp __P((vm_offset_t));
