@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_trantcp.c,v 1.10 2003/02/26 19:31:33 jdolecek Exp $	*/
+/*	$NetBSD: smb_trantcp.c,v 1.11 2003/03/24 18:08:51 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -31,11 +31,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * FreeBSD: src/sys/netsmb/smb_trantcp.c,v 1.4 2001/12/02 08:47:29 bp Exp
+ * FreeBSD: src/sys/netsmb/smb_trantcp.c,v 1.17 2003/02/19 05:47:38 imp Exp
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_trantcp.c,v 1.10 2003/02/26 19:31:33 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_trantcp.c,v 1.11 2003/03/24 18:08:51 jdolecek Exp $");
  
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -444,9 +444,9 @@ nbssn_recv(struct nbpcb *nbp, struct mbuf **mpp, int *lenp,
 {
 	struct socket *so = nbp->nbp_tso;
 	struct uio auio;
-	struct mbuf *m;
+	struct mbuf *m, *tm, *im;
 	u_int8_t rpcode;
-	int len;
+	int len, resid;
 	int error, rcvflg;
 
 	if (so == NULL)
@@ -454,8 +454,12 @@ nbssn_recv(struct nbpcb *nbp, struct mbuf **mpp, int *lenp,
 
 	if (mpp)
 		*mpp = NULL;
+	m = NULL;
 	for(;;) {
-		m = NULL;
+		/*
+		 * Poll for a response header.
+		 * If we don't have one waiting, return.
+		 */
 		error = nbssn_recvhdr(nbp, &len, &rpcode, MSG_DONTWAIT, p);
 		if (so->so_state &
 		    (SS_ISDISCONNECTING | SS_ISDISCONNECTED | SS_CANTRCVMORE)) {
@@ -467,39 +471,82 @@ nbssn_recv(struct nbpcb *nbp, struct mbuf **mpp, int *lenp,
 			return error;
 		if (len == 0 && nbp->nbp_state != NBST_SESSION)
 			break;
+		/* no data, try again */
 		if (rpcode == NB_SSN_KEEPALIVE)
 			continue;
-		bzero(&auio, sizeof(auio));
-		auio.uio_resid = len;
-		auio.uio_procp = p;
-		do {
+
+		/*
+		 * Loop, blocking, for data following the response header.
+		 *
+		 * Note that we can't simply block here with MSG_WAITALL for the
+		 * entire response size, as it may be larger than the TCP
+		 * slow-start window that the sender employs.  This will result
+		 * in the sender stalling until the delayed ACK is sent, then
+		 * resuming slow-start, resulting in very poor performance.
+		 *
+		 * Instead, we never request more than NB_SORECEIVE_CHUNK
+		 * bytes at a time, resulting in an ack being pushed by
+		 * the TCP code at the completion of each call.
+		 */
+		resid = len;
+		while (resid > 0) {
+			tm = NULL;
 			rcvflg = MSG_WAITALL;
-#ifndef __NetBSD__
-			error = so->so_proto->pr_usrreqs->pru_soreceive
-			    (so, (struct sockaddr **)NULL,
-			    &auio, &m, (struct mbuf **)NULL, &rcvflg);
+			bzero(&auio, sizeof(auio));
+			auio.uio_resid = min(resid, NB_SORECEIVE_CHUNK);
+			auio.uio_procp = p;
+			resid -= auio.uio_resid;
+			/*
+			 * Spin until we have collected everything in
+			 * this chunk.
+			 */
+			do {
+				rcvflg = MSG_WAITALL;
+#ifdef __NetBSD__
+				error = (*so->so_receive)(so, (struct mbuf **)0,
+					&auio, &tm, (struct mbuf **)NULL,
+					&rcvflg);
 #else
-			error = (*so->so_receive)(so, (struct mbuf **)0,
-						  &auio, &m, 
-						  (struct mbuf **)NULL,
-						  &rcvflg);
+				error = so->so_proto->pr_usrreqs->pru_soreceive
+				    (so, (struct sockaddr **)NULL,
+				    &auio, &tm, (struct mbuf **)NULL, &rcvflg);
 #endif
-		} while (error == EWOULDBLOCK || error == EINTR ||
+			} while (error == EWOULDBLOCK || error == EINTR ||
 				 error == ERESTART);
-		if (error)
-			break;
-		if (auio.uio_resid > 0) {
-			SMBERROR("packet is shorter than expected\n");
-			error = EPIPE;
-			break;
+			if (error)
+				goto out;
+			/* short return guarantees unhappiness */
+			if (auio.uio_resid > 0) {
+				SMBERROR("packet is shorter than expected\n");
+				error = EPIPE;
+				goto out;
+			}
+			/* append received chunk to previous chunk(s) */
+			if (m == NULL) {
+				m = tm;
+			} else {
+				/*
+				 * Just glue the new chain on the end.
+				 * Consumer will pullup as required.
+				 */
+				for (im = m; im->m_next != NULL; im = im->m_next)
+					;
+				im->m_next = tm;
+			}
 		}
+		/* got a session/message packet? */
 		if (nbp->nbp_state == NBST_SESSION &&
 		    rpcode == NB_SSN_MESSAGE)
 			break;
+		/* drop packet and try for another */
 		NBDEBUG("non-session packet %x\n", rpcode);
-		if (m)
+		if (m) {
 			m_freem(m);
+			m = NULL;
+		}
 	}
+
+out:
 	if (error) {
 		if (m)
 			m_freem(m);
