@@ -1,4 +1,4 @@
-/*	$NetBSD: locate.bigram.c,v 1.4 1995/08/31 22:36:32 jtc Exp $	*/
+/*	$NetBSD: locate.bigram.c,v 1.5 1995/09/01 23:48:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -43,11 +43,10 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-<<<<<<< locate.bigram.c
 #if 0
 static char sccsid[] = "@(#)locate.bigram.c	8.2 (Berkeley) 4/28/95";
 #endif
-static char rcsid[] = "$NetBSD: locate.bigram.c,v 1.4 1995/08/31 22:36:32 jtc Exp $";
+static char rcsid[] = "$NetBSD: locate.bigram.c,v 1.5 1995/09/01 23:48:13 thorpej Exp $";
 #endif /* not lint */
 
 /*
