@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.h,v 1.9 2003/02/26 22:02:48 thorpej Exp $	*/
+/*	$NetBSD: pthread.h,v 1.10 2003/06/02 16:59:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -67,6 +67,9 @@ int	pthread_attr_getschedparam(const pthread_attr_t *,
     struct sched_param *);
 int	pthread_attr_setschedparam(pthread_attr_t *,
     const struct sched_param *);
+int	pthread_attr_getstack(const pthread_attr_t *, void **, size_t *);
+int	pthread_attr_getstacksize(const pthread_attr_t *, size_t *);
+int	pthread_attr_getstackaddr(const pthread_attr_t *, void **);
 int	pthread_attr_getdetachstate(const pthread_attr_t *, int *);
 int	pthread_attr_setdetachstate(pthread_attr_t *, int);
 int	pthread_attr_getname_np(const pthread_attr_t *, char *,
