@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.67 2003/09/22 20:49:39 cl Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.68 2004/03/01 13:54:02 tron Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -15,7 +15,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.67 2003/09/22 20:49:39 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.68 2004/03/01 13:54:02 tron Exp $");
 
 #include "tun.h"
 
@@ -784,16 +784,16 @@ tunwrite(dev, uio, ioflag)
 	}
 	mlen = MHLEN;
 
-	top = 0;
+	top = NULL;
 	mp = &top;
 	while (error == 0 && uio->uio_resid > 0) {
 		m->m_len = min(mlen, uio->uio_resid);
-		error = uiomove(mtod (m, caddr_t), m->m_len, uio);
+		error = uiomove(mtod(m, caddr_t), m->m_len, uio);
 		*mp = m;
 		mp = &m->m_next;
-		if (uio->uio_resid > 0) {
-			MGET (m, M_DONTWAIT, MT_DATA);
-			if (m == 0) {
+		if (error == 0 && uio->uio_resid > 0) {
+			MGET(m, M_DONTWAIT, MT_DATA);
+			if (m == NULL) {
 				error = ENOBUFS;
 				break;
 			}
@@ -801,7 +801,7 @@ tunwrite(dev, uio, ioflag)
 		}
 	}
 	if (error) {
-		if (top)
+		if (top != NULL)
 			m_freem (top);
 		ifp->if_ierrors++;
 		simple_unlock(&tp->tun_lock);
