@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.63 2002/08/08 20:40:25 jdolecek Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.64 2002/08/25 23:15:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.63 2002/08/08 20:40:25 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.64 2002/08/25 23:15:21 thorpej Exp $");
 
 #include "opt_ktrace.h"
 
@@ -106,7 +106,8 @@ dofileread(struct proc *p, int fd, struct file *fp, void *buf, size_t nbyte,
 {
 	struct uio	auio;
 	struct iovec	aiov;
-	long		cnt, error;
+	size_t		cnt;
+	int		error;
 #ifdef KTRACE
 	struct iovec	ktriov;
 #endif
@@ -192,7 +193,8 @@ dofilereadv(struct proc *p, int fd, struct file *fp, const struct iovec *iovp,
 {
 	struct uio	auio;
 	struct iovec	*iov, *needfree, aiov[UIO_SMALLIOV];
-	long		i, cnt, error;
+	int		i, error;
+	size_t		cnt;
 	u_int		iovlen;
 #ifdef KTRACE
 	struct iovec	*ktriov;
@@ -310,7 +312,8 @@ dofilewrite(struct proc *p, int fd, struct file *fp, const void *buf,
 {
 	struct uio	auio;
 	struct iovec	aiov;
-	long		cnt, error;
+	size_t		cnt;
+	int		error;
 #ifdef KTRACE
 	struct iovec	ktriov;
 #endif
@@ -399,7 +402,8 @@ dofilewritev(struct proc *p, int fd, struct file *fp, const struct iovec *iovp,
 {
 	struct uio	auio;
 	struct iovec	*iov, *needfree, aiov[UIO_SMALLIOV];
-	long		i, cnt, error;
+	int		i, error;
+	size_t		cnt;
 	u_int		iovlen;
 #ifdef KTRACE
 	struct iovec	*ktriov;
