@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.22.2.2 1999/02/25 04:37:58 chs Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.22.2.3 1999/04/09 04:47:27 chs Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -1885,11 +1885,11 @@ uvm_swap_bufdone(bp)
 	 * now put the aio on the uvm.aio_done list and wake the
 	 * pagedaemon (which will finish up our job in its context).
 	 */
-	simple_lock(&uvm.pagedaemon_lock);	/* locks uvm.aio_done */
+	simple_lock(&uvm.aiodoned_lock);	/* locks uvm.aio_done */
 	TAILQ_INSERT_TAIL(&uvm.aio_done, &sbp->sw_aio, aioq);
-	simple_unlock(&uvm.pagedaemon_lock);
+	simple_unlock(&uvm.aiodoned_lock);
 
-	wakeup(&uvm.pagedaemon);
+	wakeup(&uvm.aiodoned);
 	splx(s);
 }
 
