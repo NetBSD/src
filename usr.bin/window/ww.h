@@ -1,4 +1,4 @@
-/*	$NetBSD: ww.h,v 1.7 1996/02/08 21:08:02 mycroft Exp $	*/
+/*	$NetBSD: ww.h,v 1.8 1996/02/08 21:48:51 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -85,7 +85,7 @@ struct ww {
 		/* information for overlap */
 	struct ww *ww_forw;	/* doubly linked list, for overlapping info */
 	struct ww *ww_back;
-	char ww_index;		/* the window index, for wwindex[] */
+	unsigned char ww_index;	/* the window index, for wwindex[] */
 #define WWX_NOBODY	NWW
 	int ww_order;		/* the overlapping order */
 
@@ -229,7 +229,7 @@ char wwavailmodes;		/* actually supported modes */
 char wwcursormodes;		/* the modes for the fake cursor */
 char wwwrap;			/* terminal has auto wrap around */
 int wwdtablesize;		/* result of getdtablesize() call */
-char **wwsmap;			/* the screen map */
+unsigned char **wwsmap;		/* the screen map */
 union ww_char **wwos;		/* the old (current) screen */
 union ww_char **wwns;		/* the new (desired) screen */
 union ww_char **wwcs;		/* the checkpointed screen */
