@@ -654,7 +654,7 @@ WriteTag (dir, tag, date, nonbranch, update_dir, repository)
     if (dir == NULL)
 	tmp = xstrdup(CVSADM_TAG);
     else
-	(void) asprintf (&tmp, "%s/%s", dir, CVSADM_TAG);
+	(void) xasprintf (&tmp, "%s/%s", dir, CVSADM_TAG);
 
     if (tag || date)
     {
@@ -848,7 +848,7 @@ subdir_record (cmd, parent, dir)
 	if (parent == NULL)
 	    entfilename = (char *)CVSADM_ENTLOG;
 	else
-	    asprintf (&entfilename, "%s/%s", parent, CVSADM_ENTLOG);
+	    xasprintf (&entfilename, "%s/%s", parent, CVSADM_ENTLOG);
 
 	entfile = CVS_FOPEN (entfilename, "a");
 	if (entfile == NULL)
@@ -1017,8 +1017,8 @@ base_walk (code, finfo, rev)
        doing it.  */
     if (finfo->update_dir[0] != '\0')
     {
-	asprintf(&baserev_fullname, "%s/%s", finfo->update_dir, CVSADM_BASEREV);
-	asprintf(&baserevtmp_fullname, "%s/%s",
+	xasprintf(&baserev_fullname, "%s/%s", finfo->update_dir, CVSADM_BASEREV);
+	xasprintf(&baserevtmp_fullname, "%s/%s",
 	    finfo->update_dir, CVSADM_BASEREVTMP);
     } else {
 	baserev_fullname = xstrdup(CVSADM_BASEREV);
