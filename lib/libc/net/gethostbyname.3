@@ -1,4 +1,4 @@
-.\"	$NetBSD: gethostbyname.3,v 1.9 1997/03/08 13:39:00 mouse Exp $
+.\"	$NetBSD: gethostbyname.3,v 1.10 1998/02/02 11:53:07 mrg Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -31,9 +31,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     @(#)gethostbyname.3	8.2 (Berkeley) 4/19/94
+.\"     @(#)gethostbyname.3   8.4 (Berkeley) 5/25/95
 .\"
-.Dd April 19, 1994
+.Dd May 25, 1995
 .Dt GETHOSTBYNAME 3
 .Os BSD 4.2
 .Sh NAME
@@ -96,19 +96,20 @@ The members of this structure are:
 .It Fa h_name
 Official name of the host.
 .It Fa h_aliases
-A zero terminated array of alternative names for the host.
+A NULL-terminated array of alternative names for the host.
 .It Fa h_addrtype
 The type of address being returned; currently always
 .Dv AF_INET .
 .It Fa h_length
 The length, in bytes, of the address.
 .It Fa h_addr_list
-A zero terminated array of network addresses for the host.
+A NULL-terminated array of network addresses for the host.
 Host addresses are returned in network byte order.
 .It Fa h_addr
 The first address in
 .Fa h_addr_list ;
 this is for backward compatibility.
+.El
 .Pp
 When using the nameserver,
 .Fn gethostbyname
