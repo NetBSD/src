@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.1 2001/05/28 16:22:17 thorpej Exp $	*/
+/*	$NetBSD: bus.h,v 1.2 2001/05/31 02:20:55 enami Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
 #include <sys/systm.h> /* for printf() prototype */
 /*
  * Macros for checking the aligned-ness of pointers passed to bus
- * space ops.  Strict alignment is required by the Alpha architecture,
+ * space ops.  Strict alignment is required by the MIPS architecture,
  * and a trap will occur if unaligned access is performed.  These
  * may aid in the debugging of a broken device driver by displaying
  * useful information about the problem.
@@ -243,7 +243,7 @@ struct algor_bus_space {
 };
 
 /*
- * Translation of an Alpha bus address; INTERNAL USE ONLY.
+ * Translation of an MIPS bus address; INTERNAL USE ONLY.
  */
 struct mips_bus_space_translation {
 	bus_addr_t	mbst_bus_start;	/* start of bus window */
