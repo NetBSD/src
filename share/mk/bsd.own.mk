@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.313 2002/09/27 15:56:40 thorpej Exp $
+#	$NetBSD: bsd.own.mk,v 1.314 2002/09/27 17:03:08 thorpej Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -213,17 +213,7 @@ DESTDIR?=
 # libraries moved from /usr/lib to /lib and the shared linker moved
 # from /usr/libexec to /lib
 #
-# Note that if the BINDIR is not /bin or /sbin, then we always use the
-# non-DYNAMICROOT behavior (i.e. it is only enabled for programs in /bin
-# and /sbin).
-#
 MKDYNAMICROOT?=	yes
-.if ${MKDYNAMICROOT} == "no" || \
-    (${BINDIR:Ux} != "/bin" && ${BINDIR:Ux} != "/sbin")
-_MKDYNAMICROOT= no
-.else
-_MKDYNAMICROOT= yes
-.endif
 
 # Where the system object and source trees are kept; can be configurable
 # by the user in case they want them in ~/foosrc and ~/fooobj (for example).
@@ -252,7 +242,7 @@ INFOOWN?=	root
 INFOMODE?=	${NONBINMODE}
 
 LIBDIR?=	/usr/lib
-.if ${_MKDYNAMICROOT} == "no"
+.if ${MKDYNAMICROOT} == "no"
 SHLIBDIR?=	/usr/lib
 .else
 SHLIBDIR?=	/lib
@@ -262,7 +252,7 @@ _LIBSODIR?=	${SHLIBDIR}
 .else
 _LIBSODIR?=	${LIBDIR}
 .endif
-.if ${_MKDYNAMICROOT} == "no"
+.if ${MKDYNAMICROOT} == "no"
 SHLINKDIR?=	/usr/libexec
 .else
 SHLINKDIR?=	/libexec
