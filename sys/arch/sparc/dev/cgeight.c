@@ -1,4 +1,4 @@
-/*	$NetBSD: cgeight.c,v 1.3 1996/03/14 19:44:36 christos Exp $	*/
+/*	$NetBSD: cgeight.c,v 1.4 1996/03/16 23:28:23 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -55,6 +55,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>
@@ -174,7 +175,7 @@ cgeightattach(parent, self, args)
 	register struct confargs *ca = args;
 	register int node = 0, ramsize, i;
 	register volatile struct bt_regs *bt;
-	struct fbdevice *fb;
+	struct fbdevice *fb = &sc->sc_fb;
 	int isconsole;
 
 	fb->fb_driver = &cgeightfbdriver;
