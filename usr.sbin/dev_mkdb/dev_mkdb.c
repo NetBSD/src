@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_mkdb.c,v 1.18 2002/12/15 18:23:00 hannken Exp $	*/
+/*	$NetBSD: dev_mkdb.c,v 1.19 2003/05/17 19:09:08 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)dev_mkdb.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: dev_mkdb.c,v 1.18 2002/12/15 18:23:00 hannken Exp $");
+__RCSID("$NetBSD: dev_mkdb.c,v 1.19 2003/05/17 19:09:08 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -103,8 +103,7 @@ main(argc, argv)
 	while ((ch = getopt(argc, argv, "o:")) != -1)
 		switch (ch) {
 		case 'o':
-			if (strlen(optarg) <= MAXPATHLEN)
-				dbname_arg = optarg;
+			dbname_arg = optarg;
 			break;
 		case '?':
 		default:
@@ -113,13 +112,14 @@ main(argc, argv)
 	argc -= optind;
 	argv += optind;
 
-	if ((argc == 1) && (strlen(argv[0]) <= MAXPATHLEN))
-		strncpy(path_dev, argv[0], MAXPATHLEN);
+	if (argc == 1)
+		if (strlcpy(path_dev, argv[0], sizeof(path_dev)) >= sizeof(path_dev))
+			errx(1, "device path too long");
 
 	if (argc > 1)
 		usage();
 
-	if (!getcwd(cur_dir, MAXPATHLEN))
+	if (!getcwd(cur_dir, sizeof(cur_dir)))
 		err(1, "%s", cur_dir);
 
 	if (chdir(path_dev))
@@ -134,10 +134,13 @@ main(argc, argv)
 	if (chdir(cur_dir))
 		err(1, "%s", cur_dir);
 
-	if (dbname_arg)
-		strncpy(dbname, dbname_arg, MAXPATHLEN);
-	else
-		(void)snprintf(dbname, MAXPATHLEN, "%sdev.db", _PATH_VARRUN);
+	if (dbname_arg) {
+		if (strlcpy(dbname, dbname_arg, sizeof(dbname)) >= sizeof(dbname))
+			errx(1, "dbname too long");
+	} else {
+		if (snprintf(dbname, sizeof(dbname), "%sdev.db", _PATH_VARRUN) >= sizeof(dbname))
+			errx(1, "dbname too long");
+	}
 	/* 
 	 * We use rename() to produce the dev.db file from a temporary file,
 	 * and rename() is not able to move files across filesystems. Hence we 
@@ -147,11 +150,11 @@ main(argc, argv)
 	 * we must ensure that we are not opening an existing file, therefore
 	 * the loop on dbopen. 
 	 */
-	(void)strncpy(dbtmp, dbname, MAXPATHLEN);
+	(void)strlcpy(dbtmp, dbname, sizeof(dbtmp));
 	q = dbtmp + strlen(dbtmp);
 	do {
 		(void)gettimeofday(&tv, NULL);
-		(void)snprintf(q, MAXPATHLEN - (long)(q - dbtmp), 
+		(void)snprintf(q, sizeof(dbtmp) - (q - dbtmp), 
 			    "%ld.tmp", tv.tv_usec);
 		db = dbopen(dbtmp, O_CREAT|O_EXCL|O_EXLOCK|O_RDWR|O_TRUNC,
 		    S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH, DB_HASH, &openinfo);
