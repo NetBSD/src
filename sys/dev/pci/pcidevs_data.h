@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.95 1998/11/26 20:05:38 mcr Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.96 1998/11/27 10:43:53 drochner Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.89 1998/11/23 22:54:02 mcr Exp 
+ *	NetBSD: pcidevs,v 1.90 1998/11/27 10:39:16 drochner Exp 
  */
 
 /*
@@ -1400,6 +1400,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Intel",
 	    "82451KX/GX Memory Controller (MC)",
+	},
+	{
+	    PCI_VENDOR_INTERGRAPH, PCI_PRODUCT_INTERGRAPH_4D50T,
+	    0,
+	    "Intergraph",
+	    "Powerstorm 4D50T",
 	},
 	{
 	    PCI_VENDOR_ITT, PCI_PRODUCT_ITT_AGX016,

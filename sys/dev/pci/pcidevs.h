@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.96 1998/11/26 20:05:38 mcr Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.97 1998/11/27 10:43:52 drochner Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.89 1998/11/23 22:54:02 mcr Exp 
+ *	NetBSD: pcidevs,v 1.90 1998/11/27 10:39:16 drochner Exp 
  */
 
 /*
@@ -861,6 +861,9 @@
 #define	PCI_PRODUCT_INTEL_82443BX_AGP_NOT	0x7192		/* 82443BX AGP Device (PAC) (AGP disabled) */
 #define	PCI_PRODUCT_INTEL_PCI450_PB	0x84c4		/* 82454KX/GX PCI Bridge (PB) */
 #define	PCI_PRODUCT_INTEL_PCI450_MC	0x84c5		/* 82451KX/GX Memory Controller (MC) */
+
+/* Intergraph products */
+#define	PCI_PRODUCT_INTERGRAPH_4D50T	0x00e4		/* Powerstorm 4D50T */
 
 /* I. T. T. products */
 #define	PCI_PRODUCT_ITT_AGX016	0x0001		/* AGX016 */
