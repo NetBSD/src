@@ -27,6 +27,7 @@ extern initialize_file_ftype _initialize_gdb_osabi;
 extern initialize_file_ftype _initialize_copying;
 extern initialize_file_ftype _initialize_arm_tdep;
 extern initialize_file_ftype _initialize_arm_netbsd_tdep;
+extern initialize_file_ftype _initialize_corelow;
 extern initialize_file_ftype _initialize_solib;
 extern initialize_file_ftype _initialize_svr4_solib;
 extern initialize_file_ftype _initialize_ser_hardwire;
@@ -35,7 +36,6 @@ extern initialize_file_ftype _initialize_ser_tcp;
 extern initialize_file_ftype _initialize_kernel_u_addr;
 extern initialize_file_ftype _initialize_infptrace;
 extern initialize_file_ftype _initialize_inftarg;
-extern initialize_file_ftype _initialize_corelow;
 extern initialize_file_ftype _initialize_arm_netbsd_nat;
 extern initialize_file_ftype _initialize_remote;
 extern initialize_file_ftype _initialize_dcache;
@@ -85,6 +85,16 @@ extern initialize_file_ftype _initialize_mi_out;
 extern initialize_file_ftype _initialize_mi_cmds;
 extern initialize_file_ftype _initialize_mi_main;
 extern initialize_file_ftype _initialize_mi_parse;
+extern initialize_file_ftype _initialize_nbsd_thread;
+#ifdef USE_TUI
+extern initialize_file_ftype _initialize_tui;
+extern initialize_file_ftype _initialize_tuiLayout;
+extern initialize_file_ftype _initialize_tuiRegs;
+extern initialize_file_ftype _initialize_tuiStack;
+extern initialize_file_ftype _initialize_tuiWin;
+extern initialize_file_ftype _initialize_tui_out;
+#endif
+
 void
 initialize_all_files (void)
 {
@@ -121,7 +131,6 @@ initialize_all_files (void)
   _initialize_kernel_u_addr ();
   _initialize_infptrace ();
   _initialize_inftarg ();
-  _initialize_corelow ();
   _initialize_arm_netbsd_nat ();
   _initialize_remote ();
   _initialize_dcache ();
@@ -161,6 +170,7 @@ initialize_all_files (void)
   _initialize_nlmread ();
   _initialize_serial ();
   _initialize_mdebugread ();
+  _initialize_nbsd_thread ();
   _initialize_gnu_v2_abi ();
   _initialize_gnu_v3_abi ();
   _initialize_hpacc_abi ();
@@ -171,4 +181,13 @@ initialize_all_files (void)
   _initialize_mi_cmds ();
   _initialize_mi_main ();
   _initialize_mi_parse ();
+#ifdef USE_TUI
+  _initialize_tui ();
+  _initialize_tuiLayout ();
+  _initialize_tuiRegs ();
+  _initialize_tuiStack ();
+  _initialize_tuiWin ();
+  _initialize_tui_out ();
+#endif
+  _initialize_corelow ();
 }
