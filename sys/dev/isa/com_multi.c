@@ -1,4 +1,4 @@
-/*	$NetBSD: com_multi.c,v 1.3 1997/08/13 21:26:54 jtk Exp $	*/
+/*	$NetBSD: com_multi.c,v 1.4 1997/08/16 08:33:12 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -86,7 +86,7 @@ com_multi_probe(parent, match, aux)
 	iobase = ca->ca_iobase;
 
 	/* if it's in use as console, it's there. */
-	if (iobase == comconsaddr
+	if ((iobase == comconsaddr && !comconsattached)
 #ifdef KGDB
 	    || iobase == com_kgdb_addr
 #endif

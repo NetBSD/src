@@ -1,4 +1,4 @@
-/*	$NetBSD: rtfps.c,v 1.29 1997/08/13 21:26:54 jtk Exp $	*/
+/*	$NetBSD: rtfps.c,v 1.30 1997/08/16 08:33:13 drochner Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -95,7 +95,7 @@ rtfpsprobe(parent, self, aux)
 	 */
 
 	/* if the first port is in use as console, then it. */
-	if (iobase == comconsaddr 
+	if ((iobase == comconsaddr && !comconsattached)
 #ifdef KGDB
 	    || iobase == com_kgdb_addr
 #endif
@@ -115,7 +115,7 @@ checkmappings:
 	for (i = 1; i < NSLAVES; i++) {
 		iobase += COM_NPORTS;
 
-		if (iobase == comconsaddr
+		if ((iobase == comconsaddr && !comconsattached)
 #ifdef KGDB
 		    || iobase == com_kgdb_addr
 #endif
