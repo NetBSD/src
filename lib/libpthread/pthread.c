@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.22 2003/06/26 01:30:39 nathanw Exp $	*/
+/*	$NetBSD: pthread.c,v 1.23 2003/07/18 21:57:26 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.22 2003/06/26 01:30:39 nathanw Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.23 2003/07/18 21:57:26 nathanw Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -89,6 +89,7 @@ __strong_alias(__libc_thr_self,pthread_self)
 __strong_alias(__libc_thr_create,pthread_create)
 __strong_alias(__libc_thr_exit,pthread_exit)
 __strong_alias(__libc_thr_errno,pthread__errno)
+__strong_alias(__libc_thr_setcancelstate,pthread_setcancelstate)
 
 /*
  * Static library kludge.  Place a reference to a symbol any library
