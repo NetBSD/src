@@ -1,4 +1,4 @@
-/*	$NetBSD: cmu.c,v 1.4 2001/06/11 05:24:06 enami Exp $	*/
+/*	$NetBSD: cmu.c,v 1.5 2001/09/16 05:32:20 uch Exp $	*/
 
 /*-
  * Copyright (c) 1999 SASAKI Takesi
@@ -61,10 +61,10 @@ struct vrcmu_softc {
 	int sc_save;
 };
 
-int	vrcmu_match __P((struct device *, struct cfdata *, void *));
-void	vrcmu_attach __P((struct device *, struct device *, void *));
-int	vrcmu_supply __P((vrcmu_chipset_tag_t, u_int16_t, int));
-int	vrcmu_hardpower __P((void *, int, long, void *));
+int	vrcmu_match(struct device *, struct cfdata *, void *);
+void	vrcmu_attach(struct device *, struct device *, void *);
+int	vrcmu_supply(vrcmu_chipset_tag_t, u_int16_t, int);
+int	vrcmu_hardpower(void *, int, long, void *);
 
 struct vrcmu_function_tag vrcmu_functions = {
 	vrcmu_supply
@@ -75,20 +75,14 @@ struct cfattach vrcmu_ca = {
 };
 
 int
-vrcmu_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+vrcmu_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 
 	return (2);		/* 1st attach group of vrip */
 }
 
 void
-vrcmu_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+vrcmu_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct vrip_attach_args *va = aux;
 	struct vrcmu_softc *sc = (void *)self;
@@ -110,9 +104,7 @@ vrcmu_attach(parent, self, aux)
 
 /* For serial console */
 void
-__vrcmu_supply(mask, onoff)
-	u_int16_t mask;
-	int onoff;
+__vrcmu_supply(u_int16_t mask, int onoff)
 {
 	u_int16_t reg;
 	u_int32_t addr;
@@ -127,10 +119,7 @@ __vrcmu_supply(mask, onoff)
 }
 
 int
-vrcmu_supply(cc, mask, onoff)
-	vrcmu_chipset_tag_t cc;
-	u_int16_t mask;
-	int onoff;
+vrcmu_supply(vrcmu_chipset_tag_t cc, u_int16_t mask, int onoff)
 {
 	struct vrcmu_softc *sc = (void *)cc;
 	u_int16_t reg;
@@ -153,11 +142,7 @@ vrcmu_supply(cc, mask, onoff)
 }
 
 int
-vrcmu_hardpower(ctx, type, id, msg)
-	void *ctx;
-	int type;
-	long id;
-	void *msg;
+vrcmu_hardpower(void *ctx, int type, long id, void *msg)
 {
 	struct vrcmu_softc *sc = ctx;
 	int why = (int)msg;

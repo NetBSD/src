@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.6 2001/07/17 01:41:39 toshii Exp $	*/
+/*	$NetBSD: rtc.c,v 1.7 2001/09/16 05:32:21 uch Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura. All rights reserved.
@@ -76,67 +76,59 @@ struct vrrtc_softc {
 	void *sc_ih;
 };
 
-void	clock_init __P((struct device *));
-void	clock_get __P((struct device *, time_t, struct clocktime *));
-void	clock_set __P((struct device *, struct clocktime *));
+void	clock_init(struct device *);
+void	clock_get(struct device *, time_t, struct clocktime *);
+void	clock_set(struct device *, struct clocktime *);
 
 static const struct clockfns clockfns = {
 	clock_init, clock_get, clock_set,
 };
 
-int	vrrtc_match __P((struct device *, struct cfdata *, void *));
-void	vrrtc_attach __P((struct device *, struct device *, void *));
-int	vrrtc_intr __P((void*, u_int32_t, u_int32_t));
-void	vrrtc_dump_regs __P((struct vrrtc_softc *));
+int	vrrtc_match(struct device *, struct cfdata *, void *);
+void	vrrtc_attach(struct device *, struct device *, void *);
+int	vrrtc_intr(void*, u_int32_t, u_int32_t);
+void	vrrtc_dump_regs(struct vrrtc_softc *);
 
 struct cfattach vrrtc_ca = {
 	sizeof(struct vrrtc_softc), vrrtc_match, vrrtc_attach
 };
 
-void	vrrtc_write __P((struct vrrtc_softc *, int, unsigned short));
-unsigned short	vrrtc_read __P((struct vrrtc_softc *, int));
-void	cvt_timehl_ct __P((u_long, u_long, struct clocktime *));
+void	vrrtc_write(struct vrrtc_softc *, int, unsigned short);
+unsigned short	vrrtc_read(struct vrrtc_softc *, int);
+void	cvt_timehl_ct(u_long, u_long, struct clocktime *);
 
 extern int rtc_offset;
 
 int
-vrrtc_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+vrrtc_match(struct device *parent, struct cfdata *cf, void *aux)
 {
+
 	return(1);
 }
 
 inline void
-vrrtc_write(sc, port, val)
-	struct vrrtc_softc *sc;
-	int port;
-	unsigned short val;
+vrrtc_write(struct vrrtc_softc *sc, int port, unsigned short val)
 {
+
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, port, val);
 }
 
 inline unsigned short
-vrrtc_read(sc, port)
-	struct vrrtc_softc *sc;
-	int port;
+vrrtc_read(struct vrrtc_softc *sc, int port)
 {
-	return bus_space_read_2(sc->sc_iot, sc->sc_ioh, port);
+
+	return (bus_space_read_2(sc->sc_iot, sc->sc_ioh, port));
 }
 
 void
-vrrtc_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+vrrtc_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct vrip_attach_args *va = aux;
 	struct vrrtc_softc *sc = (void*)self;
     
 	sc->sc_iot = va->va_iot;
 	if (bus_space_map(sc->sc_iot, va->va_addr, va->va_size,
-			  0 /* no flags */, &sc->sc_ioh)) {
+	    0 /* no flags */, &sc->sc_ioh)) {
 		printf("vrrtc_attach: can't map i/o space\n");
 		return;
 	}
@@ -146,7 +138,7 @@ vrrtc_attach(parent, self, aux)
 	 * so regsiter fake interrurpt handler
 	 */
 	if (!(sc->sc_ih = vrip_intr_establish(va->va_vc, va->va_intr, 
-						IPL_CLOCK, 0, 0))) {
+	    IPL_CLOCK, 0, 0))) {
 		printf (":can't map interrupt.\n");
 		return;
 	}
@@ -180,10 +172,7 @@ vrrtc_attach(parent, self, aux)
 }
 
 int
-vrrtc_intr(arg, pc, statusReg)
-        void *arg;
-	u_int32_t pc;
-	u_int32_t statusReg;
+vrrtc_intr(void *arg, u_int32_t pc, u_int32_t statusReg)
 {
 	struct vrrtc_softc *sc = arg;
 	struct clockframe cf;
@@ -199,17 +188,16 @@ vrrtc_intr(arg, pc, statusReg)
 		struct clocktime ct;
 		clock_get((struct device *)sc, NULL, &ct);
 		printf("%s(%d): rtc_intr: %2d.%2d.%2d %02d:%02d:%02d\n",
-		       __FILE__, __LINE__,
-		       ct.year, ct.mon, ct.day,
-		       ct.hour, ct.min, ct.sec);
+		    __FILE__, __LINE__,
+		    ct.year, ct.mon, ct.day,
+		    ct.hour, ct.min, ct.sec);
 	}
 #endif
 	return 0;
 }
 
 void
-vrrtc_dump_regs(sc)
-struct vrrtc_softc *sc;
+vrrtc_dump_regs(struct vrrtc_softc *sc)
 {
 	int timeh;
 	int timel;
@@ -217,13 +205,13 @@ struct vrrtc_softc *sc;
 	timeh = bus_space_read_2(sc->sc_iot, sc->sc_ioh, ETIME_H_REG_W);
 	timel = bus_space_read_2(sc->sc_iot, sc->sc_ioh, ETIME_M_REG_W);
 	timel = (timel << 16) 
-		| bus_space_read_2(sc->sc_iot, sc->sc_ioh, ETIME_L_REG_W);
+	    | bus_space_read_2(sc->sc_iot, sc->sc_ioh, ETIME_L_REG_W);
 	printf("clock_init()  Elapse Time %04x%04x\n", timeh, timel);
 
 	timeh = bus_space_read_2(sc->sc_iot, sc->sc_ioh, ECMP_H_REG_W);
 	timel = bus_space_read_2(sc->sc_iot, sc->sc_ioh, ECMP_M_REG_W);
 	timel = (timel << 16) 
-		| bus_space_read_2(sc->sc_iot, sc->sc_ioh, ECMP_L_REG_W);
+	    | bus_space_read_2(sc->sc_iot, sc->sc_ioh, ECMP_L_REG_W);
 	printf("clock_init()  Elapse Compare %04x%04x\n", timeh, timel);
 
 	timeh = bus_space_read_2(sc->sc_iot, sc->sc_ioh, RTCL1_H_REG_W);
@@ -252,8 +240,7 @@ struct vrrtc_softc *sc;
 }
 
 void
-clock_init(dev)
-	struct device *dev;
+clock_init(struct device *dev)
 {
 	struct vrrtc_softc *sc = (struct vrrtc_softc *)dev;
 
@@ -263,16 +250,16 @@ clock_init(dev)
 	 */
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, RTCL1_H_REG_W, 0);
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, 
-			  RTCL1_L_REG_W, RTCL1_L_HZ/CLOCK_RATE);
+	    RTCL1_L_REG_W, RTCL1_L_HZ/CLOCK_RATE);
 }
 
 static int m2d[12] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 
 void
-cvt_timehl_ct(timeh, timel, ct)
-	u_long timeh; /* 2 sec */
-	u_long timel; /* 1/32768 sec */
-	struct clocktime *ct;
+cvt_timehl_ct(
+	u_long timeh, /* 2 sec */
+	u_long timel, /* 1/32768 sec */
+	struct clocktime *ct)
 {
 	u_long year, month, date, hour, min, sec, sec2;
 
@@ -289,7 +276,7 @@ cvt_timehl_ct(timeh, timel, ct)
 	}
 
 	DPRINTF(("cvt_timehl_ct: timeh %08lx year %ld yrref %ld\n", 
-		timeh, year, sec2));
+	    timeh, year, sec2));
 
 	month = 0; /* now month is 0..11 */
 	sec2 = SEC2DAY * m2d[month];
@@ -303,14 +290,14 @@ cvt_timehl_ct(timeh, timel, ct)
 	month +=1; /* now month is 1..12 */
 
 	DPRINTF(("cvt_timehl_ct: timeh %08lx month %ld mref %ld\n", 
-		timeh, month, sec2));
+	    timeh, month, sec2));
 
 	sec2 = SEC2DAY;
 	date = timeh/sec2+1; /* date is 1..31 */
 	timeh -= (date-1)*sec2;
 
 	DPRINTF(("cvt_timehl_ct: timeh %08lx date %ld dref %ld\n", 
-		timeh, date, sec2));
+	    timeh, date, sec2));
 
 	sec2 = SEC2HOUR;
 	hour = timeh/sec2;
@@ -335,10 +322,7 @@ cvt_timehl_ct(timeh, timel, ct)
 }
 
 void
-clock_get(dev, base, ct)
-	struct device *dev;
-	time_t base;
-	struct clocktime *ct;
+clock_get(struct device *dev, time_t base, struct clocktime *ct)
 {
 
 	struct vrrtc_softc *sc = (struct vrrtc_softc *)dev;
@@ -347,7 +331,7 @@ clock_get(dev, base, ct)
 
 	timeh = bus_space_read_2(sc->sc_iot, sc->sc_ioh, ETIME_H_REG_W);
 	timeh = (timeh << 16) 
-		| bus_space_read_2(sc->sc_iot, sc->sc_ioh, ETIME_M_REG_W);
+	    | bus_space_read_2(sc->sc_iot, sc->sc_ioh, ETIME_M_REG_W);
 	timel = bus_space_read_2(sc->sc_iot, sc->sc_ioh, ETIME_L_REG_W);
 
 	DPRINTF(("clock_get: timeh %08lx timel %08lx\n", timeh, timel));
@@ -355,14 +339,12 @@ clock_get(dev, base, ct)
 	cvt_timehl_ct(timeh, timel, ct);
 
 	DPRINTF(("clock_get: %d/%d/%d/%d/%d/%d\n",
-		 ct->year, ct->mon, ct->day, ct->hour, ct->min, ct->sec));
+	    ct->year, ct->mon, ct->day, ct->hour, ct->min, ct->sec));
 }
 
 
 void
-clock_set(dev, ct)
-	struct device *dev;
-	struct clocktime *ct;
+clock_set(struct device *dev, struct clocktime *ct)
 {
 	struct vrrtc_softc *sc = (struct vrrtc_softc *)dev;
 	u_long timeh;	/* elapse time (2*timeh sec) */
@@ -373,12 +355,12 @@ clock_set(dev, ct)
 	timel = 0;
 
 	DPRINTF(("clock_set: %d/%d/%d/%d/%d/%d\n", 
-		ct->year, ct->mon, ct->day, ct->hour, ct->min, ct->sec));
+	    ct->year, ct->mon, ct->day, ct->hour, ct->min, ct->sec));
 
 	ct->year += YBASE;
 
 	DPRINTF(("clock_set: %d/%d/%d/%d/%d/%d\n", 
-		ct->year, ct->mon, ct->day, ct->hour, ct->min, ct->sec));
+	    ct->year, ct->mon, ct->day, ct->hour, ct->min, ct->sec));
 
 	year = EPOCHYEAR;
 	sec2 = LEAPYEAR4(year)?SEC2YR+SEC2DAY:SEC2YR;
@@ -414,9 +396,8 @@ clock_set(dev, ct)
 #endif /* RTCDEBUG */
 
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, 
-			  ETIME_H_REG_W, (timeh>>16)&0xffff);
+	    ETIME_H_REG_W, (timeh>>16)&0xffff);
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, ETIME_M_REG_W, timeh&0xffff);
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, ETIME_L_REG_W, timel);
 
 }
-

@@ -1,4 +1,4 @@
-/*	$NetBSD: vrgiuvar.h,v 1.3 2001/04/30 11:42:19 takemura Exp $	*/
+/*	$NetBSD: vrgiuvar.h,v 1.4 2001/09/16 05:32:21 uch Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -38,7 +38,7 @@
 
 struct vrgiu_intr_entry {
 	int ih_port;
-	int (*ih_fun) __P((void*));
+	int (*ih_fun)(void *);
 	void *ih_arg;
 	TAILQ_ENTRY(vrgiu_intr_entry) ih_link;
 };
@@ -60,4 +60,4 @@ struct vrgiu_softc {
 };
 
 /* Before autoconfiguration */
-void __vrgiu_out __P((int, int));
+void __vrgiu_out(int, int);
