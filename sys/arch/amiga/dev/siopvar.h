@@ -1,4 +1,4 @@
-/*	$NetBSD: siopvar.h,v 1.16 1998/11/19 21:44:37 thorpej Exp $	*/
+/*	$NetBSD: siopvar.h,v 1.17 1999/03/09 20:31:34 is Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -127,8 +127,13 @@ struct	siop_softc {
 
 	u_char	sc_istat;
 	u_char	sc_dstat;
+#ifndef ARCH_720
 	u_char	sc_sstat0;
+#endif
 	u_char	sc_sstat1;
+#ifdef ARCH_720
+	u_short	sc_sist;
+#endif
 	u_long	sc_intcode;
 	struct	scsipi_link sc_link;	/* proto for sub devices */
 	struct	scsipi_adapter sc_adapter;
@@ -142,7 +147,7 @@ struct	siop_softc {
 				       nexus_list;
 
 	struct siop_acb *sc_nexus;	/* current command */
-#define SIOP_NACB 8
+#define SIOP_NACB 16
 	struct siop_acb *sc_acb;	/* the real command blocks */
 	struct siop_tinfo sc_tinfo[8];
 
@@ -151,15 +156,19 @@ struct	siop_softc {
 	u_char	sc_ctest7;
 	u_short	sc_tcp[4];
 	u_char	sc_flags;
-	u_char	sc_sien;
 	u_char	sc_dien;
 	u_char	sc_minsync;
+#ifndef ARCH_720
+	u_char	sc_sien;
+#else
+	u_short	sc_sien;
+#endif
 	/* one for each target */
 	struct syncpar {
 		u_char state;
 		u_char sxfer;
 		u_char sbcl;
-	} sc_sync[8];
+	} sc_sync[16];
 };
 
 /* sc_flags */
@@ -196,12 +205,26 @@ struct	siop_softc {
 #define	STS_INTERMED	0x10	/* Intermediate status sent */
 #define	STS_EXT		0x80	/* Extended status valid */
 
+#ifdef ARCH_720
+void siopng_minphys __P((struct buf *bp));
+int siopng_scsicmd __P((struct scsipi_xfer *));
+void siopnginitialize __P((struct siop_softc *));
+void siopngintr __P((struct siop_softc *));
+void siopng_dump_registers __P((struct siop_softc *));
+#ifdef DEBUG
+void siopng_dump __P((struct siop_softc *));
+#endif
+
+#else
+
 void siop_minphys __P((struct buf *bp));
 int siop_scsicmd __P((struct scsipi_xfer *));
 void siopinitialize __P((struct siop_softc *));
 void siopintr __P((struct siop_softc *));
+void siop_dump_registers __P((struct siop_softc *));
 #ifdef DEBUG
 void siop_dump __P((struct siop_softc *));
+#endif
 #endif
 
 #endif /* _SIOPVAR_H */
