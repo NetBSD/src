@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_diskqueue.c,v 1.27 2003/12/30 21:59:03 oster Exp $	*/
+/*	$NetBSD: rf_diskqueue.c,v 1.28 2003/12/31 02:47:58 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -66,7 +66,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_diskqueue.c,v 1.27 2003/12/30 21:59:03 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_diskqueue.c,v 1.28 2003/12/31 02:47:58 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -84,8 +84,6 @@ __KERNEL_RCSID(0, "$NetBSD: rf_diskqueue.c,v 1.27 2003/12/30 21:59:03 oster Exp 
 #include "rf_fifo.h"
 #include "rf_kintf.h"
 
-static int init_dqd(RF_DiskQueueData_t *);
-static void clean_dqd(RF_DiskQueueData_t *);
 static void rf_ShutdownDiskQueueSystem(void *);
 
 #ifndef RF_DEBUG_DISKQUEUE
@@ -156,25 +154,6 @@ static struct pool rf_dqd_pool;
 
 #include <sys/buf.h>
 
-static int 
-init_dqd(RF_DiskQueueData_t *dqd)
-{
-
-	dqd->bp = (struct buf *) malloc(sizeof(struct buf), 
-					M_RAIDFRAME, M_NOWAIT);
-	if (dqd->bp == NULL) {
-		return (ENOMEM);
-	}
-	memset(dqd->bp, 0, sizeof(struct buf));	/* if you don't do it, nobody
-						 * else will.. */
-	return (0);
-}
-
-static void 
-clean_dqd(RF_DiskQueueData_t *dqd)
-{
-	free(dqd->bp, M_RAIDFRAME);
-}
 /* configures a single disk queue */
 
 int 
@@ -484,12 +463,16 @@ rf_CreateDiskQueueData(RF_IoType_t typ, RF_SectorNum_t ssect,
 	RF_DiskQueueData_t *p;
 
 	p = pool_get(&rf_dqd_pool, PR_WAITOK);
-	if (init_dqd(p)) {
+	p->bp = pool_get(&bufpool, PR_NOWAIT); /* XXX: make up our minds here.
+						  WAITOK, or NOWAIT?? */
+
+	if (p->bp == NULL) {
 		/* no memory for the buffer!?!? */
 		pool_put(&rf_dqd_pool, p);
 		return(NULL);
 	}
 
+	memset(p->bp, 0, sizeof(struct buf));
 	p->sectorOffset = ssect + rf_protectedSectors;
 	p->numSector = nsect;
 	p->type = typ;
@@ -510,6 +493,6 @@ rf_CreateDiskQueueData(RF_IoType_t typ, RF_SectorNum_t ssect,
 void 
 rf_FreeDiskQueueData(RF_DiskQueueData_t *p)
 {
-	clean_dqd(p);
+	pool_put(&bufpool, p->bp);
 	pool_put(&rf_dqd_pool, p);
 }
