@@ -1,4 +1,4 @@
-/*	$NetBSD: atapiconf.c,v 1.39 2001/04/25 17:53:38 bouyer Exp $	*/
+/*	$NetBSD: atapiconf.c,v 1.40 2001/05/14 20:35:27 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -40,7 +40,6 @@
 
 #include <dev/ata/atavar.h>
 #include <dev/scsipi/scsipi_all.h>
-#include <dev/scsipi/atapi_all.h>
 #include <dev/scsipi/scsipiconf.h>
 #include <dev/scsipi/atapiconf.h>
 

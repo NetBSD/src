@@ -1,4 +1,4 @@
-/*	$NetBSD: sd_atapi.c,v 1.9 2001/04/25 17:53:41 bouyer Exp $	*/
+/*	$NetBSD: sd_atapi.c,v 1.10 2001/05/14 20:35:29 bouyer Exp $	*/
 
 /*
  * Copyright 1998
@@ -52,7 +52,6 @@
 
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsipi_disk.h>
-#include <dev/scsipi/atapi_all.h>
 #include <dev/scsipi/atapi_disk.h>
 #include <dev/scsipi/atapiconf.h>
 #include <dev/scsipi/sdvar.h>
@@ -192,8 +191,8 @@ sd_atapibus_get_parms(sd, dp, flags)
 	 */
 	if (sd->sc_periph->periph_quirks & PQUIRK_NO_FLEX_PAGE)
 		return (SDGP_RESULT_OK);
-	error = atapi_mode_sense(sd->sc_periph, ATAPI_FLEX_GEOMETRY_PAGE,
-	    (struct atapi_mode_header *)&sense_data, FLEXGEOMETRYPAGESIZE,
+	error = scsipi_mode_sense_big(sd->sc_periph, 0,
+	    ATAPI_FLEX_GEOMETRY_PAGE, &sense_data.header, FLEXGEOMETRYPAGESIZE,
 	    flags | XS_CTL_DATA_ONSTACK, SDRETRIES, 20000);
 	SC_DEBUG(sd->sc_periph, SCSIPI_DB2,
 	    ("sd_atapibus_get_parms: mode sense (flex) error=%d\n", error));

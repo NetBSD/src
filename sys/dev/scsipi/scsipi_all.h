@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_all.h,v 1.16 2001/04/25 17:53:39 bouyer Exp $	*/
+/*	$NetBSD: scsipi_all.h,v 1.17 2001/05/14 20:35:28 bouyer Exp $	*/
 
 /*
  * SCSI and SCSI-like general interface description
@@ -68,6 +68,68 @@ struct scsipi_sense {
 	u_int8_t byte2;
 	u_int8_t unused[2];
 	u_int8_t length;
+	u_int8_t control;
+};
+
+#define	MODE_SENSE		0x1a
+struct scsipi_mode_sense {
+	u_int8_t opcode;
+	u_int8_t byte2;
+#define	SMS_DBD				0x08 /* disable block descriptors */
+	u_int8_t page;
+#define	SMS_PAGE_CODE 			0x3F
+#define	SMS_PAGE_CTRL 			0xC0
+#define	SMS_PAGE_CTRL_CURRENT 		0x00
+#define	SMS_PAGE_CTRL_CHANGEABLE 	0x40
+#define	SMS_PAGE_CTRL_DEFAULT 		0x80
+#define	SMS_PAGE_CTRL_SAVED 		0xC0
+	union {
+		struct {
+			u_int8_t unused;
+			u_int8_t length;
+		} scsi;
+		struct {
+			u_int8_t length[2];
+		} atapi;
+	} u_len;
+	u_int8_t control;
+};
+
+#define	MODE_SENSE_BIG		0x5A
+struct scsipi_mode_sense_big {
+	u_int8_t opcode;
+	u_int8_t byte2;		/* same bits as small version */
+	u_int8_t page; 		/* same bits as small version */
+	u_int8_t unused[4];
+	u_int8_t length[2];
+	u_int8_t control;
+};
+
+#define	MODE_SELECT		0x15
+struct scsipi_mode_select {
+	u_int8_t opcode;
+	u_int8_t byte2;
+#define	SMS_SP	0x01		/* save page */
+#define	SMS_PF	0x10
+	u_int8_t unused[2];
+	union {
+		struct {
+			u_int8_t unused;
+			u_int8_t length;
+		} scsi;
+		struct {
+			u_int8_t length[2];
+		} atapi;
+	} u_len;
+	u_int8_t control;
+};
+
+#define	MODE_SELECT_BIG		0x55
+struct scsipi_mode_select_big {
+	u_int8_t opcode;
+	u_int8_t byte2;		/* same bits as small version */
+	u_int8_t unused[5];
+	u_int8_t length[2];
 	u_int8_t control;
 };
 
@@ -232,5 +294,22 @@ struct scsipi_inquiry_data {
 /*58*/	u_int8_t reserved;
 /*59*/	char    version_descriptor[8][2];
 }; /* 74 Bytes */
+
+/* Data structures for mode select/mode sense */
+struct scsipi_mode_header {
+	u_int8_t data_length;	/* Sense data length */
+	u_int8_t medium_type;
+	u_int8_t dev_spec;
+	u_int8_t blk_desc_len;	/* unused on ATAPI */
+};
+
+struct scsipi_mode_header_big {
+	u_int8_t data_length[2];	/* Sense data length */
+	u_int8_t medium_type;
+	u_int8_t dev_spec;
+	u_int8_t unused[2];		/* unused on ATAPI */
+	u_int8_t blk_desc_len[2];	/* unused on ATAPI */
+};
+
 
 #endif /* _DEV_SCSIPI_SCSIPI_ALL_H_ */
