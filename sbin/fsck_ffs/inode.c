@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.c,v 1.13 1995/03/18 14:55:46 cgd Exp $	*/
+/*	$NetBSD: inode.c,v 1.14 1995/03/20 00:40:10 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -35,9 +35,9 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)inode.c	8.4 (Berkeley) 4/18/94";
+static char sccsid[] = "@(#)inode.c	8.5 (Berkeley) 2/8/95";
 #else
-static char rcsid[] = "$NetBSD: inode.c,v 1.13 1995/03/18 14:55:46 cgd Exp $";
+static char rcsid[] = "$NetBSD: inode.c,v 1.14 1995/03/20 00:40:10 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -331,7 +331,10 @@ cacheino(dp, inumber)
 	inpp = &inphead[inumber % numdirs];
 	inp->i_nexthash = *inpp;
 	*inpp = inp;
-	inp->i_parent = (ino_t)0;
+	if (inumber == ROOTINO)
+		inp->i_parent = ROOTINO;
+	else
+		inp->i_parent = (ino_t)0;
 	inp->i_dotdot = (ino_t)0;
 	inp->i_number = inumber;
 	inp->i_isize = dp->di_size;
