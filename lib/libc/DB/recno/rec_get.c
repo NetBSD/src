@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char sccsid[] = "@(#)rec_get.c	5.8 (Berkeley) 3/19/93";
+static char sccsid[] = "@(#)rec_get.c	5.10 (Berkeley) 5/16/93";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -82,7 +82,7 @@ __rec_get(dbp, key, data, flags)
 	 */
 	t = dbp->internal;
 	if (nrec > t->bt_nrecs) {
-		if (ISSET(t, BTF_EOF | BTF_RINMEM))
+		if (ISSET(t, R_EOF | R_INMEM))
 			return (RET_SPECIAL);
 		if ((status = t->bt_irec(t, nrec)) != RET_SUCCESS)
 			return (status);
@@ -139,7 +139,7 @@ __rec_fpipe(t, top)
 			break;
 	}
 	if (nrec < top) {
-		SET(t, BTF_EOF);
+		SET(t, R_EOF);
 		return (RET_SPECIAL);
 	}
 	return (RET_SUCCESS);
@@ -173,6 +173,8 @@ __rec_vpipe(t, top)
 			if ((ch = getc(t->bt_rfp)) == EOF || ch == bval) {
 				data.data = t->bt_dbuf;
 				data.size = p - t->bt_dbuf;
+				if (ch == EOF && data.size == 0)
+					break;
 				if (__rec_iput(t, nrec, &data, 0)
 				    != RET_SUCCESS)
 					return (RET_ERROR);
@@ -191,7 +193,7 @@ __rec_vpipe(t, top)
 			break;
 	}
 	if (nrec < top) {
-		SET(t, BTF_EOF);
+		SET(t, R_EOF);
 		return (RET_SPECIAL);
 	}
 	return (RET_SUCCESS);
@@ -230,7 +232,7 @@ __rec_fmap(t, top)
 	}
 	for (nrec = t->bt_nrecs; nrec < top; ++nrec) {
 		if (sp >= ep) {
-			SET(t, BTF_EOF);
+			SET(t, R_EOF);
 			return (RET_SPECIAL);
 		}
 		len = t->bt_reclen;
@@ -269,7 +271,7 @@ __rec_vmap(t, top)
 
 	for (nrec = t->bt_nrecs; nrec < top; ++nrec) {
 		if (sp >= ep) {
-			SET(t, BTF_EOF);
+			SET(t, R_EOF);
 			return (RET_SPECIAL);
 		}
 		for (data.data = sp; sp < ep && *sp != bval; ++sp);

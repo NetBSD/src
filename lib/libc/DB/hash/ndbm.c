@@ -35,7 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char sccsid[] = "@(#)ndbm.c	5.13 (Berkeley) 2/11/93";
+static char sccsid[] = "@(#)ndbm.c	5.14 (Berkeley) 5/23/93";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -64,8 +64,8 @@ dbm_open(file, flags, mode)
 	HASHINFO info;
 	char path[MAXPATHLEN];
 
-	info.bsize = 1024;
-	info.ffactor = 5;
+	info.bsize = 4096;
+	info.ffactor = 40;
 	info.nelem = 1;
 	info.cachesize = NULL;
 	info.hash = NULL;

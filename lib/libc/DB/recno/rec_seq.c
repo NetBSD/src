@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)rec_seq.c	5.8 (Berkeley) 3/19/93";
+static char sccsid[] = "@(#)rec_seq.c	5.9 (Berkeley) 5/16/93";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -75,7 +75,7 @@ __rec_seq(dbp, key, data, flags)
 			goto einval;
 		break;
 	case R_NEXT:
-		if (ISSET(t, BTF_SEQINIT)) {
+		if (ISSET(t, B_SEQINIT)) {
 			nrec = t->bt_rcursor + 1;
 			break;
 		}
@@ -84,14 +84,14 @@ __rec_seq(dbp, key, data, flags)
 		nrec = 1;
 		break;
 	case R_PREV:
-		if (ISSET(t, BTF_SEQINIT)) {
+		if (ISSET(t, B_SEQINIT)) {
 			if ((nrec = t->bt_rcursor - 1) == 0)
 				return (RET_SPECIAL);
 			break;
 		}
 		/* FALLTHROUGH */
 	case R_LAST:
-		if (!ISSET(t, BTF_EOF | BTF_RINMEM) &&
+		if (!ISSET(t, R_EOF | R_INMEM) &&
 		    t->bt_irec(t, MAX_REC_NUMBER) == RET_ERROR)
 			return (RET_ERROR);
 		nrec = t->bt_nrecs;
@@ -102,7 +102,7 @@ einval:		errno = EINVAL;
 	}
 	
 	if (t->bt_nrecs == 0 || nrec > t->bt_nrecs) {
-		if (!ISSET(t, BTF_EOF | BTF_RINMEM) &&
+		if (!ISSET(t, R_EOF | R_INMEM) &&
 		    (status = t->bt_irec(t, nrec)) != RET_SUCCESS)
 			return (status);
 		if (t->bt_nrecs == 0 || nrec > t->bt_nrecs)
@@ -112,7 +112,7 @@ einval:		errno = EINVAL;
 	if ((e = __rec_search(t, nrec - 1, SEARCH)) == NULL)
 		return (RET_ERROR);
 
-	SET(t, BTF_SEQINIT);
+	SET(t, B_SEQINIT);
 	t->bt_rcursor = nrec;
 
 	status = __rec_ret(t, e, nrec, key, data);

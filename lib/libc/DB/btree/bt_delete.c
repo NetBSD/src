@@ -35,7 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char sccsid[] = "@(#)bt_delete.c	5.10 (Berkeley) 2/16/93";
+static char sccsid[] = "@(#)bt_delete.c	5.11 (Berkeley) 5/16/93";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -70,7 +70,7 @@ __bt_delete(dbp, key, flags)
 	int status;
 
 	t = dbp->internal;
-	if (ISSET(t, BTF_RDONLY)) {
+	if (ISSET(t, B_RDONLY)) {
 		errno = EPERM;
 		return (RET_ERROR);
 	}
@@ -85,9 +85,9 @@ __bt_delete(dbp, key, flags)
 		 * the delete cursor bit to have been set requires that the
 		 * scan be initialized, so no reason to check.
 		 */
-		if (!ISSET(t, BTF_SEQINIT))
+		if (!ISSET(t, B_SEQINIT))
                         goto einval;
-		status = ISSET(t, BTF_DELCRSR) ?
+		status = ISSET(t, B_DELCRSR) ?
 		    RET_SPECIAL : __bt_crsrdel(t, &t->bt_bcursor);
 		break;
 	default:
@@ -95,7 +95,7 @@ einval:		errno = EINVAL;
 		return (RET_ERROR);
 	}
 	if (status == RET_SUCCESS)
-		SET(t, BTF_MODIFIED);
+		SET(t, B_MODIFIED);
 	return (status);
 }
 
@@ -158,8 +158,8 @@ bt_bdelete(t, key)
 		dirty2 = 0;
 		do {
 			if (h->pgno == cpgno && e->index == cindex) {
-				if (!ISSET(t, BTF_DELCRSR)) {
-					SET(t, BTF_DELCRSR);
+				if (!ISSET(t, B_DELCRSR)) {
+					SET(t, B_DELCRSR);
 					deleted = 1;
 				}
 				++e->index;
@@ -225,8 +225,8 @@ done1:	if (h->pgno != save.page->pgno)
 			if (__bt_cmp(t, key, e) != 0)
 				goto done2;
 			if (h->pgno == cpgno && e->index == cindex) {
-				if (!ISSET(t, BTF_DELCRSR)) {
-					SET(t, BTF_DELCRSR);
+				if (!ISSET(t, B_DELCRSR)) {
+					SET(t, B_DELCRSR);
 					deleted = 1;
 				}
 			} else {
