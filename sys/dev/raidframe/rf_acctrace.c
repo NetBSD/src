@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_acctrace.c,v 1.8 2002/09/14 17:53:57 oster Exp $	*/
+/*	$NetBSD: rf_acctrace.c,v 1.9 2002/09/14 18:07:31 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,7 +34,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_acctrace.c,v 1.8 2002/09/14 17:53:57 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_acctrace.c,v 1.9 2002/09/14 18:07:31 oster Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -65,7 +65,7 @@ RF_DECLARE_MUTEX(rf_tracing_mutex)
 {
 	if (rf_accessTraceBufSize) {
 		if (accessTraceBufCount)
-			rf_FlushAccessTraceBuf();
+				accessTraceBufCount = 0;
 		RF_Free(access_tracebuf, rf_accessTraceBufSize * sizeof(RF_AccTraceEntry_t));
 	}
 	rf_mutex_destroy(&rf_tracing_mutex);
@@ -149,15 +149,4 @@ rf_LogTraceRec(raid, rec)
 		acc->phys_io_us = rec->phys_io_us;
 		acc->user_reccount++;
 	}
-}
-
-
-/* assumes the tracing mutex is locked at entry.  In order to allow this to be called
- * from interrupt context, we don't do any copyouts here, but rather just wake trace
- * buffer collector thread.
- */
-void 
-rf_FlushAccessTraceBuf()
-{
-	accessTraceBufCount = 0;
 }
