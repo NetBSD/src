@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: lp,v 1.4 1998/07/07 17:05:28 mrg Exp $
+#	$NetBSD: lp,v 1.5 2003/03/28 14:37:43 perry Exp $
 #
 # Copyright (c) 1995 Joerg Wunsch
 #
@@ -42,6 +42,7 @@
 
 ncopies=""
 symlink="-s"
+reqid="-R"
 
 # Posix says LPDEST gets precedence over PRINTER
 dest=${LPDEST:-${PRINTER:-lp}}
@@ -57,7 +58,7 @@ do
 	c)			# copy files before printing
 		symlink="";;
 	s)			# silent
-		: ;;
+		reqid="";;
 	d)			# destination
 		dest="${OPTARG}";;
 	n)			# number of copies
@@ -71,4 +72,4 @@ done
 
 shift $(($OPTIND - 1))
 
-exec /usr/bin/lpr "-P${dest}" ${symlink} ${ncopies} "$@"
+exec /usr/bin/lpr "-P${dest}" ${reqid} ${symlink} ${ncopies} "$@"

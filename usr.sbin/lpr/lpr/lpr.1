@@ -1,4 +1,4 @@
-.\"	$NetBSD: lpr.1,v 1.13 2003/03/27 16:25:28 perry Exp $
+.\"	$NetBSD: lpr.1,v 1.14 2003/03/28 14:37:44 perry Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -41,7 +41,7 @@
 .Nd off line print
 .Sh SYNOPSIS
 .Nm
-.Op Fl cdfghlmnqprstv
+.Op Fl cdfghlmnqprRstv
 .Bk -words
 .Op Fl P Ar printer
 .Ek
@@ -148,6 +148,20 @@ option will use
 to link data files rather than trying to copy them so large files can be
 printed.  This means the files should
 not be modified or removed until they have been printed.
+.El
+.Pp
+Normally
+.Nm
+works silently except for diaganostic messages.  The following 
+option changes this behavior.
+.Bl -tag -width indent
+.It Fl R
+Writes a message to standard output containing the unique number which
+is used to identify this job.  This number can be used to cancel (see
+.Xr lprm 1 )
+or find the status (see
+.Xr lpq 1 )
+of the job.
 .El
 .Pp
 The remaining options apply to copies, the page display, and headers:
