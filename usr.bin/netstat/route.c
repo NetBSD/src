@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.41 1999/11/22 14:13:54 itojun Exp $	*/
+/*	$NetBSD: route.c,v 1.42 1999/11/24 08:45:43 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-__RCSID("$NetBSD: route.c,v 1.41 1999/11/22 14:13:54 itojun Exp $");
+__RCSID("$NetBSD: route.c,v 1.42 1999/11/24 08:45:43 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -230,8 +230,15 @@ pr_family(af)
 #define	WID_GW(af)	18	/* width of gateway column */
 #else
 /* width of destination/gateway column */
-#define	WID_DST(af)	((af) == AF_INET6 ? (nflag ? 28 : 18) : 18)
-#define	WID_GW(af)	((af) == AF_INET6 ? (nflag ? 26 : 18) : 18)
+#ifdef KAME_SCOPEID
+/* strlen("fe80::aaaa:bbbb:cccc:dddd@gif0") == 30, strlen("/128") == 4 */
+#define	WID_DST(af)	((af) == AF_INET6 ? (nflag ? 34 : 18) : 18)
+#define	WID_GW(af)	((af) == AF_INET6 ? (nflag ? 30 : 18) : 18)
+#else
+/* strlen("fe80::aaaa:bbbb:cccc:dddd") == 25, strlen("/128") == 4 */
+#define	WID_DST(af)	((af) == AF_INET6 ? (nflag ? 29 : 18) : 18)
+#define	WID_GW(af)	((af) == AF_INET6 ? (nflag ? 25 : 18) : 18)
+#endif
 #endif /* INET6 */
 
 /*
