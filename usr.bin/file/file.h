@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.15 1999/11/01 17:39:26 christos Exp $	*/
+/*	$NetBSD: file.h,v 1.16 1999/11/02 21:05:20 jwise Exp $	*/
 
 /*
  * file.h - definitions for file(1) program
@@ -30,6 +30,8 @@
 
 #ifndef __file_h__
 #define __file_h__
+
+#include <inttypes.h>
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
