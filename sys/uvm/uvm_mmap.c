@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.19 1999/03/25 18:48:53 mrg Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.20 1999/05/03 09:08:28 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -92,8 +92,8 @@ sys_sbrk(p, v, retval)
 {
 #if 0
 	struct sys_sbrk_args /* {
-			  syscallarg(int) incr;
-			  } */ *uap = v;
+		syscallarg(int) incr;
+	} */ *uap = v;
 #endif
 
 	return (ENOSYS);
@@ -112,8 +112,8 @@ sys_sstk(p, v, retval)
 {
 #if 0
 	struct sys_sstk_args /* {
-			  syscallarg(int) incr;
-			  } */ *uap = v;
+		syscallarg(int) incr;
+	} */ *uap = v;
 #endif
 
 	return (ENOSYS);
@@ -132,10 +132,10 @@ sys_madvise(p, v, retval)
 {
 #if 0
 	struct sys_madvise_args /* {
-			     syscallarg(caddr_t) addr;
-			     syscallarg(size_t) len;
-			     syscallarg(int) behav;
-			     } */ *uap = v;
+		syscallarg(caddr_t) addr;
+		syscallarg(size_t) len;
+		syscallarg(int) behav;
+	} */ *uap = v;
 #endif
 
 	return (ENOSYS);
@@ -154,10 +154,10 @@ sys_mincore(p, v, retval)
 {
 #if 0
 	struct sys_mincore_args /* {
-			     syscallarg(caddr_t) addr;
-			     syscallarg(size_t) len;
-			     syscallarg(char *) vec;
-			     } */ *uap = v;
+		syscallarg(caddr_t) addr;
+		syscallarg(size_t) len;
+		syscallarg(char *) vec;
+	} */ *uap = v;
 #endif
 
 	return (ENOSYS);
