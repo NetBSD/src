@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2000/07/06 03:39:53 jhawk Exp $
+#	$NetBSD: Makefile,v 1.15 2000/08/23 21:00:48 jhawk Exp $
 
 S=	${.CURDIR}/../../../../
 
@@ -28,5 +28,14 @@ SAMISCMAKEFLAGS= SA_USE_CREAD=yes SA_INCLUDE_NET=no
 I386MISCMAKEFLAGS= I386_INCLUDE_DOS=yes
 
 VERSIONFILE= ${.CURDIR}/version
+
+.ifndef RELEASEDIR
+release:
+	@echo setenv RELEASEDIR first
+	@false
+.else
+release:
+	cp ${.CURDIR}/dosboot.com ${RELEASEDIR}/installation/misc
+.endif
 
 .include "../Makefile.booters"
