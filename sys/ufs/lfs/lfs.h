@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.55 2003/03/08 02:55:47 perseant Exp $	*/
+/*	$NetBSD: lfs.h,v 1.56 2003/03/08 22:14:31 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -286,12 +286,8 @@ extern struct lfs_log_entry lfs_log[LFS_LOGLENGTH];
  * How to find out whether a vnode had dirty buffers or pages,
  * to know whether it needs to retain IN_MODIFIED after a write.
  */
-#ifdef LFS_UBC
 int lfs_checkifempty(struct vnode *);
-#  define VPISEMPTY(vp)	 lfs_checkifempty(vp)
-#else
-# define VPISEMPTY(vp)	((vp)->v_dirtyblkhd.lh_first == NULL)
-#endif
+#define VPISEMPTY(vp)	 lfs_checkifempty(vp)
 /*
  * WRITEINPROG does not use VPISEMPTY because any dirty pages will
  * have been given buffer headers, if they are "in progress".
