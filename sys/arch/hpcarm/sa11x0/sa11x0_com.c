@@ -1,4 +1,4 @@
-/*      $NetBSD: sa11x0_com.c,v 1.2 2001/02/23 04:31:19 ichiro Exp $        */
+/*      $NetBSD: sa11x0_com.c,v 1.3 2001/03/05 07:11:18 toshii Exp $        */
 
 /*-
  * Copyright (c) 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -220,7 +220,7 @@ sacom_attach(parent, self, aux)
 
 	if(bus_space_map(sa->sa_iot, sa->sa_addr, sa->sa_size, 0,
 			&sc->sc_ioh)) {
-		printf(": can't map bus space\n");
+		printf("%s: unable to map registers\n", sc->sc_dev.dv_xname);
 		return;
 	}
 
