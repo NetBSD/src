@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vfsops.c,v 1.18 2001/11/12 23:04:11 lukem Exp $	*/
+/*	$NetBSD: filecore_vfsops.c,v 1.18.8.1 2002/05/16 04:16:11 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1998 Andrew McMurry
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.18 2001/11/12 23:04:11 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.18.8.1 2002/05/16 04:16:11 gehenna Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -56,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.18 2001/11/12 23:04:11 lukem E
 #include <sys/errno.h>
 #include <sys/malloc.h>
 #include <sys/pool.h>
+#include <sys/conf.h>
 
 #include <filecorefs/filecore.h>
 #include <filecorefs/filecore_extern.h>
@@ -189,7 +190,7 @@ filecore_mount(mp, path, data, ndp, p)
 		vrele(devvp);
 		return ENOTBLK;
 	}
-	if (major(devvp->v_rdev) >= nblkdev) {
+	if (bdevsw_lookup(devvp->v_rdev) == NULL) {
 		vrele(devvp);
 		return ENXIO;
 	}
