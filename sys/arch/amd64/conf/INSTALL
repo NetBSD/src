@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.11 2003/11/10 00:52:28 fvdl Exp $
+# $NetBSD: INSTALL,v 1.12 2003/12/13 23:13:40 thorpej Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include	"arch/amd64/conf/std.amd64"
 
-#ident 		"INSTALL-$Revision: 1.11 $"
+#ident 		"INSTALL-$Revision: 1.12 $"
 
 maxusers	32		# estimated number of users
 
@@ -334,6 +334,7 @@ hptide* at pci? dev ? function ?	# Triones/HighPoint IDE controllers
 optiide* at pci? dev ? function ?	# Opti IDE controllers
 piixide* at pci? dev ? function ?	# Intel IDE controllers
 pdcide* at pci? dev ? function ?	# Promise IDE controllers
+satalink* at pci? dev ? function ?	# SiI SATALink controllers
 siside* at pci? dev ? function ?	# SiS IDE controllers
 slide*  at pci? dev ? function ?	# Symphony Labs IDE controllers
 viaide* at pci? dev ? function ?	# VIA/AMD/Nvidia IDE controllers

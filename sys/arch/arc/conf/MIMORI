@@ -1,4 +1,4 @@
-#	$NetBSD: MIMORI,v 1.24 2003/10/21 16:28:20 tsutsui Exp $
+#	$NetBSD: MIMORI,v 1.25 2003/12/13 23:13:40 thorpej Exp $
 #	NetBSD: GENERIC,v 1.31 2000/06/09 05:33:02 soda Exp
 #
 #	MIMORI -- My NEC RISCstation 2250 (ur)
@@ -181,6 +181,7 @@ hptide* 	at pci? dev ? function ?	# Triones/HighPoint IDE controllers
 optiide* 	at pci? dev ? function ?	# Opti IDE controllers
 #piixide* 	at pci? dev ? function ?	# Intel IDE controllers
 pdcide* 	at pci? dev ? function ?	# Promise IDE controllers
+satalink*	at pci? dev ? function ?	# SiI SATALink controllers
 #siside* 	at pci? dev ? function ?	# SiS IDE controllers
 slide*  	at pci? dev ? function ?	# Symphony Labs IDE controllers
 #viaide* 	at pci? dev ? function ?	# VIA/AMD/Nvidia IDE controllers
