@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.43 2001/03/23 11:09:49 sato Exp $	*/
+/*	$NetBSD: machdep.c,v 1.44 2001/03/25 15:15:18 uch Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.43 2001/03/23 11:09:49 sato Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.44 2001/03/25 15:15:18 uch Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 #include "opt_vr41x1.h"
@@ -231,14 +231,27 @@ mach_init(argc, argv, bi)
 
 	/* clear the BSS segment */
 #ifdef DDB
-	if (memcmp(((Elf_Ehdr *)end)->e_ident, ELFMAG, SELFMAG) == 0 &&
-	    ((Elf_Ehdr *)end)->e_ident[EI_CLASS] == ELFCLASS) {
+	size_t symbolsz = 0;
+	Elf_Ehdr *eh = (void *)end;
+	if (memcmp(eh->e_ident, ELFMAG, SELFMAG) == 0 &&
+	    eh->e_ident[EI_CLASS] == ELFCLASS) {
 		esym = end;
-		esym += ((Elf_Ehdr *)end)->e_entry;
+		if (eh->e_entry != 0) {
+			/* pbsdboot */
+			symbolsz = eh->e_entry;
+		} else {
+			/* hpcboot */
+			Elf_Shdr *sh = (void *)(end + eh->e_shoff);
+			for(i = 0; i < eh->e_shnum; i++, sh++)
+				if (sh->sh_offset > 0 &&
+				    (sh->sh_offset + sh->sh_size) > symbolsz)
+					symbolsz = sh->sh_offset + sh->sh_size;
+		}
+		esym += symbolsz;
 		kernend = (caddr_t)mips_round_page(esym);
 		bzero(edata, end - edata);
 	} else
-#endif
+#endif /* DDB */
 	{
 		kernend = (caddr_t)mips_round_page(end);
 		memset(edata, 0, kernend - edata);
@@ -359,7 +372,7 @@ mach_init(argc, argv, bi)
 #ifdef DDB
 	/* init symbols if present */
 	if (esym)
-		ddb_init(1000, &end, (int*)esym);
+		ddb_init(symbolsz, &end, esym);
 #endif
 	/*
 	 * Alloc u pages for proc0 stealing KSEG0 memory.
