@@ -26,7 +26,7 @@
 #include "uucp.h"
 
 #if USE_RCS_ID
-const char protf_rcsid[] = "$Id: protf.c,v 1.4 1998/04/17 23:39:29 ross Exp $";
+const char protf_rcsid[] = "$Id: protf.c,v 1.5 2004/11/05 20:37:28 dsl Exp $";
 #endif
 
 #include <ctype.h>
@@ -749,10 +749,10 @@ ffawait_cksum (qtrans, qdaemon, zdata, cdata)
 
   qtrans->precfn = NULL;
 
-  if (! isxdigit (zdata[0])
-      || ! isxdigit (zdata[1])
-      || ! isxdigit (zdata[2])
-      || ! isxdigit (zdata[3])
+  if (! isxdigit ((unsigned char)zdata[0])
+      || ! isxdigit ((unsigned char)zdata[1])
+      || ! isxdigit ((unsigned char)zdata[2])
+      || ! isxdigit ((unsigned char)zdata[3])
       || zdata[4] != '\0')
     {
       ulog (LOG_ERROR, "Bad checksum format");
