@@ -242,6 +242,13 @@ static int scratch_index;
 static int this_insn_number;
 static rtx this_insn;
 
+/* Used to communicate changes made by update_equiv_regs to
+   memref_referenced_p.  reg_equiv_replacement is set for any REG_EQUIV note
+   found or created, so that we can keep track of what memory accesses might
+   be created later, e.g. by reload.  */
+
+static rtx *reg_equiv_replacement;
+
 static void alloc_qty		PROTO((int, enum machine_mode, int, int));
 static void alloc_qty_for_scratch PROTO((rtx, int, rtx, int, int));
 static void validate_equiv_mem_from_store PROTO((rtx, rtx));
@@ -616,7 +623,6 @@ memref_referenced_p (memref, x)
 
   switch (code)
     {
-    case REG:
     case CONST_INT:
     case CONST:
     case LABEL_REF:
@@ -627,6 +633,11 @@ memref_referenced_p (memref, x)
     case HIGH:
     case LO_SUM:
       return 0;
+
+    case REG:
+      return (reg_equiv_replacement[REGNO (x)]
+	      && memref_referenced_p (memref,
+				      reg_equiv_replacement[REGNO (x)]));
 
     case MEM:
       if (true_dependence (memref, x))
@@ -947,11 +958,17 @@ static void
 update_equiv_regs ()
 {
   rtx *reg_equiv_init_insn = (rtx *) alloca (max_regno * sizeof (rtx *));
-  rtx *reg_equiv_replacement = (rtx *) alloca (max_regno * sizeof (rtx *));
+  /* Set when an attempt should be made to replace a register with the
+     associated reg_equiv_replacement entry at the end of this function.  */
+  char *reg_equiv_replace
+    = (char *) alloca (max_regno * sizeof *reg_equiv_replace);
   rtx insn;
+
+  reg_equiv_replacement = (rtx *) alloca (max_regno * sizeof (rtx *));
 
   bzero ((char *) reg_equiv_init_insn, max_regno * sizeof (rtx *));
   bzero ((char *) reg_equiv_replacement, max_regno * sizeof (rtx *));
+  bzero ((char *) reg_equiv_replace, max_regno * sizeof *reg_equiv_replace);
 
   init_alias_analysis ();
 
@@ -1054,32 +1071,38 @@ update_equiv_regs ()
 	REG_NOTES (insn) = note = gen_rtx (EXPR_LIST, REG_EQUIV, SET_SRC (set),
 					   REG_NOTES (insn));
 
-      /* Don't mess with things live during setjmp.  */
-      if (note && reg_live_length[regno] >= 0)
+      if (note)
 	{
 	  int regno = REGNO (dest);
 
-	  /* Note that the statement below does not affect the priority
-	     in local-alloc!  */
-	  reg_live_length[regno] *= 2;
+	  reg_equiv_replacement[regno] = XEXP (note, 0);
+	
+	  /* Don't mess with things live during setjmp.  */
+	  if (reg_live_length[regno] >= 0)
+	    {
+	      /* Note that the statement below does not affect the priority
+		 in local-alloc!  */
+	      reg_live_length[regno] *= 2;
 
-	  /* If the register is referenced exactly twice, meaning it is set
-	     once and used once, indicate that the reference may be replaced
-	     by the equivalence we computed above.  If the register is only
-	     used in one basic block, this can't succeed or combine would
-	     have done it.
 
-	     It would be nice to use "loop_depth * 2" in the compare
-	     below.  Unfortunately, LOOP_DEPTH need not be constant within
-	     a basic block so this would be too complicated.
+	      /* If the register is referenced exactly twice, meaning it is
+		 set once and used once, indicate that the reference may be
+		 replaced by the equivalence we computed above.  If the
+		 register is only used in one basic block, this can't succeed
+		 or combine would have done it.
 
-	     This case normally occurs when a parameter is read from memory
-	     and then used exactly once, not in a loop.  */
+		 It would be nice to use "loop_depth * 2" in the compare
+		 below.  Unfortunately, LOOP_DEPTH need not be constant within
+		 a basic block so this would be too complicated.
 
-	  if (reg_n_refs[regno] == 2
-	      && reg_basic_block[regno] < 0
-	      && rtx_equal_p (XEXP (note, 0), SET_SRC (set)))
-	    reg_equiv_replacement[regno] = SET_SRC (set);
+		 This case normally occurs when a parameter is read from
+		 memory and then used exactly once, not in a loop.  */
+
+	      if (reg_n_refs[regno] == 2
+		  && reg_basic_block[regno] < 0
+		  && rtx_equal_p (XEXP (note, 0), SET_SRC (set)))
+		reg_equiv_replace[regno] = 1;
+	    }
 	}
     }
 
@@ -1100,7 +1123,7 @@ update_equiv_regs ()
 	  {
 	    int regno = REGNO (XEXP (link, 0));
 
-	    if (reg_equiv_replacement[regno]
+	    if (reg_equiv_replace[regno]
 		&& validate_replace_rtx (regno_reg_rtx[regno],
 					 reg_equiv_replacement[regno], insn))
 	      {
