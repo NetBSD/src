@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.1 2003/03/12 00:09:52 thorpej Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.2 2003/03/14 18:47:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.1 2003/03/12 00:09:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.2 2003/03/14 18:47:53 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -372,6 +372,7 @@ _x86_memio_unmap(t, bsh, size, adrp)
 			bpa = pmap_extract(pmap_kernel(), va) + (bsh & PGOFSET);
 #endif
 
+			pmap_kremove(va, endva - va);
 			/*
 			 * Free the kernel virtual mapping.
 			 */
@@ -422,6 +423,7 @@ x86_memio_unmap(t, bsh, size)
 		(void) pmap_extract(pmap_kernel(), va, &bpa);
 		bpa += (bsh & PGOFSET);
 
+		pmap_kremove(va, endva - va);
 		/*
 		 * Free the kernel virtual mapping.
 		 */
