@@ -1,5 +1,5 @@
-/* $NetBSD: isp_netbsd.c,v 1.7 1998/12/05 19:48:23 mjacob Exp $ */
-/* isp_netbsd.c 1.15 */
+/* $NetBSD: isp_netbsd.c,v 1.8 1998/12/28 19:10:43 mjacob Exp $ */
+/* release_12_28_98_A */
 /*
  * Platform (NetBSD) dependent common attachment code for Qlogic adapters.
  *
@@ -54,6 +54,7 @@ static int32_t ispcmd __P((ISP_SCSI_XFER_T *));
 
 static struct scsipi_device isp_dev = { NULL, NULL, NULL, NULL };
 static int isp_poll __P((struct ispsoftc *, ISP_SCSI_XFER_T *, int));
+static void isp_watch __P ((void *));
 
 /*
  * Complete attachment of hardware, include subdevices.
@@ -109,6 +110,16 @@ isp_attach(isp)
 	if (isp->isp_osinfo._link.openings < 2)
 		isp->isp_osinfo._link.openings = 2;
 	isp->isp_osinfo._link.type = BUS_SCSI;
+
+	/*
+	 * Start the watchdog.
+	 */
+	isp->isp_dogactive = 1;
+	timeout(isp_watch, isp, 30 * hz);
+
+	/*
+	 * And attach children (if any).
+	 */
 	config_found((void *)isp, &isp->isp_osinfo._link, scsiprint);
 }
 
@@ -166,7 +177,9 @@ ispcmd(xs)
 			isp->isp_update = 1;
 		}
 	}
+	DISABLE_INTS(isp);
 	result = ispscsicmd(xs);
+	ENABLE_INTS(isp);
 	if (result != CMD_QUEUED || (xs->flags & SCSI_POLL) == 0) {
 		ISP_UNLOCK(isp);
 		return (result);
@@ -213,4 +226,77 @@ isp_poll(isp, xs, mswait)
 		mswait--;
 	}
 	return (1);
+}
+
+static void
+isp_watch(arg)
+	void *arg;
+{
+	int i;
+	struct ispsoftc *isp = arg;
+	ISP_SCSI_XFER_T *xs;
+	ISP_ILOCKVAL_DECL;
+
+	/*
+	 * Look for completely dead commands (but not polled ones).
+	 */
+	ISP_ILOCK(isp);
+	for (i = 0; i < RQUEST_QUEUE_LEN; i++) {
+		if ((xs = (ISP_SCSI_XFER_T *) isp->isp_xflist[i]) == NULL) {
+			continue;
+		}
+		if (XS_TIME(xs) == 0) {
+			continue;
+		}
+		XS_TIME(xs) -= (WATCH_INTERVAL * 1000);
+		/*
+		 * Avoid later thinking that this
+		 * transaction is not being timed.
+		 * Then give ourselves to watchdog
+		 * periods of grace.
+		 */
+		if (XS_TIME(xs) == 0) {
+			XS_TIME(xs) = 1;
+		} else if (XS_TIME(xs) > -(2 * WATCH_INTERVAL * 1000)) {
+			continue;
+		}
+		if (isp_control(isp, ISPCTL_ABORT_CMD, xs)) {
+			printf("%s: isp_watch failed to abort command\n",
+			    isp->isp_name);
+			isp_restart(isp);
+			break;
+		}
+	}
+	timeout(isp_watch, isp, WATCH_INTERVAL * hz);
+	isp->isp_dogactive = 1;
+	ISP_IUNLOCK(isp);
+}
+
+/*
+ * Free any associated resources prior to decommissioning and
+ * set the card to a known state (so it doesn't wake up and kick
+ * us when we aren't expecting it to).
+ *
+ * Locks are held before coming here.
+ */
+void
+isp_uninit(isp)
+	struct ispsoftc *isp;
+{
+	ISP_ILOCKVAL_DECL;
+	ISP_ILOCK(isp);
+	/*
+	 * Leave with interrupts disabled.
+	 */
+	DISABLE_INTS(isp);
+
+	/*
+	 * Turn off the watchdog (if active).
+	 */
+	if (isp->isp_dogactive) {
+		untimeout(isp_watch, isp);
+		isp->isp_dogactive = 0;
+	}
+
+	ISP_IUNLOCK(isp);
 }

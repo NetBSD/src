@@ -1,5 +1,5 @@
-/* $NetBSD: ispreg.h,v 1.9 1998/12/05 19:48:23 mjacob Exp $ */
-/* ispreg.h 1.7 */
+/* $NetBSD: ispreg.h,v 1.10 1998/12/28 19:10:43 mjacob Exp $ */
+/* release_12_28_98_A */
 /*
  * Machine Independent (well, as best as possible) register
  * definitions for Qlogic ISP SCSI adapters.
