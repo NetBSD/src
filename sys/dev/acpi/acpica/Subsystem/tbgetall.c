@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: tbgetall - Get all required ACPI tables
- *              $Revision: 1.3 $
+ *              xRevision: 8 $
  *
  *****************************************************************************/
 
@@ -113,6 +113,9 @@
  * such license, approval or letter.
  *
  *****************************************************************************/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: tbgetall.c,v 1.4 2003/11/09 11:51:01 kochi Exp $");
 
 #define __TBGETALL_C__
 

@@ -2,7 +2,7 @@
  *
  * Module Name: nsutils - Utilities for accessing ACPI namespace, accessing
  *                        parents and siblings and Scope manipulation
- *              $Revision: 1.8 $
+ *              xRevision: 131 $
  *
  *****************************************************************************/
 
@@ -114,6 +114,9 @@
  * such license, approval or letter.
  *
  *****************************************************************************/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: nsutils.c,v 1.9 2003/11/09 11:51:00 kochi Exp $");
 
 #define __NSUTILS_C__
 

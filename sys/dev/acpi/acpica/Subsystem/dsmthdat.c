@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: dsmthdat - control method arguments and local variables
- *              $Revision: 1.7 $
+ *              xRevision: 73 $
  *
  ******************************************************************************/
 
@@ -113,6 +113,9 @@
  * such license, approval or letter.
  *
  *****************************************************************************/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: dsmthdat.c,v 1.8 2003/11/09 11:51:00 kochi Exp $");
 
 #define __DSMTHDAT_C__
 

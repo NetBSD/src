@@ -2,7 +2,7 @@
  *
  * Module Name: nseval - Object evaluation interfaces -- includes control
  *                       method lookup and execution.
- *              $Revision: 1.8 $
+ *              xRevision: 121 $
  *
  ******************************************************************************/
 
@@ -115,6 +115,9 @@
  * such license, approval or letter.
  *
  *****************************************************************************/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: nseval.c,v 1.9 2003/11/09 11:51:00 kochi Exp $");
 
 #define __NSEVAL_C__
 

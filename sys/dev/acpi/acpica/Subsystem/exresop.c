@@ -2,7 +2,7 @@
 /******************************************************************************
  *
  * Module Name: exresop - AML Interpreter operand/object resolution
- *              $Revision: 1.9 $
+ *              xRevision: 65 $
  *
  *****************************************************************************/
 
@@ -114,6 +114,9 @@
  * such license, approval or letter.
  *
  *****************************************************************************/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: exresop.c,v 1.10 2003/11/09 11:51:00 kochi Exp $");
 
 #define __EXRESOP_C__
 

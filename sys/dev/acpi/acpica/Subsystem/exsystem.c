@@ -2,7 +2,7 @@
 /******************************************************************************
  *
  * Module Name: exsystem - Interface to OS services
- *              $Revision: 1.7 $
+ *              xRevision: 79 $
  *
  *****************************************************************************/
 
@@ -114,6 +114,9 @@
  * such license, approval or letter.
  *
  *****************************************************************************/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: exsystem.c,v 1.8 2003/11/09 11:51:00 kochi Exp $");
 
 #define __EXSYSTEM_C__
 
