@@ -1,4 +1,4 @@
-/*	$NetBSD: ustarfs.c,v 1.7 1999/03/26 15:41:38 dbj Exp $	*/
+/*	$NetBSD: ustarfs.c,v 1.8 1999/03/31 01:50:26 cgd Exp $	*/
 
 /* [Notice revision 2.2]
  * Copyright (c) 1997, 1998 Avalon Computer Systems, Inc.
@@ -53,6 +53,13 @@
  * XXX - stop hardwiring FS metadata for floppies...embed it in a file,
  * 	 file name, or something. (Remember __SYMDEF? :-)
  *
+ * XXX Does not currently implement:
+ * XXX
+ * XXX LIBSA_NO_FS_CLOSE
+ * XXX LIBSA_NO_FS_SEEK
+ * XXX LIBSA_NO_FS_WRITE
+ * XXX LIBSA_NO_FS_SYMLINK (does this even make sense?)
+ * XXX LIBSA_FS_SINGLECOMPONENT
  */
 
 #ifdef _STANDALONE
@@ -195,7 +202,7 @@ ustarfs_cylinder_read(f, seek2, forcelabel)
 	} else
 		ustf->uas_offset = 0;
 	while(xferrqst > 0) {
-		e = f->f_dev->dv_strategy(f->f_devdata, F_READ, seek2 / 512,
+		e = DEV_STRATEGY(f->f_dev)(f->f_devdata, F_READ, seek2 / 512,
 			xferrqst, xferbase, &xfercount);
 		if (e)
 			break;
@@ -395,6 +402,7 @@ ustarfs_open(path, f)
 	return e;
 }
 
+#ifndef LIBSA_NO_FS_WRITE
 int
 ustarfs_write(f, start, size, resid)
 	struct open_file *f;
@@ -404,7 +412,9 @@ ustarfs_write(f, start, size, resid)
 {
 	return (EROFS);
 }
+#endif /* !LIBSA_NO_FS_WRITE */
 
+#ifndef LIBSA_NO_FS_SEEK
 off_t
 ustarfs_seek(f, offs, whence)
 	struct open_file *f;
@@ -429,6 +439,7 @@ ustarfs_seek(f, offs, whence)
 	}
 	return ustf->uas_fseek;
 }
+#endif /* !LIBSA_NO_FS_CLOSE */
 
 int
 ustarfs_read(f, start, size, resid)
@@ -499,6 +510,7 @@ ustarfs_stat(f, sb)
 	return 0;
 }
 
+#ifndef LIBSA_NO_FS_CLOSE
 int
 ustarfs_close(f)
 	struct open_file *f;
@@ -509,3 +521,4 @@ ustarfs_close(f)
 	f->f_fsdata = 0;
 	return 0;
 }
+#endif /* !LIBSA_NO_FS_CLOSE */

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660.c,v 1.7 1999/03/26 15:41:38 dbj Exp $	*/
+/*	$NetBSD: cd9660.c,v 1.8 1999/03/31 01:50:25 cgd Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -47,6 +47,13 @@
 
 #include "stand.h"
 #include "cd9660.h"
+
+/*
+ * XXX Does not currently implement:
+ * XXX
+ * XXX LIBSA_NO_FS_SYMLINK (does this even make sense?)
+ * XXX LIBSA_FS_SINGLECOMPONENT
+ */
 
 struct file {
 	off_t off;			/* Current offset within file */
@@ -153,8 +160,10 @@ cd9660_open(path, f)
 	buf = alloc(buf_size = ISO_DEFAULT_BLOCK_SIZE);
 	vd = buf;
 	for (bno = 16;; bno++) {
+#if !defined(LIBSA_NO_TWIDDLE)
 		twiddle();
-		rc = f->f_dev->dv_strategy(f->f_devdata, F_READ, cdb2devb(bno),
+#endif
+		rc = DEV_STRATEGY(f->f_dev)(f->f_devdata, F_READ, cdb2devb(bno),
 					   ISO_DEFAULT_BLOCK_SIZE, buf, &read);
 		if (rc)
 			goto out;
@@ -182,8 +191,10 @@ cd9660_open(path, f)
 		buf = alloc(buf_size = roundup(psize, ISO_DEFAULT_BLOCK_SIZE));
 	}
 
+#if !defined(LIBSA_NO_TWIDDLE)
 	twiddle();
-	rc = f->f_dev->dv_strategy(f->f_devdata, F_READ, cdb2devb(bno),
+#endif
+	rc = DEV_STRATEGY(f->f_dev)(f->f_devdata, F_READ, cdb2devb(bno),
 				   buf_size, buf, &read);
 	if (rc)
 		goto out;
@@ -225,8 +236,10 @@ cd9660_open(path, f)
 	for (psize = 0; psize < dsize;) {
 		if (!(psize % ISO_DEFAULT_BLOCK_SIZE)) {
 			bno++;
+#if !defined(LIBSA_NO_TWIDDLE)
 			twiddle();
-			rc = f->f_dev->dv_strategy(f->f_devdata, F_READ,
+#endif
+			rc = DEV_STRATEGY(f->f_dev)(f->f_devdata, F_READ,
 						   cdb2devb(bno),
 						   ISO_DEFAULT_BLOCK_SIZE,
 						   buf, &read);
@@ -278,6 +291,7 @@ out:
 	return rc;
 }
 
+#if !defined(LIBSA_NO_FS_CLOSE)
 int
 cd9660_close(f)
 	struct open_file *f;
@@ -289,6 +303,7 @@ cd9660_close(f)
 	
 	return 0;
 }
+#endif /* !defined(LIBSA_NO_FS_CLOSE) */
 
 int
 cd9660_read(f, start, size, resid)
@@ -313,8 +328,10 @@ cd9660_read(f, start, size, resid)
 			dp = buf;
 		else
 			dp = start;
+#if !defined(LIBSA_NO_TWIDDLE)
 		twiddle();	
-		rc = f->f_dev->dv_strategy(f->f_devdata, F_READ, cdb2devb(bno),
+#endif
+		rc = DEV_STRATEGY(f->f_dev)(f->f_devdata, F_READ, cdb2devb(bno),
 					   ISO_DEFAULT_BLOCK_SIZE, dp, &read);
 		if (rc)
 			return rc;
@@ -340,6 +357,7 @@ cd9660_read(f, start, size, resid)
 	return rc;
 }
 
+#if !defined(LIBSA_NO_FS_WRITE)
 int
 cd9660_write(f, start, size, resid)
 	struct open_file *f;
@@ -349,7 +367,9 @@ cd9660_write(f, start, size, resid)
 {
 	return EROFS;
 }
+#endif /* !defined(LIBSA_NO_FS_WRITE) */
 
+#if !defined(LIBSA_NO_FS_SEEK)
 off_t
 cd9660_seek(f, offset, where)
 	struct open_file *f;
@@ -373,6 +393,7 @@ cd9660_seek(f, offset, where)
 	}
 	return fp->off;
 }
+#endif /* !defined(LIBSA_NO_FS_SEEK) */
 
 int
 cd9660_stat(f, sb)

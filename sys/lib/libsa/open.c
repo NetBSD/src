@@ -1,4 +1,4 @@
-/*	$NetBSD: open.c,v 1.18 1999/03/26 03:16:15 simonb Exp $	*/
+/*	$NetBSD: open.c,v 1.19 1999/03/31 01:50:26 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -86,7 +86,10 @@ oopen(fname, mode)
 	int mode;
 {
 	register struct open_file *f;
-	register int fd, i, error, besterror;
+	register int fd, error;
+#if !defined(LIBSA_SINGLE_FILESYSTEM)
+	register int i, besterror;
+#endif
 	char *file;
 
 	/* find a free file descriptor */
@@ -101,26 +104,38 @@ fnd:
 	 * Convert open mode (0,1,2) to F_READ, F_WRITE.
 	 */
 	f->f_flags = mode + 1;
+#if !defined(LIBSA_SINGLE_DEVICE)
 	f->f_dev = (struct devsw *)0;
+#endif
+#if !defined(LIBSA_SINGLE_FILESYSTEM)
 	f->f_ops = (struct fs_ops *)0;
+#endif
+#if !defined(LIBSA_NO_RAW_ACCESS)
 	f->f_offset = 0;
+#endif
 	file = (char *)0;
 	error = devopen(f, fname, &file);
-	if (error ||
-	    (((f->f_flags & F_NODEV) == 0) && f->f_dev == (struct devsw *)0))
+	if (error
+#if !defined(LIBSA_SINGLE_DEVICE)
+	    || (((f->f_flags & F_NODEV) == 0) &&
+		f->f_dev == (struct devsw *)0)
+#endif
+	    )
 		goto err;
 
+#if !defined(LIBSA_NO_RAW_ACCESS)
 	/* see if we opened a raw device; otherwise, 'file' is the file name. */
 	if (file == (char *)0 || *file == '\0') {
 		f->f_flags |= F_RAW;
 		return (fd);
 	}
+#endif
 
 	/* pass file name to the different filesystem open routines */
+#if !defined(LIBSA_SINGLE_FILESYSTEM)
 	besterror = ENOENT;
 	for (i = 0; i < nfsys; i++) {
-		/* convert mode (0,1,2) to FREAD, FWRITE. */
-		error = (file_system[i].open)(file, f);
+		error = FS_OPEN(&file_system[i])(file, f);
 		if (error == 0) {
 			f->f_ops = &file_system[i];
 			return (fd);
@@ -129,9 +144,19 @@ fnd:
 			besterror = error;
 	}
 	error = besterror;
+#else
+	error = FS_OPEN(&file_system[i])(file, f);
+	if (error == 0)
+		return (fd);
+	else if (error == EINVAL)
+		error = ENOENT;
+#endif
 
-	if ((f->f_flags & F_NODEV) == 0 && f->f_dev->dv_close != NULL)
-		f->f_dev->dv_close(f);
+	if ((f->f_flags & F_NODEV) == 0)
+#if !defined(LIBSA_SINGLE_DEVICE)
+		if (DEV_CLOSE(f->f_dev) != NULL)
+#endif
+			(void)DEV_CLOSE(f->f_dev)(f);
 err:
 	f->f_flags = 0;
 	errno = error;

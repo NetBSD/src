@@ -1,4 +1,4 @@
-/*	$NetBSD: netif.c,v 1.11 1999/02/11 09:10:44 pk Exp $	*/
+/*	$NetBSD: netif.c,v 1.12 1999/03/31 01:50:25 cgd Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass
@@ -289,10 +289,12 @@ struct iodesc *
 socktodesc(sock)
 	int sock;
 {
+#if !defined(LIBSA_NO_FD_CHECKING)
 	if (sock >= SOPEN_MAX) {
 		errno = EBADF;
 		return (NULL);
 	}
+#endif
 	return (&sockets[sock]);
 }
 
@@ -332,10 +334,12 @@ int
 netif_close(sock)
 	int sock;
 {
+#if !defined(LIBSA_NO_FD_CHECKING)
 	if (sock >= SOPEN_MAX) {
 		errno = EBADF;
 		return(-1);
 	}
+#endif
 	netif_detach(sockets[sock].io_netif);
 	sockets[sock].io_netif = (struct netif *)0;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs.c,v 1.22 1999/02/22 07:59:09 simonb Exp $	*/
+/*	$NetBSD: ufs.c,v 1.23 1999/03/31 01:50:26 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -86,6 +86,21 @@ max(a, b)
 #include "stand.h"
 #include "ufs.h"
 
+#if defined(UFS_NOSYMLINK) && !defined(LIBSA_NO_FS_SYMLINK)
+#define LIBSA_NO_FS_SYMLINK			/* XXX COMPAT */
+#endif
+#if defined(UFS_NOCLOSE) && !defined(LIBSA_NO_FS_CLOSE)
+#define LIBSA_NO_FS_CLOSE			/* XXX COMPAT */
+#endif
+#if defined(UFS_NOWRITE) && !defined(LIBSA_NO_FS_WRITE)
+#define LIBSA_NO_FS_WRITE			/* XXX COMPAT */
+#endif
+
+#if defined(LIBSA_FS_SINGLECOMPONENT) && !defined(LIBSA_NO_FS_SYMLINK)
+#define LIBSA_NO_FS_SYMLINK
+#endif
+
+
 /*
  * In-core open file.
  */
@@ -93,7 +108,7 @@ struct file {
 	off_t		f_seekp;	/* seek pointer */
 	struct fs	*f_fs;		/* pointer to super-block */
 	struct dinode	f_di;		/* copy of on-disk inode */
-	int		f_nindir[NIADDR];
+	unsigned int	f_nindir[NIADDR];
 					/* number of blocks mapped by
 					   indirect block at level i */
 	char		*f_blk[NIADDR];	/* buffer for indirect block at
@@ -132,8 +147,10 @@ read_inode(inumber, f)
 	 * Read inode and save it.
 	 */
 	buf = alloc(fs->fs_bsize);
+#if !defined(LIBSA_NO_TWIDDLE)
 	twiddle();
-	rc = (f->f_dev->dv_strategy)(f->f_devdata, F_READ,
+#endif
+	rc = DEV_STRATEGY(f->f_dev)(f->f_devdata, F_READ,
 		fsbtodb(fs, ino_to_fsba(fs, inumber)), fs->fs_bsize,
 		buf, &rsize);
 	if (rc)
@@ -242,8 +259,10 @@ block_map(f, file_block, disk_block_p)
 			if (fp->f_blk[level] == (char *)0)
 				fp->f_blk[level] =
 					alloc(fs->fs_bsize);
+#if !defined(LIBSA_NO_TWIDDLE)
 			twiddle();
-			rc = (f->f_dev->dv_strategy)(f->f_devdata, F_READ,
+#endif
+			rc = DEV_STRATEGY(f->f_dev)(f->f_devdata, F_READ,
 				fsbtodb(fp->f_fs, ind_block_num),
 				fs->fs_bsize,
 				fp->f_blk[level],
@@ -305,8 +324,10 @@ buf_read_file(f, buf_p, size_p)
 			bzero(fp->f_buf, block_size);
 			fp->f_buf_size = block_size;
 		} else {
+#if !defined(LIBSA_NO_TWIDDLE)
 			twiddle();
-			rc = (f->f_dev->dv_strategy)(f->f_devdata, F_READ,
+#endif
+			rc = DEV_STRATEGY(f->f_dev)(f->f_devdata, F_READ,
 				fsbtodb(fs, disk_block),
 				block_size, fp->f_buf, &fp->f_buf_size);
 			if (rc)
@@ -392,14 +413,17 @@ ufs_open(path, f)
 	char *path;
 	struct open_file *f;
 {
+#ifndef LIBSA_FS_SINGLECOMPONENT
 	register char *cp, *ncp;
 	register int c;
-	ino_t inumber, parent_inumber;
+#endif
+	ino_t inumber;
 	struct file *fp;
 	struct fs *fs;
 	int rc;
 	size_t buf_size;
-#ifndef UFS_NOSYMLINK
+#ifndef LIBSA_NO_FS_SYMLINK
+	ino_t parent_inumber;
 	int nlinks = 0;
 	char namebuf[MAXPATHLEN+1];
 	char *buf = NULL;
@@ -413,8 +437,10 @@ ufs_open(path, f)
 	/* allocate space and read super block */
 	fs = alloc(SBSIZE);
 	fp->f_fs = fs;
+#if !defined(LIBSA_NO_TWIDDLE)
 	twiddle();
-	rc = (f->f_dev->dv_strategy)(f->f_devdata, F_READ,
+#endif
+	rc = DEV_STRATEGY(f->f_dev)(f->f_devdata, F_READ,
 		SBLOCK, SBSIZE, (char *)fs, &buf_size);
 	if (rc)
 		goto out;
@@ -446,6 +472,7 @@ ufs_open(path, f)
 	if ((rc = read_inode(inumber, f)) != 0)
 		goto out;
 
+#ifndef LIBSA_FS_SINGLECOMPONENT
 	cp = path;
 	while (*cp) {
 
@@ -487,7 +514,9 @@ ufs_open(path, f)
 		 * Save directory inumber in case we find a
 		 * symbolic link.
 		 */
+#ifndef LIBSA_NO_FS_SYMLINK
 		parent_inumber = inumber;
+#endif
 		rc = search_directory(ncp, f, &inumber);
 		*cp = c;
 		if (rc)
@@ -499,7 +528,7 @@ ufs_open(path, f)
 		if ((rc = read_inode(inumber, f)) != 0)
 			goto out;
 
-#ifndef UFS_NOSYMLINK
+#ifndef LIBSA_NO_FS_SYMLINK
 		/*
 		 * Check for symbolic link.
 		 */
@@ -534,8 +563,10 @@ ufs_open(path, f)
 				if (rc)
 					goto out;
 
+#if !defined(LIBSA_NO_TWIDDLE)
 				twiddle();
-				rc = (f->f_dev->dv_strategy)(f->f_devdata,
+#endif
+				rc = DEV_STRATEGY(f->f_dev)(f->f_devdata,
 					F_READ, fsbtodb(fs, disk_block),
 					fs->fs_bsize, buf, &buf_size);
 				if (rc)
@@ -557,15 +588,28 @@ ufs_open(path, f)
 			if ((rc = read_inode(inumber, f)) != 0)
 				goto out;
 		}
-#endif	/* !UFS_NOSYMLINK */
+#endif	/* !LIBSA_NO_FS_SYMLINK */
 	}
 
 	/*
 	 * Found terminal component.
 	 */
 	rc = 0;
+
+#else /* !LIBSA_FS_SINGLECOMPONENT */
+
+	/* look up component in the current (root) directory */
+	rc = search_directory(path, f, &inumber);
+	if (rc)
+		goto out;
+
+	/* open it */
+	rc = read_inode(inumber, f);
+
+#endif /* !LIBSA_FS_SINGLECOMPONENT */
+
 out:
-#ifndef UFS_NOSYMLINK
+#ifndef LIBSA_NO_FS_SYMLINK
 	if (buf)
 		free(buf, fs->fs_bsize);
 #endif
@@ -578,7 +622,7 @@ out:
 	return (rc);
 }
 
-#ifndef UFS_NOCLOSE
+#ifndef LIBSA_NO_FS_CLOSE
 int
 ufs_close(f)
 	struct open_file *f;
@@ -600,7 +644,7 @@ ufs_close(f)
 	free(fp, sizeof(struct file));
 	return (0);
 }
-#endif /* !UFS_NOCLOSE */
+#endif /* !LIBSA_NO_FS_CLOSE */
 
 /*
  * Copy a portion of a file into kernel memory.
@@ -646,7 +690,7 @@ ufs_read(f, start, size, resid)
 /*
  * Not implemented.
  */
-#ifndef UFS_NOWRITE
+#ifndef LIBSA_NO_FS_WRITE
 int
 ufs_write(f, start, size, resid)
 	struct open_file *f;
@@ -657,8 +701,9 @@ ufs_write(f, start, size, resid)
 
 	return (EROFS);
 }
-#endif /* !UFS_NOWRITE */
+#endif /* !LIBSA_NO_FS_WRITE */
 
+#ifndef LIBSA_NO_FS_SEEK
 off_t
 ufs_seek(f, offset, where)
 	struct open_file *f;
@@ -682,6 +727,7 @@ ufs_seek(f, offset, where)
 	}
 	return (fp->f_seekp);
 }
+#endif /* !LIBSA_NO_FS_SEEK */
 
 int
 ufs_stat(f, sb)

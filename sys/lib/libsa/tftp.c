@@ -1,4 +1,4 @@
-/*	$NetBSD: tftp.c,v 1.5 1999/03/26 15:41:38 dbj Exp $	 */
+/*	$NetBSD: tftp.c,v 1.6 1999/03/31 01:50:26 cgd Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -41,6 +41,16 @@
  *  - read only
  *  - lseek only with SEEK_SET or SEEK_CUR
  *  - no big time differences between transfers (<tftp timeout)
+ */
+
+/*
+ * XXX Does not currently implement:
+ * XXX
+ * XXX LIBSA_NO_FS_CLOSE
+ * XXX LIBSA_NO_FS_SEEK
+ * XXX LIBSA_NO_FS_WRITE
+ * XXX LIBSA_NO_FS_SYMLINK (does this even make sense?)
+ * XXX LIBSA_FS_SINGLECOMPONENT (does this even make sense?)
  */
 
 #include <sys/types.h>
@@ -294,14 +304,18 @@ tftp_read(f, addr, size, resid)
 	size_t         *resid;	/* out */
 {
 	struct tftp_handle *tftpfile;
+#if !defined(LIBSA_NO_TWIDDLE)
 	static int      tc = 0;
+#endif
 	tftpfile = (struct tftp_handle *) f->f_fsdata;
 
 	while (size > 0) {
 		int needblock, count;
 
+#if !defined(LIBSA_NO_TWIDDLE)
 		if (!(tc++ % 16))
 			twiddle();
+#endif
 
 		needblock = tftpfile->off / SEGSIZE + 1;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: lseek.c,v 1.4 1997/01/22 00:38:10 cgd Exp $	*/
+/*	$NetBSD: lseek.c,v 1.5 1999/03/31 01:50:25 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -78,11 +78,14 @@ olseek(fd, offset, where)
 {
 	register struct open_file *f = &files[fd];
 
+#if !defined(LIBSA_NO_FD_CHECKING)
 	if ((unsigned)fd >= SOPEN_MAX || f->f_flags == 0) {
 		errno = EBADF;
 		return (-1);
 	}
+#endif
 
+#if !defined(LIBSA_NO_RAW_ACCESS)
 	if (f->f_flags & F_RAW) {
 		/*
 		 * On RAW devices, update internal offset.
@@ -101,6 +104,7 @@ olseek(fd, offset, where)
 		}
 		return (f->f_offset);
 	}
+#endif
 
-	return (f->f_ops->seek)(f, offset, where);
+	return FS_SEEK(f->f_ops)(f, offset, where);
 }
