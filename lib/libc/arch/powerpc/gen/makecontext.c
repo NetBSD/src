@@ -1,4 +1,4 @@
-/*	$NetBSD: makecontext.c,v 1.1.2.1 2001/11/08 05:37:36 briggs Exp $	*/
+/*	$NetBSD: makecontext.c,v 1.1.2.2 2001/11/17 21:44:35 briggs Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: makecontext.c,v 1.1.2.1 2001/11/08 05:37:36 briggs Exp $");
+__RCSID("$NetBSD: makecontext.c,v 1.1.2.2 2001/11/17 21:44:35 briggs Exp $");
 #endif
 
 #include <inttypes.h>
@@ -68,6 +68,10 @@ makecontext(ucontext_t *ucp, void (*func)(void), int argc, ...)
 	sp  = (int *)
 	    ((uintptr_t)sp & ~0xf);	/* Align on quad-word boundary. */
 
+	/*
+	 * Start executing at <func> -- when <func> completes, return to
+	 * <_resumecontext>.
+	 */
 	gr[1]  = (__greg_t)sp;
 	gr[33] = (__greg_t)_resumecontext;
 	gr[34] = (__greg_t)func;
@@ -77,7 +81,7 @@ makecontext(ucontext_t *ucp, void (*func)(void), int argc, ...)
 
 	/* Construct argument list. */
 	va_start(ap, argc);
-	/* Up to the first four arguments are passed in r3-10. */
+	/* Up to the first eight arguments are passed in r3-10. */
 	for (i = 0; i < argc && i < 8; i++)
 		gr[3 + i] = va_arg(ap, int);
 	/* Pass remaining arguments on the stack above the backchain/lr gap. */
