@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.15.2.4 2004/06/16 01:25:51 jmc Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.15.2.5 2004/06/22 08:36:08 tron Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -547,6 +547,12 @@ char *alloca ();
 #define quad_t long long
 #define u_quad_t unsigned long long
 #define strtouq strtoull
+#endif
+
+/* Has quad_t but these prototypes don't get pulled into scope. w/o we lose */
+#ifdef __NetBSD__
+quad_t   strtoq __P((const char *, char **, int)); 
+u_quad_t strtouq __P((const char *, char **, int)); 
 #endif
 
 #endif	/* !__NETBSD_COMPAT_DEFS_H__ */
