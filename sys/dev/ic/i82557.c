@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.88 2004/10/30 18:08:37 thorpej Exp $	*/
+/*	$NetBSD: i82557.c,v 1.89 2004/11/23 21:41:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.88 2004/10/30 18:08:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.89 2004/11/23 21:41:57 thorpej Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -88,6 +88,7 @@ __KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.88 2004/10/30 18:08:37 thorpej Exp $");
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/device.h>
+#include <sys/syslog.h>
 
 #include <machine/endian.h>
 
@@ -244,7 +245,8 @@ fxp_scb_wait(struct fxp_softc *sc)
 	while (CSR_READ_1(sc, FXP_CSR_SCB_COMMAND) && --i)
 		delay(2);
 	if (i == 0)
-		printf("%s: WARNING: SCB timed out!\n", sc->sc_dev.dv_xname);
+		log(LOG_WARNING,
+		    "%s: WARNING: SCB timed out!\n", sc->sc_dev.dv_xname);
 }
 
 /*
@@ -863,7 +865,7 @@ fxp_eeprom_update_cksum(struct fxp_softc *sc)
 	cksum = 0xbaba - cksum;
 	fxp_read_eeprom(sc, &data, i, 1);
 	fxp_write_eeprom(sc, &cksum, i, 1);
-	printf("%s: EEPROM checksum @ 0x%x: 0x%04x -> 0x%04x\n",
+	log(LOG_INFO, "%s: EEPROM checksum @ 0x%x: 0x%04x -> 0x%04x\n",
 	    sc->sc_dev.dv_xname, i, data, cksum);
 }
 
@@ -937,7 +939,7 @@ fxp_start(struct ifnet *ifp)
 		    BUS_DMA_WRITE|BUS_DMA_NOWAIT) != 0) {
 			MGETHDR(m, M_DONTWAIT, MT_DATA);
 			if (m == NULL) {
-				printf("%s: unable to allocate Tx mbuf\n",
+				log(LOG_ERR, "%s: unable to allocate Tx mbuf\n",
 				    sc->sc_dev.dv_xname);
 				break;
 			}
@@ -945,7 +947,8 @@ fxp_start(struct ifnet *ifp)
 			if (m0->m_pkthdr.len > MHLEN) {
 				MCLGET(m, M_DONTWAIT);
 				if ((m->m_flags & M_EXT) == 0) {
-					printf("%s: unable to allocate Tx "
+					log(LOG_ERR,
+					    "%s: unable to allocate Tx "
 					    "cluster\n", sc->sc_dev.dv_xname);
 					m_freem(m);
 					break;
@@ -956,7 +959,7 @@ fxp_start(struct ifnet *ifp)
 			error = bus_dmamap_load_mbuf(sc->sc_dmat, dmamap,
 			    m, BUS_DMA_WRITE|BUS_DMA_NOWAIT);
 			if (error) {
-				printf("%s: unable to load Tx buffer, "
+				log(LOG_ERR, "%s: unable to load Tx buffer, "
 				    "error = %d\n", sc->sc_dev.dv_xname, error);
 				break;
 			}
@@ -1616,7 +1619,7 @@ fxp_watchdog(struct ifnet *ifp)
 {
 	struct fxp_softc *sc = ifp->if_softc;
 
-	printf("%s: device timeout\n", sc->sc_dev.dv_xname);
+	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
 	ifp->if_oerrors++;
 
 	(void) fxp_init(ifp);
@@ -1821,7 +1824,7 @@ fxp_init(struct ifnet *ifp)
 		DELAY(1);
 	} while ((le16toh(cbp->cb_status) & FXP_CB_STATUS_C) == 0 && --i);
 	if (i == 0) {
-		printf("%s at line %d: dmasync timeout\n",
+		log(LOG_WARNING, "%s: line %d: dmasync timeout\n",
 		    sc->sc_dev.dv_xname, __LINE__);
 		return (ETIMEDOUT);
 	}
@@ -1853,7 +1856,7 @@ fxp_init(struct ifnet *ifp)
 		DELAY(1);
 	} while ((le16toh(cb_ias->cb_status) & FXP_CB_STATUS_C) == 0 && --i);
 	if (i == 0) {
-		printf("%s at line %d: dmasync timeout\n",
+		log(LOG_WARNING, "%s: line %d: dmasync timeout\n",
 		    sc->sc_dev.dv_xname, __LINE__);
 		return (ETIMEDOUT);
 	}
@@ -1890,7 +1893,7 @@ fxp_init(struct ifnet *ifp)
 	while (sc->sc_rxq.ifq_len < FXP_NRFABUFS) {
 		rxmap = FXP_RXMAP_GET(sc);
 		if ((error = fxp_add_rfabuf(sc, rxmap, 0)) != 0) {
-			printf("%s: unable to allocate or map rx "
+			log(LOG_ERR, "%s: unable to allocate or map rx "
 			    "buffer %d, error = %d\n",
 			    sc->sc_dev.dv_xname,
 			    sc->sc_rxq.ifq_len, error);
@@ -1951,7 +1954,8 @@ fxp_init(struct ifnet *ifp)
 	if (error) {
 		ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 		ifp->if_timer = 0;
-		printf("%s: interface not running\n", sc->sc_dev.dv_xname);
+		log(LOG_ERR, "%s: interface not running\n",
+		    sc->sc_dev.dv_xname);
 	}
 	return (error);
 }
@@ -2050,9 +2054,10 @@ fxp_add_rfabuf(struct fxp_softc *sc, bus_dmamap_t rxmap, int unload)
 	error = bus_dmamap_load_mbuf(sc->sc_dmat, rxmap, m,
 	    BUS_DMA_READ|BUS_DMA_NOWAIT);
 	if (error) {
+		/* XXX XXX XXX */
 		printf("%s: can't load rx DMA map %d, error = %d\n",
 		    sc->sc_dev.dv_xname, sc->sc_rxq.ifq_len, error);
-		panic("fxp_add_rfabuf");		/* XXX */
+		panic("fxp_add_rfabuf");
 	}
 
 	FXP_INIT_RFABUF(sc, m);
@@ -2075,7 +2080,8 @@ fxp_mdi_read(struct device *self, int phy, int reg)
 		DELAY(10);
 
 	if (count <= 0)
-		printf("%s: fxp_mdi_read: timed out\n", sc->sc_dev.dv_xname);
+		log(LOG_WARNING,
+		    "%s: fxp_mdi_read: timed out\n", sc->sc_dev.dv_xname);
 
 	return (value & 0xffff);
 }
@@ -2102,7 +2108,8 @@ fxp_mdi_write(struct device *self, int phy, int reg, int value)
 		DELAY(10);
 
 	if (count <= 0)
-		printf("%s: fxp_mdi_write: timed out\n", sc->sc_dev.dv_xname);
+		log(LOG_WARNING,
+		    "%s: fxp_mdi_write: timed out\n", sc->sc_dev.dv_xname);
 }
 
 int
@@ -2218,7 +2225,7 @@ fxp_mc_setup(struct fxp_softc *sc)
 	    FXP_SCB_CUS_ACTIVE && --count)
 		DELAY(1);
 	if (count == 0) {
-		printf("%s at line %d: command queue timeout\n",
+		log(LOG_WARNING, "%s: line %d: command queue timeout\n",
 		    sc->sc_dev.dv_xname, __LINE__);
 		return;
 	}
@@ -2238,7 +2245,7 @@ fxp_mc_setup(struct fxp_softc *sc)
 		DELAY(1);
 	} while ((le16toh(mcsp->cb_status) & FXP_CB_STATUS_C) == 0 && --count);
 	if (count == 0) {
-		printf("%s at line %d: dmasync timeout\n",
+		log(LOG_WARNING, "%s: line %d: dmasync timeout\n",
 		    sc->sc_dev.dv_xname, __LINE__);
 		return;
 	}
@@ -2341,7 +2348,7 @@ fxp_load_ucode(struct fxp_softc *sc)
 	if (count == 0) {
 		sc->sc_int_delay = 0;
 		sc->sc_bundle_max = 0;
-		printf("%s: timeout loading microcode\n",
+		log(LOG_WARNING, "%s: timeout loading microcode\n",
 		    sc->sc_dev.dv_xname);
 		return;
 	}
@@ -2350,7 +2357,7 @@ fxp_load_ucode(struct fxp_softc *sc)
 	    sc->sc_bundle_max != fxp_bundle_max) {
 		sc->sc_int_delay = fxp_int_delay;
 		sc->sc_bundle_max = fxp_bundle_max;
-		printf("%s: Microcode loaded: int delay: %d usec, "
+		log(LOG_INFO, "%s: Microcode loaded: int delay: %d usec, "
 		    "max bundle: %d\n", sc->sc_dev.dv_xname,
 		    sc->sc_int_delay,
 		    uc->bundle_max_offset == 0 ? 0 : sc->sc_bundle_max);
@@ -2365,7 +2372,7 @@ fxp_enable(struct fxp_softc *sc)
 
 	if (sc->sc_enabled == 0 && sc->sc_enable != NULL) {
 		if ((*sc->sc_enable)(sc) != 0) {
-			printf("%s: device enable failed\n",
+			log(LOG_ERR, "%s: device enable failed\n",
 			    sc->sc_dev.dv_xname);
 			return (EIO);
 		}
