@@ -1,4 +1,4 @@
-/*	$NetBSD: uda.c,v 1.34 2000/04/30 11:46:49 ragge Exp $	*/
+/*	$NetBSD: uda.c,v 1.35 2000/05/19 18:54:30 thorpej Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1988 Regents of the University of California.
@@ -288,7 +288,7 @@ udago(usc, mxi)
 	 */
 	if (sc->sc_inq == 0) {
 		err = bus_dmamap_load(sc->sc_dmat, mxi->mxi_dmam,
-		    bp->b_un.b_addr,
+		    bp->b_data,
 		    bp->b_bcount, bp->b_proc, BUS_DMA_NOWAIT);
 		if (err == 0) {
 			mscp_dgo(sc->sc_softc, mxi);
@@ -320,7 +320,7 @@ udaready(uu)
 	struct buf *bp = mxi->mxi_bp;
 	int err;
 
-	err = bus_dmamap_load(sc->sc_dmat, mxi->mxi_dmam, bp->b_un.b_addr,
+	err = bus_dmamap_load(sc->sc_dmat, mxi->mxi_dmam, bp->b_data,
 	    bp->b_bcount, bp->b_proc, BUS_DMA_NOWAIT);
 	if (err)
 		return 0;

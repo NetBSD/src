@@ -1,4 +1,4 @@
-/* $NetBSD: disksubr.c,v 1.19 2000/05/16 05:45:44 thorpej Exp $ */
+/* $NetBSD: disksubr.c,v 1.20 2000/05/19 18:54:24 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.19 2000/05/16 05:45:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.20 2000/05/19 18:54:24 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -96,7 +96,7 @@ readdisklabel(dev, strat, lp, clp)
 		goto done;
 	}
 
-	dlp = (struct disklabel *)(bp->b_un.b_addr + LABELOFFSET);
+	dlp = (struct disklabel *)(bp->b_data + LABELOFFSET);
 	if (dlp->d_magic == DISKMAGIC) {
 		if (dkcksum(dlp))
 			msg = "NetBSD disk label corrupted";
@@ -230,7 +230,7 @@ writedisklabel(dev, strat, lp, clp)
 	if ((error = biowait(bp)) != 0)
 		goto done;
 
-	dlp = (struct disklabel *)(bp->b_un.b_addr + LABELOFFSET);
+	dlp = (struct disklabel *)(bp->b_data + LABELOFFSET);
 	*dlp = *lp;     /* struct assignment */
 
 	/*
@@ -241,7 +241,7 @@ writedisklabel(dev, strat, lp, clp)
 		int i;
 		u_long *dp, sum;
 
-		dp = (u_long *)bp->b_un.b_addr;
+		dp = (u_long *)bp->b_data;
 		sum = 0;
 		for (i = 0; i < 63; i++)
 			sum += dp[i];
