@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.11 2001/12/12 00:05:11 tv Exp $
+#	$NetBSD: Makefile.inc,v 1.12 2001/12/24 00:47:42 atatat Exp $
 #
 # Makefile for install
 
@@ -39,6 +39,9 @@ CLEANFILES=	menu_defs.c menu_defs.h menus.def \
 SYSINSTLANG?=	en
 
 .PATH: ${.CURDIR}/../..
+
+MENUC?=		menuc
+MSGC?=		msgc
 
 .include <bsd.prog.mk>
 
