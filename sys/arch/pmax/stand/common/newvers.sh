@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: newvers.sh,v 1.3 1999/11/27 03:09:06 simonb Exp $
+#	$NetBSD: newvers.sh,v 1.4 1999/11/27 06:46:56 simonb Exp $
 #
 # Copyright (c) 1984, 1986, 1990, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -35,13 +35,13 @@
 #
 #	@(#)newvers.sh	8.1 (Berkeley) 4/20/94
 
-u=${USER-root} h=`hostname` t=`date`
+u=${USER-root}
+h=`hostname`
+t=`date +"%b %e %H:%M:%S %Z %Y" | sed -e 's,  *, ,g'`
 r=`awk '/^Version:/ { print $2 } ' $1`
 
-: ${MAKE=make}
-machine=${MACHINE:-`printf 'xxx:\n\techo ${MACHINE}' | $MAKE -s -f-`}
-
-echo "char bootprog_name[] = \"NetBSD/${machine} ${2}\";" > vers.c
-echo "char bootprog_rev[] = \"${r}\";" >> vers.c
-echo "char bootprog_date[] = \"${t}\";" >> vers.c
-echo "char bootprog_maker[] = \"${u}@${h}\";" >> vers.c
+echo "#include <lib/libsa/stand.h>" > vers.c
+echo "#include \"stand/common/common.h\"" >> vers.c
+echo "const char bootprog_rev[] = \"${r}\";" >> vers.c
+echo "const char bootprog_date[] = \"${t}\";" >> vers.c
+echo "const char bootprog_maker[] = \"${u}@${h}\";" >> vers.c
