@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_autoconf.c,v 1.9 1994/06/29 06:32:54 cgd Exp $	*/
+/*	$NetBSD: subr_autoconf.c,v 1.10 1994/10/07 09:07:56 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -290,32 +290,25 @@ config_attach(parent, cf, aux, print)
 		/*
 		 * Need to expand the array.
 		 */
-		int old = cd->cd_ndevs, oldbytes, new, newbytes;
+		int old = cd->cd_ndevs, new;
 		void **nsp;
 
-		if (old == 0) {
-			new = max(MINALLOCSIZE / sizeof(void *), 
-				  dev->dv_unit + 1); 
-		        newbytes = new * sizeof(void *);
-			nsp = malloc(newbytes, M_DEVBUF, M_NOWAIT);	
-			if (!nsp)
-			    panic("config_attach: expanding dev array");
-			bzero(nsp, newbytes);
-		} else {
-			new = cd->cd_ndevs;
-			do {
-				new *= 2;
-			} while (new <= dev->dv_unit);
-			oldbytes = old * sizeof(void *);
-			newbytes = new * sizeof(void *);
-			nsp = malloc(newbytes, M_DEVBUF, M_NOWAIT);
-			if (!nsp)
-			    panic("config_attach: expanding dev array (2)");
-			bcopy(cd->cd_devs, nsp, oldbytes);
-			bzero(&nsp[old], newbytes - oldbytes);
+		if (old == 0)
+			new = MINALLOCSIZE / sizeof(void *);
+		else
+			new = old * 2;
+		while (new <= dev->dv_unit)
+			new *= 2;
+		cd->cd_ndevs = new;
+		nsp = malloc(new * sizeof(void *), M_DEVBUF, M_NOWAIT);	
+		if (nsp == 0)
+			panic("config_attach: %sing dev array",
+			    old != 0 ? "expand" : "creat");
+		bzero(nsp + old, (new - old) * sizeof(void *));
+		if (old != 0) {
+			bcopy(cd->cd_devs, nsp, old * sizeof(void *));
 			free(cd->cd_devs, M_DEVBUF);
 		}
-		cd->cd_ndevs = new;
 		cd->cd_devs = nsp;
 	}
 	if (cd->cd_devs[dev->dv_unit])
