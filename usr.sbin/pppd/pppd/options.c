@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.35 2002/05/29 19:06:32 christos Exp $	*/
+/*	$NetBSD: options.c,v 1.36 2002/06/15 01:57:08 matt Exp $	*/
 
 /*
  * options.c - handles option processing for PPP.
@@ -24,7 +24,7 @@
 #if 0
 #define RCSID	"Id: options.c,v 1.80 2001/03/12 22:56:12 paulus Exp "
 #else
-__RCSID("$NetBSD: options.c,v 1.35 2002/05/29 19:06:32 christos Exp $");
+__RCSID("$NetBSD: options.c,v 1.36 2002/06/15 01:57:08 matt Exp $");
 #endif
 #endif
 
@@ -924,7 +924,7 @@ print_option(opt, mainopt, printer, arg)
 		break;
 
 	default:
-		printer(arg, "# %s value (type %d??)", opt->name, opt->type);
+		printer(arg, "# %s value (type %d?)", opt->name, opt->type);
 		break;
 	}
 	printer(arg, "\t\t# (from %s)\n", mainopt->source);
