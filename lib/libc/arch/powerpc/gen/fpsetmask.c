@@ -1,4 +1,4 @@
-/*	$NetBSD: fpsetmask.c,v 1.3 2002/01/13 21:45:48 thorpej Exp $	*/
+/*	$NetBSD: fpsetmask.c,v 1.4 2004/04/02 22:55:19 matt Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -42,21 +42,24 @@
 
 #include <sys/types.h>
 #include <ieeefp.h>
+#include <powerpc/fpu.h>
 
 #ifdef __weak_alias
 __weak_alias(fpsetmask,_fpsetmask)
 #endif
 
+#define	MASKBITS	(FPSCR_XE|FPSCR_ZE|FPSCR_UE|FPSCR_OE|FPSCR_VE)
+#define	MASKSHFT	3
+
 fp_except
-fpsetmask(mask)
-	fp_except mask;
+fpsetmask(fp_except mask)
 {
 	u_int64_t fpscr;
-	fp_rnd old;
+	fp_except old;
 
 	__asm__ __volatile("mffs %0" : "=f"(fpscr));
-	old = (fp_rnd)((fpscr >> 3) & 0x1f);
-	fpscr = (fpscr & 0xffffff07) | (mask << 3);
+	old = ((fp_rnd)fpscr & MASKBITS) >> MASKSHFT;
+	fpscr = (fpscr & ~MASKBITS) | ((mask << MASKSHFT) & MASKBITS);
 	__asm__ __volatile("mtfsf 0xff,%0" :: "f"(fpscr));
 	return (old);
 }
