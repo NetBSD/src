@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.2 1997/08/27 06:56:14 leo Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.3 1998/01/12 18:04:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Leo Weppelman.  All rights reserved.
@@ -56,10 +56,6 @@ static void	isabusattach __P((struct device *, struct device *, void *));
 
 struct cfattach isabus_ca = {
 	sizeof(struct device), isabusmatch, isabusattach
-};
-
-struct cfdriver isabus_cd = {
-	NULL, "isabus", DV_DULL
 };
 
 int
