@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.56 1998/07/26 12:00:43 mycroft Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.57 1998/07/27 17:19:58 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: disklabel.c,v 1.56 1998/07/26 12:00:43 mycroft Exp $");
+__RCSID("$NetBSD: disklabel.c,v 1.57 1998/07/27 17:19:58 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -1131,7 +1131,7 @@ display(f, lp)
 		(void) fprintf(f, "%d ", lp->d_drivedata[j]);
 	(void) fprintf(f, "\n\n%d partitions:\n", lp->d_npartitions);
 	(void) fprintf(f,
-	    "#        size   offset    fstype   [fsize bsize   cpg]\n");
+	    "#        size   offset     fstype   [fsize bsize   cpg]\n");
 	pp = lp->d_partitions;
 	for (i = 0; i < lp->d_npartitions; i++, pp++) {
 		if (pp->p_size) {
@@ -1151,7 +1151,7 @@ display(f, lp)
 				(void) fprintf(f, "  %c: %8s %8s ",
 				   'a' + i, sbuf, obuf);
 			} else
-				(void) fprintf(f, "  %c: %8d %8d  ", 'a' + i,
+				(void) fprintf(f, "  %c: %8d %8d ", 'a' + i,
 				   pp->p_size, pp->p_offset);
 			if ((unsigned) pp->p_fstype < FSMAXTYPES)
 				(void) fprintf(f, "%10.10s", fstypenames[pp->p_fstype]);
