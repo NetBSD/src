@@ -1,4 +1,4 @@
-.\"     $NetBSD: wi.4,v 1.28 2002/08/21 04:08:06 onoe Exp $
+.\"     $NetBSD: wi.4,v 1.29 2002/11/16 23:09:44 dyoung Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -30,7 +30,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 .\" THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$Id: wi.4,v 1.28 2002/08/21 04:08:06 onoe Exp $
+.\"	$Id: wi.4,v 1.29 2002/11/16 23:09:44 dyoung Exp $
 .\"
 .Dd January 11, 2001
 .Dt WI 4
@@ -46,7 +46,7 @@ WaveLAN/IEEE and PRISM-II 802.11 wireless network driver
 The
 .Nm
 driver provides support for Lucent Technologies WaveLAN/IEEE PCCARD adapters
-(also known as WaveLAN II cards) and various PCCARD adapters which use
+(also known as WaveLAN II cards) and various PCI/MiniPCI/PCCARD adapters which use
 Intersil PRISM-II and PRISM-2.5 chipsets.
 Note that while Lucent sells both ISA and PCMCIA WaveLAN/IEEE devices,
 the ISA product is actually a PCMCIA card in an ISA to PCMCIA bridge adapter.
@@ -56,7 +56,7 @@ driver is required for both the ISA and PCMCIA NICs.
 Also note that some of the PRISM-II adapters works only at 3.3V, hence
 .Xr cardbus 4
 support is required for those cards to set VCC correctly,
-even they are 16bit cards.
+even though they are 16-bit cards.
 .Pp
 The core of the WaveLAN/IEEE is the Lucent Hermes controller.
 All host/device interaction is via programmed I/O with the Hermes.
@@ -68,7 +68,7 @@ encryption.  The Intersil PRISM-II controller supports WEP as well.
 .Pp
 The
 .Nm
-driver encapsulates all IP and ARP traffic as 802.11 frames, however
+driver encapsulates all traffic as 802.11 frames, however
 it can receive either 802.11 or 802.3 frames.
 Transmit speed is selectable between 1Mbps fixed,
 2Mbps fixed or 2Mbps with auto fallback.
@@ -87,9 +87,7 @@ different firmware revisions may not interoperate in this mode.  This mode
 is no longer the default and must be selected using the
 .Xr ifconfig 8
 .Pq media option Dq adhoc,flag0
-or
-.Xr wiconfig 8
-utilities.
+utility.
 .Pp
 Recent versions of Lucent and PRISM-II firmware support IBSS creation.
 IBSS is the standard IEEE 802.11 ad-hoc mode.  In this mode, the nwid
@@ -99,7 +97,11 @@ The IBSS mode is enabled by
 or
 .Dq ibss
 media option.
-The IBSS creation is automatically enabled if supported.
+IBSS creation is automatically enabled if supported.
+.Pp
+The
+.Nm
+driver defaults to infrastructure mode (i.e., using an access point).
 .Pp
 Recent versions of PRISM-II firmware support operating as an 802.11
 Access Point.  In this mode, the Access Point station should set the
@@ -138,6 +140,8 @@ Corega Wireless LAN PCC-11, PCCA_11, PCCB_11
 .It
 DEC/Cabletron RoamAbout 802.11 DS High Rate
 .It
+D-Link DWL-520 11Mbps PCI Card
+.It
 D-Link DWL-650 11Mbps WLAN Card, DCF-650W CF Card
 .It
 ELECOM Air@Hawk LD-WL11
@@ -157,6 +161,8 @@ IO-DATA WN-B11/PCM
 Intersil PRISM Mini-PCI
 .It
 Linksys Group, Inc. Instant Wireless Network PC Card, CF Card
+.It
+Linksys Group, Inc. Instant Wireless Network WMP11 PCI Card 
 .It
 NCR WaveLAN/IEEE
 .It
@@ -183,8 +189,6 @@ NIC's on-board RAM.
 .It "wi%d: device timeout"
 The WaveLAN failed to generate an interrupt to acknowledge a transmit
 command.
-One reason can be that the board is mis-configured, see
-.Xr wiconfig 8 .
 .El
 .Sh SEE ALSO
 .Xr arp 4 ,
@@ -209,8 +213,6 @@ The
 driver was written by
 .An Bill Paul Aq wpaul@ctr.columbia.edu .
 .Sh BUGS
-WEP does not work in Access Point mode.
-.Pp
 The execution of
 .Xr wiconfig 8
 while the interface is down can produce some error messages.
