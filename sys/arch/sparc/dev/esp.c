@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.19 1995/03/01 21:09:27 pk Exp $ */
+/*	$NetBSD: esp.c,v 1.20 1995/06/02 13:43:30 pk Exp $ */
 
 /*
  * Copyright (c) 1994 Peter Galbavy
@@ -64,27 +64,27 @@
 
 int esp_debug = ESP_SHOWPHASE|ESP_SHOWMISC|ESP_SHOWTRAC|ESP_SHOWCMDS; /**/ 
 
-static void	espattach	__P((struct device *, struct device *, void *));
-static int	espmatch	__P((struct device *, void *, void *));
-static void	esp_minphys	__P((struct buf *));
-static u_int	esp_adapter_info __P((struct esp_softc *));
-static int	espprint	__P((void *, char *));
-static void	espreadregs	__P((struct esp_softc *));
-static u_char	espgetbyte	__P((struct esp_softc *));
-static void	espselect	__P((struct esp_softc *,
+/*static*/ void	espattach	__P((struct device *, struct device *, void *));
+/*static*/ int	espmatch	__P((struct device *, void *, void *));
+/*static*/ void	esp_minphys	__P((struct buf *));
+/*static*/ u_int	esp_adapter_info __P((struct esp_softc *));
+/*static*/ int	espprint	__P((void *, char *));
+/*static*/ void	espreadregs	__P((struct esp_softc *));
+/*static*/ int	espgetbyte	__P((struct esp_softc *, u_char *));
+/*static*/ void	espselect	__P((struct esp_softc *,
 				     u_char, u_char, caddr_t, u_char));
-static void	esp_scsi_reset	__P((struct esp_softc *));
-static void	esp_reset	__P((struct esp_softc *));
-static void	esp_init	__P((struct esp_softc *, int));
-static int	esp_scsi_cmd	__P((struct scsi_xfer *));
-static int	esp_poll	__P((struct esp_softc *, struct ecb *));
-static int	espphase	__P((struct esp_softc *));
-static void	esp_sched	__P((struct esp_softc *));
-static void	esp_done	__P((struct ecb *));
-static void	esp_msgin	__P((struct esp_softc *));
-static void	esp_msgout	__P((struct esp_softc *));
-static int	espintr		__P((struct esp_softc *));
-static void	esp_timeout	__P((void *arg));
+/*static*/ void	esp_scsi_reset	__P((struct esp_softc *));
+/*static*/ void	esp_reset	__P((struct esp_softc *));
+/*static*/ void	esp_init	__P((struct esp_softc *, int));
+/*static*/ int	esp_scsi_cmd	__P((struct scsi_xfer *));
+/*static*/ int	esp_poll	__P((struct esp_softc *, struct ecb *));
+/*static*/ int	espphase	__P((struct esp_softc *));
+/*static*/ void	esp_sched	__P((struct esp_softc *));
+/*static*/ void	esp_done	__P((struct ecb *));
+/*static*/ void	esp_msgin	__P((struct esp_softc *));
+/*static*/ void	esp_msgout	__P((struct esp_softc *));
+/*static*/ int	espintr		__P((struct esp_softc *));
+/*static*/ void	esp_timeout	__P((void *arg));
 
 /* Linkup to the rest of the kernel */
 struct cfdriver espcd = {
@@ -149,9 +149,10 @@ espreadregs(sc)
 /*
  * no error checking ouch
  */
-u_char
-espgetbyte(sc)
+int
+espgetbyte(sc, v)
 	struct esp_softc *sc;
+	u_char *v;
 {
 	volatile caddr_t esp = sc->sc_reg;
 
@@ -164,11 +165,15 @@ espgetbyte(sc)
 		 * interrupts
 		 */
 		espreadregs(sc);
+		if (sc->sc_espintr & ESPINTR_ILL) /* Oh, why? */
+			return -1;
 	}
 	if (!(esp[ESP_FFLAG] & ESPFIFO_FF)) {
 		printf("error... ");
+		return -1;
 	}
-	return esp[ESP_FIFO];
+	*v = esp[ESP_FIFO];
+	return 0;
 }
 
 /*
@@ -200,14 +205,24 @@ espselect(sc, target, lun, cmd, clen)
 	 * Who am I. This is where we tell the target that we are
 	 * happy for it to disconnect etc.
 	 */
-	esp[ESP_FIFO] = ESP_MSG_IDENTIFY(lun);
+#if 1
+	if ((sc->sc_tinfo[target].flags & T_XXX) == 0)
+#endif
+		esp[ESP_FIFO] = ESP_MSG_IDENTIFY(lun);
 
 	/* Now the command into the FIFO */
 	for (i = 0; i < clen; i++)
 		esp[ESP_FIFO] = *cmd++;
 
 	/* And get the targets attention */
-	ESPCMD(sc, ESPCMD_SELATN);
+#if 1
+	if ((sc->sc_tinfo[target].flags & T_XXX) == 0)
+#endif
+		ESPCMD(sc, ESPCMD_SELATN);
+#if 1
+	else
+		ESPCMD(sc, ESPCMD_SELNATN);
+#endif
 
 	/* new state ESP_SELECTING */
 	sc->sc_state = ESP_SELECTING;
@@ -627,6 +642,10 @@ esp_poll(sc, ecb)
 		if (xs->flags & ITSDONE)
 			break;
 		DELAY(5);
+		if (sc->sc_state == ESP_IDLE) {
+			ESP_TRACE(("esp_poll: rescheduling"));
+			esp_sched(sc);
+		}
 		count--;
 	}
 
@@ -691,7 +710,7 @@ esp_sched(sc)
 		sc_link = ecb->xs->sc_link;
 		t = sc_link->target;
 		if (!(sc->sc_tinfo[t].lubusy & (1 << sc_link->lun))) {
-			struct esp_tinfo *ti = &sc->sc_tinfo[ecb->xs->sc_link->target];
+			struct esp_tinfo *ti = &sc->sc_tinfo[t];
 
 			TAILQ_REMOVE(&sc->ready_list, ecb, chain);
 			sc->sc_nexus = ecb;
@@ -879,7 +898,8 @@ esp_msgin(sc)
 		/*
 		 * Which target is reselecting us? (The ID bit really)
 		 */
-		sc->sc_selid = espgetbyte(sc) & ~(1<<sc->sc_id);
+		(void)espgetbyte(sc, &sc->sc_selid);
+		sc->sc_selid &= ~(1<<sc->sc_id);
 		ESP_MISC(("selid=0x%2x ", sc->sc_selid));
 	}
 
@@ -897,7 +917,35 @@ esp_msgin(sc)
 		 * the incoming bytes.  But still, we need to ACK them.
 		 */
 		if ((sc->sc_flags & ESP_DROP_MSGI) == 0) {
-			sc->sc_imess[sc->sc_imlen] = espgetbyte(sc);
+			if (espgetbyte(sc, &sc->sc_imess[sc->sc_imlen])) {
+				/*
+				 * XXX - hack alert.
+				 * Apparently, the chip didn't grok a multibyte
+				 * message from the target; set a flag that
+				 * will cause selection w.o. ATN when we retry
+				 * (after a SCSI reset).
+				 * Set NOLUNS quirk as we won't be asking for
+				 * a lun to identify.
+				 */
+				struct scsi_link *sc_link = sc->sc_nexus->xs->sc_link;
+				printf("%s(%d,%d): "
+					"MSGIN failed; trying alt selection\n",
+					sc->sc_dev.dv_xname,
+					sc_link->target, sc_link->lun);
+				esp_sched_msgout(SEND_REJECT);
+				sc->sc_tinfo[sc_link->target].flags |= T_XXX;
+				sc_link->quirks |= SDEV_NOLUNS;
+				if (sc->sc_state == ESP_HASNEXUS) {
+					TAILQ_INSERT_HEAD(&sc->ready_list,
+					    sc->sc_nexus, chain);
+					sc->sc_nexus = NULL;
+					sc->sc_tinfo[sc_link->target].lubusy
+						&= ~(1<<sc_link->lun);
+				}
+				esp_scsi_reset(sc);
+				sc->sc_state = ESP_IDLE;
+				return;
+			}
 			ESP_MISC(("0x%02x ", sc->sc_imess[sc->sc_imlen]));
 			if (sc->sc_imlen >= ESP_MAX_MSG_LEN) {
 				esp_sched_msgout(SEND_REJECT);
@@ -1385,6 +1433,8 @@ espintr(sc)
 					ESP_MISC(("backoff selector "));
 					TAILQ_INSERT_HEAD(&sc->ready_list,
 					    sc->sc_nexus, chain);
+			sc->sc_tinfo[sc->sc_nexus->xs->sc_link->target].lubusy
+						&= ~(1<<sc_link->lun);
 					sc->sc_nexus = NULL;
 				}
 				sc->sc_state = ESP_RESELECTED;
@@ -1495,7 +1545,7 @@ espintr(sc)
 		case STATUS_PHASE:
 			ESP_PHASE(("STATUS_PHASE "));
 			ESPCMD(sc, ESPCMD_ICCS);
-			ecb->stat = espgetbyte(sc);
+			(void)espgetbyte(sc, &ecb->stat);
 			ESP_PHASE(("0x%02x ", ecb->stat));
 			sc->sc_prevphase = STATUS_PHASE;
 			break;
