@@ -1,4 +1,4 @@
-/* $NetBSD: ascreg.h,v 1.4 1996/03/07 23:54:29 mark Exp $ */
+/* $NetBSD: ascreg.h,v 1.5 1997/01/06 04:48:02 mark Exp $ */
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -260,7 +260,7 @@ temphi  = dmac + 0x0218;/*    RO  T15  T14  T13  T12  T11  T10   T9   T8 */
 	ReadSBIC1(sbic_base, a)
 
 
-static inline int
+static __inline int
 ReadSBIC1(sbic_base, a)
 	u_int sbic_base;
 	int a;
