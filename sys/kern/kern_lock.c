@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.83 2004/08/04 10:37:08 yamt Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.84 2004/10/23 21:27:34 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.83 2004/08/04 10:37:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.84 2004/10/23 21:27:34 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -1436,4 +1436,12 @@ _kernel_lock_acquire_count(int hold_count)
 	if (hold_count != 0)
 		spinlock_acquire_count(&kernel_lock, hold_count);
 }
+#if defined(DEBUG)
+void
+_kernel_lock_assert_locked()
+{
+
+	KDASSERT(lockstatus(&kernel_lock) == LK_EXCLUSIVE);
+}
+#endif
 #endif /* MULTIPROCESSOR */

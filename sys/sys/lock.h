@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.56 2004/10/17 16:06:00 jdolecek Exp $	*/
+/*	$NetBSD: lock.h,v 1.57 2004/10/23 21:27:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -370,10 +370,6 @@ void	simple_lock_switchcheck(void);
 #define	simple_lock_only_held(x,y)		/* nothing */
 #endif /* __lint__ */
 #define	LOCK_ASSERT(x)		/* nothing */
-#endif
-
-#if defined(MULTIPROCESSOR)
-extern struct lock kernel_lock;
 #endif
 
 #endif /* _KERNEL */

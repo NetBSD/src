@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.19 2004/10/23 21:24:05 yamt Exp $	*/
+/*	$NetBSD: intr.c,v 1.20 2004/10/23 21:27:35 yamt Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -104,7 +104,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.19 2004/10/23 21:24:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.20 2004/10/23 21:27:35 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -872,13 +872,13 @@ cpu_intr_init(struct cpu_info *ci)
 void
 x86_softintlock(void)
 {
-	spinlockmgr(&kernel_lock, LK_EXCLUSIVE|LK_CANRECURSE, 0);
+	KERNEL_LOCK(LK_EXCLUSIVE|LK_CANRECURSE);
 }
 
 void
 x86_softintunlock(void)
 {
-	spinlockmgr(&kernel_lock, LK_RELEASE, 0);
+	KERNEL_UNLOCK();
 }
 #endif
 
