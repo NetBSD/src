@@ -1,4 +1,4 @@
-/*	$NetBSD: play.c,v 1.27 2002/01/13 04:43:18 ross Exp $	*/
+/*	$NetBSD: play.c,v 1.28 2002/01/13 04:48:33 ross Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -297,7 +297,7 @@ play_fd(file, fd)
 	if (nr == 0) {
 		if (fflag)
 			return;
-		else goto read_error;
+		else errx(1, "unexpected EOF");
 	}
 	hdrlen = audioctl_write_fromhdr(buffer, nr, ctlfd, &datasize);
 	if (hdrlen < 0) {
