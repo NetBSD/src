@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.591 2003/07/05 01:00:24 nonaka Exp $
+# $NetBSD: mi,v 1.592 2003/07/05 06:28:00 jdolecek Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -613,6 +613,7 @@
 ./usr/share/man/cat4/dreamcast/g2bus.0		man-sys-catman
 ./usr/share/man/cat4/dreamcast/gapspci.0	man-sys-catman
 ./usr/share/man/cat4/dreamcast/gdrom.0		man-sys-catman
+./usr/share/man/cat4/dreamcast/intro.0		man-sys-catman
 ./usr/share/man/cat4/dreamcast/maple.0		man-sys-catman
 ./usr/share/man/cat4/dreamcast/mkbd.0		man-sys-catman
 ./usr/share/man/cat4/dreamcast/mlcd.0		man-sys-catman
@@ -1394,6 +1395,7 @@
 ./usr/share/man/cat8/dkctl.0			man-sysutil-catman
 ./usr/share/man/cat8/dm.0			man-games-catman
 ./usr/share/man/cat8/dmesg.0			man-sysutil-catman
+./usr/share/man/cat8/dreamcast/boot.0		man-sysutil-catman
 ./usr/share/man/cat8/dreamcast/MAKEDEV.0	man-sysutil-catman
 ./usr/share/man/cat8/dreamcast/makedev.0	man-sysutil-catman
 ./usr/share/man/cat8/dump.0			man-sysutil-catman
@@ -2426,6 +2428,7 @@
 ./usr/share/man/man4/dreamcast/g2bus.4		man-sys-man
 ./usr/share/man/man4/dreamcast/gapspci.4	man-sys-man
 ./usr/share/man/man4/dreamcast/gdrom.4		man-sys-man
+./usr/share/man/man4/dreamcast/intro.4		man-sys-man
 ./usr/share/man/man4/dreamcast/maple.4		man-sys-man
 ./usr/share/man/man4/dreamcast/mkbd.4		man-sys-man
 ./usr/share/man/man4/dreamcast/mlcd.4		man-sys-man
@@ -3207,6 +3210,7 @@
 ./usr/share/man/man8/dkctl.8			man-sysutil-man
 ./usr/share/man/man8/dm.8			man-games-man
 ./usr/share/man/man8/dmesg.8			man-sysutil-man
+./usr/share/man/man8/dreamcast/boot.8		man-sysutil-man
 ./usr/share/man/man8/dreamcast/MAKEDEV.8	man-sysutil-man
 ./usr/share/man/man8/dreamcast/makedev.8	man-sysutil-man
 ./usr/share/man/man8/dump.8			man-sysutil-man
