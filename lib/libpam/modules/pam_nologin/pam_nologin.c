@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_nologin.c,v 1.2 2004/12/12 08:18:46 christos Exp $	*/
+/*	$NetBSD: pam_nologin.c,v 1.3 2005/01/23 09:45:02 manu Exp $	*/
 
 /*-
  * Copyright 2001 Mark R V Murray
@@ -40,7 +40,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_nologin/pam_nologin.c,v 1.10 2002/04/12 22:27:21 des Exp $");
 #else
-__RCSID("$NetBSD: pam_nologin.c,v 1.2 2004/12/12 08:18:46 christos Exp $");
+__RCSID("$NetBSD: pam_nologin.c,v 1.3 2005/01/23 09:45:02 manu Exp $");
 #endif
 
 
@@ -49,6 +49,8 @@ __RCSID("$NetBSD: pam_nologin.c,v 1.2 2004/12/12 08:18:46 christos Exp $");
 #include <fcntl.h>
 #include <login_cap.h>
 #include <pwd.h>
+#include <errno.h>
+#include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -59,7 +61,7 @@ __RCSID("$NetBSD: pam_nologin.c,v 1.2 2004/12/12 08:18:46 christos Exp $");
 #include <security/pam_modules.h>
 #include <security/pam_mod_misc.h>
 
-#define	NOLOGIN	"/var/run/nologin"
+#define	NOLOGIN	"/etc/nologin"
 
 static char nologin_def[] = NOLOGIN;
 
@@ -71,38 +73,60 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags __unused,
 	struct passwd *pwd;
 	struct stat st;
 	int retval, fd;
+	int ignorenologin = 0;
+	int rootlogin = 0;
 	const char *user, *nologin;
 	char *mtmp;
 
-	retval = pam_get_user(pamh, &user, NULL);
-	if (retval != PAM_SUCCESS)
-		return (retval);
+	if ((retval = pam_get_user(pamh, &user, NULL)) != PAM_SUCCESS)
+		return retval;
 
 	PAM_LOG("Got user: %s", user);
 
+	/*
+	 * For root, the default is to ignore nologin, but the 
+	 * ignorenologin capability can override this, so we
+	 * set the default appropriately.
+	 * 
+	 * Do not allow login of unexisting users, so that a directory
+	 * failure will not cause the nologin capability to be ignored.
+	 */
+	if ((pwd = getpwnam(user)) == NULL) {
+		return PAM_USER_UNKNOWN;
+	} else {
+		if (pwd->pw_uid == 0)
+			rootlogin = 1;
+	}
+
 	lc = login_getclass(NULL);
+	ignorenologin = login_getcapbool(lc, "ignorenologin", rootlogin);
 	nologin = login_getcapstr(lc, "nologin", nologin_def, nologin_def);
 	login_close(lc);
 	lc = NULL;
 
-	fd = open(nologin, O_RDONLY, 0);
-	if (fd < 0)
-		return (PAM_SUCCESS);
+	if (ignorenologin)
+		return PAM_SUCCESS;
 
-	PAM_LOG("Opened %s file", NOLOGIN);
+	if ((fd = open(nologin, O_RDONLY, 0)) == -1) {
+		/*
+		 * The file does not exist, login is granted
+		 */
+		if (errno == ENOENT)
+			return PAM_SUCCESS;
 
-	pwd = getpwnam(user);
-	if (pwd && pwd->pw_uid == 0)
-		retval = PAM_SUCCESS;
-	else {
-		if (!pwd)
-			retval = PAM_USER_UNKNOWN;
-		else
-			retval = PAM_AUTH_ERR;
+		/* 
+		 * open failed, but the file exists. This could be
+		 * a temporary problem (system resources exausted): 
+		 * Refuse the login.
+		 */
+		PAM_LOG("Cannot open %s file: %s", nologin, strerror(errno));
+		return PAM_AUTH_ERR;
 	}
 
+	PAM_LOG("Opened %s file", nologin);
+
 	if (fstat(fd, &st) < 0)
-		return (retval);
+		return PAM_AUTH_ERR;
 
 	mtmp = malloc(st.st_size + 1);
 	if (mtmp != NULL) {
@@ -112,10 +136,9 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags __unused,
 		free(mtmp);
 	}
 
-	if (retval != PAM_SUCCESS)
-		PAM_VERBOSE_ERROR("Administrator refusing you: %s", NOLOGIN);
+	PAM_VERBOSE_ERROR("Administrator refusing you: %s", nologin);
 
-	return (retval);
+	return PAM_AUTH_ERR;
 }
 
 PAM_EXTERN int
