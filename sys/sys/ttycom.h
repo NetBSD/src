@@ -1,4 +1,4 @@
-/*	$NetBSD: ttycom.h,v 1.12 2003/08/07 16:34:20 agc Exp $	*/
+/*	$NetBSD: ttycom.h,v 1.13 2004/05/27 02:56:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993, 1994
@@ -56,6 +56,17 @@ struct winsize {
 	unsigned short	ws_xpixel;	/* horizontal size, pixels */
 	unsigned short	ws_ypixel;	/* vertical size, pixels */
 };
+
+/* ptmget, for /dev/ptm pty getting ioctl PTMGET */
+struct ptmget {
+	int	cfd;
+	int	sfd;
+	char	cn[16];
+	char	sn[16];
+};
+
+#define _PATH_PTMDEV	"/dev/ptm"
+#define _TTY_GID	4	/* XXX evil hardcoding of tty gid */
 
 #define		TIOCM_LE	0001		/* line enable */
 #define		TIOCM_DTR	0002		/* data terminal ready */
@@ -138,6 +149,10 @@ typedef char linedn_t[TTLINEDNAMELEN];
 
 #define	TIOCRCVFRAME	_IOW('t', 69, struct mbuf *)/* data frame received */
 #define	TIOCXMTFRAME	_IOW('t', 68, struct mbuf *)/* data frame transmit */
+
+#define TIOCPTMGET 	 _IOR('t', 70, struct ptmget)	/* get ptys */
+#define TIOCGRANTPT 	 _IO('t', 71) 			/* grantpt(3) */
+#define TIOCPTSNAME 	 _IOR('t', 72, struct ptmget)	 /* ptsname(3) */
 
 
 #define	TTYDISC		0		/* termios tty line discipline */
