@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.12 1998/12/10 20:10:03 tsubai Exp $	*/
+/*	$NetBSD: conf.c,v 1.13 1998/12/29 04:43:24 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -74,6 +74,12 @@ struct bdevsw bdevsw[] = {
 };
 int nblkdev = sizeof bdevsw / sizeof bdevsw[0];
 
+/* open, close, write, ioctl */
+#define	cdev_lpt_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
+	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
+	0, seltrue, (dev_type_mmap((*))) enodev }
+
 cdev_decl(cn);
 cdev_decl(ctty);
 #define mmread	mmrw
@@ -125,6 +131,15 @@ cdev_decl(wskbd);
 #include "wsmouse.h"
 cdev_decl(wsmouse);
 
+#include "usb.h"
+cdev_decl(usb);
+#include "uhid.h"
+cdev_decl(uhid);
+#include "ugen.h"
+cdev_decl(ugen);
+#include "ulpt.h"
+cdev_decl(ulpt);
+
 struct cdevsw cdevsw[] = {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
 	cdev_ctty_init(1,ctty),		/* 1: control tty */
@@ -165,6 +180,10 @@ struct cdevsw cdevsw[] = {
 	cdev_mouse_init(NWSKBD,wskbd),	/* 36: wskbd */
 	cdev_mouse_init(NWSMOUSE,wsmouse), /* 37: wsmouse */
 	cdev_disk_init(NRAID,raid),	/* 38: RAIDframe disk driver */
+	cdev_usb_init(NUSB,usb),	/* 39: USB controller */
+	cdev_usbdev_init(NUHID,uhid),	/* 40: USB generic HID */
+	cdev_lpt_init(NULPT,ulpt),	/* 41: USB printer */
+	cdev_ugen_init(NUGEN,ugen),	/* 42: USB generic driver */
 };
 int nchrdev = sizeof cdevsw / sizeof cdevsw[0];
 
@@ -238,6 +257,10 @@ static int chrtoblktbl[] = {
 	/* 36 */	NODEV,
 	/* 37 */	NODEV,
 	/* 38 */	12,
+	/* 39 */	NODEV,
+	/* 40 */	NODEV,
+	/* 41 */	NODEV,
+	/* 42 */	NODEV,
 };
 
 /*
