@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.60 2001/02/02 22:11:52 is Exp $
+#	$NetBSD: MAKEDEV,v 1.61 2001/03/21 20:59:35 mhitch Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -206,7 +206,7 @@ fd*)
 	esac
 	;;
 md*)
-	unit={$i#md}; blk=15; chr=43;
+	unit=${i#md}; blk=15; chr=43;
 	rm -f md${unit}? rmd${unit}?
 	mknod md${unit}a  b $blk $(($unit * 16 + 0))
 	mknod md${unit}c  b $blk $(($unit * 16 + 2))
