@@ -165,6 +165,7 @@ st*	at scsibus? target ? lun ?	# SCSI tape drives
 cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 ch*	at scsibus? target ? lun ?	# SCSI auto-changers
 uk*	at scsibus? target ? lun ?	# SCSI unknown device
+ss*	at scsibus? target ? lun ?	# SCSI scanner
 
 #kie*	at podulebus? slot ? offset ?
 
