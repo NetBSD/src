@@ -1,10 +1,10 @@
-/*	$NetBSD: acpidevs_data.h,v 1.1 2003/01/05 22:34:35 christos Exp $	*/
+/*	$NetBSD: acpidevs_data.h,v 1.2 2003/02/04 01:43:11 perry Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	# NetBSD: acpidevs,v 1.1 2003/01/05 22:33:54 christos Exp 
+ *	# NetBSD: acpidevs,v 1.3 2003/02/04 01:12:06 perry Exp 
  */
 
 const struct { const char *pnp, *str; } acpi_knowndevs[] = {
