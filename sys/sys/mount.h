@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.95 2002/02/05 19:35:03 chuck Exp $	*/
+/*	$NetBSD: mount.h,v 1.96 2002/02/05 21:25:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -254,7 +254,8 @@ struct mount {
 	__MNT_BASIC_FLAGS \
 	__MNT_EXPORTED_FLAGS \
 	__MNT_INTERNAL_FLAGS \
-	__MNT_EXTERNAL_FLAGS
+	__MNT_EXTERNAL_FLAGS \
+	__MNT_CONTROL_FLAGS
 /*
  * Sysctl CTL_VFS definitions.
  *
