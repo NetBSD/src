@@ -33,7 +33,7 @@
 
 #include "gssapi_locl.h"
 
-RCSID("$Id: init_sec_context.c,v 1.1.1.2 2000/08/02 19:59:09 assar Exp $");
+RCSID("$Id: init_sec_context.c,v 1.2 2000/11/06 15:06:51 fvdl Exp $");
 
 static OM_uint32
 init_auth
@@ -169,12 +169,15 @@ init_auth
     if (actual_mech_type)
 	*actual_mech_type = GSS_KRB5_MECHANISM;
 
-    kret = krb5_cc_default (gssapi_krb5_context, &ccache);
-    if (kret) {
-	*minor_status = kret;
-	ret = GSS_S_FAILURE;
-	goto failure;
-    }
+    if (initiator_cred_handle == GSS_C_NO_CREDENTIAL) {
+        kret = krb5_cc_default (gssapi_krb5_context, &ccache);
+        if (kret) {
+	    *minor_status = kret;
+	    ret = GSS_S_FAILURE;
+	    goto failure;
+	}
+    } else
+	ccache = initiator_cred_handle->ccache;
 
     kret = krb5_cc_get_principal (gssapi_krb5_context,
 				  ccache,
