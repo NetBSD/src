@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons.c,v 1.40 2000/03/30 14:45:04 simonb Exp $	*/
+/*	$NetBSD: rcons.c,v 1.41 2000/04/20 20:02:34 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -149,6 +149,7 @@ rcons_connect (info)
 	rc.rc_deffgcolor = WSCOL_WHITE;
 	rc.rc_defbgcolor = WSCOL_BLACK;
 	rcons_init(&rc, 1);
+	rcons_ttyinit(fbconstty);
 }
 #endif
 
