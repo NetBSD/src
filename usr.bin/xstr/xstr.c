@@ -1,4 +1,4 @@
-/*	$NetBSD: xstr.c,v 1.3 1994/11/14 04:56:25 jtc Exp $	*/
+/*	$NetBSD: xstr.c,v 1.4 1994/11/26 09:25:24 jtc Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)xstr.c	8.1 (Berkeley) 6/9/93";
 #endif
-static char rcsid[] = "$NetBSD: xstr.c,v 1.3 1994/11/14 04:56:25 jtc Exp $";
+static char rcsid[] = "$NetBSD: xstr.c,v 1.4 1994/11/26 09:25:24 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -73,6 +73,8 @@ off_t	yankstr();
 off_t	mesgpt;
 char	*strings =	"strings";
 
+char	*array =	0;
+
 int	cflg;
 int	vflg;
 int	readstd;
@@ -81,30 +83,32 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
+	int c;
 
-	argc--, argv++;
-	while (argc > 0 && argv[0][0] == '-') {
-		register char *cp = &(*argv++)[1];
-
-		argc--;
-		if (*cp == 0) {
+	while ((c = getopt(argc, argv, "-cvl:")) != -1)
+		switch (c) {
+		case '-':
 			readstd++;
-			continue;
-		}
-		do switch (*cp++) {
-
+			break;
 		case 'c':
 			cflg++;
-			continue;
-
+			break;
 		case 'v':
 			vflg++;
-			continue;
-
+			break;
+		case 'l':
+			array = optarg;
+			break;
 		default:
-			fprintf(stderr, "usage: xstr [ -v ] [ -c ] [ - ] [ name ... ]\n");
-		} while (*cp);
-	}
+			fprintf(stderr, "usage: xstr [ -v ] [ -c ] [ -l array ] [ - ] [ name ... ]\n");
+			exit (1);
+		} 
+	argc -= optind;
+	argv += optind;
+
+	if (array == 0)
+		array = "xstr";
+
 	if (signal(SIGINT, SIG_IGN) == SIG_DFL)
 		signal(SIGINT, onintr);
 	if (cflg || argc == 0 && !readstd)
@@ -140,7 +144,7 @@ process(name)
 	register int incomm = 0;
 	int ret;
 
-	printf("extern char\txstr[];\n");
+	printf("extern char\t%s[];\n", array);
 	for (;;) {
 		if (fgets(linebuf, sizeof linebuf, stdin) == NULL) {
 			if (ferror(stdin)) {
@@ -163,7 +167,7 @@ process(name)
 				goto def;
 			if ((ret = (int) yankstr(&cp)) == -1)
 				goto out;
-			printf("(&xstr[%d])", ret);
+			printf("(&%s[%d])", array, ret);
 			break;
 
 		case '\'':
@@ -420,7 +424,7 @@ xsdotc()
 	xdotcf = fopen("xs.c", "w");
 	if (xdotcf == NULL)
 		perror("xs.c"), exit(6);
-	fprintf(xdotcf, "char\txstr[] = {\n");
+	fprintf(xdotcf, "char\t%s[] = {\n", array);
 	for (;;) {
 		register int i, c;
 
