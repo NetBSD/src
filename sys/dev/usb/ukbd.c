@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.65 2001/02/21 21:39:59 jdolecek Exp $        */
+/*      $NetBSD: ukbd.c,v 1.66 2001/04/06 22:54:15 augustss Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -270,7 +270,11 @@ extern const struct wscons_keydesc ukbd_keydesctab[];
 
 const struct wskbd_mapdata ukbd_keymapdata = {
 	ukbd_keydesctab,
+#ifdef UKBD_LAYOUT
+	UKBD_LAYOUT,
+#else
 	KB_US,
+#endif
 };
 #endif
 
