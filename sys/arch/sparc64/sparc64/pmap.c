@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.138 2003/04/01 16:34:59 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.139 2003/05/08 18:13:25 thorpej Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
 /*
@@ -463,6 +463,8 @@ pmap_calculate_colors() {
  * To handle the kernel text, we need to do a reverse mapping of the start of
  * the kernel, then traverse the free memory lists to find out how big it is.
  */
+
+static vaddr_t kbreak; /* End of kernel VA */
 
 void
 pmap_bootstrap(kernelstart, kernelend, maxctx)
@@ -1334,8 +1336,16 @@ remap_data:
 	avail_start = nextavail;
 	for (mp = avail; mp->size; mp++)
 		avail_end = mp->start+mp->size;
-	BDPRINTF(PDB_BOOT1, ("Finished pmap_bootstrap()\r\n"));
 
+	/*
+	 * Reserve two pages for pmap_copy_page && /dev/mem and
+	 * defined the boundaries of the kernel virtual address
+	 * space.
+	 */
+	virtual_avail = kbreak = (vaddr_t)(vmmap + 2*PAGE_SIZE);
+	virtual_end = VM_MAX_KERNEL_ADDRESS;
+
+	BDPRINTF(PDB_BOOT1, ("Finished pmap_bootstrap()\r\n"));
 }
 
 /*
@@ -1390,24 +1400,6 @@ pmap_init()
 
 	vm_first_phys = avail_start;
 	vm_num_phys = avail_end - avail_start;
-}
-
-/*
- * How much virtual space is available to the kernel?
- */
-static vaddr_t kbreak; /* End of kernel VA */
-void
-pmap_virtual_space(start, end)
-	vaddr_t *start, *end;
-{
-
-	/*
-	 * Reserve one segment for kernel virtual memory
-	 */
-	/* Reserve two pages for pmap_copy_page && /dev/mem */
-	*start = kbreak = (vaddr_t)(vmmap + 2*PAGE_SIZE);
-	*end = VM_MAX_KERNEL_ADDRESS;
-	BDPRINTF(PDB_BOOT1, ("pmap_virtual_space: %x-%x\r\n", *start, *end));
 }
 
 /*

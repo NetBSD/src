@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.17 2003/04/02 07:36:03 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.18 2003/05/08 18:13:23 thorpej Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -87,7 +87,6 @@ extern paddr_t pmap_unmap_poolpage(vaddr_t);
 #define	PMAP_UNMAP_POOLPAGE(v)	pmap_unmap_poolpage((v))
 
 #define	PMAP_STEAL_MEMORY
-extern vaddr_t pmap_steal_memory(vsize_t, vaddr_t *, vaddr_t *);
 
 #define pmap_clear_modify(pg)		(pmap_clear_bit((pg), SH5_PTEL_M))
 #define	pmap_clear_reference(pg)	(pmap_clear_bit((pg), SH5_PTEL_R))

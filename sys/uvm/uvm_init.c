@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_init.c,v 1.16 2003/03/04 06:18:54 thorpej Exp $	*/
+/*	$NetBSD: uvm_init.c,v 1.17 2003/05/08 18:13:28 thorpej Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.16 2003/03/04 06:18:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.17 2003/05/08 18:13:28 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,7 +72,6 @@ struct uvmexp uvmexp;	/* decl */
 void
 uvm_init()
 {
-	vaddr_t kvm_start, kvm_end;
 
 	/*
 	 * step 0: ensure that the hardware set the page size
@@ -93,11 +92,9 @@ uvm_init()
 	 * step 2: init the page sub-system.  this includes allocating the
 	 * vm_page structures, and setting up all the page queues (and
 	 * locks).  available memory will be put in the "free" queue.
-	 * kvm_start and kvm_end will be set to the area of kernel virtual
-	 * memory which is available for general use.
 	 */
 
-	uvm_page_init(&kvm_start, &kvm_end);
+	uvm_page_init();
 
 	/*
 	 * step 3: init the map sub-system.  allocates the static pool of
@@ -113,7 +110,7 @@ uvm_init()
 	 * kmem_object.
 	 */
 
-	uvm_km_init(kvm_start, kvm_end);
+	uvm_km_init();
 
 	/*
 	 * step 5: init the pmap module.   the pmap module is free to allocate
@@ -155,8 +152,7 @@ uvm_init()
 	 */
 
 	uvm_page_rehash();
-	uao_create(VM_MAX_KERNEL_ADDRESS - VM_MIN_KERNEL_ADDRESS,
-	    UAO_FLAG_KERNSWAP);
+	uao_create(virtual_end - virtual_avail, UAO_FLAG_KERNSWAP);
 
 	/*
 	 * done!

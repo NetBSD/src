@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.7 2003/01/17 21:55:24 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.8 2003/05/08 18:13:12 thorpej Exp $ */
 /*-
  * Copyright (c) 1997, 1998, 2000 Ben Harris
  * All rights reserved.
@@ -102,7 +102,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.7 2003/01/17 21:55:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.8 2003/05/08 18:13:12 thorpej Exp $");
 
 #include <sys/kernel.h> /* for cold */
 #include <sys/malloc.h>
@@ -237,9 +237,8 @@ update_memc(register_t mask, register_t value)
  * pmap_bootstrap: first-stage pmap initialisation
  * 
  * This is called very early, and has to get the pmap system into a
- * state where pmap_virtual_space and pmap_kenter_pa at least will
- * work.  If we need memory here, we have to work out how to get it
- * ourselves.
+ * state where pmap_kenter_pa at least will work.  If we need memory
+ * here, we have to work out how to get it ourselves.
  */
 void
 pmap_bootstrap(int npages, paddr_t zp_physaddr)
@@ -260,6 +259,15 @@ pmap_bootstrap(int npages, paddr_t zp_physaddr)
 	for (i = 0; i < physmem; i++)
 		pv_table[i].pv_pflags |= PV_MODIFIED;
 #endif
+
+	/*
+	 * Define the boundaries of the managed kernel virtual address
+	 * space.  Since NetBSD/acorn26 runs the kernel from physically-
+	 * mapped space, we just return all of kernel vm.  Oh, except for
+	 * the single page at the end where we map otherwise-unmapped pages.
+	 */
+	virtual_avail = VM_MIN_KERNEL_ADDRESS;
+	virtual_end = VM_MAX_KERNEL_ADDRESS - PAGE_SIZE;
 
 	/* Set up the kernel's pmap */
 	pmap = pmap_kernel();
@@ -288,7 +296,7 @@ pmap_bootstrap(int npages, paddr_t zp_physaddr)
 }
 
 vaddr_t
-pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
+pmap_steal_memory(vsize_t size)
 {
 	int i;
 	vaddr_t addr;
@@ -1096,25 +1104,6 @@ pmap_md4_page(unsigned char digest[16], paddr_t pa)
 	MD4Final(digest, &context);
 }
 #endif
-
-/*
- * This is meant to return the range of kernel vm that is available
- * after loading the kernel.  Since NetBSD/acorn26 runs the kernel from
- * physically-mapped space, we just return all of kernel vm.  Oh,
- * except for the single page at the end where we map
- * otherwise-unmapped pages.
- */
-void
-pmap_virtual_space(vaddr_t *vstartp, vaddr_t *vendp)
-{
-	UVMHIST_FUNC("pmap_virtual_space");
-
-	UVMHIST_CALLED(pmaphist);
-	if (vstartp != NULL)
-		*vstartp = VM_MIN_KERNEL_ADDRESS;
-	if (vendp != NULL)
-		*vendp = VM_MAX_KERNEL_ADDRESS - PAGE_SIZE;
-}
 
 #ifdef DDB
 #include <ddb/db_output.h>

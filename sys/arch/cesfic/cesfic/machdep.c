@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.15 2003/04/26 11:05:09 ragge Exp $	*/
+/*	$NetBSD: machdep.c,v 1.16 2003/05/08 18:13:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -255,7 +255,6 @@ consinit()
 void
 cpu_startup()
 {
-	extern char *etext;
 	caddr_t v;
 	int i, base, residual;
 	vaddr_t minaddr, maxaddr;
@@ -353,14 +352,6 @@ cpu_startup()
 	printf("avail mem = %ld\n", ptoa(uvmexp.free));
 	printf("using %u buffers containing %d bytes of memory\n",
 		nbuf, bufpages * PAGE_SIZE);
-
-	/*
-	 * Tell the VM system that writing to kernel text isn't allowed.
-	 * If we don't, we might end up COW'ing the text segment!
-	 */
-	if (uvm_map_protect(kernel_map, KERNBASE, m68k_round_page(&etext),
-	    UVM_PROT_READ|UVM_PROT_EXEC, TRUE) != 0)
-		panic("can't protect kernel text");
 
 	/*
 	 * Set up buffers, so they can be used to read disk labels.

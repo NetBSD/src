@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.60 2002/11/30 18:28:05 bouyer Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.61 2003/05/08 18:13:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -74,8 +74,8 @@
  * overview of kernel memory management:
  *
  * the kernel virtual address space is mapped by "kernel_map."   kernel_map
- * starts at VM_MIN_KERNEL_ADDRESS and goes to VM_MAX_KERNEL_ADDRESS.
- * note that VM_MIN_KERNEL_ADDRESS is equal to vm_map_min(kernel_map).
+ * starts at virtual_avail and goes to virtual_end.  note that virtual_avail
+ * is equal to vm_map_min(kernel_map).
  *
  * the kernel_map has several "submaps."   submaps can only appear in
  * the kernel_map (user processes can't use them).   submaps "take over"
@@ -102,8 +102,8 @@
  * reference count is set to UVM_OBJ_KERN (thus indicating that the objects
  * are "special" and never die).   all kernel objects should be thought of
  * as large, fixed-sized, sparsely populated uvm_objects.   each kernel
- * object is equal to the size of kernel virtual address space (i.e. the
- * value "VM_MAX_KERNEL_ADDRESS - VM_MIN_KERNEL_ADDRESS").
+ * object is equal to the size of managed kernel virtual address space (i.e.
+ * the value "virtual_end - virtual_avail").
  *
  * most kernel private memory lives in kernel_object.   the only exception
  * to this is for memory that belongs to submaps that must be protected
@@ -118,9 +118,9 @@
  * offsets that are managed by the submap.
  *
  * note that the "offset" in a kernel object is always the kernel virtual
- * address minus the VM_MIN_KERNEL_ADDRESS (aka vm_map_min(kernel_map)).
+ * address minus virtual_avail (aka vm_map_min(kernel_map)).
  * example:
- *   suppose VM_MIN_KERNEL_ADDRESS is 0xf8000000 and the kernel does a
+ *   suppose virtual_avail is 0xf8000000 and the kernel does a
  *   uvm_km_alloc(kernel_map, PAGE_SIZE) [allocate 1 wired down page in the
  *   kernel map].    if uvm_km_alloc returns virtual address 0xf8235000,
  *   then that means that the page at offset 0x235000 in kernel_object is
@@ -134,7 +134,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.60 2002/11/30 18:28:05 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.61 2003/05/08 18:13:28 thorpej Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -148,6 +148,9 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.60 2002/11/30 18:28:05 bouyer Exp $");
  * global data structures
  */
 
+vaddr_t virtual_avail;		/* start of managed kernel virtual memory */
+vaddr_t virtual_end;		/* end of managed kernel virtual memory */
+
 struct vm_map *kernel_map = NULL;
 
 /*
@@ -160,16 +163,22 @@ static struct vm_map		kernel_map_store;
  * uvm_km_init: init kernel maps and objects to reflect reality (i.e.
  * KVM already allocated for text, data, bss, and static data structures).
  *
- * => KVM is defined by VM_MIN_KERNEL_ADDRESS/VM_MAX_KERNEL_ADDRESS.
- *    we assume that [min -> start] has already been allocated and that
- *    "end" is the end.
+ * => KVM is defined by virtual_avail/virtual_end.
+ *    we assume that any regions that have already been allocated from
+ *    the total kernel address space have already been accounted for in
+ *    the values of virtual_avail and virtual_end.
  */
 
 void
-uvm_km_init(start, end)
-	vaddr_t start, end;
+uvm_km_init(void)
 {
-	vaddr_t base = VM_MIN_KERNEL_ADDRESS;
+
+	/*
+	 * virtual_avail and virtual_end should already be page-aligned.
+	 */
+
+	KASSERT((virtual_avail & PAGE_MASK) == 0);
+	KASSERT((virtual_end & PAGE_MASK) == 0);
 
 	/*
 	 * next, init kernel memory objects.
@@ -177,22 +186,17 @@ uvm_km_init(start, end)
 
 	/* kernel_object: for pageable anonymous kernel memory */
 	uao_init();
-	uvm.kernel_object = uao_create(VM_MAX_KERNEL_ADDRESS -
-				 VM_MIN_KERNEL_ADDRESS, UAO_FLAG_KERNOBJ);
+	uvm.kernel_object = uao_create(virtual_end - virtual_avail,
+				       UAO_FLAG_KERNOBJ);
 
 	/*
 	 * init the map and reserve any space that might already
 	 * have been allocated kernel space before installing.
 	 */
 
-	uvm_map_setup(&kernel_map_store, base, end, VM_MAP_PAGEABLE);
+	uvm_map_setup(&kernel_map_store, virtual_avail, virtual_end,
+		      VM_MAP_PAGEABLE);
 	kernel_map_store.pmap = pmap_kernel();
-	if (start != base &&
-	    uvm_map(&kernel_map_store, &base, start - base, NULL,
-		    UVM_UNKNOWN_OFFSET, 0,
-		    UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL, UVM_INH_NONE,
-		    		UVM_ADV_RANDOM, UVM_FLAG_FIXED)) != 0)
-		panic("uvm_km_init: could not reserve space for kernel");
 
 	/*
 	 * install!

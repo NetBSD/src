@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.3 2003/04/02 00:00:46 thorpej Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.4 2003/05/08 18:13:18 thorpej Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -128,7 +128,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.3 2003/04/02 00:00:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.4 2003/05/08 18:13:18 thorpej Exp $");
 
 #include "opt_compat_hpux.h"
 
@@ -256,8 +256,6 @@ struct vm_map	st_map_store, pt_map_store;
 paddr_t		avail_start;	/* PA of first available physical page */
 paddr_t		avail_end;	/* PA of last available physical page */
 vsize_t		mem_size;	/* memory size in bytes */
-vaddr_t		virtual_avail;  /* VA of first avail page (after kernel bss)*/
-vaddr_t		virtual_end;	/* VA of last avail page (end of kernel AS) */
 int		page_cnt;	/* number of pages managed by VM system */
 
 boolean_t	pmap_initialized = FALSE;	/* Has pmap_init completed? */
@@ -331,26 +329,6 @@ void pmap_check_wiring	__P((char *, vaddr_t));
 #define	PRM_KEEPPTPAGE	0x04
 
 /*
- * pmap_virtual_space:		[ INTERFACE ]
- *
- *	Report the range of available kernel virtual address
- *	space to the VM system during bootstrap.
- *
- *	This is only an interface function if we do not use
- *	pmap_steal_memory()!
- *
- *	Note: no locking is necessary in this function.
- */
-void
-pmap_virtual_space(vstartp, vendp)
-	vaddr_t	*vstartp, *vendp;
-{
-
-	*vstartp = virtual_avail;
-	*vendp = virtual_end;
-}
-
-/*
  * pmap_init:			[ INTERFACE ]
  *
  *	Initialize the pmap module.  Called by vm_init(), to initialize any
@@ -407,6 +385,53 @@ pmap_init()
 	    avail_start, avail_end, virtual_avail, virtual_end));
 
 	/*
+	 * Allocate physical memory for kernel PT pages and their management.
+	 * We need 1 PT page per possible task plus some slop.
+	 */
+	npages = min(atop(M68K_MAX_KPTSIZE), maxproc+16);
+	s = ptoa(npages) + round_page(npages * sizeof(struct kpt_page));
+
+	/*
+	 * Verify that space will be allocated in region for which
+	 * we already have kernel PT pages.
+	 */
+	addr = vm_map_min(kernel_map);
+	kernel_map->first_free = &kernel_map->header;	/* XXX */
+	rv = uvm_map(kernel_map, &addr, s, NULL, UVM_UNKNOWN_OFFSET, 0,
+		     UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
+				 UVM_ADV_RANDOM, UVM_FLAG_NOMERGE));
+	if (rv != 0)
+		panic("pmap_init: uvm_map of KPT array failed: %d", rv);
+	if ((addr + s) >= (vaddr_t)Sysmap)
+		panic("pmap_init: initial kernel PT too small for KPT array "
+		    "(0x%lx - 0x%lx)", addr, s);
+	uvm_unmap(kernel_map, addr, addr + s);
+
+	/*
+	 * Now allocate the space and link the pages together to
+	 * form the KPT free list.
+	 */
+	kernel_map->first_free = &kernel_map->header;	/* XXX */
+	addr = uvm_km_zalloc(kernel_map, s);
+	if (addr == 0)
+		panic("pmap_init: cannot allocate KPT free list");
+	s = ptoa(npages);
+	addr2 = addr + s;
+	kpt_pages = &((struct kpt_page *)addr2)[npages];
+	kpt_free_list = NULL;
+	do {
+		addr2 -= PAGE_SIZE;
+		(--kpt_pages)->kpt_next = kpt_free_list;
+		kpt_free_list = kpt_pages;
+		kpt_pages->kpt_va = addr2;
+		(void) pmap_extract(pmap_kernel(), addr2,
+		    (paddr_t *)&kpt_pages->kpt_pa);
+	} while (addr != addr2);
+
+	PMAP_DPRINTF(PDB_INIT, ("pmap_init: KPT: %ld pages from %lx to %lx\n",
+	    atop(s), addr, addr + s));
+
+	/*
 	 * Allocate memory for random pmap data structures.  Includes the
 	 * initial segment table, pv_head_table and pmap_attributes.
 	 */
@@ -416,6 +441,7 @@ pmap_init()
 	s += page_cnt * sizeof(struct pv_entry);	/* pv table */
 	s += page_cnt * sizeof(char);			/* attribute table */
 	s = round_page(s);
+	kernel_map->first_free = &kernel_map->header;	/* XXX */
 	addr = uvm_km_zalloc(kernel_map, s);
 	if (addr == 0)
 		panic("pmap_init: can't allocate data structures");
@@ -449,51 +475,10 @@ pmap_init()
 	}
 
 	/*
-	 * Allocate physical memory for kernel PT pages and their management.
-	 * We need 1 PT page per possible task plus some slop.
-	 */
-	npages = min(atop(M68K_MAX_KPTSIZE), maxproc+16);
-	s = ptoa(npages) + round_page(npages * sizeof(struct kpt_page));
-
-	/*
-	 * Verify that space will be allocated in region for which
-	 * we already have kernel PT pages.
-	 */
-	addr = 0;
-	rv = uvm_map(kernel_map, &addr, s, NULL, UVM_UNKNOWN_OFFSET, 0,
-		     UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
-				 UVM_ADV_RANDOM, UVM_FLAG_NOMERGE));
-	if (rv != 0 || (addr + s) >= (vaddr_t)Sysmap)
-		panic("pmap_init: kernel PT too small");
-	uvm_unmap(kernel_map, addr, addr + s);
-
-	/*
-	 * Now allocate the space and link the pages together to
-	 * form the KPT free list.
-	 */
-	addr = uvm_km_zalloc(kernel_map, s);
-	if (addr == 0)
-		panic("pmap_init: cannot allocate KPT free list");
-	s = ptoa(npages);
-	addr2 = addr + s;
-	kpt_pages = &((struct kpt_page *)addr2)[npages];
-	kpt_free_list = NULL;
-	do {
-		addr2 -= PAGE_SIZE;
-		(--kpt_pages)->kpt_next = kpt_free_list;
-		kpt_free_list = kpt_pages;
-		kpt_pages->kpt_va = addr2;
-		(void) pmap_extract(pmap_kernel(), addr2,
-		    (paddr_t *)&kpt_pages->kpt_pa);
-	} while (addr != addr2);
-
-	PMAP_DPRINTF(PDB_INIT, ("pmap_init: KPT: %ld pages from %lx to %lx\n",
-	    atop(s), addr, addr + s));
-
-	/*
 	 * Allocate the segment table map and the page table map.
 	 */
 	s = maxproc * M68K_STSIZE;
+	kernel_map->first_free = &kernel_map->header;	/* XXX */
 	st_map = uvm_km_suballoc(kernel_map, &addr, &addr2, s, 0, FALSE,
 	    &st_map_store);
 
@@ -509,6 +494,7 @@ pmap_init()
 		maxproc = (M68K_PTMAXSIZE / M68K_MAX_PTSIZE);
 	} else
 		s = (maxproc * M68K_MAX_PTSIZE);
+	kernel_map->first_free = &kernel_map->header;	/* XXX */
 	pt_map = uvm_km_suballoc(kernel_map, &addr, &addr2, s, 0,
 	    TRUE, &pt_map_store);
 
