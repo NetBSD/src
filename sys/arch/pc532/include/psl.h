@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.9 1995/08/13 00:28:06 mycroft Exp $	*/
+/*	$NetBSD: psl.h,v 1.10 1995/08/25 07:52:19 phil Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -66,9 +66,9 @@
 /* The PSR versions ... */
 #define PSR_USR PSL_USER
 
-#ifdef _KERNEL
-#include <machine/icu.h>
-
+/*
+ * Structure of the software interrupt table
+ */
 struct iv {
 	void (*iv_vec)();
 	void *iv_arg;
@@ -76,6 +76,12 @@ struct iv {
 	char *iv_use;
 };
 
+#ifdef _KERNEL
+#include <machine/icu.h>
+
+/*
+ * Interrupt levels
+ */
 #define	IPL_NONE	-1
 #define IPL_ZERO	0
 #define	IPL_BIO		1
@@ -83,6 +89,9 @@ struct iv {
 #define	IPL_TTY		3
 #define	IPL_CLOCK	4
 
+/*
+ * Preassigned software interrupts
+ */
 #define SOFTINT		16
 #define	SIR_CLOCK	(SOFTINT+0)
 #define	SIR_CLOCKMASK	(1 << SIR_CLOCK)
@@ -96,9 +105,16 @@ extern void check_sir();
 extern int intr_establish(int, void (*)(), void *, char *, int, int);
 extern struct iv ivt[];
 
-#define di() __asm __volatile("bicpsrw 0x800" : : : "cc")
+/*
+ * Disable/Enable CPU-Interrupts
+ */
+#define di() __asm __volatile("bicpsrw 0x800 ; nop" : : : "cc")
 #define ei() __asm __volatile("bispsrw 0x800" : : : "cc")
 
+/*
+ * Globaly disable/enable specific interrupts
+ * (overriding spl0)
+ */
 #define intr_disable(ir) do { \
 		di(); \
 		ICUW(IMSK) = Cur_pl | (idisabled |= (1 << ir)); \
