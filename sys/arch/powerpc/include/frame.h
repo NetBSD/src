@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.4.2.2 2002/07/21 13:00:47 gehenna Exp $	*/
+/*	$NetBSD: frame.h,v 1.4.2.3 2002/08/31 13:45:46 gehenna Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -101,7 +101,7 @@ struct intrframe {
 	register_t srr1;		/*  8 */
 	register_t srr0;		/* 12 */
 	int pri;			/* 16 */
-	int intr_depth;			/* 20 */
+	int intrdepth;			/* 20 */
 	register_t vrsave;		/* 24 */
 	register_t ctr;			/* 28 */
 	register_t xer;			/* 32 */

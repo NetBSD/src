@@ -1,4 +1,4 @@
-/*	$NetBSD: asp.c,v 1.1.4.2 2002/07/14 17:46:18 gehenna Exp $	*/
+/*	$NetBSD: asp.c,v 1.1.4.3 2002/08/31 13:44:37 gehenna Exp $	*/
 
 /*	$OpenBSD: asp.c,v 1.5 2000/02/09 05:04:22 mickey Exp $	*/
 
@@ -104,6 +104,11 @@ struct asp_trs {
 #define	asp_scsi	_asp_ios.asp_scsi
 };
 
+#define	ASP_BANK_SZ	0x02000000
+#define	ASP_REG_INT	0x00800000
+#define	ASP_ETHER_ADDR	0x00810000
+#define	ASP_REG_MISC	0x0082f000
+
 const struct asp_spus_tag {
 	char	name[12];
 	int	ledword;
@@ -120,14 +125,12 @@ const struct asp_spus_tag {
 
 struct asp_softc {
 	struct  device sc_dev;
-	struct gscbus_ic sc_ic;
+
+	struct hp700_int_reg sc_int_reg;
 
 	volatile struct asp_hwr *sc_hw;
 	volatile struct asp_trs *sc_trs;
 };
-
-/* ASP "Primary Controller" HPA */
-#define	ASP_CHPA	0xF0800000
 
 int	aspmatch __P((struct device *, struct cfdata *, void *));
 void	aspattach __P((struct device *, struct device *, void *));
@@ -135,6 +138,31 @@ void	aspattach __P((struct device *, struct device *, void *));
 struct cfattach asp_ca = {
 	sizeof(struct asp_softc), aspmatch, aspattach
 };
+
+/*
+ * Before a module is matched, this fixes up its gsc_attach_args.
+ */
+static void asp_fix_args __P((void *, struct gsc_attach_args *)); 
+static void
+asp_fix_args(void *_sc, struct gsc_attach_args *ga)
+{
+	hppa_hpa_t module_offset;
+	struct asp_softc *sc = _sc;
+
+	/*  
+	 * Determine this module's interrupt bit.
+	 */
+	module_offset = ga->ga_hpa - (hppa_hpa_t) sc->sc_trs;
+	ga->ga_irq = HP700CF_IRQ_UNDEF;
+#define ASP_IRQ(off, irq) if (module_offset == off) ga->ga_irq = irq
+	ASP_IRQ(0x22000, 6);	/* com1 */
+	ASP_IRQ(0x23000, 5);	/* com0 */
+	ASP_IRQ(0x24000, 7);	/* lpt */
+	ASP_IRQ(0x25000, 9);	/* osiop */
+	ASP_IRQ(0x26000, 8);	/* ie */
+	ASP_IRQ(0x30000, 3);	/* siop */
+#undef ASP_IRQ
+}      
 
 int
 aspmatch(parent, cf, aux)   
@@ -147,6 +175,16 @@ aspmatch(parent, cf, aux)
 	if (ca->ca_type.iodc_type != HPPA_TYPE_BHA ||
 	    ca->ca_type.iodc_sv_model != HPPA_BHA_ASP)
 		return 0;
+
+	/* Make sure we have an IRQ. */
+	if (ca->ca_irq == HP700CF_IRQ_UNDEF)
+		ca->ca_irq = hp700_intr_allocate_bit(&int_reg_cpu);
+
+	/*
+	 * Forcibly mask the HPA down to the start of the ASP
+	 * chip address space.
+	 */
+	ca->ca_hpa &= ~(ASP_BANK_SZ - 1);
 
 	return 1;
 }
@@ -164,15 +202,31 @@ aspattach(parent, self, aux)
 	register u_int32_t irr;
 	register int s;
 
-	if (bus_space_map(ca->ca_iot, ca->ca_hpa, IOMOD_HPASIZE, 0, &ioh)) {
-#ifdef DEBUG
-		printf("aspattach: can't map IO space\n");
-#endif
-		return;
-	}
+	/*
+	 * Map the ASP interrupt registers.
+	 */
+	if (bus_space_map(ca->ca_iot, ca->ca_hpa + ASP_REG_INT,
+			  sizeof(struct asp_trs), 0, &ioh))
+		panic("aspattach: can't map interrupt registers.");
+	sc->sc_trs = (struct asp_trs *)ioh;
 
-	sc->sc_trs = (struct asp_trs *)ASP_CHPA;
-	sc->sc_hw = (struct asp_hwr *)ca->ca_hpa;
+	/*
+	 * Map the ASP miscellaneous registers.
+	 */
+	if (bus_space_map(ca->ca_iot, ca->ca_hpa + ASP_REG_MISC,
+			  sizeof(struct asp_hwr), 0, &ioh))
+		panic("aspattach: can't map miscellaneous registers.");
+	sc->sc_hw = (struct asp_hwr *)ioh;
+
+	/*
+	 * Map the Ethernet address and read it out.
+	 */
+	if (bus_space_map(ca->ca_iot, ca->ca_hpa + ASP_ETHER_ADDR,
+			  sizeof(ga.ga_ether_address), 0, &ioh))
+		panic("aspattach: can't map EEPROM.");
+	bus_space_read_region_1(ca->ca_iot, ioh, 0,
+		ga.ga_ether_address, sizeof(ga.ga_ether_address));
+	bus_space_unmap(ca->ca_iot, ioh, sizeof(ga.ga_ether_address));
 
 	machine_ledaddr = &sc->sc_trs->asp_cled;
 	machine_ledword = asp_spus[sc->sc_trs->asp_spu].ledword;
@@ -193,14 +247,17 @@ aspattach(parent, self, aux)
 	    asp_spus[sc->sc_trs->asp_spu].name, sc->sc_hw->asp_version,
 	    sc->sc_trs->asp_lan, sc->sc_trs->asp_scsi);
 
-	sc->sc_ic.gsc_type = gsc_asp;
-	sc->sc_ic.gsc_dv = sc;
-	hp700_intr_reg_establish(&sc->sc_ic.gsc_int_reg);
-	sc->sc_ic.gsc_int_reg.int_reg_mask = &sc->sc_trs->asp_imr;
-	sc->sc_ic.gsc_int_reg.int_reg_req = &sc->sc_trs->asp_irr;
+	/* Establish the interrupt register. */
+	hp700_intr_reg_establish(&sc->sc_int_reg);
+	sc->sc_int_reg.int_reg_mask = &sc->sc_trs->asp_imr;
+	sc->sc_int_reg.int_reg_req = &sc->sc_trs->asp_irr;
 
+	/* Attach the GSC bus. */
 	ga.ga_ca = *ca;	/* clone from us */
 	ga.ga_name = "gsc";
-	ga.ga_ic = &sc->sc_ic;
+	ga.ga_int_reg = &sc->sc_int_reg;
+	ga.ga_fix_args = asp_fix_args;
+	ga.ga_fix_args_cookie = sc;
+	ga.ga_scsi_target = sc->sc_trs->asp_scsi;
 	config_found(self, &ga, gscprint);
 }

@@ -39,7 +39,7 @@ device	sbtimer
 attach	sbtimer at sbscd
 file	arch/mips/sibyte/dev/sbtimer.c		sbtimer
 
-device	sbwdog
+device	sbwdog: sysmon_wdog
 attach	sbwdog at sbscd
 file	arch/mips/sibyte/dev/sbwdog.c		sbwdog
 

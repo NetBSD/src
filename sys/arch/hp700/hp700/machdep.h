@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.1.4.2 2002/07/14 17:46:26 gehenna Exp $	*/
+/*	$NetBSD: machdep.h,v 1.1.4.3 2002/08/31 13:44:39 gehenna Exp $	*/
 
 /*	$OpenBSD: cpufunc.h,v 1.17 2000/05/15 17:22:40 mickey Exp $	*/
 
@@ -77,6 +77,14 @@
 
 #include <hppa/hppa/machdep.h>
 
+/* The LEDs. */
+#define	HP700_LED_NETSND	(0)
+#define	HP700_LED_NETRCV	(1)
+#define	HP700_LED_DISK		(2)
+#define	HP700_LED_HEARTBEAT	(3)
+#define	_HP700_LEDS_BLINKABLE	(4)
+#define	_HP700_LEDS_COUNT	(8)
+
 /* This forcefully reboots the machine. */
 void cpu_die __P((void));
 
@@ -84,47 +92,26 @@ void cpu_die __P((void));
 int hp700_pagezero_map __P((void));
 void hp700_pagezero_unmap __P((int));
 
+/* Blinking the LEDs. */
 #ifdef USELEDS
-#define	PALED_NETSND	0x01
-#define	PALED_NETRCV	0x02
-#define	PALED_DISK	0x04
-#define	PALED_HEARTBEAT	0x08
-#define	PALED_LOADMASK	0xf0
-
-#define	PALED_DATA	0x01
-#define	PALED_STROBE	0x02
-
+#define	_HP700_LED_FREQ		(16)
 extern volatile u_int8_t *machine_ledaddr;
 extern int machine_ledword, machine_leds;
-
-static __inline void
-ledctl(int on, int off, int toggle)
-{
-	if (machine_ledaddr) {
-		int r;
-
-		if (on)
-			machine_leds |= on;
-		if (off)
-			machine_leds &= ~off;
-		if (toggle)
-			machine_leds ^= toggle;
-			
-		r = ~machine_leds;	/* it seems they should be reversed */
-
-		if (machine_ledword)
-			*machine_ledaddr = r;
-		else {
-			register int b;
-			for (b = 0x80; b; b >>= 1) {
-				*machine_ledaddr = (r & b)? PALED_DATA : 0;
-				DELAY(1);
-				*machine_ledaddr = ((r & b)? PALED_DATA : 0) |
-				    PALED_STROBE;
-			}
-		}
-	}
-}
-#endif /* USELEDS */
+extern int _hp700_led_on_cycles[];
+#define hp700_led_blink(i)			\
+do {						\
+	if (_hp700_led_on_cycles[i] == -1)	\
+		_hp700_led_on_cycles[i] = 1;	\
+} while (/* CONSTCOND */ 0)
+#define hp700_led_on(i, ms)			\
+do {						\
+	_hp700_led_on_cycles[i] = (((ms) * _HP700_LED_FREQ) / 1000); \
+} while (/* CONSTCOND */ 0)
+void hp700_led_ctl __P((int, int, int));
+#else  /* !USELEDS */
+#define hp700_led_blink(i)
+#define hp700_led_on(i, ms)
+#define hp700_led_ctl(off, on, toggle)
+#endif /* !USELEDS */
 
 #endif /* _MACHINE_CPUFUNC_H_ */

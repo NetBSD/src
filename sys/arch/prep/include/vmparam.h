@@ -1,6 +1,7 @@
-/*	$NetBSD: vmparam.h,v 1.8 2002/03/09 23:35:59 chs Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.8.6.1 2002/08/31 13:45:50 gehenna Exp $	*/
 
 #ifndef OLDPMAP
+#define	USER_SR		11
 #include <powerpc/mpc6xx/vmparam.h>
 #else
 /*-

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_subr.c,v 1.2.2.2 2002/07/21 13:00:49 gehenna Exp $	*/
+/*	$NetBSD: pmap_subr.c,v 1.2.2.3 2002/08/31 13:45:49 gehenna Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,10 +36,12 @@
  */
 
 #include "opt_altivec.h"
+#include "opt_pmap.h"
 #include <sys/param.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/sched.h>
+#include <sys/device.h>
 #include <sys/systm.h>
 
 #include <uvm/uvm_extern.h>
@@ -54,13 +56,21 @@
 #define	MFMSR()		mfmsr()
 #define	MTMSR(psl)	__asm __volatile("sync; mtmsr %0; isync" :: "r"(psl))
 
-static __inline u_int32_t
-mfmsr(void)
-{
-	u_int32_t psl;
-	__asm __volatile("mfmsr %0" : "=r"(psl) : );
-	return psl;
-}
+#ifdef PMAPCOUNTERS
+struct evcnt pmap_evcnt_zeroed_pages =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "pmap",
+	"pages zeroed");
+struct evcnt pmap_evcnt_copied_pages =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "pmap",
+	"pages copied");
+struct evcnt pmap_evcnt_idlezeroed_pages =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "pmap",
+	"pages idle zeroed");
+#ifdef PPC_MPC6XX
+extern struct evcnt pmap_evcnt_exec_uncached_zero_page;
+extern struct evcnt pmap_evcnt_exec_uncached_copy_page;
+#endif
+#endif /* PMAPCOUNTERS */
 
 /*
  * This file uses a sick & twisted method to deal with the common pmap
@@ -81,7 +91,7 @@ mfmsr(void)
  * However while relocation is off, we MUST not access the kernel stack in
  * any manner since it will probably no longer be mapped.  This mean no
  * calls while relocation is off.  The AltiVEC routines need to handle the
- * MSR fiddling themselves so they save things on the stack.
+ * MSR fiddling themselves so they can save things on the stack.
  */
 
 /*
@@ -91,8 +101,28 @@ void
 pmap_zero_page(paddr_t pa)
 {
 	size_t linewidth;
-	u_int32_t msr;
+	register_t msr;
 
+#if defined(PPC_MPC6XX)
+	{
+		/*
+		 * If we are zeroing this page, we must clear the EXEC-ness
+		 * of this page since the page contents will have changed.
+		 */
+		struct vm_page *pg = PHYS_TO_VM_PAGE(pa);
+		KDASSERT(pg != NULL);
+		KDASSERT(LIST_EMPTY(&pg->mdpage.mdpg_pvoh));
+#ifdef PMAPCOUNTERS
+		if (pg->mdpage.mdpg_attrs & PTE_EXEC) {
+			pmap_evcnt_exec_uncached_zero_page.ev_count++;
+		}
+#endif
+		pg->mdpage.mdpg_attrs &= ~PTE_EXEC;
+	}
+#endif
+#ifdef PMAPCOUNTERS
+	pmap_evcnt_zeroed_pages.ev_count++;
+#endif
 #ifdef ALTIVEC
 	if (pmap_use_altivec) {
 		vzeropage(pa);
@@ -127,8 +157,8 @@ pmap_zero_page(paddr_t pa)
 	} else {
 		size_t i = 0;
 		do {
-			__asm ("dcbz %0,%1" :: "r"(pa), "r"(i)); i += linewidth;
-			__asm ("dcbz %0,%1" :: "r"(pa), "r"(i)); i += linewidth;
+			__asm ("dcbz %0,%1" :: "b"(pa), "r"(i)); i += linewidth;
+			__asm ("dcbz %0,%1" :: "b"(pa), "r"(i)); i += linewidth;
 		} while (i < NBPG);
 	}
 
@@ -147,11 +177,32 @@ pmap_zero_page(paddr_t pa)
 void
 pmap_copy_page(paddr_t src, paddr_t dst)
 {
-	const long *sp;
-	long *dp;
+	const register_t *sp;
+	register_t *dp;
+	register_t msr;
 	size_t i;
-	u_int32_t msr;
 
+#if defined(PPC_MPC6XX)
+	{
+		/*
+		 * If we are copying to the destination page, we must clear
+		 * the EXEC-ness of this page since the page contents have
+		 * changed.
+		 */
+		struct vm_page *pg = PHYS_TO_VM_PAGE(dst);
+		KDASSERT(pg != NULL);
+		KDASSERT(LIST_EMPTY(&pg->mdpage.mdpg_pvoh));
+#ifdef PMAPCOUNTERS
+		if (pg->mdpage.mdpg_attrs & PTE_EXEC) {
+			pmap_evcnt_exec_uncached_copy_page.ev_count++;
+		}
+#endif
+		pg->mdpage.mdpg_attrs &= ~PTE_EXEC;
+	}
+#endif
+#ifdef PMAPCOUNTERS
+	pmap_evcnt_copied_pages.ev_count++;
+#endif
 #ifdef ALTIVEC
 	if (pmap_use_altivec) {
 		vcopypage(dst, src);
@@ -179,8 +230,8 @@ pmap_copy_page(paddr_t src, paddr_t dst)
 	 * Copy the page.  Don't use memcpy as we can't refer to the
 	 * kernel stack at this point.
 	 */
-	sp = (long *) src;
-	dp = (long *) dst;
+	sp = (const register_t *) src;
+	dp = (register_t *) dst;
 	for (i = 0; i < NBPG/sizeof(dp[0]); i += 8, dp += 8, sp += 8) {
 		dp[0] = sp[0]; dp[1] = sp[1]; dp[2] = sp[2]; dp[3] = sp[3];
 		dp[4] = sp[4]; dp[5] = sp[5]; dp[6] = sp[6]; dp[7] = sp[7];
@@ -196,7 +247,7 @@ void
 pmap_syncicache(paddr_t pa, psize_t len)
 {
 	const size_t linewidth = curcpu()->ci_ci.icache_line_size;
-	u_int32_t msr;
+	register_t msr;
 	size_t i;
 
 #ifdef PPC_MPC6XX
@@ -223,7 +274,7 @@ pmap_syncicache(paddr_t pa, psize_t len)
 	 */
 	i = 0;
 	do {
-		__asm ("dcbst %0,%1" :: "r"(pa), "r"(i)); i += linewidth;
+		__asm ("dcbst %0,%1" :: "b"(pa), "r"(i)); i += linewidth;
 	} while (i < len);
 
 	/*
@@ -236,7 +287,7 @@ pmap_syncicache(paddr_t pa, psize_t len)
 	 */
 	i = 0;
 	do {
-		__asm ("icbi %0,%1" :: "r"(pa), "r"(i)); i += linewidth;
+		__asm ("icbi %0,%1" :: "b"(pa), "r"(i)); i += linewidth;
 	} while (i < len);
 
 	/*
@@ -249,8 +300,8 @@ pmap_syncicache(paddr_t pa, psize_t len)
 boolean_t
 pmap_pageidlezero(paddr_t pa)
 {
-	u_int32_t msr;
-	u_int32_t *dp = (u_int32_t *) pa;
+	register_t msr;
+	register_t *dp = (register_t *) pa;
 	boolean_t rv = TRUE;
 	int i;
 
@@ -261,6 +312,9 @@ pmap_pageidlezero(paddr_t pa)
 				return FALSE;
 			*dp++ = 0;
 		}
+#ifdef PMAPCOUNTERS
+		pmap_evcnt_idlezeroed_pages.ev_count++;
+#endif
 		return TRUE;
 	}
 #endif
@@ -286,5 +340,9 @@ pmap_pageidlezero(paddr_t pa)
 	 * Restore relocation (MMU on).
 	 */
 	MTMSR(msr);
+#ifdef PMAPCOUNTERS
+	if (rv)
+		pmap_evcnt_idlezeroed_pages.ev_count++;
+#endif
 	return rv;
 }

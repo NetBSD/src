@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.29.4.1 2002/05/17 13:49:57 gehenna Exp $	*/
+/*	$NetBSD: machdep.c,v 1.29.4.2 2002/08/31 13:45:31 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -206,9 +206,8 @@ news68k_init()
 void
 cpu_startup()
 {
-	unsigned i;
 	caddr_t v;
-	int base, residual;
+	u_int i, base, residual;
 	vaddr_t minaddr, maxaddr;
 	vsize_t size;
 	char pbuf[9];
@@ -307,7 +306,7 @@ cpu_startup()
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
 	format_bytes(pbuf, sizeof(pbuf), bufpages * NBPG);
-	printf("using %d buffers containing %s of memory\n", nbuf, pbuf);
+	printf("using %u buffers containing %s of memory\n", nbuf, pbuf);
 
 	/*
 	 * Tell the VM system that the area before the text segment

@@ -1,4 +1,4 @@
-#	$NetBSD: MMEYE,v 1.14.2.2 2002/07/16 12:49:31 gehenna Exp $
+#	$NetBSD: MMEYE,v 1.14.2.3 2002/08/31 13:45:25 gehenna Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -40,6 +40,8 @@ options 	KTRACE		# system call tracing via ktrace(1)
 # Compatibility options
 options 	COMPAT_14	# NetBSD 1.4,
 options 	COMPAT_43	# and 4.3BSD
+options 	BSDDISKLABEL_EI	# endian independent disklabel support
+options 	COMPAT_MMEYE_OLDLABEL	# old mmeye's disklabel support
 
 # Executable format options
 options 	EXEC_COFF	# COFF executables

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.1.4.2 2002/07/14 17:46:30 gehenna Exp $	*/
+/*	$NetBSD: cpu.h,v 1.1.4.3 2002/08/31 13:44:42 gehenna Exp $	*/
 
 /*	$OpenBSD: cpu.h,v 1.20 2001/01/29 00:01:58 mickey Exp $	*/
 
@@ -70,12 +70,35 @@
 #define	HPPA_FTRS_W32B		0x00000008
 
 #ifndef _LOCORE
-/* types */
-enum hppa_cpu_type {
-	hpcx, hpcxs, hpcxt, hpcxta, hpcxl, hpcxl2, hpcxu, hpcxu2, hpcxw
+
+/*
+ * A CPU description.
+ */
+struct hppa_cpu_info { 
+
+	/* The official name of the chip. */
+	const char *hppa_cpu_info_chip_name;
+
+	/* The nickname for the chip. */
+	const char *hppa_cpu_info_chip_nickname;
+
+	/* The type and PA-RISC specification of the chip. */
+	const char *hppa_cpu_info_chip_type;
+	unsigned short hppa_cpu_info_pa_spec;
+#define HPPA_PA_SPEC_MAKE(major, minor, letter) \
+  (((major) << 8) | \
+   ((minor) << 4) | \
+   ((letter) == '\0' ? 0 : ((letter) + 0xa - 'a')))
+#define HPPA_PA_SPEC_MAJOR(x) (((x) >> 8) & 0xf)
+#define HPPA_PA_SPEC_MINOR(x) (((x) >> 4) & 0xf)
+#define HPPA_PA_SPEC_LETTER(x) \
+  (((x) & 0xf) == 0 ? '\0' : 'a' + ((x) & 0xf) - 0xa)
+
+	int (*desidhash) __P((void));
+	const u_int *itlbh, *dtlbh, *dtlbnah, *tlbdh;
+	int (*hptinit) __P((vaddr_t hpt, vsize_t hptsize));
 };
-extern enum hppa_cpu_type cpu_type;
-extern const char *cpu_typename;
+extern const struct hppa_cpu_info *hppa_cpu_info;
 #endif
 
 /*
@@ -97,6 +120,7 @@ extern const char *cpu_typename;
 #define	HPPA_PGALIAS	0x00100000
 #define	HPPA_PGAMASK	0xfff00000
 #define	HPPA_PGAOFF	0x000fffff
+#define	HPPA_SPAMASK	0xf0f0f000
 
 #define	HPPA_IOSPACE	0xf0000000
 #define	HPPA_IOBCAST	0xfffc0000
