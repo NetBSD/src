@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.39 2002/06/08 21:22:34 itojun Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.40 2002/06/08 21:28:18 itojun Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.39 2002/06/08 21:22:34 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.40 2002/06/08 21:28:18 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -534,7 +534,6 @@ nd6_ns_output(ifp, daddr6, taddr6, ln, dad)
  * Neighbor advertisement input handling.
  *
  * Based on RFC 2461
-	long time_second = time.tv_sec;
  * Based on RFC 2462 (duplicated address detection)
  *
  * the following items are not implemented yet:
