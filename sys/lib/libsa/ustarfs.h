@@ -1,4 +1,4 @@
-/*	$NetBSD: tfs.h,v 1.1 1998/09/22 00:35:15 ross Exp $	*/
+/*	$NetBSD: ustarfs.h,v 1.1 1998/09/24 05:23:34 ross Exp $	*/
 
 /* [Notice revision 2.2]
  * Copyright (c) 1997, 1998 Avalon Computer Systems, Inc.
@@ -34,9 +34,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-int	tfs_open __P((char *, struct open_file *));
-int	tfs_close __P((struct open_file *));
-int	tfs_read __P((struct open_file *, void *, size_t, size_t *));
-int	tfs_write __P((struct open_file *, void *, size_t, size_t *));
-off_t	tfs_seek __P((struct open_file *, off_t, int));
-int	tfs_stat __P((struct open_file *, struct stat *));
+int	ustarfs_open __P((char *, struct open_file *));
+int	ustarfs_close __P((struct open_file *));
+int	ustarfs_read __P((struct open_file *, void *, size_t, size_t *));
+int	ustarfs_write __P((struct open_file *, void *, size_t, size_t *));
+off_t	ustarfs_seek __P((struct open_file *, off_t, int));
+int	ustarfs_stat __P((struct open_file *, struct stat *));

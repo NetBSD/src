@@ -1,4 +1,4 @@
-/* $NetBSD: tfs.c,v 1.1 1998/09/22 00:35:15 ross Exp $ */
+/*	$NetBSD: ustarfs.c,v 1.1 1998/09/24 05:23:33 ross Exp $	*/
 
 /* [Notice revision 2.2]
  * Copyright (c) 1997, 1998 Avalon Computer Systems, Inc.
@@ -57,7 +57,7 @@
 
 #include <lib/libkern/libkern.h>
 #include "stand.h"
-#include "tfs.h"
+#include "ustarfs.h"
 
 #define	USTAR_NAME_BLOCK 512
 
@@ -92,11 +92,11 @@ typedef struct ust_active_struct {
 
 #define	BBSIZE	8192
 
-static int tfs_mode_offset = BBSIZE;
+static int ustarfs_mode_offset = BBSIZE;
 
-static int tfs_cylinder_read __P((struct open_file *, off_t));
+static int ustarfs_cylinder_read __P((struct open_file *, off_t));
 static int read512block __P((struct open_file *, off_t, char block[512]));
-static void tfs_sscanf __P((const char *, const char *, int *));
+static void ustarfs_sscanf __P((const char *, const char *, int *));
 static int convert __P((const char *, int, int));
 
 static int
@@ -121,7 +121,7 @@ convert(f, base, fw)
 }
 
 static void
-tfs_sscanf(s,f,xi)
+ustarfs_sscanf(s,f,xi)
 	const char *s,*f;
 	int *xi;
 {
@@ -129,7 +129,7 @@ tfs_sscanf(s,f,xi)
 }
 
 static int
-tfs_cylinder_read(f, seek2)
+ustarfs_cylinder_read(f, seek2)
 	struct open_file *f;
 	off_t seek2;
 {
@@ -167,7 +167,7 @@ tryagain:
 		return 0;
 	}
 	if (dienow++)
-		panic("tfs read512block");
+		panic("ustarfs read512block");
 	lastbase = ustf->uas_windowbase;
 	seek2 = ustf->uas_windowbase = offset - offset % sizeof ustf->uas_1cyl;
 	if(ustf->uas_volsize) {
@@ -183,7 +183,7 @@ tryagain:
 		}
 		seek2 %= ustf->uas_volsize;
 	}
-	e = tfs_cylinder_read(f, seek2);
+	e = ustarfs_cylinder_read(f, seek2);
 	if (e)
 		return e;
 	ustf->uas_init_window = 1;
@@ -191,7 +191,7 @@ tryagain:
 }
 
 int
-tfs_open(path, f)
+ustarfs_open(path, f)
 	char *path;
 	struct open_file *f;
 
@@ -207,7 +207,7 @@ tfs_open(path, f)
 	e = EINVAL;
 	f->f_fsdata = ustf = alloc(sizeof *ustf);
 	memset(ustf, 0, sizeof *ustf);
-	offset = tfs_mode_offset;
+	offset = ustarfs_mode_offset;
 	ustf->uas_fseek = 0;
 	for(;;) {
 		ustf->uas_filestart = offset;
@@ -219,16 +219,16 @@ tfs_open(path, f)
 		memcpy(&ustf->uas_active, block, sizeof ustf->uas_active);
 		if(strncmp(ustf->uas_active.ust_magic, "ustar", 5))
 			break;
-		e = ENOENT;	/* it must be an actual TFS */
+		e = ENOENT;	/* it must be an actual ustarfs */
 		ustf->uas_init_fs = 1;
 		/*
-		 * XXX - the right way to store FS metadata on tfs
+		 * XXX - the right way to store FS metadata on ustarfs
 		 * is to embed the data within a file. For now, we
 		 * will avoid complexity by hardwiring metadata for
 		 * a floppy.
 		 */
 		ustf->uas_volsize = 80 * 2 * 18 * 512;	/* XXX */
-		tfs_sscanf(ustf->uas_active.ust_size,"%12o",&filesize);
+		ustarfs_sscanf(ustf->uas_active.ust_size,"%12o",&filesize);
 		if(strncmp(ustf->uas_active.ust_name, path,
 		    sizeof ustf->uas_active.ust_name) == 0) {
 			ustf->uas_filesize = filesize;
@@ -248,7 +248,7 @@ tfs_open(path, f)
 }
 
 int
-tfs_write(f, start, size, resid)
+ustarfs_write(f, start, size, resid)
 	struct open_file *f;
 	void *start;
 	size_t size;
@@ -258,7 +258,7 @@ tfs_write(f, start, size, resid)
 }
 
 off_t
-tfs_seek(f, offs, whence)
+ustarfs_seek(f, offs, whence)
 	struct open_file *f;
 	off_t offs;
 	int whence;
@@ -283,7 +283,7 @@ tfs_seek(f, offs, whence)
 }
 
 int
-tfs_read(f, start, size, resid)
+ustarfs_read(f, start, size, resid)
 	struct open_file *f;
 	void *start;
 	size_t size;
@@ -330,7 +330,7 @@ tfs_read(f, start, size, resid)
 }
 
 int
-tfs_stat(f, sb)
+ustarfs_stat(f, sb)
 	struct open_file *f;
 	struct stat *sb;
 {
@@ -341,9 +341,9 @@ tfs_stat(f, sb)
 		return EINVAL;
 	ustf = f->f_fsdata;
 	memset(sb, 0, sizeof *sb);
-	tfs_sscanf(ustf->uas_active.ust_mode, "%8o", &mode);
-	tfs_sscanf(ustf->uas_active.ust_uid, "%8o", &uid);
-	tfs_sscanf(ustf->uas_active.ust_gid, "%8o", &gid);
+	ustarfs_sscanf(ustf->uas_active.ust_mode, "%8o", &mode);
+	ustarfs_sscanf(ustf->uas_active.ust_uid, "%8o", &uid);
+	ustarfs_sscanf(ustf->uas_active.ust_gid, "%8o", &gid);
 	sb->st_mode = mode;
 	sb->st_uid  = uid;
 	sb->st_gid  = gid;
@@ -352,7 +352,7 @@ tfs_stat(f, sb)
 }
 
 int
-tfs_close(f)
+ustarfs_close(f)
 	struct open_file *f;
 {
 	if (f == NULL || f->f_fsdata == NULL)
