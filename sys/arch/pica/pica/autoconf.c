@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.6 1997/01/31 01:58:44 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.7 1997/03/26 22:39:09 gwr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -87,13 +87,19 @@ struct devnametobdevmaj pica_nam2blk[] = {
  */
 configure()
 {
-	struct device *booted_device;
-	int booted_partition;
 
 	(void)splhigh();	/* To be really shure.. */
 	if(config_rootfound("mainbus", "mainbus") == NULL)
 		panic("no mainbus found");
 	(void)spl0();
+	cold = 0;
+}
+
+void
+cpu_rootconf()
+{
+	struct device *booted_device;
+	int booted_partition;
 
 	findroot(&booted_device, &booted_partition);
 
@@ -101,10 +107,6 @@ configure()
 	    booted_device ? booted_device->dv_xname : "<unknown>");
 
 	setroot(booted_device, booted_partition, pica_nam2blk);
-
-	swapconf();
-	dumpconf();
-	cold = 0;
 }
 
 u_long	bootdev;		/* should be dev_t, but not until 32 bits */

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.19 1997/03/26 15:49:31 leo Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.20 1997/03/26 22:38:56 gwr Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -65,8 +65,6 @@ struct devnametobdevmaj atari_nam2blk[] = {
 void
 configure()
 {
-	struct device *booted_device;
-	int booted_partition;
 	extern int atari_realconfig;
 	
 	atari_realconfig = 1;
@@ -74,13 +72,17 @@ configure()
 	if (config_rootfound("mainbus", "mainbus") == NULL)
 		panic("no mainbus found");
 
+	cold = 0;
+}
+
+void
+cpu_rootconf()
+{
+	struct device *booted_device;
+	int booted_partition;
+
 	findroot(&booted_device, &booted_partition);
 	setroot(booted_device, booted_partition, atari_nam2blk);
-	swapconf();
-	dumpconf();
-	if( dumplo < 0)
-		dumplo = 0;
-	cold = 0;
 }
 
 /*ARGSUSED*/

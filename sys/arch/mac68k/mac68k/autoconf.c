@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.40 1997/02/14 06:13:50 scottr Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.41 1997/03/26 22:39:03 gwr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -102,15 +102,19 @@ configure()
 	if (config_rootfound("mainbus", "mainbus") == NULL)
 		panic("No mainbus found!");
 
+	cold = 0;
+}
+
+void
+cpu_rootconf()
+{
+
 	findbootdev();
 
 	printf("boot device: %s\n",
 	    booted_device ? booted_device->dv_xname : "<unknown>");
 
 	setroot(booted_device, booted_partition, mac68k_nam2blk);
-	swapconf();
-	dumpconf();
-	cold = 0;
 }
 
 /*
