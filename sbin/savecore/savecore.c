@@ -1,4 +1,4 @@
-/*	$NetBSD: savecore.c,v 1.27 1996/06/23 20:30:39 leo Exp $	*/
+/*	$NetBSD: savecore.c,v 1.28 1996/10/01 18:21:48 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1992, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)savecore.c	8.3 (Berkeley) 1/2/94";
 #else
-static char rcsid[] = "$NetBSD: savecore.c,v 1.27 1996/06/23 20:30:39 leo Exp $";
+static char rcsid[] = "$NetBSD: savecore.c,v 1.28 1996/10/01 18:21:48 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -115,7 +115,7 @@ int	dumpfd;				/* read/write descriptor on block dev */
 kvm_t	*kd_dump;			/* kvm descriptor on block dev	*/
 time_t	now;				/* current date */
 char	panic_mesg[1024];
-int	panicstr;
+long	panicstr;
 char	vers[1024];
 
 int	clear, compress, force, verbose;	/* flags */
@@ -299,7 +299,7 @@ void
 check_kmem()
 {
 	register char	*cp;
-	register int	panicloc;
+	register long	panicloc;
 	char core_vers[1024];
 
 	(void)kvm_read(kd_dump, dump_nl[X_VERSION].n_value, core_vers,
