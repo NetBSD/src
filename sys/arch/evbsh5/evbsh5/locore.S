@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.13 2003/03/13 13:44:20 scw Exp $	*/
+/*	$NetBSD: locore.S,v 1.14 2003/08/12 21:48:07 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -109,6 +109,7 @@ ASENTRY_NOPROFILE(text)
 /*
  * We are now running mapped in KSEG0, with the MMU enabled.
  */
+	.type	Lmapped_start,@function
 Lmapped_start:
 	LEA(_C_LABEL(edata), r0)
 	LEA(_C_LABEL(end), r1)
