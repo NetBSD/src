@@ -42,7 +42,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)tsort.c	5.3 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: tsort.c,v 1.5 1993/12/01 05:34:16 cgd Exp $";
+static char rcsid[] = "$Id: tsort.c,v 1.6 1993/12/01 22:31:06 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -113,7 +113,7 @@ main(argc, argv)
 
 	if (argc < 2)
 		fp = stdin;
-	else if (argc == 2) {
+	else if (argc > 2) {
 		(void)fprintf(stderr, "usage: tsort [ inputfile ]\n");
 		exit(1);
 	} else if (!(fp = fopen(argv[1], "r"))) {
