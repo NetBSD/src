@@ -36,7 +36,7 @@
 #include <sys/wait.h>
 #endif
 
-RCSID("$Id: kadm_conn.c,v 1.1.1.1 2000/08/02 19:58:51 assar Exp $");
+RCSID("$Id: kadm_conn.c,v 1.2 2000/08/06 06:48:50 thorpej Exp $");
 
 struct kadm_port {
     char *port;
@@ -124,7 +124,7 @@ spawn_child(krb5_context context, int *socks, int num_socks, int this_sock)
 {
     int e, i;
     struct sockaddr sa;
-    size_t sa_size;
+    socklen_t sa_size;
     int s;
     pid_t pid;
     krb5_address addr;
