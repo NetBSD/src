@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.1.1.1 1995/03/26 07:12:13 leo Exp $	*/
+/*	$NetBSD: dma.c,v 1.2 1995/04/22 22:18:17 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -42,15 +42,12 @@
  *
  * The file contains the following entry points:
  *
- *	dmagrab:	ensure exclusive access to the DMA circuitry
- *	dmafree:	free exclusive access to the DMA circuitry
+ *	st_dmagrab:	ensure exclusive access to the DMA circuitry
+ *	st_dmafree:	free exclusive access to the DMA circuitry
+ *	st_dmawanted:	somebody is queued waiting for DMA-access
  *	dmaint:		DMA interrupt routine, switches to the current driver
- *	dmaaddr:	specify 24 bit RAM address
- *	dmardat:	set dma_mode and read word from dma_data
- *	dmawdat:	set dma_mode and write word to dma_data
- *	dmacomm:	like dmawdat, but first toggle WRBIT
- *
- * FIXME: 	The delay-loops should be done otherwise!
+ *	st_dmaaddr:	specify 24 bit RAM address
+ *	st_dmacomm:	program DMA, flush FIFO first
  */
 
 #include <sys/param.h>
@@ -62,8 +59,8 @@
 
 #define	NDMA_DEV	10	/* Max 2 floppy's, 8 hard-disks		*/
 typedef struct {
-	int	(*call_func)();
-	int	(*int_func)();
+	void	(*call_func)();
+	void	(*int_func)();
 	void	*softc;
 } DMA_DISP;
 
@@ -71,16 +68,17 @@ static	DMA_DISP  dispatch[NDMA_DEV];	/* dispatch table		     */
 static	int	  dma_free = 0;		/* next free entry in dispatch table */
 static	int	  dma_curr = 0;		/* current entry in dispatch table   */
 static	int	  dmalock = 0;		/* if != 0, dma is not free	     */
-static	int	  (*xxxint)();		/* current interrupt function	     */
+static	void	  (*xxxint)();		/* current interrupt function	     */
 static	void	  *dma_softc;		/* Device currently owning DMA-intr  */
 static	int	  sched_soft = 0;	/* Software interrupt scheduled	     */
 
 static	void	cdmasoft __P((void));
 
-dmagrab(int_func, call_func, softc)
-int 	(*int_func)();
-int 	(*call_func)();
+int st_dmagrab(int_func, call_func, softc, rcaller)
+void 	(*int_func)();
+void 	(*call_func)();
 void	*softc;
+int	rcaller;
 {
 	int		sps;
 	DMA_DISP	*disp;
@@ -97,17 +95,26 @@ void	*softc;
 		disp->int_func  = int_func;
 		disp->softc     = softc;
 		splx(sps);
-		return;
+		return(0);
 	}
 	dmalock++;
 	xxxint    = int_func;	/* Grab DMA interrupts			*/
 	dma_softc = softc;	/* Identify device which got DMA	*/
+	if(rcaller) {
+		/*
+		 * Just return to caller immediately without going
+		 * through 'call_func' first.
+		 */
+		return(1);
+	}
+
 	(*call_func)(softc);	/* Call followup function		*/
 	splx(sps);
-	
+	return(0);
 }
 
-dmafree()
+void
+st_dmafree()
 {
 	int		sps;
 	DMA_DISP	*disp;
@@ -127,6 +134,12 @@ dmafree()
 	dmalock = 0;
 	xxxint = NULL;		/* no more DMA interrupts */
 	splx(sps);
+}
+
+int
+st_dmawanted()
+{
+	return(dispatch[dma_curr].call_func != NULL);
 }
 
 cdmaint(sr)
@@ -151,7 +164,12 @@ static void cdmasoft()
 	(*xxxint)(dma_softc);
 }
 
-dmaaddr(address)
+/*
+ * Setup address for DMA-transfer.
+ * Note: The order _is_ important!
+ */
+void
+st_dmaaddr(address)
 caddr_t	address;
 {
 	register u_long ad = (u_long)address;
@@ -161,42 +179,16 @@ caddr_t	address;
 	DMA->dma_addr[AD_HIGH] = (ad >>16) & 0xff;
 }
 
-int
-dmardat(mode, delay)
-int	mode, delay;
-{
-	while(--delay >= 0);
-	DMA->dma_mode = mode;
-	while(--delay >= 0);
-	return(DMA->dma_data);
-}
-
-dmawdat(mode, data, delay)
-int	mode, data, delay;
+/*
+ * Program the DMA-controller to transfer 'nblk' blocks of 512 bytes.
+ * The DMA_WRBIT trick flushes the FIFO before doing DMA.
+ */
+void
+st_dmacomm(mode, data)
+int	mode, data;
 {
 	DMA->dma_mode = mode;
-	while(--delay >= 0);
+	DMA->dma_mode = mode ^ DMA_WRBIT;
+	DMA->dma_mode = mode;
 	DMA->dma_data = data;
-	while(--delay >= 0);
-}
-
-dmacomm(mode, data, delay)
-int	mode, data, delay;
-{
-	DMA->dma_mode = mode;
-	DMA->dma_mode = mode ^ WRBIT;
-	DMA->dma_mode = mode;
-	while(--delay >= 0);
-	DMA->dma_data = data;
-	while(--delay >= 0);
-}
-
-int
-dmastat(mode, delay)
-int	mode, delay;
-{
-	while(--delay >= 0);
-	DMA->dma_mode = mode;
-	while(--delay >= 0);
-	return(DMA->dma_stat);
 }
