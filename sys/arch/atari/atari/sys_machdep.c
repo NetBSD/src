@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.5 1996/02/22 10:10:58 leo Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.6 1996/08/23 11:12:51 leo Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
@@ -128,12 +128,12 @@ cachectl(req, addr, len)
 	int error = 0;
 #ifdef M68040
 	if (cpu040) {
-		register int inc = 0;
-		int pa = 0, doall = 0;
-		caddr_t end;
+		register int		inc = 0;
+			 int		pa = 0, doall = 0;
+			 caddr_t	end = 0;
 
 		if (addr == 0 ||
-		    (req & ~CC_EXTPURGE) != CC_PURGE && len > 2*NBPG)
+		    ((req & ~CC_EXTPURGE) != CC_PURGE && len > 2*NBPG))
 			doall = 1;
 		if (!doall) {
 			end = addr + len;
@@ -255,7 +255,7 @@ dma_cachectl(addr, len)
 			 * Convert to physical address.
 			 */
 			if (pa == 0 || ((int)addr & PGOFSET) == 0) {
-				pa = kvtop ((vm_offset_t)addr);
+				pa = kvtop ((caddr_t)addr);
 			}
 			if (inc == 16) {
 				DCFL(pa);
