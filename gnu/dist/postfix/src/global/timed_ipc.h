@@ -1,3 +1,5 @@
+/*	$NetBSD: timed_ipc.h,v 1.1.1.2 2004/05/31 00:24:35 heas Exp $	*/
+
 #ifndef _TIMED_IPC_H_INCLUDED_
 #define _TIMED_IPC_H_INCLUDED_
 

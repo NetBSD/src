@@ -1,3 +1,5 @@
+/*	$NetBSD: rand_sleep.c,v 1.1.1.5 2004/05/31 00:25:00 heas Exp $	*/
+
 /*++
 /* NAME
 /*	rand_sleep 3

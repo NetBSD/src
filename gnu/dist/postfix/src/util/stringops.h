@@ -1,3 +1,5 @@
+/*	$NetBSD: stringops.h,v 1.1.1.4 2004/05/31 00:25:01 heas Exp $	*/
+
 #ifndef _STRINGOPS_H_INCLUDED_
 #define _STRINGOPS_H_INCLUDED_
 

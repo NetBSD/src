@@ -1,3 +1,5 @@
+/*	$NetBSD: qmgr_user.h,v 1.1.1.2 2004/05/31 00:24:34 heas Exp $	*/
+
 #ifndef _QMGR_USER_H_INCLUDED_
 #define _QMGR_USER_H_INCLUDED_
 

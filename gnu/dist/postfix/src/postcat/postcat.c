@@ -1,3 +1,5 @@
+/*	$NetBSD: postcat.c,v 1.1.1.5 2004/05/31 00:24:41 heas Exp $	*/
+
 /*++
 /* NAME
 /*	postcat 1

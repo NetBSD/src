@@ -1,3 +1,5 @@
+/*	$NetBSD: trivial-rewrite.c,v 1.1.1.7 2004/05/31 00:24:51 heas Exp $	*/
+
 /*++
 /* NAME
 /*	trivial-rewrite 8

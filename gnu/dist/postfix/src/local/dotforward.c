@@ -1,3 +1,5 @@
+/*	$NetBSD: dotforward.c,v 1.1.1.3 2004/05/31 00:24:37 heas Exp $	*/
+
 /*++
 /* NAME
 /*	dotforward 3
