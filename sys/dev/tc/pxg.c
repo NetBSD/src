@@ -1,4 +1,4 @@
-/* 	$NetBSD: pxg.c,v 1.11 2002/09/27 20:41:57 thorpej Exp $	*/
+/* 	$NetBSD: pxg.c,v 1.12 2002/10/01 01:12:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxg.c,v 1.11 2002/09/27 20:41:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxg.c,v 1.12 2002/10/01 01:12:37 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,9 +104,8 @@ struct pxg_softc {
 	struct	stic_info *pxg_si;
 };
 
-const struct cfattach pxg_ca = {
-	sizeof(struct pxg_softc), pxg_match, pxg_attach
-};
+CFATTACH_DECL(pxg, sizeof(struct pxg_softc),
+    pxg_match, pxg_attach, NULL, NULL)
 
 static const char *pxg_types[] = {
 	"PMAG-DA ",
