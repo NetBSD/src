@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.5 2002/06/02 14:44:45 drochner Exp $	*/
+/*	$NetBSD: bus.c,v 1.6 2002/09/25 22:21:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Matthew Fredette.
@@ -128,7 +128,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/map.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.69 2002/09/19 12:00:11 wiz Exp $ */
+/*	$NetBSD: apm.c,v 1.70 2002/09/25 22:21:09 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.69 2002/09/19 12:00:11 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.70 2002/09/25 22:21:09 thorpej Exp $");
 
 #include "apm.h"
 #if NAPM > 1
@@ -59,7 +59,6 @@ __KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.69 2002/09/19 12:00:11 wiz Exp $");
 #include <sys/systm.h>
 #include <sys/signalvar.h>
 #include <sys/kernel.h>
-#include <sys/map.h>
 #include <sys/proc.h>
 #include <sys/kthread.h>
 #include <sys/lock.h>

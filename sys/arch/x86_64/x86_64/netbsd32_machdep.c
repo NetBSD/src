@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.11 2002/07/14 12:20:46 fvdl Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.12 2002/09/25 22:21:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -48,7 +48,6 @@
 #include <sys/mount.h>
 #include <sys/buf.h>
 #include <sys/vnode.h>
-#include <sys/map.h>
 
 #include <machine/fpu.h>
 #include <machine/frame.h>

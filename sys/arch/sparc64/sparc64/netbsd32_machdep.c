@@ -44,7 +44,6 @@
 #include <sys/mount.h>
 #include <sys/buf.h>
 #include <sys/vnode.h>
-#include <sys/map.h>
 #include <sys/select.h>
 #include <sys/ioctl.h>
 

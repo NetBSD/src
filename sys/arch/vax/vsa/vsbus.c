@@ -1,4 +1,4 @@
-/*	$NetBSD: vsbus.c,v 1.33 2002/06/01 23:50:56 lukem Exp $ */
+/*	$NetBSD: vsbus.c,v 1.34 2002/09/25 22:21:30 thorpej Exp $ */
 /*
  * Copyright (c) 1996, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -40,7 +40,6 @@
 #include <sys/ioctl.h>
 #include <sys/proc.h>
 #include <sys/user.h>
-#include <sys/map.h>
 #include <sys/device.h>
 #include <sys/dkstat.h>
 #include <sys/disklabel.h>

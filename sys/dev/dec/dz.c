@@ -1,4 +1,4 @@
-/*	$NetBSD: dz.c,v 1.7 2002/09/24 06:19:11 ad Exp $	*/
+/*	$NetBSD: dz.c,v 1.8 2002/09/25 22:21:36 thorpej Exp $	*/
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dz.c,v 1.7 2002/09/24 06:19:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dz.c,v 1.8 2002/09/25 22:21:36 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -47,7 +47,6 @@ __KERNEL_RCSID(0, "$NetBSD: dz.c,v 1.7 2002/09/24 06:19:11 ad Exp $");
 #include <sys/ioctl.h>
 #include <sys/tty.h>
 #include <sys/proc.h>
-#include <sys/map.h>
 #include <sys/buf.h>
 #include <sys/conf.h>
 #include <sys/file.h>
