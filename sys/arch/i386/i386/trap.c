@@ -34,11 +34,11 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)trap.c	7.4 (Berkeley) 5/13/91
- *	$Id: trap.c,v 1.8 1993/06/18 02:03:45 brezak Exp $
+ *	$Id: trap.c,v 1.9 1993/06/27 05:54:40 andrew Exp $
  */
 
 /*
- * 386 Trap and System call handleing
+ * 386 Trap and System call handling
  */
 
 #include "npx.h"
