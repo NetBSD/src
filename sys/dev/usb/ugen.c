@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.6 1998/12/29 03:13:10 augustss Exp $	*/
+/*	$NetBSD: ugen.c,v 1.7 1998/12/29 15:33:10 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -132,16 +132,18 @@ USB_ATTACH(ugen)
 	USB_ATTACH_START(ugen, sc, uaa);
 	char devinfo[1024];
 	usbd_status r;
+	int conf;
 	
 	usbd_devinfo(uaa->device, 0, devinfo);
 	USB_ATTACH_SETUP;
 	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfo);
 
 	sc->sc_udev = uaa->device;
-	r = ugen_set_config(sc, 1); /* XXX 1 */
+	conf = 1;		/* XXX should not hard code 1 */
+	r = ugen_set_config(sc, conf);
 	if (r != USBD_NORMAL_COMPLETION) {
-		printf("%s: setting configuration 1 failed\n", 
-		       USBDEVNAME(sc->sc_dev));
+		printf("%s: setting configuration %d failed\n", 
+		       USBDEVNAME(sc->sc_dev), conf);
 		sc->sc_disconnected = 1;
 		USB_ATTACH_ERROR_RETURN;
 	}
@@ -163,9 +165,12 @@ ugen_set_config(sc, configno)
 
 	DPRINTFN(1,("ugen_set_config: %s to configno %d, sc=%p\n",
 		    USBDEVNAME(sc->sc_dev), configno, sc));
-	r = usbd_set_config_no(dev, configno, 0);
-	if (r != USBD_NORMAL_COMPLETION)
-		return (r);
+	if (usbd_get_config_descriptor(dev)->bConfigurationValue != configno) {
+		/* Avoid setting the current value. */
+		r = usbd_set_config_no(dev, configno, 0);
+		if (r != USBD_NORMAL_COMPLETION)
+			return (r);
+	}
 
 	r = usbd_interface_count(dev, &niface);
 	if (r != USBD_NORMAL_COMPLETION)
