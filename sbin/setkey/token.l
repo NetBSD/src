@@ -1,5 +1,5 @@
-/*	$NetBSD: token.l,v 1.8 2003/05/22 04:01:49 itojun Exp $	*/
-/*	$KAME: token.l,v 1.34 2001/09/25 14:15:24 sakane Exp $	*/
+/*	$NetBSD: token.l,v 1.9 2003/07/01 07:20:14 itojun Exp $	*/
+/*	$KAME: token.l,v 1.41 2003/06/27 06:02:07 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
@@ -104,7 +104,7 @@ ipaddrmask	{slash}{digit}{1,3}
 name		{letter}(({letter}|{digit}|{hyphen})*({letter}|{digit}))*
 hostname	{name}(({dot}{name})+{dot}?)?
 
-%s S_PL
+%s S_PL S_AUTHALG S_ENCALG
 
 %%
 
@@ -134,6 +134,8 @@ spdflush	{ return(SPDFLUSH); }
 
 			yylval.val.len = strlen(yytext);
 			yylval.val.buf = strdup(yytext);
+			if (!yylval.val.buf)
+				yyfatal("insufficient memory");
 
 			return(PL_REQUESTS);
 		}
@@ -143,6 +145,8 @@ spdflush	{ return(SPDFLUSH); }
 {hyphen}[n46][n46]*	{
 			yylval.val.len = strlen(yytext);
 			yylval.val.buf = strdup(yytext);
+			if (!yylval.val.buf)
+				yyfatal("insufficient memory");
 			return(F_AIFLAGS);
 		}
 
@@ -154,27 +158,28 @@ esp-old		{ yylval.num = 1; return(PR_ESP); }
 ipcomp		{ yylval.num = 0; return(PR_IPCOMP); }
 
 	/* authentication alogorithm */
-{hyphen}A	{ return(F_AUTH); }
-hmac-md5	{ yylval.num = SADB_AALG_MD5HMAC; return(ALG_AUTH); }
-hmac-sha1	{ yylval.num = SADB_AALG_SHA1HMAC; return(ALG_AUTH); }
-keyed-md5	{ yylval.num = SADB_X_AALG_MD5; return(ALG_AUTH); }
-keyed-sha1	{ yylval.num = SADB_X_AALG_SHA; return(ALG_AUTH); }
-hmac-sha2-256	{ yylval.num = SADB_X_AALG_SHA2_256; return(ALG_AUTH); }
-hmac-sha2-384	{ yylval.num = SADB_X_AALG_SHA2_384; return(ALG_AUTH); }
-hmac-sha2-512	{ yylval.num = SADB_X_AALG_SHA2_512; return(ALG_AUTH); }
-null		{ yylval.num = SADB_X_AALG_NULL; return(ALG_AUTH); }
+{hyphen}A	{ BEGIN S_AUTHALG; return(F_AUTH); }
+<S_AUTHALG>hmac-md5	{ yylval.num = SADB_AALG_MD5HMAC; BEGIN INITIAL; return(ALG_AUTH); }
+<S_AUTHALG>hmac-sha1	{ yylval.num = SADB_AALG_SHA1HMAC; BEGIN INITIAL; return(ALG_AUTH); }
+<S_AUTHALG>keyed-md5	{ yylval.num = SADB_X_AALG_MD5; BEGIN INITIAL; return(ALG_AUTH); }
+<S_AUTHALG>keyed-sha1	{ yylval.num = SADB_X_AALG_SHA; BEGIN INITIAL; return(ALG_AUTH); }
+<S_AUTHALG>hmac-sha2-256 { yylval.num = SADB_X_AALG_SHA2_256; BEGIN INITIAL; return(ALG_AUTH); }
+<S_AUTHALG>hmac-sha2-384 { yylval.num = SADB_X_AALG_SHA2_384; BEGIN INITIAL; return(ALG_AUTH); }
+<S_AUTHALG>hmac-sha2-512 { yylval.num = SADB_X_AALG_SHA2_512; BEGIN INITIAL; return(ALG_AUTH); }
+<S_AUTHALG>null { yylval.num = SADB_X_AALG_NULL; BEGIN INITIAL; return(ALG_AUTH_NOKEY); }
 
 	/* encryption alogorithm */
-{hyphen}E	{ return(F_ENC); }
-des-cbc		{ yylval.num = SADB_EALG_DESCBC; return(ALG_ENC); }
-3des-cbc	{ yylval.num = SADB_EALG_3DESCBC; return(ALG_ENC); }
-simple		{ yylval.num = SADB_EALG_NULL; return(ALG_ENC); }
-blowfish-cbc	{ yylval.num = SADB_X_EALG_BLOWFISHCBC; return(ALG_ENC); }
-cast128-cbc	{ yylval.num = SADB_X_EALG_CAST128CBC; return(ALG_ENC); }
-des-deriv	{ yylval.num = SADB_EALG_DESCBC; return(ALG_ENC_DESDERIV); }
-des-32iv	{ yylval.num = SADB_EALG_DESCBC; return(ALG_ENC_DES32IV); }
-twofish-cbc	{ yylval.num = SADB_X_EALG_TWOFISHCBC; return(ALG_ENC); }
-rijndael-cbc	{ yylval.num = SADB_X_EALG_RIJNDAELCBC; return(ALG_ENC); }
+{hyphen}E	{ BEGIN S_ENCALG; return(F_ENC); }
+<S_ENCALG>des-cbc	{ yylval.num = SADB_EALG_DESCBC; BEGIN INITIAL; return(ALG_ENC); }
+<S_ENCALG>3des-cbc	{ yylval.num = SADB_EALG_3DESCBC; BEGIN INITIAL; return(ALG_ENC); }
+<S_ENCALG>null		{ yylval.num = SADB_EALG_NULL; BEGIN INITIAL; return(ALG_ENC_NOKEY); }
+<S_ENCALG>simple	{ yylval.num = SADB_EALG_NULL; BEGIN INITIAL; return(ALG_ENC_OLD); }
+<S_ENCALG>blowfish-cbc	{ yylval.num = SADB_X_EALG_BLOWFISHCBC; BEGIN INITIAL; return(ALG_ENC); }
+<S_ENCALG>cast128-cbc	{ yylval.num = SADB_X_EALG_CAST128CBC; BEGIN INITIAL; return(ALG_ENC); }
+<S_ENCALG>des-deriv	{ yylval.num = SADB_EALG_DESCBC; BEGIN INITIAL; return(ALG_ENC_DESDERIV); }
+<S_ENCALG>des-32iv	{ yylval.num = SADB_EALG_DESCBC; BEGIN INITIAL; return(ALG_ENC_DES32IV); }
+<S_ENCALG>twofish-cbc	{ yylval.num = SADB_X_EALG_TWOFISHCBC; BEGIN INITIAL; return(ALG_ENC); }
+<S_ENCALG>rijndael-cbc	{ yylval.num = SADB_X_EALG_RIJNDAELCBC; BEGIN INITIAL; return(ALG_ENC); }
 
 	/* compression algorithms */
 {hyphen}C	{ return(F_COMP); }
@@ -219,6 +224,8 @@ any		{ return(ANY); }
 
 {hexstring}	{
 			yylval.val.buf = strdup(yytext + 2);
+			if (!yylval.val.buf)
+				yyfatal("insufficient memory");
 			yylval.val.len = strlen(yylval.val.buf);
 
 			return(HEXSTRING);
@@ -231,6 +238,8 @@ any		{ return(ANY); }
 			yytext++;
 			yylval.val.len = yyleng - 2;
 			yylval.val.buf = strdup(yytext);
+			if (!yylval.val.buf)
+				yyfatal("insufficient memory");
 
 			return(QUOTEDSTRING);
 		}
@@ -238,6 +247,8 @@ any		{ return(ANY); }
 [A-Za-z0-9:][A-Za-z0-9:%\.-]* {
 			yylval.val.len = yyleng;
 			yylval.val.buf = strdup(yytext);
+			if (!yylval.val.buf)
+				yyfatal("insufficient memory");
 			return(STRING);
 		}
 

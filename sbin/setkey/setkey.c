@@ -1,5 +1,5 @@
-/*	$NetBSD: setkey.c,v 1.6 2003/04/15 07:32:06 itojun Exp $	*/
-/*	$KAME: setkey.c,v 1.25 2001/08/17 06:33:58 itojun Exp $	*/
+/*	$NetBSD: setkey.c,v 1.7 2003/07/01 07:20:14 itojun Exp $	*/
+/*	$KAME: setkey.c,v 1.28 2003/06/27 07:15:45 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
@@ -276,7 +276,7 @@ promisc()
 		}
 		/* adjust base pointer for promisc mode */
 		if (base->sadb_msg_type == SADB_X_PROMISC) {
-			if (sizeof(*base) < l)
+			if ((ssize_t)sizeof(*base) < l)
 				base++;
 			else
 				base = NULL;
@@ -314,6 +314,18 @@ again:
 	if (f_verbose) {
 		kdebug_sadb((struct sadb_msg *)buf);
 		printf("\n");
+	}
+	if (f_hexdump) {
+		int i;
+		for (i = 0; i < len; i++) {
+			if (i % 16 == 0)
+				printf("%08x: ", i);
+			printf("%02x ", buf[i] & 0xff);
+			if (i % 16 == 15)
+				printf("\n");
+		}
+		if (len % 16)
+			printf("\n");
 	}
 
 	if ((l = send(so, buf, len, 0)) < 0) {

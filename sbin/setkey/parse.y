@@ -1,5 +1,5 @@
-/*	$NetBSD: parse.y,v 1.9 2002/12/06 02:20:43 thorpej Exp $	*/
-/*	$KAME: parse.y,v 1.69 2002/05/14 11:16:10 itojun Exp $	*/
+/*	$NetBSD: parse.y,v 1.10 2003/07/01 07:20:12 itojun Exp $	*/
+/*	$KAME: parse.y,v 1.80 2003/06/27 07:15:45 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
@@ -97,7 +97,9 @@ extern void yyerror __P((const char *));
 %token F_PROTOCOL F_AUTH F_ENC F_REPLAY F_COMP F_RAWCPI
 %token F_MODE MODE F_REQID
 %token F_EXT EXTENSION NOCYCLICSEQ
-%token ALG_AUTH ALG_ENC ALG_ENC_DESDERIV ALG_ENC_DES32IV ALG_COMP
+%token ALG_AUTH ALG_AUTH_NOKEY
+%token ALG_ENC ALG_ENC_NOKEY ALG_ENC_DESDERIV ALG_ENC_DES32IV ALG_ENC_OLD
+%token ALG_COMP
 %token F_LIFETIME_HARD F_LIFETIME_SOFT
 %token DECSTRING QUOTEDSTRING HEXSTRING STRING ANY
 	/* SPD management */
@@ -106,7 +108,9 @@ extern void yyerror __P((const char *));
 %token F_AIFLAGS
 
 %type <num> prefix protocol_spec upper_spec
-%type <num> ALG_AUTH ALG_ENC ALG_ENC_DESDERIV ALG_ENC_DES32IV ALG_COMP
+%type <num> ALG_ENC ALG_ENC_DESDERIV ALG_ENC_DES32IV ALG_ENC_OLD ALG_ENC_NOKEY
+%type <num> ALG_AUTH ALG_AUTH_NOKEY
+%type <num> ALG_COMP
 %type <num> PR_ESP PR_AH PR_IPCOMP
 %type <num> EXTENSION MODE
 %type <ulnum> DECSTRING
@@ -164,7 +168,7 @@ delete_command
 				return -1;
 			}
 			if (p_mode != IPSEC_MODE_ANY)
-				yyerror("WARNING: mode is obsoleted.");
+				yyerror("WARNING: mode is obsolete");
 
 			status = setkeymsg_addr(SADB_DELETE, $5, $3, $4, 0);
 			if (status < 0)
@@ -191,7 +195,7 @@ get_command
 			int status;
 
 			if (p_mode != IPSEC_MODE_ANY)
-				yyerror("WARNING: mode is obsoleted.");
+				yyerror("WARNING: mode is obsolete");
 
 			status = setkeymsg_addr(SADB_GET, $5, $3, $4, 0);
 			if (status < 0)
@@ -275,12 +279,12 @@ algorithm_spec
 	;
 
 esp_spec
-	:	F_ENC enc_alg enc_key F_AUTH auth_alg auth_key
-	|	F_ENC enc_alg enc_key
+	:	F_ENC enc_alg F_AUTH auth_alg
+	|	F_ENC enc_alg
 	;
 
 ah_spec
-	:	F_AUTH auth_alg auth_key
+	:	F_AUTH auth_alg
 	;
 
 ipcomp_spec
@@ -304,14 +308,43 @@ ipcomp_spec
 	;
 
 enc_alg
-	:	ALG_ENC {
+	:	ALG_ENC_NOKEY {
 			if ($1 < 0) {
 				yyerror("unsupported algorithm");
 				return -1;
 			}
 			p_alg_enc = $1;
+
+			p_key_enc_len = 0;
+			p_key_enc = NULL;
 		}
-	|	ALG_ENC_DESDERIV
+	|	ALG_ENC key_string {
+			if ($1 < 0) {
+				yyerror("unsupported algorithm");
+				return -1;
+			}
+			p_alg_enc = $1;
+
+			p_key_enc_len = $2.len;
+			p_key_enc = $2.buf;
+			if (ipsec_check_keylen(SADB_EXT_SUPPORTED_ENCRYPT,
+			    p_alg_enc, PFKEY_UNUNIT64(p_key_enc_len)) < 0) {
+				yyerror(ipsec_strerror());
+				return -1;
+			}
+		}
+	|	ALG_ENC_OLD {
+			if ($1 < 0) {
+				yyerror("unsupported algorithm");
+				return -1;
+			}
+			yyerror("WARNING: obsolete algorithm");
+			p_alg_enc = $1;
+
+			p_key_enc_len = 0;
+			p_key_enc = NULL;
+		}
+	|	ALG_ENC_DESDERIV key_string
 		{
 			if ($1 < 0) {
 				yyerror("unsupported algorithm");
@@ -319,12 +352,20 @@ enc_alg
 			}
 			p_alg_enc = $1;
 			if (p_ext & SADB_X_EXT_OLD) {
-				yyerror("algorithm mismatched.");
+				yyerror("algorithm mismatched");
 				return -1;
 			}
 			p_ext |= SADB_X_EXT_DERIV;
+
+			p_key_enc_len = $2.len;
+			p_key_enc = $2.buf;
+			if (ipsec_check_keylen(SADB_EXT_SUPPORTED_ENCRYPT,
+			    p_alg_enc, PFKEY_UNUNIT64(p_key_enc_len)) < 0) {
+				yyerror(ipsec_strerror());
+				return -1;
+			}
 		}
-	|	ALG_ENC_DES32IV
+	|	ALG_ENC_DES32IV key_string
 		{
 			if ($1 < 0) {
 				yyerror("unsupported algorithm");
@@ -332,29 +373,15 @@ enc_alg
 			}
 			p_alg_enc = $1;
 			if (!(p_ext & SADB_X_EXT_OLD)) {
-				yyerror("algorithm mismatched.");
+				yyerror("algorithm mismatched");
 				return -1;
 			}
 			p_ext |= SADB_X_EXT_IV4B;
-		}
-	;
 
-enc_key
-	:	/*NOTHING*/
-		{
-			if (p_alg_enc != SADB_EALG_NULL) {
-				yyerror("no key found.");
-				return -1;
-			}
-		}
-	|	key_string
-		{
-			p_key_enc_len = $1.len;
-			p_key_enc = $1.buf;
-
+			p_key_enc_len = $2.len;
+			p_key_enc = $2.buf;
 			if (ipsec_check_keylen(SADB_EXT_SUPPORTED_ENCRYPT,
-					p_alg_enc,
-					PFKEY_UNUNIT64(p_key_enc_len)) < 0) {
+			    p_alg_enc, PFKEY_UNUNIT64(p_key_enc_len)) < 0) {
 				yyerror(ipsec_strerror());
 				return -1;
 			}
@@ -362,34 +389,30 @@ enc_key
 	;
 
 auth_alg
-	:	ALG_AUTH {
+	:	ALG_AUTH key_string {
 			if ($1 < 0) {
 				yyerror("unsupported algorithm");
 				return -1;
 			}
 			p_alg_auth = $1;
-		}
-	;
 
-auth_key
-	:	/*NOTHING*/
-		{
-			if (p_alg_auth != SADB_X_AALG_NULL) {
-				yyerror("no key found.");
-				return -1;
-			}
-		}
-	|	key_string
-		{
-			p_key_auth_len = $1.len;
-			p_key_auth = $1.buf;
-
+			p_key_auth_len = $2.len;
+			p_key_auth = $2.buf;
 			if (ipsec_check_keylen(SADB_EXT_SUPPORTED_AUTH,
-					p_alg_auth,
-					PFKEY_UNUNIT64(p_key_auth_len)) < 0) {
+			    p_alg_auth, PFKEY_UNUNIT64(p_key_auth_len)) < 0) {
 				yyerror(ipsec_strerror());
 				return -1;
 			}
+		}
+	|	ALG_AUTH_NOKEY {
+			if ($1 < 0) {
+				yyerror("unsupported algorithm");
+				return -1;
+			}
+			p_alg_auth = $1;
+
+			p_key_auth_len = 0;
+			p_key_auth = NULL;
 		}
 	;
 
@@ -442,7 +465,7 @@ extension
 		{
 			if ((p_ext & SADB_X_EXT_OLD) != 0) {
 				yyerror("replay prevention cannot be used with "
-				    "ah/esp-old.");
+				    "ah/esp-old");
 				return -1;
 			}
 			p_replay = $2;
@@ -535,8 +558,7 @@ ipaddropts
 	;
 
 ipaddropt
-	:	/* nothing */
-	|	F_AIFLAGS
+	:	F_AIFLAGS
 		{
 			char *p;
 
@@ -580,11 +602,19 @@ portstr
 	:	/*NOTHING*/
 		{
 			$$.buf = strdup("0");
+			if (!$$.buf) {
+				yyerror("insufficient memory");
+				return -1;
+			}
 			$$.len = strlen($$.buf);
 		}
 	|	BLCL ANY ELCL
 		{
 			$$.buf = strdup("0");
+			if (!$$.buf) {
+				yyerror("insufficient memory");
+				return -1;
+			}
 			$$.len = strlen($$.buf);
 		}
 	|	BLCL DECSTRING ELCL
@@ -592,6 +622,10 @@ portstr
 			char buf[20];
 			snprintf(buf, sizeof(buf), "%lu", $2);
 			$$.buf = strdup(buf);
+			if (!$$.buf) {
+				yyerror("insufficient memory");
+				return -1;
+			}
 			$$.len = strlen($$.buf);
 		}
 	|	BLCL STRING ELCL
@@ -912,7 +946,7 @@ setkeymsg_add(type, satype, srcs, dsts)
 	l = sizeof(struct sadb_msg);
 
 	/* set encryption algorithm, if present. */
-	if (satype != SADB_X_SATYPE_IPCOMP && p_alg_enc != SADB_EALG_NONE) {
+	if (satype != SADB_X_SATYPE_IPCOMP && p_key_enc) {
 		struct sadb_key m_key;
 
 		m_key.sadb_key_len =
@@ -923,12 +957,12 @@ setkeymsg_add(type, satype, srcs, dsts)
 		m_key.sadb_key_reserved = 0;
 
 		setvarbuf(buf, &l,
-			(void *)&m_key, sizeof(m_key),
+			(struct sadb_ext *)&m_key, sizeof(m_key),
 			(caddr_t)p_key_enc, p_key_enc_len);
 	}
 
 	/* set authentication algorithm, if present. */
-	if (p_alg_auth != SADB_AALG_NONE) {
+	if (p_key_auth) {
 		struct sadb_key m_key;
 
 		m_key.sadb_key_len =
@@ -939,41 +973,39 @@ setkeymsg_add(type, satype, srcs, dsts)
 		m_key.sadb_key_reserved = 0;
 
 		setvarbuf(buf, &l,
-			(void *)&m_key, sizeof(m_key),
+			(struct sadb_ext *)&m_key, sizeof(m_key),
 			(caddr_t)p_key_auth, p_key_auth_len);
 	}
 
 	/* set lifetime for HARD */
 	if (p_lt_hard != 0) {
 		struct sadb_lifetime m_lt;
+		u_int slen = sizeof(struct sadb_lifetime);
 
-		len = sizeof(struct sadb_lifetime);
-
-		m_lt.sadb_lifetime_len = PFKEY_UNIT64(len);
+		m_lt.sadb_lifetime_len = PFKEY_UNIT64(slen);
 		m_lt.sadb_lifetime_exttype = SADB_EXT_LIFETIME_HARD;
 		m_lt.sadb_lifetime_allocations = 0;
 		m_lt.sadb_lifetime_bytes = 0;
 		m_lt.sadb_lifetime_addtime = p_lt_hard;
 		m_lt.sadb_lifetime_usetime = 0;
 
-		memcpy(buf + l, &m_lt, len);
+		memcpy(buf + l, &m_lt, slen);
 		l += len;
 	}
 
 	/* set lifetime for SOFT */
 	if (p_lt_soft != 0) {
 		struct sadb_lifetime m_lt;
+		u_int slen = sizeof(struct sadb_lifetime);
 
-		len = sizeof(struct sadb_lifetime);
-
-		m_lt.sadb_lifetime_len = PFKEY_UNIT64(len);
+		m_lt.sadb_lifetime_len = PFKEY_UNIT64(slen);
 		m_lt.sadb_lifetime_exttype = SADB_EXT_LIFETIME_SOFT;
 		m_lt.sadb_lifetime_allocations = 0;
 		m_lt.sadb_lifetime_bytes = 0;
 		m_lt.sadb_lifetime_addtime = p_lt_soft;
 		m_lt.sadb_lifetime_usetime = 0;
 
-		memcpy(buf + l, &m_lt, len);
+		memcpy(buf + l, &m_lt, slen);
 		l += len;
 	}
 
@@ -1073,7 +1105,8 @@ parse_addr(host, port)
 
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = p_aifamily;
-	hints.ai_socktype = SOCK_DGRAM;
+	hints.ai_socktype = SOCK_DGRAM;		/*dummy*/
+	hints.ai_protocol = IPPROTO_UDP;	/*dummy*/
 	hints.ai_flags = p_aiflags;
 	error = getaddrinfo(host, port, &hints, &res);
 	if (error != 0) {
