@@ -43,7 +43,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)main.c	5.6 (Berkeley) 8/30/92";*/
-static char rcsid[] = "$Id: main.c,v 1.3 1993/12/22 07:38:51 cgd Exp $";
+static char rcsid[] = "$Id: main.c,v 1.4 1994/01/04 05:23:03 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -287,11 +287,11 @@ mf_fgets(sp, spflag)
 	}
 
 	/*
-	 * Use fgetline so that we can handle essentially infinite input
+	 * Use fgetln so that we can handle essentially infinite input
 	 * data.  Can't use the pointer into the stdio buffer as the process
 	 * space because the ungetc() can cause it to move.
 	 */
-	p = fgetline(f, &len);
+	p = fgetln(f, &len);
 	if (ferror(f))
 		err(FATAL, "%s: %s", fname, strerror(errno ? errno : EIO));
 	if (p[len-1] == '\n')
