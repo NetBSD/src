@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.97 1994/04/08 19:15:52 mycroft Exp $
+ *	$Id: machdep.c,v 1.98 1994/04/15 07:04:22 cgd Exp $
  */
 
 #include <stddef.h>
@@ -224,7 +224,7 @@ cpu_startup()
 	for (i = 1; i < ncallout; i++)
 		callout[i-1].c_next = &callout[i];
 
-	printf("avail mem = %d\n", ptoa(vm_page_free_count));
+	printf("avail mem = %d\n", ptoa(cnt.v_free_count));
 	printf("using %d buffers containing %d bytes of memory\n",
 		nbuf, bufpages * CLBYTES);
 

@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: vm_mmap.c 1.3 90/01/21
  *	from: @(#)vm_mmap.c	7.5 (Berkeley) 6/28/91
- *	$Id: vm_mmap.c,v 1.21 1994/04/02 08:39:55 cgd Exp $
+ *	$Id: vm_mmap.c,v 1.22 1994/04/15 07:04:51 cgd Exp $
  */
 
 /*
@@ -57,7 +57,6 @@
 #include <vm/vm.h>
 #include <vm/vm_pager.h>
 #include <vm/vm_prot.h>
-#include <vm/vm_statistics.h>
 #include <vm/vm_user.h>
 
 #ifdef DEBUG
@@ -156,7 +155,7 @@ smmap(p, uap, retval)				/* XXX SHOULD BE mmap() */
 	 * Size is implicitly rounded to a page boundary.
 	 */
 	addr = (vm_offset_t) uap->addr;
-	if ((flags & MAP_FIXED) && (addr & page_mask) || uap->len < 0)
+	if ((flags & MAP_FIXED) && (addr & PAGE_MASK) || uap->len < 0)
 		return(EINVAL);
 	size = (vm_size_t) round_page(uap->len);
 	if ((flags & MAP_FIXED) && (addr + size > VM_MAXUSER_ADDRESS))
@@ -350,7 +349,7 @@ msync(p, uap, retval)
 		printf("msync(%d): addr %x len %x\n",
 		       p->p_pid, uap->addr, uap->len);
 #endif
-	if (((int)uap->addr & page_mask) || uap->len < 0)
+	if (((int)uap->addr & PAGE_MASK) || uap->len < 0)
 		return(EINVAL);
 	addr = oaddr = (vm_offset_t)uap->addr;
 	osize = (vm_size_t)uap->len;
@@ -421,7 +420,7 @@ munmap(p, uap, retval)
 		       p->p_pid, uap->addr, uap->len);
 #endif
 	addr = (vm_offset_t) uap->addr;
-	if ((addr & page_mask) || uap->len < 0)
+	if ((addr & PAGE_MASK) || uap->len < 0)
 		return(EINVAL);
 	size = (vm_size_t) round_page(uap->len);
 	if (size == 0)
@@ -474,7 +473,7 @@ mprotect(p, uap, retval)
 		       p->p_pid, uap->addr, uap->len, uap->prot);
 #endif
 	addr = (vm_offset_t) uap->addr;
-	if ((addr & page_mask) || uap->len < 0)
+	if ((addr & PAGE_MASK) || uap->len < 0)
 		return(EINVAL);
 	size = (vm_size_t) uap->len;
 	/*
@@ -912,12 +911,19 @@ vm_allocate_with_pager(map, addr, size, fitit, pager, poffset, internal)
 	 *	it.
 	 */
 	object = vm_object_lookup(pager);
-	vm_stat.lookups++;
+	cnt.v_lookups++;
 	if (object == NULL) {
 		object = vm_object_allocate(size);
-		vm_object_enter(object, pager);
+		/*
+		 * From Mike Hibler: "unnamed anonymous objects should never
+		 * be on the hash list ... For now you can just change
+		 * vm_allocate_with_pager to not do vm_object_enter if this
+		 * is an internal object ..."
+		 */
+		if (!internal)
+			vm_object_enter(object, pager);
 	} else
-		vm_stat.hits++;
+		cnt.v_hits++;
 	if (internal)
 		object->flags |= OBJ_INTERNAL;
 	else
