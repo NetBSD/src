@@ -27,7 +27,7 @@
  *	i4b_l4.h - kernel interface to userland header file
  *	---------------------------------------------------
  *
- *	$Id: i4b_l4.h,v 1.6 2002/05/02 18:56:56 martin Exp $ 
+ *	$Id: i4b_l4.h,v 1.7 2002/05/21 10:31:11 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -56,9 +56,9 @@ extern void i4b_l4_ifstate_changed( call_desc_t *cd, int new_state );
 extern void i4b_l4_idle_timeout_ind( call_desc_t *cd );
 extern void i4b_l4_info_ind ( call_desc_t *cd );
 extern void i4b_l4_packet_ind(int, int, int, struct mbuf *pkt);
-extern void i4b_l4_l12stat(int controller, int layer, int state);
-extern void i4b_l4_pdeact(int controller, int numactive);
-extern void i4b_l4_teiasg(int controller, int tei);
+extern void i4b_l4_l12stat(struct isdn_l3_driver *, int layer, int state);
+extern void i4b_l4_pdeact(struct isdn_l3_driver *, int numactive);
+extern void i4b_l4_teiasg(struct isdn_l3_driver *, int tei);
 extern void i4b_l4_status_ind ( call_desc_t *cd );
 extern void i4b_l4_proceeding_ind ( call_desc_t *cd );
 extern void i4b_idle_check(call_desc_t *cdp);

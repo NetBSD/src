@@ -27,14 +27,14 @@
  *	i4b_isic.c - global isic stuff
  *	==============================
  *
- *	$Id: isic.c,v 1.17 2002/04/30 12:56:51 martin Exp $ 
+ *	$Id: isic.c,v 1.18 2002/05/21 10:31:12 martin Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:36:10 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic.c,v 1.17 2002/04/30 12:56:51 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic.c,v 1.18 2002/05/21 10:31:12 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/ioccom.h>
@@ -235,8 +235,8 @@ isic_attach_bri(struct isic_softc *sc, const char *cardname, const struct isdn_l
 	sc->sc_l3token = drv;
 	sc->sc_l2.driver = dchan_driver;
 	sc->sc_l2.l1_token = sc;
-	sc->sc_l2.bri = drv->bri;
-	isdn_layer2_status_ind(&sc->sc_l2, STI_ATTACH, 1);
+	sc->sc_l2.drv = drv;
+	isdn_layer2_status_ind(&sc->sc_l2, drv, STI_ATTACH, 1);
 	isdn_bri_ready(drv->bri);
 	return 1;
 }
@@ -244,7 +244,7 @@ isic_attach_bri(struct isic_softc *sc, const char *cardname, const struct isdn_l
 int
 isic_detach_bri(struct isic_softc *sc)
 {
-	isdn_layer2_status_ind(&sc->sc_l2, STI_ATTACH, 0);
+	isdn_layer2_status_ind(&sc->sc_l2, sc->sc_l3token, STI_ATTACH, 0);
 	isdn_detach_bri(sc->sc_l3token);
 	sc->sc_l3token = NULL;
 	return 1;
