@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.367 2003/09/26 20:40:29 christos Exp $
+#	$NetBSD: bsd.own.mk,v 1.368 2003/09/26 20:51:55 christos Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -488,7 +488,6 @@ GNU_ARCH.sh3eb=sh
 GNU_ARCH.sh3el=shle
 GNU_ARCH.sh5eb=sh5
 GNU_ARCH.sh5el=sh5le
-GNU_ARCH.amd64=x86_64
 MACHINE_GNU_ARCH=${GNU_ARCH.${MACHINE_ARCH}:U${MACHINE_ARCH}}
 
 #
