@@ -488,7 +488,7 @@ vt_ind(struct video_state *svsp)
 void
 vt_nel(struct video_state *svsp)
 {					
-	if(svsp->cur_offset <= (svsp->scrr_end * svsp->maxcol))
+	if(svsp->cur_offset < (svsp->scrr_end * svsp->maxcol))
 	{
 		svsp->cur_offset += (svsp->maxcol-svsp->col);
 		svsp->col = 0;
