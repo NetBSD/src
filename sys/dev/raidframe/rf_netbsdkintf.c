@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.124 2002/07/13 17:47:44 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.125 2002/07/20 16:34:15 hannken Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -114,7 +114,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.124 2002/07/13 17:47:44 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.125 2002/07/20 16:34:15 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -219,7 +219,7 @@ struct raid_softc {
 	size_t  sc_size;        /* size of the raid device */
 	char    sc_xname[20];	/* XXX external name */
 	struct disk sc_dkdev;	/* generic disk device info */
-	struct buf_queue buf_queue;	/* used for the device queue */
+	struct bufq_state buf_queue;	/* used for the device queue */
 };
 /* sc_flags */
 #define RAIDF_INITED	0x01	/* unit has been initialized */
@@ -366,7 +366,7 @@ raidattach(num)
 	}
 
 	for (raidID = 0; raidID < num; raidID++) {
-		BUFQ_INIT(&raid_softc[raidID].buf_queue);
+		bufq_init(&raid_softc[raidID].buf_queue, BUFQ_FCFS);
 
 		raidrootdev[raidID].dv_class  = DV_DISK;
 		raidrootdev[raidID].dv_cfdata = NULL;
@@ -715,7 +715,7 @@ raidstrategy(bp)
 	bp->b_resid = 0;
 
 	/* stuff it onto our queue */
-	BUFQ_INSERT_TAIL(&rs->buf_queue, bp);
+	BUFQ_PUT(&rs->buf_queue, bp);
 
 	raidstart(raidPtrs[raidID]);
 
@@ -1664,11 +1664,10 @@ raidstart(raidPtr)
 		RF_UNLOCK_MUTEX(raidPtr->mutex);
 
 		/* get the next item, if any, from the queue */
-		if ((bp = BUFQ_FIRST(&rs->buf_queue)) == NULL) {
+		if ((bp = BUFQ_GET(&rs->buf_queue)) == NULL) {
 			/* nothing more to do */
 			return;
 		}
-		BUFQ_REMOVE(&rs->buf_queue, bp);
 
 		/* Ok, for the bp we have here, bp->b_blkno is relative to the
 		 * partition.. Need to make it absolute to the underlying 
