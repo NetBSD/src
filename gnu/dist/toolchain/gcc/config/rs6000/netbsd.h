@@ -48,9 +48,11 @@
 %{mlittle} %{mlittle-endian} %{mbig} %{mbig-endian}"
 
 /* The `multiple' instructions may not be universally implemented.
-   We avoid their use here. */
+   We avoid their use here.
+   The 403 ports cannot access unaligned data.
+   Force strict alignment. */
 #undef	CC1_SPEC
-#define	CC1_SPEC	"-mno-multiple"
+#define	CC1_SPEC	"-mno-multiple -mstrict-align"
 
 /* Provide a LINK_SPEC approriate for NetBSD. */
 #undef	LINK_SPEC
