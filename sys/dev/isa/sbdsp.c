@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.33 1997/03/13 02:20:10 mycroft Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.34 1997/03/20 06:48:58 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -142,7 +142,7 @@ sb_printsc(sc)
 	    sc->sc_open, sc->sc_drq, sc->sc_iobase);
 	printf("irate %d itc %d imode %d orate %d otc %d omode %d encoding %x\n",
 	    sc->sc_irate, sc->sc_itc, sc->sc_imode,
-	    sc->sc_orate, sc->sc_otc, sc->sc_omode, sc->encoding);
+	    sc->sc_orate, sc->sc_otc, sc->sc_omode, sc->sc_encoding);
 	printf("outport %d inport %d spkron %d nintr %lu\n",
 	    sc->out_port, sc->in_port, sc->spkr_state, sc->sc_interrupts);
 	printf("precision %d channels %d intr %p arg %p\n",
@@ -250,9 +250,9 @@ sbdsp_attach(sc)
 		sc->sc_itc = sc->sc_otc = SB_8K;
   	else
 		sc->sc_itc = sc->sc_otc = SB_8K;
+	sc->sc_encoding = AUDIO_ENCODING_ULAW;
 	sc->sc_precision = 8;
 	sc->sc_channels = 1;
-	sc->encoding = AUDIO_ENCODING_ULAW;
 
 	(void) sbdsp_set_in_port(sc, SB_MIC_PORT);
 	(void) sbdsp_set_out_port(sc, SB_SPEAKER);
@@ -397,22 +397,27 @@ sbdsp_query_encoding(addr, fp)
 }
 
 int
-sbdsp_set_encoding(addr, encoding)
+sbdsp_set_format(addr, encoding, precision)
 	void *addr;
-	u_int encoding;
+	u_int encoding, precision;
 {
 	register struct sbdsp_softc *sc = addr;
 	
 	switch (encoding) {
 	case AUDIO_ENCODING_ULAW:
-		sc->encoding = AUDIO_ENCODING_ULAW;
-		break;
-	case AUDIO_ENCODING_LINEAR:
-		sc->encoding = AUDIO_ENCODING_LINEAR;
+	case AUDIO_ENCODING_PCM16:
+	case AUDIO_ENCODING_PCM8:
 		break;
 	default:
 		return (EINVAL);
 	}
+
+	if (precision == 16)
+		if (!ISSB16CLASS(sc) && !ISJAZZ16(sc))
+			return (EINVAL);
+
+	sc->sc_encoding = encoding;
+	sc->sc_precision = precision;
 
 	return (0);
 }
@@ -423,27 +428,7 @@ sbdsp_get_encoding(addr)
 {
 	register struct sbdsp_softc *sc = addr;
 
-	return (sc->encoding);
-}
-
-int
-sbdsp_set_precision(addr, precision)
-	void *addr;
-	u_int precision;
-{
-	register struct sbdsp_softc *sc = addr;
-
-	if (ISSB16CLASS(sc) || ISJAZZ16(sc)) {
-		if (precision != 16 && precision != 8)
-			return (EINVAL);
-		sc->sc_precision = precision;
-	} else {
-		if (precision != 8)
-			return (EINVAL);
-		sc->sc_precision = precision;
-	}
-
-	return (0);
+	return (sc->sc_encoding);
 }
 
 int
@@ -711,13 +696,7 @@ sbdsp_commit_settings(addr)
 				     SB_OUTPUT_RATE, &sc->sc_otc,
 				     &sc->sc_omode);
 	}
-	if (ISSB16CLASS(sc) || ISJAZZ16(sc)) {
-		if (sc->encoding == AUDIO_ENCODING_ULAW &&
-		    sc->sc_precision == 16) {
-			sc->sc_precision = 8;
-			return EINVAL;	/* XXX what should we really do? */
-		}
-	}
+
 	/*
 	 * XXX
 	 * Should wait for chip to be idle.

@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.37 1997/03/20 03:19:53 mycroft Exp $	*/
+/*	$NetBSD: audio.c,v 1.38 1997/03/20 06:48:48 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -140,6 +140,7 @@ void	audiostartp __P((struct audio_softc *));
 void	audio_rint __P((void *));
 void	audio_pint __P((void *));
 void	audio_rpint __P((void *));
+int	audio_check_format __P((u_int *, u_int *));
 
 int	audio_calc_blksize __P((struct audio_softc *));
 void	audio_fill_silence __P((int, u_char *, int));
@@ -211,9 +212,8 @@ audio_hardware_attach(hwp, hdlp)
 	    hwp->get_in_sr == 0 ||
 	    hwp->set_out_sr == 0 ||
 	    hwp->get_out_sr == 0 ||
-	    hwp->set_encoding == 0 ||
+	    hwp->set_format == 0 ||
 	    hwp->get_encoding == 0 ||
-	    hwp->set_precision == 0 ||
 	    hwp->get_precision == 0 ||
 	    hwp->set_channels == 0 ||
 	    hwp->get_channels == 0 ||
@@ -538,14 +538,12 @@ audio_open(dev, flags, ifmt, p)
 	 */
 	if (ISDEVAUDIO(dev)) {
 		/* /dev/audio */
-		hw->set_precision(sc->hw_hdl, 8);
-		hw->set_encoding(sc->hw_hdl, AUDIO_ENCODING_ULAW);
+		hw->set_format(sc->hw_hdl, AUDIO_ENCODING_ULAW, 8);
 		hw->set_in_sr(sc->hw_hdl, 8000);
 		hw->set_out_sr(sc->hw_hdl, 8000);
 		hw->set_channels(sc->hw_hdl, 1);
 
-		sc->sc_pencoding = AUDIO_ENCODING_ULAW;
-		sc->sc_rencoding = AUDIO_ENCODING_ULAW;
+		sc->sc_pencoding = sc->sc_rencoding = AUDIO_ENCODING_ULAW;
 	}
 
 	/*
@@ -1478,6 +1476,42 @@ audio_rint(v)
 }
 
 int
+audio_check_format(encodingp, precisionp)
+	u_int *encodingp, *precisionp;
+{
+
+	if (*encodingp == AUDIO_ENCODING_LINEAR)
+		switch (*precisionp) {
+		case 8:
+			*encodingp = AUDIO_ENCODING_PCM8;
+			return (0);
+		case 16:
+			*encodingp = AUDIO_ENCODING_PCM16;
+			return (0);
+		default:
+			return (EINVAL);
+		}
+
+	switch (*encodingp) {
+	case AUDIO_ENCODING_ULAW:
+	case AUDIO_ENCODING_ALAW:
+	case AUDIO_ENCODING_PCM8:
+	case AUDIO_ENCODING_ADPCM:
+		if (*precisionp != 8)
+			return (EINVAL);
+		break;
+	case AUDIO_ENCODING_PCM16:
+		if (*precisionp != 16)
+			return (EINVAL);
+		break;
+	default:
+		return (EINVAL);
+	}
+
+	return (0);
+}
+
+int
 audiosetinfo(sc, ai)
 	struct audio_softc *sc;
 	struct audio_info *ai;
@@ -1509,46 +1543,46 @@ audiosetinfo(sc, ai)
 			return(error);
 		sc->sc_50ms = 50 * hw->get_in_sr(sc->hw_hdl) / 1000;
 	}
-	if (p->encoding != ~0) {
+	if (p->encoding != ~0 || p->precision != ~0) {
 		if (!cleared)
 			audio_clear(sc);
 		cleared = 1;
-		error = hw->set_encoding(sc->hw_hdl, p->encoding);
+
+		if (p->encoding == ~0)
+			p->encoding = hw->get_encoding(sc->hw_hdl);
+		if (p->precision == ~0)
+			p->precision = hw->get_precision(sc->hw_hdl);
+		error = audio_check_format(&p->encoding, &p->precision);
 		if (error)
 			return(error);
+		error = hw->set_format(sc->hw_hdl, p->encoding, p->precision);
+		if (error)
+			return(error);
+
 		sc->sc_pencoding = p->encoding;
-	}	
-	if (r->encoding != ~0) {
-		if (!cleared)
-			audio_clear(sc);
-		cleared = 1;
-		error = hw->set_encoding(sc->hw_hdl, r->encoding);
-		if (error)
-			return(error);
-		sc->sc_rencoding = r->encoding;
-	}
-	if (p->precision != ~0) {
-		if (!cleared)
-			audio_clear(sc);
-		cleared = 1;
-		error = hw->set_precision(sc->hw_hdl, p->precision);
-		if (error)
-			return(error);
-		
 		sc->sc_blksize = audio_blocksize = audio_calc_blksize(sc);
 		audio_alloc_auzero(sc, sc->sc_blksize);
 		bps = hw->get_precision(sc->hw_hdl) / NBBY;
 		sc->sc_smpl_in_blk = sc->sc_blksize / bps;
 		audio_initbufs(sc);
-	}
-	if (r->precision != ~0) {
+	}	
+	if (r->encoding != ~0 || r->precision != ~0) {
 		if (!cleared)
 			audio_clear(sc);
 		cleared = 1;
-		error = hw->set_precision(sc->hw_hdl, r->precision);
+
+		if (r->encoding == ~0)
+			r->encoding = hw->get_encoding(sc->hw_hdl);
+		if (r->precision == ~0)
+			r->precision = hw->get_precision(sc->hw_hdl);
+		error = audio_check_format(&r->encoding, &r->precision);
 		if (error)
 			return(error);
-		
+		error = hw->set_format(sc->hw_hdl, r->encoding, r->precision);
+		if (error)
+			return(error);
+
+		sc->sc_rencoding = r->encoding;
 		sc->sc_blksize = audio_blocksize = audio_calc_blksize(sc);
 		audio_alloc_auzero(sc, sc->sc_blksize);
 		bps = hw->get_precision(sc->hw_hdl) / NBBY;
