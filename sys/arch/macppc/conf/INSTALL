@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.80 2004/11/24 20:49:24 bouyer Exp $
+#	$NetBSD: INSTALL,v 1.81 2004/12/09 02:46:01 briggs Exp $
 #
 # config file for INSTALL FLOPPY
 #
@@ -82,6 +82,7 @@ ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
 re*	at pci? dev ? function ?	# Realtek 8139C+/8169/8169S/8110S
 rtk*	at pci? dev ? function ?	# Realtek 8129/8139
 sip*	at pci? dev ? function ?	# SiS 900/7016 Ethernet
+vr*	at pci? dev ? function ?	# VIA Rhine Fast Ethernet
 adv*	at pci? dev ? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
 adw*	at pci? dev ? function ?	# AdvanSys 9x0UW[D], 3940U[2,3]W SCSI
 ahc*	at pci? dev ? function ?	# Adaptec [23]94x, aic78x0 SCSI
