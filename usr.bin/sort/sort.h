@@ -1,4 +1,4 @@
-/*	$NetBSD: sort.h,v 1.13 2002/12/24 13:20:25 jdolecek Exp $	*/
+/*	$NetBSD: sort.h,v 1.14 2002/12/24 15:02:46 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -132,9 +132,9 @@ struct filelist {
 	const char * const * names;
 };
 
-typedef int (*get_func_t) __P((int, int, struct filelist *, int,
-		RECHEADER *, u_char *, struct field *));
-typedef void (*put_func_t) __P((const struct recheader *, FILE *));
+typedef int (*get_func_t)(int, int, struct filelist *, int,
+		RECHEADER *, u_char *, struct field *);
+typedef void (*put_func_t)(const struct recheader *, FILE *);
 
 extern int PANIC;	/* maximum depth of fsort before fmerge is called */
 extern u_char ascii[NBINS], Rascii[NBINS], Ftable[NBINS], RFtable[NBINS];
@@ -147,4 +147,32 @@ extern u_char gweights[NBINS];
 extern struct coldesc clist[(ND+1)*2];
 extern int ncols;
 
-#include "extern.h"
+void	 append(const u_char **, int, int, FILE *,
+	    void (*)(const RECHEADER *, FILE *), struct field *);
+void	 concat(FILE *, FILE *);
+length_t enterkey(RECHEADER *, DBT *, int, struct field *);
+void	 fixit(int *, char **);
+void	 fldreset(struct field *);
+FILE	*ftmp(void);
+void	 fmerge(int, int, struct filelist *, int,
+		get_func_t, FILE *, put_func_t, struct field *);
+void	 fsort(int, int, int, struct filelist *, int, FILE *,
+		struct field *);
+int	 geteasy(int, int, struct filelist *,
+	    int, RECHEADER *, u_char *, struct field *);
+int	 getnext(int, int, struct filelist *,
+	    int, RECHEADER *, u_char *, struct field *);
+int	 makekey(int, int, struct filelist *,
+	    int, RECHEADER *, u_char *, struct field *);
+int	 makeline(int, int, struct filelist *,
+	    int, RECHEADER *, u_char *, struct field *);
+void	 merge(int, int, get_func_t, FILE *, put_func_t, struct field *);
+void	 num_init(void);
+void	 onepass(const u_char **, int, long, long *, u_char *, FILE *);
+int	 optval(int, int);
+void	 order(struct filelist *, get_func_t, struct field *);
+void	 putline(const RECHEADER *, FILE *);
+void	 putrec(const RECHEADER *, FILE *);
+void	 rd_append(int, int, int, FILE *, u_char *, u_char *);
+int	 setfield(const char *, struct field *, int);
+void	 settables(int);
