@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.464 2004/01/13 09:19:42 lukem Exp $
+# $NetBSD: mi,v 1.465 2004/01/14 19:45:35 wiz Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -324,6 +324,7 @@
 ./usr/X11R6/lib/X11/xkb/symbols/nec		base-x11-root
 ./usr/X11R6/lib/X11/xkb/symbols/pc		base-x11-root
 ./usr/X11R6/lib/X11/xkb/symbols/sgi		base-x11-root
+./usr/X11R6/lib/X11/xkb/symbols/sharp		base-x11-root
 ./usr/X11R6/lib/X11/xkb/symbols/sony		base-x11-root
 ./usr/X11R6/lib/X11/xkb/symbols/sun		base-x11-root
 ./usr/X11R6/lib/X11/xkb/symbols/xfree68		base-x11-root
