@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 1998/07/28 17:44:23 mycroft Exp $
+#	$NetBSD: Makefile,v 1.10 2000/09/26 16:49:23 phil Exp $
 #       @(#)Makefile	8.1 (Berkeley) 5/31/93
 
 # To install on versions prior to BSD 4.4 the following may have to be
@@ -33,5 +33,7 @@ SRCS=	ar_io.c ar_subs.c buf_subs.c cpio.c file_subs.c ftree.c\
 # MAN=	pax.1 tar.1 cpio.1
 # LINKS+=	${BINDIR}/pax ${BINDIR}/tar
 # LINKS+=	${BINDIR}/pax ${BINDIR}/cpio
+
+NOHTML=doc2html-error
 
 .include <bsd.prog.mk>
