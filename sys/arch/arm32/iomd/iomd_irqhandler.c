@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_irqhandler.c,v 1.28 2001/07/10 00:04:31 bjh21 Exp $	*/
+/*	$NetBSD: iomd_irqhandler.c,v 1.29 2001/07/10 20:10:49 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -39,7 +39,6 @@
  *	from: irqhandler.c,v 1.14 1997/04/02 21:52:19 christos Exp $
  */
 
-#include "opt_cputypes.h"
 #include "opt_irqstats.h"
 
 #include <sys/param.h>
