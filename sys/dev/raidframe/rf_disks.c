@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_disks.c,v 1.55 2004/10/10 01:17:40 mrg Exp $	*/
+/*	$NetBSD: rf_disks.c,v 1.56 2004/10/10 11:15:22 tron Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -67,7 +67,7 @@
  ***************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.55 2004/10/10 01:17:40 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.56 2004/10/10 11:15:22 tron Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -284,8 +284,10 @@ rf_ConfigureSpareDisks(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
 			goto fail;
 		} else
 			if (disks[i].numBlocks > raidPtr->sectorsPerDisk) {
-				RF_ERRORMSG2("Warning: truncating spare disk %s to %ld blocks (from %ld)\n", disks[i].devname,
-					(long int) raidPtr->sectorsPerDisk, disks[i].numBlocks);
+				RF_ERRORMSG3("Warning: truncating spare disk %s to %ld blocks (from %ld)\n",
+				    disks[i].devname,
+				    (long int) raidPtr->sectorsPerDisk,
+				    (long int) disks[i].numBlocks);
 
 				disks[i].numBlocks = raidPtr->sectorsPerDisk;
 			}
@@ -1025,8 +1027,10 @@ rf_add_hot_spare(RF_Raid_t *raidPtr, RF_SingleComponent_t *sparePtr)
 	} else {
 		if (disks[spare_number].numBlocks > 
 		    raidPtr->sectorsPerDisk) {
-			RF_ERRORMSG2("Warning: truncating spare disk %s to %ld blocks (from %ld)\n", disks[spare_number].devname, 
-				     (long int) raidPtr->sectorsPerDisk, disks[spare_number].numBlocks);
+			RF_ERRORMSG3("Warning: truncating spare disk %s to %ld blocks (from %ld)\n",
+			    disks[spare_number].devname, 
+			    (long int) raidPtr->sectorsPerDisk,
+			    (long int) disks[spare_number].numBlocks);
 			
 			disks[spare_number].numBlocks = raidPtr->sectorsPerDisk;
 		}
