@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.23 1995/05/25 04:13:17 mycroft Exp $	*/
+/*	$NetBSD: print.c,v 1.24 1995/06/07 16:29:30 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-static char rcsid[] = "$NetBSD: print.c,v 1.23 1995/05/25 04:13:17 mycroft Exp $";
+static char rcsid[] = "$NetBSD: print.c,v 1.24 1995/06/07 16:29:30 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -381,6 +381,7 @@ started(k, ve)
 {
 	VAR *v;
 	static time_t now;
+	time_t startt;
 	struct tm *tp;
 	char buf[100];
 
@@ -390,7 +391,8 @@ started(k, ve)
 		return;
 	}
 
-	tp = localtime(&k->ki_u.u_start.tv_sec);
+	startt = k->ki_u.u_start.tv_sec;
+	tp = localtime(&startt);
 	if (!now)
 		(void)time(&now);
 	if (now - k->ki_u.u_start.tv_sec < 24 * SECSPERHOUR) {
@@ -412,6 +414,7 @@ lstarted(k, ve)
 	VARENT *ve;
 {
 	VAR *v;
+	time_t startt;
 	char buf[100];
 
 	v = ve->var;
@@ -419,8 +422,9 @@ lstarted(k, ve)
 		(void)printf("%-*s", v->width, "-");
 		return;
 	}
+	startt = k->ki_u.u_start.tv_sec;
 	(void)strftime(buf, sizeof(buf) -1, "%C",
-	    localtime(&k->ki_u.u_start.tv_sec));
+	    localtime(&startt));
 	(void)printf("%-*s", v->width, buf);
 }
 
