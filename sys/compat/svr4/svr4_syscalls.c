@@ -1,4 +1,4 @@
-/* $NetBSD: svr4_syscalls.c,v 1.66 2001/01/27 08:00:59 thorpej Exp $ */
+/* $NetBSD: svr4_syscalls.c,v 1.67 2001/02/11 01:14:25 eeh Exp $ */
 
 /*
  * System call names.
@@ -54,7 +54,7 @@ const char *const svr4_syscallnames[] = {
 	"#21 (unimplemented old_mount)",		/* 21 = unimplemented old_mount */
 	"#22 (unimplemented System V umount)",		/* 22 = unimplemented System V umount */
 	"setuid",			/* 23 = setuid */
-	"getuid",			/* 24 = getuid */
+	"getuid_with_euid",			/* 24 = getuid_with_euid */
 	"#25 (unimplemented stime)",		/* 25 = unimplemented stime */
 	"#26 (unimplemented ptrace)",		/* 26 = unimplemented ptrace */
 	"alarm",			/* 27 = alarm */
@@ -77,7 +77,7 @@ const char *const svr4_syscallnames[] = {
 	"#44 (unimplemented profil)",		/* 44 = unimplemented profil */
 	"#45 (unimplemented plock)",		/* 45 = unimplemented plock */
 	"setgid",			/* 46 = setgid */
-	"getgid",			/* 47 = getgid */
+	"getgid_with_egid",			/* 47 = getgid_with_egid */
 	"signal",			/* 48 = signal */
 #ifdef SYSVMSG
 	"msgsys",			/* 49 = msgsys */

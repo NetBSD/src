@@ -1,4 +1,4 @@
-/* $NetBSD: svr4_syscallargs.h,v 1.65 2001/01/27 08:00:59 thorpej Exp $ */
+/* $NetBSD: svr4_syscallargs.h,v 1.66 2001/02/11 01:14:25 eeh Exp $ */
 
 /*
  * System call argument lists.
@@ -523,7 +523,7 @@ int	svr4_sys_stat(struct proc *, void *, register_t *);
 int	compat_43_sys_lseek(struct proc *, void *, register_t *);
 int	sys_getpid(struct proc *, void *, register_t *);
 int	sys_setuid(struct proc *, void *, register_t *);
-int	sys_getuid(struct proc *, void *, register_t *);
+int	sys_getuid_with_euid(struct proc *, void *, register_t *);
 int	svr4_sys_alarm(struct proc *, void *, register_t *);
 int	svr4_sys_fstat(struct proc *, void *, register_t *);
 int	svr4_sys_pause(struct proc *, void *, register_t *);
@@ -537,7 +537,7 @@ int	sys_dup(struct proc *, void *, register_t *);
 int	sys_pipe(struct proc *, void *, register_t *);
 int	svr4_sys_times(struct proc *, void *, register_t *);
 int	sys_setgid(struct proc *, void *, register_t *);
-int	sys_getgid(struct proc *, void *, register_t *);
+int	sys_getgid_with_egid(struct proc *, void *, register_t *);
 int	svr4_sys_signal(struct proc *, void *, register_t *);
 #ifdef SYSVMSG
 int	svr4_sys_msgsys(struct proc *, void *, register_t *);

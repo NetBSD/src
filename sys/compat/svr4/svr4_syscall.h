@@ -1,4 +1,4 @@
-/* $NetBSD: svr4_syscall.h,v 1.66 2001/01/27 08:00:59 thorpej Exp $ */
+/* $NetBSD: svr4_syscall.h,v 1.67 2001/02/11 01:14:25 eeh Exp $ */
 
 /*
  * System call numbers.
@@ -73,8 +73,8 @@
 /* syscall: "setuid" ret: "int" args: "uid_t" */
 #define	SVR4_SYS_setuid	23
 
-/* syscall: "getuid" ret: "uid_t" args: */
-#define	SVR4_SYS_getuid	24
+/* syscall: "getuid_with_euid" ret: "uid_t" args: */
+#define	SVR4_SYS_getuid_with_euid	24
 
 /* syscall: "alarm" ret: "int" args: "unsigned" */
 #define	SVR4_SYS_alarm	27
@@ -115,8 +115,8 @@
 /* syscall: "setgid" ret: "int" args: "gid_t" */
 #define	SVR4_SYS_setgid	46
 
-/* syscall: "getgid" ret: "gid_t" args: */
-#define	SVR4_SYS_getgid	47
+/* syscall: "getgid_with_egid" ret: "gid_t" args: */
+#define	SVR4_SYS_getgid_with_egid	47
 
 /* syscall: "signal" ret: "int" args: "int" "svr4_sig_t" */
 #define	SVR4_SYS_signal	48
