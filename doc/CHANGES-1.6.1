@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.1,v 1.1.2.97 2003/01/29 01:43:48 jmc Exp $
+#	$NetBSD: CHANGES-1.6.1,v 1.1.2.98 2003/01/31 09:34:06 jmc Exp $
 
 A complete list of changes from NetBSD 1.6 to NetBSD 1.6.1:
 
@@ -3475,3 +3475,14 @@ sys/dev/qbus/if_qe.c				1.56-1.57
 	[bouyer, ticket #1093]
 
 	(Moved tags for RC1 on this file)
+
+sys/arch/acorn26/podulebus/if_eh.c		1.7-1.8
+
+	Fix previous commit so typos don't prevent compiling.
+	[bouyer, ticket #1096]
+
+sys/sys/param.h					patched by hand
+
+	Fix comment from 1.6 -> 1.6.1
+
+	(Moved tags for RC1 on these 2 files)
