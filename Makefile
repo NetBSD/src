@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.131 2001/09/22 12:30:13 tv Exp $
+#	$NetBSD: Makefile,v 1.132 2001/10/01 17:19:17 mason Exp $
 
 # This is the top-level makefile for building NetBSD. For an outline of
 # how to build a snapshot or release, as well as other release engineering
@@ -136,10 +136,12 @@ build:
 .endif
 
 do-make-tools:
+.if ${USETOOLS} != "no"
 .if ${MKOBJDIRS} != "no"
 	cd ${.CURDIR}/tools && ${MAKE} ${_M} obj
 .endif
 	cd ${.CURDIR}/tools && ${MAKE} ${_M} build
+.endif
 
 do-distrib-dirs:
 .ifndef NODISTRIBDIRS
