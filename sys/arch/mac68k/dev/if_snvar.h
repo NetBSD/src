@@ -1,4 +1,4 @@
-/*      $NetBSD: if_snvar.h,v 1.2 1997/03/16 13:41:17 is Exp $	*/
+/*      $NetBSD: if_snvar.h,v 1.3 1997/03/17 04:57:58 briggs Exp $	*/
 
 /*
  * Copyright (c) 1991   Algorithmics Ltd (http://www.algor.co.uk)
@@ -94,6 +94,7 @@ typedef struct sn_softc {
 	struct	device sc_dev;
 	struct	ethercom sc_ethercom;
 #define	sc_if		sc_ethercom.ec_if	/* network visible interface */
+	u_int8_t	sc_enaddr[6];	/* Keep MAC address here until we have multicast */
 
 	bus_space_tag_t		sc_regt;
 	bus_space_handle_t	sc_regh;

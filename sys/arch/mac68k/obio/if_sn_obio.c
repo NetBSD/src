@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn_obio.c,v 1.2 1997/03/16 13:41:16 is Exp $	*/
+/*	$NetBSD: if_sn_obio.c,v 1.3 1997/03/17 04:57:58 briggs Exp $	*/
 
 /*
  * Copyright (C) 1997 Allen Briggs
@@ -61,7 +61,7 @@
 
 static int	sn_obio_match __P((struct device *, struct cfdata *, void *));
 static void	sn_obio_attach __P((struct device *, struct device *, void *));
-static void	sn_obio_getaddr __P((struct sn_softc *));
+static void	sn_obio_getaddr __P((struct sn_softc *, u_int8_t *));
 
 struct cfattach sn_obio_ca = {
 	sizeof(struct sn_softc), sn_obio_match, sn_obio_attach
