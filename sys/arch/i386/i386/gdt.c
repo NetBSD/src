@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.c,v 1.19 1999/07/20 23:07:12 thorpej Exp $	*/
+/*	$NetBSD: gdt.c,v 1.20 1999/07/25 18:05:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -111,6 +111,7 @@ gdt_compact()
 	pmap_t pmap;
 	int slot = NGDT, oslot;
 
+	proclist_lock_read();
 	for (p = allproc.lh_first; p != 0; p = p->p_list.le_next) {
 		pcb = &p->p_addr->u_pcb;
 		pmap = p->p_vmspace->vm_map.pmap;
@@ -156,6 +157,7 @@ gdt_compact()
 			panic("gdt_compact botch 4");
 	gdt_next = gdt_count;
 	gdt_free = GNULL_SEL;
+	proclist_unlock_read();
 }
 
 /*
