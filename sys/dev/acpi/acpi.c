@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.10 2002/06/18 08:09:21 tshiozak Exp $	*/
+/*	$NetBSD: acpi.c,v 1.11 2002/06/18 10:26:15 drochner Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.10 2002/06/18 08:09:21 tshiozak Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.11 2002/06/18 10:26:15 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -787,5 +787,5 @@ acpi_enter_sleep_state(struct acpi_softc *sc, int state)
 		break;
 	}
 
-	return_ACPI_STATUS(ret);
+	return (ret);
 }
