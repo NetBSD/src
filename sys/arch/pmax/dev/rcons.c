@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons.c,v 1.20 1999/01/27 03:03:51 simonb Exp $	*/
+/*	$NetBSD: rcons.c,v 1.21 1999/01/28 10:35:53 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -73,6 +73,7 @@
 
 #include <machine/pmioctl.h>
 #include <pmax/dev/fbreg.h>
+#include <pmax/dev/lk201var.h>
 
 
 
@@ -102,8 +103,6 @@ void	rcons_input __P((dev_t dev, int ic));
 void		rconsstart		__P((struct tty *));
 static void	rcons_later __P((void*));
 #endif
-
-void nobell __P ((int));
 
 
 /*
@@ -136,7 +135,7 @@ rcons_connect (info)
 #define HW_FONT_HEIGHT 15
 	rc.rc_maxrow = rc.rc_height / HW_FONT_HEIGHT;
 	rc.rc_maxcol = 80;
-	rc.rc_bell = nobell;
+	rc.rc_bell = lk_bell;
 
 	/* Initialize the state information. */
 	rc.rc_bits = 0;
@@ -162,14 +161,6 @@ rcons_connect (info)
 
 	rc.rc_xorigin = 0;
 	rc.rc_yorigin = 0;
-}
-
-/* We don't support ringing the keyboard bell yet */
-void
-nobell(arg)
-	int arg;
-{
-	return;
 }
 
 /* 
