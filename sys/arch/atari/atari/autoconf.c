@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.18 1997/03/03 12:26:20 leo Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.19 1997/03/26 15:49:31 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -227,7 +227,7 @@ findroot(devpp, partp)
 			if ((*bdevsw[maj].d_open)(MAKEDISKDEV(maj,
 			    unit, 0), FREAD|FNONBLOCK, 0, &proc0))
 				continue;
-			(void)(*bdevsw[maj].d_open)(MAKEDISKDEV(maj,
+			(void)(*bdevsw[maj].d_close)(MAKEDISKDEV(maj,
 			    unit, 0), FREAD|FNONBLOCK, 0, &proc0);
 			
 			pp = &dkp->dk_label->d_partitions[*partp];
