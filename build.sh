@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.105 2003/05/25 12:34:27 lukem Exp $
+#	$NetBSD: build.sh,v 1.106 2003/05/26 06:35:17 lukem Exp $
 #
 # Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -667,22 +667,24 @@ validatemakeparams()
 		exit 1
 	fi
 
-	# If TOOLDIR isn't already set, make objdirs in "tools" in case the
-	# default setting from <bsd.own.mk> is used.
-	#
-	if [ -z "${TOOLDIR}" ] && [ "${MKOBJDIRS}" != "no" ]; then
+	if [ "${MKOBJDIRS}" != "no" ]; then
+		# If setting -M or -O to the root of an obj dir, make sure
+		# the base directory is made before continuing as <bsd.own.mk>
+		# will need this to pick up _SRC_TOP_OBJ_
+		#
+		if [ ! -z "${makeobjdir}" ]; then
+			${runcmd} mkdir -p "${makeobjdir}"
+		fi
+
+		# make obj in tools to ensure that the objdir for the top-level
+		# of the source tree and for "tools" is available, in case the
+		# default TOOLDIR setting from <bsd.own.mk> is used, or the
+		# build.sh default DESTDIR and RELEASEDIR is to be used.
+		#
 		${runcmd} cd tools
 		${runcmd} "${make}" -m ${TOP}/share/mk obj NOSUBDIR= ||
 		    bomb "Failed to make obj in tools"
 		${runcmd} cd "${TOP}"
-	fi
-
-	# If setting -M or -O to root an obj dir make sure the base directory
-	# is made before continuing as bsd.own.mk will need this to pick up
-	# _SRC_TOP_OBJ_
-	#
-	if [ "${MKOBJDIRS}" != "no" ] && [ ! -z "${makeobjdir}" ]; then
-		${runcmd} mkdir -p "${makeobjdir}"
 	fi
 
 	statusmsg "MACHINE:          ${MACHINE}"
@@ -788,7 +790,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.105 2003/05/25 12:34:27 lukem Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.106 2003/05/26 06:35:17 lukem Exp $
 #
 
 EOF
