@@ -1,4 +1,4 @@
-/*	$NetBSD: soundcard.h,v 1.3 1997/10/29 00:31:11 augustss Exp $	*/
+/*	$NetBSD: soundcard.h,v 1.4 1997/10/29 20:23:27 augustss Exp $	*/
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -138,7 +138,7 @@
 
 /* Mixer defines */
 #define SOUND_MIXER_FIRST		0
-#define SOUND_MIXER_NRDEVICES		17
+#define SOUND_MIXER_NRDEVICES		25
 
 #define SOUND_MIXER_VOLUME		0
 #define SOUND_MIXER_BASS		1
@@ -157,6 +157,29 @@
 #define SOUND_MIXER_LINE1		14
 #define SOUND_MIXER_LINE2		15
 #define SOUND_MIXER_LINE3		16
+#define SOUND_MIXER_DIGITAL1		17
+#define SOUND_MIXER_DIGITAL2		18
+#define SOUND_MIXER_DIGITAL3		19
+#define SOUND_MIXER_PHONEIN		20
+#define SOUND_MIXER_PHONEOUT		21
+#define SOUND_MIXER_VIDEO		22
+#define SOUND_MIXER_RADIO		23
+#define SOUND_MIXER_MONITOR		24
+
+#define SOUND_ONOFF_MIN			28
+#define SOUND_ONOFF_MAX			30
+
+#define SOUND_MIXER_NONE		31
+
+#define SOUND_DEVICE_LABELS	{"Vol  ", "Bass ", "Trebl", "Synth", "Pcm  ", "Spkr ", "Line ", \
+				 "Mic  ", "CD   ", "Mix  ", "Pcm2 ", "Rec  ", "IGain", "OGain", \
+				 "Line1", "Line2", "Line3", "Digital1", "Digital2", "Digital3", \
+				 "PhoneIn", "PhoneOut", "Video", "Radio", "Monitor"}
+
+#define SOUND_DEVICE_NAMES	{"vol", "bass", "treble", "synth", "pcm", "speaker", "line", \
+				 "mic", "cd", "mix", "pcm2", "rec", "igain", "ogain", \
+				 "line1", "line2", "line3", "dig1", "dig2", "dig3", \
+				 "phin", "phout", "video", "radio", "monitor"}
 
 #define SOUND_MIXER_RECSRC		0xff
 #define SOUND_MIXER_DEVMASK		0xfe
