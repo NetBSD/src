@@ -1,4 +1,4 @@
-/*	$NetBSD: mapper.c,v 1.2.2.2 2002/12/07 00:35:21 he Exp $	*/
+/*	$NetBSD: mapper.c,v 1.2.2.3 2004/07/23 15:03:57 tron Exp $	*/
 
 /* Mapper for connections between MRouteD multicast routers.
  * Written by Pavel Curtis <Pavel@PARC.Xerox.Com>
@@ -101,7 +101,7 @@ int			get_number(int *var, int deflt, char ***pargv,
 				   int *pargc);
 u_int32_t		host_addr(char *name);
 
-void log(int severity, int syserr, const char *format, ...)
+void logit(int severity, int syserr, const char *format, ...)
 	__attribute__((__format__(__printf__, 3, 4)));
 
 Node *find_node(u_int32_t addr, Node **ptr)
@@ -165,7 +165,7 @@ Neighbor *find_neighbor(u_int32_t addr, Node *node)
  * worse, terminate the program.
  */
 void
-log(int severity, int syserr, const char *format, ...)
+logit(int severity, int syserr, const char *format, ...)
 {
     va_list ap;
     char    fmt[100];
@@ -215,7 +215,7 @@ void ask2(u_int32_t dst)
  */
 void accept_group_report(u_int32_t src, u_int32_t dst, u_int32_t group, int r_type)
 {
-    log(LOG_INFO, 0, "ignoring IGMP group membership report from %s to %s",
+    logit(LOG_INFO, 0, "ignoring IGMP group membership report from %s to %s",
 	inet_fmt(src, s1), inet_fmt(dst, s2));
 }
 
@@ -226,7 +226,7 @@ void accept_group_report(u_int32_t src, u_int32_t dst, u_int32_t group, int r_ty
 void accept_probe(u_int32_t src, u_int32_t dst, char *p, int datalen,
 		  u_int32_t level)
 {
-    log(LOG_INFO, 0, "ignoring DVMRP probe from %s to %s",
+    logit(LOG_INFO, 0, "ignoring DVMRP probe from %s to %s",
 	inet_fmt(src, s1), inet_fmt(dst, s2));
 }
 
@@ -237,7 +237,7 @@ void accept_probe(u_int32_t src, u_int32_t dst, char *p, int datalen,
 void accept_report(u_int32_t src, u_int32_t dst, char *p, int datalen,
 		   u_int32_t level)
 {
-    log(LOG_INFO, 0, "ignoring DVMRP routing report from %s to %s",
+    logit(LOG_INFO, 0, "ignoring DVMRP routing report from %s to %s",
 	inet_fmt(src, s1), inet_fmt(dst, s2));
 }
 
@@ -248,7 +248,7 @@ void accept_report(u_int32_t src, u_int32_t dst, char *p, int datalen,
 void accept_neighbor_request(u_int32_t src, u_int32_t dst)
 {
     if (src != our_addr)
-	log(LOG_INFO, 0,
+	logit(LOG_INFO, 0,
 	    "ignoring spurious DVMRP neighbor request from %s to %s",
 	    inet_fmt(src, s1), inet_fmt(dst, s2));
 }
@@ -256,7 +256,7 @@ void accept_neighbor_request(u_int32_t src, u_int32_t dst)
 void accept_neighbor_request2(u_int32_t src, u_int32_t dst)
 {
     if (src != our_addr)
-	log(LOG_INFO, 0,
+	logit(LOG_INFO, 0,
 	    "ignoring spurious DVMRP neighbor request2 from %s to %s",
 	    inet_fmt(src, s1), inet_fmt(dst, s2));
 }
@@ -309,7 +309,7 @@ void accept_neighbors(u_int32_t src, u_int32_t dst, u_char *p, int datalen,
 	Neighbor       *old_neighbors;
 
 	if (datalen < 4 + 3) {
-	    log(LOG_WARNING, 0, "received truncated interface record from %s",
+	    logit(LOG_WARNING, 0, "received truncated interface record from %s",
 		inet_fmt(src, s1));
 	    return;
 	}
@@ -354,7 +354,7 @@ void accept_neighbors(u_int32_t src, u_int32_t dst, u_char *p, int datalen,
 			if (nb_i->addr == nb_n->addr) {
 			    if (nb_i->metric != nb_n->metric
 				|| nb_i->threshold != nb_n->threshold)
-				log(LOG_WARNING, 0,
+				logit(LOG_WARNING, 0,
 				    "inconsistent %s for neighbor %s of %s",
 				    "metric/threshold",
 				    inet_fmt(nb_i->addr, s1),
@@ -386,7 +386,7 @@ void accept_neighbors(u_int32_t src, u_int32_t dst, u_char *p, int datalen,
 	    Node       *n_node;
 
 	    if (datalen < 4) {
-		log(LOG_WARNING, 0, "received truncated neighbor list from %s",
+		logit(LOG_WARNING, 0, "received truncated neighbor list from %s",
 		    inet_fmt(src, s1));
 		return;
 	    }
@@ -398,7 +398,7 @@ void accept_neighbors(u_int32_t src, u_int32_t dst, u_char *p, int datalen,
 	    for (nb = old_neighbors; nb; nb = nb->next)
 		if (nb->addr == neighbor) {
 		    if (metric != nb->metric || threshold != nb->threshold)
-			log(LOG_WARNING, 0,
+			logit(LOG_WARNING, 0,
 			    "inconsistent %s for neighbor %s of %s",
 			    "metric/threshold",
 			    inet_fmt(nb->addr, s1), inet_fmt(node->addr, s2));
@@ -444,7 +444,7 @@ void accept_neighbors2(u_int32_t src, u_int32_t dst, u_char *p, int datalen,
 	Neighbor       *old_neighbors;
 
 	if (datalen < 4 + 4) {
-	    log(LOG_WARNING, 0, "received truncated interface record from %s",
+	    logit(LOG_WARNING, 0, "received truncated interface record from %s",
 		inet_fmt(src, s1));
 	    return;
 	}
@@ -495,7 +495,7 @@ void accept_neighbors2(u_int32_t src, u_int32_t dst, u_char *p, int datalen,
 			if (nb_i->addr == nb_n->addr) {
 			    if (nb_i->metric != nb_n->metric
 				|| nb_i->threshold != nb_i->threshold)
-				log(LOG_WARNING, 0,
+				logit(LOG_WARNING, 0,
 				    "inconsistent %s for neighbor %s of %s",
 				    "metric/threshold",
 				    inet_fmt(nb_i->addr, s1),
@@ -527,7 +527,7 @@ void accept_neighbors2(u_int32_t src, u_int32_t dst, u_char *p, int datalen,
 	    Node       *n_node;
 
 	    if (datalen < 4) {
-		log(LOG_WARNING, 0, "received truncated neighbor list from %s",
+		logit(LOG_WARNING, 0, "received truncated neighbor list from %s",
 		    inet_fmt(src, s1));
 		return;
 	    }
@@ -542,7 +542,7 @@ void accept_neighbors2(u_int32_t src, u_int32_t dst, u_char *p, int datalen,
 	    for (nb = old_neighbors; nb; nb = nb->next)
 		if (nb->addr == neighbor) {
 		    if (metric != nb->metric || threshold != nb->threshold)
-			log(LOG_WARNING, 0,
+			logit(LOG_WARNING, 0,
 			    "inconsistent %s for neighbor %s of %s",
 			    "metric/threshold",
 			    inet_fmt(nb->addr, s1), inet_fmt(node->addr, s2));
@@ -571,7 +571,7 @@ void accept_neighbors2(u_int32_t src, u_int32_t dst, u_char *p, int datalen,
 
 void check_vif_state(void)
 {
-    log(LOG_NOTICE, 0, "network marked down...");
+    logit(LOG_NOTICE, 0, "network marked down...");
 }
 
 
@@ -914,7 +914,7 @@ int main(int argc, char **argv)
 		perror("poll");
 	    continue;
 	} else if (count == 0) {
-	    log(LOG_DEBUG, 0, "Timed out receiving neighbor lists");
+	    logit(LOG_DEBUG, 0, "Timed out receiving neighbor lists");
 	    if (retry_requests(routers))
 		continue;
 	    else

@@ -1,4 +1,4 @@
-/*	$NetBSD: session.c,v 1.23.2.2 2003/09/17 23:25:52 christos Exp $	*/
+/*	$NetBSD: session.c,v 1.23.2.3 2004/07/23 15:03:56 tron Exp $	*/
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -397,7 +397,7 @@ do_authenticated1(Authctxt *authctxt)
 			 * Any unknown messages in this phase are ignored,
 			 * and a failure message is returned.
 			 */
-			log("Unknown packet type received after authentication: %d", type);
+			logit("Unknown packet type received after authentication: %d", type);
 		}
 		packet_start(success ? SSH_SMSG_SUCCESS : SSH_SMSG_FAILURE);
 		packet_send();
@@ -1430,7 +1430,7 @@ session_subsystem_req(Session *s)
 	int i;
 
 	packet_check_eom();
-	log("subsystem request for %.100s", subsys);
+	logit("subsystem request for %.100s", subsys);
 
 	for (i = 0; i < options.num_subsystems; i++) {
 		if (strcmp(subsys, options.subsystem_name[i]) == 0) {
@@ -1449,7 +1449,7 @@ session_subsystem_req(Session *s)
 	}
 
 	if (!success)
-		log("subsystem request for %.100s failed, subsystem not found",
+		logit("subsystem request for %.100s failed, subsystem not found",
 		    subsys);
 
 	xfree(subsys);
@@ -1520,7 +1520,7 @@ session_input_channel_req(Channel *c, const char *rtype)
 	Session *s;
 
 	if ((s = session_by_channel(c->self)) == NULL) {
-		log("session_input_channel_req: no session %d req %.100s",
+		logit("session_input_channel_req: no session %d req %.100s",
 		    c->self, rtype);
 		return 0;
 	}

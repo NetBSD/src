@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.13 2000/10/11 14:46:16 is Exp $	*/
+/*	$NetBSD: defs.h,v 1.13.2.1 2004/07/23 15:03:58 tron Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -170,7 +170,7 @@ int	 inlist __P((struct namelist *, char *));
 void	 insert __P((char *,
 	    struct namelist *, struct namelist *, struct subcmd *));
 void	 install __P((char *, char *, int, int));
-void	 log __P((FILE *, const char *, ...))
+void	 dolog __P((FILE *, const char *, ...))
      __attribute__((__format__(__printf__, 2, 3)));
 struct namelist *
 	 lookup __P((char *, int, struct namelist *));

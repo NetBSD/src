@@ -1,4 +1,4 @@
-/*	$NetBSD: packet.h,v 1.1.1.11.2.1 2002/06/26 16:53:34 tv Exp $	*/
+/*	$NetBSD: packet.h,v 1.1.1.11.2.2 2004/07/23 15:03:56 tron Exp $	*/
 /*	$OpenBSD: packet.h,v 1.35 2002/06/19 18:01:00 markus Exp $	*/
 
 /*
@@ -91,7 +91,7 @@ int      packet_set_maxsize(int);
 do { \
 	int _len = packet_remaining(); \
 	if (_len > 0) { \
-		log("Packet integrity error (%d bytes remaining) at %s:%d", \
+		logit("Packet integrity error (%d bytes remaining) at %s:%d", \
 		    _len ,__FILE__, __LINE__); \
 		packet_disconnect("Packet integrity error."); \
 	} \

@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-rh-rsa.c,v 1.1.1.8 2002/04/22 07:35:43 itojun Exp $	*/
+/*	$NetBSD: auth-rh-rsa.c,v 1.1.1.8.2.1 2004/07/23 15:03:55 tron Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -76,7 +76,7 @@ auth_rhosts_rsa(struct passwd *pw, char *cuser, Key *client_host_key)
 
 	/* Perform the challenge-response dialog with the client for the host key. */
 	if (!auth_rsa_challenge_dialog(client_host_key)) {
-		log("Client on %.800s failed to respond correctly to host authentication.",
+		logit("Client on %.800s failed to respond correctly to host authentication.",
 		    chost);
 		return 0;
 	}

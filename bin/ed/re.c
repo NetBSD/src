@@ -1,4 +1,4 @@
-/*	$NetBSD: re.c,v 1.17 2002/01/23 19:07:33 atatat Exp $	*/
+/*	$NetBSD: re.c,v 1.17.2.1 2004/07/23 15:03:55 tron Exp $	*/
 
 /* re.c: This file contains the regular expression interface routines for
    the ed line editor. */
@@ -33,7 +33,7 @@
 #if 0
 static char *rcsid = "@(#)re.c,v 1.6 1994/02/01 00:34:43 alm Exp";
 #else
-__RCSID("$NetBSD: re.c,v 1.17 2002/01/23 19:07:33 atatat Exp $");
+__RCSID("$NetBSD: re.c,v 1.17.2.1 2004/07/23 15:03:55 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -47,7 +47,7 @@ char errmsg[MAXPATHLEN + 40] = "";
 pattern_t *
 get_compiled_pattern()
 {
-	static pattern_t *exp = NULL;
+	static pattern_t *expr = NULL;
 
 	char *exps;
 	char delimiter;
@@ -57,25 +57,25 @@ get_compiled_pattern()
 		sprintf(errmsg, "invalid pattern delimiter");
 		return NULL;
 	} else if (delimiter == '\n' || *++ibufp == '\n' || *ibufp == delimiter) {
-		if (!exp) sprintf(errmsg, "no previous pattern");
-		return exp;
+		if (!expr) sprintf(errmsg, "no previous pattern");
+		return expr;
 	} else if ((exps = extract_pattern(delimiter)) == NULL)
 		return NULL;
 	/* buffer alloc'd && not reserved */
-	if (exp && !patlock)
-		regfree(exp);
-	else if ((exp = (pattern_t *) malloc(sizeof(pattern_t))) == NULL) {
+	if (expr && !patlock)
+		regfree(expr);
+	else if ((expr = (pattern_t *) malloc(sizeof(pattern_t))) == NULL) {
 		fprintf(stderr, "%s\n", strerror(errno));
 		sprintf(errmsg, "out of memory");
 		return NULL;
 	}
 	patlock = 0;
-	if ((n = regcomp(exp, exps, ere)) != 0) {
-		regerror(n, exp, errmsg, sizeof errmsg);
-		free(exp);
-		return exp = NULL;
+	if ((n = regcomp(expr, exps, ere)) != 0) {
+		regerror(n, expr, errmsg, sizeof errmsg);
+		free(expr);
+		return expr = NULL;
 	}
-	return exp;
+	return expr;
 }
 
 

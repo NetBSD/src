@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.2.2.2 2002/12/07 00:35:22 he Exp $	*/
+/*	$NetBSD: defs.h,v 1.2.2.3 2004/07/23 15:03:57 tron Exp $	*/
 
 /*
  * The mrouted program is covered by the license in the accompanying file
@@ -148,7 +148,7 @@ extern char *		sys_errlist[];
 #endif
 
 /* main.c */
-extern void		log(int, int, const char *, ...)
+extern void		logit(int, int, const char *, ...)
 	__attribute__((__format__(__printf__, 3, 4)));
 extern int		register_input_handler(int fd, ihfunc_t func);
 

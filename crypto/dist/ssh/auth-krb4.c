@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-krb4.c,v 1.6.2.1 2002/06/26 16:52:37 tv Exp $	*/
+/*	$NetBSD: auth-krb4.c,v 1.6.2.2 2004/07/23 15:03:55 tron Exp $	*/
 /*
  * Copyright (c) 1999 Dug Song.  All rights reserved.
  *
@@ -79,7 +79,7 @@ krb4_init(void *context)
 			return (1);
 	}
 	/* Failure - cancel cleanup function, leaving ticket for inspection. */
-	log("WARNING: bad ticket file %s", authctxt->krb4_ticket_file);
+	logit("WARNING: bad ticket file %s", authctxt->krb4_ticket_file);
 
 	fatal_remove_cleanup(krb4_cleanup_proc, authctxt);
 	cleanup_registered = 0;
@@ -115,7 +115,7 @@ auth_krb4_password(Authctxt *authctxt, const char *password)
 	if (pw->pw_uid != 0 && krb_get_lrealm(realm, 1) == KSUCCESS) {
 		/* Set up our ticket file. */
 		if (!krb4_init(authctxt)) {
-			log("Couldn't initialize Kerberos ticket file for %s!",
+			logit("Couldn't initialize Kerberos ticket file for %s!",
 			    pw->pw_name);
 			goto failure;
 		}
@@ -142,7 +142,7 @@ auth_krb4_password(Authctxt *authctxt, const char *password)
 
 		if (r == KSUCCESS) {
 			if ((hp = gethostbyname(localhost)) == NULL) {
-				log("Couldn't get local host address!");
+				logit("Couldn't get local host address!");
 				goto failure;
 			}
 			memmove((void *)&faddr, (void *)hp->h_addr,
@@ -156,12 +156,12 @@ auth_krb4_password(Authctxt *authctxt, const char *password)
 				 * Probably didn't have a srvtab on
 				 * localhost. Disallow login.
 				 */
-				log("Kerberos v4 TGT for %s unverifiable, "
+				logit("Kerberos v4 TGT for %s unverifiable, "
 				    "no srvtab installed? krb_rd_req: %s",
 				    pw->pw_name, krb_err_txt[r]);
 				goto failure;
 			} else if (r != KSUCCESS) {
-				log("Kerberos v4 %s ticket unverifiable: %s",
+				logit("Kerberos v4 %s ticket unverifiable: %s",
 				    KRB4_SERVICE_NAME, krb_err_txt[r]);
 				goto failure;
 			}
@@ -170,7 +170,7 @@ auth_krb4_password(Authctxt *authctxt, const char *password)
 			 * Disallow login if no rcmd service exists, and
 			 * log the error.
 			 */
-			log("Kerberos v4 TGT for %s unverifiable: %s; %s.%s "
+			logit("Kerberos v4 TGT for %s unverifiable: %s; %s.%s "
 			    "not registered, or srvtab is wrong?", pw->pw_name,
 			    krb_err_txt[r], KRB4_SERVICE_NAME, phost);
 			goto failure;
@@ -251,7 +251,7 @@ auth_krb4(Authctxt *authctxt, KTEXT auth, char **client)
 
 	/* Check ~/.klogin authorization now. */
 	if (kuserok(&adat, authctxt->user) != KSUCCESS) {
-		log("Kerberos v4 .klogin authorization failed for %s to "
+		logit("Kerberos v4 .klogin authorization failed for %s to "
 		    "account %s", *client, authctxt->user);
 		xfree(*client);
 		*client = NULL;
@@ -296,14 +296,14 @@ auth_krb4_tgt(Authctxt *authctxt, const char *string)
 	temporarily_use_uid(pw);
 
 	if (!radix_to_creds(string, &creds)) {
-		log("Protocol error decoding Kerberos v4 TGT");
+		logit("Protocol error decoding Kerberos v4 TGT");
 		goto failure;
 	}
 	if (strncmp(creds.service, "", 1) == 0)	/* backward compatibility */
 		strlcpy(creds.service, "krbtgt", sizeof creds.service);
 
 	if (strcmp(creds.service, "krbtgt")) {
-		log("Kerberos v4 TGT (%s%s%s@%s) rejected for %s",
+		logit("Kerberos v4 TGT (%s%s%s@%s) rejected for %s",
 		    creds.pname, creds.pinst[0] ? "." : "", creds.pinst,
 		    creds.realm, pw->pw_name);
 		goto failure;
@@ -350,7 +350,7 @@ auth_afs_token(Authctxt *authctxt, const char *token_string)
 		return (0);
 
 	if (!radix_to_creds(token_string, &creds)) {
-		log("Protocol error decoding AFS token");
+		logit("Protocol error decoding AFS token");
 		return (0);
 	}
 	if (strncmp(creds.service, "", 1) == 0)	/* backward compatibility */
@@ -362,7 +362,7 @@ auth_afs_token(Authctxt *authctxt, const char *token_string)
 		uid = pw->pw_uid;
 
 	if (kafs_settoken(creds.realm, uid, &creds)) {
-		log("AFS token (%s@%s) rejected for %s",
+		logit("AFS token (%s@%s) rejected for %s",
 		    creds.pname, creds.realm, pw->pw_name);
 		memset(&creds, 0, sizeof(creds));
 		return (0);

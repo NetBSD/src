@@ -1,4 +1,4 @@
-/*	$NetBSD: scard.c,v 1.4.2.1 2002/06/26 16:53:42 tv Exp $	*/
+/*	$NetBSD: scard.c,v 1.4.2.2 2004/07/23 15:03:56 tron Exp $	*/
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
  *
@@ -527,7 +527,7 @@ sc_put_key(Key *prv, const char *id)
 	}
 	if (!sectok_swOK(sw))
 		goto done;
-	log("cyberflex_load_rsa_priv done");
+	logit("cyberflex_load_rsa_priv done");
 	key_fid[0] = 0x73;
 	key_fid[1] = 0x68;
 	if (cyberflex_load_rsa_pub(fd, cla, key_fid, len, elements[5],
@@ -537,7 +537,7 @@ sc_put_key(Key *prv, const char *id)
 	}
 	if (!sectok_swOK(sw))
 		goto done;
-	log("cyberflex_load_rsa_pub done");
+	logit("cyberflex_load_rsa_pub done");
 	status = 0;
 
 done:

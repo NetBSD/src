@@ -1,4 +1,4 @@
-/*	$NetBSD: ttymodes.c,v 1.1.1.8.2.1 2002/06/26 16:54:39 tv Exp $	*/
+/*	$NetBSD: ttymodes.c,v 1.1.1.8.2.2 2004/07/23 15:03:57 tron Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -268,7 +268,7 @@ tty_make_modes(int fd, struct termios *tiop)
 
 	if (tiop == NULL) {
 		if (tcgetattr(fd, &tio) == -1) {
-			log("tcgetattr: %.100s", strerror(errno));
+			logit("tcgetattr: %.100s", strerror(errno));
 			goto end;
 		}
 	} else
@@ -342,7 +342,7 @@ tty_parse_modes(int fd, int *n_bytes_ptr)
 	 * modes, they will initially have reasonable values.
 	 */
 	if (tcgetattr(fd, &tio) == -1) {
-		log("tcgetattr: %.100s", strerror(errno));
+		logit("tcgetattr: %.100s", strerror(errno));
 		failure = -1;
 	}
 
@@ -421,7 +421,7 @@ tty_parse_modes(int fd, int *n_bytes_ptr)
 					 * left in the packet; hopefully there is nothing
 					 * more coming after the mode data.
 					 */
-					log("parse_tty_modes: unknown opcode %d", opcode);
+					logit("parse_tty_modes: unknown opcode %d", opcode);
 					goto set;
 				}
 			} else {
@@ -437,7 +437,7 @@ tty_parse_modes(int fd, int *n_bytes_ptr)
 					(void) packet_get_int();
 					break;
 				} else {
-					log("parse_tty_modes: unknown opcode %d", opcode);
+					logit("parse_tty_modes: unknown opcode %d", opcode);
 					goto set;
 				}
 			}
@@ -447,7 +447,7 @@ tty_parse_modes(int fd, int *n_bytes_ptr)
 set:
 	if (*n_bytes_ptr != n_bytes) {
 		*n_bytes_ptr = n_bytes;
-		log("parse_tty_modes: n_bytes_ptr != n_bytes: %d %d",
+		logit("parse_tty_modes: n_bytes_ptr != n_bytes: %d %d",
 		    *n_bytes_ptr, n_bytes);
 		return;		/* Don't process bytes passed */
 	}
@@ -456,5 +456,5 @@ set:
 
 	/* Set the new modes for the terminal. */
 	if (tcsetattr(fd, TCSANOW, &tio) == -1)
-		log("Setting tty modes failed: %.100s", strerror(errno));
+		logit("Setting tty modes failed: %.100s", strerror(errno));
 }

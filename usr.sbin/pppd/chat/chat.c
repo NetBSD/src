@@ -1,4 +1,4 @@
-/*	$NetBSD: chat.c,v 1.25 2001/09/24 13:22:38 wiz Exp $	*/
+/*	$NetBSD: chat.c,v 1.25.2.1 2004/07/23 15:03:59 tron Exp $	*/
 
 /*
  *	Chat -- a program for automatic session establishment (i.e. dial
@@ -93,7 +93,7 @@
 #if 0
 static const char rcsid[] = "Id: chat.c,v 1.26 1999/12/23 01:39:54 paulus Exp ";
 #else
-__RCSID("$NetBSD: chat.c,v 1.25 2001/09/24 13:22:38 wiz Exp $");
+__RCSID("$NetBSD: chat.c,v 1.25.2.1 2004/07/23 15:03:59 tron Exp $");
 #endif
 #endif
 
@@ -207,7 +207,7 @@ int say_next = 0, hup_next = 0;
 void *dup_mem __P((void *b, size_t c));
 void *copy_of __P((char *s));
 void usage __P((void));
-void logf __P((const char *fmt, ...));
+void logit __P((const char *fmt, ...));
 void fatal __P((int code, const char *fmt, ...));
 SIGTYPE sigalrm __P((int signo));
 SIGTYPE sigint __P((int signo));
@@ -473,7 +473,7 @@ char line[1024];
 /*
  * Send a message to syslog and/or stderr.
  */
-void logf __V((const char *fmt, ...))
+void logit __V((const char *fmt, ...))
 {
     va_list args;
 
@@ -538,7 +538,7 @@ int signo;
 	fatal(2, "Can't set file mode flags on stdin: %m");
 
     if (verbose)
-	logf("alarm");
+	logit("alarm");
 }
 
 void unalarm()
@@ -967,9 +967,9 @@ char *s;
  * The expectation did not occur. This is terminal.
  */
     if (fail_reason)
-	logf("Failed (%s)", fail_reason);
+	logit("Failed (%s)", fail_reason);
     else
-	logf("Failed");
+	logit("Failed");
     terminate(exit_code);
 }
 
@@ -1045,7 +1045,7 @@ register char *s;
 	abort_string[n_aborts++] = s1;
 
 	if (verbose)
-	    logf("abort on (%v)", s);
+	    logit("abort on (%v)", s);
 	return;
     }
 
@@ -1071,7 +1071,7 @@ register char *s;
 		pack++;
 		n_aborts--;
 		if (verbose)
-		    logf("clear abort on (%v)", s);
+		    logit("clear abort on (%v)", s);
 	    }
 	}
         free(s1);
@@ -1095,7 +1095,7 @@ register char *s;
 	report_string[n_reports++] = s1;
 	
 	if (verbose)
-	    logf("report (%v)", s);
+	    logit("report (%v)", s);
 	return;
     }
 
@@ -1120,7 +1120,7 @@ register char *s;
 		pack++;
 		n_reports--;
 		if (verbose)
-		    logf("clear report (%v)", s);
+		    logit("clear report (%v)", s);
 	    }
 	}
         free(s1);
@@ -1138,7 +1138,7 @@ register char *s;
 	    timeout = DEFAULT_CHAT_TIMEOUT;
 
 	if (verbose)
-	    logf("timeout set to %d seconds", timeout);
+	    logit("timeout set to %d seconds", timeout);
 
 	return;
     }
@@ -1201,7 +1201,7 @@ int get_char()
 	return ((int)c & 0x7F);
 
     default:
-	logf("warning: read() on stdin returned %d", status);
+	logit("warning: read() on stdin returned %d", status);
 
     case -1:
 	if ((status = fcntl(0, F_GETFL, 0)) == -1)
@@ -1229,7 +1229,7 @@ int c;
 	return (0);
 	
     default:
-	logf("warning: write() on stdout returned %d", status);
+	logit("warning: write() on stdout returned %d", status);
 	
     case -1:
 	if ((status = fcntl(0, F_GETFL, 0)) == -1)
@@ -1251,9 +1251,9 @@ int c;
 
 	if (verbose) {
 	    if (errno == EINTR || errno == EWOULDBLOCK)
-		logf(" -- write timed out");
+		logit(" -- write timed out");
 	    else
-		logf(" -- write failed: %m");
+		logit(" -- write failed: %m");
 	}
 	return (0);
     }
@@ -1268,9 +1268,9 @@ register char *s;
 
     if (verbose) {
 	if (quiet)
-	    logf("send (?????\?)");	/* backslash to avoid trigraph ??) */
+	    logit("send (?????\?)");	/* backslash to avoid trigraph ??) */
 	else
-	    logf("send (%v)", s);
+	    logit("send (%v)", s);
     }
 
     alarm(timeout); alarmed = 0;
@@ -1357,17 +1357,17 @@ register char *string;
     minlen = (len > sizeof(fail_buffer)? len: sizeof(fail_buffer)) - 1;
 
     if (verbose)
-	logf("expect (%v)", string);
+	logit("expect (%v)", string);
 
     if (len > STR_LEN) {
-	logf("expect string is too long");
+	logit("expect string is too long");
 	exit_code = 1;
 	return 0;
     }
 
     if (len == 0) {
 	if (verbose)
-	    logf("got it");
+	    logit("got it");
 	return (1);
     }
 
@@ -1381,16 +1381,16 @@ register char *string;
 	    echo_stderr(c);
 	if (verbose && c == '\n') {
 	    if (s == logged)
-		logf("");	/* blank line */
+		logit("");	/* blank line */
 	    else
-		logf("%0.*v", s - logged, logged);
+		logit("%0.*v", s - logged, logged);
 	    logged = s + 1;
 	}
 
 	*s++ = c;
 
 	if (verbose && s >= logged + 80) {
-	    logf("%0.*v", s - logged, logged);
+	    logit("%0.*v", s - logged, logged);
 	    logged = s;
 	}
 
@@ -1435,8 +1435,8 @@ register char *string;
 	    strncmp(s - len, string, len) == 0) {
 	    if (verbose) {
 		if (s > logged)
-		    logf("%0.*v", s - logged, logged);
-		logf(" -- got it\n");
+		    logit("%0.*v", s - logged, logged);
+		logit(" -- got it\n");
 	    }
 
 	    alarm(0);
@@ -1449,8 +1449,8 @@ register char *string;
 		strncmp(s - abort_len, abort_string[n], abort_len) == 0) {
 		if (verbose) {
 		    if (s > logged)
-			logf("%0.*v", s - logged, logged);
-		    logf(" -- failed");
+			logit("%0.*v", s - logged, logged);
+		    logit(" -- failed");
 		}
 
 		alarm(0);
@@ -1464,7 +1464,7 @@ register char *string;
 	if (s >= end) {
 	    if (logged < s - minlen) {
 		if (verbose)
-		    logf("%0.*v", s - logged, logged);
+		    logit("%0.*v", s - logged, logged);
 		logged = s;
 	    }
 	    s -= minlen;
@@ -1474,16 +1474,16 @@ register char *string;
 	}
 
 	if (alarmed && verbose)
-	    logf("warning: alarm synchronization problem");
+	    logit("warning: alarm synchronization problem");
     }
 
     alarm(0);
     
     if (verbose && printed) {
 	if (alarmed)
-	    logf(" -- read timed out");
+	    logit(" -- read timed out");
 	else
-	    logf(" -- read failed: %m");
+	    logit(" -- read failed: %m");
     }
 
     exit_code = 3;

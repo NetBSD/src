@@ -1,4 +1,4 @@
-/*	$NetBSD: auth.c,v 1.12.2.4 2003/06/15 12:45:56 tron Exp $	*/
+/*	$NetBSD: auth.c,v 1.12.2.5 2004/07/23 15:03:55 tron Exp $	*/
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -182,13 +182,13 @@ allowed_user(struct passwd * pw)
 	 * XXX requesting user.  --thorpej
 	 */
 	if (stat(shell, &st) != 0) {
-		log("User %.100s not allowed because shell %.100s does not exist",
+		logit("User %.100s not allowed because shell %.100s does not exist",
 		    pw->pw_name, shell);
 		return 0;
 	}
 	if (S_ISREG(st.st_mode) == 0 ||
 	    (st.st_mode & (S_IXOTH|S_IXUSR|S_IXGRP)) == 0) {
-		log("User %.100s not allowed because shell %.100s is not executable",
+		logit("User %.100s not allowed because shell %.100s is not executable",
 		    pw->pw_name, shell);
 		return 0;
 	}
@@ -208,7 +208,7 @@ allowed_user(struct passwd * pw)
 		for (i = 0; i < options.num_deny_users; i++)
 			if (match_user(pw->pw_name, hostname, ipaddr,
 			    options.deny_users[i])) {
-				log("User %.100s not allowed because listed in DenyUsers",
+				logit("User %.100s not allowed because listed in DenyUsers",
 				    pw->pw_name);
 				return 0;
 			}
@@ -221,7 +221,7 @@ allowed_user(struct passwd * pw)
 				break;
 		/* i < options.num_allow_users iff we break for loop */
 		if (i >= options.num_allow_users) {
-			log("User %.100s not allowed because not listed in AllowUsers",
+			logit("User %.100s not allowed because not listed in AllowUsers",
 			    pw->pw_name);
 			return 0;
 		}
@@ -229,7 +229,7 @@ allowed_user(struct passwd * pw)
 	if (options.num_deny_groups > 0 || options.num_allow_groups > 0) {
 		/* Get the user's group access list (primary and supplementary) */
 		if (ga_init(pw->pw_name, pw->pw_gid) == 0) {
-			log("User %.100s not allowed because not in any group",
+			logit("User %.100s not allowed because not in any group",
 			    pw->pw_name);
 			return 0;
 		}
@@ -239,7 +239,7 @@ allowed_user(struct passwd * pw)
 			if (ga_match(options.deny_groups,
 			    options.num_deny_groups)) {
 				ga_free();
-				log("User %.100s not allowed because a group is listed in DenyGroups",
+				logit("User %.100s not allowed because a group is listed in DenyGroups",
 				    pw->pw_name);
 				return 0;
 			}
@@ -251,7 +251,7 @@ allowed_user(struct passwd * pw)
 			if (!ga_match(options.allow_groups,
 			    options.num_allow_groups)) {
 				ga_free();
-				log("User %.100s not allowed because none of user's groups are listed in AllowGroups",
+				logit("User %.100s not allowed because none of user's groups are listed in AllowGroups",
 				    pw->pw_name);
 				return 0;
 			}
@@ -280,7 +280,7 @@ auth_log(Authctxt *authctxt, int authenticated, char *method, char *info)
 	    !authctxt->valid ||
 	    authctxt->failures >= AUTH_FAIL_LOG ||
 	    strcmp(method, "password") == 0)
-		authlog = log;
+		authlog = logit;
 
 	if (authctxt->postponed)
 		authmsg = "Postponed";
@@ -313,12 +313,12 @@ auth_root_allowed(char *method)
 		break;
 	case PERMIT_FORCED_ONLY:
 		if (forced_command) {
-			log("Root login accepted for forced command.");
+			logit("Root login accepted for forced command.");
 			return 1;
 		}
 		break;
 	}
-	log("ROOT LOGIN REFUSED FROM %.200s", get_remote_ipaddr());
+	logit("ROOT LOGIN REFUSED FROM %.200s", get_remote_ipaddr());
 	return 0;
 }
 
@@ -410,7 +410,7 @@ check_key_in_hostfiles(struct passwd *pw, Key *key, const char *host,
 		    (stat(user_hostfile, &st) == 0) &&
 		    ((st.st_uid != 0 && st.st_uid != pw->pw_uid) ||
 		    (st.st_mode & 022) != 0)) {
-			log("Authentication refused for %.100s: "
+			logit("Authentication refused for %.100s: "
 			    "bad owner or modes for %.200s",
 			    pw->pw_name, user_hostfile);
 		} else {

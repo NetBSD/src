@@ -1,4 +1,4 @@
-/*	$NetBSD: fsinfo.h,v 1.3 2001/05/13 18:06:59 veego Exp $	*/
+/*	$NetBSD: fsinfo.h,v 1.3.2.1 2004/07/23 15:03:57 tron Exp $	*/
 
 /*
  * Copyright (c) 1997-2001 Erez Zadok
@@ -95,7 +95,7 @@ extern void init_que(qelem *);
 extern void ins_que(qelem *, qelem *);
 extern void lerror(ioloc *l, char *fmt, ...)
 	__attribute__((__format__(__printf__, 2, 3)));
-extern void log(char *fmt, ...)
+extern void logit(char *fmt, ...)
 	__attribute__((__format__(__printf__, 1, 2)));
 extern void lwarning(ioloc *l, char *fmt, ...)
 	__attribute__((__format__(__printf__, 2, 3)));

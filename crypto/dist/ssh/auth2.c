@@ -1,4 +1,4 @@
-/*	$NetBSD: auth2.c,v 1.16.2.1 2002/06/26 16:52:55 tv Exp $	*/
+/*	$NetBSD: auth2.c,v 1.16.2.2 2004/07/23 15:03:55 tron Exp $	*/
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -155,7 +155,7 @@ input_userauth_request(int type, u_int32_t seq, void *ctxt)
 			authctxt->valid = 1;
 			debug2("input_userauth_request: setting up authctxt for %s", user);
 		} else {
-			log("input_userauth_request: illegal user %s", user);
+			logit("input_userauth_request: illegal user %s", user);
 		}
 		setproctitle("%s%s", authctxt->pw ? user : "unknown",
 		    use_privsep ? " [net]" : "");

@@ -27,7 +27,7 @@
  *	i4b daemon - process handling routines
  *	--------------------------------------
  *
- *	$Id: process.c,v 1.1.1.1 2001/01/06 13:00:23 martin Exp $ 
+ *	$Id: process.c,v 1.1.1.1.2.1 2004/07/23 15:03:58 tron Exp $ 
  *
  * $FreeBSD$
  *
@@ -57,7 +57,7 @@ check_pid(void)
 		
 		if((fscanf(fp, "%d", &oldpid)) != 1)
 		{
-			log(LL_ERR, "ERROR, reading pid from lockfile failed, terminating!");
+			logit(LL_ERR, "ERROR, reading pid from lockfile failed, terminating!");
 			exit(1);
 		}
 
@@ -71,7 +71,7 @@ check_pid(void)
 
 			fclose(fp);
 
-			DBGL(DL_PROC, (log(LL_DBG, "removing old lock-file %s", PIDFILE)));
+			DBGL(DL_PROC, (logit(LL_DBG, "removing old lock-file %s", PIDFILE)));
 
 			/* remove file */
 			
@@ -81,7 +81,7 @@ check_pid(void)
 		{
 			/* process is still alive */
 			
-			log(LL_ERR, "ERROR, another daemon is already running, pid = %d, terminating!", oldpid);
+			logit(LL_ERR, "ERROR, another daemon is already running, pid = %d, terminating!", oldpid);
 			exit(1);
 		}
 	}
@@ -99,13 +99,13 @@ write_pid(void)
 	
 	if((fp = fopen(PIDFILE, "w")) == NULL)
 	{
-		log(LL_ERR, "ERROR, can't open lockfile for writing, terminating");
+		logit(LL_ERR, "ERROR, can't open lockfile for writing, terminating");
 		do_exit(1);
 	}
 
 	if((fprintf(fp, "%d", (int)getpid())) == EOF)
 	{
-		log(LL_ERR, "ERROR, can't write pid to lockfile, terminating");
+		logit(LL_ERR, "ERROR, can't write pid to lockfile, terminating");
 		do_exit(1);
 	}
 
@@ -125,7 +125,7 @@ daemonize(void)
 	switch (fork())
 	{
 		case -1:		/* error */
-			log(LL_ERR, "ERROR, daemonize/fork: %s", strerror(errno));
+			logit(LL_ERR, "ERROR, daemonize/fork: %s", strerror(errno));
 			exit(1);
 		case 0:			/* child */
 			break;
@@ -137,7 +137,7 @@ daemonize(void)
 
 	if(setsid() == -1)
 	{
-		log(LL_ERR, "ERROR, setsid returns: %s", strerror(errno));
+		logit(LL_ERR, "ERROR, setsid returns: %s", strerror(errno));
 		exit(1);
 	}
 
@@ -155,28 +155,28 @@ daemonize(void)
 		{
 			if(!isatty(fd))
 			{
-				log(LL_ERR, "ERROR, device %s is not a tty!", rdev);
+				logit(LL_ERR, "ERROR, device %s is not a tty!", rdev);
 				exit(1);
 			}
 			if((dup2(fd, STDIN_FILENO)) == -1)
 			{
-				log(LL_ERR, "ERROR, dup2 stdin: %s", strerror(errno));
+				logit(LL_ERR, "ERROR, dup2 stdin: %s", strerror(errno));
 				exit(1);
 			}				
 			if((dup2(fd, STDOUT_FILENO)) == -1)
 			{
-				log(LL_ERR, "ERROR, dup2 stdout: %s", strerror(errno));
+				logit(LL_ERR, "ERROR, dup2 stdout: %s", strerror(errno));
 				exit(1);
 			}				
 			if((dup2(fd, STDERR_FILENO)) == -1)
 			{
-				log(LL_ERR, "ERROR, dup2 stderr: %s", strerror(errno));
+				logit(LL_ERR, "ERROR, dup2 stderr: %s", strerror(errno));
 				exit(1);
 			}				
 		}
 		else
 		{
-			log(LL_ERR, "ERROR, cannot open redirected device: %s", strerror(errno));
+			logit(LL_ERR, "ERROR, cannot open redirected device: %s", strerror(errno));
 			exit(1);
 		}
 			
@@ -184,7 +184,7 @@ daemonize(void)
 		{
 			if((close(fd)) == -1)
 			{
-				log(LL_ERR, "ERROR, close in daemonize: %s", strerror(errno));
+				logit(LL_ERR, "ERROR, close in daemonize: %s", strerror(errno));
 				exit(1);
 			}				
 		}
@@ -193,7 +193,7 @@ daemonize(void)
 		
 		if((ioctl(STDIN_FILENO, TIOCSCTTY, (char *)NULL)) < 0)
 		{
-			log(LL_ERR, "ERROR, cannot setup tty as controlling terminal: %s", strerror(errno));
+			logit(LL_ERR, "ERROR, cannot setup tty as controlling terminal: %s", strerror(errno));
 			exit(1);
 		}
 
@@ -203,13 +203,13 @@ daemonize(void)
 		{
 			if(do_ttytype == 0)
 			{
-				log(LL_ERR, "ERROR, no environment variable TERM found and -t not specified!");
+				logit(LL_ERR, "ERROR, no environment variable TERM found and -t not specified!");
 				exit(1);
 			}
 
 			if((setenv("TERM", ttype, 1)) != 0)
 			{
-				log(LL_ERR, "ERROR, setenv TERM=%s failed: %s", ttype, strerror(errno));
+				logit(LL_ERR, "ERROR, setenv TERM=%s failed: %s", ttype, strerror(errno));
 				exit(1);
 			}
 		}

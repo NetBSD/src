@@ -1,4 +1,4 @@
-/*	$NetBSD: authfd.c,v 1.10.2.1 2002/06/26 16:52:56 tv Exp $	*/
+/*	$NetBSD: authfd.c,v 1.10.2.2 2004/07/23 15:03:55 tron Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -315,7 +315,7 @@ ssh_get_next_identity(AuthenticationConnection *auth, char **comment, int versio
 		buffer_get_bignum(&auth->identities, key->rsa->n);
 		*comment = buffer_get_string(&auth->identities, NULL);
 		if (bits != BN_num_bits(key->rsa->n))
-			log("Warning: identity keysize mismatch: actual %d, announced %u",
+			logit("Warning: identity keysize mismatch: actual %d, announced %u",
 			    BN_num_bits(key->rsa->n), bits);
 		break;
 	case 2:
@@ -356,7 +356,7 @@ ssh_decrypt_challenge(AuthenticationConnection *auth,
 	if (key->type != KEY_RSA1)
 		return 0;
 	if (response_type == 0) {
-		log("Compatibility with ssh protocol version 1.0 no longer supported.");
+		logit("Compatibility with ssh protocol version 1.0 no longer supported.");
 		return 0;
 	}
 	buffer_init(&buffer);
@@ -375,7 +375,7 @@ ssh_decrypt_challenge(AuthenticationConnection *auth,
 	type = buffer_get_char(&buffer);
 
 	if (agent_failed(type)) {
-		log("Agent admitted failure to authenticate using the key.");
+		logit("Agent admitted failure to authenticate using the key.");
 	} else if (type != SSH_AGENT_RSA_RESPONSE) {
 		fatal("Bad authentication response: %d", type);
 	} else {
@@ -424,7 +424,7 @@ ssh_agent_sign(AuthenticationConnection *auth,
 	}
 	type = buffer_get_char(&msg);
 	if (agent_failed(type)) {
-		log("Agent admitted failure to sign using the key.");
+		logit("Agent admitted failure to sign using the key.");
 	} else if (type != SSH2_AGENT_SIGN_RESPONSE) {
 		fatal("Bad authentication response: %d", type);
 	} else {
@@ -622,7 +622,7 @@ decode_reply(int type)
 	case SSH_AGENT_FAILURE:
 	case SSH_COM_AGENT2_FAILURE:
 	case SSH2_AGENT_FAILURE:
-		log("SSH_AGENT_FAILURE");
+		logit("SSH_AGENT_FAILURE");
 		return 0;
 	case SSH_AGENT_SUCCESS:
 		return 1;

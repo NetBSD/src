@@ -27,7 +27,7 @@
  *	i4b daemon - curses fullscreen output
  *	-------------------------------------
  *
- *	$Id: curses.c,v 1.3 2002/03/27 13:46:35 martin Exp $ 
+ *	$Id: curses.c,v 1.3.2.1 2004/07/23 15:03:58 tron Exp $ 
  *
  * $FreeBSD$
  *
@@ -64,7 +64,7 @@ init_screen(void)
 	
 	if((COLS < 80) || (LINES < 24))
 	{
-		log(LL_ERR, "ERROR, minimal screensize must be 80x24, is %dx%d, terminating!",COLS, LINES);
+		logit(LL_ERR, "ERROR, minimal screensize must be 80x24, is %dx%d, terminating!",COLS, LINES);
 		do_exit(1);
 	}		
 
@@ -76,19 +76,19 @@ init_screen(void)
 	
 	if((upper_w = newwin(uheight, COLS, UPPER_B, 0)) == NULL)
 	{
-		log(LL_ERR, "ERROR, curses init upper window, terminating!");
+		logit(LL_ERR, "ERROR, curses init upper window, terminating!");
 		exit(1);
 	}
 
 	if((mid_w = newwin(1, COLS, UPPER_B+uheight+1, 0)) == NULL)
 	{
-		log(LL_ERR, "ERROR, curses init mid window, terminating!");
+		logit(LL_ERR, "ERROR, curses init mid window, terminating!");
 		exit(1);
 	}
 
 	if((lower_w = newwin(lheight, COLS, UPPER_B+uheight+3, 0)) == NULL)
 	{
-		log(LL_ERR, "ERROR, curses init lower window, LINES = %d, lheight = %d, uheight = %d, terminating!", LINES, lheight, uheight);
+		logit(LL_ERR, "ERROR, curses init lower window, LINES = %d, lheight = %d, uheight = %d, terminating!", LINES, lheight, uheight);
 		exit(1);
 	}
 	
@@ -179,7 +179,7 @@ do_menu(void)
 	
 	if((menu_w = newwin(WMENU_HGT, WMENU_LEN, WMENU_POSLN, WMENU_POSCO )) == NULL)
 	{
-		log(LL_WRN, "ERROR, curses init menu window!");
+		logit(LL_WRN, "ERROR, curses init menu window!");
 		return;
 	}
 
@@ -591,7 +591,7 @@ display_chans(void)
 	
 	if((chan_w = newwin(nlines, ncols, pos_y, pos_x )) == NULL)
 	{
-		log(LL_WRN, "ERROR, curses init channel window!");
+		logit(LL_WRN, "ERROR, curses init channel window!");
 		if (cnt > 0)
 			free(cc);
 		return;
@@ -680,7 +680,7 @@ display_chans(void)
 		if((cep = get_cep_by_cc(cc[nlines-1].cntl, cc[nlines-1].chn))
 			!= NULL)
 		{
-			log(LL_CHD, "%05d %s manual disconnect (fullscreen menu)", cep->cdid, cep->name);
+			logit(LL_CHD, "%05d %s manual disconnect (fullscreen menu)", cep->cdid, cep->name);
 			cep->hangup = 1;
 			break;
 		}
@@ -715,7 +715,7 @@ display_cards(void)
 	
 	if((chan_w = newwin(nlines, ncols, pos_y, pos_x )) == NULL)
 	{
-		log(LL_WRN, "ERROR, curses init channel window!");
+		logit(LL_WRN, "ERROR, curses init channel window!");
 		return;
 	}
 
@@ -794,7 +794,7 @@ display_budget(void)
 	
 	if((bud_w = newwin(nlines, ncols, pos_y, pos_x )) == NULL)
 	{
-		log(LL_WRN, "ERROR, curses init budget window!");
+		logit(LL_WRN, "ERROR, curses init budget window!");
 		return;
 	}
 
