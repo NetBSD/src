@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)queue.h	8.3 (Berkeley) 12/13/93
+ *	from: @(#)queue.h	8.3 (Berkeley) 12/13/93
+ *	$Id: queue.h,v 1.4 1994/05/19 03:40:29 mycroft Exp $
  */
 
 #ifndef	_SYS_QUEUE_H_
