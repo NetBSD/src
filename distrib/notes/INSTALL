@@ -1,4 +1,4 @@
-	$NetBSD: INSTALL,v 1.64 1998/08/23 12:42:16 hubertf Exp $
+	$NetBSD: INSTALL,v 1.65 1998/09/09 21:44:18 thorpej Exp $
 #define	_FOR_RELEASE 0			/* 0 == snapshot; 1 == release */
 INSTALLATION NOTES for NetBSD/_MACH _VER
 
@@ -689,6 +689,7 @@ Chris Provenzano	<proven@NetBSD.ORG>
 Waldi Ravens		<waldi@moacs.indiv.nl.net>
 Darren Reed		<darrenr@NetBSD.ORG>
 Tim Rightnour		<garbled@NetBSD.ORG>
+Heiko W. Rupp		<hwr@NetBSD.ORG>
 Curt Sampson		<cjs@NetBSD.ORG>
 Wilfredo Sanchez	<wsanchez@NetBSD.ORG>
 Ty Sarna		<tsarna@NetBSD.ORG>
@@ -704,6 +705,7 @@ Bill Studenmund		<wrstuden@NetBSD.ORG>
 Kevin Sullivan		<sullivan@NetBSD.ORG>
 Kimmo Suominen		<kim@NetBSD.ORG>
 Matt Thomas		<matt@NetBSD.ORG>
+Christoph Toshok	<toshok@NetBSD.ORG>
 Enami Tsugutomo		<enami@NetBSD.ORG>
 Todd Vierling		<tv@NetBSD.ORG>
 Paul Vixie		<vixie@NetBSD.ORG>
