@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.23.10.1 2000/03/11 20:51:52 scw Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.23.10.2 2000/03/18 13:52:21 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -89,32 +89,4 @@ cpu_rootconf()
 		(booted_device) ? booted_device->dv_xname : "<unknown>");
 
 	setroot(booted_device, 0);
-}
-
-/*
- * find a device matching "name" and unit number
- */
-struct device *
-getdevunit(name, unit)
-	char *name;
-	int unit;
-{
-	struct device *dev = alldevs.tqh_first;
-	char num[10], fullname[16];
-	int lunit;
-
-	/* compute length of name and decimal expansion of unit number */
-	sprintf(num, "%d", unit);
-	lunit = strlen(num);
-	if (strlen(name) + lunit >= sizeof(fullname) - 1)
-		panic("config_attach: device name too long");
-
-	strcpy(fullname, name);
-	strcat(fullname, num);
-
-	while (strcmp(dev->dv_xname, fullname) != 0) {
-		if ((dev = dev->dv_list.tqe_next) == NULL)
-			return NULL;
-	}
-	return dev;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_pccvar.h,v 1.1.2.1 2000/03/11 20:51:50 scw Exp $	*/
+/*	$NetBSD: vme_pccvar.h,v 1.1.2.2 2000/03/18 13:52:11 scw Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -44,7 +44,6 @@ struct vme_pcc_softc {
 	struct device		sc_dev;
 	bus_space_tag_t		sc_bust;
 	bus_space_handle_t	sc_bush;
-	bus_space_handle_t	sc_a16bush;
 	bus_dma_tag_t		sc_dmat;
 	bus_space_tag_t		sc_vmet;
 	struct vme_chipset_tag	sc_vct;

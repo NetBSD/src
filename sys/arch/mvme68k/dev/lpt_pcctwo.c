@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_pcctwo.c,v 1.2.16.1 2000/03/11 20:51:49 scw Exp $ */
+/*	$NetBSD: lpt_pcctwo.c,v 1.2.16.2 2000/03/18 13:52:01 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -44,12 +44,13 @@
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/syslog.h>
 
 #include <machine/bus.h>
 
 #include <mvme68k/dev/lptvar.h>
-#include <mvme68k/dev/pcctwovar.h>
 #include <mvme68k/dev/pcctworeg.h>
+#include <mvme68k/dev/pcctwovar.h>
 
 
 /*
@@ -161,9 +162,9 @@ lpt_pcctwo_intr(arg)
 
 	i = lpt_intr(sc);
 
-	if (pcc2_reg_read(sc, PCCTWO_PRT_INPUT_STATUS) & PCCTWO_PRT_IN_SR_PINT)
-		pcc2_reg_write(sc, PCCTWO_PRT_ACK_ICSR,
-		    sc->sc_icr | PCCTWO_ICR_ICLR;
+	if (pcc2_reg_read(sc, PCC2REG_PRT_INPUT_STATUS) & PCCTWO_PRT_IN_SR_PINT)
+		pcc2_reg_write(sc, PCC2REG_PRT_ACK_ICSR,
+		    sc->sc_icr | PCCTWO_ICR_ICLR);
 
 	return i;
 }
@@ -176,7 +177,7 @@ lpt_pcctwo_open(sc, int_ena)
 	int sps;
 
 	pcc2_reg_write(sc, PCC2REG_PRT_ACK_ICSR,
-	    PCCTWO_ICR_ICLR | PCCTWO_ICR_EDGE;
+	    PCCTWO_ICR_ICLR | PCCTWO_ICR_EDGE);
 
 	pcc2_reg_write(sc, PCC2REG_PRT_CONTROL,
 	    pcc2_reg_read(sc, PCC2REG_PRT_CONTROL) | PCCTWO_PRT_CTRL_DOEN);
@@ -184,7 +185,7 @@ lpt_pcctwo_open(sc, int_ena)
 	if ( int_ena == 0 ) {
 		sps = splhigh();
 		sc->sc_icr = sc->sc_ipl | PCCTWO_ICR_EDGE;
-		pcc2_reg_write(sc, PCCTWO_PRT_ACK_ICSR, sc->sc_icr);
+		pcc2_reg_write(sc, PCC2REG_PRT_ACK_ICSR, sc->sc_icr);
 		splx(sps);
 	}
 }
@@ -193,7 +194,7 @@ static void
 lpt_pcctwo_close(sc)
 	struct lpt_softc *sc;
 {
-	pcc2_reg_write(sc, PCCTWO_PRT_ACK_ICSR,
+	pcc2_reg_write(sc, PCC2REG_PRT_ACK_ICSR,
 	    PCCTWO_ICR_ICLR | PCCTWO_ICR_EDGE);
 	pcc2_reg_write(sc, PCC2REG_PRT_CONTROL, 0);
 }
@@ -242,7 +243,7 @@ lpt_pcctwo_notrdy(sc, err)
 #define	LPS_MASK	(PCCTWO_PRT_IN_SR_SEL | PCCTWO_PRT_IN_SR_FLT | \
 			 PCCTWO_PRT_IN_SR_BSY | PCCTWO_PRT_IN_SR_PE)
 
-	status = pcc2_reg_read(sc, PCCTWO_PRT_INPUT_STATUS) ^ LPS_INVERT;
+	status = pcc2_reg_read(sc, PCC2REG_PRT_INPUT_STATUS) ^ LPS_INVERT;
 	status &= LPS_MASK;
 
 	if ( err ) {

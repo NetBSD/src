@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.12.10.1 2000/03/11 20:51:53 scw Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.12.10.2 2000/03/18 13:52:34 scw Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -79,6 +79,7 @@ extern int protection_codes[];
 caddr_t		CADDR1, CADDR2, vmmap;
 extern caddr_t	msgbufaddr;
 
+void	pmap_bootstrap __P((paddr_t, paddr_t));
 
 /*
  * Bootstrap the VM system.
@@ -96,7 +97,7 @@ pmap_bootstrap(nextpa, firstpa)
 	paddr_t nextpa;
 	paddr_t firstpa;
 {
-	paddr_t kstpa, kptpa, vmeiopa, iiopa, kptmpa, lkptpa, p0upa;
+	paddr_t kstpa, kptpa, iiopa, kptmpa, lkptpa, p0upa;
 	u_int nptpages, kstsize;
 	st_entry_t protoste, *ste;
 	pt_entry_t protopte, *pte, *epte;
@@ -116,12 +117,9 @@ pmap_bootstrap(nextpa, firstpa)
 	 *	iiopa		internal IO space
 	 *			PT pages		iiomappages pages
 	 *
-	 *	vmeiopa		VMEbus IO space
-	 *			PT pages                VMEIOMAPPAGES pages
-	 *
-	 * [ Sysptsize is the number of pages of PT, iiomappages and
-	 *   VMEIOMAPPAGES is the number of PTEs, hence we need to round
-	 *   the total to a page boundary with IO maps at the end. ]
+	 * [ Sysptsize is the number of pages of PT, iiomappages is the
+	 *   number of PTEs, hence we need to round the total to a page
+	 *   boundary with IO maps at the end. ]
 	 *
 	 *	kptmpa		kernel PT map		1 page
 	 *
@@ -143,10 +141,9 @@ pmap_bootstrap(nextpa, firstpa)
 	nextpa += kstsize * NBPG;
 	kptpa = nextpa;
 	nptpages = RELOC(Sysptsize, int) +
-		(iiomappages + VMEIOMAPPAGES + NPTEPG - 1) / NPTEPG;
+		(iiomappages + NPTEPG - 1) / NPTEPG;
 	nextpa += nptpages * NBPG;
-	vmeiopa = nextpa - VMEIOMAPPAGES * sizeof(pt_entry_t);
-	iiopa = vmeiopa - iiomappages * sizeof(pt_entry_t);
+	iiopa = nextpa - iiomappages * sizeof(pt_entry_t);
 	kptmpa = nextpa;
 	nextpa += NBPG;
 	lkptpa = nextpa;
@@ -344,7 +341,7 @@ pmap_bootstrap(nextpa, firstpa)
 	 * Finally, validate the internal IO space PTEs (RW+CI).
 	 */
 	pte = (u_int *)iiopa;
-	epte = (u_int *)vmeiopa;
+	epte = (u_int *)kptmpa;
 	protopte = RELOC(intiobase_phys, u_int) | PG_RW | PG_CI | PG_V;
 	while (pte < epte) {
 		*pte++ = protopte;
@@ -376,16 +373,9 @@ pmap_bootstrap(nextpa, firstpa)
 	 * kernel page table.
 	 */
 	RELOC(intiobase, char *) =
-	    (char *)m68k_ptob(nptpages*NPTEPG - (iiomappages+VMEIOMAPPAGES));
+	    (char *)m68k_ptob(nptpages*NPTEPG - iiomappages);
 	RELOC(intiolimit, char *) =
-	    (char *)m68k_ptob(nptpages*NPTEPG - VMEIOMAPPAGES);
-	/*
-	 * vmeiobase: base of VMEbus IO space.
-	 * VMEIOMAPPAGES pages at the end of the static kernel page table.
-	 * Note that the PTEs are enabled on request in bus_space_map().
-	 */
-	RELOC(vmeiobase, char *) =
-	    (char *)m68k_ptob(nptpages*NPTEPG - VMEIOMAPPAGES);
+	    (char *)m68k_ptob(nptpages*NPTEPG);
 
 	/*
 	 * Setup u-area for process 0.

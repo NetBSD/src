@@ -1,4 +1,4 @@
-#	$NetBSD: files.mvme68k,v 1.29.10.1 2000/03/11 20:51:48 scw Exp $
+#	$NetBSD: files.mvme68k,v 1.29.10.2 2000/03/18 13:51:56 scw Exp $
 
 # config file for mvme68k
 
@@ -26,6 +26,11 @@ include "dev/vme/files.vme"
 device	vmepcc: vmebus
 attach	vmepcc at pcc
 file	arch/mvme68k/dev/vme_pcc.c		vmepcc
+
+# MVME-1[67]7 VME controller chip
+device	vmetwo: vmebus
+attach	vmetwo at mainbus
+file	arch/mvme68k/dev/vme_two.c		vmetwo
 
 device clock
 attach clock at pcc with clock_pcc
@@ -98,7 +103,6 @@ file arch/mvme68k/mvme68k/clock.c
 file arch/mvme68k/mvme68k/conf.c
 file arch/mvme68k/mvme68k/db_memrw.c		ddb | kgdb
 file arch/mvme68k/mvme68k/disksubr.c
-file arch/mvme68k/mvme68k/dkbad.c
 file arch/mvme68k/mvme68k/isr.c
 file arch/mvme68k/mvme68k/machdep.c
 file arch/mvme68k/mvme68k/mem.c

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_pcctwo.c,v 1.2.16.1 2000/03/11 20:51:48 scw Exp $ */
+/*	$NetBSD: clock_pcctwo.c,v 1.2.16.2 2000/03/18 13:51:59 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -55,8 +55,8 @@
 #include <mvme68k/dev/pcctworeg.h>
 
 
-int 	clock_pcctwo_match __P((struct device *, struct cfdata  *, void *));
-void	clock_pcctwo_attach __P((struct device *, struct device *, void *));
+int clock_pcctwo_match __P((struct device *, struct cfdata *, void *));
+void clock_pcctwo_attach __P((struct device *, struct device *, void *));
 
 struct clock_pcctwo_softc {
 	struct device sc_dev;
@@ -70,13 +70,14 @@ struct cfattach clock_pcctwo_ca = {
 
 extern struct cfdriver clock_cd;
 
-static	int	clock_pcctwo_profintr __P((void *));
-static	int	clock_pcctwo_statintr __P((void *));
-static	void	clock_pcctwo_initclocks __P((void, *, int, int));
-static	void	clock_pcctwo_shutdown __P((void *));
+static int clock_pcctwo_profintr __P((void *));
+static int clock_pcctwo_statintr __P((void *));
+static void clock_pcctwo_initclocks __P((void *, int, int));
+static void clock_pcctwo_shutdown __P((void *));
 
-static	struct clock_pcctwo_softc *clock_pcctwo_sc;
+static struct clock_pcctwo_softc *clock_pcctwo_sc;
 
+/* ARGSUSED */
 int
 clock_pcctwo_match(parent, cf, aux)
 	struct device *parent;
@@ -86,10 +87,10 @@ clock_pcctwo_match(parent, cf, aux)
 	struct pcctwo_attach_args *pa = aux;
 
 	/* Only one clock, please. */
-	if ( clock_pcctwo_sc )
+	if (clock_pcctwo_sc)
 		return (0);
 
-	if ( strcmp(pa->pa_name, clock_cd.cd_name) )
+	if (strcmp(pa->pa_name, clock_cd.cd_name))
 		return (0);
 
 	pa->pa_ipl = cf->pcctwocf_ipl;
@@ -97,21 +98,21 @@ clock_pcctwo_match(parent, cf, aux)
 	return (1);
 }
 
+/* ARGSUSED */
 void
 clock_pcctwo_attach(parent, self, aux)
-	struct device *parent, *self;
+	struct device *parent;
+	struct device *self;
 	void *aux;
 {
 	struct clock_pcctwo_softc *sc;
 	struct pcctwo_attach_args *pa;
 
-	if ( pa->pa_ipl != CLOCK_LEVEL )
+	sc = clock_pcctwo_sc = (struct clock_pcctwo_softc *) self;
+	pa = aux;
+
+	if (pa->pa_ipl != CLOCK_LEVEL)
 		panic("clock_pcctwo_attach: wrong interrupt level");
-
-	sc = (struct clock_pcctwo_softc *) self;
-	pa = (struct pcctwo_attach_args *) aux;
-
-	clock_pcctwo_sc = sc;
 
 	/* Map the RTC's registers */
 	sc->sc_clock_args.ca_bust = pa->pa_bust;
@@ -125,7 +126,7 @@ clock_pcctwo_attach(parent, self, aux)
 	clock_config(self, &sc->sc_clock_args);
 
 	/* Ensure our interrupts get disabled at shutdown time. */
-	(void)shutdownhook_establish(clock_pcctwo_shutdown, NULL);
+	(void) shutdownhook_establish(clock_pcctwo_shutdown, NULL);
 
 	/* Attach the interrupt handlers. */
 	pcctwointr_establish(PCCTWOV_TIMER1, clock_pcctwo_profintr,
@@ -139,9 +140,12 @@ clock_pcctwo_attach(parent, self, aux)
 void
 clock_pcctwo_initclocks(arg, proftick, stattick)
 	void *arg;
-	int proftick, stattick;
+	int proftick;
+	int stattick;
 {
-	struct clock_pcctwo_softc *sc = arg;
+	struct clock_pcctwo_softc *sc;
+
+	sc = arg;
 
 	pcc2_reg_write(sys_pcctwo, PCC2REG_TIMER1_CONTROL, PCCTWO_TT_CTRL_COVF);
 	pcc2_reg_write32(sys_pcctwo, PCC2REG_TIMER1_COUNTER, 0);
@@ -164,7 +168,9 @@ int
 clock_pcctwo_profintr(frame)
 	void *frame;
 {
-	pcc2_reg_write(sys_pcctwo, PCC2REG_TIMER1_ICSR, sc->sc_clock_lvl);
+
+	pcc2_reg_write(sys_pcctwo, PCC2REG_TIMER1_ICSR,
+	    clock_pcctwo_sc->sc_clock_lvl);
 	hardclock(frame);
 	clock_profcnt.ev_count++;
 	return (1);
@@ -174,15 +180,16 @@ int
 clock_pcctwo_statintr(frame)
 	void *frame;
 {
+
 	/* Disable the timer interrupt while we handle it. */
 	pcc2_reg_write(sys_pcctwo, PCC2REG_TIMER2_ICSR, 0);
 
-	statclock((struct clockframe *)frame);
+	statclock((struct clockframe *) frame);
 
 	pcc2_reg_write(sys_pcctwo, PCC2REG_TIMER2_CONTROL, PCCTWO_TT_CTRL_COVF);
 	pcc2_reg_write32(sys_pcctwo, PCC2REG_TIMER2_COUNTER, 0);
 	pcc2_reg_write32(sys_pcctwo, PCC2REG_TIMER2_COMPARE,
-	    PCCTWO_US2LIM(CLOCK_NEWINT(clock_statvar, clock_statmin));
+	    PCCTWO_US2LIM(CLOCK_NEWINT(clock_statvar, clock_statmin)));
 	pcc2_reg_write(sys_pcctwo, PCC2REG_TIMER2_CONTROL,
 	    PCCTWO_TT_CTRL_CEN | PCCTWO_TT_CTRL_COC);
 
@@ -198,9 +205,10 @@ void
 clock_pcctwo_shutdown(arg)
 	void *arg;
 {
+
 	/* Make sure the timer interrupts are turned off. */
-	pcc2_reg_write(sys_pcctwo, PCC2REG_TIMER1_CONTROL, PCCTWO_TT_CTRL_COVF;
+	pcc2_reg_write(sys_pcctwo, PCC2REG_TIMER1_CONTROL, PCCTWO_TT_CTRL_COVF);
 	pcc2_reg_write(sys_pcctwo, PCC2REG_TIMER1_ICSR, 0);
-	pcc2_reg_write(sys_pcctwo, PCC2REG_TIMER2_CONTROL, PCCTWO_TT_CTRL_COVF;
+	pcc2_reg_write(sys_pcctwo, PCC2REG_TIMER2_CONTROL, PCCTWO_TT_CTRL_COVF);
 	pcc2_reg_write(sys_pcctwo, PCC2REG_TIMER2_ICSR, 0);
 }

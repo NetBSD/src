@@ -1,4 +1,4 @@
-/*	$NetBSD: ncrsc_pcctwo.c,v 1.3.2.2 2000/03/14 15:59:51 scw Exp $ */
+/*	$NetBSD: ncrsc_pcctwo.c,v 1.3.2.3 2000/03/18 13:52:03 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -54,13 +54,14 @@
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
 
+#include <machine/cpu.h>
 #include <machine/bus.h>
 #include <machine/autoconf.h>
 
 #include <mvme68k/dev/siopreg.h>
 #include <mvme68k/dev/siopvar.h>
-#include <mvme68k/dev/pccvar.h>
 #include <mvme68k/dev/pcctworeg.h>
+#include <mvme68k/dev/pcctwovar.h>
 
 
 int	ncrsc_pcctwo_match  __P((struct device *, struct cfdata *, void *));
@@ -167,7 +168,7 @@ ncrsc_pcctwo_attach(parent, self, args)
 	pcc2_reg_write(sys_pcctwo, PCC2REG_SCSI_ICSR, 0);
 	pcctwointr_establish(PCCTWOV_SCSI, ncrsc_pcctwo_intr, pa->pa_ipl, sc);
 	pcc2_reg_write(sys_pcctwo, PCC2REG_SCSI_ICSR,
-	    pa->pa_ipl | PCCTWO_ICR_IEN;
+	    pa->pa_ipl | PCCTWO_ICR_IEN);
 
 	/*
 	 * Attach all scsi units on us, watching for boot device

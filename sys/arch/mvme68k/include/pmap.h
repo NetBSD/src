@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.14.16.2 2000/03/14 10:25:01 scw Exp $	*/
+/*	$NetBSD: pmap.h,v 1.14.16.3 2000/03/18 13:52:20 scw Exp $	*/
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -139,25 +139,8 @@ extern struct pmap	kernel_pmap_store;
 	(curproc && \
 	 (pm) != pmap_kernel() && (pm) == curproc->p_vmspace->vm_map.pmap)
 
-#define _pmap_set_page_cacheable(pm,va)		\
-	do {					\
-		pt_entry_t *_pte_;		\
-		_pte_ = &((pm)->pm_stab[(vaddr_t)(va) >> PG_SHIFT]);	\
-		if ( (*_pte_ & PG_CI) != 0 ) {	\
-			*_pte_ &= ~PG_CI;	\
-			TBIS(va);		\
-		}				\
-	} while (0)
-
-#define _pmap_set_page_cacheinhibit(pm,va)	\
-	do {					\
-		pt_entry_t *_pte_;		\
-		_pte_ = &((pm)->pm_stab[(vaddr_t)(va) >> PG_SHIFT]);	\
-		if ( (*_pte_ & PG_CI) == 0 ) {	\
-			*_pte_ |= ~PG_CI;	\
-			TBIS(va);		\
-		}				\
-	} while (0)
+extern void _pmap_set_page_cacheable __P((struct pmap *, vaddr_t));
+extern void _pmap_set_page_cacheinhibit __P((struct pmap *, vaddr_t));
 
 extern struct pv_entry	*pv_table;	/* array of entries, one per page */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_pcc.c,v 1.6.24.3 2000/03/14 15:59:53 scw Exp $	*/
+/*	$NetBSD: vme_pcc.c,v 1.6.24.4 2000/03/18 13:52:11 scw Exp $	*/
 
 /*-
  * Copyright (c) 1996-2000 The NetBSD Foundation, Inc.
@@ -57,6 +57,8 @@
 #include <dev/vme/vmereg.h>
 #include <dev/vme/vmevar.h>
 
+#include <mvme68k/mvme68k/isr.h>
+
 #include <mvme68k/dev/pccreg.h>
 #include <mvme68k/dev/pccvar.h>
 #include <mvme68k/dev/vme_pccreg.h>
@@ -76,7 +78,7 @@ extern	phys_ram_seg_t mem_clusters[];
 static	int vme_pcc_attached;
 
 #ifdef DIAGNOSTIC
-const char *_vme_mod_string __P((vme_addr_t, vme_size_t,
+const char *_vme1_mod_string __P((vme_addr_t, vme_size_t,
     vme_am_t, vme_datasize_t));
 #endif
 
@@ -91,11 +93,16 @@ struct vme_pcc_range {
 };
 
 static struct vme_pcc_range vme_pcc_ranges[] = {
-    {VME_AM_A24, VME_D32|VME_D16|VME_D8, VME1_A24D32_START, VME1_A24D32_END},
-    {VME_AM_A32, VME_D32|VME_D16|VME_D8, VME1_A32D32_START, VME1_A32D32_END},
-    {VME_AM_A24, VME_D16|VME_D8,         VME1_A24D16_START, VME1_A24D16_END},
-    {VME_AM_A32, VME_D16|VME_D8,         VME1_A32D16_START, VME1_A32D16_END},
-    {VME_AM_A16, VME_D16|VME_D8,         VME1_A16D16_START, VME1_A16D16_END}
+    {VME_AM_A24 | VME_AM_DATA | VME_AM_SUPER, VME_D32 | VME_D16 | VME_D8,
+		VME1_A24D32_START, VME1_A24D32_END},
+    {VME_AM_A32 | VME_AM_DATA | VME_AM_SUPER, VME_D32 | VME_D16 | VME_D8,
+		VME1_A32D32_START, VME1_A32D32_END},
+    {VME_AM_A24 | VME_AM_DATA | VME_AM_SUPER, VME_D16 | VME_D8,
+		VME1_A24D16_START, VME1_A24D16_END},
+    {VME_AM_A32 | VME_AM_DATA | VME_AM_SUPER, VME_D16 | VME_D8,
+		VME1_A32D16_START, VME1_A32D16_END},
+    {VME_AM_A16 | VME_AM_DATA | VME_AM_SUPER, VME_D16 | VME_D8,
+		VME1_A16D16_START, VME1_A16D16_END}
 };
 #define VME1_NRANGES	(sizeof(vme_pcc_ranges)/sizeof(struct vme_pcc_range))
 
@@ -127,7 +134,7 @@ vme_pcc_attach(parent, self, aux)
 	struct vme_pcc_softc *sc;
 	struct vmebus_attach_args vaa;
 	u_int8_t reg;
-	char pbuf[9];
+	int i;
 
 	sc = (struct vme_pcc_softc *) self;
 	pa = (struct pcc_attach_args *) aux;
@@ -144,8 +151,6 @@ vme_pcc_attach(parent, self, aux)
 
 	printf(": Type 1 VMEchip, scon jumper %s\n",
 	    (reg & VME1_SCON_SWITCH) ? "enabled" : "disabled");
-	format_bytes(pbuf, sizeof(pbuf), VMEIOMAPSIZE);
-	printf("%s: VMEbus map size: %s\n", sc->sc_dev.dv_xname, pbuf);
 
 	sc->sc_vct.cookie = self;
 	sc->sc_vct.vct_probe = _vme_pcc_probe;
@@ -172,19 +177,38 @@ vme_pcc_attach(parent, self, aux)
 		    (vme_addr_t) (mem_clusters[0].size - 0x01000000);
 	}
 
-	/*
-	 * We keep A16 space permanently mapped into KVA to avoid
-	 * problems when drivers try to bus_space_map() register ranges
-	 * which are closer than NBPG to each other (highly likely in
-	 * A16 address space).
-	 * The _vme_bus_map() function re-uses this mapping to satisfy
-	 * requests to map A16 ranges.
-	 */
-	if ( bus_space_map(sc->sc_vmet, VME1_A16D16_START, 0x10000,
-	    0, &sc->sc_a16bush) < 0 ) {
-		panic("vme_pcc_attach: failed to map A16 VMEbus space");
-		/* NOTREACHED */
+#ifdef DIAGNOSTIC
+	for (i = 0; i < VME1_NRANGES; i++) {
+		vme_addr_t mask;
+
+		switch ( vme_pcc_ranges[i].pr_am & VME_AM_ADRSIZEMASK ) {
+		  case VME_AM_A32:
+			mask = 0xffffffffu;
+			break;
+
+		  case VME_AM_A24:
+			mask = 0x00ffffffu;
+			break;
+
+		  case VME_AM_A16:
+			mask = 0x0000ffffu;
+			break;
+
+		  default:
+			printf("%s: Map#%d: disabled\n",
+			    sc->sc_dev.dv_xname, i);
+			continue;
+		}
+
+		printf("%s: Map#%d: 0x%08x -> %s\n", sc->sc_dev.dv_xname, i,
+		    vme_pcc_ranges[i].pr_start,
+		    _vme1_mod_string(vme_pcc_ranges[i].pr_start & mask,
+			(vme_pcc_ranges[i].pr_end -
+			vme_pcc_ranges[i].pr_start) + 1,
+			vme_pcc_ranges[i].pr_am,
+			vme_pcc_ranges[i].pr_datasize));
 	}
+#endif
 
 	vaa.va_vct = &(sc->sc_vct);
 	vaa.va_bdt = sc->sc_dmat;
@@ -243,7 +267,7 @@ _vme_pcc_map(vsc, vmeaddr, len, am, datasize, swap, tag, handle, resc)
 
 	for (i = 0, pr = &vme_pcc_ranges[0]; i < VME1_NRANGES; i++, pr++) {
 		/* Ignore if range is disabled */
-		if ( pr->pr_am == (vme_addr_t) -1 )
+		if ( pr->pr_am == (vme_am_t) -1 )
 			continue;
 
 		/*
@@ -264,21 +288,16 @@ _vme_pcc_map(vsc, vmeaddr, len, am, datasize, swap, tag, handle, resc)
 	if ( paddr == 0 ) {
 #ifdef DIAGNOSTIC
 		printf("%s: Unable to map %s\n", sc->sc_dev.dv_xname,
-			_vme_mod_string(vmeaddr, len, am, datasize));
+			_vme1_mod_string(vmeaddr, len, am, datasize));
 #endif
 		return ENOMEM;
 	}
 
-	if ( (am & VME_AM_ADRSIZEMASK) == VME_AM_A16 )
-		bus_space_subregion(sc->sc_vmet, sc->sc_a16bush,
-		    vmeaddr, len, handle);
-	else
 	if ( (rv = bus_space_map(sc->sc_vmet, paddr, len, 0, handle)) != 0 )
 		return rv;
 
 	if ( (pm = malloc(sizeof(*pm), M_DEVBUF, M_NOWAIT)) == NULL ) {
-		if ( (am & VME_AM_ADRSIZEMASK) != VME_AM_A16 )
-			bus_space_unmap(sc->sc_vmet, *handle, len);
+		bus_space_unmap(sc->sc_vmet, *handle, len);
 		return ENOMEM;
 	}
 
@@ -304,8 +323,7 @@ _vme_pcc_unmap(vsc, resc)
 	sc = (struct vme_pcc_softc *) vsc;
 	pm = (struct vme_pcc_mapresc_t *) resc;
 
-	if ( (pm->pm_am & VME_AM_ADRSIZEMASK) != VME_AM_A16 )
-		bus_space_unmap(sc->sc_vmet, pm->pm_handle, pm->pm_size);
+	bus_space_unmap(sc->sc_vmet, pm->pm_handle, pm->pm_size);
 
 	free(pm, M_DEVBUF);
 }
@@ -385,6 +403,8 @@ _vme_pcc_intr_establish(vsc, handle, prior, func, arg)
 	 */
 	vme1_reg_write(sc, VME1REG_IRQEN,
 	    vme1_reg_read(sc, VME1REG_IRQEN) | VME1_IRQ_VME(level));
+
+	return (void *) handle;
 }
 
 void
@@ -469,7 +489,7 @@ _vme_pcc_dmamem_free(vsc, segs, nsegs)
 
 #ifdef DIAGNOSTIC
 const char *
-_vme_mod_string(addr, len, am, ds)
+_vme1_mod_string(addr, len, am, ds)
 	vme_addr_t addr;
 	vme_size_t len;
 	vme_am_t am;
@@ -490,19 +510,19 @@ _vme_mod_string(addr, len, am, ds)
 
 	switch ( am & VME_AM_ADRSIZEMASK ) {
 	  case VME_AM_A32:
-		fmt = "A24%s:%08x-%08x";
+		fmt = "A32%s:0x%08x-0x%08x";
 		break;
 
 	  case VME_AM_A24:
-		fmt = "A24%s:%06x-%06x";
+		fmt = "A24%s:0x%06x-0x%06x";
 		break;
 
 	  case VME_AM_A16:
-		fmt = "A16%s:%04x-%04x";
+		fmt = "A16%s:0x%04x-0x%04x";
 		break;
 
 	  case VME_AM_USERDEF:
-		fmt = "USR%s:%08x-%08x";
+		fmt = "USR%s:0x%08x-0x%08x";
 		break;
 	}
 

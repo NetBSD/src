@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_tworeg.h,v 1.1.16.3 2000/03/14 12:43:37 scw Exp $ */
+/*	$NetBSD: vme_tworeg.h,v 1.1.16.4 2000/03/18 13:52:13 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -105,8 +105,8 @@
 #define	VME2LCSR_MASTER_ATTR		0x28
 #define  VME2_MASTER_ATTR_AM_SHIFT(x)	((x) * 8)
 #define  VME2_MASTER_ATTR_AM_MASK	(0x0000003fu)
-#define  VME2_MASTER_ATTR_WP(x)		(1u << 6)
-#define  VME2_MASTER_ATTR_D16(x)	(1u << 7)
+#define  VME2_MASTER_ATTR_WP		(1u << 6)
+#define  VME2_MASTER_ATTR_D16		(1u << 7)
 
 	/*
 	 * GCSR Group/Board addresses, and

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.12.10.1 2000/03/11 20:51:51 scw Exp $	*/
+/*	$NetBSD: cpu.h,v 1.12.10.2 2000/03/18 13:52:18 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -108,21 +108,6 @@ extern int astpending;		/* need to trap before returning to user mode */
 #define aston() (astpending++)
 
 /*
- * simulated software interrupt register
- */
-extern unsigned char ssir;
-
-#define SIR_NET		0x1
-#define SIR_CLOCK	0x2
-
-#define setsoftint(x)	ssir |= (x)
-#define siroff(x)	ssir &= ~(x)
-#define setsoftnet()	ssir |= SIR_NET
-#define setsoftclock()	ssir |= SIR_CLOCK
-
-extern unsigned long allocate_sir();
-
-/*
  * CTL_MACHDEP definitions.
  */
 #define	CPU_CONSDEV		1	/* dev_t: console terminal device */
@@ -175,19 +160,20 @@ extern	int machineid;
 extern	int cpuspeed;
 extern	char *intiobase, *intiolimit;
 extern	u_int intiobase_phys, intiotop_phys;
-extern	char *vmeiobase;
 extern	u_long ether_data_buff_size;
 
 struct frame;
 void	doboot __P((int)) 
 	__attribute__((__noreturn__));
 int	badaddr __P((caddr_t, int));
-void	nmihand __P((struct frame *));
+int	nmihand __P((void *));
 void	mvme68k_abort __P((const char *));
 void	physaccess __P((caddr_t, caddr_t, int, int));
 void	physunaccess __P((caddr_t, int));
 void	*iomap __P((u_long, size_t));
 void	iounmap __P((void *, size_t));
+paddr_t	kvtop __P((caddr_t));
+void	loadustp __P((paddr_t));
 void	child_return __P((void *));
 void	myetheraddr	__P((u_char *));
 
@@ -215,17 +201,5 @@ int	dma_cachectl __P((caddr_t, int));
 #define	IIOV(pa)	(((u_int)(pa) - intiobase_phys) + (u_int)intiobase)
 #define	IIOP(va)	(((u_int)(va) - (u_int)intiobase) + intiobase_phys)
 #define	IIOPOFF(pa)	((u_int)(pa) - intiobase_phys)
-
-/*
- * VMEbus IO space:
- *
- * A range of kernel virtual addresses is reserved in pmap_bootstrap() for
- * VMEbus IO space. The size of the KVA space is set by VMEIOMAPSIZE, which
- * by default is 8Mb if not specified in the kernel config file.
- */
-#ifndef VMEIOMAPSIZE
-#define VMEIOMAPSIZE	(8 * 1024 * 1024)
-#endif
-#define VMEIOMAPPAGES	btoc(VMEIOMAPSIZE)
 
 #endif /* _KERNEL */

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.1.2.1 2000/03/11 20:51:52 scw Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.1.2.2 2000/03/18 13:52:24 scw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -43,14 +43,14 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/extent.h>
 #include <sys/malloc.h>
 
 #include <machine/cpu.h>
 #include <machine/pte.h>
+#define _MVME68K_BUS_DMA_PRIVATE	/* For _bus_dmamem_map/_bus_dmamem_unmap */
 #include <machine/bus.h>
+#undef _MVME68K_BUS_DMA_PRIVATE
 
-static struct extent *vmeioextent;
 
 /* ARGSUSED */
 int
@@ -61,7 +61,8 @@ bus_space_map(bust, addr, size, flags, bushp)
 	int flags;
 	bus_space_handle_t *bushp;
 {
-	u_long kva;
+	bus_dma_segment_t seg;
+	caddr_t va;
 	int rv;
 
 	if ( bust == MVME68K_INTIO_BUS_SPACE ) {
@@ -79,36 +80,19 @@ bus_space_map(bust, addr, size, flags, bushp)
 	if ( bust != MVME68K_VME_BUS_SPACE )
 		panic("bus_space_map: bad space tag");
 
-	/*
-	 * The first time through, allocate an extent to manage the
-	 * KVA space available for mapping the VMEbus.
-	 */
-	if ( vmeioextent == NULL ) {
-		vmeioextent = extent_create("vmekva", (u_long) vmeiobase,
-		    (u_long) (vmeiobase + VMEIOMAPSIZE - 1),
-		    M_DEVBUF, NULL, 0, 0);
-		if ( vmeioextent == NULL )
-			return (ENOMEM);
-	}
+	seg.ds_addr = m68k_trunc_page(addr);
+	seg.ds_len = m68k_round_page(size);
 
-	/*
-	 * Allocate virtual address space from the vmeio extent.
-	 */
-	size = m68k_round_page(size);
-	rv = extent_alloc(vmeioextent, size, NBPG, 0, EX_NOWAIT, &kva);
+	rv = _bus_dmamem_map(NULL, &seg, 1, seg.ds_len, &va,
+	    flags | BUS_DMA_COHERENT);
+
 	if ( rv != 0 )
-		return (rv);
-
-	/*
-	 * Map the range.  The range is always cache-inhibited on
-	 * the mvme68k.
-	 */
-	physaccess((caddr_t) kva, (caddr_t) addr, size, PG_RW|PG_CI);
+		return rv;
 
 	/*
 	 * The handle is really the virtual address we just mapped
 	 */
-	*bushp = (bus_space_handle_t) (kva + m68k_page_offset(addr));
+	*bushp = (bus_space_handle_t) (va + m68k_page_offset(addr));
 
 	return (0);
 }
@@ -130,22 +114,8 @@ bus_space_unmap(bust, bush, size)
 	if ( bust != MVME68K_VME_BUS_SPACE )
 		panic("bus_space_unmap: bad space tag");
 
-#ifdef DEBUG
-	if ((caddr_t)bush < vmeiobase ||
-	    (caddr_t)(bush + size) >= (vmeiobase + VMEIOMAPSIZE))
-		panic("bus_space_unmap: bad bus space handle");
-#endif
-
 	bush = m68k_trunc_page(bush);
 	size = m68k_round_page(size);
 
-	/*
-	 * Unmap the range.
-	 */
-	physunaccess((caddr_t)bush, size);
-
-	/*
-	 * Free it from the vmeio extent.
-	 */
-	(void) extent_free(vmeioextent, (u_long)bush, (u_long)size, M_NOWAIT);
+	_bus_dmamem_unmap(NULL, (caddr_t) bush, size);
 }

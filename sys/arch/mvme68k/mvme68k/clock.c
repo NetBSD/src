@@ -1,4 +1,4 @@
-/*      $NetBSD: clock.c,v 1.11.2.1 2000/03/11 20:51:52 scw Exp $	*/
+/*      $NetBSD: clock.c,v 1.11.2.2 2000/03/18 13:52:25 scw Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -178,7 +178,6 @@ microtime(tvp)
 	static struct timeval lasttime;
 
 	*tvp = time;
-	tvp->tv_usec;
 	while (tvp->tv_usec >= 1000000) {
 		tvp->tv_sec++;
 		tvp->tv_usec -= 1000000;

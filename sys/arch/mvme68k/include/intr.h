@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.1.2.1 2000/03/11 20:51:51 scw Exp $	*/
+/*	$NetBSD: intr.h,v 1.1.2.2 2000/03/18 13:52:19 scw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,6 +39,8 @@
 #ifndef _MVME68K_INTR_H
 #define _MVME68K_INTR_H
 
+#include <machine/psl.h>
+
 /*
  * These are identical to the values used by hp300, but are not meaningful
  * to mvme68k code at this time.
@@ -50,5 +52,52 @@
 #define	IPL_TTYNOBUF	4	/* IPL_TTY + higher ISR priority */
 #define	IPL_CLOCK	5	/* disable clock interrupts */
 #define	IPL_HIGH	6	/* disable all interrupts */
+
+#ifdef _KERNEL
+/* spl0 requires checking for software interrupts */
+
+#define spllowersoftclock()	spl1()
+#define splsoftclock()		splraise1()
+#define splsoftnet()		splraise1()
+#define splbio()		splraise2()
+#define splnet()		splraise3()
+#define spltty()		splraise3()
+#define splimp()		splraise3()
+#define splserial()		splraise4()
+#define splclock()		splraise5()
+#define splstatclock()		splraise5()
+#define splvm()			splraise5()
+#define splhigh()		spl7()
+#define splsched()		spl7()
+
+/* watch out for side effects */
+#define splx(s)         (s & PSL_IPL ? _spl(s) : spl0())
+
+
+#define SIR_NET		0x1
+#define SIR_CLOCK	0x2
+
+/* Following is from next68k/intr.h */
+#define	siron(mask)	\
+	__asm __volatile ( "orb %1,%0" : "=m" (ssir) : "ir" (mask))
+#define	siroff(mask)	\
+	__asm __volatile ( "andb %1,%0" : "=m" (ssir) : "ir" (~(mask)));
+
+#define setsoftint(x)	siron(x)
+#define setsoftnet()	siron(SIR_NET)
+#define setsoftclock()	siron(SIR_CLOCK)
+
+
+#ifndef _LOCORE
+/*
+ * simulated software interrupt register
+ */
+extern volatile unsigned char ssir;
+
+extern void init_sir __P((void));
+extern unsigned long allocate_sir __P((void (*)(void *), void *));
+extern int spl0 __P((void));
+#endif /* !_LOCORE */
+#endif /* _KERNEL */
 
 #endif /* _MVME68K_INTR_H */

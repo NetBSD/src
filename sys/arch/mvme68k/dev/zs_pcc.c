@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_pcc.c,v 1.7.16.2 2000/03/14 15:59:53 scw Exp $	*/
+/*	$NetBSD: zs_pcc.c,v 1.7.16.3 2000/03/18 13:52:16 scw Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -64,6 +64,7 @@
 #include <machine/cpu.h>
 #include <machine/bus.h>
 
+#include <mvme68k/dev/mainbus.h>
 #include <mvme68k/dev/pccreg.h>
 #include <mvme68k/dev/pccvar.h>
 #include <mvme68k/dev/zsvar.h>
@@ -78,6 +79,9 @@ struct cfattach zsc_pcc_ca = {
 };
 
 extern struct cfdriver zsc_cd;
+
+cons_decl(zsc_pcc);
+
 
 /*
  * Is the zs chip present?
@@ -187,5 +191,5 @@ zsc_pcccninit(cp)
 	bus_space_map(bust, MAINBUS_PCC_OFFSET + PCC_ZS0_OFF, 4, 0, &bush);
 
 	/* Do common parts of console init. */
-	zs_cnconfig(0, bust, bush);
+	zs_cnconfig(0, 0, bust, bush);
 }

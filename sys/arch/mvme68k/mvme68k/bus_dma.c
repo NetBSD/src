@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.c,v 1.1.2.3 2000/03/14 10:24:29 scw Exp $	*/
+/* $NetBSD: bus_dma.c,v 1.1.2.4 2000/03/18 13:52:22 scw Exp $	*/
 
 /*
  * This file was taken from from next68k/dev/bus_dma.c, which was originally
@@ -46,7 +46,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.1.2.3 2000/03/14 10:24:29 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.1.2.4 2000/03/18 13:52:22 scw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -459,8 +459,10 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 			bus_addr_t e = p+map->dm_segs[i].ds_len;
 #ifdef DIAGNOSTIC
 			if ((p % 16) || (e % 16)) {
-				panic("unaligned address in _bus_dmamap_sync while flushing.\n"
-				    "address=0x%08x, end=0x%08x, ops=0x%x",p,e,ops);
+				panic("unaligned address in _bus_dmamap_sync "
+				    "while flushing.\n"
+				    "address=0x%08lx, end=0x%08lx, ops=0x%x",
+				    p, e, ops);
 			}
 #endif
 /*
@@ -484,8 +486,10 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 #endif
 #ifdef DIAGNOSTIC
 			if (p != e) {
-				panic("overrun in _bus_dmamap_sync while flushing.\n"
-				    "address=0x%08x, end=0x%08x, ops=0x%x",p,e,ops);
+				panic("overrun in _bus_dmamap_sync while "
+				    "flushing.\n"
+				    "address=0x%08lx, end=0x%08lx, ops=0x%x",
+				    p, e, ops);
 			}
 #endif
 		}
@@ -498,8 +502,10 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 			bus_addr_t e = p+map->dm_segs[i].ds_len;
 #ifdef DIAGNOSTIC
 			if ((p % 16) || (e % 16)) {
-				panic("unaligned address in _bus_dmamap_sync while purging.\n"
-				    "address=0x%08x, end=0x%08x, ops=0x%x", p,e,ops);
+				panic("unaligned address in _bus_dmamap_sync "
+				    "while purging.\n"
+				    "address=0x%08lx, end=0x%08lx, ops=0x%x",
+				    p, e, ops);
 			}
 #endif
 #ifdef M68040
@@ -520,8 +526,10 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 #endif
 #ifdef DIAGNOSTIC
 			if (p != e) {
-				panic("overrun in _bus_dmamap_sync while flushing.\n"
-				    "address=0x%08x, end=0x%08x, ops=0x%x",p,e,ops);
+				panic("overrun in _bus_dmamap_sync while "
+				    "flushing.\n"
+				    "address=0x%08lx, end=0x%08lx, ops=0x%x",
+				    p, e, ops);
 			}
 #endif
 		}
@@ -696,13 +704,13 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 			if (size == 0)
 				panic("_bus_dmamem_map: size botch");
 
-			/* Cache-inhibit the page if necessary */
-			if ( (flags & BUS_DMA_COHERENT) != 0 )
-				_pmap_set_page_cacheinhibit(pmap_kernel(), va);
-
 			pmap_enter(pmap_kernel(), va, addr,
 			    VM_PROT_READ | VM_PROT_WRITE,
 			    VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED);
+
+			/* Cache-inhibit the page if necessary */
+			if ( (flags & BUS_DMA_COHERENT) != 0 )
+				_pmap_set_page_cacheinhibit(pmap_kernel(), va);
 		}
 	}
 
@@ -738,7 +746,7 @@ _bus_dmamem_unmap(t, kva, size)
 	 * were mapped DMA_MAP_COHERENT in the first place...
 	 */
 	for (s = 0, va = kva; s < size; s += PAGE_SIZE, va += PAGE_SIZE)
-		_pmap_set_page_cacheable(pmap_kernel(), va);
+		_pmap_set_page_cacheable(pmap_kernel(), (vaddr_t)va);
 
 	uvm_km_free(kernel_map, (vaddr_t)kva, size);
 }
