@@ -3,7 +3,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: hack.save.c,v 1.2 1993/08/02 17:19:21 mycroft Exp $";
+static char rcsid[] = "$Id: hack.save.c,v 1.3 1994/03/28 11:19:09 cgd Exp $";
 #endif /* not lint */
 
 #include "hack.h"
@@ -13,7 +13,6 @@ extern char fut_geno[60];	/* idem */
 
 extern char SAVEF[], nul[];
 extern char pl_character[PL_CSIZ];
-extern long lseek();
 extern struct obj *restobjchn();
 extern struct monst *restmonchn();
 
