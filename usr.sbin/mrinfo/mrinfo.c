@@ -57,15 +57,14 @@
  * or implied warranty of any kind.
  * 
  * These notices must be retained in any copies of any part of this software.
- *
- * original rcsid:
- *   Header: mrinfo.c,v 1.6 93/04/08 15:14:16 van Exp (LBL)
- * From: Id: mrinfo.c,v 1.3 1993/06/24 05:11:16 deering Exp
- *      $Id: mrinfo.c,v 1.2 1994/05/08 15:08:58 brezak Exp $
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: mrinfo.c,v 1.2 1994/05/08 15:08:58 brezak Exp $";
+static char rcsid[] =
+    "@(#) $Id: mrinfo.c,v 1.1 1995/06/01 05:19:13 mycroft Exp $";
+/*  original rcsid:
+    "@(#) Header: mrinfo.c,v 1.6 93/04/08 15:14:16 van Exp (LBL)";
+*/
 #endif
 
 #include <netdb.h>
@@ -76,16 +75,18 @@ static char rcsid[] = "$Id: mrinfo.c,v 1.2 1994/05/08 15:08:58 brezak Exp $";
 #define DEFAULT_TIMEOUT	4	/* How long to wait before retrying requests */
 #define DEFAULT_RETRIES 3	/* How many times to ask each router */
 
-u_long  our_addr, target_addr = 0;	/* in NET order */
+u_int32_t	our_addr, target_addr = 0;	/* in NET order */
 int     debug = 0;
 int	nflag = 0;
 int     retries = DEFAULT_RETRIES;
 int     timeout = DEFAULT_TIMEOUT;
 int	target_level;
+vifi_t  numvifs;		/* to keep loader happy */
+				/* (see COPY_TABLES macro called in kern.c) */
 
 char   *
 inet_name(addr)
-	u_long  addr;
+	u_int32_t  addr;
 {
 	struct hostent *e;
 	struct in_addr in;
@@ -147,7 +148,7 @@ log(severity, syserr, format, a, b, c, d, e)
  */
 void 
 ask(dst)
-	u_long  dst;
+	u_int32_t  dst;
 {
 	send_igmp(our_addr, dst, IGMP_DVMRP, DVMRP_ASK_NEIGHBORS,
 			htonl(MROUTED_LEVEL), 0);
@@ -155,7 +156,7 @@ ask(dst)
 
 void 
 ask2(dst)
-	u_long  dst;
+	u_int32_t  dst;
 {
 	send_igmp(our_addr, dst, IGMP_DVMRP, DVMRP_ASK_NEIGHBORS2,
 			htonl(MROUTED_LEVEL), 0);
@@ -166,17 +167,17 @@ ask2(dst)
  */
 void 
 accept_neighbors(src, dst, p, datalen)
-	u_long  src, dst;
+	u_int32_t  src, dst;
 	u_char *p;
 	int     datalen;
 {
 	u_char *ep = p + datalen;
-#define GET_ADDR(a) (a = ((u_long)*p++ << 24), a += ((u_long)*p++ << 16),\
-		     a += ((u_long)*p++ << 8), a += *p++)
+#define GET_ADDR(a) (a = ((u_int32_t)*p++ << 24), a += ((u_int32_t)*p++ << 16),\
+		     a += ((u_int32_t)*p++ << 8), a += *p++)
 
 	printf("%s (%s):\n", inet_fmt(src, s1), inet_name(src));
 	while (p < ep) {
-		register u_long laddr;
+		register u_int32_t laddr;
 		register u_char metric;
 		register u_char thresh;
 		register int ncount;
@@ -187,7 +188,7 @@ accept_neighbors(src, dst, p, datalen)
 		thresh = *p++;
 		ncount = *p++;
 		while (--ncount >= 0) {
-			register u_long neighbor;
+			register u_int32_t neighbor;
 			GET_ADDR(neighbor);
 			neighbor = htonl(neighbor);
 			printf("  %s -> ", inet_fmt(laddr, s1));
@@ -199,28 +200,35 @@ accept_neighbors(src, dst, p, datalen)
 
 void 
 accept_neighbors2(src, dst, p, datalen)
-	u_long  src, dst;
+	u_int32_t  src, dst;
 	u_char *p;
 	int     datalen;
 {
 	u_char *ep = p + datalen;
+	u_int broken_cisco = ((target_level & 0xffff) == 0x020a); /* 10.2 */
+	/* well, only possibly_broken_cisco, but that's too long to type. */
 
 	printf("%s (%s) [version %d.%d]:\n", inet_fmt(src, s1), inet_name(src),
 	       target_level & 0xff, (target_level >> 8) & 0xff);
+	
 	while (p < ep) {
 		register u_char metric;
 		register u_char thresh;
 		register u_char flags;
 		register int ncount;
-		register u_long laddr = *(u_long*)p;
+		register u_int32_t laddr = *(u_int32_t*)p;
 
 		p += 4;
 		metric = *p++;
 		thresh = *p++;
 		flags = *p++;
 		ncount = *p++;
-		while (--ncount >= 0) {
-			register u_long neighbor = *(u_long*)p;
+		if (broken_cisco && ncount == 0)	/* dumb Ciscos */
+			ncount = 1;
+		if (broken_cisco && ncount > 15)	/* dumb Ciscos */
+			ncount = ncount & 0xf;
+		while (--ncount >= 0 && p < ep) {
+			register u_int32_t neighbor = *(u_int32_t*)p;
 			p += 4;
 			printf("  %s -> ", inet_fmt(laddr, s1));
 			printf("%s (%s) [%d/%d", inet_fmt(neighbor, s1),
@@ -229,12 +237,16 @@ accept_neighbors2(src, dst, p, datalen)
 				printf("/tunnel");
 			if (flags & DVMRP_NF_SRCRT)
 				printf("/srcrt");
+			if (flags & DVMRP_NF_PIM)
+				printf("/pim");
 			if (flags & DVMRP_NF_QUERIER)
 				printf("/querier");
 			if (flags & DVMRP_NF_DISABLED)
 				printf("/disabled");
 			if (flags & DVMRP_NF_DOWN)
 				printf("/down");
+			if (flags & DVMRP_NF_LEAF)
+				printf("/leaf");
 			printf("]\n");
 		}
 	}
@@ -266,12 +278,12 @@ get_number(var, deflt, pargv, pargc)
 	}
 }
 
-u_long 
+u_int32_t 
 host_addr(name)
 	char   *name;
 {
 	struct hostent *e;
-	u_long addr;
+	u_int32_t		addr;
 
 	addr = inet_addr(name);
 	if ((int)addr == -1) {
@@ -280,7 +292,7 @@ host_addr(name)
 			return (0);
 		memcpy(&addr, e->h_addr_list[0], e->h_length);
 	}
-	return (addr);
+	return(addr);
 }
 
 void
@@ -291,6 +303,7 @@ usage()
 	exit(1);
 }
 
+int
 main(argc, argv)
 	int     argc;
 	char   *argv[];
@@ -346,6 +359,9 @@ main(argc, argv)
 		int     addrlen = sizeof(addr);
 
 		addr.sin_family = AF_INET;
+#if (defined(BSD) && (BSD >= 199103))
+		addr.sin_len = sizeof addr;
+#endif
 		addr.sin_addr.s_addr = target_addr;
 		addr.sin_port = htons(2000);	/* any port over 1024 will
 						 * do... */
@@ -366,7 +382,7 @@ main(argc, argv)
 		fd_set  fds;
 		struct timeval tv;
 		int     count, recvlen, dummy = 0;
-		register u_long src, dst, group;
+		register u_int32_t src, dst, group;
 		struct ip *ip;
 		struct igmp *igmp;
 		int     ipdatalen, iphdrlen, igmpdatalen;
@@ -393,7 +409,7 @@ main(argc, argv)
 				ask2(target_addr);
 			continue;
 		}
-		recvlen = recvfrom(igmp_socket, recv_buf, sizeof(recv_buf),
+		recvlen = recvfrom(igmp_socket, recv_buf, RECV_BUF_SIZE,
 				   0, NULL, &dummy);
 		if (recvlen <= 0) {
 			if (recvlen && errno != EINTR)
@@ -408,14 +424,9 @@ main(argc, argv)
 			continue;
 		}
 		ip = (struct ip *) recv_buf;
+		if (ip->ip_p == 0)
+			continue;	/* Request to install cache entry */
 		src = ip->ip_src.s_addr;
-		if (src != target_addr) {
-			fprintf(stderr, "mrinfo: got reply from %s",
-				inet_fmt(src, s1));
-			fprintf(stderr, " instead of %s\n",
-				inet_fmt(target_addr, s1));
-			continue;
-		}
 		dst = ip->ip_dst.s_addr;
 		iphdrlen = ip->ip_hl << 2;
 		ipdatalen = ip->ip_len;
@@ -436,6 +447,21 @@ main(argc, argv)
 		}
 		if (igmp->igmp_type != IGMP_DVMRP)
 			continue;
+
+		switch (igmp->igmp_code) {
+		case DVMRP_NEIGHBORS:
+		case DVMRP_NEIGHBORS2:
+			if (src != target_addr) {
+				fprintf(stderr, "mrinfo: got reply from %s",
+					inet_fmt(src, s1));
+				fprintf(stderr, " instead of %s\n",
+					inet_fmt(target_addr, s1));
+				/*continue;*/
+			}
+			break;
+		default:
+			continue;	/* ignore all other DVMRP messages */
+		}
 
 		switch (igmp->igmp_code) {
 
@@ -477,6 +503,27 @@ void accept_report()
 void accept_neighbor_request()
 {
 }
+void accept_prune()
+{
+}
+void accept_graft()
+{
+}
+void accept_g_ack()
+{
+}
+void add_table_entry()
+{
+}
 void check_vif_state()
+{
+}
+void accept_leave_message()
+{
+}
+void accept_mtrace()
+{
+}
+void accept_membership_query()
 {
 }
