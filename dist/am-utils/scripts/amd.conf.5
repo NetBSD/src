@@ -1,4 +1,4 @@
-.\"	$NetBSD: amd.conf.5,v 1.9 2004/11/27 01:24:36 christos Exp $
+.\"	$NetBSD: amd.conf.5,v 1.10 2004/11/27 23:23:26 wiz Exp $
 .\"
 .\"
 .\" Copyright (c) 1997-2004 Erez Zadok
@@ -368,7 +368,7 @@ have changed at their source (NIS servers, LDAP servers, files, etc.).  Amd
 will reload only those maps that have changed.
 
 .TP
-.BR nfs_allow_insecure_port " (string, default=no).
+.BR nfs_allow_insecure_port " (string, default=no)"
 Normally amd will refuse requests coming from unprivileged ports (i.e.
 ports >= 1024 on Unix systems), so that only privileged users and the kernel
 can send NFS requests to it. However, some kernels (certain versions of
