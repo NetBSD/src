@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.1 2003/01/24 01:56:48 thorpej Exp $	*/
+/*	$NetBSD: sem.c,v 1.2 2003/02/28 05:29:48 matt Exp $	*/
 
 /*
  * Copyright (C) 2000 Jason Evans <jasone@freebsd.org>.
@@ -36,6 +36,7 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <semaphore.h>
+#include <stdlib.h>
 #include <unistd.h>
 
 #define NCHILDREN 10
