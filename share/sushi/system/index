@@ -1,10 +1,11 @@
-# $NetBSD: index,v 1.4 2001/04/29 04:53:05 garbled Exp $
-rcconf		rcconf		Edit startup configuration
-inetdconf	inetdconf	Edit inetd.conf
+# $NetBSD: index,v 1.5 2004/03/09 21:36:37 garbled Exp $
+rcconf		rcconf		Edit startup configuration (rc.conf)
+inetdconf	inetdconf	Edit inetd server configuration (inetd.conf)
+usermgmtconf	usermgmtconf	Edit user management configuration (usermgmt.conf)
+dailyconf	dailyconf	Edit daily maintenance configuration (daily.conf)
+weeklyconf	weeklyconf	Edit weekly maintenance configuration (weekly.conf)
+securityconf	securityconf	Edit daily security check configuration (security.conf)
+sysctl		sysctl		Edit NetBSD kernel parameters (sysctl.conf)
+sshdconf	sshdconf	Edit SSH daemon configuration (sshd_config)
+localtime	localtime	Change the timezone (localtime)
 mailerconf	mailerconf	Change your default mailer (mailer.conf)
-usermgmtconf	usermgmtconf	Edit usermgmt.conf
-dailyconf	dailyconf	Edit daily.conf
-weeklyconf	weeklyconf	Edit weekly.conf
-securityconf	securityconf	Edit security.conf
-sysctl		sysctl		Edit NetBSD kernel parameters (sysctls)
-localtime	localtime	Edit /etc/localtime (timezone)

@@ -1,15 +1,15 @@
 #!/bin/sh
-# $NetBSD: script1,v 1.1 2001/03/06 21:18:42 garbled Exp $
+# $NetBSD: script1,v 1.2 2004/03/09 21:36:37 garbled Exp $
 
-A=`grep "^#$1	.*	$2	" /etc/inetd.conf`
-if [ "$A" ]; then
+A=`grep "^#$1	.*	$2" /etc/inetd.conf`
+if [ -n "$A" ]; then
 	echo "NO"
 	echo "YES"
 	exit 0
 fi
 
-A=`grep "^$1	.*	$2	" /etc/inetd.conf`
-if [ "$A" ]; then
+A=`grep "^$1	.*	$2" /etc/inetd.conf`
+if [ -n "$A" ]; then
 	echo "YES"
 	echo "NO"
 	exit 0
