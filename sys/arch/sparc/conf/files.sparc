@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.70.4.1 1999/06/21 01:01:40 thorpej Exp $
+#	$NetBSD: files.sparc,v 1.70.4.2 1999/07/01 23:22:09 thorpej Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -19,11 +19,12 @@ device obio { [addr = -1], [level = -1] }
 attach obio at mainbus
 
 include "dev/vme/files.vme"
-attach vme at mainbus with vme_mainbus
-attach vme at iommu with vme_iommu
+device sparcvme: vmebus
+attach sparcvme at mainbus with vme_mainbus
+attach sparcvme at iommu with vme_iommu
 
 file	arch/sparc/dev/obio.c		obio
-file	arch/sparc/dev/vme_machdep.c	vme
+file	arch/sparc/dev/vme_machdep.c	sparcvme
 
 device auxreg
 attach auxreg at mainbus with auxreg_mainbus
@@ -266,7 +267,8 @@ file	arch/sparc/sparc/sunos_machdep.c compat_sunos
 include "compat/aout/files.aout"
 
 # Binary compatibility with previous NetBSD releases (COMPAT_XX)
-file	arch/sparc/sparc/compat_13_machdep.c	compat_13
+# Note: SunOS compatibility also uses some of `compat_13_machdep.c'
+file	arch/sparc/sparc/compat_13_machdep.c	compat_13 | compat_sunos
 
 # Miscellaneous
 file	netns/ns_cksum.c		ns

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_subr.c,v 1.3 1999/05/18 00:22:41 thorpej Exp $	*/
+/*	$NetBSD: ntfs_subr.c,v 1.3.2.1 1999/07/01 23:49:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko (semenu@FreeBSD.org)

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.33.2.1.2.1 1999/06/21 00:49:05 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.33.2.1.2.2 1999/07/01 23:06:27 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -337,7 +337,7 @@ initppc(startkernel, endkernel, args, btinfo)
 	pmap_bootstrap(startkernel, endkernel);
 
 #ifdef DDB
-	ddb_init((int)(endsym - startsym), startsym, endsym);
+	ddb_init((int)((u_int)endsym - (u_int)startsym), startsym, endsym);
 #endif
 #if NIPKDB > 0
 	/*
@@ -582,13 +582,13 @@ lookup_bootinfo(type)
 	int type;
 {
 	struct btinfo_common *bt;
-	void *help = (void *)bootinfo;
+	struct btinfo_common *help = (struct btinfo_common *)bootinfo;
 
 	do {
-		bt = (struct btinfo_common *)help;
+		bt = help;
 		if (bt->type == type)
 			return (help);
-		help += bt->next;
+		help = (struct btinfo_common *)((char*)help + bt->next);
 	} while (bt->next &&
 		(size_t)help < (size_t)bootinfo + sizeof (bootinfo));
 
@@ -930,6 +930,10 @@ softnet(isr)
 #endif
 	if (isr & (1 << NETISR_IP))
 		ipintr();
+#endif
+#ifdef	INET6
+	if (isr & (1 << NETISR_IPV6))
+		ip6intr();
 #endif
 #ifdef	IMP
 	if (isr & (1 << NETISR_IMP))

@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.22.4.1 1999/06/21 01:19:30 thorpej Exp $
+$NetBSD: usbdevs,v 1.22.4.2 1999/07/01 23:40:23 thorpej Exp $
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -51,9 +51,11 @@ vendor GENIUS		0x0458	KYE Systems Corp.
 vendor MICROSOFT	0x045e	Microsoft
 vendor KENSINGTON	0x0461	Primax Electronics
 vendor CHERRY		0x046a	Cherry Mikroschalter GMBH
+vendor LOGITECH		0x046d	Logitech Inc.
 vendor BTC		0x046e	Behavior Tech. Computer
 vendor PHILIPS		0x0471	Philips
 vendor CONNECTIX	0x0478	Connectix Corp.
+vendor STMICRO		0x0483	STMicroelectronics
 vendor ACER		0x04a5	Acer Peripheral Inc.
 vendor CYPRESS		0x04b4	Cypress Semiconductor
 vendor EPSON		0x04b8	Seiko Epson Corp.
@@ -71,7 +73,7 @@ vendor EIZO		0x056d	EIZO
 vendor AGILER		0x056e	Elecom Co., Ltd.
 vendor IOMEGA		0x059b	Iomega Corporation
 vendor BELKIN		0x05ab	In-System Design
-vendor LOGITECH		0x05ac	Apple Computer
+vendor APPLE		0x05ac	Apple Computer
 vendor EIZONANAO	0x05e7	EIZO Nanao
 vendor CHIC		0x05fe	Chic Technology
 vendor MACALLY		0x0618	Macally
@@ -128,6 +130,9 @@ product PHILIPS HUB		0x0201	hub
 /* Connectix products */
 product CONNECTIX QUICKCAM	0x0001	QuickCam
 
+/* STMicroelectronics products */
+product STMICRO COMMUNICATOR	0x7554	USB Communicator
+
 /* Acer products */
 product ACER ACERSCAN_C310U	0x12a6	Acerscan C310U
 
@@ -183,6 +188,7 @@ product BELKIN F5U002		0x0002	Parallel printer adapter
 /* Logitech products */
 product LOGITECH M2452		0x0203	M2452 keyboard
 product LOGITECH M4848		0x0301	M4848 mouse
+product LOGITECH USBPS2		0xc001	USB-PS/2 mouse
 
 /* Chic Technology products */
 product CHIC MOUSE1		0x0001	mouse

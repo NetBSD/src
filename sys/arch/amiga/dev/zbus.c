@@ -1,4 +1,4 @@
-/*	$NetBSD: zbus.c,v 1.39 1999/03/31 02:47:38 mhitch Exp $	*/
+/*	$NetBSD: zbus.c,v 1.39.4.1 1999/07/01 23:01:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -332,7 +332,7 @@ zbusprint(auxp, pnp)
 		if (zap->manid == -1)
 			rv = UNSUPP;
 	}
-	printf(" pa %p man/pro %d/%d", zap->pa, zap->manid, zap->prodid);
+	printf(" pa %8p man/pro %d/%d", zap->pa, zap->manid, zap->prodid);
 	return(rv);
 }
 

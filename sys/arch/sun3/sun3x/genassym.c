@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.18.8.1 1999/06/21 01:03:21 thorpej Exp $	*/
+/*	$NetBSD: genassym.c,v 1.18.8.2 1999/07/01 23:24:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -91,7 +91,7 @@
 #include <sun3/sun3x/enable.h>
 
 /* Note: Avoid /usr/include for cross compilation! */
-extern void printf __P((char *fmt, ...));
+extern void printf __P((const char *fmt, ...));
 extern void exit __P((int));
 
 #define def(name, value) { name, value }

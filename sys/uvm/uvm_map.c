@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.36.2.1.2.2 1999/06/21 01:47:20 thorpej Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.36.2.1.2.3 1999/07/01 23:55:16 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -192,23 +192,6 @@ static void		uvm_map_unreference_amap __P((vm_map_entry_t, int));
 /*
  * local inlines
  */
-
-/* XXX Should not exist! */
-#define	vm_map_downgrade(map)						\
-	(void) lockmgr(&(map)->lock, LK_DOWNGRADE, NULL)
-
-/* XXX Should not exist! */
-#ifdef DIAGNOSTIC
-#define	vm_map_upgrade(map)						\
-do {									\
-	if (lockmgr(&(map)->lock, LK_UPGRADE, NULL) != 0)		\
-		panic("vm_map_upgrade: failed to upgrade lock");	\
-} while (0)
-#else
-#define	vm_map_upgrade(map)						\
-	(void) lockmgr(&(map)->lock, LK_UPGRADE, NULL)
-#endif /* DIAGNOSTIC */
-
 
 /*
  * uvm_mapent_alloc: allocate a map entry
@@ -2026,6 +2009,9 @@ uvm_map_pageable(map, start, end, new_pageable, islocked)
 {
 	vm_map_entry_t entry, start_entry, failed_entry;
 	int rv;
+#ifdef DIAGNOSTIC
+	u_int timestamp_save;
+#endif
 	UVMHIST_FUNC("uvm_map_pageable"); UVMHIST_CALLED(maphist);
 	UVMHIST_LOG(maphist,"(map=0x%x,start=0x%x,end=0x%x,new_pageable=0x%x)",
 	map, start, end, new_pageable);
@@ -2180,6 +2166,10 @@ uvm_map_pageable(map, start, end, new_pageable, islocked)
 	 * HACK HACK HACK HACK 
 	 */
 
+#ifdef DIAGNOSTIC
+	timestamp_save = map->timestamp;
+#endif
+	vm_map_busy(map);
 	vm_map_downgrade(map);
 
 	rv = 0;
@@ -2205,6 +2195,12 @@ uvm_map_pageable(map, start, end, new_pageable, islocked)
 		 * Get back to an exclusive (write) lock.
 		 */
 		vm_map_upgrade(map);
+		vm_map_unbusy(map);
+
+#ifdef DIAGNOSTIC
+		if (timestamp_save != map->timestamp)
+			panic("uvm_map_pageable: stale map");
+#endif
 
 		/*
 		 * first drop the wiring count on all the entries
@@ -2233,6 +2229,7 @@ uvm_map_pageable(map, start, end, new_pageable, islocked)
 	}
 
 	/* We are holding a read lock here. */
+	vm_map_unbusy(map);
 	vm_map_unlock_read(map);
 	
 	UVMHIST_LOG(maphist,"<- done (OK WIRE)",0,0,0,0);
@@ -2257,6 +2254,9 @@ uvm_map_pageable_all(map, flags, limit)
 	vm_map_entry_t entry, failed_entry;
 	vsize_t size;
 	int rv;
+#ifdef DIAGNOSTIC
+	u_int timestamp_save;
+#endif
 	UVMHIST_FUNC("uvm_map_pageable_all"); UVMHIST_CALLED(maphist);
 	UVMHIST_LOG(maphist,"(map=0x%x,flags=0x%x)", map, flags, 0, 0);
 
@@ -2385,6 +2385,10 @@ uvm_map_pageable_all(map, flags, limit)
 	 * Pass 3.
 	 */
 
+#ifdef DIAGNOSTIC
+	timestamp_save = map->timestamp;
+#endif
+	vm_map_busy(map);
 	vm_map_downgrade(map);
 
 	rv = KERN_SUCCESS;
@@ -2409,6 +2413,12 @@ uvm_map_pageable_all(map, flags, limit)
 		 * Get back an exclusive (write) lock.
 		 */
 		vm_map_upgrade(map);
+		vm_map_unbusy(map);
+
+#ifdef DIAGNOSTIC
+		if (timestamp_save != map->timestamp)
+			panic("uvm_map_pageable_all: stale map");
+#endif
 
 		/*
 		 * first drop the wiring count on all the entries
@@ -2435,6 +2445,7 @@ uvm_map_pageable_all(map, flags, limit)
 	}
 
 	/* We are holding a read lock here. */
+	vm_map_unbusy(map);
 	vm_map_unlock_read(map);
 
 	UVMHIST_LOG(maphist,"<- done (OK WIRE)",0,0,0,0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm.h,v 1.15.4.1 1999/06/07 04:25:35 chs Exp $	*/
+/*	$NetBSD: uvm.h,v 1.15.4.2 1999/07/01 23:55:13 thorpej Exp $	*/
 
 /*
  *
@@ -127,8 +127,10 @@ struct uvm {
  * historys
  */
 
+#ifdef _KERNEL
 UVMHIST_DECL(maphist);
 UVMHIST_DECL(pdhist);
+#endif /* _KERNEL */
 
 /*
  * vm_map_entry etype bits:
@@ -161,35 +163,30 @@ UVMHIST_DECL(ubchist);
  * macros
  */
 
+#ifdef _KERNEL
+
 /*
  * UVM_UNLOCK_AND_WAIT: atomic unlock+wait... front end for the 
  * (poorly named) thread_sleep_msg function.
  */
 
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
-
 #define UVM_UNLOCK_AND_WAIT(event,lock,intr,msg, timo) \
 	thread_sleep_msg(event,lock,intr,msg, timo)
 
 #else
-
 #define UVM_UNLOCK_AND_WAIT(event,lock,intr,msg, timo) \
 	thread_sleep_msg(event,NULL,intr,msg, timo)
-
-#endif
+#endif /* MULTIPROCESSOR || LOCKDEBUG */
 
 /*
  * UVM_PAGE_OWN: track page ownership (only if UVM_PAGE_TRKOWN)
  */
 
 #if defined(UVM_PAGE_TRKOWN)
-
 #define UVM_PAGE_OWN(PG, TAG) uvm_page_own(PG, TAG)
-
-#else /* UVM_PAGE_TRKOWN */
-
+#else
 #define UVM_PAGE_OWN(PG, TAG) /* nothing */
-
 #endif /* UVM_PAGE_TRKOWN */
 
 /*
@@ -202,6 +199,6 @@ UVMHIST_DECL(ubchist);
 #include <uvm/uvm_page_i.h>
 #include <uvm/uvm_pager_i.h>
 
-#endif
+#endif /* _KERNEL */
 
 #endif /* _UVM_UVM_H_ */

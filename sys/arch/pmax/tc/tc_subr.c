@@ -1,4 +1,4 @@
-/*	$NetBSD: tc_subr.c,v 1.21.12.1 1999/06/21 00:59:20 thorpej Exp $	*/
+/*	$NetBSD: tc_subr.c,v 1.21.12.2 1999/07/01 23:20:19 thorpej Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -14,7 +14,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: tc_subr.c,v 1.21.12.1 1999/06/21 00:59:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc_subr.c,v 1.21.12.2 1999/07/01 23:20:19 thorpej Exp $");
 
 
 #include <sys/types.h>
@@ -101,10 +101,7 @@ const struct tcfbsw tcfbsw[] = {
 #if NPX > 0
   tcfbsw_entry("PMAG-CA ", px_init),
   tcfbsw_entry("PMAG-DA ", px_init),
-  tcfbsw_entry("PMAG-E  ", px_init),	/* ??? */
-  tcfbsw_entry("PMAG-EA ", px_init),
-  tcfbsw_entry("PMAG-F  ", px_init),	/* ??? */
-  tcfbsw_entry("PMAG-FA ", px_init),
+  tcfbsw_entry("PMAG-FA ", px_init),	/* ?? */
 #endif
 };
 const int ntcfbsw = sizeof(tcfbsw) / sizeof(tcfbsw[0]);

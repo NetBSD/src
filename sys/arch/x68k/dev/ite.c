@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.17.4.1 1999/06/21 01:04:12 thorpej Exp $	*/
+/*	$NetBSD: ite.c,v 1.17.4.2 1999/07/01 23:29:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -309,6 +309,8 @@ iteon(dev, flag)
 	if (ip->flags & ITE_INGRF)
 		return(0);
 	iteinit(dev);
+	if (flag & 2)
+		ite_reset(ip);
 #if NKBD > 0
 	mfp_send_usart (0x49);	/* XXX */
 #endif

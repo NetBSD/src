@@ -1,4 +1,4 @@
-/* $NetBSD: apecs_pci.c,v 1.16 1997/09/02 13:19:15 thorpej Exp $ */
+/* $NetBSD: apecs_pci.c,v 1.16.14.1 1999/07/01 23:00:57 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: apecs_pci.c,v 1.16 1997/09/02 13:19:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apecs_pci.c,v 1.16.14.1 1999/07/01 23:00:57 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -184,7 +184,11 @@ apecs_conf_write(cpv, tag, offset, data)
 	    (offset & ~0x03) << 5 |				/* XXX */
 	    0 << 5 |						/* XXX */
 	    0x3 << 3);						/* XXX */
+
+	alpha_mb();
 	*datap = data;
+	alpha_mb();
+	alpha_mb();
 
 	if (secondary) {
 		alpha_mb();

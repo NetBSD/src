@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.9.6.1 1999/06/21 01:02:34 thorpej Exp $ */
+/*	$NetBSD: clock.c,v 1.9.6.2 1999/07/01 23:23:17 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -201,9 +201,9 @@ clock_map(bh, model)
 	char *model;
 {
 	struct clockreg *cl;
+#if 0
 	paddr_t pa;
 
-#if 0
 	pa = pmap_extract(pmap_kernel(), (vaddr_t)bh);
 	pmap_enter(pmap_kernel(), (vaddr_t)bh, pa, VM_PROT_READ, 1, VM_PROT_READ);
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: icu.s,v 1.59 1999/01/26 14:28:05 christos Exp $	*/
+/*	$NetBSD: icu.s,v 1.59.4.1 1999/07/01 23:07:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -168,6 +168,9 @@ IDTVEC(softnet)
 	DONET(NETISR_ARP, _C_LABEL(arpintr))
 #endif
 	DONET(NETISR_IP, _C_LABEL(ipintr))
+#endif
+#ifdef INET6
+	DONET(NETISR_IPV6, _C_LABEL(ip6intr))
 #endif
 #ifdef IMP
 	DONET(NETISR_IMP, _C_LABEL(impintr))
