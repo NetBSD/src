@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_intr_fixup.c,v 1.1 1999/11/17 01:20:38 thorpej Exp $	*/
+/*	$NetBSD: pci_intr_fixup.c,v 1.2 1999/11/17 18:55:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -263,12 +263,13 @@ pciintr_link_init()
 			if (pciintr_icu_getclink(pciintr_icu_tag,
 			    pciintr_icu_handle, link, &clink) != 0) {
 				/*
-				 * Table entry is bogus.
+				 * Table entry is bogus.  Just ignore it.
 				 */
+#ifdef PCIINTR_DEBUG
 				printf("pciintr_link_init: bad table entry: "
 				    "bus %d device %d link 0x%02x\n",
 				    pir->bus, (pir->device >> 3 & 0x1f), link);
-				error = 1;
+#endif
 				continue;
 			}
 
