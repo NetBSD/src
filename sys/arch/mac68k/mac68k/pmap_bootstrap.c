@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.18 1996/02/10 23:12:46 briggs Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.19 1996/02/27 03:25:47 briggs Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -363,7 +363,7 @@ pmap_bootstrap(nextpa, firstpa)
 	 */
 	pte = PA2VA(iiopa, u_int *);
 	epte = PA2VA(rompa, u_int *);
-	protopte = INTIOBASE | PG_RW | PG_CI | PG_V;
+	protopte = IOBase | PG_RW | PG_CI | PG_V;
 	while (pte < epte) {
 		*pte++ = protopte;
 		protopte += NBPG;
