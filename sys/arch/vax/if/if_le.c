@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.17 2000/06/04 02:19:25 matt Exp $	*/
+/*	$NetBSD: if_le.c,v 1.18 2000/06/05 00:09:19 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -189,7 +189,8 @@ le_ibus_attach(parent, self, aux)
 		return;
 	scb_vecalloc(vec, (void (*)(void *))am7990_intr, sc,
 		SCB_ISTACK, &sc->sc_intrcnt);
-	evcnt_attach(self, "intr", &sc->sc_intrcnt);
+	evcnt_attach_dynamic(&sc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
+		self->dv_xname, "intr");
 
 	printf(": vec %o ipl %x\n%s", vec, br, self->dv_xname);
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: dz_uba.c,v 1.11 2000/06/04 06:17:02 matt Exp $ */
+/*	$NetBSD: dz_uba.c,v 1.12 2000/06/05 00:09:18 matt Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden. All rights reserved.
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
@@ -113,7 +113,7 @@ dz_uba_attach(parent, self, aux)
         struct device *parent, *self;
         void *aux;
 {
-	struct	dz_softc *sc = (void *)self;
+	struct dz_softc *sc = (void *)self;
 	struct uba_attach_args *ua = aux;
 
 	sc->sc_iot = ua->ua_iot;
@@ -137,5 +137,5 @@ dz_uba_attach(parent, self, aux)
 		dzrint, sc, &sc->sc_rintrcnt);
 	uba_reset_establish(dzreset, self);
 
-	dzattach(sc);
+	dzattach(sc, ua->ua_evcnt);
 }

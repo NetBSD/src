@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.s,v 1.46 2000/06/04 18:13:06 matt Exp $	   */
+/*	$NetBSD: subr.s,v 1.47 2000/06/05 00:09:20 matt Exp $	   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -157,7 +157,7 @@ _cmn_idsptch:
 		movl	8(r0),r1	# get evcnt pointer
 		beql	1f		# no ptr, skip increment
 		incl	EV_COUNT(r1)	# increment low longword
-#		adwc	$0,EV_COUNT+4(r1) # add any carry to hi longword
+		adwc	$0,EV_COUNT+4(r1) # add any carry to hi longword
 1:		pushl	4(r0)		# push argument
 		calls	$1,*(r0)	# call interrupt routine
 		popr	$0x3f		# pop registers
