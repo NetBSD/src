@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_prot.c,v 1.58 2000/05/27 00:40:46 sommerfeld Exp $	*/
+/*	$NetBSD: kern_prot.c,v 1.59 2000/10/17 20:53:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1991, 1993
@@ -326,6 +326,12 @@ sys_setuid(p, v, retval)
 	    (error = suser(pc->pc_ucred, &p->p_acflag)))
 		return (error);
 	/*
+	 * check if we are all set, and this is a no-op
+	 */
+	if (pc->p_ruid == uid && pc->p_svuid == uid &&
+	    pc->pc_ucred->cr_uid == uid)
+		return 0;
+	/*
 	 * Everything's okay, do it.
 	 * Transfer proc count to new user.
 	 * Copy credentials so other references do not see our changes.
@@ -359,6 +365,12 @@ sys_seteuid(p, v, retval)
 	    (error = suser(pc->pc_ucred, &p->p_acflag)))
 		return (error);
 	/*
+	 * check if we are all set, and this is a no-op
+	 */
+	if (pc->pc_ucred->cr_uid == euid)
+		return 0;
+
+	/*
 	 * Everything's okay, do it.  Copy credentials so other references do
 	 * not see our changes.
 	 */
@@ -380,7 +392,7 @@ sys_setreuid(p, v, retval)
 	} */ *uap = v;
 	struct pcred *pc = p->p_cred;
 	uid_t ruid, euid;
-	int error;
+	int error, changed = 0;
 
 	ruid = SCARG(uap, ruid);
 	euid = SCARG(uap, euid);
@@ -396,19 +408,22 @@ sys_setreuid(p, v, retval)
 	    (error = suser(pc->pc_ucred, &p->p_acflag)))
 		return (error);
 
-	if (euid != (uid_t)-1) {
+	if (euid != (uid_t)-1 && euid != pc->pc_ucred->cr_uid) {
 		pc->pc_ucred = crcopy(pc->pc_ucred);
 		pc->pc_ucred->cr_uid = euid;
+		changed++;
 	}
 
-	if (ruid != (uid_t)-1) {
+	if (ruid != (uid_t)-1 &&
+	    (pc->p_ruid != ruid || pc->p_svuid != pc->pc_ucred->cr_uid)) {
 		(void)chgproccnt(pc->p_ruid, -1);
 		(void)chgproccnt(ruid, 1);
 		pc->p_ruid = ruid;
 		pc->p_svuid = pc->pc_ucred->cr_uid;
+		changed++;
 	}
 
-	if (euid != (uid_t)-1 && ruid != (uid_t)-1)
+	if (changed)
 		p_sugid(p);
 	return (0);
 }
@@ -431,6 +446,13 @@ sys_setgid(p, v, retval)
 	if (gid != pc->p_rgid &&
 	    (error = suser(pc->pc_ucred, &p->p_acflag)))
 		return (error);
+	/*
+	 * check if we are all set, and this is a no-op
+	 */
+	if (pc->pc_ucred->cr_gid == gid && pc->p_rgid == gid &&
+	    pc->p_svgid == gid)
+		return 0;
+
 	pc->pc_ucred = crcopy(pc->pc_ucred);
 	pc->pc_ucred->cr_gid = gid;
 	pc->p_rgid = gid;
@@ -457,6 +479,12 @@ sys_setegid(p, v, retval)
 	if (egid != pc->p_rgid && egid != pc->p_svgid &&
 	    (error = suser(pc->pc_ucred, &p->p_acflag)))
 		return (error);
+	/*
+	 * check if we are all set, and this is a no-op
+	 */
+	if (pc->pc_ucred->cr_gid == egid)
+		return 0;
+
 	pc->pc_ucred = crcopy(pc->pc_ucred);
 	pc->pc_ucred->cr_gid = egid;
 	p_sugid(p);
@@ -475,7 +503,7 @@ sys_setregid(p, v, retval)
 	} */ *uap = v;
 	struct pcred *pc = p->p_cred;
 	gid_t rgid, egid;
-	int error;
+	int error, changed = 0;
 
 	rgid = SCARG(uap, rgid);
 	egid = SCARG(uap, egid);
@@ -491,17 +519,20 @@ sys_setregid(p, v, retval)
 	    (error = suser(pc->pc_ucred, &p->p_acflag)))
 		return (error);
 
-	if (egid != (gid_t)-1) {
+	if (egid != (gid_t)-1 && pc->pc_ucred->cr_gid != egid) {
 		pc->pc_ucred = crcopy(pc->pc_ucred);
 		pc->pc_ucred->cr_gid = egid;
+		changed++;
 	}
 
-	if (rgid != (gid_t)-1) {
+	if (rgid != (gid_t)-1 &&
+	    (pc->p_rgid != rgid || pc->p_svgid != pc->pc_ucred->cr_gid)) {
 		pc->p_rgid = rgid;
 		pc->p_svgid = pc->pc_ucred->cr_gid;
+		changed++;
 	}
 
-	if (egid != (gid_t)-1 && rgid != (gid_t)-1)
+	if (changed)
 		p_sugid(p);
 	return (0);
 }
@@ -538,17 +569,29 @@ sys_setgroups(p, v, retval)
 	struct pcred *pc = p->p_cred;
 	int ngrp;
 	int error;
+	gid_t grp[NGROUPS];
+	size_t grsize;
 
 	if ((error = suser(pc->pc_ucred, &p->p_acflag)) != 0)
 		return (error);
+
 	ngrp = SCARG(uap, gidsetsize);
 	if ((u_int)ngrp > NGROUPS)
 		return (EINVAL);
-	pc->pc_ucred = crcopy(pc->pc_ucred);
-	error = copyin(SCARG(uap, gidset), pc->pc_ucred->cr_groups,
-	    ngrp * sizeof(gid_t));
+
+	grsize = ngrp * sizeof(gid_t);
+	error = copyin(SCARG(uap, gidset), grp, grsize);
 	if (error)
 		return (error);
+	/*
+	 * check if this is a no-op
+	 */
+	if (pc->pc_ucred->cr_ngroups == ngrp &&
+	    memcmp(grp, pc->pc_ucred->cr_groups, grsize) == 0)
+		return 0;
+
+	pc->pc_ucred = crcopy(pc->pc_ucred);
+	(void)memcpy(pc->pc_ucred->cr_groups, grp, grsize);
 	pc->pc_ucred->cr_ngroups = ngrp;
 	p_sugid(p);
 	return (0);
