@@ -1,4 +1,4 @@
-/*	$NetBSD: pmc.c,v 1.3 2001/11/15 07:03:31 lukem Exp $	*/
+/*	$NetBSD: pmc.c,v 1.3.12.1 2004/04/17 08:23:15 grant Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmc.c,v 1.3 2001/11/15 07:03:31 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmc.c,v 1.3.12.1 2004/04/17 08:23:15 grant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,6 +82,17 @@ pmc_init(void)
 
 	case CPUCLASS_686:
 		if (strcmp(cpu_vendor, "GenuineIntel") == 0) {
+			extern int cpu_id;
+			extern int cpuid_level;
+
+			/*
+			 * Figure out what we support; right now
+			 * we're mising Pentium 4 support.
+			 */
+			if (cpuid_level == -1 ||
+			    ((cpu_id >> 8) & 15) == CPU_FAMILY_P4)
+				break;
+
 			pmc_type = PMC_TYPE_I686;
 			pmc_state[0].pmcs_ctrmsr = MSR_PERFCTR0;
 			pmc_state[1].pmcs_ctrmsr = MSR_PERFCTR1;
