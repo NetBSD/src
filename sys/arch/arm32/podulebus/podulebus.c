@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.c,v 1.41 2001/03/25 00:56:58 bjh21 Exp $ */
+/* $NetBSD: podulebus.c,v 1.42 2001/06/08 22:38:07 bjh21 Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -77,6 +77,8 @@ extern struct bus_space podulebus_bs_tag;
 
 void map_section __P((vm_offset_t, vm_offset_t, vm_offset_t, int cacheable));
 int poduleirqhandler __P((void *arg));
+u_int poduleread __P((u_int, int));
+u_int netslotread __P((u_int, int));
 
 
 /*
@@ -195,21 +197,21 @@ podulechunkdirectory(podule)
 	address = 0x40;
 
 	do {
-		id = poduleread(podule->sync_base, address, podule->slottype);
-		size = poduleread(podule->sync_base, address + 4, podule->slottype);
-		size |= (poduleread(podule->sync_base, address + 8, podule->slottype) << 8);
-		size |= (poduleread(podule->sync_base, address + 12, podule->slottype) << 16);
+		id = podule->read_rom(podule->sync_base, address);
+		size = podule->read_rom(podule->sync_base, address + 4);
+		size |= (podule->read_rom(podule->sync_base, address + 8) << 8);
+		size |= (podule->read_rom(podule->sync_base, address + 12) << 16);
 		if (id == 0xf5) {
-			addr = poduleread(podule->sync_base, address + 16, podule->slottype);
-			addr |= (poduleread(podule->sync_base, address + 20, podule->slottype) << 8);
-			addr |= (poduleread(podule->sync_base, address + 24, podule->slottype) << 16);
-			addr |= (poduleread(podule->sync_base, address + 28, podule->slottype) << 24);
+			addr = podule->read_rom(podule->sync_base, address + 16);
+			addr |= (podule->read_rom(podule->sync_base, address + 20) << 8);
+			addr |= (podule->read_rom(podule->sync_base, address + 24) << 16);
+			addr |= (podule->read_rom(podule->sync_base, address + 28) << 24);
 			if (addr < 0x800 && done_f5 == 0) {
 				done_f5 = 1;
 				for (loop = 0; loop < size; ++loop) {
 					if (loop < PODULE_DESCRIPTION_LENGTH) {
 						podule->description[loop] =
-						    poduleread(podule->sync_base, (addr + loop)*4, podule->slottype);
+						    podule->read_rom(podule->sync_base, (addr + loop)*4);
 						podule->description[loop + 1] = 0;
 					}
 				}
@@ -217,14 +219,14 @@ podulechunkdirectory(podule)
 		}
 #ifdef DEBUG_CHUNK_DIR
 		if (id == 0xf5 || id == 0xf1 || id == 0xf2 || id == 0xf3 || id == 0xf4 || id == 0xf6) {
-			addr = poduleread(podule->sync_base, address + 16, podule->slottype);
-			addr |= (poduleread(podule->sync_base, address + 20, podule->slottype) << 8);
-			addr |= (poduleread(podule->sync_base, address + 24, podule->slottype) << 16);
-			addr |= (poduleread(podule->sync_base, address + 28, podule->slottype) << 24);
+			addr = podule->read_rom(podule->sync_base, address + 16);
+			addr |= (podule->read_rom(podule->sync_base, address + 20) << 8);
+			addr |= (podule->read_rom(podule->sync_base, address + 24) << 16);
+			addr |= (podule->read_rom(podule->sync_base, address + 28) << 24);
 			printf("<%04x.%04x.%04x.%04x>", id, address, addr, size);
 			if (addr < 0x800) {
 				for (loop = 0; loop < size; ++loop) {
-					printf("%c", poduleread(podule->sync_base, (addr + loop)*4, podule->slottype));
+					printf("%c", podule->read_rom(podule->sync_base, (addr + loop)*4));
 				}
 				printf("\\n\n");
 			}
@@ -304,33 +306,33 @@ poduleexamine(podule, dev, slottype)
 
 
 u_int
-poduleread(address, offset, slottype)
+poduleread(address, offset)
 	u_int address;
 	int offset;
-	int slottype;
 {
-	static int netslotoffset = -1;
 
-	if (slottype == SLOT_NET) {
-		if (netslotoffset == -1) {
-			netslotoffset = 0;
-			WriteByte(address, 0x00);
-		}
-		offset = offset >> 2;
-		if (offset < netslotoffset) {
-			WriteByte(address, 0);
-			netslotoffset = 0;
-		}
-		while (netslotoffset < offset) {
-			slottype = ReadByte(address);
-			++netslotoffset;
-		}
-		++netslotoffset;
-		return(ReadByte(address));
-	}
 	return(ReadByte(address + offset));
 }
 
+u_int
+netslotread(address, offset)
+	u_int address;
+	int offset;
+{
+	static int netslotoffset = -1;
+
+	offset = offset >> 2;
+	if (netslotoffset == -1 || offset < netslotoffset) {
+		WriteByte(address, 0);
+		netslotoffset = 0;
+	}
+	while (netslotoffset < offset) {
+		(void)ReadByte(address);
+		++netslotoffset;
+	}
+	++netslotoffset;
+	return(ReadByte(address));
+}
 
 void
 podulescan(dev)
@@ -349,6 +351,7 @@ podulescan(dev)
 		podule->attached = 0;
 		podule->slottype = SLOT_NONE;
 		podule->interrupt = IRQ_PODULE;
+		podule->read_rom = poduleread;
 		podule->dma_channel = -1;
 		podule->dma_interrupt = -1;
 		podule->description[0] = 0;
@@ -454,6 +457,7 @@ netslotscan(dev)
 	podule->slottype = SLOT_NONE;
 	podule->podulenum = MAX_PODULES;
 	podule->interrupt = IRQ_NETSLOT;
+	podule->read_rom = netslotread;
 	podule->dma_channel = -1;
 	podule->dma_interrupt = -1;
 	podule->description[0] = 0;

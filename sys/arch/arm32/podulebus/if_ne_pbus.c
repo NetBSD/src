@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pbus.c,v 1.8 2001/03/31 15:32:46 chris Exp $	*/
+/*	$NetBSD: if_ne_pbus.c,v 1.9 2001/06/08 22:38:07 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -694,7 +694,7 @@ en_mediastatus(sc, ifmr)
  */
 
 #define POD_READ(addr) \
-	poduleread(podule->sync_base, addr, podule->slottype)
+	podule->read_rom(podule->sync_base, addr)
 
 static u_int8_t *
 eh600_ea(sc, buffer)
