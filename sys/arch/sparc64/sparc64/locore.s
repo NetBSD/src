@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.182 2003/11/20 08:08:52 petrov Exp $	*/
+/*	$NetBSD: locore.s,v 1.183 2003/11/24 20:41:15 cdi Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -8184,6 +8184,13 @@ ENTRY(proc_trampoline)
 	Debugger()
 2:
 #endif
+
+#ifdef MULTIPROCESSOR
+	/* Finish setup in SMP environment: acquire locks etc. */
+	call _C_LABEL(proc_trampoline_mp)
+	 nop
+#endif
+
 	wrpr	%g0, 0, %pil		! Reset interrupt level
 	call	%l0			! re-use current frame
 	 mov	%l1, %o0

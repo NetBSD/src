@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.101 2003/11/09 16:41:53 martin Exp $ */
+/*	$NetBSD: trap.c,v 1.102 2003/11/24 20:41:16 cdi Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.101 2003/11/09 16:41:53 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.102 2003/11/24 20:41:16 cdi Exp $");
 
 #define NEW_FPSTATE
 
@@ -2151,7 +2151,14 @@ syscall(tf, code, pc)
 		       "unknown syscall");
 	}
 #endif
+        /* Lock the kernel if the syscall isn't MP-safe. */
+	if ((callp->sy_flags & SYCALL_MPSAFE) == 0)
+		KERNEL_PROC_LOCK(l);
+
 	error = (*callp->sy_call)(l, &args, rval);
+
+	if ((callp->sy_flags & SYCALL_MPSAFE) == 0)
+		KERNEL_PROC_UNLOCK(l);
 
 	switch (error) {
 	case 0:
@@ -2265,6 +2272,7 @@ child_return(arg)
 	/*
 	 * Return values in the frame set by cpu_fork().
 	 */
+	KERNEL_PROC_UNLOCK(l);
 	userret(l, l->l_md.md_tf->tf_pc, 0);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
@@ -2294,6 +2302,7 @@ startlwp(arg)
 #endif
 	pool_put(&lwp_uc_pool, uc);
 
+	KERNEL_PROC_UNLOCK(l);
 	userret(l, 0, 0);
 }
 
@@ -2301,5 +2310,6 @@ void
 upcallret(struct lwp *l)
 {
 
+	KERNEL_PROC_UNLOCK(l);
 	userret(l, 0, 0);
 }
