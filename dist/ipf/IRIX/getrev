@@ -1,6 +1,0 @@
-#!/bin/sh
-osrev=`uname -r`
-major=`expr $osrev : '\([0-9]\)\..*'`
-minor=`expr $osrev : '.*\.\([0-9]\)'`
-printf '%d%02d' $major $minor
-exit 0
