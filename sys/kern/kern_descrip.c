@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.120 2003/11/26 12:42:28 yamt Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.121 2003/11/30 18:16:45 provos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.120 2003/11/26 12:42:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.121 2003/11/30 18:16:45 provos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -134,7 +134,7 @@ find_last_set(struct filedesc *fd, int last)
 
 	off = (last - 1) >> NDENTRYSHIFT;
 
-	while (!bitmap[off] && off >= 0)
+	while (off >= 0 && !bitmap[off])
 		off--;
 
 	if (off < 0)
