@@ -181,6 +181,8 @@ $ ENOSR
 90 ®iadne STREAM zdroje
 $ ENOSTR
 91 Nie je STREAM
+$ ETIME
+92 Èasový limit pre STREAM ioctl vypr¹al
 $set 2
 $ SIGHUP
 1 Terminál odpojený
