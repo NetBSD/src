@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.29 2000/05/19 03:45:04 thorpej Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.30 2000/05/20 03:36:06 thorpej Exp $	*/
 
 /*
  *
@@ -180,19 +180,8 @@ ReStart:
 		if ((pp->flags & PG_BUSY) == 0)
 			panic("uvm_pagermapin: page not busy");
 #endif
-
-		/*
-		 * XXX We used to use VM_PROT_DEFAULT here, but
-		 * XXX we don't since we know the direction of
-		 * XXX the I/O now.  However, VM_PROT_DEFAULT
-		 * XXX included VM_PROT_EXECUTE.  While that could
-		 * XXX lead to unnecessary I-cache flushes, something
-		 * XXX in the path might rely on that being done,
-		 * XXX so we still include it, for now.
-		 * XXX DOUBLE CHECK THIS!
-		 */
 		pmap_enter(vm_map_pmap(pager_map), cva, VM_PAGE_TO_PHYS(pp),
-		    prot | VM_PROT_EXECUTE, PMAP_WIRED | prot);
+		    prot, PMAP_WIRED | prot);
 	}
 
 	UVMHIST_LOG(maphist, "<- done (KVA=0x%x)", kva,0,0,0);
