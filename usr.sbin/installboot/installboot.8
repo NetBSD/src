@@ -1,4 +1,4 @@
-.\"	$NetBSD: installboot.8,v 1.12 2002/05/06 02:30:28 lukem Exp $
+.\"	$NetBSD: installboot.8,v 1.13 2002/05/06 23:18:20 lukem Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 6, 2002
+.Dd May 7, 2002
 .Dt INSTALLBOOT 8
 .Os
 .Sh NAME
@@ -117,6 +117,7 @@ by the secondary bootstrap can be stored in the primary bootstrap.
 These are:
 .Bl -column "Platform" "File systems" -offset indent
 .It Sy "Platform" Ta Sy "File systems"
+.It sparc Ta ffs
 .It sun2 Ta ffs
 .El
 .Pp
@@ -187,6 +188,7 @@ The following machines are currently supported by
 .Bd -ragged -offset indent
 .Sy alpha ,
 .Sy pmax ,
+.Sy sparc ,
 .Sy sparc64 ,
 .Sy sun2 ,
 .Sy vax
@@ -382,6 +384,7 @@ back-ends:
 Simon Burge (pmax),
 Chris Demetriou (alpha),
 Matthew Fredette (sun2),
+Paul Kranenburg (sparc),
 Matthew Green (sparc64),
 Ross Harvey (alpha),
 and
