@@ -1,4 +1,4 @@
-.\" $NetBSD: modunload.8,v 1.13 2003/02/25 10:34:59 wiz Exp $
+.\" $NetBSD: modunload.8,v 1.14 2003/09/06 19:55:24 jdolecek Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\" <<Id: LICENSE,v 1.2 2000/06/14 15:57:33 cgd Exp>>
 .\"
-.Dd June 7, 1993
+.Dd September 6, 2003
 .Dt MODUNLOAD 8
 .Os
 .Sh NAME
@@ -42,6 +42,8 @@
 .Nm
 .Op Fl i Ar id
 .Op Fl n Ar name
+.Nm
+.Op Ar id Ns \&| Ns Ar name 
 .Sh DESCRIPTION
 The
 .Nm
@@ -53,7 +55,7 @@ or
 is the ID or name of the module as shown by
 .Xr modstat 8 .
 .Pp
-One of the following options must be specified:
+One of the following options may be specified:
 .Bl -tag -width indent
 .It Fl i Ar id
 Unload the module with the ID
@@ -62,6 +64,10 @@ Unload the module with the ID
 Unload the module with the name
 .Ar name .
 .El
+.Pp
+If the option is not specified, the provided argument
+is used as module ID if it's numeric. If the argument is not
+numeric, it's used as module name. 
 .Sh DIAGNOSTICS
 The
 .Nm
