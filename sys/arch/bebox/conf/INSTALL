@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.9 2000/10/02 18:43:35 abs Exp $
+#	$NetBSD: INSTALL,v 1.10 2001/06/10 11:07:37 tsubai Exp $
 #
 # First try for BEBOX config file
 #
@@ -28,6 +28,7 @@ options 		MINIROOTSIZE=3074	# size of memory disk, in blocks
 #options 	DDB
 #options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 #options 	KTRACE
+options 	NEWPMAP
 
 options 	TCP_COMPAT_42
 #options 	COMPAT_43
