@@ -1,4 +1,4 @@
-$NetBSD: TODO,v 1.3 2000/06/20 06:02:37 thorpej Exp $
+$NetBSD: TODO,v 1.4 2000/06/20 21:57:46 thorpej Exp $
 
 - Make KTH Kerberos IV API like the Berkeley'ized MIT API that
   appeared in 4.4BSD.  This also means include paths and library
@@ -29,8 +29,5 @@ $NetBSD: TODO,v 1.3 2000/06/20 06:02:37 thorpej Exp $
 
 - Make passwd(1) fall back to non-Kerberos properly.  Right now, it
   aborts, meaning you have to specify -l, or whatever.
-
-- OpenSSL installs a config file into /etc/openssl when you do a
-  `make install'.  This is Bad.  Fix it.
 
 - Nuke .cat* and .info files from src/crypto/dist.
