@@ -1,4 +1,4 @@
-/*	$NetBSD: nslm7xvar.h,v 1.10 2002/11/15 14:55:42 ad Exp $ */
+/*	$NetBSD: nslm7xvar.h,v 1.11 2003/11/02 11:07:45 wiz Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
 #define LM_ID_MASK	0xFE
 
 /*
- * additionnal registers for the Winbond chips:
+ * additional registers for the Winbond chips:
  * WB83781D: mostly lm7x compatible; extra temp sensors in bank1 & 2
  * WB83782D & WB83627HF: voltage sensors needs different handling, more FAN
  *                       dividers; mode voltage sensors, more temp sensors.

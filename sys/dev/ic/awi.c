@@ -1,4 +1,4 @@
-/*	$NetBSD: awi.c,v 1.57 2003/11/02 01:55:40 dyoung Exp $	*/
+/*	$NetBSD: awi.c,v 1.58 2003/11/02 11:07:45 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awi.c,v 1.57 2003/11/02 01:55:40 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awi.c,v 1.58 2003/11/02 11:07:45 wiz Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -163,7 +163,7 @@ static int  awi_send_mgmt(struct ieee80211com *, struct ieee80211_node *, int,
 static struct mbuf *awi_ether_encap(struct awi_softc *, struct mbuf *);
 static struct mbuf *awi_ether_modcap(struct awi_softc *, struct mbuf *);
 
-/* unalligned little endian access */     
+/* unaligned little endian access */     
 #define LE_READ_2(p)							\
 	((((u_int8_t *)(p))[0]      ) | (((u_int8_t *)(p))[1] <<  8))
 #define LE_READ_4(p)							\

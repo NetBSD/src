@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcvar.h,v 1.42 2003/10/29 22:05:15 bouyer Exp $	*/
+/*	$NetBSD: wdcvar.h,v 1.43 2003/11/02 11:07:46 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -87,7 +87,7 @@ struct channel_softc { /* Per channel data */
 
 	/*
 	 * channel queues. May be the same for all channels, if hw channels
-	 * are not independants
+	 * are not independent.
 	 */
 	struct channel_queue *ch_queue;
 	/* the channel kenrel thread */

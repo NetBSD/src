@@ -1,4 +1,4 @@
-/*	$NetBSD: midwayvar.h,v 1.12 2003/05/03 18:11:22 wiz Exp $	*/
+/*	$NetBSD: midwayvar.h,v 1.13 2003/11/02 11:07:45 wiz Exp $	*/
 
 /*
  *
@@ -50,7 +50,7 @@
 #define EN_NTX          8       /* number of tx bufs to use */
 #endif
 #ifndef EN_TXSZ
-#define EN_TXSZ         32      /* trasmit buf size in KB */
+#define EN_TXSZ         32      /* transmit buf size in KB */
 #endif
 #ifndef EN_RXSZ
 #define EN_RXSZ         32      /* recv buf size in KB */
