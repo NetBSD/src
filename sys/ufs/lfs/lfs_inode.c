@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.34 2000/04/24 19:07:16 perseant Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.35 2000/05/05 20:59:21 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -95,6 +95,8 @@
 #include <ufs/lfs/lfs_extern.h>
 
 static int lfs_vinvalbuf __P((struct vnode *, struct ucred *, struct proc *, ufs_daddr_t));
+extern int locked_queue_count;
+extern long locked_queue_bytes;
 
 /* Search a block for a specific dinode. */
 struct dinode *
@@ -184,7 +186,7 @@ lfs_update(v)
 }
 
 /* Update segment usage information when removing a block. */
-#define UPDATE_SEGUSE \
+#define UPDATE_SEGUSE do { \
 	if (lastseg != -1) { \
 		LFS_SEGENTRY(sup, fs, lastseg, sup_bp); \
 		if (num > sup->su_nbytes) { \
@@ -195,19 +197,22 @@ lfs_update(v)
 		} else \
 		sup->su_nbytes -= num; \
 		e1 = VOP_BWRITE(sup_bp); \
-		fragsreleased += numfrags(fs, num); \
-	}
+	} \
+	fragsreleased += numfrags(fs, num); \
+} while(0)
 
-#define SEGDEC(S) { \
-	if (daddr != 0) { \
+#define SEGDEC(S) do { \
+	if (daddr > 0) { \
 		if (lastseg != (seg = datosn(fs, daddr))) { \
 			UPDATE_SEGUSE; \
 			num = (S); \
 			lastseg = seg; \
 		} else \
 			num += (S); \
+	} else if (daddr == UNWRITTEN) { \
+		fragsreleased += numfrags(fs,(S)); \
 	} \
-}
+} while(0)
 
 /*
  * Truncate the inode ip to at most length size.  Update segment usage
@@ -239,7 +244,7 @@ lfs_truncate(v)
 	SEGUSE *sup;
 	ufs_daddr_t daddr, lastblock, lbn, olastblock;
 	ufs_daddr_t oldsize_lastblock, oldsize_newlast, newsize;
-	long off, a_released, fragsreleased, i_released;
+	long off, a_released, fragsreleased;
 	int e1, e2, depth, lastseg, num, offset, seg, freesize, s;
 	
 	if (length < 0)
@@ -288,15 +293,18 @@ lfs_truncate(v)
 	uvm_vnp_setsize(vp, length);
 
 	/*
-	 * Make sure no writes happen while we're truncating.
-	 * Otherwise, blocks which are accounted for on the inode
-	 * *and* which have been created for cleaning can coexist,
-	 * and cause us to overcount, and panic below.
+	 * Make sure no writes to this inode can happen while we're
+	 * truncating.  Otherwise, blocks which are accounted for on the
+	 * inode *and* which have been created for cleaning can coexist,
+	 * and cause an overcounting.
 	 *
-	 * XXX KS - too restrictive?  Maybe only when cleaning?
+	 * (We don't need to *hold* the seglock, though, because we already
+	 * hold the inode lock; draining the seglock is sufficient.)
 	 */
-	while(fs->lfs_seglock && fs->lfs_lockpid != ap->a_p->p_pid) {
-		tsleep(&fs->lfs_seglock, (PRIBIO+1), "lfs_truncate", 0);
+	if (vp != fs->lfs_unlockvp) {
+		while(fs->lfs_seglock) {
+			tsleep(&fs->lfs_seglock, PRIBIO+1, "lfs_truncate", 0);
+		}
 	}
 	
 	/*
@@ -339,12 +347,13 @@ lfs_truncate(v)
 		bzero((char *)bp->b_data + offset, (u_int)(newsize - offset));
 #ifdef DEBUG
 		if(bp->b_flags & B_CALL)
-		    panic("Can't allocbuf malloced buffer!");
+			panic("Can't allocbuf malloced buffer!");
 		else
 #endif
 			allocbuf(bp, newsize);
-		if(oldsize_newlast > newsize)
+		if(bp->b_blkno != UNASSIGNED && oldsize_newlast > newsize) {
 			ip->i_ffs_blocks -= btodb(oldsize_newlast - newsize);
+		}
 		if ((e1 = VOP_BWRITE(bp)) != 0) {
 			printf("lfs_truncate: bwrite: %d\n",e1);
 			return (e1);
@@ -393,15 +402,15 @@ lfs_truncate(v)
 					panic("lfs_truncate: bread bno %d",
 					      inp->in_lbn);
 				daddrp = (ufs_daddr_t *)bp->b_data + inp->in_off;
-				for (i = inp->in_off;
-				     i++ <= a_end[depth].in_off;) {
+				for (i = inp->in_off; i++ <= a_end[depth].in_off;) {
 					daddr = *daddrp++;
 					SEGDEC(freesize);
 				}
 				a_end[depth].in_off = NINDIR(fs) - 1;
-				if (inp->in_off == 0)
+				if (inp->in_off == 0) {
+					bp->b_flags |= B_INVAL;
 					brelse (bp);
-				else {
+				} else {
 					bzero((ufs_daddr_t *)bp->b_data +
 					      inp->in_off, fs->lfs_bsize - 
 					      inp->in_off * sizeof(ufs_daddr_t));
@@ -436,9 +445,11 @@ lfs_truncate(v)
 	}
 #ifdef DIAGNOSTIC
 	if (ip->i_ffs_blocks < fragstodb(fs, fragsreleased)) {
-		panic("lfs_truncate: frag count < 0 (%d<%ld), ino %d\n",
+		printf("lfs_truncate: frag count < 0 (%d<%ld), ino %d\n",
 			    ip->i_ffs_blocks, fragstodb(fs, fragsreleased),
 			    ip->i_number);
+		if (length > 0)
+			panic("lfs_truncate: frag count < 0");
 		fragsreleased = dbtofrags(fs, ip->i_ffs_blocks);
 	}
 #endif
@@ -451,59 +462,49 @@ lfs_truncate(v)
 	 * field can be updated.
 	 */
 	a_released = 0;
-	i_released = 0;
 
 	s = splbio();
 	for (bp = vp->v_dirtyblkhd.lh_first; bp; bp = bp->b_vnbufs.le_next) {
-
 		/* XXX KS - Don't miscount if we're not truncating to zero. */
 		if(length>0 && !(bp->b_lblkno >= 0 && bp->b_lblkno > lastblock)
 		   && !(bp->b_lblkno < 0 && bp->b_lblkno < -lastblock-NIADDR))
 			continue;
 
-		if (bp->b_flags & B_LOCKED) {
+		if (bp->b_flags & B_LOCKED)
 			a_released += numfrags(fs, bp->b_bcount);
-			/*
-			 * XXX
-			 * When buffers are created in the cache, their block
-			 * number is set equal to their logical block number.
-			 * If that is still true, we are assuming that the
-			 * blocks are new (not yet on disk) and weren't
-			 * counted above.  However, there is a slight chance
-			 * that a block's disk address is equal to its logical
-			 * block number in which case, we'll get an overcounting
-			 * here.
-			 */
-			if (bp->b_blkno == bp->b_lblkno) {
-				i_released += numfrags(fs, bp->b_bcount);
-			}
-		}
 	}
 	splx(s);
-	fragsreleased = i_released;
-#ifdef DIAGNOSTIC
-	if (fragsreleased > dbtofrags(fs, ip->i_ffs_blocks)) {
-		printf("lfs_inode: %ld frags released > %d in inode %d\n",
-		       fragsreleased, dbtofrags(fs, ip->i_ffs_blocks),
-		       ip->i_number);
-		fragsreleased = dbtofrags(fs, ip->i_ffs_blocks);
-	}
-#endif
-	fs->lfs_bfree += fragstodb(fs, fragsreleased);
-	ip->i_ffs_blocks -= fragstodb(fs, fragsreleased);
+
 #ifdef DIAGNOSTIC
 	if (length == 0 && ip->i_ffs_blocks != 0) {
 		printf("lfs_inode: trunc to zero, but %d blocks left on inode %d\n",
 		       ip->i_ffs_blocks, ip->i_number);
-		panic("lfs_inode\n");
+		panic("lfs_inode: trunc to zero\n");
 	}
 #endif
 	fs->lfs_avail += fragstodb(fs, a_released);
 	if(length>0)
 		e1 = lfs_vinvalbuf(vp, ap->a_cred, ap->a_p, lastblock-1);
-	else
+	else {
 		e1 = vinvalbuf(vp, 0, ap->a_cred, ap->a_p, 0, 0); 
+       		lfs_countlocked(&locked_queue_count,&locked_queue_bytes);
+	}
+       	wakeup(&locked_queue_count);
+
+	if (length > 0) {
+		/*
+		 * Allocate the new last block to ensure that any previously
+		 * existing indirect blocks invalidated above are valid.
+		 * (Adding the block is not really necessary.)
+		 */
+		error = VOP_BALLOC(vp, length - 1, 1, ap->a_cred, 0, &bp);
+		if (error)
+ 			return (error);
+		VOP_BWRITE(bp);
+	}
+
 	e2 = VOP_UPDATE(vp, NULL, NULL, 0);
+
 	if(e1)
 		printf("lfs_truncate: vinvalbuf: %d\n",e1);
 	if(e2)
@@ -540,6 +541,8 @@ lfs_vinvalbuf(vp, cred, p, maxblk)
 			nbp = bp->b_vnbufs.le_next;
 
 			if (bp->b_flags & B_GATHERED) {
+				printf("lfs_vinvalbuf: gathered block ino %d lbn %d\n",
+					VTOI(vp)->i_number, bp->b_lblkno);
 				error = tsleep(vp, PRIBIO+1, "lfs_vin2", 0);
 				splx(s);
 				if(error)
@@ -550,10 +553,9 @@ lfs_vinvalbuf(vp, cred, p, maxblk)
 				bp->b_flags |= B_WANTED;
 				error = tsleep((caddr_t)bp,
 					(PRIBIO + 1), "lfs_vinval", 0);
-				if (error) {
-					splx(s);
+				splx(s);
+				if (error)
 					return (error);
-				}
 				goto top;
 			}
 
@@ -561,10 +563,14 @@ lfs_vinvalbuf(vp, cred, p, maxblk)
 			if((bp->b_lblkno >= 0 && bp->b_lblkno > maxblk)
 			   || (bp->b_lblkno < 0 && bp->b_lblkno < -maxblk-(NIADDR-1)))
 			{
-				bp->b_flags |= B_INVAL | B_VFLUSH;
+				if(bp->b_flags & B_LOCKED) {
+					--locked_queue_count;
+					locked_queue_bytes -= bp->b_bufsize;
+				}
 				if(bp->b_flags & B_CALL) {
 					lfs_freebuf(bp);
 				} else {
+					bp->b_flags |= B_INVAL | B_VFLUSH;
 					brelse(bp);
 				}
 				++dirty;

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.13 2000/03/30 12:41:13 augustss Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.14 2000/05/05 20:59:22 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -218,7 +218,9 @@ lfs_segunlock(fs)
 				wakeup(&lfs_dirvcount);
 				if(vp->v_usecount == 1) {
 					/* vrele may call VOP_INACTIVE */
+					fs->lfs_unlockvp = vp;
 					vrele(vp);
+					fs->lfs_unlockvp = NULL;
 				} else
 					lfs_vunref(vp);
 
