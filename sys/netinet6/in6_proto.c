@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_proto.c,v 1.13 2000/02/06 12:49:45 itojun Exp $	*/
+/*	$NetBSD: in6_proto.c,v 1.14 2000/02/14 19:45:50 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -322,7 +322,7 @@ u_long	rip6_recvspace = RIPV6RCVQ;
 /* ICMPV6 parameters */
 int	icmp6_rediraccept = 1;		/* accept and process redirects */
 int	icmp6_redirtimeout = 10 * 60;	/* 10 minutes */
-u_int	icmp6errratelim = 1000;		/* 1000usec = 1msec */
+struct timeval icmp6errratelim = { 0, 1000 }; /* 1000usec = 1msec */
 int	icmp6_nodeinfo = 1;		/* enable/disable NI response */
 
 #ifdef TCP6
