@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.23 2000/09/24 09:44:28 jsm Exp $ */
+/*	$NetBSD: extern.h,v 1.24 2000/09/24 09:46:28 jsm Exp $ */
 
 /*
  * Copyright (c) 1983, 1993
@@ -337,16 +337,13 @@ int follow __P((void));
 char *getcom __P((char *, int, const char *, const char *));
 char *getword __P((char *, char *, int));
 int give __P((void));
-int hash __P((const char *));
 void initialize __P((const char *));
-void install __P((struct wlist *));
 int jump __P((void));
 void kiss __P((void));
 int land __P((void));
 int launch __P((void));
 void light __P((void));
 void live __P((void)) __attribute__((__noreturn__));
-struct wlist *lookup __P((const char *));
 void love __P((void));
 int moveplayer __P((int, int));
 void murder __P((void));

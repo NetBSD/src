@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.9 2000/09/22 08:19:21 jsm Exp $	*/
+/*	$NetBSD: parse.c,v 1.10 2000/09/24 09:46:28 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,11 +38,15 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: parse.c,v 1.9 2000/09/22 08:19:21 jsm Exp $");
+__RCSID("$NetBSD: parse.c,v 1.10 2000/09/24 09:46:28 jsm Exp $");
 #endif
 #endif				/* not lint */
 
 #include "extern.h"
+
+static int hash __P((const char *));
+static void install __P((struct wlist *));
+static struct wlist *lookup __P((const char *));
 
 void
 wordinit()
@@ -53,7 +57,7 @@ wordinit()
 		install(w);
 }
 
-int
+static int
 hash(s)
 	const char   *s;
 {
@@ -67,7 +71,7 @@ hash(s)
 	return hashval;
 }
 
-struct wlist *
+static struct wlist *
 lookup(s)
 	const char   *s;
 {
@@ -79,7 +83,7 @@ lookup(s)
 	return NULL;
 }
 
-void
+static void
 install(wp)
 	struct wlist *wp;
 {
