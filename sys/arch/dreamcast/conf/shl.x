@@ -1,4 +1,4 @@
-OUTPUT_FORMAT("coff-shl")
+OUTPUT_FORMAT("elf32-shl-unx")
 OUTPUT_ARCH(sh)
 MEMORY
 {
@@ -11,32 +11,32 @@ SECTIONS
     *(.text)
     *(.rodata)
     *(.strings)
-     _etext = . ; 
+     etext = . ; 
   }  > ram
   .tors :
   {
-    ___ctors = . ;
+    __ctors = . ;
     *(.ctors)
-    ___ctors_end = . ;
-    ___dtors = . ;
+    __ctors_end = . ;
+    __dtors = . ;
     *(.dtors)
-    ___dtors_end = . ;
+    __dtors_end = . ;
   } > ram
   .data :
   {
     *(.data)
-     _edata = . ; 
+     edata = . ; 
   }  > ram
   .bss :
   {
-     _bss_start = . ; 
+     bss_start = . ; 
     *(.bss)
     *(COMMON)
-     _end = . ;  
+     end = . ;  
   }  > ram
   .stack   :
   {
-     _stack = . ; 
+     stack = . ; 
     *(.stack)
   }  > ram
   .stab 0 (NOLOAD) :
