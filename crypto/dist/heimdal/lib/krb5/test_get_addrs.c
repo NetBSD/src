@@ -33,7 +33,7 @@
 #include "krb5_locl.h"
 #include <err.h>
 
-RCSID("$Id: test_get_addrs.c,v 1.1.1.2 2001/02/11 13:51:45 assar Exp $");
+RCSID("$Id: test_get_addrs.c,v 1.2 2001/04/06 10:10:21 itojun Exp $");
 
 /* print all addresses that we find */
 
