@@ -1,4 +1,4 @@
-/* $NetBSD: if_atw_cardbus.c,v 1.5 2004/01/29 10:25:49 dyoung Exp $ */
+/* $NetBSD: if_atw_cardbus.c,v 1.6 2004/02/17 21:20:55 dyoung Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2003 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atw_cardbus.c,v 1.5 2004/01/29 10:25:49 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atw_cardbus.c,v 1.6 2004/02/17 21:20:55 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -88,6 +88,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_atw_cardbus.c,v 1.5 2004/01/29 10:25:49 dyoung Ex
 #include <machine/intr.h>
 
 #include <dev/ic/atwreg.h>
+#include <dev/ic/rf3000reg.h>
+#include <dev/ic/si4136reg.h>
 #include <dev/ic/atwvar.h>
 
 #include <dev/pci/pcivar.h>
