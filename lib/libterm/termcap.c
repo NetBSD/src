@@ -1,4 +1,4 @@
-/*	$NetBSD: termcap.c,v 1.6 1995/02/27 10:18:54 cgd Exp $	*/
+/*	$NetBSD: termcap.c,v 1.7 1995/06/05 19:45:52 pk Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)termcap.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: termcap.c,v 1.6 1995/02/27 10:18:54 cgd Exp $";
+static char rcsid[] = "$NetBSD: termcap.c,v 1.7 1995/06/05 19:45:52 pk Exp $";
 #endif
 #endif /* not lint */
 
@@ -48,6 +48,7 @@ static char rcsid[] = "$NetBSD: termcap.c,v 1.6 1995/02/27 10:18:54 cgd Exp $";
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
+#include <curses.h>
 #include "pathnames.h"
 
 /*
@@ -100,10 +101,11 @@ tgetent(bp, name)
 	 * becomes "$HOME/.termcap /etc/termcap" if no TERMPATH exists.
 	 */
 	if (!cp || *cp != '/') {	/* no TERMCAP or it holds an entry */
-		if (termpath = getenv("TERMPATH"))
+		if ((termpath = getenv("TERMPATH")) != NULL)
 			strncpy(pathbuf, termpath, PBUFSIZ);
 		else {
-			if (home = getenv("HOME")) {	/* set up default */
+			if ((home = getenv("HOME")) != NULL) {
+				/* set up default */
 				p += strlen(home);	/* path, looking in */
 				strcpy(pathbuf, home);	/* $HOME first */
 				*p++ = '/';

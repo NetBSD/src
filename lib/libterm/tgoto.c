@@ -1,4 +1,4 @@
-/*	$NetBSD: tgoto.c,v 1.4 1995/02/27 10:18:59 cgd Exp $	*/
+/*	$NetBSD: tgoto.c,v 1.5 1995/06/05 19:45:54 pk Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -37,11 +37,12 @@
 #if 0
 static char sccsid[] = "@(#)tgoto.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: tgoto.c,v 1.4 1995/02/27 10:18:59 cgd Exp $";
+static char rcsid[] = "$NetBSD: tgoto.c,v 1.5 1995/06/05 19:45:54 pk Exp $";
 #endif
 #endif /* not lint */
 
 #include <string.h>
+#include <curses.h>
 
 #define	CTRL(c)	((c) & 037)
 
@@ -95,7 +96,7 @@ toohard:
 		return ("OOPS");
 	}
 	added[0] = 0;
-	while (c = *cp++) {
+	while ((c = *cp++) != '\0') {
 		if (c != '%') {
 			*dp++ = c;
 			continue;
@@ -146,7 +147,6 @@ setwhich:
 			/* fall into... */
 
 		case '.':
-casedot:
 			/*
 			 * This code is worth scratching your head at for a
 			 * while.  The idea is that various weird things can

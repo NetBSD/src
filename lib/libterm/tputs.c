@@ -1,4 +1,4 @@
-/*	$NetBSD: tputs.c,v 1.3 1995/02/27 10:19:03 cgd Exp $	*/
+/*	$NetBSD: tputs.c,v 1.4 1995/06/05 19:45:56 pk Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -37,12 +37,14 @@
 #if 0
 static char sccsid[] = "@(#)tputs.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: tputs.c,v 1.3 1995/02/27 10:19:03 cgd Exp $";
+static char rcsid[] = "$NetBSD: tputs.c,v 1.4 1995/06/05 19:45:56 pk Exp $";
 #endif
 #endif /* not lint */
 
 #include <sgtty.h>
 #include <ctype.h>
+#include <curses.h>
+#undef ospeed
 
 /*
  * The following array gives the number of tens of milliseconds per
@@ -62,10 +64,11 @@ char	PC;
  * The number of affected lines is affcnt, and the routine
  * used to output one character is outc.
  */
+void
 tputs(cp, affcnt, outc)
 	register char *cp;
 	int affcnt;
-	int (*outc)();
+	int (*outc) __P((int));
 {
 	register int i = 0;
 	register int mspc10;
