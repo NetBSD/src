@@ -1,3 +1,4 @@
+/*	$NetBSD: varargs.h,v 1.2 1999/02/15 04:36:35 hubertf Exp $	*/
 /* Record that this is varargs.h; this turns off stdarg.h.  */
 
 #ifndef _VARARGS_H
