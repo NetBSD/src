@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.44 1999/04/27 00:05:44 thorpej Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.45 1999/07/01 08:13:00 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999 The NetBSD Foundation, Inc.
@@ -92,7 +92,12 @@
 #define	MLEN		(MSIZE - sizeof(struct m_hdr))	/* normal data len */
 #define	MHLEN		(MLEN - sizeof(struct pkthdr))	/* data len w/pkthdr */
 
-#define	MINCLSIZE	(MHLEN+MLEN+1)	/* smallest amount to put in cluster */
+/*
+ * NOTE: MINCLSIZE is changed to MHLEN + 1, to avoid allocating chained
+ * non-external mbufs in the driver.  This has no impact on performance
+ * seen from the packet statistics, and avoid header pullups in network code.
+ */
+#define	MINCLSIZE	(MHLEN + 1)	/* smallest amount to put in cluster */
 #define	M_MAXCOMPRESS	(MHLEN / 2)	/* max amount to copy for compression */
 
 /*
@@ -171,12 +176,17 @@ struct mbuf {
 #define	M_MCAST		0x0200	/* send/received as link-level multicast */
 #define	M_CANFASTFWD	0x0400	/* used by filters to indicate packet can
 				   be fast-forwarded */
+#define M_ANYCAST6	0x0800	/* received as IPv6 anycast */
 #define	M_LINK0		0x1000	/* link layer specific flag */
 #define	M_LINK1		0x2000	/* link layer specific flag */
 #define	M_LINK2		0x4000	/* link layer specific flag */
+#define M_AUTHIPHDR	0x0010	/* data origin authentication for IP header */
+#define M_DECRYPTED	0x0020	/* confidentiality */
+#define M_LOOP		0x0040	/* for Mbuf statistics */
+#define M_AUTHIPDGM     0x0080  /* data origin authentication */
 
 /* flags copied when copying m_pkthdr */
-#define	M_COPYFLAGS	(M_PKTHDR|M_EOR|M_BCAST|M_MCAST|M_CANFASTFWD|M_LINK0|M_LINK1|M_LINK2)
+#define	M_COPYFLAGS	(M_PKTHDR|M_EOR|M_BCAST|M_MCAST|M_CANFASTFWD|M_ANYCAST6|M_LINK0|M_LINK1|M_LINK2|M_AUTHIPHDR|M_DECRYPTED|M_LOOP|M_AUTHIPDGM)
 
 /* mbuf types */
 #define	MT_FREE		0	/* should be on free list */

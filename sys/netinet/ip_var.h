@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.36 1998/10/08 01:41:46 thorpej Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.37 1999/07/01 08:12:51 itojun Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -152,6 +152,7 @@ struct	ipstat {
 	u_long	ips_badfrags;		/* malformed fragments (bad length) */
 	u_long	ips_rcvmemdrop;		/* frags dropped for lack of memory */
 	u_long	ips_toolong;		/* ip length > max ip packet size */
+	u_long	ips_nogif;		/* no match gif found */
 };
 
 #define	IPFLOW_HASHBITS			6 /* should not be a multiple of 8 */
@@ -183,6 +184,7 @@ extern LIST_HEAD(ipqhead, ipq) ipq;	/* ip reass. queue */
 extern u_int16_t ip_id;			/* ip packet ctr, for ids */
 extern int   ip_defttl;			/* default IP ttl */
 extern int   ipforwarding;		/* ip forwarding */
+extern int   gif_ttl;			/* default TTL for gif encap packet */
 extern int   ip_mtudisc;		/* mtu discovery */
 extern u_int ip_mtudisc_timeout;	/* seconds to timeout mtu discovery */
 extern int   anonportmin;		/* minimum ephemeral port */

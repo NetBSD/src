@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: keyv2.h,v 1.1.2.1 1999/06/28 06:37:11 itojun Exp $ */
+/* $Id: keyv2.h,v 1.2 1999/07/01 08:13:00 itojun Exp $ */
 
 /*
  * This file has been derived rfc 2367,

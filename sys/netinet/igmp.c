@@ -1,4 +1,33 @@
-/*	$NetBSD: igmp.c,v 1.20 1999/04/25 10:26:29 hwr Exp $	*/
+/*	$NetBSD: igmp.c,v 1.21 1999/07/01 08:12:49 itojun Exp $	*/
+
+/*
+ * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the project nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE PROJECT OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
 
 /*
  * Internet Group Management Protocol (IGMP) routines.
@@ -106,6 +135,7 @@ igmp_input(m, va_alist)
 	va_dcl
 #endif
 {
+	int proto;
 	register int iphlen;
 	register struct ifnet *ifp = m->m_pkthdr.rcvif;
 	register struct ip *ip = mtod(m, struct ip *);
@@ -120,6 +150,7 @@ igmp_input(m, va_alist)
 
 	va_start(ap, m);
 	iphlen = va_arg(ap, int);
+	proto = va_arg(ap, int);
 	va_end(ap);
 
 	++igmpstat.igps_rcv_total;
@@ -367,7 +398,8 @@ igmp_input(m, va_alist)
 	 * Pass all valid IGMP packets up to any process(es) listening
 	 * on a raw IGMP socket.
 	 */
-	rip_input(m);
+	rip_input(m, iphlen, proto);
+	return;
 }
 
 void
@@ -522,6 +554,9 @@ igmp_sendpkt(inm, type)
 	imo.imo_multicast_loop = 0;
 #endif /* MROUTING */
 
+#ifdef IPSEC
+	m->m_pkthdr.rcvif = NULL;
+#endif /*IPSEC*/
 	ip_output(m, (struct mbuf *)0, (struct route *)0, IP_MULTICASTOPTS,
 	    &imo);
 

@@ -1,4 +1,33 @@
-/*	$NetBSD: in_pcb.c,v 1.58 1999/03/23 10:45:37 lukem Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.59 1999/07/01 08:12:50 itojun Exp $	*/
+
+/*
+ * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the project nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE PROJECT OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -94,6 +123,12 @@
 #include <netinet/in_pcb.h>
 #include <netinet/in_var.h>
 #include <netinet/ip_var.h>
+
+#ifdef IPSEC
+#include <netinet6/ipsec.h>
+#include <netkey/key.h>
+#include <netkey/key_debug.h>
+#endif /* IPSEC */
 
 struct	in_addr zeroin_addr;
 
@@ -343,6 +378,7 @@ in_pcbconnect(v, nam)
 	 * destinations.
 	 */
 	if (in_nullhost(inp->inp_laddr)) {
+#if 0
 		register struct route *ro;
 
 		ia = (struct in_ifaddr *)0;
@@ -411,6 +447,16 @@ in_pcbconnect(v, nam)
 			}
 		}
 		ifaddr = satosin(&ia->ia_addr);
+#else
+		int error;
+		ifaddr = in_selectsrc(sin, &inp->inp_route,
+			inp->inp_socket->so_options, inp->inp_moptions, &error);
+		if (ifaddr == NULL) {
+			if (error == 0)
+				error = EADDRNOTAVAIL;
+			return error;
+		}
+#endif
 	}
 	if (in_pcblookup_connect(inp->inp_table, sin->sin_addr, sin->sin_port,
 	    !in_nullhost(inp->inp_laddr) ? inp->inp_laddr : ifaddr->sin_addr,
@@ -458,6 +504,14 @@ in_pcbdetach(v)
 	struct socket *so = inp->inp_socket;
 	int s;
 
+#ifdef IPSEC
+	if (so->so_pcb) {
+		KEYDEBUG(KEYDEBUG_KEY_STAMP,
+			printf("DP call free SO=%p from in_pcbdetach\n", so));
+		key_freeso(so);
+	}
+	ipsec4_delete_pcbpolicy(inp);
+#endif /*IPSEC*/
 	so->so_pcb = 0;
 	sofree(so);
 	if (inp->inp_options)
@@ -786,4 +840,85 @@ in_pcbrtentry(inp)
 		}
 	}
 	return (ro->ro_rt);
+}
+
+struct sockaddr_in *
+in_selectsrc(sin, ro, soopts, mopts, errorp)
+	struct sockaddr_in *sin;
+	struct route *ro;
+	int soopts;
+	struct ip_moptions *mopts;
+	int *errorp;
+{
+	struct in_ifaddr *ia;
+
+	ia = (struct in_ifaddr *)0;
+	/* 
+	 * If route is known or can be allocated now,
+	 * our src addr is taken from the i/f, else punt.
+	 */
+	if (ro->ro_rt &&
+	    (!in_hosteq(satosin(&ro->ro_dst)->sin_addr, sin->sin_addr) ||
+	    soopts & SO_DONTROUTE)) {
+		RTFREE(ro->ro_rt);
+		ro->ro_rt = (struct rtentry *)0;
+	}
+	if ((soopts & SO_DONTROUTE) == 0 && /*XXX*/
+	    (ro->ro_rt == (struct rtentry *)0 ||
+	    ro->ro_rt->rt_ifp == (struct ifnet *)0)) {
+		/* No route yet, so try to acquire one */
+		ro->ro_dst.sa_family = AF_INET;
+		ro->ro_dst.sa_len = sizeof(struct sockaddr_in);
+		satosin(&ro->ro_dst)->sin_addr = sin->sin_addr;
+		rtalloc(ro);
+	}
+	/*
+	 * If we found a route, use the address
+	 * corresponding to the outgoing interface
+	 * unless it is the loopback (in case a route
+	 * to our address on another net goes to loopback).
+	 * 
+	 * XXX Is this still true?  Do we care?
+	 */
+	if (ro->ro_rt && !(ro->ro_rt->rt_ifp->if_flags & IFF_LOOPBACK))
+		ia = ifatoia(ro->ro_rt->rt_ifa);
+	if (ia == 0) {
+		u_int16_t fport = sin->sin_port;
+
+		sin->sin_port = 0;
+		ia = ifatoia(ifa_ifwithladdr(sintosa(sin)));
+		sin->sin_port = fport;
+		if (ia == 0) {
+			/* Find 1st non-loopback AF_INET address */
+			for (ia = in_ifaddr.tqh_first;
+			     ia != NULL;
+			     ia = ia->ia_list.tqe_next)
+				if (!(ia->ia_ifp->if_flags & IFF_LOOPBACK))
+					break;
+		}
+		if (ia == 0) {
+			*errorp = EADDRNOTAVAIL;
+			return NULL;
+		}
+	}
+	/*
+	 * If the destination address is multicast and an outgoing
+	 * interface has been set as a multicast option, use the
+	 * address of that interface as our source address.
+	 */
+	if (IN_MULTICAST(sin->sin_addr.s_addr) && mopts != NULL) {
+		struct ip_moptions *imo;
+		struct ifnet *ifp;
+
+		imo = mopts;
+		if (imo->imo_multicast_ifp != NULL) {
+			ifp = imo->imo_multicast_ifp;
+			IFP_TO_IA(ifp, ia);		/* XXX */
+			if (ia == 0) {
+				*errorp = EADDRNOTAVAIL;
+				return NULL;
+			}
+		}
+	}
+	return satosin(&ia->ia_addr);
 }

@@ -83,9 +83,6 @@
 #include <netinet/in_var.h>
 #include <netinet6/in6_systm.h>
 #include <netinet6/ip6.h>
-#ifdef MAPPED_ADDR_ENABLED
-#include <netinet/in_pcb.h>
-#endif /* MAPPED_ADDR_ENABLED */
 #include <netinet6/in6_pcb.h>
 #include <netinet6/ip6_var.h>
 #include <netinet6/icmp6.h>
@@ -580,214 +577,6 @@ releaseopt:
 	return(error);
 }
 
-#ifdef MAPPED_ADDR_ENABLED
-void	udp_detach __P((struct inpcb *inp));
-int	udp_usrreq __P((struct socket *so, int req, struct mbuf *m,
-			struct mbuf *addr, struct mbuf *control));
-int	udp_output __P((struct inpcb *, struct mbuf *, struct mbuf *,
-			struct mbuf *));
-
-/*
- * Do V4 mapped addr related binding work.
- * Return 1 when V6 bind is not necessary.
- * Return 0 when V6 bind may be necessary.
- */
-static int
-udp6_mapped_bind(struct socket *so, struct mbuf *addr6, int *error_p)
-{
-	struct	inpcb *inp = sotoinpcb(so);
-	struct sockaddr_in6 *sin6_p;
-	int s, unspec;
-
-	sin6_p = mtod(addr6, struct sockaddr_in6 *);
-	unspec = (IN6_IS_ADDR_UNSPECIFIED(&sin6_p->sin6_addr)) ? 1 : 0;
-	if (IN6_IS_ADDR_V4MAPPED(&sin6_p->sin6_addr) || unspec) {
-		
-		/* Attach v4 if notyet */
-		if (inp == 0) {
-			*error_p = udp_usrreq(so, PRU_ATTACH, 0, 0, 0);
-			if (*error_p)
-			    return 1;
-			inp = sotoinpcb(so);
-		}
-		in6_sin6_2_sin_in_m(addr6);
-		s = splnet();
-		*error_p = in_pcbbind(inp, addr6);
-		splx(s);
-		if (*error_p)
-		    return 1;
-		in6_sin_2_v4mapsin6_in_m(addr6);
-		if (unspec) {
-			sin6_p = mtod(addr6, struct sockaddr_in6 *);
-			sin6_p->sin6_addr.s6_addr32[2] = 0;
-			return 0;
-		} else
-			return 1;
-	}
-	return 0;
-}
-
-/*
- * Do V4 mapped addr related connect work.
- * Return 1 when V6 connect is not necessary.
- * Return 0 when V6 connect is necessary.
- */
-static int
-udp6_mapped_connect(struct socket *so, struct mbuf *addr6, int *error_p)
-{
-	struct	inpcb *inp = sotoinpcb(so);
-	struct sockaddr_in6 *sin6_p;
-	int s;
-
-	sin6_p = mtod(addr6, struct sockaddr_in6 *);
-	if (IN6_IS_ADDR_V4MAPPED(&sin6_p->sin6_addr)) {
-
-		/* Attach v4 if notyet */
-		if (inp == 0) {
-			*error_p = udp_usrreq(so, PRU_ATTACH, 0, 0, 0);
-			if (*error_p)
-			    return 1;
-			inp = sotoinpcb(so);
-		}
-		if (inp->inp_faddr.s_addr != INADDR_ANY) {
-			*error_p = EISCONN;
-			return 1;
-		}
-		in6_sin6_2_sin_in_m(addr6);
-		s = splnet();
-		*error_p = in_pcbconnect(inp, addr6);
-		splx(s);
-		if (*error_p)
-		    return 1;
-		else
-		    soisconnected(so);
-		in6_sin_2_v4mapsin6_in_m(addr6);
-		return 1;
-	}
-	return 0;
-}
-
-/*
- * Do V4 mapped addr related disconnect work.
- * Return 1 when v4 is connected.
- * Return 0 when V4 is not connected.
- */
-static int
-udp6_mapped_disconnect(struct socket *so, struct mbuf *addr6, int *error_p)
-{
-	struct	inpcb *inp = sotoinpcb(so);
-	int s;
-
-	if (inp) {
-		if (inp->inp_faddr.s_addr == INADDR_ANY)
-		    return 0;
-		else {
-			s = splnet();
-			in_pcbdisconnect(inp);
-			inp->inp_laddr.s_addr = INADDR_ANY;
-			splx(s);
-			return 1;
-		}
-	} else
-	    return 0;
-}
-
-/*
- * Do V4 mapped addr related sending work.
- * Return 2 when v4 attach is failed.
- * Return 1 when v6 send is not necessary.
- * Return 0 when v6 send is necessary.
- */
-static int
-udp6_mapped_send(struct socket *so,
-		 struct mbuf *m,
-		 struct mbuf *addr6,
-		 struct mbuf *control,
-		 int *error_p)
-{
-	struct	inpcb *inp = sotoinpcb(so);
-	struct	in6pcb *in6p = sotoin6pcb(so);
-	struct sockaddr_in6 *sin6_p = 0;
-	int	hasv4addr;
-
-	if (addr6 == 0) {
-		if (!IN6_IS_ADDR_ANY(&in6p->in6p_faddr))
-		    hasv4addr = 0;
-		else
-		    hasv4addr = (inp && 
-				 inp->inp_faddr.s_addr != INADDR_ANY) ? 1 : 0;
-	} else {
-		sin6_p = mtod(addr6, struct sockaddr_in6 *);
-		hasv4addr = IN6_IS_ADDR_V4MAPPED(&sin6_p->sin6_addr) ? 1 : 0;
-	}
-	if (hasv4addr) {
-
-		/* Attach v4 if notyet */
-		if (inp == 0) {
-			*error_p = udp_usrreq(so, PRU_ATTACH, 0, 0, 0);
-			if (*error_p)
-			    return 2;
-			inp = sotoinpcb(so);
-		}
-		if (sin6_p)
-		    in6_sin6_2_sin_in_m(addr6);
-		*error_p = udp_output(inp, m, addr6, control);
-		if (sin6_p)
-		    in6_sin_2_v4mapsin6_in_m(addr6);
-		return 1;
-	}
-	return 0;
-}
-
-/*
- * Do V4 mapped addr related get sockaddr work.
- * Return 1 when v6 get sockaddr is not necessary.
- * Return 0 when v6 get sockaddr is necessary.
- */
-int
-udp6_mapped_sockaddr(struct socket *so, struct mbuf *addr6, int *error_p)
-{
-	struct	inpcb *inp = sotoinpcb(so);
-	struct	in6pcb *in6p = sotoin6pcb(so);
-	int	hasv4addr;
-	
-	if (inp == 0)
-		return 0;
-	hasv4addr = (inp->inp_laddr.s_addr == INADDR_ANY) ? 0 : 1;
-	if (hasv4addr && IN6_IS_ADDR_ANY(&in6p->in6p_laddr)) {
-
-		in_setsockaddr(inp, addr6);
-		in6_sin_2_v4mapsin6_in_m(addr6);
-		return 1;
-	}
-	return 0;
-}
-
-/*
- * Do V4 mapped addr related get peeraddr work.
- * Return 1 when v6 get peeraddr is not necessary.
- * Return 0 when v6 get peeraddr is necessary.
- */
-int
-udp6_mapped_peeraddr(struct socket *so, struct mbuf *addr6, int *error_p)
-{
-	struct	inpcb *inp = sotoinpcb(so);
-	struct	in6pcb *in6p = sotoin6pcb(so);
-	int	hasv4addr;
-	
-	if (inp == 0)
-		return 0;
-	hasv4addr = (inp->inp_faddr.s_addr == INADDR_ANY) ? 0 : 1;
-	if (hasv4addr && IN6_IS_ADDR_ANY(&in6p->in6p_faddr)) {
-
-		in_setpeeraddr(inp, addr6);
-		in6_sin_2_v4mapsin6_in_m(addr6);
-		return 1;
-	}
-	return 0;
-}
-#endif /* MAPPED_ADDR_ENABLED */
-
 extern	int udp6_sendspace;
 extern	int udp6_recvspace;
 
@@ -801,10 +590,6 @@ udp6_usrreq(so, req, m, addr6, control, p)
 	struct	in6pcb *in6p = sotoin6pcb(so);
 	int	error = 0;
 	int	s;
-#ifdef MAPPED_ADDR_ENABLED
-	struct	inpcb *inp = sotoinpcb(so);
-	int	hasv4addr;
-#endif /* MAPPED_ADDR_ENABLED */
 
 	/* 
 	 * MAPPED_ADDR implementation info:
@@ -832,15 +617,7 @@ udp6_usrreq(so, req, m, addr6, control, p)
 		 *  Always attach for IPv6, 
 		 *  and only when necessary for IPv4.
 		 */
-		if (in6p != NULL
-#ifdef MAPPED_ADDR_ENABLED
-		    /* 
-		     * MAPPED_ADDR implementation spec:
-		     *  When PRU_ATTACH, each of in6p and inp must be NULL.
-		     */
-		    || inp != NULL
-#endif /* MAPPED_ADDR_ENABLED */
-		    ) {
+		if (in6p != NULL) {
 			error = EINVAL;
 			break;
 		}
@@ -862,18 +639,9 @@ udp6_usrreq(so, req, m, addr6, control, p)
 
 	case PRU_DETACH:
 		udp6_detach(in6p);
-#ifdef MAPPED_ADDR_ENABLED
-		if (inp)
-			udp_detach(inp);
-#endif /* MAPPED_ADDR_ENABLED */
 		break;
 
 	case PRU_BIND:
-#ifdef MAPPED_ADDR_ENABLED
-		if (ip6_mapped_addr_on)
-			if (udp6_mapped_bind(so, addr6, &error))
-				break;
-#endif /* MAPPED_ADDR_ENABLED */
 		s = splnet();
 		error = in6_pcbbind(in6p, addr6);
 		splx(s);
@@ -884,11 +652,6 @@ udp6_usrreq(so, req, m, addr6, control, p)
 		break;
 
 	case PRU_CONNECT:
-#ifdef MAPPED_ADDR_ENABLED
-		if (ip6_mapped_addr_on)
-			if (udp6_mapped_connect(so, addr6, &error))
-				break;
-#endif /* MAPPED_ADDR_ENABLED */
 		if (!IN6_IS_ADDR_ANY(&in6p->in6p_faddr)) {
 			error = EISCONN;
 			break;
@@ -914,22 +677,8 @@ udp6_usrreq(so, req, m, addr6, control, p)
 		break;
 
 	case PRU_DISCONNECT:
-#ifdef MAPPED_ADDR_ENABLED
-		/* 
-		 * Should only one of IPv4 or IPv6 is connected at most,
-		 * but we check either and (if connected)disconnect them.
-		 */
-		hasv4addr = udp6_mapped_disconnect(so, addr6, &error);
-#endif /* MAPPED_ADDR_ENABLED */
 		if (IN6_IS_ADDR_UNSPECIFIED(&in6p->in6p_faddr)) {
-#ifdef MAPPED_ADDR_ENABLED
-			if (hasv4addr == 0)
-				error = ENOTCONN;
-			else
-				so->so_state &= ~SS_ISCONNECTED; /* XXX */
-#else /* MAPPED_ADDR_ENABLED */
 			error = ENOTCONN;
-#endif /* MAPPED_ADDR_ENABLED */
 			break;
 		}
 		s = splnet();
@@ -944,47 +693,18 @@ udp6_usrreq(so, req, m, addr6, control, p)
 		break;
 
 	case PRU_SEND:
-#ifdef MAPPED_ADDR_ENABLED
-		if (ip6_mapped_addr_on) {
-			int ret_val;
-			
-			ret_val = udp6_mapped_send(so, m, addr6, control,
-						   &error);
-			if (ret_val != 0) {
-				if (ret_val == 1)
-					return (error);
-				else /* ret_val shoud be 2. v4 attach failed */
-					break;
-			}
-			/* else proceed to udp6_output() */
-		}
-#endif /* MAPPED_ADDR_ENABLED */
 		return(udp6_output(in6p, m, addr6, control));
 
 	case PRU_ABORT:
 		soisdisconnected(so);
-#ifdef MAPPED_ADDR_ENABLED
-		if (inp)
-			udp_detach(inp);
-#endif /* MAPPED_ADDR_ENABLED */
 		udp6_detach(in6p);
 		break;
 
 	case PRU_SOCKADDR:
-#ifdef MAPPED_ADDR_ENABLED
-		if (ip6_mapped_addr_on)
-			if (udp6_mapped_sockaddr(so, addr6, &error))
-				break;
-#endif /* MAPPED_ADDR_ENABLED */
 		in6_setsockaddr(in6p, addr6);
 		break;
 
 	case PRU_PEERADDR:
-#ifdef MAPPED_ADDR_ENABLED
-		if (ip6_mapped_addr_on)
-			if (udp6_mapped_peeraddr(so, addr6, &error))
-				break;
-#endif /* MAPPED_ADDR_ENABLED */
 		in6_setpeeraddr(in6p, addr6);
 		break;
 

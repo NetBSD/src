@@ -71,7 +71,7 @@
  * Identification of the network protocol stack
  */
 #define __KAME__
-#define __KAME_VERSION		"SNAP 19990628"
+#define __KAME_VERSION		"SNAP 19990628/NetBSD-current"
 
 /*
  * Local port number conventions:
@@ -450,25 +450,12 @@ struct in6_pktinfo {
 #define IPV6CTL_LOG_INTERVAL	14
 #define IPV6CTL_HDRNESTLIMIT	15
 #define IPV6CTL_DAD_COUNT	16
-#ifdef MAPPED_ADDR_ENABLED
-#define IPV6CTL_MAPPED_ADDR	18
-#endif /* MAPPED_ADDR_ENABLED */
-#define IPV6CTL_AUTO_FLOWLABEL	19
-#define IPV6CTL_DEFMCASTHLIM	20
-#define IPV6CTL_GIF_HLIM	21	/* default HLIM for gif encap packet */
-#define IPV6CTL_KAME_VERSION	22
+#define IPV6CTL_AUTO_FLOWLABEL	17
+#define IPV6CTL_DEFMCASTHLIM	18
+#define IPV6CTL_GIF_HLIM	19	/* default HLIM for gif encap packet */
+#define IPV6CTL_KAME_VERSION	20
 /* New entries should be added here from current IPV6CTL_MAXID value. */
-#define IPV6CTL_MAXID		23
-
-#ifdef MAPPED_ADDR_ENABLED
-#define IPV6CTL_NAMES_MAPPED_ADDR	"mapped_addr"
-#define IPV6CTL_TYPE_MAPPED_ADDR	CTLTYPE_INT
-#define IPV6CTL_VARS_MAPPED_ADDR	&ip6_mapped_addr_on
-#else  /* MAPPED_ADDR_ENABLED */
-#define IPV6CTL_NAMES_MAPPED_ADDR	0
-#define IPV6CTL_TYPE_MAPPED_ADDR	0
-#define IPV6CTL_VARS_MAPPED_ADDR	0
-#endif /* MAPPED_ADDR_ENABLED */
+#define IPV6CTL_MAXID		21
 
 #define IPV6CTL_NAMES { \
 	{ 0, 0 }, \
@@ -488,8 +475,6 @@ struct in6_pktinfo {
 	{ "log_interval", CTLTYPE_INT }, \
 	{ "hdrnestlimit", CTLTYPE_INT }, \
 	{ "dad_count", CTLTYPE_INT }, \
-	{ 0, 0 }, \
-	{ IPV6CTL_NAMES_MAPPED_ADDR, IPV6CTL_TYPE_MAPPED_ADDR }, \
 	{ "auto_flowlabel", CTLTYPE_INT }, \
 	{ "defmcasthlim", CTLTYPE_INT }, \
 	{ "gifhlim", CTLTYPE_INT }, \
@@ -514,8 +499,6 @@ struct in6_pktinfo {
 	&ip6_log_interval, \
 	&ip6_hdrnestlimit, \
 	&ip6_dad_count, \
-	&0, \
-	IPV6CTL_VARS_MAPPED_ADDR, \
 	&auto_flowlabel, \
 	&ip6_defmcasthlim, \
 	&ip6_gif_hlim, \
@@ -531,22 +514,6 @@ int	in6_localaddr __P((struct in6_addr *));
 int	in6_addrscope __P((struct in6_addr *));
 struct	in6_ifaddr *in6_ifawithscope __P((struct ifnet *, struct in6_addr *));
 struct	in6_ifaddr *in6_ifawithifp __P((struct ifnet *, struct in6_addr *));
-#ifdef MAPPED_ADDR_ENABLED
-void	in6_sin6_2_sin __P((struct sockaddr_in *sin,
-			    struct sockaddr_in6 *sin6));
-void	in6_sin6_2_sin_in_m __P((struct mbuf *addr6));
-void	in6_sin_2_v4mapsin6 __P((struct sockaddr_in *sin,
-				 struct sockaddr_in6 *sin6));
-void	in6_sin_2_v4mapsin6_in_m __P((struct mbuf *addr6));
-void	in6_sin6_2_sin_in_sock __P((struct sockaddr *nam));
-void	in6_sin_2_v4mapsin6_in_sock __P((struct sockaddr **nam));
-#endif /* MAPPED_ADDR_ENABLED */
-#ifdef RADISH
-struct radish;
-struct radish_head;
-int	 in6_rd_match __P((struct sockaddr *, struct radish_head *,
-			struct radish **));
-#endif /* RADISH */
 extern void in6_if_up __P((struct ifnet *));
 
 #define	satosin6(sa)	((struct sockaddr_in6 *)(sa))
@@ -560,11 +527,9 @@ struct cmsghdr;
 extern int inet6_option_space(int);
 extern int inet6_option_init(void *, struct cmsghdr **, int);
 extern int inet6_option_append(struct cmsghdr *, const u_int8_t *, int, int);
-#if 0 /* not implemented yet */
 extern u_int8_t *inet6_option_alloc(struct cmsghdr *, int, int, int);
 extern int inet6_option_next(const struct cmsghdr *, u_int8_t **);
-extern int inet6_option_find(const struct cmsghdr *, u_int8_t *, int);
-#endif
+extern int inet6_option_find(const struct cmsghdr *, u_int8_t **, int);
 
 extern size_t inet6_rthdr_space __P((int, int));
 extern struct cmsghdr *inet6_rthdr_init __P((void *, int));

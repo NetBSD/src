@@ -1,4 +1,4 @@
-/*	$NetBSD: if_en_pci.c,v 1.12 1999/03/24 18:47:51 cgd Exp $	*/
+/*	$NetBSD: if_en_pci.c,v 1.13 1999/07/01 08:12:46 itojun Exp $	*/
 
 /*
  *
@@ -76,6 +76,15 @@ struct en_pci_softc {
 /*
  * local defines (PCI specific stuff)
  */
+
+#if !defined(MIDWAY_ENIONLY)
+static  void eni_get_macaddr __P((struct en_pci_softc *,
+		struct pci_attach_args *));
+#endif
+#if !defined(MIDWAY_ADPONLY)
+static  void adp_get_macaddr __P((struct en_pci_softc *,
+		struct pci_attach_args *));
+#endif
 
 /* 
  * address of config base memory address register in PCI config space
@@ -246,6 +255,7 @@ void *aux;
 
 #if !defined(MIDWAY_ENIONLY)
   if (sc->is_adaptec) {
+    adp_get_macaddr(scp, pa);
     sc->en_busreset = adp_busreset;
     adp_busreset(sc);
   }
@@ -253,6 +263,7 @@ void *aux;
 
 #if !defined(MIDWAY_ADPONLY)
   if (!sc->is_adaptec) {
+    eni_get_macaddr(scp, pa);
     sc->en_busreset = NULL;
     pci_conf_write(scp->en_pc, pa->pa_tag, EN_TONGA, 
 		  (TONGA_SWAP_DMA|TONGA_SWAP_WORD));
@@ -266,3 +277,140 @@ void *aux;
   en_attach(sc);
 
 }
+
+#if 0
+static void
+en_pci_shutdown(
+	int howto,
+	void *sc)
+{
+    struct en_pci_softc *psc = (struct en_pci_softc *)sc;
+    
+    en_reset(&psc->esc);
+    DELAY(10);
+}
+#endif
+
+#if !defined(MIDWAY_ENIONLY)
+
+#if defined(sparc) || defined(__FreeBSD__)
+#define bus_space_read_1(t, h, o) \
+  		((void)t, (*(volatile u_int8_t *)((h) + (o))))
+#endif
+
+static void 
+adp_get_macaddr(scp, pa)
+     struct en_pci_softc *scp;
+     struct pci_attach_args *pa;
+{
+  struct en_softc * sc = (struct en_softc *)scp;
+  int lcv;
+
+  for (lcv = 0; lcv < sizeof(sc->macaddr); lcv++)
+    sc->macaddr[lcv] = bus_space_read_1(sc->en_memt, sc->en_base,
+					MID_ADPMACOFF + lcv);
+}
+
+#endif /* MIDWAY_ENIONLY */
+
+#if !defined(MIDWAY_ADPONLY)
+
+/*
+ * Read station (MAC) address from serial EEPROM.
+ * derived from linux drivers/atm/eni.c by Werner Almesberger, EPFL LRC.
+ */
+#define EN_PROM_MAGIC  0x0c
+#define EN_PROM_DATA   0x02
+#define EN_PROM_CLK    0x01
+#define EN_ESI         64
+
+static void 
+eni_get_macaddr(scp, pa)
+  struct en_pci_softc *scp;
+  struct pci_attach_args *pa;
+{
+  struct en_softc *sc = (struct en_softc *)scp;
+  pci_chipset_tag_t id = scp->en_pc;
+  pcitag_t tag = pa->pa_tag;
+  int i, j, address, status;
+  u_int32_t data, t_data;
+  u_int8_t tmp;
+  
+  t_data = pci_conf_read(id, tag, EN_TONGA) & 0xffffff00;
+
+  data =  EN_PROM_MAGIC | EN_PROM_DATA | EN_PROM_CLK;
+  pci_conf_write(id, tag, EN_TONGA, data);
+
+  for (i = 0; i < sizeof(sc->macaddr); i ++){
+    /* start operation */
+    data |= EN_PROM_DATA ;
+    pci_conf_write(id, tag, EN_TONGA, data);
+    data |= EN_PROM_CLK ;
+    pci_conf_write(id, tag, EN_TONGA, data);
+    data &= ~EN_PROM_DATA ;
+    pci_conf_write(id, tag, EN_TONGA, data);
+    data &= ~EN_PROM_CLK ;
+    pci_conf_write(id, tag, EN_TONGA, data);
+    /* send address with serial line */
+    address = ((i + EN_ESI) << 1) + 1;
+    for ( j = 7 ; j >= 0 ; j --){
+      data = (address >> j) & 1 ? data | EN_PROM_DATA :
+      data & ~EN_PROM_DATA;
+      pci_conf_write(id, tag, EN_TONGA, data);
+      data |= EN_PROM_CLK ;
+      pci_conf_write(id, tag, EN_TONGA, data);
+      data &= ~EN_PROM_CLK ;
+      pci_conf_write(id, tag, EN_TONGA, data);
+    }
+    /* get ack */
+    data |= EN_PROM_DATA ;
+    pci_conf_write(id, tag, EN_TONGA, data);
+    data |= EN_PROM_CLK ;
+    pci_conf_write(id, tag, EN_TONGA, data);
+    data = pci_conf_read(id, tag, EN_TONGA);
+    status = data & EN_PROM_DATA;
+    data &= ~EN_PROM_CLK ;
+    pci_conf_write(id, tag, EN_TONGA, data);
+    data |= EN_PROM_DATA ;
+    pci_conf_write(id, tag, EN_TONGA, data);
+
+    tmp = 0;
+
+    for ( j = 7 ; j >= 0 ; j --){
+      tmp <<= 1;
+      data |= EN_PROM_DATA ;
+      pci_conf_write(id, tag, EN_TONGA, data);
+      data |= EN_PROM_CLK ;
+      pci_conf_write(id, tag, EN_TONGA, data);
+      data = pci_conf_read(id, tag, EN_TONGA);
+      if(data & EN_PROM_DATA) tmp |= 1;
+      data &= ~EN_PROM_CLK ;
+      pci_conf_write(id, tag, EN_TONGA, data);
+      data |= EN_PROM_DATA ;
+      pci_conf_write(id, tag, EN_TONGA, data);
+    }
+    /* get ack */
+    data |= EN_PROM_DATA ;
+    pci_conf_write(id, tag, EN_TONGA, data);
+    data |= EN_PROM_CLK ;
+    pci_conf_write(id, tag, EN_TONGA, data);
+    data = pci_conf_read(id, tag, EN_TONGA);
+    status = data & EN_PROM_DATA;
+    data &= ~EN_PROM_CLK ;
+    pci_conf_write(id, tag, EN_TONGA, data);
+    data |= EN_PROM_DATA ;
+    pci_conf_write(id, tag, EN_TONGA, data);
+
+    sc->macaddr[i] = tmp;
+  }
+  /* stop operation */
+  data &=  ~EN_PROM_DATA;
+  pci_conf_write(id, tag, EN_TONGA, data);
+  data |=  EN_PROM_CLK;
+  pci_conf_write(id, tag, EN_TONGA, data);
+  data |=  EN_PROM_DATA;
+  pci_conf_write(id, tag, EN_TONGA, data);
+  pci_conf_write(id, tag, EN_TONGA, t_data);
+}
+
+#endif /* !MIDWAY_ADPONLY */

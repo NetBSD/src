@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: pim6_var.h,v 1.1.2.1 1999/06/28 06:37:07 itojun Exp $ */
+/* $Id: pim6_var.h,v 1.2 1999/07/01 08:12:58 itojun Exp $ */
 
 #ifndef _NETINET6_PIM6_VAR_H_
 #define _NETINET6_PIM6_VAR_H_

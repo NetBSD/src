@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.139 1999/06/27 15:15:00 drochner Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.140 1999/07/01 08:12:46 itojun Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.132 1999/06/27 15:13:54 drochner Exp 
+ *	NetBSD: pcidevs,v 1.133 1999/06/30 16:52:52 fair Exp 
  */
 
 /*
@@ -40,6 +40,10 @@
 
 /*
  * NOTE: a fairly complete list of PCI codes can be found at:
+ *
+ *	http://members.hyperlink.net.au/~chart/pci.htm
+ *
+ * which replaces the database previously found at
  *
  *	http://www.halcyon.com/scripts/jboemler/pci/pcicode
  *

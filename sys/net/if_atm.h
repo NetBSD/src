@@ -1,4 +1,4 @@
-/*      $NetBSD: if_atm.h,v 1.9 1998/05/06 10:16:04 bouyer Exp $       */
+/*      $NetBSD: if_atm.h,v 1.10 1999/07/01 08:12:48 itojun Exp $       */
 
 /*
  *
@@ -45,6 +45,14 @@
 #endif
 #endif /* freebsd doesn't define _KERNEL */
 
+#ifndef NO_ATM_PVCEXT
+/*
+ * ATM_PVCEXT enables PVC extention: VP/VC shaping
+ * and PVC shadow interfaces.
+ */
+#define ATM_PVCEXT	/* enable pvc extention */
+#endif
+
 #if defined(__NetBSD__) || defined(__OpenBSD__) || defined(__bsdi__)
 #define RTALLOC1(A,B)		rtalloc1((A),(B))
 #elif defined(__FreeBSD__)
@@ -70,6 +78,9 @@ struct atm_pseudohdr {
 #define ATM_PH_AAL5    0x01	/* use AAL5? (0 == aal0) */
 #define ATM_PH_LLCSNAP 0x02	/* use the LLC SNAP encoding (iff aal5) */
 
+#ifdef ATM_PVCEXT
+#define ATM_PH_INERNAL  0x20	/* reserve for kernel internal use */
+#endif
 #define ATM_PH_DRIVER7  0x40	/* reserve for driver's use */
 #define ATM_PH_DRIVER8  0x80	/* reserve for driver's use */
 
@@ -87,6 +98,26 @@ struct atm_pseudoioctl {
 };
 #define SIOCATMENA	_IOWR('a', 123, struct atm_pseudoioctl) /* enable */
 #define SIOCATMDIS	_IOWR('a', 124, struct atm_pseudoioctl) /* disable */
+
+#ifdef ATM_PVCEXT
+
+/* structure to control PVC transmitter */
+struct pvctxreq {
+    /* first entry must be compatible with struct ifreq */
+    char pvc_ifname[IFNAMSIZ];		/* if name, e.g. "en0" */
+    struct atm_pseudohdr pvc_aph;	/* (flags) + vpi:vci */
+    struct atm_pseudohdr pvc_joint;	/* for vp shaping: another vc
+					   to share the shaper */
+    int pvc_pcr;			/* peak cell rate (shaper value) */
+};
+
+/* use ifioctl for now */
+#define SIOCSPVCTX	_IOWR('i', 95, struct pvctxreq)
+#define SIOCGPVCTX	_IOWR('i', 96, struct pvctxreq)
+#define SIOCSPVCSIF	_IOWR('i', 97, struct ifreq)
+#define SIOCGPVCSIF	_IOWR('i', 98, struct ifreq)
+
+#endif /* ATM_PVCEXT */
 
 /*
  * XXX forget all the garbage in if_llc.h and do it the easy way
@@ -112,5 +143,27 @@ void	atm_input __P((struct ifnet *, struct atm_pseudohdr *,
 int	atm_output __P((struct ifnet *, struct mbuf *, struct sockaddr *, 
 		struct rtentry *));
 #endif
-
+#ifdef ATM_PVCEXT
+#ifdef _KERNEL
+#include <sys/queue.h>
+/*
+ * ATM PVC subinterface: a trick to assign a subinterface
+ * to a PVC.
+ * with a pvc subinterface, each PVC looks like an individual
+ * Point-to-Point interface.
+ * as opposed to the NBMA model, a pvc subinterface is inherently
+ * multicast capable (no LANE/MARS required).
+ */
+struct pvcsif {
+	/*
+	 * The ifnet struct _must_ be at the head of this structure.
+	 */
+	struct ifnet sif_if;		/* ifnet structure per pvc */
+	struct atm_pseudohdr sif_aph;	/* flags + vpi:vci */
+	int	sif_vci;		/* vci no */
+	LIST_ENTRY(pvcsif) sif_links;
+};
+struct ifnet *pvcsif_alloc __P((void));
+#endif
+#endif /* ATM_PVCEXT */
 #endif /* _NET_IF_ATM_H_ */
