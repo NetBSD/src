@@ -10,7 +10,7 @@
 
 #include "adm_locl.h"
 
-RCSID("$Id: kstash.c,v 1.1.1.3 2001/09/17 12:09:42 assar Exp $");
+RCSID("$Id: kstash.c,v 1.2 2002/07/20 08:36:21 grant Exp $");
 
 /* change this later, but krblib_dbm needs it for now */
 
@@ -32,7 +32,7 @@ main(int argc, char **argv)
     setprogname (argv[0]);
 
     if ((n = kerb_init()))
-        errx(1, "Kerberos db and cache init failed = %ld\n", n);
+        errx(1, "Kerberos db and cache init failed = %ld", n);
 
     if (kdb_get_master_key (KDB_GET_PROMPT, &master_key,
 			    master_key_schedule) != 0) {
