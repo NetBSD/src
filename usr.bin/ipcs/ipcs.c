@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcs.c,v 1.20 2000/04/12 15:37:14 simonb Exp $	*/
+/*	$NetBSD: ipcs.c,v 1.21 2000/05/29 03:29:50 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1994 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
@@ -63,7 +63,6 @@ struct msginfo msginfo;
 void	cvt_time __P((time_t, char *, int));
 char   *fmt_perm __P((u_short));
 int	main __P((int, char **));
-int	semconfig __P((int, ...));
 void	usage __P((void));
 
 extern	char *__progname;		/* from crt0.o */
@@ -473,11 +472,6 @@ main(argc, argv)
 			    seminfo.semaem);
 		}
 		if (display & SEMINFO) {
-			if (semconfig(SEM_CONFIG_FREEZE) != 0) {
-				perror("semconfig");
-				fprintf(stderr,
-				    "Can't lock semaphore facility - winging it...\n");
-			}
 			if (kvm_read(kd, symbols[X_SEMA].n_value, &sema,
 			    sizeof(sema)) != sizeof(sema))
 				errx(1, "kvm_read (%s): %s",
@@ -535,8 +529,6 @@ main(argc, argv)
 					printf("\n");
 				}
 			}
-
-			(void) semconfig(SEM_CONFIG_THAW);
 
 			printf("\n");
 		}
