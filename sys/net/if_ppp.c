@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.32 1996/05/22 13:55:10 mycroft Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.33 1996/06/13 21:50:32 cgd Exp $	*/
 
 /*
  * if_ppp.c - Point-to-Point Protocol (PPP) Asynchronous driver.
@@ -555,10 +555,6 @@ pppsioctl(ifp, cmd, data)
 
     case SIOCSIFMTU:
 	sc->sc_if.if_mtu = ifr->ifr_mtu;
-	break;
-
-    case SIOCGIFMTU:
-	ifr->ifr_mtu = sc->sc_if.if_mtu;
 	break;
 
     case SIOCADDMULTI:
