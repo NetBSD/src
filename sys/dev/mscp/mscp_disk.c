@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_disk.c,v 1.42 2003/08/07 16:31:09 agc Exp $	*/
+/*	$NetBSD: mscp_disk.c,v 1.43 2004/09/25 16:44:30 thorpej Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.42 2003/08/07 16:31:09 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.43 2004/09/25 16:44:30 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -156,6 +156,10 @@ const struct cdevsw ra_cdevsw = {
 	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
 };
 
+static struct dkdriver radkdriver = {
+	rastrategy, minphys
+};
+
 /*
  * More driver definitions, for generic MSCP code.
  */
@@ -227,7 +231,7 @@ raopen(dev, flag, fmt, p)
 	struct	proc *p;
 {
 	struct ra_softc *ra;
-	int part, unit, mask;
+	int error, part, unit, mask;
 	/*
 	 * Make sure this is a reasonable open request.
 	 */
@@ -238,21 +242,40 @@ raopen(dev, flag, fmt, p)
 	if (ra == 0)
 		return ENXIO;
 
+	part = DISKPART(dev);
+
+	if ((error = lockmgr(&ra->ra_disk.dk_openlock, LK_EXCLUSIVE,
+			     NULL)) != 0)
+		return (error);
+
+	/*
+	 * If there are wedges, and this is not RAW_PART, then we
+	 * need to fail.
+	 */
+	if (ra->ra_disk.dk_nwedges != 0 && part != RAW_PART) {
+		error = EBUSY;
+		goto bad1;
+	}
+
 	/*
 	 * If this is the first open; we must first try to put
 	 * the disk online (and read the label).
 	 */
-	if (ra->ra_state == DK_CLOSED)
-		if (ra_putonline(ra) == MSCP_FAILED)
-			return ENXIO;
+	if (ra->ra_state == DK_CLOSED) {
+		if (ra_putonline(ra) == MSCP_FAILED) {
+			error = ENXIO;
+			goto bad1;
+		}
+	}
 
 	/* If the disk has no label; allow writing everywhere */
 	if (ra->ra_havelabel == 0)
 		ra->ra_wlabel = 1;
 
-	part = DISKPART(dev);
-	if (part >= ra->ra_disk.dk_label->d_npartitions)
-		return ENXIO;
+	if (part >= ra->ra_disk.dk_label->d_npartitions) {
+		error = ENXIO;
+		goto bad1;
+	}
 
 	/*
 	 * Wait for the state to settle
@@ -277,7 +300,12 @@ raopen(dev, flag, fmt, p)
 		break;
 	}
 	ra->ra_disk.dk_openmask |= mask;
+	(void) lockmgr(&ra->ra_disk.dk_openlock, LK_RELEASE, NULL);
 	return 0;
+
+ bad1:
+	(void) lockmgr(&ra->ra_disk.dk_openlock, LK_RELEASE, NULL);
+	return (error);
 }
 
 /* ARGSUSED */
@@ -289,7 +317,11 @@ raclose(dev, flags, fmt, p)
 {
 	int unit = DISKUNIT(dev);
 	struct ra_softc *ra = ra_cd.cd_devs[unit];
-	int mask = (1 << DISKPART(dev));
+	int error, mask = (1 << DISKPART(dev));
+
+	if ((error = lockmgr(&ra->ra_disk.dk_openlock, LK_EXCLUSIVE,
+			     NULL)) != 0)
+		return (error);
 
 	switch (fmt) {
 	case S_IFCHR:
@@ -317,6 +349,7 @@ raclose(dev, flags, fmt, p)
 		ra->ra_wlabel = 0;
 	}
 #endif
+	(void) lockmgr(&ra->ra_disk.dk_openlock, LK_RELEASE, NULL);
 	return (0);
 }
 
@@ -455,6 +488,9 @@ raioctl(dev, cmd, data, flag, p)
 		if ((flag & FWRITE) == 0)
 			error = EBADF;
 		else {
+			if ((error = lockmgr(&ra->ra_disk.dk_openlock,
+					     LK_EXCLUSIVE, NULL)) != 0)
+				break;
 			error = setdisklabel(lp, tp, 0, 0);
 			if ((error == 0) && (cmd == DIOCWDINFO
 #ifdef __HAVE_OLD_DISKLABEL
@@ -466,6 +502,8 @@ raioctl(dev, cmd, data, flag, p)
 				error = writedisklabel(dev, rastrategy, lp,0);
 				ra->ra_wlabel = 0;
 			}
+			(void) lockmgr(&ra->ra_disk.dk_openlock,
+				       LK_RELEASE, NULL);
 		}
 		break;
 
@@ -503,6 +541,37 @@ raioctl(dev, cmd, data, flag, p)
 		}
 #endif
 		break;
+
+	case DIOCAWEDGE:
+	    {
+	    	struct dkwedge_info *dkw = (void *) data;
+
+		if ((flag & FWRITE) == 0)
+			return (EBADF);
+
+		/* If the ioctl happens here, the parent is us. */
+		strcpy(dkw->dkw_parent, ra->ra_dev.dv_xname);
+		return (dkwedge_add(dkw));
+	    }
+	
+	case DIOCDWEDGE:
+	    {
+	    	struct dkwedge_info *dkw = (void *) data;
+
+		if ((flag & FWRITE) == 0)
+			return (EBADF);
+
+		/* If the ioctl happens here, the parent is us. */
+		strcpy(dkw->dkw_parent, ra->ra_dev.dv_xname);
+		return (dkwedge_del(dkw));
+	    }
+	
+	case DIOCLWEDGES:
+	    {
+	    	struct dkwedge_list *dkwl = (void *) data;
+
+		return (dkwedge_list(&ra->ra_disk, dkwl, p));
+	    }
 
 	default:
 		error = ENOTTY;
@@ -571,6 +640,10 @@ const struct cdevsw rx_cdevsw = {
 	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
 };
 
+static struct dkdriver rxdkdriver = {
+	rxstrategy, minphys
+};
+
 /*
  * More driver definitions, for generic MSCP code.
  */
@@ -622,6 +695,14 @@ rxattach(parent, self, aux)
 	mi->mi_dp[mp->mscp_unit] = self;
 
 	rx->ra_disk.dk_name = rx->ra_dev.dv_xname;
+#if NRX
+	if (MSCP_MID_ECH(1, mp->mscp_guse.guse_mediaid) == 'X' - '@')
+		rx->ra_disk.dk_driver = &rxdkdriver;
+#endif
+#if NRA
+	if (MSCP_MID_ECH(1, mp->mscp_guse.guse_mediaid) != 'X' - '@')
+		rx->ra_disk.dk_driver = &radkdriver;
+#endif
 	disk_attach((struct disk *)&rx->ra_disk);
 
 	/* Fill in what we know. The actual size is gotten later */
@@ -638,6 +719,13 @@ rxattach(parent, self, aux)
 	    mp->mscp_guse.guse_ngpc, mp->mscp_guse.guse_rctsize,
 	    mp->mscp_guse.guse_nrpt, mp->mscp_guse.guse_nrct);
 #endif
+	if (MSCP_MID_ECH(1, mp->mscp_guse.guse_mediaid) != 'X' - '@') {
+		/*
+		 * XXX We should try to discover wedges here, but
+		 * XXX that would mean being able to do I/O.  Should
+		 * XXX use config_defer() here.
+		 */
+	}
 }
 
 /* 
