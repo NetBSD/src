@@ -1,4 +1,4 @@
-/*	$NetBSD: mfp.c,v 1.3 1999/03/18 12:27:59 minoura Exp $	*/
+/*	$NetBSD: mfp.c,v 1.4 1999/05/05 13:46:20 minoura Exp $	*/
 
 /*
  *
@@ -55,13 +55,12 @@
 static int mfp_match __P((struct device *, struct cfdata *, void *));
 static void mfp_attach __P((struct device *, struct device *, void *));
 static void mfp_init __P((void));
+static void mfp_calibrate_delay __P((void));
 
 struct cfattach mfp_ca = {
 	sizeof(struct mfp_softc), mfp_match, mfp_attach
 };
 
-extern int x68k_realconfig;
-extern struct cfdriver mfp_cd;
 
 static int
 mfp_match(parent, cf, aux)
@@ -120,6 +119,12 @@ mfp_attach(parent, self, aux)
 		config_found (self, "kbd", NULL);
 		config_found (self, "clock", NULL);
 		config_found (self, "pow", NULL);
+	} else {
+		/*
+		 * Called from config_console;
+		 * calibrate the DELAY loop counter
+		 */
+		mfp_calibrate_delay();
 	}
 }
 
@@ -142,6 +147,32 @@ mfp_init (void)
 
 	/* Timer C/D settings */
 	mfp_set_tcdcr(0);
+}
+
+extern int delay_divisor;
+void	_delay __P((u_int));
+
+static void
+mfp_calibrate_delay(void)
+{
+	/*
+	 * Stolen from mvme68k.
+	 */
+	/*
+	 * X68k provides 4MHz clock (= 0.25usec) for MFP timer C.
+	 * 10000usec = 0.25usec * 200 * 200
+	 * Our slowest clock is 20MHz (?).  Its delay_divisor value
+	 * should be about 102.  Start from 140 here.
+	 */
+	for (delay_divisor = 140; delay_divisor > 0; delay_divisor--) {
+		mfp_set_tcdr(255-0);
+		mfp_set_tcdcr(0x70); /* 1/200 delay mode */
+		_delay(10000 << 8);
+		mfp_set_tcdcr(0); /* stop timer */
+		if ((255 - mfp_get_tcdr()) > 200)
+			break;	/* got it! */
+		/* retry! */
+	}
 }
 
 /*
