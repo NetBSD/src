@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mips,v 1.5 2000/12/03 07:05:23 matt Exp $
+#	$NetBSD: Makefile.mips,v 1.6 2000/12/03 07:21:50 matt Exp $
 
 # Makefile for NetBSD
 #
@@ -121,7 +121,7 @@ SYSTEM_OBJ+=	locore_mips1.o
 .if !empty(IDENT:M-DMIPS3)
 SYSTEM_OBJ+=	locore_mips3.o
 .endif
-.if !empty(IDENT:M-DNOFPU)
+.if empty(IDENT:M-DNOFPU)
 SYSTEM_OBJ+=	fp.o
 .endif
 SYSTEM_OBJ+=	param.o ioconf.o ${OBJS} ${LIBKERN} ${LIBCOMPAT}
@@ -211,7 +211,7 @@ SRCS+=	${MIPS}/mips/locore_mips1.S
 .if !empty(IDENT:M-DMIPS3)
 SRCS+=	${MIPS}/mips/locore_mips3.S
 .endif
-.if !empty(IDENT:M-DNOFPU)
+.if empty(IDENT:M-DNOFPU)
 SRCS+=	${MIPS}/mips/fp.S
 .endif
 
@@ -224,7 +224,7 @@ depend: .depend
 .if !empty(IDENT:M-DMIPS3)
 	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${MIPS}/mips/locore_mips3.S
 .endif
-.if !empty(IDENT:M-DNOFPU)
+.if empty(IDENT:M-DNOFPU)
 	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${MIPS}/mips/fp.S
 .endif
 	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${THISMIPS}/${TARGET_MACHINE}/locore_machdep.S
