@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn.c,v 1.22 1999/05/21 21:48:28 thorpej Exp $	*/
+/*	$NetBSD: if_sn.c,v 1.23 1999/05/24 21:53:42 thorpej Exp $	*/
 
 /*
  * National Semiconductor  DP8393X SONIC Driver
@@ -600,10 +600,10 @@ sonicput(sc, m0, mtd_next)
 	SWO(sc->bitmode, txp, TXP_FRAGOFF + (0 * TXP_FRAGSIZE) + TXP_FPTRHI,
 	    UPPER(mtdp->mtd_vbuf));
 
-	if (totlen < ETHERMIN + sizeof(struct ether_header)) {
-		int pad = ETHERMIN + sizeof(struct ether_header) - totlen;
+	if (totlen < ETHERMIN + ETHER_HDR_LEN) {
+		int pad = ETHERMIN + ETHER_HDR_LEN - totlen;
 		bzero(mtdp->mtd_buf + totlen, pad);
-		totlen = ETHERMIN + sizeof(struct ether_header);
+		totlen = ETHERMIN + ETHER_HDR_LEN;
 	}
 
 	SWO(sc->bitmode, txp, TXP_FRAGOFF + (0 * TXP_FRAGSIZE) + TXP_FSIZE,
@@ -1114,7 +1114,8 @@ sonic_read(sc, pkt, len)
 	}
 #endif /* SNDEBUG */
 
-	if (len < ETHERMIN || len > ETHERMTU) {
+	if (len < (ETHER_MIN_LEN - ETHER_CRC_LEN) ||
+	    len > (ETHER_MAX_LEN - ETHER_CRC_LEN)) {
 		printf("%s: invalid packet length %d bytes\n",
 		    sc->sc_dev.dv_xname, len);
 		return (0);
