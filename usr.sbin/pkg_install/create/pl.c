@@ -1,11 +1,11 @@
-/*	$NetBSD: pl.c,v 1.18.4.2 2002/02/23 16:41:28 he Exp $	*/
+/*	$NetBSD: pl.c,v 1.18.4.3 2002/02/23 18:06:45 he Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: pl.c,v 1.11 1997/10/08 07:46:35 charnier Exp";
 #else
-__RCSID("$NetBSD: pl.c,v 1.18.4.2 2002/02/23 16:41:28 he Exp $");
+__RCSID("$NetBSD: pl.c,v 1.18.4.3 2002/02/23 18:06:45 he Exp $");
 #endif
 #endif
 
@@ -120,7 +120,7 @@ check_list(char *home, package_t *pkg, const char *PkgName)
 	int     dirc;
 
 	/* Open Package Database for writing */
-	if (pkgdb_open(0) == -1) {
+	if (update_pkgdb && pkgdb_open(0) == -1) {
 		cleanup(0);
 		err(1, "can't open pkgdb");
 	}
@@ -146,7 +146,7 @@ check_list(char *home, package_t *pkg, const char *PkgName)
 			 * but as they are present before pkg_create
 			 * starts, it's ok to do this somewhere here
 			 */
-			{
+			if (update_pkgdb) {
 				char   *s, t[FILENAME_MAX];
 
 				(void) snprintf(t, sizeof(t), "%s/%s", cwd, p->name);
@@ -202,6 +202,9 @@ check_list(char *home, package_t *pkg, const char *PkgName)
 					tmp->type = PLIST_COMMENT;	/* PLIST_MD5 - HF */
 					tmp->next = p->next;
 					tmp->prev = p;
+					if (p == pkg->tail) {
+						pkg->tail = tmp;
+					}
 					p->next = tmp;
 					p = tmp;
 				}
@@ -213,7 +216,9 @@ check_list(char *home, package_t *pkg, const char *PkgName)
 		}
 	}
 
-	pkgdb_close();
+	if (update_pkgdb) {
+		pkgdb_close();
+	}
 
 	if (ReorderDirs && dirc > 0) {
 		reorder(pkg, dirc);
