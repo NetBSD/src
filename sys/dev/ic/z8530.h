@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530.h,v 1.2 1995/04/11 02:35:18 mycroft Exp $ */
+/*	$NetBSD: z8530.h,v 1.3 1995/06/19 13:15:08 briggs Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -345,7 +345,7 @@ struct zsdevice {
 
 #define	ZSWR14_LOCAL_LOOPBACK	0x10	/* set local loopback mode */
 #define	ZSWR14_AUTO_ECHO	0x08	/* set auto echo mode */
-#define	ZSWR14_DTR_REQ		0x04	/* DTR*/REQ* pin gives REQ* */
+#define	ZSWR14_DTR_REQ		0x04	/* DTR* / REQ* pin gives REQ* */
 #define	ZSWR14_BAUD_FROM_PCLK	0x02	/* BRG clock taken from PCLK */
 					/* (else from RTxC* pin or xtal osc) */
 #define	ZSWR14_BAUD_ENA		0x01	/* enable BRG countdown */
