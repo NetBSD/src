@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.496 2004/08/12 13:36:20 lukem Exp $
+# $NetBSD: mi,v 1.497 2004/08/12 16:07:07 lukem Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -772,6 +772,7 @@
 ./usr/include/vm				base-obsolete		obsolete
 ./usr/lib					base-sys-usr
 ./usr/lib/i18n					base-i18n-root
+./usr/lib/libntp.so				base-obsolete		obsolete
 ./usr/lib/libntp.so.0				base-obsolete		obsolete
 ./usr/lib/libntp.so.0.0				base-obsolete		obsolete
 ./usr/lib/libusb.a				base-obsolete		obsolete
