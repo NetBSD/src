@@ -147,8 +147,6 @@ readcmd(argc, argv)  char **argv; {
 
 
 umaskcmd(argc, argv)  char **argv; {
-	extern void *setmode();
-	extern mode_t getmode();
 	char *ap;
 	int mask;
 	int i;
