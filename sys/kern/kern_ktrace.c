@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.88 2004/02/25 21:40:40 enami Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.89 2004/04/30 07:51:59 enami Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.88 2004/02/25 21:40:40 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.89 2004/04/30 07:51:59 enami Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h"
@@ -71,9 +71,7 @@ int	ktrsamefile(struct file *, struct file *);
  */
 
 int
-ktrsamefile(f1, f2)
-	struct file *f1;
-	struct file *f2;
+ktrsamefile(struct file *f1, struct file *f2)
 {
 
 	return ((f1 == f2) ||
@@ -83,8 +81,7 @@ ktrsamefile(f1, f2)
 }
 
 void
-ktrderef(p)
-	struct proc *p;
+ktrderef(struct proc *p)
 {
 	struct file *fp = p->p_tracep;
 	p->p_traceflag = 0;
@@ -103,8 +100,7 @@ ktrderef(p)
 }
 
 void
-ktradref(p)
-	struct proc *p;
+ktradref(struct proc *p)
 {
 	struct file *fp = p->p_tracep;
 
@@ -112,10 +108,7 @@ ktradref(p)
 }
 
 void
-ktrinitheader(kth, p, type)
-	struct ktr_header *kth;
-	struct proc *p;
-	int type;
+ktrinitheader(struct ktr_header *kth, struct proc *p, int type)
 {
 
 	memset(kth, 0, sizeof(*kth));
@@ -126,12 +119,8 @@ ktrinitheader(kth, p, type)
 }
 
 void
-ktrsyscall(p, code, realcode, callp, args)
-	struct proc *p;
-	register_t code;
-	register_t realcode;
-	const struct sysent *callp;
-	register_t args[];
+ktrsyscall(struct proc *p, register_t code, register_t realcode,
+    const struct sysent *callp, register_t args[])
 {
 	struct ktr_header kth;
 	struct ktr_syscall *ktp;
@@ -166,11 +155,7 @@ ktrsyscall(p, code, realcode, callp, args)
 }
 
 void
-ktrsysret(p, code, error, retval)
-	struct proc *p;
-	register_t code;
-	int error;
-	register_t *retval;
+ktrsysret(struct proc *p, register_t code, int error, register_t *retval)
 {
 	struct ktr_header kth;
 	struct ktr_sysret ktp;
@@ -191,9 +176,7 @@ ktrsysret(p, code, error, retval)
 }
 
 void
-ktrnamei(p, path)
-	struct proc *p;
-	char *path;
+ktrnamei(struct proc *p, char *path)
 {
 	struct ktr_header kth;
 
@@ -207,8 +190,7 @@ ktrnamei(p, path)
 }
 
 void
-ktremul(p)
-	struct proc *p;
+ktremul(struct proc *p)
 {
 	struct ktr_header kth;
 	const char *emul = p->p_emul->e_name;
@@ -237,13 +219,8 @@ ktrkmem(struct proc *p, int ktr, const void *buf, size_t len)
 }
 
 void
-ktrgenio(p, fd, rw, iov, len, error)
-	struct proc *p;
-	int fd;
-	enum uio_rw rw;
-	struct iovec *iov;
-	int len;
-	int error;
+ktrgenio(struct proc *p, int fd, enum uio_rw rw, struct iovec *iov,
+    int len, int error)
 {
 	struct ktr_header kth;
 	struct ktr_genio *ktp;
@@ -302,12 +279,8 @@ ktrgenio(p, fd, rw, iov, len, error)
 }
 
 void
-ktrpsig(p, sig, action, mask, ksi)
-	struct proc *p;
-	int sig;
-	sig_t action;
-	const sigset_t *mask;
-	const ksiginfo_t *ksi;
+ktrpsig(struct proc *p, int sig, sig_t action, const sigset_t *mask,
+    const ksiginfo_t *ksi)
 {
 	struct ktr_header kth;
 	struct {
@@ -335,10 +308,7 @@ ktrpsig(p, sig, action, mask, ksi)
 }
 
 void
-ktrcsw(p, out, user)
-	struct proc *p;
-	int out;
-	int user;
+ktrcsw(struct proc *p, int out, int user)
 {
 	struct ktr_header kth;
 	struct ktr_csw kc;
@@ -355,12 +325,7 @@ ktrcsw(p, out, user)
 }
 
 void
-ktruser(p, id, addr, len, ustr)
-	struct proc *p;
-	const char *id;
-	void *addr;
-	size_t len;
-	int ustr;
+ktruser(struct proc *p, const char *id, void *addr, size_t len, int ustr)
 {
 	struct ktr_header kth;
 	struct ktr_user *ktp;
@@ -390,10 +355,7 @@ ktruser(p, id, addr, len, ustr)
 }
 
 void
-ktrmmsg(p, msgh, size)
-	struct proc *p;
-	const void *msgh;
-	size_t size;
+ktrmmsg(struct proc *p, const void *msgh, size_t size)
 {
 	struct ktr_header kth;
 	struct ktr_mmsg	*kp;
@@ -409,11 +371,7 @@ ktrmmsg(p, msgh, size)
 }
 
 void
-ktrmool(p, kaddr, size, uaddr)
-	struct proc *p;
-	const void *kaddr;
-	size_t size;
-	const void *uaddr;
+ktrmool(struct proc *p, const void *kaddr, size_t size, const void *uaddr)
 {
 	struct ktr_header kth;
 	struct ktr_mool *kp;
@@ -440,12 +398,7 @@ ktrmool(p, kaddr, size, uaddr)
 /* Interface and common routines */
 
 int
-ktrace_common(curp, ops, facs, pid, fp)
-	struct proc *curp;
-	int ops;
-	int facs;
-	int pid;
-	struct file *fp;
+ktrace_common(struct proc *curp, int ops, int facs, int pid, struct file *fp)
 {
 	int ret = 0;
 	int error = 0;
@@ -537,10 +490,7 @@ done:
  */
 /* ARGSUSED */
 int
-sys_fktrace(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_fktrace(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_fktrace_args /* {
 		syscallarg(int) fd;
@@ -574,10 +524,7 @@ sys_fktrace(l, v, retval)
  */
 /* ARGSUSED */
 int
-sys_ktrace(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_ktrace(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_ktrace_args /* {
 		syscallarg(const char *) fname;
@@ -647,12 +594,8 @@ done:
 }
 
 int
-ktrops(curp, p, ops, facs, fp)
-	struct proc *curp;
-	struct proc *p;
-	int ops;
-	int facs;
-	struct file *fp;
+ktrops(struct proc *curp, struct proc *p, int ops, int facs,
+    struct file *fp)
 {
 
 	if (!ktrcanset(curp, p))
@@ -691,12 +634,8 @@ ktrops(curp, p, ops, facs, fp)
 }
 
 int
-ktrsetchildren(curp, top, ops, facs, fp)
-	struct proc *curp;
-	struct proc *top;
-	int ops;
-	int facs;
-	struct file *fp;
+ktrsetchildren(struct proc *curp, struct proc *top, int ops, int facs,
+    struct file *fp)
 {
 	struct proc *p;
 	int ret = 0;
@@ -727,9 +666,7 @@ ktrsetchildren(curp, top, ops, facs, fp)
 }
 
 int
-ktrwrite(p, kth)
-	struct proc *p;
-	struct ktr_header *kth;
+ktrwrite(struct proc *p, struct ktr_header *kth)
 {
 	struct uio auio;
 	struct iovec aiov[2];
@@ -804,9 +741,7 @@ ktrwrite(p, kth)
  * TODO: check groups.  use caller effective gid.
  */
 int
-ktrcanset(callp, targetp)
-	struct proc *callp;
-	struct proc *targetp;
+ktrcanset(struct proc *callp, struct proc *targetp)
 {
 	struct pcred *caller = callp->p_cred;
 	struct pcred *target = targetp->p_cred;
@@ -828,10 +763,7 @@ ktrcanset(callp, targetp)
  * Put user defined entry to ktrace records.
  */
 int
-sys_utrace(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_utrace(struct lwp *l, void *v, register_t *retval)
 {
 #ifdef KTRACE
 	struct sys_utrace_args /* {
