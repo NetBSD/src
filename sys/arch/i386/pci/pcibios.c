@@ -1,4 +1,4 @@
-/*	$NetBSD: pcibios.c,v 1.13 2003/10/25 18:40:58 christos Exp $	*/
+/*	$NetBSD: pcibios.c,v 1.14 2003/10/27 04:10:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcibios.c,v 1.13 2003/10/25 18:40:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcibios.c,v 1.14 2003/10/27 04:10:43 christos Exp $");
 
 #include "opt_pcibios.h"
 
@@ -119,19 +119,6 @@ int	pcibios_get_intr_routing __P((struct pcibios_intr_routing *,
 int	pcibios_return_code __P((u_int16_t, const char *));
 
 void	pcibios_print_exclirq __P((void));
-
-/* for Libretto L2/L3 hack */
-void	pcibios_fixup_pir_table __P((void));
-void	pcibios_fixup_pir_table_mask __P((struct pcibios_linkmap *));
-
-struct pcibios_linkmap pir_mask[] = {
-	{ 2,	0x0040 },
-	{ 7,	0x0080 },
-	{ 8,	0x0020 },
-	{ 0,	0x0000 }
-};
-
-
 #ifdef PCIINTR_DEBUG
 void	pcibios_print_pir_table __P((void));
 #endif
@@ -314,9 +301,6 @@ pcibios_pir_init()
 		}
 		printf("\n");
 		pcibios_print_exclirq();
-
-		/* for Libretto L2/L3 hack */
-		pcibios_fixup_pir_table();
 #ifdef PCIINTR_DEBUG
 		pcibios_print_pir_table();
 #endif
@@ -349,9 +333,6 @@ pcibios_pir_init()
 	printf("PCI BIOS has %d Interrupt Routing table entries\n",
 	    pcibios_pir_table_nentries);
 	pcibios_print_exclirq();
-
-	/* for Libretto L2/L3 hack */
-	pcibios_fixup_pir_table();
 #ifdef PCIINTR_DEBUG
 	pcibios_print_pir_table();
 #endif
@@ -494,32 +475,6 @@ pcibios_print_exclirq()
 				printf(" %d", i);
 		}
 		printf("\n");
-	}
-}
-
-/* for Libretto L2/L3 hack */
-void 
-pcibios_fixup_pir_table()
-{
-	struct pcibios_linkmap *m;
-
-	for (m = pir_mask; m->link != 0; m++)
-		pcibios_fixup_pir_table_mask(m);
-}
-
-void 
-pcibios_fixup_pir_table_mask(mask)
-	struct pcibios_linkmap *mask;
-{
-	int i, j;
-
-	for (i = 0; i < pcibios_pir_table_nentries; i++) {
-		for (j = 0; j < 4; j++) {
-			if (pcibios_pir_table[i].linkmap[j].link == mask->link) {
-				pcibios_pir_table[i].linkmap[j].bitmap
-				    &= mask->bitmap; 
-			}
-		}
 	}
 }
 
