@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.17 1998/09/25 22:06:33 thorpej Exp $ */
+/* $NetBSD: intr.h,v 1.18 1998/09/26 00:03:52 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.
@@ -89,6 +89,20 @@ extern u_int64_t ssir;
 #define	setsoftnet()	ssir |= SIR_NET
 #define	setsoftclock()	ssir |= SIR_CLOCK
 #define	setsoftserial()	ssir |= SIR_SERIAL
+
+/*
+ * Interprocessor interrupts.
+ */
+#define	ALPHA_IPI_HALT		0UL	/* halt processor */
+#define	ALPHA_IPI_IMB		1UL	/* perform an I-stream barrier */
+#define	ALPHA_IPI_TBIA		2UL	/* TBI all TB entries */
+#define	ALPHA_IPI_TBIAP		3UL	/* TBI all per-process TB entries */
+#define	ALPHA_NIPIS		4UL	/* must not exceed 64 */
+
+typedef void (*ipifunc_t) __P((void));
+extern	ipifunc_t ipifuncs[ALPHA_NIPIS];
+
+void	alpha_send_ipi __P((unsigned long, unsigned long));
 
 /*
  * Alpha shared-interrupt-line common code.

@@ -1,4 +1,4 @@
-/* $NetBSD: interrupt.c,v 1.29 1998/09/24 23:28:17 thorpej Exp $ */
+/* $NetBSD: interrupt.c,v 1.30 1998/09/26 00:03:51 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.29 1998/09/24 23:28:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.30 1998/09/26 00:03:51 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,6 +56,11 @@ __KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.29 1998/09/24 23:28:17 thorpej Exp $
 #include <machine/frame.h>
 #include <machine/cpuconf.h>
 
+#if defined(MULTIPROCESSOR)
+#include <sys/device.h>
+#include <alpha/alpha/cpuvar.h>
+#endif
+
 #ifdef EVCNT_COUNTERS
 #include <sys/device.h>
 struct evcnt clock_intr_evcnt;	/* event counter for clock intrs. */
@@ -72,13 +77,34 @@ interrupt(a0, a1, a2, framep)
 	switch (a0) {
 	case ALPHA_INTR_XPROC:	/* interprocessor interrupt */
 #if defined(MULTIPROCESSOR)
+	    {
+		struct cpu_softc *sc;
+		u_long cpu_id = alpha_pal_whami();
+		u_long pending_ipis, bit;
+
+		sc = cpus[cpu_id];
+#ifdef DIAGNOSTIC
+		if (sc == NULL) {
+			/* XXX panic? */
+			printf("WARNING: no cpu_softc for ID %lu\n",
+			    cpu_id);
+			return;
+		}
+#endif
+
+		pending_ipis = alpha_atomic_loadlatch_q(&sc->sc_ipis, 0);
+		for (bit = 0; bit < ALPHA_NIPIS; bit++)
+			if (pending_ipis & (1UL << bit))
+				(*ipifuncs[bit])();
+
 		/*
 		 * Handle inter-console messages if we're the primary
 		 * CPU.
 		 */
-		if (alpha_pal_whami() == hwrpb->rpb_primary_cpu_id &&
+		if (cpu_id == hwrpb->rpb_primary_cpu_id &&
 		    hwrpb->rpb_txrdy != 0)
 			cpu_iccb_receive();
+	    }
 #else
 		printf("WARNING: received interprocessor interrupt!\n");
 #endif /* MULTIPROCESSOR */
