@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dag.h,v 1.13 2004/03/19 15:16:18 oster Exp $	*/
+/*	$NetBSD: rf_dag.h,v 1.14 2004/03/19 17:01:26 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -126,6 +126,8 @@ struct RF_DagNode_s {
 	 * IT FINISHES, ALL VISITED FLAGS IN THE DAG ARE IDENTICAL */
 	char   *name;		/* debug only */
 	RF_DagNodeFlags_t flags;/* see below */
+	RF_DagNode_t *big_dag_ptrs;  /* used in cases where the cache below isn't big enough */
+	RF_DagParam_t *big_dag_params; /* used when the cache below isn't big enough */
 	RF_DagNode_t *dag_ptrs[RF_DAG_PTRCACHESIZE];	/* cache for performance */
 	RF_DagParam_t dag_params[RF_DAG_PARAMCACHESIZE];	/* cache for performance */
 };

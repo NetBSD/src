@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagutils.c,v 1.39 2004/03/19 15:16:18 oster Exp $	*/
+/*	$NetBSD: rf_dagutils.c,v 1.40 2004/03/19 17:01:26 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagutils.c,v 1.39 2004/03/19 15:16:18 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagutils.c,v 1.40 2004/03/19 17:01:26 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -66,6 +66,22 @@ static void rf_ValidateBranchVisitedBits(RF_DagNode_t *, int, int);
 static void rf_ValidateVisitedBits(RF_DagHeader_t *);
 #endif /* RF_DEBUG_VALIDATE_DAG */
 
+
+/* The maximum number of nodes in a DAG is bounded by
+
+(2 * raidPtr->Layout->numDataCol) + (1 * layoutPtr->numParityCol) + 
+	(1 * 2 * layoutPtr->numParityCol) + 3
+
+which is:  2*RF_MAXCOL+1*2+1*2*2+3
+
+For RF_MAXCOL of 40, this works out to 89.  We use this value to provide an estimate
+on the maximum size needed for RF_DAGPCACHE_SIZE.  For RF_MAXCOL of 40, this structure 
+would be 534 bytes.  Too much to have on-hand in a RF_DagNode_t, but should be ok to 
+have a few kicking around.
+*/
+#define RF_DAGPCACHE_SIZE ((2*RF_MAXCOL+1*2+1*2*2+3) *(RF_MAX(sizeof(RF_DagParam_t), sizeof(RF_DagNode_t *))))
+
+
 /******************************************************************************
  *
  * InitNode - initialize a dag node
@@ -74,7 +90,7 @@ static void rf_ValidateVisitedBits(RF_DagHeader_t *);
  * successors array.
  *
  *****************************************************************************/
-void 
+void
 rf_InitNode(RF_DagNode_t *node, RF_NodeStatus_t initstatus, int commit,
     int (*doFunc) (RF_DagNode_t *node),
     int (*undoFunc) (RF_DagNode_t *node),
@@ -103,6 +119,8 @@ rf_InitNode(RF_DagNode_t *node, RF_NodeStatus_t initstatus, int commit,
 	node->numSuccedents = nSucc;
 	node->name = name;
 	node->dagHdr = hdr;
+	node->big_dag_ptrs = NULL;
+	node->big_dag_params = NULL;
 	node->visited = 0;
 
 	/* allocate all the pointers with one call to malloc */
@@ -121,6 +139,9 @@ rf_InitNode(RF_DagNode_t *node, RF_NodeStatus_t initstatus, int commit,
 	         *     (wasted memory)
 	         */
 		ptrs = (void **) node->dag_ptrs;
+	} else if (nptrs <= (RF_DAGPCACHE_SIZE / sizeof(RF_DagNode_t *))) {
+		node->big_dag_ptrs = rf_AllocDAGPCache();
+		ptrs = (void **) node->big_dag_ptrs;
 	} else {
 		RF_MallocAndAdd(ptrs, nptrs * sizeof(void *), 
 				(void **), alist);
@@ -133,6 +154,9 @@ rf_InitNode(RF_DagNode_t *node, RF_NodeStatus_t initstatus, int commit,
 	if (nParam) {
 		if (nParam <= RF_DAG_PARAMCACHESIZE) {
 			node->params = (RF_DagParam_t *) node->dag_params;
+		} else if (nParam <= (RF_DAGPCACHE_SIZE / sizeof(RF_DagParam_t))) {
+			node->big_dag_params = rf_AllocDAGPCache();
+			node->params = node->big_dag_params;
 		} else {
 			RF_MallocAndAdd(node->params, 
 					nParam * sizeof(RF_DagParam_t), 
@@ -191,6 +215,9 @@ rf_FreeDAG(RF_DagHeader_t *dag_h)
 #define RF_MAX_FREE_DAGLIST 128
 #define RF_MIN_FREE_DAGLIST  32
 
+#define RF_MAX_FREE_DAGPCACHE 128
+#define RF_MIN_FREE_DAGPCACHE   8
+
 #define RF_MAX_FREE_FUNCLIST 128
 #define RF_MIN_FREE_FUNCLIST  32
 
@@ -201,6 +228,7 @@ rf_ShutdownDAGs(void *ignored)
 	pool_destroy(&rf_pools.dagh);
 	pool_destroy(&rf_pools.dagnode);
 	pool_destroy(&rf_pools.daglist);
+	pool_destroy(&rf_pools.dagpcache);
 	pool_destroy(&rf_pools.funclist);
 }
 
@@ -214,6 +242,8 @@ rf_ConfigureDAGs(RF_ShutdownList_t **listp)
 		     "rf_dagh_pl", RF_MIN_FREE_DAGH, RF_MAX_FREE_DAGH);
 	rf_pool_init(&rf_pools.daglist, sizeof(RF_DagList_t),
 		     "rf_daglist_pl", RF_MIN_FREE_DAGLIST, RF_MAX_FREE_DAGLIST);
+	rf_pool_init(&rf_pools.dagpcache, RF_DAGPCACHE_SIZE,
+		     "rf_dagpcache_pl", RF_MIN_FREE_DAGPCACHE, RF_MAX_FREE_DAGPCACHE);
 	rf_pool_init(&rf_pools.funclist, sizeof(RF_FuncList_t),
 		     "rf_funclist_pl", RF_MIN_FREE_FUNCLIST, RF_MAX_FREE_FUNCLIST);
 	rf_ShutdownCreate(listp, rf_ShutdownDAGs, NULL);
@@ -250,6 +280,12 @@ rf_AllocDAGNode()
 void
 rf_FreeDAGNode(RF_DagNode_t *node)
 {
+	if (node->big_dag_ptrs) {
+		rf_FreeDAGPCache(node->big_dag_ptrs);
+	}
+	if (node->big_dag_params) {
+		rf_FreeDAGPCache(node->big_dag_params);
+	}
 	pool_put(&rf_pools.dagnode, node);
 }
 
@@ -268,6 +304,22 @@ void
 rf_FreeDAGList(RF_DagList_t *dagList)
 {
 	pool_put(&rf_pools.daglist, dagList);
+}
+
+void *
+rf_AllocDAGPCache()
+{
+	void *p;
+	p = pool_get(&rf_pools.dagpcache, PR_WAITOK);
+	memset(p, 0, RF_DAGPCACHE_SIZE);
+	
+	return (p);
+}
+
+void
+rf_FreeDAGPCache(void *p)
+{
+	pool_put(&rf_pools.dagpcache, p);
 }
 
 RF_FuncList_t *
