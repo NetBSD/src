@@ -1,15 +1,14 @@
-#	$NetBSD: Makefile,v 1.18 2003/12/11 09:46:27 dyoung Exp $
+#	$NetBSD: Makefile,v 1.19 2005/01/03 06:05:50 lukem Exp $
 
 .include <bsd.own.mk>
 
 PROG=	ssh
+SRCS=	ssh.c readconf.c clientloop.c sshtty.c \
+	sshconnect.c sshconnect1.c sshconnect2.c
 
 LINKS=	${BINDIR}/ssh ${BINDIR}/slogin
 MAN=	ssh.1 ssh_config.5
 MLINKS=	ssh.1 slogin.1
-
-SRCS=	ssh.c readconf.c clientloop.c sshtty.c \
-	sshconnect.c sshconnect1.c sshconnect2.c
 
 .if (${USE_KERBEROS} != "no")
 CPPFLAGS+=-I${DESTDIR}/usr/include/kerberosIV
@@ -28,6 +27,3 @@ DPADD+=	${LIBCOM_ERR} ${LIBROKEN}
 .endif
 
 .include <bsd.prog.mk>
-
-LDADD+=	-lz -lcrypto
-DPADD+=	${LIBZ} ${LIBCRYPTO}
