@@ -1,4 +1,4 @@
-/*	$NetBSD: strptimetest.c,v 1.2 2005/03/05 07:48:47 martin Exp $	*/
+/*	$NetBSD: strptimetest.c,v 1.3 2005/03/05 14:07:55 dsl Exp $	*/
 
 /*
  * This file placed in the public domain.
@@ -17,6 +17,7 @@
 #define STR(x) XSTR(x)
 
 typedef struct tm tm_t;
+int verbose;
 
 const static struct test_list {
     const char	*buf;
@@ -32,10 +33,12 @@ const static struct test_list {
 	    { .tm_wday = 5, .tm_mon=2, .tm_mday = 4, .tm_hour=20,
 	      .tm_min=5, .tm_sec=34, .tm_year=105 } },
 
+#if 1
     /* The pre-1.23 versions get some of these wrong! */
     { "5\t3  4 8pm:05:34 2005", "%w%n%m%t%d%n%k%p:%M:%S %Y", 21,
 	    { .tm_wday = 5, .tm_mon=2, .tm_mday = 4, .tm_hour=20,
 	      .tm_min=5, .tm_sec=34, .tm_year=105 } },
+#endif
     { "Fri Mar  4 20:05:34 2005", "%c", 24,
 	    { .tm_wday = 5, .tm_mon=2, .tm_mday = 4, .tm_hour=20,
 	      .tm_min=5, .tm_sec=34, .tm_year=105 } },
@@ -65,7 +68,7 @@ const static struct test_list {
 static void
 usage(void)
 {
-	fprintf(stderr, "usage: strptimetest [[-Ssec] [-Mmin] [-Hhour] [-dmday] [-mmon] [-Yyear] [-uwday] [-jyday] buffer format length]\n");
+	fprintf(stderr, "usage: strptimetest [-v] [[-Ssec] [-Mmin] [-Hhour] [-dmday] [-mmon] [-Yyear] [-uwday] [-jyday] buffer format length]\n");
 	exit(1);
 }
 
@@ -83,6 +86,10 @@ test(const char *buf, const char *fmt, int len, const tm_t *want)
 {
 	tm_t got;
 	const char *np;
+
+	if (verbose)
+		printf("strptime(\"%.*s\" \"%s\", \"%s\", ...)\n",
+		    len, buf, buf + len, fmt);
 
 	memset(&got, 0, sizeof got);
 	np = strptime(buf, fmt, &got);
@@ -159,16 +166,16 @@ main(int argc, char *argv[])
 {
 	tm_t tm_want;
 
-	if (argc <= 1)
-		return std_test();
-
 	memset(&tm_want, 0, sizeof tm_want);
 	for (;;) {
-		switch (getopt(argc, argv, "S:M:H:d:m:Y:u:j:")) {
+		switch (getopt(argc, argv, "S:M:H:d:m:Y:u:j:v")) {
 		default:
 			usage();
 		case -1:
 			break;
+		case 'v':
+			verbose++;
+			continue;
 		case 'S': tm_want.tm_sec = argint(); continue;
 		case 'M': tm_want.tm_min = argint(); continue;
 		case 'H': tm_want.tm_hour = argint(); continue;
@@ -182,6 +189,10 @@ main(int argc, char *argv[])
 	}
 	argv += optind;
 	argc -= optind;
+
+	if (argc <= 1)
+		return std_test();
+
 	if (argc != 3)
 		usage();
 	return test(argv[0], argv[1], atoi(argv[2]), &tm_want);
