@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.14 2001/03/01 23:45:57 bjh21 Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.15 2001/03/04 23:13:29 bjh21 Exp $	*/
 
 /*
  * arm8 support code Copyright (c) 1997 ARM Limited
@@ -351,44 +351,43 @@ set_cpufuncs()
 	cputype = cpufunc_id();
 	cputype &= CPU_ID_CPU_MASK;
 
-	switch (cputype) {
+
 #ifdef CPU_ARM6
-	case CPU_ID_ARM610:
+	if ((cputype & CPU_ID_IMPLEMENTOR_MASK) == CPU_ID_ARM_LTD &&
+	    (cputype & 0x00000f00) == 0x00000600) {
 		cpufuncs = arm6_cpufuncs;
 		cpu_reset_needs_v4_MMU_disable = 0;
-		break;
+		return 0;
+	}
 #endif	/* CPU_ARM6 */
 #ifdef CPU_ARM7
-	case CPU_ID_ARM700:
-	case CPU_ID_ARM710:
-	case CPU_ID_ARM7500:
-	case CPU_ID_ARM710A:
-	case CPU_ID_ARM710T:
+	if ((cputype & CPU_ID_IMPLEMENTOR_MASK) == CPU_ID_ARM_LTD &&
+	    (cputype & 0x0000f000) == 0x00007000) {
 		cpufuncs = arm7_cpufuncs;
 		cpu_reset_needs_v4_MMU_disable = 0;
-		break;
+		return 0;
+	}
 #endif	/* CPU_ARM7 */
 #ifdef CPU_ARM8
-	case CPU_ID_ARM810:
+	if ((cputype & CPU_ID_IMPLEMENTOR_MASK) == CPU_ID_ARM_LTD &&
+	    (cputype & 0x0000f000) == 0x00008000) {
 		cpufuncs = arm8_cpufuncs;
 		cpu_reset_needs_v4_MMU_disable = 0;	/* XXX correct? */
-		break;
+		return 0;
+	}
 #endif	/* CPU_ARM8 */
 #ifdef CPU_SA110
-	case CPU_ID_SA110:
+	if (cputype == CPU_ID_SA110) {
 		cpufuncs = sa110_cpufuncs;
 		cpu_reset_needs_v4_MMU_disable = 1;	/* SA needs it	*/
-		break;
-#endif	/* CPU_SA110 */
-	default:
-		/*
-		 * Bzzzz. And the answer was ...
-		 */
-/*		panic("No support for this CPU type (%03x) in kernel\n", id >> 4);*/
-		return(ARCHITECTURE_NOT_PRESENT);
-		break;
+		return 0;
 	}
-	return(0);
+#endif	/* CPU_SA110 */
+	/*
+	 * Bzzzz. And the answer was ...
+	 */
+/*	panic("No support for this CPU type (%08x) in kernel\n", cputype);*/
+	return(ARCHITECTURE_NOT_PRESENT);
 }
 
 /*
