@@ -1,4 +1,4 @@
-/*	$NetBSD: upgrade.c,v 1.44.2.3 2004/06/17 09:17:34 tron Exp $	*/
+/*	$NetBSD: upgrade.c,v 1.44.2.4 2004/06/17 09:21:20 tron Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -48,11 +48,8 @@
 /*
  * local prototypes
  */
-static int save_etc(void);
 static int save_X(void);
 static int merge_X(void);
-
-static int etc_saved;
 
 /*
  * Do the system upgrade.
