@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.42 2001/11/23 10:19:47 enami Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.43 2002/10/10 01:41:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -167,6 +167,24 @@
 #ifndef __dead
 #define	__dead
 #define	__pure
+#endif
+
+#if __GNUC_PREREQ__(2, 7)
+#define	__unused	__attribute__((__unused__))
+#else
+#define	__unused	/* delete */
+#endif
+
+#if __GNUC_PREREQ__(2, 7)
+#define	__packed	__attribute__((__packed__))
+#define	__aligned(x)	__attribute__((__aligned__(x)))
+#define	__section(x)	__attribute__((__section__(x)))
+#elif defined(__lint__)
+#define	__packed	/* delete */
+#define	__aligned(x)	/* delete */
+#define	__section(x)	/* delete */
+#else
+#error Need a __packed, __aligned, and __section for this compiler.
 #endif
 
 /*
