@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.2 1997/11/27 10:19:52 sakamoto Exp $	*/
+/*	$NetBSD: pccons.c,v 1.3 1997/12/12 03:08:31 sakamoto Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -901,7 +901,7 @@ sput(cp, n)
 		u_short was;
 		unsigned cursorat;
 
-#define	ISA_MEM(p)	((void *)(0xC0000000 + (u_long)(p)))
+#define	ISA_MEM(p)	((void *)(BEBOX_BUS_SPACE_MEM + (u_long)(p)))
 		cp = ISA_MEM(CGA_BUF);
 		was = *cp;
 		*cp = (u_short) 0xA55A;
@@ -1739,8 +1739,8 @@ fillw(pattern, addr, len)
 	void *addr;
 	size_t len;
 {
-	u_short *p = (short *)addr;
+	u_int16_t *p = (u_int16_t *)addr;
 
-	for (; len > 0; len--)
-		*p++ = (pattern >> 8) | ((pattern << 8) & 0xff00);
+	while (len--)
+		outwrb(p++, pattern);
 }
