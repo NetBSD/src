@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.11 1997/11/01 06:54:14 lukem Exp $	*/
+/*	$NetBSD: sysctl.c,v 1.12 1998/02/06 21:18:46 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$NetBSD: sysctl.c,v 1.11 1997/11/01 06:54:14 lukem Exp $";
+static char *rcsid = "$NetBSD: sysctl.c,v 1.12 1998/02/06 21:18:46 jonathan Exp $";
 #endif
 #endif /* not lint */
 
@@ -279,6 +279,13 @@ parse(string, flags)
 		case KERN_BOOTTIME:
 			special |= BOOTTIME;
 			break;
+		case KERN_NTPTIME:
+			if (flags == 0)
+				return;
+			fprintf(stderr,
+			    "Use xntpdc -c kerninfo to view %s information\n",
+			    string);
+			return;
 		}
 		break;
 
