@@ -1,6 +1,6 @@
 #!/usr/bin/awk -
 #
-#	$NetBSD: MAKEDEV.awk,v 1.11 2003/12/19 06:04:16 lukem Exp $
+#	$NetBSD: MAKEDEV.awk,v 1.12 2004/01/14 20:37:51 jdolecek Exp $
 #
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -99,9 +99,9 @@ BEGIN {
 		print "ERROR: no platform MAKEDEV.conf - '" cfgfile "' doesn't exist" > "/dev/stderr"
 		exit 1
 	}
-	# skip first two lines - RCS Id and blank line
-	getline < cfgfile
-	getline < cfgfile
+	# skip first two lines
+	getline CONFRCSID < cfgfile	# RCS Id
+	getline < cfgfile		# blank line
 	MDDEV = 0		# MD device targets
 	while (getline < cfgfile) {
 		if (MDDEV)
@@ -201,6 +201,40 @@ BEGIN {
 
 /%MI_DEVICES_END%/ {
 	devsubst = 0;
+	next
+}
+
+# output 'Generated from' lines
+/\$[N]etBSD/ {
+	print "#"
+	print "# Generated from:"
+
+	# MAKEDEV.awk (this script) RCS Id
+	ARCSID = "$NetBSD: MAKEDEV.awk,v 1.12 2004/01/14 20:37:51 jdolecek Exp $"
+	gsub(/\$/, "", ARCSID)
+	print "#	" ARCSID
+	
+	# MAKEDEV.tmpl RCS Id
+	gsub(/\$/, "")
+	print $0
+
+	# MD MAKEDEV.conf RCS Id
+	# strip leading hash and insert machine subdirectory name
+	gsub(/\$/, "", CONFRCSID)
+	sub(/^\# /, "", CONFRCSID)
+	sub(/MAKEDEV.conf/, "etc." machine "/MAKEDEV.conf", CONFRCSID)
+	print "#	" CONFRCSID
+
+	next # don't print the RCS Id line again
+}
+
+# filter the 'PLEASE RUN ...' paragraph
+/^\#   PLEASE RUN/, /^\#\#\#\#\#\#/ {
+	next
+}
+ 
+# filter the device list
+/^\# Tapes/,/^$/ {
 	next
 }
 
