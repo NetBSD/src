@@ -1,4 +1,4 @@
-/*	$NetBSD: badsect.c,v 1.28 2004/08/08 00:55:06 christos Exp $	*/
+/*	$NetBSD: badsect.c,v 1.29 2004/08/08 02:51:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1981, 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1981, 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)badsect.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: badsect.c,v 1.28 2004/08/08 00:55:06 christos Exp $");
+__RCSID("$NetBSD: badsect.c,v 1.29 2004/08/08 02:51:19 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -81,15 +81,13 @@ static union {
 } ucg;
 #define	acg	ucg.cg
 static struct	fs *fs;
-static int	fso, fsi;
+static int	fsi;
 static int	errs;
 static off_t	dev_bsize = 1;
 static int needswap = 0;
 static int is_ufs2;
 
-static char buf[MAXBSIZE];
-
-static void	rdfs(off_t, int, void *);
+static void	rdfs(off_t, size_t, void *);
 static int	chkuse(daddr_t, int);
 
 int	main(int, char *[]);
@@ -187,7 +185,7 @@ main(int argc, char *argv[])
 		if (chkuse(number, 1))
 			continue;
 		if (mknod(*argv, S_IFMT|S_IRUSR|S_IWUSR,
-		    dbtofsb(fs, number)) == -1) {
+		    (dev_t)dbtofsb(fs, number)) == -1) {
 			warn("Cannot mknod `%s'", *argv);
 			errs++;
 			continue;
@@ -216,7 +214,7 @@ chkuse(off_t blkno, int cnt)
 		return 1;
 	}
 
-	cg = dtog(fs, fsbn);
+	cg = (int)dtog(fs, fsbn);
 	if (fsbn < cgdmin(fs, cg)) {
 		if (cg == 0 || fsbe > cgsblock(fs, cg)) {
 			warnx("block %lld in superblock area: cannot attach",
@@ -250,7 +248,7 @@ chkuse(off_t blkno, int cnt)
  * read a block from the file system
  */
 static void
-rdfs(off_t bno, int size, void *bf)
+rdfs(off_t bno, size_t size, void *bf)
 {
 	int n;
 
