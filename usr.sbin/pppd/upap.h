@@ -16,7 +16,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: upap.h,v 1.4 1994/05/08 12:16:34 paulus Exp $
+ * $Id: upap.h,v 1.5 1995/07/04 23:48:12 paulus Exp $
  */
 
 /*
@@ -45,9 +45,10 @@ typedef struct upap_state {
     int us_clientstate;		/* Client state */
     int us_serverstate;		/* Server state */
     u_char us_id;		/* Current id */
-    int us_timeouttime;		/* Timeout time in milliseconds */
+    int us_timeouttime;		/* Timeout (seconds) for auth-req retrans. */
     int us_transmits;		/* Number of auth-reqs sent */
     int us_maxtransmits;	/* Maximum number of auth-reqs to send */
+    int us_reqtimeout;		/* Time to wait for auth-req from peer */
 } upap_state;
 
 
@@ -75,17 +76,18 @@ typedef struct upap_state {
 /*
  * Timeouts.
  */
-#define UPAP_DEFTIMEOUT	3	/* Timeout time in seconds */
+#define UPAP_DEFTIMEOUT	3	/* Timeout (seconds) for retransmitting req */
+#define UPAP_DEFREQTIME	30	/* Time to wait for auth-req from peer */
 
 
 extern upap_state upap[];
 
-void upap_init __ARGS((int));
-void upap_authwithpeer __ARGS((int, char *, char *));
-void upap_authpeer __ARGS((int));
-void upap_lowerup __ARGS((int));
-void upap_lowerdown __ARGS((int));
-void upap_input __ARGS((int, u_char *, int));
-void upap_protrej __ARGS((int));
-int  upap_printpkt __ARGS((u_char *, int,
-			   void (*) __ARGS((void *, char *, ...)), void *));
+void upap_init __P((int));
+void upap_authwithpeer __P((int, char *, char *));
+void upap_authpeer __P((int));
+void upap_lowerup __P((int));
+void upap_lowerdown __P((int));
+void upap_input __P((int, u_char *, int));
+void upap_protrej __P((int));
+int  upap_printpkt __P((u_char *, int,
+			void (*) __P((void *, char *, ...)), void *));
