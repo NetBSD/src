@@ -1,4 +1,4 @@
-/*	$NetBSD: arcemu.c,v 1.6.2.4 2004/07/23 07:02:04 tron Exp $	*/
+/*	$NetBSD: arcemu.c,v 1.6.2.5 2004/07/23 07:03:28 tron Exp $	*/
 
 /*
  * Copyright (c) 2004 Steve Rumble 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arcemu.c,v 1.6.2.4 2004/07/23 07:02:04 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcemu.c,v 1.6.2.5 2004/07/23 07:03:28 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -321,9 +321,17 @@ arcemu_ip12_GetMemoryDescriptor(void *mem)
 	u_int32_t memcfg;
 	static struct arcbios_mem am;
 
-	if (mem == NULL)	
+	if (mem == NULL) {
+		/*
+		 * We know page 0 is occupied, emulate the reserved space.
+		 */
+		am.Type = ARCBIOS_MEM_ExceptionBlock;
+		am.BasePage = 0;
+		am.PageCount = 1;
+
 		bank = 0;
-	else if (bank > 3)
+		return (&am);
+	} else if (bank > 3)
 		return (NULL);
 
 	switch (bank) {
@@ -360,6 +368,12 @@ arcemu_ip12_GetMemoryDescriptor(void *mem)
 		am.Type = ARCBIOS_MEM_FreeContiguous; 
 		am.BasePage = PIC_MEMCFG_ADDR(memcfg) / ARCBIOS_PAGESIZE;
 		am.PageCount = PIC_MEMCFG_SIZ(memcfg) / ARCBIOS_PAGESIZE;
+
+		/* page 0 is occupied (if clause before switch), compensate */
+		if (am.BasePage == 0) {
+			am.BasePage = 1;
+			am.PageCount--;	/* won't overflow */
+		}
 	}
 
 	bank++;
