@@ -1,4 +1,4 @@
-/*	$NetBSD: dcm.c,v 1.16 1995/04/10 01:01:42 mycroft Exp $	*/
+/*	$NetBSD: dcm.c,v 1.17 1995/04/19 19:15:49 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -335,14 +335,11 @@ dcmprobe(hd)
 }
 
 /* ARGSUSED */
-#ifdef __STDC__
-dcmopen(dev_t dev, int flag, int mode, struct proc *p)
-#else
+int
 dcmopen(dev, flag, mode, p)
 	dev_t dev;
 	int flag, mode;
 	struct proc *p;
-#endif
 {
 	register struct tty *tp;
 	register int unit, brd;
@@ -406,6 +403,7 @@ dcmopen(dev, flag, mode, p)
 }
  
 /*ARGSUSED*/
+int
 dcmclose(dev, flag, mode, p)
 	dev_t dev;
 	int flag, mode;
@@ -433,6 +431,7 @@ dcmclose(dev, flag, mode, p)
 	return (0);
 }
  
+int
 dcmread(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
@@ -443,6 +442,7 @@ dcmread(dev, uio, flag)
 	return ((*linesw[tp->t_line].l_read)(tp, uio, flag));
 }
  
+int
 dcmwrite(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
@@ -452,7 +452,16 @@ dcmwrite(dev, uio, flag)
 
 	return ((*linesw[tp->t_line].l_write)(tp, uio, flag));
 }
+
+struct tty *
+dcmtty(dev)
+	dev_t dev;
+{
+
+	return (dcm_tty[UNIT(dev)]);
+}
  
+int
 dcmintr(brd)
 	register int brd;
 {
@@ -720,6 +729,7 @@ dcmmint(unit, mcnd, dcm)
 	}
 }
 
+int
 dcmioctl(dev, cmd, data, flag, p)
 	dev_t dev;
 	int cmd;
@@ -800,6 +810,7 @@ dcmioctl(dev, cmd, data, flag, p)
 	return (0);
 }
 
+int
 dcmparam(tp, t)
 	register struct tty *tp;
 	register struct termios *t;
@@ -997,6 +1008,7 @@ out:
 /*
  * Stop output on a line.
  */
+int
 dcmstop(tp, flag)
 	register struct tty *tp;
 	int flag;
@@ -1242,6 +1254,7 @@ dcminit(dev, rate)
 	splx(s);
 }
 
+int
 dcmcngetc(dev)
 	dev_t dev;
 {
