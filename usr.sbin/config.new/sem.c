@@ -40,7 +40,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)sem.c	8.1 (Berkeley) 6/6/93
- *	$Id: sem.c,v 1.5 1994/06/22 11:39:07 pk Exp $
+ *	$Id: sem.c,v 1.6 1994/07/01 09:15:53 pk Exp $
  */
 
 #include <sys/param.h>
@@ -441,15 +441,17 @@ resolve(nvp, name, what, dflt, part)
 	if ((u_int)(part -= 'a') >= 7)
 		panic("resolve");
 	if ((nv = *nvp) == NULL) {
+		dev_t	d = NODEV;
 		/*
 		 * Apply default.  Easiest to do this by number.
 		 * Make sure to retain NODEVness, if this is dflt's disposition.
 		 */
-		if (dflt->nv_int == NODEV)
-			part = 7;
-		maj = major(dflt->nv_int);
-		min = (minor(dflt->nv_int) & ~7) | part;
-		*nvp = nv = newnv(NULL, NULL, NULL, makedev(maj, min));
+		if (dflt->nv_int != NODEV) {
+			maj = major(dflt->nv_int);
+			min = (minor(dflt->nv_int) & ~7) | part;
+			d = makedev(maj, min);
+		}
+		*nvp = nv = newnv(NULL, NULL, NULL, d);
 	}
 	if (nv->nv_int != NODEV) {
 		/*
