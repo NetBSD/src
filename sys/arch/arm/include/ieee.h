@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee.h,v 1.1 2001/01/10 19:02:06 bjh21 Exp $	*/
+/*	$NetBSD: ieee.h,v 1.2 2001/02/21 17:43:50 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,17 +77,29 @@
  *
  * -149 == -127 - 23 + 1.
  */
+
+/*
+ * The ARM has two sets of FP data formats.  The FPA supports 32-bit, 64-bit
+ * and 96-bit IEEE formats, with the words in big-endian order.  VFP supports
+ * 32-bin and 64-bit IEEE formats with the words in the CPU's native byte
+ * order.
+ *
+ * The FPA also has two packed decimal formats, but we ignore them here.
+ */
+
 #define	SNG_EXPBITS	8
 #define	SNG_FRACBITS	23
 
 #define	DBL_EXPBITS	11
 #define	DBL_FRACBITS	52
 
+#ifndef __VFP_FP__
 #define	E80_EXPBITS	15
 #define	E80_FRACBITS	64
 
 #define	EXT_EXPBITS	15
 #define	EXT_FRACBITS	112
+#endif
 
 struct ieee_single {
 	u_int	sng_frac:23;
@@ -95,6 +107,21 @@ struct ieee_single {
 	u_int	sng_sign:1;
 };
 
+#ifdef __VFP_FP__
+struct ieee_double {
+#ifdef __ARMEB__
+	u_int	dbl_sign:1;
+	u_int	dbl_exp:11;
+	u_int	dbl_frach:20;
+	u_int	dbl_fracl;
+#else /* !__ARMEB__ */
+	u_int	dbl_fracl;
+	u_int	dbl_frach:20;
+	u_int	dbl_exp:11;
+	u_int	dbl_sign:1;
+#endif /* !__ARMEB__ */
+};
+#else /* !__VFP_FP__ */
 struct ieee_double {
 	u_int	dbl_frach:20;
 	u_int	dbl_exp:11;
@@ -119,6 +146,7 @@ struct ieee_ext {
 	u_int	ext_fraclm;
 	u_int	ext_fracl;
 };
+#endif /* !__VFP_FP__ */
 
 /*
  * Floats whose exponent is in [1..INFNAN) (of whatever type) are
@@ -131,14 +159,18 @@ struct ieee_ext {
  */
 #define	SNG_EXP_INFNAN	255
 #define	DBL_EXP_INFNAN	2047
+#ifndef __VFP_FP__
 #define	E80_EXP_INFNAN	32767
 #define	EXT_EXP_INFNAN	32767
+#endif /* !__VFP_FP__ */
 
 #if 0
 #define	SNG_QUIETNAN	(1 << 22)
 #define	DBL_QUIETNAN	(1 << 19)
+#ifndef __VFP_FP__
 #define	E80_QUIETNAN	(1 << 15)
 #define	EXT_QUIETNAN	(1 << 15)
+#endif /* !__VFP_FP__ */
 #endif
 
 /*
@@ -146,5 +178,7 @@ struct ieee_ext {
  */
 #define	SNG_EXP_BIAS	127
 #define	DBL_EXP_BIAS	1023
+#ifndef __VFP_FP__
 #define	E80_EXP_BIAS	16383
 #define	EXT_EXP_BIAS	16383
+#endif /* !__VFP_FP__ */
