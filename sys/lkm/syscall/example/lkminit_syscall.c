@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_syscall.c,v 1.3 2001/11/12 23:23:27 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_syscall.c,v 1.4 2003/12/30 06:53:26 atatat Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: lkminit_syscall.c,v 1.3 2001/11/12 23:23:27 lukem Ex
 #include <sys/errno.h>
 
 
-int	example_syscall __P((struct proc *, void *, register_t *));
+int	example_syscall __P((struct lwp *, void *, register_t *));
 int	syscall_example_lkmentry __P((struct lkm_table *, int, int));
 
 static int syscall_load __P((struct lkm_table *, int));
