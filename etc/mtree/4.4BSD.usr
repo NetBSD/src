@@ -1,4 +1,4 @@
-#	$NetBSD: 4.4BSD.usr,v 1.6 1996/08/28 22:16:47 explorer Exp $
+#	$NetBSD: 4.4BSD.usr,v 1.7 1996/10/17 04:38:49 perry Exp $
 #
 #	   user: bostic
 #	machine: vangogh.CS.Berkeley.EDU
@@ -1420,13 +1420,6 @@ sparc           type=dir uname=root gname=wheel mode=0755
 ..
 
 
-# ./share/man/cat4/tahoe
-/set type=file gname=bin uname=bin mode=0444
-tahoe           type=dir uname=root gname=wheel mode=0755
-# ./share/man/cat4/tahoe
-..
-
-
 # ./share/man/cat4/vax
 /set type=file gname=bin uname=bin mode=0444
 vax             type=dir uname=root gname=wheel mode=0755
@@ -1480,13 +1473,6 @@ i386            type=dir uname=root gname=wheel mode=0755
 /set type=file gname=bin uname=bin mode=0444
 sparc           type=dir uname=root gname=wheel mode=0755
 # ./share/man/cat8/sparc
-..
-
-
-# ./share/man/cat8/tahoe
-/set type=file gname=bin uname=bin mode=0444
-tahoe           type=dir uname=root gname=wheel mode=0755
-# ./share/man/cat8/tahoe
 ..
 
 
