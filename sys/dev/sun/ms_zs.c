@@ -1,4 +1,4 @@
-/*	$NetBSD: ms_zs.c,v 1.1 1999/05/14 06:42:02 mrg Exp $	*/
+/*	$NetBSD: ms_zs.c,v 1.2 1999/08/02 01:44:22 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -87,6 +87,8 @@ struct zsops zsops_ms = {
 	ms_zs_softint,	/* process software interrupt */
 };
 
+int	ms_zs_bps = MS_BPS;
+
 static int	ms_zs_match(struct device *, struct cfdata *, void *);
 static void	ms_zs_attach(struct device *, struct device *, void *);
 
@@ -104,6 +106,9 @@ ms_zs_match(parent, cf, aux)
 	void   *aux;
 {
 	struct zsc_attach_args *args = aux;
+
+	if (ms_zs_bps == 0)
+		return 0;
 
 	/* Exact match required for keyboard. */
 	if (cf->cf_loc[ZSCCF_CHANNEL] == args->channel)
@@ -145,7 +150,7 @@ ms_zs_attach(parent, self, aux)
 	/* These are OK as set by zscc: WR3, WR4, WR5 */
 	/* We don't care about status or tx interrupts. */
 	cs->cs_preg[1] = ZSWR1_RIE;
-	(void) zs_set_speed(cs, MS_BPS);
+	(void) zs_set_speed(cs, ms_zs_bps);
 	zs_loadchannelregs(cs);
 	splx(s);
 
