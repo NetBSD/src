@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.20 1998/01/13 02:10:25 thorpej Exp $	*/
+/*	$NetBSD: asc.c,v 1.21 1998/01/18 04:11:41 mark Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -53,6 +53,7 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
+#include <sys/buf.h>
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
@@ -254,8 +255,8 @@ asc_dmago(dev, addr, count, flags)
 	char *addr;
 	int count, flags;
 {
-	printf("asc_dmago(addr=%x, count=%d,flags=%d)\n", (u_int)addr, count, flags);
-	printf("dmago: dc_addr=%x tcnt=%x\n", dev->sc_cur->dc_addr, dev->sc_tcnt);
+	printf("asc_dmago(addr=%p, count=%d,flags=%d)\n", addr, count, flags);
+	printf("dmago: dc_addr=%p tcnt=%lx\n", dev->sc_cur->dc_addr, dev->sc_tcnt);
 #ifdef DDB
 	Debugger();
 #else
