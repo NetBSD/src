@@ -126,8 +126,8 @@ mbsearch(parent, cf, aux)
 {
 	struct confargs ca;
 
-	ca.ca_addr  = cf->cf_loc[0];
-	ca.ca_irq   = cf->cf_loc[1];
+	ca.ca_addr  = cf->cf_addr;
+	ca.ca_irq   = cf->cf_irq;
 	ca.ca_flags = cf->cf_flags;
 
 	while ((*cf->cf_attach->ca_match)(parent, cf, &ca) > 0) {
