@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_ioctl.c,v 1.33 2000/12/01 12:28:35 jdolecek Exp $	*/
+/*	$NetBSD: sunos_ioctl.c,v 1.34 2001/02/02 12:59:43 mrg Exp $	*/
 
 /*
  * Copyright (c) 1993 Markus Wild.
@@ -26,6 +26,9 @@
  * loosely from: Header: sunos_ioctl.c,v 1.7 93/05/28 04:40:43 torek Exp
  */
 
+#include "opt_compat_netbsd32.h"
+#include "opt_execfmt.h"
+
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
@@ -49,6 +52,12 @@
 
 #include <compat/sunos/sunos.h>
 #include <compat/sunos/sunos_syscallargs.h>
+#ifdef COMPAT_NETBSD32
+#include <compat/netbsd32/netbsd32.h>
+#include <compat/netbsd32/netbsd32_syscallargs.h>
+#include <compat/sunos32/sunos32.h>
+#include <compat/sunos32/sunos32_syscallargs.h>
+#endif
 #include <compat/common/compat_util.h>
 
 /*
