@@ -1,4 +1,4 @@
-.\"	$NetBSD: newsyslog.8,v 1.22 2002/03/29 02:45:54 heinz Exp $
+.\"	$NetBSD: newsyslog.8,v 1.23 2002/09/30 10:39:22 grant Exp $
 .\"
 .\" Copyright (c) 1999, 2000 Andrew Doran <ad@NetBSD.org>
 .\" All rights reserved.
@@ -55,8 +55,8 @@
 .Nm
 is a program that should be scheduled to run periodically by
 .Xr cron 8 .
-When it is executed it archives log files if necessary.  If a log file
-is determined to require archiving,
+When it is executed it archives log files if necessary.
+If a log file is determined to require archiving,
 .Nm
 rearranges the files so that
 .Dq Va logfile
@@ -67,7 +67,8 @@ the last period's logs in it,
 .Dq Va logfile Ns Li \&.1
 has the next to last
 period's logs in it and so on, up to a user-specified number of
-archived logs.  Optionally the archived logs can be compressed to save
+archived logs.
+Optionally the archived logs can be compressed to save
 space.
 .Pp
 A log can be archived for three reasons:
@@ -100,8 +101,11 @@ Each line of the file contains information about a particular log file
 that should be handled by
 .Nm "" .
 Each line has six mandatory fields and three optional fields, with
-whitespace separating each field.  Blank lines or lines beginning with
-``#'' are ignored.  The fields of the configuration file are as
+whitespace separating each field.
+Blank lines or lines beginning with
+.Dq #
+are ignored.
+The fields of the configuration file are as
 follows:
 .Pp
 .Bl -tag -width indent
@@ -109,12 +113,14 @@ follows:
 Name of the system log file to be archived.
 .It Ar owner:group
 This optional field specifies the owner and group for the archive file.
-The ":" is essential, even if the
+The
+.Dq \&:
+is essential, even if the
 .Ar owner
 or
 .Ar group
-field is left blank.  The field may be numeric, or a name which is
-present in
+field is left blank.
+The field may be numeric, or a name which is present in
 .Pa /etc/passwd
 or
 .Pa /etc/group .
@@ -128,16 +134,16 @@ besides the log file itself.
 .It Ar size
 When the size of the log file reaches
 .Ar size
-kilobytes, the log file will be trimmed as described above.  If this field
-is replaced by an asterisk
+kilobytes, the log file will be trimmed as described above.
+If this field is replaced by an asterisk
 .Pq Ql \&* ,
 then the size of the log file is not taken into account
 when determining when to trim the log file.
 .It Ar when
 The
 .Ar when
-field can consist of an interval, a specific time, or both.  If
-the
+field can consist of an interval, a specific time, or both.
+If the
 .Ar when
 field is an asterisk
 .Pq Ql \&*
@@ -158,12 +164,15 @@ per day, per week or per month.
 .Pp
 If a time is specified, the log file will only be trimmed if
 .Nm
-is run within one hour of the specified time.  If an
+is run within one hour of the specified time.
+If an
 interval is specified, the log file will be trimmed if that many hours have
-passed since the last rotation.  When both a time and an interval are
+passed since the last rotation.
+When both a time and an interval are
 specified, the log will be trimmed if either condition is met.
 .Pp
-There is no provision for specification of a timezone.  There is
+There is no provision for specification of a timezone.
+There is
 little point in specifying an explicit minutes or seconds component in
 the current implementation, since the only comparison is `within the
 hour'.
@@ -292,7 +301,8 @@ rotate on every 5th day of month at 6:00 hr
 .El
 .Pp
 .It Ar flags
-This field specifies any special processing that is required.  Individual
+This field specifies any special processing that is required.
+Individual
 flags and their meanings:
 .Bl -tag -width indent
 .It Sy -
@@ -312,7 +322,8 @@ Create an empty log file if none currently exists.
 No signal should be sent when the log is trimmed.
 .It Sy p
 The first historical log file (i.e. the historical log file with the suffix
-``.0'') should not be compressed.
+.Dq \.0 )
+should not be compressed.
 .It Sy z
 Archived log files should be compressed with
 .Xr gzip 1
@@ -320,16 +331,18 @@ to save space.
 .El
 .It Ar path_to_pid_file
 This optional field specifies
-the file name to read to find the daemon process id.  If this
-field is present, a signal of type
+the file name to read to find the daemon process id.
+If this field is present, a signal of type
 .Ar sigtype
 is sent the process id contained in this
-file.  This field must start with "/" in order to be recognized
+file.
+This field must start with "/" in order to be recognized
 properly.
 .It Ar sigtype
 This optional field specifies the type of signal to be sent to the daemon
-process.  This may be a numeric or symbolic value.  By default
-a SIGHUP (hang-up) will be sent.
+process.
+This may be a numeric or symbolic value.
+By default a SIGHUP (hang-up) will be sent.
 .El
 .Sh OPTIONS
 The following options can be used with newsyslog:
@@ -349,7 +362,8 @@ implies
 .It Fl r
 Remove the restriction that
 .Nm
-must be running as root.  When running as a regular user,
+must be running as root.
+When running as a regular user,
 .Nm
 will not be able to send a HUP signal to
 .Xr syslogd 8 ,
@@ -358,7 +372,8 @@ logs.
 .It Fl s
 Do not signal daemon processes.
 .It Fl v
-Run in verbose mode.  In this mode each action that is taken will be printed.
+Run in verbose mode.
+In this mode each action that is taken will be printed.
 .It Fl F
 Force trimming of the logs, even if the trim conditions have not been met.
 This option is useful for diagnosing system problems by providing you with
