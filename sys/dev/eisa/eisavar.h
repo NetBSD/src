@@ -1,4 +1,4 @@
-/*	$NetBSD: eisavar.h,v 1.8 1996/04/09 22:46:15 cgd Exp $	*/
+/*	$NetBSD: eisavar.h,v 1.9 1996/04/12 06:34:36 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -53,8 +53,11 @@ struct eisabus_attach_args;
 /*
  * Machine-dependent definitions.
  */
-#if (i386 != 1)
+#if (alpha + i386 != 1)
 ERROR: COMPILING FOR UNSUPPORTED MACHINE, OR MORE THAN ONE.
+#endif
+#if alpha
+#include <alpha/eisa/eisa_machdep.h>
 #endif
 #if i386
 #include <i386/eisa/eisa_machdep.h>
