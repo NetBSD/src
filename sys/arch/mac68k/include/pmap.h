@@ -71,7 +71,7 @@
 
 /* 
  *	from: @(#)pmap.h	7.6 (Berkeley) 5/10/91
- *	$Id: pmap.h,v 1.2 1993/11/29 00:38:28 briggs Exp $
+ *	$Id: pmap.h,v 1.3 1993/12/15 03:22:59 briggs Exp $
  */
 #ifndef	_PMAP_MACHINE_
 #define	_PMAP_MACHINE_
@@ -103,7 +103,7 @@ extern pmap_t		kernel_pmap;
 #define PMAP_ACTIVATE(pmapp, pcbp, iscurproc) \
 	if ((pmapp) != NULL && (pmapp)->pm_stchanged) { \
 		(pcbp)->pcb_ustp = \
-		    macII_btop(pmap_extract(kernel_pmap, (pmapp)->pm_stab)); \
+		    mac68k_btop(pmap_extract(kernel_pmap, (pmapp)->pm_stab)); \
 		if (iscurproc) \
 			loadustp((pcbp)->pcb_ustp); \
 		(pmapp)->pm_stchanged = FALSE; \
