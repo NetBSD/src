@@ -1,4 +1,4 @@
-$NetBSD: miidevs,v 1.17 2001/05/15 21:37:04 thorpej Exp $
+$NetBSD: miidevs,v 1.18 2001/05/15 23:17:48 matt Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -62,6 +62,7 @@ oui INTEL			0x00aa00	Intel
 oui LEVEL1			0x00207b	Level 1
 oui MYSON			0x00c0b4	Myson Technology
 oui NATSEMI			0x080017	National Semiconductor
+oui PMCSIERRA			0x0009c0	PMC-Sierra
 oui QUALSEMI			0x006051	Quality Semiconductor
 oui SEEQ			0x00a07d	Seeq
 oui SIS				0x00e006	Silicon Integrated Systems
@@ -111,6 +112,7 @@ model yyAMD 79c901home		0x0039 Am79C901 HomePHY
 /* Broadcom Corp. PHYs */
 model xxBROADCOM 3C905C		0x0017 Broadcom 3C905C internal PHY
 model xxBROADCOM BCM5201	0x0021 BCM5201 10/100 media interface
+model BROADCOM BCM5221		0x001e BCM5221 10/100 PHY
 model BROADCOM BCM5400		0x0004 BCM5400 1000baseTX PHY
 
 /* Davicom Semiconductor PHYs */
@@ -139,6 +141,9 @@ model xxMYSON MTD972		0x0000 MTD972 10/100 media interface
 model xxNATSEMI DP83840		0x0000 DP83840 10/100 media interface
 model xxNATSEMI DP83843		0x0001 DP83843 10/100 media interface
 model xxNATSEMI DP83861		0x0006 DP83861 1000baseTX PHY
+
+/* Quality Semiconductor PHYs */
+model PMCSIERRA PM8351		0x0000 PM8351 OctalPHY Gigabit interface
 
 /* Quality Semiconductor PHYs */
 model xxQUALSEMI QS6612		0x0000 QS6612 10/100 media interface
