@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ln.c,v 1.13 1999/05/18 23:52:54 thorpej Exp $	*/
+/*	$NetBSD: if_ln.c,v 1.14 2000/07/26 21:50:49 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -205,20 +205,20 @@ struct ln_softc {
 	char	sc_enaddr[6];
 };
 
-static	inline struct mbuf *ln_get __P((struct ln_softc *, caddr_t, int));
-void	ln_start __P((struct ifnet *));
-void	ln_watchdog __P((struct ifnet *));
-int	ln_ioctl __P((struct ifnet *, u_long, caddr_t));
-void	ln_setladrf __P((struct ethercom *, u_int16_t *));
-static	void ln_intr __P((int));
-int	lnmatch __P((struct device *, struct cfdata *, void *));
-void	lnattach __P((struct device *, struct device *, void *));
-static	void ln_init __P((struct ln_softc *));
-static	inline int ln_put __P((struct ln_softc *, caddr_t, struct mbuf *));
-static	inline void ln_rint __P((struct ln_softc *));
-static	inline void ln_tint __P((struct ln_softc *));
-static	inline void ln_read __P((struct ln_softc *, caddr_t, int)); 
-void	ln_reset __P((struct ln_softc *));
+static	inline struct mbuf *ln_get(struct ln_softc *, caddr_t, int);
+void	ln_start(struct ifnet *);
+void	ln_watchdog(struct ifnet *);
+int	ln_ioctl(struct ifnet *, u_long, caddr_t);
+void	ln_setladrf(struct ethercom *, u_int16_t *);
+static	void ln_intr(int);
+int	lnmatch(struct device *, struct cfdata *, void *);
+void	lnattach(struct device *, struct device *, void *);
+static	void ln_init(struct ln_softc *);
+static	inline int ln_put(struct ln_softc *, caddr_t, struct mbuf *);
+static	inline void ln_rint(struct ln_softc *);
+static	inline void ln_tint(struct ln_softc *);
+static	inline void ln_read(struct ln_softc *, caddr_t, int); 
+void	ln_reset(struct ln_softc *);
 
 static	short *lance_csr; /* LANCE CSR virtual address */
 static	int *lance_addr; /* Ethernet address */
