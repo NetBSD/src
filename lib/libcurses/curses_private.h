@@ -1,4 +1,4 @@
-/*	$NetBSD: curses_private.h,v 1.24 2002/07/19 13:22:41 blymn Exp $	*/
+/*	$NetBSD: curses_private.h,v 1.25 2002/08/04 16:43:08 jdc Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 Brett Lymn
@@ -150,7 +150,7 @@ struct __pair {
 /* Maximum colours */
 #define	MAX_COLORS	64
 /* Maximum colour pairs - determined by number of colour bits in attr_t */
-#define	MAX_PAIRS	64	/* PAIR_NUMBER(__COLOR) + 1 */
+#define	MAX_PAIRS	PAIR_NUMBER(__COLOR)
 
 typedef struct keymap keymap_t;
 
@@ -280,7 +280,7 @@ void     __restore_meta_state(void);
 void	 __restore_termios(void);
 void	 __restore_stophandler(void);
 void	 __save_termios(void);
-void	 __set_color(attr_t attr);
+void	 __set_color(WINDOW *win, attr_t attr);
 void	 __set_stophandler(void);
 void	 __set_subwin(WINDOW *, WINDOW *);
 void	 __startwin(SCREEN *);
@@ -292,6 +292,7 @@ int	 __touchline(WINDOW *, int, int, int);
 int	 __touchwin(WINDOW *);
 char	*__tscroll(const char *, int, int);
 void	 __unsetattr(int);
+void	 __unset_color(WINDOW *win);
 int	 __waddch(WINDOW *, __LDATA *);
 int	 __wgetnstr(WINDOW *, char *, int);
 
@@ -309,3 +310,5 @@ extern attr_t		 __nca;
 extern attr_t		 __mask_op, __mask_me, __mask_ue, __mask_se;
 extern struct __winlist	*__winlistp;
 extern WINDOW		*__virtscr;
+extern int		 __using_color;
+extern attr_t		 __default_color;
