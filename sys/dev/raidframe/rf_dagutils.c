@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagutils.c,v 1.26 2004/02/27 03:18:02 oster Exp $	*/
+/*	$NetBSD: rf_dagutils.c,v 1.27 2004/02/29 01:24:34 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagutils.c,v 1.26 2004/02/27 03:18:02 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagutils.c,v 1.27 2004/02/29 01:24:34 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -176,7 +176,9 @@ static struct pool rf_daglist_pool;
 #define RF_MAX_FREE_DAGLIST 128
 #define RF_DAGLIST_INITIAL   32
 
-
+static struct pool rf_funclist_pool;
+#define RF_MAX_FREE_FUNCLIST 128
+#define RF_FUNCLIST_INITIAL   32
 
 static void rf_ShutdownDAGs(void *);
 static void 
@@ -184,6 +186,7 @@ rf_ShutdownDAGs(void *ignored)
 {
 	pool_destroy(&rf_dagh_pool);
 	pool_destroy(&rf_daglist_pool);
+	pool_destroy(&rf_funclist_pool);
 }
 
 int 
@@ -200,6 +203,11 @@ rf_ConfigureDAGs(RF_ShutdownList_t **listp)
 		  "rf_daglist_pl", NULL);
 	pool_sethiwat(&rf_daglist_pool, RF_MAX_FREE_DAGLIST);
 	pool_prime(&rf_daglist_pool, RF_DAGLIST_INITIAL);
+	
+	pool_init(&rf_funclist_pool, sizeof(RF_FuncList_t), 0, 0, 0,
+		  "rf_funcist_pl", NULL);
+	pool_sethiwat(&rf_funclist_pool, RF_MAX_FREE_FUNCLIST);
+	pool_prime(&rf_funclist_pool, RF_FUNCLIST_INITIAL);
 
 	rc = rf_ShutdownCreate(listp, rf_ShutdownDAGs, NULL);
 	if (rc) {
@@ -245,6 +253,22 @@ rf_FreeDAGList(RF_DagList_t *dagList)
 	pool_put(&rf_daglist_pool, dagList);
 }
 
+RF_FuncList_t *
+rf_AllocFuncList()
+{
+	RF_FuncList_t *funcList;
+
+	funcList = pool_get(&rf_funclist_pool, PR_WAITOK);
+	memset(funcList, 0, sizeof(RF_FuncList_t));
+	
+	return (funcList);
+}
+
+void
+rf_FreeFuncList(RF_FuncList_t *funcList)
+{
+	pool_put(&rf_funclist_pool, funcList);
+}
 
 
 
