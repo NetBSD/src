@@ -1,4 +1,4 @@
-.\"	$NetBSD: dirname.3,v 1.8 2002/10/17 02:06:04 thorpej Exp $
+.\"	$NetBSD: dirname.3,v 1.9 2002/10/17 08:41:38 wiz Exp $
 .\"
 .\" Copyright (c) 1997, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -53,21 +53,27 @@ function takes a pointer to a character string that contains a pathname,
 .Ar path ,
 and returns a pointer to a string that is a pathname of the parent directory of
 .Ar path .
-Trailing '/' characters in
+Trailing
+.Sq /
+characters in
 .Ar path
 are not counted as part of the path.
 .Pp
 If
 .Ar path
-does not contain a '/', then
+does not contain a
+.Sq / ,
+then
 .Fn dirname
-returns a pointer to the string ".".
+returns a pointer to the string
+.Dq \&. .
 .Pp
 If
 .Ar path
 is a null pointer or points to an empty string,
 .Fn dirname
-returns a pointer to the string ".".
+returns a pointer to the string
+.Dq \&. .
 .Sh RETURN VALUES
 The
 .Fn dirname
