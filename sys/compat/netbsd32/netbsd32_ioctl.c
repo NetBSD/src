@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.17 2003/01/24 21:55:16 fvdl Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.18 2003/04/12 05:00:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.17 2003/01/24 21:55:16 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.18 2003/04/12 05:00:38 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -545,11 +545,8 @@ printf("netbsd32_ioctl(%d, %x, %x): %s group %c base %d len %d\n",
 		IOCTL_STRUCT_CONV_TO(SIOCSIFMTU, ifreq);
 	case SIOCGIFMTU32:
 		IOCTL_STRUCT_CONV_TO(SIOCGIFMTU, ifreq);
-	case SIOCSIFASYNCMAP32:
-		IOCTL_STRUCT_CONV_TO(SIOCSIFASYNCMAP, ifreq);
-	case SIOCGIFASYNCMAP32:
-		IOCTL_STRUCT_CONV_TO(SIOCGIFASYNCMAP, ifreq);
-/*		IOCTL_STRUCT_CONV_TO(BIOCGETIF, ifreq); READ ONLY */
+	case BIOCGETIF32:
+		IOCTL_STRUCT_CONV_TO(BIOCGETIF, ifreq);
 	case BIOCSETIF32:
 		IOCTL_STRUCT_CONV_TO(BIOCSETIF, ifreq);
 	case SIOCPHASE132:
