@@ -92,6 +92,9 @@ file kern/subr_xxx.c
 file kern/sys_generic.c
 file kern/sys_process.c
 file kern/sys_socket.c
+file kern/sysv_ipc.c		sysvmsg sysvsem sysvshm
+file kern/sysv_msg.c		sysvmsg
+file kern/sysv_sem.c		sysvsem
 file kern/sysv_shm.c		sysvshm
 file kern/tty.c
 file kern/tty_compat.c
