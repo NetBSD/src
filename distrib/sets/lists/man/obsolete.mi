@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.30 2001/06/09 13:59:07 bjh21 Exp $
+# $NetBSD: obsolete.mi,v 1.31 2001/06/27 20:40:13 itojun Exp $
 /usr/share/man/cat1/amq.0
 /usr/share/man/cat1/i386
 /usr/share/man/cat1/i386/cursor.0
@@ -51,6 +51,7 @@
 /usr/share/man/cat5/pcfs.0
 /usr/share/man/cat5/pim6dd.conf.0
 /usr/share/man/cat5/pim6sd.conf.0
+/usr/share/man/cat5/primes.0
 /usr/share/man/cat5/securenet.0
 /usr/share/man/cat5/uuencode.format.0
 /usr/share/man/cat5/ypserv.acl.0
@@ -134,6 +135,7 @@
 /usr/share/man/man5/pcfs.5
 /usr/share/man/man5/pim6dd.conf.5
 /usr/share/man/man5/pim6sd.conf.5
+/usr/share/man/man5/primes.5
 /usr/share/man/man5/securenet.5
 /usr/share/man/man5/uuencode.format.5
 /usr/share/man/man5/ypserv.acl.5
