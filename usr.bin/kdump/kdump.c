@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.17 1997/07/23 05:53:34 mikel Exp $	*/
+/*	$NetBSD: kdump.c,v 1.18 1997/10/19 03:38:29 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.17 1997/07/23 05:53:34 mikel Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.18 1997/10/19 03:38:29 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -142,7 +142,7 @@ main(argc, argv)
 	char *argv[];
 {
 	int ch, ktrlen, size;
-	register void *m;
+	void *m;
 	int trpoints = ALL_POINTS;
 
 	current = &emulations[0];	/* NetBSD */
@@ -319,10 +319,10 @@ ioctldecode(cmd)
 
 void
 ktrsyscall(ktr)
-	register struct ktr_syscall *ktr;
+	struct ktr_syscall *ktr;
 {
-	register argsize = ktr->ktr_argsize;
-	register register_t *ap;
+	int argsize = ktr->ktr_argsize;
+	register_t *ap;
 
 	if (ktr->ktr_code >= current->nsysnames || ktr->ktr_code < 0)
 		(void)printf("[%d]", ktr->ktr_code);
@@ -376,9 +376,9 @@ void
 ktrsysret(ktr)
 	struct ktr_sysret *ktr;
 {
-	register int ret = ktr->ktr_retval;
-	register int error = ktr->ktr_error;
-	register int code = ktr->ktr_code;
+	int ret = ktr->ktr_retval;
+	int error = ktr->ktr_error;
+	int code = ktr->ktr_code;
 
 	if (code >= current->nsysnames || code < 0)
 		(void)printf("[%d] ", code);
@@ -439,11 +439,11 @@ ktrgenio(ktr, len)
 	struct ktr_genio *ktr;
 	int len;
 {
-	register int datalen = len - sizeof (struct ktr_genio);
-	register char *dp = (char *)ktr + sizeof (struct ktr_genio);
-	register char *cp;
-	register int col = 0;
-	register width;
+	int datalen = len - sizeof (struct ktr_genio);
+	char *dp = (char *)ktr + sizeof (struct ktr_genio);
+	char *cp;
+	int col = 0;
+	int width;
 	char visbuf[5];
 	static screenwidth = 0;
 
