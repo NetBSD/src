@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs.h,v 1.58 1999/11/10 15:56:39 matt Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.59 1999/11/10 19:47:39 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.58 1999/11/10 15:55:51 matt Exp 
+ *	NetBSD: usbdevs,v 1.59 1999/11/10 19:46:40 augustss Exp 
  */
 
 /*
@@ -131,6 +131,7 @@
 /* Kodak products */
 #define	USB_PRODUCT_KODAK_DC260	0x0110		/* Digital Science DC260 */
 #define	USB_PRODUCT_KODAK_DC240	0x0120		/* Digital Science DC240 */
+#define	USB_PRODUCT_KODAK_DC280	0x0130		/* Digital Science DC280 */
 
 /* CATC products */
 #define	USB_PRODUCT_CATC_ANDROMEDA	0x1237		/* Andromeda hub */
@@ -279,6 +280,7 @@
 #define	USB_PRODUCT_LOGITECH_M2452	0x0203		/* M2452 keyboard */
 #define	USB_PRODUCT_LOGITECH_M4848	0x0301		/* M4848 mouse */
 #define	USB_PRODUCT_LOGITECH_QUICKCAM	0x0801		/* QuickCam */
+#define	USB_PRODUCT_LOGITECH_QUICKCAMPRO	0x0810		/* QuickCam Pro */
 #define	USB_PRODUCT_LOGITECH_N48	0xc001		/* N48 mouse */
 #define	USB_PRODUCT_LOGITECH_MBA47	0xc002		/* M-BA47 mouse */
 
