@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_SMALL,v 1.109 2005/01/31 16:54:34 hannken Exp $
+#	$NetBSD: INSTALL_SMALL,v 1.110 2005/02/11 08:25:54 dsl Exp $
 #
 #	INSTALL_SMALL - Small Installation kernel.
 #
@@ -124,6 +124,7 @@ file-system 	KERNFS		# /kern
 				# immutable) behave as system flags.
 options 	NFS_V2_ONLY	# Exclude NFS3 and NQNFS code to save space
 options 	VNODE_OP_NOINLINE	# Not inlining vnode op calls saves mem
+#options 	FFS_SNAPSHOT	# ffs snapshots
 
 # Networking options
 #options 	GATEWAY		# packet forwarding

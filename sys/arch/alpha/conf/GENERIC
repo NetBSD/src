@@ -22,7 +22,7 @@ include		"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.259 $"
+#ident 		"GENERIC-$Revision: 1.260 $"
 
 maxusers 32
 
@@ -84,6 +84,7 @@ options 	QUOTA		# UFS quotas
 options 	SOFTDEP		# FFS soft updates support.
 #options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	NFSSERVER	# Sun NFS-compatible file system server
+options 	FFS_SNAPSHOT	# ffs snapshots
 
 # Networking options
 #options 	GATEWAY		# packet forwarding
