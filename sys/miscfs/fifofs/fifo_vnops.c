@@ -1,4 +1,4 @@
-/*	$NetBSD: fifo_vnops.c,v 1.37 2002/11/26 19:01:55 christos Exp $	*/
+/*	$NetBSD: fifo_vnops.c,v 1.38 2003/03/02 18:54:50 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993, 1995
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.37 2002/11/26 19:01:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.38 2003/03/02 18:54:50 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -158,7 +158,6 @@ fifo_open(void *v)
 	struct proc	*p;
 	struct socket	*rso, *wso;
 	int		error;
-	static const char openstr[] = "fifo";
 
 	vp = ap->a_vp;
 	p = ap->a_p;
@@ -212,7 +211,7 @@ fifo_open(void *v)
 			while (fip->fi_writers == 0) {
 				VOP_UNLOCK(vp, 0);
 				error = tsleep((caddr_t)&fip->fi_readers,
-				    PCATCH | PSOCK, openstr, 0);
+				    PCATCH | PSOCK, "fifor", 0);
 				vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 				if (error)
 					goto bad;
@@ -229,7 +228,7 @@ fifo_open(void *v)
 			while (fip->fi_readers == 0) {
 				VOP_UNLOCK(vp, 0);
 				error = tsleep((caddr_t)&fip->fi_writers,
-				    PCATCH | PSOCK, openstr, 0);
+				    PCATCH | PSOCK, "fifow", 0);
 				vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 				if (error)
 					goto bad;
