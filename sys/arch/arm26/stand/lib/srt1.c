@@ -1,4 +1,4 @@
-/*	$NetBSD: srt1.c,v 1.2 2001/07/27 00:21:18 bjh21 Exp $	*/
+/*	$NetBSD: srt1.c,v 1.3 2001/07/27 20:48:20 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris.
@@ -65,6 +65,9 @@ __start(void)
 
 	/* Clear BSS */
 	memset(edata, 0, end - edata);
+
+	/* Define heap. */
+	setheap(end, (void *)(HIMEM - 0x1000));
 
 	args = os_get_env(NULL, NULL);
 
