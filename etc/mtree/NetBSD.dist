@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.146 2001/03/31 09:35:34 itojun Exp $
+#	$NetBSD: NetBSD.dist,v 1.147 2001/03/31 13:50:36 itojun Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -758,6 +758,11 @@ usd
 # ./usr/share/doc/usd/11.edit
 ..
 
+# ./usr/share/doc/usd/12.ex
+12.ex
+# ./usr/share/doc/usd/12.ex
+..
+
 # ./usr/share/doc/usd/12.vi
 12.vi
 # ./usr/share/doc/usd/12.vi
@@ -766,11 +771,6 @@ usd
 # ./usr/share/doc/usd/13.viref
 13.viref
 # ./usr/share/doc/usd/13.viref
-..
-
-# ./usr/share/doc/usd/13.ex
-13.ex
-# ./usr/share/doc/usd/13.ex
 ..
 
 # ./usr/share/doc/usd/14.jove
