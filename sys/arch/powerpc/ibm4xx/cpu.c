@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.6 2002/08/23 13:43:18 simonb Exp $	*/
+/*	$NetBSD: cpu.c,v 1.7 2002/08/23 15:01:08 scw Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,6 @@
 #include <sys/device.h>
 #include <sys/properties.h>
 
-#include <machine/dcr.h>
 #include <machine/cpu.h>
 #include <powerpc/ibm4xx/dev/plbvar.h>
 
@@ -63,15 +62,6 @@ static struct cputab models[] = {
 
 static int	cpumatch(struct device *, struct cfdata *, void *);
 static void	cpuattach(struct device *, struct device *, void *);
-
-/*
- * Arguably the ECC stuff belongs somewhere else....
- */
-int intr_ecc(void *);
-
-u_quad_t		intr_ecc_tb;
-u_quad_t		intr_ecc_iv;	 /* Interval */
-u_int32_t		intr_ecc_cnt;
 
 struct cfattach cpu_ca = {
 	sizeof(struct device), cpumatch, cpuattach
@@ -102,7 +92,6 @@ cpuattach(struct device *parent, struct device *self, void *aux)
 	int own, pcf, cas, pcl, aid;
 	struct cputab *cp = models;
 	unsigned int processor_freq;
-	int eccirq;
 
 	if (board_info_get("processor-frequency",
 		&processor_freq, sizeof(processor_freq)) == -1)
@@ -150,28 +139,6 @@ cpuattach(struct device *parent, struct device *self, void *aux)
 	printf("PVR: owner %x core family %x cache %x version %x asic %x\n",
 		own, pcf, cas, pcl, aid);
 #endif
-
-	/*
-	 * If there is no ECC irq property, assume the hardware
-	 * doesn't support it.
-	 *
-	 * XXX: ECC handling needs to be pulled out of here so it
-	 * doesn't add unnecessary code to ports which don't need it.
-	 */
-	if (board_info_get("4xx-ecc-irq", &eccirq, sizeof(eccirq)) == -1)
-		return;
-
-	/* Initialize ECC error-logging handler.  This is always enabled,
-	 * but it will never be called on systems that do not have ECC
-	 * enabled by POST code in the bootloader.
-	 */
-
-	printf("Enabling ecc handler at irq %d\n", eccirq);
-	intr_ecc_tb = 0;
-	intr_ecc_iv = processor_freq; /* Set interval */
-	intr_ecc_cnt = 0;
-
-	intr_establish(eccirq, IST_LEVEL, IPL_SERIAL, intr_ecc, NULL);
 }
 
 /*
@@ -314,149 +281,3 @@ icache_flush(vaddr_t va, vsize_t len)
 			asm volatile("icbi %0,%1" : : "r" (va), "r" (i));
 	asm volatile("sync;isync" : : );
 }
-
-/*
- * ECC fault handler.
- */
-int
-intr_ecc(void * arg)
-{
-	u_int32_t		esr, ear;
-	int			ce, ue;
-	u_quad_t		tb;
-	u_long			tmp, msr, dat;
-	unsigned int		memsiz;
-
-	if (board_info_get("mem-size", &memsiz, sizeof(memsiz)) == -1)
-		panic("no mem-size");
-
-	/* This code needs to be improved to handle double-bit errors */
-	/* in some intelligent fashion. */
-
-	mtdcr(DCR_SDRAM0_CFGADDR, DCR_SDRAM0_ECCESR);
-	esr = mfdcr(DCR_SDRAM0_CFGDATA);
-
-	mtdcr(DCR_SDRAM0_CFGADDR, DCR_SDRAM0_BEAR);
-	ear = mfdcr(DCR_SDRAM0_CFGDATA);
-
-	/* Always clear the error to stop the intr ASAP. */
-
-	mtdcr(DCR_SDRAM0_CFGADDR, DCR_SDRAM0_ECCESR);
-	mtdcr(DCR_SDRAM0_CFGDATA, 0xffffffff);
-
-	if (esr == 0x00) {
-		/* No current error.  Could happen due to intr. nesting */
-		return(1);
-	};
-
-	/* Only report errors every once per second max. Do this using the TB, */
-	/* because the system time (via microtime) may be adjusted when the date is set */
-	/* and can't reliably be used to measure intervals. */
-
-	asm ("1: mftbu %0; mftb %0+1; mftbu %1; cmpw %0,%1; bne 1b"
-		: "=r"(tb), "=r"(tmp));
-	intr_ecc_cnt++;
-
-	if ((tb - intr_ecc_tb) < intr_ecc_iv) {
-		return(1);
-	};
-
-	ce = (esr & SDRAM0_ECCESR_CE) != 0x00;
-	ue = (esr & SDRAM0_ECCESR_UE) != 0x00;
-
-	printf("ECC: Error CNT=%d ESR=%x EAR=%x %s BKNE=%d%d%d%d "
-		"BLCE=%d%d%d%d CBE=%d%d.\n",
-		intr_ecc_cnt, esr, ear,
-		(ue) ? "Uncorrectable" : "Correctable",
-		((esr & SDRAM0_ECCESR_BKEN(0)) != 0x00),
-		((esr & SDRAM0_ECCESR_BKEN(1)) != 0x00),
-		((esr & SDRAM0_ECCESR_BKEN(2)) != 0x00),
-		((esr & SDRAM0_ECCESR_BKEN(3)) != 0x00),
-		((esr & SDRAM0_ECCESR_BLCEN(0)) != 0x00),
-		((esr & SDRAM0_ECCESR_BLCEN(1)) != 0x00),
-		((esr & SDRAM0_ECCESR_BLCEN(2)) != 0x00),
-		((esr & SDRAM0_ECCESR_BLCEN(3)) != 0x00),
-		((esr & SDRAM0_ECCESR_CBEN(0)) != 0x00),
-		((esr & SDRAM0_ECCESR_CBEN(1)) != 0x00));
-
-	/* Should check for uncorrectable errors and panic... */
-
-	if (intr_ecc_cnt > 1000) {
-		printf("ECC: Too many errors, recycling entire "
-			"SDRAM (size = %d).\n", memsiz);
-
-		/* Can this code be changed to run without disabling data MMU and disabling intrs? */
-		/* Does kernel always map all of physical RAM VA=PA? If so, just loop over lowmem. */
-
-		asm volatile(
-			"mfmsr 	%0;"
-			"li	%1, 0x00;"
-			"ori	%1, %1, 0x8010;"
-			"andc	%1, %0, %1;"
-			"mtmsr	%1;"
-			"sync;isync;"
-			"li	%1, 0x00;"
-			"1:"
-			"dcbt	0, %1;"
-			"sync;isync;"
-			"lwz	%2, 0(%1);"
-			"stw	%2, 0(%1);"
-			"sync;isync;"
-			"dcbf	0, %1;"
-			"sync;isync;"
-			"addi	%1, %1, 0x20;"
-			"addic.	%3, %3, -0x20;"
-			"bge 	1b;"
-			"mtmsr %0;"
-			"sync;isync;"
-		: "=&r" (msr), "=&r" (tmp), "=&r" (dat)
-		: "r" (memsiz) : "0" );
-
-		mtdcr(DCR_SDRAM0_CFGADDR, DCR_SDRAM0_ECCESR);
-		esr = mfdcr(DCR_SDRAM0_CFGDATA);
-
-		mtdcr(DCR_SDRAM0_CFGADDR, DCR_SDRAM0_ECCESR);
-		mtdcr(DCR_SDRAM0_CFGDATA, 0xffffffff);
-
-		/* Correctable errors here are OK, mem should be clean now. */
-		/* Should check for uncorrectable errors and panic... */
-		printf("ECC: Recycling complete, ESR=%x. "
-			"Checking for persistent errors.\n", esr);
-
-		asm volatile(
-			"mfmsr 	%0;"
-			"li	%1, 0x00;"
-			"ori	%1, %1, 0x8010;"
-			"andc	%1, %0, %1;"
-			"mtmsr	%1;"
-			"sync;isync;"
-			"li	%1, 0x00;"
-			"1:"
-			"dcbt	0, %1;"
-			"sync;isync;"
-			"lwz	%2, 0(%1);"
-			"stw	%2, 0(%1);"
-			"sync;isync;"
-			"dcbf	0, %1;"
-			"sync;isync;"
-			"addi	%1, %1, 0x20;"
-			"addic.	%3, %3, -0x20;"
-			"bge 	1b;"
-			"mtmsr %0;"
-			"sync;isync;"
-		: "=&r" (msr), "=&r" (tmp), "=&r" (dat)
-		: "r" (memsiz) : "0" );
-
-		mtdcr(DCR_SDRAM0_CFGADDR, DCR_SDRAM0_ECCESR);
-		esr = mfdcr(DCR_SDRAM0_CFGDATA);
-
-		/* If esr is non zero here, we're screwed.  Should check this and panic. */
-		printf("ECC: Persistent error check complete, "
-			"final ESR=%x.\n", esr);
-	};
-
-	intr_ecc_tb = tb;
-	intr_ecc_cnt = 0;
-
-	return(1);
-};
