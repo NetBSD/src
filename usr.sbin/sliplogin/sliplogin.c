@@ -1,4 +1,4 @@
-/*	$NetBSD: sliplogin.c,v 1.16 1998/07/04 21:04:02 mrg Exp $	*/
+/*	$NetBSD: sliplogin.c,v 1.17 2001/01/11 01:45:07 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)sliplogin.c	8.2 (Berkeley) 2/1/94";
 #else
-__RCSID("$NetBSD: sliplogin.c,v 1.16 1998/07/04 21:04:02 mrg Exp $");
+__RCSID("$NetBSD: sliplogin.c,v 1.17 2001/01/11 01:45:07 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -229,6 +229,8 @@ main(argc, argv)
 		errx(1, "login %s too long", argv[0]);
 	if ((name = strrchr(argv[0], '/')) == NULL)
 		name = argv[0];
+	else
+		name++;
 	s = getdtablesize();
 	for (fd = 3 ; fd < s ; fd++)
 		(void)close(fd);
