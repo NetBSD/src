@@ -1,4 +1,38 @@
-.\"	$NetBSD: ftpd.8,v 1.41 1999/08/02 00:44:59 hubertf Exp $
+.\"	$NetBSD: ftpd.8,v 1.42 1999/12/12 14:05:54 lukem Exp $
+.\"
+.\" Copyright (c) 1997-1999 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Luke Mewburn.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"        This product includes software developed by the NetBSD
+.\"        Foundation, Inc. and its contributors.
+.\" 4. Neither the name of The NetBSD Foundation nor the names of its
+.\"    contributors may be used to endorse or promote products derived
+.\"    from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\" Copyright (c) 1985, 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +67,7 @@
 .\"
 .\"     @(#)ftpd.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd May 18, 1999
+.Dd December 13, 1999
 .Dt FTPD 8
 .Os
 .Sh NAME
@@ -108,11 +142,15 @@ If the file
 exists,
 .Nm
 prints it after a successful login.
+(This may be changed with the
+.Sx /etc/ftpd.conf
+directive
+.Sy upload . )
 .Pp
 The ftp server currently supports the following ftp requests.
 The case of the requests is ignored.
 .Bl -column "Request" -offset indent
-.It Request Ta "Description"
+.It Sy Request Ta Sy Description
 .It ABOR Ta "abort previous command"
 .It ACCT Ta "specify account (ignored)"
 .It ALLO Ta "allocate storage (vacuously)"
@@ -168,6 +206,8 @@ specific commands are supported by the SITE request.
 .It CHMOD Ta "change mode of a file, e.g. ``SITE CHMOD 755 filename''"
 .It HELP Ta "give help information."
 .It IDLE Ta "set idle-timer, e.g. ``SITE IDLE 60''"
+.It RATEGET Ta "set maximum get rate throttle, e.g. ``SITE RATEGET 5k''"
+.It RATEPUT Ta "set maximum put rate throttle, e.g. ``SITE RATEPUT 5k''"
 .It UMASK Ta "change umask, e.g. ``SITE UMASK 002''"
 .El
 .Pp
@@ -272,27 +312,63 @@ The file
 .Pa /etc/ftpusers
 is used to determine which users may use ftp.
 If the file does not exist, all users are denied access.
-If it does exist, each line is a comment starting with
+.Pp
+A
+.Dq \e
+is the escape character; it can be used to escape the meaning of the
+comment character, or if it is the last character on a line, extends
+a configuration directive across multiple lines.
+A
 .Dq #
-or a glob pattern that uses the same syntax as /bin/sh,
-optionally followed by whitespace and
+is the comment character, and all characters from it to the end of
+line are ignored (unless it is escaped with the escape character).
+.Pp
+The syntax of each line is:
+.Dl  userglob[@host] [directive [class]]
+.Pp
+.Sy userglob
+is matched against the username, using
+.Xr fnmatch 3
+glob matching.
+.Pp
+.Sy host
+may be either a CIDR address (refer to
+.Xr inet_net_pton 3 )
+to match against the remote address,
+or a glob to match against the remote hostname.
+.Pp
+If
+.Sy directive
+is given, it may be one of
 .Dq allow ,
 .Dq yes ,
 .Dq deny ,
 or
 .Dq no .
-Each glob pattern is compared in turn against the username
-until a match is found.
-If the word following the matched glob pattern is
-.Dq allow
+If
+.Sy directive
+is not given, the user is denied access.
+.Pp
+.Sy class
+defines the class to use in
+.Sx /etc/ftpd.conf .
+If
+.Sy class
+is not given, it defaults to one of the following:
+.Bl -tag -width "chroot" -offset indent
+.It Sy chroot
+If there is a match in
+.Sx /etc/ftpchroot
+for the user.
+.It Sy guest
+If the username is
+.Dq anonymous
 or
-.Dq yes
-the user is granted access; if the word is
-.Dq deny
-or
-.Dq no ,
-or if the word is missing,
-the user is denied access.
+.Sq ftp .
+.It Sy real
+If neither of the above is true.
+.El
+.Pp
 No further comparisons are attempted after the first successful match.
 If no match is found, the user is granted access.
 This syntax is backward-compatable with the old syntax.
@@ -313,33 +389,32 @@ in order to allow guest logins.
 The file
 .Pa /etc/ftpchroot
 is used to determine which users will have their session's root changed
-to the user's home directory.
+to the user's home directory (using
+.Xr chroot 2 ) .
 If the file does not exist, the root change is not performed.
-If it does exist, each line is a comment starting with
-.Dq #
-or a glob pattern that uses the same syntax as /bin/sh,
-optionally followed by whitespace and
-.Dq yes
-or
-.Dq no .
-Each glob pattern is compared in turn against the username
-until a match is found.  If the word following the matched glob
-pattern is
-.Dq yes
-or there is no following word, the root is changed.
-If the word is 
-.Dq no ,
-or if no match is found, the root is not changed.
+.Pp
+The syntax is similar to
+.Sx /etc/ftpusers ,
+except that the
+.Sy class
+argument is ignored. 
+If there's a positive match, the root is changed.
 No further comparisons are attempted after the first successful match.
 This syntax is backward-compatable with the old syntax.
 .Ss /etc/ftpd.conf
 The file
 .Pa /etc/ftpd.conf
 is used to configure various options.
-Each line starting with a
+.Pp
+A
+.Dq \e
+is the escape character; it can be used to escape the meaning of the
+comment character, or if it is the last character on a line, extends
+a configuration directive across multiple lines.
+A
 .Dq #
-is a comment (and ignored), and all other non-blank lines are treated
-as configuration directives.
+is the comment character, and all characters from it to the end of
+line are ignored (unless it is escaped with the escape character).
 .Pp
 Each configuration line may be one of:
 .Bl -tag -width 4n
@@ -361,6 +436,32 @@ If class is
 or
 .Sy off
 is given, disable this feature, otherwise enable it.
+.It Sy classtype Ar class Ar type
+Set the class type of
+.Ar class
+to
+.Ar type .
+.Ar type
+may be one of:
+.Bl -tag -width "chroot" -offset indent
+.It Sy GUEST
+Guests (as per the
+.Dq anonymous
+and
+.Dq ftp
+logins).
+A
+.Xr chroot 2
+is performed after login.
+.It Sy CHROOT
+Chroot-ed users (as per
+.Pa /etc/ftpchroot ) .
+A
+.Xr chroot 2
+is performed after login.
+.It Sy REAL
+Normal users.
+.El
 .It Xo Sy conversion Ar class
 .Ar suffix Op Ar "type disable command"
 .Xc
@@ -409,7 +510,7 @@ order in the file (i.e. a LIFO).
 .It Sy display Ar class Op Ar file
 If
 .Ar file
-isn't given or
+is not given or
 .Ar class
 is
 .Dq none ,
@@ -420,25 +521,36 @@ exists, and if so, display its contents to the user.
 .It Sy maxtimeout Ar class Ar time
 Set the maximum timeout period that a client may request,
 defaulting to two hours.
-This cannot be lesser than 30 seconds, or the value for
+This cannot be less than 30 seconds, or the value for
 .Sy timeout .
 Ignored if class is
 .Dq none
 or
 .Ar time
-isn't specified.
+is not specified.
 .It Sy modify Ar class Op Sy off
 If class is
 .Dq none
 or
 .Sy off
 is given, disable the following commands:
-CHMOD, DELE, MKD, RNFR, RMD, and UMASK.
+CHMOD, DELE, MKD, RMD, RNFR, and UMASK.
 Otherwise, enable them.
+.It Sy motd Ar class Op Ar file
+If
+.Ar file
+is not given or
+.Ar class
+is
+.Dq none ,
+disable this.
+Otherwise, use
+.Ar file
+as the message of the day file to display after login.
 .It Sy notify Ar class Op Ar fileglob
 If
 .Ar fileglob
-isn't given or
+is not given or
 .Ar class
 is
 .Dq none ,
@@ -453,16 +565,41 @@ or
 .Sy off
 is given, disallow passive (PASV/LPSV/EPSV) connections.
 Otherwise, enable them.
+.It Sy rateget Ar rate
+Set the maximum get (RETR) transfer rate throttle to
+.Ar rate .
+If
+.Ar rate
+is 0, the throttle is disabled.
+.Pp
+An optional suffix may be provided, which changes the intrepretation of 
+.Ar rate
+as follows:
+.Bl -tag -width 3n -offset indent -compact
+.It b
+Causes no modification. (Optional)
+.It k
+Kilo; multiply the argument by 1024
+.It m
+Mega; multiply the argument by 1048576
+.It g
+Giga; multiply the argument by 1073741824
+.El
+.It Sy rateput Ar class
+Set the maximum put (STOR) transfer rate throttle to
+.Ar rate ,
+which is parsed as per
+.Sy rateget Ar rate .
 .It Sy timeout Ar class Ar time
 Set the inactivity timeout period.
 (the default is fifteen minutes).
-This cannot be lesser than 30 seconds, or greater than the value for
+This cannot be less than 30 seconds, or greater than the value for
 .Sy maxtimeout .
 Ignored if class is
 .Dq none
 or
 .Ar time
-isn't specified.
+is not specified.
 .It Sy umask Ar class Ar umaskval
 Set the umask to
 .Ar umaskval .
@@ -470,23 +607,23 @@ Ignored if class is
 .Dq none
 or
 .Ar umaskval
-isn't specified.
+is not specified.
+.It Sy upload Ar class Op Sy off
+If class is
+.Dq none
+or
+.Sy off
+is given, disable the following commands:
+APPE, STOR, and STOU,
+as well as the modify commands:
+CHMOD, DELE, MKD, RMD, RNFR, and UMASK.
+Otherwise, enable them.
 .El
 .Pp
 In any configuration line,
 .Ar class
-is one of:
+may be a user specified word, or one of:
 .Bl -tag -width "chroot" -compact -offset indent
-.It Sy real
-Normal user logins.
-.It Sy chroot
-Users that have been
-.Xr chroot 2 ed.
-.It Sy guest
-.Dq anonymous
-and
-.Dq ftp
-users.
 .It Sy all
 Matches any class.
 .It Sy none
@@ -499,11 +636,14 @@ checkportcmd  none
 display       none
 maxtimeout    all    7200   # 2 hours
 modify        all
-modify        guest  off
+motd          all    motd
 notify        none
 passive       all
 timeout       all    900    # 15 minutes
 umask         all    027
+upload        all
+classtype     guest  GUEST
+modify        guest  off
 umask         guest  0707
 .Ed
 .Pp
@@ -517,6 +657,35 @@ The
 STAT
 command will return the class settings for the current user as defined by
 .Pa /etc/ftpd.conf .
+.Ss Display file escape sequences
+When
+.Nm
+displays various files back to the client (such as
+.Pa /etc/ftpwelcome
+and
+.Pa /etc/motd ) ,
+various escape strings are replaced with information pertinent
+to the current connection.
+.Pp
+The supported escape strings are:
+.Bl -tag -width "Escape" -offset indent -compact
+.It Sy "Escape"
+.Sy Description
+.It "\&%C"
+Current working directory.
+.It "\&%L"
+Local hostname.
+.It "\&%R"
+Remote hostname.
+.It "\&%T"
+Current time.
+.It "\&%U"
+Username.
+.It "\&%\&%"
+A
+.Dq \&%
+character.
+.El
 .Ss Setting up a restricted ftp subtree
 In order that system security is not breached, it is recommended
 that the
@@ -597,15 +766,20 @@ The owner should be the user
 The permissions should be 300.
 .Pp
 If you don't enable conversion commands, or don't want anonymous users
-uploading files (see
+uploading files here (see
 .Pa ~ftp/incoming
 above), then don't create this directory.
 However, error messages from conversion or
 .Sq LIST
 commands won't be returned to the user.
 (This is the traditional behaviour.)
+Note that the
+.Sx /etc/ftpd.conf
+directive
+.Sy upload
+can be used to prevent users uploading here.
 .El
-
+.Pp
 To set up "ftp-only" accounts that provide only ftp, but no valid shell
 login, you can copy/link
 .Pa /sbin/nologin
@@ -636,6 +810,7 @@ If it exists, displayed and access is refused.
 .Sh SEE ALSO
 .Xr ftp 1 ,
 .Xr skey 1 ,
+.Xr fnmatch 3 ,
 .Xr getusershell 3 ,
 .Xr syslogd 8
 .Sh STANDARDS
@@ -659,7 +834,7 @@ The
 .Pa /etc/ftpd.conf
 functionality was implemented in
 .Nx 1.3
-by Luke Mewburn, based on work by Simon Burge.
+and later releases by Luke Mewburn, based on work by Simon Burge.
 .Sh BUGS
 The server must run as the super-user to create sockets with
 privileged port numbers.
