@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.44.4.4 2002/11/18 02:19:33 he Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.44.4.5 2002/12/07 19:40:24 he Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -1757,6 +1757,7 @@ void
 xscale_setup(args)
 	char *args;
 {
+	uint32_t auxctl;
 	int cpuctrl, cpuctrlmask;
 
 	/*
@@ -1768,7 +1769,8 @@ xscale_setup(args)
 	cpuctrl = CPU_CONTROL_MMU_ENABLE | CPU_CONTROL_32BP_ENABLE
 		 | CPU_CONTROL_32BD_ENABLE | CPU_CONTROL_SYST_ENABLE
 		 | CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE
-		 | CPU_CONTROL_WBUF_ENABLE | CPU_CONTROL_LABT_ENABLE;
+		 | CPU_CONTROL_WBUF_ENABLE | CPU_CONTROL_LABT_ENABLE
+		 | CPU_CONTROL_BPRD_ENABLE;
 	cpuctrlmask = CPU_CONTROL_MMU_ENABLE | CPU_CONTROL_32BP_ENABLE
 		 | CPU_CONTROL_32BD_ENABLE | CPU_CONTROL_SYST_ENABLE
 		 | CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE
@@ -1797,5 +1799,12 @@ xscale_setup(args)
 	curcpu()->ci_ctrl = cpuctrl;
 /*	cpu_control(cpuctrlmask, cpuctrl);*/
 	cpu_control(0xffffffff, cpuctrl);
+
+	/* Make sure write coalescing is turned on */
+	__asm __volatile("mrc p15, 0, %0, c1, c0, 1"
+		: "=r" (auxctl));
+	auxctl &= ~XSCALE_AUXCTL_K;
+	__asm __volatile("mcr p15, 0, %0, c1, c0, 1"
+		: : "r" (auxctl));
 }
 #endif	/* CPU_XSCALE_80200 || CPU_XSCALE_80321 || CPU_XSCALE_PXA2X0 */
