@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.6 2004/12/01 08:25:54 martin Exp $	*/
+/*	$NetBSD: fil.c,v 1.7 2004/12/06 02:59:23 christos Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -135,7 +135,7 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.6 2004/12/01 08:25:54 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.7 2004/12/06 02:59:23 christos Exp $");
 #else
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: fil.c,v 2.243.2.25 2004/06/30 11:26:08 darrenr Exp";
@@ -2765,7 +2765,11 @@ void *l4hdr;
 	m->m_off += hlen;
 #   endif
 	m->m_len -= hlen;
+#ifdef INET
 	sum2 = in_cksum(m, slen);
+#else
+	sum2 = 0;
+#endif
 	m->m_len += hlen;
 #   if BSD >= 199103
 	m->m_data -= hlen;

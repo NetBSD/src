@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upl.c,v 1.20 2004/04/23 17:25:25 itojun Exp $	*/
+/*	$NetBSD: if_upl.c,v 1.21 2004/12/06 02:59:23 christos Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.20 2004/04/23 17:25:25 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.21 2004/12/06 02:59:23 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -77,8 +77,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.20 2004/04/23 17:25:25 itojun Exp $");
 #include <netinet/in.h>
 #include <netinet/in_var.h>
 #include <netinet/if_inarp.h>
-#else
-#error upl without INET?
 #endif
 
 #ifdef NS
@@ -1072,6 +1070,7 @@ upl_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 Static void
 upl_input(struct ifnet *ifp, struct mbuf *m)
 {
+#ifdef INET
 	struct ifqueue *inq;
 	int s;
 
@@ -1093,6 +1092,7 @@ upl_input(struct ifnet *ifp, struct mbuf *m)
 	}
 	IF_ENQUEUE(inq, m);
 	splx(s);
+#endif
 	ifp->if_ipackets++;
 	ifp->if_ibytes += m->m_len;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fddisubr.c,v 1.52 2004/03/22 18:02:12 matt Exp $	*/
+/*	$NetBSD: if_fddisubr.c,v 1.53 2004/12/06 02:59:23 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.52 2004/03/22 18:02:12 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.53 2004/12/06 02:59:23 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -601,10 +601,12 @@ fddi_input(ifp, m)
 	struct ifnet *ifp;
 	struct mbuf *m;
 {
+#if defined(INET) || defined(INET6) || defined(NS) || defined(DECNET) || defined(IPX) || defined(NETATALK)
 	struct ifqueue *inq;
+	int s;
+#endif
 	struct llc *l;
 	struct fddi_header *fh;
-	int s;
 
 	MCLAIM(m, &((struct ethercom *)ifp)->ec_rx_mowner);
 	if ((ifp->if_flags & IFF_UP) == 0) {
@@ -817,11 +819,14 @@ fddi_input(ifp, m)
 		
 	default:
 		ifp->if_noproto++;
+#if defined(INET) || defined(INET6) || defined(NS) || defined(DECNET) || defined(IPX) || defined(NETATALK)
 	dropanyway:
+#endif
 		m_freem(m);
 		return;
 	}
 
+#if defined(INET) || defined(INET6) || defined(NS) || defined(DECNET) || defined(IPX) || defined(NETATALK)
 	s = splnet();
 	if (IF_QFULL(inq)) {
 		IF_DROP(inq);
@@ -829,6 +834,7 @@ fddi_input(ifp, m)
 	} else
 		IF_ENQUEUE(inq, m);
 	splx(s);
+#endif
 }
 
 /*
