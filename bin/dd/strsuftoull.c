@@ -1,4 +1,4 @@
-/*	$NetBSD: strsuftoull.c,v 1.3 2001/11/30 00:12:04 thorpej Exp $	*/
+/*	$NetBSD: strsuftoull.c,v 1.4 2002/01/22 13:03:58 is Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -75,8 +75,12 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: strsuftoull.c,v 1.3 2001/11/30 00:12:04 thorpej Exp $");
+__RCSID("$NetBSD: strsuftoull.c,v 1.4 2002/01/22 13:03:58 is Exp $");
 #endif /* not lint */
+
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
 
 #include <sys/types.h>
 #include <sys/time.h>
