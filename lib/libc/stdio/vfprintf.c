@@ -1,4 +1,4 @@
-/*	$NetBSD: vfprintf.c,v 1.35.2.4 2002/02/06 23:18:51 nathanw Exp $	*/
+/*	$NetBSD: vfprintf.c,v 1.35.2.5 2002/05/02 17:04:55 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -41,7 +41,7 @@
 #if 0
 static char *sccsid = "@(#)vfprintf.c	5.50 (Berkeley) 12/16/92";
 #else
-__RCSID("$NetBSD: vfprintf.c,v 1.35.2.4 2002/02/06 23:18:51 nathanw Exp $");
+__RCSID("$NetBSD: vfprintf.c,v 1.35.2.5 2002/05/02 17:04:55 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -196,8 +196,26 @@ __UNCONST(v)
 #define	SIZEINT		0x200		/* (signed) size_t */
 #define	ZEROPAD		0x400		/* zero (as opposed to blank) pad */
 #define FPT		0x800		/* Floating point number */
+
 int
 vfprintf(fp, fmt0, ap)
+	FILE *fp;
+	const char *fmt0;
+	_BSD_VA_LIST_ ap;
+{
+	int ret;
+
+	FLOCKFILE(fp);
+	ret = vfprintf_unlocked(fp, fmt0, ap);
+	FUNLOCKFILE(fp);
+
+	return ret;
+}
+	
+	    
+
+int
+vfprintf_unlocked(fp, fmt0, ap)
 	FILE *fp;
 	const char *fmt0;
 	_BSD_VA_LIST_ ap;
@@ -310,13 +328,11 @@ vfprintf(fp, fmt0, ap)
 	_DIAGASSERT(fp != NULL);
 	_DIAGASSERT(fmt0 != NULL);
 
-	FLOCKFILE(fp);
 	_SET_ORIENTATION(fp, -1);
 
 	/* sorry, fprintf(read_only_file, "") returns -1, not 0 */
 	if (cantwrite(fp)) {
 		errno = EBADF;
-		FUNLOCKFILE(fp);
 		return (-1);
 	}
 
@@ -324,7 +340,6 @@ vfprintf(fp, fmt0, ap)
 	if ((fp->_flags & (__SNBF|__SWR|__SRW)) == (__SNBF|__SWR) &&
 	    fp->_file >= 0) {
 		ret = __sbprintf(fp, fmt0, ap);
-		FUNLOCKFILE(fp);
 		return (ret);
 	}
 
@@ -791,7 +806,6 @@ done:
 error:
 	if (__sferror(fp))
 		ret = -1;
-	FUNLOCKFILE(fp);
 	return (ret);
 }
 
