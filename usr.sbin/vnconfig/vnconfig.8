@@ -1,4 +1,4 @@
-.\"	$NetBSD: vnconfig.8,v 1.18 2000/10/02 16:21:27 bjh21 Exp $
+.\"	$NetBSD: vnconfig.8,v 1.19 2001/11/08 15:41:55 christos Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -157,14 +157,16 @@ If no action option is given,
 is assumed.
 .Sh EXAMPLES
 .Pp
-.Dl vnconfig /dev/vnd0c /tmp/diskimage
-or
 .Dl vnconfig vnd0 /tmp/diskimage
+or
+.Dl vnconfig /dev/rvnd0c /tmp/diskimage
 .Pp
 Configures the vnode disk
 .Pa vnd0 .
+Please note that use of the second form of the command is discouraged because
+it requires knowledge of the raw partition which varies between architectures.
 .Pp
-.Dl vnconfig /dev/vnd0c /tmp/floppy.img 512/18/2/80
+.Dl vnconfig vnd0 /tmp/floppy.img 512/18/2/80
 .Pp
 Configures the vnode disk
 .Pa vnd0
@@ -172,7 +174,7 @@ emulating the geometry of 512 bytes per sector, 18 sectors per track,
 2 tracks per cylinder, and 80 cylinders total.
 .Pp
 .Pp
-.Dl vnconfig -t floppy /dev/vnd0c /tmp/floppy.img
+.Dl vnconfig -t floppy vnd0 /tmp/floppy.img
 .Pp
 Configures the vnode disk
 .Pa vnd0
@@ -181,7 +183,7 @@ using the geometry specified in the
 entry in
 .Pa /etc/disktab .
 .Pp
-.Dl vnconfig -u /dev/vnd0c
+.Dl vnconfig -u vnd0
 .Pp
 Unconfigures the
 .Pa vnd0
