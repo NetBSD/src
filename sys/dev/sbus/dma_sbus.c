@@ -1,4 +1,4 @@
-/*	$NetBSD: dma_sbus.c,v 1.23 2004/06/30 21:16:38 pk Exp $ */
+/*	$NetBSD: dma_sbus.c,v 1.24 2005/02/04 02:10:47 perry Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dma_sbus.c,v 1.23 2004/06/30 21:16:38 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dma_sbus.c,v 1.24 2005/02/04 02:10:47 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,18 +89,18 @@ struct dma_softc {
 	struct sbusdev	sc_sd;			/* sbus device */
 };
 
-int	dmamatch_sbus	__P((struct device *, struct cfdata *, void *));
-void	dmaattach_sbus	__P((struct device *, struct device *, void *));
+int	dmamatch_sbus(struct device *, struct cfdata *, void *);
+void	dmaattach_sbus(struct device *, struct device *, void *);
 
-int	dmaprint_sbus	__P((void *, const char *));
+int	dmaprint_sbus(void *, const char *);
 
-void	*dmabus_intr_establish __P((
+void	*dmabus_intr_establish(
 		bus_space_tag_t,
 		int,			/*bus interrupt priority*/
 		int,			/*`device class' level*/
-		int (*) __P((void *)),	/*handler*/
+		int (*)(void *),	/*handler*/
 		void *,			/*handler arg*/
-		void (*) __P((void))));	/*optional fast trap handler*/
+		void (*) (void));	/*optional fast trap handler*/
 
 CFATTACH_DECL(dma_sbus, sizeof(struct dma_softc),
     dmamatch_sbus, dmaattach_sbus, NULL, NULL);
@@ -234,9 +234,9 @@ dmabus_intr_establish(t, pri, level, handler, arg, fastvec)
 	bus_space_tag_t t;
 	int pri;
 	int level;
-	int (*handler) __P((void *));
+	int (*handler)(void *);
 	void *arg;
-	void (*fastvec) __P((void));	/* ignored */
+	void (*fastvec)(void);	/* ignored */
 {
 	struct lsi64854_softc *sc = t->cookie;
 

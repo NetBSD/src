@@ -1,4 +1,4 @@
-/*	$NetBSD: ofisa.c,v 1.14 2004/04/22 00:17:12 itojun Exp $	*/
+/*	$NetBSD: ofisa.c,v 1.15 2005/02/04 02:10:44 perry Exp $	*/
 
 /*
  * Copyright 1997, 1998
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofisa.c,v 1.14 2004/04/22 00:17:12 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofisa.c,v 1.15 2005/02/04 02:10:44 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,15 +51,15 @@ __KERNEL_RCSID(0, "$NetBSD: ofisa.c,v 1.14 2004/04/22 00:17:12 itojun Exp $");
 
 #define	OFW_MAX_STACK_BUF_SIZE	256
 
-static int	ofisamatch __P((struct device *, struct cfdata *, void *));
-static void	ofisaattach __P((struct device *, struct device *, void *));
+static int	ofisamatch(struct device *, struct cfdata *, void *);
+static void	ofisaattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(ofisa, sizeof(struct device),
     ofisamatch, ofisaattach, NULL, NULL);
 
 extern struct cfdriver ofisa_cd;
 
-static int	ofisaprint __P((void *, const char *));
+static int	ofisaprint(void *, const char *);
 
 static int
 ofisaprint(aux, pnp)

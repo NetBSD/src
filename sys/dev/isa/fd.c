@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.56 2005/02/01 20:33:58 drochner Exp $	*/
+/*	$NetBSD: fd.c,v 1.57 2005/02/04 02:10:40 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.56 2005/02/01 20:33:58 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.57 2005/02/04 02:10:40 perry Exp $");
 
 #include "rnd.h"
 #include "opt_ddb.h"
@@ -173,7 +173,7 @@ __KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.56 2005/02/01 20:33:58 drochner Exp $");
 #define B_FORMAT B_XXX
 
 /* controller driver configuration */
-int fdprint __P((void *, const char *));
+int fdprint(void *, const char *);
 
 #if NMCA > 0
 /* MCA - specific entries */
@@ -203,9 +203,9 @@ const struct fd_type fd_types[] = {
 };
 #endif /* defined(atari) */
 
-void fdcfinishattach __P((struct device *));
-int fdprobe __P((struct device *, struct cfdata *, void *));
-void fdattach __P((struct device *, struct device *, void *));
+void fdcfinishattach(struct device *);
+int fdprobe(struct device *, struct cfdata *, void *);
+void fdattach(struct device *, struct device *, void *);
 
 extern struct cfdriver fd_cd;
 
@@ -233,29 +233,29 @@ const struct cdevsw fd_cdevsw = {
 	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
 };
 
-void fdgetdisklabel __P((struct fd_softc *));
-int fd_get_parms __P((struct fd_softc *));
-void fdstart __P((struct fd_softc *));
+void fdgetdisklabel(struct fd_softc *);
+int fd_get_parms(struct fd_softc *);
+void fdstart(struct fd_softc *);
 
 struct dkdriver fddkdriver = { fdstrategy };
 
 #if defined(i386)
-const struct fd_type *fd_nvtotype __P((char *, int, int));
+const struct fd_type *fd_nvtotype(char *, int, int);
 #endif /* i386 */
-void fd_set_motor __P((struct fdc_softc *fdc, int reset));
-void fd_motor_off __P((void *arg));
-void fd_motor_on __P((void *arg));
-int fdcresult __P((struct fdc_softc *fdc));
-void fdcstart __P((struct fdc_softc *fdc));
-void fdcstatus __P((struct device *dv, int n, char *s));
-void fdctimeout __P((void *arg));
-void fdcpseudointr __P((void *arg));
-void fdcretry __P((struct fdc_softc *fdc));
-void fdfinish __P((struct fd_softc *fd, struct buf *bp));
-__inline const struct fd_type *fd_dev_to_type __P((struct fd_softc *, dev_t));
-int fdformat __P((dev_t, struct ne7_fd_formb *, struct proc *));
+void fd_set_motor(struct fdc_softc *fdc, int reset);
+void fd_motor_off(void *arg);
+void fd_motor_on(void *arg);
+int fdcresult(struct fdc_softc *fdc);
+void fdcstart(struct fdc_softc *fdc);
+void fdcstatus(struct device *dv, int n, char *s);
+void fdctimeout(void *arg);
+void fdcpseudointr(void *arg);
+void fdcretry(struct fdc_softc *fdc);
+void fdfinish(struct fd_softc *fd, struct buf *bp);
+__inline const struct fd_type *fd_dev_to_type(struct fd_softc *, dev_t);
+int fdformat(dev_t, struct ne7_fd_formb *, struct proc *);
 
-void	fd_mountroot_hook __P((struct device *));
+void	fd_mountroot_hook(struct device *);
 
 /*
  * Arguments passed between fdcattach and fdprobe.

@@ -1,4 +1,4 @@
-/*	$NetBSD: com_isa.c,v 1.22 2004/09/14 20:20:46 drochner Exp $	*/
+/*	$NetBSD: com_isa.c,v 1.23 2005/02/04 02:10:40 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_isa.c,v 1.22 2004/09/14 20:20:46 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_isa.c,v 1.23 2005/02/04 02:10:40 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,9 +98,9 @@ struct com_isa_softc {
 	void	*sc_ih;			/* interrupt handler */
 };
 
-int com_isa_probe __P((struct device *, struct cfdata *, void *));
-void com_isa_attach __P((struct device *, struct device *, void *));
-void com_isa_cleanup __P((void *));
+int com_isa_probe(struct device *, struct cfdata *, void *);
+void com_isa_attach(struct device *, struct device *, void *);
+void com_isa_cleanup(void *);
 
 CFATTACH_DECL(com_isa, sizeof(struct com_isa_softc),
     com_isa_probe, com_isa_attach, NULL, NULL);

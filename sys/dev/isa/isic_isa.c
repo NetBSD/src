@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isa.c,v 1.20 2004/09/14 20:20:48 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isa.c,v 1.21 2005/02/04 02:10:40 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -86,17 +86,17 @@ extern const struct isdn_layer1_isdnif_driver isic_std_driver;
 
 /* local functions */
 #ifdef __BROKEN_INDIRECT_CONFIG
-static int isic_isa_probe __P((struct device *, void *, void *));
+static int isic_isa_probe(struct device *, void *, void *);
 #else
-static int isic_isa_probe __P((struct device *, struct cfdata *, void *));
+static int isic_isa_probe(struct device *, struct cfdata *, void *);
 #endif
 
-static void isic_isa_attach __P((struct device *, struct device *, void *));
-static int setup_io_map __P((int flags, bus_space_tag_t iot,
+static void isic_isa_attach(struct device *, struct device *, void *);
+static int setup_io_map(int flags, bus_space_tag_t iot,
 	bus_space_tag_t memt, bus_size_t iobase, bus_size_t maddr,
 	int *num_mappings, struct isic_io_map *maps, int *iosize, 
-	int *msize));
-static void args_unmap __P((int *num_mappings, struct isic_io_map *maps));
+	int *msize);
+static void args_unmap(int *num_mappings, struct isic_io_map *maps);
 
 CFATTACH_DECL(isic_isa, sizeof(struct isic_softc),
     isic_isa_probe, isic_isa_attach, NULL, NULL);

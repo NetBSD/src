@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.h,v 1.22 2003/10/17 18:16:43 cdi Exp $	*/
+/*	$NetBSD: cons.h,v 1.23 2005/02/04 02:10:35 perry Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -82,21 +82,21 @@
 
 struct consdev {
 	void	(*cn_probe)	/* probe hardware and fill in consdev info */
-		    __P((struct consdev *));
+		   (struct consdev *);
 	void	(*cn_init)	/* turn on as console */
-		    __P((struct consdev *));
+		   (struct consdev *);
 	int	(*cn_getc)	/* kernel getchar interface */
-		    __P((dev_t));
+		   (dev_t);
 	void	(*cn_putc)	/* kernel putchar interface */
-		    __P((dev_t, int));
+		   (dev_t, int);
 	void	(*cn_pollc)	/* turn on and off polling */
-		    __P((dev_t, int));
+		   (dev_t, int);
 	void	(*cn_bell)	/* ring bell */
-		    __P((dev_t, u_int, u_int, u_int));
+		   (dev_t, u_int, u_int, u_int);
 	void	(*cn_halt)	/* stop device */
-		    __P((dev_t));
+		   (dev_t);
 	void	(*cn_flush)	/* flush output */
-		    __P((dev_t));
+		   (dev_t);
 	dev_t	cn_dev;		/* major/minor of device */
 	int	cn_pri;		/* pecking order; the higher the better */
 };
@@ -113,29 +113,29 @@ struct consdev {
 extern	struct consdev constab[];
 extern	struct consdev *cn_tab;
 
-void	cninit __P((void));
-int	cngetc __P((void));
-int	cngetsn __P((char *, int));
-void	cnputc __P((int));
-void	cnpollc __P((int));
-void	cnbell __P((u_int, u_int, u_int));
-void	cnflush __P((void));
-void	cnhalt __P((void));
-void	cnrint __P((void));
-void	nullcnprobe __P((struct consdev *));
-void	nullcninit __P((struct consdev *));
-void	nullcnpollc __P((dev_t, int));
-void	nullconsattach __P((int));
+void	cninit(void);
+int	cngetc(void);
+int	cngetsn(char *, int);
+void	cnputc(int);
+void	cnpollc(int);
+void	cnbell(u_int, u_int, u_int);
+void	cnflush(void);
+void	cnhalt(void);
+void	cnrint(void);
+void	nullcnprobe(struct consdev *);
+void	nullcninit(struct consdev *);
+void	nullcnpollc(dev_t, int);
+void	nullconsattach(int);
 
 /* console-specific types */
-#define	dev_type_cnprobe(n)	void n __P((struct consdev *))
-#define	dev_type_cninit(n)	void n __P((struct consdev *))
-#define	dev_type_cngetc(n)	int n __P((dev_t))
-#define	dev_type_cnputc(n)	void n __P((dev_t, int))
-#define	dev_type_cnpollc(n)	void n __P((dev_t, int))
-#define	dev_type_cnbell(n)	void n __P((dev_t, u_int, u_int, u_int));
-#define	dev_type_cnhalt(n)	void n __P((dev_t))
-#define	dev_type_cnflush(n)	void n __P((dev_t))
+#define	dev_type_cnprobe(n)	void n(struct consdev *)
+#define	dev_type_cninit(n)	void n(struct consdev *)
+#define	dev_type_cngetc(n)	int n(dev_t)
+#define	dev_type_cnputc(n)	void n(dev_t, int)
+#define	dev_type_cnpollc(n)	void n(dev_t, int)
+#define	dev_type_cnbell(n)	void n(dev_t, u_int, u_int, u_int);
+#define	dev_type_cnhalt(n)	void n(dev_t)
+#define	dev_type_cnflush(n)	void n(dev_t)
 
 #define	dev_decl(n,t)		__CONCAT(dev_type_,t)(__CONCAT(n,t))
 #define	dev_init(n,t)		__CONCAT(n,t)

@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops15.c,v 1.11 2001/11/15 09:48:14 lukem Exp $	*/
+/* 	$NetBSD: rasops15.c,v 1.12 2005/02/04 02:10:47 perry Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops15.c,v 1.11 2001/11/15 09:48:14 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops15.c,v 1.12 2005/02/04 02:10:47 perry Exp $");
 
 #include "opt_rasops.h"
 
@@ -49,12 +49,12 @@ __KERNEL_RCSID(0, "$NetBSD: rasops15.c,v 1.11 2001/11/15 09:48:14 lukem Exp $");
 #include <dev/wscons/wsconsio.h>
 #include <dev/rasops/rasops.h>
 
-static void 	rasops15_putchar __P((void *, int, int, u_int, long attr));
+static void 	rasops15_putchar(void *, int, int, u_int, long attr);
 #ifndef RASOPS_SMALL
-static void 	rasops15_putchar8 __P((void *, int, int, u_int, long attr));
-static void 	rasops15_putchar12 __P((void *, int, int, u_int, long attr));
-static void 	rasops15_putchar16 __P((void *, int, int, u_int, long attr));
-static void	rasops15_makestamp __P((struct rasops_info *, long));
+static void 	rasops15_putchar8(void *, int, int, u_int, long attr);
+static void 	rasops15_putchar12(void *, int, int, u_int, long attr);
+static void 	rasops15_putchar16(void *, int, int, u_int, long attr);
+static void	rasops15_makestamp(struct rasops_info *, long);
 #endif
 
 /*

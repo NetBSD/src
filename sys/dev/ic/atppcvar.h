@@ -1,4 +1,4 @@
-/* $NetBSD: atppcvar.h,v 1.4 2004/04/21 17:38:48 drochner Exp $ */
+/* $NetBSD: atppcvar.h,v 1.5 2005/02/04 02:10:36 perry Exp $ */
 
 /*-
  * Copyright (c) 2001 Alcove - Nicolas Souchu
@@ -246,14 +246,14 @@ struct atppc_softc {
 /* Function prototypes */
 
 /* Soft config attach/detach routines */
-void atppc_sc_attach __P((struct atppc_softc *));
-int atppc_sc_detach __P((struct atppc_softc *, int));
+void atppc_sc_attach(struct atppc_softc *);
+int atppc_sc_detach(struct atppc_softc *, int);
 
 /* Detection routines */
-int atppc_detect_port __P((bus_space_tag_t, bus_space_handle_t));
+int atppc_detect_port(bus_space_tag_t, bus_space_handle_t);
 
 /* Interrupt handler for atppc device */
-int atppcintr __P((void *));
+int atppcintr(void *);
 
 #endif /* _KERNEL */
 

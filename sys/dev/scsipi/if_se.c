@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.55 2005/02/01 00:19:34 reinoud Exp $	*/
+/*	$NetBSD: if_se.c,v 1.56 2005/02/04 02:10:47 perry Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.55 2005/02/01 00:19:34 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.56 2005/02/04 02:10:47 perry Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -206,41 +206,41 @@ struct se_softc {
 	int sc_enabled;
 };
 
-static int	sematch __P((struct device *, struct cfdata *, void *));
-static void	seattach __P((struct device *, struct device *, void *));
+static int	sematch(struct device *, struct cfdata *, void *);
+static void	seattach(struct device *, struct device *, void *);
 
-static void	se_ifstart __P((struct ifnet *));
-static void	sestart __P((struct scsipi_periph *));
+static void	se_ifstart(struct ifnet *);
+static void	sestart(struct scsipi_periph *);
 
-static void	sedone __P((struct scsipi_xfer *, int));
-static int	se_ioctl __P((struct ifnet *, u_long, caddr_t));
-static void	sewatchdog __P((struct ifnet *));
+static void	sedone(struct scsipi_xfer *, int);
+static int	se_ioctl(struct ifnet *, u_long, caddr_t);
+static void	sewatchdog(struct ifnet *);
 
-static __inline u_int16_t ether_cmp __P((void *, void *));
-static void	se_recv __P((void *));
-static struct mbuf *se_get __P((struct se_softc *, char *, int));
-static int	se_read __P((struct se_softc *, char *, int));
-static int	se_reset __P((struct se_softc *));
-static int	se_add_proto __P((struct se_softc *, int));
-static int	se_get_addr __P((struct se_softc *, u_int8_t *));
-static int	se_set_media __P((struct se_softc *, int));
-static int	se_init __P((struct se_softc *));
-static int	se_set_multi __P((struct se_softc *, u_int8_t *));
-static int	se_remove_multi __P((struct se_softc *, u_int8_t *));
+static __inline u_int16_t ether_cmp(void *, void *);
+static void	se_recv(void *);
+static struct mbuf *se_get(struct se_softc *, char *, int);
+static int	se_read(struct se_softc *, char *, int);
+static int	se_reset(struct se_softc *);
+static int	se_add_proto(struct se_softc *, int);
+static int	se_get_addr(struct se_softc *, u_int8_t *);
+static int	se_set_media(struct se_softc *, int);
+static int	se_init(struct se_softc *);
+static int	se_set_multi(struct se_softc *, u_int8_t *);
+static int	se_remove_multi(struct se_softc *, u_int8_t *);
 #if 0
-static int	sc_set_all_multi __P((struct se_softc *, int));
+static int	sc_set_all_multi(struct se_softc *, int);
 #endif
-static void	se_stop __P((struct se_softc *));
-static __inline int se_scsipi_cmd __P((struct scsipi_periph *periph,
+static void	se_stop(struct se_softc *);
+static __inline int se_scsipi_cmd(struct scsipi_periph *periph,
 			struct scsipi_generic *scsipi_cmd,
 			int cmdlen, u_char *data_addr, int datalen,
 			int retries, int timeout, struct buf *bp,
-			int flags));
-static void	se_delayed_ifstart __P((void *));
+			int flags);
+static void	se_delayed_ifstart(void *);
 static int	se_set_mode(struct se_softc *, int, int);
 
-int	se_enable __P((struct se_softc *));
-void	se_disable __P((struct se_softc *));
+int	se_enable(struct se_softc *);
+void	se_disable(struct se_softc *);
 
 CFATTACH_DECL(se, sizeof(struct se_softc),
     sematch, seattach, NULL, NULL);

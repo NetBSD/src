@@ -1,4 +1,4 @@
-/* $NetBSD: nsclpcsio_isa.c,v 1.6 2004/09/14 20:20:49 drochner Exp $ */
+/* $NetBSD: nsclpcsio_isa.c,v 1.7 2005/02/04 02:10:41 perry Exp $ */
 
 /*
  * Copyright (c) 2002
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsclpcsio_isa.c,v 1.6 2004/09/14 20:20:49 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nsclpcsio_isa.c,v 1.7 2005/02/04 02:10:41 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -38,9 +38,8 @@ __KERNEL_RCSID(0, "$NetBSD: nsclpcsio_isa.c,v 1.6 2004/09/14 20:20:49 drochner E
 #include <dev/isa/isavar.h>
 #include <dev/sysmon/sysmonvar.h>
 
-static int nsclpcsio_isa_match __P((struct device *, struct cfdata *, void *));
-static void nsclpcsio_isa_attach __P((struct device *, struct device *,
-				      void *));
+static int nsclpcsio_isa_match(struct device *, struct cfdata *, void *);
+static void nsclpcsio_isa_attach(struct device *, struct device *, void *);
 
 struct nsclpcsio_softc {
 	struct device sc_dev;

@@ -1,4 +1,4 @@
-/* $NetBSD: sfbplus.c,v 1.20 2003/12/17 03:59:33 ad Exp $ */
+/* $NetBSD: sfbplus.c,v 1.21 2005/02/04 02:10:48 perry Exp $ */
 
 /*
  * Copyright (c) 1999, 2000, 2001 Tohru Nishimura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sfbplus.c,v 1.20 2003/12/17 03:59:33 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sfbplus.c,v 1.21 2005/02/04 02:10:48 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,12 +98,12 @@ struct hwcursor64 {
 };
 
 struct hwops {
-	void (*setlut) __P((caddr_t, struct hwcmap256 *));
-	void (*getlut) __P((caddr_t, struct hwcmap256 *));
-	void (*visible) __P((caddr_t, int));
-	void (*locate) __P((caddr_t, struct hwcursor64 *));
-	void (*shape) __P((caddr_t, struct wsdisplay_curpos *, u_int64_t *));
-	void (*color) __P((caddr_t, u_int8_t *));
+	void (*setlut)(caddr_t, struct hwcmap256 *);
+	void (*getlut)(caddr_t, struct hwcmap256 *);
+	void (*visible)(caddr_t, int);
+	void (*locate)(caddr_t, struct hwcursor64 *);
+	void (*shape)(caddr_t, struct wsdisplay_curpos *, u_int64_t *);
+	void (*color)(caddr_t, u_int8_t *);
 };
 
 struct sfbp_softc {
@@ -124,13 +124,13 @@ struct sfbp_softc {
 #define	HX_MAGIC_X	368
 #define	HX_MAGIC_Y	38
 
-static int  sfbpmatch __P((struct device *, struct cfdata *, void *));
-static void sfbpattach __P((struct device *, struct device *, void *));
+static int  sfbpmatch(struct device *, struct cfdata *, void *);
+static void sfbpattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(sfbp, sizeof(struct sfbp_softc),
     sfbpmatch, sfbpattach, NULL, NULL);
 
-static void sfbp_common_init __P((struct rasops_info *));
+static void sfbp_common_init(struct rasops_info *);
 static struct rasops_info sfbp_console_ri;
 static tc_addr_t sfbp_consaddr;
 
@@ -149,18 +149,18 @@ static const struct wsscreen_list sfb_screenlist = {
 	sizeof(_sfb_scrlist) / sizeof(struct wsscreen_descr *), _sfb_scrlist
 };
 
-static int	sfbioctl __P((void *, u_long, caddr_t, int, struct proc *));
-static paddr_t	sfbmmap __P((void *, off_t, int));
+static int	sfbioctl(void *, u_long, caddr_t, int, struct proc *);
+static paddr_t	sfbmmap(void *, off_t, int);
 
-static int	sfb_alloc_screen __P((void *, const struct wsscreen_descr *,
-				      void **, int *, int *, long *));
-static void	sfb_free_screen __P((void *, void *));
-static int	sfb_show_screen __P((void *, void *, int,
-				     void (*) (void *, int, int), void *));
-static void sfbp_putchar __P((void *, int, int, u_int, long));
-static void sfbp_erasecols __P((void *, int, int, int, long));
-static void sfbp_eraserows __P((void *, int, int, long));
-static void sfbp_copyrows __P((void *, int, int, int));
+static int	sfb_alloc_screen(void *, const struct wsscreen_descr *,
+				      void **, int *, int *, long *);
+static void	sfb_free_screen(void *, void *);
+static int	sfb_show_screen(void *, void *, int,
+				     void (*) (void *, int, int), void *);
+static void sfbp_putchar(void *, int, int, u_int, long);
+static void sfbp_erasecols(void *, int, int, int, long);
+static void sfbp_eraserows(void *, int, int, long);
+static void sfbp_copyrows(void *, int, int, int);
 
 static const struct wsdisplay_accessops sfb_accessops = {
 	sfbioctl,
@@ -171,30 +171,30 @@ static const struct wsdisplay_accessops sfb_accessops = {
 	0 /* load_font */
 };
 
-static void bt459init __P((caddr_t));
-static void bt459visible __P((caddr_t, int));
-static void bt459locate __P((caddr_t, struct hwcursor64 *));
-static void bt459shape __P((caddr_t, struct wsdisplay_curpos *, u_int64_t *));
-static void bt459color __P((caddr_t, u_int8_t *));
-static void bt459setlut __P((caddr_t, struct hwcmap256 *));
+static void bt459init(caddr_t);
+static void bt459visible(caddr_t, int);
+static void bt459locate(caddr_t, struct hwcursor64 *);
+static void bt459shape(caddr_t, struct wsdisplay_curpos *, u_int64_t *);
+static void bt459color(caddr_t, u_int8_t *);
+static void bt459setlut(caddr_t, struct hwcmap256 *);
 
-static void sfbpvisible __P((caddr_t, int));
-static void sfbplocate __P((caddr_t, struct hwcursor64 *));
-static void sfbpshape __P((caddr_t, struct wsdisplay_curpos *, u_int64_t *));
-static void bt463init __P((caddr_t));
-static void bt463color __P((caddr_t, u_int8_t *));
-static void noplut __P((caddr_t, struct hwcmap256 *));
+static void sfbpvisible(caddr_t, int);
+static void sfbplocate(caddr_t, struct hwcursor64 *);
+static void sfbpshape(caddr_t, struct wsdisplay_curpos *, u_int64_t *);
+static void bt463init(caddr_t);
+static void bt463color(caddr_t, u_int8_t *);
+static void noplut(caddr_t, struct hwcmap256 *);
 
-/* EXPORT */ int sfbp_cnattach __P((tc_addr_t));
-static int  sfbpintr __P((void *));
-static void sfbp_cmap_init __P((struct sfbp_softc *));
-static void sfbp_screenblank __P((struct sfbp_softc *, int));
+/* EXPORT */ int sfbp_cnattach(tc_addr_t);
+static int  sfbpintr(void *);
+static void sfbp_cmap_init(struct sfbp_softc *);
+static void sfbp_screenblank(struct sfbp_softc *, int);
 
-static int  get_cmap __P((struct sfbp_softc *, struct wsdisplay_cmap *));
-static int  set_cmap __P((struct sfbp_softc *, struct wsdisplay_cmap *));
-static int  set_cursor __P((struct sfbp_softc *, struct wsdisplay_cursor *));
-static int  get_cursor __P((struct sfbp_softc *, struct wsdisplay_cursor *));
-static void set_curpos __P((struct sfbp_softc *, struct wsdisplay_curpos *));
+static int  get_cmap(struct sfbp_softc *, struct wsdisplay_cmap *);
+static int  set_cmap(struct sfbp_softc *, struct wsdisplay_cmap *);
+static int  set_cursor(struct sfbp_softc *, struct wsdisplay_cursor *);
+static int  get_cursor(struct sfbp_softc *, struct wsdisplay_cursor *);
+static void set_curpos(struct sfbp_softc *, struct wsdisplay_curpos *);
 
 /*
  * Compose 2 bit/pixel cursor image.  Bit order will be reversed.
@@ -573,7 +573,7 @@ sfb_show_screen(v, cookie, waitok, cb, cbarg)
 	void *v;
 	void *cookie;
 	int waitok;
-	void (*cb) __P((void *, int, int));
+	void (*cb)(void *, int, int);
 	void *cbarg;
 {
 

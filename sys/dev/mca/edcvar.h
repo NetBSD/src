@@ -1,4 +1,4 @@
-/*	$NetBSD: edcvar.h,v 1.5 2004/09/01 20:57:58 drochner Exp $	*/
+/*	$NetBSD: edcvar.h,v 1.6 2005/02/04 02:10:43 perry Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,8 +37,7 @@ struct ed_attach_args {
 	int	edc_drive;
 };
 
-int	edc_run_cmd __P((struct edc_mca_softc *, int,
-		int, u_int16_t [], int, int));
-void	edc_add_disk __P((struct edc_mca_softc *, struct ed_softc *));
-int	edc_bio __P((struct edc_mca_softc *, struct ed_softc *,
-		void *, size_t, daddr_t, int, int));
+int	edc_run_cmd(struct edc_mca_softc *, int, int, u_int16_t [], int, int);
+void	edc_add_disk(struct edc_mca_softc *, struct ed_softc *);
+int	edc_bio(struct edc_mca_softc *, struct ed_softc *,
+		void *, size_t, daddr_t, int, int);

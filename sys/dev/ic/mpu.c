@@ -1,4 +1,4 @@
-/*	$NetBSD: mpu.c,v 1.8 2004/12/02 09:50:41 xtraeme Exp $	*/
+/*	$NetBSD: mpu.c,v 1.9 2005/02/04 02:10:36 perry Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpu.c,v 1.8 2004/12/02 09:50:41 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpu.c,v 1.9 2005/02/04 02:10:36 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,12 +82,12 @@ int	mpu_reset(struct mpu_softc *);
 static	__inline int mpu_waitready(struct mpu_softc *);
 void	mpu_readinput(struct mpu_softc *);
 
-int	mpu_open __P((void *, int, 
-			 void (*iintr)__P((void *, int)),
-			 void (*ointr)__P((void *)), void *arg));
-void	mpu_close __P((void *));
-int	mpu_output __P((void *, int));
-void	mpu_getinfo __P((void *, struct midi_info *));
+int	mpu_open(void *, int, 
+			 void (*iintr)(void *, int),
+			 void (*ointr)(void *), void *arg);
+void	mpu_close(void *);
+int	mpu_output(void *, int);
+void	mpu_getinfo(void *, struct midi_info *);
 
 const struct midi_hw_if mpu_midi_hw_if = {
 	mpu_open,
@@ -165,8 +165,8 @@ int
 mpu_open(addr, flags, iintr, ointr, arg)
 	void *addr;
 	int flags;
-	void (*iintr)__P((void *, int));
-	void (*ointr)__P((void *));
+	void (*iintr)(void *, int);
+	void (*ointr)(void *);
 	void *arg;
 {
 	struct mpu_softc *sc = addr;

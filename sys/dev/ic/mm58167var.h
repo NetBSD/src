@@ -1,4 +1,4 @@
-/*	$NetBSD: mm58167var.h,v 1.1 2001/04/10 12:50:18 fredette Exp $	*/
+/*	$NetBSD: mm58167var.h,v 1.2 2005/02/04 02:10:36 perry Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -87,6 +87,6 @@ struct mm58167_softc {
 	struct todr_chip_handle _mm58167_todr_handle;
 };
 
-todr_chip_handle_t mm58167_attach __P((struct mm58167_softc *));
+todr_chip_handle_t mm58167_attach(struct mm58167_softc *);
 
 #endif	/* _MM58167VAR_H */

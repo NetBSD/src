@@ -1,4 +1,4 @@
-/*	$NetBSD: mc146818reg.h,v 1.5 2003/11/02 11:07:45 wiz Exp $	*/
+/*	$NetBSD: mc146818reg.h,v 1.6 2005/02/04 02:10:36 perry Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -152,8 +152,8 @@
  * RTC register/NVRAM read and write functions -- machine-dependent.
  * Appropriately manipulate RTC registers to get/put data values.
  */
-u_int mc146818_read __P((void *, u_int));
-void mc146818_write __P((void *, u_int, u_int));
+u_int mc146818_read(void *, u_int);
+void mc146818_write(void *, u_int, u_int);
 
 /*
  * A collection of TOD/Alarm registers.

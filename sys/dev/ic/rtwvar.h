@@ -1,4 +1,4 @@
-/* $NetBSD: rtwvar.h,v 1.19 2005/01/16 11:50:43 dyoung Exp $ */
+/* $NetBSD: rtwvar.h,v 1.20 2005/02/04 02:10:37 perry Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -436,7 +436,7 @@ struct rtw_softc {
 	uint16_t		sc_inten;
 
 	/* interrupt acknowledge hook */
-	void (*sc_intr_ack) __P((struct rtw_regs *));
+	void (*sc_intr_ack)(struct rtw_regs *);
 
 	int			(*sc_enable)(struct rtw_softc *);
 	void			(*sc_disable)(struct rtw_softc *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_puc.c,v 1.6 2002/10/02 16:51:43 thorpej Exp $	*/
+/*	$NetBSD: lpt_puc.c,v 1.7 2005/02/04 02:10:45 perry Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt_puc.c,v 1.6 2002/10/02 16:51:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_puc.c,v 1.7 2005/02/04 02:10:45 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,8 +50,8 @@ __KERNEL_RCSID(0, "$NetBSD: lpt_puc.c,v 1.6 2002/10/02 16:51:43 thorpej Exp $");
 #include <dev/pci/pucvar.h>
 #include <dev/ic/lptvar.h>
 
-int	lpt_puc_probe __P((struct device *, struct cfdata *, void *));
-void	lpt_puc_attach __P((struct device *, struct device *, void *));
+int	lpt_puc_probe(struct device *, struct cfdata *, void *);
+void	lpt_puc_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(lpt_puc, sizeof(struct lpt_softc),
     lpt_puc_probe, lpt_puc_attach, NULL, NULL);

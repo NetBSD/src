@@ -1,4 +1,4 @@
-/* $NetBSD: if_tr_mca.c,v 1.10 2002/10/02 16:34:12 thorpej Exp $ */
+/* $NetBSD: if_tr_mca.c,v 1.11 2005/02/04 02:10:43 perry Exp $ */
 
 /*_
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tr_mca.c,v 1.10 2002/10/02 16:34:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tr_mca.c,v 1.11 2005/02/04 02:10:43 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,8 +67,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_tr_mca.c,v 1.10 2002/10/02 16:34:12 thorpej Exp $
 #define TR_MBPS_4 0
 #define TR_MBPS_16 1
 
-int	tr_mca_probe __P((struct device *, struct cfdata *, void *));
-void	tr_mca_attach __P((struct device *, struct device *, void *));
+int	tr_mca_probe(struct device *, struct cfdata *, void *);
+void	tr_mca_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(tr_mca, sizeof(struct tr_softc),
     tr_mca_probe, tr_mca_attach, NULL, NULL);
@@ -82,7 +82,7 @@ static const struct tr_mca_product {
 	{ 0, NULL },
 };
 
-static const struct tr_mca_product *tr_mca_lookup __P((int));
+static const struct tr_mca_product *tr_mca_lookup(int);
 
 static const struct tr_mca_product *
 tr_mca_lookup(id)

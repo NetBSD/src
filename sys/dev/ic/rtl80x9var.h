@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl80x9var.h,v 1.3 2004/02/13 10:05:50 wiz Exp $	*/
+/*	$NetBSD: rtl80x9var.h,v 1.4 2005/02/04 02:10:37 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -49,12 +49,11 @@
 #define	_DEV_IC_RTL80x9_VAR_H_
 
 #ifdef _KERNEL
-int	rtl80x9_mediachange __P((struct dp8390_softc *));
-void	rtl80x9_mediastatus __P((struct dp8390_softc *,
-	    struct ifmediareq *));
-void	rtl80x9_init_card __P((struct dp8390_softc *));
+int	rtl80x9_mediachange(struct dp8390_softc *);
+void	rtl80x9_mediastatus(struct dp8390_softc *, struct ifmediareq *);
+void	rtl80x9_init_card(struct dp8390_softc *);
 
-void	rtl80x9_media_init __P((struct dp8390_softc *));
+void	rtl80x9_media_init(struct dp8390_softc *);
 #endif /* _KERNEL */
 
 #endif /* _DEV_IC_RTL80x9_VAR_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xivar.h,v 1.2 2004/08/12 19:42:03 mycroft Exp $	*/
+/*	$NetBSD: if_xivar.h,v 1.3 2005/02/04 02:10:45 perry Exp $	*/
 
 /*
  * Copyright (c) 2004 Charles M. Hannum.  All rights reserved.
@@ -34,8 +34,8 @@ struct xi_softc {
 	bus_space_handle_t sc_bsh;		/* Bus I/O handle */
 
         /* Power management hooks and state. */
-	int	(*sc_enable) __P((struct xi_softc *));
-	void	(*sc_disable) __P((struct xi_softc *));
+	int	(*sc_enable)(struct xi_softc *);
+	void	(*sc_disable)(struct xi_softc *);
 	int	sc_enabled;
 
 	int		sc_chipset;		/* Chipset type */
@@ -49,7 +49,7 @@ struct xi_softc {
 #endif
 };
 
-void	xi_attach __P((struct xi_softc *, u_int8_t *));
-int	xi_detach __P((struct device *, int));
-int	xi_activate __P((struct device *, enum devact));
-int	xi_intr __P((void *));
+void	xi_attach(struct xi_softc *, u_int8_t *);
+int	xi_detach(struct device *, int);
+int	xi_activate(struct device *, enum devact);
+int	xi_intr(void *);

@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.44 2003/11/08 22:49:28 uwe Exp $	*/
+/*	 $NetBSD: rasops.c,v 1.45 2005/02/04 02:10:47 perry Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.44 2003/11/08 22:49:28 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.45 2005/02/04 02:10:47 perry Exp $");
 
 #include "opt_rasops.h"
 #include "rasops_glue.h"
@@ -126,13 +126,13 @@ const u_char rasops_isgray[16] = {
 };
 
 /* Generic functions */
-static void	rasops_copyrows __P((void *, int, int, int));
-static int	rasops_mapchar __P((void *, int, u_int *));
-static void	rasops_cursor __P((void *, int, int, int));
-static int	rasops_allocattr_color __P((void *, int, int, int, long *));
-static int	rasops_allocattr_mono __P((void *, int, int, int, long *));
-static void	rasops_do_cursor __P((struct rasops_info *));
-static void	rasops_init_devcmap __P((struct rasops_info *));
+static void	rasops_copyrows(void *, int, int, int);
+static int	rasops_mapchar(void *, int, u_int *);
+static void	rasops_cursor(void *, int, int, int);
+static int	rasops_allocattr_color(void *, int, int, int, long *);
+static int	rasops_allocattr_mono(void *, int, int, int, long *);
+static void	rasops_do_cursor(struct rasops_info *);
+static void	rasops_init_devcmap(struct rasops_info *);
 
 /*
  * Initialize a 'rasops_info' descriptor.

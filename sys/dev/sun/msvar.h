@@ -1,4 +1,4 @@
-/*	$NetBSD: msvar.h,v 1.5 2003/08/07 16:31:26 agc Exp $	*/
+/*	$NetBSD: msvar.h,v 1.6 2005/02/04 02:10:47 perry Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,8 +77,8 @@ struct ms_softc {
 	 * by the lower level driver and used as a back door
 	 * when opening and closing the internal device.
 	 */
-	int	(*ms_deviopen)	__P((struct device *, int));
-	int	(*ms_deviclose)	__P((struct device *, int));
+	int	(*ms_deviopen)	(struct device *, int);
+	int	(*ms_deviclose)	(struct device *, int);
 
 	/* Flags to communicate with ms_softintr() */
 	volatile int ms_intr_flags;
@@ -112,4 +112,4 @@ struct ms_softc {
 };
 
 /* front-end call back for mouse input */
-void ms_input __P((struct ms_softc *, int c));
+void ms_input(struct ms_softc *, int c);

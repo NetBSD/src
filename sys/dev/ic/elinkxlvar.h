@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxlvar.h,v 1.14 2003/06/05 22:11:22 dogcow Exp $	*/
+/*	$NetBSD: elinkxlvar.h,v 1.15 2005/02/04 02:10:36 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -124,13 +124,13 @@ struct ex_softc {
 #endif
 
 	/* power management hooks */
-	int (*enable) __P((struct ex_softc *));
-	void (*disable) __P((struct ex_softc *));
-	void (*power) __P((struct ex_softc *, int));
+	int (*enable)(struct ex_softc *);
+	void (*disable)(struct ex_softc *);
+	void (*power)(struct ex_softc *, int);
 	int enabled;
 
 	/* interrupt acknowledge hook */
-	void (*intr_ack) __P((struct ex_softc *));
+	void (*intr_ack)(struct ex_softc *);
 
 	void *sc_sdhook;
 	void *sc_powerhook;
@@ -148,15 +148,15 @@ struct ex_softc {
 		} while ((stat & COMMAND_IN_PROGRESS) && (stat != 0xffff)); \
 	} while (0)\
 
-u_int16_t exreadeeprom __P((bus_space_tag_t, bus_space_handle_t, int));
-void	ex_config __P((struct ex_softc *));
+u_int16_t exreadeeprom(bus_space_tag_t, bus_space_handle_t, int);
+void	ex_config(struct ex_softc *);
 
-int	ex_intr __P((void *));
-void	ex_stop __P((struct ifnet *, int));
-void	ex_watchdog __P((struct ifnet *));
-int	ex_ioctl __P((struct ifnet *ifp, u_long, caddr_t));
-int	ex_activate __P((struct device *, enum devact));
-int	ex_detach __P((struct ex_softc *));
+int	ex_intr(void *);
+void	ex_stop(struct ifnet *, int);
+void	ex_watchdog(struct ifnet *);
+int	ex_ioctl(struct ifnet *ifp, u_long, caddr_t);
+int	ex_activate(struct device *, enum devact);
+int	ex_detach(struct ex_softc *);
 
-int	ex_enable __P((struct ex_softc *));
-void	ex_disable __P((struct ex_softc *));
+int	ex_enable(struct ex_softc *);
+void	ex_disable(struct ex_softc *);

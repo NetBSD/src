@@ -1,4 +1,4 @@
-/*	$NetBSD: bha_isa.c,v 1.25 2004/09/14 20:20:46 drochner Exp $	*/
+/*	$NetBSD: bha_isa.c,v 1.26 2005/02/04 02:10:40 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bha_isa.c,v 1.25 2004/09/14 20:20:46 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bha_isa.c,v 1.26 2005/02/04 02:10:40 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,8 +57,8 @@ __KERNEL_RCSID(0, "$NetBSD: bha_isa.c,v 1.25 2004/09/14 20:20:46 drochner Exp $"
 
 #define	BHA_ISA_IOSIZE	4
 
-int	bha_isa_probe __P((struct device *, struct cfdata *, void *));
-void	bha_isa_attach __P((struct device *, struct device *, void *));
+int	bha_isa_probe(struct device *, struct cfdata *, void *);
+void	bha_isa_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(bha_isa, sizeof(struct bha_softc),
     bha_isa_probe, bha_isa_attach, NULL, NULL);

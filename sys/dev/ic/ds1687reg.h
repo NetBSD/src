@@ -1,4 +1,4 @@
-/*	$NetBSD: ds1687reg.h,v 1.5 2005/02/01 16:16:22 he Exp $ 	*/
+/*	$NetBSD: ds1687reg.h,v 1.6 2005/02/04 02:10:36 perry Exp $ 	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -188,8 +188,8 @@
  * RTC register/NVRAM read and write functions -- machine-dependent.
  * Appropriately manipulate RTC registers to get/put data values.
  */
-u_int ds1687_read __P((void *, u_int));
-void ds1687_write __P((void *, u_int, u_int));
+u_int ds1687_read(void *, u_int);
+void ds1687_write(void *, u_int, u_int);
 
 /*
  * A collection of TOD/Alarm registers.

@@ -1,4 +1,4 @@
-/* $NetBSD: universe_pci.c,v 1.5 2003/01/31 00:07:43 thorpej Exp $ */
+/* $NetBSD: universe_pci.c,v 1.6 2005/02/04 02:10:45 perry Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: universe_pci.c,v 1.5 2003/01/31 00:07:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: universe_pci.c,v 1.6 2005/02/04 02:10:45 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,7 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: universe_pci.c,v 1.5 2003/01/31 00:07:43 thorpej Exp
 #include <dev/ic/universereg.h>
 #include <dev/pci/universe_pci_var.h>
 
-int univ_pci_intr __P((void *));
+int univ_pci_intr(void *);
 
 #define read_csr_4(d, reg) \
   bus_space_read_4(d->csrt, d->csrh, offsetof(struct universereg, reg))
@@ -91,7 +91,7 @@ univ_pci_attach(d, pa, name, inthdl, intcookie)
 	struct univ_pci_data *d;
 	struct pci_attach_args *pa;
 	const char *name;
-	void (*inthdl) __P((void *, int, int));
+	void (*inthdl)(void *, int, int);
 	void *intcookie;
 {
 	pci_chipset_tag_t pc = pa->pa_pc;

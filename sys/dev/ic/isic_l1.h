@@ -1,4 +1,4 @@
-/* $NetBSD: isic_l1.h,v 1.16 2003/10/03 16:38:44 pooka Exp $ */
+/* $NetBSD: isic_l1.h,v 1.17 2005/02/04 02:10:36 perry Exp $ */
 
 /*
  * Copyright (c) 1997, 2000 Hellmuth Michaelis. All rights reserved.
@@ -264,15 +264,14 @@ struct isic_softc
 #define	ISIC_WHAT_HSCXB	2
 #define	ISIC_WHAT_IPAC	3
 
-	u_int8_t	(*readreg) __P((struct isic_softc *, int, bus_size_t));
-	void		(*writereg) __P((struct isic_softc *, int, bus_size_t, u_int8_t));
-	void		(*readfifo) __P((struct isic_softc *, int, void *,
-			    size_t));
-	void		(*writefifo) __P((struct isic_softc *, int what,
-			    const void *, size_t));
-	void		(*clearirq) __P((struct isic_softc *));
+	u_int8_t	(*readreg)(struct isic_softc *, int, bus_size_t);
+	void		(*writereg)(struct isic_softc *, int, bus_size_t, u_int8_t);
+	void		(*readfifo)(struct isic_softc *, int, void *, size_t);
+	void		(*writefifo)(struct isic_softc *, int what,
+			    const void *, size_t);
+	void		(*clearirq)(struct isic_softc *);
 
-	void		(*drv_command) __P((struct isic_softc *, int, void *));
+	void		(*drv_command)(struct isic_softc *, int, void *);
 
 #define	ISAC_READ(r)		(*sc->readreg)(sc, ISIC_WHAT_ISAC, (r))
 #define	ISAC_WRITE(r,v)		(*sc->writereg)(sc, ISIC_WHAT_ISAC, (r), (v))
@@ -333,40 +332,40 @@ enum I430commands {
 
 #define N_COMMANDS CMD_ILL
 
-extern void isic_recover __P((struct isic_softc *));
-extern int isicintr __P((void *));
-extern int isicprobe __P((struct isic_attach_args *));
-extern int isic_attach_avma1 __P((struct isic_softc *));
-extern int isic_attach_s016 __P((struct isic_softc *));
-extern int isic_attach_s0163 __P((struct isic_softc *));
-extern int isic_attach_s08 __P((struct isic_softc *));
-extern int isic_attach_usrtai __P((struct isic_softc *));
-extern int isic_attach_itkix1 __P((struct isic_softc *));
-extern void isic_bchannel_setup __P((void *, int, int, int));
-extern void isic_hscx_init __P((struct isic_softc *, int, int));
-extern void isic_hscx_irq __P((struct isic_softc *, u_char ista, int, u_char));
-extern void isic_hscx_cmd __P(( struct isic_softc *, int, unsigned char));
-extern void isic_hscx_waitxfw __P(( struct isic_softc *, int));
-extern void isic_init_linktab __P((struct isic_softc *));
-extern int isic_isac_init __P((struct isic_softc *));
-extern void isic_isac_irq __P((struct isic_softc *, int));
-extern void isic_isac_l1_cmd __P((struct isic_softc *, int));
-extern void isic_next_state __P((struct isic_softc *, int));
-extern char * isic_printstate __P((struct isic_softc *));
-extern int isic_probe_avma1 __P((struct isic_attach_args *));
-extern int isic_probe_s016 __P((struct isic_attach_args *));
-extern int isic_probe_s0163 __P((struct isic_attach_args *));
-extern int isic_probe_s08 __P((struct isic_attach_args *ia));
-extern int isic_probe_usrtai __P((struct isic_attach_args *ia));
-extern int isic_probe_itkix1 __P((struct isic_attach_args *ia));
+extern void isic_recover(struct isic_softc *);
+extern int isicintr(void *);
+extern int isicprobe(struct isic_attach_args *);
+extern int isic_attach_avma1(struct isic_softc *);
+extern int isic_attach_s016(struct isic_softc *);
+extern int isic_attach_s0163(struct isic_softc *);
+extern int isic_attach_s08(struct isic_softc *);
+extern int isic_attach_usrtai(struct isic_softc *);
+extern int isic_attach_itkix1(struct isic_softc *);
+extern void isic_bchannel_setup(void *, int, int, int);
+extern void isic_hscx_init(struct isic_softc *, int, int);
+extern void isic_hscx_irq(struct isic_softc *, u_char ista, int, u_char);
+extern void isic_hscx_cmd( struct isic_softc *, int, unsigned char);
+extern void isic_hscx_waitxfw( struct isic_softc *, int);
+extern void isic_init_linktab(struct isic_softc *);
+extern int isic_isac_init(struct isic_softc *);
+extern void isic_isac_irq(struct isic_softc *, int);
+extern void isic_isac_l1_cmd(struct isic_softc *, int);
+extern void isic_next_state(struct isic_softc *, int);
+extern char * isic_printstate(struct isic_softc *);
+extern int isic_probe_avma1(struct isic_attach_args *);
+extern int isic_probe_s016(struct isic_attach_args *);
+extern int isic_probe_s0163(struct isic_attach_args *);
+extern int isic_probe_s08(struct isic_attach_args *ia);
+extern int isic_probe_usrtai(struct isic_attach_args *ia);
+extern int isic_probe_itkix1(struct isic_attach_args *ia);
 extern int isic_attach_bri(struct isic_softc *sc, const char *cardname, const struct isdn_layer1_isdnif_driver *dchan_driver);
 extern int isic_detach_bri(struct isic_softc *sc);
 
-extern void isic_isacsx_disable_intr __P((struct isic_softc *sc));
-extern void isic_isacsx_recover __P((struct isic_softc *sc));
-extern void isic_isacsx_irq __P((struct isic_softc *sc, int r));
-extern void isic_isacsx_l1_cmd __P((struct isic_softc *sc, int command));
-extern int isic_isacsx_init __P((struct isic_softc *sc));
+extern void isic_isacsx_disable_intr(struct isic_softc *sc);
+extern void isic_isacsx_recover(struct isic_softc *sc);
+extern void isic_isacsx_irq(struct isic_softc *sc, int r);
+extern void isic_isacsx_l1_cmd(struct isic_softc *sc, int command);
+extern int isic_isacsx_init(struct isic_softc *sc);
 
 #endif /* !_ISIC_L1_H */
 

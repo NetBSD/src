@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_mca.c,v 1.11 2003/10/25 18:37:03 christos Exp $	*/
+/*	$NetBSD: if_ep_mca.c,v 1.12 2005/02/04 02:10:43 perry Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ep_mca.c,v 1.11 2003/10/25 18:37:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ep_mca.c,v 1.12 2005/02/04 02:10:43 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,8 +106,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_ep_mca.c,v 1.11 2003/10/25 18:37:03 christos Exp 
 #define MCA_CBIO		0x200	/* Configuration Base IO Address */
 #define MCA_IOSZ		0x10	/* I/O space size */
 
-int ep_mca_match __P((struct device *, struct cfdata *, void *));
-void ep_mca_attach __P((struct device *, struct device *, void *));
+int ep_mca_match(struct device *, struct cfdata *, void *);
+void ep_mca_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(ep_mca, sizeof(struct ep_softc),
     ep_mca_match, ep_mca_attach, NULL, NULL);
@@ -126,7 +126,7 @@ const struct ep_mca_product {
 };
 
 static const struct ep_mca_product *ep_mca_lookup
-    __P((const struct mca_attach_args *));
+   (const struct mca_attach_args *);
 
 static const struct ep_mca_product *
 ep_mca_lookup(ma)

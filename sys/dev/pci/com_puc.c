@@ -1,4 +1,4 @@
-/*	$NetBSD: com_puc.c,v 1.10 2004/02/03 20:35:17 fredb Exp $	*/
+/*	$NetBSD: com_puc.c,v 1.11 2005/02/04 02:10:45 perry Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_puc.c,v 1.10 2004/02/03 20:35:17 fredb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_puc.c,v 1.11 2005/02/04 02:10:45 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,8 +60,8 @@ struct com_puc_softc {
 	void	*sc_ih;			/* interrupt handler */
 };
 
-int	com_puc_probe __P((struct device *, struct cfdata *, void *));
-void	com_puc_attach __P((struct device *, struct device *, void *));
+int	com_puc_probe(struct device *, struct cfdata *, void *);
+void	com_puc_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(com_puc, sizeof(struct com_puc_softc),
     com_puc_probe, com_puc_attach, NULL, NULL);

@@ -1,4 +1,4 @@
-/* $NetBSD: zs_ioasic.c,v 1.23 2004/09/13 12:55:48 drochner Exp $ */
+/* $NetBSD: zs_ioasic.c,v 1.24 2005/02/04 02:10:48 perry Exp $ */
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.23 2004/09/13 12:55:48 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.24 2005/02/04 02:10:48 perry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -90,10 +90,10 @@ __KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.23 2004/09/13 12:55:48 drochner Exp 
 /*
  * Helpers for console support.
  */
-void	zs_ioasic_cninit __P((tc_addr_t, tc_offset_t, int));
-int	zs_ioasic_cngetc __P((dev_t));
-void	zs_ioasic_cnputc __P((dev_t, int));
-void	zs_ioasic_cnpollc __P((dev_t, int));
+void	zs_ioasic_cninit(tc_addr_t, tc_offset_t, int);
+int	zs_ioasic_cngetc(dev_t);
+void	zs_ioasic_cnputc(dev_t, int);
+void	zs_ioasic_cnpollc(dev_t, int);
 
 struct consdev zs_ioasic_cons = {
 	NULL, NULL, zs_ioasic_cngetc, zs_ioasic_cnputc,
@@ -105,9 +105,9 @@ int zs_ioasic_console_channel;
 int zs_ioasic_console;
 struct zs_chanstate zs_ioasic_conschanstate_store;
 
-int	zs_ioasic_isconsole __P((tc_offset_t, int));
-int	zs_getc __P((struct zs_chanstate *));
-void	zs_putc __P((struct zs_chanstate *, int));
+int	zs_ioasic_isconsole(tc_offset_t, int);
+int	zs_getc(struct zs_chanstate *);
+void	zs_putc(struct zs_chanstate *, int);
 
 /*
  * Some warts needed by z8530tty.c
@@ -160,7 +160,7 @@ static u_char zs_ioasic_init_reg[16] = {
 	ZSWR15_BREAK_IE,
 };
 
-struct zshan *zs_ioasic_get_chan_addr __P((tc_addr_t, int));
+struct zshan *zs_ioasic_get_chan_addr(tc_addr_t, int);
 
 struct zshan *
 zs_ioasic_get_chan_addr(zsaddr, channel)
@@ -191,18 +191,18 @@ zs_ioasic_get_chan_addr(zsaddr, channel)
  ****************************************************************/
 
 /* Definition of the driver for autoconfig. */
-int	zs_ioasic_match __P((struct device *, struct cfdata *, void *));
-void	zs_ioasic_attach __P((struct device *, struct device *, void *));
-int	zs_ioasic_print __P((void *, const char *name));
-int	zs_ioasic_submatch __P((struct device *, struct cfdata *,
-				const locdesc_t *, void *));
+int	zs_ioasic_match(struct device *, struct cfdata *, void *);
+void	zs_ioasic_attach(struct device *, struct device *, void *);
+int	zs_ioasic_print(void *, const char *name);
+int	zs_ioasic_submatch(struct device *, struct cfdata *,
+				const locdesc_t *, void *);
 
 CFATTACH_DECL(zsc_ioasic, sizeof(struct zsc_softc),
     zs_ioasic_match, zs_ioasic_attach, NULL, NULL);
 
 /* Interrupt handlers. */
-int	zs_ioasic_hardintr __P((void *));
-void	zs_ioasic_softintr __P((void *));
+int	zs_ioasic_hardintr(void *);
+void	zs_ioasic_softintr(void *);
 
 /*
  * Is the zs chip present?

@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_network_subr.c,v 1.2 2001/11/13 07:26:28 lukem Exp $	*/
+/*	$NetBSD: ofw_network_subr.c,v 1.3 2005/02/04 02:10:44 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_network_subr.c,v 1.2 2001/11/13 07:26:28 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_network_subr.c,v 1.3 2005/02/04 02:10:44 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,7 +58,7 @@ struct table_entry {
 	int t_value;
 };
 
-int	of_network_parse_network_type __P((const char *));
+int	of_network_parse_network_type(const char *);
 
 /*
  * int of_network_decode_media(phandle, nmediap, defmediap)

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eg.c,v 1.63 2004/09/14 20:20:47 drochner Exp $	*/
+/*	$NetBSD: if_eg.c,v 1.64 2005/02/04 02:10:40 perry Exp $	*/
 
 /*
  * Copyright (c) 1993 Dean Huxley <dean@fsa.ca>
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_eg.c,v 1.63 2004/09/14 20:20:47 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eg.c,v 1.64 2005/02/04 02:10:40 perry Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -126,30 +126,30 @@ struct eg_softc {
 #endif
 };
 
-int egprobe __P((struct device *, struct cfdata *, void *));
-void egattach __P((struct device *, struct device *, void *));
+int egprobe(struct device *, struct cfdata *, void *);
+void egattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(eg, sizeof(struct eg_softc),
     egprobe, egattach, NULL, NULL);
 
-int egintr __P((void *));
-void eginit __P((struct eg_softc *));
-int egioctl __P((struct ifnet *, u_long, caddr_t));
-void egrecv __P((struct eg_softc *));
-void egstart __P((struct ifnet *));
-void egwatchdog __P((struct ifnet *));
-void egreset __P((struct eg_softc *));
-void egread __P((struct eg_softc *, caddr_t, int));
-struct mbuf *egget __P((struct eg_softc *, caddr_t, int));
-void egstop __P((struct eg_softc *));
+int egintr(void *);
+void eginit(struct eg_softc *);
+int egioctl(struct ifnet *, u_long, caddr_t);
+void egrecv(struct eg_softc *);
+void egstart(struct ifnet *);
+void egwatchdog(struct ifnet *);
+void egreset(struct eg_softc *);
+void egread(struct eg_softc *, caddr_t, int);
+struct mbuf *egget(struct eg_softc *, caddr_t, int);
+void egstop(struct eg_softc *);
 
-static inline void egprintpcb __P((u_int8_t *));
-static inline void egprintstat __P((u_char));
-static int egoutPCB __P((bus_space_tag_t, bus_space_handle_t, u_int8_t));
-static int egreadPCBstat __P((bus_space_tag_t, bus_space_handle_t, u_int8_t));
-static int egreadPCBready __P((bus_space_tag_t, bus_space_handle_t));
-static int egwritePCB __P((bus_space_tag_t, bus_space_handle_t, u_int8_t *));
-static int egreadPCB __P((bus_space_tag_t, bus_space_handle_t, u_int8_t *));
+static inline void egprintpcb(u_int8_t *);
+static inline void egprintstat(u_char);
+static int egoutPCB(bus_space_tag_t, bus_space_handle_t, u_int8_t);
+static int egreadPCBstat(bus_space_tag_t, bus_space_handle_t, u_int8_t);
+static int egreadPCBready(bus_space_tag_t, bus_space_handle_t);
+static int egwritePCB(bus_space_tag_t, bus_space_handle_t, u_int8_t *);
+static int egreadPCB(bus_space_tag_t, bus_space_handle_t, u_int8_t *);
 
 /*
  * Support stuff

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ntwoc_pci.c,v 1.13 2003/11/02 10:31:06 wiz Exp $	*/
+/*	$NetBSD: if_ntwoc_pci.c,v 1.14 2005/02/04 02:10:45 perry Exp $	*/
 
 /*
  * Copyright (c) 1998 Vixie Enterprises
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ntwoc_pci.c,v 1.13 2003/11/02 10:31:06 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ntwoc_pci.c,v 1.14 2005/02/04 02:10:45 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,7 +88,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ntwoc_pci.c,v 1.13 2003/11/02 10:31:06 wiz Exp $"
 #endif
 
 #if __NetBSD_Version__ >= 104160000
-static	void ntwoc_pci_config_interrupts __P((struct device *));
+static	void ntwoc_pci_config_interrupts(struct device *);
 #else
 #define	SCA_BASECLOCK	16000000
 #endif
@@ -113,17 +113,17 @@ struct ntwoc_pci_softc {
 	struct sca_softc sc_sca;	/* the SCA itself */
 };
 
-static  int ntwoc_pci_match __P((struct device *, struct cfdata *, void *));
-static  void ntwoc_pci_attach __P((struct device *, struct device *, void *));
+static  int ntwoc_pci_match(struct device *, struct cfdata *, void *);
+static  void ntwoc_pci_attach(struct device *, struct device *, void *);
 
-static	int ntwoc_pci_alloc_dma __P((struct sca_softc *));
-static	void ntwoc_pci_clock_callback __P((void *, int, int));
-static	void ntwoc_pci_dtr_callback __P((void *, int, int));
-static	void ntwoc_pci_get_clock __P((struct sca_port *, u_int8_t, u_int8_t,
-    u_int8_t, u_int8_t));
-static	int ntwoc_pci_intr __P((void *));
-static	void ntwoc_pci_setup_dma __P((struct sca_softc *));
-static	void ntwoc_pci_shutdown __P((void *sc));
+static	int ntwoc_pci_alloc_dma(struct sca_softc *);
+static	void ntwoc_pci_clock_callback(void *, int, int);
+static	void ntwoc_pci_dtr_callback(void *, int, int);
+static	void ntwoc_pci_get_clock(struct sca_port *, u_int8_t, u_int8_t,
+    u_int8_t, u_int8_t);
+static	int ntwoc_pci_intr(void *);
+static	void ntwoc_pci_setup_dma(struct sca_softc *);
+static	void ntwoc_pci_shutdown(void *sc);
 
 CFATTACH_DECL(ntwoc_pci, sizeof(struct ntwoc_pci_softc),
     ntwoc_pci_match, ntwoc_pci_attach, NULL, NULL);

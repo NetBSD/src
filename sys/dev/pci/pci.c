@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.90 2005/01/26 21:49:00 jmcneill Exp $	*/
+/*	$NetBSD: pci.c,v 1.91 2005/02/04 02:10:45 perry Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.90 2005/01/26 21:49:00 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.91 2005/02/04 02:10:45 perry Exp $");
 
 #include "opt_pci.h"
 
@@ -58,17 +58,17 @@ int pci_config_dump = 1;
 int pci_config_dump = 0;
 #endif
 
-int pcimatch __P((struct device *, struct cfdata *, void *));
-void pciattach __P((struct device *, struct device *, void *));
+int pcimatch(struct device *, struct cfdata *, void *);
+void pciattach(struct device *, struct device *, void *);
 int pcirescan(struct device *, const char *, const int *);
 void pcidevdetached(struct device *, struct device *);
 
 CFATTACH_DECL2(pci, sizeof(struct pci_softc),
     pcimatch, pciattach, NULL, NULL, pcirescan, pcidevdetached);
 
-int	pciprint __P((void *, const char *));
-int	pcisubmatch __P((struct device *, struct cfdata *,
-			 const locdesc_t *, void *));
+int	pciprint(void *, const char *);
+int	pcisubmatch(struct device *, struct cfdata *,
+			 const locdesc_t *, void *);
 
 #ifdef PCI_MACHDEP_ENUMERATE_BUS
 #define pci_enumerate_bus PCI_MACHDEP_ENUMERATE_BUS

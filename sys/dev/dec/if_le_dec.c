@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_dec.c,v 1.13 2003/08/07 16:30:55 agc Exp $	*/
+/*	$NetBSD: if_le_dec.c,v 1.14 2005/02/04 02:10:36 perry Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_dec.c,v 1.13 2003/08/07 16:30:55 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_dec.c,v 1.14 2005/02/04 02:10:36 perry Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -105,7 +105,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_le_dec.c,v 1.13 2003/08/07 16:30:55 agc Exp $");
 #include <machine/bus.h>
 
 /* access LANCE registers */
-void le_dec_writereg __P((volatile u_short *regptr, u_short val));
+void le_dec_writereg(volatile u_short *regptr, u_short val);
 #define	LERDWR(cntl, src, dst)	{ (dst) = (src); tc_mb(); }
 #define	LEWREG(src, dst)	le_dec_writereg(&(dst), (src))
 
@@ -121,8 +121,8 @@ void le_dec_writereg __P((volatile u_short *regptr, u_short val));
 #define hide		static
 #endif
 
-hide void le_dec_wrcsr __P((struct lance_softc *, u_int16_t, u_int16_t));
-hide u_int16_t le_dec_rdcsr __P((struct lance_softc *, u_int16_t));  
+hide void le_dec_wrcsr(struct lance_softc *, u_int16_t, u_int16_t);
+hide u_int16_t le_dec_rdcsr(struct lance_softc *, u_int16_t);  
 
 void
 dec_le_common_attach(sc, eap)

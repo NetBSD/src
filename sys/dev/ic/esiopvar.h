@@ -1,4 +1,4 @@
-/*	$NetBSD: esiopvar.h,v 1.10 2004/05/17 18:37:02 bouyer Exp $	*/
+/*	$NetBSD: esiopvar.h,v 1.11 2005/02/04 02:10:36 perry Exp $	*/
 
 /*
  * Copyright (c) 2002 Manuel Bouyer.
@@ -119,7 +119,7 @@ struct esiop_target {
 	u_int32_t lun_table_offset; /* pointer to our DSA table */
 };
 
-static __inline__ void esiop_table_sync __P((struct esiop_cmd *, int));
+static __inline__ void esiop_table_sync(struct esiop_cmd *, int);
 static __inline__ void
 esiop_table_sync(esiop_cmd, ops)
 	struct esiop_cmd *esiop_cmd;
@@ -159,7 +159,7 @@ struct esiop_softc {
 #define SCF_CHAN_NOSLOT	0x0001		/* channel out of scheduler slot */
 #define SCF_CHAN_ADAPTREQ 0x0002	/* esiop_scsipi_request() is running */
 
-void    esiop_attach __P((struct esiop_softc *));
-int	esiop_intr __P((void *));
-void	esiop_add_dev __P((struct esiop_softc *, int, int));
-void	esiop_del_dev __P((struct esiop_softc *, int, int));
+void    esiop_attach(struct esiop_softc *);
+int	esiop_intr(void *);
+void	esiop_add_dev(struct esiop_softc *, int, int);
+void	esiop_del_dev(struct esiop_softc *, int, int);

@@ -1,4 +1,4 @@
-/*	$NetBSD: uba_bi.c,v 1.8 2002/10/02 16:33:39 thorpej Exp $ */
+/*	$NetBSD: uba_bi.c,v 1.9 2005/02/04 02:10:36 perry Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uba_bi.c,v 1.8 2002/10/02 16:33:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uba_bi.c,v 1.9 2005/02/04 02:10:36 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -62,10 +62,10 @@ __KERNEL_RCSID(0, "$NetBSD: uba_bi.c,v 1.8 2002/10/02 16:33:39 thorpej Exp $");
 
 #define	BUA(uba)	((struct dwbua_regs *)(uba))
 
-static	int uba_bi_match __P((struct device *, struct cfdata *, void *));
-static	void uba_bi_attach __P((struct device *, struct device *, void *));
-static	void bua_init __P((struct uba_softc *));
-static	void bua_purge __P((struct uba_softc *, int));
+static	int uba_bi_match(struct device *, struct cfdata *, void *);
+static	void uba_bi_attach(struct device *, struct device *, void *);
+static	void bua_init(struct uba_softc *);
+static	void bua_purge(struct uba_softc *, int);
 
 /* bua_csr */
 #define BUACSR_ERR      0x80000000      /* composite error */

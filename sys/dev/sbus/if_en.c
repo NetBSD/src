@@ -1,4 +1,4 @@
-/*	$NetBSD: if_en.c,v 1.18 2002/12/10 13:44:47 pk Exp $	*/
+/*	$NetBSD: if_en.c,v 1.19 2005/02/04 02:10:47 perry Exp $	*/
 
 /*
  *
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_en.c,v 1.18 2002/12/10 13:44:47 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_en.c,v 1.19 2005/02/04 02:10:47 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,8 +79,8 @@ struct en_sbus_softc {
 /*
  * prototypes
  */
-static	int en_sbus_match __P((struct device *, struct cfdata *, void *));
-static	void en_sbus_attach __P((struct device *, struct device *, void *));
+static	int en_sbus_match(struct device *, struct cfdata *, void *);
+static	void en_sbus_attach(struct device *, struct device *, void *);
 
 /*
  * SBus autoconfig attachments

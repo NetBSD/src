@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380var.h,v 1.27 2004/08/13 12:59:20 tsutsui Exp $	*/
+/*	$NetBSD: ncr5380var.h,v 1.28 2005/02/04 02:10:36 perry Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -143,21 +143,21 @@ struct ncr5380_softc {
 #endif
 
 	/* Functions set from MD code */
-	int		(*sc_pio_out) __P((struct ncr5380_softc *,
-					   int, int, u_char *));
-	int		(*sc_pio_in) __P((struct ncr5380_softc *,
-					  int, int, u_char *));
-	void		(*sc_dma_alloc) __P((struct ncr5380_softc *));
-	void		(*sc_dma_free) __P((struct ncr5380_softc *));
+	int		(*sc_pio_out)(struct ncr5380_softc *,
+					   int, int, u_char *);
+	int		(*sc_pio_in)(struct ncr5380_softc *,
+					  int, int, u_char *);
+	void		(*sc_dma_alloc)(struct ncr5380_softc *);
+	void		(*sc_dma_free)(struct ncr5380_softc *);
 
-	void		(*sc_dma_setup) __P((struct ncr5380_softc *));
-	void		(*sc_dma_start) __P((struct ncr5380_softc *));
-	void		(*sc_dma_poll) __P((struct ncr5380_softc *));
-	void		(*sc_dma_eop) __P((struct ncr5380_softc *));
-	void		(*sc_dma_stop) __P((struct ncr5380_softc *));
+	void		(*sc_dma_setup)(struct ncr5380_softc *);
+	void		(*sc_dma_start)(struct ncr5380_softc *);
+	void		(*sc_dma_poll)(struct ncr5380_softc *);
+	void		(*sc_dma_eop)(struct ncr5380_softc *);
+	void		(*sc_dma_stop)(struct ncr5380_softc *);
 
-	void		(*sc_intr_on) __P((struct ncr5380_softc *));
-	void		(*sc_intr_off) __P((struct ncr5380_softc *));
+	void		(*sc_intr_on)(struct ncr5380_softc *);
+	void		(*sc_intr_off)(struct ncr5380_softc *);
 
 	int		sc_flags;	/* Misc. flags and capabilities */
 #define	NCR5380_FORCE_POLLING	1	/* Do not use interrupts. */
@@ -226,18 +226,18 @@ struct ncr5380_softc {
 
 };
 
-void	ncr5380_attach __P((struct ncr5380_softc *));
-int	ncr5380_detach __P((struct ncr5380_softc *, int));
-int 	ncr5380_intr __P((void *));
-void	ncr5380_scsipi_request __P((struct scsipi_channel *,
-	    scsipi_adapter_req_t, void *));
-int 	ncr5380_pio_in __P((struct ncr5380_softc *, int, int, u_char *));
-int 	ncr5380_pio_out __P((struct ncr5380_softc *, int, int, u_char *));
-void	ncr5380_init __P((struct ncr5380_softc *));
+void	ncr5380_attach(struct ncr5380_softc *);
+int	ncr5380_detach(struct ncr5380_softc *, int);
+int 	ncr5380_intr(void *);
+void	ncr5380_scsipi_request(struct scsipi_channel *,
+	    scsipi_adapter_req_t, void *);
+int 	ncr5380_pio_in(struct ncr5380_softc *, int, int, u_char *);
+int 	ncr5380_pio_out(struct ncr5380_softc *, int, int, u_char *);
+void	ncr5380_init(struct ncr5380_softc *);
 
 #ifdef	NCR5380_DEBUG
 struct ncr5380_softc *ncr5380_debug_sc;
-void ncr5380_trace __P((char *msg, long val));
+void ncr5380_trace(char *msg, long val);
 #define	NCR_TRACE(msg, val) ncr5380_trace(msg, val)
 #else	/* NCR5380_DEBUG */
 #define	NCR_TRACE(msg, val)	/* nada */

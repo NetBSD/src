@@ -1,4 +1,4 @@
-/*	$NetBSD: rrunner.c,v 1.46 2004/10/28 07:07:40 yamt Exp $	*/
+/*	$NetBSD: rrunner.c,v 1.47 2005/02/04 02:10:37 perry Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.46 2004/10/28 07:07:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.47 2005/02/04 02:10:37 perry Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -114,13 +114,13 @@ u_int32_t max_write_len;
 
 /* Network device driver and initialization framework routines */
 
-void eshinit __P((struct esh_softc *));
-int  eshioctl __P((struct ifnet *, u_long, caddr_t));
-void eshreset __P((struct esh_softc *));
-void eshstart __P((struct ifnet *));
-static int eshstatus __P((struct esh_softc *));
-void eshstop __P((struct esh_softc *));
-void eshwatchdog __P((struct ifnet *));
+void eshinit(struct esh_softc *);
+int  eshioctl(struct ifnet *, u_long, caddr_t);
+void eshreset(struct esh_softc *);
+void eshstart(struct ifnet *);
+static int eshstatus(struct esh_softc *);
+void eshstop(struct esh_softc *);
+void eshwatchdog(struct ifnet *);
 
 /* Routines to support FP operation */
 
@@ -146,38 +146,35 @@ const struct cdevsw esh_cdevsw = {
 
 /* General routines, not externally visable */
 
-static struct mbuf *esh_adjust_mbufs __P((struct esh_softc *, struct mbuf *m));
-static void esh_dma_sync __P((struct esh_softc *, void *,
-			      int, int, int, int, int, int));
-static void esh_fill_snap_ring __P((struct esh_softc *));
-static void esh_init_snap_ring __P((struct esh_softc *));
-static void esh_close_snap_ring __P((struct esh_softc *));
-static void esh_read_snap_ring __P((struct esh_softc *, u_int16_t, int));
-static void esh_fill_fp_ring __P((struct esh_softc *, 
-				  struct esh_fp_ring_ctl *));
-static void esh_flush_fp_ring __P((struct esh_softc *, 
+static struct mbuf *esh_adjust_mbufs(struct esh_softc *, struct mbuf *m);
+static void esh_dma_sync(struct esh_softc *, void *,
+			      int, int, int, int, int, int);
+static void esh_fill_snap_ring(struct esh_softc *);
+static void esh_init_snap_ring(struct esh_softc *);
+static void esh_close_snap_ring(struct esh_softc *);
+static void esh_read_snap_ring(struct esh_softc *, u_int16_t, int);
+static void esh_fill_fp_ring(struct esh_softc *, struct esh_fp_ring_ctl *);
+static void esh_flush_fp_ring(struct esh_softc *, 
 				   struct esh_fp_ring_ctl *,
-				   struct esh_dmainfo *));
-static void esh_init_fp_rings __P((struct esh_softc *));
-static void esh_read_fp_ring __P((struct esh_softc *, u_int16_t, int, int));
-static void esh_reset_runcode __P((struct esh_softc *));
-static void esh_send __P((struct esh_softc *));
-static void esh_send_cmd __P((struct esh_softc *, 
-			      u_int8_t, u_int8_t, u_int8_t));
-static u_int32_t esh_read_eeprom __P((struct esh_softc *, u_int32_t));
-static void esh_write_addr __P((bus_space_tag_t, bus_space_handle_t,
-				bus_addr_t, bus_addr_t));
-static int esh_write_eeprom __P((struct esh_softc *, 
-				 u_int32_t, u_int32_t));
-static void eshstart_cleanup __P((struct esh_softc *, u_int16_t, int));
+				   struct esh_dmainfo *);
+static void esh_init_fp_rings(struct esh_softc *);
+static void esh_read_fp_ring(struct esh_softc *, u_int16_t, int, int);
+static void esh_reset_runcode(struct esh_softc *);
+static void esh_send(struct esh_softc *);
+static void esh_send_cmd(struct esh_softc *, u_int8_t, u_int8_t, u_int8_t);
+static u_int32_t esh_read_eeprom(struct esh_softc *, u_int32_t);
+static void esh_write_addr(bus_space_tag_t, bus_space_handle_t,
+				bus_addr_t, bus_addr_t);
+static int esh_write_eeprom(struct esh_softc *, u_int32_t, u_int32_t);
+static void eshstart_cleanup(struct esh_softc *, u_int16_t, int);
 
-static struct esh_dmainfo *esh_new_dmainfo __P((struct esh_softc *));
-static void esh_free_dmainfo __P((struct esh_softc *, struct esh_dmainfo *));
-static int esh_generic_ioctl __P((struct esh_softc *, u_long, caddr_t, u_long,
-				  struct proc *));
+static struct esh_dmainfo *esh_new_dmainfo(struct esh_softc *);
+static void esh_free_dmainfo(struct esh_softc *, struct esh_dmainfo *);
+static int esh_generic_ioctl(struct esh_softc *, u_long, caddr_t, u_long,
+				  struct proc *);
 
 #ifdef ESH_PRINTF
-static int esh_check __P((struct esh_softc *));
+static int esh_check(struct esh_softc *);
 #endif
 
 #define ESHUNIT(x)	((minor(x) & 0xff00) >> 8)

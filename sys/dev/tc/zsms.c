@@ -1,4 +1,4 @@
-/*	$NetBSD: zsms.c,v 1.10 2003/08/07 16:31:28 agc Exp $	*/
+/*	$NetBSD: zsms.c,v 1.11 2005/02/04 02:10:48 perry Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zsms.c,v 1.10 2003/08/07 16:31:28 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zsms.c,v 1.11 2005/02/04 02:10:48 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,16 +110,16 @@ struct zsms_softc {		/* driver status information */
 
 struct zsops zsops_zsms;
 
-static int  zsms_match __P((struct device *, struct cfdata *, void *));
-static void zsms_attach __P((struct device *, struct device *, void *));
-static void zsms_input __P((void *, int));
+static int  zsms_match(struct device *, struct cfdata *, void *);
+static void zsms_attach(struct device *, struct device *, void *);
+static void zsms_input(void *, int);
 
 CFATTACH_DECL(zsms, sizeof(struct zsms_softc),
     zsms_match, zsms_attach, NULL, NULL);
 
-static int  zsms_enable __P((void *));
-static int  zsms_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
-static void zsms_disable __P((void *));
+static int  zsms_enable(void *);
+static int  zsms_ioctl(void *, u_long, caddr_t, int, struct proc *);
+static void zsms_disable(void *);
 
 const struct wsmouse_accessops zsms_accessops = {
 	zsms_enable,
@@ -289,10 +289,10 @@ zsms_input(vsc, data)
  * Interface to the lower layer (zscc)
  ****************************************************************/
 
-static void zsms_rxint __P((struct zs_chanstate *));
-static void zsms_stint __P((struct zs_chanstate *, int));
-static void zsms_txint __P((struct zs_chanstate *));
-static void zsms_softint __P((struct zs_chanstate *));
+static void zsms_rxint(struct zs_chanstate *);
+static void zsms_stint(struct zs_chanstate *, int);
+static void zsms_txint(struct zs_chanstate *);
+static void zsms_softint(struct zs_chanstate *);
 
 static void
 zsms_rxint(cs)

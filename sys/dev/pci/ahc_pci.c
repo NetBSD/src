@@ -39,7 +39,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: ahc_pci.c,v 1.47 2004/10/17 01:10:44 christos Exp $
+ * $Id: ahc_pci.c,v 1.48 2005/02/04 02:10:45 perry Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx_pci.c#57 $
  *
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahc_pci.c,v 1.47 2004/10/17 01:10:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahc_pci.c,v 1.48 2005/02/04 02:10:45 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -707,8 +707,8 @@ static void ahc_scbram_config(struct ahc_softc *ahc, int enable,
 				  int pcheck, int fast, int large);
 static void ahc_probe_ext_scbram(struct ahc_softc *ahc);
 
-int ahc_pci_probe __P((struct device *, struct cfdata *, void *));
-void ahc_pci_attach __P((struct device *, struct device *, void *));
+int ahc_pci_probe(struct device *, struct cfdata *, void *);
+void ahc_pci_attach(struct device *, struct device *, void *);
 
 
 CFATTACH_DECL(ahc_pci, sizeof(struct ahc_softc),

@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.41 2004/12/31 14:18:35 bjh21 Exp $	*/
+/*	$NetBSD: kbd.c,v 1.42 2005/02/04 02:10:47 perry Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.41 2004/12/31 14:18:35 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.42 2005/02/04 02:10:47 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,13 +91,13 @@ const struct cdevsw kbd_cdevsw = {
 };
 
 #if NWSKBD > 0
-int	wssunkbd_enable __P((void *, int));
-void	wssunkbd_set_leds __P((void *, int));
-int	wssunkbd_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
+int	wssunkbd_enable(void *, int);
+void	wssunkbd_set_leds(void *, int);
+int	wssunkbd_ioctl(void *, u_long, caddr_t, int, struct proc *);
 
-void    sunkbd_wskbd_cngetc __P((void *, u_int *, int *));
-void    sunkbd_wskbd_cnpollc __P((void *, int));
-void    sunkbd_wskbd_cnbell __P((void *, u_int, u_int, u_int));
+void    sunkbd_wskbd_cngetc(void *, u_int *, int *);
+void    sunkbd_wskbd_cnpollc(void *, int);
+void    sunkbd_wskbd_cnbell(void *, u_int, u_int, u_int);
 static void sunkbd_bell_off(void *v);
 
 const struct wskbd_accessops sunkbd_wskbd_accessops = {

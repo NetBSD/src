@@ -1,4 +1,4 @@
-/*      $NetBSD: advlib.h,v 1.14 2004/02/13 18:02:05 wiz Exp $        */
+/*      $NetBSD: advlib.h,v 1.15 2005/02/04 02:10:36 perry Exp $        */
 
 /*
  * Definitions for low level routines and data structures
@@ -1329,20 +1329,20 @@ typedef struct asceep_config
 /******************************************************************************/
 
 
-void AscInitASC_SOFTC __P((ASC_SOFTC *));
-int16_t AscInitFromEEP __P((ASC_SOFTC *));
-u_int16_t AscInitFromASC_SOFTC __P((ASC_SOFTC *));
-int AscInitDriver __P((ASC_SOFTC *));
-void AscReInitLram __P((ASC_SOFTC *));
-int AscFindSignature __P((bus_space_tag_t, bus_space_handle_t));
-u_int8_t AscGetChipIRQ __P((bus_space_tag_t, bus_space_handle_t, u_int16_t));
-u_int16_t AscGetIsaDmaChannel __P((bus_space_tag_t, bus_space_handle_t));
-int AscISR __P((ASC_SOFTC *));
-int AscExeScsiQueue __P((ASC_SOFTC *, ASC_SCSI_Q *));
-void AscInquiryHandling __P((ASC_SOFTC *, u_int8_t, ASC_SCSI_INQUIRY *));
-int AscAbortCCB __P((ASC_SOFTC *, struct adv_ccb *));
-int AscResetBus __P((ASC_SOFTC *));
-int AscResetDevice __P((ASC_SOFTC *, u_char));
+void AscInitASC_SOFTC(ASC_SOFTC *);
+int16_t AscInitFromEEP(ASC_SOFTC *);
+u_int16_t AscInitFromASC_SOFTC(ASC_SOFTC *);
+int AscInitDriver(ASC_SOFTC *);
+void AscReInitLram(ASC_SOFTC *);
+int AscFindSignature(bus_space_tag_t, bus_space_handle_t);
+u_int8_t AscGetChipIRQ(bus_space_tag_t, bus_space_handle_t, u_int16_t);
+u_int16_t AscGetIsaDmaChannel(bus_space_tag_t, bus_space_handle_t);
+int AscISR(ASC_SOFTC *);
+int AscExeScsiQueue(ASC_SOFTC *, ASC_SCSI_Q *);
+void AscInquiryHandling(ASC_SOFTC *, u_int8_t, ASC_SCSI_INQUIRY *);
+int AscAbortCCB(ASC_SOFTC *, struct adv_ccb *);
+int AscResetBus(ASC_SOFTC *);
+int AscResetDevice(ASC_SOFTC *, u_char);
 
 
 /******************************************************************************/

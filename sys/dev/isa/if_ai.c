@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ai.c,v 1.19 2004/09/14 20:20:47 drochner Exp $	*/
+/*	$NetBSD: if_ai.c,v 1.20 2005/02/04 02:10:40 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ai.c,v 1.19 2004/09/14 20:20:47 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ai.c,v 1.20 2005/02/04 02:10:40 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,24 +89,24 @@ const char *ai_names[] = {
 };
 
 /* Functions required by the i82586 MI driver */
-static void 	ai_reset __P((struct ie_softc *, int));
-static void 	ai_atten __P((struct ie_softc *, int));
+static void 	ai_reset(struct ie_softc *, int);
+static void 	ai_atten(struct ie_softc *, int);
 
-static void	ai_copyin __P((struct ie_softc *, void *, int, size_t));
-static void	ai_copyout __P((struct ie_softc *, const void *, int, size_t));
+static void	ai_copyin(struct ie_softc *, void *, int, size_t);
+static void	ai_copyout(struct ie_softc *, const void *, int, size_t);
 
-static u_int16_t ai_read_16 __P((struct ie_softc *, int));
-static void	ai_write_16 __P((struct ie_softc *, int, u_int16_t));
-static void	ai_write_24 __P((struct ie_softc *, int, int));
+static u_int16_t ai_read_16(struct ie_softc *, int);
+static void	ai_write_16(struct ie_softc *, int, u_int16_t);
+static void	ai_write_24(struct ie_softc *, int, int);
 
 /* Local support functions */
-static int 	check_ie_present __P((struct ie_softc*, bus_space_tag_t,
-					bus_space_handle_t, bus_size_t));
-static int	ai_find_mem_size __P((struct ai_softc*, bus_space_tag_t,
-					bus_size_t));
+static int 	check_ie_present(struct ie_softc*, bus_space_tag_t,
+					bus_space_handle_t, bus_size_t);
+static int	ai_find_mem_size(struct ai_softc*, bus_space_tag_t,
+					bus_size_t);
 
-int ai_match __P((struct device *, struct cfdata *, void *));
-void ai_attach __P((struct device *, struct device *, void *));
+int ai_match(struct device *, struct cfdata *, void *);
+void ai_attach(struct device *, struct device *, void *);
 
 /*
  * AT&T StarLan support routines

@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix_sbus.c,v 1.13 2004/03/17 17:04:58 pk Exp $ */
+/*	$NetBSD: cgsix_sbus.c,v 1.14 2005/02/04 02:10:47 perry Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgsix_sbus.c,v 1.13 2004/03/17 17:04:58 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgsix_sbus.c,v 1.14 2005/02/04 02:10:47 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,8 +71,8 @@ __KERNEL_RCSID(0, "$NetBSD: cgsix_sbus.c,v 1.13 2004/03/17 17:04:58 pk Exp $");
 #include <dev/sun/cgsixvar.h>
 
 /* autoconfiguration driver */
-static int	cgsixmatch __P((struct device *, struct cfdata *, void *));
-static void	cgsixattach __P((struct device *, struct device *, void *));
+static int	cgsixmatch(struct device *, struct cfdata *, void *);
+static void	cgsixattach(struct device *, struct device *, void *);
 
 /* Allocate an `sbusdev' in addition to the cgsix softc */
 struct cgsix_sbus_softc {

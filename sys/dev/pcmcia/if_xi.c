@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xi.c,v 1.50 2005/01/30 19:30:16 thorpej Exp $ */
+/*	$NetBSD: if_xi.c,v 1.51 2005/02/04 02:10:45 perry Exp $ */
 /*	OpenBSD: if_xe.c,v 1.9 1999/09/16 11:28:42 niklas Exp 	*/
 
 /*
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.50 2005/01/30 19:30:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.51 2005/02/04 02:10:45 perry Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -146,24 +146,24 @@ int xidebug = 0;
 
 #define STATIC
 
-STATIC int xi_enable __P((struct xi_softc *));
-STATIC void xi_disable __P((struct xi_softc *));
-STATIC void xi_cycle_power __P((struct xi_softc *));
-STATIC int xi_ether_ioctl __P((struct ifnet *, u_long cmd, caddr_t));
-STATIC void xi_full_reset __P((struct xi_softc *));
-STATIC void xi_init __P((struct xi_softc *));
-STATIC int xi_ioctl __P((struct ifnet *, u_long, caddr_t));
-STATIC int xi_mdi_read __P((struct device *, int, int));
-STATIC void xi_mdi_write __P((struct device *, int, int, int));
-STATIC int xi_mediachange __P((struct ifnet *));
-STATIC void xi_mediastatus __P((struct ifnet *, struct ifmediareq *));
-STATIC u_int16_t xi_get __P((struct xi_softc *));
-STATIC void xi_reset __P((struct xi_softc *));
-STATIC void xi_set_address __P((struct xi_softc *));
-STATIC void xi_start __P((struct ifnet *));
-STATIC void xi_statchg __P((struct device *));
-STATIC void xi_stop __P((struct xi_softc *));
-STATIC void xi_watchdog __P((struct ifnet *));
+STATIC int xi_enable(struct xi_softc *);
+STATIC void xi_disable(struct xi_softc *);
+STATIC void xi_cycle_power(struct xi_softc *);
+STATIC int xi_ether_ioctl(struct ifnet *, u_long cmd, caddr_t);
+STATIC void xi_full_reset(struct xi_softc *);
+STATIC void xi_init(struct xi_softc *);
+STATIC int xi_ioctl(struct ifnet *, u_long, caddr_t);
+STATIC int xi_mdi_read(struct device *, int, int);
+STATIC void xi_mdi_write(struct device *, int, int, int);
+STATIC int xi_mediachange(struct ifnet *);
+STATIC void xi_mediastatus(struct ifnet *, struct ifmediareq *);
+STATIC u_int16_t xi_get(struct xi_softc *);
+STATIC void xi_reset(struct xi_softc *);
+STATIC void xi_set_address(struct xi_softc *);
+STATIC void xi_start(struct ifnet *);
+STATIC void xi_statchg(struct device *);
+STATIC void xi_stop(struct xi_softc *);
+STATIC void xi_watchdog(struct ifnet *);
 
 void
 xi_attach(sc, myea)
@@ -536,7 +536,7 @@ xi_get(sc)
  */
 
 /* Let the MII serial management be idle for one period. */
-static INLINE void xi_mdi_idle __P((struct xi_softc *));
+static INLINE void xi_mdi_idle(struct xi_softc *);
 static INLINE void
 xi_mdi_idle(sc)
 	struct xi_softc *sc;
@@ -554,7 +554,7 @@ xi_mdi_idle(sc)
 }
 
 /* Pulse out one bit of data. */
-static INLINE void xi_mdi_pulse __P((struct xi_softc *, int));
+static INLINE void xi_mdi_pulse(struct xi_softc *, int);
 static INLINE void
 xi_mdi_pulse(sc, data)
 	struct xi_softc *sc;
@@ -574,7 +574,7 @@ xi_mdi_pulse(sc, data)
 }
 
 /* Probe one bit of data. */
-static INLINE int xi_mdi_probe __P((struct xi_softc *sc));
+static INLINE int xi_mdi_probe(struct xi_softc *sc);
 static INLINE int
 xi_mdi_probe(sc)
 	struct xi_softc *sc;
@@ -596,7 +596,7 @@ xi_mdi_probe(sc)
 }
 
 /* Pulse out a sequence of data bits. */
-static INLINE void xi_mdi_pulse_bits __P((struct xi_softc *, u_int32_t, int));
+static INLINE void xi_mdi_pulse_bits(struct xi_softc *, u_int32_t, int);
 static INLINE void
 xi_mdi_pulse_bits(sc, data, len)
 	struct xi_softc *sc;

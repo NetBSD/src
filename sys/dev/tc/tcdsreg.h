@@ -1,4 +1,4 @@
-/* $NetBSD: tcdsreg.h,v 1.4 2004/02/24 15:16:05 wiz Exp $ */
+/* $NetBSD: tcdsreg.h,v 1.5 2005/02/04 02:10:48 perry Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -123,14 +123,14 @@
 #define	TCDS_DUD_BYTE11		0xff000000	/* byte 11 mask */
 
 #if 0
-int  tcds_scsi_iserr __P((struct dma_softc *));
-int  tcds_scsi_isintr __P((int, int));
-void tcds_dma_disable __P((int));
-void tcds_dma_enable __P((int));
-void tcds_dma_init __P((struct dma_softc *, int));
-void tcds_scsi_disable __P((int));
-void tcds_scsi_enable __P((int));
-void tcds_scsi_reset __P((int));
+int  tcds_scsi_iserr(struct dma_softc *);
+int  tcds_scsi_isintr(int, int);
+void tcds_dma_disable(int);
+void tcds_dma_enable(int);
+void tcds_dma_init(struct dma_softc *, int);
+void tcds_scsi_disable(int);
+void tcds_scsi_enable(int);
+void tcds_scsi_reset(int);
 
 /*
  * XXX

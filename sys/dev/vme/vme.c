@@ -1,4 +1,4 @@
-/* $NetBSD: vme.c,v 1.14 2004/09/15 09:01:53 drochner Exp $ */
+/* $NetBSD: vme.c,v 1.15 2005/02/04 02:10:49 perry Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme.c,v 1.14 2004/09/15 09:01:53 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme.c,v 1.15 2005/02/04 02:10:49 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,18 +41,18 @@ __KERNEL_RCSID(0, "$NetBSD: vme.c,v 1.14 2004/09/15 09:01:53 drochner Exp $");
 #include <dev/vme/vmereg.h>
 #include <dev/vme/vmevar.h>
 
-static void vme_extractlocators __P((int*, struct vme_attach_args*));
-static int vmeprint __P((struct vme_attach_args*, char*));
-static int vmesubmatch1 __P((struct device*, struct cfdata*,
-			     const locdesc_t *, void*));
-static int vmesubmatch __P((struct device*, struct cfdata*,
-			    const locdesc_t *, void*));
-int vmematch __P((struct device *, struct cfdata *, void *));
-void vmeattach __P((struct device*, struct device*,void*));
-static struct extent *vme_select_map __P((struct vmebus_softc*, vme_am_t));
+static void vme_extractlocators(int*, struct vme_attach_args*);
+static int vmeprint(struct vme_attach_args*, char*);
+static int vmesubmatch1(struct device*, struct cfdata*,
+			     const locdesc_t *, void*);
+static int vmesubmatch(struct device*, struct cfdata*,
+			    const locdesc_t *, void*);
+int vmematch(struct device *, struct cfdata *, void *);
+void vmeattach(struct device*, struct device*,void*);
+static struct extent *vme_select_map(struct vmebus_softc*, vme_am_t);
 
 #ifdef notyet
-int vmedetach __P((struct device*));
+int vmedetach(struct device*);
 #endif
 
 #define VME_SLAVE_DUMMYDRV "vme_slv"

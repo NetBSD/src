@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxxvar.h,v 1.11 2003/04/29 08:47:30 scw Exp $	*/
+/*	$NetBSD: smc91cxxvar.h,v 1.12 2005/02/04 02:10:37 perry Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -54,8 +54,8 @@ struct smc91cxx_softc {
 	bus_space_handle_t sc_bsh;
 
 	/* Power management hooks and state. */
-	int	(*sc_enable) __P((struct smc91cxx_softc *));
-	void	(*sc_disable) __P((struct smc91cxx_softc *));
+	int	(*sc_enable)(struct smc91cxx_softc *);
+	void	(*sc_disable)(struct smc91cxx_softc *);
 	u_int32_t	sc_flags;	/* misc. flags*/
 #define SMC_FLAGS_ENABLED	0x0001
 #define SMC_FLAGS_ATTACHED	0x0002		/* attach was successful */
@@ -74,9 +74,9 @@ struct smc91cxx_softc {
 	bus_space_write_2((sc)->sc_bst, (sc)->sc_bsh,			\
 	    BANK_SELECT_REG_W, (x))
 
-void	smc91cxx_attach __P((struct smc91cxx_softc *, u_int8_t *));
-int	smc91cxx_intr __P((void *));
-int	smc91cxx_enable __P((struct smc91cxx_softc *));
-void	smc91cxx_disable __P((struct smc91cxx_softc *));
-int	smc91cxx_activate __P((struct device *, enum devact));
-int	smc91cxx_detach __P((struct device *, int));
+void	smc91cxx_attach(struct smc91cxx_softc *, u_int8_t *);
+int	smc91cxx_intr(void *);
+int	smc91cxx_enable(struct smc91cxx_softc *);
+void	smc91cxx_disable(struct smc91cxx_softc *);
+int	smc91cxx_activate(struct device *, enum devact);
+int	smc91cxx_detach(struct device *, int);

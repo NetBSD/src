@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus_map.c,v 1.14 2001/11/15 09:48:02 lukem Exp $	*/
+/*	$NetBSD: cardbus_map.c,v 1.15 2005/02/04 02:10:36 perry Exp $	*/
 
 /*
  * Copyright (c) 1999 and 2000
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardbus_map.c,v 1.14 2001/11/15 09:48:02 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardbus_map.c,v 1.15 2005/02/04 02:10:36 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,12 +58,12 @@ __KERNEL_RCSID(0, "$NetBSD: cardbus_map.c,v 1.14 2001/11/15 09:48:02 lukem Exp $
 #endif
 
 
-static int cardbus_io_find __P((cardbus_chipset_tag_t, cardbus_function_tag_t,
+static int cardbus_io_find(cardbus_chipset_tag_t, cardbus_function_tag_t,
 				cardbustag_t, int, cardbusreg_t,
-				bus_addr_t *, bus_size_t *, int *));
-static int cardbus_mem_find __P((cardbus_chipset_tag_t, cardbus_function_tag_t,
+				bus_addr_t *, bus_size_t *, int *);
+static int cardbus_mem_find(cardbus_chipset_tag_t, cardbus_function_tag_t,
 				 cardbustag_t, int, cardbusreg_t,
-				 bus_addr_t *, bus_size_t *, int *));
+				 bus_addr_t *, bus_size_t *, int *);
 
 /*
  * static int cardbus_io_find(cardbus_chipset_tag_t cc,

@@ -1,4 +1,4 @@
-/*	$NetBSD: clockvar.h,v 1.4 2003/11/01 22:42:23 tsutsui Exp $	*/
+/*	$NetBSD: clockvar.h,v 1.5 2005/02/04 02:10:43 perry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2002 The NetBSD Foundation, Inc.
@@ -52,13 +52,13 @@ extern	int clock_statvar;
 extern	int clock_statmin;
 
 struct clock_attach_args {
-	void			(*ca_initfunc) __P((void *, int, int));
-	long			(*ca_microtime) __P((void *));
+	void			(*ca_initfunc)(void *, int, int);
+	long			(*ca_microtime)(void *);
 	void			*ca_arg;
 };
 
-void	clock_config __P((struct device *, struct clock_attach_args *,
-			struct evcnt *));
+void	clock_config(struct device *, struct clock_attach_args *,
+			struct evcnt *);
 
 /*
  * Macro to compute a new randomized interval.  The intervals are

@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc.c,v 1.32 2004/03/24 17:26:53 drochner Exp $ */
+/* $NetBSD: pckbc.c,v 1.33 2005/02/04 02:10:37 perry Exp $ */
 
 /*
  * Copyright (c) 2004 Ben Harris.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc.c,v 1.32 2004/03/24 17:26:53 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc.c,v 1.33 2005/02/04 02:10:37 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,8 +64,8 @@ struct pckbc_slotdata {
 #endif
 };
 
-static void pckbc_init_slotdata __P((struct pckbc_slotdata *));
-static int pckbc_attach_slot __P((struct pckbc_softc *, pckbc_slot_t));
+static void pckbc_init_slotdata(struct pckbc_slotdata *);
+static int pckbc_attach_slot(struct pckbc_softc *, pckbc_slot_t);
 
 struct pckbc_internal pckbc_consdata;
 int pckbc_console_attached;
@@ -73,21 +73,21 @@ int pckbc_console_attached;
 static int pckbc_console;
 static struct pckbc_slotdata pckbc_cons_slotdata;
 
-static int pckbc_xt_translation __P((void *, pckbport_slot_t, int));
-static int pckbc_send_devcmd __P((void *, pckbport_slot_t, u_char));
-static void pckbc_slot_enable __P((void *, pckbport_slot_t, int));
-static void pckbc_intr_establish __P((void *, pckbport_slot_t));
-static void pckbc_set_poll __P((void *,	pckbc_slot_t, int on));
+static int pckbc_xt_translation(void *, pckbport_slot_t, int);
+static int pckbc_send_devcmd(void *, pckbport_slot_t, u_char);
+static void pckbc_slot_enable(void *, pckbport_slot_t, int);
+static void pckbc_intr_establish(void *, pckbport_slot_t);
+static void pckbc_set_poll(void *,	pckbc_slot_t, int on);
 
-static int pckbc_wait_output __P((bus_space_tag_t, bus_space_handle_t));
+static int pckbc_wait_output(bus_space_tag_t, bus_space_handle_t);
 
-static int pckbc_get8042cmd __P((struct pckbc_internal *));
-static int pckbc_put8042cmd __P((struct pckbc_internal *));
+static int pckbc_get8042cmd(struct pckbc_internal *);
+static int pckbc_put8042cmd(struct pckbc_internal *);
 
-void pckbc_cleanqueue __P((struct pckbc_slotdata *));
-void pckbc_cleanup __P((void *));
-int pckbc_cmdresponse __P((struct pckbc_internal *, pckbc_slot_t, u_char));
-void pckbc_start __P((struct pckbc_internal *, pckbc_slot_t));
+void pckbc_cleanqueue(struct pckbc_slotdata *);
+void pckbc_cleanup(void *);
+int pckbc_cmdresponse(struct pckbc_internal *, pckbc_slot_t, u_char);
+void pckbc_start(struct pckbc_internal *, pckbc_slot_t);
 
 const char * const pckbc_slot_names[] = { "kbd", "aux" };
 

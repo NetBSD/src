@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.115 2005/01/27 03:03:33 jmcneill Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.116 2005/02/04 02:10:45 perry Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.115 2005/01/27 03:03:33 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.116 2005/02/04 02:10:45 perry Exp $");
 
 /*
 #define CBB_DEBUG
@@ -111,122 +111,118 @@ struct cfdriver cbb_cd = {
 	}								\
     } while (0)
 
-int pcicbbmatch __P((struct device *, struct cfdata *, void *));
-void pccbbattach __P((struct device *, struct device *, void *));
-int pccbbintr __P((void *));
-static void pci113x_insert __P((void *));
-static int pccbbintr_function __P((struct pccbb_softc *));
+int pcicbbmatch(struct device *, struct cfdata *, void *);
+void pccbbattach(struct device *, struct device *, void *);
+int pccbbintr(void *);
+static void pci113x_insert(void *);
+static int pccbbintr_function(struct pccbb_softc *);
 
-static int pccbb_detect_card __P((struct pccbb_softc *));
+static int pccbb_detect_card(struct pccbb_softc *);
 
-static void pccbb_pcmcia_write __P((struct pcic_handle *, int, u_int8_t));
-static u_int8_t pccbb_pcmcia_read __P((struct pcic_handle *, int));
+static void pccbb_pcmcia_write(struct pcic_handle *, int, u_int8_t);
+static u_int8_t pccbb_pcmcia_read(struct pcic_handle *, int);
 #define Pcic_read(ph, reg) ((ph)->ph_read((ph), (reg)))
 #define Pcic_write(ph, reg, val) ((ph)->ph_write((ph), (reg), (val)))
 
-STATIC int cb_reset __P((struct pccbb_softc *));
-STATIC int cb_detect_voltage __P((struct pccbb_softc *));
-STATIC int cbbprint __P((void *, const char *));
+STATIC int cb_reset(struct pccbb_softc *);
+STATIC int cb_detect_voltage(struct pccbb_softc *);
+STATIC int cbbprint(void *, const char *);
 
-static int cb_chipset __P((u_int32_t, int *));
-STATIC void pccbb_pcmcia_attach_setup __P((struct pccbb_softc *,
-    struct pcmciabus_attach_args *));
+static int cb_chipset(u_int32_t, int *);
+STATIC void pccbb_pcmcia_attach_setup(struct pccbb_softc *,
+    struct pcmciabus_attach_args *);
 #if 0
-STATIC void pccbb_pcmcia_attach_card __P((struct pcic_handle *));
-STATIC void pccbb_pcmcia_detach_card __P((struct pcic_handle *, int));
-STATIC void pccbb_pcmcia_deactivate_card __P((struct pcic_handle *));
+STATIC void pccbb_pcmcia_attach_card(struct pcic_handle *);
+STATIC void pccbb_pcmcia_detach_card(struct pcic_handle *, int);
+STATIC void pccbb_pcmcia_deactivate_card(struct pcic_handle *);
 #endif
 
-STATIC int pccbb_ctrl __P((cardbus_chipset_tag_t, int));
-STATIC int pccbb_power __P((cardbus_chipset_tag_t, int));
-STATIC int pccbb_cardenable __P((struct pccbb_softc * sc, int function));
+STATIC int pccbb_ctrl(cardbus_chipset_tag_t, int);
+STATIC int pccbb_power(cardbus_chipset_tag_t, int);
+STATIC int pccbb_cardenable(struct pccbb_softc * sc, int function);
 #if !rbus
-static int pccbb_io_open __P((cardbus_chipset_tag_t, int, u_int32_t,
-    u_int32_t));
-static int pccbb_io_close __P((cardbus_chipset_tag_t, int));
-static int pccbb_mem_open __P((cardbus_chipset_tag_t, int, u_int32_t,
-    u_int32_t));
-static int pccbb_mem_close __P((cardbus_chipset_tag_t, int));
+static int pccbb_io_open(cardbus_chipset_tag_t, int, u_int32_t, u_int32_t);
+static int pccbb_io_close(cardbus_chipset_tag_t, int);
+static int pccbb_mem_open(cardbus_chipset_tag_t, int, u_int32_t, u_int32_t);
+static int pccbb_mem_close(cardbus_chipset_tag_t, int);
 #endif /* !rbus */
-static void *pccbb_intr_establish __P((struct pccbb_softc *, int irq,
-    int level, int (*ih) (void *), void *sc));
-static void pccbb_intr_disestablish __P((struct pccbb_softc *, void *ih));
+static void *pccbb_intr_establish(struct pccbb_softc *, int irq,
+    int level, int (*ih) (void *), void *sc);
+static void pccbb_intr_disestablish(struct pccbb_softc *, void *ih);
 
-static void *pccbb_cb_intr_establish __P((cardbus_chipset_tag_t, int irq,
-    int level, int (*ih) (void *), void *sc));
-static void pccbb_cb_intr_disestablish __P((cardbus_chipset_tag_t ct, void *ih));
+static void *pccbb_cb_intr_establish(cardbus_chipset_tag_t, int irq,
+    int level, int (*ih) (void *), void *sc);
+static void pccbb_cb_intr_disestablish(cardbus_chipset_tag_t ct, void *ih);
 
-static cardbustag_t pccbb_make_tag __P((cardbus_chipset_tag_t, int, int, int));
-static void pccbb_free_tag __P((cardbus_chipset_tag_t, cardbustag_t));
-static cardbusreg_t pccbb_conf_read __P((cardbus_chipset_tag_t, cardbustag_t,
-    int));
-static void pccbb_conf_write __P((cardbus_chipset_tag_t, cardbustag_t, int,
-    cardbusreg_t));
-static void pccbb_chipinit __P((struct pccbb_softc *));
+static cardbustag_t pccbb_make_tag(cardbus_chipset_tag_t, int, int, int);
+static void pccbb_free_tag(cardbus_chipset_tag_t, cardbustag_t);
+static cardbusreg_t pccbb_conf_read(cardbus_chipset_tag_t, cardbustag_t, int);
+static void pccbb_conf_write(cardbus_chipset_tag_t, cardbustag_t, int,
+    cardbusreg_t);
+static void pccbb_chipinit(struct pccbb_softc *);
 
-STATIC int pccbb_pcmcia_mem_alloc __P((pcmcia_chipset_handle_t, bus_size_t,
-    struct pcmcia_mem_handle *));
-STATIC void pccbb_pcmcia_mem_free __P((pcmcia_chipset_handle_t,
-    struct pcmcia_mem_handle *));
-STATIC int pccbb_pcmcia_mem_map __P((pcmcia_chipset_handle_t, int, bus_addr_t,
-    bus_size_t, struct pcmcia_mem_handle *, bus_addr_t *, int *));
-STATIC void pccbb_pcmcia_mem_unmap __P((pcmcia_chipset_handle_t, int));
-STATIC int pccbb_pcmcia_io_alloc __P((pcmcia_chipset_handle_t, bus_addr_t,
-    bus_size_t, bus_size_t, struct pcmcia_io_handle *));
-STATIC void pccbb_pcmcia_io_free __P((pcmcia_chipset_handle_t,
-    struct pcmcia_io_handle *));
-STATIC int pccbb_pcmcia_io_map __P((pcmcia_chipset_handle_t, int, bus_addr_t,
-    bus_size_t, struct pcmcia_io_handle *, int *));
-STATIC void pccbb_pcmcia_io_unmap __P((pcmcia_chipset_handle_t, int));
-STATIC void *pccbb_pcmcia_intr_establish __P((pcmcia_chipset_handle_t,
-    struct pcmcia_function *, int, int (*)(void *), void *));
-STATIC void pccbb_pcmcia_intr_disestablish __P((pcmcia_chipset_handle_t,
-    void *));
-STATIC void pccbb_pcmcia_socket_enable __P((pcmcia_chipset_handle_t));
-STATIC void pccbb_pcmcia_socket_disable __P((pcmcia_chipset_handle_t));
-STATIC void pccbb_pcmcia_socket_settype __P((pcmcia_chipset_handle_t, int));
-STATIC int pccbb_pcmcia_card_detect __P((pcmcia_chipset_handle_t pch));
+STATIC int pccbb_pcmcia_mem_alloc(pcmcia_chipset_handle_t, bus_size_t,
+    struct pcmcia_mem_handle *);
+STATIC void pccbb_pcmcia_mem_free(pcmcia_chipset_handle_t,
+    struct pcmcia_mem_handle *);
+STATIC int pccbb_pcmcia_mem_map(pcmcia_chipset_handle_t, int, bus_addr_t,
+    bus_size_t, struct pcmcia_mem_handle *, bus_addr_t *, int *);
+STATIC void pccbb_pcmcia_mem_unmap(pcmcia_chipset_handle_t, int);
+STATIC int pccbb_pcmcia_io_alloc(pcmcia_chipset_handle_t, bus_addr_t,
+    bus_size_t, bus_size_t, struct pcmcia_io_handle *);
+STATIC void pccbb_pcmcia_io_free(pcmcia_chipset_handle_t,
+    struct pcmcia_io_handle *);
+STATIC int pccbb_pcmcia_io_map(pcmcia_chipset_handle_t, int, bus_addr_t,
+    bus_size_t, struct pcmcia_io_handle *, int *);
+STATIC void pccbb_pcmcia_io_unmap(pcmcia_chipset_handle_t, int);
+STATIC void *pccbb_pcmcia_intr_establish(pcmcia_chipset_handle_t,
+    struct pcmcia_function *, int, int (*)(void *), void *);
+STATIC void pccbb_pcmcia_intr_disestablish(pcmcia_chipset_handle_t, void *);
+STATIC void pccbb_pcmcia_socket_enable(pcmcia_chipset_handle_t);
+STATIC void pccbb_pcmcia_socket_disable(pcmcia_chipset_handle_t);
+STATIC void pccbb_pcmcia_socket_settype(pcmcia_chipset_handle_t, int);
+STATIC int pccbb_pcmcia_card_detect(pcmcia_chipset_handle_t pch);
 
-static int pccbb_pcmcia_wait_ready __P((struct pcic_handle *));
-static void pccbb_pcmcia_delay __P((struct pcic_handle *, int, const char *));
+static int pccbb_pcmcia_wait_ready(struct pcic_handle *);
+static void pccbb_pcmcia_delay(struct pcic_handle *, int, const char *);
 
-static void pccbb_pcmcia_do_io_map __P((struct pcic_handle *, int));
-static void pccbb_pcmcia_do_mem_map __P((struct pcic_handle *, int));
-static void pccbb_powerhook __P((int, void *));
+static void pccbb_pcmcia_do_io_map(struct pcic_handle *, int);
+static void pccbb_pcmcia_do_mem_map(struct pcic_handle *, int);
+static void pccbb_powerhook(int, void *);
 
 /* bus-space allocation and deallocation functions */
 #if rbus
 
-static int pccbb_rbus_cb_space_alloc __P((cardbus_chipset_tag_t, rbus_tag_t,
+static int pccbb_rbus_cb_space_alloc(cardbus_chipset_tag_t, rbus_tag_t,
     bus_addr_t addr, bus_size_t size, bus_addr_t mask, bus_size_t align,
-    int flags, bus_addr_t * addrp, bus_space_handle_t * bshp));
-static int pccbb_rbus_cb_space_free __P((cardbus_chipset_tag_t, rbus_tag_t,
-    bus_space_handle_t, bus_size_t));
+    int flags, bus_addr_t * addrp, bus_space_handle_t * bshp);
+static int pccbb_rbus_cb_space_free(cardbus_chipset_tag_t, rbus_tag_t,
+    bus_space_handle_t, bus_size_t);
 
 #endif /* rbus */
 
 #if rbus
 
-static int pccbb_open_win __P((struct pccbb_softc *, bus_space_tag_t,
-    bus_addr_t, bus_size_t, bus_space_handle_t, int flags));
-static int pccbb_close_win __P((struct pccbb_softc *, bus_space_tag_t,
-    bus_space_handle_t, bus_size_t));
-static int pccbb_winlist_insert __P((struct pccbb_win_chain_head *, bus_addr_t,
-    bus_size_t, bus_space_handle_t, int));
-static int pccbb_winlist_delete __P((struct pccbb_win_chain_head *,
-    bus_space_handle_t, bus_size_t));
-static void pccbb_winset __P((bus_addr_t align, struct pccbb_softc *,
-    bus_space_tag_t));
+static int pccbb_open_win(struct pccbb_softc *, bus_space_tag_t,
+    bus_addr_t, bus_size_t, bus_space_handle_t, int flags);
+static int pccbb_close_win(struct pccbb_softc *, bus_space_tag_t,
+    bus_space_handle_t, bus_size_t);
+static int pccbb_winlist_insert(struct pccbb_win_chain_head *, bus_addr_t,
+    bus_size_t, bus_space_handle_t, int);
+static int pccbb_winlist_delete(struct pccbb_win_chain_head *,
+    bus_space_handle_t, bus_size_t);
+static void pccbb_winset(bus_addr_t align, struct pccbb_softc *,
+    bus_space_tag_t);
 void pccbb_winlist_show(struct pccbb_win_chain *);
 
 #endif /* rbus */
 
 /* for config_defer */
-static void pccbb_pci_callback __P((struct device *));
+static void pccbb_pci_callback(struct device *);
 
 #if defined SHOW_REGS
-static void cb_show_regs __P((pci_chipset_tag_t pc, pcitag_t tag,
-    bus_space_tag_t memt, bus_space_handle_t memh));
+static void cb_show_regs(pci_chipset_tag_t pc, pcitag_t tag,
+    bus_space_tag_t memt, bus_space_handle_t memh);
 #endif
 
 CFATTACH_DECL(cbb_pci, sizeof(struct pccbb_softc),
@@ -1415,7 +1411,7 @@ pccbb_power(ct, command)
 #if defined CB_PCMCIA_POLL
 struct cb_poll_str {
 	void *arg;
-	int (*func) __P((void *));
+	int (*func)(void *);
 	int level;
 	pccard_chipset_tag_t ct;
 	int count;
@@ -1425,7 +1421,7 @@ struct cb_poll_str {
 static struct cb_poll_str cb_poll[10];
 static int cb_poll_n = 0;
 
-static void cb_pcmcia_poll __P((void *arg));
+static void cb_pcmcia_poll(void *arg);
 
 static void
 cb_pcmcia_poll(arg)
@@ -1737,7 +1733,7 @@ pccbb_mem_close(ct, win)
  * static void *pccbb_cb_intr_establish(cardbus_chipset_tag_t ct,
  *					int irq,
  *					int level,
- *					int (* func) __P((void *)),
+ *					int (* func)(void *),
  *					void *arg)
  *
  *   This function registers an interrupt handler at the bridge, in
@@ -1750,7 +1746,7 @@ static void *
 pccbb_cb_intr_establish(ct, irq, level, func, arg)
 	cardbus_chipset_tag_t ct;
 	int irq, level;
-	int (*func) __P((void *));
+	int (*func)(void *);
 	void *arg;
 {
 	struct pccbb_softc *sc = (struct pccbb_softc *)ct;
@@ -1803,7 +1799,7 @@ pccbb_intr_route(sc)
  * static void *pccbb_intr_establish(struct pccbb_softc *sc,
  *				     int irq,
  *				     int level,
- *				     int (* func) __P((void *)),
+ *				     int (* func)(void *),
  *				     void *arg)
  *
  *   This function registers an interrupt handler at the bridge, in
@@ -1816,7 +1812,7 @@ static void *
 pccbb_intr_establish(sc, irq, level, func, arg)
 	struct pccbb_softc *sc;
 	int irq, level;
-	int (*func) __P((void *));
+	int (*func)(void *);
 	void *arg;
 {
 	struct pccbb_intrhand_list *pil, *newpil;
@@ -2908,7 +2904,7 @@ pccbb_pcmcia_mem_unmap(pch, window)
 #if defined PCCBB_PCMCIA_POLL
 struct pccbb_poll_str {
 	void *arg;
-	int (*func) __P((void *));
+	int (*func)(void *);
 	int level;
 	struct pcic_handle *ph;
 	int count;
@@ -2919,7 +2915,7 @@ struct pccbb_poll_str {
 static struct pccbb_poll_str pccbb_poll[10];
 static int pccbb_poll_n = 0;
 
-static void pccbb_pcmcia_poll __P((void *arg));
+static void pccbb_pcmcia_poll(void *arg);
 
 static void
 pccbb_pcmcia_poll(arg)
@@ -2982,7 +2978,7 @@ pccbb_pcmcia_intr_establish(pch, pf, ipl, func, arg)
 	pcmcia_chipset_handle_t pch;
 	struct pcmcia_function *pf;
 	int ipl;
-	int (*func) __P((void *));
+	int (*func)(void *);
 	void *arg;
 {
 	struct pcic_handle *ph = (struct pcic_handle *)pch;

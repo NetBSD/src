@@ -1,4 +1,4 @@
-/*	$NetBSD: bha_pci.c,v 1.25 2003/01/31 00:07:40 thorpej Exp $	*/
+/*	$NetBSD: bha_pci.c,v 1.26 2005/02/04 02:10:45 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bha_pci.c,v 1.25 2003/01/31 00:07:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bha_pci.c,v 1.26 2005/02/04 02:10:45 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,8 +57,8 @@ __KERNEL_RCSID(0, "$NetBSD: bha_pci.c,v 1.25 2003/01/31 00:07:40 thorpej Exp $")
 
 #define	PCI_CBIO	0x10
 
-int	bha_pci_match __P((struct device *, struct cfdata *, void *));
-void	bha_pci_attach __P((struct device *, struct device *, void *));
+int	bha_pci_match(struct device *, struct cfdata *, void *);
+void	bha_pci_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(bha_pci, sizeof(struct bha_softc),
     bha_pci_match, bha_pci_attach, NULL, NULL);
