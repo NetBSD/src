@@ -1,4 +1,4 @@
-$NetBSD: podules,v 1.5 2001/05/26 21:48:21 bjh21 Exp $
+$NetBSD: podules,v 1.6 2001/06/08 20:08:35 bjh21 Exp $
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -51,6 +51,7 @@ manufacturer	SJ		0x0029	SJ Research
 manufacturer	MORLEY		0x002b	Morley
 manufacturer	HCCS2		0x002d	HCCS
 manufacturer	VTI		0x0035	Vertical Twist
+manufacturer	DTSOFT		0x0037	D.T. Software
 manufacturer	CUMANA		0x003a	Cumana
 manufacturer	ICS		0x003c	ICS
 manufacturer	SERIALPORT	0x003f	Serial Port
@@ -60,7 +61,6 @@ manufacturer	ICUBED		0x0046	I-Cubed
 manufacturer	BRINI		0x0050	Brini
 manufacturer	ANT		0x0053	ANT
 manufacturer	CASTLE		0x0055	Castle Technology
-manufacturer	DTSOFT		0x0037	D.T. Software
 manufacturer	ALSYSTEMS	0x005b	Alsystems
 manufacturer	SIMTEC		0x005f	Simtec Electronics
 manufacturer	YES		0x0060	Yellowstone Educational Solutions
@@ -123,7 +123,7 @@ podule	HCCS2		USERANALOGUE	0x006e	User and Analogue ports
 
 podule	VTI		SCSI		0x008d	SCSI interface
 
-podule	DTSOFT		IDE		0x00ae	IDE interface
+podule	DTSOFT		IDE		0x0055	IDE interface
 
 podule	CUMANA		SCSI2		0x003a	SCSI II interface
 podule	CUMANA		SCSI1		0x00a0	SCSI I interface
