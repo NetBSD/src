@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.12 1998/12/27 09:03:14 dbj Exp $	*/
+/*	$NetBSD: esp.c,v 1.13 1998/12/30 12:02:03 dbj Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -410,7 +410,39 @@ esp_dma_isintr(sc)
 	int r = (INTR_OCCURRED(NEXT_I_SCSI));
 
 	if (r) {
-		DPRINTF(("esp_dma_isintr = 0x%b\n",r,NEXT_INTR_BITS));
+		int handled;
+
+		DPRINTF(("esp_dma_isintr = 0x%b\n",
+				(*(volatile u_long *)IIOV(NEXT_P_INTRSTAT)),NEXT_INTR_BITS));
+
+		if (esp_dma_isactive(sc)) {
+			if (esc->sc_datain) {
+				NCR_WRITE_REG(sc, ESP_DCTL, 
+						ESPDCTL_20MHZ | ESPDCTL_INTENB | ESPDCTL_DMAMOD | ESPDCTL_DMARD | ESPDCTL_FLUSH);
+				NCR_WRITE_REG(sc, ESP_DCTL, 
+						ESPDCTL_20MHZ | ESPDCTL_INTENB | ESPDCTL_DMAMOD | ESPDCTL_DMARD);
+			} else {
+				NCR_WRITE_REG(sc, ESP_DCTL, 
+						ESPDCTL_20MHZ | ESPDCTL_INTENB | ESPDCTL_DMAMOD | ESPDCTL_FLUSH);
+				NCR_WRITE_REG(sc, ESP_DCTL, 
+						ESPDCTL_20MHZ | ESPDCTL_INTENB | ESPDCTL_DMAMOD);
+			}
+			nextdma_intr(&esc->sc_scsi_dma);
+			return 0;
+		}
+
+		/* Clear the DMAMOD bit in the DCTL register, since if this
+		 * routine returns true, then the ncr53c9x_intr handler will
+		 * be called and needs access to the scsi registers.
+		 */
+		if (esc->sc_datain) {
+			NCR_WRITE_REG(sc, ESP_DCTL,
+					ESPDCTL_20MHZ | ESPDCTL_INTENB | ESPDCTL_DMARD);
+		} else {
+			NCR_WRITE_REG(sc, ESP_DCTL,
+					ESPDCTL_20MHZ | ESPDCTL_INTENB);
+		}
+
 	}
 
 	return (r);
@@ -422,11 +454,43 @@ esp_dma_reset(sc)
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
 
+	DPRINTF(("esp dma reset\n"));
+
+#ifdef ESP_DEBUG
+	if (esp_debug) {
+		printf("  *intrstat = 0x%b\n",
+				(*(volatile u_long *)IIOV(NEXT_P_INTRSTAT)),NEXT_INTR_BITS);
+		printf("  *intrmask = 0x%b\n",
+				(*(volatile u_long *)IIOV(NEXT_P_INTRMASK)),NEXT_INTR_BITS);
+	}
+#endif
+
+
+	/* Clear the DMAMOD bit in the DCTL register: */
+	if (esc->sc_datain) {
+		NCR_WRITE_REG(sc, ESP_DCTL,
+				ESPDCTL_20MHZ | ESPDCTL_INTENB | ESPDCTL_DMARD);
+	} else {
+		NCR_WRITE_REG(sc, ESP_DCTL,
+				ESPDCTL_20MHZ | ESPDCTL_INTENB);
+	}
+
 	nextdma_reset(&esc->sc_scsi_dma);
+
+#if 0
 
 	if (esc->sc_dmamap->dm_mapsize != 0) {
 		bus_dmamap_unload(esc->sc_scsi_dma.nd_dmat, esc->sc_dmamap);
 	}
+
+#else
+
+	if (esc->sc_dmamap_loaded) {
+		esp_dmacb_completed(esc->sc_dmamap,sc);
+		esp_dmacb_shutdown(sc);
+	}
+
+#endif
 
 	esc->sc_slop_bgn_addr = 0;
 	esc->sc_slop_bgn_size = 0;
@@ -435,14 +499,6 @@ esp_dma_reset(sc)
 	esc->sc_datain = -1;
 	esc->sc_dmamap_loaded = 0;
 
-	/* Clear the DMAMOD bit in the DCTL register: */
-	if (esc->sc_datain) { 
-		NCR_WRITE_REG(sc, ESP_DCTL,
-				ESPDCTL_20MHZ | ESPDCTL_INTENB | ESPDCTL_DMARD);
-	} else {
-		NCR_WRITE_REG(sc, ESP_DCTL,
-				ESPDCTL_20MHZ | ESPDCTL_INTENB);
-	}
 }
 
 int
@@ -543,7 +599,11 @@ esp_dma_setup(sc, addr, len, datain, dmasize)
 	/* Save these in case we have to abort DMA */
 	esc->sc_dmaaddr = addr;
 	esc->sc_dmalen = len;
+#if 1
+	esc->sc_dmasize = DMA_ENDALIGN(caddr_t,*addr+*len)-*addr;
+#else
 	esc->sc_dmasize = *dmasize;
+#endif
 
 #ifdef DIAGNOSTIC
 	/* if this is a read DMA, pre-fill the buffer with 0xdeadbeef
@@ -552,18 +612,20 @@ esp_dma_setup(sc, addr, len, datain, dmasize)
 	if (datain) {
 		int *v = (int *)(*esc->sc_dmaaddr);
 		int i;
-		for(i=0;i<((*len)/4);i++) v[i] = 0xdeadbeef;
+		for(i=0;i<((*esc->sc_dmalen)/4);i++) v[i] = 0xdeadbeef;
 	}
 #endif
 
-	DPRINTF(("esp_dma_setup(0x%08lx,0x%08lx,0x%08lx)\n",*addr,*len,*dmasize));
+	DPRINTF(("esp_dma_setup(0x%08lx,0x%08lx,0x%08lx)\n",*esc->sc_dmaaddr,*esc->sc_dmalen,esc->sc_dmasize));
 
+#if 0
 #ifdef DIAGNOSTIC /* @@@ this is ok sometimes. verify that we handle it ok
 									 * and then remove this check
 									 */
 	if (*(esc->sc_dmalen) != esc->sc_dmasize) {
 		panic("esp dmalen != size");
 	}
+#endif
 #endif
 
 #ifdef DIAGNOSTIC
@@ -588,8 +650,8 @@ esp_dma_setup(sc, addr, len, datain, dmasize)
 		int slop_end_size; /* # bytes to be fifo'd at end */
 
 		{
-			u_long bgn = (u_long)(*addr);
-			u_long end = (u_long)(*addr+*dmasize);
+			u_long bgn = (u_long)(*esc->sc_dmaaddr);
+			u_long end = (u_long)(*esc->sc_dmaaddr+esc->sc_dmasize);
 
 			slop_bgn_size = DMA_BEGINALIGNMENT-(bgn % DMA_BEGINALIGNMENT);
 			if (slop_bgn_size == DMA_BEGINALIGNMENT) slop_bgn_size = 0;
@@ -598,16 +660,17 @@ esp_dma_setup(sc, addr, len, datain, dmasize)
 
 		/* Check to make sure we haven't counted extra slop
 		 * as would happen for a very short dma buffer */
-		if (slop_bgn_size+slop_end_size >= *dmasize) {
-			slop_bgn_size = *dmasize;
+		if (slop_bgn_size+slop_end_size >= esc->sc_dmasize) {
+
+			slop_bgn_size = esc->sc_dmasize;
 			slop_end_size = 0;
 
 		} else {
 			int error;
 			error = bus_dmamap_load(esc->sc_scsi_dma.nd_dmat,
 					esc->sc_dmamap, 
-					*addr+slop_bgn_size,
-					*dmasize-(slop_bgn_size+slop_end_size),
+					*esc->sc_dmaaddr+slop_bgn_size,
+					esc->sc_dmasize-(slop_bgn_size+slop_end_size),
 					NULL, BUS_DMA_NOWAIT);
 			if (error) {
 				panic("%s: can't load dma map. error = %d",
@@ -616,9 +679,9 @@ esp_dma_setup(sc, addr, len, datain, dmasize)
 
 		}
 
-		esc->sc_slop_bgn_addr = *addr;
+		esc->sc_slop_bgn_addr = *esc->sc_dmaaddr;
 		esc->sc_slop_bgn_size = slop_bgn_size;
-		esc->sc_slop_end_addr = (*addr+*dmasize)-slop_end_size;
+		esc->sc_slop_end_addr = (*esc->sc_dmaaddr+esc->sc_dmasize)-slop_end_size;
 		esc->sc_slop_end_size = slop_end_size;
 	}
 
@@ -667,6 +730,9 @@ esp_dma_go(sc)
 
 	if (esc->sc_dmamap->dm_mapsize != 0) {
 
+		nextdma_start(&esc->sc_scsi_dma, 
+				(esc->sc_datain ? DMACSR_READ : DMACSR_WRITE));
+
 		if (esc->sc_datain) { 
 			NCR_WRITE_REG(sc, ESP_DCTL,
 					ESPDCTL_20MHZ | ESPDCTL_INTENB | ESPDCTL_DMAMOD | ESPDCTL_DMARD);
@@ -675,10 +741,11 @@ esp_dma_go(sc)
 					ESPDCTL_20MHZ | ESPDCTL_INTENB | ESPDCTL_DMAMOD);
 		}
 
-		nextdma_start(&esc->sc_scsi_dma, 
-				(esc->sc_datain ? DMACSR_READ : DMACSR_WRITE));
 
 	} else {
+
+		panic("FIFO emulated DMA sequences not yet supported\n");	/* @@@ */
+		
 #if defined(DIAGNOSTIC)
 		/* verify that end slop is 0, since the shutdown
 		 * callback will not be called.
@@ -778,9 +845,26 @@ esp_dmacb_completed(map, arg)
 
 	/* @@@ Flush the fifo? */
 
+	if (esc->sc_datain) { 
+		NCR_WRITE_REG(sc, ESP_DCTL,
+				ESPDCTL_20MHZ | ESPDCTL_INTENB | ESPDCTL_DMARD);
+	} else {
+		NCR_WRITE_REG(sc, ESP_DCTL,
+				ESPDCTL_20MHZ | ESPDCTL_INTENB);
+	}
+
   bus_dmamap_sync(esc->sc_scsi_dma.nd_dmat, esc->sc_dmamap,
 			0, esc->sc_dmamap->dm_mapsize, 
 			(esc->sc_datain ? BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE));
+
+	if (esc->sc_datain) {
+		NCR_WRITE_REG(sc, ESP_DCTL,
+				ESPDCTL_20MHZ | ESPDCTL_INTENB | ESPDCTL_DMAMOD | ESPDCTL_DMARD);
+	} else {
+		NCR_WRITE_REG(sc, ESP_DCTL,
+				ESPDCTL_20MHZ | ESPDCTL_INTENB | ESPDCTL_DMAMOD);
+	}
+
 }
 
 void
@@ -799,36 +883,31 @@ esp_dmacb_shutdown(arg)
 	}
 #endif
 
-	bus_dmamap_unload(esc->sc_scsi_dma.nd_dmat, esc->sc_dmamap);
+	/* Stuff the end slop into fifo */
 
-	if (esc->sc_datain) { 
-
-#if 0
-		NCR_WRITE_REG(sc, ESP_DCTL,
-				ESPDCTL_20MHZ | ESPDCTL_INTENB | ESPDCTL_DMAMOD | ESPDCTL_DMARD);
-
-		delay(2);
-
-		NCR_WRITE_REG(sc, ESP_DCTL,
-				ESPDCTL_20MHZ | ESPDCTL_INTENB | ESPDCTL_DMAMOD | ESPDCTL_FLUSH | ESPDCTL_DMARD);
-
-		delay(2);
-
-		NCR_WRITE_REG(sc, ESP_DCTL,
-				ESPDCTL_20MHZ | ESPDCTL_INTENB | ESPDCTL_DMAMOD | ESPDCTL_DMARD);
-
-		delay(2);
-
-#endif
-
-		NCR_WRITE_REG(sc, ESP_DCTL,
-				ESPDCTL_20MHZ | ESPDCTL_INTENB | ESPDCTL_DMARD);
-	} else {
-		NCR_WRITE_REG(sc, ESP_DCTL,
-				ESPDCTL_20MHZ | ESPDCTL_INTENB);
+#ifdef DIAGNOSTIC
+	{
+		int n = NCR_READ_REG(sc, NCR_FFLAG);
+		DPRINTF(("esp fifo size = %d, seq = 0x%x\n",n & NCRFIFO_FF, (n & NCRFIFO_SS)>>5));
 	}
 
-	/* Stuff the end slop into fifo */
+	if (esp_debug) {
+		NCR_DMA(("dmaintr: tcl=%d, tcm=%d, tch=%d\n",
+				NCR_READ_REG(sc, NCR_TCL),
+				NCR_READ_REG(sc, NCR_TCM),
+				(sc->sc_cfg2 & NCRCFG2_FE)
+				? NCR_READ_REG(sc, NCR_TCH) : 0));
+	}
+#endif
+
+
+	if (esc->sc_datain) { 
+		NCR_WRITE_REG(sc, ESP_DCTL,
+				ESPDCTL_20MHZ | ESPDCTL_INTENB | ESPDCTL_DMAMOD | ESPDCTL_DMARD);
+	} else {
+		NCR_WRITE_REG(sc, ESP_DCTL,
+				ESPDCTL_20MHZ | ESPDCTL_INTENB | ESPDCTL_DMAMOD);
+	}
 
 	{
 
@@ -848,7 +927,7 @@ esp_dmacb_shutdown(arg)
 			}
 #endif
 #endif
-			for(i=0;i<n;i++) {
+			for(i=0;i<esc->sc_slop_end_size;i++) {
 				esc->sc_slop_end_addr[i]=NCR_READ_REG(sc, NCR_FIFO);
 			}
 		
@@ -859,6 +938,23 @@ esp_dmacb_shutdown(arg)
 			}
 		}
 	}
+
+	if (esc->sc_datain) { 
+		NCR_WRITE_REG(sc, ESP_DCTL,
+				ESPDCTL_20MHZ | ESPDCTL_INTENB | ESPDCTL_DMARD);
+	} else {
+		NCR_WRITE_REG(sc, ESP_DCTL,
+				ESPDCTL_20MHZ | ESPDCTL_INTENB);
+	}
+
+#ifdef DIAGNOSTIC
+	{
+		int n = NCR_READ_REG(sc, NCR_FFLAG);
+		DPRINTF(("esp fifo size = %d, seq = 0x%x\n",n & NCRFIFO_FF, (n & NCRFIFO_SS)>>5));
+	}
+#endif
+
+	bus_dmamap_unload(esc->sc_scsi_dma.nd_dmat, esc->sc_dmamap);
 
 #ifdef ESP_DEBUG
 	if (esp_debug) esp_hex_dump(*(esc->sc_dmaaddr),esc->sc_dmasize);
