@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.135 2001/03/02 09:48:13 pk Exp $	*/
+/*	$NetBSD: locore.s,v 1.136 2001/03/02 10:27:00 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -4836,23 +4836,36 @@ ENTRY(snapshot)
 
 
 /*
- * cpu_set_kpc() and cpu_fork() arrange for proc_trampoline() to run
- * after after a process gets chosen in switch(). The stack frame will
- * contain a function pointer in %l0, and an argument to pass to it in %l2.
+ * cpu_fork() arrange for proc_trampoline() to run after a process gets
+ * chosen in switch(). The stack frame will contain a function pointer
+ * in %l0, and an argument to pass to it in %l2.
  *
  * If the function *(%l0) returns, we arrange for an immediate return
  * to user mode. This happens in two known cases: after execve(2) of init,
  * and when returning a child to user mode after a fork(2).
+ *
+ * If were setting up a kernel thread, the function *(%l0) will not return.
  */
 ENTRY(proc_trampoline)
-	call	%l0			! re-use current frame
+	/*
+	 * Note: cpu_fork() has set up a stack frame for us to run in,
+	 * so we can call other functions from here without using
+	 * `save ... restore'.
+	 */
+#ifdef MULTIPROCESSOR
+	/* Finish setup in SMP environment: acquire locks etc. */
+	call _C_LABEL(proc_trampoline_mp)
+	 nop
+#endif
+
+	call	%l0
 	 mov	%l1, %o0
 
 	/*
 	 * Here we finish up as in syscall, but simplified.  We need to
-	 * fiddle pc and npc a bit, as execve() / setregs() /cpu_set_kpc()
-	 * have only set npc, in anticipation that trap.c will advance past
-	 * the trap instruction; but we bypass that, so we must do it manually.
+	 * fiddle pc and npc a bit, as execve() / setregs() will have
+	 * set npc only, anticipating that trap.c will advance past the
+	 * trap instruction; but we bypass that, so we must do it manually.
 	 */
 	mov	PSR_S, %l0		! user psr (no need to load it)
 	!?wr	%g0, 2, %wim		! %wim = 2
