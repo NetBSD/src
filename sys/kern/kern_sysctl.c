@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.18 1996/07/17 21:54:04 explorer Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -195,6 +195,7 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	struct proc *p;
 {
 	int error, level, inthostid;
+	int old_autonicetime;
 	extern char ostype[], osrelease[], version[];
 
 	/* all sysctl names at this level are terminal */
@@ -278,6 +279,19 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		return (sysctl_rdint(oldp, oldlenp, newp, RAW_PART));
 	case KERN_NTPTIME:
 		return (sysctl_ntptime(oldp, oldlenp));
+	case KERN_AUTONICETIME:
+	        old_autonicetime = autonicetime;
+	        error = sysctl_int(oldp, oldlenp, newp, newlen, &autonicetime);
+		if (autonicetime < 0)
+ 		        autonicetime = old_autonicetime;
+		return (error);
+	case KERN_AUTONICEVAL:
+		error = sysctl_int(oldp, oldlenp, newp, newlen, &autoniceval);
+		if (autoniceval < PRIO_MIN)
+			autoniceval = PRIO_MIN;
+		if (autoniceval > PRIO_MAX)
+			autoniceval = PRIO_MAX;
+		return (error);
 	default:
 		return (EOPNOTSUPP);
 	}
