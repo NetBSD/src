@@ -1,4 +1,4 @@
-/*	$NetBSD: wwenviron.c,v 1.5 1997/11/21 08:37:18 lukem Exp $	*/
+/*	$NetBSD: wwenviron.c,v 1.6 1998/12/20 15:02:57 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)wwenviron.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: wwenviron.c,v 1.5 1997/11/21 08:37:18 lukem Exp $");
+__RCSID("$NetBSD: wwenviron.c,v 1.6 1998/12/20 15:02:57 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -94,7 +94,7 @@ wwenviron(wp)
 	(void) ioctl(0, TIOCSCTTY, 0);
 #else
 	(void) ioctl(0, TIOCSPGRP, (char *)&pgrp);
-	(void) setpgrp(pgrp, pgrp);
+	(void) setpgid(pgrp, pgrp);
 #endif
 	/* SIGPIPE is the only one we ignore */
 	(void) signal(SIGPIPE, SIG_DFL);
