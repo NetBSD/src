@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.372 2001/11/07 21:13:27 thorpej Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.373 2001/12/07 08:00:36 onoe Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.369 2001/11/07 21:12:49 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.370 2001/12/07 07:59:24 onoe Exp 
  */
 
 /*
@@ -3178,6 +3178,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "82801BA AC-97 PCI Modem",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801BAM_HPB,
+	    0,
+	    "Intel",
+	    "82801BAM Hub-to-PCI Bridge",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801BA_LAN,
 	    0,
 	    "Intel",
@@ -3194,6 +3200,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Intel",
 	    "82801BA IDE Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801BAM_LPC,
+	    0,
+	    "Intel",
+	    "82801BAM LPC Interface Bridge",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801BA_HPB,
