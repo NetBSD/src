@@ -1,3 +1,5 @@
+/*	$NetBSD: scsi_defs.h,v 1.3 1994/10/26 08:46:18 cgd Exp $	*/
+
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
  *			Michael L. Finch, Bradley A. Grantham, and
@@ -29,9 +31,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * $Id: scsi_defs.h,v 1.2 1993/11/29 00:32:56 briggs Exp $
- *
  */
 
 #ifndef _SCSI_DEFS_H

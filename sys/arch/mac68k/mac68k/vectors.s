@@ -1,3 +1,5 @@
+|	$NetBSD: vectors.s,v 1.4 1994/10/26 08:47:19 cgd Exp $
+
 | Copyright (c) 1988 University of Utah
 | Copyright (c) 1990 Regents of the University of California.
 | All rights reserved.
@@ -30,8 +32,7 @@
 | OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 | SUCH DAMAGE.
 |
-|	from: @(#)vectors.s	7.2 (Berkeley) 5/7/91
-|	$Id: vectors.s,v 1.3 1994/07/07 00:27:12 briggs Exp $
+|	@(#)vectors.s	7.2 (Berkeley) 5/7/91
 |
 	.text
 	.globl	_buserr,_addrerr

@@ -1,9 +1,9 @@
+/*	$NetBSD: uk.c,v 1.5 1994/10/26 08:47:46 cgd Exp $	*/
+
 
 /* 
  * Dummy driver for a device we can't identify.
  * by Julian Elischer (julian@tfs.com)
- *
- *      $Id: uk.c,v 1.4 1994/02/22 00:57:39 briggs Exp $
  */
 
 

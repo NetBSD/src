@@ -1,3 +1,5 @@
+/*	$NetBSD: if_ae.c,v 1.14 1994/10/26 08:46:11 cgd Exp $	*/
+
 /*
  * Device driver for National Semiconductor DS8390 based ethernet adapters.
  *
@@ -18,10 +20,6 @@
  *	Cayman Systems GatorCard
  */
 
-/*
- * $Id: if_ae.c,v 1.13 1994/06/26 13:01:24 briggs Exp $
- */
- 
 #include "ae.h"
 /* bpfilter included here in case it is needed in future net includes */
 #include "bpfilter.h"

@@ -1,3 +1,5 @@
+/*	$NetBSD: via.h,v 1.7 1994/10/26 08:47:21 cgd Exp $	*/
+
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
  *			Michael L. Finch, Bradley A. Grantham, and
