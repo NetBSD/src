@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_proc.c,v 1.45.2.2 2002/04/23 20:10:20 nathanw Exp $	*/
+/*	$NetBSD: kvm_proc.c,v 1.45.2.3 2002/04/23 22:03:39 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
 #else
-__RCSID("$NetBSD: kvm_proc.c,v 1.45.2.2 2002/04/23 20:10:20 nathanw Exp $");
+__RCSID("$NetBSD: kvm_proc.c,v 1.45.2.3 2002/04/23 22:03:39 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -393,7 +393,6 @@ kvm_proclist(kd, what, arg, p, bp, maxcnt)
 			if (nlwps > 0) {
 				strcpy(eproc.e_wmesg, kl[0].l_wmesg);
 			}
-			free(kl);
 		}
 		(void)kvm_read(kd, (u_long)proc.p_vmspace, &eproc.e_vm,
 		    sizeof(eproc.e_vm));
@@ -671,7 +670,6 @@ kvm_getproc2(kd, op, arg, esize, cnt)
 
 			memcpy(kp2c, &kp2, esize);
 			kp2c += esize;
-			free(kl);
 		}
 
 		free(kd->procbase);
