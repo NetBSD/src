@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.1,v 1.1.2.31 2001/03/13 21:31:03 he Exp $
+#	$NetBSD: CHANGES-1.5.1,v 1.1.2.32 2001/03/13 21:38:26 he Exp $
 
 A complete list of changes from NetBSD 1.5 to NetBSD 1.5.1:
 
@@ -1886,3 +1886,9 @@ share/man/man4/pciide.4				1.27
 
   Support Ultra/100 speed on Promise Ultra/100, and fix ``bogus
   intr'' messages generated under some conditions.
+
+sys/dev/pcmcia/pcmcia_cis.c			1.21
+
+  Add some small delays at appropriate places in CIS reading code.
+  This is a stopgap fix for PR#9984, avoiding a panic when an
+  ``AVM Fritz!'' ISDN card is installed in a cardbus slot.
