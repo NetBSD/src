@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.10 1999/12/04 22:14:15 tron Exp $
+	$NetBSD: syscalls.master,v 1.11 1999/12/05 21:24:30 tron Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -321,10 +321,10 @@
 			    void *uinfo); }
 179	STD		{ int linux_sys_rt_sigsuspend(linux_sigset_t *unewset, \
 			    size_t sigsetsize); }
-180	NOARGS		{ int sys_pread(int fd, char *buf, size_t nbytes, \
-			    off_t offset); }
-181	NOARGS		{ int sys_pwrite(int fd, char *buf, size_t nbytes, \
-			    off_t offset); }
+180	STD		{ int linux_sys_pread(int fd, char *buf, \
+			    size_t nbyte, linux_off_t offset); }
+181	STD		{ int linux_sys_pwrite(int fd, char *buf, \
+			    size_t nbyte, linux_off_t offset); }
 ;182 chown on i386; lchown on m68k.
 182	STD		{ int linux_sys_lchown(const char *path, int uid, \
 			    int gid); }
