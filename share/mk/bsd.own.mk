@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.115 1999/02/11 13:25:42 tv Exp $
+#	$NetBSD: bsd.own.mk,v 1.116 1999/02/12 01:10:07 lukem Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -80,27 +80,27 @@ STRIPFLAG?=	-s
 # XXX The next two are temporary until the transition to UVM is complete.
 
 # Systems on which UVM is the standard VM system.
-.if	(${MACHINE} != "pica")
+.if ${MACHINE} != "pica"
 UVM?=		yes
 .endif
 
 # Systems that use UVM's new pmap interface.
-.if	(${MACHINE} == "alpha") || \
-	(${MACHINE} == "i386") || \
-	(${MACHINE} == "pc532") || \
-	(${MACHINE} == "vax")
+.if ${MACHINE} == "alpha" || \
+    ${MACHINE} == "i386" || \
+    ${MACHINE} == "pc532" || \
+    ${MACHINE} == "vax"
 PMAP_NEW?=	yes
 .endif
 
 # The sparc64 port is incomplete.
-.if (${MACHINE_ARCH} == "sparc64")
+.if ${MACHINE_ARCH} == "sparc64"
 NOPROFILE=1
 NOPIC=1
 NOLINT=1
 .endif
 
 # The PowerPC port is incomplete.
-.if (${MACHINE_ARCH} == "powerpc")
+.if ${MACHINE_ARCH} == "powerpc"
 NOPROFILE=
 .endif
 
@@ -110,10 +110,10 @@ NOPROFILE=
 # OBJECT_FMT:		currently either "ELF" or "a.out".
 # SHLIB_TYPE:		"ELF" or "a.out" or "" to force static libraries.
 #
-.if (${MACHINE_ARCH} == "alpha") || \
-    (${MACHINE_ARCH} == "mips") || \
-    (${MACHINE_ARCH} == "powerpc") || \
-    (${MACHINE_ARCH} == "sparc64")
+.if ${MACHINE_ARCH} == "alpha" || \
+    ${MACHINE_ARCH} == "mips" || \
+    ${MACHINE_ARCH} == "powerpc" || \
+    ${MACHINE_ARCH} == "sparc64"
 OBJECT_FMT?=ELF
 .else
 OBJECT_FMT?=a.out
@@ -133,13 +133,13 @@ GNU_ARCH.powerpc=powerpc
 GNU_ARCH.sparc=sparc
 GNU_ARCH.sparc64=sparc
 GNU_ARCH.vax=vax
-.if (${MACHINE_ARCH} == "mips")
+.if ${MACHINE_ARCH} == "mips"
 .INIT:
 	@echo Must set MACHINE_ARCH to one of mipseb or mipsel
 	@false
 .endif
 
-.if (${MACHINE_ARCH} == "sparc64")
+.if ${MACHINE_ARCH} == "sparc64"
 MACHINE_GNU_ARCH=${MACHINE_ARCH}
 .else
 MACHINE_GNU_ARCH=${GNU_ARCH.${MACHINE_ARCH}}
@@ -155,7 +155,7 @@ TARGETS+=	all clean cleandir depend distclean includes install lint obj \
 # this is used by bsd.pkg.mk to stop "install" being defined
 NEED_OWN_INSTALL_TARGET?=	yes
 
-.if (${NEED_OWN_INSTALL_TARGET} == "yes")
+.if ${NEED_OWN_INSTALL_TARGET} == "yes"
 .if !target(install)
 install:	.NOTMAIN beforeinstall subdir-install realinstall afterinstall
 beforeinstall:	.NOTMAIN
@@ -164,5 +164,76 @@ realinstall:	.NOTMAIN beforeinstall
 afterinstall:	.NOTMAIN subdir-install realinstall
 .endif
 .endif
+
+# Define MKxxx variables (which are either yes or no) for users
+# to set in /etc/mk.conf and override on the make commandline.
+# These should be tested with `== "no"' or `!= "no"'.
+# The NOxxx variables should only be used by Makefiles.
+#
+
+MKCATPAGES?=yes
+
+.if defined(NODOC)
+MKDOC=no
+#.elif !defined(MKDOC)
+#MKDOC=yes
+.else
+MKDOC?=yes
+.endif
+
+.if defined(NOLINKLIB)
+MKLINKLIB=no
+.else
+MKLINKLIB?=yes
+.endif
+
+.if defined(NOLINT)
+MKLINT=no
+.else
+MKLINT?=yes
+.endif
+
+.if defined(NOMAN)
+MKMAN=no
+.else
+MKMAN?=yes
+.endif
+
+.if defined(NONLS)
+MKNLS=no
+.else
+MKNLS?=yes
+.endif
+
+.if defined(NOOBJ)
+MKOBJ=no
+.else
+MKOBJ?=yes
+.endif
+
+.if defined(NOPIC)
+MKPIC=no
+.else
+MKPIC?=yes
+.endif
+
+.if defined(NOPICINSTALL)
+MKPICINSTALL=no
+.else
+MKPICINSTALL?=yes
+.endif
+
+.if defined(NOPROFILE)
+MKPROFILE=no
+.else
+MKPROFILE?=yes
+.endif
+
+.if defined(NOSHARE)
+MKSHARE=no
+.else
+MKSHARE?=yes
+.endif
+
 
 .endif		# _BSD_OWN_MK_

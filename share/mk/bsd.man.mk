@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.man.mk,v 1.42 1999/02/04 11:58:31 christos Exp $
+#	$NetBSD: bsd.man.mk,v 1.43 1999/02/12 01:10:07 lukem Exp $
 #	@(#)bsd.man.mk	8.1 (Berkeley) 6/8/93
 
 .if !target(__initialized__)
@@ -12,7 +12,7 @@ __initialized__:
 .endif
 
 .PHONY:		catinstall maninstall catpages manpages catlinks manlinks cleanman
-.if !defined(NOMAN) && !defined(NOSHARE)
+.if ${MKMAN} != "no" && ${MKSHARE} != "no"
 realinstall:	${MANINSTALL}
 .endif
 cleandir distclean: cleanman
@@ -72,7 +72,7 @@ __installpage: .USE
 
 
 # Rules for cat'ed man page installation
-.if defined(CATPAGES) && !empty(CATPAGES)
+.if defined(CATPAGES) && !empty(CATPAGES) && ${MKCATPAGES} != "no"
 .   for P in ${CATPAGES}
 catpages:: ${DESTDIR}${MANDIR}/${P:T:E}${MANSUBDIR}/${P:T:R}.0${MCOMPRESSSUFFIX}
 
@@ -105,6 +105,7 @@ ${DESTDIR}${MANDIR}/man${P:T:E}${MANSUBDIR}/${P}${MCOMPRESSSUFFIX}: ${P} __insta
 manpages::
 .endif
 
+.if ${MKCATPAGES} != "no"
 catlinks: catpages
 .if defined(MLINKS) && !empty(MLINKS)
 	@set ${MLINKS}; \
@@ -122,6 +123,9 @@ catlinks: catpages
 		    ln -f $$l $$t; \
 		fi; \
 	done
+.endif
+.else
+catlinks:
 .endif
 
 manlinks: manpages
@@ -144,7 +148,7 @@ manlinks: manpages
 .endif
 
 .if defined(CATPAGES)
-.if !defined(NOMAN) && !defined(NOSHARE)
+.if ${MKMAN} != "no" && ${MKSHARE} != "no" && ${MKCATPAGES} != "no"
 all: ${CATPAGES}
 .else
 all:
