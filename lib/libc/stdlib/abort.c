@@ -1,4 +1,4 @@
-/*	$NetBSD: abort.c,v 1.7 1996/10/24 20:45:55 jtc Exp $	*/
+/*	$NetBSD: abort.c,v 1.8 1997/05/19 02:18:14 kleink Exp $	*/
 
 /*
  * Copyright (c) 1985 Regents of the University of California.
@@ -37,7 +37,7 @@
 #if 0
 static char *sccsid = "from: @(#)abort.c	5.11 (Berkeley) 2/23/91";
 #else
-static char *rcsid = "$NetBSD: abort.c,v 1.7 1996/10/24 20:45:55 jtc Exp $";
+static char *rcsid = "$NetBSD: abort.c,v 1.8 1997/05/19 02:18:14 kleink Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -65,9 +65,6 @@ abort()
 	 * POSIX.1 requires that stdio buffers be flushed on abort.
 	 * We ensure the cleanup routines are only called once in
 	 * case the user calls abort() in a SIGABRT handler.
-	 *
-	 * XXX Other libc's do atexit processing on abort.  Is this
-	 * something we should be doing too?
 	 */
 	if (!aborting) {
 		aborting = 1;
