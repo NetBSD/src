@@ -21,6 +21,7 @@ B<openssl> B<s_server>
 [B<-nbio_test>]
 [B<-crlf>]
 [B<-debug>]
+[B<-msg>]
 [B<-state>]
 [B<-CApath directory>]
 [B<-CAfile filename>]
@@ -39,6 +40,9 @@ B<openssl> B<s_server>
 [B<-hack>]
 [B<-www>]
 [B<-WWW>]
+[B<-HTTP>]
+[B<-engine id>]
+[B<-id_prefix arg>]
 [B<-rand file(s)>]
 
 =head1 DESCRIPTION
@@ -134,6 +138,10 @@ prints out the SSL session states.
 
 print extensive debugging information including a hex dump of all traffic.
 
+=item B<-msg>
+
+show all protocol messages with hex dump.
+
 =item B<-nbio_test>
 
 tests non blocking I/O
@@ -186,6 +194,28 @@ web browser.
 emulates a simple web server. Pages will be resolved relative to the
 current directory, for example if the URL https://myhost/page.html is
 requested the file ./page.html will be loaded.
+
+=item B<-HTTP>
+
+emulates a simple web server. Pages will be resolved relative to the
+current directory, for example if the URL https://myhost/page.html is
+requested the file ./page.html will be loaded. The files loaded are
+assumed to contain a complete and correct HTTP response (lines that
+are part of the HTTP response line and headers must end with CRLF).
+
+=item B<-engine id>
+
+specifying an engine (by it's unique B<id> string) will cause B<s_server>
+to attempt to obtain a functional reference to the specified engine,
+thus initialising it if needed. The engine will then be set as the default
+for all available algorithms.
+
+=item B<-id_prefix arg>
+
+generate SSL/TLS session IDs prefixed by B<arg>. This is mostly useful
+for testing any SSL/TLS code (eg. proxies) that wish to deal with multiple
+servers, when each of which might be generating a unique range of session
+IDs (eg. with a certain prefix).
 
 =item B<-rand file(s)>
 
