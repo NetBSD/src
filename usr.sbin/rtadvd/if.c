@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.2 1999/07/06 13:02:09 itojun Exp $	*/
+/*	$NetBSD: if.c,v 1.3 1999/12/08 04:54:15 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -50,6 +50,9 @@
 #include <netinet/icmp6.h>
 #ifdef __bsdi__
 # include <netinet/if_ether.h>
+#endif
+#ifdef __OpenBSD__
+#include <netinet/if_ether.h>
 #endif
 #include <unistd.h>
 #include <errno.h>
@@ -119,6 +122,8 @@ if_nametosdl(char *name)
 			if ((sa = rti_info[RTAX_IFP]) != NULL) {
 				if (sa->sa_family == AF_LINK) {
 					sdl = (struct sockaddr_dl *)sa;
+					if (strlen(name) != sdl->sdl_nlen)
+						continue; /* not same len */
 					if (strncmp(&sdl->sdl_data[0],
 						    name,
 						    sdl->sdl_nlen) == 0) {
