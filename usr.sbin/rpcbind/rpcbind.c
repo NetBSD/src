@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcbind.c,v 1.1 2000/06/02 23:15:42 fvdl Exp $	*/
+/*	$NetBSD: rpcbind.c,v 1.2 2001/01/11 02:45:31 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -125,7 +125,7 @@ main(int argc, char *argv[])
 			rl.rlim_cur = 128;
 		setrlimit(RLIMIT_NOFILE, &rl);
 	}
-	openlog("rpcbind", LOG_CONS, LOG_DAEMON);
+	openlog("rpcbind", 0, LOG_DAEMON);
 	if (geteuid()) { /* This command allowed only to root */
 		fprintf(stderr, "Sorry. You are not superuser\n");
 		exit(1);
