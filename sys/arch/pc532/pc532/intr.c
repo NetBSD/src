@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.12 1996/12/23 08:36:02 matthias Exp $  */
+/*	$NetBSD: intr.c,v 1.13 1997/02/08 09:33:55 matthias Exp $	*/
 
 /*
  * Copyright (c) 1994 Matthias Pfaller.
