@@ -1,4 +1,4 @@
-/*	$NetBSD: mongoose.c,v 1.7 2003/11/23 17:09:29 chs Exp $	*/
+/*	$NetBSD: mongoose.c,v 1.8 2003/11/28 19:03:03 chs Exp $	*/
 
 /*	$OpenBSD: mongoose.c,v 1.7 2000/08/15 19:42:56 mickey Exp $	*/
 
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mongoose.c,v 1.7 2003/11/23 17:09:29 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mongoose.c,v 1.8 2003/11/28 19:03:03 chs Exp $");
 
 #define MONGOOSE_DEBUG 9
 
@@ -640,9 +640,10 @@ mgattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ec.ec_intr_disestablish = mg_intr_disestablish;
 	sc->sc_ec.ec_intr_string = mg_intr_string;
 	sc->sc_ec.ec_intr_map = mg_intr_map;
+
 	/* inherit the bus tags for eisa from the mainbus */
 	bt = &sc->sc_eiot;
-	bcopy(ca->ca_iot, bt, sizeof(*bt));
+	memcpy(bt, ca->ca_iot, sizeof(*bt));
 	bt->hbt_cookie = sc;
 	bt->hbt_map = mg_eisa_iomap;
 #define	R(n)	bt->__CONCAT(hbt_,n) = &__CONCAT(mg_isa_,n)
@@ -652,10 +653,11 @@ mgattach(struct device *parent, struct device *self, void *aux)
 	R(rr_2);R(rr_4);R(wr_2);R(wr_4);R(sr_2);R(sr_4);
 
 	bt = &sc->sc_ememt;
-	bcopy(ca->ca_iot, bt, sizeof(*bt));
+	memcpy(bt, ca->ca_iot, sizeof(*bt));
 	bt->hbt_cookie = sc;
 	bt->hbt_map = mg_eisa_memmap;
 	bt->hbt_unmap = mg_eisa_memunmap;
+
 	/* attachment guts */
 	ea.mongoose_eisa.eba_busname = "eisa";
 	ea.mongoose_eisa.eba_iot = &sc->sc_eiot;
@@ -669,12 +671,15 @@ mgattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ic.ic_intr_establish = mg_intr_establish;
 	sc->sc_ic.ic_intr_disestablish = mg_intr_disestablish;
 	sc->sc_ic.ic_intr_check = mg_intr_check;
+
 	/* inherit the bus tags for isa from the eisa */
 	bt = &sc->sc_imemt;
-	bcopy(&sc->sc_ememt, bt, sizeof(*bt));
+	memcpy(bt, &sc->sc_ememt, sizeof(*bt));
 	bt = &sc->sc_iiot;
-	bcopy(&sc->sc_eiot, bt, sizeof(*bt));
+	memcpy(bt, &sc->sc_eiot, sizeof(*bt));
+
 	/* TODO: DMA tags */
+
 	/* attachment guts */
 	ea.mongoose_isa.iba_busname = "isa";
 	ea.mongoose_isa.iba_iot = &sc->sc_iiot;
