@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.1 2002/04/13 01:47:53 thorpej Exp $	*/
+/*	$NetBSD: md.h,v 1.2 2002/04/13 02:34:18 thorpej Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -37,7 +37,7 @@
  *
  */
 
-/* md.h -- Machine specific definitions for the shark */
+/* md.h -- Machine specific definitions for evbarm */
 
 /* Constants and defines */
 
@@ -56,21 +56,24 @@
 EXTERN distinfo dist_list[]
 #ifdef MAIN
 = {
-    {"kern-GENERIC",	1, NULL, "Kernel       : "},
-    {"base",		1, NULL, "Base         : "},
-    {"etc",		1, NULL, "System (/etc): "},
-    {"comp",		1, NULL, "Compiler     : "},
-    {"games",		1, NULL, "Games        : "},
-    {"man",		1, NULL, "Manuals      : "},
-    {"misc",		1, NULL, "Miscellaneous: "},
-    {"text",		1, NULL, "Text tools   : "},
+    {"kern-INTEGRATOR",		0, NULL, "Kernel       : "},
+    {"kern-IQ80310",		0, NULL, "Kernel       : "},
+    {"kern-IQ80321",		0, NULL, "Kernel       : "},
+    {"kern-TEAMASA_NPWR",	0, NULL, "Kernel       : "},
+    {"base",			1, NULL, "Base         : "},
+    {"etc",			1, NULL, "System (/etc): "},
+    {"comp",			1, NULL, "Compiler     : "},
+    {"games",			1, NULL, "Games        : "},
+    {"man",			1, NULL, "Manuals      : "},
+    {"misc",			1, NULL, "Miscellaneous: "},
+    {"text",			1, NULL, "Text tools   : "},
 
-    {"xbase",		1, NULL, "X11 clients  : "},
-    {"xfont",		1, NULL, "X11 fonts    : "},
-    {"xserver",		1, NULL, "X11 servers  : "},
-    {"xcontrib",	1, NULL, "X11 contrib  : "},
-    {"xcomp",		1, NULL, "X programming: "},
-    {"xmisc",		1, NULL, "X11 Misc.    : "},
+    {"xbase",			0, NULL, "X11 clients  : "},
+    {"xfont",			0, NULL, "X11 fonts    : "},
+    {"xserver",			0, NULL, "X11 servers  : "},
+    {"xcontrib",		0, NULL, "X11 contrib  : "},
+    {"xcomp",			0, NULL, "X programming: "},
+    {"xmisc",			0, NULL, "X11 Misc.    : "},
     {NULL, 0, NULL, NULL }
 }
 #endif
@@ -108,7 +111,7 @@ EXTERN	char *disk_names[]
 
 /*
  * Default fileystem type for floppy disks.
- * On shark, that is msdos.
+ * On evbarm, that is msdos.
  */
 EXTERN char *fdtype INIT("msdos");
 
