@@ -1,4 +1,4 @@
-/*	$NetBSD: view.c,v 1.4 1995/05/21 11:00:13 leo Exp $	*/
+/*	$NetBSD: view.c,v 1.5 1995/05/28 19:45:41 leo Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -413,4 +413,11 @@ int	rw;
 	if(rw == FREAD)
 		return(0);
 	return(1);
+}
+
+view_t	*
+viewview(dev)
+dev_t	dev;
+{
+	return(views[minor(dev)].view);
 }

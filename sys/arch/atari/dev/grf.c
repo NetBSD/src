@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.3 1995/05/21 10:52:18 leo Exp $	*/
+/*	$NetBSD: grf.c,v 1.4 1995/05/28 19:45:36 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -222,7 +222,6 @@ grfattach(pdp, dp, auxp)
 struct device	*pdp, *dp;
 void		*auxp;
 {
-	extern struct view_softc	views[];
 	static struct grf_softc		congrf;
 	       struct grf_softc		*gp;
 	       int			maj;
@@ -243,7 +242,6 @@ void		*auxp;
 		congrf.g_flags   = GF_ALIVE;
 		congrf.g_mode    = grf_mode;
 		congrf.g_conpri  = grfcc_cnprobe();
-		congrf.g_view    = views[0].view; /* XXX */
 		congrf.g_viewdev = congrf.g_unit;
 		grfcc_iteinit(&congrf);
 		grf_viewsync(&congrf);
@@ -270,7 +268,6 @@ void		*auxp;
 		gp->g_flags   = GF_ALIVE;
 		gp->g_mode    = grf_mode;
 		gp->g_conpri  = 0;
-		gp->g_view    = views[gp->g_unit].view; /* XXX */
 		gp->g_viewdev = gp->g_unit;
 		grfcc_iteinit(gp);
 		grf_viewsync(gp);
@@ -392,8 +389,7 @@ struct proc	*p;
 		 * check to see whether it's a command recognized by the
 		 * view code.
 		 */
-		if(gp->g_view != NULL)
-			return(viewioctl(gp->g_viewdev, cmd, data, flag, p));
+		return(viewioctl(gp->g_viewdev, cmd, data, flag, p));
 		error = EINVAL;
 		break;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: grfvar.h,v 1.1.1.1 1995/03/26 07:12:12 leo Exp $	*/
+/*	$NetBSD: grfvar.h,v 1.2 1995/05/28 19:45:38 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -56,7 +56,6 @@ struct	grf_softc {
 	int		g_unit;		/* grf unit we want/have	*/
 	dev_t		g_itedev;	/* ite device number		*/
 	dev_t		g_grfdev;	/* grf device number		*/
-	view_t		*g_view;	/* the view we're acting on	*/
 	dev_t		g_viewdev;	/* view device number		*/
 	caddr_t		g_data;		/* device dependent data	*/
 	int		(*g_mode)();

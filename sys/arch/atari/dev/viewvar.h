@@ -1,4 +1,4 @@
-/*	$NetBSD: viewvar.h,v 1.1.1.1 1995/03/26 07:12:14 leo Exp $	*/
+/*	$NetBSD: viewvar.h,v 1.2 1995/05/28 19:45:43 leo Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -58,3 +58,6 @@ enum view_unit_flags {
     VUF_MASK    = ((1<<VUB_LAST_BIT)-1)
 };
 
+#ifdef _KERNEL
+view_t	*viewview __P((dev_t));
+#endif /* _KERNEL */
