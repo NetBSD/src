@@ -1,5 +1,4 @@
-# $NetBSD: md.amiga,v 1.45 2001/01/25 08:29:19 jwise Exp $
-./dev/mouse				base-sys-devlinks
+# $NetBSD: md.amiga,v 1.46 2001/10/21 23:03:14 jmc Exp $
 ./sbin/binpatch				base-sysutil-root
 ./usr/mdec/fdboot			base-sysutil-bin
 ./usr/mdec/installboot			base-sysutil-bin
