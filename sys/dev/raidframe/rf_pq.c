@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_pq.c,v 1.5 1999/08/15 02:36:40 oster Exp $	*/
+/*	$NetBSD: rf_pq.c,v 1.6 1999/08/15 03:44:46 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -588,7 +588,8 @@ int
 rf_RecoveryPQFunc(node)
 	RF_DagNode_t *node;
 {
-	RF_PANIC();
+	RF_Raid_t *raidPtr = (RF_Raid_t *) node->params[node->numParams - 1].p;
+	printf("raid%d: Recovery from PQ not implemented.\n",raidPtr->raidid);
 	return (1);
 }
 /*
