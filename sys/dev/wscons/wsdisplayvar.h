@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplayvar.h,v 1.2 1998/05/14 20:49:57 drochner Exp $ */
+/* $NetBSD: wsdisplayvar.h,v 1.3 1998/06/11 22:00:05 drochner Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -138,6 +138,13 @@ struct wsemuldisplaydev_attach_args {
 #define	wsemuldisplaydevcf_console	cf_loc[0]	/* spec'd as console? */
 #define	WSEMULDISPLAYDEVCF_CONSOLE_UNK	-1
 
+struct wscons_syncops {
+	int (*detach) __P((void *, int, void (*)(void *, int), void *));
+	int (*attach) __P((void *, int));
+	int (*check) __P((void *));
+	void (*destroy) __P((void *));
+};
+
 /*
  * Autoconfiguration helper functions.
  */
@@ -150,3 +157,27 @@ int	wsemuldisplaydevprint __P((void *, const char *));
  * Console interface.
  */
 void	wsdisplay_cnputc __P((dev_t dev, int i));
+
+/*
+ * for use by compatibility code
+ */
+struct wsdisplay_softc;
+struct wsscreen;
+int wsscreen_attach_sync __P((struct wsscreen *,
+			      const struct wscons_syncops *, void *));
+int wsscreen_detach_sync __P((struct wsscreen *));
+int wsscreen_lookup_sync __P((struct wsscreen *,
+			      const struct wscons_syncops *, void **));
+
+int wsdisplay_maxscreenidx __P((struct wsdisplay_softc *));
+int wsdisplay_screenstate __P((struct wsdisplay_softc *, int));
+int wsdisplay_getactivescreen __P((struct wsdisplay_softc *));
+int wsscreen_switchwait __P((struct wsdisplay_softc *, int));
+
+int wsdisplay_internal_ioctl __P((struct wsdisplay_softc *sc,
+				  struct wsscreen *,
+				  u_long cmd, caddr_t data,
+				  int flag, struct proc *p));
+
+int wsdisplay_usl_ioctl __P((struct wsdisplay_softc *, struct wsscreen *,
+			     u_long, caddr_t, int, struct proc *));
