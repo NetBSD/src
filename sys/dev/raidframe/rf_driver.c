@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.11 1999/03/14 21:53:31 oster Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.11.2.1 1999/09/27 05:03:28 cgd Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -376,6 +376,7 @@ rf_UnconfigureVnodes( raidPtr )
 }
 
 #define DO_RAID_FAIL() { \
+	rf_UnconfigureVnodes(raidPtr); \
 	rf_ShutdownList(&raidPtr->shutdownList); \
 	rf_UnconfigureArray(); \
 }
