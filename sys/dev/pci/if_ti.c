@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.11 2000/10/01 23:32:43 thorpej Exp $ */
+/* $NetBSD: if_ti.c,v 1.12 2000/11/12 18:32:43 bouyer Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1569,7 +1569,8 @@ static int ti_gibinit(sc)
 		    - (caddr_t)sc->ti_rdata);
 
 	/* Set up tuneables */
-	if (ifp->if_mtu > (ETHERMTU + ETHER_HDR_LEN + ETHER_CRC_LEN))
+	if (ifp->if_mtu > (ETHERMTU + ETHER_HDR_LEN + ETHER_CRC_LEN) ||
+	    (sc->ethercom.ec_capenable & ETHERCAP_VLAN_MTU))
 		CSR_WRITE_4(sc, TI_GCR_RX_COAL_TICKS,
 		    (sc->ti_rx_coal_ticks / 10));
 	else
@@ -1801,6 +1802,11 @@ static void ti_attach(parent, self, aux)
 	ifp->if_start = ti_start;
 	ifp->if_watchdog = ti_watchdog;
 	ifp->if_snd.ifq_maxlen = TI_TX_RING_CNT - 1;
+
+	/*
+	 * We can support 802.1Q VLAN-sized frames.
+	 */
+	sc->ethercom.ec_capabilities |= ETHERCAP_VLAN_MTU;
 
 	/* Set up ifmedia support. */
 	ifmedia_init(&sc->ifmedia, IFM_IMASK, ti_ifmedia_upd, ti_ifmedia_sts);
@@ -2279,8 +2285,13 @@ static void ti_init2(sc)
 
 	/* Specify MTU and interface index. */
 	CSR_WRITE_4(sc, TI_GCR_IFINDEX, sc->sc_dev.dv_unit); /* ??? */
-	CSR_WRITE_4(sc, TI_GCR_IFMTU, ifp->if_mtu +
-	    ETHER_HDR_LEN + ETHER_CRC_LEN);
+	if ((sc->ethercom.ec_capenable & ETHERCAP_VLAN_MTU) &&
+	    ifp->if_mtu < ETHERMTU + ETHER_VLAN_ENCAP_LEN)
+		CSR_WRITE_4(sc, TI_GCR_IFMTU, ETHER_MAX_LEN +
+		    ETHER_VLAN_ENCAP_LEN);
+	else
+		CSR_WRITE_4(sc, TI_GCR_IFMTU, ifp->if_mtu +
+		    ETHER_HDR_LEN + ETHER_CRC_LEN);
 	TI_DO_CMD(TI_CMD_UPDATE_GENCOM, 0, 0);
 
 	/* Load our MAC address. */
@@ -2312,7 +2323,7 @@ static void ti_init2(sc)
 	ti_init_rx_ring_std(sc);
 
 	/* Init jumbo RX ring. */
-	if (ifp->if_mtu > (ETHERMTU + ETHER_HDR_LEN + ETHER_CRC_LEN))
+	if (ifp->if_mtu > (MCLBYTES - ETHER_HDR_LEN - ETHER_CRC_LEN))
 		ti_init_rx_ring_jumbo(sc);
 
 	/*
