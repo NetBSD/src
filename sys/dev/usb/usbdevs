@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.254 2002/06/18 00:32:30 augustss Exp $
+$NetBSD: usbdevs,v 1.255 2002/06/18 01:02:15 augustss Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -466,6 +466,7 @@ product ATI2 205		0xa001	USB Cable 205
 
 /* Atmel Comp. products */
 product ATMEL UHB124		0x3301	UHB124 hub
+product ATMEL DWL900AP		0x5601	DWL-900AP Wireless access point
 product ATMEL DWL120		0x7602	DWL-120 Wireless adapter
 
 /* Audio-Technica products */
