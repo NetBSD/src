@@ -26,7 +26,7 @@
  */
 #ifndef	lint
 static char *moduleid = 
-	"@(#)$Id: file.c,v 1.6 1995/05/21 00:13:29 christos Exp $";
+	"@(#)$Id: file.c,v 1.7 1995/07/13 13:22:58 mycroft Exp $";
 #endif	/* lint */
 
 #include <stdio.h>
@@ -313,15 +313,8 @@ int wid;
 	}
 #endif
 
-	if (inname != stdname) {
-		/*
-		 * Try to restore access, modification times if read it.
-		 */
-		utbuf.actime = sb.st_atime;
-		utbuf.modtime = sb.st_mtime;
-		(void) utime(inname, &utbuf); /* don't care if loses */
+	if (inname != stdname)
 		(void) close(fd);
-	}
 	(void) putchar('\n');
 }
 
