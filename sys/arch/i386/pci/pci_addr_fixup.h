@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_addr_fixup.h,v 1.2 2000/05/31 16:38:55 uch Exp $	*/
+/*	$NetBSD: pci_addr_fixup.h,v 1.3 2001/07/06 18:02:35 mcr Exp $	*/
 
 /*-
  * Copyright (c) 2000 UCHIYAMA Yasushi.  All rights reserved.
@@ -37,3 +37,17 @@ struct pciaddr {
 extern struct pciaddr pciaddr;
 
 void	pci_addr_fixup __P((pci_chipset_tag_t, int));
+
+/* for cardbus stuff */
+typedef int (*pciaddr_resource_manage_func_t) 
+	(pci_chipset_tag_t, pcitag_t, int, void *, int,
+	 bus_addr_t *, bus_size_t);
+
+void	pciaddr_resource_manage __P((pci_chipset_tag_t, pcitag_t,
+				     pciaddr_resource_manage_func_t,
+				     void *));
+
+void	pciaddr_print_devid __P((pci_chipset_tag_t, pcitag_t));
+
+bus_addr_t pciaddr_ioaddr __P((u_int32_t));
+
