@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_mkdb.c,v 1.11 2001/07/04 20:42:02 manu Exp $	*/
+/*	$NetBSD: dev_mkdb.c,v 1.12 2001/07/05 20:35:33 manu Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)dev_mkdb.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: dev_mkdb.c,v 1.11 2001/07/04 20:42:02 manu Exp $");
+__RCSID("$NetBSD: dev_mkdb.c,v 1.12 2001/07/05 20:35:33 manu Exp $");
 #endif
 #endif /* not lint */
 
@@ -120,12 +120,12 @@ main(argc, argv)
 	if (ftsp == NULL)
 		err(1, "fts_open: %s", path_dev);
 
-	(void)snprintf(dbtmp, MAXPATHLEN, "%sdev.tmp", _PATH_VARTMP);
+	(void)snprintf(dbtmp, MAXPATHLEN, "%sdev.tmp", _PATH_TMP);
 	if (dbname_arg)
 		strncpy(dbname, dbname_arg, MAXPATHLEN);
 	else
 		(void)snprintf(dbname, MAXPATHLEN, "%sdev.db", _PATH_VARRUN);
-	db = dbopen(dbtmp, O_CREAT|O_EXLOCK|O_RDWR|O_TRUNC,
+	db = dbopen(dbtmp, O_CREAT|O_EXCL|O_EXLOCK|O_RDWR|O_TRUNC,
 	    S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH, DB_HASH, NULL);
 	if (db == NULL)
 		err(1, "%s", dbtmp);
