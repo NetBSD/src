@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.102 2001/12/05 21:13:59 augustss Exp $
+#       $NetBSD: Makefile,v 1.103 2001/12/24 12:28:46 jdolecek Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -303,7 +303,8 @@ MLINKS+=uvm.9 uvm_init.9 uvm.9 uvm_init_limits.9 uvm.9 uvm_setpagesize.9 \
 	uvm.9 uvm_fork.9 uvm.9 uvm_grow.9 uvm.9 uvm_coredump.9 \
 	uvm.9 ubc_alloc.9 \
 	uvm.9 ubc_release.9 \
-	uvm.9 uvn_findpages.9
+	uvm.9 uvn_findpages.9 \
+	uvm.9 uvm_loan.9 uvm.9 uvm_unloan.9
 MLINKS+=vme.9 vme_probe.9 \
 	vme.9 vme_space_map.9 \
 	vme.9 vme_space_unmap.9 \
