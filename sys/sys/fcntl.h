@@ -1,4 +1,4 @@
-/*	$NetBSD: fcntl.h,v 1.18 2001/06/19 13:42:20 wiz Exp $	*/
+/*	$NetBSD: fcntl.h,v 1.19 2001/12/06 22:34:24 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990, 1993
@@ -125,6 +125,8 @@
 #define	FMARK		0x00001000	/* mark during gc() */
 #define	FDEFER		0x00002000	/* defer for next gc pass */
 #define	FHASLOCK	0x00004000	/* descriptor holds advisory lock */
+#define	FWANTCLOSE	0x00100000	/* a close is waiting for usecount */
+#define	FLARVAL		0x00200000	/* not fully constructed; don't use */
 /*
  * Note: The below is not a flag that can be used in the struct file. 
  * It's an option that can be passed to vn_open to make sure it doesn't

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.81 2001/11/12 15:25:07 lukem Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.82 2001/12/06 22:34:24 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.81 2001/11/12 15:25:07 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.82 2001/12/06 22:34:24 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -738,7 +738,7 @@ falloc(struct proc *p, struct file **resultfp, int *resultfd)
 	nfiles++;
 	fp = pool_get(&file_pool, PR_WAITOK);
 	memset(fp, 0, sizeof(struct file));
-	fp->f_iflags = FIF_LARVAL;
+	fp->f_flag = FLARVAL;
 	if ((fq = p->p_fd->fd_ofiles[0]) != NULL) {
 		LIST_INSERT_AFTER(fq, fp, f_list);
 	} else {
@@ -1038,7 +1038,7 @@ closef(struct file *fp, struct proc *p)
 	 * happen if a filedesc structure is shared by multiple
 	 * processes.
 	 */
-	if (fp->f_iflags & FIF_WANTCLOSE) {
+	if (fp->f_flag & FWANTCLOSE) {
 		/*
 		 * Another user of the file is already closing, and is
 		 * simply waiting for other users of the file to drain.
@@ -1081,7 +1081,7 @@ closef(struct file *fp, struct proc *p)
 	 * This will prevent them from adding additional uses to
 	 * the file.
 	 */
-	fp->f_iflags |= FIF_WANTCLOSE;
+	fp->f_flag |= FWANTCLOSE;
 
 	/*
 	 * We expect the caller to add a use to the file.  So, if we
