@@ -1,4 +1,4 @@
-$NetBSD: README.files,v 1.7 1996/09/14 04:39:54 cgd Exp $
+$NetBSD: README.files,v 1.8 1997/03/14 00:56:03 cgd Exp $
 
 README.files			This list.
 
@@ -12,10 +12,11 @@ In each directory:
 
 CKSUMS				Checksums (generated with NetBSD's "cksum"
 				utility) of all files in this snapshot.
+MD5SUMS				MD5 message digests (generated with NetBSD's
+				"md5" utility) of all files in this snapshot.
 README_FIRST			Important last-minute notes about the snapshot.
 README				Installation notes; incomplete.
 STATUS				Status of NetBSD/Alpha, supported hardware list.
-TODO.users			Things that I think users could do to help out.
 
 bin/				Directory with binaries for this snapshot.
 
@@ -24,16 +25,21 @@ bin/				Directory with binaries for this snapshot.
 	etc.tar.gz		/etc from the disk image.
 	netbsd.gz		Gzipped GENERIC kernel (also on disk image).
 	netbsd.gdb.gz		Gzipped GENERIC kernel w/debugging symbols.
-	rz25-image.gz		Disk image, of an RZ25, for installation.
+	diskimage.gz		Disk image for installation.
 	x11.tar.gz		/usr/X11R6 from the disk image.
 
 src/				Directory with sources for this snapshot.
 
-	X11R6-XF86-3.1.2-diffs.gz
-				Diffs from XFree86 3.1.2 used to make the
-				X11 binaries in the distribution.
+	X11R6-XF86-*-diffs.gz
+				Diffs from XFree86 (version indicated by
+				whatever matches that '*') used to make
+				the X11 binaries in the distribution.
 				X11 sources should be placed in
-				/usr/alphasrc/xc.
-	cygnus.tar.gz		Toolchain (gcc, gas, ld, etc.) sources
+				/usr/alphasrc/xc with a symlink pointing
+				from /usr/src/xc.  [May not be present
+				in all distributions.]
+	toolchain.tar.gz	Toolchain (gcc, gas, ld, etc.) sources
 				used to build the compiler toolchain.
-				Should be untarred into /usr/alphasrc/cygnus.
+				Should be untarred into
+				/usr/alphasrc/toolchain with a symlink
+				pointing from /usr/src/toolchain.
