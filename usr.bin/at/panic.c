@@ -1,4 +1,4 @@
-/*	$NetBSD: panic.c,v 1.5 1998/06/27 21:15:07 christos Exp $	*/
+/*	$NetBSD: panic.c,v 1.6 1999/01/31 09:30:31 mrg Exp $	*/
 
 /*
  * panic.c - terminate fast in case of error
@@ -44,7 +44,7 @@
 #if 0
 static char rcsid[] = "$OpenBSD: panic.c,v 1.4 1997/03/01 23:40:09 millert Exp $";
 #else
-__RCSID("$NetBSD: panic.c,v 1.5 1998/06/27 21:15:07 christos Exp $");
+__RCSID("$NetBSD: panic.c,v 1.6 1999/01/31 09:30:31 mrg Exp $");
 #endif
 #endif
 
@@ -56,6 +56,7 @@ void
 panic(a)
 	char *a;
 {
+
 	/*
 	 * Something fatal has happened, print error message and exit.
 	 */
@@ -73,6 +74,7 @@ void
 perr(a)
 	char *a;
 {
+
 	/*
 	 * Some operating system error; print error message and exit.
 	 */
@@ -90,6 +92,7 @@ void
 perr2(a, b)
 	char *a, *b;
 {
+
 	(void)fputs(a, stderr);
 	perr(b);
 }
@@ -97,6 +100,7 @@ perr2(a, b)
 void
 usage()
 {
+
 	/* Print usage and exit.  */
 	(void)fprintf(stderr,   "Usage: at [-V] [-q x] [-f file] [-m] time\n"
 				"       at [-V] -c job [job ...]\n"
