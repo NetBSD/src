@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.229 1998/08/09 08:58:18 mrg Exp $
+#	$NetBSD: files,v 1.230 1998/08/11 00:06:12 thorpej Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -101,7 +101,7 @@ define	midibus { }
 define	scsi {[channel = -1]}
 define	ata {[drive = -1]}
 define	atapi { }
-define  miibus { }
+define  mii {[phy = -1]}
 
 # audio device attributes
 define	mulaw
@@ -233,7 +233,7 @@ device	sm: arp, ether, ifnet
 file	dev/ic/smc91cxx.c		sm
 
 # SMC 83C170 EPIC/100 Fast Ethernet Controller
-device	epic: arp, ether, ifnet, miibus 
+device	epic: arp, ether, ifnet, mii
 file	dev/ic/smc83c170.c		epic
 
 # MB8696x Ethernet Controller
