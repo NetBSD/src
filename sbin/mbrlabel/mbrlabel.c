@@ -1,4 +1,4 @@
-/*	$NetBSD: mbrlabel.c,v 1.18 2001/08/20 08:21:10 ad Exp $	*/
+/*	$NetBSD: mbrlabel.c,v 1.19 2002/02/07 02:14:02 ross Exp $	*/
 
 /*
  * Copyright (C) 1998 Wolfgang Solfrank.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mbrlabel.c,v 1.18 2001/08/20 08:21:10 ad Exp $");
+__RCSID("$NetBSD: mbrlabel.c,v 1.19 2002/02/07 02:14:02 ross Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -152,7 +152,7 @@ getparts(int sd, u_int32_t off, u_int32_t extoff, int verbose)
 		perror("seek label");
 		exit(1);
 	}
-	if (read(sd, buf, DEV_BSIZE) != DEV_BSIZE) {
+	if (read(sd, buf, sizeof buf) != DEV_BSIZE) {
 		perror("read label");
 		exit(1);
 	}
@@ -299,7 +299,7 @@ main(int argc, char **argv)
 	if (argc != 1)
 		usage();
 
-	if ((sd = opendisk(argv[0], O_RDWR, name, MAXPATHLEN, 0)) < 0) {
+	if ((sd = opendisk(argv[0], O_RDWR, name, (size_t)MAXPATHLEN, 0)) < 0) {
 		perror(argv[0]);
 		exit(1);
 	}
