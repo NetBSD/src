@@ -1,4 +1,4 @@
-/*    $NetBSD: nfs_boot.c,v 1.12 1994/10/29 06:38:11 cgd Exp $ */
+/*    $NetBSD: nfs_boot.c,v 1.13 1995/02/16 21:43:15 pk Exp $ */
 
 /*
  * Copyright (c) 1994 Adam Glass, Gordon Ross
@@ -97,6 +97,8 @@ static int md_mount __P((struct sockaddr_in *mdsin, char *path,
 static void get_path_and_handle __P((struct sockaddr_in *bpsin,
 	char *key, struct nfs_dlmount *ndmntp));
 
+char	*nfsbootdevname;
+
 /*
  * Called with an empty nfs_diskless struct to be filled in.
  */
@@ -134,11 +136,14 @@ nfs_boot_init(nd, procp)
 
 	/*
 	 * Find a network interface.
-	 * XXX - This should use the specified boot device.
 	 */
-	for (ifp = ifnet; ifp; ifp = ifp->if_next)
-		if ((ifp->if_flags & (IFF_LOOPBACK|IFF_POINTOPOINT)) == 0)
-			break;
+	if (nfsbootdevname)
+		ifp = ifunit(nfsbootdevname);
+	else
+		for (ifp = ifnet; ifp; ifp = ifp->if_next)
+			if ((ifp->if_flags &
+			     (IFF_LOOPBACK|IFF_POINTOPOINT)) == 0)
+				break;
 	if (ifp == NULL)
 		panic("nfs_boot: no suitable interface");
 	sprintf(ireq.ifr_name, "%s%d", ifp->if_name, ifp->if_unit);
