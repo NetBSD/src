@@ -2,11 +2,11 @@
 # Distribution kernel (any  model) kernel config file
 
 #
-# 	$NetBSD: GENERIC,v 1.42 2000/04/03 04:31:05 sato Exp $
+# 	$NetBSD: GENERIC,v 1.43 2000/04/09 08:28:00 takemura Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
-#ident 		"GENERIC-$Revision: 1.42 $"
+#ident 		"GENERIC-$Revision: 1.43 $"
 
 maxusers	8
 
@@ -300,6 +300,7 @@ pseudo-device	ipfilter		# IP filter, NAT
 
 pseudo-device	vnd		4	# virtual disk ick
 pseudo-device	ccd		4	# concatenated disks
+pseudo-device   rnd                     # /dev/random and in-kernel generator
 
 pseudo-device	biconsdev	1	# build-in console device
 pseudo-device	wsmux		2	# mouse & keyboard multiplexor
