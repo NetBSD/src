@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.129 2000/01/11 20:53:24 pk Exp $ */
+/*	$NetBSD: autoconf.c,v 1.130 2000/01/12 14:53:17 mjacob Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1742,9 +1742,10 @@ device_register(dev, aux)
 		u_int lun = bp->val[1];
 
 		/*
-		 * Bounds check; XXX - guess a reasonable target/lun bound.
+		 * Bounds check: we know the target and lun widths.
 		 */
-		if (target >= 16 || lun >= 16) {
+		if (target > sc_link->scsipi_scsi.max_target ||
+		    lun > sc_link->scsipi_scsi.max_lun) {
 			printf("SCSI disk bootpath component not accepted: "
 			       "target %u; lun %u\n", target, lun);
 			return;
