@@ -1,4 +1,4 @@
-/*	$NetBSD: mptramp.s,v 1.1.2.6 2001/06/18 04:49:05 sommerfeld Exp $	*/
+/*	$NetBSD: mptramp.s,v 1.1.2.7 2001/06/24 19:42:57 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -260,9 +260,6 @@ mp_cont:
 	HALT(0x33)
 	xorl	%esi,%esi
 	jmp	_C_LABEL(mpidle)
-mps:
-	hlt
-	jmp mps
 	
 	.data
 _C_LABEL(mp_pdirpa):
