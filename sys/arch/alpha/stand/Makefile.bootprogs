@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.bootprogs,v 1.4 1999/02/13 02:54:37 lukem Exp $
+# $NetBSD: Makefile.bootprogs,v 1.5 1999/03/31 02:52:11 cgd Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -9,6 +9,8 @@ STRIPFLAG=
 BINMODE= 444
 
 STRIP?=	strip
+
+CHECKSIZE_CMD=	SIZE=${SIZE} sh ${.CURDIR}/../common/checksize.sh
 
 .PHONY: machine-links
 beforedepend: machine-links
@@ -26,22 +28,64 @@ AFLAGS += -DASSEMBLER
 #CPPFLAGS+= -nostdinc -I${.OBJDIR}
 CPPFLAGS+= -I${.OBJDIR}
 CPPFLAGS += -D_STANDALONE -I${.CURDIR}/../.. -I${S}
-CFLAGS = ${CWARNFLAGS} -mno-fp-regs -g
+CFLAGS = ${CWARNFLAGS} -Os -mno-fp-regs -g
 
 # For descriptions of regions available to bootstrap programs, see
 # section 3.4.1.2 (pp. III 3-14 - III 3-18) of the second edition of
 # the Alpha AXP Architecture Reference Manual.
 
-PRIMARY_LOAD_ADDRESS=	20000000	# "Region 1 start"
-SECONDARY_LOAD_ADDRESS=	20004000	# "Region 1 start" + 32k
-HEAP_LIMIT=		20040000	# "Region 1 start" + 256k
+REGION1_START=		0x20000000		# "Region 1 start"
+REGION1_SIZE!=		expr 256 \* 1024	# 256k
 
-CPPFLAGS+=		-DPRIMARY_LOAD_ADDRESS="0x${PRIMARY_LOAD_ADDRESS}"
-CPPFLAGS+=		-DSECONDARY_LOAD_ADDRESS="0x${SECONDARY_LOAD_ADDRESS}"
-CPPFLAGS+=		-DHEAP_LIMIT="0x${HEAP_LIMIT}"
+# our memory lauout:
 
-PRIMARY_CPPFLAGS=	-DPRIMARY_BOOTBLOCK
+#	'unified' boot loaders (e.g. netboot) can consume all of region
+#	1 for their text+data, or text+data+bss.
+
+UNIFIED_LOAD_ADDRESS=	${REGION1_START}
+UNIFIED_MAX_LOAD!=	expr ${REGION1_SIZE}
+UNIFIED_MAX_TOTAL!=	expr ${REGION1_SIZE}
+
+#UNIFIED_HEAP_START=	right after secondary bss
+UNIFIED_HEAP_LIMIT=	(${REGION1_START} + ${REGION1_SIZE})
+
+#	two-stage boot loaders must share region 1.  The first stage
+#	loads into the lowest portion, and uses the higest portion
+#	for its heap.  The second stage loads in between the primary image
+#	and the heap, and can reuse the memory after it (i.e. the primary's
+#	heap) for its own heap.
+
+PRIMARY_LOAD_ADDRESS=	${REGION1_START}
+#PRIMARY_MAX_LOAD=	booter dependent, no more than ${PRIMARY_MAX_TOTAL}
+PRIMARY_MAX_TOTAL!=	expr 16 \* 1024
+
+# XXX SECONDARY_LOAD_ADDRESS should be
+# XXX (${PRIMARY_LOAD_ADDRESS} + ${PRIMARY_MAX_TOTAL}) bt there's no easy
+# XXX way to do that calculation and 'ld' wants a single number.
+SECONDARY_LOAD_ADDRESS=	0x20004000	# XXX
+SECONDARY_MAX_LOAD!=	expr 112 \* 1024
+SECONDARY_MAX_TOTAL!=	expr ${REGION1_SIZE} - ${PRIMARY_MAX_TOTAL}
+
+PRIMARY_HEAP_START=	(${SECONDARY_LOAD_ADDRESS} + ${SECONDARY_MAX_LOAD})
+PRIMARY_HEAP_LIMIT=	(${REGION1_START} + ${REGION1_SIZE})
+
+#SECONDARY_HEAP_START=	right after secondary bss
+SECONDARY_HEAP_LIMIT=	(${REGION1_START} + ${REGION1_SIZE})
+
 FILE_FORMAT_CPPFLAGS=	-DALPHA_BOOT_ECOFF -DALPHA_BOOT_ELF
+
+UNIFIED_CPPFLAGS=	-DPRIMARY_BOOTBLOCK \
+			-DHEAP_LIMIT="${UNIFIED_HEAP_LIMIT}" \
+			${FILE_FORMAT_CPP_FLAGS}
+
+PRIMARY_CPPFLAGS=	-DPRIMARY_BOOTBLOCK \
+			-DSECONDARY_LOAD_ADDRESS="${SECONDARY_LOAD_ADDRESS}" \
+			-DSECONDARY_MAX_LOAD="${SECONDARY_MAX_LOAD}" \
+			-DHEAP_LIMIT="${PRIMARY_HEAP_LIMIT}" \
+			-DHEAP_START="${PRIMARY_HEAP_START}"
+
+SECONDARY_CPPFLAGS=	-DHEAP_LIMIT="${SECONDARY_HEAP_LIMIT}" \
+			${FILE_FORMAT_CPP_FLAGS}
 
 .include <bsd.prog.mk>
 
@@ -57,6 +101,5 @@ LIBZ=		${ZLIB}
 
 ### find out what to use for libsa
 SA_AS=		library
-SAMISCMAKEFLAGS= SA_USE_CREAD=yes
 .include "${S}/lib/libsa/Makefile.inc"
 LIBSA=		${SALIB}
