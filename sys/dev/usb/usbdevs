@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.123 2000/10/13 16:18:02 augustss Exp $
+$NetBSD: usbdevs,v 1.124 2000/10/13 18:16:36 augustss Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -45,6 +45,7 @@ vendor AOX		0x03e8	AOX, Inc.
 vendor ATMEL		0x03eb	Atmel Corp.
 vendor HP		0x03f0	Hewlett Packard
 vendor ADAPTEC		0x03f3	Adaptec, Inc.
+vendor NATIONAL		0x0400	National Semiconductor
 vendor ACERLABS		0x0402	Acer Labs, Inc.
 vendor FTDI		0x0403	Future Technology Devices
 vendor NEC		0x0409	NEC
@@ -445,6 +446,7 @@ product EPSON PRINTER3		0x0003	ISD USB Smart Cable
 product EPSON 636		0x0101	Perfection 636U / 636Photo scanner
 product EPSON 610		0x0103	Perfection 610 scanner
 product EPSON 1200		0x0104	Perfection 1200U / 1200Photo scanner
+product EPSON 1600		0x0107	Expression 1600
 
 /* e-TEK Labs products */
 product ETEK 1COM		0x8007	Serial port
@@ -615,7 +617,13 @@ product MULTITECH ATLAS		0xf101	MT5634ZBA-USB modem
 
 /* Mustek products */
 product MUSTEK 1200CU		0x0001	1200 CU scanner
+product MUSTEK 600CU		0x0002	600 CU scanner
+product MUSTEK 1200USB		0x0003	1200 USB scanner
+product MUSTEK 1200UB		0x0006	1200 UB scanner
 product MUSTEK MDC800		0xa800	MDC-800 digital camera
+
+/* National Semiconductor */
+product NATIONAL BEARPAW	0x1000	BearPaw 1200
 
 /* NEC products */
 product NEC HUB			0x55aa	hub
@@ -654,6 +662,7 @@ product PIENGINEERING PS2USB	0x020b	PS2 to Mac USB Adapter
 product PLX TESTBOARD		0x9060	test board
 
 /* Primax products */
+product PRIMAX G2X300		0x0300	G2-200 scanner
 product PRIMAX G2E300		0x0301	G2E-300 scanner
 product PRIMAX G2300		0x0302	G2-300 scanner
 product PRIMAX G2E3002		0x0303	G2E-300 scanner
@@ -661,6 +670,7 @@ product PRIMAX 9600		0x0340	Colorado USB 9600 scanner
 product PRIMAX 600U		0x0341	Colorado 600u scanner
 product PRIMAX 19200		0x0360	Colorado USB 19200 scanner
 product PRIMAX 1200U		0x0361	Colorado 1200u scanner
+product PRIMAX G600		0x0380	G2-600 scanner
 product PRIMAX 636I		0x0381	ReadyScan 636i
 product PRIMAX G2600		0x0382	G2-600 scanner
 product PRIMAX G2E600		0x0383	G2E-600 scanner
@@ -751,8 +761,12 @@ product UNIACCESS PANACHE	0x0101	Panache Surf USB ISDN Adapter
 product VISION VC6452V002	0x0002	CPiA Camera
 
 /* Visioneer products */
-product VISIONEER 5300		0x0221	OneTouch 5300 / 7600
+product VISIONEER 7600		0x0211	OneTouch 7600
+product VISIONEER 5300		0x0221	OneTouch 5300
 product VISIONEER 6100		0x0231	OneTouch 6100
+product VISIONEER 6200		0x0311	OneTouch 6200
+product VISIONEER 8100		0x0321	OneTouch 8100
+product VISIONEER 8600		0x0331	OneTouch 8600
 								       
 /* Wacom products */
 product WACOM CT0405U		0x0000	CT-0405-U Tablet
