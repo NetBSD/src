@@ -1,4 +1,4 @@
-/*	$NetBSD: auth.c,v 1.15 1997/03/13 18:23:19 cgd Exp $	*/
+/*	$NetBSD: auth.c,v 1.16 1997/05/17 22:14:13 christos Exp $	*/
 
 /*
  * auth.c - PPP authentication and phase control.
@@ -36,9 +36,9 @@
 
 #ifndef lint
 #if 0
-static char rcsid[] = "Id: auth.c,v 1.30 1997/03/04 03:37:21 paulus Exp ";
+static char rcsid[] = "Id: auth.c,v 1.31 1997/04/30 05:50:16 paulus Exp ";
 #else
-static char rcsid[] = "$NetBSD: auth.c,v 1.15 1997/03/13 18:23:19 cgd Exp $";
+static char rcsid[] = "$NetBSD: auth.c,v 1.16 1997/05/17 22:14:13 christos Exp $";
 #endif
 #endif
 
@@ -57,14 +57,6 @@ static char rcsid[] = "$NetBSD: auth.c,v 1.15 1997/03/13 18:23:19 cgd Exp $";
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#if defined(SVR4) || defined(_linux_)
-#include <crypt.h>
-#else
-#if defined(SUNOS4) || defined(ULTRIX)
-extern char *crypt();
-#endif
-#endif
-
 #ifdef USE_PAM
 #include <security/pam_appl.h>
 #include <security/pam_modules.h>
@@ -72,7 +64,9 @@ extern char *crypt();
 
 #ifdef HAS_SHADOW
 #include <shadow.h>
+#ifndef SVR4
 #include <shadow/pwauth.h>
+#endif
 #ifndef PW_PPP
 #define PW_PPP PW_LOGIN
 #endif
@@ -134,11 +128,13 @@ static int passwd_from_file;
 #define CHAP_WITHPEER	4
 #define CHAP_PEER	8
 
+extern char *crypt __P((const char *, const char *));
+
 /* Prototypes for procedures local to this file. */
 
 static void network_phase __P((int));
-static void check_idle __P((caddr_t));
-static void connect_time_expired __P((caddr_t));
+static void check_idle __P((void *));
+static void connect_time_expired __P((void *));
 static int  login __P((char *, char *, char **, int *));
 static void logout __P((void));
 static int  null_login __P((int));
@@ -469,7 +465,7 @@ np_finished(unit, proto)
  */
 static void
 check_idle(arg)
-    caddr_t arg;
+    void *arg;
 {
     struct ppp_idle idle;
     time_t itime;
@@ -492,7 +488,7 @@ check_idle(arg)
  */
 static void
 connect_time_expired(arg)
-    caddr_t arg;
+    void *arg;
 {
     syslog(LOG_INFO, "Connect time expired");
     lcp_close(0, "Connect time expired");	/* Close connection */
