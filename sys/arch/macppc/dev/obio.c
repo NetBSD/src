@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.8 2000/02/07 20:30:05 tsubai Exp $	*/
+/*	$NetBSD: obio.c,v 1.9 2000/02/08 08:08:43 tsubai Exp $	*/
 
 /*-
  * Copyright (C) 1998	Internet Research Institute, Inc.
@@ -31,7 +31,6 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -158,8 +157,8 @@ static char *skiplist[] = {
 	"gpio",
 	"escc-legacy",
 	"timer",
-	"i2c"
-	"power-mgt",
+	"i2c",
+	"power-mgt"
 };
 
 #define N_LIST (sizeof(skiplist) / sizeof(skiplist[0]))
