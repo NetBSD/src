@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.32 1996/10/13 03:19:43 christos Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.33 1996/10/29 02:19:25 sommerfe Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -73,7 +73,9 @@
 /*
  * To see whether pcvt is configured (for virtual console ioctl calls).
  */
+#ifndef NVT
 #include "vt.h"
+#endif
 #if NVT > 0
 #include <arch/i386/isa/pcvt/pcvt_ioctl.h>
 #endif
