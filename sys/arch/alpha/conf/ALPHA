@@ -1,4 +1,4 @@
-# $NetBSD: ALPHA,v 1.102 1999/09/01 00:05:01 thorpej Exp $
+# $NetBSD: ALPHA,v 1.103 1999/09/01 03:10:04 sommerfeld Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
@@ -217,11 +217,15 @@ ohci*	at	pci? dev ? function ?		# USB Open Host Controller
 #audio*	at	eap?
 
 # MII/PHY support
-exphy*	at	mii? phy ?
-inphy*	at	mii? phy ?
-nsphy*	at	mii? phy ?
-qsphy*	at	mii? phy ? 
-tlphy*	at	mii? phy ?
+exphy*	at mii? phy ?			# 3Com internal PHYs
+icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS1890
+inphy*	at mii? phy ?			# Intel 82555 PHYs
+lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs
+nsphy*	at mii? phy ?			# NS83840 PHYs
+qsphy*	at mii? phy ?			# Quality Semiconductor QS6612 PHYs
+sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
+tlphy*	at mii? phy ?			# ThunderLAN PHYs
+ukphy*	at mii? phy ?			# generic unknown PHYs
 
 # ISA/EISA bus support
 isa*	at	pceb?
