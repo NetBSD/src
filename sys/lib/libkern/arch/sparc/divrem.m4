@@ -1,5 +1,3 @@
-/*	$NetBSD: divrem.m4,v 1.3 1995/04/22 09:37:39 pk Exp $	*/
-
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -36,7 +34,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Header: divrem.m4,v 1.4 92/06/25 13:23:57 torek Exp
+ * from: Header: divrem.m4,v 1.4 92/06/25 13:23:57 torek Exp
+ * $Id: divrem.m4,v 1.4 1996/11/18 22:50:30 pk Exp $
  */
 
 /*
@@ -45,10 +44,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-#ifdef notdef
 	.asciz "@(#)divrem.m4	8.1 (Berkeley) 6/4/93"
-#endif
-	.asciz "$NetBSD: divrem.m4,v 1.3 1995/04/22 09:37:39 pk Exp $"
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -132,7 +128,7 @@ L.$1.eval(TWOSUPN+$2):
 	', `	DEVELOP_QUOTIENT_BITS(incr($1), `eval(2*$2-1)')')
 	ifelse($1, 1, `9:')')
 
-#include "DEFS.h"
+#include <machine/asm.h>
 #include <machine/trap.h>
 
 FUNC(NAME)

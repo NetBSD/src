@@ -1,5 +1,3 @@
-/*	$NetBSD: SYS.h,v 1.2 1994/10/26 06:39:53 cgd Exp $	*/
-
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -38,7 +36,8 @@
  *
  *	@(#)SYS.h	8.1 (Berkeley) 6/4/93
  *
- *	Header: SYS.h,v 1.2 92/07/03 18:57:00 torek Exp
+ *	from: Header: SYS.h,v 1.2 92/07/03 18:57:00 torek Exp
+ *	$Id: SYS.h,v 1.3 1996/11/18 22:50:28 pk Exp $
  */
 
 #include <machine/asm.h>
@@ -87,5 +86,24 @@
 #define	PSEUDO(x,y) \
 	ENTRY(x); mov (_CAT(SYS_,y))|SYSCALL_G2RFLAG,%g1; add %o7,8,%g2; \
 	t ST_SYSCALL; ERROR()
+
+/*
+ * SYSCALL_NOERROR is like SYSCALL, except it's used for syscalls 
+ * that never fail.
+ *
+ * XXX - This should be optimized.
+ */
+#define SYSCALL_NOERROR(x) \
+	ENTRY(x); mov _CAT(SYS_,x),%g1; t ST_SYSCALL
+
+/*
+ * RSYSCALL_NOERROR is like RSYSCALL, except it's used for syscalls 
+ * that never fail.
+ *
+ * XXX - This should be optimized.
+ */
+#define RSYSCALL_NOERROR(x) \
+	ENTRY(x); mov (_CAT(SYS_,x))|SYSCALL_G2RFLAG,%g1; add %o7,8,%g2; \
+	t ST_SYSCALL
 
 	.globl	cerror

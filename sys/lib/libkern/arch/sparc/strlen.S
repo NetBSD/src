@@ -1,5 +1,3 @@
-/*	$NetBSD: strlen.S,v 1.2 1994/10/26 06:40:09 cgd Exp $	*/
-
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -36,17 +34,15 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Header: strlen.s,v 1.1 92/06/25 12:52:47 torek Exp
+ * from: Header: strlen.s,v 1.1 92/06/25 12:52:47 torek Exp
+ * $Id: strlen.S,v 1.3 1996/11/18 22:50:37 pk Exp $
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-#ifdef notdef
 	.asciz "@(#)strlen.s	8.1 (Berkeley) 6/4/93"
-#endif
-	.asciz "$NetBSD: strlen.S,v 1.2 1994/10/26 06:40:09 cgd Exp $"
 #endif /* LIBC_SCCS and not lint */
 
-#include "DEFS.h"
+#include <machine/asm.h>
 
 ENTRY(strlen)
 	add	%o0, 1, %o1	! save starting point + 1
