@@ -1,4 +1,4 @@
-/*	$NetBSD: vr_idle.S,v 1.6 2000/08/20 21:50:08 thorpej Exp $	*/
+/*	$NetBSD: vr_idle.S,v 1.6.24.1 2002/12/18 05:00:58 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -61,53 +61,34 @@
  * Note: this is really a part of cpu_switch() but defined here for kernel
  * profiling.
  */
-LEAF(vr_idle)
-	li	t0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
-	mtc0	t0, MIPS_COP_0_STATUS		# enable all interrupts
-	nop
-	sw	zero, _C_LABEL(curproc)		# set curproc NULL for stats
-#if defined(LOCKDEBUG)
-	jal	_C_LABEL(sched_unlock_idle)	# release sched_lock
-	nop
-#endif
-
-	/* Try to zero some free pages. */
-	lw	t0, _C_LABEL(uvm) + UVM_PAGE_IDLE_ZERO
-	nop
-	beq	t0, zero, 1f
-	nop
-	jal	_C_LABEL(uvm_pageidlezero)
+NESTED(vr_idle, CALLFRAME_SIZ, ra)
+	.mask	0x80000000, -4
+	subu	sp, sp, CALLFRAME_SIZ
+	sw	ra, CALLFRAME_RA(sp)
 	nop
 1:
 	lw	t0, _C_LABEL(sched_whichqs)	# look for non-empty queue
-	bne	t0, zero, 1f
+	bne	t0, zero, 2f
 	nop
 	.word	VR_OPCODE_STANDBY
 	nop
 	nop
 	nop
 	nop
+	bne	t0, zero, 2f
+	nop
+
+	/* Try to zero some free pages. */
+	lw	t0, _C_LABEL(uvm) + UVM_PAGE_IDLE_ZERO
+	nop
 	beq	t0, zero, 1b
 	nop
-1:
-#if defined(LOCKDEBUG)
-	mtc0	zero, MIPS_COP_0_STATUS		# disable all interrupts
+	la	ra, 1b
+	j	_C_LABEL(uvm_pageidlezero)
 	nop
+2:
+	lw	ra, CALLFRAME_RA(sp)
 	nop
-	nop
-	nop
-	jal	_C_LABEL(sched_lock_idle)	# acquire sched_lock
-	nop
-	la	ra, cpu_switch_queuescan	# rathole to cpu_switch()
 	j	ra
-	nop
-#else
-	mtc0	zero, MIPS_COP_0_STATUS		# disable all interrupts
-	nop
-	nop
-	nop
-	la	ra, cpu_switch_queuescan	# rathole to cpu_switch()
-	j	ra
-	nop
-#endif
+	addu	sp, sp, CALLFRAME_SIZ
 END(vr_idle)

@@ -1,4 +1,4 @@
-/*	$NetBSD: proc_subr.s,v 1.4 2000/05/26 21:19:50 thorpej Exp $	*/
+/*	$NetBSD: proc_subr.s,v 1.4.26.1 2002/12/18 05:00:59 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -130,3 +130,54 @@ Lrem1:
 Lrem2:
 	PANIC("remrunqueue")
 #endif
+
+/*
+ * struct proc *nextrunqueue(void);
+ */
+ENTRY(nextrunqueue)
+	movl	#0,%a0			| default to none found
+
+	movl	_C_LABEL(sched_whichqs),%d0
+	tstl	%d0
+	jeq	2f
+
+	movl	%d0,%d1
+	negl	%d0
+	andl	%d1,%d0
+	bfffo	%d0{#0:#32},%d1
+	eorib	#31,%d1
+
+	movl	%d1,%d0
+	lslb	#3,%d1			| convert queue number to index
+	addl	#_C_LABEL(sched_qs),%d1	| locate queue (q)
+	movl	%d1,%a1
+
+	movl	%a1@(P_FORW),%a0	| p = q->p_forw
+#ifdef DIAGNOSTIC
+	cmpal	%d1,%a0			| anyone on queue?
+	jeq	_C_LABEL(nextrunqueue_error)	| no, panic
+#endif
+	movl	%a0@(P_FORW),%a1@(P_FORW)	| q->p_forw = p->p_forw
+	movl	%a0@(P_FORW),%a1	| n = p->p_forw
+	movl	%d1,%a1@(P_BACK)	| n->p_back = q
+	clrl	%a0@(P_BACK)		| clear back link
+
+	cmpal	%d1,%a1			| anyone left on queue?
+	jne	1f			| yes, skip
+
+	movl	_C_LABEL(sched_whichqs),%d1
+	bclr	%d0,%d1			| no, clear bit
+	movl	%d1,_C_LABEL(sched_whichqs)
+1:
+#ifdef DIAGNOSTIC
+	tstl	%a0@(P_WCHAN)
+	jne	_C_LABEL(nextrunqueue_error)
+	cmpb	#SRUN,%a0@(P_STAT)
+	jne	_C_LABEL(nextrunqueue_error)
+#endif
+2:
+	rts
+
+ASENTRY(nextrunqueue_error)
+	PANIC("nextrunqueue");
+	/*NOTREACHED*/

@@ -1,0 +1,60 @@
+$Id: ctxsw_README,v 1.1.2.1 2002/12/18 05:00:57 gmcgarry Exp $
+
+How to convert a port to the new context-switching code:
+
+Currently context switching is all done in machine-dependent cpu_switch():
+
+	- it must be called at splhigh
+	- it searches the runqueues
+	- if a process is available, cpu_switch() switches to it
+	- if a process is not available cpu_switch() jumps to an Idle function
+	- it then switches to the next process
+
+The idle function will:
+
+	- clear curproc so idle time isn't allocated to it
+	- releases the scheduler lock
+	- lower the CPL
+	- enables all interrupts
+	- tries to zero some pages
+	- performs arch-specific power-saving instructions
+	- raises the CPL to splhigh
+	- checks if the runqueue is no longer empty
+	- returns to cpu_switch()
+
+In the new world, cpu_switch() is only responsible for performing the
+actual context switch.  Frobbing of the runqueues is pushed up into
+mi_switch() and the idling functionality is moved into a specific function
+called cpu_idle().
+
+cpu_idle() can returns whenever it likes, even if a process is not on the
+runqueue.  chooseproc() will just call cpu_idle() again if there isn't
+anything ready on the runqueue.  On some processors this might not be
+efficient, and the code on this branch may still frob the run queues
+inside cpu_idle().  i386 and m68k are examples.  The solution may be
+to have a global variable (like need_resched()) for the scheduler to
+notify the low-level idling routines that the run queue is ready to be
+processed ASAP.  Needs more thought.
+
+At the moment the i386 implementation is a mess.  This is because it
+only recently got rotilled by the SMP merge.  If idle threads become
+standard across all ports even more functionality might be pushed higher
+into mi_switch().  (If the runqueue is empty, we can just cpu_switch()
+to the idle thread.)
+
+At the moment the branch is focussed on the machine-dependent context
+switch options.  Some ideas for the scheduler (such as realtime extensions)
+will be deferred for later.
+
+Changes and recommendations are most welcome.
+
+
+Tested platforms:
+
+hp300:		compile-tested only; did work at one point
+
+hpcmips:	compile-tested only
+
+i386:		seems to work
+
+pmax:		compile-tested only; did work at one point

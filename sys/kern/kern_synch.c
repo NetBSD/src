@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.115 2002/11/03 13:59:12 nisimura Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.115.4.1 2002/12/18 05:01:02 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.115 2002/11/03 13:59:12 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.115.4.1 2002/12/18 05:01:02 gmcgarry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -718,6 +718,26 @@ wakeup_one(void *ident)
 }
 
 /*
+ * Remove the next process of the highest priority from the run queue.
+ * If the queue is empty, then call cpu_idle() and wait until one is
+ * available.  Set curproc to NULL to avoid the process accumulating
+ * time while we idle.
+ */
+struct proc *
+chooseproc(void)
+{
+	struct proc *newp;
+
+	for (;;) {
+		newp = nextrunqueue();
+		if (newp != NULL)
+			break;
+		cpu_idle();
+	}
+	return (newp);
+}
+
+/*
  * General yield call.  Puts the current process back on its run queue and
  * performs a voluntary context switch.
  */
@@ -789,7 +809,6 @@ mi_switch(struct proc *p, struct proc *newp)
 
 	KDASSERT(p->p_cpu != NULL);
 	KDASSERT(p->p_cpu == curcpu());
-	KDASSERT(newp == NULL);
 
 	spc = &p->p_cpu->ci_schedstate;
 
@@ -853,27 +872,46 @@ mi_switch(struct proc *p, struct proc *newp)
 #endif
 
 	/*
-	 * If we are using h/w performance counters, save context.
+	 * If newp == NULL, then we must invoke chooseproc() to wait for
+	 * a runnable process.
 	 */
+	if (newp == NULL)
+		newp = chooseproc();
+
+       	/*
+	 * Check if we're switching to ourself.  If we're not, then
+	 * call cpu_switch() to switch to the new current process.
+	 */
+	if (p == newp) {
+		p->p_stat = SONPROC;
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
+		sched_unlock_idle();
+#endif
+	} else {
+
+		/*
+		 * If we are using h/w performance counters, save context.
+		 */
 #if PERFCTRS
-	if (PMC_ENABLED(p))
-		pmc_save_context(p);
+		if (PMC_ENABLED(p))
+			pmc_save_context(p);
+#endif
+		/*
+		 * Switch to the new current process.  When we
+		 * run again, we'll return back here.
+		 */
+		uvmexp.swtch++;
+		cpu_switch(p, newp);
+
+		/*
+		 * If we are using h/w performance counters, restore context.
+		 */
+#if PERFCTRS
+		if (PMC_ENABLED(p))
+			pmc_restore_context(p);
 #endif
 
-	/*
-	 * Switch to the new current process.  When we
-	 * run again, we'll return back here.
-	 */
-	uvmexp.swtch++;
-	cpu_switch(p, NULL);
-
-	/*
-	 * If we are using h/w performance counters, restore context.
-	 */
-#if PERFCTRS
-	if (PMC_ENABLED(p))
-		pmc_restore_context(p);
-#endif
+	}
 
 	/*
 	 * Make sure that MD code released the scheduler lock before
@@ -1117,6 +1155,31 @@ remrunqueue(struct proc *p)
 	next->p_back = prev;
 	if (prev == next)
 		sched_whichqs &= ~(1<<whichq);
+}
+
+struct proc *
+nextrunqueue(void)
+{
+	struct prochd *rq;
+	struct proc *next, *p;
+	int whichq;
+
+	if (sched_whichqs == 0)
+		return (NULL);
+	whichq = ffs(sched_whichqs)-1;
+	rq = &sched_qs[whichq];
+	p = rq->ph_link;
+#ifdef DIAGNOSTIC
+	if (p == (struct proc *)rq)
+		panic("nextrunqueue");
+#endif
+	next = p->p_forw;
+	rq->ph_link = next;
+	next->p_back = (struct proc *)rq;
+	if (next == (struct proc *)rq)
+		sched_whichqs &= ~(1<<whichq);
+	p->p_back = NULL;
+	return (p);
 }
 
 #endif
