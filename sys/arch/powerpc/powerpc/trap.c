@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.24 2000/05/24 16:48:41 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.25 2000/05/26 21:20:12 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -349,7 +349,7 @@ brain_damage:
 	 */
 	if (p != fpuproc)
 		frame->srr1 &= ~PSL_FP;
-	curpriority = p->p_priority;
+	curcpu()->ci_schedstate.spc_curpriority = p->p_priority;
 }
 
 void
@@ -368,7 +368,7 @@ child_return(arg)
 		ktrsysret(p->p_tracep, SYS_fork, 0, 0);
 #endif
 	/* Profiling?							XXX */
-	curpriority = p->p_priority;
+	curcpu()->ci_schedstate.spc_curpriority = p->p_priority;
 }
 
 static inline void

@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.44 2000/05/22 15:55:52 matt Exp $      */
+/*      $NetBSD: cpu.h,v 1.45 2000/05/26 21:20:26 thorpej Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -35,8 +35,8 @@
 
 #if defined(_KERNEL) && !defined(_LKM)
 #include "opt_multiprocessor.h"
+#include "opt_lockdebug.h"
 #endif
-
 
 #ifdef _KERNEL
 
@@ -83,24 +83,29 @@ struct clockframe {
         int     ps;
 };
 
-#if defined(MULTIPROCESSOR)
-
 struct cpu_info {
 	/*
 	 * Public members.
 	 */
-	struct proc *ci_curproc;        /* current owner of the processor */
-	struct simplelock ci_slock;     /* lock on this data structure */
-	cpuid_t ci_cpuid;               /* our CPU ID */
+	struct schedstate_percpu ci_schedstate; /* scheduler state */
 #if defined(DIAGNOSTIC) || defined(LOCKDEBUG)
 	u_long ci_spin_locks;           /* # of spin locks held */
 	u_long ci_simple_locks;         /* # of simple locks held */
 #endif
+
+#if defined(MULTIPROCESSOR)
+	struct proc *ci_curproc;        /* current owner of the processor */
+#endif
+
 	/*
 	 * Private members.
 	 */
+#if defined(MULTIPROCESSOR)
 	int	ci_want_resched;	/* Should change process */
+#endif
 };
+
+#if defined(MULTIPROCESSOR)
 
 /*
  * VAX internal CPU numbering is not sequential; therefore have a separate
@@ -120,8 +125,10 @@ extern	struct cpu_info *(*vax_curcpu)(void);
 #else /* MULTIPROCESSOR */
 
 extern	int     want_resched;   /* resched() was called */
+extern	struct cpu_info cpu_info_store;
 
-#define	cpu_number()			0
+#define	curcpu()		(&cpu_info_store)
+#define	cpu_number()		0
 #define need_resched() { want_resched++; mtpr(AST_OK,PR_ASTLVL); }
 
 #endif /* MULTIPROCESSOR */

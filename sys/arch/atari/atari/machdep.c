@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.93 2000/03/28 23:57:25 simonb Exp $	*/
+/*	$NetBSD: machdep.c,v 1.94 2000/05/26 21:19:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -120,6 +120,9 @@ int	fputype = 0;
 
 /* the following is used externally (sysctl_hw) */
 char	machine[] = MACHINE;	/* from <machine/param.h> */
+
+/* Our exported CPU info; we can have only one. */
+struct cpu_info cpu_info_store;
 
  /*
  * Console initialization: called early on from main,

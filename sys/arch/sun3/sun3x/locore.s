@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.38 2000/05/26 00:36:51 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.39 2000/05/26 21:20:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -660,7 +660,7 @@ Lidle:
 GLOBAL(_Idle)				| See clock.c
 	movw	#PSL_HIGHIPL,sr
 	addql	#1, _C_LABEL(Idle_count)
-	tstl	_C_LABEL(whichqs)
+	tstl	_C_LABEL(sched_whichqs)
 	jeq	Lidle
 	movw	#PSL_LOWIPL,sr
 	jra	Lsw1
@@ -690,7 +690,7 @@ Lsw1:
 	 * then take the first proc from that queue.
 	 */
 	clrl	d0
-	lea	_C_LABEL(whichqs),a0
+	lea	_C_LABEL(sched_whichqs),a0
 	movl	a0@,d1
 Lswchk:
 	btst	d0,d1
@@ -733,9 +733,9 @@ Lswok:
 	movl	a0@(P_BACK),a1@(P_BACK)	| q->p_back = p->p_back
 	cmpl	a0@(P_FORW),d1		| anyone left on queue?
 	jeq	Lsw2			| no, skip
-	movl	_C_LABEL(whichqs),d1
+	movl	_C_LABEL(sched_whichqs),d1
 	bset	d0,d1			| yes, reset bit
-	movl	d1,_C_LABEL(whichqs)
+	movl	d1,_C_LABEL(sched_whichqs)
 Lsw2:
 	movb	#SONPROC,a0@(P_STAT)	| p->p_stat = SONPROC
 	movl	a0,_C_LABEL(curproc)

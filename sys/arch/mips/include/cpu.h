@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.39 2000/04/15 22:05:53 soda Exp $	*/
+/*	$NetBSD: cpu.h,v 1.40 2000/05/26 21:19:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -89,7 +89,6 @@ extern int cpu_arch;
  */
 #define	cpu_wait(p)			/* nothing */
 #define	cpu_swapout(p)			panic("cpu_swapout: can't get here");
-#define	cpu_number()			0
 
 /*
  * Arguments to hardclock and gatherstats encapsulate the previous

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.20 2000/05/24 16:48:41 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.21 2000/05/26 21:20:04 thorpej Exp $	*/
 
 /*
  * This file was taken from mvme68k/mvme68k/trap.c
@@ -268,7 +268,7 @@ again:
 		}
 	}
 #endif
-	curpriority = p->p_priority;
+	curcpu()->ci_schedstate.spc_curpriority = p->p_priority;
 }
 
 /*

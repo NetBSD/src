@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.58 2000/05/26 05:27:29 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.59 2000/05/26 21:20:20 thorpej Exp $	*/
 /*
  * Copyright (c) 1996-1999 Eduardo Horvath
  * Copyright (c) 1996 Paul Kranenburg
@@ -6951,7 +6951,7 @@ ENTRY(switchexit)
 	INCR(_C_LABEL(nswitchexit))		! nswitchexit++;
 	INCR(_C_LABEL(uvmexp)+V_SWTCH)		! cnt.v_switch++;
 
-	sethi	%hi(_C_LABEL(whichqs)), %g2
+	sethi	%hi(_C_LABEL(sched_whichqs)), %g2
 	clr	%g4			! lastproc = NULL;
 	sethi	%hi(_C_LABEL(cpcb)), %g6
 	sethi	%hi(_C_LABEL(curproc)), %g7
@@ -6999,7 +6999,7 @@ idle:
 	LOCTOGLOB
 	restore
 #endif
-	ld	[%g2 + %lo(_C_LABEL(whichqs))], %o3
+	ld	[%g2 + %lo(_C_LABEL(sched_whichqs))], %o3
 	brnz,a,pt	%o3, Lsw_scan
 	 wrpr	%g0, PIL_CLOCK, %pil	! (void) splclock();
 	b	1b
@@ -7086,7 +7086,7 @@ swdebug:	.word 0
 	rdpr	%pstate, %o1		! oldpstate = %pstate;
 	wrpr	%g0, PSTATE_INTR, %pstate ! make sure we're on normal globals
 	sethi	%hi(_C_LABEL(cpcb)), %g6
-	sethi	%hi(_C_LABEL(whichqs)), %g2	! set up addr regs
+	sethi	%hi(_C_LABEL(sched_whichqs)), %g2	! set up addr regs
 	LDPTR	[%g6 + %lo(_C_LABEL(cpcb))], %g5
 	sethi	%hi(_C_LABEL(curproc)), %g7
 	stx	%o7, [%g5 + PCB_PC]	! cpcb->pcb_pc = pc;
@@ -7107,7 +7107,7 @@ swdebug:	.word 0
 	wrpr	%g0, PIL_CLOCK, %pil	! (void) splclock();
 
 Lsw_scan:
-	ld	[%g2 + %lo(_C_LABEL(whichqs))], %o3
+	ld	[%g2 + %lo(_C_LABEL(sched_whichqs))], %o3
 
 #ifndef POPC
 	.globl	_C_LABEL(__ffstab)
@@ -7160,7 +7160,7 @@ Lsw_scan:
 	/*
 	 * We found a nonempty run queue.  Take its first process.
 	 */
-	set	_C_LABEL(qs), %o5	! q = &qs[which];
+	set	_C_LABEL(sched_qs), %o5	! q = &qs[which];
 	sll	%o4, PTRSHFT+1, %o0
 	add	%o0, %o5, %o5
 	LDPTR	[%o5], %g3		! p = q->ph_link;
@@ -7176,7 +7176,7 @@ Lsw_scan:
 	mov	1, %o1			!	whichqs &= ~(1 << which);
 	sll	%o1, %o4, %o1
 	andn	%o3, %o1, %o3
-	st	%o3, [%g2 + %lo(_C_LABEL(whichqs))]
+	st	%o3, [%g2 + %lo(_C_LABEL(sched_whichqs))]
 1:
 	/*
 	 * PHASE TWO: NEW REGISTER USAGE:
@@ -10532,5 +10532,3 @@ _C_LABEL(eintrcnt):
 	.comm	_C_LABEL(curproc), PTRSZ
 	.comm	_C_LABEL(promvec), PTRSZ
 	.comm	_C_LABEL(nwindows), 4
-	.comm	_C_LABEL(qs), 32 * 8
-	.comm	_C_LABEL(whichqs), 4

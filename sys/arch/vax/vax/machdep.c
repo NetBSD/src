@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.98 2000/04/16 09:41:51 ragge Exp $	 */
+/* $NetBSD: machdep.c,v 1.99 2000/05/26 21:20:26 thorpej Exp $	 */
 
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
@@ -129,6 +129,7 @@ int (*vax_cpu_number)(void) = dummy_cpu_number;
 struct cpu_info *(*vax_curcpu)(void) = dummy_curcpu;
 #else
 int		want_resched;
+struct cpu_info cpu_info_store;
 #endif
 char		machine[] = MACHINE;		/* from <machine/param.h> */
 char		machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.61 2000/05/24 20:24:58 eeh Exp $ */
+/*	$NetBSD: machdep.c,v 1.62 2000/05/26 21:20:21 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -128,6 +128,9 @@
 #include <sparc64/sparc64/vaddrs.h>
 
 /* #include "fb.h" */
+
+/* Our exported CPU info; we have only one for now. */  
+struct cpu_info cpu_info_store;
 
 vm_map_t exec_map = NULL;
 vm_map_t mb_map = NULL;

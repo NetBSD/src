@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.72 2000/05/26 00:36:52 thorpej Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.73 2000/05/26 21:20:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -97,15 +97,16 @@
 #include <sys/ktrace.h>
 #endif
 
-#define NICE_WEIGHT 2			/* priorities per nice level */
-#define	PPQ	(128 / NQS)		/* priorities per queue */
-
-#define	ESTCPULIM(e) min((e), NICE_WEIGHT * PRIO_MAX - PPQ)
-
 #include <machine/cpu.h>
 
-u_char	curpriority;		/* usrpri of curproc */
 int	lbolt;			/* once a second sleep address */
+
+/*
+ * The global scheduler state.
+ */
+struct prochd sched_qs[RUNQUE_NQS];	/* run queues */
+__volatile u_int32_t sched_whichqs;	/* bitmap of non-empty queues */
+struct slpque sched_slpque[SLPQUE_TABLESIZE]; /* sleep queues */
 
 void roundrobin __P((void *));
 void schedcpu __P((void *));
@@ -125,19 +126,20 @@ void
 roundrobin(arg)
 	void *arg;
 {
+	struct schedstate_percpu *spc = &curcpu()->ci_schedstate;
 	int s;
 
 	if (curproc != NULL) {
 		s = splstatclock();
-		if (curproc->p_schedflags & PSCHED_SEENRR) {
+		if (spc->spc_flags & SPCF_SEENRR) {
 			/*
 			 * The process has already been through a roundrobin
 			 * without switching and may be hogging the CPU.
 			 * Indicate that the process should yield.
 			 */
-			curproc->p_schedflags |= PSCHED_SHOULDYIELD;
+			spc->spc_flags |= SPCF_SHOULDYIELD;
 		} else
-			curproc->p_schedflags |= PSCHED_SEENRR;
+			spc->spc_flags |= SPCF_SEENRR;
 		splx(s);
 	}
 	need_resched();
@@ -320,18 +322,6 @@ updatepri(p)
 }
 
 /*
- * We're only looking at 7 bits of the address; everything is
- * aligned to 4, lots of things are aligned to greater powers
- * of 2.  Shift right by 8, i.e. drop the bottom 256 worth.
- */
-#define TABLESIZE	128
-#define LOOKUP(x)	(((long)(x) >> 8) & (TABLESIZE - 1))
-struct slpque {
-	struct proc *sq_head;
-	struct proc **sq_tailp;
-} slpque[TABLESIZE];
-
-/*
  * During autoconfiguration or after a panic, a sleep will simply
  * lower the priority briefly to allow interrupts, then return.
  * The priority to be used (safepri) is machine-dependent, thus this
@@ -395,7 +385,7 @@ tsleep(ident, priority, wmesg, timo)
 	p->p_wmesg = wmesg;
 	p->p_slptime = 0;
 	p->p_priority = priority & PRIMASK;
-	qp = &slpque[LOOKUP(ident)];
+	qp = SLPQUE(ident);
 	if (qp->sq_head == 0)
 		qp->sq_head = p;
 	else
@@ -434,7 +424,7 @@ tsleep(ident, priority, wmesg, timo)
 	asm(".globl bpendtsleep ; bpendtsleep:");
 #endif
 resume:
-	curpriority = p->p_usrpri;
+	curcpu()->ci_schedstate.spc_curpriority = p->p_usrpri;
 	splx(s);
 	p->p_flag &= ~P_SINTR;
 	if (p->p_flag & P_TIMEOUT) {
@@ -528,7 +518,7 @@ sleep(ident, priority)
 	p->p_wmesg = NULL;
 	p->p_slptime = 0;
 	p->p_priority = priority;
-	qp = &slpque[LOOKUP(ident)];
+	qp = SLPQUE(ident);
 	if (qp->sq_head == 0)
 		qp->sq_head = p;
 	else
@@ -549,7 +539,7 @@ sleep(ident, priority)
 	if (KTRPOINT(p, KTR_CSW))
 		ktrcsw(p->p_tracep, 0, 0);
 #endif
-	curpriority = p->p_usrpri;
+	curcpu()->ci_schedstate.spc_curpriority = p->p_usrpri;
 	splx(s);
 }
 
@@ -566,7 +556,7 @@ unsleep(p)
 
 	s = splhigh();
 	if (p->p_wchan) {
-		hp = &(qp = &slpque[LOOKUP(p->p_wchan)])->sq_head;
+		hp = &(qp = SLPQUE(p->p_wchan))->sq_head;
 		while (*hp != p)
 			hp = &(*hp)->p_forw;
 		*hp = p->p_forw;
@@ -612,7 +602,7 @@ wakeup(ident)
 	int s;
 
 	s = splhigh();
-	qp = &slpque[LOOKUP(ident)];
+	qp = SLPQUE(ident);
 restart:
 	for (q = &qp->sq_head; (p = *q) != NULL; ) {
 #ifdef DIAGNOSTIC
@@ -652,7 +642,7 @@ wakeup_one(ident)
 	best_sleepq = best_stopq = NULL;
 
 	s = splhigh();
-	qp = &slpque[LOOKUP(ident)];
+	qp = SLPQUE(ident);
 	for (q = &qp->sq_head; (p = *q) != NULL; q = &p->p_forw) {
 #ifdef DIAGNOSTIC
 		if (p->p_back || (p->p_stat != SSLEEP && p->p_stat != SSTOP))
@@ -753,6 +743,7 @@ void
 mi_switch()
 {
 	struct proc *p = curproc;	/* XXX */
+	struct schedstate_percpu *spc = &curcpu()->ci_schedstate;
 	struct rlimit *rlim;
 	long s, u;
 	struct timeval tv;
@@ -771,8 +762,8 @@ mi_switch()
 	 * process was running, and add that to its total so far.
 	 */
 	microtime(&tv);
-	u = p->p_rtime.tv_usec + (tv.tv_usec - runtime.tv_usec);
-	s = p->p_rtime.tv_sec + (tv.tv_sec - runtime.tv_sec);
+	u = p->p_rtime.tv_usec + (tv.tv_usec - spc->spc_runtime.tv_usec);
+	s = p->p_rtime.tv_sec + (tv.tv_sec - spc->spc_runtime.tv_sec);
 	if (u < 0) {
 		u += 1000000;
 		s--;
@@ -807,14 +798,14 @@ mi_switch()
 	 * Process is about to yield the CPU; clear the appropriate
 	 * scheduling flags.
 	 */
-	p->p_schedflags &= ~PSCHED_SWITCHCLEAR;
+	spc->spc_flags &= ~SPCF_SWITCHCLEAR;
 
 	/*
 	 * Pick a new current process and record its start time.
 	 */
 	uvmexp.swtch++;
 	cpu_switch(p);
-	microtime(&runtime);
+	microtime(&spc->spc_runtime);
 }
 
 /*
@@ -826,8 +817,9 @@ rqinit()
 {
 	int i;
 
-	for (i = 0; i < NQS; i++)
-		qs[i].ph_link = qs[i].ph_rlink = (struct proc *)&qs[i];
+	for (i = 0; i < RUNQUE_NQS; i++)
+		sched_qs[i].ph_link = sched_qs[i].ph_rlink =
+		    (struct proc *)&sched_qs[i];
 }
 
 /*
@@ -875,7 +867,7 @@ setrunnable(p)
 	p->p_slptime = 0;
 	if ((p->p_flag & P_INMEM) == 0)
 		wakeup((caddr_t)&proc0);
-	else if (p->p_priority < curpriority)
+	else if (p->p_priority < curcpu()->ci_schedstate.spc_curpriority)
 		need_resched();
 }
 
@@ -893,7 +885,7 @@ resetpriority(p)
 	newpriority = PUSER + p->p_estcpu + NICE_WEIGHT * (p->p_nice - NZERO);
 	newpriority = min(newpriority, MAXPRI);
 	p->p_usrpri = newpriority;
-	if (newpriority < curpriority)
+	if (newpriority < curcpu()->ci_schedstate.spc_curpriority)
 		need_resched();
 }
 

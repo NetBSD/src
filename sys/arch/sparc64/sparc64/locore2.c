@@ -1,4 +1,4 @@
-/*	$NetBSD: locore2.c,v 1.1.1.1 1998/06/20 04:58:52 eeh Exp $ */
+/*	$NetBSD: locore2.c,v 1.2 2000/05/26 21:20:21 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -52,11 +52,10 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
+#include <sys/sched.h>
 #include <sys/resourcevar.h>
 
 #include <machine/cpu.h>
-
-int	whichqs;
 
 /*
  * Put process p on the run queue indicated by its priority.
@@ -72,8 +71,8 @@ setrunqueue(p)
 
 	if (p->p_back != NULL)
 		panic("setrunqueue");
-	q = &qs[which];
-	whichqs |= 1 << which;
+	q = &sched_qs[which];
+	sched_whichqs |= 1 << which;
 	p->p_forw = (struct proc *)q;
 	p->p_back = oldlast = q->ph_rlink;
 	q->ph_rlink = p;
@@ -91,12 +90,12 @@ remrunqueue(p)
 	register int which = p->p_priority >> 2;
 	register struct prochd *q;
 
-	if ((whichqs & (1 << which)) == 0)
+	if ((sched_whichqs & (1 << which)) == 0)
 		panic("remrq");
 	p->p_forw->p_back = p->p_back;
 	p->p_back->p_forw = p->p_forw;
 	p->p_back = NULL;
-	q = &qs[which];
+	q = &sched_qs[which];
 	if (q->ph_link == (struct proc *)q)
-		whichqs &= ~(1 << which);
+		sched_whichqs &= ~(1 << which);
 }

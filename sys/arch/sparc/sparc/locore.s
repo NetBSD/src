@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.129 2000/05/26 00:36:49 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.130 2000/05/26 21:20:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -4461,7 +4461,7 @@ ENTRY(switchexit)
 	INCR(_C_LABEL(uvmexp)+V_SWTCH)	! cnt.v_switch++;
 
 	mov	PSR_S|PSR_ET, %g1	! oldpsr = PSR_S | PSR_ET;
-	sethi	%hi(_C_LABEL(whichqs)), %g2
+	sethi	%hi(_C_LABEL(sched_whichqs)), %g2
 	clr	%g4			! lastproc = NULL;
 	sethi	%hi(cpcb), %g6
 	sethi	%hi(curproc), %g7
@@ -4477,7 +4477,7 @@ _ASM_LABEL(idle):
 	st	%g0, [%g7 + %lo(curproc)]	! curproc = NULL;
 	wr	%g1, 0, %psr		! (void) spl0();
 1:					! spin reading whichqs until nonzero
-	ld	[%g2 + %lo(_C_LABEL(whichqs))], %o3
+	ld	[%g2 + %lo(_C_LABEL(sched_whichqs))], %o3
 	tst	%o3
 	bnz,a	Lsw_scan
 	 wr	%g1, PIL_CLOCK << 8, %psr	! (void) splclock();
@@ -4565,7 +4565,7 @@ ENTRY(cpu_switch)
 	 *	%o4 = tmp 5, then at Lsw_scan, which
 	 *	%o5 = tmp 6, then at Lsw_scan, q
 	 */
-	sethi	%hi(_C_LABEL(whichqs)), %g2	! set up addr regs
+	sethi	%hi(_C_LABEL(sched_whichqs)), %g2	! set up addr regs
 	sethi	%hi(cpcb), %g6
 	ld	[%g6 + %lo(cpcb)], %o0
 	std	%o6, [%o0 + PCB_SP]	! cpcb->pcb_<sp,pc> = <sp,pc>;
@@ -4593,7 +4593,7 @@ ENTRY(cpu_switch)
 
 Lsw_scan:
 	nop; nop; nop				! paranoia
-	ld	[%g2 + %lo(_C_LABEL(whichqs))], %o3
+	ld	[%g2 + %lo(_C_LABEL(sched_whichqs))], %o3
 
 	/*
 	 * Optimized inline expansion of `which = ffs(whichqs) - 1';
@@ -4627,7 +4627,7 @@ Lsw_scan:
 	/*
 	 * We found a nonempty run queue.  Take its first process.
 	 */
-	set	_C_LABEL(qs), %o5	! q = &qs[which];
+	set	_C_LABEL(sched_qs), %o5	! q = &qs[which];
 	sll	%o4, 3, %o0
 	add	%o0, %o5, %o5
 	ld	[%o5], %g3		! p = q->ph_link;
@@ -4643,7 +4643,7 @@ Lsw_scan:
 	mov	1, %o1			!	whichqs &= ~(1 << which);
 	sll	%o1, %o4, %o1
 	andn	%o3, %o1, %o3
-	st	%o3, [%g2 + %lo(_C_LABEL(whichqs))]
+	st	%o3, [%g2 + %lo(_C_LABEL(sched_whichqs))]
 1:
 	/*
 	 * PHASE TWO: NEW REGISTER USAGE:
@@ -6187,5 +6187,3 @@ _C_LABEL(eintrcnt):
 
 	.comm	_C_LABEL(nwindows), 4
 	.comm	_C_LABEL(romp), 4
-	.comm	_C_LABEL(qs), 32 * 8
-	.comm	_C_LABEL(whichqs), 4
