@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.46 2001/10/30 01:11:53 lukem Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.47 2001/11/06 06:59:06 simonb Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.46 2001/10/30 01:11:53 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.47 2001/11/06 06:59:06 simonb Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -424,8 +424,6 @@ done:
 	 */
 	oip->i_ffs_size = length;
 	oip->i_ffs_blocks -= blocksreleased;
-	if (oip->i_ffs_blocks < 0)			/* sanity */
-		oip->i_ffs_blocks = 0;
 	lockmgr(&gp->g_glock, LK_RELEASE, NULL);
 	oip->i_flag |= IN_CHANGE;
 #ifdef QUOTA

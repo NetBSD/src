@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_inode.c,v 1.25 2001/10/26 05:56:07 lukem Exp $	*/
+/*	$NetBSD: ext2fs_inode.c,v 1.26 2001/11/06 06:59:05 simonb Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -354,8 +354,6 @@ done:
 	 */
 	oip->i_e2fs_size = length;
 	oip->i_e2fs_nblock -= blocksreleased;
-	if (oip->i_e2fs_nblock < 0)			/* sanity */
-		oip->i_e2fs_nblock = 0;
 	oip->i_flag |= IN_CHANGE;
 	return (allerror);
 }
