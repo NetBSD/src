@@ -1,4 +1,4 @@
-/*	$NetBSD: x68k_init.c,v 1.3 1997/10/10 21:45:24 oki Exp $	*/
+/*	$NetBSD: x68k_init.c,v 1.4 1997/10/11 11:13:54 oki Exp $	*/
 
 /*
  * Copyright (c) 1996 Masaru Oki.
@@ -29,6 +29,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/param.h>
 
 #include <x68k/x68k/iodevice.h>
 #define zschan IODEVbase->io_inscc.zs_chan
