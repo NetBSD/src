@@ -1,4 +1,4 @@
-/*	$NetBSD: read_line.c,v 1.2.8.1 2000/07/22 01:40:13 enami Exp $	*/
+/*	$NetBSD: read_line.c,v 1.2.8.2 2000/07/22 01:56:32 enami Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: read_line.c,v 1.2.8.1 2000/07/22 01:40:13 enami Exp $");
+__RCSID("$NetBSD: read_line.c,v 1.2.8.2 2000/07/22 01:56:32 enami Exp $");
 #endif
 
 #include <sys/param.h>
@@ -55,7 +55,7 @@ char *
 read_line(fp, size, lineno, delim, flags)
 	FILE		*fp;
 	size_t		*size;
-	int		*lineno;
+	size_t		*lineno;
 	const char	delim[3];	/* unused */
 	int		flags;		/* unused */
 {
