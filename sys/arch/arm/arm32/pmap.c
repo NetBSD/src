@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.146 2003/11/01 17:35:42 jdolecek Exp $	*/
+/*	$NetBSD: pmap.c,v 1.147 2004/01/18 13:03:50 scw Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -212,7 +212,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.146 2003/11/01 17:35:42 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.147 2004/01/18 13:03:50 scw Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -3195,9 +3195,34 @@ pmap_destroy(pmap_t pm)
 	 */
 
 	if (vector_page < KERNEL_BASE) {
+		struct pcb *pcb = &lwp0.l_addr->u_pcb;
+
+		if (pmap_is_current(pm)) {
+			/*
+			 * Frob the L1 entry corresponding to the vector
+			 * page so that it contains the kernel pmap's domain
+			 * number. This will ensure pmap_remove() does not
+			 * pull the current vector page out from under us.
+			 */
+			disable_interrupts(I32_bit | F32_bit);
+			*pcb->pcb_pl1vec = pcb->pcb_l1vec;
+			cpu_domains(pcb->pcb_dacr);
+			cpu_setttb(pcb->pcb_pagedir);
+			enable_interrupts(I32_bit | F32_bit);
+		}
+
 		/* Remove the vector page mapping */
 		pmap_remove(pm, vector_page, vector_page + PAGE_SIZE);
 		pmap_update(pm);
+
+		/*
+		 * Make sure cpu_switch(), et al, DTRT. This is safe to do
+		 * since this process has no remaining mappings of its own.
+		 */
+		curpcb->pcb_pl1vec = pcb->pcb_pl1vec;
+		curpcb->pcb_l1vec = pcb->pcb_l1vec;
+		curpcb->pcb_dacr = pcb->pcb_dacr;
+		curpcb->pcb_pagedir = pcb->pcb_pagedir;
 	}
 
 	LIST_REMOVE(pm, pm_list);
