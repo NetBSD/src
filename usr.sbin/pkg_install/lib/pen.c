@@ -1,11 +1,11 @@
-/*	$NetBSD: pen.c,v 1.16.8.2 2001/03/20 18:12:39 he Exp $	*/
+/*	$NetBSD: pen.c,v 1.16.8.3 2003/03/15 20:12:26 he Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: pen.c,v 1.25 1997/10/08 07:48:12 charnier Exp";
 #else
-__RCSID("$NetBSD: pen.c,v 1.16.8.2 2001/03/20 18:12:39 he Exp $");
+__RCSID("$NetBSD: pen.c,v 1.16.8.3 2003/03/15 20:12:26 he Exp $");
 #endif
 #endif
 
@@ -43,10 +43,11 @@ static int CurrentSet;		/* rm -rf Current only if it's really set! */
 				 * to prevent rm'ing of a partial string
 				 * when interrupted by ^C */
 
+#if 0
 /*
  * Backup Current and Previous into temp. strings that are later
  * restored & freed by restore_dirs
- * This is to make nested calls to makeplaypen/leave_playpen work
+ * This is to make nested calls to make_playpen/leave_playpen work
  */
 void
 save_dirs(char **c, char **p)
@@ -58,7 +59,7 @@ save_dirs(char **c, char **p)
 /*
  * Restore Current and Previous from temp strings that were created
  * by safe_dirs.
- * This is to make nested calls to makeplaypen/leave_playpen work
+ * This is to make nested calls to make_playpen/leave_playpen work
  */
 void
 restore_dirs(char *c, char *p)
@@ -71,6 +72,7 @@ restore_dirs(char *c, char *p)
 	strcpy(Previous, p);
 	free(p);
 }
+#endif
 
 char   *
 where_playpen(void)
@@ -154,7 +156,7 @@ make_playpen(char *pen, size_t pensize, size_t sz)
 		strcpy(Previous, Current);
 	else if (!getcwd(Previous, FILENAME_MAX)) {
 		cleanup(0);
-		err(1, "fatal error during execution: getcwd");
+		err(EXIT_FAILURE, "fatal error during execution: getcwd");
 	}
 	if (chdir(pen) == FAIL) {
 		cleanup(0);
