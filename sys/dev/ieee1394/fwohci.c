@@ -35,6 +35,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/device.h>
@@ -63,7 +64,7 @@ fwohci_init(struct fwohci_softc *sc)
 	/* Is the Global UID ROM present?
 	 */
 	if ((val & OHCI_Version_GUID_ROM) == 0) {
-		printf("\n%x: fatal: no global UID ROM\n", sc->sc_sc1394.sc1394_dev.dv_xname);
+		printf("\n%s: fatal: no global UID ROM\n", sc->sc_sc1394.sc1394_dev.dv_xname);
 		return -1;
 	}
 
