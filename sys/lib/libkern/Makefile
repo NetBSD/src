@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.31 1996/08/10 04:01:31 mycroft Exp $
+#	$NetBSD: Makefile,v 1.32 1997/02/16 21:25:18 cgd Exp $
 
 LIB=	kern
 NOPIC=
 
 M=	${.CURDIR}/arch/${MACHINE_ARCH}
 
-CPPFLAGS=	-I$M ${KERNCPPFLAGS}
+CPPFLAGS=	-I$M ${KERNCPPFLAGS} ${KERNMISCCPPFLAGS}
 
 .if exists ($M/Makefile.inc)
 .PATH:	$M
