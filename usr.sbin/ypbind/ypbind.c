@@ -31,7 +31,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$Id: ypbind.c,v 1.9.2.1 1994/07/15 21:44:39 cgd Exp $";
+static char rcsid[] = "$Id: ypbind.c,v 1.9.2.2 1994/07/16 21:09:14 cgd Exp $";
 #endif
 
 #include <sys/param.h>
@@ -410,12 +410,12 @@ char **argv;
 /*
  * State transition is done like this: 
  *
- * STATE	EVENT		ACTION		NEWSTATE	TIMEOUT
- * no binding	timeout		broadcast 	no binding	5 sec
- * no binding	answer		--		binding		60 sec
- * binding	timeout		check server	checking	5 sec
- * checking	timeout		broadcast	no binding	5 sec
- * checking	answer		--		binding		60 sec
+ * STATE	EVENT		ACTION			NEWSTATE	TIMEOUT
+ * no binding	timeout		broadcast 		no binding	5 sec
+ * no binding	answer		--			binding		60 sec
+ * binding	timeout		ping server		checking	5 sec
+ * checking	timeout		ping server + broadcast	checking	5 sec
+ * checking	answer		--			binding		60 sec
  */
 checkwork()
 {
@@ -557,12 +557,22 @@ broadcast(ypdb)
 			ypdb->dom_domain, ypdb->dom_vers);
 		unlink(path);
 	}
-	ypdb->dom_alive = 0;
 
 	bzero((char *)&bsin, sizeof bsin);
 	bsin.sin_family = AF_INET;
 	bsin.sin_port = htons(PMAPPORT);
 
+	if (ypdb->dom_alive == 2) {
+		/*
+		 * This resolves the following situation:
+		 * ypserver on other subnet was once bound,
+		 * but rebooted and is now using a different port
+		 */
+		bsin.sin_addr = ypdb->dom_server_addr.sin_addr;
+		if (sendto(rpcsock, buf, outlen, 0, (struct sockaddr *)&bsin,
+			   sizeof bsin) < 0)
+			perror("sendto");
+	}
 	/* find all networks and send the RPC packet out them all */
 	if( (sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
 		perror("socket");
@@ -747,7 +757,7 @@ int force;
 	}
 
 	/* soft update, alive */
-	if(ypdb->dom_alive!=0 && force==0) {
+	if(ypdb->dom_alive==1 && force==0) {
 		if (bcmp((char *)raddrp, (char *)&ypdb->dom_server_addr,
 			 sizeof ypdb->dom_server_addr) == 0) {
 			ypdb->dom_alive = 1;
