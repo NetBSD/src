@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.651 2004/01/03 13:31:38 lukem Exp $
+#	$NetBSD: mi,v 1.652 2004/01/03 13:50:26 lukem Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -3166,12 +3166,12 @@
 ./usr/share/man/cat3/hdestroy.0	comp-c-catman
 ./usr/share/man/cat3/heapsort.0	comp-c-catman
 ./usr/share/man/cat3/herror.0	comp-c-catman
-./usr/share/man/cat3/hesiod.0	comp-c-catman
-./usr/share/man/cat3/hesiod_end.0	comp-c-catman
-./usr/share/man/cat3/hesiod_free_list.0	comp-c-catman
-./usr/share/man/cat3/hesiod_init.0	comp-c-catman
-./usr/share/man/cat3/hesiod_resolve.0	comp-c-catman
-./usr/share/man/cat3/hesiod_to_bind.0	comp-c-catman
+./usr/share/man/cat3/hesiod.0		comp-c-catman	hesiod
+./usr/share/man/cat3/hesiod_end.0	comp-c-catman	hesiod
+./usr/share/man/cat3/hesiod_free_list.0	comp-c-catman	hesiod
+./usr/share/man/cat3/hesiod_init.0	comp-c-catman	hesiod
+./usr/share/man/cat3/hesiod_resolve.0	comp-c-catman	hesiod
+./usr/share/man/cat3/hesiod_to_bind.0	comp-c-catman	hesiod
 ./usr/share/man/cat3/hid_dispose_report_desc.0	comp-c-catman
 ./usr/share/man/cat3/hid_end_parse.0	comp-c-catman
 ./usr/share/man/cat3/hid_get_data.0	comp-c-catman
@@ -6757,12 +6757,12 @@
 ./usr/share/man/man3/hdestroy.3		comp-c-man
 ./usr/share/man/man3/heapsort.3		comp-c-man
 ./usr/share/man/man3/herror.3		comp-c-man
-./usr/share/man/man3/hesiod.3		comp-c-man
-./usr/share/man/man3/hesiod_end.3		comp-c-man
-./usr/share/man/man3/hesiod_free_list.3		comp-c-man
-./usr/share/man/man3/hesiod_init.3		comp-c-man
-./usr/share/man/man3/hesiod_resolve.3		comp-c-man
-./usr/share/man/man3/hesiod_to_bind.3		comp-c-man
+./usr/share/man/man3/hesiod.3			comp-c-man	hesiod
+./usr/share/man/man3/hesiod_end.3		comp-c-man	hesiod
+./usr/share/man/man3/hesiod_free_list.3		comp-c-man	hesiod
+./usr/share/man/man3/hesiod_init.3		comp-c-man	hesiod
+./usr/share/man/man3/hesiod_resolve.3		comp-c-man	hesiod
+./usr/share/man/man3/hesiod_to_bind.3		comp-c-man	hesiod
 ./usr/share/man/man3/hid_dispose_report_desc.3		comp-c-man
 ./usr/share/man/man3/hid_end_parse.3		comp-c-man
 ./usr/share/man/man3/hid_get_data.3		comp-c-man
