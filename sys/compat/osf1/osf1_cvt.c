@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_cvt.c,v 1.6.4.2 1999/06/21 19:24:49 cgd Exp $ */
+/* $NetBSD: osf1_cvt.c,v 1.6.4.3 1999/06/26 01:52:21 cgd Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -306,6 +306,128 @@ const struct emul_flags_xtab osf1_wait_options_xtab[] = {
     {	OSF1_WUNTRACED,		OSF1_WUNTRACED,		WUNTRACED	},
     {	0								}
 };
+
+void
+osf1_cvt_flock_from_native(nf, of)
+	const struct flock *nf;
+	struct osf1_flock *of;
+{
+
+	memset(of, 0, sizeof of);
+
+	of->l_start = nf->l_start;
+	of->l_len = nf->l_len;
+	of->l_pid = nf->l_pid;
+
+	switch (nf->l_type) {
+	case F_RDLCK:
+		of->l_type = OSF1_F_RDLCK;
+		break;
+
+	case F_WRLCK:
+		of->l_type = OSF1_F_WRLCK;
+		break;
+
+	case F_UNLCK:
+		of->l_type = OSF1_F_UNLCK;
+		break;
+	}
+
+	switch (nf->l_whence) {
+	case SEEK_SET:
+		of->l_whence = OSF1_SEEK_SET;
+		break;
+
+	case SEEK_CUR:
+		of->l_whence = OSF1_SEEK_CUR;
+		break;
+
+	case SEEK_END:
+		of->l_whence = OSF1_SEEK_END;
+		break;
+	}
+}
+
+int
+osf1_cvt_flock_to_native(of, nf)
+	const struct osf1_flock *of;
+	struct flock *nf;
+{
+
+	memset(nf, 0, sizeof nf);
+
+	nf->l_start = of->l_start;
+	nf->l_len = of->l_len;
+	nf->l_pid = of->l_pid;
+
+	switch (of->l_type) {
+	case OSF1_F_RDLCK:
+		nf->l_type = F_RDLCK;
+		break;
+
+	case OSF1_F_WRLCK:
+		nf->l_type = F_WRLCK;
+		break;
+
+	case OSF1_F_UNLCK:
+		nf->l_type = F_UNLCK;
+		break;
+
+	default:
+		return (EINVAL);
+	}
+
+	switch (of->l_whence) {
+	case OSF1_SEEK_SET:
+		nf->l_whence = SEEK_SET;
+		break;
+
+	case OSF1_SEEK_CUR:
+		nf->l_whence = SEEK_CUR;
+		break;
+
+	case OSF1_SEEK_END:
+		nf->l_whence = SEEK_END;
+		break;
+
+	default:
+		return (EINVAL);
+	}
+
+	return (0);
+}
+
+int
+osf1_cvt_msghdr_xopen_to_native(omh, bmh)
+	const struct osf1_msghdr_xopen *omh;
+	struct msghdr *bmh;
+{
+	unsigned long leftovers;
+
+	memset(bmh, 0, sizeof bmh);
+	bmh->msg_name = omh->msg_name;		/* XXX sockaddr translation */
+	bmh->msg_namelen = omh->msg_namelen;
+	bmh->msg_iov = NULL;			/* iovec xlation separate */
+	bmh->msg_iovlen = omh->msg_iovlen;
+
+	/* XXX we don't translate control messages (yet) */
+	if (bmh->msg_control != NULL || bmh->msg_controllen != 0)
+{
+printf("osf1_cvt_msghdr_xopen_to_native: control\n");
+		return (EINVAL);
+}
+
+        /* translate flags */
+        bmh->msg_flags = emul_flags_translate(osf1_sendrecv_msg_flags_xtab,
+            omh->msg_flags, &leftovers);
+        if (leftovers != 0)
+{
+printf("osf1_cvt_msghdr_xopen_to_native: leftovers 0x%lx\n", leftovers);
+                return (EINVAL);
+}
+
+	return (0);
+}
 
 int
 osf1_cvt_pathconf_name_to_native(oname, bnamep)
