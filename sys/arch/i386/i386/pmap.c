@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.175 2004/10/10 09:52:29 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.176 2004/10/10 09:53:23 yamt Exp $	*/
 
 /*
  *
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.175 2004/10/10 09:52:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.176 2004/10/10 09:53:23 yamt Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -2273,7 +2273,7 @@ pmap_zero_page(pa)
 		panic("pmap_zero_page: lock botch");
 #endif
 
-	*zpte = (pa & PG_FRAME) | PG_V | PG_RW;		/* map in */
+	*zpte = (pa & PG_FRAME) | PG_V | PG_RW | PG_M | PG_U; /* map in */
 	pmap_update_pg((vaddr_t)zerova);		/* flush TLB */
 
 	memset(zerova, 0, PAGE_SIZE);			/* zero */
@@ -2304,7 +2304,7 @@ pmap_pageidlezero(pa)
 	if (*zpte)
 		panic("pmap_zero_page_uncached: lock botch");
 #endif
-	*zpte = (pa & PG_FRAME) | PG_V | PG_RW;		/* map in */
+	*zpte = (pa & PG_FRAME) | PG_V | PG_RW | PG_M | PG_U; /* map in */
 	pmap_update_pg((vaddr_t)zerova);		/* flush TLB */
 	for (i = 0, ptr = (int *) zerova; i < PAGE_SIZE / sizeof(int); i++) {
 		if (sched_whichqs != 0) {
@@ -2349,8 +2349,8 @@ pmap_copy_page(srcpa, dstpa)
 		panic("pmap_copy_page: lock botch");
 #endif
 
-	*spte = (srcpa & PG_FRAME) | PG_V | PG_RW;
-	*dpte = (dstpa & PG_FRAME) | PG_V | PG_RW;
+	*spte = (srcpa & PG_FRAME) | PG_V | PG_RW | PG_U;
+	*dpte = (dstpa & PG_FRAME) | PG_V | PG_RW | PG_M | PG_U;
 	pmap_update_2pg((vaddr_t)csrcva, (vaddr_t)cdstva);
 	memcpy(cdstva, csrcva, PAGE_SIZE);
 #ifdef DIAGNOSTIC
