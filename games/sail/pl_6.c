@@ -1,4 +1,4 @@
-/*	$NetBSD: pl_6.c,v 1.7 2001/01/04 02:43:32 jwise Exp $	*/
+/*	$NetBSD: pl_6.c,v 1.8 2001/01/04 03:51:24 jwise Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,10 +38,11 @@
 #if 0
 static char sccsid[] = "@(#)pl_6.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pl_6.c,v 1.7 2001/01/04 02:43:32 jwise Exp $");
+__RCSID("$NetBSD: pl_6.c,v 1.8 2001/01/04 03:51:24 jwise Exp $");
 #endif
 #endif /* not lint */
 
+#include <signal.h>
 #include "player.h"
 
 void	repair(void);
