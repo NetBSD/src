@@ -26,7 +26,7 @@ file	arch/i386/isa/npx.c		npx device-driver needs-flag
 
 
 device	com at isa: tty
-file	arch/i386/isa/com.c		com device-driver
+file	arch/i386/isa/com.c		com device-driver needs-count
 device	pc at isa: tty
 file	arch/i386/isa/pccons.c		pc device-driver
 device	spkr at isa: tty
