@@ -1,4 +1,4 @@
-/*	$NetBSD: nsphy.c,v 1.5 1998/08/10 23:58:39 thorpej Exp $	*/
+/*	$NetBSD: nsphy.c,v 1.6 1998/08/12 20:46:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -355,9 +355,11 @@ nsphy_auto(sc)
 			return;
 		delay(1000);
 	}
+#if 0
 	if ((bmsr & BMSR_ACOMP) == 0)
 		printf("%s: autonegotiation failed to complete\n",
 		    sc->sc_mii.mii_dev.dv_xname);
+#endif
 }
 
 void
