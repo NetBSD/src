@@ -86,7 +86,7 @@
  * from: Utah $Hdr: locore.s 1.58 91/04/22$
  *
  *	from: @(#)locore.s	7.11 (Berkeley) 5/9/91
- *	$Id: locore.s,v 1.6 1994/01/22 13:39:32 briggs Exp $
+ *	$Id: locore.s,v 1.7 1994/01/30 01:01:08 briggs Exp $
  */
 
 #include "assym.s"
@@ -853,8 +853,17 @@ start:
 					| that above gives us
 | store mac passed vars.
 	movl	d7,_boothowto		| save reboot flags
+	movl	d6,_root_scsi_id	|   and root device
 	movl	d6,_bootdev		|   and boot device
-	movl	d6,_root_scsi_id	|   and boot device
+	andl	#0xfffffff8, d6		| if not just a scsi ID.
+	bne	Lbootdevcool		|  then assume it's a good bootdev.
+	movl	_bootdev, d6		| We need to copy this again...
+	lsll	#8, d6			| Shift unit into proper location
+	lsll	#8, d6			|   8 at a time (arch. limitation)
+	orl	#0x4, d6		| Assume SCSI disk and part 0.
+
+Lbootdevcool:
+	movl	d6, _bootdev		| and re-load bootdev
 
 | A4 is passed (was) from MacOS as the very last page in physical memory
 	jsr	_get_top_of_ram		| Get amount of memory in machine
