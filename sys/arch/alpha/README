@@ -1,0 +1,18 @@
+Alpha port status:
+
+I've got it up and running and self-hosting on a 3000/400 -- any of the
+3000 series _except the 3000/300 should work, too.  No frame buffer support,
+and the serial driver support sucks, so the general strategy i use is
+boot with a serial console, go multi-user, then log in over the network.
+
+Complete support is _NOT_ yet in the source tree, and some of it (toolchain
+support, etc.) won't ever be.  I'm going to be making a distribution of
+sources and binaries in the next few days, and will announce its availability
+when it's ready.
+
+if you're interested in this code, you should subscribe to the NetBSD
+'port-alpha' mailing list.
+
+
+
+cgd
