@@ -1,4 +1,4 @@
-.\"	$NetBSD: eisa.4,v 1.9 2001/05/06 19:55:00 ad Exp $
+.\"	$NetBSD: eisa.4,v 1.10 2001/09/11 22:52:52 wiz Exp $
 .\"
 .\" Copyright (c) 1997 Jonathan Stone
 .\" All rights reserved.
@@ -36,12 +36,12 @@
 .Nd Introduction to EISA bus machine-independent drivers and support
 .Sh SYNOPSIS
 .Pp
-Machine-dependent; depends on the bus topology and 
+Machine-dependent; depends on the bus topology and
 .Tn EISA
 bus interface of your system.  Typical
-.Tn EISA 
+.Tn EISA
 buses are either connected directly
-to the main system bus, or via an 
+to the main system bus, or via an
 .Tn PCI
 to
 .Tn EISA
@@ -96,7 +96,7 @@ BusLogic BT-74x
 interfaces.
 .It dpt
 DPT SmartCache/SmartRAID III and IV
-.Tn SCSI 
+.Tn SCSI
 interfaces.
 .It uha
 Ulrastor 24f
@@ -108,8 +108,8 @@ interfaces.
 .Bl -tag -width pcdisplay -offset indent
 .It ep
 3Com 3c579 and 3c592 10Mbit
-.Tn Ethernet , 
-and 3c597 10/100Mbit 
+.Tn Ethernet ,
+and 3c597 10/100Mbit
 .Tn Ethernet
 interfaces.
 .It fea
@@ -131,7 +131,7 @@ devices also have
 or
 .Tn ISA
 equivalents.
-These are listed in 
+These are listed in
 .Xr pci 4 ,
 .Xr isa 4 ,
 or
