@@ -1,4 +1,4 @@
-/* $NetBSD: mach_fasttraps_syscalls.c,v 1.3 2002/12/07 15:33:37 manu Exp $ */
+/* $NetBSD: mach_fasttraps_syscalls.c,v 1.4 2002/12/07 19:05:11 manu Exp $ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_fasttraps_syscalls.c,v 1.3 2002/12/07 15:33:37 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_fasttraps_syscalls.c,v 1.4 2002/12/07 19:05:11 manu Exp $");
 
 #if defined(_KERNEL_OPT)
 #include <sys/param.h>
@@ -25,7 +25,7 @@ const char *const mach_fasttraps_syscallnames[] = {
 	"#0 (unimplemented)",		/* 0 = unimplemented */
 	"cthread_set_self",			/* 1 = cthread_set_self */
 	"cthread_self",			/* 2 = cthread_self */
-	"fp_status",			/* 3 = fp_status */
+	"processor_facilities_used",			/* 3 = processor_facilities_used */
 	"load_msr",			/* 4 = load_msr */
 	"#5 (unimplemented)",		/* 5 = unimplemented */
 	"#6 (unimplemented)",		/* 6 = unimplemented */

@@ -1,4 +1,4 @@
-/* $NetBSD: mach_fasttraps_syscall.h,v 1.3 2002/12/07 15:33:36 manu Exp $ */
+/* $NetBSD: mach_fasttraps_syscall.h,v 1.4 2002/12/07 19:05:11 manu Exp $ */
 
 /*
  * System call numbers.
@@ -13,8 +13,8 @@
 /* syscall: "cthread_self" ret: "mach_cproc_t" args: */
 #define	MACH_FASTTRAPS_SYS_cthread_self	2
 
-/* syscall: "fp_status" ret: "void" args: */
-#define	MACH_FASTTRAPS_SYS_fp_status	3
+/* syscall: "processor_facilities_used" ret: "int" args: */
+#define	MACH_FASTTRAPS_SYS_processor_facilities_used	3
 
 /* syscall: "load_msr" ret: "void" args: */
 #define	MACH_FASTTRAPS_SYS_load_msr	4
