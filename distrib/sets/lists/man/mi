@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.340 2001/04/12 10:45:52 itojun Exp $
+# $NetBSD: mi,v 1.341 2001/04/13 18:48:59 pooka Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -961,6 +961,7 @@
 ./usr/share/man/cat5/disktab.0			man-sys-catman
 ./usr/share/man/cat5/dm.conf.0			man-games-catman
 ./usr/share/man/cat5/editrc.0			man-sys-catman
+./usr/share/man/cat5/elf.0			man-sys-catman
 ./usr/share/man/cat5/ethers.0			man-net-catman
 ./usr/share/man/cat5/exports.0			man-nfsserver-catman
 ./usr/share/man/cat5/fs.0			man-sys-catman
@@ -2453,6 +2454,7 @@
 ./usr/share/man/man5/disktab.5			man-sys-man
 ./usr/share/man/man5/dm.conf.5			man-games-man
 ./usr/share/man/man5/editrc.5			man-sys-man
+./usr/share/man/man5/elf.5			man-sys-man
 ./usr/share/man/man5/ethers.5			man-net-man
 ./usr/share/man/man5/exports.5			man-nfsserver-man
 ./usr/share/man/man5/fs.5			man-sys-man
