@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.40 2001/02/04 10:55:12 mrg Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.41 2001/02/18 19:26:50 chs Exp $	*/
 
 /*
  *
@@ -293,11 +293,6 @@ uvm_mk_pcluster(uobj, pps, npages, center, flags, mlo, mhi)
 			hi = mhi;
 	}
 	if ((hi - lo) >> PAGE_SHIFT > *npages) { /* pps too small, bail out! */
-#ifdef DIAGNOSTIC
-		printf("uvm_mk_pcluster uobj %p npages %d lo 0x%llx hi 0x%llx "
-		       "flags 0x%x\n", uobj, *npages, (long long)lo,
-		       (long long)hi, flags);
-#endif
 		pps[0] = center;
 		*npages = 1;
 		return(pps);
@@ -689,22 +684,14 @@ uvm_pager_dropcluster(uobj, pg, ppsp, npages, flags)
 			 * pgo_releasepg will dump the page for us
 			 */
 
-#ifdef DIAGNOSTIC
-			if (ppsp[lcv]->uobject->pgops->pgo_releasepg == NULL)
-				panic("uvm_pager_dropcluster: no releasepg "
-				    "function");
-#endif
 			saved_uobj = ppsp[lcv]->uobject;
 			obj_is_alive =
 			    saved_uobj->pgops->pgo_releasepg(ppsp[lcv], NULL);
 			
-#ifdef DIAGNOSTIC
 			/* for normal objects, "pg" is still PG_BUSY by us,
 			 * so obj can't die */
-			if (uobj && !obj_is_alive)
-				panic("uvm_pager_dropcluster: object died "
-				    "with active page");
-#endif
+			KASSERT(!uobj || obj_is_alive);
+
 			/* only unlock the object if it is still alive...  */
 			if (obj_is_alive && saved_uobj != uobj)
 				simple_unlock(&saved_uobj->vmobjlock);
@@ -798,12 +785,12 @@ uvm_aio_aiodone(bp)
 	int npages = bp->b_bufsize >> PAGE_SHIFT;
 	struct vm_page *pg, *pgs[npages];
 	struct uvm_object *uobj;
-	int s, i;
-	boolean_t release, write, swap;
+	int s, i, error;
+	boolean_t write, swap;
 	UVMHIST_FUNC("uvm_aio_aiodone"); UVMHIST_CALLED(ubchist);
 	UVMHIST_LOG(ubchist, "bp %p", bp, 0,0,0);
 
-	release = (bp->b_flags & (B_ERROR|B_READ)) == (B_ERROR|B_READ);
+	error = (bp->b_flags & B_ERROR) ? (bp->b_error ? bp->b_error : EIO) : 0;
 	write = (bp->b_flags & B_READ) == 0;
 	/* XXXUBC B_NOCACHE is for swap pager, should be done differently */
 	if (write && !(bp->b_flags & B_NOCACHE) && bioops.io_pageiodone) {
@@ -840,26 +827,25 @@ uvm_aio_aiodone(bp)
 		 * PG_RELEASED so that uvm_page_unbusy() will free them.
 		 */
 
-		if (release) {
+		if (!write && error) {
 			pg->flags |= PG_RELEASED;
 			continue;
 		}
 		KASSERT(!write || (pgs[i]->flags & PG_FAKE) == 0);
 
 		/*
-		 * if this is a read and the page is PG_FAKE
-		 * or this was a write, mark the page PG_CLEAN and not PG_FAKE.
+		 * if this is a read and the page is PG_FAKE,
+		 * or this was a successful write,
+		 * mark the page PG_CLEAN and not PG_FAKE.
 		 */
 
-		if (pgs[i]->flags & PG_FAKE || write) {
+		if ((pgs[i]->flags & PG_FAKE) || (write && error != ENOMEM)) {
 			pmap_clear_reference(pgs[i]);
 			pmap_clear_modify(pgs[i]);
 			pgs[i]->flags |= PG_CLEAN;
 			pgs[i]->flags &= ~PG_FAKE;
 		}
-		if (pg->wire_count == 0) {
-			uvm_pageactivate(pg);
-		}
+		uvm_pageactivate(pg);
 		if (swap) {
 			if (pg->pqflags & PQ_ANON) {
 				simple_unlock(&pg->uanon->an_lock);
