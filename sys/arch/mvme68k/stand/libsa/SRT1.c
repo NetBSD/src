@@ -1,4 +1,4 @@
-/*	$NetBSD: SRT1.c,v 1.1.1.1 1995/07/25 23:12:21 chuck Exp $	*/
+/*	$NetBSD: SRT1.c,v 1.2 1995/10/12 22:48:20 chuck Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -37,6 +37,7 @@
 
 extern int edata[], end[];
 extern volatile void abort();
+extern void main();
 char *_cmd_buf = (char *)0;
 
 volatile void
@@ -49,6 +50,7 @@ exit()
  * This is called by SRT0.S
  * to do final prep for main
  */
+void
 _start()
 {
 	register int *p;
@@ -65,4 +67,5 @@ _start()
 /*
  * Boot programs in C++ ?  Not likely!
  */
+void
 __main() {}

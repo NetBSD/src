@@ -12,7 +12,6 @@ devopen(f, fname, file)
 	char **file;
 {
 	struct devsw *dp;
-	char *cp, *path, *devname;
 	int error;
 
 	*file = (char*)fname;
