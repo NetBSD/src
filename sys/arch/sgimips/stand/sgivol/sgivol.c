@@ -1,4 +1,4 @@
-/*	$NetBSD: sgivol.c,v 1.7 2003/11/01 06:30:44 sekiya Exp $	*/
+/*	$NetBSD: sgivol.c,v 1.8 2003/11/08 04:59:00 sekiya Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,8 +38,8 @@
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
-#include <sys/disklabel.h>
 #include <sys/stat.h>
+#include <sys/disklabel.h>
 
 #include <errno.h>
 #include <stdio.h>
@@ -59,7 +59,7 @@
 
 #define SGI_SIZE_VOLHDR	3135	/* Can be overridden via -h parameter */
 
-struct devparms {
+struct local_devparms {
 	u_int8_t        dp_skew;
 	u_int8_t        dp_gap1;
 	u_int8_t        dp_gap2;
@@ -85,13 +85,13 @@ struct devparms {
 	u_int16_t       dp_xwcont;
 }               __attribute__((__packed__));
 
-struct sgilabel {
+struct local_sgilabel {
 #define SGILABEL_MAGIC  0xbe5a941
 	u_int32_t       magic;
 	int16_t         root;
 	int16_t         swap;
 	char            bootfile[16];
-	struct devparms dp;
+	struct local_devparms dp;
 	struct {
 		char            name[8];
 		int32_t         block;
@@ -127,7 +127,7 @@ int	opt_p;			/* Modify a partition */
 int	opt_q;			/* quiet mode */
 int	opt_f;			/* Don't ask, just do what you're told */
 int	partno, partfirst, partblocks, parttype;
-struct sgilabel *volhdr;
+struct local_sgilabel *volhdr;
 int32_t	checksum;
 u_int32_t	volhdr_size = SGI_SIZE_VOLHDR;
 
@@ -266,7 +266,7 @@ main(int argc, char *argv[])
 		perror("DIOCGDINFO");
 		exit(1);
 	}
-	volhdr = (struct sgilabel *) buf;
+	volhdr = (struct local_sgilabel *) buf;
 	if (opt_i) {
 		init_volhdr();
 		exit(0);
