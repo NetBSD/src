@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.45 1998/03/19 22:29:33 kml Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.46 1998/03/31 22:49:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -718,6 +718,16 @@ after_listen:
 		tcp_rcvseqinit(tp);
 		tp->t_flags |= TF_ACKNOW;
 		tcp_mss_from_peer(tp, opti.maxseg);
+
+		/*
+		 * Initialize the initial congestion window.  If we
+		 * had to retransmit the SYN, we must initialize cwnd
+		 * to 1 segment.
+		 */
+		tp->snd_cwnd =
+		    TCP_INITIAL_WINDOW((tp->t_flags & TF_SYN_REXMT) ? 1 :
+		    tcp_init_win, tp->t_peermss);
+
 		tcp_rmx_rtt(tp);
 		if (tiflags & TH_ACK && SEQ_GT(tp->snd_una, tp->iss)) {
 			tcpstat.tcps_connects++;
@@ -1957,6 +1967,16 @@ syn_cache_get(so, m)
 	/* Initialize tp->t_ourmss before we deal with the peer's! */
 	tp->t_ourmss = sc->sc_ourmaxseg;
 	tcp_mss_from_peer(tp, sc->sc_peermaxseg);
+
+	/*
+	 * Initialize the initial congestion window.  If we
+	 * had to retransmit the SYN,ACK, we must initialize cwnd
+	 * to 1 segment.
+	 */
+	tp->snd_cwnd =
+	    TCP_INITIAL_WINDOW((sc->sc_flags & SCF_SYNACK_REXMT) ? 1 :
+	    tcp_init_win, tp->t_peermss);
+
 	tcp_rmx_rtt(tp);
 	tp->snd_wl1 = sc->sc_irs;
 	tp->rcv_up = sc->sc_irs + 1;
@@ -2099,9 +2119,13 @@ syn_cache_add(so, m, optp, optlen, oi)
 
 	/*
 	 * See if we already have an entry for this connection.
+	 * If we do, resend the SYN,ACK, and remember since the
+	 * initial congestion window must be initialized to 1
+	 * segment when the connection completes.
 	 */
 	if ((sc = syn_cache_lookup(ti, &sc_prev, &scp)) != NULL) {
 		tcpstat.tcps_sc_dupesyn++;
+		sc->sc_flags |= SCF_SYNACK_REXMT;
 		if (syn_cache_respond(sc, m, ti, win, tb.ts_recent) == 0) {
 			tcpstat.tcps_sndacks++;
 			tcpstat.tcps_sndtotal++;
@@ -2120,6 +2144,7 @@ syn_cache_add(so, m, optp, optlen, oi)
 	sc->sc_dst.s_addr = ti->ti_dst.s_addr;
 	sc->sc_sport = ti->ti_sport;
 	sc->sc_dport = ti->ti_dport;
+	sc->sc_flags = 0;
 	sc->sc_irs = ti->ti_seq;
 	sc->sc_iss = tcp_new_iss(sc, sizeof(struct syn_cache), 0);
 	sc->sc_peermaxseg = oi->maxseg;
