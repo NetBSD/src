@@ -1,4 +1,4 @@
-.\"	$NetBSD: find.1,v 1.32 2001/12/02 12:46:39 kleink Exp $
+.\"	$NetBSD: find.1,v 1.33 2002/02/08 01:36:22 ross Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -278,7 +278,7 @@ links, owner, group, size in bytes, last modification time, and pathname.
 If the file is a block or character special file, the major and minor numbers
 will be displayed instead of the size in bytes.
 If the file is a symbolic link, the pathname of the linked\-to file will be
-displayed preceded by ``\->''.
+displayed preceded by ``\-\*[Gt]''.
 The format is identical to that produced by ``ls \-dgils''.
 .It Ic -mmin Ar n
 True if the difference between the file last modification time and the time
@@ -578,7 +578,7 @@ it appears.
 .Sh HISTORY
 A much simpler
 .Nm find
-command appeared in First Edition AT&T Unix.
+command appeared in First Edition AT\*[Am]T Unix.
 The syntax had become similar to the present version by
 the time of the Fifth Edition.
 .Sh BUGS

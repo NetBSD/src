@@ -1,4 +1,4 @@
-.\"	$NetBSD: telnet.1,v 1.21 2001/12/08 19:18:03 wiz Exp $
+.\"	$NetBSD: telnet.1,v 1.22 2002/02/08 01:36:34 ross Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -93,7 +93,7 @@ is invoked without the
 .Ar host
 argument, it enters command mode,
 indicated by its prompt
-.Pq Nm telnet\&> .
+.Pq Nm telnet\&\*[Gt] .
 In this mode, it accepts and executes the commands listed below.
 If it is invoked with arguments, it performs an
 .Ic open
@@ -1219,11 +1219,11 @@ option on output.
 If this is
 .Dv TRUE ,
 then carriage returns will be sent as
-.Li <CR><LF> .
+.Li \*[Lt]CR\*[Gt]\*[Lt]LF\*[Gt] .
 If this is
 .Dv FALSE ,
 then carriage returns will be send as
-.Li <CR><NUL> .
+.Li \*[Lt]CR\*[Gt]\*[Lt]NUL\*[Gt] .
 The initial value for this toggle is
 .Dv FALSE .
 .It Ic crmod

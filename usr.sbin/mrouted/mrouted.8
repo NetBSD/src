@@ -1,4 +1,4 @@
-'\"	$NetBSD: mrouted.8,v 1.10 2002/01/19 03:39:46 wiz Exp $
+'\"	$NetBSD: mrouted.8,v 1.11 2002/02/08 01:38:51 ross Exp $
 '\"COPYRIGHT 1989 by The Board of Trustees of Leland Stanford Junior University.
 .TH MROUTED 8
 .UC 5
@@ -112,20 +112,20 @@ configuration commands may be placed in
 There are four types of configuration commands:
 .nf
 
-    phyint <local-addr>   [disable]   [metric <m>]
-		 [threshold <t>] [rate_limit <b>]
-		   [boundary (<boundary-name>|<scoped-addr>/<mask-len>)]
-		   [altnet <network>/<mask-len>]
+    phyint \*[Lt]local-addr\*[Gt]   [disable]   [metric \*[Lt]m\*[Gt]]
+		 [threshold \*[Lt]t\*[Gt]] [rate_limit \*[Lt]b\*[Gt]]
+		   [boundary (\*[Lt]boundary-name\*[Gt]|\*[Lt]scoped-addr\*[Gt]/\*[Lt]mask-len\*[Gt])]
+		   [altnet \*[Lt]network\*[Gt]/\*[Lt]mask-len\*[Gt]]
 
-    tunnel <local-addr> <remote-addr> [metric <m>]
-		 [threshold <t>] [rate_limit <b>]
-		   [boundary (<boundary-name>|<scoped-addr>/<mask-len>)]
+    tunnel \*[Lt]local-addr\*[Gt] \*[Lt]remote-addr\*[Gt] [metric \*[Lt]m\*[Gt]]
+		 [threshold \*[Lt]t\*[Gt]] [rate_limit \*[Lt]b\*[Gt]]
+		   [boundary (\*[Lt]boundary-name\*[Gt]|\*[Lt]scoped-addr\*[Gt]/\*[Lt]mask-len\*[Gt])]
 
-    cache_lifetime <ct>
+    cache_lifetime \*[Lt]ct\*[Gt]
 
-    pruning <off/on>
+    pruning \*[Lt]off/on\*[Gt]
 
-    name <boundary-name> <scoped-addr>/<mask-len>
+    name \*[Lt]boundary-name\*[Gt] \*[Lt]scoped-addr\*[Gt]/\*[Lt]mask-len\*[Gt]
 
 .fi
 .PP
@@ -138,19 +138,19 @@ and
 options may be specified as many times as necessary.
 .PP
 The phyint command can be used to disable multicast routing on the physical
-interface identified by local IP address <local-addr>, or to associate a
+interface identified by local IP address \*[Lt]local-addr\*[Gt], or to associate a
 non-default metric or threshold with the specified physical interface.
-The local IP address <local-addr> may be replaced by the
+The local IP address \*[Lt]local-addr\*[Gt] may be replaced by the
 interface name (e.g le0).
 If a phyint is attached to multiple IP subnets, describe each additional subnet
 with the altnet keyword.
 Phyint commands must precede tunnel commands.
 .PP
 The tunnel command can be used to establish a tunnel link between local
-IP address <local-addr> and remote IP address <remote-addr>, and to associate
+IP address \*[Lt]local-addr\*[Gt] and remote IP address \*[Lt]remote-addr\*[Gt], and to associate
 a non-default metric or threshold with that tunnel.
-The local IP address <local-addr> may be replaced by the
-interface name (e.g. le0).  The remote IP address <remote-addr> may
+The local IP address \*[Lt]local-addr\*[Gt] may be replaced by the
+interface name (e.g. le0).  The remote IP address \*[Lt]remote-addr\*[Gt] may
 be replaced by a host name, if and only if the host name has a single
 IP address associated with it.
 The tunnel must be set
@@ -164,7 +164,7 @@ The cache_lifetime is a value that determines the amount of time that a
 cached multicast route stays in kernel before timing out. The value of this
 entry should lie between 300 (5 min) and 86400 (1 day). It defaults to 300.
 .PP
-The pruning <off/on> option is provided for
+The pruning \*[Lt]off/on\*[Gt] option is provided for
 .IR mrouted
 to act as a non-pruning router. It is also possible to start
 .IR mrouted
@@ -350,14 +350,14 @@ The cache tables look like this:
 Multicast Routing Cache Table (147 entries)
  Origin             Mcast-group     CTmr  Age Ptmr IVif Forwvifs
  13.2.116/22        224.2.127.255     3m   2m    -  0    1
->13.2.116.19
->13.2.116.196
+\*[Gt]13.2.116.19
+\*[Gt]13.2.116.196
  138.96.48/21       224.2.127.255     5m   2m    -  0    1
->138.96.48.108
+\*[Gt]138.96.48.108
  128.9.160/20       224.2.127.255     3m   2m    -  0    1
->128.9.160.45
+\*[Gt]128.9.160.45
  198.106.194/24     224.2.135.190     9m  28s   9m  0P
->198.106.194.22
+\*[Gt]198.106.194.22
 
 .fi
 Each entry is characterized by the origin subnet number and mask and the
@@ -381,7 +381,7 @@ that interface. An unlisted interface is a leaf subnet with are no
 members of the particular group on that subnet. A "b" on an interface
 indicates that it is a boundary interface, i.e. traffic will not be
 forwarded on the scoped address on that interface.
-An additional line with a ">" as the first character is printed for
+An additional line with a "\*[Gt]" as the first character is printed for
 each source on the subnet.  Note that there can be many sources in
 one subnet.
 .SH FILES

@@ -1,4 +1,4 @@
-.\"	$NetBSD: rdist.1,v 1.13 2002/02/07 03:15:12 ross Exp $
+.\"	$NetBSD: rdist.1,v 1.14 2002/02/08 01:36:31 ross Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -107,7 +107,7 @@ The equivalent distfile is as follows.
 .Pp
 .Bd -filled -offset indent -compact
 .Pq Ar name ...
-.Li ->
+.Li -\*[Gt]
 .Op Ar login@
 .Ar host
 .Bd -filled -offset indent -compact
@@ -197,9 +197,9 @@ to be copied, the destination hosts, and what operations to perform
 to do the updating. Each entry has one of the following formats.
 .Pp
 .Bd -literal -offset indent -compact
-<variable name> `=' <name list>
-[label:]<source list> `\->' <destination list> <command list>
-[label:]<source list> `::' <time_stamp file> <command list>
+\*[Lt]variable name\*[Gt] `=' \*[Lt]name list\*[Gt]
+[label:]\*[Lt]source list\*[Gt] `\-\*[Gt]' \*[Lt]destination list\*[Gt] \*[Lt]command list\*[Gt]
+[label:]\*[Lt]source list\*[Gt] `::' \*[Lt]time_stamp file\*[Gt] \*[Lt]command list\*[Gt]
 .Ed
 .Pp
 The first format is used for defining variables.
@@ -228,11 +228,11 @@ a name enclosed in curly braces (see the examples at the end).
 .Pp
 The source and destination lists have the following format:
 .Bd -literal -offset indent
-<name>
+\*[Lt]name\*[Gt]
 .Ed
 or
 .Bd -literal -offset indent -compact
-`(' <zero or more names separated by white-space> `)'
+`(' \*[Lt]zero or more names separated by white-space\*[Gt] `)'
 .Ed
 .Pp
 The shell meta-characters `[', `]', `{', `}', `*', and `?'
@@ -253,11 +253,11 @@ The command list consists of zero or more commands of the following
 format.
 .Bd -ragged -offset indent -compact
 .Bl -column except_patx pattern\ listx
-.It `install'	<options>	opt_dest_name `;'
-.It `notify'	<name list>	`;'
-.It `except'	<name list>	`;'
-.It `except_pat'	<pattern list>	`;'
-.It `special'	<name list>	string `;'
+.It `install'	\*[Lt]options\*[Gt]	opt_dest_name `;'
+.It `notify'	\*[Lt]name list\*[Gt]	`;'
+.It `except'	\*[Lt]name list\*[Gt]	`;'
+.It `except_pat'	\*[Lt]pattern list\*[Gt]	`;'
+.It `special'	\*[Lt]name list\*[Gt]	string `;'
 .El
 .Ed
 .Pp
@@ -358,20 +358,20 @@ FILES = ( /bin /lib /usr/bin /usr/games
 EXLIB = ( Mail.rc aliases aliases.dir aliases.pag crontab dshrc
 \tsendmail.cf sendmail.fc sendmail.hf sendmail.st uucp vfont )
 
-${FILES} -> ${HOSTS}
+${FILES} -\*[Gt] ${HOSTS}
 \tinstall -R ;
 \texcept /usr/lib/${EXLIB} ;
 \texcept /usr/games/lib ;
 \tspecial /usr/lib/sendmail "/usr/lib/sendmail -bz" ;
 
 srcs:
-/usr/src/bin -> arpa
+/usr/src/bin -\*[Gt] arpa
 \texcept_pat ( \e\e.o\e$ /SCCS\e$ ) ;
 
 IMAGEN = (ips dviimp catdvi)
 
 imagen:
-/usr/local/${IMAGEN} -> arpa
+/usr/local/${IMAGEN} -\*[Gt] arpa
 \tinstall /usr/local/lib ;
 \tnotify ralph ;
 

@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_delete.1,v 1.23 2002/02/02 01:32:25 wiz Exp $
+.\" $NetBSD: pkg_delete.1,v 1.24 2002/02/08 01:38:53 ross Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintainance
 .\" of non-core utilities.
@@ -48,7 +48,7 @@ attacks from miscreants who create dangerous package files.
 You are advised to verify the competence and identity of those who
 provide installable package files.  For extra protection, examine all
 the package control files in the package record directory (
-.Pa /var/db/pkg/<pkg-name>/ ) .
+.Pa /var/db/pkg/\*[Lt]pkg-name\*[Gt]/ ) .
 Pay particular
 attention to any +INSTALL, +DEINSTALL, +REQUIRE or +MTREE_DIRS files,
 and inspect the +CONTENTS file for
@@ -130,7 +130,7 @@ Turn on verbose output.
 .Sh TECHNICAL DETAILS
 .Nm
 does pretty much what it says.  It examines installed package records in
-.Pa /var/db/pkg/<pkg-name> ,
+.Pa /var/db/pkg/\*[Lt]pkg-name\*[Gt] ,
 deletes the package contents, and finally removes the package records.
 .Pp
 If a package is required by other installed packages,
@@ -155,7 +155,7 @@ file (see
 then this is executed first as
 .Bd -filled -offset indent -compact
 .Cm require
-.Ar <pkg-name>
+.Ar \*[Lt]pkg-name\*[Gt]
 .Ar DEINSTALL
 .Ed
 (where
@@ -181,13 +181,13 @@ The
 script is called as:
 .Bd -filled -offset indent -compact
 .Cm deinstall
-.Ar <pkg-name>
+.Ar \*[Lt]pkg-name\*[Gt]
 .Ar DEINSTALL
 .Ed
 before deleting all files and as:
 .Bd -filled -offset indent -compact
 .Cm deinstall
-.Ar <pkg-name>
+.Ar \*[Lt]pkg-name\*[Gt]
 .Ar POST-DEINSTALL
 .Ed
 after deleting them. Passing the keywords
