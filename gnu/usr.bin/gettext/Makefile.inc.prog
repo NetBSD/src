@@ -1,0 +1,13 @@
+#	$NetBSD: Makefile.inc.prog,v 1.1 2000/11/02 01:09:01 itojun Exp $
+
+LIBDIR!=	cd ${.CURDIR}/../lib; make print-objdir
+
+LDADD+=	-lintl
+DPADD+=	${LIBINTL}
+
+LDADD+=	-L${LIBDIR} -lnlsut
+DPADD+=	${LIBDIR}/libnlsut.a
+
+.PATH:	${DIST}/gettext/src
+
+CPPFLAGS+=	-I${DIST}/gettext/src

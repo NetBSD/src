@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.268 2000/10/31 10:46:35 itojun Exp $
+#	$NetBSD: mi,v 1.269 2000/11/02 01:09:04 itojun Exp $
 ./sys			comp-sysutil-root
 ./usr/bin/addr2line	comp-miscutil-bin
 ./usr/bin/ar		comp-util-bin
@@ -23,6 +23,8 @@
 ./usr/bin/gcc		comp-c-bin
 ./usr/bin/gcov		comp-debug-bin
 ./usr/bin/gdb		comp-debug-bin
+./usr/bin/gettext	comp-miscutil-bin
+./usr/bin/gettextize	comp-miscutil-bin
 ./usr/bin/gprof		comp-debug-bin
 ./usr/bin/ld		comp-util-bin
 ./usr/bin/lex		comp-c-bin
@@ -31,6 +33,11 @@
 ./usr/bin/menuc		comp-miscutil-bin
 ./usr/bin/mkstr		comp-miscutil-bin
 ./usr/bin/msgc		comp-miscutil-bin
+./usr/bin/msgcmp	comp-miscutil-bin
+./usr/bin/msgcomm	comp-miscutil-bin
+./usr/bin/msgfmt	comp-miscutil-bin
+./usr/bin/msgmerge	comp-miscutil-bin
+./usr/bin/msgunfmt	comp-miscutil-bin
 ./usr/bin/nm		comp-util-bin
 ./usr/bin/objcopy	comp-util-bin
 ./usr/bin/objdump	comp-util-bin
@@ -42,6 +49,7 @@
 ./usr/bin/strip		comp-util-bin
 ./usr/bin/tsort		comp-miscutil-bin
 ./usr/bin/unifdef	comp-miscutil-bin
+./usr/bin/xgettext	comp-miscutil-bin
 ./usr/bin/xstr		comp-miscutil-bin
 ./usr/bin/yacc		comp-c-bin
 ./usr/include/a.out.h		comp-c-include
@@ -330,8 +338,8 @@
 ./usr/include/dev/tc/tcreg.h		comp-c-include
 ./usr/include/dev/tc/tcvar.h		comp-c-include
 ./usr/include/dev/usb/usb.h		comp-c-include
-./usr/include/dev/usb/usbdevs.h		comp-c-include
 ./usr/include/dev/usb/usbcdc.h		comp-c-include
+./usr/include/dev/usb/usbdevs.h		comp-c-include
 ./usr/include/dev/usb/usbhid.h		comp-c-include
 ./usr/include/dev/vme		comp-c-include
 ./usr/include/dev/vme/vmevar.h		comp-c-include
@@ -1388,6 +1396,18 @@
 ./usr/share/lkm/vfs/README	comp-lkm-share
 ./usr/share/lkm/vfs/module/Makefile	comp-lkm-share
 ./usr/share/lkm/vfs/module/kernfsmod.c	comp-lkm-share
+./usr/share/locale/da/LC_MESSAGES/gettext.mo	comp-miscutil-bin
+./usr/share/locale/de/LC_MESSAGES/gettext.mo	comp-miscutil-bin
+./usr/share/locale/es/LC_MESSAGES/gettext.mo	comp-miscutil-bin
+./usr/share/locale/fr/LC_MESSAGES/gettext.mo	comp-miscutil-bin
+./usr/share/locale/ko/LC_MESSAGES/gettext.mo	comp-miscutil-bin
+./usr/share/locale/nl/LC_MESSAGES/gettext.mo	comp-miscutil-bin
+./usr/share/locale/no/LC_MESSAGES/gettext.mo	comp-miscutil-bin
+./usr/share/locale/no@nynorsk/LC_MESSAGES/gettext.mo	comp-miscutil-bin
+./usr/share/locale/pl/LC_MESSAGES/gettext.mo	comp-miscutil-bin
+./usr/share/locale/pt/LC_MESSAGES/gettext.mo	comp-miscutil-bin
+./usr/share/locale/sl/LC_MESSAGES/gettext.mo	comp-miscutil-bin
+./usr/share/locale/sv/LC_MESSAGES/gettext.mo	comp-miscutil-bin
 ./usr/share/man/cat1/addr2line.0	comp-miscutil-catman
 ./usr/share/man/cat1/ar.0	comp-util-catman
 ./usr/share/man/cat1/as.0	comp-util-catman
@@ -2984,8 +3004,8 @@
 ./usr/share/man/cat9/m_copydata.0		comp-kern-catman
 ./usr/share/man/cat9/m_copym.0		comp-kern-catman
 ./usr/share/man/cat9/m_copypacket.0		comp-kern-catman
-./usr/share/man/cat9/m_dup.0		comp-kern-catman
 ./usr/share/man/cat9/m_devget.0		comp-kern-catman
+./usr/share/man/cat9/m_dup.0		comp-kern-catman
 ./usr/share/man/cat9/m_free.0		comp-kern-catman
 ./usr/share/man/cat9/m_freem.0		comp-kern-catman
 ./usr/share/man/cat9/m_get.0		comp-kern-catman
@@ -4749,8 +4769,8 @@
 ./usr/share/man/man9/m_copydata.9		comp-kern-man
 ./usr/share/man/man9/m_copym.9		comp-kern-man
 ./usr/share/man/man9/m_copypacket.9		comp-kern-man
-./usr/share/man/man9/m_dup.9		comp-kern-man
 ./usr/share/man/man9/m_devget.9		comp-kern-man
+./usr/share/man/man9/m_dup.9		comp-kern-man
 ./usr/share/man/man9/m_free.9		comp-kern-man
 ./usr/share/man/man9/m_freem.9		comp-kern-man
 ./usr/share/man/man9/m_get.9		comp-kern-man
