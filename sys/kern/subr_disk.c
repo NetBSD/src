@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.34 2002/01/28 03:12:13 simonb Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.35 2002/01/28 03:33:55 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.34 2002/01/28 03:12:13 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.35 2002/01/28 03:33:55 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -552,7 +552,7 @@ sysctl_disknames(void *vwhere, size_t *sizep)
 	error = 0;
 	needed = 0;
 	left = *sizep;
-	
+
 	simple_lock(&disklist_slock);
 	for (diskp = TAILQ_FIRST(&disklist); diskp != NULL;
 	    diskp = TAILQ_NEXT(diskp, dk_link)) {
@@ -607,6 +607,7 @@ sysctl_diskstats(int *name, u_int namelen, void *vwhere, size_t *sizep)
 	error = 0;
 	left = *sizep;
 	memset(&sdisk, 0, sizeof(sdisk));
+	*sizep = 0;
 
 	simple_lock(&disklist_slock);
 	TAILQ_FOREACH(diskp, &disklist, dk_link) {
@@ -623,10 +624,12 @@ sysctl_diskstats(int *name, u_int namelen, void *vwhere, size_t *sizep)
 		sdisk.dk_time_sec = diskp->dk_time.tv_sec;
 		sdisk.dk_time_usec = diskp->dk_time.tv_usec;
 		sdisk.dk_busy = diskp->dk_busy;
+
 		error = copyout(&sdisk, where, min(tocopy, sizeof(sdisk)));
 		if (error)
 			break;
 		where += tocopy;
+		*sizep += tocopy;
 		left -= tocopy;
 	}
 	simple_unlock(&disklist_slock);
