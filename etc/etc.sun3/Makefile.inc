@@ -1,11 +1,10 @@
+#	$NetBSD: Makefile.inc,v 1.2 1997/09/20 03:05:39 mikel Exp $
 #
 #	etc.sun3/Makefile.inc -- sun3-specific etc Makefile targets
 #
-#	$Id: Makefile.inc,v 1.1 1995/07/07 16:05:20 gwr Exp $
 
 .ifdef DESTDIR
 snap_md: netbsd-gen netbsd-dl
-	cp -p ${.CURDIR}/etc.sun3/README ${DESTDIR}/snapshot/README
 
 netbsd-gen:
 	cd ${.CURDIR}/../sys/arch/sun3/compile/GENERIC && make
