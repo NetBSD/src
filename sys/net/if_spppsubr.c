@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.29 2001/11/12 23:49:43 lukem Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.30 2001/12/04 21:32:15 ross Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.29 2001/11/12 23:49:43 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.30 2001/12/04 21:32:15 ross Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -182,9 +182,9 @@ struct lcp_header {
 #define LCP_HEADER_LEN          sizeof (struct lcp_header)
 
 struct cisco_packet {
-	u_long type;
-	u_long par1;
-	u_long par2;
+	u_int32_t type;
+	u_int32_t par1;
+	u_int32_t par2;
 	u_short rel;
 	u_short time0;
 	u_short time1;
@@ -258,7 +258,7 @@ static u_short interactive_ports[8] = {
 static int sppp_output(struct ifnet *ifp, struct mbuf *m,
 		       struct sockaddr *dst, struct rtentry *rt);
 
-static void sppp_cisco_send(struct sppp *sp, int type, long par1, long par2);
+static void sppp_cisco_send(struct sppp *sp, int type, int32_t par1, int32_t par2);
 static void sppp_cisco_input(struct sppp *sp, struct mbuf *m);
 
 static void sppp_cp_input(const struct cp *cp, struct sppp *sp,
@@ -348,7 +348,7 @@ static void sppp_chap_scr(struct sppp *sp);
 
 static const char *sppp_auth_type_name(u_short proto, u_char type);
 static const char *sppp_cp_type_name(u_char type);
-static const char *sppp_dotted_quad(u_long addr);
+static const char *sppp_dotted_quad(u_int32_t addr);
 static const char *sppp_ipcp_opt_name(u_char opt);
 #ifdef INET6
 static const char *sppp_ipv6cp_opt_name(u_char opt);
@@ -359,13 +359,13 @@ static const char *sppp_proto_name(u_short proto);
 static const char *sppp_state_name(int state);
 static int sppp_params(struct sppp *sp, int cmd, void *data);
 static int sppp_strnlen(u_char *p, int max);
-static void sppp_get_ip_addrs(struct sppp *sp, u_long *src, u_long *dst,
-			      u_long *srcmask);
+static void sppp_get_ip_addrs(struct sppp *sp, u_int32_t *src, u_int32_t *dst,
+			      u_int32_t *srcmask);
 static void sppp_keepalive(void *dummy);
 static void sppp_phase_network(struct sppp *sp);
 static void sppp_print_bytes(const u_char *p, u_short len);
 static void sppp_print_string(const char *p, u_short len);
-static void sppp_set_ip_addr(struct sppp *sp, u_long src);
+static void sppp_set_ip_addr(struct sppp *sp, u_int32_t src);
 #ifdef INET6
 static void sppp_get_ip6_addrs(struct sppp *sp, struct in6_addr *src,
 				struct in6_addr *dst, struct in6_addr *srcmask);
@@ -473,7 +473,7 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 	}
 
 	if (sp->pp_flags & PP_NOFRAMING) {
-		protocol = *(mtod(m, u_int16_t*));
+		memcpy(&protocol, mtod(m, void *), 2);
 		protocol = ntohs(protocol);
 		m_adj(m, 2);
 	} else {
@@ -703,7 +703,7 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 	{
 		/* Check mbuf length here??? */
 		struct ip *ip = mtod (m, struct ip*);
-		struct tcphdr *tcp = (struct tcphdr*) ((long*)ip + ip->ip_hl);
+		struct tcphdr *tcp = (struct tcphdr*) ((int32_t*)ip + ip->ip_hl);
 
 		/*
 		 * When using dynamic local IP address assignment by using
@@ -1139,7 +1139,7 @@ sppp_cisco_input(struct sppp *sp, struct mbuf *m)
 {
 	STDDCL;
 	struct cisco_packet *h;
-	u_long me, mymask;
+	u_int32_t me, mymask;
 
 	if (m->m_pkthdr.len < CISCO_PACKET_LEN) {
 		if (debug)
@@ -1152,15 +1152,15 @@ sppp_cisco_input(struct sppp *sp, struct mbuf *m)
 	if (debug)
 		log(LOG_DEBUG,
 		    SPP_FMT "cisco input: %d bytes "
-		    "<0x%lx 0x%lx 0x%lx 0x%x 0x%x-0x%x>\n",
+		    "<0x%x 0x%x 0x%x 0x%x 0x%x-0x%x>\n",
 		    SPP_ARGS(ifp), m->m_pkthdr.len,
-		    (u_long)ntohl (h->type), (u_long)h->par1, (u_long)h->par2, (u_int)h->rel,
+		    ntohl (h->type), h->par1, h->par2, (u_int)h->rel,
 		    (u_int)h->time0, (u_int)h->time1);
 	switch (ntohl (h->type)) {
 	default:
 		if (debug)
-			addlog(SPP_FMT "cisco unknown packet type: 0x%lx\n",
-			       SPP_ARGS(ifp), (u_long)ntohl (h->type));
+			addlog(SPP_FMT "cisco unknown packet type: 0x%x\n",
+			       SPP_ARGS(ifp), ntohl (h->type));
 		break;
 	case CISCO_ADDR_REPLY:
 		/* Reply on address request, ignore */
@@ -1205,13 +1205,13 @@ sppp_cisco_input(struct sppp *sp, struct mbuf *m)
  * Send Cisco keepalive packet.
  */
 static void
-sppp_cisco_send(struct sppp *sp, int type, long par1, long par2)
+sppp_cisco_send(struct sppp *sp, int type, int32_t par1, int32_t par2)
 {
 	STDDCL;
 	struct ppp_header *h;
 	struct cisco_packet *ch;
 	struct mbuf *m;
-	u_long t = (time.tv_sec - boottime.tv_sec) * 1000;
+	u_int32_t t = (time.tv_sec - boottime.tv_sec) * 1000;
 
 	MGETHDR (m, M_DONTWAIT, MT_DATA);
 	if (! m)
@@ -1235,9 +1235,10 @@ sppp_cisco_send(struct sppp *sp, int type, long par1, long par2)
 
 	if (debug)
 		log(LOG_DEBUG,
-		    SPP_FMT "cisco output: <0x%lx 0x%lx 0x%lx 0x%x 0x%x-0x%x>\n",
-			SPP_ARGS(ifp), (u_long)ntohl (ch->type), (u_long)ch->par1,
-			(u_long)ch->par2, (u_int)ch->rel, (u_int)ch->time0, (u_int)ch->time1);
+		    SPP_FMT "cisco output: <0x%x 0x%x 0x%x 0x%x 0x%x-0x%x>\n",
+			SPP_ARGS(ifp), ntohl (ch->type), ch->par1,
+			ch->par2, (u_int)ch->rel, (u_int)ch->time0,
+			(u_int)ch->time1);
 
 	if (IF_QFULL (&sp->pp_cpq)) {
 		IF_DROP (&sp->pp_fastq);
@@ -1298,7 +1299,7 @@ sppp_cp_send(struct sppp *sp, u_short proto, u_char type,
 		    SPP_ARGS(ifp),
 		    sppp_proto_name(proto),
 		    sppp_cp_type_name (lh->type), lh->ident,
-		    ntohs (lh->len));
+			ntohs (lh->len));
 		if (len)
 			sppp_print_bytes ((u_char*) (lh+1), len);
 		addlog(">\n");
@@ -1326,6 +1327,7 @@ sppp_cp_input(const struct cp *cp, struct sppp *sp, struct mbuf *m)
 	int len = m->m_pkthdr.len;
 	int rv;
 	u_char *p;
+	u_int32_t u32;
 
 	if (len < 4) {
 		if (debug)
@@ -1593,7 +1595,7 @@ sppp_cp_input(const struct cp *cp, struct sppp *sp, struct mbuf *m)
 
 		catastrophic = 0;
 		upper = NULL;
-		proto = ntohs(*((u_int16_t *)p));
+		proto = p[0] << 8 | p[1];
 		for (i = 0; i < IDX_COUNT; i++) {
 			if (cps[i]->proto == proto) {
 				upper = cps[i];
@@ -1665,7 +1667,8 @@ sppp_cp_input(const struct cp *cp, struct sppp *sp, struct mbuf *m)
 				       SPP_ARGS(ifp), len);
 			break;
 		}
-		if (ntohl (*(long*)(h+1)) == sp->lcp.magic) {
+		memcpy(&u32, h + 1, sizeof u32);
+		if (ntohl(u32) == sp->lcp.magic) {
 			/* Line loopback mode detected. */
 			printf(SPP_FMT "loopback\n", SPP_ARGS(ifp));
 			if_down (ifp);
@@ -1677,7 +1680,8 @@ sppp_cp_input(const struct cp *cp, struct sppp *sp, struct mbuf *m)
 			lcp.Up(sp);
 			break;
 		}
-		*(long*)(h+1) = htonl (sp->lcp.magic);
+		u32 = htonl(sp->lcp.magic);
+		memcpy(h + 1, &u32, sizeof u32);
 		if (debug)
 			addlog(SPP_FMT "got lcp echo req, sending echo rep\n",
 			       SPP_ARGS(ifp));
@@ -1700,7 +1704,8 @@ sppp_cp_input(const struct cp *cp, struct sppp *sp, struct mbuf *m)
 		if (debug)
 			addlog(SPP_FMT "lcp got echo rep\n",
 			       SPP_ARGS(ifp));
-		if (ntohl (*(long*)(h+1)) != sp->lcp.magic)
+		memcpy(&u32, h + 1, sizeof u32);
+		if (ntohl(u32) != sp->lcp.magic)
 			sp->pp_alivecnt = 0;
 		break;
 	default:
@@ -2072,7 +2077,7 @@ sppp_lcp_RCR(struct sppp *sp, struct lcp_header *h, int len)
 	STDDCL;
 	u_char *buf, *r, *p;
 	int origlen, rlen;
-	u_long nmagic;
+	u_int32_t nmagic;
 	u_short authproto;
 
 	len -= 4;
@@ -2168,11 +2173,11 @@ sppp_lcp_RCR(struct sppp *sp, struct lcp_header *h, int len)
 		switch (*p) {
 		case LCP_OPT_MAGIC:
 			/* Magic number -- extract. */
-			nmagic = (u_long)p[2] << 24 |
-				(u_long)p[3] << 16 | p[4] << 8 | p[5];
+			nmagic = (u_int32_t)p[2] << 24 |
+				(u_int32_t)p[3] << 16 | p[4] << 8 | p[5];
 			if (nmagic != sp->lcp.magic) {
 				if (debug)
-					addlog(" 0x%lx", nmagic);
+					addlog(" 0x%x", nmagic);
 				continue;
 			}
 			/*
@@ -2352,7 +2357,7 @@ sppp_lcp_RCN_nak(struct sppp *sp, struct lcp_header *h, int len)
 {
 	STDDCL;
 	u_char *buf, *p;
-	u_long magic;
+	u_int32_t magic;
 
 	len -= 4;
 	buf = malloc (len, M_TEMP, M_NOWAIT);
@@ -2372,8 +2377,8 @@ sppp_lcp_RCN_nak(struct sppp *sp, struct lcp_header *h, int len)
 			/* Magic number -- renegotiate */
 			if ((sp->lcp.opts & (1 << LCP_OPT_MAGIC)) &&
 			    len >= 6 && p[1] == 6) {
-				magic = (u_long)p[2] << 24 |
-					(u_long)p[3] << 16 | p[4] << 8 | p[5];
+				magic = (u_int32_t)p[2] << 24 |
+					(u_int32_t)p[3] << 16 | p[4] << 8 | p[5];
 				/*
 				 * If the remote magic is our negated one,
 				 * this looks like a loopback problem.
@@ -2386,7 +2391,7 @@ sppp_lcp_RCN_nak(struct sppp *sp, struct lcp_header *h, int len)
 				} else {
 					sp->lcp.magic = magic;
 					if (debug)
-						addlog(" %ld", magic);
+						addlog(" %d", magic);
 				}
 			}
 			break;
@@ -2428,7 +2433,7 @@ sppp_lcp_tlu(struct sppp *sp)
 {
 	STDDCL;
 	int i;
-	u_long mask;
+	u_int32_t mask;
 
 	/* XXX ? */
 	if (! (ifp->if_flags & IFF_UP) &&
@@ -2491,7 +2496,7 @@ sppp_lcp_tld(struct sppp *sp)
 {
 	STDDCL;
 	int i;
-	u_long mask;
+	u_int32_t mask;
 
 	sp->pp_phase = PHASE_TERMINATE;
 
@@ -2658,7 +2663,7 @@ static void
 sppp_ipcp_open(struct sppp *sp)
 {
 	STDDCL;
-	u_long myaddr, hisaddr;
+	u_int32_t myaddr, hisaddr;
 
 	sp->ipcp.flags &= ~(IPCP_HISADDR_SEEN|IPCP_MYADDR_SEEN|IPCP_MYADDR_DYN);
 
@@ -2718,7 +2723,7 @@ sppp_ipcp_RCR(struct sppp *sp, struct lcp_header *h, int len)
 	u_char *buf, *r, *p;
 	struct ifnet *ifp = &sp->pp_if;
 	int rlen, origlen, debug = ifp->if_flags & IFF_DEBUG;
-	u_long hisaddr, desiredaddr;
+	u_int32_t hisaddr, desiredaddr;
 	int gotmyaddr = 0;
 
 	len -= 4;
@@ -2951,7 +2956,7 @@ sppp_ipcp_RCN_nak(struct sppp *sp, struct lcp_header *h, int len)
 	u_char *buf, *p;
 	struct ifnet *ifp = &sp->pp_if;
 	int debug = ifp->if_flags & IFF_DEBUG;
-	u_long wantaddr;
+	u_int32_t wantaddr;
 
 	len -= 4;
 	buf = malloc (len, M_TEMP, M_NOWAIT);
@@ -3040,7 +3045,7 @@ static void
 sppp_ipcp_scr(struct sppp *sp)
 {
 	char opt[6 /* compression */ + 6 /* address */];
-	u_long ouraddr;
+	u_int32_t ouraddr;
 	int i = 0;
 
 #ifdef notyet
@@ -4023,11 +4028,11 @@ static void
 sppp_chap_scr(struct sppp *sp)
 {
 	struct timeval tv;
-	u_long *ch, seed;
+	u_int32_t *ch, seed;
 	u_char clen;
 
 	/* Compute random challenge. */
-	ch = (u_long *)sp->myauth.challenge;
+	ch = (u_int32_t *)sp->myauth.challenge;
 	microtime(&tv);
 	seed = tv.tv_sec ^ tv.tv_usec;
 	ch[0] = seed ^ random();
@@ -4147,7 +4152,7 @@ sppp_pap_input(struct sppp *sp, struct mbuf *m)
 		if (debug) {
 			log(LOG_DEBUG, SPP_FMT "pap success",
 			    SPP_ARGS(ifp));
-			name_len = *((char *)h);
+			name_len = *(char *)h;
 			if (len > 5 && name_len) {
 				addlog(": ");
 				sppp_print_string((char*)(h+1), name_len);
@@ -4176,7 +4181,7 @@ sppp_pap_input(struct sppp *sp, struct mbuf *m)
 		if (debug) {
 			log(LOG_INFO, SPP_FMT "pap failure",
 			    SPP_ARGS(ifp));
-			name_len = *((char *)h);
+			name_len = *(char *)h;
 			if (len > 5 && name_len) {
 				addlog(": ");
 				sppp_print_string((char*)(h+1), name_len);
@@ -4492,7 +4497,7 @@ sppp_keepalive(void *dummy)
 			sppp_cisco_send (sp, CISCO_KEEPALIVE_REQ,
 			    ++sp->pp_seq[IDX_LCP], sp->pp_rseq[IDX_LCP]);
 		else if (sp->pp_phase >= PHASE_AUTHENTICATE) {
-			long nmagic = htonl (sp->lcp.magic);
+			int32_t nmagic = htonl (sp->lcp.magic);
 			sp->lcp.echoid = ++sp->pp_seq[IDX_LCP];
 			sppp_cp_send (sp, PPP_LCP, ECHO_REQ,
 				sp->lcp.echoid, 4, &nmagic);
@@ -4506,15 +4511,15 @@ sppp_keepalive(void *dummy)
  * Get both IP addresses.
  */
 static void
-sppp_get_ip_addrs(struct sppp *sp, u_long *src, u_long *dst, u_long *srcmask)
+sppp_get_ip_addrs(struct sppp *sp, u_int32_t *src, u_int32_t *dst, u_int32_t *srcmask)
 {
 	struct ifnet *ifp = &sp->pp_if;
 	struct ifaddr *ifa;
 	struct sockaddr_in *si, *sm;
-	u_long ssrc, ddst;
+	u_int32_t ssrc, ddst;
 
 	sm = NULL;
-	ssrc = ddst = 0L;
+	ssrc = ddst = 0;
 	/*
 	 * Pick the first AF_INET address from the list,
 	 * aliases don't make any sense on a p2p link anyway.
@@ -4548,7 +4553,7 @@ sppp_get_ip_addrs(struct sppp *sp, u_long *src, u_long *dst, u_long *srcmask)
  * Set my IP address.  Must be called at splnet.
  */
 static void
-sppp_set_ip_addr(struct sppp *sp, u_long src)
+sppp_set_ip_addr(struct sppp *sp, u_int32_t src)
 {
 	STDDCL;
 	struct ifaddr *ifa;
@@ -4820,7 +4825,7 @@ sppp_phase_network(struct sppp *sp)
 {
 	STDDCL;
 	int i;
-	u_long mask;
+	u_int32_t mask;
 
 	sp->pp_phase = PHASE_NETWORK;
 
@@ -5005,7 +5010,7 @@ sppp_print_string(const char *p, u_short len)
 }
 
 static const char *
-sppp_dotted_quad(u_long addr)
+sppp_dotted_quad(u_int32_t addr)
 {
 	static char s[16];
 	sprintf(s, "%d.%d.%d.%d",
