@@ -1,4 +1,4 @@
-/* $NetBSD: disassem.c,v 1.3 1996/03/16 00:13:09 thorpej Exp $ */
+/* $NetBSD: disassem.c,v 1.4 1996/06/03 21:27:21 mark Exp $ */
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -43,6 +43,12 @@
  * Created      : 09/10/94
  */
 
+/* Special compilation symbols
+ *
+ * DISASSEM_COLOUR - Use colour in dissassembly
+ */
+/*#define DISASSEM_COLOUR */
+
 /* Include standard header files */
 
 #include <sys/param.h>
@@ -61,23 +67,23 @@ typedef struct _opcodes {
 	instruction_decoder decoder;
 } opcodes_struct;
 
-u_int instruction_swi(u_int addr, u_int word);
-u_int instruction_branch(u_int addr, u_int word);
-u_int instruction_mul(u_int addr, u_int word);
-u_int instruction_mla(u_int addr, u_int word);
-u_int instruction_ldrstr(u_int addr, u_int word);
-u_int instruction_ldmstm(u_int addr, u_int word);
-u_int instruction_dataproc(u_int addr, u_int word);
-u_int instruction_swap(u_int addr, u_int word);
-u_int instruction_mrs(u_int addr, u_int word);
-u_int instruction_msr(u_int addr, u_int word);
-u_int instruction_msrf(u_int addr, u_int word);
-u_int instruction_mrcmcr(u_int addr, u_int word);
-u_int instruction_cdp(u_int addr, u_int word);
-u_int instruction_cdt(u_int addr, u_int word);
-u_int instruction_fpabinop(u_int addr, u_int word);
-u_int instruction_fpaunop(u_int addr, u_int word);
-u_int instruction_ldfstf(u_int addr, u_int word);
+static u_int instruction_swi		__P((u_int addr, u_int word));
+static u_int instruction_branch		__P((u_int addr, u_int word));
+static u_int instruction_mul		__P((u_int addr, u_int word));
+static u_int instruction_mla		__P((u_int addr, u_int word));
+static u_int instruction_ldrstr		__P((u_int addr, u_int word));
+static u_int instruction_ldmstm		__P((u_int addr, u_int word));
+static u_int instruction_dataproc	__P((u_int addr, u_int word));
+static u_int instruction_swap		__P((u_int addr, u_int word));
+static u_int instruction_mrs		__P((u_int addr, u_int word));
+static u_int instruction_msr		__P((u_int addr, u_int word));
+static u_int instruction_msrf		__P((u_int addr, u_int word));
+static u_int instruction_mrcmcr		__P((u_int addr, u_int word));
+static u_int instruction_cdp		__P((u_int addr, u_int word));
+static u_int instruction_cdt		__P((u_int addr, u_int word));
+static u_int instruction_fpabinop	__P((u_int addr, u_int word));
+static u_int instruction_fpaunop	__P((u_int addr, u_int word));
+static u_int instruction_ldfstf		__P((u_int addr, u_int word));
 
 /* Declare global variables */
 
@@ -259,129 +265,154 @@ extern caddr_t shell_ident;
 
 /* Local function prototypes */
 
-u_int disassemble(u_char *addr);
+u_int disassemble	__P((u_char *addr));
 
 /* Now for the main code */
 
-void
+static void
 printascii(byte)
 	int byte;
 {
+	byte &= 0x7f;
 	if (byte < 0x20)
+#ifdef DISASSEM_COLOUR
 		printf("\x1b[31m%c\x1b[0m", byte + '@');
+#else
+		printf("%c", byte + '@');
+#endif
 	else if (byte == 0x7f)
+#ifdef DISASSEM_COLOUR
 		printf("\x1b[31m?\x1b[0m");
+#else
+		printf("?");
+#endif
 	else
 		printf("%c", byte);
 }
 
 
-u_int disassemble(u_char *addr)
-  {
-    int loop;
-    u_int word;
-    u_int result = 0;
+u_int
+disassemble(addr)
+	u_char *addr;
+{
+	int loop;
+	u_int word;
+	u_int result = 0;
 
-    printf("%08x : ", (u_int)addr);
+	printf("%08x : ", (u_int)addr);
 
-    word = *((u_int *)addr);
+	word = *((u_int *)addr);
 
-    for (loop = 0; loop < 4; ++loop)
-      printascii(addr[loop]);
+	for (loop = 0; loop < 4; ++loop)
+		printascii(addr[loop]);
 
-    printf(" : %08x :    ", word);
+	printf(" : %08x :    ", word);
 
-    loop = 0;
+	loop = 0;
 
-    while (opcodes[loop].mask != 0)
-      {
-        if ((word & opcodes[loop].mask) == opcodes[loop].pattern)
-          {
-            printf("\x1b[3%dm", opcodes[loop].colour);
-            result = (*opcodes[loop].decoder)((u_int )addr, word);
-            printf("\x1b[0m");
-            break;
-          }
-        ++loop;
-      }
+	while (opcodes[loop].mask != 0) {
+		if ((word & opcodes[loop].mask) == opcodes[loop].pattern) {
+#ifdef DISASSEM_COLOUR
+			printf("\x1b[3%dm", opcodes[loop].colour);
+#endif
+			result = (*opcodes[loop].decoder)((u_int )addr, word);
+#ifdef DISASSEM_COLOUR
+			printf("\x1b[0m");
+#endif
+			break;
+		}
+		++loop;
+	}
 
-    if (opcodes[loop].mask == 0)
-      printf("Undefined instruction");
+	if (opcodes[loop].mask == 0)
+		printf("Undefined instruction");
 
-    printf("\n\r");
-    return(result);
-  }
-
-
-u_int instruction_swi(u_int addr, u_int word)
-  {
-    printf("SWI%s\t0x%08x", opcode_condition(word), (word & 0x00ffffff));
-    return(addr);
-  }
+	printf("\n\r");
+	return(result);
+}
 
 
-u_int instruction_branch(u_int addr, u_int word)
-  {
-    u_int branch;
-
-    branch = ((word << 2) & 0x03ffffff);
-    if (branch & 0x02000000)
-      branch |= 0xfc000000;
-
-    branch += addr + 8;
-
-    if (word & 0x01000000)
-      printf("BL%s\t0x%08x", opcode_condition(word), branch);
-    else
-      printf("B%s\t0x%08x", opcode_condition(word), branch);
-
-    return(branch);
-  }
+static u_int
+instruction_swi(addr, word)
+	u_int addr;
+	u_int word;
+{
+	printf("SWI%s\t0x%08x", opcode_condition(word), (word & 0x00ffffff));
+	return(addr);
+}
 
 
-u_int instruction_mul(u_int addr, u_int word)
-  {
-    printf("MUL%s%s\t", opcode_condition(word), opcode_s(word));
+static u_int
+instruction_branch(addr, word)
+	u_int addr;
+	u_int word;
+{
+	u_int branch;
 
-    printf("r%d, r%d, r%d", (word >> 16) & 0x0f, word & 0x0f,
-      (word >> 8) & 0x0f);
-    return(addr);
-  }
+	branch = ((word << 2) & 0x03ffffff);
+	if (branch & 0x02000000)
+		branch |= 0xfc000000;
 
+	branch += addr + 8;
 
-u_int instruction_mla(u_int addr, u_int word)
-  {
-    printf("MLA%s%s\t", opcode_condition(word), opcode_s(word));
+	if (word & 0x01000000)
+		printf("BL%s\t0x%08x", opcode_condition(word), branch);
+	else
+		printf("B%s\t0x%08x", opcode_condition(word), branch);
 
-    printf("r%d, r%d, r%d, r%d", (word >> 16) & 0x0f, word & 0x0f,
-      (word >> 8) & 0x0f, (word >> 12) & 0x0f);
-    return(addr);
-  }
-
-
-void register_shift(u_int word)
-  {
-    printf("r%d", (word & 0x0f));
-    if ((word & 0x00000ff0) == 0)
-      ;
-    else if ((word & 0x00000ff0) == 0x00000060)
-      printf(", RRX");
-    else
-      {
-        if (word & 0x10)
-          {
-            printf(", %s r%d", opcode_shift(word), (word >> 8) & 0x0f);
-          }
-        else
-          {
-            printf(", %s #%d", opcode_shift(word), (word >> 7) & 0x1f);
-          }
-      }
-  }
+	return(branch);
+}
 
 
-u_int instruction_ldrstr(u_int addr, u_int word)
-  {
+static u_int
+instruction_mul(addr, word)
+	u_int addr;
+	u_int word;
+{
+	printf("MUL%s%s\t", opcode_condition(word), opcode_s(word));
+
+	printf("r%d, r%d, r%d", (word >> 16) & 0x0f, word & 0x0f,
+		(word >> 8) & 0x0f);
+	return(addr);
+}
+
+
+static u_int
+instruction_mla(addr, word)
+	u_int addr;
+	u_int word;
+{
+	printf("MLA%s%s\t", opcode_condition(word), opcode_s(word));
+
+	printf("r%d, r%d, r%d, r%d", (word >> 16) & 0x0f, word & 0x0f,
+		(word >> 8) & 0x0f, (word >> 12) & 0x0f);
+	return(addr);
+}
+
+
+static void
+register_shift(word)
+	u_int word;
+{
+	printf("r%d", (word & 0x0f));
+	if ((word & 0x00000ff0) == 0)
+		;
+	else if ((word & 0x00000ff0) == 0x00000060)
+ 		printf(", RRX");
+	else {
+		if (word & 0x10)
+			printf(", %s r%d", opcode_shift(word), (word >> 8) & 0x0f);
+		else
+			printf(", %s #%d", opcode_shift(word), (word >> 7) & 0x1f);
+	}
+}
+
+
+static u_int
+instruction_ldrstr(addr, word)
+	u_int addr;
+	u_int word;
+{
     printf("%s%s%s%s\t", (word & 0x00100000) ? "LDR" : "STR",
       opcode_condition(word), opcode_b(word), opcode_t(word));
 
@@ -417,11 +448,14 @@ u_int instruction_ldrstr(u_int addr, u_int word)
       }
 
     return(addr);
-  }
+}
 
 
-u_int instruction_ldmstm(u_int addr, u_int word)
-  {
+static u_int
+instruction_ldmstm(addr, word)
+	u_int addr;
+	u_int word;
+{
     int loop;
     int start;
 
@@ -462,11 +496,14 @@ u_int instruction_ldmstm(u_int addr, u_int word)
     if (word & (1 << 22))
       printf("^");
     return(addr);
-  }
+}
 
 
-u_int instruction_dataproc(u_int addr, u_int word)
-  {
+static u_int
+instruction_dataproc(addr, word)
+	u_int addr;
+	u_int word;
+{
     if ((word & 0x01800000) == 0x01000000)
       word = word & ~(1<<20);
 
@@ -488,86 +525,107 @@ u_int instruction_dataproc(u_int addr, u_int word)
         register_shift(word);
       }
     return(addr);
-  }
+}
 
 
-u_int instruction_swap(u_int addr, u_int word)
-  {
-    printf("SWP%s%s\t", opcode_condition(word), opcode_b(word));
+static u_int
+instruction_swap(addr, word)
+	u_int addr;
+	u_int word;
+{
+	printf("SWP%s%s\t", opcode_condition(word), opcode_b(word));
 
-    printf("r%d, r%d, [r%d]", (word >> 12) & 0x0f, (word & 0x0f),
-      (word >> 16) & 0x0f);
-    return(addr);
-  }
-
-
-u_int instruction_mrs(u_int addr, u_int word)
-  {
-    printf("MRS%s\tr%d, ", opcode_condition(word), (word >> 12) & 0x0f);
-
-    printf("%s", (word & 0x00400000) ? "SPSR" : "CPSR");
-    return(addr);
-  }
+	printf("r%d, r%d, [r%d]", (word >> 12) & 0x0f, (word & 0x0f),
+		(word >> 16) & 0x0f);
+	return(addr);
+}
 
 
-u_int instruction_msr(u_int addr, u_int word)
-  {
-    printf("MSR%s\t", opcode_condition(word));
+static u_int
+instruction_mrs(addr, word)
+	u_int addr;
+	u_int word;
+{
+	printf("MRS%s\tr%d, ", opcode_condition(word), (word >> 12) & 0x0f);
 
-    printf("%s, r%d", (word & 0x00400000) ? "SPSR" : "CPSR", word & 0x0f);
-
-    return(addr);
-  }
-
-
-u_int instruction_msrf(u_int addr, u_int word)
-  {
-    printf("MSR%s\t", opcode_condition(word));
-
-    printf("%s_flg, ", (word & 0x00400000) ? "SPSR" : "CPSR");
-
-    if (word & 0x02000000)
-      printf("#0x%08x", (word & 0xff) << (32 - ((word >> 7) & 0x1e)));
-    else
-      printf("r%d", word &0x0f);
-    return(addr);
-  }
+	printf("%s", (word & 0x00400000) ? "SPSR" : "CPSR");
+	return(addr);
+}
 
 
-u_int instruction_mrcmcr(u_int addr, u_int word)
-  {
-    printf("%s%s\t", (word & (1 << 20)) ? "MRC" : "MCR",
-      opcode_condition(word));
+static u_int
+instruction_msr(addr, word)
+	u_int addr;
+	u_int word;
+{
+	printf("MSR%s\t", opcode_condition(word));
 
-    printf("CP #%d, %d, ", (word >> 8) & 0x0f, (word >> 21) & 0x07);
+	printf("%s, r%d", (word & 0x00400000) ? "SPSR" : "CPSR", word & 0x0f);
 
-    printf("r%d, cr%d, cr%d", (word >> 12) & 0x0f, (word >> 16) & 0x0f,
-      word & 0x0f);
-
-    if (((word >> 5) & 0x07) != 0)
-      printf(", %d", (word >> 5) & 0x07);
-
-    return(addr);
-  }
+	return(addr);
+}
 
 
-u_int instruction_cdp(u_int addr, u_int word)
-  {
-    printf("CDP%s\t", opcode_condition(word));
+static u_int
+instruction_msrf(addr, word)
+	u_int addr;
+	u_int word;
+{
+	printf("MSR%s\t", opcode_condition(word));
 
-    printf("CP #%d, %d, ", (word >> 8) & 0x0f, (word >> 20) & 0x0f);
+	printf("%s_flg, ", (word & 0x00400000) ? "SPSR" : "CPSR");
 
-    printf("cr%d, cr%d, cr%d", (word >> 12) & 0x0f, (word >> 16) & 0x0f,
-      word & 0x0f);
+	if (word & 0x02000000)
+		printf("#0x%08x", (word & 0xff) << (32 - ((word >> 7) & 0x1e)));
+	else
+		printf("r%d", word &0x0f);
+	return(addr);
+}
 
-    printf(", %d", (word >> 5) & 0x07);
 
-    return(addr);
-  }
+static u_int
+instruction_mrcmcr(addr, word)
+	u_int addr;
+	u_int word;
+{
+	printf("%s%s\t", (word & (1 << 20)) ? "MRC" : "MCR",
+		opcode_condition(word));
+
+	printf("CP #%d, %d, ", (word >> 8) & 0x0f, (word >> 21) & 0x07);
+
+	printf("r%d, cr%d, cr%d", (word >> 12) & 0x0f, (word >> 16) & 0x0f,
+		word & 0x0f);
+
+	if (((word >> 5) & 0x07) != 0)
+		printf(", %d", (word >> 5) & 0x07);
+
+	return(addr);
+}
 
 
-u_int instruction_cdt(u_int addr, u_int word)
-  {
+static u_int
+instruction_cdp(addr, word)
+	u_int addr;
+	u_int word;
+{
+	printf("CDP%s\t", opcode_condition(word));
+
+	printf("CP #%d, %d, ", (word >> 8) & 0x0f, (word >> 20) & 0x0f);
+
+	printf("cr%d, cr%d, cr%d", (word >> 12) & 0x0f, (word >> 16) & 0x0f,
+		word & 0x0f);
+
+	printf(", %d", (word >> 5) & 0x07);
+
+	return(addr);
+}
+
+
+static u_int
+instruction_cdt(addr, word)
+	u_int addr;
+	u_int word;
+{
     printf("%s%s%s\t", (word & (1 << 20)) ? "LDC" : "STC",
       opcode_condition(word), (word & (1 << 22)) ? "L" : "");
 
@@ -589,43 +647,52 @@ u_int instruction_cdt(u_int addr, u_int word)
       printf("!");
 
     return(addr);
-  }
+}
 
 
-u_int instruction_fpabinop(u_int addr, u_int word)
-  {
-    printf("%s%s%s%s\t", opcode_fpabinop(word), opcode_condition(word),
-      opcode_fpaprec(word), opcode_fparnd(word));
+static u_int
+instruction_fpabinop(addr, word)
+	u_int addr;
+	u_int word;
+{
+	printf("%s%s%s%s\t", opcode_fpabinop(word), opcode_condition(word),
+		opcode_fpaprec(word), opcode_fparnd(word));
 
-    printf("f%d, f%d, ", (word >> 12) & 0x07, (word >> 16) & 0x07);
+	printf("f%d, f%d, ", (word >> 12) & 0x07, (word >> 16) & 0x07);
 
-    if (word & (1 << 3))
-      printf("#%s", opcode_fpaimm(word));
-    else
-      printf("f%d", word & 0x07);
+	if (word & (1 << 3))
+		printf("#%s", opcode_fpaimm(word));
+	else
+		printf("f%d", word & 0x07);
 
-    return(addr);
-  }
-
-
-u_int instruction_fpaunop(u_int addr, u_int word)
-  {
-    printf("%s%s%s%s\t", opcode_fpaunop(word), opcode_condition(word),
-      opcode_fpaprec(word), opcode_fparnd(word));
-
-    printf("f%d, ", (word >> 12) & 0x07);
-
-    if (word & (1 << 3))
-      printf("#%s", opcode_fpaimm(word));
-    else
-      printf("f%d", word & 0x07);
-
-    return(addr);
-  }
+	return(addr);
+}
 
 
-u_int instruction_ldfstf(u_int addr, u_int word)
-  {
+static u_int
+instruction_fpaunop(addr, word)
+	u_int addr;
+	u_int word;
+{
+	printf("%s%s%s%s\t", opcode_fpaunop(word), opcode_condition(word),
+		opcode_fpaprec(word), opcode_fparnd(word));
+
+	printf("f%d, ", (word >> 12) & 0x07);
+
+	if (word & (1 << 3))
+		printf("#%s", opcode_fpaimm(word));
+	else
+		printf("f%d", word & 0x07);
+
+	return(addr);
+}
+
+
+static u_int
+instruction_ldfstf(addr, word)
+	u_int addr;
+	u_int word;
+{
     printf("%s%s%s\t", (word & (1 << 20)) ? "LDF" : "STF",
       opcode_condition(word), (word & (1 << 22)) ? "L" : "");
 
@@ -645,6 +712,6 @@ u_int instruction_ldfstf(u_int addr, u_int word)
       printf("!");
 
     return(addr);
-  }
+}
 
 /* End of disassem.c */
