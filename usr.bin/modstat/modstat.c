@@ -1,4 +1,4 @@
-/*	$NetBSD: modstat.c,v 1.11 1998/07/06 11:58:51 mrg Exp $	*/
+/*	$NetBSD: modstat.c,v 1.12 1999/06/07 00:24:16 mrg Exp $	*/
 
 /*
  * Copyright (c) 1993 Terrence R. Lambert.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: modstat.c,v 1.11 1998/07/06 11:58:51 mrg Exp $");
+__RCSID("$NetBSD: modstat.c,v 1.12 1999/06/07 00:24:16 mrg Exp $");
 #endif
 
 #include <sys/param.h>
@@ -77,6 +77,8 @@ static char *type_names[] = {
 	"MISC"
 };
 
+#define POINTERSIZE (2 * sizeof(void*))
+
 int
 dostat(devfd, modnum, modname)
 	int devfd;
@@ -106,12 +108,14 @@ dostat(devfd, modnum, modname)
 	/*
 	 * Decode this stat buffer...
 	 */
-	printf("%-7s %3d %3ld %08lx %04lx %8lx %3ld %s\n",
+	printf("%-7s %3d %3ld %0*lx %04lx %0*lx %3ld %s\n",
 	    type_names[sbuf.type],
 	    sbuf.id,		/* module id */
 	    (long)sbuf.offset,	/* offset into modtype struct */
+	    POINTERSIZE,
 	    (long)sbuf.area,	/* address module loaded at */
 	    (long)sbuf.size,	/* size in pages(K) */
+	    POINTERSIZE,
 	    (long)sbuf.private,	/* kernel address of private area */
 	    (long)sbuf.ver,	/* Version; always 1 for now */
 	    sbuf.name		/* name from private area */
@@ -177,7 +181,9 @@ main(argc, argv)
 
 	atexit(cleanup);
 
-	printf("Type    Id  Off Loadaddr Size Info     Rev Module Name\n");
+	printf("Type    Id  Off %-*s Size %-*s Rev Module Name\n", 
+	    POINTERSIZE, "Loadaddr", 
+	    POINTERSIZE, "Info");
 
 	/*
 	 * Oneshot?
