@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.46 2000/01/25 08:06:50 mycroft Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.47 2000/01/25 18:04:07 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -556,9 +556,8 @@ again:
 			sum += bus_space_read_1(nsc->sc_asict, nsc->sc_asich,
 			    PAR0 + j);
 		if (sum != 0xff) {
-			printf("%s: sum(0x%x) should be 0xff\n",
-			    dsc->sc_dev.dv_xname, sum);
-			return;
+			++i;
+			goto again;
 		}
 		for (j = 0; j < ETHER_ADDR_LEN; j++)
 			myea[j] = bus_space_read_1(nsc->sc_asict,
