@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)strip.c	5.8 (Berkeley) 11/6/91";*/
-static char rcsid[] = "$Id: strip.c,v 1.11 1994/01/05 19:02:09 mycroft Exp $";
+static char rcsid[] = "$Id: strip.c,v 1.12 1994/02/10 16:48:56 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -144,9 +144,11 @@ s_sym(fn, fd, ep, sp)
 	 * the file data segment size is already minimized, quit.
 	 */
 	if (!ep->a_syms && !ep->a_trsize && !ep->a_drsize) {
+#if 0
 		if (!zmagic)
 			return 0;
 		if (sp->st_size < N_TRELOFF(*ep))
+#endif
 			return 0;
 	}
 
