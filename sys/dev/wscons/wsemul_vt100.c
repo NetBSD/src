@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_vt100.c,v 1.5 1998/06/29 14:04:27 drochner Exp $ */
+/* $NetBSD: wsemul_vt100.c,v 1.6 1998/06/29 21:10:53 drochner Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -267,7 +267,7 @@ wsemul_vt100_reset(edp)
 	edp->scrreg_nrows = edp->nrows;
 	if (edp->tabs) {
 		bzero(edp->tabs, edp->ncols);
-		for (i = 1; i < edp->ncols; i += 8 - (i & 7))
+		for (i = 8; i < edp->ncols; i += 8)
 			edp->tabs[i] = 1;
 	}
 	edp->dcspos = 0;
