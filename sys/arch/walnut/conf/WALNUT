@@ -1,4 +1,4 @@
-#	$NetBSD: WALNUT,v 1.21 2002/06/17 05:14:28 lukem Exp $
+#	$NetBSD: WALNUT,v 1.22 2002/08/01 23:17:04 simonb Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -131,18 +131,14 @@ mainbus0 at root
 
 cpu0	at mainbus0
 
-# UARTs
-com0	at mainbus? addr 0xef600300 irq 0 # UIC IRQ 0
-com1	at mainbus? addr 0xef600400 irq 1 # UIC IRQ 1
+com0	at mainbus? addr 0xef600300 irq 0 # UARTs
+com1	at mainbus? addr 0xef600400 irq 1
 
-# Ethernet Media Access Controller
-emac0	at mainbus? addr 0xef600800 irq 15 # UIC IRQ 15
+emac0	at mainbus? addr 0xef600800 irq 15 # Ethernet Media Access Controller
+wdog*	at mainbus?			# Watchdog timer
 
-# RTC
-dsrtc0	at mainbus? addr 0xf0000000
-
-# time-of-day device via rtc device
-todclock0 at dsrtc?
+dsrtc0	at mainbus? addr 0xf0000000	# RTC
+todclock0 at dsrtc?			# time-of-day device via rtc device
 
 pchb0	at mainbus?			# PCI-Host bridges
 
@@ -250,3 +246,4 @@ pseudo-device	pty			# pseudo-terminals
 pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	wsmux			# ick
 pseudo-device	clockctl		# user control of clock subsystem
+pseudo-device	kttcp			# kernel ttcp
