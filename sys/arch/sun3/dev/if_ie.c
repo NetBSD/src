@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.30 1999/05/18 23:52:53 thorpej Exp $ */
+/*	$NetBSD: if_ie.c,v 1.31 1999/05/21 21:33:59 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.
@@ -977,7 +977,17 @@ ieget(sc, to_bpf)
 			if (m->m_flags & M_EXT)
 				len = MCLBYTES;
 		}
+
+		if (mp == &top) {
+			caddr_t newdata = (caddr_t)
+			    ALIGN(m->m_data + sizeof(struct ether_header)) -
+			    sizeof(struct ether_header);
+			len -= newdata - m->m_data; 
+			m->m_data = newdata;
+		}
+
 		m->m_len = len = min(totlen, len);
+
 		totlen -= len;
 		*mp = m;
 		mp = &m->m_next;
