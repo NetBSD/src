@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_input.c,v 1.18 1999/04/14 16:26:42 chopps Exp $	*/
+/*	$NetBSD: clnp_input.c,v 1.19 2000/01/08 20:39:45 chopps Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -182,16 +182,6 @@ next:
 	if ((m->m_flags & M_PKTHDR) == 0 || m->m_pkthdr.rcvif == 0) {
 		m_freem(m);
 		goto next;
-	} else {
-		register struct ifaddr *ifa;
-		for (ifa = m->m_pkthdr.rcvif->if_addrlist.tqh_first; ifa != 0;
-		     ifa = ifa->ifa_list.tqe_next)
-			if (ifa->ifa_addr->sa_family == AF_ISO)
-				break;
-		if (ifa == 0) {
-			m_freem(m);
-			goto next;
-		}
 	}
 	bzero((caddr_t) & sh, sizeof(sh));
 	sh.snh_flags = m->m_flags & (M_MCAST | M_BCAST);
@@ -219,6 +209,11 @@ next:
 		m->m_data += sizeof(struct fddi_header);
 		m->m_len -= sizeof(struct fddi_header);
 		m->m_pkthdr.len -= sizeof(struct fddi_header);
+		break;
+	case IFT_PTPSERIAL:
+		/* nothing extra to get from the mbuf */
+		bzero((caddr_t)sh.snh_dhost, sizeof(sh.snh_dhost));
+		bzero((caddr_t)sh.snh_shost, sizeof(sh.snh_shost));
 		break;
 	default:
 		break;
@@ -306,6 +301,7 @@ clnp_input(m, va_alist)
 #endif
 {
 	struct snpa_hdr *shp;	/* subnetwork header */
+	struct ifaddr *ifa;
 	register struct clnp_fixed *clnp;	/* ptr to fixed part of
 						 * header */
 	struct sockaddr_iso source;	/* source address of pkt */
@@ -330,6 +326,17 @@ clnp_input(m, va_alist)
 	shp = va_arg(ap, struct snpa_hdr *);
 	va_end(ap);
 
+ 	/*
+ 	 * make sure this interface has a ISO address
+ 	 */
+	for (ifa = shp->snh_ifp->if_addrlist.tqh_first; ifa != 0;
+	     ifa = ifa->ifa_list.tqe_next)
+		if (ifa->ifa_addr->sa_family == AF_ISO)
+			break;
+	if (ifa == 0) {
+		clnp_discard(m, ADDR_DESTUNREACH);
+		return;
+	}
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_INPUT]) {
@@ -547,12 +554,10 @@ clnp_input(m, va_alist)
 			clnp_er_input(m, &src, oidxp->cni_er_reason);
 		}
 		break;
-
 	case CLNP_DT:
 		(*isosw[clnp_protox[ISOPROTO_TP]].pr_input)(m, &source, &target,
 					     clnp->cnf_hdr_len, need_afrin);
 		break;
-
 	case CLNP_RAW:
 	case CLNP_ECR:
 #ifdef ARGO_DEBUG
