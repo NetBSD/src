@@ -1,6 +1,6 @@
 #! /bin/sh
 #	@(#)stests	8.1 (Berkeley) 6/6/93
-#	$NetBSD: stests,v 1.6 2001/01/12 21:45:17 jdolecek Exp $
+#	$NetBSD: stests,v 1.7 2001/01/12 22:35:07 jdolecek Exp $
 
 # This code is derived from software contributed to Berkeley by
 # Peter McIlroy.
@@ -145,11 +145,11 @@ a
 !
 rm -f out -o
 
-sort -c in 2>/dev/null && echo ${TEST}A failed
+sort $S -c in 2>/dev/null && echo ${TEST}A failed
 
 xsort B || '"cksum"' is probably unsuitable - see comments
 
-$o sort +0 in -o in || echo ${TEST}C failed
+$o sort $S +0 in -o in || echo ${TEST}C failed
 
 #---------------------------------------------------------------
 TEST=02; echo $TEST	# output from -c
@@ -158,7 +158,7 @@ x
 y
 !
 
-sort -cr in >out 2>xx && echo ${TEST}A failed
+sort -c $S -r in >out 2>xx && echo ${TEST}A failed
 test -s out && echo ${TEST}B failed
 test -s xx && echo option -c is noisy "(probably legal)"
 test -s xx || echo option -c is quiet "(legal, not classical)"
@@ -200,10 +200,10 @@ cp in out
 
 xsort A -b
 
-cat in | sort | cat >xx
+cat in | sort $S | cat >xx
 cmp xx out >/dev/null || echo ${TEST}B failed
 
-sort in | sort -cr 2>/dev/null && echo ${TEST}C failed
+sort $S in | sort -c $S -r 2>/dev/null && echo ${TEST}C failed
 
 #---------------------------------------------------------------
 TEST=05; echo $TEST	# fields, reverse fields, -c status return
@@ -230,7 +230,7 @@ xsort E -k 2,2.0
 
 xsort F -k 2,2 -k 1,1 -k 3
 
-sort -c -k 2 in 2>/dev/null && echo ${TEST}G failed
+sort -c $S -k 2 in 2>/dev/null && echo ${TEST}G failed
 
 #---------------------------------------------------------------
 TEST=06; echo $TEST	# -t
@@ -347,7 +347,7 @@ c
 ca
 !
 
-sort -m in in1 >xx
+sort $S -m in in1 >xx
 cmp xx out >/dev/null || echo $TEST failed
 
 #---------------------------------------------------------------
@@ -359,11 +359,11 @@ c
 d
 !
 
-sort -o xx     in in in in in in in in in in in in in in in in in
+sort $S -o xx     in in in in in in in in in in in in in in in in in
 linecount A xx 68
-sort -o in -mu in in in in in in in in in in in in in in in in in
+sort $S -o in -mu in in in in in in in in in in in in in in in in in
 linecount B in 4
-sort -o in -m  in in in in in in in in in in in in in in in in in
+sort $S -o in -m  in in in in in in in in in in in in in in in in in
 
 cmp in xx >/dev/null || echo ${TEST}C failed
 
@@ -432,7 +432,7 @@ rm -f out
 
 xsort A -r $y
 
-sort -r in | awk '$0 "x" != x { print ; x = $0 "x" }' >out
+sort $S -r in | awk '$0 "x" != x { print ; x = $0 "x" }' >out
 
 xsort B -u -r $y
 
@@ -440,10 +440,10 @@ xsort B -u -r $y
 TEST=16; echo $TEST	# -nr, -nm, file name -
 awk 'BEGIN { for(i=-100; i<=100; i+=2) printf "%.10d\n", i }' >in
 
-awk 'BEGIN { for(i=-99; i<=100; i+=2) print i }' | sort -nr in - >xx
+awk 'BEGIN { for(i=-99; i<=100; i+=2) print i }' | sort $S -nr in - >xx
 awk '$0+0 != 101-NR { print "'${TEST}A' failed"; exit }' xx
 
-awk 'BEGIN { for(i=-99; i<=100; i+=2) print i }' | sort -mn in - >xx
+awk 'BEGIN { for(i=-99; i<=100; i+=2) print i }' | sort $S -mn in - >xx
 awk '$0+0 != -101+NR { print "'${TEST}B' failed"; exit }' xx
 
 #---------------------------------------------------------------
@@ -484,7 +484,7 @@ $o xsort A +0 -1
 
 xsort B -k 1,1
 
-sort -u -k 1,1 in >xx
+sort $S -u -k 1,1 in >xx
 linecount C xx 2
 
 #---------------------------------------------------------------
@@ -571,7 +571,7 @@ main() { printf("%cb\n%ca\n",0,0); }
 !
 cc xx.c
 ./a.out >in
-sort in >xx
+sort $S in >xx
 cmp in xx >/dev/null && echo ${TEST}A failed
 test "`wc -c <in`" = "`wc -c <xx`" || echo ${TEST}B failed
 rm xx.c a.out
@@ -596,12 +596,12 @@ xsort "" -r -k1,1 -k2n
 #---------------------------------------------------------------
 TEST=23; echo $TEST	# empty file
 
-sort -o xx </dev/null
+sort $S -o xx </dev/null
 cmp xx /dev/null 2>/dev/null || echo ${TEST}A failed
 
-sort -c </dev/null || echo ${TEST}B failed
+sort $S -c </dev/null || echo ${TEST}B failed
 
-sort -cu </dev/null || echo ${TEST}C failed
+sort $S -cu </dev/null || echo ${TEST}C failed
 
 #---------------------------------------------------------------
 TEST=24; echo $TEST	# many fields
@@ -659,21 +659,21 @@ cat <<! >in
 23:18:11:13:11:17:11:19   ba
 24:17:05:07:05:11:05:20    ba
 !
-sort -k2b -k2 in >xx && 
+sort $S -k2b -k2 in >xx && 
 	sort -c -t: -k2n xx 2>/dev/null || echo ${TEST}A failed
-sort -k2,2.1b -k2 in >xx && 
+sort $S -k2,2.1b -k2 in >xx && 
 	sort -c -t: -k3n xx 2>/dev/null || echo ${TEST}B failed
-sort -k2.3 -k2 in >xx && 
+sort $S -k2.3 -k2 in >xx && 
 	sort -c -t: -k4n xx 2>/dev/null || echo ${TEST}C failed
-sort -k2b,2.3 -k2 in >xx && 
+sort $S -k2b,2.3 -k2 in >xx && 
 	sort -c -t: -k5n xx 2>/dev/null || echo ${TEST}D failed
-sort -k2.3,2.1b -k2 in >xx && 
+sort $S -k2.3,2.1b -k2 in >xx && 
 	sort -c -t: -k6n xx 2>/dev/null || echo ${TEST}E failed
-sort -k2,2.1b -k2r in >xx && 
+sort $S -k2,2.1b -k2r in >xx && 
 	sort -c -t: -k7n xx 2>/dev/null || echo ${TEST}F failed
-sort -b -k2,2 -k2 in >xx && 
+sort $S -b -k2,2 -k2 in >xx && 
 	sort -c -t: -k8n xx 2>/dev/null || echo ${TEST}G failed
-sort -b -k2,2b -k2 in >xx &&			# perhaps same as G
+sort $S -b -k2,2b -k2 in >xx &&			# perhaps same as G
 	sort -c -t: -k3n xx 2>/dev/null || echo ${TEST}H failed\
  "(standard is not clear on this)"
 
@@ -695,7 +695,7 @@ xsort "" -k2.2,2.1 -k2.3,2.4
 TEST=27; echo $TEST	# displaced -o
 rm -f out
 
-$o sort /dev/null -o out || $o echo ${TEST}B failed
+$o sort -S /dev/null -o out || $o echo ${TEST}B failed
 $o test -f out || $o echo ${TEST}C failed
 
 #---------------------------------------------------------------
@@ -718,10 +718,10 @@ x
 !
 rm -f out -c
 
-sort -- -k </dev/null >xx || echo ${TEST}A argument failed
+sort $S -- -k </dev/null >xx || echo ${TEST}A argument failed
 cmp xx -k || echo ${TEST}A comparison failed
 
-sort - -c </dev/null 2>/dev/null && echo ${TEST}B failed
+sort $S - -c </dev/null 2>/dev/null && echo ${TEST}B failed
 
 #---------------------------------------------------------------
 TEST=30; echo $TEST	# missing newline
@@ -866,7 +866,7 @@ x
 
 if [ -z "$g" ]; then
 	xsort A -g
-	sort -gu in >xx && $g sort -c -gu xx || echo ${TEST}B failed
+	sort $S -gu in >xx && $g sort -c $S -gu xx || echo ${TEST}B failed
 	linecount C xx 3
 else
 	# -g not supported
