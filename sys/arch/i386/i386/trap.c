@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.88 1995/10/14 14:06:16 fvdl Exp $	*/
+/*	$NetBSD: trap.c,v 1.89 1995/10/15 04:18:27 mycroft Exp $	*/
 
 #undef DEBUG
 #define DEBUG
@@ -70,10 +70,15 @@
 #ifdef COMPAT_IBCS2
 #include <compat/ibcs2/ibcs2_errno.h>
 #include <compat/ibcs2/ibcs2_exec.h>
+extern struct emul emul_ibcs2;
 #endif
 #ifdef COMPAT_LINUX
 #include <sys/exec.h>
 #include <compat/linux/linux_syscall.h>
+extern struct emul emul_linux_aout, emul_linux_elf;
+#endif
+#ifdef COMPAT_FREEBSD
+extern struct emul emul_freebsd;
 #endif
 
 #include "npx.h"
@@ -496,15 +501,6 @@ syscall(frame)
 	size_t argsize;
 	register_t code, args[8], rval[2];
 	u_quad_t sticks;
-#ifdef COMPAT_IBCS2
-	extern struct emul emul_ibcs2;
-#endif
-#ifdef COMPAT_LINUX
-	extern struct emul emul_linux_aout, emul_linux_elf;
-#endif
-#ifdef COMPAT_FREEBSD
-	extern struct emul emul_freebsd;
-#endif
 
 	cnt.v_syscall++;
 	if (!USERMODE(frame.tf_cs, frame.tf_eflags))
@@ -653,19 +649,17 @@ child_return(p, frame)
 	struct proc *p;
 	struct trapframe frame;
 {
-#ifdef COMPAT_LINUX
-	extern struct emul emul_linux_aout, emul_linux_elf;
 
-	if (p->p_emul == &emul_linux_aout || p->p_emul == &emul_linux_elf)
-		frame.tf_eax = frame.tf_edx = 0;
-	else {
+#ifdef COMPAT_LINUX
+	if (p->p_emul == &emul_linux_aout || p->p_emul == &emul_linux_elf) {
+		frame.tf_eax = 0
+		frame.tf_edx = 0;
+	} else
+#else
+	{
 		frame.tf_eax = p->p_pid;
 		frame.tf_edx = 1;
 	}
-#else
-	frame.tf_eax = p->p_pid;
-	frame.tf_edx = 1;
-#endif
 	frame.tf_eflags &= ~PSL_C;
 
 	userret(p, frame.tf_eip, 0);
