@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.303 2001/01/11 17:56:17 itojun Exp $
+# $NetBSD: mi,v 1.304 2001/01/13 19:37:23 nonaka Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/as.info
 ./usr/share/info/awk.info
@@ -1319,6 +1319,8 @@
 ./usr/share/man/cat8/pppd.0
 ./usr/share/man/cat8/pppstats.0
 ./usr/share/man/cat8/praliases.0
+./usr/share/man/cat8/prep/MAKEDEV.0
+./usr/share/man/cat8/prep/makedev.0
 ./usr/share/man/cat8/pstat.0
 ./usr/share/man/cat8/pvcsif.0
 ./usr/share/man/cat8/pvctxctl.0
@@ -2784,6 +2786,8 @@
 ./usr/share/man/man8/pppd.8
 ./usr/share/man/man8/pppstats.8
 ./usr/share/man/man8/praliases.8
+./usr/share/man/man8/prep/MAKEDEV.8
+./usr/share/man/man8/prep/makedev.8
 ./usr/share/man/man8/pstat.8
 ./usr/share/man/man8/pvcsif.8
 ./usr/share/man/man8/pvctxctl.8
