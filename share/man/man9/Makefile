@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.99 2001/12/02 02:26:28 gmcgarry Exp $
+#       $NetBSD: Makefile,v 1.100 2001/12/05 07:31:24 lukem Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -8,7 +8,8 @@ MAN=	access.9 altq.9 arp.9 audio.9 autoconf.9 bitmask_snprintf.9 \
 	callout.9 cardbus.9 cnmagic.9 config.9 cons.9 copy.9 cpu_reboot.9 \
 	ctxsw.9 disk.9 disklabel.9 \
 	dopowerhooks.9 doshutdownhooks.9 driver.9 ethersubr.9 evcnt.9 \
-	extent.9 fetch.9 fork1.9 hardclock.9 humanize_number.9 hz.9 \
+	extent.9 fetch.9 fork1.9 \
+	hash.9 hardclock.9 humanize_number.9 hz.9 \
 	in4_cksum.9 inittodr.9 intro.9 ioasic.9 ioctl.9 isa.9 isapnp.9 \
 	itimerfix.9 \
 	kprintf.9 kthread.9 linedisc.9 lock.9 log.9 malloc.9 mbuf.9 \
@@ -125,6 +126,7 @@ MLINKS+=extent.9 extent_create.9 extent.9 extent_destroy.9 \
 	extent.9 extent_print.9
 MLINKS+=fetch.9 fubyte.9 fetch.9 fuibyte.9 fetch.9 fusword.9 \
 	fetch.9 fuswintr.9 fetch.9 fuword.9 fetch.9 fuiword.9
+MLINKS+=hash.9 hash32_buf.9 hash.9 hash32_str.9 hash.9 hash32_strn.9
 MLINKS+=humanize_number.9 format_bytes.9
 MLINKS+=in4_cksum.9 in_cksum.9 \
 	in4_cksum.9 in6_cksum.9
