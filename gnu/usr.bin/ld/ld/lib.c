@@ -1,4 +1,4 @@
-/*	$NetBSD: lib.c,v 1.23 2000/12/16 09:29:29 mycroft Exp $	*/
+/*	$NetBSD: lib.c,v 1.24 2001/10/08 22:09:20 aymeric Exp $	*/
 
 /*
  *	- library routines
@@ -662,7 +662,7 @@ read_shared_object(fd, entry)
 		(TEXT_START(entry->header) - N_TXTOFF(entry->header)),
 	    L_SET) == (off_t)-1)
 		err(1, "%s: lseek", get_file_name(entry));
-	if (read(fd, (char *)nzp, n) != n)
+	if (read(fd, has_nz ? (char *) nzp : (char *) np, n) != n)
 		errx(1, "%s: premature EOF reading symbols ",
 			get_file_name(entry));
 
