@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.27 1997/06/04 14:33:53 leo Exp $	*/
+/*	$NetBSD: trap.c,v 1.28 1997/07/08 16:56:34 kleink Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -334,9 +334,6 @@ trap(type, code, v, frame)
 	u_quad_t	sticks;
 	int		i;
 	extern char	fubail[], subail[];
-#ifdef COMPAT_SUNOS
-	extern struct	emul emul_sunos;
-#endif
 
 	p = curproc;
 	sticks = ucode = 0;
@@ -504,13 +501,14 @@ trap(type, code, v, frame)
 	case T_TRAP15|T_USER:
 #ifdef COMPAT_SUNOS
 		/*
-		 * XXX This comment/code is not consistent XXX
-		 * SunOS seems to use Trap #2 for some obscure 
-		 * fpu operations.  So far, just ignore it, but
-		 * DONT trap on it.. 
+		 * SunOS uses Trap #2 for a "CPU cache flush".
+		 * Just flush the on-chip caches and return.
 		 */
-		if (p->p_emul == &emul_sunos)
-			goto out;
+		if (p->p_emul == &emul_sunos) {
+			ICIA();
+			DCIU();
+			return;
+		}
 #endif
 		frame.f_sr &= ~PSL_T;
 		i = SIGTRAP;
@@ -996,9 +994,6 @@ syscall(code, frame)
 	size_t argsize;
 	register_t args[8], rval[2];
 	u_quad_t sticks;
-#ifdef COMPAT_SUNOS
-	extern struct emul emul_sunos;
-#endif
 
 	cnt.v_syscall++;
 	if (!USERMODE(frame.f_sr))
