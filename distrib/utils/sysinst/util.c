@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.90 2003/05/09 12:34:42 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.91 2003/05/09 12:45:01 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -930,8 +930,8 @@ int askyesno(int reverse)
  * Some globals to pass things back from callbacks
  */
 static char zoneinfo_dir[STRSIZE];
-static char *tz_selected;	/* timezonename (relative to share/zoneinfo */
-static char *tz_default;	/* UTC, or whatever /etc/localtime points to */
+static const char *tz_selected;	/* timezonename (relative to share/zoneinfo */
+static const char *tz_default;	/* UTC, or whatever /etc/localtime points to */
 static char tz_env[STRSIZE];
 
 /*
@@ -1063,7 +1063,7 @@ set_timezone()
 
 	free_menu(menu_no);
 	for(n=0; n < nfiles; n++)
-		free(tz_menu[n].opt_name);
+		free((void *)tz_menu[n].opt_name);
 	free(tz_menu);
 
 	signal(SIGALRM, SIG_IGN);
