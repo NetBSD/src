@@ -1,4 +1,4 @@
-/* $NetBSD: sigchld.c,v 1.4 2003/11/13 06:48:31 simonb Exp $ */
+/* $NetBSD: sigchld.c,v 1.5 2003/11/27 01:03:13 simonb Exp $ */
 
 #include <assert.h>
 #include <signal.h>
@@ -16,6 +16,8 @@ handler(int signo, siginfo_t *info, void *ptr)
 {
 #ifdef DEBUG
 	if (info != NULL) {
+		printf("info=%p\n", info);
+		printf("ptr=%p\n", ptr);
 		printf("si_signo=%d\n", info->si_signo);
 		printf("si_errno=%d\n", info->si_errno);
 		printf("si_code=%d\n", info->si_code);
