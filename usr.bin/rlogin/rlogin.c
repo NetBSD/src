@@ -1,4 +1,4 @@
-/*	$NetBSD: rlogin.c,v 1.22 1999/04/30 15:44:21 christos Exp $	*/
+/*	$NetBSD: rlogin.c,v 1.23 1999/07/11 18:21:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1990, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rlogin.c	8.4 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: rlogin.c,v 1.22 1999/04/30 15:44:21 christos Exp $");
+__RCSID("$NetBSD: rlogin.c,v 1.23 1999/07/11 18:21:18 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -172,11 +172,9 @@ main(argc, argv)
 	struct rlimit rlim;
 #ifdef KERBEROS
 	KTEXT_ST ticket;
-	char **orig_argv = argv;
 	int sock;
 	long authopts;
 	int through_once = 0;
-	char *cp = (char *) NULL;
 	extern int _kstream_des_debug_OOB;
 	char *dest_realm = NULL;
 #endif
@@ -628,15 +626,15 @@ writer()
 				stop(0);
 				continue;
 			}
-			if (c != escapechar)
+			if (c != escapechar) {
 #ifdef KERBEROS
-				if (use_kerberos) {
+				if (use_kerberos)
 					(void)kstream_write(krem,
-				    	(char *)&escapechar, 1);
-				}
+					    (char *)&escapechar, 1);
 				else
 #endif
-				(void)write(rem, &escapechar, 1);
+					(void)write(rem, &escapechar, 1);
+			}
 		}
 
 #ifdef KERBEROS
