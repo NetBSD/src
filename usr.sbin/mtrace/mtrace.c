@@ -1,4 +1,4 @@
-/*	$NetBSD: mtrace.c,v 1.12.2.1 2000/01/23 12:03:21 he Exp $	*/
+/*	$NetBSD: mtrace.c,v 1.12.2.2 2000/10/19 17:05:37 he Exp $	*/
 
 /*
  * mtrace.c
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mtrace.c,v 1.12.2.1 2000/01/23 12:03:21 he Exp $");
+__RCSID("$NetBSD: mtrace.c,v 1.12.2.2 2000/10/19 17:05:37 he Exp $");
 #endif
 
 #include <sys/types.h>
@@ -168,6 +168,10 @@ void			check_vif_state __P((void));
 void			passive_mode __P((void));
 
 int			main __P((int argc, char *argv[]));
+#ifdef __STDC__
+void log(int severity, int syserr, char *format, ...)
+	__attribute__((__format__(__printf__, 3, 4)));
+#endif
 
 
 
@@ -1735,7 +1739,8 @@ log(severity, syserr, format, va_alist)
 	    fmt[0] = '\0';
 	    if (severity == LOG_WARNING) strcat(fmt, "warning - ");
 	    strncat(fmt, format, 80);
-	    vfprintf(stderr, fmt, ap);
+	    format = fmt;
+	    vfprintf(stderr, format, ap);
 	    if (syserr == 0)
 		fprintf(stderr, "\n");
 	    else
