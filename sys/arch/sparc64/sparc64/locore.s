@@ -1,7 +1,7 @@
-/*	$NetBSD: locore.s,v 1.118 2001/06/21 00:24:22 eeh Exp $	*/
+/*	$NetBSD: locore.s,v 1.119 2001/06/30 00:08:15 eeh Exp $	*/
 
 /*
- * Copyright (c) 1996-2000 Eduardo Horvath
+ * Copyright (c) 1996-2001 Eduardo Horvath
  * Copyright (c) 1996 Paul Kranenburg
  * Copyright (c) 1996
  * 	The President and Fellows of Harvard College.
@@ -66,7 +66,7 @@
 #define	HWREF			/* Track ref/mod bits in trap handlers */
 #undef	MMUDEBUG		/* Check use of regs during MMU faults */
 #define	VECTORED_INTERRUPTS	/* Use interrupt vectors */
-#define	PMAP_FPSTATE		/* Allow nesting of VIS pmap copy/zero */
+#undef	PMAP_FPSTATE		/* Allow nesting of VIS pmap copy/zero */
 #define	NEW_FPSTATE
 #define	PMAP_PHYS_PAGE		/* Use phys ASIs for pmap copy/zero */
 #undef	DCACHE_BUG		/* Flush D$ around ASI_PHYS accesses */
@@ -1861,8 +1861,7 @@ intr_setup_msg:
 	sethi	%hi(KERNBASE), %g5; \
 	membar	#Sync;						/* XXXX Should be taken care of by flush */ \
 	flush	%g5;						/* Some convenient address that won't trap */ \
-1:
-
+1:	
 
 /*
  * Interrupt setup is almost exactly like trap setup, but we need to
@@ -6532,7 +6531,7 @@ _C_LABEL(sigcode):
 	inc	BLOCK_SIZE, %l0
 	stda	%f48, [%l0] ASI_BLK_P
 2:
-	membar	#StoreLoad
+	membar	#Sync
 	rd	%y, %l1			! in any case, save %y
 	lduw	[%fp + BIAS + 128], %o0	! sig
 	lduw	[%fp + BIAS + 128 + 4], %o1	! code
@@ -6553,16 +6552,16 @@ _C_LABEL(sigcode):
 	add	%sp, BIAS+CC64FSZ+BLOCK_SIZE, %l0	! Generate a pointer so we can
 	andn	%l0, BLOCK_ALIGN, %l0	! do a block load
 	ldda	[%l0] ASI_BLK_P, %f0
-	inc	BLOCK_SIZE, %o0
+	inc	BLOCK_SIZE, %l0
 	ldda	[%l0] ASI_BLK_P, %f16
 1:
 	bz,pt	%icc, 2f
 	 wr	%l1, %g0, %y		! in any case, restore %y
 	add	%sp, BIAS+CC64FSZ+BLOCK_SIZE, %l0	! Generate a pointer so we can
 	andn	%l0, BLOCK_ALIGN, %l0	! do a block load
-	inc	2*BLOCK_SIZE, %o0	! and skip what we already loaded
+	inc	2*BLOCK_SIZE, %l0	! and skip what we already loaded
 	ldda	[%l0] ASI_BLK_P, %f32
-	inc	BLOCK_SIZE, %o0
+	inc	BLOCK_SIZE, %l0
 	ldda	[%l0] ASI_BLK_P, %f48
 2:
 	mov	%l2, %g2
@@ -6571,6 +6570,7 @@ _C_LABEL(sigcode):
 	mov	%l5, %g5
 	mov	%l6, %g6
 	mov	%l7, %g7
+	membar	#Sync
 
 	restore	%g0, SYS___sigreturn14, %g1 ! get registers back & set syscall #
 	add	%sp, BIAS + 128 + 8, %o0! compute scp
@@ -6786,7 +6786,7 @@ ENTRY(copystr)
 #endif
 
 /*
- * Copyin(src, dst, len)
+ * copyin(src, dst, len)
  *
  * Copy specified amount of data from user space into the kernel.
  *
@@ -6987,7 +6987,7 @@ Lcopyin_done:
 	 clr	%o0			! return 0
 
 /*
- * Copyout(src, dst, len)
+ * copyout(src, dst, len)
  *
  * Copy specified amount of data from kernel to user space.
  * Just like copyin, except that the `dst' addresses are user space
@@ -8843,48 +8843,48 @@ ENTRY(pmap_copy_page)
 	set	NBPG, %o5			! # bytes to move
 
 	ldda	[%o2] ASI_BLK_P, %f0		! Load 1st bank
-	dec	64, %o5
-	add	%o2, 64, %o2
+	dec	BLOCK_SIZE, %o5
+	add	%o2, BLOCK_SIZE, %o2
 1:
 	membar	#StoreLoad
 	ldda	[%o2] ASI_BLK_P, %f16		! Load 2nd bank
-	dec	64, %o5
-	add	%o2, 64, %o2
+	dec	BLOCK_SIZE, %o5
+	add	%o2, BLOCK_SIZE, %o2
 
 	membar	#LoadStore
 	fmovd	%f14, %f14			! Sync 1st bank
 	stda	%f0, [%o4] ASI_BLK_COMMIT_P	! Store 1st bank
 	brlez,pn	%o5, 1f			! Finished?
-	 add	%o4, 64, %o4
+	 add	%o4, BLOCK_SIZE, %o4
 
 	membar	#StoreLoad
 	ldda	[%o2] ASI_BLK_P, %f0		! Load 1st bank
-	dec	64, %o5
-	add	%o2, 64, %o2
+	dec	BLOCK_SIZE, %o5
+	add	%o2, BLOCK_SIZE, %o2
 
 	membar	#LoadStore
 	fmovd	%f30, %f30			! Sync 2nd bank
 	stda	%f16, [%o4] ASI_BLK_COMMIT_P	! Store 2nd bank
 	brgz,pt	%o5, 1b				! Finished?
-	 add	%o4, 64, %o4
+	 add	%o4, BLOCK_SIZE, %o4
 
 	!!
 	!! If we got here we have loaded bank 1 and stored bank 2
 	!!
-	membar	#LoadStore
+	membar	#Sync
 	fmovd	%f14, %f14			! Sync 1st bank
 	stda	%f0, [%o4] ASI_BLK_COMMIT_P	! Store 1st bank
 	ba,pt	%icc, 2f			! Finished?
-	 add	%o4, 64, %o4
+	 add	%o4, BLOCK_SIZE, %o4
 
 1:
 	!!
 	!! If we got here we have loaded bank 2 and stored bank 1
 	!!
-	membar	#LoadStore
+	membar	#Sync
 	fmovd	%f30, %f30			! Sync 2nd bank
 	stda	%f16, [%o4] ASI_BLK_COMMIT_P	! Store 2nd bank
-	add	%o4, 64, %o4
+	add	%o4, BLOCK_SIZE, %o4
 
 2:
 	membar	#Sync				! Finish the operation
@@ -9311,61 +9311,6 @@ ENTRY(pseg_find)
 	retl
 	 mov	1, %o0
 
-
-/*
- * copywords(src, dst, nbytes)
- *
- * Copy `nbytes' bytes from src to dst, both of which are word-aligned;
- * nbytes is a multiple of four.  It may, however, be zero, in which case
- * nothing is to be copied.
- */
-ENTRY(copywords)
-	! %o0 = src, %o1 = dst, %o2 = nbytes
-	b	1f
-	 deccc	4, %o2
-0:
-	st	%o3, [%o1 + %o2]
-	deccc	4, %o2			! while ((n -= 4) >= 0)
-1:
-	bge,a	0b			!    *(int *)(dst+n) = *(int *)(src+n);
-	 ld	[%o0 + %o2], %o3
-	retl
-	 nop
-
-/*
- * qcopy(src, dst, nbytes)
- *
- * (q for `quad' or `quick', as opposed to b for byte/block copy)
- *
- * Just like copywords, but everything is multiples of 8.
- */
-ENTRY(qcopy)
-	ba,pt	%icc, 1f
-	 deccc	8, %o2
-0:
-	stx	%g1, [%o1 + %o2]
-	deccc	8, %o2
-1:
-	bge,a,pt	%icc, 0b
-	 ldx	[%o0 + %o2], %g1
-	retl
-	nop
-
-/*
- * qzero(addr, nbytes)
- *
- * Zeroes `nbytes' bytes of a quad-aligned virtual address,
- * where nbytes is itself a multiple of 8.
- */
-ENTRY(qzero)
-	! %o0 = addr, %o1 = len (in bytes)
-0:
-	deccc	8, %o1			! while ((n =- 8) >= 0)
-	bge,a,pt	%icc, 0b
-	 stx	%g0, [%o0 + %o1]	!	*(quad *)(addr + n) = 0;
-	retl
-	nop
-
 #if 1
 /*
  * kernel bcopy/memcpy
@@ -9403,9 +9348,13 @@ ENTRY(bcopy) /* src, dest, size */
 	.text
 3:
 #endif
-	cmp	%o2, BCOPY_SMALL
+#if 1
+	cmp	%o2, 256
+	bge	Lbcopy_block
+#endif
+	 cmp	%o2, BCOPY_SMALL
 Lbcopy_start:
-	bge,a	Lbcopy_fancy	! if >= this many, go be fancy.
+	bge	Lbcopy_fancy	! if >= this many, go be fancy.
 	 btst	7, %o0		! (part of being fancy)
 
 	/*
@@ -9442,7 +9391,7 @@ Lbcopy_fancy:
 1:
 	xor	%o0, %o1, %o3	! t = src ^ dst;
 	btst	1, %o3		! if (t & 1) {
-	be,a	1f
+	be	1f
 	 btst	1, %o0		! [delay slot: if (src & 1)]
 
 	! low bits do not match, must copy by bytes.
@@ -9459,7 +9408,7 @@ Lbcopy_fancy:
 
 	! lowest bit matches, so we can copy by words, if nothing else
 1:
-	be,a	1f		! if (src & 1) {
+	be	1f		! if (src & 1) {
 	 btst	2, %o3		! [delay slot: if (t & 2)]
 
 	! although low bits match, both are 1: must copy 1 byte to align
@@ -9470,7 +9419,7 @@ Lbcopy_fancy:
 	dec	%o2		!	len--;
 	btst	2, %o3		! } [if (t & 2)]
 1:
-	be,a	1f		! if (t & 2) {
+	be	1f		! if (t & 2) {
 	 btst	2, %o0		! [delay slot: if (src & 2)]
 	dec	2, %o2		!	len -= 2;
 0:
@@ -9486,7 +9435,7 @@ Lbcopy_fancy:
 
 	! low two bits match, so we can copy by longwords
 1:
-	be,a	1f		! if (src & 2) {
+	be	1f		! if (src & 2) {
 	 btst	4, %o3		! [delay slot: if (t & 4)]
 
 	! although low 2 bits match, they are 10: must copy one short to align
@@ -9497,7 +9446,7 @@ Lbcopy_fancy:
 	dec	2, %o2		!	len -= 2;
 	btst	4, %o3		! } [if (t & 4)]
 1:
-	be,a	1f		! if (t & 4) {
+	be	1f		! if (t & 4) {
 	 btst	4, %o0		! [delay slot: if (src & 4)]
 	dec	4, %o2		!	len -= 4;
 0:
@@ -9534,7 +9483,7 @@ Lbcopy_doubles:
 	be	Lbcopy_done	!	goto bcopy_done;
 
 	 btst	4, %o2		! if ((len & 4)) == 0)
-	be,a	Lbcopy_mopw	!	goto mop_up_word_and_byte;
+	be	Lbcopy_mopw	!	goto mop_up_word_and_byte;
 	 btst	2, %o2		! [delay slot: if (len & 2)]
 	ld	[%o0], %o4	!	*(int *)dst = *(int *)src;
 	st	%o4, [%o1]
@@ -9567,6 +9516,1127 @@ Lbcopy_done:
 	retl
 	 stb	%o4,[%o1]
 
+#if 1
+
+/*
+ * Block copy.  Useful for >256 byte copies.
+ */
+	
+Lbcopy_block:
+	!! Make sure our trap table is installed
+#	ba,a,pt	%icc, Lbcopy_start
+	rdpr	%tba, %o3
+	set	_C_LABEL(trapbase), %o5
+	sub	%o3, %o5, %o3
+	brnz,pn	%o3, Lbcopy_start	! No, then don't use block load/store
+	 nop
+#define _KERNEL
+#ifdef _KERNEL
+/*
+ * Kernel:
+ *
+ * Here we use VIS instructions to do a block clear of a page.
+ * But before we can do that we need to save and enable the FPU.
+ * The last owner of the FPU registers is fpproc, and
+ * fpproc->p_md.md_fpstate is the current fpstate.  If that's not
+ * null, call savefpstate() with it to store our current fp state.
+ *
+ * Next, allocate an aligned fpstate on the stack.  We will properly
+ * nest calls on a particular stack so this should not be a problem.
+ *
+ * Now we grab either curproc (or if we're on the interrupt stack
+ * proc0).  We stash its existing fpstate in a local register and
+ * put our new fpstate in curproc->p_md.md_fpstate.  We point
+ * fpproc at curproc (or proc0) and enable the FPU.
+ *
+ * If we are ever preempted, our FPU state will be saved in our
+ * fpstate.  Then, when we're resumed and we take an FPDISABLED
+ * trap, the trap handler will be able to fish our FPU state out
+ * of curproc (or proc0).
+ *
+ * On exiting this routine we undo the damage: restore the original
+ * pointer to curproc->p_md.md_fpstate, clear our fpproc, and disable
+ * the MMU.
+ *
+ *
+ * Register usage, Kernel only (after save):
+ *
+ * %i0		src
+ * %i1		dest
+ * %i2		size
+ *
+ * %l0		XXXX DEBUG old fpstate
+ * %l1		fpproc (hi bits only)
+ * %l2		old fpproc
+ * %l5		curproc
+ * %l6		old fpstate
+ *
+ * Register ussage, Kernel and user:
+ *
+ * %g1		data is valid
+ * %g2		last safe fetchable address
+ * %g7		src (retval for memcpy)
+ *
+ * %o0		src
+ * %o1		dest
+ * %o2		end dest
+ */
+
+#define	ASI_STORE	ASI_BLK_P
+
+	!!
+	!! This code will allow us to save the fpstate around this
+	!! routine and nest FP use in the kernel
+	!!
+	save	%sp, -(CC64FSZ+FS_SIZE+BLOCK_SIZE), %sp	! Allocate an fpstate
+	sethi	%hi(FPPROC), %l1
+	LDPTR	[%l1 + %lo(FPPROC)], %l2		! Load fpproc
+	add	%sp, (CC64FSZ+STKB+BLOCK_SIZE-1), %l0	! Calculate pointer to fpstate
+	brz,pt	%l2, 1f					! fpproc == NULL?
+	 andn	%l0, BLOCK_ALIGN, %l0			! And make it block aligned
+	LDPTR	[%l2 + P_FPSTATE], %l3
+	brz,pn	%l3, 1f					! Make sure we have an fpstate
+	 mov	%l3, %o0
+	call	_C_LABEL(savefpstate)			! Save the old fpstate
+	 set	EINTSTACK-STKB, %l4			! Are we on intr stack?
+	cmp	%sp, %l4
+	bgu,pt	%xcc, 1f
+	 set	INTSTACK-STKB, %l4
+	cmp	%sp, %l4
+	blu	%xcc, 1f
+0:
+	 sethi	%hi(_C_LABEL(proc0)), %l4		! Yes, use proc0
+	ba,pt	%xcc, 2f				! XXXX needs to change to CPUs idle proc
+	 or	%l4, %lo(_C_LABEL(proc0)), %l5
+1:
+	sethi	%hi(CURPROC), %l4			! Use curproc
+	LDPTR	[%l4 + %lo(CURPROC)], %l5
+	brz,pn	%l5, 0b					! If curproc is NULL need to use proc0
+2:
+	LDPTR	[%l5 + P_FPSTATE], %l6			! Save old fpstate
+	STPTR	%l0, [%l5 + P_FPSTATE]			! Insert new fpstate
+	STPTR	%l5, [%l1 + %lo(FPPROC)]		! Set new fpproc
+	wr	%g0, FPRS_FEF, %fprs			! Enable FPU
+	
+	mov	%i0, %o0				! Src addr.
+	mov	%i1, %o1				! Store our dest ptr here.
+	mov	%i2, %o2				! Len counter
+#else
+	save	%sp, -CC64FSZ, %sp
+	mov	%i0, %o0				! Src addr.
+	mov	%i1, %o1				! Store our dest ptr here.
+	mov	%i2, %o2				! Len counter
+
+#endif
+	
+	!!
+	!! First align the output to a 64-bit entity
+	!! 
+
+	mov	%o1, %g7				! memcpy retval
+	add	%o0, %o2, %g2				! End of source block
+
+	clr	%g1					! No data loaded
+	andn	%g2, BLOCK_ALIGN, %g2			! Last safe addr.
+
+	btst	1, %o1
+	bz	4f
+	
+	 mov	-7, %o4					! Lowest src addr possible
+	alignaddr %o0, %o4, %o3				! Base addr for load.
+	
+	ldd	[%o3], %f0				! Load word -1
+	mov	1, %g1					! Data loaded
+	ldd	[%o3+8], %f2				! Load word 0
+
+	faligndata	%f0, %f2, %f4			! Isolate 1st byte
+
+	stda	%f4, [%o1] ASI_FL8_P			! Store 1st byte
+	inc	1, %o1					! Update address
+	inc	1, %o0
+	dec	1, %o2
+4:	
+	btst	2, %o1
+	bz	4f
+
+	 mov	-6, %o4					! Calculate src - 6
+	alignaddr %o0, %o4, %o4				! calculate shift mask and dest.
+
+	brz,pt	%g1, 1f					! Data loaded?
+	 cmp	%o3, %o4				! Addresses same?
+	beq,pt	%xcc, 3f
+	 mov	1, %g1					! Data loaded
+	ba,pt	%xcc, 2f				! Load 1 word and
+	fmovd	%f2, %f0				! Shuffle data
+1:	
+	ldd	[%o4], %f0				! Load word -1
+2:	
+	mov	%o4, %o3
+	ldd	[%o3+8], %f2				! Load word 0
+3:	
+	faligndata %f0, %f2, %f4			! Move 1st short low part of f8
+
+	stda	%f4, [%o1] ASI_FL16_P			! Store 1st short
+	dec	2, %o2
+	inc	2, %o1
+	inc	2, %o0					! XXXX
+4:
+	brz,pn	%o2, Lbcopy_blockfinish			! XXXX
+
+	 btst	4, %o1
+	bz	4f
+
+	mov	-4, %o4
+	alignaddr %o0, %o4, %o4				! calculate shift mask and dest.
+
+	brz,pt	%g1, 1f					! Data loaded?
+	 cmp	%o3, %o4				! Addresses same?
+	beq,pt	%xcc, 3f
+	 mov	1, %g1					! Data loaded
+	ba,pt	%xcc, 2f				! Load 1 word and
+	fmovd	%f2, %f0				! Shuffle data
+1:	
+	ldd	[%o4], %f0				! Load word -1
+2:	
+	mov	%o4, %o3
+	ldd	[%o3+8], %f2				! Load word 0
+3:	
+	faligndata %f0, %f2, %f4			! Move 1st short low part of f8
+
+	st	%f5, [%o1]				! Store word
+	dec	4, %o2
+	inc	4, %o1
+	inc	4, %o0					! XXXX
+4:
+	brz,pn	%o2, Lbcopy_blockfinish			! XXXX
+	!!
+	!! We are now 32-bit aligned in the dest.
+	!!
+Lbcopy_block_common:	
+
+	 mov	-0, %o4
+	alignaddr %o0, %o4, %o4				! base - shift
+	
+	brz,pt	%g1, 1f					! Data loaded?
+	 cmp	%o3, %o4				! Addresses same?
+	beq,pt	%xcc, 3f
+	 mov	1, %g1					! Data loaded
+	ba,pt	%xcc, 2f				! Load 1 word and
+	fmovd	%f2, %f0				! Shuffle data
+1:	
+	ldd	[%o4], %f0				! Load word -1
+2:	
+	mov	%o4, %o3
+	ldd	[%o3+8], %f2				! Load word 0
+3:	
+	add	%o3, 8, %o0				! now use %o0 for src
+	
+	!!
+	!! Continue until our dest is block aligned
+	!! 
+Lbcopy_block_aligned8:	
+1:
+	brz	%o2, Lbcopy_blockfinish
+	 btst	BLOCK_ALIGN, %o1			! Block aligned?
+	bz	1f
+	
+	 faligndata %f0, %f2, %f4			! Generate result
+	deccc	8, %o2
+	ble,pn	%icc, Lbcopy_blockfinish		! Should never happen
+	 fmovd	%f4, %f48
+	
+	std	%f4, [%o1]				! Store result
+	inc	8, %o1
+	
+	fmovd	%f2, %f0
+	inc	8, %o0
+	ba,pt	%xcc, 1b				! Not yet.
+	 ldd	[%o0], %f2				! Load next part
+Lbcopy_block_aligned64:	
+1:
+
+/*
+ * 64-byte aligned -- ready for block operations.
+ *
+ * Here we have the destination block aligned, but the
+ * source pointer may not be.  Sub-word alignment will
+ * be handled by faligndata instructions.  But the source
+ * can still be potentially aligned to 8 different words
+ * in our 64-bit block, so we have 8 different copy routines.
+ *
+ * Once we figure out our source alignment, we branch
+ * to the appropriate copy routine, which sets up the
+ * alignment for faligndata and loads (sets) the values
+ * into the source registers and does the copy loop.
+ *
+ * When were down to less than 1 block to store, we
+ * exit the copy loop and execute cleanup code.
+ *
+ * Block loads and stores are not properly interlocked.
+ * Stores save one reg/cycle, so you can start overwriting
+ * registers the cycle after the store is issued.  
+ * 
+ * Block loads require a block load to a different register
+ * block or a membar #Sync before accessing the loaded
+ * data.
+ *	
+ * Since the faligndata instructions may be offset as far
+ * as 7 registers into a block (if you are shifting source 
+ * 7 -> dest 0), you need 3 source register blocks for full 
+ * performance: one you are copying, one you are loading, 
+ * and one for interlocking.  Otherwise, we would need to
+ * sprinkle the code with membar #Sync and lose the advantage
+ * of running faligndata in parallel with block stores.  This 
+ * means we are fetching a full 128 bytes ahead of the stores.  
+ * We need to make sure the prefetch does not inadvertently 
+ * cross a page boundary and fault on data that we will never 
+ * store.
+ *
+ */
+#if 0
+	/* XXXX DEBUG -- return which routine we used instead of *src */
+	and	%o0, BLOCK_ALIGN, %o3
+	set	Lbcopy_blocknames, %g7
+	ba	1f
+	 ldx	[%g7 + %o3], %g7
+	
+#define BL_NAME(x)	x:	.asciz #x
+	.align	8
+Lbcopy_blocknames:
+	.xword	100f
+	.xword	101f
+	.xword	102f
+	.xword	103f
+	.xword	104f
+	.xword	105f
+	.xword	106f
+	.xword	107f
+	BL_NAME(100)
+	BL_NAME(101)
+	BL_NAME(102)
+	BL_NAME(103)
+	BL_NAME(104)
+	BL_NAME(105)
+	BL_NAME(106)
+	BL_NAME(107)
+	.align	8
+1:
+#endif
+#if 1
+	and	%o0, BLOCK_ALIGN, %o3
+	srax	%o3, 3, %o3				! Isolate the offset
+
+	brz	%o3, L100				! 0->0
+	 btst	4, %o3
+	bnz	%xcc, 4f
+	 btst	2, %o3
+	bnz	%xcc, 2f
+	 btst	1, %o3
+	ba,pt	%xcc, L101				! 0->1
+	 nop	/* XXX spitfire bug */
+2:
+	bz	%xcc, L102				! 0->2
+	 nop
+	ba,pt	%xcc, L103				! 0->3
+	 nop	/* XXX spitfire bug */
+4:	
+	bnz	%xcc, 2f
+	 btst	1, %o3
+	bz	%xcc, L104				! 0->4
+	 nop
+	ba,pt	%xcc, L105				! 0->5
+	 nop	/* XXX spitfire bug */
+2:
+	bz	%xcc, L106				! 0->6
+	 nop
+	ba,pt	%xcc, L107				! 0->7
+	 nop	/* XXX spitfire bug */
+#else
+
+	!!
+	!! Isolate the word offset, which just happens to be
+	!! the slot in our jump table.
+	!!
+	!! This is 6 insns, most of which cannot be paired,
+	!! which is about the same as the above version.
+	!!
+	rd	%pc, %o4
+1:	
+	and	%o0, 0x31, %o3
+	add	%o3, (Lbcopy_block_jmp - 1b), %o3
+	jmpl	%o4 + %o3, %g0
+	 nop
+
+	!!
+	!! Jump table
+	!!
+	
+Lbcopy_block_jmp:
+	ba,a,pt	%xcc, L100
+	 nop
+	ba,a,pt	%xcc, L101
+	 nop
+	ba,a,pt	%xcc, L102
+	 nop
+	ba,a,pt	%xcc, L103
+	 nop
+	ba,a,pt	%xcc, L104
+	 nop
+	ba,a,pt	%xcc, L105
+	 nop
+	ba,a,pt	%xcc, L106
+	 nop
+	ba,a,pt	%xcc, L107
+	 nop
+#endif
+
+	!!
+	!! Source is block aligned.
+	!!
+	!! Just load a block and go.
+	!! 
+L100:
+	fmovd	%f0 , %f62
+	ldda	[%o0] ASI_BLK_P, %f0
+	inc BLOCK_SIZE, %o0
+	cmp	%o0, %g2
+	bgu,a,pn	%icc, 3f
+	 membar #Sync
+	ldda	[%o0] ASI_BLK_P, %f16
+3:	
+	faligndata	%f62, %f0, %f32
+	inc BLOCK_SIZE, %o0
+	faligndata	%f0, %f2, %f34
+	dec	BLOCK_SIZE, %o2
+	faligndata	%f2, %f4, %f36
+	cmp	%o0, %g2
+	faligndata	%f4, %f6, %f38
+	faligndata	%f6, %f8, %f40
+	faligndata	%f8, %f10, %f42
+	faligndata	%f10, %f12, %f44
+	
+	brlez,pn	%o2, Lbcopy_blockdone
+	 faligndata	%f12, %f14, %f46
+
+	bgu,a,pn	%icc, 2f
+	 membar	#Sync
+	ldda	[%o0] ASI_BLK_P, %f48
+2:	
+	stda	%f32, [%o1] ASI_STORE
+
+	faligndata	%f14, %f16, %f32
+	inc	BLOCK_SIZE, %o0
+	faligndata	%f16, %f18, %f34
+	inc	BLOCK_SIZE, %o1
+	faligndata	%f18, %f20, %f36
+	dec	BLOCK_SIZE, %o2
+	faligndata	%f20, %f22, %f38
+	faligndata	%f22, %f24, %f40
+	cmp	%o0, %g2
+	faligndata	%f24, %f26, %f42
+	faligndata	%f26, %f28, %f44
+
+	brlez,pn	%o2, Lbcopy_blockdone
+	 faligndata	%f28, %f30, %f46
+
+	bgu,a,pn	%icc, 2f
+	 membar	#Sync
+	ldda	[%o0] ASI_BLK_P, %f0
+2:	
+	stda	%f32, [%o1] ASI_STORE
+
+	faligndata	%f30, %f48, %f32
+	inc	BLOCK_SIZE, %o0
+	faligndata	%f48, %f50, %f34
+	inc	BLOCK_SIZE, %o1
+	faligndata	%f50, %f52, %f36
+	dec	BLOCK_SIZE, %o2
+	faligndata	%f52, %f54, %f38
+	faligndata	%f54, %f56, %f40
+	cmp	%o0, %g2
+	faligndata	%f56, %f58, %f42
+	faligndata	%f58, %f60, %f44
+
+	brlez,pn	%o2, Lbcopy_blockdone
+	 faligndata	%f60, %f62, %f46
+
+	bgu,a,pn	%icc, 2f
+	 membar	#Sync
+	ldda	[%o0] ASI_BLK_P, %f16
+2:	
+	stda	%f32, [%o1] ASI_STORE
+	ba	3b
+	 inc	BLOCK_SIZE, %o1
+	
+	!!
+	!! Source at BLOCK_ALIGN+8
+	!!
+	!! We need to load almost 1 complete block by hand.
+	!! 
+L101:
+!	fmovd	%f0, %f0				! Hoist fmovd
+	ldd	[%o0], %f2
+	inc	8, %o0
+	ldd	[%o0], %f4
+	inc	8, %o0
+	ldd	[%o0], %f6
+	inc	8, %o0
+	ldd	[%o0], %f8
+	inc	8, %o0
+	ldd	[%o0], %f10
+	inc	8, %o0
+	ldd	[%o0], %f12
+	inc	8, %o0
+	ldd	[%o0], %f14
+	inc	8, %o0
+	
+	cmp	%o0, %g2
+	bgu,a,pn	%icc, 3f
+	 membar #Sync
+	ldda	[%o0] ASI_BLK_P, %f16
+3:	
+	faligndata	%f0, %f2, %f32
+	inc	BLOCK_SIZE, %o0
+	faligndata	%f2, %f4, %f34
+	dec	BLOCK_SIZE, %o2
+	faligndata	%f4, %f6, %f36
+	faligndata	%f6, %f8, %f38
+	cmp	%o0, %g2
+	faligndata	%f8, %f10, %f40
+	faligndata	%f10, %f12, %f42
+	faligndata	%f12, %f14, %f44
+	bgu,a,pn	%icc, 2f
+	 membar	#Sync
+	ldda	[%o0] ASI_BLK_P, %f48
+2:
+	brlez,pn	%o2, Lbcopy_blockdone
+	 faligndata	%f14, %f16, %f46
+
+	stda	%f32, [%o1] ASI_STORE
+	
+	faligndata	%f16, %f18, %f32
+	inc	BLOCK_SIZE, %o0
+	faligndata	%f18, %f20, %f34
+	inc	BLOCK_SIZE, %o1
+	faligndata	%f20, %f22, %f36
+	dec	BLOCK_SIZE, %o2
+	faligndata	%f22, %f24, %f38
+	cmp	%o0, %g2
+	faligndata	%f24, %f26, %f40
+	faligndata	%f26, %f28, %f42
+	faligndata	%f28, %f30, %f44
+	bgu,a,pn	%icc, 2f
+	 membar	#Sync
+	ldda	[%o0] ASI_BLK_P, %f0
+2:	
+	brlez,pn	%o2, Lbcopy_blockdone
+	 faligndata	%f30, %f48, %f46
+
+	stda	%f32, [%o1] ASI_STORE
+
+	faligndata	%f48, %f50, %f32
+	inc	BLOCK_SIZE, %o0
+	faligndata	%f50, %f52, %f34
+	inc	BLOCK_SIZE, %o1
+	faligndata	%f52, %f54, %f36
+	dec	BLOCK_SIZE, %o2
+	faligndata	%f54, %f56, %f38
+	faligndata	%f56, %f58, %f40
+	cmp	%o0, %g2
+	faligndata	%f58, %f60, %f42
+	faligndata	%f60, %f62, %f44
+	bgu,a,pn	%icc, 2f
+	 membar	#Sync
+	ldda	[%o0] ASI_BLK_P, %f16
+2:	
+	brlez,pn	%o2, Lbcopy_blockdone
+	 faligndata	%f62, %f0, %f46
+
+	stda	%f32, [%o1] ASI_STORE
+	ba	3b
+	 inc	BLOCK_SIZE, %o1
+
+	!!
+	!! Source at BLOCK_ALIGN+16
+	!!
+	!! We need to load 6 doubles by hand.
+	!! 
+L102:
+	ldd	[%o0], %f4
+	inc	8, %o0
+	fmovd	%f0, %f2				! Hoist fmovd
+	ldd	[%o0], %f6
+	inc	8, %o0
+	
+	ldd	[%o0], %f8
+	inc	8, %o0
+	ldd	[%o0], %f10
+	inc	8, %o0
+	ldd	[%o0], %f12
+	inc	8, %o0
+	ldd	[%o0], %f14
+	inc	8, %o0
+	
+	cmp	%o0, %g2
+	bgu,a,pn	%icc, 3f
+	 membar #Sync
+	ldda	[%o0] ASI_BLK_P, %f16
+3:	
+	faligndata	%f2, %f4, %f32
+	inc	BLOCK_SIZE, %o0
+	faligndata	%f4, %f6, %f34
+	dec	BLOCK_SIZE, %o2
+	faligndata	%f6, %f8, %f36
+	faligndata	%f8, %f10, %f38
+	cmp	%o0, %g2
+	faligndata	%f10, %f12, %f40
+	faligndata	%f12, %f14, %f42
+	bgu,a,pn	%icc, 2f
+	 membar	#Sync
+	ldda	[%o0] ASI_BLK_P, %f48
+2:
+	faligndata	%f14, %f16, %f44
+
+	brlez,pn	%o2, Lbcopy_blockdone
+	 faligndata	%f16, %f18, %f46
+	
+	stda	%f32, [%o1] ASI_STORE
+
+	faligndata	%f18, %f20, %f32
+	inc	BLOCK_SIZE, %o0
+	faligndata	%f20, %f22, %f34
+	inc	BLOCK_SIZE, %o1
+	faligndata	%f22, %f24, %f36
+	dec	BLOCK_SIZE, %o2
+	faligndata	%f24, %f26, %f38
+	cmp	%o0, %g2
+	faligndata	%f26, %f28, %f40
+	faligndata	%f28, %f30, %f42
+	bgu,a,pn	%icc, 2f
+	 membar	#Sync
+	ldda	[%o0] ASI_BLK_P, %f0
+2:	
+	faligndata	%f30, %f48, %f44
+	brlez,pn	%o2, Lbcopy_blockdone
+	 faligndata	%f48, %f50, %f46
+
+	stda	%f32, [%o1] ASI_STORE
+
+	faligndata	%f50, %f52, %f32
+	inc	BLOCK_SIZE, %o0
+	faligndata	%f52, %f54, %f34
+	inc	BLOCK_SIZE, %o1
+	faligndata	%f54, %f56, %f36
+	dec	BLOCK_SIZE, %o2
+	faligndata	%f56, %f58, %f38
+	cmp	%o0, %g2
+	faligndata	%f58, %f60, %f40
+	faligndata	%f60, %f62, %f42
+	bgu,a,pn	%icc, 2f
+	 membar	#Sync
+	ldda	[%o0] ASI_BLK_P, %f16
+2:	
+	faligndata	%f62, %f0, %f44
+	brlez,pn	%o2, Lbcopy_blockdone
+	 faligndata	%f0, %f2, %f46
+
+	stda	%f32, [%o1] ASI_STORE
+	ba	3b
+	 inc	BLOCK_SIZE, %o1
+	
+	!!
+	!! Source at BLOCK_ALIGN+24
+	!!
+	!! We need to load 5 doubles by hand.
+	!! 
+L103:
+	fmovd	%f0, %f4
+	ldd	[%o0], %f6
+	inc	8, %o0
+	ldd	[%o0], %f8
+	inc	8, %o0
+	ldd	[%o0], %f10
+	inc	8, %o0
+	ldd	[%o0], %f12
+	inc	8, %o0
+	ldd	[%o0], %f14
+	inc	8, %o0
+
+	cmp	%o0, %g2
+	bgu,a,pn	%icc, 3f
+	 membar #Sync
+	ldda	[%o0] ASI_BLK_P, %f16
+	inc	BLOCK_SIZE, %o0
+3:	
+	faligndata	%f4, %f6, %f32
+	faligndata	%f6, %f8, %f34
+	dec	BLOCK_SIZE, %o2
+	faligndata	%f8, %f10, %f36
+	cmp	%o0, %g2
+	faligndata	%f10, %f12, %f38
+	faligndata	%f12, %f14, %f40
+	bgu,a,pn	%icc, 2f
+	 membar	#Sync
+	ldda	[%o0] ASI_BLK_P, %f48
+2:
+	faligndata	%f14, %f16, %f42
+	inc	BLOCK_SIZE, %o0
+	faligndata	%f16, %f18, %f44
+	brlez,pn	%o2, Lbcopy_blockdone
+	 faligndata	%f18, %f20, %f46
+	
+	stda	%f32, [%o1] ASI_STORE
+
+	faligndata	%f20, %f22, %f32
+	dec	BLOCK_SIZE, %o2
+	faligndata	%f22, %f24, %f34
+	cmp	%o0, %g2
+	faligndata	%f24, %f26, %f36
+	inc	BLOCK_SIZE, %o1
+	faligndata	%f26, %f28, %f38
+	faligndata	%f28, %f30, %f40
+	bgu,a,pn	%icc, 2f
+	 membar	#Sync
+	ldda	[%o0] ASI_BLK_P, %f0
+2:	
+	faligndata	%f30, %f48, %f42
+	inc	BLOCK_SIZE, %o0
+	faligndata	%f48, %f50, %f44
+	brlez,pn	%o2, Lbcopy_blockdone
+	 faligndata	%f50, %f52, %f46
+
+	stda	%f32, [%o1] ASI_STORE
+	inc	BLOCK_SIZE, %o1
+
+	faligndata	%f52, %f54, %f32
+	dec	BLOCK_SIZE, %o2
+	faligndata	%f54, %f56, %f34
+	cmp	%o0, %g2
+	faligndata	%f56, %f58, %f36
+	faligndata	%f58, %f60, %f38
+	faligndata	%f60, %f62, %f40
+	bgu,a,pn	%icc, 2f
+	 membar	#Sync
+	ldda	[%o0] ASI_BLK_P, %f16
+2:	
+	faligndata	%f62, %f0, %f42
+	inc	BLOCK_SIZE, %o0
+	faligndata	%f0, %f2, %f44
+	brlez,pn	%o2, Lbcopy_blockdone
+	 faligndata	%f2, %f4, %f46
+
+	stda	%f32, [%o1] ASI_STORE
+	ba	3b
+	 inc	BLOCK_SIZE, %o1
+
+	!!
+	!! Source at BLOCK_ALIGN+32
+	!!
+	!! We need to load 4 doubles by hand.
+	!! 
+L104:
+	fmovd	%f0, %f6
+	ldd	[%o0], %f8
+	inc	8, %o0
+	ldd	[%o0], %f10
+	inc	8, %o0
+	ldd	[%o0], %f12
+	inc	8, %o0
+	ldd	[%o0], %f14
+	inc	8, %o0
+	
+	cmp	%o0, %g2
+	bgu,a,pn	%icc, 3f
+	 membar #Sync
+	ldda	[%o0] ASI_BLK_P, %f16
+	inc	BLOCK_SIZE, %o0
+3:	
+	faligndata	%f6, %f8, %f32
+	dec	BLOCK_SIZE, %o2
+	faligndata	%f8, %f10, %f34
+	cmp	%o0, %g2
+	faligndata	%f10, %f12, %f36
+	faligndata	%f12, %f14, %f38
+	bgu,a,pn	%icc, 2f
+	 membar	#Sync
+	ldda	[%o0] ASI_BLK_P, %f48
+2:
+	faligndata	%f14, %f16, %f40
+	faligndata	%f16, %f18, %f42
+	inc	BLOCK_SIZE, %o0
+	faligndata	%f18, %f20, %f44
+	brlez,pn	%o2, Lbcopy_blockdone
+	 faligndata	%f20, %f22, %f46
+	
+	stda	%f32, [%o1] ASI_STORE
+
+	faligndata	%f22, %f24, %f32
+	dec	BLOCK_SIZE, %o2
+	faligndata	%f24, %f26, %f34
+	cmp	%o0, %g2
+	faligndata	%f26, %f28, %f36
+	inc	BLOCK_SIZE, %o1
+	faligndata	%f28, %f30, %f38
+	bgu,a,pn	%icc, 2f
+	 membar	#Sync
+	ldda	[%o0] ASI_BLK_P, %f0
+2:	
+	faligndata	%f30, %f48, %f40
+	faligndata	%f48, %f50, %f42
+	inc	BLOCK_SIZE, %o0
+	faligndata	%f50, %f52, %f44
+	brlez,pn	%o2, Lbcopy_blockdone
+	 faligndata	%f52, %f54, %f46
+
+	stda	%f32, [%o1] ASI_STORE
+
+	faligndata	%f54, %f56, %f32
+	dec	BLOCK_SIZE, %o2
+	faligndata	%f56, %f58, %f34
+	cmp	%o0, %g2
+	faligndata	%f58, %f60, %f36
+	inc	BLOCK_SIZE, %o1
+	faligndata	%f60, %f62, %f38
+	bgu,a,pn	%icc, 2f
+	 membar	#Sync
+	ldda	[%o0] ASI_BLK_P, %f16
+2:	
+	faligndata	%f62, %f0, %f40
+	faligndata	%f0, %f2, %f42
+	inc	BLOCK_SIZE, %o0
+	faligndata	%f2, %f4, %f44
+	brlez,pn	%o2, Lbcopy_blockdone
+	 faligndata	%f4, %f6, %f46
+
+	stda	%f32, [%o1] ASI_STORE
+	ba	3b
+	 inc	BLOCK_SIZE, %o1
+
+	!!
+	!! Source at BLOCK_ALIGN+40
+	!!
+	!! We need to load 3 doubles by hand.
+	!! 
+L105:
+	fmovd	%f0, %f8
+	ldd	[%o0], %f10
+	inc	8, %o0
+	ldd	[%o0], %f12
+	inc	8, %o0
+	ldd	[%o0], %f14
+	inc	8, %o0
+	
+	cmp	%o0, %g2
+	bgu,a,pn	%icc, 3f
+	 membar #Sync
+	ldda	[%o0] ASI_BLK_P, %f16
+	inc	BLOCK_SIZE, %o0
+3:	
+	faligndata	%f8, %f10, %f32
+	dec	BLOCK_SIZE, %o2
+	faligndata	%f10, %f12, %f34
+	cmp	%o0, %g2
+	faligndata	%f12, %f14, %f36
+	bgu,a,pn	%icc, 2f
+	 membar	#Sync
+	ldda	[%o0] ASI_BLK_P, %f48
+2:
+	faligndata	%f14, %f16, %f38
+	faligndata	%f16, %f18, %f40
+	inc	BLOCK_SIZE, %o0
+	faligndata	%f18, %f20, %f42
+	faligndata	%f20, %f22, %f44
+	brlez,pn	%o2, Lbcopy_blockdone
+	 faligndata	%f22, %f24, %f46
+	
+	stda	%f32, [%o1] ASI_STORE
+
+	faligndata	%f24, %f26, %f32
+	dec	BLOCK_SIZE, %o2
+	faligndata	%f26, %f28, %f34
+	cmp	%o0, %g2
+	faligndata	%f28, %f30, %f36
+	bgu,a,pn	%icc, 2f
+	 membar	#Sync
+	ldda	[%o0] ASI_BLK_P, %f0
+2:
+	faligndata	%f30, %f48, %f38
+	inc	BLOCK_SIZE, %o1
+	faligndata	%f48, %f50, %f40
+	inc	BLOCK_SIZE, %o0
+	faligndata	%f50, %f52, %f42
+	faligndata	%f52, %f54, %f44
+	brlez,pn	%o2, Lbcopy_blockdone
+	 faligndata	%f54, %f56, %f46
+
+	stda	%f32, [%o1] ASI_STORE
+
+	faligndata	%f56, %f58, %f32
+	dec	BLOCK_SIZE, %o2
+	faligndata	%f58, %f60, %f34
+	cmp	%o0, %g2
+	faligndata	%f60, %f62, %f36
+	bgu,a,pn	%icc, 2f
+	 membar	#Sync
+	ldda	[%o0] ASI_BLK_P, %f16
+2:
+	faligndata	%f62, %f0, %f38
+	inc	BLOCK_SIZE, %o1
+	faligndata	%f0, %f2, %f40
+	inc	BLOCK_SIZE, %o0
+	faligndata	%f2, %f4, %f42
+	faligndata	%f4, %f6, %f44
+	brlez,pn	%o2, Lbcopy_blockdone
+	 faligndata	%f6, %f8, %f46
+
+	stda	%f32, [%o1] ASI_STORE
+	ba	3b
+	 inc	BLOCK_SIZE, %o1
+
+
+	!!
+	!! Source at BLOCK_ALIGN+48
+	!!
+	!! We need to load 2 doubles by hand.
+	!! 
+L106:
+	fmovd	%f0, %f10
+	ldd	[%o0], %f12
+	inc	8, %o0
+	ldd	[%o0], %f14
+	inc	8, %o0
+	
+	cmp	%o0, %g2
+	bgu,a,pn	%icc, 3f
+	 membar #Sync
+	ldda	[%o0] ASI_BLK_P, %f16
+	inc	BLOCK_SIZE, %o0
+3:	
+	faligndata	%f10, %f12, %f32
+	dec	BLOCK_SIZE, %o2
+	faligndata	%f12, %f14, %f34
+	cmp	%o0, %g2
+	bgu,a,pn	%icc, 2f
+	 membar	#Sync
+	ldda	[%o0] ASI_BLK_P, %f48
+2:
+	faligndata	%f14, %f16, %f36
+	faligndata	%f16, %f18, %f38
+	inc	BLOCK_SIZE, %o0
+	faligndata	%f18, %f20, %f40
+	faligndata	%f20, %f22, %f42
+	faligndata	%f22, %f24, %f44
+	brlez,pn	%o2, Lbcopy_blockdone
+	 faligndata	%f24, %f26, %f46
+	
+	stda	%f32, [%o1] ASI_STORE
+
+	dec	BLOCK_SIZE, %o2
+	faligndata	%f26, %f28, %f32
+	cmp	%o0, %g2
+	faligndata	%f28, %f30, %f34
+	bgu,a,pn	%icc, 2f
+	 membar	#Sync
+	ldda	[%o0] ASI_BLK_P, %f0
+2:
+	faligndata	%f30, %f48, %f36
+	faligndata	%f48, %f50, %f38
+	inc	BLOCK_SIZE, %o1
+	faligndata	%f50, %f52, %f40
+	faligndata	%f52, %f54, %f42
+	inc	BLOCK_SIZE, %o0
+	faligndata	%f54, %f56, %f44
+	brlez,pn	%o2, Lbcopy_blockdone
+	 faligndata	%f56, %f58, %f46
+
+	stda	%f32, [%o1] ASI_STORE
+
+	dec	BLOCK_SIZE, %o2
+	faligndata	%f58, %f60, %f32
+	cmp	%o0, %g2
+	faligndata	%f60, %f62, %f34
+	bgu,a,pn	%icc, 2f
+	 membar	#Sync
+	ldda	[%o0] ASI_BLK_P, %f16
+2:
+	faligndata	%f62, %f0, %f36
+	faligndata	%f0, %f2, %f38
+	inc	BLOCK_SIZE, %o1
+	faligndata	%f2, %f4, %f40
+	faligndata	%f4, %f6, %f42
+	inc	BLOCK_SIZE, %o0
+	faligndata	%f6, %f8, %f44
+	brlez,pn	%o2, Lbcopy_blockdone
+	 faligndata	%f8, %f10, %f46
+
+	stda	%f32, [%o1] ASI_STORE
+	ba	3b
+	 inc	BLOCK_SIZE, %o1
+
+
+	!!
+	!! Source at BLOCK_ALIGN+56
+	!!
+	!! We need to load 1 double by hand.
+	!! 
+L107:
+	fmovd	%f0, %f12
+	ldd	[%o0], %f14
+	inc	8, %o0
+
+	cmp	%o0, %g2
+	bgu,a,pn	%icc, 3f
+	 membar #Sync
+	ldda	[%o0] ASI_BLK_P, %f16
+	inc	BLOCK_SIZE, %o0
+3:	
+	dec	BLOCK_SIZE, %o2
+	faligndata	%f12, %f14, %f32
+	cmp	%o0, %g2
+	bgu,a,pn	%icc, 2f
+	 membar	#Sync
+	ldda	[%o0] ASI_BLK_P, %f48
+2:
+	faligndata	%f14, %f16, %f34
+	faligndata	%f16, %f18, %f36
+	inc	BLOCK_SIZE, %o0
+	faligndata	%f18, %f20, %f38
+	faligndata	%f20, %f22, %f40
+	faligndata	%f22, %f24, %f42
+	faligndata	%f24, %f26, %f44
+	brlez,pn	%o2, Lbcopy_blockdone
+	 faligndata	%f26, %f28, %f46
+	
+	stda	%f32, [%o1] ASI_STORE
+
+	dec	BLOCK_SIZE, %o2
+	faligndata	%f28, %f30, %f32
+	cmp	%o0, %g2
+	bgu,a,pn	%icc, 2f
+	 membar	#Sync
+	ldda	[%o0] ASI_BLK_P, %f0
+2:
+	faligndata	%f30, %f48, %f34
+	faligndata	%f48, %f50, %f36
+	inc	BLOCK_SIZE, %o1
+	faligndata	%f50, %f52, %f38
+	faligndata	%f52, %f54, %f40
+	inc	BLOCK_SIZE, %o0
+	faligndata	%f54, %f56, %f42
+	faligndata	%f56, %f58, %f44
+	brlez,pn	%o2, Lbcopy_blockdone
+	 faligndata	%f58, %f60, %f46
+	
+	stda	%f32, [%o1] ASI_STORE
+
+	dec	BLOCK_SIZE, %o2
+	faligndata	%f60, %f62, %f32
+	cmp	%o0, %g2
+	bgu,a,pn	%icc, 2f
+	 membar	#Sync
+	ldda	[%o0] ASI_BLK_P, %f16
+2:
+	faligndata	%f62, %f0, %f34
+	faligndata	%f0, %f2, %f36
+	inc	BLOCK_SIZE, %o1
+	faligndata	%f2, %f4, %f38
+	faligndata	%f4, %f6, %f40
+	inc	BLOCK_SIZE, %o0
+	faligndata	%f6, %f8, %f42
+	faligndata	%f8, %f10, %f44
+
+	brlez,pn	%o2, Lbcopy_blockdone
+	 faligndata	%f10, %f12, %f46
+
+	stda	%f32, [%o1] ASI_STORE
+	ba	3b
+	 inc	BLOCK_SIZE, %o1
+	
+Lbcopy_blockdone:
+	inc	BLOCK_SIZE, %o2				! Fixup our overcommit
+	membar	#Sync					! Finish any pending loads
+#define	FINISH_REG(f)				\
+	deccc	8, %o2;				\
+	ble,a	Lbcopy_blockfinish;		\
+	 fmovd	f, %f48;			\
+	std	f, [%o1];			\
+	inc	8, %o1
+
+	FINISH_REG(%f32)
+	FINISH_REG(%f34)
+	FINISH_REG(%f36)
+	FINISH_REG(%f38)
+	FINISH_REG(%f40)
+	FINISH_REG(%f42)
+	FINISH_REG(%f44)
+	FINISH_REG(%f46)
+	!! 
+	!! The low 3 bits have the sub-word bits needed to be
+	!! stored [because (x-8)&0x7 == x].
+	!!
+Lbcopy_blockfinish:
+	brz,pn	%o2, 2f					! 100% complete?
+	 fmovd	%f48, %f4
+	cmp	%o2, 8					! Exactly 8 bytes?
+	bz,a,pn	%xcc, 2f
+	 std	%f4, [%o1]
+
+	btst	4, %o2					! Word store?
+	bz	%xcc, 1f
+	 nop
+	st	%f4, [%o1]
+	inc	4, %o1
+1:
+	btst	2, %o2
+	fzero	%f0
+	bz	1f
+
+	 mov	-6, %o4
+	alignaddr %o1, %o4, %g0
+
+	faligndata %f0, %f4, %f8
+	
+	stda	%f8, [%o1] ASI_FL16_P			! Store short
+	inc	2, %o1
+1:
+	btst	1, %o2					! Byte aligned?
+	bz	2f
+
+	 mov	-7, %o0					! Calculate dest - 7
+	alignaddr %o1, %o0, %g0				! Calculate shift mask and dest.
+
+	faligndata %f0, %f4, %f8			! Move 1st byte to low part of f8
+
+	stda	%f8, [%o1] ASI_FL8_P			! Store 1st byte
+	inc	1, %o1					! Update address
+2:
+	membar	#Sync
+#ifdef _KERNEL		
+/*
+ * Weve saved our possible fpstate, now disable the fpu
+ * and continue with life.
+ */
+#ifdef DEBUG
+	LDPTR	[%l1 + %lo(FPPROC)], %l7
+	cmp	%l7, %l5
+!	tnz	1		! fpproc has changed!
+	LDPTR	[%l5 + P_FPSTATE], %l7
+	cmp	%l7, %l0
+	tnz	1		! fpstate has changed!
+#endif
+	STPTR	%g0, [%l1 + %lo(FPPROC)]		! Clear fpproc
+	STPTR	%l6, [%l5 + P_FPSTATE]			! Restore old fpstate
+	wr	%g0, 0, %fprs				! Disable FPU
+	ret
+	 restore	%g7, 0, %o0			! Return DEST for memcpy
+#endif
+	ret
+	 restore %g7, 0, %o0
+	retl
+	 mov	%g7, %o0
+#endif
+
+	
 #if 1
 /*
  * XXXXXXXXXXXXXXXXXXXX
@@ -9657,8 +10727,14 @@ Lbzero_internal:
 	 dec	8, %o1			! Fixup count -8
 2:
 	!! Now we're 64-bit aligned
+#if 0
+	/*
+	 * Userland tests indicate it is *slower* to use block
+	 * stores to clear memory.
+	 */
 	cmp	%o1, 256		! Use block clear if len > 256
 	bge,pt	%xcc, Lbzero_block	! use block store insns
+#endif
 	 deccc	8, %o1
 Lbzero_longs:
 	bl,pn	%xcc, Lbzero_cleanup	! Less than 8 bytes left
@@ -9717,7 +10793,6 @@ Lbzero_small:
 
 Lbzero_block:
 	!! Make sure our trap table is installed
-	ba,a,pt	%icc, Lbzero_longs
 	rdpr	%tba, %o3
 	set	_C_LABEL(trapbase), %o5
 	sub	%o3, %o5, %o3
@@ -9800,6 +10875,9 @@ Lbzero_block:
 	 dec	8, %i1
 
 2:
+	brz	%i2, 3f					! Skip the memory op
+	 fzero	%f0					! for bzero
+
 #ifdef _LP64
 	stx	%i2, [%sp + BIAS + 0x50]		! Flush this puppy to RAM
 	membar	#StoreLoad
@@ -9810,7 +10888,8 @@ Lbzero_block:
 	ld	[%sp + 0x28], %f0
 	fmovsa	%icc, %f0, %f1
 #endif
-
+	
+3:	
 	fmovda	%icc, %f0, %f2				! Duplicate the pattern
 	fmovda	%icc, %f0, %f4
 	fmovda	%icc, %f0, %f6
@@ -9820,12 +10899,14 @@ Lbzero_block:
 	fmovda	%icc, %f0, %f14
 
 	!! Remember: we were 8 bytes too far
-	dec	56, %i1			! Go one iteration too far
+	dec	56, %i1					! Go one iteration too far
 5:
-	stda	%f0, [%i0] ASI_BLK_COMMIT_P		! Store 64 bytes
-	deccc	64, %i1
+	stda	%f0, [%i0] ASI_BLK_P			! Store 64 bytes
+	deccc	BLOCK_SIZE, %i1
 	bg,pt	%icc, 5b
-	 inc	64, %i0
+	 inc	BLOCK_SIZE, %i0
+
+	membar	#Sync
 /*
  * We've saved our possible fpstate, now disable the fpu
  * and continue with life.
@@ -10080,57 +11161,6 @@ Lkcerr:
 	 mov	EFAULT, %o0
 	NOTREACHED
 
-#if 0
-/*
- * This version uses the UltraSPARC's v9 block copy extensions.
- * We need to use the floating point registers.  However, they
- * get disabled on entering the kernel.  When we try to access
- * them we should trap, which will result in saving them.
- *
- * Otherwise we can simply save them to the stack.
- */
-Lbcopy_vis:
-
-
-/*	2) Align source & dest		*/
-	alignaddr	%o1, x, %o4	! This is our destination
-	alignaddr	%o0, x, %o3
-/*	3) load in the first batch	*/
-	ldda		[%o3] ASI_BLK_P, %f0
-loop:
-	faligndata	%f0, %f2, %f34
-	faligndata	%f2, %f4, %f36
-	faligndata	%f4, %f6, %f38
-	faligndata	%f6, %f8, %f40
-	faligndata	%f8, %f10, %f42
-	faligndata	%f10, %f12, %f44
-	faligndata	%f12, %f14, %f46
-	addcc		%l0, -1, %l0
-	bg,pt		l1
-	 fmovd		%f14, %f48
-	/* end of loop handling */
-l1:
-	ldda		[regaddr] ASI_BLK_P, %f0
-	stda		%f32, [regaddr] ASI_BLK_P
-	faligndata	%f48, %f16, %f32
-	faligndata	%f16, %f18, %f34
-	faligndata	%f18, %f20, %f36
-	faligndata	%f20, %f22, %f38
-	faligndata	%f22, %f24, %f40
-	faligndata	%f24, %f26, %f42
-	faligndata	%f26, %f28, %f44
-	faligndata	%f28, %f30, %f46
-	addcc		%l0, -1, %l0
-	bne,pt		done
-	 fmovd		%f30, %f48
-	ldda		[regaddr] ASI_BLK_P, %f16
-	stda		%f32, [regaddr] ASI_BLK_P
-	ba		loop
-	 faligndata	%f48, %f0, %f32
-done:
-
-#endif
-
 /*
  * ovbcopy(src, dst, len): like bcopy, but regions may overlap.
  */
@@ -10332,7 +11362,7 @@ special_fp_store:
 	bnz	Lfp_storeq		!	goto storeq;
 Lfp_finish:
 	 btst	BLOCK_ALIGN, %o2	! Needs to be re-executed
-	bnz,pn	%icc, 2f		! Check alignment
+	bnz,pn	%icc, 3f		! Check alignment
 	 st	%o3, [%o0 + FS_QSIZE]	! f->fs_qsize = qsize;
 	btst	FPRS_DL, %o5		! Lower FPU clean?
 	bz,a,pt	%icc, 1f		! Then skip it
@@ -10356,7 +11386,11 @@ Lfp_finish:
 	retl
 	 wr	%g0, FPRS_FEF, %fprs	! Mark FPU clean
 3:
-	btst	FPRS_DL, %o5		! Lower FPU clean?
+#ifdef DIAGONSTIC
+	btst	7, %o2			! 32-bit aligned!?!?
+	bnz,pn	%icc, 6f
+#endif
+	 btst	FPRS_DL, %o5		! Lower FPU clean?
 	bz,a,pt	%icc, 4f		! Then skip it
 	 add	%o0, 128, %o0
 
@@ -10401,6 +11435,15 @@ Lfp_finish:
 	retl
 	 wr	%g0, FPRS_FEF, %fprs		! Mark FPU clean
 
+	!!
+	!! Damn thing is *NOT* aligned on a 64-bit boundary
+	!! 
+6:
+	wr	%g0, FPRS_FEF, %fprs
+	ta	1
+	retl
+	 nop
+	
 /*
  * Store the (now known nonempty) FP queue.
  * We have to reread the fsr each time in order to get the new QNE bit.
@@ -10437,63 +11480,73 @@ savefpcont:
 ENTRY(loadfpstate)
 	flushw			! Make sure we don't have stack probs & lose hibits of %o
 	rdpr	%pstate, %o1		! enable FP before we begin
-	ld	[%o0 + FS_GSR], %o3	! Restore %gsr
+	ld	[%o0 + FS_GSR], %o4	! Restore %gsr
 	set	PSTATE_PEF, %o2
 	wr	%g0, FPRS_FEF, %fprs
 	or	%o1, %o2, %o1
 	wrpr	%o1, 0, %pstate
-	wr	%o3, %g0, %gsr
 	ldx	[%o0 + FS_FSR], %fsr	! setfsr(f->fs_fsr);
-	add	%o0, FS_REGS, %o3
+	add	%o0, FS_REGS, %o3	! This is zero...
 	btst	BLOCK_ALIGN, %o3
-	bne,a,pt	%icc, 1f	! Only use block loads on aligned blocks
-	 ldd	[%o0 + FS_REGS + (4*0)], %f0
+	bne,pt	%icc, 1f	! Only use block loads on aligned blocks
+	 wr	%o4, %g0, %gsr
 	ldda	[%o3] ASI_BLK_P, %f0
-	inc	BLOCK_SIZE, %o0
+	inc	BLOCK_SIZE, %o3
 	ldda	[%o3] ASI_BLK_P, %f16
-	inc	BLOCK_SIZE, %o0
+	inc	BLOCK_SIZE, %o3
 	ldda	[%o3] ASI_BLK_P, %f32
-	inc	BLOCK_SIZE, %o0
+	inc	BLOCK_SIZE, %o3
 	ldda	[%o3] ASI_BLK_P, %f48
+	membar	#Sync			! Make sure loads are complete
 	retl
 	 wr	%g0, FPRS_FEF, %fprs	! Clear dirty bits
 1:
+#ifdef DIAGNOSTIC
+	btst	7, %o3
+	bne,pn	%icc, 1f
+	 nop
+#endif
 	/* Unaligned -- needs to be done the long way
-	ldd	[%o0 + FS_REGS + (4*0)], %f0
-	ldd	[%o0 + FS_REGS + (4*2)], %f2
-	ldd	[%o0 + FS_REGS + (4*4)], %f4
-	ldd	[%o0 + FS_REGS + (4*6)], %f6
-	ldd	[%o0 + FS_REGS + (4*8)], %f8
-	ldd	[%o0 + FS_REGS + (4*10)], %f10
-	ldd	[%o0 + FS_REGS + (4*12)], %f12
-	ldd	[%o0 + FS_REGS + (4*14)], %f14
-	ldd	[%o0 + FS_REGS + (4*16)], %f16
-	ldd	[%o0 + FS_REGS + (4*18)], %f18
-	ldd	[%o0 + FS_REGS + (4*20)], %f20
-	ldd	[%o0 + FS_REGS + (4*22)], %f22
-	ldd	[%o0 + FS_REGS + (4*24)], %f24
-	ldd	[%o0 + FS_REGS + (4*26)], %f26
-	ldd	[%o0 + FS_REGS + (4*28)], %f28
-	ldd	[%o0 + FS_REGS + (4*30)], %f30
-	ldd	[%o0 + FS_REGS + (4*32)], %f32
-	ldd	[%o0 + FS_REGS + (4*34)], %f34
-	ldd	[%o0 + FS_REGS + (4*36)], %f36
-	ldd	[%o0 + FS_REGS + (4*38)], %f38
-	ldd	[%o0 + FS_REGS + (4*40)], %f40
-	ldd	[%o0 + FS_REGS + (4*42)], %f42
-	ldd	[%o0 + FS_REGS + (4*44)], %f44
-	ldd	[%o0 + FS_REGS + (4*46)], %f46
-	ldd	[%o0 + FS_REGS + (4*48)], %f48
-	ldd	[%o0 + FS_REGS + (4*50)], %f50
-	ldd	[%o0 + FS_REGS + (4*52)], %f52
-	ldd	[%o0 + FS_REGS + (4*54)], %f54
-	ldd	[%o0 + FS_REGS + (4*56)], %f56
-	ldd	[%o0 + FS_REGS + (4*58)], %f58
-	ldd	[%o0 + FS_REGS + (4*60)], %f60
- 	ldd	[%o0 + FS_REGS + (4*62)], %f62
+	ldd	[%o3 + (4*0)], %f0
+	ldd	[%o3 + (4*2)], %f2
+	ldd	[%o3 + (4*4)], %f4
+	ldd	[%o3 + (4*6)], %f6
+	ldd	[%o3 + (4*8)], %f8
+	ldd	[%o3 + (4*10)], %f10
+	ldd	[%o3 + (4*12)], %f12
+	ldd	[%o3 + (4*14)], %f14
+	ldd	[%o3 + (4*16)], %f16
+	ldd	[%o3 + (4*18)], %f18
+	ldd	[%o3 + (4*20)], %f20
+	ldd	[%o3 + (4*22)], %f22
+	ldd	[%o3 + (4*24)], %f24
+	ldd	[%o3 + (4*26)], %f26
+	ldd	[%o3 + (4*28)], %f28
+	ldd	[%o3 + (4*30)], %f30
+	ldd	[%o3 + (4*32)], %f32
+	ldd	[%o3 + (4*34)], %f34
+	ldd	[%o3 + (4*36)], %f36
+	ldd	[%o3 + (4*38)], %f38
+	ldd	[%o3 + (4*40)], %f40
+	ldd	[%o3 + (4*42)], %f42
+	ldd	[%o3 + (4*44)], %f44
+	ldd	[%o3 + (4*46)], %f46
+	ldd	[%o3 + (4*48)], %f48
+	ldd	[%o3 + (4*50)], %f50
+	ldd	[%o3 + (4*52)], %f52
+	ldd	[%o3 + (4*54)], %f54
+	ldd	[%o3 + (4*56)], %f56
+	ldd	[%o3 + (4*58)], %f58
+	ldd	[%o3 + (4*60)], %f60
+ 	ldd	[%o3 + (4*62)], %f62
 	retl
 	 wr	%g0, FPRS_FEF, %fprs	! Clear dirty bits
 
+1:
+	wr	%g0, FPRS_FEF, %fprs	! Clear dirty bits
+	ta	1
+	retl
+	 nop
 /*
  * ienab_bis(bis) int bis;
  * ienab_bic(bic) int bic;
