@@ -1,4 +1,4 @@
-/*	$NetBSD: nightfile.c,v 1.7 1998/07/25 10:58:03 hubertf Exp $	*/
+/*	$NetBSD: nightfile.c,v 1.8 1999/07/14 17:42:13 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)nightfile.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: nightfile.c,v 1.7 1998/07/25 10:58:03 hubertf Exp $");
+__RCSID("$NetBSD: nightfile.c,v 1.8 1999/07/14 17:42:13 hubertf Exp $");
 #endif
 #endif				/* not lint */
 
@@ -633,7 +633,7 @@ Stone steps lead down to the beach +.\n"},
 	{"You are on the coast road.",
 		{198, 106, 163, 199, 73, 0, 0, 0},
 	"The forest is dense on either side.  The trees seem to be actually squeezing\n\
-together to keep us from passing.  A feeling of emnity is in the air.**\n\
+together to keep us from passing.  A feeling of enmity is in the air.**\n\
 The road continues - and -.\n"},
 	{"You are in the forest.",
 		{116, 107, 91, 106, 73, 0, 0, 0},
@@ -765,7 +765,7 @@ something drop on my neck.  The road delves into the accursed forest\n\
 **+ and +.\n"},
 	{"You are in a coconut palm grove.",
 		{223, 121, 224, 225, 82, 0, 0, 0},
-	"The tall palms are planted about 30 feet apart and the stary sky is clearly\n\
+	"The tall palms are planted about 30 feet apart and the starry sky is clearly\n\
 visible above.  A low growing grass carpets the ground all around.  The grove\n\
 continues +.***\n"},
 	{"You are walking along a dirt road.",
@@ -877,7 +877,7 @@ the way to the ocean ***+.\n"},
 runs - and -.\n"},
 	{"You are on a dirt path around the lagoon.",
 		{170, 147, 146, 0, 74, 0, 0, 0},
-	"The still waters reflect bending palms and a stary sky. It looks like\n\
+	"The still waters reflect bending palms and a starry sky. It looks like\n\
 the path runs into a clearing +. The path continues -.**\n"},
 	{"You are drowning in the lagoon.",
 		{201, 201, 147, 201, 74, 0, 0, 0},
@@ -1045,7 +1045,7 @@ strong rope. ****\n"},
 	"The road goes -* and *-.\n"},
 	{"You are in a low passage.",
 		{247, 160, 0, 0, 0, 0, 0, 0},
-	"The ceiling here sparkles with iridiscent gems and minerals. Colorful starfish\n\
+	"The ceiling here sparkles with iridescent gems and minerals. Colorful starfish\n\
 and sea anemones cling to the slippery walls and floor.  The passage continues\n\
 +.***\n"},
 	{"The walls are very close together here.",
