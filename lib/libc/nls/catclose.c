@@ -1,4 +1,4 @@
-/*	$NetBSD: catclose.c,v 1.4 1995/02/27 13:06:30 cgd Exp $	*/
+/*	$NetBSD: catclose.c,v 1.5 1995/03/01 08:00:12 jtc Exp $	*/
 
 /*
  * Written by J.T. Conklin, 10/05/94
@@ -13,13 +13,13 @@ __weak_reference(_catclose,catclose);
 
 #include <nl_types.h>
 
-extern void _catclose __P((nl_catd));
+extern int _catclose __P((nl_catd));
 
-void
+int
 catclose(catd)
 	nl_catd catd;
 {
-	_catclose(catd);
+	return _catclose(catd);
 }
 
 #endif
