@@ -1,4 +1,4 @@
-/*	$NetBSD: write.c,v 1.6 1996/06/21 20:09:07 pk Exp $	*/
+/*	$NetBSD: write.c,v 1.7 1996/06/21 20:29:30 pk Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -86,7 +86,7 @@ write(fd, dest, bcount)
 			btodb(f->f_offset), bcount, dest, &resid);
 		if (errno)
 			return (-1);
-		f->f_offset += (bcount - resid);
+		f->f_offset += resid;
 		return (resid);
 	}
 	resid = bcount;
