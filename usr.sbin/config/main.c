@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.25 1997/10/10 10:27:56 mycroft Exp $	*/
+/*	$NetBSD: main.c,v 1.26 1997/10/18 04:08:12 lukem Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -94,7 +94,7 @@ main(argc, argv)
 	int pflag, ch;
 
 	pflag = 0;
-	while ((ch = getopt(argc, argv, "Dgpb:s:")) != EOF) {
+	while ((ch = getopt(argc, argv, "Dgpb:s:")) != -1) {
 		switch (ch) {
 
 		case 'D':
