@@ -1,4 +1,4 @@
-/*	$NetBSD: auvia.c,v 1.5 2000/09/01 00:02:04 jdolecek Exp $	*/
+/*	$NetBSD: auvia.c,v 1.6 2000/11/14 18:42:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -51,6 +51,8 @@
 #include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/audioio.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pcivar.h>
@@ -700,8 +702,8 @@ auvia_malloc(void *addr, int direction, size_t size, int pool, int flags)
 		return 0;
 
 	p->size = size;
-	if ((error = bus_dmamem_alloc(sc->sc_dmat, size, NBPG, 0, &p->seg, 1, 
-				      &rseg, BUS_DMA_NOWAIT)) != 0) {
+	if ((error = bus_dmamem_alloc(sc->sc_dmat, size, PAGE_SIZE, 0, &p->seg,
+				      1, &rseg, BUS_DMA_NOWAIT)) != 0) {
 		printf("%s: unable to allocate dma, error = %d\n", 
 		       sc->sc_dev.dv_xname, error);
 		goto fail_alloc;
