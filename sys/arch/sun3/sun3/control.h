@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Header: /cvsroot/src/sys/arch/sun3/sun3/control.h,v 1.6 1993/08/28 15:35:58 glass Exp $
+ * $Header: /cvsroot/src/sys/arch/sun3/sun3/control.h,v 1.7 1993/10/12 05:21:24 glass Exp $
  */
 
 /*
@@ -71,7 +71,6 @@
 
 #include <sys/types.h>
 
-#ifdef KERNEL
 void control_copy_byte __P((char *, char *, int ));
 
 unsigned char get_control_byte __P((char *));
@@ -92,5 +91,3 @@ unsigned char get_segmap __P((vm_offset_t));
 void set_segmap __P((vm_offset_t va, unsigned char));
 
 void set_temp_seg_addr __P((vm_offset_t va));
-
-#endif

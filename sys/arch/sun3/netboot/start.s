@@ -28,66 +28,79 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Header: /cvsroot/src/sys/arch/sun3/include/Attic/control.h,v 1.7 1993/10/12 05:21:24 glass Exp $
+ * $Header: /cvsroot/src/sys/arch/sun3/netboot/Attic/start.s,v 1.1 1993/10/12 05:24:01 glass Exp $
  */
+
+#include "assym.s"
+#include "../include/asm.h"
+
+.text
+.globl start
+start:
+	movl #FIXED_LOAD_ADDR,a0	| where we are (a0)
+	lea start:l, a1			| where we want to be (a1)	
+	cmpl a0, a1
+	jeq begin
+	movl #_edata, d0
+copy:
+	movl a0@+,a1@+
+	cmpl d0, a1
+	jne copy
+	jmp begin:l
+/* find out where we are, and copy ourselves to where we are supposed to be */
+.align 4
+begin:	
+	moveq #FC_CONTROL, d0		| make movs get us to the control
+	movc d0, dfc			| space where the sun3 designers
+	movc d0, sfc			| put all the "useful" stuff
+	moveq #CONTEXT_0, d0
+	movsb d0, CONTEXT_REG		| now in context 0
+	
+savesp: movl sp, start-4:l
+	lea start-4:l, sp
+	movl #(FIXED_LOAD_ADDR-4), sp
+	jsr _machdep_nfsboot
+	jsr FIXED_LOAD_ADDR
 
 /*
- * defines for sun3 control space
- *
+ * unsigned int get_control_word (char *)
+ */	
+
+ENTRY(get_control_word)
+	movl sp@(4), a0
+	movsl a0@, d0
+	rts
+
+/*
+ * void set_control_word (char *, unsigned int)
  */
 
-#define IDPROM_BASE 0x00000000
-#define PGMAP_BASE  0x10000000
-#define SEGMAP_BASE  0x20000000
-#define CONTEXT_REG 0x30000000
-#define SYSTEM_ENAB 0x40000000
-#define UDVMA_ENAB  0x50000000
-#define BUSERR_REG  0x60000000
-#define DIAG_REG    0x70000000
+ENTRY(set_control_word)
+	movl sp@(4), a0
+	movl sp@(8), d0
+	movsl d0, a0@
+	rts
 
-#define CONTROL_ADDR_MASK 0x0FFFFFFC
+/*	
+ * unsigned char get_control_byte (char *)
+ */	
 
+ENTRY(get_control_byte)
+	movl sp@(4), a0
+	moveq #0, d0
+	movsb a0@, d0
+	rts
 
-#define NBSEG    0x20000
-#define NPMEG    0x100
-
-#define VAC_CACHE_TAGS    0x80000000
-#define VAC_CACHE_DATA    0x90000000
-#define VAC_FLUSH_BASE    0xA0000000
-#define VAC_FLUSH_CONTEXT 0x1
-#define VAC_FLUSH_PAGE    0x2
-#define VAC_FLUSH_SEGMENT 0x3
-
-#define CONTEXT_0  0x0
-#define CONTEXT_1  0x1
-#define CONTEXT_2  0x2
-#define CONTEXT_3  0x3
-#define CONTEXT_4  0x4
-#define CONTEXT_5  0x5
-#define CONTEXT_6  0x6
-#define CONTEXT_7  0x7
-#define CONTEXT_NUM 0x8
-#define CONTEXT_MASK 0x7
-
-#include <sys/types.h>
-
-void control_copy_byte __P((char *, char *, int ));
-
-unsigned char get_control_byte __P((char *));
-unsigned int get_control_word __P((char *));
-void set_control_byte __P((char *, unsigned char));
-void set_control_word __P((char *, unsigned int));
-
-vm_offset_t get_pte_pmeg __P((unsigned char, unsigned int));
-void set_pte_pmeg __P((unsigned char, unsigned int, vm_offset_t));
-
-int get_context __P((void));
-void set_context __P((int));
-     
-vm_offset_t get_pte __P((vm_offset_t va));
-void set_pte __P((vm_offset_t, vm_offset_t));
-     
-unsigned char get_segmap __P((vm_offset_t));
-void set_segmap __P((vm_offset_t va, unsigned char));
-
-void set_temp_seg_addr __P((vm_offset_t va));
+/*
+ * Get callers current SP value.
+ * Note that simply taking the address of a local variable in a C function
+ * doesn't work because callee saved registers may be outside the stack frame
+ * defined by A6 (e.g. GCC generated code).
+ *
+ * [I don't think the ENTRY() macro will do the right thing with this -- glass]
+ */
+	.globl	_getsp; .align 2
+_getsp:
+	movl	sp,d0			| get current SP
+	addql	#4,d0			| compensate for return address
+	rts

@@ -129,7 +129,7 @@ genassym:
 	    ${SUN3}/sun3/genassym.c
 
 depend: assym.s param.c
-	mkdep ${COPTS} ${CFILES} ioconf.c param.c ${SUN3}/sun3/locore.s
+	mkdep ${COPTS} ${CFILES} ioconf.c param.c
 	mkdep -a -p ${INCLUDES} ${IDENT} ${PARAM} ${SUN3}/sun3/genassym.c 
 
 links:
