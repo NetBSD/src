@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgereg.h,v 1.2 2002/06/24 01:21:39 fvdl Exp $	*/
+/*	$NetBSD: if_bgereg.h,v 1.3 2002/07/13 22:21:20 thorpej Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -230,6 +230,9 @@
 #define BGE_ASICREV_BCM5701_B0		0x01000000
 #define BGE_ASICREV_BCM5701_B2		0x01020000
 #define BGE_ASICREV_BCM5701_B5		0x01050000
+#define BGE_ASICREV_BCM5703_A0		0x10000000
+#define BGE_ASICREV_BCM5703_A1		0x10010000
+#define BGE_ASICREV_BCM5703_A2		0x10020000
 
 /* shorthand one */
 #define BGE_ASICREV_BCM5700_MASK	0x71000000
@@ -2239,6 +2242,7 @@ struct bge_softc {
 	u_int8_t		bge_tbi;
 	bus_dma_tag_t		bge_dmatag;
 	u_int32_t		bge_asicrev;
+	u_int32_t		bge_quirks;
 	struct bge_ring_data	*bge_rdata;	/* rings */
 	struct bge_chain_data	bge_cdata;	/* mbufs */
 	bus_dmamap_t		bge_ring_map;
