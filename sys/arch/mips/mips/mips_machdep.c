@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.90 2000/06/17 06:38:25 cgd Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.90.2.1 2001/06/07 15:58:29 he Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.90 2000/06/17 06:38:25 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.90.2.1 2001/06/07 15:58:29 he Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
@@ -644,6 +644,25 @@ cpu_identify()
 #endif
 	/* XXX cache sizes for MIPS1? */
 	/* XXX hardware mcclock CPU-speed computation */
+
+	/*
+	 * Install power-saving idle routines.
+	 */
+	switch (cpu_id.cpu.cp_imp) {
+#ifdef MIPS3
+	case MIPS_RM5200:
+	case MIPS_RM7000:
+	    {
+		extern void rm52xx_idle(void);
+
+		CPU_IDLE = (long *) rm52xx_idle;
+		break;
+	    }
+#endif /* MIPS3 */
+	default:
+		/* Nothing. */
+		break;
+	}
 }
 
 /*
