@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.181 2003/09/04 09:16:59 itojun Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.182 2003/09/06 03:12:51 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.181 2003/09/04 09:16:59 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.182 2003/09/06 03:12:51 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -3203,10 +3203,6 @@ syn_cache_get(src, dst, th, hlen, tlen, so, m)
 		if (in6p) {
 			in6p->in6p_laddr = ((struct sockaddr_in6 *)dst)->sin6_addr;
 			in6p->in6p_lport = ((struct sockaddr_in6 *)dst)->sin6_port;
-#if 0
-			in6p->in6p_flowinfo = ip6->ip6_flow & IPV6_FLOWINFO_MASK;
-			/*inp->inp_options = ip6_srcroute();*/ /* soon. */
-#endif
 			in6_pcbstate(in6p, IN6P_BOUND);
 		}
 		break;
