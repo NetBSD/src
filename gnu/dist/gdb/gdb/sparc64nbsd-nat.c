@@ -220,10 +220,15 @@ void
 nbsd_fpreg_to_internal (frgs)
 	char *frgs;
 {
+  int i;
+
   if (gdbarch_ptr_bit (current_gdbarch) == 32)
     sparcnbsd_supply_fpreg32(frgs, -1);
-  else
-    sparcnbsd_supply_fpreg64(frgs, -1);
+  else {
+    for (i = 0; i < 32; i++)
+      sparcnbsd_supply_fpreg64(frgs + i*8, FP0_REGNUM+i);
+    sparcnbsd_supply_fpreg64(frgs + 32*8, FSR_REGNUM);
+  }
 }
 
 void
@@ -232,7 +237,7 @@ nbsd_internal_to_reg (regs)
 {
   if (gdbarch_ptr_bit (current_gdbarch) == 32)
     sparcnbsd_fill_reg32(regs, -1);
-  else
+  else 
     sparcnbsd_fill_reg64(regs, -1);
 }
 
@@ -240,9 +245,14 @@ void
 nbsd_internal_to_fpreg (fpregs)
 	char *fpregs;
 {
+  int i;
+
   if (gdbarch_ptr_bit (current_gdbarch) == 32)
     sparcnbsd_fill_fpreg32(fpregs, -1);
-  else
-    sparcnbsd_fill_fpreg64(fpregs, -1);
+  else {
+    for (i = 0; i < 32; i++)
+      sparcnbsd_fill_fpreg64(fpregs + i*8, FP0_REGNUM+i);
+    sparcnbsd_fill_fpreg64(fpregs + 32*8, FSR_REGNUM);
+  }
 }
 
