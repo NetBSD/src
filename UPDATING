@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.128 2004/10/02 16:24:32 he Exp $
+$NetBSD: UPDATING,v 1.129 2004/10/12 04:03:20 jmc Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -16,6 +16,18 @@ See also: BUILDING, build.sh, Makefile.
 Recent changes:
 ^^^^^^^^^^^^^^^
 
+20041006:
+
+	A bug was introduced into /bin/sh (var.c rev 1.35) which causes
+	variables to not export correctly to subshells in all cases. This
+	will cause builds to break if that version of /bin/sh is installed
+	on the system. The proper version of /bin/sh can be verified with:
+
+        ident /bin/sh | grep var
+
+	Any /bin/sh w. version 1.35 will not work and needs to be updated
+	before attempting a build.
+	
 20041001:
 	The ipfilter kernel sources moved from sys/netinet to
 	dist/sys/ipf/netinet. Due to the move some Makefile
