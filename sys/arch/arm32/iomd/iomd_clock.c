@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_clock.c,v 1.20 2000/01/22 05:21:25 tsutsui Exp $	*/
+/*	$NetBSD: iomd_clock.c,v 1.21 2000/02/13 04:59:58 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -92,7 +92,7 @@ clockmatch(parent, cf, aux)
 {
 	struct clk_attach_args *ca = aux;
 
-	if (strcmp(ca->ca_name, "clk") == 0 && cf->cf_unit == 0)
+	if (strcmp(ca->ca_name, "clk") == 0)
 		return(1);
 	return(0);
 }
