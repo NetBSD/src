@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_stack.c,v 1.10 2004/01/02 19:14:00 cl Exp $	*/
+/*	$NetBSD: pthread_stack.c,v 1.11 2004/02/02 20:36:18 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_stack.c,v 1.10 2004/01/02 19:14:00 cl Exp $");
+__RCSID("$NetBSD: pthread_stack.c,v 1.11 2004/02/02 20:36:18 nathanw Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -67,9 +67,9 @@ pthread__stackid_setup(void *base, size_t size);
  * stack pointer to thread data afterwards.
  */
 #define	_STACKSIZE_LG 18
-int	pt_stacksize_lg = _STACKSIZE_LG;
-size_t	pt_stacksize = 1 << _STACKSIZE_LG;
-vaddr_t	pt_stackmask = (1 << _STACKSIZE_LG) - 1;
+int	pthread_stacksize_lg = _STACKSIZE_LG;
+size_t	pthread_stacksize = 1 << _STACKSIZE_LG;
+vaddr_t	pthread_stackmask = (1 << _STACKSIZE_LG) - 1;
 #undef	_STACKSIZE_LG
 #endif /* !PT_FIXEDSTACKSIZE_LG */
 
@@ -113,30 +113,30 @@ pthread__initmain(pthread_t *newt)
 	int ret;
 
 	pagesize = (size_t)sysconf(_SC_PAGESIZE);
-	pt_stacksize = 0;
+	pthread_stacksize = 0;
 	ret = getrlimit(RLIMIT_STACK, &slimit);
 	if (ret == -1)
 		err(1, "Couldn't get stack resource consumption limits");
 	value = getenv("PTHREAD_STACKSIZE");
 	if (value) {
-		pt_stacksize = atoi(value) * 1024;
-		if (pt_stacksize > slimit.rlim_cur)
-			pt_stacksize = (size_t)slimit.rlim_cur;
+		pthread_stacksize = atoi(value) * 1024;
+		if (pthread_stacksize > slimit.rlim_cur)
+			pthread_stacksize = (size_t)slimit.rlim_cur;
 	}
-	if (pt_stacksize == 0)
-		pt_stacksize = (size_t)slimit.rlim_cur;
-	if (pt_stacksize < 4 * pagesize)
+	if (pthread_stacksize == 0)
+		pthread_stacksize = (size_t)slimit.rlim_cur;
+	if (pthread_stacksize < 4 * pagesize)
 		errx(1, "Stacksize limit is too low, minimum %zd kbyte.",
 		    4 * pagesize / 1024);
 
-	pt_stacksize_lg = -1;
-	while (pt_stacksize) {
-		pt_stacksize >>= 1;
-		pt_stacksize_lg++;
+	pthread_stacksize_lg = -1;
+	while (pthread_stacksize) {
+		pthread_stacksize >>= 1;
+		pthread_stacksize_lg++;
 	}
 
-	pt_stacksize = (1 << pt_stacksize_lg);
-	pt_stackmask = pt_stacksize - 1;
+	pthread_stacksize = (1 << pthread_stacksize_lg);
+	pthread_stackmask = pthread_stacksize - 1;
 
 	/*
 	 * XXX The "initial" thread stack can be smaller than
