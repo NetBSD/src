@@ -27,4 +27,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 #define SOLIB_BKPT_NAME "_start"
 
+#define CANNOT_FETCH_REGISTER(regno) (regno == PS_REGNUM || regno >= MQ_REGNUM)
+#define CANNOT_STORE_REGISTER(regno) (regno == PS_REGNUM || regno >= MQ_REGNUM)
+
 #endif /* TM_NBSD_H */
