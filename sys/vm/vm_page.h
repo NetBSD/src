@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_page.h,v 1.28 1998/08/13 02:11:08 eeh Exp $	*/
+/*	$NetBSD: vm_page.h,v 1.29 1998/08/24 22:36:36 mrg Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -339,7 +339,7 @@ int		 vm_page_alloc_memory __P((psize_t size, paddr_t low,
 			struct pglist *rlist, int nsegs, int waitok));
 void		 vm_page_free_memory __P((struct pglist *list));
 #if defined(MACHINE_NONCONTIG) || defined(MACHINE_NEW_NONCONTIG)
-void		 vm_page_bootstrap __P((paddr_t *, paddr_t *));
+void		 vm_page_bootstrap __P((vaddr_t *, vaddr_t *));
 #endif
 void		 vm_page_copy __P((vm_page_t, vm_page_t));
 void		 vm_page_deactivate __P((vm_page_t));
