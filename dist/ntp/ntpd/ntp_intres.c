@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_intres.c,v 1.2 2000/04/22 15:49:32 simonb Exp $	*/
+/*	$NetBSD: ntp_intres.c,v 1.3 2001/01/16 02:50:27 cgd Exp $	*/
 
 /*
  * ripped off from ../ntpres/ntpres.c by Greg Troxel 4/2/92
@@ -468,7 +468,7 @@ findhostaddr(
 		if (debug > 2)
 			msyslog(LOG_INFO, "findhostaddr: Resolving <%s>",
 				entry->ce_name);
-#endif DEBUG
+#endif /* DEBUG */
 		hp = gethostbyname(entry->ce_name);
 	} else {
 #ifdef DEBUG

@@ -1,4 +1,4 @@
-/*     $NetBSD: login.c,v 1.63 2001/01/10 12:24:38 lukem Exp $       */
+/*     $NetBSD: login.c,v 1.64 2001/01/16 02:50:29 cgd Exp $       */
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: login.c,v 1.63 2001/01/10 12:24:38 lukem Exp $");
+__RCSID("$NetBSD: login.c,v 1.64 2001/01/16 02:50:29 cgd Exp $");
 #endif /* not lint */
 
 /*
@@ -314,7 +314,7 @@ main(argc, argv)
 		}
 		login_krb5_get_tickets = 0;
 	}
-#endif KERBEROS5
+#endif /* KERBEROS5 */
 
 	for (cnt = 0;; ask = 1) {
 #if defined(KERBEROS)

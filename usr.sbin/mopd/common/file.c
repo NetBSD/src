@@ -1,4 +1,4 @@
-/*	$NetBSD: file.c,v 1.6 1998/07/25 06:01:13 mycroft Exp $	*/
+/*	$NetBSD: file.c,v 1.7 2001/01/16 02:50:31 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995-96 Mats O Jansson.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: file.c,v 1.6 1998/07/25 06:01:13 mycroft Exp $");
+__RCSID("$NetBSD: file.c,v 1.7 2001/01/16 02:50:31 cgd Exp $");
 #endif
 
 #include "os.h"
@@ -427,7 +427,7 @@ CheckAOutFile(fd)
 	} else {
 		return(-1);
 	}
-#endif NOAOUT
+#endif /* NOAOUT */
 }
 
 int
@@ -662,7 +662,7 @@ GetAOutFileInfo(fd, load, xfr, a_text, a_text_fill,
 	}
 
 	return(0);
-#endif NOAOUT
+#endif /* NOAOUT */
 }
 
 int
