@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.h,v 1.40 1998/03/21 04:02:47 mycroft Exp $	*/
+/*	$NetBSD: tty.h,v 1.41 1998/03/22 00:55:38 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -144,11 +144,12 @@ struct tty {
 #define	TS_ASYNC	0x00002		/* Tty in async I/O mode. */
 #define	TS_BUSY		0x00004		/* Draining output. */
 #define	TS_CARR_ON	0x00008		/* Carrier is present. */
-#define	TS_FLUSH	0x00010		/* Outq has been flushed during DMA. */
-#define	TS_ISOPEN	0x00020		/* Open has completed. */
-#define	TS_TBLOCK	0x00040		/* Further input blocked. */
-#define	TS_TIMEOUT	0x00080		/* Wait for output char processing. */
-#define	TS_TTSTOP	0x00100		/* Output paused. */
+#define	TS_DIALOUT	0x00010		/* Tty used for dialout. */
+#define	TS_FLUSH	0x00020		/* Outq has been flushed during DMA. */
+#define	TS_ISOPEN	0x00040		/* Open has completed. */
+#define	TS_TBLOCK	0x00080		/* Further input blocked. */
+#define	TS_TIMEOUT	0x00100		/* Wait for output char processing. */
+#define	TS_TTSTOP	0x00200		/* Output paused. */
 #define	TS_XCLUDE	0x00400		/* Tty requires exclusivity. */
 
 /* State for intra-line fancy editing work. */
@@ -237,8 +238,9 @@ void	 ttyflush __P((struct tty *tp, int rw));
 void	 ttyinfo __P((struct tty *tp));
 int	 ttyinput __P((int c, struct tty *tp));
 int	 ttylclose __P((struct tty *tp, int flag));
+int	 ttylopen __P((dev_t device, struct tty *tp));
 int	 ttymodem __P((struct tty *tp, int flag));
-int	 ttyopen __P((dev_t device, struct tty *tp));
+int	 ttyopen __P((struct tty *tp, int dialout, int nonblock));
 int	 ttyoutput __P((int c, struct tty *tp));
 void	 ttypend __P((struct tty *tp));
 void	 ttyretype __P((struct tty *tp));
