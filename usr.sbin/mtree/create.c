@@ -1,4 +1,4 @@
-/*	$NetBSD: create.c,v 1.17 1998/10/08 02:04:56 wsanchez Exp $	*/
+/*	$NetBSD: create.c,v 1.18 1998/10/10 07:50:28 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)create.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: create.c,v 1.17 1998/10/08 02:04:56 wsanchez Exp $");
+__RCSID("$NetBSD: create.c,v 1.18 1998/10/10 07:50:28 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -62,16 +62,18 @@ __RCSID("$NetBSD: create.c,v 1.17 1998/10/08 02:04:56 wsanchez Exp $");
 
 extern int crc_total, ftsoptions;
 extern int dflag, sflag;
-extern u_short keys;
+extern int keys;
 extern char fullpath[MAXPATHLEN];
 
 static gid_t gid;
 static uid_t uid;
 static mode_t mode;
+static u_long flags;
 
 static int	dsort __P((const FTSENT **, const FTSENT **));
 static void	output __P((int *, const char *, ...));
-static int	statd __P((FTS *, FTSENT *, uid_t *, gid_t *, mode_t *));
+static int	statd __P((FTS *, FTSENT *, uid_t *, gid_t *, mode_t *,
+			   u_long *));
 static void	statf __P((FTSENT *));
 
 void
@@ -97,7 +99,7 @@ cwalk()
 		switch(p->fts_info) {
 		case FTS_D:
 			(void)printf("\n# %s\n", p->fts_path);
-			statd(t, p, &uid, &gid, &mode);
+			statd(t, p, &uid, &gid, &mode, &flags);
 			statf(p);
 			break;
 		case FTS_DP:
@@ -182,35 +184,45 @@ statf(p)
 	if (keys & F_SLINK &&
 	    (p->fts_info == FTS_SL || p->fts_info == FTS_SLNONE))
 		output(&indent, "link=%s", rlink(p->fts_accpath));
+	if (keys & F_FLAGS && p->fts_statp->st_flags != flags)
+		output(&indent, "flags=%s",
+		    flags_to_string(p->fts_statp->st_flags, "none"));
 	(void)putchar('\n');
 }
 
 #define	MAXGID	5000
 #define	MAXUID	5000
 #define	MAXMODE	MBITS + 1
+#define	MAXFLAGS 256
+#define	MAXS 16
 
 static int
-statd(t, parent, puid, pgid, pmode)
+statd(t, parent, puid, pgid, pmode, pflags)
 	FTS *t;
 	FTSENT *parent;
 	uid_t *puid;
 	gid_t *pgid;
 	mode_t *pmode;
+	u_long *pflags;
 {
 	FTSENT *p;
 	gid_t sgid;
 	uid_t suid;
 	mode_t smode;
+	u_long sflags;
 	struct group *gr;
 	struct passwd *pw;
 	gid_t savegid;
 	uid_t saveuid;
 	mode_t savemode;
-	u_short maxgid, maxuid, maxmode, g[MAXGID], u[MAXUID], m[MAXMODE];
+	u_long saveflags;
+	u_short maxgid, maxuid, maxmode, maxflags;
+	u_short g[MAXGID], u[MAXUID], m[MAXMODE], f[MAXFLAGS];
 
 	savegid = 0;
 	saveuid = 0;
 	savemode = 0;
+	saveflags = 0;
 	if ((p = fts_children(t, 0)) == NULL) {
 		if (errno)
 			mtree_err("%s: %s", RP(parent), strerror(errno));
@@ -220,8 +232,9 @@ statd(t, parent, puid, pgid, pmode)
 	memset(g, 0, sizeof(g));
 	memset(u, 0, sizeof(u));
 	memset(m, 0, sizeof(m));
+	memset(f, 0, sizeof(f));
 
-	maxuid = maxgid = maxmode = 0;
+	maxuid = maxgid = maxmode = maxflags = 0;
 	for (; p; p = p->fts_link) {
 		smode = p->fts_statp->st_mode & MBITS;
 		if (smode < MAXMODE && ++m[smode] > maxmode) {
@@ -237,6 +250,19 @@ statd(t, parent, puid, pgid, pmode)
 		if (suid < MAXUID && ++u[suid] > maxuid) {
 			saveuid = suid;
 			maxuid = u[suid];
+		}
+/*
+ * XXX
+ * note that the below will break when file flags are extended
+ * beyond the first 4 bytes of each half word of the flags
+ */
+#define FLAGS2IDX(f) ((f & 0xf) | ((f >> 12) & 0xf0))
+
+		sflags = p->fts_statp->st_flags;
+		if (FLAGS2IDX(sflags) < MAXFLAGS &&
+		    ++f[FLAGS2IDX(sflags)] > maxflags) {
+			saveflags = sflags;
+			maxflags = u[FLAGS2IDX(sflags)];
 		}
 	}
 	(void)printf("/set type=file");
@@ -260,10 +286,14 @@ statd(t, parent, puid, pgid, pmode)
 		(void)printf(" mode=%#o", savemode);
 	if (keys & F_NLINK)
 		(void)printf(" nlink=1");
+	if (keys & F_FLAGS && saveflags)
+		(void)printf(" flags=%s",
+		    flags_to_string(saveflags, "none"));
 	(void)printf("\n");
 	*puid = saveuid;
 	*pgid = savegid;
 	*pmode = savemode;
+	*pflags = saveflags;
 	return (0);
 }
 

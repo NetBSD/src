@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.6 1998/10/08 02:04:56 wsanchez Exp $	*/
+/*	$NetBSD: misc.c,v 1.7 1998/10/10 07:50:28 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: misc.c,v 1.6 1998/10/08 02:04:56 wsanchez Exp $");
+__RCSID("$NetBSD: misc.c,v 1.7 1998/10/10 07:50:28 mrg Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -60,6 +60,7 @@ typedef struct _key {
 /* NB: the following table must be sorted lexically. */
 static KEY keylist[] = {
 	{"cksum",	F_CKSUM,	NEEDVALUE},
+	{"flags",	F_FLAGS,	NEEDVALUE},
 	{"gid",		F_GID,		NEEDVALUE},
 	{"gname",	F_GNAME,	NEEDVALUE},
 	{"ignore",	F_IGN,		0},
