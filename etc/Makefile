@@ -47,6 +47,8 @@ distribution: distrib-dirs
 	    ${DESTDIR}/etc/namedb
 	install -c -o ${BINOWN} -g operator -m 664 /dev/null \
 	    ${DESTDIR}/etc/dumpdates
+	install -c -o nobody -g ${BINGRP} -m 664 /dev/null \
+	    ${DESTDIR}/var/db/locate.database
 	install -c -o ${BINOWN} -g ${BINGRP} -m 664 /dev/null \
 	    ${DESTDIR}/var/log/messages
 	install -c -o ${BINOWN} -g ${BINGRP} -m 664 /dev/null \
@@ -97,5 +99,7 @@ distrib-dirs:
 		  ${DESTDIR}/var/spool/uucppublic
 	rm -f ${DESTDIR}/sys
 	ln -s ${DESTDIR}/usr/src/sys.386bsd ${DESTDIR}/sys
+	-mkdir ${DESTDIR}/usr/obj
+	chmod 755 ${DESTDIR}/usr/obj
 
 .include <bsd.prog.mk>
