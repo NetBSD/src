@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.84 2003/02/27 23:10:52 matt Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.85 2003/02/27 23:48:29 matt Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.84 2003/02/27 23:10:52 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.85 2003/02/27 23:48:29 matt Exp $");
 
 /* If not included by exec_elf64.c, ELFSIZE won't be defined. */
 #ifndef ELFSIZE
@@ -441,15 +441,17 @@ ELFNAME(load_file)(struct proc *p, struct exec_package *epp, char *path,
 			} else {
 				u_long limit = round_page(last_ph->p_vaddr
 				    + last_ph->p_memsz);
+				u_long base = trunc_page(
+				     ELF_TRUNC(ph0->p_vaddr, ph0->p_align));
 
 				/*
 				 * If there is a gap in between the psections,
 				 * map it as inaccessible so nothing else
 				 * mmap'ed will be placed there.
 				 */
-				if (limit != trunc_page(ph0->p_vaddr)) {
+				if (limit != base) {
 					NEW_VMCMD2(vcset, vmcmd_map_zero,
-					    trunc_page(ph0->p_vaddr) - limit,
+					    base - limit,
 					    limit - base_ph->p_vaddr,
 					    NULLVP, 0, 0, VMCMD_RELATIVE);
 				}
