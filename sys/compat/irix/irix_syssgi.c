@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_syssgi.c,v 1.16 2002/02/17 20:44:17 manu Exp $ */
+/*	$NetBSD: irix_syssgi.c,v 1.17 2002/02/23 22:35:15 manu Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.16 2002/02/17 20:44:17 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.17 2002/02/23 22:35:15 manu Exp $");
 
 #include "opt_ddb.h"
 
@@ -58,6 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.16 2002/02/17 20:44:17 manu Exp $"
 #include <sys/buf.h>
 #include <sys/vnode.h>
 #include <sys/file.h>
+#include <sys/resourcevar.h>
 #include <sys/sysctl.h>
 #include <sys/exec.h>
 #include <sys/exec_elf.h>
@@ -65,6 +66,8 @@ __KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.16 2002/02/17 20:44:17 manu Exp $"
 #include <sys/syscallargs.h>
 
 #include <uvm/uvm_extern.h>
+
+#include <compat/common/compat_util.h>
 
 #include <compat/svr4/svr4_types.h>
 
@@ -371,6 +374,8 @@ irix_syssgi_sysconf(name, p, retval)
 	int error = 0;
 	int mib[2], value;
 	int len = sizeof(value);
+	struct sys___sysctl_args cup;
+	caddr_t sg = stackgap_init(p->p_emul);
 
 	switch (name) {
 	case IRIX_SC_ARG_MAX:
@@ -378,8 +383,8 @@ irix_syssgi_sysconf(name, p, retval)
 		mib[1] = KERN_ARGMAX;
 		break;
 	case IRIX_SC_CHILD_MAX:
-		mib[0] = CTL_KERN;
-		mib[1] = KERN_MAXPROC;
+		*retval = (register_t)p->p_rlimit[RLIMIT_NPROC].rlim_cur;
+		return 0;
 		break;
 	case IRIX_SC_CLK_TCK:
 		*retval = hz;
@@ -390,16 +395,16 @@ irix_syssgi_sysconf(name, p, retval)
 		mib[1] = KERN_NGROUPS;
 		break;
 	case IRIX_SC_OPEN_MAX:
-		mib[0] = CTL_KERN;
-		mib[1] = KERN_MAXFILES;
+		*retval = (register_t)p->p_rlimit[RLIMIT_NOFILE].rlim_cur;
+		return 0;
 		break;
 	case IRIX_SC_JOB_CONTROL:
-		*retval = 1;
-		return 0;
+		mib[0] = CTL_KERN;
+		mib[1] = KERN_JOB_CONTROL;
 		break;
 	case IRIX_SC_SAVED_IDS:
-		*retval = 1;
-		return 0;
+		mib[0] = CTL_KERN;
+		mib[1] = KERN_SAVED_IDS;
 		break;
 	/* Trusted IRIX capabilities are unsupported */
 	case IRIX_SC_ACL:	/* ACcess Lists */
@@ -424,8 +429,18 @@ irix_syssgi_sysconf(name, p, retval)
 		break;
 	}
 
-	error = kern_sysctl(mib, 2, &value, &len, NULL, 0, p);
-	if (error == 0)
-		*retval = (register_t)value;
-	return error;
+	SCARG(&cup, name) = stackgap_alloc(&sg, sizeof(mib));
+	if ((error = copyout(&mib, SCARG(&cup, name), sizeof(mib))) != 0)
+		return error;
+	SCARG(&cup, namelen) = sizeof(mib);
+	SCARG(&cup, old) = stackgap_alloc(&sg, sizeof(value));
+	if ((copyout(&value, SCARG(&cup, old), sizeof(value))) != 0)
+		return error;
+	SCARG(&cup, oldlenp) = stackgap_alloc(&sg, sizeof(len));
+	if ((copyout(&len, SCARG(&cup, oldlenp), sizeof(len))) != 0)
+		return error;
+	SCARG(&cup, new) = NULL;
+	SCARG(&cup, newlen) = 0;
+
+	return sys___sysctl(p, &cup, retval);
 }
