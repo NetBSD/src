@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctlgetmibinfo.c,v 1.3 2004/04/08 05:45:26 atatat Exp $ */
+/*	$NetBSD: sysctlgetmibinfo.c,v 1.4 2005/02/09 19:32:36 kleink Exp $ */
 
 /*-
  * Copyright (c) 2003,2004 The NetBSD Foundation, Inc.
@@ -40,6 +40,7 @@
 #include <sys/sysctl.h>
 
 #include <errno.h>
+#include <inttypes.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -397,7 +398,7 @@ sysctlgetmibinfo_unlocked(const char *gname, int *iname, u_int *namelenp,
 	struct sysctlnode *pnode, *node;
 	int name[CTL_MAXNAME], ni, n, haven;
 	u_int nl;
-	quad_t q;
+	intmax_t q;
 	char sep[2], token[SYSCTL_NAMELEN],
 		pname[SYSCTL_NAMELEN * CTL_MAXNAME + CTL_MAXNAME];
 	const char *piece, *dot;
@@ -487,7 +488,7 @@ sysctlgetmibinfo_unlocked(const char *gname, int *iname, u_int *namelenp,
 		 * i wonder if this "token" is an integer?
 		 */
 		errno = 0;
-		q = strtoq(token, &t, 0);
+		q = strtoimax(token, &t, 0);
 		n = (int)q;
 		if (errno != 0 || *t != '\0')
 			haven = 0;
