@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.25 2000/05/31 00:52:36 oster Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.26 2000/06/04 02:05:13 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -435,7 +435,8 @@ rf_ReconstructInPlace(raidPtr, row, col)
 			raidPtr->numFailures++;
 			raidPtr->Disks[row][col].status = rf_ds_failed;
 			raidPtr->status[row] = rf_rs_degraded;
-			rf_update_component_labels(raidPtr);
+			rf_update_component_labels(raidPtr, 
+						   RF_NORMAL_COMPONENT_UPDATE);
 		}
 
 		while (raidPtr->reconInProgress) {
