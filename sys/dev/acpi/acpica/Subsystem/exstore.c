@@ -116,7 +116,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exstore.c,v 1.9 2003/12/13 18:11:01 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exstore.c,v 1.10 2004/02/02 08:00:56 soren Exp $");
 
 #define __EXSTORE_C__
 
@@ -392,7 +392,7 @@ AcpiExStoreObjectToIndex (
 
             /* If same as the original source, add a reference */
 
-            if (NewDesc == SourceDesc)
+            if (NewDesc == SourceDesc || ObjDesc == NULL)
             {
                 AcpiUtAddReference (NewDesc);
             }
