@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1983, 1993
+ * Copyright (c) 1995
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,45 +31,47 @@
  * SUCH DAMAGE.
  */
 
-#if defined(LIBC_SCCS) && !defined(lint)
-static char sccsid[] = "@(#)readdir.c	8.3 (Berkeley) 9/29/94";
-#endif /* LIBC_SCCS and not lint */
+#ifndef lint
+static char sccsid[] = "@(#)kvm_getvfsbyname.c	8.1 (Berkeley) 4/3/95";
+#endif /* not lint */
 
 #include <sys/param.h>
-#include <dirent.h>
+#include <sys/mount.h>
+#include <sys/sysctl.h>
+#include <errno.h>
+#include <kvm.h>
+
+int getvfsbyname __P((const char *, struct vfsconf *));
 
 /*
- * get next entry in a directory.
+ * Given a filesystem name, determine if it is resident in the kernel,
+ * and if it is resident, return its vfsconf structure.
  */
-struct dirent *
-readdir(dirp)
-	register DIR *dirp;
+getvfsbyname(fsname, vfcp)
+	const char *fsname;
+	struct vfsconf *vfcp;
 {
-	register struct dirent *dp;
+	int name[4], maxtypenum, cnt;
+	size_t buflen;
 
-	for (;;) {
-		if (dirp->dd_loc >= dirp->dd_size) {
-			if (dirp->dd_flags & __DTF_READALL)
-				return (NULL);
-			dirp->dd_loc = 0;
-		}
-		if (dirp->dd_loc == 0 && !(dirp->dd_flags & __DTF_READALL)) {
-			dirp->dd_size = getdirentries(dirp->dd_fd,
-			    dirp->dd_buf, dirp->dd_len, &dirp->dd_seek);
-			if (dirp->dd_size <= 0)
-				return (NULL);
-		}
-		dp = (struct dirent *)(dirp->dd_buf + dirp->dd_loc);
-		if ((int)dp & 03)	/* bogus pointer check */
-			return (NULL);
-		if (dp->d_reclen <= 0 ||
-		    dp->d_reclen > dirp->dd_len + 1 - dirp->dd_loc)
-			return (NULL);
-		dirp->dd_loc += dp->d_reclen;
-		if (dp->d_ino == 0)
+	name[0] = CTL_VFS;
+	name[1] = VFS_GENERIC;
+	name[2] = VFS_MAXTYPENUM;
+	buflen = 4;
+	if (sysctl(name, 3, &maxtypenum, &buflen, (void *)0, (size_t)0) < 0)
+		return (-1);
+	name[2] = VFS_CONF;
+	buflen = sizeof *vfcp;
+	for (cnt = 0; cnt < maxtypenum; cnt++) {
+		name[3] = cnt;
+		if (sysctl(name, 4, vfcp, &buflen, (void *)0, (size_t)0) < 0) {
+			if (errno != EOPNOTSUPP)
+				return (-1);
 			continue;
-		if (dp->d_type == DT_WHT && (dirp->dd_flags & DTF_HIDEW))
-			continue;
-		return (dp);
+		}
+		if (!strcmp(fsname, vfcp->vfc_name))
+			return (0);
 	}
+	errno = ENOENT;
+	return (-1);
 }

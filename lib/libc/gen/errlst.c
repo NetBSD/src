@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1982, 1985 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1985, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,10 +32,12 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char sccsid[] = "@(#)errlst.c	5.10 (Berkeley) 2/19/91";
+static char sccsid[] = "@(#)errlst.c	8.2 (Berkeley) 11/16/93";
 #endif /* LIBC_SCCS and not lint */
 
-char *sys_errlist[] = {
+#include <stdio.h>
+
+const char *const sys_errlist[] = {
 	"Undefined error: 0",			/*  0 - ENOERROR */
 	"Operation not permitted",		/*  1 - EPERM */
 	"No such file or directory",		/*  2 - ENOENT */
@@ -106,7 +108,7 @@ char *sys_errlist[] = {
 	"Socket is not connected",		/* 57 - ENOTCONN */
 	"Can't send after socket shutdown",	/* 58 - ESHUTDOWN */
 	"Too many references: can't splice",	/* 59 - ETOOMANYREFS */
-	"Connection timed out",			/* 60 - ETIMEDOUT */
+	"Operation timed out",			/* 60 - ETIMEDOUT */
 	"Connection refused",			/* 61 - ECONNREFUSED */
 
 	"Too many levels of symbolic links",	/* 62 - ELOOP */
@@ -136,4 +138,4 @@ char *sys_errlist[] = {
 	"Inappropriate file type or format",	/* 79 - EFTYPE */
 };
 int errno;
-int sys_nerr = { sizeof sys_errlist/sizeof sys_errlist[0] };
+const int sys_nerr = sizeof(sys_errlist) / sizeof(sys_errlist[0]);
