@@ -1,4 +1,4 @@
-.\"	$NetBSD: ktrace.1,v 1.5 1997/02/07 03:27:22 mikel Exp $
+.\"	$NetBSD: ktrace.1,v 1.6 1997/05/25 03:52:45 cjs Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)ktrace.1	8.1 (Berkeley) 6/6/93
-.\"	$NetBSD: ktrace.1,v 1.5 1997/02/07 03:27:22 mikel Exp $
+.\"	$NetBSD: ktrace.1,v 1.6 1997/05/25 03:52:45 cjs Exp $
 .\"
 .Dd June 6, 1993
 .Dt KTRACE 1
@@ -136,8 +136,10 @@ options are mutually exclusive.
 # trace all kernel operations of process id 34
 .Dl $ ktrace -p 34
 .Pp
+.Bd -literal
 # trace all kernel operations of processes in process group 15 and
 # pass the trace flags to all current and future children
+.Ed
 .Dl $ ktrace -idg 15
 .Pp
 # disable all tracing of process 65
