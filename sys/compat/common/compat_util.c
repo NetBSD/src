@@ -1,4 +1,4 @@
-/* 	$NetBSD: compat_util.c,v 1.19 2001/01/22 19:50:56 jdolecek Exp $	*/
+/* 	$NetBSD: compat_util.c,v 1.20 2001/02/02 21:17:45 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -144,7 +144,10 @@ emul_find(p, sgp, prefix, path, pbuf, sflag)
 		*cp = '/';
 		break;
 	case CHECK_ALT_FL_EXISTS:
-		NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, buf, p);
+	case CHECK_ALT_FL_SYMLINK:
+		NDINIT(&nd, LOOKUP,	
+			(sflag == CHECK_ALT_FL_SYMLINK) ? NOFOLLOW : FOLLOW,
+			UIO_SYSSPACE, buf, p);
 
 		if ((error = namei(&nd)) != 0)
 			goto bad;
@@ -174,14 +177,6 @@ emul_find(p, sgp, prefix, path, pbuf, sflag)
 			error = ENOENT;
 			goto bad3;
 		}
-
-		break;
-
-	case CHECK_ALT_FL_SYMLINK:
-		NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_SYSSPACE, buf, p);
-
-		if ((error = namei(&nd)) != 0)
-			goto bad;
 
 		break;
 	}
