@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.87 2004/05/14 18:39:21 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.88 2004/07/09 12:12:27 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1996-2002 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.87 2004/05/14 18:39:21 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.88 2004/07/09 12:12:27 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -1029,8 +1029,8 @@ usage(void)
 	const char *progname = getprogname();
 
 	(void)fprintf(stderr,
-"usage: %s [-46AadefginpRtvV] [-N netrc] [-o outfile] [-P port] [-r retry]\n"
-"           [-T dir,max[,inc][[user@]host [port]]] [host:path[/]]\n"
+"usage: %s [-46AadefginpRtvV] [-N netrc] [-o outfile] [-P port] [-q quittime]\n"
+"           [-r retry] [-T dir,max[,inc][[user@]host [port]]] [host:path[/]]\n"
 "           [file:///file] [ftp://[user[:pass]@]host[:port]/path[/]]\n"
 "           [http://[user[:pass]@]host[:port]/path] [...]\n"
 "       %s -u URL file [...]\n", progname, progname);
