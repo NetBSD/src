@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.17 1995/06/12 00:46:50 mycroft Exp $	*/
+/*	$NetBSD: if.h,v 1.18 1995/06/19 21:41:37 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -316,7 +316,7 @@ struct	ifconf {
 	else \
 		(ifa)->ifa_refcnt--;
 
-TAILQ_HEAD(, ifnet) ifnet;
+TAILQ_HEAD(ifnet_head, ifnet) ifnet;
 
 void	ether_ifattach __P((struct ifnet *));
 void	ether_input __P((struct ifnet *, struct ether_header *, struct mbuf *));
