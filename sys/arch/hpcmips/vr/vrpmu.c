@@ -1,4 +1,4 @@
-/*	$NetBSD: vrpmu.c,v 1.7 2000/04/03 04:32:00 sato Exp $	*/
+/*	$NetBSD: vrpmu.c,v 1.7.4.1 2000/08/06 04:32:24 takemura Exp $	*/
 
 /*
  * Copyright (c) 1999 M. Warner Losh.  All rights reserved.
@@ -42,8 +42,6 @@
 #include <hpcmips/vr/bcuvar.h>
 #include <hpcmips/vr/bcureg.h>
 #endif
-
-int vrpmu_pwstate = 1;
 
 #ifdef VRPMUDEBUG
 #define DEBUG_BOOT	0x1	/* boot time */
@@ -290,13 +288,15 @@ vrpmu_intr(arg)
 	if (intstat1 & PMUINT_BATTINTR)
 		;
 	if (intstat1 & PMUINT_POWERSW) {
-		vrpmu_pwstate = !vrpmu_pwstate;
+		/*
+		 * you can't detect when the button is released
+		 */
 		config_hook_call(CONFIG_HOOK_BUTTONEVENT,
 				 CONFIG_HOOK_BUTTONEVENT_POWER,
-				 (void*)vrpmu_pwstate);
-		config_hook_call(CONFIG_HOOK_POWERCONTROL,
-				 CONFIG_HOOK_POWERCONTROL_LCD,
-				 (void*)vrpmu_pwstate);
+				 (void*)1 /* on */);
+		config_hook_call(CONFIG_HOOK_BUTTONEVENT,
+				 CONFIG_HOOK_BUTTONEVENT_POWER,
+				 (void*)0 /* off */);
 	}
 
 	if (intstat2 & PMUINT_GPIO12)
