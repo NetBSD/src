@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.s,v 1.52 2002/10/03 15:58:56 fvdl Exp $	*/
+/*	$NetBSD: vector.s,v 1.53 2002/10/05 21:29:02 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -162,10 +162,12 @@
 
 #ifdef __STDC__
 #define	XINTR(irq_num)		Xintr ## irq_num
+#define XINTR_TSS(irq_num)	Xintr_tss_ ## irq_num
 #define	XHOLD(irq_num)		Xhold ## irq_num
 #define	XSTRAY(irq_num)		Xstray ## irq_num
 #else
 #define	XINTR(irq_num)		Xintr/**/irq_num
+#define XINTR_TSS(irq_num)	Xintr_tss_/**/irq_num
 #define	XHOLD(irq_num)		Xhold/**/irq_num
 #define	XSTRAY(irq_num)		Xstray/**/irq_num
 #endif /* __STDC__ */
