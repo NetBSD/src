@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.68 1997/02/02 08:35:27 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.69 1997/02/18 20:16:54 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -91,6 +91,8 @@
 #include <machine/pmap.h>
 #include <machine/machdep.h>
 
+extern void copypage __P((const void*, void*));
+extern void zeropage __P((void*));
 
 #if	(PMAP_OBIO << PG_MOD_SHIFT) != PGT_OBIO
 #error	"PMAP_XXX definitions don't match pte.h!"
@@ -2857,12 +2859,14 @@ pmap_pageable(pmap, sva, eva, pageable)
  * XXX	this should almost certainly be done differently, and
  *	elsewhere, or even not at all
  */
+#ifndef	pmap_phys_address
 vm_offset_t
 pmap_phys_address(x)
 	int x;
 {
 	return (x);
 }
+#endif
 
 /*
  * Initialize a preallocated and zeroed pmap structure,
@@ -3132,9 +3136,8 @@ pmap_protect(pmap, sva, eva, prot)
 }
 
 /*
- * Count pages resident in this pmap.
- * XXX - Should be called: pmap_resident_count()
- * but that has to be a macro (see kern_sysctl.c)
+ * Count resident pages in this pmap.
+ * See: kern_sysctl.c:pmap_resident_count
  */
 segsz_t
 pmap_resident_pages(pmap)
@@ -3143,14 +3146,45 @@ pmap_resident_pages(pmap)
 	int i, sme, pages;
 	pmeg_t pmeg;
 
+	if (pmap->pm_segmap == 0)
+		return (0);
+
 	pages = 0;
-	if (pmap->pm_segmap) {
-		for (i = 0; i < NUSEG; i++) {
-			sme = pmap->pm_segmap[i];
-			if (sme != SEGINV) {
-				pmeg = pmeg_p(sme);
-				pages += pmeg->pmeg_vpages;
-			}
+	for (i = 0; i < NUSEG; i++) {
+		sme = pmap->pm_segmap[i];
+		if (sme != SEGINV) {
+			pmeg = pmeg_p(sme);
+			pages += pmeg->pmeg_vpages;
+		}
+	}
+	return (pages);
+}
+
+/*
+ * Count wired pages in this pmap.
+ * See vm_mmap.c:pmap_wired_count
+ */
+segsz_t
+pmap_wired_pages(pmap)
+	pmap_t pmap;
+{
+	int i, mask, sme, pages;
+	pmeg_t pmeg;
+
+	if (pmap->pm_segmap == 0)
+		return (0);
+
+	pages = 0;
+	for (i = 0; i < NUSEG; i++) {
+		sme = pmap->pm_segmap[i];
+		if (sme != SEGINV) {
+			pmeg = pmeg_p(sme);
+			mask = 0x8000;
+			do {
+				if (pmeg->pmeg_wired & mask)
+					pages++;
+				mask = (mask >> 1);
+			} while (mask);
 		}
 	}
 	return (pages);
