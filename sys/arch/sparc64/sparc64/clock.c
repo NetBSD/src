@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.45 2002/02/23 17:18:55 scw Exp $ */
+/*	$NetBSD: clock.c,v 1.46 2002/03/01 11:51:01 martin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -340,7 +340,7 @@ clockattach_ebus(parent, self, aux)
 
 	if (ebus_bus_map(bt,
 			 0,
-			 EBUS_PADDR_FROM_REG(&ea->ea_regs[0]),
+			 EBUS_ADDR_FROM_REG(&ea->ea_regs[0]),
 			 sz,
 			 BUS_SPACE_MAP_LINEAR,
 			 0,
@@ -382,7 +382,7 @@ ebus_wenable(handle, onoff)
 		bus_space_handle_t newaddr;
 
 		err = sbus_bus_map(ebi->ei_bt, 0,
-			EBUS_PADDR_FROM_REG(&ebi->ei_reg), 8192, prot,
+			EBUS_ADDR_FROM_REG(&ebi->ei_reg), 8192, prot,
 			(vaddr_t)ebi->ei_bh, &newaddr);
 		/* We can panic now or take a datafault later... */
 		if (ebi->ei_bh != newaddr)
@@ -477,7 +477,7 @@ clockattach_rtc(parent, self, aux)
 
 	if (ebus_bus_map(bt,
 			 0,
-			 EBUS_PADDR_FROM_REG(&ea->ea_regs[0]),
+			 EBUS_ADDR_FROM_REG(&ea->ea_regs[0]),
 			 sz,
 			 BUS_SPACE_MAP_LINEAR,
 			 0,
