@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.53 1998/11/23 22:10:09 wrstuden Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.54 1999/01/13 11:55:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998
@@ -201,9 +201,12 @@ cdev_decl(zs);	/* open, close, read, write, ioctl, stop, ... */
 static void zs_shutdown __P((struct zstty_softc *));
 static void	zsstart __P((struct tty *));
 static int	zsparam __P((struct tty *, struct termios *));
-static void zs_modem __P((struct zstty_softc *zst, int onoff));
-static int	zshwiflow __P((struct tty *, int));
-static void zs_hwiflow __P((struct zstty_softc *));
+static void zs_modem __P((struct zstty_softc *, int));
+static void tiocm_to_zs __P((struct zstty_softc *, struct zs_chanstate *,
+    int, int));
+static int  zs_to_tiocm __P((struct zs_chanstate *));
+static int    zshwiflow __P((struct tty *, int));
+static void  zs_hwiflow __P((struct zstty_softc *));
 
 #define	ZSUNIT(x)	(minor(x) & 0x7ffff)
 #define	ZSDIALOUT(x)	(minor(x) & 0x80000)
@@ -662,7 +665,13 @@ zsioctl(dev, cmd, data, flag, p)
 	case TIOCMSET:
 	case TIOCMBIS:
 	case TIOCMBIC:
+		tiocm_to_zs(zst, cs, cmd, *(int *)data);
+		break;
+
 	case TIOCMGET:
+		*(int *)data = zs_to_tiocm(cs);
+		break;
+
 	default:
 		error = ENOTTY;
 		break;
@@ -971,6 +980,73 @@ zs_modem(zst, onoff)
 		} else
 			zs_loadchannelregs(cs);
 	}
+}
+
+static void
+tiocm_to_zs(zst, cs, how, val)
+	struct zstty_softc *zst;
+	struct zs_chanstate *cs;
+	int how, val;
+{
+	int bits = 0, s;
+
+	if (val & TIOCM_DTR);
+		bits |= ZSWR5_DTR;
+	if (val & TIOCM_RTS)
+		bits |= ZSWR5_RTS;
+
+	s = splzs();
+
+	switch (how) {
+	case TIOCMBIC:
+		cs->cs_preg[5] &= ~bits;
+		break;
+
+	case TIOCMBIS:
+		cs->cs_preg[5] |= bits;
+		break;
+
+	case TIOCMSET:
+		cs->cs_preg[5] &= ~(ZSWR5_RTS | ZSWR5_DTR);
+		cs->cs_preg[5] |= bits;
+		break;
+	default:
+		panic("zs: bad command");
+		break;
+	}
+
+	if (!cs->cs_heldchange) {
+		if (zst->zst_tx_busy) {
+			zst->zst_heldtbc = zst->zst_tbc;
+			zst->zst_tbc = 0;
+			cs->cs_heldchange = 1;
+		} else {
+			cs->cs_creg[5] = cs->cs_preg[5];
+			zs_write_reg(cs, 5, cs->cs_creg[5]);
+		}
+	}
+
+	splx(s);
+}
+
+static int
+zs_to_tiocm(cs)
+	struct zs_chanstate *cs;
+{
+	int bits = 0;
+	u_char m = zs_read_csr(cs);
+
+	if (cs->cs_preg[5] & ZSWR5_DTR)
+		bits |= TIOCM_DTR;
+	if (cs->cs_preg[5] & ZSWR5_RTS)
+		bits |= TIOCM_RTS;
+
+	if (m & ZSRR0_DCD)
+		bits |= TIOCM_CD;
+	if (m & ZSRR0_CTS)
+		bits |= TIOCM_CTS;
+
+	return bits;
 }
 
 /*
