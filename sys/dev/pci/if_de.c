@@ -101,7 +101,7 @@
 
 #if defined(__NetBSD__)
 #include <dev/pci/pcivar.h>
-#include <dev/ic/dc21040.h>
+#include <dev/ic/dc21040reg.h>
 #endif
 
 /*
