@@ -27,8 +27,10 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$Id: insque.c,v 1.3 1993/08/26 00:44:48 jtc Exp $";
+static char *rcsid = "$Id: insque.c,v 1.4 1993/10/21 21:08:55 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
+
+#include <search.h>
 
 struct qelem {
         struct qelem *q_forw;
@@ -36,11 +38,15 @@ struct qelem {
 };
 
 void
-insque(struct qelem *entry,
-       struct qelem *pred)
+insque(entry, pred)
+	void *entry;
+	void *pred;
 {
-	entry->q_forw = pred->q_forw;
-	entry->q_back = pred;
-	(pred->q_forw)->q_back = entry;
-	pred->q_forw = entry;
+	struct qelem *e = (struct qelem *) entry;
+	struct qelem *p = (struct qelem *) pred;
+
+	e->q_forw = p->q_forw;
+	e->q_back = p;
+	p->q_forw->q_back = e;
+	p->q_forw = e;
 }
