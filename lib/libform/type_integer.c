@@ -1,4 +1,4 @@
-/*	$NetBSD: type_integer.c,v 1.6 2004/04/23 02:58:27 simonb Exp $	*/
+/*	$NetBSD: type_integer.c,v 1.7 2004/10/27 19:59:24 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: type_integer.c,v 1.6 2004/04/23 02:58:27 simonb Exp $");
+__RCSID("$NetBSD: type_integer.c,v 1.7 2004/10/27 19:59:24 dsl Exp $");
 
 #include <stdlib.h>
 #include <strings.h>
@@ -129,7 +129,7 @@ integer_check_field(FIELD *field, char *args)
 	if ((buf[cur] == '-') || (buf[cur] == '+'))
 		cur++;
 	
-	while((buf[cur] != '\0') && isdigit(buf[cur]))
+	while(isdigit(buf[cur] & 0xff))
 		cur++;
 
 	  /* check there is only trailing whitespace */

@@ -1,4 +1,4 @@
-/*	$NetBSD: usage.c,v 1.4 2003/07/26 19:25:09 salo Exp $	*/
+/*	$NetBSD: usage.c,v 1.5 2004/10/27 19:59:24 dsl Exp $	*/
 
 /*
  * Copyright (c) 1999 Lennart Augustsson <augustss@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: usage.c,v 1.4 2003/07/26 19:25:09 salo Exp $");
+__RCSID("$NetBSD: usage.c,v 1.5 2004/10/27 19:59:24 dsl Exp $");
 
 #include <assert.h>
 #include <ctype.h>
@@ -89,7 +89,7 @@ hid_init(const char *hidname)
 			break;
 		if (line[0] == '#')
 			continue;
-		for (p = line; *p && isspace(*p); p++)
+		for (p = line; *p && isspace(*p & 0xff); p++)
 			;
 		if (!*p)
 			continue;
@@ -100,12 +100,12 @@ hid_init(const char *hidname)
 			errx(1, "file %s, line %d, syntax error",
 			     hidname, lineno);
 		for (p = name; *p; p++)
-			if (isspace(*p) || *p == '.')
+			if (isspace(*p & 0xff) || *p == '.')
 				*p = '_';
 		n = strdup(name);
 		if (!n)
 			err(1, "strdup");
-		if (isspace(line[0])) {
+		if (isspace(line[0] & 0xff)) {
 			if (!curpage)
 				errx(1, "file %s, line %d, syntax error",
 				     hidname, lineno);

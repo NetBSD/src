@@ -1,4 +1,4 @@
-/*	$NetBSD: strtod.c,v 1.42 2003/01/18 11:32:04 thorpej Exp $	*/
+/*	$NetBSD: strtod.c,v 1.43 2004/10/27 19:59:24 dsl Exp $	*/
 
 /****************************************************************
  *
@@ -93,7 +93,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: strtod.c,v 1.42 2003/01/18 11:32:04 thorpej Exp $");
+__RCSID("$NetBSD: strtod.c,v 1.43 2004/10/27 19:59:24 dsl Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #define Unsigned_Shifts
@@ -1243,7 +1243,7 @@ strtod
 	}
 
 	/* "INF" or "INFINITY" */
-	if (tolower(*s) == 'i' && strncasecmp(s, "inf", 3) == 0) {
+	if (tolower(*s & 0xff) == 'i' && strncasecmp(s, "inf", 3) == 0) {
 		if (strncasecmp(s + 3, "inity", 5) == 0)
 			s += 8;
 		else
@@ -1254,7 +1254,7 @@ strtod
 	}
 
 	/* "NAN" or "NAN(n-char-sequence-opt)" */
-	if (tolower(*s) == 'n' && strncasecmp(s, "nan", 3) == 0) {
+	if (tolower(*s & 0xff) == 'n' && strncasecmp(s, "nan", 3) == 0) {
 #ifdef IEEE_Arith
 		/* Build a quiet NaN. */
 		word0(rv) = Exp_mask | ((1 << Exp_shift) - 1);
