@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.24 2002/04/14 12:24:28 martin Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.24.4.1 2003/02/07 18:44:32 tron Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.24 2002/04/14 12:24:28 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.24.4.1 2003/02/07 18:44:32 tron Exp $");
 
 #include "pppoe.h"
 #include "bpfilter.h"
@@ -139,46 +139,46 @@ void * pppoe_softintr = NULL;
 static void pppoe_softintr_handler(void *);
 #else
 struct callout pppoe_softintr = CALLOUT_INITIALIZER;
-void pppoe_softintr_handler(void*);
+void pppoe_softintr_handler(void *);
 #endif
 
-extern int sppp_ioctl(struct ifnet *ifp, unsigned long cmd, void *data);
+extern int sppp_ioctl(struct ifnet *, unsigned long, void *);
 
 /* input routines */
 static void pppoe_input(void);
-static void pppoe_disc_input(struct mbuf *m);
-static void pppoe_dispatch_disc_pkt(u_int8_t *p, size_t size, struct ifnet *rcvif, struct ether_header *eh);
+static void pppoe_disc_input(struct mbuf *);
+static void pppoe_dispatch_disc_pkt(u_int8_t *, size_t, struct ifnet *, struct ether_header *);
 static void pppoe_data_input(struct mbuf *m);
 
 /* management routines */
 void pppoeattach(int count);
-static int pppoe_connect(struct pppoe_softc *sc);
-static int pppoe_disconnect(struct pppoe_softc *sc);
-static void pppoe_abort_connect(struct pppoe_softc *sc);
-static int pppoe_ioctl(struct ifnet *ifp, unsigned long cmd, caddr_t data);
-static void pppoe_tls(struct sppp *sp);
-static void pppoe_tlf(struct sppp *sp);
-static void pppoe_start(struct ifnet *ifp);
+static int pppoe_connect(struct pppoe_softc *);
+static int pppoe_disconnect(struct pppoe_softc *);
+static void pppoe_abort_connect(struct pppoe_softc *);
+static int pppoe_ioctl(struct ifnet *, unsigned long, caddr_t);
+static void pppoe_tls(struct sppp *);
+static void pppoe_tlf(struct sppp *);
+static void pppoe_start(struct ifnet *);
 
 /* internal timeout handling */
 static void pppoe_timeout(void*);
 
 /* sending actual protocol controll packets */
-static int pppoe_send_padi(struct pppoe_softc *sc);
-static int pppoe_send_padr(struct pppoe_softc *sc);
-static int pppoe_send_padt(struct pppoe_softc *sc);
+static int pppoe_send_padi(struct pppoe_softc *);
+static int pppoe_send_padr(struct pppoe_softc *);
+static int pppoe_send_padt(struct pppoe_softc *);
 
 /* raw output */
 static int pppoe_output(struct pppoe_softc *sc, struct mbuf *m);
 
 /* internal helper functions */
-static struct pppoe_softc * pppoe_find_softc_by_session(u_int session, struct ifnet *rcvif);
-static struct pppoe_softc * pppoe_find_softc_by_hunique(u_int8_t *token, size_t len, struct ifnet *rcvif);
+static struct pppoe_softc * pppoe_find_softc_by_session(u_int, struct ifnet *);
+static struct pppoe_softc * pppoe_find_softc_by_hunique(u_int8_t *, size_t, struct ifnet *);
 
 LIST_HEAD(pppoe_softc_head, pppoe_softc) pppoe_softc_list;
 
-int     pppoe_clone_create __P((struct if_clone *, int));
-void    pppoe_clone_destroy __P((struct ifnet *));
+int	pppoe_clone_create __P((struct if_clone *, int));
+void	pppoe_clone_destroy __P((struct ifnet *));
 
 struct if_clone pppoe_cloner =
     IF_CLONE_INITIALIZER("pppoe", pppoe_clone_create, pppoe_clone_destroy);
@@ -491,140 +491,140 @@ static void pppoe_dispatch_disc_pkt(u_int8_t *p, size_t size, struct ifnet *rcvi
 	case PPPOE_CODE_PADT:
 		if (sc == NULL)
 			return;
-                /* stop timer (we might be about to transmit a PADT ourself) */
-                callout_stop(&sc->sc_timeout);
-                if (sc->sc_sppp.pp_if.if_flags & IFF_DEBUG)
-	                printf("%s: session 0x%x terminated, received PADT\n", sc->sc_sppp.pp_if.if_xname, session);
-                /* clean up softc */
-                sc->sc_state = PPPOE_STATE_INITIAL;
-                memcpy(&sc->sc_dest, etherbroadcastaddr, sizeof(sc->sc_dest));
-                if (sc->sc_ac_cookie) {
-                        free(sc->sc_ac_cookie, M_MBUF);
-                        sc->sc_ac_cookie = NULL;
-                }
-                sc->sc_ac_cookie_len = 0;
-                sc->sc_session = 0;
-                /* signal upper layer */
-                sc->sc_sppp.pp_down(&sc->sc_sppp);
-                break;
-        default:
-                printf("%s: unknown code (0x%04x) session = 0x%04x\n",
-                    sc? sc->sc_sppp.pp_if.if_xname : "pppoe",
-                    code, session);
-                break;
-        }
+		/* stop timer (we might be about to transmit a PADT ourself) */
+		callout_stop(&sc->sc_timeout);
+		if (sc->sc_sppp.pp_if.if_flags & IFF_DEBUG)
+			printf("%s: session 0x%x terminated, received PADT\n", sc->sc_sppp.pp_if.if_xname, session);
+		/* clean up softc */
+		sc->sc_state = PPPOE_STATE_INITIAL;
+		memcpy(&sc->sc_dest, etherbroadcastaddr, sizeof(sc->sc_dest));
+		if (sc->sc_ac_cookie) {
+			free(sc->sc_ac_cookie, M_MBUF);
+			sc->sc_ac_cookie = NULL;
+		}
+		sc->sc_ac_cookie_len = 0;
+		sc->sc_session = 0;
+		/* signal upper layer */
+		sc->sc_sppp.pp_down(&sc->sc_sppp);
+		break;
+	default:
+		printf("%s: unknown code (0x%04x) session = 0x%04x\n",
+		    sc? sc->sc_sppp.pp_if.if_xname : "pppoe",
+		    code, session);
+		break;
+	}
 }
 
 static void
 pppoe_disc_input(struct mbuf *m)
 {
-        u_int8_t *p;
-        struct ether_header *eh;
+	u_int8_t *p;
+	struct ether_header *eh;
 
-        /* avoid error messages if there is not a single pppoe instance */
-        if (!LIST_EMPTY(&pppoe_softc_list)) {
-	        eh = mtod(m, struct ether_header*);
-        	m_adj(m, sizeof(struct ether_header));
-	        p = mtod(m, u_int8_t*);
-        	KASSERT(m->m_flags & M_PKTHDR);
-	        pppoe_dispatch_disc_pkt(p, m->m_len, m->m_pkthdr.rcvif, eh);
+	/* avoid error messages if there is not a single pppoe instance */
+	if (!LIST_EMPTY(&pppoe_softc_list)) {
+		eh = mtod(m, struct ether_header*);
+		m_adj(m, sizeof(struct ether_header));
+		p = mtod(m, u_int8_t*);
+		KASSERT(m->m_flags & M_PKTHDR);
+		pppoe_dispatch_disc_pkt(p, m->m_len, m->m_pkthdr.rcvif, eh);
 	}
-        m_free(m);
+	m_free(m);
 }
 
 static void
 pppoe_data_input(struct mbuf *m)
 {
-        u_int8_t *p, vertype;
-        u_int16_t session, plen, code;
-        struct pppoe_softc *sc;
+	u_int8_t *p, vertype;
+	u_int16_t session, plen, code;
+	struct pppoe_softc *sc;
 
-        KASSERT(m->m_flags & M_PKTHDR);
+	KASSERT(m->m_flags & M_PKTHDR);
 
-        m_adj(m, sizeof(struct ether_header));
-        if (m->m_pkthdr.len <= PPPOE_HEADERLEN) {
-                printf("pppoe (data): dropping too short packet: %ld bytes\n", (long)m->m_pkthdr.len);
-                goto drop;
-        }
+	m_adj(m, sizeof(struct ether_header));
+	if (m->m_pkthdr.len <= PPPOE_HEADERLEN) {
+		printf("pppoe (data): dropping too short packet: %ld bytes\n", (long)m->m_pkthdr.len);
+		goto drop;
+	}
 
-        p = mtod(m, u_int8_t*);
+	p = mtod(m, u_int8_t*);
 
-        vertype = *p++;
-        if (vertype != PPPOE_VERTYPE) {
-                printf("pppoe (data): unknown version/type packet: 0x%x\n", vertype);
-                goto drop;
-        }
+	vertype = *p++;
+	if (vertype != PPPOE_VERTYPE) {
+		printf("pppoe (data): unknown version/type packet: 0x%x\n", vertype);
+		goto drop;
+	}
 
-        code = *p++;
-        if (code != 0)
-                goto drop;
+	code = *p++;
+	if (code != 0)
+		goto drop;
 
-        PPPOE_READ_16(p, session);
-        sc = pppoe_find_softc_by_session(session, m->m_pkthdr.rcvif);
-        if (sc == NULL)
-                goto drop;
+	PPPOE_READ_16(p, session);
+	sc = pppoe_find_softc_by_session(session, m->m_pkthdr.rcvif);
+	if (sc == NULL)
+		goto drop;
 
-        PPPOE_READ_16(p, plen);
+	PPPOE_READ_16(p, plen);
 
 #if NBPFILTER > 0
-        if(sc->sc_sppp.pp_if.if_bpf)
-                bpf_mtap(sc->sc_sppp.pp_if.if_bpf, m);
+	if(sc->sc_sppp.pp_if.if_bpf)
+		bpf_mtap(sc->sc_sppp.pp_if.if_bpf, m);
 #endif
 
-        m_adj(m, PPPOE_HEADERLEN);
+	m_adj(m, PPPOE_HEADERLEN);
 
 #ifdef PPPOE_DEBUG
-        {
-                struct mbuf *p;
+	{
+		struct mbuf *p;
 
-                printf("%s: pkthdr.len=%d, pppoe.len=%d",
-                        sc->sc_sppp.pp_if.if_xname,
-                        m->m_pkthdr.len, plen);
-                p = m;
-                while (p) {
-                        printf(" l=%d", p->m_len);
-                        p = p->m_next;
-                }
-                printf("\n");
-        }
+		printf("%s: pkthdr.len=%d, pppoe.len=%d",
+			sc->sc_sppp.pp_if.if_xname,
+			m->m_pkthdr.len, plen);
+		p = m;
+		while (p) {
+			printf(" l=%d", p->m_len);
+			p = p->m_next;
+		}
+		printf("\n");
+	}
 #endif
-        
-        if (m->m_pkthdr.len < plen)
-                goto drop;
+	
+	if (m->m_pkthdr.len < plen)
+		goto drop;
 
-        /* fix incoming interface pointer (not the raw ethernet interface anymore) */
-        m->m_pkthdr.rcvif = &sc->sc_sppp.pp_if;
+	/* fix incoming interface pointer (not the raw ethernet interface anymore) */
+	m->m_pkthdr.rcvif = &sc->sc_sppp.pp_if;
 
-        /* pass packet up and account for it */
-        sc->sc_sppp.pp_if.if_ipackets++;
-        sppp_input(&sc->sc_sppp.pp_if, m);
-        return;
+	/* pass packet up and account for it */
+	sc->sc_sppp.pp_if.if_ipackets++;
+	sppp_input(&sc->sc_sppp.pp_if, m);
+	return;
 
 drop:
-        m_free(m);
+	m_free(m);
 }
 
 static int
 pppoe_output(struct pppoe_softc *sc, struct mbuf *m)
 {
-        struct sockaddr dst;
-        struct ether_header *eh;
-        u_int16_t etype;
+	struct sockaddr dst;
+	struct ether_header *eh;
+	u_int16_t etype;
 
-        if (sc->sc_eth_if == NULL)
-                return EIO;
+	if (sc->sc_eth_if == NULL)
+		return EIO;
 
-        memset(&dst, 0, sizeof dst);
-        dst.sa_family = AF_UNSPEC;
-        eh = (struct ether_header*)&dst.sa_data;
-        etype = sc->sc_state == PPPOE_STATE_SESSION? ETHERTYPE_PPPOE : ETHERTYPE_PPPOEDISC;
-        eh->ether_type = htons(etype);
-        memcpy(&eh->ether_dhost, &sc->sc_dest, sizeof sc->sc_dest);
+	memset(&dst, 0, sizeof dst);
+	dst.sa_family = AF_UNSPEC;
+	eh = (struct ether_header*)&dst.sa_data;
+	etype = sc->sc_state == PPPOE_STATE_SESSION? ETHERTYPE_PPPOE : ETHERTYPE_PPPOEDISC;
+	eh->ether_type = htons(etype);
+	memcpy(&eh->ether_dhost, &sc->sc_dest, sizeof sc->sc_dest);
 
 #ifdef PPPOE_DEBUG
-        printf("%s (%x) state=%d, session=0x%x output -> %s, len=%d\n",
-            sc->sc_sppp.pp_if.if_xname, etype,
-            sc->sc_state, sc->sc_session,
+	printf("%s (%x) state=%d, session=0x%x output -> %s, len=%d\n",
+	    sc->sc_sppp.pp_if.if_xname, etype,
+	    sc->sc_state, sc->sc_session,
 	    ether_sprintf((const unsigned char *)&sc->sc_dest), m->m_pkthdr.len);
 #endif
 
