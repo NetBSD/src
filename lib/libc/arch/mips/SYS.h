@@ -1,4 +1,4 @@
-/*	$NetBSD: SYS.h,v 1.7 1996/10/19 12:32:04 jonathan Exp $ */
+/*	$NetBSD: SYS.h,v 1.8 1997/03/15 08:52:16 jonathan Exp $ */
 
 /*-
  * Copyright (c) 1996 Jonathan STone
@@ -109,7 +109,8 @@
  */
 #define RSYSCALL_NOERROR(x) \
 	PIC_SYSTRAP(x,x); \
-	j ra
+	j ra; \
+	END(x)
 
 /*
  * Do a normal syscall.
