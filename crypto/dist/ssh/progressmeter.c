@@ -1,4 +1,4 @@
-/*	$NetBSD: progressmeter.c,v 1.1.1.1 2003/04/03 05:57:27 itojun Exp $	*/
+/*	$NetBSD: progressmeter.c,v 1.2 2003/04/03 06:21:34 itojun Exp $	*/
 /*
  * Copyright (c) 1999 Theo de Raadt.  All rights reserved.
  * Copyright (c) 1999 Aaron Campbell.  All rights reserved.
@@ -126,7 +126,7 @@ stop_progress_meter()
 	alarm(0);
 	draw_progress_meter();
 	if (foregroundproc() != 0)
-		atomicio(write, fileno(stdout), "\n", 1);
+		atomic_write(fileno(stdout), "\n", 1);
 }
 
 static void
@@ -244,7 +244,7 @@ draw_progress_meter()
 		    "%02d:%02d%s", i / 60, i % 60,
 		    (cursize != totalbytes) ? " ETA" : "    ");
 	}
-	atomicio(write, fileno(stdout), buf, strlen(buf));
+	atomic_write(fileno(stdout), buf, strlen(buf));
 }
 
 static int
