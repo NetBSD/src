@@ -1,4 +1,4 @@
-/*	$NetBSD: savestr.c,v 1.1.1.1 1997/10/03 22:25:13 christos Exp $	*/
+/*	$NetBSD: savestr.c,v 1.2 1997/10/08 20:47:38 cjs Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -27,7 +27,7 @@
 static const char rcsid[] =
     "@(#) Header: savestr.c,v 1.2 97/05/09 14:52:31 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: savestr.c,v 1.1.1.1 1997/10/03 22:25:13 christos Exp $");
+__RCSID("$NetBSD: savestr.c,v 1.2 1997/10/08 20:47:38 cjs Exp $");
 #endif
 #endif
 
@@ -38,6 +38,7 @@ __RCSID("$NetBSD: savestr.c,v 1.1.1.1 1997/10/03 22:25:13 christos Exp $");
 #endif
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "gnuc.h"
 #ifdef HAVE_OS_PROTO_H
@@ -48,10 +49,10 @@ __RCSID("$NetBSD: savestr.c,v 1.1.1.1 1997/10/03 22:25:13 christos Exp $");
 
 /* A replacement for strdup() that cuts down on malloc() overhead */
 char *
-savestr(register const char *str)
+savestr(const char *str)
 {
-	register u_int size;
-	register char *p;
+	size_t size;
+	char *p;
 	static char *strptr = NULL;
 	static u_int strsize = 0;
 
