@@ -1,4 +1,4 @@
-/*	$NetBSD: adjtime.c,v 1.1 2001/09/16 07:41:57 manu Exp $ */
+/*	$NetBSD: adjtime.c,v 1.2 2001/09/17 14:25:43 tsutsui Exp $ */
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.      
@@ -36,6 +36,7 @@
 #include <paths.h>
 #include <unistd.h>
 #include <time.h>
+#include <string.h>
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/syscall.h>
