@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2003/08/01 13:55:38 mrg Exp $
+#	$NetBSD: Makefile,v 1.6 2003/08/01 17:03:43 lukem Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -41,7 +41,7 @@ INCS=		${G_OBJC_H}
 INCSDIR=	/usr/include/objc
 
 DPSRCS+=	runtime-info.h
-CLEANFILES+=	rtscratch rtscratch.s
+CLEANFILES+=	rtscratch rtscratch.s runtime-info.h
 runtime-info.h:
 	@touch rtscratch
 	`${OBJC} --print-prog-name=cc1obj` -print-objc-runtime-info rtscratch >$@

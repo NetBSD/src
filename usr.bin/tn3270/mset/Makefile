@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 2000/12/30 14:54:41 sommerfeld Exp $
+#	$NetBSD: Makefile,v 1.24 2003/08/01 17:04:04 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -13,6 +13,7 @@ MKASTOSC=${MKASTOSCDIR}/mkastosc
 ${MKASTOSC}:
 	cd ${.CURDIR}/../tools/mkastosc; ${MAKE}
 
+CLEANFILES+= astosc.out
 astosc.out: ${.CURDIR}/../ctlr/hostctlr.h ${.CURDIR}/../ctlr/function.h \
 	    ${.CURDIR}/../ctlr/${KBD} ${MKASTOSC}
 	${MKASTOSC} \

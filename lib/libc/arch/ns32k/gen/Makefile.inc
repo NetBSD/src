@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.17 2003/05/17 15:05:54 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.18 2003/08/01 17:03:52 lukem Exp $
 
 # objects built from assembler sources (need lint stubs)
 ASSRCS+=alloca.S fabs.S modf.S
@@ -24,5 +24,7 @@ SRCS+=	isnanl_ieee754.c ldexp_ieee754.c
 
 SRCS+=	makecontext.c
 
-LSRCS+=	Lint_resumecontext.c Lint_swapcontext.c
-DPSRCS+= Lint_resumecontext.c Lint_swapcontext.c
+SRCS.ns32k.gen=	Lint_resumecontext.c Lint_swapcontext.c
+LSRCS+=		${SRCS.ns32k.gen}
+DPSRCS+=	${SRCS.ns32k.gen}
+CLEANFILES+=	${SRCS.ns32k.gen}

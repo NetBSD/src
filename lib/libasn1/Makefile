@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.22 2003/07/10 10:34:21 lukem Exp $
+# $NetBSD: Makefile,v 1.23 2003/08/01 17:03:46 lukem Exp $
 
 NOLINT=		# defined
 
@@ -23,10 +23,11 @@ ${ASN1COMPILEOBJ}/asn1_compile:
 	@cd ${.CURDIR}/asn1_compile && ${MAKE}
 .endif
 
+DPSRCS+=	asn1_err.h
+CLEANFILES+=	asn1_err.h
+
 asn1_err.h asn1_err.c: asn1_err.et ${TOOL_COMPILE_ET}
 	${TOOL_COMPILE_ET} ${DIST}/heimdal/lib/asn1/asn1_err.et
-
-DPSRCS=	asn1_err.h
 
 INCS=	krb5_asn1.h asn1_err.h
 

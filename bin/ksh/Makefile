@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2001/11/03 13:39:25 lukem Exp $
+#	$NetBSD: Makefile,v 1.17 2003/08/01 17:03:42 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -18,23 +18,21 @@ DPSRCS+=ksh.1
 # needs tbl for the man page.
 USETBL= 
 
-CLEANFILES+=	siglist.out emacs.out
-
+CLEANFILES+=	siglist.out siglist.out.tmp
 # two steps to prevent the creation of a bogus siglist.out
 siglist.out: config.h sh.h siglist.in siglist.sh
-	sh $(.CURDIR)/siglist.sh "$(CC) -E $(CPPFLAGS) $(DEFS) -I. -I$(.CURDIR)" < $(.CURDIR)/siglist.in > tmpsiglist.out
-	mv tmpsiglist.out siglist.out
+	sh $(.CURDIR)/siglist.sh "$(CC) -E $(CPPFLAGS) $(DEFS) -I. -I$(.CURDIR)" < $(.CURDIR)/siglist.in > siglist.out.tmp \
+	    && mv siglist.out.tmp siglist.out
 
 # two steps to prevent the creation of a bogus emacs.out
+CLEANFILES+=	emacs.out emacs.out.tmp
 emacs.out: emacs.c
-	sh $(.CURDIR)/emacs-gen.sh $(.CURDIR)/emacs.c > tmpemacs.out
-	mv tmpemacs.out emacs.out
+	sh $(.CURDIR)/emacs-gen.sh $(.CURDIR)/emacs.c > emacs.out.tmp \
+	    && mv emacs.out.tmp emacs.out
 
+CLEANFILES+=	ksh.1 ksh.1.tmp
 ksh.1: ksh.Man mkman
-	sh $(.CURDIR)/mkman ksh $(.CURDIR)/ksh.Man >tmpksh.1
-	mv tmpksh.1 ksh.1
-
-emacs.o:	emacs.out
-trap.o:		siglist.out
+	sh $(.CURDIR)/mkman ksh $(.CURDIR)/ksh.Man >ksh.1.tmp \
+	    && mv ksh.1.tmp ksh.1
 
 .include <bsd.prog.mk>
