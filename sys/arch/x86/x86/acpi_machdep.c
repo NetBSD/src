@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_machdep.c,v 1.4 2003/09/06 14:38:43 fvdl Exp $	*/
+/*	$NetBSD: acpi_machdep.c,v 1.5 2003/10/10 20:16:54 tron Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.4 2003/09/06 14:38:43 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.5 2003/10/10 20:16:54 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,10 +116,10 @@ acpi_md_OsInstallInterruptHandler(UINT32 InterruptNumber,
 	struct pic *pic;
 	int irq, pin, trigger;
 	struct acpi_intr_defer *aip;
+#if NIOAPIC > 0
 #ifdef MPACPI
 	int i, h;
 #endif
-#if NIOAPIC > 0
 	struct ioapic_softc *sc;
 #endif
 #if defined(MPACPI) || NIOAPIC > 0
