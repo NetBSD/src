@@ -1,4 +1,4 @@
-/* $NetBSD: if_eb.c,v 1.6 1996/05/07 00:55:19 thorpej Exp $ */
+/* $NetBSD: if_eb.c,v 1.7 1996/06/03 22:39:16 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -304,6 +304,49 @@ ebattach(parent, self, aux)
 	
 	sc->sc_iobase = sc->sc_podule->mod_base + EB_8004_BASE;
 
+/* Read the station address - the receiver must be off */
+
+	WriteShort(sc->sc_iobase + EB_8004_CONFIG1, EB_BUFCODE_STATION_ADDR);
+	
+	for (sum = 0, loop = 0; loop < ETHER_ADDR_LEN; ++loop) {
+		sc->sc_arpcom.ac_enaddr[loop] =
+		    ReadByte(sc->sc_iobase + EB_8004_BUFWIN);
+		sum += sc->sc_arpcom.ac_enaddr[loop];
+	}
+
+/*
+ * Hard code the ether address if we don't have one.
+ * Build the address from the machine id.
+ */
+
+/*
+ * Hmm I have a rev f 80C04 that always reports an ether address of
+ * 00:00:00:00:10:00 following a reset. Not sure if this is a faulty
+ * card or a quirk I do not know about. Perhaps we should always set
+ * the ether address
+ */
+
+	if (sum == 0 || sum == 0x10) {
+		sc->sc_arpcom.ac_enaddr[0] = 0x00;
+		sc->sc_arpcom.ac_enaddr[1] = 0x00;
+		sc->sc_arpcom.ac_enaddr[2] = bootconfig.machine_id[3];
+		sc->sc_arpcom.ac_enaddr[3] = bootconfig.machine_id[2];
+		sc->sc_arpcom.ac_enaddr[4] = bootconfig.machine_id[1];
+		sc->sc_arpcom.ac_enaddr[5] = bootconfig.machine_id[0];
+	}
+
+	/* Get the product ID */
+	
+	WriteShort(sc->sc_iobase + EB_8004_CONFIG1, EB_BUFCODE_PRODUCTID);
+	id = ReadByte(sc->sc_iobase + EB_8004_BUFWIN);
+
+	/* Print out some information for the user. */
+
+	if ((id & 0xf0) == 0xa0)
+		printf(" SEEQ80C04 rev %x address %s", id & 0x0f, ether_sprintf(sc->sc_arpcom.ac_enaddr));
+	else
+		printf(" SEEQ???? rev %02x address %s", id, ether_sprintf(sc->sc_arpcom.ac_enaddr));
+
 	sc->sc_irqclaimed = 0;
 
 /* Set up the interrupt structure */
@@ -340,42 +383,6 @@ ebattach(parent, self, aux)
 /*	dprintf(("Attaching interface...\n"));*/
 	if_attach(ifp);
 	ether_ifattach(ifp);
-
-/* Read the station address - the receiver must be off */
-
-	WriteShort(sc->sc_iobase + EB_8004_CONFIG1, EB_BUFCODE_STATION_ADDR);
-	
-	for (sum = 0, loop = 0; loop < ETHER_ADDR_LEN; ++loop) {
-		sc->sc_arpcom.ac_enaddr[loop] =
-		    ReadByte(sc->sc_iobase + EB_8004_BUFWIN);
-		sum += sc->sc_arpcom.ac_enaddr[loop];
-	}
-
-/*
- * Hard code the ether address if we don't have one.
- * Build the address from the machine id.
- */
-
-	if (sum == 0) {
-		sc->sc_arpcom.ac_enaddr[0] = 0x00;
-		sc->sc_arpcom.ac_enaddr[1] = 0x00;
-		sc->sc_arpcom.ac_enaddr[2] = bootconfig.machine_id[3];
-		sc->sc_arpcom.ac_enaddr[3] = bootconfig.machine_id[2];
-		sc->sc_arpcom.ac_enaddr[4] = bootconfig.machine_id[1];
-		sc->sc_arpcom.ac_enaddr[5] = bootconfig.machine_id[0];
-	}
-
-	/* Get the product ID */
-	
-	WriteShort(sc->sc_iobase + EB_8004_CONFIG1, EB_BUFCODE_PRODUCTID);
-	id = ReadByte(sc->sc_iobase + EB_8004_BUFWIN);
-
-	/* Print out some information for the user. */
-
-	if ((id & 0xf0) == 0xa0)
-		printf(" SEEQ80C04 rev %x address %s", id & 0x0f, ether_sprintf(sc->sc_arpcom.ac_enaddr));
-	else
-		printf(" SEEQ???? rev %02x address %s", id, ether_sprintf(sc->sc_arpcom.ac_enaddr));
 
 	/* Finally, attach to bpf filter if it is present. */
 

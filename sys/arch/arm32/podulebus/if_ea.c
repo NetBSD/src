@@ -1,4 +1,4 @@
-/* $NetBSD: if_ea.c,v 1.7 1996/05/17 16:24:03 mark Exp $ */
+/* $NetBSD: if_ea.c,v 1.8 1996/06/03 22:39:12 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -88,6 +88,7 @@
 #include <machine/katelib.h>
 #include <machine/io.h>
 #include <machine/irqhandler.h>
+#include <machine/bootconfig.h>
 
 #include <arm32/podulebus/if_eareg.h>
 #include <arm32/podulebus/podulebus.h>
@@ -301,6 +302,36 @@ eaattach(parent, self, aux)
 	
 	sc->sc_iobase = sc->sc_podule->mod_base + EA_8005_BASE;
 
+/* Read the station address - the receiver must be off */
+
+	WriteShort(sc->sc_iobase + EA_8005_CONFIG1, EA_BUFCODE_STATION_ADDR0);
+	
+	for (sum = 0, loop = 0; loop < ETHER_ADDR_LEN; ++loop) {
+		sc->sc_arpcom.ac_enaddr[loop] =
+		    ReadByte(sc->sc_iobase + EA_8005_BUFWIN);
+		sum += sc->sc_arpcom.ac_enaddr[loop];
+	}
+
+/*
+ * Hard code the ether address if we don't have one.
+ * Need to work out how I get the real address
+ * until then use the one a network slot card
+ * would used, based on the machine id.
+ */
+
+	if (sum == 0) {
+		sc->sc_arpcom.ac_enaddr[0] = 0x00;
+		sc->sc_arpcom.ac_enaddr[1] = 0x00;
+		sc->sc_arpcom.ac_enaddr[2] = bootconfig.machine_id[3];
+		sc->sc_arpcom.ac_enaddr[3] = bootconfig.machine_id[2];
+		sc->sc_arpcom.ac_enaddr[4] = bootconfig.machine_id[1];
+		sc->sc_arpcom.ac_enaddr[5] = bootconfig.machine_id[0];
+	}
+
+	/* Print out some information for the user. */
+
+	printf(" SEEQ8005 address %s", ether_sprintf(sc->sc_arpcom.ac_enaddr));
+
 	sc->sc_irqclaimed = 0;
 
 /* Set up the interrupt structure */
@@ -337,34 +368,6 @@ eaattach(parent, self, aux)
 /*	dprintf(("Attaching interface...\n"));*/
 	if_attach(ifp);
 	ether_ifattach(ifp);
-
-/* Read the station address - the receiver must be off */
-
-	WriteShort(sc->sc_iobase + EA_8005_CONFIG1, EA_BUFCODE_STATION_ADDR0);
-	
-	for (sum = 0, loop = 0; loop < ETHER_ADDR_LEN; ++loop) {
-		sc->sc_arpcom.ac_enaddr[loop] =
-		    ReadByte(sc->sc_iobase + EA_8005_BUFWIN);
-		sum += sc->sc_arpcom.ac_enaddr[loop];
-	}
-
-/*
- * Hard code the ether address if we don't have one.
- * Need to work out how I get the real address
- */
-
-	if (sum == 0) {
-		sc->sc_arpcom.ac_enaddr[0] = 0x00;
-		sc->sc_arpcom.ac_enaddr[1] = 0x00;
-		sc->sc_arpcom.ac_enaddr[2] = 0xa4;
-		sc->sc_arpcom.ac_enaddr[3] = 0x10;
-		sc->sc_arpcom.ac_enaddr[4] = 0x02;
-		sc->sc_arpcom.ac_enaddr[5] = 0x87;
-	}
-
-	/* Print out some information for the user. */
-
-	printf(" SEEQ8005 address %s", ether_sprintf(sc->sc_arpcom.ac_enaddr));
 
 	/* Finally, attach to bpf filter if it is present. */
 
