@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.55 2001/01/07 06:08:33 sjg Exp $	*/
+/*	$NetBSD: parse.c,v 1.56 2001/01/10 15:54:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: parse.c,v 1.55 2001/01/07 06:08:33 sjg Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.56 2001/01/10 15:54:00 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.55 2001/01/07 06:08:33 sjg Exp $");
+__RCSID("$NetBSD: parse.c,v 1.56 2001/01/10 15:54:00 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -276,6 +276,8 @@ static char *ParseReadLine __P((void));
 static char *ParseSkipLine __P((int));
 static void ParseFinishLine __P((void));
 
+extern int  maxJobs;
+
 /*-
  *----------------------------------------------------------------------
  * ParseFindKeyword --
@@ -337,6 +339,8 @@ ParseVErrorInternal(va_alist)
 	va_dcl
 #endif
 {
+	static Boolean fatal_warning_error_printed = FALSE;
+
 	if (*cfname != '/') {
 		char *cp, *dir;
 
@@ -358,8 +362,12 @@ ParseVErrorInternal(va_alist)
 	va_end(ap);
 	(void)fprintf(stderr, "\n");
 	(void)fflush(stderr);
-	if (type == PARSE_FATAL)
+	if (type == PARSE_FATAL || parseWarnFatal)
 		fatals += 1;
+	if (parseWarnFatal && !fatal_warning_error_printed) {
+		Error("parsing warnings being treated as errors");
+		fatal_warning_error_printed = TRUE;
+	}
 }
 
 /*-
@@ -951,8 +959,6 @@ ParseDoDependency (line)
 			break;
 		    case NotParallel:
 		    {
-			extern int  maxJobs;
-
 			maxJobs = 1;
 			break;
 		    }
@@ -1590,6 +1596,10 @@ ParseAddCmd(gnp, cmd)
 	gn = (GNode *) Lst_Datum (Lst_Last (gn->cohorts));
     if (!(gn->type & OP_HAS_COMMANDS))
 	(void)Lst_AtEnd(gn->commands, cmd);
+    else
+	Parse_Error (PARSE_WARNING,
+		     "duplicate script for target \"%s\" ignored",
+		     gn->name);
     return(0);
 }
 
