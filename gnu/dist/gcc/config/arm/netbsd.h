@@ -45,6 +45,11 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 #include <netbsd.h>
 
+/* NetBSD uses gas so we want to use .ident */
+#undef ASM_OUTPUT_IDENT
+#define ASM_OUTPUT_IDENT(STREAM,STRING) \
+  fprintf (STREAM,"\t.ident \"%s\"\n",STRING)
+
 /* On the ARM `@' introduces a comment, so we must use something else
    for .type directives.  Most NetBSD platforms use %, but we use #
    because of some legacy assemblers.  */
