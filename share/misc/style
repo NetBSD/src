@@ -1,4 +1,4 @@
-/* $NetBSD: style,v 1.16 2000/09/06 14:12:45 enami Exp $ */
+/* $NetBSD: style,v 1.17 2001/02/19 22:46:47 cgd Exp $ */
 
 /*
  * The revision control tag appears first, with a blank line after it.
@@ -30,7 +30,7 @@
 #ifndef __lint
 __COPYRIGHT("@(#) Copyright (c) 2000\n\
 	The NetBSD Foundation, inc. All rights reserved.\n");
-__RCSID("$NetBSD: style,v 1.16 2000/09/06 14:12:45 enami Exp $");
+__RCSID("$NetBSD: style,v 1.17 2001/02/19 22:46:47 cgd Exp $");
 #endif /* !__lint */
 
 /*
@@ -178,6 +178,13 @@ main(int argc, char *argv[])
 	long num;
 	int ch;
 	char *ep;
+
+	/*
+	 * At the start of main(), call setprogname() to set the program
+	 * name.  This does nothing on NetBSD, but increases portability
+	 * to other systems.
+	 */
+	setprogname(argv[0]);
 
 	/*
 	 * For consistency, getopt should be used to parse options.  Options
@@ -366,7 +373,6 @@ vaf(const char *fmt, ...)
 static void
 usage(void)
 {
-	extern char *__progname;	/* Provided by NetBSD's crt0.o */
 
 	/*
 	 * Use printf(3), not fputs/puts/putchar/whatever, it's faster and
@@ -383,11 +389,11 @@ usage(void)
 	 * and multiple options/arguments which are specified together are
 	 * placed in a single set of braces.
 	 *
-	 * Use __progname (from crt0.o) instead of hardcoding the program name.
+	 * Use getprogname() instead of hardcoding the program name.
 	 *
 	 * "usage: f [-ade] [-b b_arg] [-m m_arg] req1 req2 [opt1 [opt2]]\n"
 	 * "usage: f [-a | -b] [-c [-de] [-n number]]\n"
 	 */
-	(void)fprintf(stderr, "usage: %s [-ab]\n", __progname);
+	(void)fprintf(stderr, "usage: %s [-ab]\n", getprogname());
 	exit(1);
 }
