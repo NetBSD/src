@@ -1733,6 +1733,10 @@ Switches:\n\
   -isystem <dir>            Add <dir> to the start of the system include path\n\
 "), stdout);
   fputs (_("\
+  -isystem-cxx <dir>        Add <dir> to the start of the system C++ include\n\
+                             path\n\
+"), stdout);
+  fputs (_("\
   -idirafter <dir>          Add <dir> to the end of the system include path\n\
   -I <dir>                  Add <dir> to the end of the main include path\n\
   -I-                       Fine-grained include path control; see info docs\n\

@@ -1179,6 +1179,7 @@ new_pending_directive (pend, text, handler)
   DEF_OPT("include",                  no_fil, OPT_include)                    \
   DEF_OPT("iprefix",                  no_pth, OPT_iprefix)                    \
   DEF_OPT("isystem",                  no_dir, OPT_isystem)                    \
+  DEF_OPT("isystem-cxx",              no_dir, OPT_isystemcxx)                 \
   DEF_OPT("iwithprefix",              no_dir, OPT_iwithprefix)                \
   DEF_OPT("iwithprefixbefore",        no_dir, OPT_iwithprefixbefore)
 
@@ -1361,6 +1362,11 @@ cpp_handle_option (pfile, argc, argv)
 	  /* Add directory to beginning of system include path, as a system
 	     include directory.  */
 	  append_include_chain (pfile, xstrdup (arg), SYSTEM, 0);
+	  break;
+	case OPT_isystemcxx:
+	  /* Add directory to beginning of system C++ include path, as a system
+	     include directory.  */
+	  append_include_chain (pfile, xstrdup (arg), SYSTEM, 1);
 	  break;
 	case OPT_include:
 	case OPT_imacros:
