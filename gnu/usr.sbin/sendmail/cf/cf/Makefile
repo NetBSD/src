@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 2003/04/01 03:16:53 atatat Exp $
+#	$NetBSD: Makefile,v 1.24 2003/04/03 19:13:31 christos Exp $
 #	install these sources in /usr/share/sendmail/cf
 
 .include <bsd.own.mk>
@@ -27,10 +27,6 @@ OTHERS=		${FILES:S/Makefile//:C/netbsd-(proto|msp).*//:S/.mc/.cf/g}
 .include <Makefile.sendmail>
 
 realall: ${ALL}
-
-afterinstall:
-	${CHMOD} ${ROMODE} ${DESTDIR}${FILESDIR}/netbsd-proto.mc
-	${CHMOD} ${ROMODE} ${DESTDIR}${FILESDIR}/netbsd-msp.mc
 
 # XXX not friendly with "make obj"
 others: ${OTHERS}
