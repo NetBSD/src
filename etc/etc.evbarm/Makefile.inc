@@ -1,11 +1,12 @@
-#	$NetBSD: Makefile.inc,v 1.15 2004/12/28 16:51:15 joff Exp $
+#	$NetBSD: Makefile.inc,v 1.16 2005/02/27 02:27:12 bsh Exp $
 #
 #	etc.evbarm/Makefile.inc -- evbarm-specific etc Makefile targets
 #
 
 .if ${MACHINE_ARCH} == "arm"
 # Little endian platforms
-EVBARM_BOARDS=		ADI_BRH INTEGRATOR IQ80310 IQ80321 TEAMASA_NPWR TS7200
+EVBARM_BOARDS=		ADI_BRH INTEGRATOR IQ80310 IQ80321 SMDK2410 SMDK2800 \
+			TEAMASA_NPWR TS7200 TWINTAIL
 .else
 # Big endian platforms
 EVBARM_BOARDS=		ADI_BRH
@@ -18,7 +19,7 @@ BUILD_KERNELS+=		${board}_INSTALL
 
 .if ${MACHINE_ARCH} == "arm"
 # Little endian platforms.
-KERNEL_SETS+=		IXM1200 SMDK2410 SMDK2800
+KERNEL_SETS+=		IXM1200
 .else
 # Big endian platforms.
 KERNEL_SETS+=		IXM1200
