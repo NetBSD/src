@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.190 2000/02/03 16:20:53 kleink Exp $
+#	$NetBSD: mi,v 1.191 2000/02/09 12:23:56 itojun Exp $
 ./sys			comp-sysutil-root
 ./usr/bin/ar		comp-util-bin
 ./usr/bin/as		comp-util-bin
@@ -1759,6 +1759,7 @@
 ./usr/share/man/cat3/getgrouplist.0	comp-c-catman
 ./usr/share/man/cat3/gethostbyaddr.0	comp-c-catman
 ./usr/share/man/cat3/gethostbyname.0	comp-c-catman
+./usr/share/man/cat3/gethostbyname2.0	comp-c-catman
 ./usr/share/man/cat3/gethostent.0	comp-c-catman
 ./usr/share/man/cat3/gethostid.0	comp-c-catman
 ./usr/share/man/cat3/gethostname.0	comp-c-catman
@@ -3240,6 +3241,7 @@
 ./usr/share/man/man3/getgrouplist.3		comp-c-man
 ./usr/share/man/man3/gethostbyaddr.3		comp-c-man
 ./usr/share/man/man3/gethostbyname.3		comp-c-man
+./usr/share/man/man3/gethostbyname2.3		comp-c-man
 ./usr/share/man/man3/gethostent.3		comp-c-man
 ./usr/share/man/man3/gethostid.3		comp-c-man
 ./usr/share/man/man3/gethostname.3		comp-c-man
