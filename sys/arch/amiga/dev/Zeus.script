@@ -1,7 +1,7 @@
 ; **
 ; ** 53C710 SCRIPTS for Progressive Peripherals, Inc. Zeus SCSI-2 driver
 ; **
-; **	$Id: Zeus.script,v 1.2 1994/02/11 07:01:20 chopps Exp $
+; **	$Id: Zeus.script,v 1.3 1994/07/10 23:00:29 chopps Exp $
 
 ; **
 ; ** Absolute definitions
@@ -127,7 +127,7 @@ MOVE SFBR | 0x00 TO SCRATCH0			; ** save status in SCRATCH0
 msgin:
 INT 0x0000ff04, WHEN NOT Msg_In			; ** expected message in
 MOVE FROM ds_Msg, WHEN Msg_In
-;JUMP REL(msgin), IF 0x07			; ** assume REJECT is for sync neg
+JUMP REL(msgin_rej), IF 0x07			; ** assume REJECT is for sync neg
 INT 0x0000ff26, IF NOT 0x00			; ** message byte != complete
 CLEAR ACK
 WAIT DISCONNECT
@@ -138,6 +138,13 @@ INT 0x0000fffb, IF 0x08				; ** -> Busy
 INT 0x0000fffd, IF 0x18				; ** -> ??
 INT 0x0000fffe, IF NOT 0x00			; ** -> not good status
 INT 0x0000ff00					; ** -> normal completion
+msgin_rej:
+CLEAR ATN
+INT 0x0000ff26
+CLEAR ACK
+JUMP REL(cmd) WHEN Cmd
+JUMP REL(status) WHEN Status
+JUMP REL(msgin) WHEN Msg_In
 
 ; **
 ; ** Should be in data out phase
