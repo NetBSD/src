@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.89 2000/06/01 00:50:01 matt Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.90 2000/06/03 16:44:43 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -984,7 +984,8 @@ raidioctl(dev, cmd, data, flag, p)
 		column = clabel->column;
 
 		if ((row < 0) || (row >= raidPtr->numRow) ||
-		    (column < 0) || (column >= raidPtr->numCol)) {
+		    (column < 0) || (column >= raidPtr->numCol +
+				     raidPtr->numSpare)) {
 			RF_Free( clabel, sizeof(RF_ComponentLabel_t));
 			return(EINVAL);
 		}
