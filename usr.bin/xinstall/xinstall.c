@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.28 1998/10/08 02:12:51 wsanchez Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.29 1998/10/10 07:38:23 mrg Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #else
-__RCSID("$NetBSD: xinstall.c,v 1.28 1998/10/08 02:12:51 wsanchez Exp $");
+__RCSID("$NetBSD: xinstall.c,v 1.29 1998/10/10 07:38:23 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -65,6 +65,7 @@ __RCSID("$NetBSD: xinstall.c,v 1.28 1998/10/08 02:12:51 wsanchez Exp $");
 #include <err.h>
 
 #include "pathnames.h"
+#include "stat_flags.h"
 
 #define STRIP_ARGS_MAX 32
 
@@ -90,7 +91,6 @@ void	copy __P((int, char *, int, char *, off_t));
 void	makelink __P((char *, char *));
 void	install __P((char *, char *, u_long, u_int));
 void	install_dir __P((char *));
-u_long	string_to_flags __P((char **, u_long *, u_long *));
 void	strip __P((char *));
 void	usage __P((void));
 int	main __P((int, char *[]));

@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.8 1998/10/10 07:38:22 mrg Exp $	*/
+/*	$NetBSD: stat_flags.h,v 1.1 1998/10/10 07:38:22 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -35,22 +35,5 @@
  *	@(#)extern.h	8.1 (Berkeley) 5/31/93
  */
 
-int	 acccmp __P((const FTSENT *, const FTSENT *));
-int	 revacccmp __P((const FTSENT *, const FTSENT *));
-int	 modcmp __P((const FTSENT *, const FTSENT *));
-int	 revmodcmp __P((const FTSENT *, const FTSENT *));
-int	 namecmp __P((const FTSENT *, const FTSENT *));
-int	 revnamecmp __P((const FTSENT *, const FTSENT *));
-int	 statcmp __P((const FTSENT *, const FTSENT *));
-int	 revstatcmp __P((const FTSENT *, const FTSENT *));
-int	 sizecmp __P((const FTSENT *, const FTSENT *));
-int	 revsizecmp __P((const FTSENT *, const FTSENT *));
-
-void	 prcopy __P((char *, char *, int));
-void	 printacol __P((DISPLAY *));
-void	 printcol __P((DISPLAY *));
-void	 printlong __P((DISPLAY *));
-void	 printscol __P((DISPLAY *));
-void	 usage __P((void));
-
-#include "stat_flags.h"
+char	*flags_to_string __P((u_long, char *));
+int	 string_to_flags __P((char **, u_long *, u_long *));
