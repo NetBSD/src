@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.h,v 1.19 1998/10/08 22:27:32 pk Exp $ */
+/*	$NetBSD: cache.h,v 1.20 1998/10/09 10:48:14 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -177,6 +177,7 @@ void	hypersparc_pure_vcache_flush __P((void));
 
 void	ms1_cache_flush_all __P((void));
 void	srmmu_cache_flush_all __P((void));
+void	cypress_cache_flush_all __P((void));
 void	hypersparc_cache_flush_all __P((void));
 
 extern void sparc_noop __P((void));
