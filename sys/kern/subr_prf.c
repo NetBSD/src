@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.18 1995/03/19 23:23:11 mycroft Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.19 1995/06/16 10:52:17 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -529,23 +529,40 @@ sprintf(buf, cfmt, va_alist)
 	register char *p, *bp;
 	register int ch, base;
 	u_long ul;
-	int lflag;
+	int lflag, tmp, width;
 	va_list ap;
+	char padc;
 
 	va_start(ap, cfmt);
 	for (bp = buf; ; ) {
+		padc = ' ';
+		width = 0;
 		while ((ch = *(u_char *)fmt++) != '%')
 			if ((*bp++ = ch) == '\0')
 				return ((bp - buf) - 1);
 
 		lflag = 0;
 reswitch:	switch (ch = *(u_char *)fmt++) {
+		case '0':
+			padc = '0';
+			goto reswitch;
+		case '1': case '2': case '3': case '4':
+		case '5': case '6': case '7': case '8': case '9':
+			for (width = 0;; ++fmt) {
+				width = width * 10 + ch - '0';
+				ch = *fmt;
+				if (ch < '0' || ch > '9')
+					break;
+			}
+			goto reswitch;
 		case 'l':
 			lflag = 1;
 			goto reswitch;
+		/* case 'b': ... break; XXX */
 		case 'c':
 			*bp++ = va_arg(ap, int);
 			break;
+		/* case 'r': ... break; XXX */
 		case 's':
 			p = va_arg(ap, char *);
 			while (*bp++ = *p++)
@@ -571,10 +588,20 @@ reswitch:	switch (ch = *(u_char *)fmt++) {
 			base = 10;
 			goto number;
 			break;
+		case 'p':
+			*bp++ = '0';
+			*bp++ = 'x';
+			ul = (u_long)va_arg(ap, void *);
+			base = 16;
+			goto number;
 		case 'x':
 			ul = lflag ? va_arg(ap, u_long) : va_arg(ap, u_int);
 			base = 16;
-number:			for (p = ksprintn(ul, base, NULL); ch = *p--;)
+number:			p = ksprintn(ul, base, &tmp);
+			if (width && (width -= tmp) > 0)
+				while (width--)
+					*bp++ = padc;
+			while (ch = *p--)
 				*bp++ = ch;
 			break;
 		default:
