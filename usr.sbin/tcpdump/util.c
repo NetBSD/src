@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.6 1997/10/03 19:56:03 christos Exp $	*/
+/*	$NetBSD: util.c,v 1.6.12.1 2000/08/09 22:44:20 itojun Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996, 1997
@@ -27,7 +27,7 @@
 static const char rcsid[] =
     "@(#) Header: util.c,v 1.58 97/05/09 14:52:17 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: util.c,v 1.6 1997/10/03 19:56:03 christos Exp $");
+__RCSID("$NetBSD: util.c,v 1.6.12.1 2000/08/09 22:44:20 itojun Exp $");
 #endif
 #endif
 
@@ -278,4 +278,25 @@ read_infile(char *fname)
 	cp[(int)buf.st_size] = '\0';
 
 	return (cp);
+}
+
+void
+safeputs(const char *s)
+{
+	while (*s) {
+		safeputchar(*s);
+		s++;
+	}
+}
+
+void
+safeputchar(int c)
+{
+	unsigned char ch;
+
+	ch = (unsigned char)(c & 0xff);
+	if (c < 0x80 && isprint(c))
+		printf("%c", c & 0xff);
+	else
+		printf("\\%03o", c & 0xff);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: interface.h,v 1.12.4.1 2000/07/26 23:14:17 mycroft Exp $	*/
+/*	$NetBSD: interface.h,v 1.12.4.2 2000/08/09 22:44:19 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -184,6 +184,9 @@ extern void warning(const char *, ...) __attribute__ ((format (printf, 1, 2)));
 
 extern char *read_infile(char *);
 extern char *copy_argv(char **);
+
+extern void safeputchar(int);
+extern void safeputs(const char *);
 
 extern char *isonsap_string(const u_char *);
 extern char *llcsap_string(u_char);

@@ -1,4 +1,4 @@
-/*	$NetBSD: print-telnet.c,v 1.2 1999/10/11 12:40:12 sjg Exp $ 	*/
+/*	$NetBSD: print-telnet.c,v 1.2.8.1 2000/08/09 22:44:19 itojun Exp $ 	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -47,19 +47,19 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-telnet.c,v 1.2 1999/10/11 12:40:12 sjg Exp $");
+__RCSID("$NetBSD: print-telnet.c,v 1.2.8.1 2000/08/09 22:44:19 itojun Exp $");
 #endif
 
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/types.h>
+#include <ctype.h>
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/ip_var.h>
 #include <netinet/tcp.h>
-#include <netinet/tcpip.h>
 
 #define TELCMDS
 #define TELOPTS
@@ -74,7 +74,6 @@ __RCSID("$NetBSD: print-telnet.c,v 1.2 1999/10/11 12:40:12 sjg Exp $");
 
 #include "interface.h"
 #include "addrtoname.h"
-
 
 #ifndef TELCMD_FIRST
 # define TELCMD_FIRST SE
@@ -124,15 +123,16 @@ telnet_print(register const u_char *sp, u_int length)
 				x = *sp++; /* option */
 				length--;
 				if (x >= 0 && x < NTELOPTS) {
-					(void)sprintf(tnet, "%s %s",
-						      telcmds[i], telopts[x]);
+					(void)snprintf(tnet, sizeof(tnet),
+					    "%s %s", telcmds[i], telopts[x]);
 				} else {
-					(void)sprintf(tnet, "%s %#x",
-						      telcmds[i], x);
+					(void)snprintf(tnet, sizeof(tnet),
+					    "%s %#x", telcmds[i], x);
 				}
 				break;
 			default:
-				(void)strcpy(tnet, telcmds[i]);
+				(void)snprintf(tnet, sizeof(tnet), "%s",
+				    telcmds[i]);
 			}
 			if (c == SB) {
 				c = *sp++;
@@ -170,11 +170,13 @@ telnet_print(register const u_char *sp, u_int length)
 			hex_print_with_offset(osp, i, off);
 			off += i;
 			if (i > 8)
-				printf("\n\t\t\t\t%s", tnet);
+				printf("\n\t\t\t\t");
 			else
-				printf("%*s\t%s", (8 - i) * 3, "", tnet);
+				printf("%*s\t", (8 - i) * 3, "");
+			safeputs(tnet);
 		} else {
-			printf("%s%s", (first) ? " [telnet " : ", ", tnet);
+			printf("%s", (first) ? " [telnet " : ", ");
+			safeputs(tnet);
 		}
 		first = 0;
 	}
