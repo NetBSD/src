@@ -1,4 +1,4 @@
-/* $NetBSD: dec_550.c,v 1.22 2003/10/14 22:01:02 nathanw Exp $ */
+/* $NetBSD: dec_550.c,v 1.23 2003/10/24 15:00:20 mycroft Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_550.c,v 1.22 2003/10/14 22:01:02 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_550.c,v 1.23 2003/10/24 15:00:20 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -233,11 +233,11 @@ dec_550_device_register(dev, aux)
 		else {
 			struct pci_attach_args *pa = aux;
 
-			if ((b->slot % 1000) != pa->pa_device)
+			if ((b->slot % 100) != pa->pa_device)
+				return;
+			if (((b->slot % 1000) / 100) != pa->pa_function)
 				return;
 
-			/* XXX function? */
-	
 			scsipidev = dev;
 			DR_VERBOSE(printf("\nscsipidev = %s\n",
 			    scsipidev->dv_xname));
