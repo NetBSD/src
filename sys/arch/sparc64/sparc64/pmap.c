@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.120.2.1 2002/06/12 01:23:47 lukem Exp $	*/
+/*	$NetBSD: pmap.c,v 1.120.2.2 2002/06/21 06:46:25 lukem Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
 /*
@@ -296,7 +296,7 @@ int memsize;
 
 static int memh = 0, vmemh = 0;	/* Handles to OBP devices */
 
-int avail_start, avail_end;	/* These are used by ps & family */
+paddr_t avail_start, avail_end;	/* These are used by ps & family */
 
 static int ptelookup_va __P((vaddr_t va)); /* sun4u */
 #if notyet
@@ -2521,16 +2521,16 @@ pmap_extract(pm, va, pap)
 		pa = (pseg_get(pm, va)&TLB_PA_MASK)+(va&PGOFSET);
 #ifdef DEBUG
 		if (pmapdebug & PDB_EXTRACT) {
-			pa = ldxa((vaddr_t)&pm->pm_segs[va_to_seg(va)], ASI_PHYS_CACHED);
-			printf("pmap_extract: va=%p segs[%ld]=%llx", (void *)(u_long)va, (long)va_to_seg(va), (unsigned long long)pa);
-			if (pa) {
-				pa = (paddr_t)ldxa((vaddr_t)&((paddr_t*)(u_long)pa)[va_to_dir(va)], ASI_PHYS_CACHED);
-				printf(" segs[%ld][%ld]=%lx", (long)va_to_seg(va), (long)va_to_dir(va), (long)pa);
+			npa = ldxa((vaddr_t)&pm->pm_segs[va_to_seg(va)], ASI_PHYS_CACHED);
+			printf("pmap_extract: va=%p segs[%ld]=%llx", (void *)(u_long)va, (long)va_to_seg(va), (unsigned long long)npa);
+			if (npa) {
+				npa = (paddr_t)ldxa((vaddr_t)&((paddr_t*)(u_long)npa)[va_to_dir(va)], ASI_PHYS_CACHED);
+				printf(" segs[%ld][%ld]=%lx", (long)va_to_seg(va), (long)va_to_dir(va), (long)npa);
 			}
-			if (pa)	{
-				pa = (paddr_t)ldxa((vaddr_t)&((paddr_t*)(u_long)pa)[va_to_pte(va)], ASI_PHYS_CACHED);
+			if (npa)	{
+				npa = (paddr_t)ldxa((vaddr_t)&((paddr_t*)(u_long)npa)[va_to_pte(va)], ASI_PHYS_CACHED);
 				printf(" segs[%ld][%ld][%ld]=%lx", (long)va_to_seg(va), 
-				       (long)va_to_dir(va), (long)va_to_pte(va), (long)pa);
+				       (long)va_to_dir(va), (long)va_to_pte(va), (long)npa);
 			}
 			printf(" pseg_get: %lx\n", (long)pa);
 		}
