@@ -1,4 +1,4 @@
-/*	$NetBSD: v_txt.c,v 1.4 2001/04/30 21:34:12 aymeric Exp $	*/
+/*	$NetBSD: v_txt.c,v 1.5 2001/05/01 16:46:12 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -1917,7 +1917,7 @@ txt_dent(sp, tp, isindent)
 {
 	CHAR_T ch;
 	u_long sw, ts;
-	size_t cno, current, spaces, target, tabs, off;
+	size_t cno, current, spaces, target, tabs;
 	int ai_reset;
 
 	ts = O_VAL(sp, O_TABSTOP);

@@ -1,4 +1,4 @@
-/*	$NetBSD: cl_main.c,v 1.4 2001/03/31 11:37:45 aymeric Exp $	*/
+/*	$NetBSD: cl_main.c,v 1.5 2001/05/01 16:46:11 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -39,6 +39,7 @@ static const char sccsid[] = "@(#)cl_main.c	10.36 (Berkeley) 10/14/96";
 GS *__global_list;				/* GLOBAL: List of screens. */
 sigset_t __sigblockset;				/* GLOBAL: Blocked signals. */
 
+int		   main __P((int, char **));
 static void	   cl_func_std __P((GS *));
 static CL_PRIVATE *cl_init __P((GS *));
 static GS	  *gs_init __P((char *));
@@ -46,6 +47,10 @@ static void	   perr __P((char *, char *));
 static int	   setsig __P((int, struct sigaction *, void (*)(int)));
 static void	   sig_end __P((GS *));
 static void	   term_init __P((char *, char *));
+static void	   h_hup __P((int));
+static void	   h_int __P((int));
+static void	   h_term __P((int));
+static void	   h_winch __P((int));
 
 /*
  * main --
@@ -61,8 +66,10 @@ main(argc, argv)
 	GS *gp;
 	size_t rows, cols;
 	int rval;
-	char *ip_arg, **p_av, **t_av, *ttype;
-
+	char *ip_arg, *ttype;
+#ifdef RUNNING_IP
+	char **p_av, **t_av;
+#endif
 	/* If loaded at 0 and jumping through a NULL pointer, stop. */
 	if (reenter++)
 		abort();
@@ -111,7 +118,7 @@ main(argc, argv)
 		exit (ip_main(argc, argv, gp, ip_arg));
 #else
 	ip_arg = argv[0];
-#endif
+#endif /* RUNNING_IP */
 		
 	/* Create and initialize the CL_PRIVATE structure. */
 	clp = cl_init(gp);
@@ -197,7 +204,6 @@ static GS *
 gs_init(name)
 	char *name;
 {
-	CL_PRIVATE *clp;
 	GS *gp;
 	char *p;
 

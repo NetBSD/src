@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.5 2001/03/31 11:37:46 aymeric Exp $	*/
+/*	$NetBSD: main.c,v 1.6 2001/05/01 16:46:11 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -41,7 +41,9 @@ static const char sccsid[] = "@(#)main.c	10.48 (Berkeley) 10/11/96";
 #include "../vi/vi.h"
 #include "pathnames.h"
 
+#ifdef DEBUG
 static void	 attach __P((GS *));
+#endif
 static void	 v_estr __P((char *, int, char *));
 static int	 v_obsolete __P((char *, char *[]));
 

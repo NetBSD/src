@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_txt.c,v 1.3 2001/03/31 11:37:50 aymeric Exp $	*/
+/*	$NetBSD: ex_txt.c,v 1.4 2001/05/01 16:46:12 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -15,6 +15,7 @@
 static const char sccsid[] = "@(#)ex_txt.c	10.17 (Berkeley) 10/10/96";
 #endif /* not lint */
 
+#include <sys/time.h>
 #include <sys/types.h>
 #include <sys/queue.h>
 
@@ -26,6 +27,7 @@ static const char sccsid[] = "@(#)ex_txt.c	10.17 (Berkeley) 10/10/96";
 #include <string.h>
 
 #include "../common/common.h"
+#include "../vi/vi.h"
 
 /*
  * !!!

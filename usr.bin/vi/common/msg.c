@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.c,v 1.5 2001/03/31 11:37:46 aymeric Exp $	*/
+/*	$NetBSD: msg.c,v 1.6 2001/05/01 16:46:11 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -66,13 +66,17 @@ msgq(sp, mt, fmt, va_alist)
 		size_t	 skip;		/* Skipped string length. */
 		size_t	 suffix;	/* Suffix string length. */
 	} str[__NL_ARGMAX];
+
+	CHAR_T ch;
+	const char *t, *u;
+	char *rbp, *s_rbp;
+	size_t cnt1, cnt2, soff;
 #endif
 	static int reenter;		/* STATIC: Re-entrancy check. */
-	CHAR_T ch;
 	GS *gp;
-	size_t blen, cnt1, cnt2, len, mlen, nlen, soff;
-	const char *p, *t, *u;
-	char *bp, *mp, *rbp, *s_rbp;
+	size_t blen, len, mlen, nlen;
+	const char *p;
+	char *bp, *mp;
         va_list ap;
 
 	/*
@@ -274,7 +278,10 @@ retry:		FREE_SPACE(sp, bp, blen);
 	fmt = rbp;
 #endif
 
-format:	/* Format the arguments into the string. */
+#ifndef NL_ARGMAX
+format:
+#endif
+	/* Format the arguments into the string. */
 #ifdef __STDC__
         va_start(ap, fmt);
 #else
@@ -349,7 +356,10 @@ nofmt:	mp += len;
 		(void)fprintf(stderr, "%.*s", (int)mlen, bp);
 
 	/* Cleanup. */
-ret:	FREE_SPACE(sp, bp, blen);
+#ifndef NL_ARGMAX
+ret:
+#endif
+	FREE_SPACE(sp, bp, blen);
 alloc_err:
 	reenter = 0;
 }
@@ -474,7 +484,7 @@ mod_rpt(sp)
 				*p++ = ' ';
 				tlen += 2;
 			}
-			len = snprintf(p, MAXNUM, "%lu ", sp->rptlines[cnt]);
+			len = snprintf(p, MAXNUM, "%u ", sp->rptlines[cnt]);
 			p += len;
 			tlen += len;
 			t = msg_cat(sp,
@@ -518,7 +528,6 @@ msgq_status(sp, lno, flags)
 	recno_t lno;
 	u_int flags;
 {
-	static int poisoned;
 	recno_t last;
 	size_t blen, len;
 	int cnt, needsep;

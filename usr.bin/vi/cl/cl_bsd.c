@@ -1,4 +1,4 @@
-/*	$NetBSD: cl_bsd.c,v 1.5 2001/03/31 11:37:45 aymeric Exp $	*/
+/*	$NetBSD: cl_bsd.c,v 1.6 2001/05/01 16:46:11 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996
@@ -34,6 +34,8 @@ static const char sccsid[] = "@(#)cl_bsd.c	8.29 (Berkeley) 7/1/96";
 static char	*ke;				/* Keypad on. */
 static char	*ks;				/* Keypad off. */
 static char	*vb;				/* Visible bell string. */
+
+static int lcmp __P((const void *, const void *));
 
 /*
  * HP's support the entire System V curses package except for the tigetstr
@@ -200,34 +202,34 @@ typedef struct _tl {
 	char *termcap;			/* Termcap name. */
 } TL;
 static const TL list[] = {
-	"cols",		"co",		/* Terminal columns. */
-	"cup",		"cm",		/* Cursor up. */
-	"cuu1",		"up",		/* Cursor up. */
-	"el",		"ce",		/* Clear to end-of-line. */
-	"flash",	"vb",		/* Visible bell. */
-	"kcub1",  	"kl",		/* Cursor left. */
-	"kcud1",	"kd",		/* Cursor down. */
-	"kcuf1",	"kr",		/* Cursor right. */
-	"kcuu1",  	"ku",		/* Cursor up. */
-	"kdch1",	"kD",		/* Delete character. */
-	"kdl1",		"kL",		/* Delete line. */
-	"ked",		"kS",		/* Delete to end of screen. */
-	"kel",		"kE",		/* Delete to eol. */
-	"khome",	"kh",		/* Go to sol. */
-	"kich1",	"kI",		/* Insert at cursor. */
-	"kil1",		"kA",		/* Insert line. */
-	"kind",		"kF",		/* Scroll down. */
-	"kll",		"kH",		/* Go to eol. */
-	"knp",		"kN",		/* Page down. */
-	"kpp",		"kP",		/* Page up. */
-	"kri",		"kR",		/* Scroll up. */
-	"lines",	"li",		/* Terminal lines. */
-	"rmcup",	"te",		/* Terminal end string. */
-	"rmkx",		"ke",		/* Exit "keypad-transmit" mode. */
-	"rmso",		"se",		/* Standout end. */
-	"smcup",	"ti",		/* Terminal initialization string. */
-	"smkx",		"ks",		/* Enter "keypad-transmit" mode. */
-	"smso",		"so",		/* Standout begin. */
+	{ "cols",	"co" },		/* Terminal columns. */
+	{ "cup",	"cm" },		/* Cursor up. */
+	{ "cuu1",	"up" },		/* Cursor up. */
+	{ "el",		"ce" },		/* Clear to end-of-line. */
+	{ "flash",	"vb" },		/* Visible bell. */
+	{ "kcub1",  	"kl" },		/* Cursor left. */
+	{ "kcud1",	"kd" },		/* Cursor down. */
+	{ "kcuf1",	"kr" },		/* Cursor right. */
+	{ "kcuu1",  	"ku" },		/* Cursor up. */
+	{ "kdch1",	"kD" },		/* Delete character. */
+	{ "kdl1",	"kL" },		/* Delete line. */
+	{ "ked",	"kS" },		/* Delete to end of screen. */
+	{ "kel",	"kE" },		/* Delete to eol. */
+	{ "khome",	"kh" },		/* Go to sol. */
+	{ "kich1",	"kI" },		/* Insert at cursor. */
+	{ "kil1",	"kA" },		/* Insert line. */
+	{ "kind",	"kF" },		/* Scroll down. */
+	{ "kll",	"kH" },		/* Go to eol. */
+	{ "knp",	"kN" },		/* Page down. */
+	{ "kpp",	"kP" },		/* Page up. */
+	{ "kri",	"kR" },		/* Scroll up. */
+	{ "lines",	"li" },		/* Terminal lines. */
+	{ "rmcup",	"te" },		/* Terminal end string. */
+	{ "rmkx",	"ke" },		/* Exit "keypad-transmit" mode. */
+	{ "rmso",	"se" },		/* Standout end. */
+	{ "smcup",	"ti" },		/* Terminal initialization string. */
+	{ "smkx",	"ks" },		/* Enter "keypad-transmit" mode. */
+	{ "smso",	"so" },		/* Standout begin. */
 };
 
 #ifdef _AIX
