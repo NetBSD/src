@@ -6,7 +6,7 @@
  *      386bsd only clean version, all SYSV stuff removed
  *      use hz value from param.c
  *
- *	$Id: spkr.c,v 1.2 1993/05/22 08:01:37 cgd Exp $
+ *	$Id: spkr.c,v 1.3 1993/06/15 21:37:18 mycroft Exp $
  */
 
 #include "speaker.h"
@@ -54,10 +54,7 @@
 #define PIT_COUNT	0x42	/* PIT count address */
 #define PIT_MODE	0xB6	/* set timer mode for sound generation */
 
-/*
- * Magic numbers for timer control. 
- */
-#define TIMER_CLK	1193180L	/* corresponds to 18.2 MHz tick rate */
+#include "timerreg.h"
 
 static int endtone()
 /* turn off the speaker, ending current tone */
@@ -70,7 +67,7 @@ static void tone(hz, ticks)
 /* emit tone of frequency hz for given number of ticks */
 unsigned int hz, ticks;
 {
-    unsigned int divisor = TIMER_CLK / hz;
+    unsigned int divisor = TIMER_DIV(hz);
     int sps;
 
 #ifdef DEBUG
