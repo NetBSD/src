@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.21 1994/12/14 18:57:23 mycroft Exp $	*/
+/*	$NetBSD: conf.c,v 1.22 1994/12/16 04:14:13 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -88,6 +88,7 @@ int	ttselect	__P((dev_t, int, struct proc *));
 bdev_decl(no);	/* dummy declarations */
 
 #include "ct.h"
+#include "mt.h"
 #include "st.h"
 #include "rd.h"
 #include "sd.h"
@@ -95,6 +96,7 @@ bdev_decl(no);	/* dummy declarations */
 #include "vn.h"
 
 bdev_decl(ct);
+bdev_decl(mt);
 bdev_decl(st);
 bdev_decl(rd);
 bdev_decl(sd);
@@ -104,7 +106,7 @@ bdev_decl(vn);
 struct bdevsw	bdevsw[] =
 {
 	bdev_tape_init(NCT,ct),	/* 0: cs80 cartridge tape */
-	bdev_notdef(),		/* 1 */
+	bdev_tape_init(NMT,mt),	/* 1: magnetic reel tape */
 	bdev_disk_init(NRD,rd),	/* 2: hpib disk */
 	bdev_swap_init(),	/* 3: swap pseudo-device */
 	bdev_disk_init(NSD,sd),	/* 4: scsi disk */
@@ -316,7 +318,7 @@ struct cdevsw	cdevsw[] =
 	cdev_ite_init(NITE,ite),	/* 13: console terminal emulator */
 	cdev_hil_init(1,hil),		/* 14: human interface loop */
 	cdev_tty_init(NDCM,dcm),	/* 15: 4-port serial */
-	cdev_notdef(),			/* 16 */
+	cdev_tape_init(NMT,mt),		/* 16: magnetic reel tape */
 	cdev_disk_init(NCCD,ccd),	/* 17: concatenated disk */
 	cdev_notdef(),			/* 18 */
 	cdev_vn_init(NVN,vn),		/* 19: vnode disk */
@@ -444,20 +446,26 @@ chrtoblk(dev)
 #define	dev_type_cninit(n)	void n __P((struct consdev *))
 #define	dev_type_cngetc(n)	int n __P((dev_t))
 #define	dev_type_cnputc(n)	void n __P((dev_t, int))
+#define	dev_type_cnpollc(n)	void n __P((dev_t, int))
 #else
 #define	dev_type_cnprobe(n)	int n()
 #define	dev_type_cninit(n)	int n()
 #define	dev_type_cngetc(n)	int n()
 #define	dev_type_cnputc(n)	int n()
+#define	dev_type_cnpollc(n)	void n()
 #endif
 
 #define	cons_decl(n) \
 	dev_decl(n,cnprobe); dev_decl(n,cninit); dev_decl(n,cngetc); \
-	dev_decl(n,cnputc)
+	dev_decl(n,cnputc); dev_decl(n,cnpollc)
 
 #define	cons_init(n) { \
 	dev_init(1,n,cnprobe), dev_init(1,n,cninit), dev_init(1,n,cngetc), \
-	dev_init(1,n,cnputc) }
+	dev_init(1,n,cnputc), dev_init(1,n,cnpollc) }
+
+#define	itecnpollc	nullcnpollc
+#define	dcacnpollc	nullcnpollc
+#define	dcmcnpollc	nullcnpollc
 
 cons_decl(ite);
 cons_decl(dca);
