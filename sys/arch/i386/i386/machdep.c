@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.47.2.16 1993/10/29 05:25:34 mycroft Exp $
+ *	$Id: machdep.c,v 1.47.2.17 1993/10/30 13:16:11 mycroft Exp $
  */
 
 #include <stddef.h>
@@ -689,7 +689,7 @@ dumpsys()
 	 * We do all the memory mapping *here*.  There is no excuse for each
 	 * driver having to know how to do this!
 	 */
-	bytes = physmem << PGSHIFT;
+	bytes = physmem << (PGSHIFT + CLSIZELOG2);
 	maddr = 0;
 	blkno = dumplo;
 	dump = bdevsw[major(dumpdev)].d_dump;
@@ -1065,7 +1065,7 @@ init386(first_avail)
 			       : biosbasemem * 1024;
 
 	/* number of pages of physmem addr space; XXX first page unused */
-	physmem = atop(avail_end) - 1;
+	physmem = btoc(avail_end) - 1;
 
 	/*
 	 * Initialize for pmap_free_pages and pmap_next_page.
