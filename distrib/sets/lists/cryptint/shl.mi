@@ -1,4 +1,4 @@
-#	$NetBSD: shl.mi,v 1.2 2000/02/04 10:35:21 veego Exp $
+#	$NetBSD: shl.mi,v 1.3 2000/05/18 12:09:52 kleink Exp $
 ./usr/lib/libasn1.so.1.4
 ./usr/lib/libasn1_pic.a
 ./usr/lib/libcom_err.so.1.0
@@ -9,7 +9,7 @@
 ./usr/lib/libcrypto_pic.a
 ./usr/lib/libdes.so.3.0
 ./usr/lib/libdes_pic.a
-./usr/lib/libgssapi.so.0.3
+./usr/lib/libgssapi.so.0.4
 ./usr/lib/libgssapi_pic.a
 ./usr/lib/libhdb.so.4.1
 ./usr/lib/libhdb_pic.a
