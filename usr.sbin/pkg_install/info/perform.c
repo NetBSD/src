@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.37.2.1 2002/06/28 12:44:23 lukem Exp $	*/
+/*	$NetBSD: perform.c,v 1.37.2.2 2002/07/21 04:41:56 lukem Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.23 1997/10/13 15:03:53 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.37.2.1 2002/06/28 12:44:23 lukem Exp $");
+__RCSID("$NetBSD: perform.c,v 1.37.2.2 2002/07/21 04:41:56 lukem Exp $");
 #endif
 #endif
 
@@ -53,7 +53,7 @@ pkg_do(char *pkg)
 	int     code = 0;
 
 	if (IS_URL(pkg)) {
-		if ((cp = fileGetURL(NULL, pkg)) != NULL) {
+		if ((cp = fileGetURL(pkg)) != NULL) {
 			strcpy(fname, cp);
 			isTMP = TRUE;
 		}
@@ -72,7 +72,7 @@ pkg_do(char *pkg)
 		}
 		cp = fname;
 	} else {
-		if ((cp = fileFindByPath(NULL, pkg)) != NULL) {
+		if ((cp = fileFindByPath(pkg)) != NULL) {
 			strncpy(fname, cp, FILENAME_MAX);
 		}
 	}
@@ -88,7 +88,7 @@ pkg_do(char *pkg)
 				 */
 				char *cp2;
 
-				if ((cp2 = fileGetURL(NULL, cp)) != NULL) {
+				if ((cp2 = fileGetURL(cp)) != NULL) {
 					strcpy(fname, cp2);
 					isTMP = TRUE;
 				}
