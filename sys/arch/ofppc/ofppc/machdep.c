@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.19 1998/06/05 11:27:10 sakamoto Exp $	*/
+/*	$NetBSD: machdep.c,v 1.20 1998/06/11 05:03:30 sakamoto Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -505,9 +505,9 @@ cpu_startup()
 		callout[i - 1].c_next = &callout[i];
 
 #if defined(UVM)
-	printf("avail memory = %d (%dK bytes)\n", ptoa(uvmexp.free));
+	printf("avail memory = %d\n", ptoa(uvmexp.free));
 #else
-	printf("avail memory = %d (%dK bytes)\n", ptoa(cnt.v_free_count));
+	printf("avail memory = %d\n", ptoa(cnt.v_free_count));
 #endif
 	printf("using %d buffers containing %d bytes of memory\n",
 	       nbuf, bufpages * CLBYTES);
