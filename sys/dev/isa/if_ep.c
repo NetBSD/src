@@ -21,7 +21,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: if_ep.c,v 1.31 1994/04/16 09:53:45 deraadt Exp $
+ *	$Id: if_ep.c,v 1.32 1994/04/18 12:40:39 deraadt Exp $
  */
 
 #include "bpfilter.h"
@@ -79,7 +79,7 @@ struct ep_softc {
 	struct arpcom ep_ac;		/* Ethernet common part		*/
 	short   ep_iobase;		/* i/o bus address		*/
 	char    ep_connectors;		/* Connectors on this card.	*/
-#define MAX_MBS  4			/* # of mbufs we keep around	*/
+#define MAX_MBS	8			/* # of mbufs we keep around	*/
 	struct mbuf *mb[MAX_MBS];	/* spare mbuf storage.		*/
 	int	next_mb;		/* Which mbuf to use next. 	*/
 	int	last_mb;		/* Last mbuf.			*/
@@ -224,7 +224,7 @@ epprobe(parent, self, aux)
 	 *	wildcard port & irq
 	 * else fail..
 	 */
-	if (ia->ia_iobase != (u_short)-1 || ia->ia_irq != (u_short)-1) {
+	if (ia->ia_iobase != (u_short)-1 && ia->ia_irq != (u_short)-1) {
 		for (i = 0; i<nepcards; i++) {
 			if (epcards[i].available == 0)
 				continue;
@@ -396,7 +396,11 @@ epinit(sc)
 	for (i = 0; i < 31; i++)
 		inb(BASE + EP_W1_TX_STATUS);
 
-	outw(BASE + EP_COMMAND, ACK_INTR | 0xff); /* get rid of stray intr's */
+	/*
+	 * attemp to get rid of stray interrupts. on the i386 this isn't
+	 * totally possible since they may queue.
+	 */
+	outw(BASE + EP_COMMAND, ACK_INTR | 0xff);
 
 	outw(BASE + EP_COMMAND, SET_RD_0_MASK | S_CARD_FAILURE | S_RX_COMPLETE |
 	    S_TX_COMPLETE | S_TX_AVAIL);
@@ -645,20 +649,20 @@ loop:
 	/* important that we do this first. */
 	outw(BASE + EP_COMMAND, ACK_INTR | status);
 
+	if (status & S_RX_COMPLETE) {
+		status &= ~S_RX_COMPLETE;
+		epread(sc);
+	}
 	if (status & S_TX_AVAIL) {
 		status &= ~S_TX_AVAIL;
 		inw(BASE + EP_W1_FREE_TX);
 		sc->ep_ac.ac_if.if_flags &= ~IFF_OACTIVE;
 		epstart(&sc->ep_ac.ac_if);
 	}
-	if (status & S_RX_COMPLETE) {
-		status &= ~S_RX_COMPLETE;
-		epread(sc);
-	}
 	if (status & S_CARD_FAILURE) {
 		printf("%s: reset (status: %x)\n", sc->sc_dev.dv_xname, status);
 		outw(BASE + EP_COMMAND, C_INTR_LATCH);
-		epinit(sc);
+		epreset(sc);
 		return (1);
 	}
 	if (status & S_TX_COMPLETE) {
