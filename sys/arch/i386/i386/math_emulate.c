@@ -1,7 +1,7 @@
 /*
  * expediant "port" of linux 8087 emulator to 386BSD, with apologies -wfj
  *
- *	$Id: math_emulate.c,v 1.3 1993/05/20 14:33:45 cgd Exp $
+ *	$Id: math_emulate.c,v 1.4 1993/05/26 18:43:33 proven Exp $
  */
 
 /*
@@ -616,7 +616,7 @@ char * ea(struct trapframe * info, unsigned short code)
 		I387.fos = 0x17;
 		return (char *) offset;
 	}
-	tmp = & (long)REG(rm);
+	tmp = (long*)&REG(rm);
 	switch (mod) {
 		case 0: offset = 0; break;
 		case 1:
