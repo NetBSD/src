@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.39 2001/12/06 23:51:04 bjh21 Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.40 2001/12/08 01:22:45 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -66,6 +66,7 @@ extern void	startrtclock __P((void));
 
 #if defined(OFWGENCFG) || defined(SHARK)
 /* Temporary for SHARK! */
+extern void ofw_device_register(struct device *dev, void *aux);
 #include <machine/ofw.h>
 #endif
 
