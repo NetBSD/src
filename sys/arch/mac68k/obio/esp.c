@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.20 1998/12/22 08:47:07 scottr Exp $	*/
+/*	$NetBSD: esp.c,v 1.21 1999/06/01 03:40:12 briggs Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.
@@ -334,8 +334,13 @@ esp_read_reg(sc, reg)
 	int reg;
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
+	u_char	v;
+	int	s;
 
-	return esc->sc_reg[reg * 16];
+	s = splhigh();
+	v = esc->sc_reg[reg * 16];
+	splx(s);
+	return v;
 }
 
 void
@@ -345,12 +350,15 @@ esp_write_reg(sc, reg, val)
 	u_char val;
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
-	u_char v = val;
+	u_char	v = val;
+	int	s;
 
 	if (reg == NCR_CMD && v == (NCRCMD_TRANS|NCRCMD_DMA)) {
 		v = NCRCMD_TRANS;
 	}
+	s = splhigh();
 	esc->sc_reg[reg * 16] = v;
+	splx(s);
 }
 
 void
@@ -502,9 +510,12 @@ esp_quick_write_reg(sc, reg, val)
 	u_char val;
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
-	u_char v = val;
+	u_char	v = val;
+	int	s;
 
+	s = splhigh();
 	esc->sc_reg[reg * 16] = v;
+	splx(s);
 }
 
 int
@@ -606,7 +617,7 @@ esp_iosb_have_dreq(esc)
 static int espspl=-1;
 #define __splx(s) __asm __volatile ("movew %0,sr" : : "di" (s));
 #define __spl2()  __splx(PSL_S|PSL_IPL2)
-#define __spl4()  __splx(PSL_S|PSL_IPL4)
+#define __spl6()  __splx(PSL_S|PSL_IPL6)
 
 void
 esp_quick_dma_go(sc)
@@ -653,7 +664,7 @@ restart_dmago:
 	if (esc->sc_datain == 0) {
 		while (esc->sc_pdmalen) {
 			WAIT;
-			__spl4(); *pdma = *(esc->sc_pdmaddr)++; __spl2()
+			__spl6(); *pdma = *(esc->sc_pdmaddr)++; __spl2()
 			esc->sc_pdmalen -= 2;
 		}
 		if (esc->sc_pad) {
@@ -662,19 +673,19 @@ restart_dmago:
 			c = (unsigned char *) esc->sc_pdmaddr;
 			us = *c;
 			WAIT;
-			__spl4(); *pdma = us; __spl2()
+			__spl6(); *pdma = us; __spl2()
 		}
 	} else {
 		while (esc->sc_pdmalen) {
 			WAIT;
-			__spl4(); *(esc->sc_pdmaddr)++ = *pdma; __spl2()
+			__spl6(); *(esc->sc_pdmaddr)++ = *pdma; __spl2()
 			esc->sc_pdmalen -= 2;
 		}
 		if (esc->sc_pad) {
 			unsigned short	us;
 			unsigned char	*c;
 			WAIT;
-			__spl4(); us = *pdma; __spl2()
+			__spl6(); us = *pdma; __spl2()
 			c = (unsigned char *) esc->sc_pdmaddr;
 			*c = us & 0xff;
 		}
