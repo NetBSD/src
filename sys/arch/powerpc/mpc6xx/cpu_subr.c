@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.3 2001/10/22 01:45:51 thorpej Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.4 2001/11/19 23:30:07 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -124,6 +124,7 @@ cpu_attach_common(struct device *self, int id)
 	case MPC603:
 	case MPC603e:
 	case MPC603ev:
+	case MPC604ev:
 	case MPC750:
 	case MPC7400:
 	case MPC7410:
