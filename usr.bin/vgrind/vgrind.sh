@@ -1,6 +1,6 @@
 #!/bin/csh -f
 #
-#	$NetBSD: vgrind.sh,v 1.4 2002/10/27 12:29:11 kleink Exp $
+#	$NetBSD: vgrind.sh,v 1.5 2003/08/18 14:10:22 pooka Exp $
 #
 # Copyright (c) 1980, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -43,6 +43,7 @@ set f=''
 set head=""
 set vf=/usr/libexec/vfontedpr
 set tm=/usr/share/tmac
+set vmacs=vgrind.tmac
 top:
 if ($#argv > 0) then
     switch ($1:q)
@@ -111,9 +112,9 @@ if (-r index) then
     sed -f nindex index >xindex
     if ($f == 'filter') then
 	if ("$head" != "") then
-	    $vf $options -h "$head" $files | cat $tm/tmac.vgrind -
+	    $vf $options -h "$head" $files | cat $tm/$vmacs -
 	else
-	    $vf $options $files | cat $tm/tmac.vgrind -
+	    $vf $options $files | cat $tm/$vmacs -
 	endif
     else
 	if ("$head" != "") then
@@ -129,9 +130,9 @@ if (-r index) then
 else
     if ($f == 'filter') then
 	if ("$head" != "") then
-	    $vf $options -h "$head" $files | cat $tm/tmac.vgrind -
+	    $vf $options -h "$head" $files | cat $tm/$vmacs -
 	else
-	    $vf $options $files | cat $tm/tmac.vgrind -
+	    $vf $options $files | cat $tm/$vmacs -
 	endif
     else
 	if ("$head" != "") then
