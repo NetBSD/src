@@ -12,11 +12,11 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: bt742a.c,v 1.12 1994/01/03 23:53:35 mycroft Exp $
+ *	$Id: bt742a.c,v 1.13 1994/01/05 13:38:57 deraadt Exp $
  */
 
 /*
- * bt742a BT-1542A SCSI driver
+ * BusTech/BusLogic bt742a EISA SCSI card driver
  */
 
 #include "bt.h"
@@ -585,7 +585,6 @@ struct isa_dev *dev;
 #ifdef  __NetBSD__				/* NetBSD */
         dev->id_irq = (1 << bt_int[unit]);
         dev->id_drq = bt_dma[unit];
-	printf("\n  **");
 #endif  __NetBSD__
 
 	btunit++;
@@ -747,7 +746,7 @@ struct bt_ccb *ccb;
 	* one to come free, starting with queued entries*
 	\***********************************************/
 	if (!ccb->next) {
-		wakeup(&bt_ccb_free[unit]);
+		wakeup((caddr_t)&bt_ccb_free[unit]);
 	}
 	if (!(flags & SCSI_NOMASK)) 
 		splx(opri);
@@ -772,7 +771,7 @@ bt_get_ccb(unit,flags)
 	\***********************************************/
 	while ((!(rc = bt_ccb_free[unit])) && (!(flags & SCSI_NOSLEEP)))
 	{
-		sleep(&bt_ccb_free[unit], PRIBIO);
+		sleep((caddr_t)&bt_ccb_free[unit], PRIBIO);
 	}
 	if (rc) 
 	{
@@ -899,74 +898,56 @@ int	unit;
 	* setup dma channel from jumpers and save int	*
 	* level						*
 	\***********************************************/
-#ifdef	__NetBSD__
-	printf("bt%d reading board settings, ",unit);
-#define	PRNT(x)
-#else	__NetBSD__
-	printf("bt%d:",unit);
-#define	PRNT(x) printf(x)
-#endif	__NetBSD__
+
+	DELAY(100);
 
 	bt_cmd(unit,0, sizeof(conf), 0 ,&conf, BT_CONF_GET);
-	switch(conf.chan)
-	{
-	case	EISADMA:
+	switch(conf.chan) {
+	case EISADMA:
 		bt_dma[unit] = -1;
-		PRNT("eisa dma ");
 		break;
-	case	CHAN0:
+	case CHAN0:
 		outb(0x0b, 0x0c);
 		outb(0x0a, 0x00);
 		bt_dma[unit] = 0;
-		PRNT("dma=0 ");
 		break;
-	case	CHAN5:
+	case CHAN5:
 		outb(0xd6, 0xc1);
 		outb(0xd4, 0x01);
 		bt_dma[unit] = 5;
-		PRNT("dma=5 ");
 		break;
-	case	CHAN6:
+	case CHAN6:
 		outb(0xd6, 0xc2);
 		outb(0xd4, 0x02);
 		bt_dma[unit] = 6;
-		PRNT("dma=6 ");
 		break;
-	case	CHAN7:
+	case CHAN7:
 		outb(0xd6, 0xc3);
 		outb(0xd4, 0x03);
 		bt_dma[unit] = 7;
-		PRNT("dma=7 ");
 		break;
 	default:
 		printf("illegal dma setting %x\n",conf.chan);
 		return(EIO);
 	}
-	switch(conf.intr)
-	{
-	case	INT9:
+	switch(conf.intr) {
+	case INT9:
 		bt_int[unit] = 9;
-		PRNT("int=9 ");
 		break;
-	case	INT10:
+	case INT10:
 		bt_int[unit] = 10;
-		PRNT("int=10 ");
 		break;
-	case	INT11:
+	case INT11:
 		bt_int[unit] = 11;
-		PRNT("int=11 ");
 		break;
-	case	INT12:
+	case INT12:
 		bt_int[unit] = 12;
-		PRNT("int=12 ");
 		break;
-	case	INT14:
+	case INT14:
 		bt_int[unit] = 14;
-		PRNT("int=14 ");
 		break;
-	case	INT15:
+	case INT15:
 		bt_int[unit] = 15;
-		PRNT("int=15 ");
 		break;
 	default:
 		printf("illegal int setting\n");
@@ -1239,7 +1220,7 @@ struct scsi_xfer *xs;
 		printf("cmd_sent ");
 	if (!(flags & SCSI_NOMASK))
 	{
-		bt_add_timeout(ccb,xs->timeout);
+		bt_add_timeout(ccb, xs->timeout);
 		return(SUCCESSFULLY_QUEUED);
 	}
 	/***********************************************\
@@ -1469,7 +1450,7 @@ int	arg;
 		}
 	}
 	splx(s);
-	timeout(bt_timeout,arg,SLEEPTIME);
+	timeout((timeout_t)bt_timeout,(caddr_t)arg,SLEEPTIME);
 }
 
 tfs_print_ccb(ccb)
