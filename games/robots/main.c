@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.20 2004/01/27 20:30:30 jsm Exp $	*/
+/*	$NetBSD: main.c,v 1.21 2004/11/05 21:30:32 dsl Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.20 2004/01/27 20:30:30 jsm Exp $");
+__RCSID("$NetBSD: main.c,v 1.21 2004/11/05 21:30:32 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -76,7 +76,7 @@ main(ac, av)
 		bad_arg = FALSE;
 		for (++av; ac > 1 && *av[0]; av++, ac--)
 			if (av[0][0] != '-')
-				if (isdigit(av[0][0]))
+				if (isdigit((unsigned char)av[0][0]))
 					Max_per_uid = atoi(av[0]);
 				else {
 					Scorefile = av[0];

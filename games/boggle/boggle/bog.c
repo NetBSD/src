@@ -1,4 +1,4 @@
-/*	$NetBSD: bog.c,v 1.18 2004/01/27 20:30:29 jsm Exp $	*/
+/*	$NetBSD: bog.c,v 1.19 2004/11/05 21:30:31 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\n\
 #if 0
 static char sccsid[] = "@(#)bog.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: bog.c,v 1.18 2004/01/27 20:30:29 jsm Exp $");
+__RCSID("$NetBSD: bog.c,v 1.19 2004/11/05 21:30:31 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -180,7 +180,7 @@ main(argc, argv)
 	}
 
 	if (argc > 0) {
-		if (islower(argv[0][0])) {
+		if (islower((unsigned char)argv[0][0])) {
 			if (strlen(argv[0]) != 16) {
 				usage();
 			} else {

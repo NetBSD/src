@@ -1,4 +1,4 @@
-/*	$NetBSD: pig.c,v 1.10 2004/01/27 20:30:30 jsm Exp $	*/
+/*	$NetBSD: pig.c,v 1.11 2004/11/05 21:30:32 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)pig.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: pig.c,v 1.10 2004/01/27 20:30:30 jsm Exp $");
+__RCSID("$NetBSD: pig.c,v 1.11 2004/11/05 21:30:32 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -99,9 +99,9 @@ pigout(buf, len)
 	int olen, allupper, firstupper;
 
 	/* See if the word is all upper case */
-	allupper = firstupper = isupper(buf[0]);
+	allupper = firstupper = isupper((unsigned char)buf[0]);
 	for (i = 1; i < len && allupper; i++)
-		allupper = allupper && isupper(buf[i]);
+		allupper = allupper && isupper((unsigned char)buf[i]);
 
 	/*
 	 * If the word starts with a vowel, append "way".  Don't treat 'y'
@@ -118,7 +118,7 @@ pigout(buf, len)
 	 * isn't treated as a vowel.
 	 */
 	if (!allupper)
-		buf[0] = tolower(buf[0]);
+		buf[0] = tolower((unsigned char)buf[0]);
 	for (start = 0, olen = len;
 	    !strchr("aeiouyAEIOUY", buf[start]) && start < olen;) {
 		ch = buf[len++] = buf[start++];
@@ -127,7 +127,7 @@ pigout(buf, len)
 			buf[len++] = buf[start++];
 	}
 	if (firstupper)
-		buf[start] = toupper(buf[start]);
+		buf[start] = toupper((unsigned char)buf[start]);
 	(void)printf("%.*s%s", olen, buf + start, allupper ? "AY" : "ay");
 }
 

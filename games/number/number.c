@@ -1,4 +1,4 @@
-/*	$NetBSD: number.c,v 1.9 2004/01/27 20:30:30 jsm Exp $	*/
+/*	$NetBSD: number.c,v 1.10 2004/11/05 21:30:32 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)number.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: number.c,v 1.9 2004/01/27 20:30:30 jsm Exp $");
+__RCSID("$NetBSD: number.c,v 1.10 2004/11/05 21:30:32 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -141,7 +141,7 @@ convert(line)
 			}
 			goto badnum;
 		}
-		if (isdigit(*p))
+		if (isdigit((unsigned char)*p))
 			continue;
 		switch (*p) {
 		case '.':

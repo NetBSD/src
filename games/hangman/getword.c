@@ -1,4 +1,4 @@
-/*	$NetBSD: getword.c,v 1.8 2003/08/07 09:37:21 agc Exp $	*/
+/*	$NetBSD: getword.c,v 1.9 2004/11/05 21:30:32 dsl Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)getword.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: getword.c,v 1.8 2003/08/07 09:37:21 agc Exp $");
+__RCSID("$NetBSD: getword.c,v 1.9 2004/11/05 21:30:32 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -63,7 +63,7 @@ getword()
 		if (strlen(Word) < Minlen)
 			continue;
 		for (wp = Word; *wp; wp++)
-			if (!islower(*wp))
+			if (!islower((unsigned char)*wp))
 				goto cont;
 		break;
 cont:		;

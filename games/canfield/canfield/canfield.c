@@ -1,4 +1,4 @@
-/*	$NetBSD: canfield.c,v 1.19 2004/01/27 20:30:29 jsm Exp $	*/
+/*	$NetBSD: canfield.c,v 1.20 2004/11/05 21:30:31 dsl Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)canfield.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: canfield.c,v 1.19 2004/01/27 20:30:29 jsm Exp $");
+__RCSID("$NetBSD: canfield.c,v 1.20 2004/11/05 21:30:31 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -1400,7 +1400,7 @@ getcmd(row, col, cp)
 			suspend();
 			move(row, col + i);
 			refresh();
-		} else if (isprint(ch)) {
+		} else if (isprint((unsigned char)ch)) {
 			cmd[i++] = ch;
 			addch(ch);
 			refresh();

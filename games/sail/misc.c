@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.14 2004/02/08 00:32:48 jsm Exp $	*/
+/*	$NetBSD: misc.c,v 1.15 2004/11/05 21:30:32 dsl Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: misc.c,v 1.14 2004/02/08 00:32:48 jsm Exp $");
+__RCSID("$NetBSD: misc.c,v 1.15 2004/11/05 21:30:32 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -188,7 +188,7 @@ colours(struct ship *sp)
 	if (sp->file->struck)
 		return flag;
 	flag = *countryname[capship(sp)->nationality];
-	return sp->file->FS ? flag : tolower(flag);
+	return sp->file->FS ? flag : tolower((unsigned char)flag);
 }
 
 void

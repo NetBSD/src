@@ -1,4 +1,4 @@
-/*	$NetBSD: pl_5.c,v 1.16 2003/08/07 09:37:44 agc Exp $	*/
+/*	$NetBSD: pl_5.c,v 1.17 2004/11/05 21:30:32 dsl Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pl_5.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pl_5.c,v 1.16 2003/08/07 09:37:44 agc Exp $");
+__RCSID("$NetBSD: pl_5.c,v 1.17 2004/11/05 21:30:32 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -122,7 +122,7 @@ acceptmove(void)
 				*p-- = '\0';
 			break;
 		default:
-			if (!isspace(*p)) {
+			if (!isspace((unsigned char)*p)) {
 				Msg("Input error.");
 				*p-- = '\0';
 			}
