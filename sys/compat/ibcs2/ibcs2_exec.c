@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_exec.c,v 1.4 1995/03/14 15:12:21 scottb Exp $	*/
+/*	$NetBSD: ibcs2_exec.c,v 1.5 1995/03/15 08:14:28 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -65,6 +65,7 @@ int exec_ibcs2_xout_prep_zmagic __P((struct proc *, struct exec_package *,
 				     struct xexec *, struct xext *));
 int exec_ibcs2_xout_setup_stack __P((struct proc *, struct exec_package *));
 void cpu_exec_ibcs2_xout_setup __P((struct proc *, struct exec_package *));
+int coff_load_shlib __P((struct proc *, char *, struct exec_package *));
 
 /*
  * exec_ibcs2_coff_makecmds(): Check if it's an coff-format executable.
@@ -413,7 +414,7 @@ n	 */
 			/* DPRINTF(("path_index: %d entry_len: %d name: %s\n",
 				 path_index, entry_len, slhdr->sl_name)); */
 
-			error = coff_load_shlib(p, slhdr->sl_name);
+			error = coff_load_shlib(p, slhdr->sl_name, epp);
 			if (error)
 				return ENOEXEC;
 			bufp += entry_len;
@@ -456,7 +457,7 @@ coff_load_shlib(p, path, epp)
 	NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, path, p);
 	/* first get the vnode */
 	if (error = namei(&nd)) {
-		DPRINTF(("load_coff_shlib: can't find library %s\n", path));
+		DPRINTF(("coff_load_shlib: can't find library %s\n", path));
 		return error;
 	}
 
@@ -470,7 +471,7 @@ coff_load_shlib(p, path, epp)
 	}
 	siz -= resid;
 	if (siz != sizeof(struct coff_filehdr)) {
-	    DPRINTF(("load_coff_shlib: incomplete read: ask=%d, rem=%d got %d\n",
+	    DPRINTF(("coff_load_shlib: incomplete read: ask=%d, rem=%d got %d\n",
 		     sizeof(struct coff_filehdr), resid, siz));
 	    vrele(nd.ni_vp);
 	    return ENOEXEC;
