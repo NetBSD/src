@@ -27,7 +27,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: rusers.c,v 1.9 1993/12/03 23:39:15 deraadt Exp $";
+static char rcsid[] = "$Id: rusers.c,v 1.10 1993/12/10 19:33:58 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -53,6 +53,7 @@ static char rcsid[] = "$Id: rusers.c,v 1.9 1993/12/03 23:39:15 deraadt Exp $";
 #define LINE_WIDTH 8
 char *argv0;
 
+struct timeval timeout = { 25, 0 };
 int longopt;
 int allopt;
 
@@ -199,7 +200,7 @@ onehost(char *host)
 
 	bzero((char *)&up, sizeof(up));
 	if (clnt_call(rusers_clnt, RUSERSPROC_NAMES, xdr_void, NULL,
-	    xdr_utmpidlearr, &up, NULL) != RPC_SUCCESS) {
+	    xdr_utmpidlearr, &up, timeout) != RPC_SUCCESS) {
 		clnt_perror(rusers_clnt, argv0);
 		exit(1);
 	}
