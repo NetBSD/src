@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.39 2003/10/31 16:30:15 scw Exp $	*/
+/*	$NetBSD: fault.c,v 1.40 2003/11/14 00:21:30 scw Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.39 2003/10/31 16:30:15 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.40 2003/11/14 00:21:30 scw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -284,6 +284,35 @@ data_abort_handler(trapframe_t *tf)
 		goto do_trapsignal;
 	default:
 		break;
+	}
+
+	/*
+	 * Make sure the Program Counter is sane. We could fall foul of
+	 * someone executing Thumb code, in which case the PC might not
+	 * be word-aligned. This would cause a kernel alignment fault
+	 * further down if we have to decode the current instruction.
+	 * XXX: It would be nice to be able to support Thumb at some point.
+	 */
+	if (__predict_false((tf->tf_pc & 3) != 0)) {
+		if (user) {
+			/*
+			 * Give the user an illegal instruction signal.
+			 */
+			/* Deliver a SIGILL to the process */
+			KSI_INIT_TRAP(&ksi);
+			ksi.ksi_signo = SIGILL;
+			ksi.ksi_code = ILL_ILLOPC;
+			ksi.ksi_addr = (u_int32_t *)(intptr_t) far;
+			ksi.ksi_trap = fsr;
+			goto do_trapsignal;
+		}
+
+		/*
+		 * The kernel never executes Thumb code.
+		 */
+		printf("\ndata_abort_fault: Misaligned Kernel-mode "
+		    "Program Counter\n");
+		dab_fatal(tf, fsr, far, l, NULL);
 	}
 
 	va = trunc_page((vaddr_t)far);
