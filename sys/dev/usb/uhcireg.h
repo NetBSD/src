@@ -1,4 +1,4 @@
-/*	$NetBSD: uhcireg.h,v 1.6 1999/04/03 19:01:20 augustss Exp $	*/
+/*	$NetBSD: uhcireg.h,v 1.7 1999/08/22 23:19:57 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -115,11 +115,6 @@ typedef u_int32_t uhci_physaddr_t;
 #define UHCI_PTR_Q		0x00000002
 #define UHCI_PTR_VF		0x00000004
 
-typedef union {
-	struct uhci_soft_qh *sqh;
-	struct uhci_soft_td *std;
-} uhci_soft_td_qh_t;
-
 /*
  * The Queue Heads and Transfer Descriptors and accessed
  * by both the CPU and the USB controller which runs
@@ -165,10 +160,7 @@ typedef struct {
 #define UHCI_TD_GET_MAXLEN(s)	((((s) >> 21) + 1) & 0x7ff)
 #define UHCI_TD_MAXLEN_MASK	0xffe00000
 	u_int32_t td_buffer;
-	uhci_soft_td_qh_t link; /* soft version of the td_link field */
-	/* padding to 32 bytes */
 } uhci_td_t;
-#define UHCI_TD_SIZE 32
 
 #define UHCI_TD_ERROR (UHCI_TD_BITSTUFF|UHCI_TD_CRCTO|UHCI_TD_BABBLE|UHCI_TD_DBUFFER|UHCI_TD_STALLED)
 
@@ -184,10 +176,6 @@ typedef struct {
 typedef struct {
 	uhci_physaddr_t qh_hlink;
 	uhci_physaddr_t qh_elink;
-	struct uhci_soft_qh *hlink; /* soft version of qh_hlink */
-	struct uhci_soft_td *elink; /* soft version of qh_elink */
-	/* padding to 32 bytes */
 } uhci_qh_t;
-#define UHCI_QH_SIZE 32
 
 #endif /* _DEV_PCI_UHCIREG_H_ */
