@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.7 2002/05/02 15:09:42 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.8 2002/06/28 12:40:10 skrll Exp $
 #
 #	etc.cats/Makefile.inc -- cats-specific etc Makefile targets
 #
@@ -8,8 +8,7 @@ KERNEL_SUFFIXES=	aout
 
 BUILD_KERNELS=		INSTALL
 
-INSTALLATION_DIRS+=	installation/kernel	\
-			installation/misc
+INSTALLATION_DIRS+=	installation/kernel
 
 # Build the release notes and boot floppies and install them
 snap_md_post:
@@ -20,4 +19,8 @@ snap_md_post:
 	cd ${.CURDIR}/../distrib/cats && ${MAKE} release
 	cd ${.CURDIR}/../distrib/notes && ${MAKE} release
 	${MAKESUMS} -t ${RELEASEDIR}/installation/kernel '*.gz'
-#	${MAKESUMS} -t ${RELEASEDIR}/installation/misc '*.gz'
+
+iso-image_md_pre:
+	cp -f ${RELEASEDIR}/binary/kernel/netbsd.aout-INSTALL.gz \
+	    ${RELEASEDIR}/netbsd.gz
+	gunzip ${RELEASEDIR}/netbsd.gz
