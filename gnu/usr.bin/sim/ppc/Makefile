@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2002/01/22 16:55:20 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2002/02/21 04:13:45 jmc Exp $
 
 TOP=	${.CURDIR}/../../..
 
@@ -192,6 +192,8 @@ run-pk: $(PACKAGE_SRC)
 	${MIC} tmp-pk.h pk.h
 	touch run-pk
 
+pk_disklabel.o: ${PK_H}
+
 hw_disk.c: ${PK_H}
 
 # defines portion
@@ -212,7 +214,7 @@ device_table.h: hw.h
 
 filter_host.lo filter_filename.o debug.c: ppc-config.h
 
-os_emul.c: ${IGENED_FILES}
+os_emul.c: ${IGENED_FILES} ${DGENED_FILES}
 
 filter_host.c: ${DIST}/sim/ppc/filter_filename.c
 	cp ${.ALLSRC} ${.TARGET}
