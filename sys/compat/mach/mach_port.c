@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_port.c,v 1.40 2003/11/03 22:17:42 manu Exp $ */
+/*	$NetBSD: mach_port.c,v 1.41 2003/11/07 17:16:39 christos Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include "opt_compat_darwin.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.40 2003/11/03 22:17:42 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.41 2003/11/07 17:16:39 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -401,10 +401,14 @@ mach_port_get_attributes(args)
 		if (mr->mr_sethead != NULL)
 			mps->mps_pset = mr->mr_sethead->mr_name;
 		mps->mps_seqno = 0; /* XXX */
-		mps->mps_mscount = mp->mp_refcount; /* XXX */
 		mps->mps_qlimit = MACH_PORT_QLIMIT_DEFAULT; /* XXX fake limit */
-		if ((mp = mr->mr_port) != NULL)
+		if ((mp = mr->mr_port) != NULL) {
+			mps->mps_mscount = mp->mp_refcount; /* XXX */
 			mps->mps_msgcount = mp->mp_count;
+		} else {
+			mps->mps_mscount = 0;
+			mps->mps_msgcount = 0;
+		}
 		mps->mps_sorights = 0; /* XXX */
 		mps->mps_srights =  0; /* XXX */
 		if (mr->mr_notify_destroyed != NULL)
