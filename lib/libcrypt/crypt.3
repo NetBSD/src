@@ -1,4 +1,4 @@
-.\"	$NetBSD: crypt.3,v 1.13 2002/04/17 18:17:58 wiz Exp $
+.\"	$NetBSD: crypt.3,v 1.14 2002/05/24 04:02:49 itojun Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -68,10 +68,16 @@ is dependent upon the contents of the
 .Dv NUL Ns -terminated
 string
 .Ar setting .
+If it begins
+with a string character
+.Pq Ql $
+and a number then a different algorithm is used depending on the number.
+At the moment a
+.Ql $1
+chooses MD5 hashing and a
+.Ql $2
+chooses Blowfish hashing; see below for more information.
 If
-.Ar setting
-begins with the ``$'' character, a non-DES encryption scheme is selected
-(currently MD5 hashing only).  If
 .Ar setting
 begins with the ``_'' character, DES encryption with a user specified number
 of perturbations is selected.  If
@@ -233,6 +239,43 @@ by the ``$'' character.  A valid password looks like this:
 ``$1$2qGr5PPQ$eT08WBFev3RPLNChixg0H.''.
 .Pp
 The entire password string is passed as
+.Fa setting
+for interpretation.
+.Ss "Blowfish" crypt
+The
+.Tn Blowfish
+version of crypt has 128 bits of
+.Fa salt
+in order to make building dictionaries of common passwords space consuming.
+The initial state of the
+.Tn Blowfish
+cipher is expanded using the
+.Fa salt
+and the
+.Fa password
+repeating the process a variable number of rounds, which is encoded in
+the password string.
+The maximum password length is 72.
+The final Blowfish password entry is created by encrypting the string
+.Pp
+.Dq OrpheanBeholderScryDoubt
+.Pp
+with the
+.Tn Blowfish
+state 64 times.
+.Pp
+The version number, the logarithm of the number of rounds and
+the concatenation of salt and hashed password are separated by the
+.Ql $
+character.
+An encoded
+.Sq 8
+would specify 256 rounds.
+A valid Blowfish password looks like this:
+.Pp
+.Dq $2a$12$eIAq8PR8sIUnJ1HaohxX2O9x9Qlm2vK97LJ5dsXdmB.eXF42qjchC .
+.Pp
+The whole Blowfish password string is passed as
 .Fa setting
 for interpretation.
 .Sh RETURN VALUES

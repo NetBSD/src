@@ -1,4 +1,4 @@
-/*	$NetBSD: pwd.h,v 1.25 2002/01/27 07:00:43 lukem Exp $	*/
+/*	$NetBSD: pwd.h,v 1.26 2002/05/24 04:02:47 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -104,6 +104,7 @@ struct passwd	*getpwnam __P((const char *));
 struct passwd	*getpwent __P((void));
 void		 setpwent __P((void));
 void		 endpwent __P((void));
+char		*bcrypt_gensalt(u_int8_t);
 #endif
 #if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
 int		 pw_scan __P((char *bp, struct passwd *pw, int *flags));
