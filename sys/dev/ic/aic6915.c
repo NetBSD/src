@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6915.c,v 1.1 2001/06/18 22:05:35 thorpej Exp $	*/
+/*	$NetBSD: aic6915.c,v 1.2 2001/07/05 05:28:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -796,7 +796,7 @@ sf_rxintr(struct sf_softc *sc)
 		 * Note that we use cluster for incoming frames, so the
 		 * buffer is virtually contiguous.
 		 */
-		memcpy(mtod(m, caddr_t), mtod(rxs->rxs_mbuf, caddr_t), len);
+		memcpy(mtod(m, caddr_t), mtod(ds->ds_mbuf, caddr_t), len);
 
 		/* Allow the receive descriptor to continue using its mbuf. */
 		SF_INIT_RXDESC(sc, rxidx);
