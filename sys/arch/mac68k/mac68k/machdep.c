@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.193 1998/04/26 21:12:03 scottr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.194 1998/05/01 03:53:47 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -78,6 +78,7 @@
 
 #include "opt_adb.h"
 #include "opt_uvm.h"
+#include "zsc.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -139,6 +140,7 @@
 #include <machine/viareg.h>
 #include <mac68k/mac68k/macrom.h>
 #include <mac68k/dev/adbvar.h>
+#include <mac68k/dev/zs_cons.h>
 #include "arp.h"
 
 /* The following is used externally (sysctl_hw) */
@@ -322,6 +324,9 @@ consinit(void)
 
 	if (!init) {
 		cninit();
+#if NZSC > 0 && defined(KGDB)
+		zs_kgdb_init();
+#endif
 #ifdef  DDB
 		/*
 		 * Initialize kernel debugger, if compiled in.
@@ -424,12 +429,13 @@ again:
 	 * memory. Insure a minimum of 16 buffers.
 	 * We allocate 3/4 as many swap buffer headers as file i/o buffers.
 	 */
-	if (bufpages == 0)
+	if (bufpages == 0) {
 		if (physmem < btoc(2 * 1024 * 1024))
 			bufpages = physmem / (10 * CLSIZE);
 		else
 			bufpages = (btoc(2 * 1024 * 1024) + physmem) /
 			    (20 * CLSIZE);
+	}
 
 	if (nbuf == 0) {
 		nbuf = bufpages;
