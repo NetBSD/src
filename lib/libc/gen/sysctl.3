@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.125 2003/11/23 07:22:19 wiz Exp $
+.\"	$NetBSD: sysctl.3,v 1.126 2003/12/09 01:39:03 atatat Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -1385,9 +1385,10 @@ points to the current process, or the PID of the target process.
 .Bl -column "USER_COLL_WEIGHTS_MAXXXX" "integerXXX" "yes" -offset indent
 .It Sy Third level name	Type	Changeable
 .It PROC\_PID\_CORENAME	string	yes
-.It PROC\_STOPEXEC	int	yes
-.It PROC\_STOPFORK	int	yes
 .It PROC\_PID\_LIMIT	node	not applicable
+.It PROC\_PID\_STOPFORK	int	yes
+.It PROC\_PID\_STOPEXEC	int	yes
+.It PROC\_PID\_STOPEXIT	int	yes
 .El
 .Bl -tag -width "123456"
 .Pp
@@ -1444,20 +1445,7 @@ The maximum number of open files for this process.
 The fifth level name is one of PROC_PID_LIMIT_TYPE_SOFT or
 PROC_PID_LIMIT_TYPE_HARD, to select respectively the soft or hard limit.
 Both are of type integer.
-.It Li PROC_STOPEXEC
-If non zero, the process will be stopped on next
-.Xr exec 3
-call.
-The process created by
-.Xr exec 3
-is created in the SSTOP state and is never scheduled for running
-before being stopped.
-This feature helps attaching a process with a debugger such as
-.Xr gdb 1
-before it had the opportunity to actually do anything.
-.Pp
-This value is inherited by the process's children.
-.It Li PROC_STOPFORK
+.It Li PROC_PID_STOPFORK
 If non zero, the process' children will be stopped after
 .Xr fork 2
 calls.
@@ -1472,6 +1460,36 @@ apply to emulation specific system calls that fork a new process, such as
 .Fn sproc
 or
 .Fn clone .
+.It Li PROC_PID_STOPEXEC
+If non zero, the process will be stopped on next
+.Xr exec 3
+call.
+The process created by
+.Xr exec 3
+is created in the SSTOP state and is never scheduled for running
+before being stopped.
+This feature helps attaching a process with a debugger such as
+.Xr gdb 1
+before it had the opportunity to actually do anything.
+.Pp
+This value is inherited by the process's children.
+.It Li PROC_PID_STOPEXIT
+If non zero, the process will be stopped on when it has cause to exit,
+either by way of calling
+.Xr exit 3 ,
+.Xr _exit 2 ,
+or by the receipt of a specific signal.
+The process is stopped before any of its resources or vm space is
+released allowing examination of the termination state of a process
+before it disappears.
+This feature can be used to examine the final conditions of the
+process's vmspace via
+.Xr pmap 1
+or its resource settings with
+.Xr sysctl 8
+before it disappears.
+.Pp
+This value is also inherited by the process's children.
 .El
 .Sh CTL_USER
 The string and integer information available for the CTL_USER level
