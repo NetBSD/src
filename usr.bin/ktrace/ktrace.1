@@ -1,4 +1,4 @@
-.\"	$NetBSD: ktrace.1,v 1.20 2003/05/02 07:52:23 gmcgarry Exp $
+.\"	$NetBSD: ktrace.1,v 1.21 2003/05/06 08:22:08 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)ktrace.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd December 9, 2002
+.Dd May 2, 2003
 .Dt KTRACE 1
 .Os
 .Sh NAME
@@ -118,8 +118,8 @@ Log trace records to
 .Ar trfile
 instead of
 .Pa ktrace.out .
-It Fl f Ar infile
-Read the trace records from 
+.It Fl f Ar infile
+Read the trace records from
 .Ar infile
 and print them in a human readable format to standard out.
 .It Fl g Ar pgid
@@ -130,16 +130,17 @@ flag is permitted).
 Inherit; pass the trace flags to all future children of the designated
 processes.
 .It Fl l
-Poll the trace file for new data and prints it to standard out.
+Poll the trace file for new data and print it to standard out.
 Only for use together with the
 .Fl f
 option.
 .It Fl m Ar maxdata
 Print at most
 .Ar maxdata
-bytes of data. This is used for pointer type arguments e.g. strings.
-The data will be escaped in C-Style.
-.It Fl o Ar outfile     
+bytes of data.
+This is used for pointer type arguments, e.g., strings.
+The data will be escaped in C-style.
+.It Fl o Ar outfile
 Log trace records to
 .Ar outfile .
 Without this option ktruss will print its output in a human
@@ -153,9 +154,9 @@ Write to the trace file with synchronized I/O.
 .It Fl R
 Display relative time stamps to output.
 .It Fl T
-Same as
+Same as the
 .Fl R
-options but use absolute timestamps instead.
+option, but use absolute timestamps instead.
 .It Fl t Ar trstr
 The string argument represents the kernel trace points, one per letter.
 The following table equates the letters with the tracepoints:
