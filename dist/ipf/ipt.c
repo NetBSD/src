@@ -1,4 +1,4 @@
-/*	$NetBSD: ipt.c,v 1.10 2002/09/19 08:10:41 martti Exp $	*/
+/*	$NetBSD: ipt.c,v 1.11 2002/12/06 04:43:53 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1993-2002 by Darren Reed.
@@ -219,7 +219,7 @@ char *argv[];
 #endif
 		packet = (char *)buf;
 		/* ipfr_slowtimer(); */
-		i = fr_check(ip, hlen, ifp, dir, (mb_t **)&packet);
+		i = fr_check(ip, hlen, ifp, dir, (void *)&packet);
 		if ((opts & OPT_NAT) == 0)
 			switch (i)
 			{
