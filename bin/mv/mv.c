@@ -1,4 +1,4 @@
-/* $NetBSD: mv.c,v 1.27 2001/09/16 21:53:55 wiz Exp $ */
+/* $NetBSD: mv.c,v 1.28 2002/12/26 21:37:17 jrf Exp $ */
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mv.c	8.2 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: mv.c,v 1.27 2001/09/16 21:53:55 wiz Exp $");
+__RCSID("$NetBSD: mv.c,v 1.28 2002/12/26 21:37:17 jrf Exp $");
 #endif
 #endif /* not lint */
 
@@ -68,7 +68,7 @@ __RCSID("$NetBSD: mv.c,v 1.27 2001/09/16 21:53:55 wiz Exp $");
 
 #include "pathnames.h"
 
-int fflg, iflg;
+int fflg, iflg, vflg;
 int stdin_ok;
 
 int copy(char *, char *);
@@ -88,7 +88,7 @@ main(int argc, char *argv[])
 	setprogname(argv[0]);
 	(void)setlocale(LC_ALL, "");
 
-	while ((ch = getopt(argc, argv, "if")) != -1)
+	while ((ch = getopt(argc, argv, "ifv")) != -1)
 		switch (ch) {
 		case 'i':
 			fflg = 0;
@@ -97,6 +97,9 @@ main(int argc, char *argv[])
 		case 'f':
 			iflg = 0;
 			fflg = 1;
+			break;
+		case 'v':
+			vflg = 1;
 			break;
 		case '?':
 		default:
@@ -210,8 +213,11 @@ do_move(char *from, char *to)
 	 *	message to standard error, and do nothing more with the
 	 *	current source file...
 	 */
-	if (!rename(from, to))
+	if (!rename(from, to)) {
+		if (vflg)
+			printf("%s -> %s\n", from, to);
 		return (0);
+	}
 
 	if (errno != EXDEV) {
 		warn("rename %s to %s", from, to);
@@ -313,6 +319,10 @@ err:		if (unlink(to))
 		warn("%s: remove", from);
 		return (1);
 	}
+
+	if (vflg)
+		printf("%s -> %s\n", from, to);
+
 	return (0);
 }
 
@@ -322,7 +332,7 @@ copy(char *from, char *to)
 	int pid, status;
 
 	if ((pid = vfork()) == 0) {
-		execl(_PATH_CP, "mv", "-PRp", from, to, NULL);
+		execl(_PATH_CP, "mv", vflg ? "-PRpv" : "-PRp", from, to, NULL);
 		warn("%s", _PATH_CP);
 		_exit(1);
 	}
@@ -363,8 +373,8 @@ copy(char *from, char *to)
 void
 usage(void)
 {
-	(void)fprintf(stderr, "usage: %s [-fi] source target\n"
-	    "       %s [-fi] source ... directory\n", getprogname(),
+	(void)fprintf(stderr, "usage: %s [-fiv] source target\n"
+	    "       %s [-fiv] source ... directory\n", getprogname(),
 	    getprogname());
 	exit(1);
 	/* NOTREACHED */
