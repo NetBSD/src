@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.54 2001/12/05 05:02:10 chs Exp $	*/
+/*	$NetBSD: trap.c,v 1.55 2002/02/02 22:02:00 dbj Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -98,6 +98,8 @@ trap(frame)
 		panic("trap: curpm (%p) != curpcb->pcb_pmreal (%p)",
 		    curpm, curpcb->pcb_pmreal);
 #endif
+
+	uvmexp.traps++;
 
 	switch (type) {
 	case EXC_TRC|EXC_USER:
