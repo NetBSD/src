@@ -1,5 +1,5 @@
 #! /bin/sh -
-#	$NetBSD: makesyscalls.sh,v 1.41 2000/12/09 05:33:27 mycroft Exp $
+#	$NetBSD: makesyscalls.sh,v 1.42 2000/12/09 05:41:12 mycroft Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -499,7 +499,7 @@ END {
 			exit 1
 		}
 		while (syscall < nsysent) {
-			printf("\t{ 0, 0,\n\t    sys_nosys },\t\t\t/* %d = unimplemented */\n", \
+			printf("\t{ 0, 0,\n\t    sys_nosys },\t\t\t/* %d = filler */\n", \
 			    syscall) > sysent
 			syscall++
 		}
