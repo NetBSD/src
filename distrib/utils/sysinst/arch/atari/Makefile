@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2003/06/12 11:20:04 dsl Exp $
+#	$NetBSD: Makefile,v 1.7 2003/06/27 22:20:17 dsl Exp $
 #
 # Makefile for atari
 #
@@ -11,5 +11,6 @@ SRCS=	menu_defs.c msg_defs.c main.c install.c upgrade.c \
 	bsddisklabel.c
 
 MD_OPTIONS=	AOUT2ELF
+LANGUAGES=	en
 
 .include "../../Makefile.inc"

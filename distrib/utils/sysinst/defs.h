@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.92 2003/06/25 15:45:21 dsl Exp $	*/
+/*	$NetBSD: defs.h,v 1.93 2003/06/27 22:20:14 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -157,7 +157,6 @@ EXTERN pid_t ttysig_forward;
 EXTERN int layoutkind;
 EXTERN int sizemult INIT(1);
 EXTERN const char *multname; 
-EXTERN const char *doingwhat;
 EXTERN const char *shellpath;
 
 /* loging variables */
@@ -322,7 +321,7 @@ void	md_set_no_x(void);
 void	toplevel(void);
 
 /* from disks.c */
-int	find_disks(void);
+int	find_disks(const char *);
 void	fmt_fspart(char *, size_t, int);
 void	disp_cur_fspart(int, int);
 int	write_disklabel(void);
