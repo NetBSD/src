@@ -1,4 +1,4 @@
-/* $NetBSD: pckbd.c,v 1.4 1998/04/16 21:18:46 drochner Exp $ */
+/* $NetBSD: pckbd.c,v 1.5 1998/04/18 09:49:58 drochner Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -89,11 +89,7 @@ struct pckbd_softc {
 	struct device *sc_wskbddev;
 };
 
-#ifdef __BROKEN_INDIRECT_CONFIG
-int pckbdprobe __P((struct device *, void *, void *));
-#else
 int pckbdprobe __P((struct device *, struct cfdata *, void *));
-#endif
 void pckbdattach __P((struct device *, struct device *, void *));
 
 struct cfattach pckbd_ca = {
@@ -107,7 +103,7 @@ void	pckbd_cngetc __P((void *, u_int *, int *));
 void	pckbd_cnpollc __P((void *, int));
 
 int	pckbd_set_xtscancode __P((pckbc_tag_t, pckbc_slot_t));
-void	pckbd_init __P((struct pckbd_internal *, pckbc_tag_t, pckbc_slot_t,
+int	pckbd_init __P((struct pckbd_internal *, pckbc_tag_t, pckbc_slot_t,
 			int));
 void	pckbd_input __P((void *, int));
 
@@ -161,16 +157,11 @@ pckbd_set_xtscancode(kbctag, kbcslot)
  * these are both bad jokes
  */
 int
-pckbdprobe(parent, match, aux)
+pckbdprobe(parent, cf, aux)
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *match;
-#else
-	struct cfdata *match;
-#endif
+	struct cfdata *cf;
 	void *aux;
 {
-	struct cfdata *cf = match;
 	struct pckbc_attach_args *pa = aux;
 	u_char cmd[1], resp[1];
 	int res;
@@ -182,7 +173,7 @@ pckbdprobe(parent, match, aux)
 	 * wired in the config file.
 	 */
 	if ((pa->pa_slot != PCKBC_KBD_SLOT) &&
-	    (cf->cf_loc[PCKBCCF_SLOT] != PCKBC_KBD_SLOT))
+	    (cf->cf_loc[PCKBCCF_SLOT] == PCKBCCF_SLOT_DEFAULT))
 		return (0);
 
 #if 1
@@ -246,18 +237,16 @@ pckbdattach(parent, self, aux)
 	    (pckbd_consdata.t_kbctag == pa->pa_tag) &&
 	    (pckbd_consdata.t_kbcslot == pa->pa_slot);
 
-	if (isconsole) {
+	if (isconsole)
 		sc->id = &pckbd_consdata;
-		sc->id->t_lastchar = 0;
-	} else {
+	else {
 		sc->id = malloc(sizeof(struct pckbd_internal),
 				M_DEVBUF, M_WAITOK);
-		pckbd_init(sc->id, pa->pa_tag, pa->pa_slot, 0);
+		(void) pckbd_init(sc->id, pa->pa_tag, pa->pa_slot, 0);
 	}
 
 	sc->id->t_sc = sc;
 
-	(void) pckbd_set_xtscancode(sc->id->t_kbctag, sc->id->t_kbcslot);
 	pckbc_set_inputhandler(sc->id->t_kbctag, sc->id->t_kbcslot,
 			       pckbd_input, sc);
 
@@ -267,8 +256,8 @@ pckbdattach(parent, self, aux)
 #else
 	a.layout = KB_US;
 #endif
-	a.keydesc = wscons_keydesctab;
-	a.num_keydescs = sizeof(wscons_keydesctab)/sizeof(wscons_keydesctab[0]);
+	a.keydesc = pckbd_keydesctab;
+	a.num_keydescs = sizeof(pckbd_keydesctab)/sizeof(pckbd_keydesctab[0]);
 
 	if (isconsole) {
 		a.getc = pckbd_cngetc;
@@ -331,16 +320,20 @@ static int pckbd_decode(id, datain, type, dataout)
 	return(1);
 }
 
-void
+int
 pckbd_init(t, kbctag, kbcslot, console)
 	struct pckbd_internal *t;
 	pckbc_tag_t kbctag;
 	pckbc_slot_t kbcslot;
 	int console;
 {
+	bzero(t, sizeof(struct pckbd_internal));
+
 	t->t_isconsole = console;
 	t->t_kbctag = kbctag;
 	t->t_kbcslot = kbcslot;
+
+	return (pckbd_set_xtscancode(kbctag, kbcslot));
 }
 
 static int
@@ -452,9 +445,12 @@ pckbd_cnattach(kbctag, kbcslot)
 	pckbc_tag_t kbctag;
 	int kbcslot;
 {
+	int res;
 	struct wskbddev_attach_args a;
 
-	pckbd_init(&pckbd_consdata, kbctag, kbcslot, 1);
+	res = pckbd_init(&pckbd_consdata, kbctag, kbcslot, 1);
+	if (res)
+		return (res);
 
 	a.console = 1;
 #ifdef PCKBD_LAYOUT
@@ -462,8 +458,8 @@ pckbd_cnattach(kbctag, kbcslot)
 #else
 	a.layout = KB_US;
 #endif
-	a.keydesc = wscons_keydesctab;
-	a.num_keydescs = sizeof(wscons_keydesctab)/sizeof(wscons_keydesctab[0]);
+	a.keydesc = pckbd_keydesctab;
+	a.num_keydescs = sizeof(pckbd_keydesctab)/sizeof(pckbd_keydesctab[0]);
 	a.getc = pckbd_cngetc;
 	a.pollc = pckbd_cnpollc;
 	a.set_leds = pckbd_set_leds;
