@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_fs.c,v 1.12 1997/05/25 10:24:05 jonathan Exp $	*/
+/*	$NetBSD: ultrix_fs.c,v 1.13 1998/03/05 22:48:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone
@@ -45,6 +45,9 @@
 #include <nfs/rpcv2.h>
 #include <nfs/nfsproto.h>
 #include <nfs/nfs.h>
+#include <nfs/nfsmount.h>
+
+#include <ufs/ufsmount.h>
 
 #include <sys/syscallargs.h>
 #include <compat/ultrix/ultrix_syscallargs.h>
@@ -244,22 +247,28 @@ ultrix_sys_getmnt(p, v, retval)
 		if ((error = copyin((caddr_t)SCARG(uap, start), &start,
 				    sizeof(*SCARG(uap, start))))  != 0)
 			goto bad;
+		simple_lock(&mountlist_slock);
 		for (skip = start, mp = mountlist.cqh_first;
 		    mp != (void*)&mountlist && skip-- > 0; mp = nmp)
 			nmp = mp->mnt_list.cqe_next;
+		simple_unlock(&mountlist_slock);
 	}
 
+	simple_lock(&mountlist_slock);
 	for (count = 0, mp = mountlist.cqh_first;
 	    mp != (void*)&mountlist && count < maxcount; mp = nmp) {
-		nmp = mp->mnt_list.cqe_next;
-		if (sfsp != NULL && (mp->mnt_flag & MNT_MLOCK) == 0) {
+		if (vfs_busy(mp, LK_NOWAIT, &mountlist_slock)) {
+			nmp = mp->mnt_list.cqe_next;
+			continue;
+		}
+		if (sfsp != NULL) {
 			struct ultrix_fs_data tem;
 			sp = &mp->mnt_stat;
 
 			/*
 			 * If requested, refresh the fsstat cache.
 			 */
-			if ((mntflags & MNT_WAIT) != 0 &&
+			if (mntflags != MNT_WAIT &&
 			    (error = VFS_STATFS(mp, sp, p)) != 0)
 				continue;
 
@@ -277,7 +286,11 @@ ultrix_sys_getmnt(p, v, retval)
 				count++;
 			}
 		}
+		simple_lock(&mountlist_slock);
+		nmp = mp->mnt_list.cqe_next;
+		vfs_unbusy(mp);
 	}
+	simple_unlock(&mountlist_slock);
 
 	if (sfsp != NULL && count > maxcount)
 		*retval = maxcount;
