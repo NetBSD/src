@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_diskqueue.c,v 1.10 2000/02/24 03:48:41 oster Exp $	*/
+/*	$NetBSD: rf_diskqueue.c,v 1.11 2000/02/24 03:52:15 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -76,23 +76,15 @@
 #include "rf_cvscan.h"
 #include "rf_sstf.h"
 #include "rf_fifo.h"
+#include "rf_kintf.h"
 
 static int init_dqd(RF_DiskQueueData_t *);
 static void clean_dqd(RF_DiskQueueData_t *);
 static void rf_ShutdownDiskQueueSystem(void *);
-/* From rf_kintf.c */
-int     rf_DispatchKernelIO(RF_DiskQueue_t *, RF_DiskQueueData_t *);
-
 
 #define Dprintf1(s,a)         if (rf_queueDebug) rf_debug_printf(s,(void *)((unsigned long)a),NULL,NULL,NULL,NULL,NULL,NULL,NULL)
 #define Dprintf2(s,a,b)       if (rf_queueDebug) rf_debug_printf(s,(void *)((unsigned long)a),(void *)((unsigned long)b),NULL,NULL,NULL,NULL,NULL,NULL)
 #define Dprintf3(s,a,b,c)     if (rf_queueDebug) rf_debug_printf(s,(void *)((unsigned long)a),(void *)((unsigned long)b),(void *)((unsigned long)c),NULL,NULL,NULL,NULL,NULL)
-#define Dprintf4(s,a,b,c,d)   if (rf_queueDebug) rf_debug_printf(s,(void *)((unsigned long)a),(void *)((unsigned long)b),(void *)((unsigned long)c),(void *)((unsigned long)d),NULL,NULL,NULL,NULL)
-#define Dprintf5(s,a,b,c,d,e) if (rf_queueDebug) rf_debug_printf(s,(void *)((unsigned long)a),(void *)((unsigned long)b),(void *)((unsigned long)c),(void *)((unsigned long)d),(void *)((unsigned long)e),NULL,NULL,NULL)
-
-
-#define SIGNAL_DISK_QUEUE(_q_,_wh_)
-#define WAIT_DISK_QUEUE(_q_,_wh_)
 
 /*****************************************************************************************
  *
