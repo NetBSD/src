@@ -56,7 +56,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: dhclient.c,v 1.1.1.5 1998/05/18 06:53:53 mellon Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: dhclient.c,v 1.2 1998/07/31 21:27:08 sommerfe Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -191,11 +191,14 @@ int main (argc, argv, envp)
 	} else {
 		/* Call the script with the list of interfaces. */
 		for (ip = interfaces; ip; ip = ip -> next) {
+		  if ((interfaces_requested == 0) ||
+		      (ip->flags == INTERFACE_REQUESTED)) {
 			script_init (ip, "PREINIT", (struct string_list *)0);
 			if (ip -> client -> alias)
 				script_write_params (ip, "alias_",
 						     ip -> client -> alias);
 			script_go (ip);
+		  }
 		}
 	}
 
