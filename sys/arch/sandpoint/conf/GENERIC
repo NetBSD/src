@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.25 2002/04/12 02:57:00 briggs Exp $
+# $NetBSD: GENERIC,v 1.26 2002/04/12 08:11:17 gmcgarry Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include 	"arch/sandpoint/conf/std.sandpoint"
 
-#ident 		"GENERIC-$Revision: 1.25 $"
+#ident 		"GENERIC-$Revision: 1.26 $"
 
 maxusers	32
 
@@ -41,6 +41,7 @@ options 	KTRACE
 #options 	PMAPDEBUG
 options 	OPENPIC_SERIAL_MODE
 options 	SYMTAB_SPACE=200000
+#options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 
 options 	COMPAT_43

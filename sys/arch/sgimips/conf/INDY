@@ -1,4 +1,4 @@
-#	$NetBSD: INDY,v 1.13 2002/04/02 05:30:48 lukem Exp $
+#	$NetBSD: INDY,v 1.14 2002/04/12 08:11:17 gmcgarry Exp $
 
 include		"arch/sgimips/conf/std.sgimips"
 
@@ -32,6 +32,7 @@ options 	MIPS3_5200		# XXX
 #options 	MEMORY_DISK_ROOT_SIZE=8192
 
 options 	KTRACE
+#options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 
 options 	DDB

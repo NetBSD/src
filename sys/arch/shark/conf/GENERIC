@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.3 2002/04/02 05:30:49 lukem Exp $
+#	$NetBSD: GENERIC,v 1.4 2002/04/12 08:11:18 gmcgarry Exp $
 #
 # Generic Shark configuration.
 #
 
 include	"arch/shark/conf/std.shark"
 
-#ident		"GENERIC-$Revision: 1.3 $"
+#ident		"GENERIC-$Revision: 1.4 $"
 
 # estimated number of users
 maxusers	32
@@ -125,6 +125,7 @@ options 	KTRACE		# system call tracing, a la ktrace(1)
 options 	IRQSTATS	# manage IRQ statistics, XXX temp required
 #options 	LKM		# loadable kernel modules
 options 	KMEMSTATS	# kernel memory statistics, XXX temp required
+#options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Development and Debugging options

@@ -1,4 +1,4 @@
-#	$NetBSD: STEELHEAD,v 1.30 2002/01/27 13:23:24 jdolecek Exp $
+#	$NetBSD: STEELHEAD,v 1.31 2002/04/12 08:11:15 gmcgarry Exp $
 #
 # STEELHEAD: Phil Nelson's pc532
 #
@@ -15,6 +15,7 @@ options 	KTRACE			# system call tracing, a la ktrace(1)
 options 	SYSVSHM			# System V shared memory
 #options 	SHMMAXPGS=1024
 #options 	LKM			# loadable kernel modules
+#options 	USERCONF		# userconf(4) support
 #options	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 
 # compatibility options
