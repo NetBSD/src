@@ -1,7 +1,7 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
 #
-#	$NetBSD: bsd.port.mk,v 1.32 1998/01/22 10:20:48 agc Exp $
+#	$NetBSD: bsd.port.mk,v 1.33 1998/01/22 11:27:54 agc Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
@@ -1416,7 +1416,7 @@ clean: pre-clean
 .if !defined(NO_WRKDIR)
 .if  defined(WRKOBJDIR)
 	@${RM} -rf ${WRKOBJDIR}/${PORTSUBDIR}
-	@${RM} ${WRKDIR}
+	@${RM} -f ${WRKDIR}
 .else
 	@if [ -d ${WRKDIR} ]; then \
 		if [ -w ${WRKDIR} ]; then \
