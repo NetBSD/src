@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.21 1999/07/27 21:29:16 thorpej Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.22 1999/07/28 01:59:46 mellon Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@ do {									\
 		(p)->p_locks += (x);					\
 } while (0)
 #else
-#define COUNT(p, x)
+#define COUNT(lkp, p, cpu_id, x)
 #endif /* LOCKDEBUG || DIAGNOSTIC */ /* } */
 
 /*
