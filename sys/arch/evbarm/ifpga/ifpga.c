@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpga.c,v 1.16 2003/07/15 00:24:58 lukem Exp $ */
+/*	$NetBSD: ifpga.c,v 1.17 2003/09/06 11:31:20 rearnsha Exp $ */
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ifpga.c,v 1.16 2003/07/15 00:24:58 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ifpga.c,v 1.17 2003/09/06 11:31:20 rearnsha Exp $");
 
 #include <sys/types.h>
 #include <sys/device.h>
@@ -51,7 +51,6 @@ __KERNEL_RCSID(0, "$NetBSD: ifpga.c,v 1.16 2003/07/15 00:24:58 lukem Exp $");
 #include <dev/pci/pciconf.h>
 
 #include <machine/intr.h>
-#include <evbarm/ifpga/irqhandler.h>	/* XXX XXX XXX */
 
 #include <arm/cpufunc.h>
 
@@ -65,6 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: ifpga.c,v 1.16 2003/07/15 00:24:58 lukem Exp $");
 #include <evbarm/dev/v360reg.h>
 
 #include <evbarm/integrator/int_bus_dma.h>
+#include "locators.h"
 
 /* Prototypes */
 static int  ifpga_match		(struct device *, struct cfdata *, void *);
@@ -81,9 +81,6 @@ int ifpga_found;
 /* Default UART clock speed (we should make this a boot option).  */
 int ifpga_uart_clk = IFPGA_UART_CLK;
 
-/* Virtual base of IRQ controller.  */
-void *ifpga_irq_vbase;
-
 #if NPCI > 0
 /* PCI handles */
 extern struct arm32_pci_chipset ifpga_pci_chipset;
@@ -93,11 +90,9 @@ static struct bus_space ifpga_pci_io_tag;
 static struct bus_space ifpga_pci_mem_tag;
 #endif /* NPCI > 0 */
 
-struct ifpga_softc *clock_sc;
-
 static struct bus_space ifpga_bs_tag;
 
-static struct ifpga_softc *ifpga_sc;
+struct ifpga_softc *ifpga_sc;
 /*
  * Print the configuration information for children
  */
@@ -269,10 +264,9 @@ ifpga_attach(struct device *parent, struct device *self, void *aux)
 	    BUS_SPACE_MAP_LINEAR, &sc->sc_irq_ioh))
 		panic("%s: Cannot map irq controller registers",
 		    self->dv_xname);
-	ifpga_irq_vbase = bus_space_vaddr(sc->sc_iot, sc->sc_irq_ioh);
 
 	/* We can write to the IRQ/FIQ controller now.  */
-	irq_postinit();
+	ifpga_intr_postinit();
 
 	/* Map the core module */
 	if (bus_space_map(sc->sc_iot, IFPGA_IO_CM_BASE, IFPGA_IO_CM_SIZE, 0,
@@ -283,8 +277,6 @@ ifpga_attach(struct device *parent, struct device *self, void *aux)
 	if (bus_space_map(sc->sc_iot, IFPGA_IO_TMR_BASE, IFPGA_IO_TMR_SIZE, 0,
 	    &sc->sc_tmr_ioh))
 		panic("%s: Cannot map timer registers", self->dv_xname);
-
-	clock_sc = sc;
 
 	printf("\n");
 
