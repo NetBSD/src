@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.153 2004/01/09 08:49:42 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.154 2004/02/12 03:25:48 chs Exp $	*/
 /*
  * 
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.153 2004/01/09 08:49:42 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.154 2004/02/12 03:25:48 chs Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -1652,6 +1652,10 @@ pmap_activate(l)
 	struct lwp *l;
 {
 	struct pmap *pmap = l->l_proc->p_vmspace->vm_map.pmap;
+
+	if (pmap == pmap_kernel()) {
+		return;
+	}
 
 	/*
 	 * This is essentially the same thing that happens in cpu_switch()
