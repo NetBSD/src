@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.16 1998/07/25 04:45:04 mycroft Exp $	*/
+/*	$NetBSD: crt0.c,v 1.17 1999/03/08 10:49:08 kleink Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -69,7 +69,7 @@ extern void	_init __P((void));
 extern void	_fini __P((void));
 
 #ifdef DYNAMIC
-void		rtld_setup __P((void (*)(void), const Obj_Entry *obj));
+void		_rtld_setup __P((void (*)(void), const Obj_Entry *obj));
 
 const Obj_Entry *__mainprog_obj;
 
@@ -120,7 +120,7 @@ __start(sp, cleanup, obj, ps_strings)
 
 #ifdef DYNAMIC
 	if (&_DYNAMIC != NULL)
-		rtld_setup(cleanup, obj);
+		_rtld_setup(cleanup, obj);
 #endif
 
 #ifdef MCRT0
@@ -138,7 +138,7 @@ __start(sp, cleanup, obj, ps_strings)
  * NOTE: Leave the RCS ID _after_ __start(), in case it gets placed in .text.
  */
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.16 1998/07/25 04:45:04 mycroft Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.17 1999/03/08 10:49:08 kleink Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 static char *
@@ -163,7 +163,7 @@ asm ("_eprol:");
 
 #ifdef DYNAMIC
 void
-rtld_setup(cleanup, obj)
+_rtld_setup(cleanup, obj)
 	void (*cleanup) __P((void));
 	const Obj_Entry *obj;
 {

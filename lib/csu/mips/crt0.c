@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.10 1998/11/04 23:48:25 jonathan Exp $	*/
+/*	$NetBSD: crt0.c,v 1.11 1999/03/08 10:49:08 kleink Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -81,7 +81,7 @@ extern void	_fini __P((void));
 #endif /* ECOFF_COMPAT */
 
 #ifdef DYNAMIC
-void		rtld_setup __P((void (*)(void), const Obj_Entry *obj));
+void		_rtld_setup __P((void (*)(void), const Obj_Entry *obj));
 
 const Obj_Entry *__mainprog_obj;
 
@@ -200,7 +200,7 @@ __start(sp, cleanup, obj, ps_strings)
 		 * XXX the rtld setup.
 		 */
 		if (&_DYNAMIC != NULL && cleanup != NULL && obj != NULL)
-			rtld_setup(cleanup, obj);
+			_rtld_setup(cleanup, obj);
 #endif
 	}
 
@@ -222,7 +222,7 @@ __start(sp, cleanup, obj, ps_strings)
  *  is the entrypoint. (Only needed for old toolchains).
  */
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.10 1998/11/04 23:48:25 jonathan Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.11 1999/03/08 10:49:08 kleink Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 
@@ -248,7 +248,7 @@ asm ("_eprol:");
 
 #ifdef DYNAMIC
 void
-rtld_setup(cleanup, obj)
+_rtld_setup(cleanup, obj)
 	void (*cleanup) __P((void));
 	const Obj_Entry *obj;
 {
