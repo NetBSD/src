@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee80211subr.c,v 1.28 2003/05/13 09:31:56 dyoung Exp $	*/
+/*	$NetBSD: if_ieee80211subr.c,v 1.29 2003/05/13 09:47:44 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ieee80211subr.c,v 1.28 2003/05/13 09:31:56 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ieee80211subr.c,v 1.29 2003/05/13 09:47:44 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -1452,6 +1452,32 @@ ieee80211_fix_rate(struct ieee80211com *ic, struct ieee80211_node *ni, int flags
 	return okrate & IEEE80211_RATE_VAL;
 }
 
+static u_int8_t *
+ieee80211_add_rates(u_int8_t *frm, const u_int8_t rates[IEEE80211_RATE_SIZE])
+{
+	int i, j;
+
+	*frm++ = IEEE80211_ELEMID_RATES;
+	j = 0;
+	for (i = 0; i < IEEE80211_RATE_SIZE; i++) {
+		if (rates[i] != 0) {
+			frm[1 + j] = rates[i];
+			j++;
+		}
+	}
+	*frm++ = j;
+	return frm + j;
+}
+
+static u_int8_t *
+ieee80211_add_ssid(u_int8_t *frm, const u_int8_t *ssid, u_int len)
+{
+	*frm++ = IEEE80211_ELEMID_SSID;
+	*frm++ = len;
+	memcpy(frm, ssid, len);
+	return frm + len;
+}
+
 void
 ieee80211_pwrsave(struct ieee80211com *ic, struct ieee80211_node *ni, 
 		  struct mbuf *m)
@@ -1480,7 +1506,7 @@ static int
 ieee80211_send_prreq(struct ieee80211com *ic, struct ieee80211_node *ni,
     int type, int dummy)
 {
-	int i, ret;
+	int ret;
 	struct mbuf *m;
 	u_int8_t *frm;
 
@@ -1494,20 +1520,8 @@ ieee80211_send_prreq(struct ieee80211com *ic, struct ieee80211_node *ni,
 		return ENOMEM;
 	m->m_data += sizeof(struct ieee80211_frame);
 	frm = mtod(m, u_int8_t *);
-
-	*frm++ = IEEE80211_ELEMID_SSID;
-	*frm++ = ic->ic_des_esslen;
-	memcpy(frm, ic->ic_des_essid, ic->ic_des_esslen);
-	frm += ic->ic_des_esslen;
-
-	*frm++ = IEEE80211_ELEMID_RATES;
-	for (i = 0; i < IEEE80211_RATE_SIZE; i++) {
-		if (ic->ic_sup_rates[i] == 0)
-			break;
-		frm[i + 1] = ic->ic_sup_rates[i];
-	}
-	*frm++ = i;
-	frm += i;
+	frm = ieee80211_add_ssid(frm, ic->ic_des_essid, ic->ic_des_esslen);
+	frm = ieee80211_add_rates(frm, ic->ic_sup_rates);
 	m->m_pkthdr.len = m->m_len = frm - mtod(m, u_int8_t *);
 
 	ret = ieee80211_mgmt_output(&ic->ic_if, ni, m, type);
@@ -1551,14 +1565,10 @@ ieee80211_send_prresp(struct ieee80211com *ic, struct ieee80211_node *bs0,
 		capinfo |= IEEE80211_CAPINFO_PRIVACY;
 	*(u_int16_t *)frm = htole16(capinfo);
 	frm += 2;
-	*frm++ = IEEE80211_ELEMID_SSID;
-	*frm++ = ni->ni_esslen;
-	memcpy(frm, ni->ni_essid, ni->ni_esslen);
-	frm += ni->ni_esslen;
-	*frm++ = IEEE80211_ELEMID_RATES;
-	*frm++ = ni->ni_nrate;
-	memcpy(frm, ni->ni_rates, ni->ni_nrate);
-	frm += ni->ni_nrate;
+
+	frm = ieee80211_add_ssid(frm, ni->ni_essid, ni->ni_esslen);
+	frm = ieee80211_add_rates(frm, ni->ni_rates);
+
 	if (ic->ic_opmode == IEEE80211_M_IBSS) {
 		*frm++ = IEEE80211_ELEMID_IBSSPARMS;
 		*frm++ = 2;
@@ -1626,9 +1636,9 @@ ieee80211_send_asreq(struct ieee80211com *ic, struct ieee80211_node *ni,
     int type, int dummy)
 {
 	struct mbuf *m;
-	u_int8_t *frm, *rates;
+	u_int8_t *frm;
 	u_int16_t capinfo;
-	int i, ret;
+	int ret;
 
 	/*
 	 * asreq frame format
@@ -1662,19 +1672,10 @@ ieee80211_send_asreq(struct ieee80211com *ic, struct ieee80211_node *ni,
 		frm += IEEE80211_ADDR_LEN;
 	}
 
-	*frm++ = IEEE80211_ELEMID_SSID;
-	*frm++ = ni->ni_esslen;
-	memcpy(frm, ni->ni_essid, ni->ni_esslen);
-	frm += ni->ni_esslen;
-
-	*frm++ = IEEE80211_ELEMID_RATES;
-	rates = frm++;	/* update later */
-	for (i = 0; i < IEEE80211_RATE_SIZE; i++) {
-		if (ni->ni_rates[i] != 0)
-			*frm++ = ni->ni_rates[i];
-	}
-	*rates = frm - (rates + 1);
+	frm = ieee80211_add_ssid(frm, ni->ni_essid, ni->ni_esslen);
+	frm = ieee80211_add_rates(frm, ic->ic_sup_rates);
 	m->m_pkthdr.len = m->m_len = frm - mtod(m, u_int8_t *);
+
 	ret = ieee80211_mgmt_output(&ic->ic_if, ni, m, type);
 	ic->ic_mgt_timer = IEEE80211_TRANS_WAIT;
 	return ret;
@@ -1685,9 +1686,8 @@ ieee80211_send_asresp(struct ieee80211com *ic, struct ieee80211_node *ni,
     int type, int status)
 {
 	struct mbuf *m;
-	u_int8_t *frm, *rates, *r;
+	u_int8_t *frm;
 	u_int16_t capinfo;
-	int i;
 
 	/*
 	 * asreq frame format
@@ -1717,18 +1717,12 @@ ieee80211_send_asresp(struct ieee80211com *ic, struct ieee80211_node *ni,
 		*(u_int16_t *)frm = htole16(0);
 	frm += 2;
 
-	*frm++ = IEEE80211_ELEMID_RATES;
-	rates = frm++;	/* update later */
 	if (ni != NULL)
-		r = ni->ni_rates;
+		frm = ieee80211_add_rates(frm, ni->ni_rates);
 	else
-		r = ic->ic_bss.ni_rates;
-	for (i = 0; i < IEEE80211_RATE_SIZE; i++, r++) {
-		if (*r != 0)
-			*frm++ = *r;
-	}
-	*rates = frm - (rates + 1);
+		frm = ieee80211_add_rates(frm, ic->ic_bss.ni_rates);
 	m->m_pkthdr.len = m->m_len = frm - mtod(m, u_int8_t *);
+
 	return ieee80211_mgmt_output(&ic->ic_if, ni, m, type);
 }
 
