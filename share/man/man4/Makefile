@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.330 2004/09/04 23:54:51 manu Exp $
+#	$NetBSD: Makefile,v 1.331 2004/09/24 13:49:50 wiz Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/18/93
 
 MAN=	aac.4 acardide.4 aceride.4 acphy.4 adc.4 adv.4 \
@@ -34,7 +34,7 @@ MAN=	aac.4 acardide.4 aceride.4 acphy.4 adc.4 adv.4 \
 	sbus.4 scc.4 scsi.4 sd.4 se.4 ses.4 sf.4 sfb.4 shb.4 \
 	siop.4 sip.4 siside.4 sk.4 sl.4 slide.4 \
 	sm.4 spc.4 speaker.4 spif.4 spp.4 sqphy.4 \
-	ss.4 st.4 ste.4 stge.4 stpcide.4 sv.4 strip.4 systrace.4 \
+	ss.4 st.4 ste.4 stge.4 sti.4 stpcide.4 sv.4 strip.4 systrace.4 \
 	tb.4 tc.4 tcds.4 tcp.4 termios.4 tfb.4 ti.4 \
 	tl.4 tlp.4 tlphy.4 tp.4 tr.4 trm.4 tty.4 tun.4 \
 	tqphy.4 twe.4 txp.4 ubsec.4 udp.4 uep.4 uha.4 uk.4 ukphy.4 \
@@ -139,7 +139,7 @@ MLINKS+=edc.4 i386/ed.4
 
 SUBDIR= man4.acorn26 man4.acorn32 man4.alpha man4.amiga man4.arc man4.atari \
 	man4.cobalt \
-	man4.dreamcast man4.evbarm man4.hp300 man4.hpcsh \
+	man4.dreamcast man4.evbarm man4.hp300 man4.hp700 man4.hpcsh \
 	man4.i386 man4.mac68k \
 	man4.macppc man4.mvme68k man4.pc532 man4.pmax man4.pmppc man4.sgimips \
 	man4.sparc man4.sparc64 man4.sun2 man4.sun3 man4.vax man4.x68k
