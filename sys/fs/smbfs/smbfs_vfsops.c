@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vfsops.c,v 1.21 2003/02/26 18:16:37 jdolecek Exp $	*/
+/*	$NetBSD: smbfs_vfsops.c,v 1.22 2003/02/26 20:21:40 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.21 2003/02/26 18:16:37 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.22 2003/02/26 20:21:40 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -184,10 +184,6 @@ smbfs_mount(struct mount *mp, const char *path, void *data,
 		ssp->ss_name);
 
 	vfs_getnewfsid(mp);
-	error = smbfs_setroot(mp);
-	if (error)
-		goto bad;
-
 	return (0);
 
 bad:
@@ -223,14 +219,14 @@ smbfs_unmount(struct mount *mp, int mntflags, struct proc *p)
 #ifdef QUOTA
 #endif
 	/* Drop the extra reference to root vnode. */
-	KASSERT(smp->sm_root != NULL && SMBTOV(smp->sm_root) != NULL);
-	vrele(SMBTOV(smp->sm_root));
+	if (smp->sm_root) {
+		vrele(SMBTOV(smp->sm_root));
+		smp->sm_root = NULL;
+	}
 
 	/* Flush all vnodes. */
-	if ((error = vflush(mp, NULLVP, flags)) != 0) {
-		vref(SMBTOV(smp->sm_root));
+	if ((error = vflush(mp, NULLVP, flags)) != 0)
 		return error;
-	}
 
 	smb_makescred(&scred, p, p->p_ucred);
 	smb_share_lock(smp->sm_share, 0);
@@ -270,11 +266,20 @@ smbfs_setroot(struct mount *mp)
 	error = smbfs_nget(mp, NULL, "TheRooT", 7, &fattr, &vp);
 	if (error)
 		return error;
-	vp->v_flag |= VROOT;
-	smp->sm_root = VTOSMB(vp);
 
-	/* Keep reference, but unlock */
-	VOP_UNLOCK(vp, 0);
+	/*
+	 * Someone might have already set sm_root while we slept
+	 * in smb_lookup or malloc/getnewvnode.
+	 */
+	if (smp->sm_root)
+		vput(vp);
+	else {
+		vp->v_flag |= VROOT;
+		smp->sm_root = VTOSMB(vp);
+
+		/* Keep reference, but unlock */
+		VOP_UNLOCK(vp, 0);
+	}
 
 	return (0);
 }
@@ -286,6 +291,13 @@ int
 smbfs_root(struct mount *mp, struct vnode **vpp)
 {
 	struct smbmount *smp = VFSTOSMBFS(mp);
+
+	if (__predict_false(!smp->sm_root)) {
+		int error = smbfs_setroot(mp);
+		if (error)
+			return (error);
+		/* fallthrough */
+	}
 
 	KASSERT(smp->sm_root != NULL && SMBTOV(smp->sm_root) != NULL);
 	*vpp = SMBTOV(smp->sm_root);
@@ -358,8 +370,6 @@ smbfs_statfs(struct mount *mp, struct statfs *sbp, struct proc *p)
 	struct smb_cred scred;
 	int error = 0;
 
-	KASSERT(smp->sm_root != NULL);
-	
 	sbp->f_iosize = SSTOVC(ssp)->vc_txmax;		/* optimal transfer block size */
 	smb_makescred(&scred, p, p->p_ucred);
 
