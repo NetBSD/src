@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.12 2000/09/05 21:52:16 thorpej Exp $	*/
+/*	$NetBSD: pte.h,v 1.13 2003/04/02 07:35:59 thorpej Exp $	*/
 
 /*
  *
@@ -146,9 +146,9 @@ typedef u_int32_t pt_entry_t;		/* PTE */
 #define	NBPD		(1 << PDSHIFT)	/* # bytes mapped by PD (4MB) */
 #define	PDOFSET		(NBPD-1)	/* mask for non-PD part of VA */
 #if 0 /* not used? */
-#define	NPTEPD		(NBPD / NBPG)	/* # of PTEs in a PD */
+#define	NPTEPD		(NBPD / PAGE_SIZE)	/* # of PTEs in a PD */
 #else
-#define	PTES_PER_PTP	(NBPD / NBPG)	/* # of PTEs in a PTP */
+#define	PTES_PER_PTP	(NBPD / PAGE_SIZE)	/* # of PTEs in a PTP */
 #endif
 #define	PD_MASK		0xffc00000	/* page directory address bits */
 #define	PT_MASK		0x003ff000	/* page table address bits */

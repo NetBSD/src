@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.28 2002/12/10 05:14:27 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.29 2003/04/02 07:35:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -65,10 +65,10 @@
  * have the user's stack hard-wired at FFF00000 for post-mortems,
  * and we must be compatible...
  */
-#define	USRSTACK	(-HIGHPAGES*NBPG)	/* Start of user stack */
+#define	USRSTACK	(-HIGHPAGES*PAGE_SIZE)	/* Start of user stack */
 #define	BTOPUSRSTACK	(0x100000-HIGHPAGES)	/* btop(USRSTACK) */
 #define P1PAGES		0x100000
-#define HIGHPAGES	(0x100000/NBPG)
+#define HIGHPAGES	(0x100000/PAGE_SIZE)
 
 /*
  * Virtual memory related constants, all in bytes
@@ -134,7 +134,7 @@
 #define VM_MAX_KERNEL_ADDRESS	((vaddr_t)0xFFFFF000)
 
 /* virtual sizes (bytes) for various kernel submaps */
-#define VM_PHYS_SIZE		(USRIOSIZE*NBPG)
+#define VM_PHYS_SIZE		(USRIOSIZE*PAGE_SIZE)
 
 /* # of kernel PT pages (initial only, can grow dynamically) */
 #define VM_KERNEL_PT_PAGES	((vsize_t)2)		/* XXX: SYSPTSIZE */

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.70 2003/03/03 22:13:16 fvdl Exp $	*/
+/*	$NetBSD: pmap.h,v 1.71 2003/04/02 07:35:59 thorpej Exp $	*/
 
 /*
  *
@@ -87,7 +87,7 @@
  * point (slot #767 as show above).  when the pmap code wants to find the
  * PTE for a virtual address, all it has to do is the following:
  *
- * address of PTE = (767 * 4MB) + (VA / NBPG) * sizeof(pt_entry_t)
+ * address of PTE = (767 * 4MB) + (VA / PAGE_SIZE) * sizeof(pt_entry_t)
  *                = 0xbfc00000 + (VA / 4096) * 4
  *
  * what happens if the pmap layer is asked to perform an operation
@@ -160,8 +160,8 @@
 
 #define PTE_BASE	((pt_entry_t *)  (PDSLOT_PTE * NBPD) )
 #define APTE_BASE	((pt_entry_t *)  (PDSLOT_APTE * NBPD) )
-#define PDP_BASE ((pd_entry_t *)(((char *)PTE_BASE) + (PDSLOT_PTE * NBPG)))
-#define APDP_BASE ((pd_entry_t *)(((char *)APTE_BASE) + (PDSLOT_APTE * NBPG)))
+#define PDP_BASE ((pd_entry_t *)(((char *)PTE_BASE) + (PDSLOT_PTE * PAGE_SIZE)))
+#define APDP_BASE ((pd_entry_t *)(((char *)APTE_BASE) + (PDSLOT_APTE * PAGE_SIZE)))
 #define PDP_PDE		(PDP_BASE + PDSLOT_PTE)
 #define APDP_PDE	(PDP_BASE + PDSLOT_APTE)
 
@@ -191,12 +191,12 @@
  *   a PTP's offset is the byte-offset in the PTE space that this PTP is at
  *   a PTP's VA is the first VA mapped by that PTP
  *
- * note that NBPG == number of bytes in a PTP (4096 bytes == 1024 entries)
+ * note that PAGE_SIZE == number of bytes in a PTP (4096 bytes == 1024 entries)
  *           NBPD == number of bytes a PTP can map (4MB)
  */
 
-#define ptp_i2o(I)	((I) * NBPG)	/* index => offset */
-#define ptp_o2i(O)	((O) / NBPG)	/* offset => index */
+#define ptp_i2o(I)	((I) * PAGE_SIZE)	/* index => offset */
+#define ptp_o2i(O)	((O) / PAGE_SIZE)	/* offset => index */
 #define ptp_i2v(I)	((I) * NBPD)	/* index => VA */
 #define ptp_v2i(V)	((V) / NBPD)	/* VA => index (same as pdei) */
 
@@ -298,7 +298,7 @@ struct pv_page_info {
  * (note: won't work on systems where NPBG isn't a constant)
  */
 
-#define PVE_PER_PVPAGE ((NBPG - sizeof(struct pv_page_info)) / \
+#define PVE_PER_PVPAGE ((PAGE_SIZE - sizeof(struct pv_page_info)) / \
 			sizeof(struct pv_entry))
 
 /*
@@ -503,6 +503,11 @@ vaddr_t	pmap_map __P((vaddr_t, paddr_t, paddr_t, vm_prot_t));
 void	pmap_ldt_cleanup __P((struct lwp *));
 #define	PMAP_FORK
 #endif /* USER_LDT */
+
+/*
+ * Hooks for the pool allocator.
+ */
+#define	POOL_VTOPHYS(va)	vtophys((vaddr_t) (va))
 
 #endif /* _KERNEL */
 #endif	/* _I386_PMAP_H_ */
