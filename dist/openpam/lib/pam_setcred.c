@@ -60,6 +60,7 @@ pam_setcred(pam_handle_t *pamh,
 	/* XXX enforce exclusivity */
 	r = openpam_dispatch(pamh, PAM_SM_SETCRED, flags);
 	RETURNC(r);
+	/*NOTREACHED*/
 }
 
 /*

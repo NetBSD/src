@@ -81,6 +81,7 @@ pam_vprompt(pam_handle_t *pamh,
 	*resp = rsp == NULL ? NULL : rsp->resp;
 	FREE(rsp);
 	RETURNC(r);
+	/*NOTREACHED*/
 }
 
 /*

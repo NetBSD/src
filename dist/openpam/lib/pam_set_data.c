@@ -81,6 +81,7 @@ pam_set_data(pam_handle_t *pamh,
 	dp->next = pamh->module_data;
 	pamh->module_data = dp;
 	RETURNC(PAM_SUCCESS);
+	/*NOTREACHED*/
 }
 
 /*

@@ -58,6 +58,7 @@ pam_close_session(pam_handle_t *pamh,
 		RETURNC(PAM_SYMBOL_ERR);
 	r = openpam_dispatch(pamh, PAM_SM_CLOSE_SESSION, flags);
 	RETURNC(r);
+	/*NOTREACHED*/
 }
 
 /*

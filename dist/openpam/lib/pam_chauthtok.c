@@ -64,6 +64,7 @@ pam_chauthtok(pam_handle_t *pamh,
 	pam_set_item(pamh, PAM_OLDAUTHTOK, NULL);
 	pam_set_item(pamh, PAM_AUTHTOK, NULL);
 	RETURNC(r);
+	/*NOTREACHED*/
 }
 
 /*

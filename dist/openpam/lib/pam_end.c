@@ -84,6 +84,7 @@ pam_end(pam_handle_t *pamh,
 	FREE(pamh);
 
 	RETURNC(PAM_SUCCESS);
+	/*NOTREACHED*/
 }
 
 /*

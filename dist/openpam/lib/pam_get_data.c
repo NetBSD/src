@@ -65,6 +65,7 @@ pam_get_data(pam_handle_t *pamh,
 		}
 	}
 	RETURNC(PAM_NO_MODULE_DATA);
+	/*NOTREACHED*/
 }
 
 /*

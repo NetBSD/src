@@ -63,6 +63,7 @@ openpam_nullconv(int n,
 	/*LINTED unused*/
 	(void)data;
 	RETURNC(PAM_CONV_ERR);
+	/*NOTREACHED*/
 }
 
 /*
