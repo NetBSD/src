@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.57 1998/07/27 17:19:58 mycroft Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.58 1998/08/04 11:52:52 drochner Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: disklabel.c,v 1.57 1998/07/27 17:19:58 mycroft Exp $");
+__RCSID("$NetBSD: disklabel.c,v 1.58 1998/08/04 11:52:52 drochner Exp $");
 #endif
 #endif /* not lint */
 
@@ -139,7 +139,7 @@ static struct dos_partition *dosdp;	/* i386 DOS partition, if found */
 static int mbrpt_nobsd; /* MBR partition table exists, but no BSD partition */
 static struct dos_partition *readmbr __P((int));
 #define MBRSIGOFS 0x1fe
-static char mbrsig[2] = {0x55, 0xaa};
+static u_char mbrsig[2] = {0x55, 0xaa};
 #endif
 #ifdef __arm32__
 static u_int filecore_partition_offset;
@@ -473,16 +473,17 @@ writelabel(f, boot, lp)
 		if (dosdp) {
 			if (dosdp->dp_start != pp->p_offset)
 				confirm("Write outside MBR partition");
-		        sectoffset = pp->p_offset * lp->d_secsize;
+		        sectoffset = (off_t)pp->p_offset * lp->d_secsize;
 		} else {
 			if (mbrpt_nobsd)
-				confirm("Erase the previous contents of the disk");
+				confirm("Erase the previous contents"
+					" of the disk");
 			sectoffset = 0;
 		}
 #endif
 #ifdef __arm32__
 		/* XXX */
-		sectoffset = filecore_partition_offset * DEV_BSIZE;
+		sectoffset = (off_t)filecore_partition_offset * DEV_BSIZE;
 #endif	/* __arm32__ */
 		/*
 		 * First set the kernel disk label,
@@ -555,7 +556,7 @@ writelabel(f, boot, lp)
 
 		alt = lp->d_ncylinders * lp->d_secpercyl - lp->d_nsectors;
 		for (i = 1; i < 11 && i < lp->d_nsectors; i += 2) {
-			(void)lseek(f, (off_t)((alt + i) * lp->d_secsize),
+			(void)lseek(f, (off_t)(alt + i) * lp->d_secsize,
 			    SEEK_SET);
 			if (write(f, boot, lp->d_secsize) < lp->d_secsize)
 				warn("alternate label %d write", i/2);
@@ -587,7 +588,8 @@ l_perror(s)
 		break;
 
 	case EXDEV:
-		warnx("%s: Labeled partition or 'a' partition must start at beginning of disk", s);
+		warnx("%s: Labeled partition or 'a' partition must start"
+		      " at beginning of disk", s);
 		break;
 
 	default:
@@ -776,7 +778,8 @@ get_filecore_partition(f)
 			 * but no NetBSD partition. We should leave this
 			 * disc alone.
 			 */
-			errx(4, "cannot label: no NetBSD partition found in RISCiX partition table");
+			errx(4, "cannot label: no NetBSD partition found"
+				" in RISCiX partition table");
 		}
 		return (offset);
 	} else {
@@ -787,7 +790,8 @@ get_filecore_partition(f)
 		 * NetBSD disklabel on the disc then they should remove
 		 * the filecore boot block first with dd.
 		 */
-		errx(4, "cannot label: filecore-only disk (no non-ADFS partition)");
+		errx(4, "cannot label: filecore-only disk"
+			" (no non-ADFS partition)");
 	}
 	return (0);
 }
@@ -809,11 +813,11 @@ readlabel(f)
 
 #ifdef __i386__
 		if (dosdp)
-			sectoffset = dosdp->dp_start * DEV_BSIZE;
+			sectoffset = (off_t)dosdp->dp_start * DEV_BSIZE;
 #endif
 #ifdef __arm32__
 		/* XXX */
-		sectoffset = filecore_partition_offset * DEV_BSIZE;
+		sectoffset = (off_t)filecore_partition_offset * DEV_BSIZE;
 #endif	/* __arm32__ */
 		if (lseek(f, sectoffset, SEEK_SET) < 0 ||
 		    read(f, bootarea, BBSIZE) < BBSIZE)
@@ -880,11 +884,12 @@ makebootarea(boot, dp, f)
 
 #ifdef __i386__
 			if (dosdp)
-				sectoffset = dosdp->dp_start * DEV_BSIZE;
+				sectoffset = (off_t)dosdp->dp_start * DEV_BSIZE;
 #endif
 #ifdef __arm32__
 			/* XXX */
-			sectoffset = filecore_partition_offset * DEV_BSIZE;
+			sectoffset = (off_t)filecore_partition_offset
+			    * DEV_BSIZE;
 #endif	/* __arm32__ */
 			if (lseek(f, sectoffset, SEEK_SET) < 0 ||
 			    read(f, boot, BBSIZE) < BBSIZE)
@@ -956,7 +961,8 @@ makebootarea(boot, dp, f)
 	b = open(bootxx, O_RDONLY);
 	if (b < 0)
 		err(4, "%s", bootxx);
-	if (read(b, &boot[dp->d_secsize], (int)(dp->d_bbsize-dp->d_secsize)) < 0)
+	if (read(b, &boot[dp->d_secsize],
+		 (int)(dp->d_bbsize-dp->d_secsize)) < 0)
 		err(4, "%s", bootxx);
 #else
 	if (read(b, boot, (int)dp->d_bbsize) < 0)
@@ -1154,7 +1160,8 @@ display(f, lp)
 				(void) fprintf(f, "  %c: %8d %8d ", 'a' + i,
 				   pp->p_size, pp->p_offset);
 			if ((unsigned) pp->p_fstype < FSMAXTYPES)
-				(void) fprintf(f, "%10.10s", fstypenames[pp->p_fstype]);
+				(void) fprintf(f, "%10.10s",
+					       fstypenames[pp->p_fstype]);
 			else
 				(void) fprintf(f, "%10d", pp->p_fstype);
 			switch (pp->p_fstype) {
@@ -1190,7 +1197,8 @@ display(f, lp)
 				    (pp->p_offset + 
 				    pp->p_size + lp->d_secpercyl - 1) /
 				    lp->d_secpercyl - 1);
-				if (pp->p_size % lp->d_secpercyl)
+				if ((pp->p_offset + pp->p_size)
+				    % lp->d_secpercyl)
 				    putc('*', f);
 				(void) fprintf(f, ")\n");
 			} else
@@ -1538,7 +1546,7 @@ getasciilabel(f, lp)
 	int m;								\
 	_CHECKLINE							\
 	cp = tp, tp = word(cp);						\
-	m = strtol(cp, &ptr, 10);					\
+	m = (int)strtol(cp, &ptr, 10);					\
 	if (*ptr == '\0')						\
 		(n) = m;						\
 	else {								\
@@ -1548,14 +1556,14 @@ getasciilabel(f, lp)
 			break;						\
 		}							\
 		(n) = m * lp->d_secpercyl;				\
-		m = strtol(ptr, &ptr, 10);				\
+		m = (int)strtol(ptr, &ptr, 10);				\
 		if (*ptr++ != '/') {					\
 			warnx("line %d: invalid format", lineno);	\
 			errors++;					\
 			break;						\
 		}							\
 		(n) += m * lp->d_nsectors;				\
-		m = strtol(ptr, &ptr, 10);				\
+		m = (int)strtol(ptr, &ptr, 10);				\
 		(n) += m;						\
 	}								\
 }
@@ -1573,13 +1581,15 @@ getasciilabel(f, lp)
 				errors++;
 			} else
 				pp->p_offset = v;
-			/* can't use word() here because of blanks in fstypenames[] */
+			/* can't use word() here because of blanks
+			   in fstypenames[] */
 			cp = tp; 
 			cpp = fstypenames;
 			for (; cpp < &fstypenames[FSMAXTYPES]; cpp++) {
 				s = *cpp;
 				if (s == NULL ||
-					(cp[strlen(s)] != ' ' && cp[strlen(s)] != '\t' &&
+					(cp[strlen(s)] != ' ' &&
+					 cp[strlen(s)] != '\t' &&
 					 cp[strlen(s)] != '\0'))
 					continue;
 				if (!memcmp(s, cp, strlen(s))) {
@@ -1601,7 +1611,8 @@ getasciilabel(f, lp)
 			else
 				v = FSMAXTYPES;
 			if ((unsigned)v >= FSMAXTYPES) {
-				warnx("line %d: warning, unknown filesystem type: %s",
+				warnx("line %d: warning, unknown"
+				      " filesystem type: %s",
 				    lineno, cp);
 				v = FS_UNUSED;
 			}
@@ -1712,10 +1723,12 @@ checklabel(lp)
 			    part, pp->p_offset);
 #ifdef notdef
 		if (pp->p_size % lp->d_secpercyl)
-			warnx("warning, partition %c: size %% cylinder-size != 0",
+			warnx("warning, partition %c:"
+			      " size %% cylinder-size != 0",
 			    part);
 		if (pp->p_offset % lp->d_secpercyl)
-			warnx("warning, partition %c: offset %% cylinder-size != 0",
+			warnx("warning, partition %c:"
+			      " offset %% cylinder-size != 0",
 			    part);
 #endif
 		if (pp->p_offset > lp->d_secperunit) {
@@ -1723,7 +1736,8 @@ checklabel(lp)
 			errors++;
 		}
 		if (pp->p_offset + pp->p_size > lp->d_secperunit) {
-			warnx("partition %c: partition extends past end of unit",
+			warnx("partition %c: partition extends"
+			      " past end of unit",
 			    part);
 			errors++;
 		}
