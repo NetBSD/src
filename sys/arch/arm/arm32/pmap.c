@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.59 2002/03/24 05:15:59 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.60 2002/03/24 05:28:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -143,7 +143,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.59 2002/03/24 05:15:59 thorpej Exp $");        
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.60 2002/03/24 05:28:46 thorpej Exp $");        
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
 	if (pmap_debug_level >= (_lev_)) \
@@ -2894,31 +2894,37 @@ pmap_unwire(pmap, va)
 	struct pmap *pmap;
 	vaddr_t va;
 {
-	pt_entry_t *pte;
-	paddr_t pa;
+	pt_entry_t *ptes;
 	struct vm_page *pg;
+	paddr_t pa;
 
-	/*
-	 * Make sure pmap is valid. -dct
-	 */
-	if (pmap == NULL)
-		return;
+	PMAP_MAP_TO_HEAD_LOCK();
+	ptes = pmap_map_ptes(pmap);		/* locks pmap */
 
-	/* Get the pte */
-	pte = pmap_pte(pmap, va);
-	if (!pte)
-		return;
+	if (pmap_pde_v(pmap_pde(pmap, va))) {
+#ifdef DIAGNOSTIC
+		if (l2pte_valid(ptes[arm_btop(va)]) == 0)
+			panic("pmap_unwire: invalid L2 PTE");
+#endif
+		/* Extract the physical address of the page */
+		pa = l2pte_pa(ptes[arm_btop(va)]);
 
-	/* Extract the physical address of the page */
-	pa = pmap_pte_pa(pte);
+		if ((pg = PHYS_TO_VM_PAGE(pa)) == NULL)
+			goto out;
 
-	if ((pg = PHYS_TO_VM_PAGE(pa)) == NULL)
-		return;
-
-	simple_lock(&pg->mdpage.pvh_slock);
-	/* Update the wired bit in the pv entry for this page. */
-	(void) pmap_modify_pv(pmap, va, pg, PT_W, 0);
-	simple_unlock(&pg->mdpage.pvh_slock);
+		/* Update the wired bit in the pv entry for this page. */
+		simple_lock(&pg->mdpage.pvh_slock);
+		(void) pmap_modify_pv(pmap, va, pg, PT_W, 0);
+		simple_unlock(&pg->mdpage.pvh_slock);
+	}
+#ifdef DIAGNOSTIC
+	else {
+		panic("pmap_unwire: invalid L1 PTE");
+	}
+#endif
+ out:
+	pmap_unmap_ptes(pmap);			/* unlocks pmap */
+	PMAP_MAP_TO_HEAD_UNLOCK();
 }
 
 /*
