@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.63 1997/02/02 07:55:52 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.64 1997/03/13 09:27:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -44,6 +44,7 @@
  */
 
 #include "assym.h"
+#include <machine/trap.h>
 
 #define MMUADDR(ar)	movl	_MMUbase,ar
 #define CLKADDR(ar)	movl	_CLKbase,ar
