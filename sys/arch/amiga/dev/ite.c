@@ -37,7 +37,7 @@
  *
  *      from: Utah Hdr: ite.c 1.1 90/07/09
  *      from: @(#)ite.c 7.6 (Berkeley) 5/16/91
- *      $Id: ite.c,v 1.10 1994/02/21 06:30:38 chopps Exp $
+ *      $Id: ite.c,v 1.11 1994/02/21 09:34:19 chopps Exp $
  */
 
 /*
@@ -91,7 +91,8 @@ int kbd_init;
 
 static char *index __P((const char *, char));
 static int inline atoi __P((const char *));
-void iteputchar __P((int c, dev_t dev));
+void iteputchar __P((int c, struct ite_softc *ip));
+void ite_putstr __P((const char * s, int len, dev_t dev));
 
 #define SUBR_CNPROBE(min)	itesw[min].ite_cnprobe(min)
 #define SUBR_INIT(ip)		ip->itesw->ite_init(ip)
@@ -208,13 +209,14 @@ ite_cnputc(dev, c)
 {
 	static int paniced = 0;
 	struct ite_softc *ip = &ite_softc[minor(dev)];
-
+	char ch = c;
+	
 	if (panicstr && !paniced &&
 	    (ip->flags & (ITE_ACTIVE | ITE_INGRF)) != ITE_ACTIVE) {
 		(void)ite_on(dev, 3);
 		paniced = 1;
 	}
-	iteputchar(c, dev);
+	ite_putstr(&ch, 1, dev);
 }
 
 /*
@@ -408,13 +410,8 @@ itestart(tp)
 		len = q_to_b(rbp, buf, ITEBURST);
 	} splx(s);
 
-
 	/* Here is a really good place to implement pre/jumpscroll() */
-	SUBR_CURSOR(ip, START_CURSOROPT);
-	for (n = 0; n < len; n++)
-		if (buf[n])
-			iteputchar(buf[n], tp->t_dev);
-	SUBR_CURSOR(ip, END_CURSOROPT);
+	ite_putstr(buf, len, tp->t_dev);
 
 	s = spltty(); {
 		tp->t_state &= ~TS_BUSY;
@@ -477,7 +474,7 @@ ite_off(dev, flag)
 	if ((flag & 1) ||
 	    (ip->flags & (ITE_INGRF | ITE_ISCONS | ITE_INITED)) == ITE_INITED)
 		SUBR_DEINIT(ip);
-	if ((flag & 2) == 0)
+	if ((flag & 2) == 0)	/* XXX hmm grfon() I think wants this to  go inactive. */
 		ip->flags &= ~ITE_ACTIVE;
 }
 
@@ -1117,25 +1114,36 @@ strncmp (a, b, l)
 }
 
 void
-iteputchar(c, dev)
-	register int c;
-	dev_t dev;  
+ite_putstr(s, len, dev)
+	const char *s;
+	int len;
+	dev_t dev;
 {
-	int unit = minor(dev);
-	struct tty *kbd_tty = ite_tty[kbd_ite - ite_softc];
-	struct ite_softc *ip = &ite_softc[unit];
-	int n, x, y;
-	char *cp;
+	struct ite_softc *ip = &ite_softc[minor(dev)];
+	int i;
 
+	/* XXX avoid problems */
 	if ((ip->flags & (ITE_ACTIVE|ITE_INGRF)) != ITE_ACTIVE)
 	  	return;
 
-#if 0
-	if (ite_tty[unit])
-	  if ((ite_tty[unit]->t_cflag & CSIZE) == CS7
-	      || (ite_tty[unit]->t_cflag & PARENB))
-	    c &= 0x7f;
-#endif
+	SUBR_CURSOR(ip, START_CURSOROPT);
+	for (i = 0; i < len; i++)
+		if (s[i])
+			iteputchar(s[i], ip);
+	SUBR_CURSOR(ip, END_CURSOROPT);
+}
+
+
+void
+iteputchar(c, ip)
+	register int c;
+	struct ite_softc *ip;
+{
+	struct tty *kbd_tty;
+	int n, x, y;
+	char *cp;
+
+	kbd_tty = ite_tty[kbd_ite - ite_softc];
 
 	if (ip->escape) 
 	  {
@@ -1941,7 +1949,7 @@ doesc:
 		break;
 
 	case BEL:
-		if (kbd_tty && ite_tty[unit] == kbd_tty)
+		if (kbd_tty && ite_tty[kbd_ite - ite_softc] == kbd_tty)
 			kbdbell();
 		break;
 
