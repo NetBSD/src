@@ -1,8 +1,7 @@
 #
 # Distribution kernel (TX3922 based model) kernel config file
-
 #
-#	$NetBSD: TX3922,v 1.14 2000/04/10 17:44:06 uch Exp $
+#	$NetBSD: TX3922,v 1.15 2000/04/24 12:59:43 uch Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
@@ -35,6 +34,7 @@ options 	KTRACE			# system call tracing support
 options 	__NO_SOFT_SERIAL_INTERRUPT
 options 	SERIALCONSSLOT=0	# UARTA 0, UARTB 1
 
+options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 options 	COMPAT_43
 
 options 	SCSIVERBOSE	# human readable SCSI error messages
