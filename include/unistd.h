@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.42 1997/10/16 23:26:24 christos Exp $	*/
+/*	$NetBSD: unistd.h,v 1.43 1997/11/02 17:16:50 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -130,7 +130,6 @@ char	*getwd __P((char *));			/* obsoleted by getcwd() */
 int	 initgroups __P((const char *, gid_t));
 int	 iruserok __P((u_int32_t, int, const char *, const char *));
 int	 lchown __P((const char *, uid_t, gid_t));
-int	 mknod __P((const char *, mode_t, dev_t));
 int	 mkstemp __P((char *));
 char	*mktemp __P((char *));
 int	 nfssvc __P((int, void *));
