@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *      $Id: bt742a.c,v 1.21 1994/03/29 04:30:21 mycroft Exp $
+ *      $Id: bt742a.c,v 1.22 1994/04/06 00:27:49 mycroft Exp $
  */
 
 /*
@@ -1157,8 +1157,7 @@ bt_inquire_setup_information(bt)
 
 	/* Inquire Board ID to Bt742 for firmware version */
 	bt_cmd(bt, 0, sizeof(bID), 0, &bID, BT_INQUIRE);
-	printf(": version %c.%c, ", bt->sc_dev.dv_xname,
-		bID.firm_revision, bID.firm_version);
+	printf(": version %c.%c, ", bID.firm_revision, bID.firm_version);
 
 	/* Obtain setup information from Bt742. */
 	bt_cmd(bt, 1, sizeof(setup), 0, &setup, BT_SETUP_GET, sizeof(setup));
