@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.hostprog.mk,v 1.36 2003/11/11 11:43:45 dsl Exp $
+#	$NetBSD: bsd.hostprog.mk,v 1.37 2003/11/16 14:09:00 lukem Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .include <bsd.init.mk>
@@ -77,7 +77,7 @@ LOBJS+=		${LSRCS:.c=.ln} ${SRCS:M*.c:.c=.ln}
 
 ${OBJS} ${LOBJS}: ${DPSRCS}
 ${HOSTPROG}: ${OBJS} ${DPADD}
-	${_MKMSG_LINK} ${HOSTPROG}
+	${_MKTARGET_LINK}
 	${HOST_LINK.c} ${HOST_LDSTATIC} -o ${.TARGET} ${OBJS} ${LDADD}
 
 .endif	# defined(OBJS) && !empty(OBJS)
