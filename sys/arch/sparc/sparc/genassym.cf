@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.17 1998/10/16 22:39:18 pk Exp $
+#	$NetBSD: genassym.cf,v 1.18 1998/10/19 11:56:44 pk Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -149,6 +149,7 @@ endif
 
 # CPU info structure
 define	CPUINFO_STRUCTSIZE	sizeof(struct cpu_info)
+define	CPUINFO_CPUNO		offsetof(struct cpu_info, cpu_no)
 define	CPUINFO_GETSYNCFLT	offsetof(struct cpu_info, get_syncflt)
 define	CPUINFO_GETASYNCFLT	offsetof(struct cpu_info, get_asyncflt)
 define	CPUINFO_PURE_VCACHE_FLS	offsetof(struct cpu_info, pure_vcache_flush)
@@ -160,8 +161,8 @@ define	CPUINFO_REDZONE		offsetof(struct cpu_info, redzone)
 define	REDSIZE			REDSIZE
 define	CPUINFO_IDLE_U		offsetof(struct cpu_info, idle_u)
 define	CPUINFO_CURPCB		offsetof(struct cpu_info, curpcb)
+define	CPUINFO_CURPROC		offsetof(struct cpu_info, _curproc)
 define	CPUINFO_SEGPTD		offsetof(struct cpu_info, cpu_seg_ptd)
-define	CPUINFO_CPUNO		offsetof(struct cpu_info, cpu_no)
 
 # PTE bits and related information
 define	PG_W		PG_W
