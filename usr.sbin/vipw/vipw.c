@@ -1,4 +1,4 @@
-/*	$NetBSD: vipw.c,v 1.8 2001/02/19 23:22:49 cgd Exp $	*/
+/*	$NetBSD: vipw.c,v 1.9 2001/08/18 19:35:33 ad Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)vipw.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: vipw.c,v 1.8 2001/02/19 23:22:49 cgd Exp $");
+__RCSID("$NetBSD: vipw.c,v 1.9 2001/08/18 19:35:33 ad Exp $");
 #endif
 #endif /* not lint */
 
@@ -123,7 +123,7 @@ main(int argc, char *argv[])
 			warnx("no changes made");
 			pw_error((char *)NULL, 0, 0);
 		}
-		if (pw_mkdb() == 0)
+		if (pw_mkdb(NULL, 0) == 0)
 			break;
 		pw_prompt();
 	}

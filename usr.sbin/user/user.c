@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.40 2001/08/17 08:29:00 joda Exp $ */
+/* $NetBSD: user.c,v 1.41 2001/08/18 19:35:33 ad Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -35,7 +35,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.40 2001/08/17 08:29:00 joda Exp $");
+__RCSID("$NetBSD: user.c,v 1.41 2001/08/18 19:35:33 ad Exp $");
 #endif
 
 #include <sys/types.h>
@@ -992,7 +992,7 @@ adduser(char *login, user_t *up)
 		errx(EXIT_FAILURE, "can't append `%s' to new groups", login);
 	}
 	(void) close(ptmpfd);
-	if (pw_mkdb() < 0) {
+	if (pw_mkdb(login, 0) < 0) {
 		err(EXIT_FAILURE, "pw_mkdb failed");
 	}
 	return 1;
@@ -1012,6 +1012,7 @@ moduser(char *login, char *newlogin, user_t *up)
 	char		*buf, *colon, *line;
 	int		masterfd;
 	int		ptmpfd;
+	int		error;
 
 	if (!valid_login(newlogin)) {
 		errx(EXIT_FAILURE, "`%s' is not a valid login name", login);
@@ -1159,9 +1160,15 @@ moduser(char *login, char *newlogin, user_t *up)
 		}
 	}
 	(void) close(ptmpfd);
-	if (pw_mkdb() < 0) {
+	if (up != NULL && strcmp(login, newlogin) == 0) {
+		error = pw_mkdb(login, 0);
+	} else {
+		error = pw_mkdb(NULL, 0);
+	}
+	if (error < 0) {
 		err(EXIT_FAILURE, "pw_mkdb failed");
 	}
+
 	return 1;
 }
 
