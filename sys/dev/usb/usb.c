@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.58 2001/11/20 23:53:26 augustss Exp $	*/
+/*	$NetBSD: usb.c,v 1.59 2001/11/26 20:16:55 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.58 2001/11/20 23:53:26 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.59 2001/11/26 20:16:55 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -330,7 +330,7 @@ usb_task_thread(void *arg)
 	for (;;) {
 		task = TAILQ_FIRST(&usb_all_tasks);
 		if (task == NULL) {
-			tsleep(&usb_all_tasks, PWAIT, "usbevt", 0);
+			tsleep(&usb_all_tasks, PWAIT, "usbtsk", 0);
 			task = TAILQ_FIRST(&usb_all_tasks);
 		}
 		DPRINTFN(2,("usb_task_thread: woke up task=%p\n", task));
