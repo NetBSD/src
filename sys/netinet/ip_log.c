@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_log.c,v 1.6 1998/11/22 15:17:19 mrg Exp $	*/
+/*	$NetBSD: ip_log.c,v 1.7 1998/12/10 15:50:59 christos Exp $	*/
 
 /*
  * Copyright (C) 1997-1998 by Darren Reed.
@@ -9,7 +9,6 @@
  *
  * Id: ip_log.c,v 2.0.2.13.2.7 1998/11/22 01:50:26 darrenr Exp 
  */
-#ifdef	IPFILTER_LOG
 # ifndef SOLARIS
 #  define SOLARIS (defined(sun) && (defined(__svr4__) || defined(__SVR4)))
 # endif
@@ -119,6 +118,7 @@ extern	kcondvar_t	iplwait;
 #  endif
 # endif
 
+#ifdef	IPFILTER_LOG
 iplog_t	**iplh[IPL_LOGMAX+1], *iplt[IPL_LOGMAX+1];
 int	iplused[IPL_LOGMAX+1];
 u_long	iplcrc[IPL_LOGMAX+1];
