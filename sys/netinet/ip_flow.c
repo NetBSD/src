@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_flow.c,v 1.11 1999/01/25 15:53:29 mycroft Exp $	*/
+/*	$NetBSD: ip_flow.c,v 1.12 1999/01/28 21:29:27 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -197,7 +197,7 @@ ipflow_fastforward(
 	 * the htons()s are combined by CSE due to the __const__ attribute.
 	 */
 	ip->ip_ttl -= IPTTLDEC;
-	if (ip->ip_sum >= ~htons(IPTTLDEC << 8))
+	if (ip->ip_sum >= (u_int16_t) ~htons(IPTTLDEC << 8))
 		ip->ip_sum -= ~htons(IPTTLDEC << 8);
 	else
 		ip->ip_sum += htons(IPTTLDEC << 8);
