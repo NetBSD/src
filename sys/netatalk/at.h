@@ -1,4 +1,4 @@
-/*	$NetBSD: at.h,v 1.4 2000/07/28 12:13:33 kleink Exp $	*/
+/*	$NetBSD: at.h,v 1.5 2004/04/22 01:01:40 matt Exp $	*/
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -97,7 +97,7 @@ struct sockaddr_at {
 
 #ifdef _KERNEL
 extern struct domain atalkdomain;
-extern struct protosw atalksw[];
+extern const struct protosw atalksw[];
 #endif
 
 #endif	/* _NETATALK_AT_H_ */

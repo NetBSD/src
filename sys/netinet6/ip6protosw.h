@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6protosw.h,v 1.14 2003/12/04 19:38:24 atatat Exp $	*/
+/*	$NetBSD: ip6protosw.h,v 1.15 2004/04/22 01:01:41 matt Exp $	*/
 /*	$KAME: ip6protosw.h,v 1.22 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -145,6 +145,6 @@ struct ip6protosw {
 	int	*pr_wassysctl;		/* @@@ used to be sysctl for protocol */
 };
 
-extern struct ip6protosw inet6sw[];
+extern const struct ip6protosw inet6sw[];
 
 #endif /* !_NETINET6_IP6PROTOSW_H_ */

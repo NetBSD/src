@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.73 2004/04/18 21:47:11 matt Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.74 2004/04/22 01:01:42 matt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -90,7 +90,7 @@ struct socket {
 	short		so_linger;	/* time to linger while closing */
 	short		so_state;	/* internal state flags SS_*, below */
 	void		*so_pcb;	/* protocol control block */
-	struct protosw	*so_proto;	/* protocol handle */
+	const struct protosw *so_proto;	/* protocol handle */
 /*
  * Variables for connection queueing.
  * Socket where accepts occur is so_head in all subsidiary sockets.

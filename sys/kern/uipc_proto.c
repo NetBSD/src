@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_proto.c,v 1.14 2003/08/07 16:31:58 agc Exp $	*/
+/*	$NetBSD: uipc_proto.c,v 1.15 2004/04/22 01:01:40 matt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_proto.c,v 1.14 2003/08/07 16:31:58 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_proto.c,v 1.15 2004/04/22 01:01:40 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_proto.c,v 1.14 2003/08/07 16:31:58 agc Exp $");
 
 extern	struct domain unixdomain;		/* or at least forward */
 
-struct protosw unixsw[] = {
+const struct protosw unixsw[] = {
 { SOCK_STREAM,	&unixdomain,	0,	PR_CONNREQUIRED|PR_WANTRCVD|PR_RIGHTS|PR_LISTEN,
   0,		0,		0,		uipc_ctloutput,
   uipc_usrreq,
