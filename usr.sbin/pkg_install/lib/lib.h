@@ -1,4 +1,4 @@
-/* $NetBSD: lib.h,v 1.29.4.6 2002/06/26 16:50:14 he Exp $ */
+/* $NetBSD: lib.h,v 1.29.4.7 2003/03/15 20:12:53 he Exp $ */
 
 /* from FreeBSD Id: lib.h,v 1.25 1997/10/08 07:48:03 charnier Exp */
 
@@ -38,6 +38,8 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "path.h"
+
 /* Macros */
 #define SUCCESS	(0)
 #define	FAIL	(-1)
@@ -61,9 +63,21 @@
 #define TAR_CMD	"tar"
 #endif
 
-/* Full path name of TAR_CMD */
-#ifndef TAR_FULLPATHNAME
-#define TAR_FULLPATHNAME	"/usr/bin/tar"
+/* Define ftp as a string, in case the ftp client is called something else */
+#ifndef FTP_CMD
+#define FTP_CMD "ftp"
+#endif
+
+#ifndef CHOWN_CMD
+#define CHOWN_CMD "chown"
+#endif
+
+#ifndef CHMOD_CMD
+#define CHMOD_CMD "chmod"
+#endif
+
+#ifndef CHGRP_CMD
+#define CHGRP_CMD "chgrp"
 #endif
 
 /* Where we put logging information by default, else ${PKG_DBDIR} if set */
@@ -88,6 +102,7 @@
 #define BUILD_INFO_FNAME	"+BUILD_INFO"
 #define SIZE_PKG_FNAME		"+SIZE_PKG"
 #define SIZE_ALL_FNAME		"+SIZE_ALL"
+#define PRESERVE_FNAME		"+PRESERVE"
 
 #define CMD_CHAR		'@'	/* prefix for extended PLIST cmd */
 
@@ -102,6 +117,11 @@
 #define TAILQ_FIRST(head)               ((head)->tqh_first)
 #define TAILQ_NEXT(elm, field)          ((elm)->field.tqe_next)
 #endif
+
+enum {
+	ReadWrite,
+	ReadOnly
+};
 
 
 /* Enumerated constants for plist entry types */
@@ -170,6 +190,9 @@ typedef int (*matchfn) (const char *, void *);
  * and this must be an URL. Hide this behind a more obvious name. */
 #define IS_URL(str)	(URLlength(str) > 0)
 
+#define IS_STDIN(str)	((str) != NULL && !strcmp((str), "-"))
+#define IS_FULLPATH(str)	((str) != NULL && (str)[0] == '/')
+
 /* Prototypes */
 /* Misc */
 int     vsystem(const char *,...)
@@ -186,8 +209,9 @@ void    show_version(void);
 /* String */
 char   *get_dash_string(char **);
 void    str_lowercase(char *);
-char   *basename_of(char *);
-char   *dirname_of(const char *);
+const char *basename_of(const char *);
+const char *dirname_of(const char *);
+const char *suffix_of(const char *);
 int     pmatch(const char *, const char *);
 int     findmatchingname(const char *, const char *, matchfn, void *); /* doesn't really belong to "strings" */
 char   *findbestmatchingname(const char *, const char *);	/* neither */
@@ -210,17 +234,17 @@ Boolean isemptyfile(const char *);
 Boolean isfile(const char *);
 Boolean isempty(const char *);
 int     URLlength(const char *);
-char   *fileGetURL(char *, char *);
-char   *fileURLFilename(char *, char *, int);
-char   *fileURLHost(char *, char *, int);
-char   *fileFindByPath(char *, char *);
+char   *fileGetURL(const char *);
+const char *fileURLFilename(const char *, char *, int);
+const char *fileURLHost(const char *, char *, int);
+char   *fileFindByPath(const char *);
 char   *fileGetContents(char *);
 Boolean make_preserve_name(char *, size_t, char *, char *);
 void    write_file(char *, char *);
 void    copy_file(char *, char *, char *);
 void    move_file(char *, char *, char *);
 int     delete_hierarchy(char *, Boolean, Boolean);
-int     unpack(char *, char *);
+int     unpack(const char *, const char *);
 void    format_cmd(char *, size_t, char *, char *, char *);
 
 /* ftpio.c: FTP handling */
@@ -239,8 +263,8 @@ void    plist_delete(package_t *, Boolean, pl_ent_t, char *);
 void    free_plist(package_t *);
 void    mark_plist(package_t *);
 void    csum_plist_entry(char *, plist_t *);
-void    add_plist(package_t *, pl_ent_t, char *);
-void    add_plist_top(package_t *, pl_ent_t, char *);
+void    add_plist(package_t *, pl_ent_t, const char *);
+void    add_plist_top(package_t *, pl_ent_t, const char *);
 void    delete_plist(package_t *pkg, Boolean all, pl_ent_t type, char *name);
 void    write_plist(package_t *, FILE *, char *);
 void    read_plist(package_t *, FILE *);
@@ -253,8 +277,9 @@ void    pkgdb_close(void);
 int     pkgdb_store(const char *, const char *);
 char   *pkgdb_retrieve(const char *);
 int     pkgdb_remove(const char *);
+int	pkgdb_remove_pkg(const char *);
 char   *pkgdb_iter(void);
-char   *_pkgdb_getPKGDB_FILE(void);
+char   *_pkgdb_getPKGDB_FILE(char *, unsigned);
 char   *_pkgdb_getPKGDB_DIR(void);
 
 /* List of packages functions */
