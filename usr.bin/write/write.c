@@ -1,4 +1,4 @@
-/*	$NetBSD: write.c,v 1.6 1997/01/17 01:52:12 perry Exp $	*/
+/*	$NetBSD: write.c,v 1.7 1997/01/20 19:04:59 explorer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)write.c	8.2 (Berkeley) 4/27/95";
 #endif
-static char *rcsid = "$NetBSD: write.c,v 1.6 1997/01/17 01:52:12 perry Exp $";
+static char *rcsid = "$NetBSD: write.c,v 1.7 1997/01/20 19:04:59 explorer Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -230,7 +230,7 @@ term_chk(tty, msgsokP, atimeP, showerror)
 	struct stat s;
 	char path[MAXPATHLEN];
 
-	(void)sprintf(path, "/dev/%s", tty);
+	(void)snprintf(path, sizeof(path), "/dev/%s", tty);
 	if (stat(path, &s) < 0) {
 		if (showerror)
 			warn("%s", path);
@@ -261,7 +261,7 @@ do_write(tty, mytty, myuid)
 		else
 			login = "???";
 
-	(void)sprintf(path, "/dev/%s", tty);
+	(void)snprintf(path, sizeof(path), "/dev/%s", tty);
 	if ((freopen(path, "w", stdout)) == NULL)
 		err(1, "%s", path);
 
