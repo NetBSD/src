@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.117 2005/02/27 00:27:33 perry Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.118 2005/03/23 20:53:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.117 2005/02/27 00:27:33 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.118 2005/03/23 20:53:19 christos Exp $");
 
 /*
 #define CBB_DEBUG
@@ -657,7 +657,7 @@ pccbb_pci_callback(self)
 
 	/*
 	 * XXX pccbbintr should be called under the priority lower
-	 * than any other hard interrputs.
+	 * than any other hard interupts.
 	 */
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_BIO, pccbbintr, sc);
 
@@ -751,7 +751,7 @@ pccbb_pci_callback(self)
  *     3) route PCI interrupt,
  *     4) close all memory and io windows.
  *     5) turn off bus power.
- *     6) card detect interrupt on.
+ *     6) card detect and power cycle interrupts on.
  *     7) clear interrupt
  */
 static void
@@ -908,9 +908,9 @@ pccbb_chipinit(sc)
 	/* turn off power */
 	pccbb_power((cardbus_chipset_tag_t)sc, CARDBUS_VCC_0V | CARDBUS_VPP_0V);
 
-	/* CSC Interrupt: Card detect interrupt on */
+	/* CSC Interrupt: Card detect and power cycle interrupts on */
 	reg = bus_space_read_4(bmt, bmh, CB_SOCKET_MASK);
-	reg |= CB_SOCKET_MASK_CD | CB_SOCKET_MASK_POWER;  /* Card detect intr is turned on. */
+	reg |= CB_SOCKET_MASK_CD | CB_SOCKET_MASK_POWER;
 	bus_space_write_4(bmt, bmh, CB_SOCKET_MASK, reg);
 	/* reset interrupt */
 	bus_space_write_4(bmt, bmh, CB_SOCKET_EVENT,
@@ -1091,6 +1091,7 @@ pccbbintr(arg)
 	}
 
 	if (sockevent & CB_SOCKET_EVENT_POWER) {
+		/* XXX: Does not happen when attaching a 16-bit card */
 		sc->sc_pwrcycle++;
 		wakeup(&sc->sc_pwrcycle);
 	}
@@ -1360,17 +1361,25 @@ pccbb_power(ct, command)
 	bus_space_write_4(memt, memh, CB_SOCKET_CTRL, sock_ctrl);
 
 	if (on) {
-		int s;
+		int s, error = 0;
 		struct timeval before, after, diff;
 
 		microtime(&before);
 		s = splbio();
-		while (pwrcycle == sc->sc_pwrcycle)
-			tsleep(&sc->sc_pwrcycle, PWAIT, "pccpwr", 0);
+		while (pwrcycle == sc->sc_pwrcycle) {
+			/*
+			 * XXX: Set timeout to 200ms because power cycle event
+			 * will be never happen when attaching a 16-bit card.
+			 */
+			if ((error = tsleep(&sc->sc_pwrcycle, PWAIT, "pccpwr",
+			    hz / 5)) == EWOULDBLOCK)
+				break;
+		}
 		splx(s);
 		microtime(&after);
 		timersub(&after, &before, &diff);
-		printf("%s: wait took %ld.%06lds\n", sc->sc_dev.dv_xname,
+		printf("%s: wait took%s %ld.%06lds\n", sc->sc_dev.dv_xname,
+		    error == EWOULDBLOCK ? " too long" : "",
 		    diff.tv_sec, diff.tv_usec);
 	}
 
