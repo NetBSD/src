@@ -71,7 +71,7 @@ union {
 	char	dummy[MAXBSIZE];
 } un;
 #define	sblock	un.sblk
-long dev_bsize = 1;
+long dev_bsize;
 long maxino;
 
 struct quotaname {
@@ -110,7 +110,7 @@ main(argc, argv)
 	register struct fstab *fs;
 	register struct passwd *pw;
 	register struct group *gr;
-	int i, argnum, maxrun, errs = 0;
+	int i, argnum, maxrun = 0, errs = 0;
 	long auxdata, done = 0;
 	char ch, *name, *blockcheck();
 	int needchk(), chkquota();
@@ -244,6 +244,7 @@ chkquota(fsname, mntpt, qnp)
 		fprintf(stdout, " quotas for %s (%s)\n", fsname, mntpt);
 	}
 	sync();
+	dev_bsize = 1;
 	bread(SBOFF, (char *)&sblock, (long)SBSIZE);
 	dev_bsize = sblock.fs_fsize / fsbtodb(&sblock, 1);
 	maxino = sblock.fs_ncg * sblock.fs_ipg;
