@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.253.2.38 2002/02/09 17:02:45 he Exp $
+# $NetBSD: mi,v 1.253.2.39 2002/02/26 20:30:35 he Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/as.info
 ./usr/share/info/awk.info
@@ -735,6 +735,7 @@
 ./usr/share/man/cat4/sequencer.0
 ./usr/share/man/cat4/si.0
 ./usr/share/man/cat4/siop.0
+./usr/share/man/cat4/sip.0
 ./usr/share/man/cat4/sl.0
 ./usr/share/man/cat4/sm.0
 ./usr/share/man/cat4/sound.0
@@ -2167,6 +2168,7 @@
 ./usr/share/man/man4/sequencer.4
 ./usr/share/man/man4/si.4
 ./usr/share/man/man4/siop.4
+./usr/share/man/man4/sip.4
 ./usr/share/man/man4/sl.4
 ./usr/share/man/man4/sm.4
 ./usr/share/man/man4/sound.4
