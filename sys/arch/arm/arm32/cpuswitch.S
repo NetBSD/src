@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.31 2003/04/22 00:24:49 thorpej Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.32 2003/04/26 17:50:21 chris Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -612,7 +612,8 @@ ENTRY(cpu_switch)
 	 * Mark the old VM space as NOT being resident in the cache.
 	 */
 	mov	r2, #0x00000000
-	strh	r2, [r5, #(CS_CACHE_ID)]
+	strb	r2, [r5, #(CS_CACHE_ID)]
+	strb	r2, [r5, #(CS_CACHE_D)]
 
 	/*
 	 * Don't allow user space access between the purge and the switch.
