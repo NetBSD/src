@@ -1,6 +1,6 @@
 #!/bin/sh
 
-#	$NetBSD: cvs.sh,v 1.1 2001/10/12 16:15:26 atatat Exp $
+#	$NetBSD: cvs.sh.sh,v 1.1 2001/12/11 15:35:53 bgrayson Exp $
 
 # ensure that HOME is set for pserver modes
 UID=`id -u`
