@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.703 2004/06/22 22:19:36 itojun Exp $
+# $NetBSD: mi,v 1.704 2004/06/23 12:44:21 kleink Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -1024,8 +1024,8 @@
 ./usr/share/man/cat4/pcscp.0			man-sys-catman		.cat
 ./usr/share/man/cat4/pcweasel.0			man-sys-catman		.cat
 ./usr/share/man/cat4/pdcide.0			man-sys-catman		.cat
-./usr/share/man/cat4/pf.0			catman-sys-man		.cat
-./usr/share/man/cat4/pflog.0			catman-sys-man		.cat
+./usr/share/man/cat4/pf.0			man-sys-catman		.cat
+./usr/share/man/cat4/pflog.0			man-sys-catman		.cat
 ./usr/share/man/cat4/phy.0			man-sys-catman		.cat
 ./usr/share/man/cat4/piixide.0			man-sys-catman		.cat
 ./usr/share/man/cat4/plip.0			man-sys-catman		.cat
@@ -1447,8 +1447,8 @@
 ./usr/share/man/cat5/passwd.conf.0		man-sys-catman		.cat
 ./usr/share/man/cat5/pcfs.0			man-obsolete		obsolete
 ./usr/share/man/cat5/pcre_table.0		man-postfix-catman	postfix,.cat
-./usr/share/man/cat5/pf.0			catman-sys-man		.cat
-./usr/share/man/cat5/pflog.0			catman-sys-man		.cat
+./usr/share/man/cat5/pf.conf.0			man-sys-catman		.cat
+./usr/share/man/cat5/pf.os.0			man-sys-catman		.cat
 ./usr/share/man/cat5/phones.0			man-uucp-catman		.cat
 ./usr/share/man/cat5/pim6dd.conf.0		man-obsolete		obsolete
 ./usr/share/man/cat5/pim6sd.conf.0		man-obsolete		obsolete
