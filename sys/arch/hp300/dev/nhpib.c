@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nhpib.c	7.4 (Berkeley) 5/7/91
- *	$Id: nhpib.c,v 1.2 1993/05/22 07:56:39 cgd Exp $
+ *	$Id: nhpib.c,v 1.3 1994/05/05 10:10:31 mycroft Exp $
  */
 
 /*
@@ -334,9 +334,10 @@ nhpibwait(hd, x)
 	return(0);
 }
 
-nhpibppwatch(unit)
-	register int unit;
+nhpibppwatch(arg)
+	void *arg;
 {
+	register int unit = (int)arg;
 	register struct hpib_softc *hs = &hpib_softc[unit];
 
 	if ((hs->sc_flags & HPIBF_PPOLL) == 0)
@@ -344,6 +345,6 @@ nhpibppwatch(unit)
 	if (nhpibppoll(unit) & (0x80 >> hs->sc_sq.dq_forw->dq_slave))
        		((struct nhpibdevice *)hs->sc_hc->hp_addr)->hpib_mim = MIS_BO;
 	else
-		timeout(nhpibppwatch, unit, 1);
+		timeout(nhpibppwatch, (void *)unit, 1);
 }
 #endif
