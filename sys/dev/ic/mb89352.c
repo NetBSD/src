@@ -1,4 +1,4 @@
-/*	$NetBSD: mb89352.c,v 1.17 2003/07/05 19:00:16 tsutsui Exp $	*/
+/*	$NetBSD: mb89352.c,v 1.18 2003/07/05 19:04:48 tsutsui Exp $	*/
 /*	NecBSD: mb89352.c,v 1.4 1998/03/14 07:31:20 kmatsuda Exp	*/
 
 /*-
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.17 2003/07/05 19:00:16 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.18 2003/07/05 19:04:48 tsutsui Exp $");
 
 #ifdef DDB
 #define	integrate
@@ -1455,9 +1455,8 @@ spc_dataout_pio(sc, p, n)
 		n -= xfer;
 		out += xfer;
 
-		while (xfer-- > 0) {
-			bus_space_write_1(iot, ioh, DREG, *p++);
-		}
+		bus_space_write_multi_1(iot, ioh, DREG, p, xfer);
+		p += xfer;
 	}
 
 	if (out == 0) {
@@ -1579,9 +1578,8 @@ spc_datain_pio(sc, p, n)
 		n -= xfer;
 		in += xfer;
 
-		while (xfer-- > 0) {
-			*p++ = bus_space_read_1(iot, ioh, DREG);
-		}
+		bus_space_read_multi_1(iot, ioh, DREG, p, xfer);
+		p += xfer;
 
 		if ((intstat & INTSMASK) != 0)
 			goto phasechange;
