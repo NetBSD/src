@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.69 2001/11/10 10:59:10 lukem Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.70 2002/01/21 13:21:51 minoura Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.69 2001/11/10 10:59:10 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.70 2002/01/21 13:21:51 minoura Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -2060,6 +2060,7 @@ nfsrv_getstream(slp, waitflag)
 				m->m_data++;
 				m->m_len--;
 			}
+			slp->ns_raw = m;
 		}
 		slp->ns_cc -= NFSX_UNSIGNED;
 		recmark = ntohl(recmark);
