@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.386 2000/12/19 10:34:11 bouyer Exp $
+#	$NetBSD: GENERIC,v 1.387 2000/12/20 10:44:29 augustss Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.386 $"
+#ident 		"GENERIC-$Revision: 1.387 $"
 
 maxusers	32		# estimated number of users
 
@@ -572,10 +572,10 @@ fea*	at eisa? slot ?			# DEC DEFEA FDDI
 tlp*	at eisa? slot ?			# DEC DE-425 Ethernet
 
 # ISA Plug-and-Play network interfaces
+an*	at isapnp?			# Aironet 802.11
 ep*	at isapnp?			# 3Com 3c509 Ethernet
 ne*	at isapnp?			# NE2000-compatible Ethernet
 tr*	at isapnp?			# IBM/3COM TROPIC Token-Ring
-an*	at isapnp?			# Aironet 802.11
 
 # PCMCIA network interfaces
 an*	at pcmcia? function ?		# Aironet PC4500/PC4800 (802.11)
