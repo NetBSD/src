@@ -1,3 +1,5 @@
+/*	$NetBSD: kdump.c,v 1.17 1997/07/23 05:53:34 mikel Exp $	*/
+
 /*-
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -31,17 +33,18 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1988, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
+#else
+__RCSID("$NetBSD: kdump.c,v 1.17 1997/07/23 05:53:34 mikel Exp $");
 #endif
-static char *rcsid = "$NetBSD: kdump.c,v 1.16 1997/05/17 19:46:27 pk Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -112,12 +115,26 @@ static struct emulation emulations[] = {
 
 struct emulation *current;
 
-
-static char *ptrace_ops[] = {
+static const char *ptrace_ops[] = {
 	"PT_TRACE_ME",	"PT_READ_I",	"PT_READ_D",	"PT_READ_U",
 	"PT_WRITE_I",	"PT_WRITE_D",	"PT_WRITE_U",	"PT_CONTINUE",
 	"PT_KILL",	"PT_ATTACH",	"PT_DETACH",
 };
+
+int	main __P((int, char **));
+int	fread_tail __P((char *, int, int));
+void	dumpheader __P((struct ktr_header *));
+void	ioctldecode __P((u_long));
+void	ktrsyscall __P((struct ktr_syscall *));
+void	ktrsysret __P((struct ktr_sysret *));
+void	ktrnamei __P((char *, int));
+void	ktremul __P((char *, int));
+void	ktrgenio __P((struct ktr_genio *, int));
+void	ktrpsig __P((struct ktr_psig *));
+void	ktrcsw __P((struct ktr_csw *));
+void	usage __P((void));
+void	setemul __P((char *));
+char	*ioctlname __P((long));
 
 int
 main(argc, argv)
@@ -170,12 +187,12 @@ main(argc, argv)
 	if (argc > 1)
 		usage();
 
-	m = (void *)malloc(size = 1025);
+	m = malloc(size = 1025);
 	if (m == NULL)
 		errx(1, "%s", strerror(ENOMEM));
 	if (!freopen(tracefile, "r", stdin))
 		err(1, "%s", tracefile);
-	while (fread_tail(&ktr_header, sizeof(struct ktr_header), 1)) {
+	while (fread_tail((char *)&ktr_header, sizeof(struct ktr_header), 1)) {
 		if (trpoints & (1<<ktr_header.ktr_type))
 			dumpheader(&ktr_header);
 		if ((ktrlen = ktr_header.ktr_len) < 0)
@@ -216,8 +233,10 @@ main(argc, argv)
 		if (tail)
 			(void)fflush(stdout);
 	}
+	return (0);
 }
 
+int
 fread_tail(buf, size, num)
 	char *buf;
 	int num, size;
@@ -231,6 +250,7 @@ fread_tail(buf, size, num)
 	return (i);
 }
 
+void
 dumpheader(kth)
 	struct ktr_header *kth;
 {
@@ -297,12 +317,12 @@ ioctldecode(cmd)
 		printf(")");
 }
 
+void
 ktrsyscall(ktr)
 	register struct ktr_syscall *ktr;
 {
 	register argsize = ktr->ktr_argsize;
 	register register_t *ap;
-	char *ioctlname();
 
 	if (ktr->ktr_code >= current->nsysnames || ktr->ktr_code < 0)
 		(void)printf("[%d]", ktr->ktr_code);
@@ -352,6 +372,7 @@ ktrsyscall(ktr)
 	(void)putchar('\n');
 }
 
+void
 ktrsysret(ktr)
 	struct ktr_sysret *ktr;
 {
@@ -387,14 +408,19 @@ ktrsysret(ktr)
 	(void)putchar('\n');
 }
 
+void
 ktrnamei(cp, len)
 	char *cp;
+	int len;
 {
+
 	(void)printf("\"%.*s\"\n", len, cp);
 }
 
+void
 ktremul(cp, len)
 	char *cp;
+	int len;
 {
 	char name[1024];
 
@@ -408,8 +434,10 @@ ktremul(cp, len)
 	setemul(name);
 }
 
+void
 ktrgenio(ktr, len)
 	struct ktr_genio *ktr;
+	int len;
 {
 	register int datalen = len - sizeof (struct ktr_genio);
 	register char *dp = (char *)ktr + sizeof (struct ktr_genio);
@@ -470,9 +498,11 @@ ktrgenio(ktr, len)
 	(void)printf("\"\n");
 }
 
+void
 ktrpsig(psig)
 	struct ktr_psig *psig;
 {
+
 	(void)printf("SIG%s ", sys_signame[psig->signo]);
 	if (psig->action == SIG_DFL)
 		(void)printf("SIG_DFL\n");
@@ -481,13 +511,16 @@ ktrpsig(psig)
 		    (u_long)psig->action, psig->mask, psig->code);
 }
 
+void
 ktrcsw(cs)
 	struct ktr_csw *cs;
 {
+
 	(void)printf("%s %s\n", cs->out ? "stop" : "resume",
 	    cs->user ? "user" : "kernel");
 }
 
+void
 usage()
 {
 
@@ -496,10 +529,12 @@ usage()
 	exit(1);
 }
 
+void
 setemul(name)
 	char *name;
 {
 	int i;
+
 	for (i = 0; emulations[i].name != NULL; i++)
 		if (strcmp(emulations[i].name, name) == 0) {
 			current = &emulations[i];
