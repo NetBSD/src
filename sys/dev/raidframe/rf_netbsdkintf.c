@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.29 1999/08/14 23:34:18 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.30 1999/11/17 01:16:37 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -152,11 +152,6 @@
 #include "rf_threadstuff.h"
 
 int     rf_kdebug_level = 0;
-
-#define RFK_BOOT_NONE 0
-#define RFK_BOOT_GOOD 1
-#define RFK_BOOT_BAD  2
-static int rf_kbooted = RFK_BOOT_NONE;
 
 #ifdef DEBUG
 #define db0_printf(a) printf a
@@ -347,8 +342,6 @@ raidattach(num)
 		printf("Kernelized RAIDframe activated\n");
 	else
 		panic("Serious error booting RAID!!\n");
-
-	rf_kbooted = RFK_BOOT_GOOD;
 
 	/* put together some datastructures like the CCD device does.. This
 	 * lets us lock the device and what-not when it gets opened. */
@@ -570,8 +563,13 @@ raidstrategy(bp)
 	else
 		db1_printf(("WRITE\n"));
 #endif
-	if (rf_kbooted != RFK_BOOT_GOOD)
+	if ((rs->sc_flags & RAIDF_INITED) ==0) {
+		bp->b_error = ENXIO;
+		bp->b_flags = B_ERROR;
+		bp->b_resid = bp->b_bcount;
+		biodone(bp);
 		return;
+	}
 	if (raidID >= numraid || !raidPtrs[raidID]) {
 		bp->b_error = ENODEV;
 		bp->b_flags |= B_ERROR;
