@@ -39,7 +39,8 @@ Supported devices include:
 			Future Domain TMC-950
 		Symbios Logic (NCR) 53C8xx-based PCI SCSI host adapters:
 			Acculogic PCIpport
-			ASUS SC-200 (requires NCR BIOS on motherboard)
+			ASUS SC-200 (requires NCR BIOS on motherboard to
+					boot from disks)
 			ASUS SP3[G] motherboard onboard SCSI
 			DEC Celebris XL/590 onboard SCSI
 			Lomas Data SCSI adapters
@@ -136,9 +137,9 @@ Supported devices include:
 		Windows Sound System [*] [+]
 		ProAudio Spectrum [*] [+]
 	Miscellaneous:
-		APM power management
+		Advanced power management (APM)
 
-Drivers for hardware marked with "[*]" are NOT included on the
+Drivers for hardware marked with "[*]" are NOT present in kernels on the
 distribution floppies.  Except as noted above, all drivers are present
 on all disks.  Also, at the present time, the distributed kernels
 support only one SCSI host adapter per machine.  NetBSD normally
