@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.c,v 1.22.2.6 2001/12/29 23:31:00 sommerfeld Exp $	*/
+/*	$NetBSD: gdt.c,v 1.22.2.7 2001/12/30 03:35:02 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.22.2.6 2001/12/29 23:31:00 sommerfeld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.22.2.7 2001/12/30 03:35:02 sommerfeld Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -216,7 +216,8 @@ gdt_alloc_cpu(struct cpu_info *ci)
 	ci->ci_gdt = (union descriptor *)uvm_km_valloc(kernel_map, max_len);
 	uvm_map_pageable(kernel_map, (vaddr_t)ci->ci_gdt,
 	    (vaddr_t)ci->ci_gdt + min_len, FALSE, FALSE);
-	memcpy(ci->ci_gdt, gdt, min_len);
+	memset(ci->ci_gdt, 0, min_len);
+	memcpy(ci->ci_gdt, gdt, NGDT * sizeof(gdt[0]));
 	setsegment(&ci->ci_gdt[GCPU_SEL].sd, ci, sizeof(struct cpu_info)-1,
 	    SDT_MEMRWA, SEL_KPL, 1, 1);
 }
