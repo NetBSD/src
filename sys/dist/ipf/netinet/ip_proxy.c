@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_proxy.c,v 1.2 2005/02/08 07:01:55 martti Exp $	*/
+/*	$NetBSD: ip_proxy.c,v 1.3 2005/02/09 08:21:27 he Exp $	*/
 
 /*
  * Copyright (C) 1997-2003 by Darren Reed.
@@ -419,7 +419,7 @@ nat_t *nat;
 	if (!aps) {
 		if (ipf_proxy_debug > 0)
 			printf("appr_new: malloc failed (%u)\n",
-				sizeof(ap_session_t));
+				(unsigned int)sizeof(ap_session_t));
 		return -1;
 	}
 
