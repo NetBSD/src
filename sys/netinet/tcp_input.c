@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.27.8.4 1997/06/26 18:38:31 thorpej Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.27.8.5 1997/06/26 21:31:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993, 1994
@@ -89,7 +89,7 @@
  *
  *	(g) The definition of "struct syn_cache" says:
  *
- *		/* This structure should not exceeed 32 bytes. */
+ *		This structure should not exceeed 32 bytes.
  *
  *	    but it's 40 bytes on the Alpha.  Can reduce memory use one
  *	    of two ways:
