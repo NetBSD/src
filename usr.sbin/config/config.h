@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.30 1997/02/02 21:12:30 thorpej Exp $	*/
+/*	$NetBSD: config.h,v 1.31 1997/03/14 00:14:09 jtk Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -285,6 +285,7 @@ struct	hashtab *needcnttab;	/* retains names marked "needs-count" */
 struct	hashtab *opttab;	/* table of configured options */
 struct	hashtab *fsopttab;	/* table of configured file systems */
 struct	hashtab *defopttab;	/* options that have been "defopt"'d */
+struct	hashtab *attrtab;	/* attributes (locators, etc.) */
 
 struct	devbase *allbases;	/* list of all devbase structures */
 struct	deva *alldevas;		/* list of all devbase attachment structures */
@@ -322,6 +323,8 @@ int	ht_insrep __P((struct hashtab *, const char *, void *, int));
 void	*ht_lookup __P((struct hashtab *, const char *));
 void	initintern __P((void));
 const char *intern __P((const char *));
+typedef int (*ht_callback) __P((const char *, void *, void *));
+int	ht_enumerate __P((struct hashtab *, ht_callback, void *));
 
 /* main.c */
 void	addoption __P((const char *name, const char *value));
