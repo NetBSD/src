@@ -1,4 +1,4 @@
-/*	$NetBSD: pmax_trap.c,v 1.28 1996/02/04 20:14:17 jonathan Exp $	*/
+/*	$NetBSD: pmax_trap.c,v 1.29 1996/02/06 00:13:04 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -655,7 +655,7 @@ trap(statusReg, causeReg, vadr, pc, args)
 #endif
 #ifdef KTRACE
 		if (KTRPOINT(p, KTR_SYSRET))
-			ktrsysret(p->p_tracep, code, i, rval);
+			ktrsysret(p->p_tracep, code, i, rval[0]); /*XXX*/
 #endif
 		goto out;
 	    }
