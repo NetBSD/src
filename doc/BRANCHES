@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.29 2005/02/27 09:36:41 tsutsui Exp $
+#	$NetBSD: BRANCHES,v 1.30 2005/03/02 22:11:03 tron Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -750,6 +750,16 @@ Notes:		http://mail-index.NetBSD.org/tech-kern/2004/12/25/0005.html
 			pdp10
 			playstation2
 
+
+Branch:		bouyer-xen2
+Description:	update xen port to xen 2.0, with support for domain0 operations
+Status:		Active
+Start Date:	Dec 13 2004
+End Date:
+Base Tag:	netbsd-2-base
+Maintainer:	Manuel Bouyer <bouyer@NetBSD.org>
+Scope:		src/sys/arch/xen
+Notes:
 
 # Other:
 
