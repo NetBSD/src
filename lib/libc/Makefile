@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.45 1995/10/04 22:06:11 thorpej Exp $
+#	$NetBSD: Makefile,v 1.46 1995/10/09 03:58:02 jtc Exp $
 #	@(#)Makefile	8.2 (Berkeley) 2/3/94
 #
 # All library objects contain sccsid strings by default; they may be
@@ -47,7 +47,7 @@ CLEANFILES+=tags
 .include "${.CURDIR}/sys/Makefile.inc"
 .include "${.CURDIR}/yp/Makefile.inc"
 
-NLS=	C.msg Pig.msg de.msg
+NLS=	C.msg Pig.msg de.msg fr.msg
 
 LIBKERN=	${.CURDIR}/../../sys/lib/libkern
 
