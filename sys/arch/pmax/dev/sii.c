@@ -1,4 +1,4 @@
-/*	$NetBSD: sii.c,v 1.4 1994/10/26 21:09:20 cgd Exp $	*/
+/*	$NetBSD: sii.c,v 1.5 1994/11/22 18:58:43 dean Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -742,7 +742,9 @@ again:
 				sc->sc_target = regs->destat;
 				state->prevComm = 0;
 			} else {
+#ifdef DEBUG
 				sii_DumpLog();
+#endif
 				panic("sc_target 2");
 			}
 		}
@@ -1530,7 +1532,9 @@ sii_GetByte(regs, phase, ack)
 	}
 	if (dstat & SII_DNE) { /* XXX */
 		printf("sii_GetByte: DNE set 5\n");
+#ifdef DEBUG
 		sii_DumpLog();
+#endif
 		regs->dstat = SII_DNE;
 	}
 	data = regs->data;
@@ -1686,7 +1690,9 @@ sii_StartDMA(regs, phase, dmaAddr, size)
 	if (regs->dstat & SII_DNE) { /* XXX */
 		regs->dstat = SII_DNE;
 		printf("sii_StartDMA: DNE set\n");
+#ifdef DEBUG
 		sii_DumpLog();
+#endif
 	}
 	regs->dmaddrl = ((u_long)dmaAddr >> 1);
 	regs->dmaddrh = ((u_long)dmaAddr >> 17) & 03;
