@@ -32,7 +32,7 @@
  */
 
 #include "kuser_locl.h"
-RCSID("$Id: kdestroy.c,v 1.1.1.2 2000/08/02 19:58:58 assar Exp $");
+RCSID("$Id: kdestroy.c,v 1.2 2000/12/19 21:31:11 nathanw Exp $");
 
 static const char *cache;
 static int help_flag;
@@ -89,7 +89,7 @@ main (int argc, char **argv)
 
     ret = krb5_init_context (&context);
     if (ret)
-	errx (1, "krb5_init_context: %s", krb5_get_err_text(context, ret));
+	errx(1, "krb5_init_context failed: %u", ret);
   
     if(cache == NULL)
 	cache = krb5_cc_default_name(context);

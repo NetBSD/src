@@ -34,7 +34,7 @@
 #include "kuser_locl.h"
 #include "rtbl.h"
 
-RCSID("$Id: klist.c,v 1.1.1.2 2000/08/02 19:58:59 assar Exp $");
+RCSID("$Id: klist.c,v 1.2 2000/12/19 21:31:12 nathanw Exp $");
 
 static char*
 printable_time(time_t t)
@@ -526,7 +526,7 @@ display_v5_ccache (const char *cred_cache, int do_test, int do_verbose,
 
     ret = krb5_init_context (&context);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_init_context");
+	errx(1, "krb5_init_context failed: %u", ret);
 
     if(cred_cache) {
 	ret = krb5_cc_resolve(context, cred_cache, &ccache);
