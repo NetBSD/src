@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.11 2001/10/23 03:31:26 thorpej Exp $	*/
+/*	$NetBSD: boot.c,v 1.12 2002/09/18 01:45:04 chs Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -106,8 +106,7 @@ char bootfile[128];
 int boothowto;
 int debug;
 
-static int ofw_version = 0;
-static char *kernels[] = { "/netbsd", "/netbsd.gz", "/netbsd.ofppc", NULL };
+static char *kernels[] = { "/netbsd.ofppc", "/netbsd", "/netbsd.gz", NULL };
 
 static void
 prom2boot(dev)
@@ -135,6 +134,10 @@ parseargs(str, howtop)
 	/* Allow user to drop back to the PROM. */
 	if (strcmp(str, "exit") == 0)
 		OF_exit();
+	if (strcmp(str, "halt") == 0)
+		OF_exit();
+	if (strcmp(str, "reboot") == 0)
+		OF_boot("");
 
 	*howtop = 0;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.6 2001/10/23 03:31:25 thorpej Exp $	*/
+/*	$NetBSD: Locore.c,v 1.7 2002/09/18 01:45:04 chs Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -107,6 +107,26 @@ OF_exit()
 
 	openfirmware(&args);
 	for (;;);			/* just in case */
+}
+
+__dead void
+OF_boot(bootspec)
+        char *bootspec;
+{
+	static struct {
+		char *name;
+		int nargs;
+		int nreturns;
+		char *bootspec;
+	} args = {
+		"boot",
+		1,
+		0,
+	};
+
+	args.bootspec = bootspec;
+	openfirmware(&args);
+	for (;;);			/* just is case */
 }
 
 int
