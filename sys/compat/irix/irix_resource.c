@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_resource.c,v 1.2 2003/01/22 12:58:23 rafal Exp $ */
+/*	$NetBSD: irix_resource.c,v 1.3 2004/10/27 19:29:57 david Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_resource.c,v 1.2 2003/01/22 12:58:23 rafal Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_resource.c,v 1.3 2004/10/27 19:29:57 david Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -112,7 +112,7 @@ irix_sys_getrlimit(l, v, retval)
 	struct rlimit rlp;
 	struct irix_rlimit irlp;
 	int error;
-	
+
 	SCARG(&cup, which) = irix_to_native_resource(SCARG(uap, resource));
 	SCARG(&cup, rlp) = stackgap_alloc(p, &sg, sizeof(struct rlimit)); 
 	
