@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.87 1997/11/19 00:19:10 gwr Exp $	*/
+/*	$NetBSD: pmap.c,v 1.88 1997/11/19 19:28:10 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -152,12 +152,12 @@
  * 0xFF000000 will look like 0x1F000000 after one reads back
  * the pte and converts the PFN to a physical address.
  */
-#define MEM_BITS	(PG_TYPE | PA_PGNUM(0xF0000000))
+#define MEM_BITS	(PG_TYPE | PA_PGNUM(0xF8000000))
 #define	IS_MAIN_MEM(pte) (((pte) & MEM_BITS) == 0)
 
 /* Does this (pseudo) PA represent device space? */
-#define PA_IS_DEV(pa) (((pa) & (PMAP_OBIO | PMAP_VME16)) || \
-					   (PA_PGNUM(pa) >= physmem))
+#define PA_DEV_MASK   (0xF8000000 | PMAP_OBIO | PMAP_VME16)
+#define PA_IS_DEV(pa) ((pa) & PA_DEV_MASK)
 
 /*
  * Is there a Virtually Addressed Cache (VAC) alias problem
@@ -466,7 +466,7 @@ pa_to_pvhead(vm_offset_t pa)
 
 	idx = PA_PGNUM(pa);
 #ifdef	DIAGNOSTIC
-	if ((pa & PGOFSET) || (idx >= physmem))
+	if (PA_IS_DEV(pa) || (idx >= physmem))
 		panic("pmap:pa_to_pvhead: bad pa=0x%lx", pa);
 #endif
 	return (&pv_head_tbl[idx]);
@@ -479,7 +479,7 @@ pa_to_pvflags(vm_offset_t pa)
 
 	idx = PA_PGNUM(pa);
 #ifdef	DIAGNOSTIC
-	if ((pa & PGOFSET) || (idx >= physmem))
+	if (PA_IS_DEV(pa) || (idx >= physmem))
 		panic("pmap:pa_to_pvflags: bad pa=0x%lx", pa);
 #endif
 	return (&pv_flags_tbl[idx]);
