@@ -135,6 +135,7 @@ powerpc-*-aix*)		gdb_host=aix ;;
 powerpcle-*-cygwin*)	gdb_host=cygwin ;;
 powerpcle-*-solaris*)	gdb_host=solaris ;;
 powerpc-*-linux*)	gdb_host=linux ;;
+powerpc-*-netbsd*)	gdb_host=nbsd ;;
 
 # OBSOLETE pn-*-*)		gdb_host=pn ;;
 
