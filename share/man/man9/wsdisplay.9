@@ -1,4 +1,4 @@
-.\"     $NetBSD: wsdisplay.9,v 1.4 2002/02/13 08:18:57 ross Exp $
+.\"     $NetBSD: wsdisplay.9,v 1.5 2002/03/10 17:31:25 junyoung Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -161,7 +161,7 @@ should be used instead.  It has the following members:
 A structure used to attach the
 .Xr wsdisplay 4
 child device for the full terminal emulation interface.  If the simple
-bit-mapped interface is to be use d, then
+bit-mapped interface is to be used, then
 .Em struct wsdisplaydev_attach_args
 should be used instead.  It has the following members:
 .Bd -literal
@@ -302,15 +302,15 @@ module must be a parent to the
 device and provide a
 .Fa wsemuldisplaydev_attach_args
 structure instead of the standard
-.Fa wsdiaplaydev_attach_args
+.Fa wsdisplaydev_attach_args
 to
 .Fn config_found
 to perform the attach.  If the display is not the console the
 attachment is the same as wsdisplaydev_attach_args.
 .Sh OPERATION
-If the display belongs to the system console, it must be desribe the
+If the display belongs to the system console, it must be describe the
 default screen by invoking
-.Fn wsdiplay_cnattach
+.Fn wsdisplay_cnattach
 at console attach time.
 .Pp
 All display manipulation is performed by the wscons interface by using
@@ -343,10 +343,10 @@ The wscons subsystem is implemented within the directory
 .Pa sys/dev/wscons .
 The
 .Nm
-module itself is implement within the file
+module itself is implemented within the file
 .Pa sys/dev/wscons/wsdisplay.c .
 The terminal emulation support
-is implement within the files
+is implemented within the files
 .Pa sys/dev/wscons/wsemul_* .
 .Xr ioctl 2
 operations are listed in
