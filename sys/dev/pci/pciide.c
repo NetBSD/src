@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.16 1998/11/12 15:05:29 bouyer Exp $	*/
+/*	$NetBSD: pciide.c,v 1.17 1998/11/17 17:59:14 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -628,9 +628,11 @@ pciide_map_channel_compat(sc, pa, chan)
 
 		goto out;
 	}
+
 	wdc_cp->data32iot = wdc_cp->cmd_iot;
 	wdc_cp->data32ioh = wdc_cp->cmd_ioh;
 	wdcattach(&sc->wdc_channels[chan]);
+
 	/*
 	 * If drive not present, try to disable the channel and
 	 * free the resources.
@@ -641,10 +643,6 @@ pciide_map_channel_compat(sc, pa, chan)
 			printf("%s: disabling %s channel (no drives)\n",
 			    sc->sc_wdcdev.sc_dev.dv_xname,
 			    PCIIDE_CHANNEL_NAME(chan));
-			bus_space_unmap(wdc_cp->cmd_iot, wdc_cp->cmd_ioh,
-			    PCIIDE_COMPAT_CMD_SIZE);
-			bus_space_unmap(wdc_cp->ctl_iot, wdc_cp->ctl_ioh,
-			    PCIIDE_COMPAT_CTL_SIZE);
 			rv = 0;
 			goto out;
 		}
