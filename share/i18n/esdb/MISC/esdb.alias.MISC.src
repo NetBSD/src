@@ -1,0 +1,7 @@
+# $NetBSD: esdb.alias.MISC.src,v 1.1 2003/06/27 08:40:58 tshiozak Exp $
+
+shift_jis			Shift_JIS
+sjis				Shift_JIS
+big5				Big5
+big5eten			Big5
+gb18030				GB18030
