@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.185 2004/03/12 16:52:14 yamt Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.186 2004/03/12 16:52:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.185 2004/03/12 16:52:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.186 2004/03/12 16:52:37 yamt Exp $");
 
 #include "opt_nfs.h"
 #include "opt_uvmhist.h"
@@ -3046,7 +3046,12 @@ nfs_fsync(v)
 		struct proc * a_p;
 	} */ *ap = v;
 
-	return (nfs_flush(ap->a_vp, ap->a_cred,
+	struct vnode *vp = ap->a_vp;
+
+	if (vp->v_type != VREG)
+		return 0;
+
+	return (nfs_flush(vp, ap->a_cred,
 	    (ap->a_flags & FSYNC_WAIT) != 0 ? MNT_WAIT : 0, ap->a_p, 1));
 }
 
