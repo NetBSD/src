@@ -1,4 +1,4 @@
-/*	$NetBSD: multibyte.c,v 1.12 2001/06/22 00:01:47 yamt Exp $	*/
+/*	$NetBSD: multibyte.c,v 1.13 2001/10/09 10:21:48 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)ansi.c	8.1 (Berkeley) 6/27/93";
 #else
-__RCSID("$NetBSD: multibyte.c,v 1.12 2001/06/22 00:01:47 yamt Exp $");
+__RCSID("$NetBSD: multibyte.c,v 1.13 2001/10/09 10:21:48 yamt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -233,11 +233,19 @@ mblen(s, n)
 	size_t n;
 {
 	static mbstate_t ls;
+	size_t r;
 
 	/* XXX: s may be NULL ? */
 
-	_mbstate_init_locale(&ls, NULL);
-	return mbrlen(s, n, &ls);
+	if (___rune_initstate(_CurrentRuneLocale))
+		___rune_initstate(_CurrentRuneLocale)(_CurrentRuneLocale, &ls);
+	r = mbrlen(s, n, &ls);
+	if (r == (size_t)-2) {
+		errno = EILSEQ;
+		return -1;
+	}
+
+	return (int)r;
 }
 
 size_t
@@ -294,12 +302,20 @@ mbtowc(pwc, s, n)
 	size_t n;
 {
 	static mbstate_t ls;
+	size_t r;
 
 	/* pwc may be NULL */
 	/* s may be NULL */
 
-	_mbstate_init_locale(&ls, NULL);
-	return mbrtowc(pwc, s, n, &ls);
+	if (___rune_initstate(_CurrentRuneLocale))
+		___rune_initstate(_CurrentRuneLocale)(_CurrentRuneLocale, &ls);
+	r = mbrtowc(pwc, s, n, &ls);
+	if (r == (size_t)-2) {
+		errno = EILSEQ;
+		return -1;
+	}
+
+	return (int)r;
 }
 
 size_t
@@ -352,7 +368,8 @@ wctomb(s, wchar)
 
 	/* s may be NULL */
 
-	_mbstate_init_locale(&ls, NULL);
+	if (___rune_initstate(_CurrentRuneLocale))
+		___rune_initstate(_CurrentRuneLocale)(_CurrentRuneLocale, &ls);
 	return wcrtomb(s, wchar, &ls);
 }
 
@@ -444,7 +461,8 @@ mbstowcs(pwcs, s, n)
 	/* pwcs may be NULL */
 	/* s may be NULL */
 
-	_mbstate_init_locale(&ls, NULL);
+	if (___rune_initstate(_CurrentRuneLocale))
+		___rune_initstate(_CurrentRuneLocale)(_CurrentRuneLocale, &ls);
 	return mbsrtowcs(pwcs, &s, n, &ls);
 }
 
@@ -529,6 +547,7 @@ wcstombs(s, pwcs, n)
 	/* s may be NULL */
 	/* pwcs may be NULL */
 
-	_mbstate_init_locale(&ls, NULL);
+	if (___rune_initstate(_CurrentRuneLocale))
+		___rune_initstate(_CurrentRuneLocale)(_CurrentRuneLocale, &ls);
 	return wcsrtombs(s, &pwcs, n, &ls);
 }
