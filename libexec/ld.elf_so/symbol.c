@@ -1,4 +1,4 @@
-/*	$NetBSD: symbol.c,v 1.21 2002/09/24 20:23:12 mycroft Exp $	 */
+/*	$NetBSD: symbol.c,v 1.22 2002/09/24 20:27:07 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -131,6 +131,16 @@ _rtld_symlook_obj(name, hash, obj, in_plt)
 			if (symp->st_shndx != SHN_UNDEF)
 				return symp;
 #ifndef __mips__
+			/*
+			 * XXX DANGER WILL ROBINSON!
+			 * If we have a function pointer in the executable's
+			 * data section, it points to the executable's PLT
+			 * slot, and there is NO relocation emitted.  To make
+			 * the function pointer comparable to function pointers
+			 * in shared libraries, we must resolve data references
+			 * in the libraries to point to PLT slots in the
+			 * executable, if they exist.
+			 */
 			else if (!in_plt && symp->st_value != 0 &&
 			     ELF_ST_TYPE(symp->st_info) == STT_FUNC)
 				return symp;
