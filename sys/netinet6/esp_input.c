@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_input.c,v 1.21.6.3 2003/07/10 15:47:36 tron Exp $	*/
+/*	$NetBSD: esp_input.c,v 1.21.6.4 2003/09/05 21:48:25 tron Exp $	*/
 /*	$KAME: esp_input.c,v 1.60 2001/09/04 08:43:19 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_input.c,v 1.21.6.3 2003/07/10 15:47:36 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_input.c,v 1.21.6.4 2003/09/05 21:48:25 tron Exp $");
 
 #include "opt_inet.h"
 
@@ -855,9 +855,9 @@ noreplaycheck:
 				goto bad;
 			}
 			m_adj(n, stripsiz);
-			m_cat(m, n);
 			/* m_cat does not update m_pkthdr.len */
 			m->m_pkthdr.len += n->m_pkthdr.len;
+			m_cat(m, n);
 		}
 
 #ifndef PULLDOWN_TEST
