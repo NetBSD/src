@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.43 2000/09/05 17:57:52 christos Exp $
+.\"	$NetBSD: make.1,v 1.44 2000/12/30 02:05:21 sommerfeld Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -58,7 +58,13 @@
 .Op Fl j Ar max_jobs
 .Ek
 .Bk -words
+.Op Fl J Ar private
+.Ek
+.Bk -words
 .Op Fl m Ar directory
+.Ek
+.Bk -words
+.Op Fl T Ar file
 .Ek
 .Bk -words
 .Op Fl V Ar variable
@@ -154,6 +160,16 @@ Ignore non-zero exit of shell commands in the makefile.
 Equivalent to specifying
 .Ql Fl
 before each command line in the makefile.
+.It Fl J Ar private
+This option should
+.Em not
+be specified by the user.
+.Pp
+When the
+.Ar j
+option is in use in a recursive build, this option is passed by a make
+to child makes to allow all the make processes in the build to
+cooperate to avoid overloading the system.
 .It Fl j Ar max_jobs
 Specify the maximum number of jobs that
 .Nm
@@ -184,6 +200,13 @@ Do not echo any commands as they are executed.
 Equivalent to specifying
 .Ql Ic @
 before each command line in the makefile.
+.It Fl T Ar tracefile
+When used with the
+.Fl j 
+flag,
+append a trace record to
+.Ar tracefile
+for each job started and completed.
 .It Fl t
 Rather than re-building a target as specified in the makefile, create it
 or update its modification time to make it appear up-to-date.
