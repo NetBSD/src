@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.56 1995/09/26 04:02:24 gwr Exp $	*/
+/*	$NetBSD: pmap.c,v 1.57 1995/10/08 23:48:22 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -1347,8 +1347,12 @@ pv_unlink(pmap, pa, va)
 
 		for (prev = head;; prev = npv, npv = npv->pv_next) {
 			pmap_stats.ps_unlink_pvsearch++;
-			if (npv == NULL)
-				panic("pv_unlink: not on list");
+			if (npv == NULL) {
+				printf("pv_unlink: not on list (pa=%x,va=%x)\n",
+					   pa, va);
+				Debugger();	/* XXX */
+				return;
+			}
 			if (npv->pv_pmap == pmap && npv->pv_va == va)
 				break;
 		}
@@ -2758,9 +2762,7 @@ pmap_extract(pmap, va)
 	PMAP_UNLOCK();
 	if ((pte & PG_VALID) == 0) {
 		printf("pmap_extract: invalid va=0x%x\n", va);
-#ifdef	DDB
 		Debugger();
-#endif
 		pte = 0;
 	}
 	pa = PG_PA(pte);
