@@ -1,4 +1,4 @@
-/*	$NetBSD: iso2022.c,v 1.10 2001/01/25 01:25:06 itojun Exp $	*/
+/*	$NetBSD: iso2022.c,v 1.11 2001/01/25 09:46:44 jdolecek Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: iso2022.c,v 1.10 2001/01/25 01:25:06 itojun Exp $");
+__RCSID("$NetBSD: iso2022.c,v 1.11 2001/01/25 09:46:44 jdolecek Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -188,11 +188,11 @@ _ISO2022_init(rl)
 	char *v, *e;
 	int i;
 	size_t s;
-	char *tags[] = {
+	const char * const tags[] = {
 "DUMMY","8BIT",	"NOOLD",
 "SI",	"SO",	"LS0",	"LS1",	"LS2",	"LS3",
 "LS1R",	"LS2R",	"LS3R",	"SS2",	"SS3",	"SS2R",	"SS3R",	NULL };
-	int flags[] = {
+	const int flags[] = {
 0,	F_8BIT,	F_NOOLD,
 F_SI,	F_SO,	F_LS0,	F_LS1,	F_LS2,	F_LS3,
 F_LS1R,	F_LS2R,	F_LS3R,	F_SS2,	F_SS3,	F_SS2R,	F_SS3R,	0 };
