@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.93 2004/03/17 17:04:59 pk Exp $ */
+/*	$NetBSD: autoconf.c,v 1.94 2004/03/19 15:22:43 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.93 2004/03/17 17:04:59 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.94 2004/03/19 15:22:43 pk Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -97,15 +97,6 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.93 2004/03/17 17:04:59 pk Exp $");
 #include "ksyms.h"
 
 int printspl = 0;
-
-/*
- * The following several variables are related to
- * the configuration process, and are used in initializing
- * the machine.
- */
-int	stdinnode;	/* node ID of ROM's console input device */
-int	fbnode;		/* node ID of ROM's console output device */
-int	optionsnode;	/* node ID of ROM's options */
 
 #ifdef KGDB
 extern	int kgdb_debug_panic;
@@ -674,9 +665,6 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 
 	/* Find the "options" node */
 	node0 = OF_child(node);
-	optionsnode = findnode(node0, "options");
-	if (optionsnode == 0)
-		panic("no options in OPENPROM");
 
 	/*
 	 * Configure the devices, in PROM order.  Skip
