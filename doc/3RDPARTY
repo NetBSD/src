@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.262 2004/11/27 01:44:18 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.263 2004/12/06 13:18:54 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -377,6 +377,14 @@ modified version of the released CDK 4.9.9.  The current version has been
 taken over by the Ncurses people, and has a number of changes to it.  It
 might be worthwhile to import at some future date, but for now we should
 leave it alone.  (garbled 1/4/2001)
+
+Package:	libevent
+Version:	0.9
+Current Vers:	1.0
+Maintainer:	Niels Provos <provos@citi.umich.edu>
+Archive Site:	http://www.monkey.org/~provos/libevent/
+Responsible:	provos
+Notes:
 
 Package:	libpcap
 Version:	0.8.3
