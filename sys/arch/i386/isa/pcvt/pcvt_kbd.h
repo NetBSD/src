@@ -220,7 +220,7 @@ static Keycap_def	key2ascii[] =
 /*  6*/ KBD_ASCII, I, {S,1,C "5"},       {S,1,C "%"},       {S,1,C "5"},       DFAULT,            DFAULT,            DFAULT,            DFAULT,
 /*  7*/ KBD_ASCII, I, {S,1,C "6"},       {S,1,C "^"},       {S,1,C "\036"},    DFAULT,            DFAULT,            DFAULT,            DFAULT,
 /*  8*/ KBD_ASCII, I, {S,1,C "7"},       {S,1,C "&"},       {S,1,C "7"},       DFAULT,            DFAULT,            DFAULT,            DFAULT,
-/*  9*/ KBD_ASCII, I, {S,1,C "8"},       {S,1,C "*"},       {S,1,C "9"},       DFAULT,            DFAULT,            DFAULT,            DFAULT,
+/*  9*/ KBD_ASCII, I, {S,1,C "8"},       {S,1,C "*"},       {S,1,C "8"},       DFAULT,            DFAULT,            DFAULT,            DFAULT,
 /* 10*/ KBD_ASCII, I, {S,1,C "9"},       {S,1,C "("},       {S,1,C "9"},       DFAULT,            DFAULT,            DFAULT,            DFAULT,
 /* 11*/ KBD_ASCII, I, {S,1,C "0"},       {S,1,C ")"},       {S,1,C "0"},       DFAULT,            DFAULT,            DFAULT,            DFAULT,
 /* 12*/ KBD_ASCII, I, {S,1,C "-"},       {S,1,C "_"},       {S,1,C "\037"},    DFAULT,            DFAULT,            DFAULT,            DFAULT,
