@@ -1,4 +1,4 @@
-/*	$NetBSD: mknetid.c,v 1.6 1997/11/01 14:25:00 lukem Exp $	*/
+/*	$NetBSD: mknetid.c,v 1.7 1997/11/13 18:38:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mknetid.c,v 1.6 1997/11/01 14:25:00 lukem Exp $");
+__RCSID("$NetBSD: mknetid.c,v 1.7 1997/11/13 18:38:26 thorpej Exp $");
 #endif
 
 /*
@@ -228,7 +228,8 @@ read_passwd(fname)
 	const char *fname;
 {
 	FILE	*pfile;
-	int	 line_no, len, colon;
+	int	 line_no, colon;
+	size_t	 len;
 	char	*p, *k, *u, *g;
 
 	if ((pfile = fopen(fname, "r")) == NULL)
@@ -299,7 +300,8 @@ read_group(fname)
 	const char *fname;
 {
 	FILE	*gfile;
-	int	 line_no, len, colon;
+	int	 line_no, colon;
+	size_t	 len;
 	char	*p, *k, *u, *g;
 
 	if ((gfile = fopen(fname, "r")) == NULL)
@@ -390,7 +392,7 @@ print_hosts(fname, domain)
 	const char *fname, *domain;
 {
 	FILE	*hfile;
-	int	 len;
+	size_t	 len;
 	char	*p, *k, *u;
 
 	if ((hfile = fopen(fname, "r")) == NULL)
@@ -421,7 +423,7 @@ print_netid(fname)
 	const char *fname;
 {
 	FILE	*mfile;
-	int	 len;
+	size_t	 len;
 	char	*p, *k, *u;
 
 	mfile = fopen(fname, "r");
