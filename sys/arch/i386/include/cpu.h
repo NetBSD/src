@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.89 2002/11/22 15:23:45 fvdl Exp $	*/
+/*	$NetBSD: cpu.h,v 1.90 2002/11/28 21:43:55 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -96,6 +96,7 @@ struct cpu_info {
 	struct proc *ci_curproc;	/* current owner of the processor */
 	struct simplelock ci_slock;	/* lock on this data structure */
 	cpuid_t ci_cpuid;		/* our CPU ID */
+	u_int ci_apicid;		/* our APIC ID */
 	u_long ci_spin_locks;		/* # of spin locks held */
 	u_long ci_simple_locks;		/* # of simple locks held */
 
