@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.36 1995/07/12 09:43:29 cgd Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.37 1995/07/12 09:56:09 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -258,7 +258,7 @@ struct scsi_quirk_inquiry_pattern {
 
 struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	{T_CDROM, T_REMOV,
-	 "CHINON  ", "CD-ROM CDS-431  ", "H42",  SDEV_NOLUNS},
+	 "CHINON  ", "CD-ROM CDS-431  ", "",     SDEV_NOLUNS},
 	{T_CDROM, T_REMOV,
 	 "CHINON  ", "CD-ROM CDS-535  ", "Q14",  SDEV_NOLUNS},
 	{T_CDROM, T_REMOV,
@@ -289,6 +289,8 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	 "TEXEL   ", "CD-ROM DM-XX24 K", "1.10", SDEV_NOLUNS},
 
 	{T_DIRECT, T_FIXED,
+	 "EMULEX  ", "MD21/S2     ESDI", "A00",  SDEV_FORCELUNS},
+	{T_DIRECT, T_FIXED,
 	 "MAXTOR  ", "XT-3280         ", "",     SDEV_NOLUNS},
 	{T_DIRECT, T_FIXED,
 	 "MAXTOR  ", "XT-4380S        ", "",     SDEV_NOLUNS},
@@ -317,6 +319,9 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	{T_DIRECT, T_FIXED,
 	 "SEAGATE ", "ST296           ", "921",  SDEV_NOLUNS},
 
+	/* XXX: QIC-36 tape behind Emulex adapter.  Very broken. */
+	{T_SEQUENTIAL, T_REMOV,
+	 "        ", "                ", "    ", SDEV_NOLUNS},
 	{T_SEQUENTIAL, T_REMOV,
 	 "EXABYTE ", "EXB-8200        ", "",     SDEV_NOLUNS},
 	{T_SEQUENTIAL, T_REMOV,
