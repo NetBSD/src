@@ -1,5 +1,5 @@
-#	$NetBSD: Makefile,v 1.1 2002/09/20 21:13:29 christos Exp $
+#	$NetBSD: Makefile,v 1.2 2004/11/19 21:38:25 christos Exp $
 
-SUBDIR+= snprintb
+SUBDIR+= snprintb sockaddr_snprintf
 
 .include <bsd.subdir.mk>
