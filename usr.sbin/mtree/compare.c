@@ -1,4 +1,4 @@
-/*	$NetBSD: compare.c,v 1.40 2002/02/08 18:15:12 tv Exp $	*/
+/*	$NetBSD: compare.c,v 1.41 2002/10/06 01:36:09 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)compare.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: compare.c,v 1.40 2002/02/08 18:15:12 tv Exp $");
+__RCSID("$NetBSD: compare.c,v 1.41 2002/10/06 01:36:09 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -77,14 +77,26 @@ do {									\
 } while (0)
 #define	LABEL if (!label++) MARK
 
-#define CHANGEFLAGS(path, oflags)					\
-	if (flags != (oflags)) {					\
+#if HAVE_STRUCT_STAT_ST_FLAGS
+
+#if HAVE_LCHFLAGS
+#define CHANGE_LCHFLAGS	if (lchflags(p->fts_accpath, flags))
+#else
+#define CHANGE_LCHFLAGS	if (S_ISLNK(p->fts_statp->st_mode)) {		\
+				label++;				\
+				printf(					\
+				    ", not modified: no lchflags call)\n"); \
+			} else if (chflags(p->fts_accpath, flags))
+#endif
+
+#define CHANGEFLAGS							\
+	if (flags != p->fts_statp->st_flags) {				\
 		if (!label) {						\
 			MARK;						\
 			printf("%sflags (\"%s\"", tab,			\
 			    flags_to_string(p->fts_statp->st_flags, "none")); \
 		}							\
-		if (lchflags(path, flags)) {				\
+		CHANGE_LCHFLAGS {					\
 			label++;					\
 			printf(", not modified: %s)\n",			\
 			    strerror(errno));				\
@@ -94,26 +106,25 @@ do {									\
 	}
 
 /* SETFLAGS:
- * given pflags, additionally set those flags specified in sflags and
- * selected by mask (the other flags are left unchanged). oflags is
- * passed as reference to check if lchflags is necessary.
+ * given pflags, additionally set those flags specified in s->st_flags and
+ * selected by mask (the other flags are left unchanged).
  */
-#define SETFLAGS(path, sflags, pflags, oflags, mask)			\
+#define SETFLAGS(pflags, mask)						\
 do {									\
-	flags = ((sflags) & (mask)) | (pflags);				\
-	CHANGEFLAGS(path, oflags);					\
+	flags = (s->st_flags & (mask)) | (pflags);			\
+	CHANGEFLAGS;							\
 } while (0)
 
 /* CLEARFLAGS:
- * given pflags, reset the flags specified in sflags and selected by mask
- * (the other flags are left unchanged). oflags is
- * passed as reference to check if lchflags is necessary.
+ * given pflags, reset the flags specified in s->st_flags and selected by mask
+ * (the other flags are left unchanged).
  */
-#define CLEARFLAGS(path, sflags, pflags, oflags, mask)			\
+#define CLEARFLAGS(pflags, mask)					\
 do {									\
-	flags = (~((sflags) & (mask)) & CH_MASK) & (pflags);		\
-	CHANGEFLAGS(path, oflags);					\
+	flags = (~(s->st_flags & (mask)) & CH_MASK) & (pflags);		\
+	CHANGEFLAGS;							\
 } while (0)
+#endif	/* HAVE_STRUCT_STAT_ST_FLAGS */
 
 int
 compare(NODE *s, FTSENT *p)
@@ -166,16 +177,12 @@ compare(NODE *s, FTSENT *p)
 #if HAVE_STRUCT_STAT_ST_FLAGS
 	if (iflag && !uflag) {
 		if (s->flags & F_FLAGS)
-		    SETFLAGS(p->fts_accpath, s->st_flags,
-			p->fts_statp->st_flags, p->fts_statp->st_flags,
-			SP_FLGS);
+		    SETFLAGS(p->fts_statp->st_flags, SP_FLGS);
 		return (label);
         }
 	if (mflag && !uflag) {
 		if (s->flags & F_FLAGS)
-		    CLEARFLAGS(p->fts_accpath, s->st_flags,
-			p->fts_statp->st_flags, p->fts_statp->st_flags,
-			SP_FLGS);
+		    CLEARFLAGS(p->fts_statp->st_flags, SP_FLGS);
 		return (label);
         }
 #endif
@@ -347,20 +354,16 @@ compare(NODE *s, FTSENT *p)
 		}
 		if (uflag) {
 			if (iflag)
-				SETFLAGS(p->fts_accpath, s->st_flags,
-				    0, p->fts_statp->st_flags, CH_MASK);
+				SETFLAGS(0, CH_MASK);
 			else if (mflag)
-				CLEARFLAGS(p->fts_accpath, s->st_flags,
-				    0, p->fts_statp->st_flags, SP_FLGS);
+				CLEARFLAGS(0, SP_FLGS);
 			else
-				SETFLAGS(p->fts_accpath, s->st_flags,
-			     	    0, p->fts_statp->st_flags,
-				    (~SP_FLGS & CH_MASK));
+				SETFLAGS(0, (~SP_FLGS & CH_MASK));
 		} else
 			printf(")\n");
 		tab = "\t";
 	}
-#endif
+#endif	/* HAVE_STRUCT_STAT_ST_FLAGS */
 
 	/*
 	 * from this point, no more permission checking or whacking
