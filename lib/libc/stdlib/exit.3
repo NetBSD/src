@@ -1,4 +1,4 @@
-.\" $NetBSD: exit.3,v 1.8 2002/02/07 07:00:28 ross Exp $
+.\" $NetBSD: exit.3,v 1.9 2002/08/10 17:09:27 yamt Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -76,6 +76,15 @@ Unlink all files created with the
 .Xr tmpfile 3
 function.
 .El
+Following this,
+.Fn exit
+calls
+.Xr _exit 2 .
+Note that typically
+.Xr _exit 2
+only passes the lower 8 bits of
+.Fa status
+on to the parent, thus negative values have less meaning.
 .Sh RETURN VALUES
 The
 .Fn exit
