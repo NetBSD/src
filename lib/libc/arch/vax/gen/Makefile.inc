@@ -1,11 +1,14 @@
-#	$NetBSD: Makefile.inc,v 1.11 2003/10/25 22:31:20 kleink Exp $
+#	$NetBSD: Makefile.inc,v 1.12 2004/01/15 19:43:45 kleink Exp $
 
 SRCS+=	byte_swap_2.S byte_swap_4.S bswap64.S \
 	fabs.S frexp.c \
+	fpclassifyf.c fpclassifd.c \
 	infinityf.c infinity.c infinityl.c isinf.c isinfl.c isnan.c isnanl.c \
+	isfinitef.c isfinited.c \
 	ldexp.S \
 	makecontext.c modf.S \
 	resumecontext.c \
+	signbitf.c signbitd.c \
 	swapcontext.S \
 	udiv.S urem.S \
 	__setjmp14.S __sigsetjmp14.S _setjmp.S 
