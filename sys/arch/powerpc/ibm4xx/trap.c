@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.6 2002/07/05 18:45:20 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.7 2002/07/11 01:38:49 simonb Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -143,7 +143,7 @@ trap(struct trapframe *frame)
 
 	ftype = VM_PROT_READ;
 
-DBPRINTF(TDB_ALL, ("trap(%x) at %x from frame %p &frame %p\n", 
+DBPRINTF(TDB_ALL, ("trap(%x) at %x from frame %p &frame %p\n",
 	type, frame->srr0, frame, &frame));
 
 	switch (type) {
@@ -162,9 +162,9 @@ printf("debug reg is %x srr2 %x srr3 %x\n", rv, srr2, srr3);
 		trapsignal(p, SIGTRAP, EXC_TRC);
 		KERNEL_PROC_UNLOCK(p);
 		break;
-		
+
 	  /* If we could not find and install appropriate TLB entry, fall through */
-	  
+
 	case EXC_DSI:
 		/* FALLTHROUGH */
 	case EXC_DTMISS:
@@ -184,7 +184,7 @@ printf("debug reg is %x srr2 %x srr3 %x\n", rv, srr2, srr3);
 			if (frame->esr & (ESR_DST|ESR_DIZ))
 				ftype = VM_PROT_WRITE;
 
-DBPRINTF(TDB_ALL, ("trap(EXC_DSI) at %x %s fault on %p esr %x\n", 
+DBPRINTF(TDB_ALL, ("trap(EXC_DSI) at %x %s fault on %p esr %x\n",
 frame->srr0, (ftype&VM_PROT_WRITE) ? "write" : "read", (void *)va, frame->esr));
 			rv = uvm_fault(map, trunc_page(va), 0, ftype);
 			KERNEL_UNLOCK();
@@ -204,16 +204,16 @@ frame->srr0, (ftype&VM_PROT_WRITE) ? "write" : "read", (void *)va, frame->esr));
 			}
 		}
 		goto brain_damage;
-		
+
 	case EXC_DSI|EXC_USER:
 		/* FALLTHROUGH */
 	case EXC_DTMISS|EXC_USER:
 		KERNEL_PROC_LOCK(p);
-			
+
 		if (frame->esr & (ESR_DST|ESR_DIZ))
 			ftype = VM_PROT_WRITE;
 
-DBPRINTF(TDB_ALL, ("trap(EXC_DSI|EXC_USER) at %x %s fault on %x %x\n", 
+DBPRINTF(TDB_ALL, ("trap(EXC_DSI|EXC_USER) at %x %s fault on %x %x\n",
 frame->srr0, (ftype&VM_PROT_WRITE) ? "write" : "read", frame->dear, frame->esr));
 KASSERT(p == curproc && (p->p_stat == SONPROC));
 		rv = uvm_fault(&p->p_vmspace->vm_map,
@@ -238,7 +238,7 @@ KASSERT(p == curproc && (p->p_stat == SONPROC));
 	case EXC_ISI|EXC_USER:
 		KERNEL_PROC_LOCK(p);
 		ftype = VM_PROT_READ | VM_PROT_EXECUTE;
-DBPRINTF(TDB_ALL, ("trap(EXC_ISI|EXC_USER) at %x %s fault on %x tf %p\n", 
+DBPRINTF(TDB_ALL, ("trap(EXC_ISI|EXC_USER) at %x %s fault on %x tf %p\n",
 frame->srr0, (ftype&VM_PROT_WRITE) ? "write" : "read", frame->srr0, frame));
 		rv = uvm_fault(&p->p_vmspace->vm_map, trunc_page(frame->srr0), 0, ftype);
 		if (rv == 0) {
@@ -278,10 +278,10 @@ frame->srr0, (ftype&VM_PROT_WRITE) ? "write" : "read", frame->srr0, frame));
 		break;
 
 	case EXC_PGM|EXC_USER:
-		/* 
-		 * Illegal insn: 
+		/*
+		 * Illegal insn:
 		 *
-		 * let's try to see if it's FPU and can be emulated. 
+		 * let's try to see if it's FPU and can be emulated.
 		 */
 		uvmexp.traps ++;
 		if (!(p->p_addr->u_pcb.pcb_flags & PCB_FPU)) {
@@ -290,7 +290,7 @@ frame->srr0, (ftype&VM_PROT_WRITE) ? "write" : "read", frame->srr0, frame));
 			p->p_addr->u_pcb.pcb_flags |= PCB_FPU;
 		}
 
-		if ((rv = fpu_emulate(frame, 
+		if ((rv = fpu_emulate(frame,
 			(struct fpreg *)&p->p_addr->u_pcb.pcb_fpu))) {
 			KERNEL_PROC_LOCK(p);
 			trapsignal(p, rv, EXC_PGM);
@@ -442,7 +442,7 @@ bigcopyin(const void *udaddr, void *kaddr, size_t len)
 	}
 
 	/*
-	 * Stolen from physio(): 
+	 * Stolen from physio():
 	 */
 	PHOLD(p);
 	error = uvm_vslock(p, (caddr_t)udaddr, len, VM_PROT_READ);
@@ -457,7 +457,7 @@ bigcopyin(const void *udaddr, void *kaddr, size_t len)
 	uvm_vsunlock(p, (caddr_t)udaddr, len);
 	PRELE(p);
 
-	return 0; 
+	return 0;
 }
 
 int
@@ -519,7 +519,7 @@ bigcopyout(const void *kaddr, void *udaddr, size_t len)
 	}
 
 	/*
-	 * Stolen from physio(): 
+	 * Stolen from physio():
 	 */
 	PHOLD(p);
 	error = uvm_vslock(p, udaddr, len, VM_PROT_WRITE);
@@ -527,7 +527,7 @@ bigcopyout(const void *kaddr, void *udaddr, size_t len)
 		PRELE(p);
 		return EFAULT;
 	}
-	up = (char *)vmaprange(p, (vaddr_t)udaddr, len, 
+	up = (char *)vmaprange(p, (vaddr_t)udaddr, len,
 		VM_PROT_READ|VM_PROT_WRITE);
 
 	memcpy(up, kp, len);
@@ -535,7 +535,7 @@ bigcopyout(const void *kaddr, void *udaddr, size_t len)
 	uvm_vsunlock(p, udaddr, len);
 	PRELE(p);
 
-	return 0; 
+	return 0;
 }
 
 /*
