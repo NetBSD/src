@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.494 2002/12/26 20:53:19 matt Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.495 2002/12/30 04:03:05 explorer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.493 2002/12/26 20:52:58 matt Exp 
+ *	NetBSD: pcidevs,v 1.494 2002/12/30 04:02:22 explorer Exp 
  */
 
 /*
@@ -1736,6 +1736,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Applied Micro Circuits",
 	    "S5920 PCI Target",
+	},
+	{
+	    PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR5001,
+	    0,
+	    "Atheros Communications, Inc.",
+	    "AR5001 Wireless LAN Reference Card",
 	},
 	{
 	    PCI_VENDOR_ATRONICS, PCI_PRODUCT_ATRONICS_IDE_2015PL,
@@ -11197,6 +11203,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_ACTIONTEC, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Action Tec Electronics, Inc.",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_ATHEROS, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Atheros Communications, Inc.",
 	    NULL,
 	},
 	{
