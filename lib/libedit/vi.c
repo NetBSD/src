@@ -1,4 +1,4 @@
-/*	$NetBSD: vi.c,v 1.10 2002/10/27 21:41:50 christos Exp $	*/
+/*	$NetBSD: vi.c,v 1.11 2002/10/31 02:01:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)vi.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: vi.c,v 1.10 2002/10/27 21:41:50 christos Exp $");
+__RCSID("$NetBSD: vi.c,v 1.11 2002/10/31 02:01:47 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -834,4 +834,52 @@ vi_repeat_prev_char(EditLine *el, int c)
 	return el->el_search.chadir == CHAR_BACK ?
 	    cv_csearch_fwd(el, el->el_search.chacha, el->el_state.argument, 0) :
 	    cv_csearch_back(el, el->el_search.chacha, el->el_state.argument, 0);
+}
+
+
+/* vi_match():
+ *	Vi go to matching () {} or []
+ *	[%]
+ */
+protected el_action_t
+/*ARGSUSED*/
+vi_match(EditLine *el, int c)
+{
+	const char match_chars[] = "()[]{}";
+	char *cp;
+	int delta, i, count;
+	char o_ch, c_ch;
+
+	*el->el_line.lastchar = '\0';		/* just in case */
+
+	i = strcspn(el->el_line.cursor, match_chars);
+	o_ch = el->el_line.cursor[i];
+	if (o_ch == 0)
+		return CC_ERROR;
+	delta = strchr(match_chars, o_ch) - match_chars;
+	c_ch = match_chars[delta ^ 1];
+	count = 1;
+	delta = 1 - (delta & 1) * 2;
+
+	for (cp = &el->el_line.cursor[i]; count; ) {
+		cp += delta;
+		if (cp < el->el_line.buffer || cp >= el->el_line.lastchar)
+			return CC_ERROR;
+		if (*cp == o_ch)
+			count++;
+		else if (*cp == c_ch)
+			count--;
+	}
+
+	el->el_line.cursor = cp;
+
+	if (el->el_chared.c_vcmd.action & DELETE) {
+		if (delta > 0)
+			el->el_line.cursor++;
+		else
+			el->el_chared.c_vcmd.pos++;
+		cv_delfini(el);
+		return (CC_REFRESH);
+	}
+	return (CC_CURSOR);
 }
