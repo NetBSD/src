@@ -1,4 +1,4 @@
-.\"	$NetBSD: crypto.4,v 1.3 2004/04/28 15:19:20 wiz Exp $
+.\"	$NetBSD: crypto.4,v 1.4 2004/04/28 15:21:43 wiz Exp $
 .\"
 .\" Copyright (c) 2004
 .\"	Jonathan Stone <jonathan@dsg.stanford.edu>. All rights reserved.
@@ -24,17 +24,17 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 .\" THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 25 23, 2004
+.Dd April 27, 2004
 .Dt CRYPTO 4
 .Os
 .Sh NAME
-.Nm "crypto"
+.Nm crypto
 .Nd user-mode access to hardware-accelerated cryptography
 .Sh SYNOPSIS
-.Cd  "hifn*   at pci? dev ? function ?"
-.Cd  "ubsec*  at pci? dev ? function ?"
+.Cd "hifn*   at pci? dev ? function ?"
+.Cd "ubsec*  at pci? dev ? function ?"
 .Pp
-.Cd "pseudo-device crypto"
+.Cd pseudo-device crypto
 .Pp
 .In sys/ioctl.h
 .In sys/time.h
@@ -50,10 +50,12 @@ The
 .Pa /dev/crypto
 special device provides an
 .Xr ioctl 2
-based interface. User-mode applications should open the special device,
+based interface.
+User-mode applications should open the special device,
 then issue
 .Xr ioctl 2
-calls on the descriptor. The
+calls on the descriptor.
+The
 .Nm
 device provides two distinct modes of operation: one mode for
 symmetric-keyed cryptographic requests, and a second mode for
@@ -66,7 +68,7 @@ to traditional symmetric-key encryption (or privacy) algorithms,
 or to keyed and unkeyed one-way hash (HMAC and MAC) algorithms.
 The symmetric-key mode also permits fused operation,
 where the hardware performs both a privacy algorithm and an integrity-check
-algorithm in a single pass over the data: either a fudised
+algorithm in a single pass over the data: either a fused
 encrypt/HMAC-generate operation, or a fused HMAC-verify/decrypt operation.
 .Pp
 To use symmetric mode, you must first create a session specifying
@@ -87,7 +89,6 @@ symmetric-key privacy algorithms may be available:
 .It CRYPTO_AES_CBC
 .It CRYPTO_ARC4
 .El
-.Pp
 .Ss Integrity-check operations
 Contingent upon hardware support, some or all of the following
 keyed one-way hash algorithms may be available:
@@ -129,24 +130,25 @@ is not desired for this session.
 .Pp
 For non-zero symmetric-key privacy algorithms, the privacy algorithm
 must be specified in
-.Fa sess->cipher ,
+.Fa sess-\*[Gt]cipher ,
 the key length in
-.Fa sessp->keylen ,
+.Fa sessp-\*[Gt]keylen ,
 and the key value in the octets addressed by
-.Fa sessp->key .
+.Fa sessp-\*[Gt]key .
 .Pp
 For keyed one-way hash algorithms, the one-way hash must be specified
 in
-.Fa sessp->mac ,
+.Fa sessp-\*[Gt]mac ,
 the key length in
-.Fa sessp->mackey ,
+.Fa sessp-\*[Gt]mackey ,
 and the key value in the octets addressed by
-.Fa sessp->mackeylen .
+.Fa sessp-\*[Gt]mackeylen .
 .\"
 .Pp
 Support for a specific combination of fused privacy  and
 integrity-check algorithms depends on whether the underlying
-hardware supports that combination. Not all combinations are supported
+hardware supports that combination.
+Not all combinations are supported
 by all hardware, even if the hardware supports each operation as a
 stand-alone non-fused operation.
 .It Dv CIOCCRYPT Fa struct crpyto_op *cr_op
@@ -155,17 +157,20 @@ The file descriptor argument to
 .Xr ioctl 4
 must have been bound to a valid session.
 To encrypt, set
-.Fa cr_op->op
-to COP_ENCRYPT. To decrypt, set
-.Fa cr_op->op
-to COP_DECRYPT.
+.Fa cr_op-\*[Gt]op
+to
+.Dv COP_ENCRYPT .
+To decrypt, set
+.Fa cr_op-\*[Gt]op
+to
+.Dv COP_DECRYPT .
 The field
-.Fa cr_op->len
+.Fa cr_op-\*[Gt]len
 supplies the length of the input buffer; the fields
-.Fa cr_op->src ,
-.Fa cr_op->dst ,
-.Fa cr_op->mac ,
-.Fa cr_op->iv
+.Fa cr_op-\*[Gt]src ,
+.Fa cr_op-\*[Gt]dst ,
+.Fa cr_op-\*[Gt]mac ,
+.Fa cr_op-\*[Gt]iv
 supply the addresses of the input buffer, output buffer,
 one-way hash, and initialization vector, respectively.
 .It Dv CIOCFSESSION Fa void
@@ -173,10 +178,7 @@ Destroys the /dev/crypto session associated with the file-descriptor
 argument.
 .El
 .\"
-.\"
-.\"
 .Sh ASYMMETRIC-KEY OPERATION
-.Pp
 .Ss Asymmetric-key algorithms
 Contingent upon hardware support, the following asymmetric
 (public-key/private-key; or key-exchange subroutine) operations may
@@ -194,61 +196,60 @@ also be available:
 See below for discussion of the input and output parameter counts.
 .Ss Asymmetric-key commands
 .Bl -tag -width CIOCFKEY
-.\"
 .It Dv CIOCASSYMFEAT Fa int *feature_mask
 Returns a bitmask of supported asymmetric-key operations.
 Each of the above-listed asymmetric operations is present
-if and only the bit position numbered by the code for that operation
+if and only if the bit position numbered by the code for that operation
 is set.
 For example,
 .Dv CRK_MOD_EXP
 is available if and only if the bit
-.Dv (1 << CRK_MOD_EX)
+.Pq 1 \*[Lt]\*[Lt] Dv CRK_MOD_EX
 is set.
 .It Dv CIOCFKEY Fa struct crypt_kop *kop
 Performs an asymmetric-key operation from the list above.
- The specific operation is supplied in
-.Fa kop->crk_op ;
+The specific operation is supplied in
+.Fa kop-\*[Gt]crk_op ;
 final status for the operation is returned in
-.Fa kop->crk_status .
+.Fa kop-\*[Gt]crk_status .
 The number of input arguments and the number of output arguments
 is specified in
-.Fa kop->crk_iparams
+.Fa kop-\*[Gt]crk_iparams
 and
-.Fa kop->crk_iparams ,
-respectively. The field
+.Fa kop-\*[Gt]crk_iparams ,
+respectively.
+The field
 .Fa crk_param[]
 must be filled in with exactly
-.Fa kop->crk_iparams + kop->crk_oparams
+.Fa kop-\*[Gt]crk_iparams + kop-\*[Gt]crk_oparams
 arguments, each encoded as a
 .Fa struct crparam
 (address, bitlength) pair.
 .El
 .Pp
-The semantics of these arguments is currently undocumented.
-.\"
+The semantics of these arguments are currently undocumented.
 .Sh SEE ALSO
-.Xr hifn 4 ,
-.Xr ubsec 4 ,
-.Xr opencrypto 9 .
+.\" .Xr hifn 4 ,
+.\" .Xr ubsec 4 ,
+.Xr opencrypto 9
+.Sh HISTORY
+The
+.Nm
+driver is derived from a version which appeared in
+.Fx 4.8 ,
+which in turn is based on code which appeared in
+.Ox 3.2 .
 .Sh BUGS
-.Pp
-Error checking and reporting is weak. The values specified for
-symmetric-key key sizes to
-.Dv CRIOCGSESSION ,
+Error checking and reporting is weak.
+The values specified for symmetric-key key sizes to
+.Dv CRIOCGSESSION
 must exactly match the values expected by
 .XR opencrypto 9 .
 The output buffer and MAC buffers supplied to
 .Dv CRIOCRYPT
 must follow whether privacy or integrity algorithms were specified for
-session: if you request a non-NULL algorithm, you must supply a suitably-sized
-buffer.
+session: if you request a
+.No non- Ns Dv NULL
+algorithm, you must supply a suitably-sized buffer.
 .Pp
 The scheme for passing arguments for asymmetric requests is Baroque.
-.Sh HISTORY
-The
-.Nm
-driver is derived from a version which appeared
-.Fx 4.8 ,
-which in turn is based on code which appeared in
-.Ox 3.2 .
