@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.13 2002/01/18 21:01:39 thorpej Exp $	*/
+/*	$NetBSD: externs1.h,v 1.14 2002/02/05 03:04:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -70,12 +70,12 @@ extern	pos_t	curr_pos;
 extern	pos_t	csrc_pos;
 extern	symt_t	symtyp;
 extern	FILE	*yyin;
-extern	u_quad_t qbmasks[], qlmasks[], qumasks[];
+extern	uint64_t qbmasks[], qlmasks[], qumasks[];
 
 extern	void	initscan(void);
-extern	int	sign(quad_t, tspec_t, int);
-extern	int	msb(quad_t, tspec_t, int);
-extern	quad_t	xsign(quad_t, tspec_t, int);
+extern	int	sign(int64_t, tspec_t, int);
+extern	int	msb(int64_t, tspec_t, int);
+extern	int64_t	xsign(int64_t, tspec_t, int);
 extern	void	clrwflgs(void);
 extern	sym_t	*getsym(sbuf_t *);
 extern	void	cleanup(void);

@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.24 2002/01/31 22:30:20 tv Exp $	*/
+/*	$NetBSD: tree.c,v 1.25 2002/02/05 03:04:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.24 2002/01/31 22:30:20 tv Exp $");
+__RCSID("$NetBSD: tree.c,v 1.25 2002/02/05 03:04:29 thorpej Exp $");
 #endif
 
 #include <stdlib.h>
@@ -48,7 +48,7 @@ __RCSID("$NetBSD: tree.c,v 1.24 2002/01/31 22:30:20 tv Exp $");
 /* Various flags for each operator. */
 static	mod_t	modtab[NOPS];
 
-static	tnode_t	*getinode(tspec_t, quad_t);
+static	tnode_t	*getinode(tspec_t, int64_t);
 static	void	ptrcmpok(op_t, tnode_t *, tnode_t *);
 static	int	asgntypok(op_t, int, tnode_t *, tnode_t *);
 static	void	chkbeop(op_t, tnode_t *, tnode_t *);
@@ -265,7 +265,7 @@ getcnode(type_t *tp, val_t *v)
  * Create a node for a integer constant.
  */
 static tnode_t *
-getinode(tspec_t t, quad_t q)
+getinode(tspec_t t, int64_t q)
 {
 	tnode_t	*n;
 
@@ -962,10 +962,10 @@ typeok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 			if (!isutyp(rt) && rn->tn_val->v_quad < 0) {
 				/* negative shift */
 				warning(121);
-			} else if ((u_quad_t)rn->tn_val->v_quad == size(lt)) {
+			} else if ((uint64_t)rn->tn_val->v_quad == size(lt)) {
 				/* shift equal to size fo object */
 				warning(267);
-			} else if ((u_quad_t)rn->tn_val->v_quad > size(lt)) {
+			} else if ((uint64_t)rn->tn_val->v_quad > size(lt)) {
 				/* shift greater than size of object */
 				warning(122);
 			}
@@ -1857,7 +1857,7 @@ cvtcon(op_t op, int arg, type_t *tp, val_t *nv, val_t *v)
 	tspec_t	ot, nt;
 	ldbl_t	max = 0.0, min = 0.0;
 	int	sz, rchk;
-	quad_t	xmask, xmsk1;
+	int64_t	xmask, xmsk1;
 	int	osz, nsz;
 
 	ot = v->v_tspec;
@@ -1888,7 +1888,7 @@ cvtcon(op_t op, int arg, type_t *tp, val_t *nv, val_t *v)
 		case QUAD:
 			max = QUAD_MAX;		min = QUAD_MIN;		break;
 		case UQUAD:
-			max = (u_quad_t)UQUAD_MAX; min = 0;		break;
+			max = (uint64_t)UQUAD_MAX; min = 0;		break;
 		case FLOAT:
 			max = FLT_MAX;		min = -FLT_MAX;		break;
 		case DOUBLE:
@@ -1921,18 +1921,18 @@ cvtcon(op_t op, int arg, type_t *tp, val_t *nv, val_t *v)
 			nv->v_ldbl = v->v_ldbl;
 		} else {
 			nv->v_quad = (nt == PTR || isutyp(nt)) ?
-				(u_quad_t)v->v_ldbl : (quad_t)v->v_ldbl;
+				(uint64_t)v->v_ldbl : (int64_t)v->v_ldbl;
 		}
 	} else {
 		if (nt == FLOAT) {
 			nv->v_ldbl = (ot == PTR || isutyp(ot)) ?
-			       (float)(u_quad_t)v->v_quad : (float)v->v_quad;
+			       (float)(uint64_t)v->v_quad : (float)v->v_quad;
 		} else if (nt == DOUBLE) {
 			nv->v_ldbl = (ot == PTR || isutyp(ot)) ?
-			       (double)(u_quad_t)v->v_quad : (double)v->v_quad;
+			       (double)(uint64_t)v->v_quad : (double)v->v_quad;
 		} else if (nt == LDOUBLE) {
 			nv->v_ldbl = (ot == PTR || isutyp(ot)) ?
-			       (ldbl_t)(u_quad_t)v->v_quad : (ldbl_t)v->v_quad;
+			       (ldbl_t)(uint64_t)v->v_quad : (ldbl_t)v->v_quad;
 		} else {
 			rchk = 1;		/* Check for lost precision. */
 			nv->v_quad = v->v_quad;
@@ -2296,7 +2296,7 @@ bldincdec(op_t op, tnode_t *ln)
 	if (ln->tn_type->t_tspec == PTR) {
 		cn = plength(ln->tn_type);
 	} else {
-		cn = getinode(INT, (quad_t)1);
+		cn = getinode(INT, (int64_t)1);
 	}
 	ntn = mktnode(op, ln->tn_type, ln, cn);
 
@@ -2604,7 +2604,7 @@ plength(type_t *tp)
 	st = INT;
 #endif
 
-	return (getinode(st, (quad_t)(elem * elsz / CHAR_BIT)));
+	return (getinode(st, (int64_t)(elem * elsz / CHAR_BIT)));
 }
 
 /*
@@ -2624,8 +2624,8 @@ fold(tnode_t *tn)
 	val_t	*v;
 	tspec_t	t;
 	int	utyp, ovfl;
-	quad_t	sl, sr = 0, q = 0, mask;
-	u_quad_t ul, ur = 0;
+	int64_t	sl, sr = 0, q = 0, mask;
+	uint64_t ul, ur = 0;
 	tnode_t	*cn;
 
 	v = xcalloc(1, sizeof (val_t));
@@ -2745,7 +2745,7 @@ fold(tnode_t *tn)
 	}
 
 	/* XXX does not work for quads. */
-	if (ovfl || ((q | mask) != ~(u_quad_t)0 && (q & ~mask) != 0)) {
+	if (ovfl || ((q | mask) != ~(uint64_t)0 && (q & ~mask) != 0)) {
 		if (hflag)
 			/* integer overflow detected, op %s */
 			warning(141, modtab[tn->tn_op].m_name);
@@ -2969,7 +2969,7 @@ bldszof(type_t *tp)
 	st = UINT;
 #endif
 
-	return (getinode(st, (quad_t)(elem * elsz / CHAR_BIT)));
+	return (getinode(st, (int64_t)(elem * elsz / CHAR_BIT)));
 }
 
 /*
@@ -3045,7 +3045,7 @@ funcarg(tnode_t *args, tnode_t *arg)
 	 * will not change.
 	 */
 	if (arg == NULL)
-		arg = getinode(INT, (quad_t)0);
+		arg = getinode(INT, (int64_t)0);
 
 	ntn = mktnode(PUSH, arg->tn_type, arg, args);
 
@@ -3336,7 +3336,7 @@ nulleff(tnode_t *tn)
 static void
 displexpr(tnode_t *tn, int offs)
 {
-	u_quad_t uq;
+	uint64_t uq;
 
 	if (tn == NULL) {
 		(void)printf("%*s%s\n", offs, "", "NULL");
@@ -3572,7 +3572,7 @@ chkaidx(tnode_t *tn, int amper)
 	int	dim;
 	tnode_t	*ln, *rn;
 	int	elsz;
-	quad_t	con;
+	int64_t	con;
 
 	ln = tn->tn_left;
 	rn = tn->tn_right;
@@ -3603,7 +3603,7 @@ chkaidx(tnode_t *tn, int amper)
 
 	/* Change the unit of the index from bytes to element size. */
 	if (isutyp(rn->tn_type->t_tspec)) {
-		con = (u_quad_t)rn->tn_val->v_quad / elsz;
+		con = (uint64_t)rn->tn_val->v_quad / elsz;
 	} else {
 		con = rn->tn_val->v_quad / elsz;
 	}
@@ -3613,7 +3613,7 @@ chkaidx(tnode_t *tn, int amper)
 	if (!isutyp(rn->tn_type->t_tspec) && con < 0) {
 		/* array subscript cannot be negative: %ld */
 		warning(167, (long)con);
-	} else if (dim > 0 && (u_quad_t)con >= dim) {
+	} else if (dim > 0 && (uint64_t)con >= dim) {
 		/* array subscript cannot be > %d: %ld */
 		warning(168, dim - 1, (long)con);
 	}
