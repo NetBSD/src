@@ -1,5 +1,5 @@
 #
-# 	$NetBSD: NULLCONF,v 1.12 2002/01/02 13:13:19 uch Exp $
+# 	$NetBSD: NULLCONF,v 1.13 2002/01/26 10:24:58 takemura Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
@@ -20,6 +20,10 @@ makeoptions	DEFWARNINGS=no	# override DEFWARNINGS?=yes
 
 file-system 	FFS		# fast filesystem with user and group quotas
 options 	COMPAT_386BSD_MBRPART # recognize old partition ID
+
+# compile options
+makeoptions	DEFGP="-G 18"
+
 config		netbsd		root on ? type ?
 
 vrisab2 at vrgiu?
