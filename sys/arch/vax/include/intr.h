@@ -1,4 +1,4 @@
-/* 	$NetBSD: intr.h,v 1.10 2001/01/15 20:19:58 thorpej Exp $	*/
+/* 	$NetBSD: intr.h,v 1.11 2001/04/12 19:16:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Matt Thomas.
@@ -125,6 +125,7 @@ do {								\
 #define	spllock()	splhigh()
 
 /* These are better to use when playing with VAX buses */
+#define	spluba()	_splraise(IPL_UBA)		/* IPL17 */
 #define spl4()		splx(0x14)
 #define spl5()		splx(0x15)
 #define spl6()		splx(0x16)
