@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 1998/08/22 19:02:10 tv Exp $
+#	$NetBSD: Makefile,v 1.17 1998/08/22 19:39:23 tv Exp $
 
 LIB=		bfd
 
@@ -7,7 +7,7 @@ NOMAN=
 NOPROFILE=
 
 SRCS=		archive.c archures.c bfd.c cache.c coffgen.c corefile.c \
-		format.c init.c libbfd.c opncls.c reloc.c section.c syms.c \
+		format.c init.c lib_bfd.c opncls.c reloc.c section.c syms.c \
 		targets.c hash.c linker.c elf.c srec.c binary.c tekhex.c \
 		ihex.c stabs.c stab-syms.c netbsd-core.c \
 		dis-buf.c disassemble.c \
