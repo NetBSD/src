@@ -1,3 +1,5 @@
+.\"	$NetBSD: net_serv.nr,v 1.2 1998/01/09 06:34:49 perry Exp $
+.\"
 .NC "Network Service Interface"
 .sh 1 "Connectionless Network Service"
 .pp

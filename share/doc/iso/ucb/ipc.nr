@@ -1,3 +1,5 @@
+.\"	$NetBSD: ipc.nr,v 1.2 1998/01/09 06:34:31 perry Exp $
+.\"
 .NC "The Design of Unix IPC"
 .sh 1 "General"
 .pp

@@ -1,3 +1,5 @@
+.\"	$NetBSD: trans_serv.nr,v 1.2 1998/01/09 06:34:54 perry Exp $
+.\"
 .NC "Transport Service Interface"
 .sh 1 "General"
 .pp

@@ -1,3 +1,5 @@
+.\"	$NetBSD: mbufrcv.grn,v 1.2 1998/01/09 06:35:09 perry Exp $
+.\"
 .(z
 .GS C
 width 5.0

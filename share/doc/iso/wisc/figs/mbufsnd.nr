@@ -1,3 +1,5 @@
+.\"	$NetBSD: mbufsnd.nr,v 1.2 1998/01/09 06:35:11 perry Exp $
+.\"
 .(z
 .br
 .nr g1 2304u

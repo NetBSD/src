@@ -1,3 +1,5 @@
+.\"	$NetBSD: parts.nr,v 1.3 1998/01/09 06:34:50 perry Exp $
+.\"
 .\"WISC: Header: parts.nr,v 1.1 88/12/05 18:10:50 nhall Exp $
 .\"WISC: Source: /usr/argo/doc/kernel/RCS/parts.nr,v $
 .\"

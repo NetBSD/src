@@ -1,3 +1,5 @@
+.\"	$NetBSD: addr.nr,v 1.2 1998/01/09 06:34:29 perry Exp $
+.\"
 .NC "NSAP Addresses & Routing"
 .sh 1 "OSI Address Formats"
 .pp

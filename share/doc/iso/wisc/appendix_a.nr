@@ -1,3 +1,5 @@
+.\"	$NetBSD: appendix_a.nr,v 1.3 1998/01/09 06:34:38 perry Exp $
+.\"
 .\" WISC: Header: appendix_a.nr,v 1.3 88/12/07 10:42:12 nhall Exp $
 .(x
 Appendix A

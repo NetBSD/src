@@ -1,3 +1,5 @@
+.\"	$NetBSD: esis_design.nr,v 1.2 1998/01/09 06:34:45 perry Exp $
+.\"
 .NC "The Design of the ARGO Network Layer"
 .sh 1 "End System to Intermediate System Routing Protocol"
 .pp

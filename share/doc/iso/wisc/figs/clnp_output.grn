@@ -1,3 +1,5 @@
+.\"	$NetBSD: clnp_output.grn,v 1.2 1998/01/09 06:35:00 perry Exp $
+.\"
 .(z
 .GS C
 width 6.0
