@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.120.2.6 1999/10/20 23:38:35 he Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.120.2.7 2000/01/15 17:21:23 he Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.113.2.5 1999/10/20 23:37:08 he Exp 
+ *	NetBSD: pcidevs,v 1.113.2.6 2000/01/15 17:20:12 he Exp 
  */
 
 /*
@@ -795,7 +795,7 @@
 #define	PCI_PRODUCT_DIAMOND_VIPER	0x9001		/* Viper/PCI */
 
 /* Distributed Processing Technology products */
-#define	PCI_PRODUCT_DPT_SC_RAID	0xa400		/* SmartCache/Raid */
+#define	PCI_PRODUCT_DPT_SC_RAID	0xa400		/* SmartCache/SmartRAID */
 
 /* Dolphin products */
 #define	PCI_PRODUCT_DOLPHIN_PCISCI	0x0658		/* PCI-SCI Bridge */
