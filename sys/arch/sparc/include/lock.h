@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.10 2000/05/05 20:12:00 hannken Exp $ */
+/*	$NetBSD: lock.h,v 1.11 2003/09/26 22:46:01 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -42,16 +42,6 @@
 /*
  * Machine dependent spin lock operations.
  */
-
-/*
- * The value for __SIMPLELOCK_LOCKED is what ldstub() naturally stores
- * `lock_data' given its address (and the fact that SPARC is big-endian).
- */
-
-typedef	__volatile int		__cpu_simple_lock_t;
-
-#define	__SIMPLELOCK_LOCKED	0xff000000
-#define	__SIMPLELOCK_UNLOCKED	0
 
 /* XXX So we can expose this to userland. */
 #ifdef __lint__

@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.4 2003/01/17 23:18:28 thorpej Exp $	*/
+/*	$NetBSD: lock.h,v 1.5 2003/09/26 22:46:01 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -42,11 +42,6 @@
 
 #ifndef _M68K_LOCK_H_
 #define	_M68K_LOCK_H_
-
-typedef	__volatile unsigned char __cpu_simple_lock_t;
-
-#define	__SIMPLELOCK_LOCKED	0x80	/* result of `tas' insn */
-#define	__SIMPLELOCK_UNLOCKED	0
 
 static __inline void __cpu_simple_lock_init __P((__cpu_simple_lock_t *)) 
 	__attribute__((__unused__)); 

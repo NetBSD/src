@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.20 2003/08/07 16:28:15 agc Exp $	*/
+/*	$NetBSD: types.h,v 1.21 2003/09/26 22:46:01 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -55,6 +55,11 @@ typedef vm_size_t	vsize_t;
 #endif
 
 typedef int		register_t;
+
+typedef	__volatile unsigned char __cpu_simple_lock_t;
+
+#define	__SIMPLELOCK_LOCKED	0x80	/* result of `tas' insn */
+#define	__SIMPLELOCK_UNLOCKED	0
 
 #define	__HAVE_SYSCALL_INTERN
 #define	__HAVE_RAS

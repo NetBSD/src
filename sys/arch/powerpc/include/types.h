@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.23 2003/09/25 18:42:18 matt Exp $	*/
+/*	$NetBSD: types.h,v 1.24 2003/09/26 22:46:01 nathanw Exp $	*/
 
 /*-
  * Copyright (C) 1995 Wolfgang Solfrank.
@@ -59,6 +59,11 @@ typedef struct label_t {
 	register_t val[40]; /* double check this XXX */
 } label_t;
 #endif
+
+typedef __volatile int __cpu_simple_lock_t;
+
+#define __SIMPLELOCK_LOCKED	1
+#define __SIMPLELOCK_UNLOCKED	0
 
 #define	__HAVE_BIGENDIAN_BITOPS		/* for cntlzw in locore_subr.S */
 #define	__HAVE_CPU_COUNTER

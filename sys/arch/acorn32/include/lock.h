@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.2 2002/10/07 23:23:53 bjh21 Exp $	*/
+/*	$NetBSD: lock.h,v 1.3 2003/09/26 22:45:41 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -46,11 +46,6 @@
 #if defined(_KERNEL) && defined(MULTIPROCESSOR)
 
 #include <arm/cpufunc.h>
-
-typedef	__volatile int __cpu_simple_lock_t;
-
-#define	__SIMPLELOCK_LOCKED	1
-#define	__SIMPLELOCK_UNLOCKED	0
 
 static __inline int
 __swp(int __val, __volatile int *__ptr)
