@@ -1,39 +1,50 @@
-#	$NetBSD: Makefile,v 1.15 1999/08/21 14:18:36 sommerfeld Exp $
+#	$NetBSD: Makefile,v 1.15.2.1 2000/11/20 20:25:49 bouyer Exp $
 
 STRIPFLAG=
-PROG=		boot
-PROGSOURCE=	boot.c net.c netif_sun.c conf.c openfirm.c bootinfo.c
-FILES=		boot.net
+PROGSOURCE=	boot.c net.c netif_sun.c conf.c openfirm.c bootinfo.c vers.c
 NEWVERSWHAT=	"Secondary Boot"
-CLEANFILES+=	vers.c vers.o boot.net
+FILES=		boot.net boot_big.net ${RELOCS:S/^/boot./g}
+CLEANFILES:=	vers.c ${FILES}
+LINKS=		${BINDIR}/boot.${RELOC_DEFAULT} ${BINDIR}/boot
 
 INCLUDE_LIBZ=	yes
 SAMISCMAKEFLAGS= SA_USE_CREAD=yes
 
 .include "../Makefile.buildboot"
 
-RELOC=		0x300000
-
 .include <bsd.own.mk>
+
+OBJS=${SRCS:N*.h:N*.sh:N*.fth:R:S/$/.o/g}
 
 OBJCOPY?=	objcopy
 
-LINKFLAGS=-N -Ttext ${RELOC} -e start
+LINKFLAGS=-N -e start
 
-all: ${FILES}
+.MAIN: all
+realall: ${FILES}
 
-${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
-	sh ${.CURDIR}/../common/newvers.sh ${.CURDIR}/version ${NEWVERSWHAT}
-	${COMPILE.c} vers.c
-	${LD} -o ${.TARGET}.tmp ${LINKFLAGS} ${OBJS} \
-	    vers.o ${LIBSA} ${LIBZ} ${LIBKERN}
-	@${SIZE} ${.TARGET}.tmp
-	@${OBJCOPY} -O binary ${.TARGET}.tmp ${.TARGET}
-	@rm -f ${.TARGET}.tmp
+.PHONY: vers.c
+vers.c: version
+	sh ${S}/conf/newvers_stand.sh ${.CURDIR}/version "sparc" ${NEWVERSWHAT}
+
+.for RELOC in ${RELOCS}
+boot.${RELOC}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
+	${LD} -o ${.TARGET}.tmp ${LINKFLAGS} -Ttext ${RELOC} ${OBJS} \
+	    ${LIBSA} ${LIBZ} ${LIBKERN}
+	${SIZE} ${.TARGET}.tmp
+	${OBJCOPY} -O binary ${.TARGET}.tmp ${.TARGET}
+	rm -f ${.TARGET}.tmp
+.endfor
  
 # conjure up a magic header that is accepted by all Sun PROMS;
 # see installboot.c for details.
-${FILES}: ${PROG}
-	(printf '\01\03\01\07\060\200\0\07\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0'; cat ${.ALLSRC} ) > ${.TARGET}
+
+SUN_MAGIC_HEADER='\01\03\01\07\060\200\0\07\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0'
+
+boot.net: boot.${RELOC_DEFAULT}
+	(printf ${SUN_MAGIC_HEADER}; cat ${.ALLSRC} ) > ${.TARGET}
+
+boot_big.net: boot.700000
+	(printf ${SUN_MAGIC_HEADER}; cat ${.ALLSRC} ) > ${.TARGET}
 
 .include <bsd.prog.mk>

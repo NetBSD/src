@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.5 1999/09/27 17:02:44 wrstuden Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.5.2.1 2000/11/20 20:13:01 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -119,8 +119,6 @@
 
 #include <machine/bswap.h>
 
-#define	b_cylin	b_resid
-
 #define NUM_PARTS 32
 
 #define ROOT_PART 1
@@ -189,8 +187,10 @@ whichType(part)
 	if (strcmp(PART_TYPE_DRIVER, typestr) == 0 ||
 	    strcmp(PART_TYPE_DRIVER43, typestr) == 0 ||
 	    strcmp(PART_TYPE_DRIVERATA, typestr) == 0 ||
+	    strcmp(PART_TYPE_DRIVERIOKIT, typestr) == 0 ||
 	    strcmp(PART_TYPE_FWB_COMPONENT, typestr) == 0 ||
-	    strcmp(PART_TYPE_PARTMAP, typestr) == 0)
+	    strcmp(PART_TYPE_PARTMAP, typestr) == 0 ||
+	    strcmp(PART_TYPE_PATCHES, typestr) == 0)
 		type = 0;
 	else if (strcmp(PART_TYPE_UNIX, typestr) == 0) {
 		/* unix part, swap, root, usr */
@@ -199,7 +199,7 @@ whichType(part)
 			type = 0;
 		else if (bzb->bzbFlags & BZB_ROOTFS)
 			type = ROOT_PART;
-		else if (bzb->bzbFlags & BZB_USRFS)
+		else if (bzb->bzbFlags & (BZB_USRFS | BZB_USRFS_NEW))
 			type = UFS_PART;
 		else if (bzb->bzbType == BZB_TYPESWAP)
 			type = SWAP_PART;
@@ -311,7 +311,7 @@ read_mac_label(dev, strat, lp, osdep)
 	bp->b_blkno = 1;	/* partition map starts at blk 1 */
 	bp->b_bcount = lp->d_secsize * NUM_PARTS;
 	bp->b_flags = B_BUSY | B_READ;
-	bp->b_cylin = 1 / lp->d_secpercyl;
+	bp->b_cylinder = 1 / lp->d_secpercyl;
 	(*strat)(bp);
 
 	if (biowait(bp)) {
@@ -400,7 +400,7 @@ read_dos_label(dev, strat, lp, osdep)
 	bp->b_blkno = MBR_BBSECTOR;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_BUSY | B_READ;
-	bp->b_cylin = MBR_BBSECTOR / lp->d_secpercyl;
+	bp->b_cylinder = MBR_BBSECTOR / lp->d_secpercyl;
 	(*strat)(bp);
 
 	/* if successful, wander through dos partition table */
@@ -519,20 +519,19 @@ readdisklabel(dev, strat, lp, osdep)
 	bp->b_resid = 0;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_BUSY | B_READ;
-	bp->b_cylin = 1 / lp->d_secpercyl;
+	bp->b_cylinder = 1 / lp->d_secpercyl;
 	(*strat)(bp);
 
 	osdep->cd_start = -1;
 
-	if (biowait(bp)) {
+	if (biowait(bp))
 		msg = "I/O error reading block zero";
-	} if (get_netbsd_label(dev, strat, lp, 0)) {
+	else if (get_netbsd_label(dev, strat, lp, 0))
 		osdep->cd_start = 0;
-		msg = "NetBSD disklabel";
-	} else {
+	else {
 		u_int16_t *sbSigp;
 
-		sbSigp = (u_int16_t *)bp->b_un.b_addr;
+		sbSigp = (u_int16_t *)bp->b_data;
 		if (*sbSigp == 0x4552) {
 			msg = read_mac_label(dev, strat, lp, osdep);
 		} else if (bswap16(*(u_int16_t *)(bp->b_data + MBR_MAGICOFF))

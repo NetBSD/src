@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.11 1999/09/17 19:59:41 thorpej Exp $	*/
+/*	$NetBSD: extintr.c,v 1.11.2.1 2000/11/20 20:06:04 bouyer Exp $	*/
 /*      $OpenBSD: isabus.c,v 1.1 1997/10/11 11:53:00 pefo Exp $ */
 
 /*-
@@ -44,8 +44,7 @@
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 
-#include <vm/vm.h>
-#include <vm/vm_kern.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/intr.h>
 #include <machine/psl.h>
@@ -318,7 +317,7 @@ intr_calculatemasks()
 	/*
 	 * Initialize the soft interrupt masks to block themselves.
 	 */
-	imask[IPL_SOFTCLOCK] = SINT_SERIAL;
+	imask[IPL_SOFTCLOCK] = SINT_CLOCK;
 	imask[IPL_SOFTNET] = SINT_NET;
 	imask[IPL_SOFTSERIAL] = SINT_SERIAL;
 

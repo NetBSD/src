@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.22 1999/08/04 15:54:28 thorpej Exp $	*/
+/*	$NetBSD: intr.c,v 1.22.2.1 2000/11/20 20:19:22 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994 Matthias Pfaller.
@@ -33,8 +33,6 @@
 #define DEFINE_SPLX
 #include <sys/param.h>
 #include <sys/systm.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 

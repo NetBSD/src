@@ -1,4 +1,4 @@
-/*	$NetBSD: vmem.c,v 1.3 1999/09/26 02:42:52 takemura Exp $	*/
+/*	$NetBSD: vmem.c,v 1.3.2.1 2000/11/20 20:39:27 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura.
@@ -113,6 +113,7 @@ vmem_exec(caddr_t entry, int argc, char *argv[], struct bootinfo *bi)
 
 	debug_printf(TEXT("execute startprog()\n"));
 	//return (-1);
+	close_debug_log();
 	return ((*system_info.si_boot)(vtophysaddr((caddr_t)map)));
 }
 

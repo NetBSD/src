@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.5 1999/09/21 13:16:15 tsubai Exp $	*/
+/*	$NetBSD: machdep.c,v 1.5.2.1 2000/11/20 20:07:35 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -76,6 +76,7 @@
  */
 
 #include "opt_ddb.h"
+#include "opt_syscall_debug.h"
 #include "opt_memsize.h"
 #include "opt_initbsc.h"
 
@@ -91,7 +92,6 @@
 #include <sys/reboot.h>
 #include <sys/conf.h>
 #include <sys/file.h>
-#include <sys/callout.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/msgbuf.h>
@@ -106,10 +106,6 @@
 #endif
 
 #include <dev/cons.h>
-
-#include <vm/vm.h>
-#include <vm/vm_kern.h>
-#include <vm/vm_page.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -185,6 +181,9 @@ void sh3_cache_on __P((void));
 void LoadAndReset __P((char *));
 void XLoadAndReset __P((char *));
 void Sh3Reset __P((void));
+#ifdef SH4
+void sh4_cache_flush __P((vaddr_t));
+#endif
 
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>
@@ -213,11 +212,6 @@ cpu_startup()
 	boothowto |= RB_SINGLE;
 #endif
 }
-
-/*
- * Info for CTL_HW
- */
-extern	char version[];
 
 #define CPUDEBUG
 
@@ -290,7 +284,6 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 }
 
 int waittime = -1;
-int cold = 1;
 struct pcb dumppcb;
 
 void
@@ -438,7 +431,7 @@ dumpsys()
 
 #if 0	/* XXX this doesn't work.  grr. */
         /* toss any characters present prior to dump */
-	while (sget() != NULL); /*syscons and pccons differ */
+	while (sget() != NULL); /* syscons and pccons differ */
 #endif
 
 	bytes = ctob(dumpmem_high) + IOM_END;
@@ -521,7 +514,7 @@ dumpsys()
 /*
  * Initialize segments and descriptor tables
  */
-#define VBRINIT		((char *)0x8c000000)
+#define VBRINIT		((char *)IOM_RAM_BEGIN)
 #define Trap100Vec	(VBRINIT + 0x100)
 #define Trap600Vec	(VBRINIT + 0x600)
 #define TLBVECTOR	(VBRINIT + 0x400)
@@ -576,9 +569,9 @@ initSH3(pc)
 	pagetab = (void *)(avail + SYSMAP);
 
 	/*
-	 *	Construct a page table directory
-	 *	In SH3 H/W does not support PTD,
-	 *	these structures are used by S/W.
+	 * Construct a page table directory
+	 * In SH3 H/W does not support PTD,
+	 * these structures are used by S/W.
 	 */
 	pte = (pt_entry_t)pagetab;
 	pte |= PG_KW | PG_V | PG_4K | PG_M | PG_N;
@@ -609,12 +602,11 @@ initSH3(pc)
 	 * Activate MMU
 	 */
 
-#define MMUCR_AT	0x0001	/* address traslation enable */
-#define MMUCR_IX	0x0002	/* index mode */
-#define MMUCR_TF	0x0004	/* TLB flush */
-#define MMUCR_SV	0x0100	/* single virtual space mode */
-
+#ifdef SH4
+	SHREG_MMUCR = MMUCR_AT | MMUCR_TF | MMUCR_SV | MMUCR_SQMD;
+#else
 	SHREG_MMUCR = MMUCR_AT | MMUCR_TF | MMUCR_SV;
+#endif
 
 	/*
 	 * Now here is virtual address
@@ -857,6 +849,7 @@ sh_memio_unmap(t, bsh, size)
 	return;
 }
 
+#if !defined(DONT_INIT_BSC)
 /*
  * InitializeBsc
  * : BSC(Bus State Controler)
@@ -883,7 +876,7 @@ InitializeBsc()
 	 * Area1 = 8bit
 	 * Area2,3: Bus width = 32bit
 	 */
-	 SHREG_BCR2 = BSC_BCR2_VAL;
+	SHREG_BCR2 = BSC_BCR2_VAL;
 
 	/*
 	 * Idle cycle number in transition area and read to write
@@ -903,7 +896,7 @@ InitializeBsc()
 	 */
 	SHREG_WCR2 = BSC_WCR2_VAL;
 
-#ifdef SH4
+#if defined(SH4) && defined(BSC_WCR3_VAL)
 	SHREG_WCR3 = BSC_WCR3_VAL;
 #endif
 
@@ -916,18 +909,24 @@ InitializeBsc()
 	 */
 	SHREG_MCR = BSC_MCR_VAL;
 
-#ifdef BSC_SDMR_VAL
-#if 1
-#define SDMR	(*(volatile unsigned char  *)BSC_SDMR_VAL)
+#if defined(BSC_SDMR2_VAL)
+#define SDMR2	(*(volatile unsigned char  *)BSC_SDMR2_VAL)
 
-	SDMR = 0;
+	SDMR2 = 0;
+#endif
+
+#if defined(BSC_SDMR3_VAL)
+#if !(defined(COMPUTEXEVB) && defined(SH7709A))
+#define SDMR3	(*(volatile unsigned char  *)BSC_SDMR3_VAL)
+
+	SDMR3 = 0;
 #else
 #define ADDSET	(*(volatile unsigned short *)0x1A000000)
 #define ADDRST	(*(volatile unsigned short *)0x18000000)
-#define SDMR	(*(volatile unsigned char  *)BSC_SDMR_VAL)
+#define SDMR3	(*(volatile unsigned char  *)BSC_SDMR3_VAL)
 
 	ADDSET = 0;
-	SDMR = 0;
+	SDMR3 = 0;
 	ADDRST = 0;
 #endif
 #endif
@@ -938,7 +937,7 @@ InitializeBsc()
 	 * OE/WE negate-address delay 3.5 cycle
 	 */
 #ifdef BSC_PCR_VAL
-	SHREG_PCR = 0x00ff;
+	SHREG_PCR = BSC_PCR_VAL;
 #endif
 
 	/*
@@ -955,7 +954,9 @@ InitializeBsc()
 	 * Refresh Timer Counter
 	 * Initialize to 0
 	 */
+#ifdef BSC_RTCNT_VAL
 	SHREG_RTCNT = BSC_RTCNT_VAL;
+#endif
 
 	/* set Refresh Time Constant Register */
 	SHREG_RTCOR = BSC_RTCOR_VAL;
@@ -971,22 +972,55 @@ InitializeBsc()
 
 #ifndef MMEYE_NO_CACHE
 	/* Cache ON */
-	SHREG_CCR = 0x0001;
+	SHREG_CCR = CCR_CE;
 #endif
 }
+#endif
 
 void
 sh3_cache_on(void)
 {
 #ifndef MMEYE_NO_CACHE
 	/* Cache ON */
-	SHREG_CCR = 0x0001;
-	SHREG_CCR = 0x0009; /* cache clear */
-	SHREG_CCR = 0x0001; /* cache on */
+	SHREG_CCR = CCR_CE;
+	SHREG_CCR = CCR_CF | CCR_CE;	/* cache clear */
+	SHREG_CCR = CCR_CE;		/* cache on */
 #endif
 }
 
+#ifdef SH4
+void
+sh4_cache_flush(addr)
+	vaddr_t addr;
+{
+#if 1
+#define SH_ADDR_ARRAY_BASE_ADDR 0xf4000000
+#define WRITE_ADDR_ARRAY( entry ) \
+	(*(volatile u_int32_t *)(SH_ADDR_ARRAY_BASE_ADDR|(entry)|0x00))
+
+	int entry;
+
+	entry = ((u_int32_t)addr) & 0x3fe0;
+
+	WRITE_ADDR_ARRAY(entry) = 0;
+#else
+	volatile int *p = (int *)IOM_RAM_BEGIN;
+	int i;
+	/* volatile */int d;
+
+	for(i = 0; i < 512; i++){
+		d = *p;
+		p += 8;
+	}
+#endif
+}
+#endif
+
 #include <machine/mmeye.h>
+
+ /* XXX This value depends on physical available memory */
+#define OSIMAGE_BUF_ADDR	(IOM_RAM_BEGIN + 0x00400000)
+
 void
 LoadAndReset(osimage)
 	char *osimage;
@@ -998,9 +1032,6 @@ LoadAndReset(osimage)
 	u_long csum = 0;
 	u_long csum2 = 0;
 	u_long size2;
-#define OSIMAGE_BUF_ADDR 0x8c400000 /* !!!!!! This value depends on physical
-				       available memory */
-
 
 	printf("LoadAndReset: copy start\n");
 	buf_addr = (void *)OSIMAGE_BUF_ADDR;

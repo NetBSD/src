@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 1996/03/08 12:41:33 ragge Exp $
+#	$NetBSD: Makefile,v 1.1.30.1 2000/11/20 20:32:44 bouyer Exp $
 #	@(#)Makefile	7.2 (Berkeley) 5/8/91
 
 BOOTS=	boot
@@ -22,7 +22,7 @@ defboo.com:
 	@/bin/false	#force exits
 
 boot:	../boot/boot
-	(cd ../boot;make boot)
+	(cd ../boot; ${MAKE} boot)
 	dd if=../boot/boot of=boot bs=32 skip=1
 
 clean:

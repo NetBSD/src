@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.21 1998/04/29 23:11:01 thorpej Exp $	*/
+/*	$NetBSD: param.h,v 1.21.14.1 2000/11/20 20:19:20 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -78,7 +78,7 @@
 #define	PGOFSET		(NBPG-1)	/* byte offset into page */
 #define	NPTEPG		(NBPG/(sizeof (pt_entry_t)))
 
-#define	KERNBASE	0xF8000000	/* start of kernel virtual */
+#define	KERNBASE	0xE0000000	/* start of kernel virtual */
 #define	BTOPKERNBASE	((u_long)KERNBASE >> PGSHIFT)
 
 #define	DEV_BSHIFT	9		/* log2(DEV_BSIZE) */
@@ -86,10 +86,6 @@
 #define BLKDEV_IOSIZE	4096		/* Was 2048 (pan) */
 #define	MAXPHYS		(128 * 1024)	/* max raw I/O transfer size */
 
-#define	CLSIZELOG2	0
-#define	CLSIZE		(1 << CLSIZELOG2)
-
-/* NOTE: SSIZE, SINCR and UPAGES must be multiples of CLSIZE */
 #define	SSIZE	1		/* initial stack size/NBPG */
 #define	SINCR	1		/* increment of stack/NBPG */
 #define	UPAGES	2		/* pages of u-area */
@@ -107,7 +103,7 @@
  * of the hardware page size.
  */
 #ifndef	MSIZE
-#define	MSIZE		128		/* size of an mbuf */
+#define	MSIZE		256		/* size of an mbuf */
 #endif	/* MSIZE */
 
 #ifndef	MCLSHIFT
@@ -130,11 +126,11 @@
 #endif
 
 /*
- * Size of kernel malloc arena in CLBYTES-sized logical pages
- */ 
-#ifndef NKMEMCLUSTERS
-#define	NKMEMCLUSTERS	(2 * 1024 * 1024/CLBYTES)
-#endif
+ * Minimum and maximum sizes of the kernel malloc arena in PAGE_SIZE-sized
+ * logical pages.
+ */
+#define	NKMEMPAGES_MIN_DEFAULT	((4 * 1024 * 1024) >> PAGE_SHIFT)
+#define	NKMEMPAGES_MAX_DEFAULT	((4 * 1024 * 1024) >> PAGE_SHIFT)
 
 /*
  * Some macros for units conversion

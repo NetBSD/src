@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.23 1999/09/25 00:00:37 shin Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.23.2.1 2000/11/20 20:13:30 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -81,9 +81,11 @@
 #define MIPS_MAX_MEM_ADDR		0xbe000000
 #define MIPS_RESERVED_ADDR		0xbfc80000
 
-#define MIPS_KSEG0_TO_PHYS(x)	((unsigned)(x) & 0x1fffffff)
+#define MIPS_PHYS_MASK			0x1fffffff
+
+#define MIPS_KSEG0_TO_PHYS(x)	((unsigned)(x) & MIPS_PHYS_MASK)
 #define MIPS_PHYS_TO_KSEG0(x)	((unsigned)(x) | MIPS_KSEG0_START)
-#define MIPS_KSEG1_TO_PHYS(x)	((unsigned)(x) & 0x1fffffff)
+#define MIPS_KSEG1_TO_PHYS(x)	((unsigned)(x) & MIPS_PHYS_MASK)
 #define MIPS_PHYS_TO_KSEG1(x)	((unsigned)(x) | MIPS_KSEG1_START)
 
 /* Map virtual address to index in mips3 r4k virtually-indexed cache */
@@ -143,10 +145,6 @@
 /*#define MIPS_SR_MBZ		0x0f8000c0*/	/* Never used, true for r3k */
 /*#define MIPS_SR_INT_MASK	0x0000ff00*/
 
-#define MIPS_SR_INT_ENAB	MIPS_SR_INT_IE	/* backwards compatibility */
-#define MIPS_SR_INT_ENA_CUR	MIPS_SR_INT_IE	/* backwards compatibility */
-
-
 
 /*
  * The R2000/R3000-specific status register bit definitions.
@@ -199,6 +197,9 @@
 #define MIPS3_SR_FR_32		0x04000000
 #define MIPS3_SR_RE		0x02000000
 
+#define MIPS3_SR_DIAG_DL	0x01000000		/* QED 52xx */
+#define MIPS3_SR_DIAG_IL	0x00800000		/* QED 52xx */
+#define MIPS3_SR_DIAG_BEV	0x00400000
 #define MIPS3_SR_SOFT_RESET	0x00100000
 #define MIPS3_SR_DIAG_CH	0x00040000
 #define MIPS3_SR_DIAG_CE	0x00020000
@@ -245,11 +246,16 @@
 #define MIPS_SOFT_INT_MASK_0	0x0100
 
 /*
- * mips3 CPUs have on-chip timer at INT_MASK_5. We don't support it yet.
+ * mips3 CPUs have on-chip timer at INT_MASK_5.  Each platform can
+ * choose to enable this interrupt.
  */
+#if defined(MIPS3_ENABLE_CLOCK_INTR)
+#define MIPS3_INT_MASK			MIPS_INT_MASK
+#define MIPS3_HARD_INT_MASK		MIPS_HARD_INT_MASK
+#else
 #define MIPS3_INT_MASK			(MIPS_INT_MASK &  ~MIPS_INT_MASK_5)
 #define MIPS3_HARD_INT_MASK		(MIPS_HARD_INT_MASK & ~MIPS_INT_MASK_5)
-
+#endif
 
 /*
  * The bits in the context register.
@@ -285,13 +291,15 @@
 #define MIPS3_CONFIG_DC_SHIFT	6
 #define MIPS3_CONFIG_IC_MASK	0x00000e00	/* Primary I-cache size */
 #define MIPS3_CONFIG_IC_SHIFT	9
+#define MIPS3_CONFIG_C_DEFBASE	0x1000		/* default base 2^12 */
 #ifdef MIPS3_4100				/* VR4100 core */
+/* XXXCDC: THIS MIPS3_4100 SPECIAL CASE SHOULD GO AWAY */
 #define MIPS3_CONFIG_CS		0x00001000	/* cache size mode indication*/
-#define MIPS3_CONFIG_CACHE_SIZE(config, mask, shift) \
+#define MIPS3_CONFIG_CACHE_SIZE(config, mask, dummy, shift) \
 	((((config)&MIPS3_CONFIG_CS)?0x400:0x1000) << (((config) & (mask)) >> (shift)))
 #else
-#define MIPS3_CONFIG_CACHE_SIZE(config, mask, shift) \
-	(0x1000 << (((config) & (mask)) >> (shift)))
+#define MIPS3_CONFIG_CACHE_SIZE(config, mask, base, shift) \
+	((base) << (((config) & (mask)) >> (shift)))
 #endif
 
 /* Block ordering: 0: sequential, 1: sub-block */
@@ -309,7 +317,7 @@
 /* Secondary Cache - 0: present, 1: not present */
 #define MIPS3_CONFIG_SC		0x00020000
 
-/* System Port width - 0: 64-bit, 1,2,3: reserved */
+/* System Port width - 0: 64-bit, 1: 32-bit (QED RM523x), 2,3: reserved */
 #define MIPS3_CONFIG_EW_MASK	0x000c0000
 #define MIPS3_CONFIG_EW_SHIFT	18
 
@@ -325,7 +333,7 @@
 #define MIPS3_CONFIG_CACHE_L2_LSIZE(config) \
 	(0x10 << (((config) & MIPS3_CONFIG_SB_MASK) >> MIPS3_CONFIG_SB_SHIFT))
 
-/* write back data rate */
+/* Write back data rate */
 #define MIPS3_CONFIG_EP_MASK	0x0f000000
 #define MIPS3_CONFIG_EP_SHIFT	24
 
@@ -483,6 +491,10 @@
  */
 #define MIPS_OPCODE_SHIFT	26
 #define MIPS_OPCODE_C1		0x11
+#define MIPS_OPCODE_LWC1	0x31
+#define MIPS_OPCODE_LDC1	0x35
+#define MIPS_OPCODE_SWC1	0x39
+#define MIPS_OPCODE_SDC1	0x3d
 
 
 
@@ -562,7 +574,7 @@
 
 #define MIPS3_TLB_NUM_TLB_ENTRIES	48
 #define MIPS_R4300_TLB_NUM_TLB_ENTRIES	32
-#define MIPS3_TLB_WIRED_ENTRIES		8	/* XXX gross XXX */
+#define MIPS3_TLB_WIRED_UPAGES		2
 
 
 /*
@@ -573,9 +585,6 @@
 
 /*
  * Patch codes to hide CPU design differences between MIPS1 and MIPS3.
- *
- * XXX INT_MASK and HARD_INT_MASK are here only because we dont
- * support the mips3 on-chip timer which is tied to INT_5.
  */
 
 #if !defined(MIPS3) && defined(MIPS1)
@@ -601,29 +610,31 @@
 /*
  * CPU processor revision ID
  */
-#define MIPS_R2000	0x01	/* MIPS R2000 CPU		ISA I	*/
-#define MIPS_R3000	0x02	/* MIPS R3000 CPU		ISA I	*/
-#define MIPS_R6000	0x03	/* MIPS R6000 CPU		ISA II	*/
-#define MIPS_R4000	0x04	/* MIPS R4000/4400 CPU		ISA III */
-#define MIPS_R3LSI	0x05	/* LSI Logic R3000 derivate	ISA I	*/
-#define MIPS_R6000A	0x06	/* MIPS R6000A CPU		ISA II	*/
-#define MIPS_R3IDT	0x07	/* IDT R3041 or RC36100 CPU	ISA I	*/
-#define MIPS_R10000	0x09	/* MIPS R10000/T5 CPU		ISA IV	*/
-#define MIPS_R4200	0x0a	/* NEC VR4200 CPU		ISA III */
-#define MIPS_R4300	0x0b	/* NEC VR4300 CPU		ISA III */
-#define MIPS_R4100	0x0c	/* NEC VR4100 CPU		ISA III */
+#define MIPS_R2000	0x01	/* MIPS R2000 			ISA I	*/
+#define MIPS_R3000	0x02	/* MIPS R3000 			ISA I	*/
+#define MIPS_R6000	0x03	/* MIPS R6000 			ISA II	*/
+#define MIPS_R4000	0x04	/* MIPS R4000/R4400 		ISA III */
+#define MIPS_R3LSI	0x05	/* LSI Logic R3000 derivative	ISA I	*/
+#define MIPS_R6000A	0x06	/* MIPS R6000A 			ISA II	*/
+#define MIPS_R3IDT	0x07	/* IDT R3041 or RC36100 	ISA I	*/
+#define MIPS_R10000	0x09	/* MIPS R10000/T5 		ISA IV	*/
+#define MIPS_R4200	0x0a	/* NEC VR4200 			ISA III */
+#define MIPS_R4300	0x0b	/* NEC VR4300 			ISA III */
+#define MIPS_R4100	0x0c	/* NEC VR4100 			ISA III */
+#define MIPS_R12000	0x0e	/* MIPS R12000			ISA IV	*/
 #define MIPS_R8000	0x10	/* MIPS R8000 Blackbird/TFP	ISA IV	*/
 #define MIPS_R4600	0x20	/* QED R4600 Orion		ISA III */
 #define MIPS_R4700	0x21	/* QED R4700 Orion		ISA III */
-#define MIPS_R4650	0x22	/* !ID crash! QED R4650 CPU	ISA III */
-#define MIPS_TX3900	0x22	/* !ID crash! Toshiba R3000 CPU ISA I	*/
-#define MIPS_R5000	0x23	/* MIPS R5000 CPU		ISA IV	*/
-#define MIPS_RC32364	0x26	/* IDT RC32364 CPU		ISA II	*/
-#define MIPS_RM5230	0x28	/* QED RM5230 CPU		ISA IV	*/
-#define MIPS_RC64470	0x30	/* IDT RC64474/RC64475 CPU	ISA III */
-#define MIPS_R3SONY	0x21	/* ? Sony R3000 based CPU	ISA I	*/
-#define MIPS_R3NKK	0x23	/* ? NKK R3000 based CPU	ISA I	*/
-#define MIPS_R5400	0x54	/* NEC VR5400 CPU		ISA IV	*/
+#define MIPS_R3SONY	0x21	/* Sony R3000 based 		ISA I	*/
+#define MIPS_R4650	0x22	/* QED R4650 			ISA III */
+#define MIPS_TX3900	0x22	/* Toshiba R3000		ISA I	*/
+#define MIPS_R5000	0x23	/* MIPS R5000 			ISA IV	*/
+#define MIPS_R3NKK	0x23	/* NKK R3000 based 		ISA I	*/
+#define MIPS_RC32364	0x26	/* IDT RC32364 			ISA II	*/
+#define MIPS_RM7000	0x27	/* QED RM7000			ISA IV  */
+#define MIPS_RM5200	0x28	/* QED RM5200s 			ISA IV	*/
+#define MIPS_RC64470	0x30	/* IDT RC64474/RC64475 		ISA III */
+#define MIPS_R5400	0x54	/* NEC VR5400 			ISA IV	*/
 
 /*
  * FPU processor revision ID
@@ -637,14 +648,11 @@
 #define MIPS_R31LSI	0x06	/* LSI Logic derivate		ISA I	*/
 #define MIPS_R10010	0x09	/* MIPS R10000/T5 FPU		ISA IV	*/
 #define MIPS_R4210	0x0a	/* NEC VR4210 FPC		ISA III */
-#define MIPS_R4300	0x0b	/* NEC VR4300 FPC		ISA III */
-#define MIPS_R8000	0x10	/* MIPS R8000 Blackbird/TFP	ISA IV	*/
-#define MIPS_R4600	0x20	/* QED R4600 Orion FPU		ISA III */
+#define MIPS_R3TOSH	0x22	/* Toshiba R3000 based FPU	ISA I	*/
 #define MIPS_R5010	0x23	/* MIPS R5000 FPU		ISA IV	*/
-#define MIPS_RC32364	0x26	/* IDT RC32364 FPU		ISA II	*/
-#define MIPS_RM5230	0x28	/* QED RM5230 FPU		ISA IV	*/
-#define MIPS_R3SONY	0x21	/* ? Sony R3000 based FPU	ISA I	*/
-#define MIPS_R3TOSH	0x22	/* ? Toshiba R3000 based FPU	ISA I	*/
-#define MIPS_R3NKK	0x23	/* ? NKK R3000 based FPU	ISA I	*/
+
+#ifdef ENABLE_MIPS_TX3900
+#include <mips/r3900regs.h>
+#endif
 
 #endif /* _MIPS_CPUREGS_H_ */

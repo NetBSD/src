@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.26 1999/09/14 17:11:45 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.26.2.1 2000/11/20 20:31:17 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -37,9 +37,6 @@
 #include <sys/user.h>
 #include <sys/queue.h>
 #include <sys/systm.h>
-
-#include <vm/vm.h>
-#include <vm/vm_kern.h>
 
 #include <uvm/uvm.h>
 
@@ -400,13 +397,23 @@ pmap_bootstrap(kernelstart, kernelend)
 		}
 	}
 
-#ifdef	HTABENTS
+	/*
+	 * The PEM recommends that the total number of PTEGs should be
+	 * at least 1/2 of the number of physical pages.
+	 */
+#ifdef HTABENTS
 	ptab_cnt = HTABENTS;
-#else /* HTABENTS */
-	ptab_cnt = 1024;
-	while ((HTABSIZE << 7) < ctob(physmem))
-		ptab_cnt <<= 1;
-#endif /* HTABENTS */
+#else
+	ptab_cnt = (physmem + 1) / 2;
+
+	/* The minimum is 1024 PTEGs. */
+	if (ptab_cnt < 1024)
+		ptab_cnt = 1024;
+
+	/* Round up to power of 2. */
+	asm ("cntlzw %0,%1" : "=r"(i) : "r"(ptab_cnt - 1));
+	ptab_cnt = 1 << (32 - i);
+#endif
 
 	/*
 	 * Find suitably aligned memory for HTAB.
@@ -773,7 +780,7 @@ pmap_free_pv(pv)
 {
 	struct pv_page *pvp;
 	
-	pvp = (struct pv_page *)trunc_page(pv);
+	pvp = (struct pv_page *)trunc_page((vaddr_t)pv);
 	switch (++pvp->pvp_pgi.pgi_nfree) {
 	case 1:
 		LIST_INSERT_HEAD(&pv_page_freelist, pvp, pvp_pgi.pgi_list);
@@ -839,7 +846,7 @@ pofree(po, freepage)
 {
 	struct po_page *pop;
 	
-	pop = (struct po_page *)trunc_page(po);
+	pop = (struct po_page *)trunc_page((vaddr_t)po);
 	switch (++pop->pop_pgi.pgi_nfree) {
 	case NPOPPG:
 		if (!freepage)
@@ -952,14 +959,13 @@ pmap_remove_pv(pteidx, va, pa, pte)
 /*
  * Insert physical page at pa into the given pmap at virtual address va.
  */
-void
-pmap_enter(pm, va, pa, prot, wired, access_type)
+int
+pmap_enter(pm, va, pa, prot, flags)
 	struct pmap *pm;
 	vaddr_t va;
 	paddr_t pa;
 	vm_prot_t prot;
-	int wired;
-	vm_prot_t access_type;
+	int flags;
 {
 	sr_t sr;
 	int idx, i, s;
@@ -967,6 +973,7 @@ pmap_enter(pm, va, pa, prot, wired, access_type)
 	struct pte_ovfl *po;
 	int managed;
 	struct mem_region *mp;
+	boolean_t wired = (flags & PMAP_WIRED) != 0;
 
 	/*
 	 * Have to remove any existing mapping first.
@@ -1018,7 +1025,7 @@ pmap_enter(pm, va, pa, prot, wired, access_type)
 	 */
 	if (pte_insert(idx, &pte)) {
 		splx(s);
-		return;
+		return (KERN_SUCCESS);
 	}
 
 	/*
@@ -1030,6 +1037,8 @@ pmap_enter(pm, va, pa, prot, wired, access_type)
 	po->po_pte = pte;
 	LIST_INSERT_HEAD(potable + idx, po, po_list);
 	splx(s);
+
+	return (KERN_SUCCESS);
 }
 
 void
@@ -1038,7 +1047,7 @@ pmap_kenter_pa(va, pa, prot)
 	paddr_t pa;
 	vm_prot_t prot;
 {
-	pmap_enter(pmap_kernel(), va, pa, prot, TRUE, 0);
+	pmap_enter(pmap_kernel(), va, pa, prot, PMAP_WIRED);
 }
 
 void
@@ -1051,7 +1060,7 @@ pmap_kenter_pgs(va, pgs, npgs)
 
 	for (i = 0; i < npgs; i++, va += PAGE_SIZE) {
 		pmap_enter(pmap_kernel(), va, VM_PAGE_TO_PHYS(pgs[i]),
-				VM_PROT_READ|VM_PROT_WRITE, TRUE, 0);
+				VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED);
 	}
 }
 

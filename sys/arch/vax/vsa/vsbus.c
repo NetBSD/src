@@ -1,6 +1,6 @@
-/*	$NetBSD: vsbus.c,v 1.19 1999/08/27 17:45:57 ragge Exp $ */
+/*	$NetBSD: vsbus.c,v 1.19.2.1 2000/11/20 20:33:40 bouyer Exp $ */
 /*
- * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
+ * Copyright (c) 1996, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
  *
  * This code is derived from software contributed to Ludd by Bertram Barth.
@@ -47,7 +47,9 @@
 #include <sys/syslog.h>
 #include <sys/stat.h>
 
-#define	_VAX_BUS_DMA_PRIVATE
+#include <uvm/uvm_extern.h>
+
+#define _VAX_BUS_DMA_PRIVATE
 #include <machine/bus.h>
 #include <machine/pte.h>
 #include <machine/sid.h>
@@ -64,16 +66,14 @@
 #include <machine/vsbus.h>
 
 #include "ioconf.h"
+#include "opt_cputype.h"
 
-int	vsbus_match	__P((struct device *, struct cfdata *, void *));
-void	vsbus_attach	__P((struct device *, struct device *, void *));
-int	vsbus_print	__P((void *, const char *));
-int	vsbus_search	__P((struct device *, struct cfdata *, void *));
+int	vsbus_match(struct device *, struct cfdata *, void *);
+void	vsbus_attach(struct device *, struct device *, void *);
+int	vsbus_print(void *, const char *);
+int	vsbus_search(struct device *, struct cfdata *, void *);
 
-void	ka410_attach	__P((struct device *, struct device *, void *));
-void	ka43_attach	__P((struct device *, struct device *, void *));
-
-struct vax_bus_dma_tag vsbus_bus_dma_tag = {
+static struct vax_bus_dma_tag vsbus_bus_dma_tag = {
 	0,
 	0,
 	0,
@@ -95,16 +95,8 @@ struct vax_bus_dma_tag vsbus_bus_dma_tag = {
 	_bus_dmamem_mmap,
 };
 
-struct	vsbus_softc {
-	struct	device sc_dev;
-#if 0
-	volatile struct vs_cpu *sc_cpu;
-#endif
-	u_char	*sc_intmsk;	/* Mask register */
-	u_char	*sc_intclr;	/* Clear interrupt register */
-	u_char	*sc_intreq;	/* Interrupt request register */
-	u_char	sc_mask;	/* Interrupts to enable after autoconf */
-};
+extern struct vax_bus_space vax_mem_bus_space;
+static SIMPLEQ_HEAD(, vsbus_dma) vsbus_dma;
 
 struct	cfattach vsbus_ca = { 
 	sizeof(struct vsbus_softc), vsbus_match, vsbus_attach
@@ -139,26 +131,53 @@ vsbus_attach(parent, self, aux)
 	void	*aux;
 {
 	struct	vsbus_softc *sc = (void *)self;
-	vaddr_t temp;
+	int dbase, dsize;
 
 	printf("\n");
 
+	sc->sc_dmatag = vsbus_bus_dma_tag;
+
 	switch (vax_boardtype) {
+#if VAX49
 	case VAX_BTYP_49:
-		temp = vax_map_physmem(0x25c00000, 1);
-		sc->sc_intreq = (char *)temp + 12;
-		sc->sc_intclr = (char *)temp + 12;
-		sc->sc_intmsk = (char *)temp + 8;
+		sc->sc_vsregs = vax_map_physmem(0x25c00000, 1);
+		sc->sc_intreq = (char *)sc->sc_vsregs + 12;
+		sc->sc_intclr = (char *)sc->sc_vsregs + 12;
+		sc->sc_intmsk = (char *)sc->sc_vsregs + 8;
+		vsbus_dma_init(sc, 8192);
 		break;
+#endif
+
+#if VAX46 || VAX48
+	case VAX_BTYP_48:
+	case VAX_BTYP_46:
+		sc->sc_vsregs = vax_map_physmem(VS_REGS, 1);
+		sc->sc_intreq = (char *)sc->sc_vsregs + 15;
+		sc->sc_intclr = (char *)sc->sc_vsregs + 15;
+		sc->sc_intmsk = (char *)sc->sc_vsregs + 12;
+		vsbus_dma_init(sc, 32768);
+#endif
 
 	default:
-		temp = vax_map_physmem(VS_REGS, 1);
-		sc->sc_intreq = (char *)temp + 15;
-		sc->sc_intclr = (char *)temp + 15;
-		sc->sc_intmsk = (char *)temp + 12;
+		sc->sc_vsregs = vax_map_physmem(VS_REGS, 1);
+		sc->sc_intreq = (char *)sc->sc_vsregs + 15;
+		sc->sc_intclr = (char *)sc->sc_vsregs + 15;
+		sc->sc_intmsk = (char *)sc->sc_vsregs + 12;
+		if (vax_boardtype == VAX_BTYP_410) {
+			dbase = KA410_DMA_BASE;
+			dsize = KA410_DMA_SIZE;
+		} else {
+			dbase = KA420_DMA_BASE;
+			dsize = KA420_DMA_SIZE;
+			*(char *)(sc->sc_vsregs + 0xe0) = 1; /* Big DMA */
+		}
+		sc->sc_dmasize = dsize;
+		sc->sc_dmaaddr = uvm_km_valloc(kernel_map, dsize);
+		ioaccess(sc->sc_dmaaddr, dbase, dsize/VAX_NBPG);
 		break;
 	}
 
+	SIMPLEQ_INIT(&vsbus_dma);
 	/*
 	 * First: find which interrupts we won't care about.
 	 * There are interrupts that interrupt on a periodic basic
@@ -192,7 +211,8 @@ vsbus_search(parent, cf, aux)
 
 	va.va_paddr = cf->cf_loc[0];
 	va.va_addr = vax_map_physmem(va.va_paddr, 1);
-	va.va_dmat = &vsbus_bus_dma_tag;
+	va.va_dmat = &sc->sc_dmatag;
+	va.va_iot = &vax_mem_bus_space;
 
 	*sc->sc_intmsk = 0;
 	*sc->sc_intclr = 0xff;
@@ -218,11 +238,13 @@ vsbus_search(parent, cf, aux)
 	if (vec == 0)
 		goto fail;
 
-	scb_vecalloc(vec, va.va_ivec, cf->cf_unit, SCB_ISTACK);
 	va.va_br = br;
 	va.va_cvec = vec;
-
+	va.va_dmaaddr = sc->sc_dmaaddr;
+	va.va_dmasize = sc->sc_dmasize;
+	*sc->sc_intmsk = c; /* Allow interrupts during attach */
 	config_attach(parent, cf, &va, vsbus_print);
+	*sc->sc_intmsk = 0;
 	return 0;
 
 fail:
@@ -241,8 +263,12 @@ unsigned char
 vsbus_setmask(mask)
 	unsigned char mask;
 {
-	struct vsbus_softc *sc = vsbus_cd.cd_devs[0];
+	struct vsbus_softc *sc;
 	unsigned char ch;
+
+	if (vsbus_cd.cd_ndevs == 0)
+		return 0;
+	sc = vsbus_cd.cd_devs[0];
 
 	ch = *sc->sc_intmsk;
 	*sc->sc_intmsk = mask;
@@ -256,19 +282,109 @@ void
 vsbus_clrintr(mask)
 	unsigned char mask;
 {
-	struct vsbus_softc *sc = vsbus_cd.cd_devs[0];
+	struct vsbus_softc *sc;
+
+	if (vsbus_cd.cd_ndevs == 0)
+		return;
+	sc = vsbus_cd.cd_devs[0];
 
 	*sc->sc_intclr = mask;
 }
 
-#ifdef notyet
 /*
- * Allocate/free DMA pages and other bus resources.
- * VS2000: All DMA and register access must be exclusive.
- * VS3100: DMA area may be accessed by anyone anytime.
- *   MFM/SCSI: Don't touch reg's while DMA is active.
- *   SCSI/SCSI: Legal to touch any register anytime.
+ * Copy data from/to a user process' space from the DMA area.
+ * Use the physical memory directly.
  */
+void
+vsbus_copytoproc(struct proc *p, caddr_t from, caddr_t to, int len)
+{
+	struct pte *pte;
+	paddr_t pa;
 
+	if ((long)to & KERNBASE) { /* In kernel space */
+		bcopy(from, to, len);
+		return;
+	}
+	pte = uvtopte(TRUNC_PAGE(to), (&p->p_addr->u_pcb));
+	if ((vaddr_t)to & PGOFSET) {
+		int cz = ROUND_PAGE(to) - (vaddr_t)to;
 
-#endif
+		pa = (pte->pg_pfn << VAX_PGSHIFT) | (NBPG - cz) | KERNBASE;
+		bcopy(from, (caddr_t)pa, min(cz, len));
+		from += cz;
+		to += cz;
+		len -= cz;
+		pte += 8; /* XXX */
+	}
+	while (len > 0) {
+		pa = (pte->pg_pfn << VAX_PGSHIFT) | KERNBASE;
+		bcopy(from, (caddr_t)pa, min(NBPG, len));
+		from += NBPG;
+		to += NBPG;
+		len -= NBPG;
+		pte += 8; /* XXX */
+	}
+}
+
+void
+vsbus_copyfromproc(struct proc *p, caddr_t from, caddr_t to, int len)
+{
+	struct pte *pte;
+	paddr_t pa;
+
+	if ((long)from & KERNBASE) { /* In kernel space */
+		bcopy(from, to, len);
+		return;
+	}
+	pte = uvtopte(TRUNC_PAGE(from), (&p->p_addr->u_pcb));
+	if ((vaddr_t)from & PGOFSET) {
+		int cz = ROUND_PAGE(from) - (vaddr_t)from;
+
+		pa = (pte->pg_pfn << VAX_PGSHIFT) | (NBPG - cz) | KERNBASE;
+		bcopy((caddr_t)pa, to, min(cz, len));
+		from += cz;
+		to += cz;
+		len -= cz;
+		pte += 8; /* XXX */
+	}
+	while (len > 0) {
+		pa = (pte->pg_pfn << VAX_PGSHIFT) | KERNBASE;
+		bcopy((caddr_t)pa, to, min(NBPG, len));
+		from += NBPG;
+		to += NBPG;
+		len -= NBPG;
+		pte += 8; /* XXX */
+	}
+}
+
+/* 
+ * There can only be one user of the DMA area on VS2k/VS3100 at one
+ * time, so keep track of it here.
+ */ 
+static int vsbus_active = 0;
+
+void
+vsbus_dma_start(struct vsbus_dma *vd)
+{
+ 
+	SIMPLEQ_INSERT_TAIL(&vsbus_dma, vd, vd_q);
+
+	if (vsbus_active == 0)
+		vsbus_dma_intr();
+}
+ 
+void
+vsbus_dma_intr(void)
+{	
+	struct vsbus_dma *vd;
+	
+	vd = SIMPLEQ_FIRST(&vsbus_dma); 
+	if (vd == NULL) {
+		vsbus_active = 0;
+		return;
+	}
+	vsbus_active = 1;
+	SIMPLEQ_REMOVE_HEAD(&vsbus_dma, vd, vd_q);
+	(*vd->vd_go)(vd->vd_arg);
+}
+

@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.8 1999/05/06 19:16:44 thorpej Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.8.2.1 2000/11/20 20:13:00 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -47,46 +47,44 @@
 /*
  * Types provided to machine-independent PCI code
  */
-typedef int pci_chipset_tag_t;
+typedef struct pci_bridge *pci_chipset_tag_t;
 typedef int pcitag_t;
 typedef int pci_intr_handle_t;
 
 struct pci_bridge {
+	int node;
 	u_int *addr;
 	u_int *data;
 	int bus;
-	bus_space_tag_t iot;
 	bus_space_tag_t memt;
-	pci_chipset_tag_t pc;
-	int present;
+	bus_space_tag_t iot;
+	pcireg_t (*conf_read)();
+	void (*conf_write)();
 };
-struct pci_bridge pci_bridges[2];
-
-#define PCI_CHIPSET_BANDIT 0x00
-#define PCI_CHIPSET_MPC106 0x10
 
 extern struct macppc_bus_dma_tag pci_bus_dma_tag;
 
 /*
  * Functions provided to machine-independent PCI code.
  */
-void		pci_attach_hook __P((struct device *, struct device *,
-		    struct pcibus_attach_args *));
-int		pci_bus_maxdevs __P((pci_chipset_tag_t, int));
-pcitag_t	pci_make_tag __P((pci_chipset_tag_t, int, int, int));
-void		pci_decompose_tag __P((pci_chipset_tag_t, pcitag_t,
-		    int *, int *, int *));
-pcireg_t	pci_conf_read __P((pci_chipset_tag_t, pcitag_t, int));
-void		pci_conf_write __P((pci_chipset_tag_t, pcitag_t, int,
-		    pcireg_t));
-int		pci_intr_map __P((pci_chipset_tag_t, pcitag_t, int, int,
-		    pci_intr_handle_t *));
-const char	*pci_intr_string __P((pci_chipset_tag_t, pci_intr_handle_t));
-void		*pci_intr_establish __P((pci_chipset_tag_t, pci_intr_handle_t,
-		    int, int (*)(void *), void *));
-void		pci_intr_disestablish __P((pci_chipset_tag_t, void *));
+void		pci_attach_hook(struct device *, struct device *,
+		    struct pcibus_attach_args *);
+int		pci_bus_maxdevs(pci_chipset_tag_t, int);
+pcitag_t	pci_make_tag(pci_chipset_tag_t, int, int, int);
+void		pci_decompose_tag(pci_chipset_tag_t, pcitag_t,
+		    int *, int *, int *);
+pcireg_t	pci_conf_read(pci_chipset_tag_t, pcitag_t, int);
+void		pci_conf_write(pci_chipset_tag_t, pcitag_t, int,
+		    pcireg_t);
+int		pci_intr_map(pci_chipset_tag_t, pcitag_t, int, int,
+		    pci_intr_handle_t *);
+const char	*pci_intr_string(pci_chipset_tag_t, pci_intr_handle_t);
+const struct evcnt *pci_intr_evcnt(pci_chipset_tag_t, pci_intr_handle_t);
+void		*pci_intr_establish(pci_chipset_tag_t, pci_intr_handle_t,
+		    int, int (*)(void *), void *);
+void		pci_intr_disestablish(pci_chipset_tag_t, void *);
 
 /*
  * Internal functions.
  */
-void		pci_init __P((int));
+void		pci_init(int);

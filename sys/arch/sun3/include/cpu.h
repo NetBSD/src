@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.23 1999/08/10 21:08:09 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.23.2.1 2000/11/20 20:27:54 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -47,6 +47,10 @@
 #ifndef _CPU_H_
 #define _CPU_H_
 
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_lockdebug.h"
+#endif
+
 #ifdef _KERNEL
 
 /*
@@ -60,6 +64,19 @@
  * The name "cpu" is historical, and used in the common
  * code to identify machine-dependent functions, etc.
  */
+
+#include <sys/sched.h>
+struct cpu_info {
+	struct schedstate_percpu ci_schedstate; /* scheduler state */
+#if defined(DIAGNOSTIC) || defined(LOCKDEBUG)
+	u_long ci_spin_locks;		/* # of spin locks held */
+	u_long ci_simple_locks;		/* # of simple locks held */
+#endif
+};
+
+extern struct cpu_info cpu_info_store;
+
+#define	curcpu()			(&cpu_info_store)
 
 /*
  * definitions of cpu-dependent requirements
@@ -98,8 +115,8 @@ extern int astpending;	 /* need to trap before returning to user mode */
  * Preempt the current process if in interrupt from user mode,
  * or after the current trap/syscall if in system mode.
  */
-extern int want_resched; /* resched() was called */
-#define	need_resched()	{ want_resched = 1; aston(); }
+extern int want_resched;	 /* resched() was called */
+#define	need_resched(ci)	{ want_resched = 1; aston(); }
 
 /*
  * Give a profiling tick to the current process when the user profiling

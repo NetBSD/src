@@ -1,4 +1,4 @@
-/*	$NetBSD: ansi.h,v 1.3 1998/07/31 15:30:40 ross Exp $ */
+/*	$NetBSD: ansi.h,v 1.3.12.1 2000/11/20 20:26:46 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1990, 1993
@@ -57,8 +57,6 @@
 #define	_BSD_TIMER_T_		int		/* timer_t */
 #define	_BSD_SUSECONDS_T_	int		/* suseconds_t */
 #define	_BSD_USECONDS_T_	unsigned int	/* useconds_t */
-#define	_BSD_INTPTR_T_		long		/* intptr_t */
-#define	_BSD_UINTPTR_T_		unsigned long	/* uintptr_t */
 
 /*
  * Runes (wchar_t) is declared to be an ``int'' instead of the more natural

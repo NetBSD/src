@@ -1,4 +1,4 @@
-/*	$NetBSD: md_root.c,v 1.7 1999/03/17 18:59:22 sommerfe Exp $	*/
+/*	$NetBSD: md_root.c,v 1.7.8.1 2000/11/20 20:15:17 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -36,6 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/systm.h>
 #include <sys/param.h>
 #include <sys/reboot.h>
 
@@ -66,23 +67,25 @@ md_attach_hook(unit, md)
 	int unit;
 	struct md_conf *md;
 {
+
 	if (unit == 0) {
 		/* Setup root ramdisk */
 		md->md_addr = (caddr_t) md_root_image;
-		md->md_size = (size_t)  md_root_size;
+		md->md_size = (size_t) md_root_size;
 		md->md_type = MD_KMEM_FIXED;
 		printf(" fixed, %d blocks", MINIROOTSIZE);
 	}
 }
-
 /*
  * This is called during open (i.e. mountroot)
  */
+/* ARGSUSED */
 void
 md_open_hook(unit, md)
 	int unit;
 	struct md_conf *md;
 {
+
 	if (unit == 0) {
 		/* The root ramdisk only works single-user. */
 		boothowto |= RB_SINGLE;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.2 1998/11/22 21:21:32 ws Exp $	*/
+/*	$NetBSD: pcb.h,v 1.2.10.1 2000/11/20 20:31:10 bouyer Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -45,18 +45,19 @@ struct pcb {
 #define	PCB_FPU		1	/* Process had FPU initialized */
 	struct fpu {
 		double fpr[32];
-		double fpcsr;	/* FPCSR stored as double for easier access */
+		double fpscr;	/* FPSCR stored as double for easier access */
 	} pcb_fpu;		/* Floating point processor */
 };
 
 struct md_coredump {
 	struct trapframe frame;
-	/* Need to add FPU regs here */
+	struct fpu fpstate;
 };
 
-#ifdef	_KERNEL
+#if defined(_KERNEL) && !defined(MULTIPROCESSOR)
 extern struct pcb *curpcb;
 extern struct pmap *curpm;
 extern struct proc *fpuproc;
 #endif
+
 #endif	/* _MACHINE_PCB_H_ */

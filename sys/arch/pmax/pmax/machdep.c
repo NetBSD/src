@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.150 1999/09/12 01:17:17 chs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.150.2.1 2000/11/20 20:20:37 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,13 +39,11 @@
  * SUCH DAMAGE.
  *
  *	@(#)machdep.c	8.3 (Berkeley) 1/12/94
+ * 	from: Utah Hdr: machdep.c 1.63 91/04/24
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.150 1999/09/12 01:17:17 chs Exp $");
-
-/* from: Utah Hdr: machdep.c 1.63 91/04/24 */
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.150.2.1 2000/11/20 20:20:37 bouyer Exp $");
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
@@ -53,70 +51,70 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.150 1999/09/12 01:17:17 chs Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/map.h>
-#include <sys/proc.h>
 #include <sys/buf.h>
 #include <sys/reboot.h>
-#include <sys/conf.h>
-#include <sys/file.h>
-#include <sys/callout.h>
-#include <sys/malloc.h>
-#include <sys/mbuf.h>
-#include <sys/msgbuf.h>
-#include <sys/ioctl.h>
 #include <sys/user.h>
 #include <sys/mount.h>
-#include <sys/syscallargs.h>
 #include <sys/kcore.h>
+#include <sys/boot_flag.h>
 
-#include <vm/vm.h>
-#include <vm/vm_kern.h>
 #include <uvm/uvm_extern.h>
 
 #include <sys/sysctl.h>
+
 #include <dev/cons.h>
 
 #include <ufs/mfs/mfs_extern.h>		/* mfs_initminiroot() */
 
-#include <machine/cpu.h>
-#include <machine/reg.h>
 #include <machine/psl.h>
-#include <machine/pte.h>
 #include <machine/autoconf.h>
 #include <machine/dec_prom.h>
 #include <machine/sysconf.h>
 #include <machine/bootinfo.h>
 #include <machine/locore.h>
-#include <pmax/pmax/pmaxtype.h>
-#include <pmax/pmax/clockreg.h>
 #include <pmax/pmax/machdep.h>
 
 #ifdef DDB
 #include <sys/exec_aout.h>		/* XXX backwards compatilbity for DDB */
 #include <machine/db_machdep.h>
-#include <ddb/db_access.h>
-#include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
 #endif
+
+#include "opt_dec_3min.h"
+#include "opt_dec_maxine.h"
+#include "opt_dec_3maxplus.h"
 
 /* the following is used externally (sysctl_hw) */
 char	machine[] = MACHINE;		/* from <machine/param.h> */
 char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 char	cpu_model[40];
+unsigned ssir;				/* simulated interrupt register */
+
+/* Our exported CPU info; we can have only one. */  
+struct cpu_info cpu_info_store;
 
 /* maps for VM objects */
 vm_map_t exec_map = NULL;
 vm_map_t mb_map = NULL;
 vm_map_t phys_map = NULL;
 
-int	systype;		/* mother board type */
-char	*bootinfo = NULL;	/* pointer to bootinfo structure */
-int	maxmem;			/* max memory per process */
-int	physmem;		/* max supported memory, changes to actual */
-int	physmem_boardmax;	/* {model,SIMM}-specific bound on physmem */
-int	mem_cluster_cnt;
-phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
+int		systype;		/* mother board type */
+char		*bootinfo = NULL;	/* pointer to bootinfo structure */
+int		cpuspeed = 30;		/* approx # instr per usec. */
+int		physmem;		/* max supported memory, changes to actual */
+int		physmem_boardmax;	/* {model,SIMM}-specific bound on physmem */
+int		mem_cluster_cnt;
+phys_ram_seg_t	mem_clusters[VM_PHYSSEG_MAX];
 
+/*      
+ * During autoconfiguration or after a panic, a sleep will simply
+ * lower the priority briefly to allow interrupts, then return.
+ * The priority to be used (safepri) is machine-dependent, thus this
+ * value is initialized and maintained in the machine-dependent layers.
+ * This priority will typically be 0, or the lowest priority
+ * that is safe for use on the interrupt stack; it can be made
+ * higher to block network software interrupts after panics.
+ */
 /*
  * safepri is a safe priority for sleep to set for a spin-wait
  * during autoconfiguration or after a panic.
@@ -128,58 +126,35 @@ int	safepri = MIPS3_PSL_LOWIPL;	/* XXX */
 
 struct splvec	splvec;			/* XXX will go XXX */
 
-void	mach_init __P((int, char *[], int, int, u_int, char *));
-
-unsigned (*clkread) __P((void)); /* high resolution timer if available */
-unsigned nullclkread __P((void));
-
-int	initcpu __P((void));
-
-/* XXX XXX XXX */
-
-/* Old 4.4bsd/pmax-derived interrupt-enable method */
-
-void	(*tc_enable_interrupt)
-     __P ((u_int slotno, int (*handler) __P((void *sc)),
-          void *sc, int onoff));
-
-volatile struct chiptime *mcclock_addr;
-/*XXXjrs*/
-const	struct callback *callv;	/* pointer to PROM entry points */
-/* XXX XXX XXX */
-
-#ifdef DEBUG
-/* stacktrace code violates prototypes to get callee's registers */
-extern void stacktrace __P((void)); /*XXX*/
-#endif
+void	mach_init __P((int, char *[], int, int, u_int, char *)); /* XXX */
 
 /* Motherboard or system-specific initialization vector */
-void	unimpl_os_init __P((void));
-void	unimpl_bus_reset __P((void));
-int	unimpl_intr __P((unsigned, unsigned, unsigned, unsigned));
-void	unimpl_cons_init __P((void));
-void	unimpl_device_register __P((struct device *, void *));
-void 	unimpl_iointr __P ((void *, u_long));
-void	unimpl_clockintr __P ((void *));
+static void	unimpl_bus_reset __P((void));
+static void	unimpl_cons_init __P((void));
+static void	unimpl_iointr __P((unsigned, unsigned, unsigned, unsigned));
+static void	unimpl_intr_establish __P((struct device *, void *, int,
+		    int (*)(void *), void *));
+static int	unimpl_memsize __P((caddr_t));
+static unsigned	nullwork __P((void));
 
 struct platform platform = {
 	"iobus not set",
-	unimpl_os_init,
 	unimpl_bus_reset,
 	unimpl_cons_init,
-	unimpl_device_register,
 	unimpl_iointr,
-	unimpl_clockintr
+	unimpl_intr_establish,
+	unimpl_memsize,
+	(void *)nullwork,
 };
 
-extern caddr_t esym;
-extern struct user *proc0paddr;
-extern struct consdev promcd;
+extern caddr_t esym;			/* XXX */
+extern struct user *proc0paddr;		/* XXX */
+extern struct consdev promcd;		/* XXX */
 
 /*
  * Do all the stuff that locore normally does before calling main().
- * Process arguments passed to us by the prom monitor.
- * Return the first page address following the system.
+ * The first 4 argments are passed by PROM monitor, and remaining two
+ * are built on temporary stack by our boot loader.
  */
 void
 mach_init(argc, argv, code, cv, bim, bip)
@@ -200,10 +175,9 @@ mach_init(argc, argv, code, cv, bim, bip)
 	struct btinfo_symtab *bi_syms;
 	struct exec *aout;		/* XXX backwards compatilbity for DDB */
 #endif
+	extern char edata[], end[];	/* XXX */
 
-	extern char edata[], end[];
-
-	/* Set up bootinfo structure.  Note that we can't print messages yet! */
+	/* Set up bootinfo structure looking at stack. */
 	if (bim == BOOTINFO_MAGIC) {
 		struct btinfo_magic *bi_magic;
 
@@ -223,7 +197,7 @@ mach_init(argc, argv, code, cv, bim, bip)
 	bi_syms = lookup_bootinfo(BTINFO_SYMTAB);
 	aout = (struct exec *)edata;
 
-	/* Valid bootinfo symtab info? */
+	/* Was it a valid bootinfo symtab info? */
 	if (bi_syms != NULL) {
 		nsym = bi_syms->nsym;
 		ssym = (caddr_t)bi_syms->ssym;
@@ -256,17 +230,9 @@ mach_init(argc, argv, code, cv, bim, bip)
 	cn_tab = &promcd;
 
 #if 0
-	/* Print out bootinfo messages now that the console is initialised. */
 	if (bootinfo_msg != NULL)
 		printf(bootinfo_msg);
 #endif
-
-	/* check for direct boot from DS5000 PROM */
-	if (argc > 0 && strcmp(argv[0], "boot") == 0) {
-		argc--;
-		argv++;
-	}
-
 	/*
 	 * Set the VM page size.
 	 */
@@ -279,7 +245,13 @@ mach_init(argc, argv, code, cv, bim, bip)
 	 */
 	mips_vector_init();
 
-	/* look at argv[0] and compute bootdev */
+	/* Check for direct boot from DS5000 REX monitor */
+	if (argc > 0 && strcmp(argv[0], "boot") == 0) {
+		argc--;
+		argv++;
+	}
+
+	/* Look at argv[0] and compute bootdev */
 	makebootdev(argv[0]);
 
 	/*
@@ -296,20 +268,17 @@ mach_init(argc, argv, code, cv, bim, bip)
 				boothowto &= ~RB_SINGLE;
 				break;
 
-			case 'd': /* break into the kernel debugger ASAP */
-				boothowto |= RB_KDB;
-				break;
-
-			case 'm': /* mini root present in memory */
-				boothowto |= RB_MINIROOT;
-				break;
-
 			case 'n': /* ask for names */
 				boothowto |= RB_ASKNAME;
 				break;
 
 			case 'N': /* don't ask for names */
 				boothowto &= ~RB_ASKNAME;
+				break;
+
+			default:
+				BOOT_FLAG(*cp, boothowto);
+				break;
 			}
 		}
 	}
@@ -319,10 +288,8 @@ mach_init(argc, argv, code, cv, bim, bip)
 	 * Check to see if a mini-root was loaded into memory. It resides
 	 * at the start of the next page just after the end of BSS.
 	 */
-	if (boothowto & RB_MINIROOT) {
-		boothowto |= RB_DFLTROOT;
+	if (boothowto & RB_MINIROOT)
 		kernend += round_page(mfs_initminiroot(kernend));
-	}
 #endif
 
 #ifdef DDB
@@ -336,28 +303,17 @@ mach_init(argc, argv, code, cv, bim, bip)
 	if (boothowto & RB_KDB)
 		Debugger();
 #endif
+
 	/*
 	 * Alloc u pages for proc0 stealing KSEG0 memory.
 	 */
 	proc0.p_addr = proc0paddr = (struct user *)kernend;
-	proc0.p_md.md_regs =
-	    (struct frame *)((caddr_t)kernend + UPAGES * PAGE_SIZE) - 1;
+	proc0.p_md.md_regs = (struct frame *)(kernend + USPACE) - 1;
+	memset(proc0.p_addr, 0, USPACE);
 	curpcb = &proc0.p_addr->u_pcb;
-	memset(kernend, 0, UPAGES * PAGE_SIZE);
+	curpcb->pcb_context[11] = MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
 
-	kernend += UPAGES * PAGE_SIZE;
-
-	/*
-	 * Determine what model of computer we are running on.
-	 */
-	i = prom_systype();
-
-	/* Check for MIPS based platform */
-	/* 0x82 -> MIPS1, 0x84 -> MIPS3 */
-	if (((i >> 24) & 0xFF) != 0x82 && ((i >> 24) & 0xff) != 0x84) {
-		printf("Unknown system type '%08x'\n", i);
-		cpu_reboot(RB_HALT | RB_NOSYNC, NULL);
-	}
+	kernend += USPACE;
 
 	/*
 	 * Initialize physmem_boardmax; assume no SIMM-bank limits.
@@ -366,43 +322,19 @@ mach_init(argc, argv, code, cv, bim, bip)
 	physmem_boardmax = MIPS_MAX_MEM_ADDR;
 
 	/*
-	 * Find out what hardware we're on, and do basic initialization.
+	 * Determine what model of computer we are running on.
 	 */
-	systype = ((i >> 16) & 0xff);
+	systype = ((prom_systype() >> 16) & 0xff);
 	if (systype >= nsysinit) {
 		platform_not_supported();
 		/* NOTREACHED */
 	}
+
+	/* Machine specific initialization. */
 	(*sysinit[systype].init)();
 
-	/*
-	 * Find out how much memory is available.
-	 * Be careful to save and restore the original contents for msgbuf.
-	 */
-	physmem = btoc((paddr_t)kernend - MIPS_KSEG0_START);
-	cp = (char *)MIPS_PHYS_TO_KSEG1(physmem << PGSHIFT);
-	while (cp < (char *)physmem_boardmax) {
-	  	int j;
-		if (badaddr(cp, 4))
-			break;
-		i = *(int *)cp;
-		j = ((int *)cp)[4];
-		*(int *)cp = 0xa5a5a5a5;
-		/*
-		 * Data will persist on the bus if we read it right away.
-		 * Have to be tricky here.
-		 */
-		((int *)cp)[4] = 0x5a5a5a5a;
-		wbflush();
-		if (*(int *)cp != 0xa5a5a5a5)
-			break;
-		*(int *)cp = i;
-		((int *)cp)[4] = j;
-		cp += NBPG;
-		physmem++;
-	}
-
-	maxmem = physmem;
+	/* Find out how much memory is available. */
+	physmem = (*platform.memsize)(kernend);
 
 	/*
 	 * Now that we know how much memory we have, initialize the
@@ -417,7 +349,7 @@ mach_init(argc, argv, code, cv, bim, bip)
 	 * Put the first 8M of RAM onto a lower-priority free list, since
 	 * some TC boards (e.g. PixelStamp boards) are only able to DMA
 	 * into this region, and we want them to have a fighting chance of
-	 * allocating their DMA memory during autoconfiguratoin.
+	 * allocating their DMA memory during autoconfiguration.
 	 */
 	first = round_page(MIPS_KSEG0_TO_PHYS(kernend));
 	last = mem_clusters[0].start + mem_clusters[0].size;
@@ -438,9 +370,9 @@ mach_init(argc, argv, code, cv, bim, bip)
 
 	/*
 	 * Allocate space for system data structures.  These data structures
-	 * are allocated here instead of cpu_startup() because physical
-	 * memory is directly addressable.  We don't have to map these into
-	 * virtual address space.
+	 * are allocated here instead of cpu_startup() because physical memory
+	 * is directly addressable.  We don't have to map these into virtual
+	 * address space.
 	 */
 	size = (unsigned)allocsys(NULL, NULL);
 	v = (caddr_t)pmap_steal_memory(size, NULL, NULL);
@@ -453,10 +385,16 @@ mach_init(argc, argv, code, cv, bim, bip)
 	pmap_bootstrap();
 }
 
+void
+consinit()
+{
+
+	(*platform.cons_init)();
+}
 
 /*
- * Machine-dependent startup code.
- * allocate memory for variable-sized tables, initialize cpu.
+ * Machine-dependent startup code: allocate memory for variable-sized
+ * tables.
  */
 void
 cpu_startup()
@@ -467,7 +405,7 @@ cpu_startup()
 	vsize_t size;
 	char pbuf[9];
 #ifdef DEBUG
-	extern int pmapdebug;
+	extern int pmapdebug;		/* XXX */
 	int opmapdebug = pmapdebug;
 
 	pmapdebug = 0;
@@ -488,7 +426,7 @@ cpu_startup()
 	 */
 	size = MAXBSIZE * nbuf;
 	if (uvm_map(kernel_map, (vaddr_t *)&buffers, round_page(size),
-		    NULL, UVM_UNKNOWN_OFFSET,
+		    NULL, UVM_UNKNOWN_OFFSET, 0,
 		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
 				UVM_ADV_NORMAL, 0)) != KERN_SUCCESS)
 		panic("cpu_startup: cannot allocate VM for buffers");
@@ -513,7 +451,7 @@ cpu_startup()
 		 * "base" pages for the rest.
 		 */
 		curbuf = (vaddr_t)buffers + (i * MAXBSIZE);
-		curbufsize = CLBYTES * ((i < residual) ? (base+1) : base);
+		curbufsize = NBPG * ((i < residual) ? (base+1) : base);
 
 		while (curbufsize) {
 			pg = uvm_pagealloc(NULL, 0, NULL, 0);
@@ -545,33 +483,19 @@ cpu_startup()
 	 * map those pages.
 	 */
 
-	/*
-	 * Initialize callouts
-	 */
-	callfree = callout;
-	for (i = 1; i < ncallout; i++)
-		callout[i-1].c_next = &callout[i];
-	callout[i-1].c_next = NULL;
-
 #ifdef DEBUG
 	pmapdebug = opmapdebug;
 #endif
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
-	format_bytes(pbuf, sizeof(pbuf), bufpages * CLBYTES);
+	format_bytes(pbuf, sizeof(pbuf), bufpages * NBPG);
 	printf("using %d buffers containing %s of memory\n", nbuf, pbuf);
 
 	/*
 	 * Set up buffers, so they can be used to read disk labels.
 	 */
 	bufinit();
-
-	/*
-	 * Set up CPU-specific registers, cache, etc.
-	 */
-	initcpu();
 }
-
 
 /*
  * Machine dependent system variables.
@@ -608,7 +532,6 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 }
 
 /*
- * lookup_bootinfo:
  * Look up information in bootinfo of boot loader.
  */
 void *
@@ -638,7 +561,6 @@ cpu_reboot(howto, bootstr)
 	volatile int howto;	/* XXX volatile to keep gcc happy */
 	char *bootstr;
 {
-	extern int cold;
 
 	/* take a snap shot before clobbering any registers */
 	if (curproc)
@@ -680,7 +602,7 @@ cpu_reboot(howto, bootstr)
 #if 0
 	if ((howto & (RB_DUMP | RB_HALT)) == RB_DUMP)
 #else
-	if (howto & RB_DUMP)
+	if ((howto & RB_DUMP) != 0)
 #endif
 		dumpsys();
 
@@ -690,14 +612,177 @@ haltsys:
 	doshutdownhooks();
 
 	/* Finally, halt/reboot the system. */
-	printf("%s\n\n", howto & RB_HALT ? "halted." : "rebooting...");
+	printf("%s\n\n", ((howto & RB_HALT) != 0) ? "halted." : "rebooting...");
 	prom_halt(howto & RB_HALT, bootstr);
 	/*NOTREACHED*/
 }
 
-#include "opt_dec_3min.h"
-#include "opt_dec_maxine.h"
-#include "opt_dec_3maxplus.h"
+/*
+ * Find out how much memory is available by testing memory.
+ * Be careful to save and restore the original contents for msgbuf.
+ */
+int
+memsize_scan(first)
+	caddr_t first;
+{
+	int i, mem;
+	char *cp;
+
+	mem = btoc((paddr_t)first - MIPS_KSEG0_START);
+	cp = (char *)MIPS_PHYS_TO_KSEG1(mem << PGSHIFT);
+	while (cp < (char *)physmem_boardmax) {
+	  	int j;
+		if (badaddr(cp, 4))
+			break;
+		i = *(int *)cp;
+		j = ((int *)cp)[4];
+		*(int *)cp = 0xa5a5a5a5;
+		/*
+		 * Data will persist on the bus if we read it right away.
+		 * Have to be tricky here.
+		 */
+		((int *)cp)[4] = 0x5a5a5a5a;
+		wbflush();
+		if (*(int *)cp != 0xa5a5a5a5)
+			break;
+		*(int *)cp = i;
+		((int *)cp)[4] = j;
+		cp += NBPG;
+		mem++;
+	}
+
+	/* clear any memory error conditions possibly caused by probe */
+	(*platform.bus_reset)();
+	return (mem);
+}
+
+/*
+ * Find out how much memory is available by using the PROM bitmap.
+ */
+int
+memsize_bitmap(first)
+	caddr_t first;
+{
+
+	panic("memsize_bitmap not implemented");
+}
+
+/*
+ *  Ensure all platform vectors are always initialized.
+ */
+static void
+unimpl_bus_reset()
+{
+
+	panic("sysconf.init didn't set bus_reset");
+}
+
+static void
+unimpl_cons_init()
+{
+
+	panic("sysconf.init didn't set cons_init");
+}
+
+static void
+unimpl_iointr(mask, pc, statusreg, causereg)
+	u_int mask;
+	u_int pc;
+	u_int statusreg;
+	u_int causereg;
+{
+
+	panic("sysconf.init didn't set intr");
+}
+
+static void
+unimpl_intr_establish(dev, cookie, level, handler, arg)
+	struct device *dev;
+	void *cookie;
+	int level;
+	int (*handler) __P((void *));
+	void *arg;
+{
+	panic("sysconf.init didn't set intr_establish");
+}
+
+static int
+unimpl_memsize(first)
+caddr_t first;
+{
+
+	panic("sysconf.init didn't set memsize");
+}
+
+static unsigned
+nullwork()
+{
+
+	return (0);
+}
+
+/*
+ * pmax uses standard mips1 convention, wiring FPU to hard interupt 5.
+ */
+#define INT_MASK_FPU	MIPS_INT_MASK_5
+#define	INT_MASK_DEV	(MIPS_HARD_INT_MASK &~ MIPS_INT_MASK_5)
+
+void
+cpu_intr(status, cause, pc, ipending)
+	u_int32_t status;
+	u_int32_t cause;
+	u_int32_t pc;
+	u_int32_t ipending;
+{
+	extern void MachFPInterrupt __P((unsigned, unsigned, unsigned, struct frame *));
+
+	uvmexp.intrs++;
+
+	/* device interrupts */
+	if (ipending & INT_MASK_DEV) {
+		(*platform.iointr)(status, cause, pc, ipending);
+	}
+	/* FPU nofiticaition */
+	if (ipending & INT_MASK_FPU) {
+		if (!USERMODE(status))
+			goto kerneltouchedFPU;
+		intrcnt[FPU_INTR]++;
+		/* dealfpu(status, cause, pc); */
+		MachFPInterrupt(status, cause, pc, curproc->p_md.md_regs);
+	}
+
+	/* software simulated interrupt */
+	if ((ipending & MIPS_SOFT_INT_MASK_1)
+		    || (ssir && (status & MIPS_SOFT_INT_MASK_1))) {
+
+#define DO_SIR(bit, fn)						\
+	do {							\
+		if (n & (bit)) {				\
+			uvmexp.softs++;				\
+			fn;					\
+		}						\
+	} while (0)
+
+		unsigned n;
+		n = ssir; ssir = 0;
+		_clrsoftintr(MIPS_SOFT_INT_MASK_1);
+
+		DO_SIR(SIR_NET, netintr());
+#undef DO_SIR
+	}
+
+	/* 'softclock' interrupt */
+	if (ipending & MIPS_SOFT_INT_MASK_0) {
+		_clrsoftintr(MIPS_SOFT_INT_MASK_0);
+		uvmexp.softs++;
+		intrcnt[SOFTCLOCK_INTR]++;
+		softclock();
+	}
+	return;
+
+kerneltouchedFPU:
+	panic("kernel used FPU: PC %x, CR %x, SR %x", pc, cause, status);
+}
 
 /*
  * Return the best possible estimate of the time in the timeval to
@@ -714,7 +799,7 @@ microtime(tvp)
 
 	*tvp = time;
 #if (DEC_3MIN + DEC_MAXINE + DEC_3MAXPLUS) > 0
-	tvp->tv_usec += (*clkread)();
+	tvp->tv_usec += (*platform.clkread)();
 #endif
 	if (tvp->tv_usec >= 1000000) {
 		tvp->tv_usec -= 1000000;
@@ -723,43 +808,13 @@ microtime(tvp)
 
 	if (tvp->tv_sec == lasttime.tv_sec &&
 	    tvp->tv_usec <= lasttime.tv_usec &&
-	    (tvp->tv_usec = lasttime.tv_usec + 1) > 1000000) {
+	    (tvp->tv_usec = lasttime.tv_usec + 1) >= 1000000) {
 		tvp->tv_sec++;
 		tvp->tv_usec -= 1000000;
 	}
 	lasttime = *tvp;
 	splx(s);
 }
-
-
-int
-initcpu()
-{
-	volatile struct chiptime *c;
-	int i = 0;
-
-	/*
-	 * reset after autoconfig probe:
-	 * clear  any memory errors, reset any pending interrupts.
-	 */
-
-	(*platform.bus_reset)();	/* XXX_cf_alpha */
-
-	/*
-	 * With newconf, this should be  done elswhere, but without it
-	 * we hang (?)
-	 */
-#if 1 /*XXX*/
-	/* disable clock interrupts (until startrtclock()) */
-	if (mcclock_addr) {
-		c = mcclock_addr;
-		c->regb = REGB_DATA_MODE | REGB_HOURS_FORMAT;
-		i = c->regc;
-	}
-	return (i);
-#endif
-}
-
 
 /*
  * Wait "n" microseconds. (scsi code needs this).
@@ -768,66 +823,6 @@ void
 delay(n)
         int n;
 {
+
         DELAY(n);
 }
-
-/*
- *  Ensure all platform vectors are always initialized.
- */
-void
-unimpl_os_init()
-{
-	panic("sysconf.init didnt set os_init");
-}
-
-void
-unimpl_bus_reset()
-{
-	panic("sysconf.init didnt set bus_reset");
-}
-
-void
-unimpl_cons_init()
-{
-	panic("sysconf.init didnt set cons_init");
-}
-
-void
-unimpl_device_register(sc, arg)
-	struct device *sc;
-	void *arg;
-{
-	panic("sysconf.init didnt set device_register");
-
-}
-
-void
-unimpl_iointr(arg, arg2)
-	void *arg;
-	u_long arg2;
-{
-	panic("sysconf.init didnt set iointr");
-}
-
-void
-unimpl_clockintr(arg)
-	void *arg;
-{
-	panic("sysconf.init didnt set clockintr");
-}
-
-int
-unimpl_intr(mask, pc, statusreg, causereg)
-	u_int mask;
-	u_int pc;
-	u_int statusreg;
-	u_int causereg;
-{
-	panic("sysconf.init didnt set intr");
-}
-
-unsigned
-nullclkread()
-{
-	return 0;
-}	

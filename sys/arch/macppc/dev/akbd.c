@@ -1,4 +1,4 @@
-/*	$NetBSD: akbd.c,v 1.9 1999/09/05 05:30:30 tsubai Exp $	*/
+/*	$NetBSD: akbd.c,v 1.9.2.1 2000/11/20 20:12:56 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -101,7 +101,11 @@ struct wskbd_consops akbd_consops = {
 
 struct wskbd_mapdata akbd_keymapdata = {
 	akbd_keydesctab,
+#ifdef AKBD_LAYOUT
+	AKBD_LAYOUT,
+#else
 	KB_US,
+#endif
 };
 
 static int akbd_is_console;

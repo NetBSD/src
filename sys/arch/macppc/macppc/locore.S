@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.16 1999/10/13 03:51:32 tsubai Exp $	*/
+/*	$NetBSD: locore.S,v 1.16.2.1 2000/11/20 20:13:01 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,9 @@
  */
 
 #include "opt_ddb.h"
-#include "ipkdb.h"
+#include "opt_ipkdb.h"
+#include "opt_lockdebug.h"
+#include "opt_multiprocessor.h"
 #include "assym.h"
 
 #include <sys/syscall.h>
@@ -47,6 +49,17 @@
  * Some instructions gas doesn't understand (yet?)
  */
 #define	bdneq	bdnzf 2,
+
+#if defined(MULTIPROCESSOR)
+/*
+ * Get varios per-cpu values.
+ */
+#define	GET_CPUINFO(r)						\
+	mfspr	r,1023;			/* r = cpu_number() */	\
+	mulli	r,r,CI_SIZE;					\
+	addis	r,r,_C_LABEL(cpu_info)@ha;			\
+	addi	r,r,_C_LABEL(cpu_info)@l;
+#endif
 
 /*
  * Globals
@@ -88,11 +101,16 @@ GLOBAL(eintrcnt)
 GLOBAL(ofmsr)
 	.long	0			/* msr used in Open Firmware */
 
+GLOBAL(powersave)
+	.long	0
+
 /*
  * File-scope for locore.S
  */
+#if !defined(MULTIPROCESSOR)
 idle_u:
 	.long	0			/* fake uarea during idle after exit */
+#endif
 openfirmware_entry:
 	.long	0			/* openfirmware entry point */
 srsave:
@@ -149,8 +167,14 @@ __start:
 	lis	9,_C_LABEL(OF_buf)@ha
 	stw	8,_C_LABEL(OF_buf)@l(9)
 	addi	8,8,NBPG
+#if defined(MULTIPROCESSOR)
+	lis	9,_C_LABEL(cpu_info)@ha
+	addi	9,9,_C_LABEL(cpu_info)@l
+	stw	8,CI_IDLE_PCB(9)
+#else
 	lis	9,idle_u@ha
 	stw	8,idle_u@l(9)
+#endif
 	addi	8,8,USPACE		/* space for idle_u */
 	lis	9,_C_LABEL(proc0paddr)@ha
 	stw	8,_C_LABEL(proc0paddr)@l(9)
@@ -315,25 +339,43 @@ ofw_back:
 /*
  * No processes are runnable, so loop waiting for one.
  * Separate label here for accounting purposes.
+ * When we get here, interrupts are off (MSR[EE]=0) and sched_lock is held.
  */
 ASENTRY(Idle)
-	mfmsr	3
-	andi.	3,3,~PSL_EE@l		/* disable interrupts while
-					   manipulating runque */
-	mtmsr	3
-
-	lis	8,_C_LABEL(whichqs)@ha
-	lwz	9,_C_LABEL(whichqs)@l(8)
+	lis	8,_C_LABEL(sched_whichqs)@ha
+	lwz	9,_C_LABEL(sched_whichqs)@l(8)
 
 	or.	9,9,9
 	bne-	.Lsw1			/* at least one queue non-empty */
 	
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
+	bl	_C_LABEL(sched_unlock_idle)
+#endif
+
+	mfmsr	3
 	ori	3,3,PSL_EE@l		/* reenable ints again */
 	mtmsr	3
 	isync
-	
-/* May do some power saving here? */
 
+/* Check if we can use power saving mode */
+	lis	8,_C_LABEL(powersave)@ha
+	lwz	9,_C_LABEL(powersave)@l(8)
+
+	or.	9,9,9
+	beq	1f
+
+	sync
+	oris	3,3,PSL_POW@h		/* enter power saving mode */
+	mtmsr	3
+	isync
+1:
+	andi.	3,3,~PSL_EE@l		/* disable interrupts while
+					   manipulating runque */
+	mtmsr	3
+
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
+	bl	_C_LABEL(sched_lock_idle)
+#endif
 	b	_ASM_LABEL(Idle)
 
 /*
@@ -341,16 +383,26 @@ ASENTRY(Idle)
  */
 ENTRY(switchexit)
 /* First switch to the idle pcb/kernel stack */
+#if defined(MULTIPROCESSOR)
+	GET_CPUINFO(7)
+	lwz	6,CI_IDLE_PCB(7)
+	stw	6,CI_CURPCB(7)
+#else
 	lis	6,idle_u@ha
 	lwz	6,idle_u@l(6)
 	lis	7,_C_LABEL(curpcb)@ha
 	stw	6,_C_LABEL(curpcb)@l(7)
+#endif
 	addi	1,6,USPACE-16		/* 16 bytes are reserved at stack top */
 	/*
 	 * Schedule the vmspace and stack to be freed (the proc arg is
 	 * already in r3).
 	 */
 	bl	_C_LABEL(exit2)
+
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
+	bl	_C_LABEL(sched_lock_idle)
+#endif
 
 /* Fall through to cpu_switch to actually select another proc */
 	li	3,0			/* indicate exited process */
@@ -368,32 +420,48 @@ ENTRY(cpu_switch)
 	stw	30,8(1)
 
 	mr	30,3
+#if defined(MULTIPROCESSOR)
+	GET_CPUINFO(3)
+	xor	31,31,31
+	stw	31,CI_CURPROC(3)	/* Zero to not accumulate cpu time */
+	lwz	31,CI_CURPCB(3)
+#else
 	lis	3,_C_LABEL(curproc)@ha
 	xor	31,31,31
 	stw	31,_C_LABEL(curproc)@l(3) /* Zero to not accumulate cpu time */
 	lis	3,_C_LABEL(curpcb)@ha
 	lwz	31,_C_LABEL(curpcb)@l(3)
+#endif
+
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
+/* Release the sched_lock before processing interrupts. */
+	bl	_C_LABEL(sched_unlock_idle)
+#endif
 
 	xor	3,3,3
 	bl	_C_LABEL(lcsplx)
 	stw	3,PCB_SPL(31)		/* save spl */
 
-/* Find a new process */
+/* Lock the scheduler. */
 	mfmsr	3
 	andi.	3,3,~PSL_EE@l		/* disable interrupts while
 					   manipulating runque */
 	mtmsr	3
 	isync
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
+	bl	_C_LABEL(sched_lock_idle)
+#endif
 
-	lis	8,_C_LABEL(whichqs)@ha
-	lwz	9,_C_LABEL(whichqs)@l(8)
+/* Find a new process */
+	lis	8,_C_LABEL(sched_whichqs)@ha
+	lwz	9,_C_LABEL(sched_whichqs)@l(8)
 
 	or.	9,9,9
 	beq-	_ASM_LABEL(Idle)	/* all queues empty */
 .Lsw1:
 	cntlzw	10,9
-	lis	4,_C_LABEL(qs)@ha
-	addi	4,4,_C_LABEL(qs)@l
+	lis	4,_C_LABEL(sched_qs)@ha
+	addi	4,4,_C_LABEL(sched_qs)@l
 	slwi	3,10,3
 	add	3,3,4			/* select queue */
 	
@@ -408,7 +476,7 @@ ENTRY(cpu_switch)
 	lis	3,0x80000000@h
 	srw	3,3,10
 	andc	9,9,3
-	stw	9,_C_LABEL(whichqs)@l(8) /* mark it empty */
+	stw	9,_C_LABEL(sched_whichqs)@l(8) /* mark it empty */
 
 1:
 	/* just did this resched thing */
@@ -418,9 +486,27 @@ ENTRY(cpu_switch)
 
 	stw	3,P_BACK(31)		/* probably superfluous */
 
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
+	/* Unlock the sched_lock, but leave interrupts off, for now. */
+	bl	_C_LABEL(sched_unlock_idle)
+#endif
+
+#if defined(MULTIPROCESSOR)
+	GET_CPUINFO(4)
+	stw	4,P_CPU(31)		/* p->p_cpu = curcpu() */
+#endif
+
+	/* Process now running on a processor. */
+	li	3,SONPROC		/* p->p_stat = SONPROC */
+	stb	3,P_STAT(31)
+
 	/* record new process */
+#if defined(MULTIPROCESSOR)
+	stw	31,CI_CURPROC(4)
+#else
 	lis	4,_C_LABEL(curproc)@ha
 	stw	31,_C_LABEL(curproc)@l(4)
+#endif
 
 	mfmsr	3
 	ori	3,3,PSL_EE@l		/* Now we can interrupt again */
@@ -448,13 +534,22 @@ switch_exited:
 
 	/* indicate new pcb */
 	lwz	4,P_ADDR(31)
+#if defined(MULTIPROCESSOR)
+	GET_CPUINFO(6)
+	stw	4,CI_CURPCB(6)
+#else
 	lis	5,_C_LABEL(curpcb)@ha
 	stw	4,_C_LABEL(curpcb)@l(5)
+#endif
 
 	/* save real pmap pointer for spill fill */
 	lwz	5,PCB_PMR(4)
+#if defined(MULTIPROCESSOR)
+	stwu	5,CI_CURPM(6)
+#else
 	lis	6,_C_LABEL(curpm)@ha
 	stwu	5,_C_LABEL(curpm)@l(6)
+#endif
 	stwcx.	5,0,6			/* clear possible reservation */
 
 	addic.	5,5,64
@@ -520,8 +615,8 @@ GLOBAL(intr_depth)
 
 /*
  * This code gets copied to all the trap vectors
- * (except ISI/DSI, the interrupts, and possibly the debugging traps when
- * using IPKDB).
+ * (except ISI/DSI, ALI, the interrupts, and possibly the debugging 
+ * traps when using IPKDB).
  */
 	.text
 	.globl	_C_LABEL(trapcode),_C_LABEL(trapsize)
@@ -534,12 +629,45 @@ _C_LABEL(trapcode):
 	mfsrr1	31
 	mtcr	31
 	bc	4,17,1f			/* branch if PSL_PR is clear */
+#if defined(MULTIPROCESSOR)
+	GET_CPUINFO(1)
+	lwz	1,CI_CURPCB(1)
+#else
 	lis	1,_C_LABEL(curpcb)@ha
 	lwz	1,_C_LABEL(curpcb)@l(1)
+#endif
 	addi	1,1,USPACE		/* stack is top of user struct */
 1:
 	bla	s_trap
 _C_LABEL(trapsize) = .-_C_LABEL(trapcode)
+
+/*
+ * For ALI: has to save DSISR and DAR
+ */
+	.globl	_C_LABEL(alitrap),_C_LABEL(alisize)
+_C_LABEL(alitrap):
+	mtsprg	1,1			/* save SP */
+	stmw	28,tempsave(0)		/* free r28-r31 */
+	mfdar	30
+	mfdsisr	31
+	stmw	30,tempsave+16(0)
+	mflr	28			/* save LR */
+	mfcr	29			/* save CR */
+/* Test whether we already had PR set */
+	mfsrr1	31
+	mtcr	31
+	bc	4,17,1f			/* branch if PSL_PR is clear */
+#if defined(MULTIPROCESSOR)
+	GET_CPUINFO(1)
+	lwz	1,CI_CURPCB(1)
+#else
+	lis	1,_C_LABEL(curpcb)@ha
+	lwz	1,_C_LABEL(curpcb)@l(1)
+#endif
+	addi	1,1,USPACE		/* stack is top of user struct */
+1:
+	bla	s_trap
+_C_LABEL(alisize) = .-_C_LABEL(alitrap)
 
 /*
  * Similar to the above for DSI
@@ -877,7 +1005,7 @@ _C_LABEL(ddblow):
 _C_LABEL(ddbsize) = .-_C_LABEL(ddblow)
 #endif	/* DDB */
 
-#if NIPKDB > 0
+#ifdef IPKDB
 #define	ipkdbsave	0xde0		/* primary save area for IPKDB */
 /*
  * In case of IPKDB we want a separate trap catcher for it
@@ -896,7 +1024,7 @@ _C_LABEL(ipkdblow):
 	addi	1,1,ipkdbstk+INTSTK@l
 	bla	ipkdbtrap
 _C_LABEL(ipkdbsize) = .-_C_LABEL(ipkdblow)
-#endif	/* NIPKDB > 0 */
+#endif	/* IPKDB */
 
 /*
  * FRAME_SETUP assumes:
@@ -967,8 +1095,7 @@ _C_LABEL(ipkdbsize) = .-_C_LABEL(ipkdblow)
 	mtcr	3;							\
 	bc	4,17,1f;		/* branch if PSL_PR is false */	\
 /* Restore user & kernel access SR: */					\
-	lis	2,_C_LABEL(curpm)@ha;	/* get real address of pmap */	\
-	lwz	2,_C_LABEL(curpm)@l(2);					\
+	GET_CURPM(2);			/* get real address of pmap */	\
 	lwz	3,PM_USRSR(2);						\
 	mtsr	USER_SR,3;						\
 	lwz	3,PM_KERNELSR(2);					\
@@ -981,6 +1108,16 @@ _C_LABEL(ipkdbsize) = .-_C_LABEL(ipkdblow)
 	mtsrr1	3;							\
 	mfsprg	2,2;			/* restore r2 & r3 */		\
 	mfsprg	3,3
+
+#if defined(MULTIPROCESSOR)
+#define	GET_CURPM(r)							\
+	GET_CPUINFO(r);							\
+	lwz	r,CI_CURPM(r);
+#else
+#define	GET_CURPM(r)							\
+	lis	r,_C_LABEL(curpm)@ha;					\
+	lwz	r,_C_LABEL(curpm)@l(r);
+#endif
 
 /*
  * Preamble code for DSI/ISI traps
@@ -1000,8 +1137,13 @@ realtrap:
 	mfsprg	1,1			/* restore SP (might have been
 					   overwritten) */
 	bc	4,17,s_trap		/* branch if PSL_PR is false */
+#if defined(MULTIPROCESSOR)
+	GET_CPUINFO(1)
+	lwz	1,CI_CURPCB(1)
+#else
 	lis	1,_C_LABEL(curpcb)@ha
 	lwz	1,_C_LABEL(curpcb)@l(1)
+#endif
 	addi	1,1,USPACE		/* stack is top of user struct */
 
 /*
@@ -1207,8 +1349,13 @@ intr_exit:
 /* Returning to user mode? */
 	mtcr	6			/* saved SRR1 */
 	bc	4,17,1f			/* branch if PSL_PR is false */
-	lis	3,_C_LABEL(curpm)@ha	/* get current pmap real addess */
+#if defined(MULTIPROCESSOR)
+	GET_CPUINFO(3)
+	lwz	3,CI_CURPM(3)
+#else
+	lis	3,_C_LABEL(curpm)@ha	/* get current pmap real address */
 	lwz	3,_C_LABEL(curpm)@l(3)
+#endif
 	lwz	3,PM_KERNELSR(3)
 	mtsr	KERNEL_SR,3		/* Restore kernel SR */
 	lis	3,_C_LABEL(astpending)@ha /* Test AST pending */
@@ -1305,7 +1452,7 @@ ddbleave:
 	rfi
 #endif /* DDB */
 
-#if NIPKDB > 0
+#ifdef IPKDB
 /*
  * Deliberate entry to ipkdbtrap
  */
@@ -1415,7 +1562,7 @@ _C_LABEL(ipkdbsbyte):
 	sync
 	icbi	0,9			/* and instruction caches */	
 	blr
-#endif	/* NIPKDB > 0 */
+#endif	/* IPKDB */
 	
 /*
  * int setfault()
@@ -1429,8 +1576,13 @@ _C_LABEL(ipkdbsbyte):
 _C_LABEL(setfault):
 	mflr	0
 	mfcr	12
+#if defined(MULTIPROCESSOR)
+	GET_CPUINFO(4)
+	lwz	4,CI_CURPCB(4)
+#else
 	lis	4,_C_LABEL(curpcb)@ha
 	lwz	4,_C_LABEL(curpcb)@l(4)
+#endif
 	stw	3,PCB_FAULT(4)
 	stw	0,0(3)
 	stw	1,4(3)
@@ -1439,20 +1591,25 @@ _C_LABEL(setfault):
 	xor	3,3,3
 	blr
 
-/*
- * The following code gets copied to the top of the user stack on process
- * execution.  It does signal trampolining on signal delivery.
- *
- * On entry r1 points to a struct sigframe at bottom of current stack.
- * All other registers are unchanged.
- */
-	.globl	_C_LABEL(sigcode),_C_LABEL(esigcode)
-_C_LABEL(sigcode):
-	addi	1,1,-16			/* reserved space for callee */
-	blrl
-	addi	3,1,16+8		/* compute &sf_sc */
-	li	0,SYS___sigreturn14
-	sc				/* sigreturn(scp) */
-	li	0,SYS_exit
-	sc				/* exit(errno) */
-_C_LABEL(esigcode):
+#if defined(MULTIPROCESSOR)
+	.globl	_C_LABEL(cpu_spinup_trampoline)
+_C_LABEL(cpu_spinup_trampoline):
+	li	0,0
+	mtmsr	0
+	isync
+
+	lis	3,cpu_hatchstack@ha
+	lwz	1,cpu_hatchstack@l(3)
+
+	bl	_C_LABEL(cpu_hatch)
+
+/* Loop forever. */
+1:
+	sync
+	mfmsr	3
+	oris	3,3,PSL_POW@h
+	mtmsr	3
+	isync
+	b	1b
+
+#endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.15 1999/09/17 20:04:37 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.15.2.1 2000/11/20 20:13:00 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -50,17 +50,14 @@
 #include <dev/ata/atavar.h>
 #include <dev/ic/wdcvar.h>
 
-void findroot __P((void));
+void canonicalize_bootpath __P((void));
 int OF_interpret __P((char *cmd, int nreturns, ...));
 
+extern char bootpath[256];
+char cbootpath[256];
 struct device *booted_device;	/* boot device */
 int booted_partition;		/* ...and partition on that device */
 
-#define INT_ENABLE_REG (interrupt_reg + 0x24)
-#define INT_CLEAR_REG  (interrupt_reg + 0x28)
-u_char *interrupt_reg;
-
-#define HEATHROW_FCR_OFFSET 0x38
 u_int *heathrow_FCR = NULL;
 
 /*
@@ -69,23 +66,11 @@ u_int *heathrow_FCR = NULL;
 void
 cpu_configure()
 {
-	int node, reg[5];
 	int msr;
 
-	node = OF_finddevice("mac-io");
-	if (node == -1)
-		node = OF_finddevice("/pci/mac-io");
-	if (node != -1 &&
-	    OF_getprop(node, "assigned-addresses", reg, sizeof(reg)) != -1) {
-		interrupt_reg = mapiodev(reg[2], NBPG);
-		heathrow_FCR = mapiodev(reg[2] + HEATHROW_FCR_OFFSET, 4);
-	} else
-		interrupt_reg = mapiodev(0xf3000000, NBPG);
-
-	out32rb(INT_ENABLE_REG, 0);		/* disable all intr. */
-	out32rb(INT_CLEAR_REG, 0xffffffff);	/* clear pending intr. */
-
+	init_interrupt();
 	calc_delayconst();
+	canonicalize_bootpath();
 
 	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("configure: mainbus not configured");
@@ -99,6 +84,211 @@ cpu_configure()
 		      : "=r"(msr) : "K"((u_short)(PSL_EE|PSL_RI)));
 }
 
+void
+canonicalize_bootpath()
+{
+	int node;
+	char *p;
+	char last[32];
+
+	/*
+	 * Strip kernel name.  bootpath contains "OF-path"/"kernel".
+	 *
+	 * for example:
+	 *   /bandit@F2000000/gc@10/53c94@10000/sd@0,0/netbsd	(OF-1.x)
+	 *   /pci/mac-io/ata-3@2000/disk@0:0/netbsd.new		(OF-3.x)
+	 */
+	strcpy(cbootpath, bootpath);
+	while ((node = OF_finddevice(cbootpath)) == -1) {
+		if ((p = strrchr(cbootpath, '/')) == NULL)
+			break;
+		*p = 0;
+	}
+
+	if (node == -1) {
+		/* Cannot canonicalize... use bootpath anyway. */
+		strcpy(cbootpath, bootpath);
+
+		return;
+	}
+
+	/*
+	 * cbootpath is a valid OF path.  Use package-to-path to
+	 * canonicalize pathname.
+	 */
+
+	/* Back up the last component for later use. */
+	if ((p = strrchr(cbootpath, '/')) != NULL)
+		strcpy(last, p + 1);
+	else
+		last[0] = 0;
+
+	bzero(cbootpath, sizeof(cbootpath));
+	OF_package_to_path(node, cbootpath, sizeof(cbootpath) - 1);
+
+	/*
+	 * OF_1.x (at least) always returns addr == 0 for
+	 * SCSI disks (i.e. "/bandit@.../.../sd@0,0").
+	 */
+	if ((p = strrchr(cbootpath, '/')) != NULL) {
+		p++;
+		if (strncmp(p, "sd@", 3) == 0 && strncmp(last, "sd@", 3) == 0)
+			strcpy(p, last);
+	}
+
+	/*
+	 * At this point, cbootpath contains like:
+	 * "/pci@80000000/mac-io@10/ata-3@20000/disk"
+	 *
+	 * The last component may have no address... so append it.
+	 */
+	p = strrchr(cbootpath, '/');
+	if (p != NULL && strchr(p, '@') == NULL) {
+		/* Append it. */
+		if ((p = strrchr(last, '@')) != NULL)
+			strcat(cbootpath, p);
+	}
+
+	if ((p = strrchr(cbootpath, ':')) != NULL) {
+		*p++ = 0;
+		/* booted_partition = *p - '0';		XXX correct? */
+	}
+
+	/* XXX Does this belong here, or device_register()? */
+	if ((p = strrchr(cbootpath, ',')) != NULL)
+		*p = 0;
+}
+
+#define DEVICE_IS(dev, name) \
+	(!strncmp(dev->dv_xname, name, sizeof(name) - 1) && \
+	dev->dv_xname[sizeof(name) - 1] >= '0' && \
+	dev->dv_xname[sizeof(name) - 1] <= '9')
+
+/*
+ * device_register is called from config_attach as each device is
+ * attached. We use it to find the NetBSD device corresponding to the
+ * known OF boot device.
+ */
+void
+device_register(dev, aux)
+	struct device *dev;
+	void *aux;
+{
+	static struct device *parent;
+	static char *bp = bootpath + 1, *cp = cbootpath;
+	unsigned long addr;
+	char *p;
+
+	if (booted_device)
+		return;
+
+	/* Skip over devices not represented in the OF tree. */
+	if (DEVICE_IS(dev, "mainbus")) {
+		parent = dev;
+		return;
+	}
+	if (DEVICE_IS(dev, "atapibus") || DEVICE_IS(dev, "pci") ||
+	    DEVICE_IS(dev, "scsibus"))
+		return;
+
+	if (DEVICE_IS(dev->dv_parent, "atapibus") ||
+	    DEVICE_IS(dev->dv_parent, "pci") ||
+	    DEVICE_IS(dev->dv_parent, "scsibus")) {
+		if (dev->dv_parent->dv_parent != parent)
+			return;
+	} else {
+		if (dev->dv_parent != parent)
+			return;
+	}
+
+	/* Get the address part of the current path component. The
+	 * last component of the canonical bootpath may have no
+	 * address (eg, "disk"), in which case we need to get the
+	 * address from the original bootpath instead.
+	 */
+	p = strchr(cp, '@');
+	if (!p) {
+		if (bp)
+			p = strchr(bp, '@');
+		if (!p)
+			addr = 0;
+		else {
+			addr = strtoul(p + 1, NULL, 16);
+			p = NULL;
+		}
+	} else
+		addr = strtoul(p + 1, &p, 16);
+
+	if (DEVICE_IS(dev->dv_parent, "mainbus")) {
+		struct confargs *ca = aux;
+
+		if (strcmp(ca->ca_name, "ofw") == 0)		/* XXX */
+			return;
+		if (addr != ca->ca_reg[0])
+			return;
+	} else if (DEVICE_IS(dev->dv_parent, "pci")) {
+		struct pci_attach_args *pa = aux;
+
+		if (addr != pa->pa_device)
+			return;
+	} else if (DEVICE_IS(dev->dv_parent, "obio")) {
+		struct confargs *ca = aux;
+
+		if (addr != ca->ca_reg[0])
+			return;
+	} else if (DEVICE_IS(dev->dv_parent, "scsibus") ||
+		   DEVICE_IS(dev->dv_parent, "atapibus")) {
+		struct scsipibus_attach_args *sa = aux;
+
+		if (dev->dv_parent->dv_xname[0] == 's') {
+			if (addr != sa->sa_sc_link->scsipi_scsi.target)
+				return;
+		} else {
+			if (addr != sa->sa_sc_link->scsipi_atapi.drive)
+				return;
+		}
+	} else if (DEVICE_IS(dev->dv_parent, "pciide")) {
+		struct ata_atapi_attach *aa = aux;
+
+		if (addr != aa->aa_channel)
+			return;
+
+		/*
+		 * OF splits channel and drive into separate path
+		 * components, so check the addr part of the next
+		 * component. (Ignore bp, because the canonical path
+		 * will be complete in the pciide case.)
+		 */
+		p = strchr(p, '@');
+		if (!p++)
+			return;
+		if (strtoul(p, &p, 16) != aa->aa_drv_data->drive)
+			return;
+	} else if (DEVICE_IS(dev->dv_parent, "wdc")) {
+		struct ata_atapi_attach *aa = aux;
+
+		if (addr != aa->aa_channel)
+			return;
+	} else
+		return;
+
+	/* If we reach this point, then dev is a match for the current
+	 * path component.
+	 */
+
+	if (p && *p) {
+		parent = dev;
+		cp = p;
+		bp = strchr(bp, '/');
+		if (bp)
+			bp++;
+		return;
+	} else {
+		booted_device = dev;
+		return;
+	}
+}
+
 /*
  * Setup root device.
  * Configure swap area.
@@ -106,131 +296,10 @@ cpu_configure()
 void
 cpu_rootconf()
 {
-	findroot();
-
 	printf("boot device: %s\n",
 	    booted_device ? booted_device->dv_xname : "<unknown>");
 
 	setroot(booted_device, booted_partition);
-}
-
-/*
- * Try to find the device we were booted from to set rootdev.
- */
-void
-findroot()
-{
-	int chosen, node, pnode;
-	u_int targ, lun = 0;	/* XXX lun */
-	struct device *dv;
-	char *p, *controller = "nodev";
-	char path[64], type[16], name[16], compat[16];
-
-	booted_device = NULL;
-
-	/* Cut off filename from "boot/devi/ce/file". */
-	path[0] = 0;
-	p = bootpath;
-	while ((p = strchr(p + 1, '/')) != NULL) {
-		char new[64];
-
-		strcpy(new, bootpath);
-		new[p - bootpath] = 0;
-		if (OF_finddevice(new) == -1)
-			break;
-		strcpy(path, new);
-	}
-	if ((node = OF_finddevice(path)) == -1)
-		goto out;
-
-	bzero(type, sizeof(type));
-	bzero(name, sizeof(name));
-	bzero(compat, sizeof(compat));
-	if (OF_getprop(node, "device_type", type, 16) == -1)
-		goto out;
-	if (OF_getprop(node, "name", name, 16) == -1)
-		goto out;
-	OF_getprop(node, "compatible", compat, 16);	/* ignore error */
-
-	if (strcmp(type, "block") == 0) {
-		char *addr;
-
-		if ((addr = strrchr(path, '@')) == NULL)	/* XXX fd:0 */
-			goto out;
-
-		targ = addr[1] - '0';		/* XXX > '9' */
-		booted_partition = 0;		/* = addr[3] - '0'; */
-
-		if ((pnode = OF_parent(node)) == -1)
-			goto out;
-
-		bzero(name, sizeof(name));
-		if (OF_getprop(pnode, "name", name, sizeof(name)) == -1)
-			goto out;
-		bzero(compat, sizeof(compat));
-		OF_getprop(pnode, "compatible", compat, 16);
-	}
-
-	if (strcmp(compat, "heathrow-ata") == 0) controller = "wdc";
-	if (strcmp(name, "mace") == 0) controller = "mc";
-	if (strcmp(name, "bmac") == 0) controller = "bm";
-	if (strcmp(name, "ethernet") == 0) controller = "bm";
-	if (strcmp(name, "53c94") == 0) controller = "esp";
-	if (strcmp(name, "mesh") == 0) controller = "mesh";
-	if (strcmp(name, "ide") == 0) controller = "wdc";
-	if (strcmp(name, "ata") == 0) controller = "wdc";
-	if (strcmp(name, "ata0") == 0) controller = "wdc";
-	if (strcmp(name, "ATA") == 0) controller = "wdc";
-
-	for (dv = alldevs.tqh_first; dv; dv=dv->dv_list.tqe_next) {
-		if (dv->dv_class != DV_DISK && dv->dv_class != DV_IFNET)
-			continue;
-
-		/* XXX ATAPI */
-		if (strncmp(dv->dv_xname, "sd", 2) == 0) {
-			struct scsibus_softc *sdv = (void *)dv->dv_parent;
-
-			/* sd? at scsibus at esp/mesh */
-			if (strncmp(dv->dv_parent->dv_parent->dv_xname,
-				    controller, strlen(controller)) != 0)
-				continue;
-			if (targ > 7 || lun > 7)
-				goto out;
-			if (sdv->sc_link[targ][lun]->device_softc != dv)
-				continue;
-			booted_device = dv;
-			break;
-		}
-
-		if (strncmp(dv->dv_xname, "wd", 2) == 0) {
-			struct wdc_softc *wdv = (void *)dv->dv_parent;
-
-			if (strncmp(dv->dv_parent->dv_xname,
-				    controller, strlen(controller)) != 0)
-				continue;
-			if (targ >= 2
-			 || wdv->channels == NULL
-			 || wdv->channels[0]->ch_drive[targ].drv_softc != dv)
-				continue;
-			booted_device = dv;
-			break;
-		}
-
-		if (strncmp(dv->dv_xname, "mc", 2) == 0)
-			if (strcmp(controller, "mc") == 0) {
-				booted_device = dv;
-				break;
-			}
-
-		if (strncmp(dv->dv_xname, "bm", 2) == 0)
-			if (strcmp(controller, "bm") == 0) {
-				booted_device = dv;
-				break;
-			}
-	}
-
-out:
-	dk_cleanup();
 }
 
 int

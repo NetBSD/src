@@ -1,4 +1,4 @@
-/*	$NetBSD: cfl.c,v 1.2 1998/04/13 12:10:26 ragge Exp $	*/
+/*	$NetBSD: cfl.c,v 1.2.14.1 2000/11/20 20:33:12 bouyer Exp $	*/
 /*-
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -115,8 +115,10 @@ cflclose(dev, flag, p)
 	int flag;
 	struct proc *p;
 {
-
+	int s;
+	s = splbio();
 	brelse(cfltab.cfl_buf);
+	splx(s);
 	cfltab.cfl_state = IDLE;
 	return 0;
 }
@@ -135,9 +137,9 @@ cflrw(dev, uio, flag)
 
 	if (uio->uio_resid == 0) 
 		return (0);
-	s = spl4();
+	s = splconsmedia();
 	while (cfltab.cfl_state == BUSY)
-		sleep((caddr_t)&cfltab, PRIBIO);
+		(void) tsleep(&cfltab, PRIBIO, "cflbusy", 0);
 	cfltab.cfl_state = BUSY;
 	splx(s);
 
@@ -151,22 +153,22 @@ cflrw(dev, uio, flag)
 			break;
 		}
 		if (uio->uio_rw == UIO_WRITE) {
-			error = uiomove(bp->b_un.b_addr, i, uio);
+			error = uiomove(bp->b_data, i, uio);
 			if (error)
 				break;
 		}
 		bp->b_flags = uio->uio_rw == UIO_WRITE ? B_WRITE : B_READ;
-		s = spl4(); 
+		s = splconsmedia(); 
 		cflstart();
 		while ((bp->b_flags & B_DONE) == 0)
-			sleep((caddr_t)bp, PRIBIO);	
+			(void) tsleep(bp, PRIBIO, "cflrw", 0);
 		splx(s);
 		if (bp->b_flags & B_ERROR) {
 			error = EIO;
 			break;
 		}
 		if (uio->uio_rw == UIO_READ) {
-			error = uiomove(bp->b_un.b_addr, i, uio);
+			error = uiomove(bp->b_data, i, uio);
 			if (error)
 				break;
 		}
@@ -183,7 +185,7 @@ cflstart()
 
 	bp = cfltab.cfl_buf;
 	cfltab.cfl_errcnt = 0;
-	cfltab.cfl_xaddr = (unsigned char *) bp->b_un.b_addr;
+	cfltab.cfl_xaddr = (unsigned char *) bp->b_data;
 	cfltab.cfl_active = CFL_START;
 	bp->b_resid = 0;
 
@@ -236,10 +238,10 @@ cfltint(arg)
 void cflrint __P((int));
 
 void
-cflrint(ch)
-	int ch;
+cflrint(int ch)
 {
 	struct buf *bp = cfltab.cfl_buf;
+	int s;
 
 	switch (cfltab.cfl_active) {
 	case CFL_NEXT:
@@ -247,7 +249,9 @@ cflrint(ch)
 			cfltab.cfl_active = CFL_GETIN;
 		else {
 			cfltab.cfl_active = CFL_IDLE;
+			s = splbio();
 			bp->b_flags |= B_DONE;
+			splx(s);
 			wakeup(bp);
 		}
 		break;
@@ -256,7 +260,9 @@ cflrint(ch)
 		*cfltab.cfl_xaddr++ = ch & 0377;
 		if (--bp->b_bcount==0) {
 			cfltab.cfl_active = CFL_IDLE;
+			s = splbio();
 			bp->b_flags |= B_DONE;
+			splx(s);
 			wakeup(bp);
 		}
 		break;

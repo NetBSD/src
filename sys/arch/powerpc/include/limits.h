@@ -1,4 +1,4 @@
-/*	$NetBSD: limits.h,v 1.5 1998/11/16 04:12:29 mycroft Exp $	*/
+/*	$NetBSD: limits.h,v 1.5.10.1 2000/11/20 20:31:09 bouyer Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -35,7 +35,7 @@
 #define	_MACHINE_LIMITS_H_
 
 #define	CHAR_BIT	8		/* bits per char		*/
-#define	MB_LEN_MAX	1		/* no multibyte characters	*/
+#define	MB_LEN_MAX	32		/* no multibyte characters	*/
 #define	CHAR_MIN	0		/* min value in char		*/
 #define	CHAR_MAX	0xff		/* max value in char		*/
 #define	UCHAR_MAX	0xff		/* max value in unsigned char	*/
@@ -56,6 +56,13 @@
 
 #if !defined(_ANSI_SOURCE)
 #define	SSIZE_MAX	INT_MAX		/* max value for a ssize_t */
+
+#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE) || \
+     defined(_ISOC99_SOURCE) || (__STDC_VERSION__ - 0) >= 199901L
+#define	ULLONG_MAX	0xffffffffffffffffULL	/* max unsigned long long */
+#define	LLONG_MAX	0x7fffffffffffffffLL	/* max signed long long */
+#define	LLONG_MIN	(-0x7fffffffffffffffLL-1) /* min signed long long */
+#endif
 
 #if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
 #define	SIZE_T_MAX	UINT_MAX	/* max value for a size_t */

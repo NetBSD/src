@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.1 1999/05/30 02:37:10 mrg Exp $ */
+/*	$NetBSD: intr.h,v 1.1.4.1 2000/11/20 20:26:48 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,16 +37,29 @@
  */
 
 /* XXX - arbitrary numbers; no interpretation is defined yet */
-#define IPL_NONE	0	/* nothing */
-#define IPL_SOFTCLOCK	1	/* timeouts */
-#define IPL_SOFTNET	1	/* protocol stack */
-#define IPL_BIO		2	/* block I/O */
-#define IPL_NET		3	/* network */
-#define IPL_SOFTSERIAL	4	/* serial */
-#define IPL_TTY		5	/* terminal */
-#define IPL_IMP		6	/* memory allocation */
-#define IPL_AUDIO	7	/* audio */
-#define IPL_CLOCK	8	/* clock */
-#define IPL_SERIAL	9	/* serial */
-#define IPL_HIGH	10	/* everything */
+#define	IPL_NONE	0		/* nothing */
+#define	IPL_SOFTINT	1		/* softint */
+#define	IPL_SOFTCLOCK	1		/* timeouts */
+#define	IPL_SOFTNET	1		/* protocol stack */
+#define	IPL_BIO		PIL_BIO		/* block I/O */
+#define	IPL_NET		PIL_NET		/* network */
+#define	IPL_SOFTSERIAL	4		/* serial */
+#define	IPL_TTY		PIL_TTY		/* terminal */
+#define	IPL_IMP		PIL_IMP		/* memory allocation */
+#define	IPL_AUDIO	PIL_AUD		/* audio */
+#define	IPL_CLOCK	PIL_CLOCK	/* clock */
+#define	IPL_SERIAL	PIL_SER		/* serial */
+#define	IPL_SCHED	PIL_SCHED	/* scheduler */
+#define	IPL_LOCK	PIL_LOCK	/* locks */
+#define	IPL_HIGH	PIL_HIGH	/* everything */
 
+#define	__GENERIC_SOFT_INTERRUPTS
+
+void *
+softintr_establish __P((int level, int (*fun)(void *), void *arg));
+
+void
+softintr_disestablish __P((void *cookie));
+
+void
+softintr_schedule __P((void *cookie));

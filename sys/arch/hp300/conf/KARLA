@@ -1,4 +1,4 @@
-#	$NetBSD: KARLA,v 1.7 1999/07/29 10:37:17 augustss Exp $
+#	$NetBSD: KARLA,v 1.7.2.1 2000/11/20 20:08:02 bouyer Exp $
 #
 # KARLA
 #
@@ -68,7 +68,6 @@ options 	DDB		# Kernel Dynamic Debugger
 #options 	DEBUG		# extra kernel debugging support
 #options 	DIAGNOSTIC	# extra kernel debugging checks
 options 	KTRACE		# system call tracing support
-options 	NKMEMCLUSTERS=1024 # 4K pages in kernel malloc pool (def: 512)
 
 config		netbsd root on ? type ?
 
@@ -98,7 +97,7 @@ oscsi*		at dio? scode?		# old HP SCSI
 sd*		at oscsi? target ? lun ?
 st*		at oscsi? target ? lun ?
 
-pseudo-device	pty		32
+pseudo-device	pty
 #pseudo-device	sl		1
 pseudo-device	ppp		1
 pseudo-device	bpfilter	8

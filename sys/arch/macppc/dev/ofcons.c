@@ -1,4 +1,4 @@
-/*	$NetBSD: ofcons.c,v 1.2 1998/07/28 23:43:33 thorpej Exp $	*/
+/*	$NetBSD: ofcons.c,v 1.2.14.1 2000/11/20 20:12:57 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -239,7 +239,7 @@ ofcstart(tp)
 	tp->t_state &= ~TS_BUSY;
 	if (cl->c_cc) {
 		tp->t_state |= TS_TIMEOUT;
-		timeout(ttrstrt, (void *)tp, 1);
+		callout_reset(&tp->t_rstrt_ch, 1, ttrstrt, tp);
 	}
 	if (cl->c_cc <= tp->t_lowat) {
 		if (tp->t_state & TS_ASLEEP) {
@@ -360,6 +360,7 @@ struct consdev consdev_ofcons = {
 	ofccngetc,
 	ofccnputc,
 	ofccnpollc,
+	NULL,
 };
 
 struct consdev *cn_tab = &consdev_ofcons;

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.16 1999/10/15 12:24:37 tsubai Exp $	*/
+/*	$NetBSD: conf.c,v 1.16.2.1 2000/11/20 20:13:01 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -105,6 +105,12 @@ cdev_decl(cd);
 cdev_decl(zs);
 #include "ipfilter.h"
 #include "ch.h"
+cdev_decl(ch);
+#include "audio.h"
+cdev_decl(audio);
+#include "midi.h"
+cdev_decl(midi);
+#include "sequencer.h"
 #include "ss.h"
 #include "uk.h"
 #include "ite.h"
@@ -120,6 +126,8 @@ cdev_decl(aed);
 cdev_decl(wd);
 cdev_decl(ofc);
 cdev_decl(nvram);
+#include "cz.h"
+cdev_decl(cztty);
 
 #include "scsibus.h"
 cdev_decl(scsibus);
@@ -141,11 +149,17 @@ cdev_decl(uhid);
 cdev_decl(ugen);
 #include "ulpt.h"
 cdev_decl(ulpt);
-#include "umodem.h"
-cdev_decl(umodem);
+#include "ucom.h"
+cdev_decl(ucom);
+#include "urio.h"
+cdev_decl(urio);
+#include "uscanner.h"
+cdev_decl(uscanner);
 
 #include "com.h"
 cdev_decl(com);
+#include "cy.h"
+cdev_decl(cy);
 
 struct cdevsw cdevsw[] = {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
@@ -160,7 +174,7 @@ struct cdevsw cdevsw[] = {
 	cdev_notdef(),			/* 9: Openfirmware RTC */
 	cdev_bpftun_init(NBPFILTER,bpf),/* 10: Berkeley packet filter */
 	cdev_bpftun_init(NTUN,tun),	/* 11: network tunnel */
-	cdev_tty_init(NZSTTY,zs),	/* 12: Zilog 8350 serial port */
+	cdev_tty_init(NZSTTY,zs),	/* 12: Zilog 8530 serial port */
 	cdev_disk_init(NSD,sd),		/* 13: SCSI disk */
 	cdev_tape_init(NST,st),		/* 14: SCSI tape */
 	cdev_disk_init(NCD,cd),		/* 15: SCSI CD-ROM */
@@ -192,8 +206,15 @@ struct cdevsw cdevsw[] = {
 	cdev_lpt_init(NULPT,ulpt),	/* 41: USB printer */
 	cdev_ugen_init(NUGEN,ugen),	/* 42: USB generic driver */
 	cdev_mouse_init(NWSMUX,wsmux),  /* 43: ws multiplexor */
-	cdev_tty_init(NUMODEM,umodem),	/* 44: USB modem */
+	cdev_tty_init(NUCOM,ucom),	/* 44: USB tty */
 	cdev_tty_init(NCOM,com),	/* 45: NS16x50 compatible ports */
+	cdev_tty_init(NCZ,cztty),	/* 46: Cyclades-Z serial port */
+	cdev_tty_init(NCY,cy),		/* 47: Cyclom-Y serial port */
+	cdev_audio_init(NAUDIO,audio),	/* 48: generic audio I/O */
+	cdev_midi_init(NMIDI,midi),	/* 49: MIDI I/O */
+	cdev_midi_init(NSEQUENCER,sequencer),	/* 50: sequencer I/O */
+	cdev_usbdev_init(NURIO,urio),	/* 51: Diamond Rio 500 */
+	cdev_ugen_init(NUSCANNER,uscanner),/* 52: USB scanner */
 };
 int nchrdev = sizeof cdevsw / sizeof cdevsw[0];
 
@@ -250,7 +271,6 @@ static int chrtoblktbl[] = {
 	/* 20 */	NODEV,
 	/* 21 */	NODEV,
 	/* 22 */	NODEV,
-	/* 22 */	NODEV,
 	/* 23 */	NODEV,
 	/* 24 */	NODEV,
 	/* 25 */	2,
@@ -274,6 +294,13 @@ static int chrtoblktbl[] = {
 	/* 43 */	NODEV,
 	/* 44 */	NODEV,
 	/* 45 */	NODEV,
+	/* 46 */	NODEV,
+	/* 47 */	NODEV,
+	/* 48 */	NODEV,
+	/* 49 */	NODEV,
+	/* 50 */	NODEV,
+	/* 51 */	NODEV,
+	/* 52 */	NODEV,
 };
 
 /*

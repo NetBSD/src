@@ -1,4 +1,4 @@
-#	$NetBSD: std.arm32,v 1.9 1999/03/24 06:06:09 mrg Exp $
+#	$NetBSD: std.arm32,v 1.9.8.1 2000/11/20 20:03:55 bouyer Exp $
 #
 # standard NetBSD/arm32 options
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.18 1999/05/01 19:20:52 kleink Exp $	*/
+/*	$NetBSD: asm.h,v 1.18.2.1 2000/11/20 20:11:38 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@
 	.text; .even; .globl name; .type name,@function; name:
 
 #ifdef GPROF
-#define _PROF_PROLOG	link a6,#0; jbsr mcount; unlk a6
+#define _PROF_PROLOG	link %a6,#0; jbsr mcount; unlk %a6
 #else
 #define _PROF_PROLOG
 #endif
@@ -193,6 +193,12 @@
 	.long	0
 
 #endif /* _KERNEL */
+
+#ifdef __ELF__
+#define	WEAK_ALIAS(alias,sym)						\
+	.weak alias;							\
+	alias = sym
+#endif
 
 #ifdef __STDC__
 #define	__STRING(x)			#x

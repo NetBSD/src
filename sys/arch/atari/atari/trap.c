@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.44 1999/07/08 18:05:26 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.44.2.1 2000/11/20 20:05:23 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,6 +43,7 @@
  */
 
 #include "opt_ddb.h"
+#include "opt_syscall_debug.h"
 #include "opt_execfmt.h"
 #include "opt_ktrace.h"
 #include "opt_compat_netbsd.h"
@@ -62,9 +63,7 @@
 #include <sys/ktrace.h>
 #endif
 
-#include <vm/vm.h>
 #include <sys/user.h>
-#include <vm/pmap.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -187,8 +186,6 @@ int mmupid   = -1;
 #define MDB_WBFOLLOW	2
 #define MDB_WBFAILED	4
 #define MDB_ISPID(pid)	((pid) == mmupid)
-static void dumpwb __P((int, u_short, u_int, u_int));
-static void dumpssw __P((u_short));
 #endif
 
 extern struct pcb *curpcb;
@@ -205,7 +202,7 @@ userret(p, fp, oticks, faultaddr, fromtrap)
 	u_int faultaddr;
 	int fromtrap;
 {
-	int sig, s;
+	int sig;
 #ifdef M68040
 	int beenhere = 0;
 
@@ -217,18 +214,9 @@ again:
 	p->p_priority = p->p_usrpri;
 	if (want_resched) {
 		/*
-		 * Since we are curproc, clock will normally just change
-		 * our priority without moving us from one queue to another
-		 * (since the running process is not on a queue.)
-		 * If that happened after we put ourselves on the run queue
-		 * but before we mi_switch()'ed, we might not be on the queue
-		 * indicated by our priority.
+		 * We are being preempted.
 		 */
-		s = splstatclock();
-		setrunqueue(p);
-		p->p_stats->p_ru.ru_nivcsw++;
-		mi_switch();
-		splx(s);
+		preempt(NULL);
 		while ((sig = CURSIG(p)) != 0)
 			postsig(sig);
 	}
@@ -268,7 +256,7 @@ again:
 		}
 	}
 #endif
-	curpriority = p->p_priority;
+	curcpu()->ci_schedstate.spc_curpriority = p->p_priority;
 }
 
 static void
@@ -375,18 +363,7 @@ trap(type, code, v, frame)
 		sticks = p->p_sticks;
 		p->p_md.md_regs = frame.f_regs;
 	}
-
-#ifdef DDB
-	if (type == T_TRACE || type == T_BREAKPOINT) {
-		if (kdb_trap(type, (db_regs_t *)&frame))
-			return;
-	}
-#endif
-
 	switch (type) {
-#ifdef DEBUG
-	dopanic:
-#endif /* DEBUG */
 	default:
 		panictrap(type, code, v, &frame);
 	/*
@@ -516,14 +493,15 @@ trap(type, code, v, frame)
 	 * NetBSD and HP-UX traps get mapped by locore.s into T_TRACE.
 	 * SUN 3.x traps get passed through as T_TRAP15 and are not really
 	 * supported yet.
+	 *
+	 * XXX: We should never get kernel-mode T_TRAP15
+	 * XXX: because locore.s now gives them special treatment.
 	 */
-	case T_TRACE:
 	case T_TRAP15:
 		frame.f_sr &= ~PSL_T;
-		i = SIGTRAP;
-		break;
+		return;
+
 	case T_TRACE|T_USER:
-	case T_TRAP15|T_USER:
 #ifdef COMPAT_SUNOS
 		/*
 		 * SunOS uses Trap #2 for a "CPU cache flush".
@@ -535,6 +513,9 @@ trap(type, code, v, frame)
 			return;
 		}
 #endif
+		/* FALLTHROUGH */
+	case T_TRACE:		/* tracing a trap instruction */
+	case T_TRAP15|T_USER:
 		frame.f_sr &= ~PSL_T;
 		i = SIGTRAP;
 		break;
@@ -648,7 +629,7 @@ trap(type, code, v, frame)
 			if (rv == KERN_SUCCESS) {
 				unsigned nss;
 
-				nss = clrnd(btoc(USRSTACK-(unsigned)va));
+				nss = btoc(USRSTACK-(unsigned)va);
 				if (nss > vm->vm_ssize)
 					vm->vm_ssize = nss;
 			} else if (rv == KERN_PROTECTION_FAILURE)
@@ -713,6 +694,9 @@ char *f7tm[] = { "d-push", "u-data", "u-code", "M-data",
 		 "M-code", "k-data", "k-code", "RES" };
 char wberrstr[] =
     "WARNING: pid %d(%s) writeback [%s] failed, pc=%x fa=%x wba=%x wbd=%x\n";
+
+static void dumpwb __P((int, u_short, u_int, u_int));
+static void dumpssw __P((u_short));
 #endif /* DEBUG */
 
 static int
@@ -763,8 +747,8 @@ writeback(fp, docachepush)
 		 */
 		if (docachepush) {
 			pmap_enter(pmap_kernel(), (vaddr_t)vmmap,
-			    trunc_page(f->f_fa), VM_PROT_WRITE, TRUE,
-			    VM_PROT_WRITE);
+			    trunc_page(f->f_fa), VM_PROT_WRITE,
+			    VM_PROT_WRITE|PMAP_WIRED);
 			fa = (u_int)&vmmap[(f->f_fa & PGOFSET) & ~0xF];
 			bcopy((caddr_t)&f->f_pd0, (caddr_t)fa, 16);
 			(void) pmap_extract(pmap_kernel(), (vaddr_t)fa, &pa);
@@ -1143,7 +1127,7 @@ syscall(code, frame)
 #endif
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSCALL))
-		ktrsyscall(p->p_tracep, code, argsize, args);
+		ktrsyscall(p, code, argsize, args);
 #endif
 	if (error)
 		goto bad;
@@ -1191,7 +1175,7 @@ syscall(code, frame)
 	userret(p, &frame, sticks, (u_int)0, 0);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
-		ktrsysret(p->p_tracep, code, error, rval[0]);
+		ktrsysret(p, code, error, rval[0]);
 #endif
 }
 /*
@@ -1212,6 +1196,6 @@ child_return(arg)
 	userret(p, f, 0, (u_int)0, 0);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
-		ktrsysret(p->p_tracep, SYS_fork, 0, 0);
+		ktrsysret(p, SYS_fork, 0, 0);
 #endif
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: tz.c,v 1.22 1999/09/17 20:04:49 thorpej Exp $	*/
+/*	$NetBSD: tz.c,v 1.22.2.1 2000/11/20 20:20:22 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -48,19 +48,16 @@
 #if NTZ > 0
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/buf.h>
-#include <sys/errno.h>
+#include <sys/conf.h>
+#include <sys/device.h>
 #include <sys/file.h>
-#include <sys/ioctl.h>
+#include <sys/kernel.h>
 #include <sys/mtio.h>
 #include <sys/proc.h>
-#include <sys/syslog.h>
+#include <sys/systm.h>
 #include <sys/tprintf.h>
-#include <sys/device.h>
 
-#include <sys/conf.h>
 #include <machine/conf.h>
 
 #include <pmax/dev/device.h>
@@ -68,7 +65,7 @@
 
 static int	tzprobe __P((void *sd /*struct pmax_scsi_device *sd*/));
 static int	tzcommand __P((dev_t dev, int command, int code,
-		       int count, caddr_t data));
+		    int count, caddr_t data));
 static void	tzstart __P((int unit));
 static void	tzdone __P((int unit, int error, int resid, int status));
 static int	tzmount __P((dev_t dev));
@@ -101,7 +98,7 @@ struct tzquirk {
 #define MAX_PAGE_0_SIZE 64
 
 
-struct	tz_softc {
+static	struct tz_softc {
 	struct	device sc_dev;		/* new config glue */
 	struct	pmax_scsi_device *sc_sd;	/* physical unit info */
 	int	sc_flags;		/* see below */
@@ -110,7 +107,8 @@ struct	tz_softc {
 	tpr_t	sc_ctty;		/* terminal for error messages */
 	daddr_t	sc_fileno;		/* file number of current position */
 	daddr_t	sc_blkno;		/* block number of current position */
-	struct	buf sc_tab;		/* queue of pending operations */
+	struct	buf_queue sc_tab;	/* queue of pending operations */
+	int	sc_active;		/* number of active operations */
 	struct	buf sc_buf;		/* buf for doing I/O */
 	struct	buf sc_errbuf;		/* buf for doing REQUEST_SENSE */
 	struct	ScsiCmd sc_cmd;		/* command for controller */
@@ -204,11 +202,15 @@ tzprobe(xxxsd)
 	if (sd->sd_unit >= NTZ)
 		return (0);
 
+	BUFQ_INIT(&sc->sc_tab);
+	callout_init(&sc->sc_cmd.timo_ch);
+
 	/* init some parameters that don't change */
 	sc->sc_sd = sd;
 	sc->sc_cmd.sd = sd;
 	sc->sc_cmd.unit = sd->sd_unit;
 	sc->sc_cmd.flags = 0;
+	sc->sc_cmd.lun = 0;
 	sc->sc_rwcmd.unitNumber = sd->sd_slave;
 
 	/* XXX set up device info */				/* XXX */
@@ -227,11 +229,8 @@ tzprobe(xxxsd)
 		(ScsiGroup0Cmd *)sc->sc_cdb.cdb);
 	sc->sc_buf.b_flags = B_BUSY | B_READ;
 	sc->sc_buf.b_bcount = sizeof(inqbuf);
-	sc->sc_buf.b_un.b_addr = (caddr_t)&inqbuf;
-	sc->sc_buf.b_actf = (struct buf *)0;
-	sc->sc_buf.b_actb = &sc->sc_tab.b_actf;
-	sc->sc_tab.b_actf = &sc->sc_buf;
-	sc->sc_tab.b_actb = &sc->sc_buf.b_actf;
+	sc->sc_buf.b_data = (caddr_t)&inqbuf;
+	BUFQ_INSERT_HEAD(&sc->sc_tab, &sc->sc_buf);
 	tzstart(sd->sd_unit);
 	if (biowait(&sc->sc_buf) ||
 	    (i = sizeof(inqbuf) - sc->sc_buf.b_resid) < 5)
@@ -245,11 +244,8 @@ tzprobe(xxxsd)
 		(ScsiGroup0Cmd *)sc->sc_cdb.cdb);
 	sc->sc_buf.b_flags = B_BUSY | B_READ;
 	sc->sc_buf.b_bcount = 0;
-	sc->sc_buf.b_un.b_addr = (caddr_t)0;
-	sc->sc_buf.b_actf = (struct buf *)0;
-	sc->sc_buf.b_actb = &sc->sc_tab.b_actf;
-	sc->sc_tab.b_actf = &sc->sc_buf;
-	sc->sc_tab.b_actb = &sc->sc_buf.b_actf;
+	sc->sc_buf.b_data = (caddr_t)0;
+	BUFQ_INSERT_HEAD(&sc->sc_tab, &sc->sc_buf);
 	tzstart(sd->sd_unit);
 	(void) biowait(&sc->sc_buf);
 
@@ -262,16 +258,16 @@ tzprobe(xxxsd)
 	if (i == 5 && inqbuf.version == 1 && (inqbuf.qualifier == 0x50 ||
 	    inqbuf.qualifier == 0x30)) {
 		strcpy(pid, "TK50");
-		printf(" %s\n", pid);
+		printf(" %s", pid);
 		if (inqbuf.qualifier == 0x30)
 			strcpy(pid, "TK50 0x30");
 	} else if (i >= 5 && inqbuf.version == 1 && inqbuf.qualifier == 0 &&
 	    inqbuf.length == 0) {
 		/* assume Emultex MT02 controller */
 		strcpy(pid, "MT02");
-		printf(" %s\n", pid);
+		printf(" %s", pid);
 	} else if (inqbuf.version > 2 || i < 36) {
-		printf(" GENERIC SCSI tape device: qual 0x%x, ver %d\n",
+		printf(" GENERIC SCSI tape device: qual 0x%x, ver %d",
 			inqbuf.qualifier, inqbuf.version);
 	} else {
 
@@ -290,8 +286,10 @@ tzprobe(xxxsd)
 			if (revl[i] != ' ')
 				break;
 		revl[i+1] = 0;
-		printf(" %s %s rev %s\n", vid, pid, revl);
+		printf(" %s %s rev %s (SCSI-%d)", vid, pid, revl,
+		    inqbuf.version);
 	}
+	printf("\n");
 
 	sc->sc_quirks = NULL;
 	for (i = 0; i < NQUIRKS; i++) {
@@ -336,9 +334,9 @@ tzcommand(dev, command, code, count, data)
 
 	s = splbio();
 	/* wait for pending operations to finish */
-	while (sc->sc_tab.b_actf) {
+	while (BUFQ_FIRST(&sc->sc_tab) != NULL) {
 		sc->sc_flags |= TZF_WAIT;
-		sleep(&sc->sc_flags, PZERO);
+		(void) tsleep(&sc->sc_flags, PZERO, "tzcmd", 0);
 	}
 	sc->sc_flags |= TZF_DONTCOUNT;	/* don't count any operations in blkno */
 	sc->sc_flags |= TZF_ALTCMD;	/* force use of sc_cdb */
@@ -357,11 +355,8 @@ tzcommand(dev, command, code, count, data)
 		sc->sc_buf.b_flags = B_BUSY | B_READ;
 	}
 	sc->sc_buf.b_bcount = data ? count : 0;
-	sc->sc_buf.b_un.b_addr = data;
-	sc->sc_buf.b_actf = (struct buf *)0;
-	sc->sc_buf.b_actb = &sc->sc_tab.b_actf;
-	sc->sc_tab.b_actf = &sc->sc_buf;
-	sc->sc_tab.b_actb = &sc->sc_buf.b_actf;
+	sc->sc_buf.b_data = data;
+	BUFQ_INSERT_HEAD(&sc->sc_tab, &sc->sc_buf);
 	tzstart(sc->sc_sd->sd_unit);
 	error = biowait(&sc->sc_buf);
 	sc->sc_flags &= ~TZF_DONTCOUNT;	/* clear don't count flag */
@@ -417,10 +412,10 @@ tzstart(unit)
 	int unit;
 {
 	struct tz_softc *sc = &tz_softc[unit];
-	struct buf *bp = sc->sc_tab.b_actf;
+	struct buf *bp = BUFQ_FIRST(&sc->sc_tab);
 	int n;
 
-	sc->sc_cmd.buf = bp->b_un.b_addr;
+	sc->sc_cmd.buf = bp->b_data;
 	sc->sc_cmd.buflen = bp->b_bcount;
 
 	if (sc->sc_flags & (TZF_SENSEINPROGRESS | TZF_ALTCMD)) {
@@ -477,8 +472,7 @@ tzdone(unit, error, resid, status)
 	int status;		/* SCSI status byte */
 {
 	struct tz_softc *sc = &tz_softc[unit];
-	struct buf *bp = sc->sc_tab.b_actf;
-	struct buf *dp;
+	struct buf *bp = BUFQ_FIRST(&sc->sc_tab);
 
 	if (bp == NULL) {
 		printf("tz%d: bp == NULL\n", unit);
@@ -486,13 +480,12 @@ tzdone(unit, error, resid, status)
 	}
 	if (sc->sc_flags & TZF_SENSEINPROGRESS) {
 		sc->sc_flags &= ~TZF_SENSEINPROGRESS;
-		*bp->b_actb = dp = bp->b_actf;	/* remove sc_errbuf */
+		BUFQ_REMOVE(&sc->sc_tab, bp);	/* remove sc_errbuf */
+		bp = BUFQ_FIRST(&sc->sc_tab);
 #ifdef DIAGNOSTIC
-		if (!dp)
+		if (bp == NULL)
 			panic("tzdone");
 #endif
-		dp->b_actb = bp->b_actb;
-		bp = dp;
 
 		if (error || (status & SCSI_STATUS_CHECKCOND)) {
 			printf("tz%d: error reading sense data: error %d scsi status 0x%x\n",
@@ -603,11 +596,8 @@ tzdone(unit, error, resid, status)
 				(ScsiGroup0Cmd *)sc->sc_cdb.cdb);
 			sc->sc_errbuf.b_flags = B_BUSY | B_PHYS | B_READ;
 			sc->sc_errbuf.b_bcount = sizeof(sc->sc_sense.sense);
-			sc->sc_errbuf.b_un.b_addr = (caddr_t)sc->sc_sense.sense;
-			sc->sc_errbuf.b_actf = bp;
-			sc->sc_errbuf.b_actb = bp->b_actb;
-			*bp->b_actb = &sc->sc_errbuf;
-			bp->b_actb = &sc->sc_errbuf.b_actf;
+			sc->sc_errbuf.b_data = (caddr_t)sc->sc_sense.sense;
+			BUFQ_INSERT_HEAD(&sc->sc_tab, &sc->sc_errbuf);
 			tzstart(unit);
 			return;
 		}
@@ -622,16 +612,12 @@ tzdone(unit, error, resid, status)
 		}
 	}
 
-	if ((dp = bp->b_actf) != 0)
-		dp->b_actb = bp->b_actb;
-	else
-		sc->sc_tab.b_actb = bp->b_actb;
-	*bp->b_actb = dp;
+	BUFQ_REMOVE(&sc->sc_tab, bp);
 	biodone(bp);
-	if (sc->sc_tab.b_actf)
+	if (BUFQ_FIRST(&sc->sc_tab) != NULL)
 		tzstart(unit);
 	else {
-		sc->sc_tab.b_active = 0;
+		sc->sc_active = 0;
 		if (sc->sc_flags & TZF_WAIT) {
 			sc->sc_flags &= ~TZF_WAIT;
 			wakeup(&sc->sc_flags);
@@ -929,7 +915,6 @@ tzstrategy(bp)
 {
 	int unit = tzunit(bp->b_dev);
 	struct tz_softc *sc = &tz_softc[unit];
-	struct buf *dp;
 	int s;
 
 	if (sc->sc_flags & TZF_SEENEOF) {
@@ -937,14 +922,10 @@ tzstrategy(bp)
 		biodone(bp);
 		return;
 	}
-	bp->b_actf = NULL;
-	dp = &sc->sc_tab;
 	s = splbio();
-	bp->b_actb = dp->b_actb;
-	*dp->b_actb = bp;
-	dp->b_actb = &bp->b_actf;
-	if (dp->b_active == 0) {
-		dp->b_active = 1;
+	BUFQ_INSERT_TAIL(&sc->sc_tab, bp);
+	if (sc->sc_active == 0) {
+		sc->sc_active = 1;
 		tzstart(unit);
 	}
 	splx(s);

@@ -1,4 +1,4 @@
-/*	$NetBSD: iwm_fdvar.h,v 1.3 1999/03/27 05:45:20 scottr Exp $	*/
+/*	$NetBSD: iwm_fdvar.h,v 1.3.8.1 2000/11/20 20:12:26 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 Hauke Fath.  All rights reserved.
@@ -132,7 +132,9 @@ typedef struct iwmAttachArgs iwmAttachArgs_t;
 struct fd_softc {
 	struct device devInfo;		/* generic device info */
 	struct disk diskInfo;		/* generic disk info */
-	struct buf bufQueue;		/* queue of buf's */
+	struct buf_queue bufQueue;	/* queue of buf's */
+	int sc_active;			/* number of active requests */
+	struct callout motor_ch;	/* motor callout */
 
 /* private stuff here */
 /* errors & retries in current I/O job */

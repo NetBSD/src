@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.13 1999/04/14 15:22:46 christos Exp $	 */
+/*	$NetBSD: main.c,v 1.13.2.1 2000/11/20 20:09:39 bouyer Exp $	 */
 
 /*
  * Copyright (c) 1996, 1997
@@ -255,7 +255,11 @@ main(argc, argv)
 	extern char    *optarg;
 	extern int      optind;
 
+#ifdef	SUPPORT_SERIAL
+	initio(SUPPORT_SERIAL);
+#else
 	initio(CONSDEV_PC);
+#endif
 	gateA20();
 
 	print_banner();
@@ -310,7 +314,7 @@ command_help(arg)
 	char *arg;
 {
 	printf("commands are:\n"
-	       "boot [xdNx:][filename] [-adrs]\n"
+	       "boot [xdNx:][filename] [-adsvq]\n"
 	       "     (ex. \"sd0a:netbsd.old -s\"\n"
 	       "ls [path]\n"
 	       "mode ufs|dos\n"

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.59 1999/09/17 20:04:42 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.59.2.1 2000/11/20 20:15:25 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -56,7 +56,6 @@
 #include <sys/conf.h>
 #include <sys/file.h>
 #include <sys/clist.h>
-#include <sys/callout.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/msgbuf.h>
@@ -70,15 +69,14 @@
 #include <sys/vnode.h>
 #include <sys/syscallargs.h>
 
-#include <vm/vm.h>
-#include <vm/vm_kern.h>
-#include <vm/vm_page.h>
-
 #include <uvm/uvm_extern.h>
 
 #include <sys/sysctl.h>
 
 #include <machine/cpu.h>
+#define _MVME68K_BUS_DMA_PRIVATE
+#include <machine/bus.h>
+#undef _MVME68K_BUS_DMA_PRIVATE
 #include <machine/reg.h>
 #include <machine/prom.h>
 #include <machine/psl.h>
@@ -88,12 +86,23 @@
 
 #include <machine/kcore.h>	/* XXX should be pulled in by sys/kcore.h */
 
+#include <mvme68k/dev/mainbus.h>
+#include <mvme68k/mvme68k/isr.h>
 #include <mvme68k/mvme68k/seglist.h>
 
-#define	MAXMEM	64*1024*CLSIZE	/* XXX - from cmap.h */
+#ifdef DDB
+#include <machine/db_machdep.h>
+#include <ddb/db_extern.h>
+#include <ddb/db_output.h>
+#endif
+
+#define	MAXMEM	64*1024	/* XXX - from cmap.h */
 
 /* the following is used externally (sysctl_hw) */
 char	machine[] = MACHINE;	/* from <machine/param.h> */
+
+/* Our exported CPU info; we can have only one. */  
+struct cpu_info cpu_info_store;
 
 vm_map_t exec_map = NULL;
 vm_map_t mb_map = NULL;
@@ -116,7 +125,16 @@ int	physmem;		/* size of physical memory */
  */
 int	safepri = PSL_LOWIPL;
 
-u_long myea; /* from ROM XXXCDC */
+/*
+ * The driver for the ethernet chip appropriate to the
+ * platform (lance or i82586) will use this variable
+ * to size the chip's packet buffer.
+ */
+#ifndef ETHER_DATA_BUFF_PAGES
+#define	ETHER_DATA_BUFF_PAGES	4
+#endif
+u_long	ether_data_buff_size = ETHER_DATA_BUFF_PAGES * NBPG;
+u_char	mvme_ea[6];
 
 extern	u_int lowram;
 extern	short exframesize[];
@@ -133,6 +151,10 @@ void	dumpsys __P((void));
 int	cpu_dumpsize __P((void));
 int	cpu_dump __P((int (*)(dev_t, daddr_t, caddr_t, size_t), daddr_t *));
 void	cpu_init_kcore_hdr __P((void));
+u_long	cpu_dump_mempagecnt __P((void));
+int	cpu_exec_aout_makecmds __P((struct proc *, struct exec_package *));
+void	straytrap __P((int, u_short));
+void	nmintr __P((struct frame));
 
 /*
  * Machine-independent crash dump header info.
@@ -171,11 +193,7 @@ void	mvme68k_init __P((void));
 void	mvme147_init __P((void));
 #endif
 
-#ifdef MVME162
-void	mvme162_init __P((void));
-#endif
-
-#ifdef MVME167
+#if defined(MVME162) || defined(MVME167)
 #include <mvme68k/dev/pcctworeg.h>
 void	mvme167_init __P((void));
 #endif
@@ -218,13 +236,13 @@ mvme68k_init()
 		mvme147_init();
 		break;
 #endif
-#ifdef MVME162
-	case MVME_162:
-		mvme162_init();
-		break;
-#endif
 #ifdef MVME167
 	case MVME_167:
+#endif
+#ifdef MVME162
+	case MVME_162:
+#endif
+#if defined(MVME167) || defined(MVME162)
 		mvme167_init();
 		break;
 #endif
@@ -237,8 +255,8 @@ mvme68k_init()
 	 */
 	for (i = 0; i < btoc(round_page(MSGBUFSIZE)); i++)
 		pmap_enter(pmap_kernel(), (vaddr_t)msgbufaddr + i * NBPG,
-		    msgbufpa + i * NBPG, VM_PROT_READ|VM_PROT_WRITE, TRUE,
-		    VM_PROT_READ|VM_PROT_WRITE);
+		    msgbufpa + i * NBPG, VM_PROT_READ|VM_PROT_WRITE,
+		    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
 	initmsgbuf(msgbufaddr, round_page(MSGBUFSIZE));
 }
 
@@ -249,66 +267,83 @@ mvme68k_init()
 void
 mvme147_init()
 {
-	struct pcc *pcc;
+	bus_space_tag_t bt = MVME68K_INTIO_BUS_SPACE;
+	bus_space_handle_t bh;
 
-	pcc = (struct pcc *)PCC_VADDR(PCC_REG_OFF);
+	/*
+	 * Set up the correct bus dma map sync function for the '147
+	 */
+	_bus_dmamap_sync = _bus_dmamap_sync_030;
+
+	/*
+	 * Set up a temporary mapping to the PCC's registers
+	 */
+	bus_space_map(bt, MAINBUS_PCC_OFFSET + PCC_REG_OFF, PCCREG_SIZE, 0, &bh);
 
 	/*
 	 * calibrate delay() using the 6.25 usec counter.
 	 * we adjust the delay_divisor until we get the result we want.
 	 */
-	pcc->t1_cr = PCC_TIMERCLEAR;
-	pcc->t1_pload = 0;		/* init value for counter */
-	pcc->t1_int = 0;		/* disable interrupt */
+	bus_space_write_1(bt, bh, PCCREG_TMR1_CONTROL, PCC_TIMERCLEAR);
+	bus_space_write_2(bt, bh, PCCREG_TMR1_PRELOAD, 0);
+	bus_space_write_1(bt, bh, PCCREG_TMR1_INTR_CTRL, 0);
 
 	for (delay_divisor = 140; delay_divisor > 0; delay_divisor--) {
-		pcc->t1_cr = PCC_TIMERSTART;
+		bus_space_write_1(bt, bh, PCCREG_TMR1_CONTROL, PCC_TIMERSTART);
 		delay(10000);
-		pcc->t1_cr = PCC_TIMERSTOP;
-		if (pcc->t1_count > 1600)  /* 1600 * 6.25usec == 10000usec */
+		bus_space_write_1(bt, bh, PCCREG_TMR1_CONTROL, PCC_TIMERSTOP);
+
+		/* 1600 * 6.25usec == 10000usec */
+		if (bus_space_read_2(bt, bh, PCCREG_TMR1_COUNT) > 1600)
 			break;	/* got it! */
-		pcc->t1_cr = PCC_TIMERCLEAR;
+
+		bus_space_write_1(bt, bh, PCCREG_TMR1_CONTROL, PCC_TIMERCLEAR);
 		/* retry! */
 	}
+
+	bus_space_unmap(bt, bh, PCCREG_SIZE);
 
 	/* calculate cpuspeed */
 	cpuspeed = 2048 / delay_divisor;
 }
 #endif /* MVME147 */
 
-#ifdef MVME162
+#if defined(MVME167) || defined(MVME162)
 /*
- * MVME-162 specific initialization.
- */
-void
-mvme162_init()
-{
-
-	/* XXX implement XXX */
-}
-#endif /* MVME162 */
-
-#ifdef MVME167
-/*
- * MVME-167 specific initializaion.
+ * MVME-167 and MVME-162 specific initializaion.
+ *
+ * XXX Still needs to be bus_spaced XXX
  */
 void
 mvme167_init()
 {
-	struct pcctwo *pcctwo;
+	bus_space_tag_t bt = MVME68K_INTIO_BUS_SPACE;
+	bus_space_handle_t bh;
 
-	pcctwo = (struct pcctwo *)PCCTWO_VADDR(PCCTWO_REG_OFF);
+	/*
+	 * Set up the correct bus dma map sync function for the '167
+	 */
+	_bus_dmamap_sync = _bus_dmamap_sync_0460;
 
-	pcctwo->tt1_icr = 0;
+	/*
+	 * Set up a temporary mapping to the PCCChip2's registers
+	 */
+	bus_space_map(bt, MAINBUS_PCCTWO_OFFSET + PCCTWO_REG_OFF,
+	    PCC2REG_SIZE, 0, &bh);
+
+	bus_space_write_1(bt, bh, PCC2REG_TIMER1_ICSR, 0);
 
 	for (delay_divisor = 60; delay_divisor > 0; delay_divisor--) {
-		pcctwo->tt1_counter = 0;
-		pcctwo->tt1_ctrl = PCCTWO_TT_CTRL_CEN;
+		bus_space_write_4(bt, bh, PCC2REG_TIMER1_COUNTER, 0);
+		bus_space_write_1(bt, bh, PCC2REG_TIMER1_CONTROL,
+		    PCCTWO_TT_CTRL_CEN);
 		delay(10000);
-		pcctwo->tt1_ctrl = 0;
-		if (pcctwo->tt1_counter > 10000)
+		bus_space_write_1(bt, bh, PCC2REG_TIMER1_CONTROL, 0);
+		if (bus_space_read_4(bt, bh, PCC2REG_TIMER1_COUNTER) > 10000)
 			break;	/* got it! */
 	}
+
+	bus_space_unmap(bt, bh, PCC2REG_SIZE);
 
 	/* calculate cpuspeed */
 	cpuspeed = 759 / delay_divisor;
@@ -374,13 +409,16 @@ cpu_startup()
 	printf(version);
 	identifycpu();
 	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
-	printf("total memory = %s\n", pbuf);
-	
+	printf("total memory = %s", pbuf);
+
 	for (vmememsize = 0, i = 1; i < mem_cluster_cnt; i++)
 		vmememsize += mem_clusters[i].size;
-	if (vmememsize != 0)
-		printf(" (%qu on-board, %qu VMEbus)",
-		    mem_clusters[0].size, vmememsize);
+	if (vmememsize != 0) {
+		format_bytes(pbuf, sizeof(pbuf), mem_clusters[0].size);
+		printf(" (%s on-board", pbuf);
+		format_bytes(pbuf, sizeof(pbuf), vmememsize);
+		printf(", %s VMEbus)", pbuf);
+	}
 
 	printf("\n");
 
@@ -401,7 +439,7 @@ cpu_startup()
 	 */
 	size = MAXBSIZE * nbuf;
 	if (uvm_map(kernel_map, (vaddr_t *) &buffers, round_page(size),
-		    NULL, UVM_UNKNOWN_OFFSET,
+		    NULL, UVM_UNKNOWN_OFFSET, 0,
 		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
 				UVM_ADV_NORMAL, 0)) != KERN_SUCCESS)
 		panic("startup: cannot allocate VM for buffers");
@@ -420,7 +458,7 @@ cpu_startup()
 		 * "base" pages for the rest.
 		 */
 		curbuf = (vaddr_t) buffers + (i * MAXBSIZE);
-		curbufsize = CLBYTES * ((i < residual) ? (base+1) : base);
+		curbufsize = NBPG * ((i < residual) ? (base+1) : base);
 
 		while (curbufsize) {
 			pg = uvm_pagealloc(NULL, 0, NULL, 0);
@@ -453,20 +491,12 @@ cpu_startup()
 				 nmbclusters * mclbytes, VM_MAP_INTRSAFE,
 				 FALSE, NULL);
 
-	/*
-	 * Initialize callouts
-	 */
-	callfree = callout;
-	for (i = 1; i < ncallout; i++)
-		callout[i-1].c_next = &callout[i];
-	callout[i-1].c_next = NULL;
-
 #ifdef DEBUG
 	pmapdebug = opmapdebug;
 #endif
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
-	format_bytes(pbuf, sizeof(pbuf), bufpages * CLBYTES);
+	format_bytes(pbuf, sizeof(pbuf), bufpages * NBPG);
 	printf("using %d buffers containing %s of memory\n", nbuf, pbuf);
 
 	/*
@@ -476,7 +506,7 @@ cpu_startup()
 	 * XXX Should just change KERNBASE and VM_MIN_KERNEL_ADDRESS,
 	 * XXX but not right now.
 	 */
-	if (uvm_map_protect(kernel_map, 0, round_page(&kernel_text),
+	if (uvm_map_protect(kernel_map, 0, round_page((vaddr_t)&kernel_text),
 	    UVM_PROT_NONE, TRUE) != KERN_SUCCESS)
 		panic("can't mark pre-text pages off-limits");
 
@@ -484,8 +514,8 @@ cpu_startup()
 	 * Tell the VM system that writing to the kernel text isn't allowed.
 	 * If we don't, we might end up COW'ing the text segment!
 	 */
-	if (uvm_map_protect(kernel_map, trunc_page(&kernel_text),
-	    round_page(&etext), UVM_PROT_READ|UVM_PROT_EXEC, TRUE)
+	if (uvm_map_protect(kernel_map, trunc_page((vaddr_t)&kernel_text),
+	    round_page((vaddr_t)&etext), UVM_PROT_READ|UVM_PROT_EXEC, TRUE)
 	    != KERN_SUCCESS)
 		panic("can't protect kernel text");
 
@@ -510,6 +540,7 @@ setregs(p, pack, stack)
 	u_long stack;
 {
 	struct frame *frame = (struct frame *)p->p_md.md_regs;
+	extern void m68881_restore __P((struct fpframe *));
 
 	frame->f_sr = PSL_USERSET;
 	frame->f_pc = pack->ep_entry & ~1;
@@ -540,7 +571,6 @@ setregs(p, pack, stack)
  * Info for CTL_HW
  */
 char	cpu_model[124];
-extern	char version[];
 
 void
 identifycpu()
@@ -661,6 +691,7 @@ identifycpu()
 /*
  * machine dependent system variables.
  */
+int
 cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	int *name;
 	u_int namelen;
@@ -699,6 +730,7 @@ cpu_reboot(howto, bootstr)
 	int howto;
 	char *bootstr;
 {
+	extern void savectx __P((struct user *));
 
 	/* take a snap shot before clobbering any registers */
 	if (curproc && curproc->p_addr)
@@ -886,7 +918,7 @@ long	dumplo = 0;		/* blocks */
 
 /*
  * This is called by main to set dumplo and dumpsize.
- * Dumps always skip the first CLBYTES of disk space
+ * Dumps always skip the first NBPG of disk space
  * in case there might be a disk label stored there.
  * If there is extra space, put dump at the end to
  * reduce the chance that swapping trashes it.
@@ -943,7 +975,6 @@ dumpsys()
 
 	/* XXX Should save registers. */
 
-	msgbufenabled = 0;	/* don't record dump msgs in msgbuf */
 	if (dumpdev == NODEV)
 		return;
 
@@ -986,7 +1017,7 @@ dumpsys()
 
 			/* Print out how many MBs we have left to go. */
 			if ((totalbytesleft % (1024*1024)) == 0)
-				printf("%d ", totalbytesleft / (1024 * 1024));
+				printf("%ld ", totalbytesleft / (1024 * 1024));
 
 			/* Limit size for next transfer. */
 			n = bytes - i;
@@ -994,7 +1025,7 @@ dumpsys()
 				n = NBPG;
 
 			pmap_enter(pmap_kernel(), (vaddr_t)vmmap, maddr,
-			    VM_PROT_READ, TRUE, VM_PROT_READ);
+			    VM_PROT_READ, VM_PROT_READ|PMAP_WIRED);
 
 			error = (*dump)(dumpdev, blkno, vmmap, n);
 			if (error)
@@ -1056,6 +1087,7 @@ initcpu()
 #endif
 }
 
+void
 straytrap(pc, evec)
 	int pc;
 	u_short evec;
@@ -1109,7 +1141,7 @@ void
 nmintr(frame)
 	struct frame frame;
 {
-	nmihand(&frame);
+	(void) nmihand(&frame);
 }
 
 /*
@@ -1119,12 +1151,13 @@ nmintr(frame)
  * environment, bumping the ABORT switch would be bad, so we enable
  * panic'ing on ABORT with the kernel option "PANICBUTTON".
  */
-void
-nmihand(frame)
-	struct frame *frame;
+int
+nmihand(arg)
+	void *arg;
 {
-
 	mvme68k_abort("ABORT SWITCH");
+
+	return 1;
 }
 
 /*
@@ -1136,7 +1169,7 @@ mvme68k_abort(cp)
 	const char *cp;
 {
 #ifdef DDB
-	printf("%s\n", cp);
+	db_printf("%s\n", cp);
 	Debugger();
 #else
 #ifdef PANICBUTTON
@@ -1154,26 +1187,10 @@ mvme68k_abort(cp)
  * Determine of the given exec package refers to something which we
  * understand and, if so, set up the vmcmds for it.
  */
+int
 cpu_exec_aout_makecmds(p, epp)
     struct proc *p;
     struct exec_package *epp;
 {
     return ENOEXEC;
-}
-
-void
-myetheraddr(ether)
-	u_char *ether;
-{
-	int e = myea;
-
-	ether[0] = 0x08;
-	ether[1] = 0x00;
-	ether[2] = 0x3e;
-	e = e >> 8;
-	ether[5] = (u_char)(e & 0xff);
-	e = e >> 8;
-	ether[4] = (u_char)(e & 0xff);
-	e = e >> 8;
-	ether[3] = (u_char)(e & 0x0f) | 0x20;
 }

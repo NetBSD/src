@@ -1,4 +1,4 @@
-/*	$NetBSD: intreg.c,v 1.13 1999/03/24 05:51:14 mrg Exp $	*/
+/*	$NetBSD: intreg.c,v 1.13.8.1 2000/11/20 20:28:00 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,8 +45,6 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/vmmeter.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 

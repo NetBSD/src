@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_pci.c,v 1.2 1998/10/05 01:09:38 mark Exp $	*/
+/*	$NetBSD: footbridge_pci.c,v 1.2.12.1 2000/11/20 20:03:57 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -34,6 +34,8 @@
  * SUCH DAMAGE.
  */
 
+#include "opt_ebsa285.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
@@ -67,6 +69,7 @@ void		footbridge_pci_conf_write __P((void *, pcitag_t, int,
 int		footbridge_pci_intr_map __P((void *, pcitag_t, int, int,
 		    pci_intr_handle_t *));
 const char	*footbridge_pci_intr_string __P((void *, pci_intr_handle_t));
+const struct evcnt *footbridge_pci_intr_evcnt __P((void *, pci_intr_handle_t));
 void		*footbridge_pci_intr_establish __P((void *, pci_intr_handle_t,
 		    int, int (*)(void *), void *));
 void		footbridge_pci_intr_disestablish __P((void *, void *));
@@ -83,6 +86,7 @@ struct arm32_pci_chipset footbridge_pci_chipset = {
 	NULL,	/* intr_v */
 	footbridge_pci_intr_map,
 	footbridge_pci_intr_string,
+	footbridge_pci_intr_evcnt,
 	footbridge_pci_intr_establish,
 	footbridge_pci_intr_disestablish
 };
@@ -341,6 +345,16 @@ footbridge_pci_intr_string(pcv, ih)
 #endif
 	sprintf(irqstr, "irq %ld", ih);
 	return(irqstr);	
+}
+
+const struct evcnt *
+footbridge_pci_intr_evcnt(pcv, ih)
+	void *pcv;
+	pci_intr_handle_t ih;
+{
+
+	/* XXX for now, no evcnt parent reported */
+	return NULL;
 }
 
 void *

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.2 1999/09/25 21:11:55 is Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.2.2.1 2000/11/20 20:11:40 bouyer Exp $	*/
 
 /* 
  * Mach Operating System
@@ -40,7 +40,7 @@
 #include <sys/param.h>
 #include <sys/proc.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/db_machdep.h>
 

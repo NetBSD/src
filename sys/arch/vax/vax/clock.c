@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.28 1999/05/01 16:13:43 ragge Exp $	 */
+/*	$NetBSD: clock.c,v 1.28.2.1 2000/11/20 20:33:13 bouyer Exp $	 */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -43,8 +43,10 @@
 #include <machine/cpu.h>
 #include <machine/uvax.h>
 
-int	yeartonum __P((int));
-int	numtoyear __P((int));
+#include "opt_cputype.h"
+
+struct evcnt clock_intrcnt =
+	EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "clock", "intr");
 
 /*
  * microtime() should return number of usecs in struct timeval.
@@ -62,11 +64,22 @@ microtime(tvp)
 	bcopy((caddr_t)&time, tvp, sizeof(struct timeval));
 
 	switch (vax_boardtype) {
-#ifdef VAX46
+#if VAX46
 	case VAX_BTYP_46: {
 		extern struct vs_cpu *ka46_cpu;
 		i = *(volatile int *)(&ka46_cpu->vc_diagtimu);
 		i = (i >> 16) * 1024 + (i & 0x3ff);
+		break;
+		}
+#endif
+#if VAX48
+	case VAX_BTYP_48: {
+		/*
+		 * PR_ICR doesn't exist.  We could use the vc_diagtimu
+		 * counter, saving the value on the timer interrupt and
+		 * subtracting that from the current value.
+		 */
+		i = 0;
 		break;
 		}
 #endif
@@ -76,13 +89,13 @@ microtime(tvp)
 	}
 	i += tick; /* Get current interval count */
 	tvp->tv_usec += i;
-	while (tvp->tv_usec > 1000000) {
+	while (tvp->tv_usec >= 1000000) {
 		tvp->tv_sec++;
 		tvp->tv_usec -= 1000000;
 	}
 	if (tvp->tv_sec == lasttime.tv_sec &&
 	    tvp->tv_usec <= lasttime.tv_usec &&
-	    (tvp->tv_usec = lasttime.tv_usec + 1) > 1000000) {
+	    (tvp->tv_usec = lasttime.tv_usec + 1) >= 1000000) {
 		tvp->tv_sec++;
 		tvp->tv_usec -= 1000000;
 	}
@@ -163,6 +176,7 @@ cpu_initclocks()
 {
 	mtpr(-10000, PR_NICR); /* Load in count register */
 	mtpr(0x800000d1, PR_ICCS); /* Start clock and enable interrupt */
+	evcnt_attach_static(&clock_intrcnt);
 }
 
 /*
@@ -201,7 +215,7 @@ numtoyear(num)
 	return y;
 }
 
-#if VAX750 || VAX780 || VAX8600 || VAX650
+#if VAX750 || VAX780 || VAX8600 || VAX650 || VAX660 || VAX670 || VAX680
 /*
  * Reads the TODR register; returns a (probably) true tick value,
  * or CLKREAD_BAD if failed. The year is based on the argument
@@ -241,7 +255,7 @@ generic_clkwrite()
 }
 #endif
 
-#if VAX630 || VAX410 || VAX43 || VAX8200 || VAX46
+#if VAX630 || VAX410 || VAX43 || VAX8200 || VAX46 || VAX48 || VAX49
 
 volatile short *clk_page;	/* where the chip is mapped in virtual memory */
 int	clk_adrshift;	/* how much to multiply the in-page address with */

@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.55 1999/07/29 10:37:15 augustss Exp $
+#	$NetBSD: GENERIC,v 1.55.2.1 2000/11/20 20:05:24 bouyer Exp $
 #
 # Generic atari
 #
@@ -7,6 +7,9 @@
 # with network (through ppp or slip).
 
 include "arch/atari/conf/std.atari"
+
+#ident 		"GENERIC-$Revision: 1.55.2.1 $"
+
 #
 # Add support for about 16 users. This variable is used to size
 # various kernel structures.
@@ -42,6 +45,10 @@ options 	FPU_EMULATE	# Support for MC68881/MC68882 emulator
 #
 #options 	GATEWAY         # packet forwarding
 options 	INET            # IP + ICMP + TCP + UDP
+options 	INET6		# IPV6
+#options 	IPSEC		# IP security
+#options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+#options 	IPSEC_DEBUG	# debug for IP security
 options 	MROUTING        # IP multicast routing
 #options 	NS              # XNS
 #options 	NSIP            # XNS tunneling over IP
@@ -64,6 +71,7 @@ file-system 	PROCFS		# Process filesystem
 file-system 	KERNFS		# Kernel parameter filesystem
 file-system 	FDESC		# /dev/fd
 file-system 	NULLFS		# Loopback filesystem
+file-system 	OVERLAY		# overlay filesystem
 file-system 	MSDOSFS		# MSDOS filesystem
 file-system 	CD9660		# ISO 9660 filesystem with Rock Ridge
 file-system 	UNION		# union file system
@@ -75,6 +83,7 @@ file-system 	LFS		# log-structured file system
 # File system options
 options 	QUOTA		# Disk quotas for local disks
 #options 	FFS_EI		# FFS Endian Independant support
+options 	SOFTDEP         # FFS soft updates support.
 options 	NFSSERVER	# Network File System server side code
 #options 	EXT2FS_SYSTEM_FLAGS	# makes ext2fs file flags (append and
 				# immutable) behave as system flags.
@@ -115,11 +124,11 @@ options 	SYSVSEM			# System V semaphores
 #
 options 	KTRACE			# Add kernel tracing system call
 options 	DIAGNOSTIC		# Add additional error checking code
-options 	NKMEMCLUSTERS=256	# Size of kernel malloc area
 
 # These options enable verbose messages for several subsystems.
 # Warning, these may compile large string tables into the kernel!
 options 	PCIVERBOSE		# verbose PCI device autoconfig messages
+#options 	PCI_CONFIG_DUMP		# verbosely dump PCI config space
 options 	SCSIVERBOSE		# human readable SCSI error messages
 
 #
@@ -150,18 +159,22 @@ pseudo-device	mouse		1	# mouse
 pseudo-device	view		2	# View (graphics mapping)
 pseudo-device	sl			# Slip
 pseudo-device	ppp			# ppp
-pseudo-device	pty		16	# Pseudo-tty support
+pseudo-device	pty			# pseudo-terminals
 pseudo-device	loop			# Loopback network
 pseudo-device	vnd		3	# 3 pseudo disks (see vnconfig)
 pseudo-device	bpfilter	2	# berkeley packet filters
 pseudo-device	tun		2	# network tunnel
 #pseudo-device	gre		2	# generic L3 over IP tunnel
+pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
+#pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
+#pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	ccd		4	# concatenating disk driver
 #pseudo-device	raid		4	# RAIDframe disk driver
+#options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 pseudo-device	md		2	# Boot memory disk
 pseudo-device	ipfilter		# IP filtering device
 # rnd is EXPERIMENTAL
-#pseudo-device	rnd			# /dev/random and in-kernel generator
+pseudo-device	rnd			# /dev/random and in-kernel generator
 
 #
 # The following sections describe various hardware options.
@@ -170,6 +183,11 @@ fd0	at fdc0 unit 0			# builtin floppy drive
 fd1	at fdc0 unit 1			# external floppy drive
 ser0	at mainbus0			# Serial support through 68901 (modem1)
 zs0	at mainbus0			# Serial support through 8530
+grfbus0	at mainbus0		# bitmapped display's
+grfcc0	at grfbus0			# Frambuffer graphics driver
+ite*	at grfcc0			# Frambuffer console
+grfet0	at grfbus0			# Tseng graphics driver
+ite*	at grfet0			# et4000/et6000/et6100 console
 nvr0	at mainbus0			# nvram driver
 lp0	at mainbus0			# centronics printer
 

@@ -1,17 +1,15 @@
-#	$NetBSD: Makefile,v 1.5 1999/04/11 04:25:15 simonb Exp $
+#	$NetBSD: Makefile,v 1.5.2.1 2000/11/20 20:20:40 bouyer Exp $
 #	@(#)Makefile	8.3 (Berkeley) 2/16/94
 
-S=	${.CURDIR}/../../../..
+SECONDARY_PROG=	boot.pmax
 
-PROG=		boot
-RELOC=		80710000
-BINMODE=	555
 SRCS=		start.S boot.c
-NEWVERSWHAT=	"Secondary Boot"
-VERSIONFILE=	${.CURDIR}/version
-.PATH:  	${.CURDIR}/../lib
+SRCS+=		bootinfo.c callvec.c conf.c devopen.c putchar.c rz.c
+SRCS+=		bootinit.S bootread.S getchar.S startprog.S
 
-# Copy boot to / as well.
+CPPFLAGS+=	-DBOOT_TYPE_NAME='"Secondary"'
+
+# Copy bootpmax to / as well.
 afterinstall:
 	cp -p ${DESTDIR}${BINDIR}/${PROG} ${DESTDIR}/
 

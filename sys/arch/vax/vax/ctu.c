@@ -1,4 +1,4 @@
-/*	$NetBSD: ctu.c,v 1.5 1996/10/13 03:35:36 christos Exp $ */
+/*	$NetBSD: ctu.c,v 1.5.28.1 2000/11/20 20:33:15 bouyer Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -43,6 +43,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/kernel.h>
 #include <sys/buf.h>
 #include <sys/fcntl.h>
@@ -68,7 +69,7 @@ enum tu_state {
 	SC_RESTART,
 };
 
-volatile struct tu_softc {
+struct tu_softc {
 	enum	tu_state sc_state;
 	int	sc_error;
 	char	sc_rsp[15];	/* Should be struct rsb; but don't work */
@@ -80,13 +81,13 @@ volatile struct tu_softc {
 	int	sc_bbytes;	/* Number of xfer'd bytes this block */
 	int	sc_op;		/* Read/write */
 	int	sc_xmtok;	/* set if OK to xmit */
-	struct	buf sc_q;	/* Current buffer */
+	struct	buf_queue sc_q;	/* pending I/O requests */
 } tu_sc;
 
 struct	ivec_dsp tu_recv, tu_xmit;
 
-void	ctutintr __P((int));
-void	cturintr __P((int));
+void	ctutintr __P((void *));
+void	cturintr __P((void *));
 void	ctuattach __P((void));
 void	ctustart __P((struct buf *));
 void	ctuwatch __P((void *));
@@ -98,18 +99,20 @@ void	ctustrategy __P((struct buf *));
 int	ctuioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
 int	ctudump __P((dev_t, daddr_t, caddr_t, size_t));
 
+static struct callout ctu_watch_ch = CALLOUT_INITIALIZER;
 
 void
 ctuattach()
 {
-	extern	struct ivec_dsp idsptch;
+	BUFQ_INIT(&tu_sc.sc_q);
 
-	bcopy(&idsptch, &tu_recv, sizeof(struct ivec_dsp));
-	bcopy(&idsptch, &tu_xmit, sizeof(struct ivec_dsp));
-	scb->scb_csrint = (void *)&tu_recv;
-	scb->scb_cstint = (void *)&tu_xmit;
+	tu_recv = idsptch;
 	tu_recv.hoppaddr = cturintr;
+	scb->scb_csrint = (void *)&tu_recv;
+
+	tu_xmit = idsptch;
 	tu_xmit.hoppaddr = ctutintr;
+	scb->scb_cstint = (void *)&tu_xmit;
 }
 
 int
@@ -130,7 +133,7 @@ ctuopen(dev, oflags, devtype, p)
 
 	tu_sc.sc_error = 0;
 	mtpr(0100, PR_CSRS);	/* Enable receive interrupt */
-	timeout(ctuwatch, 0, 100); /* Check once/second */
+	callout_reset(&ctu_watch_ch, hz, ctuwatch, NULL);
 
 	tu_sc.sc_state = SC_INIT;
 
@@ -160,7 +163,7 @@ ctuclose(dev, oflags, devtype, p)
 	mtpr(0, PR_CSRS);
 	mtpr(0, PR_CSTS);
 	tu_sc.sc_state = SC_UNUSED;
-	untimeout(ctuwatch, 0);
+	callout_stop(&ctu_watch_ch);
 	return 0;
 }
 
@@ -172,17 +175,17 @@ ctustrategy(bp)
 
 #ifdef TUDEBUG
 	printf("addr %x, block %x, nblock %x, read %x\n",
-		bp->b_un.b_addr, bp->b_blkno, bp->b_bcount,
+		bp->b_data, bp->b_blkno, bp->b_bcount,
 		bp->b_flags & B_READ);
 #endif
 
 	if (bp->b_blkno >= 512) {
-		iodone(bp);
+		biodone(bp);
 		return;
 	}
-	bp->b_cylinder = bp->b_blkno;
+	bp->b_rawblkno = bp->b_blkno;
 	s = splimp();
-	disksort((struct buf *)&tu_sc.sc_q, bp); /* Why not use disksort? */
+	disksort_blkno(&tu_sc.sc_q, bp); /* Why not use disksort? */
 	if (tu_sc.sc_state == SC_READY)
 		ctustart(bp);
 	splx(s);
@@ -195,7 +198,7 @@ ctustart(bp)
 	struct rsp *rsp = (struct rsp *)tu_sc.sc_rsp;
 
 
-	tu_sc.sc_xfptr = tu_sc.sc_blk = bp->b_un.b_addr;
+	tu_sc.sc_xfptr = tu_sc.sc_blk = bp->b_data;
 	tu_sc.sc_tpblk = bp->b_blkno;
 	tu_sc.sc_nbytes = bp->b_bcount;
 	tu_sc.sc_xbytes = tu_sc.sc_bbytes = 0;
@@ -213,7 +216,7 @@ ctustart(bp)
 	tu_sc.sc_state = SC_SEND_CMD;
 	if (tu_sc.sc_xmtok) {
 		tu_sc.sc_xmtok = 0;
-		ctutintr(0);
+		ctutintr(NULL);
 	}
 }
 
@@ -243,12 +246,12 @@ ctudump(dev, blkno, va, size)
 
 void
 cturintr(arg)
-	int arg;
+	void *arg;
 {
 	int	status = mfpr(PR_CSRD);
 	struct	buf *bp;
 
-	bp = tu_sc.sc_q.b_actf;
+	bp = BUFQ_FIRST(&tu_sc.sc_q);
 	switch (tu_sc.sc_state) {
 
 	case SC_UNUSED:
@@ -268,12 +271,12 @@ cturintr(arg)
 #ifdef TUDEBUG
 				printf("Xfer ok\n");
 #endif
-				tu_sc.sc_q.b_actf = bp->b_actf;
-				iodone(bp);
+				BUFQ_REMOVE(&tu_sc.sc_q, bp);
+				biodone(bp);
 				tu_sc.sc_xmtok = 1;
 				tu_sc.sc_state = SC_READY;
-				if (tu_sc.sc_q.b_actf)
-					ctustart(tu_sc.sc_q.b_actf);
+				if (BUFQ_FIRST(&tu_sc.sc_q) != NULL)
+					ctustart(BUFQ_FIRST(&tu_sc.sc_q));
 			}
 			break;
 		}
@@ -293,12 +296,12 @@ cturintr(arg)
 		if (status != 020)
 			printf("SC_GET_WCONT: status %o\n", status);
 		else
-			ctutintr(0);
+			ctutintr(NULL);
 		tu_sc.sc_xmtok = 0;
 		break;
 
 	case SC_RESTART:
-		ctustart(tu_sc.sc_q.b_actf);
+		ctustart(BUFQ_FIRST(&tu_sc.sc_q));
 		break;
 
 	default:
@@ -315,7 +318,7 @@ cturintr(arg)
 
 void
 ctutintr(arg)
-	int arg;
+	void *arg;
 {
 	int	c;
 
@@ -397,12 +400,12 @@ ctuwatch(arg)
 	void *arg;
 {
 
-	timeout(ctuwatch, 0, 1000);
+	callout_reset(&ctu_watch_ch, hz, ctuwatch, NULL);
 
 	if (tu_sc.sc_state == SC_GET_RESP && tu_sc.sc_tpblk != 0 &&
 	    tu_sc.sc_tpblk == oldtp && (tu_sc.sc_tpblk % 128 != 0)) {
 		printf("tu0: lost recv interrupt\n");
-		ctustart(tu_sc.sc_q.b_actf);
+		ctustart(BUFQ_FIRST(&tu_sc.sc_q));
 		return;
 	}
 	if (tu_sc.sc_state == SC_RESTART)

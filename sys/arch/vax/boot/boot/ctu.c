@@ -1,4 +1,4 @@
-/*	$NetBSD: ctu.c,v 1.1 1999/03/06 16:36:05 ragge Exp $ */
+/*	$NetBSD: ctu.c,v 1.1.8.1 2000/11/20 20:32:36 bouyer Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -42,6 +42,10 @@
 #include <machine/mtpr.h>
 #include <machine/rsp.h>
 
+#include "vaxstand.h"
+
+static short ctu_cksum(unsigned short *, int);
+
 enum tu_state {
 	SC_INIT,
 	SC_READY,
@@ -58,8 +62,8 @@ volatile struct tu_softc {
 	int	sc_bbytes;	/* Number of xfer'd bytes this block */
 } tu_sc;
 
-void	ctutintr __P(());
-void	cturintr __P(());
+void	ctutintr __P((void));
+void	cturintr __P((void));
 
 int
 ctuopen(f, adapt, ctlr, unit, part)
@@ -77,15 +81,13 @@ ctuopen(f, adapt, ctlr, unit, part)
 }
 
 int
-ctustrategy(ra, func, dblk, size, buf, rsize)
-        struct ra_softc *ra;
+ctustrategy(f, func, dblk, size, buf, rsize)
+        void *f;
         int func;
         daddr_t dblk;
-        char *buf;
-        u_int size, *rsize;
+        void *buf;
+        size_t size, *rsize;
 {
-	int	s;
-
 	struct rsp *rsp = (struct rsp *)tu_sc.sc_rsp;
 
 	tu_sc.sc_xfptr = buf;
@@ -100,7 +102,7 @@ ctustrategy(ra, func, dblk, size, buf, rsize)
 	rsp->rsp_sw = rsp->rsp_xx1 = rsp->rsp_xx2 = 0;
 	rsp->rsp_cnt = tu_sc.sc_nbytes;
 	rsp->rsp_blk = dblk;
-	rsp->rsp_sum = ctu_cksum(rsp, 6);
+	rsp->rsp_sum = ctu_cksum((u_short *)rsp, 6);
 	tu_sc.sc_state = SC_SEND_CMD;
 	while (tu_sc.sc_state != SC_GET_RESP)
 		ctutintr();
@@ -144,6 +146,9 @@ cturintr()
 		tu_sc.sc_xfptr[tu_sc.sc_xbytes++] = status;
 		break;
 
+	case SC_READY:
+	case SC_SEND_CMD:
+		break;
 	}
 
 }
@@ -164,6 +169,7 @@ ctutintr()
 	}
 }
 
+short
 ctu_cksum(buf, words)
 	unsigned short *buf;
 	int words;

@@ -1,4 +1,4 @@
-#	$NetBSD: SHARKINST,v 1.4 1999/07/29 10:37:15 augustss Exp $
+#	$NetBSD: SHARKINST,v 1.4.2.1 2000/11/20 20:03:55 bouyer Exp $
 # From:  NetBSD: SHARK,v 1.23 1999/06/26 06:56:26 cgd Exp
 #
 #	SHARK Install Kernel
@@ -102,7 +102,7 @@ options 	SYSVSHM		# System V-like memory sharing
 
 options 	MEMORY_DISK_HOOKS	# boottime setup of ramdisk
 #options 	MEMORY_DISK_SIZE=0	# Size in blocks
-options 	MINIROOTSIZE=3400	# Size in blocks
+options 	MINIROOTSIZE=3800	# Size in blocks
 options 	MEMORY_DISK_IS_ROOT	# use memory disk as root
 
 options 	XSERVER			# also need INSECURE for now
@@ -126,7 +126,6 @@ options 	KMEMSTATS	# kernel memory statistics, XXX temp required
 #options 	PORTMASTER	# Enable PortMaster only options
 options 	DIAGNOSTIC	# internal consistency checks
 #options  	PMAP_DEBUG	# Enable pmap_debug_level code
-#options 	POSTMORTEM	# perform postmortem on panic
 #options 	IPKDB		# remote kernel debugging
 options 	DDB		# in-kernel debugger
 #options 	DDB_ONPANIC=0	# don't run DDB at panictime
@@ -198,9 +197,9 @@ pseudo-device	bpfilter 8		# packet filter
 #pseudo-device	tun	2		# network tunneling over tty
 #pseudo-device	ipfilter 1		# ip filter
 
-pseudo-device	pty	32		# pseudo-terminals
+pseudo-device	pty			# pseudo-terminals
 #pseudo-device	tb	1		# tablet line discipline
-pseudo-device	vnd	4		# paging to files
+pseudo-device	vnd	4		# disk-like interface to files
 #pseudo-device	ccd	2		# concatenated disk devices
 pseudo-device	rnd			# /dev/random and /dev/urandom
 

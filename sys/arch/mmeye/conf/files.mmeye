@@ -1,4 +1,4 @@
-#	$NetBSD: files.mmeye,v 1.1 1999/09/13 10:30:50 itojun Exp $
+#	$NetBSD: files.mmeye,v 1.1.2.1 2000/11/20 20:14:47 bouyer Exp $
 #
 # config file for mmeye
 
@@ -6,3 +6,5 @@ include "arch/mmeye/conf/files.shbus"
 
 file	arch/mmeye/mmeye/conf.c
 file	arch/mmeye/mmeye/machdep.c
+
+defopt	opt_memsize.h	IOM_ROM_BEGIN IOM_ROM_SIZE IOM_RAM_BEGIN IOM_RAM_SIZE

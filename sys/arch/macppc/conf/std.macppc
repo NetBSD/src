@@ -1,4 +1,4 @@
-#	$NetBSD: std.macppc,v 1.7 1999/09/12 01:17:11 chs Exp $
+#	$NetBSD: std.macppc,v 1.7.2.1 2000/11/20 20:12:55 bouyer Exp $
 #
 # Standard/required options for NetBSD/macppc.
 

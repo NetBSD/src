@@ -1,4 +1,4 @@
-/*	$NetBSD: rc7500_machdep.c,v 1.25 1999/09/17 19:59:39 thorpej Exp $	*/
+/*	$NetBSD: rc7500_machdep.c,v 1.25.2.1 2000/11/20 20:04:06 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -63,8 +63,6 @@
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
 
-#include <vm/vm_kern.h>
-
 #include <machine/signal.h>
 #include <machine/frame.h>
 #include <machine/bootconfig.h>
@@ -79,7 +77,7 @@
 #include <machine/rtc.h>
 #include <arm32/iomd/iomdreg.h>
 
-#include "ipkdb.h"
+#include "opt_ipkdb.h"
 
 #ifdef RC7500
 #include <arm32/rc7500/rc7500_prom.h>
@@ -97,7 +95,7 @@ u_int cpu_reset_address = 0;
 #define FIQ_STACK_SIZE	1
 #define IRQ_STACK_SIZE	1
 #define ABT_STACK_SIZE	1
-#if NIPKDB > 0
+#ifdef IPKDB
 #define UND_STACK_SIZE	2
 #else
 #define UND_STACK_SIZE	1
@@ -547,7 +545,7 @@ initarm(prom_id)
 
 	/* Right We have the bottom meg of memory mapped to 0x00000000
 	 * so was can get at it. The kernel will ocupy the start of it.
-	 * After the kernel/args we allocate some the the fixed page tables
+	 * After the kernel/args we allocate some of the fixed page tables
 	 * we need to get the system going.
 	 * We allocate one page directory and 8 page tables and store the
 	 * physical addresses in the kernel_pt_table array.
@@ -920,7 +918,7 @@ initarm(prom_id)
 	irq_init();
 	printf("done.\n");
 
-#if NIPKDB > 0
+#ifdef IPKDB
 	/* Initialise ipkdb */
 	ipkdb_init();
 	if (boothowto & RB_KDB)

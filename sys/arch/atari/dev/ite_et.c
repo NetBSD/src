@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_et.c,v 1.8 1998/01/12 18:04:09 thorpej Exp $	*/
+/*	$NetBSD: ite_et.c,v 1.8.14.1 2000/11/20 20:05:26 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -88,13 +88,6 @@ void et_putc __P((struct ite_softc *ip, int c, int dy, int dx, int mode));
 void et_scroll __P((struct ite_softc *ip, int sy, int sx, int count,
     int dir));
 
-/* XXX: move to ite.c */
-extern int ite_default_x;
-extern int ite_default_y;
-extern int ite_default_width;
-extern int ite_default_depth;
-extern int ite_default_height;
-
 /*
  * grfet config stuff
  */
@@ -117,7 +110,8 @@ struct device	*pdp;
 struct cfdata	*cfp;
 void		*auxp;
 {
-	static int	card_probed = -1;
+	static int	card_probed  = -1;
+	static int	did_consinit = 0;
 	grf_auxp_t	*grf_auxp = auxp;
 
 	if (card_probed <= 0) {
@@ -140,23 +134,24 @@ void		*auxp;
 
 	if (atari_realconfig == 0) {
 		/*
-		 * Early console init. Only match unit 0.
+		 * Early console init. Only match first unit.
 		 */
-		if (cfp->cf_unit != 0)
+		if (did_consinit)
 			return 0;
-		if (viewopen(0, 0, 0, NULL))
+		if (viewopen(cfp->cf_unit, 0, 0, NULL))
 			return 0;
 		cfdata_grf = cfp;
+		did_consinit = 1;
 		return 1;
 	}
 
 	/*
 	 * Normal config. When we are called directly from the grfbus,
-	 * we only match unit 0. The attach function will call us for
+	 * we only match the first unit. The attach function will call us for
 	 * the other configured units.
 	 */
 	if (grf_auxp->from_bus_match
-	    && ((cfp->cf_unit != 0) || !et_probe_card()))
+	    && ((did_consinit > 1) || !et_probe_card()))
 		return 0;
 
 	if (!grf_auxp->from_bus_match && (grf_auxp->unit != cfp->cf_unit))
@@ -165,10 +160,11 @@ void		*auxp;
 	/*
 	 * Final constraint: each grf needs a view....
 	 */
-	if((cfdata_grf == NULL) || (cfp->cf_unit != 0)) {
+	if((cfdata_grf == NULL) || (did_consinit > 1)) {
 	    if(viewopen(cfp->cf_unit, 0, 0, NULL))
 		return 0;
 	}
+	did_consinit = 2;
 	return 1;
 }
 
@@ -517,7 +513,7 @@ et_clear(ip, sy, sx, h, w)
 	int h;
 	int w;
 {
-	/* cl_clear and cl_scroll both rely on ite passing arguments
+	/* et_clear and et_scroll both rely on ite passing arguments
 	 * which describe continuous regions.  For a VT200 terminal,
 	 * this is safe behavior.
 	 */

@@ -1,4 +1,4 @@
-/* $NetBSD: sbic.c,v 1.13 1999/09/30 22:59:53 thorpej Exp $ */
+/* $NetBSD: sbic.c,v 1.13.2.1 2000/11/20 20:04:05 bouyer Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -57,11 +57,7 @@
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
-#include <vm/vm.h>
-#include <vm/vm_kern.h>
-#include <vm/vm_page.h>
-/*#include <machine/pmap.h>
-#include <machine/cpu.h>*/
+#include <uvm/uvm_extern.h>
 #include <machine/io.h>
 #include <machine/irqhandler.h>
 #include <arm32/podulebus/podulebus.h>
@@ -70,8 +66,6 @@
 #include <arm32/podulebus/ascreg.h>
 
 /* These are for bounce buffers */
-
-/*#include <vm/pmap.h>*/
 
 /* Since I can't find this in any other header files */
 #define SCSI_PHASE(reg)	(reg&0x07)
@@ -84,7 +78,6 @@
 #define	SBIC_DATA_WAIT	50000	/* wait per data in/out step */
 #define	SBIC_INIT_WAIT	50000	/* wait per step (both) during init */
 
-#define	b_cylin		b_resid
 #define SBIC_WAIT(regs, until, timeo) sbicwait(regs, until, timeo, __LINE__)
 
 extern u_int kvtop();
@@ -895,6 +888,7 @@ sbicinit(dev)
 		TAILQ_INIT(&dev->ready_list);
 		TAILQ_INIT(&dev->nexus_list);
 		TAILQ_INIT(&dev->free_list);
+		callout_init(&dev->sc_timo_ch);
 		dev->sc_nexus = NULL;
 		dev->sc_xs = NULL;
 		acb = dev->sc_acb;
@@ -910,7 +904,8 @@ sbicinit(dev)
 		bzero(dev->sc_tinfo, sizeof(dev->sc_tinfo));
 #ifdef DEBUG
 		/* make sure timeout is really not needed */
-		timeout((void *)sbictimeout, dev, 30 * hz);
+		callout_reset(&dev->sc_timo_ch, 30 * hz,
+		    (void *)sbictimeout, dev);
 #endif
 
 	} else panic("sbic: reinitializing driver!");
@@ -2818,7 +2813,8 @@ void sbictimeout(dev)
 		dev->sc_dmatimo++;
 	}
 	splx(s);
-	timeout((void *)sbictimeout, dev, 30 * hz);
+	callout_reset(&dev->sc_timo_ch, 30 * hz,
+	    (void *)sbictimeout, dev);
 }
 
 void

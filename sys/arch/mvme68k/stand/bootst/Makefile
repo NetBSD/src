@@ -1,39 +1,26 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/10/93
-#	$NetBSD: Makefile,v 1.5 1998/06/12 23:11:45 cgd Exp $
+#	$NetBSD: Makefile,v 1.5.16.1 2000/11/20 20:15:27 bouyer Exp $
 
-RELOC=0x3F0000 
-
-S=	${.CURDIR}/../../../..
-DEFS= 
-INCPATH=-I${.CURDIR} -I${.CURDIR}/../libsa -I${.CURDIR}/../libbug \
-	-I${.CURDIR}/../../include -I${S} -I${S}/lib/libsa
-CFLAGS=	-O2 ${INCPATH} ${DEFS} ${COPTS}
 CLEANFILES+=stboot bootst bootst.bug
 
-.include "${S}/arch/mvme68k/stand/libsa/Makefile.inc"
-.include "${S}/arch/mvme68k/stand/libbug/Makefile.inc"
-.include "${S}/arch/mvme68k/stand/bugcrt/Makefile.inc"
-.include "${S}/arch/mvme68k/stand/wrtvid/Makefile.inc"
-
-SRCS=   boot.c conf.c dev_tape.c rawfs.c version.c
-
+PROG=bootst.bug
+SRCS=   boot.c conf.c dev_tape.c rawfs.c
 LIBS=	${LIBSA} ${LIBBUG}
+SRTOBJ=
+DPADD=	${WRTVID}
 
-OBJS= ${SRCS:N*.h:R:S/$/.o/g}
-
-BOOTS=	bootst stboot
-ALL=	${BOOTS} 
-
-all: ${ALL}
-
-bootst.bug:	${OBJS} ${BUGCRT} ${LIBS}
-	${LD} -s -N -T ${RELOC} ${BUGCRT} ${OBJS} ${LIBS} -o $@
+bootst stboot: ${PROG} ${WRTVID}
 	@size bootst.bug
+	@strip bootst.bug
+	@${WRTVID} bootst.bug # creates bootst  and stboot
 
-bootst stboot: bootst.bug ${WRTVID}
-	${WRTVID} bootst.bug
+proginstall::
+	${INSTALL} ${RENAME} ${PRESERVE} ${COPY} ${STRIPFLAG} ${INSTPRIV} \
+	   -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} bootst ${DESTDIR}${MDEC_DIR}
+	${INSTALL} ${RENAME} ${PRESERVE} ${COPY} ${STRIPFLAG} ${INSTPRIV} \
+	   -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} stboot ${DESTDIR}${MDEC_DIR}
 
-install:
-	${INSTALL} -c -m 555 -g bin -o bin ${BOOTS} ${DESTDIR}${MDEC_DIR}
+.include "../Makefile.booters"
 
+all realall: bootst
 .include <bsd.prog.mk>

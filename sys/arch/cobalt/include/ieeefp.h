@@ -1,0 +1,3 @@
+/*	$NetBSD: ieeefp.h,v 1.1.6.2 2000/11/20 20:07:05 bouyer Exp $	*/
+
+#include <mips/ieeefp.h>

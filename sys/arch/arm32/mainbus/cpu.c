@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.21 1999/02/26 12:05:49 is Exp $	*/
+/*	$NetBSD: cpu.c,v 1.21.8.1 2000/11/20 20:04:02 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -49,8 +49,7 @@
 #include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/proc.h>
-#include <vm/vm.h>
-#include <vm/vm_kern.h>
+#include <uvm/uvm_extern.h>
 #include <machine/bootconfig.h>
 #include <machine/io.h>
 #include <machine/conf.h>
@@ -99,10 +98,7 @@ cpumatch(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
-
-	if (cf->cf_unit == 0)
-		return(1);
-	return(0);
+	return(1);
 }
 
 

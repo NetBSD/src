@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.1 1996/05/17 21:18:07 chuck Exp $	*/
+/*	$NetBSD: devopen.c,v 1.1.32.1 2000/11/20 20:15:30 bouyer Exp $	*/
 
 #include <sys/param.h>
 #include <stand.h>
@@ -20,7 +20,6 @@ devopen(f, fname, file)
 	char **file;
 {
 	struct devsw *dp;
-	char *cp, *path, *devname;
 	int error;
 
 	*file = (char*)fname;

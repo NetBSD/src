@@ -1,4 +1,4 @@
-/*	$NetBSD: subyte.c,v 1.1 1996/09/30 16:34:54 ws Exp $	*/
+/*	$NetBSD: subyte.c,v 1.1.28.1 2000/11/20 20:31:18 bouyer Exp $	*/
 
 /*-
  * Copyright (C) 1993 Wolfgang Solfrank.
@@ -31,13 +31,16 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/systm.h>
+
 /*
  * Emulate subyte.
  */
+
 int
 subyte(addr,c)
-char *addr;
-unsigned char c;
+	void *addr;
+	unsigned char c;
 {
 	if (copyout(&c,addr,sizeof(c)))
 		return -1;

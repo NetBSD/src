@@ -1,4 +1,4 @@
-/*	$NetBSD: nextdma.c,v 1.20 1999/08/29 05:56:26 dbj Exp $	*/
+/*	$NetBSD: nextdma.c,v 1.20.2.1 2000/11/20 20:18:13 bouyer Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -113,8 +113,16 @@ void
 nextdma_init(nd)
 	struct nextdma_config *nd;
 {
-  DPRINTF(("DMA init ipl (%ld) intr(0x%b)\n",
-			NEXT_I_IPL(nd->nd_intr), NEXT_I_BIT(nd->nd_intr),NEXT_INTR_BITS));
+#ifdef ND_DEBUG
+	if (nextdma_debug) {
+		char sbuf[256];
+
+		bitmask_snprintf(NEXT_I_BIT(nd->nd_intr), NEXT_INTR_BITS,
+				 sbuf, sizeof(sbuf));
+		printf("DMA init ipl (%ld) intr(0x%s)\n",
+			NEXT_I_IPL(nd->nd_intr), sbuf);
+	}
+#endif
 
 	nd->_nd_map = NULL;
 	nd->_nd_idx = 0;
@@ -329,8 +337,9 @@ next_dma_print(nd)
 	u_long dd_saved_limit;
 	u_long dd_saved_start;
 	u_long dd_saved_stop;
+	char sbuf[256];
 
-  /* Read all of the registers before we print anything out,
+	/* Read all of the registers before we print anything out,
 	 * in case something changes
 	 */
 	dd_csr          = bus_space_read_4(nd->nd_bst, nd->nd_bsh, DD_CSR);
@@ -344,10 +353,13 @@ next_dma_print(nd)
 	dd_saved_start  = bus_space_read_4(nd->nd_bst, nd->nd_bsh, DD_SAVED_START);
 	dd_saved_stop   = bus_space_read_4(nd->nd_bst, nd->nd_bsh, DD_SAVED_STOP);
 
-	printf("NDMAP: *intrstat = 0x%b\n",
-			(*(volatile u_long *)IIOV(NEXT_P_INTRSTAT)),NEXT_INTR_BITS);
-	printf("NDMAP: *intrmask = 0x%b\n",
-			(*(volatile u_long *)IIOV(NEXT_P_INTRMASK)),NEXT_INTR_BITS);
+	bitmask_snprintf((*(volatile u_long *)IIOV(NEXT_P_INTRSTAT)),
+			 NEXT_INTR_BITS, sbuf, sizeof(sbuf));
+	printf("NDMAP: *intrstat = 0x%s\n", sbuf);
+
+	bitmask_snprintf((*(volatile u_long *)IIOV(NEXT_P_INTRMASK)),
+			 NEXT_INTR_BITS, sbuf, sizeof(sbuf));
+	printf("NDMAP: *intrmask = 0x%s\n", sbuf);
 
 	/* NDMAP is Next DMA Print (really!) */
 
@@ -380,7 +392,9 @@ next_dma_print(nd)
 		printf("NDMAP: nd->_nd_map_cont = NULL\n");
 	}
 
-	printf("NDMAP: dd->dd_csr          = 0x%b\n",   dd_csr,   DMACSR_BITS);
+	bitmask_snprintf(dd_csr, DMACSR_BITS, sbuf, sizeof(sbuf));
+	printf("NDMAP: dd->dd_csr          = 0x%s\n",   sbuf);
+
 	printf("NDMAP: dd->dd_saved_next   = 0x%08x\n", dd_saved_next);
 	printf("NDMAP: dd->dd_saved_limit  = 0x%08x\n", dd_saved_limit);
 	printf("NDMAP: dd->dd_saved_start  = 0x%08x\n", dd_saved_start);
@@ -391,8 +405,10 @@ next_dma_print(nd)
 	printf("NDMAP: dd->dd_start        = 0x%08x\n", dd_start);
 	printf("NDMAP: dd->dd_stop         = 0x%08x\n", dd_stop);
 
-	printf("NDMAP: interrupt ipl (%ld) intr(0x%b)\n",
-			NEXT_I_IPL(nd->nd_intr), NEXT_I_BIT(nd->nd_intr),NEXT_INTR_BITS);
+	bitmask_snprintf(NEXT_I_BIT(nd->nd_intr), NEXT_INTR_BITS,
+			 sbuf, sizeof(sbuf));
+	printf("NDMAP: interrupt ipl (%ld) intr(0x%s)\n",
+			NEXT_I_IPL(nd->nd_intr), sbuf);
 }
 
 /****************************************************************/
@@ -452,8 +468,16 @@ nextdma_intr(arg)
   if (!INTR_OCCURRED(nd->nd_intr)) return 0;
   /* Handle dma interrupts */
 
-  DPRINTF(("DMA interrupt ipl (%ld) intr(0x%b)\n",
-          NEXT_I_IPL(nd->nd_intr), NEXT_I_BIT(nd->nd_intr),NEXT_INTR_BITS));
+#ifdef ND_DEBUG
+	if (nextdma_debug) {
+		char sbuf[256];
+
+		bitmask_snprintf(NEXT_I_BIT(nd->nd_intr), NEXT_INTR_BITS,
+				 sbuf, sizeof(sbuf));
+		printf("DMA interrupt ipl (%ld) intr(0x%s)\n",
+			NEXT_I_IPL(nd->nd_intr), sbuf);
+	}
+#endif
 
 #ifdef DIAGNOSTIC
 	if (!nd->_nd_map) {
@@ -467,8 +491,12 @@ nextdma_intr(arg)
 
 #ifdef DIAGNOSTIC
 		if ((!(state & DMACSR_COMPLETE)) || (state & DMACSR_SUPDATE)) {
+			char sbuf[256];
+
 			next_dma_print(nd);
-			panic("DMA Unexpected dma state in interrupt (0x%b)",state,DMACSR_BITS);
+
+			bitmask_snprintf(state, DMACSR_BITS, sbuf, sizeof(sbuf));
+			panic("DMA Unexpected dma state in interrupt (0x%s)", sbuf);
 		}
 #endif
 
@@ -479,9 +507,12 @@ nextdma_intr(arg)
 
 #ifdef DIAGNOSTIC
 			if (state & DMACSR_ENABLE) {
+				char sbuf[256];
+
 				next_dma_print(nd);
-				panic("DMA: unexpected DMA state at shutdown (0x%b)\n", 
-						state,DMACSR_BITS);
+
+				bitmask_snprintf(state, DMACSR_BITS, sbuf, sizeof(sbuf));
+				panic("DMA: unexpected DMA state at shutdown (0x%s)\n", sbuf);
 			}
 #endif
 			bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_CSR,
@@ -505,40 +536,33 @@ nextdma_intr(arg)
 				dmadir = DMACSR_SETWRITE;
 			}
 
-			if (state & DMACSR_ENABLE) {
-
-				if ((nd->_nd_map_cont == NULL) && (nd->_nd_idx+1 == nd->_nd_map->dm_nsegs)) {
-					bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_CSR,
-							DMACSR_CLRCOMPLETE | dmadir);
-				} else {
-					bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_CSR,
-							DMACSR_CLRCOMPLETE | dmadir | DMACSR_SETSUPDATE);
-				}
-
+				/* we used to SETENABLE here only
+                                   conditionally, but we got burned
+                                   because DMA sometimes would shut
+                                   down between when we checked and
+                                   when we acted upon it.  CL19991211 */
+			if ((nd->_nd_map_cont == NULL) && (nd->_nd_idx+1 == nd->_nd_map->dm_nsegs)) {
+				bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_CSR,
+						  DMACSR_CLRCOMPLETE | dmadir | DMACSR_SETENABLE);
 			} else {
-
-#if (defined(ND_DEBUG))
-				if (nextdma_debug) next_dma_print(nd);
-#endif
-#if 0 && defined(DIAGNOSTIC)
-				printf("DMA: Unexpected shutdown, restarting intr(0x%b)\n",
-						NEXT_I_BIT(nd->nd_intr),NEXT_INTR_BITS);
-#endif
-
-				if ((nd->_nd_map_cont == NULL) && (nd->_nd_idx+1 == nd->_nd_map->dm_nsegs)) {
-					bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_CSR, 
-							DMACSR_CLRCOMPLETE | dmadir | DMACSR_SETENABLE);
-				} else {
-					bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_CSR,
-							DMACSR_CLRCOMPLETE | dmadir | DMACSR_SETSUPDATE | DMACSR_SETENABLE);
-				}
+				bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_CSR,
+						  DMACSR_CLRCOMPLETE | dmadir | DMACSR_SETSUPDATE | DMACSR_SETENABLE);
 			}
+
 		}
 
 	}
 
-  DPRINTF(("DMA exiting interrupt ipl (%ld) intr(0x%b)\n",
-          NEXT_I_IPL(nd->nd_intr), NEXT_I_BIT(nd->nd_intr),NEXT_INTR_BITS));
+#ifdef ND_DEBUG
+	if (nextdma_debug) {
+		char sbuf[256];
+
+		bitmask_snprintf(NEXT_I_BIT(nd->nd_intr), NEXT_INTR_BITS,
+				 sbuf, sizeof(sbuf));
+		printf("DMA exiting interrupt ipl (%ld) intr(0x%s)\n",
+			NEXT_I_IPL(nd->nd_intr), sbuf);
+	}
+#endif
 
   return(1);
 }
@@ -565,13 +589,24 @@ nextdma_start(nd, dmadir)
 
 #ifdef DIAGNOSTIC
 	if (!nextdma_finished(nd)) {
-		panic("DMA trying to start before previous finished on intr(0x%b)\n",
-				NEXT_I_BIT(nd->nd_intr),NEXT_INTR_BITS);
+		char sbuf[256];
+
+		bitmask_snprintf(NEXT_I_BIT(nd->nd_intr), NEXT_INTR_BITS,
+				 sbuf, sizeof(sbuf));
+		panic("DMA trying to start before previous finished on intr(0x%s)\n", sbuf);
 	}
 #endif
 
-  DPRINTF(("DMA start (%ld) intr(0x%b)\n",
-          NEXT_I_IPL(nd->nd_intr), NEXT_I_BIT(nd->nd_intr),NEXT_INTR_BITS));
+#ifdef ND_DEBUG
+	if (nextdma_debug) {
+		char sbuf[256];
+
+		bitmask_snprintf(NEXT_I_BIT(nd->nd_intr), NEXT_INTR_BITS,
+				 sbuf, sizeof(sbuf));
+		printf("DMA start (%ld) intr(0x%s)\n",
+			NEXT_I_IPL(nd->nd_intr), sbuf);
+	}
+#endif
 
 #ifdef DIAGNOSTIC
 	if (nd->_nd_map) {
@@ -601,9 +636,16 @@ nextdma_start(nd, dmadir)
 
 	next_dma_rotate(nd);
 
-	DPRINTF(("DMA initiating DMA %s of %d segments on intr(0x%b)\n",
-			(dmadir == DMACSR_SETREAD ? "read" : "write"), nd->_nd_map->dm_nsegs,
-			NEXT_I_BIT(nd->nd_intr),NEXT_INTR_BITS));
+#ifdef ND_DEBUG
+	if (nextdma_debug) {
+		char sbuf[256];
+
+		bitmask_snprintf(NEXT_I_BIT(nd->nd_intr), NEXT_INTR_BITS,
+				 sbuf, sizeof(sbuf));
+		printf("DMA initiating DMA %s of %d segments on intr(0x%s)\n",
+			(dmadir == DMACSR_SETREAD ? "read" : "write"), nd->_nd_map->dm_nsegs, sbuf);
+	}
+#endif
 
 	bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_CSR, 0);
 	bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_CSR, 

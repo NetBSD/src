@@ -1,4 +1,4 @@
-/*	$NetBSD: hil.c,v 1.38 1999/08/13 11:40:46 bad Exp $	*/
+/*	$NetBSD: hil.c,v 1.38.2.1 2000/11/20 20:08:04 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,6 +43,7 @@
  */
 
 #include "opt_compat_hpux.h"
+#include "rnd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,6 +57,10 @@
 #include <sys/tty.h>
 #include <sys/uio.h>
 #include <sys/user.h>
+
+#if NRND > 0
+#include <sys/rnd.h>
+#endif
 
 #include <hp300/dev/hilreg.h>
 #include <hp300/dev/hilioctl.h>
@@ -730,10 +735,11 @@ hpuxhilioctl(dev, cmd, data, flag)
 #endif
 
 /* ARGSUSED */
-int
+paddr_t
 hilmmap(dev, off, prot)
 	dev_t dev;
-	int off, prot;
+	off_t off;
+	int prot;
 {
 	return (-1);
 }
@@ -824,6 +830,9 @@ hilint(unit)
 	stat = READHILSTAT(hildevice);
 	c = READHILDATA(hildevice);		/* clears interrupt */
 	hil_process_int(hilp, stat, c);
+#if NRND > 0
+	rnd_add_uint32(&hilp->rnd_source, (stat<<8)|c);
+#endif
 }
 
 #include "ite.h"
@@ -1337,6 +1346,17 @@ hilinfo(unit)
 			printf(" 0");
 		printf("\n");
 	}
+#if NRND > 0
+	/*
+	 * attach the device into the random source list
+	 * except from ID module (no point)
+	 */
+	if (!id) {
+		char buf[10];
+		sprintf(buf, "hil%d", unit);
+		rnd_attach_source(&hilp->rnd_source, buf, RND_TYPE_TTY, 0);
+	}
+#endif
 }
 
 #define HILAR1	0x3E
@@ -1488,7 +1508,7 @@ hilreset(hilp)
 	db = LPC_RECONF | LPC_KBDCOOK | LPC_NOERROR | LPC_AUTOPOLL;
 	send_hil_cmd(hildevice, HIL_WRITELPCTRL, &db, 1, NULL);
 	/*
-	 * Delay one second for reconfiguration and then read the the
+	 * Delay one second for reconfiguration and then read the
 	 * data to clear the interrupt (if the loop reconfigured).
 	 */
 	DELAY(1000000);

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.pmax,v 1.75 1999/07/26 05:20:48 cgd Exp $
+#	$NetBSD: Makefile.pmax,v 1.75.2.1 2000/11/20 20:20:14 bouyer Exp $
 
 # Makefile for NetBSD
 #
@@ -44,19 +44,23 @@ S=	../../../..
 PMAX=	$S/arch/pmax
 MIPS=	$S/arch/mips
 
-HAVE_GCC28!=	${CC} --version | egrep "^(2\.8|egcs)" ; echo
+HAVE_EGCS!=	${CC} --version | egrep "^(2\.[89]|egcs)" ; echo
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -Dpmax
 CWARNFLAGS?=	-Wall -Werror -Wstrict-prototypes -Wmissing-prototypes \
 		-Wpointer-arith
-.if (${HAVE_GCC28} != "")
+# XXX Delete -Wuninitialized for now, since the compiler doesn't
+# XXX always get it right.  --thorpej 
+CWARNFLAGS+=	-Wno-uninitialized
+.if (${HAVE_EGCS} != "")
 CWARNFLAGS+=	-Wno-main
 .endif
 GP?=		-G 0
 CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} ${GP} \
 		-mno-abicalls -mno-half-pic
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
-LINKFLAGS=	-Ttext 0x80030000 -T ${MIPS}/conf/kern.ldscript -e start ${GP}
+LINKFLAGS=	-Ttext 0x80030000 -T ${MIPS}/conf/kern.ldscript.le \
+		-e start ${GP}
 STRIPFLAGS=	-g -X -x
 
 %INCLUDES
@@ -191,6 +195,8 @@ depend: .depend
 	@sed -e 's/.*\.o:.*\.c/assym.h:/' < assym.dep >> .depend
 	@rm -f assym.dep
 
+dependall: depend all
+
 
 # depend on root or device configuration
 autoconf.o conf.o: Makefile
@@ -221,5 +227,17 @@ fp.o: ${MIPS}/mips/fp.S assym.h
 
 locore_machdep.o: ${PMAX}/pmax/locore_machdep.S assym.h
 	${NORMAL_S}
+
+# The install target can be redefined by putting a
+# install-kernel-${MACHINE_NAME} target into /etc/mk.conf
+MACHINE_NAME!=  uname -n
+install: install-kernel-${MACHINE_NAME}
+.if !target(install-kernel-${MACHINE_NAME}})
+install-kernel-${MACHINE_NAME}:
+	rm -f /onetbsd
+	ln /netbsd /onetbsd
+	cp netbsd /nnetbsd
+	mv /nnetbsd /netbsd
+.endif
 
 %RULES

@@ -1,4 +1,4 @@
-#	$NetBSD: MMEYE,v 1.3 1999/09/14 11:20:52 tsubai Exp $
+#	$NetBSD: MMEYE,v 1.3.2.1 2000/11/20 20:14:46 bouyer Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -23,7 +23,6 @@ options 	HZ=50		# clock interrupt generates every 1/HZ sec
 #options 	NTP		# NTP phase/frequency locked loop
 
 options 	KTRACE		# system call tracing via ktrace(1)
-options 	PMAP_NEW	# new pmap interface
 
 # Diagnostic/debugging support options
 #options 	DIAGNOSTIC	# cheap kernel consistency checks
@@ -52,6 +51,7 @@ options 	INET		# IP + ICMP + TCP + UDP
 options 	NFS_BOOT_DHCP	# Support DHCP NFS root
 
 #options 	PCIVERBOSE	# verbose PCI device autoconfig messages
+#options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
 options 	PCMCIAVERBOSE	# verbose PCMCIA configuration messages
 
 # Kernel root file system and dump configuration.
@@ -65,6 +65,9 @@ config		netbsd	root on wd0a type ffs
 mainbus0 at root
 
 shb*	at mainbus?
+
+# WatchDog Timer
+wdog0 at shb? port 0xffffff84
 
 com0	at shb? port 0xa4000000 irq 11
 com1	at shb? port 0xa4000008 irq 12
@@ -89,7 +92,7 @@ pseudo-device	vnd		4	# disk-like interface to files
 #pseudo-device	bpfilter	8	# Berkeley packet filter
 #pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	loop			# network loopback
-pseudo-device	pty		16	# pseudo-terminals
+pseudo-device	pty			# pseudo-terminals
 
 # Enable the hooks used for initializing the root memory-disk.
 #options 	MEMORY_DISK_HOOKS

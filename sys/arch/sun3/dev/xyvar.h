@@ -1,4 +1,4 @@
-/* $NetBSD: xyvar.h,v 1.4 1998/01/26 21:03:45 gwr Exp $ */
+/* $NetBSD: xyvar.h,v 1.4.14.1 2000/11/20 20:27:53 bouyer Exp $ */
 
 /*
  *
@@ -39,6 +39,8 @@
  *
  * author: Chuck Cranor <chuck@ccrc.wustl.edu>
  */
+
+#include <sys/callout.h>
 
 /*
  * i/o request: wrapper for hardware's iopb data structure
@@ -114,7 +116,7 @@ struct xy_softc {
   u_char nsect;                    /* number of sectors per track */
   u_char hw_spt;                   /* as above, but includes spare sectors */
   struct xy_iorq *xyrq;		   /* this disk's ioreq structure */
-  struct buf xyq;		   /* queue'd I/O requests */
+  struct buf_queue xyq;		   /* queue'd I/O requests */
   struct dkbad dkb;                /* bad144 sectors */
 };
 
@@ -140,6 +142,8 @@ struct xy_softc {
 struct xyc_softc {
   struct device sc_dev;            /* device struct, reqd by autoconf */
   struct evcnt sc_intrcnt;         /* event counter (for vmstat -i) */
+
+  struct callout sc_tick_ch;
 
   struct xyc *xyc;                 /* vaddr of vme registers */
 

@@ -1,4 +1,5 @@
-/*	$NetBSD: trap.c,v 1.47 1999/08/21 19:26:20 matt Exp $     */
+/*	$NetBSD: trap.c,v 1.47.2.1 2000/11/20 20:33:33 bouyer Exp $     */
+
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -33,6 +34,7 @@
 		
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
+#include "opt_multiprocessor.h"
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -43,9 +45,7 @@
 #include <sys/signalvar.h>
 #include <sys/exec.h>
 
-#include <vm/vm.h>
-#include <vm/vm_kern.h>
-#include <vm/vm_page.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/mtpr.h>
 #include <machine/pte.h>
@@ -65,6 +65,8 @@
 #ifdef TRAPDEBUG
 volatile int startsysc = 0, faultdebug = 0;
 #endif
+
+static __inline void userret __P((struct proc *, struct trapframe *, u_quad_t));
 
 void	arithflt __P((struct trapframe *));
 void	syscall __P((struct trapframe *));
@@ -100,6 +102,45 @@ int no_traps = 18;
 		frame->r1 = -1; /* for fetch/store */		\
 		return;						\
 	}
+
+/*
+ * userret:
+ *
+ *	Common code used by various execption handlers to
+ *	return to usermode.
+ */
+static __inline void
+userret(p, frame, oticks)
+	struct proc *p;
+	struct trapframe *frame;
+	u_quad_t oticks;
+{
+	int sig;
+
+	/* Take pending signals. */
+	while ((sig = CURSIG(p)) != 0)
+		postsig(sig);
+	p->p_priority = p->p_usrpri;
+	if (curcpu()->ci_want_resched) {
+		/*
+		 * We are being preempted.
+		 */
+		preempt(NULL);
+		while ((sig = CURSIG(p)) != 0)
+			postsig(sig);
+	}
+
+	/*
+	 * If profiling, charge system time to the trapped pc.
+	 */
+	if (p->p_flag & P_PROFIL) {
+		extern int psratio;
+
+		addupc_task(p, frame->pc,
+		    (int)(p->p_sticks - oticks) * psratio);
+	}
+	curcpu()->ci_schedstate.spc_curpriority = p->p_priority;
+}
 
 void
 arithflt(frame)
@@ -256,36 +297,18 @@ if(faultdebug)printf("trap accflt type %lx, code %lx, pc %lx, psl %lx\n",
 		return;
 #endif
 	}
-
-	if (trapsig)
+	if (trapsig) {
+		if (sig == SIGSEGV || sig == SIGILL)
+			printf("pid %d (%s): sig %d: type %lx, code %lx, pc %lx, psl %lx\n",
+			       p->p_pid, p->p_comm, sig, frame->trap,
+			       frame->code, frame->pc, frame->psl);
 		trapsignal(p, sig, frame->code);
+	}
 
 	if (umode == 0)
 		return;
 
-	while ((sig = CURSIG(p)) !=0)
-		postsig(sig);
-	p->p_priority = p->p_usrpri;
-	if (want_resched) {
-		/*
-		 * Since we are curproc, clock will normally just change
-		 * our priority without moving us from one queue to another
-		 * (since the running process is not on a queue.)
-		 * If that happened after we setrunqueue ourselves but before
-		 * we swtch()'ed, we might not be on the queue indicated by
-		 * our priority.
-		 */
-		splstatclock();
-		setrunqueue(p);
-		mi_switch();
-		while ((sig = CURSIG(p)) != 0)
-			postsig(sig);
-	}
-	if (p->p_flag & P_PROFIL) { 
-		extern int psratio;
-		addupc_task(p, frame->pc, (int)(p->p_sticks-oticks) * psratio);
-	}
-	curpriority = p->p_priority;
+	userret(p, frame, oticks);
 }
 
 void
@@ -311,7 +334,7 @@ syscall(frame)
 {
 	struct sysent *callp;
 	u_quad_t oticks;
-	int nsys, sig;
+	int nsys;
 	int err, rval[2], args[8];
 	struct trapframe *exptr;
 	struct proc *p = curproc;
@@ -348,7 +371,7 @@ if(startsysc)printf("trap syscall %s pc %lx, psl %lx, sp %lx, pid %d, frame %p\n
 		if (err) {
 #ifdef KTRACE
 			if (KTRPOINT(p, KTR_SYSCALL))
-				ktrsyscall(p->p_tracep, frame->code,
+				ktrsyscall(p, frame->code,
 				    callp->sy_argsize, args);
 #endif
 			goto bad;
@@ -356,7 +379,7 @@ if(startsysc)printf("trap syscall %s pc %lx, psl %lx, sp %lx, pid %d, frame %p\n
 	}
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSCALL))
-		ktrsyscall(p->p_tracep, frame->code, callp->sy_argsize, args);
+		ktrsyscall(p, frame->code, callp->sy_argsize, args);
 #endif
 	err = (*callp->sy_call)(curproc, args, rval);
 	exptr = curproc->p_addr->u_pcb.framep;
@@ -365,7 +388,7 @@ if(startsysc)printf("trap syscall %s pc %lx, psl %lx, sp %lx, pid %d, frame %p\n
 if(startsysc)
 	printf("retur %s pc %lx, psl %lx, sp %lx, pid %d, v{rde %d r0 %d, r1 %d, frame %p\n",
 	       syscallnames[exptr->code], exptr->pc, exptr->psl,exptr->sp,
-		curproc->p_pid,err,rval[0],rval[1],exptr);
+		p->p_pid,err,rval[0],rval[1],exptr); /* } */
 #endif
 
 bad:
@@ -388,31 +411,25 @@ bad:
 		exptr->psl |= PSL_C;
 		break;
 	}
-	p = curproc;
-	while ((sig = CURSIG(p)) !=0)
-		postsig(sig);
-	p->p_priority = p->p_usrpri;
-	if (want_resched) {
-		/*
-		 * Since we are curproc, clock will normally just change
-		 * our priority without moving us from one queue to another
-		 * (since the running process is not on a queue.)
-		 * If that happened after we setrunqueue ourselves but before
-		 * we swtch()'ed, we might not be on the queue indicated by
-		 * our priority.
-		 */
-		splstatclock();
-		setrunqueue(p);
-		mi_switch();
-		while ((sig = CURSIG(p)) != 0)
-			postsig(sig);
-	}
-	if (p->p_flag & P_PROFIL) { 
-		extern int psratio;
-		addupc_task(p, frame->pc, (int)(p->p_sticks-oticks) * psratio);
-	}
+
+	userret(p, frame, oticks);
+
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
-		ktrsysret(p->p_tracep, frame->code, err, rval[0]);
+		ktrsysret(p, frame->code, err, rval[0]);
 #endif
 }
+
+void
+child_return(void *arg)
+{
+        struct proc *p = arg;
+
+	userret(p, p->p_addr->u_pcb.framep, 0);
+
+#ifdef KTRACE
+	if (KTRPOINT(p, KTR_SYSRET))
+		ktrsysret(p, SYS_fork, 0, 0);
+#endif
+}
+

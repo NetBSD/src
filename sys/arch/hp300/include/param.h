@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.38 1998/06/25 23:57:37 thorpej Exp $	*/
+/*	$NetBSD: param.h,v 1.38.14.1 2000/11/20 20:08:09 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -70,11 +70,11 @@
 #define	NPTEPG		(NBPG/(sizeof (pt_entry_t)))
 
 /*
- * Size of kernel malloc arena in CLBYTES-sized logical pages
+ * Minimum and maximum sizes of the kernel malloc arena in PAGE_SIZE-sized
+ * logical pages.
  */
-#ifndef NKMEMCLUSTERS
-# define	NKMEMCLUSTERS	(2048 * 1024 / CLBYTES)
-#endif
+#define	NKMEMPAGES_MIN_DEFAULT	((6 * 1024 * 1024) >> PAGE_SHIFT)
+#define	NKMEMPAGES_MAX_DEFAULT	((8 * 1024 * 1024) >> PAGE_SHIFT)
 
 #if defined(_KERNEL) && !defined(_LOCORE)
 #define	delay(us)	_delay((us) << 8)

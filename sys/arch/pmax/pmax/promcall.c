@@ -1,4 +1,4 @@
-/*	$NetBSD: promcall.c,v 1.3 1999/06/08 23:40:19 simonb Exp $	*/
+/*	$NetBSD: promcall.c,v 1.3.4.1 2000/11/20 20:20:39 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,21 +43,21 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: promcall.c,v 1.3 1999/06/08 23:40:19 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: promcall.c,v 1.3.4.1 2000/11/20 20:20:39 bouyer Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/reboot.h>
+#include <sys/systm.h>
+
 #include <dev/cons.h>
 
+#include <machine/dec_prom.h>
 #include <pmax/pmax/pmaxtype.h>
 #include <pmax/pmax/machdep.h>
-#include <machine/dec_prom.h>
 
 static int  romgetc __P((dev_t));
 static void romputc __P((dev_t, int));
-static int  atoi __P((const char *));
 
 #define DEFAULT_SCSIID	7    /* XXX - this should really live somewhere else */
 
@@ -71,6 +71,7 @@ struct consdev promcd = {
 	romgetc,	/* getc */
 	romputc,	/* putc */
 	nullcnpollc,	/* pollc */
+	NULL,		/* bell */
 	makedev(0, 0),
 	CN_DEAD,
 };
@@ -116,7 +117,7 @@ prom_findcons(kbdslot, crtslot, prom_using_screen)
 	int *crtslot;
 	int *prom_using_screen;
 {
-	register char *oscon = 0;	/* PROM osconsole string */
+	char *oscon = 0;	/* PROM osconsole string */
 
 	/*
 	 * Get and parse the "osconsole" environment variable.
@@ -184,7 +185,7 @@ prom_systype()
 	if (callv != &callvec)
 		return (*callv->_getsysid)();
 	cp = prom_getenv("systype");
-	return (cp != NULL) ? atoi(cp) : 0;
+	return (cp != NULL) ? strtoul(cp, NULL, 0) : 0;
 }
 
 /*
@@ -231,66 +232,5 @@ prom_scsiid(cnum)
 
 	snprintf(scsiid_var, 8, "scsiid%d", cnum);
 	cp = prom_getenv(scsiid_var);
-	return (cp != NULL) ? atoi(cp) : DEFAULT_SCSIID;
-}
-
-/*
- * over-engineered atoi(3)
- */
-static int
-atoi(s)
-	const char *s;
-{
-	int c;
-	unsigned base = 10, d;
-	int neg = 0, val = 0;
-
-	if (s == 0 || (c = *s++) == 0)
-		goto out;
-
-	/* skip spaces if any */
-	while (c == ' ' || c == '\t')
-		c = *s++;
-
-	/* parse sign, allow more than one (compat) */
-	while (c == '-') {
-		neg = !neg;
-		c = *s++;
-	}
-
-	/* parse base specification, if any */
-	if (c == '0') {
-		c = *s++;
-		switch (c) {
-		case 'X':
-		case 'x':
-			base = 16;
-			break;
-		case 'B':
-		case 'b':
-			base = 2;
-			break;
-		default:
-			base = 8;
-		}
-	}
-
-	/* parse number proper */
-	for (;;) {
-		if (c >= '0' && c <= '9')
-			d = c - '0';
-		else if (c >= 'a' && c <= 'z')
-			d = c - 'a' + 10;
-		else if (c >= 'A' && c <= 'Z')
-			d = c - 'A' + 10;
-		else
-			break;
-		val *= base;
-		val += d;
-		c = *s++;
-	}
-	if (neg)
-		val = -val;
-out:
-	return val;
+	return (cp != NULL) ? strtoul(cp, NULL, 0) : DEFAULT_SCSIID;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.6 1999/03/05 07:59:13 tsubai Exp $	*/
+/*	$NetBSD: asm.h,v 1.6.8.1 2000/11/20 20:31:07 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -75,6 +75,12 @@
 #define	ASMSTR		.asciz
 
 #define RCSID(x)	.text; .asciz x
+
+#ifdef __ELF__
+#define	WEAK_ALIAS(alias,sym)						\
+	.weak alias;							\
+	alias = sym
+#endif
 
 #ifdef __STDC__
 #define	WARN_REFERENCES(_sym,_msg)				\

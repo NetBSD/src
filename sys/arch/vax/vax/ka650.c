@@ -1,4 +1,4 @@
-/*	$NetBSD: ka650.c,v 1.20 1999/08/07 10:36:49 ragge Exp $	*/
+/*	$NetBSD: ka650.c,v 1.20.2.1 2000/11/20 20:33:22 bouyer Exp $	*/
 /*
  * Copyright (c) 1988 The Regents of the University of California.
  * All rights reserved.
@@ -46,8 +46,8 @@
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <vm/vm.h>
-#include <vm/vm_kern.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/ka650.h>
 #include <machine/clock.h>
@@ -83,6 +83,9 @@ struct	cpu_dep	ka650_calls = {
 	2,	/* SCB pages */
 	ka650_halt,
 	ka650_reboot,
+	0,
+	0,
+	CPU_RAISEIPL,	/* Needed for the LANCE chip */
 };
 
 /*
@@ -187,6 +190,7 @@ uvaxIII_mchk(cmcf)
 	register struct mc650frame *mcf = (struct mc650frame *)cmcf;
 	register u_int type = mcf->mc65_summary;
 	register u_int i;
+	char sbuf[256];
 
 	printf("machine check %x", type);
 	if (type >= 0x80 && type <= 0x83)
@@ -196,8 +200,9 @@ uvaxIII_mchk(cmcf)
 	printf("\n\tvap %x istate1 %x istate2 %x pc %x psl %x\n",
 	    mcf->mc65_mrvaddr, mcf->mc65_istate1, mcf->mc65_istate2,
 	    mcf->mc65_pc, mcf->mc65_psl);
-	printf("dmaser=0x%b qbear=0x%x dmaear=0x%x\n",
-	    ka650merr_ptr->merr_dser, DMASER_BITS, 
+	bitmask_snprintf(ka650merr_ptr->merr_dser, DMASER_BITS,
+			 sbuf, sizeof(sbuf));
+	printf("dmaser=0x%s qbear=0x%x dmaear=0x%x\n", sbuf,
 	    (int)ka650merr_ptr->merr_qbear,
 	    (int)ka650merr_ptr->merr_dear);
 	ka650merr_ptr->merr_dser = DSER_CLEAR;

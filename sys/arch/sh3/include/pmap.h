@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.2 1999/09/14 10:22:35 tsubai Exp $	*/
+/*	$NetBSD: pmap.h,v 1.2.2.1 2000/11/20 20:24:30 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -357,7 +357,12 @@ extern int pmap_pg_g;			/* do we support PG_G? */
 
 #define	pmap_kernel()			(&kernel_pmap_store)
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
+#define	pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
+#ifdef SH4
+#define	pmap_update()			(cacheflush(), tlbflush())
+#else
 #define	pmap_update()			tlbflush()
+#endif
 
 #define pmap_clear_modify(pg)		pmap_change_attrs(pg, 0, PG_M)
 #define pmap_clear_reference(pg)	pmap_change_attrs(pg, 0, PG_U)
@@ -399,6 +404,12 @@ vaddr_t reserve_dumppages __P((vaddr_t)); /* XXX: not a pmap fn */
 #define PMAP_GROWKERNEL		/* turn on pmap_growkernel interface */
 
 /*
+ * Alternate mapping hooks for pool pages.  Avoids thrashing the TLB.
+ */
+#define PMAP_MAP_POOLPAGE(pa)	SH3_PHYS_TO_P1SEG((pa))
+#define PMAP_UNMAP_POOLPAGE(va)	SH3_P1SEG_TO_PHYS((va))
+
+/*
  * inline functions
  */
 
@@ -410,12 +421,25 @@ __inline static void
 pmap_update_pg(va)
 	vaddr_t va;
 {
+#ifdef SH4
+#if 1
+	tlbflush();
+	cacheflush();
+#else
+	u_int32_t *addr, data;
+
+	addr = (void *)(0xf6000080 | (va & 0x00003f00)); /* 13-8 */
+	data =         (0x00000000 | (va & 0xfffff000)); /* 31-17, 11-10 */
+	*addr = data;
+#endif
+#else
 	u_int32_t *addr, data;
 
 	addr = (void *)(0xf2000080 | (va & 0x0001f000)); /* 16-12 */
 	data =         (0x00000000 | (va & 0xfffe0c00)); /* 31-17, 11-10 */
 
 	*addr = data;
+#endif
 }
 
 /*
@@ -426,8 +450,13 @@ __inline static void
 pmap_update_2pg(va, vb)
 	vaddr_t va, vb;
 {
+#ifdef SH4
+	tlbflush();
+	cacheflush();
+#else
 	pmap_update_pg(va);
 	pmap_update_pg(vb);
+#endif
 }
 
 /*
@@ -481,7 +510,6 @@ paddr_t vtophys __P((vaddr_t));
 void pmap_emulate_reference __P((struct proc *, vaddr_t, int, int));
 
 /* XXX */
-#define SH3_PHYS_TO_P1SEG(pa)	(((pa) & 0x1fffffff) | SH3_P1SEG_BASE)
 #define PG_U 0		/* referenced bit */
 
 #endif /* _KERNEL */

@@ -1,4 +1,4 @@
-#	$NetBSD: HAYDON,v 1.9 1999/07/31 20:19:31 thorpej Exp $
+#	$NetBSD: HAYDON,v 1.9.2.1 2000/11/20 20:08:02 bouyer Exp $
 #
 # HAYDON
 #
@@ -73,7 +73,6 @@ options 	DDB		# Kernel Dynamic Debugger
 #options 	DEBUG		# extra kernel debugging support
 #options 	DIAGNOSTIC	# extra kernel debugging checks
 options 	KTRACE		# system call tracing support
-options 	NKMEMCLUSTERS=1024 # 4K pages in kernel malloc pool (def: 512)
 
 config		netbsd root on ? type ?
 
@@ -103,7 +102,7 @@ oscsi*		at dio? scode?		# old HP SCSI
 sd*		at oscsi? target ? lun ?
 st*		at oscsi? target ? lun ?
 
-pseudo-device	pty		32
+pseudo-device	pty
 #pseudo-device	sl		1
 pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	ppp		1

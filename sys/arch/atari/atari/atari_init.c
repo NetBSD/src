@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.43 1999/09/22 07:16:05 leo Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.43.2.1 2000/11/20 20:05:21 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -37,7 +37,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <vm/vm.h>
 #include <sys/user.h>
 #include <sys/ioctl.h>
 #include <sys/select.h>
@@ -46,6 +45,7 @@
 #include <sys/buf.h>
 #include <sys/msgbuf.h>
 #include <sys/mbuf.h>
+#include <sys/extent.h>
 #include <sys/protosw.h>
 #include <sys/domain.h>
 #include <sys/dkbad.h>
@@ -53,7 +53,8 @@
 #include <sys/exec.h>
 #include <sys/core.h>
 #include <sys/kcore.h>
-#include <vm/pmap.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/vmparam.h>
 #include <machine/pte.h>
@@ -86,6 +87,21 @@ static void set_machtype __P((void));
 static void mmu040_setup __P((st_entry_t *, u_int, pt_entry_t *, u_int,
 			      pt_entry_t *, u_int, u_int));
 #endif
+
+/*
+ * Extent maps to manage all memory space, including I/O ranges.  Allocate
+ * storage for 8 regions in each, initially.  Later, iomem_malloc_safe
+ * will indicate that it's safe to use malloc() to dynamically allocate
+ * region descriptors.
+ * This means that the fixed static storage is only used for registrating
+ * the found memory regions and the bus-mapping of the console.
+ *
+ * The extent maps are not static!  They are used for bus address space
+ * allocation.
+ */
+static long iomem_ex_storage[EXTENT_FIXED_STORAGE_SIZE(8) / sizeof(long)];
+struct extent *iomem_ex;
+int iomem_malloc_safe;
 
 /*
  * All info needed to generate a panic dump. All fields are setup by
@@ -158,6 +174,7 @@ int	reloc_kernel = RELOC_KERNEL;		/* Patchable	*/
  * 
  * Very crude 68040 support by Michael L. Hitch.
  */
+int kernel_copyback = 1;
 
 void
 start_c(id, ttphystart, ttphysize, stphysize, esym_addr)
@@ -277,6 +294,7 @@ char	*esym_addr;		/* Address of kernel '_esym' symbol	*/
 	 */
 	if (machineid & ATARI_HADES)
 		ptextra += btoc(PCI_CONF_SIZE + PCI_IO_SIZE + PCI_VGA_SIZE);
+	ptextra += btoc(BOOTM_VA_POOL);
 
 	/*
 	 * The 'pt' (the initial kernel pagetable) has to map the kernel and
@@ -350,13 +368,19 @@ char	*esym_addr;		/* Address of kernel '_esym' symbol	*/
 	 * recommended by Motorola; for the 68060 mandatory)
 	 */
 	if (mmutype == MMU_68040) {
+
+	    if (kernel_copyback)
+		pg_proto |= PG_CCB;
+
 	    for (; i < (u_int)Sysseg; i += NBPG, pg_proto += NBPG)
 		*pg++ = pg_proto;
+
 	    pg_proto = (pg_proto & ~PG_CCB) | PG_CI;
-	    for (; i < (u_int)&Sysseg[kstsize * NPTEPG]; i += NBPG,
-							 pg_proto += NBPG)
+	    for (; i < pstart; i += NBPG, pg_proto += NBPG)
 		*pg++ = pg_proto;
-	    pg_proto = (pg_proto & ~PG_CI) | PG_CCB;
+	    pg_proto = (pg_proto & ~PG_CI);
+	    if (kernel_copyback)
+		pg_proto |= PG_CCB;
 	}
 #endif /* defined(M68040) || defined(M68060) */
 
@@ -543,6 +567,32 @@ char	*esym_addr;		/* Address of kernel '_esym' symbol	*/
 	init_stmem();
 
 	/*
+	 * Initialize the I/O mem extent map.
+	 * Note: we don't have to check the return value since
+	 * creation of a fixed extent map will never fail (since
+	 * descriptor storage has already been allocated).
+	 *
+	 * N.B. The iomem extent manages _all_ physical addresses
+	 * on the machine.  When the amount of RAM is found, all
+	 * extents of RAM are allocated from the map.
+	 */
+	iomem_ex = extent_create("iomem", 0x0, 0xffffffff, M_DEVBUF,
+	    (caddr_t)iomem_ex_storage, sizeof(iomem_ex_storage),
+	    EX_NOCOALESCE|EX_NOWAIT);
+
+	/*
+	 * Allocate the physical RAM from the extent map
+	 */
+	for (i = 0; boot_segs[i].end != 0; i++) {
+		if (extent_alloc_region(iomem_ex, boot_segs[i].start,
+			  boot_segs[i].end - boot_segs[i].start, EX_NOWAIT)) {
+			/* XXX: Ahum, should not happen ;-) */
+			printf("Warning: Cannot allocate boot memory from"
+			       " extent map!?\n");
+		}
+	}
+
+	/*
 	 * Initialize interrupt mapping.
 	 */
 	intr_init();
@@ -641,6 +691,7 @@ pt_entry_t	*pt;
 u_int		ptsize;		/* Size of 'pt' in bytes	*/
 u_int		ptextra;	/* #of additional I/O pte's	*/
 {
+	extern void	bootm_init __P((vaddr_t, pt_entry_t *, u_long));
 	vaddr_t		ioaddr;
 	pt_entry_t	*pg, *epg;
 	pt_entry_t	pg_proto;
@@ -693,6 +744,12 @@ u_int		ptextra;	/* #of additional I/O pte's	*/
 			pg_proto += NBPG;
 		}
 	}
+
+	bootm_init(ioaddr, pg, BOOTM_VA_POOL);
+	/*
+	 * ioaddr += BOOTM_VA_POOL;
+	 * pg = &pg[btoc(BOOTM_VA_POOL)];
+	 */
 }
 
 /*
@@ -753,7 +810,6 @@ u_long	kbase;
 	cpu_kcore_hdr_t *h = &cpu_kcore_hdr;
 	struct m68k_kcore_hdr *m = &h->un._m68k;
 	extern char end[];
-	extern char machine[];
 	int	i;
 
 	bzero(&cpu_kcore_hdr, sizeof(cpu_kcore_hdr));

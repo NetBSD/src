@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.4 1999/10/17 15:06:45 tsubai Exp $	*/
+/*	$NetBSD: intr.h,v 1.4.2.1 2000/11/20 20:17:25 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -54,10 +54,25 @@ extern void _splnone __P((void));
 extern void _setsoftintr __P((int));
 extern void _clrsoftintr __P((int));
 
+/*
+ * software simulated interrupt
+ */
+#define SIR_NET		0x01
+#define SIR_SERIAL	0x02
+
+#define setsoft(x)	do {			\
+	extern u_int ssir;			\
+	int s;					\
+						\
+	s = splhigh();				\
+	ssir |= (x);				\
+	_setsoftintr(MIPS_SOFT_INT_MASK_1);	\
+	splx(s);				\
+} while (0)
+
 #define setsoftclock()	_setsoftintr(MIPS_SOFT_INT_MASK_0)
-#define setsoftnet()	_setsoftintr(MIPS_SOFT_INT_MASK_1)
-#define clearsoftclock() _clrsoftintr(MIPS_SOFT_INT_MASK_0)
-#define clearsoftnet()	_clrsoftintr(MIPS_SOFT_INT_MASK_1)
+#define setsoftnet()	setsoft(SIR_NET)
+#define setsoftserial()	setsoft(SIR_SERIAL)
 
 /*
  * nesting interrupt masks.
@@ -80,6 +95,8 @@ extern void _clrsoftintr __P((int));
 #define splclock()	_splraise(MIPS_INT_MASK_SPL2)
 #define splstatclock()	_splraise(MIPS_INT_MASK_SPL2)
 #define splhigh()	_splraise(MIPS_INT_MASK_SPL2)
+#define	splsched()	splhigh()
+#define	spllock()	splhigh()
 
 #define splsoftclock()	_splraise(MIPS_INT_MASK_SPL_SOFT0)
 #define splsoftnet()	_splraise(MIPS_INT_MASK_SPL_SOFT1)
@@ -107,12 +124,11 @@ extern void _clrsoftintr __P((int));
 extern u_int intrcnt[];
 
 /* handle i/o device interrupts */
-extern int (*mips_hardware_intr) __P((u_int, u_int, u_int, u_int));
-extern int news3400_intr __P((u_int, u_int, u_int, u_int));
+extern void news3400_intr __P((u_int, u_int, u_int, u_int));
+extern void news5000_intr __P((u_int, u_int, u_int, u_int));
 
-/* handle software interrupts */
-extern void (*mips_software_intr) __P((int));
-extern void news3400_softintr __P((int));
+extern void (*enable_intr) __P((void));
+extern void (*disable_intr) __P((void));
 
 #endif /* !_LOCORE */
 #endif /* _KERNEL */

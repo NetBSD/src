@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_mb.c,v 1.7 1999/08/06 08:27:31 leo Exp $	*/
+/*	$NetBSD: wdc_mb.c,v 1.7.2.1 2000/11/20 20:05:27 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -87,14 +87,17 @@ wdc_mb_probe(parent, cfp, aux)
 	struct cfdata *cfp;
 	void *aux;
 {
-	struct channel_softc ch = { 0 };
+	static int	wdc_matched = 0;
+	struct channel_softc ch;
 	int	result = 0;
 	u_char	sv_ierb;
 
-	if ((machineid & ATARI_TT) || strcmp("wdc", aux) || cfp->cf_unit != 0)
+	if ((machineid & ATARI_TT) || strcmp("wdc", aux) || wdc_matched)
 		return 0;
 	if (!atari_realconfig)
 		return 0;
+
+	memset(&ch, 0, sizeof(ch));
 
 	ch.cmd_iot = ch.ctl_iot = mb_alloc_bus_space_tag();
 	if (ch.cmd_iot == NULL)
@@ -126,6 +129,8 @@ wdc_mb_probe(parent, cfp, aux)
 	bus_space_unmap(ch.cmd_iot,  ch.cmd_ioh, 0x40);
 	mb_free_bus_space_tag(ch.cmd_iot);
 
+	if (result)
+		wdc_matched = 1;
 	return (result);
 }
 

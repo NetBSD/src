@@ -1,4 +1,4 @@
-#	$NetBSD: files.sh3,v 1.4 1999/09/21 13:16:17 tsubai Exp $
+#	$NetBSD: files.sh3,v 1.4.2.1 2000/11/20 20:24:27 bouyer Exp $
 #
 # new style config file for sh3 architecture
 #
@@ -15,13 +15,16 @@ file	arch/sh3/sh3/db_disasm.c	ddb
 file	arch/sh3/sh3/db_interface.c	ddb
 file	arch/sh3/sh3/db_memrw.c		ddb | kgdb
 file	arch/sh3/sh3/db_trace.c		ddb
+file	arch/sh3/sh3/sh3disasm.c	ddb
 file	arch/sh3/sh3/disksubr.c		disk
-file	arch/sh3/sh3/in_cksum.c		inet
+file	arch/sh3/sh3/in_cksum.S		inet
+file	netinet/in4_cksum.c		inet
+#file	arch/sh3/sh3/in_cksum.c		inet
 file	arch/sh3/sh3/kgdb_machdep.c	kgdb
 file	arch/sh3/sh3/Locore.c
 file	arch/sh3/sh3/math_emulate.c	math_emulate
 file	arch/sh3/sh3/mem.c
-file	arch/sh3/sh3/ns_cksum.c		ns
+file	netns/ns_cksum.c		ns
 file	arch/sh3/sh3/pmap.c
 file	arch/sh3/sh3/process_machdep.c
 file	arch/sh3/sh3/sh3_machdep.c
@@ -29,6 +32,7 @@ file	arch/sh3/sh3/sys_machdep.c
 file	arch/sh3/sh3/trap.c
 file	arch/sh3/sh3/vm_machdep.c
 file	arch/sh3/sh3/clock.c
+file	dev/clock_subr.c
 file	dev/cninit.c
 file	dev/cons.c
 major	{vnd = 14}

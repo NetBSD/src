@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.4 1999/09/16 21:39:24 msaitoh Exp $	*/
+/*	$NetBSD: locore.s,v 1.4.2.1 2000/11/20 20:07:35 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1997
@@ -40,6 +40,9 @@
  *	@(#)locore.s	7.3 (Berkeley) 5/13/91
  */
 
+#include "opt_ddb.h"
+#include "opt_lockdebug.h"
+
 #include "assym.h"
 
 #include <sys/errno.h>
@@ -51,11 +54,21 @@
 #include <machine/pte.h>
 #include <machine/trap.h>
 
-#define INIT_STACK	0x8c3ff000
+#define INIT_STACK	IOM_RAM_BEGIN + IOM_RAM_SIZE - 0x00001000
+
+#ifdef SH4
+#define SHREG_BBRA	0xff200008
+#define SHREG_EXPEVT	0xff000024
+#define SHREG_INTEVT	0xff000028
+#define SHREG_MMUCR	0xff000010
+#define SHREG_TTB	0xff000008
+#else
+#define SHREG_BBRA	0xffffffb8
 #define SHREG_EXPEVT	0xffffffd4
 #define SHREG_INTEVT	0xffffffd8
 #define SHREG_MMUCR	0xffffffe0
 #define SHREG_TTB	0xfffffff8
+#endif
 
 /*
  * These are used on interrupt or trap entry or exit.
@@ -81,7 +94,6 @@
 	and	r15, r9		; \
 	cmp/eq	r8, r9		; \
 	bt	1f		; /* If already kernel mode then jump */ \
-	nop			; \
 	ldc	r15, r2_bank	; \
 	mov.l	3f, r8		; /* 3f = Kernel Stack */ \
 	mov.l	@r8, r15	; /* Change to Kernel Stack */ \
@@ -239,9 +251,9 @@
  *
  * XXX 4 == sizeof pde
  */
-	.set	_C_LABEL(APTmap),(PDSLOT_APTE << PDSHIFT)
-	.set	_C_LABEL(APTD),(_C_LABEL(APTmap) + PDSLOT_APTE * NBPG)
-	.set	_C_LABEL(APTDpde),(_C_LABEL(PTD) + PDSLOT_APTE * 4)
+	.set	_C_LABEL(APTmap), (PDSLOT_APTE << PDSHIFT)
+	.set	_C_LABEL(APTD), (_C_LABEL(APTmap) + PDSLOT_APTE * NBPG)
+	.set	_C_LABEL(APTDpde), (_C_LABEL(PTD) + PDSLOT_APTE * 4)
 
 /*
  * Initialization
@@ -264,12 +276,14 @@ start:
 	/* Set SP to initial position */
 	mov.l	XLtmpstk, r15
 
+	ECLI
+
 	/* Set Register Bank to Bank 0 */
 	mov.l	SR_init, r0
 	ldc	r0, sr
 
 	xor	r0, r0
-	mov	#SHREG_MMUCR, r2
+	mov.l	XL_SHREG_MMUCR, r2
 	mov.l	r0, @r2		/* MMU OFF */
 
 	bra	start1
@@ -285,12 +299,13 @@ start:
 #endif
 	.align	2
 SR_init:	.long	0x500000F0
+XL_SHREG_MMUCR:	.long	SHREG_MMUCR
 start1:
 
 #ifdef ROMIMAGE
 	/* Initialize BUS State Control Regs. */
 	mov.l	_ROM_START, r3
-	mov.l	_RAM_START, r4
+	mov.l	_C_LABEL(ram_start), r4
 	sub	r3, r4
 	/* Set Bus State Controler */
 	mov.l	XLInitializeBsc, r0
@@ -311,7 +326,7 @@ start1:
 	add	r3, r1		/* src address */
 	mov.l	___start, r3
 	sub	r2, r3
-	mov.l	_RAM_START, r4
+	mov.l	_C_LABEL(ram_start), r4
 	add	r4, r3		/* dest address */
 1:
 	mov.l	@r1+, r4
@@ -319,7 +334,6 @@ start1:
 	add	#4, r3
 	dt	r0		/* decrement and Test */
 	bf	1b
-	nop
 	/* kernel image copy end */
 
 	mov.l	LXstart_in_RAM, r0
@@ -330,10 +344,12 @@ start1:
 LXstart_in_RAM:
 	.long	start_in_RAM
 #else
+#ifndef	DONT_INIT_BSC
 	/* Set Bus State Controler */
 	mov.l	XLInitializeBsc, r0
 	jsr	@r0
 	nop
+#endif
 #endif
 
 start_in_RAM:
@@ -342,36 +358,80 @@ start_in_RAM:
 	mov.l	XLinitSH3, r0
 	jsr	@r0		/* call initSH3() */
 	nop
-1:
 
+	.align	2
+1:
 #if 1
 	mov.l	XLKernelStack, r3
 	mov.l	r15, @r3
 #endif
 
+#ifdef SH4
+	/* CCR must be accessed from P2 area */
+	mova	cache_on, r0
+	mov	r0, r5
+	mov.l	XLtoP2, r1
+	add	r1, r5
+	mova	main_label, r0
+	mov	r0, r2
+	mov.l	XL_SHREG_CCR, r3
+	mov.l	XL_CCRVAL, r4
+	jmp	@r5
+	nop
+
+	.align	2
+cache_on:
+	mov.l	r4, @r3 /* Write to CCR */
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	jmp @r2
+	nop
+	
+	.align	2
+main_label:
+#endif
 	mov.l	XLmain, r0
 	jsr	@r0		/* call main() */
 	nop
 
 		.align	2
 
-XLInitializeBsc:.long	_InitializeBsc
+	.globl	_C_LABEL(ram_start)
+#ifndef	DONT_INIT_BSC
+XLInitializeBsc:.long	_C_LABEL(InitializeBsc)
+#endif
 ___start:	.long	start
 ___etext:	.long	_etext
 ___end:		.long	_end
 XLtmpstk:	.long	INIT_STACK
 _KERNBASE:	.long	KERNBASE
-_RAM_START:	.long	IOM_RAM_BEGIN
+_C_LABEL(ram_start):	.long	IOM_RAM_BEGIN
 _ROM_START:	.long	IOM_ROM_BEGIN
 XLKernelStack:	.long	KernelStack
-XLinitSH3:	.long	_initSH3
-XLmain:		.long	_main
+XLinitSH3:	.long	_C_LABEL(initSH3)
+XLmain:		.long	_C_LABEL(main)
+XLtoP2:		.long	0x20000000
+XL_SHREG_CCR:	.long	0xff00001c
+#ifdef SH4
+#if 1
+XL_CCRVAL:	.long	0x0909 /* Operand cache ON */
+#else
+XL_CCRVAL:	.long	0x0000 /* cache OFF */
+#endif
+#endif
 
 NENTRY(proc_trampoline)
 	mov	r11, r4
 	jsr	@r12
 	nop
 	add	#4, r15		/* pop tf_trapno */
+	CLI
 	INTRFASTEXIT
 	/* NOTREACHED */
 
@@ -402,8 +462,8 @@ XLSYS___sigreturn14:
 	.long	SYS___sigreturn14
 XLSYS_exit:
 	.long	SYS_exit
-	.globl	_esigcode
-_esigcode:
+	.globl	_C_LABEL(esigcode)
+_C_LABEL(esigcode):
 
 /*****************************************************************************/
 
@@ -450,7 +510,7 @@ ENTRY(longjmp)
  * actually to shrink the 0-127 range of priorities into the 32 available
  * queues.
  */
-	.globl	_whichqs,_qs,_panic
+	.globl	_C_LABEL(sched_whichqs), _C_LABEL(sched_qs), _C_LABEL(panic)
 
 /*
  * When no processes are on the runq, cpu_switch() branches to here to wait for
@@ -458,25 +518,40 @@ ENTRY(longjmp)
  */
 
 ENTRY(idle)
-	CLI
-	ECLI
+	/* 
+	 * When we get here, interrupts are off (via ECLI) and
+	 * sched_lock is held.
+	 */
+	STI
+
 	mov.l	XXLwhichqs, r0
 	mov.l	@r0, r0
 	mov	r0, r14
 	tst	r0, r0
 	bf	sw1
+
+#if defined(LOCKDEBUG)
+	mov.l	Xsched_unlock, r0
+	jsr	@r0
 	nop
-	STI
+#endif
 	ESTI
 
 	sleep
 
-	bra	_idle
+	ECLI
+#if defined(LOCKDEBUG)
+	mov.l	Xsched_lock, r0
+	jsr	@r0
+	nop
+#endif
+
+	bra	_C_LABEL(idle)
 	nop
 
 	.align	2
 XXLwhichqs:
-	.long	_whichqs
+	.long	_C_LABEL(sched_whichqs)
 
 
 #define	PUSHALL	\
@@ -550,17 +625,18 @@ XXLwhichqs:
 switch_error:
 	mova	1f, r0
 	mov	r0, r4
-	mov.l	XL_panic, r0
+	mov.l	2f, r0
 	jsr	@r0
 	nop
 
+	.align	2
 1:	.asciz	"cpu_swicth"
 	.align	2
-XL_panic:	.long	_panic
+2:	.long	_C_LABEL(panic)
 #endif
 
 /*
- * cpu_switch(void);
+ * void cpu_switch(struct proc *)
  * Find a runnable process and switch to it.  Wait if necessary.  If the new
  * process is the same as the old one, we short-circuit the context save and
  * restore.
@@ -582,7 +658,6 @@ ENTRY(cpu_switch)
 	mov.l	@r12, r12
 	tst	r12, r12
 	bt	1f
-	nop
 
 	/* Save stack pointers. */
 	mov	r12, r4
@@ -619,6 +694,12 @@ ENTRY(cpu_switch)
 	mov.l	r1, @r0
 #endif
 
+#if defined(LOCKDEBUG)
+	/* Release the sched_lock before processing interrupts. */
+	mov.l	Xsched_unlock, r0
+	jsr	@r0
+	nop
+#endif
 	xor	r0, r0
 	mov.l	XXLcpl, r1
 	mov.l	r0, @r1			/* spl0() */
@@ -629,9 +710,9 @@ ENTRY(cpu_switch)
 	nop
 
 	.align	2
-XXLcpl:		.long	_cpl
-XXLcurproc:	.long	_curproc
-XXLXspllower:	.long	_Xspllower
+XXLcpl:		.long	_C_LABEL(cpl)
+XXLcurproc:	.long	_C_LABEL(curproc)
+XXLXspllower:	.long	_C_LABEL(Xspllower)
 XXLKernelStack:	.long	KernelStack
 XXLKernelSp:	.long	KernelSp
 
@@ -640,16 +721,23 @@ switch_search:
 	 * First phase: find new process.
 	 *
 	 * Registers:
-	 *   %eax - queue head, scratch, then zero
-	 *   %ebx - queue number
-	 *   %ecx - cached value of whichqs
-	 *   %edx - next process in queue
-	 *   %esi - old process
-	 *   %edi - new process
+	 *   r0  - queue head, scratch, then zero
+	 *   r13 - queue number
+	 *   r14 - cached value of whichqs
+	 *   r9  - next process in queue
+	 *   r12 - old process
+	 *   r8  - new process
 	 */
 
+	/* Lock the scheduler. */
+	ECLI				/* splhigh doesn't do a cli */
+#if defined(LOCKDEBUG)
+	mov.l	Xsched_lock, r0
+	jsr	@r0
+	nop
+#endif
+
 	/* Wait for new process. */
-	CLI				/* splhigh doesn't do a cli */
 	mov.l	XXXLwhichqs, r0
 	mov.l	@r0, r0
 	mov	r0, r14
@@ -658,7 +746,7 @@ switch_search:
 
 	.align	2
 XXXLwhichqs:
-	.long	_whichqs
+	.long	_C_LABEL(sched_whichqs)
 1:
 
 
@@ -703,7 +791,7 @@ sw1:	mov	#1, r1
 	TESTANDSHIFT	/* bit 30 */
 	TESTANDSHIFT	/* bit 31 */
 
-	bra	_idle			/* if none, idle */
+	bra	_C_LABEL(idle)		/* if none, idle */
 	nop
 
 1:	mov.l	XLqs, r0
@@ -730,7 +818,6 @@ sw1:	mov	#1, r1
 	stc	r0_bank, r0
 	cmp/eq	r0, r8		/* linked to self (i.e. nothing queued)? */
 	bf	10f
-	nop
 	mov.l	XL_switch_error, r0
 	jmp	@r0
 	nop
@@ -775,20 +862,20 @@ sw1:	mov	#1, r1
 	mov.l	r14, @r0
 /* #define sh3_debug */
 #ifdef sh3_debug
-	mova	XL_fmt, r0
+	mova	1f, r0
 	mov	r0, r4
-	mov	r14, r6
 	mov	r13, r5
-	mov.l	XL_printf, r0
+	mov	r14, r6
+	mov.l	2f, r0
 	jsr	@r0
 	nop
 	bra	3f
 	nop
 
-XL_fmt:	.asciz	"switch[i=%d,whichqs=0x%0x]\n"
 	.align	2
-XL_printf:
-	.long	_printf
+1:	.asciz	"switch[i=%d,whichqs=0x%0x]\n"
+	.align	2
+2:	.long	_C_LABEL(printf)
 #endif
 
 3:
@@ -805,7 +892,6 @@ XL_printf:
 	mov.l	@r0, r0
 	tst	r0, r0
 	bt	11f
-	nop
 
 	mov	r8, r4
 	add	#P_STAT, r4
@@ -817,14 +903,14 @@ XL_printf:
 	mov	#SRUN, r1
 	cmp/eq	r0, r1
 	bt	11f
-	nop
 
 	mov.l	XL_switch_error, r0
 	jmp	@r0
 	nop
 
 	.align	2
-XL_switch_error:	.long	switch_error
+XL_switch_error:
+	.long	switch_error
 11:
 #endif
 
@@ -841,15 +927,28 @@ XL_switch_error:	.long	switch_error
 	xor	r0, r0
 	mov.l	r0, @r1		/* r8->p_back = 0 */
 
+#if defined(LOCKDEBUG)
+	/*
+	 * Unlock the sched_lock, but leave interrupts off, for now.
+	 */
+	mov.l	Xsched_unlock, r0
+	jsr	@r0
+	nop
+#endif
+
+	/* p->p_cpu initialized in fork1() for single-processor */
+
+	/* Process now running on a processor. */
+	mov	#P_STAT, r0
+	mov	#SONPROC, r1
+	mov.b	r1, @(r0, r8)	/* p->p_stat = SONPROC */
+
 	/* Record new process. */
 	mov.l	XXXLcurproc, r0
 	mov.l	r8, @r0
 
 	/* It's okay to take interrupts here. */
-#if 1 /* 1998.10.19 */
-	ECLI
-#endif
-	STI
+	ESTI
 
 	/* Skip context switch if same process. */
 	mov	r12, r0		/* r12 = oldCurproc */
@@ -860,7 +959,6 @@ XL_switch_error:	.long	switch_error
 	/* If old process exited, don't bother. */
 	tst	r12, r12
 	bt	switch_exited
-	nop
 
 	/*
 	 * Second phase: save old context.
@@ -891,7 +989,7 @@ switch_exited:
 	 */
 
 	/* No interrupts while loading new state. */
-	CLI
+	ECLI
 	mov	r8, r4		/* r8 = qs[i]->p_forw */
 	mov.l	XLP_ADDR, r1
 	add	r1, r4
@@ -926,14 +1024,18 @@ switch_exited:
 	nop
 
 	mov.l	@r0, r0
-	mov	#SHREG_TTB, r2
+	mov.l	XL_SHREG_TTB, r2
 	mov.l	r0, @r2
 
 	/* flush TLB */
-	mov	#SHREG_MMUCR, r0
+	mov.l	XXL_SHREG_MMUCR, r0
 	mov	#4, r1
 	mov.l	@r0, r2
 	or	r1, r2
+#ifdef SH4
+	mov.l	XL_MMUCR_VBITS, r1
+	and	r1, r2
+#endif
 	mov.l	r2, @r0
 
 switch_restored:
@@ -942,10 +1044,7 @@ switch_restored:
 	mov.l	r12, @r0
 
 	/* Interrupts are okay again. */
-#if 1 /* 1998.10.19 */
-	ECLI
-#endif
-	STI
+	ESTI
 
 switch_return:
 	/*
@@ -970,19 +1069,24 @@ switch_return:
 	nop
 
 	.align	2
-XLqs:		.long	_qs
+XLqs:		.long	_C_LABEL(sched_qs)
 XLP_ADDR:	.long	P_ADDR
-XLwhichqs:	.long	_whichqs
-XLwant_resched:	.long	_want_resched
-XXXLcurproc:	.long	_curproc
+XLwhichqs:	.long	_C_LABEL(sched_whichqs)
+XLwant_resched:	.long	_C_LABEL(want_resched)
+XXXLcurproc:	.long	_C_LABEL(curproc)
 XL_ConvVtoP:	.long	_ConvVtoP
 XL_KernelSp:	.long	KernelSp
+XL_SHREG_TTB:	.long	SHREG_TTB
+#if defined(LOCKDEBUG)
+Xsched_lock:	.long	_C_LABEL(sched_lock_idle)
+Xsched_unlock:	.long	_C_LABEL(sched_unlock_idle)
+#endif
 /*
  * switch_exit(struct proc *p);
  * Switch to proc0's saved context and deallocate the address space and kernel
  * stack for p.  Then jump into cpu_switch(), as if we were in proc0 all along.
  */
-	.globl	_proc0,_kernel_map
+	.globl	_C_LABEL(proc0), _C_LABEL(kernel_map)
 ENTRY(switch_exit)
 	mov	r4, r8			/* old process */
 	mov.l	XLproc0, r9
@@ -993,7 +1097,7 @@ ENTRY(switch_exit)
 	mov.l	r0, @r1
 
 	/* Restore proc0's context. */
-	CLI
+	ECLI
 	mov	r9, r0
 	mov.l	XXLP_ADDR, r1
 	add	r1, r0
@@ -1009,14 +1113,18 @@ ENTRY(switch_exit)
 	mov	r10, r0
 	add	#PCB_PAGEDIRREG, r0
 	mov.l	@r0, r2
-	mov	#SHREG_TTB, r1
+	mov.l	XXL_SHREG_TTB, r1
 	mov.l	r2, @r1
 
 	/* flush TLB */
-	mov	#SHREG_MMUCR, r0
+	mov.l	XXL_SHREG_MMUCR, r0
 	mov	#4, r1
 	mov.l	@r0, r2
 	or	r1, r2
+#ifdef SH4
+	mov.l	XL_MMUCR_VBITS, r1
+	and	r1, r2
+#endif
 	mov.l	r2, @r0
 
 	/* Record new pcb. */
@@ -1024,10 +1132,7 @@ ENTRY(switch_exit)
 	mov.l	r10, @r0
 
 	/* Interrupts are okay again. */
-#if 1 /* 1998.10.19 */
-	ECLI
-#endif
-	STI
+	ESTI
 
 	mov	r8, r4
 	mov.l	XLexit2, r0
@@ -1044,10 +1149,13 @@ ENTRY(switch_exit)
 	nop
 
 	.align	2
-	.globl	_exit2
+	.globl	_C_LABEL(exit2)
 XLexit2:
-	.long	_exit2
-
+	.long	_C_LABEL(exit2)
+XL_MMUCR_VBITS:
+	.long	MMUCR_VALIDBITS
+XXL_SHREG_MMUCR:
+	.long	SHREG_MMUCR
 XXLP_ADDR:
 	.long	P_ADDR
 
@@ -1100,7 +1208,7 @@ NENTRY(exphandler)
 100:
 #endif
 
-	mov	#SHREG_EXPEVT, r0
+	mov.l	XL_SHREG_EXPEVT, r0
 	mov.l	@r0, r0
 	cmp/eq	#0x40, r0	/* T_TLBINVALIDR */
 	bf	1f
@@ -1116,10 +1224,16 @@ NENTRY(exphandler)
 	bt	3b
 
 	INTRENTRY
-	mov	#SHREG_EXPEVT, r0
+#ifdef DDB
+	mov	#0, r0
+	mov.l	XL_SHREG_BBRA, r1
+	mov.w	r0, @r1		/* disable UBC */
+	mov.l	r0, @r15	/* clear frame->dummy */
+#endif
+	mov.l	XL_SHREG_EXPEVT, r0
 	mov.l	@r0, r0
 	mov.l	r0, @-r15
-	ECLI
+	ESTI
 	STI
 	mov.l	XL_trap, r0
 	jsr	@r0
@@ -1128,13 +1242,11 @@ NENTRY(exphandler)
 	nop
 
 2:	/* Check for ASTs on exit to user mode. */
-	CLI
-	ESTI
+	ECLI
 	mov.l	XL_astpending, r0
 	mov.l	@r0, r0
 	tst	r0, r0
 	bt	1f
-	nop
 
 	/* If trap occurred in kernel , skip AST proc */
 	mov	r15, r0
@@ -1143,14 +1255,14 @@ NENTRY(exphandler)
 	mov	#1, r1
 	mov	#31, r2
 	shld	r2, r1
-	tst	r1, r0	/* test MSB of TF_SPC */
+	tst	r1, r0		/* test MSB of TF_SPC */
 	bf	1f
-	nop
 5:	xor	r0, r0
 	mov.l	XL_astpending, r1
 	mov.l	r0, @r1
-	ECLI
-	STI
+
+	ESTI
+
 	mov.l	XLT_ASTFLT, r1
 	mov.l	r1, @-r15
 	mov.l	XL_trap, r0
@@ -1159,22 +1271,34 @@ NENTRY(exphandler)
 	add	#4, r15
 	bra	2b
 	nop
-1:	INTRFASTEXIT
+1:
+	CLI
+
+#ifdef DDB
+	mov.l	@r15, r0
+	mov.l	XL_SHREG_BBRA, r1
+	mov.w	r0, @r1
+#endif
+	INTRFASTEXIT
 
 	.align	2
 XL_TLBPROTWR:
 	.long	0x000000c0
+XL_SHREG_EXPEVT:
+	.long	SHREG_EXPEVT
+XL_SHREG_BBRA:
+	.long	SHREG_BBRA
 
-	.globl	_tlbmisshandler_stub, _tlbmisshandler_stub_end
-
-_tlbmisshandler_stub:
+	.globl	_C_LABEL(tlbmisshandler_stub)
+	.globl	_C_LABEL(tlbmisshandler_stub_end)
+_C_LABEL(tlbmisshandler_stub):
 	mov.l	XL_tlbmisshandler, r0
 	jmp	@r0
 	nop
 	.align	2
 XL_tlbmisshandler:
-	.long	_tlbmisshandler
-_tlbmisshandler_stub_end:
+	.long	_C_LABEL(tlbmisshandler)
+_C_LABEL(tlbmisshandler_stub_end):
 
 	.align	2
 NENTRY(tlbmisshandler)
@@ -1183,7 +1307,6 @@ NENTRY(tlbmisshandler)
 	mov.l	XL_splimit3, r0
 	cmp/hs	r15, r0
 	bf	100f
-	nop
 	mov.l	XL_splimit_low3, r0
 	cmp/hs	r0, r15
 	bf	100f
@@ -1208,8 +1331,8 @@ XL_splimit_low3:	.long	0x80000000
 	INTRFASTEXIT
 
 	.align	2
-	.globl	_MonTrap100, _MonTrap100_end
-_MonTrap100:
+	.globl	_C_LABEL(MonTrap100), _C_LABEL(MonTrap100_end)
+_C_LABEL(MonTrap100):
 	mov.l	1f, r0
 	jmp	@r0
 	nop
@@ -1217,11 +1340,11 @@ _MonTrap100:
 	.align	2
 1:
 	.long	_exphandler
-_MonTrap100_end:
+_C_LABEL(MonTrap100_end):
 
 	.align	2
-	.globl	_MonTrap600, _MonTrap600_end
-_MonTrap600:
+	.globl	_C_LABEL(MonTrap600), _C_LABEL(MonTrap600_end)
+_C_LABEL(MonTrap600):
 	mov.l	1f, r0
 	jmp	@r0
 	nop
@@ -1231,28 +1354,87 @@ _MonTrap600:
 	.long	_ihandler
 _MonTrap600_end:
 
-/************************************************************************/
-/*	Immediate Data							*/
-/************************************************************************/
+/*
+ * Immediate Data
+ */
 		.align	2
 
-XL_curpcb:	.long	_curpcb
-XLcurproc:	.long	_curproc
-XLcpl:		.long	_cpl
-XLXspllower:	.long	_Xspllower
-XLproc0:	.long	_proc0
+XL_curpcb:	.long	_C_LABEL(curpcb)
+XLcurproc:	.long	_C_LABEL(curproc)
+XLcpl:		.long	_C_LABEL(cpl)
+XLXspllower:	.long	_C_LABEL(Xspllower)
+XLproc0:	.long	_C_LABEL(proc0)
 
-XL_trap:	.long	_trap
-XL_astpending:	.long	_astpending
+XL_trap:	.long	_C_LABEL(trap)
+XL_astpending:	.long	_C_LABEL(astpending)
 XLT_ASTFLT:	.long	T_ASTFLT
-XL_tlb_handler:	.long	_tlb_handler
-XLexphandler:	.long	_exphandler
+XL_tlb_handler:	.long	_C_LABEL(tlb_handler)
+XLexphandler:	.long	_C_LABEL(exphandler)
 
 	/*
-	 *	Convert Virtual address to Physical Address
-	 *	r4 = Virtual Address
-	 *	r0 = returned Physical address
+	 * Convert Virtual address to Physical Address
+	 * r4 = Virtual Address
+	 * r0 = returned Physical address
 	 */
+#ifdef SH4
+ENTRY(ConvVtoP)
+	mov.l	r1, @-r15
+	mov.l	r2, @-r15
+	mov.l	r3, @-r15
+	mov.l	r5, @-r15
+#ifdef SH4 /*  cache flush */
+	sts.l	pr, @-r15
+	mov.l	r4, @-r15
+	mov.l	XL_cacheflush, r0
+	jsr	@r0
+	nop
+	mov.l	@r15+, r4
+	lds.l	@r15+, pr
+#endif
+	mov	r4, r0
+	mov.l	XL_CSMASK, r1
+	mov.l	XL_KCSAREA, r2
+	and	r4, r1
+	cmp/eq	r1, r2
+	bt	1f
+	mov.l	XL_P2AREA, r5
+	mov	#PDSHIFT, r1
+	neg	r1, r1
+	shld	r1, r0
+	shll2	r0
+	mov.l	XXL_SHREG_TTB, r1
+	or	r5, r1	
+	mov.l	@r1, r1
+	add	r0, r1
+	or	r5, r1
+	mov.l	@r1, r2		/* r2 = pde  */
+	mov.l	XL_PG_FRAME, r1
+	and	r1, r2		/* r2 = page table address */
+	mov	r4, r0
+	mov.l	XL_PT_MASK, r3
+	and	r3, r0
+	mov	#PGSHIFT, r1
+	neg	r1, r1
+	shld	r1, r0
+	shll2	r0
+	add	r0, r2		/* r2 = pte */
+	or	r5, r2
+	mov.l	@r2, r2
+	mov.l	XL_PG_FRAME, r1
+	and	r1, r2
+	not	r1, r1
+	and	r1, r4
+	or	r4, r2
+	or	r5, r2
+	mov	r2, r0		/* r0 = Physical address */
+1:
+	mov.l	@r15+, r5
+	mov.l	@r15+, r3
+	mov.l	@r15+, r2
+	mov.l	@r15+, r1
+	rts
+	nop
+#else
 ENTRY(ConvVtoP)
 	mov.l	r1, @-r15
 	mov.l	r2, @-r15
@@ -1267,7 +1449,7 @@ ENTRY(ConvVtoP)
 	neg	r1, r1
 	shld	r1, r0
 	shll2	r0
-	mov	#SHREG_TTB, r1
+	mov.l	XXL_SHREG_TTB, r1
 	mov.l	@r1, r1
 	add	r0, r1
 	mov.l	@r1, r2		/* r2 = pde */
@@ -1295,12 +1477,18 @@ ENTRY(ConvVtoP)
 
 	rts
 	nop
+#endif
 
 	.align	2
 XL_PT_MASK:	.long	PT_MASK
 XL_PG_FRAME:	.long	PG_FRAME
 XL_CSMASK:	.long	0xc0000000
 XL_KCSAREA:	.long	0x80000000
+XXL_SHREG_TTB:	.long	SHREG_TTB
+XL_P2AREA:	.long	0xa0000000
+#ifdef SH4
+XL_cacheflush:	.long	_sh4_cache_flush
+#endif
 
 Xrecurse:
 	stc	sr, r0
@@ -1328,12 +1516,12 @@ XL_splimit_low2:	.long	0x80000000
 100:
 #endif
 7:
-	mov	#SHREG_INTEVT, r0
+	mov.l	XL_SHREG_INTEVT, r0
 	mov.l	@r0, r0
 	mov.l	r0, @-r15
 6:
-	ECLI		/* disable external interrupt */
-	STI		/* enable exception for TLB handling */
+	ECLI			/* disable external interrupt */
+	STI			/* enable exception for TLB handling */
 	mov.l	XL_intrhandler, r0
 	jsr	@r0
 	nop
@@ -1342,7 +1530,6 @@ XL_splimit_low2:	.long	0x80000000
 
 	tst	r0, r0
 	bt	1f
-	nop
 
 	mov.l	XL_check_ipending, r0
 	jsr	@r0
@@ -1350,15 +1537,13 @@ XL_splimit_low2:	.long	0x80000000
 
 	tst	r0, r0
 	bf	7b
-	nop
 
 2:	/* Check for ASTs on exit to user mode. */
-	CLI
+	ECLI
 	mov.l	XXL_astpending, r0
 	mov.l	@r0, r0
 	tst	r0, r0
 	bt	1f
-	nop
 
 	/* If trap occurred in kernel , skip AST proc */
 	mov	r15, r0
@@ -1369,11 +1554,10 @@ XL_splimit_low2:	.long	0x80000000
 	shld	r2, r1
 	tst	r1, r0		/* test MSB of TF_SPC */
 	bf	1f
-	nop
 5:	xor	r0, r0
 	mov.l	XXL_astpending, r1
 	mov.l	r0, @r1
-	STI
+	ESTI
 	mov.l	XXLT_ASTFLT, r1
 	mov.l	r1, @-r15
 	mov.l	XXL_trap, r0
@@ -1382,27 +1566,51 @@ XL_splimit_low2:	.long	0x80000000
 	add	#4, r15
 	bra	2b
 	nop
-1:	INTRFASTEXIT
+1:
+	CLI
+	INTRFASTEXIT
 
 	.align	2
-XL_intrhandler:		.long	_intrhandler
-XXL_astpending:		.long	_astpending
+XL_SHREG_INTEVT:	.long	SHREG_INTEVT
+XL_intrhandler:		.long	_C_LABEL(intrhandler)
+XXL_astpending:		.long	_C_LABEL(astpending)
 XXLT_ASTFLT:		.long	T_ASTFLT
-XXL_trap:		.long	_trap
-XL_check_ipending:	.long	_check_ipending
+XXL_trap:		.long	_C_LABEL(trap)
+XL_check_ipending:	.long	_C_LABEL(check_ipending)
+
+ENTRY(enable_interrupt)
+	ESTI
+	rts
+	nop
+
+ENTRY(disable_interrupt)
+	ECLI
+	rts
+	nop
+
+ENTRY(enable_ext_intr)
+	ESTI
+	rts
+	nop
+
+ENTRY(disable_ext_intr)
+	ECLI
+	rts
+	nop
 
 NENTRY(Xspllower)
 	sts.l	pr, @-r15
 	mov.l	r1, @-r15
 
 Xrestart:
+	ECLI
+	STI
 	mov.l	XXL_check_ipending, r0
 	jsr	@r0
 	nop
 
 	tst	r0, r0
 	bt	1f
-	nop
 
 	mov.l	XL_restart, r1
 	mov.l	XL_Xrecurse, r0
@@ -1410,34 +1618,34 @@ Xrestart:
 	nop
 
 1:
+	ESTI
 	mov.l	@r15+, r1
 	lds.l	@r15+, pr
 	rts
 	nop
 
-
 	.align	2
 XXL_check_ipending:
-		.long	_check_ipending
+		.long	_C_LABEL(check_ipending)
 XL_Xrecurse:	.long	Xrecurse
 XL_restart:	.long	Xrestart
 
 ENTRY(cpu_printR15)
 	sts.l	pr, @-r15
-	mova	XL_fmt, r0
+	mova	1f, r0
 	mov	r0, r4
 	mov	r15, r5
-	mov.l	XL_printf, r0
+	mov.l	2f, r0
 	jsr	@r0
 	nop
 	lds.l	@r15+, pr
 	rts
 	nop
 
-XL_fmt:	.asciz	"sp=0x%x\n"
 	.align	2
-XL_printf:
-	.long	_printf
+1:	.asciz	"sp=0x%x\n"
+	.align	2
+2:	.long	_C_LABEL(printf)
 
 load_and_reset:
 	mov.l	XL_start_address, r0
@@ -1457,7 +1665,7 @@ load_and_reset:
 
 	.align	2
 XL_start_address:
-	.long	0x8c010000
+	.long	IOM_RAM_BEGIN + 0x00010000
 load_and_reset_end:
 
 ENTRY(XLoadAndReset)
@@ -1479,7 +1687,7 @@ ENTRY(XLoadAndReset)
 
 	.align	2
 XL_load_trampoline_addr:
-	.long	0x8c008000
+	.long	IOM_RAM_BEGIN + 0x00008000
 XL_load_and_reset:
 	.long	load_and_reset
 XL_load_and_reset_end:
@@ -1494,14 +1702,17 @@ ENTRY(Sh3Reset)
 XL_reset_vector:
 	.long	0xa0000000
 
-	.globl	_intrcnt, _eintrcnt, _intrnames, _eintrnames
-_intrcnt:
+	.data
+	.align	2
+	.globl	_C_LABEL(intrcnt), _C_LABEL(eintrcnt)
+	.globl	_C_LABEL(intrnames), _C_LABEL(eintrnames)
+_C_LABEL(intrcnt):
 	.long	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
-_eintrcnt:
+_C_LABEL(eintrcnt):
 
-_intrnames:
+_C_LABEL(intrnames):
 	.asciz	"irq0", "irq1", "irq2", "irq3"
 	.asciz	"irq4", "irq5", "irq6", "irq7"
 	.asciz	"irq8", "irq9", "irq10", "irq11"
 	.asciz	"irq12", "irq13", "irq14", "irq15"
-_eintrnames:
+_C_LABEL(eintrnames):

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.86 1999/09/17 20:04:54 thorpej Exp $ */
+/*	$NetBSD: trap.c,v 1.86.2.1 2000/11/20 20:25:48 bouyer Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -69,8 +69,7 @@
 #include <sys/ktrace.h>
 #endif
 
-#include <vm/vm.h>
-#include <vm/vm_kern.h>
+#include <uvm/uvm_extern.h>
 
 #include <sparc/sparc/asm.h>
 #include <machine/cpu.h>
@@ -228,18 +227,9 @@ userret(p, pc, oticks)
 	}
 	if (want_resched) {
 		/*
-		 * Since we are curproc, clock will normally just change
-		 * our priority without moving us from one queue to another
-		 * (since the running process is not on a queue.)
-		 * If that happened after we put ourselves on the run queue
-		 * but before we switched, we might not be on the queue
-		 * indicated by our priority.
+		 * We are being preempted.
 		 */
-		(void) splstatclock();
-		setrunqueue(p);
-		p->p_stats->p_ru.ru_nivcsw++;
-		mi_switch();
-		(void) spl0();
+		preempt(NULL);
 		while ((sig = CURSIG(p)) != 0)
 			postsig(sig);
 	}
@@ -250,7 +240,7 @@ userret(p, pc, oticks)
 	if (p->p_flag & P_PROFIL)
 		addupc_task(p, pc, (int)(p->p_sticks - oticks));
 
-	curpriority = p->p_priority;
+	curcpu()->ci_schedstate.spc_curpriority = p->p_priority;
 }
 
 /*
@@ -336,6 +326,18 @@ trap(type, psr, pc, tf)
 	pcb = &p->p_addr->u_pcb;
 	p->p_md.md_tf = tf;	/* for ptrace/signals */
 
+#ifdef FPU_DEBUG
+	if (type != T_FPDISABLED && (tf->tf_psr & PSR_EF) != 0) {
+		if (cpuinfo.fpproc != p)
+			panic("FPU enabled but wrong proc (0)");
+		savefpstate(p->p_md.md_fpstate);
+		p->p_md.md_fpumid = -1;
+		cpuinfo.fpproc = NULL;
+		tf->tf_psr &= ~PSR_EF;
+		setpsr(getpsr() & ~PSR_EF);
+	}
+#endif
+
 	switch (type) {
 
 	default:
@@ -391,6 +393,15 @@ badtrap:
 
 	case T_FPDISABLED: {
 		struct fpstate *fs = p->p_md.md_fpstate;
+
+#ifdef FPU_DEBUG
+		if ((tf->tf_psr & PSR_PS) != 0) {
+			printf("FPU fault from kernel mode, pc=%x\n", pc);
+#if DDB
+			Debugger();
+#endif
+		}
+#endif
 
 		if (fs == NULL) {
 			fs = malloc(sizeof *fs, M_SUBPROC, M_WAITOK);
@@ -719,6 +730,18 @@ mem_access_fault(type, ser, v, pc, psr, tf)
 		p = &proc0;
 	sticks = p->p_sticks;
 
+#ifdef FPU_DEBUG
+	if ((tf->tf_psr & PSR_EF) != 0) {
+		if (cpuinfo.fpproc != p)
+			panic("FPU enabled but wrong proc (1)");
+		savefpstate(p->p_md.md_fpstate);
+		p->p_md.md_fpumid = -1;
+		cpuinfo.fpproc = NULL;
+		tf->tf_psr &= ~PSR_EF;
+		setpsr(getpsr() & ~PSR_EF);
+	}
+#endif
+
 	/*
 	 * Figure out what to pass the VM code, and ignore the sva register
 	 * value in v on text faults (text faults are always at pc).
@@ -800,7 +823,7 @@ mem_access_fault(type, ser, v, pc, psr, tf)
 #endif
 	    ) {
 		if (rv == KERN_SUCCESS) {
-			unsigned nss = clrnd(btoc(USRSTACK - va));
+			unsigned nss = btoc(USRSTACK - va);
 			if (nss > vm->vm_ssize)
 				vm->vm_ssize = nss;
 		} else if (rv == KERN_PROTECTION_FAILURE)
@@ -883,6 +906,18 @@ mem_access_fault4m(type, sfsr, sfva, tf)
 	if ((p = curproc) == NULL)	/* safety check */
 		p = &proc0;
 	sticks = p->p_sticks;
+
+#ifdef FPU_DEBUG
+	if ((tf->tf_psr & PSR_EF) != 0) {
+		if (cpuinfo.fpproc != p)
+			panic("FPU enabled but wrong proc (2)");
+		savefpstate(p->p_md.md_fpstate);
+		p->p_md.md_fpumid = -1;
+		cpuinfo.fpproc = NULL;
+		tf->tf_psr &= ~PSR_EF;
+		setpsr(getpsr() & ~PSR_EF);
+	}
+#endif
 
 	pc = tf->tf_pc;			/* These are needed below */
 	psr = tf->tf_psr;
@@ -1041,7 +1076,7 @@ mem_access_fault4m(type, sfsr, sfva, tf)
 	 */
 	if ((caddr_t)va >= vm->vm_maxsaddr) {
 		if (rv == KERN_SUCCESS) {
-			unsigned nss = clrnd(btoc(USRSTACK - va));
+			unsigned nss = btoc(USRSTACK - va);
 			if (nss > vm->vm_ssize)
 				vm->vm_ssize = nss;
 		} else if (rv == KERN_PROTECTION_FAILURE)
@@ -1126,6 +1161,18 @@ syscall(code, tf, pc)
 	new = code & (SYSCALL_G7RFLAG | SYSCALL_G2RFLAG);
 	code &= ~(SYSCALL_G7RFLAG | SYSCALL_G2RFLAG);
 
+#ifdef FPU_DEBUG
+	if ((tf->tf_psr & PSR_EF) != 0) {
+		if (cpuinfo.fpproc != p)
+			panic("FPU enabled but wrong proc (3)");
+		savefpstate(p->p_md.md_fpstate);
+		p->p_md.md_fpumid = -1;
+		cpuinfo.fpproc = NULL;
+		tf->tf_psr &= ~PSR_EF;
+		setpsr(getpsr() & ~PSR_EF);
+	}
+#endif
+
 	callp = p->p_emul->e_sysent;
 	nsys = p->p_emul->e_nsysent;
 
@@ -1175,7 +1222,7 @@ syscall(code, tf, pc)
 			if (error) {
 #ifdef KTRACE
 				if (KTRPOINT(p, KTR_SYSCALL))
-					ktrsyscall(p->p_tracep, code,
+					ktrsyscall(p, code,
 					    callp->sy_argsize, args.i);
 #endif
 				goto bad;
@@ -1186,7 +1233,7 @@ syscall(code, tf, pc)
 	}
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSCALL))
-		ktrsyscall(p->p_tracep, code, callp->sy_argsize, args.i);
+		ktrsyscall(p, code, callp->sy_argsize, args.i);
 #endif
 	rval[0] = 0;
 	rval[1] = tf->tf_out[1];
@@ -1233,7 +1280,7 @@ syscall(code, tf, pc)
 	userret(p, pc, sticks);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
-		ktrsysret(p->p_tracep, code, error, rval[0]);
+		ktrsysret(p, code, error, rval[0]);
 #endif
 	share_fpu(p, tf);
 }
@@ -1253,7 +1300,7 @@ child_return(arg)
 	userret(p, p->p_md.md_tf->tf_pc, 0);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
-		ktrsysret(p->p_tracep,
+		ktrsysret(p,
 			  (p->p_flag & P_PPWAIT) ? SYS_vfork : SYS_fork, 0, 0);
 #endif
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: dcvar.h,v 1.4 1997/05/28 14:21:39 jonathan Exp $	*/
+/*	$NetBSD: dcvar.h,v 1.4.24.1 2000/11/20 20:20:16 bouyer Exp $	*/
 
 /*
  * External declarations from DECstation dc serial driver.
@@ -19,32 +19,36 @@ struct dc_softc {
 	 */
 	int	dc_brk;
 
+	int	dc_flags;
+
 	char	dc_19200;		/* this unit supports 19200 */
 	char	dcsoftCAR;		/* mask, lines with carrier on (DSR) */
 	char	dc_rtscts;		/* mask, lines with hw flow control */
 	char	dc_modem;		/* mask, lines with  DTR wired  */
 };
 
+/* flags */
+#define DC_KBDMOUSE	0x01		/* keyboard and mouse attached */
+
 int	dcattach __P((struct dc_softc *sc, void *addr,
-			int dtrmask, int rts_ctsmask,
-			int speed, int consline));
+	    int dtrmask, int rts_ctsmask, int speed, int consline));
+
 int	dcintr __P((void * xxxunit));
 
 /*
  * Following declaratios for console code.
- * XXX shuould be separated, or redesigned.
+ * XXX should be redesigned to expose less driver internals.
  */
-extern int dcGetc __P ((dev_t dev));
-extern int dcparam __P((register struct tty *tp, register struct termios *t));
-extern void dcPutc __P((dev_t dev, int c));
-
-struct dc7085regs;
-void dc_consinit __P((dev_t dev, volatile struct dc7085regs *dcaddr));
+int	dcGetc __P((dev_t dev));
+void	dcPutc __P((dev_t dev, int c));
 
 /* QVSS-compatible in-kernel X input event parser, pointer tracker */
-void	(*dcDivertXInput) __P((int cc)); /* X windows keyboard input routine */
-void	(*dcMouseEvent) __P((int));	/* X windows mouse motion event routine */
-void	(*dcMouseButtons) __P((int));	/* X windows mouse buttons event routine */
+extern void	(*dcDivertXInput) __P((int));
+extern void	(*dcMouseEvent) __P((void *));
+extern void	(*dcMouseButtons) __P((void *));
+
+void dc_cnattach __P((paddr_t, int));
+void dckbd_cnattach __P((paddr_t));
 
 #endif	/* _DCVAR_H */
 #endif	/* _KERNEL */

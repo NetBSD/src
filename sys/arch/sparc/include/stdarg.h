@@ -1,4 +1,4 @@
-/*	$NetBSD: stdarg.h,v 1.15 1999/05/04 13:36:10 christos Exp $ */
+/*	$NetBSD: stdarg.h,v 1.15.2.1 2000/11/20 20:25:40 bouyer Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -48,6 +48,7 @@
 #define	_SPARC_STDARG_H_
 
 #include <machine/ansi.h>
+#include <sys/featuretest.h>
 
 typedef _BSD_VA_LIST_	va_list;
 
@@ -61,7 +62,7 @@ typedef _BSD_VA_LIST_	va_list;
 	(((sizeof(type) + sizeof(long) - 1) / sizeof(long)) * sizeof(long))
 
 #define	va_start(ap, last) \
-	(__builtin_next_arg(last), (ap) = (va_list)__builtin_saveregs())
+	(void)(__builtin_next_arg(last), (ap) = (va_list)__builtin_saveregs())
 
 /*
  * va_arg picks up the next argument of type `type'.  Appending an
@@ -105,6 +106,13 @@ typedef _BSD_VA_LIST_	va_list;
 	 *__va_arg(ap, type *) : __va_size(type) == 8 ?			\
 	 __va_8byte(ap, type) : __va_arg(ap, type))
 #endif /* __lint__ */
+
+#if !defined(_ANSI_SOURCE) && \
+    (!defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE) || \
+     defined(_ISOC99_SOURCE) || (__STDC_VERSION__ - 0) >= 199901L)
+# define va_copy(dest, src) \
+	((dest) = (src))
+#endif
 
 #define va_end(ap)	
 

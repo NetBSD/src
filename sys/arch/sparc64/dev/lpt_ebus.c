@@ -1,7 +1,7 @@
-/*	$NetBSD: lpt_ebus.c,v 1.2 1999/06/05 14:19:44 mrg Exp $	*/
+/*	$NetBSD: lpt_ebus.c,v 1.2.4.1 2000/11/20 20:26:44 bouyer Exp $	*/
 
 /*
- * Copyright (c) 1999 Matthew R. Green
+ * Copyright (c) 1999, 2000 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -79,9 +79,17 @@ lpt_ebus_attach(parent, self, aux)
 
 	sc->sc_iot = ea->ea_bustag;
 	/*
+	 * Addresses that shoud be supplied by the prom:
+	 *	- normal lpt registers
+	 *	- ns873xx configuration registers
+	 *	- DMA space
+	 * The `lpt' driver does not use DMA accesses, so we can
+	 * ignore that for now.  We should enable the lpt port in
+	 * the ns873xx registers here. XXX
+	 *
 	 * Use the prom address if there.
 	 */
-	if (ea->ea_naddrs)
+	if (ea->ea_nvaddrs)
 		sc->sc_ioh = (bus_space_handle_t)ea->ea_vaddrs[0];
 	else if (ebus_bus_map(sc->sc_iot, 0,
 			      EBUS_PADDR_FROM_REG(&ea->ea_regs[0]),
@@ -91,13 +99,10 @@ lpt_ebus_attach(parent, self, aux)
 		printf(": can't map register space\n");
                 return;
 	}
-	printf(" addr %p");
 
-	for (i = 0; i < ea->ea_nintrs; i++) {
-		bus_intr_establish(ea->ea_bustag, ea->ea_intrs[i], 0,
-		    lptintr, sc);
-		printf(" vector %d", ea->ea_intrs[i]);
-	}
+	for (i = 0; i < ea->ea_nintrs; i++)
+		bus_intr_establish(ea->ea_bustag, ea->ea_intrs[i],
+				   IPL_SERIAL, 0, lptintr, sc);
 	printf("\n");
 
 	lpt_attach_subr(sc);

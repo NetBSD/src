@@ -1,4 +1,4 @@
-/*	$NetBSD: fb_usrreq.c,v 1.16 1999/07/25 22:50:28 ad Exp $	*/
+/*	$NetBSD: fb_usrreq.c,v 1.16.2.1 2000/11/20 20:20:17 bouyer Exp $	*/
 
 /*ARGSUSED*/
 int
@@ -12,7 +12,7 @@ fbopen(dev, flag, mode, p)
 	if (minor(dev) >= fbndevs)
 	    return(ENXIO);
 	    
-	fi = &fbdevs[minor(dev)].fd_info;
+	fi = fbdevs[minor(dev)];
 
 	if (fi->fi_open)
 		return (EBUSY);
@@ -53,7 +53,7 @@ fbclose(dev, flag, mode, p)
 	if (minor(dev) >= fbndevs)
 	    return(EBADF);
 	    
-	fi = &fbdevs[minor(dev)].fd_info;
+	fi = fbdevs[minor(dev)];
 
 	if (!fi->fi_open)
 		return (EBADF);
@@ -68,6 +68,13 @@ fbclose(dev, flag, mode, p)
 		fi->fi_driver->fbd_initcmap(fi);
 
 	genDeconfigMouse();
+
+	/*
+	 * Reset the keyboard - we don't know what the X server (or whatever
+	 * was using the framebuffer) did to the keyboard.  The X11R6 server
+	 * changes the keyboard state, and doesn't reset it.
+	 */
+	lk_reset(fbtty->kbddev, fbtty->KBDPutc);
 
 	bzero((caddr_t)fi->fi_pixels, fi->fi_pixelsize);
 	(*fi->fi_driver->fbd_poscursor)
@@ -90,7 +97,7 @@ fbioctl(dev, cmd, data, flag, p)
 	if (minor(dev) >= fbndevs)
 	    return(EBADF);
 	    
-	fi = &fbdevs[minor(dev)].fd_info;
+	fi = fbdevs[minor(dev)];
 	fbtty = fi->fi_glasstty;
 
 	switch (cmd) {
@@ -228,7 +235,7 @@ fbpoll(dev, events, p)
 	if (minor(dev) >= fbndevs)
 	    return(EBADF);
 	    
-	fi = &fbdevs[minor(dev)].fd_info;
+	fi = fbdevs[minor(dev)];
 
 	if (events & (POLLIN | POLLRDNORM)) {
 		if (fi->fi_fbu->scrInfo.qe.eHead !=
@@ -252,10 +259,11 @@ fbpoll(dev, events, p)
  * Return the physical page number that corresponds to byte offset 'off'.
  */
 /*ARGSUSED*/
-int
+paddr_t
 fbmmap(dev, off, prot)
 	dev_t dev;
-	int off, prot;
+	off_t off;
+	int prot;
 {
 	struct fbinfo *fi;
 	int len;
@@ -266,14 +274,14 @@ fbmmap(dev, off, prot)
 	if (minor(dev) >= fbndevs)
 	    return(-1);
 	    
-	fi = &fbdevs[minor(dev)].fd_info;
+	fi = fbdevs[minor(dev)];
 
 	len = mips_round_page(((vaddr_t)fi->fi_fbu & PGOFSET)
 			      + sizeof(*fi->fi_fbu));
 	if (off < len)
-		return (int)mips_btop(MIPS_KSEG0_TO_PHYS(fi->fi_fbu) + off);
+		return mips_btop(MIPS_KSEG0_TO_PHYS(fi->fi_fbu) + off);
 	off -= len;
 	if (off >= fi->fi_type.fb_size)
 		return (-1);
-	return (int)mips_btop(MIPS_KSEG1_TO_PHYS(fi->fi_pixels) + off);
+	return mips_btop(MIPS_KSEG1_TO_PHYS(fi->fi_pixels) + off);
 }

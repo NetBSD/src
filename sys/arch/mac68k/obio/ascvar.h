@@ -1,4 +1,4 @@
-/*	$NetBSD: ascvar.h,v 1.4 1997/10/10 05:54:57 scottr Exp $	*/
+/*	$NetBSD: ascvar.h,v 1.4.16.1 2000/11/20 20:12:26 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds.  All rights reserved.
@@ -26,6 +26,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/callout.h>
+
 #define ASCUNIT(d)	((d) & 0x7)
 
 struct asc_softc {
@@ -34,6 +36,7 @@ struct asc_softc {
 	bus_space_handle_t	sc_handle;
 	int			sc_open;
 	int			sc_ringing;
+	struct callout		sc_bell_ch;
 };
 
 int	ascopen __P((dev_t dev, int flag, int mode, struct proc *p));
@@ -42,4 +45,4 @@ int	ascread __P((dev_t, struct uio *, int));
 int	ascwrite __P((dev_t, struct uio *, int));
 int	ascioctl __P((dev_t, int, caddr_t, int, struct proc *p));
 int	ascpoll __P((dev_t dev, int events, struct proc *p));
-int	ascmmap __P((dev_t dev, int off, int prot));
+paddr_t	ascmmap __P((dev_t dev, off_t off, int prot));

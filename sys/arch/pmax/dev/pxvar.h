@@ -1,11 +1,11 @@
-/* 	$NetBSD: pxvar.h,v 1.6 1999/05/18 21:51:58 ad Exp $ */
+/* 	$NetBSD: pxvar.h,v 1.6.4.1 2000/11/20 20:20:19 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Andy Doran.
+ * by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,8 +36,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _PXVAR_H_
-#define _PXVAR_H_ 1
+#ifndef _PMAX_DEV_PXVAR_H_
+#define _PMAX_DEV_PXVAR_H_
 
 struct px_cliplist {
 	int	cl_cur;		/* current cliprect */
@@ -98,14 +98,14 @@ struct px_info {
 	struct px_cliplist pxi_cliplist;/* cliplist for Xserver */
 };
 
-/* Map returned by ioctl QIOCGMAP for Xserver */
+/* Map returned by ioctl QIOCGINFO for Xserver */
 typedef struct px_map {
-	struct px_info	info;
-	u_char		__pad0[NBPG - sizeof(struct px_info)];
-	u_char		rbuf[65536];
-	u_char		ibuf[16384];
 	struct stic_regs stic;
 	u_char		__pad1[NBPG - sizeof(struct stic_regs)];
+	int32_t		poll[4096];
+	struct px_info	info;
+	u_char		__pad0[NBPG - sizeof(struct px_info)];
+	u_char		rbuf[81920];
 } px_map;
 
 /*
@@ -136,10 +136,8 @@ typedef struct px_map {
 
 #ifdef _KERNEL
 
-/* XXX ugly hack to make the PX fit for findcons() */
-struct	fbinfo;
-int	px_init __P((struct fbinfo *, char *, int, int));
+int px_cnattach __P((paddr_t));
 
 #endif /* _KERNEL */
 
-#endif /* _TC_PXVAR_H_ */
+#endif	/* !_PMAX_DEV_PXVAR_H_ */

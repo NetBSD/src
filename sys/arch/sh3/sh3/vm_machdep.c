@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.2 1999/09/14 10:22:37 tsubai Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.2.2.1 2000/11/20 20:24:33 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -56,8 +56,7 @@
 #include <sys/exec.h>
 #include <sys/ptrace.h>
 
-#include <vm/vm.h>
-#include <vm/vm_kern.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/cpu.h>
 #include <machine/reg.h>
@@ -66,18 +65,29 @@ void	setredzone __P((u_short *, caddr_t));
 
 /*
  * Finish a fork operation, with process p2 nearly set up.
- * Copy and update the kernel stack and pcb, making the child
- * ready to run, and marking it so that it can return differently
- * than the parent.  Returns 1 in the child process, 0 in the parent.
- * We currently double-map the user area so that the stack is at the same
- * address in each process; in the future we will probably relocate
- * the frame pointers on the stack after copying.
+ * Copy and update the pcb and trap frame, making the child ready to run.
+ * 
+ * Rig the child's kernel stack so that it will start out in
+ * proc_trampoline() and call child_return() with p2 as an
+ * argument. This causes the newly-created child process to go
+ * directly to user level with an apparent return value of 0 from
+ * fork(), while the parent process returns normally.
+ *
+ * p1 is the process being forked; if p1 == &proc0, we are creating
+ * a kernel thread, and the return path and argument are specified with
+ * `func' and `arg'.
+ *
+ * If an alternate user-level stack is requested (with non-zero values
+ * in both the stack and stacksize args), set up the user stack pointer
+ * accordingly.
  */
 void
-cpu_fork(p1, p2, stack, stacksize)
+cpu_fork(p1, p2, stack, stacksize, func, arg)
 	register struct proc *p1, *p2;
 	void *stack;
 	size_t stacksize;
+	void (*func) __P((void *));
+	void *arg;
 {
 	register struct pcb *pcb = &p2->p_addr->u_pcb;
 	register struct trapframe *tf;
@@ -105,8 +115,7 @@ cpu_fork(p1, p2, stack, stacksize)
 	pcb->kr15 = (int)p2->p_addr + USPACE - sizeof(struct trapframe);
 
 	/*
-	 * Copy the trapframe, and arrange for the child to return directly
-	 * through rei().
+	 * Copy the trapframe.
 	 */
 	p2->p_md.md_regs = tf = (struct trapframe *)pcb->kr15 - 1;
 	*tf = *p1->p_md.md_regs;
@@ -119,8 +128,8 @@ cpu_fork(p1, p2, stack, stacksize)
 
 	sf = (struct switchframe *)tf - 1;
 	sf->sf_ppl = 0;
-	sf->sf_r12 = (int)child_return;
-	sf->sf_r11 = (int)p2;
+	sf->sf_r12 = (int)func;
+	sf->sf_r11 = (int)arg;
 	sf->sf_pr = (int)proc_trampoline;
 	pcb->r15 = (int)sf;
 
@@ -128,23 +137,6 @@ cpu_fork(p1, p2, stack, stacksize)
 	   be occured when accessing kernel stack */
 	pcb->r15 = vtophys(pcb->r15);
 	pcb->kr15 = vtophys(pcb->kr15);
-}
-
-void
-cpu_set_kpc(p, pc, arg)
-	struct proc *p;
-	void (*pc) __P((void *));
-	void *arg;
-{
-	struct switchframe *sf = (struct switchframe *)p->p_addr->u_pcb.r15;
-	struct trapframe *tf;
-
-	sf->sf_r12 = (int) pc;
-	sf->sf_r11 = (int) arg;
-	sf->sf_pr  = (int) proc_trampoline;
-
-	tf = (struct trapframe *)(sf+1);
-	tf->tf_ssr |= 0x000000f0; /* disable external interrupt */
 }
 
 void
@@ -183,7 +175,6 @@ cpu_coredump(p, vp, cred, chdr)
 	struct ucred *cred;
 	struct core *chdr;
 {
-#ifdef	TODO
 	struct md_core md_core;
 	struct coreseg cseg;
 	int error;
@@ -216,7 +207,6 @@ cpu_coredump(p, vp, cred, chdr)
 		return error;
 
 	chdr->c_nseg++;
-#endif
 	return 0;
 }
 
@@ -242,8 +232,7 @@ setredzone(pte, vaddr)
 
 /*
  * Move pages from one kernel virtual address to another.
- * Both addresses are assumed to reside in the Sysmap,
- * and size must be a multiple of CLSIZE.
+ * Both addresses are assumed to reside in the Sysmap.
  */
 void
 pagemove(from, to, size)
@@ -252,7 +241,7 @@ pagemove(from, to, size)
 {
 	register pt_entry_t *fpte, *tpte;
 
-	if (size % CLBYTES)
+	if (size % NBPG)
 		panic("pagemove");
 	fpte = kvtopte(from);
 	tpte = kvtopte(to);
@@ -297,7 +286,7 @@ vmapbuf(bp, len)
 
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vmapbuf");
-	faddr = trunc_page(bp->b_saveaddr = bp->b_data);
+	faddr = trunc_page((vaddr_t)bp->b_saveaddr = bp->b_data);
 	off = (vaddr_t)bp->b_data - faddr;
 	len = round_page(off + len);
 	taddr= uvm_km_valloc_wait(phys_map, len);
@@ -318,7 +307,7 @@ vmapbuf(bp, len)
 		pmap_extract(vm_map_pmap(&bp->b_proc->p_vmspace->vm_map),
 			     faddr, &fpa);
 		pmap_enter(vm_map_pmap(phys_map), taddr, fpa,
-			   VM_PROT_READ|VM_PROT_WRITE, TRUE, 0);
+			   VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED);
 		faddr += PAGE_SIZE;
 		taddr += PAGE_SIZE;
 		len -= PAGE_SIZE;
@@ -338,7 +327,7 @@ vunmapbuf(bp, len)
 
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vunmapbuf");
-	addr = trunc_page(bp->b_data);
+	addr = trunc_page((vaddr_t)bp->b_data);
 	off = (vaddr_t)bp->b_data - addr;
 	len = round_page(off + len);
 	uvm_km_free_wakeup(phys_map, addr, len);

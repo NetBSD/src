@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.44 1999/10/17 09:27:21 jdolecek Exp $	*/
+/*	$NetBSD: si.c,v 1.44.2.1 2000/11/20 20:27:52 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -76,8 +76,6 @@
  * The autoconfiguration boilerplate came from Adam Glass.
  */
 
-#include "opt_ddb.h"
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/errno.h>
@@ -120,15 +118,6 @@ int si_dma_intr_timo = 500;	/* ticks (sec. X 100) */
 
 static void	si_minphys __P((struct buf *));
 
-/* This is copied from julian's bt driver */
-/* "so we have a default dev struct for our link struct." */
-static struct scsipi_device si_dev = {
-	NULL,		/* Use default error handler.	    */
-	NULL,		/* Use default start handler.		*/
-	NULL,		/* Use default async handler.	    */
-	NULL,		/* Use default "done" routine.	    */
-};
-
 /*
  * New-style autoconfig attachment. The cfattach
  * structures are in si_obio.c and si_vme.c
@@ -163,22 +152,6 @@ si_attach(sc)
 #endif
 	ncr_sc->sc_min_dma_len = MIN_DMA_LEN;
 
-	/*
-	 * Fill in the adapter.
-	 */
-	ncr_sc->sc_adapter.scsipi_cmd = ncr5380_scsi_cmd;
-	ncr_sc->sc_adapter.scsipi_minphys = si_minphys;
-
-	/*
-	 * Fill in the prototype scsi_link.
-	 */
-	ncr_sc->sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
-	ncr_sc->sc_link.adapter_softc = sc;
-	ncr_sc->sc_link.scsipi_scsi.adapter_target = 7;
-	ncr_sc->sc_link.adapter = &ncr_sc->sc_adapter;
-	ncr_sc->sc_link.device = &si_dev;
-	ncr_sc->sc_link.type = BUS_SCSI;
-
 #ifdef	DEBUG
 	if (si_debug)
 		printf("si: Set TheSoftC=%p TheRegs=%p\n", sc, regs);
@@ -197,6 +170,8 @@ si_attach(sc)
 	ncr_sc->sci_r6 = &regs->sci.sci_r6;
 	ncr_sc->sci_r7 = &regs->sci.sci_r7;
 
+	ncr_sc->sc_rev = NCR_VARIANT_NCR5380;
+
 	/*
 	 * Allocate DMA handles.
 	 */
@@ -208,12 +183,14 @@ si_attach(sc)
 	for (i = 0; i < SCI_OPENINGS; i++)
 		sc->sc_dma[i].dh_flags = 0;
 
+	ncr_sc->sc_link.scsipi_scsi.adapter_target = 7;
+	ncr_sc->sc_adapter.scsipi_minphys = si_minphys;
+
 	/*
 	 *  Initialize si board itself.
 	 */
-	ncr5380_init(ncr_sc);
-	ncr5380_reset_scsibus(ncr_sc);
-	config_found(&(ncr_sc->sc_dev), &(ncr_sc->sc_link), scsiprint);
+	ncr5380_attach(ncr_sc);
+
 }
 
 static void
@@ -223,9 +200,7 @@ si_minphys(struct buf *bp)
 #ifdef	DEBUG
 		if (si_debug) {
 			printf("si_minphys len = 0x%lx.\n", bp->b_bcount);
-#ifdef DDB
 			Debugger();
-#endif
 		}
 #endif
 		bp->b_bcount = MAX_DMA_LEN;
@@ -272,10 +247,8 @@ si_intr(void *arg)
 #ifdef	DEBUG
 		if (!claimed) {
 			printf("si_intr: spurious from SBC\n");
-#ifdef	DDB
 			if (si_debug & 4)
 				Debugger();	/* XXX */
-#endif
 		}
 #endif
 		/* Yes, we DID cause this interrupt. */
@@ -332,9 +305,7 @@ si_dma_alloc(ncr_sc)
 	 */
 	if (xlen > MAX_DMA_LEN) {
 		printf("si_dma_alloc: excessive xlen=0x%x\n", xlen);
-#ifdef	DDB
 		Debugger();
-#endif
 		ncr_sc->sc_datalen = xlen = MAX_DMA_LEN;
 	}
 
@@ -354,7 +325,7 @@ found:
 	dh->dh_dvma = 0;
 
 	/* Copy the "write" flag for convenience. */
-	if (xs->flags & SCSI_DATA_OUT)
+	if (xs->xs_control & XS_CTL_DATA_OUT)
 		dh->dh_flags |= SIDH_OUT;
 
 #if 0

@@ -1,4 +1,4 @@
-/*	$NetBSD: fbvar.h,v 1.5 1999/07/25 22:50:50 ad Exp $ */
+/*	$NetBSD: fbvar.h,v 1.5.2.1 2000/11/20 20:20:29 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -45,6 +45,9 @@
  *	@(#)fbvar.h	8.1 (Berkeley) 6/11/93
  */
 
+#ifndef _PMAX_FBVAR_H_
+#define _PMAX_FBVAR_H_
+
 /* XXX */
 #include <sys/select.h>
 
@@ -54,7 +57,7 @@ struct hw_cursor {
 	int	x, y;			/* Position of cursor... */
 	int	depth;			/* Depth in bits of cursor... */
 	caddr_t	bitmap;			/* Cursor bitmap... */
-	caddr_t cmap;			/* Cursor colormap... */
+	u_char *cmap;			/* Cursor colormap... */
 	int	cmap_size;		/* Size of cursor colormap... */
 };
 
@@ -94,20 +97,22 @@ struct fbinfo {
 struct fbdriver {
 	int	(*fbd_unblank) __P((struct fbinfo *));
 	int	(*fbd_blank) __P((struct fbinfo *));
-	void	(*fbd_initcmap) __P ((struct fbinfo *));
-	int	(*fbd_getcmap) __P ((struct fbinfo *, caddr_t, int, int));
-	int	(*fbd_putcmap) __P ((struct fbinfo *, caddr_t, int, int));
-	void	(*fbd_poscursor) __P ((struct fbinfo *fi, int x, int y));
-	void	(*fbd_loadcursor) __P ((struct fbinfo *fi, u_short *cursor));
-	void	(*fbd_cursorcolor) __P ((struct fbinfo *fi, u_int *color));
+	void	(*fbd_initcmap) __P((struct fbinfo *));
+	int	(*fbd_getcmap) __P((struct fbinfo *, u_char *, int, int));
+	int	(*fbd_putcmap) __P((struct fbinfo *, const u_char *, int, int));
+	void	(*fbd_poscursor) __P((struct fbinfo *fi, int x, int y));
+	void	(*fbd_loadcursor) __P((struct fbinfo *fi, u_short *cursor));
+	void	(*fbd_cursorcolor) __P((struct fbinfo *fi, u_int *color));
 };
 
 #ifdef _KERNEL
 
-#define kbd_docmd(cmd, val)	0	/* For now, do nothing. */
-#define romgetcursoraddr(xp, yp)	0
-
-void	fbconnect __P ((char *name, struct fbinfo *info, int silent));
-int	fballoc __P ((caddr_t base, struct fbinfo **fip));
+void	fbattach __P((int));
+void	fbcnalloc __P ((struct fbinfo **fip));
+int	fballoc __P ((struct fbinfo **fip));
+void	fbconnect __P ((struct fbinfo *fi));
+int	tcfb_cnattach __P((int prom_slot));
 
 #endif /* _KERNEL */
+
+#endif	/* !_PMAX_FBVAR_H_ */

@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.14 1999/05/06 14:16:08 kleink Exp $
+#	$NetBSD: genassym.cf,v 1.14.2.1 2000/11/20 20:15:24 bouyer Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -45,8 +45,6 @@ include <sys/mbuf.h>
 include <sys/msgbuf.h>
 include <sys/syscall.h>
 include <sys/user.h>
-
-include <vm/vm.h>
 
 include <uvm/uvm_extern.h>
 
@@ -141,6 +139,7 @@ define	P_MD_REGS		offsetof(struct proc, p_md.md_regs)
 
 define	SSLEEP			SSLEEP
 define	SRUN			SRUN
+define	SONPROC			SONPROC
 
 # interrupt/fault metering
 define	UVMEXP_INTRS		offsetof(struct uvmexp, intrs)
@@ -151,6 +150,7 @@ define	PSL_IPL7		PSL_IPL7
 define	PSL_LOWIPL		PSL_LOWIPL
 define	PSL_HIGHIPL		PSL_HIGHIPL
 define	PSL_USER		PSL_USER
+define	PSL_TS			PSL_T | PSL_S
 define	SPL1			PSL_S | PSL_IPL1
 define	SPL2			PSL_S | PSL_IPL2
 define	SPL3			PSL_S | PSL_IPL3

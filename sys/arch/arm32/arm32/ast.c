@@ -1,4 +1,4 @@
-/*	$NetBSD: ast.c,v 1.16 1999/03/24 05:50:53 mrg Exp $	*/
+/*	$NetBSD: ast.c,v 1.16.8.1 2000/11/20 20:03:50 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe
@@ -56,8 +56,6 @@
 #include <machine/cpufunc.h>
 #include <machine/psl.h>
 
-#include <vm/vm.h>
-
 #include <uvm/uvm_extern.h>
 
 int want_resched = 0;
@@ -68,7 +66,7 @@ userret(p, pc, oticks)
 	int pc;
 	u_quad_t oticks;
 {
-	int sig, s;
+	int sig;
 
 #ifdef DIAGNOSTIC
 	if (p == NULL)
@@ -99,21 +97,9 @@ userret(p, pc, oticks)
 
 	if (want_resched) {
 		/*
-		 * Since we are curproc, a clock interrupt could
-		 * change our priority without changing run queues
-	         * (the running process is not kept on a run queue).
-		 * If this happened after we setrunqueue ourselves but
-		 * before we switch()'ed, we might not be on the queue
-		 * indicated by our priority
+		 * We are being preempted.
 		 */
-
-	        s = splstatclock();
-		setrunqueue(p);
-		p->p_stats->p_ru.ru_nivcsw++;
-
-		mi_switch();
-
-		(void)splx(s);
+		preempt(NULL);
 		while ((sig = (CURSIG(p))) != 0) {
 			postsig(sig);
 		}
@@ -128,7 +114,7 @@ userret(p, pc, oticks)
 		addupc_task(p, pc, (int)(p->p_sticks - oticks) * psratio);
 	}
 
-	curpriority = p->p_priority;
+	curcpu()->ci_schedstate.spc_curpriority = p->p_priority;
 
 #ifdef DIAGNOSTIC
 	if (current_spl_level != _SPL_0) {

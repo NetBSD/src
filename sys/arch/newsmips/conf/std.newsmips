@@ -1,4 +1,4 @@
-#	$NetBSD: std.newsmips,v 1.5 1999/03/24 06:06:10 mrg Exp $
+#	$NetBSD: std.newsmips,v 1.5.8.1 2000/11/20 20:17:18 bouyer Exp $
 
 machine newsmips mips
 

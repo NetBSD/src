@@ -1,4 +1,4 @@
-/*	$NetBSD: sfb.c,v 1.33 1999/09/05 11:34:30 simonb Exp $	*/
+/*	$NetBSD: sfb.c,v 1.33.2.1 2000/11/20 20:20:21 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -80,28 +80,22 @@
  * rights to redistribute these changes.
  */
 
-#include "fb.h"
-#include "sfb.h"
-
 #include <sys/param.h>
-#include <sys/systm.h>					/* printf() */
-#include <sys/errno.h>
+#include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/fcntl.h>
+
 #include <dev/tc/tcvar.h>
 
 #include <machine/autoconf.h>
 #include <machine/fbio.h>
 #include <machine/fbvar.h>
-#include <pmax/dev/sfbvar.h>		/* XXX dev/tc ? */
+#include <machine/pmioctl.h>
 
 #include <pmax/dev/bt459.h>
+#include <pmax/dev/fbreg.h>
+#include <pmax/dev/sfbvar.h>		/* XXX dev/tc ? */
 #include <pmax/dev/sfbreg.h>
 
-#include <mips/cpuregs.h>		/* mips cached->uncached */
-
-#include <machine/pmioctl.h>
-#include <pmax/dev/fbreg.h>
 
 /*  turn on SFB-driver debugging  */
 /* #define SFBDEBUG */
@@ -109,19 +103,19 @@
 /*
  * These need to be mapped into user space.
  */
-struct fbuaccess sfbu;
-struct pmax_fbtty sfbfb;
+static struct fbuaccess sfbu;
+static struct pmax_fbtty sfbfb;
+static struct fbinfo *sfb_fi;
 
 
 /*
  * Forward references.
  */
 
-int sfbinit __P((struct fbinfo *fi, caddr_t sfbaddr, int unit, int silent));
-
-int sfbmatch __P((struct device *, struct cfdata *, void *));
-void sfbattach __P((struct device *, struct device *, void *));
-int sfb_intr __P((void *sc));
+static int	sfbmatch __P((struct device *, struct cfdata *, void *));
+static void	sfbattach __P((struct device *, struct device *, void *));
+static int	sfbinit __P((struct fbinfo *, caddr_t, int, int));
+static int	sfb_intr __P((void *sc));
 
 struct cfattach sfb_ca = {
 	sizeof(struct fbinfo), sfbmatch, sfbattach
@@ -138,10 +132,24 @@ struct fbdriver sfb_driver = {
 	bt459CursorColor
 };
 
+int
+sfb_cnattach(addr)
+paddr_t addr;
+{
+	struct fbinfo *fi;
+	caddr_t base;
+
+	base = (caddr_t)MIPS_PHYS_TO_KSEG1(addr);
+	fbcnalloc(&fi);
+	if (sfbinit(fi, base, 0, 1) < 0)
+	      return (0);
+	sfb_fi = fi;
+	return (1);
+}
 
 /* match and attach routines cut-and-pasted from cfb */
 
-int
+static int
 sfbmatch(parent, match, aux)
 	struct device *parent;
 	struct cfdata *match;
@@ -153,14 +161,6 @@ sfbmatch(parent, match, aux)
 	if (!TC_BUS_MATCHNAME(ta, "PMAGB-BA"))
 		return (0);
 
-	/*
-	 * if the TC rom ident matches, assume the VRAM is present too.
-	 */
-#if 0
-	if (badaddr( ((caddr_t)ta->ta_addr) + SFB_OFFSET_VRAM, 4))
-		return (0);
-#endif
-
 	return (1);
 }
 
@@ -168,7 +168,7 @@ sfbmatch(parent, match, aux)
  * Attach a device.  Hand off all the work to sfbinit(),
  * so console-config code can attach sfbs early in boot.
  */
-void
+static void
 sfbattach(parent, self, aux)
 	struct device *parent;
 	struct device *self;
@@ -179,13 +179,20 @@ sfbattach(parent, self, aux)
 	int unit = self->dv_unit;
 	struct fbinfo *fi;
 
-	/* Allocate a struct fbinfo and point the softc at it */
-	if (fballoc(sfbaddr, &fi) == 0 && !sfbinit(fi, sfbaddr, unit, 0))
-			return;
+	if (sfb_fi)
+		fi = sfb_fi;
+	else {
+		if (fballoc(&fi) < 0 || sfbinit(fi, sfbaddr, unit, 0) < 0)
+		return; /* failed */
+	}
+	((struct fbsoftc *)self)->sc_fi = fi;
 
-	if ((((struct fbsoftc *)self)->sc_fi = fi) == NULL)
-		return;
-		
+	printf(": %dx%dx%d%s",
+		fi->fi_type.fb_width,
+		fi->fi_type.fb_height,
+		fi->fi_type.fb_depth,
+		(sfb_fi) ? " console" : "");
+
 #if 0 /*XXX*/
 
 	/*
@@ -203,7 +210,6 @@ sfbattach(parent, self, aux)
 	 * interrupt handler, which interrupts during vertical-retrace.
 	 */
 	tc_intr_establish(parent, ta->ta_cookie, TC_IPL_NONE, sfb_intr, fi);
-	fbconnect ("PMAGB-BA", fi, 0);
 	printf("\n");
 }
 
@@ -211,7 +217,7 @@ sfbattach(parent, self, aux)
 /*
  * Initialization
  */
-int
+static int
 sfbinit(fi, base, unit, silent)
 	struct fbinfo *fi;
 	char *base;
@@ -293,19 +299,10 @@ sfbinit(fi, base, unit, silent)
 	 * Initialize the color map, the screen, and the mouse.
 	 */
 	if (tb_kbdmouseconfig(fi)) {
-		printf(" (mouse/keyboard config failed)");
-		return (0);
+		return (-1);
 	}
-
-
-	/*sfbInitColorMap();*/  /* done by bt459init() */
-
-	/*
-	 * Connect to the raster-console pseudo-driver
-	 */
-
-	fbconnect ("PMAGB-BA", fi, silent);
-	return (1);
+	fbconnect(fi);
+	return (0);
 }
 
 
@@ -321,7 +318,7 @@ sfbinit(fi, base, unit, silent)
  * This function simply dismisses SFB interrupts, or the interrupt
  * request from the card will still be active.
  */
-int
+static int
 sfb_intr(sc)
 	void *sc;
 {

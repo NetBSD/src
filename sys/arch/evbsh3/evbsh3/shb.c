@@ -1,4 +1,4 @@
-/*	$NetBSD: shb.c,v 1.3 1999/09/17 19:59:41 thorpej Exp $	*/
+/*	$NetBSD: shb.c,v 1.3.2.1 2000/11/20 20:07:35 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.  All rights reserved.
@@ -29,13 +29,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "opt_atalk.h"
-#include "opt_ccitt.h"
-#include "opt_inet.h"
-#include "opt_iso.h"
-#include "opt_natm.h"
-#include "opt_ns.h"
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -45,6 +38,7 @@
 #include <sys/proc.h>
 
 #include <machine/intr.h>
+#include <sh3/cpufunc.h>
 #include <sh3/intcreg.h>
 #include <sh3/trapreg.h>
 #include <machine/shbvar.h>
@@ -205,7 +199,7 @@ intr_calculatemasks()
 
 	/* First, figure out which levels each IRQ uses. */
 	for (irq = 0; irq < ICU_LEN; irq++) {
-		register int levels = 0;
+		int levels = 0;
 		for (q = intrhand[irq]; q; q = q->ih_next)
 			levels |= 1 << q->ih_level;
 		intrlevel[irq] = levels;
@@ -213,7 +207,7 @@ intr_calculatemasks()
 
 	/* Then figure out which IRQs use each level. */
 	for (level = 0; level < NIPL; level++) {
-		register int irqs = 0;
+		int irqs = 0;
 		for (irq = 0; irq < ICU_LEN; irq++)
 			if (intrlevel[irq] & (1 << level))
 				irqs |= 1 << irq;
@@ -271,7 +265,7 @@ intr_calculatemasks()
 
 	/* And eventually calculate the complete masks. */
 	for (irq = 0; irq < ICU_LEN; irq++) {
-		register int irqs = 1 << irq;
+		int irqs = 1 << irq;
 		for (q = intrhand[irq]; q; q = q->ih_next)
 			irqs |= imask[q->ih_level];
 		intrmask[irq] = irqs;
@@ -280,7 +274,7 @@ intr_calculatemasks()
 #ifdef	TODO
 	/* Lastly, determine which IRQs are actually in use. */
 	{
-		register int irqs = 0;
+		int irqs = 0;
 		for (irq = 0; irq < ICU_LEN; irq++)
 			if (intrhand[irq])
 				irqs |= 1 << irq;
@@ -379,8 +373,7 @@ fakeintr(arg)
 }
 
 
-#define	IRQ_BIT(irq_num)	(1 << (irq_num) )
-
+#define	IRQ_BIT(irq_num)	(1 << (irq_num))
 
 /*ARGSUSED*/
 int	/* 1 = check ipending on return, 0 = fast intr return */
@@ -388,7 +381,7 @@ intrhandler(p1, p2, p3, p4, frame)
 	int p1, p2, p3, p4; /* dummy param */
 	struct trapframe frame;
 {
-        unsigned int irl;
+	unsigned int irl;
 	struct intrhand *ih;
 	unsigned int irq_num;
 	int ocpl;
@@ -403,9 +396,15 @@ intrhandler(p1, p2, p3, p4, frame)
 	if (irl >= INTEVT_SOFT) {
 		/* This is software interrupt */
 		irq_num = (irl - INTEVT_SOFT);
-	} else if (irl == INTEVT_TMU1)
+	} else if (irl == INTEVT_TMU1) {
 		irq_num = TMU1_IRQ;
-	else
+	} else if (IS_INTEVT_SCI0(irl)) {	/* XXX TOO DIRTY */
+		irq_num = SCI_IRQ;
+#ifdef SH4
+	} else if ((irl & 0x0f00) == INTEVT_SCIF) {
+		irq_num = SCIF_IRQ;
+#endif
+	} else
 		irq_num = (irl - 0x200) >> 5;
 
 	mask_irq(irq_num);
@@ -417,9 +416,6 @@ intrhandler(p1, p2, p3, p4, frame)
 
 	ocpl = cpl;
 	cpl |= intrmask[irq_num];
-#ifdef	TODO
-	enable_ext_intr();
-#endif
 	ih = intrhand[irq_num];
 	if (ih == NULL) {
 
@@ -431,6 +427,8 @@ intrhandler(p1, p2, p3, p4, frame)
 #endif
 		return 1;
 	}
+
+	enable_ext_intr();
 	while (ih) {
 		if (ih->ih_arg)
 			(*ih->ih_fun)(ih->ih_arg);
@@ -438,6 +436,7 @@ intrhandler(p1, p2, p3, p4, frame)
 			(*ih->ih_fun)(&frame);
 		ih = ih->ih_next;
 	}
+	disable_ext_intr();
 
 	cpl = ocpl;
 
@@ -464,11 +463,26 @@ check_ipending(p1, p2, p3, p4, frame)
 	if (ir == 0)
 		return 0;
 
+#if 0
 	mask = 1;
 	for (i = 0; i < MASK_LEN; i++, mask <<= 1) {
 		if (ir & mask)
 			break;
 	}
+#else
+	mask = 1 << IRQ_LOW;
+	for (i = IRQ_LOW; i <= IRQ_HIGH; i++, mask <<= 1) {
+		if (ir & mask)
+			break;
+	}
+	if (IRQ_HIGH < i) {
+		mask = 1 << SIR_LOW;
+		for (i = SIR_LOW; i <= SIR_HIGH; i++, mask <<= 1) {
+			if (ir & mask)
+				break;
+		}
+	}
+#endif
 
 	if ((mask & ipending) == 0)
 		goto restart;
@@ -487,17 +501,48 @@ check_ipending(p1, p2, p3, p4, frame)
 }
 
 #if !defined(SH4)
+
+#ifdef SH7709A_BROKEN_IPR	/* broken IPR patch */
+
+#define IPRA	0
+#define IPRB	1
+#define IPRC	2
+#define IPRD	3
+#define IPRE	4
+
+static unsigned short ipr[ 5 ];
+
+#endif /* SH7709A_BROKEN_IPR */
+
 void
 mask_irq(irq)
 	int irq;
 {
 	switch (irq) {
 	case TMU1_IRQ:
+#ifdef SH7709A_BROKEN_IPR
+		ipr[IPRA] &= ~((15)<<8);
+		SHREG_IPRA = ipr[IPRA];
+#else
 		SHREG_IPRA &= ~((15)<<8);
+#endif
 		break;
-#if defined(SH7709) || defined(SH7709A)
+	case SCI_IRQ:
+#ifdef SH7709A_BROKEN_IPR
+		ipr[IPRB] &= ~((15)<<4);
+		SHREG_IPRB = ipr[IPRB];
+#else
+		SHREG_IPRB &= ~((15)<<4);
+#endif
+		break;
+#if defined(SH7709) || defined(SH7709A) || defined(SH7729)
 	case SCIF_IRQ:
+#ifdef SH7709A_BROKEN_IPR
+		ipr[IPRE] &= ~((15)<<4);
+		SHREG_IPRE = ipr[IPRE];
+#else
 		SHREG_IPRE &= ~((15)<<4);
+#endif
 		break;
 #endif
 #if 0
@@ -515,22 +560,41 @@ mask_irq(irq)
 		break;
 #endif
 	default:
-		if (irq < 16)
+		if (irq < SHB_MAX_HARDINTR)
 			printf("masked unknown irq(%d)!\n", irq);
 	}
 }
 
 void
-unmask_irq(int irq)
+unmask_irq(irq)
+	int irq;
 {
 
 	switch (irq) {
 	case TMU1_IRQ:
+#ifdef SH7709A_BROKEN_IPR
+		ipr[ IPRA ] |= ((15 - irq)<<8);
+		SHREG_IPRA = ipr[ IPRA ];
+#else
 		SHREG_IPRA |= ((15 - irq)<<8);
+#endif
 		break;
-#if defined(SH7709) || defined(SH7709A)
+	case SCI_IRQ:
+#ifdef SH7709A_BROKEN_IPR
+		ipr[IPRB] |= ((15 - irq)<<4);
+		SHREG_IPRB = ipr[IPRB];
+#else
+		SHREG_IPRB |= ((15 - irq)<<4);
+#endif
+		break;
+#if defined(SH7709) || defined(SH7709A) || defined(SH7729)
 	case SCIF_IRQ:
+#ifdef SH7709A_BROKEN_IPR
+		ipr[ IPRE ] |= ((15 - irq)<<4);
+		SHREG_IPRE = ipr[ IPRE ];
+#else
 		SHREG_IPRE |= ((15 - irq)<<4);
+#endif
 		break;
 #endif
 #if 0
@@ -548,7 +612,7 @@ unmask_irq(int irq)
 		break;
 #endif
 	default:
-		if (irq < 16)
+		if (irq < SHB_MAX_HARDINTR)
 			printf("unmasked unknown irq(%d)!\n", irq);
 	}
 }
@@ -582,13 +646,14 @@ mask_irq(irq)
 		break;
 #endif
 	default:
-		if (irq < 16)
+		if (irq < SHB_MAX_HARDINTR)
 			printf("masked unknown irq(%d)!\n", irq);
 	}
 }
 
 void
-unmask_irq(int irq)
+unmask_irq(irq)
+	int irq;
 {
 
 	switch (irq) {
@@ -616,7 +681,7 @@ unmask_irq(int irq)
 		break;
 #endif
 	default:
-		if (irq < 16)
+		if (irq < SHB_MAX_HARDINTR)
 			printf("unmasked unknown irq(%d)!\n", irq);
 	}
 }
@@ -655,56 +720,24 @@ Xsoftserial(void)
 }
 #endif
 
-#ifdef INET
-void arpintr __P((void));
-void ipintr __P((void));
-void pppintr __P((void));
-#endif
-
-#ifdef NS
-void nsintr __P((void));
-#endif
-
 void
 Xsoftnet(void)
 {
-#ifdef INET
-        unsigned long ni = netisr;
-        netisr = 0;
+	int s, ni;
 
-#include "arp.h"
-#if NARP > 0
-	if (ni & (1 << NETISR_ARP))
-		arpintr();
-#endif
-	if (ni & (1 << NETISR_IP))
-		ipintr();
-#endif /* INET */
-#ifdef NS
-	if (ni & (1 << NETISR_NS))
-		nsintr();
-#endif
-#ifdef ISO
-	if (ni & (1 << NETISR_ISO))
-		clnlintr();
-#endif
-#ifdef CCITT
-	if (ni & (1 << NETISR_CCITT))
-		ccittintr();
-#endif
-#ifdef NATM
-	if (ni & (1 << NETISR_NATM))
-		natmintr();
-#endif
-#ifdef NETATALK
-	if (ni & (1 << NETISR_ATALK))
-		atintr();
-#endif
-#include "ppp.h"
-#if NPPP > 0
-	if (ni & (1 << NETISR_PPP))
-		pppintr();
-#endif
+	s = splhigh();
+	ni = netisr;
+	netisr = 0;
+	splx(s);
+
+#define DONETISR(bit, fn) do {		\
+	if (ni & (1 << bit))		\
+		fn();			\
+} while (0)
+
+#include <net/netisr_dispatch.h>
+
+#undef DONETISR
 }
 
 void
@@ -714,7 +747,7 @@ Xsoftclock(void)
         softclock();
 }
 
-#define	LEGAL_IRQ(x)	((x) >= 0 && (x) < ICU_LEN && (x) != 2)
+#define	LEGAL_IRQ(x)	((x) >= 0 && (x) < SHB_MAX_HARDINTR && (x) != 2)
 
 int
 sh_intr_alloc(mask, type, irq)
@@ -741,7 +774,7 @@ sh_intr_alloc(mask, type, irq)
 	mask &= 0xefbf;
 
 	for (i = 0; i < SHB_MAX_HARDINTR; i++) {
-		if (LEGAL_IRQ(i) == 0 || (mask & (1<<i)) == 0)
+		if (LEGAL_IRQ(i) == 0 || (mask & (1 << i)) == 0)
 			continue;
 
 		switch(intrtype[i]) {

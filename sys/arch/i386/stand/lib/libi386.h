@@ -1,4 +1,4 @@
-/*	$NetBSD: libi386.h,v 1.9 1999/04/14 15:22:07 christos Exp $	*/
+/*	$NetBSD: libi386.h,v 1.9.2.1 2000/11/20 20:09:40 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -44,17 +44,18 @@ ssize_t pread __P((int, void *, size_t));
 void startprog __P((physaddr_t, int, unsigned long*, physaddr_t));
 
 int exec_netbsd __P((const char*, physaddr_t, int));
-int netbsd_opt __P((char));
 
 void delay __P((int));
 int getbasemem __P((void));
 int getextmemx __P((void));
 int getextmem1 __P((void));
+int biosvideomode __P((void));
 #ifdef CONSERVATIVE_MEMDETECT
 #define getextmem() getextmem1()
 #else
 #define getextmem() getextmemx()
 #endif
+void printmemlist __P((void));
 void reboot __P((void));
 void gateA20 __P((void));
 
@@ -87,7 +88,7 @@ physaddr_t xmsalloc __P((int));
 
 /* parseutils.c */
 char *gettrailer __P((char*));
-int parseopts __P((char*, int*));
+int parseopts __P((const char*, int*));
 int parseboot __P((char*, char**, int*));
 
 /* menuutils.c */

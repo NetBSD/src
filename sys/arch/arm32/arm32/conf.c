@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.40 1999/08/16 22:27:13 augustss Exp $	*/
+/*	$NetBSD: conf.c,v 1.40.2.1 2000/11/20 20:03:50 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -43,6 +43,8 @@
  *
  * Created      : 17/09/94
  */
+
+#include "opt_footbridge.h"
  
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -183,7 +185,9 @@ int nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 #include "ugen.h"
 #include "ugen.h"
 #include "ulpt.h"
-#include "umodem.h"
+#include "ucom.h"
+#include "urio.h"
+#include "uscanner.h"
 #include "vcoda.h"			/* coda file system */
 #include "wsdisplay.h"
 #include "wskbd.h"
@@ -252,20 +256,11 @@ struct cdevsw cdevsw[] = {
 	cdev_lkm_dummy(),		/* 47: reserved */
 	cdev_lkm_dummy(),		/* 48: reserved */
 	cdev_mm_init(NOFROM, ofrom),	/* 49: ofrom */
-#ifdef SHARK /* XXX */
-	cdev_tty_init(NSCR,scr),        /*  50: Smart card reader  */
-#else
-	cdev_lkm_dummy(),		/* 50: reserved */
-#endif
+	cdev_tty_init(NSCR,scr),        /* 50: Smart card reader  */
 	cdev_notdef(),			/* 51: reserved */
 	cdev_rnd_init(NRND,rnd),	/* 52: random source pseudo-device */
 	cdev_prof_init(NPROFILER, prof), /* 53: fiq Profiler*/
-#if defined(FOOTBRIDGE)
 	cdev_tty_init(NFCOM, fcom),	/* 54: FOOTBRIDGE console */
-#else
-	/* FOOTBRIDGE */
-	cdev_lkm_dummy(),		/* 54: */	
-#endif	/* FOOTBRIDGE */
 	cdev_lkm_dummy(),		/* 55: Reserved for bypass device */	
 	cdev_joy_init(NJOY,joy),	/* 56: ISA joystick */
 	cdev_midi_init(NMIDI,midi),	/* 57: MIDI I/O */
@@ -285,7 +280,9 @@ struct cdevsw cdevsw[] = {
 	cdev_disk_init(NRAID,raid),    	/* 71: RAIDframe disk driver */
 	cdev_ugen_init(NUGEN,ugen),	/* 72: USB generic driver */
 	cdev_mouse_init(NWSMUX,wsmux),	/* 73: ws multiplexor */
-	cdev_tty_init(NUMODEM,umodem),	/* 74: USB modem */
+	cdev_tty_init(NUCOM,ucom),	/* 74: USB tty */
+	cdev_usbdev_init(NURIO,urio),	/* 75: Diamond Rio 500 */
+	cdev_ugen_init(NUSCANNER,uscanner),/* 76: USB scanner */
 };
 
 int nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
@@ -402,6 +399,8 @@ static int chrtoblktbl[] = {
     /* 72 */	    NODEV,
     /* 73 */	    NODEV,
     /* 74 */	    NODEV,
+    /* 75 */	    NODEV,
+    /* 76 */	    NODEV,
 };
 
 /*

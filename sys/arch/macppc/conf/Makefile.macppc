@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.macppc,v 1.9 1999/08/27 07:59:49 tsubai Exp $
+#	$NetBSD: Makefile.macppc,v 1.9.2.1 2000/11/20 20:12:55 bouyer Exp $
 #
 # Makefile for NetBSD
 #
@@ -45,11 +45,14 @@ S!=	cd ../../../..; pwd
 PPC=	$S/arch/macppc
 
 TEXTADDR?=	100000
-HAVE_GCC28!=	${CC} --version | egrep "^(2\.8|egcs)" ; echo 
+HAVE_EGCS!=	${CC} --version | egrep "^(2\.[89]|egcs)" ; echo 
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -Dmacppc
 CWARNFLAGS?=	-Werror -Wreturn-type -Wpointer-arith
-.if (${HAVE_GCC28} != "")
+# XXX Delete -Wuninitialized for now, since the compiler doesn't
+# XXX always get it right.  --thorpej 
+CWARNFLAGS+=	-Wno-uninitialized
+.if (${HAVE_EGCS} != "")
 CWARNFLAGS+=	-Wno-main
 .endif
 CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} -msoft-float
@@ -183,6 +186,9 @@ depend: .depend
 	@sed -e 's/.*\.o:.*\.c/assym.h:/' < assym.dep >> .depend
 	@rm -f assym.dep
 
+dependall: depend all
+
+
 # depend on root or device configuration
 autoconf.o conf.o: Makefile
 
@@ -198,5 +204,17 @@ locore.o machdep.o: Makefile
 
 locore.o: ${PPC}/macppc/locore.S assym.h
 	${NORMAL_S}
+
+# The install target can be redefined by putting a
+# install-kernel-${MACHINE_NAME} target into /etc/mk.conf
+MACHINE_NAME!=  uname -n
+install: install-kernel-${MACHINE_NAME}
+.if !target(install-kernel-${MACHINE_NAME}})
+install-kernel-${MACHINE_NAME}:
+	rm -f /onetbsd
+	ln /netbsd /onetbsd
+	cp netbsd /nnetbsd
+	mv /nnetbsd /netbsd
+.endif
 
 %RULES

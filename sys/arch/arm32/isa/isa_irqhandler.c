@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_irqhandler.c,v 1.6 1999/05/11 12:41:15 hpeyerl Exp $	*/
+/*	$NetBSD: isa_irqhandler.c,v 1.6.2.1 2000/11/20 20:04:02 bouyer Exp $	*/
 
 /*
  * Copyright 1997
@@ -80,7 +80,8 @@
 #include <sys/systm.h>
 #include <sys/syslog.h>
 #include <sys/malloc.h>
-#include <vm/vm.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/irqhandler.h>
 #include <machine/cpu.h>

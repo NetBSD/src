@@ -1,4 +1,4 @@
-/*	$NetBSD: cacheops.h,v 1.6 1999/09/27 04:43:40 itohy Exp $	*/
+/*	$NetBSD: cacheops.h,v 1.6.2.1 2000/11/20 20:11:38 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
 #define	DCIA()		DCIA_20()
 #define	DCIS()		DCIS_20()
 #define	DCIU()		DCIU_20()
-#define	DCIAS()		DCIAS_20()
+#define	DCIAS(pa)	DCIAS_20((pa))
 #define	PCIA()		PCIA_20()
 
 #elif defined(M68030) && !(defined(M68020)||defined(M68040)||defined(M68060))
@@ -73,7 +73,7 @@
 #define	DCIA()		DCIA_30()
 #define	DCIS()		DCIS_30()
 #define	DCIU()		DCIU_30()
-#define	DCIAS()		DCIAS_30()
+#define	DCIAS(pa)	DCIAS_30((pa))
 #define	PCIA()		PCIA_30()
 
 #elif defined(M68040) && !(defined(M68020)||defined(M68030)||defined(M68060))
@@ -137,6 +137,7 @@ void	_DCIA __P((void));
 void	_DCIS __P((void));
 void	_DCIU __P((void));
 void	_DCIAS __P((paddr_t));
+void	_PCIA __P((void));
 
 #define	TBIA()		_TBIA()
 #define	TBIS(va)	_TBIS((va))
@@ -148,10 +149,10 @@ void	_DCIAS __P((paddr_t));
 #define	DCIS()		_DCIS()
 #define	DCIU()		_DCIU()
 #define	DCIAS(pa)	_DCIAS((pa))
+#define	PCIA()		_PCIA()
 
 #if defined(M68040)||defined(M68060)
 
-void	_PCIA __P((void));
 void	_DCFA __P((void));
 void	_ICPL __P((paddr_t));
 void	_ICPP __P((paddr_t));
@@ -161,7 +162,6 @@ void	_DCPA __P((void));
 void	_DCFL __P((paddr_t));
 void	_DCFP __P((paddr_t));
 
-#define	PCIA()		_PCIA()
 #define	DCFA()		_DCFA()
 #define	ICPL(pa)	_ICPL((pa))
 #define	ICPP(pa)	_ICPP((pa))

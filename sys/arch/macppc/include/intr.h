@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.5 1999/08/05 18:08:11 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.5.2.1 2000/11/20 20:12:59 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -151,7 +151,7 @@ softintr(ipl)
 	__asm__ volatile("mtmsr %0" :: "r"(msrsave));
 }
 
-#define	ICU_LEN		32
+#define ICU_LEN		64
 
 /* Soft interrupt masks. */
 #define SIR_CLOCK	28
@@ -188,6 +188,8 @@ softintr(ipl)
  */
 #define splimp()	splraise(imask[IPL_IMP])
 #define	splhigh()	splraise(imask[IPL_HIGH])
+#define	splsched()	splhigh()
+#define	spllock()	splhigh()
 #define	spl0()		spllower(0)
 
 #define	setsoftclock()	softintr(SIR_CLOCK)

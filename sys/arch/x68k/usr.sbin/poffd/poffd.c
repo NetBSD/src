@@ -1,4 +1,4 @@
-/*	$NetBSD: poffd.c,v 1.2 1998/01/05 20:52:35 perry Exp $	*/
+/*	$NetBSD: poffd.c,v 1.2.16.1 2000/11/20 20:30:21 bouyer Exp $	*/
 /*
  * Copyright (c) 1995 MINOURA Makoto.
  * All rights reserved.
@@ -148,7 +148,16 @@ sethandler(void)
 	sw = powerinfo.pow_switch_boottime;
 	oldsw = powerinfo.pow_switch_current & 6;
 
-	if (sw & POW_ALARMSW) {
+#if 0
+	if (sw & POW_ALARMSW)
+#else
+	/*
+	 * According to Takeshi Nakayama <tn@catvmics.ne.jp>,
+	 * POW_ALARMSW seems to be always 1 on some models (at least XVI).
+	 */
+	if ((sw & (POW_EXTERNALSW|POW_FRONTSW)) == 0)
+#endif
+	{
 		struct x68k_alarminfo alarminfo;
 		int secs;
 		time_t boottime, offtime, now;

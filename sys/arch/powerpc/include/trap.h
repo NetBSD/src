@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.h,v 1.1 1996/09/30 16:34:35 ws Exp $	*/
+/*	$NetBSD: trap.h,v 1.1.28.1 2000/11/20 20:31:12 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -30,8 +30,8 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef	_MACHINE_TRAP_H_
-#define	_MACHINE_TRAP_H_
+#ifndef	_POWERPC_TRAP_H_
+#define	_POWERPC_TRAP_H_
 
 #define	EXC_RSVD	0x0000		/* Reserved */
 #define	EXC_RST		0x0100		/* Reset */
@@ -64,4 +64,22 @@
 /* Trap was in user mode */
 #define	EXC_USER	0x10000
 
-#endif	/* _MACHINE_TRAP_H_ */
+
+/*
+ * EXC_ALI sets bits in the DSISR and DAR to provide enough
+ * information to recover from the unaligned access without needing to
+ * parse the offending instruction. This includes certain bits of the
+ * opcode, and information about what registers are used. The opcode
+ * indicator values below come from Appendix F of Book III of "The
+ * PowerPC Architecture".
+ */
+
+#define EXC_ALI_OPCODE_INDICATOR(dsisr) ((dsisr >> 10) & 0x7f)
+#define EXC_ALI_LFD	0x09
+#define EXC_ALI_STFD	0x0b
+
+/* Macros to extract register information */
+#define EXC_ALI_RST(dsisr) ((dsisr >> 5) & 0x1f)   /* source or target */
+#define EXC_ALI_RA(dsisr) (dsisr & 0x1f)
+
+#endif	/* _POWERPC_TRAP_H_ */

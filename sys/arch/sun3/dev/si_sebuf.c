@@ -1,4 +1,4 @@
-/*	$NetBSD: si_sebuf.c,v 1.8 1999/04/09 04:26:27 gwr Exp $	*/
+/*	$NetBSD: si_sebuf.c,v 1.8.8.1 2000/11/20 20:27:53 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -144,15 +144,6 @@ struct cfattach si_sebuf_ca = {
 
 static void	se_minphys __P((struct buf *));
 
-/* This is copied from julian's bt driver */
-/* "so we have a default dev struct for our link struct." */
-static struct scsipi_device se_dev = {
-	NULL,		/* Use default error handler.	    */
-	NULL,		/* Use default start handler.		*/
-	NULL,		/* Use default async handler.	    */
-	NULL,		/* Use default "done" routine.	    */
-};
-
 /* Options for disconnect/reselect, DMA, and interrupts. */
 int se_options = SE_DISABLE_DMA | SE_FORCE_POLLING | 0xff;
 
@@ -254,22 +245,6 @@ se_attach(parent, self, args)
 #endif
 	ncr_sc->sc_min_dma_len = MIN_DMA_LEN;
 
-	/*
-	 * Fill in the adapter.
-	 */
-	ncr_sc->sc_adapter.scsipi_cmd = ncr5380_scsi_cmd;
-	ncr_sc->sc_adapter.scsipi_minphys = se_minphys;
-
-	/*
-	 * Fill in the prototype scsi_link.
-	 */
-	ncr_sc->sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
-	ncr_sc->sc_link.adapter_softc = sc;
-	ncr_sc->sc_link.scsipi_scsi.adapter_target = 7;
-	ncr_sc->sc_link.adapter = &ncr_sc->sc_adapter;
-	ncr_sc->sc_link.device = &se_dev;
-	ncr_sc->sc_link.type = BUS_SCSI;
-
 #ifdef	DEBUG
 	if (se_debug)
 		printf("se: Set TheSoftC=%p TheRegs=%p\n", sc, regs);
@@ -288,6 +263,8 @@ se_attach(parent, self, args)
 	ncr_sc->sci_r6 = &regs->ncrregs[6];
 	ncr_sc->sci_r7 = &regs->ncrregs[7];
 
+	ncr_sc->sc_rev = NCR_VARIANT_NCR5380;
+
 	/*
 	 * Allocate DMA handles.
 	 */
@@ -299,12 +276,13 @@ se_attach(parent, self, args)
 	for (i = 0; i < SCI_OPENINGS; i++)
 		sc->sc_dma[i].dh_flags = 0;
 
+	ncr_sc->sc_link.scsipi_scsi.adapter_target = 7;
+	ncr_sc->sc_adapter.scsipi_minphys = se_minphys;
+
 	/*
 	 *  Initialize se board itself.
 	 */
-	ncr5380_init(ncr_sc);
-	ncr5380_reset_scsibus(ncr_sc);
-	config_found(&(ncr_sc->sc_dev), &(ncr_sc->sc_link), scsiprint);
+	ncr5380_attach(ncr_sc);
 }
 
 static void
@@ -661,7 +639,7 @@ found:
 	dh->dh_flags = SIDH_BUSY;
 
 	/* Copy the "write" flag for convenience. */
-	if (xs->flags & SCSI_DATA_OUT)
+	if (xs->xs_control & XS_CTL_DATA_OUT)
 		dh->dh_flags |= SIDH_OUT;
 
 	dh->dh_addr = (u_char*) addr;

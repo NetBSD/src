@@ -1,4 +1,4 @@
-/*	$NetBSD: stdarg.h,v 1.8 1999/05/04 13:36:44 christos Exp $ */
+/*	$NetBSD: stdarg.h,v 1.8.2.1 2000/11/20 20:26:49 bouyer Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -48,6 +48,7 @@
 #define	_SPARC64_STDARG_H_
 
 #include <machine/ansi.h>
+#include <sys/featuretest.h>
 
 #ifdef __lint__
 #define	__builtin_saveregs(t)		(0)
@@ -60,31 +61,38 @@ typedef _BSD_VA_LIST_	va_list;
 #define	va_start(ap, last) \
 	(__builtin_next_arg(last), (ap) = (va_list)__builtin_saveregs())
 
+#if !defined(_ANSI_SOURCE) && \
+    (!defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE) || \
+     defined(_ISOC99_SOURCE) || (__STDC_VERSION__ - 0) >= 199901L)
+#define	va_copy(dest, src) \
+	((dest) = (src))
+#endif
+
 #define va_end(ap)	
 
 #ifdef __arch64__
 /*
  * For sparcv9 code.
  */
-#define	__va_arg(ap, type) \
-	((type)*(unsigned long *)((ap) += 8, (ap) - 8))
-
-/* Like __va_arg(), except when the type must be 16-byte aligned. */
+#define	__va_arg8(ap, type) \
+	(*(type *)(void *)((ap) += 8, (ap) - 8))
 #define	__va_arg16(ap, type) \
-	((type)*(unsigned long *)((__alignof__(type) == 16 ?				\
-		    (ap) = (va_list)(((unsigned long)(ap) + 31) & -16) :\
-			((ap) += 16)), (ap) - 16))
+	(*(type *)(void *)((ap) = (va_list)(((unsigned long)(ap) + 31) & -16),\
+			   (ap) - 16))
+#define	__va_int(ap, type) \
+	(*(type *)(void *)((ap) += 8, (ap) - sizeof(type)))
 
 #define	__REAL_TYPE_CLASS	8
 #define	__RECORD_TYPE_CLASS	12
 #define va_arg(ap, type) \
 	(__builtin_classify_type(*(type *)0) == __REAL_TYPE_CLASS ?	\
-	 __va_arg16(ap, type) :						\
+	 (__alignof__(type) == 16 ? __va_arg16(ap, type) :		\
+	  __va_arg8(ap, type)) :					\
 	 (__builtin_classify_type(*(type *)0) < __RECORD_TYPE_CLASS ?	\
-	  __va_arg(ap, type) :						\
-	  (sizeof(type) <= 8 ? __va_arg(ap, type) :			\
+	  __va_int(ap, type) :						\
+	  (sizeof(type) <= 8 ? __va_arg8(ap, type) :			\
 	   (sizeof(type) <= 16 ? __va_arg16(ap, type) :			\
-	    *__va_arg(ap, type *)))))
+	    *__va_arg8(ap, type *)))))
 #else
 /* 
  * For sparcv8 code.

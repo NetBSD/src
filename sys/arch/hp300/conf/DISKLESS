@@ -1,4 +1,4 @@
-#	$NetBSD: DISKLESS,v 1.27 1999/07/31 20:19:31 thorpej Exp $
+#	$NetBSD: DISKLESS,v 1.27.2.1 2000/11/20 20:08:02 bouyer Exp $
 #
 # Diskless HP 9000/300-series workstation
 #
@@ -37,7 +37,6 @@ options 	SYSVSHM		# System V-style shared memory
 options 	SYSVSEM		# System V-style semaphores
 options 	SYSVMSG		# System V-style message queues
 options 	KTRACE		# system call tracing support
-options 	NKMEMCLUSTERS=1024	# 4K pages in kernel malloc pool
 
 # Filesystems
 file-system	NFS		# Network filesystem client
@@ -136,6 +135,6 @@ dcm*		at dio? scode ?	flags 0xe # DCM 4- or 8-port serial interfaces
 
 le*		at dio? scode ?		# LANCE ethernet interfaces
 
-pseudo-device	pty		64	# pseudo ptys
+pseudo-device	pty			# pseudo-terminals
 pseudo-device	bpfilter	16	# Berkeley packet filter
 pseudo-device	loop			# loopback network interface

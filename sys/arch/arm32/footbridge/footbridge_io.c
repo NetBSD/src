@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_io.c,v 1.3 1999/02/27 11:14:27 mark Exp $	*/
+/*	$NetBSD: footbridge_io.c,v 1.3.8.1 2000/11/20 20:03:57 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Causality Limited
@@ -42,11 +42,14 @@
 #include <sys/systm.h>
 #include <machine/bus.h>
 #include <arm32/footbridge/dc21285mem.h>
+#include <uvm/uvm_extern.h>
 
 /* Proto types for all the bus_space structure functions */
 
 bs_protos(footbridge);
 bs_protos(bs_notimpl);
+bs_map_proto(footbridge_mem);
+bs_unmap_proto(footbridge_mem);
 
 /* Declare the footbridge bus space tag */
 
@@ -62,6 +65,9 @@ struct bus_space footbridge_bs_tag = {
 	/* allocation/deallocation */
 	footbridge_bs_alloc,
 	footbridge_bs_free,
+
+	/* get kernel virtual address */
+	footbridge_bs_vaddr,
 
 	/* barrier */
 	footbridge_bs_barrier,
@@ -81,7 +87,7 @@ struct bus_space footbridge_bs_tag = {
 	/* read region */
 	bs_notimpl_bs_rr_1,
 	footbridge_bs_rr_2,
-	bs_notimpl_bs_rr_4,
+	footbridge_bs_rr_4,
 	bs_notimpl_bs_rr_8,
 
 	/* write (single) */
@@ -99,7 +105,7 @@ struct bus_space footbridge_bs_tag = {
 	/* write region */
 	bs_notimpl_bs_wr_1,
 	footbridge_bs_wr_2,
-	bs_notimpl_bs_wr_4,
+	footbridge_bs_wr_4,
 	bs_notimpl_bs_wr_8,
 
 	/* set multiple */
@@ -121,6 +127,24 @@ struct bus_space footbridge_bs_tag = {
 	bs_notimpl_bs_c_8,
 };
 
+void footbridge_create_io_bs_tag(t, cookie)
+	struct bus_space *t;
+	void *cookie;
+{
+	*t = footbridge_bs_tag;
+	t->bs_cookie = cookie;
+}
+
+void footbridge_create_mem_bs_tag(t, cookie)
+	struct bus_space *t;
+	void *cookie;
+{
+	*t = footbridge_bs_tag;
+	t->bs_map = footbridge_mem_bs_map;
+	t->bs_unmap = footbridge_mem_bs_unmap;
+	t->bs_cookie = cookie;
+}
+
 /* bus space functions */
 
 int
@@ -132,17 +156,70 @@ footbridge_bs_map(t, bpa, size, cacheable, bshp)
 	bus_space_handle_t *bshp;
 {
 	/*
-	 * Temporary implementation as all I/O is already mapped etc.
+	 * The whole 64K of PCI space is always completely mapped during
+	 * boot.
 	 *
-	 * Eventually this function will do the mapping check for multiple maps
+	 * Eventually this function will do the mapping check overlapping / 
+	 * multiple mappings.
 	 */
-	if (bpa >= DC21285_PCI_MEM_VSIZE && bpa != DC21285_ARMCSR_VBASE)
-		panic("footbridge_bs_map: Address out of range (%08lx)\n", bpa);
 
 	/* The cookie is the base address for the I/O area */
 	*bshp = bpa + (bus_addr_t)t;
 	return(0);
+}
+
+int
+footbridge_mem_bs_map(t, bpa, size, cacheable, bshp)
+	void *t;
+	bus_addr_t bpa;
+	bus_size_t size;
+	int cacheable;
+	bus_space_handle_t *bshp;
+{
+	bus_addr_t startpa, endpa;
+	vaddr_t va;
+
+	/* Round the allocation to page boundries */
+	startpa = trunc_page(bpa);
+	endpa = round_page(bpa + size);
+
+	/*
+	 * Check for mappings below 1MB as we have this space already
+	 * mapped. In practice it is only the VGA hole that takes
+	 * advantage of this.
+	 */
+	if (endpa < DC21285_PCI_ISA_MEM_VSIZE) {
+		/* Store the bus space handle */
+		*bshp = DC21285_PCI_ISA_MEM_VBASE + bpa;
+		return 0;
 	}
+
+	/*
+	 * Eventually this function will do the mapping check for overlapping / 
+	 * multiple mappings
+	 */
+
+	va = uvm_km_valloc(kernel_map, endpa - startpa);
+	if (va == 0)
+		return ENOMEM;
+
+	/* Store the bus space handle */
+	*bshp = va + (bpa & PGOFSET);
+
+	/* Now map the pages */
+	/* The cookie is the physical base address for the I/O area */
+	while (startpa < endpa) {
+		pmap_enter(kernel_pmap, va, (bus_addr_t)t + startpa,
+		    VM_PROT_READ | VM_PROT_WRITE, 0);
+		va += NBPG;
+		startpa += NBPG;
+	}
+
+/*	if (bpa >= DC21285_PCI_MEM_VSIZE && bpa != DC21285_ARMCSR_VBASE)
+		panic("footbridge_bs_map: Address out of range (%08lx)\n", bpa);
+*/
+	return(0);
+}
 
 int
 footbridge_bs_alloc(t, rstart, rend, size, alignment, boundary, cacheable,
@@ -169,6 +246,30 @@ footbridge_bs_unmap(t, bsh, size)
 	 */
 }
 
+void
+footbridge_mem_bs_unmap(t, bsh, size)
+	void *t;
+	bus_space_handle_t bsh;
+	bus_size_t size;
+{
+	vaddr_t startva, endva;
+
+	/*
+	 * Check for mappings below 1MB as we have this space permenantly
+	 * mapped. In practice it is only the VGA hole that takes
+	 * advantage of this.
+	 */
+	if (bsh >= DC21285_PCI_ISA_MEM_VBASE
+	    && bsh < (DC21285_PCI_ISA_MEM_VBASE + DC21285_PCI_ISA_MEM_VSIZE)) {
+		return;
+	}
+
+	startva = trunc_page(bsh);
+	endva = round_page(bsh + size);
+
+	uvm_km_free(kernel_map, startva, endva - startva);
+}
+
 void    
 footbridge_bs_free(t, bsh, size)
 	void *t;
@@ -191,6 +292,15 @@ footbridge_bs_subregion(t, bsh, offset, size, nbshp)
 
 	*nbshp = bsh + (offset << ((int)t));
 	return (0);
+}
+
+void *
+footbridge_bs_vaddr(t, bsh)
+	void *t;
+	bus_space_handle_t bsh;
+{
+
+	return ((void *)bsh);
 }
 
 void

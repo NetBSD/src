@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.4 1998/11/24 12:50:56 mrg Exp $	*/
+/*	$NetBSD: emul.c,v 1.4.10.1 2000/11/20 20:26:52 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 #include <machine/instr.h>
 #include <machine/cpu.h>
 #include <machine/psl.h>
-#include <sparc/sparc/cpuvar.h>
+#include <sparc64/sparc64/cpuvar.h>
 
 #define DEBUG_EMUL
 #ifdef DEBUG_EMUL
@@ -52,16 +52,16 @@
 # define DPRINTF(a)
 #endif
 
-#define GPR(tf, i)	((int32_t *) &tf->tf_global)[i]
-#define IPR(tf, i)	((int32_t *) tf->tf_out[6])[i - 16]
+#define GPR(tf, i)	((int32_t *)(u_long)&tf->tf_global)[i]
+#define IPR(tf, i)	((int32_t *)(u_long)tf->tf_out[6])[i - 16]
 #define FPR(p, i)	((int32_t) p->p_md.md_fpstate->fs_regs[i])
 
-static __inline int readgpreg __P((struct trapframe *, int, void *));
+static __inline int readgpreg __P((struct trapframe64 *, int, void *));
 static __inline int readfpreg __P((struct proc *, int, void *));
-static __inline int writegpreg __P((struct trapframe *, int, const void *));
+static __inline int writegpreg __P((struct trapframe64 *, int, const void *));
 static __inline int writefpreg __P((struct proc *, int, const void *));
-static __inline int decodeaddr __P((struct trapframe *, union instr *, void *));
-static int muldiv __P((struct trapframe *, union instr *, int32_t *, int32_t *,
+static __inline int decodeaddr __P((struct trapframe64 *, union instr *, void *));
+static int muldiv __P((struct trapframe64 *, union instr *, int32_t *, int32_t *,
     int32_t *));
 
 #define	REGNAME(i)	"goli"[i >> 3], i & 7
@@ -69,7 +69,7 @@ static int muldiv __P((struct trapframe *, union instr *, int32_t *, int32_t *,
 
 static __inline int
 readgpreg(tf, i, val)
-	struct trapframe *tf;
+	struct trapframe64 *tf;
 	int i;
 	void *val;
 {
@@ -87,7 +87,7 @@ readgpreg(tf, i, val)
 		
 static __inline int
 writegpreg(tf, i, val)
-	struct trapframe *tf;
+	struct trapframe64 *tf;
 	int i;
 	const void *val;
 {
@@ -128,7 +128,7 @@ writefpreg(p, i, val)
 
 static __inline int
 decodeaddr(tf, code, val)
-	struct trapframe *tf;
+	struct trapframe64 *tf;
 	union instr *code;
 	void *val;
 {
@@ -148,7 +148,7 @@ decodeaddr(tf, code, val)
 
 static int
 muldiv(tf, code, rd, rs1, rs2)
-	struct trapframe *tf;
+	struct trapframe64 *tf;
 	union instr *code;
 	int32_t *rd, *rs1, *rs2;
 {
@@ -209,17 +209,17 @@ muldiv(tf, code, rd, rs1, rs2)
 		tf->tf_tstate &= ~(TSTATE_CCR);
 
 		if (*rd == 0)
-			tf->tf_tstate |= (ICC_Z|XCC_Z) << TSTATE_CCR_SHIFT;
+			tf->tf_tstate |= (u_int64_t)(ICC_Z|XCC_Z) << TSTATE_CCR_SHIFT;
 		else {
 			if (op.bits.sgn && *rd < 0)
-				tf->tf_tstate |= (ICC_N|XCC_N) << TSTATE_CCR_SHIFT;
+				tf->tf_tstate |= (u_int64_t)(ICC_N|XCC_N) << TSTATE_CCR_SHIFT;
 			if (op.bits.div) {
 				if (*rd * *rs2 != *rs1)
-					tf->tf_tstate |= (ICC_V|XCC_V) << TSTATE_CCR_SHIFT;
+					tf->tf_tstate |= (u_int64_t)(ICC_V|XCC_V) << TSTATE_CCR_SHIFT;
 			}
 			else {
 				if (*rd / *rs2 != *rs1)
-					tf->tf_tstate |= (ICC_V|XCC_V) << TSTATE_CCR_SHIFT;
+					tf->tf_tstate |= (u_int64_t)(ICC_V|XCC_V) << TSTATE_CCR_SHIFT;
 			}
 		}
 	}
@@ -236,7 +236,7 @@ muldiv(tf, code, rd, rs1, rs2)
 int
 fixalign(p, tf)
 	struct proc *p;
-	struct trapframe *tf;
+	struct trapframe64 *tf;
 {
 	static u_char sizedef[] = { 0x4, 0xff, 0x2, 0x8 };
 
@@ -268,7 +268,7 @@ fixalign(p, tf)
 	int error;
 
 	/* fetch and check the instruction that caused the fault */
-	error = copyin((caddr_t) tf->tf_pc, &code.i_int, sizeof(code.i_int));
+	error = copyin((caddr_t)(u_long)tf->tf_pc, &code.i_int, sizeof(code.i_int));
 	if (error != 0) {
 		DPRINTF(("fixalign: Bad instruction fetch\n"));
 		return EINVAL;
@@ -345,13 +345,13 @@ fixalign(p, tf)
 		}
 
 		if (size == 2)
-			return copyout(&data.s[1], (caddr_t) rs1, size);
+			return copyout(&data.s[1], (caddr_t)(u_long)rs1, size);
 		else
-			return copyout(&data.d, (caddr_t) rs1, size);
+			return copyout(&data.d, (caddr_t)(u_long)rs1, size);
 	}
 	else { /* load */
 		if (size == 2) {
-			error = copyin((caddr_t) rs1, &data.s[1], size);
+			error = copyin((caddr_t)(u_long)rs1, &data.s[1], size);
 			if (error)
 				return error;
 
@@ -362,7 +362,7 @@ fixalign(p, tf)
 				data.s[0] = 0;
 		}
 		else
-			error = copyin((caddr_t) rs1, &data.d, size);
+			error = copyin((caddr_t)(u_long)rs1, &data.d, size);
 
 		if (error)
 			return error;
@@ -397,7 +397,7 @@ fixalign(p, tf)
 int
 emulinstr(pc, tf)
 	vaddr_t pc;
-	struct trapframe *tf;
+	struct trapframe64 *tf;
 {
 	union instr code;
 	int32_t rs1, rs2, rd;

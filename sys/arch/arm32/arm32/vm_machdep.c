@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.45 1999/05/26 22:19:34 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.45.2.1 2000/11/20 20:03:53 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -57,9 +57,6 @@
 #include <sys/exec.h>
 #include <sys/syslog.h>
 
-#include <vm/vm.h>
-#include <vm/vm_kern.h>
-
 #include <uvm/uvm_extern.h>
 
 #include <machine/cpu.h>
@@ -96,20 +93,30 @@ pt_entry_t *pmap_pte	__P((pmap_t, vm_offset_t));
 
 /*
  * Finish a fork operation, with process p2 nearly set up.
- * Copy and update the kernel stack and pcb, making the child
- * ready to run, and marking it so that it can return differently
- * than the parent.  Returns 1 in the child process, 0 in the parent.
- * We currently double-map the user area so that the stack is at the same
- * address in each process; in the future we will probably relocate
- * the frame pointers on the stack after copying.
+ * Copy and update the pcb and trap frame, making the child ready to run.
+ * 
+ * Rig the child's kernel stack so that it will start out in
+ * proc_trampoline() and call child_return() with p2 as an
+ * argument. This causes the newly-created child process to go
+ * directly to user level with an apparent return value of 0 from
+ * fork(), while the parent process returns normally.
+ *
+ * p1 is the process being forked; if p1 == &proc0, we are creating
+ * a kernel thread, and the return path and argument are specified with
+ * `func' and `arg'.
+ *
+ * If an alternate user-level stack is requested (with non-zero values
+ * in both the stack and stacksize args), set up the user stack pointer
+ * accordingly.
  */
-
 void
-cpu_fork(p1, p2, stack, stacksize)
+cpu_fork(p1, p2, stack, stacksize, func, arg)
 	struct proc *p1;
 	struct proc *p2;
 	void *stack;
 	size_t stacksize;
+	void (*func) __P((void *));
+	void *arg;
 {
 	struct pcb *pcb = (struct pcb *)&p2->p_addr->u_pcb;
 	struct trapframe *tf;
@@ -176,25 +183,11 @@ cpu_fork(p1, p2, stack, stacksize)
 
 	sf = (struct switchframe *)tf - 1;
 	sf->sf_spl = _SPL_0;
-	sf->sf_r4 = (u_int)child_return;
-	sf->sf_r5 = (u_int)p2;
+	sf->sf_r4 = (u_int)func;
+	sf->sf_r5 = (u_int)arg;
 	sf->sf_pc = (u_int)proc_trampoline;
 	pcb->pcb_sp = (u_int)sf;
 }
-
-
-void
-cpu_set_kpc(p, pc, arg)
-	struct proc *p;
-	void (*pc) __P((void *));
-	void *arg;
-{
-	struct switchframe *sf = (struct switchframe *)p->p_addr->u_pcb.pcb_sp;
-
-	sf->sf_r4 = (u_int)pc;
-	sf->sf_r5 = (u_int)arg;
-}
-
 
 /*
  * cpu_exit is called as the last action during exit.
@@ -248,7 +241,7 @@ cpu_swapin(p)
 
 	/* Map the system page */
 	pmap_enter(p->p_vmspace->vm_map.pmap, 0x00000000, systempage.pv_pa,
-	    VM_PROT_READ, TRUE, VM_PROT_READ);
+	    VM_PROT_READ, VM_PROT_READ|PMAP_WIRED);
 }
 
 
@@ -281,7 +274,7 @@ pagemove(from, to, size)
 {
 	register pt_entry_t *fpte, *tpte;
 
-	if (size % CLBYTES)
+	if (size % NBPG)
 		panic("pagemove: size=%08x", size);
 
 #ifdef PMAP_DEBUG
@@ -337,7 +330,7 @@ vmapbuf(bp, len)
 
 	taddr = uvm_km_valloc_wait(phys_map, len);
 
-	faddr = trunc_page(bp->b_data);
+	faddr = trunc_page((vaddr_t)bp->b_data);
 	off = (vm_offset_t)bp->b_data - faddr;
 	len = round_page(off + len);
 	bp->b_saveaddr = bp->b_data;
@@ -394,7 +387,7 @@ vunmapbuf(bp, len)
 	 * Make sure the cache does not have dirty data for the
 	 * pages we had mapped.
 	 */
-	addr = trunc_page(bp->b_data);
+	addr = trunc_page((vaddr_t)bp->b_data);
 	off = (vm_offset_t)bp->b_data - addr;
 	len = round_page(off + len);
 	bp->b_data = bp->b_saveaddr;

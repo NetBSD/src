@@ -1,9 +1,11 @@
-#	$NetBSD: GENERIC,v 1.19 1999/07/29 10:37:21 augustss Exp $
+#	$NetBSD: GENERIC,v 1.19.2.1 2000/11/20 20:18:39 bouyer Exp $
 #
 # First try for PPC config file
 #
 
 include "arch/ofppc/conf/std.ofppc"
+
+#ident 		"GENERIC-$Revision: 1.19.2.1 $"
 
 maxusers	32
 
@@ -42,6 +44,7 @@ file-system 	MSDOSFS
 file-system 	FDESC
 file-system 	KERNFS
 file-system 	NULLFS
+file-system 	OVERLAY		# overlay file system
 file-system 	PORTAL
 file-system 	PROCFS
 file-system 	UMAPFS
@@ -49,8 +52,13 @@ file-system 	UNION
 
 options 	NFSSERVER
 #options 	FFS_EI		# FFS Endian Independant support
+options 	SOFTDEP         # FFS soft updates support.
 
 options 	INET
+options 	INET6		# IPV6
+#options 	IPSEC		# IP security
+#options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+#options 	IPSEC_DEBUG	# debug for IP security
 options 	NMBCLUSTERS=1024
 
 config		netbsd	root on ? type ?
@@ -71,8 +79,12 @@ ofrtc*		at ofbus?
 
 pseudo-device	loop
 pseudo-device	bpfilter	8	# packet filter
-pseudo-device	pty		64
+pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
+#pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
+#pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
+pseudo-device	pty			# pseudo-terminals
 #pseudo-device	raid		4	# RAIDframe disk driver
+#options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # rnd is EXPERIMENTAL
-#pseudo-device	rnd			# /dev/random and in-kernel generator
+pseudo-device	rnd			# /dev/random and in-kernel generator
 #pseudo-device	gre		2	# generic L3 over IP tunnel

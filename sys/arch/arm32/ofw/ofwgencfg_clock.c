@@ -1,4 +1,4 @@
-/*	$NetBSD: ofwgencfg_clock.c,v 1.6 1998/07/07 00:48:13 mark Exp $	*/
+/*	$NetBSD: ofwgencfg_clock.c,v 1.6.14.1 2000/11/20 20:04:04 bouyer Exp $	*/
 
 /*
  * Copyright 1997
@@ -157,7 +157,7 @@ microtime(tvp)
 
 	/* Make sure the micro seconds don't overflow. */
 
-	while (tvp->tv_usec > 1000000) {
+	while (tvp->tv_usec >= 1000000) {
 		tvp->tv_usec -= 1000000;
 		++tvp->tv_sec;
 	}
@@ -167,7 +167,7 @@ microtime(tvp)
 	if (tvp->tv_sec == oldtv.tv_sec &&
 	    tvp->tv_usec <= oldtv.tv_usec) {
 		tvp->tv_usec = oldtv.tv_usec + 1;
-		if (tvp->tv_usec > 1000000) {
+		if (tvp->tv_usec >= 1000000) {
 			tvp->tv_usec -= 1000000;
 			++tvp->tv_sec;
 		}

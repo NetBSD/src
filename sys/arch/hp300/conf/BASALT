@@ -1,15 +1,10 @@
-#	$NetBSD: BASALT,v 1.33 1999/09/19 21:20:43 thorpej Exp $
+#	$NetBSD: BASALT,v 1.33.2.1 2000/11/20 20:08:02 bouyer Exp $
 #
 # Kernel for basalt.og.org - thorpej's HP380 workstation.
 #
 
 # Include attributes common to all hp300s
 include "arch/hp300/conf/std.hp300"
-
-# Pull in US crypto bits
-prefix ../crypto-us/sys
-cinclude "conf/files.crypto-us"
-prefix
 
 # Support for various CPU types
 options 	HP380
@@ -32,7 +27,6 @@ options 	SYSVSHM			# System V-style shared memory
 options 	SYSVSEM			# System V-style semaphores
 options 	SYSVMSG			# System V-style message queues
 options 	KTRACE			# system call tracing support
-options 	NKMEMCLUSTERS=2048	# # 4K pages in kernel malloc pool
 options 	LKM			# loadable kernel modules
 
 # Filesystems
@@ -62,6 +56,9 @@ options 	PFIL_HOOKS		# packet filter hooks
 options 	USELEDS		# make the lights twinkle
 options 	COMPAT_HPUX	# HP-UX binary compatibility
 options 	COMPAT_M68K4K	# m68k4k executables
+options 	COMPAT_LINUX	# Linux/m68k compatibility
+options 	COMPAT_SVR4	# SVR4/m68k compatibility
+options 	EXEC_ELF32	# ELF binaries
 
 # Debugging options
 options 	DIAGNOSTIC	# Kernel sanity checks
@@ -111,7 +108,7 @@ sd*		at oscsi? target ? lun ?	# SCSI disks
 st*		at oscsi? target ? lun ?	# SCSI tapes
 ac*		at oscsi? target ? lun ?	# SCSI changers
 
-pseudo-device	pty		128	# pseudo ptys
+pseudo-device	pty			# pseudo-terminals
 pseudo-device	ppp		1	# PPP network interfaces
 pseudo-device	bpfilter	4	# packet filter devices
 pseudo-device	vnd		4	# vnode pseudo-disks

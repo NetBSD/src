@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.16 1999/03/23 21:29:05 drochner Exp $	*/
+/*	$NetBSD: bus.h,v 1.16.8.1 2000/11/20 20:25:38 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -125,7 +125,9 @@ struct sparc_bus_space_tag {
 
 	void	*(*sparc_intr_establish) __P((
 				bus_space_tag_t,
-				int,			/*level*/
+				int,			/*bus-specific intr*/
+				int,			/*device class level,
+							  see machine/intr.h*/
 				int,			/*flags*/
 				int (*) __P((void *)),	/*handler*/
 				void *));		/*handler arg*/
@@ -192,7 +194,9 @@ static int	bus_space_mmap __P((
 				bus_space_handle_t *));
 static void	*bus_intr_establish __P((
 				bus_space_tag_t,
-				int,			/*level*/
+				int,			/*bus-specific intr*/
+				int,			/*device class level,
+							  see machine/intr.h*/
 				int,			/*flags*/
 				int (*) __P((void *)),	/*handler*/
 				void *));		/*handler arg*/
@@ -260,14 +264,15 @@ bus_space_mmap(t, bt, a, f, hp)
 }
 
 __inline__ void *
-bus_intr_establish(t, l, f, h, a)
+bus_intr_establish(t, p, l, f, h, a)
 	bus_space_tag_t t;
+	int	p;
 	int	l;
 	int	f;
 	int	(*h)__P((void *));
 	void	*a;
 {
-	_BS_CALL(t, sparc_intr_establish)(t, l, f, h, a);
+	_BS_CALL(t, sparc_intr_establish)(t, p, l, f, h, a);
 }
 
 __inline__ void
@@ -294,6 +299,7 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 /* flags for bus space map functions */
 #define BUS_SPACE_MAP_CACHEABLE	0x0001
 #define BUS_SPACE_MAP_LINEAR	0x0002
+#define BUS_SPACE_MAP_PREFETCHABLE	0x0004
 #define BUS_SPACE_MAP_BUS1	0x0100	/* placeholders for bus functions... */
 #define BUS_SPACE_MAP_BUS2	0x0200
 #define BUS_SPACE_MAP_BUS3	0x0400
@@ -641,7 +647,7 @@ bus_space_read_region_2(t, h, o, a, c)
 	u_int16_t		*a;
 {
 	for (; c; a++, c--, o+=2)
-		*a = bus_space_read_1(t, h, o);
+		*a = bus_space_read_2(t, h, o);
 }
 extern __inline__ void
 bus_space_read_region_4(t, h, o, a, c)
@@ -651,7 +657,7 @@ bus_space_read_region_4(t, h, o, a, c)
 	u_int32_t		*a;
 {
 	for (; c; a++, c--, o+=4)
-		*a = bus_space_read_1(t, h, o);
+		*a = bus_space_read_4(t, h, o);
 }
 extern __inline__ void
 bus_space_read_region_8(t, h, o, a, c)
@@ -661,7 +667,7 @@ bus_space_read_region_8(t, h, o, a, c)
 	u_int64_t		*a;
 {
 	for (; c; a++, c--, o+=8)
-		*a = bus_space_read_1(t, h, o);
+		*a = bus_space_read_8(t, h, o);
 }
 
 /*
@@ -905,6 +911,9 @@ bus_space_copy_region_8(t, h1, o1, h2, o2, c)
 /* For devices that have a 24-bit address space */
 #define BUS_DMA_24BIT		BUS_DMA_BUS1
 
+/* Internal flag: current DVMA address is equal to the KVA buffer address */
+#define _BUS_DMA_DIRECTMAP	BUS_DMA_BUS2
+
 /* Forwards needed by prototypes below. */
 struct mbuf;
 struct uio;
@@ -929,7 +938,9 @@ typedef struct sparc_bus_dmamap		*bus_dmamap_t;
 struct sparc_bus_dma_segment {
 	bus_addr_t	ds_addr;	/* DVMA address */
 	bus_size_t	ds_len;		/* length of transfer */
-	void		*_ds_mlist;	/* XXX - dmamap_alloc'ed pages */
+	bus_size_t	_ds_sgsize;	/* size of allocated DVMA segment */
+	void		*_ds_mlist;	/* page list when dmamem_alloc'ed */
+	vaddr_t		_ds_va;		/* VA when dmamem_map'ed */
 };
 typedef struct sparc_bus_dma_segment	bus_dma_segment_t;
 
@@ -971,8 +982,8 @@ struct sparc_bus_dma_tag {
 	int	(*_dmamem_map) __P((bus_dma_tag_t, bus_dma_segment_t *,
 		    int, size_t, caddr_t *, int));
 	void	(*_dmamem_unmap) __P((bus_dma_tag_t, caddr_t, size_t));
-	int	(*_dmamem_mmap) __P((bus_dma_tag_t, bus_dma_segment_t *,
-		    int, int, int, int));
+	paddr_t	(*_dmamem_mmap) __P((bus_dma_tag_t, bus_dma_segment_t *,
+		    int, off_t, int, int));
 };
 
 #define	bus_dmamap_create(t, s, n, m, b, f, p)			\
@@ -1011,7 +1022,7 @@ struct sparc_bus_dma_tag {
  */
 struct sparc_bus_dmamap {
 	/*
-	 * PRIVATE MEMBERS: not for use my machine-independent code.
+	 * PRIVATE MEMBERS: not for use by machine-independent code.
 	 */
 	bus_size_t	_dm_size;	/* largest DMA transfer mappable */
 	int		_dm_segcnt;	/* number of segs this map can map */
@@ -1020,6 +1031,13 @@ struct sparc_bus_dmamap {
 	int		_dm_flags;	/* misc. flags */
 
 	void		*_dm_cookie;	/* cookie for bus-specific functions */
+
+	u_long		_dm_align;	/* DVMA alignment; must be a
+					   multiple of the page size */
+	u_long		_dm_ex_start;	/* constraints on DVMA map */
+	u_long		_dm_ex_end;	/* allocations; used by the VME bus
+					   driver and by the IOMMU driver
+					   when mapping 24-bit devices */
 
 	/*
 	 * PUBLIC MEMBERS: these are used by machine-independent code.
@@ -1043,20 +1061,22 @@ void	_bus_dmamap_unload __P((bus_dma_tag_t, bus_dmamap_t));
 void	_bus_dmamap_sync __P((bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
 	    bus_size_t, int));
 
-int	_bus_dmamem_alloc_common __P((bus_dma_tag_t tag, bus_size_t size,
+int	_bus_dmamem_alloc __P((bus_dma_tag_t tag, bus_size_t size,
 	    bus_size_t alignment, bus_size_t boundary,
 	    bus_dma_segment_t *segs, int nsegs, int *rsegs, int flags));
-void	_bus_dmamem_free_common __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
+void	_bus_dmamem_free __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
 	    int nsegs));
 void	_bus_dmamem_unmap __P((bus_dma_tag_t tag, caddr_t kva,
 	    size_t size));
-int	_bus_dmamem_mmap __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
-	    int nsegs, int off, int prot, int flags));
+paddr_t	_bus_dmamem_mmap __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
+	    int nsegs, off_t off, int prot, int flags));
 
 int	_bus_dmamem_alloc_range __P((bus_dma_tag_t tag, bus_size_t size,
 	    bus_size_t alignment, bus_size_t boundary,
 	    bus_dma_segment_t *segs, int nsegs, int *rsegs, int flags,
 	    vaddr_t low, vaddr_t high));
+
+vaddr_t	_bus_dma_valloc_skewed(size_t, u_long, u_long, u_long);
 #endif /* _SPARC_BUS_DMA_PRIVATE */
 
 #endif /* _SPARC_BUS_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: dz_ibus.c,v 1.15 1999/08/27 17:50:42 ragge Exp $ */
+/*	$NetBSD: dz_ibus.c,v 1.15.2.1 2000/11/20 20:33:37 bouyer Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -51,7 +51,7 @@
 #include <machine/cpu.h>
 #include <machine/scb.h>
 
-#include <machine/../vax/gencons.h>
+#include <arch/vax/vax/gencons.h>
 
 #include <dev/qbus/dzreg.h>
 #include <dev/qbus/dzvar.h>
@@ -59,9 +59,9 @@
 #include "ioconf.h"
 #include "lkc.h"
 
-static  int     dz_vsbus_match __P((struct device *, struct cfdata *, void *));
-static  void    dz_vsbus_attach __P((struct device *, struct device *, void *));
-static	int	dz_print __P((void *, const char *));
+static  int     dz_vsbus_match(struct device *, struct cfdata *, void *);
+static  void    dz_vsbus_attach(struct device *, struct device *, void *);
+static	int	dz_print(void *, const char *);
 
 static	vaddr_t dz_regs; /* Used for console */
 
@@ -112,7 +112,6 @@ dz_vsbus_match(parent, cf, aux)
 	dzP->tcr = 1;
 	DELAY(100000);
 	dzP->tcr = i;
-	va->va_ivec = dzxint;
 
 	/* If the device doesn't exist, no interrupt has been generated */
 	return 1;
@@ -144,10 +143,13 @@ dz_vsbus_attach(parent, self, aux)
 	sc->sc_type = DZ_DZV;
 
 	sc->sc_dsr = 0x0f; /* XXX check if VS has modem ctrl bits */
-	scb_vecalloc(va->va_cvec - 4, dzrint, self->dv_unit, SCB_ISTACK);
+
+	scb_vecalloc(va->va_cvec, dzxint, sc, SCB_ISTACK, &sc->sc_tintrcnt);
+	scb_vecalloc(va->va_cvec - 4, dzrint, sc, SCB_ISTACK, &sc->sc_rintrcnt);
+
 	printf("\n%s: 4 lines", self->dv_xname);
 
-	dzattach(sc);
+	dzattach(sc, NULL);
 
 	if (((vax_confdata & 0x80) == 0) ||/* workstation, have lkc */
 	    (vax_boardtype == VAX_BTYP_48))

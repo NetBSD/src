@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.71 1999/09/12 01:17:29 chs Exp $	   */
+/*	$NetBSD: pmap.c,v 1.71.2.1 2000/11/20 20:33:27 bouyer Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -41,9 +41,7 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 
-#include <vm/vm.h>
-#include <vm/vm_page.h>
-#include <vm/vm_kern.h>
+#include <uvm/uvm_extern.h>
 
 #ifdef PMAPDEBUG
 #include <dev/cons.h>
@@ -58,6 +56,7 @@
 #include <machine/sid.h>
 #include <machine/cpu.h>
 #include <machine/scb.h>
+#include <machine/rpb.h>
 
 /* QDSS console mapping hack */
 #include "qd.h"
@@ -75,12 +74,23 @@ vaddr_t	istack;
 #define PROT_RO		(PG_RO >> PROTSHIFT)
 #define PROT_URKW	(PG_URKW >> PROTSHIFT)
 
+/*
+ * Scratch pages usage:
+ * Page 1: initial frame pointer during autoconfig. Stack and pcb for
+ *	   processes during exit on boot cpu only.
+ * Page 2: cpu_info struct for any cpu.
+ * Page 3: unused
+ * Page 4: unused
+ */
+long	scratch;
+#define	SCRATCHPAGES	4
+
+
 struct pmap kernel_pmap_store;
 
 struct	pte *Sysmap;		/* System page table */
 struct	pv_entry *pv_table;	/* array of entries, one per LOGICAL page */
 int	pventries;
-void	*scratch;
 vaddr_t	iospace;
 
 vaddr_t ptemapstart, ptemapend;
@@ -146,6 +156,7 @@ pmap_bootstrap()
 	 * size calculations must be done now.
 	 * Remember: sysptsize is in PTEs and nothing else!
 	 */
+	physmem = btoc(avail_end);
 
 #define USRPTSIZE ((MAXTSIZ + MAXDSIZ + MAXSSIZ + MMAPSPACE) / VAX_NBPG)
 	/* Kernel alloc area */
@@ -195,10 +206,10 @@ pmap_bootstrap()
 	kvtopte(istack)->pg_v = 0;
 
 	/* Some scratch pages */
-	scratch = (void *)((u_int)istack + ISTACK_SIZE);
+	scratch = ((u_int)istack + ISTACK_SIZE);
 
 	/* Physical-to-virtual translation table */
-	(unsigned)pv_table = (u_int)scratch + 4 * VAX_NBPG;
+	(unsigned)pv_table = scratch + 4 * VAX_NBPG;
 
 	avail_start = (unsigned)pv_table + (ROUND_PAGE(avail_end >> PGSHIFT)) *
 	    sizeof(struct pv_entry) - KERNBASE;
@@ -227,7 +238,7 @@ pmap_bootstrap()
 
 	/* Init SCB and set up stray vectors. */
 	avail_start = scb_init(avail_start);
-	bzero(0, VAX_NBPG >> 1);
+	bcopy((caddr_t)proc0paddr + REDZONEADDR, 0, sizeof(struct rpb));
 
 	if (dep_call->cpu_steal_pages)
 		(*dep_call->cpu_steal_pages)();
@@ -237,9 +248,9 @@ pmap_bootstrap()
 	virtual_end = TRUNC_PAGE(virtual_end);
 
 
-#if defined(PMAPDEBUG)
+#if 0 /* Breaks cninit() on some machines */
 	cninit();
-	printf("Sysmap %p, istack %lx, scratch %p\n",Sysmap,istack,scratch);
+	printf("Sysmap %p, istack %lx, scratch %\n",Sysmap,istack,scratch);
 	printf("etext %p\n", &etext);
 	printf("SYSPTSIZE %x\n",sysptsize);
 	printf("pv_table %p, ptemapstart %lx ptemapend %lx\n",
@@ -267,6 +278,17 @@ pmap_bootstrap()
 	mtpr(pcb->P1LR = pmap->pm_p1lr, PR_P1LR);
 	mtpr(pcb->P0LR = pmap->pm_p0lr, PR_P0LR);
 
+	/* cpu_info struct */
+	pcb->SSP = scratch + VAX_NBPG;
+	mtpr(pcb->SSP, PR_SSP);
+	bzero((caddr_t)pcb->SSP,
+	    sizeof(struct cpu_info) + sizeof(struct device));
+	curcpu()->ci_exit = scratch;
+	curcpu()->ci_dev = (void *)(pcb->SSP + sizeof(struct cpu_info));
+#if defined(MULTIPROCESSOR)
+	curcpu()->ci_flags = CI_MASTERCPU|CI_RUNNING;
+#endif
+
 	/*
 	 * Now everything should be complete, start virtual memory.
 	 */
@@ -274,6 +296,8 @@ pmap_bootstrap()
 	    avail_start >> PGSHIFT, avail_end >> PGSHIFT,
 	    VM_FREELIST_DEFAULT);
 	mtpr(sysptsize, PR_SLR);
+	rpb.sbr = mfpr(PR_SBR);
+	rpb.slr = mfpr(PR_SLR);
 	mtpr(1, PR_MAPEN);
 }
 
@@ -297,13 +321,14 @@ pmap_steal_memory(size, vstartp, vendp)
 	size = round_page(size);
 	npgs = btoc(size);
 
+#ifdef DIAGNOSTIC
+	if (uvm.page_init_done == TRUE)
+		panic("pmap_steal_memory: called _after_ bootstrap");
+#endif
+
 	/*
 	 * A vax only have one segment of memory.
 	 */
-#ifdef DIAGNOSTIC
-	if (vm_physmem[0].pgs)
-		panic("pmap_steal_memory: called _after_ bootstrap");
-#endif
 
 	v = (vm_physmem[0].avail_start << PGSHIFT) | KERNBASE;
 	vm_physmem[0].avail_start += npgs;
@@ -350,7 +375,7 @@ pmap_decpteref(pmap, pte)
 		return;
 	index = ((vaddr_t)pte - (vaddr_t)pmap->pm_p0br) >> PGSHIFT;
 
-	pte = (struct pte *)trunc_page(pte);
+	pte = (struct pte *)trunc_page((vaddr_t)pte);
 #ifdef PMAPDEBUG
 	if (startpmapdebug)
 		printf("pmap_decpteref: pmap %p pte %p index %d refcnt %d\n",
@@ -385,6 +410,7 @@ pmap_create()
 	MALLOC(pmap, struct pmap *, sizeof(*pmap), M_VMPMAP, M_WAITOK);
 	bzero(pmap, sizeof(struct pmap));
 	pmap_pinit(pmap);
+	simple_lock_init(&pmap->pm_lock);
 	return(pmap);
 }
 
@@ -456,7 +482,6 @@ if(startpmapdebug)printf("pmap_release: pmap %p\n",pmap);
 #endif
 	extent_free(ptemap, (u_long)pmap->pm_p0br,
 	    USRPTSIZE * sizeof(struct pte), EX_WAITOK);
-	mtpr(0, PR_TBIA);
 }
 
 /*
@@ -561,7 +586,6 @@ if(startpmapdebug)
 	ptp[5] = ptp[0] + 5;
 	ptp[6] = ptp[0] + 6;
 	ptp[7] = ptp[0] + 7;
-	mtpr(0, PR_TBIA);
 }
 
 void
@@ -625,34 +649,34 @@ if(startpmapdebug)
 		ptp[7] = ptp[0] + 7;
 		ptp += LTOHPN;
 	}
-	mtpr(0, PR_TBIA);
 }
 
 /*
  * pmap_enter() is the main routine that puts in mappings for pages, or
  * upgrades mappings to more "rights". Note that:
- * - "wired" isn't used. We don't loose mappings unless asked for.
- * - "access_type" is set if the entering was caused by a fault.
  */
-void
-pmap_enter(pmap, v, p, prot, wired, access_type)
+int
+pmap_enter(pmap, v, p, prot, flags)
 	pmap_t	pmap;
 	vaddr_t	v;
 	paddr_t	p;
-	vm_prot_t prot, access_type;
-	boolean_t wired;
+	vm_prot_t prot;
+	int flags;
 {
 	struct	pv_entry *pv, *tmp;
 	int	i, s, newpte, oldpte, *patch, index = 0; /* XXX gcc */
+#ifdef PMAPDEBUG
+	boolean_t wired = (flags & PMAP_WIRED) != 0;
+#endif
 
 #ifdef PMAPDEBUG
 if (startpmapdebug)
 	printf("pmap_enter: pmap %p v %lx p %lx prot %x wired %d access %x\n",
-		    pmap, v, p, prot, wired, access_type);
+		    pmap, v, p, prot, wired, flags & VM_PROT_ALL);
 #endif
 	/* Can this happen with UVM??? */
 	if (pmap == 0)
-		return;
+		return (KERN_SUCCESS);
 
 	RECURSESTART;
 	/* Find addess of correct pte */
@@ -689,7 +713,7 @@ if (startpmapdebug)
 			panic("pmap_enter: bad index %d", index);
 #endif
 		if (pmap->pm_refcnt[index] == 0) {
-			vaddr_t ptaddr = trunc_page(&patch[i]);
+			vaddr_t ptaddr = trunc_page((vaddr_t)&patch[i]);
 			paddr_t phys;
 			struct vm_page *pg;
 #ifdef DEBUG
@@ -717,21 +741,31 @@ if (startpmapdebug)
 			    VM_PROT_READ|VM_PROT_WRITE);
 		}
 	}
+	if (flags & PMAP_WIRED)
+		newpte |= PG_W;
 
 	oldpte = patch[i] & ~(PG_V|PG_M);
 
-	/* No mapping change. Can this happen??? */
-	if (newpte == oldpte) {
-		RECURSEEND;
-		return;
-	}
+#ifdef DIAGNOSTIC
+	/* No mapping change. Not allowed to happen. */
+	if (newpte == oldpte)
+		panic("pmap_enter onto myself");
+#endif
 
 	pv = pv_table + (p >> PGSHIFT);
 
+	/* wiring change? */
+	if (newpte == (oldpte | PG_W)) {
+		patch[i] |= PG_W; /* Just wiring change */
+		RECURSEEND;
+		return (KERN_SUCCESS);
+	}
 	/* Changing mapping? */
 	oldpte &= PG_FRAME;
-	if ((newpte & PG_FRAME) != oldpte) {
-
+	if ((newpte & PG_FRAME) == oldpte) {
+		/* prot change. resident_count will be increased later */
+		pmap->pm_stats.resident_count--;
+	} else {
 		/*
 		 * Mapped before? Remove it then.
 		 */
@@ -754,17 +788,14 @@ if (startpmapdebug)
 			pv->pv_next = tmp;
 		}
 		splx(s);
-	} else {
-		/* No mapping change, just flush the TLB */
-		mtpr(0, PR_TBIA);
 	}
 	pmap->pm_stats.resident_count++;
 
-	if (access_type & VM_PROT_READ) {
+	if (flags & VM_PROT_READ) {
 		pv->pv_attr |= PG_V;
 		newpte |= PG_V;
 	}
-	if (access_type & VM_PROT_WRITE)
+	if (flags & VM_PROT_WRITE)
 		pv->pv_attr |= PG_M;
 
 	patch[i] = newpte;
@@ -783,6 +814,9 @@ if (startpmapdebug)
 #endif
 	if (pventries < 10)
 		more_pventries();
+
+	mtpr(0, PR_TBIA); /* Always; safety belt */
+	return (KERN_SUCCESS);
 }
 
 void *
@@ -825,7 +859,6 @@ if(startpmapdebug)
 		*pentry++ = (count>>VAX_PGSHIFT)|PG_V|
 		    (prot & VM_PROT_WRITE ? PG_KW : PG_KR);
 	}
-	mtpr(0,PR_TBIA);
 	return(virtuell+(count-pstart)+0x80000000);
 }
 
@@ -958,7 +991,7 @@ if(startpmapdebug) printf("pmap_protect: pmap %p, start %lx, end %lx, prot %x\n"
 		pts += LTOHPN;
 	}
 	RECURSEEND;
-	mtpr(0,PR_TBIA);
+	mtpr(0, PR_TBIA);
 }
 
 int pmap_simulref(int bits, int addr);
@@ -1071,6 +1104,7 @@ pmap_clear_reference(pg)
 		    pv->pv_pte[4].pg_v = pv->pv_pte[5].pg_v = 
 		    pv->pv_pte[6].pg_v = pv->pv_pte[7].pg_v = 0;
 	RECURSEEND;
+	mtpr(0, PR_TBIA);
 	return TRUE; /* XXX */
 }
 
@@ -1265,6 +1299,25 @@ if(startpmapdebug) printf("pmap_activate: p %p\n", p);
 		mtpr(pmap->pm_p1lr, PR_P1LR);
 	}
 	mtpr(0, PR_TBIA);
+}
+
+/*
+ * removes the wired bit from a bunch of PTE's.
+ */
+void
+pmap_unwire(pmap_t pmap, vaddr_t v)
+{
+	int *pte;
+
+	if (v & KERNBASE) {
+		pte = (int *)kvtopte(v);
+	} else {
+		if (v < 0x40000000)
+			pte = (int *)&pmap->pm_p0br[PG_PFNUM(v)];
+		else
+			pte = (int *)&pmap->pm_p1br[PG_PFNUM(v)];
+	}
+	pte[0] &= ~PG_W; /* Informational, only first page */
 }
 
 struct pv_entry *pv_list;

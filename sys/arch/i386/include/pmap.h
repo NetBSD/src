@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.42 1999/07/28 01:07:59 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.42.2.1 2000/11/20 20:09:30 bouyer Exp $	*/
 
 /*
  *
@@ -41,6 +41,7 @@
 
 #if defined(_KERNEL) && !defined(_LKM)
 #include "opt_user_ldt.h"
+#include "opt_largepages.h"
 #endif
 
 #include <machine/cpufunc.h>
@@ -57,17 +58,17 @@
  * are described by PDEs in the PDP.  the PDEs are defined as follows:
  *
  * (ranges are inclusive -> exclusive, just like vm_map_entry start/end)
- * (the following assumes that KERNBASE is 0xf0000000)
+ * (the following assumes that KERNBASE is 0xc0000000)
  *
  * PDE#s	VA range		usage
- * 0->959	0x0 -> 0xefc00000	user address space, note that the
- *					max user address is 0xefbfe000
+ * 0->767	0x0 -> 0xbfc00000	user address space, note that the
+ *					max user address is 0xbfbfe000
  *					the final two pages in the last 4MB
  *					used to be reserved for the UAREA
  *					but now are no longer used
- * 959		0xefc00000->		recursive mapping of PDP (used for
- *			0xf0000000	linear mapping of PTPs)
- * 960->1023	0xf0000000->		kernel address space (constant
+ * 768		0xbfc00000->		recursive mapping of PDP (used for
+ *			0xc0000000	linear mapping of PTPs)
+ * 768->1023	0xc0000000->		kernel address space (constant
  *			0xffc00000	across all pmap's/processes)
  * 1023		0xffc00000->		"alternate" recursive PDP mapping
  *			<end>		(for other pmaps)
@@ -80,18 +81,18 @@
  * 4MB range is the PTE that maps VA 0xffffe000 (the last page in a 4GB
  * address).
  *
- * all pmap's PD's must have the same values in slots 960->1023 so that
+ * all pmap's PD's must have the same values in slots 768->1023 so that
  * the kernel is always mapped in every process.  these values are loaded
  * into the PD at pmap creation time.
  *
  * at any one time only one pmap can be active on a processor.  this is
  * the pmap whose PDP is pointed to by processor register %cr3.  this pmap
  * will have all its PTEs mapped into memory at the recursive mapping
- * point (slot #959 as show above).  when the pmap code wants to find the
+ * point (slot #767 as show above).  when the pmap code wants to find the
  * PTE for a virtual address, all it has to do is the following:
  *
- * address of PTE = (959 * 4MB) + (VA / NBPG) * sizeof(pt_entry_t)
- *                = 0xefc00000 + (VA / 4096) * 4
+ * address of PTE = (767 * 4MB) + (VA / NBPG) * sizeof(pt_entry_t)
+ *                = 0xbfc00000 + (VA / 4096) * 4
  *
  * what happens if the pmap layer is asked to perform an operation
  * on a pmap that is not the one which is currently active?  in that
@@ -107,25 +108,25 @@
  *   |   0| -> PTP#0 that maps VA 0x0 -> 0x400000
  *   |    |
  *   |    |
- *   | 959| -> points back to PDP (%cr3) mapping VA 0xefc00000 -> 0xf0000000
- *   | 960| -> first kernel PTP (maps 0xf0000000 -> 0xf0400000)
+ *   | 767| -> points back to PDP (%cr3) mapping VA 0xbfc00000 -> 0xc0000000
+ *   | 768| -> first kernel PTP (maps 0xc0000000 -> 0xf0400000)
  *   |    |
  *   |1023| -> points to alternate pmap's PDP (maps 0xffc00000 -> end)
  *   +----+
  *
- * note that the PDE#959 VA (0xefc00000) is defined as "PTE_BASE"
+ * note that the PDE#767 VA (0xbfc00000) is defined as "PTE_BASE"
  * note that the PDE#1023 VA (0xffc00000) is defined as "APTE_BASE"
  *
- * starting at VA 0xefc00000 the current active PDP (%cr3) acts as a
+ * starting at VA 0xbfc00000 the current active PDP (%cr3) acts as a
  * PTP:
  *
- * PTP#959 == PDP(%cr3) => maps VA 0xefc00000 -> 0xf0000000
+ * PTP#767 == PDP(%cr3) => maps VA 0xbfc00000 -> 0xc0000000
  *   +----+
- *   |   0| -> maps the contents of PTP#0 at VA 0xefc00000->0xefc01000
+ *   |   0| -> maps the contents of PTP#0 at VA 0xbfc00000->0xbfc01000
  *   |    |
  *   |    |
- *   | 959| -> maps contents of PTP#959 (the PDP) at VA 0xeffbf000
- *   | 960| -> maps contents of first kernel PTP
+ *   | 767| -> maps contents of PTP#767 (the PDP) at VA 0xbffbf000
+ *   | 768| -> maps contents of first kernel PTP
  *   |    |
  *   |1023|
  *   +----+
@@ -148,8 +149,8 @@
  * the following defines identify the slots used as described above.
  */
 
-#define PDSLOT_PTE	((KERNBASE/NBPD)-1) /* 959: for recursive PDP map */
-#define PDSLOT_KERN	(KERNBASE/NBPD)	    /* 960: start of kernel space */
+#define PDSLOT_PTE	((KERNBASE/NBPD)-1) /* 767: for recursive PDP map */
+#define PDSLOT_KERN	(KERNBASE/NBPD)	    /* 768: start of kernel space */
 #define PDSLOT_APTE	((unsigned)1023) /* 1023: alternative recursive slot */
 
 /*
@@ -187,27 +188,6 @@
 #define NKPTP_MIN	4	/* smallest value we allow */
 #define NKPTP_MAX	(1024 - (KERNBASE/NBPD) - 1)
 				/* largest value (-1 for APTP space) */
-
-/*
- * various address macros
- *
- *  vtopte: return a pointer to the PTE mapping a VA
- *  kvtopte: same as above (takes a KVA, but doesn't matter with this pmap)
- *  ptetov: given a pointer to a PTE, return the VA that it maps
- *  vtophys: translate a VA to the PA mapped to it
- *
- * plus alternative versions of the above
- */
-
-#define vtopte(VA)	(PTE_BASE + i386_btop(VA))
-#define kvtopte(VA)	vtopte(VA)
-#define ptetov(PT)	(i386_ptob(PT - PTE_BASE))
-#define	vtophys(VA)	((*vtopte(VA) & PG_FRAME) | \
-			 ((unsigned)(VA) & ~PG_FRAME))
-#define	avtopte(VA)	(APTE_BASE + i386_btop(VA))
-#define	ptetoav(PT)	(i386_ptob(PT - APTE_BASE))
-#define	avtophys(VA)	((*avtopte(VA) & PG_FRAME) | \
-			 ((unsigned)(VA) & ~PG_FRAME))
 
 /*
  * pdei/ptei: generate index into PDP/PTP from a VA
@@ -342,6 +322,7 @@ struct pmap_remove_record {
 	vaddr_t prr_vas[PMAP_RR_MAX];
 };
 
+#if 0
 /*
  * pmap_transfer_location: used to pass the current location in the
  * pmap between pmap_transfer and pmap_transfer_ptes [e.g. during
@@ -353,6 +334,7 @@ struct pmap_transfer_location {
 	pt_entry_t *pte;		/* the PTE that maps address */
 	struct vm_page *ptp;		/* the PTP that the PTE lives in */
 };
+#endif
 
 /*
  * global kernel variables
@@ -371,14 +353,15 @@ extern int pmap_pg_g;			/* do we support PG_G? */
 
 #define	pmap_kernel()			(&kernel_pmap_store)
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
+#define	pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
 #define	pmap_update()			tlbflush()
 
 #define pmap_clear_modify(pg)		pmap_change_attrs(pg, 0, PG_M)
 #define pmap_clear_reference(pg)	pmap_change_attrs(pg, 0, PG_U)
-#define pmap_copy(DP,SP,D,L,S)		pmap_transfer(DP,SP,D,L,S, FALSE)
+#define pmap_copy(DP,SP,D,L,S)		
 #define pmap_is_modified(pg)		pmap_test_attrs(pg, PG_M)
 #define pmap_is_referenced(pg)		pmap_test_attrs(pg, PG_U)
-#define pmap_move(DP,SP,D,L,S)		pmap_transfer(DP,SP,D,L,S, TRUE)
+#define pmap_move(DP,SP,D,L,S)		
 #define pmap_phys_address(ppn)		i386_ptob(ppn)
 #define pmap_valid_entry(E) 		((E) & PG_V) /* is PDE or PTE valid? */
 
@@ -407,6 +390,12 @@ void		pmap_write_protect __P((struct pmap *, vaddr_t,
 vaddr_t reserve_dumppages __P((vaddr_t)); /* XXX: not a pmap fn */
 
 #define PMAP_GROWKERNEL		/* turn on pmap_growkernel interface */
+
+/*
+ * Do idle page zero'ing uncached to avoid polluting the cache.
+ */
+boolean_t	pmap_zero_page_uncached __P((paddr_t));
+#define	PMAP_PAGEIDLEZERO(pa)	pmap_zero_page_uncached((pa))
 
 /*
  * inline functions
@@ -494,6 +483,46 @@ pmap_protect(pmap, sva, eva, prot)
 	}
 }
 
+/*
+ * various address inlines
+ *
+ *  vtopte: return a pointer to the PTE mapping a VA, works only for
+ *  user and PT addresses
+ *
+ *  kvtopte: return a pointer to the PTE mapping a kernel VA
+ */
+
+#include <lib/libkern/libkern.h>
+
+static __inline pt_entry_t *
+vtopte(vaddr_t va)
+{
+
+	KASSERT(va < (PDSLOT_KERN << PDSHIFT));
+
+	return (PTE_BASE + i386_btop(va));
+}
+
+static __inline pt_entry_t *
+kvtopte(vaddr_t va)
+{
+
+	KASSERT(va >= (PDSLOT_KERN << PDSHIFT));
+
+#ifdef LARGEPAGES
+	{
+		pd_entry_t *pde;
+
+		pde = &pmap_kernel()->pm_pdir[pdei(va)];
+		if (*pde & PG_PS)
+			return ((pt_entry_t *)pde);
+	}
+#endif
+
+	return (PTE_BASE + i386_btop(va));
+}
+
+paddr_t vtophys __P((vaddr_t));
 vaddr_t	pmap_map __P((vaddr_t, paddr_t, paddr_t, vm_prot_t));
 
 #if defined(USER_LDT)

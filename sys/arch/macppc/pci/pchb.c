@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.2 1998/07/13 19:27:13 tsubai Exp $	*/
+/*	$NetBSD: pchb.c,v 1.2.14.1 2000/11/20 20:13:02 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -47,10 +47,6 @@
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
 
-#ifndef PCI_PRODUCT_APPLE_BANDIT
-#define PCI_PRODUCT_APPLE_BANDIT 1
-#endif
-
 int	pchbmatch __P((struct device *, struct cfdata *, void *));
 void	pchbattach __P((struct device *, struct device *, void *));
 
@@ -70,26 +66,26 @@ pchbmatch(parent, cf, aux)
 	 * Match all known PCI host chipsets.
 	 */
 	switch (PCI_VENDOR(pa->pa_id)) {
-
 	case PCI_VENDOR_APPLE:
 		switch (PCI_PRODUCT(pa->pa_id)) {
-
 		case PCI_PRODUCT_APPLE_BANDIT:
-		case 0x08:
-			return 1;
+		case PCI_PRODUCT_APPLE_BANDIT2:
+		case PCI_PRODUCT_APPLE_UNINORTH1:
+		case PCI_PRODUCT_APPLE_UNINORTH2:
+		case PCI_PRODUCT_APPLE_UNINORTH_AGP:
+			return (1);
 		}
 		break;
 
 	case PCI_VENDOR_MOT:
 		switch (PCI_PRODUCT(pa->pa_id)) {
-
-		case 0x02:	/* MPC106 */
-			return 1;
+		case PCI_PRODUCT_MOT_MPC106:
+			return (1);
 		}
 		break;
 	}
 
-	return 0;
+	return (0);
 }
 
 void

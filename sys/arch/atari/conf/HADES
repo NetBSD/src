@@ -1,5 +1,5 @@
 #
-#	$NetBSD: HADES,v 1.20 1999/07/29 10:37:16 augustss Exp $
+#	$NetBSD: HADES,v 1.20.2.1 2000/11/20 20:05:24 bouyer Exp $
 #
 # Medusa-Hades
 #
@@ -74,7 +74,6 @@ options 	COMPAT_14	# Compatibility to NetBSD1.4
 #
 options 	KTRACE			# Add kernel tracing system call
 options 	DIAGNOSTIC		# Add additional error checking code
-options 	NKMEMCLUSTERS=256	# Size of kernel malloc area
 
 #
 # Atari specific kernel options:
@@ -94,7 +93,7 @@ pseudo-device	mouse	1	# mouse
 pseudo-device	view	4	# View (graphics mapping)
 pseudo-device	sl		# Slip
 pseudo-device	ppp		# ppp
-pseudo-device	pty	16	# Pseudo-tty support
+pseudo-device	pty		# pseudo-terminals
 pseudo-device	loop		# Loopback network
 pseudo-device	vnd	3	# 3 pseudo disks (see vnconfig)
 pseudo-device	md	2	# Boot memory disk
@@ -107,12 +106,13 @@ hdfd1	at fdc0 unit 1		# 2nd Hades-type floppy drive
 zs0	at mainbus0		# Serial support through 8530
 nvr0	at mainbus0		# nvram driver
 lp0	at mainbus0		# centronics printer
-grfet0	at grfbus0		# ET4000 consoles
-ite*	at grfet0
+grfbus0	at mainbus0		# bitmapped display's
+grfet0	at grfbus0		# et4000/et6000/et6100 consoles
+ite0	at grfet0
 grfet1	at grfbus0
-ite*	at grfet1
+ite1	at grfet1
 grfet2	at grfbus0
-ite*	at grfet2
+ite2	at grfet2
 pcibus0	at mainbus0		# PCI-bus
 pci0	at pcibus0
 avmebus0 at mainbus0		# VME bus

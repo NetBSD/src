@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.9 1999/05/05 04:32:28 thorpej Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.9.2.1 2000/11/20 20:13:03 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -49,8 +49,7 @@
 #include <sys/errno.h>
 #include <sys/device.h>
 
-#include <vm/vm.h>
-#include <vm/vm_kern.h>
+#include <uvm/uvm_extern.h>
 
 #define _MACPPC_BUS_DMA_PRIVATE
 #include <machine/bus.h>
@@ -61,6 +60,12 @@
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
+
+#include <dev/ofw/openfirm.h>
+#include <dev/ofw/ofw_pci.h>
+
+static void fixpci __P((int, pci_chipset_tag_t));
+static int find_node_intr __P((int, u_int32_t *, u_int32_t *));
 
 /*
  * PCI doesn't have any special needs; just use the generic versions
@@ -88,8 +93,25 @@ pci_attach_hook(parent, self, pba)
 	struct device *parent, *self;
 	struct pcibus_attach_args *pba;
 {
+	pci_chipset_tag_t pc = pba->pba_pc;
+	int bus = pba->pba_bus;
+	int node, nn, sz;
+	int32_t busrange[2];
 
-	/* Nothing to do. */
+	for (node = pc->node; node; node = nn) {
+		sz = OF_getprop(node, "bus-range", busrange, 8);
+		if (sz == 8 && busrange[0] == bus) {
+			fixpci(node, pc);
+			return;
+		}
+		if ((nn = OF_child(node)) != 0)
+			continue;
+		while ((nn = OF_peer(node)) == 0) {
+			node = OF_parent(node);
+			if (node == pc->node)
+				return;		/* not found */
+		}
+	}
 }
 
 int
@@ -142,54 +164,8 @@ pci_conf_read(pc, tag, reg)
 	pcitag_t tag;
 	int reg;
 {
-	pcireg_t data;
-	struct pci_bridge *r;
-	int bus, dev, func, s;
 
-	s = splhigh();
-
-	if (pc == PCI_CHIPSET_MPC106) {
-		r = &pci_bridges[0];
-
-		out32rb(r->addr, tag | reg);
-		data = 0xffffffff;
-		if (!badaddr(r->data, 4))
-			data = in32rb(r->data);
-		out32rb(r->addr, 0);
-	} else {
-		pci_decompose_tag(pc, tag, &bus, &dev, &func);
-
-		r = &pci_bridges[pc];
-
-		/*
-		 * bandit's minimum device number of the first bus is 11.
-		 * So we behave as if there is no device when dev < 11.
-		 */
-		if (func > 7)
-			panic("pci_conf_read: func > 7");
-
-		if (bus == r->bus) {
-			if (dev < 11) {
-				if (reg == PCI_ID_REG)
-					return 0xffffffff;
-				else
-					panic("pci_conf_read: dev < 11");
-			}
-			out32rb(r->addr, (1 << dev) | (func << 8) | reg);
-		} else
-			out32rb(r->addr, tag | reg | 1);
-		DELAY(10);
-		data = 0xffffffff;
-		if (!badaddr(r->data, 4))
-			data = in32rb(r->data);
-		DELAY(10);
-		out32rb(r->addr, 0);
-		DELAY(10);
-	}
-
-	splx(s);
-
-	return data;
+	return (*pc->conf_read)(pc, tag, reg);
 }
 
 void
@@ -199,39 +175,8 @@ pci_conf_write(pc, tag, reg, data)
 	int reg;
 	pcireg_t data;
 {
-	struct pci_bridge *r;
-	int bus, dev, func, s;
 
-	s = splhigh();
-
-	if (pc == PCI_CHIPSET_MPC106) {
-		r = &pci_bridges[0];
-
-		out32rb(r->addr, tag | reg);
-		out32rb(r->data, data);
-		out32rb(r->addr, 0);
-	} else {
-		r = &pci_bridges[pc];
-
-		pci_decompose_tag(pc, tag, &bus, &dev, &func);
-
-		if (func > 7)
-			panic("pci_conf_write: func > 7");
-
-		if (bus == r->bus) {
-			if (dev < 11)
-				panic("pci_conf_write: dev < 11");
-			out32rb(r->addr, (1 << dev) | (func << 8) | reg);
-		} else
-			out32rb(r->addr, tag | reg | 1);
-		DELAY(10);
-		out32rb(r->data, data);
-		DELAY(10);
-		out32rb(r->addr, 0);
-		DELAY(10);
-	}
-
-	splx(s);
+	(*pc->conf_write)(pc, tag, reg, data);
 }
 
 int
@@ -299,6 +244,16 @@ pci_intr_string(pc, ih)
 	
 }
 
+const struct evcnt *
+pci_intr_evcnt(pc, ih)
+	pci_chipset_tag_t pc;
+	pci_intr_handle_t ih;
+{
+
+	/* XXX for now, no evcnt parent reported */
+	return NULL;
+}
+
 extern void * intr_establish();
 extern void intr_disestablish();
 
@@ -323,4 +278,157 @@ pci_intr_disestablish(pc, cookie)
 {
 
 	intr_disestablish(cookie);
+}
+
+#define pcibus(x) \
+	(((x) & OFW_PCI_PHYS_HI_BUSMASK) >> OFW_PCI_PHYS_HI_BUSSHIFT)
+#define pcidev(x) \
+	(((x) & OFW_PCI_PHYS_HI_DEVICEMASK) >> OFW_PCI_PHYS_HI_DEVICESHIFT)
+#define pcifunc(x) \
+	(((x) & OFW_PCI_PHYS_HI_FUNCTIONMASK) >> OFW_PCI_PHYS_HI_FUNCTIONSHIFT)
+
+void
+fixpci(parent, pc)
+	int parent;
+	pci_chipset_tag_t pc;
+{
+	int node;
+	pcitag_t tag;
+	pcireg_t csr, intr;
+	int len, i;
+	int32_t irqs[4];
+	struct {
+		u_int32_t phys_hi, phys_mid, phys_lo;
+		u_int32_t size_hi, size_lo;
+	} addr[8];
+
+	for (node = OF_child(parent); node; node = OF_peer(node)) {
+		len = OF_getprop(node, "assigned-addresses", addr,
+				 sizeof(addr));
+		if (len < (int)sizeof(addr[0]))
+			continue;
+
+		tag = pci_make_tag(pc, pcibus(addr[0].phys_hi),
+				   pcidev(addr[0].phys_hi),
+				   pcifunc(addr[0].phys_hi));
+
+		/*
+		 * Make sure the IO and MEM enable bits are set in the CSR.
+		 */
+		csr = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
+		csr &= ~(PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE);
+
+		for (i = 0; i < len / sizeof(addr[0]); i++) {
+			switch (addr[i].phys_hi & OFW_PCI_PHYS_HI_SPACEMASK) {
+			case OFW_PCI_PHYS_HI_SPACE_IO:
+				csr |= PCI_COMMAND_IO_ENABLE;
+				break;
+
+			case OFW_PCI_PHYS_HI_SPACE_MEM32:
+				csr |= PCI_COMMAND_MEM_ENABLE;
+				break;
+			}
+		}
+
+		pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, csr);
+
+		/*
+		 * Make sure the line register is programmed with the
+		 * interrupt mapping.
+		 */
+		if (find_node_intr(node, &addr[0].phys_hi, irqs) == -1)
+			continue;
+
+		intr = pci_conf_read(pc, tag, PCI_INTERRUPT_REG);
+		intr &= ~PCI_INTERRUPT_LINE_MASK;
+		intr |= irqs[0] & PCI_INTERRUPT_LINE_MASK;
+		pci_conf_write(pc, tag, PCI_INTERRUPT_REG, intr);
+	}
+}
+
+/*
+ * Find PCI IRQ of the node from OF tree.
+ */
+int
+find_node_intr(node, addr, intr)
+	int node;
+	u_int32_t *addr, *intr;
+{
+	int parent, len, mlen, iparent;
+	int match, i;
+	u_int32_t map[64], *mp;
+	u_int32_t imask[8], maskedaddr[8];
+	u_int32_t icells;
+	char name[32];
+
+	len = OF_getprop(node, "AAPL,interrupts", intr, 4) ;
+	if (len == 4)
+		return len;
+
+	parent = OF_parent(node);
+	len = OF_getprop(parent, "interrupt-map", map, sizeof(map));
+	mlen = OF_getprop(parent, "interrupt-map-mask", imask, sizeof(imask));
+
+	if (len == -1 || mlen == -1)
+		goto nomap;
+
+#ifdef DIAGNOSTIC
+	if (mlen == sizeof(imask)) {
+		printf("interrupt-map too long\n");
+		return -1;
+	}
+#endif
+
+	/* mask addr by "interrupt-map-mask" */
+	bcopy(addr, maskedaddr, mlen);
+	for (i = 0; i < mlen / 4; i++)
+		maskedaddr[i] &= imask[i];
+
+	mp = map;
+	while (len > mlen) {
+		match = bcmp(maskedaddr, mp, mlen);
+		mp += mlen / 4;
+		len -= mlen;
+
+		/*
+		 * We must read "#interrupt-cells" for each time because
+		 * interrupt-parent may be defferent.
+		 *
+		 * XXX assume #address-cells == 1
+		 */
+		iparent = *mp++;
+		len -= 4;
+		if (OF_getprop(iparent, "#interrupt-cells", &icells, 4) != 4)
+			return -1;
+
+		/* Found. */
+		if (match == 0) {
+			bcopy(mp, intr, icells * 4);
+			return icells * 4;
+		}
+
+		mp += icells;
+		len -= icells * 4;
+	}
+
+nomap:
+	/*
+	 * If the node has no interrupt property and the parent is a
+	 * pci-bridge, use parent's interrupt.  This occurs on a PCI
+	 * slot.  (e.g. AHA-3940)
+	 */
+	bzero(name, sizeof(name));
+	OF_getprop(parent, "name", name, sizeof(name));
+	if (strcmp(name, "pci-bridge") == 0) {
+		len = OF_getprop(parent, "AAPL,interrupts", intr, 4) ;
+		if (len == 4)
+			return len;
+	}
+
+	/* XXX This may be wrong... */
+	len = OF_getprop(node, "interrupts", intr, 4) ;
+	if (len == 4)
+		return len;
+
+	return -1;
 }

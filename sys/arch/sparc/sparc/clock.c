@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.69 1998/10/14 14:53:36 pk Exp $ */
+/*	$NetBSD: clock.c,v 1.69.12.1 2000/11/20 20:25:42 bouyer Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -70,18 +70,19 @@
 #include <sys/gmon.h>
 #endif
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
 #include <machine/autoconf.h>
 #include <machine/eeprom.h>
 #include <machine/cpu.h>
 
+#include <dev/clock_subr.h>
+
 #include <sparc/sparc/vaddrs.h>
 #include <sparc/sparc/cpuvar.h>
 #include <sparc/sparc/clockreg.h>
 #include <sparc/sparc/timerreg.h>
-#include "kbd.h"
 
 /*
  * Statistics clock interval and variance, in usec.  Variance must be a
@@ -320,6 +321,9 @@ oclockattach(parent, self, aux)
 #endif /* SUN4 */
 }
 
+/* We support only on eeprom device */
+static int eeprom_attached;
+
 /*
  * Sun 4/100, 4/200 EEPROM match routine.
  */
@@ -335,7 +339,8 @@ eeprom_match(parent, cf, aux)
 	if (uoba->uoba_isobio4 == 0)
 		return (0);
 
-	if (cf->cf_unit != 0)
+	if (eeprom_attached)
+		/* We support only on eeprom device */
 		return (0);
 
 	/* Only these sun4s have oclock */
@@ -363,6 +368,7 @@ eeprom_attach(parent, self, aux)
 	struct obio4_attach_args *oba = &uoba->uoba_oba4;
 	bus_space_handle_t bh;
 
+	eeprom_attached = 1;
 	printf("\n");
 
 	if (obio_bus_map(oba->oba_bustag,
@@ -936,10 +942,6 @@ clockintr(cap)
 {
 	register volatile int discard;
 	int s;
-#if	NKBD	> 0
-	extern int cnrom __P((void));
-	extern int rom_console_input;
-#endif
 
 	/*
 	 * Protect the clearing of the clock interrupt.  If we don't
@@ -971,11 +973,6 @@ forward:
 	splx(s);
 
 	hardclock((struct clockframe *)cap);
-#if	NKBD > 0
-	if (rom_console_input && cnrom())
-		setsoftint();
-#endif
-
 	return (1);
 }
 
@@ -1034,14 +1031,6 @@ statintr(cap)
 	return (1);
 }
 
-/*
- * BCD to decimal and decimal to BCD.
- */
-#define	FROMBCD(x)	(((x) >> 4) * 10 + ((x) & 0xf))
-#define	TOBCD(x)	(((x) / 10 * 16) + ((x) % 10))
-
-#define	SECDAY		(24 * 60 * 60)
-#define	SECYR		(SECDAY * 365)
 /*
  * should use something like
  * #define LEAPYEAR(y) ((((y) % 4) == 0 && ((y) % 100) != 0) || ((y) % 400) == 0)

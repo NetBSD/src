@@ -1,17 +1,31 @@
-/*	$NetBSD: cpu.h,v 1.19 1999/01/16 02:36:01 nisimura Exp $	*/
+/*	$NetBSD: cpu.h,v 1.19.8.1 2000/11/20 20:20:26 bouyer Exp $	*/
 
-#ifndef __PMAX_CPU_H
-#define __PMAX_CPU_H
+#ifndef _PMAX_CPU_H_
+#define _PMAX_CPU_H_
 
-/*
- * pmax uses standard mips1 convention, wiring FPU to hard interupt 5.
- */
 #include <mips/cpu.h>
 #include <mips/cpuregs.h>
 
-#define MIPS_INT_MASK_FPU	MIPS_INT_MASK_5
+#ifndef _LOCORE
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_lockdebug.h"
+#endif
 
-#define	INT_MASK_REAL_DEV	(MIPS_HARD_INT_MASK &~ MIPS_INT_MASK_5)
-#define	INT_MASK_FPU_DEAL	MIPS_INT_MASK_5
+#include <sys/sched.h>
+struct cpu_info {
+	struct schedstate_percpu ci_schedstate; /* scheduler state */
+#if defined(DIAGNOSTIC) || defined(LOCKDEBUG)
+	u_long ci_spin_locks;		/* # of spin locks held */
+	u_long ci_simple_locks;		/* # of simple locks held */
+#endif
+};
 
-#endif __PMAX_CPU_H
+#ifdef _KERNEL
+extern struct cpu_info cpu_info_store;
+
+#define	curcpu()		(&cpu_info_store)
+#define	cpu_number()		(0)
+#endif
+#endif /* !_LOCORE */
+
+#endif	/* !_PMAX_CPU_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.18 1999/09/22 07:18:45 leo Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.18.2.1 2000/11/20 20:05:30 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -39,8 +39,7 @@
 #include <sys/device.h>
 #include <sys/malloc.h>
 
-#include <vm/vm.h>
-#include <vm/vm_kern.h>
+#include <uvm/uvm_extern.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
@@ -67,6 +66,17 @@
 #define PCI_MEM_START   0x00100000      /*   1 MByte */
 #define PCI_IO_START    0x00004000      /*  16 kByte (some PCI cards allow only
 					    I/O addresses up to 0xffff) */
+
+/*
+ * PCI memory and IO should be aligned acording to this masks
+ */
+#define PCI_MACHDEP_IO_ALIGN_MASK	0xffffff00
+#define PCI_MACHDEP_MEM_ALIGN_MASK	0xfffff000
+
+/*
+ * Convert a PCI 'device' number to a slot number.
+ */
+#define	DEV2SLOT(dev)	(3 - dev)
 
 /*
  * Struct to hold the memory and I/O datas of the pci devices
@@ -96,17 +106,36 @@ struct cfattach pcibus_ca = {
 	sizeof(struct device), pcibusmatch, pcibusattach
 };
 
+/*
+ * We need some static storage to probe pci-busses for VGA cards during
+ * early console init.
+ */
+static struct atari_bus_space	bs_storage[2];	/* 1 iot, 1 memt */
+
 int
 pcibusmatch(pdp, cfp, auxp)
 struct device	*pdp;
 struct cfdata	*cfp;
 void		*auxp;
 {
+	static int	nmatched = 0;
+
+	if (strcmp((char *)auxp, "pcibus"))
+		return (0);	/* Wrong number... */
+
 	if(atari_realconfig == 0)
-		return (0);
-	if (strcmp((char *)auxp, "pcibus") || cfp->cf_unit != 0)
-		return(0);
-	return(machineid & ATARI_HADES ? 1 : 0);
+		return (1);
+
+	if (machineid & ATARI_HADES) {
+		/*
+		 * The Hades has only one pci bus
+		 */
+		if (nmatched)
+			return (0);
+		nmatched++;
+		return (1);
+	}
+	return (0);
 }
 
 void
@@ -115,24 +144,32 @@ struct device	*pdp, *dp;
 void		*auxp;
 {
 	struct pcibus_attach_args	pba;
-	bus_space_tag_t			leb_alloc_bus_space_tag __P((void));
-
-
-	enable_pci_devices();
 
 	pba.pba_busname = "pci";
 	pba.pba_pc      = NULL;
 	pba.pba_bus     = 0;
 	pba.pba_flags	= PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
 	pba.pba_dmat	= BUS_PCI_DMA_TAG;
-	pba.pba_iot     = leb_alloc_bus_space_tag();
-	pba.pba_memt    = leb_alloc_bus_space_tag();
+	pba.pba_iot     = leb_alloc_bus_space_tag(&bs_storage[0]);
+	pba.pba_memt    = leb_alloc_bus_space_tag(&bs_storage[0]);
 	if ((pba.pba_iot == NULL) || (pba.pba_memt == NULL)) {
 		printf("leb_alloc_bus_space_tag failed!\n");
 		return;
 	}
 	pba.pba_iot->base  = PCI_IO_PHYS;
 	pba.pba_memt->base = PCI_MEM_PHYS;
+
+	if (dp == NULL) {
+		/*
+		 * Scan the bus for a VGA-card that we support. If we
+		 * find one, try to initialize it to a 'standard' text
+		 * mode (80x25).
+		 */
+		check_for_vga();
+		return;
+	}
+
+	enable_pci_devices();
 
 	MFP2->mf_aer &= ~(0x27); /* PCI interrupts: HIGH -> LOW */
 
@@ -188,12 +225,6 @@ init_pci_bus()
 		csr &= ~PCI_COMMAND_MASTER_ENABLE;
 		pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, csr);
 	}
-
-	/*
-	 * Scan the bus for a VGA-card that we support. If we find
-	 * one, try to initialize it to a 'standard' text mode (80x25).
-	 */
-	check_for_vga();
 }
 
 /*
@@ -348,6 +379,14 @@ enable_pci_devices()
 		p->size = PCI_MAPREG_IO_SIZE(mask);
 
 		/*
+		 * Align IO if necessary
+		 */
+		if (p->size < PCI_MAPREG_IO_SIZE(PCI_MACHDEP_IO_ALIGN_MASK)) {
+		    p->mask = PCI_MACHDEP_IO_ALIGN_MASK;
+		    p->size = PCI_MAPREG_IO_SIZE(p->mask);
+		}
+
+		/*
 		 * if I/O is already enabled (probably by the console driver)
 		 * save the address in order to take care about it later.
 		 */
@@ -357,6 +396,14 @@ enable_pci_devices()
 		insert_into_list(&iolist, p);
 	    } else {
 		p->size = PCI_MAPREG_MEM_SIZE(mask);
+
+		/*
+		 * Align memory if necessary
+		 */
+		if (p->size < PCI_MAPREG_IO_SIZE(PCI_MACHDEP_MEM_ALIGN_MASK)) {
+		    p->mask = PCI_MACHDEP_MEM_ALIGN_MASK;
+		    p->size = PCI_MAPREG_MEM_SIZE(p->mask);
+		}
 
 		/*
 		 * if memory is already enabled (probably by the console driver)
@@ -377,8 +424,8 @@ enable_pci_devices()
 	 * number. This makes sense on the atari because the
 	 * individual slots are hard-wired to a specific MFP-pin.
 	 */
-	csr  = (dev << PCI_INTERRUPT_PIN_SHIFT);
-	csr |= (dev << PCI_INTERRUPT_LINE_SHIFT);
+	csr  = (DEV2SLOT(dev) << PCI_INTERRUPT_PIN_SHIFT);
+	csr |= (DEV2SLOT(dev) << PCI_INTERRUPT_LINE_SHIFT);
 	pci_conf_write(pc, tag, PCI_INTERRUPT_REG, csr);
     }
 
@@ -386,7 +433,7 @@ enable_pci_devices()
      * second step: calculate the memory and I/O adresses beginning from
      * PCI_MEM_START and PCI_IO_START. Care about already mapped areas.
      *
-     * beginn with memory list
+     * begin with memory list
      */
 
     address = PCI_MEM_START;
@@ -441,6 +488,7 @@ enable_pci_devices()
 		csr = pci_conf_read(pc, p->tag, PCI_COMMAND_STATUS_REG);
 		csr |= PCI_COMMAND_MEM_ENABLE | PCI_COMMAND_MASTER_ENABLE;
 		pci_conf_write(pc, p->tag, PCI_COMMAND_STATUS_REG, csr);
+		p->csr = csr;
 	    }
 	}
 	p = LIST_NEXT(p, link);
@@ -481,6 +529,7 @@ enable_pci_devices()
 		csr = pci_conf_read(pc, p->tag, PCI_COMMAND_STATUS_REG);
 		csr |= PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MASTER_ENABLE;
 		pci_conf_write(pc, p->tag, PCI_COMMAND_STATUS_REG, csr);
+		p->csr = csr;
 	    }
 	}
 	p = LIST_NEXT(p, link);
@@ -613,6 +662,16 @@ pci_intr_string(pc, ih)
 	sprintf(irqstr, "irq %d", ih);
 	return (irqstr);
 	
+}
+
+const struct evcnt *
+pci_intr_evcnt(pc, ih)
+	pci_chipset_tag_t pc;
+	pci_intr_handle_t ih;
+{
+
+	/* XXX for now, no evcnt parent reported */
+	return NULL;
 }
 
 /*

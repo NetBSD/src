@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.7 1999/08/04 16:01:47 thorpej Exp $	*/
+/*	$NetBSD: intr.c,v 1.7.2.1 2000/11/20 20:12:22 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -40,18 +40,10 @@
  * Link and dispatch interrupts.
  */
 
-#include "opt_inet.h"
-#include "opt_atalk.h"
-#include "opt_ccitt.h"
-#include "opt_iso.h"
-#include "opt_ns.h"
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/vmmeter.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -60,10 +52,14 @@
 #include <machine/cpu.h>
 #include <machine/intr.h>
 
+#include <machine/psc.h>
+#include <machine/viareg.h>
+
 #define	NISR	8
 #define	ISRLOC	0x18
 
 static int intr_noint __P((void *));
+void netintr __P((void));
 
 static int ((*intr_func[NISR]) __P((void *))) = {
 	intr_noint,
@@ -121,34 +117,35 @@ intr_init()
 
 	g_inames = (char *) &intrnames;
 	if (mac68k_machine.aux_interrupts) {
-
 		inames = AUX_INAMES;
 
 		/* Standard spl(9) interrupt priorities */
-		mac68k_ipls[MAC68K_IPL_TTY] = (PSL_S | PSL_IPL1);
 		mac68k_ipls[MAC68K_IPL_BIO] = (PSL_S | PSL_IPL2);
 		mac68k_ipls[MAC68K_IPL_NET] = (PSL_S | PSL_IPL3);
+		mac68k_ipls[MAC68K_IPL_TTY] = (PSL_S | PSL_IPL1);
 		mac68k_ipls[MAC68K_IPL_IMP] = (PSL_S | PSL_IPL6);
 		mac68k_ipls[MAC68K_IPL_STATCLOCK] = (PSL_S | PSL_IPL6);
 		mac68k_ipls[MAC68K_IPL_CLOCK] = (PSL_S | PSL_IPL6);
-		mac68k_ipls[MAC68K_IPL_SCHED] = (PSL_S | PSL_IPL4);
+		mac68k_ipls[MAC68K_IPL_SCHED] = (PSL_S | PSL_IPL6);
 
-		/* Non-standard interrupt priority */
+		/* Non-standard interrupt priorities */
+		mac68k_ipls[MAC68K_IPL_ADB] = (PSL_S | PSL_IPL6);
 		mac68k_ipls[MAC68K_IPL_AUDIO] = (PSL_S | PSL_IPL5);
 
 	} else {
 		inames = STD_INAMES;
 
 		/* Standard spl(9) interrupt priorities */
-		mac68k_ipls[MAC68K_IPL_TTY] = (PSL_S | PSL_IPL1);
 		mac68k_ipls[MAC68K_IPL_BIO] = (PSL_S | PSL_IPL2);
 		mac68k_ipls[MAC68K_IPL_NET] = (PSL_S | PSL_IPL2);
+		mac68k_ipls[MAC68K_IPL_TTY] = (PSL_S | PSL_IPL1);
 		mac68k_ipls[MAC68K_IPL_IMP] = (PSL_S | PSL_IPL2);
 		mac68k_ipls[MAC68K_IPL_STATCLOCK] = (PSL_S | PSL_IPL2);
 		mac68k_ipls[MAC68K_IPL_CLOCK] = (PSL_S | PSL_IPL2);
 		mac68k_ipls[MAC68K_IPL_SCHED] = (PSL_S | PSL_IPL3);
 
-		/* Non-standard interrupt priority */
+		/* Non-standard interrupt priorities */
+		mac68k_ipls[MAC68K_IPL_ADB] = (PSL_S | PSL_IPL1);
 		mac68k_ipls[MAC68K_IPL_AUDIO] = (PSL_S | PSL_IPL2);
 
 		if (current_mac_model->class == MACH_CLASSAV) {
@@ -161,6 +158,12 @@ intr_init()
 	memcpy(g_inames, inames, MAX_INAME_LENGTH);
 
 	intr_computeipl();
+
+	/* Initialize the VIAs */
+	via_init();
+
+	/* Initialize the PSC (if present) */
+	psc_init();
 }
 
 
@@ -172,8 +175,8 @@ void
 intr_computeipl()
 {
 	/*
-	 * Enforce `bio <= net <= tty <= imp <= statclock <= clock <= sched'
-	 * as defined in spl(9)
+	 * Enforce the following relationship, as defined in spl(9):
+	 * `bio <= net <= tty <= imp <= statclock <= clock <= sched <= serial'
 	 */
 	if (mac68k_ipls[MAC68K_IPL_BIO] > mac68k_ipls[MAC68K_IPL_NET])
 		mac68k_ipls[MAC68K_IPL_NET] = mac68k_ipls[MAC68K_IPL_BIO];
@@ -193,6 +196,9 @@ intr_computeipl()
 
 	if (mac68k_ipls[MAC68K_IPL_CLOCK] > mac68k_ipls[MAC68K_IPL_SCHED])
 		mac68k_ipls[MAC68K_IPL_SCHED] = mac68k_ipls[MAC68K_IPL_CLOCK];
+
+	if (mac68k_ipls[MAC68K_IPL_SCHED] > mac68k_ipls[MAC68K_IPL_SERIAL])
+		mac68k_ipls[MAC68K_IPL_SERIAL] = mac68k_ipls[MAC68K_IPL_SCHED];
 }
 
 /*
@@ -275,19 +281,6 @@ intr_noint(arg)
 	return 0;
 }
 
-/*
- * XXX Why on earth isn't this in a common file?!
- */
-void	netintr __P((void));
-void	arpintr __P((void));
-void	atintr __P((void));
-void	ipintr __P((void));
-void	ip6intr __P((void));
-void	nsintr __P((void));
-void	clnlintr __P((void));
-void	ccittintr __P((void));
-void	pppintr __P((void));
-
 void
 netintr()
 {
@@ -301,39 +294,14 @@ netintr()
 
 		if (isr == 0)
 			return;
-#ifdef INET
-#include "arp.h"
-#if NARP > 0
-		if (isr & (1 << NETISR_ARP))
-			arpintr();
-#endif
-		if (isr & (1 << NETISR_IP))
-			ipintr();
-#endif
-#ifdef INET6
-		if (isr & (1 << NETISR_IPV6))
-			ip6intr();
-#endif
-#ifdef NETATALK
-		if (isr & (1 << NETISR_ATALK))
-			atintr();
-#endif
-#ifdef NS
-		if (isr & (1 << NETISR_NS))
-			nsintr();
-#endif
-#ifdef ISO
-		if (isr & (1 << NETISR_ISO))
-			clnlintr();
-#endif
-#ifdef CCITT
-		if (isr & (1 << NETISR_CCITT))
-			ccittintr();
-#endif
-#include "ppp.h"
-#if NPPP > 0
-		if (isr & (1 << NETISR_PPP))
-			pppintr();
-#endif
+
+#define DONETISR(bit, fn) do {		\
+	if (isr & (1 << bit))		\
+		fn();			\
+} while (0)
+
+#include <net/netisr_dispatch.h>
+
+#undef DONETISR
 	}
 }

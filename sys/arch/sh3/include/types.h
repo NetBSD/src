@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.1 1999/09/13 10:31:23 itojun Exp $	*/
+/*	$NetBSD: types.h,v 1.1.2.1 2000/11/20 20:24:31 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -42,7 +42,7 @@
 
 #if defined(_KERNEL)
 typedef struct label_t {
-	int val[6];
+	int val[9];
 } label_t;
 #endif
 
@@ -74,5 +74,7 @@ typedef	long long		  int64_t;
 typedef	unsigned long long	u_int64_t;
 
 typedef int32_t			register_t;
+
+#define __BROKEN_CONFIG_UNIT_USAGE
 
 #endif	/* _MACHTYPES_H_ */

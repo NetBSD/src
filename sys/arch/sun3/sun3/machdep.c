@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.132 1999/09/12 01:17:25 chs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.132.2.1 2000/11/20 20:28:02 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -55,7 +55,6 @@
 #include <sys/conf.h>
 #include <sys/file.h>
 #include <sys/clist.h>
-#include <sys/callout.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
@@ -72,11 +71,6 @@
 #ifdef	KGDB
 #include <sys/kgdb.h>
 #endif
-
-#include <vm/vm.h>
-#include <vm/vm_map.h>
-#include <vm/vm_kern.h>
-#include <vm/vm_page.h>
 
 #include <uvm/uvm.h> /* XXX: not _extern ... need vm_map_create */
 
@@ -104,6 +98,9 @@
 extern char kernel_text[];
 /* Defined by the linker */
 extern char etext[];
+
+/* Our exported CPU info; we can have only one. */  
+struct cpu_info cpu_info_store;
 
 vm_map_t exec_map = NULL;  
 vm_map_t mb_map = NULL;
@@ -152,7 +149,7 @@ consinit()
 
 		ddb_init(end[0], end + 1, (int*)esym);
 	}
-#endif DDB
+#endif /* DDB */
 
 	/*
 	 * Now that the console can do input as well as
@@ -231,7 +228,7 @@ cpu_startup()
 	 */
 	size = MAXBSIZE * nbuf;
 	if (uvm_map(kernel_map, (vm_offset_t *) &buffers, round_page(size),
-		    NULL, UVM_UNKNOWN_OFFSET,
+		    NULL, UVM_UNKNOWN_OFFSET, 0,
 		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
 				UVM_ADV_NORMAL, 0)) != KERN_SUCCESS)
 		panic("startup: cannot allocate VM for buffers");
@@ -254,7 +251,7 @@ cpu_startup()
 		 * "base" pages for the rest.
 		 */
 		curbuf = (vm_offset_t) buffers + (i * MAXBSIZE);
-		curbufsize = CLBYTES * ((i < residual) ? (base+1) : base);
+		curbufsize = NBPG * ((i < residual) ? (base+1) : base);
 
 		while (curbufsize) {
 			pg = uvm_pagealloc(NULL, 0, NULL, 0);
@@ -289,17 +286,9 @@ cpu_startup()
 				 nmbclusters * mclbytes, VM_MAP_INTRSAFE,
 				 FALSE, NULL);
 
-	/*
-	 * Initialize callouts
-	 */
-	callfree = callout;
-	for (i = 1; i < ncallout; i++)
-		callout[i-1].c_next = &callout[i];
-	callout[i-1].c_next = NULL;
-
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
-	format_bytes(pbuf, sizeof(pbuf), bufpages * CLBYTES);
+	format_bytes(pbuf, sizeof(pbuf), bufpages * NBPG);
 	printf("using %d buffers containing %s of memory\n", nbuf, pbuf);
 
 	/*
@@ -554,7 +543,7 @@ long	dumplo = 0; 		/* blocks */
 
 /*
  * This is called by main to set dumplo, dumpsize.
- * Dumps always skip the first CLBYTES of disk space
+ * Dumps always skip the first NBPG of disk space
  * in case there might be a disk label stored there.
  * If there is extra space, put dump at the end to
  * reduce the chance that swapping trashes it.
@@ -624,7 +613,6 @@ dumpsys()
 	daddr_t blkno;
 	int error = 0;
 
-	msgbufenabled = 0;
 	if (dumpdev == NODEV)
 		return;
 	if (dumppage == 0)
@@ -732,7 +720,7 @@ dumpsys()
 		if ((todo & 0xf) == 0)
 			printf("\r%4d", todo);
 		pmap_enter(pmap_kernel(), vmmap, paddr | PMAP_NC,
-		    VM_PROT_READ, FALSE, VM_PROT_READ);
+		    VM_PROT_READ, VM_PROT_READ);
 		error = (*dsw->d_dump)(dumpdev, blkno, vaddr, NBPG);
 		pmap_remove(pmap_kernel(), vmmap, vmmap + NBPG);
 		if (error)

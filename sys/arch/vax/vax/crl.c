@@ -1,4 +1,4 @@
-/*	$NetBSD: crl.c,v 1.5 1996/10/13 03:35:35 christos Exp $	*/
+/*	$NetBSD: crl.c,v 1.5.28.1 2000/11/20 20:33:14 bouyer Exp $	*/
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -66,7 +66,7 @@ struct {
 	int	crl_ds;		/* saved drive status */
 } crlstat;
 
-void	crlintr __P((int));
+void	crlintr __P((void *));
 void	crlattach __P((void));
 static	void crlstart __P((void));
 
@@ -80,11 +80,9 @@ struct	ivec_dsp crl_intr;
 void
 crlattach()
 {
-	extern	struct ivec_dsp idsptch;
-
-	bcopy(&idsptch, &crl_intr, sizeof(struct ivec_dsp));
-	scb->scb_csrint = &crl_intr;
+	crl_intr = idsptch;
 	crl_intr.hoppaddr = crlintr;
+	scb->scb_csrint = &crl_intr;
 }	
 
 /*ARGSUSED*/
@@ -130,9 +128,9 @@ crlrw(dev, uio, flag)
 
 	if (uio->uio_resid == 0) 
 		return (0);
-	s = spl4();
+	s = splconsmedia();
 	while (crltab.crl_state & CRL_BUSY)
-		sleep((caddr_t)&crltab, PRIBIO);
+		(void) tsleep(&crltab, PRIBIO, "crlbusy", 0);
 	crltab.crl_state |= CRL_BUSY;
 	splx(s);
 
@@ -145,22 +143,22 @@ crlrw(dev, uio, flag)
 			break;
 		}
 		if (uio->uio_rw == UIO_WRITE) {
-			error = uiomove(bp->b_un.b_addr, i, uio);
+			error = uiomove(bp->b_data, i, uio);
 			if (error)
 				break;
 		}
 		bp->b_flags = uio->uio_rw == UIO_WRITE ? B_WRITE : B_READ;
-		s = spl4(); 
+		s = splconsmedia(); 
 		crlstart();
 		while ((bp->b_flags & B_DONE) == 0)
-			sleep((caddr_t)bp, PRIBIO);	
+			(void) tsleep(bp, PRIBIO, "crlrw", 0);
 		splx(s);
 		if (bp->b_flags & B_ERROR) {
 			error = EIO;
 			break;
 		}
 		if (uio->uio_rw == UIO_READ) {
-			error = uiomove(bp->b_un.b_addr, i, uio);
+			error = uiomove(bp->b_data, i, uio);
 			if (error)
 				break;
 		}
@@ -177,7 +175,7 @@ crlstart()
 
 	bp = crltab.crl_buf;
 	crltab.crl_errcnt = 0;
-	crltab.crl_xaddr = (ushort *) bp->b_un.b_addr;
+	crltab.crl_xaddr = (ushort *) bp->b_data;
 	bp->b_resid = 0;
 
 	if ((mfpr(PR_STXCS) & STXCS_RDY) == 0)
@@ -191,13 +189,13 @@ crlstart()
 		mtpr(bp->b_blkno<<8 | STXCS_IE | CRL_F_WRITE, PR_STXCS);
 	}
 #ifdef lint
-	crlintr();
+	crlintr(NULL);
 #endif
 }
 
 void
 crlintr(arg)
-	int arg;
+	void *arg;
 {
 	register struct buf *bp;
 	int i;
@@ -210,10 +208,18 @@ crlintr(arg)
 		switch (crltab.crl_active) {
 
 		case CRL_F_RETSTS:
-			crlstat.crl_ds = mfpr(PR_STXDB);
-			printf("crlcs=0x%b, crlds=0x%b\n", crlstat.crl_cs,
-				CRLCS_BITS, crlstat.crl_ds, CRLDS_BITS); 
-			break;
+			{
+				char sbuf[256], sbuf2[256];
+
+				crlstat.crl_ds = mfpr(PR_STXDB);
+
+				bitmask_snprintf(crlstat.crl_cs, CRLCS_BITS,
+						 sbuf, sizeof(sbuf));
+				bitmask_snprintf(crlstat.crl_ds, CRLDS_BITS,
+						 sbuf2, sizeof(sbuf2));
+				printf("crlcs=0x%s, crlds=0x%s\n", sbuf, sbuf2);
+				break;
+			}
 
 		case CRL_F_READ:
 		case CRL_F_WRITE:

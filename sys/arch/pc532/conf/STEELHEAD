@@ -1,4 +1,4 @@
-#	$NetBSD: STEELHEAD,v 1.26 1999/07/29 10:37:21 augustss Exp $
+#	$NetBSD: STEELHEAD,v 1.26.2.1 2000/11/20 20:19:18 bouyer Exp $
 #
 # STEELHEAD: Phil Nelson's pc532
 #
@@ -61,7 +61,7 @@ sd* at scsibus? target ? lun ?			# SCSI disks
 st* at scsibus? target ? lun ?			# SCSI tapes
 cd* at scsibus? target ? lun ?			# SCSI cd-rom
 
-pseudo-device	pty 16			# pseudo-terminals
+pseudo-device	pty			# pseudo-terminals
 pseudo-device	loop 1			# loopback network
 pseudo-device	bpfilter 4		# packet filter
 pseudo-device	sl 3			# compressed SLIP

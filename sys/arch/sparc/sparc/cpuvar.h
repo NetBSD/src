@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.22 1999/10/04 19:23:49 pk Exp $ */
+/*	$NetBSD: cpuvar.h,v 1.22.2.1 2000/11/20 20:25:43 bouyer Exp $ */
 
 /*
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -39,8 +39,16 @@
 #ifndef _sparc_cpuvar_h
 #define _sparc_cpuvar_h
 
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_multiprocessor.h"
+#include "opt_lockdebug.h"
+#endif
+
 #include <sys/device.h>
 #include <sys/lock.h>
+#include <sys/sched.h>
+
+#include <sparc/include/reg.h>
 
 #include <sparc/sparc/cache.h>	/* for cacheinfo */
 
@@ -61,7 +69,7 @@ struct module_info {
 	void (*hotfix) __P((struct cpu_info *));
 	void (*mmu_enable)__P((void));
 	void (*cache_enable)__P((void));
-	int  ncontext;			/* max. # of contexts (we use) */
+	int  ncontext;			/* max. # of contexts (that we use) */
 
 	void (*get_syncflt)__P((void));
 	int  (*get_asyncflt)__P((u_int *, u_int *));
@@ -70,10 +78,12 @@ struct module_info {
 	void (*sp_vcache_flush_segment)__P((int, int));
 	void (*sp_vcache_flush_region)__P((int));
 	void (*sp_vcache_flush_context)__P((void));
-	void (*pcache_flush_line)__P((int, int));
+	void (*pcache_flush_page)__P((paddr_t, int));
 	void (*pure_vcache_flush)__P((void));
 	void (*cache_flush_all)__P((void));
 	void (*memerr)__P((unsigned, u_int, u_int, struct trapframe *));
+	void (*zero_page)__P((paddr_t));
+	void (*copy_page)__P((paddr_t, paddr_t));
 };
 
 struct xpmsg {
@@ -126,6 +136,19 @@ struct xpmsg {
  */
 
 struct cpu_info {
+	struct schedstate_percpu ci_schedstate; /* scheduler state */
+
+	/*
+	 * SPARC cpu_info structures live at two VAs: one global
+	 * VA (so each CPU can access any other CPU's cpu_info)
+	 * and an alias VA CPUINFO_VA which is the same on each
+	 * CPU and maps to that CPU's cpu_info.  Since the alias
+	 * CPUINFO_VA is how we locate our cpu_info, we have to
+	 * self-reference the global VA so that we can return it
+	 * in the curcpu() macro.
+	 */
+	struct cpu_info * __volatile ci_self;
+
 	int		node;		/* PROM node for this CPU */
 
 	/* CPU information */
@@ -198,8 +221,7 @@ struct cpu_info {
 	 * etc.
 	 */
 
-	struct	proc	*_curproc;		/* CPU owner */
-#define curproc	cpuinfo._curproc
+	struct	proc	*ci_curproc;		/* CPU owner */
 	struct	proc 	*fpproc;		/* FPU owner */
 
 	/*
@@ -254,11 +276,15 @@ struct cpu_info {
 	void	(*vcache_flush_context)__P((void));
 	void	(*sp_vcache_flush_context)__P((void));
 
-	void	(*pcache_flush_line)__P((int, int));
+	void	(*pcache_flush_page)__P((paddr_t, int));
 	void	(*pure_vcache_flush)__P((void));
 	void	(*cache_flush_all)__P((void));
 
-#ifdef SUN4M
+	/* Support for hardware-assisted page clear/copy */
+	void	(*zero_page)__P((paddr_t));
+	void	(*copy_page)__P((paddr_t, paddr_t));
+
+#if 0
 	/* hardware-assisted block operation routines */
 	void		(*hwbcopy)
 				__P((const void *from, void *to, size_t len));
@@ -276,6 +302,11 @@ struct cpu_info {
 
 	/* Inter-processor message area */
 	struct xpmsg msg;
+
+#if defined(DIAGNOSTIC) || defined(LOCKDEBUG)
+	u_long ci_spin_locks;		/* # of spin locks held */
+	u_long ci_simple_locks;		/* # of simple locks held */
+#endif
 };
 
 /*
@@ -357,6 +388,7 @@ struct cpu_info {
 void getcpuinfo __P((struct cpu_info *sc, int node));
 void mmu_install_tables __P((struct cpu_info *));
 void pmap_alloc_cpu __P((struct cpu_info *));
+void pmap_globalize_boot_cpu __P((struct cpu_info *));
 
 extern struct cpu_info **cpus;
 

@@ -1,37 +1,60 @@
-#	$NetBSD: Makefile,v 1.6 1999/06/21 21:02:49 wrstuden Exp $
+#	$NetBSD: Makefile,v 1.6.2.1 2000/11/20 20:13:04 bouyer Exp $
 
 S=	${.CURDIR}/../../../..
 
 PROG=		ofwboot
-FILES=		${PROG}.elf
-SRCS=		Locore.c boot.c ofdev.c net.c netif_of.c alloc.c
+FILES=		${PROG}.elf ${PROG}.xcf
+SRCS=		Locore.c boot.c ofdev.c net.c netif_of.c vers.c
+XCOFFXTRA=	Xcoffxtra.c
+XCOFFXTRAOBJ=	Xcoffxtra.o
+CFLAGS+=	-msoft-float
+#CFLAGS+=	-DDEBUG -DNETIF_DEBUG
+CPPFLAGS+=	-D_STANDALONE -DSUPPORT_DHCP
+DBG=		-Os -mmultiple
+
 .PATH:		${S}/arch/powerpc/powerpc
 SRCS+=		ofwmagic.S
-#CFLAGS+=	-DDEBUG -DNETIF_DEBUG
+
 MKMAN=		no
 STRIPFLAG=
 BINMODE=	444
 OBJCOPY?=	objcopy
 
+.if !defined(FIXCOFF)
+.ifnmake(print-objdir)
+FIXCOFFDIR!=	cd ${.CURDIR}/../fixcoff; ${MAKE} print-objdir
+FIXCOFF=	${FIXCOFFDIR}/fixcoff
+FIXCOFFTARG=	${FIXCOFF}
+
+${FIXCOFF}:
+	(cd ${.CURDIR}/../fixcoff; make)
+
+.endif
+.else
+FIXCOFFTARG=
+.endif
+
 NEWVERSWHAT=	"OpenFirmware Boot"
 
 # For now...
 #RELOC=		20000
-RELOC=		6c0000
+RELOC=		600000
 
 ENTRY=		_start
 
-CLEANFILES+=	vers.c vers.o ${PROG}.elf
+CLEANFILES+=	vers.c ${PROG}.elf ${PROG}.mrg ${PROG}.xcf
 
 CPPFLAGS+=	-I. -I${.CURDIR}/../../.. -I${.CURDIR}/../../../..
 CPPFLAGS+=	-DRELOC=0x${RELOC}
 #CPPFLAGS+=	-DXCOFF_GLUE		# for booting PCI Powermacs
 
-CLEANFILES+= ${.OBJDIR}/machine ${.OBJDIR}/powerpc
+CLEANFILES+= ${XCOFFXTRAOBJ}
 
 .BEGIN:
 	@[ -h machine ] || ln -s ${S}/arch/${MACHINE}/include machine
 	@[ -h powerpc ] || ln -s ${S}/arch/powerpc/include powerpc
+.NOPATH: machine powerpc
+CLEANFILES+= machine powerpc
 
 ### find out what to use for libkern
 KERN_AS=	library
@@ -49,14 +72,19 @@ SAMISCMAKEFLAGS= SA_USE_CREAD=yes SA_USE_LOADFILE=yes
 .include "${S}/lib/libsa/Makefile.inc"
 LIBSA=		${SALIB}
 
-${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
-	sh ${.CURDIR}/../newvers.sh ${.CURDIR}/version ${NEWVERSWHAT}
-	${COMPILE.c} vers.c
-	${LD} -s -N -Ttext ${RELOC} -Bstatic -o ${PROG} \
-	    ${OBJS} vers.o ${LIBSA} ${LIBZ} ${LIBKERN}
-	mv ${PROG} ${PROG}.elf
+.PHONY: vers.c
+vers.c: version
+	sh ${S}/conf/newvers_stand.sh ${.CURDIR}/version "macppc" ${NEWVERSWHAT}
+
+${PROG}: ${OBJS} ${XCOFFXTRAOBJ} ${LIBSA} ${LIBZ} ${LIBKERN} ${FIXCOFFTARG}
+	${LD} -s -N -Ttext ${RELOC} -Bstatic -o ${PROG}.elf \
+	    ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 	${OBJCOPY} -O binary ${PROG}.elf ${PROG}
-#	${OBJCOPY} --input-target=elf32-powerpc \
-#	    --output-target=xcoff-powermac ${PROG}.elf ${PROG}.xcf
+	${LD} -s -N -T ${.CURDIR}/../fixcoff/elf32_powerpc_merge.x -e _entry \
+	    -Ttext ${RELOC} -Bstatic -o ${PROG}.mrg  ${XCOFFXTRAOBJ} \
+	    ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
+	${OBJCOPY} -O aixcoff-rs6000 -R .comment -R .note \
+	    ${PROG}.mrg ${PROG}.xcf
+	${FIXCOFF} ${PROG}.xcf
 
 .include <bsd.prog.mk>

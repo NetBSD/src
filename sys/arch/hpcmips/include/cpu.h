@@ -1,20 +1,31 @@
-/*	$NetBSD: cpu.h,v 1.1.1.1 1999/09/16 12:23:22 takemura Exp $	*/
+/*	$NetBSD: cpu.h,v 1.1.1.1.2.1 2000/11/20 20:46:44 bouyer Exp $	*/
 
 #ifndef __HPCMIPS_CPU_H
 #define __HPCMIPS_CPU_H
 
-/*
- *  VR4100: Internal timer causes hard interrupt 5.
- */
-#define MIPS3_INTERNAL_TIMER_INTERRUPT
-#define MIPS_INT_MASK_CLOCK	MIPS_INT_MASK_5
-
 #include <mips/cpu.h>
-#include <mips/cpuregs.h> /* XXX */
+#include <mips/cpuregs.h>
 
-#if 0
-#define	INT_MASK_REAL_DEV	MIPS_HARD_INT_MASK	/* XXX */
+#ifndef _LOCORE
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_lockdebug.h"
 #endif
-#define	INT_MASK_REAL_DEV	MIPS3_HARD_INT_MASK	/* XXX */
+
+#include <sys/sched.h>
+struct cpu_info {
+	struct schedstate_percpu ci_schedstate; /* scheduler state */
+#if defined(DIAGNOSTIC) || defined(LOCKDEBUG)
+	u_long ci_spin_locks;		/* # of spin locks held */
+	u_long ci_simple_locks;		/* # of simple locks held */
+#endif
+};
+
+#ifdef _KERNEL
+extern struct cpu_info cpu_info_store;
+
+#define	cpu_number()	(0)
+#define	curcpu()	(&cpu_info_store)
+#endif
+#endif /* !_LOCORE */
 
 #endif __HPCMIPS_CPU_H

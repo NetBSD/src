@@ -1,4 +1,4 @@
-/*	$NetBSD: csc.c,v 1.6 1999/09/30 22:59:53 thorpej Exp $	*/
+/*	$NetBSD: csc.c,v 1.6.2.1 2000/11/20 20:04:04 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -47,9 +47,7 @@
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
-#include <vm/vm.h>
-#include <vm/vm_kern.h>
-#include <vm/vm_page.h>
+#include <uvm/uvm_extern.h>
 #include <machine/pmap.h>
 #include <machine/io.h>
 #include <machine/irqhandler.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: fdvar.h,v 1.8 1998/09/05 15:42:42 pk Exp $	*/
+/*	$NetBSD: fdvar.h,v 1.8.12.1 2000/11/20 20:25:32 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -43,18 +43,20 @@
 
 #ifndef _LOCORE
 struct fdcio {
+	bus_space_handle_t	fdcio_handle;
 	/*
 	 * 82072 (sun4c) and 82077 (sun4m) controllers have different
-	 * register layout; so we cache some here.
+	 * register layout; so we cache offsets to the registers here.
 	 */
-	volatile u_int8_t	*fdcio_reg_msr;
-	volatile u_int8_t	*fdcio_reg_fifo;
-	volatile u_int8_t	*fdcio_reg_dor;	/* 82077 only */
+	u_int	fdcio_reg_msr;
+	u_int	fdcio_reg_fifo;
+	u_int	fdcio_reg_dor;		/* 82077 only */
 
 	/*
 	 * Interrupt state.
 	 */
-	int	fdcio_istate;
+	int	fdcio_itask;
+	int	fdcio_istatus;
 
 	/*
 	 * IO state.
@@ -71,12 +73,17 @@ struct fdcio {
 };
 #endif /* _LOCORE */
 
-/* istate values */
-#define ISTATE_IDLE		0	/* No HW interrupt expected */
-#define ISTATE_SPURIOUS		1	/* Spurious HW interrupt detected */
-#define ISTATE_SENSEI		2	/* Do SENSEI on next HW interrupt */
-#define ISTATE_DMA		3	/* Pseudo-DMA in progress */
-#define ISTATE_DONE		4	/* Interrupt processing complete */
+/* itask values */
+#define FDC_ITASK_NONE		0	/* No HW interrupt expected */
+#define FDC_ITASK_SENSEI	1	/* Do SENSEI on next HW interrupt */
+#define FDC_ITASK_DMA		2	/* Do Pseudo-DMA */
+#define FDC_ITASK_RESULT	3	/* Pick up command results */
+
+/* istatus values */
+#define FDC_ISTATUS_NONE	0	/* No status available */
+#define FDC_ISTATUS_SPURIOUS	1	/* Spurious HW interrupt detected */
+#define FDC_ISTATUS_ERROR	2	/* Operation completed abnormally */
+#define FDC_ISTATUS_DONE	3	/* Operation completed normally */
 
 
 #define FD_MAX_NSEC 36		/* highest known number of spt - allow for */

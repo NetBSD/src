@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.4 1998/06/29 20:18:07 gwr Exp $ */
+/*	$NetBSD: boot.c,v 1.4.14.1 2000/11/20 20:27:56 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -60,7 +60,7 @@ main()
 {
 	char *cp, *file;
 
-	printf(">> NetBSD tapeboot [%s]\n", version);
+	printf(">> %s tapeboot [%s]\n", bootprog_name, bootprog_rev);
 	prom_get_boot_info();
 
 	/*

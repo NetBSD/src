@@ -1,10 +1,12 @@
-#	$NetBSD: GENERIC,v 1.47 1999/07/31 20:19:31 thorpej Exp $
+#	$NetBSD: GENERIC,v 1.47.2.1 2000/11/20 20:08:02 bouyer Exp $
 #
 # Generic kernel - one size fits all.
 #
 
 # Include attributes common to all hp300s
 include "arch/hp300/conf/std.hp300"
+
+#ident 		"GENERIC-$Revision: 1.47.2.1 $"
 
 # Support for various CPU types
 options 	HP320
@@ -37,7 +39,6 @@ options 	SYSVSHM		# System V-style shared memory
 options 	SYSVSEM		# System V-style semaphores
 options 	SYSVMSG		# System V-style message queues
 options 	KTRACE		# system call tracing support
-options 	NKMEMCLUSTERS=1024	# 4K pages in kernel malloc pool
 options 	LKM		# Loadable kernel modules
 #options 	SCSIVERBOSE	# Verbose SCSI errors
 
@@ -54,11 +55,16 @@ file-system	MFS		# Memory-based filesystem
 # Filesystem options
 options 	QUOTA		# User and group quotas in FFS
 #options 	FFS_EI		# FFS Endian Independant support
+options 	SOFTDEP         # FFS soft updates support.
 options 	NFSSERVER	# Network filesystem server
 options 	NFS_BOOT_BOOTPARAM # use Sun bootparams for NFS boot
 
 # Networking options
 options 	INET		# Internet protocols
+options 	INET6		# IPV6
+#options 	IPSEC		# IP security
+#options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+#options 	IPSEC_DEBUG	# debug for IP security
 options 	GATEWAY		# IP forwarding + larger mb_map
 options 	MROUTING	# Multicast routing
 options 	TCP_COMPAT_42	# compatibility with 4.2BSD TCP/IP
@@ -170,15 +176,19 @@ sd*		at oscsi? target ? lun ?	# SCSI disks
 st*		at oscsi? target ? lun ?	# SCSI tapes
 ac*		at oscsi? target ? lun ?	# SCSI changers
 
-pseudo-device	pty		64	# pseudo ptys
+pseudo-device	pty			# pseudo-terminals
 pseudo-device	sl		4	# SLIP network interfaces
 pseudo-device	ppp		4	# PPP network interfaces
 pseudo-device	bpfilter	16	# Berkeley packet filter
 pseudo-device	vnd		4	# vnode pseudo-disks
 pseudo-device	ccd		4	# concatenated disk devices
 #pseudo-device	raid		4	# RAIDframe disk driver
+#options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 pseudo-device	loop			# loopback network interface
 pseudo-device	ipfilter 		# IP Filter package
 #pseudo-device	gre		2	# generic L3 over IP tunnel
+pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
+#pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
+#pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
 # rnd is EXPERIMENTAL
-#pseudo-device	rnd			# /dev/random and in-kernel generator
+pseudo-device	rnd			# /dev/random and in-kernel generator

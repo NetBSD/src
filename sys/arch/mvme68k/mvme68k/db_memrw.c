@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.4 1998/08/22 10:55:34 scw Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.4.14.1 2000/11/20 20:15:24 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -55,11 +55,13 @@
  * by Jason R. Thorpe <thorpej@NetBSD.ORG>.
  */
 
+#include "opt_ddb.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/pte.h>
 #include <machine/db_machdep.h>
@@ -67,6 +69,9 @@
 #include <m68k/cacheops.h>
 
 #include <ddb/db_access.h>
+#ifdef DDB
+#include <ddb/db_output.h>
+#endif
 
 static void	db_write_text __P((vaddr_t, size_t, char *));
 
@@ -161,7 +166,11 @@ db_write_text(addr, size, data)
 		oldpte = *pte;
 
 		if ((oldpte & PG_V) == 0) {
+#ifdef DDB
+			db_printf(" address %p not a valid page\n", dst);
+#else
 			printf(" address %p not a valid page\n", dst);
+#endif
 			return;
 		}
 

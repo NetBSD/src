@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.43 1999/07/29 19:14:37 augustss Exp $	*/
+/*	$NetBSD: conf.c,v 1.43.2.1 2000/11/20 20:33:13 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -43,6 +43,8 @@
 #include <sys/conf.h>
 #include <sys/vnode.h>
 
+#include "opt_cputype.h"
+
 #include "hp.h" /* 0 */
 bdev_decl(hp);
 
@@ -66,7 +68,7 @@ bdev_decl(ts);
 #include "mu.h"
 bdev_decl(mu);
 
-#if defined(VAX750)
+#if VAX750
 #define NCTU	1
 #else
 #define NCTU	0
@@ -161,6 +163,7 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 #endif
 
 #define smgcnputc wsdisplay_cnputc
+#define	smgcnpollc nullcnpollc
 
 cons_decl(gen);
 cons_decl(dz);
@@ -171,13 +174,14 @@ cons_decl(smg);
 #include "smg.h"
 
 struct	consdev constab[]={
-#if VAX8600 || VAX8200 || VAX780 || VAX750 || VAX650 || VAX630 || VAX670
+#if VAX8600 || VAX8200 || VAX780 || VAX750 || VAX650 || VAX630 || VAX660 || \
+	VAX670 || VAX680 || VAX8800
 #define NGEN	1
 	cons_init(gen), /* Generic console type; mtpr/mfpr */
 #else
 #define NGEN	0
 #endif
-#if VAX410 || VAX43 || VAX46 || VAX48 || VAX49
+#if VAX410 || VAX43 || VAX46 || VAX48 || VAX49 || VAX53
 	cons_init(dz),	/* DZ11-like serial console on VAXstations */
 #endif
 #if VAX650 || VAX630
@@ -188,7 +192,7 @@ struct	consdev constab[]={
 	cons_init(qd),
 #endif
 #endif
-#if 0 /* NSMG XXX fails due to wscons */
+#if NSMG
 	cons_init(smg),
 #endif
 

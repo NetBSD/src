@@ -1,32 +1,22 @@
-/* $NetBSD: lk201.c,v 1.14 1999/04/24 08:01:04 simonb Exp $ */
+/*	$NetBSD: lk201.c,v 1.14.2.1 2000/11/20 20:20:18 bouyer Exp $	*/
 
 /*
  * The LK201 keycode mapping routine is here, along with initialization
  * functions for the keyboard and mouse.
  */
 
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/syslog.h>
-#include <sys/select.h>
-#include <dev/cons.h>
-
-#include <machine/pmioctl.h>
 
 #include <dev/dec/lk201.h>
+
 #include <pmax/dev/lk201var.h>
 
-
-/* Exported functions */
-extern char *kbdMapChar __P((int keycode));
-
-extern void KBDReset __P(( dev_t dev, void (*putc) (dev_t, int) ));
-
 /*
- * Keyboard to Ascii, unshifted.
+ * Keyboard to ASCII, unshifted.
  */
-static unsigned char unshiftedAscii[] = {
+static u_char unshiftedAscii[] = {
 /*  0 */ KBD_NOKEY,	KBD_NOKEY,	KBD_NOKEY,	KBD_NOKEY,
 /*  4 */ KBD_NOKEY,	KBD_NOKEY,	KBD_NOKEY,	KBD_NOKEY,
 /*  8 */ KBD_NOKEY,	KBD_NOKEY,	KBD_NOKEY,	KBD_NOKEY,
@@ -96,7 +86,7 @@ static unsigned char unshiftedAscii[] = {
 /*
  * Keyboard to Ascii, shifted.
  */
-static unsigned char shiftedAscii[] = {
+static u_char shiftedAscii[] = {
 /*  0 */ KBD_NOKEY,	KBD_NOKEY,	KBD_NOKEY,	KBD_NOKEY,
 /*  4 */ KBD_NOKEY,	KBD_NOKEY,	KBD_NOKEY,	KBD_NOKEY,
 /*  8 */ KBD_NOKEY,	KBD_NOKEY,	KBD_NOKEY,	KBD_NOKEY,
@@ -166,7 +156,7 @@ static unsigned char shiftedAscii[] = {
 /*
  * Keyboard initialization string.
  */
-static u_char kbdInitString[] = {
+static u_char lk_initstr[] = {
 	LK_LED_ENABLE, LED_ALL,		/* show we are resetting keyboard */
 	LK_DEFAULTS,
 	LK_CMD_MODE(LK_AUTODOWN, 1),
@@ -192,59 +182,64 @@ static u_char kbdInitString[] = {
 	LK_LED_DISABLE, LED_ALL,	/* clear keyboard leds */
 };
 
-
 /*
- * Keyboard to what the rcons termcap entry expects.
+ * Keyboard to what the rcons termcap entry expects for long codes.
  * XXX function keys are handled specially.
  */
-static struct toString {
+struct {
 	int	ts_keycode;
+	int	ts_len;
 	char	*ts_string;
-} toString[] = {			/* termcap name */
-	{ KBD_UP,	"\033[A" },	/* ku */
-	{ KBD_DOWN,	"\033[B" },	/* kd */
-	{ KBD_RIGHT,	"\033[C" },	/* kr */
-	{ KBD_LEFT,	"\033[D" },	/* kl */
-	{ KBD_REMOVE,	"\177" },	/* kD */
-	{ KBD_NEXT,	"\033[222z" },	/* kN */
-	{ KBD_PREVIOUS,	"\033[216z" },	/* kP */
+} static lk_keytostr[] = {			/* termcap name */
+	{ KBD_UP,	3, "\033[A" },		/* ku */
+	{ KBD_DOWN,	3, "\033[B" },		/* kd */
+	{ KBD_RIGHT,	3, "\033[C" },		/* kr */
+	{ KBD_LEFT,	3, "\033[D" },		/* kl */
+	{ KBD_REMOVE,	1, "\177" },		/* kD */
+	{ KBD_NEXT,	6, "\033[222z" },	/* kN */
+	{ KBD_PREVIOUS,	6, "\033[216z" },	/* kP */
 };
 
-#define NUM_TOSTRING (sizeof(toString) / sizeof(toString[0]))
+#define NUM_KEYTOSTR (sizeof(lk_keytostr) / sizeof(lk_keytostr[0]))
 
-
-static void (*raw_kbd_putc) __P((dev_t dev, int c)) = NULL;
-static dev_t lk_out_dev = NODEV;
+static void	(*raw_kbd_putc) __P((dev_t dev, int c)) = NULL;
+static int	(*raw_kbd_getc) __P((dev_t dev)) = NULL;
+static dev_t	lk_out_dev = NODEV;
+static dev_t	lk_in_dev = NODEV;
 
 /*
- * Initialize the Keyboard.
+ * Initialize the keyboard.
  */
 void
-KBDReset(kbddev, putc)
+lk_reset(kbddev, putc)
 	dev_t kbddev;
 	void (*putc) __P((dev_t, int));
 {
+	static int inlk_reset;
 	int i;
-	static int inKBDReset;
 
-	if (inKBDReset)
+	if (inlk_reset)
 		return;
-	inKBDReset = 1;
+	inlk_reset = 1;
 
-	/* XXX no way to disable keyclick from userspace */
-	for (i = 0; i < sizeof(kbdInitString); i++) {
-		(*putc)(kbddev, (int)kbdInitString[i]);
+	for (i = 0; i < sizeof(lk_initstr); i++) {
+		(*putc)(kbddev, (int)lk_initstr[i]);
 		DELAY(20000);
 	}
-	inKBDReset = 0;
+
+	inlk_reset = 0;
 	raw_kbd_putc = putc;
 	lk_out_dev = kbddev;
 }
 
+/*
+ * Sound the keyboard bell.
+ */
 void
 lk_bell(ring)
 	int ring;
 {
+
 	if ((!ring) || (lk_out_dev == NODEV) || (raw_kbd_putc == NULL))
 		return;
 	(*raw_kbd_putc)(lk_out_dev, LK_RING_BELL);
@@ -252,47 +247,37 @@ lk_bell(ring)
 }
 
 /*
- * ----------------------------------------------------------------------------
- *
- * kbdMapChar --
- *
- *	Map characters from the keyboard to ASCII. Return NULL if there is
- *	no valid mapping.
- *
- * Results:
- *	None.
- *
- * Side effects:
- *	Remember state of shift, control and caps-lock keys.
- *
- * ----------------------------------------------------------------------------
+ * Map characters from the keyboard to ASCII. Return NULL if there is
+ * no valid mapping. Return length of mapped ASCII in *len - returned
+ * string is not NUL terminated, as NUL is a valid code.
  */
 char *
-kbdMapChar(cc)
-	int cc;
+lk_mapchar(cc, len)
+	int cc, *len;
 {
-	static u_char shiftDown;
-	static u_char ctrlDown;
-	static u_char capsLock;
-	static char buf[8];
-	static char *lastStr;
-	char *cp = NULL;
+	static u_char shiftDown, ctrlDown, capsLock;
+	static char buf[8], *lastStr;
+	static int lastLen;
+	char *cp;
+	int i;
+	
+	cp = NULL;
 
 	switch (cc) {
 	case KEY_REPEAT:
-		cp = lastStr;
-		goto done;
+		*len = lastLen;
+		return (lastStr);
 
 	case KEY_UP:
 		shiftDown = 0;
 		ctrlDown = 0;
+		*len = 0;
 		return (NULL);
 
 	case KEY_CAPSLOCK:
 		capsLock ^= 1;
 #if 0
-		/* XXX causes lockup due to spl??? */
-		/* XXX may interact badly with Xserver */
+		/* XXX causes a lockup - why? */
 		if (capsLock)
 			(*raw_kbd_putc)(lk_out_dev, LK_LED_ENABLE);
 		else
@@ -300,43 +285,40 @@ kbdMapChar(cc)
 
 		(*raw_kbd_putc)(lk_out_dev, LED_1);
 #endif
+		*len = 0;
 		return (NULL);
 
 	case KEY_SHIFT:
 	case KEY_R_SHIFT:
 		shiftDown ^= 1;
+		*len = 0;
 		return (NULL);
 
 	case KEY_CONTROL:
 		ctrlDown ^= 1;
+		*len = 0;
 		return (NULL);
 
 	case LK_POWER_ERROR:
 	case LK_KDOWN_ERROR:
 	case LK_INPUT_ERROR:
 	case LK_OUTPUT_ERROR:
-		log(LOG_WARNING,
-			"lk201: keyboard error, code=%x\n", cc);
+		log(LOG_WARNING, "lk201: keyboard error, code=%x\n", cc);
+		*len = 0;
 		return (NULL);
 	}
 
-	if (shiftDown)
-		cc = shiftedAscii[cc];
-	else
-		cc = unshiftedAscii[cc];
+	cc = (shiftDown ? shiftedAscii[cc] : unshiftedAscii[cc]);
 
 	/* Map keypad 'Enter' key to return */
 	if (cc == KBD_KP_ENTER)
 		cc = KBD_RET;
 	else if (cc >= KBD_NOKEY) {
-		int i;
-
-		/* XXX slow, although keyboard interrupts aren't frequent */
-
 		/* Check for keys that have multi-character codes */
-		for (i = 0; i < NUM_TOSTRING; i++)
-			if (toString[i].ts_keycode == cc) {
-				cp = toString[i].ts_string;
+		for (i = 0; i < NUM_KEYTOSTR; i++)
+			if (lk_keytostr[i].ts_keycode == cc) {
+				cp = lk_keytostr[i].ts_string;
+				*len = lk_keytostr[i].ts_len;
 				break;
 			}
 
@@ -350,8 +332,9 @@ kbdMapChar(cc)
 			 * except for the 'Help' and 'Do' keys, which we
 			 * return as F15 and F16 since that's what they
 			 * really are.
-			 * XXX termcap can only handle F0->F9. Is this right?
-			 * XXX 'Do' is used for dropping into ddb.
+			 *
+			 * XXX termcap can only handle F0->F9?
+			 * XXX 'Do' is used for dropping into ddb on pmax.
 			 */
 			if (cc >= KBD_F1 && cc <= KBD_F6) {
 				buf[3] = '2';
@@ -367,11 +350,10 @@ kbdMapChar(cc)
 			buf[0] = '\033';
 			buf[1] = '[';
 			buf[2] = '2';
-			buf[5] = '\0';
 			cp = buf;
+			*len = 5;
 		}
-	}
-	else if (cc >= 'a' && cc <= 'z') {
+	} else if (cc >= 'a' && cc <= 'z') {
 		if (ctrlDown)
 			cc = cc - 'a' + '\1'; /* ^A */
 		else if (shiftDown ^ capsLock)
@@ -385,83 +367,71 @@ kbdMapChar(cc)
 
 	if (cp == NULL) {
 		buf[0] = cc;
-		buf[1] = '\0';
 		cp = buf;
+		*len = 1;
 	}
+
 	lastStr = cp;
-done:
+	lastLen = *len;
 	return (cp);
 }
-
-
-static int (*raw_kbd_getc) __P((dev_t dev)) = NULL;
-static dev_t lk_in_dev = NODEV;
 
 /*
  * Divert input from a serial port to the lk-201 keyboard handler.
  */
 void
 lk_divert(getfn, in_dev)
-	int (*getfn) __P ((dev_t dev)) ;
+	int (*getfn) __P((dev_t dev));
 	dev_t in_dev;
 {
+
 	raw_kbd_getc = getfn;
 	lk_in_dev = in_dev;
 }
 
 /*
- * Get an ASCII character off of the keyboard.
- * Simply pass the getc request onto the underlying
- * serial driver, and map the resulting LK-201 keycode to ASCII.
- * FIXME: this design should be thrown away and replaced with a stackable
- * "Bstreams"-style driver.
+ * Get an ASCII character off of the keyboard; simply pass the getc request 
+ * onto the underlying serial driver, and map the resulting LK-201 keycode to 
+ * ASCII.
  */
 int
-LKgetc(dev)
+lk_getc(dev)
 	dev_t dev;	/* ignored */
 {
-	int c;
 	static char *cp;
+	static int len;
+	int c;
 
-#if 0
-/*XXX*/ printf("LK-201 getc 0x%x( [%d %d]) in_dev [%d %d]\n",
-	       raw_kbd_getc,
-	       major(dev), minor(dev),
-	       major(lk_in_dev), minor(lk_in_dev));
-#endif
-
+#ifdef DIAGNOSTIC
 	if (raw_kbd_getc == NULL) {
-		panic("Reading from LK-201 before keyboard driver diverted\n");
+		panic("Reading from LK-201 before kbd driver diverted\n");
 		return (-1);
 	}
-
+#endif
 	for (;;) {
-		if (cp) {
-			c = *(unsigned char *)cp++;
-			if (*cp == '\0')
-				cp = NULL;
+		if (len != 0) {
+			c = *(u_char *)cp++;
+			len--;
 			break;
 		}
 
 		/* c = (*cn_tab.cn_kbdgetc)(cn_tab.cn_dev); */
 		c = (*raw_kbd_getc) (lk_in_dev);
-#if 0
-/*XXX*/ printf(" 0x%x [%c]", c, c);
-#endif
+
 		if (c == 0)
 			return (-1);
 
-		cp = kbdMapChar(c & 0xff);
+		cp = lk_mapchar(c & 0xff, &len);
 	}
+
 	return (c);
 }
-
 
 /*
  * Initialize the mouse.  (Doesn't really belong here.)
  */
 void
-MouseInit(mdev, putc, getc)
+lk_mouseinit(mdev, putc, getc)
 	dev_t mdev;
 	void (*putc) __P((dev_t, int));
 	int (*getc) __P((dev_t));
@@ -474,30 +444,34 @@ MouseInit(mdev, putc, getc)
 	(*putc)(mdev, MOUSE_SELF_TEST);
 	id_byte1 = (*getc)(mdev);
 	if (id_byte1 == MOUSE_SELF_TEST) {
-		printf("MouseInit: mouse loopback connector.\n");
+		printf("lk_mouseinit: mouse loopback connector.\n");
 		return;
 	}
 	if (id_byte1 < 0) {
-		printf("MouseInit: Timeout on %s byte of self-test report\n", "1st");
+		printf("lk_mouseinit: Timeout on %s byte of self-test report\n", 
+		    "1st");
 		return;
 	}
 	id_byte2 = (*getc)(mdev);
 	if (id_byte2 < 0) {
-		printf("MouseInit: Timeout on %s byte of self-test report\n", "2nd");
+		printf("lk_mouseinit: Timeout on %s byte of self-test report\n", 
+		    "2nd");
 		return;
 	}
 	id_byte3 = (*getc)(mdev);
 	if (id_byte3 < 0) {
-		printf("MouseInit: Timeout on %s byte of self-test report\n", "3rd");
+		printf("lk_mouseinit: Timeout on %s byte of self-test report\n", 
+		    "3rd");
 		return;
 	}
 	id_byte4 = (*getc)(mdev);
 	if (id_byte4 < 0) {
-		printf("MouseInit: Timeout on %s byte of self-test report\n", "4th");
+		printf("lk_mouseinit: Timeout on %s byte of self-test report\n", 
+		    "4th");
 		return;
 	}
 	if ((id_byte2 & 0x0f) != 0x2)
-		printf("MouseInit: We don't have a mouse!!!\n");
+		printf("lk_mouseinit: We don't have a mouse!!!\n");
 	/*
 	 * For some reason, the mouse doesn't see this command if it comes
 	 * too soon after a self test.

@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_explode.c,v 1.3 1996/03/14 19:41:54 christos Exp $ */
+/*	$NetBSD: fpu_explode.c,v 1.3.30.1 2000/11/20 20:25:36 bouyer Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -105,7 +105,34 @@ fpu_itof(fp, i)
 	return (FPC_NUM);
 }
 
-#define	mask(nbits) ((1 << (nbits)) - 1)
+#ifdef SUN4U
+/*
+ * 64-bit int -> fpn.
+ */
+int
+fpu_xtof(fp, i)
+	register struct fpn *fp;
+	register u_int64_t i;
+{
+
+	if (i == 0)
+		return (FPC_ZERO);
+	/*
+	 * The value FP_1 represents 2^FP_LG, so set the exponent
+	 * there and let normalization fix it up.  Convert negative
+	 * numbers to sign-and-magnitude.  Note that this relies on
+	 * fpu_norm()'s handling of `supernormals'; see fpu_subr.c.
+	 */
+	fp->fp_exp = FP_LG2;
+	*((int64_t*)fp->fp_mant) = (int64_t)i < 0 ? -i : i;
+	fp->fp_mant[2] = 0;
+	fp->fp_mant[3] = 0;
+	fpu_norm(fp);
+	return (FPC_NUM);
+}
+#endif /* SUN4U */
+
+#define	mask(nbits) ((1L << (nbits)) - 1)
 
 /*
  * All external floating formats convert to internal in the same manner,
@@ -186,7 +213,7 @@ fpu_dtof(fp, i, j)
  * 128-bit extended -> fpn.
  */
 int
-fpu_xtof(fp, i, j, k, l)
+fpu_qtof(fp, i, j, k, l)
 	register struct fpn *fp;
 	register u_int i, j, k, l;
 {
@@ -220,12 +247,22 @@ fpu_explode(fe, fp, type, reg)
 	int type, reg;
 {
 	register u_int s, *space;
+#ifdef SUN4U
+	u_int64_t l, *xspace;
 
+	xspace = (u_int64_t *)&fe->fe_fpstate->fs_regs[reg & ~1];
+	l = xspace[0];
+#endif /* SUN4U */
 	space = &fe->fe_fpstate->fs_regs[reg];
 	s = space[0];
 	fp->fp_sign = s >> 31;
 	fp->fp_sticky = 0;
 	switch (type) {
+#ifdef SUN4U
+	case FTYPE_LNG:
+		s = fpu_xtof(fp, l);
+		break;
+#endif /* SUN4U */
 
 	case FTYPE_INT:
 		s = fpu_itof(fp, s);
@@ -240,12 +277,13 @@ fpu_explode(fe, fp, type, reg)
 		break;
 
 	case FTYPE_EXT:
-		s = fpu_xtof(fp, s, space[1], space[2], space[3]);
+		s = fpu_qtof(fp, s, space[1], space[2], space[3]);
 		break;
 
 	default:
 		panic("fpu_explode");
 	}
+
 	if (s == FPC_QNAN && (fp->fp_mant[0] & FP_QUIETBIT) == 0) {
 		/*
 		 * Input is a signalling NaN.  All operations that return
@@ -259,4 +297,12 @@ fpu_explode(fe, fp, type, reg)
 		s = FPC_SNAN;
 	}
 	fp->fp_class = s;
+	DPRINTF(FPE_REG, ("fpu_explode: %%%c%d => ", (type == FTYPE_LNG) ? 'x' :
+		((type == FTYPE_INT) ? 'i' : 
+			((type == FTYPE_SNG) ? 's' :
+				((type == FTYPE_DBL) ? 'd' :
+					((type == FTYPE_EXT) ? 'q' : '?')))), 
+		reg));
+	DUMPFPN(FPE_REG, fp);
+	DPRINTF(FPE_REG, ("\n"));
 }

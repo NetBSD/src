@@ -1,4 +1,4 @@
-/*	$NetBSD: dtopreg.h,v 1.6 1999/04/24 08:01:03 simonb Exp $	*/
+/*	$NetBSD: dtopreg.h,v 1.6.2.1 2000/11/20 20:20:17 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -91,6 +91,8 @@
 
 #ifndef	_DTOP_H_
 #define	_DTOP_H_
+
+#include <sys/callout.h>
 
 #define	DTOP_MAX_DEVICES	14
 #define	DTOP_MAX_MSG_SIZE	36	/* 3 hdr + 32 data + 1 checksum */
@@ -249,6 +251,7 @@ typedef	union {
 #		define		K_AR_OFF	4	/* turn off polling pls */
 #		define		K_AR_ACTIVE	2	/* polling, no autos yet */
 #		define		K_AR_TRIGGER	1	/* sent one autorepeat */
+		struct callout	repeat_ch;
 	} keyboard;
 
 	struct {

@@ -1,17 +1,20 @@
-/*	$NetBSD: vmparam.h,v 1.9 1999/05/07 18:04:37 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.9.2.1 2000/11/20 20:20:32 bouyer Exp $	*/
+
+#ifndef _PMAX_VMPARAM_H_
+#define _PMAX_VMPARAM_H_
 
 #include <mips/vmparam.h>
-
+ 
 /*
- * DECstation has one physical memory segment.
+ * We have two freelists. The first 8M of RAM goes onto a lower-priority
+ * free list, since some TC boards (e.g. PixelStamp boards) are only able 
+ * to DMA into this region, and we want them to have a fighting chance of
+ * allocating their DMA memory during autoconfiguration.
  */
-#define	VM_PHYSSEG_MAX		2	/* 2 free lists */
-#define	VM_PHYSSEG_STRAT	VM_PSTRAT_BSEARCH
-#define	VM_PHYSSEG_NOADD		/* can't add RAM after vm_mem_init */
-
 #define	VM_NFREELIST		2
 #define	VM_FREELIST_DEFAULT	0
 #define	VM_FREELIST_FIRST8	1
 
-/* pcb base */
-/*#define	pcbb(p)		((u_int)(p)->p_addr) */
+#define	VM_PHYSSEG_MAX		2
+
+#endif	/* !_PMAX_VMPARAM_H_ */

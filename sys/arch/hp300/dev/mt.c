@@ -1,4 +1,4 @@
-/*	$NetBSD: mt.c,v 1.10 1998/01/12 18:31:03 thorpej Exp $	*/
+/*	$NetBSD: mt.c,v 1.10.14.1 2000/11/20 20:08:04 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -68,6 +68,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/buf.h>
 #include <sys/ioctl.h>
 #include <sys/mtio.h>
@@ -98,6 +99,8 @@ int	nmtinfo = sizeof(mtinfo) / sizeof(mtinfo[0]);
 
 struct	mt_softc {
 	struct	device sc_dev;
+	struct	callout sc_start_ch;
+	struct	callout sc_intr_ch;
 	int	sc_hpibno;	/* logical HPIB this slave it attached to */
 	int	sc_slave;	/* HPIB slave address (0-6) */
 	short	sc_flags;	/* see below */
@@ -110,7 +113,8 @@ struct	mt_softc {
 	short	sc_type;	/* tape drive model (hardware IDs) */
 	struct	hpibqueue sc_hq; /* HPIB device queue member */
 	tpr_t	sc_ttyp;
-	struct buf sc_tab;	/* buf queue */
+	struct buf_queue sc_tab;/* buf queue */
+	int	sc_active;
 	struct buf sc_bufstore;	/* XXX buffer storage */
 };
 
@@ -178,7 +182,9 @@ mtattach(parent, self, aux)
 	hpibno = parent->dv_unit;
 	slave = ha->ha_slave;
 
-	sc->sc_tab.b_actb = &sc->sc_tab.b_actf;
+	BUFQ_INIT(&sc->sc_tab);
+	callout_init(&sc->sc_start_ch);
+	callout_init(&sc->sc_intr_ch);
 
 	sc->sc_hpibno = hpibno;
 	sc->sc_slave = slave;
@@ -439,7 +445,7 @@ mtcommand(dev, cmd, cnt)
 	do {
 		bp->b_flags = B_BUSY | B_CMD;
 		mtstrategy(bp);
-		iowait(bp);
+		biowait(bp);
 		if (bp->b_flags & B_ERROR) {
 			error = (int) (unsigned) bp->b_error;
 			break;
@@ -461,7 +467,6 @@ mtstrategy(bp)
 	struct buf *bp;
 {
 	struct mt_softc *sc;
-	struct buf *dp;
 	int unit;
 	int s;
 
@@ -500,18 +505,14 @@ mtstrategy(bp)
 #endif
 			bp->b_flags |= B_ERROR;
 			bp->b_error = EIO;
-			iodone(bp);
+			biodone(bp);
 			return;
 		}
 	}
-	dp = &sc->sc_tab;
-	bp->b_actf = NULL;
 	s = splbio();
-	bp->b_actb = dp->b_actb;
-	*dp->b_actb = bp;
-	dp->b_actb = &bp->b_actf;
-	if (dp->b_active == 0) {
-		dp->b_active = 1;
+	BUFQ_INSERT_TAIL(&sc->sc_tab, bp);
+	if (sc->sc_active == 0) {
+		sc->sc_active = 1;
 		mtustart(sc);
 	}
 	splx(s);
@@ -554,13 +555,13 @@ mtstart(arg)
 	void *arg;
 {
 	struct mt_softc *sc = arg;
-	struct buf *bp, *dp;
+	struct buf *bp;
 	short	cmdcount = 1;
 	u_char	cmdbuf[2];
 
 	dlog(LOG_DEBUG, "%s start", sc->sc_dev.dv_xname);
 	sc->sc_flags &= ~MTF_WRT;
-	bp = sc->sc_tab.b_actf;
+	bp = BUFQ_FIRST(&sc->sc_tab);
 	if ((sc->sc_flags & MTF_ALIVE) == 0 &&
 	    ((bp->b_flags & B_CMD) == 0 || bp->b_cmd != MTRESET))
 		goto fatalerror;
@@ -584,7 +585,8 @@ mtstart(arg)
 			 * but not otherwise.
 			 */
 			if (sc->sc_flags & (MTF_DSJTIMEO | MTF_STATTIMEO)) {
-				timeout(spl_mtstart, sc, hz >> 5);
+				callout_reset(&sc->sc_start_ch, hz >> 5,
+				    spl_mtstart, sc);
 				return;
 			}
 		    case 2:
@@ -670,7 +672,8 @@ mtstart(arg)
 				break;
 
 			    case -2:
-				timeout(spl_mtstart, sc, hz >> 5);
+				callout_reset(&sc->sc_start_ch, hz >> 5,
+				    spl_mtstart, sc);
 				return;
 			}
 
@@ -685,7 +688,7 @@ mtstart(arg)
 				    sc->sc_dev.dv_xname);
 				goto fatalerror;
 			}
-			timeout(spl_mtintr, sc, 4 * hz);
+			callout_reset(&sc->sc_intr_ch, 4 * hz, spl_mtintr, sc);
 			hpibawait(sc->sc_hpibno);
 			return;
 
@@ -739,15 +742,11 @@ errdone:
 	bp->b_flags |= B_ERROR;
 done:
 	sc->sc_flags &= ~(MTF_HITEOF | MTF_HITBOF);
-	iodone(bp);
-	if ((dp = bp->b_actf))
-		dp->b_actb = bp->b_actb;
-	else
-		sc->sc_tab.b_actb = bp->b_actb;
-	*bp->b_actb = dp;
+	BUFQ_REMOVE(&sc->sc_tab, bp);
+	biodone(bp);
 	hpibfree(sc->sc_dev.dv_parent, &sc->sc_hq);
-	if ((bp = dp) == NULL)
-		sc->sc_tab.b_active = 0;
+	if ((bp = BUFQ_FIRST(&sc->sc_tab)) == NULL)
+		sc->sc_active = 0;
 	else
 		mtustart(sc);
 }
@@ -766,10 +765,10 @@ mtgo(arg)
 	int rw;
 
 	dlog(LOG_DEBUG, "%s go", sc->sc_dev.dv_xname);
-	bp = sc->sc_tab.b_actf;
+	bp = BUFQ_FIRST(&sc->sc_tab);
 	rw = bp->b_flags & B_READ;
 	hpibgo(sc->sc_hpibno, sc->sc_slave, rw ? MTT_READ : MTL_WRITE,
-	    bp->b_un.b_addr, bp->b_bcount, rw, rw != 0);
+	    bp->b_data, bp->b_bcount, rw, rw != 0);
 }
 
 void
@@ -777,11 +776,11 @@ mtintr(arg)
 	void *arg;
 {
 	struct mt_softc *sc = arg;
-	struct buf *bp, *dp;
+	struct buf *bp;
 	int i;
 	u_char cmdbuf[4];
 
-	bp = sc->sc_tab.b_actf;
+	bp = BUFQ_FIRST(&sc->sc_tab);
 	if (bp == NULL) {
 		log(LOG_ERR, "%s intr: bp == NULL", sc->sc_dev.dv_xname);
 		return;
@@ -824,7 +823,7 @@ mtintr(arg)
 		 * to the request for DSJ.  It's probably just "busy" figuring
 		 * it out and will know in a little bit...
 		 */
-		timeout(spl_mtintr, sc, hz >> 5);
+		callout_reset(&sc->sc_intr_ch, hz >> 5, spl_mtintr, sc);
 		return;
 
 	    default:
@@ -842,7 +841,7 @@ mtintr(arg)
 			sc->sc_stat3, sc->sc_stat5);
 
 		if ((bp->b_flags & B_CMD) && bp->b_cmd == MTRESET)
-			untimeout(spl_mtintr, sc);
+			callout_stop(&sc->sc_intr_ch);
 		if (sc->sc_stat3 & SR3_POWERUP)
 			sc->sc_flags &= MTF_OPEN | MTF_EXISTS;
 		goto error;
@@ -894,7 +893,7 @@ mtintr(arg)
 				sc->sc_flags |= MTF_HITBOF;
 		}
 		if (bp->b_cmd == MTRESET) {
-			untimeout(spl_mtintr, sc);
+			callout_stop(&sc->sc_intr_ch);
 			sc->sc_flags |= MTF_ALIVE;
 		}
 	} else {
@@ -928,19 +927,11 @@ mtintr(arg)
 	cmdbuf[0] = MTE_COMPLETE | MTE_IDLE;
 	(void) hpibsend(sc->sc_hpibno, sc->sc_slave, MTL_ECMD, cmdbuf, 1);
 	bp->b_flags &= ~B_CMD;
-	iodone(bp);
-	if ((dp = bp->b_actf))
-		dp->b_actb = bp->b_actb;
-	else
-		sc->sc_tab.b_actb = bp->b_actb;
-	*bp->b_actb = dp;
+	BUFQ_REMOVE(&sc->sc_tab, bp);
+	biodone(bp);
 	hpibfree(sc->sc_dev.dv_parent, &sc->sc_hq);
-#if 0
-	if (bp /*sc->sc_tab.b_actf*/ == NULL)
-#else
-	if (sc->sc_tab.b_actf == NULL)
-#endif
-		sc->sc_tab.b_active = 0;
+	if (BUFQ_FIRST(&sc->sc_tab) == NULL)
+		sc->sc_active = 0;
 	else
 		mtustart(sc);
 }

@@ -1,9 +1,11 @@
-#	$NetBSD: INSTALL,v 1.2 1999/07/29 10:37:25 augustss Exp $
+#	$NetBSD: INSTALL,v 1.2.2.1 2000/11/20 20:32:43 bouyer Exp $
 #
 # INSTALL kernel; all supported devices but nothing fancy.
 #
 
 include		"arch/vax/conf/std.vax"
+
+makeoptions     COPTS="-Os"             # Optimise for space. Implies -O2
 
 # Here are all different supported CPU types listed.
 options 	"VAX8600"
@@ -26,7 +28,7 @@ maxusers	8
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT     # force root on memory disk
 options 	MEMORY_DISK_SERVER=0    # no userspace memory disk support
-options 	MINIROOTSIZE=2400       # size of memory disk, in blocks
+options 	MINIROOTSIZE=2276       # size of memory disk, in blocks
 
 
 # Kernel compiled-in symbolic debugger & system call tracer
@@ -41,10 +43,10 @@ options 	MINIROOTSIZE=2400       # size of memory disk, in blocks
 #options 	GATEWAY
 options         INET
 
-# All supported filesystem types
+# File systems
 file-system 	FFS
 #file-system 	LFS
-file-system 	MFS
+#file-system 	MFS
 file-system 	NFS
 #file-system 	FDESC
 file-system 	KERNFS
@@ -52,17 +54,21 @@ file-system 	KERNFS
 #file-system 	PROCFS
 #file-system 	UMAPFS
 #file-system 	UNION
-#file-system 	CD9660
+file-system 	CD9660
 
+# Filesystem options
 #options 	QUOTA
 #options 	FFS_EI		# FFS Endian Independant support
 #options 	NFSSERVER
-options 	NFS_BOOT_BOOTP,NFS_BOOT_DHCP	# Use bootp <> dhcp
-options 	NFS_BOOT_BOOTPARAM	# Use the Sun way for netbooting.
+#options 	NFS_V2_ONLY	# Exclude NFS3 and NQNFS code to save space
+#options 	VNODE_OP_NOINLINE # Save space by not inlining vnode op calls
+
+#options 	NFS_BOOT_BOOTP,NFS_BOOT_DHCP	# Use bootp <> dhcp
+#options 	NFS_BOOT_BOOTPARAM	# Use the Sun way for netbooting.
 
 # WS console uses VT100 terminal emulation
 options 	WSEMUL_VT100
-options 	WSDISPLAY_DEFAULTSCREENS=8
+#options 	WSDISPLAY_DEFAULTSCREENS=8
 
 # System V shared memory & semaphores support.
 #options 	SYSVMSG
@@ -81,8 +87,8 @@ options 	WSDISPLAY_DEFAULTSCREENS=8
 #options 	COMPAT_12
 #options 	COMPAT_13
 options 	COMPAT_14
+options 	COMPAT_15
 #options 	COMPAT_ULTRIX
-#options 	TCP_COMPAT_42
 
 #options 	LKM
 
@@ -92,19 +98,18 @@ config          netbsd root on ? type ?
 mainbus0	at root
 
 # Devices directly attached to mainbus.
-cpu0		at mainbus0	# Only one CPU so far.
-sbi*		at mainbus0	# SBI's are always at mainbus (Abus).
-mem*		at mainbus0	# Some machines have memory at mainbus.
+sbi*		at mainbus0	# SBI's, VAX-11/78[05] main bus
 bi*		at mainbus0	# VAXBI bus
+abus0		at mainbus0	# 8600 internal bus.
 cmi0		at mainbus0	# 11/750 internal bus.
-uba0		at mainbus0	# MicroVAXen only have QBUS.
 vsbus0		at mainbus0	# Internal "virtual" VAXstation bus
+ibus0		at mainbus0	# Internal MicroVAX bus
 
 # Devices connected at VAXBI
 cpu0		at bi? node?	# KA820/KA825 cpu
 cpu*		at bi? node?
 mem*		at bi? node?	# Memory subsystems
-uba*		at bi? node?	# DWBUA BI-Unibus adapter
+#uba*		at bi? node?	# DWBUA BI-Unibus adapter
 #ni*		at bi? node?	# DEBNA/DEBNT ethernet adapter
 kdb*		at bi? node?	# KDB50 MSCP disk ctlr
 mscpbus*	at kdb?
@@ -114,6 +119,9 @@ mem*		at cmi? tr?	# Memory subsystems
 uba*		at cmi? tr?	# Unibus adapters
 mba*		at cmi? tr?	# Massbus adapters
 
+# Devices connected at abus
+sbi*		at abus0
+
 # Devices connected at sbi
 mem*		at sbi? tr?	# Memory subsystems
 uba*		at sbi? tr?	# Unibus adapters
@@ -121,6 +129,9 @@ mba*		at sbi? tr?	# Massbus adapters
 
 # Devices on Massbus adapters
 hp*		at mba? drive?	# RM/RP disk drives
+
+# Devices on internal MicroVAX bus
+uba0		at ibus?	# Q-Bus adapter
 
 # Disk controllers at Unibus
 uda0		at uba?	csr 0172150	# UDA50/RQDX?
@@ -144,47 +155,50 @@ mt*		at mscpbus? drive?	# MSCP tape
 #rd*		at hdc0 drive?		# The RD disk subsystem on VS2000
 
 # SCSI controllers.
-ncr0		at vsbus0 csr 0x200c0080 # VS2000/3100 SCSI-controller (5380)
-ncr1		at vsbus0 csr 0x200c0180 # VS2000/3100 SCSI-controller (5380)
-scsibus*	at ncr?
+asc0		at vsbus0 csr 0x200c0080 # VS4000/{60,VLC} SCSI-controller
+#asc0		at vsbus0 csr 0x26000080 # VS4000/90 SCSI-controller
+si0		at vsbus0 csr 0x200c0080 # VS2000/3100 SCSI-controller (5380)
+si1		at vsbus0 csr 0x200c0180 # VS2000/3100 SCSI-controller (5380)
+scsibus*	at asc?
+scsibus*	at si?
 
 # SCSI devices
 sd*		at scsibus? target? lun?
 st*		at scsibus? target? lun?
 cd*		at scsibus? target? lun?
-ch*		at scsibus? target? lun?
-ss*		at scsibus? target? lun?
-uk*		at scsibus? target? lun?
-
-# Graphic adapters.
-qd0		at uba? csr 0177400
+#ch*		at scsibus? target? lun?
+#ss*		at scsibus? target? lun?
+#uk*		at scsibus? target? lun?
 
 # Ethernet cards
 de0		at uba? csr 0174510	# DELUA/DEUNA
 qe0		at uba? csr 0174440	# DEQNA/DELQA
-ln0		at vsbus0 csr 0x200e0000# LANCE
+qe1		at uba? csr 0174460	# DEQNA/DELQA
+le0		at vsbus0 csr 0x200e0000# LANCE
+ze0		at vsbus0 csr 0x20008000# SGEC ethernet
+ze0		at ibus0		# SGEC on-board ethernet
 
 # Terminal lines
 dhu0		at uba? csr 0160440	# DHU-11
 dz0		at uba? csr 0160100	# DZ-11
 dz0		at vsbus0 csr 0x200a0000# DC-367
+dz0		at vsbus0 csr 0x25000000# VS4000/90
 dl0		at uba? csr 0176500	# DL-11
 
 # VAXstation graphics support
+#qd0		at uba? csr 0177400
 smg0		at vsbus0 csr 0x200f0000# Small monochrome display ctlr.
 wsdisplay0	at smg0			# display device driver.
 lkc0		at dz0			# Keyboard LK201
 
 pseudo-device   loop	1
-#pseudo-device   pty	48
+pseudo-device	pty		2	# pseudo-terminals (Sysinst needs two)
 #pseudo-device	bpfilter 8	# Not supported by de yet.
-pseudo-device	sl	2
-pseudo-device	ppp	2
 #pseudo-device	tun	2
 #pseudo-device	gre		2	# generic L3 over IP tunnel
 #pseudo-device	tb	1
 #pseudo-device	vnd	4
-pseudo-device	ccd	4
+#pseudo-device	ccd	4
 #pseudo-device	raid	4		# RAIDframe disk driver
 # rnd is EXPERIMENTAL
 #pseudo-device	rnd			# /dev/random and in-kernel generator

@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.c,v 1.16 1999/03/30 10:10:57 mycroft Exp $	*/
+/*	$NetBSD: undefined.c,v 1.16.8.1 2000/11/20 20:03:53 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -56,8 +56,6 @@
 #ifdef FAST_FPE
 #include <sys/acct.h>
 #endif
-
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -127,7 +125,6 @@ undefinedinstruction(frame)
 	struct proc *p;
 	u_int fault_pc;
 	int fault_instruction;
-	int s;
 	int fault_code;
 	u_quad_t sticks = 0;
 	int coprocessor;
@@ -194,7 +191,7 @@ undefinedinstruction(frame)
 		/* Fault has not been handled */
 
 #ifdef VERBOSE_ARM32
-		s = spltty();
+		{ s = spltty();
 
 		if ((fault_instruction & 0x0f000010) == 0x0e000000) {
 			printf("CDP\n");
@@ -214,7 +211,7 @@ undefinedinstruction(frame)
 			disassemble(fault_pc);
 		}
 
-		(void)splx(s);
+		(void)splx(s); }
 #endif
         
 		if ((fault_code & FAULT_USER) == 0) {
@@ -250,21 +247,9 @@ undefinedinstruction(frame)
 
 		if (want_resched) {
 			/*
-			 * Since we are curproc, a clock interrupt could
-			 * change our priority without changing run queues
-			 * (the running process is not kept on a run queue).
-			 * If this happened after we setrunqueue ourselves but
-			 * before we switch()'ed, we might not be on the queue
-			 * indicated by our priority
+			 * We are being preempted.
 			 */
-	
-		        s = splstatclock();
-			setrunqueue(p);
-			p->p_stats->p_ru.ru_nivcsw++;
-
-			mi_switch();
-
-			(void)splx(s);
+			preempt(NULL);
 			while ((sig = (CURSIG(p))) != 0) {
 				postsig(sig);
 			}
@@ -282,7 +267,7 @@ undefinedinstruction(frame)
 			    (int)(p->p_sticks - sticks) * psratio);
 		}
 
-		curpriority = p->p_priority;
+		curcpu()->ci_schedstate.spc_curpriority = p->p_priority;
 	}
 
 #else
@@ -299,7 +284,7 @@ resethandler(frame)
 	/* Extra info incase panic drops us into the debugger */
 	printf("Trap frame at %p\n", frame);
 #endif	/* DDB */
-	panic("Branch to never-never land (zero)..... were dead\n");
+	panic("Branch to never-never land (zero)..... we're dead\n");
 }
 
 /* End of undefined.c */

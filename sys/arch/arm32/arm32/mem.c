@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.11 1999/03/26 23:41:28 mycroft Exp $	*/
+/*	$NetBSD: mem.c,v 1.11.8.1 2000/11/20 20:03:52 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -52,8 +52,6 @@
 #include <sys/fcntl.h>
 
 #include <machine/cpu.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -125,7 +123,7 @@ mmrw(dev, uio, flags)
 			prot = uio->uio_rw == UIO_READ ? VM_PROT_READ :
 			    VM_PROT_WRITE;
 			pmap_enter(pmap_kernel(), (vm_offset_t)memhook,
-			    trunc_page(v), prot, TRUE, prot);
+			    trunc_page(v), prot, prot|PMAP_WIRED);
 			o = uio->uio_offset & PGOFSET;
 			c = min(uio->uio_resid, (int)(NBPG - o));
 			error = uiomove((caddr_t)memhook + o, c, uio);
@@ -157,10 +155,10 @@ mmrw(dev, uio, flags)
 			}
 			if (zeropage == NULL) {
 				zeropage = (caddr_t)
-				    malloc(CLBYTES, M_TEMP, M_WAITOK);
-				bzero(zeropage, CLBYTES);
+				    malloc(NBPG, M_TEMP, M_WAITOK);
+				bzero(zeropage, NBPG);
 			}
-			c = min(iov->iov_len, CLBYTES);
+			c = min(iov->iov_len, NBPG);
 			error = uiomove(zeropage, c, uio);
 			continue;
 
@@ -183,10 +181,11 @@ mmrw(dev, uio, flags)
 	return (error);
 }
 
-int
+paddr_t
 mmmmap(dev, off, prot)
 	dev_t dev;
-	int off, prot;
+	off_t off;
+	int prot;
 {
 	struct proc *p = curproc;	/* XXX */
 
@@ -203,7 +202,7 @@ mmmmap(dev, off, prot)
 
 	/* minor device 0 is physical memory */
 
-	if ((unsigned)off >= ctob(physmem) &&
+	if (off >= ctob(physmem) &&
 	    suser(p->p_ucred, &p->p_acflag) != 0)
 		return -1;
 	return arm_byte_to_page(off);

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.15 1999/06/28 08:20:42 itojun Exp $	*/
+/*	$NetBSD: intr.c,v 1.15.2.1 2000/11/20 20:03:52 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -35,20 +35,12 @@
  * Soft interrupt and other generic interrupt functions.
  */
 
-#include "opt_inet.h"
-#include "opt_atalk.h"
-#include "opt_ccitt.h"
-#include "opt_iso.h"
-#include "opt_ns.h"
-#include "opt_natm.h"
 #include "opt_irqstats.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/syslog.h>
 #include <sys/malloc.h>
-#include <sys/socket.h>
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -56,46 +48,6 @@
 #include <machine/cpu.h>
 
 #include <net/netisr.h>
-#include <net/if.h>
-
-#ifdef INET
-#include <netinet/in.h>
-#include "arp.h"
-#if NARP > 0
-#include <netinet/if_inarp.h>
-#endif	/* NARP > 0 */
-#include <netinet/ip_var.h>
-#endif 	/* INET */
-#ifdef INET6
-# ifndef INET
-#  include <netinet/in.h>
-# endif
-#include <netinet6/ip6.h>
-#include <netinet6/ip6_var.h>
-#endif /* INET6 */
-#ifdef NS
-#include <netns/ns_var.h>
-#endif	/* NS */
-#ifdef ISO
-#include <netiso/iso.h>
-#include <netiso/clnp.h>
-#endif	/* ISO */
-#ifdef CCITT
-#include <netccitt/x25.h>
-#include <netccitt/pk.h>
-#include <netccitt/pk_extern.h>
-#endif	/* CCITT */
-#ifdef NATM
-#include <netnatm/natm.h>
-#endif	/* NATM */
-#ifdef NETATALK
-#include <netatalk/at_extern.h>
-#endif	/* NETATALK */
-#include "ppp.h"
-#if NPPP > 0
-#include <net/ppp_defs.h>
-#include <net/if_ppp.h>
-#endif	/* NPPP > 0 */
 
 u_int soft_interrupts = 0;
 
@@ -163,7 +115,7 @@ setsoftast()
 extern int want_resched;
 
 void
-need_resched(void)
+need_resched(struct cpu_info *ci)
 {
 	want_resched = 1;
 	setsoftast();
@@ -190,7 +142,7 @@ dosoftints()
 		INC_SINTRCNT(SOFTIRQ_CLOCK);
 		clearsoftintr(SOFTIRQ_BIT(SOFTIRQ_CLOCK));
 		softclock();
-		splx(s);
+		(void)splx(s);
 	}
 
 	/*
@@ -203,67 +155,18 @@ dosoftints()
 		INC_SINTRCNT(SOFTIRQ_NET);
 		clearsoftintr(SOFTIRQ_BIT(SOFTIRQ_NET));
 
-#ifdef INET
-#if NARP > 0
-		if (netisr & (1 << NETISR_ARP)) {
-			atomic_clear_bit(&netisr, (1 << NETISR_ARP));
-			arpintr();
-		}
-#endif
-		if (netisr & (1 << NETISR_IP)) {
-			atomic_clear_bit(&netisr, (1 << NETISR_IP));
-			ipintr();
-		}
-#endif
-#ifdef INET6
-		if (netisr & (1 << NETISR_IPV6)) {
-			atomic_clear_bit(&netisr, (1 << NETISR_IPV6));
-			ip6intr();
-		}
-#endif
-#ifdef NETATALK
-		if (netisr & (1 << NETISR_ATALK)) {
-			atomic_clear_bit(&netisr, (1 << NETISR_ATALK));
-			atintr();
-		}
-#endif
-#ifdef NS
-		if (netisr & (1 << NETISR_NS)) {
-			atomic_clear_bit(&netisr, (1 << NETISR_NS));
-			nsintr();
-		}
-#endif
-#ifdef IMP
-		if (netisr & (1 << NETISR_IMP)) {
-			atomic_clear_bit(&netisr, (1 << NETISR_IMP));
-			impintr();
-		}
-#endif
-#ifdef ISO
-		if (netisr & (1 << NETISR_ISO)) {
-			atomic_clear_bit(&netisr, (1 << NETISR_ISO));
-			clnlintr();
-		}
-#endif
-#ifdef CCITT
-		if (netisr & (1 << NETISR_CCITT)) {
-			atomic_clear_bit(&netisr, (1 << NETISR_CCITT));
-			ccittintr();
-		}
-#endif
-#ifdef NATM
-		if (netisr & (1 << NETISR_NATM)) {
-			atomic_clear_bit(&netisr, (1 << NETISR_NATM));
-			natmintr();
-		}
-#endif
-#if NPPP > 0
-		if (netisr & (1 << NETISR_PPP)) {
-			atomic_clear_bit(&netisr, (1 << NETISR_PPP));
-			pppintr();
-		}
-#endif
-		splx(s);
+#define DONETISR(bit, fn) do {					\
+		if (netisr & (1 << bit)) {			\
+			atomic_clear_bit(&netisr, (1 << bit));	\
+			fn();					\
+		}						\
+} while (0)
+
+#include <net/netisr_dispatch.h>
+
+#undef DONETISR
+
+		(void)splx(s);
 	}
 	/*
 	 * Serial software interrupts
@@ -277,7 +180,7 @@ dosoftints()
 #if NCOM > 0
 		comsoft();
 #endif	/* NCOM > 0 */
-		splx(s);
+		(void)splx(s);
 	}
 }
 

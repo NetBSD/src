@@ -1,4 +1,4 @@
-/*	$NetBSD: copyoutstr.c,v 1.2 1999/01/10 10:24:16 tsubai Exp $	*/
+/*	$NetBSD: copyoutstr.c,v 1.2.8.1 2000/11/20 20:31:14 bouyer Exp $	*/
 
 /*-
  * Copyright (C) 1995 Wolfgang Solfrank.
@@ -46,18 +46,23 @@ copyoutstr(kaddr, udaddr, len, done)
 {
 	const u_char *kp = kaddr;
 	u_char *up = udaddr;
-	int l;
-	
+	size_t l;
+	int rv;
+
+	rv = ENAMETOOLONG;
 	for (l = 0; len-- > 0; l++) {
 		if (subyte(up++, *kp) < 0) {
-			*done = l;
-			return EACCES;
+			rv = EFAULT;
+			break;
 		}
 		if (!*kp++) {
-			*done = l + 1;
-			return 0;
+			l++;
+			rv = 0;
+			break;
 		}
 	}
-	*done = l;
-	return ENAMETOOLONG;
+	if (done != NULL) {
+		*done = l;
+	}
+	return rv;
 }

@@ -1,0 +1,14 @@
+#	$NetBSD: std.amigappc,v 1.1.6.2 2000/11/20 19:59:36 bouyer Exp $
+
+# standard amiga information
+
+machine amigappc powerpc
+
+mainbus0	at root
+
+clock0	at mainbus0
+kbd0	at mainbus0
+zbus0	at mainbus0
+
+options 	EXEC_ELF
+options 	EXEC_SCRIPT

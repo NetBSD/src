@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.1 1999/09/13 10:31:21 itojun Exp $	*/
+/*	$NetBSD: pte.h,v 1.1.2.1 2000/11/20 20:24:30 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -73,6 +73,16 @@ typedef int	pt_entry_t;		/* Mach page table entry */
 #define	PG_M		0x00000004	/* has been modified */
 #define	PG_FRAME	0xfffff000	/* page frame mask */
 
+#ifdef SH4_PCMCIA
+#define PG_PCMCIA_16    0x00000000      /* 16bit width */
+#define PG_PCMCIA_8     0x00000080      /* 8 bit width */
+#define PG_PCMCIA_NONE  0x00000000      /* Non PCMCIA space */
+#define PG_PCMCIA       0x00000a00      /* PCMCIA space */
+#define PG_PCMCIA_IO    0x00000200      /* PCMCIA IO space */
+#define PG_PCMCIA_MEM   0x00000800      /* PCMCIA Memory space */
+#define PG_PCMCIA_ATT   0x00000a00      /* PCMCIA Attribute space */
+#endif
+
 #define	PG_KR		0x00000000
 #define	PG_KW		0x00000020
 #define	PG_URKR		0x00000040
@@ -83,11 +93,8 @@ typedef int	pt_entry_t;		/* Mach page table entry */
 #define	PG_4K		0x00000010
 #define	PG_G		0x00000002	/* share status */
 
-#ifndef _LOCORE
-#ifdef _KERNEL
-/* utilities defined in pmap.c */
-extern	pt_entry_t *Sysmap;
-#endif
+#ifdef SH4
+#define	PG_WT		0x00000001	/* write through */
 #endif
 
 #endif /* !_SH3_PTE_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.10 1999/03/24 05:51:13 mrg Exp $ */
+/*	$NetBSD: genassym.c,v 1.10.8.1 2000/11/20 20:26:52 bouyer Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -56,6 +56,8 @@
 #include <sys/device.h>
 #include <sys/disklabel.h>
 #include <sys/disk.h>
+
+#include <uvm/uvm.h>
 
 #include <machine/db_machdep.h>
 #include <machine/pmap.h>
@@ -123,13 +125,18 @@ main()
 	off("P_WCHAN", struct proc, p_wchan);
 	off("P_VMSPACE", struct proc, p_vmspace);
 	off("P_PID", struct proc, p_pid);
+	off("P_FPSTATE", struct proc, p_md.md_fpstate);
 	def("SRUN", SRUN);
+	def("SONPROC", SONPROC);
 
 	/* user struct stuff */
 	siz("USIZ", struct user); /* Needed for redzone calculations */
 
 	/* VM structure fields */
 	off("VM_PMAP", struct vmspace, vm_map.pmap);
+
+	/* UVM structure fields */
+	off("UVM_PAGE_IDLE_ZERO", struct uvm, page_idle_zero);
 
 	/* pmap structure fields */
 	off("PM_CTX", struct pmap, pm_ctx);
@@ -141,16 +148,28 @@ main()
 	off("V_INTR", struct uvmexp, intrs);
 	off("V_FAULTS", struct uvmexp, faults);
 
+	/* CPU info structure */
+	off("CI_CURPROC", struct cpu_info, ci_curproc);
+	off("CI_CPCB", struct cpu_info, ci_cpcb);
+	off("CI_NEXT", struct cpu_info, ci_next);
+	off("CI_FPPROC", struct cpu_info, ci_fpproc);
+	off("CI_NUMBER", struct cpu_info, ci_number);
+	off("CI_UPAID", struct cpu_info, ci_upaid);
+	off("CI_SPINUP", struct cpu_info, ci_spinup);
+	off("CI_INITSTACK", struct cpu_info, ci_initstack);
+	off("CI_PADDR", struct cpu_info, ci_paddr);
+
 	/* FPU state */
-	off("FS_REGS", struct fpstate, fs_regs);
-	off("FS_FSR", struct fpstate, fs_fsr);
-	off("FS_QSIZE", struct fpstate, fs_qsize);
-	off("FS_QUEUE", struct fpstate, fs_queue);
-	siz("FS_SIZE", struct fpstate);
+	off("FS_REGS", struct fpstate64, fs_regs);
+	off("FS_FSR", struct fpstate64, fs_fsr);
+	off("FS_GSR", struct fpstate64, fs_gsr);
+	off("FS_QSIZE", struct fpstate64, fs_qsize);
+	off("FS_QUEUE", struct fpstate64, fs_queue);
+	siz("FS_SIZE", struct fpstate64);
 	def("FSR_QNE", FSR_QNE);
-	def("FPRS_FEF",FPRS_FEF);
-	def("FPRS_DU",FPRS_DU);
-	def("FPRS_DL",FPRS_DL);
+	def("FPRS_FEF", FPRS_FEF);
+	def("FPRS_DU", FPRS_DU);
+	def("FPRS_DL", FPRS_DL);
 
 	/* system calls */
 	def("SYS___sigreturn14", SYS___sigreturn14);
@@ -173,26 +192,26 @@ main()
 	off("PCB_LASTCALL", struct pcb, lastcall);
 	siz("PCB_SIZE", struct pcb);
 
-	/* trapframe fields */
-	off("TF_TSTATE", struct trapframe, tf_tstate);
-	off("TF_PC", struct trapframe, tf_pc);
-	off("TF_NPC", struct trapframe, tf_npc);
-	off("TF_FAULT", struct trapframe, tf_fault);
-	off("TF_KSTACK", struct trapframe, tf_kstack);
-	off("TF_Y", struct trapframe, tf_y);
-	off("TF_PIL", struct trapframe, tf_pil);
-	off("TF_OLDPIL", struct trapframe, tf_oldpil);
-	off("TF_TT", struct trapframe, tf_tt);
-	off("TF_GLOBAL", struct trapframe, tf_global);
-	off("TF_OUT", struct trapframe, tf_out);
-	off("TF_LOCAL", struct trapframe, tf_local);
-	off("TF_IN", struct trapframe, tf_in);
+	/* trapframe64 fields */
+	off("TF_TSTATE", struct trapframe64, tf_tstate);
+	off("TF_PC", struct trapframe64, tf_pc);
+	off("TF_NPC", struct trapframe64, tf_npc);
+	off("TF_FAULT", struct trapframe64, tf_fault);
+	off("TF_KSTACK", struct trapframe64, tf_kstack);
+	off("TF_Y", struct trapframe64, tf_y);
+	off("TF_PIL", struct trapframe64, tf_pil);
+	off("TF_OLDPIL", struct trapframe64, tf_oldpil);
+	off("TF_TT", struct trapframe64, tf_tt);
+	off("TF_GLOBAL", struct trapframe64, tf_global);
+	off("TF_OUT", struct trapframe64, tf_out);
+	off("TF_LOCAL", struct trapframe64, tf_local);
+	off("TF_IN", struct trapframe64, tf_in);
 	/* shortened versions */
-	off("TF_G", struct trapframe, tf_global);
-	off("TF_O", struct trapframe, tf_out);
-	off("TF_L", struct trapframe, tf_local);
-	off("TF_I", struct trapframe, tf_in);
-	siz("TF_SIZE", struct trapframe);
+	off("TF_G", struct trapframe64, tf_global);
+	off("TF_O", struct trapframe64, tf_out);
+	off("TF_L", struct trapframe64, tf_local);
+	off("TF_I", struct trapframe64, tf_in);
+	siz("TF_SIZE", struct trapframe64);
 
 #if 0
 	/* clockframe fields */
@@ -209,49 +228,14 @@ main()
 	off("IH_ARG", struct intrhand, ih_arg);
 	off("IH_NUMBER", struct intrhand, ih_number);
 	off("IH_PIL", struct intrhand, ih_pil);
+	off("IH_PEND", struct intrhand, ih_pending);
 	off("IH_NEXT", struct intrhand, ih_next);
 	off("IH_MAP", struct intrhand, ih_map);
 	off("IH_CLR", struct intrhand, ih_clr);
 	siz("IH_SIZE", struct intrhand);
-	
-#ifdef notyet
-	/* ZSCC interrupt fields */
-	off("ZSC_A", struct zs_softc, sc_a);
-	off("ZSC_B", struct zs_softc, sc_b);
-/*	off("ZL_WREG", struct zs_line, zl_wreg); */
-	off("ZL_TBC", struct zs_line, zl_tbc);
-	off("ZL_TBA", struct zs_line, zl_tba);
-	off("ZL_RBPUT", struct zs_line, zl_rbput);
-	off("ZL_RBUF", struct zs_line, zl_rbuf);
-	def("ZSRR1_DO_bit", ffs(ZSRR1_DO) - 1);
-#endif
-#ifdef notyet
-	/* audio trap handler fields */
-	off("AU_AMD", struct auio, au_amd);
-	off("AU_RDATA", struct auio, au_rdata);
-	off("AU_REND", struct auio, au_rend);
-	off("AU_PDATA", struct auio, au_pdata);
-	off("AU_PEND", struct auio, au_pend);
-	off("AU_EVCNT", struct auio, au_intrcnt.ev_count);
-
-	off("AMD_IR", struct amd7930, ir);
-	off("AMD_BBRB", struct amd7930, bbrb);
-	off("AMD_BBTB", struct amd7930, bbtb);
-#endif
-/*	def("PROM_BASE", PROM_BASE); */
-
-	off("PV_NODEOPS", struct promvec, pv_nodeops);
-	off("PV_HALT", struct promvec, pv_halt);
-	off("PV_EVAL", struct promvec, pv_fortheval.v0_eval);
-	off("PV_ROMVEC_VERS", struct promvec, pv_romvec_vers);
 
 	off("NO_NEXTNODE", struct nodeops, no_nextnode);
 	off("NO_GETPROP", struct nodeops, no_getprop);
-
-#if 0
-	off("OLDMON_PRINTF", struct om_vector, printf);
-	off("OLDMON_HALT", struct om_vector, exitToMon);
-#endif
 
 	/* floppy trap handler fields */
 	off("FDC_REG_MSR", struct fdcio, fdcio_reg_msr);

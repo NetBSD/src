@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.14 1999/05/13 14:24:27 minoura Exp $	*/
+/*	$NetBSD: pmap.h,v 1.14.2.1 2000/11/20 20:30:08 bouyer Exp $	*/
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -132,6 +132,8 @@ struct pv_page {
 	struct pv_entry pvp_pv[NPVPPG];
 };
 
+#ifdef _KERNEL
+
 extern struct pmap	kernel_pmap_store;
 
 #define pmap_kernel()	(&kernel_pmap_store)
@@ -152,5 +154,13 @@ extern char		*vmmap;		/* map for mem, dumps, etc. */
 vaddr_t	pmap_map __P((vaddr_t, paddr_t, paddr_t, int));
 void	pmap_procwr __P((struct proc *, vaddr_t, size_t));
 #define PMAP_NEED_PROCWR
+
+/*
+ * Do idle page zero'ing uncached to avoid polluting the cache.
+ */
+boolean_t pmap_zero_page_uncached __P((paddr_t));
+#define	PMAP_PAGEIDLEZERO(pa)	pmap_zero_page_uncached((pa))
+
+#endif /* _KERNEL */
 
 #endif /* !_X68K_PMAP_H_ */

@@ -1,2 +1,2 @@
-#include "compat.h"
+#include <stand.h>
 #include "../../hpcmips/platid.c"

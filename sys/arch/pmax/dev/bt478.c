@@ -1,4 +1,4 @@
-/*	$NetBSD: bt478.c,v 1.11 1999/09/05 11:34:29 simonb Exp $	*/
+/*	$NetBSD: bt478.c,v 1.11.2.1 2000/11/20 20:20:15 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -62,8 +62,6 @@
 
 #include <machine/bus.h>			/*  wbflush() */
 
-#include <mips/cpuregs.h>
-
 #include <machine/fbio.h>
 #include <machine/fbvar.h>
 
@@ -72,15 +70,9 @@
 #include <pmax/pmax/kn01.h>
 
 
-
 /*
  * Forward references.
  */
-
-
-/* XXX qvss ioctl interface uses this */
-void bt478CursorColor __P((struct fbinfo *fi, unsigned int color[]));
-
 
 static u_char	bg_RGB[3];	/* background color for the cursor */
 static u_char	fg_RGB[3];	/* foreground color for the cursor */
@@ -257,7 +249,7 @@ bt478InitColorMap (fi)
 int
 bt478LoadColorMap(fi, bits, index, count)
 	struct fbinfo *fi;
-	caddr_t bits;
+	const u_char *bits;
 	int index, count;
 {
 	VDACRegs *vdac = (VDACRegs *)(fi -> fi_vdac);
@@ -294,7 +286,7 @@ bt478LoadColorMap(fi, bits, index, count)
 int
 bt478GetColorMap(fi, bits, index, count)
 	struct fbinfo *fi;
-	caddr_t bits;
+	u_char *bits;
 	int index, count;
 {
 	u_char *cmap_bits;

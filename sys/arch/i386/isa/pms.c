@@ -1,4 +1,4 @@
-/*	$NetBSD: pms.c,v 1.45 1999/08/19 15:33:16 drochner Exp $	*/
+/*	$NetBSD: pms.c,v 1.45.2.1 2000/11/20 20:09:33 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1997 Charles M. Hannum.
@@ -57,7 +57,7 @@
 #endif
 #if (NOPMS_PCKBC > 0)
 #include <machine/bus.h>
-#include <dev/isa/pckbcvar.h>
+#include <dev/ic/pckbcvar.h>
 #endif
 #include <machine/mouse.h>
 #include <machine/conf.h>
@@ -364,7 +364,7 @@ opms_pckbc_attach(parent, self, aux)
 	sc->sc_state = 0;
 
 	pckbc_set_inputhandler(sc->sc_kbctag, sc->sc_kbcslot,
-			       opmsinput, sc);
+			       opmsinput, sc, sc->sc_dev.dv_xname);
 
 	/* no interrupts until enabled */
 	cmd[0] = PMS_DEV_DISABLE;

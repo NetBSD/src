@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.1.1.1 1999/09/16 12:23:20 takemura Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.1.1.1.2.1 2000/11/20 20:46:38 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -34,6 +34,9 @@
  *
  */
 
+#include "opt_vr41x1.h"
+#include "opt_tx39xx.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -57,6 +60,9 @@ struct cfattach mainbus_ca = {
 	sizeof(struct mainbus_softc), mbmatch, mbattach
 };
 
+/* There can be only one. */
+static int mainbus_found;
+
 static int
 mbmatch(parent, cf, aux)
 	struct device *parent;
@@ -64,16 +70,10 @@ mbmatch(parent, cf, aux)
 	void *aux;
 {
 
-	/*
-	 * Only one mainbus, but some people are stupid...
-	 */	
-	if (cf->cf_unit > 0)
-		return(0);
+	if (mainbus_found)
+		return (0);
 
-	/*
-	 * That one mainbus is always here.
-	 */
-	return(1);
+	return (1);
 }
 
 int ncpus = 0;	/* only support uniprocessors, for now */
@@ -82,14 +82,16 @@ bus_space_tag_t system_bus_iot; /* Serial console requires this */
 bus_space_tag_t
 mb_bus_space_init()
 {
-    bus_space_tag_t iot;
-    iot = hpcmips_alloc_bus_space_tag();
-    strcpy(iot->t_name, "System internal");
-    iot->t_base = 0x0;
-    iot->t_size = 0xffffffff;
-    iot->t_extent = 0; /* No extent for bootstraping */
-    system_bus_iot = iot;
-    return iot;
+	bus_space_tag_t iot;
+
+	iot = hpcmips_alloc_bus_space_tag();
+	strcpy(iot->t_name, "System internal");
+	iot->t_base = 0x0;
+	iot->t_size = 0xffffffff;
+	iot->t_extent = 0; /* No extent for bootstraping */
+	system_bus_iot = iot;
+
+	return (iot);
 }
 
 static void
@@ -98,8 +100,14 @@ mbattach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
+	int i;
 	register struct device *mb = self;
 	struct mainbus_attach_args ma;
+	char *devnames[] = {
+		"txsim", "vrip", "bivideo", "btnmgr", "hpcapm",
+	};
+
+	mainbus_found = 1;
 
 	printf("\n");
 
@@ -107,17 +115,20 @@ mbattach(parent, self, aux)
 	ma.ma_name = "cpu";
 	config_found(mb, &ma, mbprint);
 
-	/* Attach frame buffer */
-	ma.ma_name = "fb";
-	config_found(mb, &ma, mbprint);
-
-	/* Attach Vr41x1 integrated peripherals (if configured). */
-	ma.ma_name = "vrip";
+#if defined VR41X1 && defined TX39XX
+#error misconfiguration
+#elif defined VR41X1
 	if (!system_bus_iot) 
 	    mb_bus_space_init();
 	hpcmips_init_bus_space_extent(system_bus_iot); /* Now prepare extent */
 	ma.ma_iot = system_bus_iot;
-	config_found(mb, &ma, mbprint);
+#endif
+
+	/* Attach devices */
+	for (i = 0; i < sizeof(devnames)/sizeof(*devnames); i++) {
+		ma.ma_name = devnames[i];
+		config_found(mb, &ma, mbprint);
+	}
 }
 
 
@@ -129,5 +140,6 @@ mbprint(aux, pnp)
 
 	if (pnp)
 		return (QUIET);
+
 	return (UNCONF);
 }

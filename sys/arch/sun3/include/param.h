@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.49 1999/04/05 14:34:18 gwr Exp $	*/
+/*	$NetBSD: param.h,v 1.49.8.1 2000/11/20 20:27:54 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -74,11 +74,11 @@
 #include <m68k/param.h>
 
 /*
- * Size of kernel malloc arena in CLBYTES-sized logical pages
+ * Minimum and maximum sizes of the kernel malloc arena in PAGE_SIZE-sized
+ * logical pages.
  */
-#ifndef 	NKMEMCLUSTERS
-# define	NKMEMCLUSTERS	(2048 * 1024 / CLBYTES)
-#endif
+#define	NKMEMPAGES_MIN_DEFAULT	((3 * 1024 * 1024) >> PAGE_SHIFT)
+#define	NKMEMPAGES_MAX_DEFAULT	((3 * 1024 * 1024) >> PAGE_SHIFT)
 
 #if defined(_KERNEL) && !defined(_LOCORE)
 

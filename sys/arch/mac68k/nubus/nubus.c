@@ -1,4 +1,4 @@
-/*	$NetBSD: nubus.c,v 1.47 1999/08/23 22:29:39 thorpej Exp $	*/
+/*	$NetBSD: nubus.c,v 1.47.2.1 2000/11/20 20:12:25 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Allen Briggs.  All rights reserved.
@@ -35,9 +35,7 @@
 #include <sys/buf.h>
 #include <sys/conf.h>
 
-#include <vm/vm.h>
-#include <vm/vm_kern.h>
-#include <vm/vm_map.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>
 #include <machine/bus.h>
@@ -46,8 +44,6 @@
 #include <machine/cpu.h>
 #include <machine/pte.h>
 #include <machine/viareg.h>
-
-#include <vm/vm.h>
 
 #include <mac68k/nubus/nubus.h>
 
@@ -718,6 +714,7 @@ nubus_get_c_string(bst, bsh, fmt, dirent, data_return, max_bytes)
 			return 1;
 		loc = nubus_adjust_ptr(lanes, loc, 1);
 	}
+	*(data_return-1) = '\0';
 	return 0;
 }
 

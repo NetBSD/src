@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.5 1999/06/04 14:00:38 mrg Exp $ */
+/*	$NetBSD: disksubr.c,v 1.5.2.1 2000/11/20 20:26:52 bouyer Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -57,49 +57,7 @@
 static	char *disklabel_sun_to_bsd __P((char *, struct disklabel *));
 static	int disklabel_bsd_to_sun __P((struct disklabel *, char *));
 
-#define b_cylin		b_resid
-
 extern struct device *bootdv;
-
-/*
- * find the boot device (if it was a disk).   we must check to see if
- * unit info in saved bootpath structure matches unit info in our softc.
- * note that knowing the device name (e.g. "xd0") is not useful... we
- * must check the drive number (or target/lun, in the case of SCSI).
- * (XXX is it worth ifdef'ing this?)
- */
-
-void
-dk_establish(dk, dev)
-	struct disk *dk;
-	struct device *dev;
-{
-	struct bootpath *bp = bootpath_store(0, NULL); /* restore bootpath! */
-	struct scsibus_softc *sbsc;
-	int target, lun;
-
-	if (bp == NULL)
-		return;
-
-	/*
-	 * scsi: sd,cd
-	 */
-	if (strncmp("sd", dev->dv_xname, 2) == 0 ||
-	    strncmp("wd", dev->dv_xname, 2) == 0 ||
-	    strncmp("cd", dev->dv_xname, 2) == 0) {
-
-		sbsc = (struct scsibus_softc *)dev->dv_parent;
-
-		target = bp->val[0];
-		lun = bp->val[1];
-
-		if (sbsc->sc_link[target][lun] != NULL &&
-		    sbsc->sc_link[target][lun]->device_softc == (void *)dev) {
-			bp->dev = dev;	/* got it! */
-			return;
-		}
-	}
-}
 
 /*
  * Attempt to read a disk label from a device
@@ -139,7 +97,7 @@ readdisklabel(dev, strat, lp, clp)
 	/* next, dig out disk label */
 	bp->b_dev = dev;
 	bp->b_blkno = LABELSECTOR;
-	bp->b_cylin = 0;
+	bp->b_cylinder = 0;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_BUSY | B_READ;
 	(*strat)(bp);
@@ -148,7 +106,7 @@ readdisklabel(dev, strat, lp, clp)
 	error = biowait(bp);
 	if (error == 0) {
 		/* Save the whole block in case it has info we need. */
-		bcopy(bp->b_un.b_addr, clp->cd_block, sizeof(clp->cd_block));
+		bcopy(bp->b_data, clp->cd_block, sizeof(clp->cd_block));
 	}
 	bp->b_flags = B_INVAL | B_AGE | B_READ;
 	brelse(bp);
@@ -180,12 +138,12 @@ readdisklabel(dev, strat, lp, clp)
  */
 int
 setdisklabel(olp, nlp, openmask, clp)
-	register struct disklabel *olp, *nlp;
+	struct disklabel *olp, *nlp;
 	u_long openmask;
 	struct cpu_disklabel *clp;
 {
-	register int i;
-	register struct partition *opp, *npp;
+	int i;
+	struct partition *opp, *npp;
 
 	/* sanity clause */
 	if (nlp->d_secpercyl == 0 || nlp->d_secsize == 0 ||
@@ -225,7 +183,7 @@ int
 writedisklabel(dev, strat, lp, clp)
 	dev_t dev;
 	void (*strat) __P((struct buf *));
-	register struct disklabel *lp;
+	struct disklabel *lp;
 	struct cpu_disklabel *clp;
 {
 	struct buf *bp;
@@ -251,12 +209,12 @@ writedisklabel(dev, strat, lp, clp)
 
 	/* Get a buffer and copy the new label into it. */
 	bp = geteblk((int)lp->d_secsize);
-	bcopy(clp->cd_block, bp->b_un.b_addr, sizeof(clp->cd_block));
+	bcopy(clp->cd_block, bp->b_data, sizeof(clp->cd_block));
 
 	/* Write out the updated label. */
 	bp->b_dev = dev;
 	bp->b_blkno = LABELSECTOR;
-	bp->b_cylin = 0;
+	bp->b_cylinder = 0;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_WRITE;
 	(*strat)(bp);
@@ -277,9 +235,7 @@ bounds_check_with_label(bp, lp, wlabel)
 	struct disklabel *lp;
 	int wlabel;
 {
-#define dkpart(dev) (minor(dev) & 7)
-
-	struct partition *p = lp->d_partitions + dkpart(bp->b_dev);
+	struct partition *p = lp->d_partitions + DISKPART(bp->b_dev);
 	int maxsz = p->p_size;
 	int sz = (bp->b_bcount + DEV_BSIZE - 1) >> DEV_BSHIFT;
 
@@ -487,11 +443,11 @@ disklabel_bsd_to_sun(lp, cp)
  */
 int
 isbad(bt, cyl, trk, sec)
-	register struct dkbad *bt;
+	struct dkbad *bt;
 	int cyl, trk, sec;
 {
-	register int i;
-	register long blk, bblk;
+	int i;
+	long blk, bblk;
 
 	blk = ((long)cyl << 16) + (trk << 8) + sec;
 	for (i = 0; i < 126; i++) {

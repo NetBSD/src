@@ -32,7 +32,7 @@ SECTIONS
      _edata = . ; 
   }  > ram
   .bss :
-  AT ( ROM + SIZEOF(.text) + SIZEOF(.tors) + SIZEOF(.data) + SIZEOF(.bss))
+  AT ( ROM + SIZEOF(.text) + SIZEOF(.tors) + SIZEOF(.data))
   {
      _bss_start = . ; 
     *(.bss)

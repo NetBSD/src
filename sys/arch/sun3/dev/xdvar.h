@@ -1,4 +1,4 @@
-/*	$NetBSD: xdvar.h,v 1.5 1998/01/26 21:03:43 gwr Exp $	*/
+/*	$NetBSD: xdvar.h,v 1.5.14.1 2000/11/20 20:27:53 bouyer Exp $	*/
 
 /*
  *
@@ -39,6 +39,8 @@
  *
  * author: Chuck Cranor <chuck@ccrc.wustl.edu>
  */
+
+#include <sys/callout.h>
 
 /*
  * i/o request: wrapper for hardware's iopb data structure
@@ -138,6 +140,8 @@ struct xdc_softc {
   struct device sc_dev;            /* device struct, reqd by autoconf */
   struct evcnt sc_intrcnt;         /* event counter (for vmstat -i) */
 
+  struct callout sc_tick_ch;
+
   struct xdc *xdc;                 /* vaddr of vme registers */
 
   int bustype;                     /* from attach args */
@@ -149,7 +153,7 @@ struct xdc_softc {
   struct xd_iorq *reqs;            /* i/o requests */
   struct xd_iopb *iopbase;         /* iopb base addr (maps iopb->iorq) */
   struct xd_iopb *dvmaiopb;        /* iopb base in DVMA space, not kvm */
-  struct buf sc_wq;                /* queue'd IOPBs for this controller */
+  struct buf_queue sc_wq;	   /* queue'd IOPBs for this controller */
   char freereq[XDC_MAXIOPB];       /* free list (stack) */
   char waitq[XDC_MAXIOPB];         /* wait queue */
   u_char nfree;                    /* number of iopbs free */

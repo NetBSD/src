@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_nubus.c,v 1.55 1999/06/14 03:11:34 briggs Exp $	*/
+/*	$NetBSD: grf_nubus.c,v 1.55.2.1 2000/11/20 20:12:25 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -11,10 +11,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by Allen Briggs.
- * 4. The name of the author may not be used to endorse or promote products
+ * 3. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
@@ -31,8 +28,6 @@
 /*
  * Device-specific routines for handling Nubus-based video cards.
  */
-
-#include "opt_grf.h"
 
 #include <sys/param.h>
 
@@ -211,7 +206,7 @@ bad:
 	gm->hres = image.hRes;
 	gm->vres = image.vRes;
 	gm->fbsize = gm->height * gm->rowbytes;
-	gm->fbbase = (caddr_t)sc->sc_handle;	/* XXX evil hack */
+	gm->fbbase = (caddr_t)(sc->sc_handle.base);	/* XXX evil hack */
 	gm->fboff = image.offset;
 
 	strncpy(cardname, nubus_get_card_name(sc->sc_tag, sc->sc_handle,
@@ -311,6 +306,7 @@ bad:
 		break;
 	case NUBUS_DRHW_ROPS24LXI:
 	case NUBUS_DRHW_ROPS24XLTV:
+	case NUBUS_DRHW_ROPS24MXTV:
 		sc->cli_offset = 0xfb0010;
 		sc->cli_value = 0x00;
 		add_nubus_intr(na->slot, grfmv_intr_generic_write4, sc);
@@ -483,7 +479,7 @@ grfmv_intr_cb264(vsc)
 	volatile char *slotbase;
 
 	sc = (struct grfbus_softc *)vsc;
-	slotbase = (volatile char *)sc->sc_handle;	/* XXX evil hack */
+	slotbase = (volatile char *)(sc->sc_handle.base); /* XXX evil hack */
 	asm volatile("	movl	%0,a0
 			movl	a0@(0xff6028),d0
 			andl	#0x2,d0
@@ -537,7 +533,7 @@ grfmv_intr_cb364(vsc)
 	volatile char *slotbase;
 
 	sc = (struct grfbus_softc *)vsc;
-	slotbase = (volatile char *)sc->sc_handle;	/* XXX evil hack */
+	slotbase = (volatile char *)(sc->sc_handle.base); /* XXX evil hack */
 	asm volatile("	movl	%0,a0
 			movl	a0@(0xfe6028),d0
 			andl	#0x2,d0

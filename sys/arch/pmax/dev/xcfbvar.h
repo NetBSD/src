@@ -1,8 +1,3 @@
-/*	$NetBSD: xcfbvar.h,v 1.3 1999/04/24 08:01:08 simonb Exp $	*/
+/*	$NetBSD: xcfbvar.h,v 1.3.2.1 2000/11/20 20:20:22 bouyer Exp $	*/
 
-/*
- * Initialize a Personal Decstation baseboard framebuffer,
- * so it can be used as a bitmapped glass-tty console device.
- */
-extern int
-xcfbinit __P((struct fbinfo *fi, caddr_t base, int unit, int silent));
+int xcfb_cnattach __P((void));

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.41 1999/09/21 00:10:39 matt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.41.2.1 2000/11/20 20:20:33 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,59 +43,40 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.41 1999/09/21 00:10:39 matt Exp $");
-
-/*
- * Setup the system to run on the current machine.
- *
- * Configure() is called at boot time.  Available
- * devices are determined (from possibilities mentioned in ioconf.c),
- * and the drivers are initialized.
- */
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.41.2.1 2000/11/20 20:20:33 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/map.h>
-#include <sys/buf.h>
-#include <sys/dkstat.h>
 #include <sys/conf.h>
 #include <sys/reboot.h>
 #include <sys/device.h>
 
-#include <machine/cpu.h>
 #include <machine/autoconf.h>
+#include <machine/intr.h>
 #include <machine/sysconf.h>
 
 #include <pmax/dev/device.h>
-#include <pmax/pmax/turbochannel.h>
 
+#include <dev/tc/tcvar.h>
 
-/*
- * The following several variables are related to
- * the configuration process, and are used in initializing
- * the machine.
- */
-int	cpuspeed = 30;	/* approx # instr per usec. */
+#include <dev/scsipi/scsi_all.h>
+#include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsiconf.h>
 
-/*
- * XXX This should really be in a tcasic driver, or something.
- * XXX But right now even the 3100 code uses it.
- */
-tc_option_t tc_slot_info[TC_MAX_LOGICAL_SLOTS];
+#include "rz.h"
+#include "tz.h"
+#include "xasc_ioasic.h"
+#include "xasc_pmaz.h"
 
-
-void configure_scsi __P((void));
-
-void findroot __P((struct device **, int *));
+struct intrhand intrtab[MAX_DEV_NCOOKIES];
+struct device *booted_device;
+static struct device *booted_controller;
+static int	booted_slot, booted_unit, booted_partition;
+static char	*booted_protocol;
 
 /*
- * Determine mass storage and memory configuration for a machine.
- * Print cpu type, and then iterate over an array of devices
- * found on the baseboard or in turbochannel option slots.
- * Once devices are configured, enable interrupts, and probe
- * for attached scsi devices.
- */
+ * Configure all devices on system
+ */     
 void
 cpu_configure()
 {
@@ -109,142 +90,196 @@ cpu_configure()
 
 	/* Configuration is finished, turn on interrupts. */
 	_splnone();	/* enable all source forcing SOFT_INTs cleared */
-
-	/*
-	 * Probe SCSI bus using old-style pmax configuration table.
-	 * We do not yet have machine-independent SCSI support or polled
-	 * SCSI.
-	 */
+#if NRZ > 0 || NTZ > 0
 	printf("Beginning old-style SCSI device autoconfiguration\n");
 	configure_scsi();
+#endif
+}
+
+/*
+ * Look at the string 'cp' and decode the boot device.  Boot names
+ * can be something like 'rz(0,0,0)vmunix' or '5/rz0/vmunix'.
+ *
+ * 3100 allows abbrivation;
+ *	dev(controller[,uni-number[,partition-number]]])[filename]
+ */
+void
+makebootdev(cp)
+	char *cp;
+{
+	booted_device = NULL;
+	booted_slot = booted_unit = booted_partition = 0;
+	booted_protocol = NULL;
+
+	if (cp[0] == 'r' && cp[1] == 'z' && cp[2] == '(') {
+		cp += 3;
+		if (*cp >= '0' && *cp <= '9')
+			booted_slot = *cp++ - '0';
+		if (*cp == ',')
+			cp += 1;
+		if (*cp >= '0' && *cp <= '9')
+			booted_unit = *cp++ - '0';
+		if (*cp == ',')
+			cp += 1;
+		if (*cp >= '0' && *cp <= '9')
+			booted_partition = *cp - '0';
+		booted_protocol = "SCSI";
+		return;
+	}
+	if (cp[0] >= '0' && cp[0] <= '9' && cp[1] == '/') {
+		booted_slot = cp[0] - '0';
+		if (cp[2] == 'r' && cp[3] == 'z'
+		    && cp[4] >= '0' && cp[4] <= '9') {
+			booted_protocol = "SCSI";
+			booted_unit = cp[4] - '0';
+		}
+		else if (strncmp(cp+2, "tftp", 4) == 0)
+			booted_protocol = "BOOTP";
+		else if (strncmp(cp+2, "mop", 3) == 0)
+			booted_protocol = "MOP";
+	}
 }
 
 void
 cpu_rootconf()
 {
-	struct device *booted_device;
-	int booted_partition;
+#if NRZ > 0
+	struct device *dv;
+	char name[5];
 
-	findroot(&booted_device, &booted_partition);
+	if (booted_device == NULL && strcmp(booted_protocol, "SCSI") == 0) {
+		int ctlr_no;
 
+		if (booted_controller)
+			ctlr_no = booted_controller->dv_unit;
+		else
+			ctlr_no = 0;
+		snprintf(name, sizeof(name), "rz%d", booted_unit + ctlr_no * 8);
+		for (dv = TAILQ_FIRST(&alldevs); dv; dv = TAILQ_NEXT(dv, dv_list)) {
+			if (dv->dv_class == DV_DISK && !strcmp(dv->dv_xname, name)) {
+				booted_device = dv;
+				break;
+			}
+		}
+	}
+#endif
 	printf("boot device: %s\n",
 	    booted_device ? booted_device->dv_xname : "<unknown>");
 
 	setroot(booted_device, booted_partition);
 }
 
-u_long	bootdev = 0;		/* should be dev_t, but not until 32 bits */
-
 /*
- * Attempt to find the device from which we were booted.
+ * Try to determine the boot device.
  */
 void
-findroot(devpp, partp)
-	struct device **devpp;
-	int *partp;
+device_register(dev, aux)
+	struct device *dev;
+	void *aux;
 {
-	int i, majdev, unit, part, controller;
-	struct pmax_scsi_device *dp;
-	const char *bootdv_name;
+	static int found, initted, scsiboot, netboot;
+	static struct device *ioasicdev;
+	struct device *parent = dev->dv_parent;
+	struct cfdata *cf = dev->dv_cfdata;
+	struct cfdriver *cd = cf->cf_driver;
+
+	if (found)
+		return;
+
+	if (!initted) {
+		scsiboot = strcmp(booted_protocol, "SCSI") == 0;
+		netboot = (strcmp(booted_protocol, "BOOTP") == 0) ||
+		    (strcmp(booted_protocol, "MOP") == 0);
+		initted = 1;
+	}
 
 	/*
-	 * Default to "not found".
+	 * Check if IOASIC was the boot slot.
 	 */
-	*devpp = NULL;
-	*partp = 0;
-	bootdv_name = NULL;
+	if (strcmp(cd->cd_name, "ioasic") == 0) {
+		struct tc_attach_args *ta = aux;
 
-	if ((bootdev & B_MAGICMASK) != B_DEVMAGIC)
-		return;
-
-	majdev = B_TYPE(bootdev);
-	for (i = 0; dev_name2blk[i].d_name != NULL; i++) {
-		if (majdev == dev_name2blk[i].d_maj) {
-			bootdv_name = dev_name2blk[i].d_name;
-			break;
-		}
-	}
-
-	if (bootdv_name == NULL) {
-#if defined(DEBUG)
-		printf("findroot(): no name2blk for boot device %d\n", majdev);
-#endif
+		if (ta->ta_slot == booted_slot)
+			ioasicdev = dev;
 		return;
 	}
 
-	controller = B_CONTROLLER(bootdev);
-	part = B_PARTITION(bootdev);
-	unit = B_UNIT(bootdev);
+	/*
+	 * Check for ASC controller on either IOASIC or TC option card.
+	 */
+	if (scsiboot && (
+	    strcmp(cd->cd_name, "asc") == 0 ||
+	    strcmp(cd->cd_name, "xasc") == 0)) {
+		struct tc_attach_args *ta = aux;
 
-	for (dp = scsi_dinit; dp->sd_driver != NULL; dp++) {
-		if (dp->sd_alive && dp->sd_drive == unit &&
-		    dp->sd_ctlr == controller &&
-		    dp->sd_driver->d_name[0] == bootdv_name[0] &&
-		    dp->sd_driver->d_name[1] == bootdv_name[1]) {
-			*devpp = dp->sd_devp;
-			*partp = part;
+		/*
+		 * If boot was from IOASIC controller, ioasicdev will
+		 * be the ASC parent.
+		 * If boot was from a TC option card, the TC slot number
+		 * of the ASC will match the boot slot.
+		 */
+		if (parent == ioasicdev ||
+		    ta->ta_slot == booted_slot) {
+			booted_controller = dev;
 			return;
 		}
 	}
-#if defined(DEBUG)
-	printf("findroot(): no driver for boot device %s\n", bootdv_name);
-#endif
-}
 
-/*
- * Look at the string 'cp' and decode the boot device.
- * Boot names can be something like 'rz(0,0,0)vmunix' or '5/rz0/vmunix'.
- */
-void
-makebootdev(cp)
-	char *cp;
-{
-	int majdev, unit, part, ctrl;
-
-	if (*cp >= '0' && *cp <= '9') {
-		/* XXX should be able to specify controller */
-		if (cp[1] != '/' || cp[4] < '0' || cp[4] > '9')
-			goto defdev;
-		unit = cp[4] - '0';
-		if (cp[5] >= 'a' && cp[5] <= 'h')
-			part = cp[5] - 'a';
-		else
-			part = 0;
-		cp += 2;
-		for (majdev = 0; dev_name2blk[majdev].d_name != NULL;
-		    majdev++) {
-			if (cp[0] == dev_name2blk[majdev].d_name[0] &&
-			    cp[1] == dev_name2blk[majdev].d_name[1]) {
-				bootdev = MAKEBOOTDEV(
-				    dev_name2blk[majdev].d_maj, 0, 0,
-				    unit, part);
-				return;
-			}
-		}
-		goto defdev;
+	/*
+	 * If an SII device is configured, it's currently the only
+	 * possible SCSI boot device.
+	 */
+	if (scsiboot && (
+	    strcmp(cd->cd_name, "sii") == 0 ||
+	    strcmp(cd->cd_name, "xsii") == 0)) {
+		booted_controller = dev;
+		return;
 	}
-	for (majdev = 0; dev_name2blk[majdev].d_name != NULL; majdev++)
-		if (cp[0] == dev_name2blk[majdev].d_name[0] &&
-		    cp[1] == dev_name2blk[majdev].d_name[1] &&
-		    cp[2] == '(')
-			goto fndmaj;
-defdev:
-	bootdev = B_DEVMAGIC;
-	return;
 
-fndmaj:
-	majdev = dev_name2blk[majdev].d_maj;
-	for (ctrl = 0, cp += 3; *cp >= '0' && *cp <= '9'; )
-		ctrl = ctrl * 10 + *cp++ - '0';
-	if (*cp == ',')
-		cp++;
-	for (unit = 0; *cp >= '0' && *cp <= '9'; )
-		unit = unit * 10 + *cp++ - '0';
-	if (*cp == ',')
-		cp++;
-	for (part = 0; *cp >= '0' && *cp <= '9'; )
-		part = part * 10 + *cp++ - '0';
-	if (*cp != ')')
-		goto defdev;
-	bootdev = MAKEBOOTDEV(majdev, 0, ctrl, unit, part);
+	/*
+	 * If we found the boot controller, if check disk/tape/cdrom device
+	 * on that controller matches.
+	 */
+	if (booted_controller && (strcmp(cd->cd_name, "sd") == 0 ||
+	    strcmp(cd->cd_name, "st") == 0 ||
+	    strcmp(cd->cd_name, "cd") == 0)) {
+		struct scsipibus_attach_args *sa = aux;
+
+		if (parent->dv_parent != booted_controller)
+			return;
+		if (booted_unit != sa->sa_sc_link->scsipi_scsi.target)
+			return;
+		booted_device = dev;
+		found = 1;
+		return;
+	}
+
+	/*
+	 * XXX rz devices don't call device_register?
+	 */
+	if (booted_controller && (strcmp(cd->cd_name, "rz") == 0 ||
+	    strcmp(cd->cd_name, "tz") == 0)) {
+		int sd_ctlr = (int)aux;
+
+		if (booted_unit == (dev->dv_unit & 7)) {
+			if (booted_controller->dv_unit == sd_ctlr)
+				booted_device = dev;
+				found = 1;
+				return;
+		}
+	}
+
+	/*
+	 * Check if netboot device.
+	 */
+	if (netboot && strcmp(cd->cd_name, "le") == 0) {
+		struct tc_attach_args *ta = aux;
+
+		if (parent == ioasicdev ||
+		    ta->ta_slot == booted_slot) {
+			booted_device = dev;
+			found = 1;
+			return;
+		}
+	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.4 1999/04/28 15:22:25 christos Exp $ */
+/*	$NetBSD: installboot.c,v 1.4.2.1 2000/11/20 20:25:50 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,6 +41,8 @@
 #include <sys/time.h>
 #include <sys/stat.h>
 #include <sys/sysctl.h>
+#include <sys/mman.h>
+#include <sys/utsname.h>
 #include <ufs/ufs/dinode.h>
 #include <ufs/ufs/dir.h>
 #include <ufs/ffs/fs.h>
@@ -55,7 +57,7 @@
 
 #include "loadfile.h"
 
-int	verbose, nowrite, hflag;
+int	verbose, nowrite, sparc64, uflag, hflag = 1;
 char	*boot, *proto, *dev;
 
 #if 0
@@ -83,24 +85,27 @@ int32_t	*block_count_p;		/* size of this array */
 int32_t	*block_size_p;		/* filesystem block size */
 int32_t	max_block_count;
 
-char	*karch;
-char	cpumodel[100];
-
-
-char		*loadprotoblocks __P((char *, long *));
+char		*loadprotoblocks __P((char *, size_t *));
 int		loadblocknums __P((char *, int));
 static void	devread __P((int, void *, daddr_t, size_t, char *));
 static void	usage __P((void));
 int 		main __P((int, char *[]));
 
-
 static void
 usage()
 {
 	extern char *__progname;
-	(void)fprintf(stderr,
-	    "Usage: %s [-n] [-v] [-h] [-a <karch>] <boot> <proto> <device>\n",
-	    __progname);
+
+	if (sparc64)
+		(void)fprintf(stderr,
+		    "Usage: %s [-nv] <bootblk> <device>\n"
+		    "       %s -U [-nv] <boot> <proto> <device>\n",
+		    __progname, __progname);
+	else
+		(void)fprintf(stderr,
+		    "Usage: %s [-nv] <boot> <proto> <device>\n"
+		    "       %s -u [-n] [-v] <bootblk> <device>\n",
+		    __progname, __progname);
 	exit(1);
 }
 
@@ -112,22 +117,37 @@ main(argc, argv)
 	int	c;
 	int	devfd;
 	char	*protostore;
-	long	protosize;
-	int	mib[2];
-	size_t	size;
+	size_t	protosize;
+	struct	utsname utsname;
 
-	while ((c = getopt(argc, argv, "a:vnh")) != -1) {
+	/*
+	 * For UltraSPARC machines, we turn on the uflag by default.
+	 */
+	if (uname(&utsname) == -1)
+		err(1, "uname");
+	if (strcmp(utsname.machine, "sparc64") == 0)
+		sparc64 = uflag = 1;
+
+	while ((c = getopt(argc, argv, "a:nhuUv")) != -1) {
 		switch (c) {
 		case 'a':
-			karch = optarg;
+			warnx("-a option is obsolete");
 			break;
 		case 'h':	/* Note: for backwards compatibility */
 			/* Don't strip a.out header */
-			hflag = 1;
+			warnx("-h option is obsolete");
 			break;
 		case 'n':
 			/* Do not actually write the bootblock to disk */
 			nowrite = 1;
+			break;
+		case 'u':
+			/* UltraSPARC boot block */
+			uflag = 1;
+			break;
+		case 'U':
+			/* Force non-ultrasparc */
+			uflag = 0;
 			break;
 		case 'v':
 			/* Chat */
@@ -138,57 +158,61 @@ main(argc, argv)
 		}
 	}
 
-	if (argc - optind < 3) {
-		usage();
+	if (uflag) {
+		if (argc - optind < 2)
+			usage();
+	} else {
+		if (argc - optind < 3)
+			usage();
+		boot = argv[optind++];
 	}
 
-	boot = argv[optind];
-	proto = argv[optind + 1];
-	dev = argv[optind + 2];
-
-	if (karch == NULL) {
-		mib[0] = CTL_HW;
-		mib[1] = HW_MODEL;
-		size = sizeof(cpumodel);
-		if (sysctl(mib, 2, cpumodel, &size, NULL, 0) == -1)
-			err(1, "sysctl");
-
-		if (size < 5 || strncmp(cpumodel, "SUN-4", 5) != 0) /*XXX*/ 
-			/* Assume a sun4c/sun4m */
-			karch = "sun4c";
-		else
-			karch = "sun4";
-	}
+	proto = argv[optind++];
+	dev = argv[optind];
 
 	if (verbose) {
-		printf("boot: %s\n", boot);
+		if (!uflag)
+			printf("boot: %s\n", boot);
 		printf("proto: %s\n", proto);
 		printf("device: %s\n", dev);
-		printf("architecture: %s\n", karch);
 	}
 
-	if (strcmp(karch, "sun4") == 0) {
-		hflag = 1;
-	} else if (strcmp(karch, "sun4c") == 0) {
-		hflag = 1;
-	} else if (strcmp(karch, "sun4m") == 0) {
-		hflag = 1;
-	} else
-		errx(1, "Unsupported architecture");
-
 	/* Load proto blocks into core */
-	if ((protostore = loadprotoblocks(proto, &protosize)) == NULL)
-		exit(1);
+	if (uflag == 0) {
+		if ((protostore = loadprotoblocks(proto, &protosize)) == NULL)
+			exit(1);
 
-	/* Open and check raw disk device */
-	if ((devfd = open(dev, O_RDONLY, 0)) < 0)
-		err(1, "open: %s", dev);
+		/* Open and check raw disk device */
+		if ((devfd = open(dev, O_RDONLY, 0)) < 0)
+			err(1, "open: %s", dev);
 
-	/* Extract and load block numbers */
-	if (loadblocknums(boot, devfd) != 0)
-		exit(1);
+		/* Extract and load block numbers */
+		if (loadblocknums(boot, devfd) != 0)
+			exit(1);
 
-	(void)close(devfd);
+		(void)close(devfd);
+	} else {
+		struct stat sb;
+		int protofd;
+		size_t blanklen;
+
+		if ((protofd = open(proto, O_RDONLY)) < 0)
+			err(1, "open: %s", proto);
+
+		if (fstat(protofd, &sb) < 0)
+			err(1, "fstat: %s", proto);
+
+		/* there must be a better way */
+		blanklen = DEV_BSIZE - ((sb.st_size + DEV_BSIZE) & (DEV_BSIZE - 1));
+		protosize = sb.st_size + blanklen;
+		if ((protostore = mmap(0, (size_t)protosize,
+		    PROT_READ|PROT_WRITE, MAP_PRIVATE,
+		    protofd, 0)) == MAP_FAILED)
+			err(1, "mmap: %s", proto);
+		/* and provide the rest of the block */
+		if (blanklen)
+			memset(protostore + sb.st_size, 0, blanklen);
+	}
 
 	if (nowrite)
 		return 0;
@@ -215,7 +239,7 @@ main(argc, argv)
 char *
 loadprotoblocks(fname, size)
 	char *fname;
-	long *size;
+	size_t *size;
 {
 	int	fd, sz;
 	u_long	ap, bp, st, en;
@@ -263,19 +287,19 @@ loadprotoblocks(fname, size)
 	block_table = (daddr_t *) (bp + nl[X_BLOCKTABLE].n_value - st);
 	block_count_p = (int32_t *)(bp + nl[X_BLOCKCOUNT].n_value - st);
 	block_size_p = (int32_t *) (bp + nl[X_BLOCKSIZE].n_value - st);
-	if ((int)block_table & 3) {
+	if ((int)(u_long)block_table & 3) {
 		warn("%s: invalid address: block_table = %p",
 		     fname, block_table);
 		free((void *)bp);
 		return NULL;
 	}
-	if ((int)block_count_p & 3) {
+	if ((int)(u_long)block_count_p & 3) {
 		warn("%s: invalid address: block_count_p = %p",
 		     fname, block_count_p);
 		free((void *)bp);
 		return NULL;
 	}
-	if ((int)block_size_p & 3) {
+	if ((int)(u_long)block_size_p & 3) {
 		warn("%s: invalid address: block_size_p = %p",
 		     fname, block_size_p);
 		free((void *)bp);

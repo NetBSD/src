@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.42 1999/10/18 19:37:28 fvdl Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.42.2.1 2000/11/20 20:09:19 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -46,13 +46,18 @@
  * devices are determined (from possibilities mentioned in ioconf.c),
  * and the drivers are initialized.
  */
+
+#include "opt_compat_oldboot.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/dkstat.h>
 #include <sys/disklabel.h>
 #include <sys/conf.h>
+#ifdef COMPAT_OLDBOOT
 #include <sys/reboot.h>
+#endif
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/vnode.h>
@@ -65,10 +70,25 @@
 
 static int match_harddisk __P((struct device *, struct btinfo_bootdisk *));
 static void matchbiosdisks __P((void));
-void findroot __P((struct device **, int *));
+static void findroot __P((void));
 
 extern struct disklist *i386_alldisks;
 extern int i386_ndisks;
+
+#include "bios32.h"
+#if NBIOS32 > 0
+#include <machine/bios32.h>
+#endif
+
+#include "opt_pcibios.h"
+#ifdef PCIBIOS
+#include <dev/pci/pcireg.h>
+#include <dev/pci/pcivar.h>
+#include <i386/pci/pcibios.h>
+#endif
+
+struct device *booted_device;
+int booted_partition;
 
 /*
  * Determine i/o configuration for a machine.
@@ -78,6 +98,13 @@ cpu_configure()
 {
 
 	startrtclock();
+
+#if NBIOS32 > 0
+	bios32_init();
+#endif
+#ifdef PCIBIOS
+	pcibios_init();
+#endif
 
 	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("configure: mainbus not configured");
@@ -98,10 +125,7 @@ cpu_configure()
 void
 cpu_rootconf()
 {
-	struct device *booted_device;
-	int booted_partition;
-
-	findroot(&booted_device, &booted_partition);
+	findroot();
 	matchbiosdisks();
 
 	printf("boot device: %s\n",
@@ -136,7 +160,8 @@ matchbiosdisks()
 	for (dv = alldevs.tqh_first; dv != NULL; dv = dv->dv_list.tqe_next)
 		if (dv->dv_class == DV_DISK &&
 		    (!strcmp(dv->dv_cfdata->cf_driver->cd_name, "sd") ||
-		     !strcmp(dv->dv_cfdata->cf_driver->cd_name, "wd")))
+		     !strcmp(dv->dv_cfdata->cf_driver->cd_name, "wd") ||
+		     !strcmp(dv->dv_cfdata->cf_driver->cd_name, "lsu")))
 			i386_ndisks++;
 
 	if (i386_ndisks == 0)
@@ -172,7 +197,8 @@ matchbiosdisks()
 		    dv->dv_xname, dv->dv_cfdata->cf_driver->cd_name);
 #endif
 		if (!strcmp(dv->dv_cfdata->cf_driver->cd_name, "sd") ||
-		    !strcmp(dv->dv_cfdata->cf_driver->cd_name, "wd")) {
+		    !strcmp(dv->dv_cfdata->cf_driver->cd_name, "wd") ||
+		    !strcmp(dv->dv_cfdata->cf_driver->cd_name, "lsu")) {
 			n++;
 			sprintf(i386_alldisks->dl_nativedisks[n].ni_devname,
 			    "%s%d", dv->dv_cfdata->cf_driver->cd_name,
@@ -232,9 +258,9 @@ matchbiosdisks()
 	}
 }
 
-
+#ifdef COMPAT_OLDBOOT
 u_long	bootdev = 0;		/* should be dev_t, but not until 32 bits */
-struct device *booted_device;
+#endif
 
 /*
  * helper function for "findroot()":
@@ -319,25 +345,18 @@ closeout:
  * change rootdev to correspond to the load device.
  */
 void
-findroot(devpp, partp)
-	struct device **devpp;
-	int *partp;
+findroot(void)
 {
 	struct btinfo_bootdisk *bid;
 	struct device *dv;
+#ifdef COMPAT_OLDBOOT
 	int i, majdev, unit, part;
 	char buf[32];
+#endif
 
-	/*
-	 * Default to "not found."
-	 */
-	*devpp = NULL;
-	*partp = 0;
-
-	if (booted_device) {
-		*devpp = booted_device;
+	if (booted_device)
 		return;
-	}
+
 	if (lookup_bootinfo(BTINFO_NETIF)) {
 		/*
 		 * We got netboot interface information, but
@@ -378,7 +397,8 @@ findroot(devpp, partp)
 			}
 
 			if (!strcmp(dv->dv_cfdata->cf_driver->cd_name, "sd") ||
-			    !strcmp(dv->dv_cfdata->cf_driver->cd_name, "wd")) {
+			    !strcmp(dv->dv_cfdata->cf_driver->cd_name, "wd") ||
+			    !strcmp(dv->dv_cfdata->cf_driver->cd_name, "lsu")) {
 				/*
 				 * Don't trust BIOS device numbers, try
 				 * to match the information passed by the
@@ -391,24 +411,25 @@ findroot(devpp, partp)
 				goto found;
 			}
 
-			/* no "fd", "wd" or "sd" */
+			/* no "fd", "wd", "sd", "lsu" */
 			continue;
 
 found:
-			if (*devpp) {
+			if (booted_device) {
 				printf("warning: double match for boot "
-				    "device (%s, %s)\n", (*devpp)->dv_xname,
+				    "device (%s, %s)\n", booted_device->dv_xname,
 				    dv->dv_xname);
 				continue;
 			}
-			*devpp = dv;
-			*partp = bid->partition;
+			booted_device = dv;
+			booted_partition = bid->partition;
 		}
 
-		if (*devpp)
+		if (booted_device)
 			return;
 	}
 
+#ifdef COMPAT_OLDBOOT
 #if 0
 	printf("howto %x bootdev %x ", boothowto, bootdev);
 #endif
@@ -430,11 +451,12 @@ found:
 	for (dv = alldevs.tqh_first; dv != NULL;
 	    dv = dv->dv_list.tqe_next) {
 		if (strcmp(buf, dv->dv_xname) == 0) {
-			*devpp = dv;
-			*partp = part;
+			booted_device = dv;
+			booted_partition = part;
 			return;
 		}
 	}
+#endif
 }
 
 #include "pci.h"
@@ -459,9 +481,13 @@ device_register(dev, aux)
 		if (bin == NULL)
 			return;
 
-		/* check driver name */
-		if (strcmp(bin->ifname, dev->dv_cfdata->cf_driver->cd_name))
-			return;
+		/*
+		 * We don't check the driver name against the device name
+		 * passed by the boot ROM. The ROM should stay usable
+		 * if the driver gets obsoleted.
+		 * The physical attachment information (checked below)
+		 * must be sufficient to identify the device.
+		 */
 
 		if (bin->bus == BI_BUS_ISA &&
 		    !strcmp(dev->dv_parent->dv_cfdata->cf_driver->cd_name,

@@ -1,4 +1,4 @@
-# $NetBSD: std.evbsh3,v 1.1 1999/09/13 10:30:25 itojun Exp $
+# $NetBSD: std.evbsh3,v 1.1.2.1 2000/11/20 20:07:35 bouyer Exp $
 #
 # standard, required NetBSD/evbsh3 'options'
  

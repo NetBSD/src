@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.12 1999/03/23 18:07:19 wrstuden Exp $	*/
+/*	$NetBSD: zs.c,v 1.12.8.1 2000/11/20 20:12:58 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Bill Studenmund
@@ -111,9 +111,6 @@ struct zsdevice {
 	struct	zschan zs_chan_a;
 };
 
-/* Saved PROM mappings */
-static struct zsdevice *zsaddr[2];
-
 /* Flags from cninit() */
 static int zs_hwflags[NZSC][2];
 /* Default speed for each channel */
@@ -121,9 +118,9 @@ static int zs_defspeed[NZSC][2] = {
 	{ 38400, 	/* tty00 */
 	  38400 },	/* tty01 */
 };
+
 /* console stuff */
 void	*zs_conschan = 0;
-int	zs_consunit;
 #ifdef	ZS_CONSOLE_ABORT
 int	zs_cons_canabort = 1;
 #else
@@ -133,9 +130,7 @@ int	zs_cons_canabort = 0;
 /* device to which the console is attached--if serial. */
 /* Mac stuff */
 
-static struct zschan	*zs_get_chan_addr __P((int zsc_unit, int channel));
-void			zs_init __P((void));
-int			zs_cn_check_speed __P((int bps));
+static int zs_get_speed __P((struct zs_chanstate *));
 
 /*
  * Even though zsparam will set up the clock multiples, etc., we
@@ -162,27 +157,6 @@ static u_char zs_init_reg[16] = {
 	ZSWR14_BAUD_ENA,
 	ZSWR15_BREAK_IE,
 };
-
-struct zschan *
-zs_get_chan_addr(zs_unit, channel)
-	int zs_unit, channel;
-{
-	struct zsdevice *addr;
-	struct zschan *zc;
-
-	if (zs_unit >= 1)
-		return NULL;
-	addr = zsaddr[zs_unit];
-	if (addr == NULL)
-		return NULL;
-	if (channel == 0) {
-		zc = &addr->zs_chan_a;
-	} else {
-		zc = &addr->zs_chan_b;
-	}
-	return (zc);
-}
-
 
 /****************************************************************
  * Autoconfig
@@ -250,15 +224,17 @@ zsc_attach(parent, self, aux)
 	volatile struct zschan *zc;
 	struct xzs_chanstate *xcs;
 	struct zs_chanstate *cs;
+	struct zsdevice *zsd;
 	int zsc_unit, channel;
 	int s, chip, theflags;
 	int node, intr[2][3];
 	u_int regs[6];
 
+	chip = 0;
 	zsc_unit = zsc->zsc_dev.dv_unit;
 
 	ca->ca_reg[0] += ca->ca_baseaddr;
-	zsaddr[0] = mapiodev(ca->ca_reg[0], ca->ca_reg[1]);
+	zsd = mapiodev(ca->ca_reg[0], ca->ca_reg[1]);
 
 	node = OF_child(ca->ca_node);	/* ch-a */
 
@@ -289,16 +265,6 @@ zsc_attach(parent, self, aux)
 
 	printf(": irq %d,%d\n", intr[0][0], intr[1][0]);
 
-	/* Make sure everything's inited ok. */
-	if (zsaddr[zsc_unit] == NULL)
-		panic("zs_attach: zs%d not mapped\n", zsc_unit);
-
-	if ((zs_hwflags[zsc_unit][0] | zs_hwflags[zsc_unit][1]) &
-		ZS_HWFLAG_CONSOLE) {
-
-		zs_conschan = zs_get_chan_addr(zsc_unit, minor(cn_tab->cn_dev));
-	}
-
 	/*
 	 * Initialize software state for each channel.
 	 */
@@ -313,7 +279,8 @@ zsc_attach(parent, self, aux)
 		cs->cs_private = NULL;
 		cs->cs_ops = &zsops_null;
 
-		zc = zs_get_chan_addr(zsc_unit, channel);
+		zc = (channel == 0) ? &zsd->zs_chan_a : &zsd->zs_chan_b;
+
 		cs->cs_reg_csr  = &zc->zc_csr;
 		cs->cs_reg_data = &zc->zc_data;
 
@@ -322,7 +289,10 @@ zsc_attach(parent, self, aux)
 
 		/* Current BAUD rate generator clock. */
 		cs->cs_brg_clk = PCLK / 16;	/* RTxC is 230400*16, so use 230400 */
-		cs->cs_defspeed = zs_defspeed[zsc_unit][channel];
+		if (zsc_args.hwflags & ZS_HWFLAG_CONSOLE)
+			cs->cs_defspeed = zs_get_speed(cs);
+		else
+			cs->cs_defspeed = zs_defspeed[zsc_unit][channel];
 		cs->cs_defcflag = zs_def_cflag;
 
 		/* Make these correspond to cs_defcflag (-crtscts) */
@@ -599,34 +569,25 @@ zs_dma_setup(cs, pa, len)
 }
 #endif
 
+/*
+ * Compute the current baud rate given a ZS channel.
+ * XXX Assume internal BRG.
+ */
+int
+zs_get_speed(cs)
+	struct zs_chanstate *cs;
+{
+	int tconst;
+
+	tconst = zs_read_reg(cs, 12);
+	tconst |= zs_read_reg(cs, 13) << 8;
+	return TCONST_TO_BPS(cs->cs_brg_clk, tconst);
+}
+
 #ifndef ZS_TOLERANCE
 #define ZS_TOLERANCE 51
 /* 5% in tenths of a %, plus 1 so that exactly 5% will be ok. */
 #endif
-
-/*
- * check out a rate for acceptability from the internal clock
- * source. Used in console config to validate a requested
- * default speed. Placed here so that all the speed checking code is
- * in one place.
- *
- * != 0 means ok.
- */
-int
-zs_cn_check_speed(bps)
-	int bps;	/* target rate */
-{
-	int tc, rate;
-
-	tc = BPS_TO_TCONST(PCLK / 16, bps);
-	if (tc < 0)
-		return 0;
-	rate = TCONST_TO_BPS(PCLK / 16, tc);
-	if (ZS_TOLERANCE > abs(((rate - bps)*1000)/bps)) 
-		return 1;
-	else
-		return 0;
-}
 
 /*
  * Search through the signal sources in the channel, and
@@ -1097,6 +1058,7 @@ struct consdev consdev_zs = {
 	zscngetc,
 	zscnputc,
 	zscnpollc,
+	NULL,
 };
 
 void
@@ -1140,19 +1102,31 @@ void
 zscninit(cp)
 	struct consdev *cp;
 {
-	int pkg;
-	int unit = 0;
+	int escc, escc_ch, obio, zs_offset;
+	int ch = 0;
+	u_int32_t reg[5];
 	char name[16];
 
-	if ((pkg = OF_instance_to_package(stdin)) == -1)
+	if ((escc_ch = OF_instance_to_package(stdin)) == -1)
 		return;
 
 	bzero(name, sizeof(name));
-	if (OF_getprop(pkg, "name", name, sizeof(name)) == -1)
+	if (OF_getprop(escc_ch, "name", name, sizeof(name)) == -1)
 		return;
 
 	if (strcmp(name, "ch-b") == 0)
-		unit = 1;
+		ch = 1;
 
-	zs_hwflags[0][unit] = ZS_HWFLAG_CONSOLE;
+	if (OF_getprop(escc_ch, "reg", reg, sizeof(reg)) < 4)
+		return;
+	zs_offset = reg[0];
+
+	escc = OF_parent(escc_ch);
+	obio = OF_parent(escc);
+
+	if (OF_getprop(obio, "assigned-addresses", reg, sizeof(reg)) < 12)
+		return;
+	zs_conschan = (void *)(reg[2] + zs_offset);
+
+	zs_hwflags[0][ch] = ZS_HWFLAG_CONSOLE;
 }

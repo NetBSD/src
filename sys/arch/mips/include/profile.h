@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.12 1998/09/11 16:46:31 jonathan Exp $	*/
+/*	$NetBSD: profile.h,v 1.12.14.1 2000/11/20 20:13:32 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,8 +46,9 @@
   *  Declare non-profiled _splhigh() /_splx() entrypoints for _mcount.
   *  see MCOUNT_ENTER and MCOUNT_EXIT.
   */
-#define	_KERNEL_MCOUNT_DECL \
-    extern int _splhigh __P((void)); extern int _splx __P((int));
+#define	_KERNEL_MCOUNT_DECL			\
+	int _splraise_noprof __P((int));	\
+	int _splset_noprof __P((int));
 #else   /* !_KERNEL */
 /* Make __mcount static. */
 #define	_KERNEL_MCOUNT_DECL	static
@@ -71,6 +72,7 @@
 	".set noreorder;" \
 	".set noat;" \
 	_PROF_CPLOAD \
+	"addu $29,$29,-16;" \
 	"sw $4,8($29);" \
 	"sw $5,12($29);" \
 	"sw $6,16($29);" \
@@ -86,7 +88,7 @@
 	"lw $7,20($29);" \
 	"lw $31,4($29);" \
 	"lw $1,0($29);" \
-	"addu $29,$29,8;" \
+	"addu $29,$29,24;" \
 	"j $31;" \
 	"move $31,$1;" \
 	".set reorder;" \
@@ -95,13 +97,13 @@
 #ifdef _KERNEL
 /*
  * The following two macros do splhigh and splx respectively.
- * They have to be defined this way because these are real
- * functions on the MIPS, and we do not want to invoke mcount
- * recursively.
+ * We use versions of _splraise() and _splset that don't
+ * including profiling support.
  */
-#define	MCOUNT_ENTER	s = _splhigh()
 
-#define	MCOUNT_EXIT	_splx(s)
+#define	MCOUNT_ENTER	s = _splraise_noprof(MIPS_INT_MASK)
+
+#define	MCOUNT_EXIT	(void)_splset_noprof(s)
 #endif /* _KERNEL */
 
 #endif /* _MIPS_PROFILE_H_ */

@@ -1,0 +1,9 @@
+#	$NetBSD: std.prep,v 1.2.2.2 2000/11/20 20:22:56 bouyer Exp $
+#
+# standard, required NetBSD/prep 'options'
+
+machine		prep powerpc
+
+options 	EXEC_SCRIPT	# exec #! scripts
+options 	EXEC_ELF32	# exec ELF binaries
+options 	EXEC_AOUT	# exec a.out binaries

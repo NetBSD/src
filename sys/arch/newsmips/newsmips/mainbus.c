@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.2 1998/06/09 11:30:09 tsubai Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.2.14.1 2000/11/20 20:17:31 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -34,6 +34,7 @@
 #include <sys/reboot.h>
 
 #include <machine/autoconf.h>
+#include <machine/apbus.h>
 
 struct mainbus_softc {
 	struct device sc_dev;
@@ -48,15 +49,16 @@ struct cfattach mainbus_ca = {
 	sizeof(struct mainbus_softc), mbmatch, mbattach
 };
 
+/* There can be only one. */
+static int mainbus_found;
+
 static int
-mbmatch(parent, cfdata, aux)
+mbmatch(parent, cf, aux)
 	struct device *parent;
-	struct cfdata *cfdata;
+	struct cfdata *cf;
 	void *aux;
 {
-	struct cfdata *cf = cfdata;
-
-	if (cf->cf_unit > 0)
+	if (mainbus_found)
 		return 0;
 
 	return 1;
@@ -71,6 +73,7 @@ mbattach(parent, self, aux)
 	register struct device *mb = self;
 	struct confargs nca;
 
+	mainbus_found = 1;
 	printf("\n");
 
 	nca.ca_name = "cpu";
@@ -79,8 +82,14 @@ mbattach(parent, self, aux)
 	nca.ca_addr = 0;
 	config_found(mb, &nca, mbprint);
 
-	nca.ca_name = "hb";
-	config_found(self, &nca, NULL);
+	/* XXX */
+	if (_sip != NULL) {
+		nca.ca_name = "ap";
+		config_found(self, &nca, NULL);
+	} else {
+		nca.ca_name = "hb";
+		config_found(self, &nca, NULL);
+	}
 }
 
 static int

@@ -1,9 +1,11 @@
-#	$NetBSD: GENERIC,v 1.3 1999/09/14 11:20:52 tsubai Exp $
+#	$NetBSD: GENERIC,v 1.3.2.1 2000/11/20 20:14:46 bouyer Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/mmeye/conf/std.mmeye"
+
+#ident 		"GENERIC-$Revision: 1.3.2.1 $"
 
 maxusers	16		# estimated number of users
 
@@ -22,8 +24,6 @@ options		INITTODR_ALWAYS_USE_RTC
 options 	HZ=50		# clock interrupt generates every 1/HZ sec
 options 	NTP		# NTP phase/frequency locked loop
 options 	KTRACE		# system call tracing via ktrace(1)
-
-#options 	PMAP_NEW	# new pmap interface
 
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
@@ -60,6 +60,7 @@ file-system 	MSDOSFS		# MS-DOS file system
 file-system 	FDESC		# /dev/fd
 file-system 	KERNFS		# /kern
 file-system 	NULLFS		# loopback file system
+file-system 	OVERLAY		# overlay file system
 file-system 	PORTAL		# portal filesystem (still experimental)
 file-system 	PROCFS		# /proc
 file-system 	UMAPFS		# NULLFS + uid and gid remapping
@@ -69,12 +70,18 @@ file-system	CODA		# Coda File System; also needs vcoda (below)
 # File system options
 #options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
+options 	SOFTDEP         # FFS soft updates support.
 options 	NFSSERVER	# Network File System server
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
+
 # Networking options
 #options 	GATEWAY		# packet forwarding
 options 	INET		# IP + ICMP + TCP + UDP
+options 	INET6		# IPV6
+#options 	IPSEC		# IP security
+#options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+#options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	NS		# XNS
 #options 	NSIP		# XNS tunneling over IP
@@ -96,6 +103,7 @@ options 	NFS_BOOT_DHCP	# Support DHCP NFS root
 # These options enable verbose messages for several subsystems.
 # Warning, these may compile large string tables into the kernel!
 #options 	PCIVERBOSE	# verbose PCI device autoconfig messages
+#options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
 options 	PCMCIAVERBOSE	# verbose PCMCIA configuration messages
 options 	SCSIVERBOSE	# human readable SCSI error messages
 #options 	USBVERBOSE	# verbose USB device autoconfig messages
@@ -111,12 +119,15 @@ mainbus0 at root
 
 shb*	at mainbus?
 
+# WatchDog Timer
+wdog0 at shb? port 0xffffff84
+
 com0	at shb? port 0xa4000000 irq 11
 com1	at shb? port 0xa4000008 irq 12
 
 # SH PCMCIA controllers
-shpcic0	at shb? port 0xb000000a iomem 0xb8000000 iosiz 0x4000000
-shpcic1	at shb? port 0xb000000c iomem 0xb9000000 iosiz 0x4000000
+shpcic0	at shb? port 0xb000000a iomem 0xb8000000 iosiz 0x1000000
+shpcic1	at shb? port 0xb000000c iomem 0xb9000000 iosiz 0x1000000
 
 # PCMCIA bus support
 pcmcia*	at shpcic? controller ? socket ?
@@ -134,6 +145,7 @@ sm*	at pcmcia? function ?		# Megahertz Ethernet
 
 pseudo-device	ccd		4	# concatenated/striped disk devices
 #pseudo-device	raid		4	# RAIDframe disk driver
+#options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 pseudo-device	vnd		4	# disk-like interface to files
 pseudo-device	bpfilter	8	# Berkeley packet filter
 pseudo-device	ipfilter		# IP filter (firewall) and NAT
@@ -144,7 +156,10 @@ pseudo-device	strip		2	# Starmode Radio IP (Metricom)
 pseudo-device	tun		2	# network tunneling over tty
 pseudo-device	gre		2	# generic L3 over IP tunnel
 pseudo-device	ipip		2	# IP Encapsulation within IP (RFC 2003)
-pseudo-device	pty		16	# pseudo-terminals
+pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
+#pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
+#pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
+pseudo-device	pty			# pseudo-terminals
 pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	vcoda		4	# coda minicache <-> venus comm.
 #pseudo-device	md		1	# memory disk device (ramdisk)

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 1999/04/28 09:15:05 christos Exp $
+#	$NetBSD: Makefile,v 1.12.2.1 2000/11/20 20:09:39 bouyer Exp $
 
 S?=	${.CURDIR}/../../../../
 
@@ -15,12 +15,12 @@ CPPFLAGS= -I$S/lib/libsa ${I386CPPFLAGS} ${I386MISCCPPFLAGS}
 #CPPFLAGS+= -DNO_DISKLABEL
 #CPPFLAGS+= -DSAVE_MEMORY
 
-SRCS= pcio.c conio.S comio.S comio_direct.c
+SRCS= pcio.c conio.S comio.S comio_direct.c biosvideomode.S
 SRCS+= getsecs.c biosgetrtc.S biosdelay.S biosreboot.S gatea20.c
-SRCS+= biosmem.S getextmemx.c biosmemx.S
+SRCS+= biosmem.S getextmemx.c biosmemx.S printmemlist.c
 SRCS+= pread.c menuutils.c parseutils.c
 SRCS+= bootinfo.c bootinfo_biosgeom.c bootinfo_memmap.c
-SRCS+= startprog.S netbsd_opts.c panic.c
+SRCS+= startprog.S panic.c
 .if (${I386_INCLUDE_DISK} == "yes")
 SRCS+= biosdisk.c biosdisk_ll.c bios_disk.S
 .endif

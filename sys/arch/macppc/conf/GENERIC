@@ -1,9 +1,11 @@
-#	$NetBSD: GENERIC,v 1.39 1999/10/15 12:27:06 tsubai Exp $
+#	$NetBSD: GENERIC,v 1.39.2.1 2000/11/20 20:12:55 bouyer Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include		"arch/macppc/conf/std.macppc"
+
+#ident 		"GENERIC-$Revision: 1.39.2.1 $"
 
 maxusers	32
 
@@ -50,6 +52,7 @@ file-system 	MSDOSFS		# MS-DOS file system
 file-system 	FDESC		# /dev/fd
 file-system 	KERNFS		# /kern
 file-system 	NULLFS		# loopback file system
+file-system 	OVERLAY		# overlay file system
 file-system 	PORTAL		# portal filesystem (still experimental)
 file-system 	PROCFS		# /proc
 file-system 	UMAPFS		# NULLFS + uid and gid remapping
@@ -58,6 +61,7 @@ file-system 	UNION		# union file system
 # File system options
 options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
+options 	SOFTDEP         # FFS soft updates support.
 options 	NFSSERVER	# Network File System server
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
@@ -67,6 +71,10 @@ options 	NFS_BOOT_DHCP	# Support DHCP NFS root
 # Networking options
 #options 	GATEWAY		# packet forwarding
 options 	INET		# IP + ICMP + TCP + UDP
+options 	INET6		# IPV6
+#options 	IPSEC		# IP security
+#options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+#options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	NS		# XNS
 #options 	NSIP		# XNS tunneling over IP
@@ -87,12 +95,15 @@ options 	NMBCLUSTERS=1024
 # These options enable verbose messages for several subsystems.
 # Warning, these may compile large string tables into the kernel!
 options 	PCIVERBOSE	# verbose PCI device autoconfig messages
+options 	MIIVERBOSE	# verbose PHY autoconfig messages
+#options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
 options 	SCSIVERBOSE	# human readable SCSI error messages
 options 	USBVERBOSE	# verbose USB device autoconfig messages
 
 # wscons options
 #options 	WSEMUL_SUN		# sun terminal emulation
 options 	WSEMUL_VT100		# VT100 / VT220 emulation
+options 	FONT_GALLANT12x22
 
 # Kernel root file system and dump configuration.
 config		netbsd	root on ? type ?
@@ -104,7 +115,13 @@ config		netbsd	root on ? type ?
 mainbus* at root
 
 cpu*	at mainbus?
-pci*	at mainbus? bus ?
+bandit*	at mainbus?
+grackle* at mainbus?
+uninorth* at mainbus?
+
+pci*	at bandit? bus ?
+pci*	at grackle? bus ?
+pci*	at uninorth? bus ?
 pci*	at ppb? bus ?
 
 pchb*	at pci? dev ? function ?	# PCI-Host bridges
@@ -113,18 +130,40 @@ ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 de*	at pci? dev ? function ?	# DEC 21x4x-based Ethernet
 fpa*	at pci? dev ? function ?	# DEC PCI FDDI (DEFPA) Controller
 ep*	at pci? dev ? function ?	# 3Com 3c59x
+epic*	at pci? dev ? function ?	# SMC EPIC/100 Ethernet
+ex*	at pci? dev ? function ?	# 3Com 90x[B]
+fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
+rtk*	at pci? dev ? function ?	# Realtek 8129/8139
+sip*	at pci? dev ? function ?	# SiS 900/7016 Ethernet
 adv*	at pci? dev ? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
 ahc*	at pci? dev ? function ?	# Adaptec 294x, aic78x0 SCSI
 bha*	at pci? dev ? function ?	# BusLogic 9xx SCSI
+ncr*	at pci? dev ? function ?	# NCR 53c8xx SCSI
 pcscp*	at pci? dev ? function ?	# AMD Am53c974 PCscsi-PCI SCSI
 ofb*	at pci? dev ? function ?	# Generic Open Firmware Framebuffer
 pciide*	at pci? dev ? function ?
-cbb*	at pci? dev? function ?		# PCI-CardBus bridge
+cbb*	at pci? dev ? function ?	# PCI-CardBus bridge
+gm*	at pci? dev ? function ?	# gmac ethernet
 obio0	at pci? dev ? function ?
 #macofcons0 at pci? dev ? function ?	# OpenFirmware console (for debugging)
 
+exphy*	at mii? phy ?			# 3Com internal PHYs
+icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS1890
+inphy*	at mii? phy ?			# Intel 82555 PHYs
+iophy*	at mii? phy ?			# Intel 82553 PHYs
+lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs
 nsphy*	at mii? phy ?			# NS83840 PHYs
+nsphyter* at mii? phy ?			# NS83843 PHYs
+qsphy*	at mii? phy ?			# Quality Semiconductor QS6612 PHYs
+sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
+tlphy*	at mii? phy ?			# ThunderLAN PHYs
+tqphy*	at mii? phy ?			# TDK Semiconductor PHYs
+ukphy*	at mii? phy ?			# generic unknown PHYs
+
+# PCI serial interfaces
+cy*	at pci? dev ? function ?	# Cyclades Cyclom-Y serial boards
+#cz*	at pci? dev ? function ?	# Cyclades-Z multi-port serial boards
 
 bm*	at obio?			# bmac ethernet
 mc*	at obio?			# MACE ethernet
@@ -135,6 +174,7 @@ adb*	at obio?			# Apple Desktop Bus
 aed*	at adb?				# ADB Event Device
 akbd*	at adb?				# ADB keyboard
 ams*	at adb?				# ADB mouse
+abtn*	at adb?
 zsc*	at obio?
 zstty*	at zsc? channel ?
 mediabay* at obio?
@@ -149,17 +189,20 @@ wdc*	at pcmcia? function ?		# PCMCIA IDE controllers
 ep*	at pcmcia? function ?		# 3Com 3c589 and 3c562 Ethernet
 mbe*	at pcmcia? function ?		# MB8696x based Ethernet
 ne*	at pcmcia? function ?		# NE2000-compatible Ethernet
-ex*	at cardbus?			# 3Com 3C575TX
+ex*	at cardbus? dev ? function ?	# 3Com 3C575TX
+tlp*	at cardbus? dev ? function ?	# DECchip 21143
+rtk*	at cardbus? dev ? function ?	# Realtek 8129/8139
 
 wsdisplay0 at ofb? console ?
 wskbd0	at akbd? console ?
-wsmouse0 at ams? mux 0
+wsmouse0 at ams?
 
 scsibus* at adv?
 scsibus* at ahc?
 scsibus* at bha?
 scsibus* at esp?
 scsibus* at mesh?
+scsibus* at ncr?
 scsibus* at pcscp?
 
 sd*	at scsibus? target ? lun ?	# SCSI disks
@@ -169,7 +212,7 @@ ch*	at scsibus? target ? lun ?	# SCSI autochangers
 ss*	at scsibus? target ? lun ?	# SCSI scanners
 uk*	at scsibus? target ? lun ?	# SCSI unknown
 
-wdc*	at obio? flags 0x0
+wdc*	at obio? flags 0x1
 wd*	at pciide? channel ? drive ?
 wd*	at wdc? channel ? drive ? flags 0x0000
 
@@ -180,7 +223,7 @@ sd*	at atapibus? drive ? flags 0x0000	# ATAPI disk drives
 uk*	at atapibus? drive ? flags 0x0000	# ATAPI unknown
 
 # PCI USB controllers
-ohci*	at pci?				# Open Host Controller
+ohci*	at pci? dev ? function ?	# Open Host Controller
 
 # USB bus support
 usb*	at ohci?
@@ -191,11 +234,11 @@ uhub*	at uhub? port ? configuration ? interface ?
 
 # USB Mice
 ums*	at uhub? port ? configuration ? interface ?
-wsmouse* at ums? mux 0
+wsmouse* at ums?
 
 # USB Keyboards
 ukbd*	at uhub? port ? configuration ? interface ?
-wskbd*	at ukbd? console ? mux 1
+wskbd*	at ukbd? console ?
 
 # USB Generic HID devices
 uhid*	at uhub? port ? configuration ? interface ?
@@ -205,21 +248,60 @@ ulpt*	at uhub? port ? configuration ? interface ?
 
 # USB Modem
 umodem*	at uhub? port ? configuration ?
+ucom*	at umodem?
 
 # USB Mass Storage
 umass*	at uhub? port ? configuration ? interface ?
+atapibus* at umass? channel ?
 scsibus* at umass? channel ?
 
 # USB audio
 uaudio*	at uhub? port ? configuration ?
-audio*	at uaudio?
+
+# USB Ethernet adapters
+aue*	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
+cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
+kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
 
 # USB Generic driver
 ugen*	at uhub? port ? configuration ? interface ?
 
+# Audio Devices
+
+# PCI audio devices
+#clcs*	at pci? dev ? function ?	# Cirrus Logic CS4280
+#cmpci*	at pci? dev ? function ?	# C-Media CMI8338/8738
+eap*	at pci? dev ? function ?	# Ensoniq AudioPCI
+#eso*	at pci? dev ? function ?	# ESS Solo-1 PCI AudioDrive
+#fms*	at pci? dev ? function ?	# Forte Media FM801
+#sv*	at pci? dev ? function ?	# S3 SonicVibes
+
+# OPL[23] FM synthesizers
+#opl*	at eso?
+#opl*	at fms?
+
+# Audio support
+#audio*	at auvia?
+#audio*	at clcs?
+#audio*	at cmpci?
+audio*	at eap?
+#audio*	at eso?
+#audio*	at fms?
+#audio*	at sv?
+audio*	at uaudio?
+
+# MPU 401 UARTs
+#mpu*	at eso?
+#mpu*	at fms?
+
+# MIDI support
+midi*	at eap?			# 137[01] MIDI port
+#midi*	at mpu?			# MPU 401
+
 pseudo-device	vnd		4	# disk-like interface to files
 pseudo-device	ccd		4	# concatenated/striped disk devices
 #pseudo-device	raid		4	# RAIDframe disk driver
+#options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 pseudo-device	md		1	# memory disk device
 pseudo-device	loop			# network loopback
 pseudo-device	bpfilter	8	# packet filter
@@ -228,8 +310,8 @@ pseudo-device	ppp		2	# Point-to-Point Protocol
 pseudo-device	sl		2	# Serial Line IP
 pseudo-device	tun		4	# network tunneling over tty
 #pseudo-device	gre		2	# generic L3 over IP tunnel
-pseudo-device	pty		64	# pseudo-terminals
-pseudo-device	wsmux		2	# mouse & keyboard multiplexor
-
-# rnd is EXPERIMENTAL at this point.
-#pseudo-device	rnd			# /dev/random and in-kernel generator
+pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
+#pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
+#pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
+pseudo-device	pty			# pseudo-terminals
+pseudo-device	rnd			# /dev/random and in-kernel generator

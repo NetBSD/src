@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn.c,v 1.24 1999/09/29 06:14:02 scottr Exp $	*/
+/*	$NetBSD: if_sn.c,v 1.24.2.1 2000/11/20 20:12:17 bouyer Exp $	*/
 
 /*
  * National Semiconductor  DP8393X SONIC Driver
@@ -40,7 +40,7 @@
 #include <netinet/if_inarp.h>
 #endif
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include "bpfilter.h"
 #if NBPFILTER > 0
@@ -1022,8 +1022,8 @@ sonicrxint(sc)
 		rxpkt_ptr = SRO(bitmode, rda, RXPKT_PTRLO);
 		len = SRO(bitmode, rda, RXPKT_BYTEC) - FCSSIZE;
 		if (status & RCR_PRX) {
-			caddr_t pkt =
-			    sc->rbuf[orra & RBAMASK] + (rxpkt_ptr & PGOFSET);
+			caddr_t pkt = sc->rbuf[orra & RBAMASK] +
+			    m68k_page_offset(rxpkt_ptr);
 			if (sonic_read(sc, pkt, len))
 				sc->sc_if.if_ipackets++;
 			else
@@ -1098,13 +1098,7 @@ sonic_read(sc, pkt, len)
 	int len;
 {
 	struct ifnet *ifp = &sc->sc_if;
-	struct ether_header *eh;
 	struct mbuf *m;
-
-	/*
-	 * Get pointer to ethernet header (in input buffer).
-	 */
-	eh = (struct ether_header *)pkt;
 
 #ifdef SNDEBUG
 	{
@@ -1128,14 +1122,8 @@ sonic_read(sc, pkt, len)
 	 * If so, hand off the raw packet to enet, then discard things
 	 * not destined for us (but be sure to keep broadcast/multicast).
 	 */
-	if (ifp->if_bpf) {
+	if (ifp->if_bpf)
 		bpf_tap(ifp->if_bpf, pkt, len);
-		if ((ifp->if_flags & IFF_PROMISC) != 0 &&
-		    (eh->ether_dhost[0] & 1) == 0 && /* !mcast and !bcast */
-		    bcmp(eh->ether_dhost, LLADDR(ifp->if_sadl),
-		    sizeof(eh->ether_dhost)) != 0)
-			return (0);
-	}
 #endif
 	m = sonic_get(sc, pkt, len);
 	if (m == NULL)

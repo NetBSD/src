@@ -1,4 +1,4 @@
-/*	$NetBSD: fb_sub.c,v 1.4 1998/08/21 14:52:29 tsubai Exp $	*/
+/*	$NetBSD: fb_sub.c,v 1.4.12.1 2000/11/20 20:17:20 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -103,7 +103,6 @@ static struct memseg {
 #define MIPS_KSEG0_TO_KSEG1(x)	MIPS_PHYS_TO_KSEG1(x)
 
 extern int fbstart();
-extern void MachFlushDCache();
 
 #ifdef CPU_DOUBLE
 COPYIN(src, dst, len, seg)

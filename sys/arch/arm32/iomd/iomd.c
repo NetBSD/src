@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd.c,v 1.5 1998/04/17 18:44:09 mark Exp $	*/
+/*	$NetBSD: iomd.c,v 1.5.14.1 2000/11/20 20:04:01 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996-1997 Mark Brinicombe.
@@ -91,6 +91,8 @@ struct cfattach iomd_ca = {
 
 extern struct bus_space iomd_bs_tag;
 
+int iomd_found;
+
 /* Declare prototypes */
 
 /*
@@ -121,9 +123,9 @@ iomdmatch(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
-	if (cf->cf_unit == 0)
-		return(1);
-	return(0);
+	if (iomd_found)
+		return 0;
+	return 1;
 }
 
 
@@ -151,6 +153,9 @@ iomdattach(parent, self, aux)
 	union iomd_attach_args ia;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
+
+	/* There can be only 1 IOMD. */
+	iomd_found = 1;
 
 	iot = sc->sc_iot = &iomd_bs_tag;
 

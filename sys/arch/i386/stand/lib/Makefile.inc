@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.2 1998/09/05 15:15:16 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.2.12.1 2000/11/20 20:09:39 bouyer Exp $
 #
 #	Configuration variables (default values are below):
 #
@@ -20,7 +20,8 @@ I386DST?=		${.OBJDIR}/lib/i386
 I386LIB=		${I386DST}/libi386.a
 
 I386MAKE= \
-	cd ${I386DIR} && MAKEOBJDIR=${I386DST} ${MAKE} \
+	cd ${I386DIR} && MAKEOBJDIRPREFIX= && unset MAKEOBJDIRPREFIX && \
+	  MAKEOBJDIR=${I386DST} ${MAKE} \
 	    CC=${CC:Q} CFLAGS=${CFLAGS:Q} \
 	    AS=${AS:Q} AFLAGS=${AFLAGS:Q} \
 	    LD=${LD:Q} STRIP=${STRIP:Q} \

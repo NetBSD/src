@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.14 1999/02/26 22:16:36 is Exp $	*/
+/*	$NetBSD: pmap.h,v 1.14.8.1 2000/11/20 20:15:22 bouyer Exp $	*/
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -44,12 +44,6 @@
 #define	_MACHINE_PMAP_H_
 
 #include <machine/pte.h>
-
-#if defined(M68040)
-#define HP_SEG_SIZE	(mmutype == MMU_68040 ? 0x40000 : NBSEG)
-#else
-#define HP_SEG_SIZE	NBSEG
-#endif
 
 /*
  * Pmap stuff
@@ -139,6 +133,9 @@ extern struct pmap	kernel_pmap_store;
 	(curproc && \
 	 (pm) != pmap_kernel() && (pm) == curproc->p_vmspace->vm_map.pmap)
 
+extern void _pmap_set_page_cacheable __P((struct pmap *, vaddr_t));
+extern void _pmap_set_page_cacheinhibit __P((struct pmap *, vaddr_t));
+
 extern struct pv_entry	*pv_table;	/* array of entries, one per page */
 
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
@@ -150,6 +147,12 @@ extern char		*vmmap;		/* map for mem, dumps, etc. */
 vaddr_t	pmap_map __P((vaddr_t, paddr_t, paddr_t, int));
 void	pmap_procwr __P((struct proc *, vaddr_t, size_t));
 #define PMAP_NEED_PROCWR
+
+/*
+ * Do idle page zero'ing uncached to avoid polluting the cache.
+ */
+boolean_t pmap_zero_page_uncached(paddr_t);
+#define	PMAP_PAGEIDLEZERO(pa)	pmap_zero_page_uncached((pa))
 
 #endif /* _KERNEL */
 

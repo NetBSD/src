@@ -1,8 +1,3 @@
-/*	$NetBSD: mips_opcode.h,v 1.6 1996/03/23 19:10:06 jonathan Exp $	*/
-
-/*
- * Define the instruction formats and opcode values for the
- * MIPS instruction set.
- */
+/*	$NetBSD: mips_opcode.h,v 1.6.32.1 2000/11/20 20:20:31 bouyer Exp $	*/
 
 #include <mips/mips_opcode.h>

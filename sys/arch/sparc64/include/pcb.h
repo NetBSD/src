@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.2 1999/10/11 01:57:45 eeh Exp $ */
+/*	$NetBSD: pcb.h,v 1.2.2.1 2000/11/20 20:26:49 bouyer Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -135,11 +135,7 @@ struct pcb {
 	char	pcb_cwp;	/* %cwp when switch() was called */
 	char	pcb_pil;	/* %pil when switch() was called -- prolly not needed */
 
-#ifdef notdef
-	int	pcb_winof;	/* number of window overflow traps */
-	int	pcb_winuf;	/* number of window underflow traps */
-#endif
-	char*	lastcall;	/* DEBUG -- name of last system call */
+	char	*lastcall;	/* DEBUG -- name of last system call */
 	/* the following MUST be aligned on a 64-bit boundary */
 	struct	rwindow64 pcb_rw[PCB_MAXWIN];	/* saved windows */
 };
@@ -150,9 +146,14 @@ struct pcb {
  * from the top of the kernel stack (included here so that the kernel
  * stack itself need not be dumped).
  */
-struct md_coredump {
+struct md_coredump32 {
 	struct	trapframe32 md_tf;
-	struct	fpstate md_fpstate;
+	struct	fpstate32 md_fpstate;
+};
+
+struct md_coredump {
+	struct	trapframe64 md_tf;
+	struct	fpstate64 md_fpstate;
 };
 
 #ifdef _KERNEL

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.17 1999/09/10 16:38:47 drochner Exp $	*/
+/*	$NetBSD: main.c,v 1.17.2.1 2000/11/20 20:09:38 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1999
@@ -84,6 +84,7 @@ void	command_ls __P((char *));
 void	command_quit __P((char *));
 void	command_boot __P((char *));
 void	command_dev __P((char *));
+void	command_consdev __P((char *));
 
 struct bootblk_command commands[] = {
 	{ "help",	command_help },
@@ -92,6 +93,9 @@ struct bootblk_command commands[] = {
 	{ "quit",	command_quit },
 	{ "boot",	command_boot },
 	{ "dev",	command_dev },
+#ifdef SUPPORT_SERIAL
+	{ "consdev",	command_consdev },
+#endif
 	{ NULL,		NULL },
 };
 
@@ -211,11 +215,6 @@ print_banner()
 	printf(">> %s, Revision %s\n", bootprog_name, bootprog_rev);
 	printf(">> (%s, %s)\n", bootprog_maker, bootprog_date);
 	printf(">> Memory: %d/%d k\n", getbasemem(), getextmem());
-	printf(
-#ifdef COMPAT_OLDBOOT
-	       "Use hd1a:netbsd to boot sd0 when wd0 is also installed\n"
-#endif
-	       "Press return to boot now, any other key for boot menu\n");
 }
 
 
@@ -236,6 +235,10 @@ main()
 #endif
 	gateA20();
 
+#ifdef RESET_VIDEO
+	biosvideomode();
+#endif
+
 	print_banner();
 
 	/* try to set default device to what BIOS tells us */
@@ -245,6 +248,11 @@ main()
 	/* if the user types "boot" without filename */
 	default_filename = DEFFILENAME;
 
+	printf(
+#ifdef COMPAT_OLDBOOT
+	       "Use hd1a:netbsd to boot sd0 when wd0 is also installed\n"
+#endif
+	       "Press return to boot now, any other key for boot menu\n");
 	currname = 0;
 	for (;;) {
 		printf("booting %s - starting in ",
@@ -284,10 +292,13 @@ command_help(arg)
 {
 
 	printf("commands are:\n"
-	    "boot [xdNx:][filename] [-adrs]\n"
+	    "boot [xdNx:][filename] [-adsvq]\n"
 	    "     (ex. \"sd0a:netbsd.old -s\"\n"
 	    "ls [path]\n"
 	    "dev xd[N[x]]:\n"
+#ifdef SUPPORT_SERIAL
+	    "consdev {pc|com[0123]|com[0123]kbd|auto}\n"
+#endif
 	    "help|?\n"
 	    "quit\n");
 }
@@ -309,7 +320,7 @@ command_quit(arg)
 	char *arg;
 {
 
-	printf("Rebooting... goodbye...\n");
+	printf("Exiting...\n");
 	delay(1000000);
 	reboot();
 	/* Note: we shouldn't get to this point! */
@@ -352,4 +363,36 @@ command_dev(arg)
 	/* put to own static storage */
 	strncpy(savedevname, devname, MAXDEVNAME + 1);
 	default_devname = savedevname;
+}
+
+void
+command_consdev(arg)
+	char *arg;
+{
+	if (!strcmp("pc", arg))
+		initio(CONSDEV_PC);
+	else if (!strcmp("com0", arg))
+		initio(CONSDEV_COM0);
+	else if (!strcmp("com1", arg))
+		initio(CONSDEV_COM1);
+	else if (!strcmp("com2", arg))
+		initio(CONSDEV_COM2);
+	else if (!strcmp("com3", arg))
+		initio(CONSDEV_COM3);
+	else if (!strcmp("com0kbd", arg))
+		initio(CONSDEV_COM0KBD);
+	else if (!strcmp("com1kbd", arg))
+		initio(CONSDEV_COM1KBD);
+	else if (!strcmp("com2kbd", arg))
+		initio(CONSDEV_COM2KBD);
+	else if (!strcmp("com3kbd", arg))
+		initio(CONSDEV_COM3KBD);
+	else if (!strcmp("auto", arg))
+		initio(CONSDEV_AUTO);
+	else {
+		printf("invalid console device.\n");
+		return;
+	}
+
+	print_banner();
 }

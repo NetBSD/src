@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.9 1999/03/16 16:30:23 minoura Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.9.8.1 2000/11/20 20:30:23 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -43,16 +43,6 @@
 #include <sys/disklabel.h>
 #include <sys/syslog.h>
 #include <sys/disk.h>
-
-#define	b_cylin	b_resid
-
-/* was this the boot device ? */
-void
-dk_establish(dk, dev)
-	struct disk *dk;
-	struct device *dev;
-{
-}
 
 /*
  * Attempt to read a disk label from a device
@@ -108,7 +98,7 @@ readdisklabel(dev, strat, lp, osdep)
 		bp->b_blkno = DOSBBSECTOR;
 		bp->b_bcount = lp->d_secsize;
 		bp->b_flags = B_BUSY | B_READ;
-		bp->b_cylin = DOSBBSECTOR / lp->d_secpercyl;
+		bp->b_cylinder = DOSBBSECTOR / lp->d_secpercyl;
 		(*strat)(bp);
 
 		if (biowait(bp)) {
@@ -124,7 +114,7 @@ readdisklabel(dev, strat, lp, osdep)
 		bp->b_blkno = DOSPARTOFF;
 		bp->b_bcount = lp->d_secsize;
 		bp->b_flags = B_BUSY | B_READ;
-		bp->b_cylin = DOSPARTOFF / lp->d_secpercyl;
+		bp->b_cylinder = DOSPARTOFF / lp->d_secpercyl;
 		(*strat)(bp);
 
 		/* if successful, wander through dos partition table */
@@ -161,8 +151,16 @@ readdisklabel(dev, strat, lp, osdep)
 #endif
 				if (!bcmp(dp->dp_typname, "Human68k", 8))
 					fstype = FS_MSDOS;
+				else if (!bcmp(dp->dp_typname, "BSD ffs ", 8))
+					fstype = FS_BSDFFS;
+				else if (!bcmp(dp->dp_typname, "BSD lfs ", 8))
+					fstype = FS_BSDLFS;
+				else if (!bcmp(dp->dp_typname, "BSD swap", 8))
+					fstype = FS_SWAP;
+#ifndef COMPAT_14
 				else if (part == 1)
 					fstype = FS_SWAP;
+#endif
 				else
 					fstype = FS_BSDFFS; /* XXX */
 				lp->d_partitions[part].p_fstype = fstype; /* XXX */
@@ -174,7 +172,7 @@ readdisklabel(dev, strat, lp, osdep)
 
 	/* next, dig out disk label */
 	bp->b_blkno = dospartoff + LABELSECTOR;
-	bp->b_cylin = cyl;
+	bp->b_cylinder = cyl;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_BUSY | B_READ;
 	(*strat)(bp);
@@ -185,7 +183,7 @@ readdisklabel(dev, strat, lp, osdep)
 		goto done;
 	}
 	for (dlp = (struct disklabel *)bp->b_data;
-	    dlp <= (struct disklabel *)(bp->b_un.b_addr+DEV_BSIZE-sizeof(*dlp));
+	    dlp <= (struct disklabel *)(bp->b_data+DEV_BSIZE-sizeof(*dlp));
 	    dlp = (struct disklabel *)((char *)dlp + sizeof(long))) {
 		if (dlp->d_magic != DISKMAGIC || dlp->d_magic2 != DISKMAGIC) {
 			if (msg == NULL)
@@ -217,7 +215,7 @@ readdisklabel(dev, strat, lp, osdep)
 			else
 				bp->b_blkno /= DEV_BSIZE / lp->d_secsize;
 			bp->b_bcount = lp->d_secsize;
-			bp->b_cylin = lp->d_ncylinders - 1;
+			bp->b_cylinder = lp->d_ncylinders - 1;
 			(*strat)(bp);
 
 			/* if successful, validate, otherwise try another */
@@ -328,7 +326,7 @@ writedisklabel(dev, strat, lp, osdep)
 		bp->b_blkno = DOSBBSECTOR;
 		bp->b_bcount = lp->d_secsize;
 		bp->b_flags = B_BUSY | B_READ;
-		bp->b_cylin = DOSBBSECTOR / lp->d_secpercyl;
+		bp->b_cylinder = DOSBBSECTOR / lp->d_secpercyl;
 		(*strat)(bp);
 		if (biowait(bp))
 			goto done;
@@ -343,7 +341,7 @@ writedisklabel(dev, strat, lp, osdep)
 		bp->b_blkno = DOSPARTOFF;
 		bp->b_bcount = lp->d_secsize;
 		bp->b_flags = B_BUSY | B_READ;
-		bp->b_cylin = DOSPARTOFF / lp->d_secpercyl;
+		bp->b_cylinder = DOSPARTOFF / lp->d_secpercyl;
 		(*strat)(bp);
 
 		if ((error = biowait(bp)) == 0) {
@@ -369,6 +367,14 @@ writedisklabel(dev, strat, lp, osdep)
 
 				case FS_BSDFFS:
 					np = "BSD ffs ";
+					if (part == 0)
+						dp->dp_flag = 0; /* 自動起動 */
+					else
+						dp->dp_flag = 2; /* 使用可能 */
+					break;
+
+				case FS_BSDLFS:
+					np = "BSD lfs ";
 					if (part == 0)
 						dp->dp_flag = 0; /* 自動起動 */
 					else
@@ -411,7 +417,7 @@ writedisklabel(dev, strat, lp, osdep)
 
 	/* next, dig out disk label */
 	bp->b_blkno = dospartoff + LABELSECTOR;
-	bp->b_cylin = cyl;
+	bp->b_cylinder = cyl;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_READ;
 	(*strat)(bp);
@@ -483,7 +489,7 @@ bounds_check_with_label(bp, lp, wlabel)
 	}
 
 	/* calculate cylinder for disksort to order transfers with */
-	bp->b_cylin = (bp->b_blkno + p->p_offset) /
+	bp->b_cylinder = (bp->b_blkno + p->p_offset) /
 	    (lp->d_secsize / DEV_BSIZE) / lp->d_secpercyl;
 	return (1);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ka410.c,v 1.21 1999/09/06 19:52:53 ragge Exp $ */
+/*	$NetBSD: ka410.c,v 1.21.2.1 2000/11/20 20:33:19 bouyer Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -38,8 +38,7 @@
 #include <sys/kernel.h>
 #include <sys/systm.h>
 
-#include <vm/vm.h>
-#include <vm/vm_kern.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/pte.h>
 #include <machine/cpu.h>
@@ -79,6 +78,8 @@ struct	cpu_dep ka410_calls = {
 	ka410_halt,
 	ka410_reboot,
 	ka410_clrf,
+	NULL,
+	CPU_RAISEIPL,
 };
 
 

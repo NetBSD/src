@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.3 1998/02/05 04:57:37 gwr Exp $	*/
+/*	$NetBSD: kgdb_machdep.c,v 1.3.14.1 2000/11/20 20:28:01 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -51,8 +51,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kgdb.h>
-
-extern void Debugger __P((void));
 
 /*
  * Determine if the memory at va..(va+len) is valid.

@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_3100.c,v 1.12 1999/05/26 04:23:59 nisimura Exp $	*/
+/* $NetBSD: dec_3100.c,v 1.12.2.1 2000/11/20 20:20:35 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -71,88 +71,47 @@
  *	@(#)machdep.c	8.3 (Berkeley) 1/12/94
  */
 
-#include <sys/types.h>
+#include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
 #include <machine/cpu.h>
 #include <machine/intr.h>
-#include <machine/reg.h>
-#include <machine/psl.h>
-#include <machine/locore.h>
-#include <machine/autoconf.h>		/* intr_arg_t */
-#include <machine/sysconf.h>		/* intr_arg_t */
+#include <machine/sysconf.h>
 
-#include <mips/mips_param.h>		/* hokey spl()s */
 #include <mips/mips/mips_mcclock.h>	/* mcclock CPUspeed estimation */
 
-#include <pmax/pmax/clockreg.h>
-#include <pmax/pmax/turbochannel.h>
-#include <pmax/pmax/pmaxtype.h>
-
+#include <pmax/pmax/machdep.h>
 #include <pmax/pmax/kn01.h>
+#include <pmax/dev/pmvar.h>
+#include <pmax/dev/dcvar.h>
 
 #include <pmax/ibus/ibusvar.h>
 
-#include "dc_ds.h"
-#include "le_pmax.h"
-#include "sii.h"
+#include "rasterconsole.h"
+#include "pm.h"
 
-void		dec_3100_init __P((void));
-void		dec_3100_os_init __P((void));
-void		dec_3100_bus_reset __P((void));
+void		dec_3100_init __P((void));		/* XXX */
+static void	dec_3100_bus_reset __P((void));
 
-void		dec_3100_enable_intr
-		   __P ((u_int slotno, int (*handler) __P((intr_arg_t sc)),
-			 intr_arg_t sc, int onoff));
-int		dec_3100_intr __P((unsigned, unsigned, unsigned, unsigned));
-void		dec_3100_cons_init __P((void));
-void		dec_3100_device_register __P((struct device *, void *));
-
+static void	dec_3100_cons_init __P((void));
 static void	dec_3100_errintr __P((void));
+static void	dec_3100_intr __P((unsigned, unsigned, unsigned, unsigned));
+static void	dec_3100_intr_establish __P((struct device *, void *,
+		    int, int (*)(void *), void *));
 
-void	dec_3100_intr_establish __P((void* cookie, int level,
-			 int (*handler) __P((intr_arg_t)), intr_arg_t arg));
-void	dec_3100_intr_disestablish __P((struct ibus_attach_args *ia));
+#define	kn01_wbflush()	mips1_wbflush() /* XXX to be corrected XXX */
 
-extern unsigned nullclkread __P((void));
-extern unsigned (*clkread) __P((void));
-
-extern volatile struct chiptime *mcclock_addr; /* XXX */
-extern char cpu_model[];
-
-
-/*
- * Fill in platform struct.
- */
 void
 dec_3100_init()
 {
 	platform.iobus = "baseboard";
-
-	platform.os_init = dec_3100_os_init;
 	platform.bus_reset = dec_3100_bus_reset;
 	platform.cons_init = dec_3100_cons_init;
-	platform.device_register = dec_3100_device_register;
-
-	sprintf(cpu_model, "DECstation %d100 (PMAX)", cpu_mhz < 15 ? 3 : 2);
-
-	dec_3100_os_init();
-}
-
-
-void
-dec_3100_os_init()
-{
-	/*
-	 * Set up interrupt handling and I/O addresses.
-	 */
-	mips_hardware_intr = dec_3100_intr;
-	tc_enable_interrupt = dec_3100_enable_intr; /*XXX*/
-	mcclock_addr = (void *)MIPS_PHYS_TO_KSEG1(KN01_SYS_CLOCK);
-
-	/* no high resolution timer circuit; possibly never called */
-	clkread = nullclkread;
+	platform.iointr = dec_3100_intr;
+	platform.intr_establish = dec_3100_intr_establish;
+	platform.memsize = memsize_scan;
+	/* no high resolution timer available */
 
 	splvec.splbio = MIPS_SPL0;
 	splvec.splnet = MIPS_SPL_0_1;
@@ -161,79 +120,72 @@ dec_3100_os_init()
 	splvec.splclock = MIPS_SPL_0_1_2_3;
 	splvec.splstatclock = MIPS_SPL_0_1_2_3;
 
-	mc_cpuspeed(mcclock_addr, MIPS_INT_MASK_3);
-}
+	/* calibrate cpu_mhz value */
+	mc_cpuspeed(MIPS_PHYS_TO_KSEG1(KN01_SYS_CLOCK), MIPS_INT_MASK_3);
 
+	sprintf(cpu_model, "DECstation %d100 (PMAX)", cpu_mhz < 15 ? 2 : 3);
+}
 
 /*
  * Initalize the memory system and I/O buses.
  */
-void
+static void
 dec_3100_bus_reset()
 {
 	/* nothing to do */
-	(void)wbflush();
+	kn01_wbflush();
 }
 
-void
+static void
 dec_3100_cons_init()
 {
-}
+	int kbd, crt, screen;
 
+	kbd = crt = screen = 0;
+	prom_findcons(&kbd, &crt, &screen);
 
-void
-dec_3100_device_register(dev, aux)
-	struct device *dev;
-	void *aux;
-{
-	panic("dec_3100_device_register unimplemented");
-}
-
-
-/*
- * Enable an interrupt from a slot on the KN01 internal bus.
- *
- * The 4.4bsd kn01 interrupt handler hard-codes r3000 CAUSE register
- * bits to particular device interrupt handlers.  We may choose to store
- * function and softc pointers at some future point.
- */
-void
-dec_3100_enable_intr(slotno, handler, sc, on)
-	unsigned int slotno;
-	int (*handler) __P((void* softc));
-	void *sc;
-	int on;
-{
-	/*
-	 */
-	if (on)  {
-		tc_slot_info[slotno].intr = handler;
-		tc_slot_info[slotno].sc = sc;
-	} else {
-		tc_slot_info[slotno].intr = 0;
-		tc_slot_info[slotno].sc = 0;
+	if (screen > 0) {
+#if NRASTERCONSOLE > 0 && NPM > 0
+		if (pm_cnattach() > 0) {
+			dckbd_cnattach(KN01_SYS_DZ);
+			return;
+		}
+#else
+		printf("No framebuffer device configured: ");
+		printf("using serial console\n");
+#endif
 	}
+	/*
+	 * Delay to allow PROM putchars to complete.
+	 * FIFO depth * character time,
+	 * character time = (1000000 / (defaultrate / 10))
+	 */
+	DELAY(160000000 / 9600);	/* XXX */
+
+	dc_cnattach(KN01_SYS_DZ, kbd);
 }
 
-/*
- * Handle pmax (DECstation 2100/3100) interrupts.
- */
-int
-dec_3100_intr(mask, pc, status, cause)
-	unsigned mask;
-	unsigned pc;
+#define CALLINTR(vvv, cp0)					\
+    do {							\
+	if (ipending & (cp0)) {					\
+		intrcnt[vvv] += 1;				\
+		(*intrtab[vvv].ih_func)(intrtab[vvv].ih_arg);	\
+	}							\
+    } while (0)
+
+static void
+dec_3100_intr(status, cause, pc, ipending)
 	unsigned status;
 	unsigned cause;
+	unsigned pc;
+	unsigned ipending;
 {
 	/* handle clock interrupts ASAP */
-	if (mask & MIPS_INT_MASK_3) {
+	if (ipending & MIPS_INT_MASK_3) {
 		struct clockframe cf;
-		struct chiptime *clk;
-		volatile int temp;
 
-		clk = (void *)MIPS_PHYS_TO_KSEG1(KN01_SYS_CLOCK);
-		temp = clk->regc;	/* XXX clear interrupt bits */
-
+		__asm __volatile("lbu $0,48(%0)" ::
+			"r"(MIPS_PHYS_TO_KSEG1(KN01_SYS_CLOCK)));
 		cf.pc = pc;
 		cf.sr = status;
 		hardclock(&cf);
@@ -246,55 +198,29 @@ dec_3100_intr(mask, pc, status, cause)
 	/* If clock interrupts were enabled, re-enable them ASAP. */
 	_splset(MIPS_SR_INT_IE | (status & MIPS_INT_MASK_3));
 
-#if NSII > 0
-	if (mask & MIPS_INT_MASK_0) {
-		intrcnt[SCSI_INTR]++;
-		(*tc_slot_info[3].intr)(tc_slot_info[3].sc);
-	}
-#endif /* NSII */
+	CALLINTR(SYS_DEV_SCSI, MIPS_INT_MASK_0);
+	CALLINTR(SYS_DEV_LANCE, MIPS_INT_MASK_1);
+	CALLINTR(SYS_DEV_SCC0, MIPS_INT_MASK_2);
 
-#if NLE_PMAX > 0
-	if (mask & MIPS_INT_MASK_1) {
-		/*
-		 * tty interrupts were disabled by the splx() call
-		 * that re-enables clock interrupts.  A slip or ppp driver
-		 * manipulating if queues should have called splimp(),
-		 * which would mask out MIPS_INT_MASK_1.
-		 */
-		(*tc_slot_info[2].intr)(tc_slot_info[2].sc);
-		intrcnt[LANCE_INTR]++;
-	}
-#endif /* NLE_PMAX */
-
-#if NDC_DS > 0
-	if (mask & MIPS_INT_MASK_2) {
-		(*tc_slot_info[1].intr)(tc_slot_info[1].sc);
-		intrcnt[SERIAL0_INTR]++;
-	}
-#endif /* NDC_DS */
-
-	if (mask & MIPS_INT_MASK_4) {
+	if (ipending & MIPS_INT_MASK_4) {
 		dec_3100_errintr();
 		intrcnt[ERROR_INTR]++;
 	}
-	return (MIPS_SR_INT_IE | (status & ~cause & MIPS_HARD_INT_MASK));
+	_splset(MIPS_SR_INT_IE | (status & ~cause & MIPS_HARD_INT_MASK));
 }
 
-void
-dec_3100_intr_establish(cookie, level, handler, arg)
-	void * cookie;
+
+static void
+dec_3100_intr_establish(dev, cookie, level, handler, arg)
+	struct device *dev;
+	void *cookie;
 	int level;
-	int (*handler) __P((intr_arg_t));
-	intr_arg_t arg;
+	int (*handler) __P((void *));
+	void *arg;
 {
-	dec_3100_enable_intr((u_int)cookie, handler, arg, 1);
-}
 
-
-void
-dec_3100_intr_disestablish(struct ibus_attach_args *ia)
-{
-	printf("dec_3100_intr_distestablish: not implemented\n");
+	intrtab[(int)cookie].ih_func = handler;
+	intrtab[(int)cookie].ih_arg = arg;
 }
 
 
@@ -304,16 +230,15 @@ dec_3100_intr_disestablish(struct ibus_attach_args *ia)
 static void
 dec_3100_errintr()
 {
-	volatile u_short *sysCSRPtr =
-		(u_short *)MIPS_PHYS_TO_KSEG1(KN01_SYS_CSR);
-	u_short csr;
+	u_int16_t csr;
 
-	csr = *sysCSRPtr;
+	csr = *(u_int16_t *)MIPS_PHYS_TO_KSEG1(KN01_SYS_CSR);
 
 	if (csr & KN01_CSR_MERR) {
 		printf("Memory error at 0x%x\n",
-			*(unsigned *)MIPS_PHYS_TO_KSEG1(KN01_SYS_ERRADR));
+			*(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN01_SYS_ERRADR));
 		panic("Mem error interrupt");
 	}
-	*sysCSRPtr = (csr & ~KN01_CSR_MBZ) | 0xff;
+	csr = (csr & ~KN01_CSR_MBZ) | 0xff;
+	*(volatile u_int16_t *)MIPS_PHYS_TO_KSEG1(KN01_SYS_CSR) = csr;
 }

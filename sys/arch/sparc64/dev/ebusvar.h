@@ -1,7 +1,7 @@
-/*	$NetBSD: ebusvar.h,v 1.2 1999/06/05 14:18:26 mrg Exp $	*/
+/*	$NetBSD: ebusvar.h,v 1.2.4.1 2000/11/20 20:26:43 bouyer Exp $	*/
 
 /*
- * Copyright (c) 1999 Matthew R. Green
+ * Copyright (c) 1999, 2000 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -48,12 +48,13 @@ struct ebus_attach_args {
 	u_int32_t		*ea_intrs;	/* interrupts */
 
 	int			ea_nregs;	/* number of them */
-	int			ea_naddrs;
+	int			ea_nvaddrs;
 	int			ea_nintrs;
 };
 
 struct ebus_softc {
 	struct device			sc_dev;
+	struct psycho_softc		*sc_parent;	/* for iommu */
 
 	int				sc_node;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.10 1999/06/07 05:28:04 eeh Exp $	*/
+/*	$NetBSD: pmap.h,v 1.10.2.1 2000/11/20 20:26:49 bouyer Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -118,7 +118,8 @@ struct pmap {
 	 * !!! Only touch this through pseg_get() and pseg_set() !!!
 	 */
 	paddr_t pm_physaddr;	/* physical address of pm_segs */
-	int64_t *pm_segs;  
+	int64_t *pm_segs;
+	struct simplelock pm_lock;
 };
 
 /*
@@ -162,6 +163,8 @@ int pmap_count_res __P((pmap_t pmap));
 #define	pmap_phys_address(x)		((((paddr_t)(x))<<PGSHIFT)|PMAP_NC)
 
 void pmap_bootstrap __P((u_long kernelstart, u_long kernelend, u_int numctx));
+/* make sure all page mappings are modulo 16K to prevent d$ aliasing */
+#define PMAP_PREFER(pa, va)	(*(va)+=(((*(va))^(pa))&(1<<(PGSHIFT+1))))
 
 /* SPARC specific? */
 void		pmap_redzone __P((void));

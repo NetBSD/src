@@ -1,4 +1,4 @@
-/*	$NetBSD: eisa_machdep.c,v 1.10 1998/06/03 06:35:49 thorpej Exp $	*/
+/*	$NetBSD: eisa_machdep.c,v 1.10.14.1 2000/11/20 20:09:18 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -171,6 +171,14 @@ eisa_intr_string(ec, ih)
 	
 }
 
+const struct evcnt *
+eisa_intr_evcnt(eisa_chipset_tag_t ec, eisa_intr_handle_t ih)
+{
+
+	/* XXX for now, no evcnt parent reported */
+	return NULL;
+}
+
 void *
 eisa_intr_establish(ec, ih, type, level, func, arg)
 	eisa_chipset_tag_t ec;
@@ -220,4 +228,48 @@ eisa_mem_free(t, bah, size)
 {
 
 	bus_space_free(t, bah, size);
+}
+
+int
+eisa_conf_read_mem(ec, slot, func, entry, ecm)
+	eisa_chipset_tag_t ec;
+	int slot, func, entry;
+	struct eisa_cfg_mem *ecm;
+{
+
+	/* XXX XXX XXX */
+	return (ENOENT);
+}
+
+int
+eisa_conf_read_irq(ec, slot, func, entry, eci)
+	eisa_chipset_tag_t ec;
+	int slot, func, entry;
+	struct eisa_cfg_irq *eci;
+{
+
+	/* XXX XXX XXX */
+	return (ENOENT);
+}
+
+int
+eisa_conf_read_dma(ec, slot, func, entry, ecd)
+	eisa_chipset_tag_t ec;
+	int slot, func, entry;
+	struct eisa_cfg_dma *ecd;
+{
+
+	/* XXX XXX XXX */
+	return (ENOENT);
+}
+
+int
+eisa_conf_read_io(ec, slot, func, entry, ecio)
+	eisa_chipset_tag_t ec;
+	int slot, func, entry;
+	struct eisa_cfg_io *ecio;
+{
+
+	/* XXX XXX XXX */
+	return (ENOENT);
 }

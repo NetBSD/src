@@ -1,4 +1,4 @@
-#	$NetBSD: LAGER,v 1.25 1999/07/29 10:37:17 augustss Exp $
+#	$NetBSD: LAGER,v 1.25.2.1 2000/11/20 20:08:03 bouyer Exp $
 #
 # LAGER (hpeyerl's hp425s)
 #
@@ -26,7 +26,6 @@ options 	SYSVSHM			# System V-style shared memory
 options 	SYSVSEM			# System V-style semaphores
 options 	SYSVMSG			# System V-style message queues
 options 	KTRACE			# system call tracing support
-options 	NKMEMCLUSTERS=2048	# # 4K pages in kernel malloc pool
 options 	LKM			# loadable kernel modules
 
 # Filesystems
@@ -95,7 +94,7 @@ sd*		at oscsi? target ? lun ?	# SCSI disks
 st*		at oscsi? target ? lun ?	# SCSI tapes
 ac*		at oscsi? target ? lun ?	# SCSI changers
 
-pseudo-device	pty		128	# pseudo ptys
+pseudo-device	pty			# pseudo-terminals
 pseudo-device	ppp		1	# PPP network interfaces
 pseudo-device	bpfilter	4	# packet filter devices
 pseudo-device	vnd		4	# vnode pseudo-disks

@@ -1,4 +1,4 @@
-/*	$NetBSD: sbicvar.h,v 1.5 1998/11/19 21:47:03 thorpej Exp $	*/
+/*	$NetBSD: sbicvar.h,v 1.5.12.1 2000/11/20 20:15:19 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,6 +39,7 @@
  */
 #ifndef _SBICVAR_H_
 #define _SBICVAR_H_
+#include <sys/callout.h>
 #include <sys/malloc.h>
 
 
@@ -102,8 +103,10 @@ struct  sbic_softc {
     struct  scsipi_link     sc_link;    /* proto for sub devices */
     struct  scsipi_adapter  sc_adapter;
     sbic_regmap_p           sc_sbicp;   /* the SBIC */
-    volatile void           *sc_cregs;  /* driver specific regs */
+    void                   *sc_driver;  /* driver specific field */
     int                     sc_ipl;
+
+    struct callout	    sc_timo_ch;
 
     /* Lists of command blocks */
     TAILQ_HEAD(acb_list, sbic_acb)  free_list,
@@ -202,5 +205,7 @@ struct scsipi_xfer;
 
 void sbic_minphys __P((struct buf *bp));
 int sbic_scsicmd __P((struct scsipi_xfer *));
+void sbicinit __P((struct sbic_softc *));
+int sbicintr __P((struct sbic_softc *));
 
 #endif /* _SBICVAR_H_ */

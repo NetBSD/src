@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.10 1999/05/06 14:16:09 kleink Exp $
+#	$NetBSD: genassym.cf,v 1.10.2.1 2000/11/20 20:30:23 bouyer Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -46,9 +46,7 @@ include <sys/msgbuf.h>
 include <sys/syscall.h>
 include <sys/user.h>
 
-include <vm/vm.h>
-
-include <uvm/uvm_extern.h>
+include <uvm/uvm.h>
 
 ifdef COMPAT_SVR4
 include <compat/svr4/svr4_syscall.h>
@@ -119,6 +117,7 @@ define	P_MD_FLAGS		offsetof(struct proc, p_md.md_flags)
 define	P_MD_REGS		offsetof(struct proc, p_md.md_regs)
 define	SSLEEP			SSLEEP
 define	SRUN			SRUN
+define	SONPROC			SONPROC
 
 # interrupt/fault metering
 define	UVMEXP_INTRS		offsetof(struct uvmexp, intrs)
@@ -147,6 +146,7 @@ define	PSL_IPL7		PSL_IPL7
 define	PSL_LOWIPL		PSL_LOWIPL
 define	PSL_HIGHIPL		PSL_HIGHIPL
 define	PSL_USER		PSL_USER
+define	PSL_TS			PSL_T | PSL_S
 define	SPL1			PSL_S | PSL_IPL1
 define	SPL2			PSL_S | PSL_IPL2
 define	SPL3			PSL_S | PSL_IPL3
@@ -204,6 +204,9 @@ define	SYS_compat_13_sigreturn13 SYS_compat_13_sigreturn13
 # errno
 define	EFAULT			EFAULT
 define	ENAMETOOLONG		ENAMETOOLONG
+
+# UVM
+define	UVM_PAGE_IDLE_ZERO	offsetof(struct uvm, page_idle_zero)
 
 # SVR4 binary compatibility
 ifdef COMPAT_SVR4

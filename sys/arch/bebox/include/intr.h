@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.9 1999/08/05 18:08:10 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.9.2.1 2000/11/20 20:06:06 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -191,6 +191,9 @@ set_sint(pending)
 
 #define	splhigh()	splraise(imask[IPL_HIGH])
 #define	spl0()		spllower(0)
+
+#define	splsched()	splhigh()
+#define	spllock()	splhigh()
 
 #endif /* !_LOCORE */
 

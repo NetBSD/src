@@ -1,4 +1,4 @@
-/*	$NetBSD: ofwgencfg_machdep.c,v 1.10 1999/01/03 02:23:28 mark Exp $	*/
+/*	$NetBSD: ofwgencfg_machdep.c,v 1.10.8.1 2000/11/20 20:04:04 bouyer Exp $	*/
 
 /*
  * Copyright 1997
@@ -46,15 +46,14 @@
 #include <sys/proc.h>
 #include <sys/kernel.h>
 #include <sys/exec.h>
-#include <vm/vm.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <dev/cons.h>
 
 #include <machine/db_machdep.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
-
-#include <vm/vm_kern.h>
 
 #include <machine/frame.h>
 #include <machine/bootconfig.h>
@@ -63,7 +62,7 @@
 #include <machine/pte.h>
 #include <machine/undefined.h>
 
-#include "ipkdb.h"
+#include "opt_ipkdb.h"
 
 #include <dev/ofw/openfirm.h>
 #include <machine/ofw.h>

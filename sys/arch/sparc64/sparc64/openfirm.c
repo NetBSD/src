@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.c,v 1.7 1998/11/24 13:02:59 mrg Exp $	*/
+/*	$NetBSD: openfirm.c,v 1.7.10.1 2000/11/20 20:26:56 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -458,7 +458,7 @@ OF_read(handle, addr, len)
 	args.nreturns = 1;
 	args.ihandle = HDL2CELL(handle);
 	args.addr = ADR2CELL(addr);
-	for (; len > 0; len -= l, addr += l) {
+	for (; len > 0; len -= l, (char *)addr += l) {
 		l = min(NBPG, len);
 		args.len = l;
 		if (openfirmware(&args) == -1)
@@ -500,8 +500,14 @@ OF_write(handle, addr, len)
 	args.nreturns = 1;
 	args.ihandle = HDL2CELL(handle);
 	args.addr = ADR2CELL(addr);
-if (len>1024) { prom_printf("OF_write() > 1024\n"); Debugger(); }
-	for (; len > 0; len -= l, addr += l) {
+if (len>1024) { prom_printf("OF_write() > 1024\n");
+#ifdef DDB
+Debugger();
+#else
+panic("OF_write");
+#endif
+}
+	for (; len > 0; len -= l, (char *)addr += l) {
 		l = min(NBPG, len);
 		args.len = l;
 		if (openfirmware(&args) == -1)
@@ -609,8 +615,8 @@ OF_poweroff()
 }
 
 void
-(*OF_set_callback(newfunc))()
-	void (*newfunc)();
+(*OF_set_callback(newfunc))(void *)
+	void (*newfunc)(void *);
 {
 	struct {
 		cell_t name;
@@ -657,6 +663,8 @@ OF_set_symbol_lookup(s2v, v2s)
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
 
+int obp_symbol_debug = 0;
+
 void OF_sym2val(cells)
 	void *cells;
 {
@@ -668,7 +676,7 @@ void OF_sym2val(cells)
 		cell_t result;
 		cell_t value;
 	} *args = (struct args*)cells;
-	db_sym_t symbol;
+	char *symbol;
 	db_expr_t value;
 
 	/* Set data segment pointer */
@@ -684,10 +692,12 @@ void OF_sym2val(cells)
 		args->result = -1;
 		return;
 	} 
-	symbol = (db_sym_t)args->symbol;
-prom_printf("looking up symbol %s\n", symbol);
-	db_symbol_values(symbol, (char**)NULL, &value);
-	args->result = 0;
+	symbol = (char *)(u_long)args->symbol;
+	if (obp_symbol_debug)
+		prom_printf("looking up symbol %s\r\n", symbol);
+	args->result = (db_value_of_name(symbol, &value) == TRUE) ? 0 : -1;
+	if (obp_symbol_debug)
+		prom_printf("%s is %lx\r\n", symbol, value);
 	args->value = ADR2CELL(value);
 }
 
@@ -709,6 +719,9 @@ void OF_val2sym(cells)
 	/* Set data segment pointer */
 	__asm __volatile("clr %%g4" : :);
 
+	if (obp_symbol_debug)
+		prom_printf("OF_val2sym: nargs %lx nreturns %lx\r\n",
+			args->nargs, args->nreturns);
 	/* No args?  Nothing to do. */
 	if (!args->nargs || 
 	    !args->nreturns) return;
@@ -721,9 +734,12 @@ void OF_val2sym(cells)
 	} 
 	
 	value = args->value;
-prom_printf("looking up value %ld\n", value);
+	if (obp_symbol_debug)
+		prom_printf("looking up value %ld\r\n", value);
 	symbol = db_search_symbol(value, 0, &offset);
 	if (symbol == DB_SYM_NULL) {
+		if (obp_symbol_debug)
+			prom_printf("OF_val2sym: not found\r\n");
 		args->nreturns = 1;
 		args->offset = -1;
 		return;		

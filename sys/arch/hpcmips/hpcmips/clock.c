@@ -1,4 +1,4 @@
-/* $NetBSD: clock.c,v 1.2 1999/09/19 00:46:05 shin Exp $ */
+/* $NetBSD: clock.c,v 1.2.2.1 2000/11/20 20:46:32 bouyer Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -41,10 +41,11 @@
  *
  *	@(#)clock.c	8.1 (Berkeley) 6/10/93
  */
+#include "opt_tx39xx.h"
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.2 1999/09/19 00:46:05 shin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.2.2.1 2000/11/20 20:46:32 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -53,33 +54,11 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.2 1999/09/19 00:46:05 shin Exp $");
 #include <sys/sched.h>
 
 #include <dev/clock_subr.h>
-
 #include <machine/clock_machdep.h>
-
-#ifdef alpha
-#include <machine/autoconf.h>
-#include <machine/cpuconf.h>
-#endif /* alpha */
-
 #include <dev/dec/clockvar.h>
 
-#ifdef alpha
-#include "opt_clock_compat_osf1.h"
-#endif /* alpha */
-
-#define MINYEAR 1998 /* "today" */
-#ifdef CLOCK_COMPAT_OSF1
-/*
- * According to OSF/1's /usr/sys/include/arch/alpha/clock.h,
- * the console adjusts the RTC years 13..19 to 93..99 and
- * 20..40 to 00..20. (historical reasons?)
- * DEC Unix uses an offset to the year to stay outside
- * the dangerous area for the next couple of years.
- */
-#define UNIX_YEAR_OFFSET 52 /* 41=>1993, 12=>2064 */
-#else
+#define MINYEAR 2000 /* "today" */
 #define UNIX_YEAR_OFFSET 0
-#endif
 
 struct device *clockdev;
 const struct clockfns *clockfns;
@@ -101,7 +80,8 @@ clockattach(dev, fns)
 	clockdev = dev;
 	clockfns = fns;
 #ifdef EVCNT_COUNTERS
-	evcnt_attach(dev, "intr", &clock_intr_evcnt);
+	evcnt_attach_dynamic(&clock_intr_evcnt, EVCNT_TYPE_INTR, NULL,
+	    dev->dv_xname, "intr");
 #endif
 }
 
@@ -127,7 +107,7 @@ cpu_initclocks()
 {
 	if (clockfns == NULL)
 		panic("cpu_initclocks: no clock attached");
-
+#ifndef TX39XX /* TX3912/22 periodic timer is not 256Hz */
 	hz = CLOCK_RATE;	/* 256 Hz clock */
 	tick = 1000000 / hz;	/* number of microseconds between interrupts */
 	tickfix = 1000000 - (hz * tick);
@@ -138,23 +118,7 @@ cpu_initclocks()
 		tickfix >>= (ftp - 1);
 		tickfixinterval = hz >> (ftp - 1);
         }
-
-#ifdef aplha
-	/*
-	 * Establish the clock interrupt; it's a special case.
-	 *
-	 * We establish the clock interrupt this late because if
-	 * we do it at clock attach time, we may have never been at
-	 * spl0() since taking over the system.  Some versions of
-	 * PALcode save a clock interrupt, which would get delivered
-	 * when we spl0() in autoconf.c.  If established the clock
-	 * interrupt handler earlier, that interrupt would go to
-	 * hardclock, which would then fall over because p->p_stats
-	 * isn't set at that time.
-	 */
-	platform.clockintr = (void (*) __P((void *))) hardclock;
-	schedhz = 16;
-#endif /* alpha */
+#endif /* !TX39XX */
 	/*
 	 * Get the clock started.
 	 */
@@ -174,7 +138,6 @@ setstatclockrate(newhz)
 	/* nothing we can do */
 }
 
-#define DEBUG 
 /*
  * Initialze the time of day register, based on the time base which is, e.g.
  * from a filesystem.  Base provides the time to within six months,

@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.1 1999/09/21 13:16:16 tsubai Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.1.2.1 2000/11/20 20:24:33 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -79,7 +79,6 @@
 
 #include <sys/param.h>
 #include <sys/buf.h>
-#include <sys/callout.h>
 #include <sys/exec.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
@@ -94,21 +93,18 @@
 #include <sys/kgdb.h>
 #endif
 
-#include <vm/vm.h>
-#include <vm/vm_kern.h>
 #include <uvm/uvm_extern.h>
 
 char cpu_model[120];
+
+/* Our exported CPU info; we can have only one. */  
+struct cpu_info cpu_info_store;
 
 vm_map_t exec_map = NULL;
 vm_map_t mb_map = NULL;
 vm_map_t phys_map = NULL;
 
 extern int physmem;
-
-#ifdef COMPAT_NOMID
-static int exec_nomid	__P((struct proc *, struct exec_package *));
-#endif
 
 void
 sh3_startup()
@@ -146,7 +142,7 @@ sh3_startup()
 	size = MAXBSIZE * nbuf;
 	buffers = 0;
 	if (uvm_map(kernel_map, (vaddr_t *) &buffers, round_page(size),
-		    NULL, UVM_UNKNOWN_OFFSET,
+		    NULL, UVM_UNKNOWN_OFFSET, 0,
 		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
 				UVM_ADV_NORMAL, 0)) != KERN_SUCCESS)
 		panic("cpu_startup: cannot allocate VM for buffers");
@@ -170,7 +166,7 @@ sh3_startup()
 		 * "base" pages for the rest.
 		 */
 		curbuf = (vaddr_t) buffers + (i * MAXBSIZE);
-		curbufsize = CLBYTES * ((i < residual) ? (base+1) : base);
+		curbufsize = NBPG * ((i < residual) ? (base+1) : base);
 
 		while (curbufsize) {
 			pg = uvm_pagealloc(NULL, 0, NULL, 0);
@@ -189,30 +185,17 @@ sh3_startup()
 	 * limits the number of processes exec'ing at any time.
 	 */
 	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				   16*NCARGS, TRUE, FALSE, NULL);
+				   16*NCARGS, VM_MAP_PAGEABLE, FALSE, NULL);
 
 	/*
 	 * Allocate a submap for physio
 	 */
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				   VM_PHYS_SIZE, TRUE, FALSE, NULL);
-
-	/*
-	 * Finally, allocate mbuf cluster submap.
-	 */
-	mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-	    VM_MBUF_SIZE, FALSE, FALSE, NULL);
-
-	/*
-	 * Initialize callouts
-	 */
-	callfree = callout;
-	for (i = 1; i < ncallout; i++)
-		callout[i-1].c_next = &callout[i];
+				   VM_PHYS_SIZE, 0, FALSE, NULL);
 
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
-	format_bytes(pbuf, sizeof(pbuf), bufpages * CLBYTES);
+	format_bytes(pbuf, sizeof(pbuf), bufpages * NBPG);
 	printf("using %d buffers containing %s of memory\n", nbuf, pbuf);
 
 	/*
@@ -489,95 +472,4 @@ _remque(v)
 	next->q_prev = prev;
 	prev->q_next = next;
 	elem->q_prev = 0;
-}
-
-#ifdef COMPAT_NOMID
-static int
-exec_nomid(p, epp)
-	struct proc *p;
-	struct exec_package *epp;
-{
-	int error;
-	u_long midmag, magic;
-	u_short mid;
-	struct exec *execp = epp->ep_hdr;
-
-	/* check on validity of epp->ep_hdr performed by exec_out_makecmds */
-
-	midmag = ntohl(execp->a_midmag);
-	mid = (midmag >> 16) & 0xffff;
-	magic = midmag & 0xffff;
-
-	if (magic == 0) {
-		magic = (execp->a_midmag & 0xffff);
-		mid = MID_ZERO;
-	}
-
-	midmag = mid << 16 | magic;
-
-	switch (midmag) {
-	case (MID_ZERO << 16) | ZMAGIC:
-		/*
-		 * 386BSD's ZMAGIC format:
-		 */
-		error = exec_aout_prep_oldzmagic(p, epp);
-		break;
-
-	case (MID_ZERO << 16) | QMAGIC:
-		/*
-		 * BSDI's QMAGIC format:
-		 * same as new ZMAGIC format, but with different magic number
-		 */
-		error = exec_aout_prep_zmagic(p, epp);
-		break;
-
-	case (MID_ZERO << 16) | NMAGIC:
-		/*
-		 * BSDI's NMAGIC format:
-		 * same as NMAGIC format, but with different magic number
-		 * and with text starting at 0.
-		 */
-		error = exec_aout_prep_oldnmagic(p, epp);
-		break;
-
-	case (MID_ZERO << 16) | OMAGIC:
-		/*
-		 * BSDI's OMAGIC format:
-		 * same as OMAGIC format, but with different magic number
-		 * and with text starting at 0.
-		 */
-		error = exec_aout_prep_oldomagic(p, epp);
-		break;
-
-	default:
-		error = ENOEXEC;
-	}
-
-	return error;
-}
-#endif
-
-/*
- * cpu_exec_aout_makecmds():
- *	cpu-dependent a.out format hook for execve().
- *
- * Determine of the given exec package refers to something which we
- * understand and, if so, set up the vmcmds for it.
- *
- * On the i386, old (386bsd) ZMAGIC binaries and BSDI QMAGIC binaries
- * if COMPAT_NOMID is given as a kernel option.
- */
-int
-cpu_exec_aout_makecmds(p, epp)
-	struct proc *p;
-	struct exec_package *epp;
-{
-	int error = ENOEXEC;
-
-#ifdef COMPAT_NOMID
-	if ((error = exec_nomid(p, epp)) == 0)
-		return error;
-#endif /* ! COMPAT_NOMID */
-
-	return error;
 }

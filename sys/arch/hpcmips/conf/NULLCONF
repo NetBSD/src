@@ -1,20 +1,21 @@
 #
-# 	$NetBSD: NULLCONF,v 1.2 1999/09/25 00:03:22 shin Exp $
+# 	$NetBSD: NULLCONF,v 1.2.2.1 2000/11/20 20:45:44 bouyer Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 maxusers	8
 options 	MIPS3			# R4000/R4400/R4600 CPUs
 options 	VR41X1			# NEC VR41x1 series
 options		MIPS3_4100		# VR4100 core
-options		SOFTFLOAT		# No FPU
+options 	NOFPU			# No FPU
+options 	SOFTFLOAT		# emulate FPU insn
 options		MIPS3_L2CACHE_ABSENT
 options 	DDB			# in-kernel debugger
-options 	"NKMEMCLUSTERS=1024"	# 4K pages in kernel malloc pool
 
 options		WINCE_DEFAULT_SETTING # Debugging use
 options		DUMP_GIU_LEVEL2_INTR  # Debugging use
 options		DEBUG_FIND_PCIC       # Debugging use XXX harmful don't define until read source.
 #options		DEBUG_FIND_PCIC_I82365SL_ONLY
+makeoptions	CWARNFLAGS=""	# override CWARNFLAGS?= -Werror ...
 
 file-system 	FFS             # fast filesystem with user and group quotas
 options 	COMPAT_386BSD_MBRPART # recognize old partition ID
@@ -25,6 +26,7 @@ vrcmu*	at vrip? addr 0x0b000060 size 0x20
 vrbcu*	at vrip? addr 0x0b000000 size 0x20
 vrrtc*	at vrip? addr 0x0b0000c0 size 0x20 intr 2
 vrkiu*  at vrip? addr 0x0b000180 size 0x20 intr 7
+hpckbd*	at vrkiu?
 options __NO_SOFT_SERIAL_INTERRUPT
 com*	at vrip? addr 0x0c000000 size 0x20 intr 9
 vrgiu*	at vrip? addr 0x0b000100 size 0x20 intr 8
@@ -32,5 +34,10 @@ vrgiu*	at vrip? addr 0x0b000100 size 0x20 intr 8
 vrisab2 at vrgiu?
 isa2	at vrisab2
 
-pseudo-device	biconsdev	1	# build-in console device
+# Workstation Console attachments
+bivideo0	at	mainbus0
+hpcfb*		at	bivideo0
+wsdisplay*	at	hpcfb?
+wskbd*		at	hpckbd? mux 1
 
+pseudo-device	biconsdev	1	# build-in console device

@@ -1,4 +1,4 @@
-/*	$NetBSD: shpcic.c,v 1.2 1999/09/14 10:22:35 tsubai Exp $	*/
+/*	$NetBSD: shpcic.c,v 1.2.2.1 2000/11/20 20:24:28 bouyer Exp $	*/
 
 #define	SHPCICDEBUG
 
@@ -40,7 +40,7 @@
 #include <sys/malloc.h>
 #include <sys/kthread.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -240,6 +240,7 @@ shpcic_attach_socket(h)
 
 	/* now, config one pcmcia device per socket */
 
+	paa.paa_busname = "pcmcia";
 	paa.pct = (pcmcia_chipset_tag_t) h->sc->pct;
 	paa.pch = (pcmcia_chipset_handle_t) h;
 	paa.iobase = h->sc->iobase;

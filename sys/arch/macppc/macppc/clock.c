@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.8 1999/03/24 05:51:04 mrg Exp $	*/
+/*	$NetBSD: clock.c,v 1.8.8.1 2000/11/20 20:13:01 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -35,8 +35,6 @@
 #include <sys/kernel.h>
 #include <sys/systm.h>
 
-#include <vm/vm.h>
-
 #include <uvm/uvm_extern.h>
 
 #include <dev/ofw/openfirm.h>
@@ -45,12 +43,18 @@
 #include "adb.h"
 
 /*
- * Initially we assume a processor with a bus frequency of 12.5 MHz.
+ * Initially we assume a processor with a bus frequency of 50 MHz.
  */
-static u_long ticks_per_sec = 12500000;
+static u_long ticks_per_sec = 50*1000*1000/4;
 static u_long ns_per_tick = 80;
 static long ticks_per_intr;
 static volatile u_long lasttb;
+
+#ifdef TIMEBASE_FREQ
+u_int timebase_freq = TIMEBASE_FREQ;
+#else
+u_int timebase_freq = 0;
+#endif
 
 #define SECDAY 86400
 #define DIFF19041970 2082844800
@@ -117,6 +121,7 @@ decr_intr(frame)
 	u_long tb;
 	long tick;
 	int nticks;
+	int pri, msr;
 
 	/*
 	 * Check whether we are initialized.
@@ -128,21 +133,13 @@ decr_intr(frame)
 	 * Based on the actual time delay since the last decrementer reload,
 	 * we arrange for earlier interrupt next time.
 	 */
-	asm ("mftb %0; mfdec %1" : "=r"(tb), "=r"(tick));
+	asm ("mfdec %0" : "=r"(tick));
 	for (nticks = 0; tick < 0; nticks++)
 		tick += ticks_per_intr;
 	asm volatile ("mtdec %0" :: "r"(tick));
-	/*
-	 * lasttb is used during microtime. Set it to the virtual
-	 * start of this tick interval.
-	 */
-	lasttb = tb + tick - ticks_per_intr;
 
 	uvmexp.intrs++;
 	intrcnt[CNT_CLOCK]++;
-	{
-	int pri;
-	int msr;
 
 	pri = splclock();
 	if (pri & (1 << SPL_CLOCK))
@@ -150,6 +147,13 @@ decr_intr(frame)
 	else {
 		nticks += tickspending;
 		tickspending = 0;
+
+		/*
+		 * lasttb is used during microtime. Set it to the virtual
+		 * start of this tick interval.
+		 */
+		asm ("mftb %0" : "=r"(tb));
+		lasttb = tb + tick - ticks_per_intr;
 
 		/*
 		 * Reenable interrupts
@@ -168,7 +172,6 @@ decr_intr(frame)
 		hardclock(frame);
 	}
 	splx(pri);
-	}
 }
 
 void
@@ -180,28 +183,23 @@ void
 calc_delayconst()
 {
 	int qhandle, phandle;
-	char name[32];
+	char type[32];
 	int msr, scratch;
 	
 	/*
 	 * Get this info during autoconf?				XXX
 	 */
+	if (timebase_freq != 0) {
+		ticks_per_sec = timebase_freq;
+		goto found;
+	}
+
 	for (qhandle = OF_peer(0); qhandle; qhandle = phandle) {
-		if (OF_getprop(qhandle, "device_type", name, sizeof name) >= 0
-		    && !strcmp(name, "cpu")
+		if (OF_getprop(qhandle, "device_type", type, sizeof type) > 0
+		    && strcmp(type, "cpu") == 0
 		    && OF_getprop(qhandle, "timebase-frequency",
-				  &ticks_per_sec, sizeof ticks_per_sec) >= 0) {
-			/*
-			 * Should check for correct CPU here?		XXX
-			 */
-			asm volatile ("mfmsr %0; andi. %1, %0, %2; mtmsr %1"
-				      : "=r"(msr), "=r"(scratch) : "K"((u_short)~PSL_EE));
-			ns_per_tick = 1000000000 / ticks_per_sec;
-			ticks_per_intr = ticks_per_sec / hz;
-			asm volatile ("mftb %0" : "=r"(lasttb));
-			asm volatile ("mtdec %0" :: "r"(ticks_per_intr));
-			asm volatile ("mtmsr %0" :: "r"(msr));
-			break;
+			   &ticks_per_sec, sizeof ticks_per_sec) > 0) {
+			goto found;
 		}
 		if ((phandle = OF_child(qhandle)))
 			continue;
@@ -211,8 +209,19 @@ calc_delayconst()
 			qhandle = OF_parent(qhandle);
 		}
 	}
-	if (!phandle)
-		panic("no cpu node");
+	panic("no cpu node");
+
+found:
+	/*
+	 * Should check for correct CPU here?		XXX
+	 */
+	asm volatile ("mfmsr %0; andi. %1,%0,%2; mtmsr %1"
+		      : "=r"(msr), "=r"(scratch) : "K"((u_short)~PSL_EE));
+	ns_per_tick = 1000000000 / ticks_per_sec;
+	ticks_per_intr = ticks_per_sec / hz;
+	asm volatile ("mftb %0" : "=r"(lasttb));
+	asm volatile ("mtdec %0" :: "r"(ticks_per_intr));
+	asm volatile ("mtmsr %0" :: "r"(msr));
 }
 
 static inline u_quad_t
@@ -245,7 +254,7 @@ microtime(tvp)
 	asm volatile ("mtmsr %0" :: "r"(msr));
 	ticks /= 1000;
 	tvp->tv_usec += ticks;
-	while (tvp->tv_usec > 1000000) {
+	while (tvp->tv_usec >= 1000000) {
 		tvp->tv_usec -= 1000000;
 		tvp->tv_sec++;
 	}
@@ -265,9 +274,9 @@ delay(n)
 	tb += (n * 1000 + ns_per_tick - 1) / ns_per_tick;
 	tbh = tb >> 32;
 	tbl = tb;
-	asm ("1: mftbu %0; cmplw %0,%1; blt 1b; bgt 2f;"
-	     "mftb %0; cmplw %0,%2; blt 1b; 2:"
-	     :: "r"(scratch), "r"(tbh), "r"(tbl));
+	asm volatile ("1: mftbu %0; cmplw %0,%1; blt 1b; bgt 2f;"
+		      "mftb %0; cmplw %0,%2; blt 1b; 2:"
+		      : "=r"(scratch) : "r"(tbh), "r"(tbl));
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_machdep.c,v 1.8 1998/09/11 12:50:05 mycroft Exp $	*/
+/*	$NetBSD: ibcs2_machdep.c,v 1.8.12.1 2000/11/20 20:09:21 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -60,6 +60,8 @@
 
 #include <compat/ibcs2/ibcs2_types.h>
 #include <compat/ibcs2/ibcs2_signal.h>
+#include <compat/ibcs2/ibcs2_sysi86.h>
+#include <compat/ibcs2/ibcs2_syscallargs.h>
 
 void
 ibcs2_setregs(p, epp, stack)
@@ -183,4 +185,46 @@ ibcs2_sendsig(catcher, sig, mask, code)
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
 		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
+}
+
+int
+ibcs2_sys_sysmachine(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct ibcs2_sys_sysmachine_args /* {
+		syscallarg(int) cmd;
+		syscallarg(int) arg;
+	} */ *uap = v;
+	int val, error;
+
+	switch (SCARG(uap, cmd)) {
+	case IBCS2_SI86FPHW:
+		val = IBCS2_FP_NO;
+#ifdef MATH_EMULATE
+		val = IBCS2_FP_SW;
+#else
+		val = IBCS2_FP_387;		/* a real coprocessor */
+#endif
+		if ((error = copyout((caddr_t)&val, (caddr_t)SCARG(uap, arg),
+				     sizeof(val))))
+			return error;
+		break;
+
+	case IBCS2_SI86STIME:		/* XXX - not used much, if at all */
+	case IBCS2_SI86SETNAME:
+		return EINVAL;
+
+	case IBCS2_SI86PHYSMEM:
+                *retval = ctob(physmem);
+		break;
+
+	case IBCS2_SI86GETFEATURES:	/* XXX structure def? */
+		break;
+
+	default:
+		return EINVAL;
+	}
+	return 0;
 }

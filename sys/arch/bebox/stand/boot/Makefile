@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 1999/06/28 01:20:43 sakamoto Exp $
+#	$NetBSD: Makefile,v 1.8.2.1 2000/11/20 20:06:08 bouyer Exp $
 
 S= ${.CURDIR}/../../../..
 
@@ -8,9 +8,9 @@ NEWVERSWHAT= "BOOT"
 ASRCS+= srt0.s
 CSRCS+= boot.c clock.c com.c conf.c cons.c cpu.c devopen.c
 CSRCS+= fd.c filesystem.c inkernel.c io.c tgets.c prf.c monitor.c
-CSRCS+= kbd.c ns16550.c vreset.c vga.c video.c
+CSRCS+= kbd.c ns16550.c vers.c vreset.c vga.c video.c
 
-CLEANFILES+= vers.c vers.o ${BOOTPROG} ${.CURDIR}/lib
+CLEANFILES+= vers.c ${BOOTPROG}
 
 CPPFLAGS= -I${.CURDIR} -I${.CURDIR}/../elf2pef -I${.CURDIR}/../../..
 CPPFLAGS+= -I${S} -I${S}/lib/libsa
@@ -30,11 +30,11 @@ BINMODE= 444
 
 RELOC= 0x700000
 
-CLEANFILES+= ${.OBJDIR}/machine ${.OBJDIR}/powerpc
-
 .BEGIN:
 	@[ -h machine ] || ln -s ${S}/arch/${MACHINE}/include machine
 	@[ -h powerpc ] || ln -s ${S}/arch/powerpc/include powerpc
+.NOPATH: machine powerpc
+CLEANFILES+= machine powerpc
 
 ### find out what to use for libkern
 KERN_AS=	library
@@ -52,11 +52,13 @@ SAMISCMAKEFLAGS= SA_USE_CREAD=yes SA_USE_LOADFILE=yes
 .include "${S}/lib/libsa/Makefile.inc"
 LIBSA=		${SALIB}
 
-all: ${BOOTPROG}
+.PHONY: vers.c
+vers.c: version
+	sh ${S}/conf/newvers_stand.sh ${.CURDIR}/version "bebox" ${NEWVERSWHAT}
+
+realall: ${BOOTPROG}
 
 ${BOOTPROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
-	sh ${.CURDIR}/../newvers.sh ${.CURDIR}/version ${NEWVERSWHAT}
-	${COMPILE.c} vers.c
 	${LD} -o ${BOOTPROG} -s -N -T ld.script -Ttext ${RELOC} ${OBJS} \
 		${LIBSA} ${LIBZ} ${LIBKERN} vers.o
 

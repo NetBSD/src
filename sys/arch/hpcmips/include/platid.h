@@ -1,4 +1,4 @@
-/*	$NetBSD: platid.h,v 1.1.1.1 1999/09/16 12:23:23 takemura Exp $	*/
+/*	$NetBSD: platid.h,v 1.1.1.1.2.1 2000/11/20 20:46:49 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -69,6 +69,11 @@ typedef union {
 
 typedef platid_t platid_mask_t;
 
+struct platid_name {
+	platid_mask_t *mask;
+	char *name;
+};
+
 #define PLATID_FLAGS_SHIFT		0
 #define PLATID_CPU_SUBMODEL_SHIFT	8
 #define PLATID_CPU_MODEL_SHIFT		14
@@ -106,12 +111,15 @@ typedef platid_t platid_mask_t;
 extern platid_t platid_unknown;
 extern platid_t platid_wild;
 extern platid_t platid;
+extern struct platid_name platid_name_table[];
+extern int	platid_name_table_size;
 
 void platid_ntoh(platid_t *pid);
 void platid_hton(platid_t *pid);
 void platid_dump(char *name, void* pxx);
 int platid_match(platid_t *platid, platid_mask_t *mask);
 int platid_match_sub(platid_t*, platid_mask_t*, int);
+char*	platid_name(platid_t *platid);
 
 #define PLATID_DEREFP(pp)	((platid_t*)(pp))
 #define PLATID_DEREF(pp)	(*PLATID_DEREFP(pp))

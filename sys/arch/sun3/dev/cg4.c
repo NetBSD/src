@@ -1,4 +1,4 @@
-/*	$NetBSD: cg4.c,v 1.19 1998/06/09 16:10:25 gwr Exp $	*/
+/*	$NetBSD: cg4.c,v 1.19.14.1 2000/11/20 20:27:51 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -68,7 +68,7 @@
 #include <sys/proc.h>
 #include <sys/tty.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
@@ -371,10 +371,10 @@ cg4ioctl(dev, cmd, data, flags, p)
  *
  * The hardware looks completely different.
  */
-int
+paddr_t
 cg4mmap(dev, off, prot)
 	dev_t dev;
-	int off;
+	off_t off;
 	int prot;
 {
 	struct cg4_softc *sc = cgfour_cd.cd_devs[minor(dev)];

@@ -1,4 +1,4 @@
-/*	$NetBSD: rdvar.h,v 1.7 1997/03/31 07:40:02 scottr Exp $	*/
+/*	$NetBSD: rdvar.h,v 1.7.22.1 2000/11/20 20:08:05 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -42,6 +42,8 @@
  *	@(#)rdvar.h	8.1 (Berkeley) 6/10/93
  */
 
+#include <sys/callout.h>
+
 struct	rdidentinfo {
 	short	ri_hwid;		/* 2 byte HW id */
 	short	ri_maxunum;		/* maximum allowed unit number */
@@ -63,6 +65,7 @@ struct rdstats {
 struct	rd_softc {
 	struct	device sc_dev;
 	struct	disk sc_dkdev;
+	struct	callout sc_restart_ch;
 	int	sc_slave;		/* HP-IB slave */
 	int	sc_punit;		/* physical unit on slave */
 	int	sc_flags;
@@ -77,8 +80,13 @@ struct	rd_softc {
 	struct	rd_ssmcmd sc_ssmc;
 	struct	rd_srcmd sc_src;
 	struct	rd_clearcmd sc_clear;
-	struct	buf sc_tab;		/* buffer queue */
+	struct	buf_queue sc_tab;
+	int	sc_active;
+	int	sc_errcnt;
 	struct	rdstats sc_stats;
+#if NRND > 0
+	rndsource_element_t rnd_source;
+#endif
 };
 
 /* sc_flags values */
@@ -94,8 +102,6 @@ struct	rd_softc {
 #define rdpart(x)	(minor(x) & 0x7)
 #define	rdpunit(x)	((x) & 7)
 #define rdlabdev(d)	(dev_t)(((int)(d)&~7)|2)	/* rd?c */
-
-#define	b_cylin		b_resid
 
 #define	RDRETRY		5
 #define RDWAITC		1	/* min time for timeout in seconds */

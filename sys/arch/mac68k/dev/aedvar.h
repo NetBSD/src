@@ -1,4 +1,4 @@
-/*	$NetBSD: aedvar.h,v 1.2 1999/02/11 06:41:09 ender Exp $	*/
+/*	$NetBSD: aedvar.h,v 1.2.10.1 2000/11/20 20:12:15 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -30,6 +30,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/callout.h>
 #include <machine/adbsys.h>
 
 /* Event queue definitions */
@@ -40,6 +41,8 @@
 
 struct aed_softc {
 	struct  device  sc_dev;
+
+	struct callout sc_repeat_ch;
 
 	/* ADB info */
 	int		origaddr;	/* ADB device type (ADBADDR_AED) */
@@ -69,7 +72,7 @@ struct aed_softc {
 /* Options */
 #define AED_MSEMUL	0x1		/* emulate mouse buttons */
 
-void	aed_input __P((adb_event_t *event));
+int	aed_input __P((adb_event_t *event));
 int	aedopen __P((dev_t dev, int flag, int mode, struct proc *p));
 int	aedclose __P((dev_t dev, int flag, int mode, struct proc *p));
 int	aedread __P((dev_t dev, struct uio *uio, int flag));

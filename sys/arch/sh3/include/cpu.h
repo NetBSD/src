@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.2 1999/09/14 10:22:35 tsubai Exp $	*/
+/*	$NetBSD: cpu.h,v 1.2.2.1 2000/11/20 20:24:29 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -47,12 +47,31 @@
 #ifndef _SH3_CPU_H_
 #define _SH3_CPU_H_
 
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_lockdebug.h"
+#endif
+
 /*
  * Definitions unique to sh3 cpu support.
  */
 #include <machine/psl.h>
 #include <machine/frame.h>
 #include <machine/segments.h>
+
+#include <sys/sched.h>
+struct cpu_info {
+	struct schedstate_percpu ci_schedstate; /* scheduler state */
+#if defined(DIAGNOSTIC) || defined(LOCKDEBUG)
+	u_long ci_spin_locks;		/* # of spin locks held */
+	u_long ci_simple_locks;		/* # of simple locks held */
+#endif
+};
+
+#ifdef _KERNEL
+extern struct cpu_info cpu_info_store;
+
+#define	curcpu()			(&cpu_info_store)
+#endif
 
 /*
  * definitions of cpu-dependent requirements
@@ -90,7 +109,7 @@
  * or after the current trap/syscall if in system mode.
  */
 int	want_resched;		/* resched() was called */
-#define	need_resched()		(want_resched = 1, setsoftast())
+#define	need_resched(ci)	(want_resched = 1, setsoftast())
 
 /*
  * Give a profiling tick to the current process when the user profiling
@@ -125,6 +144,15 @@ void	delay __P((int));
 #define SH3_P4SEG_BASE	0xe0000000
 #define SH3_P4SEG_END	0xffffffff
 
+#define SH3_PHYS_MASK	0x1fffffff
+#define SH3_P1234SEG_SIZE	0x20000000
+
+#define SH3_P1SEG_TO_PHYS(x)	((unsigned)(x) & SH3_PHYS_MASK)
+#define SH3_P2SEG_TO_PHYS(x)	((unsigned)(x) & SH3_PHYS_MASK)
+#define SH3_PHYS_TO_P1SEG(x)	((unsigned)(x) | SH3_P1SEG_BASE)
+#define SH3_PHYS_TO_P2SEG(x)	((unsigned)(x) | SH3_P2SEG_BASE)
+#define SH3_P1SEG_TO_P2SEG(x)	((unsigned)(x) | SH3_P1234SEG_SIZE)
+
 /*
  * pull in #defines for kinds of processors
  */
@@ -134,13 +162,14 @@ void	delay __P((int));
 #ifdef _KERNEL
 extern int cpu;
 extern int cpu_class;
-extern int cpu_feature;
-extern int cpuid_level;
 extern struct cpu_nocpuid_nameclass sh3_nocpuid_cpus[];
 extern struct cpu_cpuid_nameclass sh3_cpuid_cpus[];
 
 /* autoconf.c */
 void	configure __P((void));
+
+/* sh3_machdep.c */
+void sh3_startup __P((void));
 
 /* machdep.c */
 void	delay __P((int));
@@ -179,10 +208,6 @@ int kvtop __P((caddr_t));
 int	math_emulate __P((struct trapframe *));
 #endif
 
-
-/* trap.c */
-void	child_return __P((struct proc *, int, int, int, struct trapframe));
-
 #endif /* _KERNEL */
 
 /*
@@ -206,8 +231,5 @@ void	child_return __P((struct proc *, int, int, int, struct trapframe));
 	{ "debug_mode", CTLTYPE_INT }, \
 	{ "load_and_reset", CTLTYPE_INT }, \
 }
-
-#include <machine/sh3.h>
-
 
 #endif /* !_SH3_CPU_H_ */

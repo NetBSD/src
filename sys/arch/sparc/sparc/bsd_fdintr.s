@@ -1,4 +1,4 @@
-/*	$NetBSD: bsd_fdintr.s,v 1.16 1999/03/24 05:51:11 mrg Exp $ */
+/*	$NetBSD: bsd_fdintr.s,v 1.16.8.1 2000/11/20 20:25:42 bouyer Exp $ */
 
 /*
  * Copyright (c) 1995 Paul Kranenburg
@@ -48,9 +48,9 @@
 	or	%l6, IE_L4, %l6;			\
 	stb	%l6, [%l5 + %lo(INTRREG_VA)]
 
-! raise(0,PIL_AUSOFT)	! NOTE: CPU#0 and PIL_AUSOFT=4
+! raise(0,PIL_FDSOFT)	! NOTE: CPU#0 and PIL_FDSOFT=4
 #define FD_SET_SWINTR_4M				\
-	sethi	%hi(1 << (16 + 4)), %l5;		\
+	sethi	%hi(PINTR_SINTRLEV(PIL_FDSOFT)), %l5;	\
 	set	ICR_PI_SET, %l6;			\
 	st	%l5, [%l6]
 
@@ -182,18 +182,27 @@ _ENTRY(_C_LABEL(fdchwintr))
 	st	%l6, [R_fdc + FDC_EVCNT]
 
 	! load chips register addresses
+	! NOTE: we ignore the bus tag here and assume the bus handle
+	!	is the virtual address of the chip's registers.
+	ld	[R_fdc + FDC_REG_HANDLE], %l7	! get chip registers bus handle
 	ld	[R_fdc + FDC_REG_MSR], R_msr	! get chip MSR reg addr
+	add	R_msr, %l7, R_msr
 	ld	[R_fdc + FDC_REG_FIFO], R_fifo	! get chip FIFO reg addr
+	add	R_fifo, %l7, R_fifo
 	!!ld	[R_fdc + FDC_REG_DOR], R_dor	! get chip DOR reg addr
+	!!add	R_dor, %l7, R_dor
 
 	! find out what we are supposed to do
-	ld	[R_fdc + FDC_ISTATE], %l7	! examine flags
-	cmp	%l7, ISTATE_SENSEI
+	ld	[R_fdc + FDC_ITASK], %l7	! get task from fdc
+	cmp	%l7, FDC_ITASK_SENSEI
 	be	sensei
-	 nop
-	cmp	%l7, ISTATE_DMA
-	bne	spurious
-	 nop
+	 !nop
+	cmp	%l7, FDC_ITASK_RESULT
+	be	resultphase
+	 !nop
+	cmp	%l7, FDC_ITASK_DMA
+	bne,a	ssi				! a spurious interrupt
+	 mov	FDC_ISTATUS_SPURIOUS, %l7	! set status and post sw intr
 
 	! pseudo DMA
 	ld	[R_fdc + FDC_TC], R_tc		! residual count
@@ -243,16 +252,13 @@ nextc:
 	FD_DEASSERT_TC
 	b,a	resultphase1
 
-spurious:
-	mov	ISTATE_SPURIOUS, %l7
-	st	%l7, [R_fdc + FDC_ISTATE]
-	b,a	ssi
 
 sensei:
 	ldub	[R_msr], %l7
 	set	POLL_TIMO, %l6
 1:	deccc	%l6				! timeout?
-	be	ssi
+	be,a	ssi				! if so, set status
+	 mov	FDC_ISTATUS_ERROR, %l7		! and post sw interrupt
 	and	%l7, (NE7_RQM | NE7_DIO | NE7_CB), %l7
 	cmp	%l7, NE7_RQM
 	bne,a	1b				! loop till chip ready
@@ -271,7 +277,8 @@ resultphase1:
 	ldub	[R_msr], %l7
 	set	POLL_TIMO, %l6
 1:	deccc	%l6				! timeout?
-	be	ssi
+	be,a	ssi				! if so, set status
+	 mov	FDC_ISTATUS_ERROR, %l7		! and post sw interrupt
 	and	%l7, (NE7_RQM | NE7_DIO | NE7_CB), %l7
 	cmp	%l7, NE7_RQM
 	be	3f				! done
@@ -291,11 +298,12 @@ resultphase1:
 3:
 	! got status, update sc_nstat and mark istate DONE
 	st	R_stcnt, [R_fdc + FDC_NSTAT]
-	mov	ISTATE_DONE, %l7
-	st	%l7, [R_fdc + FDC_ISTATE]
+	mov	FDC_ISTATUS_DONE, %l7
 
 ssi:
 	! set software interrupt
+	! enter here with status in %l7
+	st	%l7, [R_fdc + FDC_ISTATUS]
 	FD_SET_SWINTR
 
 x:

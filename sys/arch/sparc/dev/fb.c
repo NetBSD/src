@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.42 1999/08/26 20:50:08 thorpej Exp $ */
+/*	$NetBSD: fb.c,v 1.42.2.1 2000/11/20 20:25:32 bouyer Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -56,12 +56,15 @@
 #include <sys/conf.h>
 
 #include <machine/autoconf.h>
-#include <machine/fbio.h>
 #include <machine/kbd.h>
-#include <machine/fbvar.h>
 #include <machine/conf.h>
 #include <machine/eeprom.h>
-#include <sparc/dev/pfourreg.h>
+#include <sparc/dev/cons.h>
+
+#include <dev/sun/fbio.h>
+#include <dev/sun/fbvar.h>
+
+#include "pfour.h"
 
 static struct fbdevice *devfb;
 
@@ -71,6 +74,45 @@ fb_unblank()
 
 	if (devfb)
 		(*devfb->fb_driver->fbd_unblank)(devfb->fb_device);
+}
+
+/*
+ * Helper function for frame buffer devices. Decides whether
+ * the device can be the console output device according to
+ * PROM info. The result from this function may not be conclusive
+ * on machines with old PROMs; in that case, drivers should consult
+ * other sources of configuration information (e.g. EEPROM entries).
+ */
+int
+fb_is_console(node)
+	int node;
+{
+	int fbnode;
+
+	switch (prom_version()) {
+	case PROM_OLDMON:
+		/* `node' is not valid; just check for any fb device */
+		return (prom_stdout() == PROMDEV_SCREEN);
+
+	case PROM_OBP_V0:
+		/*
+		 * Prefer the `fb' property on the root node.
+		 * Fall back on prom_stdout() cookie if not present.
+		 */
+		fbnode = getpropint(findroot(), "fb", 0);
+		if (fbnode == 0)
+			return (prom_stdout() == PROMDEV_SCREEN);
+		else
+			return (node == fbnode);
+
+	case PROM_OBP_V2:
+	case PROM_OBP_V3:
+	case PROM_OPENFIRM:
+		/* Just match the nodes */
+		return (node == prom_stdout_node);
+	}
+
+	return (0);
 }
 
 void
@@ -185,12 +227,13 @@ fbpoll(dev, events, p)
 	return (devfb->fb_driver->fbd_poll)(dev, events, p);
 }
 
-int
+paddr_t
 fbmmap(dev, off, prot)
 	dev_t dev;
-	int off, prot;
+	off_t off;
+	int prot;
 {
-	int (*map)__P((dev_t, int, int)) = devfb->fb_driver->fbd_mmap;
+	paddr_t (*map)__P((dev_t, off_t, int)) = devfb->fb_driver->fbd_mmap;
 
 	if (map == NULL)
 		return (-1);
@@ -226,73 +269,9 @@ fb_setsize_eeprom(fb, depth, def_width, def_height)
 	fb->fb_type.fb_height = def_height;
 
 	if (fb->fb_flags & FB_PFOUR) {
-		volatile u_int32_t pfour;
-
-		/*
-		 * Some pfour framebuffers, e.g. the
-		 * cgsix, don't encode resolution the
-		 * same, so the driver handles that.
-		 * The driver can let us know that it
-		 * needs to do this by not mapping in
-		 * the pfour register by the time this
-		 * routine is called.
-		 */
-		if (fb->fb_pfour == NULL)
-			goto donesize;
-
-		pfour = *fb->fb_pfour;
-
-		/*
-		 * Use the pfour register to determine
-		 * the size.  Note that the cgsix and
-		 * cgeight don't use this size encoding.
-		 * In this case, we have to settle
-		 * for the defaults we were provided
-		 * with.
-		 */
-		if ((PFOUR_ID(pfour) == PFOUR_ID_COLOR24) ||
-		    (PFOUR_ID(pfour) == PFOUR_ID_FASTCOLOR))
-			goto donesize;
-
-		switch (PFOUR_SIZE(pfour)) {
-		case PFOUR_SIZE_1152X900:
-			fb->fb_type.fb_width = 1152;
-			fb->fb_type.fb_height = 900;
-			break;
-
-		case PFOUR_SIZE_1024X1024:
-			fb->fb_type.fb_width = 1024;
-			fb->fb_type.fb_height = 1024;
-			break;
-
-		case PFOUR_SIZE_1280X1024:
-			fb->fb_type.fb_width = 1280;
-			fb->fb_type.fb_height = 1024;
-			break;
-
-		case PFOUR_SIZE_1600X1280:
-			fb->fb_type.fb_width = 1600;
-			fb->fb_type.fb_height = 1280;
-			break;
-
-		case PFOUR_SIZE_1440X1440:
-			fb->fb_type.fb_width = 1440;
-			fb->fb_type.fb_height = 1440;
-			break;
-
-		case PFOUR_SIZE_640X480:
-			fb->fb_type.fb_width = 640;
-			fb->fb_type.fb_height = 480;
-			break;
-
-		default:
-			/*
-			 * XXX: Do nothing, I guess.
-			 * Should we print a warning about
-			 * an unknown value? --thorpej
-			 */
-			break;
-		}
+#if NPFOUR > 0
+		fb_setsize_pfour(fb);
+#endif
 	} else if (eep != NULL) {
 		switch (eep->eeScreenSize) {
 		case EE_SCR_1152X900:
@@ -325,7 +304,6 @@ fb_setsize_eeprom(fb, depth, def_width, def_height)
 		}
 	}
 
-donesize:
 	fb->fb_linebytes = (fb->fb_type.fb_width * depth) / 8;
 #endif /* SUN4 */
 }
@@ -401,22 +379,48 @@ fbrcons_init(fb)
 		    a2int(getpropstring(optionsnode, "screen-#rows"), 34);
 	}
 #endif /* !RASTERCONS_FULLSCREEN */
-	/* 
+	/*
 	 * - force monochrome output
 	 * - eraserows() hack to clear the *entire* display
 	 * - cursor is currently enabled
 	 * - center output
 	 */
-	ri->ri_flg = RI_FORCEMONO | RI_FULLCLEAR | RI_CURSOR | RI_CENTER;
+	ri->ri_flg = RI_FULLCLEAR | RI_CURSOR | RI_CENTER;
 
 	/* Get operations set and connect to rcons */
 	if (rasops_init(ri, maxrow, maxcol))
 		panic("fbrcons_init: rasops_init failed!");
-		
-	/* PROM sets up colormap so black is index 0x00 and white is 0xff */
+
 	if (ri->ri_depth == 8) {
-		ri->ri_devcmap[0] = 0x00000000;
-		ri->ri_devcmap[1] = 0xffffffff;
+		int i;
+		for (i = 0; i < 16; i++) {
+
+			/*
+			 * Cmap entries are repeated four times in the
+			 * 32 bit wide `devcmap' entries for optimization
+			 * purposes; see rasops(9)
+			 */
+#define I_TO_DEVCMAP(i)	((i) | ((i)<<8) | ((i)<<16) | ((i)<<24))
+
+			/*
+			 * Use existing colormap entries for black and white
+			 */
+			if ((i & 7) == WSCOL_BLACK) {
+				ri->ri_devcmap[i] = I_TO_DEVCMAP(255);
+				continue;
+			}
+
+			if ((i & 7) == WSCOL_WHITE) {
+				ri->ri_devcmap[i] = I_TO_DEVCMAP(0);
+				continue;
+			}
+			/*
+			 * Other entries refer to ANSI map, which for now
+			 * is setup in bt_subr.c
+			 */
+			ri->ri_devcmap[i] = I_TO_DEVCMAP(i + 1);
+#undef I_TO_DEVCMAP
+		}
 	}
 
 	rc->rc_row = rc->rc_col = 0;
@@ -457,68 +461,3 @@ fbrcons_cols()
 	return (devfb ? devfb->fb_rcons.rc_maxcol : 0);
 }
 #endif /* RASTERCONSOLE */
-
-/*
- * Support routines for pfour framebuffers.
- */
-
-/*
- * Probe for a pfour framebuffer.  Return values:
- *
- *	PFOUR_NOTPFOUR		framebuffer is not a pfour
- *				framebuffer
- *
- *	otherwise returns pfour ID
- */
-int
-fb_pfour_id(va)
-	volatile void *va;
-{
-#if defined(SUN4)
-	volatile u_int32_t val, save, *pfour = va;
-
-	/* Read the pfour register. */
-	save = *pfour;
-
-	/*
-	 * Try to modify the type code.  If it changes, put the
-	 * original value back, and notify the caller that it's
-	 * not a pfour framebuffer.
-	 */
-	val = save & ~PFOUR_REG_RESET;
-	*pfour = (val ^ PFOUR_FBTYPE_MASK);
-	if ((*pfour ^ val) & PFOUR_FBTYPE_MASK) {
-		*pfour = save;
-		return (PFOUR_NOTPFOUR);
-	}
-
-	return (PFOUR_ID(val));
-#else
-	return (PFOUR_NOTPFOUR);
-#endif /* SUN4 */
-}
-
-/*
- * Return the status of the video enable.
- */
-int
-fb_pfour_get_video(fb)
-	struct fbdevice *fb;
-{
-
-	return ((*fb->fb_pfour & PFOUR_REG_VIDEO) != 0);
-}
-
-/*
- * Enable or disable the framebuffer.
- */
-void
-fb_pfour_set_video(fb, enable)
-	struct fbdevice *fb;
-	int enable;
-{
-	volatile u_int32_t pfour;
-
-	pfour = *fb->fb_pfour & ~(PFOUR_REG_INTCLR|PFOUR_REG_VIDEO);
-	*fb->fb_pfour = pfour | (enable ? PFOUR_REG_VIDEO : 0);
-}

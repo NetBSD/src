@@ -1,4 +1,4 @@
-#	$NetBSD: files.shbus,v 1.4 1999/09/17 01:21:41 msaitoh Exp $
+#	$NetBSD: files.shbus,v 1.4.2.1 2000/11/20 20:07:35 bouyer Exp $
 #
 # Config file and device description for machine-independent SHBus code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -14,6 +14,12 @@ device	shb {[port = -1], [size = 0],
 attach	shb at mainbus
 
 file arch/evbsh3/evbsh3/shb.c		shb needs-flag
+
+# Misc devices
+
+device	wdog
+attach	wdog at shb
+file	arch/sh3/dev/wdog.c		wdog	needs-flag
 
 #
 # Serial drivers

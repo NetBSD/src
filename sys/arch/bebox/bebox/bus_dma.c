@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.24 1999/07/08 18:05:27 thorpej Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.24.2.1 2000/11/20 20:06:04 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -58,10 +58,6 @@
 #include <sys/device.h>
 #include <sys/extent.h>
 #include <sys/syscallargs.h>
-
-#include <vm/vm.h>
-#include <vm/vm_kern.h>
-#include <vm/vm_page.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -420,8 +416,8 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 			if (size == 0)
 				panic("_bus_dmamem_map: size botch");
 			pmap_enter(pmap_kernel(), va, addr,
-			    VM_PROT_READ | VM_PROT_WRITE, TRUE,
-			    VM_PROT_READ | VM_PROT_WRITE);
+			    VM_PROT_READ | VM_PROT_WRITE,
+			    VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED);
 #if 0
 			if (flags & BUS_DMA_COHERENT)
 				pmap_changebit(addr, PG_N, ~0);
@@ -461,11 +457,13 @@ _bus_dmamem_unmap(t, kva, size)
  * Common functin for mmap(2)'ing DMA-safe memory.  May be called by
  * bus-specific DMA mmap(2)'ing functions.
  */
-int
+paddr_t
 _bus_dmamem_mmap(t, segs, nsegs, off, prot, flags)
 	bus_dma_tag_t t;
 	bus_dma_segment_t *segs;
-	int nsegs, off, prot, flags;
+	int nsegs;
+	off_t off;
+	int prot, flags;
 {
 	int i;
 
@@ -531,7 +529,7 @@ _bus_dmamap_load_buffer(t, map, buf, buflen, p, flags, lastaddrp, segp, first)
 		/*
 		 * Get the physical address for this segment.
 		 */
-		(void) pmap_extract(pmap, vaddr, &curaddr);
+		(void) pmap_extract(pmap, vaddr, (paddr_t *)&curaddr);
 
 		/*
 		 * If we're beyond the bounce threshold, notify

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.8 1999/10/05 03:46:30 eeh Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.8.2.1 2000/11/20 20:26:58 bouyer Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -35,6 +35,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include "opt_ddb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,7 +83,6 @@ svr4_setregs(p, epp, stack)
 
 #ifdef DEBUG
 #include <sparc64/sparc64/sigdebug.h>
-void Debugger __P((void));
 #endif
 
 #ifdef DEBUG_SVR4
@@ -126,7 +127,7 @@ svr4_getmcontext(p, mc, flags)
 	struct svr4_mcontext *mc;
 	u_long *flags;
 {
-	struct trapframe *tf = (struct trapframe *)p->p_md.md_tf;
+	struct trapframe64 *tf = (struct trapframe64 *)p->p_md.md_tf;
 	svr4_greg_t *r = mc->greg;
 #ifdef FPU_CONTEXT
 	svr4_fregset_t *f = &mc->freg;
@@ -137,7 +138,9 @@ svr4_getmcontext(p, mc, flags)
 	if (rwindow_save(p)) {
 #ifdef DEBUG
 		printf("svr4_getcontext: rwindow_save(%p) failed, sending SIGILL\n", p);
+#ifdef DDB
 		Debugger();
+#endif
 #endif
 		sigexit(p, SIGILL);
 	}
@@ -199,7 +202,7 @@ svr4_getmcontext(p, mc, flags)
 #ifdef DEBUG_SVR4
 	svr4_printmcontext("getmcontext", mc);
 #endif
-	return (void *)tf->tf_out[6];
+	return (void *)(u_long)tf->tf_out[6];
 }
 
 
@@ -218,11 +221,11 @@ svr4_setmcontext(p, mc, flags)
 	struct svr4_mcontext *mc;
 	u_long flags;
 {
-	register struct trapframe *tf;
+	register struct trapframe64 *tf;
 	svr4_greg_t *r = mc->greg;
 #ifdef FPU_CONTEXT
 	svr4_fregset_t *f = &mc->freg;
-	struct fpstate *fps = p->p_md.md_fpstate;
+	struct fpstate64 *fps = p->p_md.md_fpstate;
 #endif
 
 #ifdef DEBUG_SVR4
@@ -233,7 +236,9 @@ svr4_setmcontext(p, mc, flags)
 	if (rwindow_save(p)) {
 #ifdef DEBUG
 		printf("svr4_setcontext: rwindow_save(%p) failed, sending SIGILL\n", p);
+#ifdef DDB
 		Debugger();
+#endif
 #endif
 		sigexit(p, SIGILL);
 	}
@@ -246,7 +251,7 @@ svr4_setmcontext(p, mc, flags)
 
 	if (flags & SVR4_UC_CPU) {
 		/* Restore register context. */
-		tf = (struct trapframe *)p->p_md.md_tf;
+		tf = (struct trapframe64 *)p->p_md.md_tf;
 
 		/*
 		 * Only the icc bits in the psr are used, so it need not be
@@ -456,13 +461,13 @@ svr4_sendsig(catcher, sig, mask, code)
 	u_long code;
 {
 	register struct proc *p = curproc;
-	register struct trapframe *tf;
+	register struct trapframe64 *tf;
 	struct svr4_sigframe *fp, frame;
 	struct sigacts *psp = p->p_sigacts;
 	int onstack;
 	vaddr_t oldsp, newsp, addr;
 
-	tf = (struct trapframe *)p->p_md.md_tf;
+	tf = (struct trapframe64 *)p->p_md.md_tf;
 	oldsp = tf->tf_out[6];
 
 	/* Do we need to jump onto the signal stack? */
@@ -485,14 +490,16 @@ svr4_sendsig(catcher, sig, mask, code)
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid) {
 		printf("svr4_sendsig: %s[%d] sig %d newusp %p scp %p oldsp %p\n",
 		    p->p_comm, p->p_pid, sig, fp, &fp->sf_uc, oldsp);
+#ifdef DDB
 		if (sigdebug & SDB_DDB) Debugger();
+#endif
 	}
 #endif
 	/*
 	 * Build the argument list for the signal handler.
 	 */
 	svr4_getcontext(p, &frame.sf_uc, mask);
-	svr4_getsiginfo(&frame.sf_si, sig, code, (caddr_t) tf->tf_pc);
+	svr4_getsiginfo(&frame.sf_si, sig, code, (caddr_t)(u_long)tf->tf_pc);
 
 	/* Build stack frame for signal trampoline. */
 	frame.sf_signum = frame.sf_si.si_signo;
@@ -526,7 +533,9 @@ svr4_sendsig(catcher, sig, mask, code)
 		if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
 			printf("svr4_sendsig: window save or copyout error\n");
 		printf("svr4_sendsig: stack was trashed trying to send sig %d, sending SIGILL\n", sig);
+#ifdef DDB
 		Debugger();
+#endif
 #endif
 		sigexit(p, SIGILL);
 		/* NOTREACHED */
@@ -554,7 +563,9 @@ svr4_sendsig(catcher, sig, mask, code)
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid) {
 		printf("svr4_sendsig: about to return to catcher %p thru %p\n", 
 		       catcher, addr);
+#ifdef DDB
 		if (sigdebug & SDB_DDB) Debugger();
+#endif
 	}
 #endif
 }
@@ -567,7 +578,7 @@ svr4_trap(type, p)
 	struct proc *p;
 {
 	int n;
-	struct trapframe *tf = p->p_md.md_tf;
+	struct trapframe64 *tf = p->p_md.md_tf;
 	extern struct emul emul_svr4;
 
 	if (p->p_emul != &emul_svr4)
@@ -592,23 +603,54 @@ svr4_trap(type, p)
 
 	case T_SVR4_GETHRTIME:
 		/*
-		 * this list like gethrtime(3). To implement this
-		 * correctly we need a timer that does not get affected
-		 * adjtime(), or settimeofday(). For now we use
-		 * microtime, and convert to nanoseconds...
-		 */
-		/*FALLTHROUGH*/
-	case T_SVR4_GETHRVTIME:
-		/*
-		 * This is like gethrvtime(3). Since we don't have lwp
-		 * we massage microtime() output
+		 * This is like gethrtime(3), returning the time expressed
+		 * in nanoseconds since an arbitrary time in the past and
+		 * guaranteed to be monotonically increasing, which we
+		 * obtain from mono_time(9).
 		 */
 		{
-			struct timeval  tv;
+			struct timeval tv;
+			quad_t tm;
+			int s;
+
+			s = splclock();
+			tv = mono_time;
+			splx(s);
+
+			tm = (u_quad_t) tv.tv_sec * 1000000000 +
+			    (u_quad_t) tv.tv_usec * 1000;
+			tf->tf_out[0] = ((u_int32_t *) &tm)[0];
+			tf->tf_out[1] = ((u_int32_t *) &tm)[1];
+		}
+		break;
+
+	case T_SVR4_GETHRVTIME:
+		/*
+		 * This is like gethrvtime(3). returning the LWP's (now:
+		 * proc's) virtual time expressed in nanoseconds. It is
+		 * supposedly guaranteed to be monotonically increasing, but
+		 * for now using the process's real time augmented with its
+		 * current runtime is the best we can do.
+		 */
+		{
+			struct schedstate_percpu *spc =
+			    &curcpu()->ci_schedstate;
+			struct timeval tv;
+			quad_t tm;
 
 			microtime(&tv);
-			tf->tf_out[0] = tv.tv_sec;
-			tf->tf_out[1] = tv.tv_usec * 1000;
+
+			tm =
+			    (u_quad_t) (p->p_rtime.tv_sec +
+			                tv.tv_sec -
+			                    spc->spc_runtime.tv_sec)
+			                * 1000000 +
+			    (u_quad_t) (p->p_rtime.tv_usec +
+			                tv.tv_usec -
+			                    spc->spc_runtime.tv_usec)
+			                * 1000;
+			tf->tf_out[0] = ((u_int32_t *) &tm)[0];
+			tf->tf_out[1] = ((u_int32_t *) &tm)[1];
 		}
 		break;
 

@@ -1,8 +1,10 @@
-/*	$NetBSD: pmvar.h,v 1.5 1999/07/25 22:50:29 ad Exp $	*/
+/*	$NetBSD: pmvar.h,v 1.5.2.1 2000/11/20 20:20:19 bouyer Exp $	*/
 
 /*
- * Initialize a Decstation 3100/2100 baseboard framebuffer,
+ * Initialize a DECstation 3100/2100 baseboard framebuffer,
  * so it can be used as a bitmapped glass-tty console device.
  */
-int pminit __P((struct fbinfo *fi, caddr_t base, int unit, int silent));
-int pmattach __P((struct fbinfo *fi, int unit, int silent));
+int pm_cnattach __P((void));
+
+extern	struct pmax_fbtty pmfb;		/* used in dev/pm_ds.c */
+extern	struct fbuaccess pmu;		/* used in dev/pm_ds.c */

@@ -1,16 +1,17 @@
-#	$NetBSD: Makefile,v 1.8 1999/08/11 02:00:09 matt Exp $
+#	$NetBSD: Makefile,v 1.8.2.1 2000/11/20 20:25:37 bouyer Exp $
 
 KDIR=	/sys/arch/sparc/include
 INCSDIR= /usr/include/sparc
 
 INCS=	ansi.h aout_machdep.h apmvar.h asm.h autoconf.h bswap.h \
-	bsd_openprom.h bootinfo.h bus.h cdefs.h cgtworeg.h conf.h cpu.h \
-	ctlreg.h disklabel.h eeprom.h elf_machdep.h endian.h fbio.h float.h \
-	frame.h fsr.h idprom.h ieee.h ieeefp.h instr.h kbd.h kbio.h kcore.h \
-	loadfile_machdep.h limits.h oldmon.h openpromio.h param.h pcb.h \
-	pmap.h proc.h \
-	profile.h psl.h pte.h ptrace.h reg.h reloc.h remote-sl.h setjmp.h \
-	signal.h stdarg.h svr4_machdep.h trap.h types.h varargs.h vmparam.h \
-	vuid_event.h
+	bootinfo.h cdefs.h cgtworeg.h conf.h cpu.h disklabel.h eeprom.h \
+	elf_machdep.h endian.h endian_machdep.h float.h frame.h \
+	fsr.h idprom.h ieee.h ieeefp.h int_types.h kbd.h kbio.h \
+	kcore.h limits.h lock.h math.h oldmon.h openpromio.h param.h \
+	pcb.h pmap.h proc.h profile.h psl.h pte.h ptrace.h reg.h reloc.h \
+	setjmp.h signal.h stdarg.h tctrl.h trap.h \
+	types.h varargs.h vmparam.h vuid_event.h
+
+SYMLINKS= ../dev/sun/fbio.h ${INCSDIR}/fbio.h
 
 .include <bsd.kinc.mk>

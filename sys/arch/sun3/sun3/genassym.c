@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.49 1999/07/01 20:46:42 thorpej Exp $	*/
+/*	$NetBSD: genassym.c,v 1.49.2.1 2000/11/20 20:28:00 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -68,7 +68,7 @@
 #include <sys/proc.h>
 #include <sys/syscall.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #ifdef COMPAT_SVR4
 #include <compat/svr4/svr4_syscall.h>
@@ -129,6 +129,7 @@ struct nv assyms[] = {
 	def1(PSL_HIGHIPL),
 	def1(PSL_USER),
 	def1(PSL_S),
+	def("PSL_TS", PSL_T | PSL_S),
 	def1(FC_CONTROL),
 	def1(FC_SUPERD),
 	def1(FC_USERD),
@@ -180,6 +181,7 @@ struct nv assyms[] = {
 	def("P_MDFLAG", offsetof(struct proc, p_md.md_flags)),
 	def("P_MDREGS", offsetof(struct proc, p_md.md_regs)),
 	def1(SRUN),
+	def1(SONPROC),
 
 	/* XXX: HP-UX trace bit? */
 

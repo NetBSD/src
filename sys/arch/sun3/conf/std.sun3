@@ -1,4 +1,4 @@
-# $NetBSD: std.sun3,v 1.26 1999/09/12 01:17:24 chs Exp $
+# $NetBSD: std.sun3,v 1.26.2.1 2000/11/20 20:27:50 bouyer Exp $
 
 # Standard information for Sun3 machines.
 machine	sun3 m68k

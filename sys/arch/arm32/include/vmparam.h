@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.15 1999/04/26 22:46:45 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.15.2.1 2000/11/20 20:04:01 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -99,7 +99,34 @@
 #define	KERNEL_TEXT_BASE	KERNEL_BASE
 #define	ALT_PAGE_TBLS_BASE	0xf0c00000
 #define	KERNEL_VM_BASE		0xf1000000
+/*
+ * The Kernel VM Size varies depending on the machine depending on how
+ * much space is needed (and where) for other mappings.
+ * In some cases the chosen value may not be the maximum in order that
+ * we don't waste memory with kernel pages tables as we can't currently
+ * grow the kernel page tables after booting.
+ * You only need to increase these values if you find that the number of
+ * buffers is being limited due to lack of VA space.
+ */
+#if defined(FOOTBRIDGE)
+/*
+ * The range 0xf1000000 - 0xfcffffff is available for kernel VM space
+ * Footbridge registers and I/O mappings occupy 0xfd000000 - 0xffffffff
+ */
+#define KERNEL_VM_SIZE		0x07000000
+#elif defined(SHARK)
+/*
+ * The range 0xf1000000 - 0xf6ffffff is available for kernel VM space
+ * OFW sites at 0xf7000000
+ */
+#define	KERNEL_VM_SIZE		0x04000000
+#else
+/*
+ * The range 0xf1000000 - 0xf3ffffff is available for kernel VM space
+ * Fixed mappings exist from 0xf4000000 - 0xffffffff
+ */
 #define	KERNEL_VM_SIZE		0x03000000
+#endif
 #define	PROCESS_PAGE_TBLS_BASE	PAGE_TABLE_SPACE_START
 
 /*
@@ -128,8 +155,7 @@
 
 /* virtual sizes (bytes) for various kernel submaps */
 
-#define VM_KMEM_SIZE		(NKMEMCLUSTERS*CLBYTES)
-#define VM_PHYS_SIZE		(USRIOSIZE*CLBYTES)
+#define VM_PHYS_SIZE		(USRIOSIZE*NBPG)
 
 /*
  * max number of non-contig chunks of physical RAM you can have

@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.39 1999/05/03 16:14:02 christos Exp $ */
+/*	$NetBSD: param.h,v 1.39.2.1 2000/11/20 20:25:40 bouyer Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -89,6 +89,9 @@ extern int nbpg, pgofset, pgshift;
 #endif
 
 #define	KERNBASE	0xf0000000	/* start of kernel virtual space */
+#define KERNEND		0xfe000000	/* end of kernel virtual space */
+/* Arbitrarily only use 1/4 of the kernel address space for buffers. */
+#define VM_MAX_KERNEL_BUF	((KERNEND - KERNBASE)/4)
 #define PROM_LOADADDR	0x00004000	/* where the prom loads us */
 #define	KERNTEXTOFF	(KERNBASE+PROM_LOADADDR)/* start of kernel text */
 
@@ -97,31 +100,26 @@ extern int nbpg, pgofset, pgshift;
 #define	BLKDEV_IOSIZE	2048
 #define	MAXPHYS		(64 * 1024)
 
-#define	CLSIZE		1
-#define	CLSIZELOG2	0
-
-/* NOTE: SSIZE must be multiple of CLSIZE */
 #define	SSIZE		1		/* initial stack size in pages */
 #define	USPACE		8192
 
 /*
  * Constants related to network buffer management.
- * MCLBYTES must be no larger than CLBYTES (the software page size), and,
+ * MCLBYTES must be no larger than NBPG (the software page size), and,
  * on machines that exchange pages of input or output buffers with mbuf
  * clusters (MAPPED_MBUFS), MCLBYTES must also be an integral multiple
  * of the hardware page size.
  */
-#define	MSIZE		128		/* size of an mbuf */
+#define	MSIZE		256		/* size of an mbuf */
 #define	MCLBYTES	2048		/* enough for whole Ethernet packet */
 #define	MCLSHIFT	11		/* log2(MCLBYTES) */
 #define	MCLOFSET	(MCLBYTES - 1)
-
-#ifndef NMBCLUSTERS
 
 #if defined(_KERNEL) && !defined(_LKM)
 #include "opt_gateway.h"
 #endif /* _KERNEL && ! _LKM */
 
+#ifndef NMBCLUSTERS
 #ifdef GATEWAY
 #define	NMBCLUSTERS	512		/* map size, max cluster allocation */
 #else
@@ -132,11 +130,11 @@ extern int nbpg, pgofset, pgshift;
 #define MSGBUFSIZE	4096
 
 /*
- * Size of kernel malloc arena in CLBYTES-sized logical pages.
+ * Minimum and maximum sizes of the kernel malloc arena in PAGE_SIZE-sized
+ * logical pages.
  */
-#ifndef	NKMEMCLUSTERS
-#define	NKMEMCLUSTERS	(6 * 1024 * 1024 / CLBYTES)
-#endif
+#define	NKMEMPAGES_MIN_DEFAULT	((6 * 1024 * 1024) >> PAGE_SHIFT)
+#define	NKMEMPAGES_MAX_DEFAULT	((6 * 1024 * 1024) >> PAGE_SHIFT)
 
 /* pages ("clicks") to disk blocks */
 #define	ctod(x)		((x) << (PGSHIFT - DEV_BSHIFT))
@@ -200,6 +198,8 @@ extern int cputyp;
  * involving variables, the kernel will perform slighly worse due to the
  * extra memory references they'll generate.
  */
+#define CPU_ISSUN4U	(0)
+#define CPU_ISSUN4MOR4U	(CPU_ISSUN4M)
 #if   defined(SUN4M) && defined(SUN4C) && defined(SUN4)
 #	define CPU_ISSUN4M	(cputyp == CPU_SUN4M)
 #	define CPU_ISSUN4C	(cputyp == CPU_SUN4C)

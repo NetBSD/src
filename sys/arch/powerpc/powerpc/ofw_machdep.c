@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_machdep.c,v 1.4 1998/02/24 05:46:07 mycroft Exp $	*/
+/*	$NetBSD: ofw_machdep.c,v 1.4.14.1 2000/11/20 20:31:16 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -60,21 +60,49 @@ void
 mem_regions(memp, availp)
 	struct mem_region **memp, **availp;
 {
-	int phandle, i, j, cnt;
-	
+	int phandle, i, cnt;
+
 	/*
 	 * Get memory.
 	 */
-	if ((phandle = OF_finddevice("/memory")) == -1
-	    || OF_getprop(phandle, "reg",
-			  OFmem, sizeof OFmem[0] * OFMEM_REGIONS)
-	       <= 0
-	    || OF_getprop(phandle, "available",
-			  OFavail, sizeof OFavail[0] * OFMEM_REGIONS)
-	       <= 0)
-		panic("no memory?");
+	if ((phandle = OF_finddevice("/memory")) == -1)
+		goto error;
+
+	bzero(OFmem, sizeof OFmem);
+	cnt = OF_getprop(phandle, "reg",
+		OFmem, sizeof OFmem[0] * OFMEM_REGIONS);
+	if (cnt <= 0)
+		goto error;
+
+	/* Remove zero sized entry in the returned data. */
+	cnt /= sizeof OFmem[0];
+	for (i = 0; i < cnt; i++)
+		if (OFmem[i].size == 0) {
+			bcopy(&OFmem[i + 1], &OFmem[i],
+			      (cnt - i) * sizeof OFmem[0]);
+			cnt--;
+		}
+
+	bzero(OFavail, sizeof OFavail);
+	cnt = OF_getprop(phandle, "available",
+		OFavail, sizeof OFavail[0] * OFMEM_REGIONS);
+	if (cnt <= 0)
+		goto error;
+
+	cnt /= sizeof OFavail[0];
+	for (i = 0; i < cnt; i++)
+		if (OFavail[i].size == 0) {
+			bcopy(&OFavail[i + 1], &OFavail[i],
+			      (cnt - i) * sizeof OFavail[0]);
+			cnt--;
+		}
+
 	*memp = OFmem;
 	*availp = OFavail;
+	return;
+
+error:
+	panic("no memory?");
 }
 
 void
@@ -90,6 +118,7 @@ ppc_boot(str)
 	OF_boot(str);
 }
 
+#ifdef __BROKEN_DK_ESTABLISH
 /*
  * Establish a list of all available disks to allow specifying the
  * root/swap/dump dev.
@@ -295,3 +324,4 @@ dk_match(name)
 	}
 	return ENODEV;
 }
+#endif /* __BROKEN_DK_ESTABLISH */

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.4 1999/09/25 03:09:01 takemura Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.4.2.1 2000/11/20 20:46:26 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.4 1999/09/25 03:09:01 takemura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.4.2.1 2000/11/20 20:46:26 bouyer Exp $");
 
 /*
  * Setup the system to run on the current machine.
@@ -68,10 +68,15 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.4 1999/09/25 03:09:01 takemura Exp $"
 #include <machine/autoconf.h>
 #include <machine/sysconf.h>
 
+#include <machine/config_hook.h>
+
 int	cpuspeed = 7;	/* approx # instr per usec. */
 
+struct device *booted_device;
+int booted_partition;
+
 static char booted_device_name[16];
-static void get_device __P((char *name, struct device **devpp, int *partp));
+static void get_device __P((char *name));
 
 /*
  * Determine mass storage and memory configuration for a machine.
@@ -85,6 +90,9 @@ cpu_configure()
 {
 	/* Kick off autoconfiguration. */
 	(void)splhigh();
+
+	config_hook_init();
+
 	if (config_rootfound("mainbus", "mainbus") == NULL)
 		panic("no mainbus found");
 
@@ -98,10 +106,7 @@ cpu_configure()
 void
 cpu_rootconf()
 {
-	struct device *booted_device;
-	int booted_partition;
-
-	get_device(booted_device_name, &booted_device, &booted_partition);
+	get_device(booted_device_name);
 
 	printf("boot device: %s\n",
 	    booted_device ? booted_device->dv_xname : "<unknown>");
@@ -117,17 +122,12 @@ makebootdev(cp)
 }
 
 static void
-get_device(name, devpp, partp)
+get_device(name)
 	char *name;
-	struct device **devpp;
-	int *partp;
 {
 	int loop, unit, part;
 	char buf[32], *cp;
 	struct device *dv;
-
-	*devpp = NULL;
-	*partp = 0;
 
 	if (strncmp(name, "/dev/", 5) == 0)
 		name += 5;
@@ -152,8 +152,8 @@ get_device(name, devpp, partp)
 			for (dv = alldevs.tqh_first; dv != NULL;
 			    dv = dv->dv_list.tqe_next) {
 				if (strcmp(buf, dv->dv_xname) == 0) {
-					*devpp = dv;
-					*partp = part;
+					booted_device = dv;
+					booted_partition = part;
 					return;
 				}
 			}

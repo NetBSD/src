@@ -1,4 +1,4 @@
-/*	$NetBSD: pcic_shbsubr.c,v 1.2 1999/09/14 10:22:35 tsubai Exp $	*/
+/*	$NetBSD: pcic_shbsubr.c,v 1.2.2.1 2000/11/20 20:24:27 bouyer Exp $	*/
 
 #define	SHPCICSUBRDEBUG
 
@@ -40,7 +40,7 @@
 #include <sys/extent.h>
 #include <sys/malloc.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.27 1999/02/09 17:15:52 tv Exp $	*/
+/*	$NetBSD: param.h,v 1.27.8.1 2000/11/20 20:20:31 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -42,6 +42,9 @@
  *	@(#)param.h	8.1 (Berkeley) 6/10/93
  */
 
+#ifndef _PMAX_PARAM_H_
+#define _PMAX_PARAM_H_
+
 /*
  * Machine-dependent constants (VM, etc) common across MIPS cpus
  */
@@ -58,42 +61,32 @@
 #define	MACHINE		"pmax"
 #define	MID_MACHINE	MID_PMAX
 
-#define	KERNBASE	0x80000000	/* start of kernel virtual */
-#define KERNTEXTOFF	0x80030000	/* start of kernel text for kvm_mkdb */
-#define	BTOPKERNBASE	((u_long)KERNBASE >> PGSHIFT)
-
 #define	DEV_BSIZE	512
 #define	DEV_BSHIFT	9		/* log2(DEV_BSIZE) */
 #define BLKDEV_IOSIZE	2048
 #define	MAXPHYS		(64 * 1024)	/* max raw I/O transfer size */
 
-#define	CLSIZE		1
-#define	CLSIZELOG2	0
-
 /*
  * Constants related to network buffer management.
- * MCLBYTES must be no larger than CLBYTES (the software page size), and,
+ * MCLBYTES must be no larger than NBPG (the software page size), and,
  * on machines that exchange pages of input or output buffers with mbuf
  * clusters (MAPPED_MBUFS), MCLBYTES must also be an integral multiple
  * of the hardware page size.
  */
-#define	MSIZE		128		/* size of an mbuf */
+#define	MSIZE		256		/* size of an mbuf */
 
 #ifndef MCLSHIFT
-
-# define	MCLSHIFT	11	/* convert bytes to m_buf clusters */
-					/* 2K cluster can hold Ether frame */
+# define MCLSHIFT	11		/* convert bytes to m_buf clusters */
 #endif	/* MCLSHIFT */
 
 #define	MCLBYTES	(1 << MCLSHIFT)	/* size of a m_buf cluster */
 #define	MCLOFSET	(MCLBYTES - 1)
 
-#ifndef NMBCLUSTERS
-
 #if defined(_KERNEL) && !defined(_LKM)
 #include "opt_gateway.h"
 #endif /* _KERNEL && ! _LKM */
 
+#ifndef NMBCLUSTERS
 #ifdef GATEWAY
 #define	NMBCLUSTERS	2048		/* map size, max cluster allocation */
 #else
@@ -101,14 +94,17 @@
 #endif
 #endif
 
-#include <machine/intr.h>
-
 #ifdef _KERNEL
 #ifndef _LOCORE
 
-extern void delay __P((int n));
-extern int cpuspeed;
-#define	DELAY(n)	{ register int N = cpuspeed * (n); while (--N > 0); }
+void	delay __P((int n));
+extern	int cpuspeed;
+#define	DELAY(n)	{ int N = cpuspeed * (n); while (--N > 0); }
+
+#include <machine/intr.h>
+
 
 #endif	/* !_LOCORE */
 #endif	/* _KERNEL */
+
+#endif	/* !_PMAX_PARAM_H_ */

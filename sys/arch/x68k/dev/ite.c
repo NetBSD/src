@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.20 1999/06/27 14:14:30 minoura Exp $	*/
+/*	$NetBSD: ite.c,v 1.20.2.1 2000/11/20 20:30:01 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -556,7 +556,7 @@ itestart(tp)
 	/* we have characters remaining. */
 	if (rbp->c_cc) {
 		tp->t_state |= TS_TIMEOUT;
-		timeout(ttrstrt, (caddr_t)tp, 1);
+		callout_reset(&tp->t_rstrt_ch, 1, ttrstrt, tp);
 	}
 	/* wakeup we are below */
 	if (rbp->c_cc <= tp->t_lowat) {
@@ -761,9 +761,8 @@ ite_filter(c)
 	struct key key;
 	int s, i;
 
-	if (!kbd_ite)
+	if (!kbd_ite || !(kbd_tty = ite_tty[kbd_ite->device.dv_unit]))
 		return;
-	kbd_tty = ite_tty[kbd_ite->device.dv_unit];
 
 	/* have to make sure we're at spltty in here */
 	s = spltty ();

@@ -1,4 +1,4 @@
-/*	$NetBSD: uba_sbi.c,v 1.1 1999/06/21 16:23:01 ragge Exp $	   */
+/*	$NetBSD: uba_sbi.c,v 1.1.4.1 2000/11/20 20:33:11 bouyer Exp $	   */
 /*
  * Copyright (c) 1996 Jonathan Stone.
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
@@ -52,8 +52,9 @@
 
 #include <dev/qbus/ubavar.h>
 
-#include <arch/vax/uba/uba_common.h>
+#include <vax/uba/uba_common.h>
 
+#include "locators.h"
 #include "ioconf.h"
 
 /* Some SBI-specific defines */
@@ -86,16 +87,16 @@ char    ubasr_bits[] = UBASR_BITS;
 /*
  * The DW780 are directly connected to the SBI on 11/780 and 8600.
  */
-static	int	dw780_match __P((struct device *, struct cfdata *, void *));
-static	void	dw780_attach __P((struct device *, struct device *, void *));
-static	void	dw780_init __P((struct uba_softc*));
-static	void    dw780_beforescan __P((struct uba_softc *));
-static	void    dw780_afterscan __P((struct uba_softc *));
-static	int     dw780_errchk __P((struct uba_softc *));
-static	void    uba_dw780int __P((int));
-static  void	ubaerror __P((struct uba_softc *, int *, int *));
+static	int	dw780_match(struct device *, struct cfdata *, void *);
+static	void	dw780_attach(struct device *, struct device *, void *);
+static	void	dw780_init(struct uba_softc*);
+static	void    dw780_beforescan(struct uba_softc *);
+static	void    dw780_afterscan(struct uba_softc *);
+static	int     dw780_errchk(struct uba_softc *);
+static	void    uba_dw780int(void *);
+static  void	ubaerror(struct uba_softc *, int *, int *);
 #ifdef notyet
-static	void	dw780_purge __P((struct uba_softc *, int));
+static	void	dw780_purge(struct uba_softc *, int);
 #endif
 
 struct	cfattach uba_sbi_ca = {
@@ -107,33 +108,29 @@ extern	struct vax_bus_space vax_mem_bus_space;
 volatile int svec;
 
 int
-dw780_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+dw780_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct sbi_attach_args *sa = (struct sbi_attach_args *)aux;
 
-	if ((cf->cf_loc[0] != sa->nexnum) && (cf->cf_loc[0] > -1 ))
+	if (cf->cf_loc[SBICF_TR] != sa->sa_nexnum &&
+	    cf->cf_loc[SBICF_TR] != SBICF_TR_DEFAULT)
 		return 0;
 	/*
 	 * The uba type is actually only telling where the uba
 	 * space is in nexus space.
 	 */
-	if ((sa->type & ~3) != NEX_UBA0)
+	if ((sa->sa_type & ~3) != NEX_UBA0)
 		return 0;
 
 	return 1;
 }
 
 void
-dw780_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+dw780_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct uba_vsoftc *sc = (void *)self;
 	struct sbi_attach_args *sa = aux;
-	int ubaddr = sa->type & 3;
+	int ubaddr = sa->sa_type & 3;
 	int i;
 
 	printf(": DW780\n");
@@ -149,20 +146,22 @@ dw780_attach(parent, self, aux)
 	sc->uv_sc.uh_errchk = dw780_errchk;
 	sc->uv_sc.uh_iot = &vax_mem_bus_space;
 	sc->uv_sc.uh_dmat = &sc->uv_dmat;
-	sc->uv_uba = (void *)sa->nexaddr;
+	sc->uv_uba = (void *)sa->sa_ioh;
 	sc->uh_ibase = VAX_NBPG + ubaddr * VAX_NBPG;
 
 	/*
 	 * Set up dispatch vectors for DW780.
 	 */
-	for (i = 0; i < 4; i++)
-		scb_vecalloc(256 + i * 64 + sa->nexnum * 4, uba_dw780int,
-		    sc->uv_sc.uh_dev.dv_unit, SCB_ISTACK);
+	for (i = 0x14; i < 0x18; i++)
+		scb_vecalloc(vecnum(0, i, sa->sa_nexnum), uba_dw780int,
+		    sc, SCB_ISTACK, &sc->uv_sc.uh_intrcnt);
+	evcnt_attach_dynamic(&sc->uv_sc.uh_intrcnt, EVCNT_TYPE_INTR, NULL,
+		sc->uv_sc.uh_dev.dv_xname, "intr");
+
 	/*
 	 * Fill in variables used by the sgmap system.
 	 */
-	sc->uv_size = UBASIZE;		/* Size in bytes of Qbus space */
-	sc->uv_addr = (paddr_t)sc->uv_uba->uba_map;
+	sc->uv_size = UBASIZE;		/* Size in bytes of Unibus space */
 
 	uba_dma_init(sc);
 	uba_attach(&sc->uv_sc, (parent->dv_unit ? UMEMB8600(ubaddr) :
@@ -207,13 +206,13 @@ dw780_errchk(sc)
 }
 
 void
-uba_dw780int(uba)
-	int	uba;
+uba_dw780int(arg)
+	void	*arg;
 {
-	int	br, vec, arg;
-	struct	uba_vsoftc *vc = uba_cd.cd_devs[uba];
+	struct	uba_vsoftc *vc = arg;
 	struct	uba_regs *ur = vc->uv_uba;
-	void	(*func) __P((int));
+	struct	ivec_dsp *scb_vec;
+	int	br, vec;
 
 	br = mfpr(PR_IPL);
 	vec = ur->uba_brrvr[br - 0x14];
@@ -225,10 +224,8 @@ uba_dw780int(uba)
 	if (cold)
 		scb_fake(vec + vc->uh_ibase, br);
 	else {
-		struct ivec_dsp *scb_vec = (struct ivec_dsp *)((int)scb + 512);
-		func = scb_vec[vec/4].hoppaddr;
-		arg = scb_vec[vec/4].pushlarg;
-		(*func)(arg);
+		scb_vec = (struct ivec_dsp *)((int)scb + 512 + 4 * vec);
+		(*scb_vec->hoppaddr)(scb_vec->pushlarg);
 	}
 }
 
@@ -277,6 +274,7 @@ ubaerror(uh, ipl, uvec)
 	struct uba_vsoftc *vc = (void *)uh;
 	struct	uba_regs *uba = vc->uv_uba;
 	register int sr, s;
+	char sbuf[256], sbuf2[256];
 
 	if (*uvec == 0) {
 		/*
@@ -293,28 +291,35 @@ ubaerror(uh, ipl, uvec)
 		if (++vc->uh_zvcnt > zvcnt_max) {
 			printf("%s: too many zero vectors (%d in <%d sec)\n",
 				vc->uv_sc.uh_dev.dv_xname, vc->uh_zvcnt, (int)dt + 1);
-			printf("\tIPL 0x%x\n\tcnfgr: %b	 Adapter Code: 0x%x\n",
-				*ipl, uba->uba_cnfgr&(~0xff), UBACNFGR_BITS,
-				uba->uba_cnfgr&0xff);
-			printf("\tsr: %b\n\tdcr: %x (MIC %sOK)\n",
-				uba->uba_sr, ubasr_bits, uba->uba_dcr,
+
+			bitmask_snprintf(uba->uba_cnfgr&(~0xff), UBACNFGR_BITS,
+					 sbuf, sizeof(sbuf));
+			printf("\tIPL 0x%x\n\tcnfgr: %s	 Adapter Code: 0x%x\n",
+				*ipl, sbuf, uba->uba_cnfgr&0xff);
+
+			bitmask_snprintf(uba->uba_sr, ubasr_bits, sbuf, sizeof(sbuf));
+			printf("\tsr: %s\n\tdcr: %x (MIC %sOK)\n",
+				sbuf, uba->uba_dcr,
 				(uba->uba_dcr&0x8000000)?"":"NOT ");
-			ubareset(vc->uv_sc.uh_dev.dv_unit);
+
+			ubareset(&vc->uv_sc);
 		}
 		return;
 	}
 	if (uba->uba_cnfgr & NEX_CFGFLT) {
-		printf("%s: sbi fault sr=%b cnfgr=%b\n",
-		    vc->uv_sc.uh_dev.dv_xname, uba->uba_sr, ubasr_bits,
-		    uba->uba_cnfgr, NEXFLT_BITS);
-		ubareset(vc->uv_sc.uh_dev.dv_unit);
+		bitmask_snprintf(uba->uba_sr, ubasr_bits, sbuf, sizeof(sbuf));
+		bitmask_snprintf(uba->uba_cnfgr, NEXFLT_BITS, sbuf2, sizeof(sbuf2));
+		printf("%s: sbi fault sr=%s cnfgr=%s\n",
+		    vc->uv_sc.uh_dev.dv_xname, sbuf, sbuf2);
+		ubareset(&vc->uv_sc);
 		*uvec = 0;
 		return;
 	}
 	sr = uba->uba_sr;
 	s = splimp();
-	printf("%s: uba error sr=%b fmer=%x fubar=%o\n", vc->uv_sc.uh_dev.dv_xname,
-	    uba->uba_sr, ubasr_bits, uba->uba_fmer, 4*uba->uba_fubar);
+	bitmask_snprintf(uba->uba_sr, ubasr_bits, sbuf, sizeof(sbuf));
+	printf("%s: uba error sr=%s fmer=%x fubar=%o\n", vc->uv_sc.uh_dev.dv_xname,
+	    sbuf, uba->uba_fmer, 4*uba->uba_fubar);
 	splx(s);
 	uba->uba_sr = sr;
 	*uvec &= UBABRRVR_DIV;
@@ -322,7 +327,7 @@ ubaerror(uh, ipl, uvec)
 		if (ubaerrcnt > ubacrazy)
 			panic("uba crazy");
 		printf("ERROR LIMIT ");
-		ubareset(vc->uv_sc.uh_dev.dv_unit);
+		ubareset(&vc->uv_sc);
 		*uvec = 0;
 	}
 }

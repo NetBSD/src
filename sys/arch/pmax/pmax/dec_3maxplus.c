@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_3maxplus.c,v 1.26 1999/08/16 13:11:45 simonb Exp $	*/
+/* $NetBSD: dec_3maxplus.c,v 1.26.2.1 2000/11/20 20:20:35 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,127 +73,80 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.26 1999/08/16 13:11:45 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.26.2.1 2000/11/20 20:20:35 bouyer Exp $");
 
-#include <sys/types.h>
+#include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/device.h>
 
 #include <machine/cpu.h>
-#include <machine/reg.h>
-#include <machine/intr.h>
-#include <machine/psl.h>
-#include <machine/autoconf.h>		/* intr_arg_t */
 #include <machine/sysconf.h>
 
-#include <mips/mips_param.h>		/* hokey spl()s */
 #include <mips/mips/mips_mcclock.h>	/* mclock CPUspeed estimation */
 
 /* all these to get ioasic_base */
-#include <sys/device.h>			/* struct cfdata for.. */
 #include <dev/tc/tcvar.h>		/* tc type definitions for.. */
 #include <dev/tc/ioasicreg.h>		/* ioasic interrrupt masks */
 #include <dev/tc/ioasicvar.h>		/* ioasic_base */
 
-#include <pmax/pmax/clockreg.h>
-#include <pmax/pmax/turbochannel.h>
-#include <pmax/pmax/pmaxtype.h>
 #include <pmax/pmax/machdep.h>
-
 #include <pmax/pmax/kn03.h>
 #include <pmax/pmax/memc.h>
+#include <pmax/tc/sccvar.h>
 
-/*
- * Forward declarations
- */
-void		dec_3maxplus_init __P((void));
-void		dec_3maxplus_os_init __P((void));
-void		dec_3maxplus_bus_reset __P((void));
-void		dec_3maxplus_enable_intr
-		   __P ((u_int slotno, int (*handler) __P((intr_arg_t sc)),
-			 intr_arg_t sc, int onoff));
-int		dec_3maxplus_intr __P((unsigned, unsigned, unsigned, unsigned));
-void		dec_3maxplus_cons_init __P((void));
-void		dec_3maxplus_device_register __P((struct device *, void *));
-static void 	dec_3maxplus_errintr __P ((void));
+#include "rasterconsole.h"
 
+void		dec_3maxplus_init __P((void));		/* XXX */
+static void	dec_3maxplus_bus_reset __P((void));
+static void	dec_3maxplus_cons_init __P((void));
+static void 	dec_3maxplus_errintr __P((void));
+static void	dec_3maxplus_intr __P((unsigned, unsigned, unsigned, unsigned));
+static void	dec_3maxplus_intr_establish __P((struct device *, void *,
+		    int, int (*)(void *), void *));
+
+static void	kn03_wbflush __P((void));
+static unsigned	kn03_clkread __P((void));
 
 /*
  * Local declarations
  */
-u_long	kn03_tc3_imask;
-
+static u_int32_t kn03_tc3_imask;
 static unsigned latched_cycle_cnt;
 
-void kn03_wbflush __P((void));
-unsigned kn03_clkread __P((void));
-extern unsigned (*clkread) __P((void));
-
-extern volatile struct chiptime *mcclock_addr; /* XXX */
-extern char cpu_model[];
-
-
-/*
- * Fill in platform struct.
- */
 void
 dec_3maxplus_init()
 {
 	u_int32_t prodtype;
 
-	/* we can determine product type with INTR register. */
-	prodtype = *(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN03_REG_INTR);
-	prodtype &= KN03_INTR_PROD_JUMPER;
-	/* the bit persists even after INTR register is assigned with 0. */
-
-	platform.iobus = "tc3maxplus";
-
-	platform.os_init = dec_3maxplus_os_init;
+	platform.iobus = "tcbus";
 	platform.bus_reset = dec_3maxplus_bus_reset;
 	platform.cons_init = dec_3maxplus_cons_init;
-	platform.device_register = dec_3maxplus_device_register;
-
-	dec_3maxplus_os_init();
-
-	if (prodtype)
-		sprintf(cpu_model, "DECstation 5000/%s (3MAXPLUS)",
-		    (CPUISMIPS3) ? "260" : "240");
-	else
-		sprintf(cpu_model, "DECsystem 5900%s (3MAXPLUS)",
-		    (CPUISMIPS3) ? "-260" : "");
-}
-
-
-/*
- * Set up OS level stuff: spls, etc.
- */
-void
-dec_3maxplus_os_init()
-{
-	/* clear any pending memory errors. */
+	platform.iointr = dec_3maxplus_intr;
+	platform.intr_establish = dec_3maxplus_intr_establish;
+	platform.memsize = memsize_scan;
+	platform.clkread = kn03_clkread;
+	/* 3MAX+ has IOASIC free-running high resolution timer */
+ 
+	/* clear any memory errors */
 	*(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN03_SYS_ERRADR) = 0;
 	kn03_wbflush();
 
 	ioasic_base = MIPS_PHYS_TO_KSEG1(KN03_SYS_ASIC);
-	mips_hardware_intr = dec_3maxplus_intr;
-	tc_enable_interrupt = dec_3maxplus_enable_intr;	/* XXX */
-	mcclock_addr = (void *)(ioasic_base + IOASIC_SLOT_8_START);
-
-	/* 3MAX+ has IOASIC free-running high resolution timer */
-	clkread = kn03_clkread;
 
 	/*
 	 * 3MAX+ IOASIC interrupts come through INT 0, while
 	 * clock interrupt does via INT 1.  splclock and splstatclock
 	 * should block IOASIC activities.
-	 */
+	 */ 
 	splvec.splbio = MIPS_SPL0;
 	splvec.splnet = MIPS_SPL0;
 	splvec.spltty = MIPS_SPL0;
 	splvec.splimp = MIPS_SPL0;
-	splvec.splclock = MIPS_SPL_0_1;
+	splvec.splclock = MIPS_SPL_0_1;	 
 	splvec.splstatclock = MIPS_SPL_0_1;
-
-	mc_cpuspeed(mcclock_addr, MIPS_INT_MASK_1);
+	
+	/* calibrate cpu_mhz value */
+	mc_cpuspeed(ioasic_base+IOASIC_SLOT_8_START, MIPS_INT_MASK_1);
 
 	*(u_int32_t *)(ioasic_base + IOASIC_LANCE_DECODE) = 0x3;
 	*(u_int32_t *)(ioasic_base + IOASIC_SCSI_DECODE) = 0xe;
@@ -202,28 +155,31 @@ dec_3maxplus_os_init()
 	*(u_int32_t *)(ioasic_base + IOASIC_SCC1_DECODE) = (0x10|6);
 	*(u_int32_t *)(ioasic_base + IOASIC_CSR) = 0x00000f00;
 #endif
+
 	/* XXX hard-reset LANCE */
 	*(u_int32_t *)(ioasic_base + IOASIC_CSR) |= 0x100;
 
-	/* clear any memory errors from probes */
-	*(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN03_SYS_ERRADR) = 0;
-	kn03_wbflush();
-
-	/*
-	 * Initialize interrupts.
-	 */
-	kn03_tc3_imask = KN03_IM0 &
-		~(KN03_INTR_TC_0|KN03_INTR_TC_1|KN03_INTR_TC_2);
-	*(u_int32_t *)(ioasic_base + IOASIC_IMSK) = kn03_tc3_imask;
+	/* sanitize interrupt mask */
+	kn03_tc3_imask = KN03_INTR_PSWARN;
 	*(u_int32_t *)(ioasic_base + IOASIC_INTR) = 0;
+	*(u_int32_t *)(ioasic_base + IOASIC_IMSK) = kn03_tc3_imask;
 	kn03_wbflush();
-}
 
+	prodtype = *(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN03_REG_INTR);
+	prodtype &= KN03_INTR_PROD_JUMPER;
+	/* the bit persists even if INTR register is assigned value 0 */
+	if (prodtype)
+		sprintf(cpu_model, "DECstation 5000/%s (3MAXPLUS)",
+		    (CPUISMIPS3) ? "260" : "240");
+	else
+		sprintf(cpu_model, "DECsystem 5900%s (3MAXPLUS)",
+		    (CPUISMIPS3) ? "-260" : "");
+}
 
 /*
  * Initalize the memory system and I/O buses.
  */
-void
+static void
 dec_3maxplus_bus_reset()
 {
 	/*
@@ -239,119 +195,115 @@ dec_3maxplus_bus_reset()
 }
 
 
-void
+static void
 dec_3maxplus_cons_init()
 {
+	int kbd, crt, screen;
+	extern int tcfb_cnattach __P((int));		/* XXX */
+
+	kbd = crt = screen = 0;
+	prom_findcons(&kbd, &crt, &screen);
+
+	if (screen > 0) {
+#if NRASTERCONSOLE > 0
+		if (tcfb_cnattach(crt) > 0) {
+			scc_lk201_cnattach(ioasic_base, 0x180000);
+			return;
+		}
+#endif
+		printf("No framebuffer device configured for slot %d: ", crt);
+		printf("using serial console\n");
+	}
+	/*
+	 * Delay to allow PROM putchars to complete.
+	 * FIFO depth * character time,
+	 * character time = (1000000 / (defaultrate / 10))
+	 */
+	DELAY(160000000 / 9600);	/* XXX */
+
+	scc_cnattach(ioasic_base, 0x180000);
 }
 
-
-void
-dec_3maxplus_device_register(dev, aux)
+static void
+dec_3maxplus_intr_establish(dev, cookie, level, handler, arg)
 	struct device *dev;
-	void *aux;
-{
-	panic("dec_3maxplus_device_register unimplemented");
-}
-
-
-/*
- *	Enable/Disable interrupts.
- *	We pretend we actually have 8 slots even if we really have
- *	only 4: TCslots 0-2 maps to slots 0-2, TCslot3 maps to
- *	slots 3-7 (see pmax/tc/ds-asic-conf.c).
- */
-void
-dec_3maxplus_enable_intr(slotno, handler, sc, on)
-	unsigned int slotno;
-	int (*handler) __P((void* softc));
-	void *sc;
-	int on;
+	void *cookie;
+	int level;
+	int (*handler) __P((void *));
+	void *arg;
 {
 	unsigned mask;
 
-#if 0
-	printf("3MAXPLUS: imask %x, %sabling slot %d, unit %d addr 0x%x\n",
-	       kn03_tc3_imask, (on? "en" : "dis"), slotno, unit, handler);
-#endif
-
-	switch (slotno) {
-	case 0:
+	switch ((int)cookie) {
+	  case SYS_DEV_OPT0:
 		mask = KN03_INTR_TC_0;
 		break;
-	case 1:
+	  case SYS_DEV_OPT1:
 		mask = KN03_INTR_TC_1;
 		break;
-	case 2:
+	  case SYS_DEV_OPT2:
 		mask = KN03_INTR_TC_2;
 		break;
-	case KN03_SCSI_SLOT:
+	  case SYS_DEV_SCSI:
 		mask = (IOASIC_INTR_SCSI | IOASIC_INTR_SCSI_PTR_LOAD |
 			IOASIC_INTR_SCSI_OVRUN | IOASIC_INTR_SCSI_READ_E);
 		break;
-	case KN03_LANCE_SLOT:
-		mask = KN03_INTR_LANCE;
-		mask |= IOASIC_INTR_LANCE_READ_E;
+	  case SYS_DEV_LANCE:
+		mask = KN03_INTR_LANCE | IOASIC_INTR_LANCE_READ_E;
 		break;
-	case KN03_SCC0_SLOT:
+	  case SYS_DEV_SCC0:
 		mask = KN03_INTR_SCC_0;
 		break;
-	case KN03_SCC1_SLOT:
+	  case SYS_DEV_SCC1:
 		mask = KN03_INTR_SCC_1;
 		break;
-	case KN03_ASIC_SLOT:
-		mask = KN03_INTR_ASIC;
-		break;
-	default:
+	  default:
 #ifdef DIAGNOSTIC
-		printf("warning: enabling unknown intr %x\n", slotno);
+		printf("warning: enabling unknown intr %x\n", (int)cookie);
 #endif
-		goto done;
+		return;
 	}
-	if (on) {
-		kn03_tc3_imask |= mask;
-		tc_slot_info[slotno].intr = handler;
-		tc_slot_info[slotno].sc = sc;
 
-	} else {
-		kn03_tc3_imask &= ~mask;
-		tc_slot_info[slotno].intr = 0;
-		tc_slot_info[slotno].sc = 0;
-	}
-done:
+	kn03_tc3_imask |= mask;
+	intrtab[(int)cookie].ih_func = handler;
+	intrtab[(int)cookie].ih_arg = arg;
+
 	*(u_int32_t *)(ioasic_base + IOASIC_IMSK) = kn03_tc3_imask;
 	kn03_wbflush();
 }
 
 
-/*
- * 3Max+ hardware interrupts. (DECstation 5000/240)
- */
-int
-dec_3maxplus_intr(mask, pc, status, cause)
-	unsigned mask;
-	unsigned pc;
+#define CHECKINTR(vvv, bits)					\
+    do {							\
+	if (can_serve & (bits)) {				\
+		ifound = 1;					\
+		intrcnt[vvv] += 1;				\
+		(*intrtab[vvv].ih_func)(intrtab[vvv].ih_arg);	\
+	}							\
+    } while (0)
+
+static void
+dec_3maxplus_intr(status, cause, pc, ipending)
 	unsigned status;
 	unsigned cause;
+	unsigned pc;
+	unsigned ipending;
 {
-	static int user_warned = 0;
+	static int warned = 0;
 	unsigned old_buscycle;
 
-	if (mask & MIPS_INT_MASK_4)
+	if (ipending & MIPS_INT_MASK_4)
 		prom_haltbutton();
 
 	/* handle clock interrupts ASAP */
 	old_buscycle = latched_cycle_cnt;
-	if (mask & MIPS_INT_MASK_1) {
+	if (ipending & MIPS_INT_MASK_1) {
 		struct clockframe cf;
-		struct chiptime *clk;
-		volatile int temp;
 
-		clk = (void *)(ioasic_base + IOASIC_SLOT_8_START);
-		temp = clk->regc;	/* XXX clear interrupt bits */
-
+		__asm __volatile("lbu $0,48(%0)" ::
+			"r"(ioasic_base + IOASIC_SLOT_8_START));
 		latched_cycle_cnt =
 			*(u_int32_t *)(ioasic_base + IOASIC_CTR);
-
 		cf.pc = pc;
 		cf.sr = status;
 		hardclock(&cf);
@@ -371,128 +323,71 @@ dec_3maxplus_intr(mask, pc, status, cause)
 	 * ticks to be missed.
 	 */
 #ifdef notdef
-	if ((mask & MIPS_INT_MASK_1) && old_buscycle > (tick+49) * 25) {
-		extern int msgbufmapped;
+	if ((ipending & MIPS_INT_MASK_1) && old_buscycle > (tick+49) * 25) {
+		/* XXX need to include <sys/msgbug.h> for msgbufmapped */
   		if(msgbufmapped && 0)
 			 addlog("kn03: clock intr %d usec late\n",
 				 old_buscycle/25);
 	}
 #endif
+	if (ipending & MIPS_INT_MASK_0) {
+		int ifound;
+		u_int32_t imsk, intr, can_serve, xxxintr;
+
+		do {
+			ifound = 0;
+			imsk = *(u_int32_t *)(ioasic_base + IOASIC_IMSK);
+			intr = *(u_int32_t *)(ioasic_base + IOASIC_INTR);
+			can_serve = intr & imsk;
+
+			CHECKINTR(SYS_DEV_SCC0, IOASIC_INTR_SCC_0);
+			CHECKINTR(SYS_DEV_SCC1, IOASIC_INTR_SCC_1);
+			CHECKINTR(SYS_DEV_LANCE, IOASIC_INTR_LANCE);
+			CHECKINTR(SYS_DEV_SCSI, IOASIC_INTR_SCSI);
+			CHECKINTR(SYS_DEV_OPT2, KN03_INTR_TC_2);
+			CHECKINTR(SYS_DEV_OPT1, KN03_INTR_TC_1);
+			CHECKINTR(SYS_DEV_OPT0, KN03_INTR_TC_0);
+
+			if (warned > 0 && !(can_serve & KN03_INTR_PSWARN)) {
+				printf("%s\n", "Power supply ok now.");
+				warned = 0;
+			}
+			if ((can_serve & KN03_INTR_PSWARN) && (warned < 3)) {
+				warned++;
+				printf("%s\n", "Power supply overheating");
+			}
+
+#define ERRORS	(IOASIC_INTR_SCSI_OVRUN|IOASIC_INTR_SCSI_READ_E|IOASIC_INTR_LANCE_READ_E)
+#define PTRLOAD	(IOASIC_INTR_SCSI_PTR_LOAD)
 	/*
-	 * IOCTL asic DMA-related interrupts should be checked here,
-	 * and DMA pointers serviced as soon as possible.
+	 * XXX future project is here XXX
+	 * IOASIC DMA completion interrupt (PTR_LOAD) should be checked
+	 * here, and DMA pointers serviced as soon as possible.
 	 */
-
-	if (mask & MIPS_INT_MASK_0) {
-		u_int32_t intr, imsk, turnoff;
-
-		turnoff = 0;
-		intr = *(u_int32_t *)(ioasic_base + IOASIC_INTR);
-		imsk = *(u_int32_t *)(ioasic_base + IOASIC_IMSK);
-		intr &= imsk;
-
-		if (intr & IOASIC_INTR_SCSI_PTR_LOAD) {
-			turnoff |= IOASIC_INTR_SCSI_PTR_LOAD;
-#ifdef notdef
-			asc_dma_intr();
-#endif
-		}
-
 	/*
-	 * XXX
-	 * DMA and non-DMA  interrupts from the IOCTl asic all use the
-	 * single interrupt request line from the IOCTL asic.
-	 * Disabling IOASIC interrupts while servicing network or
-	 * disk-driver interrupts causes DMA overruns. NON-dma IOASIC
-	 * interrupts should be disabled in the ioasic, and
-	 * interrupts from the IOASIC itself should be re-enabled.
+	 * All of IOASIC device interrupts comes through a single service
+	 * request line coupled with MIPS cpu INT 0.
+	 * Disabling INT 0 makes entire IOASIC interrupt services blocked,
+	 * and it's harmful because it causes DMA overruns during network
+	 * disk I/O interrupts.
+	 * So, Non-DMA interrupts should be selectively disabled by masking
+	 * IOASIC_IMSK register, and INT 3 itself be reenabled immediately,
+	 * and made available all the time.
 	 * DMA interrupts can then be serviced whilst still servicing
 	 * non-DMA interrupts from ioctl devices or TC options.
 	 */
-
-		if (intr & (IOASIC_INTR_SCSI_OVRUN | IOASIC_INTR_SCSI_READ_E))
-			turnoff = IOASIC_INTR_SCSI_OVRUN | IOASIC_INTR_SCSI_READ_E;
-
-		if (intr & IOASIC_INTR_LANCE_READ_E)
-			turnoff |= IOASIC_INTR_LANCE_READ_E;
-
-		if (turnoff)
-			*(u_int32_t *)(ioasic_base + IOASIC_INTR) = ~turnoff;
-
-		if ((intr & KN03_INTR_SCC_0) &&
-			tc_slot_info[KN03_SCC0_SLOT].intr) {
-			(*(tc_slot_info[KN03_SCC0_SLOT].intr))
-			(tc_slot_info[KN03_SCC0_SLOT].sc);
-			intrcnt[SERIAL0_INTR]++;
-		}
-
-		if ((intr & KN03_INTR_SCC_1) &&
-			tc_slot_info[KN03_SCC1_SLOT].intr) {
-			(*(tc_slot_info[KN03_SCC1_SLOT].intr))
-			(tc_slot_info[KN03_SCC1_SLOT].sc);
-			intrcnt[SERIAL1_INTR]++;
-		}
-
-		if ((intr & KN03_INTR_TC_0) &&
-			tc_slot_info[0].intr) {
-			(*(tc_slot_info[0].intr))
-			(tc_slot_info[0].sc);
-			intrcnt[SLOT0_INTR]++;
-		}
-#ifdef DIAGNOSTIC
-		else if (intr & KN03_INTR_TC_0)
-			printf ("can't handle tc0 interrupt\n");
-#endif /*DIAGNOSTIC*/
-
-		if ((intr & KN03_INTR_TC_1) &&
-			tc_slot_info[1].intr) {
-			(*(tc_slot_info[1].intr))
-			(tc_slot_info[1].sc);
-			intrcnt[SLOT1_INTR]++;
-		}
-#ifdef DIAGNOSTIC
-		else if (intr & KN03_INTR_TC_1)
-			printf ("can't handle tc1 interrupt\n");
-#endif /*DIAGNOSTIC*/
-
-		if ((intr & KN03_INTR_TC_2) &&
-			tc_slot_info[2].intr) {
-			(*(tc_slot_info[2].intr))
-			(tc_slot_info[2].sc);
-			intrcnt[SLOT2_INTR]++;
-		}
-#ifdef DIAGNOSTIC
-		else if (intr & KN03_INTR_TC_2)
-			printf ("can't handle tc2 interrupt\n");
-#endif /*DIAGNOSTIC*/
-
-		if ((intr & KN03_INTR_LANCE) &&
-			tc_slot_info[KN03_LANCE_SLOT].intr) {
-			(*(tc_slot_info[KN03_LANCE_SLOT].intr))
-			(tc_slot_info[KN03_LANCE_SLOT].sc);
-			intrcnt[LANCE_INTR]++;
-		}
-
-		if ((intr & IOASIC_INTR_SCSI) &&
-			tc_slot_info[KN03_SCSI_SLOT].intr) {
-			(*(tc_slot_info[KN03_SCSI_SLOT].intr))
-			(tc_slot_info[KN03_SCSI_SLOT].sc);
-			intrcnt[SCSI_INTR]++;
-		}
-
-		if (user_warned && ((intr & KN03_INTR_PSWARN) == 0)) {
-			printf("%s\n", "Power supply ok now.");
-			user_warned = 0;
-		}
-		if ((intr & KN03_INTR_PSWARN) && (user_warned < 3)) {
-			user_warned++;
-			printf("%s\n", "Power supply overheating");
-		}
-	}
-	if (mask & MIPS_INT_MASK_3)
+			xxxintr = can_serve & (ERRORS | PTRLOAD);
+			if (xxxintr) {
+				ifound = 1;
+				*(u_int32_t *)(ioasic_base + IOASIC_INTR)
+					= intr &~ xxxintr;
+			}
+		} while (ifound);
+        }
+	if (ipending & MIPS_INT_MASK_3)
 		dec_3maxplus_errintr();
 
-	return (MIPS_SR_INT_IE | (status & ~cause & MIPS_HARD_INT_MASK));
+	_splset(MIPS_SR_INT_IE | (status & ~cause & MIPS_HARD_INT_MASK));
 }
 
 
@@ -517,7 +412,7 @@ dec_3maxplus_errintr()
 	dec_mtasic_err(erradr, errsyn, csr & KN03_CSR_BNK32M);
 }
 
-void
+static void
 kn03_wbflush()
 {
 	/* read once IOASIC SLOT 0 */
@@ -530,7 +425,7 @@ kn03_wbflush()
  * interpolation base is the copy of the bus cycle-counter taken by
  * the RTC interrupt handler.
  */
-unsigned
+static unsigned
 kn03_clkread()
 {
 	u_int32_t usec, cycles;

@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_machdep.c,v 1.2 1999/10/15 07:20:43 tsubai Exp $	*/
+/*	$NetBSD: rbus_machdep.c,v 1.2.2.1 2000/11/20 20:13:02 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1999
@@ -31,16 +31,13 @@
 #include <sys/device.h>
 #include <sys/systm.h>
 
-#include <vm/vm.h>
-#include <vm/vm_kern.h>
-#include <vm/vm_page.h>
-
 #include <uvm/uvm_extern.h>
 
 #include <machine/bat.h>
 #include <machine/bus.h>
 
 #include <dev/pci/pcivar.h>
+#include <dev/pci/pcidevs.h>
 #include <dev/cardbus/rbus.h>
 
 static void macppc_cardbus_init __P((pci_chipset_tag_t, pcitag_t));
@@ -102,8 +99,8 @@ rbus_pccbb_parent_mem(pa)
 		size  = 0x10000000;
 	}
 
-	battable[start >> 28].batl = BATL(start, BAT_I);
-	battable[start >> 28].batu = BATU(start);
+	battable[start >> 28].batl = BATL(start, BAT_I, BAT_PP_RW);
+	battable[start >> 28].batu = BATU(start, BAT_BL_256M, BAT_Vs);
 
 	return rbus_new_root_delegate(pa->pa_memt, start, size, 0);
 }
@@ -133,7 +130,11 @@ macppc_cardbus_init(pc, tag)
 		return;
 	initted = 1;
 
-	if (pc == PCI_CHIPSET_MPC106) {
+	/* XXX What about other bridges? */
+
+	x = pci_conf_read(pc, tag, PCI_ID_REG);
+	if (PCI_VENDOR(x) == PCI_VENDOR_TI &&
+	    PCI_PRODUCT(x) == PCI_PRODUCT_TI_PCI1211) {
 		/* For CardBus card. */
 		pci_conf_write(pc, tag, 0x18, 0x10010100);
 
@@ -142,10 +143,14 @@ macppc_cardbus_init(pc, tag)
 		x |= 0x02;
 		pci_conf_write(pc, tag, 0x8c, x);
 
-		/* Set Subordinate bus number to 1 */
 		tag = pci_make_tag(pc, 0, 0, 0);
-		x = pci_conf_read(pc, tag, 0x40);
-		x |= 1 << 8;
-		pci_conf_write(pc, tag, 0x40, x);
+		x = pci_conf_read(pc, tag, PCI_ID_REG);
+		if (PCI_VENDOR(x) == PCI_VENDOR_MOT &&
+		    PCI_PRODUCT(x) == PCI_PRODUCT_MOT_MPC106) {
+			/* Set subordinate bus number to 1. */
+			x = pci_conf_read(pc, tag, 0x40);
+			x |= 1 << 8;
+			pci_conf_write(pc, tag, 0x40, x);
+		}
 	}
 }

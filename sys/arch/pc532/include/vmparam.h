@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.18 1999/06/17 00:22:42 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.18.2.1 2000/11/20 20:19:21 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -56,7 +56,7 @@
  * Immediately after the user structure is the page table map, and then
  * kernal address space.
  */
-#define	USRTEXT		CLBYTES			/* For NetBSD... */
+#define	USRTEXT		NBPG			/* For NetBSD... */
 #define	USRSTACK	VM_MAXUSER_ADDRESS
 
 /*
@@ -108,51 +108,28 @@
 #define	MAXSLP 		20
 
 /*
- * A swapped in process is given a small amount of core without being bothered
- * by the page replacement algorithm.  Basically this says that if you are
- * swapped in you deserve some resources.  We protect the last SAFERSS
- * pages against paging and will just swap you out rather than paging you.
- * Note that each process has at least UPAGES+CLSIZE pages which are not
- * paged anyways (this is currently 8+2=10 pages or 5k bytes), so this
- * number just means a swapped in process is given around 25k bytes.
- * Just for fun: current memory prices are 4600$ a megabyte on VAX (4/22/81),
- * so we loan each swapped in process memory worth 100$, or just admit
- * that we don't consider it worthwhile and swap it out to disk which costs
- * $30/mb or about $0.75.
- * { wfj 6/16/89: Retail AT memory expansion $800/megabyte, loan of $17
- *   on disk costing $7/mb or $0.18 (in memory still 100:1 in cost!) }
- * Update: memory prices have changed recently (9/96). At the current    
- * value of $6 per megabyte, we lend each swapped in process memory worth
- * $0.15, or just admit that we don't consider it worthwhile and swap it out
- * to disk which costs $0.20/MB, or just under half a cent. 
- */
-#define	SAFERSS		8		/* nominal ``small'' resident set size
-					   protected against replacement */
-
-/*
  * Mach derived constants
  */
 
 /* user/kernel map constants */
 #define VM_MIN_ADDRESS		((vaddr_t)0)
-/* PTDPTDI << PDSHIFT */
-#define VM_MAXUSER_ADDRESS	((vaddr_t)0xF7C00000)
-/* PTDPTDI << PDSHIFT + PTDPTDI << PGSHIFT */
-#define VM_MAX_ADDRESS		((vaddr_t)0xF7FDF000)
-/* KPTDI << PDSHIFT */
-#define VM_MIN_KERNEL_ADDRESS	((vaddr_t)0xF8000000)
-/* APTDPTDI << PDSHIFT */
+/* (PDSLOT_PTE << PDSHIFT) */
+#define VM_MAXUSER_ADDRESS	((vaddr_t)0xDFC00000)
+/* (PDSLOT_PTE << PDSHIFT) + (PDSLOT_PTE << PGSHIFT) */
+#define VM_MAX_ADDRESS		((vaddr_t)0xDFFDF000)
+/* PDSLOT_KERN << PDSHIFT */
+#define VM_MIN_KERNEL_ADDRESS	((vaddr_t)0xE0000000)
+/* PDSLOT_APTE << PDSHIFT */
 #define VM_MAX_KERNEL_ADDRESS	((vaddr_t)0xFF800000)
 
 /* XXX max. amount of KVM to be used by buffers. */
 #ifndef VM_MAX_KERNEL_BUF
 #define VM_MAX_KERNEL_BUF \
-	((VM_MAX_KERNEL_ADDRESS - VM_MIN_KERNEL_ADDRESS) * 7 / 10)
+	((VM_MAX_KERNEL_ADDRESS - VM_MIN_KERNEL_ADDRESS) / 1024 * 7 / 10 * 1024)
 #endif
 
 /* virtual sizes (bytes) for various kernel submaps */
-#define VM_KMEM_SIZE		(NKMEMCLUSTERS*CLBYTES)
-#define VM_PHYS_SIZE		(USRIOSIZE*CLBYTES)
+#define VM_PHYS_SIZE		(USRIOSIZE*NBPG)
 
 #define VM_PHYSSEG_MAX		1	/* we have contiguous memory */
 #define VM_PHYSSEG_STRAT	VM_PSTRAT_RANDOM

@@ -1,4 +1,4 @@
-/*	$NetBSD: mips3_pte.h,v 1.10 1999/09/25 00:00:37 shin Exp $	*/
+/*	$NetBSD: mips3_pte.h,v 1.10.2.1 2000/11/20 20:13:31 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -81,15 +81,9 @@ struct tlb {
 #define MIPS3_PG_WIRED	0x80000000	/* SW */
 #define MIPS3_PG_RO	0x40000000	/* SW */
 
-#ifdef MIPS_16K_PAGE			/* enable kernel support for 16k pages  */
-#define	MIPS3_PG_SVPN	0xffffc000	/* Software page no mask */
-#define	MIPS3_PG_HVPN	0xffff8000	/* Hardware page no mask */
-#define	MIPS3_PG_ODDPG	0x00004000	/* Odd even pte entry */
-#else
 #define	MIPS3_PG_SVPN	0xfffff000	/* Software page no mask */
 #define	MIPS3_PG_HVPN	0xffffe000	/* Hardware page no mask */
 #define	MIPS3_PG_ODDPG	0x00001000	/* Odd even pte entry */
-#endif
 #define	MIPS3_PG_ASID	0x000000ff	/* Address space ID */
 #define	MIPS3_PG_G	0x00000001	/* Global; ignore ASID if in lo0 & lo1 */
 #define	MIPS3_PG_V	0x00000002	/* Valid */
@@ -123,13 +117,14 @@ struct tlb {
 /* pte accessor macros */
 
 #define mips3_pfn_is_ext(x) ((x) & 0x3c000000)
-#define mips3_vad_to_pfn(x) (((unsigned)(x) >> MIPS3_PG_SHIFT) & MIPS3_PG_FRAME)
-#define mips3_vad_to_pfn64(x) (((quad_t)(x) >> MIPS3_PG_SHIFT) & MIPS3_PG_FRAME)
-#define mips3_pfn_to_vad(x) (((x) & MIPS3_PG_FRAME) << MIPS3_PG_SHIFT)
-#define mips3_vad_to_vpn(x) ((unsigned)(x) & MIPS3_PG_SVPN)
+#define mips3_paddr_to_tlbpfn(x) \
+    (((paddr_t)(x) >> MIPS3_PG_SHIFT) & MIPS3_PG_FRAME)
+#define mips3_tlbpfn_to_paddr(x) \
+    ((paddr_t)((x) & MIPS3_PG_FRAME) << MIPS3_PG_SHIFT)
+#define mips3_vad_to_vpn(x) ((vaddr_t)(x) & MIPS3_PG_SVPN)
 #define mips3_vpn_to_vad(x) ((x) & MIPS3_PG_SVPN)
 
-#define MIPS3_PTE_TO_PADDR(pte) (mips3_pfn_to_vad(pte))
+#define MIPS3_PTE_TO_PADDR(pte) (mips3_tlbpfn_to_paddr(pte))
 #define MIPS3_PAGE_IS_RDONLY(pte,va) \
     (pmap_is_page_ro(pmap_kernel(), mips_trunc_page(va), (pte)))
 

@@ -1,5 +1,5 @@
 #
-#	$NetBSD: files.atari,v 1.66 1999/09/27 14:32:17 leo Exp $
+#	$NetBSD: files.atari,v 1.66.2.1 2000/11/20 20:05:24 bouyer Exp $
 
 maxpartitions 16
 
@@ -24,12 +24,12 @@ device	kbd: event
 attach	kbd at mainbus
 file	arch/atari/dev/kbd.c		kbd needs-flag
 
-# serial port via 68901 (modem1/serial1)
+# serial port via 68901 (ttyB0/ttyB1)
 device	ser: tty
 attach	ser at mainbus
 file	arch/atari/dev/ser.c		ser needs-flag
 
-# serial port via 85C30 (modem2/serial2)
+# serial port via 85C30 (ttyA0/ttyA1)
 device	zs: tty
 attach	zs at mainbus
 file	arch/atari/dev/zs.c		zs needs-count
@@ -42,6 +42,9 @@ file	arch/atari/dev/lpt.c		lp needs-flag
 # memory disk
 file	arch/atari/dev/md_root.c	memory_disk_hooks
 major   {md = 1}
+
+# RAIDframe
+major	{raid = 15}
 
 # nvram
 device	nvr
@@ -99,11 +102,11 @@ define	grfb {}
 device	grfbus: grfb
 attach	grfbus at mainbus
 file	arch/atari/dev/grf.c
+file	arch/atari/dev/grfabs.c		grfcc | grfet
 
 device	grfcc {}
 attach	grfcc at grfb
 file	arch/atari/dev/ite_cc.c		grfcc needs-count
-file	arch/atari/dev/grfabs.c		grfcc
 file	arch/atari/dev/grfabs_tt.c	grfcc
 file	arch/atari/dev/grfabs_fal.c	grfcc
 
@@ -166,8 +169,8 @@ attach	ncrscsi at mainbus
 file	arch/atari/dev/atari5380.c	ncrscsi
 
 # list of standard files...
-file	dev/cons.c				ite
-file	dev/cninit.c				ite
+file	dev/cons.c				ite | ser
+file	dev/cninit.c				ite | ser
 file	arch/atari/atari/atari_init.c
 file	arch/atari/atari/autoconf.c
 file	arch/atari/atari/be_bus.c		vme

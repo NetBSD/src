@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.6 1999/05/06 19:16:44 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.6.2.1 2000/11/20 20:13:02 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,15 +31,13 @@
  */
 
 #include <sys/param.h>
-#include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/systm.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/ofw/openfirm.h>
 
 #include <machine/autoconf.h>
-
-#include "pci.h"
 
 int	mainbus_match __P((struct device *, struct cfdata *, void *));
 void	mainbus_attach __P((struct device *, struct device *, void *));
@@ -69,12 +67,20 @@ mainbus_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct pcibus_attach_args pba;
 	struct ofbus_attach_args oba;
 	struct confargs ca;
-	int node, n;
+	int node, i;
+	u_int32_t reg[4];
+	char name[32];
 
 	printf("\n");
+
+	for (i = 0; i < 2; i++) {
+		ca.ca_name = "cpu";
+		ca.ca_reg = reg;
+		reg[0] = i;
+		config_found(self, &ca, NULL);
+	}
 
 	node = OF_peer(0);
 	if (node) {
@@ -83,25 +89,16 @@ mainbus_attach(parent, self, aux)
 		config_found(self, &oba, NULL);
 	}
 
-	ca.ca_name = "cpu";
-	config_found(self, &ca, NULL);
+	for (node = OF_child(OF_finddevice("/")); node; node = OF_peer(node)) {
+		bzero(name, sizeof(name));
+		if (OF_getprop(node, "name", name, sizeof(name)) == -1)
+			continue;
 
-	/* Now can map PCI configuration space registers. */
-	pci_init(1);
-
-	for (n = 0; n < 2; n++) {
-		if (pci_bridges[n].addr) {
-			bzero(&pba, sizeof(pba));
-			pba.pba_busname = "pci";
-			pba.pba_iot = pci_bridges[n].iot;
-			pba.pba_memt = pci_bridges[n].memt;
-			pba.pba_dmat = &pci_bus_dma_tag;
-			pba.pba_bus = pci_bridges[n].bus;
-			pba.pba_pc = pci_bridges[n].pc;
-			pba.pba_flags =
-				PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
-			config_found(self, &pba, mainbus_print);
-		}
+		ca.ca_name = name;
+		ca.ca_node = node;
+		ca.ca_nreg = OF_getprop(node, "reg", reg, sizeof(reg));
+		ca.ca_reg  = reg;
+		config_found(self, &ca, NULL);
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysconf.c,v 1.4 1999/03/25 01:17:53 simonb Exp $	*/
+/*	$NetBSD: sysconf.c,v 1.4.8.1 2000/11/20 20:20:39 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,21 +31,21 @@
  */
 
 #include <sys/param.h>
-#include <sys/device.h>
 #include <sys/systm.h>
 #include <machine/sysconf.h>
+#include <pmax/pmax/pmaxtype.h>
 
 
 #include "opt_dec_3100.h"
 #ifdef DEC_3100
-  extern void dec_3100_init __P((void));
+  void	dec_3100_init __P((void));
 #else
 # define dec_3100_init		platform_not_configured
 #endif
 
 #include "opt_dec_3max.h"
 #ifdef DEC_3MAX
-  extern void dec_3max_init __P((void));
+  void	dec_3max_init __P((void));
 #else
 # define dec_3max_init	platform_not_configured
 #endif
@@ -53,7 +53,7 @@
 
 #include "opt_dec_3min.h"
 #ifdef DEC_3MIN
-  extern void dec_3min_init __P((void));
+  void	dec_3min_init __P((void));
 #else
 # define dec_3min_init	platform_not_configured
 #endif
@@ -61,35 +61,35 @@
 
 #include "opt_dec_maxine.h"
 #ifdef DEC_MAXINE
-  extern void dec_maxine_init __P((void));
+  void	dec_maxine_init __P((void));
 #else
 # define dec_maxine_init	platform_not_configured
 #endif
 
 #include "opt_dec_3maxplus.h"
 #ifdef DEC_3MAXPLUS
-  extern void dec_3maxplus_init __P((void));
+  void	dec_3maxplus_init __P((void));
 #else
 # define dec_3maxplus_init	platform_not_configured
 #endif
 
 #include "opt_dec_5100.h"
 #ifdef DEC_5100
-  extern void dec_5100_init __P((void));
+  void	dec_5100_init __P((void));
 #else
 # define dec_5100_init	platform_not_configured
 #endif
 
 #include "opt_dec_5400.h"
 #ifdef DEC_5400
-  extern void dec_5400_init __P((void));
+  void	dec_5400_init __P((void));
 #else
 # define dec_5400_init	platform_not_configured
 #endif
 
 #include "opt_dec_5500.h"
 #ifdef DEC_5500
-  extern void dec_5500_init __P((void));
+  void	dec_5500_init __P((void));
 #else
 # define dec_5500_init	platform_not_configured
 #endif
@@ -97,7 +97,7 @@
 
 #include "opt_dec_5800.h"
 #ifdef DEC_5800
-  extern void dec_5800_init __P((void));
+  void	dec_5800_init __P((void));
 #else
 # define dec_5800_init	platform_not_configured
 #endif
@@ -124,8 +124,6 @@ int nsysinit = (sizeof(sysinit) / sizeof(sysinit[0]));
 void
 platform_not_configured()
 {
-	extern int systype;
-
 	printf("\n");
 	printf("Support for system type %d is not present in this kernel.\n",
 	    systype);
@@ -138,7 +136,6 @@ platform_not_configured()
 void
 platform_not_supported()
 {
-	extern int systype;
 	const char *typestr;
 
 	if (systype >= nsysinit)

@@ -1,4 +1,4 @@
-/*	$NetBSD: reloc.h,v 1.6 1996/10/07 03:15:03 jonathan Exp $	*/
+/*	$NetBSD: reloc.h,v 1.6.30.1 2000/11/20 20:13:32 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -48,7 +48,7 @@ enum reloc_type {
 	MIPS_RELOC_WDISP16,	/* 16-bit signed pc-relative << 2 */
 	MIPS_RELOC_HI16,	/* 16-bit absolute << 16 */
 	MIPS_RELOC_HI16_S,	/* 16-bit absolute << 16 (+1 if needed) */
-	MIPS_RELOC_LO16,	/* 16-bit absolute */
+	MIPS_RELOC_LO16		/* 16-bit absolute */
 };
 
 /*

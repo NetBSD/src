@@ -1,4 +1,4 @@
-/*	$NetBSD: data.h,v 1.1 1999/03/06 16:36:05 ragge Exp $ */
+/*	$NetBSD: data.h,v 1.1.8.1 2000/11/20 20:32:36 bouyer Exp $ */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -36,8 +36,6 @@
  /* All bugs are subject to removal without further notice */
 		
 
-
-extern unsigned *bootregs;
 
 /*
  * rpb->iovec gives pointer to this structure.

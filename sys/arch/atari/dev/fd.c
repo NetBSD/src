@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.29 1999/08/06 08:27:30 leo Exp $	*/
+/*	$NetBSD: fd.c,v 1.29.2.1 2000/11/20 20:05:25 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -50,6 +50,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/buf.h>
@@ -131,7 +132,8 @@ static char	*fd_error= NULL;	/* error from fd_xfer_ok()	*/
 struct fd_softc {
 	struct device	sc_dv;		/* generic device info		*/
 	struct disk	dkdev;		/* generic disk info		*/
-	struct buf	bufq;		/* queue of buf's		*/
+	struct buf_queue bufq;		/* queue of buf's		*/
+	struct callout	sc_motor_ch;
 	int		unit;		/* unit for atari controlling hw*/
 	int		nheads;		/* number of heads in use	*/
 	int		nsectors;	/* number of sectors/track	*/
@@ -174,8 +176,19 @@ struct fd_types {
 		{ 2, 18, 2880 , FLP_HD , "1.44MB" },	/* 1.44 Mb	*/
 };
 
+#define	FLP_TYPE_360	0		/* XXX: Please keep these in	*/
+#define	FLP_TYPE_720	1		/* sync with the numbering in	*/
+#define	FLP_TYPE_144	2		/* 'fdtypes' right above!	*/
+
+/*
+ * This is set only once at attach time. The value is determined by reading
+ * the configuration switches and is one of the FLP_TYPE_*'s. 
+ * This is simular to the way Atari handles the _FLP cookie.
+ */
+static short	def_type = 0;		/* Reflects config-switches	*/
+
 #define	FLP_DEFTYPE	1		/* 720Kb, reasonable default	*/
-#define	FLP_TYPE(dev)	( DISKPART(dev) == 0 ? FLP_DEFTYPE : DISKPART(dev) - 1 )
+#define	FLP_TYPE(dev)	( DISKPART(dev) == 0 ? def_type : DISKPART(dev) - 1 )
 
 typedef void	(*FPV) __P((void *));
 
@@ -231,6 +244,25 @@ extern __inline__ u_char read_dmastat(void)
 }
 
 /*
+ * Config switch stuff. Used only for the floppy type for now. That's
+ * why it's here...
+ * XXX: If needed in more places, it should be moved to it's own include file.
+ * Note: This location _must_ be read as an u_short. Failure to do so
+ *       will return garbage!
+ */
+static u_short rd_cfg_switch __P((void));
+static u_short rd_cfg_switch(void)
+{
+	return(*((u_short*)AD_CFG_SWITCH));
+}
+
+/*
+ * Switch definitions.
+ * Note: ON reads as a zero bit!
+ */
+#define	CFG_SWITCH_NOHD	0x4000
+
+/*
  * Autoconfig stuff....
  */
 extern struct cfdriver fd_cd;
@@ -249,8 +281,12 @@ struct device	*pdp;
 struct cfdata	*cfp;
 void		*auxp;
 {
-	if(strcmp("fdc", auxp) || cfp->cf_unit != 0)
+	static int	fdc_matched = 0;
+
+	/* Match only once */
+	if(strcmp("fdc", auxp) || fdc_matched)
 		return(0);
+	fdc_matched = 1;
 	return(1);
 }
 
@@ -285,6 +321,7 @@ void		*auxp;
 	}
 
 	if(nfound) {
+		struct fd_softc *fdsc = getsoftc(fd_cd, first_found);
 
 		/*
 		 * Make sure motor will be turned of when a floppy is
@@ -292,7 +329,7 @@ void		*auxp;
 		 */
 		fdselect(first_found, 0, FLP_DD);
 		fd_state = FLP_MON;
-		timeout((FPV)fdmotoroff, (void*)getsoftc(fd_cd,first_found), 0);
+		callout_reset(&fdsc->sc_motor_ch, 0, (FPV)fdmotoroff, fdsc);
 
 		/*
 		 * enable disk related interrupts
@@ -341,9 +378,20 @@ struct device	*pdp, *dp;
 void		*auxp;
 {
 	struct fd_softc	*sc;
-	struct fd_types *type = &fdtypes[FLP_DEFTYPE]; /* XXX: switches??? */
+	struct fd_types *type;
+	u_short		swtch;
 
 	sc = (struct fd_softc *)dp;
+
+	callout_init(&sc->sc_motor_ch);
+
+	/*
+	 * Find out if an Ajax chip might be installed. Set the default
+	 * floppy type accordingly.
+	 */
+	swtch    = rd_cfg_switch();
+	def_type = (swtch & CFG_SWITCH_NOHD) ? FLP_TYPE_720 : FLP_TYPE_144;
+	type     = &fdtypes[def_type];
 
 	printf(": %s %d cyl, %d head, %d sec\n", type->descr,
 		type->nblocks / (type->nsectors * type->nheads), type->nheads,
@@ -458,7 +506,7 @@ struct proc	*proc;
 
 		type = FLP_TYPE(dev);
 
-		sc->bufq.b_actf = NULL;
+		BUFQ_INIT(&sc->bufq);
 		sc->unit        = DISKUNIT(dev);
 		sc->part        = RAW_PART;
 		sc->nheads	= fdtypes[type].nheads;
@@ -574,14 +622,17 @@ struct buf	*bp;
 		else bp->b_bcount = sz * lp->d_secsize;
 	}
 
+	/* No partition translation. */
+	bp->b_rawblkno = bp->b_blkno;
+
 	/*
 	 * queue the buf and kick the low level code
 	 */
 	sps = splbio();
-	disksort(&sc->bufq, bp);
+	disksort_blkno(&sc->bufq, bp);	/* XXX disksort_cylinder */
 	if (!lock_stat) {
 		if (fd_state & FLP_MON)
-			untimeout((FPV)fdmotoroff, (void*)sc);
+			callout_stop(&sc->sc_motor_ch);
 		fd_state = FLP_IDLE;
 		st_dmagrab((dma_farg)fdcint, (dma_farg)fdstart, sc,
 							&lock_stat, 0);
@@ -664,7 +715,7 @@ struct fd_softc	*sc;
 {
 	struct buf	*bp;
 
-	bp           = sc->bufq.b_actf;
+	bp	     = BUFQ_FIRST(&sc->bufq);
 	sc->sector   = bp->b_blkno;	/* Start sector for I/O		*/
 	sc->io_data  = bp->b_data;	/* KVA base for I/O		*/
 	sc->io_bytes = bp->b_bcount;	/* Transfer size in bytes	*/
@@ -680,14 +731,14 @@ struct fd_softc	*sc;
 
 /*
  * The current transaction is finished (for good or bad). Let go of
- * the the dma-resources. Call biodone() to finish the transaction.
+ * the dma-resources. Call biodone() to finish the transaction.
  * Find a new transaction to work on.
  */
 static void
 fddone(sc)
 register struct fd_softc	*sc;
 {
-	struct buf	*bp, *dp;
+	struct buf	*bp;
 	struct fd_softc	*sc1;
 	int		i, sps;
 
@@ -702,11 +753,10 @@ register struct fd_softc	*sc;
 		 * Finish current transaction.
 		 */
 		sps = splbio();
-		dp = &sc->bufq;
-		bp = dp->b_actf;
-		if(bp == NULL)
+		bp = BUFQ_FIRST(&sc->bufq);
+		if (bp == NULL)
 			panic("fddone");
-		dp->b_actf = bp->b_actf;
+		BUFQ_REMOVE(&sc->bufq, bp);
 		splx(sps);
 
 #ifdef FLP_DEBUG
@@ -732,10 +782,11 @@ register struct fd_softc	*sc;
 			i = 0;
 		if((sc1 = fd_cd.cd_devs[i]) == NULL)
 			continue;
-		if(sc1->bufq.b_actf)
+		if (BUFQ_FIRST(&sc1->bufq) != NULL)
 			break;
 		if(i == sc->unit) {
-			timeout((FPV)fdmotoroff, (void*)sc, FLP_MONDELAY);
+			callout_reset(&sc->sc_motor_ch, FLP_MONDELAY,
+			    (FPV)fdmotoroff, sc);
 #ifdef FLP_DEBUG
 			printf("fddone: Nothing to do\n");
 #endif
@@ -854,7 +905,8 @@ struct fd_softc	*sc;
 		 */
 		fd_cmd = RESTORE;
 		write_fdreg(FDC_CS, RESTORE|VBIT|hbit);
-		timeout((FPV)fdmotoroff, (void*)sc, FLP_XFERDELAY);
+		callout_reset(&sc->sc_motor_ch, FLP_XFERDELAY,
+		    (FPV)fdmotoroff, sc);
 
 #ifdef FLP_DEBUG
 		printf("fd_xfer:Recalibrating drive %d\n", sc->unit);
@@ -872,7 +924,8 @@ struct fd_softc	*sc;
 		sc->curtrk = track;	/* be optimistic */
 		write_fdreg(FDC_DR, track);
 		write_fdreg(FDC_CS, SEEK|RATE6|VBIT|hbit);
-		timeout((FPV)fdmotoroff, (void*)sc, FLP_XFERDELAY);
+		callout_reset(&sc->sc_motor_ch, FLP_XFERDELAY,
+		    (FPV)fdmotoroff, sc);
 		fd_cmd = SEEK;
 #ifdef FLP_DEBUG
 		printf("fd_xfer:Seek to track %d on drive %d\n",track,sc->unit);
@@ -916,7 +969,7 @@ struct fd_softc	*sc;
 		write_fdreg(DMA_WRBIT | FDC_CS, F_WRITE|hbit|EBIT|PBIT);
 		fd_cmd = F_WRITE;
 	}
-	timeout((FPV)fdmotoroff, (void*)sc, FLP_XFERDELAY);
+	callout_reset(&sc->sc_motor_ch, FLP_XFERDELAY, (FPV)fdmotoroff, sc);
 }
 
 /* return values of fd_xfer_ok(): */
@@ -941,7 +994,7 @@ struct fd_softc	*sc;
 	/*
 	 * Cancel timeout (we made it, didn't we)
 	 */
-	untimeout((FPV)fdmotoroff, (void*)sc);
+	callout_stop(&sc->sc_motor_ch);
 
 	switch(fd_xfer_ok(sc)) {
 		case X_ERROR :
@@ -970,7 +1023,7 @@ struct fd_softc	*sc;
 				return;
 			}
 
-			bp = sc->bufq.b_actf;
+			bp = BUFQ_FIRST(&sc->bufq);
 
 			bp->b_error  = EIO;
 			bp->b_flags |= B_ERROR;
@@ -1226,7 +1279,9 @@ struct fd_softc	*fdsoftc;
 			fddeselect();
 			fd_state = FLP_IDLE;
 		}
-		else timeout((FPV)fdmotoroff, (void*)fdsoftc, 10*FLP_MONDELAY);
+		else
+			callout_reset(&fdsoftc->sc_motor_ch, 10*FLP_MONDELAY,
+			    (FPV)fdmotoroff, fdsoftc);
 	}
 	st_dmafree(fdsoftc, &tmp);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: sfas.c,v 1.15 1999/09/30 22:59:54 thorpej Exp $	*/
+/*	$NetBSD: sfas.c,v 1.15.2.1 2000/11/20 20:04:06 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Stevens
@@ -58,10 +58,6 @@
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
-
-#include <vm/vm.h>
-#include <vm/vm_kern.h>
-#include <vm/vm_page.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -231,7 +227,7 @@ sfas_scsicmd(struct scsipi_xfer *xs)
 
 	slp = xs->sc_link;
 	dev = slp->adapter_softc;
-	flags = xs->xs_flags;
+	flags = xs->xs_control;
 	target = slp->scsipi_scsi.target;
 
 	if (flags & XS_CTL_DATA_UIO)
@@ -281,7 +277,7 @@ sfas_donextcmd(dev, pendp)
  * acknowledged the reset. After that we have to wait a reset to select
  * delay before anything else can happend.
  */
-	if (pendp->xs->xs_flags & XS_CTL_RESET) {
+	if (pendp->xs->xs_control & XS_CTL_RESET) {
 		struct nexus	*nexus;
 
 		s = splbio();
@@ -311,7 +307,7 @@ sfas_donextcmd(dev, pendp)
  * If we are polling, go to splbio and perform the command, else we poke
  * the scsi-bus via sfasgo to get the interrupt machine going.
  */
-	if (pendp->xs->xs_flags & XS_CTL_POLL) {
+	if (pendp->xs->xs_control & XS_CTL_POLL) {
 		s = splbio();
 		sfasicmd(dev, pendp);
 		TAILQ_INSERT_TAIL(&dev->sc_xs_free, pendp, link);
@@ -1288,7 +1284,7 @@ sfas_postaction(dev, rp, nexus)
 
 		  /* We should use polled IO here. */
 		  if (dev->sc_dma_blk_flg == SFAS_CHAIN_PRG) {
-			dev->sc_ixfer(dev, nexus->xs->xs_flags & XS_CTL_POLL);
+			dev->sc_ixfer(dev, nexus->xs->xs_control & XS_CTL_POLL);
 			dev->sc_cur_link++;
 			dev->sc_dma_len = 0;
 			break;

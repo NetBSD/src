@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.15 1999/08/05 18:08:14 thorpej Exp $	*/
+/*	$NetBSD: psl.h,v 1.15.2.1 2000/11/20 20:27:54 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -106,6 +106,7 @@ _getsr(void)
 /* Block out all interrupts (except NMI of course). */
 #define splhigh()       spl7()
 #define splsched()      spl7()
+#define spllock()	spl7()
 
 #endif	/* KERNEL && !_LOCORE */
 #endif /* _SUN3_PSL_H_ */

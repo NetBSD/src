@@ -1,4 +1,4 @@
-/*	$NetBSD: ka630.h,v 1.3 1998/04/13 12:12:59 ragge Exp $ */
+/*	$NetBSD: ka630.h,v 1.3.14.1 2000/11/20 20:32:53 bouyer Exp $ */
 /*-
  * Copyright (c) 1986, 1988 The Regents of the University of California.
  * All rights reserved.
@@ -34,10 +34,13 @@
  *	@(#)uvaxII.h	7.4 (Berkeley) 5/9/91
  */
 
-#if VAX630 || VAX410
+#ifndef _VAX_INCLUDE_KA630_H_
+#define	_VAX_INCLUDE_KA630_H_
+
 #define UVAXIISID	((u_long *)0x20040004)
 #define UVAXIICPU	((struct uvaxIIcpu *)0x20080000)
 
+#ifndef _LOCORE
 struct uvaxIIcpu {
 	u_short uvaxII_bdr;
 	u_short uvaxII_xxx;
@@ -45,6 +48,7 @@ struct uvaxIIcpu {
 	u_long  uvaxII_cear;
 	u_long  uvaxII_dear;
 };
+#endif
 
 /* Memory system err reg. */
 #define	UVAXIIMSER_CD	0x00000300
@@ -61,13 +65,11 @@ struct uvaxIIcpu {
 /* Mem. error address regs. */
 #define	UVAXIICEAR_PG	0x00007fff
 #define	UVAXIIDEAR_PG	0x00007fff
-#endif
 
 /*
  * Definitions specific to the ka630 MicroVAXII Q22 bus cpu card. Includes the
  * tod clock chip and the cpu registers.
  */
-#if VAX630
 #define KA630CLK	((struct ka630clock *)0x200b8000)
 
 /* Bdr register bits */
@@ -118,6 +120,19 @@ struct ka630clock {
 	u_short	csr3;
 	u_short	cpmbx;	/* CPMBX is used by the boot rom. see ka630-ug-3.3.3 */
 };
+#endif
 
-#endif
-#endif
+#define KA630_NVR_ADRS	0x200B8024
+/* Definitions for various locations in the KA630 console page */
+#define KA630_PUTC_POLL 0x20
+#define KA630_PUTC	0x24
+#define KA630_GETC	0x1C
+#define KA630_ROW	0x4C
+#define KA630_MINROW	0x4D
+#define KA630_MAXROW	0x4E
+#define KA630_COL	0x50
+#define KA630_MINCOL	0x51
+#define KA630_MAXCOL	0x52
+
+#endif /* _VAX_INCLUDE_KA630_H_ */
+

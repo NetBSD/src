@@ -1,0 +1,6 @@
+#	$NetBSD: std.mipsco,v 1.1.2.2 2000/11/20 20:14:01 bouyer Exp $
+
+machine mipsco mips
+
+options	EXEC_ELF32	# exec ELF32 binaries
+options	EXEC_SCRIPT	# exec #! scripts

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.2 1999/09/14 10:22:37 tsubai Exp $	*/
+/*	$NetBSD: trap.c,v 1.2.2.1 2000/11/20 20:24:33 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -39,6 +39,8 @@
  *	@(#)trap.c	7.4 (Berkeley) 5/13/91
  */
 
+#define RECURSE_TLB_HANDLER
+
 /*
  * SH3 Trap and System call handling
  *
@@ -46,6 +48,7 @@
  */
 
 #include "opt_ddb.h"
+#include "opt_syscall_debug.h"
 #include "opt_ktrace.h"
 
 #include <sys/param.h>
@@ -60,7 +63,7 @@
 #endif
 #include <sys/syscall.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <sh3/trapreg.h>
 #include <machine/cpu.h>
@@ -97,7 +100,7 @@ userret(p, pc, oticks)
 	int pc;
 	u_quad_t oticks;
 {
-	int sig, s;
+	int sig;
 
 	/* take pending signals */
 	while ((sig = CURSIG(p)) != 0)
@@ -105,18 +108,9 @@ userret(p, pc, oticks)
 	p->p_priority = p->p_usrpri;
 	if (want_resched) {
 		/*
-		 * Since we are curproc, a clock interrupt could
-		 * change our priority without changing run queues
-		 * (the running process is not kept on a run queue).
-		 * If this happened after we setrunqueue ourselves but
-		 * before we switch()'ed, we might not be on the queue
-		 * indicated by our priority.
+		 * We are being preempted.
 		 */
-		s = splstatclock();
-		setrunqueue(p);
-		p->p_stats->p_ru.ru_nivcsw++;
-		mi_switch();
-		splx(s);
+		preempt(NULL);
 		while ((sig = CURSIG(p)) != 0)
 			postsig(sig);
 	}
@@ -130,7 +124,7 @@ userret(p, pc, oticks)
 		addupc_task(p, pc, (int)(p->p_sticks - oticks) * psratio);
 	}
 
-	curpriority = p->p_priority;
+	curcpu()->ci_schedstate.spc_curpriority = p->p_priority;
 }
 
 char	*trap_type[] = {
@@ -207,20 +201,29 @@ trap(p1, p2, p3, p4, frame)
 
 	default:
 	we_re_toast:
+#ifdef DDB
+		if (kdb_trap(type, 0, &frame))
+			return;
+#endif
 		if (frame.tf_trapno >> 5 < trap_types)
 			printf("fatal %s", trap_type[frame.tf_trapno >> 5]);
 		else
 			printf("unknown trap %x", frame.tf_trapno);
 		printf(" in %s mode\n", (type & T_USER) ? "user" : "supervisor");
-		printf("trap type %d spc %x ssr %x \n",
+		printf("trap type %x spc %x ssr %x \n",
 			   type, frame.tf_spc, frame.tf_ssr);
 
 		panic("trap");
 		/*NOTREACHED*/
 
 	case T_TRAP|T_USER:
-		syscall(&frame);
-		return;
+		if (SHREG_TRA == (0x000000c3 << 2)) {
+			trapsignal(p, SIGTRAP, type &~ T_USER);
+			break;
+		} else {
+			syscall(&frame);
+			return;
+		}
 
 	case T_INITPAGEWR:
 	case T_INITPAGEWR|T_USER:
@@ -276,7 +279,7 @@ trap(p1, p2, p3, p4, frame)
 	case T_ADDRESSERRR|T_USER:		/* protection fault */
 	case T_ADDRESSERRW|T_USER:
 	case T_INVALIDSLOT|T_USER:
-		printf("trap type %d spc %x ssr %x \n",
+		printf("trap type %x spc %x ssr %x \n",
 			   type, frame.tf_spc, frame.tf_ssr);
 		trapsignal(p, SIGBUS, type &~ T_USER);
 		goto out;
@@ -353,7 +356,7 @@ trap(p1, p2, p3, p4, frame)
 		if ((caddr_t)va >= vm->vm_maxsaddr
 			&& (caddr_t)va < (caddr_t)VM_MAXUSER_ADDRESS
 			&& map != kernel_map) {
-			nss = clrnd(btoc(USRSTACK-(unsigned)va));
+			nss = btoc(USRSTACK-(unsigned)va);
 			if (nss > btoc(p->p_rlimit[RLIMIT_STACK].rlim_cur)) {
 				rv = KERN_FAILURE;
 				goto nogo;
@@ -393,9 +396,8 @@ trap(p1, p2, p3, p4, frame)
 #endif /* TODO */
 
 	case T_USERBREAK|T_USER:		/* bpt instruction fault */
-	trapsignal(p, SIGTRAP, type &~ T_USER);
-	break;
-
+		trapsignal(p, SIGTRAP, type &~ T_USER);
+		break;
 	}
 
 	if ((type & T_USER) == 0)
@@ -455,7 +457,12 @@ syscall(frame)
 		 */
 		if (callp != sysent)
 			break;
-		code = frame->tf_r5; /* fuword(params + _QUAD_LOWWORD * sizeof(int)); */
+		/* fuword(params + _QUAD_LOWWORD * sizeof(int)); */
+#if _BYTE_ORDER == BIG_ENDIAN
+		code = frame->tf_r5;
+#else
+		code = frame->tf_r4;
+#endif
 		/* params += sizeof(quad_t); */
 		break;
 	default:
@@ -468,7 +475,7 @@ syscall(frame)
 	argsize = callp->sy_argsize;
 
 	if (ocode == SYS_syscall) {
-		if (argsize){
+		if (argsize) {
 			args[0] = frame->tf_r5;
 			args[1] = frame->tf_r6;
 			args[2] = frame->tf_r7;
@@ -517,7 +524,7 @@ syscall(frame)
 //#endif
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSCALL))
-		ktrsyscall(p->p_tracep, code, argsize, args);
+		ktrsyscall(p, code, argsize, args);
 #endif
 	if (error)
 		goto bad;
@@ -563,24 +570,24 @@ syscall(frame)
 	userret(p, frame->tf_spc, sticks);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
-		ktrsysret(p->p_tracep, code, error, rval[0]);
+		ktrsysret(p, code, error, rval[0]);
 #endif
 }
 
 void
-child_return(p, p2, p3, p4, frame)
-	struct proc *p;
-	int p2, p3, p4;	/* dummy param */
-	struct trapframe frame;
+child_return(arg)
+	void *arg;
 {
+	struct proc *p = arg;
+	struct trapframe *tf = p->p_md.md_regs;
 
-	frame.tf_r0 = 0;
-	frame.tf_ssr |= PSL_TBIT; /* This indicates no error. */
+	tf->tf_r0 = 0;
+	tf->tf_ssr |= PSL_TBIT; /* This indicates no error. */
 
-	userret(p, frame.tf_spc, 0);
+	userret(p, tf->tf_spc, 0);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
-		ktrsysret(p->p_tracep, SYS_fork, 0, 0);
+		ktrsysret(p, SYS_fork, 0, 0);
 #endif
 }
 
@@ -602,25 +609,46 @@ tlb_handler(p1, p2, p3, p4, frame)
 	struct proc *p;
 	struct vmspace *vm;
 	vm_map_t map;
-	int rv;
+	int rv = 0;
+	u_quad_t sticks = 0;
+	int type = 0;
 	vm_prot_t ftype;
 	extern vm_map_t kernel_map;
-	unsigned nss;
+	unsigned int nss;
 	vaddr_t	va_save;
 	unsigned long pteh_save;
 	int exptype;
+#ifdef RECURSE_TLB_HANDLER
+	int reentrant = 0;
+#endif
+
+	uvmexp.traps++;
 
 	va = (vaddr_t)SHREG_TEA;
 	va = trunc_page(va);
 	pde_index = pdei(va);
+#ifdef SH4
+	pd_top = (u_long *)(SH3_P1SEG_TO_P2SEG(SHREG_TTB));
+	pde = (u_long *)((u_long)SH3_P1SEG_TO_P2SEG(pd_top[pde_index]));
+#else
 	pd_top = (u_long *)SHREG_TTB;
 	pde = (u_long *)pd_top[pde_index];
+#endif
 	exptype = SHREG_EXPEVT;
 
+#if 0 /* def SH4 */
+	if (((u_long)pde & PG_V) != 0 && 
+	    (incpuswitch || exptype != T_TLBPRIVW)) {
+#else
 	if (((u_long)pde & PG_V) != 0 && exptype != T_TLBPRIVW) {
+#endif
 		(u_long)pde &= ~PGOFSET;
 		pte_index = ptei(va);
+#ifdef SH4
+		pte = SH3_P1SEG_TO_P2SEG(pde[pte_index]);
+#else
 		pte = pde[pte_index];
+#endif
 
 		if ((pte & PG_V) != 0) {
 #ifdef	DEBUG_TLB
@@ -629,8 +657,47 @@ tlb_handler(p1, p2, p3, p4, frame)
 				       va, pte);
 #endif
 
+#ifdef SH4_PCMCIA
+#define PTEL_VALIDBITS 0x1ffff17e
+#else
 #define PTEL_VALIDBITS 0x1ffffd7e
+#endif
+#ifdef SH4
+			if (pte & PG_PCMCIA) {
+				int pcmtype;
+				unsigned long ptea = 0;
+
+				pcmtype = pte & PG_PCMCIA;
+
+				/* printf("pcmtype = %lx,pte=%lx\n",
+				       pcmtype,pte); */
+
+				if (pcmtype == PG_PCMCIA_IO) {
+					ptea = 0x03;
+				} else if (pcmtype == PG_PCMCIA_MEM) {
+					ptea = 0x05; 
+					/* ptea = 0x03; */
+				} else if (pcmtype == PG_PCMCIA_ATT) {
+					ptea = 0x07;
+				}
+
+				SHREG_PTEL = (pte & PTEL_VALIDBITS)
+					& ~PG_N;
+
+				SHREG_PTEA = ptea;
+			} else {
+				if ( /*1 ||*/ (va >= SH3_P1SEG_BASE)) {
+					SHREG_PTEL = (pte & PTEL_VALIDBITS)
+						| PG_WT;
+				} else {
+					SHREG_PTEL = pte & PTEL_VALIDBITS;
+				}
+
+				SHREG_PTEA = 0;
+			}
+#else
 			SHREG_PTEL = pte & PTEL_VALIDBITS;
+#endif
 
 			return;
 		}
@@ -646,7 +713,20 @@ tlb_handler(p1, p2, p3, p4, frame)
 	if (p == NULL) {
 		rv = KERN_FAILURE;
 		goto nogo;
+	} else {
+#if 1
+		if (!KERNELMODE(frame.tf_r15)) {
+#else
+		if (!KERNELMODE(frame.tf_spc, frame.tf_ssr)) {
+#endif
+			type = T_USER;
+			sticks = p->p_sticks;
+			p->p_md.md_regs = &frame;
+		}
+		else
+			sticks = 0;
 	}
+
 	vm = p->p_vmspace;
 	/*
 	 * It is only a kernel address space fault iff:
@@ -668,22 +748,50 @@ tlb_handler(p1, p2, p3, p4, frame)
 		ftype = VM_PROT_READ;
 
 	nss = 0;
-#if 1
+
+#ifdef SH4
+	if (vm != NULL && (caddr_t)va >= vm->vm_maxsaddr
+	    && (caddr_t)va < (caddr_t)VM_MAXUSER_ADDRESS
+	    && map != kernel_map) {
+#else
 	if ((caddr_t)va >= vm->vm_maxsaddr
 	    && (caddr_t)va < (caddr_t)VM_MAXUSER_ADDRESS
 	    && map != kernel_map) {
-		nss = clrnd(btoc(USRSTACK-(unsigned)va));
+#endif
+		nss = btoc(USRSTACK-(unsigned)va);
 		if (nss > btoc(p->p_rlimit[RLIMIT_STACK].rlim_cur)) {
-			rv = KERN_FAILURE;
-			goto nogo;
+			/*
+			 * We used to fail here. However, it may
+			 * just have been an mmap()ed page low
+			 * in the stack, which is legal. If it
+			 * wasn't, uvm_fault() will fail below.
+			 *
+			 * Set nss to 0, since this case is not
+			 * a "stack extension".
+			 */
+			nss = 0;
 		}
 	}
-#endif
 
+#ifdef RECURSE_TLB_HANDLER
+	if (((PSL_BL | PSL_IMASK) & frame.tf_ssr) == 0)
+		reentrant = 1;
+#endif
 	/* Fault the original page in. */
+#ifdef RECURSE_TLB_HANDLER
+	if (reentrant)
+		enable_ext_intr();
+#endif
 	rv = uvm_fault(map, va, 0, ftype);
+#ifdef RECURSE_TLB_HANDLER
+	if (reentrant)
+		disable_ext_intr();
+#endif
 	if (rv == KERN_SUCCESS) {
-#if 1
+#ifdef SH4
+		if (vm != NULL && nss > vm->vm_ssize)
+			vm->vm_ssize = nss;
+#else
 		if (nss > vm->vm_ssize)
 			vm->vm_ssize = nss;
 #endif
@@ -692,7 +800,12 @@ tlb_handler(p1, p2, p3, p4, frame)
 		SHREG_PTEH = pteh_save;
 		pde_index = pdei(va);
 		pd_top = (u_long *)SHREG_TTB;
+#ifdef SH4
+		pde = (u_long *)
+			((u_long)SH3_P1SEG_TO_P2SEG(pd_top[pde_index]));
+#else
 		pde = (u_long *)pd_top[pde_index];
+#endif
 
 		if (((u_long)pde & PG_V) != 0) {
 			(u_long)pde &= ~PGOFSET;
@@ -705,7 +818,44 @@ tlb_handler(p1, p2, p3, p4, frame)
 					printf("tlb_handler#:va(0x%lx),pte(0x%lx)\n", va, pte);
 #endif
 
+#ifdef SH4
+				if (pte & PG_PCMCIA) {
+					int pcmtype;
+					unsigned long ptea = 0;
+
+					pcmtype = pte & PG_PCMCIA;
+
+					/* printf("pcmtype = %lx,pte=%lx\n",
+					       pcmtype,pte); */
+
+					if (pcmtype == PG_PCMCIA_IO) {
+						ptea = 0x03;
+					} else if (pcmtype == PG_PCMCIA_MEM) {
+						ptea = 0x05; 
+						/*ptea = 0x03; */
+					} else if (pcmtype == PG_PCMCIA_ATT) {
+						ptea = 0x07;
+					}
+
+					SHREG_PTEL = (pte & PTEL_VALIDBITS)
+						& ~PG_N;
+
+					SHREG_PTEA = ptea;
+				} else {
+					if ( /*1 ||*/ (va >= SH3_P1SEG_BASE)) {
+						SHREG_PTEL = 
+							(pte & PTEL_VALIDBITS)
+								| PG_WT;
+					} else {
+						SHREG_PTEL = 
+							(pte & PTEL_VALIDBITS);
+					}
+					SHREG_PTEA = 0;
+				}
+#else
+
 				SHREG_PTEL = pte & PTEL_VALIDBITS;
+#endif
 
 				return;
 			}
@@ -713,6 +863,14 @@ tlb_handler(p1, p2, p3, p4, frame)
 	}
 
  nogo:
+	if (p != NULL) {
+		struct pcb *pcb = &p->p_addr->u_pcb;
+		if (pcb->pcb_onfault != 0) {
+			frame.tf_spc = (int)pcb->pcb_onfault;
+			return;
+		}
+	}
+
 #ifdef	DEBUG
 	if (trapdebug) {
 		printf("tlb_handler#NOGO:va(0x%lx),spc=%x\n",
@@ -727,4 +885,10 @@ tlb_handler(p1, p2, p3, p4, frame)
 		trapsignal(p, SIGKILL, T_TLBINVALIDR);
 	} else
 		trapsignal(p, SIGSEGV, T_TLBINVALIDR);
+
+	if ((type & T_USER) == 0)
+		return;
+
+	if (p != NULL)
+		userret(p, frame.tf_spc, sticks);
 }

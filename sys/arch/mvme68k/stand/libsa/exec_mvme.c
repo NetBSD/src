@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_mvme.c,v 1.5 1998/08/22 10:55:36 scw Exp $ */
+/*	$NetBSD: exec_mvme.c,v 1.5.14.1 2000/11/20 20:15:30 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -38,27 +38,32 @@
 #include <sys/param.h>
 #include <sys/reboot.h>
 #include <machine/prom.h>
-#include <a.out.h>
+#include <sys/exec_aout.h>
 
 #include "stand.h"
 #include "libsa.h"
 
+/* This must agree with what locore.s expects */
+typedef void (*kentry_t)(int, u_int, u_int, u_int, int, char *);
+
+
 /*ARGSUSED*/
 void
-exec_mvme(file, flag)
+exec_mvme(file, flag, part)
 	char	*file;
 	int	flag;
+	int	part;
 {
 	char *loadaddr;
 	int io;
 	struct exec x;
 	int cc, magic;
-	void (*entry)();
+	kentry_t *entry;
 	char *cp;
 	int *ip;
 
 #ifdef	DEBUG
-	printf("exec_mvme: file=%s flag=0x%x\n", file, flag);
+	printf("exec_mvme: partition=%d, file=%s flag=0x%x\n", part, file, flag);
 #endif
 
 	io = open(file, 0);
@@ -93,7 +98,7 @@ exec_mvme(file, flag)
 	if (magic == ZMAGIC)
 		cp += sizeof(x);
 	/*LINTED*/
-	entry = (void (*)())cp;
+	entry = (kentry_t *) cp;
 
 	/*
 	 * Leave a copy of the exec header before the text.
@@ -105,7 +110,7 @@ exec_mvme(file, flag)
 	/*
 	 * Read in the text segment.
 	 */
-	printf("%d", x.a_text);
+	printf("%ld", x.a_text);
 	cc = (int)x.a_text;
 	if (magic == ZMAGIC) 
 		cc = cc - sizeof(x); /* a.out header part of text in zmagic */
@@ -126,7 +131,7 @@ exec_mvme(file, flag)
 	/*
 	 * Read in the data segment.
 	 */
-	printf("+%d", x.a_data);
+	printf("+%ld", x.a_data);
 	if (read(io, cp, (size_t)x.a_data) != (size_t)x.a_data)
 		goto shread;
 	cp += (int)x.a_data;
@@ -135,7 +140,7 @@ exec_mvme(file, flag)
 	 * Zero out the BSS section.
 	 * (Kernel doesn't care, but do it anyway.)
 	 */
-	printf("+%d", x.a_bss);
+	printf("+%ld", x.a_bss);
 	cc = (int)x.a_bss;
 	/*LINTED*/
 	while ((int)cp & 3) {
@@ -185,7 +190,7 @@ exec_mvme(file, flag)
 
 	printf("Start @ 0x%p ...\n", entry);
 	(*entry)(flag, bugargs.ctrl_addr, 
-				bugargs.ctrl_lun, bugargs.dev_lun, 0, cp);
+				bugargs.ctrl_lun, bugargs.dev_lun, part, cp);
 	printf("exec: kernel returned!\n");
 	return;
 

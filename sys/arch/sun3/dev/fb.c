@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.5 1998/02/08 05:15:35 gwr Exp $ */
+/*	$NetBSD: fb.c,v 1.5.14.1 2000/11/20 20:27:51 bouyer Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -114,10 +114,11 @@ fbioctl(dev, cmd, data, flags, p)
 	return (fbioctlfb(devfb, cmd, data));
 }
 
-int
+paddr_t
 fbmmap(dev, off, prot)
 	dev_t dev;
-	int off, prot;
+	off_t off;
+	int prot;
 {
 	return ((*devfb->fb_driver->fbd_mmap)(dev, off, prot));
 }

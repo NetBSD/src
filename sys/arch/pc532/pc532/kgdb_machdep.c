@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.7 1998/09/02 19:17:14 matthias Exp $	*/
+/*	$NetBSD: kgdb_machdep.c,v 1.7.12.1 2000/11/20 20:19:22 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996 Matthias Pfaller.
@@ -33,7 +33,8 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kgdb.h>
-#include <vm/vm.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/cpufunc.h>
 #include <machine/frame.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: pow.c,v 1.7 1998/08/04 16:07:53 minoura Exp $	*/
+/*	$NetBSD: pow.c,v 1.7.14.1 2000/11/20 20:30:02 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 MINOURA Makoto.
@@ -92,14 +92,20 @@ powattach(num)
 		}
 
 		printf("pow%d: started by ", minor);
-		if ((sw & POW_ALARMSW) && sramtop[0x26] == 0)
-			printf ("RTC alarm.\n");
-		else if (sw & POW_EXTERNALSW)
+		if (sw & POW_EXTERNALSW)
 			printf ("external power switch.\n");
 		else if (sw & POW_FRONTSW)
 			printf ("front power switch.\n");
+		/* XXX: I don't know why POW_ALARMSW should not be checked */
+#if 0
+		else if ((sw & POW_ALARMSW) && sramtop[0x26] == 0)
+			printf ("RTC alarm.\n");
 		else
 			printf ("???.\n");
+#else
+		else
+			printf ("RTC alarm.\n");
+#endif
 	}
 
 	shutdownhook_establish(pow_check_switch, 0);

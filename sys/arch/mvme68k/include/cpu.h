@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.12 1999/08/10 21:08:08 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.12.2.1 2000/11/20 20:15:21 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -42,15 +42,36 @@
  *	@(#)cpu.h	8.4 (Berkeley) 1/5/94
  */
 
+#ifndef _MACHINE_CPU_H_
+#define _MACHINE_CPU_H_
+
 /*
  * Exported definitions unique to mvme68k/68k cpu support.
  */
+
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_lockdebug.h"
+#endif
 
 /*
  * Get common m68k CPU definitions.
  */
 #include <m68k/cpu.h>
 #define	M68K_MMU_MOTOROLA
+
+#include <sys/sched.h>
+struct cpu_info {
+	struct schedstate_percpu ci_schedstate; /* scheduler state */
+#if defined(DIAGNOSTIC) || defined(LOCKDEBUG)
+	u_long ci_spin_locks;		/* # of spin locks held */
+	u_long ci_simple_locks;		/* # of simple locks held */
+#endif
+};
+
+#ifdef _KERNEL
+extern struct cpu_info cpu_info_store;
+
+#define	curcpu()			(&cpu_info_store)
 
 /*
  * definitions of cpu-dependent requirements
@@ -89,7 +110,7 @@ struct clockframe {
  * or after the current trap/syscall if in system mode.
  */
 extern int want_resched;	/* resched() was called */
-#define	need_resched()	{ want_resched++; aston(); }
+#define	need_resched(ci)	{ want_resched++; aston(); }
 
 /*
  * Give a profiling tick to the current process when the user profiling
@@ -107,20 +128,7 @@ extern int want_resched;	/* resched() was called */
 extern int astpending;		/* need to trap before returning to user mode */
 #define aston() (astpending++)
 
-/*
- * simulated software interrupt register
- */
-extern unsigned char ssir;
-
-#define SIR_NET		0x1
-#define SIR_CLOCK	0x2
-
-#define setsoftint(x)	ssir |= (x)
-#define siroff(x)	ssir &= ~(x)
-#define setsoftnet()	ssir |= SIR_NET
-#define setsoftclock()	ssir |= SIR_CLOCK
-
-extern unsigned long allocate_sir();
+#endif /* _KERNEL */
 
 /*
  * CTL_MACHDEP definitions.
@@ -175,27 +183,28 @@ extern	int machineid;
 extern	int cpuspeed;
 extern	char *intiobase, *intiolimit;
 extern	u_int intiobase_phys, intiotop_phys;
-extern	void *ether_data_buff;		/* These two will go when bus_dma */
-extern	u_long ether_data_buff_size;	/* support is added. */
+extern	u_long ether_data_buff_size;
+extern	u_char mvme_ea[6];
 
 struct frame;
 void	doboot __P((int)) 
 	__attribute__((__noreturn__));
 int	badaddr __P((caddr_t, int));
-void	nmihand __P((struct frame *));
+int	nmihand __P((void *));
 void	mvme68k_abort __P((const char *));
 void	physaccess __P((caddr_t, caddr_t, int, int));
 void	physunaccess __P((caddr_t, int));
 void	*iomap __P((u_long, size_t));
 void	iounmap __P((void *, size_t));
+paddr_t	kvtop __P((caddr_t));
+void	loadustp __P((paddr_t));
 void	child_return __P((void *));
-void	myetheraddr	__P((u_char *));
 
 /* Prototypes from sys_machdep.c: */
 int	cachectl1 __P((unsigned long, vaddr_t, size_t, struct proc *));
 int	dma_cachectl __P((caddr_t, int));
 
-/* physical memory sections for mvme147 */
+/* physical memory addresses where mvme147's onboard devices live */
 #define	INTIOBASE147	(0xfffe0000u)
 #define	INTIOTOP147	(0xfffe5000u)
 
@@ -203,16 +212,6 @@ int	dma_cachectl __P((caddr_t, int));
 #define	INTIOBASE167	(0xfff40000u)
 #define	INTIOTOP167	(0xfffd0000u)
 
-/*
- * Internal IO space:
- *
- * Internal IO space is mapped in the kernel from ``intiobase'' to
- * ``intiolimit'' (defined in locore.s).  Since it is always mapped,
- * conversion between physical and kernel virtual addresses is easy.
- */
-#define	ISIIOVA(va) \
-	((char *)(va) >= intiobase && (char *)(va) < intiolimit)
-#define	IIOV(pa)	(((u_int)(pa) - intiobase_phys) + (u_int)intiobase)
-#define	IIOP(va)	(((u_int)(va) - (u_int)intiobase) + intiobase_phys)
-#define	IIOPOFF(pa)	((u_int)(pa) - intiobase_phys)
 #endif /* _KERNEL */
+
+#endif /* _MACHINE_CPU_H_ */

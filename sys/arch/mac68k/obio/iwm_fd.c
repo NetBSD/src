@@ -1,4 +1,4 @@
-/*	$NetBSD: iwm_fd.c,v 1.2 1999/03/27 05:45:19 scottr Exp $	*/
+/*	$NetBSD: iwm_fd.c,v 1.2.8.1 2000/11/20 20:12:26 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 Hauke Fath.  All rights reserved.
@@ -34,6 +34,7 @@
  */
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/kernel.h>
 #include <sys/file.h>
 #include <sys/ioctl.h>
@@ -58,6 +59,9 @@
 #include <mac68k/obio/iwmreg.h>
 #include <mac68k/obio/iwm_fdvar.h>
 
+#ifdef _LKM
+#include "iwm_mod.h"
+#endif
 
 /**
  **	Private functions
@@ -89,6 +93,8 @@ static void invalidateCylinderCache __P((fd_softc_t *fd));
 
 #ifdef _LKM
 static int probe_fd __P((void));
+int fd_mod_init __P((void));
+void fd_mod_free __P((void));
 #endif
 
 static int fdstart_Init __P((fd_softc_t *fd));
@@ -286,7 +292,8 @@ iwm_match(parent, match, auxp)
 		 * We know next to nothing about the SWIM.
 		 */
 		matched = 0;
-		printf("IWM or SWIM not found: Unknown location (SWIM II?).\n");
+		if (TRACE_CONFIG)
+			printf("IWM or SWIM not found: Unknown location (SWIM II?).\n");
 	} else {
 		matched = 1;
 		if (TRACE_CONFIG) {
@@ -399,7 +406,8 @@ map_iwm_base(base)
 		 * Neither IIfx/Q9[05]0 style IOP controllers nor 
 		 * Q[68]40AV DMA based controllers are supported. 
 		 */
-		printf("Unknown floppy controller chip.\n");
+		if (TRACE_CONFIG)
+			printf("Unknown floppy controller chip.\n");
 		IWMBase = 0L;
 		known = 0;
 		break;
@@ -465,6 +473,10 @@ fd_attach(parent, self, auxp)
 
 	iwm->fd[ia->unit] = fd;		/* iwm has ptr to this drive */
 	iwm->drives++;
+
+	BUFQ_INIT(&fd->bufQueue);
+	callout_init(&fd->motor_ch);
+
 	printf(" drive %d: ", fd->unit);
 
 	if (IWM_NO_DISK & driveInfo) {
@@ -560,9 +572,9 @@ fd_mod_free(void)
 		if (iwm->fd[unit] != NULL) {
 			/* 
 			 * Let's hope there is only one task per drive,
-			 * see timeout(9). 
+			 * see callout(9). 
 			 */
-			untimeout(motor_off, iwm->fd[unit]);
+			callout_stop(&iwm->fd[unit]->motor_ch);
 			disk_detach(&iwm->fd[unit]->diskInfo);
 			free(iwm->fd[unit], M_DEVBUF);
 			iwm->fd[unit] = NULL;
@@ -1044,8 +1056,8 @@ fdstrategy(bp)
 		printf("     struct buf is at %p\n", bp);
 		printf("     Allocated buffer size (b_bufsize): 0x0%lx\n",
 		    bp->b_bufsize);
-		printf("     Base address of buffer (b_un.b_addr): %p\n",
-		    bp->b_un.b_addr);
+		printf("     Base address of buffer (b_data): %p\n",
+		    bp->b_data);
 		printf("     Bytes to be transferred (b_bcount): 0x0%lx\n",
 		    bp->b_bcount);
 		printf("     Remaining I/O (b_resid): 0x0%lx\n",
@@ -1115,6 +1127,7 @@ fdstrategy(bp)
 		 */
 		remap_geometry(bp->b_blkno, fd->currentType->heads,
 		    &physDiskLoc);
+		bp->b_rawblkno = bp->b_blkno;
 		bp->b_cylinder = physDiskLoc.track;
 
 		if (TRACE_STRAT) {
@@ -1124,9 +1137,9 @@ fdstrategy(bp)
 			    bp->b_cylinder);
 		}
 		spl = splbio();
-		untimeout(motor_off, fd);
-		disksort(&fd->bufQueue, bp);
-		if (fd->bufQueue.b_active == 0)
+		callout_stop(&fd->motor_ch);
+		disksort_cylinder(&fd->bufQueue, bp);
+		if (fd->sc_active == 0)
 			fdstart(fd);
 		splx(spl);
 	}
@@ -1240,7 +1253,7 @@ fdstart_Init(fd)
 	 * Get the first entry from the queue. This is the buf we gave to
 	 * fdstrategy(); disksort() put it into our softc.
 	 */
-	bp = fd->bufQueue.b_actf;
+	bp = BUFQ_FIRST(&fd->bufQueue);
 	if (NULL == bp) {
 		if (TRACE_STRAT)
 			printf("Queue empty: Nothing to do");
@@ -1253,7 +1266,7 @@ fdstart_Init(fd)
 		iwmMotor(fd->unit, 1);
 		fd->state |= IWM_FD_MOTOR_ON;
 	}
-	fd->current_buffer = bp->b_un.b_addr;
+	fd->current_buffer = bp->b_data;
 
 	/* XXX - assumes blocks of 512 bytes */
 	fd->startBlk = bp->b_blkno;
@@ -1628,8 +1641,10 @@ static int
 fdstart_Exit(fd)
 	fd_softc_t *fd;
 {
-	int i;
 	struct buf *bp;
+#ifdef DIAGNOSTIC
+	int i;
+#endif
 	
 	invalidateCylinderCache(fd);
 
@@ -1641,7 +1656,7 @@ fdstart_Exit(fd)
 			    fd->pos.track, fd->pos.side, fd->pos.sector);
 #endif
 
-	bp = fd->bufQueue.b_actf;
+	bp = BUFQ_FIRST(&fd->bufQueue);
 
 	bp->b_resid = fd->bytesLeft;
 	bp->b_error = (0 == fd->iwmErr) ? 0 : EIO;
@@ -1652,16 +1667,16 @@ fdstart_Exit(fd)
 		printf(" fdstart() finished job; fd->iwmErr = %d, b_error = %d",
 		    fd->iwmErr, bp->b_error);
 		if (DISABLED)
-			hexDump(bp->b_un.b_addr, bp->b_bcount);
+			hexDump(bp->b_data, bp->b_bcount);
 	}
 	/*
 	 * Remove requested buf from beginning of queue
 	 * and release it.
 	 */
-	fd->bufQueue.b_actf = bp->b_actf;
+	BUFQ_REMOVE(&fd->bufQueue, bp);
 	if (DISABLED && TRACE_STRAT)
-		printf(" Next buf (bufQueue.b_actf) at %p\n",
-		    fd->bufQueue.b_actf);
+		printf(" Next buf (bufQueue first) at %p\n",
+		    BUFQ_FIRST(&fd->bufQueue));
 	disk_unbusy(&fd->diskInfo, bp->b_bcount - bp->b_resid);
 	biodone(bp);
 	/* 
@@ -1670,7 +1685,7 @@ fdstart_Exit(fd)
 	 * XXX Unloading the module while the timeout is still
 	 *     running WILL crash the machine. 
 	 */
-	timeout(motor_off, fd, 10 * hz);
+	callout_reset(&fd->motor_ch, 10 * hz, motor_off, fd);
 
 	return state_Done;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.1 1999/09/13 10:31:26 itojun Exp $	*/
+/*	$NetBSD: Locore.c,v 1.1.2.1 2000/11/20 20:24:31 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -81,8 +81,9 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/user.h>
+#include <sys/sched.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/cpu.h>
 #include <machine/cpufunc.h>
@@ -245,34 +246,31 @@ copyoutstr(kaddr, uaddr, maxlen, lencopied)
 
 	curpcb->pcb_onfault = &&Err999;
 
-	if ((cnt = (char *)VM_MAXUSER_ADDRESS - to) < maxlen)
-		maxlen = cnt;
-	else
-		cnt = maxlen - 1;
+	if ((cnt = (char *)VM_MAXUSER_ADDRESS - to) > maxlen)
+		cnt = maxlen;
 
 	while (cnt--) {
-		if ((*to++ = *from++) == 0)
-			break;
+		if ((*to++ = *from++) == 0) {
+			rc = 0;
+			goto out;
+		}
 	}
 
-	*lencopied = from - from_top;
+	if (to >= (char *)VM_MAXUSER_ADDRESS)
+		rc = EFAULT;
+	else
+		rc = ENAMETOOLONG;
 
-	if (cnt == 0) {
-		if (to >= (char *)VM_MAXUSER_ADDRESS)
-			rc = EFAULT;
-		else
-			rc = ENAMETOOLONG;
-	} else
-		rc = 0;
-
+out:
+	if (lencopied)
+		*lencopied = from - from_top;
 	curpcb->pcb_onfault = 0;
 	return rc;
 
  Err999:
-	curpcb->pcb_onfault = 0;
-	if (lencopied != 0)
+	if (lencopied)
 		*lencopied = from - from_top;
-
+	curpcb->pcb_onfault = 0;
 	return EFAULT;
 }
 
@@ -298,36 +296,31 @@ copyinstr(uaddr, kaddr, maxlen, lencopied)
 
 	curpcb->pcb_onfault = &&Err999;
 
-	if ((cnt = (char *)VM_MAXUSER_ADDRESS - from) < maxlen)
-		maxlen = cnt;
-	else
-		cnt = maxlen - 1;
+	if ((cnt = (char *)VM_MAXUSER_ADDRESS - to) > maxlen)
+		cnt = maxlen;
 
 	while (cnt--) {
-		if ((*to++ = *from++) == 0)
-			break;
+		if ((*to++ = *from++) == 0) {
+			rc = 0;
+			goto out;
+		}
 	}
 
-	if (lencopied != NULL)
+	if (to >= (char *)VM_MAXUSER_ADDRESS)
+		rc = EFAULT;
+	else
+		rc = ENAMETOOLONG;
+
+out:
+	if (lencopied)
 		*lencopied = from - from_top;
-
-	if (cnt == 0 && *(from - 1) != 0) {
-		if (to >= (char *)VM_MAXUSER_ADDRESS)
-			rc = EFAULT;
-		else
-			rc = ENAMETOOLONG;
-	} else
-		rc = 0;
-
 	curpcb->pcb_onfault = 0;
-
 	return rc;
 
  Err999:
-	curpcb->pcb_onfault = 0;
-	if (lencopied != 0)
+	if (lencopied)
 		*lencopied = from - from_top;
-
+	curpcb->pcb_onfault = 0;
 	return EFAULT;
 }
 
@@ -349,18 +342,16 @@ copystr(kfaddr, kdaddr, maxlen, lencopied)
 	int i;
 
 	for (i = 0; i < maxlen; i++) {
-		if ((*to++ = *from++) == NULL)
-			break;
+		if ((*to++ = *from++) == NULL) {
+			if (lencopied)
+				*lencopied = i + 1;
+			return (0);
+		}
 	}
 
-	if (i == maxlen) {
+	if (lencopied)
 		*lencopied = i;
-		return ENAMETOOLONG;
-	} else {
-		if (lencopied)
-			*lencopied = i + 1;
-		return 0;
-	}
+	return (ENAMETOOLONG);
 }
 
 /*
@@ -614,7 +605,8 @@ setrunqueue(p)
 	int which = p->p_priority >> 2;
 
 #ifdef sh3_debug
-	printf("setrunque[whichqs = 0x%x,which=%d]\n", whichqs, which);
+	printf("setrunque[whichqs = 0x%x,which=%d]\n",
+	    sched_whichqs, which);
 #endif
 
 #define DIAGNOSTIC 1
@@ -622,9 +614,9 @@ setrunqueue(p)
 	if (p->p_back || which >= 32 || which < 0)
 		panic("setrunqueue");
 #endif
-	q = &qs[which];
-	whichqs |= 0x00000001 << which;
-	if (whichqs == 0) {
+	q = &sched_qs[which];
+	sched_whichqs |= 0x00000001 << which;
+	if (sched_whichqs == 0) {
 		panic("setrunqueue[whichqs == 0 ]");
 	}
 	p->p_forw = (struct proc *)q;
@@ -632,7 +624,8 @@ setrunqueue(p)
 	q->ph_rlink = p;
 	oldlast->p_forw = p;
 #ifdef sh3_debug
-	printf("setrunque[whichqs = 0x%x,which=%d]\n", whichqs, which);
+	printf("setrunque[whichqs = 0x%x,which=%d]\n",
+	    sched_whichqs, which);
 #endif
 }
 
@@ -649,20 +642,22 @@ remrunqueue(p)
 	struct prochd *q;
 
 #ifdef sh3_debug
-	printf("remrunque[whichqs = 0x%x,which=%d]\n", whichqs, which);
+	printf("remrunque[whichqs = 0x%x,which=%d]\n",
+	    sched_whichqs, which);
 #endif
 #ifdef DIAGNOSTIC
-	if (!(whichqs & (0x00000001 << which)))
+	if (!(sched_whichqs & (0x00000001 << which)))
 		panic("remrunqueue");
 #endif
 	p->p_forw->p_back = p->p_back;
 	p->p_back->p_forw = p->p_forw;
 	p->p_back = NULL;
-	q = &qs[which];
+	q = &sched_qs[which];
 	if (q->ph_link == (struct proc *)q)
-		whichqs &= ~(0x00000001 << which);
+		sched_whichqs &= ~(0x00000001 << which);
 #ifdef sh3_debug
-	printf("remrunque[whichqs = 0x%x,which=%d]\n", whichqs, which);
+	printf("remrunque[whichqs = 0x%x,which=%d]\n",
+	    sched_whichqs, which);
 #endif
 }
 

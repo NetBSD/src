@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.16 1999/04/12 20:38:18 pk Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.16.2.1 2000/11/20 20:09:20 bouyer Exp $	*/
 
 /* 
  * Mach Operating System
@@ -144,6 +144,17 @@ char *	db_Grp8[] = {
 	"btc"
 };
 
+char *	db_Grp9[] = {
+	"",
+	"cmpxchg8b",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+};
+
 struct inst db_inst_0f0x[] = {
 /*00*/	{ "",	   TRUE,  NONE,  op1(Ew),     (char *)db_Grp6 },
 /*01*/	{ "",	   TRUE,  NONE,  op1(Ew),     (char *)db_Grp7 },
@@ -182,6 +193,26 @@ struct inst	db_inst_0f2x[] = {
 /*2d*/	{ "",      FALSE, NONE,  0,	      0 },
 /*2e*/	{ "",      FALSE, NONE,  0,	      0 },
 /*2f*/	{ "",      FALSE, NONE,  0,	      0 },
+};
+
+struct inst	db_inst_0f3x[] = {
+/*30*/	{ "wrmsr", FALSE, NONE,  0,	      0 },
+/*31*/	{ "rdtsc", FALSE, NONE,  0,	      0 },
+/*32*/	{ "rdmsr", FALSE, NONE,  0,	      0 },
+/*33*/	{ "rdpmc", FALSE, NONE,  0,	      0 },
+/*34*/	{ "",	   FALSE, NONE,  0,	      0 },
+/*35*/	{ "",	   FALSE, NONE,  0,	      0 },
+/*36*/	{ "",	   FALSE, NONE,  0,	      0 },
+/*37*/	{ "",	   FALSE, NONE,  0,	      0 },
+
+/*38*/	{ "",	   FALSE, NONE,  0,	      0 },
+/*39*/	{ "",	   FALSE, NONE,  0,	      0 },
+/*3a*/	{ "",	   FALSE, NONE,  0,	      0 },
+/*3v*/	{ "",	   FALSE, NONE,  0,	      0 },
+/*3c*/	{ "",	   FALSE, NONE,  0,	      0 },
+/*3d*/	{ "",	   FALSE, NONE,  0,	      0 },
+/*3e*/	{ "",	   FALSE, NONE,  0,	      0 },
+/*3f*/	{ "",	   FALSE, NONE,  0,	      0 },
 };
 
 struct inst	db_inst_0f8x[] = {
@@ -236,7 +267,7 @@ struct inst	db_inst_0fax[] = {
 
 /*a8*/	{ "push",  FALSE, NONE,  op1(Si),     0 },
 /*a9*/	{ "pop",   FALSE, NONE,  op1(Si),     0 },
-/*aa*/	{ "",      FALSE, NONE,  0,	      0 },
+/*aa*/	{ "rsm",   FALSE, NONE,  0,	      0 },
 /*ab*/	{ "bts",   TRUE,  LONG,  op2(R,E),    0 },
 /*ac*/	{ "shrd",  TRUE,  LONG,  op3(Ib,E,R), 0 },
 /*ad*/	{ "shrd",  TRUE,  LONG,  op3(CL,E,R), 0 },
@@ -272,7 +303,7 @@ struct inst	db_inst_0fcx[] = {
 /*c4*/	{ "",	   FALSE, NONE,	 0,	      0 },
 /*c5*/	{ "",	   FALSE, NONE,	 0,	      0 },
 /*c6*/	{ "",	   FALSE, NONE,	 0,	      0 },
-/*c7*/	{ "",	   FALSE, NONE,	 0,	      0 },
+/*c7*/	{ "",	   TRUE,  NONE,	 op1(E),      (char *)db_Grp9 },
 /*c8*/	{ "bswap", FALSE, LONG,  op1(Ri),     0 },
 /*c9*/	{ "bswap", FALSE, LONG,  op1(Ri),     0 },
 /*ca*/	{ "bswap", FALSE, LONG,  op1(Ri),     0 },
@@ -287,7 +318,7 @@ struct inst *db_inst_0f[] = {
 	db_inst_0f0x,
 	0,
 	db_inst_0f2x,
-	0,
+	db_inst_0f3x,
 	0,
 	0,
 	0,
@@ -939,7 +970,7 @@ db_print_address(seg, size, addrp)
 	if (seg)
 		db_printf("%s:", seg);
 
-	db_printsym((db_addr_t)addrp->disp, DB_STGY_ANY);
+	db_printsym((db_addr_t)addrp->disp, DB_STGY_ANY, db_printf);
 	if (addrp->base != 0 || addrp->index != 0) {
 		db_printf("(");
 		if (addrp->base)
@@ -976,7 +1007,7 @@ db_disasm_esc(loc, inst, short_addr, size, seg)
 		 * Normal address modes.
 		 */
 		loc = db_read_address(loc, short_addr, regmodrm, &address);
-		db_printf(fp->f_name);
+		db_printf("%s", fp->f_name);
 		switch(fp->f_size) {
 		    case SNGL:
 			db_printf("s");
@@ -1066,7 +1097,10 @@ db_disasm(loc, altfmt)
 	 * Don't try to disassemble the location if the mapping is invalid.
 	 * If we do, we'll fault, and end up debugging the debugger!
 	 */
-	pte = vtopte((vaddr_t)loc);
+	if ((vaddr_t)loc >= VM_MIN_KERNEL_ADDRESS)
+		pte = kvtopte((vaddr_t)loc);
+	else
+		pte = vtopte((vaddr_t)loc);
 	if ((*pte & PG_V) == 0) {
 		db_printf("invalid address\n");
 		return (loc);
@@ -1172,11 +1206,11 @@ db_disasm(loc, altfmt)
 
 	if (i_size == SDEP) {
 		if (size == WORD)
-			db_printf(i_name);
+			db_printf("%s", i_name);
 		else
-			db_printf(ip->i_extra);
+			db_printf("%s", ip->i_extra);
 	} else {
-		db_printf(i_name);
+		db_printf("%s", i_name);
 		if (i_size != NONE) {
 			if (i_size == BYTE) {
 				db_printf("b");
@@ -1195,6 +1229,8 @@ db_disasm(loc, altfmt)
 	for (first = TRUE;
 	     i_mode != 0;
 	     i_mode >>= 8, first = FALSE) {
+		char tbuf[24];
+
 		if (!first)
 			db_printf(",");
 
@@ -1261,46 +1297,56 @@ db_disasm(loc, altfmt)
 		    case I:
 			len = db_lengths[size];
 			get_value_inc(imm, loc, len, FALSE);/* unsigned */
-			db_printf("$%#n", imm);
+			db_format_radix(tbuf, 24, (unsigned int)imm, TRUE);
+			db_printf("$%s", tbuf);
 			break;
 		    case Is:
 			len = db_lengths[size];
 			get_value_inc(imm, loc, len, TRUE);	/* signed */
-			db_printf("$%#r", imm);
+			db_format_radix(tbuf, 24, imm, TRUE);
+			db_printf("$%s", tbuf);
 			break;
 		    case Ib:
 			get_value_inc(imm, loc, 1, FALSE);	/* unsigned */
-			db_printf("$%#n", imm);
+			db_format_radix(tbuf, 24, (unsigned int)imm, TRUE);
+			db_printf("$%s", tbuf);
 			break;
 		    case Ibs:
 			get_value_inc(imm, loc, 1, TRUE);	/* signed */
-			db_printf("$%#r", imm);
+			db_format_radix(tbuf, 24, imm, TRUE);
+			db_printf("$%s", tbuf);
 			break;
 		    case Iw:
 			get_value_inc(imm, loc, 2, FALSE);	/* unsigned */
-			db_printf("$%#n", imm);
+			db_format_radix(tbuf, 24, (unsigned int)imm, TRUE);
+			db_printf("$%s", tbuf);
 			break;
 		    case Il:
 			get_value_inc(imm, loc, 4, FALSE);
-			db_printf("$%#n", imm);
+			db_format_radix(tbuf, 24, (unsigned int)imm, TRUE);
+			db_printf("$%s", tbuf);
 			break;
 		    case O:
 			if (short_addr)
 				get_value_inc(displ, loc, 2, TRUE);
 			else
 				get_value_inc(displ, loc, 4, TRUE);
-			if (seg)
-				db_printf("%s:%#r",seg, displ);
-			else
-				db_printsym((db_addr_t)displ, DB_STGY_ANY);
+			if (seg) {
+				db_format_radix(tbuf, 24, displ, TRUE);
+				db_printf("%s:%s", seg, tbuf);
+			} else
+				db_printsym((db_addr_t)displ, DB_STGY_ANY,
+				    db_printf);
 			break;
 		    case Db:
 			get_value_inc(displ, loc, 1, TRUE);
-			db_printsym((db_addr_t)(displ + loc), DB_STGY_XTRN);
+			db_printsym((db_addr_t)(displ + loc), DB_STGY_XTRN,
+			    db_printf);
 			break;
 		    case Dl:
 			get_value_inc(displ, loc, 4, TRUE);
-			db_printsym((db_addr_t)(displ + loc), DB_STGY_XTRN);
+			db_printsym((db_addr_t)(displ + loc), DB_STGY_XTRN,
+			    db_printf);
 			break;
 		    case o1:
 			db_printf("$1");
@@ -1310,8 +1356,11 @@ db_disasm(loc, altfmt)
 			break;
 		    case OS:
 			get_value_inc(imm, loc, 4, FALSE);	/* offset */
+			db_format_radix(tbuf, 24, (unsigned int)imm, TRUE);
+			db_printf("$%s", tbuf);
 			get_value_inc(imm2, loc, 2, FALSE);	/* segment */
-			db_printf("$%#n,%#n", imm2, imm);
+			db_format_radix(tbuf, 24, (unsigned int)imm2, TRUE);
+			db_printf(",%s", tbuf);
 			break;
 		}
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: mac68k5380.c,v 1.35 1998/12/22 08:47:05 scottr Exp $	*/
+/*	$NetBSD: mac68k5380.c,v 1.35.10.1 2000/11/20 20:12:17 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs
@@ -50,6 +50,7 @@
  */
 #include "ncr5380reg.h"
 
+#include <machine/cpu.h>
 #include <machine/stdarg.h>
 #include <machine/viareg.h>
 

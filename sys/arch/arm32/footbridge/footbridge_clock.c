@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_clock.c,v 1.2 1999/04/23 09:09:04 mark Exp $	*/
+/*	$NetBSD: footbridge_clock.c,v 1.2.2.1 2000/11/20 20:03:56 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -73,7 +73,7 @@ clockmatch(parent, cf, aux)
 {
 	union footbridge_attach_args *fba = aux;
 
-	if (strcmp(fba->fba_ca.ca_name, "clk") == 0 && cf->cf_unit == 0)
+	if (strcmp(fba->fba_ca.ca_name, "clk") == 0)
 		return(1);
 	return(0);
 }
@@ -262,7 +262,7 @@ microtime(tvp)
 	tvp->tv_usec += ((deltatm << 8) / clock_sc->sc_clock_ticks_per_256us);
 
 	/* Make sure the micro seconds don't overflow. */
-	while (tvp->tv_usec > 1000000) {
+	while (tvp->tv_usec >= 1000000) {
 		tvp->tv_usec -= 1000000;
 		++tvp->tv_sec;
 	}
@@ -271,7 +271,7 @@ microtime(tvp)
 	if (tvp->tv_sec == oldtv.tv_sec &&
 	    tvp->tv_usec <= oldtv.tv_usec) {
 		tvp->tv_usec = oldtv.tv_usec + 1;
-		if (tvp->tv_usec > 1000000) {
+		if (tvp->tv_usec >= 1000000) {
 			tvp->tv_usec -= 1000000;
 			++tvp->tv_sec;
 		}

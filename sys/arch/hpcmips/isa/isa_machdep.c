@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.1.1.1 1999/09/16 12:23:24 takemura Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.1.1.1.2.1 2000/11/20 20:46:53 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi
@@ -28,6 +28,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/reboot.h>
 
 #include <machine/bus.h>
 
@@ -37,11 +38,28 @@
 #include <machine/platid.h>
 #include <machine/platid_mask.h>
 
+#include <hpcmips/hpcmips/machdep.h>
 #include <hpcmips/vr/vripreg.h>
 #include <hpcmips/vr/vripvar.h>
 #include <hpcmips/vr/vrgiureg.h>
 
 #include "locators.h"
+
+#define VRISADEBUG
+
+#ifdef VRISADEBUG
+#ifndef VRISADEBUG_CONF
+#define VRISADEBUG_CONF 0
+#endif /* VRISADEBUG_CONF */
+int vrisa_debug = VRISADEBUG_CONF;
+#define DPRINTF(arg) if (vrisa_debug) printf arg;
+#define DBITDISP32(mask) if (vrisa_debug) bitdisp32(mask);
+#define VPRINTF(arg) if (bootverbose || vrisa_debug) printf arg;
+#else /* VRISADEBUG */
+#define DPRINTF(arg)
+#define DBITDISP32(mask)
+#define VPRINTF(arg) if (bootverbose) printf arg;
+#endif /* VRISADEBUG */
 
 int	vrisabprint __P((void*, const char*));
 int	vrisabmatch __P((struct device*, struct cfdata*, void*));
@@ -52,6 +70,7 @@ struct vrisab_softc {
 	vrgiu_chipset_tag_t sc_gc;
 	vrgiu_function_tag_t sc_gf;
 	int sc_intr_map[MAX_GPIO_INOUT]; /* ISA <-> GIU inerrupt line mapping */
+	struct hpcmips_isa_chipset sc_isa_ic;
 };
 
 struct cfattach vrisab_ca = {
@@ -63,6 +82,15 @@ struct cfattach vrisab_ca = {
 #warning DEBUG_FIND_PCIC
 static void __find_pcic __P((void));
 #endif
+
+#ifdef DEBUG_FIND_COMPORT
+#include <mips/cpuregs.h>
+#include <dev/ic/ns16550reg.h>
+#include <dev/ic/comreg.h>
+#warning DEBUG_FIND_COMPORT
+static void __find_comport __P((void));
+#endif
+
 
 int
 vrisabmatch(parent, match, aux)
@@ -98,9 +126,10 @@ vrisabattach(parent, self, aux)
     
 	sc->sc_gc = chipset = gpa->gpa_gc;
 	sc->sc_gf = gpa->gpa_gf;
+	sc->sc_isa_ic.ic_sc = sc;
 
 	iba.iba_busname = "isa";
-	iba.iba_ic	    = sc;
+	iba.iba_ic	= &sc->sc_isa_ic;
 	iba.iba_dmat    = 0; /* XXX not yet */
 
 	/* Allocate ISA memory space */
@@ -130,8 +159,13 @@ vrisabattach(parent, self, aux)
 		sc->sc_intr_map[i] = -1;
 	printf (":ISA port %#x-%#x mem %#x-%#x\n",
 		iba.iba_iot->t_base, iba.iba_iot->t_base + iba.iba_iot->t_size,
-		iba.iba_memt->t_base, iba.iba_memt->t_base + iba.iba_memt->t_base);
+		iba.iba_memt->t_base, iba.iba_memt->t_base + iba.iba_memt->t_size);
 	config_found(self, &iba, vrisabprint);
+#endif
+
+#ifdef DEBUG_FIND_COMPORT
+#warning DEBUG_FIND_COMPORT
+	__find_comport();
 #endif
 }
 
@@ -152,37 +186,81 @@ isa_attach_hook(parent, self, iba)
 {
 }
 
+const struct evcnt *
+isa_intr_evcnt(isa_chipset_tag_t ic, int irq)
+{
+
+	/* XXX for now, no evcnt parent reported */
+	return NULL;
+}
+
 void *
-isa_intr_establish(ic, port_irq, type, level, ih_fun, ih_arg)
+isa_intr_establish(ic, intr, type, level, ih_fun, ih_arg)
 	isa_chipset_tag_t ic;
-	int port_irq; /* (GPIO<<16)|(ISA IRQ) */
+	int intr;
 	int type;  /* XXX not yet */
 	int level;  /* XXX not yet */
 	int (*ih_fun) __P((void*));
 	void *ih_arg;
 {
-	struct vrisab_softc *sc = (void*)ic;
+	struct vrisab_softc *sc = ic->ic_sc;
 	int port, irq, mode;
-#define GET_PORT(i) (((i)>>16)&0x1f)
-#define GET_IRQ(i) ((i)&0xf)
+
+	/*
+	 * 'intr' encoding:
+	 *
+	 * 0x0000000f ISA IRQ#
+	 * 0x00ff0000 GPIO port#
+	 * 0x01000000 interrupt signal hold/through	(1:hold/0:though)
+	 * 0x02000000 interrupt detection level		(1:low /0:high	)
+	 * 0x04000000 interrupt detection trigger	(1:edge/0:level	)
+	 */
+#define INTR_IRQ(i)	(((i)>> 0) & 0x0f)
+#define INTR_PORT(i)	(((i)>>16) & 0xff)
+#define INTR_MODE(i)	(((i)>>24) & 0x07)
+	static int intr_modes[8] = {
+		VRGIU_INTR_LEVEL_HIGH_THROUGH,
+		VRGIU_INTR_LEVEL_HIGH_HOLD,
+		VRGIU_INTR_LEVEL_LOW_THROUGH,
+		VRGIU_INTR_LEVEL_LOW_HOLD,
+		VRGIU_INTR_EDGE_THROUGH,
+		VRGIU_INTR_EDGE_HOLD,
+		VRGIU_INTR_EDGE_THROUGH,
+		VRGIU_INTR_EDGE_HOLD,
+	};
+#ifdef VRISADEBUG
+	static char* intr_mode_names[8] = {
+		"level high through",
+		"level high hold",
+		"level low through",
+		"level low hold",
+		"edge through",
+		"edge hold",
+		"edge through",
+		"edge hold",
+	};
+#endif /* VRISADEBUG */
 	/* 
 	 * ISA IRQ <-> GPIO port mapping
 	 */
-	irq = GET_IRQ(port_irq);
-	if (!(port = GET_PORT(port_irq))) {/* GPIO port not specfied */
-		port = sc->sc_intr_map[irq]; /* Use Already mapped port */
-	} else { /* GPIO port specified. */
-		if (sc->sc_intr_map[irq] != -1)
-			panic("isa_intr_establish: conflict GPIO line. %d <-> %d",
-			      port, sc->sc_intr_map[irq]);
-		sc->sc_intr_map[irq] = port; /* Register it */
-		printf("ISA IRQ %d -> GPIO port %d\n", irq, port);
+	irq = INTR_IRQ(intr);
+	if (sc->sc_intr_map[irq] != -1) {
+		/* already mapped */
+		intr = sc->sc_intr_map[irq];
+	} else {
+		/* not mapped yet */
+		sc->sc_intr_map[irq] = intr; /* Register it */
 	}
-	if (!port)
-		panic("isa_intr_establish: can't ISA IRQ to GIU port.");
+	mode = INTR_MODE(intr);
+	port = INTR_PORT(intr);
+
+	VPRINTF(("ISA IRQ %d -> GPIO port %d, %s\n",
+	       irq, port, intr_mode_names[mode]));
+
 	/* Call Vr routine */
-	mode = VRGIU_INTR_LEVEL_HIGH_THROUGH;  /* XXX Is this OK? */
-	return sc->sc_gf->gf_intr_establish(sc->sc_gc, port, mode, level, ih_fun, ih_arg);
+	return sc->sc_gf->gf_intr_establish(sc->sc_gc, port,
+					    intr_modes[mode],
+					    level, ih_fun, ih_arg);
 }
 
 void
@@ -190,7 +268,7 @@ isa_intr_disestablish(ic, arg)
 	isa_chipset_tag_t ic;
 	void *arg;
 {
-	struct vrisab_softc *sc = (void*)ic;
+	struct vrisab_softc *sc = ic->ic_sc;
 	/* Call Vr routine */
 	sc->sc_gf->gf_intr_disestablish(sc->sc_gc, arg);
 }
@@ -203,11 +281,12 @@ isa_intr_alloc(ic, mask, type, irq)
 	int *irq;
 {
 	/* XXX not coded yet. this is temporary XXX */
-	printf ("isa_intr_alloc:");
-	bitdisp32(mask);
-	*irq = (ffs(mask) -1);/* XXX */
+	DPRINTF(("isa_intr_alloc:"));
+	DBITDISP32(mask);
+	*irq = (ffs(mask) -1); /* XXX */
 	return 0;
 }
+
 
 #ifdef DEBUG_FIND_PCIC
 #warning DEBUG_FIND_PCIC
@@ -246,4 +325,52 @@ __find_pcic(void)
 }
 #endif
 
-	
+
+#ifdef DEBUG_FIND_COMPORT
+#warning DEBUG_FIND_COMPORT
+
+static int probe_com __P((u_int32_t));
+
+static int  probe_com( port_addr )
+	u_int32_t	port_addr;
+{
+	u_int32_t	addr;
+	u_int8_t	ubtmp1;
+	u_int8_t	ubtmp2;
+
+	addr = MIPS_PHYS_TO_KSEG1( port_addr );
+
+	*((volatile u_int8_t*)(addr + com_cfcr)) = LCR_8BITS;
+	*((volatile u_int8_t*)(addr + com_iir)) = 0;
+
+	ubtmp1 = *((volatile u_int8_t*)(addr + com_cfcr));
+	ubtmp2 = *((volatile u_int8_t*)(addr + com_iir));
+
+	if( (ubtmp1 != LCR_8BITS) || ((ubtmp2 & 0x38) != 0) ){
+		return( 0 );
+	}
+
+	return( 1 );
+}
+
+static void
+__find_comport(void)
+{
+	int	found;
+	u_int32_t	port;
+	u_int32_t	step;
+
+	found = 0;
+	step = 0x08;
+
+	printf("Searching COM port. Trying ISA port %#x-%#x step %#x\n",
+		   VR_ISA_PORT_BASE, VR_ISA_PORT_BASE + VR_ISA_PORT_SIZE - 1, step );
+
+	for( port = VR_ISA_PORT_BASE ; port < (VR_ISA_PORT_BASE + VR_ISA_PORT_SIZE) ; port += step ){
+		if( probe_com( port ) ){
+			found++;
+			printf("found %d at %#x\n",found,port);
+		}
+	}
+}
+#endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.17 1999/08/14 20:48:33 leo Exp $	*/
+/*	$NetBSD: bus.h,v 1.17.2.1 2000/11/20 20:05:27 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -87,15 +87,25 @@ typedef u_long	bus_size_t;
 typedef struct atari_bus_space	*bus_space_tag_t;
 typedef caddr_t			bus_space_handle_t;
 
-#define	BUS_SPACE_MAP_CACHEABLE	0x01
-#define	BUS_SPACE_MAP_LINEAR	0x02
+#define	BUS_SPACE_MAP_CACHEABLE		0x01
+#define	BUS_SPACE_MAP_LINEAR		0x02
+#define	BUS_SPACE_MAP_PREFETCHABLE	0x04
 
+int	bus_space_alloc __P((bus_space_tag_t, bus_addr_t, bus_addr_t,
+				bus_size_t, bus_size_t, bus_size_t, int,
+				bus_addr_t *, bus_space_handle_t *));
 int	bus_space_map __P((bus_space_tag_t, bus_addr_t, bus_size_t,
 				int, bus_space_handle_t *));
 void	bus_space_unmap __P((bus_space_tag_t, bus_space_handle_t,
 				bus_size_t));
 int	bus_space_subregion __P((bus_space_tag_t, bus_space_handle_t,
 				bus_size_t, bus_size_t, bus_space_handle_t *));
+
+/*
+ * Tag allocation
+ */
+bus_space_tag_t		beb_alloc_bus_space_tag __P((bus_space_tag_t));
+bus_space_tag_t		leb_alloc_bus_space_tag __P((bus_space_tag_t));
 
 /*
  * XXX
@@ -311,8 +321,10 @@ struct atari_bus_space {
     #define	__abs_copy(sz, t, h1, o1, h2, o2, cnt)			\
 	(*(t)->__abs_opname(c,sz))(t, h1, o1, h2, o2, cnt)
 #else
-    #define	__abs_copy(sz, t, h1, o1, h2, o2, cnt)			\
-	memcpy((void*)(h2 + o2), (void *)(h1 + o1), sz * cnt)
+    #define	__abs_copy(sz, t, h1, o1, h2, o2, cnt) do {		\
+		    memcpy((void*)(h2 + o2), (void *)(h1 + o1), sz * cnt);  \
+		    (void)t;						    \
+		} while (0)
 #endif
 
 
@@ -497,6 +509,22 @@ struct atari_bus_space {
 #define BUS_SPACE_ALIGNED_POINTER(p, t) ALIGNED_POINTER(p, t)
 
 /*
+ * Bus read/write barrier methods.
+ *
+ *	void bus_space_barrier __P((bus_space_tag_t tag,
+ *	    bus_space_handle_t bsh, bus_size_t offset,
+ *	    bus_size_t len, int flags));
+ *
+ * Note: the Atari does not currently require barriers, but we must
+ * provide the flags to MI code.
+ */
+#define	bus_space_barrier(t, h, o, l, f)	\
+	((void)((void)(t), (void)(h), (void)(o), (void)(l), (void)(f)))
+#define	BUS_SPACE_BARRIER_READ	0x01	/* force read barrier */
+#define	BUS_SPACE_BARRIER_WRITE	0x02	/* force write barrier */
+
+
+/*
  * Flags used in various bus DMA methods.
  */
 #define	BUS_DMA_WAITOK		0x00	/* safe to sleep (pseudo-flag)       */
@@ -588,7 +616,7 @@ int	bus_dmamem_map __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
 	    int nsegs, size_t size, caddr_t *kvap, int flags));
 void	bus_dmamem_unmap __P((bus_dma_tag_t tag, caddr_t kva,
 	    size_t size));
-int	bus_dmamem_mmap __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
-	    int nsegs, int off, int prot, int flags));
+paddr_t	bus_dmamem_mmap __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
+	    int nsegs, off_t off, int prot, int flags));
 
 #endif /* _ATARI_BUS_H_ */

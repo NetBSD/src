@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.1.1.1 1995/06/01 20:38:08 gwr Exp $	*/
+/*	$NetBSD: conf.c,v 1.1.1.1.34.1 2000/11/20 20:27:57 bouyer Exp $	*/
 
 #include <stand.h>
 #include <ufs.h>
@@ -14,3 +14,7 @@ struct devsw devsw[] = {
 };
 int	ndevs = 1;
 
+void
+main() {
+	xxboot_main("ufsboot");
+}

@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: binstall.sh,v 1.3 1999/03/01 01:05:51 kim Exp $
+#	$NetBSD: binstall.sh,v 1.3.8.1 2000/11/20 20:25:49 bouyer Exp $
 #
 
 vecho () {
@@ -11,7 +11,7 @@ vecho () {
 }
 
 Usage () {
-	echo "Usage: $0 [-hvt] [-m<path>] net|ffs directory"
+	echo "Usage: $0 [-hvtuU] [-m<path>] net|ffs directory"
 	exit 1
 }
 
@@ -24,6 +24,9 @@ Help () {
 	echo "the appropriate filesystem partition."
 	echo "Options:"
 	echo "	-h		- display this message"
+	echo "	-u		- install sparc64 (UltraSPARC) boot block"
+	echo "	-U		- install sparc boot block"
+	echo "	-b<bootprog>	- second-stage boot program to install"
 	echo "	-m<path>	- Look for boot programs in <path> (default: /usr/mdec)"
 	echo "	-v		- verbose mode"
 	echo "	-t		- test mode (implies -v)"
@@ -38,12 +41,19 @@ Secure () {
 
 PATH=/bin:/usr/bin:/sbin:/usr/sbin
 MDEC=${MDEC:-/usr/mdec}
+BOOTPROG=${BOOTPROG:-boot}
+OFWBOOT=${OFWBOOTBLK:-ofwboot}
+if [ "`sysctl -n hw.machine`" = sparc64 ]; then
+	ULTRASPARC=1
+else
+	ULTRASPARC=0
+fi
 
 if [ "`sysctl -n kern.securelevel`" -gt 0 ]; then
 	Secure
 fi
 
-set -- `getopt "hm:tv" "$@"`
+set -- `getopt "b:hm:tvuU" "$@"`
 if [ $? -gt 0 ]; then
 	Usage
 fi
@@ -52,6 +62,9 @@ for a in $*
 do
 	case $1 in
 	-h) Help; shift ;;
+	-u) ULTRASPARC=1; shift ;;
+	-U) ULTRASPARC=0; shift ;;
+	-b) BOOTPROG=$2; OFWBOOT=$2; shift 2 ;;
 	-m) MDEC=$2; shift 2 ;;
 	-t) TEST=1; VERBOSE=1; shift ;;
 	-v) VERBOSE=1; shift ;;
@@ -73,8 +86,18 @@ if [ ! -d $DEST ]; then
 	Usage
 fi
 
-
 SKIP=0
+
+if [ "$ULTRASPARC" = "1" ]; then
+	targ=ofwboot
+	netboot=ofwboot.net
+	nettarg=boot.sparc.netbsd
+	BOOTPROG=$OFWBOOT
+else
+	targ=boot
+	netboot=boot.net
+	nettarg=boot.sparc64.netbsd
+fi
 
 case $WHAT in
 "ffs")
@@ -97,19 +120,24 @@ case $WHAT in
 		echo "Cannot find \"$DEST\" in mount table"
 		exit 1
 	fi
-	TARGET=$DEST/boot
+	TARGET=$DEST/$targ
 	vecho Boot device: $DEV
 	vecho Target: $TARGET
-	$DOIT dd if=${MDEC}/boot of=$TARGET bs=32 skip=$SKIP
+	$DOIT dd if=${MDEC}/${BOOTPROG} of=$TARGET bs=32 skip=$SKIP
 	sync; sync; sync
-	vecho ${MDEC}/installboot ${VERBOSE:+-v} $TARGET ${MDEC}/bootxx $DEV
-	$DOIT ${MDEC}/installboot ${VERBOSE:+-v} $TARGET ${MDEC}/bootxx $DEV
+	if [ "$ULTRASPARC" = "1" ]; then
+		vecho ${MDEC}/installboot -u ${VERBOSE:+-v} ${MDEC}/bootblk $DEV
+		$DOIT ${MDEC}/installboot -u ${VERBOSE:+-v} ${MDEC}/bootblk $DEV
+	else
+		vecho ${MDEC}/installboot ${VERBOSE:+-v} $TARGET ${MDEC}/bootxx $DEV
+		$DOIT ${MDEC}/installboot ${VERBOSE:+-v} $TARGET ${MDEC}/bootxx $DEV
+	fi
 	;;
 
 "net")
-	TARGET=$DEST/boot.sparc.netbsd
+	TARGET=$DEST/$nettarg
 	vecho Target: $TARGET
-	cp -f ${MDEC}/boot.net $TARGET
+	$DOIT cp -f ${MDEC}/$netboot $TARGET
 	;;
 
 *)

@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BOOT,v 1.28 1999/07/29 10:37:15 augustss Exp $
+#	$NetBSD: BOOT,v 1.28.2.1 2000/11/20 20:05:24 bouyer Exp $
 #
 # BOOT
 #
@@ -66,7 +66,6 @@ options 	COMPAT_14	# Compatibility to NetBSD1.4
 #
 options 	KTRACE			# Add kernel tracing system call
 options 	DIAGNOSTIC		# Add additional error checking code
-options 	NKMEMCLUSTERS=256	# Size of kernel malloc area
 
 #
 # Atari specific kernel options:
@@ -88,7 +87,7 @@ config		netbsd root on ? type ?
 pseudo-device	view		1	# View (graphics mapping)
 pseudo-device	sl			# Slip
 pseudo-device	ppp			# ppp
-pseudo-device	pty		16	# Pseudo-tty support
+pseudo-device	pty			# pseudo-terminals
 pseudo-device	loop			# Loopback network
 pseudo-device	vnd		3	# 3 pseudo disks (see vnconfig)
 pseudo-device	md		2	# Boot memory disk
@@ -99,6 +98,9 @@ pseudo-device	md		2	# Boot memory disk
 fd0	at fdc0 unit 0		# builtin floppy drive
 fd1	at fdc0 unit 1		# external floppy drive
 zs0	at mainbus0		# Serial support through 8530
+grfbus0	at mainbus0		# bitmapped display's
+grfcc0	at grfbus0		# graphics driver
+ite0	at grfcc0		# console
 nvr0	at mainbus0		# nvram driver
 wdc0	at mainbus0		# IDE-bus
 wd*	at wdc? drive ?		#    ... and drives

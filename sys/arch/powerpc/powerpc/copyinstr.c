@@ -1,4 +1,4 @@
-/*	$NetBSD: copyinstr.c,v 1.2 1999/01/10 10:24:16 tsubai Exp $	*/
+/*	$NetBSD: copyinstr.c,v 1.2.8.1 2000/11/20 20:31:13 bouyer Exp $	*/
 
 /*-
  * Copyright (C) 1995 Wolfgang Solfrank.
@@ -44,21 +44,25 @@ copyinstr(udaddr, kaddr, len, done)
 	size_t len;
 	size_t *done;
 {
-	int c;
 	const u_char *up = udaddr;
 	u_char *kp = kaddr;
-	int l;
-	
+	size_t l;
+	int c, rv;
+
+	rv = ENAMETOOLONG;
 	for (l = 0; len-- > 0; l++) {
 		if ((c = fubyte(up++)) < 0) {
-			*done = l;
-			return EACCES;
+			rv = EFAULT;
+			break;
 		}
 		if (!(*kp++ = c)) {
-			*done = l + 1;
-			return 0;
+			l++;
+			rv = 0;
+			break;
 		}
 	}
-	*done = l;
-	return ENAMETOOLONG;
+	if (done != NULL) {
+		*done = l;
+	}
+	return rv;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.8 1999/06/18 04:49:26 cgd Exp $	*/
+/*	$NetBSD: bus.h,v 1.8.2.1 2000/11/20 20:32:47 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -72,6 +72,7 @@
 #define _VAX_BUS_H_
 
 #ifdef BUS_SPACE_DEBUG
+#include <sys/systm.h> /* for printf() prototype */
 /*
  * Macros for sanity-checking the aligned-ness of pointers passed to
  * bus space ops.  These are not strictly necessary on the VAX, but
@@ -137,6 +138,7 @@ struct vax_bus_space {
 
 #define	BUS_SPACE_MAP_CACHEABLE		0x01
 #define	BUS_SPACE_MAP_LINEAR		0x02
+#define	BUS_SPACE_MAP_PREFETCHABLE	0x04
 
 #define	bus_space_map(t, a, s, f, hp)					\
 	(*(t)->vbs_map)((t)->vbs_cookie, (a), (s), (f), (hp), 1)
@@ -164,7 +166,7 @@ struct vax_bus_space {
  */
 
 #define bus_space_subregion(t, h, o, s, nhp)				\
-	(*(t)->vbs_subregion)((t)->vbs_cookie, (h), (o), (s), (hp))
+	(*(t)->vbs_subregion)((t)->vbs_cookie, (h), (o), (s), (nhp))
 
 /*
  *	int bus_space_alloc __P((bus_space_tag_t t, bus_addr_t rstart,
@@ -865,6 +867,7 @@ vax_mem_copy_region_4(t, h1, o1, h2, o2, c)
 #define	BUS_DMA_BUS3		0x40
 #define	BUS_DMA_BUS4		0x80
 
+#define	VAX_BUS_DMA_SPILLPAGE	BUS_DMA_BUS1	/* VS4000 kludge */
 /*
  * Private flags stored in the DMA map.
  */
@@ -914,6 +917,8 @@ struct vax_bus_dma_segment {
 	bus_size_t	ds_len;		/* length of transfer */
 };
 typedef struct vax_bus_dma_segment	bus_dma_segment_t;
+
+struct proc;
 
 /*
  *	bus_dma_tag_t
@@ -975,8 +980,8 @@ struct vax_bus_dma_tag {
 	int	(*_dmamem_map) __P((bus_dma_tag_t, bus_dma_segment_t *,
 		    int, size_t, caddr_t *, int));
 	void	(*_dmamem_unmap) __P((bus_dma_tag_t, caddr_t, size_t));
-	int	(*_dmamem_mmap) __P((bus_dma_tag_t, bus_dma_segment_t *,
-		    int, int, int, int));
+	paddr_t	(*_dmamem_mmap) __P((bus_dma_tag_t, bus_dma_segment_t *,
+		    int, off_t, int, int));
 };
 
 #define	vaxbus_dma_get_tag(t, b)				\
@@ -1068,8 +1073,8 @@ int	_bus_dmamem_map __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
 	    int nsegs, size_t size, caddr_t *kvap, int flags));
 void	_bus_dmamem_unmap __P((bus_dma_tag_t tag, caddr_t kva,
 	    size_t size));
-int	_bus_dmamem_mmap __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
-	    int nsegs, int off, int prot, int flags));
+paddr_t	_bus_dmamem_mmap __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
+	    int nsegs, off_t off, int prot, int flags));
 #endif /* _VAX_BUS_DMA_PRIVATE */
 
 #endif /* _VAX_BUS_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: start.S,v 1.1 1999/07/08 11:48:07 tsubai Exp $	*/
+/*	$NetBSD: start.S,v 1.1.2.1 2000/11/20 20:17:33 bouyer Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -43,12 +43,21 @@ _start:
 	/* disklabel here */
 	.space	0x1f0
 
-1:
-	li	sp, 0x7fff0000
-	addu	sp, sp, a3		/* sp = 0x7fff0000 + maxmem */
-
-	jal	bootxx
+1:	bgez	a3, 2f			/* load address */
+	lui	v0, 0xa000		/* 0xa0000000 for non-APbus */
+	ori	v0, 0x1000		/* 0xa0001000 for APbus */
+2:	la	v1, _start		/* relocate myself */
+	la	t1, _end
+3:	lw	t0, 0(v0)
+	addu	v1, 4
+	sw	t0, -4(v1)
+	bne	v1, t1, 3b
+	addu	v0, 4
+	bgez	a3, 4f
 	nop
-
-	jal	halt
+	lw	t0, 16(sp)
+	sw	t0, _sip
+4:	li	sp, 0xa0001000
+	la	v0, bootxx
+	j	v0
 	nop
