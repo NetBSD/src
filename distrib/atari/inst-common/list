@@ -1,5 +1,5 @@
 #
-#	$NetBSD: list,v 1.1.1.1 1995/04/17 19:08:50 leo Exp $
+#	$NetBSD: list,v 1.2 1995/05/10 13:42:38 leo Exp $
 #
 
 # copy the crunched binary, link to it, and kill it
@@ -45,6 +45,7 @@ LINK	instbin			usr/bin/gunzip
 LINK	instbin			usr/bin/gzcat
 LINK	instbin			usr/bin/gzip
 LINK	instbin			usr/bin/more
+LINK	instbin			usr/bin/printf
 LINK	instbin			usr/bin/sed
 LINK	instbin			usr/bin/strings
 LINK	instbin			usr/bin/tar
