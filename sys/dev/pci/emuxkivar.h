@@ -1,4 +1,4 @@
-/*	$NetBSD: emuxkivar.h,v 1.6 2003/05/03 18:11:34 wiz Exp $	*/
+/*	$NetBSD: emuxkivar.h,v 1.7 2004/05/27 20:20:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -40,6 +40,7 @@
 #define _DEV_PCI_EMU10K1VAR_H_
 
 #define	EMU_PCI_CBIO		0x10
+#define EMU_SUBSYS_APS		0x40011102
 
 /*
  * DMA memory management
@@ -93,7 +94,7 @@ struct emuxki_mem {
 struct emuxki_chanparms_fxsend {
 	struct {
 		u_int8_t        level, dest;
-	} a, b, c, d;
+	} a, b, c, d, e, f, g, h;
 };
 
 struct emuxki_chanparms_pitch {
@@ -224,6 +225,12 @@ struct emuxki_stream {
 
 struct emuxki_softc {
 	struct device   sc_dev;
+	audio_device_t sc_audv;
+  	enum {
+		EMUXKI_SBLIVE = 0x00, EMUXKI_AUDIGY = 0x01,
+		EMUXKI_AUDIGY2 = 0x02, EMUXKI_LIVE_5_1 = 0x04,
+		EMUXKI_APS = 0x08
+  	} sc_type;
 
 	/* Autoconfig parameters */
 	bus_space_tag_t 	sc_iot;
