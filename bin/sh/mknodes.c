@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Kenneth Almquist.
@@ -35,14 +35,13 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1991 The Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1991, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)mknodes.c	5.1 (Berkeley) 3/7/91";*/
-static char rcsid[] = "$Id: mknodes.c,v 1.5 1993/09/05 17:32:07 mycroft Exp $";
+static char sccsid[] = "@(#)mknodes.c	8.1 (Berkeley) 5/31/93";
 #endif /* not lint */
 
 /*
@@ -101,15 +100,11 @@ char *savestr();
 
 main(argc, argv)
 	char **argv;
-{
-	if (argc != 3) {
+	{
+	if (argc != 3)
 		error("usage: mknodes file\n");
-		return(1);
-	}
-	if ((infp = fopen(argv[1], "r")) == NULL) {
+	if ((infp = fopen(argv[1], "r")) == NULL)
 		error("Can't open %s", argv[1]);
-		return(1);
-	}
 	while (readline()) {
 		if (line[0] == ' ' || line[0] == '\t')
 			parsefield();
@@ -117,7 +112,7 @@ main(argc, argv)
 			parsenode();
 	}
 	output(argv[2]);
-	return(0);
+	exit(0);
 }
 
 

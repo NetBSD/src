@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Kenneth Almquist.
@@ -33,8 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)output.h	5.1 (Berkeley) 3/7/91
- *	$Id: output.h,v 1.5 1994/05/04 23:45:06 jtc Exp $
+ *	@(#)output.h	8.1 (Berkeley) 5/31/93
  */
 
 #ifndef OUTPUT_INCL
@@ -56,9 +55,9 @@ extern struct output *out2;
 
 
 #ifdef __STDC__
-void outstr(const char *, struct output *);
-void out1str(const char *);
-void out2str(const char *);
+void outstr(char *, struct output *);
+void out1str(char *);
+void out2str(char *);
 void outfmt(struct output *, char *, ...);
 void out1fmt(char *, ...);
 void fmtstr(char *, int, char *, ...);

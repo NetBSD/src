@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Kenneth Almquist.
@@ -35,15 +35,13 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)redir.c	5.1 (Berkeley) 3/7/91";*/
-static char rcsid[] = "$Id: redir.c,v 1.6 1994/04/25 18:47:17 cgd Exp $";
+static char sccsid[] = "@(#)redir.c	8.1 (Berkeley) 5/31/93";
 #endif /* not lint */
 
 /*
  * Code for dealing with input/output redirection.
  */
 
-#include <sys/types.h>
 #include "shell.h"
 #include "nodes.h"
 #include "jobs.h"
@@ -52,9 +50,11 @@ static char rcsid[] = "$Id: redir.c,v 1.6 1994/04/25 18:47:17 cgd Exp $";
 #include "output.h"
 #include "memalloc.h"
 #include "error.h"
+#include <sys/types.h>
 #include <signal.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <unistd.h>
 
 
 #define EMPTY -2		/* marks an unused slot in redirtab */
@@ -70,9 +70,11 @@ struct redirtab {
 
 MKINIT struct redirtab *redirlist;
 
-/* We keep track of whether or not fd0 has been redirected.  This is for
-   background commands, where we want to redirect fd0 to /dev/null only
-   if it hasn't already been redirected.  */
+/* 
+ * We keep track of whether or not fd0 has been redirected.  This is for
+ * background commands, where we want to redirect fd0 to /dev/null only
+ * if it hasn't already been redirected.  
+*/
 int fd0_redirected = 0;
 
 #ifdef __STDC__
@@ -128,8 +130,8 @@ redirect(redir, flags)
 		} else {
 			close(fd);
 		}
-		if (fd == 0)
-			fd0_redirected++;
+                if (fd == 0)
+                        fd0_redirected++;
 		openredirect(n, memory);
 	}
 	if (memory[1])
@@ -185,7 +187,7 @@ movefd:
 		if ((f = open(fname, O_WRONLY)) < 0
 		 && (f = creat(fname, 0666)) < 0)
 			error("cannot create %s: %s", fname, errmsg(errno, E_CREAT));
-		lseek(f, 0, 2);
+		lseek(f, (off_t)0, 2);
 #endif
 		goto movefd;
 	case NTOFD:
@@ -263,8 +265,8 @@ popredir() {
 
 	for (i = 0 ; i < 10 ; i++) {
 		if (rp->renamed[i] != EMPTY) {
-			if (i == 0)
-				fd0_redirected--;
+                        if (i == 0)
+                                fd0_redirected--;
 			close(i);
 			if (rp->renamed[i] >= 0) {
 				copyfd(rp->renamed[i], i);
@@ -277,8 +279,6 @@ popredir() {
 	ckfree(rp);
 	INTON;
 }
-
-
 
 /*
  * Undo all redirections.  Called on error or interrupt.
@@ -299,6 +299,11 @@ SHELLPROC {
 
 #endif
 
+/* Return true if fd 0 has already been redirected at least once.  */
+int
+fd0_redirected_p () {
+        return fd0_redirected != 0;
+}
 
 /*
  * Discard all saved file descriptors.
@@ -322,45 +327,17 @@ clearredir() {
 
 
 /*
- * Copy a file descriptor, like the F_DUPFD option of fcntl.  Returns -1
+ * Copy a file descriptor to be >= to.  Returns -1
  * if the source file descriptor is closed, EMPTY if there are no unused
  * file descriptors left.
  */
 
 int
 copyfd(from, to) {
-#ifdef F_DUPFD
 	int newfd;
 
 	newfd = fcntl(from, F_DUPFD, to);
 	if (newfd < 0 && errno == EMFILE)
 		return EMPTY;
 	return newfd;
-#else
-	char toclose[32];
-	int i;
-	int newfd;
-	int e;
-
-	for (i = 0 ; i < to ; i++)
-		toclose[i] = 0;
-	INTOFF;
-	while ((newfd = dup(from)) >= 0 && newfd < to)
-		toclose[newfd] = 1;
-	e = errno;
-	for (i = 0 ; i < to ; i++) {
-		if (toclose[i])
-			close(i);
-	}
-	INTON;
-	if (newfd < 0 && e == EMFILE)
-		return EMPTY;
-	return newfd;
-#endif
-}
-
-/* Return true if fd 0 has already been redirected at least once.  */
-int
-fd0_redirected_p () {
-	return fd0_redirected != 0;
 }
