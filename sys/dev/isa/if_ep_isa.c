@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_isa.c,v 1.23 1998/08/12 18:51:54 thorpej Exp $	*/
+/*	$NetBSD: if_ep_isa.c,v 1.24 1998/11/04 00:30:14 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -272,7 +272,7 @@ ep_isa_probe(parent, match, aux)
 				"ep_isa_probe: can't map Etherlink iobase\n");
 				return 0;
 			}
-			if (bus_space_read_2(iot, ioh2, EP_W0_EEPROM_COMMAND)
+			if (bus_space_read_2(iot, ioh2, ELINK_W0_EEPROM_COMMAND)
 			    & EEPROM_TST_MODE) {
 				printf(
 				 "3COM 3C509 Ethernet card in PnP mode\n");
@@ -332,7 +332,7 @@ ep_isa_attach(parent, self, aux)
 
 	sc->sc_iot = iot;
 	sc->sc_ioh = ioh;
-	sc->bustype = EP_BUS_ISA;
+	sc->bustype = ELINK_BUS_ISA;
 
 	sc->enable = NULL;
 	sc->disable = NULL;
@@ -341,13 +341,13 @@ ep_isa_attach(parent, self, aux)
 	chipset = (int)(long)ia->ia_aux;
 	if ((chipset & 0xfff0) == PROD_ID_3C509) {
 		printf(": 3Com 3C509 Ethernet\n");
-		epconfig(sc, EP_CHIPSET_3C509, NULL);
+		epconfig(sc, ELINK_CHIPSET_3C509, NULL);
 	} else {
 		/*
 		 * XXX: Maybe a 3c515, but the check in ep_isa_probe looks
 		 * at the moment only for a 3c509.
 		 */
-		printf(": unknown 3Com Ethernet card: 0x%04x\n", chipset);
+		printf(": unknown 3Com Ethernet card: %04x\n", chipset);
 		return;
 	}
 
