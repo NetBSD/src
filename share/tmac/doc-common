@@ -1,4 +1,4 @@
-.\"	$NetBSD: doc-common,v 1.24 1999/02/10 23:16:07 ross Exp $
+.\"	$NetBSD: doc-common,v 1.25 1999/03/09 06:33:21 ross Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -135,6 +135,9 @@
 .nr z8 0
 .nr z9 0
 .nr z# 0
+.\" initializations added so all groff warnings can be enabled
+.	ds dD
+.\" warning initializations end
 .de Dt
 .ds dT UNTITLED
 .ds vT LOCAL
@@ -286,6 +289,7 @@
 ..
 .de lM
 .fl
+.if \\n(lC .ab List open at EOF -- A .Bl directive has no matching .El
 .if \\n(cR \{\
 '	sp
 .	tl @\\*(Hs\\*(oS\fP@\\*(Vs\\*(dD\fP@%@
