@@ -1,10 +1,10 @@
-#	$NetBSD: files.pci,v 1.120 2001/02/07 14:41:12 tacha Exp $
+#	$NetBSD: files.pci,v 1.121 2001/02/09 14:33:15 briggs Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
 # defined first.
 
-defopt	opt_pci.h	PCIVERBOSE PCI_CONFIG_DUMP
+defopt	opt_pci.h	PCIVERBOSE PCI_CONFIG_DUMP PCI_NETBSD_CONFIGURE
 
 defopt	opt_bktr.h	BKTR_OVERRIDE_CARD BKTR_OVERRIDE_TUNER BKTR_OVERRIDE_DBX
 			BKTR_OVERRIDE_MSP BKTR_SYSTEM_DEFAULT
@@ -20,6 +20,7 @@ file	dev/pci/pci.c			pci needs-flag
 file	dev/pci/pci_map.c		pci
 file	dev/pci/pci_quirks.c		pci
 file	dev/pci/pci_subr.c		pci
+file	dev/pci/pciconf.c		pci_netbsd_configure
 
 # Cypress 82c693 hyperCache(tm) Stand-Alone PCI Peripheral Controller
 # with USB.  This is a combo chip:
