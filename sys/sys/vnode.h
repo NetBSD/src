@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.113 2003/07/08 06:49:23 itojun Exp $	*/
+/*	$NetBSD: vnode.h,v 1.114 2003/07/30 12:09:47 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -47,6 +47,8 @@
 #include <uvm/uvm_pglist.h>	/* XXX */
 #include <uvm/uvm_object.h>	/* XXX */
 #include <uvm/uvm_extern.h>	/* XXX */
+
+struct namecache;
 
 /*
  * The vnode is the focus of all file activity in UNIX.  There is a
@@ -100,6 +102,8 @@ struct vnode {
 	struct buflists	v_cleanblkhd;		/* clean blocklist head */
 	struct buflists	v_dirtyblkhd;		/* dirty blocklist head */
 	LIST_ENTRY(vnode) v_synclist;		/* vnodes with dirty buffers */
+	LIST_HEAD(, namecache) v_dnclist;	/* namecaches for children */
+	LIST_HEAD(, namecache) v_nclist;	/* namecaches for our parent */
 	union {
 		struct mount	*vu_mountedhere;/* ptr to mounted vfs (VDIR) */
 		struct socket	*vu_socket;	/* unix ipc (VSOCK) */
@@ -583,6 +587,7 @@ int	getvnode(struct filedesc *fdp, int fd, struct file **fpp);
 
 /* see vfssubr(9) */
 void	vfs_getnewfsid(struct mount *);
+int	vfs_drainvnodes(long target, struct proc *);
 #ifdef DDB
 void	vfs_vnode_print(struct vnode *, int, void (*)(const char *, ...));
 #endif /* DDB */

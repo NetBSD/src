@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.138 2003/07/02 20:07:45 ragge Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.139 2003/07/30 12:09:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.138 2003/07/02 20:07:45 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.139 2003/07/30 12:09:46 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_insecure.h"
@@ -375,8 +375,11 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		error = sysctl_int(oldp, oldlenp, newp, newlen, &desiredvnodes);
 		if (newp && !error) {
 			if (old_vnodes > desiredvnodes) {
-				desiredvnodes = old_vnodes;
-				return (EINVAL);
+				error = vfs_drainvnodes(desiredvnodes, p);
+				if (error) {
+					desiredvnodes = old_vnodes;
+					return error;
+				}
 			}
 			vfs_reinit();
 			nchreinit();
