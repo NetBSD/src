@@ -1,4 +1,4 @@
-/*	$NetBSD: gphyter.c,v 1.12 2003/04/29 01:49:33 thorpej Exp $	*/
+/*	$NetBSD: gphyter.c,v 1.13 2004/04/10 18:47:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gphyter.c,v 1.12 2003/04/29 01:49:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gphyter.c,v 1.13 2004/04/10 18:47:56 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -302,7 +302,8 @@ gphyter_status(struct mii_softc *sc)
 			mii->mii_media_status = 0;
 		}
 		if (physup & PHY_SUP_DUPLEX)
-			mii->mii_media_active |= IFM_FDX;
+			mii->mii_media_active |=
+			    IFM_FDX | gmii_phy_getflowcontrol(sc);
 	} else
 		mii->mii_media_active = ife->ifm_media;
 }
