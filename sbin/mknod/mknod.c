@@ -1,4 +1,4 @@
-/*	$NetBSD: mknod.c,v 1.32 2004/06/17 21:09:01 dsl Exp $	*/
+/*	$NetBSD: mknod.c,v 1.33 2004/06/17 23:15:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -43,13 +43,15 @@
 #include <sys/cdefs.h>
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1998 The NetBSD Foundation, Inc.  All rights reserved.\n");
-__RCSID("$NetBSD: mknod.c,v 1.32 2004/06/17 21:09:01 dsl Exp $");
+__RCSID("$NetBSD: mknod.c,v 1.33 2004/06/17 23:15:07 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/param.h>
+#ifdef __NetBSD__
 #include <sys/sysctl.h>
+#endif
 
 #include <err.h>
 #include <errno.h>
