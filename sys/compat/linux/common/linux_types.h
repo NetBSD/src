@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_types.h,v 1.11 2001/01/19 01:40:40 manu Exp $	*/
+/*	$NetBSD: linux_types.h,v 1.12 2002/01/14 23:14:44 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -45,11 +45,11 @@
 #include <compat/linux/arch/alpha/linux_types.h>
 #elif defined(__powerpc__)
 #include <compat/linux/arch/powerpc/linux_types.h>
+#elif defined(__arm__)
+#include <compat/linux/arch/arm/linux_types.h>
 /*
  * The rest are not written yet:
  */
-#elif defined(__arm32__)
-#include <compat/linux/arch/arm32/linux_types.h>
 #elif defined(__m68k__)
 #include <compat/linux/arch/m68k/linux_types.h>
 #elif defined(__mips__)

@@ -1,11 +1,11 @@
-/*	$NetBSD: linux_syscall.h,v 1.40 2002/01/14 23:14:34 bjh21 Exp $	*/
+/*	$NetBSD: linux_socket.h,v 1.1 2002/01/14 23:14:40 bjh21 Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Eric Haszlakiewicz.
+ * by Frank van der Linden and Eric Haszlakiewicz.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,23 +36,49 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _LINUX_SYSCALL_H
-#define _LINUX_SYSCALL_H
+#ifndef _ARM_LINUX_SOCKET_H
+#define _ARM_LINUX_SOCKET_H
 
-#if defined(__i386__)
-#include <compat/linux/arch/i386/linux_syscall.h>
-#elif defined(__m68k__)
-#include <compat/linux/arch/m68k/linux_syscall.h>
-#elif defined(__alpha__)
-#include <compat/linux/arch/alpha/linux_syscall.h>
-#elif defined(__powerpc__)
-#include <compat/linux/arch/powerpc/linux_syscall.h>
-#elif defined(__mips__)
-#include <compat/linux/arch/mips/linux_syscall.h>
-#elif defined(__arm__)
-#include <compat/linux/arch/arm/linux_syscall.h>
-#else
-#define	LINUX_SYS_MAXSYSCALL	0
-#endif
+/*
+ * Option levels for [gs]etsockopt(2).  Only SOL_SOCKET is different,
+ * the rest matches IPPROTO_XXX
+ */
+#define LINUX_SOL_SOCKET	1
 
-#endif /* !_LINUX_SYSCALL_H */
+/*
+ * Options for [gs]etsockopt(2), socket level.  For Linux, thay
+ * are not masks, but just increasing numbers.
+ */
+
+#define LINUX_SO_DEBUG		1
+#define LINUX_SO_REUSEADDR	2
+#define LINUX_SO_TYPE		3
+#define LINUX_SO_ERROR		4
+#define LINUX_SO_DONTROUTE	5
+#define LINUX_SO_BROADCAST	6
+#define LINUX_SO_SNDBUF		7
+#define LINUX_SO_RCVBUF		8
+#define LINUX_SO_KEEPALIVE	9
+#define LINUX_SO_OOBINLINE	10
+#define LINUX_SO_NO_CHECK	11
+#define LINUX_SO_PRIORITY	12
+#define LINUX_SO_LINGER		13
+
+/* unused: */
+#define LINUX_SO_BSDCOMPAT	14
+#define LINUX_SO_REUSEPORT	15	/* undef in Linux */
+#define LINUX_SO_PASSCRED	16
+#define LINUX_SO_PEERCRED	17
+#define LINUX_SO_RCVLOWAT	18
+#define LINUX_SO_SNDLOWAT	19
+#define LINUX_SO_RCVTIMEO	20
+#define LINUX_SO_SNDTIMEO	21
+#define LINUX_SO_SECURITY_AUTHENTICATION	22
+#define LINUX_SO_SECURITY_ENCRYPTION_TRANSPORT	23
+#define LINUX_SO_SECURITY_ENCRYPTION_NETWORK	24
+
+#define LINUX_SO_BINDTODEVICE	25
+#define LINUX_SO_ATTACH_FILTER	26
+#define LINUX_SO_DETACH_FILTER	26
+
+#endif /* !_ARM_LINUX_SOCKET_H */

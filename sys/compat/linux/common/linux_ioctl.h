@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ioctl.h,v 1.15 2001/09/22 21:24:16 manu Exp $	*/
+/*	$NetBSD: linux_ioctl.h,v 1.16 2002/01/14 23:14:42 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -69,6 +69,8 @@ __END_DECLS
 #include <compat/linux/arch/powerpc/linux_ioctl.h>
 #elif defined(__mips__)
 #include <compat/linux/arch/mips/linux_ioctl.h>
+#elif defined(__arm__)
+#include <compat/linux/arch/arm/linux_ioctl.h>
 #else
 #error Undefined linux_ioctl.h machine type.
 #endif
