@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.82 2000/06/11 07:50:11 ragge Exp $	   */
+/*	$NetBSD: pmap.c,v 1.82.2.1 2000/08/13 08:46:32 ragge Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -483,7 +483,6 @@ if(startpmapdebug)printf("pmap_release: pmap %p\n",pmap);
 #endif
 	extent_free(ptemap, (u_long)pmap->pm_p0br,
 	    USRPTSIZE * sizeof(struct pte), EX_WAITOK);
-	mtpr(0, PR_TBIA);
 }
 
 /*
@@ -588,7 +587,6 @@ if(startpmapdebug)
 	ptp[5] = ptp[0] + 5;
 	ptp[6] = ptp[0] + 6;
 	ptp[7] = ptp[0] + 7;
-	mtpr(0, PR_TBIA);
 }
 
 void
@@ -652,7 +650,6 @@ if(startpmapdebug)
 		ptp[7] = ptp[0] + 7;
 		ptp += LTOHPN;
 	}
-	mtpr(0, PR_TBIA);
 }
 
 /*
@@ -707,6 +704,8 @@ if (startpmapdebug)
 			newpte = (p >> VAX_PGSHIFT) |
 			    (prot & VM_PROT_WRITE ? PG_RW : PG_RO);
 		}
+		if (flags & PMAP_WIRED)
+			newpte |= PG_W;
 
 		/*
 		 * Check if a pte page must be mapped in.
@@ -748,19 +747,24 @@ if (startpmapdebug)
 
 	oldpte = patch[i] & ~(PG_V|PG_M);
 
-	/* No mapping change. Can this happen??? */
-	if (newpte == oldpte) {
-		RECURSEEND;
-		mtpr(1, PR_TBIA); /* Always; safety belt */
-		return (KERN_SUCCESS);
-	}
+	/* No mapping change. Not allowed to happen. */
+	if (newpte == oldpte)
+		panic("pmap_enter onto myself");
 
 	pv = pv_table + (p >> PGSHIFT);
 
+	/* wiring change? */
+	if (newpte == (oldpte | PG_W)) {
+		patch[i] |= PG_W; /* Just wiring change */
+		RECURSEEND;
+		return (KERN_SUCCESS);
+	}
 	/* Changing mapping? */
 	oldpte &= PG_FRAME;
-	if ((newpte & PG_FRAME) != oldpte) {
-
+	if ((newpte & PG_FRAME) == oldpte) {
+		/* prot change. resident_count will be increased later */
+		pmap->pm_stats.resident_count--;
+	} else {
 		/*
 		 * Mapped before? Remove it then.
 		 */
@@ -810,7 +814,7 @@ if (startpmapdebug)
 	if (pventries < 10)
 		more_pventries();
 
-	mtpr(1, PR_TBIA); /* Always; safety belt */
+	mtpr(0, PR_TBIA); /* Always; safety belt */
 	return (KERN_SUCCESS);
 }
 
@@ -854,7 +858,6 @@ if(startpmapdebug)
 		*pentry++ = (count>>VAX_PGSHIFT)|PG_V|
 		    (prot & VM_PROT_WRITE ? PG_KW : PG_KR);
 	}
-	mtpr(0,PR_TBIA);
 	return(virtuell+(count-pstart)+0x80000000);
 }
 
@@ -987,7 +990,7 @@ if(startpmapdebug) printf("pmap_protect: pmap %p, start %lx, end %lx, prot %x\n"
 		pts += LTOHPN;
 	}
 	RECURSEEND;
-	mtpr(1, PR_TBIA);
+	mtpr(0, PR_TBIA);
 }
 
 int pmap_simulref(int bits, int addr);
@@ -1100,7 +1103,7 @@ pmap_clear_reference(pg)
 		    pv->pv_pte[4].pg_v = pv->pv_pte[5].pg_v = 
 		    pv->pv_pte[6].pg_v = pv->pv_pte[7].pg_v = 0;
 	RECURSEEND;
-	mtpr(1, PR_TBIA);
+	mtpr(0, PR_TBIA);
 	return TRUE; /* XXX */
 }
 
@@ -1295,6 +1298,25 @@ if(startpmapdebug) printf("pmap_activate: p %p\n", p);
 		mtpr(pmap->pm_p1lr, PR_P1LR);
 	}
 	mtpr(0, PR_TBIA);
+}
+
+/*
+ * removes the wired bit from a bunch of PTE's.
+ */
+void
+pmap_unwire(pmap_t pmap, vaddr_t v)
+{
+	int *pte;
+
+	if (v & KERNBASE) {
+		pte = (int *)kvtopte(v);
+	} else {
+		if (v < 0x40000000)
+			pte = (int *)&pmap->pm_p0br[PG_PFNUM(v)];
+		else
+			pte = (int *)&pmap->pm_p1br[PG_PFNUM(v)];
+	}
+	pte[0] &= ~PG_W; /* Informational, only first page */
 }
 
 struct pv_entry *pv_list;
