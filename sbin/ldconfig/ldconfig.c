@@ -1,4 +1,4 @@
-/*	$NetBSD: ldconfig.c,v 1.15 1996/07/03 03:28:11 thorpej Exp $	*/
+/*	$NetBSD: ldconfig.c,v 1.16 1997/01/03 07:10:52 mikel Exp $	*/
 
 /*
  * Copyright (c) 1993,1995 Paul Kranenburg
@@ -118,7 +118,7 @@ char	*argv[];
 			return rval;
 		if (justread) {
 			listhints();
-			return;
+			return rval;
 		}
 	}
 
