@@ -1,4 +1,4 @@
-.\"	$NetBSD: arp.8,v 1.9 1997/10/16 23:46:38 lukem Exp $
+.\"	$NetBSD: arp.8,v 1.10 1998/02/10 03:45:05 mrg Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -44,9 +44,10 @@
 .Op Fl n
 .Ar hostname
 .Nm ""
-.Op Fl n
+.Op Fl nv
 .Fl a
 .Nm ""
+.Op Fl v
 .Fl d Ar hostname
 .Nm ""
 .Fl s Ar hostname ether_addr
@@ -118,6 +119,10 @@ in the file should be of the form
 .Ed
 .Pp
 with argument meanings as given above.
+.It Fl v
+Display verbose information when adding or deleting
+.Tn ARP
+entries.
 .El
 .Sh SEE ALSO
 .Xr inet 3 ,
