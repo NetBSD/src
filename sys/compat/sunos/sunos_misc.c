@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.72 1996/09/07 12:40:48 mycroft Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.73 1996/10/13 00:56:02 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -83,6 +83,7 @@
 #include <sys/syscallargs.h>
 #include <sys/conf.h>
 #include <sys/socketvar.h>
+#include <sys/exec.h>
 
 #include <compat/sunos/sunos.h>
 #include <compat/sunos/sunos_syscallargs.h>
