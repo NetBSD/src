@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.106 1997/08/23 14:01:32 drochner Exp $	*/
+/*	$NetBSD: com.c,v 1.107 1997/08/24 09:40:16 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -1703,6 +1703,9 @@ com_kgdb_attach(iot, iobase, rate, cflag)
 	tcflag_t cflag;
 {
 	int res;
+
+	if (iot == comconstag && iobase == comconsaddr)
+		return(EBUSY); /* cannot share with console */
 
 	res = cominit(iot, iobase, rate, cflag, &com_kgdb_ioh);
 	if(res) return(res);
