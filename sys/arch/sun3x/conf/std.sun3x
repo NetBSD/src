@@ -1,4 +1,4 @@
-#	$NetBSD: std.sun3x,v 1.2 1997/04/25 19:11:48 gwr Exp $
+#	$NetBSD: std.sun3x,v 1.3 1997/05/07 02:20:28 lukem Exp $
 
 # Standard information for sun3's.
 machine	sun3x m68k
@@ -40,7 +40,7 @@ clock0	at obio0 addr 0x640007F8 ipl 5
 iommu0	at obio0 addr 0x60000000
 
 # Standard defines
-options		EXEC_AOUT
-options		EXEC_SCRIPT
+options 	EXEC_AOUT
+options 	EXEC_SCRIPT
 options 	SWAPPAGER, VNODEPAGER, DEVPAGER
 
