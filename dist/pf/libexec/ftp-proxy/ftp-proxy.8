@@ -1,4 +1,4 @@
-.\"	$NetBSD: ftp-proxy.8,v 1.3 2004/06/25 15:57:50 wiz Exp $
+.\"	$NetBSD: ftp-proxy.8,v 1.4 2004/06/30 13:29:43 darrenr Exp $
 .\"	$OpenBSD: ftp-proxy.8,v 1.40 2004/03/16 08:50:07 jmc Exp $
 .\"
 .\" Copyright (c) 1996-2001
@@ -36,6 +36,17 @@
 .Nd Internet File Transfer Protocol proxy server
 .Sh SYNOPSIS
 .Nm ftp-proxy
+.Fl i
+.Op Fl AnrVw
+.Op Fl a Ar address
+.Op Fl D Ar debuglevel
+.Op Fl g Ar group
+.Op Fl M Ar maxport
+.Op Fl m Ar minport
+.Op Fl t Ar timeout
+.Op Fl u Ar user
+.Nm ftp-proxy
+.Fl p
 .Op Fl AnrVw
 .Op Fl a Ar address
 .Op Fl D Ar debuglevel
@@ -102,6 +113,10 @@ lookups which require root.
 By default,
 .Nm
 uses the default group of the user it drops privilege to.
+.It Fl i
+Set
+.Nm ftp-proxy
+for use with IP-Filter.
 .It Fl M Ar maxport
 Specify the upper end of the port range the proxy will use for the
 data connections it establishes.
@@ -138,6 +153,10 @@ Without this flag,
 does not require any IP forwarding or NAT beyond the
 .Em rdr
 necessary to capture the FTP control connection.
+.It Fl p
+Set
+.Nm ftp-proxy
+for use with pf.
 .It Fl r
 Use reverse host
 .Pq reverse DNS
@@ -191,7 +210,13 @@ is run from
 and requires that FTP connections are redirected to it using a
 .Em rdr
 rule.
-A typical way to do this would be to use a
+A typical way to do this would be to use either an ipnat rule such as
+.Bd -literal -offset 2n
+int_if = \&"xl0\&";
+rdr $int_if 0/0 port 21 -\*[Gt] 127.0.0.1 port 8021 tcp
+.Ed
+.Pp
+or a
 .Xr pf.conf 5
 rule such as
 .Bd -literal -offset 2n
@@ -218,7 +243,23 @@ sends through the control connection to the server with its own
 address and proxy port, where it listens for the data connection.
 When the server opens the data connection back to this port, the
 proxy forwards it to the client.
-The
+If you're using IP-Filter, the
+.Xr ipf.conf 5
+rules need to let pass connections to these proxy ports
+(see options
+.Fl u , m ,
+and
+.Fl M
+above) in on the external interface.
+The following example allows only ports 49152 to 65535 to pass in
+statefully:
+.Bd -literal -offset indent
+block in on $ext_if proto tcp all
+pass  in on $ext_if inet proto tcp from any to $ext_if \e
+    port \*[Gt] 49151 keep state
+.Ed
+.Pp
+If you're using pf, then the
 .Xr pf.conf 5
 rules need to let pass connections to these proxy ports
 (see options
@@ -234,7 +275,9 @@ pass  in on $ext_if inet proto tcp from any to $ext_if \e
     port \*[Gt] 49151 keep state
 .Ed
 .Pp
-Alternatively, rules can make use of the fact that by default,
+Alternatively,
+.Xr pf.conf 5
+rules can make use of the fact that by default,
 .Nm
 runs as user
 .Qq proxy
@@ -255,8 +298,12 @@ are needed.
 .Xr hosts.allow 5 ,
 .Xr hosts.deny 5 ,
 .Xr inetd.conf 5 ,
+.Xr ipf.conf 5 ,
+.Xr ipnat.conf 5 ,
 .Xr pf.conf 5 ,
 .Xr inetd 8 ,
+.Xr ipf 8 ,
+.Xr ipnat 8 ,
 .Xr pfctl 8 ,
 .Xr syslogd 8
 .Sh BUGS
@@ -268,8 +315,7 @@ When not in network address translation mode, the proxy returns an error
 to the client, hopefully forcing the client to revert to passive mode
 .Pq PASV
 which is supported.
-EPSV will work in network address translation mode, assuming a
-.Xr pf.conf 5
+EPSV will work in network address translation mode, assuming a configuration
 setup which allows the EPSV connections through to their destinations.
 .Pp
 IPv6 is not yet supported.
