@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_dbg.h,v 1.2 2003/01/18 10:34:23 thorpej Exp $	*/
+/*	$NetBSD: pthread_dbg.h,v 1.3 2003/02/27 00:54:08 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -134,6 +134,9 @@ int td_thr_iter(td_proc_t *, int (*)(td_thread_t *, void *), void *);
 
 /* Get information on a thread */
 int td_thr_info(td_thread_t *, td_thread_info_t *);
+
+/* Get the user-assigned name of a thread */
+int td_thr_getname(td_thread_t *, char *, int);
 
 /* Get register state of a thread */
 int td_thr_getregs(td_thread_t *, int, void *);
