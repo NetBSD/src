@@ -1,4 +1,4 @@
-/* $NetBSD: ttyflags.c,v 1.14 2003/07/12 14:33:55 itojun Exp $ */
+/* $NetBSD: ttyflags.c,v 1.15 2005/01/19 20:48:13 xtraeme Exp $ */
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1994 Christopher G. Demetriou\n\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: ttyflags.c,v 1.14 2003/07/12 14:33:55 itojun Exp $");
+__RCSID("$NetBSD: ttyflags.c,v 1.15 2005/01/19 20:48:13 xtraeme Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -59,11 +59,10 @@ __RCSID("$NetBSD: ttyflags.c,v 1.14 2003/07/12 14:33:55 itojun Exp $");
 #include <ttyent.h>
 #include <unistd.h>
 
-int change_all __P((void));
-int change_ttyflags __P((struct ttyent *));
-int change_ttys __P((char **));
-int main __P((int, char *[]));
-void usage __P((void));
+int change_all(void);
+int change_ttyflags(struct ttyent *);
+int change_ttys(char **);
+void usage(void);
 
 int nflag, vflag;
 
@@ -73,9 +72,7 @@ int nflag, vflag;
  * the flags of the ttys specified on the command line.
  */
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int aflag, ch, rval;
 
@@ -121,7 +118,7 @@ main(argc, argv)
  * Change all /etc/ttys entries' flags.
  */
 int
-change_all()
+change_all(void)
 {
 	struct ttyent *tep;
 	int rval;
@@ -137,8 +134,7 @@ change_all()
  * Change the specified ttys' flags.
  */
 int
-change_ttys(ttylist)
-	char **ttylist;
+change_ttys(char **ttylist)
 {
 	struct ttyent *tep;
 	int rval;
@@ -165,8 +161,7 @@ change_ttys(ttylist)
  * open the device, and change the flags.
  */
 int
-change_ttyflags(tep)
-	struct ttyent *tep;
+change_ttyflags(struct ttyent *tep)
 {
 	int fd, flags, rval, st, sep;
 	char path[PATH_MAX];
@@ -244,7 +239,7 @@ change_ttyflags(tep)
  * Print usage information when a bogus set of arguments is given.
  */
 void
-usage()
+usage(void)
 {
 	(void)fprintf(stderr, "usage: ttyflags [-v] [-a | tty ... ]\n");
 	exit(1);
