@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.42 1994/11/08 04:22:39 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.43 1995/03/05 22:19:26 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1120,8 +1120,14 @@ boot(howto)
 		vnshutdown();
 #endif
 #endif
-		sync(&proc0, (void *)NULL, (int *)NULL);
-
+		sync(&proc0, (void *)0, (int *)0);
+#ifdef notyet
+		/*
+		 * Unmount filesystems
+		 */
+		if (panicstr == 0)
+			vfs_unmountall();
+#endif
 		for (iter = 0; iter < 20; iter++) {
 			nbusy = 0;
 			for (bp = &buf[nbuf]; --bp >= buf; )
@@ -1155,31 +1161,51 @@ boot(howto)
 	/*NOTREACHED*/
 }
 
-int	dumpmag = 0x8fca0101;	/* magic number for savecore */
-int	dumpsize = 0;		/* also for savecore */
-long	dumplo = 0;
+/*
+ * These variables are needed by /sbin/savecore
+ */
+u_long	dumpmag = 0x8fca0101;	/* magic number */
+int	dumpsize = 0;		/* pages */
+long	dumplo = 0;		/* blocks */
 
+/*
+ * This is called by configure to set dumplo and dumpsize.
+ * Dumps always skip the first CLBYTES of disk space
+ * in case there might be a disk label stored there.
+ * If there is extra space, put dump at the end to
+ * reduce the chance that swapping trashes it.
+ */
+void
 dumpconf()
 {
-	int nblks;
+	int nblks;	/* size of dump area */
+	int maj;
+
+	if (dumpdev == NODEV)
+		return;
+	maj = major(dumpdev);
+	if (maj < 0 || maj >= nblkdev)
+		panic("dumpconf: bad dumpdev=0x%x", dumpdev);
+	if (bdevsw[maj].d_psize == NULL)
+		return;
+	nblks = (*bdevsw[maj].d_psize)(dumpdev);
+	if (nblks <= ctod(1))
+		return;
 
 	/*
 	 * XXX include the final RAM page which is not included in physmem.
 	 */
 	dumpsize = physmem + 1;
-	if (dumpdev != NODEV && bdevsw[major(dumpdev)].d_psize) {
-		nblks = (*bdevsw[major(dumpdev)].d_psize)(dumpdev);
-		if (dumpsize > btoc(dbtob(nblks - dumplo)))
-			dumpsize = btoc(dbtob(nblks - dumplo));
-		else if (dumplo == 0)
-			dumplo = nblks - btodb(ctob(dumpsize));
-	}
-	/*
-	 * Don't dump on the first CLBYTES (why CLBYTES?)
-	 * in case the dump device includes a disk label.
-	 */
-	if (dumplo < btodb(CLBYTES))
-		dumplo = btodb(CLBYTES);
+
+	/* Always skip the first CLBYTES, in case there is a label there. */
+	if (dumplo < ctod(1))
+		dumplo = ctod(1);
+
+	/* Put dump at end of partition, and make it fit. */
+	if (dumpsize > dtoc(nblks - dumplo))
+		dumpsize = dtoc(nblks - dumplo);
+	if (dumplo < nblks - ctod(dumpsize))
+		dumplo = nblks - ctod(dumpsize);
 }
 
 /*
@@ -1193,15 +1219,13 @@ dumpsys()
 	msgbufmapped = 0;
 	if (dumpdev == NODEV)
 		return;
-	/*
-	 * For dumps during autoconfiguration,
-	 * if dump device has already configured...
-	 */
-	if (dumpsize == 0)
+	if (dumpsize == 0) {
 		dumpconf();
-	if (dumplo < 0)
-		return;
+		if (dumpsize == 0)
+			return;
+	}
 	printf("\ndumping to dev %x, offset %d\n", dumpdev, dumplo);
+
 	printf("dump ");
 	switch ((*bdevsw[major(dumpdev)].d_dump)(dumpdev)) {
 
@@ -1219,6 +1243,10 @@ dumpsys()
 
 	case EIO:
 		printf("i/o error\n");
+		break;
+
+	case EINTR:
+		printf("aborted from console\n");
 		break;
 
 	default:
