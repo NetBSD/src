@@ -1,6 +1,6 @@
-#	$NetBSD: NWSCONS,v 1.13 1998/10/30 13:47:03 lukem Exp $
+#	$NetBSD: NWSCONS,v 1.14 1998/11/06 20:29:52 tron Exp $
 #
-#	like GENERIC, with new console drivers
+#	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
@@ -310,6 +310,8 @@ ahc0	at isa? port ? irq ?		# Adaptec 284x SCSI
 aic0	at isa? port 0x340 irq 11	# Adaptec 152[02] SCSI
 bha0	at isa? port 0x330 irq ? drq ?	# BusLogic [457]4X SCSI
 bha1	at isa? port 0x334 irq ? drq ?
+nca0	at isa? port 0x360 irq 15	# Port-mapped NCR 53C80 contoller
+nca1	at isa? iomem 0xd8000 irq 5	# Memory-mapped controller (T128, etc.)
 sea0	at isa? iomem 0xc8000 irq 5	# Seagate/Future Domain SCSI
 uha0	at isa? port 0x330 irq ? drq ?	# UltraStor [13]4f SCSI
 uha1	at isa? port 0x340 irq ? drq ?
@@ -325,6 +327,7 @@ scsibus* at ahc?
 scsibus* at aic?
 scsibus* at bha?
 scsibus* at isp?
+scsibus* at nca?
 scsibus* at ncr?
 scsibus* at sea?
 scsibus* at uha?
@@ -341,7 +344,10 @@ uk*	at scsibus? target ? lun ?	# SCSI unknown
 
 # IDE and Related Devices
 # PCI IDE controllers (CMD tech's PCI0640, Intel's PIIx).
-#pciide* at pci ? dev ? function ?
+# The 0x0001 flag force the driver to use DMA, even if the driver doesn't know
+# how to set up DMA modes for this chip. This may work, or may cause
+# a machine hang with some controllers.
+#pciide* at pci ? dev ? function ? flags 0x0000
 
 # ISA Plug-and-Play IDE controllers
 wdc*	at isapnp? 
@@ -391,7 +397,8 @@ fd*	at fdc? drive ?			# the drives themselves
 # PCI network interfaces
 de*	at pci? dev ? function ?	# DEC 21x4x-based Ethernet
 en*	at pci? dev ? function ?	# ENI/Adaptec ATM
-ep*	at pci? dev ? function ?	# 3Com 3c59x/3c90x Ethernet
+ep*	at pci? dev ? function ?	# 3Com 3c59x
+ex*	at pci? dev ? function ?	# 3Com 90x[B]
 epic*	at pci? dev ? function ?	# SMC EPIC/100 Ethernet
 esh*	at pci? dev ? function ?	# Essential HIPPI card
 fpa*	at pci? dev ? function ?	# DEC DEFPA FDDI
@@ -440,10 +447,15 @@ we0	at isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC Ethernet
 we1	at isa? port 0x300 iomem 0xcc000 irq 10
 
 # MII/PHY support
+exphy*	at mii? phy ?			# 3Com internal PHYs
+icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS1890
 inphy*	at mii? phy ?			# Intel 82555 PHYs
+lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs
 nsphy*	at mii? phy ?			# NS83840 PHYs
 qsphy*	at mii? phy ?			# Quality Semiconductor QS6612 PHYs
+sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
 tlphy*	at mii? phy ?			# ThunderLAN PHYs
+ukphy*	at mii? phy ?			# generic unknown PHYs
 
 # USB Controller and Devices
 
