@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.61 2002/09/13 03:17:21 mycroft Exp $	 */
+/*	$NetBSD: rtld.c,v 1.62 2002/09/13 14:23:07 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -287,10 +287,6 @@ _rtld(sp, relocbase)
 	sp += 2;		/* skip over return argument space */
 	argv = (const char **) &sp[1];
 	argc = *(long *)sp;
-#ifdef __sparc_v9__
-	/* XXX Temporary hack for argc format conversion. */
-	argc = (argc >> 32) | (argc & 0xffffffff);
-#endif
 	sp += 2 + argc;		/* Skip over argc, arguments, and NULL
 				 * terminator */
 	env = (char **) sp;
