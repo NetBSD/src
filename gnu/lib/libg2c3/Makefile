@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2003/10/19 14:52:03 lukem Exp $
+#	$NetBSD: Makefile,v 1.5 2003/10/21 10:01:19 lukem Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -30,8 +30,7 @@ ${f:.c=.d} ${f:.c=.o} ${f:.c=.so} ${f:.c=.po}: ${DIST}/libf2c/libU77/$f
 .for c in F I U
 CLEANFILES+=	Version${c}.c
 Version${c}.c: ${DIST}/libf2c/lib${c}77/Version.c
-	${_MKMSGCREATE}
-	${_MKCMD}\
+	${_MKTARGET_CREATE}
 	cp $> $@
 .endfor
 
@@ -39,21 +38,18 @@ Version${c}.c: ${DIST}/libf2c/lib${c}77/Version.c
 OBJS+=		L${f}.o
 
 L${f}.o: f2cext.c
-	${_MKMSGCOMPILE}
-	${_MKCMD}\
+	${_MKTARGET_COMPILE}
 	${COMPILE.c} -DL${f} -o $@ ${>:M*.c}
 
 .if ${MKPIC} != "no"
 L${f}.so: f2cext.c
-	${_MKMSGCOMPILE}
-	${_MKCMD}\
+	${_MKTARGET_COMPILE}
 	${COMPILE.c} ${CPICFLAGS} -DL${f} -o $@ ${>:M*.c}
 .endif
 
 .if ${MKPROFILE} != "no"
 L${f}.po: f2cext.c
-	${_MKMSGCOMPILE}
-	${_MKCMD}\
+	${_MKTARGET_COMPILE}
 	${COMPILE.c} -pg -DL${f} -o $@ ${>:M*.c}
 .endif
 .endfor

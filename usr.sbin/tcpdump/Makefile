@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.32 2003/10/19 06:12:07 lukem Exp $	
+#	$NetBSD: Makefile,v 1.33 2003/10/21 10:01:22 lukem Exp $	
 
 .include <bsd.own.mk>
 
@@ -39,8 +39,7 @@ SRCS+=	version.c
 #SRCS+=	print-smb.c smbutil.c
 
 version.c: VERSION
-	${_MKMSGCREATE}
-	${_MKCMD}\
+	${_MKTARGET_CREATE}
 	sed -e 's/.*/char version[] = "&";/' ${.ALLSRC} > ${.TARGET}
 
 LDADD+=	-lpcap -ll

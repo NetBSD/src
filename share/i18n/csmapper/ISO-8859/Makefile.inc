@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.2 2003/10/19 14:08:50 lukem Exp $
+# $NetBSD: Makefile.inc,v 1.3 2003/10/21 10:01:21 lukem Exp $
 
 .PATH: ${.CURDIR}/ISO-8859
 
@@ -21,8 +21,7 @@ FILESDIR_UCS%ISO-8859-$i.mps=	${BINDIR}/ISO-8859
 .endfor
 
 mapper.dir.ISO-8859: ${.CURDIR}/ISO-8859/ISO-8859.part
-	${_MKMSGCREATE}
-	${_MKCMD}\
+	${_MKTARGET_CREATE}
 	(\
 	    echo "# ISO-8859";\
 	    printf '%-32s%-16s\n' ISO-8859-1/UCS mapper_none;\
@@ -45,8 +44,7 @@ mapper.dir.ISO-8859: ${.CURDIR}/ISO-8859/ISO-8859.part
 	) > ${.TARGET}
 
 charset.pivot.ISO-8859: ${.CURDIR}/ISO-8859/ISO-8859.part
-	${_MKMSGCREATE}
-	${_MKCMD}\
+	${_MKTARGET_CREATE}
 	(\
 	    echo "# ISO-8859";\
 	    for i in ${PART_ISO-8859}; do \

@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.man.mk,v 1.87 2003/10/19 03:00:55 lukem Exp $
+#	$NetBSD: bsd.man.mk,v 1.88 2003/10/21 10:01:21 lukem Exp $
 #	@(#)bsd.man.mk	8.1 (Berkeley) 6/8/93
 
 .include <bsd.init.mk>
@@ -64,7 +64,6 @@ realall:	${MANPAGES}
 .SUFFIXES:	${_MNUMBERS:@N@.$N${MANSUFFIX}@}
 
 ${_MNUMBERS:@N@.$N.$N${MANSUFFIX}@}:			# build rule
-	${_MKCMD}\
 	cat ${.IMPSRC} ${MANCOMPRESS} > ${.TARGET}.tmp && mv ${.TARGET}.tmp ${.TARGET}
 .endif # !empty(MANSUFFIX)
 
@@ -119,13 +118,11 @@ realall:	${CATPAGES}
 .MADE:	${HTMLDEPS}
 
 ${_MNUMBERS:@N@.$N.cat$N${MANSUFFIX}@}: ${CATDEPS}	# build rule
-	${_MKMSGFORMAT}
+	${_MKTARGET_FORMAT}
 .if defined(USETBL)
-	${_MKCMD}\
 	${TOOL_TBL} ${.IMPSRC} | ${TOOL_ROFF_ASCII} -mandoc ${MANCOMPRESS} \
 	    > ${.TARGET}.tmp && mv ${.TARGET}.tmp ${.TARGET}
 .else
-	${_MKCMD}\
 	${TOOL_ROFF_ASCII} -mandoc ${.IMPSRC} ${MANCOMPRESS} \
 	    > ${.TARGET}.tmp && mv ${.TARGET}.tmp ${.TARGET}
 .endif
@@ -179,8 +176,7 @@ html:		${HTMLPAGES}
 .SUFFIXES:	${_MNUMBERS:@N@.html$N@}
 
 ${_MNUMBERS:@N@.$N.html$N@}: ${HTMLDEPS}			# build rule
-	${_MKMSGFORMAT}
-	${_MKCMD}\
+	${_MKTARGET_FORMAT}
 	${TOOL_ROFF_HTML} ${.IMPSRC} > ${.TARGET}.tmp && \
 	    mv ${.TARGET}.tmp ${.TARGET}
 
@@ -205,7 +201,6 @@ htmlpages::	${_F}
 .endfor
 
 cleanhtml:
-	${_MKCMD}\
 	rm -f ${HTMLPAGES}
 .endif							# }
 
@@ -216,11 +211,9 @@ cleandir: cleanman
 cleanman:
 .if !empty(MAN) && (${MKMAN} != "no")
 .if (${MKCATPAGES} != "no")
-	${_MKCMD}\
 	rm -f ${CATPAGES}
 .endif
 .if !empty(MANSUFFIX)
-	${_MKCMD}\
 	rm -f ${MANPAGES} ${CATPAGES:S/${MANSUFFIX}$//}
 .endif
 .endif
