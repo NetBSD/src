@@ -1,4 +1,4 @@
-/*	$NetBSD: itevar.h,v 1.11 1995/08/20 15:22:46 chopps Exp $	*/
+/*	$NetBSD: itevar.h,v 1.12 1995/10/20 10:08:29 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -206,7 +206,7 @@ void	itestart __P((struct tty *));
 
 /* ite functions */
 int	ite_on __P((dev_t, int));
-int	ite_off __P((dev_t, int));
+void	ite_off __P((dev_t, int));
 void	ite_reinit __P((dev_t));
 int	ite_param __P((struct tty *, struct termios *));
 void	ite_reset __P((struct ite_softc *));
