@@ -134,6 +134,10 @@
 #define timelocal	_timelocal
 #define timeoff		_timeoff
 #define tzsetwall	_tzsetwall
+#define altzone		_altzone
+#define tzname		_tzname
+#define daylight	_daylight
+#define timezone	_timezone
 
 /* misc */
 #define catclose	_catclose
