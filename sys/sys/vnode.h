@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.40 1997/01/22 07:09:34 mikel Exp $	*/
+/*	$NetBSD: vnode.h,v 1.41 1997/05/08 10:21:38 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -161,11 +161,9 @@ struct vattr {
 #define	IO_NDELAY	0x10		/* FNDELAY flag set in file table */
 
 /*
- *  Modes.  Some values same as Ixxx entries from inode.h for now.
+ *  Modes.
  */
-#define	VSUID	04000		/* set user id on execution */
-#define	VSGID	02000		/* set group id on execution */
-#define	VSVTX	01000		/* save swapped text even after use */
+#define	VLOOKUP	01000		/* directory lookup permissions */
 #define	VREAD	00400		/* read, write, execute permissions */
 #define	VWRITE	00200
 #define	VEXEC	00100
