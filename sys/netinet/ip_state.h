@@ -1,7 +1,7 @@
-/*	$NetBSD: ip_state.h,v 1.8.2.3 1998/07/22 23:45:14 mellon Exp $	*/
+/*	$NetBSD: ip_state.h,v 1.8.2.4 1998/11/24 07:20:28 cgd Exp $	*/
 
 /*
- * Copyright (C) 1995-1997 by Darren Reed.
+ * Copyright (C) 1995-1998 by Darren Reed.
  *
  * Redistribution and use in source and binary forms are permitted
  * provided that this notice is preserved and due credit is given
@@ -90,6 +90,7 @@ typedef	struct	ipslog	{
 	struct	in_addr	isl_dst;
 	u_char	isl_p;
 	u_char	isl_flags;
+	u_char	isl_state[2];
 	u_short	isl_type;
 	union {
 		u_short	isl_filler[2];
