@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.80 2004/08/11 00:18:18 mycroft Exp $	*/
+/*	$NetBSD: i82365.c,v 1.81 2004/08/11 01:04:40 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2000 Christian E. Hopps.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.80 2004/08/11 00:18:18 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.81 2004/08/11 01:04:40 mycroft Exp $");
 
 #define	PCICDEBUG
 
@@ -1548,14 +1548,14 @@ pcic_chip_socket_disable(pch)
 
 	/* disable interrupts */
 	intr = pcic_read(h, PCIC_INTR);
-	intr &= ~PCIC_INTR_IRQ_MASK;
+	intr &= ~(PCIC_INTR_IRQ_MASK | PCIC_INTR_CARDTYPE_MASK);
 	pcic_write(h, PCIC_INTR, intr);
-
-	/* power down the socket */
-	pcic_write(h, PCIC_PWRCTL, 0);
 
 	/* zero out the address windows */
 	pcic_write(h, PCIC_ADDRWIN_ENABLE, 0);
+
+	/* power down the socket */
+	pcic_write(h, PCIC_PWRCTL, 0);
 
 	h->flags &= ~PCIC_FLAG_ENABLED;
 }
@@ -1569,7 +1569,7 @@ pcic_chip_socket_settype(pch, type)
 	int intr;
 
 	intr = pcic_read(h, PCIC_INTR);
-	intr &= ~PCIC_INTR_CARDTYPE_MASK;
+	intr &= ~(PCIC_INTR_IRQ_MASK | PCIC_INTR_CARDTYPE_MASK);
 	if (type == PCMCIA_IFTYPE_IO) {
 		intr |= PCIC_INTR_CARDTYPE_IO;
 		intr |= h->ih_irq << PCIC_INTR_IRQ_SHIFT;
