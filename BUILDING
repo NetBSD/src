@@ -507,6 +507,33 @@ BUILDING
      This script can be symlinked into a directory listed in PATH, or called
      with an absolute path.
 
+EXAMPLES
+     1.   % ./build.sh -U
+
+          Using unprivileged mode, build a complete distribution to a DESTDIR
+          directory that build.sh selects (and will display).
+
+     2.   # ./build.sh -U -d -D /
+
+          As root, install to / a complete distribution.  Even though this is
+          run as root, -U is required so that the permissions stored in
+          DESTDIR/METALOG are correctly applied to the files as they're copied
+          to /.
+
+     3.   % ./build.sh -U -u -R <dir>
+
+          Using unprivileged mode, build a complete release to a DESTDIR di-
+          rectory that build.sh selects (and will display), and to a user
+          specified RELEASEDIR.  MKUPDATE=yes (-u) is set to prevent the
+          ``make cleandir'', so that if this is run after example 1, it
+          doesn't need to redo that portion of the release build.
+
+     4.   % ./build.sh -t
+
+          Perform a build that builds and installs the cross tools only. These
+          are installed into a TOOLDIR directory that build.sh selects (and
+          will display).
+
 OBSOLETE VARIABLES
      NBUILDJOBS  Now obsolete.  Use the make(1) option -j, instead.
 
@@ -520,4 +547,4 @@ HISTORY
 BUGS
      A few platforms are not yet using the USE_NEW_TOOLCHAIN system.
 
-NetBSD                            May 3, 2002                                8
+NetBSD                            May 3, 2002                                9
