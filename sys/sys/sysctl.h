@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.51 2000/06/16 00:18:10 simonb Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.52 2000/06/29 09:01:09 mrg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -48,7 +48,7 @@
 #include <sys/time.h>
 #include <sys/ucred.h>
 #include <sys/proc.h>
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 #endif
 
 /*
