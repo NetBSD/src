@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.4 2004/02/27 14:52:01 skrll Exp $
+#	$NetBSD: Makefile.inc,v 1.5 2004/02/29 17:05:31 skrll Exp $
 
 .include <bsd.own.mk>
 
@@ -28,12 +28,12 @@ HOSTLIBIBERTY=		${HOSTLIBIBERTYOBJ}/libiberty/libiberty.a
 
 .include "${GCCARCH}/defs.mk"
 
-.if ${MKPIC} != "no"
+#.if ${MKPIC} != "no"
 .if ${G_ENABLE_SHARED} == "yes" && ${G_SHLIB_LINK} != ""
-CPPFLAGS+=	-DENABLE_SHARED_LIBGCC
+CPPFLAGS+=	-DENABLE_SHARED_LIBGCC -DNH=${MKPIC}
 .endif
 
 .if empty(G_SHLIB_MULTILIB)
 CPPFLAGS+=	-DNO_SHARED_LIBGCC_MULTILIB
 .endif
-.endif
+#.endif
