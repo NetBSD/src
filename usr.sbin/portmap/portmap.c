@@ -1,4 +1,4 @@
-/*	$NetBSD: portmap.c,v 1.17 1999/01/18 19:47:36 drochner Exp $	*/
+/*	$NetBSD: portmap.c,v 1.18 1999/01/20 14:12:18 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)portmap.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: portmap.c,v 1.17 1999/01/18 19:47:36 drochner Exp $");
+__RCSID("$NetBSD: portmap.c,v 1.18 1999/01/20 14:12:18 drochner Exp $");
 #endif
 #endif /* not lint */
 
@@ -110,22 +110,30 @@ static char sccsid[] = "@(#)portmap.c 1.32 87/08/06 Copyr 1984 Sun Micro";
 #include <unistd.h>
 
 #ifdef LIBWRAP
-# include <tcpd.h>      
+# include <tcpd.h>
 #ifndef LIBWRAP_ALLOW_FACILITY
 # define LIBWRAP_ALLOW_FACILITY LOG_AUTH
 #endif
 #ifndef LIBWRAP_ALLOW_SEVERITY
 # define LIBWRAP_ALLOW_SEVERITY LOG_INFO
-#endif                  
+#endif
 #ifndef LIBWRAP_DENY_FACILITY
 # define LIBWRAP_DENY_FACILITY LOG_AUTH
-#endif  
+#endif
 #ifndef LIBWRAP_DENY_SEVERITY
 # define LIBWRAP_DENY_SEVERITY LOG_WARNING
 #endif
 int allow_severity = LIBWRAP_ALLOW_FACILITY|LIBWRAP_ALLOW_SEVERITY;
 int deny_severity = LIBWRAP_DENY_FACILITY|LIBWRAP_DENY_SEVERITY;
 #endif
+
+#ifndef PORTMAP_LOG_FACILITY
+# define PORTMAP_LOG_FACILITY LOG_AUTH
+#endif
+#ifndef PORTMAP_LOG_SEVERITY
+# define PORTMAP_LOG_SEVERITY LOG_INFO
+#endif
+int log_severity = PORTMAP_LOG_FACILITY|PORTMAP_LOG_SEVERITY;
 
 struct encap_parms {
 	u_int arglen;
@@ -323,7 +331,8 @@ reg_service(rqstp, xprt)
 			svcerr_decode(xprt);
 		else {
 			if (verboselog)
-				logit(allow_severity, svc_getcaller(xprt), rqstp->rq_proc, reg.pm_prog, "");
+				logit(log_severity, svc_getcaller(xprt),
+				      rqstp->rq_proc, reg.pm_prog, "");
 			if(!is_loopback(svc_getcaller(xprt))) {
 				ans = 0;
 				goto done;
@@ -380,7 +389,8 @@ reg_service(rqstp, xprt)
 		else {
 			ans = 0;
 			if (verboselog)
-				logit(allow_severity, svc_getcaller(xprt), rqstp->rq_proc, reg.pm_prog, "");
+				logit(log_severity, svc_getcaller(xprt),
+				      rqstp->rq_proc, reg.pm_prog, "");
 			if(!is_loopback(svc_getcaller(xprt))) {
 				goto done;
 			}
@@ -667,7 +677,7 @@ check_access(addr, proc, prog)
 	}
 #endif
 	if (verboselog)
-		logit(allow_severity, addr, proc, prog, "");
+		logit(log_severity, addr, proc, prog, "");
     	return 1;
 }
 
