@@ -1,4 +1,4 @@
-/*	$NetBSD: rc7500_machdep.c,v 1.5 1998/04/02 02:01:13 mark Exp $	*/
+/*	$NetBSD: rc7500_machdep.c,v 1.6 1998/06/09 01:57:42 tv Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -1014,7 +1014,12 @@ promcngetc();
 #ifdef DDB
 	printf("ddb: ");
 	db_machine_init();
-	ddb_init();
+	{
+		extern int end;
+		extern int *esym;
+
+		ddb_init(*(int *)&end, ((int *)&end) + 1, esym);
+	}
 
 	if (boothowto & RB_KDB)
 		Debugger();

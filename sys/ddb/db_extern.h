@@ -1,4 +1,4 @@
-/*	$NetBSD: db_extern.h,v 1.3 1997/11/16 22:46:39 christos Exp $	*/
+/*	$NetBSD: db_extern.h,v 1.4 1998/06/09 01:57:46 tv Exp $	*/
 
 /*
  * Copyright (c) 1995 Christos Zoulas.  All rights reserved.
@@ -32,7 +32,11 @@
 #define _DDB_DB_EXTERN_H_
 
 /* db_aout.c and db_elf.c */
+#ifdef DB_ELF_SYMBOLS	/* XXX */
 void X_db_sym_init __P((void *, void *, char *));
+#else
+void X_db_sym_init __P((int, void *, void *, char *));
+#endif
 db_sym_t X_db_lookup __P((db_symtab_t *, char *));
 db_sym_t X_db_search_symbol __P((db_symtab_t *, db_addr_t, db_strategy_t,
 				 db_expr_t *));
@@ -44,7 +48,7 @@ int X_db_sym_numargs __P((db_symtab_t *, db_sym_t, int *, char **));
 #ifdef DB_ELF_SYMBOLS	/* XXX */
 void ddb_init __P((void *, void *));
 #else
-void ddb_init __P((void));
+void ddb_init __P((int, void *, void *));
 #endif
 
 /* db_examine.c */

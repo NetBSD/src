@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.91 1998/06/06 05:03:23 mrg Exp $ */
+/*	$NetBSD: autoconf.c,v 1.92 1998/06/09 01:57:45 tv Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -228,7 +228,12 @@ bootstrap()
 	/* Moved zs_kgdb_init() to dev/zs.c:consinit(). */
 #ifdef DDB
 	db_machine_init();
-	ddb_init();
+	{
+		extern int end;
+		extern int *esym;
+
+		ddb_init(*(int *)&end, ((int *)&end) + 1, esym);
+	}
 #endif
 
 	/*
