@@ -1,4 +1,4 @@
-/*	$NetBSD: cmu.c,v 1.5 2001/09/16 05:32:20 uch Exp $	*/
+/*	$NetBSD: cmu.c,v 1.6 2002/01/26 10:50:44 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999 SASAKI Takesi
@@ -42,6 +42,7 @@
 #include <mips/cpuregs.h>
 
 #include <machine/bus.h>
+#include <machine/bitdisp.h>
 
 #include "opt_vr41xx.h"
 #include <hpcmips/vr/vr.h>

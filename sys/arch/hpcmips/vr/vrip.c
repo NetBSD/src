@@ -1,7 +1,7 @@
-/*	$NetBSD: vrip.c,v 1.13 2002/01/02 13:13:21 uch Exp $	*/
+/*	$NetBSD: vrip.c,v 1.14 2002/01/26 10:50:44 takemura Exp $	*/
 
 /*-
- * Copyright (c) 1999
+ * Copyright (c) 1999, 2002
  *         Shin Takemura and PocketBSD Project. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the PocketBSD project
- *	and its contributors.
- * 4. Neither the name of the project nor the names of its contributors
+ * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -46,6 +42,7 @@
 #include <machine/autoconf.h>
 #include <machine/platid.h>
 #include <machine/platid_mask.h>
+#include <machine/bitdisp.h>
 
 #include <hpcmips/vr/vr.h>
 #include <hpcmips/vr/vrcpudef.h>
@@ -68,6 +65,17 @@ int	vrip_debug = VRIPDEBUG_CONF;
 #define DBITDISP32(arg)
 #define DDUMP_LEVEL2MASK(sc,arg)
 #endif
+
+struct vrip_softc {
+	struct	device sc_dv;
+	bus_space_tag_t sc_iot;
+	bus_space_handle_t sc_ioh;
+	hpcio_chip_t sc_gpio_chips[VRIP_NIOCHIPS];
+	vrcmu_chipset_tag_t sc_cc;
+	vrcmu_function_tag_t sc_cf;
+	int sc_pri; /* attaching device priority */
+	u_int32_t sc_intrmask;
+};
 
 int	vripmatch(struct device *, struct cfdata *, void *);
 void	vripattach(struct device *, struct device *, void *);
@@ -109,38 +117,6 @@ static struct intrhand {
 };
 
 #define	LEGAL_LEVEL1(x)	((x) >= 0 && (x) < MAX_LEVEL1)
-
-void
-bitdisp16(u_int16_t a)
-{
-	u_int16_t j;
-
-	for (j = 0x8000; j > 0; j >>=1)
-		printf ("%c", a&j ?'|':'.');
-	printf ("\n");
-}
-
-void
-bitdisp32(u_int32_t a)
-{
-	u_int32_t j;
-
-	for (j = 0x80000000; j > 0; j >>=1)
-		printf ("%c" , a&j ? '|' : '.');
-	printf ("\n");
-}
-
-void
-bitdisp64(u_int32_t a[2])
-{
-	u_int32_t j;
-
-	for( j = 0x80000000 ; j > 0 ; j >>=1 )
-		printf("%c" , a[1]&j ?';':',' );
-	for( j = 0x80000000 ; j > 0 ; j >>=1 )
-		printf("%c" , a[0]&j ?'|':'.' );
-	printf("\n");
-}
 
 int
 vripmatch(struct device *parent, struct cfdata *match, void *aux)
