@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.74 2001/04/13 23:30:15 thorpej Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.75 2001/05/30 16:42:02 itojun Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -531,10 +531,6 @@ sl_btom(sc, len)
 	int len;
 {
 	struct mbuf *m;
-
-	MGETHDR(m, M_DONTWAIT, MT_DATA);
-	if (m == NULL)
-		return (NULL);
 
 	/*
 	 * Allocate a new input buffer and swap.
