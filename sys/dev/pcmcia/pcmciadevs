@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.82 2000/03/16 16:38:41 onoe Exp $
+$NetBSD: pcmciadevs,v 1.83 2000/03/18 15:00:31 mycroft Exp $
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,6 +41,7 @@ $NetBSD: pcmciadevs,v 1.82 2000/03/16 16:38:41 onoe Exp $
  */
 
 vendor FUJITSU			0x0004  Fujitsu Corporation
+vendor PANASONIC		0x0032	Matsushita Electric Industrial Co.
 vendor SANDISK			0x0045	Sandisk Corporation
 vendor NEWMEDIA			0x0057	New Media Corporation
 vendor INTEL			0x0089	Intel
@@ -147,6 +148,9 @@ product MEGAHERTZ XJEM3336 	0x0006 Megahertz X-JACK Ethernet Modem
 
 /* Melco Products */
 product MELCO LPC3_TX	 	0xc1ab Melco LPC3-TX
+
+/* Panasonic Products */
+product PANASONIC KXLC002	0x0304 Panasonic 4X CD-ROM Interface Card
 
 /* US Robotics Products */
 product USROBOTICS WORLDPORT144	0x3330 US Robotics WorldPort 14.4 Modem
