@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.73 1999/03/26 22:23:57 sommerfe Exp $	*/
+/*	$NetBSD: unistd.h,v 1.74 1999/04/20 20:15:48 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -264,7 +264,7 @@ char	*getwd __P((char *));			/* obsoleted by getcwd() */
 #endif
 
 /* FIXME: this should go to <sys/time.h>! */
-#ifdef __STDC__
+#if __STDC__
 struct timeval;				/* select(2) XXX */
 #endif
 int	 select __P((int, fd_set *, fd_set *, fd_set *, struct timeval *));
