@@ -3,6 +3,7 @@ RCSID("$OpenBSD: cli.c,v 1.7 2001/02/04 15:32:23 stevesk Exp $");
 
 #include "xmalloc.h"
 #include "log.h"
+#include "cli.h"
 
 #include <vis.h>
 
@@ -33,7 +34,7 @@ cli_open(int from_stdin)
 		cli_input = STDIN_FILENO;
 		cli_output = STDERR_FILENO;
 	} else {
-		cli_input = cli_output = open("/dev/tty", O_RDWR);
+		cli_input = cli_output = open(_PATH_TTY, O_RDWR);
 		if (cli_input < 0)
 			fatal("You have no controlling tty.  Cannot read passphrase.");
 	}
@@ -44,7 +45,7 @@ cli_open(int from_stdin)
 }
 
 static void
-cli_close()
+cli_close(void)
 {
 	if (!cli_from_stdin && cli_input >= 0)
 		close(cli_input);
@@ -54,14 +55,14 @@ cli_close()
 	return;
 }
 
-void
-intrcatch()
+static void
+intrcatch(int sig)
 {
 	intr = 1;
 }
 
 static void
-cli_echo_disable()
+cli_echo_disable(void)
 {
 	sigemptyset(&nset);
 	sigaddset(&nset, SIGTSTP);
@@ -84,7 +85,7 @@ cli_echo_disable()
 }
 
 static void
-cli_echo_restore()
+cli_echo_restore(void)
 {
 	if (echo_modified != 0) {
 		tcsetattr(cli_input, TCSANOW, &otio);

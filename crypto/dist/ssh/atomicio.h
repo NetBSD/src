@@ -26,6 +26,8 @@
  */
 
 /*
- * Ensure all of data on socket comes through. f==read || f==write
+ * `Atomic' read and write operations, to ensure that all the
+ * data makes it through a socket (handles signals, etc.).
  */
-ssize_t	atomicio(ssize_t (*f)(), int fd, void *s, size_t n);
+ssize_t	atomic_read(int, void *, size_t);
+ssize_t atomic_write(int, const void *, size_t);

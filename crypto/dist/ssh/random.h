@@ -1,4 +1,4 @@
-/*	$NetBSD: client.h,v 1.1.1.1 2000/09/28 22:09:54 thorpej Exp $	*/
+/*	$NetBSD: random.h,v 1.1 2001/02/07 17:05:33 itojun Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -36,4 +36,5 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-void	client_set_session_ident(int id);
+void arc4random_stir(void);
+u_int32_t arc4random(void);

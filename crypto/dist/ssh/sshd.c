@@ -1,5 +1,3 @@
-/*	$NetBSD: sshd.c,v 1.2 2001/01/16 02:20:19 simonb Exp $	*/
-
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -41,42 +39,37 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* from OpenBSD: sshd.c,v 1.145 2001/01/04 22:25:58 markus Exp */
-
-#include <sys/cdefs.h>
-#ifndef lint
-__RCSID("$NetBSD: sshd.c,v 1.2 2001/01/16 02:20:19 simonb Exp $");
-#endif
-
 #include "includes.h"
+RCSID("$OpenBSD: sshd.c,v 1.163 2001/02/04 23:56:23 deraadt Exp $");
 
+#include <openssl/dh.h>
+#include <openssl/bn.h>
+#include <openssl/hmac.h>
+
+#include "ssh.h"
+#include "ssh1.h"
+#include "ssh2.h"
 #include "xmalloc.h"
 #include "rsa.h"
-#include "ssh.h"
 #include "pty.h"
 #include "packet.h"
-#include "pathnames.h"
-#include "cipher.h"
 #include "mpaux.h"
+#include "log.h"
 #include "servconf.h"
 #include "uidswap.h"
 #include "compat.h"
 #include "buffer.h"
-
-#include "ssh2.h"
-#include <openssl/dh.h>
-#include <openssl/bn.h>
-#include <openssl/hmac.h>
+#include "cipher.h"
 #include "kex.h"
-#include <openssl/dsa.h>
-#include <openssl/rsa.h>
-#include <openssl/rand.h>
 #include "key.h"
 #include "dh.h"
-
-#include "auth.h"
 #include "myproposal.h"
 #include "authfile.h"
+#include "pathnames.h"
+#include "atomicio.h"
+#include "canohost.h"
+#include "auth.h"
+#include "misc.h"
 
 #ifdef LIBWRAP
 #include <tcpd.h>
@@ -155,10 +148,10 @@ struct {
 } sensitive_data;
 
 /*
- * Flag indicating whether the current session key has been used.  This flag
- * is set whenever the key is used, and cleared when the key is regenerated.
+ * Flag indicating whether the RSA server key needs to be regenerated.
+ * Is set in the SIGALRM handler and cleared when the key is regenerated.
  */
-int key_used = 0;
+int key_do_regen = 0;
 
 /* This is set to true when SIGHUP is received. */
 int received_sighup = 0;
@@ -269,7 +262,6 @@ grace_alarm_handler(int sig)
  * Thus there should be no concurrency control/asynchronous execution
  * problems.
  */
-/* XXX do we really want this work to be done in a signal handler ? -m */
 static void
 generate_empheral_server_key(void)
 {
@@ -278,24 +270,17 @@ generate_empheral_server_key(void)
 	if (sensitive_data.server_key != NULL)
 		key_free(sensitive_data.server_key);
 	sensitive_data.server_key = key_generate(KEY_RSA1, options.server_key_bits);
-	ssh_random_stir();
+	arc4random_stir();
 	log("RSA key generation complete.");
 }
+
 static void
 key_regeneration_alarm(int sig)
 {
 	int save_errno = errno;
-
-	/* Check if we should generate a new key. */
-	if (key_used) {
-		/* This should really be done in the background. */
-		generate_empheral_server_key();
-		key_used = 0;
-	}
-	/* Reschedule the alarm. */
-	signal(SIGALRM, key_regeneration_alarm);
-	alarm(options.key_regeneration_time);
+	signal(SIGALRM, SIG_DFL);
 	errno = save_errno;
+	key_do_regen = 1;
 }
 
 static void
@@ -435,7 +420,7 @@ destroy_sensitive_data(void)
 		key_free(sensitive_data.server_key);
 		sensitive_data.server_key = NULL;
 	}
-        for(i = 0; i < options.num_host_key_files; i++) {
+	for(i = 0; i < options.num_host_key_files; i++) {
 		if (sensitive_data.host_keys[i]) {
 			key_free(sensitive_data.host_keys[i]);
 			sensitive_data.host_keys[i] = NULL;
@@ -537,8 +522,7 @@ drop_connection(int startups)
 	p /= (double) (options.max_startups - options.max_startups_begin);
 	p += options.max_startups_rate;
 	p /= 100.0;
-	RAND_pseudo_bytes((u_char *)&r, sizeof(r));
-	r /= (double) UINT_MAX;
+	r = arc4random() / (double) UINT_MAX;
 
 	debug("drop_connection: p %g, r %g", p, r);
 	return (r < p) ? 1 : 0;
@@ -558,7 +542,6 @@ main(int ac, char **av)
 	int opt, sock_in = 0, sock_out = 0, newsock, j, i, fdsetsz, on = 1;
 	pid_t pid;
 	socklen_t fromlen;
-	int silent = 0;
 	fd_set *fdset;
 	struct sockaddr_storage from;
 	const char *remote_ip;
@@ -570,6 +553,7 @@ main(int ac, char **av)
 	int listen_sock, maxfd;
 	int startup_p[2];
 	int startups = 0;
+	int ret, key_used = 0;
 
 	/* Save argv. */
 	saved_argv = av;
@@ -578,7 +562,7 @@ main(int ac, char **av)
 	initialize_server_options(&options);
 
 	/* Parse command-line arguments. */
-	while ((opt = getopt(ac, av, "f:p:b:k:h:g:V:u:dDiqQ46")) != EOF) {
+	while ((opt = getopt(ac, av, "f:p:b:k:h:g:V:u:dDiqQ46")) != -1) {
 		switch (opt) {
 		case '4':
 			IPv4or6 = AF_INET;
@@ -607,7 +591,7 @@ main(int ac, char **av)
 			inetd_flag = 1;
 			break;
 		case 'Q':
-			silent = 1;
+			/* ignored */
 			break;
 		case 'q':
 			options.log_level = SYSLOG_LEVEL_QUIET;
@@ -674,7 +658,7 @@ main(int ac, char **av)
 	log_init(__progname,
 	    options.log_level == -1 ? SYSLOG_LEVEL_INFO : options.log_level,
 	    options.log_facility == -1 ? SYSLOG_FACILITY_AUTH : options.log_facility,
-	    !silent && !inetd_flag, 0, 0);
+	    !inetd_flag);
 
 	/* Read server configuration options from the configuration file. */
 	read_server_config(&options, config_file_name);
@@ -726,9 +710,7 @@ main(int ac, char **av)
 		log("Disabling protocol version 2. Could not load host key");
 		options.protocol &= ~SSH_PROTO_2;
 	}
-	if (! options.protocol & (SSH_PROTO_1|SSH_PROTO_2)) {
-		if (silent == 0)
-			fprintf(stderr, "sshd: no hostkeys available -- exiting.\n");
+	if (!(options.protocol & (SSH_PROTO_1|SSH_PROTO_2))) {
 		log("sshd: no hostkeys available -- exiting.\n");
 		exit(1);
 	}
@@ -759,8 +741,7 @@ main(int ac, char **av)
 	/* Initialize the log (it is reinitialized below in case we forked). */
 	if (debug_flag && !inetd_flag)
 		log_stderr = 1;
-	log_init(__progname, options.log_level, options.log_facility, log_stderr,
-	    0, 0);
+	log_init(__progname, options.log_level, options.log_facility, log_stderr);
 
 	/*
 	 * If not in debugging mode, and not started from inetd, disconnect
@@ -784,11 +765,10 @@ main(int ac, char **av)
 #endif /* TIOCNOTTY */
 	}
 	/* Reinitialize the log (because of the fork above). */
-	log_init(__progname, options.log_level, options.log_facility, log_stderr,
-	    0, 0);
+	log_init(__progname, options.log_level, options.log_facility, log_stderr);
 
 	/* Initialize the random number generator. */
-	ssh_random_stir();
+	arc4random_stir();
 
 	/* Chdir to the root directory so that the current disk can be
 	   unmounted if desired. */
@@ -885,13 +865,8 @@ main(int ac, char **av)
 				fclose(f);
 			}
 		}
-		if (options.protocol & SSH_PROTO_1) {
+		if (options.protocol & SSH_PROTO_1)
 			generate_empheral_server_key();
-
-			/* Schedule server key regeneration alarm. */
-			signal(SIGALRM, key_regeneration_alarm);
-			alarm(options.key_regeneration_time);
-		}
 
 		/* Arrange to restart on SIGHUP.  The handler needs listen_sock. */
 		signal(SIGHUP, sighup_handler);
@@ -922,7 +897,7 @@ main(int ac, char **av)
 				sighup_restart();
 			if (fdset != NULL)
 				xfree(fdset);
-			fdsetsz = howmany(maxfd, NFDBITS) * sizeof(fd_mask);
+			fdsetsz = howmany(maxfd+1, NFDBITS) * sizeof(fd_mask);
 			fdset = (fd_set *)xmalloc(fdsetsz);
 			memset(fdset, 0, fdsetsz);
 
@@ -933,11 +908,17 @@ main(int ac, char **av)
 					FD_SET(startup_pipes[i], fdset);
 
 			/* Wait in select until there is a connection. */
-			if (select(maxfd + 1, fdset, NULL, NULL, NULL) < 0) {
-				if (errno != EINTR)
-					error("select: %.100s", strerror(errno));
-				continue;
+			ret = select(maxfd+1, fdset, NULL, NULL, NULL);
+			if (ret < 0 && errno != EINTR)
+				error("select: %.100s", strerror(errno));
+			if (key_used && key_do_regen) {
+				generate_empheral_server_key();
+				key_used = 0;
+				key_do_regen = 0;
 			}
+			if (ret < 0)
+				continue;
+
 			for (i = 0; i < options.max_startups; i++)
 				if (startup_pipes[i] != -1 &&
 				    FD_ISSET(startup_pipes[i], fdset)) {
@@ -984,7 +965,7 @@ main(int ac, char **av)
 						startups++;
 						break;
 					}
-				
+
 				/*
 				 * Got connection.  Fork a child to handle it, unless
 				 * we are in debugging mode.
@@ -1023,7 +1004,7 @@ main(int ac, char **av)
 						close_listen_socks();
 						sock_in = newsock;
 						sock_out = newsock;
-						log_init(__progname, options.log_level, options.log_facility, log_stderr, 0, 0);
+						log_init(__progname, options.log_level, options.log_facility, log_stderr);
 						break;
 					}
 				}
@@ -1037,9 +1018,15 @@ main(int ac, char **av)
 				close(startup_p[1]);
 
 				/* Mark that the key has been used (it was "given" to the child). */
-				key_used = 1;
+				if ((options.protocol & SSH_PROTO_1) &&
+				    key_used == 0) {
+					/* Schedule server key regeneration alarm. */
+					signal(SIGALRM, key_regeneration_alarm);
+					alarm(options.key_regeneration_time);
+					key_used = 1;
+				}
 
-				ssh_random_stir();
+				arc4random_stir();
 
 				/* Close the new socket (the child is now taking care of it). */
 				close(newsock);
@@ -1073,6 +1060,12 @@ main(int ac, char **av)
 	linger.l_onoff = 1;
 	linger.l_linger = 5;
 	setsockopt(sock_in, SOL_SOCKET, SO_LINGER, (void *) &linger, sizeof(linger));
+
+	/* Set keepalives if requested. */
+	if (options.keepalives &&
+	    setsockopt(sock_in, SOL_SOCKET, SO_KEEPALIVE, (void *)&on,
+	    sizeof(on)) < 0)
+		error("setsockopt SO_KEEPALIVE: %.100s", strerror(errno));
 
 	/*
 	 * Register our connection.  This turns encryption off because we do
@@ -1131,8 +1124,8 @@ main(int ac, char **av)
 	}
 #ifdef KRB4
 	if (!packet_connection_is_ipv4() &&
-	    options.kerberos_authentication == 4) {
-		debug("Kerberos 4 Authentication disabled, only available for IPv4.");
+	    options.kerberos_authentication) {
+		debug("Kerberos Authentication disabled, only available for IPv4.");
 		options.kerberos_authentication = 0;
 	}
 #endif /* KRB4 */
@@ -1149,23 +1142,11 @@ main(int ac, char **av)
 		do_authentication();
 	}
 
-#if defined(KRB4) || defined(KRB5)
-	/* Cleanup user's ticket cache file. */
-	if (options.kerberos_ticket_cleanup) {
-		switch (options.kerberos_authentication) {
 #ifdef KRB4
-		case 4:
-			(void) dest_tkt();
-			break;
-#endif
-#ifdef KRB5
-		case 5:
-			/* XXX */
-			break;
-#endif
-		}
-	}
-#endif /* KRB4 || KRB5 */
+	/* Cleanup user's ticket cache file. */
+	if (options.kerberos_ticket_cleanup)
+		(void) dest_tkt();
+#endif /* KRB4 */
 
 	/* The connection has been terminated. */
 	verbose("Closing connection to %.100s", remote_ip);
@@ -1181,6 +1162,7 @@ do_ssh1_kex(void)
 {
 	int i, len;
 	int plen, slen;
+	int rsafail = 0;
 	BIGNUM *session_key_int;
 	u_char session_key[SSH_SESSION_KEY_LENGTH];
 	u_char cookie[8];
@@ -1197,10 +1179,8 @@ do_ssh1_kex(void)
 	 * of the reasons why it is inherently insecure.
 	 */
 	for (i = 0; i < 8; i++) {
-		if (i % 4 == 0) {
-			/* XXXthorpej */
-			RAND_pseudo_bytes((u_char *)&rand, sizeof(rand));
-		}
+		if (i % 4 == 0)
+			rand = arc4random();
 		cookie[i] = rand & 0xff;
 		rand >>= 8;
 	}
@@ -1238,22 +1218,18 @@ do_ssh1_kex(void)
 		auth_mask |= 1 << SSH_AUTH_RHOSTS_RSA;
 	if (options.rsa_authentication)
 		auth_mask |= 1 << SSH_AUTH_RSA;
-#if defined(KRB4) || defined(KRB5)
+#ifdef KRB4
 	if (options.kerberos_authentication)
 		auth_mask |= 1 << SSH_AUTH_KERBEROS;
 #endif
-#if defined(AFS) || defined(KRB5)
+#ifdef AFS
 	if (options.kerberos_tgt_passing)
 		auth_mask |= 1 << SSH_PASS_KERBEROS_TGT;
-#endif
-#ifdef AFS
 	if (options.afs_token_passing)
 		auth_mask |= 1 << SSH_PASS_AFS_TOKEN;
 #endif
-#ifdef SKEY
-	if (options.skey_authentication == 1)
+	if (options.challenge_reponse_authentication == 1)
 		auth_mask |= 1 << SSH_AUTH_TIS;
-#endif
 	if (options.password_authentication)
 		auth_mask |= 1 << SSH_AUTH_PASSWORD;
 	packet_put_int(auth_mask);
@@ -1297,7 +1273,7 @@ do_ssh1_kex(void)
 	 * with larger modulus first).
 	 */
 	if (BN_cmp(sensitive_data.server_key->rsa->n, sensitive_data.ssh1_host_key->rsa->n) > 0) {
-		/* Private key has bigger modulus. */
+		/* Server key has bigger modulus. */
 		if (BN_num_bits(sensitive_data.server_key->rsa->n) <
 		    BN_num_bits(sensitive_data.ssh1_host_key->rsa->n) + SSH_KEY_BITS_RESERVED) {
 			fatal("do_connection: %s: server_key %d < host_key %d + SSH_KEY_BITS_RESERVED %d",
@@ -1306,10 +1282,12 @@ do_ssh1_kex(void)
 			    BN_num_bits(sensitive_data.ssh1_host_key->rsa->n),
 			    SSH_KEY_BITS_RESERVED);
 		}
-		rsa_private_decrypt(session_key_int, session_key_int,
-		    sensitive_data.server_key->rsa);
-		rsa_private_decrypt(session_key_int, session_key_int,
-		    sensitive_data.ssh1_host_key->rsa);
+		if (rsa_private_decrypt(session_key_int, session_key_int,
+		    sensitive_data.server_key->rsa) <= 0)
+			rsafail++;
+		if (rsa_private_decrypt(session_key_int, session_key_int,
+		    sensitive_data.ssh1_host_key->rsa) <= 0)
+			rsafail++;
 	} else {
 		/* Host key has bigger modulus (or they are equal). */
 		if (BN_num_bits(sensitive_data.ssh1_host_key->rsa->n) <
@@ -1320,10 +1298,12 @@ do_ssh1_kex(void)
 			    BN_num_bits(sensitive_data.server_key->rsa->n),
 			    SSH_KEY_BITS_RESERVED);
 		}
-		rsa_private_decrypt(session_key_int, session_key_int,
-		    sensitive_data.ssh1_host_key->rsa);
-		rsa_private_decrypt(session_key_int, session_key_int,
-		    sensitive_data.server_key->rsa);
+		if (rsa_private_decrypt(session_key_int, session_key_int,
+		    sensitive_data.ssh1_host_key->rsa) < 0)
+			rsafail++;
+		if (rsa_private_decrypt(session_key_int, session_key_int,
+		    sensitive_data.server_key->rsa) < 0)
+			rsafail++;
 	}
 
 	compute_session_id(session_id, cookie,
@@ -1338,15 +1318,29 @@ do_ssh1_kex(void)
 	 * least significant 256 bits of the integer; the first byte of the
 	 * key is in the highest bits.
 	 */
-	BN_mask_bits(session_key_int, sizeof(session_key) * 8);
-	len = BN_num_bytes(session_key_int);
-	if (len < 0 || len > sizeof(session_key))
-		fatal("do_connection: bad len from %s: session_key_int %d > sizeof(session_key) %lu",
-		    get_remote_ipaddr(),
-		    len, (u_long)sizeof(session_key));
-	memset(session_key, 0, sizeof(session_key));
-	BN_bn2bin(session_key_int, session_key + sizeof(session_key) - len);
-
+	if (!rsafail) {
+		BN_mask_bits(session_key_int, sizeof(session_key) * 8);
+		len = BN_num_bytes(session_key_int);
+		if (len < 0 || len > sizeof(session_key)) {
+			error("do_connection: bad session key len from %s: "
+			    "session_key_int %d > sizeof(session_key) %lu",
+			    get_remote_ipaddr(), len, (u_long)sizeof(session_key));
+			rsafail++;
+		} else {
+			memset(session_key, 0, sizeof(session_key));
+			BN_bn2bin(session_key_int,
+			    session_key + sizeof(session_key) - len);
+		}
+	}
+	if (rsafail) {
+		log("do_connection: generating a fake encryption key");
+		for (i = 0; i < SSH_SESSION_KEY_LENGTH; i++) {
+			if (i % 4 == 0)
+				rand = arc4random();
+			session_key[i] = rand & 0xff;
+			rand >>= 8;
+		}
+	}
 	/* Destroy the decrypted integer.  It is no longer needed. */
 	BN_clear_free(session_key_int);
 
@@ -1489,7 +1483,7 @@ ssh_dh1_server(Kex *kex, Buffer *client_kexinit, Buffer *server_kexinit)
 	fprintf(stderr, "\npub= ");
 	BN_print_fp(stderr, dh->pub_key);
 	fprintf(stderr, "\n");
-        DHparams_print_fp(stderr, dh);
+	DHparams_print_fp(stderr, dh);
 #endif
 	if (!dh_pub_is_valid(dh, dh_client_pub))
 		packet_disconnect("bad client public DH value");
@@ -1529,6 +1523,7 @@ ssh_dh1_server(Kex *kex, Buffer *client_kexinit, Buffer *server_kexinit)
 	buffer_free(server_kexinit);
 	xfree(client_kexinit);
 	xfree(server_kexinit);
+	BN_free(dh_client_pub);
 #ifdef DEBUG_KEXDH
 	fprintf(stderr, "hash == ");
 	for (i = 0; i< 20; i++)
@@ -1558,6 +1553,7 @@ ssh_dh1_server(Kex *kex, Buffer *client_kexinit, Buffer *server_kexinit)
 	packet_write_wait();
 
 	kex_derive_keys(kex, hash, shared_secret);
+	BN_clear_free(shared_secret);
 	packet_set_kex(kex);
 
 	/* have keys, free DH */
@@ -1630,7 +1626,7 @@ ssh_dhgex_server(Kex *kex, Buffer *client_kexinit, Buffer *server_kexinit)
 	fprintf(stderr, "\npub= ");
 	BN_print_fp(stderr, dh->pub_key);
 	fprintf(stderr, "\n");
-        DHparams_print_fp(stderr, dh);
+	DHparams_print_fp(stderr, dh);
 #endif
 	if (!dh_pub_is_valid(dh, dh_client_pub))
 		packet_disconnect("bad client public DH value");
@@ -1671,6 +1667,7 @@ ssh_dhgex_server(Kex *kex, Buffer *client_kexinit, Buffer *server_kexinit)
 	buffer_free(server_kexinit);
 	xfree(client_kexinit);
 	xfree(server_kexinit);
+	BN_free(dh_client_pub);
 #ifdef DEBUG_KEXDH
 	fprintf(stderr, "hash == ");
 	for (i = 0; i< 20; i++)
@@ -1700,6 +1697,7 @@ ssh_dhgex_server(Kex *kex, Buffer *client_kexinit, Buffer *server_kexinit)
 	packet_write_wait();
 
 	kex_derive_keys(kex, hash, shared_secret);
+	BN_clear_free(shared_secret);
 	packet_set_kex(kex);
 
 	/* have keys, free DH */

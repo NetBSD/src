@@ -26,6 +26,7 @@
 
 #include "includes.h"
 #include "xmalloc.h"
+#include "uuencode.h"
 
 #include <resolv.h>
 

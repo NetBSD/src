@@ -1,7 +1,5 @@
 .\"  -*- nroff -*-
 .\"
-.\" $NetBSD: ssh.1,v 1.6 2001/01/18 13:37:17 itojun Exp $
-.\"
 .\" Author: Tatu Ylonen <ylo@cs.hut.fi>
 .\" Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
 .\"                    All rights reserved
@@ -36,12 +34,13 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 7, 2001
+.\" $OpenBSD: ssh.1,v 1.86 2001/02/06 23:05:44 jakob Exp $
+.Dd September 25, 1999
 .Dt SSH 1
 .Os
 .Sh NAME
 .Nm ssh
-.Nd Secure Shell client (remote login program)
+.Nd OpenSSH secure shell client (remote login program)
 .Sh SYNOPSIS
 .Nm ssh
 .Op Fl l Ar login_name
@@ -49,7 +48,7 @@
 .Op Ar command
 .Pp
 .Nm ssh
-.Op Fl afgknqtvxACNPTX246
+.Op Fl afgknqstvxACNPTX1246
 .Op Fl c Ar cipher_spec
 .Op Fl e Ar escape_char
 .Op Fl i Ar identity_file
@@ -91,7 +90,7 @@ The user must prove
 his/her identity to the remote machine using one of several methods
 depending on the protocol version used:
 .Pp
-.Ss Secure Shell protocol version 1
+.Ss SSH protocol version 1
 .Pp
 First, if the machine the user logs in from is listed in
 .Pa /etc/hosts.equiv
@@ -144,7 +143,7 @@ The scheme is based on public-key cryptography: there are cryptosystems
 where encryption and decryption are done using separate keys, and it
 is not possible to derive the decryption key from the encryption key.
 RSA is one such system.
-Each user creates a public/private
+The idea is that each user creates a public/private
 key pair for authentication purposes.
 The server knows the public key, and only the user knows the private key.
 The file
@@ -202,7 +201,7 @@ The password is sent to the remote
 host for checking; however, since all communications are encrypted,
 the password cannot be seen by someone listening on the network.
 .Pp
-.Ss Secure Shell protocol version 2
+.Ss SSH protocol version 2
 .Pp
 When a user connects using the protocol version 2
 different authentication methods are available:
@@ -224,7 +223,7 @@ and is only known to the client and the server.
 If public key authentication fails or is not available a password
 can be sent encrypted to the remote host for proving the user's identity.
 This protocol 2 implementation does not yet support Kerberos or
-One Time Password (S/Key) authentication.
+S/Key authentication.
 .Pp
 Protocol 2 provides additional mechanisms for confidentiality
 (the traffic is encrypted using 3DES, Blowfish, CAST128 or Arcfour)
@@ -471,6 +470,10 @@ for older servers.
 Quiet mode.
 Causes all warning and diagnostic messages to be suppressed.
 Only fatal errors are displayed.
+.It Fl s
+May be used to request invocation of a subsystem on the remote system. Subsystems are a feature of the SSH2 protocol which facilitate the use 
+of SSH as a secure transport for other application (eg. sftp). The 
+subsystem is specified as the remote command.
 .It Fl t
 Force pseudo-tty allocation.
 This can be used to execute arbitrary
@@ -546,6 +549,10 @@ from the local machine.
 Port forwardings can also be specified in the configuration file.
 Privileged ports can be forwarded only when
 logging in as root on the remote machine.
+.It Fl 1
+Forces
+.Nm
+to try protocol version 1 only.
 .It Fl 2
 Forces
 .Nm
@@ -630,8 +637,6 @@ The argument to this keyword must be
 .Dq yes
 or
 .Dq no .
-The default is
-.Dq yes .
 .It Cm BatchMode
 If set to
 .Dq yes ,
@@ -641,8 +646,6 @@ user to supply the password.
 The argument must be
 .Dq yes
 or
-.Dq no .
-The default is
 .Dq no .
 .It Cm CheckHostIP
 If this flag is set to
@@ -654,19 +657,16 @@ This allows ssh to detect if a host key changed due to DNS spoofing.
 If the option is set to
 .Dq no ,
 the check will not be executed.
-The default is
-.Dq no .
 .It Cm Cipher
 Specifies the cipher to use for encrypting the session
 in protocol version 1.
 Currently,
-.Dq blowfish
+.Dq blowfish 
 and
 .Dq 3des
 are supported.
 The default is
 .Dq 3des .
-(Also see the COMPATIBILITY section below.)
 .It Cm Ciphers
 Specifies the ciphers allowed for protocol version 2
 in order of preference.
@@ -678,8 +678,6 @@ Specifies whether to use compression.
 The argument must be
 .Dq yes
 or
-.Dq no .
-The default is
 .Dq no .
 .It Cm CompressionLevel
 Specifies the compression level to use if compression is enable.
@@ -724,8 +722,6 @@ The argument must be
 .Dq yes
 or
 .Dq no .
-The default is
-.Dq no .
 .It Cm ForwardAgent
 Specifies whether the connection to the authentication agent (if any)
 will be forwarded to the remote machine.
@@ -761,8 +757,8 @@ Specifies a file to use instead of
 .It Cm HostKeyAlias
 Specifies an alias that should be used instead of the
 real host name when looking up or saving the host key
-the kown_hosts files.
-This option is useful for tunneling ssh connection
+in the known_hosts files.
+This option is useful for tunneling ssh connections
 or if you have multiple servers running on a single host.
 .It Cm HostName
 Specifies the real host name to log into.
@@ -775,15 +771,6 @@ specifications).
 Specifies the file from which the user's RSA authentication identity
 is read (default
 .Pa $HOME/.ssh/identity
-in the user's home directory).  Additionally, any identities represented
-by the authentication agent will be used for authentication.  The file
-name may use the tilde syntax to refer to a user's home directory.
-It is possible to have multiple identity files specified in configuration
-files; all these identities will be tried in sequence.
-.It Cm IdentityFile2
-Specifies the file from which the user's DSA authentication identity
-is read (default
-.Pa $HOME/.ssh/id_dsa
 in the user's home directory).
 Additionally, any identities represented by the authentication agent
 will be used for authentication.
@@ -816,8 +803,6 @@ The argument to this keyword must be
 .Dq yes
 or
 .Dq no .
-The default is
-.Dq yes .
 .It Cm KerberosTgtPassing
 Specifies whether a Kerberos TGT will be forwarded to the server.
 This will only work if the Kerberos server is actually an AFS kaserver.
@@ -825,8 +810,6 @@ The argument to this keyword must be
 .Dq yes
 or
 .Dq no .
-The default is
-.Dq yes .
 .It Cm LocalForward
 Specifies that a TCP/IP port on the local machine be forwarded over
 the secure channel to given host:port from the remote machine.
@@ -851,8 +834,6 @@ The argument to this keyword must be
 .Dq yes
 or
 .Dq no .
-The default is
-.Dq yes .
 Note that this option applies to both protocol version 1 and 2.
 .It Cm Port
 Specifies the port number to connect on the remote host.
@@ -919,8 +900,6 @@ The argument to this keyword must be
 .Dq yes
 or
 .Dq no .
-The default is
-.Dq yes .
 .It Cm RhostsRSAAuthentication
 Specifies whether to try rhosts based authentication with RSA host
 authentication.
@@ -929,24 +908,21 @@ The argument must be
 .Dq yes
 or
 .Dq no .
-The default is
-.Dq yes .
 .It Cm RSAAuthentication
 Specifies whether to try RSA authentication.
 The argument to this keyword must be
 .Dq yes
 or
 .Dq no .
-The default is
-.Dq yes .
 RSA authentication will only be
 attempted if the identity file exists, or an authentication agent is
 running.
 Note that this option applies to protocol version 1 only.
-.It Cm SkeyAuthentication
-Specifies whether to use
+.It Cm ChallengeResponseAuthentication
+Specifies whether to use challenge response authentication.
+Currently there is only support for
 .Xr skey 1
-One Time Password scheme for authentication.
+authentication.
 The argument to this keyword must be
 .Dq yes
 or
@@ -961,28 +937,33 @@ will never automatically add host keys to the
 .Pa $HOME/.ssh/known_hosts
 and
 .Pa $HOME/.ssh/known_hosts2
-files, and refuses to connect hosts whose host key has changed.
+files, and refuses to connect to hosts whose host key has changed.
 This provides maximum protection against trojan horse attacks.
 However, it can be somewhat annoying if you don't have good
 .Pa /etc/ssh_known_hosts
 and
 .Pa /etc/ssh_known_hosts2
 files installed and frequently
-connect new hosts.
-Basically this option forces the user to manually
-add any new hosts.
-Normally this option is set to
-.Dq ask ,
-and new hosts will be added to the known host files after the
-user is requested to confirm this action.
-If set to
+connect to new hosts.
+This option forces the user to manually
+add all new hosts.
+If this flag is set to
 .Dq no ,
-new host keys will be added without prompting the user for verification.
+.Nm
+will automatically add new host keys to the
+user known hosts files.
+If this flag is set to
+.Dq ask ,
+new host keys
+will be added to the user known host files only after the user
+has confirmed that is what they really want to do, and
+.Nm
+will refuse to connect to hosts whose host key has changed.
 The host keys of
-known hosts will be verified automatically in either case.
+known hosts will be verified automatically in all cases.
 The argument must be
 .Dq yes ,
-.Dq no ,
+.Dq no
 or
 .Dq ask .
 The default is
@@ -1025,8 +1006,6 @@ are ignored if this has been specified.
 The argument must be
 .Dq yes
 or
-.Dq no .
-The default is
 .Dq no .
 .It Cm XAuthLocation
 Specifies the location of the
@@ -1298,14 +1277,20 @@ or with F-Secure SSH, using the
 .Dq Fl u
 option to
 .Xr ssh-keygen 1 .
-.Sh AUTHOR
-Tatu Ylonen <ylo@cs.hut.fi>,
-Aaron Campbell, Bob Beck, Markus Friedl,
-Niels Provos, Theo de Raadt, and Dug Song.
+.Sh AUTHORS
+OpenSSH is a derivative of the original and free
+ssh 1.2.12 release by Tatu Ylonen.
+Aaron Campbell, Bob Beck, Markus Friedl, Niels Provos,
+Theo de Raadt and Dug Song
+removed many bugs, re-added newer features and
+created OpenSSH.
+Markus Friedl contributed the support for SSH
+protocol versions 1.5 and 2.0.
 .Sh SEE ALSO
 .Xr rlogin 1 ,
 .Xr rsh 1 ,
 .Xr scp 1 ,
+.Xr sftp 1 ,
 .Xr ssh-add 1 ,
 .Xr ssh-agent 1 ,
 .Xr ssh-keygen 1 ,

@@ -49,7 +49,7 @@ RCSID("$OpenBSD: hostfile.c,v 1.24 2001/01/21 19:05:49 markus Exp $");
  * pointer over the key.  Skips any whitespace at the beginning and at end.
  */
 
-int
+static int
 hostfile_read_key(char **cpp, u_int *bitsp, Key *ret)
 {
 	char *cp;
@@ -82,7 +82,7 @@ auth_rsa_read_key(char **cpp, u_int *bitsp, BIGNUM * e, BIGNUM * n)
 	return ret;
 }
 
-int
+static int
 hostfile_check_key(int bits, Key *key, const char *host, const char *filename, int linenum)
 {
 	if (key == NULL || key->type != KEY_RSA1 || key->rsa == NULL)
