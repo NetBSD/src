@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.80 2002/10/30 02:48:28 simonb Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.81 2002/11/09 20:11:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.80 2002/10/30 02:48:28 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.81 2002/11/09 20:11:01 thorpej Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -242,7 +242,8 @@ uvm_page_init(kvm_startp, kvm_endp)
 	vsize_t freepages, pagecount, bucketcount, n;
 	struct pgflbucket *bucketarray;
 	struct vm_page *pagearray;
-	int lcv, i;
+	int lcv;
+	u_int i;
 	paddr_t paddr;
 
 	/*

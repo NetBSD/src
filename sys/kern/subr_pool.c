@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.81 2002/11/08 02:08:57 enami Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.82 2002/11/09 20:12:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.81 2002/11/08 02:08:57 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.82 2002/11/09 20:12:55 thorpej Exp $");
 
 #include "opt_pool.h"
 #include "opt_poollog.h"
@@ -102,9 +102,9 @@ TAILQ_HEAD(pool_pagelist,pool_item_header);
 
 struct pool_item {
 #ifdef DIAGNOSTIC
-	int pi_magic;
+	u_int pi_magic;
 #endif
-#define	PI_MAGIC 0xdeadbeef
+#define	PI_MAGIC 0xdeadbeefU
 	/* Other entries use only this list entry */
 	TAILQ_ENTRY(pool_item)	pi_list;
 };
