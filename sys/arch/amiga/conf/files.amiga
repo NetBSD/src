@@ -1,4 +1,4 @@
-#	$NetBSD: files.amiga,v 1.121 2002/04/22 09:41:19 augustss Exp $
+#	$NetBSD: files.amiga,v 1.121.4.1 2002/05/28 19:34:47 tv Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -188,7 +188,7 @@ device	grful: grfbus
 attach	grful at zbus
 file	arch/amiga/dev/grf_ul.c		grful needs-flag
 file	arch/amiga/dev/ite_ul.c		grful & ite
-file	arch/amiga/dev/grf_ultms.g	grful
+file	arch/amiga/dev/grf_ultms.c	grful
 
 # CyberVison 64 grf (ite5 grf5)
 device	grfcv: grfbus
