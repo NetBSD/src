@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.8 2001/12/20 19:20:02 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.9 2002/09/11 18:20:47 mycroft Exp $
 
 SRCS+=	rtld_start.S alpha_reloc.c
 
@@ -9,4 +9,3 @@ CPPFLAGS+= -DELFSIZE=64
 #CPPFLAGS+= -DRTLD_DEBUG_ALPHA
 
 LDFLAGS+= -Bshareable -Bsymbolic -e _rtld_start
-LDFLAGS+= --script ${.CURDIR}/arch/alpha/ld.so.script
