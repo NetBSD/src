@@ -1,4 +1,4 @@
-.\"	$NetBSD: bind.2,v 1.12 1999/03/22 19:45:00 garbled Exp $
+.\"	$NetBSD: bind.2,v 1.13 1999/03/23 10:59:11 lukem Exp $
 .\"
 .\" Copyright (c) 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)bind.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd June 4, 1993
+.Dd March 23, 1999
 .Dt BIND 2
 .Os
 .Sh NAME
@@ -131,3 +131,34 @@ The
 .Fn bind
 function call appeared in
 .Bx 4.2 .
+.Sh SECURITY CONSIDERATIONS
+.Fn bind
+was changed in
+.Nx 1.4
+to prevent the binding of a socket to the same port as an existing
+socket when all of the following is true:
+.Bl -bullet -compact -offset indent
+.It
+either of the existing or new addresses is
+.Li INADDR_ANY ,
+.It
+the uid of the new socket is not root, and
+the uids of the creators of the sockets are different,
+.It
+the address is not a multicast address, and
+.It
+both sockets are not bound to
+.Li INADDR_ANY
+with
+.Li SO_REUSEPORT
+set.
+.El
+.Pp
+This prevents an attack where a user could bind to a port with
+the host's IP address (after setting
+.Li SO_REUSEADDR )
+and
+.Sq steal
+packets destined for a server that bound to the
+same port with
+.Li INADDR_ANY .
