@@ -1,4 +1,7 @@
 #!/bin/sh
+#
+# $NetBSD: logtest,v 1.2 2002/05/13 06:34:14 martti Exp $
+#
 if [ -f /usr/ucb/touch ] ; then
 	TOUCH=/usr/ucb/touch
 else
@@ -11,34 +14,36 @@ else
 	fi
 fi
 echo "$1...";
+TESTDIR=$2
+[ -z "$2" ] && TESTDIR=${PWD}
 
 /bin/cp /dev/null results/$1
 /bin/cp /dev/null results/$1.b
 
 ( while read rule; do
 	echo $rule >> results/$1 
-	echo $rule | ../ipftest -br - -Hi input/$1 -l logout > /dev/null
+	echo $rule | ipftest -br - -Hi ${TESTDIR}/input/$1 -l logout > /dev/null
 	if [ $? -ne 0 ] ; then
 		/bin/rm -f logout
 		exit 1
 	fi
-	TZ=GMT ../ipmon -P /dev/null -f logout >> results/$1
+	TZ=GMT ipmon -P /dev/null -f logout >> results/$1
         echo "--------" >> results/$1
-	TZ=GMT ../ipmon -P /dev/null -bf logout >> results/$1.b
+	TZ=GMT ipmon -P /dev/null -bf logout >> results/$1.b
         echo "--------" >> results/$1.b
-done ) < regress/$1
-../ipftest -br regress/$1 -Hi input/$1 -l logout > /dev/null
-TZ=GMT ../ipmon -P /dev/null -f logout >> results/$1
+done ) < ${TESTDIR}/regress/$1
+ipftest -br ${TESTDIR}/regress/$1 -Hi ${TESTDIR}/input/$1 -l logout > /dev/null
+TZ=GMT ipmon -P /dev/null -f logout >> results/$1
 echo "--------" >> results/$1
-TZ=GMT ../ipmon -P /dev/null -bf logout >> results/$1.b
+TZ=GMT ipmon -P /dev/null -bf logout >> results/$1.b
 echo "--------" >> results/$1.b
 
-cmp expected/$1 results/$1
+cmp ${TESTDIR}/expected/$1 results/$1
 status=$?
 if [ $status -ne 0 ] ; then
 	exit $status
 fi
-cmp expected/$1.b results/$1.b
+cmp ${TESTDIR}/expected/$1.b results/$1.b
 status=$?
 if [ $status -ne 0 ] ; then
 	exit $status
