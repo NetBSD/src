@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.57 1998/10/27 23:48:22 mycroft Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.57.2.1 1999/04/09 04:22:56 chs Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -554,6 +554,12 @@ getblk(vp, blkno, size, slpflag, slptimeo)
 	struct bufhashhdr *bh;
 	struct buf *bp;
 	int s, err;
+
+#ifdef DIAGNOSTIC
+	if (vp->v_type == VREG && blkno >= 0) {
+		panic("getblk of VREG vp %p blkno 0x%x", vp, blkno);
+	}
+#endif
 
 	/*
 	 * XXX
