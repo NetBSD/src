@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_page.c,v 1.44 1998/03/20 17:40:20 phil Exp $	*/
+/*	$NetBSD: vm_page.c,v 1.45 1998/03/31 03:04:59 chuck Exp $	*/
 
 #define	VM_PAGE_ALLOC_MEMORY_STATS
 
@@ -582,7 +582,7 @@ vm_page_physload(start, end, avail_start, avail_end)
 			pgs[lcv].phys_addr = paddr;
 			if (atop(paddr) >= avail_start &&
 			    atop(paddr) <= avail_end)
-				vm_page_free(&pgs[i]);
+				vm_page_free(&pgs[lcv]);
 		}
 /* XXXCDC: incomplete: need to update v_free_count, what else? */
 /* XXXCDC: need hook to tell pmap to rebuild pv_list, etc... */

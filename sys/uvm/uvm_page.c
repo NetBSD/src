@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.7 1998/03/09 00:58:58 mrg Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.8 1998/03/31 03:04:59 chuck Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -610,7 +610,7 @@ uvm_page_physload(start, end, avail_start, avail_end)
 			pgs[lcv].phys_addr = paddr;
 			if (atop(paddr) >= avail_start &&
 			    atop(paddr) <= avail_end)
-				vm_page_free(&pgs[i]);
+				uvm_pagefree(&pgs[lcv]);
 		}
 		/* XXXCDC: incomplete: need to update uvmexp.free, what else? */
 		/* XXXCDC: need hook to tell pmap to rebuild pv_list, etc... */
