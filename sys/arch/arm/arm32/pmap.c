@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.67 2002/03/24 21:10:25 chris Exp $	*/
+/*	$NetBSD: pmap.c,v 1.68 2002/03/24 21:32:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -143,7 +143,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.67 2002/03/24 21:10:25 chris Exp $");        
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.68 2002/03/24 21:32:18 thorpej Exp $");        
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
 	if (pmap_debug_level >= (_lev_)) \
@@ -306,7 +306,6 @@ int l1pt_create_count;			/* stat - L1's create count */
 int l1pt_reuse_count;			/* stat - L1's reused count */
 
 /* Local function prototypes (not used outside this file) */
-pt_entry_t *pmap_pte __P((struct pmap *pmap, vaddr_t va));
 void pmap_copy_on_write __P((struct vm_page *));
 void pmap_pinit __P((struct pmap *));
 void pmap_freepagedir __P((struct pmap *));
@@ -2883,107 +2882,6 @@ pmap_unwire(pmap, va)
  out:
 	pmap_unmap_ptes(pmap);			/* unlocks pmap */
 	PMAP_MAP_TO_HEAD_UNLOCK();
-}
-
-/*
- * pt_entry_t *pmap_pte(struct pmap *pmap, vaddr_t va)
- *
- * Return the pointer to a page table entry corresponding to the supplied
- * virtual address.
- *
- * The page directory is first checked to make sure that a page table
- * for the address in question exists and if it does a pointer to the
- * entry is returned.
- *
- * The way this works is that that the kernel page tables are mapped
- * into the memory map at APTE_BASE to APTE_BASE+4MB.  This allows
- * page tables to be located quickly.
- */
-pt_entry_t *
-pmap_pte(pmap, va)
-	struct pmap *pmap;
-	vaddr_t va;
-{
-	pt_entry_t *ptp;
-	pt_entry_t *result;
-
-	/* The pmap must be valid */
-	if (!pmap)
-		return(NULL);
-
-	/* Return the address of the pte */
-	PDEBUG(10, printf("pmap_pte: pmap=%p va=V%08lx pde = V%p (%08X)\n",
-	    pmap, va, pmap_pde(pmap, va), *(pmap_pde(pmap, va))));
-
-	/* Do we have a valid pde ? If not we don't have a page table */
-	if (!pmap_pde_page(pmap_pde(pmap, va))) {
-		PDEBUG(0, printf("pmap_pte: failed - pde = %p\n",
-		    pmap_pde(pmap, va)));
-		return(NULL); 
-	}
-
-	PDEBUG(10, printf("pmap pagetable = P%08lx current = P%08x\n",
-	    pmap->pm_pptpt, (*((pt_entry_t *)(PTE_BASE
-	    + (PTE_BASE >> (PGSHIFT - 2)) +
-	    (PTE_BASE >> PDSHIFT))) & PG_FRAME)));
-
-	/*
-	 * If the pmap is the kernel pmap or the pmap is the active one
-	 * then we can just return a pointer to entry relative to
-	 * PTE_BASE.
-	 * Otherwise we need to map the page tables to an alternative
-	 * address and reference them there.
-	 */
-	if (pmap == pmap_kernel() || pmap->pm_pptpt
-	    == (*((pt_entry_t *)(PTE_BASE
-	    + ((PTE_BASE >> (PGSHIFT - 2)) &
-	    ~3) + (PTE_BASE >> PDSHIFT))) & PG_FRAME)) {
-		ptp = (pt_entry_t *)PTE_BASE;
-	} else {
-		struct proc *p = curproc;
-
-		/* If we don't have a valid curproc use proc0 */
-		/* Perhaps we should just use kernel_pmap instead */
-		if (p == NULL)
-			p = &proc0;
-#ifdef DIAGNOSTIC
-		/*
-		 * The pmap should always be valid for the process so
-		 * panic if it is not.
-		 */
-		if (!p->p_vmspace || !p->p_vmspace->vm_map.pmap) {
-			printf("pmap_pte: va=%08lx p=%p vm=%p\n",
-			    va, p, p->p_vmspace);
-			console_debugger();
-		}
-		/*
-		 * The pmap for the current process should be mapped. If it
-		 * is not then we have a problem.
-		 */
-		if (p->p_vmspace->vm_map.pmap->pm_pptpt !=
-		    (*((pt_entry_t *)(PTE_BASE
-		    + (PTE_BASE >> (PGSHIFT - 2)) +
-		    (PTE_BASE >> PDSHIFT))) & PG_FRAME)) {
-			printf("pmap pagetable = P%08lx current = P%08x ",
-			    pmap->pm_pptpt, (*((pt_entry_t *)(PTE_BASE
-			    + (PTE_BASE >> (PGSHIFT - 2)) +
-			    (PTE_BASE >> PDSHIFT))) &
-			    PG_FRAME));
-			printf("pptpt=%lx\n", p->p_vmspace->vm_map.pmap->pm_pptpt);
-			panic("pmap_pte: current and pmap mismatch\n");
-		}
-#endif
-
-		ptp = (pt_entry_t *)APTE_BASE;
-		pmap_map_in_l1(p->p_vmspace->vm_map.pmap, APTE_BASE,
-		    pmap->pm_pptpt, FALSE);
-		cpu_tlb_flushD();
-		cpu_cpwait();
-	}
-	PDEBUG(10, printf("page tables base = %p offset=%lx\n", ptp,
-	    ((va >> (PGSHIFT-2)) & ~3)));
-	result = (pt_entry_t *)((char *)ptp + ((va >> (PGSHIFT-2)) & ~3));
-	return(result);
 }
 
 /*
