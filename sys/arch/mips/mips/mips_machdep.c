@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.42 1999/01/15 01:23:15 castor Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.43 1999/01/15 09:58:43 castor Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.42 1999/01/15 01:23:15 castor Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.43 1999/01/15 09:58:43 castor Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
@@ -283,7 +283,7 @@ mips3_ConfigCache()
 
 	mips_L2CachePresent = (config & MIPS3_CONFIG_SC) == 0;
 	mips_L2CacheLSize = MIPS3_CONFIG_CACHE_L2_LSIZE(config);
-	if (!mips_L2CachePreset) {
+	if (!mips_L2CachePresent) {
 		mips_L2CacheSize = 0;
 	}
 	mips_L2CacheMixed = (config & MIPS3_CONFIG_SS) == 0;
