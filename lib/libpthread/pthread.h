@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.h,v 1.3 2003/01/19 11:17:02 jdolecek Exp $	*/
+/*	$NetBSD: pthread.h,v 1.4 2003/01/19 16:03:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -47,105 +47,109 @@
 #include "pthread_types.h"
 
 __BEGIN_DECLS
-int	pthread_create(pthread_t *thread, const pthread_attr_t *attr, 
-	    void *(*startfunc)(void *), void *arg);
-void	pthread_exit(void *retval) __attribute__((__noreturn__));
-int	pthread_join(pthread_t thread, void **valptr);
-int	pthread_equal(pthread_t t1, pthread_t t2);
+int	pthread_create(pthread_t *, const pthread_attr_t *, 
+	    void *(*)(void *), void *);
+void	pthread_exit(void *) __attribute__((__noreturn__));
+int	pthread_join(pthread_t, void **);
+int	pthread_equal(pthread_t, pthread_t);
 pthread_t	pthread_self(void);
-int	pthread_detach(pthread_t thread);
+int	pthread_detach(pthread_t);
 
-int	pthread_kill(pthread_t thread, int sig);
+int	pthread_kill(pthread_t, int);
 
 int	pthread_getrrtimer_np(void);
 int	pthread_setrrtimer_np(int);
 
-int	pthread_attr_destroy(pthread_attr_t *attr);
-int	pthread_attr_getdetachstate(pthread_attr_t *attr, int *detachstate);
-int	pthread_attr_init(pthread_attr_t *attr);
-int	pthread_attr_setdetachstate(pthread_attr_t *attr, int detachstate);
-int	pthread_attr_setschedparam(pthread_attr_t *attr,
-	    const struct sched_param *param);
-int	pthread_attr_getschedparam(pthread_attr_t *attr,
-	    struct sched_param *param);
+int	pthread_attr_init(pthread_attr_t *);
+int	pthread_attr_destroy(pthread_attr_t *);
+int	pthread_attr_getschedparam(const pthread_attr_t *,
+    struct sched_param *);
+int	pthread_attr_setschedparam(pthread_attr_t *,
+    const struct sched_param *);
+int	pthread_attr_getstacksize(const pthread_attr_t *, size_t *);
+int	pthread_attr_setstacksize(pthread_attr_t *, size_t);
+int	pthread_attr_getguardsize(const pthread_attr_t *, size_t *);
+int	pthread_attr_setguardsize(pthread_attr_t *, size_t);
+int	pthread_attr_getstackaddr(const pthread_attr_t *, void **);
+int	pthread_attr_setstackaddr(pthread_attr_t *, void *);
+int	pthread_attr_getdetachstate(const pthread_attr_t *, int *);
+int	pthread_attr_setdetachstate(pthread_attr_t *, int);
 
-int	pthread_mutex_init(pthread_mutex_t *mutex,
-	    const pthread_mutexattr_t *attr);
-int	pthread_mutex_destroy(pthread_mutex_t *mutex);
-int	pthread_mutex_lock(pthread_mutex_t *mutex);
-int	pthread_mutex_trylock(pthread_mutex_t *mutex);
-int	pthread_mutex_unlock(pthread_mutex_t *mutex);
-int	pthread_mutexattr_init(pthread_mutexattr_t *attr);
-int	pthread_mutexattr_destroy(pthread_mutexattr_t *attr);
-int	pthread_mutexattr_gettype(const pthread_mutexattr_t *attr, int *type);
+int	pthread_mutex_init(pthread_mutex_t *, const pthread_mutexattr_t *);
+int	pthread_mutex_destroy(pthread_mutex_t *);
+int	pthread_mutex_lock(pthread_mutex_t *);
+int	pthread_mutex_trylock(pthread_mutex_t *);
+int	pthread_mutex_unlock(pthread_mutex_t *);
+int	pthread_mutexattr_init(pthread_mutexattr_t *);
+int	pthread_mutexattr_destroy(pthread_mutexattr_t *);
+int	pthread_mutexattr_gettype(const pthread_mutexattr_t *, int *);
 int	pthread_mutexattr_settype(pthread_mutexattr_t *attr, int type);
 
-int	pthread_cond_init(pthread_cond_t *cond,
-	    const pthread_condattr_t *attr);
-int	pthread_cond_destroy(pthread_cond_t *cond);
-int	pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex);
-int	pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
-	    const struct timespec *abstime);
-int	pthread_cond_signal(pthread_cond_t *cond);
-int	pthread_cond_broadcast(pthread_cond_t *cond);
-int	pthread_condattr_init(pthread_condattr_t *attr);
-int	pthread_condattr_destroy(pthread_condattr_t *attr);
+int	pthread_cond_init(pthread_cond_t *, const pthread_condattr_t *);
+int	pthread_cond_destroy(pthread_cond_t *);
+int	pthread_cond_wait(pthread_cond_t *, pthread_mutex_t *);
+int	pthread_cond_timedwait(pthread_cond_t *, pthread_mutex_t *,
+	    const struct timespec *);
+int	pthread_cond_signal(pthread_cond_t *);
+int	pthread_cond_broadcast(pthread_cond_t *);
+int	pthread_condattr_init(pthread_condattr_t *);
+int	pthread_condattr_destroy(pthread_condattr_t *);
 
-int	pthread_once(pthread_once_t *once_control, void (*routine)(void));
+int	pthread_once(pthread_once_t *, void (*)(void));
 
-int	pthread_key_create(pthread_key_t *key, void (*destruct)(void *));
-int	pthread_key_delete(pthread_key_t key);
-int	pthread_setspecific(pthread_key_t key, const void *value);
-void*	pthread_getspecific(pthread_key_t key);
+int	pthread_key_create(pthread_key_t *, void (*)(void *));
+int	pthread_key_delete(pthread_key_t);
+int	pthread_setspecific(pthread_key_t, const void *);
+void*	pthread_getspecific(pthread_key_t);
 
-int	pthread_cancel(pthread_t thread);
-int	pthread_setcancelstate(int state, int *oldstate);
-int	pthread_setcanceltype(int type, int *oldtype);
+int	pthread_cancel(pthread_t);
+int	pthread_setcancelstate(int, int *);
+int	pthread_setcanceltype(int, int *);
 void	pthread_testcancel(void);
 
 struct pthread_cleanup_store {
 	void	*pad[4];
 };
 
-#define pthread_cleanup_push(routine,arg)			\
+#define pthread_cleanup_push(routine, arg)			\
         {							\
-		struct pthread_cleanup_store __store;	\
+		struct pthread_cleanup_store __store;		\
 		pthread__cleanup_push((routine),(arg), &__store);
 
 #define pthread_cleanup_pop(execute)				\
 		pthread__cleanup_pop((execute), &__store);	\
 	}
 
-void	pthread__cleanup_push(void (*routine)(void *), void *arg, void *store);
-void	pthread__cleanup_pop(int execute, void *store);
+void	pthread__cleanup_push(void (*)(void *), void *, void *);
+void	pthread__cleanup_pop(int, void *);
 
-int	pthread_spin_init(pthread_spinlock_t *lock, int pshared);
-int	pthread_spin_destroy(pthread_spinlock_t *lock);
-int	pthread_spin_lock(pthread_spinlock_t *lock);
-int	pthread_spin_trylock(pthread_spinlock_t *lock);
-int	pthread_spin_unlock(pthread_spinlock_t *lock);
+int	pthread_spin_init(pthread_spinlock_t *, int);
+int	pthread_spin_destroy(pthread_spinlock_t *);
+int	pthread_spin_lock(pthread_spinlock_t *);
+int	pthread_spin_trylock(pthread_spinlock_t *);
+int	pthread_spin_unlock(pthread_spinlock_t *);
 
-int	pthread_rwlock_init(pthread_rwlock_t *rwlock,
-	    const pthread_rwlockattr_t *attr);
-int	pthread_rwlock_destroy(pthread_rwlock_t *rwlock);
-int	pthread_rwlock_rdlock(pthread_rwlock_t *rwlock);
-int	pthread_rwlock_tryrdlock(pthread_rwlock_t *rwlock);
-int	pthread_rwlock_wrlock(pthread_rwlock_t *rwlock);
-int	pthread_rwlock_trywrlock(pthread_rwlock_t *rwlock);
-int	pthread_rwlock_timedrdlock(pthread_rwlock_t *rwlock,
-	    const struct timespec *abs_timeout);
-int	pthread_rwlock_timedwrlock(pthread_rwlock_t *rwlock,
-	    const struct timespec *abs_timeout);
-int	pthread_rwlock_unlock(pthread_rwlock_t *rwlock);
-int	pthread_rwlockattr_init(pthread_rwlockattr_t *attr);
-int	pthread_rwlockattr_destroy(pthread_rwlockattr_t *attr);
+int	pthread_rwlock_init(pthread_rwlock_t *,
+	    const pthread_rwlockattr_t *);
+int	pthread_rwlock_destroy(pthread_rwlock_t *);
+int	pthread_rwlock_rdlock(pthread_rwlock_t *);
+int	pthread_rwlock_tryrdlock(pthread_rwlock_t *);
+int	pthread_rwlock_wrlock(pthread_rwlock_t *);
+int	pthread_rwlock_trywrlock(pthread_rwlock_t *);
+int	pthread_rwlock_timedrdlock(pthread_rwlock_t *,
+	    const struct timespec *);
+int	pthread_rwlock_timedwrlock(pthread_rwlock_t *,
+	    const struct timespec *);
+int	pthread_rwlock_unlock(pthread_rwlock_t *);
+int	pthread_rwlockattr_init(pthread_rwlockattr_t *);
+int	pthread_rwlockattr_destroy(pthread_rwlockattr_t *);
 
-int	pthread_barrier_init(pthread_barrier_t *barrier,
-	    const pthread_barrierattr_t *attr, unsigned int count);
-int	pthread_barrier_wait(pthread_barrier_t *barrier);
-int	pthread_barrier_destroy(pthread_barrier_t *barrier);
-int	pthread_barrierattr_init(pthread_barrierattr_t *attr);
-int	pthread_barrierattr_destroy(pthread_barrierattr_t *attr);
+int	pthread_barrier_init(pthread_barrier_t *,
+	    const pthread_barrierattr_t *, unsigned int);
+int	pthread_barrier_wait(pthread_barrier_t *);
+int	pthread_barrier_destroy(pthread_barrier_t *);
+int	pthread_barrierattr_init(pthread_barrierattr_t *);
+int	pthread_barrierattr_destroy(pthread_barrierattr_t *);
 
 int 	*pthread__errno(void);
 __END_DECLS
