@@ -1,4 +1,4 @@
-/*	$NetBSD: savecore.c,v 1.43 2000/10/08 07:04:28 darrenr Exp $	*/
+/*	$NetBSD: savecore.c,v 1.44 2000/12/07 03:17:17 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)savecore.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: savecore.c,v 1.43 2000/10/08 07:04:28 darrenr Exp $");
+__RCSID("$NetBSD: savecore.c,v 1.44 2000/12/07 03:17:17 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,6 +52,8 @@ __RCSID("$NetBSD: savecore.c,v 1.43 2000/10/08 07:04:28 darrenr Exp $");
 #include <sys/mount.h>
 #include <sys/syslog.h>
 #include <sys/time.h>
+#include <sys/sysctl.h>
+#include <machine/cpu.h>
 
 #include <dirent.h>
 #include <errno.h>
@@ -108,7 +110,7 @@ long	dumplo;				/* where dump starts on dumpdev */
 int	dumpmag;			/* magic number in dump */
 int	dumpsize;			/* amount of memory dumped */
 
-char	*kernel = _PATH_UNIX;
+char	*kernel;			/* name of used kernel */
 char	*dirname;			/* directory to save dumps in */
 char	*ddname;			/* name of dump device */
 dev_t	dumpdev;			/* dump device */
@@ -144,6 +146,14 @@ main(argc, argv)
 	char *argv[];
 {
 	int ch;
+#ifdef CPU_BOOTED_KERNEL
+	int mib[2];
+	size_t size;
+	char buf[MAXPATHLEN];
+#endif
+
+	dirname = NULL;
+	kernel = NULL;
 
 	openlog("savecore", LOG_PERROR, LOG_DAEMON);
 
@@ -172,13 +182,33 @@ main(argc, argv)
 	argc -= optind;
 	argv += optind;
 
-	if (!clear) {
-		if (argc != 1 && argc != 2)
-			usage();
+	if (argc != (clear ? 0 : 1))
+		usage();
+
+	if (!clear)
 		dirname = argv[0];
+
+	if (kernel == NULL) {
+		kernel = _PATH_UNIX;
+#ifdef CPU_BOOTED_KERNEL
+		/* find real boot-kernel name */
+		mib[0] = CTL_MACHDEP;
+		mib[1] = CPU_BOOTED_KERNEL;
+		size = sizeof(buf) - 1;
+		if (sysctl(mib, 2, buf + 1, &size, NULL, NULL) == 0) {
+			/*
+			 * traditionally, this sysctl returns the
+			 * relative path of the kernel with the
+			 * leading slash stripped -- could be empty,
+			 * though (e.g. when netbooting).
+			 */
+			if (buf[1] != '\0') {
+				buf[0] = '/';
+				kernel = buf;
+			}
+		}
+#endif
 	}
-	if (argc == 2)
-		kernel = argv[1];
 
 	(void)time(&now);
 	kmem_setup();
@@ -224,17 +254,17 @@ kmem_setup()
 	 */
 	kd_kern = kvm_openfiles(kernel, NULL, NULL, O_RDONLY, errbuf);
 	if (kd_kern == NULL) {
-		syslog(LOG_ERR, "%s: kvm_openfiles: %s", _PATH_UNIX, errbuf);
+		syslog(LOG_ERR, "%s: kvm_openfiles: %s", kernel, errbuf);
 		exit(1);
 	}
 	if (kvm_nlist(kd_kern, current_nl) == -1)
-		syslog(LOG_ERR, "%s: kvm_nlist: %s", _PATH_UNIX,
+		syslog(LOG_ERR, "%s: kvm_nlist: %s", kernel,
 			kvm_geterr(kd_kern));
 	
 	for (i = 0; cursyms[i] != -1; i++)
 		if (current_nl[cursyms[i]].n_value == 0) {
 			syslog(LOG_ERR, "%s: %s not in namelist",
-			    _PATH_UNIX, current_nl[cursyms[i]].n_name);
+			    kernel, current_nl[cursyms[i]].n_name);
 			exit(1);
 		}
 
@@ -262,11 +292,9 @@ kmem_setup()
 		exit(1);
 	}
 
-	if (kernel == NULL) {
-		(void)kvm_read(kd_kern, current_nl[X_VERSION].n_value,
-			vers, sizeof(vers));
-		vers[sizeof(vers) - 1] = '\0';
-	}
+	(void)kvm_read(kd_kern, current_nl[X_VERSION].n_value,
+	    vers, sizeof(vers));
+	vers[sizeof(vers) - 1] = '\0';
 
 	ddname = find_dev(dumpdev, S_IFBLK);
 	dumpfd = Open(ddname, O_RDWR);
@@ -279,7 +307,7 @@ kmem_setup()
 
 	if (kvm_nlist(kd_dump, dump_nl) == -1)
 		syslog(LOG_ERR, "%s: kvm_nlist: %s", kernel,
-			kvm_geterr(kd_dump));
+		    kvm_geterr(kd_dump));
 
 	for (i = 0; dumpsyms[i] != -1; i++)
 		if (dump_nl[dumpsyms[i]].n_value == 0) {
@@ -320,7 +348,7 @@ check_kmem()
 	if (strcmp(vers, core_vers) && kernel == 0)
 		syslog(LOG_WARNING,
 		    "warning: %s version mismatch:\n\t%s\nand\t%s\n",
-		    _PATH_UNIX, vers, core_vers);
+		    kernel, vers, core_vers);
 
 	if (KREAD(kd_dump, dump_nl[X_PANICSTR].n_value, &panicstr) != 0) {
 		if (verbose)
