@@ -1,4 +1,4 @@
-/*	$NetBSD: memmove.S,v 1.2 1997/10/09 07:30:42 jtc Exp $	*/
+/*	$NetBSD: memmove.S,v 1.3 1997/11/22 03:27:13 mark Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -39,6 +39,6 @@
 #include <machine/asm.h>
 
 ENTRY(memmove)
-	stmfd	sp!, {r1, lr}
+	stmfd	sp!, {r0, lr}
 	bl	__memcpy
 	ldmfd	sp!, {r0, pc}
