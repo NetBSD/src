@@ -1,4 +1,4 @@
-/*	$NetBSD: rain.c,v 1.5 1995/04/22 08:23:37 cgd Exp $	*/
+/*	$NetBSD: rain.c,v 1.6 1995/04/22 10:26:09 cgd Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)rain.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: rain.c,v 1.5 1995/04/22 08:23:37 cgd Exp $";
+static char rcsid[] = "$NetBSD: rain.c,v 1.6 1995/04/22 10:26:09 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -69,7 +69,7 @@ static struct termio sg, old_tty;
 static struct sgttyb sg, old_tty;
 #endif
 
-static void fputchar();
+void	fputchar __P((int));
 char	*LL, *TE, *tgoto();
 
 main(argc, argv)
@@ -255,9 +255,9 @@ onsig()
 	exit(0);
 }
 
-int
+void
 fputchar(c)
 	int c;
 {
-	putchar(c);
+	(void)putchar(c);
 }
