@@ -1,5 +1,5 @@
-#	$NetBSD: ssh_config,v 1.2.2.2 2001/02/26 20:27:14 he Exp $
-#	$OpenBSD: ssh_config,v 1.8 2001/02/02 12:57:51 deraadt Exp $
+#	$NetBSD: ssh_config,v 1.2.2.3 2001/12/10 23:54:34 he Exp $
+#	$OpenBSD: ssh_config,v 1.10 2001/04/03 21:19:38 todd Exp $
 
 # This is ssh client systemwide configuration file.  See ssh(1) for more
 # information.  This file provides defaults for users, and the values can
@@ -29,9 +29,8 @@
 #   StrictHostKeyChecking yes
 #   IdentityFile ~/.ssh/identity
 #   IdentityFile ~/.ssh/id_dsa
-#   IdentityFile ~/.ssh/id_rsa1
-#   IdentityFile ~/.ssh/id_rsa2
+#   IdentityFile ~/.ssh/id_rsa
 #   Port 22
-#   Protocol 1,2
+#   Protocol 2,1
 #   Cipher blowfish
 #   EscapeChar ~
