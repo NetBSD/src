@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnp.c,v 1.8 1997/08/06 04:52:31 mikel Exp $	*/
+/*	$NetBSD: isapnp.c,v 1.9 1997/08/12 07:38:10 mikel Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -64,8 +64,12 @@ static int isapnp_print __P((void *, const char *));
 #ifdef _KERNEL
 static int isapnp_submatch __P((struct device *, void *, void *));
 #endif
-static int isapnp_find __P((struct isapnp_softc *));
+static int isapnp_find __P((struct isapnp_softc *, int));
+#ifdef __BROKEN_INDIRECT_CONFIG
 static int isapnp_match __P((struct device *, void *, void *));
+#else
+static int isapnp_match __P((struct device *, struct cfdata *, void *));
+#endif
 static void isapnp_attach __P((struct device *, struct device *, void *));
 
 struct cfattach isapnp_ca = {
@@ -92,7 +96,7 @@ isapnp_init(sc)
 	ISAPNP_WRITE_ADDR(sc, 0);
 
 	/* Send the 32 byte sequence to awake the logic */
-	for (i = 0; i < 32; i++) {
+	for (i = 0; i < ISAPNP_LFSR_LENGTH; i++) {
 		ISAPNP_WRITE_ADDR(sc, v);
 		v = ISAPNP_LFSR_NEXT(v);
 	}
@@ -528,7 +532,7 @@ isapnp_print(aux, str)
 
 #ifdef _KERNEL
 /* isapnp_submatch():
- *	Probe the card...
+ *	Probe the logical device...
  */
 static int
 isapnp_submatch(parent, match, aux)
@@ -545,8 +549,9 @@ isapnp_submatch(parent, match, aux)
  *	Probe and add cards
  */
 static int
-isapnp_find(sc)
+isapnp_find(sc, all)
 	struct isapnp_softc *sc;
+	int all;
 {
 	int p;
 
@@ -573,8 +578,9 @@ isapnp_find(sc)
 		return 0;
 	}
 
-	while (isapnp_findcard(sc))
-		continue;
+	if (all)
+		while (isapnp_findcard(sc))
+			continue;
 
 	return 1;
 }
@@ -725,23 +731,31 @@ isapnp_configure(sc, ipa)
 static int
 isapnp_match(parent, match, aux)
 	struct device *parent;
-	void *match, *aux;
+#ifdef __BROKEN_INDIRECT_CONFIG
+	void *match;
+#else
+	struct cfdata *match;
+#endif
+	void *aux;
 {
 	int rv;
 	struct isapnp_softc sc;
 	struct isa_attach_args *ia = aux;
 
 	sc.sc_iot = ia->ia_iot;
-	ia->ia_iobase = ISAPNP_ADDR;
-	ia->ia_iosize = 1;
+	sc.sc_ncards = 0;
 	(void) strcpy(sc.sc_dev.dv_xname, "(isapnp probe)");
 
 	if (isapnp_map(&sc))
 		return 0;
 
-	rv = isapnp_find(&sc);
+	rv = isapnp_find(&sc, 0);
+	ia->ia_iobase = ISAPNP_ADDR;
+	ia->ia_iosize = 1;
 
 	isapnp_unmap(&sc);
+	if (rv)
+		isapnp_unmap_readport(&sc);
 
 	return (rv);
 }
@@ -766,8 +780,8 @@ isapnp_attach(parent, self, aux)
 	if (isapnp_map(sc))
 		panic("%s: bus map failed\n", sc->sc_dev.dv_xname);
 
-	if (!isapnp_find(sc))
-		panic("%s: no devices found\n", sc->sc_dev.dv_xname);
+	if (!isapnp_find(sc, 1))
+		panic("%s: no cards found\n", sc->sc_dev.dv_xname);
 
 	printf(": read port 0x%x\n", sc->sc_read_port);
 
@@ -779,7 +793,6 @@ isapnp_attach(parent, self, aux)
 
 		if ((ipa = isapnp_get_resource(sc, c)) == NULL)
 			continue;
-
 
 		DPRINTF(("Selecting attachments\n"));
 		for (d = 0; (lpa = isapnp_bestconfig(sc, &ipa)) != NULL; d++) {
