@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: grfabs_cc.c,v 1.2 1994/03/14 15:02:28 chopps Exp $
+ *	$Id: grfabs_cc.c,v 1.3 1994/03/27 06:23:30 chopps Exp $
  *
  *  abstract interface for custom chips to the amiga abstract graphics driver.
  *
@@ -36,9 +36,9 @@
 #include <sys/param.h>
 #include <sys/errno.h>
 #include <sys/cdefs.h>
+#include <sys/queue.h>
 
 #include <amiga/amiga/custom.h>
-#include <amiga/amiga/dlists.h>
 #include <amiga/amiga/cc.h>
 
 #include <amiga/dev/grfabs_reg.h>
@@ -50,8 +50,6 @@ char   *monitor_name = "CCMONITOR";
 monitor_t monitor;
 mdata_t monitor_data;
 cop_t  *null_mode_copper_list;
-
-extern dll_list_t *monitors;
 
 #if defined (GRF_PAL)
 #  if defined (GRF_A2024)
@@ -117,46 +115,46 @@ dmdata_t *h_this_data;
 monitor_t *
 cc_init_monitor()
 {
-	if (!m_this) {
-		cop_t  *cp;
-		cc_monitor = m_this = &monitor;
+	cop_t  *cp;
+	
+	if (m_this)
+		return(m_this);
 
-		/* turn sprite DMA off. we don't support them yet. */
-		custom.dmacon = DMAF_SPRITE;
+	cc_monitor = m_this = &monitor;
+	/* turn sprite DMA off. we don't support them yet. */
+	custom.dmacon = DMAF_SPRITE;
 
-		m_this->node.next = m_this->node.prev = NULL;
-		m_this->name = monitor_name;
-		m_this_data = m_this->data = &monitor_data;
+	m_this->name = monitor_name;
+	m_this_data = m_this->data = &monitor_data;
 
-		m_this->get_current_mode = get_current_mode;
-		m_this->vbl_handler = (vbl_handler_func *) monitor_vbl_handler;
-		m_this->get_next_mode = get_next_mode;
-		m_this->get_best_mode = get_best_mode;
+	m_this->get_current_mode = get_current_mode;
+	m_this->vbl_handler = (vbl_handler_func *) monitor_vbl_handler;
+	m_this->get_next_mode = get_next_mode;
+	m_this->get_best_mode = get_best_mode;
 
-		m_this->alloc_bitmap = alloc_bitmap;
-		m_this->free_bitmap = free_bitmap;
+	m_this->alloc_bitmap = alloc_bitmap;
+	m_this->free_bitmap = free_bitmap;
 
-		m_this_data->current_mode = NULL;
-		dinit_list(&m_this_data->modes);
+	m_this_data->current_mode = NULL;
+	LIST_INIT(&m_this_data->modes);
 
-		cp = null_mode_copper_list = alloc_chipmem(sizeof(cop_t) * 4);
-		if (!cp) {
-			panic("no chipmem for grf.");
-		}
-		CMOVE(cp, R_COLOR00, 0x0000);	/* background is black */
-		CMOVE(cp, R_BPLCON0, 0x0000);	/* no planes to fetch from */
-		CWAIT(cp, 255, 255);	/* COPEND */
-		CWAIT(cp, 255, 255);	/* COPEND really */
+	cp = null_mode_copper_list = alloc_chipmem(sizeof(cop_t) * 4);
+	if (!cp)
+		panic("no chipmem for grf.");
 
-		/* install m_this list and turn DMA on */
-		custom.cop1lc = PREP_DMA_MEM(null_mode_copper_list);
-		custom.copjmp1 = 0;
-		custom.dmacon = DMAF_SETCLR | DMAF_MASTER | DMAF_RASTER \
-		    |DMAF_COPPER;
+	CMOVE(cp, R_COLOR00, 0x0000);	/* background is black */
+	CMOVE(cp, R_BPLCON0, 0x0000);	/* no planes to fetch from */
+	CWAIT(cp, 255, 255);	/* COPEND */
+	CWAIT(cp, 255, 255);	/* COPEND really */
 
-		cc_init_modes();
-		dadd_tail(monitors, &m_this->node);
-	}
+	/* install m_this list and turn DMA on */
+	custom.cop1lc = PREP_DMA_MEM(null_mode_copper_list);
+	custom.copjmp1 = 0;
+	custom.dmacon = DMAF_SETCLR | DMAF_MASTER | DMAF_RASTER \
+	    |DMAF_COPPER;
+
+	cc_init_modes();
+	LIST_INSERT_HEAD(monitors, m_this, link);
 	return (m_this);
 }
 
@@ -164,35 +162,32 @@ void
 monitor_vbl_handler(m)
 	monitor_t *m;
 {
-	if (m_this_data->current_mode) {
-		DMDATA(m_this_data->current_mode)->vbl_handler(m_this_data->current_mode);
-	}
+	dmdata_t *dmd;
+
+	if (m_this_data->current_mode == NULL)
+		return;
+
+	dmd = DMDATA(m_this_data->current_mode);
+	if (dmd)
+		dmd->vbl_handler(m_this_data->current_mode);
 }
 
 dmode_t *
 get_current_mode()
 {
-	if (m_this_data->current_mode) {
-		return (m_this_data->current_mode);
-	} else {
-		return (NULL);
-	}
+	if (m_this_data->current_mode)
+		return(m_this_data->current_mode);
+	else
+		return(NULL);
 }
 
 dmode_t *
 get_next_mode(d)
 	dmode_t *d;
 {
-	if (d) {
-		if (d->node.next->next) {
-			return ((dmode_t *) d->node.next);
-		}
-	} else
-		if (m_this_data->modes.head->next) {
-			return ((dmode_t *) m_this_data->modes.head);
-		} else {
-			return (NULL);
-		}
+	if (d)
+		return(d->link.le_next);
+	return(m_this_data->modes.lh_first);
 }
 
 /* XXX needs to have more control attributes */
@@ -201,37 +196,36 @@ get_best_mode(size, depth)
 	dimen_t *size;
 	u_char depth;
 {
-	dmode_t *save = NULL;
-	dmode_t *m = (dmode_t *) m_this_data->modes.head;
-	long    dt;
+	dmode_t *save;
+	dmode_t *dm;
+	long    dt, dx, dy, ct;
+	dmdata_t *dmd;
 
-	while (m->node.next) {
-		long    dx, dy, ct;
-		dmdata_t *dmd = m->data;
-
+	save = NULL;
+	dm = m_this_data->modes.lh_first;
+	while (dm != NULL) {
+		dmd = dm->data;
 		if (depth > dmd->max_depth || depth < dmd->min_depth) {
-			m = (dmode_t *) m->node.next;
+			dm = dm->link.le_next;
 			continue;
-		}
-		if (size->width > dmd->max_size.width ||
+		} else if (size->width > dmd->max_size.width ||
 		    size->height > dmd->max_size.height) {
-			m = (dmode_t *) m->node.next;
+			dm = dm->link.le_next;
 			continue;
-		}
-		if (size->width < dmd->min_size.width ||
+		} else if (size->width < dmd->min_size.width ||
 		    size->height < dmd->min_size.height) {
-			m = (dmode_t *) m->node.next;
+			dm = dm->link.le_next;
 			continue;
 		}
-		dx = abs(m->nominal_size.width - size->width);
-		dy = abs(m->nominal_size.height - size->height);
+		dx = abs(dm->nominal_size.width - size->width);
+		dy = abs(dm->nominal_size.height - size->height);
 		ct = dx + dy;
 
 		if (ct < dt || save == NULL) {
-			save = m;
+			save = dm;
 			dt = ct;
 		}
-		m = (dmode_t *) m->node.next;
+		dm = dm->link.le_next;
 	}
 	return (save);
 }
@@ -763,7 +757,7 @@ cc_init_ntsc_hires()
 		h_this_data->beamcon0 = STANDARD_NTSC_BEAMCON;
 #endif
 
-		dadd_head(&MDATA(cc_monitor)->modes, &h_this->node);
+		LIST_INSERT_HEAD(&MDATA(cc_monitor)->modes, h_this, link);
 	}
 	return (h_this);
 }
@@ -783,8 +777,6 @@ display_hires_view(v)
 
 		/* round down to nearest even width */
 		/* w &= 0xfffe; */
-
-
 		/* calculate datafetch width. */
 
 		ddfwidth = ((v->bitmap->bytes_per_row >> 1) - 2) << 2;
@@ -941,7 +933,7 @@ cc_init_ntsc_hires_lace()
 		hl_this_data->beamcon0 = STANDARD_NTSC_BEAMCON;
 #endif
 
-		dadd_head(&MDATA(cc_monitor)->modes, &hl_this->node);
+		LIST_INSERT_HEAD(&MDATA(cc_monitor)->modes, hl_this, link);
 	}
 	return (hl_this);
 }
@@ -1142,7 +1134,7 @@ cc_init_ntsc_hires_dlace()
 #if defined (GRF_ECS)
 		hdl_this_data->beamcon0 = STANDARD_NTSC_BEAMCON;
 #endif
-		dadd_head(&MDATA(cc_monitor)->modes, &hdl_this->node);
+		LIST_INSERT_HEAD(&MDATA(cc_monitor)->modes, hdl_this, link);
 	}
 	return (hdl_this);
 }
@@ -1364,7 +1356,7 @@ cc_init_ntsc_a2024()
 		a24_this_data->vbl_handler = (vbl_handler_func *) a2024_mode_vbl_handler;
 
 
-		dadd_head(&MDATA(cc_monitor)->modes, &a24_this->node);
+		LIST_INSERT_HEAD(&MDATA(cc_monitor)->modes, a24_this, link);
 	}
 	return (a24_this);
 }
@@ -1596,7 +1588,7 @@ cc_init_pal_hires()
 		ph_this_data->beamcon0 = STANDARD_PAL_BEAMCON;
 #endif
 
-		dadd_head(&MDATA(cc_monitor)->modes, &ph_this->node);
+		LIST_INSERT_HEAD(&MDATA(cc_monitor)->modes, ph_this, link);
 	}
 	return (ph_this);
 }
@@ -1770,7 +1762,7 @@ cc_init_pal_hires_lace()
 		phl_this_data->beamcon0 = STANDARD_PAL_BEAMCON;
 #endif
 
-		dadd_head(&MDATA(cc_monitor)->modes, &phl_this->node);
+		LIST_INSERT_HEAD(&MDATA(cc_monitor)->modes, phl_this, link);
 	}
 	return (phl_this);
 }
@@ -1969,7 +1961,7 @@ cc_init_pal_hires_dlace()
 		phdl_this_data->beamcon0 = STANDARD_PAL_BEAMCON;
 #endif
 
-		dadd_head(&MDATA(cc_monitor)->modes, &phdl_this->node);
+		LIST_INSERT_HEAD(&MDATA(cc_monitor)->modes, phdl_this, link);
 	}
 	return (phdl_this);
 }
@@ -2193,7 +2185,7 @@ cc_init_pal_a2024()
 		p24_this_data->vbl_handler = (vbl_handler_func *) pal_a2024_mode_vbl_handler;
 
 
-		dadd_head(&MDATA(cc_monitor)->modes, &p24_this->node);
+		LIST_INSERT_HEAD(&MDATA(cc_monitor)->modes, p24_this, link);
 	}
 	return (p24_this);
 }

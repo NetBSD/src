@@ -27,35 +27,40 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: grfabs_reg.h,v 1.1 1994/02/13 21:10:36 chopps Exp $
+ *	$Id: grfabs_reg.h,v 1.2 1994/03/27 06:23:37 chopps Exp $
  */
 
 #if ! defined (_GRFABS_REG_H)
 #define _GRFABS_REG_H
 
-typedef struct point {
+struct point {
     long x;
     long y;
-} point_t;
+};
+typedef struct point point_t;
 
-typedef struct dimension {
+struct dimension {
     u_long width;
     u_long height;
-} dimen_t;
+};
+typedef struct dimension dimen_t;
 
-typedef struct box {
+struct box {
     long x;
     long y;
     u_long width;
     u_long height;
-} box_t;
+};
+typedef struct box box_t;
 
-typedef struct rectangle {
+struct rectangle {
     long left;
     long top;
     long right;
     long bottom;
-} rect_t;
+};
+
+typedef struct rectangle rect_t;
 
 typedef struct bitmap bmap_t;
 typedef struct colormap colormap_t;
@@ -63,11 +68,15 @@ typedef struct view view_t;
 typedef struct display_mode dmode_t;
 typedef struct monitor monitor_t;
 
+LIST_HEAD(monitor_list, monitor);
+extern struct monitor_list *monitors;
+
 /*
  * Bitmap stuff.
  */
 
-/* Note structure is 5 long words big.  This may come in handy for
+/*
+ * Note structure is 5 long words big.  This may come in handy for
  * contiguous allocations 
  * 
  * Please do fill in everything correctly this is the main input for
@@ -76,39 +85,39 @@ typedef struct monitor monitor_t;
  * If you need a template look at alloc_bitmap() in grf_cc.c.
  *
  * WARNING: the plane array is only for convience, all data for bitplanes 
- *          MUST be contiguous.  This is for mapping purposes.  The reason
- *          for the plane pointers and row_mod is to support interleaving
- *          on monitors that wish to support this. 
- *
+ *	MUST be contiguous.  This is for mapping purposes.  The reason
+ *	for the plane pointers and row_mod is to support interleaving
+ *	on monitors that wish to support this. 
+ *	
  * 2nd Warning: Also don't get funky with these pointers you are expected
- *              to place the start of mappable plane data in ``hardware_address'',
- *              ``hardware_address'' is the only thing that /dev/view checks and it expects
- *              the planes to follow with no padding in between.  If you have
- *              special alignment requirements make use of the given fields
- *              so that the entire contiguous plane data is exactly:
- *              bytes_per_row*height*depth long starting at the physical address
- *              contained within hardware_address.
- *
- * Final Warning: Plane data must begin on a PAGE address and the allocation must
- *                be ``n'' PAGES big do to mapping requirements (otherwise the
- *                user could write over non-allocated memory.
- *
+ *	to place the start of mappable plane data in ``hardware_address'',
+ *	``hardware_address'' is the only thing that /dev/view checks and it
+ *	expects the planes to follow with no padding in between.  If you have
+ *	special alignment requirements make use of the given fields
+ *	so that the entire contiguous plane data is exactly:
+ *	bytes_per_row*height*depth long starting at the physical address
+ *	contained within hardware_address.
+ *	
+ * Final Warning: Plane data must begin on a PAGE address and the allocation
+ *	must be ``n'' PAGES big do to mapping requirements (otherwise the
+ *	user could write over non-allocated memory.
+ *	
  */
 struct bitmap {
-    u_short   bytes_per_row;			  /* number of bytes per display row. */
-    u_short   row_mod;				  /* number of bytes to reach next row. */
-    u_short   rows;				  /* number of display rows. */
-    u_short   depth;				  /* depth of bitmap. */
-    u_short   flags;				  /* flags. */
+    u_short   bytes_per_row;	  /* number of bytes per display row. */
+    u_short   row_mod;		  /* number of bytes to reach next row. */
+    u_short   rows;		  /* number of display rows. */
+    u_short   depth;		  /* depth of bitmap. */
+    u_short   flags;		  /* flags. */
     u_short   pad;
-    u_char  *blit_temp;				  /* private monitor buffer. */
-    u_char **plane;				  /* plane data for bitmap. */
-    u_char  *hardware_address;			  /* mappable bitplane pointer. */
+    u_char  *blit_temp;		  /* private monitor buffer. */
+    u_char **plane;		  /* plane data for bitmap. */
+    u_char  *hardware_address;	  /* mappable bitplane pointer. */
 };
 
 enum bitmap_flag_bits {
-    BMB_CLEAR,					  /* init only. */
-    BMB_INTERLEAVED,				  /* init/read. */
+    BMB_CLEAR,			  /* init only. */
+    BMB_INTERLEAVED,		  /* init/read. */
 };
 
 enum bitmap_flags {
@@ -117,15 +126,17 @@ enum bitmap_flags {
 };
 
 /* Use these macros to find misc. sizes of actual bitmap */
-#define BM_WIDTH(b)        (b->bytes_per_row << 3)                                  
-#define BM_HEIGHT(b)	   (b->rows)                                                
-#define BM_ROW(b,p,l)	   (b->plane[p] + ((b->bytes_per_row+b->row_mod)*l))
+#define BM_WIDTH(b)	((b)->bytes_per_row << 3)
+#define BM_HEIGHT(b)	((b)->rows)
+#define BM_ROW(b,p,l) \
+    ((b)->plane[p] + (((b)->bytes_per_row + (b)->row_mod) * l))
 
 /*
  * Colormap stuff.
  */
 
-/* valid masks are a bitfield of zeros followed by ones that indicate 
+/*
+ * valid masks are a bitfield of zeros followed by ones that indicate 
  * which mask are valid for each component.  The ones and zeros will 
  * be contiguous so adding one to this value yields the number of
  * levels for that component. 
@@ -150,24 +161,27 @@ struct colormap {
     } valid_mask;
     u_short first;	/* what color register does entry[0] refer to. */
     u_short size;	/* number of entries */
-    u_long *entry;/* the table of actual color values. */
+    u_long *entry;	/* the table of actual color values. */
 };
 
 enum colormap_type {
-    CM_MONO,			/* only on or off allowed */
-    CM_GREYSCALE,		/* grey vals. */
-    CM_COLOR			/* RGB vals. */
+    CM_MONO,		/* only on or off allowed */
+    CM_GREYSCALE,	/* grey vals. */
+    CM_COLOR		/* RGB vals. */
 };
 
-#define CM_FIXVAL(x) (0xff&x)
+#define CM_FIXVAL(x) (0xff & (x))
 
 /* these macros are for creating entries */
-#define MAKE_COLOR_ENTRY(r,g,b) (CM_FIXVAL(r) << 16 | CM_FIXVAL(g) << 8 | CM_FIXVAL(b))
-#define MAKE_MONO_ENTRY(x)	(x ? 1 : 0)
-#define MAKE_GREY_ENTRY(l)      CM_FIXVAL(l)
+#define MAKE_COLOR_ENTRY(r,g,b) \
+    (CM_FIXVAL(r) << 16 | CM_FIXVAL(g) << 8 | CM_FIXVAL(b))
+#define MAKE_MONO_ENTRY(x)	((x) ? 1 : 0)
+#define MAKE_GREY_ENTRY(l)	CM_FIXVAL(l)
 
-#define CM_LTOW(v) (((0x000F0000&v)>>8)|((0x00000F00&v)>>4)|(0xF&v))
-#define CM_WTOL(v) (((0xF00&v)<<8)|((0x0F0&v)<<4)|(0xF&v))
+#define CM_LTOW(v) \
+    (((0x000F0000 & (v)) >> 8) | ((0x00000F00 & (v)) >> 4) | (0xF & (v)))
+#define CM_WTOL(v) \
+    (((0xF00 & (v)) << 8) | ((0x0F0 & (v)) << 4) | (0xF & (v)))
 
 /*
  * View stuff.
@@ -180,21 +194,21 @@ typedef int get_colormap_func (view_t *v, colormap_t *);
 typedef int use_colormap_func (view_t *v, colormap_t *);
 
 struct view {
-    bmap_t  *bitmap;				  /* bitmap. */
-    box_t    display;				  /* viewable area. */
-    void    *data;				  /* view specific data. */
+    bmap_t  *bitmap;			/* bitmap. */
+    box_t    display;			/* viewable area. */
+    void    *data;			/* view specific data. */
 
     /* functions */
-    display_view_func *display_view;		  /* make this view active */
-    remove_view_func  *remove_view;		  /* remove this view if active */
-    free_view_func    *free_view;		  /* free this view */
-    get_mode_func     *get_display_mode;	  /* get the mode this view belongs to */
-    get_colormap_func *get_colormap;		  /* get a color map for registers */
-    use_colormap_func *use_colormap;		  /* use color map to load registers */
+    display_view_func *display_view;	/* make this view active */
+    remove_view_func  *remove_view;	/* remove this view if active */
+    free_view_func    *free_view;	/* free this view */
+    get_mode_func     *get_display_mode;/* get the mode this view belongs to */
+    get_colormap_func *get_colormap;	/* get a color map for registers */
+    use_colormap_func *use_colormap;	/* use color map to load registers */
 };
 
-#define VDISPLAY_LINE(v, p, l) ((v)->bitmap->plane[p] +\
-	(((v)->bitmap->bytes_per_row+(v)->bitmap->row_mod)*l))
+#define VDISPLAY_LINE(v, p, l) ((v)->bitmap->plane[(p)] +\
+	(((v)->bitmap->bytes_per_row + (v)->bitmap->row_mod) * l))
 
 /*
  * Mode stuff
@@ -205,15 +219,13 @@ typedef view_t *get_current_view_func (dmode_t *);
 typedef monitor_t  *get_monitor_func (dmode_t *);
     
 struct display_mode {
-    dll_node_t node;				  /* a link into a monitor's mode list. */
-    u_char    *name;				  /* logical name for mode. */
-    dimen_t    nominal_size;			  /* best fit. */
-    void      *data;				  /* mode specific flags. */
-
-    /* mode functions */
-    alloc_view_func       *alloc_view;		  /* allocate a view for this mode. */
-    get_current_view_func *get_current_view;	  /* get active view. */
-    get_monitor_func      *get_monitor;		  /* get monitor that mode belongs to */
+    LIST_ENTRY(display_mode) link;
+    u_char    *name;			/* logical name for mode. */
+    dimen_t    nominal_size;		/* best fit. */
+    void      *data;			/* mode specific flags. */
+    alloc_view_func       *alloc_view;	/* allocate a view for this mode. */
+    get_current_view_func *get_current_view;	/* get active view. */
+    get_monitor_func      *get_monitor;	/* get monitor that mode belongs to */
 };
 
 /*
@@ -227,18 +239,16 @@ typedef bmap_t *alloc_bitmap_func (u_short w, u_short h, u_short d, u_short f);
 typedef void    free_bitmap_func (bmap_t *bm);
 
 struct monitor {
-    dll_node_t  node;				  /* a link into the database. */
-    u_char     *name;				  /* a logical name for this monitor. */
-    void       *data;				  /* monitor specific data. */
-
-    /* funciton interface to this monitor. */
-    vbl_handler_func       *vbl_handler;	  /* gets called on every vbl if not NULL */
-    get_next_mode_func     *get_next_mode;	  /* return next mode in list */
-    get_current_mode_func  *get_current_mode;	  /* return active mode or NULL */
-    get_best_mode_func     *get_best_mode;	  /* return mode that best fits */
+    LIST_ENTRY(monitor) link; /* a link into the database. */
+    u_char     *name;	/* a logical name for this monitor. */
+    void       *data;	/* monitor specific data. */
+    get_current_mode_func *get_current_mode;
+    vbl_handler_func	*vbl_handler;	/* called on every vbl if not NULL */
+    get_next_mode_func	*get_next_mode;	/* return next mode in list */
+    get_best_mode_func	*get_best_mode; /* return mode that best fits */
     
-    alloc_bitmap_func      *alloc_bitmap;	  /* allocate a bitmap for use with this monitor */
-    free_bitmap_func       *free_bitmap;	  /* free a bitmap */
+    alloc_bitmap_func	*alloc_bitmap;
+    free_bitmap_func	*free_bitmap;
 };
 
 /*
@@ -246,17 +256,17 @@ struct monitor {
  */
 
 #define BOX_2_RECT(b,r) do { \
-			     (r)->left = (b)->x; (r)->top = (b)->y; \
-			     (r)->right = (b)->x + (b)->width -1; \
-			     (r)->bottom = (b)->y + (b)->height -1; \
-		       } while (0)
+    (r)->left = (b)->x; (r)->top = (b)->y; \
+    (r)->right = (b)->x + (b)->width -1; \
+    (r)->bottom = (b)->y + (b)->height -1; \
+    } while (0)
 
 #define RECT_2_BOX(r,b) do { \
-			     (b)->x = (r)->left; \
-			     (b)->y = (r)->top; \
-		             (b)->width = (r)->right - (r)->left +1; \
-			     (b)->height = (r)->bottom - (r)->top +1; \
-		       } while (0)
+    (b)->x = (r)->left; \
+    (b)->y = (r)->top; \
+    (b)->width = (r)->right - (r)->left +1; \
+    (b)->height = (r)->bottom - (r)->top +1; \
+    } while(0)
 
 #define INIT_BOX(b,xx,yy,ww,hh) do{(b)->x = xx; (b)->y = yy; (b)->width = ww; (b)->height = hh;}while (0)
 #define INIT_RECT(rc,l,t,r,b) do{(rc)->left = l; (rc)->right = r; (rc)->top = t; (rc)->bottom = b;}while (0)
