@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc_machdep.c,v 1.13 2001/06/01 14:06:43 toshii Exp $	*/
+/*	$NetBSD: hpc_machdep.c,v 1.14 2001/06/19 13:45:55 wiz Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -286,7 +286,7 @@ cpu_reboot(howto, bootstr)
  *
  * Initial entry point on startup. This gets called before main() is
  * entered.
- * It should be responcible for setting up everything that must be
+ * It should be responsible for setting up everything that must be
  * in place when main is called.
  * This includes
  *   Taking a copy of the boot configuration structure.

@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.seq,v 1.11 2000/03/15 02:09:11 fvdl Exp $	*/
+/*	$NetBSD: aic7xxx.seq,v 1.12 2001/06/19 13:45:57 wiz Exp $	*/
 
 /*
  * Adaptec 274x/284x/294x device driver firmware for Linux and FreeBSD.
@@ -1061,7 +1061,7 @@ p_status:
  * This is done to allow the host to send messages outside of an identify
  * sequence while protecting the seqencer from testing the MK_MESSAGE bit
  * on an SCB that might not be for the current nexus. (For example, a
- * BDR message in responce to a bad reselection would leave us pointed to
+ * BDR message in response to a bad reselection would leave us pointed to
  * an SCB that doesn't have anything to do with the current target).
  *
  * Otherwise, treat MSG_OUT as a 1 byte message to send (abort, abort tag,
