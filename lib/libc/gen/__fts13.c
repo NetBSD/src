@@ -1,4 +1,4 @@
-/*	$NetBSD: fts.c,v 1.20 1997/10/21 00:56:51 fvdl Exp $	*/
+/*	$NetBSD: __fts13.c,v 1.1 1997/10/21 00:56:47 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fts.c	8.6 (Berkeley) 8/14/94";
 #else
-__RCSID("$NetBSD: fts.c,v 1.20 1997/10/21 00:56:51 fvdl Exp $");
+__RCSID("$NetBSD: __fts13.c,v 1.1 1997/10/21 00:56:47 fvdl Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -54,24 +54,12 @@ __RCSID("$NetBSD: fts.c,v 1.20 1997/10/21 00:56:51 fvdl Exp $");
 #include <string.h>
 #include <unistd.h>
 
-#undef fts_children
-#undef fts_close
-#undef fts_open
-#undef fts_read
-#undef fts_set
-#undef stat
-#undef fstat
-#undef lstat
-
-#define FTSENT FTSENT12
-#define FTS FTS12
-
 #ifdef __weak_alias
-__weak_alias(fts_children,_fts_children);
-__weak_alias(fts_close,_fts_close);
-__weak_alias(fts_open,_fts_open);
-__weak_alias(fts_read,_fts_read);
-__weak_alias(fts_set,_fts_set);
+__weak_alias(__fts_children13,___fts_children13);
+__weak_alias(__fts_close13,___fts_close13);
+__weak_alias(__fts_open13,___fts_open13);
+__weak_alias(__fts_read13,___fts_read13);
+__weak_alias(__fts_set13,___fts_set13);
 #endif
 
 static FTSENT	*fts_alloc __P((FTS *, char *, int));
@@ -99,7 +87,7 @@ static u_short	 fts_stat __P((FTS *, FTSENT *, int));
 #define	BREAD		3		/* fts_read */
 
 FTS *
-fts_open(argv, options, compar)
+__fts_open13(argv, options, compar)
 	char * const *argv;
 	register int options;
 	int (*compar) __P((const FTSENT **, const FTSENT **));
@@ -233,7 +221,7 @@ fts_load(sp, p)
 }
 
 int
-fts_close(sp)
+__fts_close13(sp)
 	FTS *sp;
 {
 	register FTSENT *freep, *p;
@@ -286,7 +274,7 @@ fts_close(sp)
 	    p->fts_path[0] == '/' ? 0 : p->fts_pathlen)
 
 FTSENT *
-fts_read(sp)
+__fts_read13(sp)
 	register FTS *sp;
 {
 	register FTSENT *p, *tmp;
@@ -478,7 +466,7 @@ name:		t = sp->fts_path + NAPPEND(p->fts_parent);
  */
 /* ARGSUSED */
 int
-fts_set(sp, p, instr)
+__fts_set13(sp, p, instr)
 	FTS *sp;
 	FTSENT *p;
 	int instr;
@@ -493,7 +481,7 @@ fts_set(sp, p, instr)
 }
 
 FTSENT *
-fts_children(sp, instr)
+__fts_children13(sp, instr)
 	register FTS *sp;
 	int instr;
 {
@@ -811,7 +799,7 @@ fts_stat(sp, p, follow)
 	register FTSENT *t;
 	register dev_t dev;
 	register ino_t ino;
-	struct stat12 *sbp, sb;
+	struct stat *sbp, sb;
 	int saved_errno;
 
 	/* If user needs stat info, stat buffer already allocated. */
@@ -845,7 +833,7 @@ fts_stat(sp, p, follow)
 		}
 	} else if (lstat(p->fts_accpath, sbp)) {
 		p->fts_errno = errno;
-err:		memset(sbp, 0, sizeof(struct stat12));
+err:		memset(sbp, 0, sizeof(struct stat));
 		return (FTS_NS);
 	}
 
@@ -936,7 +924,7 @@ fts_alloc(sp, name, namelen)
 	 */
 	len = sizeof(FTSENT) + namelen;
 	if (!ISSET(FTS_NOSTAT))
-		len += sizeof(struct stat12) + ALIGNBYTES;
+		len += sizeof(struct stat) + ALIGNBYTES;
 	if ((p = malloc(len)) == NULL)
 		return (NULL);
 
@@ -944,7 +932,7 @@ fts_alloc(sp, name, namelen)
 	memmove(p->fts_name, name, namelen + 1);
 
 	if (!ISSET(FTS_NOSTAT))
-		p->fts_statp = (struct stat12 *)ALIGN(p->fts_name + namelen + 2);
+		p->fts_statp = (struct stat *)ALIGN(p->fts_name + namelen + 2);
 	p->fts_namelen = namelen;
 	p->fts_path = sp->fts_path;
 	p->fts_errno = 0;
