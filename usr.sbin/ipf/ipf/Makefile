@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2004/03/29 04:40:00 lukem Exp $
+#	$NetBSD: Makefile,v 1.19 2004/03/29 23:28:11 jmc Exp $
 
 .include <bsd.own.mk>		# for MKDYNAMICROOT definition
 
@@ -6,6 +6,7 @@ PROG=		ipf
 SRCS=		ipf.c ipfcomp.c ipf_y.c ipf_l.c
 MAN=		ipf.8 ipf.4 ipf.5 ipl.4
 MLINKS=		ipl.4 ipfilter.4 ipf.5 ipf.conf.5 ipf.5 ipf6.conf.5
+CPPFLAGS+=	-I.
 
 CLEANFILES+=	ipf_y.c ipf_y.h
 CLEANFILES+=	ipf_l.c ipf_l.h
