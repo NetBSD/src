@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.117 2002/03/08 20:48:39 thorpej Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.117.6.1 2002/05/16 11:47:15 gehenna Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -114,7 +114,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.117 2002/03/08 20:48:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.117.6.1 2002/05/16 11:47:15 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -183,14 +183,25 @@ static void InitBP(struct buf * bp, struct vnode *, unsigned rw_flag,
 static void raidinit(RF_Raid_t *);
 
 void raidattach(int);
-int raidsize(dev_t);
-int raidopen(dev_t, int, int, struct proc *);
-int raidclose(dev_t, int, int, struct proc *);
-int raidioctl(dev_t, u_long, caddr_t, int, struct proc *);
-int raidwrite(dev_t, struct uio *, int);
-int raidread(dev_t, struct uio *, int);
-void raidstrategy(struct buf *);
-int raiddump(dev_t, daddr_t, caddr_t, size_t);
+
+dev_type_open(raidopen);
+dev_type_close(raidclose);
+dev_type_read(raidread);
+dev_type_write(raidwrite);
+dev_type_ioctl(raidioctl);
+dev_type_strategy(raidstrategy);
+dev_type_dump(raiddump);
+dev_type_size(raidsize);
+
+const struct bdevsw raid_bdevsw = {
+	raidopen, raidclose, raidstrategy, raidioctl,
+	raiddump, raidsize, D_DISK
+};
+
+const struct cdevsw raid_cdevsw = {
+	raidopen, raidclose, raidread, raidwrite, raidioctl,
+	nostop, notty, nopoll, nommap, D_DISK
+};
 
 /*
  * Pilfered from ccd.c
@@ -2213,6 +2224,7 @@ raidread_component_label(dev, b_vp, clabel)
 	RF_ComponentLabel_t *clabel;
 {
 	struct buf *bp;
+	const struct bdevsw *bdev;
 	int error;
 	
 	/* XXX should probably ensure that we don't try to do this if
@@ -2234,7 +2246,10 @@ raidread_component_label(dev, b_vp, clabel)
 	bp->b_flags |= B_READ;
  	bp->b_resid = RF_COMPONENT_INFO_SIZE / DEV_BSIZE;
 
-	(*bdevsw[major(bp->b_dev)].d_strategy)(bp);
+	bdev = bdevsw_lookup(bp->b_dev);
+	if (bdev == NULL)
+		return (ENXIO);
+	(*bdev->d_strategy)(bp);
 
 	error = biowait(bp); 
 
@@ -2261,6 +2276,7 @@ raidwrite_component_label(dev, b_vp, clabel)
 	RF_ComponentLabel_t *clabel;
 {
 	struct buf *bp;
+	const struct bdevsw *bdev;
 	int error;
 
 	/* get a block of the appropriate size... */
@@ -2277,7 +2293,10 @@ raidwrite_component_label(dev, b_vp, clabel)
 
 	memcpy(bp->b_data, clabel, sizeof(RF_ComponentLabel_t));
 
-	(*bdevsw[major(bp->b_dev)].d_strategy)(bp);
+	bdev = bdevsw_lookup(bp->b_dev);
+	if (bdev == NULL)
+		return (ENXIO);
+	(*bdev->d_strategy)(bp);
 	error = biowait(bp); 
 	brelse(bp);
 	if (error) {
@@ -2654,12 +2673,11 @@ rf_mountroot_hook(dev)
 RF_AutoConfig_t *
 rf_find_raid_components()
 {
-	struct devnametobdevmaj *dtobdm;
 	struct vnode *vp;
 	struct disklabel label;
 	struct device *dv;
-	char *cd_name;
 	dev_t dev;
+	int bmajor;
 	int error;
 	int i;
 	int good_one;
@@ -2686,15 +2704,11 @@ rf_find_raid_components()
 		}
 		
 		/* need to find the device_name_to_block_device_major stuff */
-		cd_name = dv->dv_cfdata->cf_driver->cd_name;
-		dtobdm = dev_name2blk;
-		while (dtobdm->d_name && strcmp(dtobdm->d_name, cd_name)) {
-			dtobdm++;
-		}
+		bmajor = devsw_name2blk(dv->dv_xname, NULL, 0);
 
 		/* get a vnode for the raw partition of this disk */
 
-		dev = MAKEDISKDEV(dtobdm->d_maj, dv->dv_unit, RAW_PART);
+		dev = MAKEDISKDEV(bmajor, dv->dv_unit, RAW_PART);
 		if (bdevvp(dev, &vp))
 			panic("RAID can't alloc vnode");
 
@@ -2730,7 +2744,7 @@ rf_find_raid_components()
 			if (label.d_partitions[i].p_fstype != FS_RAID)
 				continue;
 
-			dev = MAKEDISKDEV(dtobdm->d_maj, dv->dv_unit, i);
+			dev = MAKEDISKDEV(bmajor, dv->dv_unit, i);
 			if (bdevvp(dev, &vp))
 				panic("RAID can't alloc vnode");
 
