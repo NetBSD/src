@@ -3004,8 +3004,8 @@ wy75|wyse75|wyse 75:\
 	:am:hs:mi:ms:xn:xo:bs:pt:\
 	:co#80:li#24:pb#1201:kn#6:\
 	:AL=2*\E[%dL:DC=3*\E[%dP:DL=1*\E[%dM:DO=\E[%dB:\
-	:IC=1*\E[%d@:LE=\E[%dD:RI=\E[%dC:UP=\E[%dA:ae=^O:\
-	:al=2\E[L:as=\E[0m^N:bt=\E[1Z:cd=30\E[J:ce=3\E[K:\
+	:IC=1*\E[%d@:LE=\E[%dD:RI=\E[%dC:UP=\E[%dA:ae=\E(B:\
+	:al=2\E[L:as=\E(0:bt=\E[1Z:cd=30\E[J:ce=3\E[K:\
 	:ch=\E[%i%dG:cl=30\E[H\E[J:cm=\E[%i%d;%dH:\
 	:cs=2\E[%i%d;%dr:ct=\E[3g:dc=3\E[P:dl=\E[M:\
 	:ds=\E[>,^A^A\E[>-^A^A:ei=\E[4l:fs=^A:ho=\E[H:\
