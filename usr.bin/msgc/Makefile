@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.3 1997/10/19 04:23:05 lukem Exp $
+#	$NetBSD: Makefile,v 1.4 1997/10/22 01:47:23 lukem Exp $
 
 PROG=	msgc
 SRCS=	msgmain.c msgparse.y msgscan.l msgdb.c util.c avl.c
 .PATH: ${.CURDIR}/../menuc
-CFLAGS+=-I. -I${.CURDIR}
+CPPFLAGS+=-I. -I${.CURDIR}
 LDADD+=	-ll
 DPADD+=	${LIBL}
 
