@@ -1,5 +1,6 @@
-# $NetBSD: Makefile,v 1.1 2004/08/18 12:30:01 drochner Exp $
+# $NetBSD: Makefile,v 1.2 2005/01/20 15:56:30 xtraeme Exp $
 
+WARNS=	3
 PROG=	drvctl
 MAN=	drvctl.8
 

@@ -1,4 +1,4 @@
-/* $NetBSD: drvctl.c,v 1.2 2004/08/18 13:24:55 wiz Exp $ */
+/* $NetBSD: drvctl.c,v 1.3 2005/01/20 15:56:30 xtraeme Exp $ */
 
 /*
  * Copyright (c) 2004
@@ -40,7 +40,7 @@
 static void usage(void);
 
 static void
-usage()
+usage(void)
 {
 
 	fprintf(stderr, "Usage: %s -r [-a attribute] busdevice [locator ...]\n"
