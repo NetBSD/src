@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#  $NetBSD: build.sh,v 1.78 2003/01/02 05:11:12 lukem Exp $
+#  $NetBSD: build.sh,v 1.79 2003/01/02 23:11:07 lukem Exp $
 #
 # Top level build wrapper, for a system containing no tools.
 #
@@ -11,16 +11,19 @@
 # to take any further action.
 #
 
-bomb () {
+bomb()
+{
 	echo ""
 	echo "ERROR: $@"
 	echo "*** BUILD ABORTED ***"
 	exit 1
 }
 
-cd `dirname $0`
-[ -d usr.bin/make ] || bomb "build.sh must be run from the top source level"
-[ -f share/mk/bsd.own.mk ] || bomb "src/share/mk is missing; please re-fetch the source tree"
+cd "$(dirname $0)"
+[ -d usr.bin/make ] ||
+    bomb "build.sh must be run from the top source level"
+[ -f share/mk/bsd.own.mk ] ||
+    bomb "src/share/mk is missing; please re-fetch the source tree"
 
 uname_s=$(uname -s 2>/dev/null)
 uname_m=$(uname -m 2>/dev/null)
@@ -32,12 +35,13 @@ uname_m=$(uname -m 2>/dev/null)
 # XXX Except that doesn't work on Solaris.
 unset PWD
 if [ "${uname_s}" = "SunOS" ]; then
-	TOP=`pwd -P`
+	TOP=$(pwd -P)
 else
-	TOP=`pwd`
+	TOP=$(pwd)
 fi
 
-getarch () {
+getarch()
+{
 	# Translate a MACHINE into a default MACHINE_ARCH.
 	case $MACHINE in
 		acorn26|acorn32|cats|netwinder|shark|*arm)
@@ -80,7 +84,8 @@ getarch () {
 	esac
 }
 
-validatearch () {
+validatearch()
+{
 	# Ensure that the MACHINE_ARCH exists (and is supported by build.sh).
 	case $MACHINE_ARCH in
 		alpha|arm|armeb|hppa|i386|m68000|m68k|mipse[bl]|ns32k|powerpc|sh[35]e[bl]|sparc|sparc64|vax|x86_64)
@@ -90,7 +95,8 @@ validatearch () {
 	esac
 }
 
-getmakevar () {
+getmakevar()
+{
 	$make -m ${TOP}/share/mk -s -f- _x_ <<EOF
 _x_:
 	echo \${$1}
@@ -99,17 +105,19 @@ _x_:
 EOF
 }
 
-resolvepath () {
+resolvepath()
+{
 	case $OPTARG in
 	/*)	;;
 	*)	OPTARG="$TOP/$OPTARG";;
 	esac
 }
 
-usage () {
+usage()
+{
 	cat <<_usage_
 Usage:
-`basename $0` [-bdEnortUu] [-a arch] [-B buildid] [-D dest] [-i idir] [-j njob]
+$(basename $0) [-bdEnortUu] [-a arch] [-B buildid] [-D dest] [-i idir] [-j njob]
     [-k kernel] [-M obj] [-m mach] [-O obj] [-R release] [-T tools] [-w wrapper]
 
     -a arch	set MACHINE_ARCH to arch (otherwise deduced from MACHINE)
@@ -162,10 +170,11 @@ if type getopts >/dev/null 2>&1; then
 	getoptcmd='getopts $opts opt && opt=-$opt'
 	optargcmd=':'
 else
-	type getopt >/dev/null 2>&1 || bomb "/bin/sh shell is too old; try ksh or bash"
+	type getopt >/dev/null 2>&1 ||
+	    bomb "/bin/sh shell is too old; try ksh or bash"
 
 	# Use old-style getopt(1) (doesn't handle whitespace in args).
-	args="`getopt $opts $*`"
+	args="$(getopt $opts $*)"
 	[ $? = 0 ] || usage
 	set -- $args
 
@@ -174,7 +183,8 @@ else
 fi
 
 # Parse command line options.
-while eval $getoptcmd; do case $opt in
+while eval $getoptcmd; do
+    case $opt in
 	-a)	eval $optargcmd
 		MACHINE_ARCH=$OPTARG; opt_a=yes;;
 
@@ -242,7 +252,8 @@ while eval $getoptcmd; do case $opt in
 
 	--)		break;;
 	-'?'|-h)	usage;;
-esac; done
+    esac
+done
 
 # Set up MACHINE*.  On a NetBSD host, these are allowed to be unset.
 if [ -z "$MACHINE" ]; then
@@ -304,11 +315,11 @@ if $do_rebuildmake; then
 	$runcmd rm -f usr.bin/make/*.o usr.bin/make/lst.lib/*.o
 fi
 
-EXTERNAL_TOOLCHAIN=`getmakevar EXTERNAL_TOOLCHAIN`
+EXTERNAL_TOOLCHAIN=$(getmakevar EXTERNAL_TOOLCHAIN)
 if [ "$runcmd" = "echo" ]; then
 	TOOLCHAIN_MISSING=no
 else
-	TOOLCHAIN_MISSING=`getmakevar TOOLCHAIN_MISSING`
+	TOOLCHAIN_MISSING=$(getmakevar TOOLCHAIN_MISSING)
 fi
 if [ "${TOOLCHAIN_MISSING}" = "yes" -a \
      "${EXTERNAL_TOOLCHAIN}" = "" ]; then
@@ -352,12 +363,12 @@ if [ "$runcmd" = "echo" ]; then
 	DESTDIR='$DESTDIR'
 	TOOLDIR='$TOOLDIR'
 else
-	DESTDIR=`getmakevar DESTDIR`;
-	[ $? = 0 ] || bomb "getmakevar DESTDIR failed";
+	DESTDIR=$(getmakevar DESTDIR)
+	[ $? = 0 ] || bomb "getmakevar DESTDIR failed"
 	$runcmd echo "===> DESTDIR path: $DESTDIR"
 
-	TOOLDIR=`getmakevar TOOLDIR`;
-	[ $? = 0 ] || bomb "getmakevar TOOLDIR failed";
+	TOOLDIR=$(getmakevar TOOLDIR)
+	[ $? = 0 ] || bomb "getmakevar TOOLDIR failed"
 	$runcmd echo "===> TOOLDIR path: $TOOLDIR"
 
 	export DESTDIR TOOLDIR
@@ -436,12 +447,12 @@ fi
 eval cat <<EOF $makewrapout
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.78 2003/01/02 05:11:12 lukem Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.79 2003/01/02 23:11:07 lukem Exp $
 #
 
 EOF
 for f in $makeenv; do
-	eval echo "$f=\'\$`echo $f`\'\;\ export\ $f" $makewrapout
+	eval echo "$f=\'\$$(echo $f)\'\;\ export\ $f" $makewrapout
 done
 eval echo "USETOOLS=yes\; export USETOOLS" $makewrapout
 
@@ -501,9 +512,9 @@ else
 			KERNOBJDIR='$KERNOBJDIR'
 		else
 			KERNCONFDIR="$( getmakevar KERNCONFDIR )"
-			[ $? = 0 ] || bomb "getmakevar KERNCONFDIR failed";
+			[ $? = 0 ] || bomb "getmakevar KERNCONFDIR failed"
 			KERNOBJDIR="$( getmakevar KERNOBJDIR )"
-			[ $? = 0 ] || bomb "getmakevar KERNOBJDIR failed";
+			[ $? = 0 ] || bomb "getmakevar KERNOBJDIR failed"
 		fi
 		case "${kernconfname}" in
 		*/*)
