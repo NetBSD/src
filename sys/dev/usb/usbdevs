@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.4 1998/09/07 08:18:40 veego Exp $
+$NetBSD: usbdevs,v 1.5 1998/10/05 02:30:17 mark Exp $
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -48,6 +48,7 @@ vendor GENIUS		0x0458	Genius
 vendor CHERRY		0x046a	Cherry
 vendor PHILIPS		0x0471	Philips
 vendor CONNECTIX	0x0478	Connectix
+vendor CYPRESS		0x04b4	Cypress Semicondutor
 vendor EIZO		0x056d	EIZO
 vendor BELKIN		0x05ab	Belkin
 vendor EIZONANAO	0x05e7	EIZO Nanao
@@ -87,6 +88,9 @@ product PHILIPS HUB		0x0201	hub
 
 /* Connectix products */
 product CONNECTIX QUICKCAM	0x0001	QuickCam
+
+/* Cypress Semiconduuctor products */
+product CYPRESS MOUSE		0x0001	mouse
 
 /* Belkin products */
 product BELKIN F5U002		0x0002	Parallel printer adapter
