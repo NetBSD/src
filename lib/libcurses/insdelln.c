@@ -1,4 +1,4 @@
-/*	$NetBSD: insdelln.c,v 1.1.2.1 2000/03/05 23:27:11 jdc Exp $	*/
+/*	$NetBSD: insdelln.c,v 1.1.2.2 2000/03/16 21:30:35 jdc Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@ winsdelln(win, lines)
 		for (y = win->cury; y < win->maxy; y++)
 			__touchline(win, y, 0, (int) win->maxx - 1, 0);
 	}
-	if (win->orig == NULL)
+	if (win->orig != NULL)
 		__id_subwins(win);
 	return (OK);
 }
