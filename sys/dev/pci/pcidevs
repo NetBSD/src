@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.133 1999/06/30 16:52:52 fair Exp $
+$NetBSD: pcidevs,v 1.134 1999/07/12 15:02:46 kleink Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -839,7 +839,7 @@ product ESSENTIAL RR_HIPPI	0x0001	RoadRunner HIPPI Interface
 product ESSENTIAL RR_GIGE	0x0005	RoadRunner Gig-E Interface
 
 /* ESS Technology Inc products */
-product ESSTECH	SOLO1		0x1969	SOLO-1 AudioDrive
+product ESSTECH	SOLO1		0x1969	Solo-1 PCI AudioDrive
 product ESSTECH	MAESTRO2E	0x1978	Maestro 2E
 
 /* 2 Micro Inc */
