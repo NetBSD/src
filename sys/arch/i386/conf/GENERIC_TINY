@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_TINY,v 1.24 2001/04/21 21:03:46 fvdl Exp $
+#	$NetBSD: GENERIC_TINY,v 1.25 2001/04/29 12:48:12 fvdl Exp $
 #
 #	GENERIC_TINY -- suitable default for 4M machines
 #			No EISA, PCI, or SCSI.
@@ -52,6 +52,8 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 #options 	SYSVSEM		# System V-like semaphores
 #options 	SYSVSHM		# System V-like memory sharing
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
+
+options 	NMBCLUSTERS=256
 
 #options 	LKM		# loadable kernel modules
 
