@@ -57,7 +57,7 @@
  * from: Utah $Hdr: cpu.h 1.16 91/03/25$
  *
  *	from: @(#)cpu.h	7.7 (Berkeley) 6/27/91
- *	$Id: cpu.h,v 1.4 1994/01/17 01:04:08 briggs Exp $
+ *	$Id: cpu.h,v 1.5 1994/02/22 01:00:44 briggs Exp $
  */
 
 /*
@@ -150,11 +150,16 @@ extern unsigned char ssir;
 /* BARF MF - some values from the thinkc gesalt include file */
 #define MACH_MAC2		6
 #define MACH_MAC2X		7
-#define MACH_MAC2SI		18
-#define MACH_MAC2CI		11
 #define MACH_MAC2CX		8
 #define MACH_MACSE30		9
+#define MACH_MAC2CI		11
 #define MACH_MAC2FX		13
+#define MACH_MAC2SI		18
+#define MACH_MACQ900		20
+#define MACH_MACPB170		21
+#define MACH_MACQ700		22
+#define MACH_MACCLASSIC2	23
+#define MACH_MACPB140		25
 
 /* MF processor passed in */
 #define MACH_68020	0
@@ -170,10 +175,13 @@ extern unsigned char ssir;
 #define	MHZ_40		5
 
 #ifdef KERNEL
-extern	int machineid, ectype;
-extern	char *intiobase, *intiolimit;
-extern	char *extiobase, *extiolimit;
+extern	int	machineid,  ectype;
+extern	char	*intiobase, *intiolimit;
+extern	char	*extiobase, *extiolimit;
 
+extern	int	mach_processor, mach_memsize;
+extern	int	do_graybars,    serial_boot_echo;
+extern	int	booter_version;
 #endif
 
 /* physical memory sections */
