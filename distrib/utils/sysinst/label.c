@@ -1,4 +1,4 @@
-/*	$NetBSD: label.c,v 1.32 2003/06/16 20:11:40 dsl Exp $	*/
+/*	$NetBSD: label.c,v 1.33 2003/06/27 13:36:04 dsl Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: label.c,v 1.32 2003/06/16 20:11:40 dsl Exp $");
+__RCSID("$NetBSD: label.c,v 1.33 2003/06/27 13:36:04 dsl Exp $");
 #endif
 
 #include <sys/types.h>
@@ -272,7 +272,7 @@ set_ptn_labels(menudesc *m, void *arg)
 	}
 
 	snprintf(l[6], sizeof l[0], msg_string(MSG_preserve_fmt),
-		msg_string(p->pi_newfs ? MSG_no : MSG_yes));
+		msg_string(p->pi_newfs ? MSG_No : MSG_Yes));
 	snprintf(l[7], sizeof l[0], msg_string(MSG_mount_fmt), p->pi_mount);
 
 	for (opt = m->opts, i = 0; i < nelem(l); i++, opt++)

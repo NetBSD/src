@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.107 2003/06/13 22:27:03 dsl Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.108 2003/06/27 13:36:06 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -44,11 +44,14 @@ message usage
 
 message newline {\n}
 
-message yes {Yes}
-message no {No}
-message all {All}
-message some {Some}
-message none {None}
+message Yes {Yes}
+message No {No}
+message All {All}
+message Some {Some}
+message None {None}
+message none {none}
+message OK {OK}
+message ok {ok}
 
 message install
 {install}
@@ -973,6 +976,73 @@ one mount point with "/".
 
 Press <return> to continue.
 }
+
+message NetBSD_VERSION_Install_System {NetBSD-@@VERSION@@ Install System}
+message Exit_Install_System {Exit Install System}
+message Install_NetBSD_to_hard_disk {Install NetBSD to hard disk}
+message Upgrade_NetBSD_on_a_hard_disk {Upgrade NetBSD on a hard disk}
+message Re_install_sets_or_install_additional_sets {Re-install sets or install additional sets}
+message Reboot_the_computer {Reboot the computer}
+message Utility_menu {Utility menu}
+message NetBSD_VERSION_Utilities {NetBSD-@@VERSION@@ Utilities}
+message Run_bin_sh {Run /bin/sh}
+message Set_timezone {Set timezone}
+message Configure_network {Configure network}
+message Partition_a_disk {Partition a disk}
+message Logging_functions {Logging functions}
+message Halt_the_system {Halt the system}
+message yes_or_no {yes or no?}
+message Hit_enter_to_continue {Hit enter to continue}
+message Choose_your_installation {Choose your installation}
+message Standard {Standard}
+message Use_Existing {Use Existing}
+message Choose_your_size_specifier {Choose your size specifier}
+message Megabytes {Megabytes}
+message Cylinders {Cylinders}
+message Sectors {Sectors}
+message Select_medium {Select medium}
+message ftp {ftp}
+message nfs {nfs}
+message cdrom {cdrom}
+message floppy {floppy}
+message unmounted_fs {unmounted fs}
+message local_dir {local dir}
+message Select_your_distribution {Select your distribution}
+message Full_installation {Full installation}
+message Custom_installation {Custom installation}
+message Change {Change}
+message hidden {** hidden **}
+message Host {Host}
+message Directory {Directory}
+message User {User}
+message Password {Password}
+message Proxy {Proxy}
+message ftp_proxy {ftp_proxy}
+message Get_Distribution {Get Distribution}
+message Continue {Continue}
+message What_do_you_want_to_do {What do you want to do?}
+message Try_again {Try again}
+message Give_up {Give up}
+message Ignore_continue_anyway {Ignore, continue anyway}
+message Set_finished {Set finished}
+message Abort_install {Abort install}
+message Password_cipher {Password cipher}
+message DES {DES}
+message MD5 {MD5}
+message Blowfish_2_7_round {Blowfish 2^7 round}
+message do_not_change {do not change}
+message Device {Device}
+message File_system {File system}
+message Change_directory_path {Change directory path}
+message Select_IPv6_DNS_server {  Select IPv6 DNS server}
+message other {other }
+message Perform_IPv6_autoconfiguration {Perform IPv6 autoconfiguration?}
+message Perform_DHCP_autoconfiguration {Perform DHCP autoconfiguration?}
+message Root_shell {Root shell}
+message Select_set_extraction_verbosity {Select set extraction verbosity}
+message Progress_bar_recommended {Progress bar (recommended)}
+message Silent {Silent}
+message Verbose_file_name_listing_slow {Verbose file name listing (slow)}
 
 .if AOUT2ELF
 message aoutfail
