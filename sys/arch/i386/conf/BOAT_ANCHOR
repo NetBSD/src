@@ -1,7 +1,7 @@
 #
 #	BOAT_ANCHOR -- kernel for the 386-20 the gang uses for testing
 #
-#	$Id: BOAT_ANCHOR,v 1.33 1994/04/15 00:25:13 cgd Exp $
+#	$Id: BOAT_ANCHOR,v 1.34 1994/04/20 23:39:24 mycroft Exp $
 #
 machine		"i386"
 cpu		"I386_CPU"
@@ -29,23 +29,23 @@ config		netbsd	root on wd0 swap on wd0
 
 controller	isa0
 
-device		pc0	at isa? port "IO_KBD" tty irq 1 vector pcrint
-device          com0    at isa? port "IO_COM1" tty irq 4 vector comintr
-master		ast0	at isa? port 0x1a0 tty irq 3 vector astintr
+device		pc0	at isa? port "IO_KBD" irq 1
+device          com0    at isa? port "IO_COM1" irq 4
+master		ast0	at isa? port 0x1a0 irq 3
 device		com1	at ast0 flags 1 slave ?
 device		com2	at ast0 flags 1 slave ?
 device		com3	at ast0 flags 1 slave ?
 device		com4	at ast0 flags 1 slave ?
 
-controller	wdc0	at isa? port "IO_WD1" bio irq 14 vector wdintr
+controller	wdc0	at isa? port "IO_WD1" irq 14
 disk		wd0	at wdc0 drive ?
 
-controller	fdc0	at isa? port "IO_FD1" bio irq 6 drq 2 vector fdintr
+controller	fdc0	at isa? port "IO_FD1" irq 6 drq 2
 disk		fd0	at fdc0 drive ?
 
-device ed0 at isa? port 0x280 net irq 9 iomem 0xd0000 vector edintr
+device ed0 at isa? port 0x280 irq 9 iomem 0xd0000
 
-device		npx0	at isa? port "IO_NPX" irq 13 vector npxintr
+device		npx0	at isa? port "IO_NPX" irq 13
 
 pseudo-device	loop
 pseudo-device	ether

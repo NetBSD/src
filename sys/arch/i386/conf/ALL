@@ -1,7 +1,7 @@
 #
 #	ALL -- everything that's currently supported
 #
-#	$Id: ALL,v 1.46 1994/04/15 00:25:12 cgd Exp $
+#	$Id: ALL,v 1.47 1994/04/20 23:39:19 mycroft Exp $
 #
 
 # architecture type and name of kernel; REQUIRED
@@ -110,46 +110,46 @@ config		netbsd	root on wd0 swap on wd0 and sd0
 controller	isa0
 
 #console
-device		pc0	at isa? port "IO_KBD" tty irq 1 vector pcrint
+device		pc0	at isa? port "IO_KBD" irq 1
 
 #serial ports
-device		com0	at isa? port "IO_COM1" tty irq 4 vector comintr
-device		com1	at isa? port "IO_COM2" tty irq 3 vector comintr
-#device		com2	at isa? port "IO_COM3" tty irq 5 vector comintr
-#device		com3	at isa? port "IO_COM4" tty irq 9 vector comintr
+device		com0	at isa? port "IO_COM1" irq 4
+device		com1	at isa? port "IO_COM2" irq 3
+#device		com2	at isa? port "IO_COM3" irq 5
+#device		com3	at isa? port "IO_COM4" irq 9
 
 #parallel ports
-device		lpt0	at isa? port "IO_LPT1" tty irq 7 vector lptintr
-device		lpt1	at isa? port "IO_LPT2" tty
-device		lpt2	at isa? port "IO_LPT3" tty
+device		lpt0	at isa? port "IO_LPT1" irq 7
+device		lpt1	at isa? port "IO_LPT2"
+device		lpt2	at isa? port "IO_LPT3"
 
 #bus mice
 # Microft InPort
-device		mms0	at isa? port "IO_BMS1" tty irq 5 vector mmsintr
+device		mms0	at isa? port "IO_BMS1" irq 5
 # Logitech
-device		lms0	at isa? port "IO_BMS1" tty irq 5 vector lmsintr
+device		lms0	at isa? port "IO_BMS1" irq 5
 # PS/2 auxiliary port; BROKEN
-#device		pms0	at isa? port "IO_KBD" tty irq 5 vector pmsintr
+#device		pms0	at isa? port "IO_KBD" irq 5
 
 #non-scsi disk controllers
-controller	wdc0	at isa? port "IO_WD1" bio irq 14 vector wdintr
+controller	wdc0	at isa? port "IO_WD1" irq 14
 disk		wd0	at wdc0 drive ?
 disk		wd1	at wdc0 drive ?
 
 #non-scsi floppy controllers
-controller	fdc0	at isa? port "IO_FD1" bio irq 6 drq 2 vector fdintr
+controller	fdc0	at isa? port "IO_FD1" irq 6 drq 2
 disk		fd0	at fdc0 drive ?
 disk		fd1	at fdc0 drive ?
 
 #non-scsi tape drives
-device		wt0	at isa? port 0x300 bio irq 5 drq 1 vector wtintr
+device		wt0	at isa? port 0x300 irq 5 drq 1
 
 #non-scsi CD-ROM drives
 # Mitsumi
-device		mcd0	at isa? port 0x300 bio irq 10 vector mcdintr
+device		mcd0	at isa? port 0x300 irq 10
 
 #scsi
-controller	aha0	at isa? port "IO_AHA0" bio irq 11 drq 5 vector ahaintr
+controller	aha0	at isa? port "IO_AHA0" irq 11 drq 5
 master		scsibus0 at aha0
 device		sd0	at scsibus0 slave ?
 device		sd1	at scsibus0 slave ?
@@ -162,7 +162,7 @@ device		cd1	at scsibus0 slave ?
 device	        ch0	at scsibus0 slave ?
 device	        ch1	at scsibus0 slave ?
 
-controller	ahb0	at isa? bio irq 11 drq 5 vector ahbintr
+controller	ahb0	at isa? irq 11 drq 5
 master		scsibus1 at ahb0
 device		sd0	at scsibus1 slave ?
 device		sd1	at scsibus1 slave ?
@@ -175,7 +175,7 @@ device		cd1	at scsibus1 slave ?
 device	        ch0	at scsibus1 slave ?
 device	        ch1	at scsibus1 slave ?
 
-controller	bt0	at isa? port "IO_BT0" bio irq 11  vector btintr
+controller	bt0	at isa? port "IO_BT0" irq 11
 master		scsibus2 at bt0
 device		sd0	at scsibus2 slave ?
 device		sd1	at scsibus2 slave ?
@@ -188,7 +188,7 @@ device		cd1	at scsibus2 slave ?
 device	        ch0	at scsibus2 slave ?
 device	        ch1	at scsibus2 slave ?
 
-controller	uha0	at isa? port "IO_UHA0" bio irq 11 drq 5 vector uhaintr
+controller	uha0	at isa? port "IO_UHA0" irq 11 drq 5
 master		scsibus3 at uha0
 device		sd0	at scsibus3 slave ?
 device		sd1	at scsibus3 slave ?
@@ -202,17 +202,17 @@ device	        ch0	at scsibus3 slave ?
 device	        ch1	at scsibus3 slave ?
 
 #sound-blaster
-device		sb0	at isa? port 0x220 bio irq 7 drq 1 vector sbintr
+device		sb0	at isa? port 0x220 irq 7 drq 1
 
 #ethernet
-device ed0 at isa? port 0x300 net irq 10 iomem 0xcc000 vector edintr
-device ed1 at isa? port 0x250 net irq 9 iomem 0xd8000 vector edintr
-device hp0 at isa? port 0x300 net irq 5 vector hpintr
-device is0 at isa? port 0x280 net irq 10 drq 7 vector isintr
-device ep0 at isa? port ? net irq ? vector epintr
+device ed0 at isa? port 0x300 irq 10 iomem 0xcc000
+device ed1 at isa? port 0x250 irq 9 iomem 0xd8000
+device hp0 at isa? port 0x300 irq 5
+device is0 at isa? port 0x280 irq 10 drq 7
+device ep0 at isa? port ? irq ?
 
 #math co-processor
-device		npx0	at isa? port "IO_NPX" irq 13 vector npxintr
+device		npx0	at isa? port "IO_NPX" irq 13
 
 # psuedo-terminals; REQUIRED for remote logins and many other things
 pseudo-device pty	64
