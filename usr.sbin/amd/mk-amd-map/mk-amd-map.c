@@ -1,4 +1,4 @@
-/*	$NetBSD: mk-amd-map.c,v 1.7 1998/04/23 11:51:07 tv Exp $	*/
+/*	$NetBSD: mk-amd-map.c,v 1.8 1998/05/05 08:59:56 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997 Erez Zadok
@@ -220,8 +220,8 @@ main(int argc, char *argv[])
   int rc = 0;
   DBM *mapd = NULL;
   static char maptmp[] = "dbmXXXXXX";
-  char maptpag[16];
-  char *mappag = (char *) NULL;
+  char maptdb[16];
+  char *mapdb = (char *) NULL;
   int len;
   char *sl;
   int printit = 0;
@@ -260,16 +260,16 @@ main(int argc, char *argv[])
 
   if (!printit) {
     len = strlen(map);
-    mappag = (char *) malloc(len + 5);
-    if (!mappag) {
+    mapdb = (char *) malloc(len + 4);
+    if (!mapdb) {
       perror("mk-amd-map: malloc");
       exit(1);
     }
     mktemp(maptmp);
-    sprintf(maptpag, "%s.db", maptmp);
-    if (remove_file(maptpag) < 0) {
+    sprintf(maptdb, "%s.db", maptmp);
+    if (remove_file(maptdb) < 0) {
       fprintf(stderr, "Can't remove existing temporary file ");
-      perror(maptpag);
+      perror(maptdb);
       exit(1);
     }
   }
@@ -299,14 +299,14 @@ main(int argc, char *argv[])
 	fprintf(stderr, "Error reading source file  %s\n", map);
 	rc = 1;
       } else {
-	sprintf(mappag, "%s.db", map);
-	if (unlink(mappag) == 0)
+	sprintf(mapdb, "%s.db", map);
+	if (unlink(mapdb) == 0)
 	  fprintf(stderr, "WARNING: existing map \"%s.db\" destroyed\n", map);
-	if (rename(maptpag, mappag) < 0) {
-	  fprintf(stderr, "Couldn't rename %s to ", maptpag);
-	  perror(mappag);
+	if (rename(maptdb, mapdb) < 0) {
+	  fprintf(stderr, "Couldn't rename %s to ", maptdb);
+	  perror(mapdb);
 	  /* Throw away the temporary map */
-	  unlink(maptpag);
+	  unlink(maptdb);
 	  rc = 1;
 	}
       }
