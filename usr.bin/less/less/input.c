@@ -1,29 +1,13 @@
-/*	$NetBSD: input.c,v 1.1.1.4 1999/04/06 05:30:38 mrg Exp $	*/
+/*	$NetBSD: input.c,v 1.1.1.5 2001/07/26 12:00:31 mrg Exp $	*/
 
 /*
- * Copyright (c) 1984,1985,1989,1994,1995,1996,1999  Mark Nudelman
- * All rights reserved.
+ * Copyright (C) 1984-2000  Mark Nudelman
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice in the documentation and/or other materials provided with 
- *    the distribution.
+ * You may distribute under the terms of either the GNU General Public
+ * License or the Less License, as specified in the README file.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY
- * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR 
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT 
- * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR 
- * BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
- * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE 
- * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN 
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * For more information about less, or for information on how to 
+ * contact the author, see the README file.
  */
 
 
@@ -41,6 +25,8 @@
 
 extern int squeeze;
 extern int chopline;
+extern int hshift;
+extern int quit_if_one_screen;
 extern int sigs;
 extern int ignore_eoi;
 extern POSITION start_attnpos;
@@ -114,7 +100,7 @@ forw_line(curr_pos)
 			 * End of the line.
 			 */
 			new_pos = ch_tell();
-			endline = 1;
+			endline = TRUE;
 			break;
 		}
 
@@ -128,18 +114,19 @@ forw_line(curr_pos)
 			 * is too long to print in the screen width.
 			 * End the line here.
 			 */
-			if (chopline)
+			if (chopline || hshift > 0)
 			{
 				do
 				{
 					c = ch_forw_get();
 				} while (c != '\n' && c != EOI);
 				new_pos = ch_tell();
-				endline = 1;
+				endline = TRUE;
+				quit_if_one_screen = FALSE;
 			} else
 			{
 				new_pos = ch_tell() - 1;
-				endline = 0;
+				endline = FALSE;
 			}
 			break;
 		}
@@ -277,7 +264,7 @@ back_line(curr_pos)
 		null_line();
 		return (NULL_POSITION);
 	}
-	endline = 0;
+	endline = FALSE;
     loop:
 	begin_new_pos = new_pos;
 	prewind();
@@ -295,7 +282,7 @@ back_line(curr_pos)
 		new_pos++;
 		if (c == '\n')
 		{
-			endline = 1;
+			endline = TRUE;
 			break;
 		}
 		if (pappend(c, ch_tell()-1))
@@ -305,9 +292,10 @@ back_line(curr_pos)
 			 * reached our curr_pos yet.  Discard the line
 			 * and start a new one.
 			 */
-			if (chopline)
+			if (chopline || hshift > 0)
 			{
-				endline = 1;
+				endline = TRUE;
+				quit_if_one_screen = FALSE;
 				break;
 			}
 			pdone(0);
