@@ -1,4 +1,4 @@
-/* $NetBSD: if_ehreg.h,v 1.2 1996/03/08 16:24:51 mark Exp $ */
+/* $NetBSD: if_ehreg.h,v 1.3 1996/10/14 23:57:11 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson.
@@ -43,6 +43,7 @@
 /* Special registers */
 
 #define EH_CONFIGA	(0x0a<<2)
+#define EH_CONFIGB	(0x0b<<2)
 
 /* Page 0 read registers */
 
