@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.7 2000/06/29 08:19:21 mrg Exp $
+#	$NetBSD: genassym.cf,v 1.8 2000/08/11 14:51:08 msaitoh Exp $
 
 #
 # Copyright (c) 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -98,6 +98,7 @@ define	SIGF_SC			offsetof(struct sigframe, sf_sc)
 define	SC_EFLAGS		offsetof(struct sigcontext, sc_ssr)
 
 define	IOM_RAM_BEGIN		IOM_RAM_BEGIN
+define	IOM_RAM_SIZE		IOM_RAM_SIZE
 define	IOM_ROM_BEGIN		IOM_ROM_BEGIN
 
 define	LED_ADDR		LED_ADDR

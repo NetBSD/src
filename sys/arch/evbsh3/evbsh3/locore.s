@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.19 2000/08/03 08:19:26 msaitoh Exp $	*/
+/*	$NetBSD: locore.s,v 1.20 2000/08/11 14:51:08 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1997
@@ -51,7 +51,7 @@
 #include <machine/pte.h>
 #include <machine/trap.h>
 
-#define INIT_STACK	IOM_RAM_BEGIN + 0x003ff000
+#define INIT_STACK	IOM_RAM_BEGIN + IOM_RAM_SIZE - 0x00001000
 
 #ifdef SH4
 #define SHREG_EXPEVT	0xff000024
