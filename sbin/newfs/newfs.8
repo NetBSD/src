@@ -1,4 +1,4 @@
-.\"	$NetBSD: newfs.8,v 1.48 2003/04/02 10:39:30 fvdl Exp $
+.\"	$NetBSD: newfs.8,v 1.49 2003/04/03 14:17:26 tron Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -42,7 +42,8 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl B Ar byte-order
-.Op Fl FINOZ
+.Op Fl FINZ
+.Op Fl O Ar filesystem-format
 .Op Fl S Ar sector-size
 .Op Fl T Ar disk-type
 .Op Fl a Ar maxcontig
@@ -107,12 +108,18 @@ or
 .It Fl N
 Causes the file system parameters to be printed out
 without really creating the file system.
-.It Fl O
-Creates a
-.Bx 4.3
-format file system.
-This option is primarily used to build root file systems
-that can be understood by older boot ROMs.
+.It Fl O Ar filesystem-format
+Select the filesystem-format
+.Bl -tag -width 3n -offset indent -compact
+.It 0
+4.3BSD; This option is primarily used to build root file systems that can be
+understood by older boot ROMs.
+.It 1
+FFS; normal fast-filesystem
+.It 2
+UFS2; enhanced fast-filesystem (suited for more than 1 Terabyte capacity,
+access control lists)
+.El
 .It Fl T Ar disk-type
 Uses information for the specified disk from
 .Pa /etc/disktab
