@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_dev.c,v 1.13 2003/02/25 09:12:11 jdolecek Exp $	*/
+/*	$NetBSD: smb_dev.c,v 1.14 2003/04/07 19:35:40 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_dev.c,v 1.13 2003/02/25 09:12:11 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_dev.c,v 1.14 2003/04/07 19:35:40 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -65,6 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: smb_dev.c,v 1.13 2003/02/25 09:12:11 jdolecek Exp $"
 #include <netsmb/smb_conn.h>
 #include <netsmb/smb_subr.h>
 #include <netsmb/smb_dev.h>
+#include <netsmb/smb_rq.h>
 
 #ifdef __NetBSD__
 static struct smb_dev **smb_devtbl; /* indexed by minor */
@@ -175,6 +176,8 @@ nsmbattach(int num)
 		smb_sm_done();
 		return;
 	}
+
+	smb_rqinit();
 }
 #endif /* __NetBSD__ */
 

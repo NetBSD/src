@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_smb.c,v 1.16 2003/04/07 13:56:13 jdolecek Exp $	*/
+/*	$NetBSD: smbfs_smb.c,v 1.17 2003/04/07 19:35:39 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_smb.c,v 1.16 2003/04/07 13:56:13 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_smb.c,v 1.17 2003/04/07 19:35:39 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -134,14 +134,14 @@ smbfs_smb_lockandx(struct smbnode *np, int op, caddr_t id, off_t start, off_t en
 	struct smb_cred *scred)
 {
 	struct smb_share *ssp = np->n_mount->sm_share;
-	struct smb_rq rq, *rqp = &rq;
+	struct smb_rq *rqp;
 	struct mbchain *mbp;
 	u_char ltype = 0;
 	int error;
 
 	if (op == SMB_LOCK_SHARED)
 		ltype |= SMB_LOCKING_ANDX_SHARED_LOCK;
-	error = smb_rq_init(rqp, SSTOCP(ssp), SMB_COM_LOCKING_ANDX, scred);
+	error = smb_rq_alloc(SSTOCP(ssp), SMB_COM_LOCKING_ANDX, scred, &rqp);
 	if (error)
 		return error;
 	smb_rq_getrequest(rqp, &mbp);
@@ -226,12 +226,12 @@ int
 smbfs_smb_statfs(struct smb_share *ssp, struct statfs *sbp,
 	struct smb_cred *scred)
 {
-	struct smb_rq rq, *rqp = &rq;
+	struct smb_rq *rqp;
 	struct mdchain *mdp;
 	u_int16_t units, bpu, bsize, funits;
 	int error;
 
-	error = smb_rq_init(rqp, SSTOCP(ssp), SMB_COM_QUERY_INFORMATION_DISK, scred);
+	error = smb_rq_alloc(SSTOCP(ssp), SMB_COM_QUERY_INFORMATION_DISK, scred, &rqp);
 	if (error)
 		return error;
 	smb_rq_wstart(rqp);
@@ -262,11 +262,11 @@ int
 smbfs_smb_setfsize(struct smbnode *np, int newsize, struct smb_cred *scred)
 {
 	struct smb_share *ssp = np->n_mount->sm_share;
-	struct smb_rq rq, *rqp = &rq;
+	struct smb_rq *rqp;
 	struct mbchain *mbp;
 	int error;
 
-	error = smb_rq_init(rqp, SSTOCP(ssp), SMB_COM_WRITE, scred);
+	error = smb_rq_alloc(SSTOCP(ssp), SMB_COM_WRITE, scred, &rqp);
 	if (error)
 		return error;
 	smb_rq_getrequest(rqp, &mbp);
@@ -293,13 +293,13 @@ int
 smbfs_smb_setpattr(struct smbnode *np, u_int16_t attr, struct timespec *mtime,
 	struct smb_cred *scred)
 {
-	struct smb_rq rq, *rqp = &rq;
+	struct smb_rq *rqp;
 	struct smb_share *ssp = np->n_mount->sm_share;
 	struct mbchain *mbp;
 	u_long time;
 	int error, svtz;
 
-	error = smb_rq_init(rqp, SSTOCP(ssp), SMB_COM_SET_INFORMATION, scred);
+	error = smb_rq_alloc(SSTOCP(ssp), SMB_COM_SET_INFORMATION, scred, &rqp);
 	if (error)
 		return error;
 	svtz = SSTOVC(ssp)->vc_sopt.sv_tz;
@@ -443,13 +443,13 @@ int
 smbfs_smb_setftime(struct smbnode *np, struct timespec *mtime,
 	struct timespec *atime, struct smb_cred *scred)
 {
-	struct smb_rq rq, *rqp = &rq;
+	struct smb_rq *rqp;
 	struct smb_share *ssp = np->n_mount->sm_share;
 	struct mbchain *mbp;
 	u_int16_t date, time;
 	int error, tzoff;
 
-	error = smb_rq_init(rqp, SSTOCP(ssp), SMB_COM_SET_INFORMATION2, scred);
+	error = smb_rq_alloc(SSTOCP(ssp), SMB_COM_SET_INFORMATION2, scred, &rqp);
 	if (error)
 		return error;
 	tzoff = SSTOVC(ssp)->vc_sopt.sv_tz;
@@ -531,7 +531,7 @@ smbfs_smb_setfattrNT(struct smbnode *np, u_int16_t attr, struct timespec *mtime,
 int
 smbfs_smb_open(struct smbnode *np, int accmode, struct smb_cred *scred)
 {
-	struct smb_rq rq, *rqp = &rq;
+	struct smb_rq *rqp;
 	struct smb_share *ssp = np->n_mount->sm_share;
 	struct mbchain *mbp;
 	struct mdchain *mdp;
@@ -539,7 +539,7 @@ smbfs_smb_open(struct smbnode *np, int accmode, struct smb_cred *scred)
 	u_int16_t fid, wattr, grantedmode;
 	int error;
 
-	error = smb_rq_init(rqp, SSTOCP(ssp), SMB_COM_OPEN, scred);
+	error = smb_rq_alloc(SSTOCP(ssp), SMB_COM_OPEN, scred, &rqp);
 	if (error)
 		return error;
 	smb_rq_getrequest(rqp, &mbp);
@@ -584,12 +584,12 @@ int
 smbfs_smb_close(struct smb_share *ssp, u_int16_t fid, struct timespec *mtime,
 	struct smb_cred *scred)
 {
-	struct smb_rq rq, *rqp = &rq;
+	struct smb_rq *rqp;
 	struct mbchain *mbp;
 	u_long time;
 	int error;
 
-	error = smb_rq_init(rqp, SSTOCP(ssp), SMB_COM_CLOSE, scred);
+	error = smb_rq_alloc(SSTOCP(ssp), SMB_COM_CLOSE, scred, &rqp);
 	if (error)
 		return error;
 	smb_rq_getrequest(rqp, &mbp);
@@ -612,7 +612,7 @@ int
 smbfs_smb_create(struct smbnode *dnp, const char *name, int nmlen,
 	struct smb_cred *scred)
 {
-	struct smb_rq rq, *rqp = &rq;
+	struct smb_rq *rqp;
 	struct smb_share *ssp = dnp->n_mount->sm_share;
 	struct mbchain *mbp;
 	struct mdchain *mdp;
@@ -623,7 +623,7 @@ smbfs_smb_create(struct smbnode *dnp, const char *name, int nmlen,
 	u_long tm;
 	int error;
 
-	error = smb_rq_init(rqp, SSTOCP(ssp), SMB_COM_CREATE_NEW, scred);
+	error = smb_rq_alloc(SSTOCP(ssp), SMB_COM_CREATE_NEW, scred, &rqp);
 	if (error)
 		return error;
 	smb_rq_getrequest(rqp, &mbp);
@@ -664,12 +664,12 @@ smbfs_smb_create(struct smbnode *dnp, const char *name, int nmlen,
 int
 smbfs_smb_delete(struct smbnode *np, struct smb_cred *scred)
 {
-	struct smb_rq rq, *rqp = &rq;
+	struct smb_rq *rqp;
 	struct smb_share *ssp = np->n_mount->sm_share;
 	struct mbchain *mbp;
 	int error;
 
-	error = smb_rq_init(rqp, SSTOCP(ssp), SMB_COM_DELETE, scred);
+	error = smb_rq_alloc(SSTOCP(ssp), SMB_COM_DELETE, scred, &rqp);
 	if (error)
 		return error;
 	smb_rq_getrequest(rqp, &mbp);
@@ -691,12 +691,12 @@ int
 smbfs_smb_rename(struct smbnode *src, struct smbnode *tdnp,
 	const char *tname, int tnmlen, struct smb_cred *scred)
 {
-	struct smb_rq rq, *rqp = &rq;
+	struct smb_rq *rqp;
 	struct smb_share *ssp = src->n_mount->sm_share;
 	struct mbchain *mbp;
 	int error;
 
-	error = smb_rq_init(rqp, SSTOCP(ssp), SMB_COM_RENAME, scred);
+	error = smb_rq_alloc(SSTOCP(ssp), SMB_COM_RENAME, scred, &rqp);
 	if (error)
 		return error;
 	smb_rq_getrequest(rqp, &mbp);
@@ -725,12 +725,12 @@ int
 smbfs_smb_move(struct smbnode *src, struct smbnode *tdnp,
 	const char *tname, int tnmlen, u_int16_t flags, struct smb_cred *scred)
 {
-	struct smb_rq rq, *rqp = &rq;
+	struct smb_rq *rqp;
 	struct smb_share *ssp = src->n_mount->sm_share;
 	struct mbchain *mbp;
 	int error;
 
-	error = smb_rq_init(rqp, SSTOCP(ssp), SMB_COM_MOVE, scred);
+	error = smb_rq_alloc(rqp, SSTOCP(ssp), SMB_COM_MOVE, scred, &rqp);
 	if (error)
 		return error;
 	smb_rq_getrequest(rqp, &mbp);
@@ -761,12 +761,12 @@ int
 smbfs_smb_mkdir(struct smbnode *dnp, const char *name, int len,
 	struct smb_cred *scred)
 {
-	struct smb_rq rq, *rqp = &rq;
+	struct smb_rq *rqp;
 	struct smb_share *ssp = dnp->n_mount->sm_share;
 	struct mbchain *mbp;
 	int error;
 
-	error = smb_rq_init(rqp, SSTOCP(ssp), SMB_COM_CREATE_DIRECTORY, scred);
+	error = smb_rq_alloc(SSTOCP(ssp), SMB_COM_CREATE_DIRECTORY, scred, &rqp);
 	if (error)
 		return error;
 	smb_rq_getrequest(rqp, &mbp);
@@ -786,12 +786,12 @@ smbfs_smb_mkdir(struct smbnode *dnp, const char *name, int len,
 int
 smbfs_smb_rmdir(struct smbnode *np, struct smb_cred *scred)
 {
-	struct smb_rq rq, *rqp = &rq;
+	struct smb_rq *rqp;
 	struct smb_share *ssp = np->n_mount->sm_share;
 	struct mbchain *mbp;
 	int error;
 
-	error = smb_rq_init(rqp, SSTOCP(ssp), SMB_COM_DELETE_DIRECTORY, scred);
+	error = smb_rq_alloc(SSTOCP(ssp), SMB_COM_DELETE_DIRECTORY, scred, &rqp);
 	if (error)
 		return error;
 	smb_rq_getrequest(rqp, &mbp);
@@ -1057,11 +1057,11 @@ smbfs_smb_trans2find2(struct smbfs_fctx *ctx)
 static int
 smbfs_smb_findclose2(struct smbfs_fctx *ctx)
 {
-	struct smb_rq rq, *rqp = &rq;
+	struct smb_rq *rqp;
 	struct mbchain *mbp;
 	int error;
 
-	error = smb_rq_init(rqp, SSTOCP(ctx->f_ssp), SMB_COM_FIND_CLOSE2, ctx->f_scred);
+	error = smb_rq_alloc(SSTOCP(ctx->f_ssp), SMB_COM_FIND_CLOSE2, ctx->f_scred, &rqp);
 	if (error)
 		return error;
 	smb_rq_getrequest(rqp, &mbp);
@@ -1327,7 +1327,7 @@ smbfs_smb_lookup(struct smbnode *dnp, const char *name, int nmlen,
 int
 smbfs_smb_ntcreatex(struct smbnode *np, int accmode, struct smb_cred *scred)
 {
-	struct smb_rq rq, *rqp = &rq;
+	struct smb_rq *rqp;
 	struct smb_share *ssp = np->n_mount->sm_share;
 	struct mbchain *mbp;
 	struct mdchain *mdp;
@@ -1338,7 +1338,7 @@ smbfs_smb_ntcreatex(struct smbnode *np, int accmode, struct smb_cred *scred)
 
 	KASSERT(SMBTOV(np)->v_type == VDIR);
 
-	error = smb_rq_init(rqp, SSTOCP(ssp), SMB_COM_NT_CREATE_ANDX, scred);
+	error = smb_rq_alloc(SSTOCP(ssp), SMB_COM_NT_CREATE_ANDX, scred, &rqp);
 	if (error)
 		return error;
 	smb_rq_getrequest(rqp, &mbp);
@@ -1562,7 +1562,7 @@ smbfs_smb_ntcancel(struct smb_connobj *layer, u_int16_t mid, struct smb_cred *sc
 	/*
 	 * This is nonstandard. We need to rewrite the just written
 	 * mid to different one. Access underlying mbuf directly.
-	 * We assume mid is the last thing written smb_rq_init()
+	 * We assume mid is the last thing written smb_rq_alloc()
 	 * to request buffer.
 	 */
 	m = mbp->mb_cur;

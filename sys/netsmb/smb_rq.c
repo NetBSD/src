@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_rq.c,v 1.19 2003/04/07 11:23:02 jdolecek Exp $	*/
+/*	$NetBSD: smb_rq.c,v 1.20 2003/04/07 19:35:40 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,12 +35,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_rq.c,v 1.19 2003/04/07 11:23:02 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_rq.c,v 1.20 2003/04/07 19:35:40 jdolecek Exp $");
  
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/lock.h>
 #include <sys/sysctl.h>
@@ -54,16 +53,31 @@ __KERNEL_RCSID(0, "$NetBSD: smb_rq.c,v 1.19 2003/04/07 11:23:02 jdolecek Exp $")
 #include <netsmb/smb_subr.h>
 #include <netsmb/smb_tran.h>
 
-static MALLOC_DEFINE(M_SMBRQ, "SMBRQ", "SMB request");
-
 #ifndef __NetBSD__
 MODULE_DEPEND(netsmb, libmchain, 1, 1, 1);
 #endif
 
+static struct pool smbrq_pool;
+static struct pool smbt2rq_pool;
+
+static int  smb_rq_init(struct smb_rq *, struct smb_connobj *, u_char,
+		struct smb_cred *);
 static int  smb_rq_getenv(struct smb_connobj *layer,
 		struct smb_vc **vcpp, struct smb_share **sspp);
 static int  smb_rq_new(struct smb_rq *rqp, u_char cmd);
+static int  smb_t2_init(struct smb_t2rq *, struct smb_connobj *, u_short,
+		struct smb_cred *);
 static int  smb_t2_reply(struct smb_t2rq *t2p);
+
+int
+smb_rqinit(void)
+{
+	pool_init(&smbrq_pool, sizeof(struct smb_rq), 0, 0, 0,
+		"smbrqpl", &pool_allocator_nointr);
+	pool_init(&smbt2rq_pool, sizeof(struct smb_t2rq), 0, 0, 0,
+		"smbt2pl", &pool_allocator_nointr);
+	return (0);
+}
 
 int
 smb_rq_alloc(struct smb_connobj *layer, u_char cmd, struct smb_cred *scred,
@@ -72,9 +86,7 @@ smb_rq_alloc(struct smb_connobj *layer, u_char cmd, struct smb_cred *scred,
 	struct smb_rq *rqp;
 	int error;
 
-	MALLOC(rqp, struct smb_rq *, sizeof(*rqp), M_SMBRQ, M_WAITOK);
-	if (rqp == NULL)
-		return ENOMEM;
+	rqp = pool_get(&smbrq_pool, PR_WAITOK);
 	error = smb_rq_init(rqp, layer, cmd, scred);
 	rqp->sr_flags |= SMBR_ALLOCED;
 	if (error) {
@@ -85,7 +97,7 @@ smb_rq_alloc(struct smb_connobj *layer, u_char cmd, struct smb_cred *scred,
 	return 0;
 }
 
-int
+static int
 smb_rq_init(struct smb_rq *rqp, struct smb_connobj *layer, u_char cmd,
 	struct smb_cred *scred)
 {
@@ -145,7 +157,7 @@ smb_rq_done(struct smb_rq *rqp)
 	md_done(&rqp->sr_rp);
 	smb_sl_destroy(&rqp->sr_slock);
 	if (rqp->sr_flags & SMBR_ALLOCED)
-		free(rqp, M_SMBRQ);
+		pool_put(&smbrq_pool, rqp);
 }
 
 /*
@@ -378,9 +390,7 @@ smb_t2_alloc(struct smb_connobj *layer, u_short setup, struct smb_cred *scred,
 	struct smb_t2rq *t2p;
 	int error;
 
-	MALLOC(t2p, struct smb_t2rq *, sizeof(*t2p), M_SMBRQ, M_WAITOK);
-	if (t2p == NULL)
-		return ENOMEM;
+	t2p = pool_get(&smbt2rq_pool, PR_WAITOK);
 	error = smb_t2_init(t2p, layer, setup, scred);
 	t2p->t2_flags |= SMBT2_ALLOCED;
 	if (error) {
@@ -391,7 +401,7 @@ smb_t2_alloc(struct smb_connobj *layer, u_short setup, struct smb_cred *scred,
 	return 0;
 }
 
-int
+static int
 smb_t2_init(struct smb_t2rq *t2p, struct smb_connobj *source, u_short setup,
 	struct smb_cred *scred)
 {
@@ -418,7 +428,7 @@ smb_t2_done(struct smb_t2rq *t2p)
 	md_done(&t2p->t2_rparam);
 	md_done(&t2p->t2_rdata);
 	if (t2p->t2_flags & SMBT2_ALLOCED)
-		free(t2p, M_SMBRQ);
+		pool_put(&smbt2rq_pool, t2p);
 }
 
 static int
