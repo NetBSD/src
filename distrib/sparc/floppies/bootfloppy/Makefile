@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.2 1998/06/06 06:09:14 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 1998/06/20 13:31:34 mrg Exp $
 
 TOP=		${.CURDIR}/..
 
 .include "${TOP}/Makefile.inc"
 
 IMAGE=		boot${REV}.fs
-KERN=		${.CURDIR}/../../../../sys/arch/sparc/compile/FLOPPY/netbsd
+KERN=		${.CURDIR}/../../../../sys/arch/sparc/compile/INSTALL/netbsd
 
 MOUNT_POINT?=	/mnt
 VND?=		vnd0
