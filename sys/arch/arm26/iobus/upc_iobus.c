@@ -1,4 +1,4 @@
-/* $NetBSD: upc_iobus.c,v 1.5 2001/01/23 23:58:32 bjh21 Exp $ */
+/* $NetBSD: upc_iobus.c,v 1.6 2001/03/20 00:03:10 bjh21 Exp $ */
 /*-
  * Copyright (c) 2000 Ben Harris
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: upc_iobus.c,v 1.5 2001/01/23 23:58:32 bjh21 Exp $");
+__RCSID("$NetBSD: upc_iobus.c,v 1.6 2001/03/20 00:03:10 bjh21 Exp $");
 
 #include <sys/device.h>
 
@@ -91,8 +91,8 @@ upc_iobus_attach(struct device *parent, struct device *self, void *aux)
 	struct upc_softc *upc = &sc->sc_upc;
 
 	upc->sc_iot = ioa->ioa_tag;
-	bus_space_map(ioa->ioa_tag, ioa->ioa_base, UPC_BUS_SIZE, 0,
-		      &upc->sc_ioh);
+	bus_space_map(ioa->ioa_tag, MEMC_IO_BASE + ioa->ioa_base,
+	    UPC_BUS_SIZE, 0, &upc->sc_ioh);
 	upc_attach(upc);
 
 	if (upc->sc_irq4.uih_func != NULL) {
