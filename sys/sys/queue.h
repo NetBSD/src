@@ -1,6 +1,6 @@
-/*	$NetBSD: queue.h,v 1.9 1994/12/13 15:04:28 mycroft Exp $	*/
+/*	$NetBSD: queue.h,v 1.10 1996/04/09 20:55:34 cgd Exp $	*/
 
-/* 
+/*
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
