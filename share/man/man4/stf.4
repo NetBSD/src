@@ -1,4 +1,4 @@
-.\"     $NetBSD: stf.4,v 1.5 2000/06/10 08:02:21 itojun Exp $
+.\"     $NetBSD: stf.4,v 1.5.2.1 2001/05/01 10:13:08 he Exp $
 .\"     $KAME: stf.4,v 1.24 2000/06/07 23:35:18 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -141,6 +141,9 @@ all of the directly connected subnets.
 .It
 Packets that does not pass ingress filtering.
 Outer IPv4 source address must meet the IPv4 topology on the routing table.
+Ingress filter can be turned off by
+.Dv IFF_LINK2
+bit.
 .It
 The same set of rules are appplied against the IPv4 address embedded into
 inner IPv6 address, if the IPv6 address matches 6to4 prefix.
@@ -182,9 +185,9 @@ It emits 6to4 packet only for IPv6 destination 2002:0901::/32
 .Rs
 .%A Brian Carpenter
 .%A Keith Moore
-.%T "Connection of IPv6 Domains via IPv4 Clouds without Explicit Tunnels"
-.%D June 2000
-.%N draft-ietf-ngtrans-6to4-06.txt
+.%T "Connection of IPv6 Domains via IPv4 Clouds"
+.%D September 2000
+.%N draft-ietf-ngtrans-6to4-07.txt
 .%O work in progress
 .Re
 .Rs
