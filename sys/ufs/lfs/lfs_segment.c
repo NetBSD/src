@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.22 1999/03/30 16:03:16 perseant Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.23 1999/03/30 16:11:43 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -346,6 +346,7 @@ lfs_writevnodes(fs, mp, sp, op)
 			continue;
 		}
 #endif
+		only_cleaning = 0;
 		/*
 		 * Write the inode/file if dirty and it's not the
 		 * the IFILE.
