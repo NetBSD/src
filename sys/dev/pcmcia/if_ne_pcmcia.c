@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.100 2003/01/16 15:21:20 kanaoka Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.101 2003/04/09 02:09:55 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.100 2003/01/16 15:21:20 kanaoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.101 2003/04/09 02:09:55 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -448,6 +448,11 @@ static const struct ne2000dev {
     { PCMCIA_STR_BILLIONTON_LNT10TN,
       PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
       PCMCIA_CIS_BILLIONTON_LNT10TN,
+      0, -1, { 0x00, 0x00, 0x00 } },
+
+    { PCMCIA_STR_BILLIONTON_CFLT10N,
+      PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
+      PCMCIA_CIS_BILLIONTON_CFLT10N,
       0, -1, { 0x00, 0x00, 0x00 } },
 
     { PCMCIA_STR_NDC_ND5100_E,
