@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_ifattach.c,v 1.54 2002/11/02 07:30:55 perry Exp $	*/
+/*	$NetBSD: in6_ifattach.c,v 1.55 2003/07/08 10:20:45 itojun Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.54 2002/11/02 07:30:55 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.55 2003/07/08 10:20:45 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.54 2002/11/02 07:30:55 perry Exp 
 #include <netinet6/in6_ifattach.h>
 #include <netinet6/ip6_var.h>
 #include <netinet6/nd6.h>
+#include <netinet6/ip6_mroute.h>
 
 #include <net/net_osdep.h>
 
@@ -667,6 +668,9 @@ in6_ifdetach(ifp)
 	short rtflags;
 	struct sockaddr_in6 sin6;
 	struct in6_multi_mship *imm;
+
+	/* remove ip6_mrouter stuff */
+	ip6_mrouter_detach(ifp);
 
 	/* remove neighbor management table */
 	nd6_purge(ifp);
