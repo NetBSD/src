@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: security,v 1.68 2001/10/13 14:22:11 lukem Exp $
+#	$NetBSD: security,v 1.69 2001/10/14 00:42:31 lukem Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -845,9 +845,9 @@ for file in $special_files; do
 done >> $TMP1
 sort -u $TMP1 > $TMP2
 
-cat $TMP2 | while read file; do
+while read file; do
 	backup_and_diff "$file" no
-done
+done < $TMP2
 
 
 if [ -n "$CHANGELIST" ]; then
