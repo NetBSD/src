@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1992 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1992, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Ralph Campbell.
@@ -32,17 +32,19 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ *	from: @(#)mkboot.c	8.1 (Berkeley) 6/10/93
+ *      $Id: mkboot.c,v 1.2 1994/05/27 08:42:40 glass Exp $
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1992 Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"from: @(#) Copyright (c) 1992, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif not lint
 
 #ifndef lint
-/*static char sccsid[] = "@(#)mkboot.c	7.6 (Berkeley) 2/15/93";*/
-static char rcsid[] = "$Id: mkboot.c,v 1.1.1.1 1993/10/12 03:22:44 deraadt Exp $";
+static char sccsid[] = "from: @(#)mkboot.c	8.1 (Berkeley) 6/10/93";
 #endif not lint
 
 #include <sys/param.h>

@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1992 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1992, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Ralph Campbell.
@@ -33,7 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)dec_prom.h	7.1 (Berkeley) 11/15/92
+ *	from: @(#)dec_prom.h	8.1 (Berkeley) 6/10/93
+ *      $Id: dec_prom.h,v 1.2 1994/05/27 08:42:38 glass Exp $
  *
  * machMon.h --
  *
@@ -47,8 +48,8 @@
  *	suitability of this software for any purpose.  It is provided "as is"
  *	without express or implied warranty.
  *
- * from: $Header: /sprite/src/kernel/mach/ds3100.md/RCS/machMon.h,
- *	v 9.3 90/02/20 14:34:07 shirriff Exp $ SPRITE (Berkeley)
+ * from: Header: /sprite/src/kernel/mach/ds3100.md/RCS/machMon.h,
+ *	v 9.3 90/02/20 14:34:07 shirriff Exp  SPRITE (Berkeley)
  */
 
 #ifndef _DEC_PROM

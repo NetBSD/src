@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1988 University of Utah.
- * Copyright (c) 1992 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1992, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -36,8 +36,9 @@
  * SUCH DAMAGE.
  *
  * from: Utah Hdr: hpux_syscalls.c 1.1 90/07/09
- * from: @(#)ultrix_syscalls.c	7.1 (Berkeley) 1/7/92
- * $Id: ultrix_syscalls.c,v 1.1.1.1 1993/10/12 03:22:47 deraadt Exp $
+ *
+ *	from: @(#)ultrix_syscalls.c	8.1 (Berkeley) 6/10/93
+ *      $Id: ultrix_syscalls.c,v 1.2 1994/05/27 08:43:23 glass Exp $
  */
 
 #ifdef HPUXCOMPAT

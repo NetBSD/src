@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1992 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1992, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Ralph Campbell.
@@ -33,7 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)conf.c	7.5 (Berkeley) 2/15/93
+ *	from: @(#)conf.c	8.1 (Berkeley) 6/10/93
+ *      $Id: conf.c,v 1.2 1994/05/27 08:42:32 glass Exp $
  */
 
 #include <stand/stand.h>

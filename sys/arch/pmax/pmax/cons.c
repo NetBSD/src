@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1988 University of Utah.
- * Copyright (c) 1992 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1992, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -36,8 +36,9 @@
  * SUCH DAMAGE.
  *
  * from: Utah Hdr: cons.c 1.1 90/07/09
- * from: @(#)cons.c	7.5 (Berkeley) 11/15/92
- * $Id: cons.c,v 1.1.1.1 1993/10/12 03:22:30 deraadt Exp $
+ *
+ *	from: @(#)cons.c	8.2 (Berkeley) 1/11/94
+ *      $Id: cons.c,v 1.2 1994/05/27 08:41:43 glass Exp $
  */
 
 #include <sys/param.h>
@@ -53,9 +54,11 @@
 
 /*
  * Console I/O is redirected to the appropriate device, either a screen and
- * keyboard or a serial port.
+ * keyboard, a serial port, or the "virtual" console.
  */
 #include <pmax/pmax/cons.h>
+
+extern struct tty *constty;	/* virtual console output device */
 
 struct consdev cn_tab = {
 	1,
@@ -104,6 +107,8 @@ cnwrite(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
 {
+	if (constty)
+		return ((*linesw[constty->t_line].l_write)(constty, uio, flag));
 	if (cn_tab.cn_dev == NODEV)
 		return (0);
 	dev = cn_tab.cn_dev;
@@ -117,6 +122,25 @@ cnioctl(dev, cmd, data, flag, p)
 {
 	int error;
 
+	/*
+	 * Superuser can always use this to wrest control of console
+	 * output from the "virtual" console.
+	 */
+	if (cmd == TIOCCONS && constty) {
+		error = suser(p->p_ucred, (u_short *) NULL);
+		if (error)
+			return (error);
+		constty = NULL;
+		return (0);
+	}
+#if 0
+	if (constty) {
+		error = (*linesw[constty->t_line].l_ioctl)
+			(constty, cmd, data, flag, p);
+		if (error >= 0)
+			return (error);
+	}
+#endif
 	if (cn_tab.cn_dev == NODEV)
 		return (0);
 	dev = cn_tab.cn_dev;
@@ -153,13 +177,10 @@ cnputc(c)
 	register int c;
 {
 	int s;
-	char oval[2];
 
 	if (cn_tab.cn_dev == NODEV || cn_tab.cn_disabled) {
-		oval[0] = c;
-		oval[1] = '\0';
 		s = splhigh();
-		(*callv->puts)(oval);
+		(*callv->printf)("%c", c);
 		splx(s);
 	} else if (c) {
 		if (c == '\n')

@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1992 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1992, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Ralph Campbell.
@@ -33,8 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: @(#)sys_machdep.c	7.3 (Berkeley) 10/11/92
- * $Id: sys_machdep.c,v 1.2 1994/01/16 00:52:47 deraadt Exp $
+ *	from: @(#)sys_machdep.c	8.1 (Berkeley) 6/10/93
+ *      $Id: sys_machdep.c,v 1.3 1994/05/27 08:42:19 glass Exp $
  */
 
 #include <sys/param.h>
@@ -104,23 +104,3 @@ vdoualarm(arg)
 	nvualarm--;
 }
 #endif
-
-struct sysarch_args {
-	int op;
-	char *params;
-};
-
-sysarch(p, uap, retval)
-	struct proc *p;
-	register struct sysarch_args *uap;
-	int *retval;
-{
-	int error = 0;
-
-	switch(uap->op) {
-	default:
-		error = EINVAL;
-		break;
-	}
-	return(error);
-}
