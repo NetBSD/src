@@ -1,4 +1,4 @@
-#	$NetBSD: NWSCONS,v 1.7 1998/08/11 00:32:04 thorpej Exp $
+#	$NetBSD: NWSCONS,v 1.8 1998/08/31 17:58:54 thorpej Exp $
 #
 #	like GENERIC, with new console drivers
 #
@@ -44,9 +44,6 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 #options 	NTP		# NTP phase/frequency locked loop
 
 options 	KTRACE		# system call tracing via ktrace(1)
-
-#options 	UVM		# Use UVM instead of Mach VM.
-#options 	PMAP_NEW	# new pmap interface; requires UVM
 
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores

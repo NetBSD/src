@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.179 1998/08/26 14:27:44 dante Exp $
+#	$NetBSD: GENERIC,v 1.180 1998/08/31 17:58:46 thorpej Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -48,9 +48,6 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 #options 	NTP		# NTP phase/frequency locked loop
 
 options 	KTRACE		# system call tracing via ktrace(1)
-
-#options 	UVM		# Use UVM instead of Mach VM.
-#options 	PMAP_NEW	# new pmap interface; requires UVM
 
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
