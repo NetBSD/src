@@ -1,11 +1,11 @@
-#	$NetBSD: list,v 1.6 2003/03/07 16:57:46 he Exp $
+#	$NetBSD: list,v 1.7 2004/03/27 17:29:32 fredb Exp $
 
 # mac68k extra's
 PROG	sbin/dmesg
 
 PROG	usr/bin/basename
 PROG	usr/bin/cksum usr/bin/sum
-PROG	usr/bin/gawk usr/bin/awk
+PROG	usr/bin/awk
 PROG	usr/bin/netstat
 PROG	usr/bin/rsh
 PROG	usr/bin/tset usr/bin/reset
