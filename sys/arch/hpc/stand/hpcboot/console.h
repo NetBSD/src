@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: console.h,v 1.5 2001/05/21 15:54:25 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: console.h,v 1.6 2001/06/19 16:48:49 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -76,14 +76,14 @@ protected:
 	char _bufm[CONSOLE_BUFSIZE];	// multibyte char buffer.
 
 protected:
-	SerialConsole(void) { _handle = INVALID_HANDLE_VALUE; }
+	SerialConsole(void);
+	~SerialConsole(void) { /* NO-OP */ };
 	BOOL openCOM1(void);
 	BOOL setupMultibyteBuffer(void);
 
 public:
 	void genericPrint(const char *);
 	virtual BOOL init(void);
-	virtual int16_t getBootConsole(void) { return BI_CNUSE_SERIAL; }
 	virtual void print(const TCHAR *fmt, ...);
 };
 
