@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.73 1999/10/01 06:55:44 lukem Exp $	*/
+/*	$NetBSD: ftp.c,v 1.74 1999/10/01 08:01:12 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.73 1999/10/01 06:55:44 lukem Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.74 1999/10/01 08:01:12 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -1375,7 +1375,7 @@ reinit:
 		result = COMPLETE + 1;
 		switch (data_addr.su_family) {
 		case AF_INET:
-			if (epsv4) {
+			if (epsv4 && !epsv4bad) {
 				result = command(pasvcmd = "EPSV");
 				/*
 				 * this code is to be friendly with broken
@@ -1386,6 +1386,13 @@ reinit:
 "wrong server: return code must be 229\n",
 						ttyout);
 					result = COMPLETE + 1;
+				}
+				if (result != COMPLETE) {
+					epsv4bad = 1;
+					if (debug)
+						fputs(
+					"disabling epsv4 for this connection\n",
+						    ttyout);
 				}
 			}
 			if (result != COMPLETE)
@@ -1635,7 +1642,7 @@ noport:
 
 		switch (data_addr.su_family) {
 		case AF_INET:
-			if (!epsv4) {
+			if (!epsv4 || epsv4bad) {
 				result = COMPLETE + 1;
 				break;
 			}
@@ -1648,8 +1655,15 @@ noport:
 					NULL, 0, NI_NUMERICHOST)) {
 				result = ERROR;
 			} else {
-				result = command("EPRT |%d|%s|%d|",
-					af, hname, ntohs(data_addr.su_port));
+				result = command("EPRT |%d|%s|%d|", af, hname,
+						ntohs(data_addr.su_port));
+				if (result != COMPLETE) {
+					epsv4bad = 1;
+					if (debug)
+						fputs(
+					"disabling epsv4 for this connection\n",
+						    ttyout);
+				}
 			}
 			break;
 #endif
