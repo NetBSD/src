@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_llseek.c,v 1.12 1995/10/07 06:27:05 mycroft Exp $	*/
+/*	$NetBSD: linux_llseek.c,v 1.13 1995/10/08 22:53:43 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -42,6 +42,9 @@
 #include <sys/kernel.h>
 #include <sys/mount.h>
 #include <sys/malloc.h>
+#include <sys/vnode.h>
+#include <sys/tty.h>
+#include <sys/conf.h>
 
 #include <sys/syscallargs.h>
 
@@ -293,6 +296,13 @@ linux_sys_fcntl(p, v, retval)
 	struct linux_flock lfl;
 	struct flock *bfp, bfl;
 	struct sys_fcntl_args fca;
+	struct filedesc *fdp;
+	struct file *fp;
+	struct vnode *vp;
+	struct vattr va;
+	long pgid;
+	struct pgrp *pgrp;
+	struct tty *tp, *(*d_tty) __P((dev_t));
 
 	fd = SCARG(uap, fd);
 	cmd = SCARG(uap, cmd);
@@ -351,11 +361,46 @@ linux_sys_fcntl(p, v, retval)
 		return sys_fcntl(p, &fca, retval);
 		break;
 	case LINUX_F_SETOWN:
-		cmd = F_SETOWN;
-		break;
-	case LINUX_F_GETOWN:
-		cmd = F_GETOWN;
-		break;
+	case LINUX_F_GETOWN:	
+		/*
+		 * We need to route around the normal fcntl() for these calls,
+		 * since it uses TIOC{G,S}PGRP, which is too restrictive for
+		 * Linux F_{G,S}ETOWN semantics. For sockets, this problem
+		 * does not exist.
+		 */
+		fdp = p->p_fd;
+		if ((u_int)fd >= fdp->fd_nfiles ||
+		    (fp = fdp->fd_ofiles[fd]) == NULL)
+			return EBADF;
+		if (fp->f_type == DTYPE_SOCKET) {
+			cmd = cmd == LINUX_F_SETOWN ? F_SETOWN : F_GETOWN;
+			break;
+		}
+		vp = (struct vnode *)fp->f_data;
+		if (vp->v_type != VCHR)
+			return EINVAL;
+		if ((error = VOP_GETATTR(vp, &va, p->p_ucred, p)))
+			return error;
+		d_tty = cdevsw[major(va.va_rdev)].d_tty;
+		if (!d_tty || (!(tp = (*d_tty)(va.va_rdev))))
+			return EINVAL;
+		if (cmd == LINUX_F_GETOWN) {
+			retval[0] = tp->t_pgrp ? tp->t_pgrp->pg_id : NO_PID;
+			return 0;
+		}
+		if ((long)arg <= 0) {
+			pgid = -(long)arg;
+		} else {
+			struct proc *p1 = pfind((long)arg);
+			if (p1 == 0)
+				return (ESRCH);
+			pgid = (long)p1->p_pgrp->pg_id;
+		}
+		pgrp = pgfind(pgid);
+		if (pgrp == NULL || pgrp->pg_session != p->p_session)
+			return EPERM;
+		tp->t_pgrp = pgrp;
+		return 0;
 	default:
 		return EOPNOTSUPP;
 	}
