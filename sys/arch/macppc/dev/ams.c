@@ -1,4 +1,4 @@
-/*	$NetBSD: ams.c,v 1.3 1998/11/18 09:11:34 tsubai Exp $	*/
+/*	$NetBSD: ams.c,v 1.4 1999/01/18 12:36:36 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -539,7 +539,7 @@ ms_processevent(event, msc)
 
 	if (msc->sc_wsmousedev)
 		wsmouse_input(msc->sc_wsmousedev, new_event.u.m.buttons,
-			      new_event.u.m.dx, new_event.u.m.dy, 0);
+			      new_event.u.m.dx, -new_event.u.m.dy, 0);
 #if NAED > 0
 	aed_input(&new_event);
 #endif
