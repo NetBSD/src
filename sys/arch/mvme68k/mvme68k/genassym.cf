@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.9 1998/09/30 22:23:14 thorpej Exp $
+#	$NetBSD: genassym.cf,v 1.10 1998/10/01 00:29:52 thorpej Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -198,6 +198,7 @@ define	FR_ADJ			offsetof(struct frame, f_stackadj)
 define	SYS_exit		SYS_exit
 define	SYS_execve		SYS_execve
 define	SYS___sigreturn14	SYS___sigreturn14
+define	SYS_compat_13_sigreturn13 SYS_compat_13_sigreturn13
 
 # errno
 define	EFAULT			EFAULT
