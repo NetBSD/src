@@ -1,10 +1,8 @@
-#	$NetBSD: Makefile,v 1.6 1998/01/09 08:05:20 perry Exp $
+#	$NetBSD: Makefile,v 1.7 1998/09/13 23:50:39 perry Exp $
 #
 #	from: @(#)Makefile	8.2 (Berkeley) 3/21/94
 
 # Makefile for kernel tags files, init_sysent, etc.
-
-ARCH=	hp300 i386 luna68k news3400 pmax sparc tahoe vax
 
 all:
 	@echo "make tags, links, init_sysent.c, or vnode_if.c only"
@@ -24,6 +22,17 @@ vnode_if.c ../sys/vnode_if.h: ${VNODEIFSRC}
 	-mv -f ../sys/vnode_if.h ../sys/vnode_if.h.bak
 	sh vnode_if.sh vnode_if.src
 
+# XXX 
+# [Note by Perry Metzger, Sept. 1998]
+# As it stands, the tags support below is hopelessly
+# broken. Just look at the names of the architectures it is dealing
+# with and where it expects to find the support for them to see why.
+# I've left the stuff in this Makefile alone in the hope that someone
+# will fix it someday -- I am assuming that it might help that
+# person if they have the old Makefile goo left in place as a starting
+# point. 
+# XXX
+
 # Kernel tags:
 # Tags files are built in the top-level directory for each architecture,
 # with a makefile listing the architecture-dependent files, etc.  The list
@@ -32,6 +41,8 @@ vnode_if.c ../sys/vnode_if.h: ${VNODEIFSRC}
 # from the generic directories that are relative to the machine type, even
 # via remote mounts; therefore we use symlinks to $SYSTAGS, which points at
 # ${SYSDIR}/${MACHINE}/tags.
+
+ARCH=	hp300 i386 luna68k news3400 pmax sparc tahoe vax
 
 SYSTAGS=/var/db/sys_tags
 SYSDIR=/sys
