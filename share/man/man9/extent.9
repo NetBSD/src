@@ -1,4 +1,4 @@
-.\" $NetBSD: extent.9,v 1.16 2000/06/14 06:49:19 cgd Exp $
+.\" $NetBSD: extent.9,v 1.17 2001/06/21 11:59:00 wiz Exp $
 .\"
 .\" Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
 .\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
 .\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS 
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
 .\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
 .\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
 .\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
@@ -159,7 +159,7 @@ policies, which are selected by the
 argument:
 .Bl -tag -offset indent -width "XXXXXXXXX"
 .It Dv EX_FAST
-Allocate the first region that fits the provided paramters, regardless
+Allocate the first region that fits the provided parameters, regardless
 of resulting extent fragmentation.
 .It default
 Allocate the smallest region that is capable of holding the request,
@@ -224,7 +224,7 @@ If
 is not specified, the allocation will fail if the request can not be
 satisfied without sleeping.
 The caller must also specify, using the
-.Dv EX_NOWAIT 
+.Dv EX_NOWAIT
 or
 .Dv EX_WAITOK
 flags, if waiting for overhead allocation is allowed.
@@ -233,7 +233,7 @@ The
 .Fn extent_alloc1
 and
 .Fn extent_alloc_subregion1
-functions are extensions that take one additional argument, 
+functions are extensions that take one additional argument,
 .Fa skew ,
 that modifies the requested alignment result in the following way:
 the value
@@ -348,7 +348,7 @@ func()
 	/*
 	 * Give up the extent.
 	 */
-	extent_destroy(foo_ex); 
+	extent_destroy(foo_ex);
 }
 .Ed
 .Sh CODE REFERENCES
