@@ -28,6 +28,7 @@
 
 #include "emul_generic.h"
 #include "emul_netbsd.h"
+#include "emul_unix.h"
 #include "emul_chirp.h"
 #include "emul_bugapi.h"
 
@@ -35,6 +36,8 @@ static const os_emul *(os_emulations[]) = {
   &emul_chirp,
   &emul_bugapi,
   &emul_netbsd,
+  &emul_solaris,
+  &emul_linux,
   0
 };
 
@@ -73,9 +76,9 @@ os_emul_create(const char *file_name,
   }
 
   /* see if the device tree already specifies the required emulation */
-  if (device_find_property(root, "/openprom/options/os-emul") != NULL)
+  if (tree_find_property(root, "/openprom/options/os-emul") != NULL)
     emulation_name =
-      device_find_string_property(root, "/openprom/options/os-emul");
+      tree_find_string_property(root, "/openprom/options/os-emul");
   else
     emulation_name = NULL;
 

@@ -1,6 +1,6 @@
 /*  This file is part of the program psim.
 
-    Copyright (C) 1994-1995, Andrew Cagney <cagney@highland.com.au>
+    Copyright (C) 1994-1997, Andrew Cagney <cagney@highland.com.au>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -147,6 +147,9 @@ enum {
   fpscr_rn_round_towards_zero = MASK32(31,31),
   fpscr_rn_round_towards_pos_infinity = MASK32(30,30),
   fpscr_rn_round_towards_neg_infinity = MASK32(30,31),
+  fpscr_vx_bits = (fpscr_vxsnan | fpscr_vxisi | fpscr_vxidi
+		   | fpscr_vxzdz | fpscr_vximz | fpscr_vxvc
+		   | fpscr_vxsoft | fpscr_vxsqrt | fpscr_vxcvi),
 };
 
 
@@ -277,6 +280,7 @@ typedef enum {
   reg_invalid,
   reg_gpr, reg_fpr, reg_spr, reg_msr,
   reg_cr, reg_fpscr, reg_pc, reg_sr,
+  reg_insns, reg_stalls, reg_cycles,
   nr_register_types
 } register_types;
 
@@ -302,6 +306,8 @@ INLINE_REGISTERS\
 #define DAR		SPREG(spr_dar)
 #define DSISR		SPREG(spr_dsisr)
 
+/* general purpose registers - indexed access */
+#define GPR(N)          cpu_registers(processor)->gpr[N]
 
 /* segment registers */
 #define SEGREG(N)       cpu_registers(processor)->sr[N]

@@ -1,6 +1,6 @@
 /*  This file is part of the program psim.
 
-    Copyright (C) 1994-1995, Andrew Cagney <cagney@highland.com.au>
+    Copyright (C) 1994-1995,1997, Andrew Cagney <cagney@highland.com.au>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -26,7 +26,7 @@
 
 typedef struct _cap_mapping cap_mapping;
 struct _cap_mapping {
-  unsigned32 external;
+  unsigned_cell external;
   void *internal;
   cap_mapping *next;
 };
@@ -45,22 +45,31 @@ cap_create(const char *key)
 
 INLINE_CAP\
 (void)
-cap_init(cap *map)
+cap_init(cap *db)
 {
-  cap_mapping *current_mapping = map->mappings;
-  while (current_mapping != NULL) {
-    cap_mapping *tbd = current_mapping;
-    current_mapping = tbd->next;
-    zfree(tbd);
+  cap_mapping *current_map = db->mappings;
+  if (current_map != NULL) {
+    db->nr_mappings = db->mappings->external;
+    /* verify that the mappings that were not removed are in sequence
+       down to nr 1 */
+    while (current_map->next != NULL) {
+      if (current_map->external != current_map->next->external + 1)
+	error("cap: cap database possibly corrupt");
+      current_map = current_map->next;
+    }
+    ASSERT(current_map->next == NULL);
+    if (current_map->external != 1)
+      error("cap: cap database possibly currupt");
   }
-  map->nr_mappings = 0;
-  map->mappings = (cap_mapping*)0;
+  else {
+    db->nr_mappings = 0;
+  }
 }
 
 INLINE_CAP\
 (void *)
 cap_internal(cap *db,
-	     signed32 external)
+	     signed_cell external)
 {
   cap_mapping *current_map = db->mappings;
   while (current_map != NULL) {
@@ -72,7 +81,7 @@ cap_internal(cap *db,
 }
 
 INLINE_CAP\
-(signed32)
+(signed_cell)
 cap_external(cap *db,
 	     void *internal)
 {
@@ -82,13 +91,44 @@ cap_external(cap *db,
       return current_map->external;
     current_map = current_map->next;
   }
-  current_map = ZALLOC(cap_mapping);
-  current_map->next = db->mappings;
-  current_map->internal = internal;
-  db->nr_mappings += 1;
-  current_map->external = db->nr_mappings;
-  db->mappings = current_map;
-  return current_map->external;
+  return 0;
+}
+
+INLINE_CAP\
+(void)
+cap_add(cap *db,
+	void *internal)
+{
+  if (cap_external(db, internal) != 0) {
+    error("cap: attempting to add an object already in the data base");
+  }
+  else {
+    /* insert at the front making things in decending order */
+    cap_mapping *new_map = ZALLOC(cap_mapping);
+    new_map->next = db->mappings;
+    new_map->internal = internal;
+    db->nr_mappings += 1;
+    new_map->external = db->nr_mappings;
+    db->mappings = new_map;
+  }
+}
+
+INLINE_CAP\
+(void)
+cap_remove(cap *db,
+	   void *internal)
+{
+  cap_mapping **current_map = &db->mappings;
+  while (*current_map != NULL) {
+    if ((*current_map)->internal == internal) {
+      cap_mapping *delete = *current_map;
+      *current_map = delete->next;
+      zfree(delete);
+      return;
+    }
+    current_map = &(*current_map)->next;
+  }
+  error("cap: attempt to remove nonexistant internal object");
 }
 
 #endif

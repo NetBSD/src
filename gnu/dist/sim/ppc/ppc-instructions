@@ -1,7 +1,7 @@
 #
 #   This file is part of the program psim.
 #
-#   Copyright (C) 1994-1996, Andrew Cagney <cagney@highland.com.au>
+#   Copyright (C) 1994-1997, Andrew Cagney <cagney@highland.com.au>
 #
 #   --
 #
@@ -33,38 +33,6 @@
 #   along with this program; if not, write to the Free Software
 #   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-#   --
-#
-#
-# Fields:
-#
-#	1	Instruction format as a `start-bit,content' pairs.
-#		the content is one of a digit, field name or `/' (aka.0)
-#
-#	2	Format specifier
-#
-#	3	Flags:	64 - 64bit only
-#			f - floating point enabled required
-#
-#	4 	short name
-#
-#	5	Description
-#
-#
-# For flags marked 'model', the fields are interpreted as follows:
-#
-#	1	Not used
-#
-#	2	Not used
-#
-#	3	"macro"
-#
-#	4	String name for model
-#
-#	5	Specific CPU model, must be an identifier
-#
-#	6	Comma separated list of functional units
-
 
 # PowerPC models
 ::model:604:ppc604:  PPC_UNIT_BAD,   PPC_UNIT_BAD,   1,  1,  0
@@ -78,68 +46,68 @@
 		do { \
 		  if (CURRENT_MODEL_ISSUE > 0) { \
 		    if (RC) \
-		      ppc_insn_int(my_index, cpu_model(processor), OUT_MASK, IN_MASK); \
+		      ppc_insn_int_cr(MY_INDEX, cpu_model(processor), OUT_MASK, IN_MASK, 1 << 0); \
 		    else \
-		      ppc_insn_int_cr(my_index, cpu_model(processor), OUT_MASK, IN_MASK, 1 << 0); \
+		      ppc_insn_int(MY_INDEX, cpu_model(processor), OUT_MASK, IN_MASK); \
 		  } \
 		} while (0)
 
 	#define PPC_INSN_INT_CR(OUT_MASK, IN_MASK, CR_MASK) \
 		do { \
 		  if (CURRENT_MODEL_ISSUE > 0) \
-		    ppc_insn_int_cr(my_index, cpu_model(processor), OUT_MASK, IN_MASK, CR_MASK); \
+		    ppc_insn_int_cr(MY_INDEX, cpu_model(processor), OUT_MASK, IN_MASK, CR_MASK); \
 		} while (0)
 
 	#define PPC_INSN_CR(OUT_MASK, IN_MASK) \
 		do { \
 		  if (CURRENT_MODEL_ISSUE > 0) \
-		    ppc_insn_cr(my_index, cpu_model(processor), OUT_MASK, IN_MASK); \
+		    ppc_insn_cr(MY_INDEX, cpu_model(processor), OUT_MASK, IN_MASK); \
 		} while (0)
 
 	#define PPC_INSN_FLOAT(OUT_MASK, IN_MASK, RC) \
 		do { \
 		  if (CURRENT_MODEL_ISSUE > 0) { \
 		    if (RC) \
-		      ppc_insn_float(my_index, cpu_model(processor), OUT_MASK, IN_MASK); \
+		      ppc_insn_float(MY_INDEX, cpu_model(processor), OUT_MASK, IN_MASK); \
 		    else \
-		      ppc_insn_float_cr(my_index, cpu_model(processor), OUT_MASK, IN_MASK, 1 << 0); \
+		      ppc_insn_float_cr(MY_INDEX, cpu_model(processor), OUT_MASK, IN_MASK, 1 << 0); \
 		  } \
 		} while (0)
 
 	#define PPC_INSN_FLOAT_CR(OUT_MASK, IN_MASK, CR_MASK) \
 		do { \
 		  if (CURRENT_MODEL_ISSUE > 0) \
-		    ppc_insn_float_cr(my_index, cpu_model(processor), OUT_MASK, IN_MASK, CR_MASK); \
+		    ppc_insn_float_cr(MY_INDEX, cpu_model(processor), OUT_MASK, IN_MASK, CR_MASK); \
 		} while (0)
 
 	#define PPC_INSN_INT_FLOAT(OUT_INT_MASK, OUT_FP_MASK, IN_INT_MASK, IN_FP_MASK) \
 		do { \
 		  if (CURRENT_MODEL_ISSUE > 0) \
-		    ppc_insn_int_float(my_index, cpu_model(processor), OUT_INT_MASK, OUT_FP_MASK, IN_INT_MASK, IN_FP_MASK); \
+		    ppc_insn_int_float(MY_INDEX, cpu_model(processor), OUT_INT_MASK, OUT_FP_MASK, IN_INT_MASK, IN_FP_MASK); \
 		} while (0)
 
 	#define PPC_INSN_FROM_SPR(INT_MASK, SPR) \
 		do { \
 		  if (CURRENT_MODEL_ISSUE > 0) \
-		    ppc_insn_from_spr(my_index, cpu_model(processor), INT_MASK, SPR); \
+		    ppc_insn_from_spr(MY_INDEX, cpu_model(processor), INT_MASK, SPR); \
 		} while (0)
 
 	#define PPC_INSN_TO_SPR(INT_MASK, SPR) \
 		do { \
 		  if (CURRENT_MODEL_ISSUE > 0) \
-		    ppc_insn_to_spr(my_index, cpu_model(processor), INT_MASK, SPR); \
+		    ppc_insn_to_spr(MY_INDEX, cpu_model(processor), INT_MASK, SPR); \
 		} while (0)
 
 	#define PPC_INSN_MFCR(INT_MASK) \
 		do { \
 		  if (CURRENT_MODEL_ISSUE > 0) \
-		    ppc_insn_mfcr(my_index, cpu_model(processor), INT_MASK); \
+		    ppc_insn_mfcr(MY_INDEX, cpu_model(processor), INT_MASK); \
 		} while (0)
 
 	#define PPC_INSN_MTCR(INT_MASK, FXM) \
 		do { \
 		  if (CURRENT_MODEL_ISSUE > 0) \
-		    ppc_insn_mtcr(my_index, cpu_model(processor), INT_MASK, FXM); \
+		    ppc_insn_mtcr(MY_INDEX, cpu_model(processor), INT_MASK, FXM); \
 		} while (0)
 
 ::model-data:::
@@ -187,7 +155,7 @@
 	  signed16 done;				/* # of cycles until insn is done */
 	  signed16 nr_writebacks;			/* # of registers this unit writes back */
 	};
-
+	
 	/* Structure to hold the current state information for the simulated CPU model */
 	struct _model_data {
 	  cpu *processor;				/* point back to processor */
@@ -783,6 +751,15 @@ void::model-function::model_halt:model_data *model_ptr
 	while (model_ptr->busy_head.next)
 	  model_new_cycle(model_ptr);
 
+unsigned_word::model-function::model_get_number_of_stalls:model_data *model_ptr
+	return (model_ptr->nr_stalls_data
+	        + model_ptr->nr_stalls_unit
+	        + model_ptr->nr_stalls_serialize
+	        + model_ptr->nr_stalls_writeback);
+
+unsigned_word::model-function::model_get_number_of_cycles:model_data *model_ptr
+	return (model_ptr->nr_cycles);
+
 model_print *::model-function::model_mon_info:model_data *model_ptr
 	model_print *head;
 	model_print *tail;
@@ -829,7 +806,7 @@ model_print *::model-function::model_mon_info:model_data *model_ptr
 	  tail->count = model_ptr->nr_stalls_writeback;
 	  tail->name = "";
 	  tail->suffix_plural = "times a write-back slot was unavailable";
-	  tail->suffix_singular = "time a writeback was unavilable";
+	  tail->suffix_singular = "time a writeback was unavailable";
 	}
 
 	if (model_ptr->nr_branches) {
@@ -942,7 +919,6 @@ void::model-function::model_branch_predict:model_data *model_ptr, int success
 ::internal::illegal
 	program_interrupt(processor, cia,
 	                  illegal_instruction_program_interrupt);
-	return 0;
 
 
 # The following (floating point unavailable) instruction is `known' by gen
@@ -950,7 +926,6 @@ void::model-function::model_branch_predict:model_data *model_ptr, int success
 # executed but floating point is make unavailable by the MSR
 ::internal::floating_point_unavailable
 	floating_point_unavailable_interrupt(processor, cia);
-	return 0;
 
 
 #
@@ -1134,59 +1109,60 @@ void::function::convert_to_integer:cpu *processor, unsigned_word cia, unsigned64
 	int rbit = 0;
 	int xbit = 0;
 	int sign = EXTRACTED64(frb, 0, 0);
-	if (EXTRACTED64(frb, 1, 11) == 2047 && EXTRACTED64(frb, 12, 63) == 0)
-	  goto Infinity_Operand;
-	if (EXTRACTED64(frb, 1, 11) == 2047 && EXTRACTED64(frb, 12, 12) == 0)
-	  goto SNaN_Operand;
-	if (EXTRACTED64(frb, 1, 11) == 2047 && EXTRACTED64(frb, 12, 12) == 1)
-	  goto QNaN_Operand;
-	if (EXTRACTED64(frb, 1, 11) > 1086) goto Large_Operand;
-	if (EXTRACTED64(frb, 1, 11) > 0) exp = EXTRACTED64(frb, 1, 11) - 1023;
-	if (EXTRACTED64(frb, 1, 11) == 0) exp = -1022;
-	if (EXTRACTED64(frb, 1, 11) > 0) { /* normal */
-	  frac = BIT64(1) | INSERTED64(EXTRACTED64(frb, 12, 63), 2, 53);
-	  frac64 = 0;
-	}
-	if (EXTRACTED64(frb, 1, 11) == 0) { /* denorm */
-	  frac = INSERTED64(EXTRACTED64(frb, 12, 63), 2, 53);
-	  frac64 = 0;
-	}
-	gbit = 0, rbit = 0, xbit = 0;
-	for (i = 1; i <= 63 - exp; i++) {
-	  xbit = rbit | xbit;
-	  rbit = gbit;
-	  gbit = frac64;
-	  frac64 = EXTRACTED64(frac, 63, 63);
-	  frac = INSERTED64(EXTRACTED64(frac, 0, 62), 1, 63);
-	}
-	Round_Integer(processor, sign, &frac, &frac64, gbit, rbit, xbit, round_mode);
-	if (sign == 1) { /* frac[0:64] = ~frac[0:64] + 1 */
-	  frac = ~frac;
-	  frac64 ^= 1;
-	  frac += (frac64 ? 1 : 0);
-	  frac64 = (frac64 + 1) & 0x1;
-	}
-	if (tgt_precision == 32 /* can ignore frac64 in compare */
-	    && (signed64)frac > (signed64)MASK64(33+1, 63)/*2^31-1 >>1*/)
-	  goto Large_Operand;
-	if (tgt_precision == 64 /* can ignore frac64 in compare */
-	    && (signed64)frac > (signed64)MASK64(1+1, 63)/*2^63-1 >>1*/)
-	  goto Large_Operand;
-	if (tgt_precision == 32 /* can ignore frac64 in compare */
-	    && (signed64)frac < (signed64)MASK64(0, 32+1)/*-2^31 >>1*/)
-	  goto Large_Operand;
-	if (tgt_precision == 64 /* can ignore frac64 in compare */
-	    && (signed64)frac < (signed64)MASK64(0, 0+1)/*-2^63 >>1*/)
-	  goto Large_Operand;
-	FPSCR_SET_XX(FPSCR & fpscr_fi);
-	if (tgt_precision == 32)
-	  *frt = MASKED64(*frt, 0, 31) | (EXTRACTED64(frac, 33, 63) << 1) | frac64;
-	if (tgt_precision == 64)
-	  *frt = (EXTRACTED64(frac, 1, 63) << 1) | frac64;
-	/*FPSCR[fprf] = undefined */
-	goto Done;
-	/**/
-	Infinity_Operand:
+	/***/
+	  if (EXTRACTED64(frb, 1, 11) == 2047 && EXTRACTED64(frb, 12, 63) == 0)
+	    GOTO(Infinity_Operand);
+	  if (EXTRACTED64(frb, 1, 11) == 2047 && EXTRACTED64(frb, 12, 12) == 0)
+	    GOTO(SNaN_Operand);
+	  if (EXTRACTED64(frb, 1, 11) == 2047 && EXTRACTED64(frb, 12, 12) == 1)
+	    GOTO(QNaN_Operand);
+	  if (EXTRACTED64(frb, 1, 11) > 1086) GOTO(Large_Operand);
+	  if (EXTRACTED64(frb, 1, 11) > 0) exp = EXTRACTED64(frb, 1, 11) - 1023;
+	  if (EXTRACTED64(frb, 1, 11) == 0) exp = -1022;
+	  if (EXTRACTED64(frb, 1, 11) > 0) { /* normal */
+	    frac = BIT64(1) | INSERTED64(EXTRACTED64(frb, 12, 63), 2, 53);
+	    frac64 = 0;
+	  }
+	  if (EXTRACTED64(frb, 1, 11) == 0) { /* denorm */
+	    frac = INSERTED64(EXTRACTED64(frb, 12, 63), 2, 53);
+	    frac64 = 0;
+	  }
+	  gbit = 0, rbit = 0, xbit = 0;
+	  for (i = 1; i <= 63 - exp; i++) {
+	    xbit = rbit | xbit;
+	    rbit = gbit;
+	    gbit = frac64;
+	    frac64 = EXTRACTED64(frac, 63, 63);
+	    frac = INSERTED64(EXTRACTED64(frac, 0, 62), 1, 63);
+	  }
+	  Round_Integer(processor, sign, &frac, &frac64, gbit, rbit, xbit, round_mode);
+	  if (sign == 1) { /* frac[0:64] = ~frac[0:64] + 1 */
+	    frac = ~frac;
+	    frac64 ^= 1;
+	    frac += (frac64 ? 1 : 0);
+	    frac64 = (frac64 + 1) & 0x1;
+	  }
+	  if (tgt_precision == 32 /* can ignore frac64 in compare */
+	      && (signed64)frac > (signed64)MASK64(33+1, 63)/*2^31-1 >>1*/)
+	    GOTO(Large_Operand);
+	  if (tgt_precision == 64 /* can ignore frac64 in compare */
+	      && (signed64)frac > (signed64)MASK64(1+1, 63)/*2^63-1 >>1*/)
+	    GOTO(Large_Operand);
+	  if (tgt_precision == 32 /* can ignore frac64 in compare */
+	      && (signed64)frac < (signed64)MASK64(0, 32+1)/*-2^31 >>1*/)
+	    GOTO(Large_Operand);
+	  if (tgt_precision == 64 /* can ignore frac64 in compare */
+	      && (signed64)frac < (signed64)MASK64(0, 0+1)/*-2^63 >>1*/)
+	    GOTO(Large_Operand);
+	  FPSCR_SET_XX(FPSCR & fpscr_fi);
+	  if (tgt_precision == 32)
+	    *frt = MASKED64(*frt, 0, 31) | (EXTRACTED64(frac, 33, 63) << 1) | frac64;
+	  if (tgt_precision == 64)
+	    *frt = (EXTRACTED64(frac, 1, 63) << 1) | frac64;
+	  /*FPSCR[fprf] = undefined */
+	  GOTO(Done);
+	  /**/
+	LABEL(Infinity_Operand):
 	  FPSCR_SET_FR(0);
 	  FPSCR_SET_FI(0);
 	  FPSCR_OR_VX(fpscr_vxcvi);
@@ -1201,9 +1177,9 @@ void::function::convert_to_integer:cpu *processor, unsigned_word cia, unsigned64
 	    }
 	    /* FPSCR[FPRF] = undefined */
 	  }
-	  goto Done;
+	  GOTO(Done);
 	/**/
-	SNaN_Operand:
+	LABEL(SNaN_Operand):
 	  FPSCR_SET_FR(0);
 	  FPSCR_SET_FI(0);
 	  FPSCR_OR_VX(fpscr_vxsnan | fpscr_vxcvi);
@@ -1212,9 +1188,9 @@ void::function::convert_to_integer:cpu *processor, unsigned_word cia, unsigned64
 	    if (tgt_precision == 64) *frt = BIT64(0); /*0x8000_0000_0000_0000*/
 	    /* FPSCR[fprf] = undefined */
 	  }
-	  goto Done;
+	  GOTO(Done);
 	/**/
-	QNaN_Operand:
+	LABEL(QNaN_Operand):
 	  FPSCR_SET_FR(0);
 	  FPSCR_SET_FI(0);
 	  FPSCR_OR_VX(fpscr_vxcvi);
@@ -1223,9 +1199,9 @@ void::function::convert_to_integer:cpu *processor, unsigned_word cia, unsigned64
 	    if (tgt_precision == 64) *frt = BIT64(0);/*0x8000_0000_0000_0000*/
 	    /* FPSCR[fprf] = undefined */
 	  }
-	  goto Done;
+	  GOTO(Done);
 	/**/
-	Large_Operand:
+	LABEL(Large_Operand):
 	  FPSCR_SET_FR(0);
 	  FPSCR_SET_FI(0);
 	  FPSCR_OR_VX(fpscr_vxcvi);
@@ -1241,7 +1217,7 @@ void::function::convert_to_integer:cpu *processor, unsigned_word cia, unsigned64
 	    /* FPSCR[fprf] = undefined */
 	  }
 	/**/
-	Done:
+	LABEL(Done):
 
 
 # extract out raw fields of a FP number
@@ -1398,7 +1374,7 @@ void::function::invalid_arithemetic_operation:cpu *processor, unsigned_word cia,
 	  }
 	  else { /* arrith, frsp */
 	    *frt = select_qnan(fra, frb, frc,
-	                       instruction_is_frsp, 0/*generate*/, single);
+	                       instruction_is_frsp, 1/*generate*/, single);
 	    FPSCR_SET_FR(0);
 	    FPSCR_SET_FI(0);
 	    FPSCR_SET_FPRF(fpscr_rf_quiet_nan);
@@ -1419,7 +1395,7 @@ void::function::invalid_arithemetic_operation:cpu *processor, unsigned_word cia,
 #
 # I.2.4.1 Branch Instructions
 #
-0.18,6.LI,30.AA,31.LK:I:t::Branch
+0.18,6.LI,30.AA,31.LK:I:::Branch
 *601: PPC_UNIT_BPU,   PPC_UNIT_BPU,   1,  1,  0
 *603: PPC_UNIT_BPU,   PPC_UNIT_BPU,   1,  1,  0
 *603e:PPC_UNIT_BPU,   PPC_UNIT_BPU,   1,  1,  0
@@ -1430,7 +1406,7 @@ void::function::invalid_arithemetic_operation:cpu *processor, unsigned_word cia,
 	if (CURRENT_MODEL_ISSUE > 0)
 	  model_branches(cpu_model(processor), 1, -1);
 
-0.16,6.BO,11.BI,16.BD,30.AA,31.LK:B:t::Branch Conditional
+0.16,6.BO,11.BI,16.BD,30.AA,31.LK:B:::Branch Conditional
 *601: PPC_UNIT_BPU,   PPC_UNIT_BPU,   1,  1,  0
 *603: PPC_UNIT_BPU,   PPC_UNIT_BPU,   1,  1,  0
 *603e:PPC_UNIT_BPU,   PPC_UNIT_BPU,   1,  1,  0
@@ -1464,7 +1440,7 @@ void::function::invalid_arithemetic_operation:cpu *processor, unsigned_word cia,
 	    model_branch_predict(cpu_model(processor), reverse ? !succeed : succeed);
 	}
 
-0.19,6.BO,11.BI,16./,21.16,31.LK:XL:t::Branch Conditional to Link Register
+0.19,6.BO,11.BI,16./,21.16,31.LK:XL:::Branch Conditional to Link Register
 *601: PPC_UNIT_BPU,   PPC_UNIT_BPU,   1,  1,  0
 *603: PPC_UNIT_BPU,   PPC_UNIT_BPU,   1,  1,  0
 *603e:PPC_UNIT_BPU,   PPC_UNIT_BPU,   1,  1,  0
@@ -1490,7 +1466,7 @@ void::function::invalid_arithemetic_operation:cpu *processor, unsigned_word cia,
 	    model_branch_predict(cpu_model(processor), BO{4} ? !succeed : succeed);
 	}
 
-0.19,6.BO,11.BI,16./,21.528,31.LK:XL:t::Branch Conditional to Count Register
+0.19,6.BO,11.BI,16./,21.528,31.LK:XL:::Branch Conditional to Count Register
 *601: PPC_UNIT_BPU,   PPC_UNIT_BPU,   1,  1,  0
 *603: PPC_UNIT_BPU,   PPC_UNIT_BPU,   1,  1,  0
 *603e:PPC_UNIT_BPU,   PPC_UNIT_BPU,   1,  1,  0
@@ -1515,13 +1491,13 @@ void::function::invalid_arithemetic_operation:cpu *processor, unsigned_word cia,
 #
 # I.2.4.2 System Call Instruction
 #
-0.17,6./,11./,16./,30.1,31./:SC:t::System Call
+0.17,6./,11./,16./,30.1,31./:SC:::System Call
 *601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
 *603: PPC_UNIT_SRU,   PPC_UNIT_SRU,   3,  3,  0
 *603e:PPC_UNIT_SRU,   PPC_UNIT_SRU,   3,  3,  0
 *604: PPC_UNIT_SCIU1, PPC_UNIT_SCIU2, 1,  1,  0
 	if (CURRENT_MODEL_ISSUE > 0)
-	  model_serialize(my_index, cpu_model(processor));
+	  model_serialize(MY_INDEX, cpu_model(processor));
 	system_call_interrupt(processor, cia);
 
 #
@@ -1614,7 +1590,7 @@ void::function::invalid_arithemetic_operation:cpu *processor, unsigned_word cia,
 *604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
 	unsigned_word b;
 	unsigned_word EA;
-	if (RA == 0) b = 0;
+	if (RA_is_0) b = 0;
 	else         b = *rA;
 	EA = b + EXTS(D);
 	*rT = MEM(unsigned, EA, 1);
@@ -1628,7 +1604,7 @@ void::function::invalid_arithemetic_operation:cpu *processor, unsigned_word cia,
 *604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
 	unsigned_word b;
 	unsigned_word EA;
-	if (RA == 0) b = 0;
+	if (RA_is_0) b = 0;
 	else         b = *rA;
 	EA = b + *rB;
 	*rT = MEM(unsigned, EA, 1);
@@ -1640,7 +1616,7 @@ void::function::invalid_arithemetic_operation:cpu *processor, unsigned_word cia,
 *603e:PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
 *604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
 	unsigned_word EA;
-	if (RA == 0 || RA == RT)
+	if (RA_is_0 || RA == RT)
 	  program_interrupt(processor, cia,
 	                    illegal_instruction_program_interrupt);
 	EA = *rA + EXTS(D);
@@ -1654,7 +1630,7 @@ void::function::invalid_arithemetic_operation:cpu *processor, unsigned_word cia,
 *603e:PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
 *604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
 	unsigned_word EA;
-	if (RA == 0 || RA == RT)
+	if (RA_is_0 || RA == RT)
 	  program_interrupt(processor, cia,
 	                    illegal_instruction_program_interrupt);
 	EA = *rA + *rB;
@@ -1669,7 +1645,7 @@ void::function::invalid_arithemetic_operation:cpu *processor, unsigned_word cia,
 *604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
 	unsigned_word b;
 	unsigned_word EA;
-	if (RA == 0) b = 0;
+	if (RA_is_0) b = 0;
 	else         b = *rA;
 	EA = b + EXTS(D);
 	*rT = MEM(unsigned, EA, 2);
@@ -1682,7 +1658,7 @@ void::function::invalid_arithemetic_operation:cpu *processor, unsigned_word cia,
 *604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
 	unsigned_word b;
 	unsigned_word EA;
-	if (RA == 0) b = 0;
+	if (RA_is_0) b = 0;
 	else         b = *rA;
 	EA = b + *rB;
 	*rT = MEM(unsigned, EA, 2);
@@ -1694,7 +1670,7 @@ void::function::invalid_arithemetic_operation:cpu *processor, unsigned_word cia,
 *603e:PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
 *604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
 	unsigned_word EA;
-	if (RA == 0 || RA == RT)
+	if (RA_is_0 || RA == RT)
 	  program_interrupt(processor, cia,
 	                    illegal_instruction_program_interrupt);
 	EA = *rA + EXTS(D);
@@ -1708,7 +1684,7 @@ void::function::invalid_arithemetic_operation:cpu *processor, unsigned_word cia,
 *603e:PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
 *604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
 	unsigned_word EA;
-	if (RA == 0 || RA == RT)
+	if (RA_is_0 || RA == RT)
 	  program_interrupt(processor, cia,
 	                    illegal_instruction_program_interrupt);
 	EA = *rA + *rB;
@@ -1723,7 +1699,7 @@ void::function::invalid_arithemetic_operation:cpu *processor, unsigned_word cia,
 *604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
 	unsigned_word b;
 	unsigned_word EA;
-	if (RA == 0) b = 0;
+	if (RA_is_0) b = 0;
 	else         b = *rA;
 	EA = b + EXTS(D);
 	*rT = MEM(signed, EA, 2);
@@ -1736,7 +1712,7 @@ void::function::invalid_arithemetic_operation:cpu *processor, unsigned_word cia,
 *604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
 	unsigned_word b;
 	unsigned_word EA;
-	if (RA == 0) b = 0;
+	if (RA_is_0) b = 0;
 	else         b = *rA;
 	EA = b + *rB;
 	*rT = MEM(signed, EA, 2);
@@ -1748,7 +1724,7 @@ void::function::invalid_arithemetic_operation:cpu *processor, unsigned_word cia,
 *603e:PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
 *604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
 	unsigned_word EA;
-	if (RA == 0 || RA == RT)
+	if (RA_is_0 || RA == RT)
 	  program_interrupt(processor, cia,
 	                    illegal_instruction_program_interrupt);
 	EA = *rA + EXTS(D);
@@ -1761,7 +1737,7 @@ void::function::invalid_arithemetic_operation:cpu *processor, unsigned_word cia,
 *603e:PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
 *604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
 	unsigned_word EA;
-	if (RA == 0 || RA == RT)
+	if (RA_is_0 || RA == RT)
 	  program_interrupt(processor, cia,
 	                    illegal_instruction_program_interrupt);
 	EA = *rA + *rB;
@@ -1776,7 +1752,7 @@ void::function::invalid_arithemetic_operation:cpu *processor, unsigned_word cia,
 *604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
 	unsigned_word b;
 	unsigned_word EA;
-	if (RA == 0) b = 0;
+	if (RA_is_0) b = 0;
 	else         b = *rA;
 	EA = b + EXTS(D);
 	*rT = MEM(unsigned, EA, 4);
@@ -1789,7 +1765,7 @@ void::function::invalid_arithemetic_operation:cpu *processor, unsigned_word cia,
 *604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
 	unsigned_word b;
 	unsigned_word EA;
-	if (RA == 0) b = 0;
+	if (RA_is_0) b = 0;
 	else         b = *rA;
 	EA = b + *rB;
 	*rT = MEM(unsigned, EA, 4);
@@ -1801,7 +1777,7 @@ void::function::invalid_arithemetic_operation:cpu *processor, unsigned_word cia,
 *603e:PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
 *604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
 	unsigned_word EA;
-	if (RA == 0 || RA == RT)
+	if (RA_is_0 || RA == RT)
 	  program_interrupt(processor, cia,
 	                    illegal_instruction_program_interrupt);
 	EA = *rA + EXTS(D);
@@ -1815,7 +1791,7 @@ void::function::invalid_arithemetic_operation:cpu *processor, unsigned_word cia,
 *603e:PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
 *604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
 	unsigned_word EA;
-	if (RA == 0 || RA == RT)
+	if (RA_is_0 || RA == RT)
 	  program_interrupt(processor, cia,
 	                    illegal_instruction_program_interrupt);
 	EA = *rA + *rB;
@@ -1826,7 +1802,7 @@ void::function::invalid_arithemetic_operation:cpu *processor, unsigned_word cia,
 0.58,6.RT,11.RA,16.DS,30.2:DS:64::Load Word Algebraic
 #	unsigned_word b;
 #	unsigned_word EA;
-#	if (RA == 0) b = 0;
+#	if (RA_is_0) b = 0;
 #	else         b = *rA;
 #	EA = b + EXTS(DS_0b00);
 #	*rT = MEM(signed, EA, 4);
@@ -1834,14 +1810,14 @@ void::function::invalid_arithemetic_operation:cpu *processor, unsigned_word cia,
 0.31,6.RT,11.RA,16.RB,21.341,31./:X:64::Load Word Algebraic Indexed
 #	unsigned_word b;
 #	unsigned_word EA;
-#	if (RA == 0) b = 0;
+#	if (RA_is_0) b = 0;
 #	else         b = *rA;
 #	EA = b + *rB;;
 #	*rT = MEM(signed, EA, 4);
 
 0.31,6.RT,11.RA,16.RB,21.373,31./:X:64::Load Word Algebraic with Update Indexed
 #	unsigned_word EA;
-#	if (RA == 0 || RA == RT)
+#	if (RA_is_0 || RA == RT)
 #	  program_interrupt(processor, cia
 #	                    illegal_instruction_program_interrupt);
 #	EA = *rA + *rB;
@@ -1851,7 +1827,7 @@ void::function::invalid_arithemetic_operation:cpu *processor, unsigned_word cia,
 0.58,6.RT,11.RA,16.DS,30.0:DS:64::Load Doubleword
 #	unsigned_word b;
 #	unsigned_word EA;
-#	if (RA == 0) b = 0;
+#	if (RA_is_0) b = 0;
 #	else         b = *rA;
 #	EA = b + EXTS(DS_0b00);
 #	*rT = MEM(unsigned, EA, 8);
@@ -1859,14 +1835,14 @@ void::function::invalid_arithemetic_operation:cpu *processor, unsigned_word cia,
 0.31,6.RT,11.RA,16.RB,21.21,31./:X:64::Load Doubleword Indexed
 #	unsigned_word b;
 #	unsigned_word EA;
-#	if (RA == 0) b = 0;
+#	if (RA_is_0) b = 0;
 #	else         b = *rA;
 #	EA = b + *rB;
 #	*rT = MEM(unsigned, EA, 8);
 
 0.58,6.RT,11.RA,16.DS,30.1:DS:64::Load Doubleword with Update
 #	unsigned_word EA;
-#	if (RA == 0 || RA == RT)
+#	if (RA_is_0 || RA == RT)
 #	  program_interrupt(processor, cia
 #	                    illegal_instruction_program_interrupt);
 #	EA = *rA + EXTS(DS_0b00);
@@ -1875,7 +1851,7 @@ void::function::invalid_arithemetic_operation:cpu *processor, unsigned_word cia,
 
 0.31,6.RT,11.RA,16.RB,21.53,31./:DS:64::Load Doubleword with Update Indexed
 #	unsigned_word EA;
-#	if (RA == 0 || RA == RT)
+#	if (RA_is_0 || RA == RT)
 #	  program_interrupt(processor, cia
 #	                    illegal_instruction_program_interrupt);
 #	EA = *rA + *rB;
@@ -1895,7 +1871,7 @@ void::function::invalid_arithemetic_operation:cpu *processor, unsigned_word cia,
 *604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  3,  0
 	unsigned_word b;
 	unsigned_word EA;
-	if (RA == 0) b = 0;
+	if (RA_is_0) b = 0;
 	else         b = *rA;
 	EA = b + EXTS(D);
 	STORE(EA, 1, *rS);
@@ -1908,7 +1884,7 @@ void::function::invalid_arithemetic_operation:cpu *processor, unsigned_word cia,
 *604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  3,  0
 	unsigned_word b;
 	unsigned_word EA;
-	if (RA == 0) b = 0;
+	if (RA_is_0) b = 0;
 	else         b = *rA;
 	EA = b + *rB;
 	STORE(EA, 1, *rS);
@@ -1920,7 +1896,7 @@ void::function::invalid_arithemetic_operation:cpu *processor, unsigned_word cia,
 *603e:PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
 *604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  3,  0
 	unsigned_word EA;
-	if (RA == 0)
+	if (RA_is_0)
 	  program_interrupt(processor, cia,
 	                    illegal_instruction_program_interrupt);
 	EA = *rA + EXTS(D);
@@ -1934,7 +1910,7 @@ void::function::invalid_arithemetic_operation:cpu *processor, unsigned_word cia,
 *603e:PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
 *604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  3,  0
 	unsigned_word EA;
-	if (RA == 0)
+	if (RA_is_0)
 	  program_interrupt(processor, cia,
 	                    illegal_instruction_program_interrupt);
 	EA = *rA + *rB;
@@ -1949,7 +1925,7 @@ void::function::invalid_arithemetic_operation:cpu *processor, unsigned_word cia,
 *604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  3,  0
 	unsigned_word b;
 	unsigned_word EA;
-	if (RA == 0) b = 0;
+	if (RA_is_0) b = 0;
 	else         b = *rA;
 	EA = b + EXTS(D);
 	STORE(EA, 2, *rS);
@@ -1962,7 +1938,7 @@ void::function::invalid_arithemetic_operation:cpu *processor, unsigned_word cia,
 *604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  3,  0
 	unsigned_word b;
 	unsigned_word EA;
-	if (RA == 0) b = 0;
+	if (RA_is_0) b = 0;
 	else         b = *rA;
 	EA = b + *rB;
 	STORE(EA, 2, *rS);
@@ -1974,7 +1950,7 @@ void::function::invalid_arithemetic_operation:cpu *processor, unsigned_word cia,
 *603e:PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
 *604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  3,  0
 	unsigned_word EA;
-	if (RA == 0)
+	if (RA_is_0)
 	  program_interrupt(processor, cia,
 	                    illegal_instruction_program_interrupt);
 	EA = *rA + EXTS(D);
@@ -1988,7 +1964,7 @@ void::function::invalid_arithemetic_operation:cpu *processor, unsigned_word cia,
 *603e:PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
 *604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  3,  0
 	unsigned_word EA;
-	if (RA == 0)
+	if (RA_is_0)
 	  program_interrupt(processor, cia,
 	                    illegal_instruction_program_interrupt);
 	EA = *rA + *rB;
@@ -2003,7 +1979,7 @@ void::function::invalid_arithemetic_operation:cpu *processor, unsigned_word cia,
 *604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  3,  0
 	unsigned_word b;
 	unsigned_word EA;
-	if (RA == 0) b = 0;
+	if (RA_is_0) b = 0;
 	else         b = *rA;
 	EA = b + EXTS(D);
 	STORE(EA, 4, *rS);
@@ -2016,7 +1992,7 @@ void::function::invalid_arithemetic_operation:cpu *processor, unsigned_word cia,
 *604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  3,  0
 	unsigned_word b;
 	unsigned_word EA;
-	if (RA == 0) b = 0;
+	if (RA_is_0) b = 0;
 	else         b = *rA;
 	EA = b + *rB;
 	STORE(EA, 4, *rS);
@@ -2028,7 +2004,7 @@ void::function::invalid_arithemetic_operation:cpu *processor, unsigned_word cia,
 *603e:PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
 *604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  3,  0
 	unsigned_word EA;
-	if (RA == 0)
+	if (RA_is_0)
 	  program_interrupt(processor, cia,
 	                    illegal_instruction_program_interrupt);
 	EA = *rA + EXTS(D);
@@ -2042,7 +2018,7 @@ void::function::invalid_arithemetic_operation:cpu *processor, unsigned_word cia,
 *603e:PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
 *604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  3,  0
 	unsigned_word EA;
-	if (RA == 0)
+	if (RA_is_0)
 	  program_interrupt(processor, cia,
 	                    illegal_instruction_program_interrupt);
 	EA = *rA + *rB;
@@ -2053,20 +2029,20 @@ void::function::invalid_arithemetic_operation:cpu *processor, unsigned_word cia,
 0.62,6.RS,11.RA,16.DS,30.0:DS:64::Store Doubleword
 #	unsigned_word b;
 #	unsigned_word EA;
-#	if (RA == 0) b = 0;
+#	if (RA_is_0) b = 0;
 #	else         b = *rA;
 #	EA = b + EXTS(DS_0b00);
 #	STORE(EA, 8, *rS);
 0.31,6.RS,11.RA,16.RB,21.149,31./:X:64::Store Doubleword Indexed
 #	unsigned_word b;
 #	unsigned_word EA;
-#	if (RA == 0) b = 0;
+#	if (RA_is_0) b = 0;
 #	else         b = *rA;
 #	EA = b + *rB;
 #	STORE(EA, 8, *rS);
 0.62,6.RS,11.RA,16.DS,30.1:DS:64::Store Doubleword with Update
 #	unsigned_word EA;
-#	if (RA == 0)
+#	if (RA_is_0)
 #	  program_interrupt(processor, cia
 #	                    illegal_instruction_program_interrupt);
 #	EA = *rA + EXTS(DS_0b00);
@@ -2074,7 +2050,7 @@ void::function::invalid_arithemetic_operation:cpu *processor, unsigned_word cia,
 #	*rA = EA;
 0.31,6.RS,11.RA,16.RB,21.181,31./:X:64::Store Doubleword with Update Indexed
 #	unsigned_word EA;
-#	if (RA == 0)
+#	if (RA_is_0)
 #	  program_interrupt(processor, cia
 #	                    illegal_instruction_program_interrupt);
 #	EA = *rA + *rB;
@@ -2093,7 +2069,7 @@ void::function::invalid_arithemetic_operation:cpu *processor, unsigned_word cia,
 *604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  3,  0
 	unsigned_word b;
 	unsigned_word EA;
-	if (RA == 0) b = 0;
+	if (RA_is_0) b = 0;
 	else         b = *rA;
 	EA = b + *rB;
 	*rT = SWAP_2(MEM(unsigned, EA, 2));
@@ -2106,7 +2082,7 @@ void::function::invalid_arithemetic_operation:cpu *processor, unsigned_word cia,
 *604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  3,  0
 	unsigned_word b;
 	unsigned_word EA;
-	if (RA == 0) b = 0;
+	if (RA_is_0) b = 0;
 	else         b = *rA;
 	EA = b + *rB;
 	*rT = SWAP_4(MEM(unsigned, EA, 4));
@@ -2119,7 +2095,7 @@ void::function::invalid_arithemetic_operation:cpu *processor, unsigned_word cia,
 *604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  3,  0
 	unsigned_word b;
 	unsigned_word EA;
-	if (RA == 0) b = 0;
+	if (RA_is_0) b = 0;
 	else         b = *rA;
 	EA = b + *rB;
 	STORE(EA, 2, SWAP_2(*rS));
@@ -2132,7 +2108,7 @@ void::function::invalid_arithemetic_operation:cpu *processor, unsigned_word cia,
 *604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  3,  0
 	unsigned_word b;
 	unsigned_word EA;
-	if (RA == 0) b = 0;
+	if (RA_is_0) b = 0;
 	else         b = *rA;
 	EA = b + *rB;
 	STORE(EA, 4, SWAP_4(*rS));
@@ -2143,22 +2119,158 @@ void::function::invalid_arithemetic_operation:cpu *processor, unsigned_word cia,
 # I.3.3.5 Fixed-Point Load and Store Multiple Instrctions
 #
 
-0.46,6.RT,11.RA,16.D:D:be::Load Multiple Word
+0.46,6.RT,11.RA,16.D:D:::Load Multiple Word
+	unsigned_word EA;
+	unsigned_word b;
+	int r;
+	if (RA_is_0) b = 0;
+	else         b = *rA;
+	EA = b + EXTS(D);
+	r = RT;
+	if (RA >= r)
+	  program_interrupt(processor, cia,
+	                  illegal_instruction_program_interrupt);
+	if (CURRENT_ALIGNMENT == STRICT_ALIGNMENT || (EA % 4 != 0))
+	  alignment_interrupt(processor, cia, EA);
+	while (r <= 31) {
+	  GPR(r) = MEM(unsigned, EA, 4);
+	  r = r + 1;
+	  EA = EA + 4;
+	}
 
-0.47,6.RS,11.RA,16.D:D:be::Store Multiple Word
+0.47,6.RS,11.RA,16.D:D:::Store Multiple Word
+	unsigned_word EA;
+	unsigned_word b;
+	int r;
+	if (RA_is_0) b = 0;
+	else         b = *rA;
+	EA = b + EXTS(D);
+	if (CURRENT_ALIGNMENT == STRICT_ALIGNMENT
+	    || (EA % 4 != 0))
+	  alignment_interrupt(processor, cia, EA);
+	r = RS;
+	while (r <= 31) {
+	  STORE(EA, 4, GPR(r));
+	  r = r + 1;
+	  EA = EA + 4;
+	}
 
 
 #
 # I.3.3.6 Fixed-Point Move Assist Instructions
 #
 
-0.31,6.RT,11.RA,16.NB,21.597,31./:X:be::Load String Word Immediate
+0.31,6.RT,11.RA,16.NB,21.597,31./:X:::Load String Word Immediate
+	unsigned_word EA;
+	int n;
+	int r;
+	int i;
+	int nr;
+	if (RA_is_0) EA = 0;
+	else         EA = *rA;
+	if (NB == 0) n = 32;
+	else         n = NB;
+	r = RT - 1;
+	i = 32;
+	nr = (n + 3) / 4;
+	if ((RT + nr >= 32)
+	    ? (RA >= RT || RA < (RT + nr) % 32)
+	    : (RA >= RT && RA < RT + nr))
+	  program_interrupt(processor, cia,
+	                    illegal_instruction_program_interrupt);
+	if (CURRENT_ALIGNMENT == STRICT_ALIGNMENT)
+	  alignment_interrupt(processor, cia, EA);
+	while (n > 0) {
+	  if (i == 32) {
+	    r = (r + 1) % 32;
+	    GPR(r) = 0;
+	  }
+	  GPR(r) |= INSERTED(MEM(unsigned, EA, 1), i, i+7);
+	  if (i == 64) i = 32;
+	  EA = EA + 1;
+	  n = n - 1;
+	}
 
-0.31,6.RT,11.RA,16.RB,21.533,31./:X:be::Load String Word Indexed
+0.31,6.RT,11.RA,16.RB,21.533,31./:X:::Load String Word Indexed
+	unsigned_word EA;
+	unsigned_word b;
+	int n;
+	int r;
+	int i;
+	int nr;
+	if (RA_is_0) b = 0;
+	else         b = *rA;
+	EA = b + *rB;
+	n = EXTRACTED32(XER, 25, 31);
+	r = RT - 1;
+	i = 32;
+	nr = (n + 3) / 4;
+	if (((RT + n >= 32)
+	     ? ((RA >= RT || RA < (RT + n) % 32)
+	        || (RB >= RT || RB < (RT + n) % 32))
+	     : ((RA >= RT && RA < RT + n)
+	        || (RB >= RT && RB < RT + n)))
+	    || (RT == RA || RT == RB))
+	  program_interrupt(processor, cia,
+	                  illegal_instruction_program_interrupt);
+	if (CURRENT_ALIGNMENT == STRICT_ALIGNMENT)
+	  alignment_interrupt(processor, cia, EA);
+	while (n > 0) {
+	  if (i == 32) {
+	    r = (r + 1) % 32;
+	    GPR(i) = 0;
+	  }
+	  GPR(r) |= INSERTED(MEM(unsigned, EA, 1), i, i+7);
+	  i = i + 8;
+	  if (i == 64) i = 32;
+	  EA = EA + 1;
+	  n = n - 1;
+	}
 
-0.31,6.RS,11.RA,16.NB,21.725,31./:X:be::Store String Word Immedate
+0.31,6.RS,11.RA,16.NB,21.725,31./:X:::Store String Word Immedate
+	unsigned_word EA;
+	int n;
+	int r;
+	int i;
+	if (RA_is_0) EA = 0;
+	else         EA = *rA;
+	if (NB == 0) n = 32;
+	else         n = NB;
+	r = RS - 1;
+	i = 32;
+	if (CURRENT_ALIGNMENT == STRICT_ALIGNMENT)
+	  alignment_interrupt(processor, cia, EA);
+	while (n > 0) {
+	  if (i == 32) r = (r + 1) % 32;
+	  STORE(EA, 1, EXTRACTED(GPR(r), i, i+7));
+	  i = i + 8;
+	  if (i == 64) i = 32;
+	  EA = EA + 1;
+	  n = n - 1;
+	}
 
-0.31,6.RS,11.RA,16.RB,21.661,31./:X:be::Store String Word Indexed
+0.31,6.RS,11.RA,16.RB,21.661,31./:X:::Store String Word Indexed
+	unsigned_word EA;
+	unsigned_word b;
+	int n;
+	int r;
+	int i;
+	if (RA_is_0) b = 0;
+	else         b = *rA;
+	EA = b + *rB;
+	if (CURRENT_ALIGNMENT == STRICT_ALIGNMENT)
+	  alignment_interrupt(processor, cia, EA);
+	n = EXTRACTED32(XER, 25, 31);
+	r = RS - 1;
+	i = 32;
+	while (n > 0) {
+	  if (i == 32) r = (r + 1) % 32;
+	  STORE(EA, 1, EXTRACTED(GPR(r), i, i+7));
+	  i = i + 8;
+	  if (i == 64) i = 32;
+	  EA = EA + 1;
+	  n = n - 1;
+	}
 
 
 #
@@ -2176,7 +2288,7 @@ void::function::invalid_arithemetic_operation:cpu *processor, unsigned_word cia,
 *604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  3,  0
 	unsigned_word b;
 	unsigned_word EA;
-	if (RA == 0) b = 0;
+	if (RA_is_0) b = 0;
 	else         b = *rA;
 	EA = b + *rB;
 	RESERVE = 1;
@@ -2188,7 +2300,7 @@ void::function::invalid_arithemetic_operation:cpu *processor, unsigned_word cia,
 0.31,6.RT,11.RA,16.RB,21.84,31./:X:64::Load Doubleword And Reserve Indexed
 	unsigned_word b;
 	unsigned_word EA;
-	if (RA == 0) b = 0;
+	if (RA_is_0) b = 0;
 	else         b = *rA;
 	EA = b + *rB;
 	RESERVE = 1;
@@ -2204,7 +2316,7 @@ void::function::invalid_arithemetic_operation:cpu *processor, unsigned_word cia,
 *604: PPC_UNIT_BPU,   PPC_UNIT_BPU,   1,  3,  0
 	unsigned_word b;
 	unsigned_word EA;
-	if (RA == 0) b = 0;
+	if (RA_is_0) b = 0;
 	else         b = *rA;
 	EA = b + *rB;
 	if (RESERVE) {
@@ -2227,7 +2339,7 @@ void::function::invalid_arithemetic_operation:cpu *processor, unsigned_word cia,
 0.31,6.RS,11.RA,16.RB,21.214,31.1:X:64::Store Doubleword Conditional Indexed
 	unsigned_word b;
 	unsigned_word EA;
-	if (RA == 0) b = 0;
+	if (RA_is_0) b = 0;
 	else         b = *rA;
 	EA = b + *rB;
 	if (RESERVE) {
@@ -2259,7 +2371,7 @@ void::function::invalid_arithemetic_operation:cpu *processor, unsigned_word cia,
 # I.3.3.9 Fixed-Point Arithmetic Instructions
 #
 
-0.14,6.RT,11.RA,16.SI:D:T::Add Immediate
+0.14,6.RT,11.RA,16.SI:D:::Add Immediate
 *601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
 *603: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
 *603e:PPC_UNIT_IU,    PPC_UNIT_SRU,   1,  1,  0
@@ -2477,7 +2589,7 @@ void::function::invalid_arithemetic_operation:cpu *processor, unsigned_word cia,
 
 0.31,6.RT,11.RA,16.RB,21./,22.9,31.Rc:XO:64::Multiply High Doubleword Unsigned
 
-0.31,6.RT,11.RA,16.RB,21./,22.11,31.Rc:XO::milhwu:Multiply High Word Unsigned
+0.31,6.RT,11.RA,16.RB,21./,22.11,31.Rc:XO::mulhwu:Multiply High Word Unsigned
 *601: PPC_UNIT_IU,    PPC_UNIT_IU,    10, 10, 0
 *603: PPC_UNIT_IU,    PPC_UNIT_IU,    6,  6,  0
 *603e:PPC_UNIT_IU,    PPC_UNIT_IU,    6,  6,  0
@@ -2962,12 +3074,12 @@ void::function::invalid_arithemetic_operation:cpu *processor, unsigned_word cia,
 #	CR0_COMPARE(result, 0, Rc);
 
 0.23,6.RS,11.RA,16.RB,21.MB,26.ME,31.Rc:M:::Rotate Left Word then AND with Mask
-#	long n = MASKED(*rB, 59, 63);
-#	unsigned32 r = ROTL32(*rS, n);
-#	unsigned32 m = MASK(MB+32, ME+32);
-#	signed_word result = r & m;
-#	*rA = result;
-#	CR0_COMPARE(result, 0, Rc);
+	long n = MASKED(*rB, 59, 63);
+	unsigned32 r = ROTL32(*rS, n);
+	unsigned32 m = MASK(MB+32, ME+32);
+	signed_word result = r & m;
+	*rA = result;
+	CR0_COMPARE(result, 0, Rc);
 
 0.30,6.RS,11.RA,16.sh_0_4,21.mb,27.3,30.sh_5,31.Rc:MD:64::Rotate Left Doubleword Immediate then Mask Insert
 #	long n = (sh_5 << 4) | sh_0_4;
@@ -3142,8 +3254,23 @@ void::function::invalid_arithemetic_operation:cpu *processor, unsigned_word cia,
 	  program_interrupt(processor, cia,
 	                    illegal_instruction_program_interrupt);
 	else {
-	  /* HACK - some SPR's need to get their value extracted specially */
-	  *rT = SPREG(n);
+	  /* HACK - time base registers need to be calculated */
+	  if (WITH_TIME_BASE) {
+	    switch (n) {
+	    case spr_dec:
+	      *rT = cpu_get_decrementer(processor);
+	      break;
+	    case spr_tbu:
+	    case spr_tbl:
+	      /* NOTE - these SPR's are not readable. Use mftb[ul] */
+	    default:
+	      *rT = SPREG(n);
+	      break;
+	    }
+	  }
+	  else {
+	    *rT = SPREG(n);
+	  }
 	}
 	PPC_INSN_FROM_SPR(RT_BITMASK, n);
 
@@ -3167,6 +3294,8 @@ void::function::invalid_arithemetic_operation:cpu *processor, unsigned_word cia,
 	PPC_INSN_MTCR(RS_BITMASK, FXM);
 
 0.31,6.BF,9./,11./,16./,21.512,31./:X:::Move to Condition Register from XER
+#	CR_SET(BF, EXTRACTED32(XER, 0, 3));
+#	MBLIT32(XER, 0, 3, 0);
 
 0.31,6.RT,11./,16./,21.19,31./:X:::Move From Condition Register
 *601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
@@ -3187,7 +3316,7 @@ void::function::invalid_arithemetic_operation:cpu *processor, unsigned_word cia,
 *604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  3,  0
 	unsigned_word b;
 	unsigned_word EA;
-	if (RA == 0) b = 0;
+	if (RA_is_0) b = 0;
 	else         b = *rA;
 	EA = b + EXTS(D);
 	*frT = DOUBLE(MEM(unsigned, EA, 4));
@@ -3200,7 +3329,7 @@ void::function::invalid_arithemetic_operation:cpu *processor, unsigned_word cia,
 *604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  3,  0
 	unsigned_word b;
 	unsigned_word EA;
-	if (RA == 0) b = 0;
+	if (RA_is_0) b = 0;
 	else         b = *rA;
 	EA = b + *rB;
 	*frT = DOUBLE(MEM(unsigned, EA, 4));
@@ -3212,7 +3341,7 @@ void::function::invalid_arithemetic_operation:cpu *processor, unsigned_word cia,
 *603e:PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
 *604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  3,  0
 	unsigned_word EA;
-	if (RA == 0)
+	if (RA_is_0)
 	  program_interrupt(processor, cia,
 	                    illegal_instruction_program_interrupt);
 	EA = *rA + EXTS(D);
@@ -3226,7 +3355,7 @@ void::function::invalid_arithemetic_operation:cpu *processor, unsigned_word cia,
 *603e:PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
 *604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  3,  0
 	unsigned_word EA;
-	if (RA == 0)
+	if (RA_is_0)
 	  program_interrupt(processor, cia,
 	                    illegal_instruction_program_interrupt);
 	EA = *rA + *rB;
@@ -3241,7 +3370,7 @@ void::function::invalid_arithemetic_operation:cpu *processor, unsigned_word cia,
 *604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  3,  0
 	unsigned_word b;
 	unsigned_word EA;
-	if (RA == 0) b = 0;
+	if (RA_is_0) b = 0;
 	else         b = *rA;
 	EA = b + EXTS(D);
 	*frT = MEM(unsigned, EA, 8);
@@ -3254,7 +3383,7 @@ void::function::invalid_arithemetic_operation:cpu *processor, unsigned_word cia,
 *604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  3,  0
 	unsigned_word b;
 	unsigned_word EA;
-	if (RA == 0) b = 0;
+	if (RA_is_0) b = 0;
 	else         b = *rA;
 	EA = b + *rB;
 	*frT = MEM(unsigned, EA, 8);
@@ -3266,7 +3395,7 @@ void::function::invalid_arithemetic_operation:cpu *processor, unsigned_word cia,
 *603e:PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
 *604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  3,  0
 	unsigned_word EA;
-	if (RA == 0)
+	if (RA_is_0)
 	  program_interrupt(processor, cia,
 	                    illegal_instruction_program_interrupt);
 	EA = *rA + EXTS(D);
@@ -3280,7 +3409,7 @@ void::function::invalid_arithemetic_operation:cpu *processor, unsigned_word cia,
 *603e:PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
 *604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  3,  0
 	unsigned_word EA;
-	if (RA == 0)
+	if (RA_is_0)
 	  program_interrupt(processor, cia,
 	                    illegal_instruction_program_interrupt);
 	EA = *rA + *rB;
@@ -3300,7 +3429,7 @@ void::function::invalid_arithemetic_operation:cpu *processor, unsigned_word cia,
 *604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  3,  0
 	unsigned_word b;
 	unsigned_word EA;
-	if (RA == 0) b = 0;
+	if (RA_is_0) b = 0;
 	else         b = *rA;
 	EA = b + EXTS(D);
 	STORE(EA, 4, SINGLE(*frS));
@@ -3313,7 +3442,7 @@ void::function::invalid_arithemetic_operation:cpu *processor, unsigned_word cia,
 *604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  3,  0
 	unsigned_word b;
 	unsigned_word EA;
-	if (RA == 0) b = 0;
+	if (RA_is_0) b = 0;
 	else         b = *rA;
 	EA = b + *rB;
 	STORE(EA, 4, SINGLE(*frS));
@@ -3325,7 +3454,7 @@ void::function::invalid_arithemetic_operation:cpu *processor, unsigned_word cia,
 *603e:PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
 *604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  3,  0
 	unsigned_word EA;
-	if (RA == 0)
+	if (RA_is_0)
 	  program_interrupt(processor, cia,
 	                    illegal_instruction_program_interrupt);
 	EA = *rA + EXTS(D);
@@ -3339,7 +3468,7 @@ void::function::invalid_arithemetic_operation:cpu *processor, unsigned_word cia,
 *603e:PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
 *604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  3,  0
 	unsigned_word EA;
-	if (RA == 0)
+	if (RA_is_0)
 	  program_interrupt(processor, cia,
 	                    illegal_instruction_program_interrupt);
 	EA = *rA + *rB;
@@ -3354,7 +3483,7 @@ void::function::invalid_arithemetic_operation:cpu *processor, unsigned_word cia,
 *604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  3,  0
 	unsigned_word b;
 	unsigned_word EA;
-	if (RA == 0) b = 0;
+	if (RA_is_0) b = 0;
 	else         b = *rA;
 	EA = b + EXTS(D);
 	STORE(EA, 8, *frS);
@@ -3367,7 +3496,7 @@ void::function::invalid_arithemetic_operation:cpu *processor, unsigned_word cia,
 *604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  3,  0
 	unsigned_word b;
 	unsigned_word EA;
-	if (RA == 0) b = 0;
+	if (RA_is_0) b = 0;
 	else         b = *rA;
 	EA = b + *rB;
 	STORE(EA, 8, *frS);
@@ -3379,7 +3508,7 @@ void::function::invalid_arithemetic_operation:cpu *processor, unsigned_word cia,
 *603e:PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
 *604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  3,  0
 	unsigned_word EA;
-	if (RA == 0)
+	if (RA_is_0)
 	  program_interrupt(processor, cia,
 	                    illegal_instruction_program_interrupt);
 	EA = *rA + EXTS(D);
@@ -3393,7 +3522,7 @@ void::function::invalid_arithemetic_operation:cpu *processor, unsigned_word cia,
 *603e:PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  2,  0
 *604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  3,  0
 	unsigned_word EA;
-	if (RA == 0)
+	if (RA_is_0)
 	  program_interrupt(processor, cia,
 	                    illegal_instruction_program_interrupt);
 	EA = *rA + *rB;
@@ -4028,28 +4157,29 @@ void::function::invalid_arithemetic_operation:cpu *processor, unsigned_word cia,
 	int sign;
 	int exp;
 	unsigned64 frac_grx;
-	/* split off cases for what to do */
-	if (EXTRACTED64(*frB, 1, 11) < 897
-	    && EXTRACTED64(*frB, 1, 63) > 0) {
-	    if ((FPSCR & fpscr_ue) == 0) goto Disabled_Exponent_Underflow;
-	    if ((FPSCR & fpscr_ue) != 0) goto Enabled_Exponent_Underflow;
-	}
-	if (EXTRACTED64(*frB, 1, 11) > 1150
-	    && EXTRACTED64(*frB, 1, 11) < 2047) {
-	    if ((FPSCR & fpscr_oe) == 0) goto Disabled_Exponent_Overflow;
-	    if ((FPSCR & fpscr_oe) != 0) goto Enabled_Exponent_Overflow;
-	}
-	if (EXTRACTED64(*frB, 1, 11) > 896
-	    && EXTRACTED64(*frB, 1, 11) < 1151) goto Normal_Operand;
-	if (EXTRACTED64(*frB, 1, 63) == 0) goto Zero_Operand;
-	if (EXTRACTED64(*frB, 1, 11) == 2047) {
-	  if (EXTRACTED64(*frB, 12, 63) == 0) goto Infinity_Operand;
-	  if (EXTRACTED64(*frB, 12, 12) == 1) goto QNaN_Operand;
-	  if (EXTRACTED64(*frB, 12, 12) == 0
-	      && EXTRACTED64(*frB, 13, 63) > 0) goto SNaN_Operand;
-	}
-	/* handle them */
-	Disabled_Exponent_Underflow:
+	/***/
+	  /* split off cases for what to do */
+	  if (EXTRACTED64(*frB, 1, 11) < 897
+	      && EXTRACTED64(*frB, 1, 63) > 0) {
+	      if ((FPSCR & fpscr_ue) == 0) GOTO(Disabled_Exponent_Underflow);
+	      if ((FPSCR & fpscr_ue) != 0) GOTO(Enabled_Exponent_Underflow);
+	  }
+	  if (EXTRACTED64(*frB, 1, 11) > 1150
+	      && EXTRACTED64(*frB, 1, 11) < 2047) {
+	      if ((FPSCR & fpscr_oe) == 0) GOTO(Disabled_Exponent_Overflow);
+	      if ((FPSCR & fpscr_oe) != 0) GOTO(Enabled_Exponent_Overflow);
+	  }
+	  if (EXTRACTED64(*frB, 1, 11) > 896
+	      && EXTRACTED64(*frB, 1, 11) < 1151) GOTO(Normal_Operand);
+	  if (EXTRACTED64(*frB, 1, 63) == 0) GOTO(Zero_Operand);
+	  if (EXTRACTED64(*frB, 1, 11) == 2047) {
+	    if (EXTRACTED64(*frB, 12, 63) == 0) GOTO(Infinity_Operand);
+	    if (EXTRACTED64(*frB, 12, 12) == 1) GOTO(QNaN_Operand);
+	    if (EXTRACTED64(*frB, 12, 12) == 0
+	        && EXTRACTED64(*frB, 13, 63) > 0) GOTO(SNaN_Operand);
+	  }
+	/**/
+	LABEL(Disabled_Exponent_Underflow):
 	  sign = EXTRACTED64(*frB, 0, 0);
 	  if (EXTRACTED64(*frB, 1, 11) == 0) {
 	    exp = -1022;
@@ -4091,8 +4221,9 @@ void::function::invalid_arithemetic_operation:cpu *processor, unsigned_word cia,
 	            | INSERTED64(exp + 1023, 1, 11)
 	            | INSERTED64(EXTRACTED64(frac_grx, 1, 52), 12, 63));
 	  }
-	  goto Done;
-	Enabled_Exponent_Underflow:
+	  GOTO(Done);
+	/**/
+	LABEL(Enabled_Exponent_Underflow):
 	  FPSCR_SET_UX(1);
 	  sign = EXTRACTED64(*frB, 0, 0);
 	  if (EXTRACTED64(*frB, 1, 11) == 0) {
@@ -4117,8 +4248,9 @@ void::function::invalid_arithemetic_operation:cpu *processor, unsigned_word cia,
 	          | INSERTED64(EXTRACTED64(frac_grx, 1, 52), 12, 63));
 	  if (sign == 0) FPSCR_SET_FPRF(fpscr_rf_pos_normal_number);
 	  if (sign == 1) FPSCR_SET_FPRF(fpscr_rf_neg_normal_number);
-	  goto Done;
-	Disabled_Exponent_Overflow:
+	  GOTO(Done);
+	/**/
+	LABEL(Disabled_Exponent_Overflow):
 	  FPSCR_SET_OX(1);
 	  if ((FPSCR & fpscr_rn) == fpscr_rn_round_to_nearest) {
 	    if (EXTRACTED64(*frB, 0, 0) == 0) {
@@ -4163,43 +4295,49 @@ void::function::invalid_arithemetic_operation:cpu *processor, unsigned_word cia,
 	  /* FPSCR[FR] <- undefined */
 	  FPSCR_SET_FI(1);
 	  FPSCR_SET_XX(1);
-	  goto Done;
-	Enabled_Exponent_Overflow:
+	  GOTO(Done);
+	/**/
+	LABEL(Enabled_Exponent_Overflow):
 	  sign = EXTRACTED64(*frB, 0, 0);
 	  exp = EXTRACTED64(*frB, 1, 11) - 1023;
 	  frac_grx = BIT64(0) | INSERTED64(EXTRACTED64(*frB, 12, 63), 1, 52);
 	  Round_Single(processor, sign, &exp, &frac_grx);
 	  FPSCR_SET_XX(FPSCR & fpscr_fi);
-	  Enabled_Overflow:
-	    FPSCR_SET_OX(1);
-	    exp = exp - 192;
-	    *frT = (INSERTED64(sign, 0, 0)
-	            | INSERTED64(exp + 1023, 1, 11)
-	            | INSERTED64(EXTRACTED64(frac_grx, 1, 52), 12, 63));
-	    if (sign == 0) FPSCR_SET_FPRF(fpscr_rf_pos_normal_number);
-	    if (sign == 1) FPSCR_SET_FPRF(fpscr_rf_neg_normal_number);
-	  goto Done;
-	Zero_Operand:
+	/**/
+	LABEL(Enabled_Overflow):
+	  FPSCR_SET_OX(1);
+	  exp = exp - 192;
+	  *frT = (INSERTED64(sign, 0, 0)
+	          | INSERTED64(exp + 1023, 1, 11)
+	          | INSERTED64(EXTRACTED64(frac_grx, 1, 52), 12, 63));
+	  if (sign == 0) FPSCR_SET_FPRF(fpscr_rf_pos_normal_number);
+	  if (sign == 1) FPSCR_SET_FPRF(fpscr_rf_neg_normal_number);
+	  GOTO(Done);
+	/**/
+	LABEL(Zero_Operand):
 	  *frT = *frB;
 	  if (EXTRACTED64(*frB, 0, 0) == 0) FPSCR_SET_FPRF(fpscr_rf_pos_zero);
 	  if (EXTRACTED64(*frB, 0, 0) == 1) FPSCR_SET_FPRF(fpscr_rf_neg_zero);
 	  FPSCR_SET_FR(0);
 	  FPSCR_SET_FI(0);
-	  goto Done;
-	Infinity_Operand:
+	  GOTO(Done);
+	/**/
+	LABEL(Infinity_Operand):
 	  *frT = *frB;
 	  if (EXTRACTED64(*frB, 0, 0) == 0) FPSCR_SET_FPRF(fpscr_rf_pos_infinity);
 	  if (EXTRACTED64(*frB, 0, 0) == 1) FPSCR_SET_FPRF(fpscr_rf_neg_infinity);
 	  FPSCR_SET_FR(0);
 	  FPSCR_SET_FI(0);
-	  goto Done;
-	QNaN_Operand:
+	  GOTO(Done);
+	/**/
+	LABEL(QNaN_Operand):
 	  *frT = INSERTED64(EXTRACTED64(*frB, 0, 34), 0, 34);
 	  FPSCR_SET_FPRF(fpscr_rf_quiet_nan);
 	  FPSCR_SET_FR(0);
 	  FPSCR_SET_FI(0);
-	  goto Done;
-	SNaN_Operand:
+	  GOTO(Done);
+	/**/
+	LABEL(SNaN_Operand):
 	  FPSCR_OR_VX(fpscr_vxsnan);
 	  if ((FPSCR & fpscr_ve) == 0) {
 	    *frT = (MASKED64(*frB, 0, 11)
@@ -4209,29 +4347,35 @@ void::function::invalid_arithemetic_operation:cpu *processor, unsigned_word cia,
 	  }
 	  FPSCR_SET_FR(0);
 	  FPSCR_SET_FI(0);
-	  goto Done;
-	Normal_Operand:
+	  GOTO(Done);
+	/**/
+	LABEL(Normal_Operand):
 	  sign = EXTRACTED64(*frB, 0, 0);
 	  exp = EXTRACTED64(*frB, 1, 11) - 1023;
 	  frac_grx = BIT64(0) | INSERTED64(EXTRACTED64(*frB, 12, 63), 1, 52);
 	  Round_Single(processor, sign, &exp, &frac_grx);
 	  FPSCR_SET_XX(FPSCR & fpscr_fi);
-	  if (exp > 127 && (FPSCR & fpscr_oe) == 0) goto Disabled_Exponent_Overflow;
-	  if (exp > 127 && (FPSCR & fpscr_oe) != 0) goto Enabled_Overflow;
+	  if (exp > 127 && (FPSCR & fpscr_oe) == 0) GOTO(Disabled_Exponent_Overflow);
+	  if (exp > 127 && (FPSCR & fpscr_oe) != 0) GOTO(Enabled_Overflow);
 	  *frT = (INSERTED64(sign, 0, 0)
 	          | INSERTED64(exp + 1023, 1, 11)
 	          | INSERTED64(EXTRACTED64(frac_grx, 1, 52), 12, 63));
 	  if (sign == 0) FPSCR_SET_FPRF(fpscr_rf_pos_normal_number);
 	  if (sign == 1) FPSCR_SET_FPRF(fpscr_rf_neg_normal_number);
-	  goto Done;
-	Done:
-	PPC_INSN_FLOAT(FRT_BITMASK, FRB_BITMASK, Rc);
+	  GOTO(Done);
+	/**/
+	LABEL(Done):
+	  PPC_INSN_FLOAT(FRT_BITMASK, FRB_BITMASK, Rc);
+
 
 0.63,6.FRT,11./,16.FRB,21.814,31.Rc:X:64,f::Floating Convert To Integer Doubleword
+	floating_point_assist_interrupt(processor, cia);
 
 0.63,6.FRT,11./,16.FRB,21.815,31.Rc:X:64,f::Floating Convert To Integer Doubleword with round towards Zero
+	floating_point_assist_interrupt(processor, cia);
 
 0.63,6.FRT,11./,16.FRB,21.14,31.Rc:X:f::Floating Convert To Integer Word
+	floating_point_assist_interrupt(processor, cia);
 
 0.63,6.FRT,11./,16.FRB,21.15,31.Rc:X:f:fctiwz:Floating Convert To Integer Word with round towards Zero
 *601: PPC_UNIT_FPU,   PPC_UNIT_FPU,   4,  4,  0
@@ -4249,30 +4393,32 @@ void::function::invalid_arithemetic_operation:cpu *processor, unsigned_word cia,
 	int sign = EXTRACTED64(*frB, 0, 0);
 	int exp = 63;
 	unsigned64 frac = *frB;
-	if (frac == 0) goto Zero_Operand;
-	if (sign == 1) frac = ~frac + 1;
-	while (EXTRACTED64(frac, 0, 0) == 0) {
-	  /*??? do the loop 0 times if (FRB) = max negative integer */
-	  frac = INSERTED64(EXTRACTED64(frac, 1, 63), 0, 62);
-	  exp = exp - 1;
-	}
-	Round_Float(processor, sign, &exp, &frac, FPSCR & fpscr_rn);
-	if (sign == 0) FPSCR_SET_FPRF(fpscr_rf_pos_normal_number);
-	if (sign == 1) FPSCR_SET_FPRF(fpscr_rf_pos_normal_number);
-	*frT = (INSERTED64(sign, 0, 0)
-	        | INSERTED64(exp + 1023, 1, 11)
-	        | INSERTED64(EXTRACTED64(frac, 1, 52), 12, 63));
-	goto Done;
+	/***/
+	  if (frac == 0) GOTO(Zero_Operand);
+	  if (sign == 1) frac = ~frac + 1;
+	  while (EXTRACTED64(frac, 0, 0) == 0) {
+	    /*??? do the loop 0 times if (FRB) = max negative integer */
+	    frac = INSERTED64(EXTRACTED64(frac, 1, 63), 0, 62);
+	    exp = exp - 1;
+	  }
+	  Round_Float(processor, sign, &exp, &frac, FPSCR & fpscr_rn);
+	  if (sign == 0) FPSCR_SET_FPRF(fpscr_rf_pos_normal_number);
+	  if (sign == 1) FPSCR_SET_FPRF(fpscr_rf_pos_normal_number);
+	  *frT = (INSERTED64(sign, 0, 0)
+	          | INSERTED64(exp + 1023, 1, 11)
+	          | INSERTED64(EXTRACTED64(frac, 1, 52), 12, 63));
+	  GOTO(Done);
 	/**/
-	Zero_Operand:
+	LABEL(Zero_Operand):
 	  FPSCR_SET_FR(0);
 	  FPSCR_SET_FI(0);
 	  FPSCR_SET_FPRF(fpscr_rf_pos_zero);
 	  *frT = 0;
-	  goto Done;
+	  GOTO(Done);
 	/**/
-	Done:
-	PPC_INSN_FLOAT(FRT_BITMASK, FRB_BITMASK, Rc);
+	LABEL(Done):
+	  PPC_INSN_FLOAT(FRT_BITMASK, FRB_BITMASK, Rc);
+
 
 #
 # I.4.6.7 Floating-Point Compare Instructions
@@ -4334,41 +4480,94 @@ void::function::invalid_arithemetic_operation:cpu *processor, unsigned_word cia,
 #
 
 0.63,6.FRT,11./,16./,21.583,31.Rc:X:f::Move From FPSCR
+	FPSCR_BEGIN;
+	*frT = FPSCR;
+	FPSCR_END(Rc);
 
 0.63,6.BF,9./,11.BFA,14./,16./,21.64,31./:X:f::Move to Condition Register from FPSCR
+	FPSCR_BEGIN;
+	unsigned field = FPSCR_FIELD(BFA);
+	CR_SET(BF, field);
+	FPSCR_SET(BFA, 0); /* FPSCR_END fixes up FEX/VX */
+	FPSCR_END(0);
 
 0.64,6.BF,9./,11./,16.U,20./,21.134,31.Rc:X:f::Move To FPSCR Field Immediate
+	FPSCR_BEGIN;
+	FPSCR_SET(BF, U);
+	FPSCR_END(Rc);
 
 0.63,6./,7.FLM,15./,16.FRB,21.711,31.Rc:XFL:f::Move To FPSCR Fields
+	FPSCR_BEGIN;
+	int i;
+	for (i = 0; i < 8; i++) {
+	  if ((FLM & BIT8(i))) {
+	    FPSCR &= ~MASK32(i*4, i*4+3);
+	    FPSCR |= MASKED32(*frB, i*4, i*4+3);
+	  }
+	}
+	FPSCR_END(Rc);
 
 0.63,6.BT,11./,16./,21.70,31.Rc:X:f::Move To FPSCR Bit 0
+	FPSCR_BEGIN;
+	unsigned32 bit = BIT32(BT);
+	FPSCR &= ~bit;
+	FPSCR_END(Rc);
 
 0.63,6.BT,11./,16./,21.38,31.Rc:X:f::Move To FPSCR Bit 1
+	FPSCR_BEGIN;
+	unsigned32 bit = BIT32(BT);
+	if (bit & fpscr_fi)
+	  bit |= fpscr_xx;
+	if ((bit & fpscr_vx_bits))
+	  bit |= fpscr_fx;
+	/* note - omit vx bit */
+	if ((bit & (fpscr_ox | fpscr_ux | fpscr_zx | fpscr_xx)))
+	  bit |= fpscr_fx;
+	FPSCR |= bit;
+	FPSCR_END(Rc);
 
 
 #
 # I.A.1.1 Floating-Point Store Instruction
 #
-0.31,6.FRS,11.RA,16.RB,21.983,31./:X:f::Store Floating-Point as Integer Word Indexed
+0.31,6.FRS,11.RA,16.RB,21.983,31./:X:f,o::Store Floating-Point as Integer Word Indexed
+	program_interrupt(processor, cia, optional_instruction_program_interrupt);
 
 #
 # I.A.1.2 Floating-Point Arithmetic Instructions
 #
 
-0.63,6.FRT,11./,16.FRB,21./,26.22,31.Rc:A:f::Floating Square Root
+0.63,6.FRT,11./,16.FRB,21./,26.22,31.Rc:A:f,o::Floating Square Root
+	program_interrupt(processor, cia, optional_instruction_program_interrupt);
 
-0.59,6.FRT,11./,16.FRB,21./,26.22,31.Rc:A:f::Floating Square Root Single
+0.59,6.FRT,11./,16.FRB,21./,26.22,31.Rc:A:f,o::Floating Square Root Single
+	program_interrupt(processor, cia, optional_instruction_program_interrupt);
 
-0.59,6.FRT,11./,16.FRB,21./,26.24,31.Rc:A:f::Floating Reciprocal Estimate Single
+0.59,6.FRT,11./,16.FRB,21./,26.24,31.Rc:A:f,o::Floating Reciprocal Estimate Single
+	program_interrupt(processor, cia, optional_instruction_program_interrupt);
 
-0.63,6.FRT,11./,16.FRB,21./,26.26,31.Rc:A:f::Floating Reciprocal Square Root Estimate
+0.63,6.FRT,11./,16.FRB,21./,26.26,31.Rc:A:f,o::Floating Reciprocal Square Root Estimate
+	program_interrupt(processor, cia, optional_instruction_program_interrupt);
 
 #
 # I.A.1.3 Floating-Point Select Instruction
 #
 
-0.63,6.FRT,11.FRA,16.FRB,21.FRC,26.23,31.Rc:A:f::Floating Select
-
+0.63,6.FRT,11.FRA,16.FRB,21.FRC,26.23,31.Rc:A:f,o::Floating Select
+*601: PPC_UNIT_BAD,   PPC_UNIT_BAD,   0,  0,  0
+*603: PPC_UNIT_FPU,   PPC_UNIT_FPU,   1,  3,  0
+*603e:PPC_UNIT_FPU,   PPC_UNIT_FPU,   1,  3,  0
+*604: PPC_UNIT_FPU,   PPC_UNIT_FPU,   1,  3,  0
+	if (CURRENT_MODEL == MODEL_ppc601) {
+	  program_interrupt(processor, cia, optional_instruction_program_interrupt);
+	} else {
+	  unsigned64 zero = 0;
+	  FPSCR_BEGIN;
+	  if (is_NaN(*frA, 0) || is_less_than (frA, &zero)) *frT = *frB;
+	  else						    *frT = *frC;
+	  FPSCR_END(Rc);
+	  PPC_INSN_FLOAT(FRT_BITMASK, FRA_BITMASK | FRB_BITMASK | FRC_BITMASK, Rc);
+	}
 
 #
 # II.3.2 Cache Management Instructions
@@ -4390,7 +4589,7 @@ void::function::invalid_arithemetic_operation:cpu *processor, unsigned_word cia,
 *603: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  3,  0
 *603e:PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  3,  0
 *604: PPC_UNIT_LSU,   PPC_UNIT_LSU,   1,  1,  0
-	cpu_synchronize_context(processor);
+	cpu_synchronize_context(processor, cia);
 	PPC_INSN_INT(0, 0, 0);
 
 
@@ -4486,7 +4685,8 @@ void::function::invalid_arithemetic_operation:cpu *processor, unsigned_word cia,
 	         | MASKED(SRR1, 37, 41)
 	         | MASKED(SRR1, 48, 63));
 	  NIA = MASKED(SRR0, 0, 61);
-	  cpu_synchronize_context(processor);
+	  cpu_synchronize_context(processor, cia);
+	  check_masked_interrupts(processor);
 	}
 
 #
@@ -4503,8 +4703,10 @@ void::function::invalid_arithemetic_operation:cpu *processor, unsigned_word cia,
 	if (IS_PROBLEM_STATE(processor))
 	  program_interrupt(processor, cia,
 	                    privileged_instruction_program_interrupt);
-	else
+	else {
 	  MSR = *rS;
+	  check_masked_interrupts(processor);
+	}
 
 0.31,6.RT,11./,16./,21.83,31./:X:::Move From Machine State Register
 *601: PPC_UNIT_IU,    PPC_UNIT_IU,    1,  1,  0
@@ -4514,8 +4716,10 @@ void::function::invalid_arithemetic_operation:cpu *processor, unsigned_word cia,
 	if (IS_PROBLEM_STATE(processor))
 	  program_interrupt(processor, cia,
 	                    privileged_instruction_program_interrupt);
-	else
+	else {
 	  *rT = MSR;
+	  check_masked_interrupts(processor);
+	}
 
 
 #

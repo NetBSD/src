@@ -1,6 +1,6 @@
 /*  This file is part of the program psim.
 
-    Copyright (C) 1994-1995, Andrew Cagney <cagney@highland.com.au>
+    Copyright (C) 1994-1995,1997, Andrew Cagney <cagney@highland.com.au>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -38,13 +38,23 @@ INLINE_CAP\
 (cap *db);
 
 INLINE_CAP\
-(signed32) cap_external
+(signed_cell) cap_external
 (cap *db,
  void *internal);
 
 INLINE_CAP\
 (void *) cap_internal
 (cap *db,
- signed32 external);
+ signed_cell external);
+
+INLINE_CAP\
+(void) cap_add
+(cap *db,
+ void *internal);
+
+INLINE_CAP\
+(void) cap_remove
+(cap *db,
+ void *internal);
 
 #endif

@@ -1,6 +1,6 @@
 /*  This file is part of the program psim.
 
-    Copyright (C) 1994-1995, Andrew Cagney <cagney@highland.com.au>
+    Copyright (C) 1994-1997, Andrew Cagney <cagney@highland.com.au>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -60,14 +60,18 @@ INLINE_VM\
  unsigned_word cia);
 
 
-/* block transfers */
+/* generic block transfers.  Dependant on the presence of the
+   PROCESSOR arg, either returns the number of bytes transfered or (if
+   PROCESSOR is non NULL) aborts the simulation */
 
 INLINE_VM\
 (int) vm_data_map_read_buffer
 (vm_data_map *map,
  void *target,
  unsigned_word addr,
- unsigned len);
+ unsigned len,
+ cpu *processor,
+ unsigned_word cia);
 
 INLINE_VM\
 (int) vm_data_map_write_buffer
@@ -75,7 +79,9 @@ INLINE_VM\
  const void *source,
  unsigned_word addr,
  unsigned len,
- int violate_read_only_section);
+ int violate_read_only_section,
+ cpu *processor,
+ unsigned_word cia);
 
 
 /* fetch the next instruction from memory */
@@ -129,7 +135,10 @@ INLINE_VM\
 (vm *memory,
  spreg *sprs,
  sreg *srs,
- msreg msr);
+ msreg msr,
+ /**/
+ cpu *processor,
+ unsigned_word cia);
 
 
 /* update vm data structures due to a TLB operation */

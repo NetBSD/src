@@ -26,6 +26,8 @@
 #include "idecode.h"
 #include "os_emul.h"
 
+#include "tree.h"
+
 #include "bfd.h"
 
 #ifndef INLINE_EMUL_GENERIC
@@ -121,6 +123,12 @@ INLINE_EMUL_GENERIC void emul_write_gpr64
 INLINE_EMUL_GENERIC void emul_write_status
 (cpu *processor,
  int status,
+ int errno);
+
+INLINE_EMUL_GENERIC void emul_write2_status
+(cpu *processor,
+ int status1,
+ int status2,
  int errno);
 
 INLINE_EMUL_GENERIC char *emul_read_string

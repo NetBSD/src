@@ -22,12 +22,10 @@
 #ifndef _EVENTS_H_
 #define _EVENTS_H_
 
-typedef struct _event_queue event_queue;
-typedef void *event_entry_tag;
+/* typedef struct _event_queue event_queue; */
+/* typedef struct _event_entry_tag *event_entry_tag; */
 
-typedef void event_handler
-(event_queue *queue,
- void *data);
+typedef void event_handler(void *data);
 
 INLINE_EVENTS\
 (event_queue *) event_queue_create

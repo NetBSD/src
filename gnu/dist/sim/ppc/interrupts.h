@@ -93,6 +93,7 @@ typedef enum {
   illegal_instruction_program_interrupt,
   privileged_instruction_program_interrupt,
   trap_program_interrupt,
+  optional_instruction_program_interrupt, /* subset of illegal instruction */
   nr_program_interrupt_reasons
 } program_interrupt_reasons;
 
@@ -122,23 +123,47 @@ INLINE_INTERRUPTS\
 (cpu *processor,
  unsigned_word cia);
 
-/* Hardware generated interrupts
+/* Hardware generated interrupts:
 
-   These hardware generated interrupt routines are called outside of
-   the instruction execution cycle and so return normally.
+   These asynchronous hardware generated interrupts may be called at
+   any time.  It is the responsibility of this (the interrupts) module
+   to ensure that interrupts are delivered correctly (when possible).
+   The delivery of these interrupts is controlled by the MSR's
+   external interrupt enable bit.  When ever the MSR's value is
+   changed, the processor must call the check_masked_interrupts()
+   function in case delivery has been made possible.
 
-   More importantly, they assume that the current instruction address
-   held within the processor is correct.
+   decrementer_interrupt is `edge' sensitive.  Multiple edges arriving
+   before the first edge has been delivered result in only one
+   interrupt.
 
-   Return a non zero value if the interrupt was not successfully
-   delivered */
+   external_interrupt is `level' sensitive.  An external interrupt
+   will only be delivered when the external interrupt port is
+   `asserted'. While interrupts are disabled, the external interrupt
+   can be asserted and then de-asserted without an interrupt
+   eventually being delivered. */
+
+enum {
+  external_interrupt_pending = 1,
+  decrementer_interrupt_pending = 2,
+};
+
+typedef struct _interrupts {
+  event_entry_tag delivery_scheduled;
+  int pending_interrupts;
+} interrupts;
 
 INLINE_INTERRUPTS\
-(int) decrementer_interrupt
+(void) check_masked_interrupts
 (cpu *processor);
 
 INLINE_INTERRUPTS\
-(int) external_interrupt
+(void) decrementer_interrupt
 (cpu *processor);
+
+INLINE_INTERRUPTS\
+(void) external_interrupt
+(cpu *processor,
+ int is_asserted);
 
 #endif /* _INTERRUPTS_H_ */

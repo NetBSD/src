@@ -1,6 +1,6 @@
 /*  This file is part of the program psim.
 
-    Copyright (C) 1994-1996, Andrew Cagney <cagney@highland.com.au>
+    Copyright (C) 1994-1997, Andrew Cagney <cagney@highland.com.au>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -86,8 +86,8 @@
        else \
          XER &= (~xer_carry); */ \
   } \
-  ITRACE(trace_alu, (" Result = %ld (0x%lx), XER = %ld\n", \
-		     (long)alu_result, (long)alu_result, (long)XER)); \
+  TRACE(trace_alu, (" Result = %ld (0x%lx), XER = %ld\n", \
+                    (long)alu_result, (long)alu_result, (long)XER)); \
   /* Update the Result Conditions if needed */ \
   CR0_COMPARE(alu_result, 0, Rc); \
   /* assign targ same */ \
@@ -261,6 +261,7 @@ do { \
     : cr_i_zero))
 
 #define CR_SET(REG, VAL) MBLIT32(CR, REG*4, REG*4+3, VAL)
+#define CR_FIELD(REG) EXTRACTED32(CR, REG*4, REG*4+3)
 #define CR_SET_XER_SO(REG, VAL) \
 do { \
   creg new_bits = ((XER & xer_summary_overflow) \
@@ -281,9 +282,9 @@ do { \
 do { \
   if (Rc) { \
     CR_COMPARE(0, LHS, RHS); \
-    ITRACE(trace_alu, \
-	   ("CR=0x%08lx, LHS=%ld, RHS=%ld\n", \
-	    (unsigned long)CR, (long)LHS, (long)RHS)); \
+    TRACE(trace_alu, \
+	  ("CR=0x%08lx, LHS=%ld, RHS=%ld\n", \
+	   (unsigned long)CR, (long)LHS, (long)RHS)); \
   } \
 } while (0)
 
@@ -302,21 +303,39 @@ do { \
 } while (0)
 
 
-/* some FPSCR update macros */
+
+/* some FPSCR update macros. */
 
 #define FPSCR_BEGIN \
-FPSCR &= ~fpscr_reserved_20; \
 { \
-  fpscreg old_fpscr __attribute__((__unused__)) = FPSCR
+  fpscreg old_fpscr UNUSED = FPSCR
 
 #define FPSCR_END(Rc) { \
+  /* always update VX */ \
+  if ((FPSCR & fpscr_vx_bits)) \
+    FPSCR |= fpscr_vx; \
+  else \
+    FPSCR &= ~fpscr_vx; \
+  /* always update FEX */ \
+  if (((FPSCR & fpscr_vx) && (FPSCR & fpscr_ve)) \
+      || ((FPSCR & fpscr_ox) && (FPSCR & fpscr_oe)) \
+      || ((FPSCR & fpscr_ux) && (FPSCR & fpscr_ue)) \
+      || ((FPSCR & fpscr_zx) && (FPSCR & fpscr_ze)) \
+      || ((FPSCR & fpscr_xx) && (FPSCR & fpscr_xe))) \
+    FPSCR |= fpscr_fex; \
+  else \
+    FPSCR &= ~fpscr_fex; \
   CR1_UPDATE(Rc); \
-  if (FPSCR & fpscr_reserved_20) { \
-    FPSCR &= ~fpscr_reserved_20; \
+  /* interrupt enabled? */ \
+  if ((MSR & (msr_floating_point_exception_mode_0 \
+              | msr_floating_point_exception_mode_1)) \
+      && (FPSCR & fpscr_fex)) \
     program_interrupt(processor, cia, \
                       floating_point_enabled_program_interrupt); \
-  } \
 }}
+
+#define FPSCR_SET(REG, VAL) MBLIT32(FPSCR, REG*4, REG*4+3, VAL)
+#define FPSCR_FIELD(REG) EXTRACTED32(FPSCR, REG*4, REG*4+3)
 
 #define FPSCR_SET_FPCC(VAL) MBLIT32(FPSCR, fpscr_fpcc_bit, fpscr_fpcc_bit+3, VAL)
 
@@ -324,11 +343,9 @@ FPSCR &= ~fpscr_reserved_20; \
 
 #define FPSCR_OR_VX(VAL) \
 do { \
+  /* NOTE: VAL != 0 */ \
   FPSCR |= (VAL); \
   FPSCR |= fpscr_fx; \
-  if (FPSCR & fpscr_ve) \
-    FPSCR |= fpscr_fex | fpscr_reserved_20; \
-  FPSCR |= fpscr_vx; \
 } while (0)
 
 #define FPSCR_SET_OX(COND) \
@@ -336,8 +353,6 @@ do { \
   if (COND) { \
     FPSCR |= fpscr_ox; \
     FPSCR |= fpscr_fx; \
-    if (FPSCR & fpscr_oe) \
-      FPSCR |= fpscr_fex | fpscr_reserved_20; \
   } \
   else \
     FPSCR &= ~fpscr_ox; \
@@ -348,8 +363,6 @@ do { \
   if (COND) { \
     FPSCR |= fpscr_ux; \
     FPSCR |= fpscr_fx; \
-    if (FPSCR & fpscr_ue) \
-      FPSCR |= fpscr_fex | fpscr_reserved_20; \
   } \
   else \
     FPSCR &= ~fpscr_ux; \
@@ -360,8 +373,6 @@ do { \
   if (COND) { \
     FPSCR |= fpscr_zx; \
     FPSCR |= fpscr_fx; \
-    if (FPSCR & fpscr_ze) \
-      FPSCR |= fpscr_fex | fpscr_reserved_20; \
   } \
   else \
     FPSCR &= ~fpscr_zx; \
@@ -372,13 +383,12 @@ do { \
   if (COND) { \
     FPSCR |= fpscr_xx; \
     FPSCR |= fpscr_fx; \
-    if (FPSCR & fpscr_xe) \
-      FPSCR |= fpscr_fex | fpscr_reserved_20; \
   } \
 } while (0)
 
-#define FPSCR_SET_FR(COND) \
-do { \
+/* Note: code using SET_FI must also explicitly call SET_XX */
+
+#define FPSCR_SET_FR(COND) do { \
   if (COND) \
     FPSCR |= fpscr_fr; \
   else \
@@ -387,8 +397,9 @@ do { \
 
 #define FPSCR_SET_FI(COND) \
 do { \
-  if (COND) \
+  if (COND) { \
     FPSCR |= fpscr_fi; \
+  } \
   else \
     FPSCR &= ~fpscr_fi; \
 } while (0)

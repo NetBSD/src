@@ -95,6 +95,11 @@ INLINE_MON\
  unsigned_word cia);
 
 INLINE_MON\
+(unsigned) mon_get_number_of_insns
+(mon *monitor,
+ int cpu_nr);
+
+INLINE_MON\
 (void) mon_print_info
 (psim *system,
  mon *monitor,

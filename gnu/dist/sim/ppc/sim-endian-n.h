@@ -31,6 +31,8 @@
 #define swap_N XCONCAT2(swap_,N)
 #define endian_h2be_N XCONCAT2(endian_h2be_,N)
 #define endian_be2h_N XCONCAT2(endian_be2h_,N)
+#define endian_h2le_N XCONCAT2(endian_h2le_,N)
+#define endian_le2h_N XCONCAT2(endian_le2h_,N)
 
 
 INLINE_SIM_ENDIAN\
@@ -93,6 +95,33 @@ endian_be2h_N(unsigned_N raw_in)
   }
 }
 
+
+INLINE_SIM_ENDIAN\
+(unsigned_N)
+endian_h2le_N(unsigned_N raw_in)
+{
+  if (CURRENT_HOST_BYTE_ORDER == LITTLE_ENDIAN) {
+    return raw_in;
+  }
+  else {
+    _SWAP_N(return,raw_in);
+  }
+}
+
+
+INLINE_SIM_ENDIAN\
+(unsigned_N)
+endian_le2h_N(unsigned_N raw_in)
+{
+  if (CURRENT_HOST_BYTE_ORDER == LITTLE_ENDIAN) {
+    return raw_in;
+  }
+  else {
+    _SWAP_N(return,raw_in);
+  }
+}
+
+
 /* NOTE: See start of file for #define */
 #undef unsigned_N
 #undef endian_t2h_N
@@ -101,3 +130,5 @@ endian_be2h_N(unsigned_N raw_in)
 #undef swap_N
 #undef endian_h2be_N
 #undef endian_be2h_N
+#undef endian_h2le_N
+#undef endian_le2h_N

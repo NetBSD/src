@@ -61,7 +61,7 @@ EXTRACTED(unsigned_word word,
 	  unsigned stop)
 {
   ASSERT(start <= stop);
-#if (WITH_64BITS_TARGET)
+#if (WITH_TARGET_WORD_BITSIZE == 64)
   return _EXTRACTEDn(64, word, start, stop);
 #else
   if (stop < 32)
@@ -69,6 +69,25 @@ EXTRACTED(unsigned_word word,
   else
     return ((word >> (63 - stop))
 	    & MASK(start+(63-stop), 63));
+#endif
+}
+
+
+INLINE_BITS\
+(unsigned_word)
+INSERTED(unsigned_word word,
+	 unsigned start,
+	 unsigned stop)
+{
+  ASSERT(start <= stop);
+#if (WITH_TARGET_WORD_BITSIZE == 64)
+  return _INSERTEDn(64, word, start, stop);
+#else
+  if (stop < 32)
+    return 0;
+  else
+    return ((word & MASK(start+(63-stop), 63))
+	    << (63 - stop));
 #endif
 }
 

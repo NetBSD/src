@@ -83,6 +83,7 @@
 
 #define BIT4(POS)  (1 << _MAKE_SHIFT(4, POS))
 #define BIT5(POS)  (1 << _MAKE_SHIFT(5, POS))
+#define BIT8(POS)  (1 << _MAKE_SHIFT(8, POS))
 #define BIT10(POS)  (1 << _MAKE_SHIFT(10, POS))
 #define BIT32(POS) _BITn(32, POS)
 #define BIT64(POS) _BITn(64, POS)
@@ -189,9 +190,11 @@ INLINE_BITS\
 #define INSERTED32(WORD, START, STOP) _INSERTEDn(32, WORD, START, STOP)
 #define INSERTED64(WORD, START, STOP) _INSERTEDn(64, WORD, START, STOP)
 
-#define INSERTED(WORD, START, STOP) \
-_INSERTEDn(WITH_TARGET_WORD_BITSIZE, WORD, START, STOP)
-
+INLINE_BITS\
+(unsigned_word) INSERTED
+(unsigned_word val,
+ unsigned start,
+ unsigned stop);
 
 
 /* depending on MODE return a 64bit or 32bit (sign extended) value */

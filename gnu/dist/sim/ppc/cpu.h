@@ -1,6 +1,6 @@
 /*  This file is part of the program psim.
 
-    Copyright (C) 1994-1995, Andrew Cagney <cagney@highland.com.au>
+    Copyright (C) 1994-1997, Andrew Cagney <cagney@highland.com.au>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -30,7 +30,7 @@
 #include "events.h"
 #include "interrupts.h"
 #include "psim.h"
-#include "icache.h"
+#include "idecode.h"
 #include "itable.h"
 #include "os_emul.h"
 #include "mon.h"
@@ -52,7 +52,6 @@ INLINE_CPU\
 (cpu *) cpu_create
 (psim *system,
  core *memory,
- event_queue *events,
  cpu_mon *monitor,
  os_emul *cpu_emulation,
  int cpu_nr);
@@ -79,33 +78,8 @@ INLINE_CPU\
 (int) cpu_nr
 (cpu *processor) CONST_ATTRIBUTE;
 
-INLINE_CPU\
-(event_queue *) cpu_event_queue
-(cpu *processor);
 
-
-/* The processors local concept of time */
-
-INLINE_CPU\
-(signed64) cpu_get_time_base
-(cpu *processor);
-
-INLINE_CPU\
-(void) cpu_set_time_base
-(cpu *processor,
- signed64 time_base);
-
-INLINE_CPU\
-(signed32) cpu_get_decrementer
-(cpu *processor);
-
-INLINE_CPU\
-(void) cpu_set_decrementer
-(cpu *processor,
- signed32 decrementer);
-
-
-/* manipulate the program counter
+/* manipulate the processors program counter and execution state.
 
    The program counter is not included in the register file.  Instead
    it is extracted and then later restored (set, reset, halt).  This
@@ -133,6 +107,34 @@ INLINE_CPU\
  unsigned_word nia,
  stop_reason reason,
  int signal);
+
+EXTERN_CPU\
+(void) cpu_error
+(cpu *processor,
+ unsigned_word cia,
+ const char *fmt,
+ ...) __attribute__ ((format (printf, 3, 4)));
+
+
+/* The processors local concept of time */
+
+INLINE_CPU\
+(signed64) cpu_get_time_base
+(cpu *processor);
+
+INLINE_CPU\
+(void) cpu_set_time_base
+(cpu *processor,
+ signed64 time_base);
+
+INLINE_CPU\
+(signed32) cpu_get_decrementer
+(cpu *processor);
+
+INLINE_CPU\
+(void) cpu_set_decrementer
+(cpu *processor,
+ signed32 decrementer);
 
 
 #if WITH_IDECODE_CACHE_SIZE
@@ -180,6 +182,13 @@ INLINE_CPU\
 (cpu *processor);
 
 
+/* reveal the processors interrupt state */
+
+INLINE_CPU\
+(interrupts *) cpu_interrupts
+(cpu *processor);
+
+
 /* grant access to the reservation information */
 
 typedef struct _memory_reservation {
@@ -191,12 +200,6 @@ typedef struct _memory_reservation {
 INLINE_CPU\
 (memory_reservation *) cpu_reservation
 (cpu *processor);
-
-
-INLINE_CPU\
-(void) cpu_print_info
-(cpu *processor,
- int verbose);
 
 
 /* Registers:
@@ -212,11 +215,8 @@ INLINE_CPU\
 
 INLINE_CPU\
 (void) cpu_synchronize_context
-(cpu *processor);
-
-INLINE_CPU\
-(model_data *) cpu_model
-(cpu *processor) CONST_ATTRIBUTE;
+(cpu *processor,
+ unsigned_word cia);
 
 #define IS_PROBLEM_STATE(PROCESSOR) \
 (CURRENT_ENVIRONMENT == OPERATING_ENVIRONMENT \
@@ -234,6 +234,17 @@ INLINE_CPU\
 (CURRENT_ENVIRONMENT == OPERATING_ENVIRONMENT \
  ? (cpu_registers(PROCESSOR)->msr & msr_floating_point_available) \
  : 1)
+
+
+
+INLINE_CPU\
+(void) cpu_print_info
+(cpu *processor,
+ int verbose);
+
+INLINE_CPU\
+(model_data *) cpu_model
+(cpu *processor) CONST_ATTRIBUTE;
 
 
 #if (CPU_INLINE & INCLUDE_MODULE)

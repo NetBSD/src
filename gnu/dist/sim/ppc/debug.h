@@ -1,6 +1,6 @@
 /*  This file is part of the program psim.
 
-    Copyright (C) 1994-1996, Andrew Cagney <cagney@highland.com.au>
+    Copyright (C) 1994-1997, Andrew Cagney <cagney@highland.com.au>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -31,20 +31,31 @@ typedef enum {
   trace_gdb,
   trace_os_emul,
   /**/
+  trace_events,
   trace_device_tree,
   trace_devices,
-  trace_pass_device,
+  trace_binary_device,
+  trace_com_device,
   trace_console_device,
-  trace_icu_device,
+  trace_core_device,
+  trace_disk_device,
+  trace_eeprom_device,
+  trace_file_device,
+  trace_glue_device,
   trace_halt_device,
+  trace_htab_device,
+  trace_icu_device,
+  trace_ide_device,
+  trace_memory_device,
+  trace_opic_device,
+  trace_pal_device,
+  trace_pass_device,
+  trace_phb_device,
+  trace_stack_device,
   trace_register_device,
   trace_vm_device,
-  trace_memory_device,
-  trace_htab_device,
-  trace_binary_device,
-  trace_file_device,
-  trace_core_device,
-  trace_stack_device,
+  /**/
+  trace_disklabel_package,
   /**/
   trace_semantics,
   trace_idecode,
@@ -54,6 +65,7 @@ typedef enum {
   /**/
   trace_vm,
   trace_core,
+  trace_interrupts,
   trace_psim,
   trace_device_init,
   trace_cpu,
@@ -69,47 +81,84 @@ typedef enum {
 
 extern int ppc_trace[nr_trace_options];
 
-#if WITH_TRACE
+/* simple */
 #define TRACE(OBJECT, ARGS) \
 do { \
-  if (ppc_trace[OBJECT]) { \
-    printf_filtered("%s:%d: ", filter_filename(__FILE__), __LINE__); \
-    printf_filtered ARGS; \
+  if (WITH_TRACE) { \
+    if (ppc_trace[OBJECT]) { \
+      printf_filtered("%s:%d: ", filter_filename(__FILE__), __LINE__); \
+      printf_filtered ARGS; \
+    } \
   } \
 } while (0)
+
 /* issue */
 #define ITRACE(OBJECT, ARGS) \
 do { \
-  if (ppc_trace[OBJECT]) { \
-    printf_filtered("%s:%d:0x%lx", my_prefix, cpu_nr(processor) + 1, (unsigned long)cia); \
-    printf_filtered ARGS; \
+  if (WITH_TRACE) { \
+    if (ppc_trace[OBJECT]) { \
+      printf_filtered("%s:%d:0x%08lx:%s ", itable[MY_INDEX].file, itable[MY_INDEX].line_nr, (long)cia, itable[MY_INDEX].name); \
+      printf_filtered ARGS; \
+    } \
   } \
 } while (0)
+
 /* device */
 #define DTRACE(OBJECT, ARGS) \
 do { \
-  if (ppc_trace[trace_devices] || ppc_trace[trace_##OBJECT##_device]) { \
-    printf_filtered("%s:%d:%s: ", filter_filename(__FILE__), __LINE__, #OBJECT); \
-    printf_filtered ARGS; \
+  if (WITH_TRACE) { \
+    int trace_device = device_trace(me); \
+    if (ppc_trace[trace_devices] \
+	|| ppc_trace[trace_##OBJECT##_device] \
+	|| trace_device) { \
+      printf_filtered("%s:%d:%s:%s%s ", \
+		      filter_filename(__FILE__), __LINE__, #OBJECT, \
+		      trace_device ? device_path(me) : "", \
+		      trace_device ? ":" : ""); \
+      printf_filtered ARGS; \
+    } \
   } \
 } while (0)
-#else
-#define TRACE(OBJECT, ARGS)
-#define ITRACE(OBJECT, ARGS)
-#define DTRACE(OBJECT, ARGS)
-#endif
 
-#if WITH_ASSERT
+/* device instance */
+#define DITRACE(OBJECT, ARGS) \
+do { \
+  if (WITH_TRACE) { \
+    device *me = device_instance_device(instance); \
+    int trace_device = device_trace(me); \
+    if (ppc_trace[trace_devices] \
+	|| ppc_trace[trace_##OBJECT##_device] \
+	|| trace_device) { \
+      printf_filtered("%s:%d:%s:%s%s ", \
+		      filter_filename(__FILE__), __LINE__, #OBJECT, \
+		      trace_device ? device_path(me) : "", \
+		      trace_device ? ":" : ""); \
+      printf_filtered ARGS; \
+    } \
+  } \
+} while (0)
+
+/* package */
+#define PTRACE(OBJECT, ARGS) \
+do { \
+  if (WITH_TRACE) { \
+    if (ppc_trace[trace_##OBJECT##_package]) { \
+      printf_filtered("%s:%d:%s: ", filter_filename(__FILE__), __LINE__, #OBJECT); \
+      printf_filtered ARGS; \
+    } \
+  } \
+} while (0)
+
+
 #define ASSERT(EXPRESSION) \
 do { \
-  if (!(EXPRESSION)) { \
-    error("%s:%d: assertion failed - %s\n", \
-	  filter_filename(__FILE__), __LINE__, #EXPRESSION); \
+  if (WITH_ASSERT) { \
+    if (!(EXPRESSION)) { \
+      error("%s:%d: assertion failed - %s\n", \
+	    filter_filename(__FILE__), __LINE__, #EXPRESSION); \
+    } \
   } \
 } while (0)
-#else
-#define ASSERT(EXPRESSION)
-#endif
 
 /* Parse OPTION updating the trace array */
 extern void

@@ -1,6 +1,6 @@
 /*  This file is part of the program psim.
 
-    Copyright (C) 1994-1995, Andrew Cagney <cagney@highland.com.au>
+    Copyright (C) 1994-1997, Andrew Cagney <cagney@highland.com.au>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -58,9 +58,11 @@ vm_data_map_read_N(vm_data_map *map,
     case NONSTRICT_ALIGNMENT:
       {
 	unsigned_N val;
-	if (vm_data_map_read_buffer(map, &val, ea, sizeof(unsigned_N))
-	    != sizeof(unsigned_N))
-	  alignment_interrupt(processor, cia, ea);
+	if (vm_data_map_read_buffer(map, &val, ea, sizeof(unsigned_N), processor, cia)
+	    != sizeof(unsigned_N)) {
+	  cpu_error(processor, cia, "misaligned %d byte read to 0x%lx failed",
+		    sizeof(unsigned_N), (unsigned long)ea);
+	}
 	val = T2H_N(val);
 	if (WITH_MON & MONITOR_LOAD_STORE_UNIT) {
 	  /* YUCK */
@@ -72,7 +74,7 @@ vm_data_map_read_N(vm_data_map *map,
 	return val;
       }
     default:
-      error("unknown alignment support\n");
+      error("internal error - vm_data_map_read_N - bad switch");
       return 0;
     }
   }
@@ -104,9 +106,11 @@ vm_data_map_write_N(vm_data_map *map,
     case NONSTRICT_ALIGNMENT:
       {
 	unsigned_N data = H2T_N(val);
-        if (vm_data_map_write_buffer(map, &data, ea, sizeof(unsigned_N), 0)
-	    != sizeof(unsigned_N))
-          alignment_interrupt(processor, cia, ea);
+	if (vm_data_map_write_buffer(map, &data, ea, sizeof(unsigned_N), 0, processor, cia)
+	    != sizeof(unsigned_N)) {
+	  cpu_error(processor, cia, "misaligned %d byte write to 0x%lx failed",
+		    sizeof(unsigned_N), (unsigned long)ea);
+	}
 	if (WITH_MON & MONITOR_LOAD_STORE_UNIT) {
 	  /* YUCK */
 	  unsigned ra = vm_real_data_addr(map, ea, 1, processor, cia);
@@ -117,7 +121,7 @@ vm_data_map_write_N(vm_data_map *map,
       }
       break;
     default:
-      error("unknown alignment support\n");
+      error("internal error - vm_data_map_write_N - bad switch");
     }
   }
 }
