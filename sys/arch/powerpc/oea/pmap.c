@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.14 2003/08/24 17:52:35 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.15 2003/10/27 23:08:12 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.14 2003/08/24 17:52:35 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.15 2003/10/27 23:08:12 dyoung Exp $");
 
 #include "opt_altivec.h"
 #include "opt_pmap.h"
@@ -769,7 +769,8 @@ pmap_pte_spill(struct pmap *pm, vaddr_t addr, boolean_t exec)
 {
 	struct pvo_entry *source_pvo, *victim_pvo, *next_pvo;
 	struct pvo_entry *pvo;
-	struct pvo_tqhead *pvoh, *vpvoh;
+	/* XXX: gcc -- vpvoh is always set at either *1* or *2* */
+	struct pvo_tqhead *pvoh, *vpvoh = NULL;
 	int ptegidx, i, j;
 	volatile struct pteg *pteg;
 	volatile struct pte *pt;
@@ -863,7 +864,7 @@ pmap_pte_spill(struct pmap *pm, vaddr_t addr, boolean_t exec)
 		 */
 		if ((pt->pte_hi & PTE_HID) == 0 && victim_pvo == NULL &&
 		    pmap_pte_compare(pt, &pvo->pvo_pte)) {
-			vpvoh = pvoh;
+			vpvoh = pvoh;			/* *1* */
 			victim_pvo = pvo;
 			if (source_pvo != NULL)
 				break;
@@ -884,7 +885,7 @@ pmap_pte_spill(struct pmap *pm, vaddr_t addr, boolean_t exec)
 		 * If this is a secondary PTE, we need to search
 		 * its primary pvo bucket for the matching PVO.
 		 */
-		vpvoh = &pmap_pvo_table[ptegidx ^ pmap_pteg_mask];
+		vpvoh = &pmap_pvo_table[ptegidx ^ pmap_pteg_mask]; /* *2* */
 		TAILQ_FOREACH(pvo, vpvoh, pvo_olink) {
 			PMAP_PVO_CHECK(pvo);		/* sanity check */
 
