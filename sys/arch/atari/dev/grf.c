@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.11 1996/08/27 21:55:45 cgd Exp $	*/
+/*	$NetBSD: grf.c,v 1.12 1996/09/16 06:43:32 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -72,7 +72,10 @@
 #include <atari/dev/viewioctl.h>
 #include <atari/dev/viewvar.h>
 
-#include "grf.h"
+#include "grfcc.h"
+#include "grfet.h"
+#define	NGRF	(NGRFCC + NGRFET)
+
 #if NGRF > 0
 
 #include "ite.h"
@@ -82,12 +85,6 @@
 #define ite_reinit(d)
 #endif
 
-dev_type_open(grfopen);
-dev_type_close(grfclose);
-dev_type_ioctl(grfioctl);
-dev_type_select(grfselect);
-dev_type_mmap(grfmmap);
-
 int grfon __P((dev_t));
 int grfoff __P((dev_t));
 int grfsinfo __P((dev_t, struct grfdyninfo *));
@@ -96,20 +93,15 @@ int grfbanked_get __P((dev_t, off_t, int));
 int grfbanked_cur __P((dev_t));
 int grfbanked_set __P((dev_t, int));
 #endif
-static void grf_viewsync __P((struct grf_softc *));
-static int  grf_mode __P((struct grf_softc *, int, void *, int, int));
 
 int grfbusprint __P((void *auxp, const char *));
 int grfbusmatch __P((struct device *, void *, void *));
 void grfbusattach __P((struct device *, struct device *, void *));
 
-void grfattach __P((struct device *, struct device *, void *));
-int grfmatch __P((struct device *, void *, void *));
-int grfprint __P((void *, const char *));
 /*
  * pointers to grf drivers device structs 
  */
-struct grf_softc *grfsp[NGRF];
+struct grf_softc *grfsp[NGRF]; /* XXX */
 
 struct cfattach grfbus_ca = {
 	sizeof(struct device), grfbusmatch, grfbusattach
@@ -119,19 +111,10 @@ struct cfdriver grfbus_cd = {
 	NULL, "grfbus", DV_DULL
 };
 
-struct cfattach grf_ca = {
-	sizeof(struct grf_softc), grfmatch, grfattach
-};
-
-struct cfdriver grf_cd = {
-	NULL, "grf", DV_DULL
-};
-
 /*
  * only used in console init.
  */
 static struct cfdata *cfdata_gbus  = NULL;
-static struct cfdata *cfdata_grf   = NULL;
 
 int
 grfbusmatch(pdp, match, auxp)
@@ -143,23 +126,8 @@ void		*match, *auxp;
 	if(strcmp(auxp, grfbus_cd.cd_name))
 		return(0);
 
-	if((atari_realconfig == 0) || (cfdata_gbus == NULL)) {
-		/*
-		 * Probe layers we depend on
-		 */
-		if(grfabs_probe() == 0)
-			return(0);
-		viewprobe();
-
-		if(atari_realconfig == 0) {
-			/*
-			 * XXX: console init opens view 0
-			 */
-			if(viewopen(0, 0, 0, NULL))
-				return(0);
-			cfdata_gbus = cfp;
-		}
-	}
+	if(atari_realconfig == 0)
+		cfdata_gbus = cfp;
 	return(1);	/* Always there	*/
 }
 
@@ -168,137 +136,27 @@ grfbusattach(pdp, dp, auxp)
 struct device	*pdp, *dp;
 void		*auxp;
 {
-	static  int	did_cons = 0;
-		int	i;
+    grf_auxp_t	grf_auxp;
 
-	if(dp == NULL) { /* Console init	*/
-		did_cons = 1;
-		i = 0;
-		atari_config_found(cfdata_gbus, NULL, (void*)&i, grfbusprint);
-	}
-	else {
-		printf("\n");
-		for(i = 0; i < NGRF; i++) {
-			/*
-			 * Skip opening view[0] when we this is the console.
-			 */
-			if(!did_cons || (i > 0))
-			    if(viewopen(i, 0, 0, NULL))
-				break;
-			config_found(dp, (void*)&i, grfbusprint);
-		}
-	}
+    grf_auxp.busprint       = grfbusprint;
+    grf_auxp.from_bus_match = 1;
+
+    if(dp == NULL) /* Console init	*/
+	atari_config_found(cfdata_gbus, NULL, (void*)&grf_auxp, grfbusprint);
+    else {
+	printf("\n");
+	config_found(dp, (void*)&grf_auxp, grfbusprint);
+    }
 }
 
 int
 grfbusprint(auxp, name)
-void  *auxp;
-const char  *name;
+void		*auxp;
+const char	*name;
 {
 	if(name == NULL)
 		return(UNCONF);
 	return(QUIET);
-}
-
-
-int
-grfmatch(pdp, match, auxp)
-struct device	*pdp;
-void	*match, *auxp;
-{
-	int	unit = *(int*)auxp;
-	struct cfdata *cfp = match;
-
-	/*
-	 * Match only on unit indicated by grfbus attach.
-	 */
-	if(cfp->cf_unit != unit)
-		return(0);
-
-	cfdata_grf = cfp;
-	return(1);
-}
-
-/*
- * attach: initialize the grf-structure and try to attach an ite to us.
- * note  : dp is NULL during early console init.
- */
-void
-grfattach(pdp, dp, auxp)
-struct device	*pdp, *dp;
-void		*auxp;
-{
-	static struct grf_softc		congrf;
-	       struct grf_softc		*gp;
-	       int			maj;
-
-	/*
-	 * find our major device number 
-	 */
-	for(maj = 0; maj < nchrdev; maj++)
-		if (cdevsw[maj].d_open == grfopen)
-			break;
-
-	/*
-	 * Handle exeption case: early console init
-	 */
-	if(dp == NULL) {
-		congrf.g_unit    = 0;
-		congrf.g_grfdev  = makedev(maj, 0);
-		congrf.g_flags   = GF_ALIVE;
-		congrf.g_mode    = grf_mode;
-		congrf.g_conpri  = grfcc_cnprobe();
-		congrf.g_viewdev = congrf.g_unit;
-		grfcc_iteinit(&congrf);
-		grf_viewsync(&congrf);
-
-		/* Attach console ite */
-		atari_config_found(cfdata_grf, NULL, &congrf, grfprint);
-		return;
-	}
-
-	gp = (struct grf_softc *)dp;
-	gp->g_unit = gp->g_device.dv_unit;
-	grfsp[gp->g_unit] = gp;
-
-	if((cfdata_grf != NULL) && (gp->g_unit == 0)) {
-		/*
-		 * We inited earlier just copy the info, take care
-		 * not to copy the device struct though.
-		 */
-		bcopy(&congrf.g_display, &gp->g_display,
-			(char *)&gp[1] - (char *)&gp->g_display);
-	}
-	else {
-		gp->g_grfdev  = makedev(maj, gp->g_unit);
-		gp->g_flags   = GF_ALIVE;
-		gp->g_mode    = grf_mode;
-		gp->g_conpri  = 0;
-		gp->g_viewdev = gp->g_unit;
-		grfcc_iteinit(gp);
-		grf_viewsync(gp);
-	}
-
-	printf(": width %d height %d", gp->g_display.gd_dwidth,
-		    gp->g_display.gd_dheight);
-	if(gp->g_display.gd_colors == 2)
-		printf(" monochrome\n");
-	else printf(" colors %d\n", gp->g_display.gd_colors);
-	
-	/*
-	 * try and attach an ite
-	 */
-	config_found(dp, gp, grfprint);
-}
-
-int
-grfprint(auxp, pnp)
-void *auxp;
-const char *pnp;
-{
-	if(pnp)
-		printf("ite at %s", pnp);
-	return(UNCONF);
 }
 
 /*ARGSUSED*/
@@ -507,7 +365,7 @@ grfsinfo(dev, dyninfo)
 /*
  * Get the grf-info in sync with underlying view.
  */
-static void
+void
 grf_viewsync(gp)
 struct grf_softc *gp;
 {
@@ -523,6 +381,10 @@ struct grf_softc *gp;
   
 	gi->gd_fbaddr  = bm.hw_address;
 	gi->gd_fbsize  = bm.depth*bm.bytes_per_row*bm.rows;
+	gi->gd_regaddr = bm.hw_regs;
+	gi->gd_regsize = bm.reg_size;
+	gp->g_fbkva    = bm.plane;
+	gp->g_regkva   = bm.regs;
 
 	if(viewioctl(gp->g_viewdev, VIOCGSIZE, (caddr_t)&vs, 0, NOPROC)) {
 		/*
@@ -552,7 +414,7 @@ struct grf_softc *gp;
  * Return a UNIX error number or 0 for success.
  */
 /*ARGSUSED*/
-static int
+int
 grf_mode(gp, cmd, arg, a2, a3)
 struct grf_softc	*gp;
 int			cmd, a2, a3;

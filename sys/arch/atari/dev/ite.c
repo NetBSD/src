@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.14 1996/09/02 06:43:42 mycroft Exp $	*/
+/*	$NetBSD: ite.c,v 1.15 1996/09/16 06:43:39 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -61,6 +61,7 @@
 
 #include <machine/cpu.h>
 
+#include <atari/atari/device.h>
 #include <atari/atari/kdassert.h>
 #include <atari/dev/event_var.h>
 #include <atari/dev/kbdmap.h>
@@ -150,16 +151,11 @@ itematch(pdp, match, auxp)
 	struct device *pdp;
 	void *match, *auxp;
 {
-	struct cfdata *cdp = match;
-	struct grf_softc *gp;
-	int maj;
+	struct cfdata	 *cdp = match;
+	struct grf_softc *gp  = auxp;
+	dev_t		 itedev;
+	int		 maj;
 	
-	gp = auxp;
-
-	/* ite0 should be at grf0 */
-	if(cdp->cf_unit != gp->g_unit)
-		return(0);
-
 	/*
 	 * all that our mask allows (more than enough no one 
 	 * has > 32 monitors for text consoles on one machine)
@@ -175,7 +171,20 @@ itematch(pdp, match, auxp)
 	for(maj = 0; maj < nchrdev; maj++)
 		if (cdevsw[maj].d_open == iteopen)
 			break;
-	gp->g_itedev = makedev(maj, cdp->cf_unit);
+	itedev = makedev(maj, cdp->cf_unit);
+
+	/*
+	 * Try to make sure that a single ite will not be attached to
+	 * multiple grf's.
+	 * Note that the console grf is the only grf that will ever enter
+	 * here with itedev != (dev_t)-1.
+	 */
+	if (gp->g_itedev == (dev_t)-1) {
+		if (ite_confunits & (1 << ITEUNIT(itedev)))
+				return (0);
+	}
+
+	gp->g_itedev = itedev;
 	return(1);
 }
 
@@ -236,8 +245,6 @@ static struct ite_softc *
 getitesp(dev)
 	dev_t dev;
 {
-	extern int	atari_realconfig;
-
 	if(atari_realconfig && (con_itesoftc.grf == NULL))
 		return(ite_cd.cd_devs[ITEUNIT(dev)]);
 
@@ -354,7 +361,6 @@ void
 iteinit(dev)
 	dev_t dev;
 {
-	extern int		atari_realconfig;
 	struct ite_softc	*ip;
 
 	ip = getitesp(dev);
@@ -675,6 +681,11 @@ int	unit;
 	 * Now make it visible
 	 */
 	viewioctl(ip->grf->g_viewdev, VIOCDISPLAY, NULL, 0, NOPROC);
+
+	/*
+	 * Make sure the cursor's there too....
+	 */
+  	SUBR_CURSOR(ip, DRAW_CURSOR);
 }
 
 /* XXX called after changes made in underlying grf layer. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: grfvar.h,v 1.3 1996/02/22 10:11:26 leo Exp $	*/
+/*	$NetBSD: grfvar.h,v 1.4 1996/09/16 06:43:38 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -42,6 +42,15 @@
  *	@(#)grfvar.h	7.3 (Berkeley) 5/7/91
  */
 
+/*
+ * Structure passed as 'auxp' during autoconf.
+ */
+typedef struct {
+	cfprint_t	busprint;	/* grfbusprint function		*/
+	int		from_bus_match;	/* called from grfbusmatch()	*/
+	int		unit;		/* grf-unit we want to attach	*/
+} grf_auxp_t;
+
 struct ite_softc;
 
 /* 
@@ -70,6 +79,8 @@ struct	grf_softc {
 	void		(*g_itecursor) __P((struct ite_softc *, int));
 	void		(*g_itescroll) __P((struct ite_softc *, int, int,
 								int, int));
+	volatile caddr_t g_regkva;	/* KVA of registers		*/
+	volatile caddr_t g_fbkva;	/* KVA of frame buffer		*/
 };
 
 /* flags */
@@ -99,3 +110,17 @@ struct	grf_softc {
 #define GRFOVDEV	0x10	/* XXX no driver uses yet, overlay planes */
 #define GRFIMDEV	0x20	/* XXX no driver uses yet, images planes  */
 #define GRFUNIT(d)	((d) & 0x7)
+
+#ifdef _KERNEL
+
+dev_type_open(grfopen);
+dev_type_close(grfclose);
+dev_type_ioctl(grfioctl);
+dev_type_select(grfselect);
+dev_type_mmap(grfmmap);
+
+int  grf_mode __P((struct grf_softc *, int, void *, int, int));
+void grf_viewsync __P((struct grf_softc *));
+
+extern struct grf_softc *grfsp[]; /* XXX */
+#endif /* _KERNEL */
