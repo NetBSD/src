@@ -1,4 +1,4 @@
-/*	$NetBSD: am_compat.h,v 1.1.1.5 2002/11/29 22:59:02 christos Exp $	*/
+/*	$NetBSD: am_compat.h,v 1.2 2003/07/29 12:11:29 markd Exp $	*/
 
 /*
  * am_compat.h:
@@ -95,6 +95,10 @@
 #if defined(MNT2_NFS_OPT_NONLM) && !defined(MNTTAB_OPT_NOLOCK)
 # define MNTTAB_OPT_NOLOCK "nolock"
 #endif /* defined(MNT2_NFS_OPT_NONLM) && !defined(MNTTAB_OPT_NOLOCK) */
+
+#if defined(MNT2_NFS_OPT_XLATECOOKIE) && !defined(MNTTAB_OPT_XLATECOOKIE)
+# define MNTTAB_OPT_XLATECOOKIE "xlatecookie"
+#endif /* defined(MNT2_NFS_OPT_XLATECOOKIE) && !defined(MNTTAB_OPT_XLATECOOKIE) */
 
 /*
  * Complete MNTTAB_OPT_* options based on MNT2_CDFS_OPT_* mount options.
