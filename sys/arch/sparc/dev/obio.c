@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.28 1996/12/10 22:55:01 pk Exp $	*/
+/*	$NetBSD: obio.c,v 1.29 1996/12/10 23:24:56 pk Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Theo de Raadt
@@ -160,7 +160,9 @@ obioattach(parent, self, args)
 		/* find these first */
 		"eeprom",
 		"counter",
+#if 0 /* Not all sun4m's have an `auxio' */
 		"auxio",
+#endif
 		"",
 		/* place device to ignore here */
 		"interrupt",
