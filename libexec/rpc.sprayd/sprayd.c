@@ -27,11 +27,11 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: sprayd.c,v 1.5 1995/01/13 21:07:00 mycroft Exp $
+ *	$Id: sprayd.c,v 1.6 1995/01/13 21:28:00 mycroft Exp $
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: sprayd.c,v 1.5 1995/01/13 21:07:00 mycroft Exp $";
+static char rcsid[] = "$Id: sprayd.c,v 1.6 1995/01/13 21:28:00 mycroft Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -47,13 +47,18 @@ static int from_inetd = 1;
 
 #define TIMEOUT 120
 
-static void
+void
 cleanup()
 {
 	(void) pmap_unset(SPRAYPROG, SPRAYVERS);
 	exit(0);
 }
 
+void
+die()
+{
+	exit(0);
+}
 
 int
 main(argc, argv)
@@ -65,7 +70,7 @@ main(argc, argv)
 	int proto = 0;
 	struct sockaddr_in from;
 	int fromlen;
-	
+
 	/*
 	 * See if inetd started us
 	 */
@@ -75,7 +80,7 @@ main(argc, argv)
 		sock = RPC_ANYSOCK;
 		proto = IPPROTO_UDP;
 	}
-	
+
 	if (!from_inetd) {
 		daemon(0, 0);
 
@@ -85,11 +90,12 @@ main(argc, argv)
 		(void) signal(SIGTERM, cleanup);
 		(void) signal(SIGHUP, cleanup);
 	} else {
+		(void) signal(SIGALRM, die);
 		alarm(TIMEOUT);
 	}
 
 	openlog("rpc.sprayd", LOG_CONS|LOG_PID, LOG_DAEMON);
-	
+
 	transp = svcudp_create(sock);
 	if (transp == NULL) {
 		syslog(LOG_ERR, "cannot create udp service.");
