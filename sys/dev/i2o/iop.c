@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.20 2001/11/13 12:24:58 lukem Exp $	*/
+/*	$NetBSD: iop.c,v 1.21 2002/01/02 19:04:17 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.20 2001/11/13 12:24:58 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.21 2002/01/02 19:04:17 ad Exp $");
 
 #include "opt_i2o.h"
 #include "iop.h"
@@ -313,6 +313,11 @@ iop_init(struct iop_softc *sc, const char *intrstr)
 		goto bail_out;
 	}
 	state++;
+
+#ifdef I2ODEBUG
+	/* So that our debug checks don't choke. */
+	sc->sc_framesize = 128;
+#endif
 
 	/* Reset the adapter and request status. */
  	if ((rv = iop_reset(sc)) != 0) {
@@ -943,9 +948,10 @@ iop_status_get(struct iop_softc *sc, int nosleep)
 			tsleep(iop_status_get, PWAIT, "iopstat", hz / 10);
 	}
 
-	if (st->syncbyte != 0xff)
+	if (st->syncbyte != 0xff) {
+		printf("%s: STATUS_GET timed out\n", sc->sc_dv.dv_xname);
 		rv = EIO;
-	else {
+	} else {
 		memcpy(&sc->sc_status, st, sizeof(sc->sc_status));
 		rv = 0;
 	}
