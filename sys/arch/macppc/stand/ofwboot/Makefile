@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 1998/06/12 21:07:24 tsubai Exp $
+#	$NetBSD: Makefile,v 1.3 1998/06/26 12:29:29 tsubai Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -16,7 +16,7 @@ NEWVERSWHAT=	"OpenFirmware Boot"
 
 # For now...
 #RELOC=		20000
-RELOC=		3e0000
+RELOC=		6c0000
 
 ENTRY=		_start
 
@@ -24,7 +24,6 @@ CLEANFILES+=	vers.c vers.o ${PROG}.elf
 
 CPPFLAGS+=	-I${.CURDIR}/../../.. -I${.CURDIR}/../../../..
 CPPFLAGS+=	-DRELOC=0x${RELOC}
-CPPFLAGS+=	-DFIRMWORKSBUGS
 CPPFLAGS+=	-DPOWERPC_BOOT_AOUT
 CPPFLAGS+=	-DPOWERPC_BOOT_ELF
 #CPPFLAGS+=	-DXCOFF_GLUE		# for booting PCI Powermacs

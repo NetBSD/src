@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.1 1998/05/15 10:15:59 tsubai Exp $	*/
+/*	$NetBSD: Locore.c,v 1.2 1998/06/26 12:29:29 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -39,7 +39,7 @@
 
 static int (*openfirmware) __P((void *));
 
-static void startup __P((int (*)(void *), char *, int));
+static void startup __P((void *, int, int (*)(void *), char *, int));
 static void setup __P((void));
 
 static int stack[4096/4];
@@ -87,7 +87,9 @@ openfirmware(arg)
 #endif
 
 static void
-startup(openfirm, arg, argl)
+startup(vpd, res, openfirm, arg, argl)
+	void *vpd;
+	int res;
 	int (*openfirm)(void *);
 	char *arg;
 	int argl;
