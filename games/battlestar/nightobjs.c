@@ -1,4 +1,4 @@
-/*	$NetBSD: nightobjs.c,v 1.6 1997/10/11 02:07:31 lukem Exp $	*/
+/*	$NetBSD: nightobjs.c,v 1.7 1999/02/10 01:36:50 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,13 +38,13 @@
 #if 0
 static char sccsid[] = "@(#)nightobjs.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: nightobjs.c,v 1.6 1997/10/11 02:07:31 lukem Exp $");
+__RCSID("$NetBSD: nightobjs.c,v 1.7 1999/02/10 01:36:50 hubertf Exp $");
 #endif
 #endif				/* not lint */
 
 #include "extern.h"
 
-struct objs nightobjs[] = {
+const struct objs nightobjs[] = {
 	{218, PAJAMAS},
 	{235, NATIVE},
 	{92, PAPAYAS},

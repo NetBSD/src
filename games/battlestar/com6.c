@@ -1,4 +1,4 @@
-/*	$NetBSD: com6.c,v 1.9 1997/10/13 21:05:36 cjs Exp $	*/
+/*	$NetBSD: com6.c,v 1.10 1999/02/10 01:36:50 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)com6.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: com6.c,v 1.9 1997/10/13 21:05:36 cjs Exp $");
+__RCSID("$NetBSD: com6.c,v 1.10 1999/02/10 01:36:50 hubertf Exp $");
 #endif
 #endif				/* not lint */
 
@@ -136,7 +136,7 @@ post(ch)
 	sigprocmask(SIG_SETMASK, &osigset, (sigset_t *) 0);
 }
 
-char   *
+const char   *
 rate()
 {
 	int     score;
