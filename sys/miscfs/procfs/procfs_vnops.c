@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.116 2004/10/01 14:09:55 yamt Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.117 2004/10/01 16:32:16 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.116 2004/10/01 14:09:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.117 2004/10/01 16:32:16 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,6 +107,7 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.116 2004/10/01 14:09:55 yamt Exp 
  */
 
 static int procfs_validfile_linux __P((struct proc *, struct mount *));
+static int procfs_root_readdir_callback(struct proc *, void *);
 
 /*
  * This is a list of the valid names in the
@@ -1000,6 +1001,55 @@ procfs_validfile_linux(p, mp)
 	    (p == NULL || procfs_validfile(p, mp)));
 }
 
+struct procfs_root_readdir_ctx {
+	struct uio *uiop;
+	off_t *cookies;
+	int ncookies;
+	int skip;
+	int idx;
+	int error;
+};
+
+static int
+procfs_root_readdir_callback(struct proc *p, void *arg)
+{
+	struct procfs_root_readdir_ctx *ctxp = arg;
+	struct dirent d;
+	struct uio *uiop;
+	int error;
+
+	uiop = ctxp->uiop;
+	if (uiop->uio_resid < UIO_MX)
+		return -1; /* no space */
+
+	if (ctxp->skip) {
+		ctxp->skip--;
+		return 0;
+	}
+
+	memset(&d, 0, UIO_MX);
+	d.d_reclen = UIO_MX;
+	d.d_fileno = PROCFS_FILENO(p->p_pid, PFSproc, -1);
+	d.d_namlen = snprintf(d.d_name,
+	    UIO_MX - offsetof(struct dirent, d_name), "%ld", (long)p->p_pid);
+	d.d_type = DT_DIR;
+
+	proclist_unlock_read();
+	error = uiomove(&d, UIO_MX, uiop);
+	proclist_lock_read();
+	if (error) {
+		ctxp->error = error;
+		return -1;
+	}
+
+	ctxp->ncookies++;
+	if (ctxp->cookies)
+		*(ctxp->cookies)++ = ctxp->idx + 1;
+	ctxp->idx++;
+
+	return 0;
+}
+
 /*
  * readdir returns directory entries from pfsnode (vp).
  *
@@ -1030,9 +1080,10 @@ procfs_readdir(v)
 	off_t i;
 	int error;
 	off_t *cookies = NULL;
-	int ncookies, left, skip, j;
+	int ncookies;
 	struct vnode *vp;
 	const struct proc_target *pt;
+	struct procfs_root_readdir_ctx ctx;
 
 	vp = ap->a_vp;
 	pfs = VTOPFS(vp);
@@ -1155,19 +1206,12 @@ procfs_readdir(v)
 	 * this is for the root of the procfs filesystem
 	 * what is needed are special entries for "curproc"
 	 * and "self" followed by an entry for each process
-	 * on allproc
-#ifdef PROCFS_ZOMBIE
-	 * and deadproc and zombproc.
-#endif
+	 * on allproc.
 	 */
 
 	case PFSroot: {
-		int pcnt = i, nc = 0;
-		const struct proclist_desc *pd;
-		volatile struct proc *p;
+		int nc = 0;
 
-		if (pcnt > 4)
-			pcnt = 4;
 		if (ap->a_ncookies) {
 			/*
 			 * XXX Potentially allocating too much space here,
@@ -1177,17 +1221,9 @@ procfs_readdir(v)
 			    M_TEMP, M_WAITOK);
 			*ap->a_cookies = cookies;
 		}
-		/*
-		 * XXX: THIS LOOP ASSUMES THAT allproc IS THE FIRST
-		 * PROCLIST IN THE proclists!
-		 */
-		proclist_lock_read();
-		pd = proclists;
-#ifdef PROCFS_ZOMBIE
-	again:
-#endif
-		for (p = LIST_FIRST(pd->pd_list);
-		     p != NULL && uio->uio_resid >= UIO_MX; i++, pcnt++) {
+		error = 0;
+		/* 0 ... 3 are static entries. */
+		for (; i <= 3 && uio->uio_resid >= UIO_MX; i++) {
 			switch (i) {
 			case 0:		/* `.' */
 			case 1:		/* `..' */
@@ -1211,20 +1247,6 @@ procfs_readdir(v)
 				memcpy(d.d_name, "self", sizeof("self"));
 				d.d_type = DT_LNK;
 				break;
-
-			default:
-				while (pcnt < i) {
-					pcnt++;
-					p = LIST_NEXT(p, p_list);
-					if (!p)
-						goto done;
-				}
-				d.d_fileno = PROCFS_FILENO(p->p_pid, PFSproc, -1);
-				d.d_namlen = snprintf(d.d_name,
-				    sizeof(d.d_name), "%ld", (long)p->p_pid);
-				d.d_type = DT_DIR;
-				p = LIST_NEXT(p, p_list);
-				break;
 			}
 
 			if ((error = uiomove(&d, UIO_MX, uio)) != 0)
@@ -1233,22 +1255,31 @@ procfs_readdir(v)
 			if (cookies)
 				*cookies++ = i + 1;
 		}
-	done:
-
-#ifdef PROCFS_ZOMBIE
-		pd++;
-		if (p == NULL && pd->pd_list != NULL)
-			goto again;
-#endif
-		proclist_unlock_read();
-
-		skip = i - pcnt;
-		if (skip >= nproc_root_targets)
+		/* 4 ... are process entries. */
+		ctx.uiop = uio;
+		ctx.error = 0;
+		ctx.idx = 4;
+		ctx.skip = i - ctx.idx;
+		ctx.cookies = cookies;
+		ctx.ncookies = nc;
+		proclist_foreach_call(&allproc,
+		    procfs_root_readdir_callback, &ctx);
+		cookies = ctx.cookies;
+		nc = ctx.ncookies;
+		error = ctx.error;
+		if (error)
 			break;
-		left = nproc_root_targets - skip;
-		for (j = 0, pt = &proc_root_targets[0];
-		     uio->uio_resid >= UIO_MX && j < left;
-		     pt++, j++, i++) {
+
+		/* misc entries. */
+		if (i >= ctx.idx + nproc_root_targets)
+			break;
+		pt = &proc_root_targets[0];
+		if (i < ctx.idx)
+			i = ctx.idx;
+		for (pt = &proc_root_targets[i - ctx.idx];
+		    uio->uio_resid >= UIO_MX &&
+		    pt < &proc_root_targets[nproc_root_targets];
+		    pt++, i++) {
 			if (pt->pt_valid &&
 			    (*pt->pt_valid)(NULL, vp->v_mount) == 0)
 				continue;
