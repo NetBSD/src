@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.58 2003/02/10 17:31:01 christos Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.59 2003/02/12 14:50:52 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.58 2003/02/10 17:31:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.59 2003/02/12 14:50:52 fvdl Exp $");
 
 #include "opt_nfs.h"
 
@@ -234,6 +234,7 @@ nfs_inactive(v)
 	struct sillyrename *sp;
 	struct proc *p = ap->a_p;
 	struct vnode *vp = ap->a_vp;
+	struct nfsmount *nmp = VFSTONFS(vp->v_mount);
 
 	np = VTONFS(vp);
 	if (prtactive && vp->v_usecount != 0)
@@ -260,6 +261,16 @@ nfs_inactive(v)
 		vput(sp->s_dvp);
 		FREE(sp, M_NFSREQ);
 	}
+
+	LIST_REMOVE(np, n_hash);
+
+	if ((nmp->nm_flag & NFSMNT_NQNFS) && np->n_timer.cqe_next != 0) {
+		CIRCLEQ_REMOVE(&nmp->nm_timerhead, np, n_timer);
+	}
+
+	if (vp->v_type == VDIR && np->n_dircache)
+		nfs_invaldircache(vp, 1);
+
 	return (0);
 }
 
@@ -275,37 +286,28 @@ nfs_reclaim(v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct nfsnode *np = VTONFS(vp);
-	struct nfsmount *nmp = VFSTONFS(vp->v_mount);
 
 	if (prtactive && vp->v_usecount != 0)
 		vprint("nfs_reclaim: pushing active", vp);
-
-	LIST_REMOVE(np, n_hash);
-
-	if ((nmp->nm_flag & NFSMNT_NQNFS) && np->n_timer.cqe_next != 0) {
-		CIRCLEQ_REMOVE(&nmp->nm_timerhead, np, n_timer);
-	}
 
 	/*
 	 * Free up any directory cookie structures and
 	 * large file handle structures that might be associated with
 	 * this nfs node.
 	 */
-	if (vp->v_type == VDIR && np->n_dircache) {
-		nfs_invaldircache(vp, 1);
+	if (vp->v_type == VDIR && np->n_dircache)
 		FREE(np->n_dircache, M_NFSDIROFF);
-	}
-	if (np->n_fhsize > NFS_SMALLFH) {
+
+	if (np->n_fhsize > NFS_SMALLFH)
 		free(np->n_fhp, M_NFSBIGFH);
-	}
 
 	pool_put(&nfs_vattr_pool, np->n_vattr);
-	if (np->n_rcred) {
+	if (np->n_rcred)
 		crfree(np->n_rcred);
-	}
-	if (np->n_wcred) {
+
+	if (np->n_wcred)
 		crfree(np->n_wcred);
-	}
+
 	cache_purge(vp);
 	pool_put(&nfs_node_pool, vp->v_data);
 	vp->v_data = NULL;
