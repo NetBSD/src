@@ -1,4 +1,4 @@
-/*	$NetBSD: ultra14f.c,v 1.47 1995/02/10 01:37:57 mycroft Exp $	*/
+/*	$NetBSD: ultra14f.c,v 1.48 1995/03/14 02:35:11 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -1070,8 +1070,10 @@ u14_init(uha)
 	int iobase = uha->sc_iobase;
 
 	/* make sure interrupts are enabled */
+#ifdef UHADEBUG
 	printf("u14_init: lmask=%02x, smask=%02x\n",
 	    inb(iobase + U14_LMASK), inb(iobase + U14_SMASK));
+#endif
 	outb(0xd1, iobase + U14_LMASK);	/* XXX */
 	outb(0x91, iobase + U14_SMASK);	/* XXX */
 }
@@ -1086,8 +1088,10 @@ u24_init(uha)
 	outb(iobase + U24_OGMCMD, 0);
 	outb(iobase + U24_ICMCMD, 0);
 	/* make sure interrupts are enabled */
+#ifdef UHADEBUG
 	printf("u24_init: lmask=%02x, smask=%02x\n",
 	    inb(iobase + U24_LMASK), inb(iobase + U24_SMASK));
+#endif
 	outb(0xd2, iobase + U24_LMASK);	/* XXX */
 	outb(0x92, iobase + U24_SMASK);	/* XXX */
 }
