@@ -1,4 +1,4 @@
-#	$NetBSD: files.macppc,v 1.32 2000/08/25 12:44:43 tsubai Exp $
+#	$NetBSD: files.macppc,v 1.33 2000/10/29 01:39:19 tsutsui Exp $
 #
 # macppc-specific configuration info
 
@@ -22,7 +22,7 @@ file dev/cons.c
 #
 # Memory Disk for install floppy
 #
-file arch/macppc/macppc/md_root.c		memory_disk_hooks
+file dev/md_root.c				memory_disk_hooks
 major {md = 9}
 
 #
