@@ -1,4 +1,4 @@
-/*	$NetBSD: pwd.c,v 1.11 1998/11/03 21:38:19 wsanchez Exp $	*/
+/*	$NetBSD: pwd.c,v 1.12 1999/05/31 14:31:07 kleink Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -43,22 +43,22 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)pwd.c	8.3 (Berkeley) 4/1/94";
 #else
-__RCSID("$NetBSD: pwd.c,v 1.11 1998/11/03 21:38:19 wsanchez Exp $");
+__RCSID("$NetBSD: pwd.c,v 1.12 1999/05/31 14:31:07 kleink Exp $");
 #endif
 #endif /* not lint */
 
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <err.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
-#include <sys/param.h>
-#include <sys/stat.h>
-#include <errno.h>
 #include <string.h>
+#include <unistd.h>
 
-char *getcwd_logical __P((char *, size_t));
-void  usage __P((void));
-int   main __P((int, char *[]));
+static char *	getcwd_logical __P((char *, size_t));
+static void	usage __P((void));
+int		main __P((int, char *[]));
 
 int
 main(argc, argv)
@@ -66,8 +66,8 @@ main(argc, argv)
 	char *argv[];
 {
 	int ch;
-	int lFlag=0;
-	char *p = NULL;
+	int lFlag = 0;
+	const char *p;
 
 	while ((ch = getopt(argc, argv, "LP")) != -1)
 		switch (ch) {
@@ -92,56 +92,61 @@ main(argc, argv)
 	else
 		p = getcwd(NULL, 0);
 
-	if (p == NULL) err(1, "%s", "");
+	if (p == NULL)
+		err(EXIT_FAILURE, "%s", "");
 
 	(void)printf("%s\n", p);
 
-	exit(0);
+	exit(EXIT_SUCCESS);
 	/* NOTREACHED */
 }
 
-char *
+static char *
 getcwd_logical(pt, size)
-        char *pt;
-        size_t size;
+	char *pt;
+	size_t size;
 {
-        char *pwd;
-        size_t pwdlen;
-        dev_t dev;
-        ino_t ino;
-        struct stat s;
+	char *pwd;
+	size_t pwdlen;
+	dev_t dev;
+	ino_t ino;
+	struct stat s;
 
-        /* Check $PWD -- if it's right, it's fast. */
-        if ((pwd = getenv("PWD")) != NULL && pwd[0] == '/' && stat(pwd, &s) != -1) {
-                dev = s.st_dev;
-                ino = s.st_ino;
-                if (stat(".", &s) != -1 && dev == s.st_dev && ino == s.st_ino) {
-                        pwdlen = strlen(pwd);
-			if (pt) {
-				if (!size) {
-                                        errno = EINVAL;
-                                        return (NULL);
-				}
-                                if (pwdlen + 1 > size) {
-                                        errno = ERANGE;
-                                        return (NULL);
-                                }
-                        } else if ((pt = malloc(pwdlen + 1)) == NULL)
-                                return (NULL);
-                        memmove(pt, pwd, pwdlen);
-                        pt[pwdlen] = '\0';
-                        return (pt);
-                }
-        }
+	/* Check $PWD -- if it's right, it's fast. */
+	if ((pwd = getenv("PWD")) != NULL && pwd[0] == '/') {
+		if (stat(pwd, &s) != -1) {
+			dev = s.st_dev;
+			ino = s.st_ino;
+			if (stat(".", &s) != -1 && dev == s.st_dev &&
+			    ino == s.st_ino) {
+				pwdlen = strlen(pwd);
+				if (pt) {
+					if (!size) {
+						errno = EINVAL;
+						return (NULL);
+					}
+					if (pwdlen + 1 > size) {
+						errno = ERANGE;
+						return (NULL);
+					}
+				} else if ((pt = malloc(pwdlen + 1)) == NULL)
+					return (NULL);
+				(void)memmove(pt, pwd, pwdlen);
+				pt[pwdlen] = '\0';
+				return (pt);
+			}
+		}
+	} else
+		errno = ENOENT;
 
-        return (NULL);
+	return (NULL);
 }
 
-void
+static void
 usage()
 {
 
-	(void)fprintf(stderr, "usage: pwd\n");
-	exit(1);
+	(void)fprintf(stderr, "usage: pwd [-LP]\n");
+	exit(EXIT_FAILURE);
 	/* NOTREACHED */
 }
