@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2002/05/30 18:53:19 thorpej Exp $
+#	$NetBSD: Makefile,v 1.5 2002/11/29 17:11:21 jdolecek Exp $
 
 .include "../Makefile.inc"
 
@@ -18,6 +18,7 @@ SRCS+=	linux_exec_elf32.c
 
 # compat_util.c symbol redifinitions
 CPPFLAGS+=	-Demul_find=linux_elf_emul_find			\
+		-Demul_find_interp=linux_emul_find_interp	\
 		-Dstackgap_init=linux_stackgap_init 		\
 		-Demul_flags_translate=linux_elf_emul_flags_translate \
 		-Dstackgap_alloc=linux_elf_stackgap_alloc 	\
