@@ -1,11 +1,13 @@
-#	$NetBSD: Makefile,v 1.12 2002/03/04 16:43:10 shiba Exp $
+#	$NetBSD: Makefile,v 1.13 2002/03/05 20:41:29 thorpej Exp $
+
+.include <bsd.own.mk>
 
 TOP=		${.CURDIR}/..
 
 .include "${TOP}/Makefile.inc"
 
 .ifndef NOTESOBJDIR
-NOTESOBJDIR!=cd ${.CURDIR}/../../../notes/mac68k;${MAKE} ${MAKEFLAGS} -V .OBJDIR
+NOTESOBJDIR!=cd ${.CURDIR}/../../../notes/mac68k && ${PRINTOBJDIR}
 .endif
 
 IMAGE=		ramdisk.fs
@@ -66,5 +68,4 @@ clean cleandir distclean:
 .INTERRUPT: unconfig
 
 .include <bsd.own.mk>
-.include <bsd.obj.mk>
 .include <bsd.subdir.mk>
