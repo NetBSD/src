@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3reg.h,v 1.7 1996/11/22 04:48:27 jonathan Exp $	*/
+/*	$NetBSD: elink3reg.h,v 1.8 1996/12/07 16:23:40 cjs Exp $	*/
 
 /*
  * Copyright (c) 1995 Herb Peyerl <hpeyerl@beer.org>
@@ -101,6 +101,8 @@
 	/* Read */
 #define EP_W3_FREE_TX		0x0c
 #define EP_W3_FREE_RX		0x0a
+	/* Read/Write */
+#define EP_W3_INTERNAL_CONFIG	0x00
 
 /*
  * Window 4 registers. Diagnostics.
