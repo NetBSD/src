@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.12.10.4 2000/08/12 16:13:01 sommerfeld Exp $	*/
+/*	$NetBSD: intr.h,v 1.12.10.5 2000/08/18 03:10:08 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -65,6 +65,7 @@
 #define	IPL_CLOCK	0xd0	/* clock */
 #define	IPL_HIGH	0xd0	/* everything */
 #define	IPL_SERIAL	0xe0	/* serial */
+#define IPL_IPI		0xe0	/* inter-processor interrupts */
 #define	NIPL		16
 
 /* Interrupt sharing types. */
@@ -150,8 +151,11 @@ spllower(ncpl)
 #define	splserial()	splraise(IPL_SERIAL)
 #define spllock() 	splraise(IPL_SERIAL) /* XXX XXX XXX XXX */
 #define splsched()	splraise(IPL_HIGH)
+#define splipi()	splraise(IPL_IPI)
 
 #define spllpt()	spltty()
+
+#define SPL_ASSERT_ATMOST(x) KDASSERT(lapic_tpr <= (x))
 
 /*
  * Software interrupt masks
@@ -196,15 +200,12 @@ softintr(sir, vec)
 #define	setsoftserial()	softintr(SIR_SERIAL,IPL_SOFTSERIAL)
 
 
-#define I386_IPI_HALT		0x00000001
-#define I386_IPI_TLB		0x00000002
-#define I386_IPI_FPSAVE		0x00000004
+#define I386_IPI_HALT			0x00000001
+#define I386_IPI_FLUSH_FPU		0x00000002
+#define I386_IPI_SYNCH_FPU		0x00000004
+#define I386_IPI_TLB			0x00000008
 
-/* the following are for debugging.. */
-#define I386_IPI_GMTB		0x00000010
-#define I386_IPI_NYCHI		0x00000020
-
-#define I386_NIPI		6
+#define I386_NIPI		4
 
 void i386_send_ipi (struct cpu_info *, int);
 void i386_broadcast_ipi (int);
