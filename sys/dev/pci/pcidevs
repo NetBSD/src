@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.236.2.2 2000/06/27 21:52:53 thorpej Exp $
+$NetBSD: pcidevs,v 1.236.2.3 2000/07/06 01:15:06 enami Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1271,6 +1271,7 @@ product PROLAN NE2KETHER 0x1980 Ethernet
 product PROMISE DC5030	0x5300	DC5030
 product PROMISE ULTRA33	0x4d33	Ultra33/ATA Bus Master IDE Accelerator
 product PROMISE ULTRA66	0x4d38	Ultra66/ATA Bus Master IDE Accelerator
+product PROMISE ULTRA100	0x4d30	Ultra100/ATA Bus Master IDE Accelerator
 
 /* QLogic products */
 product QLOGIC ISP1020	0x1020	ISP1020
