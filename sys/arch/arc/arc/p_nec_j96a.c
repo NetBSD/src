@@ -1,4 +1,4 @@
-/*	$NetBSD: p_nec_j96a.c,v 1.2 2002/12/07 13:09:46 tsutsui Exp $	*/
+/*	$NetBSD: p_nec_j96a.c,v 1.3 2002/12/09 13:36:27 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 2002 Izumi Tsutsui.  All rights reserved.
@@ -27,22 +27,11 @@
  */
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/device.h>
 
 #include <machine/autoconf.h>
-#include <machine/pio.h>
 #include <machine/platform.h>
 
-#include <arc/jazz/rd94.h>
 #include <arc/jazz/jazziovar.h>
-#include <arc/dev/mcclockvar.h>
-#include <arc/jazz/mcclock_jazziovar.h>
-
-u_int mc_nec_j96a_read __P((struct mcclock_softc *, u_int));
-void mc_nec_j96a_write __P((struct mcclock_softc *, u_int, u_int));
-
-void p_nec_j96a_init __P((void));
 
 struct platform platform_nec_j96a = {
 	"NEC-J96A",
@@ -53,47 +42,8 @@ struct platform platform_nec_j96a = {
 	200, /* MHz */
 	c_jazz_eisa_mainbusdevs,
 	platform_generic_match,
-	p_nec_j96a_init,
+	c_nec_eisa_init,
 	c_jazz_eisa_cons_init,
 	jazzio_reset,
 	c_nec_jazz_set_intr,
 };
-
-static struct mcclock_jazzio_config mcclock_nec_j96a_conf = {
-	0x80004000, 1,
-	{ mc_nec_j96a_read, mc_nec_j96a_write }
-};
-
-u_int
-mc_nec_j96a_read(sc, reg)
-	struct mcclock_softc *sc;
-	u_int reg;
-{
-	int i, as;
-
-	as = in32(RD94_SYS_EISA_AS) & 0x80;
-	out32(RD94_SYS_EISA_AS, as | reg);
-	i = bus_space_read_1(sc->sc_iot, sc->sc_ioh, 0);
-	return i;
-}
-
-void
-mc_nec_j96a_write(sc, reg, datum)
-	struct mcclock_softc *sc;
-	u_int reg, datum;
-{
-	int as;
-
-	as = in32(RD94_SYS_EISA_AS) & 0x80;
-	out32(RD94_SYS_EISA_AS, as | reg);
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh, 0, datum);
-}
-
-void
-p_nec_j96a_init()
-{
-
-	c_nec_eisa_init();
-
-	mcclock_jazzio_conf = &mcclock_nec_j96a_conf;
-}

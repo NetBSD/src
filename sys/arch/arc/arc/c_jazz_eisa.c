@@ -1,4 +1,4 @@
-/*	$NetBSD: c_jazz_eisa.c,v 1.1 2001/06/13 15:21:00 soda Exp $	*/
+/*	$NetBSD: c_jazz_eisa.c,v 1.2 2002/12/09 13:36:26 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -38,11 +38,14 @@
 
 #include <machine/autoconf.h>
 #include <machine/bus.h>
+#include <machine/pio.h>
 #include <machine/platform.h>
 
 #include <arc/arc/arcbios.h>
 #include <arc/jazz/pica.h>
 #include <arc/jazz/jazziovar.h>
+#include <arc/dev/mcclockvar.h>
+#include <arc/jazz/mcclock_jazziovar.h>
 
 #include "pc.h"
 #if NPC_JAZZIO > 0
@@ -79,12 +82,50 @@ char *c_jazz_eisa_mainbusdevs[] = {
 };
 
 /*
+ * chipset-dependent mcclock routines.
+ */
+u_int mc_jazz_eisa_read __P((struct mcclock_softc *, u_int));
+void mc_jazz_eisa_write __P((struct mcclock_softc *, u_int, u_int));
+ 
+struct mcclock_jazzio_config mcclock_jazz_eisa_conf = {
+	0x80004000, 1,
+	{ mc_jazz_eisa_read, mc_jazz_eisa_write }
+};
+
+u_int   
+mc_jazz_eisa_read(sc, reg)
+	struct mcclock_softc *sc;
+	u_int reg;
+{       
+	int i, as;
+
+	as = in32(arc_bus_io.bs_vbase + C_JAZZ_EISA_TODCLOCK_AS) & 0x80;
+	out32(arc_bus_io.bs_vbase + C_JAZZ_EISA_TODCLOCK_AS, as | reg);
+	i = bus_space_read_1(sc->sc_iot, sc->sc_ioh, 0);
+	return i;
+}
+
+void
+mc_jazz_eisa_write(sc, reg, datum)
+	struct mcclock_softc *sc;
+	u_int reg, datum;
+{
+	int as;
+
+	as = in32(arc_bus_io.bs_vbase + C_JAZZ_EISA_TODCLOCK_AS) & 0x80;
+	out32(arc_bus_io.bs_vbase + C_JAZZ_EISA_TODCLOCK_AS, as | reg);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, 0, datum);
+}
+
+/*
  * common configuration for Magnum derived and NEC EISA generation machines.
  */
 void
 c_jazz_eisa_init()
 {
-	/* nothing to do */
+
+	/* chipset-dependent mcclock configuration */
+        mcclock_jazzio_conf = &mcclock_jazz_eisa_conf;
 }
 
 /*

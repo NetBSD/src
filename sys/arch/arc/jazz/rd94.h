@@ -1,4 +1,4 @@
-/*	$NetBSD: rd94.h,v 1.5 2002/12/07 13:09:47 tsutsui Exp $	*/
+/*	$NetBSD: rd94.h,v 1.6 2002/12/09 13:36:28 tsutsui Exp $	*/
 /*	$OpenBSD: pica.h,v 1.4 1996/09/14 15:58:28 pefo Exp $ */
 
 /*
@@ -89,8 +89,6 @@
 #define	RD94_SYS_FLOPPY		(RD94LB+0xC000)	/* Floppy base address */
 #define	RD94_SYS_SOUND		(RD94LB+0x10000)/* Sound port */
 #define	RD94_SYS_THERMOMETER	(RD94LB+0x12000)/* DS1620 thermometer */
-
-#define	RD94_SYS_EISA_AS	(RD94_V_EISA_IO+0x70) /* only for J96A */
 
 #define	RD94_SYS_LB_LED		(RD94LB+0xE000)	/* LED/self-test register */
 #define	RD94_SYS_LB_IE1		(RD94LB+0xF000)	/* Local bus int enable */

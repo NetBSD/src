@@ -1,4 +1,4 @@
-/*	$NetBSD: pica.h,v 1.2 2001/06/13 15:11:38 soda Exp $	*/
+/*	$NetBSD: pica.h,v 1.3 2002/12/09 13:36:28 tsutsui Exp $	*/
 /*	$OpenBSD: pica.h,v 1.4 1996/09/14 15:58:28 pefo Exp $ */
 
 /*
@@ -90,7 +90,7 @@
 #define	PICA_SYS_NVPROM		(PVLB+0xb000)	/* Read only NV-ram */
 #define	PICA_SYS_SOUND		(PVLB+0xc000)	/* Sound port */
 
-#define	PICA_SYS_ISA_AS		(PICA_V_ISA_IO+0x70)
+#define	C_JAZZ_EISA_TODCLOCK_AS	0x70		/* address select for clock */
 
 #define	PICA_P_DRAM_CONF	0x800e0000	/* Dram config registers */
 #define	PICA_V_DRAM_CONF	0xe00e0000
