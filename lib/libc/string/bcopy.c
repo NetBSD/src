@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopy.c,v 1.9 1998/02/22 09:12:57 mycroft Exp $	*/
+/*	$NetBSD: bcopy.c,v 1.10 1998/03/26 23:53:36 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,11 +41,11 @@
 #if 0
 static char sccsid[] = "@(#)bcopy.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: bcopy.c,v 1.9 1998/02/22 09:12:57 mycroft Exp $");
+__RCSID("$NetBSD: bcopy.c,v 1.10 1998/03/26 23:53:36 cgd Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
-#ifndef _KERNEL
+#if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <string.h>
 #else
 #include <lib/libkern/libkern.h>
