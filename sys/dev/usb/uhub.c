@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.31 1999/10/12 20:02:47 augustss Exp $	*/
+/*	$NetBSD: uhub.c,v 1.32 1999/10/13 08:10:56 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -50,6 +50,7 @@
 #elif defined(__FreeBSD__)
 #include <sys/module.h>
 #include <sys/bus.h>
+#include "bus_if.h"
 #endif
 #include <sys/proc.h>
 
@@ -60,7 +61,7 @@
 #include <dev/usb/usbdi_util.h>
 #include <dev/usb/usbdivar.h>
 
-#ifdef USB_DEBUG
+#ifdef UHUB_DEBUG
 #define DPRINTF(x)	if (usbdebug) logprintf x
 #define DPRINTFN(n,x)	if (usbdebug>(n)) logprintf x
 extern int	usbdebug;
@@ -81,12 +82,41 @@ usbd_status uhub_init_port __P((struct usbd_port *));
 usbd_status uhub_explore __P((usbd_device_handle hub));
 void uhub_intr __P((usbd_request_handle, usbd_private_handle, usbd_status));
 
-USB_DECLARE_DRIVER_NAME(usb, uhub);
+#if defined(__FreeBSD__)
+static bus_child_detached_t uhub_child_detached;
+#endif
+
+USB_DECLARE_DRIVER_INIT(uhub, 
+			DEVMETHOD(bus_child_detached, uhub_child_detached));
+
+/* 
+ * We need two attachment points:
+ * hub to usb and hub to hub
+ * Every other driver only connects to hubs
+ */
 
 #if defined(__NetBSD__) || defined(__OpenBSD__)
+/* Create the driver instance for the hub connected to hub case */
 struct cfattach uhub_uhub_ca = {
 	sizeof(struct uhub_softc), uhub_match, uhub_attach,
 	uhub_detach, uhub_activate
+};
+#elif defined(__FreeBSD__)
+/* Create the driver instance for the hub connected to usb case. */
+devclass_t uhubroot_devclass;
+
+static device_method_t uhubroot_methods[] = {
+	DEVMETHOD(device_probe, uhub_match),
+	DEVMETHOD(device_attach, uhub_attach),
+
+	/* detach is not allowed for a root hub */
+	{0,0}
+};
+
+static	driver_t uhubroot_driver = {
+	"uhub",
+	uhubroot_methods,
+	sizeof(struct uhub_softc)
 };
 #endif
 
@@ -162,7 +192,6 @@ USB_ATTACH(uhub)
 	printf("%s: %d port%s with %d removable, %s powered\n",
 	       USBDEVNAME(sc->sc_dev), nports, nports != 1 ? "s" : "",
 	       nremov, dev->self_powered ? "self" : "bus");
-	
 
 	hub = malloc(sizeof(*hub) + (nports-1) * sizeof(struct usbd_port),
 		     M_USBDEV, M_NOWAIT);
@@ -178,6 +207,7 @@ USB_ATTACH(uhub)
 		 dev->self_powered, dev->powersrc->parent,
 		 dev->powersrc->parent ? 
 		 dev->powersrc->parent->self_powered : 0));
+
 	if (!dev->self_powered && dev->powersrc->parent &&
 	    !dev->powersrc->parent->self_powered) {
 		printf("%s: bus powered hub connected to bus powered hub, "
@@ -422,6 +452,7 @@ uhub_explore(dev)
 	return (USBD_NORMAL_COMPLETION);
 }
 
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 int
 uhub_activate(self, act)
 	device_ptr_t self;
@@ -449,34 +480,34 @@ uhub_activate(self, act)
 	}
 	return (0);
 }
+#endif
 
 /*
  * Called from process context when the hub is gone.
  * Detach all devices on active ports.
  */
-int
-uhub_detach(self, flags)
-	device_ptr_t self;
-	int flags;
+USB_DETACH(uhub)
 {
-	struct uhub_softc *sc = (struct uhub_softc *)self;
+	USB_DETACH_START(uhub, sc);
 	usbd_device_handle dev = sc->sc_hub;
 	struct usbd_port *rup;
-	int p, nports;
+	int port, nports;
 
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 	DPRINTF(("uhub_detach: sc=%p flags=%d\n", sc, flags));
+#elif defined(__FreeBSD__)
+	DPRINTF(("uhub_detach: sc=%port\n", sc));
+#endif
 
-	if (!dev->hub) {
-		/* Must be partially working */
+	if (!dev->hub)		/* Must be partially working */
 		return (0);
-	}
 
 	usbd_abort_pipe(sc->sc_ipipe);
 	usbd_close_pipe(sc->sc_ipipe);
 
 	nports = dev->hub->hubdesc.bNbrPorts;
-	for(p = 0; p < nports; p++) {
-		rup = &dev->hub->ports[p];
+	for(port = 0; port < nports; port++) {
+		rup = &dev->hub->ports[port];
 		if (rup->device)
 			usb_disconnect_port(rup, self);
 	}

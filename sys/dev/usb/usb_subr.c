@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.51 1999/10/12 20:02:48 augustss Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.52 1999/10/13 08:10:58 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -223,6 +223,11 @@ usbd_devinfo_vp(dev, v, p)
 #ifdef USBVERBOSE
 	struct usb_knowndev *kdp;
 #endif
+
+	if (!dev) {
+		v[0] = p[0] = '\0';
+		return;
+	}
 
 	vendor = usbd_get_string(dev, udd->iManufacturer, v);
 	product = usbd_get_string(dev, udd->iProduct, p);
@@ -739,11 +744,12 @@ usbd_probe_and_attach(parent, dev, port, addr)
 	 * during probe and attach. Should be changed however.
 	 */
 	device_t bdev;
-	bdev = device_add_child(*parent, NULL, -1, &uaa);
+	bdev = device_add_child(parent, NULL, -1, &uaa);
 	if (!bdev) {
 	    printf("%s: Device creation failed\n", USBDEVNAME(dev->bus->bdev));
 	    return (USBD_INVAL);
 	}
+	device_quiet(bdev);
 #endif
 
 	uaa.device = dev;
@@ -786,8 +792,9 @@ usbd_probe_and_attach(parent, dev, port, addr)
 			       USBDEVPTRNAME(parent), port, addr);
 #endif
 #if defined(__FreeBSD__)
-			device_delete_child(*parent, bdev);
+			device_delete_child(parent, bdev);
 #endif
+
  			return (r);
 		}
 		nifaces = dev->cdesc->bNumInterface;
@@ -797,9 +804,15 @@ usbd_probe_and_attach(parent, dev, port, addr)
 		uaa.ifaces = ifaces;
 		uaa.nifaces = nifaces;
 		dev->subdevs = malloc((nifaces+1) * sizeof dv, M_USB,M_NOWAIT);
-		if (dev->subdevs == 0)
+		if (dev->subdevs == 0) {
+#if defined(__FreeBSD__)
+			device_delete_child(parent, bdev);
+#endif
 			return (USBD_NOMEM);
-		for (found = i = 0; i < nifaces; i++) {
+		}
+
+		found = 0;
+		for (i = 0; i < nifaces; i++) {
 			if (!ifaces[i])
 				continue; /* interface already claimed */
 			uaa.iface = ifaces[i];
@@ -810,10 +823,26 @@ usbd_probe_and_attach(parent, dev, port, addr)
 				dev->subdevs[found++] = dv;
 				dev->subdevs[found] = 0;
 				ifaces[i] = 0; /* consumed */
+
+#if defined(__FreeBSD__)
+				/* create another child for the next iface */
+				bdev = device_add_child(parent, NULL, -1,&uaa);
+				if (!bdev) {
+					printf("%s: Device creation failed\n",
+					USBDEVNAME(dev->bus->bdev));
+					return (USBD_NORMAL_COMPLETION);
+				}
+				device_quiet(bdev);
+#endif
 			}
 		}
-		if (found != 0)
+		if (found != 0) {
+#if defined(__FreeBSD__)
+			/* remove the last created child again; it is unused */
+			device_delete_child(parent, bdev);
+#endif
 			return (USBD_NORMAL_COMPLETION);
+		}
 		free(dev->subdevs, M_USB);
 		dev->subdevs = 0;
 	}
@@ -849,11 +878,7 @@ usbd_probe_and_attach(parent, dev, port, addr)
 	 */
 	DPRINTF(("usbd_probe_and_attach: generic attach failed\n"));
 #if defined(__FreeBSD__)
-/*
- * XXX should we delete the child again? Left for now to avoid dangling
- * references.
-      device_delete_child(*parent, bdev);
-*/
+	device_delete_child(parent, bdev);
 #endif
  	return (USBD_NORMAL_COMPLETION);
 }
@@ -1100,13 +1125,6 @@ usbd_submatch(parent, match, aux)
 	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
 }
 
-#elif defined(__FreeBSD__)
-static void
-usbd_bus_print_child(device_t bus, device_t dev)
-{
-	/* FIXME print the device address and the configuration used
-	 */
-}
 #endif
 
 void
@@ -1218,6 +1236,9 @@ usb_disconnect_port(up, parent)
 
 	if (dev->subdevs) {
 		for (i = 0; dev->subdevs[i]; i++) {
+			if (!dev->subdevs[i])	/* skip empty elements */
+				continue;
+
 			printf("%s: at %s", USBDEVPTRNAME(dev->subdevs[i]), 
 			       hubname);
 			if (up->portno != 0)
@@ -1231,11 +1252,5 @@ usb_disconnect_port(up, parent)
 	dev->bus->devices[dev->address] = 0;
 	up->device = 0;
 	usb_free_device(dev);
-
-#if defined(__FreeBSD__)
-      device_delete_child(
-	  device_get_parent(((struct softc *)dev->softc)->sc_dev), 
-	  ((struct softc *)dev->softc)->sc_dev);
-#endif
 }
 

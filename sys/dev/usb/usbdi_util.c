@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi_util.c,v 1.21 1999/09/09 12:26:48 augustss Exp $	*/
+/*	$NetBSD: usbdi_util.c,v 1.22 1999/10/13 08:10:59 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -43,7 +43,9 @@
 #include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/device.h>
-#if defined(__FreeBSD__)
+#if defined(__NetBSD__) || defined(__OpenBSD__)
+#include <sys/device.h>
+#elif defined(__FreeBSD__)
 #include <sys/bus.h>
 #endif
 
