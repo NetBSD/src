@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vfsops.c,v 1.17 1995/01/18 09:34:24 mycroft Exp $	*/
+/*	$NetBSD: fdesc_vfsops.c,v 1.18 1995/03/08 01:34:45 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -69,7 +69,7 @@ fdesc_mount(mp, path, data, ndp, p)
 	struct proc *p;
 {
 	int error = 0;
-	u_int size;
+	u_long size;
 	struct fdescmount *fmp;
 	struct vnode *rvp;
 
