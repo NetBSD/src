@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.35 2000/08/22 21:35:45 pk Exp $
+#	$NetBSD: files.sparc64,v 1.36 2000/08/22 21:43:35 pk Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -168,18 +168,6 @@ major	{ wd = 12 }
 
 # RAIDframe
 major 	{ raid = 25 }
-
-device cgtwo
-attach cgtwo at sbus
-file	arch/sparc64/dev/cgtwo.c		cgtwo needs-flag
-
-device cgfour: bt_dac, pfour
-attach cgfour at sbus
-file	arch/sparc64/dev/cgfour.c		cgfour needs-flag
-
-device cgeight: bt_dac, pfour
-attach cgeight at sbus
-file	arch/sparc64/dev/cgeight.c	cgeight needs-flag
 
 device cgfourteen
 attach cgfourteen at sbus
