@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.8 1996/04/29 16:23:09 cgd Exp $	*/
+/*	$NetBSD: cpu.c,v 1.9 1996/04/29 16:36:19 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -143,7 +143,7 @@ cpuattach(parent, dev, aux)
 			needcomma = 1;
 		}
 		if (p->pcs_proc_var & PCS_VAR_PE) {
-			printf("%s, Primary Eligible", needcomma ? ", " : "");
+			printf("%sPrimary Eligible", needcomma ? ", " : "");
 			needcomma = 1;
 		}
 		if (p->pcs_proc_var & PCS_VAR_RESERVED)
