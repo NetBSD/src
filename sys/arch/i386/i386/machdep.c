@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.439 2001/05/03 16:04:26 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.440 2001/05/03 16:55:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -287,6 +287,7 @@ cpu_startup()
 	char buf[160];				/* about 2 line */
 	char pbuf[9];
 	char cbuf[7];
+	int bigcache, cachesize;
 
 	/*
 	 * Initialize error message buffer (et end of core).
@@ -310,10 +311,14 @@ cpu_startup()
 		printf(", %qd.%02qd MHz", (cpu_tsc_freq + 4999) / 1000000,
 		    ((cpu_tsc_freq + 4999) / 10000) % 100);
 	printf("\n");
+
+	bigcache = cachesize = 0;
+
 	if (ci->ci_cinfo[CAI_ICACHE].cai_totalsize != 0 ||
 	    ci->ci_cinfo[CAI_DCACHE].cai_totalsize != 0) {
 		printf("cpu0:");
 		if (ci->ci_cinfo[CAI_ICACHE].cai_totalsize) {
+			cachesize = ci->ci_cinfo[CAI_ICACHE].cai_totalsize;
 			format_bytes(cbuf, sizeof(cbuf),
 			    ci->ci_cinfo[CAI_ICACHE].cai_totalsize);
 			printf(" I-cache %s %db/line ", cbuf,
@@ -321,20 +326,28 @@ cpu_startup()
 			switch (ci->ci_cinfo[CAI_ICACHE].cai_associativity) {
 			case 0:
 				printf("disabled");
+				cachesize = 0;
 				break;
 			case 1:
 				printf("direct-mapped");
 				break;
 			case ~0:
 				printf("fully associative");
+				/* XXX Don't need any color bins? */
 				break;
 			default:
 				printf("%d-way",
 				    ci->ci_cinfo[CAI_ICACHE].cai_associativity);
+				cachesize /=
+				    ci->ci_cinfo[CAI_ICACHE].cai_associativity;
 				break;
 			}
 		}
+		if (cachesize > bigcache)
+			bigcache = cachesize;
+
 		if (ci->ci_cinfo[CAI_DCACHE].cai_totalsize) {
+			cachesize = ci->ci_cinfo[CAI_DCACHE].cai_totalsize;
 			format_bytes(cbuf, sizeof(cbuf),
 			    ci->ci_cinfo[CAI_DCACHE].cai_totalsize);
 			printf("%sD-cache %s %db/line ",
@@ -344,22 +357,30 @@ cpu_startup()
 			switch (ci->ci_cinfo[CAI_DCACHE].cai_associativity) {
 			case 0:
 				printf("disabled");
+				cachesize = 0;
 				break;
 			case 1:
 				printf("direct-mapped");
 				break;
 			case ~0:
 				printf("fully associative");
+				/* XXX Don't need any color bins? */
 				break;
 			default:
 				printf("%d-way",
 				    ci->ci_cinfo[CAI_DCACHE].cai_associativity);
+				cachesize /=
+				    ci->ci_cinfo[CAI_DCACHE].cai_associativity;
 				break;
 			}
 		}
+		if (cachesize > bigcache)
+			bigcache = cachesize;
+
 		printf("\n");
 	}
 	if (ci->ci_cinfo[CAI_L2CACHE].cai_totalsize) {
+		cachesize = ci->ci_cinfo[CAI_L2CACHE].cai_totalsize;
 		format_bytes(cbuf, sizeof(cbuf),
 		    ci->ci_cinfo[CAI_L2CACHE].cai_totalsize);
 		printf("cpu0: L2 cache %s %db/line ", cbuf,
@@ -367,20 +388,35 @@ cpu_startup()
 		switch (ci->ci_cinfo[CAI_L2CACHE].cai_associativity) {
 		case 0:
 			printf("disabled");
+			cachesize = 0;
 			break;
 		case 1:
 			printf("direct-mapped");
 			break;
 		case ~0:
 			printf("fully associative");
+			/* XXX Don't need any color bins? */
 			break;
 		default:
 			printf("%d-way",
 			    ci->ci_cinfo[CAI_L2CACHE].cai_associativity);
+			cachesize /=
+			    ci->ci_cinfo[CAI_L2CACHE].cai_associativity;
 			break;
 		}
+		if (cachesize > bigcache)
+			bigcache = cachesize;
+
 		printf("\n");
 	}
+
+	/*
+	 * Know the size of the largest cache on this CPU, re-color
+	 * our pages.
+	 */
+	if (bigcache != 0)
+		uvm_page_recolor(atop(bigcache));
+
 	if ((cpu_feature & CPUID_MASK1) != 0) {
 		bitmask_snprintf(cpu_feature, CPUID_FLAGS1,
 		    buf, sizeof(buf));
@@ -1050,15 +1086,15 @@ intel_cpuid_cpu_cacheinfo(struct cpu_info *ci)
 #define	AMD_L2_EAX_IUTLB_ENTRIES(x)	( (x)         & 0xfff)
 
 /* L2 TLB 4K pages */
-#define	AMD_L2_EAX_DTLB_ASSOC(x)	(((x) >> 28)  & 0xf)
-#define	AMD_L2_EAX_DTLB_ENTRIES(x)	(((x) >> 16)  & 0xfff) 
-#define	AMD_L2_EAX_IUTLB_ASSOC(x)	(((x) >> 12)  & 0xf)
-#define	AMD_L2_EAX_IUTLB_ENTRIES(x)	( (x)         & 0xfff)
+#define	AMD_L2_EBX_DTLB_ASSOC(x)	(((x) >> 28)  & 0xf)
+#define	AMD_L2_EBX_DTLB_ENTRIES(x)	(((x) >> 16)  & 0xfff) 
+#define	AMD_L2_EBX_IUTLB_ASSOC(x)	(((x) >> 12)  & 0xf)
+#define	AMD_L2_EBX_IUTLB_ENTRIES(x)	( (x)         & 0xfff)
 
 /* L2 Cache */
-#define	AMD_L2_ECX_C_SIZE(x)		((((x) >> 24) & 0xff) * 1024)
-#define	AMD_L2_ECX_C_ASSOC(x)		 (((x) >> 16) & 0xff)
-#define	AMD_L2_ECX_C_LPT(x)		 (((x) >> 8)  & 0xff)
+#define	AMD_L2_ECX_C_SIZE(x)		((((x) >> 16) & 0xffff) * 1024)
+#define	AMD_L2_ECX_C_ASSOC(x)		 (((x) >> 12) & 0xf)
+#define	AMD_L2_ECX_C_LPT(x)		 (((x) >> 8)  & 0xf)
 #define	AMD_L2_ECX_C_LS(x)		 ( (x)        & 0xff)
 
 static const struct i386_cache_info amd_cpuid_l2cache_assoc_info[] = {
@@ -2180,6 +2216,13 @@ init386(first_avail)
 	 */
 	if (PAGE_SIZE != NBPG)
 		panic("init386: PAGE_SIZE != NBPG");
+
+	/*
+	 * Start with 2 color bins -- this is just a guess to get us
+	 * started.  We'll recolor when we determine the largest cache
+	 * sizes on the system.
+	 */
+	uvmexp.ncolors = 2;
 
 #if NBIOSCALL > 0
 	avail_start = 3*PAGE_SIZE; /* save us a page for trampoline code and
