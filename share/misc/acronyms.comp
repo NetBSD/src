@@ -1,10 +1,10 @@
+$NetBSD: acronyms.comp,v 1.41 2004/03/26 12:45:39 keihan Exp $
 
-$NetBSD: acronyms.comp,v 1.40 2004/03/11 09:32:48 keihan Exp $
 ABI	application binary interface
 ACPI	advanced configuration and power interface
 ADC	analog [to] digital converter
 AGP	accelerated graphics port
-ANSI	American National Standards Institute
+ANSI	american national standards institute
 API	application programming interface
 APIC	advanced programmable interrupt controller
 ARP	address resolution protocol
@@ -78,13 +78,13 @@ IC	integrated circuit
 ICB	internet citizen's band
 ICMP	internet control message protocol
 IDE	integrated drive electronics
-IEC	International Electrotechnical Commission
+IEC	international electrotechnical commission
 IEEE	institute [of] electrical [and] electronics engineers
 IESG	internet engineering steering group
 IETF	internet engineering task force
 IKE	internet key exchange
 IMAP	internet mail access protocol
-INCITS	InterNational Committee on Information Technology Standards
+INCITS	international committee on information technology standards
 IO	input/output
 IOCTL	input/output control
 IP	internet protocol
@@ -95,7 +95,7 @@ IRQ	interrupt request
 IRTF	internet research task force
 ISA	industry standard architecture
 ISDN	integrated services digital network
-ISO	International Standards Organization
+ISO	international standards organization
 ISOC	internet society
 ISP	internet service provider
 JPEG	joint photographic experts group
@@ -132,7 +132,7 @@ OTP	one time password
 PAM	pluggable authentication modules
 PAX	portable archive exchange
 PCI	peripheral component interconnect
-PCMCIA	Personal Computer Memory Card International Association
+PCMCIA	personal computer memory card international association
 PDP	page descriptor page
 PERL	practical extraction [and] report language
 PGP	pretty good privacy
@@ -162,7 +162,7 @@ RTF	rich text format
 S/PDIF	sony/phillips digital interface
 SACD	super audio compact disc
 SAM	serial access memory
-SASI	Shugart Associates system interface (predecessor to SCSI)
+SASI	shugart associates system interface (predecessor to SCSI)
 SATA	serial advanced technology attachment
 SCSI	small computer system interface
 SDRAM	synchronous dynamic random access memory
