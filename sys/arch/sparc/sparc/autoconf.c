@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.97 1998/09/07 23:04:28 pk Exp $ */
+/*	$NetBSD: autoconf.c,v 1.98 1998/09/24 20:38:43 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -274,10 +274,6 @@ bootstrap()
 			printf("bootstrap: could not get interrupt properties");
 			romhalt();
 		}
-#if 0
-		if (!romprop(&ra, "interrupt", node))
-			panic("bootstrap: could not get interrupt properties");
-#endif
 		if (nvaddrs < 2 || nvaddrs > 5) {
 			printf("bootstrap: cannot handle %d interrupt regs\n",
 				nvaddrs);
@@ -298,6 +294,7 @@ bootstrap()
 
 			setpte4m(PI_INTR_VA + (_MAXNBPG * i), pte);
 		}
+		cpuinfo.intreg_4m = (struct icr_pi *)(PI_INTR_VA);
 
 		/*
 		 * That was the processor register...now get system register;
@@ -965,6 +962,7 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 #if defined(SUN4M)
 	static const char *const openboot_special4m[] = {
 		/* find these first */
+		"eccmemctl",	/* memory error registers */
 		"obio",		/* smart enough to get eeprom/etc mapped */
 		"",
 
@@ -974,7 +972,6 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 		 * elsewhere.
 		 */
 		"SUNW,sx",		/* XXX: no driver for SX yet */
-		"eccmemctl",
 		"virtual-memory",
 		"aliases",
 		"memory",
