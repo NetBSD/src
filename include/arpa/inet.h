@@ -55,7 +55,7 @@
 
 /*
  *	@(#)inet.h	8.1 (Berkeley) 6/2/93
- *	$NetBSD: inet.h,v 1.8 1998/02/10 00:32:52 perry Exp $
+ *	$NetBSD: inet.h,v 1.9 1999/07/03 13:30:38 kleink Exp $
  */
 
 #ifndef _ARPA_INET_H_
@@ -73,19 +73,23 @@
 
 __BEGIN_DECLS
 unsigned long	 inet_addr __P((const char *));
-int		 inet_aton __P((const char *, struct in_addr *));
 unsigned long	 inet_lnaof __P((struct in_addr));
 struct in_addr	 inet_makeaddr __P((u_long , u_long));
-char *		 inet_neta __P((u_long, char *, size_t));
 unsigned long	 inet_netof __P((struct in_addr));
 unsigned long	 inet_network __P((const char *));
+char		*inet_ntoa __P((struct in_addr));
+#if !defined(_XOPEN_SOURCE) || (_XOPEN_SOURCE - 0) >= 500
+const char	*inet_ntop __P((int, const void *, char *, size_t));
+int		 inet_pton __P((int, const char *, void *));
+#endif
+#if !defined(_XOPEN_SOURCE)
+int		 inet_aton __P((const char *, struct in_addr *));
+char *		 inet_neta __P((u_long, char *, size_t));
 char		*inet_net_ntop __P((int, const void *, int, char *, size_t));
 int		 inet_net_pton __P((int, const char *, void *, size_t));
-char		*inet_ntoa __P((struct in_addr));
-int		 inet_pton __P((int, const char *, void *));
-const char	*inet_ntop __P((int, const void *, char *, size_t));
 u_int		 inet_nsap_addr __P((const char *, u_char *, int));
 char		*inet_nsap_ntoa __P((int, const u_char *, char *));
+#endif
 __END_DECLS
 
 #endif /* _ARPA_INET_H_ */
