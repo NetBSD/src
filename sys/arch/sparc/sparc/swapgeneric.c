@@ -2,11 +2,14 @@
  * fake swapgeneric.c -- should do this differently.
  *
  *	@(#)swapgeneric.c	8.1 (Berkeley) 7/19/93
- * $Id: swapgeneric.c,v 1.3 1993/10/16 07:23:12 deraadt Exp $
+ * $Id: swapgeneric.c,v 1.4 1994/02/01 06:01:50 deraadt Exp $
  */
 
 #include <sys/param.h>
 #include <sys/conf.h>
+
+extern int ufs_mountroot();
+int (*mountroot)() = ufs_mountroot;
 
 dev_t	rootdev = NODEV;
 dev_t	dumpdev = NODEV;
