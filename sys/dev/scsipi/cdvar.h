@@ -1,4 +1,4 @@
-/*	$NetBSD: cdvar.h,v 1.19 2003/09/07 22:11:24 mycroft Exp $	*/
+/*	$NetBSD: cdvar.h,v 1.20 2003/09/08 01:56:34 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -51,13 +51,8 @@ struct cd_softc {
 	} params;
 
 	struct bufq_state buf_queue;
-	char name[16]; /* product name, for default disklabel */
 
 #if NRND > 0
 	rndsource_element_t	rnd_source;
 #endif
 };
-
-void cdattach __P((struct device *, struct cd_softc *, struct scsipi_periph *));
-int cdactivate __P((struct device *, enum devact));
-int cddetach __P((struct device *, int));
