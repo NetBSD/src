@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.75 2001/09/15 04:45:28 thorpej Exp $
+#	$NetBSD: MAKEDEV,v 1.76 2001/09/18 19:58:41 ad Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -119,6 +119,7 @@
 #	wsmux*	wscons event multiplexor
 #	pci*	PCI bus access devices
 #	agp*	AGP GART devices
+#	stic*	PixelStamp interface chip
 
 dialin=0
 dialout=524288
@@ -547,6 +548,13 @@ agp*)
 	mknod agp$unit c 67 $unit
 	if [ "$unit" = "0" ]; then ln -sf agp$unit agpgart; fi
 	chmod 644 agp$unit
+	;;
+
+stic*)
+	unit=${i#stic}; 
+	rm -f stic $unit
+	mknod stic $unit c 68 $unit
+	chmod 600 stic$unit
 	;;
 
 altq)
