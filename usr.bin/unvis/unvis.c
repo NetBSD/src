@@ -1,4 +1,4 @@
-/*	$NetBSD: unvis.c,v 1.9 2003/08/07 11:16:56 agc Exp $	*/
+/*	$NetBSD: unvis.c,v 1.10 2004/04/22 06:55:15 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)unvis.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: unvis.c,v 1.9 2003/08/07 11:16:56 agc Exp $");
+__RCSID("$NetBSD: unvis.c,v 1.10 2004/04/22 06:55:15 lukem Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -47,6 +47,8 @@ __RCSID("$NetBSD: unvis.c,v 1.9 2003/08/07 11:16:56 agc Exp $");
 #include <stdlib.h>
 #include <unistd.h>
 #include <vis.h>
+
+int eflags;
 
 int	main __P((int, char **));
 void process __P((FILE *fp, const char *filename));
@@ -59,11 +61,14 @@ main(argc, argv)
 	FILE *fp;
 	int ch;
 
-	while ((ch = getopt(argc, argv, "")) != -1)
+	while ((ch = getopt(argc, argv, "h")) != -1)
 		switch((char)ch) {
+		case 'h':
+			eflags |= VIS_HTTPSTYLE;
+			break;
 		case '?':
 		default:
-			(void) fprintf(stderr, "usage: unvis [file...]\n");
+			(void) fprintf(stderr, "usage: unvis [-h] [file...]\n");
 			exit(1);
 		}
 	argc -= optind;
@@ -94,7 +99,7 @@ process(fp, filename)
 	while ((c = getc(fp)) != EOF) {
 		offset++;
 	again:
-		switch(ret = unvis(&outc, (char)c, &state, 0)) {
+		switch(ret = unvis(&outc, (char)c, &state, eflags)) {
 		case UNVIS_VALID:
 			putchar(outc);
 			break;
@@ -113,6 +118,6 @@ process(fp, filename)
 			/* NOTREACHED */
 		}
 	}
-	if (unvis(&outc, (char)0, &state, UNVIS_END) == UNVIS_VALID)
+	if (unvis(&outc, (char)0, &state, eflags | UNVIS_END) == UNVIS_VALID)
 		putchar(outc);
 }
