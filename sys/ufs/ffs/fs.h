@@ -1,4 +1,4 @@
-/*	$NetBSD: fs.h,v 1.33 2003/08/07 16:34:32 agc Exp $	*/
+/*	$NetBSD: fs.h,v 1.34 2003/08/21 14:41:00 dsl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -289,7 +289,7 @@ struct fs {
 	int64_t	 fs_sparecon64[17];	/* old rotation block list head */
 	int64_t	 fs_sblockloc;		/* byte offset of standard superblock */
 	struct	csum_total fs_cstotal;	/* cylinder summary information */
-	int64_t fs_time;		/* last time written */
+	int64_t  fs_time;		/* last time written */
 	int64_t	 fs_size;		/* number of blocks in fs */
 	int64_t	 fs_dsize;		/* number of data blocks in fs */
 	int64_t  fs_csaddr;		/* blk addr of cyl grp summary area */
@@ -369,15 +369,17 @@ struct fs {
  * Its size is derived from the size of the maps maintained in the
  * cylinder group and the (struct cg) size.
  */
-#define	CGSIZE(fs) \
+#define	CGSIZE_IF(fs, ipg, fpg) \
     /* base cg */	(sizeof(struct cg) + sizeof(int32_t) + \
     /* old btotoff */	(fs)->fs_old_cpg * sizeof(int32_t) + \
     /* old boff */	(fs)->fs_old_cpg * sizeof(u_int16_t) + \
-    /* inode map */	howmany((fs)->fs_ipg, NBBY) + \
-    /* block map */	howmany((fs)->fs_fpg, NBBY) +\
+    /* inode map */	howmany((ipg), NBBY) + \
+    /* block map */	howmany((fpg), NBBY) +\
     /* if present */	((fs)->fs_contigsumsize <= 0 ? 0 : \
     /* cluster sum */	(fs)->fs_contigsumsize * sizeof(int32_t) + \
-    /* cluster map */	howmany(fragstoblks(fs, (fs)->fs_fpg), NBBY)))
+    /* cluster map */	howmany(fragstoblks(fs, (fpg)), NBBY)))
+
+#define	CGSIZE(fs) CGSIZE_IF((fs), (fs)->fs_ipg, (fs)->fs_fpg)
 
 /*
  * The minimal number of cylinder groups that should be created.
@@ -498,13 +500,15 @@ struct ocg {
  * They calc file system addresses of cylinder group data structures.
  */
 #define	cgbase(fs, c)	(((daddr_t)(fs)->fs_fpg) * (c))
+#define	cgstart_ufs1(fs, c) \
+    (cgbase(fs, c) + (fs)->fs_old_cgoffset * ((c) & ~((fs)->fs_old_cgmask)))
+#define	cgstart_ufs2(fs, c) cgbase((fs), (c))
+#define	cgstart(fs, c) ((fs)->fs_magic == FS_UFS2_MAGIC \
+			    ? cgstart_ufs2((fs), (c)) : cgstart_ufs1((fs), (c)))
 #define	cgdmin(fs, c)	(cgstart(fs, c) + (fs)->fs_dblkno)	/* 1st data */
 #define	cgimin(fs, c)	(cgstart(fs, c) + (fs)->fs_iblkno)	/* inode blk */
 #define	cgsblock(fs, c)	(cgstart(fs, c) + (fs)->fs_sblkno)	/* super blk */
 #define	cgtod(fs, c)	(cgstart(fs, c) + (fs)->fs_cblkno)	/* cg block */
-#define	cgstart(fs, c) \
-    ((fs)->fs_magic == FS_UFS2_MAGIC ? cgbase(fs, c) : \
-    (cgbase(fs, c) + (fs)->fs_old_cgoffset * ((c) & ~((fs)->fs_old_cgmask))))
 
 /*
  * Macros for handling inode numbers:
