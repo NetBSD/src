@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: wtf,v 1.2 1999/07/22 10:08:17 lukem Exp $
+#	$NetBSD: wtf,v 1.3 1999/07/25 20:29:04 briggs Exp $
 #
 # Public domain
 #
@@ -22,8 +22,13 @@ while [ $# -gt 0 ] ; do
 	if [ "$ans" != "" ] ; then
 		echo "$target: $ans"
 	else
-		echo "Gee...  I don't know what $1 means..."
-		rv=1
+		ans=`whatis $1 2> /dev/null | egrep "^$1[, ]" 2> /dev/null`
+		if [ $? -eq 0 ] ; then
+			echo "$1: $ans"
+		else
+			echo "Gee...  I don't know what $1 means..."
+			rv=1
+		fi
 	fi
 	shift
 done
