@@ -1,7 +1,8 @@
+
 /******************************************************************************
  *
- * Name: acoutput.h -- debug output
- *       $Revision: 1.1.1.2 $
+ * Module Name: exoparg3 - AML execution - opcodes with 3 arguments
+ *              $Revision: 1.1.1.1 $
  *
  *****************************************************************************/
 
@@ -84,6 +85,7 @@
  * HERE.  ANY SOFTWARE ORIGINATING FROM INTEL OR DERIVED FROM INTEL SOFTWARE
  * IS PROVIDED "AS IS," AND INTEL WILL NOT PROVIDE ANY SUPPORT,  ASSISTANCE,
  * INSTALLATION, TRAINING OR OTHER SERVICES.  INTEL WILL NOT PROVIDE ANY
+
  * UPDATES, ENHANCEMENTS OR EXTENSIONS.  INTEL SPECIFICALLY DISCLAIMS ANY
  * IMPLIED WARRANTIES OF MERCHANTABILITY, NONINFRINGEMENT AND FITNESS FOR A
  * PARTICULAR PURPOSE.
@@ -114,154 +116,219 @@
  *
  *****************************************************************************/
 
-#ifndef __ACOUTPUT_H__
-#define __ACOUTPUT_H__
+#define __EXOPARG3_C__
 
-/*
- * Debug levels and component IDs.  These are used to control the
- * granularity of the output of the DEBUG_PRINT macro -- on a per-
- * component basis and a per-exception-type basis.
- */
-
-/* Component IDs are used in the global "DebugLayer" */
-
-#define ACPI_UTILITIES              0x00000001
-#define ACPI_HARDWARE               0x00000002
-#define ACPI_EVENTS                 0x00000004
-#define ACPI_TABLES                 0x00000008
-#define ACPI_NAMESPACE              0x00000010
-#define ACPI_PARSER                 0x00000020
-#define ACPI_DISPATCHER             0x00000040
-#define ACPI_EXECUTER               0x00000080
-#define ACPI_RESOURCES              0x00000100
-#define ACPI_DEBUGGER               0x00000200
-#define ACPI_OS_SERVICES            0x00000400
-
-#define ACPI_ALL_COMPONENTS         0x00000FFF
-
-#define ACPI_COMPONENT_DEFAULT      (ACPI_ALL_COMPONENTS)
-
-/* Component IDs for ACPI tools and utilities */
-
-#define ACPI_COMPILER               0x00001000
-#define ACPI_TOOLS                  0x00002000
-
-/* Component IDs reserved for ACPI drivers */
-
-#define ACPI_ALL_DRIVERS            0xFFFF0000
-
-/*
- * Raw debug output levels, do not use these in the DEBUG_PRINT macros
- */
-
-#define ACPI_LV_OK                  0x00000001
-#define ACPI_LV_INFO                0x00000002
-#define ACPI_LV_WARN                0x00000004
-#define ACPI_LV_ERROR               0x00000008
-#define ACPI_LV_FATAL               0x00000010
-#define ACPI_LV_DEBUG_OBJECT        0x00000020
-#define ACPI_LV_ALL_EXCEPTIONS      0x0000003F
+#include "acpi.h"
+#include "acinterp.h"
+#include "acparser.h"
+#include "amlcode.h"
 
 
-/* Trace verbosity level 1 [Standard Trace Level] */
-
-#define ACPI_LV_PARSE               0x00000040
-#define ACPI_LV_LOAD                0x00000080
-#define ACPI_LV_DISPATCH            0x00000100
-#define ACPI_LV_EXEC                0x00000200
-#define ACPI_LV_NAMES               0x00000400
-#define ACPI_LV_OPREGION            0x00000800
-#define ACPI_LV_BFIELD              0x00001000
-#define ACPI_LV_TABLES              0x00002000
-#define ACPI_LV_VALUES              0x00004000
-#define ACPI_LV_OBJECTS             0x00008000
-#define ACPI_LV_RESOURCES           0x00010000
-#define ACPI_LV_USER_REQUESTS       0x00020000
-#define ACPI_LV_PACKAGE             0x00040000
-#define ACPI_LV_INIT                0x00080000
-#define ACPI_LV_VERBOSITY1          0x000FFF40 | ACPI_LV_ALL_EXCEPTIONS
-
-/* Trace verbosity level 2 [Function tracing and memory allocation] */
-
-#define ACPI_LV_ALLOCATIONS         0x00100000
-#define ACPI_LV_FUNCTIONS           0x00200000
-#define ACPI_LV_VERBOSITY2          0x00300000 | ACPI_LV_VERBOSITY1
-#define ACPI_LV_ALL                 ACPI_LV_VERBOSITY2
-
-/* Trace verbosity level 3 [Threading, I/O, and Interrupts] */
-
-#define ACPI_LV_MUTEX               0x01000000
-#define ACPI_LV_THREADS             0x02000000
-#define ACPI_LV_IO                  0x04000000
-#define ACPI_LV_INTERRUPTS          0x08000000
-#define ACPI_LV_VERBOSITY3          0x0F000000 | ACPI_LV_VERBOSITY2
-
-/* Exceptionally verbose output -- also used in the global "DebugLevel"  */
-
-#define ACPI_LV_AML_DISASSEMBLE     0x10000000
-#define ACPI_LV_VERBOSE_INFO        0x20000000
-#define ACPI_LV_FULL_TABLES         0x40000000
-#define ACPI_LV_EVENTS              0x80000000
-
-#define ACPI_LV_VERBOSE             0xF0000000
+#define _COMPONENT          ACPI_EXECUTER
+        ACPI_MODULE_NAME    ("exoparg3")
 
 
-/*
- * Debug level macros that are used in the DEBUG_PRINT macros
- */
-
-#define ACPI_DEBUG_LEVEL(dl)       dl,__LINE__,&_Dbg
-
-/* Exception level -- used in the global "DebugLevel" */
-
-#define ACPI_DB_OK                  ACPI_DEBUG_LEVEL (ACPI_LV_OK)
-#define ACPI_DB_INFO                ACPI_DEBUG_LEVEL (ACPI_LV_INFO)
-#define ACPI_DB_WARN                ACPI_DEBUG_LEVEL (ACPI_LV_WARN)
-#define ACPI_DB_ERROR               ACPI_DEBUG_LEVEL (ACPI_LV_ERROR)
-#define ACPI_DB_FATAL               ACPI_DEBUG_LEVEL (ACPI_LV_FATAL)
-#define ACPI_DB_DEBUG_OBJECT        ACPI_DEBUG_LEVEL (ACPI_LV_DEBUG_OBJECT)
-#define ACPI_DB_ALL_EXCEPTIONS      ACPI_DEBUG_LEVEL (ACPI_LV_ALL_EXCEPTIONS)
-
-
-/* Trace level -- also used in the global "DebugLevel" */
-
-#define ACPI_DB_THREADS             ACPI_DEBUG_LEVEL (ACPI_LV_THREADS)
-#define ACPI_DB_PARSE               ACPI_DEBUG_LEVEL (ACPI_LV_PARSE)
-#define ACPI_DB_DISPATCH            ACPI_DEBUG_LEVEL (ACPI_LV_DISPATCH)
-#define ACPI_DB_LOAD                ACPI_DEBUG_LEVEL (ACPI_LV_LOAD)
-#define ACPI_DB_EXEC                ACPI_DEBUG_LEVEL (ACPI_LV_EXEC)
-#define ACPI_DB_NAMES               ACPI_DEBUG_LEVEL (ACPI_LV_NAMES)
-#define ACPI_DB_OPREGION            ACPI_DEBUG_LEVEL (ACPI_LV_OPREGION)
-#define ACPI_DB_BFIELD              ACPI_DEBUG_LEVEL (ACPI_LV_BFIELD)
-#define ACPI_DB_TABLES              ACPI_DEBUG_LEVEL (ACPI_LV_TABLES)
-#define ACPI_DB_FUNCTIONS           ACPI_DEBUG_LEVEL (ACPI_LV_FUNCTIONS)
-#define ACPI_DB_VALUES              ACPI_DEBUG_LEVEL (ACPI_LV_VALUES)
-#define ACPI_DB_OBJECTS             ACPI_DEBUG_LEVEL (ACPI_LV_OBJECTS)
-#define ACPI_DB_ALLOCATIONS         ACPI_DEBUG_LEVEL (ACPI_LV_ALLOCATIONS)
-#define ACPI_DB_RESOURCES           ACPI_DEBUG_LEVEL (ACPI_LV_RESOURCES)
-#define ACPI_DB_IO                  ACPI_DEBUG_LEVEL (ACPI_LV_IO)
-#define ACPI_DB_INTERRUPTS          ACPI_DEBUG_LEVEL (ACPI_LV_INTERRUPTS)
-#define ACPI_DB_USER_REQUESTS       ACPI_DEBUG_LEVEL (ACPI_LV_USER_REQUESTS)
-#define ACPI_DB_PACKAGE             ACPI_DEBUG_LEVEL (ACPI_LV_PACKAGE)
-#define ACPI_DB_MUTEX               ACPI_DEBUG_LEVEL (ACPI_LV_MUTEX)
-#define ACPI_DB_INIT                ACPI_DEBUG_LEVEL (ACPI_LV_INIT)
-
-#define ACPI_DB_ALL                 ACPI_DEBUG_LEVEL (ACPI_LV_ALL)
+/*!
+ * Naming convention for AML interpreter execution routines.
+ *
+ * The routines that begin execution of AML opcodes are named with a common
+ * convention based upon the number of arguments, the number of target operands,
+ * and whether or not a value is returned:
+ *
+ *      AcpiExOpcode_xA_yT_zR
+ *
+ * Where:
+ *
+ * xA - ARGUMENTS:    The number of arguments (input operands) that are
+ *                    required for this opcode type (1 through 6 args).
+ * yT - TARGETS:      The number of targets (output operands) that are required
+ *                    for this opcode type (0, 1, or 2 targets).
+ * zR - RETURN VALUE: Indicates whether this opcode type returns a value
+ *                    as the function return (0 or 1).
+ *
+ * The AcpiExOpcode* functions are called via the Dispatcher component with
+ * fully resolved operands.
+!*/
 
 
+/*******************************************************************************
+ *
+ * FUNCTION:    AcpiExOpcode_3A_0T_0R
+ *
+ * PARAMETERS:  WalkState           - Current walk state
+ *
+ * RETURN:      Status
+ *
+ * DESCRIPTION: Execute Triadic operator (3 operands)
+ *
+ ******************************************************************************/
 
-/* Defaults for DebugLevel, debug and normal */
-
-#define DEBUG_DEFAULT               (ACPI_LV_OK | ACPI_LV_WARN | ACPI_LV_ERROR | ACPI_LV_DEBUG_OBJECT)
-#define NORMAL_DEFAULT              (ACPI_LV_OK | ACPI_LV_WARN | ACPI_LV_ERROR | ACPI_LV_DEBUG_OBJECT)
-#define DEBUG_ALL                   (ACPI_LV_AML_DISASSEMBLE | ACPI_LV_ALL_EXCEPTIONS | ACPI_LV_ALL)
-
-/* Misc defines */
-
-#define HEX                         0x01
-#define ASCII                       0x02
-#define FULL_ADDRESS                0x04
-#define CHARS_PER_LINE              16          /* used in DumpBuf function */
+ACPI_STATUS
+AcpiExOpcode_3A_0T_0R (
+    ACPI_WALK_STATE         *WalkState)
+{
+    ACPI_OPERAND_OBJECT     **Operand = &WalkState->Operands[0];
+    ACPI_SIGNAL_FATAL_INFO  *Fatal;
+    ACPI_STATUS             Status = AE_OK;
 
 
-#endif /* __ACOUTPUT_H__ */
+    ACPI_FUNCTION_TRACE_STR ("ExOpcode_3A_0T_0R", AcpiPsGetOpcodeName (WalkState->Opcode));
+
+
+    switch (WalkState->Opcode)
+    {
+
+    case AML_FATAL_OP:          /* Fatal (FatalType  FatalCode  FatalArg)    */
+
+        ACPI_DEBUG_PRINT ((ACPI_DB_INFO,
+            "FatalOp: Type %X Code %X Arg %X <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n",
+            (UINT32) Operand[0]->Integer.Value, (UINT32) Operand[1]->Integer.Value,
+            (UINT32) Operand[2]->Integer.Value));
+
+
+        Fatal = ACPI_MEM_ALLOCATE (sizeof (ACPI_SIGNAL_FATAL_INFO));
+        if (Fatal)
+        {
+            Fatal->Type     = (UINT32) Operand[0]->Integer.Value;
+            Fatal->Code     = (UINT32) Operand[1]->Integer.Value;
+            Fatal->Argument = (UINT32) Operand[2]->Integer.Value;
+        }
+
+        /*
+         * Always signal the OS!
+         */
+        Status = AcpiOsSignal (ACPI_SIGNAL_FATAL, Fatal);
+
+        /* Might return while OS is shutting down, just continue */
+
+        ACPI_MEM_FREE (Fatal);
+        break;
+
+
+    default:
+
+        ACPI_REPORT_ERROR (("AcpiExOpcode_3A_0T_0R: Unknown opcode %X\n",
+                WalkState->Opcode));
+        Status = AE_AML_BAD_OPCODE;
+        goto Cleanup;
+    }
+
+
+Cleanup:
+
+    return_ACPI_STATUS (Status);
+}
+
+
+/*******************************************************************************
+ *
+ * FUNCTION:    AcpiExOpcode_3A_1T_1R
+ *
+ * PARAMETERS:  WalkState           - Current walk state
+ *
+ * RETURN:      Status
+ *
+ * DESCRIPTION: Execute Triadic operator (3 operands)
+ *
+ ******************************************************************************/
+
+ACPI_STATUS
+AcpiExOpcode_3A_1T_1R (
+    ACPI_WALK_STATE         *WalkState)
+{
+    ACPI_OPERAND_OBJECT     **Operand = &WalkState->Operands[0];
+    ACPI_OPERAND_OBJECT     *ReturnDesc = NULL;
+    char                    *Buffer;
+    ACPI_STATUS             Status = AE_OK;
+    NATIVE_UINT             Index;
+    ACPI_SIZE               Length;
+
+
+    ACPI_FUNCTION_TRACE_STR ("ExOpcode_3A_1T_1R", AcpiPsGetOpcodeName (WalkState->Opcode));
+
+
+    switch (WalkState->Opcode)
+    {
+    case AML_MID_OP:        /* Mid  (Source[0], Index[1], Length[2], Result[3]) */
+
+        /*
+         * Create the return object.  The Source operand is guaranteed to be
+         * either a String or a Buffer, so just use its type.
+         */
+        ReturnDesc = AcpiUtCreateInternalObject (ACPI_GET_OBJECT_TYPE (Operand[0]));
+        if (!ReturnDesc)
+        {
+            Status = AE_NO_MEMORY;
+            goto Cleanup;
+        }
+
+        /* Get the Integer values from the objects */
+
+        Index = (NATIVE_UINT) Operand[1]->Integer.Value;
+        Length = (ACPI_SIZE) Operand[2]->Integer.Value;
+
+        /*
+         * If the index is beyond the length of the String/Buffer, or if the
+         * requested length is zero, return a zero-length String/Buffer
+         */
+        if ((Index < Operand[0]->String.Length) &&
+            (Length > 0))
+        {
+            /* Truncate request if larger than the actual String/Buffer */
+
+            if ((Index + Length) >
+                Operand[0]->String.Length)
+            {
+                Length = (ACPI_SIZE) Operand[0]->String.Length - Index;
+            }
+
+            /* Allocate a new buffer for the String/Buffer */
+
+            Buffer = ACPI_MEM_CALLOCATE ((ACPI_SIZE) Length + 1);
+            if (!Buffer)
+            {
+                Status = AE_NO_MEMORY;
+                goto Cleanup;
+            }
+
+            /* Copy the portion requested */
+
+            ACPI_MEMCPY (Buffer, Operand[0]->String.Pointer + Index,
+                         Length);
+
+            /* Set the length of the new String/Buffer */
+
+            ReturnDesc->String.Pointer = Buffer;
+            ReturnDesc->String.Length = (UINT32) Length;
+        }
+        break;
+
+
+    default:
+
+        ACPI_REPORT_ERROR (("AcpiExOpcode_3A_0T_0R: Unknown opcode %X\n",
+                WalkState->Opcode));
+        Status = AE_AML_BAD_OPCODE;
+        goto Cleanup;
+    }
+
+    /* Store the result in the target */
+
+    Status = AcpiExStore (ReturnDesc, Operand[3], WalkState);
+
+Cleanup:
+
+    /* Delete return object on error */
+
+    if (ACPI_FAILURE (Status))
+    {
+        AcpiUtRemoveReference (ReturnDesc);
+    }
+
+    /* Set the return object and exit */
+
+    WalkState->ResultObj = ReturnDesc;
+    return_ACPI_STATUS (Status);
+}
+
+
