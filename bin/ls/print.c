@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.14 1995/09/07 06:43:00 jtc Exp $	*/
+/*	$NetBSD: print.c,v 1.15 1996/12/11 03:25:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.5 (Berkeley) 7/28/94";
 #else
-static char rcsid[] = "$NetBSD: print.c,v 1.14 1995/09/07 06:43:00 jtc Exp $";
+static char rcsid[] = "$NetBSD: print.c,v 1.15 1996/12/11 03:25:39 thorpej Exp $";
 #endif
 #endif /* not lint */
 
@@ -135,8 +135,6 @@ printlong(dp)
 	}
 }
 
-#define	TAB	8
-
 void
 printcol(dp)
 	DISPLAY *dp;
@@ -146,7 +144,7 @@ printcol(dp)
 	static int lastentries = -1;
 	FTSENT *p;
 	int base, chcnt, cnt, col, colwidth, num;
-	int endcol, numcols, numrows, row;
+	int numcols, numrows, row;
 
 	/*
 	 * Have to do random access in the linked list -- build a table
@@ -172,13 +170,15 @@ printcol(dp)
 	if (f_type)
 		colwidth += 1;
 
-	colwidth = (colwidth + TAB) & ~(TAB - 1);
+	colwidth += 1;
+
 	if (termwidth < 2 * colwidth) {
 		printscol(dp);
 		return;
 	}
 
 	numcols = termwidth / colwidth;
+	colwidth = termwidth / numcols;		/* spread out if possible */
 	numrows = num / numcols;
 	if (num % numcols)
 		++numrows;
@@ -186,17 +186,12 @@ printcol(dp)
 	if (dp->list->fts_level != FTS_ROOTLEVEL && (f_longform || f_size))
 		(void)printf("total %lu\n", howmany(dp->btotal, blocksize));
 	for (row = 0; row < numrows; ++row) {
-		endcol = colwidth;
 		for (base = row, chcnt = col = 0; col < numcols; ++col) {
-			chcnt += printaname(array[base], dp->s_inode,
-			    dp->s_block);
+			chcnt = printaname(array[base], dp->s_inode, dp->s_block);
 			if ((base += numrows) >= num)
 				break;
-			while ((cnt = (chcnt + TAB & ~(TAB - 1))) <= endcol) {
-				(void)putchar('\t');
-				chcnt = cnt;
-			}
-			endcol += colwidth;
+			while (chcnt++ < colwidth)
+				putchar(' ');
 		}
 		(void)putchar('\n');
 	}
