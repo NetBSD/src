@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile.sparc,v 1.73 2001/05/29 02:20:26 mrg Exp $
+# 	$NetBSD: Makefile.sparc,v 1.74 2001/10/23 19:42:16 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -11,6 +11,8 @@
 # Machine generic makefile changes should be made in
 #	/sys/arch/sparc/conf/Makefile.sparc
 # after which config should be rerun for all machines of that type.
+
+MACHINE_ARCH=sparc
 
 .include <bsd.own.mk>
 
