@@ -1,4 +1,7 @@
-# $NetBSD: Makefile,v 1.2 2000/06/17 00:04:38 thorpej Exp $
+# $NetBSD: Makefile,v 1.2.2.1 2001/04/05 23:25:14 he Exp $
+
+.include <bsd.own.mk>
+
 DIST=		${.CURDIR}/../../crypto/dist
 .PATH: ${DIST}/heimdal/admin
 
@@ -14,26 +17,27 @@ SRCS=		 add.c				\
 		 ktutil.c			\
 		 list.c				\
 		 purge.c			\
-		 remove.c			\
-		 srvconvert.c			\
-		 srvcreate.c
+		 remove.c
 
 CPPFLAGS+= -I.					\
 	-I${DIST}/heimdal/admin			\
 	-I${.CURDIR}/../../include/heimdal	\
 	-I${DESTDIR}/usr/include/kadm5		\
 	-I${DESTDIR}/usr/include/krb5		\
+	-I${DESTDIR}/usr/include		\
 	-I${DESTDIR}/usr/include/openssl	\
 	-DHAVE_CONFIG_H
 
-LDADD=	-lkadm5srv \
-	-lhdb \
+VERS!=	cd ${.CURDIR}/../../lib/libvers && ${PRINTOBJDIR}
+
+LDADD=	-lkadm5clnt \
 	-lkrb5 \
 	-lcrypto \
 	-lasn1 \
 	-lcom_err \
 	-lsl \
 	-ledit -ltermcap \
+	-L${VERS} -lvers \
 	-lroken \
 	-lcrypt
 
