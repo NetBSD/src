@@ -1,4 +1,4 @@
-/* $NetBSD: bus.h,v 1.2 2000/06/08 23:23:41 bjh21 Exp $ */
+/* $NetBSD: bus.h,v 1.3 2000/12/09 18:47:15 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -64,6 +64,9 @@ extern int bus_space_shift(bus_space_tag_t, bus_space_handle_t, int,
 /* Allocating and freeing bus space */
 #define bus_space_alloc(t, rs, re, s, a, b, c, ap, hp) (-1)
 #define bus_space_free(t, h, s) /* Do nothing */
+
+/* Used by ne2000.c */
+#define BUS_SPACE_ALIGNED_POINTER ALIGNED_POINTER
 
 /* Bus barrier operations. */
 #define BUS_SPACE_BARRIER_READ	0
