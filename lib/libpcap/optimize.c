@@ -1,4 +1,4 @@
-/*	$NetBSD: optimize.c,v 1.10 2000/04/14 14:17:13 itojun Exp $	*/
+/*	$NetBSD: optimize.c,v 1.11 2000/10/10 19:12:49 is Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1993, 1994, 1995, 1996
@@ -28,7 +28,7 @@
 static const char rcsid[] =
     "@(#) Header: optimize.c,v 1.60 96/09/26 23:28:14 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: optimize.c,v 1.10 2000/04/14 14:17:13 itojun Exp $");
+__RCSID("$NetBSD: optimize.c,v 1.11 2000/10/10 19:12:49 is Exp $");
 #endif
 #endif
 
@@ -1959,7 +1959,7 @@ convert_code_r(p)
 	    {
 		int i;
 		int jt, jf;
-		char *ljerr = "%s for block-local relative jump: off=%d";
+		const char ljerr[]="%s for block-local relative jump: off=%d";
 
 #if 0
 		printf("code=%x off=%d %x %x\n", src->s.code,
