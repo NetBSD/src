@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dge.c,v 1.7 2004/10/30 18:09:22 thorpej Exp $ */
+/*	$NetBSD: if_dge.c,v 1.8 2005/02/18 01:21:02 heas Exp $ */
 
 /*
  * Copyright (c) 2004, SUNET, Swedish University Computer Network.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.7 2004/10/30 18:09:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.8 2005/02/18 01:21:02 heas Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1024,7 +1024,6 @@ dge_tx_cksum(struct dge_softc *sc, struct dge_txsoft *txs, uint8_t *fieldsp)
 	struct mbuf *m0 = txs->txs_mbuf;
 	struct dge_ctdes *t;
 	uint32_t ipcs, tucs;
-	struct ip *ip;
 	struct ether_header *eh;
 	int offset, iphl;
 	uint8_t fields = 0;
@@ -1037,12 +1036,10 @@ dge_tx_cksum(struct dge_softc *sc, struct dge_txsoft *txs, uint8_t *fieldsp)
 	eh = mtod(m0, struct ether_header *);
 	switch (htons(eh->ether_type)) {
 	case ETHERTYPE_IP:
-		iphl = sizeof(struct ip);
 		offset = ETHER_HDR_LEN;
 		break;
 
 	case ETHERTYPE_VLAN:
-		iphl = sizeof(struct ip);
 		offset = ETHER_HDR_LEN + ETHER_VLAN_ENCAP_LEN;
 		break;
 
@@ -1054,17 +1051,7 @@ dge_tx_cksum(struct dge_softc *sc, struct dge_txsoft *txs, uint8_t *fieldsp)
 		return (0);
 	}
 
-	if (m0->m_len < (offset + iphl)) {
-		if ((txs->txs_mbuf = m_pullup(m0, offset + iphl)) == NULL) {
-			printf("%s: dge_tx_cksum: mbuf allocation failed, "
-			    "packet dropped\n", sc->sc_dev.dv_xname);
-			return (ENOMEM);
-		}
-		m0 = txs->txs_mbuf;
-	}
-
-	ip = (struct ip *) (mtod(m0, caddr_t) + offset);
-	iphl = ip->ip_hl << 2;
+	iphl = m0->m_pkthdr.csum_data >> 16;
 
 	/*
 	 * NOTE: Even if we're not using the IP or TCP/UDP checksum
@@ -1097,8 +1084,8 @@ dge_tx_cksum(struct dge_softc *sc, struct dge_txsoft *txs, uint8_t *fieldsp)
 		DGE_EVCNT_INCR(&sc->sc_ev_txtusum);
 		fields |= TDESC_POPTS_TXSM;
 		tucs = DGE_TCPIP_TUCSS(offset) |
-		    DGE_TCPIP_TUCSO(offset + m0->m_pkthdr.csum_data) |
-		    DGE_TCPIP_TUCSE(0) /* rest of packet */;
+		   DGE_TCPIP_TUCSO(offset + (m0->m_pkthdr.csum_data & 0xffff)) |
+		   DGE_TCPIP_TUCSE(0) /* rest of packet */;
 	} else if (__predict_true(sc->sc_txctx_tucs != 0xffffffff)) {
 		/* Use the cached value. */
 		tucs = sc->sc_txctx_tucs;
