@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.126 1999/09/26 20:28:00 jdolecek Exp $
+# $NetBSD: mi,v 1.127 1999/09/27 00:14:52 perry Exp $
 .
 ./altroot
 ./bin
@@ -923,7 +923,6 @@
 ./usr/share/man/man4/amiga
 ./usr/share/man/man4/arm32
 ./usr/share/man/man4/atari
-./usr/share/man/man4/bebox
 ./usr/share/man/man4/hp300
 ./usr/share/man/man4/i386
 ./usr/share/man/man4/mac68k
