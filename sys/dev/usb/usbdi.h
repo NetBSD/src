@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.h,v 1.24 1999/08/22 20:12:39 augustss Exp $	*/
+/*	$NetBSD: usbdi.h,v 1.25 1999/08/29 19:41:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -163,7 +163,7 @@ usb_endpoint_descriptor_t *usbd_find_edesc
 void usbd_dopoll __P((usbd_interface_handle));
 void usbd_set_polling __P((usbd_interface_handle iface, int on));
 
-char *usbd_errstr __P((usbd_status err));
+const char *usbd_errstr __P((usbd_status err));
 
 /* NetBSD attachment information */
 
