@@ -1,4 +1,4 @@
-/*	$NetBSD: system.c,v 1.15 2002/06/13 23:41:20 wiz Exp $	*/
+/*	$NetBSD: system.c,v 1.16 2002/09/18 19:54:25 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)system.c	4.5 (Berkeley) 4/26/91";
 #else
-__RCSID("$NetBSD: system.c,v 1.15 2002/06/13 23:41:20 wiz Exp $");
+__RCSID("$NetBSD: system.c,v 1.16 2002/09/18 19:54:25 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -57,6 +57,7 @@ __RCSID("$NetBSD: system.c,v 1.15 2002/06/13 23:41:20 wiz Exp $");
 
 #include <sys/time.h>
 #include <sys/socket.h>
+#include <sys/poll.h>
 #include <netinet/in.h>
 #include <sys/wait.h>
 #include <errno.h>
@@ -472,15 +473,14 @@ int	copyout;
 static int
 doconnect()
 {
-    fd_set fdset;
+    struct pollfd set[1];
     int i;
 
     sock = -1;
-    FD_ZERO(&fdset);
+    set[0].fd = serversock;
+    set[0].events = POLLIN;
     while (shell_active && (sock == -1)) {
-	FD_SET(serversock, &fdset);
-	if ((i = select(serversock+1, &fdset,
-		    (fd_set *)0, (fd_set *)0, (struct timeval *)0)) < 0) {
+	if ((i = poll(set, 1, INFTIM)) < 0) {
 	    if (errno == EINTR) {
 		continue;
 	    } else {
