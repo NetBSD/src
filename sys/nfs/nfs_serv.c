@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.63 2002/09/26 20:38:04 bouyer Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.64 2002/09/26 20:41:25 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.63 2002/09/26 20:38:04 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.64 2002/09/26 20:41:25 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1415,7 +1415,6 @@ nfsrv_create(nfsd, slp, procp, mrq)
 			if (error) {
 				nfsm_reply(0);
 			}
-			PNBUF_PUT(nd.ni_cnd.cn_pnbuf);
 			if (nd.ni_cnd.cn_flags & ISSYMLINK) {
 				vrele(nd.ni_dvp);
 				vput(nd.ni_vp);
