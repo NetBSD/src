@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.54 2000/02/02 23:28:08 thorpej Exp $	*/
+/*	$NetBSD: if.c,v 1.55 2000/02/05 07:58:54 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -452,7 +452,7 @@ if_rt_walktree(rn, v)
 	struct radix_node *rn;
 	void *v;
 {
-	struct ifnet *ifp;
+	struct ifnet *ifp = (struct ifnet *)v;
 	struct rtentry *rt = (struct rtentry *)rn;
 	int error;
 
