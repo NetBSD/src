@@ -1,4 +1,4 @@
-/* $NetBSD: ptsc.c,v 1.14 1997/01/17 01:12:26 mark Exp $ */
+/*	$NetBSD: ptsc.c,v 1.15 1997/01/28 04:21:01 mark Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Stevens
@@ -90,7 +90,7 @@ struct cfdriver ptsc_cd = {
 	NULL, "ptsc", DV_DULL, NULL, 0
 };
 
-int ptsc_intr		 __P((struct sfas_softc *dev));
+int ptsc_intr		 __P((void *arg));
 int ptsc_setup_dma	 __P((struct sfas_softc *sc, void *ptr, int len,
 			      int mode));
 int ptsc_build_dma_chain __P((struct sfas_softc *sc,
@@ -217,9 +217,10 @@ ptscattach(pdp, dp, auxp)
 
 
 int
-ptsc_intr(dev)
-	struct sfas_softc *dev;
+ptsc_intr(arg)
+	void *arg;
 {
+	struct sfas_softc *dev = arg;
 	ptsc_regmap_p	      rp;
 	int		      quickints;
 
