@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.115 2004/12/21 05:51:31 yamt Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.116 2005/01/26 21:49:27 mycroft Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -217,6 +217,7 @@ struct tcpcb {
 	tcp_seq	iss;			/* initial send sequence number */
 	u_long	snd_wnd;		/* send window */
 	tcp_seq snd_recover;		/* for use in fast recovery */
+	tcp_seq	snd_high;		/* NewReno false fast rexmit counter */
 /* receive sequence variables */
 	u_long	rcv_wnd;		/* receive window */
 	tcp_seq	rcv_nxt;		/* receive next */
@@ -822,7 +823,7 @@ int	 syn_cache_respond(struct syn_cache *, struct mbuf *);
 void	 syn_cache_timer(void *);
 void	 syn_cache_cleanup(struct tcpcb *);
 
-int	 tcp_newreno(struct tcpcb *, struct tcphdr *);
+void	 tcp_newreno(struct tcpcb *, struct tcphdr *);
 
 int	 tcp_input_checksum(int, struct mbuf *, const struct tcphdr *, int, int,
     int);

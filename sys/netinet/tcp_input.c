@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.212 2004/12/21 05:51:31 yamt Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.213 2005/01/26 21:49:27 mycroft Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.212 2004/12/21 05:51:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.213 2005/01/26 21:49:27 mycroft Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1495,6 +1495,21 @@ after_listen:
 		if (tcp_dooptions(tp, optp, optlen, th, m, toff, &opti) < 0)
 			goto drop;
 
+	if (opti.ts_present && opti.ts_ecr) {
+		u_int32_t now;
+
+		/*
+		 * Calculate the RTT from the returned time stamp and the
+		 * connection's time base.  If the time stamp is later than
+		 * the current time, fall back to non-1323 RTT calculation.
+		 */
+		now = TCP_TIMESTAMP(tp);
+		if (SEQ_GEQ(now, opti.ts_ecr))
+			opti.ts_ecr = now - opti.ts_ecr + 1;
+		else
+			opti.ts_ecr = 0;
+	}
+
 	/*
 	 * Header prediction: check for the two common cases
 	 * of a uni-directional data xfer.  If the packet has
@@ -1528,6 +1543,7 @@ after_listen:
 		}
 
 		if (tlen == 0) {
+			/* Ack prediction. */
 			if (SEQ_GT(th->th_ack, tp->snd_una) &&
 			    SEQ_LEQ(th->th_ack, tp->snd_max) &&
 			    tp->snd_cwnd >= tp->snd_wnd &&
@@ -1537,8 +1553,7 @@ after_listen:
 				 */
 				++tcpstat.tcps_predack;
 				if (opti.ts_present && opti.ts_ecr)
-					tcp_xmit_timer(tp,
-					  TCP_TIMESTAMP(tp) - opti.ts_ecr + 1);
+					tcp_xmit_timer(tp, opti.ts_ecr);
 				else if (tp->t_rtttime &&
 				    SEQ_GT(th->th_ack, tp->t_rtseq))
 					tcp_xmit_timer(tp,
@@ -1553,12 +1568,9 @@ after_listen:
 				sbdrop(&so->so_snd, acked);
 				tp->t_lastoff -= acked;
 
-				/*
-				 * We want snd_recover to track snd_una to
-				 * avoid sequence wraparound problems for
-				 * very large transfers.
-				 */
-				tp->snd_una = tp->snd_recover = th->th_ack;
+				tp->snd_una = th->th_ack;
+				if (SEQ_LT(tp->snd_high, tp->snd_una))
+					tp->snd_high = tp->snd_una;
 				m_freem(m);
 
 				/*
@@ -1683,9 +1695,11 @@ after_listen:
 		if ((tiflags & TH_SYN) == 0)
 			goto drop;
 		if (tiflags & TH_ACK) {
-			tp->snd_una = tp->snd_recover = th->th_ack;
+			tp->snd_una = th->th_ack;
 			if (SEQ_LT(tp->snd_nxt, tp->snd_una))
 				tp->snd_nxt = tp->snd_una;
+			if (SEQ_LT(tp->snd_high, tp->snd_una))
+				tp->snd_high = tp->snd_una;
 			TCP_TIMER_DISARM(tp, TCPT_REXMT);
 		}
 		tp->irs = th->th_seq;
@@ -2078,22 +2092,23 @@ after_listen:
 				    th->th_ack != tp->snd_una)
 					tp->t_dupacks = 0;
 				else if (++tp->t_dupacks == tcprexmtthresh) {
-					tcp_seq onxt = tp->snd_nxt;
-					u_int win =
-					    min(tp->snd_wnd, tp->snd_cwnd) /
-					    2 /	tp->t_segsz;
-					if (tcp_do_newreno && SEQ_LT(th->th_ack,
-					    tp->snd_recover)) {
+					tcp_seq onxt;
+					u_int win;
+
+					if (tcp_do_newreno &&
+					    SEQ_LT(th->th_ack, tp->snd_high)) {
 						/*
 						 * False fast retransmit after
-						 * timeout.  Do not cut window.
+						 * timeout.  Do not enter fast
+						 * recovery.
 						 */
-						tp->snd_cwnd += tp->t_segsz;
 						tp->t_dupacks = 0;
-						(void) tcp_output(tp);
-						goto drop;
+						break;
 					}
 
+					onxt = tp->snd_nxt;
+					win = min(tp->snd_wnd, tp->snd_cwnd) /
+					    2 /	tp->t_segsz;
 					if (win < 2)
 						win = 2;
 					tp->snd_ssthresh = win * tp->t_segsz;
@@ -2130,24 +2145,13 @@ after_listen:
 		 * If the congestion window was inflated to account
 		 * for the other side's cached packets, retract it.
 		 */
-		if (tcp_do_newreno == 0) {
+		if (!tcp_do_newreno) {
 			if (tp->t_dupacks >= tcprexmtthresh &&
 			    tp->snd_cwnd > tp->snd_ssthresh)
 				tp->snd_cwnd = tp->snd_ssthresh;
 			tp->t_dupacks = 0;
-		} else if (tp->t_dupacks >= tcprexmtthresh &&
-			   tcp_newreno(tp, th) == 0) {
-			tp->snd_cwnd = tp->snd_ssthresh;
-			/*
-			 * Window inflation should have left us with approx.
-			 * snd_ssthresh outstanding data.  But in case we
-			 * would be inclined to send a burst, better to do
-			 * it via the slow start mechanism.
-			 */
-			if (SEQ_SUB(tp->snd_max, th->th_ack) < tp->snd_ssthresh)
-				tp->snd_cwnd = SEQ_SUB(tp->snd_max, th->th_ack)
-				    + tp->t_segsz;
-			tp->t_dupacks = 0;
+		} else {
+			tcp_newreno(tp, th);
 		}
 		if (SEQ_GT(th->th_ack, tp->snd_max)) {
 			tcpstat.tcps_rcvacktoomuch++;
@@ -2167,7 +2171,7 @@ after_listen:
 		 * Recompute the initial retransmit timer.
 		 */
 		if (opti.ts_present && opti.ts_ecr)
-			tcp_xmit_timer(tp, TCP_TIMESTAMP(tp) - opti.ts_ecr + 1);
+			tcp_xmit_timer(tp, opti.ts_ecr);
 		else if (tp->t_rtttime && SEQ_GT(th->th_ack, tp->t_rtseq))
 			tcp_xmit_timer(tp, tcp_now - tp->t_rtttime);
 
@@ -2190,14 +2194,17 @@ after_listen:
 		 * (segsz^2 / cwnd per packet), plus a constant
 		 * fraction of a packet (segsz/8) to help larger windows
 		 * open quickly enough.
+		 *
+		 * If we are still in fast recovery (meaning we are using
+		 * NewReno and we have only received partial acks), do not
+		 * inflate the window yet.
 		 */
-		{
-		u_int cw = tp->snd_cwnd;
-		u_int incr = tp->t_segsz;
+		if (tp->t_dupacks == 0) {
+			u_int cw = tp->snd_cwnd;
+			u_int incr = tp->t_segsz;
 
-		if (cw > tp->snd_ssthresh)
-			incr = incr * incr / cw;
-		if (tcp_do_newreno == 0 || SEQ_GEQ(th->th_ack, tp->snd_recover))
+			if (cw > tp->snd_ssthresh)
+				incr = incr * incr / cw;
 			tp->snd_cwnd = min(cw + incr,
 			    TCP_MAXWIN << tp->snd_scale);
 		}
@@ -2215,14 +2222,11 @@ after_listen:
 			ourfinisacked = 0;
 		}
 		sowwakeup(so);
-		/*
-		 * We want snd_recover to track snd_una to
-		 * avoid sequence wraparound problems for
-		 * very large transfers.
-		 */
-		tp->snd_una = tp->snd_recover = th->th_ack;
+		tp->snd_una = th->th_ack;
 		if (SEQ_LT(tp->snd_nxt, tp->snd_una))
 			tp->snd_nxt = tp->snd_una;
+		if (SEQ_LT(tp->snd_high, tp->snd_una))
+			tp->snd_high = tp->snd_una;
 
 		switch (tp->t_state) {
 
@@ -3036,20 +3040,29 @@ tcp_xmit_timer(tp, rtt)
 }
 
 /*
- * Checks for partial ack.  If partial ack arrives, force the retransmission
- * of the next unacknowledged segment, do not clear tp->t_dupacks, and return
- * 1.  By setting snd_nxt to th_ack, this forces retransmission timer to
- * be started again.  If the ack advances at least to tp->snd_recover, return 0.
+ * Implement the NewReno response to a new ack, checking for partial acks in
+ * fast recovery.
  */
-int
+void
 tcp_newreno(tp, th)
 	struct tcpcb *tp;
 	struct tcphdr *th;
 {
-	tcp_seq onxt = tp->snd_nxt;
-	u_long ocwnd = tp->snd_cwnd;
+	if (tp->t_dupacks < tcprexmtthresh) {
+		/*
+		 * We were not in fast recovery.  Reset the duplicate ack
+		 * counter.
+		 */
+		tp->t_dupacks = 0;
+	} else if (SEQ_LT(th->th_ack, tp->snd_recover)) {
+		/*
+		 * This is a partial ack.  Retransmit the first unacknowledged
+		 * segment and deflate the congestion window by the amount of
+		 * acknowledged data.  Do not exit fast recovery.
+		 */
+		tcp_seq onxt = tp->snd_nxt;
+		u_long ocwnd = tp->snd_cwnd;
 
-	if (SEQ_LT(th->th_ack, tp->snd_recover)) {
 		/*
 		 * snd_una has not yet been updated and the socket's send
 		 * buffer has not yet drained off the ACK'd data, so we
@@ -3073,9 +3086,23 @@ tcp_newreno(tp, th)
 		 * not updated yet.
 		 */
 		tp->snd_cwnd -= (th->th_ack - tp->snd_una - tp->t_segsz);
-		return 1;
+	} else {
+		/*
+		 * Complete ack.  Inflate the congestion window to ssthresh
+		 * and exit fast recovery.
+		 *
+		 * Window inflation should have left us with approx.
+		 * snd_ssthresh outstanding data.  But in case we
+		 * would be inclined to send a burst, better to do
+		 * it via the slow start mechanism.
+		 */
+		if (SEQ_LT(tp->snd_max, th->th_ack + tp->snd_ssthresh))
+			tp->snd_cwnd = SEQ_SUB(tp->snd_max, th->th_ack)
+			    + tp->t_segsz;
+		else
+			tp->snd_cwnd = tp->snd_ssthresh;
+		tp->t_dupacks = 0;
 	}
-	return 0;
 }
 
 
