@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ksyms.c,v 1.13 2003/06/29 22:31:20 fvdl Exp $	*/
+/*	$NetBSD: kern_ksyms.c,v 1.14 2003/09/03 10:55:22 ragge Exp $	*/
 /*
  * Copyright (c) 2001, 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.13 2003/06/29 22:31:20 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.14 2003/09/03 10:55:22 ragge Exp $");
 
 #ifdef _KERNEL
 #include "opt_ddb.h"
@@ -647,7 +647,7 @@ ksyms_addsymtab(const char *mod, void *symstart, vsize_t symsize,
 {
 	Elf_Sym *sym = symstart;
 	struct symtab *st;
-	long rval;
+	unsigned long rval;
 	int i;
 	char *str, *name;
 
