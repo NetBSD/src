@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.2 1999/09/16 14:37:47 takemura Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.3 1999/09/25 00:18:10 shin Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.2 1999/09/16 14:37:47 takemura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.3 1999/09/25 00:18:10 shin Exp $");
 
 /*
  * Setup the system to run on the current machine.
@@ -73,7 +73,6 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.2 1999/09/16 14:37:47 takemura Exp $"
  * the configuration process, and are used in initializing
  * the machine.
  */
-int	cold = 1;	/* if 1, still working on cold-start */
 int	cpuspeed = 7;	/* approx # instr per usec. */
 
 static char booted_device_name[16];
@@ -99,8 +98,6 @@ cpu_configure()
 
 	/* Configuration is finished, turn on interrupts. */
 	_splnone();	/* enable all source forcing SOFT_INTs cleared */
-
-	cold = 0;
 }
 
 void
