@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.18 2003/07/10 10:34:01 lukem Exp $
+#	$NetBSD: Makefile,v 1.19 2004/05/10 00:08:49 ross Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
 
 FLOPPYBASE=	cdhdtape
-FLOPPYSIZE=	5760
+FLOPPYSIZE=	10000
 FLOPPYMETAFILE!=printf "USTAR.volsize.%o" ${FLOPPYSIZE}
 FLOPPYFILES=	boot ${FLOPPYMETAFILE} netbsd
 FLOPPYMAX=	1
