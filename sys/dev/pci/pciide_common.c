@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_common.c,v 1.3 2003/11/27 23:02:40 fvdl Exp $	*/
+/*	$NetBSD: pciide_common.c,v 1.4 2003/12/19 05:16:57 thorpej Exp $	*/
 
 
 /*
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.3 2003/11/27 23:02:40 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.4 2003/12/19 05:16:57 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -97,12 +97,6 @@ int wdcdebug_pciide_mask = 0;
 
 static const char dmaerrfmt[] = 
     "%s:%d: unable to %s table DMA map for drive %d, error=%d\n";
-
-
-
-/* options passed via the 'flags' config keyword */
-#define	PCIIDE_OPTIONS_DMA	0x01
-#define	PCIIDE_OPTIONS_NODMA	0x02
 
 /* Default product description for devices not known from this controller */
 const struct pciide_product_desc default_product_desc = {
