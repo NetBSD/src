@@ -1,4 +1,4 @@
-/*	$NetBSD: traceroute.c,v 1.19.2.1 1997/11/01 06:29:41 mellon Exp $	*/
+/*	$NetBSD: traceroute.c,v 1.19.2.2 1997/11/04 22:34:23 mellon Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997
@@ -29,7 +29,7 @@ static const char rcsid[] =
 #else
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997\n\
 The Regents of the University of California.  All rights reserved.\n");
-__RCSID("$NetBSD: traceroute.c,v 1.19.2.1 1997/11/01 06:29:41 mellon Exp $");
+__RCSID("$NetBSD: traceroute.c,v 1.19.2.2 1997/11/04 22:34:23 mellon Exp $");
 #endif
 #endif
 
@@ -271,8 +271,8 @@ u_char	packet[512];		/* last inbound (icmp) packet */
 
 struct ip *outip;		/* last output (udp) packet */
 struct udphdr *outudp;		/* last output (udp) packet */
-struct outdata *outdata;	/* last output (udp) packet */
-struct outdata  outsetup;	/* setup and copy for alignment */
+void *outmark;			/* packed location of struct outdata */
+struct outdata outsetup;	/* setup and copy for alignment */
 
 struct icmp *outicmp;		/* last output (icmp) packet */
 
@@ -334,7 +334,6 @@ int	str2val(const char *, const char *, int, int);
 void	tvsub(struct timeval *, struct timeval *);
 __dead	void usage(void);
 int	wait_for_reply(int, struct sockaddr_in *, struct timeval *);
-void	fool_memcpy(void *dst, const void *src, size_t len);
 
 int
 main(int argc, char **argv)
@@ -465,7 +464,7 @@ main(int argc, char **argv)
 
 	if (lsrr > 0)
 		optlen = (lsrr + 1) * sizeof(gwlist[0]);
-	minpacket = sizeof(*outip) + sizeof(*outdata) + optlen;
+	minpacket = sizeof(*outip) + sizeof(struct outdata) + optlen;
 	if (useicmp)
 		minpacket += 8;			/* XXX magic number */
 	else
@@ -560,7 +559,7 @@ main(int argc, char **argv)
 		outicmp->icmp_type = ICMP_ECHO;
 		outicmp->icmp_id = htons(ident);
 
-		outdata = (struct outdata *)(outp + 8);	/* XXX magic number */
+		outmark = outp + 8;	/* XXX magic number */
 	} else {
 		outip->ip_p = IPPROTO_UDP;
 
@@ -568,7 +567,7 @@ main(int argc, char **argv)
 		outudp->uh_sport = htons(ident);
 		outudp->uh_ulen =
 		    htons((u_short)(packlen - (sizeof(*outip) + optlen)));
-		outdata = (struct outdata *)(outudp + 1);
+		outmark = outudp + 1;
 	}
 
 	cp = "icmp";
@@ -861,18 +860,7 @@ main(int argc, char **argv)
 			break;
 	}
 	exit(0);
-	/*NOTREACHED*/
 }
-#if 1
-/*
- * Without this, gcc on alpha inlines memcpy and gets alignment faults
- */
-void
-fool_memcpy(void *dst, const void *src, size_t len)
-{
-	(void)memcpy(dst,src,len);
-}
-#endif
 
 int
 wait_for_reply(register int sock, register struct sockaddr_in *fromp,
@@ -949,7 +937,7 @@ send_probe(register int seq, int ttl, register struct timeval *tp)
 	outsetup.seq = seq;
 	outsetup.ttl = ttl;
 	outsetup.tv  = *tp;
-	fool_memcpy((char *)outdata,(char *)&outsetup,sizeof(outsetup));
+	memcpy(outmark,&outsetup,sizeof(outsetup));
 
 	if (useicmp)
 		outicmp->icmp_seq = htons(seq);
