@@ -1,4 +1,4 @@
-/*	$NetBSD: traceroute.c,v 1.24 1998/07/17 23:45:24 is Exp $	*/
+/*	$NetBSD: traceroute.c,v 1.25 1998/08/27 20:31:02 ross Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997
@@ -29,7 +29,7 @@ static const char rcsid[] =
 #else
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997\n\
 The Regents of the University of California.  All rights reserved.\n");
-__RCSID("$NetBSD: traceroute.c,v 1.24 1998/07/17 23:45:24 is Exp $");
+__RCSID("$NetBSD: traceroute.c,v 1.25 1998/08/27 20:31:02 ross Exp $");
 #endif
 #endif
 
@@ -1061,7 +1061,7 @@ again:
 	    packlen, 0, &whereto, sizeof(whereto));
 #endif
 	if (cc < 0 || cc != packlen)  {
-		if (cc < 0)
+		if (cc < 0) {
 			/*
 			 * An errno of EMSGSIZE means we're writing too big a
 			 * datagram for the interface.  We have to just decrease
@@ -1081,6 +1081,7 @@ again:
 			} else
 				Fprintf(stderr, "%s: sendto: %s\n",
 				    prog, strerror(errno));
+		}
 		
 		Printf("%s: wrote %s %d chars, ret=%d\n",
 		    prog, hostname, packlen, cc);
