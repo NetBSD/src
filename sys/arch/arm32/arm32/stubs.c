@@ -1,4 +1,4 @@
-/* $NetBSD: stubs.c,v 1.7 1996/06/12 20:12:04 mark Exp $ */
+/* $NetBSD: stubs.c,v 1.8 1996/08/29 22:33:24 mark Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -66,26 +66,32 @@
 #include <machine/bootconfig.h>
 #include <machine/katelib.h>
 #include <machine/psl.h>
+#include <machine/pcb.h>
 
-#include "fdc.h" 
-#include "rd.h" 
-
-extern int ffs_mountroot();
-extern int cd9660_mountroot();
-int do_mountroot();
-int (*mountroot)() = do_mountroot;
+#include "hydrabus.h"
 
 extern u_int soft_interrupts;
 
 extern int msgbufmapped;
-extern dev_t rootdev;
 extern dev_t dumpdev;
+extern BootConfig bootconfig;
+extern videomemory_t videomemory;
+
+#ifdef GENERIC
+
+#include "fdc.h" 
+#include "rd.h" 
+
+extern dev_t rootdev;
+extern int ffs_mountroot();
+extern int cd9660_mountroot();
+extern int nfs_mountroot();
+int do_mountroot();
+int (*mountroot)() = do_mountroot;
+
 #ifdef RAMDISK_HOOKS
 extern struct rd_conf *bootrd;
 #endif
-
-extern BootConfig bootconfig;
-extern videomemory_t videomemory;
 
 int load_ramdisc_from_floppy __P((struct rd_conf *rd, dev_t dev));
 
@@ -125,6 +131,11 @@ do_mountroot()
  * CDROM driver we are using
  */
 
+#ifdef NFSCLIENT
+	/* Test for the fake nfs device */
+	if (major(rootdev) == 1)
+		return(nfs_mountroot());
+#endif
 #ifdef CD9660
 	if (major(rootdev) == 20 || major(rootdev) == 26) {
 		error = cd9660_mountroot();
@@ -145,106 +156,8 @@ do_mountroot()
 #endif
 	return(error);
 } 
-
-
-/*
- * All the copyin and copyout and copystr functions need to be recoded in assembly
- * at some point. The guts of the functions now use an assembly bcopy routine but
- * it would be nice to code them completely in assembly. The main reason they have
- * not been is purely because it is easier to add debugging code to check the
- * parameters in C.
- */
-
-int copystrinout __P((void */*from*/, void */*to*/, size_t /*maxlen*/, size_t */*lencopied*/));
-
-#if 0
-int
-copystr(from, to, maxlen, lencopied)
-	void *from;
-	void *to;
-	size_t maxlen;
-	size_t *lencopied;
-{
-	int byte = 0;
-	int len;
-    
-	len = 0;
-
-	do {
-		if (len == maxlen)
-			break;
-		byte = *((caddr_t)from)++;
-		*((caddr_t)to)++ = byte;
-		++len;
-	} while (byte != 0);
-
-	if (lencopied)
-		*lencopied = len;
-     
-	if (byte == 0)
-		return(0);
-	else
-		return(ENAMETOOLONG);
-}
-
-
-#else
-int
-copystr(from, to, maxlen, lencopied)
-	void *from;
-	void *to;
-	size_t maxlen;
-	size_t *lencopied;
-
-{
-	return(copystrinout(from, to, maxlen, lencopied));
-}
 #endif
 
-
-int
-copyinstr(udaddr, kaddr, len, done)
-	void *udaddr;
-	void *kaddr;
-	u_int len;
-	u_int *done;
-{
-	if (udaddr < (void *)VM_MIN_ADDRESS
-	    || udaddr >= (void *)VM_MAXUSER_ADDRESS) {
-		printf("akt: copyinstr: udaddr=%08x kaddr=%08x\n",
-		    (u_int)udaddr, (u_int)kaddr);
-		return(EFAULT);
-	}
-	if (kaddr < (void *)VM_MAXUSER_ADDRESS
-	    || kaddr >= (void *)VM_MAXKERN_ADDRESS) {
-		printf("akt: copyinstr: udaddr=%08x kaddr=%08x\n",
-		    (u_int)udaddr, (u_int)kaddr);
-		return(EFAULT);
-	}
-	return(copystrinout(udaddr, kaddr, len, done));
-}
-
-int
-copyoutstr(kaddr, udaddr, len, done)
-	void *kaddr;
-	void *udaddr;
-	u_int len;
-	u_int *done;
-{
-	if (udaddr < (void *)VM_MIN_ADDRESS
-	    || udaddr >= (void*)VM_MAXUSER_ADDRESS) {
-		printf("akt: copyoutstr: udaddr=%08x kaddr=%08x\n",
-		    (u_int)udaddr, (u_int)kaddr);
-		return(EFAULT);
-	}
-	if (kaddr < (void *)VM_MAXUSER_ADDRESS
-	    || kaddr >= (void *)VM_MAXKERN_ADDRESS) {
-		printf("akt: copyoutstr: udaddr=%08x kaddr=%08x\n",
-		    (u_int)udaddr, (u_int)kaddr);
-		return(EFAULT);
-	}
-	return(copystrinout(kaddr, udaddr, len, done));
-}
 
 void
 setsoftintr(irqmask)
@@ -489,7 +402,7 @@ beep_generate()
 extern u_int spl_mask;
 
 int current_spl_level = SPL_0;
-u_int spl_masks[8];
+u_int spl_masks[SPL_LEVELS];
 
 int safepri = SPL_0;
 
