@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.61 2003/07/15 00:24:38 lukem Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.62 2003/09/03 02:07:07 mycroft Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.61 2003/07/15 00:24:38 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.62 2003/09/03 02:07:07 mycroft Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_cpuoptions.h"
@@ -896,7 +896,9 @@ set_cpufuncs()
 	}
 #endif	/* CPU_ARM8 */
 #ifdef CPU_ARM9
-	if (cputype == CPU_ID_ARM920T) {
+	if (((cputype & CPU_ID_IMPLEMENTOR_MASK) == CPU_ID_ARM_LTD ||
+	     (cputype & CPU_ID_IMPLEMENTOR_MASK) == CPU_ID_TI) &&
+	    (cputype & 0x0000f000) == 0x00009000) {
 		cpufuncs = arm9_cpufuncs;
 		cpu_reset_needs_v4_MMU_disable = 1;	/* V4 or higher */
 		get_cachetype_cp15();
