@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2002/01/19 03:37:35 reinoud Exp $
+# $NetBSD: Makefile,v 1.5 2002/01/19 11:16:20 reinoud Exp $
 
 ITARGET=	${RELEASEDIR}/installation
 IINST=		${INSTALL} ${RENAME} ${PRESERVE} ${COPY}	\
@@ -7,7 +7,7 @@ KERNELS=	A7INST CATSINST RPCINST SHARKINST
 
 SUBDIR= ramdisk kernels
 
-REV!=sh ${.CURDIR}/../../../../sys/conf/osrelease.sh -s
+REV!=sh ${.CURDIR}/../../sys/conf/osrelease.sh -s
 
 .include <bsd.subdir.mk>
 
