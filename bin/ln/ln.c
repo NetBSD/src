@@ -1,4 +1,4 @@
-/*	$NetBSD: ln.c,v 1.11 1997/05/16 02:59:39 jtk Exp $	*/
+/*	$NetBSD: ln.c,v 1.12 1997/05/16 14:44:02 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ln.c	8.2 (Berkeley) 3/31/94";
 #else
-static char rcsid[] = "$NetBSD: ln.c,v 1.11 1997/05/16 02:59:39 jtk Exp $";
+static char rcsid[] = "$NetBSD: ln.c,v 1.12 1997/05/16 14:44:02 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -57,9 +57,8 @@ static char rcsid[] = "$NetBSD: ln.c,v 1.11 1997/05/16 02:59:39 jtk Exp $";
 #include <string.h>
 #include <unistd.h>
 
-int	dirflag;			/* Undocumented directory flag. */
 int	fflag;				/* Unlink existing files. */
-int	lflag;				/* Check new name for symlink first. */
+int	hflag;				/* Check new name for symlink first. */
 int	sflag;				/* Symbolic, not hard, link. */
 					/* System link call. */
 int (*linkf) __P((const char *, const char *));
@@ -76,20 +75,17 @@ main(argc, argv)
 	int ch, exitval;
 	char *sourcedir;
 
-	while ((ch = getopt(argc, argv, "hnFfs")) != -1)
+	while ((ch = getopt(argc, argv, "fhns")) != -1)
 		switch (ch) {
-		case 'F':
-			dirflag = 1;	/* XXX: deliberately undocumented. */
-			break;
 		case 'f':
 			fflag = 1;
 			break;
+		case 'h':
+		case 'n':
+			hflag = 1;
+			break;
 		case 's':
 			sflag = 1;
-			break;
-		case 'h':
-		case 'n':		/* GNU compat; undocumented */
-			lflag = 1;
 			break;
 		case '?':
 		default:
@@ -111,7 +107,7 @@ main(argc, argv)
 	}
 					/* ln target1 target2 directory */
 	sourcedir = argv[argc - 1];
-	if (lflag && lstat(sourcedir, &sb) == 0 && S_ISLNK(sb.st_mode)) {
+	if (hflag && lstat(sourcedir, &sb) == 0 && S_ISLNK(sb.st_mode)) {
 		/* we were asked not to follow symlinks, but found one at
 		   the target--simulate "not a directory" error */
 		errno = ENOTDIR;
@@ -140,18 +136,13 @@ linkit(target, source, isdir)
 			warn("%s", target);
 			return (1);
 		}
-		/* Only symbolic links to directories, unless -F option used. */
-		if (!dirflag && S_ISDIR(sb.st_mode)) {
-			warnx("%s: is a directory", target);
-			return (1);
-		}
 	}
 
-	/* If the source is a directory (and not a symlink if lflag),
+	/* If the source is a directory (and not a symlink if hflag),
 	   append the target's name. */
 	if (isdir ||
 	    !lstat(source, &sb) && S_ISDIR(sb.st_mode) ||
-	    !lflag && !stat(source, &sb) && S_ISDIR(sb.st_mode)) {
+	    !hflag && !stat(source, &sb) && S_ISDIR(sb.st_mode)) {
 		if ((p = strrchr(target, '/')) == NULL)
 			p = target;
 		else
@@ -178,6 +169,6 @@ usage()
 {
 
 	(void)fprintf(stderr,
-	    "usage:\tln [-fsh] file1 file2\n\tln [-fsh] file ... directory\n");
+	    "usage:\tln [-fhns] file1 file2\n\tln [-fhns] file ... directory\n");
 	exit(1);
 }
