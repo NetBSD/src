@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_termios.c,v 1.6 1995/10/14 20:24:58 christos Exp $	 */
+/*	$NetBSD: svr4_termios.c,v 1.7 1996/03/14 19:29:14 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -540,6 +540,25 @@ svr4_termioctl(fp, cmd, data, p, retval)
 		}
 
 		return (*ctl)(fp, cmd, (caddr_t) &bt, p);
+
+	case SVR4_TIOCGWINSZ:
+		{
+			struct svr4_winsize ws;
+
+			error = (*ctl)(fp, TIOCGWINSZ, (caddr_t) &ws, p);
+			if (error)
+				return error;
+			return copyout(&st, data, sizeof(st));
+		}
+
+	case SVR4_TIOCSWINSZ:
+		{
+			struct svr4_winsize ws;
+
+			if ((error = copyin(data, &ws, sizeof(ws))) != 0)
+				return error;
+			return (*ctl)(fp, TIOCSWINSZ, (caddr_t) &ws, p);
+		}
 
 	default:
 		DPRINTF(("Unknown svr4 termios %x\n", cmd));
