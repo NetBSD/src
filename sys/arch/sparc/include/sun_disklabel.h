@@ -1,4 +1,4 @@
-/*	$NetBSD: sun_disklabel.h,v 1.4 1995/03/28 18:20:12 jtc Exp $ */
+/*	$NetBSD: sun_disklabel.h,v 1.5 1995/06/26 22:09:47 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -90,7 +90,7 @@ struct sun_disklabel {			/* total size = 512 bytes */
 	char	sl_text[128];
 	char	sl_xxx1[292];
 	u_short sl_rpm;			/* rotational speed */
-	char	sl_xxx2[2];
+	u_short	sl_pcylinders;		/* number of physical cyls */
 	u_short sl_sparespercyl;	/* spare sectors per cylinder */
 	char	sl_xxx3[4];
 	u_short sl_interleave;		/* interleave factor */
