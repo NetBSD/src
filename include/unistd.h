@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.24 1994/12/28 04:40:28 mycroft Exp $	*/
+/*	$NetBSD: unistd.h,v 1.25 1995/03/19 22:51:38 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -133,8 +133,8 @@ int	 mkstemp __P((char *));
 char	*mktemp __P((char *));
 int	 nfssvc __P((int, void *));
 int	 nice __P((int));
-void	 psignal __P((u_int, const char *));
-extern const char *const sys_siglist[];
+void	 psignal __P((unsigned int, const char *));
+extern __const char *__const sys_siglist[];
 int	 profil __P((char *, int, int, int));
 int	 rcmd __P((char **, int, const char *,
 		const char *, const char *, int *));
