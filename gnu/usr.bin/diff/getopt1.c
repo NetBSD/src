@@ -17,17 +17,24 @@
    Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 #ifndef lint
-static char rcsid[] = "$Id: getopt1.c,v 1.3 1993/08/02 17:26:16 mycroft Exp $";
-#endif /* not lint */
+static char *rcsid = "$Id: getopt1.c,v 1.4 1993/09/16 17:39:15 jtc Exp $";
+#endif
 
 #ifdef HAVE_CONFIG_H
-#include "config.h"
+/* We use <config.h> instead of "config.h" so that a compilation
+   using -I. -I$srcdir will use ./config.h rather than $srcdir/config.h
+   (which it would do because getopt1.c was found in $srcdir).  */
+#include <config.h>
 #endif
 
 #include "getopt.h"
 
-#if !__STDC__ && !defined(const) && IN_GCC
+#ifndef __STDC__
+/* This is a separate conditional since some stdc systems
+   reject `defined (const)'.  */
+#ifndef const
 #define const
+#endif
 #endif
 
 #include <stdio.h>
