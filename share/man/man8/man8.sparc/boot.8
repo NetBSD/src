@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.6 1997/03/13 05:00:55 perry Exp $
+.\"	$NetBSD: boot.8,v 1.7 1997/04/13 13:46:56 mrg Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,20 +33,21 @@
 .\"
 .\"     @(#)boot_sparc.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd April 19, 1994
+.Dd April 13, 1997
 .Dt BOOT 8 sparc
 .Os
 .Sh NAME
 .Nm boot
 .Nd
 system bootstrapping procedures
-.\" .Sh SYNOPSIS
-.\" .Nm boot
-.\" .Op Fl n
-.\" .Op Fl q
-.\" .Oo
-.\" .Ar -- <boot string>
-.\" .Oc
+.Sh SYNOPSIS
+.Nm boot
+.Op Fl n
+.Op Fl q
+.Op Fl d
+.Oo
+.Ar -- <boot string>
+.Oc
 .Sh DESCRIPTION
 .Sy Power fail and crash recovery.
 Normally, the system will reboot itself at power-up or after crashes.
@@ -56,25 +57,25 @@ as described in
 and unless this fails, the system will resume multi-user operations.
 .Pp
 .Sy Cold starts
-The SPARC system currently uses the SunOS bootstrap loaders.
-This will be changed in a future version of the system.
-The SunOS boot will attempt to load
+The
+.Nx
+boot
 .Pa netbsd
-from partition A of the boot device,
+from partition a of the boot device,
 which must currently be an ``sd'' disk.
 .Pp
 The
 .Op Fl s
-flag to the SunOS boot loader will being the system up in single-user mode.
+flag to the boot loader will being the system up in single-user mode.
 The
 .Op Fl a
 flag instructs the system to prompt for the location of the root filesystem
 and the primary swap partition.
-.\"The
-.\".Op Fl d
-.\"flag to the SunOS boot loader will bring the system up in debug mode.
-.\"Here it waits for a kernel debugger connect; see
-.\".Xr kgdb 8 .
+The
+.Op Fl d
+flag to the boot loader will bring the system up in debug mode.
+Here it waits for a kernel debugger connect; see
+.Xr gdb 8 .
 Any extra flags or arguments, the after the -- separator, 
 .Ar <boot string>
 are passed to the boot prom.
@@ -122,7 +123,5 @@ system bootstrap
 .Xr init 8 ,
 .Xr rc 8 ,
 .Xr shutdown 8 ,
-.Xr syslogd 8
-.Sh BUGS
-The use of Sun disk labels, without the ability to write them,
-is problematic.
+.Xr syslogd 8 ,
+.Xr installboot 8 .
