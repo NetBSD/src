@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.189 2003/09/08 01:13:04 mycroft Exp $	*/
+/*	$NetBSD: cd.c,v 1.190 2003/09/08 01:56:33 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.189 2003/09/08 01:13:04 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.190 2003/09/08 01:56:33 mycroft Exp $");
 
 #include "rnd.h"
 
@@ -89,8 +89,6 @@ __KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.189 2003/09/08 01:13:04 mycroft Exp $");
 #include <dev/scsipi/scsi_disk.h>	/* rw comes from there */
 #include <dev/scsipi/scsipiconf.h>
 #include <dev/scsipi/cdvar.h>
-
-#include "cd.h"		/* NCD_SCSIBUS and NCD_ATAPIBUS come from here */
 
 #define	CDUNIT(z)			DISKUNIT(z)
 #define	CDPART(z)			DISKPART(z)
@@ -149,7 +147,28 @@ int	cd_set_pa_immed __P((struct cd_softc *, int));
 int	cd_load_unload __P((struct cd_softc *, struct ioc_load_unload *));
 int	cd_setblksize __P((struct cd_softc *));
 
+int	cdmatch __P((struct device *, struct cfdata *, void *));
+void	cdattach __P((struct device *, struct device *, void *));
+int	cdactivate __P((struct device *, enum devact));
+int	cddetach __P((struct device *, int));
+
+CFATTACH_DECL(cd, sizeof(struct cd_softc), cdmatch, cdattach, cddetach,
+    cdactivate);
+
 extern struct cfdriver cd_cd;
+
+const struct scsipi_inquiry_pattern cd_patterns[] = {
+	{T_CDROM, T_REMOV,
+	 "",         "",                 ""},
+	{T_WORM, T_REMOV,
+	 "",         "",                 ""},
+#if 0
+	{T_CDROM, T_REMOV, /* more luns */
+	 "PIONEER ", "CD-ROM DRM-600  ", ""},
+#endif
+	{T_DIRECT, T_REMOV,
+	 "NEC                 CD-ROM DRIVE:260", "", ""},
+};
 
 dev_type_open(cdopen);
 dev_type_close(cdclose);
@@ -182,13 +201,36 @@ const struct scsipi_periphsw cd_switch = {
  * The routine called by the low level scsi routine when it discovers
  * A device suitable for this driver
  */
-void
-cdattach(parent, cd, periph)
+int
+cdmatch(parent, match, aux)
 	struct device *parent;
-	struct cd_softc *cd;
-	struct scsipi_periph *periph;
+	struct cfdata *match;
+	void *aux;
 {
+	struct scsipibus_attach_args *sa = aux;
+	int priority;
+
+	(void)scsipi_inqmatch(&sa->sa_inqbuf,
+	    (caddr_t)cd_patterns, sizeof(cd_patterns) / sizeof(cd_patterns[0]),
+	    sizeof(cd_patterns[0]), &priority);
+
+	return (priority);
+}
+
+void
+cdattach(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
+{
+	struct cd_softc *cd = (void *)self;
+	struct scsipibus_attach_args *sa = aux;
+	struct scsipi_periph *periph = sa->sa_periph;
+
 	SC_DEBUG(periph, SCSIPI_DB2, ("cdattach: "));
+
+	if (scsipi_periph_bustype(sa->sa_periph) == SCSIPI_BUSTYPE_SCSI &&
+	    periph->periph_version == 0)
+		cd->flags |= CDF_ANCIENT;
 
 	bufq_alloc(&cd->buf_queue, BUFQ_DISKSORT|BUFQ_SORT_RAWBLOCK);
 
@@ -739,9 +781,7 @@ cdstart(periph)
 	struct cd_softc *cd = (void *)periph->periph_dev;
 	struct buf *bp = 0;
 	struct scsipi_rw_big cmd_big;
-#if NCD_SCSIBUS > 0 
 	struct scsi_rw cmd_small;
-#endif
 	struct scsipi_generic *cmdp;
 	int flags, nblks, cmdlen, error;
 
@@ -786,7 +826,6 @@ cdstart(periph)
 		
 		nblks = howmany(bp->b_bcount, cd->params.blksize);
 
-#if NCD_SCSIBUS > 0
 		/*
 		 *  Fill out the scsi command.  If the transfer will
 		 *  fit in a "small" cdb, use it.
@@ -804,9 +843,7 @@ cdstart(periph)
 			cmd_small.length = nblks & 0xff;
 			cmdlen = sizeof(cmd_small);
 			cmdp = (struct scsipi_generic *)&cmd_small;
-		} else
-#endif
-		{
+		} else {
 			/*
 			 * Need a large cdb.
 			 */
@@ -1470,18 +1507,19 @@ cdgetdefaultlabel(cd, lp)
 	lp->d_secpercyl = lp->d_ntracks * lp->d_nsectors;
 
 	switch (scsipi_periph_bustype(cd->sc_periph)) {
-#if NCD_SCSIBUS > 0
 	case SCSIPI_BUSTYPE_SCSI:
 		lp->d_type = DTYPE_SCSI;
 		break;
-#endif
-#if NCD_ATAPIBUS > 0
 	case SCSIPI_BUSTYPE_ATAPI:
 		lp->d_type = DTYPE_ATAPI;
 		break;
-#endif
 	}
-	strncpy(lp->d_typename, cd->name, 16);
+	/*
+	 * XXX
+	 * We could probe the mode pages to figure out what kind of disc it is.
+	 * Is this worthwhile?
+	 */
+	strncpy(lp->d_typename, "generic CD/DVD", 16);
 	strncpy(lp->d_packname, "fictitious", 16);
 	lp->d_secperunit = cd->params.disksize;
 	lp->d_rpm = 300;
