@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.35 2000/01/11 15:32:37 pk Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.36 2000/01/17 17:59:49 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -377,6 +377,11 @@ struct scsi_quirk_inquiry_pattern {
  */
 #define	scsipi_command(l, c, cl, da, dl, r, t, b, f)			\
 	(*(l)->scsipi_cmd)((l), (c), (cl), (da), (dl), (r), (t), (b), (f))
+
+/*
+ * Default number of retries, used for generic routines.
+ */
+#define SCSIPIRETRIES 4
 
 /*
  * Similar, but invoke the controller directly with a scsipi_xfer.
