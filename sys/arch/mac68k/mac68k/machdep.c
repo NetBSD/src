@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.33 1995/01/21 00:11:57 briggs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.34 1995/02/01 13:48:45 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -504,7 +504,7 @@ struct sunos_sigframe {
 #endif
 
 #ifdef DEBUG
-int sigdebug = 0;
+int sigdebug = 0x0;
 int sigpid = 0;
 #define SDB_FOLLOW	0x01
 #define SDB_KSTACK	0x02
@@ -523,27 +523,28 @@ sendsig(catcher, sig, mask, code)
 	register struct proc *p = curproc;
 	register struct sigframe *fp, *kfp;
 	register struct frame *frame;
-	register struct sigacts *ps = p->p_sigacts;
+	register struct sigacts *psp = p->p_sigacts;
 	register short ft;
-	int oonstack, fsize;
+	int oonstack;
 	extern short exframesize[];
 	extern char sigcode[], esigcode[];
 
+
+/*printf("sendsig %d %d %x %x %x\n", p->p_pid, sig, mask, code, catcher);*/
+
 	frame = (struct frame *)p->p_md.md_regs;
 	ft = frame->f_format;
-	oonstack = ps->ps_sigstk.ss_flags & SA_ONSTACK;
+	oonstack = psp->ps_sigstk.ss_flags & SA_ONSTACK;
 
 #ifdef COMPAT_SUNOS
-	if (p->p_emul == EMUL_SUNOS)
-	  {
-	    /*
-	     * Build the short SunOS frame instead
-	     */
-	    sunos_sendsig (catcher, sig, mask, code);
-	    return;
-	  }
+	if (p->p_emul == EMUL_SUNOS) {
+		/*
+		 * build the short SunOS frame instead
+		 */
+		sunos_sendsig(catcher, sig, mask, code);
+		return;
+	}
 #endif
-
 	/*
 	 * Allocate and validate space for the signal handler
 	 * context. Note that if the stack is in P0 space, the
@@ -551,14 +552,13 @@ sendsig(catcher, sig, mask, code)
 	 * will fail if the process has not already allocated
 	 * the space with a `brk'.
 	 */
-	fsize = sizeof(struct sigframe);
-	if ((ps->ps_flags & SAS_ALTSTACK) && !oonstack
-	    && (ps->ps_sigonstack & sigmask(sig))) {
-		fp = (struct sigframe *)(ps->ps_sigstk.ss_base +
-					 ps->ps_sigstk.ss_size - fsize);
-		ps->ps_sigstk.ss_flags |= SA_ONSTACK;
+	if ((psp->ps_flags & SAS_ALTSTACK) && oonstack == 0 &&
+	    (psp->ps_sigonstack & sigmask(sig))) {
+		fp = (struct sigframe *)(psp->ps_sigstk.ss_base +
+		    psp->ps_sigstk.ss_size - sizeof(struct sigframe));
+		psp->ps_sigstk.ss_flags |= SA_ONSTACK;
 	} else
-		fp = (struct sigframe *)(frame->f_regs[SP] - fsize);
+		fp = (struct sigframe *)frame->f_regs[SP] - 1;
 	if ((unsigned)fp <= USRSTACK - ctob(p->p_vmspace->vm_ssize)) 
 		(void)grow(p, (unsigned)fp);
 #ifdef DEBUG
@@ -566,7 +566,7 @@ sendsig(catcher, sig, mask, code)
 		printf("sendsig(%d): sig %d ssp %x usp %x scp %x ft %d\n",
 		       p->p_pid, sig, &oonstack, fp, &fp->sf_sc, ft);
 #endif
-	if (useracc((caddr_t)fp, fsize, B_WRITE) == 0) {
+	if (useracc((caddr_t)fp, sizeof(struct sigframe), B_WRITE) == 0) {
 #ifdef DEBUG
 		if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
 			printf("sendsig(%d): useracc failed on sig %d\n",
@@ -584,7 +584,7 @@ sendsig(catcher, sig, mask, code)
 		psignal(p, SIGILL);
 		return;
 	}
-	kfp = (struct sigframe *)malloc((u_long)fsize, M_TEMP, M_WAITOK);
+	kfp = malloc(sizeof(struct sigframe), M_TEMP, M_WAITOK);
 	/* 
 	 * Build the argument list for the signal handler.
 	 */
@@ -649,7 +649,7 @@ sendsig(catcher, sig, mask, code)
 	kfp->sf_sc.sc_ap = (int)&fp->sf_state;
 	kfp->sf_sc.sc_pc = frame->f_pc;
 	kfp->sf_sc.sc_ps = frame->f_sr;
-	(void) copyout((caddr_t)kfp, (caddr_t)fp, fsize);
+	(void) copyout((caddr_t)kfp, (caddr_t)fp, sizeof(struct sigframe));
 	frame->f_regs[SP] = (int)fp;
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
@@ -660,7 +660,7 @@ sendsig(catcher, sig, mask, code)
 	/*
 	 * Signal trampoline code is at base of user stack.
 	 */
-	frame->f_pc = (int) (((u_char *)PS_STRINGS) - (esigcode - sigcode));
+	frame->f_pc = (int)(((char *)PS_STRINGS) - (esigcode - sigcode));
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
 		printf("sendsig(%d): sig %d returns\n",
@@ -680,7 +680,7 @@ void
 sunos_sendsig(catcher, sig, mask, code)
 	sig_t catcher;
 	int sig, mask;
-	u_long code;
+	unsigned code;
 {
 	register struct proc *p = curproc;
 	register struct sunos_sigframe *fp;
@@ -1278,8 +1278,8 @@ nmihand(struct frame frame)
 	if (nmihanddeep++ >= 4) /* then this is the fifth */
 		asm("stop #2700");
 	printf("PC is 0x%x.\n", frame.f_pc);
-	regdump(&frame, 128);
-/*	dumptrace(); */
+/*	regdump(&frame, 128);
+	dumptrace(); */
 	Debugger();
 	nmihanddeep--;
 }
@@ -1302,7 +1302,7 @@ regdump(frame, sbytes)
 	printf("dfc = 0x%08x\n", getdfc());
 	printf("Registers:\n     ");
 	for (i = 0; i < 8; i++)
-		printf("         %d", i);
+		printf("        %d", i);
 	printf("\ndreg:");
 	for (i = 0; i < 8; i++)
 		printf(" %08x", frame->f_regs[i]);
@@ -1328,14 +1328,15 @@ extern char kstack[];
 #define KSADDR	((int *)&(kstack[(UPAGES-1)*NBPG]))
 
 dumpmem(ptr, sz)
-	register int *ptr;
+	register unsigned int *ptr;
 	int sz;
 {
 	register int i, val, same;
 
+	sz /= 4;
 	for (i = 0; i < sz; i++) {
 		if ((i & 7) == 0)
-			printf("\n%08x: ", (int) ptr);
+			printf("\n%08x: ", (unsigned int) ptr);
 		else
 			printf(" ");
 		printf("%08x ", *ptr++);
