@@ -1,4 +1,4 @@
-/*	$NetBSD: reloc.h,v 1.5 2003/08/07 16:29:41 agc Exp $ */
+/*	$NetBSD: reloc.h,v 1.6 2005/01/05 09:12:38 skrll Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -84,9 +84,9 @@ enum reloc_type {
 	RELOC_PLT32,
 	RELOC_HIPLT22,
 	RELOC_LOPLT10,
-	RELOC_LOPLT10,
-	RELOC_PCPLT22,
 	RELOC_PCPLT32,
+	RELOC_PCPLT22,
+	RELOC_PCPLT10,
 
 	RELOC_10,
 	RELOC_11,
