@@ -1,76 +1,35 @@
-#	$NetBSD: Makefile.bootfloppy,v 1.7 2002/04/16 05:23:40 lukem Exp $
+#	$NetBSD: Makefile.bootfloppy,v 1.8 2002/04/16 09:06:51 lukem Exp $
 #
 # Makefile snippet to create a set of USTAR floppies
+#
+
+#
+# Required variables:
+#	FLOPPYBASE	Basename of floppies. Floppy number ${n} will
+#			be generated as ${FLOPPYBASE}${n}.fs
+#	FLOPPYKERNDIR	${FLOPPYKERNEL} is from ${.CURDIR}/../${FLOPPYKERNDIR}
+#	FLOPPYKERNEL	Kernel to copy
+#
+# Optional variables:
+#	FLOPPY_BOOT	Bootstrap to use.  [${DESTDIR}/usr/mdec/biosboot.sym]
 #
 
 .include <bsd.own.mk>
 .include "${_SRC_TOP_}/distrib/Makefile.inc"
 
-#
-# Required variables:
-#	_SRC_TOP_	Top level of src tree (set by <bsd.own.mk>)
-#	FLOPPYBASE	Basename of floppies. Floppy number ${n} will
-#			be generated as ${FLOPPYBASE}${n}.fs
-#	FLOPPYKERNEL	Kernel to copy 
-#	FLOPPYKERNDIR	${FLOPPYKERNEL} is from ${.CURDIR}/../${FLOPPYKERNDIR}
+FLOPPYSIZE?=		2880
+MDEC=			${DESTDIR}/usr/mdec
+#	XXXDISTRIB: need MI installboot for i386
+FLOPPYINSTBOOT=		"${MDEC}/installboot -b 17 -f ${FLOPPY_BOOT} @IMAGE@"
+FLOPPYKERNOBJ!=		cd ${.CURDIR}/../${FLOPPYKERNDIR} && ${PRINTOBJDIR}
 
-#
-# Optional variables:
-#	FLOPPYSIZE	Size of floppy in 512 byte blocks.	[2880]
-#	FLOPPYMAX	Maximum number of floppies to build.	[1]
-#			If 1, final image is installed as ${FLOPPYBASE}.fs
-#	FLOPPYBOOTCODE	Boot blocks to use.  [${DESTDIR}/usr/mdec/biosboot.sym]
-#	FLOPPYMETA	ustar metafile (written between "boot" & "netbsd")
-#	FLOPPYPAD	If defined, pad the last floppy to ${FLOPPYSIZE}
-#
+FLOPPY_BOOT?=		${MDEC}/biosboot.sym
+FLOPPY_BOOT_STRIP=	yes
+FLOPPY_NETBSD=		${FLOPPYKERNOBJ}/${FLOPPYKERNEL}
+FLOPPYFILES=		boot ${FLOPPYMETAFILE} netbsd
 
-FLOPPYSIZE?=	2880
-FLOPPYMAX?=	1
-FLOPPYBOOTCODE?=${DESTDIR}/usr/mdec/biosboot.sym
-FLOPPYFILES=	boot ${FLOPPYMETA} netbsd
+FLOPPYINSTDIR=		installation/floppy
 
-FLOPPYKERNOBJ!=	cd ${.CURDIR}/../${FLOPPYKERNDIR} && ${PRINTOBJDIR}
-
-boot: ${FLOPPYBOOTCODE}
-	@echo "Copying ${FLOPPYBOOTCODE} to boot"
-	@rm -f boot
-	@cp ${FLOPPYBOOTCODE} boot
-	@${STRIP} boot
-
-netbsd: ${FLOPPYKERNOBJ}/${FLOPPYKERNEL}
-	@echo "Copying ${FLOPPYKERNOBJ}/${FLOPPYKERNEL} to netbsd"
-	@rm -f netbsd
-	@cp ${FLOPPYKERNOBJ}/${FLOPPYKERNEL} netbsd
-
-.if defined(FLOPPYMETA)
-${FLOPPYMETA}:
-	echo "Creating ${FLOPPYMETA}"
-	@rm -f ${FLOPPYMETA}
-	@touch ${FLOPPYMETA}
-.endif
-
-${FLOPPYBASE}1.fs: ${FLOPPYFILES}
-	@echo "Creating ${FLOPPYBASE}1.fs from ${FLOPPYFILES}
-#		XXXDISTRIB; need MI installboot for i386
-	sh ${DISTRIBDIR}/common/buildfloppies.sh \
-	    -i "${DESTDIR}/usr/mdec/installboot -b 17 -f ${FLOPPYBOOTCODE} @IMAGE@" \
-	    ${FLOPPYMAX:D-m "${FLOPPYMAX}"} ${FLOPPYPAD:D-p} \
-	    ${FLOPPYBASE} ${FLOPPYSIZE} ${FLOPPYFILES}
-
-CLEANFILES+=	${FLOPPYFILES} ${FLOPPYBASE}?.fs
-
-
-realall: ${FLOPPYBASE}1.fs
-
-release: check_RELEASEDIR .WAIT ${FLOPPYBASE}1.fs
-	-mkdir -p ${RELEASEDIR}/installation/floppy
-	if [ -e ${FLOPPYBASE}2.fs ]; then \
-		${RELINSTALL} ${FLOPPYBASE}?.fs \
-		    ${RELEASEDIR}/installation/floppy; \
-	else \
-		${RELINSTALL} ${FLOPPYBASE}1.fs \
-		    ${RELEASEDIR}/installation/floppy/${FLOPPYBASE}.fs; \
-	fi
-
+.include "${DISTRIBDIR}/common/Makefile.tarfloppy"
 
 .include <bsd.prog.mk>
