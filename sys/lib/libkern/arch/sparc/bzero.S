@@ -1,3 +1,5 @@
+/*	$NetBSD: bzero.S,v 1.5 1999/03/05 09:18:32 pk Exp $	*/
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,14 +37,16 @@
  * SUCH DAMAGE.
  *
  * from: Header: bzero.s,v 1.1 92/06/25 12:52:46 torek Exp
- * $NetBSD: bzero.S,v 1.4 1997/10/13 11:57:40 lukem Exp $
  */
 
-#if defined(LIBC_SCCS) && !defined(lint)
-	.asciz "@(#)bzero.s	8.1 (Berkeley) 6/4/93"
-#endif  /* LIBC_SCCS and not lint */
-
 #include <machine/asm.h>
+#if defined(LIBC_SCCS) && !defined(lint)
+#if 0
+	.asciz "@(#)bzero.s	8.1 (Berkeley) 6/4/93"
+#else
+	RCSID("$NetBSD: bzero.S,v 1.5 1999/03/05 09:18:32 pk Exp $")
+#endif
+#endif  /* LIBC_SCCS and not lint */
 
 /*
  * bzero(addr, len)
