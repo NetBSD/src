@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_mapper_646.c,v 1.3 2003/07/12 15:39:20 tshiozak Exp $	*/
+/*	$NetBSD: citrus_mapper_646.c,v 1.4 2003/07/14 11:37:49 tshiozak Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_mapper_646.c,v 1.3 2003/07/12 15:39:20 tshiozak Exp $");
+__RCSID("$NetBSD: citrus_mapper_646.c,v 1.4 2003/07/14 11:37:49 tshiozak Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -244,7 +244,7 @@ if (m6->m6_map[INDEX_##x]!=INVALID && src==m6->m6_map[INDEX_##x]) {	\
 else
 		SPECIALS(BACKWARD);
 		if (src>=0x80)
-			return _MAPPER_CONVERT_ILSEQ;
+			return _MAPPER_CONVERT_NONIDENTICAL;
 		*dst = src;
 	}
 
