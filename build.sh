@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.126 2004/02/04 11:23:40 lukem Exp $
+#	$NetBSD: build.sh,v 1.127 2004/02/06 23:19:30 lukem Exp $
 #
 # Copyright (c) 2001-2004 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -341,9 +341,10 @@ usage()
 	fi
 	cat <<_usage_
 
-Usage: ${progname} [-EnorUu] [-a arch] [-B buildid] [-D dest] [-j njob]
+Usage: ${progname} [-EnorUux] [-a arch] [-B buildid] [-D dest] [-j njob]
 		[-M obj] [-m mach] [-N noisy] [-O obj] [-R release] [-T tools]
-		[-V var=[value]] [-w wrapper] [-Z var]   operation [...]
+		[-V var=[value]] [-w wrapper] [-X x11src] [-Z var]
+		operation [...]
 
  Build operations (all imply "obj" and "tools"):
     build               Run "make build".
@@ -370,7 +371,7 @@ Usage: ${progname} [-EnorUu] [-a arch] [-B buildid] [-D dest] [-j njob]
     -B buildId  Set BUILDID to buildId.
     -D dest     Set DESTDIR to dest.  [Default: destdir.MACHINE]
     -E          Set "expert" mode; disables various safety checks.
-                Should not be used without expert knowledge of the build system
+                Should not be used without expert knowledge of the build system.
     -j njob     Run up to njob jobs in parallel; see make(1) -j.
     -M obj      Set obj root directory to obj; sets MAKEOBJDIRPREFIX.
                 Unsets MAKEOBJDIR.
@@ -395,6 +396,8 @@ Usage: ${progname} [-EnorUu] [-a arch] [-B buildid] [-D dest] [-j njob]
     -V v=[val]  Set variable \`v' to \`val'.
     -w wrapper  Create ${toolprefix}make script as wrapper.
                 [Default: \${TOOLDIR}/bin/${toolprefix}make-\${MACHINE}]
+    -X x11src   Set X11SRCDIR to x11src.  [Default: /usr/xsrc]
+    -x          Set MKX11=yes; build X11R6 from X11SRCDIR
     -Z v        Unset ("zap") variable \`v'.
 
 _usage_
@@ -403,7 +406,7 @@ _usage_
 
 parseoptions()
 {
-	opts='a:B:bD:dEhi:j:k:M:m:N:nO:oR:rT:tUuV:w:Z:'
+	opts='a:B:bD:dEhi:j:k:M:m:N:nO:oR:rT:tUuV:w:xX:Z:'
 	opt_a=no
 
 	if type getopts >/dev/null 2>&1; then
@@ -558,6 +561,15 @@ parseoptions()
 		-w)
 			eval ${optargcmd}; resolvepath
 			makewrapper="${OPTARG}"
+			;;
+
+		-X)
+			eval ${optargcmd}; resolvepath
+			setmakeenv X11SRCDIR "${OPTARG}"
+			;;
+
+		-x)
+			setmakeenv MKX11 yes
 			;;
 
 		-Z)
@@ -830,7 +842,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.126 2004/02/04 11:23:40 lukem Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.127 2004/02/06 23:19:30 lukem Exp $
 #
 
 EOF
