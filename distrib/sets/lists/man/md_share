@@ -191,6 +191,7 @@
 ./usr/share/man/cat8/boot_sun3.0
 ./usr/share/man/cat8/boot_tahoe.0
 ./usr/share/man/cat8/boot_vax.0
+./usr/share/man/cat8/boot_x68k.0
 ./usr/share/man/cat8/hp300/MAKEDEV.0
 ./usr/share/man/cat8/hp300/crash.0
 ./usr/share/man/cat8/hp300/format.0
@@ -209,3 +210,4 @@
 ./usr/share/man/cat8/vax/format.0
 ./usr/share/man/cat8/vax/installboot.0
 ./usr/share/man/cat8/vax/makedev.0
+./usr/share/man/cat8/x68k/poffd.0
