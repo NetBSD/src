@@ -11,15 +11,15 @@ file	arch/arm32/mainbus/mainbus.c		mainbus
 
 device hydrabus { [slot = -1] }
 attach hydrabus at mainbus
-file	arch/arm32/mainbus/exp/hydra.c			hydrabus needs-flag
-file	arch/arm32/mainbus/exp/hydraboot.S		hydrabus
+file	arch/arm32/mainbus/exp/hydra.c		hydrabus needs-flag
+file	arch/arm32/mainbus/exp/hydraboot.S	hydrabus
 
 device cpu
 attach cpu at mainbus, hydrabus
-file	arch/arm32/mainbus/cpu.c			cpu needs-flag
+file	arch/arm32/mainbus/cpu.c		cpu needs-flag
 major	{cpu = 38}
 
-#Standard NetBSD wd driver
+# Standard NetBSD wd driver
 device  wdc {drive = -1}
 attach	wdc at mainbus
 device  wd: disk
@@ -27,24 +27,7 @@ attach	wd at wdc
 file    arch/arm32/mainbus/wd.c			wdc needs-flag
 major   {wd = 16}
 
-#Hacked NetBSD wd driver with cd and atapi support - nasty hack atm
-#device  wdc {drive = -1}
-#attach  wdc at mainbus
-#device  wd: disk
-#attach  wd at wdc
-#file    arch/arm32/mainbus/exp/wd.c		wdc needs-flag
-#major   {wd = 16}
-
-device  atapi: disk
-attach	atapi at mainbus
-file    arch/arm32/mainbus/exp/atapi.c		atapi needs-flag
-
-device  wcd: disk
-attach	wcd at mainbus
-file    arch/arm32/mainbus/exp/wcd.c		wcd needs-flag
-major   {wcd = 20}
-
-#Standard NetBSD fd driver
+# Standard NetBSD fd driver
 device  fdc {drive = -1}
 attach	fdc at mainbus
 device  fd: disk
@@ -58,11 +41,13 @@ file	dev/ramdisk.c				rd needs-count
 file	arch/arm32/dev/rd_hooks.c		rd | ramdisk_hooks
 major   {rd = 18}
 
+# Standard parallal driver
 device  lpt: tty, ether, ifnet
 attach	lpt at mainbus
 file    arch/arm32/mainbus/lpt.c		lpt needs-flag
 major   {lpt = 8}
 
+# Standard serial driver
 device  com: tty
 attach	com at mainbus
 file    arch/arm32/mainbus/com.c		com needs-flag
@@ -82,7 +67,7 @@ major   {pms = 40}
 # Audio devices
 device	beep
 attach	beep at mainbus
-file    arch/arm32/mainbus/beep.c			beep needs-flag
+file    arch/arm32/mainbus/beep.c		beep needs-flag
 major   {beep = 10}
 
 device	audio: audio
@@ -90,15 +75,16 @@ attach	audio at mainbus
 file	arch/arm32/mainbus/vidcaudio.c		vidcaudio needs-flag
 major   {audio = 36}
 
+# Standard keyboard driver
 device	kbd
 attach	kbd at mainbus
-file    arch/arm32/mainbus/kbd.c			kbd needs-flag
+file    arch/arm32/mainbus/kbd.c		kbd needs-flag
 major   {kbd = 11}
 
 # Podule bus device
 device podulebus { [slot = -1] }
 attach podulebus at root
-file	arch/arm32/podulebus/podulebus.c		podulebus
+file	arch/arm32/podulebus/podulebus.c	podulebus needs-flag
 
 # Ethernet devices
 device ea: ether, ifnet
@@ -133,8 +119,8 @@ file	arch/arm32/mainbus/rtc.c		rtc	needs-count
 #attach kie at podule
 #file	arch/arm32/podulebus/kgdb_ie.c		kie
 
-#file	arch/arm32/arm32/kgdb_glue.c			kgdb
-#file	arch/arm32/arm32/kgdb_step.c			kgdb
+#file	arch/arm32/arm32/kgdb_glue.c		kgdb
+#file	arch/arm32/arm32/kgdb_step.c		kgdb
 
 #
 # Machine-independent SCSI drivers
@@ -159,16 +145,16 @@ file	arch/arm32/podulebus/asc.c		asc needs-flag
 
 # Generic fas216 + esp216 driver
 define	sfas
-file	arch/arm32/podulebus/sfas.c	sfas
+file	arch/arm32/podulebus/sfas.c		sfas
 
 # Cumana specific layer for sfas
 device	csc: scsi, sfas
 attach	csc at podulebus
-file	arch/arm32/podulebus/exp/csc.c	csc
+file	arch/arm32/podulebus/exp/csc.c		csc
 
 device	ptsc: scsi, sfas
 attach	ptsc at podulebus
-file	arch/arm32/podulebus/ptsc.c	ptsc
+file	arch/arm32/podulebus/ptsc.c		ptsc
 
 # Generic NCR driver
 define	ncr
@@ -213,8 +199,8 @@ file	arch/arm32/arm32/vm_machdep.c
 file	arch/arm32/arm32/pmap.c
 file	arch/arm32/arm32/fusu.c
 
-file	netinet/in_cksum.c		inet
-file	netns/ns_cksum.c		ns
+file	netinet/in_cksum.c			inet
+file	netns/ns_cksum.c			ns
 
 # IRQ/FIQ files
 file	arch/arm32/arm32/spl.S
