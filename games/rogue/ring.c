@@ -1,4 +1,4 @@
-/*	$NetBSD: ring.c,v 1.4 1997/10/12 11:45:47 lukem Exp $	*/
+/*	$NetBSD: ring.c,v 1.5 1998/11/10 13:01:32 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)ring.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: ring.c,v 1.4 1997/10/12 11:45:47 lukem Exp $");
+__RCSID("$NetBSD: ring.c,v 1.5 1998/11/10 13:01:32 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,8 +59,8 @@ __RCSID("$NetBSD: ring.c,v 1.4 1997/10/12 11:45:47 lukem Exp $");
 
 #include "rogue.h"
 
-char *left_or_right = "left or right hand?";
-char *no_ring = "there's no ring on that hand";
+const char *left_or_right = "left or right hand?";
+const char *no_ring = "there's no ring on that hand";
 short stealthy;
 short r_rings;
 short add_strength;
