@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.16 2000/03/26 20:42:36 kleink Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.17 2000/05/28 05:49:03 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -57,24 +57,26 @@
  * fork(), while the parent process returns normally.
  *
  * p1 is the process being forked; if p1 == &proc0, we are creating
- * a kernel thread, and the return path will later be changed in cpu_set_kpc.
+ * a kernel thread, and the return path and argument are specified with
+ * `func' and `arg'.
  *
  * If an alternate user-level stack is requested (with non-zero values
  * in both the stack and stacksize args), set up the user stack pointer
  * accordingly.
  */
 void
-cpu_fork(p1, p2, stack, stacksize)
+cpu_fork(p1, p2, stack, stacksize, func, arg)
 	struct proc *p1, *p2;
 	void *stack;
 	size_t stacksize;
+	void (*func) __P((void *));
+	void *arg;
 {
 	struct trapframe *tf;
 	struct callframe *cf;
 	struct switchframe *sf;
 	caddr_t stktop1, stktop2;
 	extern void fork_trampoline __P((void));
-	extern void child_return __P((void *));
 	struct pcb *pcb = &p2->p_addr->u_pcb;
 
 #ifdef DIAGNOSTIC
@@ -119,8 +121,8 @@ cpu_fork(p1, p2, stack, stacksize)
 	 */
 	stktop2 -= 16;
 	cf = (struct callframe *)stktop2;
-	cf->r31 = (register_t)child_return;
-	cf->r30 = (register_t)p2;
+	cf->r31 = (register_t)func;
+	cf->r30 = (register_t)arg;
 	
 	/*
 	 * Below that, we allocate the switch frame:
@@ -132,23 +134,6 @@ cpu_fork(p1, p2, stack, stacksize)
 	sf->user_sr = pmap_kernel()->pm_sr[USER_SR]; /* again, just in case */
 	pcb->pcb_sp = (int)stktop2;
 	pcb->pcb_spl = 0;
-}
-
-/*
- * Set initial pc of process forked by above.
- */
-void
-cpu_set_kpc(p, pc, arg)
-	struct proc *p;
-	void (*pc) __P((void *));
-	void *arg;
-{
-	struct switchframe *sf = (struct switchframe *)p->p_addr->u_pcb.pcb_sp;
-	struct callframe *cf = (struct callframe *)sf->sp;
-	
-	cf->r30 = (int)arg;
-	cf->r31 = (int)pc;
-	cf++->lr = (int)pc;
 }
 
 void

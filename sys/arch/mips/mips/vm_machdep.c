@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.58 2000/05/24 18:42:03 soren Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.59 2000/05/28 05:49:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.58 2000/05/24 18:42:03 soren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.59 2000/05/28 05:49:02 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,17 +79,20 @@ paddr_t kvtophys __P((vaddr_t));	/* XXX */
  * fork(), while the parent process returns normally.
  *
  * p1 is the process being forked; if p1 == &proc0, we are creating
- * a kernel thread, and the return path will later be changed in cpu_set_kpc.
+ * a kernel thread, and the return path and argument are specified with
+ * `func' and `arg'.
  *
  * If an alternate user-level stack is requested (with non-zero values
  * in both the stack and stacksize args), set up the user stack pointer
  * accordingly.
  */
 void
-cpu_fork(p1, p2, stack, stacksize)
+cpu_fork(p1, p2, stack, stacksize, func, arg)
 	struct proc *p1, *p2;
 	void *stack;
 	size_t stacksize;
+	void (*func) __P((void *));
+	void *arg;
 {
 	struct pcb *pcb;
 	struct frame *f;
@@ -138,33 +141,11 @@ cpu_fork(p1, p2, stack, stacksize)
 	for (i = 0; i < UPAGES; i++)
 		p2->p_md.md_upte[i] = pte[i].pt_entry &~ x;
 
-	/*
-	 * Arrange for continuation at child_return(), which will return to
-	 * user process soon.
-	 */
 	pcb = &p2->p_addr->u_pcb;
 	pcb->pcb_segtab = (void *)p2->p_vmspace->vm_map.pmap->pm_segtab;
 	pcb->pcb_context[10] = (int)proc_trampoline;	/* RA */
 	pcb->pcb_context[8] = (int)f - 24;		/* SP */
-	pcb->pcb_context[0] = (int)child_return;	/* S0 */
-	pcb->pcb_context[1] = (int)p2;			/* S1 */
-}
-
-/*
- * Arrange for in-kernel execution of a process to continue at the
- * named pc, as if the code at that address were called as a function
- * with argument, the current process's process pointer.
- */
-void
-cpu_set_kpc(p, pc, arg)
-	struct proc *p;
-	void (*pc) __P((void *));
-	void *arg;
-{
-	struct pcb *pcb = &p->p_addr->u_pcb;
-
-	pcb->pcb_context[10] = (int)proc_trampoline;	/* RA */
-	pcb->pcb_context[0] = (int)pc;			/* S0 */
+	pcb->pcb_context[0] = (int)func;		/* S0 */
 	pcb->pcb_context[1] = (int)arg;			/* S1 */
 }
 
