@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.5 2003/01/13 21:14:39 fvdl Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.6 2003/05/08 14:06:48 kochi Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -220,6 +220,7 @@ mpacpi_nonpci_intr(APIC_HEADER *hdrp, void *aux)
 		switch (isa_ovr->Polarity) {
 		case MPS_INTPO_ACTHI:
 			mpi->redir &= ~IOAPIC_REDLO_ACTLO;
+			break;
 		case MPS_INTPO_DEF:
 		case MPS_INTPO_ACTLO:
 			mpi->redir |= IOAPIC_REDLO_ACTLO;
