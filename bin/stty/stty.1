@@ -1,4 +1,4 @@
-.\"	$NetBSD: stty.1,v 1.11 1996/11/11 00:18:50 lukem Exp $
+.\"	$NetBSD: stty.1,v 1.12 1997/03/08 13:29:57 mouse Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -328,10 +328,10 @@ Send (do not send)
 for background output.  This causes background jobs to stop if they attempt
 terminal output.
 .It Cm altwerase Pq Fl altwerase
-Use (do not use) an alternate word erase algorithm when processing
+Use (do not use) an alternative word erase algorithm when processing
 .Dv WERASE
 characters.
-This alternate algorithm considers sequences of
+This alternative algorithm considers sequences of
 alphanumeric/underscores as words.
 It also skips the first preceding character in its classification
 (as a convenience since the one preceding character could have been
