@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.485 2004/10/04 06:04:52 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.486 2004/10/04 06:05:50 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -7733,3 +7733,9 @@ sys/netinet/fil.c				1.69-1.70+patch
 	"keep state" rules and try to prevent such rules 
 	("keep state with oow") from being loaded into the kernel. PR#26581
 	[jdolecek, ticket #888]
+
+sys/nfs/nfs_subs.c				1.137
+
+	nfs_enterdircache: initialize dc_flags of a newly allocated dircache 
+	entry.
+	[yamt, ticket #889]
