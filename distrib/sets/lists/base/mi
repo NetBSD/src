@@ -364,6 +364,8 @@
 ./usr/bin/zcat
 ./usr/bin/zcmp
 ./usr/bin/zdiff
+./usr/bin/zegrep
+./usr/bin/zfgrep
 ./usr/bin/zforce
 ./usr/bin/zgrep
 ./usr/bin/zmore
