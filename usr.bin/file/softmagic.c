@@ -1,4 +1,4 @@
-/*	$NetBSD: softmagic.c,v 1.27 2002/06/05 12:52:58 itojun Exp $	*/
+/*	$NetBSD: softmagic.c,v 1.28 2002/06/14 19:05:19 wiz Exp $	*/
 
 /*
  * softmagic - interpret variable magic from MAGIC
@@ -42,17 +42,16 @@
 #if 0
 FILE_RCSID("@(#)Id: softmagic.c,v 1.48 2002/05/16 18:45:56 christos Exp ")
 #else
-__RCSID("$NetBSD: softmagic.c,v 1.27 2002/06/05 12:52:58 itojun Exp $");
+__RCSID("$NetBSD: softmagic.c,v 1.28 2002/06/14 19:05:19 wiz Exp $");
 #endif
 #endif	/* lint */
 
-static int match	__P((struct magic *, uint32_t, unsigned char *, int));
-static int mget		__P((union VALUETYPE *,
-			     unsigned char *, struct magic *, int));
-static int mcheck	__P((union VALUETYPE *, struct magic *));
-static int32_t mprint	__P((union VALUETYPE *, struct magic *));
-static void mdebug	__P((int32_t, char *, int));
-static int mconvert	__P((union VALUETYPE *, struct magic *));
+static int match(struct magic *, uint32_t, unsigned char *, int);
+static int mget(union VALUETYPE *, unsigned char *, struct magic *, int);
+static int mcheck(union VALUETYPE *, struct magic *);
+static int32_t mprint(union VALUETYPE *, struct magic *);
+static void mdebug(int32_t, char *, int);
+static int mconvert(union VALUETYPE *, struct magic *);
 
 extern int kflag;
 
@@ -63,9 +62,7 @@ extern int kflag;
  */
 /*ARGSUSED1*/		/* nbytes passed for regularity, maybe need later */
 int
-softmagic(buf, nbytes)
-	unsigned char *buf;
-	int nbytes;
+softmagic(unsigned char *buf, int nbytes)
 {
 	struct mlist *ml;
 
@@ -104,11 +101,7 @@ softmagic(buf, nbytes)
  *	so that higher-level continuations are processed.
  */
 static int
-match(magic, nmagic, s, nbytes)
-	struct magic *magic;
-	uint32_t nmagic;
-	unsigned char	*s;
-	int nbytes;
+match(struct magic *magic, uint32_t nmagic, unsigned char *s, int nbytes)
 {
 	int magindex = 0;
 	int cont_level = 0;
@@ -218,9 +211,7 @@ match(magic, nmagic, s, nbytes)
 }
 
 static int32_t
-mprint(p, m)
-	union VALUETYPE *p;
-	struct magic *m;
+mprint(union VALUETYPE *p, struct magic *m)
 {
 	uint32_t v;
 	int32_t t=0 ;
@@ -297,9 +288,7 @@ mprint(p, m)
  * (unless you have a better idea)
  */
 static int
-mconvert(p, m)
-	union VALUETYPE *p;
-	struct magic *m;
+mconvert(union VALUETYPE *p, struct magic *m)
 {
 	switch (m->type) {
 	case BYTE:
@@ -566,10 +555,7 @@ mconvert(p, m)
 
 
 static void
-mdebug(offset, str, len)
-	int32_t offset;
-	char *str;
-	int len;
+mdebug(int32_t offset, char *str, int len)
 {
 	(void) fprintf(stderr, "mget @%d: ", offset);
 	showstr(stderr, (char *) str, len);
@@ -578,11 +564,7 @@ mdebug(offset, str, len)
 }
 
 static int
-mget(p, s, m, nbytes)
-	union VALUETYPE* p;
-	unsigned char	*s;
-	struct magic *m;
-	int nbytes;
+mget(union VALUETYPE *p, unsigned char *s, struct magic *m, int nbytes)
 {
 	int32_t offset = m->offset;
 
@@ -955,9 +937,7 @@ mget(p, s, m, nbytes)
 }
 
 static int
-mcheck(p, m)
-	union VALUETYPE* p;
-	struct magic *m;
+mcheck(union VALUETYPE *p, struct magic *m)
 {
 	uint32_t l = m->value.l;
 	uint32_t v;
