@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.1.1.1 1998/06/20 04:58:51 eeh Exp $ */
+/*	$NetBSD: frame.h,v 1.2 1998/08/30 15:32:17 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -53,7 +53,7 @@
  * windows to the stack.
  */
 #ifndef _LOCORE
-struct frame {
+struct frame32 {
 	int	fr_local[8];	/* space to save locals (%l0..%l7) */
 	int	fr_arg[6];	/* space to save arguments (%i0..%i5) */
 	struct	frame *fr_fp;	/* space to save frame pointer (%i6) */

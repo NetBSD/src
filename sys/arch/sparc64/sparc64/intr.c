@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.7 1998/08/13 02:10:46 eeh Exp $ */
+/*	$NetBSD: intr.c,v 1.8 1998/08/30 15:32:18 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -111,7 +111,7 @@ strayintr(fp)
 {
 	static int straytime, nstray;
 	int timesince;
-	int swallow_zsintrs;
+	static int swallow_zsintrs;
 
 	/* If we're in polled mode ignore spurious interrupts */
 	if (swallow_zsintrs) return;
@@ -237,31 +237,9 @@ intr_establish(level, ih)
 	struct intrhand *ih;
 {
 	register struct intrhand **p, *q;
-#ifdef DIAGNOSTIC
-	register struct trapvec *tv;
-	register int displ;
-#endif
 	int s;
 
 	s = splhigh();
-#if 0
-#ifdef DIAGNOSTIC
-	/* double check for legal hardware interrupt */
-	if ((level != 1 && level != 4 && level != 6) || CPU_ISSUN4M ) {
-		tv = &trapbase[T_L1INT - 1 + level];
-		displ = &sparc_interrupt[0] - &tv->tv_instr[1];
-
-		/* has to be `mov level,%l3; ba _sparc_interrupt; rdpsr %l0' */
-		if (tv->tv_instr[0] != I_MOVi(I_L3, level) ||
-		    tv->tv_instr[1] != I_BA(0, displ) ||
-		    tv->tv_instr[2] != I_RDPSR(I_L0))
-			panic("intr_establish(%d, %p)\n%x %x %x != %x %x %x",
-			    level, ih,
-			    tv->tv_instr[0], tv->tv_instr[1], tv->tv_instr[2],
-			    I_MOVi(I_L3, level), I_BA(0, displ), I_RDPSR(I_L0));
-	}
-#endif
-#endif
 	/*
 	 * This is O(N^2) for long chains, but chains are never long
 	 * and we do want to preserve order.

@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.2 1998/07/07 03:05:04 eeh Exp $ */
+/*	$NetBSD: asm.h,v 1.3 1998/08/30 15:32:17 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -123,7 +123,7 @@
 	    "r" ((long long)(value)), "r" ((int)(loc)), "r" (asi)); \
 })
 
-#ifdef notyet
+#ifdef _LP64
 /* native load 64-bit int from alternate address space w/64-bit compiler*/
 #define	ldxa(loc, asi) ({ \
 	register long _lda_v; \
@@ -143,7 +143,7 @@
 })
 #endif
 
-#ifdef notyet
+#ifdef _LP64
 /* native store 64-bit int to alternate address space w/64-bit compiler*/
 #define	stxa(loc, asi, value) ({ \
 	__asm __volatile("wr %2,%%g0,%%asi; stxa %0,[%1]%%asi; membar #Sync" : : \
@@ -168,12 +168,12 @@
 
 #define membar_sync() __asm __volatile("membar #Sync" : :)
 
-#ifdef notyet
+#ifdef _LP64
 /* read 64-bit %tick register */
 #define	tick() ({ \
-	register long _lda_v; \
-	__asm __volatile("rdpr %%tick, %0" : "=r" (_lda_) :); \
-	_lda_v; \
+	register long _tick_tmp; \
+	__asm __volatile("rdpr %%tick, %0" : "=r" (_tick_tmp) :); \
+	_tick_tmp; \
 })
 #else
 /* native load 64-bit int from alternate address space w/32-bit compiler*/

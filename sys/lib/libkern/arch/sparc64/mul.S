@@ -1,4 +1,4 @@
-/*	$NetBSD: mul.S,v 1.2 1998/08/29 18:16:58 eeh Exp $	*/
+/*	$NetBSD: mul.S,v 1.3 1998/08/30 15:32:20 eeh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -43,8 +43,26 @@
 #ifdef notdef
 	.asciz "@(#)mul.s	8.1 (Berkeley) 6/4/93"
 #endif
-	.asciz "$NetBSD: mul.S,v 1.2 1998/08/29 18:16:58 eeh Exp $"
+	.asciz "$NetBSD: mul.S,v 1.3 1998/08/30 15:32:20 eeh Exp $"
 #endif /* LIBC_SCCS and not lint */
+
+/*
+ * This doesn't really belong here and should be handled by toolchain
+ * magic.
+ */
+
+.globl	__mul64, __div64, __udiv64, __rem64, __urem64
+
+__mul64:
+	ba,a,pt	%icc,__muldi3
+__div64:
+	ba,a,pt %icc,__divdi3
+__udiv64:
+	ba,a,pt %icc,__udivdi3
+__rem64:
+        ba,a,pt %icc,__moddi3
+__urem64:
+        ba,a,pt %icc,__umoddi3
 
 /*
  * Signed multiply, from Appendix E of the Sparc Version 8
