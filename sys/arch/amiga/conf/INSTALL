@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.14 2001/03/10 23:55:31 is Exp $
+# $NetBSD: INSTALL,v 1.15 2001/06/11 01:50:52 wiz Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running make in this directory.
@@ -7,7 +7,7 @@
 
 include "arch/amiga/conf/std.amiga"
 
-#ident  		"GENERIC-$Revision: 1.14 $"
+#ident  		"GENERIC-$Revision: 1.15 $"
 
 makeoptions	COPTS="-Os"
 
@@ -71,7 +71,7 @@ file-system 	KERNFS		# kernel data-structure filesystem
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
 
-#Compatability options for various existing systems
+#Compatibility options for various existing systems
 
 #Support for various kernel options
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: scmio.c,v 1.7 2000/01/21 17:08:38 mycroft Exp $	*/
+/*	$NetBSD: scmio.c,v 1.8 2001/06/11 01:50:59 wiz Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -147,7 +147,7 @@
  *	Added register variables to decode() for speedup.  Added I/O
  *	buffering to reduce the number or read/write system calls.
  *	Removed readmfil/writemfil routines which were not used and were
- *	not compatable with the other similarly defined routines anyway.
+ *	not compatible with the other similarly defined routines anyway.
  *
  * 19-Dec-85  Glenn Marcy (gm0w) at Carnegie-Mellon University
  *	Created from scm.c I/O and crypt routines.

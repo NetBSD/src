@@ -1,4 +1,4 @@
-/*	$NetBSD: option.c,v 1.4 1998/02/04 11:08:59 christos Exp $	*/
+/*	$NetBSD: option.c,v 1.5 2001/06/11 01:50:50 wiz Exp $	*/
 
 /*
  * Copyright (c) 1988 Mark Nudleman
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)option.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: option.c,v 1.4 1998/02/04 11:08:59 christos Exp $");
+__RCSID("$NetBSD: option.c,v 1.5 2001/06/11 01:50:50 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -120,7 +120,7 @@ option(argc, argv)
 			if (tabstop <= 0)
 				tabstop = 8;
 			break;
-		case 'f':	/* ignore -f, compatability with old more */
+		case 'f':	/* ignore -f, compatibility with old more */
 			break;
 		case '?':
 		default:

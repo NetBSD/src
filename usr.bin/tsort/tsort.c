@@ -1,4 +1,4 @@
-/*	$NetBSD: tsort.c,v 1.14 2001/02/21 00:11:36 cgd Exp $	*/
+/*	$NetBSD: tsort.c,v 1.15 2001/06/11 01:50:58 wiz Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)tsort.c	8.3 (Berkeley) 5/4/95";
 #endif
-__RCSID("$NetBSD: tsort.c,v 1.14 2001/02/21 00:11:36 cgd Exp $");
+__RCSID("$NetBSD: tsort.c,v 1.15 2001/06/11 01:50:58 wiz Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -70,7 +70,7 @@ __RCSID("$NetBSD: tsort.c,v 1.14 2001/02/21 00:11:36 cgd Exp $");
  *     tsort [-l] [inputfile]
  *  If no input file is specified, standard input is read.
  *
- *  Should be compatable with AT&T tsort HOWEVER the output is not identical
+ *  Should be compatible with AT&T tsort HOWEVER the output is not identical
  *  (i.e. for most graphs there is more than one sorted order, and this tsort
  *  usually generates a different one then the AT&T tsort).  Also, cycle
  *  reporting seems to be more accurate in this version (the AT&T tsort

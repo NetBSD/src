@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.39 2000/11/23 16:06:10 abs Exp $
+.\"	$NetBSD: install,v 1.40 2001/06/11 01:50:50 wiz Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -527,7 +527,7 @@ more than one disk, you may want to look at the output of the
 command to see how your disks have been identified by the kernel.
 .(Note
 If you repartition a hard drive, be certain that every partition starts
-on a cylinder boundary for compatability with the Sparc ROM.
+on a cylinder boundary for compatibility with the Sparc ROM.
 .Note)
 .Pp
 The installation script goes through the following phases:

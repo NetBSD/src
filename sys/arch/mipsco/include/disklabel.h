@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.4 2001/03/05 04:58:09 wdk Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.5 2001/06/11 01:50:54 wiz Exp $	*/
 
 /*
  * Copyright (c) 2000 Wayne Knowles.     All rights reserved.
@@ -43,7 +43,7 @@
  * Partition 10 - whole disk
  */
 
-#define MAXPARTITIONS	8	/* XXX - NetBSD Compatability */
+#define MAXPARTITIONS	8	/* XXX - NetBSD Compatibility */
 #define RAW_PART	2
 #define LABELSECTOR	1
 #define LABELOFFSET	0

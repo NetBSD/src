@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.40 2001/05/12 22:35:29 chs Exp $
+# $NetBSD: GENERIC,v 1.41 2001/06/11 01:50:54 wiz Exp $
 #
 # GENERIC next68k
 #
@@ -6,7 +6,7 @@
 
 include "arch/next68k/conf/std.next68k"
 
-#ident 		"GENERIC-$Revision: 1.40 $"
+#ident 		"GENERIC-$Revision: 1.41 $"
 
 # Needs to be set per system.  i.e change these as you see fit
 maxusers	16
@@ -42,7 +42,7 @@ options 	SCSIDEBUG
 options 	SCSIVERBOSE		# Verbose SCSI errors
 options         SWAPDEBUG
 
-# Compatability options
+# Compatibility options
 options 	COMPAT_43	# and 4.3BSD and ...
 options 	COMPAT_44	# and 4.4BSD and ...
 options 	COMPAT_09	# NetBSD 0.9

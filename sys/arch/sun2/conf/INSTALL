@@ -1,10 +1,10 @@
-# $NetBSD: INSTALL,v 1.1 2001/05/03 15:39:48 fredette Exp $
+# $NetBSD: INSTALL,v 1.2 2001/06/11 01:50:56 wiz Exp $
 
 # INSTALL Sun2 (2/120, 2/170, 2/50, ...)
 
 include "arch/sun2/conf/std.sun2"
 
-#ident 		"INSTALL-$Revision: 1.1 $"
+#ident 		"INSTALL-$Revision: 1.2 $"
 
 # Machines to be supported by this kernel
 #options 	FPU_EMULATE
@@ -38,7 +38,7 @@ maxusers	2
 #options 	SCSIDEBUG
 #options 	SCSIVERBOSE		# Verbose SCSI errors
 
-# Compatability options
+# Compatibility options
 #options 	COMPAT_SUNOS	# can run SunOS 4.1.1 executables
 #options 	COMPAT_43	# and 4.3BSD and ...
 

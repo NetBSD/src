@@ -1,4 +1,4 @@
-.\"$NetBSD: hardware,v 1.13 2001/05/22 04:09:41 mbw Exp $
+.\"$NetBSD: hardware,v 1.14 2001/06/11 01:50:49 wiz Exp $
 .
 Currently,
 .Nx*M
@@ -207,7 +207,7 @@ D-Link DFE-530TX
 .Pq Em vr
 .It
 Many other PCI and Cardbus Ethernet interfaces, such as
-Tulip-compatable
+Tulip-compatible
 .Pq Em de No and Em tlp ,
 3Com
 .Pq Em ep ,
@@ -215,7 +215,7 @@ SMC
 .Pq Em epic ,
 Intel
 .Pq Em fxp ,
-NE2000-compatable
+NE2000-compatible
 .Pq Em ne ,
 and RealTek
 .Pq Em rtk

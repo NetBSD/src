@@ -1,4 +1,4 @@
-/*	$NetBSD: sup.h,v 1.8 2001/01/16 02:50:32 cgd Exp $	*/
+/*	$NetBSD: sup.h,v 1.9 2001/06/11 01:50:59 wiz Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -217,7 +217,7 @@ typedef struct tliststruct TREELIST;
 #define FUPDATE		    010		/* only set file information */
 #define FNEEDED		0100000		/* file needed for upgrade */
 
-/* version 3 compatability */
+/* version 3 compatibility */
 #define	FCOMPAT		0010000		/* Added to detect execute commands to send */
 
 /* message types now obsolete */
@@ -242,7 +242,7 @@ typedef struct tliststruct TREELIST;
 /* blocking factor for filenames in list of all file names */
 #define BLOCKALL	32
 
-/* end version 3 compatability */
+/* end version 3 compatibility */
 
 #define MAXCHILDREN 3			/* maximum number of children allowed
 					   to sup at the same time */

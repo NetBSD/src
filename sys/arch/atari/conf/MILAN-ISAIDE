@@ -1,5 +1,5 @@
 #
-# $NetBSD: MILAN-ISAIDE,v 1.1 2001/06/07 08:01:19 leo Exp $
+# $NetBSD: MILAN-ISAIDE,v 1.2 2001/06/11 01:50:53 wiz Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
@@ -14,7 +14,7 @@
 
 include "arch/atari/conf/std.milan"
 
-#ident  		"GENERIC-$Revision: 1.1 $"
+#ident  		"GENERIC-$Revision: 1.2 $"
 
 #Add support for about 16 users. This variable is used to size
 #various kernel structures.
@@ -97,7 +97,7 @@ options 	DDB		# Kernel debugger
 options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 #options 	DEBUG		# expensive debugging checks/support
 
-#Compatability options for various existing systems
+#Compatibility options for various existing systems
 
 options 	COMPAT_43	# 4.3 BSD compatible system calls (required)
 options 	COMPAT_10	# Compatibility to NetBSD1.0

@@ -1,4 +1,4 @@
-#	$NetBSD: KGDB,v 1.24 2001/02/22 07:11:08 chs Exp $
+#	$NetBSD: KGDB,v 1.25 2001/06/11 01:50:55 wiz Exp $
 
 # KGDB Sun3 (3/50, 3/60, 3/110, 3/160, 3/260, 3/E)
 # like GENERIC but supports gdb on other machine, i.e.:
@@ -41,7 +41,7 @@ options 	DIAGNOSTIC	# extra kernel sanity checking
 #options 	SCSIDEBUG
 #options 	SCSIVERBOSE		# Verbose SCSI errors
 
-# Compatability options
+# Compatibility options
 options 	COMPAT_SUNOS	# can run SunOS 4.1.1 executables
 options 	COMPAT_43	# and 4.3BSD and ...
 options 	COMPAT_10	# NetBSD 1.0

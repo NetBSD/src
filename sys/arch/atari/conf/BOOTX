@@ -1,5 +1,5 @@
 #
-# $NetBSD: BOOTX,v 1.30 2001/04/10 07:03:49 leo Exp $
+# $NetBSD: BOOTX,v 1.31 2001/06/11 01:50:53 wiz Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
@@ -17,7 +17,7 @@
 
 include "arch/atari/conf/std.atari"
 
-#ident  		"GENERIC-$Revision: 1.30 $"
+#ident  		"GENERIC-$Revision: 1.31 $"
 
 #Add support for about 16 users. This variable is used to size
 #various kernel structures.
@@ -59,7 +59,7 @@ file-system 	CD9660		# ISO 9660 filesystem with Rock Ridge
 options 	PANICWAIT	# Require keystroke to dump/reboot
 options 	DDB		# Kernel debugger
 
-#Compatability options for various existing systems
+#Compatibility options for various existing systems
 
 options 	COMPAT_43	# 4.3 BSD compatible system calls (required)
 options 	COMPAT_10	# Compatibility to NetBSD1.0

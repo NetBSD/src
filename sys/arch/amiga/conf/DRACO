@@ -1,4 +1,4 @@
-# $NetBSD: DRACO,v 1.52 2001/03/10 23:55:31 is Exp $
+# $NetBSD: DRACO,v 1.53 2001/06/11 01:50:52 wiz Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running make in this directory.
@@ -7,7 +7,7 @@
 
 include "arch/amiga/conf/std.amiga"
 
-#ident  		"GENERIC-$Revision: 1.52 $"
+#ident  		"GENERIC-$Revision: 1.53 $"
 
 maxusers	8
 options 	RTC_OFFSET=0
@@ -77,7 +77,7 @@ options 	NFSSERVER	# Network File System server side code
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
 
-#Compatability options for various existing systems
+#Compatibility options for various existing systems
 
 options 	TCP_COMPAT_42	# compatibility with 4.2BSD TCP/IP
 options 	COMPAT_43	# compatibility with 4.3BSD interfaces

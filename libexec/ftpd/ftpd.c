@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.125 2001/04/25 01:46:26 lukem Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.126 2001/06/11 01:50:51 wiz Exp $	*/
 
 /*
  * Copyright (c) 1997-2001 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.125 2001/04/25 01:46:26 lukem Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.126 2001/06/11 01:50:51 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -653,7 +653,7 @@ user(const char *name)
  * for a user. Each line is a shell-style glob followed by
  * `yes' or `no'.
  *
- * For backward compatability, `allow' and `deny' are synonymns
+ * For backward compatibility, `allow' and `deny' are synonymns
  * for `yes' and `no', respectively.
  *
  * Each glob is matched against the username in turn, and the first

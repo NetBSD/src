@@ -1,5 +1,5 @@
 #
-# $NetBSD: FALCON,v 1.37 2001/04/10 07:03:49 leo Exp $
+# $NetBSD: FALCON,v 1.38 2001/06/11 01:50:53 wiz Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
@@ -17,7 +17,7 @@
 
 include "arch/atari/conf/std.atari"
 
-#ident  		"GENERIC-$Revision: 1.37 $"
+#ident  		"GENERIC-$Revision: 1.38 $"
 
 #Add support for about 16 users. This variable is used to size
 #various kernel structures.
@@ -101,7 +101,7 @@ options 	DDB		# Kernel debugger
 options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 #options 	DEBUG		# expensive debugging checks/support
 
-#Compatability options for various existing systems
+#Compatibility options for various existing systems
 
 options 	COMPAT_43	# 4.3 BSD compatible system calls (required)
 options 	COMPAT_10	# Compatibility to NetBSD1.0

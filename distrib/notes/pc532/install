@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.15 2000/11/02 01:37:48 lukem Exp $
+.\"	$NetBSD: install,v 1.16 2001/06/11 01:50:50 wiz Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -301,7 +301,7 @@ won't happen for a while after \*V release.)
 .Pp
 Get the .tgz files from the cd-rom
 .It
-Use the ROM compatable
+Use the ROM compatible
 .Ic download
 program. The program
 download is included in the initial installation and

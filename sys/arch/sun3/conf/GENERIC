@@ -1,11 +1,11 @@
-# $NetBSD: GENERIC,v 1.77 2001/02/22 07:11:08 chs Exp $
+# $NetBSD: GENERIC,v 1.78 2001/06/11 01:50:55 wiz Exp $
 
 # GENERIC Sun3 (3/50, 3/60, 3/110, 3/160, 3/260, 3/E)
 # Supports root on: ie0, le0, sd*, ...
 
 include "arch/sun3/conf/std.sun3"
 
-#ident 		"GENERIC-$Revision: 1.77 $"
+#ident 		"GENERIC-$Revision: 1.78 $"
 
 # Machines to be supported by this kernel
 options 	FPU_EMULATE
@@ -40,7 +40,7 @@ options 	DDB
 #options 	SCSIDEBUG
 #options 	SCSIVERBOSE		# Verbose SCSI errors
 
-# Compatability options
+# Compatibility options
 options 	COMPAT_SUNOS	# can run SunOS 4.1.1 executables
 #options 	COMPAT_SVR4	# can run SVR4 executables
 options 	COMPAT_43	# and 4.3BSD and ...

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.40 2001/02/04 19:52:06 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.41 2001/06/11 01:50:49 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.7 (Berkeley) 7/19/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.40 2001/02/04 19:52:06 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.41 2001/06/11 01:50:49 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -338,7 +338,7 @@ readcmdfile(name)
 
 
 /*
- * Take commands from a file.  To be compatable we should do a path
+ * Take commands from a file.  To be compatible we should do a path
  * search for the file, which is necessary to find sub-commands.
  */
 

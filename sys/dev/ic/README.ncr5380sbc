@@ -5,7 +5,7 @@ BACKGROUND
 The NCR 53C80 SCSI Bus Controller (SBC) is an early single-chip solution
 which formed the basis of many early SCSI host adapters for both the
 i386 and m68k platforms. The NCR 53C400 is a slightly more advanced
-chip which retains backward compatability with the 53C80.
+chip which retains backward compatibility with the 53C80.
 
 On the PC, the NCR 53C80 was most commonly used to implement simple, cheap
 SCSI host adapters that were bundled with tape and CD-ROM drives. Since
@@ -54,7 +54,7 @@ To setup the nca driver, the configuration file must contain the following:
 
 	options	NCR5380_USE_BUS_SPACE
 
-This line is required to add bus_space() compatability to the MI driver.
+This line is required to add bus_space() compatibility to the MI driver.
 
 Next you need to add one or more configuration lines for the nca devices:
 

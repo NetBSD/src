@@ -1,4 +1,4 @@
-/*	$NetBSD: c_ksh.c,v 1.5 1999/10/20 15:09:59 hubertf Exp $	*/
+/*	$NetBSD: c_ksh.c,v 1.6 2001/06/11 01:50:48 wiz Exp $	*/
 
 /*
  * built-in Korn commands: c_*
@@ -653,7 +653,7 @@ c_typeset(wp)
 			break;
 		  case 'p': /* posix export/readonly -p flag.
 			     * typset -p is the same as typeset (in pdksh);
-			     * here for compatability with ksh93.
+			     * here for compatibility with ksh93.
 			     */
 			pflag = 1;
 			break;
