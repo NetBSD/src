@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_cardbus.c,v 1.6 1999/12/11 00:39:13 thorpej Exp $	*/
+/*	$NetBSD: if_tlp_cardbus.c,v 1.7 2000/01/25 03:44:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -303,6 +303,17 @@ tlp_cardbus_attach(parent, self, aux)
 	reg = (reg & ~(PCI_COMMAND_IO_ENABLE|PCI_COMMAND_MEM_ENABLE)) |
 	    csc->sc_csr;
 	cardbus_conf_write(cc, cf, ca->ca_tag, PCI_COMMAND_STATUS_REG, reg);
+
+	/*
+	 * Make sure the latency timer is set to some reasonable
+	 * value.
+	 */
+	reg = cardbus_conf_read(cc, cf, ca->ca_tag, PCI_BHLC_REG);
+	if (PCI_LATTIMER(reg) < 0x20) {
+		reg &= ~(PCI_LATTIMER_MASK << PCI_LATTIMER_SHIFT);
+		reg |= (0x20 << PCI_LATTIMER_SHIFT);
+		cardbus_conf_write(cc, cf, ca->ca_tag, PCI_BHLC_REG, reg);
+	}
 
 	/*
 	 * Read the contents of the Ethernet Address ROM/SROM.  Some
