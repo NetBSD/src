@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_subr.c,v 1.2 1998/03/01 02:23:46 fvdl Exp $	*/
+/*	$NetBSD: ext2fs_subr.c,v 1.3 1998/03/04 06:50:25 cgd Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -82,6 +82,7 @@ ext2fs_blkatoff(v)
 	return (0);
 }
 
+#ifdef DIAGNOSTIC
 void
 ext2fs_checkoverlap(bp, ip)
 	struct buf *bp;
@@ -113,3 +114,4 @@ ext2fs_checkoverlap(bp, ip)
 		panic("Disk buffer overlap");
 	}
 }
+#endif
