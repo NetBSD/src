@@ -1,4 +1,4 @@
-/*	$NetBSD: gencode.c,v 1.22 2000/03/01 03:47:48 itojun Exp $	*/
+/*	$NetBSD: gencode.c,v 1.23 2000/04/14 14:26:35 itojun Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -26,7 +26,7 @@
 static const char rcsid[] =
     "@(#) Header: gencode.c,v 1.93 97/06/12 14:22:47 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: gencode.c,v 1.22 2000/03/01 03:47:48 itojun Exp $");
+__RCSID("$NetBSD: gencode.c,v 1.23 2000/04/14 14:26:35 itojun Exp $");
 #endif
 #endif
 
@@ -1223,8 +1223,12 @@ gen_proto_abbrev(proto)
 		b1 = gen_proto(IPPROTO_ICMP, Q_IP, Q_DEFAULT);
 		break;
 
+#ifndef	IPPROTO_IGMP
+#define	IPPROTO_IGMP	2
+#endif
+
 	case Q_IGMP:
-		b1 = gen_proto(2, Q_IP, Q_DEFAULT);
+		b1 = gen_proto(IPPROTO_IGMP, Q_IP, Q_DEFAULT);
 		break;
 
 #ifndef	IPPROTO_IGRP
@@ -1232,8 +1236,11 @@ gen_proto_abbrev(proto)
 #endif
 	case Q_IGRP:
 		b1 = gen_proto(IPPROTO_IGRP, Q_IP, Q_DEFAULT);
-		gen_and(b0, b1);
 		break;
+
+#ifndef IPPROTO_PIM
+#define IPPROTO_PIM	103
+#endif
 
 	case Q_PIM:
 		b1 = gen_proto(IPPROTO_PIM, Q_IP, Q_DEFAULT);
@@ -2073,8 +2080,12 @@ gen_scode(name, q)
 				b = tmp;
 			}
 			freeaddrinfo(res0);
-			if (b == NULL)
-				bpf_error("unknown host '%s'", name);
+			if (b == NULL) {
+				bpf_error("unknown host '%s'%s", name,
+				    (proto == Q_DEFAULT)
+					? ""
+					: " for specified address family");
+			}
 			return b;
 #endif /*INET6*/
 		}
