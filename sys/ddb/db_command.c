@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.70 2003/05/15 13:18:18 atatat Exp $	*/
+/*	$NetBSD: db_command.c,v 1.71 2003/05/16 16:28:30 itojun Exp $	*/
 
 /*
  * Mach Operating System
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.70 2003/05/15 13:18:18 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.71 2003/05/16 16:28:30 itojun Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -421,7 +421,7 @@ db_command(const struct db_command **last_cmdp,
 					db_flush_lex();
 					return;
 				}
-				db_strcpy(modif, db_tok_string);
+				strlcpy(modif, db_tok_string, sizeof(modif));
 			} else {
 				db_unread_token(t);
 				modif[0] = '\0';
