@@ -1,4 +1,4 @@
-/* $NetBSD: prom.c,v 1.43 2003/01/17 22:11:18 thorpej Exp $ */
+/* $NetBSD: prom.c,v 1.44 2003/03/08 01:18:42 he Exp $ */
 
 /* 
  * Copyright (c) 1992, 1994, 1995, 1996 Carnegie Mellon University
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: prom.c,v 1.43 2003/01/17 22:11:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: prom.c,v 1.44 2003/03/08 01:18:42 he Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -49,7 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: prom.c,v 1.43 2003/01/17 22:11:18 thorpej Exp $");
 
 /* XXX this is to fake out the console routines, while booting. */
 struct consdev promcons = { NULL, NULL, promcngetc, promcnputc,
-			    nullcnpollc, NULL, makedev(23,0), 1 };
+			    nullcnpollc, NULL, NULL, NULL, makedev(23,0), 1 };
 
 struct rpb	*hwrpb;
 int		alpha_console;
