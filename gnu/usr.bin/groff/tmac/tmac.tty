@@ -96,3 +96,21 @@
 .ftr TBI BI
 .ftr TI I
 .ftr TR R
+.
+.ftr AX BI
+.ftr KR R
+.ftr KI I
+.ftr KB B
+.ftr KX BI
+.ftr CO I
+.ftr CX BI
+.ftr H R
+.ftr HO I
+.ftr HX BI
+.ftr Hr R
+.ftr Hi I
+.ftr Hb B
+.ftr Hx BI
+.ftr NX BI
+.ftr PA R
+.ftr PX BI
