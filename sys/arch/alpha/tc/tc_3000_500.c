@@ -1,4 +1,4 @@
-/* $NetBSD: tc_3000_500.c,v 1.23 2000/06/05 21:47:31 thorpej Exp $ */
+/* $NetBSD: tc_3000_500.c,v 1.24 2001/07/27 00:25:21 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tc_3000_500.c,v 1.23 2000/06/05 21:47:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc_3000_500.c,v 1.24 2001/07/27 00:25:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -214,8 +214,8 @@ tc_3000_500_intrnull(val)
 }
 
 void
-tc_3000_500_iointr(framep, vec)
-        void *framep;
+tc_3000_500_iointr(arg, vec)
+        void *arg;
         unsigned long vec;
 {
         u_int32_t ir;

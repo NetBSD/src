@@ -1,4 +1,4 @@
-/* $NetBSD: jensenio_intr.c,v 1.2 2000/08/14 05:38:23 thorpej Exp $ */
+/* $NetBSD: jensenio_intr.c,v 1.3 2001/07/27 00:25:19 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: jensenio_intr.c,v 1.2 2000/08/14 05:38:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jensenio_intr.c,v 1.3 2001/07/27 00:25:19 thorpej Exp $");
 
 #include <sys/types.h> 
 #include <sys/param.h> 
@@ -62,13 +62,6 @@ static bus_space_tag_t pic_iot;
 static bus_space_handle_t pic_ioh[2];
 static bus_space_handle_t pic_elcr_ioh;
 
-static const int irq_to_vector[] = {
-	0x900,		/* com0 */
-	0x920,		/* com1 */
-	0x980,		/* keyboard */
-	0x990,		/* mouse */
-};
-
 int	jensenio_eisa_intr_map(void *, u_int, eisa_intr_handle_t *);
 const char *jensenio_eisa_intr_string(void *, int);
 const struct evcnt *jensenio_eisa_intr_evcnt(void *, int);
@@ -77,13 +70,7 @@ void	*jensenio_eisa_intr_establish(void *, int, int, int,
 void	jensenio_eisa_intr_disestablish(void *, void *);
 int	jensenio_eisa_intr_alloc(void *, int, int, int *);
 
-/*
- * We have 16 (E)ISA IRQs, plus 4 hard-wired vectors which we
- * assign to "virtual" IRQs.
- */
-#define	JENSEN_MAX_IRQ		20
-#define	JENSEN_VECT_IRQ_BASE	16
-#define	JENSEN_IRQ_IS_EISA(x)	((x) < 16)
+#define	JENSEN_MAX_IRQ		16
 
 struct alpha_shared_intr *jensenio_eisa_intr;
 
@@ -110,10 +97,6 @@ const int jensenio_intr_deftype[JENSEN_MAX_IRQ] = {
 	IST_UNUSABLE,		/* 13: not connected */
 	IST_NONE,		/* 14: EISA pin D07 (SCSI) */
 	IST_NONE,		/* 15: EISA pin D06 */
-	IST_EDGE,		/* 16: com0 (vector 0x900) */
-	IST_EDGE,		/* 17: com1 (vector 0x920) */
-	IST_EDGE,		/* 18: keyboard (vector 0x980) */
-	IST_EDGE,		/* 19: mouse (vector 0x990) */
 };
 
 static __inline void
@@ -148,18 +131,10 @@ jensenio_intr_init(struct jensenio_config *jcp)
 		    i, 0);
 
 		cp = alpha_shared_intr_string(jensenio_eisa_intr, i);
-		if (JENSEN_IRQ_IS_EISA(i)) {
-			sprintf(cp, "irq %d", i);
-			evcnt_attach_dynamic(alpha_shared_intr_evcnt(
-			    jensenio_eisa_intr, i), EVCNT_TYPE_INTR,
-			    NULL, "eisa", cp);
-		} else {
-			sprintf(cp, "0x%03x",
-			    irq_to_vector[i - JENSEN_VECT_IRQ_BASE]);
-			evcnt_attach_dynamic(alpha_shared_intr_evcnt(
-			    jensenio_eisa_intr, i), EVCNT_TYPE_INTR,
-			    NULL, "vector", cp);
-		}
+		sprintf(cp, "irq %d", i);
+		evcnt_attach_dynamic(alpha_shared_intr_evcnt(
+		    jensenio_eisa_intr, i), EVCNT_TYPE_INTR,
+		    NULL, "eisa", cp);
 	}
 
 	/*
@@ -186,20 +161,14 @@ jensenio_intr_init(struct jensenio_config *jcp)
 	ic->ic_intr_disestablish = jensenio_eisa_intr_disestablish;
 	ic->ic_intr_alloc = jensenio_eisa_intr_alloc;
 	ic->ic_intr_evcnt = jensenio_eisa_intr_evcnt;
-
-	set_iointr(jensenio_iointr);
 }
 
 int
 jensenio_eisa_intr_map(void *v, u_int eirq, eisa_intr_handle_t *ihp)
 {
 
-	if (JENSEN_IRQ_IS_EISA(eirq) == 0) {
-		printf("jensenio_eisa_intr_map: bad EISA IRQ %d\n",
-		    eirq);
-		*ihp = -1;
-		return (1);
-	}
+	if (*ihp >= JENSEN_MAX_IRQ)
+		panic("jensenio_eisa_intr_map: bogus IRQ %d\n", *ihp);
 
 	if (jensenio_intr_deftype[eirq] == IST_UNUSABLE) {
 		printf("jensenio_eisa_intr_map: unusable irq %d\n",
@@ -220,11 +189,7 @@ jensenio_eisa_intr_string(void *v, int eirq)
 	if (eirq >= JENSEN_MAX_IRQ)
 		panic("jensenio_eisa_intr_string: bogus IRQ %d\n", eirq);
 
-	if (JENSEN_IRQ_IS_EISA(eirq) == 0)
-		sprintf(irqstr, "vector 0x%03x",
-		    irq_to_vector[eirq - JENSEN_VECT_IRQ_BASE]);
-	else
-		sprintf(irqstr, "eisa irq %d", eirq);
+	sprintf(irqstr, "eisa irq %d", eirq);
 
 	return (irqstr);
 }
@@ -233,7 +198,7 @@ const struct evcnt *
 jensenio_eisa_intr_evcnt(void *v, int eirq)
 {
 
-	if (eirq > 19)
+	if (eirq >= JENSEN_MAX_IRQ)
 		panic("jensenio_eisa_intr_evcnt: bogus IRQ %d\n", eirq);
 
 	return (alpha_shared_intr_evcnt(jensenio_eisa_intr, eirq));
@@ -245,7 +210,7 @@ jensenio_eisa_intr_establish(void *v, int irq, int type, int level,
 {
 	void *cookie;
 
-	if (irq > 19 || type == IST_NONE)
+	if (irq >= JENSEN_MAX_IRQ || type == IST_NONE)
 		panic("jensenio_eisa_intr_establish: bogus irq or type");
 
 	if (jensenio_intr_deftype[irq] == IST_UNUSABLE) {
@@ -257,11 +222,9 @@ jensenio_eisa_intr_establish(void *v, int irq, int type, int level,
 	cookie = alpha_shared_intr_establish(jensenio_eisa_intr, irq,
 	    type, level, fn, arg, "eisa irq");
 
-	if (JENSEN_IRQ_IS_EISA(irq) == 0)
-		return (cookie);
-
 	if (cookie != NULL &&
-	    alpha_shared_intr_isactive(jensenio_eisa_intr, irq)) {
+	    alpha_shared_intr_firstactive(jensenio_eisa_intr, irq)) {
+		scb_set(0x800 + SCB_IDXTOVEC(irq), jensenio_iointr, NULL);
 		jensenio_setlevel(irq,
 		    alpha_shared_intr_get_sharetype(jensenio_eisa_intr,
 						    irq) == IST_LEVEL);
@@ -283,15 +246,11 @@ jensenio_eisa_intr_disestablish(void *v, void *cookie)
 	alpha_shared_intr_disestablish(jensenio_eisa_intr, cookie,
 	    "eisa irq");
 
-	if (JENSEN_IRQ_IS_EISA(irq) == 0) {
-		splx(s);
-		return;
-	}
-
 	if (alpha_shared_intr_isactive(jensenio_eisa_intr, irq) == 0) {
 		jensenio_enable_intr(irq, 0);
 		alpha_shared_intr_set_dfltsharetype(jensenio_eisa_intr,
 		    irq, jensenio_intr_deftype[irq]);
+		scb_free(0x800 + SCB_IDXTOVEC(irq));
 	}
 
 	splx(s);
@@ -309,29 +268,13 @@ void
 jensenio_iointr(void *framep, u_long vec)
 {
 	int irq;
-	int need_eoi = 0;
 
-	switch (vec) {
-	case 0x900: irq = 16; break;		/* com0 */
-	case 0x920: irq = 17; break;		/* com1 */
-	case 0x980: irq = 18; break;		/* keyboard */
-	case 0x990: irq = 19; break;		/* mouse */
-	default:
-		if (vec >= 0x800) {
-			if (vec >= 0x800 + (JENSEN_VECT_IRQ_BASE << 4))
-				panic("jensenio_iointr: vec 0x%lx out of "
-				    "range\n", vec);
-			irq = (vec - 0x800) >> 4;
-			need_eoi = 1;
-		} else
-			panic("jensenio_iointr: wierd vec 0x%lx\n", vec);
-	}
+	irq = SCB_VECTOIDX(vec - 0x800);
 
 	if (!alpha_shared_intr_dispatch(jensenio_eisa_intr, irq))
 		alpha_shared_intr_stray(jensenio_eisa_intr, irq, "eisa irq");
 
-	if (need_eoi)
-		jensenio_specific_eoi(irq);
+	jensenio_specific_eoi(irq);
 }
 
 void

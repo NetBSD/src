@@ -1,4 +1,4 @@
-/* $NetBSD: pci_kn20aa.c,v 1.41 2000/12/28 22:59:07 sommerfeld Exp $ */
+/* $NetBSD: pci_kn20aa.c,v 1.42 2001/07/27 00:25:20 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_kn20aa.c,v 1.41 2000/12/28 22:59:07 sommerfeld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_kn20aa.c,v 1.42 2001/07/27 00:25:20 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -71,7 +71,7 @@ void	dec_kn20aa_intr_disestablish __P((void *, void *));
 
 struct alpha_shared_intr *kn20aa_pci_intr;
 
-void	kn20aa_iointr __P((void *framep, unsigned long vec));
+void	kn20aa_iointr __P((void *arg, unsigned long vec));
 void	kn20aa_enable_intr __P((int irq));
 void	kn20aa_disable_intr __P((int irq));
 
@@ -112,8 +112,6 @@ pci_kn20aa_pickintr(ccp)
 	sio_intr_setup(pc, iot);
 	kn20aa_enable_intr(KN20AA_PCEB_IRQ);
 #endif
-
-	set_iointr(kn20aa_iointr);
 }
 
 int     
@@ -233,8 +231,10 @@ dec_kn20aa_intr_establish(ccv, ih, level, func, arg)
 	    level, func, arg, "kn20aa irq");
 
 	if (cookie != NULL &&
-	    alpha_shared_intr_isactive(kn20aa_pci_intr, ih))
+	    alpha_shared_intr_firstactive(kn20aa_pci_intr, ih)) {
+		scb_set(0x900 + SCB_IDXTOVEC(ih), kn20aa_iointr, NULL);
 		kn20aa_enable_intr(ih);
+	}
 	return (cookie);
 }
 
@@ -257,38 +257,27 @@ dec_kn20aa_intr_disestablish(ccv, cookie)
 		kn20aa_disable_intr(irq);
 		alpha_shared_intr_set_dfltsharetype(kn20aa_pci_intr, irq,
 		    IST_NONE);
+		scb_free(0x900 + SCB_IDXTOVEC(irq));
 	}
  
 	splx(s);
 }
 
 void
-kn20aa_iointr(framep, vec)
-	void *framep;
+kn20aa_iointr(arg, vec)
+	void *arg;
 	unsigned long vec;
 {
 	int irq;
 
-	if (vec >= 0x900) {
-		if (vec >= 0x900 + (KN20AA_MAX_IRQ << 4))
-			panic("kn20aa_iointr: vec 0x%lx out of range\n", vec);
-		irq = (vec - 0x900) >> 4;
+	irq = SCB_VECTOIDX(vec - 0x900);
 
-		if (!alpha_shared_intr_dispatch(kn20aa_pci_intr, irq)) {
-			alpha_shared_intr_stray(kn20aa_pci_intr, irq,
-			    "kn20aa irq");
-			if (ALPHA_SHARED_INTR_DISABLE(kn20aa_pci_intr, irq))
-				kn20aa_disable_intr(irq);
-		}
-		return;
+	if (!alpha_shared_intr_dispatch(kn20aa_pci_intr, irq)) {
+		alpha_shared_intr_stray(kn20aa_pci_intr, irq,
+		    "kn20aa irq");
+		if (ALPHA_SHARED_INTR_DISABLE(kn20aa_pci_intr, irq))
+			kn20aa_disable_intr(irq);
 	}
-#if NSIO > 0 || NPCEB > 0
-	if (vec >= 0x800) {
-		sio_iointr(framep, vec);
-		return;
-	} 
-#endif
-	panic("kn20aa_iointr: weird vec 0x%lx\n", vec);
 }
 
 void

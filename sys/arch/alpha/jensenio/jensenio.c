@@ -1,4 +1,4 @@
-/* $NetBSD: jensenio.c,v 1.2 2000/08/14 02:14:24 thorpej Exp $ */
+/* $NetBSD: jensenio.c,v 1.3 2001/07/27 00:25:19 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: jensenio.c,v 1.2 2000/08/14 02:14:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jensenio.c,v 1.3 2001/07/27 00:25:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,9 +76,9 @@ const struct jensenio_dev {
 	bus_addr_t jd_ioaddr;		/* I/O space address */
 	int jd_irq[2];			/* Jensen IRQs */
 } jensenio_devs[] = {
-	{ "pckbc",	IO_KBD,		{ 18, 19 } }, /* 0x980, 0x990 */
-	{ "com",	IO_COM1,	{ 16, -1 } }, /* 0x900 */
-	{ "com",	IO_COM2,	{ 17, -1 } }, /* 0x920 */
+	{ "pckbc",	IO_KBD,		{ 0x980, 0x990 } },
+	{ "com",	IO_COM1,	{ 0x900, -1 } },
+	{ "com",	IO_COM2,	{ 0x920, -1 } },
 	{ "lpt",	IO_LPT3,	{ 1, -1 } },
 	{ "mcclock",	0x170,		{ -1, -1 } },
 	{ NULL,		0,		{ -1, -1 } },

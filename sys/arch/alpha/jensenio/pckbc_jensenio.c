@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc_jensenio.c,v 1.2 2001/07/12 23:25:40 thorpej Exp $ */
+/* $NetBSD: pckbc_jensenio.c,v 1.3 2001/07/27 00:25:19 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pckbc_jensenio.c,v 1.2 2001/07/12 23:25:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_jensenio.c,v 1.3 2001/07/27 00:25:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,13 +62,18 @@ __KERNEL_RCSID(0, "$NetBSD: pckbc_jensenio.c,v 1.2 2001/07/12 23:25:40 thorpej E
 
 #include <alpha/jensenio/jenseniovar.h>
 
+struct pckbc_jensenio_intrcookie {
+	struct pckbc_softc *ic_sc;
+	struct evcnt ic_ev;
+	u_long ic_vector;
+	char ic_vecstr[8];
+};
+
 struct pckbc_jensenio_softc {
 	struct	pckbc_softc sc_pckbc;	/* real "pckbc" softc */
 
 	/* Jensen-specific goo. */
-	void	*sc_ih[PCKBC_NSLOTS];	/* interrupt handlers */
-	int	sc_irq[PCKBC_NSLOTS];	/* Sable IRQs to use */
-	eisa_chipset_tag_t sc_ec;	/* EISA chipset for registering intrs */
+	struct pckbc_jensenio_intrcookie sc_ic[PCKBC_NSLOTS];
 };
 
 int	pckbc_jensenio_match(struct device *, struct cfdata *, void *);
@@ -80,6 +85,7 @@ struct cfattach pckbc_jensenio_ca = {
 };
 
 void	pckbc_jensenio_intr_establish(struct pckbc_softc *, pckbc_slot_t);
+void	pckbc_jensenio_intr(void *, u_long);
 
 int
 pckbc_jensenio_match(struct device *parent, struct cfdata *match, void *aux)
@@ -102,13 +108,11 @@ pckbc_jensenio_attach(struct device *parent, struct device *self, void *aux)
 	struct pckbc_internal *t;
 	bus_space_handle_t ioh_d, ioh_c;
 
-	jsc->sc_ec = ja->ja_ec;
-
 	/*
 	 * Set up IRQs.
 	 */
-	jsc->sc_irq[PCKBC_KBD_SLOT] = ja->ja_irq[0];
-	jsc->sc_irq[PCKBC_AUX_SLOT] = ja->ja_irq[1];
+	jsc->sc_ic[PCKBC_KBD_SLOT].ic_vector = ja->ja_irq[0];
+	jsc->sc_ic[PCKBC_AUX_SLOT].ic_vector = ja->ja_irq[1];
 
 	sc->intr_establish = pckbc_jensenio_intr_establish;
 
@@ -145,19 +149,25 @@ void
 pckbc_jensenio_intr_establish(struct pckbc_softc *sc, pckbc_slot_t slot)
 {
 	struct pckbc_jensenio_softc *jsc = (void *) sc;
-	const char *intrstr;
 
-	intrstr = eisa_intr_string(jsc->sc_ec, jsc->sc_irq[slot]);
-	jsc->sc_ih[slot] = eisa_intr_establish(jsc->sc_ec, jsc->sc_irq[slot],
-	    IST_EDGE, IPL_TTY, pckbcintr, sc);
-	if (jsc->sc_ih[slot] == NULL) {
-		printf("%s: unable to establish interrupt for %s slot",
-		    sc->sc_dv.dv_xname, pckbc_slot_names[slot]);
-		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
-		return;
-	}
-	printf("%s: %s slot interrupting at %s\n", sc->sc_dv.dv_xname,
-	    pckbc_slot_names[slot], intrstr);
+	jsc->sc_ic[slot].ic_sc = sc;
+
+	scb_set(jsc->sc_ic[slot].ic_vector, pckbc_jensenio_intr,
+	    &jsc->sc_ic[slot]);
+	printf("%s: %s slot interrupting at vector 0x%lx\n", sc->sc_dv.dv_xname,
+	    pckbc_slot_names[slot], jsc->sc_ic[slot].ic_vector);
+
+	sprintf(jsc->sc_ic[slot].ic_vecstr, "0x%lx",
+	    jsc->sc_ic[slot].ic_vector);
+	evcnt_attach_dynamic(&jsc->sc_ic[slot].ic_ev, EVCNT_TYPE_INTR,
+	    NULL, "vector", jsc->sc_ic[slot].ic_vecstr);
+}
+
+void
+pckbc_jensenio_intr(void *arg, u_long vec)
+{
+	struct pckbc_jensenio_intrcookie *ic = arg;
+
+	ic->ic_ev.ev_count++;
+	(void) pckbcintr(ic->ic_sc);
 }

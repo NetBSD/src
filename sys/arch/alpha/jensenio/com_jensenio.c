@@ -1,4 +1,4 @@
-/* $NetBSD: com_jensenio.c,v 1.1 2000/07/12 20:36:08 thorpej Exp $ */
+/* $NetBSD: com_jensenio.c,v 1.2 2001/07/27 00:25:19 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: com_jensenio.c,v 1.1 2000/07/12 20:36:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_jensenio.c,v 1.2 2001/07/27 00:25:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,7 +71,8 @@ struct com_jensenio_softc {
 	struct	com_softc sc_com;	/* real "com" softc */
 
 	/* Jensen-specific goo. */
-	void	*sc_ih;			/* interrupt handler */
+	char	sc_vecstr[8];
+	struct evcnt sc_ev_intr;
 };
 
 int	com_jensenio_match(struct device *, struct cfdata *, void *);
@@ -82,6 +83,8 @@ struct cfattach com_jensenio_ca = {
 	sizeof(struct com_jensenio_softc), com_jensenio_match,
 	    com_jensenio_attach
 };
+
+void	com_jensenio_intr(void *, u_long);
 
 int
 com_jensenio_match(struct device *parent, struct cfdata *match, void *aux)
@@ -101,7 +104,6 @@ com_jensenio_attach(struct device *parent, struct device *self, void *aux)
 	struct com_jensenio_softc *jsc = (void *)self;
 	struct com_softc *sc = &jsc->sc_com;
 	struct jensenio_attach_args *ja = aux;
-	const char *intrstr;
 
 	sc->sc_iot = ja->ja_iot;
 	sc->sc_iobase = ja->ja_ioaddr;
@@ -117,18 +119,13 @@ com_jensenio_attach(struct device *parent, struct device *self, void *aux)
 
 	com_attach_subr(sc);
 
-	intrstr = eisa_intr_string(ja->ja_ec, ja->ja_irq[0]);
-	jsc->sc_ih = eisa_intr_establish(ja->ja_ec, ja->ja_irq[0],
-	    IST_EDGE, IPL_SERIAL, comintr, sc);
-	if (jsc->sc_ih == NULL) {
-		printf("%s: unable to establish interrupt",
-		    sc->sc_dev.dv_xname);
-		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
-		return;
-	}
-	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
+	scb_set(ja->ja_irq[0], com_jensenio_intr, sc);
+	printf("%s: interrupting at vector 0x%x\n",
+	    sc->sc_dev.dv_xname, ja->ja_irq[0]);
+
+	sprintf(jsc->sc_vecstr, "0x%x", ja->ja_irq[0]);
+	evcnt_attach_dynamic(&jsc->sc_ev_intr, EVCNT_TYPE_INTR,
+	    NULL, "vector", jsc->sc_vecstr);
 
 	/*
 	 * Shutdown hook for buggy BIOSs that don't recognize the UART
@@ -136,6 +133,15 @@ com_jensenio_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	if (shutdownhook_establish(com_jensenio_cleanup, sc) == NULL)
 		panic("com_jensenio_attach: could not establish shutdown hook");
+}
+
+void
+com_jensenio_intr(void *arg, u_long vec)
+{
+	struct com_jensenio_softc *jsc = arg;
+
+	jsc->sc_ev_intr.ev_count++;
+	(void) comintr(&jsc->sc_com);
 }
 
 void
