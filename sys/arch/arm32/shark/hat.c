@@ -1,4 +1,4 @@
-/*	$NetBSD: hat.c,v 1.3 1998/05/01 21:18:40 cgd Exp $	*/
+/*	$NetBSD: hat.c,v 1.4 1998/07/08 05:01:17 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -55,7 +55,6 @@
 #include <dev/isa/isavar.h>
 
 #include <arm32/isa/timerreg.h>
-#include <arm32/isa/isadmavar.h>
 #include <arm32/shark/fiq.h>
 #include <arm32/shark/sequoia.h>
 
@@ -96,7 +95,7 @@ int hatClkOff(void)
 	fiqhandler.fh_r13 = 0;
 
 	fiq_setregs(&fiqhandler);
-	isa_dmathaw();
+	isa_dmathaw(&isa_chipset_tag);		/* XXX */
 
 	return 0;
 }
@@ -112,7 +111,7 @@ int hatClkOn(int count, void (*hatFn)(int), int arg,
 
 	hatWedgeFn = wedgeFn;
 
-	isa_dmafreeze();
+	isa_dmafreeze(&isa_chipset_tag);	/* XXX */
 
 	fiq_getregs(&fiqhandler);
 
