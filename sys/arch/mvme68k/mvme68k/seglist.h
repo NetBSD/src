@@ -1,4 +1,4 @@
-/*	$NetBSD: seglist.h,v 1.2 1998/02/21 19:03:27 scw Exp $	*/
+/*	$NetBSD: seglist.h,v 1.3 1998/03/18 07:18:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 The Steve Woodford
@@ -41,15 +41,11 @@
  *
  * NOTE: If you change this, you'll need to update locore.s ...
  */
-struct phys_seg_list_t {
+typedef struct {
 	vm_offset_t	ps_start;	/* Start of segment */
 	vm_offset_t	ps_end;		/* End of segment */
 	int		ps_startpage;	/* Page number of first page */
-};
+} phys_seg_list_t;
 
-/* Space for onboard RAM, and one contiguous offboard segment */
-#define	MAX_PHYS_SEGS	VM_PHYSSEG_MAX
-
-/* Instantiated in pmap.c */
-extern struct phys_seg_list_t phys_seg_list[MAX_PHYS_SEGS];
-
+/* Instantiated in machdep.c */
+extern phys_seg_list_t phys_seg_list[];
