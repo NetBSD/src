@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.45 1997/03/17 03:24:26 thorpej Exp $	*/
+/*	$NetBSD: if_le.c,v 1.46 1997/03/23 22:54:27 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
@@ -391,6 +391,7 @@ leattach(parent, self, aux)
 		if (dmachild) {
 			lesc->sc_dma = (struct dma_softc *)parent;
 			lesc->sc_dma->sc_le = lesc;
+			DMA_RESET(lesc->sc_dma);
 			lesc->sc_dma->sc_regs->en_bar = laddr & 0xff000000;
 		}
 #endif
