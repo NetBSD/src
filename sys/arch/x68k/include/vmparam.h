@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.6 1998/08/22 14:38:38 minoura Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.7 1998/09/03 14:13:18 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -108,7 +108,7 @@
  * External IO space map size.
  */
 #ifndef EIOMAPSIZE
-#define EIOMAPSIZE	btoc(0xe0000000-0xc0000000)	/* 32mb */
+#define EIOMAPSIZE	0
 #endif
 
 /*
