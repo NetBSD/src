@@ -1,7 +1,7 @@
-/* $NetBSD: fault.c,v 1.12 1996/10/16 19:32:13 ws Exp $ */
+/*	$NetBSD: fault.c,v 1.13 1997/02/04 07:12:31 mark Exp $	*/
 
 /*
- * Copyright (c) 1994-1996 Mark Brinicombe.
+ * Copyright (c) 1994-1997 Mark Brinicombe.
  * Copyright (c) 1994 Brini.
  * All rights reserved.
  *
@@ -76,6 +76,7 @@ static int onfault_count = 0;
 
 int pmap_modified_emulation __P((pmap_t, vm_offset_t));
 int pmap_handled_emulation __P((pmap_t, vm_offset_t));
+pt_entry_t *pmap_pte __P((pmap_t pmap, vm_offset_t va));
 
 u_int disassemble __P((u_int));
 int fetchuserword __P((u_int address, u_int *location));
@@ -129,38 +130,6 @@ data_abort_handler(frame)
 	u_quad_t sticks = 0;
 	int saved_lr = 0;
 
-#ifndef CPU_SA110    
-	/*
-	 * OK you did not see this :-) This is worse than your worst nightmare
-	 * This bug was found when implementing LDR/STR late abort fixes
-	 * Don't know why I did not spot it before.
-	 * I really need to rethink the trapframe structure ...
-	 */
-
-	if ((frame->tf_spsr & PSR_MODE) == PSR_SVC32_MODE) {
-
-	/* Ok an abort in SVC mode */
-
-	/* CHEAT CHEAT CHEAT - SHUT YOUR EYES NOW ! */
-
-	/*
-	 * Copy the SVC r14 into the usr r14 - The usr r14 is garbage as
-	 * the fault happened in svc mode but we need it in the usr slot
-	 * so we can treat the registers as an array of ints during fixing.
-	 * NOTE: This PC is in the position but writeback is not allowed
-	 * on r15.
-	 */
-		saved_lr = frame->tf_usr_lr;
-		frame->tf_usr_lr = frame->tf_svc_lr;
-
-	/*
-	 * Note the trapframe does not have the SVC r13 so a fault from an
-	 * instruction with writeback to r13 in SVC mode is not allowed.
-	 * This should not happen as the kstack is always valid.
-	 */
-	}
-#endif	/* !CPU_SA110 */
-
 	/*
 	 * Enable IRQ's and FIQ's (disabled by CPU on abort) if trapframe
 	 * shows they were enabled.
@@ -194,258 +163,9 @@ data_abort_handler(frame)
 		printf("Instruction @V%08x = %08x\n",
 		    fault_pc, fault_instruction);
 	}
-
-	/* Decode the fault instruction and fix the registers as needed */
-
-#ifndef CPU_SA110
-	/* Was is a swap instruction ? */
-
-	if ((fault_instruction & 0x0fb00ff0) == 0x01000090) {
-#ifdef DEBUG_FAULT_CORRECTION
-		if (pmap_debug_level >= 0) {
-			printf("SWP\n");
-			disassemble(fault_pc);
-		}
-#endif	/* DEBUG_FAULT_CORRECTION */
-	} else if ((fault_instruction & 0x0c000000) == 0x04000000) {
-
-	/* Was is a ldr/str instruction */
-
-#ifdef CPU_LATE_ABORT
-
-		/* This is for late abort only */
-
-		int base;
-		int offset;
-		int *registers = &frame->tf_r0;
-#endif	/* CPU_LATE_ABORT */
-
-#ifdef DEBUG_FAULT_CORRECTION
-		if (pmap_debug_level >= 0) {
-/*			printf("LDR/STR\n");*/
-			disassemble(fault_pc);
-		}
-#endif	/* DEBUG_FAULT_CORRECTION */
-		
-#ifdef CPU_LATE_ABORT
-
-/* This is for late abort only */
-
-	if ((fault_instruction & (1 << 24)) == 0
-	    || (fault_instruction & (1 << 21)) != 0) {
-		base = (fault_instruction >> 16) & 0x0f;
-		if (base == 13 && (frame->tf_spsr & PSR_MODE) == PSR_SVC32_MODE) {
-			disassemble(fault_pc);
-			panic("Abort handler cannot fix this :-(\n");
-		}
-		if (base == 15) {
-			disassemble(fault_pc);
-			panic("Abort handler cannot fix this :-(\n");
-		}
-#ifdef DEBUG_FAULT_CORRECTION
-		if (pmap_debug_level >=0)
-			printf("late abt fix: r%d=%08x ", base, registers[base]);
-#endif	/* DEBUG_FAULT_CORRECTION */
-		if ((fault_instruction & (1 << 25)) == 0) {
-			/* Immediate offset - easy */                  
-			offset = fault_instruction & 0xfff;
-			if ((fault_instruction & (1 << 23)))
-				offset = -offset;
-			registers[base] += offset;
-#ifdef DEBUG_FAULT_CORRECTION
-			if (pmap_debug_level >=0)
-				printf("imm=%08x ", offset);
-#endif	/* DEBUG_FAULT_CORRECTION */
-		} else {
-			int shift;
-
-			offset = fault_instruction & 0x0f;
-			if (offset == base) {
-				disassemble(fault_pc);
-				panic("Abort handler cannot fix this :-(\n");
-			}
-                
-/* Register offset - hard we have to cope with shifts ! */
-			offset = registers[offset];
-
-			if ((fault_instruction & (1 << 4)) == 0)
-				shift = (fault_instruction >> 7) & 0x1f;
-			else {
-				if ((fault_instruction & (1 << 7)) != 0) {
-					disassemble(fault_pc);
-					panic("Abort handler cannot fix this :-(\n");
-				}
-				shift = ((fault_instruction >> 8) & 0xf);
-				if (base == shift) {
-					disassemble(fault_pc);
-					panic("Abort handler cannot fix this :-(\n");
-				}
-#ifdef DEBUG_FAULT_CORRECTION
-				if (pmap_debug_level >=0)
-					printf("shift reg=%d ", shift);
-#endif	/* DEBUG_FAULT_CORRECTION */
-				shift = registers[shift];
-			}
-#ifdef DEBUG_FAULT_CORRECTION
-			if (pmap_debug_level >=0)
-				printf("shift=%08x ", shift);
-#endif	/* DEBUG_FAULT_CORRECTION */
-			switch (((fault_instruction >> 5) & 0x3)) {
-			case 0 : /* Logical left */
-				offset = (int)(((u_int)offset) << shift);
-				break;
-			case 1 : /* Logical Right */
-				if (shift == 0) shift = 32;
-				offset = (int)(((u_int)offset) >> shift);
-				break;
-			case 2 : /* Arithmetic Right */
-				if (shift == 0) shift = 32;
-				offset = (int)(((int)offset) >> shift);
-				break;
-			case 3 : /* Rotate right */
-				disassemble(fault_pc);
-				panic("Abort handler cannot fix this yet :-(\n");
-				break;
-			}
-
-#ifdef DEBUG_FAULT_CORRECTION
-			if (pmap_debug_level >=0)
-				printf("abt: fixed LDR/STR with register offset\n");
-#endif	/* DEBUG_FAULT_CORRECTION */               
-			if ((fault_instruction & (1 << 23)))
-				offset = -offset;
-#ifdef DEBUG_FAULT_CORRECTION
-			if (pmap_debug_level >=0)
-				printf("offset=%08x ", offset);
-#endif	/* DEBUG_FAULT_CORRECTION */
-			registers[base] += offset;
-		}
-#ifdef DEBUG_FAULT_CORRECTION
-		if (pmap_debug_level >=0)
-			printf("r%d=%08x\n", base, registers[base]);
-#endif	/* DEBUG_FAULT_CORRECTION */
-	}
-#endif	/* CPU_LATE_ABORT */
-	} else if ((fault_instruction & 0x0e000000) == 0x08000000) {
-		int base;
-		int loop;
-		int count;
-		int *registers = &frame->tf_r0;
-        
-#ifdef DEBUG_FAULT_CORRECTION
-		if (pmap_debug_level >= 0) {
-			printf("LDM/STM\n");
-			disassemble(fault_pc);
-		}
-#endif	/* DEBUG_FAULT_CORRECTION */
-		if (fault_instruction & (1 << 21)) {
-#ifdef DEBUG_FAULT_CORRECTION
-			if (pmap_debug_level >= 0)
-				printf("This instruction must be corrected\n");
-#endif	/* DEBUG_FAULT_CORRECTION */
-			base = (fault_instruction >> 16) & 0x0f;
-			if (base == 15) {
-				disassemble(fault_pc);
-				panic("Abort handler cannot fix this :-(\n");
-			}
-			/* Count registers transferred */
-			count = 0;
-			for (loop = 0; loop < 16; ++loop) {
-				if (fault_instruction & (1<<loop))
-					++count;
-			}
-#ifdef DEBUG_FAULT_CORRECTION
-			if (pmap_debug_level >= 0) {
-				printf("%d registers used\n", count);
-				printf("Corrected r%d by %d bytes ", base, count * 4);
-			}
-#endif	/* DEBUG_FAULT_CORRECTION */
-			if (fault_instruction & (1 << 23)) {
-#ifdef DEBUG_FAULT_CORRECTION
-				if (pmap_debug_level >= 0)
-					printf("down\n");
-#endif	/* DEBUG_FAULT_CORRECTION */
-				registers[base] -= count * 4;
-			} else {
-#ifdef DEBUG_FAULT_CORRECTION
-				if (pmap_debug_level >= 0)
-					printf("up\n");
-#endif	/* DEBUG_FAULT_CORRECTION */
-				registers[base] += count * 4;
-			}
-		}
-	} else if ((fault_instruction & 0x0e000000) == 0x0c000000) {
-		int base;
-		int offset;
-		int *registers = &frame->tf_r0;
-	
-/* REGISTER CORRECTION IS REQUIRED FOR THESE INSTRUCTIONS */
-
-#ifdef DEBUG_FAULT_CORRECTION
-		if (pmap_debug_level >= 0) {
-			printf("LDC/STC\n");
-			disassemble(fault_pc);
-		}
-#endif	/* DEBUG_FAULT_CORRECTION */
-
-/* Only need to fix registers if write back is turned on */
-
-		if ((fault_instruction & (1 << 21)) != 0) {
-			base = (fault_instruction >> 16) & 0x0f;
-			if (base == 13 && (frame->tf_spsr & PSR_MODE) == PSR_SVC32_MODE) {
-				disassemble(fault_pc);
-				panic("Abort handler cannot fix this :-(\n");
-			}
-			if (base == 15) {
-				disassemble(fault_pc);
-				panic("Abort handler cannot fix this :-(\n");
-			}
-
-			offset = (fault_instruction & 0xff) << 2;
-			if (pmap_debug_level >= 0)
-				printf("r%d=%08x\n", base, registers[base]);
-			if ((fault_instruction & (1 << 23)) != 0)
-				offset = -offset;
-			registers[base] += offset;
-			if (pmap_debug_level >= 0)
-				printf("r%d=%08x\n", base, registers[base]);
-		}
-	} else if ((fault_instruction & 0x0e000000) == 0x0c000000) {
-		disassemble(fault_pc);
-		panic("How did this happen ...\nWe have faulted on a non data transfer instruction");
-	}
-
-	/*
-	 * OK you did not see this :-) This is worse than your worst nightmare
-	 * This bug was found when implementing LDR/STR late abort fixes
-	 * Don't know why I did not spot it before.
-	 * I really need to rethink the trapframe structure ...
-	 */
-
-	if ((frame->tf_spsr & PSR_MODE) == PSR_SVC32_MODE) {
-
-		/* Ok an abort in SVC mode */
-
-		/* CHEAT CHEAT CHEAT - SHUT YOUR EYES NOW ! */
-
-	/*
-	 * Copy the SVC r14 into the usr r14 - The usr r14 is garbage as
-	 * the fault happened in svc mode but we need it in the usr slot
-	 * so we can treat the registers as an array of ints during fixing.
-	 * NOTE: This PC is in the position but writeback is not allowed
-	 * on r15.
-	 */
-
-		frame->tf_svc_lr = frame->tf_usr_lr;
-		frame->tf_usr_lr = saved_lr;
-
-	/*
-	 * Note the trapframe does not have the SVC r13 so a fault from an
-	 * instruction with writeback to r13 in SVC mode is not allowed.
-	 * This should not happen as the kstack is always valid.
-	 */
-	}
-#endif	/* !CPU_SA110 */
+               
+	if (cpu_dataabt_fixup(frame))
+		panic("fixup failed\n");
 
 	(void)splx(s);
 
@@ -1000,6 +720,8 @@ out:
  * Otherwise fault the page in and try again.
  */
 
+extern int kernel_debug;
+
 void
 prefetch_abort_handler(frame)
 	trapframe_t *frame;
@@ -1011,6 +733,7 @@ prefetch_abort_handler(frame)
 	u_int s;
 	int fault_code;
 	u_quad_t sticks;
+	pt_entry_t *pte;
 
 	/* Debug code */
 
@@ -1040,6 +763,11 @@ prefetch_abort_handler(frame)
  
 	cnt.v_trap++;
 
+#ifdef notyet
+	if (cpu_prefetchabt_fixup(frame))
+		panic("fixup failed\n");
+#endif
+
 	/* Get the current proc structure or proc0 if there is none */
 
 	if ((p = curproc) == 0) {
@@ -1048,7 +776,7 @@ prefetch_abort_handler(frame)
 	}
 
 	if (pmap_debug_level >= 0)
-		printf("prefetch fault in process %08x\n", (u_int)p);
+		printf("prefetch fault in process %08x %s\n", (u_int)p, p->p_comm);
 
 	/*
 	 * can't use curpcb, as it might be NULL; and we have p in a
@@ -1099,7 +827,7 @@ prefetch_abort_handler(frame)
 	fault_pc = frame->tf_pc;
 
 	if (pmap_debug_level >= 0)
-		printf("Prefetch abort: PC = %08x\n", fault_pc);
+		printf("prefetch_abort: PC = %08x\n", fault_pc);
 
 	/* Ok validate the address, can only execute in USER space */
 
@@ -1130,9 +858,16 @@ prefetch_abort_handler(frame)
 
 		if (pmap_debug_level >= 0) {
 			s = spltty();
-			printf("Instruction @V%08x = %08x\n", fault_pc, fault_instruction);
+			printf("Instruction @V%08x = %08x\n", fault_pc,
+			    fault_instruction);
 			disassemble(fault_pc);
-			printf("return addr=%08x\n", frame->tf_pc);
+			printf("return addr=%08x", frame->tf_pc);
+			pte = pmap_pte(p->p_vmspace->vm_map.pmap,
+			    (vm_offset_t)fault_pc);
+			if (pte)
+				printf(" pte=%08x *pte=%08x\n", pte, *pte);
+			else
+				printf("\n");
 
 			(void)splx(s);
 		}

@@ -1,7 +1,7 @@
-/* $NetBSD: vm_machdep.c,v 1.12 1996/11/23 04:09:01 mark Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.13 1997/02/04 07:12:36 mark Exp $	*/
 
 /*
- * Copyright (c) 1994-1996 Mark Brinicombe.
+ * Copyright (c) 1994-1997 Mark Brinicombe.
  * Copyright (c) 1994 Brini.
  * All rights reserved.
  *
@@ -212,10 +212,8 @@ cpu_fork(p1, p2)
 
 	*((int *)(p2->p_vmspace->vm_pmap.pm_vptpt + 0)) = 0;
 
-#ifdef CPU_SA110
-	cache_clean();
-	tlb_flush();
-#endif	/* CPU_SA110 */
+	cpu_cache_purgeID();
+	cpu_tlb_flushID();
 
 /* Wire down a page to cover the page table zero page and the start of the user are in */
 
@@ -420,14 +418,14 @@ pagemove(from, to, size)
 	 * pages we are moving.
 	 */
 
-	cache_clean();	/* XXX - SA Only ? */
+	cpu_cache_purgeID();	/* XXX can we limit the purge ? */
 
 	while (size > 0) {
 		*tpte++ = *fpte;
 		*fpte++ = 0;
 		size -= NBPG;
 	}
-	tlb_flush();
+	cpu_tlb_flushID();
 }
 
 extern vm_map_t phys_map;
@@ -485,14 +483,14 @@ vmapbuf(bp, len)
 	 * pages we are replacing
 	 */
 
-	cache_clean();	/* XXX - SA Only ? */
+	cpu_cache_purgeID();	/* XXX Can we limit the purge ? */
 
 	do {
 		*fpte = (*fpte) & ~(PT_C | PT_B);
 		*tpte++ = *fpte++;
 		len -= PAGE_SIZE;
 	} while (len > 0);
-	tlb_flush();
+	cpu_tlb_flushID();
 }
 
 /*
@@ -519,7 +517,7 @@ vunmapbuf(bp, len)
 	 * pages we had mapped.
 	 */
 
-	cache_clean();	/* XXX - SA Only ? */
+	cpu_cache_purgeID();	/* Can we limit the purge ? */
 
 	addr = trunc_page(bp->b_data);
 	off = (vm_offset_t)bp->b_data - addr;
@@ -528,7 +526,7 @@ vunmapbuf(bp, len)
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = 0;
 
-	tlb_flush();
+	cpu_tlb_flushID();
 }
 
 /*

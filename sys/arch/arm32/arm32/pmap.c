@@ -1,7 +1,7 @@
-/* $NetBSD: pmap.c,v 1.10 1996/10/17 02:55:29 mark Exp $ */
+/*	$NetBSD: pmap.c,v 1.11 1997/02/04 07:12:34 mark Exp $	*/
 
 /*
- * Copyright (c) 1994-1996 Mark Brinicombe.
+ * Copyright (c) 1994-1997 Mark Brinicombe.
  * Copyright (c) 1994 Brini.
  * All rights reserved.
  *
@@ -41,6 +41,17 @@
  * Machine dependant vm stuff
  *
  * Created      : 20/09/94
+ */
+
+/*
+ * XXX XXX XXX
+ *
+ * There are one or two ultra gross hacks in the file. This fix some
+ * nightmare problems with double mappings.
+ * This file is being rewritten from the ground up and these problems
+ * will disappear then. In the mean this this GROSS hack can be used.
+ * Due to the serious performance hit with the SA110 and this problem
+ * a temporary fix is needed prior to the complete pmap rewrite.
  */
 
 /*
@@ -348,6 +359,8 @@ pmap_enter_pv(pmap, va, pind, flags)
  * this mapping should be deleted during switch_exit() but at the moment it
  * is not so a duplicate mapping is possible. For the moment we just updated
  * flags and exit ... This should work as it is a special case.
+ *
+ * XXX - I think this problem has been fixed now - mark
  */
 				npv->pv_va = va;
 				npv->pv_pmap = pmap;
@@ -802,10 +815,9 @@ pmap_allocpagedir(pmap)
 			    L2_PTE_NC_NB(pd + 0x2000, AP_KRW);
 			*((pt_entry_t *)(pmap->pm_vptpt + 0xf5c)) =
 			    L2_PTE_NC_NB(pd + 0x3000, AP_KRW);
-#ifdef CPU_SA110
+
 			/* XXX - the pmap is not in use thus should not need cleaning */
-			cache_clean();
-#endif	/* CPU_SA110 */
+			cpu_cache_purgeID();
 
 			pmap->pm_count = 1;
 			simple_lock_init(&pmap->pm_lock);
@@ -1436,9 +1448,7 @@ pmap_remove_all(pa)
 		return;
 	}
 
-#ifdef CPU_SA110
-	cache_clean();
-#endif	/* CPU_SA110 */
+	cpu_cache_purgeID();
 
 	s = splimp();
 	pv = ph = &pv_table[pind];
@@ -1552,9 +1562,7 @@ pmap_protect(pmap, sva, eva, prot)
 	if (prot & VM_PROT_WRITE)
 		return;
 
-#ifdef CPU_SA110
-	cache_clean();
-#endif	/* CPU_SA110 */
+	cpu_cache_purgeID();
 
 	sva &= PG_FRAME;
 	eva &= PG_FRAME;
@@ -1616,6 +1624,134 @@ next:
 
 	if (flush)
 		tlb_flush();
+}
+
+
+int
+pmap_nightmare(pmap, pind, va, prot)
+	pmap_t pmap;
+	int pind;
+	vm_offset_t va;
+	vm_prot_t prot;
+{
+	struct pv_entry *pv, *npv;
+	int entries = 0;
+	int writeable = 0;
+	int cacheable = 0;
+
+	/* We may need to inhibit the cache on all the mappings */
+
+	pv = &pv_table[pind];
+
+	if (pv->pv_pmap == NULL)
+		panic("pmap_enter: pv_entry has been lost\n");
+
+	/*
+	 * There is at least one other VA mapping this page.
+	 */
+	for (npv = pv; npv; npv = npv->pv_next) {
+		/* Count mappings in the same pmap */
+		if (pmap == npv->pv_pmap) {
+			++entries;
+			/* Writeable mappings */
+			if (npv->pv_flags & PT_Wr)
+				++writeable;
+		}
+	}
+	if (entries > 1) {
+#ifdef PORTMASTER
+		printf("pmap_nightmare: e=%d w=%d p=%d c=%d pind=%x va=%x [", entries, writeable, (prot & VM_PROT_WRITE), cacheable, pind, (u_int)va);
+#endif
+		for (npv = pv; npv; npv = npv->pv_next) {
+			/* Count mappings in the same pmap */
+			if (pmap == npv->pv_pmap) {
+				printf("va=%x ", (u_int)npv->pv_va);
+			}
+		}
+		printf("]\n");
+#if 0
+		if (writeable || (prot & VM_PROT_WRITE))) {
+			for (npv = pv; npv; npv = npv->pv_next) {
+				/* Revoke cacheability */
+				if (pmap == npv->pv_pmap) {
+					pte = pmap_pte(pmap, npv->pv_va);
+					*pte = (*pte) & ~(PT_C | PT_B);
+				}
+			}
+		}
+#endif
+	} else {
+		if ((prot & VM_PROT_WRITE) == 0)
+			cacheable = PT_C;
+#ifdef PORTMASTER
+		if (cacheable == 0)
+			printf("pmap_nightmare: w=%d p=%d va=%x c=%d\n", writeable, (prot & VM_PROT_WRITE), (u_int)va, cacheable);
+#endif
+	}
+
+	return(cacheable);
+}
+
+
+int
+pmap_nightmare1(pmap, pind, va, prot, cacheable)
+	pmap_t pmap;
+	int pind;
+	vm_offset_t va;
+	vm_prot_t prot;
+	int cacheable;
+{
+	struct pv_entry *pv, *npv;
+	int entries = 0;
+	int writeable = 0;
+
+	/* We may need to inhibit the cache on all the mappings */
+
+	pv = &pv_table[pind];
+
+	if (pv->pv_pmap == NULL)
+		panic("pmap_enter: pv_entry has been lost\n");
+
+	/*
+	 * There is at least one other VA mapping this page.
+	 */
+	for (npv = pv; npv; npv = npv->pv_next) {
+		/* Count mappings in the same pmap */
+		if (pmap == npv->pv_pmap) {
+			++entries;
+			/* Writeable mappings */
+			if (npv->pv_flags & PT_Wr)
+				++writeable;
+		}
+	}
+	if (entries > 1) {
+#ifdef PORTMASTER
+		printf("pmap_nightmare1: e=%d w=%d p=%d c=%d pind=%x va=%x [", entries, writeable, (prot & VM_PROT_WRITE), cacheable, pind, (u_int)va);
+#endif
+		for (npv = pv; npv; npv = npv->pv_next) {
+			/* Count mappings in the same pmap */
+			if (pmap == npv->pv_pmap) {
+				printf("va=%x ", (u_int)npv->pv_va);
+			}
+		}
+		printf("]\n");
+#if 0
+		if (writeable || (prot & VM_PROT_WRITE))) {
+			for (npv = pv; npv; npv = npv->pv_next) {
+				/* Revoke cacheability */
+				if (pmap == npv->pv_pmap) {
+					pte = pmap_pte(pmap, npv->pv_va);
+					*pte = (*pte) & ~(PT_C | PT_B);
+				}
+			}
+		}
+#endif
+	} else {
+/*		cacheable = PT_C;*/
+/*		printf("pmap_nightmare1: w=%d p=%d va=%x c=%d\n", writeable, (prot & VM_PROT_WRITE), (u_int)va, cacheable);*/
+	}
+
+	return(cacheable);
 }
 
 
@@ -1714,6 +1850,9 @@ pmap_enter(pmap, va, pa, prot, wired)
 				--pmap->pm_stats.wired_count;
 			else if (!flags && wired)
 				++pmap->pm_stats.wired_count;
+
+ 			cacheable = pmap_nightmare1(pmap, pind, va, prot, cacheable);
+
 		} else {
 /* We are replacing the page with a new one. */
 
@@ -1748,6 +1887,8 @@ pmap_enter(pmap, va, pa, prot, wired)
 			if ((pind = pmap_page_index(pa)) != -1) {
 				if (pmap_enter_pv(pmap, va, pind, 0))
  					cacheable = PT_C;
+ 				else
+ 					cacheable = pmap_nightmare(pmap, pind, va, prot);
  			} else {
  /*
   * Assumption: if it is not part of our managed memory
@@ -1778,6 +1919,8 @@ pmap_enter(pmap, va, pa, prot, wired)
 		if ((pind = pmap_page_index(pa)) != -1) {
 			if (pmap_enter_pv(pmap, va, pind, 0)) 
 				cacheable = PT_C;
+			else
+				cacheable = pmap_nightmare(pmap, pind, va, prot);
 		} else {
  /*
   * Assumption: if it is not part of our managed memory
@@ -2322,10 +2465,8 @@ pmap_changebit(pa, setbits, maskbits)
 	s = splimp();
 	pv = &pv_table[pind];
 
-#ifdef CPU_SA110
 	/* XXX do we need this flush as we are only modifying pte permissions not addresses */
-	cache_clean();
-#endif	/* CPU_SA110 */
+	cpu_cache_purgeID();
 
 /*
  * Clear saved attributes (modify, reference)
