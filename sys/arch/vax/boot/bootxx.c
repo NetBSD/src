@@ -1,4 +1,4 @@
-/* $NetBSD: bootxx.c,v 1.2 1995/04/25 14:14:22 ragge Exp $ */
+/* $NetBSD: bootxx.c,v 1.3 1995/09/16 13:01:06 ragge Exp $ */
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -43,9 +43,17 @@
 
 #include "../mba/mbareg.h"
 #include "../mba/hpreg.h"
+
 #include "../include/pte.h"
 #include "../include/sid.h"
 #include "../include/mtpr.h"
+#include "../include/reg.h"
+
+#define NRSP 0 /* Kludge */
+#define NCMD 0 /* Kludge */
+#include "../uba/ubareg.h"
+#include "../uba/udareg.h"
+#include "../vax/mscp.h"
 
 #include "data.h"
 #include "vaxstand.h"
@@ -53,67 +61,65 @@
 #include <a.out.h>
 
 int             romstrategy(), romopen();
+int	command(int, int);
 
 /*
- * Boot program... arguments passed in r10 and r11 determine whether boot
+ * Boot program... argume passed in r10 and r11 determine whether boot
  * stops to ask for system name and which device boot comes from.
- * 
- * bertram 22-mar-1995: passing arguments in registers removed. also any
- * asm-declaration for fixed registers.
  */
 
 volatile u_int  devtype, bootdev;
 unsigned        opendev, boothowto, bootset;
-
 int             cpu_type, cpunumber;
-
-int 
-is_uVAX()
-{
-	return ((cpunumber == VAX_78032 || cpunumber == VAX_650) ? 1 : 0);
-}
-int 
-is_750()
-{
-	return (cpunumber == VAX_750 ? 1 : 0);
-}
+unsigned *bootregs;
+int is_750 = 0, is_mvax = 0, is_tmscp = 0;
+struct	rpb *rpb;
 
 main()
 {
-	int             io, retry, type, i;
+	int io;
+	char *hej = "/boot";
 
-	initData();
+        cpu_type = mfpr(PR_SID);
+        cpunumber = (mfpr(PR_SID) >> 24) & 0xFF;
 
-#ifdef VERBOSE
-	printf("\ncpunumber: %d, cpu_type: %x\n", cpunumber, cpu_type);
-#endif
-	if (is_uVAX()) {	/* rpb and bootregs[] are */
-		bootdev = rpb->devtyp;	/* initialized in init.c */
-		boothowto = bootregs[5];
-	} else if (is_750()) {	/* code in start.s places bdev */
-		bootdev = bootregs[0];	/* in r0/r10, howto in r5/r11 */
-		boothowto = bootregs[5];	/* so we can use any
-						 * combination */
-	} else {		/* not (yet) neccessary ... */
+        switch (cpunumber) {
+
+        case VAX_78032:
+        case VAX_650:
+        {
+                int	cpu_sie;        /* sid-extension */
+
+                is_mvax = 1;
+                cpu_sie = *((int *) 0x20040004) >> 24;
+                cpu_type |= cpu_sie;
+		rpb = bootregs[11];
+		bootdev = rpb->devtyp;
+
+                break;
+        }
+        case VAX_750:
+                is_750 = 1;
 		bootdev = bootregs[10];
-		boothowto = bootregs[11];
-	}
+
+                break;
+        }
+
 	bootset = getbootdev();
 
-	printf("\nhowto %x, bdev %x, booting...\n", boothowto, bootdev);
-	io = open("boot", 0);
+	printf("\nhowto 0x%x, bdev 0x%x, booting...\n", boothowto, bootdev);
+	io = open(hej, 0);
+
 	if (io >= 0 && io < SOPEN_MAX) {
 		copyunix(io);
 	} else {
 		printf("Boot failed. errno %d (%s)\n", errno, strerror(errno));
 	}
-	asm("halt");
 }
 
 /* ARGSUSED */
 copyunix(aio)
 {
-	register int    esym;	/* must be r9 */
 	struct exec     x;
 	register int    io = aio, i;
 	char           *addr;
@@ -153,41 +159,47 @@ shread:
 
 getbootdev()
 {
-	int             i, major, adaptor, controller, unit, partition;
+	int	i, major, adaptor, controller, unit, partition;
 
-	if (is_uVAX()) {
-		adaptor = 0;	/* Q22 is the only Unibus adaptor */
-		controller = rpb->slave;	/* e.g. DUA ===> 0, DUB ===>
-						 * 1 */
-		unit = rpb->unit;	/* e.g. DUB2 ==> 2, DUA0 ==> 0 */
-	} else {
-		unit = bootregs[3];	/* this is for 11/750 */
-		controller = 0;
+
+	switch (cpunumber) {
+	case VAX_78032:
+	case VAX_650:
+		adaptor = 0;
+		controller = ((rpb->csrphy & 017777) == 0xDC)?1:0;
+		unit = rpb->unit;			/* DUC, DUD? */
+		
+		break;
+
+	case VAX_750:
+		controller = 0;	/* XXX Actually massbuss can be on 3 ctlr's */
+		unit = bootregs[3];
+		break;
 	}
+
 	partition = 0;
 
 	switch (bootdev) {
-	case 0:		/* massbuss boot */
+	case 0:			/* massbuss boot */
 		major = 0;	/* hp / ...  */
 		adaptor = (bootregs[1] & 0x6000) >> 17;
 		break;
 
 	case 17:		/* UDA50 boot */
 		major = 9;	/* ra / mscp  */
-		if (!is_uVAX())
+		if (is_750)
 			adaptor = (bootregs[1] & 0x40000 ? 0 : 1);
 		break;
 
 	case 18:		/* TK50 boot */
-		major = 8;	/* tm / tmscp  */
-		if (is_uVAX())
-			break;
+		major = 15;	/* tms / tmscp  */
+		is_tmscp = 1;	/* use tape spec in mscp routines */
+		break;
 
 	default:
 		printf("Unsupported boot device %d, trying anyway.\n", bootdev);
 		boothowto |= (RB_SINGLE | RB_ASKNAME);
 	}
-
 	return MAKEBOOTDEV(major, adaptor, controller, unit, partition);
 }
 
@@ -202,70 +214,157 @@ struct fs_ops   file_system[] = {
 };
 
 int             nfsys = (sizeof(file_system) / sizeof(struct fs_ops));
+
 struct disklabel lp;
+int part_off = 0;		/* offset into partition holding /boot */
+char io_buf[MAXBSIZE];
+volatile struct uda {
+	struct  uda1ca uda_ca;           /* communications area */
+	struct  mscp uda_rsp;     /* response packets */
+	struct  mscp uda_cmd;     /* command packets */
+} uda;
+volatile struct udadevice *csr;
 
 devopen(f, fname, file)
 	struct open_file *f;
-	char           *fname;
+	const char    *fname;
 	char          **file;
 {
 	char           *msg;
+	int		i, err, off;
+	char		line[64];
+
 	f->f_dev = &devsw[0];
 	*file = fname;
 
-	if (is_uVAX())
-		initCtrl();
+	/*
+	 * On uVAX we need to init [T]MSCP ctlr to be able to use it.
+	 */
+	if (is_mvax) {
+		switch (bootdev) {
+		case 17:	/* MSCP */
+		case 18:	/* TMSCP */
+			csr = (struct udadevice *)rpb->csrphy;
 
-	msg = getdisklabel((void *) RELOC + LABELOFFSET, &lp);
-	if (msg)
-		printf("getdisklabel: %s\n", msg);
+			csr->udaip = 0; /* Start init */
+			while((csr->udasa & UDA_STEP1) == 0);
+			csr->udasa = 0x8000;
+			while((csr->udasa & UDA_STEP2) == 0);
+			csr->udasa = (short)(((u_int)&uda)&0xffff) + 8;
+			while((csr->udasa & UDA_STEP3) == 0);
+			csr->udasa = 0x10;
+			while((csr->udasa & UDA_STEP4) == 0);
+			csr->udasa = 0x0001;
+
+			uda.uda_ca.ca_rspdsc =
+			    (int) &uda.uda_rsp.mscp_cmdref;
+			uda.uda_ca.ca_cmddsc =
+			    (int) &uda.uda_cmd.mscp_cmdref;
+			if (is_tmscp)
+				uda.uda_cmd.mscp_vcid = 1;
+			command(M_OP_SETCTLRC, 0);
+			uda.uda_cmd.mscp_unit = rpb->unit;
+			command(M_OP_ONLINE, 0);
+		}
+	}
+
+	/* 
+	 * the disklabel _shall_ be at address LABELOFFSET + RELOC in
+	 * phys memory now, no need at all to reread it again.
+	 * Actually disklabel is only needed when using hp disks,
+	 * but it doesn't hurt to always get it.
+	 */
+	if (!is_tmscp) {
+		msg = getdisklabel(LABELOFFSET + RELOC, &lp);
+		if (msg) {
+			printf("getdisklabel: %s\n", msg);
+		}
+	}
 	return 0;
 }
 
-extern int      bulkread630(int lbn, int size, void *buf, int *regs);
+command(cmd, arg)
+{
+	volatile int hej;
 
-extern int      read750(int block, int *regs);
-extern int      read630(int block, int *regs);
+	uda.uda_cmd.mscp_opcode = cmd;
+	uda.uda_cmd.mscp_modifier = arg;
 
+	uda.uda_cmd.mscp_msglen = MSCP_MSGLEN;
+	uda.uda_rsp.mscp_msglen = MSCP_MSGLEN;
+	uda.uda_ca.ca_rspdsc |= MSCP_OWN|MSCP_INT;
+	uda.uda_ca.ca_cmddsc |= MSCP_OWN|MSCP_INT;
+	hej = csr->udaip;
+	while (uda.uda_ca.ca_rspdsc < 0);
+
+}
+
+int curblock = 0;
 
 romstrategy(sc, func, dblk, size, buf, rsize)
-	void           *sc;
-	int             func;
-	daddr_t         dblk;
-	char           *buf;
-	int             size, *rsize;
+	void    *sc;
+	int     func;
+	daddr_t dblk;
+	char    *buf;
+	int     size, *rsize;
 {
-	int             nsize = size, block = dblk;
-	int             (*readblk) (int, int *);
+	int i;
+	int	block = dblk;
+	int     nsize = size;
 
-	if (is_uVAX() && (bootdev == 17 || bootdev == 18)) {
-		int             res;
-		*rsize = nsize;
-		res = bulkread630(block, size, buf, bootregs);
-		return (res & 0x01 ? 0 : -1);
-	}
-	if (is_750() && bootdev == 0) {
-		*rsize = nsize;
-		return hpread(block, size, buf);
-	}
-	if (is_uVAX())
-		readblk = read630;
-	else if (is_750())
-		readblk = read750;
-	else {
-		printf("Unuspported VAX-type %d.\n", cpunumber);
-		return (1);
+	switch (cpunumber) {
+
+	case VAX_650:
+	case VAX_78032:
+		switch (bootdev) {
+
+		case 17: /* MSCP */
+			uda.uda_cmd.mscp_seq.seq_lbn = dblk;
+			uda.uda_cmd.mscp_seq.seq_bytecount = size;
+			uda.uda_cmd.mscp_seq.seq_buffer = buf;
+			uda.uda_cmd.mscp_unit = rpb->unit;
+			command(M_OP_READ, 0);
+			break;
+
+		case 18: /* TMSCP */
+			if (dblk < curblock) {
+				uda.uda_cmd.mscp_seq.seq_bytecount =
+				    curblock - dblk;
+				command(M_OP_POS, 12);
+			} else {
+				uda.uda_cmd.mscp_seq.seq_bytecount =
+				    dblk - curblock;
+				command(M_OP_POS, 4);
+			}
+			curblock = size/512 + dblk;
+			for (i = 0 ; i < size/512 ; i++) {
+				uda.uda_cmd.mscp_seq.seq_lbn = 1;
+				uda.uda_cmd.mscp_seq.seq_bytecount = 512;
+				uda.uda_cmd.mscp_seq.seq_buffer = buf + i * 512;
+				uda.uda_cmd.mscp_unit = rpb->unit;
+				command(M_OP_READ, 0);
+			}
+			break;
+
+		}
+		break;
+
+	case VAX_750:
+		if (bootdev) {
+			while (size > 0) {
+				if ((read750(block, bootregs) & 0x01) == 0)
+					return 1;
+
+				bcopy(0, buf, 512);
+				size -= 512;
+				buf += 512;
+				block++;
+			}
+		} else
+			hpread(block, size, buf);
+		break;
 	}
 
-	while (size > 0) {
-		if (!(readblk(block, bootregs) & 0x01))
-			return (1);	/* low-bit clear indicates error */
-
-		bcopy(0, buf, 512);	/* readblk writes at adress 0x0 */
-		size -= 512;
-		buf += 512;
-		block++;
-	}
 	*rsize = nsize;
 	return 0;
 }
@@ -282,7 +381,6 @@ hpread(block, size, buf)
 
 	for (mapnr = 0, nsize = size; (nsize + NBPG) > 0; nsize -= NBPG)
 		mr->mba_map[mapnr++] = PG_V | pfnum++;
-
 	mr->mba_var = ((u_int) buf & PGOFSET);
 	mr->mba_bc = (~size) + 1;
 	bn = block;
@@ -294,7 +392,8 @@ hpread(block, size, buf)
 	hd->hp_da = (tn << 8) | sn;
 	hd->hp_cs1 = HPCS_READ;
 	while (mr->mba_sr & MBASR_DTBUSY);
-	if (mr->mba_sr & MBACR_ABORT)
+	if (mr->mba_sr & MBACR_ABORT){
 		return 1;
+	}
 	return 0;
 }
