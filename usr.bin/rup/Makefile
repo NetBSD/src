@@ -1,13 +1,13 @@
 #
 # a makefile for /usr/bin/rup
 #
-# $Header: /cvsroot/src/usr.bin/rup/Makefile,v 1.1 1993/06/03 19:32:28 brezak Exp $
+# $Header: /cvsroot/src/usr.bin/rup/Makefile,v 1.2 1993/06/04 14:53:53 brezak Exp $
 #
 
 PROG = rup
 MAN1=	rup.0
 
-DPADD=	${LIBRPCSVC} ${LIBRPC}
-LDADD=	${LDARGS} -lrpcsvc -lrpc
+DPADD=	${LIBRPCSVC}
+LDADD=	-lrpcsvc
 
 .include <bsd.prog.mk>
