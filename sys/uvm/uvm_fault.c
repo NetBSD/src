@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.42 1999/07/11 17:47:12 thorpej Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.43 1999/07/19 19:02:22 cgd Exp $	*/
 
 /*
  *
@@ -725,7 +725,7 @@ ReFault:
 		npages = nback + nforw + 1;
 		centeridx = nback;
 
-		narrow = FALSE;	/* ensure only once per-fault */
+		narrow = TRUE;	/* ensure only once per-fault */
 
 	} else {
 		
