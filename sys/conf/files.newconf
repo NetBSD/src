@@ -34,10 +34,6 @@ pseudo-device sl: ifnet
 pseudo-device tun: ifnet
 pseudo-device bpfilter: ifnet
 
-pseudo-device devpager
-pseudo-device swappager
-pseudo-device vnodepager
-
 # kernel sources
 file ddb/db_access.c		ddb
 file ddb/db_aout.c		ddb
@@ -86,6 +82,7 @@ file kern/kern_time.c
 file kern/kern_xxx.c		
 file kern/spec_vnops.c	
 file kern/subr_acct.c	 	accounting
+file kern/subr_autoconf.c
 file kern/subr_log.c		
 file kern/subr_mcount.c	 	profiling-routine
 file kern/subr_prf.c		
@@ -236,9 +233,9 @@ file ufs/ufs_subr.c
 file ufs/ufs_tables.c	
 file ufs/ufs_vfsops.c	
 file ufs/ufs_vnops.c		
-file vm/device_pager.c	 	devpager needs-count
+file vm/device_pager.c	 	devpager
 file vm/kern_lock.c		
-file vm/swap_pager.c		swappager needs-count
+file vm/swap_pager.c		swappager
 file vm/vm_fault.c		
 file vm/vm_glue.c		
 file vm/vm_init.c		
@@ -253,4 +250,4 @@ file vm/vm_pager.c
 file vm/vm_swap.c		
 file vm/vm_unix.c		
 file vm/vm_user.c		
-file vm/vnode_pager.c	 	vnodepager needs-count
+file vm/vnode_pager.c	 	vnodepager

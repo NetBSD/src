@@ -480,8 +480,6 @@ pmeg_t pmeg_allocate_invalid(pmap, va)
     pmegp->pmeg_reserved  = 0;
     pmegp->pmeg_vpages  = 0;
     enqueue_tail(&pmeg_active_queue, pmegp);
-    printf("pmeg_allocate_invalid: pmeg %d allocated to pmap %x\n",
-	   pmegp->pmeg_index, pmap);
     return pmegp;
 }
 
@@ -635,54 +633,39 @@ unsigned char pv_link(pmap, pa, va, flags)
     head = pv = pa_to_pvp(pa);
     PMAP_LOCK();
 
-    printf("entering pv_link, pv == %x\n", pv);
-    printf("entering pv_link, pv_head_table == %x\n", pv_head_table);
-    printf("entering pv_link, pa == %x pgnum %x\n", pa, PA_PGNUM(pa));    
     if (pv->pv_pmap == NULL) {	/* not currently "managed" */
  	pv->pv_va = va;
 	pv->pv_pmap = pmap,
 	pv->pv_next = NULL;
 	pv->pv_flags = flags;
-	printf("pv_link: before force_cache_flags\n");
 	force_cache_flags(pa, flags);
-	printf("pv_link: not currently managed\n");
 	return flags & PV_NC;
     }
-    printf("entering pv_link loop\n");
     for (npv = pv ; npv != NULL; last= npv, npv = npv->pv_next ) {
 	if ((npv->pv_pmap != pmap) || (npv->pv_va != va)) continue;
-	printf("pv_link: found match\n");
 	if (flags == npv->pv_flags) /* no change */
 	    return get_cache_flags(pa);
 	npv->pv_flags = flags;
 	goto recompute;
     }
-    printf("entering pv_link new entry\n");
 /*zalloc(pv_zone);*/
     pv = malloc(sizeof(struct pv_entry), M_VMPVENT, M_WAITOK);
     pv->pv_va = va;
     pv->pv_pmap = pmap,
     pv->pv_next = NULL;
     pv->pv_flags = flags;
-    printf("entering pv_link before last\n");
     last->pv_next = pv;
-    printf("entering pv_link after last\n");
 
  recompute:
     if (get_cache_flags(pa) & PG_NC) return flags & PV_NC; /* already NC */
     if (flags & PV_NC) {	/* being NCed, wasn't before */
 	force_cache_flags(pa, flags);
-	printf("pv_link: change pte 1\n");
 	pv_change_pte(head, MAKE_PV_REAL(PV_NC), 0);
-	printf("pv_link: change pte 1 end\n");
 	return flags & PV_NC;
     }
-    printf("pv_link: cache compute\n");
     nflags = pv_compute_cache(head);
     force_cache_flags(pa, nflags);
-    printf("pv_link: change pte 2 \n");
     pv_change_pte(head, MAKE_PV_REAL(nflags), 0); /*  */
-    printf("pv_link: change pte 2 after\n");
     return nflags & PV_NC;
 }
 void pv_change_pte(pv_list, set_bits, clear_bits)
@@ -798,10 +781,6 @@ void pv_init()
 	mon_panic("pmap: kmem_alloc() of pv cache table failed");
     bzero(pv_cache_table, sizeof(char)* PA_PGNUM(avail_end));
     pv_initialized++;
-    printf("PV: head: %x\n modified: %x\n cache: %x\n",
-	   pv_head_table,
-	   pv_modified_table,
-	   pv_cache_table);
 }
 
 void sun3_protection_init()
@@ -1028,11 +1007,10 @@ void pmap_remove_range_mmu(pmap, sva, eva)
     pmeg_t pmegp;
     vm_offset_t va,pte;
     
-    printf("entering pmap_remove_range_mmu: %x -> %x\n", sva, eva);
     saved_context = get_context();
     if (pmap != kernel_pmap)
 	set_context(pmap->pm_context->context_num);
-    printf("pmap_remove_range_mmu: past stupid context thing\n");
+
     sme = get_segmap(sva);
     if (sme == SEGINV) {
 	if (pmap == kernel_pmap) return;
@@ -1044,28 +1022,19 @@ void pmap_remove_range_mmu(pmap, sva, eva)
 	pmegp = pmeg_p(sme);
     /* have pmeg, will travel */
     if (!pmegp->pmeg_vpages) goto outta_here; /* no valid pages anyway */
-    printf("pmap_remove_range_mmu: starting removal");
+
     va = sva;
     while (va < eva) {
 	pte = get_pte(va);
 	if (pte & PG_VALID) {
-	    printf("before save_modified_bits(): %x\n", pv_modified_table);
-	    printf("before save_modified_bits(): PG_PGNUM(pte)== %x\n",
-		   PG_PGNUM(pte));
-	    printf("before save_modified_bits(): pv_init %d\n",
-		   pv_initialized);
 	    if (pv_initialized)
 		save_modified_bits(pte);
-	    printf("after save_modified_bits()\n");
 	    pv_unlink(pmap, PG_PA(pte), va);
-	    printf("after after pv_unlink()\n");
 	    pmegp->pmeg_vpages--;
-	    printf("after pmegp->pmeg_vpages--\n");
 	    set_pte(va, PG_INVAL);
 	}
 	va+= NBPG;
     }
-    printf("pmap_remove_range_mmu: past removal");
     if (pmegp->pmeg_vpages <= 0) {
 	if (is_pmeg_wired(pmegp))
 	    printf("pmap: removing wired pmeg\n");
@@ -1079,7 +1048,6 @@ void pmap_remove_range_mmu(pmap, sva, eva)
 	else
 	    set_segmap(sva, SEGINV);
     }
-    printf("pmap_remove_range_mmu: past cleanup");
 outta_here:
     set_context(saved_context);
 }
@@ -1219,8 +1187,6 @@ void pmap_enter_kernel(va, pa, prot, wired, pte_proto, mem_type)
      */
     if (va < VM_MIN_KERNEL_ADDRESS)
 	printf("pmap: kernel trying to allocate virtual space below itself\n");
-    if ((va+NBPG) >= VM_MAX_KERNEL_ADDRESS)
-	printf("pmap: kernel trying to allocate virtual space above itself\n");
     s = splpmap();
     sme = get_segmap(va);
     /* XXXX -- lots of non-defined routines, need to see if pmap has a
@@ -1270,8 +1236,6 @@ add_pte:	/* can be destructive */
 	else
 	    set_pte(va, pte_proto);
     }
-    printf("pmap_enter_kernel: va: %x pa: %x pte_proto: %x\n", va, pa,
-	   pte_proto);
     pmegp->pmeg_vpages++;	/* assumes pmap_enter can never insert
 				 a non-valid page*/
     splx(s);

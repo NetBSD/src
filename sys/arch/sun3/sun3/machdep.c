@@ -134,14 +134,14 @@ void cpu_startup()
 	size = (vm_size_t)(v - firstaddr);
 	firstaddr = (caddr_t) kmem_alloc(kernel_map, round_page(size));
 	if (firstaddr == 0)
-	    panic("startup: no room for tables");
+	    panic("cpu_startup: no room for tables");
 	goto again;
     }
     /*
      * End of second pass, addresses have been assigned
      */
     if ((vm_size_t)(v - firstaddr) != size)
-	panic("startup: table size inconsistency");
+	panic("cpu_startup: table size inconsistency");
     /* buffer_map stuff but not used */
     /*
      * Allocate a submap for exec arguments.  This map effectively
@@ -152,10 +152,11 @@ void cpu_startup()
      *	NOT CURRENTLY USED -- cgd
      */
     /*
-     * Allocate a submap for physio
+     * Allocate a map for physio and DVMA
      */
-    phys_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr,
-			     VM_PHYS_SIZE, TRUE);
+    phys_map = vm_map_create(kernel_pmap, DVMA_SPACE_START, DVMA_SPACE_END, 0);
+    if (!phys_map)
+	panic("cpu_startup: unable to create physmap");
     
     /*
      * Finally, allocate mbuf pool.  Since mclrefcnt is an off-size
@@ -183,7 +184,7 @@ void cpu_startup()
      * Configure the system.
      */
     printf("about to call configure\n");
-/*    configure();*/
+    configure();
 
     sun3_stop();
     cold = 0;
@@ -838,66 +839,5 @@ hexstr(val, len)
 		val >>= 4;
 	}
 	return(nbuf);
-}
-
-netintr()
-{
-#ifdef INET
-	if (netisr & (1 << NETISR_IP)) {
-		netisr &= ~(1 << NETISR_IP);
-		ipintr();
-	}
-#endif
-#ifdef NS
-	if (netisr & (1 << NETISR_NS)) {
-		netisr &= ~(1 << NETISR_NS);
-		nsintr();
-	}
-#endif
-#ifdef ISO
-	if (netisr & (1 << NETISR_ISO)) {
-		netisr &= ~(1 << NETISR_ISO);
-		clnlintr();
-	}
-#endif
-}
-
-intrhand(sr)
-	int sr;
-{
-#if 0
-    register struct isr *isr;
-    register int found = 0;
-    register int ipl;
-    extern struct isr isrqueue[];
-
-    ipl = (sr >> 8) & 7;
-    switch (ipl) {
-
-    case 1:
-    case 2:
-    case 3:
-    case 4:
-    case 5:
-    case 6:
-    case 7:
-	ipl = ISRIPL(ipl);
-	isr = isrqueue[ipl].isr_forw;
-	for (; isr != &isrqueue[ipl]; isr = isr->isr_forw) {
-	    if ((isr->isr_intr)(isr->isr_arg)) {
-		found++;
-		break;
-	    }
-	}
-	if (found == 0)
-	    printf("stray interrupt, sr 0x%x\n", sr);
-	break;
-	
-    case 0:
-    default:
-	printf("intrhand: unexpected sr 0x%x\n", sr);
-	break;
-    }
-#endif
 }
 

@@ -1,9 +1,4 @@
-	move idprom.h into include and out of dev
-	start thinking about autoconfig
-	add idprom to SOLIPSIST config file
-	figure out spl layout
 	figure out stack issues
-	fix sun3_vm_init()->pmap_bootstraping->sys/vm interfacing problems
 	figure out how much of process.s we are going to rewrite because
 		we have a different mmu
 	

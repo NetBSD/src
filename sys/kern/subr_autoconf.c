@@ -15,7 +15,7 @@
  *
  *	%W% (Berkeley) %G%
  *
- * from: $Header: /cvsroot/src/sys/kern/subr_autoconf.c,v 1.2 1993/08/13 22:00:55 glass Exp $ (LBL)
+ * from: $Header: /cvsroot/src/sys/kern/subr_autoconf.c,v 1.3 1993/08/15 23:04:50 glass Exp $ (LBL)
  */
 
 #include "param.h"
@@ -56,8 +56,14 @@ mapply(m, cf)
 
 	if (m->fn != NULL)
 		pri = (*m->fn)(m->parent, cf, m->aux);
-	else
+	else {
+	        if (!cf->cf_driver->cd_match) {
+		    printf("mapply: no match function for '%s' device\n",
+			   cf->cf_driver->cd_name);
+		    panic("mapply: not match function\n");
+		}
 		pri = (*cf->cf_driver->cd_match)(m->parent, cf, m->aux);
+	}
 	if (pri > m->pri) {
 		m->match = cf;
 		m->pri = pri;
@@ -157,7 +163,8 @@ config_found(parent, aux, print)
 		config_attach(parent, cf, aux, print);
 		return (1);
 	}
-	printf(msgs[(*print)(aux, parent->dv_xname)]);
+	if (print)
+	    printf(msgs[(*print)(aux, parent->dv_xname)]);
 	return (0);
 }
 
@@ -230,8 +237,9 @@ config_attach(parent, cf, aux, print)
 		panic("config_attach: device name too long");
 
 	/* get memory for all device vars */
-	dev = (struct device *)malloc(cd->cd_devsize, M_DEVBUF, M_WAITOK);
-					/* XXX cannot wait! */
+	dev = (struct device *)malloc(cd->cd_devsize, M_DEVBUF, M_NOWAIT);
+	if (!dev)
+	    panic("config_attach: memory allocation for device softc failed");
 	bzero(dev, cd->cd_devsize);
 	*nextp = dev;			/* link up */
 	nextp = &dev->dv_next;
@@ -245,7 +253,8 @@ config_attach(parent, cf, aux, print)
 		printf("%s (root)", dev->dv_xname);
 	else {
 		printf("%s at %s", dev->dv_xname, parent->dv_xname);
-		(void) (*print)(aux, (char *)0);
+		if (print)
+		    (void) (*print)(aux, (char *)0);
 	}
 
 	/* put this device in the devices array */
@@ -257,7 +266,9 @@ config_attach(parent, cf, aux, print)
 		void **nsp;
 
 		if (old == 0) {
-			nsp = malloc(MINALLOCSIZE, M_DEVBUF, M_WAITOK);	/*XXX*/
+			nsp = malloc(MINALLOCSIZE, M_DEVBUF, M_NOWAIT);	
+			if (!nsp)
+			    panic("config_attach: expanding dev array");
 			bzero(nsp, MINALLOCSIZE);
 			cd->cd_ndevs = MINALLOCSIZE / sizeof(void *);
 		} else {
@@ -268,7 +279,9 @@ config_attach(parent, cf, aux, print)
 			cd->cd_ndevs = new;
 			oldbytes = old * sizeof(void *);
 			newbytes = new * sizeof(void *);
-			nsp = malloc(newbytes, M_DEVBUF, M_WAITOK);	/*XXX*/
+			nsp = malloc(newbytes, M_DEVBUF, M_NOWAIT);
+			if (!nsp)
+			    panic("config_attach: expanding dev array (2)");
 			bcopy(cd->cd_devs, nsp, oldbytes);
 			bzero(&nsp[old], newbytes - oldbytes);
 			free(cd->cd_devs, M_DEVBUF);

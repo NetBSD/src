@@ -1,6 +1,9 @@
 machine		"sun3"
 
-#mainbus0 at root
+options NEWCONFIG
 
-obio0 at root
-obmem0 at root
+mainbus0 at root
+
+obio0 at mainbus?
+obmem0 at mainbus?
+obctl0 at mainbus?
