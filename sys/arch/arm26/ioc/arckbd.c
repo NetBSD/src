@@ -1,4 +1,4 @@
-/* $NetBSD: arckbd.c,v 1.4 2000/10/14 23:41:05 bjh21 Exp $ */
+/* $NetBSD: arckbd.c,v 1.5 2000/12/23 21:49:14 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -43,12 +43,13 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: arckbd.c,v 1.4 2000/10/14 23:41:05 bjh21 Exp $");
+__RCSID("$NetBSD: arckbd.c,v 1.5 2000/12/23 21:49:14 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/errno.h>
 #include <sys/ioctl.h>
 #include <sys/proc.h>
+#include <sys/reboot.h>	/* For bootverbose */
 #include <sys/syslog.h>
 #include <sys/systm.h>
 
@@ -200,15 +201,16 @@ arckbd_attach(parent, self, aux)
 	bst = sc->sc_bst = ioc->ioc_fast_t;
 	bsh = sc->sc_bsh = ioc->ioc_fast_h; 
 
-	printf("\n");
 	sc->sc_rirq = ioc_irq_establish(sc->sc_dev.dv_parent, IOC_IRQ_SRX,
 					IPL_TTY, arckbd_rint, self);
-	printf("%s: interrupting at %s (rx)", self->dv_xname,
-	       irq_string(sc->sc_rirq));
+	if (bootverbose)
+		printf("\n%s: interrupting at %s (rx)", self->dv_xname,
+		    irq_string(sc->sc_rirq));
 	sc->sc_xirq = ioc_irq_establish(sc->sc_dev.dv_parent, IOC_IRQ_STX,
 					IPL_TTY, arckbd_xint, self);
 	irq_disable(sc->sc_xirq);
-	printf(" and %s (tx)", irq_string(sc->sc_xirq));
+	if (bootverbose)
+		printf(" and %s (tx)", irq_string(sc->sc_xirq));
 
        	/* Initialisation of IOC KART per IOC Data Sheet section 6.2.3. */
 
