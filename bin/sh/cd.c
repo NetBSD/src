@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.15 1996/03/01 01:58:58 jtc Exp $	*/
+/*	$NetBSD: cd.c,v 1.16 1996/06/25 16:40:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)cd.c	8.2 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: cd.c,v 1.15 1996/03/01 01:58:58 jtc Exp $";
+static char rcsid[] = "$NetBSD: cd.c,v 1.16 1996/06/25 16:40:06 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -62,6 +62,7 @@ static char rcsid[] = "$NetBSD: cd.c,v 1.15 1996/03/01 01:58:58 jtc Exp $";
 #include "output.h"
 #include "memalloc.h"
 #include "error.h"
+#include "exec.h"
 #include "redir.h"
 #include "mystring.h"
 #include "show.h"
@@ -84,7 +85,6 @@ cdcmd(argc, argv)
 	char *path;
 	char *p;
 	struct stat statb;
-	char *padvance();
 	int print = 0;
 
 	nextopt(nullstr);
