@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.29 1999/12/15 17:41:48 drochner Exp $	*/
+/*	$NetBSD: main.c,v 1.30 2000/01/04 13:43:38 ad Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.1 (Berkeley) 6/20/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.29 1999/12/15 17:41:48 drochner Exp $");
+__RCSID("$NetBSD: main.c,v 1.30 2000/01/04 13:43:38 ad Exp $");
 #endif
 #endif /* not lint */
 
@@ -69,6 +69,7 @@ __RCSID("$NetBSD: main.c,v 1.29 1999/12/15 17:41:48 drochner Exp $");
 #include <time.h>
 #include <unistd.h>
 #include <util.h>
+#include <limits.h>
 
 #include "gettytab.h"
 #include "pathnames.h"
@@ -190,7 +191,7 @@ main(argc, argv)
 {
 	extern char **environ;
 	char *tname;
-	int repcnt = 0, failopenlogged = 0, uugetty = 0;
+	int repcnt = 0, failopenlogged = 0, uugetty = 0, first_time = 1;
 	struct rlimit limit;
 	struct passwd *pw;
         int rval;
@@ -335,6 +336,23 @@ main(argc, argv)
 		if (CL && *CL)
 			putpad(CL);
 		edithost(HE);
+
+                /* 
+                 * If this is the first time through this, and an
+                 * issue file has been given, then send it. 
+                 */
+                if (first_time && IF) {
+                	char buf[_POSIX2_LINE_MAX];
+                	FILE *fd;
+                        
+                        if ((fd = fopen(IF, "r")) != NULL) {
+                        	while (fgets(buf, sizeof(buf) - 1, fd) != NULL)
+                                	putf(buf);
+				fclose(fd);
+                	}
+                }
+                first_time = 0;
+                    
 		if (IM && *IM)
 			putf(IM);
 		oflush();
@@ -347,11 +365,26 @@ main(argc, argv)
 			signal(SIGALRM, dingdong);
 			alarm(TO);
 		}
-		if ((rval = getname()) == 2) {
+		if (AL) {
+			const char *p = AL;
+			char *q = name;
+
+			while (*p && q < &name[sizeof name - 1]) {
+				if (isupper(*p))
+					upper = 1;
+				else if (islower(*p))
+					lower = 1;
+				else if (isdigit(*p))
+					digit++;
+				*q++ = *p++;
+			}
+		} else if ((rval = getname()) == 2) {
 		        execle(PP, "ppplogin", ttyn, (char *) 0, env);
 		        syslog(LOG_ERR, "%s: %m", PP);
 		        exit(1);
-		} else if (rval) {
+		} 
+		
+		if (rval || AL) {
 			int i;
 
 			oflush();
@@ -386,7 +419,8 @@ main(argc, argv)
 			limit.rlim_max = RLIM_INFINITY;
 			limit.rlim_cur = RLIM_INFINITY;
 			(void)setrlimit(RLIMIT_CPU, &limit);
-			execle(LO, "login", "-p", "--", name, (char *)0, env);
+			execle(LO, "login", AL ? "-fp" : "-p", "--", name, 
+			    (char *)0, env);
 			syslog(LOG_ERR, "%s: %m", LO);
 			exit(1);
 		}
