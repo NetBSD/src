@@ -1,10 +1,10 @@
-# $NetBSD: TCWSCONS,v 1.21 2001/03/05 12:15:38 ad Exp $
+# $NetBSD: TCWSCONS,v 1.22 2001/08/23 01:29:31 nisimura Exp $
 #
 # TURBOchannel Alpha DEC3000
 
 include	"arch/alpha/conf/std.alpha"
 
-#ident 		"TCWSCONS-$Revision: 1.21 $"
+#ident 		"TCWSCONS-$Revision: 1.22 $"
 
 maxusers 32
 
@@ -131,6 +131,8 @@ audio*	at	bba?
 tcds*	at	tc? slot ? offset ?
 asc*	at	tcds? chip ?
 #cfb*	at	tc? slot ? offset ?
+#mfb*	at	tc? slot ? offset ?
+#tfb*	at	tc? slot ? offset ?
 sfb*	at	tc? slot ? offset ?
 #sfbp*	at	tc? slot ? offset ?
 #px*	at	tc? slot ? offset ?
@@ -153,7 +155,10 @@ st*	at	scsibus? target ? lun ?		# SCSI tape drives
 
 # Workstation Console attachments
 #wsdisplay*	at	cfb?
+#wsdisplay*	at	mfb?
+#wsdisplay*	at	tfb?
 wsdisplay*	at	sfb?
+#wsdisplay*	at	sfbp?
 #wsdisplay*	at	px?
 #wsdisplay*	at	pxg?
 wskbd*		at	lkkbd? console ?
