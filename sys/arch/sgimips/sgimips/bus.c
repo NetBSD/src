@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.22 2003/10/07 16:03:09 tsutsui Exp $	*/
+/*	$NetBSD: bus.c,v 1.23 2004/01/12 03:30:51 sekiya Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.22 2003/10/07 16:03:09 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.23 2004/01/12 03:30:51 sekiya Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -176,6 +176,88 @@ bus_space_write_2(t, h, o, v)
 	}
 
 	wbflush();	/* XXX */
+}
+
+u_int32_t
+bus_space_read_4(bus_space_tag_t tag, bus_space_handle_t bsh, bus_size_t o)
+{
+	u_int32_t reg;
+	int s;
+
+	switch (tag) {
+		case SGIMIPS_BUS_SPACE_MACE:
+			s = splhigh();
+			delay(10);
+			reg = (*(volatile u_int32_t *)(bsh + o));
+			delay(10);
+			splx(s);
+			break;
+		default:
+			wbflush();
+			reg = (*(volatile u_int32_t *)(bsh + o));
+			break;
+	}
+	return reg;
+}
+
+void
+bus_space_write_4(bus_space_tag_t tag, bus_space_handle_t bsh, bus_size_t o, u_int32_t v)
+{
+	int s;
+
+	switch (tag) {
+		case SGIMIPS_BUS_SPACE_MACE:
+			s = splhigh();
+			delay(10);
+			*(volatile u_int32_t *)((bsh) + (o)) = (v);
+			delay(10);
+			splx(s);
+			break;
+		default:
+			*(volatile u_int32_t *)((bsh) + (o)) = (v);
+			wbflush(); /* XXX */
+			break;
+	}
+}
+
+u_int64_t
+bus_space_read_8(bus_space_tag_t tag, bus_space_handle_t bsh, bus_size_t o)
+{
+	u_int64_t reg;
+	int s;
+
+	switch (tag) {
+		case SGIMIPS_BUS_SPACE_MACE:
+			s = splhigh();
+			delay(10);
+			reg = mips3_ld( (u_int64_t *)(bsh + o));
+			delay(10);
+			splx(s);
+			break;
+		default:
+			reg = mips3_ld( (u_int64_t *)(bsh + o));
+			break;
+	}
+	return reg;
+}
+
+void
+bus_space_write_8(bus_space_tag_t tag, bus_space_handle_t bsh, bus_size_t o, u_int64_t v)
+{
+	int s;
+
+	switch (tag) {
+		case SGIMIPS_BUS_SPACE_MACE:
+			s = splhigh();
+			delay(10);
+			mips3_sd( (u_int64_t *)(bsh + o), v);
+			delay(10);
+			splx(s);
+			break;
+		default:
+			mips3_sd( (u_int64_t *)(bsh + o), v);
+			break;
+	}
 }
 
 int
