@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.56 2003/08/07 16:27:59 agc Exp $	*/
+/*	$NetBSD: param.h,v 1.57 2003/08/08 20:13:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -76,26 +76,22 @@
 #define	PGOFSET		(NBPG-1)	/* byte offset into page */
 #define	NPTEPG		(NBPG/(sizeof (pt_entry_t)))
 
+/*
+ * Unfortunately the assembler does not understand 0xf00UL, so we
+ * have KERNBASE_LOCORE
+ */
 #ifdef KERNBASE
-#ifndef KERNBASE_LOCORE
-#error you must define KERNBASE_LOCORE if you define KERNBASE.
+#error "You should only re-define KERNBASE_LOCORE"
 #endif
-#ifdef _LOCORE
-#undef KERNBASE
-#define KERNBASE KERNBASE_LOCORE
-#endif /* _LOCORE */
-#endif /* KERNBASE */
 
-#ifndef KERNBASE
-#ifndef _LOCORE
-#define	KERNBASE	0xc0000000UL	/* start of kernel virtual space */
-#else
-#define	KERNBASE	0xc0000000	/* start of kernel virtual space */
-#endif /* _LOCORE */
-#endif /* KERNBASE */
+#ifndef	KERNBASE_LOCORE
+#define	KERNBASE_LOCORE	0xc0000000	/* start of kernel virtual space */
+#endif
 
-#define	KERNTEXTOFF	(KERNBASE + 0x100000) /* start of kernel text */
-#define	BTOPKERNBASE	((u_long)KERNBASE >> PGSHIFT)
+#define	KERNBASE	((u_long)KERNBASE_LOCORE)
+
+#define	KERNTEXTOFF	(KERNBASE_LOCORE + 0x100000) /* start of kernel text */
+#define	BTOPKERNBASE	(KERNBASE >> PGSHIFT)
 
 #define	DEV_BSHIFT	9		/* log2(DEV_BSIZE) */
 #define	DEV_BSIZE	(1 << DEV_BSHIFT)
