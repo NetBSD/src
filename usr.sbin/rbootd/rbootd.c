@@ -1,4 +1,4 @@
-/*	$NetBSD: rbootd.c,v 1.5 1995/10/06 05:12:17 thorpej Exp $	*/
+/*	$NetBSD: rbootd.c,v 1.6 1997/07/28 05:39:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988, 1992 The University of Utah and the Center
@@ -46,15 +46,19 @@
  * Author: Jeff Forys, University of Utah CSS
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
+__COPYRIGHT(
 "@(#) Copyright (c) 1992, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "@(#)rbootd.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$NetBSD: rbootd.c,v 1.5 1995/10/06 05:12:17 thorpej Exp $";
+#if 0
+static char sccsid[] = "@(#)rbootd.c	8.1 (Berkeley) 6/4/93";
+#else
+__RCSID("$NetBSD: rbootd.c,v 1.6 1997/07/28 05:39:20 thorpej Exp $");
+#endif
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -70,6 +74,8 @@ static char rcsid[] = "$NetBSD: rbootd.c,v 1.5 1995/10/06 05:12:17 thorpej Exp $
 #include <syslog.h>
 #include <unistd.h>
 #include "defs.h"
+
+int	main __P((int, char *[]));
 
 extern	char *__progname;	/* from crt0.o */
 
@@ -248,7 +254,7 @@ main(argc, argv)
 
 		if (FD_ISSET(fd, &r)) {
 			RMPCONN rconn;
-			CLIENT *client, *FindClient();
+			CLIENT *client;
 			int doread = 1;
 
 			while (BpfRead(&rconn, doread)) {
