@@ -25,7 +25,10 @@
 #
 # HISTORY
 # $Log: Makefile,v $
-# Revision 1.1  1993/03/21 18:04:42  cgd
+# Revision 1.2  1993/04/28 08:45:51  deraadt
+# Ensure the rmaouthdr shell script is executable before running it!
+#
+# Revision 1.1  1993/03/21  18:08:11  cgd
 # after 0.2.2 "stable" patches applied
 #
 # Revision 2.2	92/04/04  11:33:46  rpd
@@ -72,6 +75,7 @@ boot: boot.sed $(OBJS)
 	$(LD) -N -T 0 -o boot $(OBJS) $(LIBS)
 	cp boot boot.sym
 	@strip boot
+	@chmod a+x ./rmaouthdr
 	@./rmaouthdr boot boot.tmp
 	@mv -f boot.tmp boot
 	@ls -l boot
