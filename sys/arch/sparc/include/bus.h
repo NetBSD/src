@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.6 1998/02/04 05:12:59 thorpej Exp $	*/
+/*	$NetBSD: bus.h,v 1.7 1998/03/21 19:31:27 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -77,6 +77,7 @@
  * Bus address and size types
  */
 typedef	u_long	bus_space_handle_t;
+typedef u_long	bus_type_t;
 typedef u_long	bus_addr_t;
 typedef u_long	bus_size_t;
 
@@ -87,33 +88,61 @@ struct sparc_bus_space_tag {
 	void	*cookie;
 
 	int	(*sparc_bus_map) __P((
-				void *,
+				void *,			/*cookie*/
+				bus_type_t,
 				bus_addr_t,
 				bus_size_t,
-				int,
+				int,			/*flags*/
+				vm_offset_t,		/*preferred vaddr*/
 				bus_space_handle_t *));
 	int	(*sparc_bus_unmap) __P((
-				void *,
+				void *,			/*cookie*/
 				bus_space_handle_t,
 				bus_size_t));
 	int	(*sparc_bus_subregion) __P((
-				void *,
+				void *,			/*cookie*/
 				bus_space_handle_t,
 				bus_size_t,
 				bus_size_t,
 				bus_space_handle_t *));
 
 	void	(*sparc_barrier) __P((void *));
+
+	int	(*sparc_bus_mmap) __P((
+				void *,			/*cookie*/
+				bus_type_t,		/**/
+				bus_addr_t,		/**/
+				int));			/*flags*/
+
+	void	*(*sparc_intr_establish) __P((
+				void *,			/*cookie*/
+				int,			/*level*/
+				int,			/*flags*/
+				int (*) __P((void *)),	/*handler*/
+				void *));		/*handler arg*/
+
 };
 
 typedef struct sparc_bus_space_tag	*bus_space_tag_t;
 
 #define bus_space_map(t, a, s, f, hp)					\
-	(*(t)->sparc_bus_map)((t)->cookie, (a), (s), (f), (hp))
+	(*(t)->sparc_bus_map)((t)->cookie, 0, (a), (s), (f), 0, (hp))
+#define bus_space_map2(t, bt, a, s, f, v, hp)				\
+	(*(t)->sparc_bus_map)((t)->cookie, (bt), (a), (s), (f), (v), (hp))
 #define bus_space_unmap(t, h, s)					\
 	(*(t)->sparc_bus_unmap)((t)->cookie, (h), (s))
 #define bus_space_subregion(t, h, o, s, hp)				\
 	(*(t)->sparc_bus_subregion)((t)->cookie, (h), (o), (s), (hp))
+#define bus_space_mmap(t, bt, a, f)				\
+	(*(t)->sparc_bus_mmap)((t)->cookie, (bt), (a), (f))
+
+/*
+ * The following base function are directly callable for now.
+ */
+int sparc_bus_map __P(( void *, bus_type_t, bus_addr_t, bus_size_t,
+			int, vm_offset_t, bus_space_handle_t *));
+int sparc_bus_mmap __P((void *, bus_type_t, bus_addr_t, int));
+
 
 #if 0
 int	bus_space_alloc __P((bus_space_tag_t t, bus_addr_t rstart,
@@ -124,8 +153,20 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 	    bus_size_t size));
 #endif
 
-#define BUS_SPACE_MAP_CACHEABLE		0x01
-#define BUS_SPACE_MAP_LINEAR		0x02
+#define BUS_SPACE_MAP_CACHEABLE	0x0001
+#define BUS_SPACE_MAP_LINEAR	0x0002
+#define BUS_SPACE_MAP_BUS1	0x0100	/* placeholders for bus functions... */
+#define BUS_SPACE_MAP_BUS2	0x0200
+#define BUS_SPACE_MAP_BUS3	0x0400
+#define BUS_SPACE_MAP_BUS4	0x0800
+
+
+#define bus_intr_establish(t, l, f, h, a)				\
+	(*(t)->sparc_intr_establish)((t)->cookie, (l), (f), (h), (a))
+
+/* flags for intr_establish() */
+#define BUS_INTR_ESTABLISH_FASTTRAP	1
+#define BUS_INTR_ESTABLISH_SOFTINTR	2
 
 
 /*
