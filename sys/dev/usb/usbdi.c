@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.52 1999/11/26 01:40:01 augustss Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.53 1999/11/28 22:49:53 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -151,6 +151,9 @@ usbd_open_pipe(iface, address, flags, pipe)
 	usbd_status err;
 	int i;
 
+	DPRINTFN(3,("usbd_open_pipe: address=0x%x flags=0x%x\n", address, 
+		    flags));
+
 	for (i = 0; i < iface->idesc->bNumEndpoints; i++) {
 		ep = &iface->endpoints[i];
 		if (ep->edesc == NULL)
@@ -185,6 +188,9 @@ usbd_open_pipe_intr(iface, address, flags, pipe, priv, buffer, length, cb)
 	usbd_status err;
 	usbd_xfer_handle xfer;
 	usbd_pipe_handle ipipe;
+
+	DPRINTFN(3,("usbd_open_pipe_intr: address=0x%x flags=0x%x length=%d\n",
+		    address, flags, length));
 
 	err = usbd_open_pipe(iface, address, USBD_EXCLUSIVE_USE, &ipipe);
 	if (err)
@@ -481,6 +487,12 @@ usb_config_descriptor_t *
 usbd_get_config_descriptor(dev)
 	usbd_device_handle dev;
 {
+#ifdef DIAGNOSTIC
+	if (dev == NULL) {
+		printf("usbd_get_config_descriptor: dev == NULL\n");
+		return (NULL);
+	}
+#endif
 	return (dev->cdesc);
 }
 
@@ -488,6 +500,12 @@ usb_interface_descriptor_t *
 usbd_get_interface_descriptor(iface)
 	usbd_interface_handle iface;
 {
+#ifdef DIAGNOSTIC
+	if (iface == NULL) {
+		printf("usbd_get_interface_descriptor: dev == NULL\n");
+		return (NULL);
+	}
+#endif
 	return (iface->idesc);
 }
 
