@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.62 1998/08/15 04:49:48 mycroft Exp $	*/
+/*	$NetBSD: pmap.c,v 1.63 1998/11/20 17:44:39 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -707,8 +707,10 @@ pmap_remove_pv(pmap, va, pv)
 		if (npv) {
 			*pv = *npv;
 			pmap_free_pv(npv);
-		} else
+		} else {
 			pv->pv_pmap = NULL;
+			pv->pv_next = NULL;	/* to be safe */
+		}
 	} else {
 		for (npv = pv->pv_next; npv; pv = npv, npv = npv->pv_next) {
 			if (pmap == npv->pv_pmap && va == npv->pv_va)
@@ -1141,9 +1143,10 @@ reduce wiring count on page table pages as references drop
 		*pte = 0;
 
 		npv = pv->pv_next;
-		if (pv == ph)
+		if (pv == ph) {
 			ph->pv_pmap = NULL;
-		else
+			ph->pv_next = NULL;	/* to be safe */
+		} else
 			pmap_free_pv(pv);
 		pv = npv;
 	}
