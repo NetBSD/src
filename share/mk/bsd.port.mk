@@ -1,7 +1,7 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
 #
-#	$NetBSD: bsd.port.mk,v 1.13.2.5 1997/11/10 08:05:53 hubertf Exp $
+#	$NetBSD: bsd.port.mk,v 1.13.2.6 1997/11/27 08:38:42 mellon Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
@@ -117,6 +117,10 @@ NetBSD_MAINTAINER=	agc@netbsd.org
 # MTREE_FILE	- The name of the mtree file (default: /etc/mtree/BSD.x11.dist
 #				  if USE_IMAKE or USE_X11 is set, /etc/mtree/BSD.local.dist
 #				  otherwise.)
+# PLIST_SRC	    - Which file(s) to use to build ${PLIST}. Either
+#                 ${PKGDIR}/PLIST or ${PKGDIR}/PLIST-mi plus
+#                 ${PKGDIR}/PLIST-md.shared or ${PKGDIR}/PLIST-md.static,
+#                 if not set otherwise.
 #
 # NO_BUILD		- Use a dummy (do-nothing) build target.
 # NO_CONFIGURE	- Use a dummy (do-nothing) configure target.
@@ -419,8 +423,8 @@ MAKE_PROGRAM=		${GMAKE}
 MAKE_PROGRAM=		${MAKE}
 .endif
 .if defined(USE_PERL5)
-BUILD_DEPENDS+=		perl5.00401:${PORTSDIR}/lang/perl5
-RUN_DEPENDS+=		perl5.00401:${PORTSDIR}/lang/perl5
+BUILD_DEPENDS+=		perl5.00404:${PORTSDIR}/lang/perl5
+RUN_DEPENDS+=		perl5.00404:${PORTSDIR}/lang/perl5
 .endif
 
 .if exists(${PORTSDIR}/../Makefile.inc)
@@ -505,12 +509,7 @@ EXTRACT_BEFORE_ARGS?=   -xzf
 # Figure out where the local mtree file is
 .if !defined(MTREE_FILE)
 .if defined(USE_IMAKE) || defined(USE_X11)
-.if (${OPSYS} == "NetBSD")
-# XXX - agc - this is temporary, and will change when NetBSD has an X11 mtree file
-MTREE_FILE=	/etc/mtree/BSD.pkg.dist
-.else
 MTREE_FILE=	/etc/mtree/BSD.x11.dist
-.endif
 .else
 .if (${OPSYS} == "NetBSD")
 MTREE_FILE=	/etc/mtree/BSD.pkg.dist
@@ -1618,7 +1617,7 @@ lib-depends:
 		else \
 			target=${DEPENDS_TARGET}; \
 		fi; \
-		if /sbin/ldconfig -r | ${GREP} -q -e "-l$$lib"; then \
+		if ${LDCONFIG} -r | ${GREP} -q -e "-l$$lib"; then \
 			${ECHO_MSG} "===>  ${PKGNAME} depends on shared library: $$lib - found"; \
 		else \
 			${ECHO_MSG} "===>  ${PKGNAME} depends on shared library: $$lib - not found"; \
@@ -1736,16 +1735,31 @@ readme:
 	@cd ${.CURDIR} && make README.html
 .endif
 
+HTMLIFY=	${SED} -e 's/&/\&amp;/g' -e 's/>/\&gt;/g' -e 's/</\&lt;/g'
+
+.if (${OPSYS} == "NetBSD")
+README_NAME=	${TEMPLATES}/README.pkg
+.else
+README_NAME=	${TEMPLATES}/README.port
+.endif
+
 README.html:
 	@${ECHO_MSG} "===>  Creating README.html for ${PKGNAME}"
-	@${CAT} ${TEMPLATES}/README.port | \
-		${SED} -e 's%%PORT%%'`${ECHO} ${.CURDIR} | ${SED} -e 's.*/\([^/]*/[^/]*\)$$\1'`'g' \
-			-e 's%%PKG%%${PKGNAME}g' \
+	@${MAKE} print-depends-list | ${HTMLIFY} >> $@.tmp1
+	@${MAKE} print-package-depends | ${HTMLIFY} >> $@.tmp2
+	@${ECHO} ${PKGNAME} | ${HTMLIFY} >> $@.tmp3
+	@${CAT} ${README_NAME} | \
+		${SED} -e 's/%%PORT%%/'"`basename ${.CURDIR}`"'/g' \
+			-e '/%%PKG%%/r$@.tmp3' \
+			-e '/%%PKG%%/d' \
 			-e '/%%COMMENT%%/r${PKGDIR}/COMMENT' \
 			-e '/%%COMMENT%%/d' \
-			-e 's%%BUILD_DEPENDS%%'"`${MAKE} print-depends-list`"'' \
-			-e 's%%RUN_DEPENDS%%'"`${MAKE} print-package-depends`"'' \
+			-e '/%%BUILD_DEPENDS%%/r$@.tmp1' \
+			-e '/%%BUILD_DEPENDS%%/d' \
+			-e '/%%RUN_DEPENDS%%/r$@.tmp2' \
+			-e '/%%RUN_DEPENDS%%/d' \
 		>> $@
+	@rm -f $@.tmp1 $@.tmp2 $@.tmp3
 
 .if !target(print-depends-list)
 print-depends-list:
@@ -1825,19 +1839,46 @@ tags:
 #    (we don't regard MANCOMPRESSED as many ports seem to have .gz pages in
 #     PLIST even when they install manpages without compressing them)
 #  - substituting machine architecture (uname -m) for <$ARCH>
-${PLIST}: ${PKGDIR}/PLIST
+.if !defined(PLIST_SRC)
+.if exists(${PKGDIR}/PLIST)
+PLIST_SRC=	${PKGDIR}/PLIST
+.elif exists(${PKGDIR}/PLIST-mi) && \
+      exists(${PKGDIR}/PLIST-md.shared) && \
+      exists(${PKGDIR}/PLIST-md.static)
+PLIST_SRC=	${PKGDIR}/PLIST-mi
+.if ${MACHINE_ARCH} == "powerpc" ||  ${MACHINE_ARCH} == "pmax" ||  ${MACHINE_ARCH} == "alpha"
+# XXX this is mostly for perl; alpha can be removed once perl knows
+#     how to do dynamic loading - hubertf
+PLIST_SRC+=	${PKGDIR}/PLIST-md.static
+.else
+PLIST_SRC+=	${PKGDIR}/PLIST-md.shared
+.endif  # powerpc || pmax || alpha
+.else   # no PLIST at all
+PLIST_SRC=
+.endif  # ${PKGDIR}/PLIST
+.endif  # !PLIST_SRC
+
+${PLIST}: ${PLIST_SRC}
+	@if [ -z "${PLIST_SRC}" ] ; then \
+		${ECHO} "No ${PKGDIR}/PLIST, and no ${PKGDIR}/PLIST-{mi,md.shared,md.static}" ; \
+		${ECHO} "Package must care for making ${PLIST}!" ; \
+	fi
 .if defined(MANZ)
-	@${SED} \
-		-e '/man\/man.*[^g][^z]$$/s/$$/.gz/g' \
-		-e '/man\/cat.*[^g][^z]$$/s/$$/.gz/g' \
-		-e 's/\<\$$ARCH\>/'${ARCH}'/g' \
-		<${PKGDIR}/PLIST >${PLIST}
+	@if [ ! -z "${PLIST_SRC}" ] ; then \
+		${CAT} ${PLIST_SRC} | ${SED} \
+			-e '/man\/man.*[^g][^z]$$/s/$$/.gz/g' \
+			-e '/man\/cat.*[^g][^z]$$/s/$$/.gz/g' \
+			-e 's/\<\$$ARCH\>/'${ARCH}'/g' \
+			>${PLIST} ; \
+	fi
 .else   # !MANZ
-	@${SED} \
-		-e '/man\/man/s/\.gz$$//g' \
-		-e '/man\/cat/s/\.gz$$//g' \
-		-e 's/\<\$$ARCH\>/'${ARCH}'/g' \
-		<${PKGDIR}/PLIST >${PLIST}
+	@if [ ! -z "${PLIST_SRC}" ] ; then \
+		${CAT} ${PLIST_SRC} | ${SED} \
+			-e '/man\/man/s/\.gz$$//g' \
+			-e '/man\/cat/s/\.gz$$//g' \
+			-e 's/\<\$$ARCH\>/'${ARCH}'/g' \
+			>${PLIST} ; \
+	fi
 .endif  # MANZ
 
 
