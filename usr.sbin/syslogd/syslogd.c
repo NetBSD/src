@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.17 1997/10/24 01:41:47 mrg Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.18 1998/05/08 19:03:41 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -657,7 +657,7 @@ fprintlog(f, flags, msg)
 	case F_FORW:
 		dprintf(" %s\n", f->f_un.f_forw.f_hname);
 		l = snprintf(line, sizeof line, "<%d>%.15s %s", f->f_prevpri,
-		    iov[0].iov_base, iov[4].iov_base);
+		    (char *)iov[0].iov_base, (char *)iov[4].iov_base);
 		if (l > MAXLINE)
 			l = MAXLINE;
 		if ((finet >= 0) &&
