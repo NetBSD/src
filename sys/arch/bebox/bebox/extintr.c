@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.8 1998/08/15 03:02:35 mycroft Exp $	*/
+/*	$NetBSD: extintr.c,v 1.9 1998/08/24 01:40:27 sakamoto Exp $	*/
 /*      $OpenBSD: isabus.c,v 1.1 1997/10/11 11:53:00 pefo Exp $ */
 
 /*-
@@ -64,7 +64,7 @@ int fakeintr(arg)
 	return 0;
 }
 
-extern vm_offset_t bebox_mb_reg;
+extern paddr_t bebox_mb_reg;
 
 #define	BEBOX_ISA_INTR		16
 
