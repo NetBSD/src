@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.87 2003/06/14 08:09:48 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.88 2003/06/15 06:05:31 tsutsui Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/arc/conf/std.arc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.87 $"
+#ident		"GENERIC-$Revision: 1.88 $"
 
 maxusers	32		# estimated number of users
 
@@ -222,12 +222,12 @@ isa*		at tyneisabr?
 timer0		at isa? port 0x40 irq 0
 mcclock0 	at isa? port 0x70
 
-pc0		at isa? irq 1			# generic PC console device
-opms0		at isa? irq 12			# PS/2 auxiliary port mouse
+#pc0		at isa? irq 1			# generic PC console device
+#opms0		at isa? irq 12			# PS/2 auxiliary port mouse
 vga0		at isa?
 #options 	VGA_RASTERCONSOLE
 options 	VGA_RESET
-#pckbc0		at isa?				# PC keyboard controller
+pckbc0		at isa?				# PC keyboard controller
 com0		at isa? port 0x3f8 irq 4
 com1		at isa? port 0x2f8 irq 3
 com2		at isa? port 0x3e8 irq 4
