@@ -1,10 +1,10 @@
 #	from: @(#)Makefile	5.8 (Berkeley) 7/28/90
-#	$NetBSD: Makefile,v 1.6 1998/04/09 00:32:40 tv Exp $
+#	$NetBSD: Makefile,v 1.7 1998/11/01 03:51:16 lukem Exp $
 
 .if ${MACHINE} == "sun3" || ${MACHINE} == "sun3x" || ${MACHINE} == "sparc"
 PROG=	eeprom
 
-YFLAGS+=-pgetdate_
+YPREFIX=getdate_
 
 BINGRP=	kmem
 BINMODE=2555
