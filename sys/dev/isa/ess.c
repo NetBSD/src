@@ -1,4 +1,4 @@
-/*	$NetBSD: ess.c,v 1.42 1999/03/18 04:31:36 mycroft Exp $	*/
+/*	$NetBSD: ess.c,v 1.43 1999/03/18 06:04:21 mycroft Exp $	*/
 
 /*
  * Copyright 1997
@@ -857,6 +857,9 @@ essattach(sc)
 	printf(": ESS Technology ES%s [version 0x%04x]\n", 
 	       essmodel[sc->sc_model], sc->sc_version);
 	
+	sc->sc_audio1.irq = -1;
+	sc->sc_audio2.irq = -1;
+
 	sc->sc_audio1.polled = sc->sc_audio1.irq == -1;
 	if (!sc->sc_audio1.polled) {
 		sc->sc_audio1.ih = isa_intr_establish(sc->sc_ic,
@@ -1254,9 +1257,9 @@ ess_audio1_trigger_output(addr, start, end, blksize, intr, arg, param)
 	sc->sc_audio1.intr = intr;
 	sc->sc_audio1.arg = arg;
 	if (sc->sc_audio1.polled) {
+		sc->sc_audio1.dmapos = 0;
+		sc->sc_audio1.buffersize = (char *)end - (char *)start;
 		sc->sc_audio1.dmacount = 0;
-		sc->sc_audio1.dmapos = sc->sc_audio1.buffersize =
-		    (char *)end - (char *)start;
 		sc->sc_audio1.blksize = blksize;
 		timeout(ess_audio1_poll, sc, hz/30);
 	}
@@ -1332,9 +1335,9 @@ ess_audio2_trigger_output(addr, start, end, blksize, intr, arg, param)
 	sc->sc_audio2.intr = intr;
 	sc->sc_audio2.arg = arg;
 	if (sc->sc_audio2.polled) {
+		sc->sc_audio2.dmapos = 0;
+		sc->sc_audio2.buffersize = (char *)end - (char *)start;
 		sc->sc_audio2.dmacount = 0;
-		sc->sc_audio2.dmapos = sc->sc_audio2.buffersize =
-		    (char *)end - (char *)start;
 		sc->sc_audio2.blksize = blksize;
 		timeout(ess_audio2_poll, sc, hz/30);
 	}
@@ -1401,9 +1404,9 @@ ess_audio1_trigger_input(addr, start, end, blksize, intr, arg, param)
 	sc->sc_audio1.intr = intr;
 	sc->sc_audio1.arg = arg;
 	if (sc->sc_audio1.polled) {
+		sc->sc_audio1.dmapos = 0;
+		sc->sc_audio1.buffersize = (char *)end - (char *)start;
 		sc->sc_audio1.dmacount = 0;
-		sc->sc_audio1.dmapos = sc->sc_audio1.buffersize =
-		    (char *)end - (char *)start;
 		sc->sc_audio1.blksize = blksize;
 		timeout(ess_audio1_poll, sc, hz/30);
 	}
@@ -1560,15 +1563,20 @@ ess_audio1_poll(addr)
 	sc->sc_audio1.nintr++;
 
 	dmapos = isa_dmacount(sc->sc_ic, sc->sc_audio1.drq);
-	dmacount = sc->sc_audio1.dmacount + sc->sc_audio1.dmapos - dmapos;
-	if (dmapos > sc->sc_audio1.dmapos)
+	dmacount = sc->sc_audio1.dmapos - dmapos;
+	if (dmacount < 0)
 		dmacount += sc->sc_audio1.buffersize;
+	sc->sc_audio1.dmapos = dmapos;
+#if 1
+	dmacount += sc->sc_audio1.dmacount;
 	while (dmacount > sc->sc_audio1.blksize) {
 		dmacount -= sc->sc_audio1.blksize;
 		(*sc->sc_audio1.intr)(sc->sc_audio1.arg);
 	}
-	sc->sc_audio1.dmapos = dmapos;
 	sc->sc_audio1.dmacount = dmacount;
+#else
+	(*sc->sc_audio1.intr)(sc->sc_audio1.arg, dmacount);
+#endif
 
 	timeout(ess_audio1_poll, sc, hz/30);
 }
@@ -1586,15 +1594,20 @@ ess_audio2_poll(addr)
 	sc->sc_audio2.nintr++;
 
 	dmapos = isa_dmacount(sc->sc_ic, sc->sc_audio2.drq);
-	dmacount = sc->sc_audio2.dmacount + sc->sc_audio2.dmapos - dmapos;
-	if (dmapos > sc->sc_audio2.dmapos)
+	dmacount = sc->sc_audio2.dmapos - dmapos;
+	if (dmacount < 0)
 		dmacount += sc->sc_audio2.buffersize;
+	sc->sc_audio2.dmapos = dmapos;
+#if 1
+	dmacount += sc->sc_audio2.dmacount;
 	while (dmacount > sc->sc_audio2.blksize) {
 		dmacount -= sc->sc_audio2.blksize;
 		(*sc->sc_audio2.intr)(sc->sc_audio2.arg);
 	}
-	sc->sc_audio2.dmapos = dmapos;
 	sc->sc_audio2.dmacount = dmacount;
+#else
+	(*sc->sc_audio2.intr)(sc->sc_audio2.arg, dmacount);
+#endif
 
 	timeout(ess_audio2_poll, sc, hz/30);
 }
