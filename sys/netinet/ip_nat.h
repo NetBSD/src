@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.h,v 1.10.2.1 1997/10/30 07:13:50 mrg Exp $	*/
+/*	$NetBSD: ip_nat.h,v 1.10.2.2 1997/11/17 16:33:19 mrg Exp $	*/
 
 /*
  * Copyright (C) 1995-1997 by Darren Reed.
@@ -8,7 +8,7 @@
  * to the original author and the contributors.
  *
  * @(#)ip_nat.h	1.5 2/4/96
- * Id: ip_nat.h,v 2.0.2.23 1997/10/29 12:38:38 darrenr Exp 
+ * Id: ip_nat.h,v 2.0.2.23.2.1 1997/11/05 11:08:18 darrenr Exp 
  */
 
 #ifndef	__IP_NAT_H__
@@ -102,7 +102,7 @@ typedef	struct	ipnat	{
 #define	NAT_BIMAP	(NAT_MAP|NAT_REDIRECT)
 
 #define	IPN_CMPSIZ	(sizeof(struct in_addr) * 4 + sizeof(u_short) * 3 + \
-			 sizeof(int) + IFNAMSIZ)
+			 sizeof(int) + IFNAMSIZ + APR_LABELLEN + sizeof(char))
 
 typedef	struct	natlookup {
 	struct	in_addr	nl_inip;

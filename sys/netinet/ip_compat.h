@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_compat.h,v 1.9.2.1 1997/10/30 07:13:42 mrg Exp $	*/
+/*	$NetBSD: ip_compat.h,v 1.9.2.2 1997/11/17 16:32:43 mrg Exp $	*/
 
 /*
  * Copyright (C) 1993-1997 by Darren Reed.
@@ -8,7 +8,7 @@
  * to the original author and the contributors.
  *
  * @(#)ip_compat.h	1.8 1/14/96
- * Id: ip_compat.h,v 2.0.2.31 1997/10/29 12:14:08 darrenr Exp 
+ * Id: ip_compat.h,v 2.0.2.31.2.4 1997/11/12 10:48:43 darrenr Exp 
  */
 
 #ifndef	__IP_COMPAT_H__
@@ -28,26 +28,31 @@
 #endif
 
 #if defined(_KERNEL) && !defined(KERNEL)
-#define	KERNEL
+# define	KERNEL
 #endif
 #if defined(KERNEL) && !defined(_KERNEL)
-#define	_KERNEL
+# define	_KERNEL
+#endif
+#if!defined(__KERNEL__) && defined(KERNEL)
+# define 	__KERNEL__
 #endif
 
 #if defined(__SVR4) || defined(__svr4__) || defined(__sgi)
 #define index   strchr
-# ifndef	_KERNEL
+# if !defined(_KERNEL)
 #  define	bzero(a,b)	memset(a,0,b)
 #  define	bcmp		memcmp
 #  define	bcopy(a,b,c)	memmove(b,a,c)
 # endif
 #endif
 
-#ifdef __sgi
+#if defined(__sgi) || defined(bsdi)
 struct  ether_addr {
         u_char  ether_addr_octet[6];
 };
+#endif
 
+#ifdef __sgi
 # ifdef IPFILTER_LKM
 #  define IPL_PRFX ipl
 #  define IPL_EXTERN(ep) ipl##ep
@@ -60,10 +65,14 @@ struct  ether_addr {
 # define IPL_EXTERN(ep) ipl##ep
 #endif
 
+#ifdef	linux
+# include <sys/sysmacros.h>
+#endif
 #if	SOLARIS
 # define	MTYPE(m)	((m)->b_datap->db_type)
 # include	<sys/ioccom.h>
 # include	<sys/sysmacros.h>
+# include	<sys/kmem.h>
 /*
  * because Solaris 2 defines these in two places :-/
  */
@@ -79,12 +88,12 @@ struct  ether_addr {
 #  include <inet/ip.h>
 #  include <inet/ip_ire.h>
 #  undef	_KERNEL
-# else
+# else /* _KERNEL */
 #  include <inet/common.h>
 #  include <inet/ip.h>
 #  include <inet/ip_ire.h>
-# endif
-#endif
+# endif /* _KERNEL */
+#endif /* SOLARIS */
 #define	IPMINLEN(i, h)	((i)->ip_len >= ((i)->ip_hl * 4 + sizeof(struct h)))
 
 #ifndef	IP_OFFMASK
@@ -95,10 +104,10 @@ struct  ether_addr {
 # define	USE_QUAD_T
 # define	U_QUAD_T	u_quad_t
 # define	QUAD_T		quad_t
-#else
+#else /* BSD > 199306 */
 # define	U_QUAD_T	u_long
 # define	QUAD_T		long
-#endif
+#endif /* BSD > 199306 */
 
 /*
  * These operating systems already take care of the problem for us.
@@ -114,7 +123,7 @@ typedef unsigned int    u_32_t;
 # else
 typedef unsigned long   u_32_t;
 # endif
-#endif
+#endif /* __NetBSD__ || __OpenBSD__ || __FreeBSD__ */
 
 #ifndef	MAX
 #define	MAX(a,b)	(((a) > (b)) ? (a) : (b))
@@ -178,17 +187,19 @@ typedef unsigned long   u_32_t;
 
 
 #if defined(__FreeBSD__) && defined(KERNEL)
-# include <machine/spl.h>
+# if __FreeBSD__ < 3
+#  include <machine/spl.h>
+# endif
 # if defined(IPFILTER_LKM) && !defined(ACTUALLY_LKM_NOT_KERNEL)
 #  define	ACTUALLY_LKM_NOT_KERNEL
 # endif
-#endif
+#endif /* __FreeBSD__ && KERNEL */
 
 /*
  * Build some macros and #defines to enable the same code to compile anywhere
  * Well, that's the idea, anyway :-)
  */
-#if defined(_KERNEL) || defined(KERNEL)
+#ifdef KERNEL
 # if SOLARIS
 #  define	MUTEX_ENTER(x)	mutex_enter(x)
 #  define	MUTEX_EXIT(x)	mutex_exit(x)
@@ -200,12 +211,12 @@ typedef unsigned long   u_32_t;
 #  define	SPL_IMP(x)	;
 #  undef	SPL_X
 #  define	SPL_X(x)	;
-#  ifdef	sparc
+#  ifdef sparc
 #   define	ntohs(x)	(x)
 #   define	ntohl(x)	(x)
 #   define	htons(x)	(x)
 #   define	htonl(x)	(x)
-#  endif
+#  endif /* sparc */
 #  define	KMALLOC(a,b,c)	(a) = (b)kmem_alloc((c), KM_NOSLEEP)
 #  define	GET_MINOR(x)	getminor(x)
 typedef	struct	qif	{
@@ -233,11 +244,9 @@ typedef	struct	qif	{
 extern	ill_t	*get_unit __P((char *));
 #  define	GETUNIT(n)	get_unit((n))
 # else /* SOLARIS */
-#  ifdef __sgi
+#  if defined(__sgi)
 #   include <sys/ksynch.h>
 #   define	IPF_LOCK_PL	plhi
-#  endif
-#  if defined(__sgi)
 #   include <sys/sema.h>
 #undef kmutex_t
 typedef struct {
@@ -246,16 +255,16 @@ typedef struct {
 } kmutex_t;
 #   define	MUTEX_ENTER(x)	(x)->pl = LOCK((x)->l, IPF_LOCK_PL);
 #   define	MUTEX_EXIT(x)	UNLOCK((x)->l, (x)->pl);
-#  else
+#  else /* __sgi */
 #   define	MUTEX_ENTER(x)	;
 #   define	MUTEX_EXIT(x)	;
-#  endif
+#  endif /* __sgi */
 #  ifndef linux
 #   define	FREE_MB_T(m)	m_freem(m)
 #   define	MTOD(m,t)	mtod(m,t)
 #   define	IRCOPY(a,b,c)	bcopy((a), (b), (c))
 #   define	IWCOPY(a,b,c)	bcopy((a), (b), (c))
-#  endif
+#  endif /* !linux */
 # endif /* SOLARIS */
 
 # ifdef sun
@@ -264,7 +273,9 @@ typedef struct {
 #   define	GETUNIT(n)	ifunit((n), IFNAMSIZ)
 #  endif
 # else
-#  define	GETUNIT(n)	ifunit((n))
+#  ifndef	linux
+#   define	GETUNIT(n)	ifunit((n))
+#  endif
 # endif /* sun */
 
 # if defined(sun) && !defined(linux) || defined(__sgi)
@@ -285,21 +296,21 @@ extern	void	m_copyback __P((struct mbuf *, int, int, caddr_t));
 #  else
 #   if !SOLARIS
 #    define	KMALLOC(a,b,c)	(a) = (b)new_kmem_alloc((c), KMEM_NOSLEEP)
-#   endif /* __svr4__ */
+#   endif /* SOLARIS */
 #  endif /* __sgi */
 # endif /* sun && !linux */
 # ifndef	GET_MINOR
 #  define	GET_MINOR(x)	minor(x)
 # endif
-# if BSD >= 199306 || defined(__FreeBSD__)
+# if (BSD >= 199306) || defined(__FreeBSD__)
 #  include <vm/vm.h>
 #  if !defined(__FreeBSD__) || (defined (__FreeBSD__) && __FreeBSD__>=3)
 #   include <vm/vm_extern.h>
 #   include <sys/proc.h>
 extern	vm_map_t	kmem_map;
-#  else
+#  else /* !__FreeBSD__ || (__FreeBSD__ && __FreeBSD__>=3) */
 #   include <vm/vm_kern.h>
-#  endif /* __FreeBSD__ */
+#  endif /* !__FreeBSD__ || (__FreeBSD__ && __FreeBSD__>=3) */
 #  ifdef	M_PFIL
 #   define	KMALLOC(a, b, c)	MALLOC((a), b, (c), M_PFIL, M_NOWAIT)
 #   define	KFREE(x)	FREE((x), M_PFIL)
@@ -308,7 +319,7 @@ extern	vm_map_t	kmem_map;
 #   define	KMALLOC(a, b, c)	MALLOC((a), b, (c), M_TEMP, M_NOWAIT)
 #   define	KFREE(x)	FREE((x), M_TEMP)
 #   define	KFREES(x,s)	FREE((x), M_TEMP)
-#  endif
+#  endif /* M_PFIL */
 #  define	UIOMOVE(a,b,c,d)	uiomove(a,b,d)
 #  define	SLEEP(id, n)	tsleep((id), PPAUSE|PCATCH, n, 0)
 #  define	WAKEUP(id)	wakeup(id)
@@ -317,12 +328,12 @@ extern	vm_map_t	kmem_map;
 #  define	SPL_NET(x)	x = splsoftnet()
 #  define	SPL_X(x)	(void) splx(x)
 # else
-#  if !SOLARIS
+#  if !SOLARIS && !defined(linux)
 #   define	SPL_IMP(x)	x = splimp()
 #   define	SPL_NET(x)	x = splnet()
 #   define	SPL_X(x)	(void) splx(x)
 #  endif
-# endif
+# endif /* NetBSD && NetBSD <= 1991011 && NetBSD >= 199407 */
 # define	PANIC(x,y)	if (x) panic y
 #else /* KERNEL */
 # define	SLEEP(x,y)	;
@@ -345,8 +356,12 @@ extern	vm_map_t	kmem_map;
 #if SOLARIS
 typedef mblk_t mb_t;
 #else
+# ifdef	linux
+typedef struct sk_buff mb_t;
+# else
 typedef struct mbuf mb_t;
-#endif
+# endif
+#endif /* SOLARIS */
 
 #if defined(linux) || defined(__sgi)
 /*
@@ -474,6 +489,38 @@ typedef struct mbuf mb_t;
 #endif /* linux || __sgi */
 
 #ifdef	linux
+/*
+ * TCP States
+ */
+#define	TCPS_CLOSED		0	/* closed */
+#define	TCPS_LISTEN		1	/* listening for connection */
+#define	TCPS_SYN_SENT		2	/* active, have sent syn */
+#define	TCPS_SYN_RECEIVED	3	/* have send and received syn */
+/* states < TCPS_ESTABLISHED are those where connections not established */
+#define	TCPS_ESTABLISHED	4	/* established */
+#define	TCPS_CLOSE_WAIT		5	/* rcvd fin, waiting for close */
+/* states > TCPS_CLOSE_WAIT are those where user has closed */
+#define	TCPS_FIN_WAIT_1		6	/* have closed, sent fin */
+#define	TCPS_CLOSING		7	/* closed xchd FIN; await FIN ACK */
+#define	TCPS_LAST_ACK		8	/* had fin and close; await FIN ACK */
+/* states > TCPS_CLOSE_WAIT && < TCPS_FIN_WAIT_2 await ACK of FIN */
+#define	TCPS_FIN_WAIT_2		9	/* have closed, fin is acked */
+#define	TCPS_TIME_WAIT		10	/* in 2*msl quiet wait after close */
+
+/*
+ * file flags.
+ */
+#define	FWRITE	WRITE
+#define	FREAD	READ
+/*
+ * mbuf related problems.
+ */
+#define	mtod(m,t)	(t)((m)->data)
+#define	m_len		len
+#define	m_next		next
+
+#define	IP_DF		0x8000
+
 typedef	struct	{
 	__u16	th_sport;
 	__u16	th_dport;
@@ -562,6 +609,8 @@ typedef struct icmp {
 # define	icmp_data	icmp_dun.id_data
 } icmphdr_t;
 
+# ifndef LINUX_IPOVLY
+#  define LINUX_IPOVLY
 struct ipovly {
 	caddr_t	ih_next, ih_prev;	/* for protocol sequence q's */
 	u_char	ih_x1;			/* (unused) */
@@ -570,6 +619,7 @@ struct ipovly {
 	struct	in_addr ih_src;		/* source internet address */
 	struct	in_addr ih_dst;		/* destination internet address */
 };
+# endif
 
 typedef struct  {
 	__u8	ether_dhost[6];
@@ -577,33 +627,63 @@ typedef struct  {
 	__u16	ether_type;
 } ether_header_t;
 
+typedef	struct	uio	{
+	int	uio_resid;
+	int	uio_rw;
+	caddr_t	uio_buf;
+} uio_t;
+
+# define	UIO_READ	0
+# define	UIO_WRITE	1
+# define	UIOMOVE(a, b, c, d)	uiomove(a,b,c,d)
+
+/*
+ * For masking struct ifnet onto struct device
+ */
+# define	if_name	name
+
 # ifdef	KERNEL
-#  define	SPL_X(x)	(void)
-#  define	SPL_NET(x)	(void)
-#  define	SPL_IMP(x)	(void)
+#  define	GETUNIT(x)	dev_get(x)
+#  define	FREE_MB_T(m)	kfree_skb(m, FREE_WRITE)
+#  define	uniqtime	do_gettimeofday
+#  undef INT_MAX
+#  undef UINT_MAX
+#  undef LONG_MAX
+#  undef ULONG_MAX
+#  include <linux/netdevice.h>
+#  define	SPL_X(x)
+#  define	SPL_NET(x)
+#  define	SPL_IMP(x)
  
-#  define	bcopy(a,b,c)	memmove(b,a,c)
 #  define	bcmp(a,b,c)	memcmp(a,b,c)
+#  define	bcopy(a,b,c)	memcpy(b,a,c)
+#  define	bzero(a,c)	memset(a,0,c)
 
 #  define	UNITNAME(n)	dev_get((n))
-#  define	ifnet	device
 
 #  define	KMALLOC(a,b,c)	(a) = (b)kmalloc((c), GFP_ATOMIC)
 #  define	KFREE(x)	kfree_s((x), sizeof(*(x)))
 #  define	KFREES(x,s)	kfree_s((x), (s))
 #  define	IRCOPY(a,b,c)	{ \
-				 error = verify_area(VERIFY_READ, \
-						     (b) ,sizeof((b))); \
+				 error = verify_area(VERIFY_READ, (a) ,(c)); \
 				 if (!error) \
 					memcpy_fromfs((b), (a), (c)); \
 				}
 #  define	IWCOPY(a,b,c)	{ \
-				 error = verify_area(VERIFY_WRITE, \
-						     (b) ,sizeof((b))); \
+				 error = verify_area(VERIFY_WRITE, (b), (c)); \
 				 if (!error) \
 					memcpy_tofs((b), (a), (c)); \
 				}
+# else
+#  define	__KERNEL__
+#  undef INT_MAX
+#  undef UINT_MAX
+#  undef LONG_MAX
+#  undef ULONG_MAX
+#  include <linux/netdevice.h>
+#  undef	__KERNEL__
 # endif
+# define	ifnet	device
 #else
 typedef	struct	tcphdr	tcphdr_t;
 typedef	struct	udphdr	udphdr_t;

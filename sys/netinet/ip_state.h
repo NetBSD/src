@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_state.h,v 1.8.2.1 1997/10/30 07:13:53 mrg Exp $	*/
+/*	$NetBSD: ip_state.h,v 1.8.2.2 1997/11/17 16:33:30 mrg Exp $	*/
 
 /*
  * Copyright (C) 1995-1997 by Darren Reed.
@@ -8,7 +8,7 @@
  * to the original author and the contributors.
  *
  * @(#)ip_state.h	1.3 1/12/96 (C) 1995 Darren Reed
- * Id: ip_state.h,v 2.0.2.14 1997/10/29 12:14:16 darrenr Exp 
+ * Id: ip_state.h,v 2.0.2.14.2.1 1997/11/06 21:23:15 darrenr Exp 
  */
 #ifndef	__IP_STATE_H__
 #define	__IP_STATE_H__
@@ -95,6 +95,7 @@ typedef	struct	ipslog	{
 
 #define	ISL_NEW		0
 #define	ISL_EXPIRE	0xffff
+#define	ISL_FLUSH	0xfffe
 
 
 typedef	struct	ips_stat {
@@ -128,6 +129,7 @@ extern	int	fr_addstate __P((ip_t *, fr_info_t *, u_int));
 extern	int	fr_checkstate __P((ip_t *, fr_info_t *));
 extern	void	fr_timeoutstate __P((void));
 extern	void	fr_tcp_age __P((u_long *, u_char *, ip_t *, fr_info_t *, int));
+extern	int	fr_state_flush __P((int));
 extern	void	fr_stateunload __P((void));
 extern	void	ipstate_log __P((struct ipstate *, u_short));
 #if defined(__NetBSD__) || defined(__OpenBSD__)
