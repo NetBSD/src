@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)net.c	5.5 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: net.c,v 1.6 1995/05/21 15:06:52 mycroft Exp $";
+static char rcsid[] = "$Id: net.c,v 1.7 1996/11/21 06:01:50 lukem Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -47,20 +47,24 @@ static char rcsid[] = "$Id: net.c,v 1.6 1995/05/21 15:06:52 mycroft Exp $";
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
+#include <unistd.h>
+#include "finger.h"
+#include "extern.h"
 
+void
 netfinger(name)
 	char *name;
 {
-	extern int lflag;
-	register FILE *fp;
-	register int c, lastc;
-	struct hostent *hp, def;
+	FILE *fp;
+	int c, lastc;
+	struct hostent *hp;
 	struct servent *sp;
 	struct sockaddr_in sin;
 	int s;
-	char *alist[1], *host, *rindex();
+	char *host;
 
-	if (!(host = rindex(name, '@')))
+	lastc = 0;
+	if (!(host = strrchr(name, '@')))
 		return;
 	*host++ = NULL;
 	if (inet_aton(host, &sin.sin_addr) == 0) {
@@ -111,8 +115,8 @@ netfinger(name)
 	 * Otherwise, all high bits are stripped; if it isn't printable and
 	 * it isn't a space, we can simply set the 7th bit.  Every ASCII
 	 * character with bit 7 set is printable.
-	 */ 
-	if (fp = fdopen(s, "r"))
+	 */
+	if ((fp = fdopen(s, "r")) != NULL)
 		while ((c = getc(fp)) != EOF) {
 			c &= 0x7f;
 			if (c == '\r') {

@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)finger.h	5.5 (Berkeley) 6/1/90
- *	$Id: finger.h,v 1.3 1993/10/07 19:58:30 brezak Exp $
+ *	$Id: finger.h,v 1.4 1996/11/21 06:01:49 lukem Exp $
  */
 
 #include <pwd.h>
@@ -82,9 +82,5 @@ typedef struct where {
 PERSON *htab[HSIZE];			/* the buckets */
 PERSON *phead, *ptail;			/* the linked list of all people */
 
-int entries;				/* number of people */
-
 PERSON *enter_person(), *find_person(), *palloc();
 WHERE *walloc();
-
-extern char tbuf[1024];			/* temp buffer for anybody */

@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 1989 The Regents of the University of California.
  * All rights reserved.
+ * Portions Copyright (c) 1983, 1995, 1996 Eric P. Allman
  *
  * This code is derived from software contributed to Berkeley by
  * Tony Nardo of the Johns Hopkins University/Applied Physics Lab.
@@ -36,9 +37,11 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)util.c	5.14 (Berkeley) 1/17/91";*/
-static char rcsid[] = "$Id: util.c,v 1.6 1995/09/27 01:10:48 jtc Exp $";
+static char rcsid[] = "$Id: util.c,v 1.7 1996/11/21 06:01:52 lukem Exp $";
 #endif /* not lint */
 
+#include <sys/types.h>
+#include <sys/uio.h>
 #include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/file.h>
@@ -48,17 +51,18 @@ static char rcsid[] = "$Id: util.c,v 1.6 1995/09/27 01:10:48 jtc Exp $";
 #include <string.h>
 #include <paths.h>
 #include <errno.h>
+#include <unistd.h>
 #include "finger.h"
+#include "extern.h"
 
+void
 find_idle_and_ttywrite(w)
-	register WHERE *w;
+	WHERE *w;
 {
-	extern time_t now;
-	extern int errno;
 	struct stat sb;
-	char *strerror();
 
-	(void)sprintf(tbuf, "%s/%s", _PATH_DEV, w->tty);
+	(void)snprintf(tbuf, sizeof(tbuf), "%s/%s", _PATH_DEV, w->tty);
+	tbuf[sizeof(tbuf)-1] = '\0';
 	if (stat(tbuf, &sb) < 0) {
 		(void)fprintf(stderr,
 		    "finger: %s: %s\n", tbuf, strerror(errno));
@@ -70,15 +74,14 @@ find_idle_and_ttywrite(w)
 	w->writable = ((sb.st_mode & TALKABLE) == TALKABLE);
 }
 
+void
 userinfo(pn, pw)
-	register PERSON *pn;
-	register struct passwd *pw;
+	PERSON *pn;
+	struct passwd *pw;
 {
-	extern time_t now;
-	register char *p, *t;
-	struct stat sb;
-	extern int errno;
+	char *p;
 	char *bp, name[1024];
+	struct stat sb;
 
 	pn->realname = pn->office = pn->officephone = pn->homephone = NULL;
 
@@ -87,23 +90,13 @@ userinfo(pn, pw)
 	pn->dir = strdup(pw->pw_dir);
 	pn->shell = strdup(pw->pw_shell);
 
-	/* why do we skip asterisks!?!? */
-	(void)strcpy(bp = tbuf, pw->pw_gecos);
-	if (*bp == '*')
-		++bp;
+	(void)strncpy(bp = tbuf, pw->pw_gecos, sizeof(tbuf));
+	tbuf[sizeof(tbuf) - 1] = '\0';
 
 	/* ampersands get replaced by the login name */
 	if (!(p = strsep(&bp, ",")))
 		return;
-	for (t = name; *t = *p; ++p)
-		if (*t == '&') {
-			(void)strcpy(t, pw->pw_name);
-			if (islower(*t))
-				*t = toupper(*t);
-			while (*++t);
-		}
-		else
-			++t;
+	expandusername(p, pw->pw_name, name, sizeof(name));
 	pn->realname = strdup(name);
 	pn->office = ((p = strsep(&bp, ",")) && *p) ?
 	    strdup(p) : NULL;
@@ -111,7 +104,9 @@ userinfo(pn, pw)
 	    strdup(p) : NULL;
 	pn->homephone = ((p = strsep(&bp, ",")) && *p) ?
 	    strdup(p) : NULL;
-	(void)sprintf(tbuf, "%s/%s", _PATH_MAILSPOOL, pw->pw_name);
+	(void)snprintf(tbuf, sizeof(tbuf), "%s/%s", _PATH_MAILSPOOL,
+	    pw->pw_name);
+	tbuf[sizeof(tbuf)-1] = '\0';
 	pn->mailrecv = -1;		/* -1 == not_valid */
 	if (stat(tbuf, &sb) < 0) {
 		if (errno != ENOENT) {
@@ -125,38 +120,67 @@ userinfo(pn, pw)
 	}
 }
 
+int
 match(pw, user)
 	struct passwd *pw;
 	char *user;
 {
-	register char *p, *t;
+	char *p, *t;
 	char name[1024];
 
-	/* why do we skip asterisks!?!? */
-	(void)strcpy(p = tbuf, pw->pw_gecos);
-	if (*p == '*')
-		++p;
+	(void)strncpy(p = tbuf, pw->pw_gecos, sizeof(tbuf));
+	tbuf[sizeof(tbuf) - 1] = '\0';
 
 	/* ampersands get replaced by the login name */
 	if (!(p = strtok(p, ",")))
 		return(0);
-	for (t = name; *t = *p; ++p)
-		if (*t == '&') {
-			(void)strcpy(t, pw->pw_name);
-			while (*++t);
-		}
-		else
-			++t;
-	for (t = name; p = strtok(t, "\t "); t = (char *)NULL)
+	expandusername(p, pw->pw_name, name, sizeof(name));
+	for (t = name; (p = strtok(t, "\t ")) != NULL; t = (char *)NULL)
 		if (!strcasecmp(p, user))
 			return(1);
 	return(0);
 }
 
-enter_lastlog(pn)
-	register PERSON *pn;
+/* inspired by usr.sbin/sendmail/util.c::buildfname */
+void
+expandusername(gecos, login, buf, buflen)
+	char *gecos;
+	char *login;
+	char *buf;
+	int buflen;
 {
-	register WHERE *w;
+	char *p, *bp;
+
+	/* why do we skip asterisks!?!? */
+	if (*gecos == '*')
+		gecos++;
+	bp = buf;
+
+	/* copy gecos, interpolating & to be full name */
+	for (p = gecos; *p != '\0'; p++) {
+		if (bp >= &buf[buflen - 1]) {
+			/* buffer overflow - just use login name */
+			snprintf(buf, buflen, "%s", login);
+			buf[buflen - 1] = '\0';
+			return;
+		}
+		if (*p == '&') {
+			/* interpolate full name */
+			snprintf(bp, buflen - (bp - buf), "%s", login);
+			*bp = toupper(*bp);
+			bp += strlen(bp);
+		}
+		else
+			*bp++ = *p;
+	}
+	*bp = '\0';
+}
+
+void
+enter_lastlog(pn)
+	PERSON *pn;
+{
+	WHERE *w;
 	static int opened, fd;
 	struct lastlog ll;
 	char doit = 0;
@@ -202,11 +226,12 @@ enter_lastlog(pn)
 	}
 }
 
+void
 enter_where(ut, pn)
 	struct utmp *ut;
 	PERSON *pn;
 {
-	register WHERE *w = walloc(pn);
+	WHERE *w = walloc(pn);
 
 	w->info = LOGGEDIN;
 	bcopy(ut->ut_line, w->tty, UT_LINESIZE);
@@ -219,9 +244,9 @@ enter_where(ut, pn)
 
 PERSON *
 enter_person(pw)
-	register struct passwd *pw;
+	struct passwd *pw;
 {
-	register PERSON *pn, **pp;
+	PERSON *pn, **pp;
 
 	for (pp = htab + hash(pw->pw_name);
 	     *pp != NULL && strcmp((*pp)->name, pw->pw_name) != 0;
@@ -249,7 +274,7 @@ PERSON *
 find_person(name)
 	char *name;
 {
-	register PERSON *pn;
+	PERSON *pn;
 
 	/* name may be only UT_NAMESIZE long and not terminated */
 	for (pn = htab[hash(name)];
@@ -259,15 +284,16 @@ find_person(name)
 	return(pn);
 }
 
+int
 hash(name)
-	register char *name;
+	char *name;
 {
-	register int h, i;
+	int h, i;
 
 	h = 0;
 	/* name may be only UT_NAMESIZE long and not terminated */
 	for (i = UT_NAMESIZE; --i >= 0 && *name;)
-		h = ((h << 2 | h >> HBITS - 2) ^ *name++) & HMASK;
+		h = ((h << 2 | h >> (HBITS - 2)) ^ *name++) & HMASK;
 	return(h);
 }
 
@@ -285,9 +311,9 @@ palloc()
 
 WHERE *
 walloc(pn)
-	register PERSON *pn;
+	PERSON *pn;
 {
-	register WHERE *w;
+	WHERE *w;
 
 	if ((w = (WHERE *)malloc((u_int) sizeof(WHERE))) == NULL) {
 		(void)fprintf(stderr, "finger: out of space.\n");
@@ -307,7 +333,7 @@ char *
 prphone(num)
 	char *num;
 {
-	register char *p;
+	char *p;
 	int len;
 	static char pbuf[15];
 
