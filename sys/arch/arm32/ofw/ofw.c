@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw.c,v 1.16 1998/08/29 03:17:28 mark Exp $	*/
+/*	$NetBSD: ofw.c,v 1.17 1998/08/29 04:58:16 mark Exp $	*/
 
 /*
  * Copyright 1997
@@ -1350,9 +1350,6 @@ ofw_construct_proc0_addrspace(proc0_ttbbase, proc0_ptpt)
 	 * we don't want aliases to physical addresses that the kernel
 	 * has-mapped/will-map elsewhere.
 	 */
-
-	ofw_discardmappings(proc0_pt_kernel.virtual,
-	    proc0_pt_pte.virtual, PT_SIZE);
 	ofw_discardmappings(proc0_pt_kernel.virtual,
 	    proc0_pt_sys.virtual, PT_SIZE);
 	ofw_discardmappings(proc0_pt_kernel.virtual,
@@ -1369,6 +1366,18 @@ ofw_construct_proc0_addrspace(proc0_ttbbase, proc0_ptpt)
 	ofw_discardmappings(proc0_pt_kernel.virtual,
 	    msgbuf.virtual, MSGBUFSIZE);
 
+	/*
+	 * We did not throw away the proc0_pt_pte and proc0_pagedir
+	 * mappings as well still want them. However we don't want them
+	 * cached ...
+	 * Really these should be uncached when allocated.
+	 */
+	map_entry_nc(proc0_pt_kernel.virtual, proc0_pt_pte.virtual,
+	    proc0_pt_pte.physical);
+	for (i = 0; i < (PD_SIZE / NBPG); ++i)
+		map_entry_nc(proc0_pt_kernel.virtual,
+		    proc0_pagedir.virtual + NBPG * i,
+		    proc0_pagedir.physical + NBPG * i);
 
 	/*
 	 * Construct the proc0 L2 pagetables that map page tables.
