@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.54 2003/07/15 03:36:15 lukem Exp $	*/
+/*	$NetBSD: si.c,v 1.55 2004/12/13 02:33:06 chs Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: si.c,v 1.54 2003/07/15 03:36:15 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: si.c,v 1.55 2004/12/13 02:33:06 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -195,7 +195,7 @@ si_minphys(struct buf *bp)
 	if (bp->b_bcount > MAX_DMA_LEN) {
 #ifdef	DEBUG
 		if (si_debug) {
-			printf("si_minphys len = 0x%lx.\n", bp->b_bcount);
+			printf("si_minphys len = 0x%x.\n", bp->b_bcount);
 			Debugger();
 		}
 #endif
