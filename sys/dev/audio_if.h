@@ -1,4 +1,4 @@
-/*	$NetBSD: audio_if.h,v 1.19 1997/08/19 23:49:58 augustss Exp $	*/
+/*	$NetBSD: audio_if.h,v 1.20 1997/08/24 22:31:30 augustss Exp $	*/
 
 /*
  * Copyright (c) 1994 Havard Eidnes.
@@ -68,7 +68,7 @@ struct audio_hw_if {
 	 * The values in the params struct may be changed (e.g. rounding
 	 * to the nearest sample rate.)
 	 */
-        int	(*set_params)__P((void *, int, struct audio_params *, struct audio_params *));
+        int	(*set_params)__P((void *, int, int, struct audio_params *, struct audio_params *));
   
 	/* Hardware may have some say in the blocksize to choose */
 	int	(*round_blocksize)__P((void *, int));

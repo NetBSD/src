@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdspvar.h,v 1.28 1997/08/04 09:29:57 augustss Exp $	*/
+/*	$NetBSD: sbdspvar.h,v 1.29 1997/08/24 22:31:36 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -169,7 +169,7 @@ int	sbdsp_get_out_gain __P((void *));
 int	sbdsp_set_monitor_gain __P((void *, u_int));
 int	sbdsp_get_monitor_gain __P((void *));
 int	sbdsp_query_encoding __P((void *, struct audio_encoding *));
-int	sbdsp_set_params __P((void *, int, struct audio_params *, struct audio_params *));
+int	sbdsp_set_params __P((void *, int, int, struct audio_params *, struct audio_params *));
 int	sbdsp_round_blocksize __P((void *, int));
 int	sbdsp_set_out_port __P((void *, int));
 int	sbdsp_get_out_port __P((void *));

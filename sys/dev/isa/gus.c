@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.40 1997/08/19 23:50:00 augustss Exp $	*/
+/*	$NetBSD: gus.c,v 1.41 1997/08/24 22:31:33 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -357,8 +357,8 @@ int	gus_set_in_gain __P((caddr_t, u_int, u_char));
 int	gus_get_in_gain __P((caddr_t));
 int	gus_set_out_gain __P((caddr_t, u_int, u_char));
 int	gus_get_out_gain __P((caddr_t));
-int 	gus_set_params __P((void *, int, struct audio_params *, struct audio_params *));
-int 	gusmax_set_params __P((void *, int, struct audio_params *, struct audio_params *));
+int 	gus_set_params __P((void *, int, int, struct audio_params *, struct audio_params *));
+int 	gusmax_set_params __P((void *, int, int, struct audio_params *, struct audio_params *));
 int	gus_round_blocksize __P((void *, int));
 int	gus_set_out_port __P((void *, int));
 int	gus_get_out_port __P((void *));
@@ -2088,27 +2088,27 @@ gus_set_volume(sc, voice, volume)
  */
 
 int
-gusmax_set_params(addr, mode, p, q)
+gusmax_set_params(addr, setmode, usemode, p, r)
 	void *addr;
-	int mode;
-	struct audio_params *p, *q;
+	int setmode, usemode;
+	struct audio_params *p, *r;
 {
 	struct ad1848_softc *ac = addr;
 	struct gus_softc *sc = ac->parent;
 	int error;
 
-	error = ad1848_set_params(ac, mode, p, q);
+	error = ad1848_set_params(ac, setmode, usemode, p, r);
 	if (error)
 		return error;
-	error = gus_set_params(sc, mode, p, q);
+	error = gus_set_params(sc, setmode, usemode, p, r);
 	return error;
 }
 
 int
-gus_set_params(addr, mode, p, q)
+gus_set_params(addr, setmode, usemode, p, r)
 	void *addr;
-	int mode;
-	struct audio_params *p, *q;
+	int setmode, usemode;
+	struct audio_params *p, *r;
 {
 	struct gus_softc *sc = addr;
 	int s;
@@ -2143,32 +2143,26 @@ gus_set_params(addr, mode, p, q)
 
 	if (p->sample_rate > gus_max_frequency[sc->sc_voices - GUS_MIN_VOICES])
 		p->sample_rate = gus_max_frequency[sc->sc_voices - GUS_MIN_VOICES];
-	if (mode == AUMODE_RECORD)
+	if (setmode & AUMODE_RECORD)
 		sc->sc_irate = p->sample_rate;
-	else
+	if (setmode & AUMODE_PLAY)
 		sc->sc_orate = p->sample_rate;
 
 	switch (p->encoding) {
 	case AUDIO_ENCODING_ULAW:
-		p->sw_code = mode == AUMODE_PLAY ? 
-			mulaw_to_ulinear8 : ulinear8_to_mulaw;
+		p->sw_code = mulaw_to_ulinear8;
+		r->sw_code = ulinear8_to_mulaw;
 		break;
 	case AUDIO_ENCODING_ALAW:
-		p->sw_code = mode == AUMODE_PLAY ? 
-			alaw_to_ulinear8 : ulinear8_to_alaw;
+		p->sw_code = alaw_to_ulinear8;
+		r->sw_code = ulinear8_to_alaw;
 		break;
 	case AUDIO_ENCODING_ULINEAR_BE:
 	case AUDIO_ENCODING_SLINEAR_BE:
-		p->sw_code = swap_bytes;
+		r->sw_code = p->sw_code = swap_bytes;
 		break;
-	default:
-		p->sw_code = 0;
 	}
 
-	/* Update setting for the other mode. */
-	q->encoding = p->encoding;
-	q->channels = p->channels;
-	q->precision = p->precision;
 	return 0;
 }
 
@@ -2260,8 +2254,11 @@ gusmax_commit_settings(addr)
 {
 	struct ad1848_softc *ac = addr;
 	struct gus_softc *sc = ac->parent;
+	int error;
 
-	(void) ad1848_commit_settings(ac);
+	error = ad1848_commit_settings(ac);
+	if (error)
+		return error;
 	return gus_commit_settings(sc);
 }
 

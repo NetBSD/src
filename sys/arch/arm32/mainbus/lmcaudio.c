@@ -1,4 +1,4 @@
-/* $NetBSD: lmcaudio.c,v 1.12 1997/08/19 23:49:44 augustss Exp $ */
+/* $NetBSD: lmcaudio.c,v 1.13 1997/08/24 22:31:25 augustss Exp $ */
 
 /*
  * Copyright (c) 1996, Danny C Tsen.
@@ -105,7 +105,6 @@ void lmcaudio_timeout	__P((void *arg));
 int lmcaudio_intr	__P((void *arg));
 int lmcaudio_dma_program	__P((vm_offset_t cur, vm_offset_t end, void (*intr)(), void *arg));
 void lmcaudio_dummy_routine	__P((void *arg));
-int lmcaudio_stereo	__P((int channel, int position));
 int lmcaudio_rate	__P((int rate));
 void lmcaudio_shutdown	__P((void));
 
@@ -312,7 +311,7 @@ lmcaudio_drain(addr)
  * ************************************************************************* */
 
 int    lmcaudio_query_encoding   __P((void *, struct audio_encoding *));
-int    lmcaudio_set_params       __P((void *, int, struct audio_params *, struct audio_params *));
+int    lmcaudio_set_params       __P((void *, int, int, struct audio_params *, struct audio_params *));
 int    lmcaudio_round_blocksize  __P((void *, int));
 int    lmcaudio_set_out_port	 __P((void *, int));
 int    lmcaudio_get_out_port	 __P((void *));
@@ -338,22 +337,17 @@ struct audio_device lmcaudio_device = {
 };
 
 int
-lmcaudio_set_params(addr, mode, p, q)
+lmcaudio_set_params(addr, setmode, usemode, p, r)
 	void *addr;
-	int mode;
-	struct audio_params *p, *q;
+	int setmode, usemode;
+	struct audio_params *p, *r;
 {
 	if (p->encoding != AUDIO_ENCODING_SLINEAR_LE ||
 	    p->precision != 16 ||
 	    p->channels != 2)
 		return EINVAL;
 
-	/* Update setting for the other mode. */
-	q->sample_rate = p->sample_rate;
-	q->encoding = p->encoding;
-	q->channels = p->channels;
-	q->precision = p->precision;
-	return 0;
+	return lmcaudio_rate(p->sample_rate);
 }
 
 int
@@ -616,14 +610,6 @@ lmcaudio_rate(rate)
 {
 	curr_rate = (int)(250000/rate + 0.5) - 2;
 	outl(VIDC_BASE, VIDC_SFR | curr_rate);
-	return(0);
-}
-
-int
-lmcaudio_stereo(channel, position)
-	int channel;
-	int position;
-{
 	return(0);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: am7930_sparc.c,v 1.27 1997/08/19 23:49:54 augustss Exp $	*/
+/*	$NetBSD: am7930_sparc.c,v 1.28 1997/08/24 22:31:27 augustss Exp $	*/
 
 /*
  * Copyright (c) 1995 Rolf Grossmann
@@ -393,10 +393,10 @@ amd7930_close(addr)
 }
 
 int
-amd7930_set_params(addr, mode, p, q)
+amd7930_set_params(addr, setmode, usemode, p, r)
 	void *addr;
-	int mode;
-	struct audio_params *p, *q;
+	int setmode, usemode;
+	struct audio_params *p, *r;
 {
 	if (p->sample_rate < 7500 || p->sample_rate > 8500 ||
 	    p->encoding != AUDIO_ENCODING_ULAW ||
@@ -404,12 +404,6 @@ amd7930_set_params(addr, mode, p, q)
 	    p->channels != 1)
 		return EINVAL;
 	p->sample_rate = 8000;	/* no other sampling rates supported by amd chip */
-
-	/* Update setting for the other mode. */
-	q->sample_rate = p->sample_rate;
-	q->encoding = p->encoding;
-	q->channels = p->channels;
-	q->precision = p->precision;
 
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: audioio.h,v 1.12 1997/07/27 01:17:10 augustss Exp $	*/
+/*	$NetBSD: audioio.h,v 1.13 1997/08/24 22:31:37 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -151,6 +151,7 @@ typedef struct audio_encoding {
 #define AUDIO_GETPROPS	_IOR('A', 34, int)
 #define  AUDIO_PROP_FULLDUPLEX	0x01
 #define  AUDIO_PROP_MMAP	0x02
+#define  AUDIO_PROP_INDEPENDENT	0x04
 
 /*
  * Mixer device
@@ -258,6 +259,7 @@ typedef struct mixer_ctrl {
 #define AudioNwave	"wave"
 #define AudioNmidi	"midi"
 #define AudioNmixerout	"mixerout"
+#define AudioNswap	"swap"
 
 #define AudioEmulaw "mulaw"
 #define AudioEalaw "alaw"
