@@ -1,4 +1,4 @@
-/*	$NetBSD: umassvar.h,v 1.3 2001/04/17 00:50:13 augustss Exp $	*/
+/*	$NetBSD: umassvar.h,v 1.4 2001/11/25 19:05:23 augustss Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
  *		      Nick Hibma <n_hibma@freebsd.org>
@@ -139,7 +139,8 @@ typedef void (*transfer_cb_f)(struct umass_softc *sc, void *priv,
 typedef void (*wire_reset_f)(struct umass_softc *sc, int status);
 typedef void (*wire_transfer_f)(struct umass_softc *sc, int lun,
 				void *cmd, int cmdlen, void *data, int datalen, 
-				int dir, transfer_cb_f cb, void *priv);
+				int dir, u_int timeout, transfer_cb_f cb,
+				void *priv);
 typedef void (*wire_state_f)(usbd_xfer_handle xfer,
 			     usbd_private_handle priv, usbd_status err);
 

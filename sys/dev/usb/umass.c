@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.66 2001/11/23 01:15:28 augustss Exp $	*/
+/*	$NetBSD: umass.c,v 1.67 2001/11/25 19:05:22 augustss Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
  *		      Nick Hibma <n_hibma@freebsd.org>
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.66 2001/11/23 01:15:28 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.67 2001/11/25 19:05:22 augustss Exp $");
 
 #include "atapibus.h"
 
@@ -181,12 +181,12 @@ Static void umass_reset(struct umass_softc *sc,	transfer_cb_f cb, void *priv);
 /* Bulk-Only related functions */
 Static void umass_bbb_reset(struct umass_softc *sc, int status);
 Static void umass_bbb_transfer(struct umass_softc *sc, int lun,
-				void *cmd, int cmdlen,
-				void *data, int datalen, int dir,
-				transfer_cb_f cb, void *priv);
+			       void *cmd, int cmdlen,
+			       void *data, int datalen, int dir,
+			       u_int timeout, transfer_cb_f cb, void *priv);
 Static void umass_bbb_state(usbd_xfer_handle xfer,
-				usbd_private_handle priv,
-				usbd_status err);
+			    usbd_private_handle priv,
+			    usbd_status err);
 usbd_status umass_bbb_get_max_lun(struct umass_softc *sc, u_int8_t *maxlun);
 
 
@@ -195,9 +195,9 @@ Static int umass_cbi_adsc(struct umass_softc *sc, char *buffer,int buflen,
 				usbd_xfer_handle xfer);
 Static void umass_cbi_reset(struct umass_softc *sc, int status);
 Static void umass_cbi_transfer(struct umass_softc *sc, int lun,
-				void *cmd, int cmdlen,
-				void *data, int datalen, int dir,
-				transfer_cb_f cb, void *priv);
+			       void *cmd, int cmdlen,
+			       void *data, int datalen, int dir,
+			       u_int timeout, transfer_cb_f cb, void *priv);
 Static void umass_cbi_state(usbd_xfer_handle xfer,
 				usbd_private_handle priv, usbd_status err);
 
@@ -916,8 +916,8 @@ umass_bbb_reset(struct umass_softc *sc, int status)
 
 Static void
 umass_bbb_transfer(struct umass_softc *sc, int lun, void *cmd, int cmdlen,
-		    void *data, int datalen, int dir,
-		    transfer_cb_f cb, void *priv)
+		   void *data, int datalen, int dir, u_int timeout,
+		   transfer_cb_f cb, void *priv)
 {
 	static int dCBWtag = 42;	/* unique for CBW of transfer */
 
@@ -927,6 +927,9 @@ umass_bbb_transfer(struct umass_softc *sc, int lun, void *cmd, int cmdlen,
 	KASSERT(sc->proto & PROTO_BBB,
 		("sc->proto == 0x%02x wrong for umass_bbb_transfer\n",
 		sc->proto));
+
+	/* Be a little generous. */
+	sc->timeout = timeout + USBD_DEFAULT_TIMEOUT;
 
 	/*
 	 * Do a Bulk-Only transfer with cmdlen bytes from cmd, possibly
@@ -1401,8 +1404,8 @@ umass_cbi_reset(struct umass_softc *sc, int status)
 
 Static void
 umass_cbi_transfer(struct umass_softc *sc, int lun,
-		void *cmd, int cmdlen, void *data, int datalen, int dir,
-		transfer_cb_f cb, void *priv)
+		   void *cmd, int cmdlen, void *data, int datalen, int dir,
+		   u_int timeout, transfer_cb_f cb, void *priv)
 {
 	DPRINTF(UDMASS_CBI,("%s: umass_cbi_transfer cmd=0x%02x, len=%d\n",
 		USBDEVNAME(sc->sc_dev), *(u_char*)cmd, datalen));
@@ -1413,6 +1416,9 @@ umass_cbi_transfer(struct umass_softc *sc, int lun,
 
 	if (sc->sc_dying)
 		return;
+
+	/* Be a little generous. */
+	sc->timeout = timeout + USBD_DEFAULT_TIMEOUT;
 
 	/*
 	 * Do a CBI transfer with cmdlen bytes from cmd, possibly
