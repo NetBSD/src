@@ -1,10 +1,11 @@
-#	$NetBSD: Makefile.inc,v 1.53 2002/11/29 12:58:17 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.54 2003/04/07 16:22:43 drochner Exp $
 #	from: @(#)Makefile.inc	8.3 (Berkeley) 2/4/95
 
 # stdlib sources
 .PATH: ${ARCHDIR}/stdlib ${.CURDIR}/stdlib
 
 SRCS+=	_rand48.c _strtoimax.c _strtoumax.c _strtoll.c _strtoull.c \
+	__unsetenv13.c \
 	a64l.c abort.c atexit.c atof.c atoi.c atol.c atoll.c \
 	bsearch.c calloc.c drand48.c erand48.c exit.c \
 	getenv.c getopt.c getopt_long.c getsubopt.c \
@@ -14,7 +15,8 @@ SRCS+=	_rand48.c _strtoimax.c _strtoumax.c _strtoll.c _strtoull.c \
 	rand.c rand_r.c random.c seed48.c setenv.c srand48.c \
 	strsuftoll.c strtod.c \
 	strtoimax.c strtol.c strtoll.c strtoq.c strtoul.c strtoull.c \
-	strtoumax.c strtouq.c system.c tdelete.c tfind.c tsearch.c twalk.c
+	strtoumax.c strtouq.c system.c tdelete.c tfind.c tsearch.c twalk.c \
+	unsetenv.c
 
 # machine-dependent stdlib sources
 # m-d Makefile.inc must include sources for:
