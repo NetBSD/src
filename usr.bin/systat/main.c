@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.15.2.1 1999/09/26 13:36:43 he Exp $	*/
+/*	$NetBSD: main.c,v 1.15.2.2 1999/12/20 23:54:16 he Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: main.c,v 1.15.2.1 1999/09/26 13:36:43 he Exp $");
+__RCSID("$NetBSD: main.c,v 1.15.2.2 1999/12/20 23:54:16 he Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -100,6 +100,7 @@ main(argc, argv)
 
 	egid = getegid();
 	(void)setegid(getgid());
+
 	while ((ch = getopt(argc, argv, "M:N:w:")) != -1)
 		switch(ch) {
 		case 'M':
@@ -331,7 +332,7 @@ error(fmt, va_alist)
 
 	if (wnd) {
 		getyx(stdscr, oy, ox);
-		(void) vsprintf(buf, fmt, ap);
+		(void) vsnprintf(buf, sizeof(buf), fmt, ap);
 		clrtoeol();
 		standout();
 		mvaddstr(CMDLINE, 0, buf);
