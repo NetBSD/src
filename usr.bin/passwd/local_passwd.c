@@ -1,4 +1,4 @@
-/*	$NetBSD: local_passwd.c,v 1.14 1997/10/19 12:29:51 lukem Exp $	*/
+/*	$NetBSD: local_passwd.c,v 1.15 1998/04/02 10:38:25 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)local_passwd.c    8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: local_passwd.c,v 1.14 1997/10/19 12:29:51 lukem Exp $");
+__RCSID("$NetBSD: local_passwd.c,v 1.15 1998/04/02 10:38:25 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,6 +52,7 @@ __RCSID("$NetBSD: local_passwd.c,v 1.14 1997/10/19 12:29:51 lukem Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 #include <util.h>
 
