@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.77 1999/12/16 07:01:23 lukem Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.78 1999/12/18 05:51:35 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.77 1999/12/16 07:01:23 lukem Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.78 1999/12/18 05:51:35 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -150,6 +150,7 @@ __RCSID("$NetBSD: ftpd.c,v 1.77 1999/12/16 07:01:23 lukem Exp $");
 #include <time.h>
 #include <unistd.h>
 #include <util.h>
+#include <utmp.h>
 #ifdef SKEY
 #include <skey.h>
 #endif
@@ -160,6 +161,7 @@ __RCSID("$NetBSD: ftpd.c,v 1.77 1999/12/16 07:01:23 lukem Exp $");
 
 #include "extern.h"
 #include "pathnames.h"
+#include "version.h"
 
 #if __STDC__
 #include <stdarg.h>
@@ -167,7 +169,7 @@ __RCSID("$NetBSD: ftpd.c,v 1.77 1999/12/16 07:01:23 lukem Exp $");
 #include <varargs.h>
 #endif
 
-const char version[] = "NetBSD-ftpd 19991216";
+const char version[] = FTPD_VERSION;
 
 union sockunion  ctrl_addr;
 union sockunion  data_source;
@@ -186,6 +188,7 @@ int	type;
 int	form;
 int	stru;			/* avoid C keyword */
 int	mode;
+int	doutmp = 0;		/* update utmp file */
 int	usedefault = 1;		/* for data transfers */
 int	pdata = -1;		/* for passive mode */
 int	family = AF_INET;
@@ -198,6 +201,7 @@ char	hostname[MAXHOSTNAMELEN+1];
 char	remotehost[MAXHOSTNAMELEN+1];
 static char ttyline[20];
 char	*tty = ttyline;		/* for klogin */
+static struct utmp utmp;	/* for utmp */
 
 off_t	total_data_in;		/* total file data bytes received */
 off_t	total_data_out;		/* total file data bytes sent data */
@@ -277,7 +281,7 @@ main(argc, argv)
 	(void)strcpy(confdir, _DEFAULT_CONFDIR);
 	hostname[0] = '\0';
 
-	while ((ch = getopt(argc, argv, "a:c:C:dh:lst:T:u:v46")) != -1) {
+	while ((ch = getopt(argc, argv, "a:c:C:dh:lst:T:u:Uv46")) != -1) {
 		switch (ch) {
 		case 'a':
 			anondir = optarg;
@@ -313,6 +317,10 @@ main(argc, argv)
 		case 'u':
 			warnx("-%c has been deprecated in favour of ftpd.conf",
 			    ch);
+			break;
+
+		case 'U':
+			doutmp = 1;
 			break;
 
 		case '4':
@@ -407,7 +415,7 @@ main(argc, argv)
 	(void) freopen(_PATH_DEVNULL, "w", stderr);
 	(void) signal(SIGPIPE, lostconn);
 	(void) signal(SIGCHLD, SIG_IGN);
-	if ((long)signal(SIGURG, myoob) < 0)
+	if (signal(SIGURG, myoob) == SIG_ERR)
 		syslog(LOG_ERR, "signal: %m");
 
 	/* Try to handle urgent data inline */
@@ -496,6 +504,7 @@ sgetpwnam(name)
 		return (p);
 	if (save.pw_name) {
 		free((char *)save.pw_name);
+		memset(save.pw_passwd, 0, strlen(save.pw_passwd));
 		free((char *)save.pw_passwd);
 		free((char *)save.pw_gecos);
 		free((char *)save.pw_dir);
@@ -721,8 +730,11 @@ end_login()
 {
 
 	(void) seteuid((uid_t)0);
-	if (logged_in)
+	if (logged_in) {
 		logwtmp(ttyline, "", "");
+		if (doutmp)
+			logout(utmp.ut_line);
+	}
 	pw = NULL;
 	logged_in = 0;
 	curclass.type = CLASS_REAL;
@@ -732,9 +744,9 @@ void
 pass(passwd)
 	const char *passwd;
 {
-	int rval;
-	const char *cp, *shell, *home;
-	char	*class;
+	int		 rval;
+	const char	*cp, *shell, *home;
+	char		*class;
 
 	class = NULL;
 	if (logged_in || askpasswd == 0) {
@@ -838,6 +850,17 @@ skip:
 
 	/* open wtmp before chroot */
 	logwtmp(ttyline, pw->pw_name, remotehost);
+
+	/* open utmp before chroot */
+	if (doutmp) {
+		memset((void *)&utmp, 0, sizeof(utmp));
+		(void)time(&utmp.ut_time);
+		(void)strncpy(utmp.ut_name, pw->pw_name, sizeof(utmp.ut_name));
+		(void)strncpy(utmp.ut_host, remotehost, sizeof(utmp.ut_host));
+		(void)strncpy(utmp.ut_line, ttyline, sizeof(utmp.ut_line));
+		login(&utmp);
+	}
+
 	logged_in = 1;
 
 			/* check user in /etc/ftpchroot */
@@ -2055,7 +2078,7 @@ renamefrom(name)
 		return (NULL);
 	}
 	reply(350, "File exists, ready for destination name");
-	return (name);
+	return (xstrdup(name));
 }
 
 void
@@ -2105,6 +2128,8 @@ dologout(status)
 	if (logged_in) {
 		(void) seteuid((uid_t)0);
 		logwtmp(ttyline, "", "");
+		if (doutmp)
+			logout(utmp.ut_line);
 #ifdef KERBEROS
 		if (!notickets && krbtkfile_env)
 			unlink(krbtkfile_env);
@@ -2135,6 +2160,7 @@ myoob(signo)
 		longjmp(urgcatch, 1);
 	}
 	if (strcasecmp(cp, "STAT\r\n") == 0) {
+		tmpline[0] = '\0';
 		if (file_size != (off_t) -1)
 			reply(213, "Status: %qd of %qd byte%s transferred",
 			    (qdfmt_t)byte_count, (qdfmt_t)file_size,
@@ -2539,7 +2565,7 @@ logcmd(command, bytes, file1, file2, elapsed, error)
 	const struct timeval	*elapsed;
 	const char		*error;
 {
-	char	buf[MAXPATHLEN + 100], realfile[MAXPATHLEN + 1];
+	char	buf[MAXPATHLEN * 2 + 100], realfile[MAXPATHLEN + 1];
 	const char *p;
 	size_t	len;
 
