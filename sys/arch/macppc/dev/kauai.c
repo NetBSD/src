@@ -1,4 +1,4 @@
-/*	$NetBSD: kauai.c,v 1.1.2.2 2003/06/19 11:18:28 grant Exp $	*/
+/*	$NetBSD: kauai.c,v 1.1.2.3 2003/06/19 11:24:01 grant Exp $	*/
 
 /*-
  * Copyright (c) 2003 Tsubai Masanari.  All rights reserved.
@@ -76,8 +76,10 @@ void kauai_set_modes __P((struct channel_softc *));
 static void calc_timing_kauai __P((struct kauai_softc *, int));
 static int getnodebypci(pci_chipset_tag_t, pcitag_t);
 
-CFATTACH_DECL(kauai, sizeof(struct kauai_softc),
-    kauai_match, kauai_attach, NULL, wdcactivate);
+struct cfattach kauai_ca = {
+	sizeof(struct kauai_softc), kauai_match, kauai_attach,
+	NULL, wdcactivate
+};
 
 int
 kauai_match(parent, match, aux)
