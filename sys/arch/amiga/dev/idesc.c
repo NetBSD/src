@@ -1,4 +1,4 @@
-/*	$NetBSD: idesc.c,v 1.8 1994/12/01 17:25:13 chopps Exp $	*/
+/*	$NetBSD: idesc.c,v 1.9 1994/12/28 09:25:25 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -92,7 +92,7 @@
 #include <amiga/amiga/device.h>
 #include <amiga/amiga/cia.h>
 #include <amiga/amiga/custom.h>
-#include <amiga/dev/ztwobusvar.h>
+#include <amiga/dev/zbusvar.h>
 
 #define	b_cylin		b_resid
 

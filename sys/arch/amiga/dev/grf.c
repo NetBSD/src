@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.16 1994/12/01 17:24:58 chopps Exp $	*/
+/*	$NetBSD: grf.c,v 1.17 1994/12/28 09:25:05 chopps Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -148,9 +148,7 @@ grfattach(pdp, dp, auxp)
 	 * find our major device number 
 	 */
 	for(maj = 0; maj < nchrdev; maj++)
-		if (cdevsw[maj].d_open ==
-		    (int (*)__P((dev_t,int,int,struct proc *,struct file*)))
-		    grfopen)
+		if (cdevsw[maj].d_open == grfopen)
 			break;
 
 	gp->g_grfdev = makedev(maj, gp->g_unit);
@@ -268,6 +266,8 @@ grfioctl(dev, cmd, data, flag, p)
 	case GRFIOCSSPRITEINF:
 	case GRFIOCGSPRITEINF:
 	case GRFIOCGSPRITEMAX:
+	case GRFTOGGLE: /* Toggles between Cirrus boards and native ECS on
+                     Amiga. 15/11/94 ill */
 		return(gp->g_mode(gp, GM_GRFIOCTL, cmd, data));
 	default:
 		/*

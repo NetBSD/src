@@ -1,4 +1,4 @@
-/*	$NetBSD: sbic.c,v 1.6 1994/10/26 02:04:37 cgd Exp $	*/
+/*	$NetBSD: sbic.c,v 1.7 1994/12/28 09:25:48 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -76,13 +76,13 @@
 
 extern u_int kvtop();
 
-int  sbicicmd __P((struct sbic_softc *, int, void *, int, void *, int,u_char));
+int  sbicicmd __P((struct sbic_softc *, int, int, void *, int, void *, int,u_char));
 int  sbicgo __P((struct sbic_softc *, struct scsi_xfer *));
 int  sbicdmaok __P((struct sbic_softc *, struct scsi_xfer *));
 int  sbicgetsense __P((struct sbic_softc *, struct scsi_xfer *));
 int  sbicwait __P((sbic_regmap_p, char, int , int));
 int  sbiccheckdmap __P((void *, u_long, u_long)); 
-int  sbicselectbus __P((struct sbic_softc *, sbic_regmap_p, u_char, u_char));
+int  sbicselectbus __P((struct sbic_softc *, sbic_regmap_p, u_char, u_char, u_char));
 int  sbicxfstart __P((sbic_regmap_p, int, u_char, int));
 int  sbicxfout __P((sbic_regmap_p regs, int, void *, int));
 int  sbicfromscsiperiod __P((struct sbic_softc *, sbic_regmap_p, int));
@@ -228,10 +228,11 @@ sbic_donextcmd(dev)
 		sbicreset(dev);
 
 	dev->sc_stat[0] = -1;
+	xs->cmd->bytes[0] |= slp->lun << 5;
 	if (phase == STATUS_PHASE || flags & SCSI_NOMASK ||
 	    sbicdmaok(dev, xs) == 0) 
-		stat = sbicicmd(dev, slp->target, xs->cmd, xs->cmdlen, 
-		    xs->data, xs->datalen, phase);
+		stat = sbicicmd(dev, slp->target, slp->lun, xs->cmd,
+		    xs->cmdlen, xs->data, xs->datalen, phase);
 	else if (sbicgo(dev, xs) == 0)
 		return;
 	else 
@@ -324,8 +325,8 @@ sbicgetsense(dev, xs)
 	    
 	rqs.unused[0] = rqs.unused[1] = rqs.control = 0;
 	
-	return(sbicicmd(dev, slp->target, &rqs, sizeof(rqs), &xs->sense,
-	    rqs.length, DATA_IN_PHASE));
+	return(sbicicmd(dev, slp->target, slp->lun, &rqs, sizeof(rqs),
+	    &xs->sense, rqs.length, DATA_IN_PHASE));
 }
 
 int
@@ -536,10 +537,10 @@ sbicerror(dev, regs, csr)
  * select the bus, return when selected or error.
  */
 int
-sbicselectbus(dev, regs, target, our_addr)
+sbicselectbus(dev, regs, target, lun, our_addr)
         struct sbic_softc *dev;
 	sbic_regmap_p regs;
-	u_char target, our_addr;
+	u_char target, lun, our_addr;
 {
 	u_char asr, csr, id;
 
@@ -606,7 +607,7 @@ sbicselectbus(dev, regs, target, our_addr)
 	
 
 		if (dev->sc_sync[id].state != SYNC_START)
-			SEND_BYTE (regs, MSG_IDENTIFY);
+			SEND_BYTE (regs, MSG_IDENTIFY | lun);
 		else {
 			/*
 			 * try to initiate a sync transfer.
@@ -622,7 +623,7 @@ sbicselectbus(dev, regs, target, our_addr)
 			/*
 			 * setup scsi message sync message request
 			 */
-			dev->sc_msg[0] = MSG_IDENTIFY;
+			dev->sc_msg[0] = MSG_IDENTIFY | lun;
 			dev->sc_msg[1] = MSG_EXT_MESSAGE;
 			dev->sc_msg[2] = 3;
 			dev->sc_msg[3] = MSG_SYNC_REQ;
@@ -793,7 +794,7 @@ sbicxfin(regs, len, bp)
  * be one of DATA_IN_PHASE, DATA_OUT_PHASE or STATUS_PHASE.
  */
 int
-sbicicmd(dev, target, cbuf, clen, buf, len, xferphase)
+sbicicmd(dev, target, lun, cbuf, clen, buf, len, xferphase)
 	struct sbic_softc *dev;
 	void *cbuf, *buf;
 	int clen, len;
@@ -814,7 +815,7 @@ retry_selection:
 	/*
 	 * select the SCSI bus (it's an error if bus isn't free)
 	 */
-	if (sbicselectbus(dev, regs, target, dev->sc_scsiaddr))
+	if (sbicselectbus(dev, regs, target, lun, dev->sc_scsiaddr))
 		return(-1);
 	/* 
 	 * Wait for a phase change (or error) then let the device sequence 
@@ -1120,7 +1121,8 @@ sbicgo(dev, xs)
 	/*
 	 * select the SCSI bus (it's an error if bus isn't free)
 	 */
-	if (sbicselectbus(dev, regs, target, dev->sc_scsiaddr)) {
+	if (sbicselectbus(dev, regs, target, xs->sc_link->lun,
+	    dev->sc_scsiaddr)) {
 		dev->sc_dmafree(dev);
 		return(-1);
 	}

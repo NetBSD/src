@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_rt.c,v 1.19 1994/12/01 17:25:09 chopps Exp $	*/
+/*	$NetBSD: grf_rt.c,v 1.20 1994/12/28 09:25:11 chopps Exp $	*/
 
 #include "grfrt.h"
 #if NGRFRT > 0
@@ -12,7 +12,7 @@
 #include <sys/device.h>
 #include <machine/cpu.h>
 #include <amiga/amiga/device.h>
-#include <amiga/dev/ztwobusvar.h>
+#include <amiga/dev/zbusvar.h>
 #include <amiga/dev/grfioctl.h>
 #include <amiga/dev/grfvar.h>
 #include <amiga/dev/grf_rtreg.h>
@@ -765,7 +765,7 @@ grfrtmatch(pdp, cfp, auxp)
 #ifdef RETINACONSOLE
 	static int rtconunit = -1;
 #endif
-	struct ztwobus_args *zap;
+	struct zbus_args *zap;
 
 	zap = auxp;
 
@@ -804,7 +804,7 @@ grfrtmatch(pdp, cfp, auxp)
 }
 
 /* 
- * attach to the grfbus (ztwobus)
+ * attach to the grfbus (zbus)
  */
 void
 grfrtattach(pdp, dp, auxp)
@@ -813,7 +813,7 @@ grfrtattach(pdp, dp, auxp)
 {
 	static struct grf_softc congrf;
 	static int coninited;
-	struct ztwobus_args *zap;
+	struct zbus_args *zap;
 	struct grf_softc *gp;
 
 	zap = auxp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: grfioctl.h,v 1.7 1994/10/26 02:03:32 cgd Exp $	*/
+/*	$NetBSD: grfioctl.h,v 1.8 1994/12/28 09:25:19 chopps Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -121,7 +121,8 @@ struct grfvideo_mode {
 #define GRFSETVMODE	_IOW('G', 42, int)
 	/* get number of configured video modes */
 #define GRFGETNUMVM	_IOR('G', 43, int)
-
+	/* toggle between Cirrus and ECS, ill */
+#define GRFTOGGLE	_IO('G', 44)
 
 /*
  * generic framebuffer-related ioctls. These are somewhat

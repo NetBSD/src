@@ -1,4 +1,4 @@
-/*	$NetBSD: grfvar.h,v 1.9 1994/10/26 02:03:33 cgd Exp $	*/
+/*	$NetBSD: grfvar.h,v 1.10 1994/12/28 09:25:20 chopps Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -91,6 +91,7 @@ struct	grf_softc {
 #define GM_GRFSETBANK	10
 #define GM_GRFGETCURBANK 11
 #define GM_GRFIOCTL	12
+#define GM_GRFTOGGLE 13
 
 /* minor device interpretation */
 #define GRFOVDEV	0x10	/* XXX no driver uses yet, overlay planes */
@@ -103,5 +104,6 @@ struct	grf_softc {
 enum grfunits {
 	GRF_CC_UNIT,
 	GRF_RETINAII_UNIT,
-	GRF_RETINAIII_UNIT
+	GRF_RETINAIII_UNIT,
+	GRF_CL5426_UNIT
 };

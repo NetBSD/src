@@ -1,4 +1,4 @@
-/*	$NetBSD: mlhsc.c,v 1.5 1994/12/01 17:25:28 chopps Exp $	*/
+/*	$NetBSD: mlhsc.c,v 1.6 1994/12/28 09:25:45 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -44,7 +44,7 @@
 #include <amiga/amiga/device.h>
 #include <amiga/dev/scireg.h>
 #include <amiga/dev/scivar.h>
-#include <amiga/dev/ztwobusvar.h>
+#include <amiga/dev/zbusvar.h>
 
 int mlhscprint __P((void *auxp, char *));
 void mlhscattach __P((struct device *, struct device *, void *));
@@ -94,7 +94,7 @@ mlhscmatch(pdp, cdp, auxp)
 	struct cfdata *cdp;
 	void *auxp;
 {
-	struct ztwobus_args *zap;
+	struct zbus_args *zap;
 
 	zap = auxp;
 
@@ -114,7 +114,7 @@ mlhscattach(pdp, dp, auxp)
 {
 	volatile u_char *rp;
 	struct sci_softc *sc;
-	struct ztwobus_args *zap;
+	struct zbus_args *zap;
 
 	printf("\n");
 
