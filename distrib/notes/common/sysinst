@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysinst,v 1.34 2002/05/25 15:46:04 bjh21 Exp $
+.\"	$NetBSD: sysinst,v 1.35 2002/06/05 12:55:14 wiz Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -406,7 +406,7 @@ The main menu will be displayed.
 .ne 10
 . cs \n(.f 22
   .***********************************************.
-  * NetBSD-1.5.1 Install System                   *
+  * NetBSD-1.6 Install System                     *
   *                                               *
   *\*>a: Install NetBSD to hard disk                *
   * b: Upgrade NetBSD on a hard disk              *
