@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_ioframebuffer.c,v 1.30 2003/12/27 22:06:19 manu Exp $ */
+/*	$NetBSD: darwin_ioframebuffer.c,v 1.31 2003/12/29 01:34:02 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_ioframebuffer.c,v 1.30 2003/12/27 22:06:19 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_ioframebuffer.c,v 1.31 2003/12/29 01:34:02 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -511,8 +511,8 @@ darwin_ioframebuffer_connect_map_memory(args)
 		struct vnode *vp;
 
 		/* 
-		 * Use unit given by sysctl emul.darwin.ioframebuffer_unit
-		 * and emul.darwin.ioframebuffer_screen
+		 * Use unit given by sysctl emul.darwin.ioframebuffer.unit
+		 * and emul.darwin.ioframebuffer.screen
 		 */
 		unit = darwin_ioframebuffer_unit;
 		screen = darwin_ioframebuffer_screen;
@@ -670,12 +670,32 @@ darwin_ioframebuffer_connect_method_scalari_structi(args)
 		break;
 	}
 
+	case DARWIN_IOFBSETGAMMATABLE: {
+		int entries;
+		int count;
+		int width;
+		int *data;
+
+		entries = req->req_in[0];
+		count = req->req_in[1];
+		width = req->req_in[2];
+
+#ifdef DEBUG_DARWIN
+		printf("DARWIN_IOFBSETGAMMATABLE: entries = %d, "
+		    "count = %d, width = %d\n", entries, count, width);
+#endif
+
+		data = &req->req_in[3];
+		break;
+	}
+
 	case DARWIN_IOFBSETCLUTWITHENTRIES: {
 		int index;
 		int option;
 		struct darwin_iocolorentry *clut; 
 		size_t clutlen;
-		size_t kcolorsize;
+		size_t tablen;
+		size_t kcolorsz;
 		caddr_t sg = stackgap_init(p, 0);
 		int error;
 		struct wsdisplay_cmap cmap;
@@ -695,42 +715,17 @@ darwin_ioframebuffer_connect_method_scalari_structi(args)
 		clutlen = struct_len / sizeof(*clut);
 		clut = (struct darwin_iocolorentry *)struct_data;
 
-		if (clutlen == 0)
+		if ((clutlen == 0) || (index >= 256))
 			break;	
-		if (clutlen >= 256)
-			return mach_msg_error(args, EINVAL);
 	
 #ifdef DEBUG_DARWIN
 		printf("DARWIN_IOFBSETCLUTWITHENTRIES: index = %d, "
 		    "option = %d, clutlen = %d\n", index, option, clutlen);
 #endif
 
-		kcolorsize = sizeof(u_char) * clutlen;
-		red = stackgap_alloc(p, &sg, kcolorsize);
-		green = stackgap_alloc(p, &sg, kcolorsize);
-		blue = stackgap_alloc(p, &sg, kcolorsize);
-
-		for (i = 0; i < clutlen; i++) {
-			kred[i] = (u_char)(clut->red >> 8);
-			kgreen[i] = (u_char)(clut->green >> 8);
-			kblue[i] = (u_char)(clut->blue >> 8);
-			clut++;
-		}
-
-		cmap.index = index;
-		cmap.count = clutlen;
-		cmap.red = red;
-		cmap.green = green;
-		cmap.blue = blue;
-
-		if (((error = copyout(kred, red, kcolorsize)) != 0) ||
-		    ((error = copyout(kgreen, green, kcolorsize)) != 0) ||
-		    ((error = copyout(kblue, blue, kcolorsize)) != 0))
-			return mach_msg_error(args, error);
-
 		/* 
 		 * Find wsdisplay. Use the screen given by sysctl
-		 * emul.darwin.ioframebuffer_screen
+		 * emul.darwin.ioframebuffer.screen
 		 */
 		unit = darwin_ioframebuffer_unit;
 		screen = darwin_ioframebuffer_screen;
@@ -740,9 +735,54 @@ darwin_ioframebuffer_connect_method_scalari_structi(args)
 		if ((wsdisplay = cdevsw_lookup(dev)) == NULL)
 			return mach_msg_error(args, ENXIO);
 
-		if ((error = (wsdisplay->d_ioctl)(dev, 
-		    WSDISPLAYIO_PUTCMAP, (caddr_t)&cmap, 0, p)) != 0)
-			return mach_msg_error(args, error);
+		/*
+		 * We only support 256 entries
+		 */
+		if (index + clutlen > 256)
+			clutlen = 256 - index;
+
+		/*
+		 * Big tables will not fit in the stackgap.
+		 * We have to split the data. 
+		 */
+		if (clutlen <= 128)
+			tablen = clutlen;
+		else
+			tablen = 128;
+
+		kcolorsz = sizeof(u_char) * tablen;
+		red = stackgap_alloc(p, &sg, kcolorsz);
+		green = stackgap_alloc(p, &sg, kcolorsz);
+		blue = stackgap_alloc(p, &sg, kcolorsz);
+
+		do {
+			for (i = 0; i < tablen; i++) {
+				kred[i] = (u_char)(clut->red >> 8);
+				kgreen[i] = (u_char)(clut->green >> 8);
+				kblue[i] = (u_char)(clut->blue >> 8);
+				clut++;
+			}
+
+			cmap.index = index;
+			cmap.count = tablen;
+			cmap.red = red;
+			cmap.green = green;
+			cmap.blue = blue;
+
+			if (((error = copyout(kred, red, kcolorsz)) != 0) ||
+			    ((error = copyout(kgreen, green, kcolorsz)) != 0) ||
+			    ((error = copyout(kblue, blue, kcolorsz)) != 0))
+				return mach_msg_error(args, error);
+
+			if ((error = (wsdisplay->d_ioctl)(dev, 
+			    WSDISPLAYIO_PUTCMAP, (caddr_t)&cmap, 0, p)) != 0)
+				return mach_msg_error(args, error);
+
+			index += tablen;
+			clutlen -= tablen;
+			if (clutlen <= 128)
+				tablen = clutlen;
+		} while (clutlen > 0);
 
 		break;
 	}
