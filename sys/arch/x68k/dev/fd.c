@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.48 2002/10/13 10:11:31 isaki Exp $	*/
+/*	$NetBSD: fd.c,v 1.49 2002/10/20 02:33:08 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -317,7 +317,7 @@ fdc_dmastart(fdc, read, addr, count)
 {
 	int error;
 
-	DPRINTF(("fdc_dmastart: (%s, addr = %p, count = %ld\n",
+	DPRINTF(("fdc_dmastart: %s, addr = %p, count = %ld\n",
 		 read ? "read" : "write", (caddr_t) addr, count));
 
 	error = bus_dmamap_load(fdc->sc_dmat, fdc->sc_dmamap, addr, count,
