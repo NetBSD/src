@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.19 1995/10/07 06:26:15 mycroft Exp $  */
+/* $NetBSD: machdep.c,v 1.20 1995/11/10 19:05:49 ragge Exp $  */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -46,6 +46,7 @@
  */
 
 #include "sys/param.h"
+#include "sys/systm.h"
 #include "sys/map.h"
 #include "sys/proc.h"
 #include "sys/user.h"
@@ -130,7 +131,6 @@ cpu_startup()
 	vm_size_t       size;
 	extern int      cpu_type, boothowto, startpmapdebug;
 	extern unsigned int avail_end;
-	extern char    *panicstr;
 
 	/*
 	 * Initialize error message buffer.
@@ -303,7 +303,7 @@ allocsys(v)
 	return v;
 }
 
-int             dumplo = 0;
+long    dumplo = 0;
 
 dumpconf()
 {
@@ -340,7 +340,9 @@ cpu_sysctl()
 	return (EOPNOTSUPP);
 }
 
-setstatclockrate()
+void
+setstatclockrate(hzrate)
+	int hzrate;
 {
 	panic("setstatclockrate");
 }
@@ -366,7 +368,7 @@ sys_sigreturn(p, v, retval)
 	struct sigcontext *cntx;
 
 	scf = p->p_addr->u_pcb.framep;
-	cntx = uap->sigcntxp;
+	cntx = SCARG(uap, sigcntxp);
 
 	/* Compatibility mode? */
 	if ((cntx->sc_ps & (PSL_IPL | PSL_IS)) ||
@@ -481,8 +483,6 @@ int             waittime = -1;
 boot(howto)
 	int             howto;
 {
-	extern char    *panicstr;
-
 	if ((howto & RB_NOSYNC) == 0 && waittime < 0) {
 		waittime = 0;
 		vfs_shutdown();
@@ -536,7 +536,7 @@ netintr()
 	}
 #endif
 #if NPPP > 0
-	if (n & (1 << NETISR_PPP)) {
+	if (netisr & (1 << NETISR_PPP)) {
 		pppintr();
 	}
 #endif
@@ -553,7 +553,7 @@ machinecheck(frame)
 
 dumpsys()
 {
-	extern int      dumpdev, dumplo;
+	extern int      dumpdev;
 
 	msgbufmapped = 0;
 	if (dumpdev == NODEV)
@@ -597,7 +597,9 @@ fuswintr()
 	panic("fuswintr: need to be implemented");
 }
 
-suibyte()
+suibyte(base, byte)
+	int byte;
+	void *base;
 {
 	panic("suibyte: need to be implemented");
 }
@@ -710,4 +712,12 @@ setsoftnet()
 ns_cksum()
 {
 	panic("ns_cksum");
+}
+
+cmrerr()
+{
+	switch (cpunumber) {
+	case VAX_750:
+		ka750_memerr();
+	}
 }
