@@ -1,0 +1,15 @@
+#source: tlspic1.s
+#source: tlspic2.s
+#as:
+#ld: -shared -melf64_ia64
+#objdump: -sj.got
+#target: ia64-*-*
+
+.*: +file format elf64-ia64-little
+
+Contents of section .got:
+ 131a0 0+ 0+ 0+ 0+  .*
+ 131b0 0+ 0+ [0-9a-f]+ [0-9a-f]+  .*
+ 131c0 [0-9a-f]+ [0-9a-f]+ [0-9a-f]+ [0-9a-f]+  .*
+ 131d0 [0-9a-f]+ [0-9a-f]+ [0-9a-f]+ [0-9a-f]+  .*
+ 131e0 440+ 0+ [0-9a-f]+ [0-9a-f]+  .*

@@ -1,0 +1,448 @@
+# Mensajes en español para opcodes-2.12.91
+# Copyright (C) 2002 Free Software Foundation, Inc.
+# Cristian Othón Martínez Vera <cfuga@itam.mx>, 2002.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: opcodes 2.12.91\n"
+"POT-Creation-Date: 2002-07-23 15:55-0400\n"
+"PO-Revision-Date: 2002-07-24 02:03-0500\n"
+"Last-Translator: Cristian Othón Martínez Vera <cfuga@itam.mx>\n"
+"Language-Team: Spanish <es@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=ISO-8859-1\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: alpha-opc.c:335
+msgid "branch operand unaligned"
+msgstr "operando de ramificación sin alinear"
+
+#: alpha-opc.c:358 alpha-opc.c:380
+msgid "jump hint unaligned"
+msgstr "pista de salto sin alinear"
+
+#: arc-dis.c:52
+msgid "Illegal limm reference in last instruction!\n"
+msgstr "¡Referencia limm ilegal en la última instrucción!\n"
+
+#: arm-dis.c:507
+msgid "<illegal precision>"
+msgstr "<precisión ilegal>"
+
+#: arm-dis.c:1010
+#, c-format
+msgid "Unrecognised register name set: %s\n"
+msgstr "Conjunto de nombres de registro no reconocido: %s\n"
+
+#: arm-dis.c:1017
+#, c-format
+msgid "Unrecognised disassembler option: %s\n"
+msgstr "Opción de desensamblador no reconocida: %s\n"
+
+#: arm-dis.c:1191
+msgid ""
+"\n"
+"The following ARM specific disassembler options are supported for use with\n"
+"the -M switch:\n"
+msgstr ""
+"\n"
+"Las siguientes opciones de desensamblador específicas de ARM tienen soporte\n"
+"para su uso con el interruptor -M:\n"
+
+#: avr-dis.c:118 avr-dis.c:128
+msgid "undefined"
+msgstr "sin definir"
+
+#: avr-dis.c:180
+msgid "Internal disassembler error"
+msgstr "Error interno del desensamblador"
+
+#: avr-dis.c:228
+#, c-format
+msgid "unknown constraint `%c'"
+msgstr "restricción `%c' desconocida"
+
+#: cgen-asm.c:346 fr30-ibld.c:195 frv-ibld.c:195 m32r-ibld.c:195
+#: openrisc-ibld.c:195 xstormy16-ibld.c:195
+#, c-format
+msgid "operand out of range (%ld not between %ld and %ld)"
+msgstr "operando fuera de rango (%ld no está entre %ld y %ld)"
+
+#: cgen-asm.c:367
+#, c-format
+msgid "operand out of range (%lu not between %lu and %lu)"
+msgstr "operando fuera de rango (%lu no está entre %lu y %lu)"
+
+#: d30v-dis.c:312
+#, c-format
+msgid "<unknown register %d>"
+msgstr "<registro %d desconocido>"
+
+#. Can't happen.
+#: dis-buf.c:57
+#, c-format
+msgid "Unknown error %d\n"
+msgstr "Error desconocido %d\n"
+
+#: dis-buf.c:62
+#, c-format
+msgid "Address 0x%x is out of bounds.\n"
+msgstr "La dirección 0x%x está fuera de los límites.\n"
+
+#: fr30-asm.c:323 frv-asm.c:595 m32r-asm.c:325 openrisc-asm.c:244
+#: xstormy16-asm.c:231
+#, c-format
+msgid "Unrecognized field %d while parsing.\n"
+msgstr "No se reconoció el campo %d durante la decodificación.\n"
+
+#: fr30-asm.c:373 frv-asm.c:645 m32r-asm.c:375 openrisc-asm.c:294
+#: xstormy16-asm.c:281
+msgid "missing mnemonic in syntax string"
+msgstr "falta el mnemónico en la cadena sintáctica"
+
+#. We couldn't parse it.
+#: fr30-asm.c:509 fr30-asm.c:513 fr30-asm.c:600 fr30-asm.c:702 frv-asm.c:781
+#: frv-asm.c:785 frv-asm.c:872 frv-asm.c:974 m32r-asm.c:511 m32r-asm.c:515
+#: m32r-asm.c:602 m32r-asm.c:704 openrisc-asm.c:430 openrisc-asm.c:434
+#: openrisc-asm.c:521 openrisc-asm.c:623 xstormy16-asm.c:417
+#: xstormy16-asm.c:421 xstormy16-asm.c:508 xstormy16-asm.c:610
+msgid "unrecognized instruction"
+msgstr "instrucción no reconocida"
+
+#: fr30-asm.c:556 frv-asm.c:828 m32r-asm.c:558 openrisc-asm.c:477
+#: xstormy16-asm.c:464
+#, c-format
+msgid "syntax error (expected char `%c', found `%c')"
+msgstr "error sintáctico (se esperaba el carácter `%c', se encontró `%c')"
+
+#: fr30-asm.c:566 frv-asm.c:838 m32r-asm.c:568 openrisc-asm.c:487
+#: xstormy16-asm.c:474
+#, c-format
+msgid "syntax error (expected char `%c', found end of instruction)"
+msgstr "error sintáctico (se esperaba el carácter `%c', se encontró el final de la instrucción)"
+
+#: fr30-asm.c:594 frv-asm.c:866 m32r-asm.c:596 openrisc-asm.c:515
+#: xstormy16-asm.c:502
+msgid "junk at end of line"
+msgstr "basura al final de la línea"
+
+#: fr30-asm.c:701 frv-asm.c:973 m32r-asm.c:703 openrisc-asm.c:622
+#: xstormy16-asm.c:609
+msgid "unrecognized form of instruction"
+msgstr "forma de instrucción no reconocida"
+
+#: fr30-asm.c:713 frv-asm.c:985 m32r-asm.c:715 openrisc-asm.c:634
+#: xstormy16-asm.c:621
+#, c-format
+msgid "bad instruction `%.50s...'"
+msgstr "instrucción errónea `%.50s...'"
+
+#: fr30-asm.c:716 frv-asm.c:988 m32r-asm.c:718 openrisc-asm.c:637
+#: xstormy16-asm.c:624
+#, c-format
+msgid "bad instruction `%.50s'"
+msgstr "instrucción errónea `%.50s'"
+
+#. Default text to print if an instruction isn't recognized.
+#: fr30-dis.c:39 frv-dis.c:39 m32r-dis.c:39 mmix-dis.c:282 openrisc-dis.c:39
+#: xstormy16-dis.c:39
+msgid "*unknown*"
+msgstr "*desconocida*"
+
+#: fr30-dis.c:318 frv-dis.c:360 m32r-dis.c:249 openrisc-dis.c:136
+#: xstormy16-dis.c:169
+#, c-format
+msgid "Unrecognized field %d while printing insn.\n"
+msgstr "No se reconoció el campo %d al mostrar insn.\n"
+
+#: fr30-ibld.c:166 frv-ibld.c:166 m32r-ibld.c:166 openrisc-ibld.c:166
+#: xstormy16-ibld.c:166
+#, c-format
+msgid "operand out of range (%ld not between %ld and %lu)"
+msgstr "operando fuera de rango (%ld no está entre %ld y %lu)"
+
+#: fr30-ibld.c:179 frv-ibld.c:179 m32r-ibld.c:179 openrisc-ibld.c:179
+#: xstormy16-ibld.c:179
+#, c-format
+msgid "operand out of range (%lu not between 0 and %lu)"
+msgstr "operando fuera de rango (%lu no está entre 0 y %lu)"
+
+#: fr30-ibld.c:730 frv-ibld.c:820 m32r-ibld.c:659 openrisc-ibld.c:633
+#: xstormy16-ibld.c:678
+#, c-format
+msgid "Unrecognized field %d while building insn.\n"
+msgstr "No se reconoció el campo %d al construir insn.\n"
+
+#: fr30-ibld.c:937 frv-ibld.c:1103 m32r-ibld.c:792 openrisc-ibld.c:735
+#: xstormy16-ibld.c:826
+#, c-format
+msgid "Unrecognized field %d while decoding insn.\n"
+msgstr "No se reconoció el campo %d al decodificar insn.\n"
+
+#: fr30-ibld.c:1086 frv-ibld.c:1348 m32r-ibld.c:902 openrisc-ibld.c:815
+#: xstormy16-ibld.c:939
+#, c-format
+msgid "Unrecognized field %d while getting int operand.\n"
+msgstr "No se reconoció el campo %d al obtener el operando int.\n"
+
+#: fr30-ibld.c:1215 frv-ibld.c:1573 m32r-ibld.c:992 openrisc-ibld.c:875
+#: xstormy16-ibld.c:1032
+#, c-format
+msgid "Unrecognized field %d while getting vma operand.\n"
+msgstr "No se reconoció el campo %d al obtener el operando vma.\n"
+
+#: fr30-ibld.c:1349 frv-ibld.c:1807 m32r-ibld.c:1090 openrisc-ibld.c:944
+#: xstormy16-ibld.c:1134
+#, c-format
+msgid "Unrecognized field %d while setting int operand.\n"
+msgstr "No se reconoció el campo %d al establecer el operando int.\n"
+
+#: fr30-ibld.c:1471 frv-ibld.c:2029 m32r-ibld.c:1176 openrisc-ibld.c:1001
+#: xstormy16-ibld.c:1224
+#, c-format
+msgid "Unrecognized field %d while setting vma operand.\n"
+msgstr "No se reconoció el campo %d al establecer el operando vma.\n"
+
+#: h8300-dis.c:385
+#, c-format
+msgid "Hmmmm %x"
+msgstr "Hmmmm %x"
+
+#: h8300-dis.c:396
+#, c-format
+msgid "Don't understand %x \n"
+msgstr "No se entiende %x \n"
+
+#: h8500-dis.c:143
+#, c-format
+msgid "can't cope with insert %d\n"
+msgstr "no se puede lidiar con insert %d\n"
+
+#. Couldn't understand anything.
+#: h8500-dis.c:350
+#, c-format
+msgid "%02x\t\t*unknown*"
+msgstr "%02x\t\t*desconocido*"
+
+#: i386-dis.c:1649
+msgid "<internal disassembler error>"
+msgstr "<error interno del desensamblador>"
+
+#: m10200-dis.c:199
+#, c-format
+msgid "unknown\t0x%02x"
+msgstr "desconocido\t0x%02x"
+
+#: m10200-dis.c:339
+#, c-format
+msgid "unknown\t0x%04lx"
+msgstr "desconocido\t0x%04lx"
+
+#: m10300-dis.c:685
+#, c-format
+msgid "unknown\t0x%04x"
+msgstr "desconocido\t0x%04x"
+
+#: m68k-dis.c:429
+#, c-format
+msgid "<internal error in opcode table: %s %s>\n"
+msgstr "<error interno en la tabla de códigos de operación: %s %s>\n"
+
+#: m68k-dis.c:1007
+#, c-format
+msgid "<function code %d>"
+msgstr "<código de función %d>"
+
+#: m88k-dis.c:255
+#, c-format
+msgid "# <dis error: %08x>"
+msgstr "# <error de desensamblador: %08x>"
+
+#: mips-dis.c:337
+#, c-format
+msgid "# internal error, undefined modifier(%c)"
+msgstr "# error interno, modificador(%c) sin definir"
+
+#: mips-dis.c:1209
+#, c-format
+msgid "# internal disassembler error, unrecognised modifier (%c)"
+msgstr "# error interno del desensamblador, modificador (%c) no reconocido"
+
+#: mmix-dis.c:34
+#, c-format
+msgid "Bad case %d (%s) in %s:%d\n"
+msgstr "Case %d erróneo (%s) en %s:%d\n"
+
+#: mmix-dis.c:44
+#, c-format
+msgid "Internal: Non-debugged code (test-case missing): %s:%d"
+msgstr "Interno: Código no depurado (falta el caso de prueba): %s:%d"
+
+#: mmix-dis.c:53
+msgid "(unknown)"
+msgstr "(desconocido)"
+
+#: mmix-dis.c:517
+#, c-format
+msgid "*unknown operands type: %d*"
+msgstr "*tipo de operandos operandos desconocido: %d*"
+
+#. I and Z are output operands and can`t be immediate
+#. * A is an address and we can`t have the address of
+#. * an immediate either. We don't know how much to increase
+#. * aoffsetp by since whatever generated this is broken
+#. * anyway!
+#.
+#: ns32k-dis.c:628
+msgid "$<undefined>"
+msgstr "$<sin definir>"
+
+#: ppc-opc.c:777 ppc-opc.c:810
+msgid "invalid conditional option"
+msgstr "opción condicional inválida"
+
+#: ppc-opc.c:812
+msgid "attempt to set y bit when using + or - modifier"
+msgstr "intento de establecer el bit y cuando se usaba el modificador + ó -"
+
+#: ppc-opc.c:844 ppc-opc.c:896
+msgid "offset not a multiple of 4"
+msgstr "el desplazamiento no es un múltiplo de 4"
+
+#: ppc-opc.c:869
+msgid "offset not between -2048 and 2047"
+msgstr "el desplazamiento no está entre -2048 y 2047"
+
+#: ppc-opc.c:894
+msgid "offset not between -8192 and 8191"
+msgstr "el desplazamiento no está entre -8192 y 8191"
+
+#: ppc-opc.c:922
+msgid "ignoring least significant bits in branch offset"
+msgstr "ignorando los bits menos significativos en el desplazamiento de la rama"
+
+#: ppc-opc.c:956 ppc-opc.c:993
+msgid "illegal bitmask"
+msgstr "máscara de bits ilegal"
+
+#: ppc-opc.c:1066
+msgid "value out of range"
+msgstr "valor fuera de rango"
+
+#: ppc-opc.c:1142
+msgid "index register in load range"
+msgstr "registro índice en el rango de carga"
+
+#: ppc-opc.c:1158
+msgid "invalid register operand when updating"
+msgstr "operando de registro inválido mientras se actualizaba"
+
+#. Mark as non-valid instruction
+#: sparc-dis.c:750
+msgid "unknown"
+msgstr "desconocida"
+
+#: sparc-dis.c:825
+#, c-format
+msgid "Internal error:  bad sparc-opcode.h: \"%s\", %#.8lx, %#.8lx\n"
+msgstr "Error interno:  sparc-opcode.h erróneo: \"%s\", %#.8lx, %#.8lx\n"
+
+#: sparc-dis.c:836
+#, c-format
+msgid "Internal error: bad sparc-opcode.h: \"%s\", %#.8lx, %#.8lx\n"
+msgstr "Error interno: sparc-opcode.h erróneo: \"%s\", %#.8lx, %#.8lx\n"
+
+#: sparc-dis.c:885
+#, c-format
+msgid "Internal error: bad sparc-opcode.h: \"%s\" == \"%s\"\n"
+msgstr "Error interno: sparc-opcode.h erróneo: \"%s\" == \"%s\"\n"
+
+#: v850-dis.c:224
+#, c-format
+msgid "unknown operand shift: %x\n"
+msgstr "operando de desplazamiento desconocido: %x\n"
+
+#: v850-dis.c:236
+#, c-format
+msgid "unknown pop reg: %d\n"
+msgstr "registro pop desconocido: %d\n"
+
+#. The functions used to insert and extract complicated operands.
+#. Note: There is a conspiracy between these functions and
+#. v850_insert_operand() in gas/config/tc-v850.c.  Error messages
+#. containing the string 'out of range' will be ignored unless a
+#. specific command line option is given to GAS.
+#: v850-opc.c:68
+msgid "displacement value is not in range and is not aligned"
+msgstr "el valor de desubicación no está en el rango y no está alineado"
+
+#: v850-opc.c:69
+msgid "displacement value is out of range"
+msgstr "el valor de desubicación está fuera de rango"
+
+#: v850-opc.c:70
+msgid "displacement value is not aligned"
+msgstr "el valor de desubicación no está alineado"
+
+#: v850-opc.c:72
+msgid "immediate value is out of range"
+msgstr "el valor inmediato está fuera de rango"
+
+#: v850-opc.c:83
+msgid "branch value not in range and to odd offset"
+msgstr "el valor de ramificación no está en rango e indica un desplazamiento impar"
+
+#: v850-opc.c:85 v850-opc.c:117
+msgid "branch value out of range"
+msgstr "el valor de ramificación está fuera de rango"
+
+#: v850-opc.c:88 v850-opc.c:120
+msgid "branch to odd offset"
+msgstr "ramificación a un desplazamiento impar"
+
+#: v850-opc.c:115
+msgid "branch value not in range and to an odd offset"
+msgstr "el valor de ramificación no está en rango e indica un desplazamiento impar"
+
+#: v850-opc.c:346
+msgid "invalid register for stack adjustment"
+msgstr "registro inválido para el ajuste de la pila"
+
+#: v850-opc.c:370
+msgid "immediate value not in range and not even"
+msgstr "el valor inmediato no está en rango y no es par"
+
+#: v850-opc.c:375
+msgid "immediate value must be even"
+msgstr "el valor inmediato debe ser par"
+
+#: xstormy16-asm.c:74
+msgid "Bad register in preincrement"
+msgstr "Registro erróneo en el preincremento"
+
+#: xstormy16-asm.c:79
+msgid "Bad register in postincrement"
+msgstr "Registro erróneo en el postincremento"
+
+#: xstormy16-asm.c:81
+msgid "Bad register name"
+msgstr "Nombre de registro erróneo"
+
+#: xstormy16-asm.c:85
+msgid "Label conflicts with register name"
+msgstr "La etiqueta tiene conflictos con el nombre de registro"
+
+#: xstormy16-asm.c:89
+msgid "Label conflicts with `Rx'"
+msgstr "La etiqueta tiene conflictos con `Rx'"
+
+#: xstormy16-asm.c:91
+msgid "Bad immediate expression"
+msgstr "Expresión inmediata errónea"
+
+#: xstormy16-asm.c:120
+msgid "Small operand was not an immediate number"
+msgstr "El operando small no era un número inmediato"
+
+#~ msgid "unrecognized keyword/register name"
+#~ msgstr "nombre clave/de registro no reconocido"
