@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.506 2002/03/25 16:39:53 martin Exp $
+#	$NetBSD: files,v 1.507 2002/03/28 11:56:32 pk Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -707,7 +707,7 @@ file	dev/ic/aic6915.c		sf
 # Mostek time-of-day clock and NVRAM
 #
 define	mk48txx
-file	dev/ic/mk48txx.c		mk48txx			needs-flag
+file	dev/ic/mk48txx.c		mk48txx
 
 # Intersil 7170 time-of-day clock
 #
