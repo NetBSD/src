@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.107 2003/10/10 11:53:44 yamt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.108 2003/10/10 13:02:34 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -37,8 +37,12 @@
 #ifndef _I386_CPU_H_
 #define _I386_CPU_H_
 
+#ifdef _KERNEL
 #if defined(_KERNEL_OPT)
 #include "opt_multiprocessor.h"
+#include "opt_math_emulate.h"
+#include "opt_user_ldt.h"
+#include "opt_vm86.h"
 #endif
 
 /*
@@ -53,8 +57,6 @@
 #include <sys/device.h>
 #include <sys/lock.h>			/* will also get LOCKDEBUG */
 #include <sys/sched.h>
-
-#ifdef _KERNEL
 
 #include <lib/libkern/libkern.h>	/* offsetof */
 
@@ -226,7 +228,6 @@ extern void need_resched __P((struct cpu_info *));
 #else /* !MULTIPROCESSOR */
 
 #define	X86_MAXPROCS		1
-
 #define	curcpu()		(&cpu_info_primary)
 
 /*
@@ -400,17 +401,11 @@ void	npxsave_cpu __P((struct cpu_info *, int));
 /* vm_machdep.c */
 int kvtop __P((caddr_t));
 
-#if !defined(_LKM)
-#include "opt_math_emulate.h"
-#endif
 #ifdef MATH_EMULATE
 /* math_emulate.c */
 int	math_emulate __P((struct trapframe *, ksiginfo_t *));
 #endif
 
-#if !defined(_LKM)
-#include "opt_user_ldt.h"
-#endif
 #ifdef USER_LDT
 /* sys_machdep.h */
 int	i386_get_ldt __P((struct lwp *, void *, register_t *));
@@ -421,9 +416,6 @@ int	i386_set_ldt __P((struct lwp *, void *, register_t *));
 void	isa_defaultirq __P((void));
 int	isa_nmi __P((void));
 
-#if !defined(_LKM)
-#include "opt_vm86.h"
-#endif
 #ifdef VM86
 /* vm86.c */
 void	vm86_gpfault __P((struct lwp *, int));
@@ -436,9 +428,9 @@ void kgdb_port_init __P((void));
 void x86_bus_space_init __P((void));
 void x86_bus_space_mallocok __P((void));
 
-#endif /* _KERNEL */
+#include <machine/psl.h>	/* Must be after struct cpu_info declaration */
 
-#include <machine/psl.h>
+#endif /* _KERNEL */
 
 /*
  * CTL_MACHDEP definitions.
@@ -483,7 +475,6 @@ void x86_bus_space_mallocok __P((void));
 	{ "tm_longrun_percentage", CTLTYPE_INT }, \
 }
 
-
 /*
  * Structure for CPU_DISKINFO sysctl call.
  * XXX this should be somewhere else.
@@ -510,5 +501,4 @@ struct disklist {
 		int ni_biosmatches[MAX_BIOSDISKS]; /* indices in dl_biosdisks */
 	} dl_nativedisks[1];			   /* actually longer */
 };
-
 #endif /* !_I386_CPU_H_ */
