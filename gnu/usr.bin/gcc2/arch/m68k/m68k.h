@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with GNU CC; see the file COPYING.  If not, write to
 the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 
-	$Id: m68k.h,v 1.1 1993/11/25 01:26:21 paulus Exp $
+	$Id: m68k.h,v 1.2 1994/03/03 10:35:53 pk Exp $
 */
 
 
@@ -254,11 +254,6 @@ extern int target_flags;
 
 /* This defines the register which is used to hold the offset table for PIC. */
 #define PIC_OFFSET_TABLE_REGNUM 13
-
-/* Used to output a (use pic_offset_table_rtx) so that we 
-   always save/restore a5 in functions that use PIC relocation
-   at *any* time during the compilation process. */
-#define FINALIZE_PIC finalize_pic()
 
 #ifndef SUPPORT_SUN_FPA
 
