@@ -1,4 +1,4 @@
-/* $NetBSD: darwin_syscallargs.h,v 1.29 2003/09/03 07:29:29 manu Exp $ */
+/* $NetBSD: darwin_syscallargs.h,v 1.30 2003/09/06 11:18:03 manu Exp $ */
 
 /*
  * System call argument lists.
@@ -205,12 +205,17 @@ struct bsd_sys_getfh_args {
 	syscallarg(fhandle_t *) fhp;
 };
 
-struct bsd_compat_12_sys_stat_args {
+struct darwin_sys_stat_args {
 	syscallarg(const char *) path;
 	syscallarg(struct stat12 *) ub;
 };
 
-struct bsd_compat_12_sys_lstat_args {
+struct darwin_sys_fstat_args {
+	syscallarg(int) fd;
+	syscallarg(struct stat12 *) sb;
+};
+
+struct darwin_sys_lstat_args {
 	syscallarg(const char *) path;
 	syscallarg(struct stat12 *) ub;
 };
@@ -426,9 +431,9 @@ int	compat_09_sys_setdomainname(struct lwp *, void *, register_t *);
 int	sys_setgid(struct lwp *, void *, register_t *);
 int	sys_setegid(struct lwp *, void *, register_t *);
 int	sys_seteuid(struct lwp *, void *, register_t *);
-int	bsd_compat_12_sys_stat(struct lwp *, void *, register_t *);
-int	compat_12_sys_fstat(struct lwp *, void *, register_t *);
-int	bsd_compat_12_sys_lstat(struct lwp *, void *, register_t *);
+int	darwin_sys_stat(struct lwp *, void *, register_t *);
+int	darwin_sys_fstat(struct lwp *, void *, register_t *);
+int	darwin_sys_lstat(struct lwp *, void *, register_t *);
 int	bsd_sys_pathconf(struct lwp *, void *, register_t *);
 int	sys_fpathconf(struct lwp *, void *, register_t *);
 int	sys_getrlimit(struct lwp *, void *, register_t *);
