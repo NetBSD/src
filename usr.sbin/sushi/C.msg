@@ -20,8 +20,6 @@ $set 1 errors
 19 No menu hierchy found.
 20 Bad keybinding
 21 Bad keyword in config file
-22 Cannot initialize curses
-23 failed to allocate bottomhelp window
 $set 2 labels
 1 F1=Help
 2 F2=Refresh
@@ -45,6 +43,12 @@ $set 3 run.c stuff
 7 Finished
 8 Press any key to continue
 9 Use HOME,END,PGUP,PDGN,UP/DOWN Arrow keys to scroll ESC, F3 exits, F10 quits.
+10 The current field is a list field, and selections can only be made from
+11 the pre-defined list.  Please use TAB or the List(F4) command to edit.
+12 Press the ENTER key to return from the list popup.
+13 The current field is a multiple-selection list field.  The field can only
+14 be edited by issuing the List(F4) command, and toggling desired options
+15 with the spacebar.  Press the ENTER key to return from the list popup.
 $set 4 menu titles and stuff
 1 Select choice
 2 Generating form data, please wait
