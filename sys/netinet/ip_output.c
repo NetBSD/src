@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.84 2001/04/13 23:30:24 thorpej Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.85 2001/05/26 21:27:09 ragge Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -128,10 +128,6 @@
 
 #ifdef MROUTING
 #include <netinet/ip_mroute.h>
-#endif
-
-#ifdef __vax__
-#include <machine/mtpr.h>
 #endif
 
 #include <machine/stdarg.h>
@@ -1119,7 +1115,7 @@ ip_pcbopts(pcbopt, m)
 		return (0);
 	}
 
-#ifndef	vax
+#ifndef	__vax__
 	if (m->m_len % sizeof(int32_t))
 		goto bad;
 #endif
