@@ -1,4 +1,4 @@
-/*	$NetBSD: mesh.c,v 1.13 2001/11/04 12:03:41 tsutsui Exp $	*/
+/*	$NetBSD: mesh.c,v 1.14 2002/04/05 18:27:45 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000	Tsubai Masanari.
@@ -503,7 +503,7 @@ mesh_select(sc, scb)
 	sc->sc_prevphase = MESH_SELECTING;
 	sc->sc_nextstate = MESH_IDENTIFY;
 
-	timeout = (u_int64_t)scb->xs->timeout * (u_int64_t)hz / 1000;
+	timeout = mstohz(scb->xs->timeout);
 	if (timeout == 0)
 		timeout = 1;
 
