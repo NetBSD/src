@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_misc.c,v 1.10 2002/11/14 21:17:30 christos Exp $	 */
+/*	$NetBSD: mach_misc.c,v 1.11 2002/11/16 20:00:30 manu Exp $	 */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_misc.c,v 1.10 2002/11/14 21:17:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_misc.c,v 1.11 2002/11/16 20:00:30 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -302,19 +302,6 @@ int
 mach_sys_init_process(struct proc *p, void *v, register_t *r) {
 	*r = 0;
 	DPRINTF(("mach_sys_init_process();\n"));
-	return 0;
-}
-
-
-int
-mach_sys_map_fd(struct proc *p, void *v, register_t *r) {
-#ifdef DEBUG_MACH
-	struct mach_sys_map_fd_args *ap = v;
-#endif
-	*r = 0;
-	DPRINTF(("mach_sys_map_fd(0x%lx, %p, %d, %d);\n",
-	    SCARG(ap, offset), SCARG(ap, va), SCARG(ap, findspace),
-	    SCARG(ap, size)));
 	return 0;
 }
 
