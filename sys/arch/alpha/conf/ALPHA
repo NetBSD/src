@@ -1,4 +1,4 @@
-#	$NetBSD: ALPHA,v 1.30.2.1 1997/01/24 07:05:47 cgd Exp $
+#	$NetBSD: ALPHA,v 1.30.2.2 1997/01/25 01:29:52 cgd Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
@@ -114,10 +114,11 @@ scc1	at	ioasic? offset ?
 tcds0	at	tc? slot ? offset ?
 esp0	at	tcds? slot ?
 esp1	at	tcds? slot ?
-cfb*	at	tc? slot ? offset ?
-sfb*	at	tc? slot ? offset ?
+#cfb*	at	tc? slot ? offset ?
+#sfb*	at	tc? slot ? offset ?
 le*	at	tc? slot ? offset ?
 fta*	at	tc? slot ? offset ?		# DEC DEFTA FDDI cards
+#otto*	at	tc? slot ? offset ?		# DEC DGLTA ATM cards
 
 # PCI host bus adapter support
 apecs*	at	mainbus?
@@ -143,6 +144,8 @@ vga*	at	pci? dev ? function ?		# PCI VGA graphics
 ppb*	at	pci? dev ? function ?		# PCI-PCI bridges
 sio*	at	pci? dev ? function ?		# Intel PCI-ISA bridge
 tga*	at	pci? dev ? function ?		# DEC ZLXp-E[123] graphics
+#otto*	at	pci? dev ? function ?		# DEC DGLPB ATM cards
+pcimd*	at	pci? dev ? function ?		# PCI "miscellaneous" displays
 
 # ISA/EISA bus support
 isa*	at	pceb?
@@ -176,10 +179,13 @@ st*	at	scsibus? target ? lun ?		# SCSI tape drives
 uk*	at	scsibus? target ? lun ?		# SCSI unknown
 
 # Workstation Console attachments
-wscons*	at	cfb?
-wscons*	at	vga?
-wscons*	at	sfb?
-wscons*	at	tga?
+#wsdisplay*	at	cfb? console ?
+wsdisplay*	at	vga? console ?
+#wsdisplay*	at	sfb? console ?
+wsdisplay*	at	tga? console ?
+wsdisplay*	at	pcimd?
+wskbd*		at	pckbd? console ?
+wsmouse*	at	pms?
 
 pseudo-device	bpfilter	16
 pseudo-device	ccd		4
