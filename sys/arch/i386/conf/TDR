@@ -1,7 +1,7 @@
 #
 # Theo Deraadt's 486
 #
-#	$Id: TDR,v 1.16 1993/08/14 07:31:28 deraadt Exp $
+#	$Id: TDR,v 1.17 1993/08/26 09:52:16 deraadt Exp $
 #
 machine		"i386"
 cpu		"I486_CPU"
@@ -11,7 +11,7 @@ maxusers	10
 options		INET,NFSSERVER,NFSCLIENT,GATEWAY
 options		"COMPAT_43"
 options		"TCP_COMPAT_42"
-options		KERNFS
+options		KERNFS,FDESC
 options 	DDB
 options		"COMPAT_NOMID"
 options		"DUMMY_NOPS"
@@ -27,9 +27,8 @@ controller	fdc0	at isa? port "IO_FD1" bio irq 6 drq 2 vector fdintr
 disk		fd0	at fdc0 drive 0
 disk		fd1	at fdc0 drive 1
 
-device	com0	at isa? port "IO_COM1" tty irq 4 vector comintr
-device	com1	at isa? port "IO_COM2" tty irq 3 vector comintr
-
+device		com0	at isa? port "IO_COM1" tty irq 4 vector comintr
+device		com1	at isa? port "IO_COM2" tty irq 3 vector comintr
 
 device		pc0	at isa? port "IO_KBD" tty irq 1 vector pcrint
 device		npx0	at isa? port "IO_NPX" irq 13 vector npxintr
