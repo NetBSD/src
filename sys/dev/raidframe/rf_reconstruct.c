@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.78 2004/12/12 20:53:15 oster Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.79 2005/01/18 03:29:51 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.78 2004/12/12 20:53:15 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.79 2005/01/18 03:29:51 oster Exp $");
 
 #include <sys/time.h>
 #include <sys/buf.h>
@@ -1550,6 +1550,7 @@ ForceReconReadDoneProc(void *arg, int status)
 	if (status) {
 		printf("raid%d: Forced recon read failed!\n", rbuf->raidPtr->raidid);
 		rf_CauseReconEvent(rbuf->raidPtr, rbuf->col, (void *) rbuf, RF_REVENT_FORCEDREAD_FAILED);
+		return;
 	}
 	rf_CauseReconEvent(rbuf->raidPtr, rbuf->col, (void *) rbuf, RF_REVENT_FORCEDREADDONE);
 }
