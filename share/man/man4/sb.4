@@ -1,4 +1,4 @@
-.\"	$NetBSD: sb.4,v 1.7 1997/04/10 07:30:03 mikel Exp $
+.\"	$NetBSD: sb.4,v 1.8 1997/07/28 00:23:11 augustss Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -63,7 +63,7 @@ jumper-selected.  For the SoundBlaster 16, the IRQ and DRQ channels are
 set by this driver to the values specified in the config file.  The IRQ
 must be selected from the set {5,7,9,10}.
 .Pp
-The configuration file must use a nonzero 
+The configuration file must use 1
 .Cm flags
 specification to enable the Jazz16 support.  This is to avoid potential
 conflicts with other devices when probing the Jazz 16 because it requires
@@ -75,8 +75,8 @@ driver, and the optional SCSI CD-ROM interface is handled by the
 .Xr aic 4
 driver.
 .Sh BUGS
-The driver has not been extensively tested on original SoundBlaster,
-SoundBlaster 16, or newer cards.
+The 16 bit DMA channel is always channel 5.  This is because there
+is currently no way to specify a second drq in the config file.
 .Pp
 The FM synthesizer, MIDI port, and non-SCSI CD-ROM interfaces are not
 supported.
