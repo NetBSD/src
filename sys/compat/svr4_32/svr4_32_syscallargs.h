@@ -1,4 +1,4 @@
-/* $NetBSD: svr4_32_syscallargs.h,v 1.2.4.4 2002/05/29 21:48:57 nathanw Exp $ */
+/* $NetBSD: svr4_32_syscallargs.h,v 1.2.4.5 2002/08/23 19:53:04 petrov Exp $ */
 
 /*
  * System call argument lists.
@@ -358,7 +358,7 @@ struct svr4_32_sys__lwp_setprivate_args {
 
 struct svr4_32_sys__lwp_wait_args {
 	syscallarg(svr4_lwpid_t) wait_for;
-	syscallarg(svr4_32_lwpid_tp) departed_lwp;
+	syscallarg(svr4_32_lwpid_tp *) departed_lwp; /* XXX  */
 };
 
 struct svr4_32_sys_pread_args {

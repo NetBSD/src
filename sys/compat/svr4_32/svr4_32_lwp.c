@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_lwp.c,v 1.2.4.3 2002/08/23 02:39:16 petrov Exp $	*/
+/*	$NetBSD: svr4_32_lwp.c,v 1.2.4.4 2002/08/23 19:53:04 petrov Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_lwp.c,v 1.2.4.3 2002/08/23 02:39:16 petrov Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_lwp.c,v 1.2.4.4 2002/08/23 19:53:04 petrov Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -162,33 +162,14 @@ svr4_32_sys__lwp_wait(l, v, retval)
 	register_t *retval;
 {
 	struct svr4_32_sys__lwp_wait_args *uap = v;
-	struct sys_wait4_args ap;
-	int error;
+	struct sys__lwp_wait_args ap;
 
-	SCARG(&ap, pid) = SCARG(uap, wait_for);
-	SCARG(&ap, status) = NULL;
-	SCARG(&ap, options) = 0;
+	SCARG(&ap, wait_for) = SCARG(uap, wait_for);
+	SCARG(&ap, departed) = SCARG(uap, departed_lwp);
 
-	if ((error = sys_wait4(l, &ap, retval)) == -1)
-		return error;
-
-	if (SCARG(uap, departed_lwp) != NULL)
-	    if ((error = copyout(retval, (caddr_t)(u_long)SCARG(uap, departed_lwp),
-		sizeof(svr4_lwpid_t))) == -1)
-		    return error;
-
-	*retval = 0;
-	return 0;
+	return sys__lwp_wait(l, &ap, retval);
 }
 
-/* XXX Stolen from kern_sig.c */
-#define CANSIGNAL(p, pc, q, signum) \
-	((pc)->pc_ucred->cr_uid == 0 || \
-	    (pc)->p_ruid == (q)->p_cred->p_ruid || \
-	    (pc)->pc_ucred->cr_uid == (q)->p_cred->p_ruid || \
-	    (pc)->p_ruid == (q)->p_ucred->cr_uid || \
-	    (pc)->pc_ucred->cr_uid == (q)->p_ucred->cr_uid || \
-	    ((signum) == SIGCONT && (q)->p_session == (p)->p_session))
 int
 svr4_32_sys__lwp_suspend(l, v, retval)
 	struct lwp *l;
@@ -196,18 +177,11 @@ svr4_32_sys__lwp_suspend(l, v, retval)
 	register_t *retval;
 {
 	struct svr4_32_sys__lwp_suspend_args *uap = v;
-	struct proc *p = l->l_proc;
-	struct proc *pt;
+	struct sys__lwp_suspend_args ap;
 
-	/* Security implications here! */
-	if ((pt = pfind(SCARG(uap, lwpid))) == NULL)
-		return ESRCH;
+	SCARG(&ap, target) = SCARG(uap, lwpid);
 
-	if (!CANSIGNAL(p, p->p_cred, pt, 0))
-		return EPERM;
-
-	pt->p_stat = SSTOP;
-	return 0;
+	return sys__lwp_suspend(l, &ap, retval);
 }
 
 int
@@ -217,17 +191,11 @@ svr4_32_sys__lwp_continue(l, v, retval)
 	register_t *retval;
 {
 	struct svr4_32_sys__lwp_continue_args *uap = v;
-	struct proc *p = l->l_proc;
-	struct proc *pt;
+	struct sys__lwp_continue_args ap;
 
-	if ((pt = pfind(SCARG(uap, lwpid))) == NULL)
-		return ESRCH;
+	SCARG(&ap, target) = SCARG(uap, lwpid);
 
-	if (!CANSIGNAL(p, p->p_cred, pt, 0))
-		return EPERM;
-
-/* XXX	pt->p_stat = SRUN; */
-	return 0;
+	return sys__lwp_continue(l, &ap, retval);
 }
 
 int
@@ -236,10 +204,10 @@ svr4_32_sys__lwp_getprivate(l, v, retval)
 	void *v;
 	register_t *retval;
 {
-#if 0
-	/* XXX: Use mach field! */
-	*retval = (register_t)p->p_thread;
-#endif
+	/* XXX NJWLWP: Replace with call to native version if we ever
+	 * implement that. */
+
+	*retval = (register_t)l->l_private;
 	return 0;
 }
 
@@ -249,24 +217,13 @@ svr4_32_sys__lwp_setprivate(l, v, retval)
 	void *v;
 	register_t *retval;
 {
-/* XXX	struct svr4_32_sys__lwp_setprivate_args *uap = v; */
-
-	/* 
-	 * XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-	 *
-	 * This has many problems:
-	 *
-	 * 1) we are using an old, left over field from Mach
-	 *  
-	 * 2) the lwpid_t is an unsigned int but the p_thread
-	 *	field is a (64-bit) pointer.
-	 *
-	 * 3) we're copying in 64-bits from a 32-bit field.
-	 */
 #if 0
-/* XXX */
-	return copyin((caddr_t)(u_long)SCARG(uap, buffer), 
-		      &p->p_thread, sizeof(void *));
+	struct svr4_32_sys__lwp_setprivate_args *uap = v;
+
+	/* XXX NJWLWP: Replace with call to native version if we ever
+	 * implement that. */
+
+	return copyin(SCARG(uap, buffer), &l->l_private, sizeof(void *));
 #endif
 	return 0;
 }
