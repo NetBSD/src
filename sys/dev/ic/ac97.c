@@ -1,4 +1,4 @@
-/*      $NetBSD: ac97.c,v 1.52 2003/11/24 16:05:10 kent Exp $ */
+/*      $NetBSD: ac97.c,v 1.53 2004/06/01 13:35:59 mrg Exp $ */
 /*	$OpenBSD: ac97.c,v 1.8 2000/07/19 09:01:35 csapuntz Exp $	*/
 
 /*
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.52 2003/11/24 16:05:10 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.53 2004/06/01 13:35:59 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -578,7 +578,9 @@ static const struct ac97_codecid {
 	  AC97_VENDOR_ID_MASK,		"Yamaha unknown",	},
 
 	/*
-	 * http://www.sigmatel.com/audio/audio_codecs.htm
+	 * http://www.sigmatel.com/products/technical_docs.htm
+	 * and
+	 * http://www.sigmatel.com/documents/c-major-brochure-9-0.pdf
 	 */
 	{ 0x83847600, 0xffffffff,	"SigmaTel STAC9700",	},
 	{ 0x83847604, 0xffffffff,	"SigmaTel STAC9701/3/4/5", },
@@ -588,6 +590,7 @@ static const struct ac97_codecid {
 	{ 0x83847644, 0xffffffff,	"SigmaTel STAC9744/45",	},
 	{ 0x83847650, 0xffffffff,	"SigmaTel STAC9750/51",	},
 	{ 0x83847656, 0xffffffff,	"SigmaTel STAC9756/57",	},
+	{ 0x83847658, 0xffffffff,	"SigmaTel STAC9758/59",	},
 	{ 0x83847666, 0xffffffff,	"SigmaTel STAC9766/67",	},
 	{ 0x83847684, 0xffffffff,	"SigmaTel STAC9783/84",	},
 	{ 0x83847600, AC97_VENDOR_ID_MASK, "SigmaTel unknown",	},
