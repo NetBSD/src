@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.27 2000/03/12 22:56:49 tsarna Exp $	*/
+/*	$NetBSD: sysctl.c,v 1.28 2000/03/12 22:58:05 tsarna Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.27 2000/03/12 22:56:49 tsarna Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.28 2000/03/12 22:58:05 tsarna Exp $");
 #endif
 #endif /* not lint */
 
@@ -239,7 +239,7 @@ main(argc, argv)
 		if (fp == NULL) {
 			err(1, "%s", fn);
 		} else {
-			while (l = fparseln(fp, NULL, NULL, NULL, 0)) {
+			while ((l = fparseln(fp, NULL, NULL, NULL, 0))) {
 				if (*l) {
 					parse(l, 1);
 				}
