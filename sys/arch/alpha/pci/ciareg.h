@@ -1,7 +1,7 @@
-/*	$NetBSD: ciareg.h,v 1.1.4.2 1996/06/13 18:12:16 cgd Exp $	*/
+/*	$NetBSD: ciareg.h,v 1.1.4.3 1996/06/13 18:35:27 cgd Exp $	*/
 
 /*
- * Copyright (c) 1995 Carnegie-Mellon University.
+ * Copyright (c) 1995, 1996 Carnegie-Mellon University.
  * All rights reserved.
  *
  * Author: Chris G. Demetriou
