@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.3 2002/01/30 14:01:33 reinoud Exp $
+#	$NetBSD: INSTALL,v 1.4 2002/02/11 21:48:47 reinoud Exp $
 #
 #	INSTALL -- NetBSD/acorn32 install configuration
 #
@@ -20,7 +20,7 @@
 
 include		"arch/acorn32/conf/std.acorn32"
 
-#ident		"INSTALL-$Revision: 1.3 $"
+#ident		"INSTALL-$Revision: 1.4 $"
 
 # estimated number of users
 maxusers	32
@@ -104,9 +104,6 @@ options 	COMPAT_12	# NetBSD 1.2 compatibility.
 #options 	COMPAT_10	# NetBSD 1.0 compatibility.
 #options 	COMPAT_09	# NetBSD 0.9 compatibility.
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
-
-# Bootloader options (has to go !)
-#options 	COMPAT_OLD_BOOTLOADER
 
 # Shared memory options
 
