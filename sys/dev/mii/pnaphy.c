@@ -1,4 +1,4 @@
-/*	$NetBSD: pnaphy.c,v 1.8 2002/10/02 16:34:20 thorpej Exp $	*/
+/*	$NetBSD: pnaphy.c,v 1.9 2002/10/13 06:28:01 fair Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pnaphy.c,v 1.8 2002/10/02 16:34:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pnaphy.c,v 1.9 2002/10/13 06:28:01 fair Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,7 +115,7 @@ pnaphyattach(struct device *parent, struct device *self, void *aux)
 	sc->mii_phy = ma->mii_phyno;
 	sc->mii_funcs = &pnaphy_funcs;
 	sc->mii_pdata = mii;
-	sc->mii_flags = ma->mii_flags;
+	sc->mii_flags = ma->mii_flags | MIIF_IS_HPNA; /* force HomePNA */
 	sc->mii_anegticks = 5;
 
 	PHY_RESET(sc);
