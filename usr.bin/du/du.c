@@ -1,4 +1,4 @@
-/*	$NetBSD: du.c,v 1.9 1995/03/28 17:50:18 glass Exp $	*/
+/*	$NetBSD: du.c,v 1.10 1995/09/28 06:19:56 perry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -44,9 +44,9 @@ static char copyright[] =
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)du.c	8.4 (Berkeley) 4/1/94";
+static char sccsid[] = "@(#)du.c	8.5 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: du.c,v 1.9 1995/03/28 17:50:18 glass Exp $";
+static char rcsid[] = "$NetBSD: du.c,v 1.10 1995/09/28 06:19:56 perry Exp $";
 #endif
 #endif /* not lint */
 
@@ -157,7 +157,7 @@ main(argc, argv)
 	if ((fts = fts_open(argv, ftsoptions, NULL)) == NULL)
 		err(1, NULL);
 
-	for (; (p = fts_read(fts)) != NULL;)
+	for (rval = 0; (p = fts_read(fts)) != NULL;)
 		switch (p->fts_info) {
 		case FTS_D:			/* Ignore. */
 			break;
@@ -179,7 +179,8 @@ main(argc, argv)
 		case FTS_DNR:			/* Warn, continue. */
 		case FTS_ERR:
 		case FTS_NS:
-			warn("%s", p->fts_path);
+			warnx("%s: %s", p->fts_path, strerror(p->fts_errno));
+			rval = 1;
 			break;
 		default:
 			if (p->fts_statp->st_nlink > 1 && linkchk(p))
