@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.14 2003/12/26 06:00:58 mrg Exp $ */
+/*	$NetBSD: lock.h,v 1.14.2.1 2004/04/24 18:32:29 jdc Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -43,6 +43,10 @@
  * Machine dependent spin lock operations.
  */
 
+#if __SIMPLELOCK_UNLOCKED != 0
+#error __SIMPLELOCK_UNLOCKED must be 0 for this implementation
+#endif
+
 /* XXX So we can expose this to userland. */
 #ifdef __lint__
 #define __ldstub(__addr)	(__addr)
@@ -63,15 +67,15 @@ static __inline__ int __ldstub(__cpu_simple_lock_t *addr)
 
 static __inline void __cpu_simple_lock_init __P((__cpu_simple_lock_t *))
 	__attribute__((__unused__));
-static __inline void __cpu_simple_lock __P((__cpu_simple_lock_t *))
-	__attribute__((__unused__));
 static __inline int __cpu_simple_lock_try __P((__cpu_simple_lock_t *))
 	__attribute__((__unused__));
 static __inline void __cpu_simple_unlock __P((__cpu_simple_lock_t *))
 	__attribute__((__unused__));
-
-#if __SIMPLELOCK_UNLOCKED != 0
-#error __SIMPLELOCK_UNLOCKED must be 0 for this implementation
+#ifndef __CPU_SIMPLE_LOCK_NOINLINE
+static __inline void __cpu_simple_lock __P((__cpu_simple_lock_t *))
+	__attribute__((__unused__));
+#else
+extern void __cpu_simple_lock __P((__cpu_simple_lock_t *));
 #endif
 
 static __inline void
@@ -81,6 +85,7 @@ __cpu_simple_lock_init(__cpu_simple_lock_t *alp)
 	*alp = __SIMPLELOCK_UNLOCKED;
 }
 
+#ifndef __CPU_SIMPLE_LOCK_NOINLINE
 static __inline void
 __cpu_simple_lock(__cpu_simple_lock_t *alp)
 {
@@ -97,6 +102,7 @@ __cpu_simple_lock(__cpu_simple_lock_t *alp)
 			/* spin */ ;
 	}
 }
+#endif /* __CPU_SIMPLE_LOCK_NOINLINE */
 
 static __inline int
 __cpu_simple_lock_try(__cpu_simple_lock_t *alp)
