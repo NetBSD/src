@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.120 2002/09/13 14:03:53 ad Exp $
+#	$NetBSD: DEVNAMES,v 1.121 2002/10/06 12:32:02 bjh21 Exp $
 #
 # This file contains all used device names and defined attributes in 
 # alphabetical order. New devices added to the system somewhere should first 
@@ -461,6 +461,7 @@ hpcfbif			hpcmips		Attribute
 hpibbus			hp300
 hpibdev			hp300		Attribute
 ht			vax
+hydra			acorn32
 hyper			amiga
 hyper			amigappc
 hyper			hp300
