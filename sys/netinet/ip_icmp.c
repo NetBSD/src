@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.66.10.1 2002/06/15 00:53:41 lukem Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.66.10.2 2003/06/16 13:46:51 grant Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.66.10.1 2002/06/15 00:53:41 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.66.10.2 2003/06/16 13:46:51 grant Exp $");
 
 #include "opt_ipsec.h"
 
@@ -830,6 +830,12 @@ icmp_reflect(m)
 			 (unsigned)(m->m_len - sizeof(struct ip)));
 	}
 	m->m_flags &= ~(M_BCAST|M_MCAST);
+
+	/*      
+	 * Clear any in-bound checksum flags for this packet.
+	 */
+	m->m_pkthdr.csum_flags = 0;
+
 	icmp_send(m, opts);
 done:
 	if (opts)
