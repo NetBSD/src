@@ -1,0 +1,148 @@
+# Copyright (C) 1996, 1997 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-gdb@prep.ai.mit.edu
+
+# This file was written by Jeff Law. (law@cygnus.com)
+
+if $tracelevel then {
+	strace $tracelevel
+}
+
+set prms_id 0
+set bug_id 0
+
+set prototypes 1
+set testfile "structs"
+set srcfile ${testfile}.c
+set binfile ${objdir}/${subdir}/${testfile}
+
+# build the first test case
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug}] != "" } {
+    # built the second test case since we can't use prototypes
+    warning "Prototypes not supported, rebuilding with -DNO_PROTOTYPES"
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug additional_flags=-DNO_PROTOTYPES}] != "" } {
+     gdb_suppress_entire_file "Testcase compile failed, so all tests in this file will automatically fail."
+    }
+    set prototypes 0
+}
+
+# Create and source the file that provides information about the compiler
+# used to compile the test case.
+if [get_compiler_info ${binfile}] {
+    return -1;
+}
+
+# The a29k can't call functions, so don't even bother with this test.
+if [istarget "a29k-*-udi"] then {
+    setup_xfail "a29k-*-udi" 2416
+    fail "a29k-*-udi can not call functions"
+    continue
+}
+
+# FIXME:  Before calling this proc, we should probably verify that
+# we can call inferior functions and get a valid integral value
+# returned.
+# Note that it is OK to check for 0 or 1 as the returned values, because C
+# specifies that the numeric value of a relational or logical expression
+# (computed in the inferior) is 1 for true and 0 for false.
+
+proc do_function_calls {} {
+    global prototypes
+    global gcc_compiled
+    global gdb_prompt
+
+    # First, call the "fun" functions and examine the value they return.
+    gdb_test "p fun1()" " = {a = 49 '1'}"
+    gdb_test "p fun2()" " = {a = 97 'a', b = 98 'b'}"
+    gdb_test "p fun3()" " = {a = 65 'A', b = 66 'B', c = 67 'C'}"
+    gdb_test "p fun4()" " = {a = 49 '1', b = 50 '2', c = 51 '3', d = 52 '4'}"
+    gdb_test "p fun5()" " = {a = 97 'a', b = 98 'b', c = 99 'c', d = 100 'd', e = 101 'e'}"
+    gdb_test "p fun6()" " = {a = 65 'A', b = 66 'B', c = 67 'C', d = 68 'D', e = 69 'E', f = 70 'F'}"
+    gdb_test "p fun7()" " = {a = 49 '1', b = 50 '2', c = 51 '3', d = 52 '4', e = 53 '5', f = 54 '6', g = 55 '7'}"
+    gdb_test "p fun8()" " = {a = 49 '1', b = 50 '2', c = 51 '3', d = 52 '4', e = 53 '5', f = 54 '6', g = 55 '7', h = 56 '8'}"
+    gdb_test "p fun9()" " = {a = 97 'a', b = 98 'b', c = 99 'c', d = 100 'd', e = 101 'e', f = 102 'f', g = 103 'g', h = 104 'h', i = 105 'i'}"
+    gdb_test "p fun10()" " = {a = 65 'A', b = 66 'B', c = 67 'C', d = 68 'D', e = 69 'E', f = 70 'F', g = 71 'G', h = 72 'H', i = 73 'I', j = 74 'J'}"
+    gdb_test "p fun11()" " = {a = 49 '1', b = 50 '2', c = 51 '3', d = 52 '4', e = 53 '5', f = 54 '6', g = 55 '7', h = 56 '8', i = 57 '9', j = 65 'A', k = 66 'B'}"
+    gdb_test "p fun12()" " = {a = 65 'A', b = 66 'B', c = 67 'C', d = 68 'D', e = 69 'E', f = 70 'F', g = 71 'G', h = 72 'H', i = 73 'I', j = 74 'J', k = 75 'K', l = 76 'L'}"
+    gdb_test "p fun16()" " = {a = 97 'a', b = 98 'b', c = 99 'c', d = 100 'd', e = 101 'e', f = 102 'f', g = 103 'g', h = 104 'h', i = 105 'i', j = 106 'j', k = 107 'k', l = 108 'l', m = 109 'm', n = 110 'n', o = 111 'o', p = 112 'p'}"
+
+    # Now call the Fun functions to set the L* variables.  This
+    # tests that gdb properly passes structures to functions.
+    gdb_test "p Fun1(foo1)" " = (void|0)"
+    gdb_test "p Fun2(foo2)" " = (void|0)"
+    gdb_test "p Fun3(foo3)" " = (void|0)"
+    gdb_test "p Fun4(foo4)" " = (void|0)"
+    gdb_test "p Fun5(foo5)" " = (void|0)"
+    gdb_test "p Fun6(foo6)" " = (void|0)"
+    gdb_test "p Fun7(foo7)" " = (void|0)"
+    gdb_test "p Fun8(foo8)" " = (void|0)"
+    gdb_test "p Fun9(foo9)" " = (void|0)"
+    gdb_test "p Fun10(foo10)" " = (void|0)"
+    gdb_test "p Fun11(foo11)" " = (void|0)"
+    gdb_test "p Fun12(foo12)" " = (void|0)"
+    gdb_test "p Fun16(foo16)" " = (void|0)"
+
+    # Now print the L* variables and examine their values.
+    gdb_test "p L1" " = {a = 49 '1'}"
+    gdb_test "p L2" " = {a = 97 'a', b = 98 'b'}"
+    gdb_test "p L3" " = {a = 65 'A', b = 66 'B', c = 67 'C'}"
+    gdb_test "p L4" " = {a = 49 '1', b = 50 '2', c = 51 '3', d = 52 '4'}"
+    if {$gcc_compiled} then {
+	setup_xfail "hppa*-*-*"
+    }
+    gdb_test "p L5" " = {a = 97 'a', b = 98 'b', c = 99 'c', d = 100 'd', e = 101 'e'}"
+    if {$gcc_compiled} then {
+	setup_xfail "hppa*-*-*"
+    }
+    gdb_test "p L6" " = {a = 65 'A', b = 66 'B', c = 67 'C', d = 68 'D', e = 69 'E', f = 70 'F'}"
+    if {$gcc_compiled} then {
+	setup_xfail "hppa*-*-*"
+    }
+    gdb_test "p L7" " = {a = 49 '1', b = 50 '2', c = 51 '3', d = 52 '4', e = 53 '5', f = 54 '6', g = 55 '7'}"
+    gdb_test "p L8" " = {a = 49 '1', b = 50 '2', c = 51 '3', d = 52 '4', e = 53 '5', f = 54 '6', g = 55 '7', h = 56 '8'}"
+    gdb_test "p L9" " = {a = 97 'a', b = 98 'b', c = 99 'c', d = 100 'd', e = 101 'e', f = 102 'f', g = 103 'g', h = 104 'h', i = 105 'i'}"
+    gdb_test "p L10" " = {a = 65 'A', b = 66 'B', c = 67 'C', d = 68 'D', e = 69 'E', f = 70 'F', g = 71 'G', h = 72 'H', i = 73 'I', j = 74 'J'}"
+    gdb_test "p L11" " = {a = 49 '1', b = 50 '2', c = 51 '3', d = 52 '4', e = 53 '5', f = 54 '6', g = 55 '7', h = 56 '8', i = 57 '9', j = 65 'A', k = 66 'B'}"
+    gdb_test "p L12" " = {a = 65 'A', b = 66 'B', c = 67 'C', d = 68 'D', e = 69 'E', f = 70 'F', g = 71 'G', h = 72 'H', i = 73 'I', j = 74 'J', k = 75 'K', l = 76 'L'}"
+    gdb_test "p L16" " = {a = 97 'a', b = 98 'b', c = 99 'c', d = 100 'd', e = 101 'e', f = 102 'f', g = 103 'g', h = 104 'h', i = 105 'i', j = 106 'j', k = 107 'k', l = 108 'l', m = 109 'm', n = 110 'n', o = 111 'o', p = 112 'p'}"
+}
+# Start with a fresh gdb.
+
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load ${binfile}
+
+gdb_test "set print sevenbit-strings" ""
+gdb_test "set print address off" ""
+gdb_test "set width 0" ""
+
+if [target_info exists gdb,cannot_call_functions] {
+    setup_xfail "*-*-*" 2416
+    fail "This target can not call functions"
+    return 0
+}
+
+if { ![runto_main] } then {
+    gdb_suppress_tests;
+}
+
+do_function_calls;
+
+gdb_stop_suppressing_tests;
+
+return 0

@@ -1,0 +1,249 @@
+# Copyright (C) 1995, 1997 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-gdb@prep.ai.mit.edu
+
+# This file tests various Chill values, expressions, and types.
+
+# This file was written by Wilfried Moser (moser@aut.alcatel.at)
+#			   Kurt Fuchs (fuchs_k@aut.alcatel.at)
+#
+
+if $tracelevel then {
+	strace $tracelevel
+}
+
+if [skip_chill_tests] then { continue }
+
+set testfile "gch981"
+set srcfile ${srcdir}/$subdir/${testfile}.ch
+set binfile ${objdir}/${subdir}/${testfile}.exe
+if  { [compile "${srcfile} -g -w -o ${binfile} ${CHILL_RT0} ${CHILL_LIB}"] != "" } {
+    perror "Couldn't compile ${srcfile}"
+    return -1
+}
+
+# Set the current language to chill.  This counts as a test.  If it
+# fails, then we skip the other tests.
+
+proc set_lang_chill {} {
+    global gdb_prompt
+    global binfile objdir subdir
+
+    verbose "loading file '$binfile'"
+    gdb_load $binfile
+    send_gdb "set language chill\n"
+    gdb_expect {
+	-re ".*$gdb_prompt $" {}
+	timeout { fail "set language chill (timeout)" ; return 0 }
+    }
+
+    send_gdb "show language\n"
+    gdb_expect {
+	-re ".* source language is \"chill\".*$gdb_prompt $" {
+	    pass "set language to \"chill\""
+	    send_gdb "break xx_\n"
+	    gdb_expect {
+		-re ".*$gdb_prompt $" {
+		    send_gdb "run\n" 
+		    gdb_expect -re ".*$gdb_prompt $" {}
+		    return 1
+		}
+		timeout {
+		    fail "can't set breakpoint (timeout)"
+		    return 0
+		}
+	    }
+	}
+	-re ".*$gdb_prompt $" {
+	    fail "setting language to \"chill\""
+	    return 0
+	}
+	timeout {
+	    fail "can't show language (timeout)"
+	    return 0
+	}
+    }
+}
+
+# Testing printing of a specific value.  Increment passcount for
+# success or issue fail message for failure.  In both cases, return
+# a 1 to indicate that more tests can proceed.  However a timeout
+# is a serious error, generates a special fail message, and causes
+# a 0 to be returned to indicate that more tests are likely to fail
+# as well.
+#
+# Args are:
+#
+#	First one is string to send_gdb to gdb
+#	Second one is string to match gdb result to
+#	Third one is an optional message to be printed
+
+proc test_print_accept { args } {
+    global gdb_prompt
+    global passcount
+    global verbose
+
+    if [llength $args]==3 then {
+	set message [lindex $args 2]
+    } else {
+	set message [lindex $args 0]
+    }
+    set sendthis [lindex $args 0]
+    set expectthis [lindex $args 1]
+    set result [gdb_test $sendthis ".* = ${expectthis}" $message]
+    if $result==0 {incr passcount}
+    return $result
+}
+
+proc test_power {} {
+    global passcount gdb_prompt
+
+    verbose "Testing some POWERSET Stuff"
+    set passcount 0
+
+    test_print_accept "print v1_power1" {\[e1:e5\]}
+    test_print_accept "print v2_power1" {\[\]}
+    test_print_accept "print SIZE(v1_power1)" "1"
+
+    gdb_test "set v1_power1 := \[b1\]"  ""
+#   if GDB has rejected the improper values, we have to gdb_expect the same!
+    test_print_accept "print v1_power1" {\[e1:e5\]}
+
+    gdb_test "set v1_power1 := \[a1,a2\]"  ""
+    test_print_accept "print v1_power1" {\[e1:e5\]}
+    gdb_test "set v1_power1 := \[b1,b2,b3,e4\]"  ""
+    test_print_accept "print v1_power1" {\[e1:e5\]}
+    gdb_test "set v1_power1 := \[e4:e5\]"  ""
+    test_print_accept "print v1_power1" {\[e4:e5\]}
+    gdb_test "set v1_power1 := \[e1, e2:e3, e5\]"  ""
+    test_print_accept "print v1_power1" {\[e1:e3, e5\]}
+    gdb_test "set v1_power1 := \[e1, e2:e4, e4:e5\]"  ""
+    test_print_accept "print v1_power1" {\[e1:e5\]}
+    gdb_test "set v1_power1 := \[e1, e1:e3, e1:e2, e2:e3\]"  ""
+    test_print_accept "print v1_power1" {\[e1:e3\]}
+
+    gdb_test "set v_power2 := \[e2\]"  ""
+    test_print_accept "print v_power2" {\[\]}
+    gdb_test "set v_power2 := \[1,2,3\]"  ""
+    test_print_accept "print v_power2" {\[\]}
+    gdb_test "set v_power2 := \[e2, b2, b1\]"  ""
+    test_print_accept "print v_power2" {\[\]}
+
+# Note, that this is a numbered SET, so a1:a3 contains all elements (exept a6)
+    gdb_test "set v_power2 := \[a1:a3, a6:a4, a7:a9\]"  ""
+    test_print_accept "print v_power2" {\[a6:a3\]}
+    gdb_test "set v_power2 := \[a1, a4:a6, a9\]"  ""
+    test_print_accept "print v_power2" {\[a1, a9\]}
+    gdb_test "set v_power2 := \[a1:a2, a6, a9\]"  ""
+    test_print_accept "print v_power2" {\[a6:a2, a9\]}
+    gdb_test "set v_power2 := \[a1, a4, a7:a8, a9:a3\]"  ""
+    test_print_accept "print v_power2" {\[a1, a4, a9:a8\]}
+    gdb_test "set v_power2 := \[a1, a4:a8\]"  ""
+    test_print_accept "print v_power2" {\[a1, a4:a8\]}
+    gdb_test "set v_power2 := \[a8,a3,a7,a9,a5,a6\]"  ""
+    test_print_accept "print v_power2" {\[a6, a5, a9, a7, a3, a8\]}
+
+    gdb_test "set v_power3 := \[b1:b2,e1\]"  ""
+    test_print_accept "print v_power3" {\[b1:b2\]}
+    gdb_test "set v_power3 := \[b1, b3, b6:b7\]"  ""
+    test_print_accept "print v_power3" {\[b1, b3, b6:b7\]}
+    gdb_test "set v_power3 := \[b1, b3:b4, b7\]"  ""
+    test_print_accept "print v_power3" {\[b1, b3:b4, b7\]}
+    gdb_test "set v_power3 := \[b1, b4:b6, b7\]"  ""
+    test_print_accept "print v_power3" {\[b1, b4:b7\]}
+    gdb_test "set v_power3 := \[b1:b7\]"  ""
+    test_print_accept "print v_power3" {\[b1:b7\]}
+    gdb_test "set v_power3 := \[b5:b7, b1\]"  ""
+    test_print_accept "print v_power3" {\[b1, b5:b7\]}
+
+    gdb_test "set v_power4 := \[\"b\"\]" ""
+    test_print_accept "print v_power4" {\['b':'x'\]}
+    gdb_test "set v_power4 := \[5\]"  ""
+    test_print_accept "print v_power4" {\['b':'x'\]}
+    gdb_test "set v_power4 := \['c':'f','g':'h','o':'t'\]" ""
+    test_print_accept "print v_power4" {\['c':'h', 'o':'t'\]}
+    gdb_test "set v_power4 := \['a','b','c','d','e','f'\]" ""
+    test_print_accept "print v_power4" {\['a':'f'\]}
+    gdb_test "set v_power4 := \['\^(0)':'\^(200)'\]" ""
+    test_print_accept "print v_power4" {\['\^\(0\)':'\^\(200\)'\]}
+
+    gdb_test "set v_power5 := \[a8\]"  ""
+    test_print_accept "print v_power5" {\[2:100\]}
+    gdb_test "set v_power5 := \[4\]"  ""
+    test_print_accept "print v_power5" {\[4\]}
+    gdb_test "set v_power5 := \[3:95,9:100,10:107,200:250\]" ""
+    test_print_accept "print v_power5" {\[3:107, 200:250\]}
+    gdb_test "set v_power5 := \[2, 100:120, 350:400\]"  ""
+    test_print_accept "print v_power5" {\[2, 100:120, 350:400\]}
+    gdb_test "set v_power5 := \[2:64,65:127,128:256,256:399,400\]" ""
+    test_print_accept "print v_power5" {\[2:400\]}
+    gdb_test "set v_power5 := \[3:95, 99:100, 101:107, 200:250\]"  ""
+    test_print_accept "print v_power5" {\[3:95, 99:107, 200:250\]}
+
+    gdb_test "set v_power6 := \[a8\]"  ""
+    test_print_accept "print v_power6" {\[\]}
+    gdb_test "set v_power6 := \[4\]"  ""
+    test_print_accept "print v_power6" {\[4\]}
+    gdb_test "set v_power6 := \[3:95, 99:100, 101:107, 200:250\]"  ""
+    test_print_accept "print v_power6" {\[3:95, 99:107, 200:250\]}
+    gdb_test "set v_power6 := \[-111:0, 1:112, 11111:22222\]"  ""
+    test_print_accept "print v_power6" {\[-111:112, 11111:22222\]}
+    gdb_test "set v_power6 := \[0, 200:4000, 6666:9999\]"  ""
+    test_print_accept "print v_power6" {\[0, 200:4000, 6666:9999\]}
+
+#    gdb_test "set v_power7 := \[a8\]"  ""
+#    test_print_accept "print v_power7" {\[2:100\]}
+#    gdb_test "set v_power7 := \[4\]"  ""
+#    test_print_accept "print v_power7" {\[4\]}
+#    gdb_test "set v_power7 := \[3:95, 99:100, 101:107, 200:250\]" ""
+#    test_print_accept "print v_power7" {\[3:95, 99:107, 200:250\]}
+#    gdb_test "set v_power7 := \[0, 1000, 1000000, 10000000000\]"  ""
+#    test_print_accept "print v_power7" {\[0, 1000, 1000000, 1000000000\]}
+#    gdb_test "set v_power7 := \[-20000:100000, 111111:2222222\]"  ""
+#    test_print_accept "print v_power7" {\[-20000:100000, 111111:2222222\]}
+#    gdb_test "set v_power7 := \[\]"  ""
+#    test_print_accept "print v_power7" {\[3:95, 99:107, 200:250\]}
+#    gdb_test "set v_power7 := \[2:-500, -501:1, 20:370, -888:-920, 1000:2000, 1800:2500\]\ " ""
+#    test_print_accept "print v_power7" {\[-920:-888, -501:2, 20:370, 1000:2500\]}
+#    test_print_accept "print SIZE(v_power7)" ""
+
+
+    runto 58
+    test_print_accept "print v_set1 IN v1_power1" "TRUE"
+    test_print_accept "print v_set1 IN v2_power1" "FALSE"
+
+}
+
+
+
+# Start with a fresh gdb.
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+
+gdb_test "set print sevenbit-strings" ".*"
+
+
+if [set_lang_chill] then {
+    # test builtins as described in chapter 6.20.3 Z.200
+
+    test_power 
+} else {
+    warning "$test_name tests suppressed."
+}

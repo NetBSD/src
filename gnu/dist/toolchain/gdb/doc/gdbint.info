@@ -1,0 +1,49 @@
+This is gdbint.info, produced by Makeinfo version 3.12f from
+./gdbint.texinfo.
+
+START-INFO-DIR-ENTRY
+* Gdb-Internals: (gdbint).	The GNU debugger's internals.
+END-INFO-DIR-ENTRY
+
+   This file documents the internals of the GNU debugger GDB.
+
+   Copyright 1990-1999 Free Software Foundation, Inc.  Contributed by
+Cygnus Solutions.  Written by John Gilmore.  Second Edition by Stan
+Shebs.
+
+   Permission is granted to make and distribute verbatim copies of this
+manual provided the copyright notice and this permission notice are
+preserved on all copies.
+
+   Permission is granted to copy or distribute modified versions of this
+manual under the terms of the GPL (for which purpose this text may be
+regarded as a program in the language TeX).
+
+
+Indirect:
+gdbint.info-1: 741
+gdbint.info-2: 42530
+gdbint.info-3: 92454
+
+Tag Table:
+(Indirect)
+Node: Top741
+Node: Requirements1361
+Node: Overall Structure2848
+Node: Algorithms6121
+Node: User Interface11136
+Node: Symbol Handling12886
+Node: Language Support26785
+Node: Host Definition31995
+Node: Target Architecture Definition42530
+Node: Target Vector Definition78934
+Node: Native Debugging81492
+Node: Support Libraries92454
+Node: Coding94164
+Node: Porting GDB106388
+Node: Testsuite109103
+Node: Hints115569
+Node: Getting Started115866
+Node: Debugging GDB120002
+
+End Tag Table
