@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.30 2001/02/27 04:37:47 chs Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.31 2001/03/26 06:47:34 chs Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -300,9 +300,27 @@ WRITE(void *v)
 
 		if (ioflag & IO_SYNC) {
 			simple_lock(&vp->v_uvm.u_obj.vmobjlock);
+#if 1
+			/*
+			 * XXX 
+			 * flush whole blocks in case there are deps.
+			 * otherwise we can dirty and flush part of
+			 * a block multiple times and the softdep code
+			 * will get confused.  fixing this the right way
+			 * is complicated so we'll work around it for now.
+			 */
+
+			rv = vp->v_uvm.u_obj.pgops->pgo_flush(
+			    &vp->v_uvm.u_obj,
+			    oldoff & ~(fs->fs_bsize - 1),
+			    (oldoff + bytelen + fs->fs_bsize - 1) &
+			    ~(fs->fs_bsize - 1),
+			    PGO_CLEANIT|PGO_SYNCIO);
+#else
 			rv = vp->v_uvm.u_obj.pgops->pgo_flush(
 			    &vp->v_uvm.u_obj, oldoff, oldoff + bytelen,
 			    PGO_CLEANIT|PGO_SYNCIO);
+#endif
 			simple_unlock(&vp->v_uvm.u_obj.vmobjlock);
 		} else if (oldoff >> 16 != uio->uio_offset >> 16) {
 			simple_lock(&vp->v_uvm.u_obj.vmobjlock);
