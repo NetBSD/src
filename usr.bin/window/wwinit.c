@@ -1,4 +1,4 @@
-/*	$NetBSD: wwinit.c,v 1.15 2002/06/14 01:06:59 wiz Exp $	*/
+/*	$NetBSD: wwinit.c,v 1.16 2003/01/16 09:46:48 kleink Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)wwinit.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: wwinit.c,v 1.15 2002/06/14 01:06:59 wiz Exp $");
+__RCSID("$NetBSD: wwinit.c,v 1.16 2003/01/16 09:46:48 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,18 +60,18 @@ wwinit(void)
 {
 	int i, j;
 	char *kp;
-	sigset_t sigset, osigset;
+	sigset_t nsigset, osigset;
 
 	wwdtablesize = 3;
 	wwhead.ww_forw = &wwhead;
 	wwhead.ww_back = &wwhead;
 
-	sigemptyset(&sigset);
-	sigaddset(&sigset, SIGCHLD);
-	sigaddset(&sigset, SIGALRM);
-	sigaddset(&sigset, SIGHUP);
-	sigaddset(&sigset, SIGTERM);
-	sigprocmask(SIG_BLOCK, &sigset, &osigset);
+	sigemptyset(&nsigset);
+	sigaddset(&nsigset, SIGCHLD);
+	sigaddset(&nsigset, SIGALRM);
+	sigaddset(&nsigset, SIGHUP);
+	sigaddset(&nsigset, SIGTERM);
+	sigprocmask(SIG_BLOCK, &nsigset, &osigset);
 
 	if (signal(SIGCHLD, wwchild) == SIG_ERR ||
 	    signal(SIGHUP, wwquit) == SIG_ERR ||

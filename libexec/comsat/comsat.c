@@ -1,4 +1,4 @@
-/*	$NetBSD: comsat.c,v 1.23 2002/03/18 23:34:21 mjl Exp $	*/
+/*	$NetBSD: comsat.c,v 1.24 2003/01/16 09:41:36 kleink Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)comsat.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: comsat.c,v 1.23 2002/03/18 23:34:21 mjl Exp $");
+__RCSID("$NetBSD: comsat.c,v 1.24 2003/01/16 09:41:36 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -92,7 +92,7 @@ main(int argc, char *argv[])
 	int cc, ch;
 	int fromlen;
 	char msgbuf[100];
-	sigset_t sigset;
+	sigset_t nsigset;
 
 	/* verify proper invocation */
 	fromlen = sizeof(from);
@@ -139,14 +139,14 @@ main(int argc, char *argv[])
 		}
 		if (!nutmp)		/* no one has logged in yet */
 			continue;
-		sigemptyset(&sigset);
-		sigaddset(&sigset, SIGALRM);
-		sigprocmask(SIG_SETMASK, &sigset, NULL);
+		sigemptyset(&nsigset);
+		sigaddset(&nsigset, SIGALRM);
+		sigprocmask(SIG_SETMASK, &nsigset, NULL);
 		msgbuf[cc] = '\0';
 		(void)time(&lastmsgtime);
 		mailfor(msgbuf);
-		sigemptyset(&sigset);
-		sigprocmask(SIG_SETMASK, &sigset, NULL);
+		sigemptyset(&nsigset);
+		sigprocmask(SIG_SETMASK, &nsigset, NULL);
 	}
 }
 
