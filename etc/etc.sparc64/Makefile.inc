@@ -1,9 +1,12 @@
-#	$NetBSD: Makefile.inc,v 1.10 2001/08/23 16:01:56 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.11 2001/08/26 05:31:28 eeh Exp $
 #
 #	etc.sparc64/Makefile.inc -- sparc64-specific etc Makefile targets
 #
 
 TOP= $(.CURDIR)/..
+
+# Specify whether or not to build 32-bit libs.
+MK32BITLIBS?=no
 
 # Set this for any kernels beyond GENERIC you want to include
 # in the distribution.
@@ -28,7 +31,8 @@ snap_md_pre:
 	cd $(TOP)/distrib && ${MAKE} clean 
 .endif
 
-.if (${MACHINE_ARCH} == sparc64 && ${MACHINE} == sparc64 && ${MK32BITLIBS} == yes)
+.if ${MACHINE_ARCH} == "sparc64" && ${MACHINE} == "sparc64" && \
+	${MK32BITLIBS} == "yes"
 
 	# build 32 bit csu
 .if ${MKOBJDIRS} != "no"
@@ -38,7 +42,6 @@ snap_md_pre:
 	(cd ${.CURDIR}/../lib/csu && \
 	    ${MAKE} ${SPARC32} ${_M} ${_J} MKSHARE=no dependall && \
 	    ${MAKE} ${SPARC32} ${_M} MKSHARE=no install)
-
 	# build 32 bit libraries
 .if ${MKOBJDIRS} != "no"
 	(cd ${.CURDIR}/../lib && \
@@ -47,7 +50,6 @@ snap_md_pre:
 	(cd ${.CURDIR}/../lib && \
 	    ${MAKE} ${SPARC32} ${_M} ${_J} MKSHARE=no dependall && \
 	    ${MAKE} ${SPARC32} ${_M} MKSHARE=no install)
-
 	# build 32 bit gnu libraries
 .if ${MKOBJDIRS} != "no"
 	(cd ${.CURDIR}/../gnu/lib && \
@@ -56,7 +58,6 @@ snap_md_pre:
 	(cd ${.CURDIR}/../gnu/lib && \
 	    ${MAKE} ${SPARC32} ${_M} ${_J} MKSHARE=no dependall && \
 	    ${MAKE} ${SPARC32} ${_M} MKSHARE=no install)
-
 	# build 32 bit ld.elf_so
 .if ${MKOBJDIRS} != "no"
 	(cd ${.CURDIR}/../libexec/ld.elf_so && \
