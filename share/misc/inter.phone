@@ -1,5 +1,5 @@
 # Country Code : City Code : City : Country
-#	$NetBSD: inter.phone,v 1.7 1997/10/15 07:31:30 lukem Exp $
+#	$NetBSD: inter.phone,v 1.8 1999/01/05 21:47:24 pk Exp $
 #	@(#)inter.phone	8.1 (Berkeley) 6/9/93
 20:2:Cairo:Egypt, Arab Rep. of
 20:3:Alexandria:Egypt, Arab Rep. of
@@ -107,19 +107,19 @@
 44:121:Birmingham, Eng.:United Kingdom
 44:1222:Cardiff, Wales:United Kingdom
 44:1232:Belfast, N. Ire.:United Kingdom
-44:1272:Bristol, Eng.:United Kingdom
+44:117:Bristol, Eng.:United Kingdom
 44:1274:Bradford, Eng.:United Kingdom
 44:131:Edinburgh, Scot.:United Kingdom
 44:141:Glasgow, Scot.:United Kingdom
 44:1484:Huddersfield, Eng.:United Kingdom
 44:1485:Hillington, Eng.:United Kingdom
 44:151:Liverpool, Eng.:United Kingdom
-44:1532:Leeds, Eng.:United Kingdom
-44:1533:Leicester, Eng.:United Kingdom
-44:1602:Nottingham, Eng.:United Kingdom
+44:113:Leeds, Eng.:United Kingdom
+44:117:Leicester, Eng.:United Kingdom
+44:115:Nottingham, Eng.:United Kingdom
 44:161:Manchester, Eng.:United Kingdom
 44:191:Newcastle-upon-Tyne, Eng.:United Kingdom
-44:1742:Sheffield, Eng.:United Kingdom
+44:114:Sheffield, Eng.:United Kingdom
 44:1752:Plymouth, Eng.:United Kingdom
 44:1782:Stoke-on-Trent, Eng.:United Kingdom
 44:1902:Wolverhampton, Eng.:United Kingdom
