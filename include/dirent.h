@@ -31,31 +31,13 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)dirent.h	5.18 (Berkeley) 2/23/91
- *	$Id: dirent.h,v 1.4 1993/12/10 19:16:09 jtc Exp $
+ *	$Id: dirent.h,v 1.5 1993/12/15 00:50:19 jtc Exp $
  */
 
 #ifndef _DIRENT_H_
 #define _DIRENT_H_
 
-/*
- * A directory entry has a struct dirent at the front of it, containing its
- * inode number, the length of the entry, and the length of the name
- * contained in the entry.  These are followed by the name padded to a 4
- * byte boundary with null bytes.  All names are guaranteed null terminated.
- * The maximum length of a name in a directory is MAXNAMLEN.
- */
-
-struct dirent {
-	unsigned long	d_fileno;	/* file number of entry */
-	unsigned short	d_reclen;	/* length of this record */
-	unsigned short	d_namlen;	/* length of string in d_name */
-#ifdef _POSIX_SOURCE
-	char	d_name[255 + 1];	/* name must be no longer than this */
-#else
-#define	MAXNAMLEN	255
-	char	d_name[MAXNAMLEN + 1];	/* name must be no longer than this */
-#endif
-};
+#include <sys/dirent.h>
 
 /* structure describing an open directory. */
 typedef struct {
@@ -83,7 +65,6 @@ typedef struct {
 #endif /* _POSIX_SOURCE */
 
 
-#ifndef KERNEL
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
@@ -100,7 +81,5 @@ int alphasort __P((const void *, const void *));
 int getdirentries __P((int, char *, int, long *));
 #endif /* not POSIX */
 __END_DECLS
-
-#endif /* !KERNEL */
 
 #endif /* !_DIRENT_H_ */
