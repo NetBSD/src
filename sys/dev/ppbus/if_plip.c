@@ -1,4 +1,4 @@
-/* $NetBSD: if_plip.c,v 1.3 2004/01/21 00:33:37 bjh21 Exp $ */
+/* $NetBSD: if_plip.c,v 1.4 2004/01/25 00:28:01 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 1997 Poul-Henning Kamp
@@ -26,8 +26,11 @@
  * SUCH DAMAGE.
  *
  *	From Id: lpt.c,v 1.55.2.1 1996/11/12 09:08:38 phk Exp
- * $FreeBSD: src/sys/dev/ppbus/if_plip.c,v 1.19.2.1 2000/05/24 00:20:57 n_hibma Exp $
+ * FreeBSD: src/sys/dev/ppbus/if_plip.c,v 1.19.2.1 2000/05/24 00:20:57 n_hibma Exp
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_plip.c,v 1.4 2004/01/25 00:28:01 bjh21 Exp $");
 
 /*
  * Parallel port TCP/IP interfaces added.  I looked at the driver from
