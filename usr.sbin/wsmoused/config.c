@@ -1,11 +1,11 @@
-/* $NetBSD: config.c,v 1.2 2003/03/04 19:28:59 jmmv Exp $ */
+/* $NetBSD: config.c,v 1.3 2003/08/06 18:07:53 jmmv Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Julio Merino.
+ * by Julio M. Merino Vidal.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,11 +32,12 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: config.c,v 1.2 2003/03/04 19:28:59 jmmv Exp $");
+__RCSID("$NetBSD: config.c,v 1.3 2003/08/06 18:07:53 jmmv Exp $");
 #endif /* not lint */
 
 #include <sys/time.h>
 #include <dev/wscons/wsconsio.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <err.h>
@@ -46,14 +47,22 @@ __RCSID("$NetBSD: config.c,v 1.2 2003/03/04 19:28:59 jmmv Exp $");
 #include "pathnames.h"
 #include "wsmoused.h"
 
+/* --------------------------------------------------------------------- */
+
+/*
+ * Global variables.
+ */
+
 static struct block *Global = NULL;
+
+/* --------------------------------------------------------------------- */
 
 /* Prototypes for config_yacc.y (only used here) */
 struct block *config_parse(FILE *);
 
-/*
- * Creates a new, empty property.  Returns a pointer to it.
- */
+/* --------------------------------------------------------------------- */
+
+/* Creates a new, empty property.  Returns a pointer to it. */
 struct prop *
 prop_new(void)
 {
@@ -65,22 +74,23 @@ prop_new(void)
 	return p;
 }
 
-/*
- * Frees a property created with prop_new.  All data stored in the property
- * is also destroyed.
- */
+/* --------------------------------------------------------------------- */
+
+/* Frees a property created with prop_new.  All data stored in the property
+ * is also destroyed. */
 void
 prop_free(struct prop *p)
 {
+
 	free(p->p_name);
 	free(p->p_value);
 	free(p);
 }
 
-/*
- * Creates a new, empty block, with the specified type (see BLOCK_* macros).
- * Returns a pointer to it.
- */
+/* --------------------------------------------------------------------- */
+
+/* Creates a new, empty block, with the specified type (see BLOCK_* macros).
+ * Returns a pointer to it. */
 struct block *
 block_new(int type)
 {
@@ -93,10 +103,10 @@ block_new(int type)
 	return b;
 }
 
-/*
- * Frees a block created with block_new.  All data contained inside the block
- * is also destroyed.
- */
+/* --------------------------------------------------------------------- */
+
+/* Frees a block created with block_new.  All data contained inside the block
+ * is also destroyed. */
 void
 block_free(struct block *b)
 {
@@ -113,12 +123,13 @@ block_free(struct block *b)
 	free(b);
 }
 
-/*
- * Add a property to a block.
- */
+/* --------------------------------------------------------------------- */
+
+/* Adds a property to a block. */
 void
 block_add_prop(struct block *b, struct prop *p)
 {
+
 	if (p == NULL)
 		return;
 
@@ -130,12 +141,13 @@ block_add_prop(struct block *b, struct prop *p)
 	}
 }
 
-/*
- * Add a child (block) to a block.
- */
+/* --------------------------------------------------------------------- */
+
+/* Adds a child (block) to a block. */
 void
 block_add_child(struct block *b, struct block *c)
 {
+
 	if (c == NULL)
 		return;
 
@@ -148,12 +160,12 @@ block_add_child(struct block *b, struct block *c)
 	}
 }
 
-/*
- * Get the value of a property in the specified block (or in its parents).
- * If not found, return the value given in def.
- */
+/* --------------------------------------------------------------------- */
+
+/* Get the value of a property in the specified block (or in its parents).
+ * If not found, return the value given in def. */
 char *
-block_get_propval(struct block *b, char *pname, char *def)
+block_get_propval(struct block *b, const char *pname, char *def)
 {
 	int pc;
 
@@ -170,17 +182,17 @@ block_get_propval(struct block *b, char *pname, char *def)
 	return def;
 }
 
-/*
- * Get the value of a property in the specified block converting it to an
+/* --------------------------------------------------------------------- */
+
+/* Get the value of a property in the specified block converting it to an
  * integer, if possible.  If the property cannot be found in the given
  * block, all its parents are tried.  If after all not found (or conversion
- * not possible), return the value given in def.
- */
+ * not possible), return the value given in def. */
 int
-block_get_propval_int(struct block *b, char *pname, int def)
+block_get_propval_int(struct block *b, const char *pname, int def)
 {
-	int pc, ret;
 	char *ptr;
+	int pc, ret;
 
 	if (b == NULL)
 		return def;
@@ -203,15 +215,20 @@ block_get_propval_int(struct block *b, char *pname, int def)
 	return def;
 }
 
-/*
- * Get a mode block (childs of the global scope), which matches the specified
- * name.
- */
+/* --------------------------------------------------------------------- */
+
+/* Gets a mode block (childs of the global scope), which matches the
+ * specified name. */
 struct block *
-config_get_mode(char *modename)
+config_get_mode(const char *modename)
 {
-	struct block *b = Global;
 	int bc;
+	struct block *b;
+
+	b = Global;
+
+	if (strcmp(modename, "Global") == 0)
+		return Global;
 
 	if (b != NULL)
 		for (bc = 0; bc < b->b_child_count; bc++)
@@ -221,11 +238,11 @@ config_get_mode(char *modename)
 	return NULL;
 }
 
-/*
- * Read the configuration file.
- */
+/* --------------------------------------------------------------------- */
+
+/* Reads the configuration file. */
 void
-config_read(char *conffile, int opt)
+config_read(const char *conffile, int opt)
 {
 	FILE *f;
 
@@ -241,12 +258,13 @@ config_read(char *conffile, int opt)
 	}
 }
 
-/*
- * Destroy all the configuration data.
- */
+/* --------------------------------------------------------------------- */
+
+/* Destroys all the configuration data. */
 void
 config_free(void)
 {
+
 	if (Global != NULL)
 		block_free(Global);
 }

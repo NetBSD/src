@@ -1,10 +1,10 @@
-.\" $NetBSD: wsmoused.conf.5,v 1.3 2003/03/04 22:31:15 jmmv Exp $
+.\" $NetBSD: wsmoused.conf.5,v 1.4 2003/08/06 18:07:53 jmmv Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
-.\" by Julio Merino.
+.\" by Julio M. Merino Vidal.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 4, 2003
+.Dd August 6, 2003
 .Dt WSMOUSED.CONF 5
 .Os
 .Sh NAME
@@ -58,9 +58,11 @@ It has a name, which goes to the left of the equal sign, and a value,
 which goes to the right.
 The assignment ends with a semicolon.
 It looks like:
+.Pp
 .Dl name = value;
 .Pp
 There is no difference between string or integer values when defining them.
+The value must be surrounded by double quotes if it contains whitespace.
 Booleans are specified as integers, where
 .Sq 0
 means false and
@@ -85,7 +87,7 @@ mode mode_name {
 .Ed
 .Pp
 Actually, there is only one recognized mode, the
-.Ql sel
+.Ql selection
 mode.
 .Ss Properties common to all modes
 The following properties can be defined in the global scope, thus
@@ -98,6 +100,10 @@ The
 device name to use.
 Defaults to
 .Pa /dev/wsmouse .
+.It modes = string;
+Whitespace separated list of modes to be activated when running.
+Defaults to
+.Sq selection .
 .It nodaemon = boolean;
 Set to 1 to not fork in the background.
 .It pidfile = basename;
@@ -109,9 +115,9 @@ and have the
 extension automatically added.
 By default it is set to daemon's program name.
 .El
-.Ss Properties specific to the sel mode
+.Ss Properties specific to the selection mode
 The following properties are only useful when running in the
-.Em sel
+.Em selection
 mode:
 .Bl -tag -width indent
 .It fifo = pathname;
