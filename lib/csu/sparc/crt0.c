@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.16 1996/10/18 05:36:58 thorpej Exp $	*/
+/*	$NetBSD: crt0.c,v 1.17 1996/12/07 23:47:40 pk Exp $	*/
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -32,7 +32,7 @@
 
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: crt0.c,v 1.16 1996/10/18 05:36:58 thorpej Exp $";
+static char rcsid[] = "$NetBSD: crt0.c,v 1.17 1996/12/07 23:47:40 pk Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -69,6 +69,13 @@ asm ("	add	%l2, 4,	%l2");		/* envp = argv + (argc << 2) + 4 */
 asm ("	add	%l1, %l2, %l2");	/**/
 asm ("	sethi	%hi(_environ), %l3");
 asm ("	st	%l2, [%l3+%lo(_environ)]");	/* *environ = l2 */
+
+/* We get a pointer to PSSTRINGS in %g1 */
+asm ("	cmp	%g1, 0");
+asm ("	be	1f");
+asm ("	sethi	%hi(___ps_strings), %l3");
+asm ("	st	%g1, [%l3+%lo(___ps_strings)]");
+asm ("1:");
 
 /* Finish diddling with stack. */
 asm ("	andn	%sp, 7,	%sp");
