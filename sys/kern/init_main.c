@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.106 1997/10/13 00:48:07 explorer Exp $	*/
+/*	$NetBSD: init_main.c,v 1.107 1997/10/17 21:40:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -95,8 +95,12 @@
 #include <net/if.h>
 #include <net/raw_cb.h>
 
-char	copyright[] =
-"Copyright (c) 1982, 1986, 1989, 1991, 1993\n    The Regents of the University of California.  All rights reserved.\n\n";
+char	copyright[] = "\
+Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.  All rights reserved.
+Copyright (c) 1982, 1986, 1989, 1991, 1993
+    The Regents of the University of California.  All rights reserved.
+
+";
 
 /* Components of the first process -- never freed. */
 struct	session session0;
