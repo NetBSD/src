@@ -1,4 +1,4 @@
-/*	$NetBSD: a34kbbc.c,v 1.6 2000/01/03 21:52:14 is Exp $	*/
+/*	$NetBSD: a34kbbc.c,v 1.7 2000/01/06 10:53:34 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -167,7 +167,7 @@ a34kusettod(tvp)
 
 	clock_secs_to_ymdhms(secs, &dt);
 
-	rt->control1 = A3CONTROL1_HOLD_CLOCK;
+	rt->control1 = A3CONTROL1_HOLD_CLOCK;		/* implies mode 0 */
 	rt->second1 = dt.dt_sec / 10;
 	rt->second2 = dt.dt_sec % 10;
 	rt->minute1 = dt.dt_min / 10;
@@ -183,7 +183,7 @@ a34kusettod(tvp)
 	rt->year2   = dt.dt_year % 10;
 	rt->control1 = A3CONTROL1_HOLD_CLOCK | 1;	/* mode 1 registers */
 	rt->leapyear = dt.dt_year; 		/* XXX implicit % 4 */
-	rt->control1 = A3CONTROL1_FREE_CLOCK;		/* implies mode 0 */
+	rt->control1 = A3CONTROL1_FREE_CLOCK;		/* implies mode 1 */
 
 	return (1);
 }
