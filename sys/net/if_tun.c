@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.15 1994/10/30 21:48:57 cgd Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.16 1995/03/08 02:57:09 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -102,7 +102,7 @@ tunattach(unused)
 		ifp->if_opackets = 0;
 		if_attach(ifp);
 #if NBPFILTER > 0
-		bpfattach(&tunctl[i].tun_bpf, ifp, DLT_NULL, sizeof(u_int));
+		bpfattach(&tunctl[i].tun_bpf, ifp, DLT_NULL, sizeof(u_int32_t));
 #endif
 	}
 }
@@ -276,10 +276,10 @@ tunoutput(ifp, m0, dst, rt)
 		 * try to free it or keep a pointer to it).
 		 */
 		struct mbuf m;
-		u_int af = dst->sa_family;
+		u_int32_t af = dst->sa_family;
 
 		m.m_next = m0;
-		m.m_len = 4;
+		m.m_len = sizeof(af);
 		m.m_data = (char *)&af;
 
 		bpf_mtap(tp->tun_bpf, &m);
@@ -491,10 +491,10 @@ tunwrite(dev, uio)
 		 * try to free it or keep a pointer to it).
 		 */
 		struct mbuf m;
-		u_int af = AF_INET;
+		u_int32_t af = AF_INET;
 
 		m.m_next = top;
-		m.m_len = 4;
+		m.m_len = sizeof(af);
 		m.m_data = (char *)&af;
 
 		bpf_mtap(tunctl[unit].tun_bpf, &m);

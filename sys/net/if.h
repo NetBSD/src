@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.13 1994/10/30 21:48:48 cgd Exp $	*/
+/*	$NetBSD: if.h,v 1.14 1995/03/08 02:56:49 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -327,7 +327,7 @@ void	if_down __P((struct ifnet *));
 void	if_qflush __P((struct ifqueue *));
 void	if_slowtimo __P((void *));
 void	if_up __P((struct ifnet *));
-int	ifconf __P((int, caddr_t));
+int	ifconf __P((u_long, caddr_t));
 void	ifinit __P((void));
 int	ifioctl __P((struct socket *, u_long, caddr_t, struct proc *));
 int	ifpromisc __P((struct ifnet *, int));
