@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.391 2002/01/14 03:57:11 augustss Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.392 2002/01/15 20:16:36 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.386 2002/01/14 03:56:33 augustss Exp 
+ *	NetBSD: pcidevs,v 1.387 2002/01/15 20:14:47 thorpej Exp 
  */
 
 /*
@@ -1240,6 +1240,7 @@
 #define	PCI_PRODUCT_INTEL_82543_COPPER	0x1004		/* i82543 Gigabit Ethernet (1000BASE-T) */
 #define	PCI_PRODUCT_INTEL_82544_XT	0x1008		/* i82544 Gigabit Ethernet (1000BASE-T) */
 #define	PCI_PRODUCT_INTEL_82544_XF	0x1009		/* i82544 Gigabit Ethernet (1000BASE-X) */
+#define	PCI_PRODUCT_INTEL_82544GC	0x100c		/* i82544GC Gigabit Ethernet (1000BASE-T) */
 #define	PCI_PRODUCT_INTEL_IN_BUSINESS	0x1030		/* InBusiness Fast Ethernet LAN Controller */
 #define	PCI_PRODUCT_INTEL_PRO_100_VE_0	0x1031		/* PRO/100 VE Network Controller */
 #define	PCI_PRODUCT_INTEL_PRO_100_VE_1	0x1032		/* PRO/100 VE Network Controller */
