@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)un.h	7.7 (Berkeley) 6/28/90
- *	$Id: un.h,v 1.3 1993/05/20 16:23:40 cgd Exp $
+ *	$Id: un.h,v 1.4 1993/06/27 05:59:12 andrew Exp $
  */
 
 #ifndef _SYS_UN_H_
@@ -47,7 +47,19 @@ struct	sockaddr_un {
 };
 
 #ifdef KERNEL
-int	unp_discard();
+
+#include <sys/unpcb.h>
+
+int	uipc_usrreq __P((struct socket *so, int req, struct mbuf *m,
+		struct mbuf *nam, struct mbuf *control));
+int	unp_attach __P((struct socket *so));
+int	unp_detach __P((struct unpcb *unp));
+int	unp_bind __P((struct unpcb *unp, struct mbuf *nam, struct proc *p));
+int	unp_connect __P((struct socket *so, struct mbuf *nam, struct proc *p));
+int	unp_connect2 __P((struct socket *so, struct socket *so2));
+void	unp_disconnect __P((struct unpcb *unp));
+void	unp_mark __P((struct file *fp));
+void	unp_discard __P((struct file *fp));
 #else
 
 /* actual length of an initialized sockaddr_un */

@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)socket.h	7.13 (Berkeley) 4/20/91
- *	$Id: socket.h,v 1.4 1993/05/20 16:23:09 cgd Exp $
+ *	$Id: socket.h,v 1.5 1993/06/27 05:59:06 andrew Exp $
  */
 
 #ifndef _SYS_SOCKET_H_
@@ -236,7 +236,32 @@ struct omsghdr {
 	int	msg_accrightslen;
 };
 
-#ifndef	KERNEL
+#ifdef	KERNEL
+
+/* structure prototypes */
+struct socket;
+struct mbuf;
+
+/* function prototypes */
+int	socreate __P((int dom, struct socket **aso, int type, int proto));
+int	sobind __P((struct socket *so, struct mbuf *nam));
+int	solisten __P((struct socket *so, int backlog));
+int	sofree __P((struct socket *so));
+int	soclose __P((struct socket *so));
+int	soabort __P((struct socket *so));
+int	soaccept __P((struct socket *so, struct mbuf *nam));
+int	soconnect __P((struct socket *so, struct mbuf *nam));
+int	soconnect2 __P((struct socket *so1, struct socket *so2));
+int	sodisconnect __P((struct socket *so));
+int	sosend __P((struct socket *so, struct mbuf *addr, struct uio *uio,
+		struct mbuf *top, struct mbuf *control, int flags));
+int	soreceive __P((struct socket *so, struct mbuf **paddr, struct uio *uio,
+		struct mbuf **mp0, struct mbuf **controlp, int *flagsp));
+
+void	socantsendmore __P((struct socket *so));
+void	socantrcvmore __P((struct socket *so));
+
+#else	/* !KERNEL */
 
 #include <sys/cdefs.h>
 
