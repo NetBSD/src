@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.1 2001/03/29 04:44:20 fredette Exp $	*/
+/*	$NetBSD: pmap.h,v 1.2 2001/04/06 13:12:06 fredette Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -91,6 +91,9 @@ extern segsz_t pmap_wired_pages(pmap_t);
 /* Map a given physical region to a virtual region */
 extern vm_offset_t pmap_map __P((vm_offset_t, vm_offset_t, vm_offset_t, int));
 
+/* Extract the PMEG for a given physical address. */
+extern int _pmap_extract_pmeg __P((pmap_t, vm_offset_t));
+
 /*
  * Since PTEs also contain type bits, we have to have some way
  * to tell pmap_enter `this is an IO page' or `this is not to
@@ -100,6 +103,7 @@ extern vm_offset_t pmap_map __P((vm_offset_t, vm_offset_t, vm_offset_t, int));
  * The values below must agree with pte.h such that:
  *	(PMAP_OBIO << PG_MOD_SHIFT) == PGT_OBIO
  */
+#define	PMAP_OBMEM	0x00
 #define	PMAP_OBIO	0x04	/* tells pmap_enter to use PG_OBIO */
 #define	PMAP_VME16	0x08	/* etc */
 #define	PMAP_MBMEM	0x08	/* etc (sun-2/120) */
