@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.153 2001/01/08 07:28:07 itojun Exp $
+#	$NetBSD: bsd.own.mk,v 1.154 2001/01/08 13:28:08 itojun Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -134,7 +134,7 @@ GNU_ARCH.sparc64=sparc
 GNU_ARCH.vax=vax
 
 # CPU model, derived from MACHINE_ARCH
-MACHINE_CPU=	${MACHINE_ARCH:C/mipse[bl]/mips/:S/arm26/arm/:C/sh3e[bl]/sh3/}
+MACHINE_CPU=	${MACHINE_ARCH:C/mipse[bl]/mips/:S/arm26/arm/:S/arm32/arm/:C/sh3e[bl]/sh3/}
 
 .if ${MACHINE_ARCH} == "mips"
 .BEGIN:
