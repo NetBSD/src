@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.24 2000/05/31 05:09:17 thorpej Exp $	*/
+/*	$NetBSD: locore.S,v 1.24.2.1 2001/03/22 02:37:02 he Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -446,6 +446,7 @@ ENTRY(cpu_switch)
 	/* record new process */
 	lis	4,_C_LABEL(curproc)@ha
 	stw	31,_C_LABEL(curproc)@l(4)
+	lwz	4,P_ADDR(31)
 
 	mfmsr	3
 	ori	3,3,PSL_EE@l		/* Now we can interrupt again */
@@ -472,7 +473,6 @@ switch_exited:
 	mtmsr	3
 
 	/* indicate new pcb */
-	lwz	4,P_ADDR(31)
 	lis	5,_C_LABEL(curpcb)@ha
 	stw	4,_C_LABEL(curpcb)@l(5)
 
