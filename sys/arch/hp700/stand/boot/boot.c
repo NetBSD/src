@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.4 2003/10/11 03:57:31 matt Exp $	*/
+/*	$NetBSD: boot.c,v 1.5 2003/10/21 12:18:02 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -104,6 +104,7 @@ char *names[] = {
 
 static int bdev, badapt, bctlr, bunit, bpart;
 
+void boot(dev_t boot_dev);
 int main(void);
 void getbootdev(int *);
 void exec_hp700(char *, u_long, int);
@@ -117,13 +118,13 @@ typedef void (*startfuncp)(int, int, int, int, int, int, caddr_t)
 int howto;
 
 void
-boot(dev_t bootdev)
+boot(dev_t boot_dev)
 {
         machdep();
 #ifdef	DEBUGBUG
 	debug = 1;
 #endif
-	devboot(bootdev, devname_buffer);
+	devboot(boot_dev, devname_buffer);
 	main();
 }
 
@@ -168,7 +169,7 @@ main(void)
 }
 
 void
-getbootdev(int *howto)
+getbootdev(int *boot_howto)
 {
 	char c, *ptr = line;
 
@@ -188,7 +189,7 @@ getbootdev(int *howto)
 				return;
 			if (c == '-')
 				while ((c = *++ptr) && c != ' ')
-					BOOT_FLAG(c, *howto);
+					BOOT_FLAG(c, *boot_howto);
 			else {
 				name = ptr;
 				while ((c = *++ptr) && c != ' ');
@@ -204,7 +205,7 @@ getbootdev(int *howto)
 	(((x) + sizeof(u_long) - 1) & ~(sizeof(u_long) - 1))
 
 void
-exec_hp700(char *file, u_long loadaddr, int howto)
+exec_hp700(char *file, u_long loadaddr, int boot_howto)
 {
 #ifdef EXEC_DEBUG
 	extern int debug;
@@ -223,7 +224,7 @@ exec_hp700(char *file, u_long loadaddr, int howto)
 	marks[MARK_START] = loadaddr;
 #ifdef EXEC_DEBUG
 	printf("file=%s loadaddr=%x howto=%x\n",
-		file, loadaddr, howto);
+		file, loadaddr, boot_howto);
 #endif
 	if ((fd = loadfile(file, marks, LOAD_KERNEL)) == -1)
 		return;
@@ -260,7 +261,7 @@ exec_hp700(char *file, u_long loadaddr, int howto)
 	__asm("mtctl %r0, %cr17");
 	__asm("mtctl %r0, %cr17");
 	/* stack and the gung is ok at this point, so, no need for asm setup */
-	(*(startfuncp)(marks[MARK_ENTRY])) ((int)pdc, howto, bootdev, marks[MARK_END],
+	(*(startfuncp)(marks[MARK_ENTRY])) ((int)pdc, boot_howto, bootdev, marks[MARK_END],
 				       BOOTARG_APIVER, ac, av);
 	/* not reached */
 }
