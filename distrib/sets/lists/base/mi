@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.304 2002/02/12 01:43:34 thorpej Exp $
+# $NetBSD: mi,v 1.305 2002/02/12 02:05:06 thorpej Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -925,6 +925,7 @@
 ./usr/share/games			base-games-share
 ./usr/share/games/atc			base-games-share
 ./usr/share/games/boggle		base-games-share
+./usr/share/games/ching			base-games-share
 ./usr/share/games/fortune		base-games-share
 ./usr/share/games/larn			base-games-share
 ./usr/share/games/quiz.db		base-games-share
