@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ex_cardbus.c,v 1.27 2002/10/02 16:33:42 thorpej Exp $	*/
+/*	$NetBSD: if_ex_cardbus.c,v 1.28 2003/11/02 09:56:38 wiz Exp $	*/
 
 /*
  * CardBus specific routines for 3Com 3C575-family CardBus ethernet adapter
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ex_cardbus.c,v 1.27 2002/10/02 16:33:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ex_cardbus.c,v 1.28 2003/11/02 09:56:38 wiz Exp $");
 
 /* #define EX_DEBUG 4 */	/* define to report information for debugging */
 
@@ -454,7 +454,7 @@ ex_cardbus_setup(csc)
 	    reg);
   
  	/*
-	 * set latency timmer
+	 * set latency timer
 	 */
 	reg = cardbus_conf_read(cc, cf, csc->sc_tag, CARDBUS_BHLC_REG);
 	if (CARDBUS_LATTIMER(reg) < 0x20) {
