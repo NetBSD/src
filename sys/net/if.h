@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.20 1996/02/13 22:00:12 christos Exp $	*/
+/*	$NetBSD: if.h,v 1.21 1996/02/17 12:32:50 pk Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -290,7 +290,8 @@ struct	ifreq {
 struct ifaliasreq {
 	char	ifra_name[IFNAMSIZ];		/* if name, e.g. "en0" */
 	struct	sockaddr ifra_addr;
-	struct	sockaddr ifra_broadaddr;
+	struct	sockaddr ifra_dstaddr;
+#define	ifra_broadaddr	ifra_dstaddr
 	struct	sockaddr ifra_mask;
 };
 
