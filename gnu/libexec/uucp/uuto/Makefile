@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.8 1999/02/13 23:53:57 lukem Exp $
+#	$NetBSD: Makefile,v 1.9 2000/01/23 22:13:55 mycroft Exp $
 # Makefile for uuto
 
 BINDIR=		$(bindir)
 
 CLEANFILES=	uuto
 
-all:	${CLEANFILES}
+realall:	${CLEANFILES}
 
 uuto:	uuto.in
 	sed -e "s|@BINDIR@|$(bindir)|g" -e "s|@SBINDIR@|$(sbindir)|g" \
