@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: dhcp.c,v 1.3 1999/02/18 22:04:07 mellon Exp $ Copyright (c) 1995, 1996, 1997, 1998, 1999 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: dhcp.c,v 1.4 1999/02/19 22:39:06 mellon Exp $ Copyright (c) 1995, 1996, 1997, 1998, 1999 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -1360,7 +1360,8 @@ struct lease *find_lease (packet, share, ours)
 	   lease to be abandoned.   If so, this request probably came from
 	   that client. */
 	if (ip_lease && (ip_lease -> shared_network != share)) {
-		*ours = 1;
+		if (ours)
+			*ours = 1;
 		ip_lease = (struct lease *)0;
 		strcpy (dhcp_message, "requested address on bad subnet");
 	}
@@ -1390,7 +1391,8 @@ struct lease *find_lease (packet, share, ours)
 		}
 		strcpy (dhcp_message, "requested address is not available");
 		ip_lease = (struct lease *)0;
-		*ours = 1;
+		if (ours)
+			*ours = 1;
 
 		/* If we get to here and fixed_lease is not null, that means
 		   that there are both a dynamic lease and a fixed-address
