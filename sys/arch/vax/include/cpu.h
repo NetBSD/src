@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.28 1998/06/09 14:03:24 ragge Exp $      */
+/*      $NetBSD: cpu.h,v 1.29 1998/08/10 14:33:33 ragge Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -38,6 +38,7 @@
 #include <machine/mtpr.h>
 #include <machine/pcb.h>
 #include <machine/uvax.h>
+#include <machine/psl.h>
 
 #define enablertclock()
 #define	cpu_wait(p)

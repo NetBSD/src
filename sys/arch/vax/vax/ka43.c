@@ -1,4 +1,4 @@
-/*	$NetBSD: ka43.c,v 1.9 1998/06/20 18:46:19 ragge Exp $ */
+/*	$NetBSD: ka43.c,v 1.10 1998/08/10 14:31:07 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -321,6 +321,11 @@ ka43_steal_pages()
         extern  int clk_adrshift, clk_tweak;
 	int	junk, val;
 
+        /* Interrupt vector number in interrupt mask table */
+        inr_ni = VS3100_NI;
+        inr_sr = VS3100_SR;
+        inr_st = VS3100_ST;
+        inr_vf = VS3100_VF;
 	/* 
 	 * SCB is already copied/initialized at addr avail_start
 	 * by pmap_bootstrap(), but it's not yet mapped. Thus we use
