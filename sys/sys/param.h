@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1982, 1986, 1989 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1986, 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  * (c) UNIX System Laboratories, Inc.
  * All or some portions of this file are derived from material licensed
  * to the University of California by American Telephone and Telegraph
@@ -35,19 +35,16 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)param.h	7.23 (Berkeley) 5/6/91
- *	$Id: param.h,v 1.10 1994/05/17 04:25:06 cgd Exp $
+ *	from: @(#)param.h	8.2 (Berkeley) 1/21/94
+ *	$Id: param.h,v 1.11 1994/05/24 02:35:24 cgd Exp $
  */
 
-#ifndef _SYS_PARAM_H_
-#define _SYS_PARAM_H_
-
-#define	BSD	199103	/* CSRG: March, 1991 system version (year & month) */
+#define	BSD	199103		/* System version (year & month). */
 #define BSD4_3	1
-#define BSD4_4	0.5
+#define BSD4_4	1
 
-#define NetBSD	1993070	/* NetBSD date: 1993, July, release 0 */
-#define NetBSD0_9 2	/* NetBSD 0.9a */
+#define NetBSD	1993070		/* NetBSD version (year, month, release) */
+#define NetBSD0_9 2		/* NetBSD 0.9B */
 
 #ifndef NULL
 #define	NULL	0
@@ -91,7 +88,6 @@
 
 /* Machine type dependent parameters. */
 #include <machine/param.h>
-#include <machine/endian.h>
 #include <machine/limits.h>
 
 /*
@@ -157,7 +153,7 @@
  * made larger without any effect on existing file systems; however making
  * it smaller make make some file systems unmountable.
  */
-#define	MAXBSIZE	16384
+#define	MAXBSIZE	16384 /* XXX MAXPHYS */
 #define MAXFRAG 	8
 
 /*
@@ -185,11 +181,8 @@
 #define	roundup(x, y)	((((x)+((y)-1))/(y))*(y))
 #define powerof2(x)	((((x)-1)&(x))==0)
 
-/* Macros for fast min/max: with inline expansion, the "function" is faster. */
-#ifdef KERNEL
-#define	MIN(a,b) min((a), (b))
-#define	MAX(a,b) max((a), (b))
-#else
+/* Macros for min/max. */
+#ifndef KERNEL
 #define	MIN(a,b) (((a)<(b))?(a):(b))
 #define	MAX(a,b) (((a)>(b))?(a):(b))
 #endif
@@ -224,6 +217,4 @@
  * FSHIFT must be at least 11; this gives us a maximum load avg of ~1024.
  */
 #define	FSHIFT	11		/* bits to right of fixed binary point */
-#define FSCALE	(1 << FSHIFT)
-
-#endif /* !_SYS_PARAM_H_ */
+#define FSCALE	(1<<FSHIFT)
