@@ -1,4 +1,4 @@
-/*	$NetBSD: vrkiu.c,v 1.27 2001/06/11 06:04:55 enami Exp $	*/
+/*	$NetBSD: vrkiu.c,v 1.28 2001/06/11 06:11:01 enami Exp $	*/
 
 /*-
  * Copyright (c) 1999 SASAKI Takesi All rights reserved.
@@ -49,12 +49,13 @@
 #include <machine/platid.h>
 #include <machine/platid_mask.h>
 
+#include <dev/hpc/hpckbdvar.h>
+
 #include <hpcmips/vr/vr.h>
 #include <hpcmips/vr/vripvar.h>
-#include <hpcmips/vr/vrkiuvar.h>
 #include <hpcmips/vr/vrkiureg.h>
+#include <hpcmips/vr/vrkiuvar.h>
 #include <hpcmips/vr/icureg.h>
-#include <dev/hpc/hpckbdvar.h>
 
 #include "opt_wsdisplay_compat.h"
 #include "opt_pckbd_layout.h"

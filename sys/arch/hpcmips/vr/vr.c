@@ -1,4 +1,4 @@
-/*	$NetBSD: vr.c,v 1.25 2001/06/11 05:52:21 enami Exp $	*/
+/*	$NetBSD: vr.c,v 1.26 2001/06/11 06:11:01 enami Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -54,6 +54,8 @@
 #include <mips/mips_param.h>		/* hokey spl()s */
 #include <mips/mips/mips_mcclock.h>	/* mcclock CPUspeed estimation */
 
+#include <dev/hpc/hpckbdvar.h>
+
 #include "opt_vr41xx.h"
 #include <hpcmips/vr/vr.h>
 #include <hpcmips/vr/vr_asm.h>
@@ -103,6 +105,7 @@
 #endif
 
 #if NVRKIU > 0
+#include <arch/hpcmips/vr/vrkiureg.h>
 #include <arch/hpcmips/vr/vrkiuvar.h>
 #endif
 
