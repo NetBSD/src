@@ -1,4 +1,4 @@
-/*	$NetBSD: cy.c,v 1.6 1997/04/13 20:00:29 cgd Exp $	*/
+/*	$NetBSD: cy.c,v 1.7 1997/06/17 05:38:10 cgd Exp $	*/
 
 /*
  * cy.c
@@ -98,7 +98,7 @@ cy_find(sc)
 			chip -= (CY32_ADDR_FIX << bustype);
 
 #ifdef CY_DEBUG
-		printf("%s probe chip %d offset 0x%lx ... ",
+		printf("%s probe chip %d offset 0x%x ... ",
 		    sc->sc_dev.dv_xname, cy_chip, chip);
 #endif
 
@@ -122,7 +122,7 @@ cy_find(sc)
 	         * cleared chip 0 GFRCR. In that case we have a 16 port card.
 	         */
 		if (cy_chip == 4 &&
-		    bus_space_read_1(tag, bsh, chip +
+		    bus_space_read_1(tag, bsh, /* off for chip 0 (0) + */
 		       ((CD1400_GFRCR << 1) << bustype)) == 0)
 			break;
 
@@ -201,7 +201,7 @@ cy_attach(parent, self, aux)
 
 		for (cdu = 0; cdu < CD1400_NO_OF_CHANNELS; cdu++) {
 			sc->sc_ports[port].cy_port_num = port;
-			sc->sc_ports[port].cy_chip = chip;
+			sc->sc_ports[port].cy_chip = cy_chip;
 
 			/* should we initialize anything else here? */
 			port++;
