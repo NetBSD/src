@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2001/01/10 18:11:05 thorpej Exp $
+#	$NetBSD: Makefile,v 1.4 2001/10/19 22:57:53 tv Exp $
 
 PROG	=	isdnd
 SRCS	=	rc_parse.y rc_scan.l main.c rc_config.c log.c curses.c	\
@@ -14,8 +14,7 @@ CPPFLAGS+=	-DDEBUG
 MAN      =	isdnd.8 isdnd.rc.5 isdnd.rates.5 isdnd.acct.5
 
 LDADD+=-ly -ll
-YFLAGS += -d
-CLEANFILES+=	y.tab.h
+YHEADER=1
 
 .include <bsd.prog.mk>
 
