@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.68 2001/03/14 16:39:33 drochner Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.69 2001/04/03 20:25:22 ragge Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -41,7 +41,9 @@
 /*
  * We need <machine/types.h> for __HAVE_OLD_DISKLABEL
  */
+#ifndef _LOCORE
 #include <sys/types.h>
+#endif
 
 /*
  * Each disk has a label which includes information about the hardware
