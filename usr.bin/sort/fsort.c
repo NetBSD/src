@@ -1,4 +1,4 @@
-/*	$NetBSD: fsort.c,v 1.27 2003/10/16 07:01:51 itojun Exp $	*/
+/*	$NetBSD: fsort.c,v 1.28 2003/10/17 22:59:35 enami Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
 #include "fsort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: fsort.c,v 1.27 2003/10/16 07:01:51 itojun Exp $");
+__RCSID("$NetBSD: fsort.c,v 1.28 2003/10/17 22:59:35 enami Exp $");
 __SCCSID("@(#)fsort.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -189,7 +189,7 @@ fsort(binno, depth, top, filelist, nfiles, outfp, ftbl)
 				/* buffer was too small for data, allocate
 				 * bigger buffer */
 				nbuffer = realloc(buffer, bufsize * 2);
-				if (!buffer) {
+				if (!nbuffer) {
 					err(2, "failed to realloc buffer to %lu bytes",
 						(unsigned long) bufsize * 2);
 				}
