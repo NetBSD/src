@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.66 1999/03/24 05:51:05 mrg Exp $	*/
+/*	$NetBSD: locore.S,v 1.67 1999/03/30 14:27:56 soda Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -136,7 +136,7 @@ LEAF_NOPROFILE(sigcode)
 	syscall
 	break	0			# just in case sigreturn fails
 END(sigcode)
-ALIAS(esigcode)
+XLEAF(esigcode)
 
 #ifdef COMPAT_ULTRIX
 LEAF_NOPROFILE(ultrix_sigcode)
@@ -145,7 +145,7 @@ LEAF_NOPROFILE(ultrix_sigcode)
 	syscall
 	break	0			# just in case sigreturn fails
 END(ultrix_sigcode)
-ALIAS(ultrix_esigcode)
+XLEAF(ultrix_esigcode)
 #endif
 
 /*
@@ -695,7 +695,7 @@ END(suswintr)
  * Fetches a short word of data from the user-space address.
  */
 LEAF(fuword)
-ALIAS(fuiword)
+XLEAF(fuiword)
 	lw	v1, _C_LABEL(curpcb)
 	la	v0, _C_LABEL(fswberr)
 	blt	a0, zero, _C_LABEL(fswberr)
@@ -710,7 +710,7 @@ END(fuword)
  * Fetches a short word of data from the user-space address.
  */
 LEAF(fusword)
-ALIAS(fuisword)
+XLEAF(fuisword)
 	lw	v1, _C_LABEL(curpcb)
 	la	v0, _C_LABEL(fswberr)
 	blt	a0, zero, _C_LABEL(fswberr)
@@ -725,7 +725,7 @@ END(fusword)
  * Fetch a byte from the user's address space.
  */
 LEAF(fubyte)
-ALIAS(fuibyte)
+XLEAF(fuibyte)
 	lw	v1, _C_LABEL(curpcb)
 	la	v0, _C_LABEL(fswberr)
 	blt	a0, zero, _C_LABEL(fswberr)
@@ -772,7 +772,7 @@ END(suiword)
  * Stores a short word of data to the user-space address.
  */
 LEAF(susword)
-ALIAS(suisword)
+XLEAF(suisword)
 	lw	v1, _C_LABEL(curpcb)
 	la	v0, _C_LABEL(fswberr)
 	blt	a0, zero, _C_LABEL(fswberr)
@@ -788,7 +788,7 @@ END(susword)
  * Stores a byte of data to the user-space address.
  */
 LEAF(subyte)
-ALIAS(suibyte)
+XLEAF(suibyte)
 	lw	v1, _C_LABEL(curpcb)
 	la	v0, _C_LABEL(fswberr)
 	blt	a0, zero, _C_LABEL(fswberr)
@@ -832,8 +832,8 @@ END(badaddr)
  */
 LEAF(fswintrberr)
 	nop
-ALIAS(fswberr)
-ALIAS(baderr)
+XLEAF(fswberr)
+XLEAF(baderr)
 	sw	zero, U_PCB_ONFAULT(v1)
 	j	ra
 	li	v0, -1
@@ -857,7 +857,7 @@ bcopy:
  */
 #if BYTE_ORDER == LITTLE_ENDIAN
 LEAF(htonl)				# a0 = 0x11223344, return 0x44332211
-ALIAS(ntohl)
+XLEAF(ntohl)
 	srl	v1, a0, 24		# v1 = 0x00000011
 	sll	v0, a0, 24		# v0 = 0x44000000
 	or	v0, v0, v1
@@ -875,7 +875,7 @@ END(htonl)
  * hostorder = ntohs(netorder)
  */
 LEAF(htons)
-ALIAS(ntohs)
+XLEAF(ntohs)
 	srl	v0, a0, 8
 	and	v0, v0, 0xff
 	sll	v1, a0, 8
@@ -1117,7 +1117,7 @@ END(savefpregs)
  *----------------------------------------------------------------------------
  */
 NESTED(MachFPInterrupt, CALLFRAME_SIZ, ra)
-ALIAS(MachFPTrap)
+XLEAF(MachFPTrap)
 	.mask	0x80000000, -4
 	subu	sp, sp, CALLFRAME_SIZ
 	mfc0	t0, MIPS_COP_0_STATUS
