@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.5 1994/07/13 22:30:13 mycroft Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.6 1994/07/18 08:07:50 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -440,20 +440,18 @@ cd9660_root(mp, vpp)
 	struct vnode **vpp;
 {
 	struct iso_mnt *imp = VFSTOISOFS(mp);
-	ino_t inum;
-	struct vnode *nvp;
-	int error;
+	struct iso_directory_record *dp =
+	    (struct iso_directory_record *)imp->root;
+	ino_t ino;
 	
-	isodirino(&inum, imp->root, imp);
+	isodirino(&ino, dp, imp);
 	
 	/*
 	 * With RRIP we must use the `.' entry of the root directory.
-	 * Simply tell iget, that it's a relocated directory.
+	 * Simply tell vget, that it's a relocated directory.
 	 */
-	if (error = VFS_VGET(mp, inum, &nvp))
-		return (error);
-	*vpp = nvp;
-	return (0);
+	return (cd9660_vget_internal(mp, ino, vpp,
+	    imp->iso_ftype == ISO_FTYPE_RRIP, dp));
 }
 
 /*
@@ -597,7 +595,11 @@ cd9660_vget(mp, ino, vpp)
 	 * that right now.
 	 */
 	return (cd9660_vget_internal(mp, ino, vpp,
+#if 0
 	    VFSTOISOFS(mp)->iso_ftype == ISO_FTYPE_RRIP,
+#else
+	    0,
+#endif
 	    (struct iso_directory_entry *)0));
 }
 
@@ -613,7 +615,6 @@ cd9660_vget_internal(mp, ino, vpp, relocated, isodir)
 	struct iso_node *ip;
 	struct buf *bp;
 	struct vnode *vp, *nvp;
-	int lbn, off;
 	dev_t dev;
 	int error;
 
@@ -643,23 +644,26 @@ cd9660_vget_internal(mp, ino, vpp, relocated, isodir)
 	 */
 	cd9660_ihashins(ip);
 
-	lbn = iso_lblkno(imp, ino);
-	if (lbn >= imp->volume_space_size) {
-		vput(vp);
-		printf("fhtovp: lbn exceed volume space %d\n", lbn);
-		return (ESTALE);
-	}
-	
-	off = iso_blkoff(imp, ino);
-	if (off + ISO_DIRECTORY_RECORD_SIZE > imp->logical_block_size) {
-		vput(vp);
-		printf("fhtovp: crosses block boundary %d\n",
-		       off + ISO_DIRECTORY_RECORD_SIZE);
-		return (ESTALE);
-	}
-	
 	if (isodir == 0) {
-		error = bread(imp->im_devvp, btodb(lbn * imp->logical_block_size),
+		int lbn, off;
+
+		lbn = iso_lblkno(imp, ino);
+		if (lbn >= imp->volume_space_size) {
+			vput(vp);
+			printf("fhtovp: lbn exceed volume space %d\n", lbn);
+			return (ESTALE);
+		}
+	
+		off = iso_blkoff(imp, ino);
+		if (off + ISO_DIRECTORY_RECORD_SIZE > imp->logical_block_size) {
+			vput(vp);
+			printf("fhtovp: crosses block boundary %d\n",
+			       off + ISO_DIRECTORY_RECORD_SIZE);
+			return (ESTALE);
+		}
+	
+		error = bread(imp->im_devvp,
+			      btodb(lbn * imp->logical_block_size),
 			      imp->logical_block_size, NOCRED, &bp);
 		if (error) {
 			vput(vp);
@@ -668,30 +672,31 @@ cd9660_vget_internal(mp, ino, vpp, relocated, isodir)
 			return (error);
 		}
 		isodir = (struct iso_directory_record *)(bp->b_data + off);
-	} else
-		bp = 0;
 
-	if (off + isonum_711(isodir->length) > imp->logical_block_size) {
-		vput(vp);
-		if (bp != 0)
-			brelse(bp);
-		printf("fhtovp: directory crosses block boundary %d[off=%d/len=%d]\n",
-		       off +isonum_711(isodir->length), off,
-		       isonum_711(isodir->length));
-		return (ESTALE);
-	}
+		if (off + isonum_711(isodir->length) >
+		    imp->logical_block_size) {
+			vput(vp);
+			if (bp != 0)
+				brelse(bp);
+			printf("fhtovp: directory crosses block boundary %d[off=%d/len=%d]\n",
+			       off +isonum_711(isodir->length), off,
+			       isonum_711(isodir->length));
+			return (ESTALE);
+		}
 	
 #if 0
-	if (isonum_733(isodir->extent) + isonum_711(isodir->ext_attr_length) !=
-	    ifhp->ifid_start) {
-		if (bp != 0)
-			brelse(bp);
-		printf("fhtovp: file start miss %d vs %d\n",
-		       isonum_733(isodir->extent) + isonum_711(isodir->ext_attr_length),
-		       ifhp->ifid_start);
-		return (ESTALE);
-	}
+		if (isonum_733(isodir->extent) +
+		    isonum_711(isodir->ext_attr_length) != ifhp->ifid_start) {
+			if (bp != 0)
+				brelse(bp);
+			printf("fhtovp: file start miss %d vs %d\n",
+			       isonum_733(isodir->extent) + isonum_711(isodir->ext_attr_length),
+			       ifhp->ifid_start);
+			return (ESTALE);
+		}
 #endif
+	} else
+		bp = 0;
 
 	ip->i_mnt = imp;
 	ip->i_devvp = imp->im_devvp;
