@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.116 2000/06/06 03:10:55 thorpej Exp $
+# $NetBSD: files.alpha,v 1.117 2000/06/11 21:25:23 thorpej Exp $
 #
 # alpha-specific configuration info
 
@@ -209,15 +209,9 @@ file	arch/alpha/tc/tcds_dma.c	asc
 include "dev/pci/files.pci"	# XXX some ISA devs are 'at pci' too.
 include "dev/isa/files.isa"
 
-#file	arch/alpha/isa/isafcns_jensen.c	dec_2000_300
-
 #
 # ISA Bus devices
 #
-
-#device	ibus at mainbus { }
-#device	jcombo at ibus: isabus
-#device	jeisa at ibus: eisabus
 
 file	arch/alpha/isa/isa_machdep.c	isa
 
@@ -250,6 +244,23 @@ file	arch/alpha/isa/isapnp_machdep.c	isapnp
 
 include "dev/eisa/files.eisa"
 
+device	jensenio {[port = -1]}: eisabus, isabus
+attach	jensenio at mainbus
+file	arch/alpha/jensenio/jensenio.c		 jensenio
+file	arch/alpha/jensenio/jensenio_bus_intio.c jensenio
+file	arch/alpha/jensenio/jensenio_bus_io.c	 jensenio
+file	arch/alpha/jensenio/jensenio_bus_mem.c	 jensenio
+file	arch/alpha/jensenio/jensenio_dma.c	 jensenio
+file	arch/alpha/jensenio/jensenio_intr.c	 jensenio
+
+attach	com at jensenio with com_jensenio
+file	arch/alpha/jensenio/com_jensenio.c	com_jensenio
+
+attach	lpt at jensenio with lpt_jensenio
+file	arch/alpha/jensenio/lpt_jensenio.c	lpt_jensenio
+
+attach	pckbc at jensenio with pckbc_jensenio
+file	arch/alpha/jensenio/pckbc_jensenio.c	pckbc_jensenio
 
 #
 # PCI Bus support
@@ -363,6 +374,7 @@ file	arch/alpha/sableio/pckbc_sableio.c	pckbc_sableio
 #file	arch/alpha/sableio/fdc_sableio.c	fdc_sableio
 
 # CPU support files
+file	arch/alpha/alpha/dec_2000_300.c	dec_2000_300
 file	arch/alpha/pci/pci_2100_a50.c	dec_2100_a50
 file	arch/alpha/pci/pci_2100_a500.c	dec_2100_a500
 file	arch/alpha/pci/pci_up1000.c	api_up1000
@@ -429,10 +441,12 @@ device	mcclock
 attach	mcclock at ioasic with mcclock_ioasic
 attach	mcclock at isa with mcclock_isa
 attach	mcclock at gbus with mcclock_tlsb
+attach	mcclock at jensenio with mcclock_jensenio
 file	arch/alpha/alpha/mcclock.c	mcclock
 file	arch/alpha/tc/mcclock_ioasic.c	mcclock_ioasic
 file	arch/alpha/isa/mcclock_isa.c	mcclock_isa
 file	arch/alpha/tlsb/mcclock_tlsb.c	mcclock_tlsb
+file	arch/alpha/jensenio/mcclock_jensenio.c	mcclock_jensenio
 
 
 #
