@@ -1,4 +1,4 @@
-/*	$NetBSD: tulipvar.h,v 1.9 1999/09/14 22:25:50 thorpej Exp $	*/
+/*	$NetBSD: tulipvar.h,v 1.10 1999/09/14 23:33:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -233,6 +233,7 @@ struct tulip_softc {
 	int		sc_flags;	/* misc flags. */
 	char		sc_name[16];	/* board name */
 	u_int32_t	sc_cacheline;	/* cache line size */
+	int		sc_devno;	/* PCI device # */
 
 	struct mii_data sc_mii;		/* MII/media information */
 
