@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.h,v 1.7.4.2 1997/08/11 09:41:46 thorpej Exp $	*/
+/*	$NetBSD: isa_machdep.h,v 1.7.4.3 1997/08/29 03:15:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -110,10 +110,9 @@ int	isa_intr_alloc __P((isa_chipset_tag_t, int, int, int *));
 void	*isa_intr_establish __P((isa_chipset_tag_t ic, int irq, int type,
 	    int level, int (*ih_fun)(void *), void *ih_arg));
 void	isa_intr_disestablish __P((isa_chipset_tag_t ic, void *handler));
-#define isa_mem_alloc(t, size, align, boundary, cacheable, addrp, bahp) \
-	(bus_space_alloc((t), IOM_BEGIN, IOM_END, (size), (align), \
-			 (boundary), (cacheable), (addrp), (bahp)))
-#define isa_mem_free(t, bah, size) bus_space_free((t), (bah), (size))
+int	isa_mem_alloc __P((bus_space_tag_t, bus_size_t, bus_size_t,
+	    bus_addr_t, int, bus_addr_t *, bus_space_handle_t *));
+void	isa_mem_free __P((bus_space_tag_t, bus_space_handle_t, bus_size_t));
 
 /*
  * ALL OF THE FOLLOWING ARE MACHINE-DEPENDENT, AND SHOULD NOT BE USED

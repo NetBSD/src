@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.22.4.2 1997/08/11 09:41:44 thorpej Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.22.4.3 1997/08/29 03:15:34 thorpej Exp $	*/
 
 #define ISA_DMA_STATS
 
@@ -537,6 +537,33 @@ isa_attach_hook(parent, self, iba)
 	if (isa_has_been_seen)
 		panic("isaattach: ISA bus already seen!");
 	isa_has_been_seen = 1;
+}
+
+int
+isa_mem_alloc(t, size, align, boundary, flags, addrp, bshp)
+	bus_space_tag_t t;
+	bus_size_t size, align;
+	bus_addr_t boundary;
+	int flags;
+	bus_addr_t *addrp;
+	bus_space_handle_t *bshp;
+{
+
+	/*
+	 * Allocate physical address space in the ISA hole.
+	 */
+	return (bus_space_alloc(t, IOM_BEGIN, IOM_END - 1, size, align,
+	    boundary, flags, addrp, bshp));
+}
+
+void
+isa_mem_free(t, bsh, size)
+	bus_space_tag_t t;
+	bus_space_handle_t bsh;
+	bus_size_t size;
+{
+
+	bus_space_free(t, bsh, size);
 }
 
 /**********************************************************************
