@@ -1,5 +1,5 @@
 '\" t
-.\" $NetBSD: ksh.Man,v 1.9 2002/09/26 11:11:17 wiz Exp $
+.\" $NetBSD: ksh.Man,v 1.10 2002/10/02 15:58:04 wiz Exp $
 .\"{{{}}}
 .\"{{{  Notes about man page
 .\"     - use the pseudo-macros .sh( and .sh) to begin and end sh-specific
@@ -1340,7 +1340,7 @@ When used as a prefix operator, the result is the incremented value of
 the parameter, when used as a postfix operator, the result is the
 original value of the parameter.
 .IP "\fB++\fP"
-similar to \fB++\fP, except the paramter is decremented by 1.
+similar to \fB++\fP, except the parameter is decremented by 1.
 .IP "\fB,\fP"
 separates two arithmetic expressions; the left hand side is evaluated first,
 then the right.
