@@ -30,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)ffs_alloc.c	8.18 (Berkeley) 5/26/95
+ *	@(#)ffs_alloc.c	8.19 (Berkeley) 7/13/95
  */
 
 #include <sys/param.h>
@@ -1116,7 +1116,7 @@ ffs_clusteralloc(ip, cg, bpref, len)
 	for (i = 0; i < len; i += fs->fs_frag)
 		if ((got = ffs_alloccgblk(fs, cgp, bno + i)) != bno + i)
 			panic("ffs_clusteralloc: lost block");
-	brelse(bp);
+	bdwrite(bp);
 	return (bno);
 
 fail:

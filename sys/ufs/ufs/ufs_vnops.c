@@ -35,7 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)ufs_vnops.c	8.27 (Berkeley) 5/27/95
+ *	@(#)ufs_vnops.c	8.28 (Berkeley) 7/31/95
  */
 
 #include <sys/param.h>
@@ -682,8 +682,8 @@ out:
 int
 ufs_link(ap)
 	struct vop_link_args /* {
-		struct vnode *a_vp;
 		struct vnode *a_tdvp;
+		struct vnode *a_vp;
 		struct componentname *a_cnp;
 	} */ *ap;
 {
