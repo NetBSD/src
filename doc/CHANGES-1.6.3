@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.33 2004/03/15 05:46:12 jmc Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.34 2004/03/15 05:49:18 jmc Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -197,3 +197,8 @@ sys/dev/pci/if_bge.c			1.59
 	Set BGE_JUMBO_RXRING_VALID in bge_flags when allocating jumbo ring 
 	buffers so it can be freed later. PR#24686
 	[martin, ticket #1622]
+
+sys/netinet/tcp_timer.c			1.66
+
+	callout_ack() was called with wrong argument
+	[he, ticket #1624]
