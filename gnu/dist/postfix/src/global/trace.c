@@ -1,4 +1,4 @@
-/*	$NetBSD: trace.c,v 1.1.1.2 2004/05/31 00:24:36 heas Exp $	*/
+/*	$NetBSD: trace.c,v 1.1.1.3 2004/07/28 22:49:19 heas Exp $	*/
 
 /*++
 /* NAME
@@ -174,8 +174,8 @@ int     vtrace_append(int flags, const char *queue_id,
 	req_stat = -1;
     } else {
 	if (flags & DEL_REQ_FLAG_EXPAND)
-	    vlog_adhoc(queue_id, orig_rcpt, recipient, relay,
-		       entry, dsn_action, fmt, ap);
+	    log_adhoc(queue_id, orig_rcpt, recipient, relay,
+		      entry, dsn_action, "%s", vstring_str(why));
 	req_stat = 0;
     }
     vstring_free(why);

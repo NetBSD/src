@@ -9356,3 +9356,53 @@ Apologies for any names omitted.
 
 	Bugfix: missing "sasl enabled" guard in the SMTPD policy
 	client.  File: smtpd/smtpd_check.c.
+
+20040614
+
+	Bugfix: the SMTP client did not reset per-session EHLO,
+	SASL, and history information when opening a connection to
+	an alternate SMTP server.  This is the result of abstraction
+	no longer matching function. Reported and diagnosed by
+	Victor Duchovni, Morgan Stanley.
+
+	Bugfix: non-portable reuse of variadic argument lists.
+	Fix by Victor Duchovni, Morgan Stanley. Files:  global/bounce.c,
+	global/defer.c, global/sent.c, global/trace.c, global/verify.c.
+
+	Portability: NetBSD 2.0 has changed from statfs to statvfs.
+	John Heasley. File: util/sys_defs.h.
+
+	Documentation: typo fixes by IKEDA Nozomu.
+
+20040616
+
+	Bugfix: one missed variadic argument list fix. Victor
+	Duchovni, Morgan Stanley. File: global/verify.c.
+
+	Bugfix: the resolver client cache should be context dependent
+	because address verification probes may use a different
+	route than normal mail deliveries. File: global/resolve_clnt.c.
+
+	Safety: added similar context dependence to the address
+	rewriting client in order to avoid trouble when Postfix is
+	changed. File: global/rewrite_clnt.c.
+
+	Bugfix: space in HELO commands could end up in XFORWARD
+	commands.  File: smtpd/smtpd.c.
+
+20040619
+
+	Bugfix: more missing resets in the SMTP client when it
+	switches to an alternate SMTP server.  In this case the
+	error_mask that controls whether an SMTP session transcript
+	is mailed to the postmaster, and the size_limit that controls
+	how large a message Postfix will send. Found during code
+	maintenance.  File: smtp/smtp_connect.c.
+
+20040622
+
+	Safety: when mail is delivered to a transport with per-delivery
+	recipient limit of 1, split the recipient address on the
+	recipient delimiter if one is defined, so that extended
+	addresses don't get extra delivery concurrency slots.
+	Files: *qmgr/qmgr_message.c.

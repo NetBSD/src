@@ -309,9 +309,9 @@ HEADER_CHECKS(5)                                 HEADER_CHECKS(5)
        exploit.
 
        /etc/postfix/main.cf:
-           <a href="postconf.5.html#header_checks">header_checks</a> = <a href="regexp_table.5.html">regexp</a>:/etc/postfix/header_checks
+           <a href="postconf.5.html#body_checks">body_checks</a> = <a href="regexp_table.5.html">regexp</a>:/etc/postfix/body_checks
 
-       /etc/postfix/header_checks:
+       /etc/postfix/body_checks:
            /^&lt;iframe src=(3D)?cid:.* height=(3D)?0 width=(3D)?0&gt;$/
                REJECT IFRAME vulnerability exploit
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: verify.c,v 1.1.1.2 2004/05/31 00:24:36 heas Exp $	*/
+/*	$NetBSD: verify.c,v 1.1.1.3 2004/07/28 22:49:19 heas Exp $	*/
 
 /*++
 /* NAME
@@ -136,26 +136,31 @@ int     vverify_append(const char *queue_id, const char *orig_rcpt,
 		              time_t entry, const char *status,
 		              int rcpt_stat, const char *fmt, va_list ap)
 {
+    VSTRING *text = vstring_alloc(10);
     int     req_stat;
 
     /*
      * Impedance adaptor between bounce/defer/sent and verify_clnt.
      */
+    vstring_vsprintf(text, fmt, ap);
     if (var_verify_neg_cache || rcpt_stat == DEL_RCPT_STAT_OK) {
-	req_stat = verify_clnt_vupdate(orig_rcpt, rcpt_stat, fmt, ap);
+	req_stat = verify_clnt_update(orig_rcpt, rcpt_stat,
+				      "%s", vstring_str(text));
 	if (req_stat == VRFY_STAT_OK && strcasecmp(recipient, orig_rcpt) != 0)
-	    req_stat = verify_clnt_vupdate(recipient, rcpt_stat, fmt, ap);
+	    req_stat = verify_clnt_update(recipient, rcpt_stat,
+					  "%s", vstring_str(text));
     } else {
 	status = "undeliverable-but-not-cached";
 	req_stat = VRFY_STAT_OK;
     }
     if (req_stat == VRFY_STAT_OK) {
-	vlog_adhoc(queue_id, orig_rcpt, recipient, relay,
-		   entry, status, fmt, ap);
+	log_adhoc(queue_id, orig_rcpt, recipient, relay,
+		  entry, status, "%s", vstring_str(text));
 	req_stat = 0;
     } else {
 	msg_warn("%s: %s service failure", queue_id, var_verify_service);
 	req_stat = -1;
     }
+    vstring_free(text);
     return (req_stat);
 }

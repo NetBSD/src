@@ -1,4 +1,4 @@
-/*	$NetBSD: trivial-rewrite.c,v 1.1.1.7 2004/05/31 00:24:51 heas Exp $	*/
+/*	$NetBSD: trivial-rewrite.c,v 1.1.1.8 2004/07/28 22:49:30 heas Exp $	*/
 
 /*++
 /* NAME
@@ -122,7 +122,7 @@
 /* ADDRESS VERIFICATION CONTROLS
 /* .ad
 /* .fi
-/*	Postfix version 2.1 introduces sender and address verification.
+/*	Postfix version 2.1 introduces sender and recipient address verification.
 /*	This feature is implemented by sending probe email messages that
 /*	are not actually delivered.
 /*	By default, address verification probes use the same route

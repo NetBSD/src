@@ -57,7 +57,7 @@ while(<>) {
     #$block =~ s/<\/ul>/\n.PP\n/g;
     $block =~ s/<\/dl>/\n/g;
     $block =~ s/<\/ul>/\n/g;
-    $block =~ s/<dd>/\n/g;
+    $block =~ s/<dd>\s*/\n/g;
     $block =~ s/<\/dd>/\n/g;
     $block =~ s/<li>\s*/\n.IP \\(bu\n/g;
     $block =~ s/<dt>\s*/\n.IP "/g;

@@ -1,4 +1,4 @@
-/*	$NetBSD: defer.c,v 1.1.1.5 2004/05/31 00:24:29 heas Exp $	*/
+/*	$NetBSD: defer.c,v 1.1.1.6 2004/07/28 22:49:14 heas Exp $	*/
 
 /*++
 /* NAME
@@ -226,14 +226,16 @@ int     vdefer_append(int flags, const char *id, const char *orig_rcpt,
 			     ATTR_TYPE_STR, MAIL_ATTR_WHY, vstring_str(why),
 				ATTR_TYPE_END) != 0)
 	    msg_warn("%s: %s service failure", id, var_defer_service);
-	vlog_adhoc(id, orig_rcpt, recipient, relay, entry, "deferred", fmt, ap);
+	log_adhoc(id, orig_rcpt, recipient, relay, entry, "deferred",
+		  "%s", vstring_str(why));
 
 	/*
 	 * Traced delivery.
 	 */
 	if (flags & DEL_REQ_FLAG_RECORD)
-	    if (vtrace_append(flags, id, orig_rcpt, recipient, relay,
-			      entry, "4.0.0", "deferred", fmt, ap) != 0)
+	    if (trace_append(flags, id, orig_rcpt, recipient, relay,
+			     entry, "4.0.0", "deferred",
+			     "%s", vstring_str(why)) != 0)
 		msg_warn("%s: %s service failure", id, var_trace_service);
 
 	/*

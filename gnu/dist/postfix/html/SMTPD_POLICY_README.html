@@ -216,7 +216,7 @@ TCP sockets instead: </p>
 <blockquote>
 <pre>
  1 /etc/postfix/master.cf:
- 2     127.0.0.1:9998  unix  -       n       n       -       -       spawn
+ 2     127.0.0.1:9998  inet  n       n       n       -       -       spawn
  3       user=nobody argv=/some/where/policy-server
  4 
  5 /etc/postfix/main.cf:
@@ -340,7 +340,7 @@ client/server configuration</a>" section above.  </p>
 <blockquote>
 <pre>
 1 /etc/postfix/master.cf:
-2     127.0.0.1:9998  unix  -       n       n       -       -       spawn
+2     127.0.0.1:9998  inet  n       n       n       -       -       spawn
 3       user=nobody argv=/usr/bin/perl /usr/libexec/postfix/greylist.pl
 4 
 5 /etc/postfix/main.cf:

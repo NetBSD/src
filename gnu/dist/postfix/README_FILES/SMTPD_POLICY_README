@@ -145,7 +145,7 @@ NOTES:
   * Solaris UNIX-domain sockets do not work reliably. Use TCP sockets instead:
 
      1 /etc/postfix/master.cf:
-     2     127.0.0.1:9998  unix  -       n       n       -       -       spawn
+     2     127.0.0.1:9998  inet  n       n       n       -       -       spawn
      3       user=nobody argv=/some/where/policy-server
      4
      5 /etc/postfix/main.cf:
@@ -235,7 +235,7 @@ On Solaris you must use inet: style sockets instead of unix: style, as detailed
 in the "Policy client/server configuration" section above.
 
     1 /etc/postfix/master.cf:
-    2     127.0.0.1:9998  unix  -       n       n       -       -       spawn
+    2     127.0.0.1:9998  inet  n       n       n       -       -       spawn
     3       user=nobody argv=/usr/bin/perl /usr/libexec/postfix/greylist.pl
     4
     5 /etc/postfix/main.cf:

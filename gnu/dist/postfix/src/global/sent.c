@@ -1,4 +1,4 @@
-/*	$NetBSD: sent.c,v 1.1.1.4 2004/05/31 00:24:35 heas Exp $	*/
+/*	$NetBSD: sent.c,v 1.1.1.5 2004/07/28 22:49:18 heas Exp $	*/
 
 /*++
 /* NAME
@@ -163,17 +163,22 @@ int     vsent(int flags, const char *id, const char *orig_rcpt,
      * Normal mail delivery. May also send a delivery record to the user.
      */
     else {
+	VSTRING *text = vstring_alloc(10);
+
+	vstring_vsprintf(text, fmt, ap);
 	if ((flags & DEL_REQ_FLAG_RECORD) == 0
-	    || vtrace_append(flags, id, orig_rcpt, recipient, relay,
-			     entry, "2.0.0", "delivered", fmt, ap) == 0) {
-	    vlog_adhoc(id, orig_rcpt, recipient, relay,
-		       entry, "sent", fmt, ap);
+	    || trace_append(flags, id, orig_rcpt, recipient, relay,
+			    entry, "2.0.0", "delivered",
+			    "%s", vstring_str(text)) == 0) {
+	    log_adhoc(id, orig_rcpt, recipient, relay,
+		      entry, "sent", "%s", vstring_str(text));
 	    status = 0;
 	} else {
 	    status = defer_append(flags, id, orig_rcpt, recipient, offset,
 				  relay, entry, "%s: %s service failed",
 				  id, var_trace_service);
 	}
+	vstring_free(text);
 	return (status);
     }
 }

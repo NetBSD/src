@@ -15,14 +15,12 @@ snapshot releases.
 Major changes - critical
 ------------------------
 
-If you run Postfix 1.x or earlier then you must stop Postfix before
-upgrading. This is because the master-child protocols have changed,
-and very little will work with the old master daemon process.
-
-[Incompat 20021119] You can upgrade Postfix 2.0 without stopping.
-After upgrading an existing Postfix 2.0 system you must use "postfix
-reload".  Some internal protocols have changed, but the master-child
-protocols are the same as with Postfix 2.0.
+If you run Postfix 2.0 or earlier then you must stop Postfix before
+upgrading. The master-child protocols have changed between Postfix
+1.1 and 2.0, and version 2.1 sometimes writes queue files that the
+2.0 and earlier queue managers complain about. If this happens move
+the files from the corrupt directory to the maildrop directory and
+give them another chance.
 
 [Incompat 20021119] The Postfix upgrade procedure will add two new
 services to your master.cf file: "trace" and "verify". These servers

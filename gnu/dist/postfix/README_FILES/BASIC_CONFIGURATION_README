@@ -116,8 +116,8 @@ small site, you probably want to change that into $mydomain, which defaults to
 the parent domain of the machine name.
 
 For the sake of consistency between sender and recipient addresses, myorigin
-also specifies the default domain name that is appended to an unqualified
-recipient address.
+also specifies the domain name that is appended to an unqualified recipient
+address.
 
 Examples (specify only one of the following):
 
