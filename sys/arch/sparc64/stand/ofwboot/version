@@ -1,0 +1,9 @@
+$NetBSD: version,v 1.1 2000/04/13 09:38:12 mrg Exp $
+
+# The newvers.sh looks for the line below.  We use this method
+# rather than $3 of the dollar-NetBSD-dollar line above so that
+# this version can be on branch-files also.
+Version: 1.2
+
+1.1:
+1.2:	get it to work with non-start-of-disk partitions
