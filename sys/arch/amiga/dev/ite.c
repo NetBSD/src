@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.29 1995/05/07 15:37:06 chopps Exp $	*/
+/*	$NetBSD: ite.c,v 1.30 1995/05/14 14:26:00 chopps Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -535,19 +535,17 @@ iteioctl(dev, cmd, addr, flag, p)
 		ib->volume = bvolume;
 		ib->pitch = bpitch;
 		ib->msec = bmsec;
-		break;
+		return (0);
 	case ITEIOCSBELL:
 		ib = (struct itebell *)addr;
-		/* bounds check */
+
 		if (ib->pitch > MAXBPITCH || ib->pitch < MINBPITCH ||
 		    ib->volume > MAXBVOLUME || ib->msec > MAXBTIME)
-			error = EINVAL;
-		else {
-			bvolume = ib->volume;
-			bpitch = ib->pitch;
-			bmsec = ib->msec;
-		}
-		break;
+			return (EINVAL);
+		bvolume = ib->volume;
+		bpitch = ib->pitch;
+		bmsec = ib->msec;
+		return (0);
 	case ITEIOCSKMAP:
 		if (addr == 0)
 			return(EFAULT);
@@ -562,6 +560,7 @@ iteioctl(dev, cmd, addr, flag, p)
 		irp = (struct iterepeat *)addr;
 		irp->start = start_repeat_timeo;
 		irp->next = next_repeat_timeo;
+		return (0);
 	case ITEIOCSREPT:
 		irp = (struct iterepeat *)addr;
 		if (irp->start < ITEMINREPEAT && irp->next < ITEMINREPEAT)
