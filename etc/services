@@ -1,4 +1,4 @@
-#	$NetBSD: services,v 1.39 2000/08/03 22:58:37 thorpej Exp $
+#	$NetBSD: services,v 1.40 2000/08/06 20:12:19 thorpej Exp $
 #
 # Network services, Internet style
 #
@@ -214,6 +214,7 @@ kerberos-iv	750/udp		kdc kerberos4	# Kerberos (server) udp
 kerberos-iv	750/tcp		kdc kerberos4	# Kerberos (server) tcp
 kerberos-master	751/udp			# Kerberos admin server udp
 kerberos-master	751/tcp			# Kerberos admin server tcp
+hprop		754/tcp			# Heimdal KDC database propagation
 krbupdate	760/tcp		kreg	# BSD Kerberos registration
 kpasswd		761/tcp		kpwd	# BSD Kerberos `passwd'
 kpop		1109/tcp		# Kerberos POP server
