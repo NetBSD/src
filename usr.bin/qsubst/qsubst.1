@@ -1,7 +1,9 @@
+.\"	$NetBSD: qsubst.1,v 1.2 1999/09/04 17:07:23 perry Exp $
+.\"
 .\" This file is in the public domain.
-.Dd May 29, 1997
+.Dd September 4, 1999
 .Dt QSUBST 1
-.Os NetBSD 1.2BETA
+.Os
 .Sh NAME
 .Nm qsubst
 .Nd query-replace strings in files
@@ -28,7 +30,7 @@ substituted.  The string itself is displayed using the terminal's
 standout mode, if any.  Then one character is read from the terminal.
 This is then interpreted as follows (this is designed to be like Emacs'
 query-replace-string):
-.Bl -tag -compact -offset indent
+.Bl -tag -width "space" -compact -offset indent
 .It space
 Replace this occurrence and go on to the next one.
 .It \&.
@@ -53,7 +55,7 @@ Print out the current filename and ask again.
 .Pp
 The first two arguments to qsubst are always the string to replace and
 the string to replace it with.  The options are as follows:
-.Bl -tag -compact -offset indent
+.Bl -tag -width "-F filename" -compact -offset indent
 .It Fl w
 The search string is considered as a C symbol; it must be bounded by
 non-symbol characters.  This option toggles.

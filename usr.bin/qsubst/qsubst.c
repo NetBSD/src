@@ -1,3 +1,5 @@
+/*	$NetBSD: qsubst.c,v 1.2 1999/09/04 17:07:23 perry Exp $	*/
+
 /*
  * qsubst -- designed for renaming routines existing in a whole bunch
  *  of files.  Needs -ltermcap.
@@ -96,22 +98,17 @@
  *			       mouse@rodents.montreal.qc.ca
  */
 
-#include <stdio.h>
+#include <sys/file.h>
+
 #include <ctype.h>
 #include <errno.h>
-#include <unistd.h>
-#include <stdlib.h>
 #include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <strings.h>
+#include <termcap.h>
 #include <termios.h>
-#include <sys/file.h>
-#include <unused-arg.h>
-
-/* These belong in an include file, but which one? */
-extern int tgetent(char *, const char *);
-extern int tgetflag(const char *);
-extern const char *tgetstr(const char *, char **);
-extern void tputs(const char *, int, int (*)(char));
+#include <unistd.h>
 
 extern const char *__progname;
 
@@ -121,13 +118,13 @@ extern const char *__progname;
 
 static int debugging;
 static FILE *tempf;
-static long int tbeg;
+static long tbeg;
 static FILE *workf;
 static char *str1;
 static char *str2;
 static int s1l;
 static int s2l;
-static long int nls[MAX_C_A+1];
+static long nls[MAX_C_A+1];
 static char buf[(BUF_SIZ*2)+2];
 static char *bufp;
 static char *bufp0;
@@ -160,7 +157,8 @@ static void tstp_self(void)
  signal(SIGTSTP,old_tstp);
 }
 
-static void sigtstp(UNUSED_ARG(int sig))
+/* ARGSUSED */
+static void sigtstp(int sig)
 {
  struct termios tio;
 
@@ -203,10 +201,9 @@ static int foundit(void)
   }
 }
 
-static int putcharf(char c)
+static void putcharf(int c)
 {
  putchar(c);
- return(0); /* ??? */
 }
 
 static void put_ul(char *s)
@@ -226,11 +223,9 @@ static void put_ul(char *s)
 static int getc_cbreak(void)
 {
  struct termios tio;
- struct termios otio;
  char c;
 
  if (tcgetattr(0,&tio) < 0) return(getchar());
- otio = tio;
  tio.c_lflag &= ~(ICANON|ECHOKE|ECHOE|ECHO|ECHONL);
  tio.c_cc[VMIN] = 1;
  tio.c_cc[VTIME] = 0;
@@ -249,7 +244,7 @@ static int getc_cbreak(void)
 
 static int doit(void)
 {
- long int save;
+ long save;
  int i;
  int lastnl;
  int use_replacement;
@@ -344,7 +339,7 @@ static int doit(void)
  return(i);
 }
 
-static void add_shift(long int *a, long int e, int n)
+static void add_shift(long *a, long e, int n)
 {
  int i;
 
@@ -358,7 +353,7 @@ static void add_shift(long int *a, long int e, int n)
 static void process_file(char *fn)
 {
  int i;
- long int n;
+ long n;
  int c;
 
  workf = fopen(fn,"r+");
@@ -483,7 +478,6 @@ static void process_indir_file(char *fn)
  fclose(f);
 }
 
-int main(int, char **);
 int main(int ac, char **av)
 {
  int skip;
@@ -620,3 +614,4 @@ int main(int ac, char **av)
   }
  exit(0);
 }
+
