@@ -1,4 +1,4 @@
-/*	$NetBSD: entry.c,v 1.5 2000/09/13 04:07:34 enami Exp $	*/
+/*	$NetBSD: entry.c,v 1.6 2004/02/07 12:31:15 jdolecek Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -22,7 +22,7 @@
 #if 0
 static char rcsid[] = "Id: entry.c,v 2.12 1994/01/17 03:20:37 vixie Exp";
 #else
-__RCSID("$NetBSD: entry.c,v 1.5 2000/09/13 04:07:34 enami Exp $");
+__RCSID("$NetBSD: entry.c,v 1.6 2004/02/07 12:31:15 jdolecek Exp $");
 #endif
 #endif
 
@@ -46,7 +46,7 @@ static char	get_list __P((bitstr_t *, int, int, char *[], int, FILE *)),
 		get_number __P((int *, int, char *[], int, FILE *));
 static int	set_element __P((bitstr_t *, int, int, int));
 
-static char *ecodes[] =
+static const char * const ecodes[] =
 	{
 		"no error",
 		"bad minute",
