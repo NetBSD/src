@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.499 2004/10/13 05:48:45 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.500 2004/11/12 04:43:42 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -7821,3 +7821,15 @@ sys/sys/param.h					patched by hand
 share/tmac/doc-common				patched by hand
 
 	Welcome to 2.0_RC4
+
+sys/netinet/fil.c				patch
+
+	Fix for previous revision was incorrect. it checks for FI_OOW 
+	regardless of what type of data is stored in the rule (only a 
+	valid check for FR_T_IPF rules.)
+	[darrenr, ticket #910]
+
+sbin/init/init.c				1.68
+
+	Be explicit about the perms of mfs /dev.
+	[dan, ticket #914]
