@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.4 1998/02/07 11:09:19 mrg Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.5 1998/02/08 18:27:30 thorpej Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -394,8 +394,8 @@ vm_size_t size;
 
   vm_offset_t addr, vaddr, paddr;
 
-  /* round the size to an integer multiple */
-  size = (size + 3) &~ 3; /* XXX */
+  /* round to page size */
+  size = round_page(size);
 
   /*
    * on first call to this function init ourselves.   we detect this
