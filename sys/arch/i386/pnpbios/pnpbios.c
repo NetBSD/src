@@ -1,4 +1,4 @@
-/* $NetBSD: pnpbios.c,v 1.38 2003/10/28 11:17:14 drochner Exp $ */
+/* $NetBSD: pnpbios.c,v 1.39 2003/11/02 11:32:03 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2000 Jason R. Thorpe.  All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pnpbios.c,v 1.38 2003/10/28 11:17:14 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pnpbios.c,v 1.39 2003/11/02 11:32:03 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1304,7 +1304,7 @@ pnp_debugdump(r, vres, len)
 	const void *vres;
 	size_t len;
 {
-	const u_int8_t *res;
+	const u_int8_t *res = vres;
 	int type, i;
 
 	if (res[0] & ISAPNP_LARGE_TAG) {
