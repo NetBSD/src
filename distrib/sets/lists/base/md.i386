@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.103 2003/09/11 19:21:00 christos Exp $
+# $NetBSD: md.i386,v 1.104 2003/10/08 04:25:43 lukem Exp $
 ./lib/libm387.so.0			base-sys-shlib
 ./lib/libm387.so.0.0			base-sys-shlib
 ./sbin/fdisk				base-sysutil-root
@@ -21,13 +21,12 @@
 ./usr/lkm/exec_linux_elf.o		base-sys-lkm
 ./usr/lkm/exec_pecoff.o			base-sys-lkm
 ./usr/lkm/exec_svr4_elf.o		base-sys-lkm
-./usr/mdec/biosboot			base-sysutil-bin
-./usr/mdec/bootxx_dosfs			base-sysutil-bin
+./usr/mdec/boot				base-sysutil-bin
 ./usr/mdec/bootxx_ffsv1			base-sysutil-bin
 ./usr/mdec/bootxx_ffsv2			base-sysutil-bin
 ./usr/mdec/bootxx_lfsv1			base-sysutil-bin
 ./usr/mdec/bootxx_lfsv2			base-sysutil-bin
-./usr/mdec/bootxx_ufs			base-sysutil-bin
+./usr/mdec/bootxx_msdos			base-sysutil-bin
 ./usr/mdec/bootxx_ustarfs		base-sysutil-bin
 ./usr/mdec/dosboot.com			base-sysutil-bin
 ./usr/mdec/mbr				base-sysutil-bin

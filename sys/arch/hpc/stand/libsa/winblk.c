@@ -1,4 +1,4 @@
-/*	$NetBSD: winblk.c,v 1.1 2001/02/09 18:35:37 uch Exp $	*/
+/*	$NetBSD: winblk.c,v 1.2 2003/10/08 04:25:44 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura.
@@ -65,7 +65,7 @@
 struct winblk {
 	HANDLE	hDevice;
 	DISK_INFO di;
-	struct mbr_partition mbr[NMBRPART];
+	struct mbr_partition mbr[MBR_PART_COUNT];
 	struct disklabel dl;
 	char buf[BLKSZ];
 	int start;
@@ -207,13 +207,13 @@ winblkopen(struct open_file *f, ...)
 	if (error = rawread(ctx, MBR_BBSECTOR, 1, ctx->buf)) {
 		goto end;
 	}
-	memcpy(&ctx->mbr, &ctx->buf[MBR_PARTOFF], sizeof(ctx->mbr));
+	memcpy(&ctx->mbr, &ctx->buf[MBR_PART_OFFSET], sizeof(ctx->mbr));
 
-	for (i = 0; i < NMBRPART; i++) {
+	for (i = 0; i < MBR_PART_COUNT; i++) {
 	        DEBUG_PRINTF((TEXT("%d: type=%d %d(%d) (%d:%d:%d - %d:%d:%d)")
 			      TEXT(" flag=0x%02x\n"),
 			      i,
-			      ctx->mbr[i].mbrp_typ,
+			      ctx->mbr[i].mbrp_type,
 			      ctx->mbr[i].mbrp_start,
 			      ctx->mbr[i].mbrp_size,
 			      ctx->mbr[i].mbrp_scyl,
@@ -230,12 +230,12 @@ winblkopen(struct open_file *f, ...)
 	 */
 	ctx->start = -1;
 	start_386bsd = -1;
-	for (i = 0; i < NMBRPART; i++) {
-		if (ctx->mbr[i].mbrp_typ == MBR_PTYPE_NETBSD) {
+	for (i = 0; i < MBR_PART_COUNT; i++) {
+		if (ctx->mbr[i].mbrp_type == MBR_PTYPE_NETBSD) {
 			ctx->start = ctx->mbr[i].mbrp_start;
 			break;
 		}
-		if (ctx->mbr[i].mbrp_typ == MBR_PTYPE_386BSD) {
+		if (ctx->mbr[i].mbrp_type == MBR_PTYPE_386BSD) {
 			start_386bsd = ctx->mbr[i].mbrp_start;
 		}
 	}

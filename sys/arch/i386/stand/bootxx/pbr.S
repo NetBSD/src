@@ -1,4 +1,4 @@
-/*	$NetBSD: pbr.S,v 1.7 2003/08/30 13:33:55 dsl Exp $	*/
+/*	$NetBSD: pbr.S,v 1.8 2003/10/08 04:25:45 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <machine/asm.h>
-#include <sys/disklabel_mbr.h>
+#include <sys/bootblock.h>
 
 #define	OURADDR		0x7c00		/* our address */
 #define BOOTADDR	PRIMARY_LOAD_ADDRESS
@@ -69,7 +69,7 @@
 #define errcod R(_errcod)
 #define newline R(_newline)
 
-#define TABENTRYSIZE	(PARTNAMESIZE + 1)
+#define TABENTRYSIZE	(MBR_BS_PARTNAMESIZE + 1)
 #define NAMETABSIZE	(4 * TABENTRYSIZE)
 
 #ifdef TERSE_ERROR
@@ -94,7 +94,7 @@
  * and can load the subsequent blocks (that load boot) to an address
  * of our choosing. 0:600 is a not unreasonable choice.
  *
- * On entry the bios drive number is in %dl and %esi may contain the
+ * On entry the BIOS drive number is in %dl and %esi may contain the
  * sector we were loaded from (if we were loaded by NetBSD mbr code).
  * In any case we have to re-read sector zero of the disk and hunt
  * through the BIOS partition table for the NetBSD partition.
@@ -104,18 +104,21 @@
 	.code16
 ENTRY(start)
 	/*
-	 * The PC BIOS architecture defines a 'Boot Parameter Block' here.
-	 * The actual format varies between different dos versions, but
+	 * The PC BIOS architecture defines a Boot Parameter Block (BPB) here.
+	 * The actual format varies between different MS-DOS versions, but
 	 * apparantly some system BIOS insist on patching this area
-	 * (especially on LS120 drives - which I thought had an mbr...).
+	 * (especially on LS120 drives - which I thought had an MBR...).
 	 * The initial jmp and nop are part of the standard and may be
 	 * tested for by the system BIOS.
 	 */
 	jmp	start0
 	nop
-	.ascii	"NetBSD20"		/* OS name and version */
+	.ascii	"NetBSD20"		/* oemname (8 bytes) */
 
-	. = start + 0x25		/* rest all zeros for now */
+	. = start + MBR_BPB_OFFSET	/* move to start of BPB */
+					/* (ensures oemname doesn't overflow) */
+
+	. = start + MBR_BOOTCODE_OFFSET	/* skip BPB */
 start0:
 	xor	%ax, %ax		/* don't trust values of ds, es or ss */
 	mov	%ax, %ds
@@ -136,22 +139,37 @@ start0:
 /* See if this is our code, if so we have already loaded the next stage */
 
 	xorl	%ebp, %ebp		/* pass sector 0 to next stage */
-	movl	(%bx), %eax		/* mbr code shouldn't even have ... */
+	movl	(%bx), %eax		/* MBR code shouldn't even have ... */
 	cmpl	R(start), %eax		/* ... a jmp at the start. */
 	je	pbr_read_ok1
 
-/* Now scan the mbr partition table for a netbsd partition */
+/* Now scan the MBR partition table for a netbsd partition */
 	
 	xorl	%ebx, %ebx		/* for base extended ptn chain */
 scan_ptn_tbl:
 	xorl	%ecx, %ecx		/* for next extended ptn */
-	movw	$BOOTADDR + MBR_PARTOFF, %di
-1:	movb	4(%di), %al		/* mbrp_typ */
+	movw	$BOOTADDR + MBR_PART_OFFSET, %di
+1:	movb	4(%di), %al		/* mbrp_type */
 	movl	8(%di), %ebp		/* mbrp_start == LBA sector */
 	addl	lba_sector, %ebp	/* add base of extended partition */
+#ifdef BOOT_FROM_FAT
+	cmpb	$MBR_PTYPE_FAT12, %al
+	je	5f
+	cmpb	$MBR_PTYPE_FAT16S, %al
+	je	5f
+	cmpb	$MBR_PTYPE_FAT16B, %al
+	je	5f
+	cmpb	$MBR_PTYPE_FAT32, %al
+	je	5f
+	cmpb	$MBR_PTYPE_FAT32L, %al
+	je	5f
+	cmpb	$MBR_PTYPE_FAT16L, %al
+	je	5f
+#else
 	cmpb	$MBR_PTYPE_NETBSD, %al
+#endif
 	jne	10f
-	testl	%esi, %esi		/* looking for a specific sector? */
+5:	testl	%esi, %esi		/* looking for a specific sector? */
 	je	boot
 	cmpl	%ebp, %esi		/* ptn we wanted? */
 	je	boot
@@ -164,7 +182,7 @@ scan_ptn_tbl:
 	jne	20f
 15:	movl	8(%di), %ecx		/* sector of next ext. ptn */
 20:	add	$0x10, %di
-	cmp	$BOOTADDR + MBR_MAGICOFF, %di
+	cmp	$BOOTADDR + MBR_MAGIC_OFFSET, %di
 	jne	1b
 
 	/* not in base partitions, check extended ones */
@@ -188,7 +206,7 @@ no_netbsd_ptn:
 /*
  * Sector below CHS limit
  * Do a cylinder-head-sector read instead
- * I believe the bios should do reads that cross track boundaries.
+ * I believe the BIOS should do reads that cross track boundaries.
  * (but the read should start at the beginning of a track...)
  */
 read_chs:
@@ -204,8 +222,8 @@ pbr_read_ok1:
  * We can either do a CHS (Cylinder Head Sector) or an LBA (Logical
  * Block Address) read.  Always doing the LBA one
  * would be nice - unfortunately not all systems support it.
- * Also some may contain a separate (eg SCSI) bios that doesn't
- * support it even when the main bios does.
+ * Also some may contain a separate (eg SCSI) BIOS that doesn't
+ * support it even when the main BIOS does.
  *
  * The safest thing seems to be to find out whether the sector we
  * want is inside the CHS sector count.  If it is we use CHS, if
@@ -220,7 +238,7 @@ boot:
 	testl	%ebx, %ebx		/* was it an extended ptn? */
 	jnz	boot_lba		/* yes - boot with LBA reads */
 
-/* get maximum (bios) sector */
+/* get maximum (BIOS) sector */
 	push	%dx				/* save drive number */
 	movb	$8, %ah
 	int	$0x13				/* chs info */
@@ -263,9 +281,9 @@ check_lba:
  * and the disk packet capability.
  *
  * This is actually relatively pointless:
- * 1) we only us LBA reads if CHS ones would fail
- * 2) the mbr code managed to read the same sectors
- * 3) the bios will (ok should) reject the LBA read as a bad bios call
+ * 1) we onlye us LBA reads if CHS ones would fail
+ * 2) the MBR code managed to read the same sectors
+ * 3) the BIOS will (ok should) reject the LBA read as a bad BIOS call
  */
 	movw	$0x55aa, %bx
 	movb	$0x41, %ah
@@ -373,18 +391,27 @@ _lba_sector:
 	.long	0x0000
 
 /*
- * Some people like to put this code into the mbr of a disk (this is not
- * a valid PC disk layout but...).  To do this there must be space here
- * for a 64byte partition table.  There isn't (quite) that much space
- * here, but provided the partition 0 entry is left blank it should be ok.
- *
- * Placate certain people by defining the last mbr partition active
- * and covering the start of the disk.
+ * Provide empty MBR partition table.
+ * If this is installed as an MBR, the user can use fdisk(8) to create
+ * the correct partition table ...
  */
+	. = _C_LABEL(start) + MBR_PART_OFFSET
+_pbr_part0:
+	.byte	0, 0, 0, 0, 0, 0, 0, 0	
+	.long	0, 0
+_pbr_part1:
+	.byte	0, 0, 0, 0, 0, 0, 0, 0	
+	.long	0, 0
+_pbr_part2:
+	.byte	0, 0, 0, 0, 0, 0, 0, 0	
+	.long	0, 0
+_pbr_part3:
+	.byte	0, 0, 0, 0, 0, 0, 0, 0	
+	.long	0, 0
 
-	. = _C_LABEL(start) + MBR_MAGICOFF - 16
-	.byte	MBR_FLAGS_ACTIVE, 0, 0, 0, MBR_PTYPE_NETBSD, 0, 15, 0
-	.long	0, 15
-	. = _C_LABEL(start) + MBR_MAGICOFF
+/*
+ * The magic comes last
+ */
+	. = _C_LABEL(start) + MBR_MAGIC_OFFSET
 pbr_magic:
 	.word	MBR_MAGIC

@@ -1,15 +1,14 @@
-# $NetBSD: md.amd64,v 1.4 2003/09/27 02:09:36 mrg Exp $
+# $NetBSD: md.amd64,v 1.5 2003/10/08 04:25:43 lukem Exp $
 ./sbin/fdisk				base-sysutil-root
 ./usr/bin/fdformat			base-util-bin
 ./usr/lib/libx86_64.so.0		base-sys-shlib
 ./usr/lib/libx86_64.so.0.0		base-sys-shlib
-./usr/mdec/biosboot			base-sysutil-bin
-./usr/mdec/bootxx_dosfs			base-sysutil-bin
+./usr/mdec/boot				base-sysutil-bin
 ./usr/mdec/bootxx_ffsv1			base-sysutil-bin
 ./usr/mdec/bootxx_ffsv2			base-sysutil-bin
 ./usr/mdec/bootxx_lfsv1			base-sysutil-bin
 ./usr/mdec/bootxx_lfsv2			base-sysutil-bin
-./usr/mdec/bootxx_ufs			base-sysutil-bin
+./usr/mdec/bootxx_msdos			base-sysutil-bin
 ./usr/mdec/bootxx_ustarfs		base-sysutil-bin
 ./usr/mdec/dosboot.com			base-sysutil-bin
 ./usr/mdec/mbr				base-sysutil-bin

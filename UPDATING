@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.96 2003/09/06 22:12:42 christos Exp $
+$NetBSD: UPDATING,v 1.97 2003/10/08 04:25:43 lukem Exp $
 
 This file is intended to be a brief introduction to the build
 process and a reference on what to do if something doesn't work.
@@ -7,6 +7,11 @@ For a more detailed description see Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20031008:
+	/usr/include/sys/disklabel_mbr.h was removed.
+	It's necessary to "make cleandir" to ensure that
+	the dependencies will be rebuilt correctly.
 
 20030906:
 	With the addition of siginfo support the old signal trampoline

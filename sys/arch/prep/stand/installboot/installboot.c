@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.4 2003/10/06 08:44:39 he Exp $	*/
+/*	$NetBSD: installboot.c,v 1.5 2003/10/08 04:25:46 lukem Exp $	*/
 
 /*
  * Copyright (c) 2000 NONAKA Kimihiro (nonaka@netbsd.org).
@@ -29,7 +29,7 @@
 
 #include <sys/param.h>
 #include <sys/exec_elf.h>
-#include <sys/disklabel_mbr.h>
+#include <sys/bootblock.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -188,17 +188,17 @@ load_prep_partition(int devfd, struct mbr_partition *ppp)
 
 	if (devread(devfd, mbr, MBR_BBSECTOR, DEV_BSIZE, "MBR") != 0)
 		return 1;
-	if (*(u_int16_t *)&mbr[MBR_MAGICOFF] != htole16(MBR_MAGIC)) {
+	if (*(u_int16_t *)&mbr[MBR_MAGIC_OFFSET] != htole16(MBR_MAGIC)) {
 		warn("no MBR_MAGIC");
 		return 1;
 	}
 
-	mbrp = (struct mbr_partition *)&mbr[MBR_PARTOFF];
-	for (i = 0; i < NMBRPART; i++) {
-		if (mbrp[i].mbrp_typ == MBR_PTYPE_PREP)
+	mbrp = (struct mbr_partition *)&mbr[MBR_PART_OFFSET];
+	for (i = 0; i < MBR_PART_COUNT; i++) {
+		if (mbrp[i].mbrp_type == MBR_PTYPE_PREP)
 			break;
 	}
-	if (i == NMBRPART) {
+	if (i == MBR_PART_COUNT) {
 		warn("no PReP partition.");
 		return 1;
 	}
