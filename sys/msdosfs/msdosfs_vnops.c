@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.117 2001/11/10 13:26:46 lukem Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.118 2001/11/30 07:05:53 chs Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.117 2001/11/10 13:26:46 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.118 2001/11/30 07:05:53 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -648,16 +648,15 @@ msdosfs_write(v)
 		 */
 
 		if (oldoff >> 16 != uio->uio_offset >> 16) {
-			simple_lock(&vp->v_uobj.vmobjlock);
-			error = vp->v_uobj.pgops->pgo_put(
-			    &vp->v_uobj, (oldoff >> 16) << 16,
+			simple_lock(&vp->v_interlock);
+			error = VOP_PUTPAGES(vp, (oldoff >> 16) << 16,
 			    (uio->uio_offset >> 16) << 16, PGO_CLEANIT);
 		}
 	} while (error == 0 && uio->uio_resid > 0);
 	if (error == 0 && ioflag & IO_SYNC) {
-		simple_lock(&vp->v_uobj.vmobjlock);
-		error = vp->v_uobj.pgops->pgo_put(&vp->v_uobj, oldoff,
-		    oldoff + bytelen, PGO_CLEANIT|PGO_SYNCIO);
+		simple_lock(&vp->v_interlock);
+		error = VOP_PUTPAGES(vp, trunc_page(oldoff),
+		    round_page(oldoff + bytelen), PGO_CLEANIT | PGO_SYNCIO);
 	}
 	dep->de_flag |= DE_UPDATE;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.39 2001/11/17 07:22:34 simonb Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.40 2001/11/30 07:05:55 chs Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.39 2001/11/17 07:22:34 simonb Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.40 2001/11/30 07:05:55 chs Exp $");
 
 #ifdef LFS_READWRITE
 #define	BLKSIZE(a, b, c)	blksize(a, b, c)
@@ -299,7 +299,7 @@ WRITE(void *v)
 		if (flags & B_SYNC) {
 			vp->v_size = blkroundup(fs, osize);
 			simple_lock(&vp->v_interlock);
-			VOP_PUTPAGES(vp, osize & ~(bsize - 1),
+			VOP_PUTPAGES(vp, trunc_page(osize & ~(bsize - 1)),
 			    round_page(vp->v_size), PGO_CLEANIT | PGO_SYNCIO);
 		}
 	}
@@ -375,8 +375,9 @@ WRITE(void *v)
 	}
 	if (error == 0 && ioflag & IO_SYNC) {
 		simple_lock(&vp->v_interlock);
-		error = VOP_PUTPAGES(vp, origoff & ~(bsize - 1),
-		    blkroundup(fs, uio->uio_offset), PGO_CLEANIT|PGO_SYNCIO);
+		error = VOP_PUTPAGES(vp, trunc_page(origoff & ~(bsize - 1)),
+		    round_page(blkroundup(fs, uio->uio_offset)),
+		    PGO_CLEANIT | PGO_SYNCIO);
 	}
 	goto out;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.48 2001/11/08 05:24:52 chs Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.49 2001/11/30 07:05:55 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.48 2001/11/08 05:24:52 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.49 2001/11/30 07:05:55 chs Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -231,7 +231,8 @@ ffs_truncate(v)
 			if (ioflag & IO_SYNC) {
 				ovp->v_size = blkroundup(fs, osize);
 				simple_lock(&ovp->v_interlock);
-				VOP_PUTPAGES(ovp, osize & ~(fs->fs_bsize - 1),
+				VOP_PUTPAGES(ovp,
+				    trunc_page(osize & ~(fs->fs_bsize - 1)),
 				    round_page(ovp->v_size),
 				    PGO_CLEANIT | PGO_SYNCIO);
 			}
