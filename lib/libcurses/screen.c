@@ -1,4 +1,4 @@
-/*	$NetBSD: screen.c,v 1.15 2003/08/07 16:44:24 agc Exp $	*/
+/*	$NetBSD: screen.c,v 1.16 2004/03/22 18:57:10 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)screen.c	8.2 (blymn) 11/27/2001";
 #else
-__RCSID("$NetBSD: screen.c,v 1.15 2003/08/07 16:44:24 agc Exp $");
+__RCSID("$NetBSD: screen.c,v 1.16 2004/03/22 18:57:10 jdc Exp $");
 #endif
 #endif					/* not lint */
 
@@ -131,6 +131,7 @@ newterm(char *type, FILE *outfd, FILE *infd)
 	new_screen->curwin = 0;
 	new_screen->notty = FALSE;
 	new_screen->half_delay = FALSE;
+	new_screen->resized = 0;
 
 	if (_cursesi_gettmode(new_screen) == ERR)
 		goto error_exit;
@@ -168,6 +169,7 @@ newterm(char *type, FILE *outfd, FILE *infd)
 	__init_acs(new_screen);
 
 	__set_stophandler();
+	__set_winchhandler();
 
 	  /*
 	   * bleh - it seems that apps expect the first newterm to set

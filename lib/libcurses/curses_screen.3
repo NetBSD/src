@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_screen.3,v 1.10 2004/03/16 19:26:18 snj Exp $
+.\"	$NetBSD: curses_screen.3,v 1.11 2004/03/22 18:57:10 jdc Exp $
 .\"
 .\" Copyright (c) 2002
 .\"	Brett Lymn (blymn@NetBSD.org, brett_lymn@yahoo.com.au)
@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"
-.Dd April 8, 2003
+.Dd February 24, 2004
 .Dt CURSES_SCREEN 3
 .Os
 .Sh NAME
@@ -111,7 +111,7 @@ The curses session must be initialised by calling
 which saves the current terminal state and sets up the terminal and
 internal data structures to support the curses application.
 This
-function call must be, with few exceptions, the first curses library
+function call must be, with few exceptions, the first Curses library
 call made.
 The exception to this rule is the
 .Fn newterm
@@ -127,6 +127,18 @@ If the environment variables
 or
 .Va COLS
 are set, then these will be used instead.
+.Pp
+When either
+.Fn newterm ,
+or
+.Fn initscr
+are called, the Curses library sets up signal handlers for
+.Dv SIGTSTP
+and
+.Dv SIGWINCH .
+If a signal handler is already installed for
+.Dv SIGWINCH ,
+this will also be called when the Curses library handler is called.
 .Pp
 The
 .Fn isendwin
@@ -168,7 +180,8 @@ An error occurred in the function.
 .Sh SEE ALSO
 .Xr curses_window 3 ,
 .Xr tty 4 ,
-.Xr termcap 5
+.Xr termcap 5 ,
+.Xr signal 7
 .Sh STANDARDS
 The
 .Nx
