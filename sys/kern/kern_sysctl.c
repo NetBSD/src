@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.105 2002/04/02 20:21:51 jdolecek Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.106 2002/04/03 08:06:17 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.105 2002/04/02 20:21:51 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.106 2002/04/03 08:06:17 simonb Exp $");
 
 #include "opt_ddb.h"
 #include "opt_insecure.h"
@@ -862,7 +862,7 @@ emul_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	for (i = 0; i < nexecs_builtin; i++) {
 	    e = execsw_builtin[i].es_emul;
 	    if (e == NULL || strcmp(ename, e->e_name) != 0 ||
-		e->es_sysctl != NULL)
+		e->e_sysctl != NULL)
 		continue;
 
 	    return (*e->e_sysctl)(name + 1, namelen - 1, oldp, oldlenp,
@@ -1181,7 +1181,7 @@ sysctl_sysvipc(int *name, u_int namelen, void *where, size_t *sizep)
 	struct shm_sysctl_info *shmsi;
 #endif
 	size_t infosize, dssize, tsize, buflen;
-	void *buf = NULL, *buf2;
+	void *buf = NULL;
 	char *start;
 	int32_t nds;
 	int i, error, ret;
@@ -1249,21 +1249,18 @@ sysctl_sysvipc(int *name, u_int namelen, void *where, size_t *sizep)
 #ifdef SYSVMSG
 	case KERN_SYSVIPC_MSG_INFO:
 		msgsi = (struct msg_sysctl_info *)buf;
-		buf2 = &msgsi->msgids[0];
 		msgsi->msginfo = msginfo;
 		break;
 #endif
 #ifdef SYSVSEM
 	case KERN_SYSVIPC_SEM_INFO:
 		semsi = (struct sem_sysctl_info *)buf;
-		buf2 = &semsi->semids[0];
 		semsi->seminfo = seminfo;
 		break;
 #endif
 #ifdef SYSVSHM
 	case KERN_SYSVIPC_SHM_INFO:
 		shmsi = (struct shm_sysctl_info *)buf;
-		buf2 = &shmsi->shmids[0];
 		shmsi->shminfo = shminfo;
 		break;
 #endif
