@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)a.out.h	5.6 (Berkeley) 4/30/91
- *	$Id: a.out.h,v 1.11 1993/12/11 03:51:46 mycroft Exp $
+ *	$Id: a.out.h,v 1.12 1994/01/12 19:14:21 pk Exp $
  */
 
 #ifndef	_AOUT_H_
@@ -72,11 +72,12 @@
 
 /* Address of the bottom of the data segment. */
 #define	N_DATADDR(ex) \
-	N_ALIGN(ex, N_TXTADDR(ex) + (ex).a_text)
+	(N_GETMAGIC(ex) == OMAGIC ? N_TXTADDR(ex) + (ex).a_text : \
+		(N_TXTADDR(ex) + (ex).a_text + __LDPGSZ - 1) & ~(__LDPGSZ - 1))
 
 /* Address of the bottom of the bss segment. */
 #define	N_BSSADDR(ex) \
-	N_ALIGN(ex, N_DATADDR(ex) + (ex).a_data)
+	(N_DATADDR(ex) + (ex).a_data)
 
 /* Text segment offset. */
 #define	N_TXTOFF(ex) \
@@ -89,7 +90,7 @@
 
 /* Text relocation table offset. */
 #define	N_TRELOFF(ex) \
-	N_ALIGN(ex, N_DATOFF(ex) + (ex).a_data)
+	(N_DATOFF(ex) + (ex).a_data)
 
 /* Data relocation table offset. */
 #define	N_DRELOFF(ex) \
