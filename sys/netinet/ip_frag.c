@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_frag.c,v 1.4 1997/05/25 12:40:16 darrenr Exp $	*/
+/*	$NetBSD: ip_frag.c,v 1.5 1997/05/27 01:18:47 thorpej Exp $	*/
 
 /*
  * (C)opyright 1993,1994,1995 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 #if !defined(lint) && defined(LIBC_SCCS)
 static	char	sccsid[] = "@(#)ip_frag.c	1.11 3/24/96 (C) 1993-1995 Darren Reed";
-static	char	rcsid[] = "$Id: ip_frag.c,v 1.4 1997/05/25 12:40:16 darrenr Exp $";
+static	char	rcsid[] = "$Id: ip_frag.c,v 1.5 1997/05/27 01:18:47 thorpej Exp $";
 #endif
 
 #if !defined(_KERNEL) && !defined(KERNEL)
@@ -203,7 +203,6 @@ ipfr_t *table[];
 {
 	ipfr_t	*f, frag;
 	u_int	idx;
-	int	ret;
 
 	/*
 	 * For fragments, we record protocol, packet id, TOS and both IP#'s
