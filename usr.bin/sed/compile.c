@@ -408,7 +408,7 @@ compile_re(p, repp)
 	/* initialize pattern buffer */
 	(*repp)->buffer = NULL;
 	(*repp)->allocated = 0L;
-	(*repp)->fastmap = (char *) malloc(FASTMAP_SIZE);
+	(*repp)->fastmap = 0;		/* fastmap not used by regex > 0.12 */
 	(*repp)->translate = 0;
 #endif
 	if (p && (eval = regcomp(*repp, re, 0)) != 0)

@@ -1,5 +1,5 @@
 #!/bin/sh
-SED=./sed
+SED=sed
 PRINTF=printf
 
 # tests that a delimiter okay in ccl, i.e., s/[/]// deletes a /
