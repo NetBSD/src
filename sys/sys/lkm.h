@@ -1,4 +1,4 @@
-/*	$NetBSD: lkm.h,v 1.18 2000/05/02 22:13:20 jdolecek Exp $	*/
+/*	$NetBSD: lkm.h,v 1.19 2000/12/08 19:42:12 jdolecek Exp $	*/
 
 /*
  * Header file used by loadable kernel modules and loadable kernel module
@@ -49,7 +49,8 @@ typedef enum loadmod {
 	LM_DEV,
 	LM_STRMOD,
 	LM_EXEC,
-	LM_MISC
+	LM_COMPAT,
+	LM_MISC,
 } MODTYPE;
 
 
@@ -133,8 +134,19 @@ struct lkm_exec {
 	int	lkm_ver;
 	const char *lkm_name;
 	u_long	lkm_offset;
-	struct execsw	*lkm_exec;
-	struct execsw	lkm_oldexec;
+	struct execsw	*lkm_execsw;
+	const char *lkm_emul;
+};
+
+/*
+ * Compat (emulation) loader
+ */
+struct lkm_compat {
+	MODTYPE	lkm_type;
+	int	lkm_ver;
+	const char *lkm_name;
+	u_long	lkm_offset;
+	const struct emul	*lkm_compat;
 };
 
 /*
@@ -169,6 +181,7 @@ union lkm_generic {
 	struct lkm_dev		*lkm_dev;
 	struct lkm_strmod	*lkm_strmod;
 	struct lkm_exec		*lkm_exec;
+	struct lkm_compat	*lkm_compat;
 	struct lkm_misc		*lkm_misc;
 };
 
@@ -231,13 +244,23 @@ struct lkm_table {
 		{ (void *)devp }, 		\
 	};
 
-#define	MOD_EXEC(name,execslot,execsw)		\
+#define	MOD_COMPAT(name, compatslot,emulp)	\
+	static struct lkm_compat _module = {	\
+		LM_COMPAT,			\
+		LKM_VERSION,			\
+		name,				\
+		compatslot,			\
+		emulp				\
+	};
+
+#define	MOD_EXEC(name,execslot,execsw,emul)	\
 	static struct lkm_exec _module = {	\
 		LM_EXEC,			\
 		LKM_VERSION,			\
 		name,				\
 		execslot,			\
-		execsw				\
+		execsw,				\
+		emul				\
 	};
 
 #define	MOD_MISC(name)				\

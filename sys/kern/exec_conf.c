@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_conf.c,v 1.50 2000/12/02 20:44:09 scw Exp $	*/
+/*	$NetBSD: exec_conf.c,v 1.51 2000/12/08 19:42:11 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -142,7 +142,7 @@ extern const struct emul emul_netbsd_aout;
 extern const struct emul emul_netbsd_aoutm68k;
 #endif
 
-const struct execsw execsw[] = {
+const struct execsw execsw_builtin[] = {
 #ifdef EXEC_SCRIPT
 	{ MAXINTERP, exec_script_makecmds, { NULL },
 	  NULL, EXECSW_PRIO_ANY, }, /* shell scripts */
@@ -301,5 +301,4 @@ const struct execsw execsw[] = {
 	  pecoff_copyargs, setregs },	/* Win32/CE PE/COFF */
 #endif
 };
-int nexecs = (sizeof(execsw) / sizeof(*execsw));
-int exec_maxhdrsz = 0;
+int nexecs_builtin = (sizeof(execsw_builtin) / sizeof(struct execsw));
