@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.37 1999/06/30 06:44:23 augustss Exp $        */
+/*      $NetBSD: ukbd.c,v 1.38 1999/07/24 01:40:19 augustss Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -385,13 +385,18 @@ ukbd_enable(v, on)
 	struct ukbd_softc *sc = v;
 	usbd_status r;
 
+	/* Should only be called to change state */
+	if (sc->sc_enabled == on) {
+#ifdef DIAGNOSTIC
+		printf("ukbd_enable: %s: bad call on=%d\n", 
+		       USBDEVNAME(sc->sc_dev), on);
+#endif
+		return (EBUSY);
+	}
+
 	DPRINTF(("ukbd_enable: sc=%p on=%d\n", sc, on));
 	if (on) {
 		/* Set up interrupt pipe. */
-		if (sc->sc_enabled)
-			return (EBUSY);
-		
-		sc->sc_enabled = 1;
 		r = usbd_open_pipe_intr(sc->sc_iface, sc->sc_ep_addr, 
 					USBD_SHORT_XFER_OK,
 					&sc->sc_intrpipe, sc, &sc->sc_ndata, 
@@ -402,9 +407,8 @@ ukbd_enable(v, on)
 		/* Disable interrupts. */
 		usbd_abort_pipe(sc->sc_intrpipe);
 		usbd_close_pipe(sc->sc_intrpipe);
-
-		sc->sc_enabled = 0;
 	}
+	sc->sc_enabled = on;
 
 	return (0);
 }
