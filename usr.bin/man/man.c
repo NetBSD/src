@@ -1,5 +1,7 @@
+/*	$NetBSD: man.c,v 1.7 1995/09/28 06:05:34 tls Exp $	*/
+
 /*
- * Copyright (c) 1987, 1993, 1994
+ * Copyright (c) 1987, 1993, 1994, 1995
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,12 +35,16 @@
 
 #ifndef lint
 static char copyright[] =
-"@(#) Copyright (c) 1987, 1993\n\
+"@(#) Copyright (c) 1987, 1993, 1994, 1995\n\
 	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-static char sccsid[] = "@(#)man.c	8.16 (Berkeley) 4/16/94";
+#if 0
+static char sccsid[] = "@(#)man.c	8.17 (Berkeley) 1/31/95";
+#else
+static char rcsid[] = "$NetBSD: man.c,v 1.7 1995/09/28 06:05:34 tls Exp $";
+#endif
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -492,35 +498,35 @@ build_page(fmt, pathp)
 		warnx("Formatting manual page...");
 	}
 
-	/*
-	 * Historically man chdir'd to the root of the man tree. 
-	 * This was used in man pages that contained relative ".so"
-	 * directives (including other man pages for command aliases etc.)
-	 * It even went one step farther, by examining the first line
-	 * of the man page and parsing the .so filename so it would
-	 * make hard(?) links to the cat'ted man pages for space savings.
-	 * (We don't do that here, but we could).
-	 */
+       /*
+        * Historically man chdir'd to the root of the man tree. 
+        * This was used in man pages that contained relative ".so"
+        * directives (including other man pages for command aliases etc.)
+        * It even went one step farther, by examining the first line
+        * of the man page and parsing the .so filename so it would
+        * make hard(?) links to the cat'ted man pages for space savings.
+        * (We don't do that here, but we could).
+        */
+ 
+       /* copy and find the end */
+       for (b = buf, p = *pathp; (*b++ = *p++) != '\0';)
+               continue;
+ 
+       /* skip the last two path components, page name and man[n] */
+       for (--b, n = 2; b != buf; b--)
+               if (*b == '/')
+                       if (--n == 0) {
+                               *b = '\0';
+                               (void) chdir(buf);
+                       }
 
-	/* copy and find the end */
-	for (b = buf, p = *pathp; (*b++ = *p++) != '\0';)
-		continue;
-
-	/* skip the last two path components, page name and man[n] */
-	for (--b, n = 2; b != buf; b--)
-		if (*b == '/')
-			if (--n == 0) {
-				*b = '\0';
-				(void) chdir(buf);
-			}
 
 	/* Add a remove-when-done list. */
 	if ((intmpp = getlist("_intmp")) == NULL)
 		intmpp = addlist("_intmp");
 
 	/* Move to the printf(3) format string. */
-	for (; *fmt && isspace(*fmt); ++fmt)
-		continue;
+	for (; *fmt && isspace(*fmt); ++fmt);
 
 	/*
 	 * Get a temporary file and build a version of the file
