@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.links.mk,v 1.27 2004/05/13 13:05:53 lukem Exp $
+#	$NetBSD: bsd.links.mk,v 1.28 2004/05/16 09:44:38 lukem Exp $
 
 .include <bsd.init.mk>
 
@@ -43,9 +43,9 @@ linksinstall::	realinstall
 .endif
 
 
-.if defined(CONFIGSYMLINKS) && !empty(CONFIGSYMLINKS)
 configinstall:		configlinksinstall
 configlinksinstall::	.PHONY
+.if defined(CONFIGSYMLINKS)
 	@(set ${CONFIGSYMLINKS}; \
 	 while test $$# -ge 2; do \
 		l=$$1; shift; \
@@ -58,6 +58,21 @@ configlinksinstall::	.PHONY
 		${_MKSHECHO} ${INSTALL_SYMLINK} ${SYSPKGTAG} $$l $$t; \
 		${INSTALL_SYMLINK} ${SYSPKGTAG} $$l $$t; \
 	 done; )
+.endif
+.if !empty(CONFIGLINKS)
+	@(set ${CONFIGLINKS}; \
+	 while test $$# -ge 2; do \
+		l=${DESTDIR}$$1; shift; \
+		t=${DESTDIR}$$1; shift; \
+		if  ldevino=`${TOOL_STAT} -qf '%d %i' $$l` && \
+		    tdevino=`${TOOL_STAT} -qf '%d %i' $$t` && \
+		    [ "$$ldevino" = "$$tdevino" ]; then \
+			continue ; \
+		fi ; \
+		${_MKSHMSG_INSTALL} $$t; \
+		${_MKSHECHO} ${INSTALL_LINK} ${SYSPKGTAG} $$l $$t; \
+		${INSTALL_LINK} ${SYSPKGTAG} $$l $$t; \
+	done ; )
 .endif
 
 .include <bsd.sys.mk>
