@@ -1,4 +1,4 @@
-/*	$NetBSD: threadlib.h,v 1.4 2003/01/19 21:58:21 thorpej Exp $	*/
+/*	$NetBSD: threadlib.h,v 1.5 2003/07/19 05:05:28 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2003 The NetBSD Foundation, Inc.
@@ -156,6 +156,7 @@ void	__libc_thr_create(thr_t *, const thrattr_t *,
 	    void *(*)(void *), void *);
 void	__libc_thr_exit(void *) __attribute__((__noreturn__));
 int	*__libc_thr_errno(void);
+int	__libc_thr_setcancelstate(int, int *);
 
 extern int __isthreaded;
 __END_DECLS
@@ -168,7 +169,7 @@ __END_DECLS
 #define	thr_exit(v)		__libc_thr_exit((v))
 #define	thr_errno()		__libc_thr_errno()
 #define	thr_enabled()		(__isthreaded)
-
+#define thr_setcancelstate(n, o) __libc_thr_setcancelstate((n),(o))
 #endif /* __LIBC_THREAD_STUBS */
 
 #endif /* _THREADLIB_H_ */
