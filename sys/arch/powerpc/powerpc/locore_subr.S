@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.2.10.1 2001/11/05 19:46:18 briggs Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.2.10.2 2001/11/08 05:07:18 briggs Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -41,8 +41,19 @@
 	.data
 GLOBAL(powersave)
 	.long	0
+	.section	".rodata"
+	.align 2
+.LC0:
+	.string "."
+.LC1:
+	.string "!"
+.LC2:
+	.string "+"
+.LC3:
+	.string "x"
 
 	.text
+	.align 2
 /*
  * No processes are runnable, so loop waiting for one.
  * Separate label here for accounting purposes.
@@ -101,7 +112,7 @@ ENTRY(switch_lwp_exit)
 	lis	7,_C_LABEL(curpcb)@ha
 	stw	6,_C_LABEL(curpcb)@l(7)
 #endif
-	addi	1,6,USPACE-16		/* 16 bytes are reserved at stack top */
+	addi	1,6,USPACE-20		/* 16 bytes are reserved at stack top */
 	/*
 	 * Schedule the vmspace and stack to be freed (the proc arg is
 	 * already in r3).
@@ -126,7 +137,7 @@ ENTRY(switch_exit)
 	lis	7,_C_LABEL(curpcb)@ha
 	stw	6,_C_LABEL(curpcb)@l(7)
 #endif
-	addi	1,6,USPACE-16		/* 16 bytes are reserved at stack top */
+	addi	1,6,USPACE-20		/* 16 bytes are reserved at stack top */
 	/*
 	 * Schedule the vmspace and stack to be freed (the proc arg is
 	 * already in r3).
@@ -169,7 +180,7 @@ ENTRY(cpu_switch)
 	stw	1,PCB_SP(3)		/* save SP */
 
 	lwz	6,CI_IDLE_PCB(7)
-	addi	1,6,USPACE-16		/* 16 bytes are reserved at stack top */
+	addi	1,6,USPACE-20		/* 16 bytes are reserved at stack top */
 
 1:
 	xor	31,31,31
@@ -254,6 +265,10 @@ ENTRY(cpu_switch)
 #if defined(MULTIPROCESSOR)
 	GET_CPUINFO(4)
 	stw	4,L_CPU(31)		/* l->l_cpu = curcpu() */
+#else
+	lis	4,_C_LABEL(cpu_info_store)@ha
+	addi	4,4,_C_LABEL(cpu_info_store)@l
+	stw	4,L_CPU(31)		/* l->l_cpu = &cpu_info_store */
 #endif
 
 	/* Process now running on a processor. */
@@ -368,10 +383,12 @@ switch_return:
 ENTRY(cpu_preempt)
 	mflr	0			/* save lr */
 	stw	0,4(1)
-	stwu	1,-20(1)
-	stw	31,16(1)
-	stw	30,12(1)
-	stw	29,8(1)
+	stwu	1,-16(1)
+	stw	31,12(1)
+	stw	30,8(1)
+
+	stwu	1,-12(1)		/* Extra, temporary, stack usage */
+	stw	29,8(1)			/* to avoid differring from cpu_sw */
 
 	mr	30,3
 	mr	29,4
@@ -390,7 +407,7 @@ ENTRY(cpu_preempt)
 	stw	1,PCB_SP(3)		/* save SP */
 
 	lwz	6,CI_IDLE_PCB(7)
-	addi	1,6,USPACE-16		/* 16 bytes are reserved at stack top */
+	addi	1,6,USPACE-20		/* 16 bytes are reserved at stack top */
 
 1:
 	xor	31,31,31
@@ -432,6 +449,9 @@ ENTRY(cpu_preempt)
 	xor	3,3,3
 
 	mr	31,29			/* r31 = newlwp */
+	lwz	29,8(1)			/* restore temp stack allocation */
+	addi	1,1,12
+
 	lwz	4,L_BACK(31)		/* r4 = newlwp->l_back */
 	stw	3,L_BACK(31)		/* newlwp->l_back = NULL */
 	lwz	3,L_FORW(31)		/* r3 = newlwp->l_forw */
@@ -465,8 +485,6 @@ ENTRY(cpu_preempt)
 	stw	3,_C_LABEL(want_resched)@l(4)
 #endif
 
-	stw	3,L_BACK(31)		/* probably superfluous */
-
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	/* Unlock the sched_lock, but leave interrupts off, for now. */
 	bl	_C_LABEL(sched_unlock_idle)
@@ -475,6 +493,10 @@ ENTRY(cpu_preempt)
 #if defined(MULTIPROCESSOR)
 	GET_CPUINFO(4)
 	stw	4,L_CPU(31)		/* l->l_cpu = curcpu() */
+#else
+	lis	4,_C_LABEL(cpu_info_store)@ha
+	addi	4,4,_C_LABEL(cpu_info_store)@l
+	stw	4,L_CPU(31)		/* l->l_cpu = &cpu_info_store */
 #endif
 
 	/* Process now running on a processor. */
@@ -565,10 +587,9 @@ preempt_return:
 	lwz	3,PCB_SPL(4)
 	bl	_C_LABEL(lcsplx)
 
-	lwz	31,16(1)
-	lwz	30,12(1)
-	lwz	29,8(1)
-	addi	1,1,20
+	lwz	31,12(1)
+	lwz	30,8(1)
+	addi	1,1,16
 	lwz	0,4(1)
 	mtlr	0
 	blr
