@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stream.c,v 1.29 1998/10/03 22:03:07 christos Exp $	 */
+/*	$NetBSD: svr4_stream.c,v 1.30 1998/11/25 15:48:35 christos Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -512,7 +512,7 @@ si_listen(fp, fd, ioc, p)
 	if ((error = copyin(ioc->buf, &lst, ioc->len)) != 0)
 		return error;
 
-	if (lst.cmd != SVR4_TI_BIND_REQUEST) {
+	if (lst.cmd != SVR4_TI_OLD_BIND_REQUEST) {
 		DPRINTF(("si_listen: bad request %ld\n", lst.cmd));
 		return EINVAL;
 	}
@@ -761,7 +761,7 @@ ti_bind(fp, fd, ioc, p)
 	if ((error = copyin(ioc->buf, &bnd, ioc->len)) != 0)
 		return error;
 
-	if (bnd.cmd != SVR4_TI_BIND_REQUEST) {
+	if (bnd.cmd != SVR4_TI_OLD_BIND_REQUEST) {
 		DPRINTF(("ti_bind: bad request %ld\n", bnd.cmd));
 		return EINVAL;
 	}
@@ -1528,8 +1528,30 @@ svr4_sys_putmsg(p, v, retval)
 	switch (st->s_family) {
 	case AF_INET:
 		if (sc.len != sizeof(sain)) {
-			DPRINTF(("putmsg: Invalid inet length %ld\n", sc.len));
-			return ENOSYS;
+#ifdef notyet
+		        if (sc.cmd == SVR4_TI_DATA_REQUEST) {
+			        struct sys_write_args wa;
+
+				/* Solaris seems to use sc.cmd = 3 to
+				 * send "expedited" data.  telnet uses
+				 * this for options processing, sending EOF,
+				 * etc.  I'm sure other things use it too.
+				 * I don't have any documentation
+				 * on it, so I'm making a guess that this
+				 * is how it works. newton@atdot.dotat.org XXX
+				 *
+				 * Hmm, expedited data seems to be sc.cmd = 4.
+				 * I think 3 is normal data. (christos)
+				 */
+				DPRINTF(("sending expedited data (???)\n"));
+				SCARG(&wa, fd) = SCARG(uap, fd);
+				SCARG(&wa, buf) = dat.buf;
+				SCARG(&wa, nbyte) = dat.len;
+				return sys_write(p, &wa, retval);
+			}
+#endif
+	                DPRINTF(("putmsg: Invalid inet length %ld\n", sc.len));
+	                return EINVAL;
 		}
 		netaddr_to_sockaddr_in(&sain, &sc);
 		skp = &sain;
@@ -1895,6 +1917,33 @@ svr4_sys_getmsg(p, v, retval)
 
 	default:
 		st->s_cmd = sc.cmd;
+#ifdef notyet
+		if (st->s_cmd == 0) {
+		        struct sys_read_args ra;
+
+			/* More wierdness:  Again, I can't find documentation
+			 * to back this up, but when a process does a generic
+			 * "getmsg()" call it seems that the command field is
+			 * zero and the length of the data area is zero.  I
+			 * think processes expect getmsg() to fill in dat.len
+			 * after reading at most dat.maxlen octets from the
+			 * stream.  Since we're using sockets I can let 
+			 * read() look after it and frob return values
+			 * appropriately (or inappropriately :-)
+			 *   -- newton@atdot.dotat.org        XXX
+			 */
+			SCARG(&ra, fd) = SCARG(uap, fd);
+			SCARG(&ra, buf) = dat.buf;
+			SCARG(&ra, nbyte) = dat.maxlen;
+			if ((error = sys_read(p, &ra, retval)) != 0)
+			        return error;
+			dat.len = *retval;
+			*retval = 0;
+			st->s_cmd = SVR4_TI_SENDTO_REQUEST;
+			break;
+			
+		}
+#endif
 		DPRINTF(("getmsg: Unknown state %x\n", st->s_cmd));
 		return EINVAL;
 	}
