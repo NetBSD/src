@@ -43,7 +43,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)join.c	5.1 (Berkeley) 11/18/91";*/
-static char rcsid[] = "$Id: join.c,v 1.4 1993/11/15 09:30:52 cgd Exp $";
+static char rcsid[] = "$Id: join.c,v 1.5 1993/12/22 07:24:18 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -271,7 +271,7 @@ slurp(F)
 	LINE tmp;
 	size_t len;
 	int cnt;
-	char *bp, *fieldp, *token;
+	char *bp, *fieldp;
 
 	/*
 	 * Read all of the lines from an input file that have the same
@@ -310,10 +310,10 @@ slurp(F)
 		}
 		if ((bp = fgetline(F->fp, &len)) == NULL)
 			return;
-		if (lp->linealloc <= len) {
+		if (lp->linealloc <= len + 1) {
 			if (lp->linealloc == 0)
 				lp->linealloc = 128;
-			while (lp->linealloc <= len)
+			while (lp->linealloc <= len + 1)
 				lp->linealloc *= 2;
 
 			if ((lp->line = realloc(lp->line,
@@ -322,10 +322,16 @@ slurp(F)
 		}
 		bcopy(bp, lp->line, len+1);
 
+		/* Replace trailing newline, if it exists. */ 
+		if (bp[len - 1] == '\n')
+			lp->line[len - 1] = '\0';
+		else
+			lp->line[len] = '\0';
+		bp = lp->line;
+
 		/* Split the line into fields, allocate space as necessary. */
-		token = lp->line;
 		lp->fieldcnt = 0;
-		while ((fieldp = strsep(&token, tabchar)) != NULL) {
+		while ((fieldp = strsep(&bp, tabchar)) != NULL) {
 			if (spans && *fieldp == '\0')
 				continue;
 			if (lp->fieldcnt == lp->fieldalloc) {
