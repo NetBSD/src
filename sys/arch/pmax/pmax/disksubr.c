@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.16.2.3 1999/01/28 04:47:21 nisimura Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.16.2.4 1999/12/09 19:33:45 drochner Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -146,20 +146,22 @@ readdisklabel(dev, strat, lp, osdep)
 	/* ULTRIX disklabel resides at the end of superblock area */
 	ulp = (struct pt *)(bp->b_un.b_addr + DEV_BSIZE - sizeof(struct pt));
 	if (ulp->pt_magic == PT_MAGIC) {
+#if MAXPARTITIONS < 8 /* XXX can't happen */
 		lp->d_npartitions = MAXPARTITIONS;
-		i = 0;
-		do {
+#else
+		lp->d_npartitions = 8;
+#endif
+		for (i = 0; i < lp->d_npartitions; i++) {
 			lp->d_partitions[i].p_size
 				= ulp->pt_part[i].pi_nblocks;
 			lp->d_partitions[i].p_offset
 				= ulp->pt_part[i].pi_blkoff;
 			lp->d_partitions[i].p_fsize = 1024;
 			lp->d_partitions[i].p_fstype = FS_BSDFFS;
-			i += 1;
-		} while (i < lp->d_npartitions);
-		lp->d_magic = PT_MAGIC;
-		lp->d_npartitions = i;
+		}
+		strncpy(lp->d_packname, "ULTRIX native", 16);
 		lp->d_partitions[1].p_fstype = FS_SWAP;
+		lp->d_checksum = dkcksum(lp);
 		goto done;
 	}
 	msg = "no disk label";
