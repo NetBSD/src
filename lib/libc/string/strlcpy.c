@@ -1,4 +1,5 @@
-/*	$OpenBSD: strlcpy.c,v 1.4 1999/05/01 18:56:41 millert Exp $	*/
+/*	$NetBSD: strlcpy.c,v 1.2 1999/09/08 22:56:56 lukem Exp $	*/
+/*	from OpenBSD: strlcpy.c,v 1.4 1999/05/01 18:56:41 millert Exp 	*/
 
 /*
  * Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -27,8 +28,9 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: strlcpy.c,v 1.4 1999/05/01 18:56:41 millert Exp $";
+__RCSID("$NetBSD: strlcpy.c,v 1.2 1999/09/08 22:56:56 lukem Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -39,7 +41,8 @@ static char *rcsid = "$OpenBSD: strlcpy.c,v 1.4 1999/05/01 18:56:41 millert Exp 
  * will be copied.  Always NUL terminates (unless siz == 0).
  * Returns strlen(src); if retval >= siz, truncation occurred.
  */
-size_t strlcpy(dst, src, siz)
+size_t
+strlcpy(dst, src, siz)
 	char *dst;
 	const char *src;
 	size_t siz;
@@ -47,6 +50,9 @@ size_t strlcpy(dst, src, siz)
 	register char *d = dst;
 	register const char *s = src;
 	register size_t n = siz;
+
+	if (dst == NULL || src == NULL)
+		return (0);
 
 	/* Copy as many bytes as will fit */
 	if (n != 0 && --n != 0) {
