@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.43 1997/05/07 04:36:00 mikel Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.44 1997/05/07 18:51:47 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -340,11 +340,21 @@ sbdsp_query_encoding(addr, fp)
 	switch (fp->index) {
 	case 0:
 		strcpy(fp->name, AudioEmulaw);
-		fp->format_id = AUDIO_ENCODING_ULAW;
+		fp->encoding = AUDIO_ENCODING_ULAW;
+		fp->precision = 8;
+		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
 		break;
 	case 1:
-		strcpy(fp->name, AudioEpcm16);
-		fp->format_id = AUDIO_ENCODING_PCM16;
+		strcpy(fp->name, AudioElinear_le);
+		fp->encoding = AUDIO_ENCODING_LINEAR_LE;
+		fp->precision = 16;
+		fp->flags = 0;
+		break;
+	case 2:
+		strcpy(fp->name, AudioEulinear);
+		fp->encoding = AUDIO_ENCODING_ULINEAR;
+		fp->precision = 8;
+		fp->flags = 0;
 		break;
 	default:
 		return (EINVAL);
@@ -360,8 +370,7 @@ sbdsp_set_io_params(sc, p)
 
 	switch (p->encoding) {
 	case AUDIO_ENCODING_ULAW:
-	case AUDIO_ENCODING_PCM16:
-	case AUDIO_ENCODING_PCM8:
+	case AUDIO_ENCODING_LINEAR_LE:
 		break;
 	default:
 		return (EINVAL);
