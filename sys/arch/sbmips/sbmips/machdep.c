@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.19 2003/04/26 11:05:23 ragge Exp $ */
+/* $NetBSD: machdep.c,v 1.20 2003/07/06 12:14:50 simonb Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -264,6 +264,8 @@ mach_init(long fwhandle, long magic, long bootdata, long reserved)
 		/*
 		 * Handle the case of not being called from the firmware.
 		 */
+		/* XXX hardwire to 32MB; should be kernel config option */
+		physmem = 32 * 1024 * 1024 / 4096;
 		mem_clusters[0].start = 0;
 		mem_clusters[0].size = ctob(physmem);
 		mem_cluster_cnt = 1;
