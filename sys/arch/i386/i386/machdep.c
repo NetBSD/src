@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.538 2003/09/10 21:38:40 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.539 2003/09/25 22:01:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.538 2003/09/10 21:38:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.539 2003/09/25 22:01:31 christos Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -626,7 +626,7 @@ buildcontext(struct lwp *l, int sel, void *catcher, void *fp)
 }
 
 static void
-sendsig_siginfo(ksiginfo_t *ksi, sigset_t *mask)
+sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 {
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
@@ -687,7 +687,7 @@ sendsig_siginfo(ksiginfo_t *ksi, sigset_t *mask)
 }
 
 void
-sendsig(ksiginfo_t *ksi, sigset_t *mask)
+sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 {
 #ifdef COMPAT_16
 	if (curproc->p_sigacts->sa_sigdesc[ksi->ksi_signo].sd_vers < 2)
