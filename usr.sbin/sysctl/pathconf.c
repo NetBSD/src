@@ -1,4 +1,4 @@
-/*	$NetBSD: pathconf.c,v 1.2 1995/09/30 07:12:47 thorpej Exp $	*/
+/*	$NetBSD: pathconf.c,v 1.3 1997/11/01 06:54:14 lukem Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)pathconf.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: pathconf.c,v 1.2 1995/09/30 07:12:47 thorpej Exp $";
+static char rcsid[] = "$NetBSD: pathconf.c,v 1.3 1997/11/01 06:54:14 lukem Exp $";
 #endif
 #endif /* not lint */
 
@@ -91,7 +91,7 @@ main(argc, argv)
 	char *path;
 	int ch;
 
-	while ((ch = getopt(argc, argv, "Aan")) != EOF) {
+	while ((ch = getopt(argc, argv, "Aan")) != -1) {
 		switch (ch) {
 
 		case 'A':

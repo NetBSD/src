@@ -1,4 +1,4 @@
-/*	$NetBSD: chg_pid.c,v 1.3 1996/01/09 09:55:06 leo Exp $	*/
+/*	$NetBSD: chg_pid.c,v 1.4 1997/11/01 06:49:21 lukem Exp $	*/
 
 /*
  * Copyright (c) 1995 L. Weppelman
@@ -95,7 +95,7 @@ int	read_block	PROTO((void *, int, int));
 int	write_block	PROTO((void *, int, int));
 void	set_csum	PROTO((char *));
 
-const char version[] = "$Revision: 1.3 $";
+const char version[] = "$Revision: 1.4 $";
 
 char	*Progname = NULL;		/* What are we called		*/
 int	t_flag    = 0;			/* Test -- don't actually do it	*/
@@ -121,7 +121,7 @@ char	*argv[];
 	init_toslib(argv[0]);
 	Progname = argv[0];
 
-	while ((c = getopt(argc, argv, "htVwo:")) != EOF) {
+	while ((c = getopt(argc, argv, "htVwo:")) != -1) {
 		switch (c) {
 			case 'h':
 				h_flag = 1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.5 1996/02/28 21:04:05 thorpej Exp $	*/
+/*	$NetBSD: main.c,v 1.6 1997/11/01 06:51:46 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 5/30/95";
 #else
-static char rcsid[] = "$NetBSD: main.c,v 1.5 1996/02/28 21:04:05 thorpej Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.6 1997/11/01 06:51:46 lukem Exp $";
 #endif
 #endif /* not lint */
 
@@ -141,7 +141,7 @@ main(argc, argv)
 	rlogin = (strncmp(prompt, "rlog", 4) == 0) ? '~' : _POSIX_VDISABLE;
 	autologin = -1;
 
-	while ((ch = getopt(argc, argv, "8EKLS:X:acde:fFk:l:n:rt:x")) != EOF) {
+	while ((ch = getopt(argc, argv, "8EKLS:X:acde:fFk:l:n:rt:x")) != -1) {
 		switch(ch) {
 		case '8':
 			eight = 3;	/* binary output and input */

@@ -34,7 +34,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ident "$Header: /cvsroot/src/sys/arch/bebox/isa/pcvt/Util/kbdio/Attic/kbdio.y,v 1.1 1997/10/14 06:50:45 sakamoto Exp $"
+#ident "$Header: /cvsroot/src/sys/arch/bebox/isa/pcvt/Util/kbdio/Attic/kbdio.y,v 1.2 1997/11/01 06:49:27 lukem Exp $"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -305,7 +305,7 @@ int main(int argc, char **argv) {
 	int fd, c;
 	const char *devname = "/dev/console";
 
-	while((c = getopt(argc, argv, "df:")) != EOF)
+	while((c = getopt(argc, argv, "df:")) != -1)
 		switch(c) {
 		case 'd':
 			yydebug = 1;
