@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)regexp.3	8.1 (Berkeley) 6/4/93
-.\"	$NetBSD: regexp.3,v 1.9 1998/04/29 19:25:25 fair Exp $
+.\"	$NetBSD: regexp.3,v 1.10 1999/08/22 13:06:47 kleink Exp $
 .\"
 .Dd June 4, 1993
 .Dt REGEXP 3
@@ -51,6 +51,8 @@
 .Fn regexec "const regexp *prog" "const char *string"
 .Ft void
 .Fn regsub "const regexp *prog" "const char *source" "char *dest"
+.Ft void
+.Fn regerror "const char *msg"
 .Sh DESCRIPTION
 .Bf -symbolic
 This interface is made obsolete by
