@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.2 2003/05/11 21:51:32 fvdl Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.3 2003/05/15 13:30:31 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -73,11 +73,14 @@
 #if NPCI > 0
 struct mpacpi_pcibus {
 	TAILQ_ENTRY(mpacpi_pcibus) mpr_list;
-	ACPI_NAMESPACE_NODE *mpr_node;
 	ACPI_HANDLE *mpr_handle;		/* Same thing really, but.. */
 	int mpr_bus;
 	int mpr_level;
-	struct mpacpi_pcibus *mpr_parent;
+};
+
+struct mpacpi_walk_status {
+	struct mpacpi_pcibus *mpw_mpr;
+	struct acpi_softc *mpw_acpi;
 };
 
 TAILQ_HEAD(, mpacpi_pcibus) mpacpi_pcibusses;
@@ -102,8 +105,7 @@ static ACPI_STATUS mpacpi_nonpci_intr(APIC_HEADER *, void *);
 static ACPI_STATUS mpacpi_pcibus_cb(ACPI_HANDLE, UINT32, void *, void **);
 static int mpacpi_pcircount(struct mpacpi_pcibus *);
 static int mpacpi_pciroute(struct mpacpi_pcibus *);
-static void mpacpi_pcihier(struct acpi_softc *, struct mpacpi_pcibus *);
-static struct mpacpi_pcibus *mpacpi_find_pcibus(ACPI_NAMESPACE_NODE *);
+static ACPI_STATUS mpacpi_pcihier_cb(ACPI_HANDLE, UINT32, void *, void **);
 static int mpacpi_find_pcibusses(struct acpi_softc *);
 
 static void mpacpi_print_pci_intr(int);
@@ -123,6 +125,7 @@ int mpacpi_npci;
 int mpacpi_maxpci;
 static int mpacpi_maxbuslevel;
 static int mpacpi_npciroots;
+static int mpacpi_npciknown;
 #endif
 
 static int mpacpi_intr_index;
@@ -347,18 +350,6 @@ mpacpi_scan_apics(struct device *self)
 
 #if NPCI > 0
 
-static struct mpacpi_pcibus *
-mpacpi_find_pcibus(ACPI_NAMESPACE_NODE *node)
-{
-	struct mpacpi_pcibus *mpr;
-
-	TAILQ_FOREACH(mpr, &mpacpi_pcibusses, mpr_list) {
-		if (mpr->mpr_node == node)
-			return mpr;
-	}
-	return NULL;
-}
-
 static int
 mpacpi_find_pcibusses(struct acpi_softc *acpi)
 {
@@ -406,7 +397,6 @@ mpacpi_pcibus_cb(ACPI_HANDLE handle, UINT32 level, void *ct, void **status)
 		} else
 			mpr->mpr_bus = ACPI_LOWORD(val);
 		mpacpi_npciroots++;
-		mpr->mpr_parent = NULL;
 		if (mp_verbose)
 			printf("mpacpi: found root PCI bus %d at level %u\n",
 			    mpr->mpr_bus, level);
@@ -418,7 +408,6 @@ mpacpi_pcibus_cb(ACPI_HANDLE handle, UINT32 level, void *ct, void **status)
 	}
 
 	mpr->mpr_handle = handle;
-	mpr->mpr_node = node;
 	mpr->mpr_level = (int)level;
 	TAILQ_INSERT_TAIL(&mpacpi_pcibusses, mpr, mpr_list);
 	mpacpi_npci++;
@@ -427,40 +416,58 @@ mpacpi_pcibus_cb(ACPI_HANDLE handle, UINT32 level, void *ct, void **status)
 	return AE_OK;
 }
 
-static void
-mpacpi_pcihier(struct acpi_softc *acpi, struct mpacpi_pcibus *mpr)
+static ACPI_STATUS
+mpacpi_pcihier_cb(ACPI_HANDLE handle, UINT32 level, void *ct, void **status)
 {
-	ACPI_NAMESPACE_NODE *parentnode;
 	ACPI_STATUS ret;
 	ACPI_INTEGER val;
-	struct mpacpi_pcibus *parentmpr;
-	pcireg_t binf;
+	pcireg_t binf, class;
 	pcitag_t tag;
+	struct acpi_softc *acpi;
+	struct mpacpi_pcibus *mpr, *mparent;
+	struct mpacpi_walk_status *mpw = ct;
+	int bus;
 
-	if (mpr->mpr_bus == -1) {
-		parentnode = AcpiNsGetParentNode(mpr->mpr_node);
-		parentmpr = mpacpi_find_pcibus(parentnode);
-		if (parentmpr == NULL) {
-			if (mp_verbose)
-				printf("mpacpi: no parent bus at level %d\n",
-				    mpr->mpr_level);
-			return;
-		}
-		ret = AcpiUtEvaluateNumericObject(METHOD_NAME__ADR,
-		    mpr->mpr_node, &val);
-		if (ACPI_FAILURE(ret))
-			return;
-		tag = pci_make_tag(acpi->sc_pc, parentmpr->mpr_bus,
-		    ACPI_HIWORD(val), ACPI_LOWORD(val));
-		binf = pci_conf_read(acpi->sc_pc, tag, PPB_REG_BUSINFO);
-		mpr->mpr_bus = PPB_BUSINFO_SECONDARY(binf);
-		mpr->mpr_parent = parentmpr;
+	mparent = mpw->mpw_mpr;
+	acpi = mpw->mpw_acpi;
+
+	ret = AcpiUtEvaluateNumericObject(METHOD_NAME__ADR, handle, &val);
+	if (ACPI_FAILURE(ret))
+		return AE_OK;
+
+	tag = pci_make_tag(acpi->sc_pc, mparent->mpr_bus,
+	    ACPI_HIWORD(val), ACPI_LOWORD(val));
+	class = pci_conf_read(acpi->sc_pc, tag, PCI_CLASS_REG);
+	if (PCI_CLASS(class) != PCI_CLASS_BRIDGE ||
+	    PCI_SUBCLASS(class) != PCI_SUBCLASS_BRIDGE_PCI)
+		return AE_OK;
+
+	TAILQ_FOREACH(mpr, &mpacpi_pcibusses, mpr_list)
+		if (mpr->mpr_handle == handle)
+			break;
+	if (mpr != NULL && mpr->mpr_bus != -1)
+		return AE_OK;
+
+	binf = pci_conf_read(acpi->sc_pc, tag, PPB_REG_BUSINFO);
+	bus = PPB_BUSINFO_SECONDARY(binf);
+
+	if (mpr == NULL) {
 		if (mp_verbose)
-			printf("mpacpi: found subordinate PCI bus %d\n",
-			    mpr->mpr_bus);
+			printf("mpacpi: PCI bus %d has no ACPI handle; "
+			       "ignoring.\n", bus);
+		return AE_OK;
 	}
+
+	mpr->mpr_bus = bus;
+	mpacpi_npciknown++;
+	if (mp_verbose)
+		printf("mpacpi: found subordinate PCI bus %d\n",
+		    mpr->mpr_bus);
+
 	if (mpr->mpr_bus > mpacpi_maxpci)
 		mpacpi_maxpci = mpr->mpr_bus;
+
+	return AE_OK;
 }
 
 /*
@@ -565,24 +572,44 @@ mpacpi_config_irouting(struct acpi_softc *acpi)
 #if NPCI > 0
 	struct mpacpi_pcibus *mpr;
 #endif
-	int nintr;
+	int nintr, known;
 	int i, index;
 	struct mp_bus *mbp;
 	struct mp_intr_map *mpi;
 	struct ioapic_softc *ioapic;
+	struct mpacpi_walk_status mpw;
 
 	nintr = mpacpi_nintsrc + NUM_LEGACY_IRQS - 1;
+	mpacpi_npciknown = mpacpi_npciroots;
 #if NPCI > 0
 	TAILQ_FOREACH(mpr, &mpacpi_pcibusses, mpr_list) {
 		nintr += mpacpi_pcircount(mpr);
 	}
 
-	for (i = 0; i <= mpacpi_maxbuslevel; i++) {
+	for (;;) {
+		known = mpacpi_npciknown;
 		TAILQ_FOREACH(mpr, &mpacpi_pcibusses, mpr_list) {
-			if (mpr->mpr_level == i)
-				mpacpi_pcihier(acpi, mpr);
+			if (mpr->mpr_bus != -1) {
+				mpw.mpw_acpi = acpi;
+				mpw.mpw_mpr = mpr;
+				AcpiWalkNamespace(ACPI_TYPE_DEVICE, 
+				    mpr->mpr_handle, 1, mpacpi_pcihier_cb,
+				    &mpw, NULL);
+			}
+		}
+		if (mpacpi_npciknown == mpacpi_npci) {
+			if (mp_verbose)
+				printf("mpacpi: resolved all PCI buses\n");
+			break;
+		}
+		if (mpacpi_npciknown == known) {
+			if (mp_verbose)
+				printf("mpacpi: couldn't find all PCI bus "
+				       "numbers\n");
+			break;
 		}
 	}
+
 	mp_isa_bus = mpacpi_maxpci + 1;
 #else
 	mp_isa_bus = 0;
