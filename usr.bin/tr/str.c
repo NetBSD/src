@@ -1,4 +1,4 @@
-/*	$NetBSD: str.c,v 1.8 1997/10/20 00:56:05 lukem Exp $	*/
+/*	$NetBSD: str.c,v 1.9 1999/03/16 14:57:48 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)str.c	8.2 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: str.c,v 1.8 1997/10/20 00:56:05 lukem Exp $");
+__RCSID("$NetBSD: str.c,v 1.9 1999/03/16 14:57:48 kleink Exp $");
 #endif /* not lint */
 
 #include <sys/cdefs.h>
@@ -166,7 +166,7 @@ static CLASS classes[] = {
 	{ "digit",  isdigit,  },
 	{ "graph",  isgraph,  },
 	{ "lower",  islower,  },
-	{ "print",  isupper,  },
+	{ "print",  isprint,  },
 	{ "punct",  ispunct,  },
 	{ "space",  isspace,  },
 	{ "upper",  isupper,  },
