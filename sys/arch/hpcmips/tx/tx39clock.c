@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39clock.c,v 1.14 2003/07/15 02:29:33 lukem Exp $ */
+/*	$NetBSD: tx39clock.c,v 1.15 2003/09/26 15:34:11 simonb Exp $ */
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tx39clock.c,v 1.14 2003/07/15 02:29:33 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tx39clock.c,v 1.15 2003/09/26 15:34:11 simonb Exp $");
 
 #include "opt_tx39clock_debug.h"
 
@@ -156,21 +156,20 @@ tx39clock_cpuspeed(int *cpuclock, int *cpuspeed)
 	int elapsed;
 	
 	__tx39timer_rtcget(&t0);
-	__asm__ __volatile__("
-		.set	noreorder;
-		li	$8, 10000000;
-	1:	nop;
-		nop;
-		nop;
-		nop;
-		nop;
-		nop;
-		nop;
-		add	$8, $8, -1;
-		bnez	$8, 1b;
-		nop;
-		.set	reorder;
-	");
+	__asm__ __volatile__(
+		".set	noreorder;		\n\t"
+		"li	$8, 10000000;		\n"
+	"1:	nop;				\n\t"
+		"nop;				\n\t"
+		"nop;				\n\t"
+		"nop;				\n\t"
+		"nop;				\n\t"
+		"nop;				\n\t"
+		"nop;				\n\t"
+		"add	$8, $8, -1;		\n\t"
+		"bnez	$8, 1b;			\n\t"
+		"nop;				\n\t"
+		".set	reorder;");
 	__tx39timer_rtcget(&t1);
 
 	elapsed = t1.t_lo - t0.t_lo;
