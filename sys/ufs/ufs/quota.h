@@ -1,4 +1,4 @@
-/*	$NetBSD: quota.h,v 1.3 1994/10/20 04:21:20 cgd Exp $	*/
+/*	$NetBSD: quota.h,v 1.4 1994/12/13 21:14:43 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -35,23 +35,23 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)quota.h	8.1 (Berkeley) 6/11/93
+ *	@(#)quota.h	8.3 (Berkeley) 8/19/94
  */
 
 #ifndef _QUOTA_
 #define _QUOTA_
 
 /*
- * Definitions for disk quotas imposed on the average user (big brother
- * finally hits UNIX).
+ * Definitions for disk quotas imposed on the average user
+ * (big brother finally hits UNIX).
  *
  * The following constants define the amount of time given a user before the
  * soft limits are treated as hard limits (usually resulting in an allocation
  * failure). The timer is started when the user crosses their soft limit, it
  * is reset when they go below their soft limit.
  */
-#define	MAX_IQ_TIME	(7*24*60*60)	/* 1 week in seconds */
-#define	MAX_DQ_TIME	(7*24*60*60)	/* 1 week in seconds */
+#define	MAX_IQ_TIME	(7*24*60*60)	/* seconds in 1 week */
+#define	MAX_DQ_TIME	(7*24*60*60)	/* seconds in 1 week */
 
 /*
  * The following constants define the usage of the quota file array in the
@@ -67,10 +67,10 @@
 /*
  * Definitions for the default names of the quotas files.
  */
-#define INITQFNAMES {							\
-	"user",		/* USRQUOTA */					\
-	"group",	/* GRPQUOTA */					\
-	"undefined",							\
+#define INITQFNAMES { \
+	"user",		/* USRQUOTA */ \
+	"group",	/* GRPQUOTA */ \
+	"undefined", \
 };
 #define	QUOTAFILENAME	"quota"
 #define	QUOTAGROUP	"operator"
@@ -116,23 +116,28 @@ struct dqblk {
  * used entries.
  */
 struct dquot {
-	struct	dquot *dq_forw, **dq_back; /* hash list */
-	struct	dquot *dq_freef, **dq_freeb; /* free list */
-
+	LIST_ENTRY(dquot) dq_hash;	/* hash list */
+	TAILQ_ENTRY(dquot) dq_freelist;	/* free list */
+	u_int16_t dq_flags;		/* flags, see below */
+	u_int16_t dq_cnt;		/* count of active references */
+	u_int16_t dq_spare;		/* unused spare padding */
+	u_int16_t dq_type;		/* quota type of this dquot */
+	u_int32_t dq_id;		/* identifier this applies to */
+	struct	ufsmount *dq_ump;	/* filesystem that this is taken from */
+	struct	dqblk dq_dqb;		/* actual usage & quotas */
+};
+/*
+ * Flag values.
+ */
 #define	DQ_LOCK		0x01		/* this quota locked (no MODS) */
 #define	DQ_WANT		0x02		/* wakeup on unlock */
 #define	DQ_MOD		0x04		/* this quota modified since read */
 #define	DQ_FAKE		0x08		/* no limits here, just usage */
 #define	DQ_BLKS		0x10		/* has been warned about blk limit */
 #define	DQ_INODS	0x20		/* has been warned about inode limit */
-	u_int16_t dq_flags;		/* flags, see below */
-
-	int16_t	  dq_cnt;		/* count of active references */
-	int16_t	  dq_spare;		/* unused spare padding */
-	int16_t	  dq_type;		/* quota type of this dquot */
-	u_int32_t dq_id;		/* identifier this applies to */
-	struct ufsmount *dq_ump;	/* filesystem that this is taken from */
-
+/*
+ * Shorthand notation.
+ */
 #define	dq_bhardlimit	dq_dqb.dqb_bhardlimit
 #define	dq_bsoftlimit	dq_dqb.dqb_bsoftlimit
 #define	dq_curblocks	dq_dqb.dqb_curblocks
@@ -141,13 +146,11 @@ struct dquot {
 #define	dq_curinodes	dq_dqb.dqb_curinodes
 #define	dq_btime	dq_dqb.dqb_btime
 #define	dq_itime	dq_dqb.dqb_itime
-	struct dqblk dq_dqb;		/* actual usage & quotas */
-};
 
 /*
- * If the system has never checked for a quota for this file, then it is set
- * to NODQUOT.  Once a write attempt is made the inode pointer is set to
- * reference a dquot structure.
+ * If the system has never checked for a quota for this file, then it is
+ * set to NODQUOT.  Once a write attempt is made the inode pointer is set
+ * to reference a dquot structure.
  */
 #define	NODQUOT		NULL
 
