@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.113 2000/08/20 21:50:09 thorpej Exp $	*/
+/*	$NetBSD: locore.S,v 1.114 2000/09/05 00:55:48 soren Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -96,11 +96,11 @@ _C_LABEL(kernel_text):
  */
 	la	v1, start
 	slt	v0, v1, sp
-	bne	v0, $0, 1f
+	bne	v0, zero, 1f
 	addu	v0, v1, -CALLFRAME_SIZ
 	subu	v0, v1, sp
 	slt	v0, v0, 4096			# within 4KB of _start
-	beq	v0, $0, 2f
+	beq	v0, zero, 2f
 	addu	v0, v1, -CALLFRAME_SIZ
 1:
 	move	sp, v0
@@ -163,6 +163,7 @@ _C_LABEL(kernel_text):
 	jal	_C_LABEL(main)			# main(void)
 	nop
 	PANIC("main() returned")		# main never returns
+	nop
 	.set	at
 	.globl _C_LABEL(verylocore)
 _C_LABEL(verylocore):
@@ -214,6 +215,7 @@ NESTED(setrunqueue, CALLFRAME_SIZ, ra)
 	beq	t0, zero, 1f
 	lbu	t0, P_PRIORITY(a0)	# put on p->p_priority / 4 queue
 	PANIC("setrunqueue")		#
+	nop
 1:
 	li	t1, 1			# compute corresponding bit
 	srl	t0, t0, 2		# compute index into 'whichqs'
@@ -252,6 +254,7 @@ NESTED(remrunqueue, CALLFRAME_SIZ, ra)
 	bne	v0, zero, 1f
 	lw	v0, P_BACK(a0)		# v0 = p->p_back
 	PANIC("remrunqueue")		# it wasn't recorded to be on its q
+	nop
 1:
 	lw	v1, P_FORW(a0)		# v1 = p->p_forw
 	nop
@@ -379,6 +382,7 @@ cpu_switch_queuescan:
 	bne	t0, a0, 2f			# make sure something in queue
 	sw	v0, P_FORW(t0)			# qp->ph_link = p->p_forw;
 	PANIC("cpu_switch")			# nothing in queue
+	nop
 2:
 	sw	t0, P_BACK(v0)			# p->p_forw->p_back = qp
 	bne	v0, t0, 3f			# queue still not empty
