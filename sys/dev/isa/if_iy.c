@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iy.c,v 1.45 2000/12/14 06:59:02 thorpej Exp $	*/
+/*	$NetBSD: if_iy.c,v 1.46 2001/03/15 13:23:23 is Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
 
@@ -1139,7 +1139,7 @@ struct iy_softc *sc;
 		if ((txstat2 & 0x2000) == 0)
 			++ifp->if_oerrors;
 		if (txstat2 & 0x000f)
-			ifp->if_oerrors += txstat2 & 0x000f;
+			ifp->if_collisions += txstat2 & 0x000f;
 	}
 	ifp->if_flags &= ~IFF_OACTIVE;
 }
