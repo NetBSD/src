@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.58 2003/01/18 06:44:57 thorpej Exp $ */
+/*	$NetBSD: param.h,v 1.59 2003/04/09 16:22:33 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -54,10 +54,8 @@
 #define	MACHINE_ARCH	"sparc"
 #define	MID_MACHINE	MID_SPARC
 
-#ifdef _KERNEL_OPT
-#include "opt_sparc_arch.h"
-#endif
 #ifdef _KERNEL				/* XXX */
+#include <machine/cpuconf.h>		/* XXX */
 #ifndef _LOCORE				/* XXX */
 #include <machine/cpu.h>		/* XXX */
 #endif					/* XXX */
@@ -161,20 +159,8 @@ extern int nbpg, pgofset, pgshift;
  */
 #define	bdbtofsb(bn)	((bn) / (BLKDEV_IOSIZE / DEV_BSIZE))
 
-/*
- * Values for the cputyp variable.
- */
-#define CPU_SUN4	0
-#define CPU_SUN4C	1
-#define CPU_SUN4M	2
-#define CPU_SUN4U	3
-#define	CPU_SUN4D	4
-
 #if defined(_KERNEL) || defined(_STANDALONE)
 #ifndef _LOCORE
-
-extern int cputyp;
-
 extern void	delay __P((unsigned int));
 #define	DELAY(n)	delay(n)
 #endif /* _LOCORE */
@@ -197,65 +183,8 @@ extern void	delay __P((unsigned int));
 #endif /* MSIIEP */
 
 /*
- * Shorthand CPU-type macros.  Let compiler optimize away code
- * conditional on constants.
- */
-
-/*
- * Step 1: Count the number of CPU types configured into the
- * kernel.
- */
-#define	CPU_NTYPES	(defined(SUN4) + defined(SUN4C) + \
-			 defined(SUN4M) + defined(SUN4D))
-
-/*
- * Step 2: Define the CPU type predicates.  Rules:
- *
- *	* If CPU types are configured in, and the CPU type
- *	  is not one of them, then the test is always false.
- *
- *	* If exactly one CPU type is configured in, and it's
- *	  this one, then the test is always true.
- *
- *	* Otherwise, we have to reference the cputyp variable.
- */
-#if CPU_NTYPES != 0 && !defined(SUN4)
-#	define CPU_ISSUN4	(0)
-#elif CPU_NTYPES == 1 && defined(SUN4)
-#	define CPU_ISSUN4	(1)
-#else
-#	define CPU_ISSUN4	(cputyp == CPU_SUN4)
-#endif
-
-#if CPU_NTYPES != 0 && !defined(SUN4C)
-#	define CPU_ISSUN4C	(0)
-#elif CPU_NTYPES == 1 && defined(SUN4C)
-#	define CPU_ISSUN4C	(1)
-#else
-#	define CPU_ISSUN4C	(cputyp == CPU_SUN4C)
-#endif
-
-#if CPU_NTYPES != 0 && !defined(SUN4M)
-#	define CPU_ISSUN4M	(0)
-#elif CPU_NTYPES == 1 && defined(SUN4M)
-#	define CPU_ISSUN4M	(1)
-#else
-#	define CPU_ISSUN4M	(cputyp == CPU_SUN4M)
-#endif
-
-#if CPU_NTYPES != 0 && !defined(SUN4D)
-#	define CPU_ISSUN4D	(0)
-#elif CPU_NTYPES == 1 && defined(SUN4D)
-#	define CPU_ISSUN4D	(1)
-#else
-#	define CPU_ISSUN4D	(cputyp == CPU_SUN4D)
-#endif
-
-#define	CPU_ISSUN4U		(0)
-
-/*
- * Step 3: Sun4 machines have a page size of 8192.  All other machines
- * have a page size of 4096.  Short cut page size variables if we can.
+ * Sun4 machines have a page size of 8192.  All other machines have a page
+ * size of 4096.  Short cut page size variables if we can.
  */
 #if CPU_NTYPES != 0 && !defined(SUN4)
 #	define NBPG		4096
@@ -270,11 +199,5 @@ extern void	delay __P((unsigned int));
 #	define PGOFSET		pgofset
 #	define PGSHIFT		pgshift
 #endif
-
-/*
- * Step 4: Sun4M and Sun4D systems have an SRMMU.  Define some
- * short-hand for this.
- */
-#define	CPU_HAS_SRMMU		(CPU_ISSUN4M || CPU_ISSUN4D)
 
 #endif /* _KERNEL || _STANDALONE */
