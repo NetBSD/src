@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.30 2002/05/16 01:01:45 thorpej Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.31 2002/05/16 20:28:33 eeh Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -96,20 +96,6 @@ pci_attach_hook(parent, self, pba)
 	struct device *self;
 	struct pcibus_attach_args *pba;
 {
-	struct sparc_pci_chipset *npc;
-	pcitag_t btag;
-
-	/*
-	 * If we're attaching at a bridge, create a new PCI chipset
-	 * tag that points at the bridge's node.
-	 */
-	if (pba->pba_bridgetag != NULL) {
-		btag = *pba->pba_bridgetag;
-		npc = malloc(sizeof(*npc), M_DEVBUF, M_WAITOK);
-		*npc = *pba->pba_pc;
-		npc->curnode = PCITAG_NODE(btag);
-		pba->pba_pc = npc;
-	}
 }
 
 int
@@ -265,7 +251,12 @@ pci_enumerate_bus(struct pci_softc *sc,
 	int node, b, d, f, ret;
 	char name[30];
 
-	for (node = OF_child(pc->curnode); node != 0 && node != -1;
+	if (sc->sc_bridgetag)
+		node = PCITAG_NODE(*sc->sc_bridgetag);
+	else
+		node = pc->rootnode;
+
+	for (node = OF_child(node); node != 0 && node != -1;
 	     node = OF_peer(node)) {
 		name[0] = name[29] = 0;
 		OF_getprop(node, "name", name, sizeof(name));

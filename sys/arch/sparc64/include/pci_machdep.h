@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.h,v 1.13 2002/05/16 01:01:47 thorpej Exp $ */
+/* $NetBSD: pci_machdep.h,v 1.14 2002/05/16 20:28:34 eeh Exp $ */
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -46,7 +46,6 @@ typedef u_int pci_intr_handle_t;
 struct sparc_pci_chipset {
 	void			*cookie;	/* psycho_pbm, but sssh! */
 	int			rootnode;	/* PCI controller */
-	int			curnode;	/* Current OFW node */
 };
 
 /* 
