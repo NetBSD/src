@@ -1,4 +1,4 @@
-#       $NetBSD: files.vax,v 1.54 1999/07/09 02:32:32 thorpej Exp $
+#       $NetBSD: files.vax,v 1.55 1999/08/03 19:56:21 ragge Exp $
 #
 # new style config file for vax architecture
 #
@@ -18,21 +18,15 @@ file	arch/vax/vax/sbi.c		sbi needs-flag
 device	cmi { tr=-1 }
 attach	cmi at mainbus
 
-device	bi { node=-1 }
-attach	bi at mainbus
-file	arch/vax/bi/bi.c		bi needs-flag
-
 device	vsbus { csr }
 attach	vsbus at mainbus
 file	arch/vax/vsa/vsbus.c		vsbus
 
 device	cpu
 attach	cpu at mainbus with cpu_mainbus
-attach	cpu at bi with cpu_bi
 
 device	mem
 attach	mem at mainbus with mem_mainbus
-attach	mem at bi with mem_bi
 attach	mem at sbi with mem_sbi
 attach	mem at cmi with mem_cmi
 
@@ -61,27 +55,25 @@ major	{md = 23}
 include "dev/mscp/files.mscp"
 major	{ra = 9}
 
-# KDB50 on BI
-device	kdb: mscp
-attach	kdb at bi
-file	arch/vax/bi/kdb.c		kdb
-
 # Unibus/Q22 bus definitions
 include "dev/qbus/files.uba"
 
 attach	uba at mainbus with uba_mainbus
 file	arch/vax/uba/uba_mainbus.c	uba_mainbus
 attach	uba at sbi with uba_sbi
+file	arch/vax/uba/uba_sbi.c		uba_sbi
 attach	uba at cmi with uba_cmi
+file	arch/vax/uba/uba_cmi.c		uba_cmi
 
-# DEBNA/DEBNT Ethernet Adapter
-device	ni: ifnet, ether, arp
-attach	ni at bi
-file	arch/vax/bi/ni.c		ni needs-flag
+# BI bus definitions
+include "dev/bi/files.bi"
 
-# DWBUA BI-Unibus adapter
-attach	uba at bi with uba_bi
-file	arch/vax/bi/uba_bi.c		uba_bi
+attach	bi at mainbus with bi_mainbus
+file	arch/vax/bi/bi_mainbus.c	bi_mainbus
+
+# VAX CPUs at BI, do not belong in MI code.
+attach	cpu at bi with cpu_bi
+attach	mem at bi with mem_bi
 
 # TS11 at UBA
 device	ts: tape
@@ -129,12 +121,6 @@ file	arch/vax/vsa/smg.c		smg needs-flag
 device	lkc
 attach	lkc at dz
 file	arch/vax/vsa/lkc.c		lkc needs-flag
-
-# QDSS at UBA
-device	qd
-attach	qd at uba
-file	arch/vax/uba/qd.c		qd needs-count
-file	arch/vax/uba/qfont.c		qd | smg
 
 # These devices aren't tested (or even compiled!)
 # They are just included here to make some files happy ;)
