@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.68 2002/09/27 03:18:23 thorpej Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.69 2002/09/27 05:45:03 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.68 2002/09/27 03:18:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.69 2002/09/27 05:45:03 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -115,7 +115,8 @@ extern short cfroots[];
  * List of all cfdriver structures.  We use this to detect duplicates
  * when other cfdrivers are loaded.
  */
-struct cfdriverlist allcfdrivers;
+struct cfdriverlist allcfdrivers = LIST_HEAD_INITIALIZER(&allcfdrivers);
+extern struct cfdriver * const cfdriver_list_initial[];
 
 /*
  * List of cfdata tables.  We always have one such list -- the one
@@ -168,10 +169,9 @@ __volatile int config_pending;		/* semaphore for mountroot */
 void
 configure(void)
 {
-	extern struct cfdriver * const cfdriver_list_initial[];
 	int i;
 
-	LIST_INIT(&allcfdrivers);
+	/* allcfdrivers is statically initialized. */
 	for (i = 0; cfdriver_list_initial[i] != NULL; i++)
 		if (config_cfdriver_attach(cfdriver_list_initial[i]) != 0)
 			panic("configure: duplicate `%s' drivers",
@@ -260,6 +260,21 @@ static struct cfdriver *
 config_cfdriver_lookup(const char *name)
 {
 	struct cfdriver *cd;
+
+	/*
+	 * It is sometimes necessary to use the autoconfiguration
+	 * framework quite early (e.g. to initialize the console).
+	 * We support this by noticing an empty cfdriver list and
+	 * searching the initial static list instead.
+	 */
+	if (LIST_EMPTY(&allcfdrivers)) {
+		int i;
+
+		for (i = 0; cfdriver_list_initial[i] != NULL; i++) {
+			if (STREQ(cfdriver_list_initial[i]->cd_name, name))
+				return (cfdriver_list_initial[i]);
+		}
+	}
 
 	LIST_FOREACH(cd, &allcfdrivers, cd_list) {
 		if (STREQ(cd->cd_name, name))
