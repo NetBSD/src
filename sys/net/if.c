@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.27 1996/02/27 07:28:38 mycroft Exp $	*/
+/*	$NetBSD: if.c,v 1.28 1996/02/27 08:17:08 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -521,7 +521,7 @@ ifioctl(so, cmd, data, p)
 	default:
 		if (so->so_proto == 0)
 			return (EOPNOTSUPP);
-#ifndef COMPAT_43
+#if !defined(COMPAT_43) && !defined(COMPAT_LINUX)
 		return ((*so->so_proto->pr_usrreq)(so, PRU_CONTROL,
 			(struct mbuf *) cmd, (struct mbuf *) data,
 			(struct mbuf *) ifp));
@@ -531,8 +531,8 @@ ifioctl(so, cmd, data, p)
 
 		switch (cmd) {
 
-		case SIOCSIFDSTADDR:
 		case SIOCSIFADDR:
+		case SIOCSIFDSTADDR:
 		case SIOCSIFBRDADDR:
 		case SIOCSIFNETMASK:
 #if BYTE_ORDER != BIG_ENDIAN
