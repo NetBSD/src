@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.107 2001/09/24 01:48:16 chs Exp $	   */
+/*	$NetBSD: pmap.c,v 1.108 2001/09/30 17:12:08 ragge Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -842,10 +842,11 @@ if (startpmapdebug)
 		 * Mapped before? Remove it then.
 		 */
 
-		oldpte &= PG_FRAME;
-		if (oldpte) {
+		if (oldpte & PG_FRAME) {
 			RECURSEEND;
-			rensa(oldpte >> LTOHPS, (struct pte *)&patch[i]);
+			if ((oldpte & PG_SREF) == 0)
+				rensa((oldpte & PG_FRAME) >> LTOHPS,
+				    (struct pte *)&patch[i]);
 			RECURSESTART;
 		} else if (pmap != pmap_kernel())
 				pmap->pm_refcnt[index]++; /* New mapping */
