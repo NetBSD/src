@@ -1,4 +1,4 @@
-/* $NetBSD: key.c,v 1.19 2003/08/07 09:05:41 agc Exp $ */
+/* $NetBSD: key.c,v 1.20 2004/04/01 16:10:03 tsarna Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)key.c	8.4 (Berkeley) 2/20/95";
 #else
-__RCSID("$NetBSD: key.c,v 1.19 2003/08/07 09:05:41 agc Exp $");
+__RCSID("$NetBSD: key.c,v 1.20 2004/04/01 16:10:03 tsarna Exp $");
 #endif
 #endif /* not lint */
 
@@ -42,9 +42,12 @@ __RCSID("$NetBSD: key.c,v 1.19 2003/08/07 09:05:41 agc Exp $");
 
 #include <err.h>
 #include <errno.h>
+#include <fcntl.h>
+#include <paths.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "stty.h"
 #include "extern.h"
@@ -56,6 +59,7 @@ void	f_columns(struct info *);
 void	f_dec(struct info *);
 void	f_everything(struct info *);
 void	f_extproc(struct info *);
+void	f_insane(struct info *);
 void	f_ispeed(struct info *);
 void	f_nl(struct info *);
 void	f_ospeed(struct info *);
@@ -84,6 +88,7 @@ static const struct key {
 	{ "dec",	f_dec,		0 },
 	{ "everything",	f_everything,	0 },
 	{ "extproc",	f_extproc,	F_OFFOK },
+	{ "insane",	f_insane,	0 },
 	{ "ispeed",	f_ispeed,	F_NEEDARG },
 	{ "new",	f_tty,		0 },
 	{ "nl",		f_nl,		F_OFFOK },
@@ -196,6 +201,34 @@ f_extproc(struct info *ip)
 	}
 	ip->set = 1;
 #endif
+}
+
+void
+f_insane(struct info *ip)
+{
+	int f, r;
+	
+	r = f = open(_PATH_URANDOM, O_RDONLY, 0);
+	if (f >= 0) {
+		r = read(f, &(ip->t), sizeof(struct termios));
+		close(f);
+	}
+	if (r < 0) {
+		/* XXX not cryptographically secure! */
+	    
+	        srandom(time(NULL));
+		ip->t.c_iflag = random();
+		ip->t.c_oflag = random();
+		ip->t.c_cflag = random();
+		ip->t.c_lflag = random();
+		for (f = 0; f < NCCS; f++) {
+			ip->t.c_cc[f] = random() & 0xFF;
+		}
+		ip->t.c_ispeed = random();
+		ip->t.c_ospeed = random();
+	}
+    
+	ip->set = 1;
 }
 
 void
