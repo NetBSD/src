@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.80 2004/01/11 10:13:42 lukem Exp $
+# $NetBSD: md.i386,v 1.81 2004/01/11 14:53:23 lukem Exp $
 ./lib/libm387.so				comp-sys-shlib
 ./usr/include/i386				comp-c-include
 ./usr/include/i386/_G_config.h			comp-obsolete		obsolete
@@ -105,5 +105,5 @@
 ./usr/lib/libpmc.so				comp-c-lib
 ./usr/lib/libpmc_p.a				comp-c-proflib		profile
 ./usr/lib/libpmc_pic.a				comp-c-piclib
-./usr/libdata/lint/llib-li386.ln		comp-c-lintlib
-./usr/libdata/lint/llib-lpmc.ln			comp-c-lintlib
+./usr/libdata/lint/llib-li386.ln		comp-c-lintlib		lint
+./usr/libdata/lint/llib-lpmc.ln			comp-c-lintlib		lint
