@@ -1,4 +1,4 @@
-.\"	$NetBSD: speaker.4,v 1.7 1996/05/23 16:52:44 thorpej Exp $
+.\"	$NetBSD: speaker.4,v 1.8 1998/08/12 09:08:38 augustss Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .Sh NAME
 speaker \- console speaker device driver
 .Sh SYNOPSIS
-.Cd "spkr0	at pckbd? port 0x61"
+.Cd "spkr0	at pcppi?"
 .Fd #include <machine/spkr.h>
 .Pa /dev/speaker
 .Sh DESCRIPTION
