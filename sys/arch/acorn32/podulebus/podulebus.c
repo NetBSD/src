@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.c,v 1.16 2003/04/26 19:35:02 chris Exp $ */
+/* $NetBSD: podulebus.c,v 1.17 2003/05/21 17:17:51 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -43,7 +43,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: podulebus.c,v 1.16 2003/04/26 19:35:02 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: podulebus.c,v 1.17 2003/05/21 17:17:51 thorpej Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -442,7 +442,7 @@ podulebusattach(parent, self, aux)
 	printf("\n");
 
 
-#ifndef ARM32_PMAP_NEW
+#if 0 /* XXXJRT */
 	/* Ok we need to map in the podulebus */
 	/* with the new pmap mappings have to be done when the L1 tables
 	 * are built during initarm
