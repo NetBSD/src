@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.53 1997/10/28 18:58:20 christos Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.54 1997/11/03 22:03:31 pk Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -900,6 +900,8 @@ svr4_sys_ulimit(p, v, retval)
 	switch (SCARG(uap, cmd)) {
 	case SVR4_GFILLIM:
 		*retval = p->p_rlimit[RLIMIT_FSIZE].rlim_cur / 512;
+		if (*retval == -1)
+			*retval = 0x7fffffff;
 		return 0;
 
 	case SVR4_SFILLIM:
@@ -926,23 +928,33 @@ svr4_sys_ulimit(p, v, retval)
 				return error;
 
 			*retval = p->p_rlimit[RLIMIT_FSIZE].rlim_cur;
+			if (*retval == -1)
+				*retval = 0x7fffffff;
 			return 0;
 		}
 
 	case SVR4_GMEMLIM:
 		{
 			struct vmspace *vm = p->p_vmspace;
-			*retval = (long) vm->vm_daddr +
-				  p->p_rlimit[RLIMIT_DATA].rlim_cur;
+			register_t r = p->p_rlimit[RLIMIT_DATA].rlim_cur;
+
+			if (r == -1)
+				r = 0x7fffffff;
+			r += (long) vm->vm_daddr;
+			if (r < 0)
+				r = 0x7fffffff;
+			*retval = r;
 			return 0;
 		}
 
 	case SVR4_GDESLIM:
 		*retval = p->p_rlimit[RLIMIT_NOFILE].rlim_cur;
+		if (*retval == -1)
+			*retval = 0x7fffffff;
 		return 0;
 
 	default:
-		return ENOSYS;
+		return EINVAL;
 	}
 }
 
