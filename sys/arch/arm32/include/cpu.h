@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.3 1996/02/22 22:22:07 mark Exp $ */
+/* $NetBSD: cpu.h,v 1.4 1996/03/08 19:08:28 mark Exp $ */
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -41,21 +41,17 @@
  * CPU specific symbols
  *
  * Created      : 18/09/94
- * Last updated : 01/07/95
  *
  * Based on kate/katelib/arm6.h
- *
- *    $Id: cpu.h,v 1.3 1996/02/22 22:22:07 mark Exp $
  */
 
-#ifndef _ARM_CPU_H
-#define _ARM_CPU_H
+#ifndef _ARM32_CPU_H_
+#define _ARM32_CPU_H_
 
 #ifndef _LOCORE
-#  include <machine/frame.h>
-#  include <machine/psl.h>
+#include <machine/frame.h>
 #endif
-
+#include <machine/psl.h>
 
 /*
  * If we are not an ARM6 then we MUST use late aborts as only the ARM6
@@ -194,6 +190,6 @@
 
 #define signotify(p)            setsoftast()
     
-#endif
+#endif /* _ARM32_CPU_H_ */
 
 /* End of cpu.h */
