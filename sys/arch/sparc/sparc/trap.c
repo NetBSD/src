@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.146 2003/10/12 19:48:52 pk Exp $ */
+/*	$NetBSD: trap.c,v 1.147 2003/10/15 07:49:41 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.146 2003/10/12 19:48:52 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.147 2003/10/15 07:49:41 pk Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -1118,6 +1118,12 @@ mem_access_fault4m(type, sfsr, sfva, tf)
 	pc = tf->tf_pc;			/* These are needed below */
 	psr = tf->tf_psr;
 
+#if /*DIAGNOSTICS*/1
+	if (type == T_DATAERROR || type == T_TEXTERROR)
+		printf("%s[%d]: trap 0x%x: pc=0x%x sfsr=0x%x sfva=0x%x\n",
+			p->p_comm, p->p_pid, type, pc, sfsr, sfva);
+#endif
+
 	/*
 	 * Our first priority is handling serious faults, such as
 	 * parity errors or async faults that might have come through here.
@@ -1179,7 +1185,8 @@ mem_access_fault4m(type, sfsr, sfva, tf)
 	 * Q: test SFSR_FAV in the locore stubs too?
 	 */
 	if ((sfsr & SFSR_FAV) == 0) {
-		if (type == T_TEXTFAULT)
+		/* note: T_TEXTERROR == T_TEXTFAULT | 0x20 */
+		if ((type & ~0x20) == T_TEXTFAULT)
 			sfva = pc;
 		else {
 			rv = EACCES;
@@ -1242,7 +1249,7 @@ mem_access_fault4m(type, sfsr, sfva, tf)
 		/* stores are never text faults. */
 		atype = VM_PROT_WRITE;
 	} else {
-		if ((sfsr & SFSR_AT_TEXT) || type == T_TEXTFAULT) {
+		if ((sfsr & SFSR_AT_TEXT) || (type & ~0x20) == T_TEXTFAULT) {
 			atype = VM_PROT_EXECUTE;
 		} else {
 			atype = VM_PROT_READ;
