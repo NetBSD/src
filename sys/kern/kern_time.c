@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.9 1994/06/29 06:32:48 cgd Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.10 1994/09/18 21:49:07 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -125,7 +125,6 @@ settimeofday(p, uap, retval)
 	return (0);
 }
 
-extern	int tickadj;			/* "standard" clock skew, us./tick */
 int	tickdelta;			/* current clock skew, us. per tick */
 long	timedelta;			/* unapplied time correction, us. */
 long	bigadj = 1000000;		/* use 10x skew above bigadj us. */
