@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.3.2.15 2002/08/12 20:13:57 thorpej Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.3.2.16 2002/08/12 20:21:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -289,9 +289,10 @@ ENTRY(cpu_switch)
 	ldr	r7, Lcurpcb
 	str	r0, [r7]
 
-	/* Lower the spl level to spl0 and get the current spl level. */
-	mov	r7, r1
+	/* stash the old proc while we call functions */
+	mov	r5, r1
 
+	/* Lower the spl level to spl0 and get the current spl level. */
 #ifdef __NEWINTR
 	mov	r0, #(IPL_NONE)
 	bl	_C_LABEL(_spllower)
@@ -307,7 +308,8 @@ ENTRY(cpu_switch)
 	/* Push the old spl level onto the stack */
 	str	r0, [sp, #-0x0004]!
 
-	mov	r1, r7
+	/* put old proc back in r1 */
+	mov	r1, r5
 
 	/* First phase : find a new lwp */
 
