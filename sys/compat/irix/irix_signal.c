@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_signal.c,v 1.5 2002/02/17 22:49:54 manu Exp $ */
+/*	$NetBSD: irix_signal.c,v 1.6 2002/03/26 16:38:12 manu Exp $ */
 
 /*-
  * Copyright (c) 1994, 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.5 2002/02/17 22:49:54 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.6 2002/03/26 16:38:12 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -490,9 +490,9 @@ irix_sys_waitsys(p, v, retval)
 	}
 
 #ifdef DEBUG_IRIX
-	printf("waitsys(%d, %d, %p, %x)\n", 
+	printf("waitsys(%d, %d, %p, %x, %p)\n", 
 		 SCARG(uap, type), SCARG(uap, pid),
-		 SCARG(uap, info), SCARG(uap, options));
+		 SCARG(uap, info), SCARG(uap, options), SCARG(uap, ru));
 #endif
 
 loop:
@@ -512,7 +512,7 @@ loop:
 		    ((SCARG(uap, options) & (SVR4_WEXITED|SVR4_WTRAPPED)))) {
 			*retval = 0;
 #ifdef DEBUG_IRIX
-			printf("found %d\n", q->p_pid);
+			printf("irix_sys_wait(): found %d\n", q->p_pid);
 #endif
 			if ((error = irix_setinfo(q, q->p_xstat,
 						  SCARG(uap, info))) != 0)
@@ -521,14 +521,13 @@ loop:
 
 			if ((SCARG(uap, options) & SVR4_WNOWAIT)) {
 #ifdef DEBUG_IRIX
-				printf(("Don't wait\n"));
+				prrintf(("irix_sys_wait(): Don't wait\n"));
 #endif
 				return 0;
 			}
 			if (SCARG(uap, ru) &&
-			    (error = copyout((caddr_t)p->p_ru,
-			    (caddr_t)SCARG(uap, ru),
-			    sizeof(struct rusage))))
+			    (error = copyout(&(p->p_stats->p_ru),
+			    (caddr_t)SCARG(uap, ru), sizeof(struct rusage))))
 				return (error);
 
 			/*
