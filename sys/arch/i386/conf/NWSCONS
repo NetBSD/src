@@ -1,4 +1,4 @@
-#	$NetBSD: NWSCONS,v 1.21 1999/01/22 22:47:16 tron Exp $
+#	$NetBSD: NWSCONS,v 1.22 1999/01/23 15:38:11 drochner Exp $
 #
 #	like GENERIC, with new console drivers
 #
@@ -227,10 +227,10 @@ npx0	at isa? port 0xf0 irq 13	# x86 math coprocessor
 # wscons
 pckbc0	at isa?			# pc keyboard controller
 pckbd*	at pckbc?		# PC keyboard
-# "pms" should not be enabled together with "psm" or "psmi"
+# "opms" should not be enabled together with "psm" or "psmi"
 #psm*		at pckbc?		# PS/2 mouse for wsmouse
 #psmi*		at pckbc?	# PS/2 "Intelli"mouse for wsmouse
-pms*		at pckbc?		# backwards compatible PS/2 mouse
+opms*		at pckbc?		# backwards compatible PS/2 mouse
 vga0		at isa?
 vga*		at pci?
 pcdisplay0	at isa?			# CGA, MDA, EGA, HGA
@@ -562,12 +562,19 @@ midi*	at opl?			# OPL FM synth
 # Mice
 
 # ISA busmice
-lms0	at isa? port 0x23c irq 5	# Logitech bus mouse
-lms1	at isa? port 0x238 irq 5
-mms0	at isa? port 0x23c irq 5	# Microsoft InPort mouse
-mms1	at isa? port 0x238 irq 5
-#pms0	at pc? irq 12		# PS/2 auxiliary port mouse
-#pms0	at vt? irq 12		# PS/2 auxiliary port mouse
+#lms0	at isa? port 0x23c irq 5	# Logitech bus mouse
+#lms1	at isa? port 0x238 irq 5
+#mms0	at isa? port 0x23c irq 5	# Microsoft InPort mouse
+#mms1	at isa? port 0x238 irq 5
+#wsmouse*	at lms?
+#wsmouse*	at mms?
+# backwards compatible versions
+olms0	at isa? port 0x23c irq 5	# Logitech bus mouse
+olms1	at isa? port 0x238 irq 5
+omms0	at isa? port 0x23c irq 5	# Microsoft InPort mouse
+omms1	at isa? port 0x238 irq 5
+#opms0	at pc? irq 12		# PS/2 auxiliary port mouse
+#opms0	at vt? irq 12		# PS/2 auxiliary port mouse
 
 
 # Joysticks
