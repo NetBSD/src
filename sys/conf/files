@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.372 2000/06/06 18:26:32 soren Exp $
+#	$NetBSD: files,v 1.373 2000/06/14 19:47:12 thorpej Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -538,6 +538,16 @@ file coda/coda_subr.c			coda
 file coda/coda_venus.c			coda
 file coda/coda_vfsops.c			coda
 file coda/coda_vnops.c			coda
+file crypto/des/des_cbc.c		ipsec & ipsec_esp
+file crypto/des/des_ecb.c		ipsec & ipsec_esp
+file crypto/des/des_setkey.c		ipsec & ipsec_esp
+file crypto/des/des_3cbc.c		ipsec & ipsec_esp
+file crypto/blowfish/bf_cbc.c		ipsec & ipsec_esp
+file crypto/blowfish/bf_cbc_m.c		ipsec & ipsec_esp
+file crypto/blowfish/bf_enc.c		ipsec & ipsec_esp
+file crypto/blowfish/bf_skey.c		ipsec & ipsec_esp
+file crypto/cast128/cast128.c		ipsec & ipsec_esp
+file crypto/cast128/cast128_cbc.c	ipsec & ipsec_esp
 file ddb/db_access.c			ddb | kgdb
 file ddb/db_aout.c			ddb
 file ddb/db_break.c			ddb
@@ -854,6 +864,9 @@ file netinet6/ah_core.c			ipsec
 file netinet6/ah_input.c		ipsec
 file netinet6/ah_output.c		ipsec
 file netinet6/dest6.c			inet6
+file netinet6/esp_core.c		ipsec & ipsec_esp
+file netinet6/esp_output.c		ipsec & ipsec_esp
+file netinet6/esp_input.c		ipsec & ipsec_esp
 file netinet6/frag6.c			inet6
 file netinet6/icmp6.c			inet6
 file netinet6/in6.c			inet6
