@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.83 1997/06/05 20:13:37 is Exp $	*/
+/*	$NetBSD: locore.s,v 1.84 1997/06/05 20:57:13 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -333,6 +333,7 @@ _fpfault:
 	movl	_curpcb,a0	| current pcb
 	lea	a0@(PCB_FPCTX),a0 | address of FP savearea
 	fsave	a0@		| save state
+#if defined(M68020) || defined(M68030)
 #if defined(M68060) || defined(M68040)
 	movb	_machineid+3,d0
 	andb	#0x90,d0	| AMIGA_68060 | AMIGA_68040
@@ -344,6 +345,7 @@ _fpfault:
 	movb	a0@(1),d0	| get frame size
 	bset	#3,a0@(0,d0:w)	| set exc_pend bit of BIU
 Lfptnull:
+#endif
 	fmovem	fpsr,sp@-	| push fpsr as code argument
 	frestore a0@		| restore state
 	movl	#T_FPERR,sp@-	| push type arg
