@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_switch.S,v 1.1.2.2 2002/11/20 09:30:52 wdk Exp $	*/
+/*	$NetBSD: pthread_switch.S,v 1.1.2.3 2002/11/24 07:01:27 wdk Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
 #include <machine/asm.h>
 #include "assym.h"
 
-#ifdef ABICALLS
+#ifdef __ABICALLS__
 	.abicalls
 # define PIC_PROLOGUE(x,sr)	  \
 	.set noreorder		; \

@@ -1,4 +1,4 @@
-/*	$NetBSD: SYS.h,v 1.1.2.3 2002/11/23 10:41:17 wdk Exp $ */
+/*	$NetBSD: SYS.h,v 1.1.2.4 2002/11/24 07:01:27 wdk Exp $ */
 
 /*-
  * Copyright (c) 1996 Jonathan Stone
@@ -80,7 +80,7 @@
  * ii) Do interprocedure jumps indirectly via t9, with the side-effect of
  *     preserving the callee's entry address in t9.
  */
-#ifdef ABICALLS
+#ifdef __ABICALLS__
 	.abicalls
 # define PIC_PROLOGUE(x,sr)	.set noreorder; .cpload sr; .set reorder
 #else
