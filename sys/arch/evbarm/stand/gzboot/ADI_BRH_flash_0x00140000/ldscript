@@ -1,7 +1,5 @@
-/*	$NetBSD: ldscript,v 1.1 2003/03/25 23:38:00 thorpej Exp $	*/
+/*	$NetBSD: ldscript,v 1.2 2003/05/26 15:07:53 thorpej Exp $	*/
 
-OUTPUT_FORMAT("elf32-littlearm", "elf32-bigarm",
-	      "elf32-littlearm")
 OUTPUT_ARCH(arm)
 ENTRY(FLASH)
 MEMORY
