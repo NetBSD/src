@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.25 1997/03/24 23:49:39 gwr Exp $	*/
+/*	$NetBSD: mem.c,v 1.26 1997/04/28 23:21:01 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -59,6 +59,7 @@
 #include <vm/vm_map.h>
 
 #include <machine/cpu.h>
+#include <machine/leds.h>
 #include <machine/pte.h>
 #include <machine/pmap.h>
 #include <machine/machdep.h>
