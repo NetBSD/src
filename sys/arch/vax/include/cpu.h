@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.52 2000/06/11 07:50:13 ragge Exp $      */
+/*      $NetBSD: cpu.h,v 1.53 2000/07/26 11:55:01 ragge Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -79,6 +79,7 @@ struct	cpu_dep {
 	/* Kick off slave cpu */
 	void	(*cpu_startslave)(struct device *, struct cpu_info *);
 #endif
+	void	(*cpu_badaddr)(void); /* cpu-specific badaddr() */
 };
   
 #define	CPU_RAISEIPL	1	/* Must raise IPL until intr is handled */ 
@@ -126,8 +127,6 @@ struct cpu_info {
 
 extern char tramp;
 #endif
-
-extern int mastercpu;
 
 /*
  * Notify the current process (p) that it has a signal pending,
