@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.215.2.12 2000/08/23 15:12:32 sommerfeld Exp $	*/
+/*	$NetBSD: locore.s,v 1.215.2.13 2000/08/24 02:33:11 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -811,10 +811,10 @@ NENTRY(proc_trampoline)
 #ifdef MULTIPROCESSOR
 	call	_C_LABEL(proc_trampoline_mp)
 #endif
+	movl	$0,CPL
 	pushl	%ebx
 	call	%esi
 	addl	$4,%esp
-	movl	$0,CPL
 	INTRFASTEXIT
 	/* NOTREACHED */
 
@@ -1946,13 +1946,27 @@ NENTRY(switch_error)
  * Find a runnable process and switch to it.  Wait if necessary.  If the new
  * process is the same as the old one, we short-circuit the context save and
  * restore.
+ *	
+ * Note that the stack frame layout is known to "struct switchframe"
+ * in <machine/frame.h> and to the code in cpu_fork() which initializes 
+ * it for a new process.
  */
 ENTRY(cpu_switch)
 	pushl	%ebx
 	pushl	%esi
 	pushl	%edi
-	pushl	CPL
 
+#ifdef DIAGNOSTIC
+	cmpl	$IPL_HIGH,CPL
+	je	1f
+	pushl	2f
+	call	_C_LABEL(panic)
+	/* NOTREACHED */
+2:	.asciz	"not splhigh() in cpu_switch!"
+
+1:	
+#endif /* DIAGNOSTIC */
+	
 	GET_CURPROC(%esi,%ecx)
 
 	/*
@@ -2229,11 +2243,7 @@ switch_restored:
 switch_return:
 	movl	$0,CPL			# spl0()
 	call	_C_LABEL(Xspllower)	# process pending interrupts
-	/*
-	 * Restore old cpl from stack.  Note that this is always an increase
-	 * from the brief spl0 above.
-	 */
-	popl	CPL
+	movl	$IPL_HIGH,CPL		# splhigh()
 	
 	movl	%edi,%eax		# return (p);
 	popl	%edi
