@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.390 2002/01/14 01:37:35 augustss Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.391 2002/01/14 03:57:11 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.385 2002/01/14 01:35:05 augustss Exp 
+ *	NetBSD: pcidevs,v 1.386 2002/01/14 03:56:33 augustss Exp 
  */
 
 /*
@@ -1316,7 +1316,7 @@
 #define	PCI_PRODUCT_INTEL_82801CA_USBC	0x2487		/* 82801CA/CAM USB Controller */
 #define	PCI_PRODUCT_INTEL_82801CA_IDE_1	0x248A		/* 82801CA IDE Controller */
 #define	PCI_PRODUCT_INTEL_82801CA_IDE_2	0x248B		/* 82801CA IDE Controller */
-#define	PCI_PRODUCT_INTEL_82801CAM_LPC	0x2482		/* 82801CAM LPC Interface */
+#define	PCI_PRODUCT_INTEL_82801CAM_LPC	0x248C		/* 82801CAM LPC Interface */
 #define	PCI_PRODUCT_INTEL_82820_MCH	0x2501		/* 82820 MCH (Camino) */
 #define	PCI_PRODUCT_INTEL_82820_AGP	0x250f		/* 82820 AGP */
 #define	PCI_PRODUCT_INTEL_82830MP_IO_1	0x3575		/* 82830MP CPU to I/O Bridge 1 */
