@@ -7022,6 +7022,7 @@ finish_function (nested)
       if (TYPE_MAIN_VARIANT (TREE_TYPE (TREE_TYPE (fndecl)))
 	  != integer_type_node)
 	{
+#ifndef __NetBSD__
 	  /* You would expect the sense of this test to be the other way
 	     around, but if warn_main is set, we will already have warned,
 	     so this would be a duplicate.  This is the warning you get
@@ -7030,6 +7031,7 @@ finish_function (nested)
 	     usual.  */
 	  if (! warn_main)
 	    pedwarn_with_decl (fndecl, "return type of `%s' is not `int'");
+#endif
 	}
       else
 	{
