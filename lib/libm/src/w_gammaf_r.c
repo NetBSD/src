@@ -15,7 +15,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: w_gammaf_r.c,v 1.6 1999/07/02 15:37:44 simonb Exp $");
+__RCSID("$NetBSD: w_gammaf_r.c,v 1.7 2001/01/06 00:15:00 christos Exp $");
 #endif
 
 /*
@@ -24,9 +24,6 @@ __RCSID("$NetBSD: w_gammaf_r.c,v 1.6 1999/07/02 15:37:44 simonb Exp $");
 
 #include "math.h"
 #include "math_private.h"
-
-float gammaf_r __P((float, int *));
-
 
 #ifdef __STDC__
 	float gammaf_r(float x, int *signgamp) /* wrapper lgammaf_r */

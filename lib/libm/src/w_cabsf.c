@@ -7,9 +7,10 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: w_cabsf.c,v 1.3 1999/07/02 15:37:44 simonb Exp $");
+__RCSID("$NetBSD: w_cabsf.c,v 1.4 2001/01/06 00:15:00 christos Exp $");
 #endif
 
+#define __MATH_PRIVATE__
 #include <math.h>
 
 struct complex {
