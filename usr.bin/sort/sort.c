@@ -1,4 +1,4 @@
-/*	$NetBSD: sort.c,v 1.38 2004/02/17 13:52:56 jdolecek Exp $	*/
+/*	$NetBSD: sort.c,v 1.39 2004/02/17 18:59:13 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\n\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: sort.c,v 1.38 2004/02/17 13:52:56 jdolecek Exp $");
+__RCSID("$NetBSD: sort.c,v 1.39 2004/02/17 18:59:13 jdolecek Exp $");
 __SCCSID("@(#)sort.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -132,8 +132,8 @@ main(argc, argv)
 	int ch, i, stdinflag = 0, tmp = 0;
 	char cflag = 0, mflag = 0;
 	char *outfile, *outpath = 0;
-	struct field *fldtab, *ftpos, *p;
-	size_t fldtab_sz = 3;
+	struct field *fldtab, *p;
+	size_t fldtab_sz = 3, fidx = 0;
 	struct filelist filelist;
 	FILE *outfp = NULL;
 	struct rlimit rl;
@@ -153,7 +153,6 @@ main(argc, argv)
 
 	fldtab = malloc(fldtab_sz * sizeof(*fldtab));
 	memset(fldtab, 0, fldtab_sz * sizeof(*fldtab));
-	ftpos = fldtab;
 
 	fixit(&argc, argv);
 
@@ -190,7 +189,7 @@ main(argc, argv)
 			    sizeof(fldtab[fldtab_sz]));
 			fldtab_sz++;
 
-			setfield(optarg, ++ftpos, fldtab->flags);
+			setfield(optarg, &fldtab[++fidx], fldtab->flags);
 			break;
 		case 'm':
 			mflag = 1;
@@ -265,7 +264,7 @@ main(argc, argv)
 	} else {
 		if (!fldtab[1].icol.num) {
 			fldtab[0].flags &= ~(BI|BT);
-			setfield("1", ++ftpos, fldtab->flags);
+			setfield("1", &fldtab[++fidx], fldtab->flags);
 		}
 		fldreset(fldtab);
 		fldtab[0].flags &= ~F;
