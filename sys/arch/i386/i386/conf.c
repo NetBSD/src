@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.53 1994/12/04 06:32:39 mycroft Exp $	*/
+/*	$NetBSD: conf.c,v 1.54 1994/12/05 05:45:38 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -341,7 +341,7 @@ cdev_decl(spkr);
 	(dev_type_reset((*))) nullop, 0, seltrue, \
 	(dev_type_mmap((*))) enodev, 0 }
 
-#include "sb.h"
+#include "audio.h"
 cdev_decl(audio);
 /* open, close, read, write, ioctl */
 #define cdev_audio_init(c,n) { \
@@ -420,7 +420,7 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(NMCD,mcd),	/* 39: Mitsumi CD-ROM */
 	cdev_tun_init(NTUN,tun),	/* 40: network tunnel */
 	cdev_disk_init(NVN,vn),		/* 41: vnode disk driver */
-	cdev_audio_init(NSB,audio),	/* 42: generic audio I/O */
+	cdev_audio_init(NAUDIO,audio),	/* 42: generic audio I/O */
 #ifdef COMPAT_SVR4
 	cdev_svr4_net_init(1,svr4_net),	/* 43: svr4 net pseudo-device */
 #else
