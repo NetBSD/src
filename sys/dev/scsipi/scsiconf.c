@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.122.2.1 1999/11/10 18:30:21 he Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.122.2.2 1999/11/27 15:11:28 he Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -562,7 +562,7 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	{{T_SCANNER, T_FIXED,
 	 "UMAX    ", "Astra 1200S     ", "V2.9"}, SDEV_NOLUNS},
 	{{T_SCANNER, T_FIXED,
-	 "UMAX    ", "Astra 1220S     ", "V1.2"}, SDEV_NOLUNS},
+	 "UMAX    ", "Astra 1220S     ", ""}, SDEV_NOLUNS},
 	{{T_SCANNER, T_FIXED,
 	 "UMAX    ", "UMAX S-6E       ", "V2.0"}, SDEV_NOLUNS},
 	{{T_SCANNER, T_FIXED,
