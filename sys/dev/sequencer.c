@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencer.c,v 1.16 2001/09/03 14:52:29 reinoud Exp $	*/
+/*	$NetBSD: sequencer.c,v 1.17 2001/11/13 05:32:50 lukem Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.17 2001/11/13 05:32:50 lukem Exp $");
 
 #include "sequencer.h"
 #if NSEQUENCER > 0

@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.142 2001/10/03 20:48:41 augustss Exp $	*/
+/*	$NetBSD: audio.c,v 1.143 2001/11/13 05:32:49 lukem Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -59,6 +59,9 @@
  * - Add softaudio() isr processing for wakeup, poll, signals, 
  *   and silence fill.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.143 2001/11/13 05:32:49 lukem Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
