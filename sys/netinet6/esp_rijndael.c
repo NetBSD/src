@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_rijndael.c,v 1.12 2003/07/15 17:37:00 kleink Exp $	*/
+/*	$NetBSD: esp_rijndael.c,v 1.13 2003/07/20 03:24:03 itojun Exp $	*/
 /*	$KAME: esp_rijndael.c,v 1.4 2001/03/02 05:53:05 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_rijndael.c,v 1.12 2003/07/15 17:37:00 kleink Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_rijndael.c,v 1.13 2003/07/20 03:24:03 itojun Exp $");
 
 #include "opt_inet.h"
 
@@ -60,7 +60,7 @@ typedef struct {
 	int		r_nr; /* key-length-dependent number of rounds */
 } rijndael_ctx;
 
-int
+size_t
 esp_rijndael_schedlen(algo)
 	const struct esp_algorithm *algo;
 {
