@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.21 2000/09/20 19:28:40 agc Exp $ */
+/* $NetBSD: user.c,v 1.22 2000/09/26 11:35:48 agc Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -36,7 +36,7 @@
 __COPYRIGHT(
 	"@(#) Copyright (c) 1999 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.21 2000/09/20 19:28:40 agc Exp $");
+__RCSID("$NetBSD: user.c,v 1.22 2000/09/26 11:35:48 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -867,7 +867,7 @@ moduser(char *login, char *newlogin, user_t *up)
 			memsave(&up->u_comment, pwp->pw_gecos, strlen(pwp->pw_gecos));
 		}
 		if (strcmp(up->u_shell, DEF_SHELL) == 0 && strcmp(pwp->pw_shell, DEF_SHELL) != 0) {
-			memsave(&up->u_comment, pwp->pw_shell, strlen(pwp->pw_shell));
+			memsave(&up->u_shell, pwp->pw_shell, strlen(pwp->pw_shell));
 		}
 	}
 	loginc = strlen(login);
