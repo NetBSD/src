@@ -1,4 +1,39 @@
-/*	$NetBSD: locore_subr.S,v 1.2.10.6 2002/08/01 02:43:10 nathanw Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.2.10.7 2002/12/19 19:50:59 thorpej Exp $	*/
+
+/*
+ * Copyright (c) 2001 Wasabi Systems, Inc.
+ * All rights reserved.
+ *
+ * Written by Eduardo Horvath and Simon Burge for Wasabi Systems, Inc.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed for the NetBSD Project by
+ *	Wasabi Systems, Inc.
+ * 4. The name of Wasabi Systems, Inc. may not be used to endorse
+ *    or promote products derived from this software without specific prior
+ *    written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY WASABI SYSTEMS, INC. ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL WASABI SYSTEMS, INC
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -38,6 +73,8 @@
  *	#include <powerpc/powerpc/locore_subr.S>
  */
 
+#include "opt_ppcarch.h"
+
 	.data
 GLOBAL(powersave)
 	.long	-1
@@ -60,10 +97,14 @@ ASENTRY(Idle)
 	bl	_C_LABEL(sched_unlock_idle)
 #endif
 
+#if defined(PPC_IBM4XX)
+	wrteei	1			/* reenable ints again */
+#else /* PPC_MPC6XX */
 	mfmsr	3
 	ori	3,3,PSL_EE@l		/* reenable ints again */
 	mtmsr	3
 	isync
+#endif
 
 /* Check if we can use power saving mode */
 	lis	8,_C_LABEL(powersave)@ha
@@ -72,14 +113,23 @@ ASENTRY(Idle)
 	add.	9,9,9
 	ble	1f
 
+#if defined(PPC_MPC6XX)
 	sync
 	oris	3,3,PSL_POW@h		/* enter power saving mode */
 	mtmsr	3
 	isync
+#endif /* PPC_MPC6XX */
+
 1:
+#if defined(PPC_IBM4XX)
+	wrteei	0			/* disable interrupts while
+					   manipulating runque */
+#else /* PPC_MPC6XX */
 	andi.	3,3,~PSL_EE@l		/* disable interrupts while
 					   manipulating runque */
 	mtmsr	3
+#endif
+
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	bl	_C_LABEL(sched_lock_idle)
 #endif
@@ -197,11 +247,16 @@ ENTRY_NOPROFILE(cpu_switch)
 #endif
 
 /* Lock the scheduler. */
+#if defined(PPC_IBM4XX)
+	wrteei	0			/* disable interrupts while
+					   manipulating runque */
+#else /* PPC_MPC6XX */
 	mfmsr	3
 	andi.	3,3,~PSL_EE@l		/* disable interrupts while
 					   manipulating runque */
 	mtmsr	3
 	isync
+#endif
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	bl	_C_LABEL(sched_lock_idle)
 #endif
@@ -276,7 +331,11 @@ switch_preempt_common:
 	or.	30,30,30		/* old lwp was exiting? */
 	beq	switch_exited
 
+#if defined(PPC_IBM4XX)
+	li	10,0			/* no SR for 4xx CPUs */
+#else /* PPC_MPC6XX */
 	mfsr	10,USER_SR		/* save USER_SR for copyin/copyout */
+#endif
 	mfcr	11			/* save cr */
 	mr	12,2			/* save r2 */
 	stwu	1,-SFRAMELEN(1)		/* still running on old stack */
@@ -313,8 +372,15 @@ switch_exited:
 	mr	2,12			/* get saved r2 */
 	mtcr	11			/* get saved cr */
 	isync
+#if defined(PPC_IBM4XX)
+	/*
+	 * Don't have to do anything here; TLB PID gets updated on
+	 * return from trap.
+	 */
+#else /* PPC_MPC6XX */
 	mtsr	USER_SR,10		/* get saved USER_SR */
 	isync
+#endif
 
 	li	3,1			/* switched lwps */
 
@@ -325,14 +391,33 @@ switch_return:
 	bl	_C_LABEL(sched_unlock_idle)
 #endif
 
+#if defined(PPC_IBM4XX)
+	wrteei	1			/* interrupts are okay again */
+#else /* PPC_MPC6XX */
 	mfmsr	3
 	ori	3,3,PSL_EE@l		/* interrupts are okay again */
 	mtmsr	3
+#endif
 
 	lwz	3,PCB_SPL(4)
 	bl	_C_LABEL(lcsplx)
 
+#if defined(PPC_IBM4XX)
+0:
+	lis	3,_C_LABEL(curpm)@ha
+	addi	3,3,_C_LABEL(curpm)@l	/* Do we need a context? */
+	lwz	4,PM_CTX(3)
+	cmpwi	4,0
+#	mtspr	SPR_SPR0,4		/* Always keep the current ctx here */
 	mr	3,30			/* restore return value */
+	bne	1f
+	bl	_C_LABEL(ctx_alloc)
+	mr	3,30			/* restore return value */
+	b	0b			/* reload */
+1:
+#else /* PPC_MPC6XX */
+	mr	3,30			/* restore return value */
+#endif
 
 	lwz	31,12(1)
 	lwz	30,8(1)
