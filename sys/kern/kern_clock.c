@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.32 1996/03/30 22:23:18 christos Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.33 1996/04/22 01:38:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -48,7 +48,6 @@
 #include <sys/proc.h>
 #include <sys/resourcevar.h>
 #include <sys/signalvar.h>
-#include <sys/cpu.h>
 #include <vm/vm.h>
 #include <sys/sysctl.h>
 #include <sys/timex.h>
