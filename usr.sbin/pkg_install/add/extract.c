@@ -1,11 +1,11 @@
-/*	$NetBSD: extract.c,v 1.6 1997/10/17 14:53:31 lukem Exp $	*/
+/*	$NetBSD: extract.c,v 1.7 1997/10/19 09:39:35 mrg Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "FreeBSD - Id: extract.c,v 1.17 1997/10/08 07:45:35 charnier Exp";
 #else
-__RCSID("$NetBSD: extract.c,v 1.6 1997/10/17 14:53:31 lukem Exp $");
+__RCSID("$NetBSD: extract.c,v 1.7 1997/10/19 09:39:35 mrg Exp $");
 #endif
 #endif
 
@@ -43,8 +43,8 @@ __RCSID("$NetBSD: extract.c,v 1.6 1997/10/17 14:53:31 lukem Exp $");
 		    strcat(where_args, "|tar xf - -C "); \
 		    strcat(where_args, todir); \
 		    if (system(where_args)) \
-	cleanup(0), errx(2, "can not invoke %d byte tar pipeline: %s", \
-				strlen(where_args), where_args); \
+	cleanup(0), errx(2, "can not invoke %lu byte tar pipeline: %s", \
+			(u_long)strlen(where_args), where_args); \
 		    strcpy(where_args, STARTSTRING); \
 		    where_count = sizeof(STARTSTRING)-1; \
 	} \

@@ -1,11 +1,11 @@
-/*	$NetBSD: file.c,v 1.7 1997/10/18 11:05:51 lukem Exp $	*/
+/*	$NetBSD: file.c,v 1.8 1997/10/19 09:39:48 mrg Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: file.c,v 1.29 1997/10/08 07:47:54 charnier Exp";
 #else
-__RCSID("$NetBSD: file.c,v 1.7 1997/10/18 11:05:51 lukem Exp $");
+__RCSID("$NetBSD: file.c,v 1.8 1997/10/19 09:39:48 mrg Exp $");
 #endif
 #endif
 
@@ -342,7 +342,7 @@ fileGetContents(char *fname)
 	cleanup(0), errx(2, "unable to open '%s' for reading", fname);
     if (read(fd, contents, sb.st_size) != sb.st_size)
 	cleanup(0), errx(2, "short read on '%s' - did not get %qd bytes",
-			fname, sb.st_size);
+			fname, (long long)sb.st_size);
     close(fd);
     contents[sb.st_size] = '\0';
     return contents;
