@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.164 2002/03/01 06:02:41 jmc Exp $
+#	$NetBSD: Makefile,v 1.165 2002/03/05 16:17:06 pk Exp $
 
 # This is the top-level makefile for building NetBSD. For an outline of
 # how to build a snapshot or release, as well as other release engineering
@@ -105,19 +105,13 @@ regression-tests:
 	@(cd ${.CURDIR}/regress && ${MAKE} regress)
 .endif
 
-whatis.db:
+afterinstall:
 .if ${MKMAN} != "no"
 	(cd ${.CURDIR}/share/man && ${MAKE} makedb)
 .endif
-
-# Let install-info track this as it's the program creating/updating the
-# dir file
-infodir-meta:
 .if defined(UNPRIVED) && (${MKINFO} != "no")
 	(cd ${.CURDIR}/gnu/usr.bin/texinfo/install-info && ${MAKE} infodir-meta)
 .endif
-
-afterinstall: whatis.db infodir-meta
 
 # Targets (in order!) called by "make build".
 
