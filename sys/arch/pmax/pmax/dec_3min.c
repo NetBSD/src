@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_3min.c,v 1.14 1999/04/26 09:23:23 nisimura Exp $	*/
+/*	$NetBSD: dec_3min.c,v 1.15 1999/05/21 01:09:50 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.14 1999/04/26 09:23:23 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.15 1999/05/21 01:09:50 nisimura Exp $");
 
 
 #include <sys/types.h>
@@ -102,7 +102,7 @@ __KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.14 1999/04/26 09:23:23 nisimura Exp $
 #include <pmax/pmax/machdep.h>		/* XXXjrs replace with vectors */
 
 #include <pmax/pmax/kmin.h>		/* 3min baseboard addresses */
-#include <pmax/pmax/dec_kn02_subr.h>	/* 3min/maxine memory errors */
+#include <pmax/pmax/memc.h>		/* 3min/maxine memory errors */
 
 
 /*
