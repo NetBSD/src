@@ -1,4 +1,4 @@
-/*	$NetBSD: if_epic_pci.c,v 1.5 1998/08/11 00:12:52 thorpej Exp $	*/
+/*	$NetBSD: if_epic_pci.c,v 1.6 1999/03/24 01:05:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -161,6 +161,11 @@ epic_pci_attach(parent, self, aux)
 	sc->sc_dmat = pa->pa_dmat;
 
 	printf(": SMC EPIC/100 Fast Ethernet\n");
+
+	/* Make sure bus mastering is enabled. */
+	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
+	    pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG) |
+	    PCI_COMMAND_MASTER_ENABLE);
 
 	/*
 	 * Map and establish our interrupt.

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_en_pci.c,v 1.10 1998/06/08 06:55:55 thorpej Exp $	*/
+/*	$NetBSD: if_en_pci.c,v 1.11 1999/03/24 01:05:15 thorpej Exp $	*/
 
 /*
  *
@@ -199,6 +199,13 @@ void *aux;
 
   sc->is_adaptec = (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_ADP) ? 1 : 0;
   scp->en_pc = pa->pa_pc;
+
+  /*
+   * make sure bus mastering is enabled
+   */
+  pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
+    pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG) |
+    PCI_COMMAND_MASTER_ENABLE);
 
   /*
    * interrupt map
