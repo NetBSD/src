@@ -1,4 +1,4 @@
-#	$NetBSD: majors.sandpoint,v 1.8 2003/10/10 21:21:27 jdolecek Exp $
+#	$NetBSD: majors.sandpoint,v 1.9 2003/10/10 22:42:40 jdolecek Exp $
 #
 # Device majors for sandpoint
 #
@@ -56,8 +56,6 @@ device-major	clockctl	char 58			clockctl
 device-major	systrace	char 59			systrace
 device-major	cgd		char 60  block 19	cgd
 device-major	ksyms		char 61			ksyms
-device-major	pf		char 62			pf
-device-major	crypto		char 63			opencrypto
 
 # Majors up to 143 are reserved for machine-dependant drivers.
 # New machine-independant driver majors are assigned in 

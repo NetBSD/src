@@ -1,4 +1,4 @@
-#	$NetBSD: majors.pc532,v 1.8 2003/10/10 21:21:26 jdolecek Exp $
+#	$NetBSD: majors.pc532,v 1.9 2003/10/10 22:42:40 jdolecek Exp $
 #
 # Device majors for pc532
 #
@@ -35,8 +35,6 @@ device-major	clockctl	char 32			clockctl
 device-major	systrace	char 33			systrace
 device-major	cgd		char 34  block 14	cgd
 device-major	ksyms		char 35			ksyms
-device-major	pf		char 36			pf
-device-major	crypto		char 37			opencrypto
 
 # Majors up to 143 are reserved for machine-dependant drivers.
 # New machine-independant driver majors are assigned in 

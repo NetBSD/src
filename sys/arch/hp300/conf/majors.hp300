@@ -1,4 +1,4 @@
-#	$NetBSD: majors.hp300,v 1.10 2003/10/10 21:21:26 jdolecek Exp $
+#	$NetBSD: majors.hp300,v 1.11 2003/10/10 22:42:40 jdolecek Exp $
 #
 # Device majors for hp300
 #
@@ -44,12 +44,11 @@ device-major	clockctl	char 42			clockctl
 device-major	systrace	char 43			systrace
 device-major	cgd		char 44  block 16	cgd
 device-major	ksyms		char 45			ksyms
-device-major	pf		char 46			pf
+
 device-major	cd		char 47  block 17	cd
 device-major	ch		char 48			ch
 device-major	ss		char 49			ss
 device-major	uk		char 50			uk
-device-major	crypto		char 51			opencrypto
 
 # Majors up to 143 are reserved for machine-dependant drivers.
 # New machine-independant driver majors are assigned in 

@@ -1,4 +1,4 @@
-#	$NetBSD: majors.macppc,v 1.15 2003/10/10 21:21:26 jdolecek Exp $
+#	$NetBSD: majors.macppc,v 1.16 2003/10/10 22:42:40 jdolecek Exp $
 #
 # Device majors for macppc
 #
@@ -76,8 +76,6 @@ device-major	bktr		char 71			bktr
 device-major	radio		char 72			radio
 device-major	wsfont		char 73			wsfont
 device-major	ksyms		char 74			ksyms
-device-major	pf		char 75			pf
-device-major	crypto		char 76			opencrypto
 
 # Majors up to 143 are reserved for machine-dependant drivers.
 # New machine-independant driver majors are assigned in 

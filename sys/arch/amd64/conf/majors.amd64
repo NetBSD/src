@@ -1,4 +1,4 @@
-#	$NetBSD: majors.amd64,v 1.5 2003/10/10 21:21:25 jdolecek Exp $
+#	$NetBSD: majors.amd64,v 1.6 2003/10/10 22:42:39 jdolecek Exp $
 #
 # Device majors for amd64
 #
@@ -80,8 +80,6 @@ device-major	agp		char 82			agp
 device-major	pci		char 83			pci
 device-major	irframe		char 84			irframe
 device-major	ksyms		char 85			ksyms
-device-major	pf		char 86			pf
-device-major	crypto		char 87			opencrypto
 
 # Majors up to 143 are reserved for machine-dependant drivers.
 # New machine-independant driver majors are assigned in 
