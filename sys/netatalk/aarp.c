@@ -1,4 +1,4 @@
-/*	$NetBSD: aarp.c,v 1.11 2003/01/28 22:26:35 wiz Exp $	*/
+/*	$NetBSD: aarp.c,v 1.12 2003/02/26 07:53:04 matt Exp $	*/
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aarp.c,v 1.11 2003/01/28 22:26:35 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aarp.c,v 1.12 2003/02/26 07:53:04 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -85,18 +85,21 @@ struct aarptab  aarptab[AARPTAB_SIZE];
 extern u_char   etherbroadcastaddr[6];
 #endif	/* __FreeBSD__ */
 
-u_char atmulticastaddr[6] = {
+const u_char atmulticastaddr[6] = {
 	0x09, 0x00, 0x07, 0xff, 0xff, 0xff
 };
 
-u_char at_org_code[3] = {
+const u_char at_org_code[3] = {
 	0x08, 0x00, 0x07
 };
-u_char aarp_org_code[3] = {
+const u_char aarp_org_code[3] = {
 	0x00, 0x00, 0x00
 };
 
 struct callout aarptimer_callout;
+#ifdef MBUFTRACE
+struct mowner aarp_mowner = { "atalk", "arp" };
+#endif
 
 /*ARGSUSED*/
 static void
@@ -167,6 +170,7 @@ aarpwhohas(ifp, sat)
 	if ((m = m_gethdr(M_DONTWAIT, MT_DATA)) == NULL)
 		return;
 
+	MCLAIM(m, &aarp_mowner);
 	m->m_len = sizeof(*ea);
 	m->m_pkthdr.len = sizeof(*ea);
 	MH_ALIGN(m, sizeof(*ea));
@@ -508,6 +512,7 @@ aarptnew(addr)
 		first = 0;
 		callout_init(&aarptimer_callout);
 		callout_reset(&aarptimer_callout, hz, aarptimer, NULL);
+		MOWNER_ATTACH(&aarp_mowner);
 	}
 	aat = &aarptab[AARPTAB_HASH(*addr) * AARPTAB_BSIZ];
 	for (n = 0; n < AARPTAB_BSIZ; n++, aat++) {
@@ -568,9 +573,10 @@ aarpprobe(arp)
 		callout_reset(&aa->aa_probe_ch, hz / 5, aarpprobe, arp);
 	}
 
-	if ((m = m_gethdr(M_DONTWAIT, MT_DATA)) == NULL) {
+	if ((m = m_gethdr(M_DONTWAIT, MT_DATA)) == NULL)
 		return;
-	}
+
+	MCLAIM(m, &aarp_mowner);
 	m->m_len = sizeof(*ea);
 	m->m_pkthdr.len = sizeof(*ea);
 	MH_ALIGN(m, sizeof(*ea));
