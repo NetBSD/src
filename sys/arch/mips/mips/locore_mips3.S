@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.10 1999/09/25 00:00:39 shin Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.11 1999/10/29 03:36:18 simonb Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -1905,7 +1905,7 @@ END(mips3_HitFlushDCache)
  *
  * mips3_InvalidateDCache --
  *
- *	void mips3_FlushDCache(addr, len)
+ *	void mips3_InvalidateDCache(addr, len)
  *		vaddr_t addr, len;
  *
  *	Flush data cache for range of addr to addr + len - 1.
