@@ -38,7 +38,7 @@
  * from: Utah $Hdr: grf.c 1.31 91/01/21$
  *
  *	from: from: from: from: @(#)grf.c	7.8 (Berkeley) 5/7/91
- *	$Id: grf.c,v 1.6 1994/05/04 05:25:41 briggs Exp $
+ *	$Id: grf.c,v 1.7 1994/06/26 13:02:41 briggs Exp $
  */
 
 /*
@@ -71,8 +71,8 @@
 #include <vm/vm_page.h>
 #include <vm/vm_pager.h>
 
-#include <miscfs/specfs/specdev.h>
 #include <vnode.h>
+#include <miscfs/specfs/specdev.h>
 #include <mman.h>
 
 #include "ite.h"
@@ -469,7 +469,7 @@ grfunmmap(dev, addr, p)
 	if (addr == 0)
 		return(EINVAL);		/* XXX: how do we deal with this? */
 	size = round_page(gp->g_display.gd_regsize + gp->g_display.gd_fbsize);
-	rv = vm_deallocate(p->p_vmspace->vm_map, (vm_offset_t)addr, size);
+	rv = vm_deallocate(&(p->p_vmspace->vm_map), (vm_offset_t)addr, size);
 	return(rv == KERN_SUCCESS ? 0 : EINVAL);
 }
 

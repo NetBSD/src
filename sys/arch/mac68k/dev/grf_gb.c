@@ -38,7 +38,7 @@
  * from: Utah $Hdr: grf_gb.c 1.16 91/04/02$
  *
  *	from: @(#)grf_gb.c	7.4 (Berkeley) 5/7/91
- *	$Id: grf_gb.c,v 1.3 1994/01/30 01:15:33 briggs Exp $
+ *	$Id: grf_gb.c,v 1.4 1994/06/26 13:02:43 briggs Exp $
  */
 
 #include "grf.h"
@@ -82,10 +82,12 @@ gb_init(gp, addr)
 	extern caddr_t sctopa(), iomap();
 
 	gbp = (struct gboxfb *) addr;
+#ifdef FOO
 	if (ISIIOVA(addr))
 		gi->gd_regaddr = (caddr_t) IIOP(addr);
 	else
 		gi->gd_regaddr = sctopa(vatosc(addr));
+#endif
 	gi->gd_regsize = 0x10000;
 	gi->gd_fbwidth = 1024;		/* XXX */
 	gi->gd_fbheight = 1024;		/* XXX */
