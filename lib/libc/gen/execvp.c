@@ -1,4 +1,4 @@
-/*	$NetBSD: execvp.c,v 1.18 2001/09/19 01:07:19 enami Exp $	*/
+/*	$NetBSD: execvp.c,v 1.19 2001/09/19 01:14:51 enami Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)exec.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: execvp.c,v 1.18 2001/09/19 01:07:19 enami Exp $");
+__RCSID("$NetBSD: execvp.c,v 1.19 2001/09/19 01:14:51 enami Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -63,9 +63,7 @@ extern rwlock_t __environ_lock;
 #endif
 
 int
-execvp(name, argv)
-	const char *name;
-	char * const *argv;
+execvp(const char *name, char * const *argv)
 {
 	const char **memp;
 	int cnt;
@@ -135,14 +133,16 @@ retry:		rwlock_rdlock(&__environ_lock);
 		case ENOENT:
 			break;
 		case ENOEXEC:
-			for (cnt = 0; argv[cnt] != NULL; ++cnt);
-			if ((memp = alloca((cnt + 2) * sizeof (*memp))) == NULL)
+			for (cnt = 0; argv[cnt] != NULL; ++cnt)
+				continue;
+			if ((memp = alloca((cnt + 2) * sizeof(*memp))) == NULL)
 				goto done;
 			memp[0] = _PATH_BSHELL;
 			memp[1] = bp;
-			(void)memmove(&memp[2], &argv[1], cnt * sizeof (*memp));
+			(void)memmove(&memp[2], &argv[1], cnt * sizeof(*memp));
 			rwlock_rdlock(&__environ_lock);
-			(void)execve(_PATH_BSHELL, (char * const *)memp, environ);
+			(void)execve(_PATH_BSHELL, (char * const *)memp,
+			    environ);
 			rwlock_unlock(&__environ_lock);
 			goto done;
 		case ETXTBSY:
