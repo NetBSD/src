@@ -1,4 +1,4 @@
-/*	$NetBSD: cnmagic.c,v 1.3 2001/11/12 15:25:01 lukem Exp $	*/
+/*	$NetBSD: cnmagic.c,v 1.4 2001/11/27 20:00:36 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Eduardo Horvath
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cnmagic.c,v 1.3 2001/11/12 15:25:01 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cnmagic.c,v 1.4 2001/11/27 20:00:36 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,7 +125,7 @@ int
 cn_get_magic(char *magic, int maglen) {
 	unsigned int i, c;
 	
-	for (i=0; i<CNS_LEN; i++) {
+	for (i=0; i<CNS_LEN;) {
 		c = cn_magic[i];
 		/* Translate a character */
 		switch (CNS_MAGIC_VAL(c)) {
