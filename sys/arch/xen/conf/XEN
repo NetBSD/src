@@ -1,4 +1,4 @@
-# $NetBSD: XEN,v 1.14.4.2 2004/12/17 10:13:32 bouyer Exp $
+# $NetBSD: XEN,v 1.14.4.3 2005/01/19 10:24:22 bouyer Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -135,9 +135,9 @@ xencons*	at hypervisor?		# Xen virtual console
 xennet* 	at hypervisor?		# Xen virtual network interface
 
 xbd*		at hypervisor?		# Xen virtual block device
-wd*		at hypervisor?		# Xen vbd (wd identity)
-sd*		at hypervisor?		# Xen vbd (sd identity)
-cd*		at hypervisor?		# Xen vbd (cd identity)
+#wd*		at hypervisor?		# Xen vbd (wd identity)
+#sd*		at hypervisor?		# Xen vbd (sd identity)
+#cd*		at hypervisor?		# Xen vbd (cd identity)
 
 #xenkbc* 	at hypervisor?		# Xen Keyboard/Mouse Interface
 #pckbd*		at xenkbc?		# Keyboard
