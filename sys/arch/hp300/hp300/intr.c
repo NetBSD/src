@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.9 1998/07/05 06:49:05 jonathan Exp $	*/
+/*	$NetBSD: intr.c,v 1.10 1998/07/07 18:27:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -307,48 +307,45 @@ void	pppintr __P((void));
 void
 netintr()
 {
+	int s, isr;
+
+	for (;;) {
+		s = splimp();
+		isr = netisr;
+		netisr = 0;
+		splx(s);
+
+		if (isr == 0)
+			return;
 #ifdef INET
 #include "arp.h"
 #if NARP > 0
-	if (netisr & (1 << NETISR_ARP)) {
-		netisr &= ~(1 << NETISR_ARP);
-		arpintr();
-	}
+		if (isr & (1 << NETISR_ARP))
+			arpintr();
 #endif
-	if (netisr & (1 << NETISR_IP)) {
-		netisr &= ~(1 << NETISR_IP);
-		ipintr();
-	}
+		if (isr & (1 << NETISR_IP))
+			ipintr();
 #endif
 #ifdef NETATALK
-	if (netisr & (1 << NETISR_ATALK)) {
-		netisr &= ~(1 << NETISR_ATALK);
-		atintr();
-	}
+		if (isr & (1 << NETISR_ATALK))
+			atintr();
 #endif
 #ifdef NS
-	if (netisr & (1 << NETISR_NS)) {
-		netisr &= ~(1 << NETISR_NS);
-		nsintr();
-	}
+		if (isr & (1 << NETISR_NS))
+			nsintr();
 #endif
 #ifdef ISO
-	if (netisr & (1 << NETISR_ISO)) {
-		netisr &= ~(1 << NETISR_ISO);
-		clnlintr();
-	}
+		if (isr & (1 << NETISR_ISO))
+			clnlintr();
 #endif
 #ifdef CCITT
-	if (netisr & (1 << NETISR_CCITT)) {
-		netisr &= ~(1 << NETISR_CCITT);
-		ccittintr();
-	}
+		if (isr & (1 << NETISR_CCITT))
+			ccittintr();
 #endif
 #include "ppp.h"
 #if NPPP > 0
-	if (netisr & (1 << NETISR_PPP)) {
-		netisr &= ~(1 << NETISR_PPP);
-		pppintr();
-	}
+		if (isr & (1 << NETISR_PPP))
+			pppintr();
 #endif
+	}
 }
