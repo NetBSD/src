@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: rtld.c,v 1.24 1994/10/26 20:21:42 mycroft Exp $
+ *	$Id: rtld.c,v 1.25 1994/12/07 20:30:53 pk Exp $
  */
 
 #include <sys/param.h>
@@ -484,7 +484,7 @@ again:
 		return NULL;
 	}
 
-	if ((addr = mmap(0, hdr.a_text + hdr.a_data,
+	if ((addr = mmap(0, hdr.a_text + hdr.a_data + hdr.a_bss,
 	     PROT_READ|PROT_EXEC,
 	     MAP_COPY, fd, 0)) == (caddr_t)-1) {
 		(void)close(fd);
@@ -551,7 +551,7 @@ caddr_t			addr;
 
 	if (getenv("LD_SUPPRESS_WARNINGS") == NULL &&
 	    getenv("LD_WARN_NON_PURE_CODE") != NULL)
-		warnx("ld.so: warning: non pure code in %s at %x (%s)\n",
+		warnx("warning: non pure code in %s at %x (%s)",
 				smp->som_path, r->r_address, sym);
 
 	if (smp->som_write == 0 &&
