@@ -1,10 +1,10 @@
-# $NetBSD: DRACO,v 1.38 1999/06/18 05:58:48 is Exp $
+# $NetBSD: DRACO,v 1.39 1999/07/28 05:56:07 is Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running make in this directory.
 #
 # Created from: 
-#$ NetBSD: GENERIC,v 1.126 1999/06/18 05:58:25 is Exp $
+#$ NetBSD: GENERIC,v 1.127 1999/07/28 05:55:19 is Exp $
 
 include "arch/amiga/conf/std.amiga"
 
@@ -184,9 +184,6 @@ es*		at zbus0		# CEI A4066 EthernetPLUS
 qn*		at zbus0		# Quicknet
 
 bah*		at zbus0		# C=/Ameristar A2060 / 560
-
-#Greater Valley Product Bus
-gvpbus* 	at zbus0
 
 drsc0		at mainbus0		# DraCo scsi
 scsibus*	at drsc0
