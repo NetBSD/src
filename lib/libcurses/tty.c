@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.8 1997/09/12 21:08:26 phil Exp $	*/
+/*	$NetBSD: tty.c,v 1.8.2.1 1997/11/15 00:46:03 mellon Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tty.c	8.5 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: tty.c,v 1.8 1997/09/12 21:08:26 phil Exp $");
+__RCSID("$NetBSD: tty.c,v 1.8.2.1 1997/11/15 00:46:03 mellon Exp $");
 #endif
 #endif /* not lint */
 
@@ -131,6 +131,12 @@ gettmode()
 int
 raw()
 {
+	/* Check if we need to restart ... */
+	if (__endwin) {
+		__endwin = 0;
+		__restartwin();
+	}
+	
 	useraw = __pfast = __rawmode = 1;
 	curt = &rawt;
 	return (tcsetattr(STDIN_FILENO, __tcaction ?
@@ -140,6 +146,12 @@ raw()
 int
 noraw()
 {
+	/* Check if we need to restart ... */
+	if (__endwin) {
+		__endwin = 0;
+		__restartwin();
+	}
+	
 	useraw = __pfast = __rawmode = 0;
 	curt = &__baset;
 	return (tcsetattr(STDIN_FILENO, __tcaction ?
@@ -149,7 +161,12 @@ noraw()
 int
 cbreak()
 {
-
+	/* Check if we need to restart ... */
+	if (__endwin) {
+		__endwin = 0;
+		__restartwin();
+	}
+	
 	__rawmode = 1;
 	curt = useraw ? &rawt : &cbreakt;
 	return (tcsetattr(STDIN_FILENO, __tcaction ?
@@ -159,6 +176,11 @@ cbreak()
 int
 nocbreak()
 {
+	/* Check if we need to restart ... */
+	if (__endwin) {
+		__endwin = 0;
+		__restartwin();
+	}
 
 	__rawmode = 0;
 	curt = useraw ? &rawt : &__baset;
@@ -169,6 +191,12 @@ nocbreak()
 int
 echo()
 {
+	/* Check if we need to restart ... */
+	if (__endwin) {
+		__endwin = 0;
+		__restartwin();
+	}
+
 	rawt.c_lflag |= ECHO;
 	cbreakt.c_lflag |= ECHO;
 	__baset.c_lflag |= ECHO;
@@ -181,6 +209,12 @@ echo()
 int
 noecho()
 {
+	/* Check if we need to restart ... */
+	if (__endwin) {
+		__endwin = 0;
+		__restartwin();
+	}
+
 	rawt.c_lflag &= ~ECHO;
 	cbreakt.c_lflag &= ~ECHO;
 	__baset.c_lflag &= ~ECHO;
@@ -193,6 +227,12 @@ noecho()
 int
 nl()
 {
+	/* Check if we need to restart ... */
+	if (__endwin) {
+		__endwin = 0;
+		__restartwin();
+	}
+
 	rawt.c_iflag |= ICRNL;
 	rawt.c_oflag |= ONLCR;
 	cbreakt.c_iflag |= ICRNL;
@@ -208,6 +248,12 @@ nl()
 int
 nonl()
 {
+	/* Check if we need to restart ... */
+	if (__endwin) {
+		__endwin = 0;
+		__restartwin();
+	}
+
 	rawt.c_iflag &= ~ICRNL;
 	rawt.c_oflag &= ~ONLCR;
 	cbreakt.c_iflag &= ~ICRNL;
