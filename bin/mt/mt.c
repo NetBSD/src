@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mt.c	5.6 (Berkeley) 6/6/91";*/
-static char rcsid[] = "$Id: mt.c,v 1.2 1993/08/01 18:59:20 mycroft Exp $";
+static char rcsid[] = "$Id: mt.c,v 1.3 1994/03/30 01:50:43 jtc Exp $";
 #endif /* not lint */
 
 /*
@@ -51,9 +51,14 @@ static char rcsid[] = "$Id: mt.c,v 1.2 1993/08/01 18:59:20 mycroft Exp $";
 #include <sys/mtio.h>
 #include <fcntl.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <ctype.h>
+#include <err.h>
 
-#define	equal(s1,s2)	(strcmp(s1, s2) == 0)
+static void printreg();
+static void status();
+static void usage();
 
 struct commands {
 	char *c_name;
@@ -76,58 +81,75 @@ struct commands {
 int mtfd;
 struct mtop mt_com;
 struct mtget mt_status;
-char *tape;
+char *tape = NULL;
 
+int
 main(argc, argv)
+	int argc;
 	char **argv;
 {
-	char line[80], *getenv();
 	register char *cp;
 	register struct commands *comp;
+	int c;
 
-	if (argc > 2 && (equal(argv[1], "-t") || equal(argv[1], "-f"))) {
-		argc -= 2;
-		tape = argv[2];
-		argv += 2;
-	} else
-		if ((tape = getenv("TAPE")) == NULL)
-			tape = DEFTAPE;
-	if (argc < 2) {
-		fprintf(stderr, "usage: mt [ -f device ] command [ count ]\n");
-		exit(1);
+	while ((c = getopt(argc, argv, "f:t:")) != -1) {
+		switch (c) {
+		case 'f':
+		case 't':
+			tape = optarg;
+			break;
+		default:
+			usage();
+			/* NOTREACHED */
+		}
 	}
-	cp = argv[1];
+	argc -= optind;
+	argv += optind;
+
+	if (argc < 1 || argc > 2) {
+		usage();
+		/* NOTREACHED */
+	}
+
+	cp = argv[0];
 	for (comp = com; comp->c_name != NULL; comp++)
 		if (strncmp(cp, comp->c_name, strlen(cp)) == 0)
 			break;
 	if (comp->c_name == NULL) {
-		fprintf(stderr, "mt: don't grok \"%s\"\n", cp);
-		exit(1);
+		errx(1, "don't grok \"%s\"", cp);
+		/* NOTREACHED */
 	}
+
+	if (tape == NULL) {
+		if ((tape = getenv("TAPE")) == NULL)
+			tape = DEFTAPE;
+	}
+
 	if ((mtfd = open(tape, comp->c_ronly ? O_RDONLY : O_RDWR)) < 0) {
-		perror(tape);
-		exit(1);
+		err(1, "%s", tape);
+		/* NOTREACHED */
 	}
 	if (comp->c_code != MTNOP) {
 		mt_com.mt_op = comp->c_code;
-		mt_com.mt_count = (argc > 2 ? atoi(argv[2]) : 1);
+		mt_com.mt_count = (argc == 2 ? atoi(argv[1]) : 1);
 		if (mt_com.mt_count < 0) {
-			fprintf(stderr, "mt: negative repeat count\n");
-			exit(1);
+			errx(1, "negative repeat count");
+			/* NOTREACHED */
 		}
 		if (ioctl(mtfd, MTIOCTOP, &mt_com) < 0) {
-			fprintf(stderr, "%s %s %d ", tape, comp->c_name,
-				mt_com.mt_count);
-			perror("failed");
-			exit(2);
+			err(2, "%s %s %d failed", 
+				tape, comp->c_name, mt_com.mt_count);
+			/* NOTREACHED */
 		}
 	} else {
 		if (ioctl(mtfd, MTIOCGET, (char *)&mt_status) < 0) {
-			perror("mt");
-			exit(2);
+			err(2, NULL);
+			/* NOTREACHED */
 		}
 		status(&mt_status);
 	}
+
+	exit(0);
 }
 
 #ifdef vax
@@ -175,6 +197,7 @@ struct tape_desc {
 /*
  * Interpret the status buffer returned
  */
+static void
 status(bp)
 	register struct mtget *bp;
 {
@@ -196,6 +219,7 @@ status(bp)
 /*
  * Print a register a la the %b format of the kernel's printf
  */
+static void
 printreg(s, v, bits)
 	char *s;
 	register char *bits;
@@ -224,4 +248,11 @@ printreg(s, v, bits)
 		}
 		putchar('>');
 	}
+}
+
+static void
+usage()
+{
+	fprintf(stderr, "usage: mt [ -f device ] command [ count ]\n");
+	exit(1);
 }
