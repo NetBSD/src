@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.28 1998/12/20 17:46:46 kleink Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.29 1999/03/20 01:39:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -41,14 +41,12 @@
 #ifndef	_SYS_CDEFS_H_
 #define	_SYS_CDEFS_H_
 
-/*
- * These need to be defined early for the correct CPP evil to happen
- * in <machine/cdefs.h>.
- */
-#define	___STRING(x)	__STRING(x)
-#define	___CONCAT(x,y)	__CONCAT(x,y)
-
 #include <machine/cdefs.h>
+#ifdef __ELF__
+#include <sys/cdefs_elf.h>
+#else
+#include <sys/cdefs_aout.h>
+#endif
 
 #if defined(__cplusplus)
 #define	__BEGIN_DECLS	extern "C" {
@@ -65,6 +63,10 @@
  * in between its arguments.  __CONCAT can also concatenate double-quoted
  * strings produced by the __STRING macro, but this only works with ANSI C.
  */
+
+#define	___STRING(x)	__STRING(x)
+#define	___CONCAT(x,y)	__CONCAT(x,y)
+
 #if defined(__STDC__) || defined(__cplusplus)
 #define	__P(protos)	protos		/* full-blown ANSI C */
 #define	__CONCAT(x,y)	x ## y
@@ -153,24 +155,21 @@
 #define	__pure
 #endif
 
-#define __IDSTRING(name,string) \
-	static const char name[] __attribute__((__unused__)) = string
+#if defined(_KERNEL)
+#if defined(NO_KERNEL_RCSIDS)
+#undef __KERNEL_RCSID
+#define	__KERNEL_RCSID(_n, _s)		/* nothing */
+#endif /* NO_KERNEL_RCSIDS */
+#endif /* _KERNEL */
 
-#ifndef __RCSID
-#define __RCSID(s) __IDSTRING(rcsid,s)
-#endif
-
-#ifndef __COPYRIGHT
-#define __COPYRIGHT(s) __IDSTRING(copyright,s)
-#endif
-
-/* This is defined in <machine/cdefs.h> */
-#ifndef __RENAME
+#ifdef __GNUC__
+#define	__RENAME(x)	__asm__(___STRING(_C_LABEL(x)))
+#else
 #ifdef __lint__
-#define __RENAME(a)	__symbolrename(a)
+#define	__RENAME(x)	__symbolrename(x)
 #else
 #error "No function renaming possible"
-#endif
-#endif
+#endif /* __lint__ */
+#endif /* __GNUC__ */
 
 #endif /* !_SYS_CDEFS_H_ */
