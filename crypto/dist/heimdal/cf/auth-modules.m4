@@ -1,11 +1,11 @@
-dnl $Heimdal: auth-modules.m4,v 1.5 2002/09/09 13:31:45 joda Exp $
-dnl $NetBSD: auth-modules.m4,v 1.1.1.4 2002/09/12 12:41:44 joda Exp $
+dnl $Heimdal: auth-modules.m4,v 1.5.6.1 2004/04/01 07:27:32 joda Exp $
+dnl $NetBSD: auth-modules.m4,v 1.1.1.4.2.1 2004/04/21 04:55:38 jmc Exp $
 dnl
 dnl Figure what authentication modules should be built
 dnl
 dnl rk_AUTH_MODULES(module-list)
 
-AC_DEFUN(rk_AUTH_MODULES,[
+AC_DEFUN([rk_AUTH_MODULES],[
 AC_MSG_CHECKING([which authentication modules should be built])
 
 z='m4_ifval([$1], $1, [sia pam afskauthlib])'

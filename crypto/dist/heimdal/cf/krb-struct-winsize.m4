@@ -1,11 +1,11 @@
-dnl $Heimdal: krb-struct-winsize.m4,v 1.3 2001/09/01 11:56:05 assar Exp $
-dnl $NetBSD: krb-struct-winsize.m4,v 1.1.1.4 2002/09/12 12:41:44 joda Exp $
+dnl $Heimdal: krb-struct-winsize.m4,v 1.3.10.1 2004/04/01 07:27:34 joda Exp $
+dnl $NetBSD: krb-struct-winsize.m4,v 1.1.1.4.2.1 2004/04/21 04:55:38 jmc Exp $
 dnl
 dnl
 dnl Search for struct winsize
 dnl
 
-AC_DEFUN(AC_KRB_STRUCT_WINSIZE, [
+AC_DEFUN([AC_KRB_STRUCT_WINSIZE], [
 AC_MSG_CHECKING(for struct winsize)
 AC_CACHE_VAL(ac_cv_struct_winsize, [
 ac_cv_struct_winsize=no

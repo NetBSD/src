@@ -35,7 +35,7 @@
 
 #ifdef __RCSID
 __RCSID("$Heimdal: gen_length.c,v 1.11 2001/09/25 13:39:26 assar Exp $"
-        "$NetBSD: gen_length.c,v 1.2 2002/09/13 19:09:01 thorpej Exp $");
+        "$NetBSD: gen_length.c,v 1.2.2.1 2004/04/21 04:55:40 jmc Exp $");
 #endif
 
 static void
@@ -129,8 +129,12 @@ length_type (const char *name, const Type *t, const char *variable)
 		 variable, variable);
 
 	fprintf (codefile, "for(i = (%s)->len - 1; i >= 0; --i){\n", name);
+	fprintf (codefile, "int oldret = %s;\n"
+		 "%s = 0;\n", variable, variable);
 	asprintf (&n, "&(%s)->val[i]", name);
 	length_type(n, t->subtype, variable);
+	fprintf (codefile, "%s += oldret;\n",
+		 variable);
 	fprintf (codefile, "}\n");
 
 	fprintf (codefile,

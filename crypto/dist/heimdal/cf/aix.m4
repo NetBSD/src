@@ -1,9 +1,9 @@
 dnl
-dnl $Heimdal: aix.m4,v 1.9 2002/08/28 19:19:43 joda Exp $
-dnl $NetBSD: aix.m4,v 1.3 2002/09/12 13:18:55 joda Exp $
+dnl $Heimdal: aix.m4,v 1.9.6.1 2004/04/01 07:27:32 joda Exp $
+dnl $NetBSD: aix.m4,v 1.3.2.1 2004/04/21 04:55:38 jmc Exp $
 dnl
 
-AC_DEFUN(rk_AIX,[
+AC_DEFUN([rk_AIX],[
 
 aix=no
 case "$host" in 

@@ -1,7 +1,7 @@
-dnl $Heimdal: have-pragma-weak.m4,v 1.3 1999/03/01 11:55:25 joda Exp $
-dnl $NetBSD: have-pragma-weak.m4,v 1.1.1.3 2002/09/12 12:41:44 joda Exp $
+dnl $Heimdal: have-pragma-weak.m4,v 1.3.34.1 2004/04/01 07:27:33 joda Exp $
+dnl $NetBSD: have-pragma-weak.m4,v 1.1.1.3.2.1 2004/04/21 04:55:38 jmc Exp $
 dnl
-AC_DEFUN(AC_HAVE_PRAGMA_WEAK, [
+AC_DEFUN([AC_HAVE_PRAGMA_WEAK], [
 if test "${enable_shared}" = "yes"; then
 AC_MSG_CHECKING(for pragma weak)
 AC_CACHE_VAL(ac_have_pragma_weak, [

@@ -33,8 +33,8 @@
 
 #include "gssapi_locl.h"
 
-__RCSID("$Heimdal: encapsulate.c,v 1.6 2001/08/23 04:35:54 assar Exp $"
-        "$NetBSD: encapsulate.c,v 1.1.1.5 2002/09/12 12:41:40 joda Exp $");
+__RCSID("$Heimdal: encapsulate.c,v 1.6.6.1 2003/09/18 21:47:44 lha Exp $"
+        "$NetBSD: encapsulate.c,v 1.1.1.5.2.1 2004/04/21 04:55:40 jmc Exp $");
 
 void
 gssapi_krb5_encap_length (size_t data_len,
@@ -70,6 +70,26 @@ gssapi_krb5_make_header (u_char *p,
     p += GSS_KRB5_MECHANISM->length;
     memcpy (p, type, 2);
     p += 2;
+    return p;
+}
+
+u_char *
+_gssapi_make_mech_header(u_char *p,
+			 size_t len)
+{
+    int e;
+    size_t len_len, foo;
+
+    *p++ = 0x60;
+    len_len = length_len(len);
+    e = der_put_length (p + len_len - 1, len_len, len, &foo);
+    if(e || foo != len_len)
+	abort ();
+    p += len_len;
+    *p++ = 0x06;
+    *p++ = GSS_KRB5_MECHANISM->length;
+    memcpy (p, GSS_KRB5_MECHANISM->elements, GSS_KRB5_MECHANISM->length);
+    p += GSS_KRB5_MECHANISM->length;
     return p;
 }
 

@@ -1,12 +1,12 @@
-dnl $Heimdal: check-declaration.m4,v 1.3 1999/03/01 13:03:08 joda Exp $
-dnl $NetBSD: check-declaration.m4,v 1.1.1.3 2002/09/12 12:41:44 joda Exp $
+dnl $Heimdal: check-declaration.m4,v 1.3.34.1 2004/04/01 07:27:32 joda Exp $
+dnl $NetBSD: check-declaration.m4,v 1.1.1.3.2.1 2004/04/21 04:55:38 jmc Exp $
 dnl
 dnl
 dnl Check if we need the declaration of a variable
 dnl
 
 dnl AC_HAVE_DECLARATION(includes, variable)
-AC_DEFUN(AC_CHECK_DECLARATION, [
+AC_DEFUN([AC_CHECK_DECLARATION], [
 AC_MSG_CHECKING([if $2 is properly declared])
 AC_CACHE_VAL(ac_cv_var_$2_declaration, [
 AC_TRY_COMPILE([$1

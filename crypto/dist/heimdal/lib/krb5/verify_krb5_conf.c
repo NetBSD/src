@@ -35,8 +35,8 @@
 #include <getarg.h>
 #include <parse_bytes.h>
 #include <err.h>
-__RCSID("$Heimdal: verify_krb5_conf.c,v 1.17 2003/03/29 09:52:50 lha Exp $"
-        "$NetBSD: verify_krb5_conf.c,v 1.1.1.6 2003/05/15 20:28:48 lha Exp $");
+__RCSID("$Heimdal: verify_krb5_conf.c,v 1.17.2.2 2004/02/13 16:19:44 lha Exp $"
+        "$NetBSD: verify_krb5_conf.c,v 1.1.1.6.2.1 2004/04/21 04:55:42 jmc Exp $");
 
 /* verify krb5.conf */
 
@@ -157,10 +157,7 @@ check_host(krb5_context context, const char *path, char *data)
     hostname[strcspn(hostname, "/")] = '\0';
     ret = getaddrinfo(hostname, "telnet" /* XXX */, NULL, &ai);
     if(ret != 0) {
-	if(ret == EAI_NODATA)
-	    krb5_warnx(context, "%s: host not found (%s)", path, hostname);
-	else
-	    krb5_warnx(context, "%s: %s (%s)", path, gai_strerror(ret), hostname);
+	krb5_warnx(context, "%s: %s (%s)", path, gai_strerror(ret), hostname);
 	return 1;
     }
     return 0;
@@ -450,8 +447,8 @@ struct entry log_strings[] = {
 
 #if 0
 struct entry kdcdefaults_entries[] = {
-    { "kdc_ports, krb5_config_string, mit_entry },
-    { "v4_mode, krb5_config_string, mit_entry },
+    { "kdc_ports", krb5_config_string, mit_entry },
+    { "v4_mode", krb5_config_string, mit_entry },
     { NULL }
 };
 #endif
