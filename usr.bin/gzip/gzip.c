@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.27 2004/03/28 04:13:40 mrg Exp $	*/
+/*	$NetBSD: gzip.c,v 1.28 2004/03/28 08:18:14 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003 Matthew R. Green
@@ -32,7 +32,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003 Matthew R. Green\n\
      All rights reserved.\n");
-__RCSID("$NetBSD: gzip.c,v 1.27 2004/03/28 04:13:40 mrg Exp $");
+__RCSID("$NetBSD: gzip.c,v 1.28 2004/03/28 08:18:14 mrg Exp $");
 #endif /* not lint */
 
 /*
@@ -203,8 +203,8 @@ static const struct option longopts[] = {
 int
 main(int argc, char **argv)
 {
-#ifndef SMALL
 	const char *progname = getprogname();
+#ifndef SMALL
 	char *gzip;
 #endif
 	int ch;
@@ -219,6 +219,7 @@ main(int argc, char **argv)
 #ifndef SMALL
 	if ((gzip = getenv("GZIP")) != NULL)
 		prepend_gzip(gzip, &argc, &argv);
+#endif
 
 	/*
 	 * XXX
@@ -229,16 +230,14 @@ main(int argc, char **argv)
 	else if (strcmp(progname, "zcat") == 0 ||
 		 strcmp(progname, "gzcat") == 0)
 		dflag = cflag = 1;
-#endif
 
 #ifdef SMALL
-#define OPTIONS_LIST "cdhHl:tV123456789"
+#define OPT_LIST "cdhHl:tV123456789"
 #else
-#define OPTIONS_LIST "cdfhHlnNqrS:tvV123456789"
+#define OPT_LIST "cdfhHlnNqrS:tvV123456789"
 #endif
 
-	while ((ch = getopt_long(argc, argv, "cdfhHlnNqrS:tvV123456789",
-				 longopts, NULL)) != -1)
+	while ((ch = getopt_long(argc, argv, OPT_LIST, longopts, NULL)) != -1)
 		switch (ch) {
 		case 'c':
 			cflag = 1;
