@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.13 2003/05/26 15:53:19 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.14 2004/03/17 23:37:20 mycroft Exp $
 #
 #	etc.evbarm/Makefile.inc -- evbarm-specific etc Makefile targets
 #
@@ -18,7 +18,7 @@ BUILD_KERNELS+=		${board}_INSTALL
 
 .if ${MACHINE_ARCH} == "arm"
 # Little endian platforms.
-KERNEL_SETS+=		IXM1200 SMDK2800
+KERNEL_SETS+=		IXM1200 SMDK2410 SMDK2800
 .else
 # Big endian platforms.
 KERNEL_SETS+=		IXM1200
