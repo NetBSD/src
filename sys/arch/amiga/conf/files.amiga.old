@@ -52,6 +52,7 @@ arch/amiga/dev/rtclockb.c		optional rtclockb device-driver
 arch/amiga/dev/event.c			standard
 arch/amiga/dev/ms.c			optional mouse device-driver
 arch/amiga/dev/grf/grf_cc/grf_cc_a2024_mode.c	optional grf view
+arch/amiga/dev/grf/grf_cc/grf_cc_pal_a2024_mode.c optional grf view
 arch/amiga/dev/grf/grf_cc/grf_cc_global.c	optional grf view
 arch/amiga/dev/grf/grf_cc/grf_cc_h_mode.c	optional grf view
 arch/amiga/dev/grf/grf_cc/grf_cc_hdl_mode.c	optional grf view
