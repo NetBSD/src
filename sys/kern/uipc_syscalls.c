@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.78 2003/02/26 18:22:10 matt Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.79 2003/04/05 16:54:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.78 2003/02/26 18:22:10 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.79 2003/04/05 16:54:34 christos Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_pipe.h"
@@ -175,6 +175,7 @@ sys_accept(struct lwp *l, void *v, register_t *retval)
 	unsigned int	namelen;
 	int		error, s, fd;
 	struct socket	*so;
+	int		fflag;
 
 	p = l->l_proc;
 	fdp = p->p_fd;
@@ -222,6 +223,7 @@ sys_accept(struct lwp *l, void *v, register_t *retval)
 		splx(s);
 		return (error);
 	}
+	fflag = fp->f_flag;
 	/* falloc() will use the descriptor for us */
 	if ((error = falloc(p, &fp, &fd)) != 0) {
 		splx(s);
@@ -238,7 +240,7 @@ sys_accept(struct lwp *l, void *v, register_t *retval)
 	  so = aso;
 	}
 	fp->f_type = DTYPE_SOCKET;
-	fp->f_flag = FREAD|FWRITE;
+	fp->f_flag = fflag;
 	fp->f_ops = &socketops;
 	fp->f_data = (caddr_t)so;
 	FILE_UNUSE(fp, p);
