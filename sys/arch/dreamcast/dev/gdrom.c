@@ -1,4 +1,4 @@
-/*	$NetBSD: gdrom.c,v 1.1 2001/01/21 23:30:28 marcus Exp $	*/
+/*	$NetBSD: gdrom.c,v 1.2 2001/01/25 01:41:47 marcus Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -46,6 +46,7 @@
 #include <sys/fcntl.h>
 #include <sys/disklabel.h>
 #include <sys/disk.h>
+#include <sys/cdio.h>
 
 #include <machine/conf.h>
 #include <machine/cpu.h>
@@ -391,7 +392,7 @@ gdromopen(dev, flags, devtype, p)
 	struct proc *p;
 {
 	struct gdrom_softc *sc;
-	int track, part, error, unit, cnt;
+	int error, unit, cnt;
 	struct gd_toc toc;
 
 #ifdef GDROMDEBUG
@@ -419,21 +420,8 @@ gdromopen(dev, flags, devtype, p)
 	if ((error = gdrom_read_toc(&toc)) != 0)
 	  return error;
 
-	part = DISKPART(dev);
-
-	for (track = TOC_TRACK(toc.first); track <= TOC_TRACK(toc.last);
-	     track ++)
-	  if (TOC_CTRL(toc.entry[track-1]))
-	    if (!part)
-	      break;
-	    else
-	      --part;
-
-	if (track > TOC_TRACK(toc.last) || track > 100)
-		return (ENXIO);
-
 	sc->is_open = 1;
-	sc->openpart_start = htonl(TOC_LBA(toc.entry[track-1]));
+	sc->openpart_start = 150;
 
 #ifdef GDROMDEBUG
 	printf("open OK\n");
@@ -503,10 +491,47 @@ gdromioctl(dev, cmd, addr, flag, p)
 	int flag;
 	struct proc *p;
 {
+	struct gdrom_softc *sc;
+	int unit, error;
 #ifdef GDROMDEBUG
 	printf("GDROM: ioctl %lx\n", cmd);
 #endif
-	return (EINVAL);
+
+	unit = DISKUNIT(dev);
+	sc = gdrom_cd.cd_devs[unit];
+
+	switch (cmd) {
+	case CDIOREADMSADDR: {
+		int track, sessno = *(int*)addr;
+		struct gd_toc toc;
+
+		if (sessno != 0)
+			return (EINVAL);
+
+		if ((error = gdrom_read_toc(&toc)) != 0)
+		  return error;
+
+		for (track = TOC_TRACK(toc.last);
+		     track >= TOC_TRACK(toc.first);
+		     --track)
+		  if (TOC_CTRL(toc.entry[track-1]))
+		    break;
+
+		if (track < TOC_TRACK(toc.first) || track > 100)
+		  return (ENXIO);
+
+		*(int*)addr = htonl(TOC_LBA(toc.entry[track-1])) -
+		  sc->openpart_start;
+
+		return 0;
+	}
+	 default:
+	   return (EINVAL);
+	}
+
+#ifdef DIAGNOSTIC
+	panic("gdromioctl: impossible");
+#endif
 }
 
 
