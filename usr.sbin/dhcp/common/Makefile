@@ -40,6 +40,11 @@ MKLINT=	no
 MKPIC=	no
 MKPROFILE=no
 
+.if ${MACHINE_ARCH} == "alpha" || \
+    ${MACHINE_ARCH} == "sparc64"
+CPPFLAGS+=-DPTRSIZE_64BIT
+.endif
+
 # only needed during build
 libinstall::
 
