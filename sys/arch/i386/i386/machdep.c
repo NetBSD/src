@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.474 2002/06/18 09:56:33 tron Exp $	*/
+/*	$NetBSD: machdep.c,v 1.475 2002/06/23 22:18:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.474 2002/06/18 09:56:33 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.475 2002/06/23 22:18:51 thorpej Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -1991,10 +1991,10 @@ sendsig(catcher, sig, mask, code)
 	fp--;
 
 	/* Build stack frame for signal trampoline. */
+	frame.sf_ra = (int)p->p_sigctx.ps_sigcode;
 	frame.sf_signum = sig;
 	frame.sf_code = code;
 	frame.sf_scp = &fp->sf_sc;
-	frame.sf_handler = catcher;
 
 	/* Save register context. */
 #ifdef VM86
@@ -2054,13 +2054,14 @@ sendsig(catcher, sig, mask, code)
 	}
 
 	/*
-	 * Build context to run handler in.
+	 * Build context to run handler in.  We invoke the handler
+	 * directly, only returning via the trampoline.
 	 */
 	tf->tf_gs = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_fs = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
-	tf->tf_eip = (int)p->p_sigctx.ps_sigcode;
+	tf->tf_eip = (int)catcher;
 	tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
 	tf->tf_eflags &= ~(PSL_T|PSL_VM|PSL_AC);
 	tf->tf_esp = (int)fp;

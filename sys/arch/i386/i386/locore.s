@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.255 2002/05/31 18:07:31 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.256 2002/06/23 22:18:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -726,11 +726,13 @@ NENTRY(proc_trampoline)
  */
 /* LINTSTUB: Var: char sigcode[1], esigcode[1]; */
 NENTRY(sigcode)
-	call	*SIGF_HANDLER(%esp)
-	leal	SIGF_SC(%esp),%eax	# scp (the call may have clobbered the
-					# copy at SIGF_SCP(%esp))
-	pushl	%eax
-	pushl	%eax			# junk to fake return address
+	/*
+	 * Handler has returned here as if we called it.  The sigcontext
+	 * is on the stack after the 3 args "we" pushed.
+	 */
+	leal	12(%esp),%eax		# get pointer to sigcontext
+	movl	%eax,4(%esp)		# put it in the argument slot
+					# fake return address already there
 	movl	$SYS___sigreturn14,%eax
 	int	$0x80	 		# enter kernel with args on stack
 	movl	$SYS_exit,%eax
