@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_43.c,v 1.17 2003/08/07 16:30:36 agc Exp $	*/
+/*	$NetBSD: tty_43.c,v 1.18 2004/04/25 06:23:40 matt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_43.c,v 1.17 2003/08/07 16:30:36 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_43.c,v 1.18 2004/04/25 06:23:40 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,7 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: tty_43.c,v 1.17 2003/08/07 16:30:36 agc Exp $");
 
 int ttydebug = 0;
 
-static struct speedtab compatspeeds[] = {
+static const struct speedtab compatspeeds[] = {
 #define MAX_SPEED	17
 	{ 115200, 17 },
 	{ 57600, 16 },
@@ -79,7 +79,7 @@ static struct speedtab compatspeeds[] = {
 	{ 0,	0 },
 	{ -1,	-1 },
 };
-static int compatspcodes[] = {
+static const int compatspcodes[] = {
 	0, 50, 75, 110, 134, 150, 200, 300, 600, 1200,
 	1800, 2400, 4800, 9600, 19200, 38400, 57600, 115200
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: mfc.c,v 1.34 2004/03/28 18:59:39 mhitch Exp $ */
+/*	$NetBSD: mfc.c,v 1.35 2004/04/25 06:23:41 matt Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -58,7 +58,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfc.c,v 1.34 2004/03/28 18:59:39 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfc.c,v 1.35 2004/04/25 06:23:41 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -265,7 +265,7 @@ int	mfcsdefaultrate = 38400 /*TTYDEF_SPEED*/;
  * baud rate tables for BRG set 1 [not used yet]
  */
 
-struct speedtab mfcs3speedtab1[] = {
+const struct speedtab mfcs3speedtab1[] = {
 	{ 0,		0	},
 	{ 100,		0x00	},
 	{ 220,		0x11	},
@@ -284,7 +284,7 @@ struct speedtab mfcs3speedtab1[] = {
  * baud rate tables for BRG set 1 [not used yet]
  */
 
-struct speedtab mfcs2speedtab1[] = {
+const struct speedtab mfcs2speedtab1[] = {
 	{ 0,		0	},
 	{ 50,		0x00	},
 	{ 110,		0x11	},
@@ -305,7 +305,7 @@ struct speedtab mfcs2speedtab1[] = {
  * baud rate tables for BRG set 2
  */
 
-struct speedtab mfcs3speedtab2[] = {
+const struct speedtab mfcs3speedtab2[] = {
 	{ 0,		0	},
 	{ 150,		0x00	},
 	{ 200,		0x11	},
@@ -325,7 +325,7 @@ struct speedtab mfcs3speedtab2[] = {
  * baud rate tables for BRG set 2
  */
 
-struct speedtab mfcs2speedtab2[] = {
+const struct speedtab mfcs2speedtab2[] = {
 	{ 0,		0	},
 	{ 75,		0x00	},
 	{ 100,		0x11	},
