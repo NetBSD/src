@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.21 2001/02/18 20:17:05 chs Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.22 2001/02/27 02:55:40 chs Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -171,7 +171,7 @@ ufs_balloc_range(vp, off, len, cred, flags)
 	int i, delta, error, npages1, npages2;
 	int bshift = vp->v_mount->mnt_fs_bshift;
 	int bsize = 1 << bshift;
-	int ppb = max(bsize >> PAGE_SHIFT, 1);
+	int ppb = MAX(bsize >> PAGE_SHIFT, 1);
 	struct vm_page *pgs1[ppb], *pgs2[ppb];
 	UVMHIST_FUNC("ufs_balloc_range"); UVMHIST_CALLED(ubchist);
 	UVMHIST_LOG(ubchist, "vp %p off 0x%x len 0x%x u_size 0x%x",
@@ -183,7 +183,7 @@ ufs_balloc_range(vp, off, len, cred, flags)
 		return error;
 	}
 
-	neweof = max(vp->v_uvm.u_size, off + len);
+	neweof = MAX(vp->v_uvm.u_size, off + len);
 	error = VOP_SIZE(vp, neweof, &neweob);
 	if (error) {
 		return error;
@@ -202,7 +202,7 @@ ufs_balloc_range(vp, off, len, cred, flags)
 
 	oldpagestart = trunc_page(oldeof) & ~(bsize - 1);
 	if ((oldeob & (bsize - 1)) != 0 && oldeob != neweob) {
-		npages1 = min(ppb, (round_page(neweob) - oldpagestart) >>
+		npages1 = MIN(ppb, (round_page(neweob) - oldpagestart) >>
 			      PAGE_SHIFT);
 		memset(pgs1, 0, npages1 * sizeof(struct vm_page *));
 		simple_lock(&uobj->vmobjlock);
@@ -232,7 +232,7 @@ ufs_balloc_range(vp, off, len, cred, flags)
 
 	pagestart = trunc_page(off) & ~(bsize - 1);
 	if (pagestart != oldpagestart || pgs1[0] == NULL) {
-		npages2 = min(ppb, (round_page(neweob) - pagestart) >>
+		npages2 = MIN(ppb, (round_page(neweob) - pagestart) >>
 			      PAGE_SHIFT);
 		memset(pgs2, 0, npages2 * sizeof(struct vm_page *));
 		simple_lock(&uobj->vmobjlock);
@@ -289,7 +289,7 @@ out:
 		 */
 
 		(uobj->pgops->pgo_flush)(uobj, oldeof & ~(bsize - 1),
-		    min((oldeof + bsize) & ~(bsize - 1), neweof),
+		    MIN((oldeof + bsize) & ~(bsize - 1), neweof),
 		    PGO_CLEANIT | ((flags & B_SYNC) ? PGO_SYNCIO : 0));
 	}
 	if (pgs2[0] != NULL) {
