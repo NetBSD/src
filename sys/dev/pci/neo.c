@@ -1,4 +1,4 @@
-/*	$NetBSD: neo.c,v 1.20 2003/10/30 01:58:17 simonb Exp $	*/
+/*	$NetBSD: neo.c,v 1.20.2.1 2004/09/22 20:58:43 jmc Exp $	*/
 
 /*
  * Copyright (c) 1999 Cameron Grant <gandalf@vilnya.demon.co.uk>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: neo.c,v 1.20 2003/10/30 01:58:17 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: neo.c,v 1.20.2.1 2004/09/22 20:58:43 jmc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -198,7 +198,7 @@ int	neo_mixer_get_port(void *, mixer_ctrl_t *);
 int     neo_attach_codec(void *sc, struct ac97_codec_if *);
 int	neo_read_codec(void *sc, u_int8_t a, u_int16_t *d);
 int	neo_write_codec(void *sc, u_int8_t a, u_int16_t d);
-void    neo_reset_codec(void *sc);
+int     neo_reset_codec(void *sc);
 enum ac97_host_flags neo_flags_codec(void *sc);
 int	neo_query_devinfo(void *, mixer_devinfo_t *);
 void   *neo_malloc(void *, int, size_t, struct malloc_type *, int);
@@ -659,7 +659,7 @@ neo_attach_codec(void *v, struct ac97_codec_if *codec_if)
 	return (0);
 }
 
-void
+int
 neo_reset_codec(void *v)
 {
 	struct neo_softc *sc = v;
@@ -668,6 +668,7 @@ neo_reset_codec(void *v)
 	nm_wr_1(sc, 0x6cc, 0x87);
 	nm_wr_1(sc, 0x6cc, 0x80);
 	nm_wr_1(sc, 0x6cc, 0x00);
+	return 0;
 }
 
 enum ac97_host_flags
