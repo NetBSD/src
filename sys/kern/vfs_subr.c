@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.140 2000/09/19 22:00:58 fvdl Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.141 2000/11/24 03:59:09 chs Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -148,9 +148,7 @@ struct vfs_list_head vfs_list =			/* vfs list */
 struct nfs_public nfs_pub;			/* publicly exported FS */
 
 struct simplelock mountlist_slock = SIMPLELOCK_INITIALIZER;
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 static struct simplelock mntid_slock = SIMPLELOCK_INITIALIZER;
-#endif
 struct simplelock mntvnode_slock = SIMPLELOCK_INITIALIZER;
 struct simplelock vnode_free_list_slock = SIMPLELOCK_INITIALIZER;
 struct simplelock spechash_slock = SIMPLELOCK_INITIALIZER;

@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.54 2000/11/21 03:53:27 enami Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.55 2000/11/24 03:59:08 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -82,10 +82,7 @@ struct	pt_softc {
 static struct pt_softc **pt_softc = NULL;	/* pty array */
 static int npty = 0;			/* for pstat -t */
 static int maxptys = DEFAULT_MAXPTYS;	/* maximum number of ptys (sysctable) */
-
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 static struct simplelock pt_softc_mutex = SIMPLELOCK_INITIALIZER;
-#endif
 
 #define	PF_PKT		0x08		/* packet mode */
 #define	PF_STOPPED	0x10		/* user told stopped */
