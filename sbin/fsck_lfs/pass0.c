@@ -1,4 +1,4 @@
-/* $NetBSD: pass0.c,v 1.9 2001/07/13 20:30:19 perseant Exp $	 */
+/* $NetBSD: pass0.c,v 1.10 2001/11/02 05:39:10 lukem Exp $	 */
 
 /*
  * Copyright (c) 1998 Konrad E. Schroder.
@@ -76,7 +76,7 @@ pass0()
 	daddr_t         daddr;
 	IFILE          *ifp;
 	struct bufarea *bp;
-	ino_t           ino, lastino, nextino, *visited;
+	ino_t           ino, plastino, nextino, *visited;
 
 	/*
          * Check the inode free list for inuse inodes, and cycles.
@@ -85,20 +85,20 @@ pass0()
 	visited = (ino_t *)malloc(maxino * sizeof(ino_t));
 	memset(visited, 0, maxino * sizeof(ino_t));
 
-	lastino = 0;
+	plastino = 0;
 	ino = sblock.lfs_free;
 	while (ino) {
 		if (ino >= maxino) {
 			printf("! Ino %d out of range (last was %d)\n", ino,
-			       lastino);
+			       plastino);
 			break;
 		}
 		if (visited[ino]) {
 			pwarn("! Ino %d already found on the free list!\n",
 			       ino);
 			if (preen || reply("FIX") == 1) {
-				/* lastino can't be zero */
-				ifp = lfs_ientry(lastino, &bp);
+				/* plastino can't be zero */
+				ifp = lfs_ientry(plastino, &bp);
 				ifp->if_nextfree = 0;
 				dirty(bp);
 				bp->b_flags &= ~B_INUSE;
@@ -114,11 +114,11 @@ pass0()
 			pwarn("! Ino %d with daddr 0x%x is on the free list!\n",
 			       ino, daddr);
 			if (preen || reply("FIX") == 1) {
-				if (lastino == 0) {
+				if (plastino == 0) {
 					sblock.lfs_free = nextino;
 					sbdirty();
 				} else {
-					ifp = lfs_ientry(lastino, &bp);
+					ifp = lfs_ientry(plastino, &bp);
 					ifp->if_nextfree = nextino;
 					dirty(bp);
 					bp->b_flags &= ~B_INUSE;
@@ -127,7 +127,7 @@ pass0()
 				continue;
 			}
 		}
-		lastino = ino;
+		plastino = ino;
 		ino = nextino;
 	}
 	/*
