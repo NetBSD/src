@@ -1,4 +1,4 @@
-/*	$NetBSD: kbio.h,v 1.3 1995/04/26 14:24:54 pk Exp $ */
+/*	$NetBSD: kbio.h,v 1.4 1995/05/10 16:07:27 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -66,22 +66,43 @@
  * Keyboard commands and types are defined in kbd.h as they are actually
  * real hardware commands and type numbers.
  */
-struct kiockey {
+struct okiockey { /* Out-dated key translation structure */
 	int	kio_tablemask;	/* whatever */
 	u_char	kio_station;	/* key number */
 	u_char	kio_entry;	/* HOLE if not present */
 	char	kio_text[10];	/* the silly escape sequences (unsupported) */
 };
 
+struct kiockey {
+	int	kio_tablemask;	/* whatever */
+	u_char	kio_station;	/* key number */
+	u_short	kio_entry;	/* HOLE if not present */
+	char	kio_text[10];	/* the silly escape sequences (unsupported) */
+};
+
+/*
+ * Values for kio_tablemask. These determine which table to read/modify
+ * in KIOC[SG]KEY ioctls. Currently, we only have "non-shift" and "shift"
+ * tables.
+ */
+#define KIOC_NOMASK	0x0
+#define KIOC_CAPSMASK	0x1
+#define KIOC_SHIFTMASK	0xe
+#define KIOC_CTRLMASK	0x30
+#define KIOC_ALTGMASK	0x200
+#define KIOC_NUMLMASK	0x800
+
 #define	HOLE	0x302		/* value for kio_entry to say `really type 3' */
 
 #define	KIOCTRANS	_IOW('k', 0, int)	/* set translation mode */
 			/* (we only accept TR_UNTRANS_EVENT) */
-#define	KIOCGETKEY	_IOWR('k', 2, struct kiockey) /* fill in kio_entry */
+#define	KIOCGETKEY	_IOWR('k', 2, struct okiockey) /* fill in kio_entry */
 #define	KIOCGTRANS	_IOR('k', 5, int)	/* get translation mode */
 #define	KIOCCMD		_IOW('k', 8, int)	/* X uses this to ring bell */
 #define	KIOCTYPE	_IOR('k', 9, int)	/* get keyboard type */
 #define	KIOCSDIRECT	_IOW('k', 10, int)	/* keys to console? */
+#define KIOCSKEY	_IOW('k', 12, struct kiockey) /* set xlat mode */
+#define KIOCGKEY	_IOWR('k', 13, struct kiockey) /* get xlat mode */
 #define	KIOCLAYOUT	_IOR('k', 20, int)	/* get keyboard layout */
 #define	KIOCSLED	_IOW('k', 14, char)	/* set LED state */
 #define	KIOCGLED	_IOR('k', 15, char)	/* get LED state */
