@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.86 2000/02/14 21:42:54 thorpej Exp $
+#	$NetBSD: files.sparc,v 1.87 2000/02/25 16:02:49 pk Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -84,7 +84,7 @@ file	arch/sparc/sparc/bsd_fdintr.s		fdc
 include "dev/sbus/files.sbus"
 attach sbus at mainbus with sbus_mainbus
 attach sbus at iommu with sbus_iommu
-file	arch/sparc/dev/sbus.c			sbus
+file	arch/sparc/dev/sbus.c			sbus needs-flag
 
 device tpcic: pcmciabus
 attach tpcic at sbus
@@ -231,8 +231,6 @@ file	arch/sparc/fpu/fpu_mul.c
 file	arch/sparc/fpu/fpu_sqrt.c
 file	arch/sparc/fpu/fpu_subr.c
 
-# N.B.: optimizer breaks pmap.c and/or cache.c somehow -- have not
-# identified the exact problem yet.  NOOPT_C suffices for now.
 file	arch/sparc/sparc/autoconf.c
 file	arch/sparc/sparc/cache.c
 file	arch/sparc/sparc/conf.c
