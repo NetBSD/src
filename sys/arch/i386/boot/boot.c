@@ -29,7 +29,11 @@
 /*
  * HISTORY
  * $Log: boot.c,v $
- * Revision 1.3  1993/04/28 06:37:58  cgd
+ * Revision 1.4  1993/05/04 10:22:39  deraadt
+ * if we timeout asking for kernel name, print a \n before proceeding.
+ * Funny how one character can bug ya so much, eh?
+ *
+ * Revision 1.3  1993/04/28  06:37:58  cgd
  * bsd->netbsd
  *
  * Revision 1.2  1993/04/28  05:32:55  cgd
@@ -316,6 +320,7 @@ getbootdev(howto)
 					*ptr++ = 0;
 			}
 		}
-	}
+	} else
+		printf("\n");
 }
 
