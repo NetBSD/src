@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1987 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1987, 1993, 1994
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,28 +32,30 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1987 Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1987, 1993, 1994\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-static char sccsid[] = "@(#)last.c	5.18 (Berkeley) 3/1/91";
+static char sccsid[] = "@(#)last.c	8.2 (Berkeley) 4/2/94";
 #endif /* not lint */
 
-/*
- * last
- */
 #include <sys/param.h>
 #include <sys/stat.h>
-#include <sys/file.h>
-#include <signal.h>
-#include <time.h>
-#include <utmp.h>
-#include <stdio.h>
-#include <paths.h>
 
-#define	SECDAY	(24*60*60)			/* seconds in a day */
+#include <err.h>
+#include <fcntl.h>
+#include <paths.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+#include <tzfile.h>
+#include <unistd.h>
+#include <utmp.h>
+
 #define	NO	0				/* false/no */
 #define	YES	1				/* true/yes */
 
@@ -80,19 +82,27 @@ static long	currentout,			/* current logout value */
 		maxrec;				/* records to display */
 static char	*file = _PATH_WTMP;		/* wtmp file */
 
+void	 addarg __P((int, char *));
+TTY	*addtty __P((char *));
+void	 hostconv __P((char *));
+void	 onintr __P((int));
+char	*ttyconv __P((char *));
+int	 want __P((struct utmp *, int));
+void	 wtmp __P((void));
+
+int
 main(argc, argv)
 	int argc;
-	char **argv;
+	char *argv[];
 {
 	extern int optind;
 	extern char *optarg;
 	int ch;
-	long atol();
-	char *p, *ttyconv();
+	char *p;
 
 	maxrec = -1;
 	while ((ch = getopt(argc, argv, "0123456789f:h:t:")) != EOF)
-		switch((char)ch) {
+		switch (ch) {
 		case '0': case '1': case '2': case '3': case '4':
 		case '5': case '6': case '7': case '8': case '9':
 			/*
@@ -121,7 +131,8 @@ main(argc, argv)
 			break;
 		case '?':
 		default:
-			fputs("usage: last [-#] [-f file] [-t tty] [-h hostname] [user ...]\n", stderr);
+			(void)fprintf(stderr,
+	"usage: last [-#] [-f file] [-t tty] [-h hostname] [user ...]\n");
 			exit(1);
 		}
 
@@ -144,23 +155,18 @@ main(argc, argv)
  * wtmp --
  *	read through the wtmp file
  */
+void
 wtmp()
 {
-	register struct utmp	*bp;		/* current structure */
-	register TTY	*T;			/* tty list entry */
+	struct utmp	*bp;			/* current structure */
+	TTY	*T;				/* tty list entry */
 	struct stat	stb;			/* stat of file for size */
-	long	bl, delta,			/* time difference */
-		lseek(), time();
+	long	bl, delta;			/* time difference */
 	int	bytes, wfd;
-	char	*ct, *crmsg,
-		*asctime(), *ctime(), *strcpy();
-	TTY	*addtty();
-	void	onintr();
+	char	*ct, *crmsg;
 
-	if ((wfd = open(file, O_RDONLY, 0)) < 0 || fstat(wfd, &stb) == -1) {
-		perror(file);
-		exit(1);
-	}
+	if ((wfd = open(file, O_RDONLY, 0)) < 0 || fstat(wfd, &stb) == -1)
+		err(1, "%s", file);
 	bl = (stb.st_size + sizeof(buf) - 1) / sizeof(buf);
 
 	(void)time(&buf[0].ut_time);
@@ -168,12 +174,9 @@ wtmp()
 	(void)signal(SIGQUIT, onintr);
 
 	while (--bl >= 0) {
-		if (lseek(wfd, (long)(bl * sizeof(buf)), L_SET) == -1 ||
-		    (bytes = read(wfd, (char *)buf, sizeof(buf))) == -1) {
-			fprintf(stderr, "last: %s: ", file);
-			perror((char *)NULL);
-			exit(1);
-		}
+		if (lseek(wfd, (off_t)(bl * sizeof(buf)), L_SET) == -1 ||
+		    (bytes = read(wfd, buf, sizeof(buf))) == -1)
+			err(1, "%s", file);
 		for (bp = &buf[bytes / sizeof(buf[0]) - 1]; bp >= buf; --bp) {
 			/*
 			 * if the terminal line is '~', the machine stopped.
@@ -188,7 +191,12 @@ wtmp()
 				    UT_NAMESIZE) ? "crash" : "shutdown";
 				if (want(bp, NO)) {
 					ct = ctime(&bp->ut_time);
-					printf("%-*.*s  %-*.*s %-*.*s %10.10s %5.5s \n", UT_NAMESIZE, UT_NAMESIZE, bp->ut_name, UT_LINESIZE, UT_LINESIZE, bp->ut_line, UT_HOSTSIZE, UT_HOSTSIZE, bp->ut_host, ct, ct + 11);
+				printf("%-*.*s  %-*.*s %-*.*s %10.10s %5.5s \n",
+					    UT_NAMESIZE, UT_NAMESIZE,
+					    bp->ut_name, UT_LINESIZE,
+					    UT_LINESIZE, bp->ut_line,
+					    UT_HOSTSIZE, UT_HOSTSIZE,
+					    bp->ut_host, ct, ct + 11);
 					if (maxrec != -1 && !--maxrec)
 						return;
 				}
@@ -202,7 +210,11 @@ wtmp()
 			    && !bp->ut_line[1]) {
 				if (want(bp, NO)) {
 					ct = ctime(&bp->ut_time);
-					printf("%-*.*s  %-*.*s %-*.*s %10.10s %5.5s \n", UT_NAMESIZE, UT_NAMESIZE, bp->ut_name, UT_LINESIZE, UT_LINESIZE, bp->ut_line, UT_HOSTSIZE, UT_HOSTSIZE, bp->ut_host, ct, ct + 11);
+				printf("%-*.*s  %-*.*s %-*.*s %10.10s %5.5s \n",
+				    UT_NAMESIZE, UT_NAMESIZE, bp->ut_name,
+				    UT_LINESIZE, UT_LINESIZE, bp->ut_line,
+				    UT_HOSTSIZE, UT_HOSTSIZE, bp->ut_host,
+				    ct, ct + 11);
 					if (maxrec && !--maxrec)
 						return;
 				}
@@ -220,7 +232,11 @@ wtmp()
 			}
 			if (bp->ut_name[0] && want(bp, YES)) {
 				ct = ctime(&bp->ut_time);
-				printf("%-*.*s  %-*.*s %-*.*s %10.10s %5.5s ", UT_NAMESIZE, UT_NAMESIZE, bp->ut_name, UT_LINESIZE, UT_LINESIZE, bp->ut_line, UT_HOSTSIZE, UT_HOSTSIZE, bp->ut_host, ct, ct + 11);
+				printf("%-*.*s  %-*.*s %-*.*s %10.10s %5.5s ",
+				UT_NAMESIZE, UT_NAMESIZE, bp->ut_name,
+				UT_LINESIZE, UT_LINESIZE, bp->ut_line,
+				UT_HOSTSIZE, UT_HOSTSIZE, bp->ut_host,
+				ct, ct + 11);
 				if (!T->logout)
 					puts("  still logged in");
 				else {
@@ -229,12 +245,16 @@ wtmp()
 						printf("- %s", crmsg);
 					}
 					else
-						printf("- %5.5s", ctime(&T->logout)+11);
+						printf("- %5.5s",
+						    ctime(&T->logout)+11);
 					delta = T->logout - bp->ut_time;
-					if (delta < SECDAY)
-						printf("  (%5.5s)\n", asctime(gmtime(&delta))+11);
+					if (delta < SECSPERDAY)
+						printf("  (%5.5s)\n",
+						    asctime(gmtime(&delta))+11);
 					else
-						printf(" (%ld+%5.5s)\n", delta / SECDAY, asctime(gmtime(&delta))+11);
+						printf(" (%ld+%5.5s)\n",
+						    delta / SECSPERDAY,
+						    asctime(gmtime(&delta))+11);
 				}
 				if (maxrec != -1 && !--maxrec)
 					return;
@@ -250,11 +270,12 @@ wtmp()
  * want --
  *	see if want this entry
  */
+int
 want(bp, check)
-	register struct utmp *bp;
+	struct utmp *bp;
 	int check;
 {
-	register ARG *step;
+	ARG *step;
 
 	if (check)
 		/*
@@ -267,41 +288,39 @@ want(bp, check)
 		else if (!strncmp(bp->ut_line, "uucp", sizeof("uucp") - 1))
 			bp->ut_line[4] = '\0';
 	if (!arglist)
-		return(YES);
+		return (YES);
 
 	for (step = arglist; step; step = step->next)
 		switch(step->type) {
 		case HOST_TYPE:
 			if (!strncasecmp(step->name, bp->ut_host, UT_HOSTSIZE))
-				return(YES);
+				return (YES);
 			break;
 		case TTY_TYPE:
 			if (!strncmp(step->name, bp->ut_line, UT_LINESIZE))
-				return(YES);
+				return (YES);
 			break;
 		case USER_TYPE:
 			if (!strncmp(step->name, bp->ut_name, UT_NAMESIZE))
-				return(YES);
+				return (YES);
 			break;
 	}
-	return(NO);
+	return (NO);
 }
 
 /*
  * addarg --
  *	add an entry to a linked list of arguments
  */
+void
 addarg(type, arg)
 	int type;
 	char *arg;
 {
-	register ARG *cur;
-	char *malloc();
+	ARG *cur;
 
-	if (!(cur = (ARG *)malloc((u_int)sizeof(ARG)))) {
-		fputs("last: malloc failure.\n", stderr);
-		exit(1);
-	}
+	if (!(cur = (ARG *)malloc((u_int)sizeof(ARG))))
+		err(1, "malloc failure");
 	cur->next = arglist;
 	cur->type = type;
 	cur->name = arg;
@@ -316,17 +335,14 @@ TTY *
 addtty(ttyname)
 	char *ttyname;
 {
-	register TTY *cur;
-	char *malloc();
+	TTY *cur;
 
-	if (!(cur = (TTY *)malloc((u_int)sizeof(TTY)))) {
-		fputs("last: malloc failure.\n", stderr);
-		exit(1);
-	}
+	if (!(cur = (TTY *)malloc((u_int)sizeof(TTY))))
+		err(1, "malloc failure");
 	cur->next = ttylist;
 	cur->logout = currentout;
-	bcopy(ttyname, cur->tty, UT_LINESIZE);
-	return(ttylist = cur);
+	memmove(cur->tty, ttyname, UT_LINESIZE);
+	return (ttylist = cur);
 }
 
 /*
@@ -335,22 +351,21 @@ addtty(ttyname)
  *	has a domain attached that is the same as the current domain, rip
  *	off the domain suffix since that's what login(1) does.
  */
+void
 hostconv(arg)
 	char *arg;
 {
 	static int first = 1;
 	static char *hostdot, name[MAXHOSTNAMELEN];
-	char *argdot, *index();
+	char *argdot;
 
-	if (!(argdot = index(arg, '.')))
+	if (!(argdot = strchr(arg, '.')))
 		return;
 	if (first) {
 		first = 0;
-		if (gethostname(name, sizeof(name))) {
-			perror("last: gethostname");
-			exit(1);
-		}
-		hostdot = index(name, '.');
+		if (gethostname(name, sizeof(name)))
+			err(1, "gethostname");
+		hostdot = strchr(name, '.');
 	}
 	if (hostdot && !strcasecmp(hostdot, argdot))
 		*argdot = '\0';
@@ -364,7 +379,7 @@ char *
 ttyconv(arg)
 	char *arg;
 {
-	char *mval, *malloc(), *strcpy();
+	char *mval;
 
 	/*
 	 * kludge -- we assume that all tty's end with
@@ -372,21 +387,19 @@ ttyconv(arg)
 	 */
 	if (strlen(arg) == 2) {
 		/* either 6 for "ttyxx" or 8 for "console" */
-		if (!(mval = malloc((u_int)8))) {
-			fputs("last: malloc failure.\n", stderr);
-			exit(1);
-		}
+		if (!(mval = malloc((u_int)8)))
+			err(1, "malloc failure");
 		if (!strcmp(arg, "co"))
 			(void)strcpy(mval, "console");
 		else {
 			(void)strcpy(mval, "tty");
 			(void)strcpy(mval + 3, arg);
 		}
-		return(mval);
+		return (mval);
 	}
 	if (!strncmp(arg, _PATH_DEV, sizeof(_PATH_DEV) - 1))
-		return(arg + 5);
-	return(arg);
+		return (arg + 5);
+	return (arg);
 }
 
 /*
@@ -397,7 +410,7 @@ void
 onintr(signo)
 	int signo;
 {
-	char *ct, *ctime();
+	char *ct;
 
 	ct = ctime(&buf[0].ut_time);
 	printf("\ninterrupted %10.10s %5.5s \n", ct, ct + 11);
