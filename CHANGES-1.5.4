@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.4,v 1.1.2.151 2004/04/21 19:55:31 jmc Exp $
+#	$NetBSD: CHANGES-1.5.4,v 1.1.2.152 2004/05/06 03:40:45 jmc Exp $
 
 A complete list of changes from NetBSD 1.5.3 to NetBSD 1.5.4:
 
@@ -2617,3 +2617,10 @@ sys/netinet/tcp_var.h				patch
 	If SYN is coming and RCV.NXT == SEG.SEQ, then ACK with value - 1.
 	SA#2004-006.
 	[itojun, ticket #143]
+
+usr.bin/vi/common/line.c			1.7
+
+	Flush the current line cache on every operation on the DB.
+	We can't keep a reference to data returned by libdb after a subsequent
+	call to any other libdb function on that DB.
+	[aymeric, ticket #144]
