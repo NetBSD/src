@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gfe.c,v 1.3 2003/03/17 16:41:15 matt Exp $	*/
+/*	$NetBSD: if_gfe.c,v 1.4 2003/03/18 15:09:28 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -40,8 +40,6 @@
 /*
  * if_gfe.c -- GT ethernet MAC driver
  */
-
-#define PKT_DUMP 0
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -645,27 +643,6 @@ gfe_rx_rxqalloc(struct gfe_softc *sc, enum gfe_rxprio rxprio)
 	return error;
 }
 
-#if PKT_DUMP
-static void pkt_dump(struct gfe_softc *sc, unsigned char *p, int l);
-static void
-pkt_dump(struct gfe_softc *sc, unsigned char *p, int l)
-{
-	char	str[17];
-	int	j;
-
-	str[16] = '\0';
-	while (l) {
-		printf("%08lx:", (unsigned long) p);
-		for (j=0;j<16 && l;j++, l--, p++) {
-			printf(" %02x", (unsigned) *p);
-			str[j] = (*p < ' ' || *p > '~') ? '.' : *p;
-		}
-		while (j < 16) { printf("   "); str[j++] = ' '; }
-		printf(" %s\n", str);
-	}
-}
-#endif
-
 void
 gfe_rx_get(struct gfe_softc *sc, enum gfe_rxprio rxprio)
 {
@@ -745,20 +722,11 @@ gfe_rx_get(struct gfe_softc *sc, enum gfe_rxprio rxprio)
 
 		KASSERT(m->m_len == 0 && m->m_pkthdr.len == 0);
 		memcpy(m->m_data + m->m_len, rxb->rb_data, buflen);
-#if PKT_DUMP
-printf("[%d]\n", buflen);
-pkt_dump(sc,m->m_data+m->m_len,buflen);
-#endif
 		m->m_len = buflen;
 		m->m_pkthdr.len = buflen;
+		m->m_flags |= M_HASFCS;
 
 		ifp->if_ipackets++;
-#ifdef M_HASFCS
-		m->m_flags |= M_HASFCS;
-#else
-		m->m_len -= 4;
-		m->m_pkthdr.len -= 4;
-#endif
 #if NBPFILTER > 0
 		if (ifp->if_bpf != NULL)
 			bpf_mtap(ifp->if_bpf, m);
@@ -793,9 +761,13 @@ pkt_dump(sc,m->m_data+m->m_len,buflen);
 		bus_dmamap_sync(sc->sc_dmat, rxq->rxq_desc_mem.gdm_map,
 				rxq->rxq_fi * sizeof(*rxd), sizeof(*rxd),
 				BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+#if 0
+		/*
+		 * Can't touch descriptor after doing a dmamap_sync.
+		 */
 		rxq->rxq_fi = (rxd->ed_nxtptr - rxq->rxq_desc_busaddr) /
 			sizeof(*rxd);
-#if 0
+#else
 		if (++rxq->rxq_fi == GE_RXDESC_MAX)
 			rxq->rxq_fi = 0;
 #endif
@@ -1097,10 +1069,6 @@ gfe_tx_enqueue(struct gfe_softc *sc, enum gfe_txprio txprio)
 
 	m_copydata(m, 0, m->m_pkthdr.len,
 	    txq->txq_buf_mem.gdm_kva + txq->txq_outptr);
-#if PKT_DUMP
-GE_DPRINTF(sc,("\n"));
-pkt_dump(sc, txq->txq_buf_mem.gdm_kva + txq->txq_outptr, m->m_pkthdr.len);
-#endif
 	bus_dmamap_sync(sc->sc_dmat, txq->txq_buf_mem.gdm_map,
 	    txq->txq_outptr, m->m_pkthdr.len, BUS_DMASYNC_PREWRITE);
 	txd->ed_bufptr = htogt32(txq->txq_buf_busaddr + txq->txq_outptr);
