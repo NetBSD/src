@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.24 2000/06/23 12:18:48 kleink Exp $	*/
+/*	$NetBSD: asm.h,v 1.25 2000/07/25 17:56:05 jeffs Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -292,5 +292,23 @@ _C_LABEL(x):
 #define	REG_EPILOGUE	.set pop
 #define SZREG	8
 #endif	/* _MIPS_BSD_API */
+
+/*
+ * The DYNAMIC_STATUS_MASK option adds an additional masking operation
+ * when updating the hardware interrupt mask in the status register.
+ *
+ * This is useful for platforms that need to at run-time mask
+ * interrupts based on motherboard configuration or to handle
+ * slowly clearing interrupts.
+ *
+ * XXX this is only currently implemented for mips3.
+ */
+#ifdef MIPS_DYNAMIC_STATUS_MASK
+#define DYNAMIC_STATUS_MASK(sr,scratch)	\
+	lw	scratch, mips_dynamic_status_mask; \
+	and	sr, sr, scratch
+#else
+#define DYNAMIC_STATUS_MASK(sr,scratch)
+#endif
 
 #endif /* _MIPS_ASM_H */
