@@ -1,4 +1,4 @@
-/* $NetBSD: i82596.c,v 1.1 2004/03/12 11:37:17 jkunz Exp $ */
+/* $NetBSD: i82596.c,v 1.2 2004/08/26 16:56:07 jkunz Exp $ */
 
 /*
  * Copyright (c) 2003 Jochen Kunz.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82596.c,v 1.1 2004/03/12 11:37:17 jkunz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82596.c,v 1.2 2004/08/26 16:56:07 jkunz Exp $");
 
 /* autoconfig and device stuff */
 #include <sys/param.h>
@@ -202,12 +202,9 @@ iee_intr(void *intarg)
 	    BUS_DMASYNC_POSTREAD);
 	scb_status = SC_SCB->scb_status;
 	scb_cmd = SC_SCB->scb_cmd;
-	n = 0;
 	rfd = SC_RFD(sc->sc_rx_done);
-	while ((scb_status & IEE_SCB_STAT_FR) != 0
-	    && (rfd->rfd_status & IEE_RFD_B) == 0 && rfd->rfd_status != 0) {
+	while ((rfd->rfd_status & IEE_RFD_C) != 0) {
 		/* At least one packet was received. */
-		n = 1;
 		rbd = SC_RBD(sc->sc_rx_done);
 		rx_map = sc->sc_rx_map[sc->sc_rx_done];
 		rx_mbuf = sc->sc_rx_mbuf[sc->sc_rx_done];
@@ -289,13 +286,10 @@ iee_intr(void *intarg)
 		(sc->sc_iee_cmd)(sc, IEE_SCB_RUC_ST);
 		printf("%s: iee_intr: receive ring buffer overrun\n", 
 		    sc->sc_dev.dv_xname);
-	} else
-		if (n != 0)
-			bus_dmamap_sync(sc->sc_dmat, sc->sc_shmem_map, 
-			    IEE_RFD_OFF, IEE_RFD_LIST_SZ + IEE_RBD_LIST_SZ, 
-			    BUS_DMASYNC_PREWRITE);
+	}
 
-	if (sc->sc_next_cb != 0 && (scb_status & IEE_SCB_CUS_ACT) == 0) { 
+	if (sc->sc_next_cb != 0 
+	    && (SC_CB(sc->sc_next_cb - 1)->cb_status & IEE_CB_C) != 0) {
 		/* CMD list finished */
 		ifp->if_timer = 0;
 		if (sc->sc_next_tbd != 0) {
@@ -317,8 +311,7 @@ iee_intr(void *intarg)
 		for (n = 0 ; n < sc->sc_next_cb ; n++) {
 			/* Check if a CMD failed, but ignore TX errors. */
 			if ((SC_CB(n)->cb_cmd & IEE_CB_CMD) != IEE_CB_CMD_TR
-			    && ((SC_CB(n)->cb_status & IEE_CB_C) == 0 
-			    || (SC_CB(n)->cb_status & IEE_CB_OK) == 0))
+			    && ((SC_CB(n)->cb_status & IEE_CB_OK) == 0))
 				printf("%s: iee_intr: scb_status=0x%x " 
 				    "scb_cmd=0x%x failed command %d: "
 				    "cb_status[%d]=0x%.4x cb_cmd[%d]=0x%.4x\n", 
@@ -365,6 +358,8 @@ iee_intr(void *intarg)
 		printf("%s: iee_intr: short_fr_err=%d\n", sc->sc_dev.dv_xname, 
 		    sc->sc_short_fr_err);
 	}
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_shmem_map, 0, IEE_SHMEM_MAX, 
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 	(sc->sc_iee_cmd)(sc, IEE_SCB_ACK);
 	return(1);
 }
