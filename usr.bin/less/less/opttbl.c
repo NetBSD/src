@@ -1,4 +1,4 @@
-/*	$NetBSD: opttbl.c,v 1.10 2003/04/14 03:02:29 mrg Exp $	*/
+/*	$NetBSD: opttbl.c,v 1.11 2004/10/30 20:17:19 dsl Exp $	*/
 
 /*
  * Copyright (C) 1984-2002  Mark Nudelman
@@ -465,7 +465,7 @@ findopt(c)
 	{
 		if (o->oletter == c)
 			return (o);
-		if ((o->otype & TRIPLE) && toupper(o->oletter) == c)
+		if ((o->otype & TRIPLE) && toupper((unsigned char)o->oletter) == c)
 			return (o);
 	}
 	return (NULL);
