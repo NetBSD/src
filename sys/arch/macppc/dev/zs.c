@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.4 1998/07/13 19:37:28 tsubai Exp $	*/
+/*	$NetBSD: zs.c,v 1.5 1998/08/16 11:24:36 tsubai Exp $	*/
 
 /*
  * Copyright (c) 1996 Bill Studenmund
@@ -334,9 +334,7 @@ zsc_attach(parent, self, aux)
 		xcs->cs_clock_count = 3;
 		if (channel == 0) {
 			theflags = 0; /*mac68k_machine.modem_flags;*/
-			/*xcs->cs_clocks[1].clk = mac68k_machine.modem_dcd_clk;*/
-			/*xcs->cs_clocks[2].clk = mac68k_machine.modem_cts_clk;*/
-			xcs->cs_clocks[1].clk = 0;
+			xcs->cs_clocks[1].clk = 115200 * 32;
 			xcs->cs_clocks[2].clk = 0;
 		} else {
 			theflags = 0; /*mac68k_machine.print_flags;*/
@@ -347,9 +345,7 @@ zsc_attach(parent, self, aux)
 			 * use it. But a clock will freak out the chip, so we
 			 * let you set it, telling us to bar interrupts on the line.
 			 */
-			/*xcs->cs_clocks[1].clk = mac68k_machine.print_dcd_clk;*/
-			/*xcs->cs_clocks[2].clk = mac68k_machine.print_cts_clk;*/
-			xcs->cs_clocks[1].clk = 0;
+			xcs->cs_clocks[1].clk = 115200 * 32;
 			xcs->cs_clocks[2].clk = 0;
 		}
 		if (xcs->cs_clocks[1].clk)
@@ -444,35 +440,6 @@ zsc_print(aux, name)
 		printf(" channel %d", args->channel);
 
 	return UNCONF;
-}
-
-int
-zsmdioctl(cs, cmd, data)
-	struct zs_chanstate *cs;
-	u_long cmd;
-	caddr_t data;
-{
-	switch (cmd) {
-	default:
-		return (-1);
-	}
-	return (0);
-}
-
-void
-zsmd_setclock(cs)
-	struct zs_chanstate *cs;
-{
-	struct xzs_chanstate *xcs = (void *)cs;
-
-	if (cs->cs_channel != 0)
-		return;
-
-	/*
-	 * If the new clock has the external bit set, then select the
-	 * external source.
-	 */
-	/*via_set_modem((xcs->cs_pclk_flag & ZSC_EXTERN) ? 1 : 0);*/
 }
 
 static int zssoftpending;
