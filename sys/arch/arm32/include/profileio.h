@@ -1,3 +1,5 @@
+/*	$NetBSD: profileio.h,v 1.2 1998/07/08 07:56:13 thorpej Exp $	*/
+
 /*
  * Copyright 1997
  * Digital Equipment Corporation. All rights reserved.
@@ -191,12 +193,3 @@ __attribute__ ((packed));
 #define BAD_OPTION       0x07
 
 #endif
-
-
-
-
-
-
-
-
-
