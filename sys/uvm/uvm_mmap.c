@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.77 2003/08/24 18:12:25 chs Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.78 2003/10/07 00:17:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.77 2003/08/24 18:12:25 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.78 2003/10/07 00:17:09 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -329,6 +329,16 @@ sys_mmap(l, v, retval)
 	size = (vsize_t)round_page(size);	/* round up */
 	if ((ssize_t) size < 0)
 		return (EINVAL);			/* don't allow wrap */
+
+#ifndef pmap_wired_count
+	/*
+	 * if we're going to wire the mapping, restrict it to superuser.
+	 */
+	
+	if ((flags & MAP_WIRED) != 0 &&
+	    (error = suser(p->p_ucred, &p->p_acflag)) != 0)
+		return (error);
+#endif
 
 	/*
 	 * now check (MAP_FIXED) or get (!MAP_FIXED) the "addr"
@@ -1173,6 +1183,8 @@ uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff, locklimit)
 	/*
 	 * POSIX 1003.1b -- if our address space was configured
 	 * to lock all future mappings, wire the one we just made.
+	 *
+	 * Also handle the MAP_WIRED flag here.
 	 */
 
 	if (prot == VM_PROT_NONE) {
@@ -1184,7 +1196,7 @@ uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff, locklimit)
 		return (0);
 	}
 	vm_map_lock(map);
-	if (map->flags & VM_MAP_WIREFUTURE) {
+	if ((flags & MAP_WIRED) != 0 || (map->flags & VM_MAP_WIREFUTURE) != 0) {
 		if ((atop(size) + uvmexp.wired) > uvmexp.wiredmax
 #ifdef pmap_wired_count
 		    || (locklimit != 0 && (size +

@@ -1,4 +1,4 @@
-/*	$NetBSD: mmap.c,v 1.14 2002/06/04 22:17:47 fvdl Exp $	*/
+/*	$NetBSD: mmap.c,v 1.15 2003/10/07 00:17:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -145,6 +145,29 @@ main(argc, argv)
 		err(1, "munlock %s", filename);
 
 	(void) munmap(addr, st.st_size);
+
+	/*
+	 * TEST THE MAP_WIRED FLAG TO MMAP.
+	 */
+
+	npgs = 128;
+
+	printf(">>> MAPPING %d PAGE ANONYMOUS REGION WITH MAP_WIRED <<<\n",
+	    npgs);
+
+	addr = mmap(NULL, npgs * pgsize, PROT_READ|PROT_WRITE,
+	    MAP_ANON|MAP_PRIVATE|MAP_WIRED, -1, (off_t) 0);
+	if (addr == MAP_FAILED)
+		err(1, "mmap anon MAP_WIRED");
+
+	printf("    CHECKING RESIDENCY\n");
+
+	if (check_residency(addr, npgs) != 128) {
+		printf("    RESIDENCY CHECK FAILED!\n");
+		ecode = 1;
+	}
+
+	(void) munmap(addr, npgs * pgsize);
 
 	/*
 	 * TEST MLOCKALL'ING AN ANONYMOUS MEMORY RANGE.
