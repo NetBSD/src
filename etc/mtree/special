@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.9 1997/04/25 06:58:52 mikel Exp $
+#	$NetBSD: special,v 1.10 1997/06/21 06:10:03 mikel Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # Hand-crafted mtree specification for the dangerous files.
@@ -44,6 +44,7 @@ named.boot	type=file mode=0644 uname=root gname=wheel
 netstart	type=file mode=0644 uname=root gname=wheel
 passwd		type=file mode=0644 uname=root gname=wheel
 printcap	type=file mode=0644 uname=root gname=wheel
+profile		type=file mode=0644 uname=root gname=wheel
 rc		type=file mode=0644 uname=root gname=wheel
 rc.conf		type=file mode=0644 uname=root gname=wheel
 rc.lkm		type=file mode=0644 uname=root gname=wheel
