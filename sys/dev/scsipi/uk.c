@@ -1,4 +1,4 @@
-/*	$NetBSD: uk.c,v 1.28 2000/03/29 18:11:44 augustss Exp $	*/
+/*	$NetBSD: uk.c,v 1.29 2000/03/30 00:00:57 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -244,7 +244,7 @@ ukioctl(dev, cmd, addr, flag, p)
 	int flag;
 	struct proc *p;
 {
-	register struct uk_softc *uk = uk_cd.cd_devs[UKUNIT(dev)];
+	struct uk_softc *uk = uk_cd.cd_devs[UKUNIT(dev)];
 
 	return (scsipi_do_ioctl(uk->sc_link, dev, cmd, addr, flag, p));
 }

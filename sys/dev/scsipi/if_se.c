@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.28 2000/03/23 07:01:43 thorpej Exp $	*/
+/*	$NetBSD: if_se.c,v 1.29 2000/03/30 00:00:55 augustss Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -271,9 +271,9 @@ static __inline u_int16_t
 ether_cmp(one, two)
 	void *one, *two;
 {
-	register u_int16_t *a = (u_int16_t *) one;
-	register u_int16_t *b = (u_int16_t *) two;
-	register u_int16_t diff;
+	u_int16_t *a = (u_int16_t *) one;
+	u_int16_t *b = (u_int16_t *) two;
+	u_int16_t diff;
 
 	diff = (a[0] - b[0]) | (a[1] - b[1]) | (a[2] - b[2]);
 
@@ -647,7 +647,7 @@ bad:
  */
 static int
 se_read(sc, data, datalen)
-	register struct se_softc *sc;
+	struct se_softc *sc;
 	char *data;
 	int datalen;
 {
@@ -996,11 +996,11 @@ se_stop(sc)
  */
 static int
 se_ioctl(ifp, cmd, data)
-	register struct ifnet *ifp;
+	struct ifnet *ifp;
 	u_long cmd;
 	caddr_t data;
 {
-	register struct se_softc *sc = ifp->if_softc;
+	struct se_softc *sc = ifp->if_softc;
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
@@ -1029,7 +1029,7 @@ se_ioctl(ifp, cmd, data)
 #ifdef NS
 		case AF_NS:
 		    {
-			register struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
+			struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
 
 			if (ns_nullhost(*ina))
 				ina->x_host =
@@ -1236,7 +1236,7 @@ seioctl(dev, cmd, addr, flag, p)
 	int flag;
 	struct proc *p;
 {
-	register struct se_softc *sc = se_cd.cd_devs[SEUNIT(dev)];
+	struct se_softc *sc = se_cd.cd_devs[SEUNIT(dev)];
 
 	return (scsipi_do_ioctl(sc->sc_link, dev, cmd, addr, flag, p));
 }
