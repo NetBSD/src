@@ -8,7 +8,7 @@
     *  
     *  SB1250 specification level:  User's manual 1/02/02
     *  
-    *  Author:  Mitch Lichtenberg (mpl@broadcom.com)
+    *  Author:  Mitch Lichtenberg
     *  
     *********************************************************************  
     *
@@ -62,6 +62,8 @@
  * 
  * First, the interrupt numbers.
  */
+
+#define K_INT_SOURCES               64
 
 #define K_INT_WATCHDOG_TIMER_0      0
 #define K_INT_WATCHDOG_TIMER_1      1
