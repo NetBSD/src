@@ -1,7 +1,10 @@
+/*	$NetBSD: hmac_md5.c,v 1.2 2005/02/09 21:35:46 kleink Exp $	*/
+
 /*
  * hmac_md5 - using HMAC from RFC 2104
  */
 
+#include "namespace.h"
 #include <sys/types.h>
 #include <md5.h>
 

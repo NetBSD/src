@@ -1,4 +1,4 @@
-/*	$NetBSD: res_send.c,v 1.7 2004/11/07 02:25:01 christos Exp $	*/
+/*	$NetBSD: res_send.c,v 1.8 2005/02/09 21:35:46 kleink Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993
@@ -76,7 +76,7 @@
 static const char sccsid[] = "@(#)res_send.c	8.1 (Berkeley) 6/4/93";
 static const char rcsid[] = "Id: res_send.c,v 1.5.2.2.4.5 2004/08/10 02:19:56 marka Exp";
 #else
-__RCSID("$NetBSD: res_send.c,v 1.7 2004/11/07 02:25:01 christos Exp $");
+__RCSID("$NetBSD: res_send.c,v 1.8 2005/02/09 21:35:46 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -84,6 +84,7 @@ __RCSID("$NetBSD: res_send.c,v 1.7 2004/11/07 02:25:01 christos Exp $");
  * Send query to name server and wait for reply.
  */
 
+#include "namespace.h"
 #include "port_before.h"
 #include "fd_setsize.h"
 
