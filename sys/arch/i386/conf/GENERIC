@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.149 1998/05/20 16:25:06 augustss Exp $
+#	$NetBSD: GENERIC,v 1.150 1998/06/02 01:44:57 thorpej Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -6,6 +6,8 @@
 include "arch/i386/conf/std.i386"
 
 maxusers	32		# estimated number of users
+
+options GATEWAY
 
 # CPU support.  At least one is REQUIRED.
 options 	I386_CPU
@@ -333,6 +335,7 @@ fd*	at fdc? drive ?			# the drives themselves
 de*	at pci? dev ? function ?	# DEC 21x4x-based Ethernet
 en*	at pci? dev ? function ?	# ENI/Adaptec ATM
 ep*	at pci? dev ? function ?	# 3Com 3c59x/3c90x Ethernet
+epic*	at pci? dev ? function ?	# SMC EPIC/100 Ethernet
 fpa*	at pci? dev ? function ?	# DEC DEFPA FDDI
 fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
