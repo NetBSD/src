@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.41 2004/04/27 11:26:28 mrg Exp $	*/
+/*	$NetBSD: gzip.c,v 1.42 2004/04/27 13:45:50 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003, 2004 Matthew R. Green
@@ -32,7 +32,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003, 2004 Matthew R. Green\n\
      All rights reserved.\n");
-__RCSID("$NetBSD: gzip.c,v 1.41 2004/04/27 11:26:28 mrg Exp $");
+__RCSID("$NetBSD: gzip.c,v 1.42 2004/04/27 13:45:50 mrg Exp $");
 #endif /* not lint */
 
 /*
@@ -525,7 +525,7 @@ gz_compress(FILE *in, int out, off_t *gsizep, const char *origname, time_t mtime
 		maybe_err(1, "write");
 	free(str);
 
-	if (fclose(in) < 0)
+	if (fclose(in) != 0)
 		maybe_err(1, "failed fclose");
 
 	if (gsizep)
@@ -888,6 +888,8 @@ file_compress(char *file)
 	gz_compress(in, out, NULL, savename, mtime);
 #endif
 
+	(void)fclose(in);
+
 	/*
 	 * if we compressed to stdout, we don't know the size and
 	 * we don't know the new file name, punt.  if we can't stat
@@ -942,7 +944,7 @@ file_uncompress(char *file)
 		/* we don't want to fail here. */
 #ifndef SMALL
 		if (fflag)
-			goto close_it;
+			goto lose_close_it;
 #endif
 		maybe_err(1, "can't read %s", file);
 	}
@@ -962,8 +964,10 @@ file_uncompress(char *file)
 # endif
 	}
 
-	if (fflag == 0 && method == FT_UNKNOWN)
-		maybe_errx(1, "%s: not in gzip format", file);
+	if (fflag == 0 && method == FT_UNKNOWN) {
+		maybe_warnx("%s: not in gzip format", file);
+		goto lose_close_it;
+	}
 #endif
 
 	if (cflag == 0 || lflag) {
@@ -971,8 +975,10 @@ file_uncompress(char *file)
 		if (strncmp(s, suffix, suffix_len) == 0) {
 			(void)strncpy(outfile, file, len - suffix_len + 1);
 			outfile[len - suffix_len + 1] = '\0';
-		} else if (lflag == 0)
-			maybe_errx(1, "unknown suffix %s", s);
+		} else if (lflag == 0) {
+			maybe_warnx("unknown suffix %s", s);
+			goto lose_close_it;
+		}
 	}
 
 #ifdef SMALL
@@ -986,8 +992,10 @@ file_uncompress(char *file)
 			int i;
 
 			rbytes = read(fd, name, PATH_MAX + 1);
-			if (rbytes < 0)
-				maybe_err(1, "can't read %s", file);
+			if (rbytes < 0) {
+				maybe_warn("can't read %s", file);
+				goto lose_close_it;
+			}
 			for (i = 0; i < rbytes && name[i]; i++)
 				;
 			if (i < rbytes) {
@@ -1004,9 +1012,6 @@ file_uncompress(char *file)
 			}
 		}
 	}
-#ifndef SMALL
-close_it:
-#endif
 	close(fd);
 
 	if (cflag == 0 || lflag) {
@@ -1042,14 +1047,21 @@ close_it:
 			out = STDOUT_FILENO;
 		else 
 			out = open(outfile, O_WRONLY|O_CREAT|O_EXCL, 0600);
-		if (out == -1)
-			maybe_err(1, "open for write: %s", outfile);
+		if (out == -1) {
+			maybe_warn("open for write: %s", outfile);
+			close(in);
+			goto lose;
+		}
 
 		if ((size = unbzip2(in, out, NULL, 0, NULL)) == 0) {
 			if (cflag == 0)
 				unlink(outfile);
 			goto lose;
 		}
+		if (close(in) != 0)
+			maybe_warn("couldn't close input");
+		if (cflag == 0 && close(out) != 0)
+			maybe_warn("couldn't close output");
 	} else
 #endif
 
@@ -1077,16 +1089,16 @@ close_it:
 			maybe_err(1, "open for write: %s", outfile);
 
 		size = zuncompress(in, out, NULL, 0, NULL);
+		if (ferror(in) || fclose(in) != 0) {
+			unlink(outfile);
+			maybe_err(1, "failed infile fclose");
+		}
 		if (cflag == 0) {
 			if (size == 0) {
 				unlink(outfile);
 				goto lose;
 			}
-			if (ferror(in) || fclose(in)) {
-				unlink(outfile);
-				maybe_err(1, "failed infile fclose");
-			}
-			if (fclose(out)) {
+			if (fclose(out) != 0) {
 				unlink(outfile);
 				maybe_err(1, "failed outfile close");
 			}
@@ -1110,19 +1122,23 @@ close_it:
 		if (cflag == 0) {
 			/* Use open(2) directly to get a safe file.  */
 			fd = open(outfile, O_WRONLY|O_CREAT|O_EXCL, 0600);
-			if (fd < 0)
-				maybe_err(1, "can't open %s", outfile);
+			if (fd < 0) {
+				maybe_warn("can't open %s", outfile);
+				close(in);
+				goto lose;
+			}
 		} else
 			fd = STDOUT_FILENO;
 
 		size = gz_uncompress(in, fd, NULL, 0, NULL);
+		(void)close(in);
 		if (cflag == 0) {
+			if (close(fd))
+				maybe_warn("failed close");
 			if (size == -1) {
 				unlink(outfile);
 				goto lose;
 			}
-			if (close(fd))
-				maybe_err(1, "failed close");
 		}
 	}
 
@@ -1164,6 +1180,8 @@ close_it:
 	}
 	return (size);
 
+lose_close_it:
+	close(fd);
 lose:
 	newfile = 0;
 	return 0;
