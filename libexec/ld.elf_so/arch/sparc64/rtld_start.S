@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.13 2002/09/26 02:14:10 mycroft Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.14 2002/09/26 02:25:57 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2000 Eduardo Horvath.
@@ -101,44 +101,34 @@ _rtld_start:
 	 * We have two separate entry points to the runtime linker.
 	 * I'm implementing this following the SPARC v9 ABI spec.
 	 *
-	 * _rtld_bind_start_0(x, y) is called from .PLT0, and is used for
+	 * _rtld_bind_start_0(y, x) is called from .PLT0, and is used for
 	 * PLT entries above 32768.
 	 *
-	 * _rtld_bind_start_1(x, y) is called from .PLT1, and is used for
+	 * _rtld_bind_start_1(y, x) is called from .PLT1, and is used for
 	 * PLT entries below 32768.
 	 *
 	 * The first two entries of PLT2 contain the xword object pointer.
 	 *
 	 * These routines are called with two longword arguments, 
 	 * x and y.  To calculate the address of the entry,
-	 * _rtld_bind_start_1(x, y) does:
+	 * _rtld_bind_start_1(y, x) does:
 	 *
 	 *	n = x >> 15;
 	 *
-	 * and _rtld_bind_start_0(x, y) does:
+	 * and _rtld_bind_start_0(y, x) does:
 	 *
-	 *	i = x - y + 1048596;
+	 *	i = x - y + 8 - 32768*32;
 	 *	n = 32768 + (i/5120)*160 + (i%5120)/24;
 	 *
 	 * Neither routine needs to issue a save since it's already been
 	 * done in the PLT entry.
 	 */
 
-	/* NOTE: _rtld_bind_start_0 is untested.  Hence the debug stuff */
-	
 	.section	".text"
 	.align	4
 	.global	_rtld_bind_start_0
 	.type	_rtld_bind_start_0,@function
 _rtld_bind_start_0:	# (y, x)
-#if 0
-	call	_rtld_bind_start_0_stub
-	 ldx     [%o0 + (10*4)], %l7
-	mov	%o0, %o1
-	
-	call	_rtld_bind
-	 mov	%l7, %o0
-#else
 	/* %o0 = obj->pltgot[6] */
 	/* %o1 = plt[4] */
 	/* %o1 - %o0 + 8 == offset of plt[] from obj->pltgot[] */
@@ -174,7 +164,6 @@ _rtld_bind_start_0:	# (y, x)
 
 	jmp	%o0			/* return value == function address */
 	 restore			/* Dump our stack frame */
-#endif	
 	
 	.section	".text"
 	.align	4
