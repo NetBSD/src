@@ -1,4 +1,4 @@
-/*	$NetBSD: paths.c,v 1.19 2002/10/05 11:59:04 mycroft Exp $	 */
+/*	$NetBSD: paths.c,v 1.20 2002/10/05 12:23:39 mycroft Exp $	 */
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -79,9 +79,6 @@ _rtld_append_path(head_p, path_p, bp, len)
 {
 	char *cp;
 	Search_Path *path;
-
-	if (bp == NULL || len == 0 || *bp == '\0')
-		return path_p;
 
 	if (_rtld_find_path(*head_p, bp, len) != NULL)
 		return path_p;
@@ -197,9 +194,6 @@ _rtld_process_mapping(lib_p, bp, len)
 	char *ptr, *key, *lib, *l;
 	int i, j, k;
 	
-	if (bp == NULL || len == 0 || *bp == '\0')
-		return;
-
 	dbg((" processing mapping \"%s\"", bp));
 
 	if ((ptr = strsep(&bp, WS)) == NULL)
@@ -327,9 +321,9 @@ _rtld_process_hints(path_p, lib_p, fname)
 	const char *fname;
 {
 	int fd;
-	char *p, *buf, *b, *ebuf;
+	char *buf, *b, *ebuf;
 	struct stat st;
-	size_t sz;
+	size_t sz, len;
 	Search_Path **head_p = path_p;
 	int doing_path = 0;
 
@@ -357,63 +351,27 @@ _rtld_process_hints(path_p, lib_p, fname)
 	while ((*path_p) != NULL)
 		path_p = &(*path_p)->sp_next;
 
-	for (b = NULL, p = buf, ebuf = buf + sz; p < ebuf; p++) {
-
-		if ((p == buf || p[-1] == '\0') && b == NULL)
-			b = p;
-
-		switch (*p) {
-		case '/':
-			if (b == p)
-				doing_path = 1;
+	for (b = buf, ebuf = buf + sz; b < ebuf; ) {
+		b += strspn(b, " \t\n");
+		if (*b == '\0')
 			break;
 
-		case ' ': case '\t':
-			if (b == p)
-				b++;
-			break;
+		doing_path = *b == '/';
 
-		case '\n':
-			if (doing_path)
-				path_p = _rtld_append_path(head_p, path_p, b,
-				    p - b);
-			else {
-				*p = '\0';
-				_rtld_process_mapping(lib_p, b, p - b);
-			}
-			b = NULL;
-			break;
-
-		case '#':
-			if (b != p) {
-				char *sp;
-				for  (sp = p - 1; *sp == ' ' ||
-				    *sp == '\t'; --sp)
-					continue;
-				++sp;
-				if (doing_path)
-					path_p = _rtld_append_path(head_p,
-					    path_p, b, sp - b);
-				else {
-					*sp = '\0';
-					_rtld_process_mapping(lib_p, b, sp - b);
-					*sp = ' ';
-				}
-			}
-			b = NULL;
-			break;
-
-		default:
-			if (b == p)
-				doing_path = 0;
-			break;
+		len = strcspn(b, "\n#");
+		if (doing_path)
+			path_p = _rtld_append_path(head_p, path_p, b, len);
+		else {
+			char tmp = b[len];
+			b[len] = '\0';
+			_rtld_process_mapping(lib_p, b, len);
+			b[len] = tmp;
 		}
+			
+		b += len;
+		if (*b == '#')
+			b += strcspn(b, "\n");
 	}
-
-	if (doing_path)
-		path_p = _rtld_append_path(head_p, path_p, b, ebuf - b);
-	else
-		_rtld_process_mapping(lib_p, b, ebuf - b);
 
 	(void)munmap(buf, sz);
 }
