@@ -1,17 +1,17 @@
-#	$NetBSD: Makefile,v 1.9 2003/01/26 00:05:37 fvdl Exp $
+#	$NetBSD: Makefile,v 1.10 2003/03/06 22:32:07 fvdl Exp $
 
 INCSDIR= /usr/include/x86_64
 
 INCS=	ansi.h aout_machdep.h asm.h atomic.h \
-	bios32.h bootinfo.h bswap.h bus.h byte_swap.h \
+	bootinfo.h bswap.h bus.h byte_swap.h \
 	cdefs.h cpu.h cpufunc.h \
 	disklabel.h \
 	elf_machdep.h endian.h endian_machdep.h \
-	float.h fpu.h frame.h frameasm.h \
+	float.h fpu.h frame.h \
 	gdt.h \
 	ieee.h ieeefp.h \
 	int_const.h int_fmtio.h int_limits.h int_mwgwtypes.h int_types.h \
-	intr.h isa_machdep.h \
+	intr.h intrdefs.h \
 	kcore.h \
 	limits.h lock.h \
 	math.h mcontext.h mtrr.h \
