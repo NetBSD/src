@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.9 1996/08/27 21:56:26 cgd Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.10 1996/09/12 05:48:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -78,7 +78,6 @@ void	setroot __P((void));
  * the machine.
  */
 int	cold;			/* if 1, still working on cold-start */
-int	cpuspeed = MHZ_16;	/* relative cpu speed */
 
 void mainbus_attach __P((struct device *, struct device *, void *));
 int  mainbus_match __P((struct device *, void *, void *));
@@ -96,16 +95,20 @@ struct cfdriver mainbus_cd = {
 	NULL, "mainbus", DV_DULL, 0
 };
 
+#ifdef MVME147
 static	char *mainbusdevs_147[] = {
 	"pcc", NULL
 };
+#endif
 
-#ifdef notyet
+#ifdef MVME162
 static	char *mainbusdevs_162[] = {
 	"mc", "flash", "sram", NULL
 };
+#endif
 
-static	char *mainbusdevs_167[] = {	/* includes 166, 177 */
+#if defined(MVME167) || defined(MVME177)
+static	char *mainbusdevs_1x7[] = {	/* includes 166, 177 */
 	"pcctwo", "sram", NULL
 };
 #endif
@@ -116,7 +119,12 @@ mainbus_match(parent, cf, args)
 	void *cf;
 	void *args;
 {
-	return (1);
+	static int mainbus_matched;
+
+	if (mainbus_matched)
+		return (0);
+
+	return ((mainbus_matched = 1));
 }
 
 void
@@ -132,32 +140,30 @@ mainbus_attach(parent, self, args)
 	/*
 	 * Attach children appropriate for this CPU.
 	 */
-#ifdef notyet
-	switch (cputyp) {
+	switch (machineid) {
 #ifdef MVME147
-	case CPU_147:
+	case MVME_147:
 		devices = mainbusdevs_147;
 		break;
 #endif
 
 #ifdef MVME162
-	case CPU_162:
+	case MVME_162:
 		devices = mainbusdevs_162;
 		break;
 #endif
 
-#ifdef MVME167
-	case CPU_167:
-		devices = mainbusdevs_167;
+#if defined(MVME167) || defined(MVME177)
+	case MVME_166:
+	case MVME_167:
+	case MVME_177:
+		devices = mainbusdevs_1x7;
 		break;
 #endif
 
 	default:
 		panic("mainbus_attach: impossible CPU type");
 	}
-#else
-	devices = mainbusdevs_147;	/* XXX for now... */
-#endif
 
 	for (i = 0; devices[i] != NULL; ++i)
 		(void)config_found(self, devices[i], mainbus_print);
