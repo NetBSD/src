@@ -1,4 +1,4 @@
-/*	$NetBSD: essvar.h,v 1.17 2000/03/23 07:01:34 thorpej Exp $	*/
+/*	$NetBSD: essvar.h,v 1.17.4.1 2001/01/25 20:55:33 jhawk Exp $	*/
 /*
  * Copyright 1997
  * Digital Equipment Corporation. All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 /*
-** @(#) $RCSfile: essvar.h,v $ $Revision: 1.17 $ (SHARK) $Date: 2000/03/23 07:01:34 $
+** @(#) $RCSfile: essvar.h,v $ $Revision: 1.17.4.1 $ (SHARK) $Date: 2001/01/25 20:55:33 $
 **
 **++
 **
@@ -165,4 +165,5 @@ struct ess_softc
 
 int	essmatch __P((struct ess_softc *));
 void	essattach __P((struct ess_softc *));
+int	ess_config_addr __P((struct ess_softc *));
 
