@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.55 2001/04/20 12:56:08 jdc Exp $	*/
+/*	$NetBSD: curses.h,v 1.56 2001/04/21 16:19:37 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -460,6 +460,7 @@ extern char	*ttytype;		/* Full name of current terminal. */
 #define	deleteln()			wdeleteln(stdscr)
 #define	erase()				werase(stdscr)
 #define	getch()				wgetch(stdscr)
+#define	getnstr(s, n)			wgetnstr(stdscr, s, n)
 #define	getstr(s)			wgetstr(stdscr, s)
 #define	inch()				winch(stdscr)
 #define	inchnstr(c)			winchnstr(stdscr, c)
@@ -491,6 +492,7 @@ extern char	*ttytype;		/* Full name of current terminal. */
 #define	mvaddstr(y, x, s)		mvwaddstr(stdscr, y, x, s)
 #define	mvdelch(y, x)			mvwdelch(stdscr, y, x)
 #define	mvgetch(y, x)			mvwgetch(stdscr, y, x)
+#define	mvgetnstr(y, x, s)		mvwgetnstr(stdscr, y, x, s, n)
 #define	mvgetstr(y, x, s)		mvwgetstr(stdscr, y, x, s)
 #define	mvinch(y, x)			mvwinch(stdscr, y, x)
 #define	mvinchnstr(y, x, c, n)		mvwinchnstr(stdscr, y, x, c, n)
@@ -510,6 +512,8 @@ extern char	*ttytype;		/* Full name of current terminal. */
 	(wmove(w, y, x) == ERR ? ERR : wdelch(w))
 #define	mvwgetch(w, y, x) \
 	(wmove(w, y, x) == ERR ? ERR : wgetch(w))
+#define	mvwgetnstr(w, y, x, s, n) \
+	(wmove(w, y, x) == ERR ? ERR : wgetnstr(w, s, n))
 #define	mvwgetstr(w, y, x, s) \
 	(wmove(w, y, x) == ERR ? ERR : wgetstr(w, s))
 #define	mvwinch(w, y, x) \
@@ -547,6 +551,7 @@ int	 delch(void);
 int	 deleteln(void);
 int	 erase(void);
 int	 getch(void);
+int	 getnstr(char *, int);
 int	 getstr(char *);
 chtype	 inch(void);
 int	 inchnstr(chtype *, int);
@@ -578,6 +583,7 @@ int	 mvaddnstr(int, int, const char *, int);
 int	 mvaddstr(int, int, const char *);
 int	 mvdelch(int, int);
 int	 mvgetch(int, int);
+int	 mvgetnstr(int, int, char *, int);
 int	 mvgetstr(int, int, char *);
 chtype	 mvinch(int, int);
 int	 mvinchnstr(int, int, chtype *, int);
@@ -592,6 +598,7 @@ int	 mvwaddnstr(WINDOW *, int, int, const char *, int);
 int	 mvwaddstr(WINDOW *, int, int, const char *);
 int	 mvwdelch(WINDOW *, int, int);
 int	 mvwgetch(WINDOW *, int, int);
+int	 mvwgetnstr(WINDOW *, int, int, char *, int);
 int	 mvwgetstr(WINDOW *, int, int, char *);
 chtype	 mvwinch(WINDOW *, int, int);
 int	 mvwinsch(WINDOW *, int, int, chtype);
@@ -723,6 +730,7 @@ int	 wdelch(WINDOW *);
 int	 wdeleteln(WINDOW *);
 int	 werase(WINDOW *);
 int	 wgetch(WINDOW *);
+int	 wgetnstr(WINDOW *, char *, int);
 int	 wgetstr(WINDOW *, char *);
 int	 whline(WINDOW *, chtype, int);
 chtype	 winch(WINDOW *);
