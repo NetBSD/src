@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.2 1995/04/28 11:41:53 leo Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.3 1995/05/05 16:35:21 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -68,7 +68,7 @@ pv_entry_t	pv_table;
 /*
  * Need-to-know for kernel reload code.
  */
-static u_long	boot_ttphystart, boot_ttphysize, boot_stphysize;
+u_long	boot_ttphystart, boot_ttphysize, boot_stphysize;
 
 extern char	*esym;
 

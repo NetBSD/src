@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.4 1995/04/27 20:34:13 leo Exp $	*/
+/*	$NetBSD: machdep.c,v 1.5 1995/05/05 16:35:25 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -86,10 +86,11 @@
 #include <machine/psl.h>
 #include <machine/pte.h>
 #include <machine/iomap.h>
-#include <machine/scu.h>
 #include <dev/cons.h>
 
-/* vm_map_t buffer_map; */
+static void call_sicallbacks __P((void));
+static void alloc_sicallback __P((void));
+
 extern vm_offset_t avail_end;
 
 /*
@@ -143,6 +144,7 @@ void
 cpu_startup()
 {
 	extern	 long		Usrptsize;
+	extern	 u_long		boot_ttphysize, boot_stphysize;
 	extern	 struct map	*useriomap;
 	register unsigned	i;
 	register caddr_t	v, firstaddr;
@@ -172,7 +174,9 @@ cpu_startup()
 	 */
 	printf(version);
 	identifycpu();
-	printf("real  mem = %d (%d pages)\n",ctob(physmem),ctob(physmem)/NBPG);
+
+	i = boot_ttphysize + boot_stphysize;
+	printf("real  mem = %d (%d pages)\n", i, i/NBPG);
 
 	/*
 	 * Allocate space for system data structures.
@@ -941,6 +945,29 @@ u_short	evec;
 	       evec & 0xFFF, pc);
 }
 
+/*
+ * Simulated software interrupt handler
+ */
+softint()
+{
+	if(ssir & SIR_NET) {
+		siroff(SIR_NET);
+		cnt.v_soft++;
+		netintr();
+	}
+	if(ssir & SIR_CLOCK) {
+		siroff(SIR_CLOCK);
+		cnt.v_soft++;
+		/* XXXX softclock(&frame.f_stackadj); */
+		softclock();
+	}
+	if (ssir & SIR_CBACK) {
+		siroff(SIR_CBACK);
+		cnt.v_soft++;
+		call_sicallbacks();
+	}
+}
+
 int	*nofault;
 
 badbaddr(addr)
@@ -1013,7 +1040,7 @@ static int ncb;		/* number of callback blocks allocated */
 static int ncbd;	/* number of callback blocks dynamically allocated */
 #endif
 
-void alloc_sicallback()
+static void alloc_sicallback()
 {
 	struct si_callback	*si;
 	int					s;
@@ -1047,7 +1074,7 @@ void	*rock1, *rock2;
 	splx(s);
 
 	if(si == NULL) {
-		si = (struct si_callback *)malloc(sizeof(*si), M_TEMP, M_NOWAIT);
+		si = (struct si_callback *)malloc(sizeof(*si),M_TEMP,M_NOWAIT);
 #ifdef DIAGNOSTIC
 		if(si)
 			++ncbd;		/* count # dynamically allocated */
@@ -1070,7 +1097,7 @@ void	*rock1, *rock2;
 	 * and cause a software interrupt (spl1). This interrupt might
 	 * happen immediately, or after returning to a safe enough level.
 	 */
-	SCU->sys_int = 1;
+	setsoftcback();
 }
 
 void rem_sicallback(function)
@@ -1098,12 +1125,12 @@ void (*function) __P((void *rock1, void *rock2));
 }
 
 /* purge the list */
-void call_sicallbacks()
+static void call_sicallbacks()
 {
 	struct si_callback	*si;
-	int					s;
-	void				*rock1, *rock2;
-	void				(*function) __P((void *, void *));
+	int			s;
+	void			*rock1, *rock2;
+	void			(*function) __P((void *, void *));
 
 	do {
 		s = splhigh ();
