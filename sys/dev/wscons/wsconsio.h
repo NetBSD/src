@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.43 2001/10/02 21:03:05 mycroft Exp $ */
+/* $NetBSD: wsconsio.h,v 1.44 2001/10/24 14:07:32 augustss Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -40,7 +40,8 @@
  *	0-31	keyboard ioctls (WSKBDIO)
  *	32-63	mouse ioctls (WSMOUSEIO)
  *	64-95	display ioctls (WSDISPLAYIO)
- *	96-255	reserved for future use
+ *	96-f127	mux ioctls (WSMUXIO)
+ *	128-255	reserved for future use
  */
 
 #include <sys/types.h>
@@ -340,7 +341,7 @@ struct wsdisplay_usefontdata {
 };
 #define WSDISPLAYIO_USEFONT	_IOW('W', 80, struct wsdisplay_usefontdata)
 
-/* Replaced by WSMUX_{ADD,REMOVE}_DEVICE */
+/* Obsolete, replaced by WSMUXIO_{ADD,REMOVE}_DEVICE */
 struct wsdisplay_kbddata {
 	int op;
 #define _O_WSDISPLAY_KBD_ADD 0
@@ -365,7 +366,8 @@ struct wsdisplay_param {
 /* Mapping information retrieval. */
 
 /* Mux ioctls (96 - 127) */
-#define WSMUX_INJECTEVENT	_IOW('W', 96, struct wscons_event)
+#define WSMUXIO_INJECTEVENT	_IOW('W', 96, struct wscons_event)
+#define WSMUX_INJECTEVENT WSMUXIO_INJECTEVENT /* XXX compat */
 
 struct wsmux_device {
 	int type;
@@ -374,14 +376,17 @@ struct wsmux_device {
 #define WSMUX_MUX	3
 	int idx;
 };
-#define WSMUX_ADD_DEVICE	_IOW('W', 97, struct wsmux_device)
-#define WSMUX_REMOVE_DEVICE	_IOW('W', 98, struct wsmux_device)
+#define WSMUXIO_ADD_DEVICE	_IOW('W', 97, struct wsmux_device)
+#define WSMUX_ADD_DEVICE WSMUXIO_ADD_DEVICE /* XXX compat */
+#define WSMUXIO_REMOVE_DEVICE	_IOW('W', 98, struct wsmux_device)
+#define WSMUX_REMOVE_DEVICE WSMUXIO_REMOVE_DEVICE /* XXX compat */
 
 #define WSMUX_MAXDEV 32
 struct wsmux_device_list {
 	int ndevices;
 	struct wsmux_device devices[WSMUX_MAXDEV];
 };
-#define WSMUX_LIST_DEVICES	_IOWR('W', 99, struct wsmux_device_list)
+#define WSMUXIO_LIST_DEVICES	_IOWR('W', 99, struct wsmux_device_list)
+#define WSMUX_LIST_DEVICES WSMUXIO_LIST_DEVICES /* XXX compat */
 
 #endif /* _DEV_WSCONS_WSCONSIO_H_ */

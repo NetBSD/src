@@ -1,4 +1,4 @@
-/* $NetBSD: wsevent.c,v 1.6 2001/10/13 15:56:16 augustss Exp $ */
+/* $NetBSD: wsevent.c,v 1.7 2001/10/24 14:07:32 augustss Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsevent.c,v 1.6 2001/10/13 15:56:16 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsevent.c,v 1.7 2001/10/24 14:07:32 augustss Exp $");
 
 /*
  * Copyright (c) 1992, 1993
@@ -100,10 +100,16 @@ void
 wsevent_init(struct wseventvar *ev)
 {
 
+#ifdef DIAGNOSTIC
+	if (ev->q != NULL) {
+		printf("wsevent_init: already init\n");
+		return;
+	}
+#endif
 	ev->get = ev->put = 0;
 	ev->q = malloc((u_long)WSEVENT_QSIZE * sizeof(struct wscons_event),
-	    M_DEVBUF, M_WAITOK);
-	memset((caddr_t)ev->q, 0, WSEVENT_QSIZE * sizeof(struct wscons_event));
+		       M_DEVBUF, M_WAITOK);
+	memset(ev->q, 0, WSEVENT_QSIZE * sizeof(struct wscons_event));
 }
 
 /*
@@ -114,6 +120,31 @@ wsevent_fini(struct wseventvar *ev)
 {
 
 	free(ev->q, M_DEVBUF);
+	ev->q = NULL;
+}
+
+/*
+ * Allocate a wseventvar.
+ */
+struct wseventvar *
+wsevent_alloc(void)
+{
+	struct wseventvar *ev;
+
+	ev = malloc(sizeof(*ev), M_DEVBUF, M_WAITOK);
+	memset(ev, 0, sizeof *ev);
+	wsevent_init(ev);
+	return (ev);
+}
+
+/*
+ * Deallocate a wseventvar.
+ */
+void
+wsevent_free(struct wseventvar *ev)
+{
+	wsevent_fini(ev);
+	free(ev, M_DEVBUF);
 }
 
 /*
@@ -137,7 +168,7 @@ wsevent_read(struct wseventvar *ev, struct uio *uio, int flags)
 			return (EWOULDBLOCK);
 		}
 		ev->wanted = 1;
-		error = tsleep((caddr_t)ev, PWSEVENT | PCATCH,
+		error = tsleep(ev, PWSEVENT | PCATCH,
 		    "wsevent_read", 0);
 		if (error) {
 			splx(s);
@@ -156,7 +187,7 @@ wsevent_read(struct wseventvar *ev, struct uio *uio, int flags)
 	n = howmany(uio->uio_resid, sizeof(struct wscons_event));
 	if (cnt > n)
 		cnt = n;
-	error = uiomove((caddr_t)&ev->q[ev->get],
+	error = uiomove(&ev->q[ev->get],
 	    cnt * sizeof(struct wscons_event), uio);
 	n -= cnt;
 	/*
@@ -169,7 +200,7 @@ wsevent_read(struct wseventvar *ev, struct uio *uio, int flags)
 		return (error);
 	if (cnt > n)
 		cnt = n;
-	error = uiomove((caddr_t)&ev->q[0],
+	error = uiomove(&ev->q[0],
 	    cnt * sizeof(struct wscons_event), uio);
 	ev->get = cnt;
 	return (error);
