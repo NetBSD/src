@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.63 2002/09/13 15:27:30 mycroft Exp $	 */
+/*	$NetBSD: rtld.c,v 1.64 2002/09/19 13:59:46 christos Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -495,10 +495,14 @@ _rtld(sp, relocbase)
 	 */
 	real___progname = _rtld_objmain_sym("__progname");
 	if (real___progname) {
-		if ((*real___progname = strrchr(argv[0], '/')) == NULL)
-			(*real___progname) = argv[0];
-		else
-			(*real___progname)++;
+		if (argv[0] != NULL) {
+			if ((*real___progname = strrchr(argv[0], '/')) == NULL)
+				(*real___progname) = argv[0];
+			else
+				(*real___progname)++;
+		} else {
+			(*real___progname) = NULL;
+		}
 	}
 	real_environ = _rtld_objmain_sym("environ");
 	if (real_environ)
