@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.45 2003/10/25 09:10:35 christos Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.46 2003/11/13 11:59:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.45 2003/10/25 09:10:35 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.46 2003/11/13 11:59:46 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -315,7 +315,7 @@ pipe_create(pipep, allockva)
 	struct pipe *pipe;
 	int error;
 
-	pipe = pool_get(&pipe_pool, M_WAITOK);
+	pipe = *pipep = pool_get(&pipe_pool, M_WAITOK);
 	if (pipe == NULL)
 		return (ENOMEM);
 
@@ -332,7 +332,6 @@ pipe_create(pipep, allockva)
 	simple_lock_init(&pipe->pipe_slock);
 	lockinit(&pipe->pipe_lock, PRIBIO | PCATCH, "pipelk", 0, 0);
 
-	*pipep = pipe;
 	return (0);
 }
 
