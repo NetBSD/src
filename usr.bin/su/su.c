@@ -1,4 +1,4 @@
-/*	$NetBSD: su.c,v 1.30 1999/03/15 08:05:07 christos Exp $	*/
+/*	$NetBSD: su.c,v 1.31 1999/03/15 09:30:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)su.c	8.3 (Berkeley) 4/2/94";*/
 #else
-__RCSID("$NetBSD: su.c,v 1.30 1999/03/15 08:05:07 christos Exp $");
+__RCSID("$NetBSD: su.c,v 1.31 1999/03/15 09:30:51 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -56,9 +56,6 @@ __RCSID("$NetBSD: su.c,v 1.30 1999/03/15 08:05:07 christos Exp $");
 #include <grp.h>
 #include <paths.h>
 #include <pwd.h>
-#ifdef SHADOWPASSWORDS
-#include <shadow.h>
-#endif
 #include <stdio.h>
 #ifdef SKEY
 #include <skey.h>
@@ -104,9 +101,6 @@ main(argc, argv)
 	extern char *__progname;
 	extern char **environ;
 	struct passwd *pwd;
-#ifdef SHADOWPASSWORDS
-	struct spwd *shapwd;
-#endif
 	char *p;
 	struct group *gr;
 #ifdef BSD4_4
@@ -260,20 +254,8 @@ main(argc, argv)
 
 			} else
 #endif
-#ifdef SHADOWPASSWORDS
-			if (strcmp(pass, "x") == 0) {
-				if ((shapwd = getspnam(user)) == NULL)
-					errx(1,
-				    "Could not find shadow passwd entry for %s",
-					    user);
-				if (strcmp(shapwd->sp_pwdp,
-				    crypt(p, shapwd->sp_pwdp))) {
-					goto badlogin;
-				}
-			} else
-#endif
 			if (strcmp(pass, crypt(p, pass))) {
-#if defined(SKEY) || defined(SHADOWPASSWORDS)
+#ifdef SKEY
 badlogin:
 #endif
 				fprintf(stderr, "Sorry\n");
