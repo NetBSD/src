@@ -1,6 +1,7 @@
-#	$NetBSD: Makefile,v 1.15 1997/04/19 07:22:08 thorpej Exp $
+#	$NetBSD: Makefile,v 1.16 1997/10/12 14:21:48 lukem Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
+WARNS=	0
 PROG=	monop
 SRCS=	monop.c cards.c execute.c getinp.c houses.c jail.c misc.c morg.c \
 	print.c prop.c rent.c roll.c spec.c trade.c

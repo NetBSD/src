@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.6 1997/10/11 20:22:10 mycroft Exp $
+#	$NetBSD: Makefile.inc,v 1.7 1997/10/12 14:21:44 lukem Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 5/31/93
 
 BINOWN?=	games
@@ -9,3 +9,4 @@ SYMLINKS+=	dm /usr/games/${PROG}
 .else
 BINDIR?=	/usr/games
 .endif
+WARNS?=		1

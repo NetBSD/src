@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 1997/03/24 22:15:46 christos Exp $
+#	$NetBSD: Makefile,v 1.11 1997/10/12 14:21:47 lukem Exp $
 #	@(#)Makefile	5.12 (Berkeley) 5/30/93
 
 # EXTRA
@@ -52,6 +52,7 @@
 # NOLOG
 #	Turn off logging.
 
+WARNS=	0
 PROG=	larn
 MAN=	larn.6
 CFLAGS+=-DBSD -DVER=12 -DSUBVER=0 -DNONAP -DUIDSCORE
