@@ -1,4 +1,4 @@
-.\" $NetBSD: mount_msdos.8,v 1.21 2001/11/16 10:25:47 wiz Exp $
+.\" $NetBSD: mount_msdos.8,v 1.22 2001/11/16 11:26:56 wiz Exp $
 .\"
 .\" Copyright (c) 1993, 1994 Christopher G. Demetriou
 .\" All rights reserved.
@@ -137,7 +137,21 @@ limited to the boot block. This option enforces
 .Xr unmount 2 ,
 .Xr fstab 5 ,
 .Xr mount 8
-.Sh CAVEATS
+.Sh HISTORY
+The
+.Nm
+utility first appeared in
+.Nx 0.9 .
+Its predecessor, the
+.Ic mount_pcfs
+utility appeared in
+.Nx 0.8 ,
+and was abandoned in favor
+of the more aptly-named
+.Nm "" .
+.Sh BUGS
+Compressed partitions are not supported.
+.Pp
 The use of the
 .Fl 9
 flag could result in damaged filesystems,
@@ -152,17 +166,3 @@ will result in empty filesystems to be populated
 with short filenames only. To generate long filenames
 on empty DOS filesystems use
 .Fl l .
-.Sh HISTORY
-The
-.Nm
-utility first appeared in
-.Nx 0.9.
-Its predecessor, the
-.Ic mount_pcfs
-utility appeared in
-.Nx 0.8 ,
-and was abandoned in favor
-of the more aptly-named
-.Nm "" .
-.Sh BUGS
-Compressed partitions are not supported.
