@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.2 2004/04/17 12:46:42 cl Exp $	*/
+/*	$NetBSD: vector.S,v 1.3 2004/05/07 13:52:37 cl Exp $	*/
 /*	NetBSD: 1.13 2004/03/11 11:39:26 yamt Exp 	*/
 
 /*
@@ -1277,8 +1277,10 @@ ENTRY(hypervisor_callback)
         movl HYPERVISOR_shared_info,%esi
         xorl %eax,%eax
         movb TF_CS(%esp),%cl
-    	test $2,%cl          # slow return to ring 2 or 3
-        jne  safesti
+        test $CHK_UPL,%cl          # slow return to ring 2 or 3
+        je   safesti
+        movl CPUVAR(ILEVEL),%ebx
+        jmp  doreti_checkast
 safesti:btsl $31,4(%esi)     # reenable event callbacks
 scrit:  /**** START OF CRITICAL REGION ****/
         cmpl %eax,(%esi)
