@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.49 2000/04/06 12:49:00 mrg Exp $	*/
+/*	$NetBSD: pmap.c,v 1.50 2000/04/08 04:45:41 mrg Exp $	*/
 #undef NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define HWREF 1 
 #undef BOOT_DEBUG
@@ -1189,11 +1189,11 @@ pmap_release(pm)
 
 	s=splimp();
 	for(i=0; i<STSZ; i++)
-		if((pdir = (paddr_t *)ldxa(&pm->pm_segs[i], ASI_PHYS_CACHED))) {
+		if((pdir = (paddr_t *)(u_long)ldxa((vaddr_t)&pm->pm_segs[i], ASI_PHYS_CACHED))) {
 			for (k=0; k<PDSZ; k++) {
-				if ((ptbl = (paddr_t *)(u_long)ldxa(&pdir[k], ASI_PHYS_CACHED))) {
+				if ((ptbl = (paddr_t *)(u_long)ldxa((vaddr_t)&pdir[k], ASI_PHYS_CACHED))) {
 					for (j=0; j<PTSZ; j++) {
-						int64_t data = ldxa(&ptbl[j], ASI_PHYS_CACHED);
+						int64_t data = ldxa((vaddr_t)&ptbl[j], ASI_PHYS_CACHED);
 						if (data&TLB_V && 
 						    IS_VM_PHYSADDR(data&TLB_PA_MASK)) {
 #ifdef DEBUG
@@ -1206,14 +1206,14 @@ pmap_release(pm)
 								       data&TLB_PA_MASK);
 						}
 					}
-					vm_page_free1((vm_page_t)PHYS_TO_VM_PAGE((paddr_t)ptbl));
+					vm_page_free1((vm_page_t)PHYS_TO_VM_PAGE((paddr_t)(u_long)ptbl));
 					stxa(&pdir[k], ASI_PHYS_CACHED, NULL);
 				}
 			}
-			vm_page_free1((vm_page_t)PHYS_TO_VM_PAGE((paddr_t)pdir));
+			vm_page_free1((vm_page_t)PHYS_TO_VM_PAGE((paddr_t)(u_long)pdir));
 			stxa(&pm->pm_segs[i], ASI_PHYS_CACHED, NULL);
 		}
-	vm_page_free1((vm_page_t)PHYS_TO_VM_PAGE((paddr_t)pm->pm_segs));
+	vm_page_free1((vm_page_t)PHYS_TO_VM_PAGE((paddr_t)(u_long)pm->pm_segs));
 	pm->pm_segs = NULL;
 #ifdef NOTDEF_DEBUG
 	for (i=0; i<physmem; i++) {
@@ -1282,27 +1282,27 @@ pmap_collect(pm)
 	
 	s = splimp();
 	for (i=0; i<STSZ; i++) {
-		if ((pdir = (paddr_t *)ldxa(&pm->pm_segs[i], ASI_PHYS_CACHED))) {
+		if ((pdir = (paddr_t *)(u_long)ldxa((vaddr_t)&pm->pm_segs[i], ASI_PHYS_CACHED))) {
 			m = 0;
 			for (k=0; k<PDSZ; k++) {
-				if ((ptbl = (paddr_t *)ldxa(&pdir[k], ASI_PHYS_CACHED))) {
+				if ((ptbl = (paddr_t *)(u_long)ldxa((vaddr_t)&pdir[k], ASI_PHYS_CACHED))) {
 					m++;
 					n = 0;
 					for (j=0; j<PTSZ; j++) {
-						int64_t data = ldxa(&ptbl[j], ASI_PHYS_CACHED);
+						int64_t data = ldxa((vaddr_t)&ptbl[j], ASI_PHYS_CACHED);
 						if (data&TLB_V)
 							n++;
 					}
 					if (!n) {
 						/* Free the damn thing */
-						vm_page_free1((vm_page_t)PHYS_TO_VM_PAGE((paddr_t)ptbl));
+						vm_page_free1((vm_page_t)PHYS_TO_VM_PAGE((paddr_t)(u_long)ptbl));
 						stxa(&pdir[k], ASI_PHYS_CACHED, NULL);
 					}
 				}
 			}
 			if (!m) {
 				/* Free the damn thing */
-				vm_page_free1((vm_page_t)PHYS_TO_VM_PAGE((paddr_t)pdir));
+				vm_page_free1((vm_page_t)PHYS_TO_VM_PAGE((paddr_t)(u_long)pdir));
 				stxa(&pm->pm_segs[i], ASI_PHYS_CACHED, NULL);
 			}
 		}
@@ -2129,14 +2129,14 @@ pmap_extract(pm, va, pap)
 		pa = (pseg_get(pm, va)&TLB_PA_MASK)+(va&PGOFSET);
 #ifdef DEBUG
 		if (pmapdebug & PDB_EXTRACT) {
-			pa = ldxa(&pm->pm_segs[va_to_seg(va)], ASI_PHYS_CACHED);
+			pa = ldxa((vaddr_t)&pm->pm_segs[va_to_seg(va)], ASI_PHYS_CACHED);
 			printf("pmap_extract: va=%p segs[%ld]=%lx", va, (long)va_to_seg(va), (long)pa);
 			if (pa) {
-				pa = ldxa(&((paddr_t*)pa)[va_to_dir(va)], ASI_PHYS_CACHED);
+				pa = (paddr_t)ldxa((vaddr_t)&((paddr_t*)(u_long)pa)[va_to_dir(va)], ASI_PHYS_CACHED);
 				printf(" segs[%ld][%ld]=%lx", va_to_seg(va), (long)va_to_dir(va), (long)pa);
 			}
 			if (pa)	{
-				pa = ldxa(&((paddr_t*)pa)[va_to_pte(va)], ASI_PHYS_CACHED);
+				pa = (paddr_t)ldxa((vaddr_t)&((paddr_t*)(u_long)pa)[va_to_pte(va)], ASI_PHYS_CACHED);
 				printf(" segs[%ld][%ld][%ld]=%lx", (long)va_to_seg(va), 
 				       (long)va_to_dir(va), (long)va_to_pte(va), (long)pa);
 			}
@@ -3056,11 +3056,11 @@ pmap_count_res(pm)
 	s = splimp();
 	n = 0;
 	for (i=0; i<STSZ; i++) {
-		if((pdir = (paddr_t *)ldxa(&pm->pm_segs[i], ASI_PHYS_CACHED))) {
+		if((pdir = (paddr_t *)(u_long)ldxa((vaddr_t)&pm->pm_segs[i], ASI_PHYS_CACHED))) {
 			for (k=0; k<PDSZ; k++) {
-				if ((ptbl = (paddr_t *)ldxa(&pdir[k], ASI_PHYS_CACHED))) {
+				if ((ptbl = (paddr_t *)(u_long)ldxa((vaddr_t)&pdir[k], ASI_PHYS_CACHED))) {
 					for (j=0; j<PTSZ; j++) {
-						int64_t data = ldxa(&ptbl[j], ASI_PHYS_CACHED);
+						int64_t data = (int64_t)ldxa((vaddr_t)&ptbl[j], ASI_PHYS_CACHED);
 						if (data&TLB_V)
 							n++;
 					}
