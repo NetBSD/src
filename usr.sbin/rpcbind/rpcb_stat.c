@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcb_stat.c,v 1.2 2000/07/04 20:27:40 matt Exp $	*/
+/*	$NetBSD: rpcb_stat.c,v 1.3 2003/10/21 02:50:41 fvdl Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -114,7 +114,7 @@ rpcbs_getaddr(rpcvers_t rtype, rpcprog_t prog, rpcvers_t vers, char *netid,
 			return;
 		if ((al->prog == prog) && (al->vers == vers) &&
 		    (strcmp(al->netid, netid) == 0)) {
-			if ((uaddr == NULL) || (uaddr[0] == NULL))
+			if ((uaddr == NULL) || (uaddr[0] == 0))
 				al->failure++;
 			else
 				al->success++;
@@ -132,7 +132,7 @@ rpcbs_getaddr(rpcvers_t rtype, rpcprog_t prog, rpcvers_t vers, char *netid,
 	al->prog = prog;
 	al->vers = vers;
 	al->netid = nconf->nc_netid;
-	if ((uaddr == NULL) || (uaddr[0] == NULL)) {
+	if ((uaddr == NULL) || (uaddr[0] == 0)) {
 		al->failure = 1;
 		al->success = 0;
 	} else {
