@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.7 1995/01/09 09:20:49 mycroft Exp $	*/
+/*	$NetBSD: mem.c,v 1.8 1995/01/09 11:16:50 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -99,8 +99,10 @@ mmrw(dev, uio, flags)
 			v = uio->uio_offset;
 #ifndef DEBUG
 			/* allow reads only in RAM (except for DEBUG) */
-			if (v >= 0xFFFFFFFC || v < lowram)
-				return (EFAULT);
+			if (v >= 0xFFFFFFFC || v < lowram) {
+				error = EFAULT;
+				goto unlock;
+			}
 #endif
 			pmap_enter(kernel_pmap, (vm_offset_t)vmmap,
 			    trunc_page(v), uio->uio_rw == UIO_READ ?
@@ -166,6 +168,7 @@ mmrw(dev, uio, flags)
 		uio->uio_resid -= c;
 	}
 	if (minor(dev) == 0) {
+unlock:
 		if (physlock > 1)
 			wakeup((caddr_t)&physlock);
 		physlock = 0;
