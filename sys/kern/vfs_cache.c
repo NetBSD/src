@@ -31,17 +31,17 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vfs_cache.c	7.8 (Berkeley) 2/28/91
- *	$Id: vfs_cache.c,v 1.3 1993/09/07 15:41:10 ws Exp $
+ *	$Id: vfs_cache.c,v 1.4 1993/12/18 04:22:39 mycroft Exp $
  */
 
-#include "param.h"
-#include "systm.h"
-#include "time.h"
-#include "mount.h"
-#include "vnode.h"
-#include "namei.h"
-#include "errno.h"
-#include "malloc.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/time.h>
+#include <sys/mount.h>
+#include <sys/vnode.h>
+#include <sys/namei.h>
+#include <sys/errno.h>
+#include <sys/malloc.h>
 
 /*
  * Name caching works as follows:

@@ -8,12 +8,12 @@
 
 #ifdef SYSVSEM
 
-#include "param.h"
-#include "systm.h"
-#include "kernel.h"
-#include "proc.h"
-#include "sem.h"
-#include "malloc.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/kernel.h>
+#include <sys/proc.h>
+#include <sys/sem.h>
+#include <sys/malloc.h>
 
 static int	semctl(), semget(), semop(), semconfig();
 int	(*semcalls[])() = { semctl, semget, semop, semconfig };

@@ -19,16 +19,16 @@
  * 4. The name of Theo de Raadt may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
- *	$Id: tty_subr.c,v 1.2 1993/10/13 03:15:57 deraadt Exp $
+ *	$Id: tty_subr.c,v 1.3 1993/12/18 04:22:19 mycroft Exp $
  */
 
-#include "param.h"
-#include "systm.h"
-#include "buf.h"
-#include "ioctl.h"
-#include "tty.h"
-#include "clist.h"
-#include "malloc.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/buf.h>
+#include <sys/ioctl.h>
+#include <sys/tty.h>
+#include <sys/clist.h>
+#include <sys/malloc.h>
 
 /*
  * At compile time, choose:

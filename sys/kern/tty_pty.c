@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)tty_pty.c	7.21 (Berkeley) 5/30/91
- *	$Id: tty_pty.c,v 1.15 1993/11/15 09:17:05 deraadt Exp $
+ *	$Id: tty_pty.c,v 1.16 1993/12/18 04:22:16 mycroft Exp $
  */
 
 /*
@@ -41,17 +41,17 @@
 #include "pty.h"
 
 #if NPTY > 0
-#include "param.h"
-#include "systm.h"
-#include "ioctl.h"
-#include "select.h"
-#include "tty.h"
-#include "conf.h"
-#include "file.h"
-#include "proc.h"
-#include "uio.h"
-#include "kernel.h"
-#include "vnode.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/ioctl.h>
+#include <sys/select.h>
+#include <sys/tty.h>
+#include <sys/conf.h>
+#include <sys/file.h>
+#include <sys/proc.h>
+#include <sys/uio.h>
+#include <sys/kernel.h>
+#include <sys/vnode.h>
 
 #if NPTY == 1
 #undef NPTY

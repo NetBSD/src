@@ -38,7 +38,7 @@
  * from: Utah $Hdr: uipc_shm.c 1.9 89/08/14$
  *
  *	from: @(#)sysv_shm.c	7.15 (Berkeley) 5/13/91
- *	$Id: sysv_ipc.c,v 1.1 1993/11/14 13:22:58 cgd Exp $
+ *	$Id: sysv_ipc.c,v 1.2 1993/12/18 04:21:46 mycroft Exp $
  */
 
 /*
@@ -63,12 +63,12 @@
 
 #ifdef SYSVIPC
 
-#include "param.h"
-#include "systm.h"
-#include "kernel.h"
-#include "proc.h"
-#include "ipc.h"
-#include "shm.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/kernel.h>
+#include <sys/proc.h>
+#include <sys/ipc.h>
+#include <sys/shm.h>
 
 /*
  * Perform access checking.

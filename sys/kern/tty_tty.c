@@ -31,20 +31,20 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)tty_tty.c	7.15 (Berkeley) 5/28/91
- *	$Id: tty_tty.c,v 1.6 1993/11/24 03:40:10 deraadt Exp $
+ *	$Id: tty_tty.c,v 1.7 1993/12/18 04:22:22 mycroft Exp $
  */
 
 /*
  * Indirect driver for controlling tty.
  */
-#include "param.h"
-#include "systm.h"
-#include "conf.h"
-#include "ioctl.h"
-#include "tty.h"
-#include "proc.h"
-#include "vnode.h"
-#include "file.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/conf.h>
+#include <sys/ioctl.h>
+#include <sys/tty.h>
+#include <sys/proc.h>
+#include <sys/vnode.h>
+#include <sys/file.h>
 
 #define cttyvp(p) ((p)->p_flag&SCTTY ? (p)->p_session->s_ttyvp : NULL)
 

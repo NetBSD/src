@@ -31,18 +31,18 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)uipc_domain.c	7.9 (Berkeley) 3/4/91
- *	$Id: uipc_domain.c,v 1.4 1993/06/27 06:01:59 andrew Exp $
+ *	$Id: uipc_domain.c,v 1.5 1993/12/18 04:22:23 mycroft Exp $
  */
 
 #include <sys/cdefs.h>
-#include "param.h"
-#include "systm.h"
-#include "socket.h"
-#include "protosw.h"
-#include "domain.h"
-#include "mbuf.h"
-#include "time.h"
-#include "kernel.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/socket.h>
+#include <sys/protosw.h>
+#include <sys/domain.h>
+#include <sys/mbuf.h>
+#include <sys/time.h>
+#include <sys/kernel.h>
 
 #define	ADDDOMAIN(x)	{ \
 	extern struct domain __CONCAT(x,domain); \
