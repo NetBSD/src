@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.126 2002/07/21 15:32:18 hannken Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.127 2002/07/24 02:55:22 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -114,7 +114,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.126 2002/07/21 15:32:18 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.127 2002/07/24 02:55:22 oster Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -3268,7 +3268,9 @@ rf_auto_config_set(cset,unit)
 	int raidID;
 	int retcode;
 
+#if DEBUG
 	printf("RAID autoconfigure\n");
+#endif
 
 	retcode = 0;
 	*unit = -1;
@@ -3321,7 +3323,11 @@ rf_auto_config_set(cset,unit)
 		printf("(Out of RAID devs!)\n");
 		return(1);
 	}
+
+#if DEBUG
 	printf("Configuring raid%d:\n",raidID);
+#endif
+
 	raidPtr = raidPtrs[raidID];
 
 	/* XXX all this stuff should be done SOMEWHERE ELSE! */
