@@ -1,4 +1,4 @@
-/*	$NetBSD: if_uba.c,v 1.4 1995/02/13 00:42:30 ragge Exp $	*/
+/*	$NetBSD: if_uba.c,v 1.5 1995/04/11 06:16:38 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -182,28 +182,18 @@ if_ubaalloc(ifu, ifrw, nmr)
  * changed when remapping the transmit buffers).
  */
 struct mbuf *
-if_ubaget(ifu, ifr, totlen, off, ifp)
+if_ubaget(ifu, ifr, totlen, ifp)
 	struct ifubinfo *ifu;
 	register struct ifrw *ifr;
 	register int totlen;
-	int off;
 	struct ifnet *ifp;
 {
 	struct mbuf *top, **mp;
 	register struct mbuf *m;
 	register caddr_t cp = ifr->ifrw_addr + ifu->iff_hlen, pp;
 	register int len;
-	caddr_t epkt = cp + totlen;
 	top = 0;
 	mp = &top;
-	/*
-	 * Skip the trailer header (type and trailer length).
-	 */
-	if (off) {
-		off += 2 * sizeof(u_short);
-		totlen -= 2 * sizeof(u_short);
-		cp += off;
-	}
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == 0){
 		return ((struct mbuf *)NULL);
@@ -225,7 +215,7 @@ if_ubaget(ifu, ifr, totlen, off, ifp)
 			}
 			m->m_len = MLEN;
 		}
-		len = min(totlen, epkt - cp);
+		len = totlen;
 		if (len >= MINCLSIZE) {
 			struct pte *cpte, *ppte;
 			int x, *ip, i;
@@ -276,8 +266,6 @@ nocopy:
 		*mp = m;
 		mp = &m->m_next;
 		totlen -= len;
-		if (cp == epkt)
-			cp = ifr->ifrw_addr + ifu->iff_hlen;
 	}
 out:
 	if (ifr->ifrw_flags & IFRW_W){
