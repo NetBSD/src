@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.13 2003/04/02 04:22:03 thorpej Exp $	*/
+/*	$NetBSD: cpu.c,v 1.14 2003/06/13 04:05:26 msaitoh Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -59,6 +59,7 @@ static struct cputab models[] = {
 	{ PVR_401G2 >> 16, "401G2" },
 	{ PVR_403 >> 16, "403" },
 	{ PVR_405GP >> 16, "405GP" },
+	{ PVR_405GPR >> 16, "405GPr" },
 	{ 0,		    NULL }
 };
 
@@ -211,6 +212,12 @@ cpu_probe_cache()
 		curcpu()->ci_ci.dcache_size = 8192;
 		curcpu()->ci_ci.dcache_line_size = 32;
 		curcpu()->ci_ci.icache_size = 8192;
+		curcpu()->ci_ci.icache_line_size = 32;
+		break;
+	case PVR_405GPR:
+		curcpu()->ci_ci.dcache_size = 16384;
+		curcpu()->ci_ci.dcache_line_size = 32;
+		curcpu()->ci_ci.icache_size = 16384;
 		curcpu()->ci_ci.icache_line_size = 32;
 		break;
 	default:
