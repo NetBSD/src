@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.4 1998/08/15 03:02:41 mycroft Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.5 1998/10/15 14:39:53 tsubai Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -54,6 +54,7 @@ typedef int pci_intr_handle_t;
 struct pci_bridge {
 	u_int *addr;
 	u_int *data;
+	int bus;
 	bus_space_tag_t iot;
 	pci_chipset_tag_t pc;
 };
