@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.6 1997/04/04 15:36:01 augustss Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.7 1997/04/06 23:49:32 augustss Exp $	*/
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
@@ -242,8 +242,8 @@ oss_ioctl_audio(p, uap, retval)
 struct audiodevinfo {
 	int done;
 	dev_t dev;
-	u_int16_t devmap[OSS_SOUND_MIXER_NRDEVICES], 
-	          rdevmap[NETBSD_MAXDEVS];
+	int16_t devmap[OSS_SOUND_MIXER_NRDEVICES], 
+	        rdevmap[NETBSD_MAXDEVS];
         u_long devmask, recmask, stereomask;
 	u_long caps, source;
 };
@@ -438,18 +438,34 @@ oss_ioctl_mixer(p, uap, retval)
 		if (di->source == -1)
 			return EINVAL;
 		mc.dev = di->source;
-		mc.type = AUDIO_MIXER_ENUM;
 		error = copyin(SCARG(uap, data), &idat, sizeof idat);
 		if (error)
 			return error;
-		for(i = 0; i < OSS_SOUND_MIXER_NRDEVICES; i++)
-			if (idat & (1 << i))
-				mc.un.ord = di->devmap[i];
-		return ioctlf(fp, AUDIO_MIXER_READ, (caddr_t)&mc, p);
+		if (di->caps & OSS_SOUND_CAP_EXCL_INPUT) {
+			mc.type = AUDIO_MIXER_ENUM;
+			for(i = 0; i < OSS_SOUND_MIXER_NRDEVICES; i++)
+				if (idat & (1 << i))
+					break;
+			if (i >= OSS_SOUND_MIXER_NRDEVICES ||
+			    di->devmap[i] == -1)
+				return EINVAL;
+			mc.un.ord = di->devmap[i];
+		} else {
+			mc.type = AUDIO_MIXER_SET;
+			for(i = 0; i < OSS_SOUND_MIXER_NRDEVICES; i++)
+				if (idat & (1 << i)) {
+					if (di->devmap[i] == -1)
+						return EINVAL;
+					mc.un.mask |= 1 << di->devmap[i];
+				}
+		}
+		return ioctlf(fp, AUDIO_MIXER_WRITE, (caddr_t)&mc, p);
 	default:
 		if (OSS_MIXER_READ(OSS_SOUND_MIXER_FIRST) <= com &&
 		    com < OSS_MIXER_READ(OSS_SOUND_MIXER_NRDEVICES)) {
 			n = OSS_GET_DEV(com);
+			if (di->devmap[n] == -1)
+				return EINVAL;
 			mc.dev = di->devmap[n];
 			mc.type = AUDIO_MIXER_VALUE;
 		    doread:
@@ -472,6 +488,8 @@ oss_ioctl_mixer(p, uap, retval)
 		} else if (OSS_MIXER_WRITE(OSS_SOUND_MIXER_FIRST) <= com &&
 			   com < OSS_MIXER_WRITE(OSS_SOUND_MIXER_NRDEVICES)) {
 			n = OSS_GET_DEV(com);
+			if (di->devmap[n] == -1)
+				return EINVAL;
 			error = copyin(SCARG(uap, data), &idat, sizeof idat);
 			if (error)
 				return error;
