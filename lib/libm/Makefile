@@ -1,5 +1,5 @@
 #  @(#)Makefile 5.1beta 93/09/24 
-#  $Id: Makefile,v 1.18 1994/03/10 18:13:32 jtc Exp $
+#  $Id: Makefile,v 1.19 1994/03/11 01:34:18 jtc Exp $
 # 
 #  ====================================================
 #  Copyright (C) 1993 by Sun Microsystems, Inc. All rights reserved.
@@ -95,7 +95,7 @@ SRCS=${COMMON_SRCS}
 
 MAN3+=	acos.0 acosh.0 asin.0 asinh.0 atan.0 atan2.0 atanh.0 ceil.0 \
 	cos.0 cosh.0 erf.0 exp.0 fabs.0 floor.0 fmod.0 hypot.0 ieee.0 \
-	infnan.0 j0.0 lgamma.0 math.0 rint.0 sin.0 sinh.0 sqrt.0 \
+	j0.0 lgamma.0 math.0 rint.0 sin.0 sinh.0 sqrt.0 \
 	tan.0 tanh.0
 
 MLINKS+=erf.3 erfc.3
