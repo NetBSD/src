@@ -1,4 +1,4 @@
-.\" $NetBSD: main,v 1.6.2.20 2000/02/13 20:14:52 he Exp $
+.\" $NetBSD: main,v 1.6.2.21 2000/02/13 22:58:17 he Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -205,6 +205,12 @@ so.
 .It
 An implementation of the System V user management utilities has been
 added.
+.It
+The name ``errno'' is now always a macro which expands to a function
+call.  This is done to ease the integration of thread libraries with
+the code in both system and third-party libraries.  Please include
+.Aq errno.h
+to access the correct definition of ``errno''.
 .It
 A utility for making temporary files for shell scripts has been
 added, see
