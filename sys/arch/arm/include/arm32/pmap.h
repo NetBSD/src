@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.10 2001/06/22 09:12:11 chris Exp $	*/
+/*	$NetBSD: pmap.h,v 1.11 2001/07/28 18:12:44 chris Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -35,6 +35,34 @@
 
 #include <machine/cpufunc.h>
 #include <machine/pte.h>
+
+/*
+ * a pmap describes a processes' 4GB virtual address space.  this
+ * virtual address space can be broken up into 4096 1MB regions which
+ * are described by PDEs in the PDP.  the PDEs are defined as follows:
+ *
+ * (ranges are inclusive -> exclusive, just like vm_map_entry start/end)
+ * (the following assumes that KERNBASE is 0xf0000000)
+ *
+ * PDE#s	VA range		usage
+ * 0->3835	0x0 -> 0xefc00000	user address space
+ * 3836->3839	0xefc00000->		recursive mapping of PDP (used for
+ *			0xf0000000	linear mapping of PTPs)
+ * 3840->3851	0xf0000000->		kernel text address space (constant
+ *			0xf0c00000	across all pmap's/processes)
+ * 3852->3855	0xf0c00000->		"alternate" recursive PDP mapping
+ *			0xf1000000	(for other pmaps)
+ * 3856->4095	0xf1000000->		KVM and device mappings, constant
+ *			0x00000000	across all pmaps
+ *
+ * The maths works out that to then map each 1MB block into 4k pages requires
+ * 256 entries, of 4 bytes each, totaling 1k per 1MB.  However as we use 4k
+ * pages we allocate 4 PDE's at a time, allocating the same access permissions
+ * to them all.  This means we only need 1024 entries in the page table page
+ * table, IE we use 1 4k page to linearly map all the other page tables used.
+ */
+
+
 
 /*
  * Data structures used by pmap
@@ -75,7 +103,7 @@ typedef struct pmap *pmap_t;
  */
 typedef struct pv_entry {
 	struct pv_entry *pv_next;       /* next pv_entry */
-	pmap_t          pv_pmap;        /* pmap where mapping lies */
+	struct pmap     *pv_pmap;        /* pmap where mapping lies */
 	vaddr_t         pv_va;          /* virtual address for mapping */
 	int             pv_flags;       /* flags */
 } *pv_entry_t;
@@ -137,8 +165,7 @@ typedef struct {
  * Commonly referenced structures
  */
 extern pv_entry_t	pv_table;	/* Phys to virt mappings, per page. */
-extern pmap_t		kernel_pmap;	/* pmap pointer used for the kernel */
-extern struct pmap	kernel_pmap_store;  /* kernel_pmap points to this */
+extern struct pmap	kernel_pmap_store;
 extern int		pmap_debug_level; /* Only exists if PMAP_DEBUG */
 
 /*
@@ -165,10 +192,10 @@ extern void pmap_procwr __P((struct proc *, vaddr_t, int));
  */
 extern void pmap_bootstrap __P((pd_entry_t *, pv_addr_t));
 extern void pmap_debug	__P((int));
-extern int pmap_handled_emulation __P((pmap_t, vaddr_t));
-extern int pmap_modified_emulation __P((pmap_t, vaddr_t));
+extern int pmap_handled_emulation __P((struct pmap *, vaddr_t));
+extern int pmap_modified_emulation __P((struct pmap *, vaddr_t));
 extern void pmap_postinit __P((void));
-extern pt_entry_t *pmap_pte __P((pmap_t, vaddr_t));
+extern pt_entry_t *pmap_pte __P((struct pmap *, vaddr_t));
 
 #endif	/* _KERNEL */
 
