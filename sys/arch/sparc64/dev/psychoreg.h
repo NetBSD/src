@@ -1,17 +1,9 @@
-/*	$NetBSD: psychoreg.h,v 1.1 1999/06/04 13:42:15 mrg Exp $ */
+/*	$NetBSD: psychoreg.h,v 1.2 1999/06/07 05:40:08 mrg Exp $ */
 
 /*
- * Copyright (c) 1992, 1993
- *	The Regents of the University of California.  All rights reserved.
- *
- * This software was developed by the Computer Systems Engineering group
- * at Lawrence Berkeley Laboratory under DARPA contract BG 91-66 and
- * contributed to Berkeley.
- *
- * All advertising materials mentioning features or use of this software
- * must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Lawrence Berkeley Laboratory.
+ * Copyright (c) 1998, 1999 Eduardo E. Horvath
+ * Copyright (c) 1999 Matthew R. Green
+ * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -21,29 +13,21 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
+ * 3. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+ * AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	@(#)sbusreg.h	8.1 (Berkeley) 6/11/93
  */
-
 #ifndef _SPARC64_DEV_PSYCHOREG_H_
 #define _SPARC64_DEV_PSYCHOREG_H_
 
@@ -231,20 +215,21 @@ struct psychoreg {
 	 * NB: config and I/O space can use 1-4 byte accesses, not 8 byte accesses.
 	 * Memory space can use any sized accesses.
 	 *
-	 * Note that the SUNW,sabre (APB) has slightly differrent addresses
+	 * Note that the SUNW,sabre/SUNW,simba combinations found on the
+	 * Ultra5 and Ultra10 machines uses slightly differrent addresses
 	 * than the above.  This is mostly due to the fact that the APB is
 	 * a multi-function PCI device with two PCI bridges, and the U2P is
-	 * two separate PCI devices (also PCI bridges).  It uses the same
-	 * PCI configuration space, though the configuration header for each
-	 * PCI bus is located differently due to the SUNW,simba PCI busses
-	 * being function 0 and function 1 of the APB, whereas the psycho's
-	 * are each their own PCI device.  The I/O and memory spaces are each
-	 * split into 8 equally sized areas (8x2MB blocks for I/O space, and
-	 * 8x512MB blocks for memory space).  These are allocated in to either
-	 * PCI A or PCI B, or neither in the APB's `I/O Address Map Register
-	 * A/B' (0xde) and `Memory Address Map Register A/B' (0xdf) registers
-	 * of each simba.  We must ensure that both of the following are
-	 * correct (the prom should do this for us):
+	 * two separate PCI bridges.  It uses the same PCI configuration
+	 * space, though the configuration header for each PCI bus is
+	 * located differently due to the SUNW,simba PCI busses being
+	 * function 0 and function 1 of the APB, whereas the psycho's are
+	 * each their own PCI device.  The I/O and memory spaces are each
+	 * split into 8 equally sized areas (8x2MB blocks for I/O space,
+	 * and 8x512MB blocks for memory space).  These are allocated in to
+	 * either PCI A or PCI B, or neither in the APB's `I/O Address Map
+	 * Register A/B' (0xde) and `Memory Address Map Register A/B' (0xdf)
+	 * registers of each simba.  We must ensure that both of the
+	 * following are correct (the prom should do this for us):
 	 *
 	 *    (PCI A Memory Address Map) & (PCI B Memory Address Map) == 0
 	 *
@@ -273,8 +258,9 @@ struct psychoreg {
  */
 
 /*
- * For the physical adddresses split into 3 32 bit values, we deocde them
- * like the following (PCI Bus binding 2.0, 2.2.1.1 Numerical Representation)
+ * For the physical adddresses split into 3 32 bit values, we deocde
+ * them like the following (IEEE1275 PCI Bus binding 2.0, 2.2.1.1
+ * Numerical Representation):
  *
  * 	phys.hi cell:	npt000ss bbbbbbbb dddddfff rrrrrrrr
  * 	phys.mid cell:	hhhhhhhh hhhhhhhh hhhhhhhh hhhhhhhh
