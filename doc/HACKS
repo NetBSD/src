@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.32.2.2 2004/05/15 13:35:18 tron Exp $
+# $NetBSD: HACKS,v 1.32.2.3 2004/08/11 19:52:10 jmc Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -94,6 +94,20 @@ descr
 	hack forces NetBSD 1.6 and later systems to also include <stdint.h>
 	to get the relevant definitions.  This hack should be backed out
 	when all platforms have switched away from GCC2.
+kcah
+
+hack	gcc-strict-aliasing
+cdate	6 August 2004
+who	junyoung
+pr	26516
+file	src/usr.sbin/racoon/racoon/Makefile : 1.21
+descr
+	GCC issues a warning "dereferencing type-punned pointer will break
+	strict-aliasing rules" when compiling
+	crypto/dist/kame/racoon/crypto/openssl.c with -O[23s]. Note that this
+	is due to invalid use of type casting in the code and not a compiler
+	bug. Once a new release of KAME with a proper fix applied is imported
+	this should be backed out.
 kcah
 
 
