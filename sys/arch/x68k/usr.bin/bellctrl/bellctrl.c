@@ -1,10 +1,11 @@
-/*	$NetBSD: bellctrl.c,v 1.5 2003/05/17 09:43:58 isaki Exp $	*/
+/*	$NetBSD: bellctrl.c,v 1.6 2003/05/17 09:55:43 isaki Exp $	*/
 
 /*
  * bellctrl - OPM bell controller (for NetBSD/X680x0)
  * Copyright (c)1995 ussy.
  */
 
+#include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
@@ -37,7 +38,6 @@ void set_bell_dur();
 void set_voice_param();
 void set_bell_param();
 int usage();
-int error();
 
 int
 main(int argc, char **argv)
@@ -195,17 +195,17 @@ set_voice_param(char *path, int flag)
 	} else {
 		if ((fd = open(path, 0)) >= 0) {
 			if (read(fd, &voice, sizeof(voice)) != sizeof(voice))
-				error("cannot read voice parameter.");
+				err(1, "cannot read voice parameter");
 			close(fd);
 		} else {
-			error("cannot open voice parameter.");
+			err(1, "cannot open voice parameter");
 		}
 	}
 
 	if ((fd = open("/dev/bell", O_RDWR)) < 0)
-		error("cannot open /dev/bell");
+		err(1, "cannot open /dev/bell");
 	if (ioctl(fd, BELLIOCSVOICE, &voice))
-		error("ioctl BELLIOCSVOICE failed");
+		err(1, "ioctl BELLIOCSVOICE failed");
 
 	close(fd);
 }
@@ -217,9 +217,9 @@ set_bell_param(void)
 	struct bell_info param;
 
 	if ((fd = open("/dev/bell", O_RDWR)) < 0)
-		error("cannot open /dev/bell");
+		err(1, "cannot open /dev/bell");
 	if (ioctl(fd, BELLIOCGPARAM, &param))
-		error("ioctl BELLIOCGPARAM failed.");
+		err(1, "ioctl BELLIOCGPARAM failed");
 
 	if (values.volume == DEFAULT)
 		values.volume = param.volume;
@@ -229,7 +229,7 @@ set_bell_param(void)
 		values.msec = param.msec;
 
 	if (ioctl(fd, BELLIOCSPARAM, &values))
-		error("ioctl BELLIOCSPARAM failed.");
+		err(1, "ioctl BELLIOCSPARAM failed");
 
 	close(fd);
 }
@@ -254,11 +254,4 @@ usage(char *fmt, char *arg)
 	fprintf(stderr, "	To set voice parameter:\n");
 	fprintf(stderr, "\t-v voicefile\n");
 	exit(0);
-}
-
-int
-error(char *message)
-{
-	fprintf(stderr, "%s: %s\n", progName, message);
-	exit(1);
 }
