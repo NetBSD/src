@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 1998/03/05 15:03:20 tsubai Exp $
+#	$NetBSD: Makefile,v 1.2 1998/06/12 23:22:41 cgd Exp $
 
 # Makefile for newsmips tags file
 
@@ -25,5 +25,7 @@ tags:
 links:
 	-for i in ${DNEWSMIPS}; do \
 	    cd $$i && rm -f tags; ln -s ../tags tags; done
+
+SUBDIR=	include
 
 .include <bsd.subdir.mk>

@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.2 1998/01/05 20:51:39 perry Exp $
+#	$NetBSD: Makefile,v 1.3 1998/06/12 23:22:35 cgd Exp $
 #
 NOPROG=	noprog
 NOMAN=	noman
 
-SUBDIR=	stand
+SUBDIR=	include stand
 
 obj:	_SUBDIRUSE
 

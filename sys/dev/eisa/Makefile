@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.1 1996/02/26 23:46:17 cgd Exp $
+#	$NetBSD: Makefile,v 1.2 1998/06/12 23:22:49 cgd Exp $
 
-AWK=	awk
+INCSDIR= /usr/include/dev/eisa
 
-eisadevs.h eisadevs_data.h: eisadevs devlist2h.awk
-	/bin/rm -f eisadevs.h eisadevs_data.h
-	${AWK} -f devlist2h.awk eisadevs
+INCS=	ahbreg.h eisadevs.h eisadevs_data.h eisareg.h eisavar.h
+
+.include <bsd.kinc.mk>
