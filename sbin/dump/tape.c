@@ -1,4 +1,4 @@
-/*	$NetBSD: tape.c,v 1.28 2001/05/28 01:09:55 lukem Exp $	*/
+/*	$NetBSD: tape.c,v 1.29 2001/08/14 05:44:15 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.4 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: tape.c,v 1.28 2001/05/28 01:09:55 lukem Exp $");
+__RCSID("$NetBSD: tape.c,v 1.29 2001/08/14 05:44:15 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -97,7 +97,7 @@ static	void tperror(int);
  * Concurrent dump mods (Caltech) - disk block reading and tape writing
  * are exported to several slave processes.  While one slave writes the
  * tape, the others read disk blocks; they pass control of the tape in
- * a ring via signals. The parent process traverses the filesystem and
+ * a ring via signals. The parent process traverses the file system and
  * sends writeheader()'s and lists of daddr's to the slaves via pipes.
  * The following structure defines the instruction packets sent to slaves.
  */
