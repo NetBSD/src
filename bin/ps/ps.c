@@ -1,4 +1,4 @@
-/*	$NetBSD: ps.c,v 1.50 2003/08/07 09:05:24 agc Exp $	*/
+/*	$NetBSD: ps.c,v 1.51 2004/01/11 18:55:33 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: ps.c,v 1.50 2003/08/07 09:05:24 agc Exp $");
+__RCSID("$NetBSD: ps.c,v 1.51 2004/01/11 18:55:33 jdolecek Exp $");
 #endif
 #endif /* not lint */
 
@@ -522,7 +522,6 @@ pick_representative_lwp(ki, kl, nlwps)
 		if (suspended != -1)
 			return &kl[suspended];
 		break;
-	case SDEAD:
 	case SZOMB:
 		/* First will do */
 		return kl;

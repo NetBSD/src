@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.79 2003/08/07 09:05:24 agc Exp $	*/
+/*	$NetBSD: print.c,v 1.80 2004/01/11 18:55:33 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.79 2003/08/07 09:05:24 agc Exp $");
+__RCSID("$NetBSD: print.c,v 1.80 2004/01/11 18:55:33 jdolecek Exp $");
 #endif
 #endif /* not lint */
 
@@ -1042,7 +1042,7 @@ getpcpu(k)
 
 	/* XXX - I don't like this */
 	if (k->p_swtime == 0 || (k->p_flag & L_INMEM) == 0 ||
-	    k->p_stat == SZOMB || k->p_stat == SDEAD)
+	    k->p_stat == SZOMB)
 		return (0.0);
 	if (rawcpu)
 		return (100.0 * fxtofl(k->p_pctcpu));
