@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.160 2003/04/11 22:02:32 nathanw Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.161 2003/06/09 07:46:20 simonb Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -119,7 +119,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.160 2003/04/11 22:02:32 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.161 2003/06/09 07:46:20 simonb Exp $");
 
 #include "opt_cputype.h"
 
@@ -1470,15 +1470,15 @@ savefpregs(l)
 	 * turnoff interrupts enabling CP1 to read FPCSR register.
 	 */
 	__asm __volatile (
-		".set noreorder		;"
-		".set noat		;"
-		"mfc0	%0, $12		;"
-		"li	$1, %2		;"
-		"mtc0	$1, $12		;"
+		".set noreorder					\n\t"
+		".set noat					\n\t"
+		"mfc0	%0, $" ___STRING(MIPS_COP_0_STATUS) "	\n\t"
+		"li	$1, %2					\n\t"
+		"mtc0	$1, $" ___STRING(MIPS_COP_0_STATUS) "	\n\t"
 		___STRING(COP0_HAZARD_FPUENABLE)
-		"cfc1	%1, $31		;"
-		"cfc1	%1, $31		;"
-		".set reorder		;"
+		"cfc1	%1, $31					\n\t"
+		"cfc1	%1, $31					\n\t"
+		".set reorder					\n\t"
 		".set at" 
 		: "=r" (status), "=r"(fpcsr) : "i"(MIPS_SR_COP_1_BIT));
 	/*
@@ -1530,7 +1530,8 @@ savefpregs(l)
 	/*
 	 * stop CP1, enable interrupts.
 	 */
-	__asm __volatile ("mtc0 %0, $12" :: "r"(status));
+	__asm __volatile ("mtc0 %0, $" ___STRING(MIPS_COP_0_STATUS)
+	    :: "r"(status));
 	return;
 #endif
 }
@@ -1550,13 +1551,13 @@ loadfpregs(l)
 	 * turnoff interrupts enabling CP1 to load FP registers.
 	 */
 	__asm __volatile(
-		".set noreorder		;"
-		".set noat		;"
-		"mfc0	%0, $12		;"
-		"li	$1, %1		;"
-		"mtc0	$1, $12		;"
+		".set noreorder					\n\t"
+		".set noat					\n\t"
+		"mfc0	%0, $" ___STRING(MIPS_COP_0_STATUS) "	\n\t"
+		"li	$1, %1					\n\t"
+		"mtc0	$1, $" ___STRING(MIPS_COP_0_STATUS) "	\n\t"
 		___STRING(COP0_HAZARD_FPUENABLE)
-		".set reorder		;"
+		".set reorder					\n\t"
 		".set at" : "=r"(status) : "i"(MIPS_SR_COP_1_BIT));
 
 	f = (struct frame *)l->l_md.md_regs;
@@ -1603,11 +1604,11 @@ loadfpregs(l)
 	 * load FPCSR and stop CP1 again while enabling interrupts.
 	 */
 	__asm __volatile(
-		".set noreorder		;"
-		".set noat		;"
-		"ctc1	%0, $31		;"
-		"mtc0	%1, $12		;"
-		".set reorder		;"
+		".set noreorder					\n\t"
+		".set noat					\n\t"
+		"ctc1	%0, $31					\n\t"
+		"mtc0	%1, $" ___STRING(MIPS_COP_0_STATUS) "	\n\t"
+		".set reorder					\n\t"
 		".set at"
 		:: "r"(fp[32] &~ MIPS_FPU_EXCEPTION_BITS), "r"(status));
 	return;
