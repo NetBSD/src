@@ -1,4 +1,4 @@
-/*	$NetBSD: romboot.S,v 1.3 2002/01/03 11:23:29 shin Exp $	*/
+/*	$NetBSD: romboot.S,v 1.4 2002/02/11 19:10:30 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 Takao Shinohara.
@@ -66,7 +66,7 @@
 #define ra	$31
 
 #define MIPS_KSEG1_START	0xa0000000
-#define KERNEL_LOADADDR		0x80030000
+#define KERNEL_LOADADDR		0x80001000
 
 	.text
 	.set	noreorder
