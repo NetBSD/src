@@ -1,4 +1,4 @@
-/* $NetBSD: prom.h,v 1.8 1998/05/25 04:01:10 thorpej Exp $ */
+/* $NetBSD: prom.h,v 1.9 1998/09/24 21:18:13 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -96,6 +96,9 @@ void	hwrpb_restart_setup __P((void));
 
 #ifndef ASSEMBLER
 #ifdef _KERNEL
+int	prom_enter __P((void));
+void	prom_leave __P((int));
+
 void	promcnputc __P((dev_t, int));
 int	promcngetc __P((dev_t));
 int	promcnlookc __P((dev_t, char *));
