@@ -1,4 +1,4 @@
-/*	$NetBSD: an.c,v 1.24 2003/01/31 00:26:27 thorpej Exp $	*/
+/*	$NetBSD: an.c,v 1.25 2003/07/06 07:54:43 dyoung Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.24 2003/01/31 00:26:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.25 2003/07/06 07:54:43 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -126,9 +126,9 @@ __KERNEL_RCSID(0, "$NetBSD: an.c,v 1.24 2003/01/31 00:26:27 thorpej Exp $");
 #include <net/if_arp.h>
 #include <net/if_dl.h>
 #include <net/if_ether.h>
+#include <net/if_media.h>
 #include <net/if_ieee80211.h>
 #include <net/if_types.h>
-#include <net/if_media.h>
 
 #ifdef INET
 #include <netinet/in.h>
