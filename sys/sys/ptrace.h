@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ptrace.h	7.4 (Berkeley) 2/22/91
- *	$Id: ptrace.h,v 1.6 1994/01/08 11:19:53 cgd Exp $
+ *	$Id: ptrace.h,v 1.7 1994/01/08 15:19:13 mycroft Exp $
  */
 
 #ifndef _SYS_PTRACE_H_
@@ -56,9 +56,6 @@
 #include <machine/ptrace.h>	/* machine-specific requests, if any */
 
 #ifdef KERNEL
-/* reparent a process */
-void	proc_reparent __P((struct proc *child, struct proc *parent));
-
 /* internal machine-dependent functions used by ptrace (and others) */
 #if defined(PT_GETREGS) || defined(PT_SETREGS)
 struct reg;
