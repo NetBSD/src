@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.122 1998/12/10 18:13:29 mjacob Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.122.2.1 1999/11/10 18:30:21 he Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -407,6 +407,8 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	{{T_CDROM, T_REMOV,
 	 "SONY    ", "CD-ROM CDU-55S  ", ""},     SDEV_NOLUNS},
 	{{T_CDROM, T_REMOV,
+	 "SONY    ", "CD-ROM CDU-561  ", ""},     SDEV_NOLUNS},
+	{{T_CDROM, T_REMOV,
 	 "SONY    ", "CD-ROM CDU-8003A", ""},     SDEV_NOLUNS},
 	{{T_CDROM, T_REMOV,
 	 "SONY    ", "CD-ROM CDU-8012 ", ""},     SDEV_NOLUNS},
@@ -431,6 +433,8 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	{{T_OPTICAL, T_REMOV,
 	 "EPSON   ", "OMD-5010        ", "3.08"}, SDEV_NOLUNS},
 
+	{{T_DIRECT, T_FIXED,
+	"TOSHIBA ", "CD-ROM XM-3401TA", "0283"}, ADEV_CDROM|SDEV_NOLUNS},
 	{{T_DIRECT, T_FIXED,
 	 "ADAPTEC ", "AEC-4412BD",       "1.2A"}, SDEV_NOMODESENSE},
 	{{T_DIRECT, T_FIXED,
