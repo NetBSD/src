@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.GLcore,v 1.6 2004/04/05 12:03:25 lukem Exp $
+#	$NetBSD: Makefile.GLcore,v 1.7 2004/05/14 07:21:24 he Exp $
 
 LIB=	GLcore
 
@@ -72,6 +72,10 @@ CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11 \
 		-I${X11SRCDIR.xc}/programs/Xserver/GL/mesa/src/X
 
 CPPFLAGS+=	-DGLXEXT -DGLX_USE_MESA
+
+.if ${MACHINE_CPU} == "sh5"
+COPTS.s_triangle.c= -O0
+.endif
 
 .include <bsd.x11.mk>
 LIBDIR=	${XMODULEDIR}
