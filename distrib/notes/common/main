@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.274 2004/12/12 13:59:51 spz Exp $
+.\"	$NetBSD: main,v 1.275 2004/12/23 12:25:24 hamajima Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1547,6 +1547,7 @@ If you're one of them, and would like to mentioned, tell us!)
 .It Ta Ross Harvey Ta Mt ross@NetBSD.org
 .It Ta Eric Haszlakiewicz Ta Mt erh@NetBSD.org
 .It Ta John Hawkinson Ta Mt jhawk@NetBSD.org
+.It Ta HAMAJIMA Katsuomi Ta Mt hamajima@NetBSD.org
 .It Ta HAYAKAWA Koichi Ta Mt haya@NetBSD.org
 .It Ta John Heasley Ta Mt heas@NetBSD.org
 .It Ta Ren\('e Hexel Ta Mt rh@NetBSD.org
