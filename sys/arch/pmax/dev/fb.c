@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.17 1996/10/13 13:13:56 jonathan Exp $	*/
+/*	$NetBSD: fb.c,v 1.18 1996/10/14 04:55:26 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -70,7 +70,6 @@
 #include <sys/time.h>
 #include <sys/kernel.h>
 #include <sys/ioctl.h>
-#include <sys/poll.h>
 #include <sys/file.h>
 #include <sys/vnode.h>
 #include <sys/errno.h>
