@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_cons.c,v 1.2 2002/03/27 04:14:25 thorpej Exp $	*/
+/*	$NetBSD: ns16550.c,v 1.1 2002/03/28 20:40:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -37,21 +37,14 @@
 
 /* 
  * This file provides the cons_init() function and console I/O routines
- * for boards based on the Intel IQ80310 design.
- *
- * This also works with the IQ80321.
+ * for boards that use 16550-compatible UARTs.
  */
 
 #include <sys/types.h>
 #include <dev/ic/comreg.h>
-#include <evbarm/iq80310/iq80310reg.h>
 #include <lib/libsa/stand.h>
 
 #include "board.h"
-
-#ifndef CONADDR
-#define	CONADDR		IQ80310_UART2
-#endif
 
 #define	INB(x)		*((__volatile uint8_t *) (CONADDR + (x)))
 #define	OUTB(x, v)	*((__volatile uint8_t *) (CONADDR + (x))) = (v)
