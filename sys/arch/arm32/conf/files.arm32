@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm32,v 1.52 1998/07/30 14:11:43 augustss Exp $
+#	$NetBSD: files.arm32,v 1.53 1998/07/30 21:51:00 thorpej Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -73,6 +73,14 @@ file	arch/arm32/ofw/oftodclock.c		ofw & (shark | ofwgencfg)
 define	isadma
 file	dev/isa/isadma.c			isadma needs-flag
 file	arch/arm32/isa/isadma_machdep.c		isadma
+
+# XXX SoundBlaster stuff (for files.ofisa - should just pull in
+# XXX files.isa)
+define	sbdsp
+file	dev/isa/sbdsp.c				sbdsp
+
+device	sb: audio, isadma, sbdsp, mulaw, auconv
+file	dev/isa/sb.c				sb needs-flag
 
 # XXX should pull in files.isa
 # ESS Technology ES1887/ES888
