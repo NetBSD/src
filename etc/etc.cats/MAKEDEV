@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.12 2002/06/19 15:00:04 wiz Exp $
+#	$NetBSD: MAKEDEV,v 1.13 2002/06/30 02:57:05 tsutsui Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -153,7 +153,7 @@ all)
 	makedev mouse-qms0 random
 	makedev music rmidi0 rmidi1 rmidi2 rmidi3 rmidi4 rmidi5 rmidi6 rmidi7
 	makedev scsibus0 scsibus1 scsibus2 scsibus3
-	make ev clockctl
+	makedev clockctl
 	makedev systrace
 	;;
 
