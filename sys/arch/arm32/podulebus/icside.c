@@ -1,4 +1,4 @@
-/*	$NetBSD: icside.c,v 1.6 1998/01/18 04:09:48 mark Exp $	*/
+/*	$NetBSD: icside.c,v 1.7 1998/09/05 01:12:14 mark Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe
@@ -15,6 +15,7 @@
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
  *	This product includes software developed by Mark Brinicombe
+ *	for the NetBSD Project.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
@@ -33,8 +34,9 @@
  */
 
 /*
- * Thanks to xxx for loaning an ICS IDE card for the development of this driver
- * Thanks to Ian Copestake and David Basildon for providing interrupt enable
+ * Thanks to David Baildon for loaning an ICS IDE card for the development
+ * of this driver
+ * Thanks to Ian Copestake and David Baildon for providing interrupt enable
  * information
  */
 
