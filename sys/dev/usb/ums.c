@@ -1,4 +1,4 @@
-/*	$NetBSD: ums.c,v 1.4 1998/07/27 18:51:32 augustss Exp $	*/
+/*	$NetBSD: ums.c,v 1.5 1998/07/27 22:34:30 drochner Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -302,7 +302,7 @@ ums_intr(reqh, addr, status)
 	if (dx || dy || buttons != sc->sc_buttons) {
 		sc->sc_buttons = buttons;
 		if (sc->sc_wsmousedev)
-			wsmouse_input(sc->sc_wsmousedev, buttons, dx, dy);
+			wsmouse_input(sc->sc_wsmousedev, buttons, dx, dy, 0);
 	}
 }
 
