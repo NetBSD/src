@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.16.2.1 2002/05/27 00:34:59 lukem Exp $
+# $NetBSD: postinstall,v 1.16.2.2 2002/06/11 08:49:55 lukem Exp $
 #
 # Copyright (c) 2002 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -48,7 +48,6 @@
 #	- de* -> tlp* migration (/etc/ifconfig.de*, $ifconfig_de*,
 #	  dhclient.conf, ...) ?
 #	- support quiet/verbose mode ?
-#	- postfix
 #	- check obsolete file lists -- need to remove non obsolete files from
 #	  the sets first.
 #
@@ -166,6 +165,10 @@ compare_dir()
 	shift 4
 	_files=$*
 
+	if [ ! -d "${_src}" ]; then
+		msg "${_src} is not a directory; skipping check"
+		return 1
+	fi
 	check_dir ${_op} ${_dest} 755 || return 1
 
 	_cmpdir_rv=0
