@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12.2.2 2000/03/01 00:27:37 he Exp $
+#	$NetBSD: Makefile,v 1.12.2.3 2000/07/23 16:30:27 he Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -88,6 +88,7 @@ release:
 	@false
 .else	# RELEASEDIR
 release: ${IMAGE}.gz
+	-mkdir -p ${RELEASEDIR}/installation/miniroot
 	cp -p ${IMAGE}.gz \
 	 ${RELEASEDIR}/installation/miniroot/${IMAGE}.gz
 .endif	# RELEASEDIR
