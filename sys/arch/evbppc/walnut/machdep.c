@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.16 2003/07/25 11:44:21 scw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.17 2003/08/12 05:06:55 matt Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.16 2003/07/25 11:44:21 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.17 2003/08/12 05:06:55 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -202,7 +202,7 @@ initppc(u_int startkernel, u_int endkernel, char *args, void *info_block)
 	memset(lwp0.l_addr, 0, sizeof *lwp0.l_addr);
 
 	curpcb = &proc0paddr->u_pcb;
-	curpm = curpcb->pcb_pmreal = curpcb->pcb_pm = pmap_kernel();
+	curpcb->pcb_pm = pmap_kernel();
 
 	/*
 	 * Set up trap vectors
