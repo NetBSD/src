@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.247 2004/04/04 18:24:22 pk Exp $ */
+/*	$NetBSD: machdep.c,v 1.248 2004/04/27 11:25:24 pk Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.247 2004/04/04 18:24:22 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.248 2004/04/27 11:25:24 pk Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -271,8 +271,31 @@ cpu_startup()
 	if (CPU_ISSUN4C) {
 		/* Clip UBC windows */
 		if (cpuinfo.mmu_nsegment <= 128) {
-			ubc_nwins = 256;
-			/*ubc_winshift = 12; tune this too? */
+			/*
+			 * ubc_nwins and ubc_winshift control the amount
+			 * of VM used by the UBC. Normally, this VM is
+			 * not wired in the kernel map, hence non-locked
+			 * `PMEGs' (see pmap.c) are used for this space.
+			 * We still limit possible fragmentation to prevent
+			 * the occasional wired UBC mappings from tying up
+			 * too many PMEGs.
+			 *
+			 * Set the upper limit to 9 segments (default
+			 * winshift = 13).
+			 */
+			ubc_nwins = 512;
+
+			/*
+			 * buf_setvalimit() allocates a submap for buffer
+			 * allocation. We use it to limit the number of locked
+			 * `PMEGs' (see pmap.c) dedicated to the buffer cache.
+			 *
+			 * Set the upper limit to 12 segments (3MB), which
+			 * corresponds approximately to the size of the
+			 * traditional 5% rule (assuming a maximum 64MB of
+			 * memory in small sun4c machines).
+			 */
+			buf_setvalimit(12 * 256*1024);
 		}
 
 		/* Clip max data & stack to avoid running into the MMU hole */
