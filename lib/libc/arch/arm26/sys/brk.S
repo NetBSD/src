@@ -1,4 +1,4 @@
-/*	$NetBSD: brk.S,v 1.2 2000/06/23 15:40:37 kleink Exp $	*/
+/*	$NetBSD: brk.S,v 1.3 2000/06/26 06:25:38 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,6 +40,10 @@
 	.globl	_end
 	.globl	curbrk
 
+#ifdef WEAK_ALIAS
+WEAK_ALIAS(brk, _brk)
+#endif
+
 	.data
 	.align	0
 	.globl	_C_LABEL(__minbrk)
@@ -50,12 +54,7 @@ _C_LABEL(__minbrk):
 /*
  * Change the data segment size
  */
-#ifdef WEAK_ALIAS
-WEAK_ALIAS(brk, _brk)
 ENTRY(_brk)
-#else
-ENTRY(brk)
-#endif
 #ifdef PIC
 	/* Setup the GOT */
 	ldr	r3, Lgot
