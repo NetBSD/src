@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.386 2004/08/12 04:21:54 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.387 2004/08/12 04:24:04 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -6435,3 +6435,8 @@ distrib/notes/vax/hardware			1.9
 
 	Updates of supported hardware
 	[ragge, ticket #748]
+
+lib/libpthread/pthread_rwlock.c			1.8
+
+	pthread_rwlock_timedwrlock: return ETIMEDOUT appropriately.
+	[yamt, ticket #749]
