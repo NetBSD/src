@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.56 2001/05/05 14:42:41 takemura Exp $	*/
+/*	$NetBSD: main.c,v 1.57 2001/05/12 10:08:59 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 Shin Takemura.
@@ -163,8 +163,13 @@ int fb_bpl[] = {
 
 struct fb_setting fb_settings[] = {
 	/*
-	 * You must choose fb_type to make the screen look black-on-white.
-	 * (Foreground color is black and background color is white.)
+	 * You must choose fb_type to make the screen looks like:
+	 *   black-on-white on monochrome or gray scale screen
+	 *   white-on-black on color screen
+	 * without 'reverse video' on the properties daialog.
+	 *
+	 * 'black-on-white' means that Foreground color is black and 
+	 * background color is white.
 	 */
 	{ NULL, BIFB_D2_M2L_3,
 		320, 240, 80, 0xa000000,
