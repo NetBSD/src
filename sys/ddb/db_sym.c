@@ -1,4 +1,4 @@
-/*	$NetBSD: db_sym.c,v 1.25 2001/01/17 19:50:03 jdolecek Exp $	*/
+/*	$NetBSD: db_sym.c,v 1.26 2001/06/13 06:01:45 simonb Exp $	*/
 
 /* 
  * Mach Operating System
@@ -26,6 +26,8 @@
  * rights to redistribute these changes.
  */
 
+#include "opt_ddbparam.h"
+
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
@@ -52,6 +54,13 @@
 db_symtab_t	db_symtabs[MAXNOSYMTABS] = {{0,},};
 
 db_symtab_t	*db_last_symtab;
+
+#ifdef SYMTAB_SPACE
+#define		SYMTAB_FILLER	"|This is the symbol table!"
+
+char		db_symtab[SYMTAB_SPACE] = SYMTAB_FILLER;
+int		db_symtabsize = SYMTAB_SPACE;
+#endif
 
 static char *db_qualify __P((db_sym_t, const char *));
 static db_forall_func_t db_sift;
@@ -98,8 +107,18 @@ ddb_init(symsize, vss, vse)
 	const char *name = "netbsd";
 
 	if (symsize <= 0) {
-		printf(" [ no symbols available ]\n");
-		return;
+#ifdef SYMTAB_SPACE
+		if (strncmp(db_symtab, SYMTAB_FILLER, sizeof(SYMTAB_FILLER))) {
+			symsize = db_symtabsize;
+			vss = db_symtab;
+			vse = db_symtab + db_symtabsize;
+		} else {
+#endif
+			printf(" [ no symbols available ]\n");
+			return;
+#ifdef SYMTAB_SPACE
+		}
+#endif
 	}
 
 	/*
@@ -120,6 +139,8 @@ ddb_init(symsize, vss, vse)
 
 	db_symformat = NULL;
 	printf("[ no symbol table formats found ]\n");
+
+	/* XXX: try SYMTAB_SPACE if we get this far? */
 }
 
 /*
