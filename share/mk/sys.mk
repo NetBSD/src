@@ -1,5 +1,5 @@
 #	from: @(#)sys.mk	5.11 (Berkeley) 3/13/91
-#	$Id: sys.mk,v 1.13 1994/01/31 18:40:14 jtc Exp $
+#	$Id: sys.mk,v 1.14 1994/03/24 01:39:28 jtc Exp $
 
 unix=		We run UNIX.
 
@@ -49,31 +49,31 @@ YACC=		yacc
 YFLAGS=		-d
 
 # single suffix rules
-#.c:
-#	${CC} ${CFLAGS} ${.IMPSRC} ${LDLIBS} -o ${.TARGET}
-#
-#.cc .C:
-#	${CXX} ${CXXFLAGS} ${.IMPSRC} ${LDLIBS} -o ${.TARGET}
-#
-#.e .r .F .f:
-#	${FC} ${RFLAGS} ${EFLAGS} ${FFLAGS} ${.IMPSRC} ${LDLIBS} -o ${.TARGET}
-#
-#.p:
-#	${PC} ${PFLAGS} ${.IMPSRC} ${LDLIBS} -o ${.TARGET}
-#
-#.y:
-#	${YACC} ${YFLAGS} ${.IMPSRC}
-#	${CC} ${CFLAGS} y.tab.c ${LDLIBS} -ly -o ${.TARGET}
-#	rm -f y.tab.c
-#
-#.l:
-#	${LEX} ${LFLAGS} ${.IMPSRC}
-#	${CC} ${CFLAGS} lex.yy.c ${LDLIBS} -ll -o ${.TARGET}
-#	rm -f lex.yy.c
-#
-#.sh:
-#	rm -f ${.TARGET}
-#	cp ${.IMPSRC} ${.TARGET}
+.c:
+	${CC} ${CFLAGS} ${.IMPSRC} ${LDLIBS} -o ${.TARGET}
+
+.cc .C:
+	${CXX} ${CXXFLAGS} ${.IMPSRC} ${LDLIBS} -o ${.TARGET}
+
+.e .r .F .f:
+	${FC} ${RFLAGS} ${EFLAGS} ${FFLAGS} ${.IMPSRC} ${LDLIBS} -o ${.TARGET}
+
+.p:
+	${PC} ${PFLAGS} ${.IMPSRC} ${LDLIBS} -o ${.TARGET}
+
+.y:
+	${YACC} ${YFLAGS} ${.IMPSRC}
+	${CC} ${CFLAGS} y.tab.c ${LDLIBS} -ly -o ${.TARGET}
+	rm -f y.tab.c
+
+.l:
+	${LEX} ${LFLAGS} ${.IMPSRC}
+	${CC} ${CFLAGS} lex.yy.c ${LDLIBS} -ll -o ${.TARGET}
+	rm -f lex.yy.c
+
+.sh:
+	rm -f ${.TARGET}
+	cp ${.IMPSRC} ${.TARGET}
 
 
 # double suffix rules
