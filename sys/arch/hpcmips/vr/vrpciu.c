@@ -1,4 +1,4 @@
-/*	$NetBSD: vrpciu.c,v 1.4 2002/01/13 14:18:32 takemura Exp $	*/
+/*	$NetBSD: vrpciu.c,v 1.5 2002/01/18 13:51:01 shin Exp $	*/
 
 /*-
  * Copyright (c) 2001 Enami Tsugutomo.
@@ -34,9 +34,12 @@
 #include <machine/bus_space_hpcmips.h>
 #include <machine/bus_dma_hpcmips.h>
 #include <machine/config_hook.h>
+#include <machine/platid.h>
+#include <machine/platid_mask.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
+#include <dev/pci/pciidereg.h>
 
 #include <hpcmips/vr/icureg.h>
 #include <hpcmips/vr/vripvar.h>
@@ -294,6 +297,25 @@ vrpciu_attach(struct device *parent, struct device *self, void *aux)
 	pba.pba_memt = sc->sc_iot;
 	pba.pba_dmat = &hpcmips_default_bus_dma_tag.bdt;
 	pba.pba_bus = 0;
+
+	if (platid_match(&platid, &platid_mask_MACH_LASER5_L_BOARD)) {
+		/*
+		 * fix PCI device configration for L-Router.
+		 */
+		/* change IDE controller to native mode */
+		reg = pci_conf_read(pc, pci_make_tag(pc, 0, 16, 0),
+				    PCI_CLASS_REG);
+		reg |= PCIIDE_INTERFACE_PCI(0) << PCI_INTERFACE_SHIFT;
+		reg |= PCIIDE_INTERFACE_PCI(1) << PCI_INTERFACE_SHIFT;
+		pci_conf_write(pc, pci_make_tag(pc, 0, 16, 0), PCI_CLASS_REG,
+			       reg);
+		/* fix broken BAR setting of fxp0, fxp1 */
+		pci_conf_write(pc, pci_make_tag(pc, 0, 0, 0), PCI_MAPREG_START,
+			       0x11100000);
+		pci_conf_write(pc, pci_make_tag(pc, 0, 1, 0), PCI_MAPREG_START,
+			       0x11200000);
+	}
+
 	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED |
 	    PCI_FLAGS_MRL_OKAY;
 	pba.pba_pc = pc;
