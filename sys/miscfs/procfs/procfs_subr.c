@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.48 2003/03/15 00:22:47 enami Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.49 2003/04/17 19:04:25 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou.  All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.48 2003/03/15 00:22:47 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.49 2003/04/17 19:04:25 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -150,10 +150,12 @@ procfs_allocvp(mp, vpp, pid, pfs_type, fd)
 		} else {	/* /proc/N/fd/M = [ps-]rw------- */
 			struct file *fp;
 			struct vnode *vxp;
+			struct proc *pown;
 
 			/* XXX can procfs_getfp() ever fail here? */
-			if ((error = procfs_getfp(pfs, &fp)) != 0)
+			if ((error = procfs_getfp(pfs, &pown, &fp)) != 0)
 				goto bad;
+			FILE_USE(fp);
 
 			pfs->pfs_mode = S_IRUSR|S_IWUSR;
 			switch (fp->f_type) {
@@ -169,8 +171,10 @@ procfs_allocvp(mp, vpp, pid, pfs_type, fd)
 				break;
 			default:
 				error = EOPNOTSUPP;
+				FILE_UNUSE(fp, pown);
 				goto bad;
 			}
+			FILE_UNUSE(fp, pown);
 		}
 		break;
 
@@ -522,8 +526,9 @@ procfs_revoke_vnodes(p, arg)
 }
 
 int
-procfs_getfp(pfs, fp)
+procfs_getfp(pfs, pown, fp)
 	struct pfsnode *pfs;
+	struct proc **pown;
 	struct file **fp;
 {
 	struct proc *p = PFIND(pfs->pfs_pid);
@@ -534,7 +539,9 @@ procfs_getfp(pfs, fp)
 	if (pfs->pfs_fd == -1)
 		return EINVAL;
 
-	if ((*fp = p->p_fd->fd_ofiles[pfs->pfs_fd]) == NULL)
+	if ((*fp = fd_getfile(p->p_fd, pfs->pfs_fd)) == NULL)
 		return EBADF;
+
+	*pown = p;
 	return 0;
 }

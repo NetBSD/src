@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs.h,v 1.41 2003/02/25 21:00:31 jrf Exp $	*/
+/*	$NetBSD: procfs.h,v 1.42 2003/04/17 19:04:25 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -168,7 +168,7 @@ void procfs_revoke_vnodes __P((struct proc *, void *));
 void procfs_hashinit __P((void));
 void procfs_hashreinit __P((void));
 void procfs_hashdone __P((void));
-int procfs_getfp __P((struct pfsnode *, struct file **));
+int procfs_getfp __P((struct pfsnode *, struct proc **, struct file **));
 
 /* functions to check whether or not files should be displayed */
 int procfs_validfile __P((struct proc *, struct mount *));
