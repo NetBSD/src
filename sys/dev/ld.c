@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.4 2001/01/07 18:09:01 fvdl Exp $	*/
+/*	$NetBSD: ld.c,v 1.5 2001/01/08 02:03:46 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -299,7 +299,7 @@ ldioctl(dev_t dev, u_long cmd, caddr_t addr, int32_t flag, struct proc *p)
 	case ODIOCGDINFO:
 		newlabel = *(sc->sc_dk.dk_label);
 		if (newlabel.d_npartitions > OLDMAXPARTITIONS)
-			newlabel.d_npartitions = OLDMAXPARTITIONS;
+			return ENOTTY;
 		memcpy(addr, &newlabel, sizeof(struct olddisklabel));
 		return (0);
 #endif
@@ -365,7 +365,7 @@ ldioctl(dev_t dev, u_long cmd, caddr_t addr, int32_t flag, struct proc *p)
 	case ODIOCGDEFLABEL:
 		ldgetdefaultlabel(sc, &newlabel);
 		if (newlabel.d_npartitions > OLDMAXPARTITIONS)
-			newlabel.d_npartitions = OLDMAXPARTITIONS;
+			return ENOTTY;
 		memcpy(addr, &newlabel, sizeof (struct olddisklabel));
 		break;
 #endif
