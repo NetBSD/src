@@ -1,7 +1,4 @@
-/* Target-dependent code for GDB, the GNU debugger.
-   Copyright 2001
-   Free Software Foundation, Inc.
-   Contributed by Jiri Smid, SuSE Labs.
+/* Native support for NetBSD x86-64.
 
    This file is part of GDB.
 
@@ -20,19 +17,22 @@
    Foundation, Inc., 59 Temple Place - Suite 330,
    Boston, MA 02111-1307, USA.  */
 
-#ifndef X86_64_TDEP_H
-#define X86_64_TDEP_H
+#ifndef NM_X86_64_H
+#define NM_X86_64_H
 
-#include "i386-tdep.h"
+#define REGISTER_U_ADDR(addr, blockend, regno) \
+	(addr) = x86_64_register_u_addr ((blockend),(regno));
+CORE_ADDR x86_64_register_u_addr (CORE_ADDR, int);
 
-extern int x86_64_num_regs;
-extern int x86_64_num_gregs;
+/* Return the size of the user struct.  */
 
-int x86_64_register_number (const char *name);
-const char *x86_64_register_name (int reg_nr);
-	
+/* Offset of the registers within the user area.  */
+#define U_REGS_OFFSET 0
 
-gdbarch_frame_saved_pc_ftype x86_64_nbsd_frame_saved_pc;
-gdbarch_saved_pc_after_call_ftype x86_64_nbsd_saved_pc_after_call;
+/* This is the amount to subtract from u.u_ar0
+   to get the offset in the core file of the register values.  */
+#define KERNEL_U_ADDR 0x0
 
-#endif
+#include "config/nm-nbsd.h"
+
+#endif /* NM_X86_64.h */
