@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs.h,v 1.161 1999/09/10 19:56:51 augustss Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.162 1999/09/11 06:27:36 soren Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -895,6 +895,8 @@
 /* Efficient Networks products */
 #define	PCI_PRODUCT_EFFICIENTNETS_ENI155PF	0x0000		/* 155P-MF1 ATM (FPGA) */
 #define	PCI_PRODUCT_EFFICIENTNETS_ENI155PA	0x0002		/* 155P-MF1 ATM (ASIC) */
+#define	PCI_PRODUCT_EFFICIENTNETS_ENI25P	0x0003		/* SpeedStream ENI-25p */
+#define	PCI_PRODUCT_EFFICIENTNETS_SS3000	0x0005		/* SpeedStream 3000 */
 
 /* Hewlett-Packard products */
 #define	PCI_PRODUCT_HP_J2585A	0x1030		/* J2585A */
