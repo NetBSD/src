@@ -1,5 +1,5 @@
-/*	$NetBSD: if_nameindex.c,v 1.2 2000/04/24 10:40:25 itojun Exp $	*/
-/*	$KAME: if_nameindex.c,v 1.3 2000/04/24 10:08:41 itojun Exp $	*/
+/*	$NetBSD: if_nameindex.c,v 1.2.4.1 2000/07/24 14:11:09 itojun Exp $	*/
+/*	$KAME: if_nameindex.c,v 1.5 2000/07/24 12:03:31 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2000
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: if_nameindex.c,v 1.2 2000/04/24 10:40:25 itojun Exp $");
+__RCSID("$NetBSD: if_nameindex.c,v 1.2.4.1 2000/07/24 14:11:09 itojun Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -113,11 +113,11 @@ if_nameindex(void)
 	 * for the array of structures, and the last part for
 	 * the strings.
 	 */
-	cp = malloc(ni*(sizeof(struct if_nameindex) + 1) + nbytes);
+	cp = malloc((ni + 1) * sizeof(struct if_nameindex) + nbytes);
 	ifni = (struct if_nameindex *)cp;
 	if (ifni == NULL)
 		goto out;
-	cp += ni*(sizeof(struct if_nameindex) + 1);
+	cp += (ni + 1) * sizeof(struct if_nameindex);
 
 	/*
 	 * Now just loop through the list of interfaces again,
