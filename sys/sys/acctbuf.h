@@ -24,11 +24,11 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: acctbuf.h,v 1.2 1993/05/20 16:21:45 cgd Exp $
+ *	$Id: acctbuf.h,v 1.3 1993/06/02 01:44:10 cgd Exp $
  */
 
-#ifndef _SYS_ACCTBUF_H
-#define _SYS_ACCTBUF_H
+#ifndef _SYS_ACCTBUF_H_
+#define _SYS_ACCTBUF_H_
 
 #define ACCT_BSIZE	4096
 #define ACCT_NBRECS	((ACCT_BSIZE / sizeof(struct acct)) - 1)
@@ -63,4 +63,4 @@ extern void acctbuf_checkbuf(char *);
 #endif /* ACCOUNTING */
 #endif
 
-#endif /* _SYS_ACCTBUF_H */
+#endif /* _SYS_ACCTBUF_H_ */
