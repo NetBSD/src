@@ -81,6 +81,8 @@ $set 1 # Automatically created by po2msg.sed
   G
   s/^[^\n]*$/& /
   s/\(.*\)\n\([0-9]*\)/\2 \1/
+# Change escaped quotes into regular quotes.
+  s/\\"/"/g
 # Clear flag from last substitution.
   tb
 # Append the next line.
@@ -90,12 +92,16 @@ $set 1 # Automatically created by po2msg.sed
   s/\(.*\n\)"\(.*\)"/\1\2/
 # Yes, then branch.
   ta
+# Comment out if no message exists.
+  s/^\([0-9]* *\n\)/$ \1/
   P
   D
 # Note that `D' includes a jump to the start!!
 # We found a continuation line.  But before printing insert '\'.
   :a
   s/\(.*\)\(\n.*\)/\1\\\2/
+# Change escaped quotes into regular quotes.
+  s/\\"/"/g
   P
 # We cannot use the sed command `D' here
   s/.*\n\(.*\)/\1/

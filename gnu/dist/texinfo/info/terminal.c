@@ -1,5 +1,5 @@
 /* terminal.c -- How to handle the physical terminal for Info.
-   $Id: terminal.c,v 1.1.1.1 1999/02/11 03:57:22 tv Exp $
+   $Id: terminal.c,v 1.2 1999/02/11 04:13:16 tv Exp $
 
    Copyright (C) 1988, 89, 90, 91, 92, 93, 96, 97, 98
    Free Software Foundation, Inc.
@@ -36,7 +36,9 @@
 #else
 /* On Solaris2, sys/types.h #includes sys/reg.h, which #defines PC.
    Unfortunately, PC is a global variable used by the termcap library. */
+#ifndef __NetBSD__
 #undef PC
+#endif
 
 /* Termcap requires these variables, whether we access them or not. */
 char *BC, *UP;
@@ -114,12 +116,18 @@ static char *term_invend;
 /* Although I can't find any documentation that says this is supposed to
    return its argument, all the code I've looked at (termutils, less)
    does so, so fine.  */
+#ifdef __NetBSD__
+void
+#else
 static int
+#endif
 output_character_function (c)
      int c;
 {
   putc (c, stdout);
+#ifndef __NetBSD__
   return c;
+#endif
 }
 
 /* Macro to send STRING to the terminal. */
