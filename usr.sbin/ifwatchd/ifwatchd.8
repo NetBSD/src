@@ -1,4 +1,4 @@
-.\" $NetBSD: ifwatchd.8,v 1.6 2002/02/23 08:11:22 martin Exp $
+.\" $NetBSD: ifwatchd.8,v 1.7 2002/02/23 17:03:18 wiz Exp $
 .\"
 .\" Copyright (C) 2001 by Martin Husemann
 .\" All rights reserved.
@@ -105,12 +105,12 @@ an example for an up script doing this:
 /sbin/route add default $4
 .Ed
 As described below the fourth command line parameter will contain the peer
-address of the pppoe link. The coresponding ip-down script is:
+address of the pppoe link. The corresponding ip-down script is:
 .Bd -literal -offset indent
 #! /bin/sh
 /sbin/route delete default
 .Ed
-Note that this is not a good idea if you have pppoe0 configured to connect 
+Note that this is not a good idea if you have pppoe0 configured to connect
 only on demand (via the link1 flag), but works well for all permanent connected
 cases. Use
 .Bd -literal -offset indent
