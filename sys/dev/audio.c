@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.58 1997/07/31 22:33:18 augustss Exp $	*/
+/*	$NetBSD: audio.c,v 1.59 1997/08/01 17:04:00 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -1184,6 +1184,9 @@ audio_ioctl(dev, cmd, addr, flag, p)
 	DPRINTF(("audio_ioctl(%d,'%c',%d)\n",
 	          IOCPARM_LEN(cmd), IOCGROUP(cmd), cmd&0xff));
 	switch (cmd) {
+	case FIONBIO:
+		/* All handled in the upper FS layer. */
+		break;
 	case FIOASYNC:
 		if (*(int *)addr) {
 			if (sc->sc_async)
