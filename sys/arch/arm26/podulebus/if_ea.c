@@ -1,4 +1,4 @@
-/* $NetBSD: if_ea.c,v 1.2 2000/07/20 20:25:10 bjh21 Exp $ */
+/* $NetBSD: if_ea.c,v 1.3 2000/07/22 21:30:54 bjh21 Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -1381,6 +1381,15 @@ eaget(buf, totlen, ifp)
                         } else
                                 len = m->m_len;
                 }
+		if (top == 0) {
+			/* Make sure the payload is aligned */
+			caddr_t newdata = (caddr_t)
+			    ALIGN(m->m_data + sizeof(struct ether_header)) -
+			    sizeof(struct ether_header);
+			len -= newdata - m->m_data;
+			m->m_len = len;
+			m->m_data = newdata;
+		}
                 bcopy(cp, mtod(m, caddr_t), (unsigned)len);
                 cp += len;
                 *mp = m;
