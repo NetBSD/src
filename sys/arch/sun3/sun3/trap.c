@@ -550,7 +550,7 @@ syscall(code, frame)
 	    /* XXX don't do this for sun_sigreturn, as there's no
 	       XXX stored pc on the stack to skip, the argument follows
 	       XXX the syscall number without a gap. */
-	    if (code != SYS_sigreturn)
+	    if (code != SUN_SYS_sigreturn)
 	      {
 		  frame.f_regs[SP] += sizeof (int);
 		  /* remember that we adjusted the SP, might have to undo
