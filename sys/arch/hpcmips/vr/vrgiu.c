@@ -1,4 +1,4 @@
-/*	$NetBSD: vrgiu.c,v 1.27 2001/12/16 09:58:34 takemura Exp $	*/
+/*	$NetBSD: vrgiu.c,v 1.28 2001/12/29 05:15:32 takemura Exp $	*/
 /*-
  * Copyright (c) 1999-2001
  *         Shin Takemura and PocketBSD Project. All rights reserved.
@@ -206,6 +206,10 @@ vrgiu_attach(struct device *parent, struct device *self, void *aux)
 #ifdef WINCE_DEFAULT_SETTING
 #warning WINCE_DEFAULT_SETTING
 #else
+	VPRINTF(DEBUG_IO, ("                                            "
+			   " 3         2         1\n"));
+	VPRINTF(DEBUG_IO, ("                                            "
+			   "10987654321098765432109876543210\n"));
 	VPRINTF(DEBUG_IO, ("WIN setting:                                "));
 	VDUMP_IOSETTING(DEBUG_IO, sc);
 	VPRINTF(DEBUG_IO, ("\n"));
@@ -278,11 +282,16 @@ vrgiu_print(void *aux, const char *pnp)
 void
 vrgiu_dump_iosetting(struct vrgiu_softc *sc)
 {
-	long iosel, inten, useupdn, termupdn;
+	long iosel, inten, useupdn, termupdn, edge, hold, level;
 	u_int32_t m;
+	char syms[] = "iiiiiiiilhLHeeEEoooooooooooooooo"
+		      "DDDDDDDDDDDDDDDDUUUUUUUUUUUUUUUU";
 
 	iosel= vrgiu_regread_4(sc, GIUIOSEL_REG);
 	inten= vrgiu_regread_4(sc, GIUINTEN_REG);
+	edge = vrgiu_regread_4(sc, GIUINTTYP_REG);
+	hold = vrgiu_regread_4(sc, GIUINTHTSEL_REG);
+	level = vrgiu_regread_4(sc, GIUINTALSEL_REG);
 #ifndef VRGIU_HAVE_PULLUPDNREGS
 	useupdn = termupdn = 0;
 #else
@@ -290,9 +299,13 @@ vrgiu_dump_iosetting(struct vrgiu_softc *sc)
 	termupdn = vrgiu_regread(sc, GIUTERMUPDN_REG_W);
 #endif
 	for (m = 0x80000000; m; m >>=1)
-		printf ("%c" , (useupdn&m) ?
-		    ((termupdn&m) ? 'U' : 'D') :
-		    ((iosel&m) ? 'o' : ((inten&m)?'I':'i')));
+		printf ("%c", syms[
+			((useupdn&m) ? 32 : 0) +
+			((iosel&m) ? 16 : 0) + ((termupdn&m) ? 16 : 0) +
+			((inten&m) ? 8 : 0) +
+			((edge&m) ? 4 : 0) +
+			((hold&m) ? 2 : 0) +
+			((level&m) ? 1 : 0)]);
 }
 
 void
@@ -536,6 +549,7 @@ vrgiu_intr_establish(
 	if (!(ih = malloc(sizeof(struct vrgiu_intr_entry), M_DEVBUF, M_NOWAIT)))
 		panic ("vrgiu_intr_establish: no memory.");
 
+	DPRINTF(DEBUG_INTR, ("%s: port %d ", sc->sc_dev.dv_xname, port));
 	ih->ih_port = port;
 	ih->ih_fun = ih_fun;
 	ih->ih_arg = ih_arg;
