@@ -1,4 +1,4 @@
-.\" $NetBSD: usb.4,v 1.2 1998/07/12 20:56:23 augustss Exp $
+.\" $NetBSD: usb.4,v 1.3 1998/07/26 22:22:26 augustss Exp $
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
@@ -100,10 +100,101 @@ within it.
 A device may operate in different configurations.  Depending on the
 configuration the device may present different sets of endpoints
 and interfaces.
+.Sh USB CONTROLLER INTERFACE
+Use the following to get access to the USB specific structurs and defines.
+.Bd -literal 
+#include <sys/dev/usb.h>
+.Ed
 .Pp
-.\" The USB controller has a device that supports
-.\" .Xr ioctl 2
-.\" to manipulate it.
+The
+.Pa /dev/usbN
+can be opened and a few operations can be performed on it.
+The
+.Xr poll 2
+system call will say that I/O is possible on the controller device when a
+USB device has been connected or disconnected to the bus.
+.Pp
+The following
+.Xr ioctl 2
+commands are supported on the controller device:
+.Bl -tag -width indent -compact
+.It Dv USB_DISCOVER
+This command will cause a complete bus discovery to be initiated.
+If any devices attached or detached from the bus they will be
+processed during this command.  This is the only way that new
+devices are found on the bus.
+.It Dv USB_DEVICEINFO (struct usb_device_info)
+This command can be used to retrieve some information about a device
+on the bus.  The 
+.Va addr
+field should be filled before the call and
+the other fields will be filled by information about the device
+on that address.  Should no such device exist an error is reported.
+.Bd -literal
+struct usb_device_info {
+	uByte	addr;		/* device address */
+	char	product[USB_MAX_STRING_LEN];
+	char	vendor[USB_MAX_STRING_LEN];
+	char	revision[8];
+	uByte	class;
+	uByte	config;
+	uByte	lowspeed;
+	int	power;
+	int	nports;
+	uByte	ports[16];
+#define USB_PORT_ENABLED 0xff
+#define USB_PORT_SUSPENDED 0xfe
+#define USB_PORT_POWERED 0xfd
+#define USB_PORT_DISABLED 0xfc
+};
+.Ed
+The
+.Va product ,
+.Va vendor ,
+and
+.Va revision
+fields contain (self-explanatory) descriptions of the device.
+The
+.Va class
+field contans the device class.
+The
+.Va config
+field shows the current configuration of the device.
+The
+.Va lowspeed
+field
+is set if the device is a USB low speed device.
+The
+.Va power
+field shows the power consumption in mA (drawn a 5V), or 0 if
+the device is self powered.
+.Pp
+If the device is a hub the
+.Va nports
+field is non-zero and the
+.Va ports
+field contains the addresses of the connected devices.
+If no device is connected to a port one of the
+.Va USB_PORT_*
+values indicates its status.
+.It Dv USB_DEVICESTATS (struct usb_device_stats)
+.Bd -literal
+This command retrieves statisctics about the controller.
+struct usb_device_stats {
+	u_long	requests[4];
+};
+.Ed
+The
+.Va requests
+field is indexed by the transfer kind, i.e.,
+.Va UE_* ,
+and indicates how many transfers of each kind that has been completed
+for the controller.
+.It Dv USB_REQUEST (struct usb_ctl_request)
+This command can be used to execute arbitrary requests on the control
+pipe.  This is DANGEROUS and should be used with great care since it 
+can destroy the bus integrety.
+.El
 .Sh SEE ALSO
 .Xr pci 4 ,
 .Xr uaudio 4 ,
