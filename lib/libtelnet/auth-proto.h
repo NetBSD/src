@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-proto.h,v 1.7 1998/07/27 01:45:09 mycroft Exp $	*/
+/*	$NetBSD: auth-proto.h,v 1.8 1999/07/02 16:05:11 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -42,7 +42,7 @@
  * to require a specific license from the United States Government.
  * It is the responsibility of any person or organization contemplating
  * export to obtain such a license before exporting.
- * 
+ *
  * WITHIN THAT CONSTRAINT, permission to use, copy, modify, and
  * distribute this software and its documentation for any purpose and
  * without fee is hereby granted, provided that the above copyright

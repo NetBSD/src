@@ -1,4 +1,4 @@
-/*	$NetBSD: prettydate.c,v 1.3 1998/03/06 18:17:15 christos Exp $	*/
+/*	$NetBSD: prettydate.c,v 1.4 1999/07/02 15:58:36 simonb Exp $	*/
 
 /*
  * prettydate - convert a time stamp to something readable
@@ -31,7 +31,7 @@ prettydate(ts)
 	};
 
 	LIB_GETBUF(bp);
-	
+
 	sec = ts->l_ui - JAN_1970;
 	msec = ts->l_uf / 4294967;	/* fract / (2 ** 32 / 1000) */
 
@@ -41,6 +41,6 @@ prettydate(ts)
 		       (u_long)ts->l_ui, (u_long)ts->l_uf, days[tm->tm_wday],
 		       months[tm->tm_mon], tm->tm_mday, 1900 + tm->tm_year,
 		       tm->tm_hour,tm->tm_min, tm->tm_sec, msec);
-	
+
 	return bp;
 }

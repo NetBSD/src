@@ -1,4 +1,4 @@
-/*	$NetBSD: systime.c,v 1.3 1998/03/06 18:17:16 christos Exp $	*/
+/*	$NetBSD: systime.c,v 1.4 1999/07/02 15:58:37 simonb Exp $	*/
 
 /*
  * systime -- routines to fiddle a UNIX clock.
@@ -142,13 +142,13 @@ step_systime(now)
 		isneg = 1;
 	} else
 		isneg = 0;
-#ifdef SLEWALWAYS 
+#ifdef SLEWALWAYS
 #ifdef STEP_SLEW
 
 	if (tmp_ui >= 3) {		/* Step it and slew we  might win */
              n = step_systime_real(now);
 	     if (!n) return n;
-	     if (isneg) 
+	     if (isneg)
 		now->l_ui = ~0;
 	     else
 		now->l_ui = ~0;
@@ -217,7 +217,7 @@ adj_systime(now)
 #ifdef DEBUG
 	if (debug > 4)
 		printf("systime: offset %s\n", lfptoa(now, 6));
-#endif 
+#endif
 	/*
 	 * Move the current offset into the registers
 	 */
@@ -333,7 +333,7 @@ adj_systime(now)
 		sys_clock_offset.l_ui = offset_i;
 		sys_clock_offset.l_uf = offset_f;
 		rval = 1;
-#ifndef SYS_WINNT 
+#ifndef SYS_WINNT
 		if (oadjtv.tv_sec != 0 || oadjtv.tv_usec != 0) {
 			sTVTOTS(&oadjtv, &oadjts);
 			L_ADD(&sys_clock_offset, &oadjts);

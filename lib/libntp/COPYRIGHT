@@ -1,4 +1,4 @@
-<!-- $NetBSD: COPYRIGHT,v 1.4 1998/08/12 14:11:49 christos Exp $ -->
+<!-- $NetBSD: COPYRIGHT,v 1.5 1999/07/02 15:58:35 simonb Exp $ -->
 <!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML Strict//EN">
 <html><head><title>
 Copyright Notice
@@ -52,9 +52,9 @@ Trimble PARSE support
 
 <br><li>Steve Clift (clift@ml.csiro.au): OMEGA clock driver
 
-<br><li><a href="http://www.ee.uct.ac.za/~casey"> Casey Crellin </a> 
-        <a href="mailto:casey@csc.co.za"> (casey@csc.co.za) </a> 
-    vxWorks (Tornado) port and help with target configuration 
+<br><li><a href="http://www.ee.uct.ac.za/~casey"> Casey Crellin </a>
+        <a href="mailto:casey@csc.co.za"> (casey@csc.co.za) </a>
+    vxWorks (Tornado) port and help with target configuration
 
 <br><li>Torsten Duwe (duwe@immd4.informatik.uni-erlangen.de) Linux Port
 

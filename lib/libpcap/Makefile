@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.18 1999/07/02 10:05:22 itojun Exp $	
+#	$NetBSD: Makefile,v 1.19 1999/07/02 16:03:41 simonb Exp $
 
 LIB=	pcap
-MAN=	pcap.3 
+MAN=	pcap.3
 
 LEX=	flex
 
@@ -15,12 +15,12 @@ YPREFIX=pcap_
 YHEADER=1
 
 SRCS=	scanner.l savefile.c pcap.c pcap-bpf.c optimize.c nametoaddr.c \
-	inet.c grammar.y gencode.c etherent.c bpf_image.c 
+	inet.c grammar.y gencode.c etherent.c bpf_image.c
 SRCS+=	bpf_filter.c version.c
 
 .PATH:	${.CURDIR}/../../sys/net
 
-INCS=	pcap-namedb.h pcap.h 
+INCS=	pcap-namedb.h pcap.h
 INCSDIR=/usr/include
 
 scanner.c: grammar.h

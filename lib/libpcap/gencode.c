@@ -1,4 +1,4 @@
-/*	$NetBSD: gencode.c,v 1.13 1999/07/02 10:05:22 itojun Exp $	*/
+/*	$NetBSD: gencode.c,v 1.14 1999/07/02 16:03:41 simonb Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -26,7 +26,7 @@
 static const char rcsid[] =
     "@(#) Header: gencode.c,v 1.93 97/06/12 14:22:47 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: gencode.c,v 1.13 1999/07/02 10:05:22 itojun Exp $");
+__RCSID("$NetBSD: gencode.c,v 1.14 1999/07/02 16:03:41 simonb Exp $");
 #endif
 #endif
 
@@ -104,7 +104,7 @@ bpf_error(fmt, va_alist)
 	va_start(ap);
 #endif
 	if (bpf_pcap != NULL)
-		(void)vsnprintf(pcap_geterr(bpf_pcap), 
+		(void)vsnprintf(pcap_geterr(bpf_pcap),
 		    PCAP_ERRBUF_SIZE, fmt, ap);
 	va_end(ap);
 	longjmp(top_ctx, 1);

@@ -1,4 +1,4 @@
-/*	$NetBSD: calleapwhen.c,v 1.2 1998/01/09 03:16:02 perry Exp $	*/
+/*	$NetBSD: calleapwhen.c,v 1.3 1999/07/02 15:58:36 simonb Exp $	*/
 
 /*
  * calleapwhen - determine the number of seconds to the next possible
@@ -54,7 +54,7 @@ calleapwhen(ntpdate, leaplast, leapnext)
 	for (i = 1; i < 9; i++)
 		if (dateincycle < (u_long)calleaptab[i])
 			break;
-	
+
 	/*
 	 * i points at the next leap.  Compute the last and the next.
 	 */

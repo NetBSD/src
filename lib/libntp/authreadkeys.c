@@ -1,4 +1,4 @@
-/*	$NetBSD: authreadkeys.c,v 1.3 1998/03/06 18:17:14 christos Exp $	*/
+/*	$NetBSD: authreadkeys.c,v 1.4 1999/07/02 15:58:36 simonb Exp $	*/
 
 /*
  * authreadkeys.c - routines to support the reading of the key file
@@ -49,7 +49,7 @@ nexttok(str)
 	 */
 	while (*cp == ' ' || *cp == '\t')
 		cp++;
-	
+
 	/*
 	 * Save this and space to end of token
 	 */
@@ -57,19 +57,19 @@ nexttok(str)
 	while (*cp != '\0' && *cp != '\n' && *cp != ' '
 	    && *cp != '\t' && *cp != '#')
 		cp++;
-	
+
 	/*
 	 * If token length is zero return an error, else set end of
 	 * token to zero and return start.
 	 */
 	if (starttok == cp)
 		return 0;
-	
+
 	if (*cp == ' ' || *cp == '\t')
 		*cp++ = '\0';
 	else
 		*cp = '\0';
-	
+
 	*str = cp;
 	return starttok;
 }
@@ -114,7 +114,7 @@ extern	int	fclose		P((FILE *stream));
 		token = nexttok(&line);
 		if (token == 0)
 			continue;
-		
+
 		/*
 		 * First is key number.  See if it is okay.
 		 */

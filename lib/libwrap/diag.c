@@ -1,13 +1,13 @@
-/*	$NetBSD: diag.c,v 1.3 1997/10/09 21:20:21 christos Exp $	*/
+/*	$NetBSD: diag.c,v 1.4 1999/07/02 16:15:33 simonb Exp $	*/
 
  /*
   * Routines to report various classes of problems. Each report is decorated
   * with the current context (file name and line number), if available.
-  * 
+  *
   * tcpd_warn() reports a problem and proceeds.
-  * 
+  *
   * tcpd_jump() reports a problem and jumps.
-  * 
+  *
   * Author: Wietse Venema, Eindhoven University of Technology, The Netherlands.
   */
 
@@ -16,7 +16,7 @@
 #if 0
 static char sccsid[] = "@(#) diag.c 1.1 94/12/28 17:42:20";
 #else
-__RCSID("$NetBSD: diag.c,v 1.3 1997/10/09 21:20:21 christos Exp $");
+__RCSID("$NetBSD: diag.c,v 1.4 1999/07/02 16:15:33 simonb Exp $");
 #endif
 #endif
 

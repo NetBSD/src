@@ -1,4 +1,4 @@
-/*	$NetBSD: authusekey.c,v 1.3 1998/03/06 18:17:14 christos Exp $	*/
+/*	$NetBSD: authusekey.c,v 1.4 1999/07/02 15:58:36 simonb Exp $	*/
 
 /*
  * authusekey - decode a key from ascii and use it
@@ -88,14 +88,14 @@ authusekey(keyno, keytype, str)
 		if (!DESauth_parity(key)) {
 			return 0;
 		}
-		
+
 		/*
 		 * We can't find a good reason not to use this key.
 		 * So use it.
 		 */
 		DESauth_setkey(keyno, key);
 		break;
-	
+
 	case KEY_TYPE_ASCII:
 		/*
 		 * Make up key from ascii representation
@@ -107,7 +107,7 @@ authusekey(keyno, keytype, str)
 		    | (u_int32)keybytes[2] << 8 | (u_int32)keybytes[3];
 		key[1] = (u_int32)keybytes[4] << 24 | (u_int32)keybytes[5] << 16
 		    | (u_int32)keybytes[6] << 8 | (u_int32)keybytes[7];
-		
+
 		/*
 		 * Set parity on key
 		 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: mstolfp.c,v 1.2 1998/01/09 03:16:23 perry Exp $	*/
+/*	$NetBSD: mstolfp.c,v 1.3 1999/07/02 15:58:36 simonb Exp $	*/
 
 /*
  * mstolfp - convert an ascii string in milliseconds to an l_fp number
@@ -34,7 +34,7 @@ mstolfp(str, lfp)
 	cp = str;
 	while (isspace(*cp))
 		cp++;
-	
+
 	if (*cp == '-') {
 		*bp++ = '-';
 		cp++;
@@ -83,7 +83,7 @@ mstolfp(str, lfp)
 	 */
 	while (cp < cpdec)
 		*bp++ = (char)*cp++;
-	
+
 	if (*cp == '.') {
 		cp++;
 		while (isdigit(*cp))

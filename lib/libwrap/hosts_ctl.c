@@ -1,4 +1,4 @@
-/*	$NetBSD: hosts_ctl.c,v 1.2 1997/10/09 21:20:32 christos Exp $	*/
+/*	$NetBSD: hosts_ctl.c,v 1.3 1999/07/02 16:15:33 simonb Exp $	*/
 
  /*
   * hosts_ctl() combines common applications of the host access control
@@ -6,10 +6,10 @@
   * access control checker. The host name and user name arguments should be
   * empty strings, STRING_UNKNOWN or real data. If a match is found, the
   * optional shell command is executed.
-  * 
+  *
   * Restriction: this interface does not pass enough information to support
   * selective remote username lookups or selective hostname double checks.
-  * 
+  *
   * Author: Wietse Venema, Eindhoven University of Technology, The Netherlands.
   */
 
@@ -18,7 +18,7 @@
 #if 0
 static char sccsid[] = "@(#) hosts_ctl.c 1.4 94/12/28 17:42:27";
 #else
-__RCSID("$NetBSD: hosts_ctl.c,v 1.2 1997/10/09 21:20:32 christos Exp $");
+__RCSID("$NetBSD: hosts_ctl.c,v 1.3 1999/07/02 16:15:33 simonb Exp $");
 #endif
 #endif
 

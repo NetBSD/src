@@ -1,4 +1,4 @@
-.\"	$NetBSD: ex2.c,v 1.5 1998/01/09 04:12:09 perry Exp $
+.\"	$NetBSD: ex2.c,v 1.6 1999/07/02 16:11:15 simonb Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	 The Regents of the University of California.  All rights reserved.
@@ -54,7 +54,7 @@ main()
 	char id[100];
 	int hh = 0;
 	int curx, cury, base, arg;
-	
+
 	initscr();
 	signal(SIGINT, quit);
 	crmode();
@@ -183,7 +183,7 @@ main()
 			insertln();
 			(void)snprintf(id, sizeof id, "%d: ", base);
 			addstr(id);
-			for (j = 0; j < XSIZE - strlen(id) - 2; j++) 
+			for (j = 0; j < XSIZE - strlen(id) - 2; j++)
 				addch('0' + (base % 10));
 			cury++;
 		} else if (cury >= YSIZE) {

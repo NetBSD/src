@@ -1,4 +1,4 @@
-/*	$NetBSD: decodenetnum.c,v 1.2 1998/01/09 03:16:05 perry Exp $	*/
+/*	$NetBSD: decodenetnum.c,v 1.3 1999/07/02 15:58:36 simonb Exp $	*/
 
 /*
  * decodenetnum - return a net number (this is crude, but careful)
@@ -52,7 +52,7 @@ decodenetnum(num, netnum)
 		*netnum <<= 8;
 		*netnum += temp;
 	}
-	
+
 	if (i < 4)
 		return 0;
 	*netnum = htonl(*netnum);

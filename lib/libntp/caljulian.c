@@ -1,4 +1,4 @@
-/*	$NetBSD: caljulian.c,v 1.3 1998/03/06 18:17:14 christos Exp $	*/
+/*	$NetBSD: caljulian.c,v 1.4 1999/07/02 15:58:36 simonb Exp $	*/
 
 /*
  * caljulian - determine the Julian date from an NTP time.
@@ -56,7 +56,7 @@ caljulian(ntptime, jt)
     minutes    = ntptime / SECSPERMIN;
     jt->minute = minutes % MINSPERHR;
     jt->hour   = (minutes / MINSPERHR) % HRSPERDAY;
-    
+
     /*
      * Find the day past 1900/01/01 00:00 UTC
      */
@@ -100,7 +100,7 @@ caljulian(ntptime, jt)
 	for (jt->month=0;jt->month<11; jt->month++)
 	{
 	    int t;
-	
+
 	    t = monthday - calmonthtab[jt->month];
 	    if (jt->month == 1 && is_leapyear(jt->year))
 		t--;

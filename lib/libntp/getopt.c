@@ -1,4 +1,4 @@
-/*	$NetBSD: getopt.c,v 1.7 1998/08/12 14:11:49 christos Exp $	*/
+/*	$NetBSD: getopt.c,v 1.8 1999/07/02 15:58:36 simonb Exp $	*/
 
 /*
  * getopt - get option letter from argv
@@ -67,7 +67,7 @@ ntp_getopt(argc, argv, optstring)
 		scan = NULL;
 		ntp_optind++;
 	}
-	
+
 	if (scan == NULL || *scan == '\0') {
 		if (ntp_optind >= argc
 		    || argv[ntp_optind][0] != '-'
@@ -79,7 +79,7 @@ ntp_getopt(argc, argv, optstring)
 			ntp_optind++;
 			return (-1);
 		}
-	
+
 		scan = argv[ntp_optind++]+1;
 	}
 

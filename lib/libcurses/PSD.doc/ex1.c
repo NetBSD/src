@@ -1,4 +1,4 @@
-.\"	$NetBSD: ex1.c,v 1.4 1998/01/09 04:12:08 perry Exp $
+.\"	$NetBSD: ex1.c,v 1.5 1999/07/02 16:11:14 simonb Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	 The Regents of the University of California.  All rights reserved.
@@ -39,7 +39,7 @@
 #include <signal.h>
 
 
-#define YSIZE 10 
+#define YSIZE 10
 #define XSIZE 20
 
 int quit();
@@ -57,7 +57,7 @@ main()
 	crmode();			/* We want cbreak mode */
 	noecho();			/* We want to have control of chars */
 	delwin(stdscr);			/* Create our own stdscr */
-	stdscr = newwin(YSIZE, XSIZE, 10, 35); 
+	stdscr = newwin(YSIZE, XSIZE, 10, 35);
 	flushok(stdscr, TRUE);		/* Enable flushing of stdout */
 	scrollok(stdscr, TRUE);		/* Enable scrolling */
 	erase();			/* Initially, clear the screen */
@@ -99,6 +99,6 @@ quit()
 	exit(0);
 }
 
-				
-	
-	
+
+
+

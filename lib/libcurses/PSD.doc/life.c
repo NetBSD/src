@@ -1,4 +1,4 @@
-.\"	$NetBSD: life.c,v 1.4 1998/01/09 04:12:15 perry Exp $
+.\"	$NetBSD: life.c,v 1.5 1999/07/02 16:11:15 simonb Exp $
 .\"
 .\" Copyright (c) 1980, 1993
 .\"	 The Regents of the University of California.  All rights reserved.
@@ -130,7 +130,7 @@ getstart()
 
 	if (Head != NULL)			/* start new list */
 		dellist(Head);
-	Head = malloc(sizeof (LIST)); 
+	Head = malloc(sizeof (LIST));
 
 	/*
 	 * loop through the screen looking for 'x's, and add a list

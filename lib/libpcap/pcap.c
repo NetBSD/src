@@ -1,4 +1,4 @@
-/*	$NetBSD: pcap.c,v 1.6 1998/07/26 14:49:36 mycroft Exp $	*/
+/*	$NetBSD: pcap.c,v 1.7 1999/07/02 16:03:41 simonb Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -39,7 +39,7 @@
 static const char rcsid[] =
     "@(#) Header: pcap.c,v 1.27 96/11/27 18:43:25 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: pcap.c,v 1.6 1998/07/26 14:49:36 mycroft Exp $");
+__RCSID("$NetBSD: pcap.c,v 1.7 1999/07/02 16:03:41 simonb Exp $");
 #endif
 #endif
 
@@ -201,6 +201,6 @@ pcap_close(pcap_t *p)
 	if (p->md.device != NULL)
 		free(p->md.device);
 #endif
-	
+
 	free(p);
 }

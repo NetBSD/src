@@ -68,7 +68,7 @@ In this case, it will put on as much as it can.
 .De
 Add no more than
 .Vn len
-characters of the string pointed to by                                                 
+characters of the string pointed to by
 .Vn str
 on the window at the current \*y.
 \*(Es
@@ -82,7 +82,7 @@ Remove character attributes set by
 To clear all character attributes, use
 .Fn attroff "A_ATTRIBUTES" .
 .Fn attroff "A_UNDERLINE"
-is equivalent to 
+is equivalent to
 .Fn underend .
 .Ds
 .Fn attron "int attribute" \(dg
@@ -93,7 +93,7 @@ The attributes that can be set are \fBA_UNDERLINE\fR,
 \fBA_REVERSE\fR, \fBA_BLINK\fR, \fBA_DIM\fR,
 \fBA_BOLD\fR, \fBA_BLANK\fR and \fBA_PROTECT\fB.
 .Fn attron "A_UNDERLINE"
-is equivalent to 
+is equivalent to
 .Fn underscore .
 .Ds
 .Fn attrset "int attribute" \(dg
@@ -189,7 +189,7 @@ Wipes the window clear from the current \*y to the end of the line.
 .Ds
 .Fn crmode "" \(dg
 .De
-Identical to 
+Identical to
 .Fn cbreak .
 The misnamed macro
 .Fn crmode
@@ -240,7 +240,7 @@ This restores the terminal to the state it was before
 and
 .Fn setterm )
 was called.
-It should always be called before exiting and before the final calls to 
+It should always be called before exiting and before the final calls to
 .Fn delwin .
 It does not exit.
 This is especially useful for resetting tty stats
@@ -447,7 +447,7 @@ the cursor will be left after the last update on the terminal,
 and the current \*y for
 .Vn win
 will be changed accordingly.
-If 
+If
 .Vn boolf
  is 0 the cursor will be moved to the current \*y.
 This flag
@@ -486,7 +486,7 @@ Equivalent to:
 move(y, x);
 printw(fmt, ...);
 .)l
-.Ds 
+.Ds
 .Fn mvscanw "int y" "int x" "const char *fmt" "..."
 .De
 Equivalent to:
@@ -529,7 +529,7 @@ scanw(fmt, ...);
 .)l
 .Ds
 .Ft "WINDOW *"
-.Fn newwin "int lines" "int cols" "int begin_y" "int begin_x" 
+.Fn newwin "int lines" "int cols" "int begin_y" "int begin_x"
 .De
 Create a new window with
 .Vn lines
@@ -600,13 +600,13 @@ Turn echoing of characters off.
 .Ds
 .Fn nonl "" \(dg
 .De
-Unset the terminal to from nl mode.  See 
+Unset the terminal to from nl mode.  See
 .Fn nl .
 .ne 1i
 .Ds
 .Fn noraw "" \(dg
 .De
-Unset the terminal from raw mode.  See 
+Unset the terminal from raw mode.  See
 .Fn raw .
 .Ds
 .Fn notimeout "WINDOW *win1" "int boolf"
@@ -645,7 +645,7 @@ i.e., blanks on
 .Vn win1
 leave the contents of the space on
 .Vn win2
-untouched.  Note that all non-blank characters are overwritten 
+untouched.  Note that all non-blank characters are overwritten
 destructively in the overlay.
 .Ds
 .Fn overwrite "WINDOW *win1" "WINDOW *win2"
@@ -722,7 +722,7 @@ stored.
 These functions are performed automatically by
 .Fn initscr
 and
-.Fn endwin .  
+.Fn endwin .
 This function should not be used by the user.
 .Ds
 .Fn savetty "" \(dg
@@ -738,7 +738,7 @@ Perform a
 .Fn scanf
 through the window using
 .Vn fmt .
-It does this using consecutive calls to 
+It does this using consecutive calls to
 .Fn getch
 (or
 .Fn wgetch ).
@@ -879,12 +879,12 @@ to trap to this routine.
 .Fn unctrl "char *ch" \(dg
 .De
 Returns a string which is an ASCII representation of
-.Vn ch .  
+.Vn ch .
 Characters are 8 bits long.
 .Ds
 .Fn unctrllen "char *ch" \(dg
 .De
-Returns the length of the ASCII representation of 
+Returns the length of the ASCII representation of
 .Vn ch .
 .ne 1i
 .Ds
@@ -905,21 +905,21 @@ This is equivalent to
 .Ds
 .Fn vwprintw "WINDOW *win" "const char *fmt" "va_list ap"
 .De
-Identical to 
-.Fn printw 
+Identical to
+.Fn printw
 except that it takes both a window specification and a pointer to a variable
 length argument list.
 .Ds
 .Fn vwscanw "WINDOW *win" "const char *fmt" "va_list ap"
 .De
-Identical to 
+Identical to
 .Fn scanw
 except that it takes both a window specification and a pointer to a variable
 length argument list.
 .Ds
 .Fn waddbytes "WINDOW *win" "char *str" "int len"
 .De
-This function is the low level character output function.  
+This function is the low level character output function.
 .Vn Len
 characters of the string
 .Vn str
@@ -927,34 +927,34 @@ are output to the current \*y position of the window specified by
 .Vn win.
 .sp 2
 .pp
-\fIThe following functions differ from the standard functions only in their 
+\fIThe following functions differ from the standard functions only in their
 specification of a window, rather than the use of the default
 .Vn stdscr.\fP
 .Ds
-.Fn waddch "WINDOW *win" "char ch" 
-.Fn waddstr "WINDOW *win" "char *str" 
+.Fn waddch "WINDOW *win" "char ch"
+.Fn waddstr "WINDOW *win" "char *str"
 .Fn waddnstr "WINDOW *win" "char *str" "int len"
 .Fn wattron  "WINDOW *win" "int attr"
 .Fn wattroff  "WINDOW *win" "int attr"
 .Fn wattrset  "WINDOW *win" "int attr"
-.Fn wclear "WINDOW *win"  
-.Fn wclrtobot "WINDOW *win"  
-.Fn wclrtoeol "WINDOW *win"  
-.Fn wdelch "WINDOW *win"  
-.Fn wdeleteln "WINDOW *win" 
-.Fn werase "WINDOW *win" 
-.Fn wgetch "WINDOW *win" 
-.Fn wgetstr "WINDOW *win" "char *str" 
+.Fn wclear "WINDOW *win"
+.Fn wclrtobot "WINDOW *win"
+.Fn wclrtoeol "WINDOW *win"
+.Fn wdelch "WINDOW *win"
+.Fn wdeleteln "WINDOW *win"
+.Fn werase "WINDOW *win"
+.Fn wgetch "WINDOW *win"
+.Fn wgetstr "WINDOW *win" "char *str"
 .Fn winch "WINDOW *win" \(dg
-.Fn winsch "WINDOW *win" "char c" 
-.Fn winsertln "WINDOW *win" 
-.Fn wmove "WINDOW *win" "int y" int x" 
-.Fn wprintw "WINDOW *win" "char *fmt" "..." 
-.Fn wrefresh "WINDOW *win" 
-.Fn wscanw "WINDOW *win" "char *fmt" "..." 
-.Fn wstandend "WINDOW *win" 
+.Fn winsch "WINDOW *win" "char c"
+.Fn winsertln "WINDOW *win"
+.Fn wmove "WINDOW *win" "int y" int x"
+.Fn wprintw "WINDOW *win" "char *fmt" "..."
+.Fn wrefresh "WINDOW *win"
+.Fn wscanw "WINDOW *win" "char *fmt" "..."
+.Fn wstandend "WINDOW *win"
 .Fn wstandout "WINDOW *win"
 .Fn wtimeout "WINDOW *win" "int delay"
-.Fn wunderend "WINDOW *win" 
+.Fn wunderend "WINDOW *win"
 .Fn wunderscore "WINDOW *win"
 .Dg

@@ -1,4 +1,4 @@
-/*	$NetBSD: nametoaddr.c,v 1.10 1999/07/02 10:05:22 itojun Exp $	*/
+/*	$NetBSD: nametoaddr.c,v 1.11 1999/07/02 16:03:41 simonb Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -30,7 +30,7 @@
 static const char rcsid[] =
     "@(#) Header: nametoaddr.c,v 1.47 97/06/13 13:16:19 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: nametoaddr.c,v 1.10 1999/07/02 10:05:22 itojun Exp $");
+__RCSID("$NetBSD: nametoaddr.c,v 1.11 1999/07/02 16:03:41 simonb Exp $");
 #endif
 #endif
 
@@ -346,7 +346,7 @@ pcap_ether_hostton(const char *name)
 		return (NULL);
 	else
 		rewind(fp);
-	
+
 	while ((ep = pcap_next_etherent(fp)) != NULL) {
 		if (strcmp(ep->name, name) == 0) {
 			ap = (u_char *)malloc(6);
