@@ -1,4 +1,4 @@
-/*	$NetBSD: res_send.c,v 1.6 1996/12/17 03:36:01 mrg Exp $	*/
+/*	$NetBSD: res_send.c,v 1.7 1997/02/08 04:38:31 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1989, 1993
@@ -58,7 +58,7 @@
 static char sccsid[] = "@(#)res_send.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "$Id: res_send.c,v 8.7 1995/12/03 08:31:17 vixie Exp ";
 #else
-static char rcsid[] = "$NetBSD: res_send.c,v 1.6 1996/12/17 03:36:01 mrg Exp $";
+static char rcsid[] = "$NetBSD: res_send.c,v 1.7 1997/02/08 04:38:31 mycroft Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -576,9 +576,9 @@ res_send(buf, buflen, ans, anssiz)
 				seconds /= _res.nscount;
 			if ((long) seconds <= 0)
 				seconds = 1;
-    wait:
 			dsfd.fd = s;
-			dsfd.events = dsfd.revents = POLLIN;
+			dsfd.events = POLLIN;
+    wait:
 			n = poll(&dsfd, 1, seconds * 1000);
 			if (n < 0) {
 				Perror(stderr, "poll", errno);
