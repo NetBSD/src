@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_acctrace.c,v 1.15 2004/02/29 20:47:37 oster Exp $	*/
+/*	$NetBSD: rf_acctrace.c,v 1.16 2004/02/29 21:38:41 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,7 +34,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_acctrace.c,v 1.15 2004/02/29 20:47:37 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_acctrace.c,v 1.16 2004/02/29 21:38:41 oster Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -49,25 +49,29 @@ __KERNEL_RCSID(0, "$NetBSD: rf_acctrace.c,v 1.15 2004/02/29 20:47:37 oster Exp $
 #include "rf_hist.h"
 #include "rf_shutdown.h"
 
+#if RF_ACC_TRACE > 0
 static long numTracesSoFar;
 
 RF_DECLARE_MUTEX(rf_tracing_mutex)
+#endif
 
 int 
 rf_ConfigureAccessTrace(RF_ShutdownList_t **listp)
 {
-
+#if RF_ACC_TRACE > 0
 	numTracesSoFar = 0;
 	rf_mutex_init(&rf_tracing_mutex);
-
+#endif
 	return (0);
 }
+
 /* install a trace record.  cause a flush to disk or to the trace
  * collector daemon if the trace buffer is at least 1/2 full.  
  */
 void 
 rf_LogTraceRec(RF_Raid_t *raid, RF_AccTraceEntry_t *rec)
 {
+#if RF_ACC_TRACE > 0
 	RF_AccTotals_t *acc = &raid->acc_totals;
 
 	if (((rf_maxNumTraces >= 0) && (numTracesSoFar >= rf_maxNumTraces)))
@@ -111,4 +115,6 @@ rf_LogTraceRec(RF_Raid_t *raid, RF_AccTraceEntry_t *rec)
 		acc->phys_io_us = rec->phys_io_us;
 		acc->user_reccount++;
 	}
+#endif /* RF_ACC_TRACE > 0 */
 }
+
