@@ -1,4 +1,4 @@
-/*	$NetBSD: postmortem.c,v 1.15 1998/08/27 04:00:53 mark Exp $	*/
+/*	$NetBSD: postmortem.c,v 1.16 1999/01/03 02:23:28 mark Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -233,10 +233,10 @@ postmortem(frame)
 	}
 
 #ifndef	OFWGENCFG
-	pm_dumpw(irqstack.virtual + NBPG - 0x100, 0x100);
+	pm_dumpw(irqstack.pv_va + NBPG - 0x100, 0x100);
 #endif
-	pm_dumpw(undstack.virtual + NBPG - 0x20, 0x20);
-	pm_dumpw(abtstack.virtual + NBPG - 0x20, 0x20);
+	pm_dumpw(undstack.pv_va + NBPG - 0x20, 0x20);
+	pm_dumpw(abtstack.pv_va + NBPG - 0x20, 0x20);
 
 	printf("abt_sp=%08x irq_sp=%08x und_sp=%08x svc_sp=%08x\n",
 	    get_stackptr(PSR_ABT32_MODE),

@@ -1,4 +1,4 @@
-/*	$NetBSD: shark_machdep.c,v 1.11 1998/08/29 03:57:03 mark Exp $	*/
+/*	$NetBSD: shark_machdep.c,v 1.12 1999/01/03 02:23:28 mark Exp $	*/
 
 /*
  * Copyright 1997
@@ -237,9 +237,9 @@ initarm(ofw_handle)
 	 * The kernel stack for SVC mode will be updated on return
 	 * from this routine.
 	 */
-	set_stackptr(PSR_IRQ32_MODE, irqstack.virtual + NBPG);
-	set_stackptr(PSR_UND32_MODE, undstack.virtual + NBPG);
-	set_stackptr(PSR_ABT32_MODE, abtstack.virtual + NBPG);
+	set_stackptr(PSR_IRQ32_MODE, irqstack.pv_va + NBPG);
+	set_stackptr(PSR_UND32_MODE, undstack.pv_va + NBPG);
+	set_stackptr(PSR_ABT32_MODE, abtstack.pv_va + NBPG);
 
 	/* Set-up exception handlers. */
 
@@ -308,7 +308,7 @@ initarm(ofw_handle)
 #endif
 
 	/* Return the new stackbase. */
-	return(kernelstack.virtual + USPACE_SVC_STACK_TOP);
+	return(kernelstack.pv_va + USPACE_SVC_STACK_TOP);
 }
 
 

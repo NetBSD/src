@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.35 1998/09/03 03:31:53 mark Exp $	*/
+/*	$NetBSD: pmap.c,v 1.36 1999/01/03 02:23:28 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -633,8 +633,8 @@ pmap_bootstrap(kernel_l1pt, kernel_ptpt)
 	kernel_pmap = &kernel_pmap_store;
 
 	kernel_pmap->pm_pdir = kernel_l1pt;
-	kernel_pmap->pm_pptpt = kernel_ptpt.physical;
-	kernel_pmap->pm_vptpt = kernel_ptpt.virtual;
+	kernel_pmap->pm_pptpt = kernel_ptpt.pv_pa;
+	kernel_pmap->pm_vptpt = kernel_ptpt.pv_va;
 	simple_lock_init(&kernel_pmap->pm_lock);
 	kernel_pmap->pm_count = 1;
 
@@ -1214,7 +1214,7 @@ pmap_pinit(pmap)
 	}
 
 	/* Map zero page for the pmap. This will also map the L2 for it */
-	pmap_enter(pmap, 0x00000000, systempage.physical,
+	pmap_enter(pmap, 0x00000000, systempage.pv_pa,
 	    VM_PROT_READ, TRUE);
 }
 
