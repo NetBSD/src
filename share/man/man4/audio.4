@@ -1,4 +1,4 @@
-.\"	$NetBSD: audio.4,v 1.48 2002/02/22 03:03:54 uwe Exp $
+.\"	$NetBSD: audio.4,v 1.49 2002/03/13 00:18:40 wiz Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -125,7 +125,9 @@ If the
 .Dv AUMODE_PLAY_ALL
 mode is not set the writing process must
 provide enough data via
-subsequent write calls to ``catch up'' in time to the current audio
+subsequent write calls to
+.Dq catch up
+in time to the current audio
 block before any more process-provided samples will be played.
 If a reading process does not call
 .Xr read 2
@@ -590,9 +592,12 @@ The
 .Va mixer_class
 field identifies what class of control this is.
 This value is set to the index value used to query the class itself.
-For example, a mixer level controlling the input gain on the ``line
-in'' circuit would be a class that matches an input class device
-with the name ``Inputs'' (AudioCInputs).
+For example, a mixer level controlling the input gain on the
+.Dq line in
+circuit would be a class that matches an input class device
+with the name
+.Dq inputs
+.Dv ( AudioCinputs ) .
 Mixer controls which control audio circuitry for a particular audio
 source (e.g. line-in, CD in, DAC output) are collected under the input class,
 while those which control all audio sources (e.g. master volume,
@@ -604,7 +609,9 @@ and
 .Va prev
 may be used by the hardware device driver to provide hints for the next
 and previous devices in a related set (for example, the line in level
-control would have the line in mute as its ``next'' value).
+control would have the line in mute as its
+.Dq next
+value).
 If there is no relevant next or previous value,
 .Dv AUDIO_MIXER_LAST
 is specified.
