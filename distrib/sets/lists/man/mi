@@ -428,6 +428,7 @@
 ./usr/share/man/cat8/ping.0
 ./usr/share/man/cat8/portmap.0
 ./usr/share/man/cat8/pppd.0
+./usr/share/man/cat8/pppstats.0
 ./usr/share/man/cat8/pwd_mkdb.0
 ./usr/share/man/cat8/quot.0
 ./usr/share/man/cat8/quotacheck.0
@@ -488,4 +489,5 @@
 ./usr/share/man/cat8/vmstat.0
 ./usr/share/man/cat8/vnconfig.0
 ./usr/share/man/cat8/yp.0
+./usr/share/man/cat8/yppoll.0
 ./usr/share/man/cat8/zic.0
