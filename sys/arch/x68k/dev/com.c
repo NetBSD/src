@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.21 2001/05/30 15:24:39 lukem Exp $	*/
+/*	$NetBSD: com.c,v 1.22 2001/11/25 15:43:06 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1068,7 +1068,7 @@ out:
 	callout_reset(&com_poll_ch, 1, compollin, NULL);
 }
 
-static int
+int
 comintr(arg)
 	void *arg;
 {
@@ -1118,7 +1118,9 @@ comintr(arg)
 						     sc->sc_mcr);
 					}
 				}
+#ifdef DDB
 			next:
+#endif
 				lsr = inb(pio(iobase , com_lsr));
 			} while (ISSET(lsr, LSR_RXRDY));
 
