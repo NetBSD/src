@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.12 2002/09/12 22:56:31 mycroft Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.13 2002/09/26 20:42:12 mycroft Exp $	*/
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -16,9 +16,8 @@ _rtld_setup_pltgot(const Obj_Entry *obj)
 }
 
 int
-_rtld_relocate_nonplt_objects(obj, self)
+_rtld_relocate_nonplt_objects(obj)
 	const Obj_Entry *obj;
-	bool self;
 {
 	const Elf_Rela *rela;
 
