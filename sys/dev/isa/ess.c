@@ -1,4 +1,4 @@
-/*	$NetBSD: ess.c,v 1.26 1998/08/26 13:08:44 augustss Exp $	*/
+/*	$NetBSD: ess.c,v 1.27 1998/11/25 13:39:37 mycroft Exp $	*/
 
 /*
  * Copyright 1997
@@ -1572,166 +1572,153 @@ ess_query_devinfo(addr, dip)
 	 */
 	switch (dip->index) {
 	case ESS_DAC_PLAY_VOL:
-		dip->type = AUDIO_MIXER_VALUE;
 		dip->mixer_class = ESS_INPUT_CLASS;
-		dip->prev = AUDIO_MIXER_LAST;
-		dip->next = AUDIO_MIXER_LAST;
+		dip->next = dip->prev = AUDIO_MIXER_LAST;
 		strcpy(dip->label.name, AudioNdac);
+		dip->type = AUDIO_MIXER_VALUE;
 		dip->un.v.num_channels = 2;
 		strcpy(dip->un.v.units.name, AudioNvolume);
 		return (0);
 
 	case ESS_MIC_PLAY_VOL:
-		dip->type = AUDIO_MIXER_VALUE;
 		dip->mixer_class = ESS_INPUT_CLASS;
 		dip->prev = AUDIO_MIXER_LAST;
 		dip->next = ESS_MIC_PREAMP;
 		strcpy(dip->label.name, AudioNmicrophone);
+		dip->type = AUDIO_MIXER_VALUE;
 		dip->un.v.num_channels = 2;
 		strcpy(dip->un.v.units.name, AudioNvolume);
 		return (0);
 
 	case ESS_LINE_PLAY_VOL:
-		dip->type = AUDIO_MIXER_VALUE;
 		dip->mixer_class = ESS_INPUT_CLASS;
-		dip->prev = AUDIO_MIXER_LAST;
-		dip->next = AUDIO_MIXER_LAST;
+		dip->next = dip->prev = AUDIO_MIXER_LAST;
 		strcpy(dip->label.name, AudioNline);
+		dip->type = AUDIO_MIXER_VALUE;
 		dip->un.v.num_channels = 2;
 		strcpy(dip->un.v.units.name, AudioNvolume);
 		return (0);
 
 	case ESS_SYNTH_PLAY_VOL:
-		dip->type = AUDIO_MIXER_VALUE;
 		dip->mixer_class = ESS_INPUT_CLASS;
-		dip->prev = AUDIO_MIXER_LAST;
-		dip->next = AUDIO_MIXER_LAST;
+		dip->next = dip->prev = AUDIO_MIXER_LAST;
 		strcpy(dip->label.name, AudioNfmsynth);
+		dip->type = AUDIO_MIXER_VALUE;
 		dip->un.v.num_channels = 2;
 		strcpy(dip->un.v.units.name, AudioNvolume);
 		return (0);
 
 	case ESS_CD_PLAY_VOL:
-		dip->type = AUDIO_MIXER_VALUE;
 		dip->mixer_class = ESS_INPUT_CLASS;
-		dip->prev = AUDIO_MIXER_LAST;
-		dip->next = AUDIO_MIXER_LAST;
+		dip->next = dip->prev = AUDIO_MIXER_LAST;
 		strcpy(dip->label.name, AudioNcd);
+		dip->type = AUDIO_MIXER_VALUE;
 		dip->un.v.num_channels = 2;
 		strcpy(dip->un.v.units.name, AudioNvolume);
 		return (0);
 
 	case ESS_AUXB_PLAY_VOL:
-		dip->type = AUDIO_MIXER_VALUE;
 		dip->mixer_class = ESS_INPUT_CLASS;
-		dip->prev = AUDIO_MIXER_LAST;
-		dip->next = AUDIO_MIXER_LAST;
+		dip->next = dip->prev = AUDIO_MIXER_LAST;
 		strcpy(dip->label.name, "auxb");
+		dip->type = AUDIO_MIXER_VALUE;
 		dip->un.v.num_channels = 2;
 		strcpy(dip->un.v.units.name, AudioNvolume);
 		return (0);
 
 	case ESS_INPUT_CLASS:
-		dip->type = AUDIO_MIXER_CLASS;
 		dip->mixer_class = ESS_INPUT_CLASS;
 		dip->next = dip->prev = AUDIO_MIXER_LAST;
 		strcpy(dip->label.name, AudioCinputs);
+		dip->type = AUDIO_MIXER_CLASS;
 		return (0);
 
-
 	case ESS_MASTER_VOL:
-		dip->type = AUDIO_MIXER_VALUE;
 		dip->mixer_class = ESS_OUTPUT_CLASS;
-		dip->prev = dip->next = AUDIO_MIXER_LAST;
+		dip->next = dip->prev = AUDIO_MIXER_LAST;
 		strcpy(dip->label.name, AudioNmaster);
+		dip->type = AUDIO_MIXER_VALUE;
 		dip->un.v.num_channels = 2;
 		strcpy(dip->un.v.units.name, AudioNvolume);
 		return (0);
 
 	case ESS_PCSPEAKER_VOL:
-		dip->type = AUDIO_MIXER_VALUE;
 		dip->mixer_class = ESS_OUTPUT_CLASS;
-		dip->prev = AUDIO_MIXER_LAST;
-		dip->next = AUDIO_MIXER_LAST;
+		dip->next = dip->prev = AUDIO_MIXER_LAST;
 		strcpy(dip->label.name, "pc_speaker");
+		dip->type = AUDIO_MIXER_VALUE;
 		dip->un.v.num_channels = 1;
 		strcpy(dip->un.v.units.name, AudioNvolume);
 		return (0);
 
 	case ESS_OUTPUT_CLASS:
-		dip->type = AUDIO_MIXER_CLASS;
 		dip->mixer_class = ESS_OUTPUT_CLASS;
 		dip->next = dip->prev = AUDIO_MIXER_LAST;
 		strcpy(dip->label.name, AudioCoutputs);
+		dip->type = AUDIO_MIXER_CLASS;
 		return (0);
 
 
 	case ESS_DAC_REC_VOL:
-		dip->type = AUDIO_MIXER_VALUE;
 		dip->mixer_class = ESS_RECORD_CLASS;
-		dip->prev = AUDIO_MIXER_LAST;
-		dip->next = AUDIO_MIXER_LAST;
+		dip->next = dip->prev = AUDIO_MIXER_LAST;
 		strcpy(dip->label.name, AudioNdac);
+		dip->type = AUDIO_MIXER_VALUE;
 		dip->un.v.num_channels = 2;
 		strcpy(dip->un.v.units.name, AudioNvolume);
 		return (0);
 
 	case ESS_MIC_REC_VOL:
-		dip->type = AUDIO_MIXER_VALUE;
 		dip->mixer_class = ESS_RECORD_CLASS;
-		dip->prev = AUDIO_MIXER_LAST;
-		dip->next = AUDIO_MIXER_LAST;
+		dip->next = dip->prev = AUDIO_MIXER_LAST;
 		strcpy(dip->label.name, AudioNmicrophone);
+		dip->type = AUDIO_MIXER_VALUE;
 		dip->un.v.num_channels = 2;
 		strcpy(dip->un.v.units.name, AudioNvolume);
 		return (0);
 
 	case ESS_LINE_REC_VOL:
-		dip->type = AUDIO_MIXER_VALUE;
 		dip->mixer_class = ESS_RECORD_CLASS;
-		dip->prev = AUDIO_MIXER_LAST;
-		dip->next = AUDIO_MIXER_LAST;
+		dip->next = dip->prev = AUDIO_MIXER_LAST;
 		strcpy(dip->label.name, AudioNline);
+		dip->type = AUDIO_MIXER_VALUE;
 		dip->un.v.num_channels = 2;
 		strcpy(dip->un.v.units.name, AudioNvolume);
 		return (0);
 
 	case ESS_SYNTH_REC_VOL:
-		dip->type = AUDIO_MIXER_VALUE;
 		dip->mixer_class = ESS_RECORD_CLASS;
-		dip->prev = AUDIO_MIXER_LAST;
-		dip->next = AUDIO_MIXER_LAST;
+		dip->next = dip->prev = AUDIO_MIXER_LAST;
 		strcpy(dip->label.name, AudioNfmsynth);
+		dip->type = AUDIO_MIXER_VALUE;
 		dip->un.v.num_channels = 2;
 		strcpy(dip->un.v.units.name, AudioNvolume);
 		return (0);
 
 	case ESS_CD_REC_VOL:
-		dip->type = AUDIO_MIXER_VALUE;
 		dip->mixer_class = ESS_RECORD_CLASS;
-		dip->prev = AUDIO_MIXER_LAST;
-		dip->next = AUDIO_MIXER_LAST;
+		dip->next = dip->prev = AUDIO_MIXER_LAST;
 		strcpy(dip->label.name, AudioNcd);
+		dip->type = AUDIO_MIXER_VALUE;
 		dip->un.v.num_channels = 2;
 		strcpy(dip->un.v.units.name, AudioNvolume);
 		return (0);
 
 	case ESS_AUXB_REC_VOL:
-		dip->type = AUDIO_MIXER_VALUE;
 		dip->mixer_class = ESS_RECORD_CLASS;
-		dip->prev = AUDIO_MIXER_LAST;
-		dip->next = AUDIO_MIXER_LAST;
+		dip->next = dip->prev = AUDIO_MIXER_LAST;
 		strcpy(dip->label.name, "auxb");
+		dip->type = AUDIO_MIXER_VALUE;
 		dip->un.v.num_channels = 2;
 		strcpy(dip->un.v.units.name, AudioNvolume);
 		return (0);
 
 	case ESS_MIC_PREAMP:
-		dip->type = AUDIO_MIXER_ENUM;
 		dip->mixer_class = ESS_INPUT_CLASS;
 		dip->prev = ESS_MIC_PLAY_VOL;
 		dip->next = AUDIO_MIXER_LAST;
 		strcpy(dip->label.name, AudioNpreamp);
+		dip->type = AUDIO_MIXER_ENUM;
 		dip->un.e.num_mem = 2;
 		strcpy(dip->un.e.member[0].label.name, AudioNoff);
 		dip->un.e.member[0].ord = 0;
@@ -1740,20 +1727,19 @@ ess_query_devinfo(addr, dip)
 		return (0);
 
 	case ESS_RECORD_VOL:
-		dip->type = AUDIO_MIXER_VALUE;
 		dip->mixer_class = ESS_RECORD_CLASS;
-		dip->prev = AUDIO_MIXER_LAST;
-		dip->next = AUDIO_MIXER_LAST;
+		dip->next = dip->prev = AUDIO_MIXER_LAST;
 		strcpy(dip->label.name, AudioNrecord);
+		dip->type = AUDIO_MIXER_VALUE;
 		dip->un.v.num_channels = 2;
 		strcpy(dip->un.v.units.name, AudioNvolume);
 		return (0);
 
 	case ESS_RECORD_SOURCE:
-		dip->mixer_class = ESS_RECORD_CLASS;
-		dip->prev = dip->next = AUDIO_MIXER_LAST;
+		dip->next = dip->prev = AUDIO_MIXER_LAST;
 		strcpy(dip->label.name, AudioNsource);
 		dip->type = AUDIO_MIXER_SET;
+		dip->mixer_class = ESS_RECORD_CLASS;
 		dip->un.s.num_mem = 6;
 		strcpy(dip->un.s.member[0].label.name, AudioNdac);
 		dip->un.s.member[0].mask = 1 << ESS_DAC_REC_VOL;
@@ -1770,18 +1756,17 @@ ess_query_devinfo(addr, dip)
 		return (0);
 
 	case ESS_RECORD_CLASS:
-		dip->type = AUDIO_MIXER_CLASS;
 		dip->mixer_class = ESS_RECORD_CLASS;
 		dip->next = dip->prev = AUDIO_MIXER_LAST;
 		strcpy(dip->label.name, AudioCrecord);
+		dip->type = AUDIO_MIXER_CLASS;
 		return (0);
 
-
 	case ESS_RECORD_MONITOR:
-		dip->mixer_class = ESS_MONITOR_CLASS;
 		dip->prev = dip->next = AUDIO_MIXER_LAST;
 		strcpy(dip->label.name, AudioNmonitor);
 		dip->type = AUDIO_MIXER_ENUM;
+		dip->mixer_class = ESS_MONITOR_CLASS;
 		dip->un.e.num_mem = 2;
 		strcpy(dip->un.e.member[0].label.name, AudioNoff);
 		dip->un.e.member[0].ord = 0;
@@ -1790,10 +1775,10 @@ ess_query_devinfo(addr, dip)
 		return (0);
 
 	case ESS_MONITOR_CLASS:
-		dip->type = AUDIO_MIXER_CLASS;
 		dip->mixer_class = ESS_MONITOR_CLASS;
 		dip->next = dip->prev = AUDIO_MIXER_LAST;
 		strcpy(dip->label.name, AudioCmonitor);
+		dip->type = AUDIO_MIXER_CLASS;
 		return (0);
 	}
 
