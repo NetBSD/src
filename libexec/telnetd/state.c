@@ -1,4 +1,4 @@
-/*	$NetBSD: state.c,v 1.11 1997/10/08 08:45:11 mrg Exp $	*/
+/*	$NetBSD: state.c,v 1.12 2000/06/22 06:47:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,13 +38,17 @@
 #if 0
 static char sccsid[] = "@(#)state.c	8.5 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: state.c,v 1.11 1997/10/08 08:45:11 mrg Exp $");
+__RCSID("$NetBSD: state.c,v 1.12 2000/06/22 06:47:49 thorpej Exp $");
 #endif
 #endif /* not lint */
 
 #include "telnetd.h"
 #if	defined(AUTHENTICATION)
 #include <libtelnet/auth.h>
+#endif
+
+#if defined(ENCRYPTION)
+#include <libtelnet/encrypt.h>
 #endif
 
 static int envvarok __P((char *));
@@ -59,7 +63,7 @@ int	not42 = 1;
  * Buffer for sub-options, and macros
  * for suboptions buffer manipulations
  */
-unsigned char subbuffer[512], *subpointer= subbuffer, *subend= subbuffer;
+unsigned char subbuffer[4096], *subpointer= subbuffer, *subend= subbuffer;
 
 #define	SB_CLEAR()	subpointer = subbuffer
 #define	SB_TERM()	{ subend = subpointer; SB_CLEAR(); }
@@ -103,6 +107,10 @@ telrcv()
 		if ((&ptyobuf[BUFSIZ] - pfrontp) < 2)
 			break;
 		c = *netip++ & 0377, ncc--;
+#ifdef	ENCRYPTION
+		if (decrypt_input)
+			c = (*decrypt_input)(c);
+#endif	/* ENCRYPTION */
 		switch (state) {
 
 		case TS_CR:
@@ -131,6 +139,10 @@ telrcv()
 			 */
 			if ((c == '\r') && his_state_is_wont(TELOPT_BINARY)) {
 				int nc = *netip;
+#ifdef	ENCRYPTION
+				if (decrypt_input)
+					nc = (*decrypt_input)(nc & 0xff);
+#endif	/* ENCRYPTION */
 #ifdef	LINEMODE
 				/*
 				 * If we are operating in linemode,
@@ -143,6 +155,10 @@ telrcv()
 				} else
 #endif
 				{
+#ifdef	ENCRYPTION
+					if (decrypt_input)
+						(void)(*decrypt_input)(-1);
+#endif	/* ENCRYPTION */
 					state = TS_CR;
 				}
 			}
@@ -461,6 +477,9 @@ extern void auth_request __P((void));	/* libtelnet */
 #ifdef	LINEMODE
 extern void doclientstat __P((void));
 #endif
+#ifdef	ENCRYPTION
+extern void encrypt_send_support __P((void));
+#endif	/* ENCRYPTION */
 
 	void
 willoption(option)
@@ -574,6 +593,12 @@ willoption(option)
 			break;
 #endif
 
+#ifdef	ENCRYPTION
+		case TELOPT_ENCRYPT:
+			func = encrypt_send_support;
+			changeok++;
+			break;
+#endif	/* ENCRYPTION */
 
 		default:
 			break;
@@ -632,6 +657,12 @@ willoption(option)
 			func = auth_request;
 			break;
 #endif
+
+#ifdef	ENCRYPTION
+		case TELOPT_ENCRYPT:
+			func = encrypt_send_support;
+			break;
+#endif	/* ENCRYPTION */
 
 		case TELOPT_LFLOW:
 			func = flowstat;
@@ -699,6 +730,8 @@ wontoption(option)
 			 */
 			if (lmodetype != REAL_LINEMODE)
 				break;
+			/* XXX double-check this --thorpej */
+			lmodetype = KLUDGE_LINEMODE;
 # endif	/* KLUDGELINEMODE */
 			clientstat(TELOPT_LINEMODE, WONT, 0);
 			break;
@@ -922,6 +955,12 @@ dooption(option)
 			/* NOT REACHED */
 			break;
 
+#ifdef	ENCRYPTION
+		case TELOPT_ENCRYPT:
+			changeok++;
+			break;
+#endif	/* ENCRYPTION */
+
 		case TELOPT_LINEMODE:
 		case TELOPT_TTYPE:
 		case TELOPT_NAWS:
@@ -1063,12 +1102,37 @@ static int
 envvarok(varp)
 	char *varp;
 {
-	return (strncmp(varp, "LD_", strlen("LD_")) &&
-		strncmp(varp, "_RLD_", strlen("_RLD_")) &&
-		strcmp(varp, "LIBPATH") &&
-		strcmp(varp, "ENV") &&
-		strcmp(varp, "BASH_ENV") &&
-		strcmp(varp, "IFS"));
+
+	if (strcmp(varp, "TERMCAP") &&	/* to prevent a security hole */
+	    strcmp(varp, "TERMINFO") &&	/* with tgetent */
+	    strcmp(varp, "TERMPATH") &&
+	    strcmp(varp, "HOME") &&	/* to prevent the tegetent bug  */
+	    strncmp(varp, "LD_", strlen("LD_")) &&	/* most systems */
+	    strncmp(varp, "_RLD_", strlen("_RLD_")) &&	/* IRIX */
+	    strcmp(varp, "LIBPATH") &&			/* AIX */
+	    strcmp(varp, "ENV") &&
+	    strcmp(varp, "BASH_ENV") &&
+	    strcmp(varp, "IFS") &&
+	    strncmp(varp, "KRB5", strlen("KRB5")) &&	/* Krb5 */
+	    /*
+	     * The above case is a catch-all for now.  Here are some of
+	     * the specific ones we must avoid passing, at least until
+	     * we can prove it can be done safely.  Keep this list
+	     * around un case someone wants to remove the catch-all.
+	     */
+	    strcmp(varp, "KRB5_CONFIG") &&		/* Krb5 */
+	    strcmp(varp, "KRB5CCNAME") &&		/* Krb5 */
+	    strcmp(varp, "KRB5_KTNAME") &&		/* Krb5 */
+	    strcmp(varp, "KRBTKFILE") &&		/* Krb4 */
+	    strcmp(varp, "KRB_CONF") &&			/* CNS 4 */
+	    strcmp(varp, "KRB_REALMS") &&		/* CNS 4 */
+	    strcmp(varp, "RESOLV_HOST_CONF"))		/* Linux */
+		return (1);
+	else {
+		syslog(LOG_INFO, "Rejected the attempt to modify the "
+		    "environment variable \"%s\"", varp);
+		return (0);
+	}
 }
 
 /*
@@ -1459,6 +1523,49 @@ suboption()
 	}
 	break;
 #endif
+#ifdef	ENCRYPTION
+    case TELOPT_ENCRYPT:
+	if (SB_EOF())
+		break;
+	switch(SB_GET()) {
+	case ENCRYPT_SUPPORT:
+		encrypt_support(subpointer, SB_LEN());
+		break;
+	case ENCRYPT_IS:
+		encrypt_is(subpointer, SB_LEN());
+		break;
+	case ENCRYPT_REPLY:
+		encrypt_reply(subpointer, SB_LEN());
+		break;
+	case ENCRYPT_START:
+		encrypt_start(subpointer, SB_LEN());
+		break;
+	case ENCRYPT_END:
+		encrypt_end();
+		break;
+	case ENCRYPT_REQSTART:
+		encrypt_request_start(subpointer, SB_LEN());
+		break;
+	case ENCRYPT_REQEND:
+		/*
+		 * We can always send an REQEND so that we cannot
+		 * get stuck encrypting.  We should only get this
+		 * if we have been able to get in the correct mode
+		 * anyhow.
+		 */
+		encrypt_request_end();
+		break;
+	case ENCRYPT_ENC_KEYID:
+		encrypt_enc_keyid(subpointer, SB_LEN());
+		break;
+	case ENCRYPT_DEC_KEYID:
+		encrypt_dec_keyid(subpointer, SB_LEN());
+		break;
+	default:
+		break;
+	}
+	break;
+#endif	/* ENCRYPTION */
 
     default:
 	break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: network.c,v 1.6 1998/02/27 10:44:13 christos Exp $	*/
+/*	$NetBSD: network.c,v 1.7 2000/06/22 06:47:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)network.c	8.2 (Berkeley) 12/15/93";
 #else
-__RCSID("$NetBSD: network.c,v 1.6 1998/02/27 10:44:13 christos Exp $");
+__RCSID("$NetBSD: network.c,v 1.7 2000/06/22 06:47:48 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -136,6 +136,10 @@ netflush()
 {
     register int n, n1;
 
+#ifdef	ENCRYPTION
+    if (encrypt_output)
+	ring_encrypt(&netoring, encrypt_output);
+#endif	/* ENCRYPTION */
     if ((n1 = n = ring_full_consecutive(&netoring)) > 0) {
 	if (!ring_at_mark(&netoring)) {
 	    n = send(net, (char *)netoring.consume, n, 0); /* normal write */

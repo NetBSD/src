@@ -1,4 +1,4 @@
-/*	$NetBSD: externs.h,v 1.18 2000/02/01 02:28:23 assar Exp $	*/
+/*	$NetBSD: externs.h,v 1.19 2000/06/22 06:47:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -170,6 +170,11 @@ extern char
     options[],		/* All the little options */
     *hostname;		/* Who are we connected to? */
 
+#ifdef	ENCRYPTION
+extern void (*encrypt_output) P((unsigned char *, int));
+extern int (*decrypt_input) P((int));
+#endif	/* ENCRYPTION */
+
 /*
  * We keep track of each side of the option negotiation.
  */
@@ -275,6 +280,7 @@ unsigned char *env_getvalue P((unsigned char *));
 void env_varval P((unsigned char *));
 int auth_cmd P((int, char *[]));
 int ayt_status P((void));
+int encrypt_cmd P((int, char *[]));
 int tn P((int, char *[]));
 void command P((int, char *, int));
 void cmdrc P((const char *, const char *));
