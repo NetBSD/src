@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.231 2001/03/15 06:10:32 chs Exp $ */
+/* $NetBSD: machdep.c,v 1.232 2001/04/15 23:07:34 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.231 2001/03/15 06:10:32 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.232 2001/04/15 23:07:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1844,18 +1844,6 @@ fpusave_proc(struct proc *p, int save)
 	KASSERT(ci->ci_fpcurproc == p);
 	fpusave_cpu(ci, save);
 #endif /* MULTIPROCESSOR */
-}
-
-void
-spl0()
-{
-
-	if (ssir) {
-		(void) alpha_pal_swpipl(ALPHA_PSL_IPL_SOFT);
-		softintr_dispatch();
-	}
-
-	(void) alpha_pal_swpipl(ALPHA_PSL_IPL_0);
 }
 
 /*
