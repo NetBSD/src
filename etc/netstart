@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: netstart,v 1.29 1997/02/15 10:02:19 mikel Exp $
+#	$NetBSD: netstart,v 1.30 1997/03/10 09:42:24 mycroft Exp $
 #	from: @(#)netstart	8.1 (Berkeley) 7/23/93
 
 # /etc/myname contains my symbolic name
@@ -12,7 +12,7 @@ if [ -f /etc/defaultdomain ]; then
 fi
 
 # install and enable packet filter rules before configuring interfaces.
-if [ "X$ipfilter" != XNO -a -f /etc/ipf.conf ]; then
+if [ "$ipfilter" != NO ] && [ -f /etc/ipf.conf ]; then
 	echo 'installing packet filter rules ... '
 	ipf -f /etc/ipf.conf
 fi
@@ -59,9 +59,9 @@ fi
             fi
 
 	    cmd="ifconfig $1 $af $name "
-	    if [ "${dt}" = "dest" ]; then cmd="$cmd $dtaddr"; fi
+	    if [ "$dt" = dest ]; then cmd="$cmd $dtaddr"; fi
 	    if [ -n "$mask" ]; then cmd="$cmd netmask $mask"; fi
-	    if [ -n "$bcaddr" -a "X$bcaddr" != "XNONE" ]; then
+	    if [ -n "$bcaddr" ] && [ "$bcaddr" != NONE ]; then
 		cmd="$cmd broadcast $bcaddr";
 	    fi
 	    cmd="$cmd $extras"
@@ -91,7 +91,7 @@ fi
 if [ -f /etc/ifaliases ]; then
 (
 	while read addr int net; do
-		if [ x"$net" = x ]; then
+		if [ ! -n "$net" ]; then
 			ifconfig $int inet alias $addr
 		else
 			ifconfig $int inet alias $addr netmask $net
