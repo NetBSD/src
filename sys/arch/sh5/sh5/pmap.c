@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.18 2002/10/10 08:57:52 scw Exp $	*/
+/*	$NetBSD: pmap.c,v 1.19 2002/10/12 12:02:16 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -287,7 +287,7 @@ struct pvo_entry {
 #define	PVO_WIRED		0x0010		/* PVO entry is wired */
 #define	PVO_MANAGED		0x0020		/* PVO e. for managed page */
 #define	PVO_WRITABLE		0x0040		/* PVO e. for writable page */
-#define	PVO_CACHEABLE		0x0080		/* PVO e. for cacheable page */
+#define	PVO_CACHEABLE		0x0100		/* PVO e. for cacheable page */
 /* Note: These three fields must match the values for SH5_PTEL_[RM] */
 #define	PVO_REFERENCED		0x0400		/* Cached referenced bit */
 #define	PVO_MODIFIED		0x0800		/* Cached modified bit */
