@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.1 2003/03/16 07:03:30 matt Exp $	*/
+/*	$NetBSD: obio.c,v 1.2 2003/03/27 07:20:48 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -104,8 +104,9 @@ obio_cfprint(void *aux, const char *pnp)
 	if (pnp) {
 		aprint_normal("%s at %s", oa->oa_name, pnp);
 	}
-	aprint_normal(" offset %#x size %#x irq %d",
-	    oa->oa_offset, oa->oa_size, oa->oa_irq);
+	aprint_normal(" offset %#x size %#x", oa->oa_offset, oa->oa_size);
+	if (oa->oa_irq != OBIO_UNK_IRQ)
+		aprint_normal(" irq %d", oa->oa_irq);
 
 	return (UNCONF);
 }
