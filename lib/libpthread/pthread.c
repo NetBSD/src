@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.34 2004/06/25 16:33:32 drochner Exp $	*/
+/*	$NetBSD: pthread.c,v 1.35 2004/07/18 21:24:52 chs Exp $	*/
 
 /*-
  * Copyright (c) 2001,2002,2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.34 2004/06/25 16:33:32 drochner Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.35 2004/07/18 21:24:52 chs Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -66,16 +66,16 @@ static void	pthread__create_tramp(void *(*start)(void *), void *arg);
 
 int pthread__started;
 
-pthread_spin_t pthread__allqueue_lock;
+pthread_spin_t pthread__allqueue_lock = __SIMPLELOCK_UNLOCKED;
 struct pthread_queue_t pthread__allqueue;
 
-pthread_spin_t pthread__deadqueue_lock;
+pthread_spin_t pthread__deadqueue_lock = __SIMPLELOCK_UNLOCKED;
 struct pthread_queue_t pthread__deadqueue;
 struct pthread_queue_t *pthread__reidlequeue;
 
 static int nthreads;
 static int nextthread;
-static pthread_spin_t nextthread_lock;
+static pthread_spin_t nextthread_lock = __SIMPLELOCK_UNLOCKED;
 static pthread_attr_t pthread_default_attr;
 
 enum {
@@ -86,7 +86,7 @@ enum {
 
 static int pthread__diagassert = DIAGASSERT_ABORT | DIAGASSERT_STDERR;
 
-pthread_spin_t pthread__runqueue_lock;
+pthread_spin_t pthread__runqueue_lock = __SIMPLELOCK_UNLOCKED;
 struct pthread_queue_t pthread__runqueue;
 struct pthread_queue_t pthread__idlequeue;
 struct pthread_queue_t pthread__suspqueue;
@@ -410,7 +410,7 @@ pthread__create_tramp(void *(*start)(void *), void *arg)
 {
 	void *retval;
 
-	retval = start(arg);
+	retval = (*start)(arg);
 
 	pthread_exit(retval);
 
