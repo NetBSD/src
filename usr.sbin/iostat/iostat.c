@@ -1,4 +1,4 @@
-/*	$NetBSD: iostat.c,v 1.16 1998/08/27 01:59:38 enami Exp $	*/
+/*	$NetBSD: iostat.c,v 1.17 1998/08/27 03:17:49 lukem Exp $	*/
 
 /*
  * Copyright (c) 1996 John M. Vinopal
@@ -75,7 +75,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)iostat.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: iostat.c,v 1.16 1998/08/27 01:59:38 enami Exp $");
+__RCSID("$NetBSD: iostat.c,v 1.17 1998/08/27 03:17:49 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -366,7 +366,7 @@ disk_statsx(etime)
 		(void)printf(" %8.2f", atime / etime);
 
 					/* average megabytes (per second) */
-		(void)printf(" %8.0f",
+		(void)printf(" %8.2f",
 		    cur.dk_bytes[dn] / (1024.0 * 1024) / etime);
 
 	}
