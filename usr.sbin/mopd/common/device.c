@@ -1,4 +1,4 @@
-/*	$NetBSD: device.c,v 1.3 1997/10/16 23:24:28 lukem Exp $	*/
+/*	$NetBSD: device.c,v 1.4 2002/07/13 11:35:35 itojun Exp $	*/
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: device.c,v 1.3 1997/10/16 23:24:28 lukem Exp $");
+__RCSID("$NetBSD: device.c,v 1.4 2002/07/13 11:35:35 itojun Exp $");
 #endif
 
 #include "os.h"
@@ -179,12 +179,12 @@ deviceInitOne(ifname)
 	if ((strlen(dev) == 2) &&
 	    (dev[0] == 'e') &&
 	    ((dev[1] == 'n') || (dev[1] == 't'))) {
-		sprintf(interface,"ent%d\0",unit);
+		snprintf(interface, sizeof(interface), "ent%d\0", unit);
 	} else {
-		sprintf(interface,"%s%d\0",dev,unit);
+		snprintf(interface, sizeof(interface), "%s%d\0", dev, unit);
 	}
 #else
-	sprintf(interface,"%s",ifname);
+	snprintf(interface, sizeof(interface), "%s", ifname);
 #endif /* _AIX */
 
 	/* Ok, init it just once */

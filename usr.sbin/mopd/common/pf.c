@@ -1,4 +1,4 @@
-/*	$NetBSD: pf.c,v 1.5 1998/05/24 20:30:55 thorpej Exp $	*/
+/*	$NetBSD: pf.c,v 1.6 2002/07/13 11:35:35 itojun Exp $	*/
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pf.c,v 1.5 1998/05/24 20:30:55 thorpej Exp $");
+__RCSID("$NetBSD: pf.c,v 1.6 2002/07/13 11:35:35 itojun Exp $");
 #endif
 
 #include "os.h"
@@ -99,7 +99,7 @@ pfInit(interface, mode, protocol, typ)
 	
   	/* Go through all the minors and find one that isn't in use. */
 	do {
-		(void) sprintf(device, "/dev/bpf%d", n++);
+		(void) snprintf(device, sizeof(device), "/dev/bpf%d", n++);
 		fd = open(device, mode);
 	} while (fd < 0 && errno == EBUSY);
 
