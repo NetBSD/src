@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.73 2004/02/02 06:27:56 christos Exp $	*/
+/*	$NetBSD: kdump.c,v 1.74 2004/02/27 22:44:38 enami Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.73 2004/02/02 06:27:56 christos Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.74 2004/02/27 22:44:38 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -723,6 +723,8 @@ visdump_buf(const void *vdp, int datalen, int col)
 		if (col + width > (screenwidth - 2)) {
 			(void)printf("\\\n\t");
 			col = 8;
+			if (*cp == '\t')
+				width = 8;
 		}
 		col += width;
 		do {
