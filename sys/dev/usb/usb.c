@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.26 1999/10/12 11:54:56 augustss Exp $	*/
+/*	$NetBSD: usb.c,v 1.27 1999/10/12 20:02:48 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -226,6 +226,8 @@ usb_event_thread(arg)
 {
 	struct usb_softc *sc = arg;
 
+	DPRINTF(("usb_event_thread: start\n"));
+
 	while (!sc->sc_dying) {
 #ifdef USB_DEBUG
 		if (!usb_noexplore)
@@ -240,6 +242,7 @@ usb_event_thread(arg)
 	/* In case parent is waiting for us to exit. */
 	wakeup(sc);
 
+	DPRINTF(("usb_event_thread: exit\n"));
 	kthread_exit(0);
 }
 
@@ -594,11 +597,13 @@ usb_detach(self, flags)
 {
 	struct usb_softc *sc = (struct usb_softc *)self;
 
+	DPRINTF(("usb_detach: start\n"));
+
 	sc->sc_dying = 1;
 
 	/* Make all devices disconnect. */
 	if (sc->sc_port.device)
-		usb_disconnect_port(&sc->sc_port);
+		usb_disconnect_port(&sc->sc_port, self);
 
 	/* Kill off event thread. */
 	if (sc->sc_event_thread) {
@@ -606,6 +611,7 @@ usb_detach(self, flags)
 		if (tsleep(sc, PWAIT, "usbdet", hz * 60))
 			printf("%s: event thread didn't die\n",
 			       USBDEVNAME(sc->sc_dev));
+		DPRINTF(("usb_detach: event thread dead\n"));
 	}
 
 	usbd_finish();

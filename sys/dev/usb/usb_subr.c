@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.50 1999/10/12 11:54:56 augustss Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.51 1999/10/12 20:02:48 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1191,11 +1191,12 @@ usb_free_device(dev)
  * been disconnected.
  */
 void
-usb_disconnect_port(up)
+usb_disconnect_port(up, parent)
 	struct usbd_port *up;
+	device_ptr_t parent;
 {
 	usbd_device_handle dev = up->device;
-	char *hubname;
+	char *hubname = USBDEVPTRNAME(parent);
 	int i;
 
 	DPRINTFN(3,("uhub_disconnect: up=%p dev=%p port=%d\n", 
@@ -1216,11 +1217,12 @@ usb_disconnect_port(up)
 	}
 
 	if (dev->subdevs) {
-		hubname = USBDEVPTRNAME(up->parent->subdevs[0]);
 		for (i = 0; dev->subdevs[i]; i++) {
-			printf("%s: at %s port %d (addr %d) disconnected\n",
-			       USBDEVPTRNAME(dev->subdevs[i]), hubname,
-			       up->portno, dev->address);
+			printf("%s: at %s", USBDEVPTRNAME(dev->subdevs[i]), 
+			       hubname);
+			if (up->portno != 0)
+				printf(" port %d", up->portno);
+			printf(" (addr %d) disconnected\n", dev->address);
 			config_detach(dev->subdevs[i], DETACH_FORCE);
 		}
 	}
