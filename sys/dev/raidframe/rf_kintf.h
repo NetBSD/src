@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_kintf.h,v 1.5 1999/12/12 20:52:16 oster Exp $	*/
+/*	$NetBSD: rf_kintf.h,v 1.6 2000/01/05 02:57:29 oster Exp $	*/
 /*
  * rf_kintf.h
  *
@@ -36,7 +36,6 @@
 
 #include "rf_types.h"
 
-void    rf_ReconKernelThread(void);
 int     rf_GetSpareTableFromDaemon(RF_SparetWait_t * req);
 
 void    raidstart(RF_Raid_t * raidPtr);

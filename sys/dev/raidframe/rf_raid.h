@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid.h,v 1.7 1999/08/14 03:10:04 oster Exp $	*/
+/*	$NetBSD: rf_raid.h,v 1.8 2000/01/05 02:57:29 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -177,6 +177,13 @@ struct RF_Raid_s {
 	RF_ThroughputStats_t throughputstats;
 #endif				/* !KERNEL && !SIMULATE */
 	RF_CumulativeStats_t userstats;
+	int     parity_rewrite_stripes_done;
+	int     recon_stripes_done;
+	int     copyback_stripes_done;
+
+	int     recon_in_progress;
+	int     parity_rewrite_in_progress;
+	int     copyback_in_progress;
 
 	/*
          * Engine thread control
@@ -184,7 +191,10 @@ struct RF_Raid_s {
 	        RF_DECLARE_MUTEX(node_queue_mutex)
 	        RF_DECLARE_COND(node_queue_cond)
 	RF_DagNode_t *node_queue;
+	RF_Thread_t parity_rewrite_thread;
+	RF_Thread_t copyback_thread;
 	RF_Thread_t engine_thread;
+	RF_Thread_t recon_thread;
 	RF_ThreadGroup_t engine_tg;
 	int     shutdown_engine;
 	int     dags_in_flight;	/* debug */

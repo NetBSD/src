@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_paritylogging.c,v 1.3 1999/02/05 00:06:14 oster Exp $	*/
+/*	$NetBSD: rf_paritylogging.c,v 1.4 2000/01/05 02:57:29 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -432,7 +432,7 @@ rf_ConfigureParityLogging(
 	}
 	RF_ASSERT(raidPtr->parityLogDiskQueue.threadState == 0);
 	raidPtr->parityLogDiskQueue.threadState = RF_PLOG_CREATED;
-	rc = RF_CREATE_THREAD(raidPtr->pLogDiskThreadHandle, rf_ParityLoggingDiskManager, raidPtr);
+	rc = RF_CREATE_THREAD(raidPtr->pLogDiskThreadHandle, rf_ParityLoggingDiskManager, raidPtr,"rf_log");
 	if (rc) {
 		raidPtr->parityLogDiskQueue.threadState = 0;
 		RF_ERRORMSG3("Unable to create parity logging disk thread file %s line %d rc=%d\n",

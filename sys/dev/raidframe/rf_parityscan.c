@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_parityscan.c,v 1.7 1999/08/13 03:41:57 oster Exp $	*/
+/*	$NetBSD: rf_parityscan.c,v 1.8 2000/01/05 02:57:28 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -92,7 +92,8 @@ rf_RewriteParity(raidPtr)
 		asm_h = rf_MapAccess(raidPtr, i, 
 				     layoutPtr->dataSectorsPerStripe, 
 				     NULL, RF_DONT_REMAP);
-
+		raidPtr->parity_rewrite_stripes_done = 
+			i / layoutPtr->dataSectorsPerStripe ;
 		rc = rf_VerifyParity(raidPtr, asm_h->stripeMap, 1, 0);
 
 		switch (rc) {

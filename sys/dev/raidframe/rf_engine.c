@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_engine.c,v 1.5 1999/03/14 21:53:31 oster Exp $	*/
+/*	$NetBSD: rf_engine.c,v 1.6 2000/01/05 02:57:29 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -130,7 +130,7 @@ rf_ConfigureEngine(
 	if (rf_engineDebug) {
 		printf("[%d] Creating engine thread\n", tid);
 	}
-	if (RF_CREATE_THREAD(raidPtr->engine_thread, DAGExecutionThread, raidPtr)) {
+	if (RF_CREATE_THREAD(raidPtr->engine_thread, DAGExecutionThread, raidPtr,"raid")) {
 		RF_ERRORMSG("RAIDFRAME: Unable to create engine thread\n");
 		return (ENOMEM);
 	}
