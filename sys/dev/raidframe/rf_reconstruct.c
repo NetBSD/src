@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.69 2004/03/03 16:12:28 oster Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.70 2004/03/03 16:59:54 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.69 2004/03/03 16:12:28 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.70 2004/03/03 16:59:54 oster Exp $");
 
 #include <sys/time.h>
 #include <sys/buf.h>
@@ -851,6 +851,18 @@ ProcessReconEvent(RF_Raid_t *raidPtr, RF_ReconEvent_t *event)
 		RF_ASSERT(!submitblocked);
 		break;
 
+		/* A read I/O failed to complete */
+	case RF_REVENT_READ_FAILED:
+		/* fallthru to panic... */
+
+		/* A write I/O failed to complete */
+	case RF_REVENT_WRITE_FAILED:
+		/* fallthru to panic... */
+
+		/* a forced read I/O failed to complete */
+	case RF_REVENT_FORCEDREAD_FAILED:
+		/* fallthru to panic... */
+
 	default:
 		RF_PANIC();
 	}
@@ -1239,11 +1251,9 @@ ReconReadDoneProc(void *arg, int status)
 	RF_Raid_t *raidPtr = ctrl->reconCtrl->reconDesc->raidPtr;
 
 	if (status) {
-		/*
-	         * XXX
-	         */
-		printf("Recon read failed!\n");
-		RF_PANIC();
+		printf("raid%d: Recon read failed!\n", raidPtr->raidid);
+		rf_CauseReconEvent(raidPtr, ctrl->col, NULL, RF_REVENT_READ_FAILED);
+		return(0);
 	}
 #if RF_ACC_TRACE > 0
 	RF_ETIMER_STOP(raidPtr->recon_tracerecs[ctrl->col].recon_timer);
@@ -1267,9 +1277,9 @@ ReconWriteDoneProc(void *arg, int status)
 
 	Dprintf2("Reconstruction completed on psid %ld ru %d\n", rbuf->parityStripeID, rbuf->which_ru);
 	if (status) {
-		printf("Recon write failed!\n");	/* fprintf(stderr,"Recon
-							 * write failed!\n"); */
-		RF_PANIC();
+		printf("raid%d: Recon write failed!\n", rbuf->raidPtr->raidid);
+		rf_CauseReconEvent((RF_Raid_t *) rbuf->raidPtr, rbuf->col, arg, RF_REVENT_WRITE_FAILED);
+		return(0);
 	}
 	rf_CauseReconEvent((RF_Raid_t *) rbuf->raidPtr, rbuf->col, arg, RF_REVENT_WRITEDONE);
 	return (0);
@@ -1548,10 +1558,8 @@ ForceReconReadDoneProc(void *arg, int status)
 	RF_ReconBuffer_t *rbuf = arg;
 
 	if (status) {
-		printf("Forced recon read failed!\n");	/* fprintf(stderr,"Forced
-							 *  recon read
-							 * failed!\n"); */
-		RF_PANIC();
+		printf("raid%d: Forced recon read failed!\n", rbuf->raidPtr->raidid);
+		rf_CauseReconEvent((RF_Raid_t *) rbuf->raidPtr, rbuf->col, (void *) rbuf, RF_REVENT_FORCEDREAD_FAILED);
 	}
 	rf_CauseReconEvent((RF_Raid_t *) rbuf->raidPtr, rbuf->col, (void *) rbuf, RF_REVENT_FORCEDREADDONE);
 }
