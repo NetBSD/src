@@ -1,4 +1,4 @@
-/*	$NetBSD: ping.c,v 1.15 1995/04/22 15:27:08 cgd Exp $	*/
+/*	$NetBSD: ping.c,v 1.16 1995/05/21 01:18:03 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$NetBSD: ping.c,v 1.15 1995/04/22 15:27:08 cgd Exp $";
+static char rcsid[] = "$NetBSD: ping.c,v 1.16 1995/05/21 01:18:03 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -268,8 +268,7 @@ main(argc, argv)
 	memset(&whereto, 0, sizeof(struct sockaddr));
 	to = (struct sockaddr_in *)&whereto;
 	to->sin_family = AF_INET;
-	to->sin_addr.s_addr = inet_addr(target);
-	if (to->sin_addr.s_addr != (u_int)-1)
+	if (inet_aton(target, &to->sin_addr) != 0)
 		hostname = target;
 	else {
 		hp = gethostbyname(target);
