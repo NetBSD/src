@@ -1,18 +1,45 @@
 #!/bin/sh
 #
-#	$NetBSD: wtf,v 1.8 2003/02/06 15:17:01 salo Exp $
+#	$NetBSD: wtf,v 1.9 2003/04/10 09:18:24 jmmv Exp $
 #
 # Public domain
 #
 
+usage() {
+	echo "usage: `basename $0` [-f dbfile] [is] <acronym>"
+	exit 1
+}
+
 acronyms=${ACRONYMDB:-/usr/share/misc/acronyms}
+
+args=`getopt f: $*`
+if [ $? -ne 0 ]; then
+	usage
+fi
+set -- $args
+while [ $# -gt 0 ]; do
+	case "$1" in
+		-f)
+			acronyms=$2; shift
+			;;
+		--)
+			shift; break
+			;;
+	esac
+	shift
+done
 
 if [ X"$1" = X"is" ] ; then
 	shift
 fi
 
 if [ $# -lt 1 ] ; then
-	echo "Usage: `basename $0` [is] <acronym>"
+	usage
+fi
+
+if [ ! -f $acronyms ]; then
+	echo "wtf: cannot open acronyms database file \`$acronyms'"
+	exit 1
 fi
 
 rv=0
