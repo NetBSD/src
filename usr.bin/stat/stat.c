@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.c,v 1.2 2002/05/09 17:52:03 atatat Exp $ */
+/*	$NetBSD: stat.c,v 1.2.2.1 2002/06/02 15:34:00 tv Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: stat.c,v 1.2 2002/05/09 17:52:03 atatat Exp $");
+__RCSID("$NetBSD: stat.c,v 1.2.2.1 2002/06/02 15:34:00 tv Exp $");
 #endif
 
 #include <sys/types.h>
@@ -500,6 +500,8 @@ format1(const struct stat *st,
 		    S_ISCHR(st->st_mode) ? S_IFCHR :
 		    S_ISBLK(st->st_mode) ? S_IFBLK :
 		    0U);
+		if (sdata == NULL)
+			sdata = "???";
 		if (hilo == HIGH_PIECE) {
 			data = major(data);
 			hilo = 0;
