@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_machdep.c,v 1.6 2004/03/21 14:15:35 pk Exp $	*/
+/*	$NetBSD: rbus_machdep.c,v 1.7 2004/03/22 12:19:49 nakayama Exp $	*/
 
 /*
  * Copyright (c) 2003 Takeshi Nakayama.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rbus_machdep.c,v 1.6 2004/03/21 14:15:35 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rbus_machdep.c,v 1.7 2004/03/22 12:19:49 nakayama Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -37,6 +37,7 @@ __KERNEL_RCSID(0, "$NetBSD: rbus_machdep.c,v 1.6 2004/03/21 14:15:35 pk Exp $");
 
 #include <machine/bus.h>
 #include <machine/openfirm.h>
+#include <machine/promlib.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/ppbreg.h>
 #include <sparc64/dev/iommuvar.h>
@@ -138,7 +139,7 @@ pccbb_attach_hook(parent, self, pa)
 	pcireg_t reg;
 	int node = PCITAG_NODE(pa->pa_tag);
 	int error;
-	int bus, *br;
+	int bus, br[2], *brp;
 	int len, intr;
 
 	/*
@@ -146,8 +147,9 @@ pccbb_attach_hook(parent, self, pa)
 	 *	if OBP didn't assign a bus number to the cardbus bridge,
 	 *	then assign it here.
 	 */
-	br = 0;
-	error = prom_getprop(node, "bus-range", sizeof(br), &len, &brp);
+	brp = br;
+	len = 2;
+	error = prom_getprop(node, "bus-range", sizeof(*brp), &len, &brp);
 	if (error == 0 && len == 2) {
 		bus = br[0];
 		DPRINTF("pccbb_attach_hook: bus-range %d-%d\n", br[0], br[1]);
@@ -192,7 +194,7 @@ pccbb_attach_hook(parent, self, pa)
 	 *	interrupt numbers assigned by OBP are [0x00,0x3f],
 	 *	so they map to [0x40,0x7f] due to inhibit the value 0x00.
 	 */
-	if ((intr = prom_getpropint(node, "interrupts", -1) == -1) {
+	if ((intr = prom_getpropint(node, "interrupts", -1)) == -1) {
 		printf("pccbb_attach_hook: could not read interrupts\n");
 		return;
 	}
