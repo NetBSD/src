@@ -1,4 +1,4 @@
-/*	$NetBSD: except.c,v 1.3 1998/01/09 08:03:49 perry Exp $	*/
+/*	$NetBSD: except.c,v 1.4 2001/09/24 13:09:48 wiz Exp $	*/
 
 #include <stdio.h>
 #include <signal.h>
@@ -7,7 +7,7 @@
 #include <float.h>
 
 void sigfpe();
-volatile sig_atomic_t signal_cought;
+volatile sig_atomic_t signal_caught;
 
 static volatile const double one  = 1.0;
 static volatile const double zero = 0.0;
@@ -27,56 +27,56 @@ main()
 
 	/* set up signal handler */
 	signal (SIGFPE, sigfpe);
-	signal_cought = 0;
+	signal_caught = 0;
 
 	/* trip divide by zero */
 	x = one / zero;
 	assert (fpgetsticky() & FP_X_DZ);
-	assert (signal_cought == 0);
+	assert (signal_caught == 0);
 	fpsetsticky(0);
 
 	/* trip invalid operation */
 	x = zero / zero;
 	assert (fpgetsticky() & FP_X_INV);
-	assert (signal_cought == 0);
+	assert (signal_caught == 0);
 	fpsetsticky(0);
 
 	/* trip overflow */
 	x = huge * huge;
 	assert (fpgetsticky() & FP_X_OFL);
-	assert (signal_cought == 0);
+	assert (signal_caught == 0);
 	fpsetsticky(0);
 
 	/* trip underflow */
 	x = tiny * tiny;
 	assert (fpgetsticky() & FP_X_UFL);
-	assert (signal_cought == 0);
+	assert (signal_caught == 0);
 	fpsetsticky(0);
 
 #if 1
 	/* unmask and then trip divide by zero */
 	fpsetmask(FP_X_DZ);
 	x = one / zero;
-	assert (signal_cought == 1);
-	signal_cought = 0;
+	assert (signal_caught == 1);
+	signal_caught = 0;
 
 	/* unmask and then trip invalid operation */
 	fpsetmask(FP_X_INV);
 	x = zero / zero;
-	assert (signal_cought == 1);
-	signal_cought = 0;
+	assert (signal_caught == 1);
+	signal_caught = 0;
 
 	/* unmask and then trip overflow */
 	fpsetmask(FP_X_OFL);
 	x = huge * huge;
-	assert (signal_cought == 1);
-	signal_cought = 0;
+	assert (signal_caught == 1);
+	signal_caught = 0;
 
 	/* unmask and then trip underflow */
 	fpsetmask(FP_X_UFL);
 	x = tiny * tiny;
-	assert (signal_cought == 1);
-	signal_cought = 0;
+	assert (signal_caught == 1);
+	signal_caught = 0;
 #endif
 
 	exit(0);
@@ -85,5 +85,5 @@ main()
 void
 sigfpe()
 {
-	signal_cought = 1;
+	signal_caught = 1;
 }
