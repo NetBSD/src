@@ -1,13 +1,11 @@
-#	$NetBSD: Makefile,v 1.2 1999/04/08 15:18:00 kleink Exp $
+#	$NetBSD: Makefile,v 1.3 1999/05/31 14:17:44 kleink Exp $
 
 .include <bsd.own.mk>
 
 SUBDIR=		common info install-info makeinfo texi2dvi texindex
 
-.if ${MKSHARE} != "no"
 FILESDIR=	/usr/share/misc
 FILES=		epsf.tex texinfo.tex
-.endif
 
 .if ${MKNLS} != "no"
 .for F in de.gmo fr.gmo
