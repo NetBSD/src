@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qe.c,v 1.10 1996/02/02 18:59:20 mycroft Exp $ */
+/*	$NetBSD: if_qe.c,v 1.11 1996/02/11 13:47:59 ragge Exp $ */
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -232,7 +232,7 @@ struct	qe_softc {
 
 int	qematch __P((struct device *, void *, void *));
 void	qeattach __P((struct device *, struct device *, void *));
-int	qereset __P((int));
+int	qereset __P((int));	/* XXX - should be void (if any) */
 void	qeinit __P((int));
 void	qestart __P((struct ifnet *));
 void	qeintr __P((int));
@@ -400,10 +400,13 @@ qeattach(parent, self, aux)
  * Reset of interface after UNIBUS reset.
  * If interface is on specified uba, reset its state.
  */
+int
 qereset(unit)
 	int unit;
 {
+#ifdef notyet
 	register struct uba_device *ui;
+#endif
 
 	panic("qereset");
 #ifdef notyet
@@ -414,6 +417,7 @@ qereset(unit)
 	qe_softc[unit].qe_if.if_flags &= ~IFF_RUNNING;
 	qeinit(unit);
 #endif
+	return 0; /* XXX */
 }
 
 /*
@@ -519,7 +523,6 @@ void
 qestart(ifp)
 	struct ifnet *ifp;
 {
-	int unit =  ifp->if_unit;
 	register struct qe_softc *sc = qecd.cd_devs[ifp->if_unit];
 	volatile struct qedevice *addr = sc->qe_vaddr;
 	register struct qe_ring *rp;
@@ -907,8 +910,6 @@ qeread(sc, ifrw, len)
 {
 	struct ether_header *eh;
     	struct mbuf *m;
-	int s;
-	struct ifqueue *inq;
 
 	/*
 	 * Deal with trailer protocol: if type is INET trailer
