@@ -1,4 +1,4 @@
-/*      $NetBSD: ixdp425_pci.c,v 1.3 2003/10/08 14:55:04 scw Exp $ */
+/*      $NetBSD: ixdp425_pci.c,v 1.4 2003/10/11 03:53:52 ichiro Exp $ */
 #define PCI_DEBUG
 /*
  * Copyright (c) 2003
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixdp425_pci.c,v 1.3 2003/10/08 14:55:04 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixdp425_pci.c,v 1.4 2003/10/11 03:53:52 ichiro Exp $");
 
 /*
  * IXDP425 PCI interrupt support.
@@ -183,43 +183,40 @@ ixp425_md_pci_conf_interrupt(pci_chipset_tag_t pc, int bus, int dev, int pin,
 		panic("ixp425_md_pci_conf_interrupt: unsupported bus number");
 }
 
+#define	IXP425_MAX_DEV	4
+#define	IXP425_MAX_LINE	4
 static int
 ixdp425_pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
+	static int ixp425_pci_table[IXP425_MAX_DEV][IXP425_MAX_LINE] =
+	{
+		{PCI_INT_A, PCI_INT_B, PCI_INT_C, PCI_INT_D},
+		{PCI_INT_B, PCI_INT_C, PCI_INT_D, PCI_INT_A},
+		{PCI_INT_C, PCI_INT_D, PCI_INT_A, PCI_INT_B},
+		{PCI_INT_D, PCI_INT_A, PCI_INT_B, PCI_INT_C},
+	};
+
 	int pin = pa->pa_intrpin;
+	int dev = pa->pa_device;
 
 #ifdef PCI_DEBUG
 	void *v = pa->pa_pc;
 	int line = pa->pa_intrline;
-	int dev=pa->pa_device;
 	pcitag_t intrtag = pa->pa_intrtag;
 
 	printf("ixdp425_pci_intr_map: v=%p, tag=%08lx intrpin=%d line=%d dev=%d\n",
 		v, intrtag, pin, line, dev);
 #endif
 	
-	switch (pin) {
-	case 1:
-		*ihp = PCI_INT_A;
+	if (pin >= 1 && pin <= IXP425_MAX_LINE &&
+	    dev >= 1 && dev <= IXP425_MAX_DEV) {
+		*ihp = ixp425_pci_table[dev - 1][pin - 1];
 		return (0);
-	case 2:
-		*ihp = PCI_INT_B;
-		return (0);
-	case 3:
-		*ihp = PCI_INT_C;
-		return (0);
-	case 4:
-		*ihp = PCI_INT_D;
-		return (0);
-	default:
-#ifdef PCI_DEBUG
+	} else {
 		printf("ixdp425_pci_intr_map: no mapping for %d/%d/%d\n",
 			pa->pa_bus, pa->pa_device, pa->pa_function);
-#endif
 		return (1);
 	}
-
-	return (0);
 }
 
 static const char *
