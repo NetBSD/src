@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	6.1 (Berkeley) 3/3/91
-#	$Id: Makefile,v 1.8 1993/10/16 03:19:36 cgd Exp $
+#	$Id: Makefile,v 1.9 1993/10/16 03:57:39 cgd Exp $
 
 .include "config/Makefile.$(MACHINE)"
 
@@ -29,28 +29,44 @@ CFLAGS+=	-I$(.CURDIR) ${ADDINCLUDE} -I$(.CURDIR)/config \
 #LDADD+=		-lgnumalloc
 DPADD+=		/usr/lib/libgnumalloc.a
 
+CONF_HEADERS=	targ-cpu.h obj-format.h host.h targ-env.h
+
 .PATH: $(.CURDIR)/config
 
-beforedepend: config.status
-$(PROG): config.status
+beforedepend ${PROG}: ${CONF_HEADERS}
 
-config.status:
-	/bin/rm -f targ-cpu.h ; ln -s $(.CURDIR)/config/tc-$(gas_target).h targ-cpu.h
-	/bin/rm -f obj-format.h ; ln -s $(.CURDIR)/config/obj-$(gas_objformat).h obj-format.h
-	/bin/rm -f host.h
+targ-cpu.h: Makefile config/Makefile.$(MACHINE)
+	@cmp -s $(.CURDIR)/config/tc-$(gas_target).h targ-cpu.h || \
+	    ( echo "updating ${.TARGET}..." ; /bin/rm -f targ-cpu.h ; \
+	    cp $(.CURDIR)/config/tc-$(gas_target).h targ-cpu.h )
+
+obj-format.h: Makefile config/Makefile.$(MACHINE)
+	@cmp -s $(.CURDIR)/config/obj-$(gas_objformat).h obj-format.h || \
+	    ( echo "updating ${.TARGET}..." ; /bin/rm -f obj-format.h ; \
+	    cp $(.CURDIR)/config/obj-$(gas_objformat).h obj-format.h )
+
 .if exists ($(.CURDIR)/config/ho-$(gas_hosttype).h)
-	ln -s $(.CURDIR)/config/ho-$(gas_hosttype).h host.h
+config_hostfile=	$(.CURDIR)/config/ho-$(gas_hosttype).h
 .else
-	ln -s $(.CURDIR)/config/ho-generic.h host.h
+config_hostfile=	$(.CURDIR)/config/ho-generic.h
 .endif
-	/bin/rm -f targ-env.h
-.if exists ($(.CURDIR)/config/te-$(MACHINE).h)
-	ln -s $(.CURDIR)/config/te-$(MACHINE).h targ-env.h
-.else
-	ln -s $(.CURDIR)/config/te-generic.h targ-env.h
-.endif
-	echo "curdir=$(.CURDIR) machine=$(gas_target) host=$(gas_hosttype)" > $(.TARGET)
 
-CLEANFILES+= targ-cpu.h obj-format.h host.h targ-env.h config.status
+host.h: Makefile config/Makefile.$(MACHINE)
+	@cmp -s $(config_hostfile) host.h || \
+	    ( echo "updating ${.TARGET}..." ; /bin/rm -f host.h ; \
+	    cp $(config_hostfile) host.h )
+
+.if exists ($(.CURDIR)/config/te-$(MACHINE).h)
+config_targenvfile=	$(.CURDIR)/config/te-$(MACHINE).h
+.else
+config_targenvfile=	$(.CURDIR)/config/te-generic.h
+.endif
+
+targ-env.h: Makefile config/Makefile.$(MACHINE)
+	@cmp -s $(config_targenvfile) targ-env.h || \
+	    ( echo "updating ${.TARGET}..." ; /bin/rm -f targ-env.h ; \
+	    cp $(config_targenvfile) targ-env.h )
+
+CLEANFILES+= ${CONF_HEADERS} config.status
 
 .include <bsd.prog.mk>
