@@ -1,4 +1,4 @@
-/* $NetBSD: disksubr.c,v 1.17 2000/01/18 19:34:24 thorpej Exp $ */
+/* $NetBSD: disksubr.c,v 1.18 2000/03/07 15:55:14 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.17 2000/01/18 19:34:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.18 2000/03/07 15:55:14 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -277,9 +277,7 @@ bounds_check_with_label(bp, lp, wlabel)
 	struct disklabel *lp;
 	int wlabel;
 {
-#define dkpart(dev) (minor(dev) & 7)
-
-	struct partition *p = lp->d_partitions + dkpart(bp->b_dev);
+	struct partition *p = lp->d_partitions + DISKPART(bp->b_dev);
 	int labelsect = lp->d_partitions[RAW_PART].p_offset;
 	int maxsz = p->p_size;
 	int sz = (bp->b_bcount + DEV_BSIZE - 1) >> DEV_BSHIFT;

@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.7 2000/01/18 19:49:26 thorpej Exp $ */
+/*	$NetBSD: disksubr.c,v 1.8 2000/03/07 15:55:17 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -243,9 +243,7 @@ bounds_check_with_label(bp, lp, wlabel)
 	struct disklabel *lp;
 	int wlabel;
 {
-#define dkpart(dev) (minor(dev) & 7)
-
-	struct partition *p = lp->d_partitions + dkpart(bp->b_dev);
+	struct partition *p = lp->d_partitions + DISKPART(bp->b_dev);
 	int maxsz = p->p_size;
 	int sz = (bp->b_bcount + DEV_BSIZE - 1) >> DEV_BSHIFT;
 
