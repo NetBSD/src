@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.28 2001/06/30 04:33:11 thorpej Exp $ */
+/* $NetBSD: if_ti.c,v 1.29 2001/06/30 05:48:24 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -2084,6 +2084,7 @@ static void ti_txeof(sc)
 {
 	struct ti_tx_desc	*cur_tx = NULL;
 	struct ifnet		*ifp;
+	struct txdmamap_pool_entry *dma;
 
 	ifp = &sc->ethercom.ec_if;
 
@@ -2117,10 +2118,14 @@ static void ti_txeof(sc)
 			m_freem(sc->ti_cdata.ti_tx_chain[idx]);
 			sc->ti_cdata.ti_tx_chain[idx] = NULL;
 
-			/* if (sc->txdma[idx] == 0) panic() */
-			SIMPLEQ_INSERT_HEAD(&sc->txdma_list, sc->txdma[idx],
-					    link);
-			sc->txdma[idx] = 0;
+			dma = sc->txdma[idx];
+			KDASSERT(dma != NULL);
+			bus_dmamap_sync(sc->sc_dmat, dma->dmamap, 0,
+			    dma->dmamap->dm_mapsize, BUS_DMASYNC_POSTWRITE);
+			bus_dmamap_unload(sc->sc_dmat, dma->dmamap);
+
+			SIMPLEQ_INSERT_HEAD(&sc->txdma_list, dma, link);
+			sc->txdma[idx] = NULL;
 		}
 		sc->ti_txcnt--;
 		TI_INC(sc->ti_tx_saved_considx, TI_TX_RING_CNT);
@@ -2290,6 +2295,11 @@ static int ti_encap(sc, m_head, txidx)
 		    TI_BDFLAG_END;
 	else
 		sc->ti_rdata->ti_tx_ring[cur].ti_flags |= TI_BDFLAG_END;
+
+	/* Sync the packet's DMA map. */
+	bus_dmamap_sync(sc->sc_dmat, dmamap, 0, dmamap->dm_mapsize,
+	    BUS_DMASYNC_PREWRITE);
+
 	sc->ti_cdata.ti_tx_chain[cur] = m_head;
 	SIMPLEQ_REMOVE_HEAD(&sc->txdma_list, dma, link);
 	sc->txdma[cur] = dma;
