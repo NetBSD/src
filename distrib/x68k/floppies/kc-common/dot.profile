@@ -1,4 +1,4 @@
-#	$Id: dot.profile,v 1.1 1996/06/17 04:14:19 oki Exp $
+#	$NetBSD: dot.profile,v 1.2 1996/08/30 20:04:05 thorpej Exp $
 
 PATH=/sbin:/bin:/
 export PATH

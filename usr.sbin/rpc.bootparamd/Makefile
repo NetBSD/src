@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.10 1995/06/24 15:03:49 pk Exp $
+#	$NetBSD: Makefile,v 1.11 1996/08/30 20:10:25 thorpej Exp $
 
 CFLAGS+=-DYP
 
