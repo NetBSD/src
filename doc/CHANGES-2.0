@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.324 2004/07/10 12:48:45 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.325 2004/07/10 13:16:41 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -5230,4 +5230,45 @@ sys/netinet/in.c				1.97
 	update the interface route and various internal state. Also, it should
 	use an ifreq, not an if_aliasreq. Addresses PR 9604.
 	[mycroft, ticket #615]
+
+etc/wscons.conf					1.11
+share/man/man4/pckbd.4				1.14
+
+	Add mention of Norwegian, Portuguese, and Spanish built-in keymaps.
+	[fredb, ticket #616]
+
+sys/nfs/nfs_socket.c				1.106 via patch
+
+	- for tcp, use SO_RCVTIMEO to recover from server crash.
+	  otherwise we can be stuck in soreceive forever.
+	  the problem is pointed by Minoura Makoto.  PR/25662
+	- clear r_rexmit on reconnect and clear r_rtt and R_TIMING on
+	  retransmit so that the above (and soft mounts) happy.
+	[yamt, ticket #617]
+
+sys/dev/usb/umct.c				1.14
+
+	The MCT advertises both the interrupt and bulkin endpoints as
+	interrupts. Go from assuming that the first enumerated interrupt
+	is the bulkin (since this may not be the case) to assuming that
+	the true interrupt endpoint will have a 0x2 wMaxPacketSize.
+	From FreeBSD's umct.c, ok'd by mycroft@, closes PR25959.
+	[rumble, ticket #619]
+
+sys/arch/alpha/alpha/machdep.c			1.283
+
+	After sending the IPI to halt other CPUs, clear cpus_paused to ensure
+	that the other CPUs resume execution.  If the halt was initiated from
+	DDB, the CPUs will not have been resume execution and will never halt.
+	If one of the paused CPUs is the primary CPU, the system will hang.
+	Fixes PR#26159.
+	[mhitch, ticket #624]
+
+share/man/man5/mk.conf.5			1.19-1.20
+
+	Add missing MKCVS, MKKERBEROS4, MKPOSTFIX, MKSENDMAIL, and MKUUCP.
+	Note that some variables are still missing, since i'm not sure how
+	to describe them... Bump date.
+	Add missing .YorN
+	[junyoung, ticket #627]
 
