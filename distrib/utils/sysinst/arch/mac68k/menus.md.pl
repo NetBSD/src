@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.pl,v 1.3 2002/10/20 22:06:17 rnestor Exp $	*/
+/*	$NetBSD: menus.md.pl,v 1.4 2003/01/11 19:31:52 christos Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: menus.md.en,v 1.13 2001/11/29 23:20:58 thorpej Exp 	*/
 
@@ -61,11 +61,11 @@ menu nodiskmap, title "Wybierz opcje", y=16;
                }
                map.size = NEW_MAP_SIZE;
                map.in_use_cnt = new_map[0].pmMapBlkCnt;
-               map.blk = (struct part_map_entry *)calloc(map.size,
-                       sizeof(struct part_map_entry));
+               map.blk = (struct apple_part_map_entry *)calloc(map.size,
+                       sizeof(struct apple_part_map_entry));
                for (i=0;i<map.size;i++)
                    memcpy (&map.blk[i], &new_map[i],
-                        sizeof(struct part_map_entry));
+                        sizeof(struct apple_part_map_entry));
        };
 
 menu editparttable, title  "Wybierz swoje partycje", exit, y=15;
@@ -94,7 +94,7 @@ menu editparttable, title  "Wybierz swoje partycje", exit, y=15;
                    k = map.in_use_cnt+1;
                    if (k <= map.size) {
                        memcpy (&map.blk[k], &map.blk[j],
-                           sizeof(struct part_map_entry));
+                           sizeof(struct apple_part_map_entry));
                        free_size = map.blk[j].pmPartBlkCnt - size;
                        strcpy (map.blk[j].pmPartType, "Apple_Scratch");
                        map.blk[j].pmPartBlkCnt = size;
@@ -115,11 +115,11 @@ menu editparttable, title  "Wybierz swoje partycje", exit, y=15;
                            free (map.blk);
                            map.size = NEW_MAP_SIZE;
                            map.in_use_cnt = new_map[0].pmMapBlkCnt;
-                           map.blk = (struct part_map_entry *)calloc(map.size,
-                               sizeof(struct part_map_entry));
+                           map.blk = (struct apple_part_map_entry *)calloc(map.size,
+                               sizeof(struct apple_part_map_entry));
                            for (i=0;i<map.size;i++)
                                memcpy (&map.blk[i], &new_map[i],
-                                   sizeof(struct part_map_entry));
+                                   sizeof(struct apple_part_map_entry));
                            map.blk[0].pmSigPad = 0; /* Don't rewrite Block0 */
 			}
                    }
@@ -161,10 +161,10 @@ menu chooseid, title  "Rodzaj partycji?";
                j = map.mblk[map.selected];
                reset_part_flags(j);
                bzb = (EBZB *)&map.blk[j].pmBootArgs[0];
-               bzb->magic = BZB_MAGIC;
+               bzb->magic = APPLE_BZB_MAGIC;
                strcpy (map.blk[j].pmPartName, "NetBSD Root");
                strcpy (map.blk[j].pmPartType, "Apple_Unix_SVR2");
-               bzb->type = BZB_TYPEFS;
+               bzb->type = APPLE_BZB_TYPEFS;
                bzb->flags.root = 1;
                /*
                 * Automatically determine root mount points.  The first
@@ -177,7 +177,7 @@ menu chooseid, title  "Rodzaj partycji?";
                    j = map.mblk[i];
                    if (part_type(j, fstyp, use, name) == TYP_BSD) {
                        bzb = (EBZB *)&map.blk[j].pmBootArgs[0];
-                       if (bzb->type == BZB_TYPEFS && bzb->flags.root) {
+                       if (bzb->type == APPLE_BZB_TYPEFS && bzb->flags.root) {
                           if (map.root_cnt++ == 0)
                                strcpy (bzb->mount_point, "/");
                           else
@@ -192,10 +192,10 @@ menu chooseid, title  "Rodzaj partycji?";
                j = map.mblk[map.selected];
                reset_part_flags(j);
                bzb = (EBZB *)&map.blk[j].pmBootArgs[0];
-               bzb->magic = BZB_MAGIC;
+               bzb->magic = APPLE_BZB_MAGIC;
                strcpy (map,blk[j].pmPartName, "NetBSD SWAP");
                strcpy (map.blk[j].pmPartType, "Apple_Unix_SVR2");
-               bzb->type = BZB_TYPESWAP; };
+               bzb->type = APPLE_BZB_TYPESWAP; };
        option "NetBSD Usr", exit, action {
                int j;
                EBZB *bzb;
@@ -203,10 +203,10 @@ menu chooseid, title  "Rodzaj partycji?";
                j = map.mblk[map.selected];
                reset_part_flags(j);
                bzb = (EBZB *)&map.blk[j].pmBootArgs[0];
-               bzb->magic = BZB_MAGIC;
+               bzb->magic = APPLE_BZB_MAGIC;
                strcpy (map.blk[j].pmPartName, "NetBSD Usr");
                strcpy (map.blk[j].pmPartType, "Apple_Unix_SVR2");
-               bzb->type = BZB_TYPEFS;
+               bzb->type = APPLE_BZB_TYPEFS;
                bzb->flags.usr = 1;
                if (!map.usr_cnt)
                    strcpy (bzb->mount_point, "/usr");
@@ -218,10 +218,10 @@ menu chooseid, title  "Rodzaj partycji?";
                j = map.mblk[map.selected];
                reset_part_flags(j);
                bzb = (EBZB *)&map.blk[j].pmBootArgs[0];
-               bzb->magic = BZB_MAGIC;
+               bzb->magic = APPLE_BZB_MAGIC;
                strcpy (map.blk[j].pmPartName, "NetBSD Root & Usr");
                strcpy (map.blk[j].pmPartType, "Apple_Unix_SVR2");
-               bzb->type = BZB_TYPEFS;
+               bzb->type = APPLE_BZB_TYPEFS;
                bzb->flags.root = 1;
                bzb->flags.usr = 1;
                if (!map.root_cnt)
