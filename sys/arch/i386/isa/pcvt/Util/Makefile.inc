@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.4 1996/10/18 06:04:08 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.5 1997/03/28 20:22:55 christos Exp $
 
 ECHO	?=	echo
 
@@ -24,7 +24,7 @@ MAN3EXT	=	3
 MAN4EXT	=	4
 MAN5EXT	=	5
 MAN8EXT	=	8
-MANDIR	=	/usr/local/man/cat
+MANDIR	=	/usr/local/man
 
 MAN = ${MAN1} ${MAN3} ${MAN4} ${MAN5} ${MAN8}
 
