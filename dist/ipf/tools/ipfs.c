@@ -1,4 +1,4 @@
-/*	$NetBSD: ipfs.c,v 1.2 2004/05/10 00:36:19 christos Exp $	*/
+/*	$NetBSD: ipfs.c,v 1.3 2004/05/10 00:50:07 christos Exp $	*/
 
 /*
  * Copyright (C) 1999-2001, 2003 by Darren Reed.
@@ -41,6 +41,7 @@
 #include <arpa/nameser.h>
 #include <resolv.h>
 #include "ipf.h"
+#include "ipl.h"
 
 #if !defined(lint)
 static const char rcsid[] = "@(#)Id: ipfs.c,v 1.12 2003/12/01 01:56:53 darrenr Exp";
@@ -385,6 +386,7 @@ int fd;
 char *file;
 {
 	ipstate_save_t ips, *ipsp;
+	ipfobj_t obj;
 	int wfd = -1;
 
 	if (!file)
@@ -398,12 +400,19 @@ char *file;
 	}
 
 	ipsp = &ips;
+	bzero((char *)&obj, sizeof(obj));
 	bzero((char *)ipsp, sizeof(ips));
 
+	obj.ipfo_rev = IPFILTER_VERSION;
+	obj.ipfo_size = sizeof(*ipsp);
+	obj.ipfo_type = IPFOBJ_STATESAVE;
+	obj.ipfo_ptr = ipsp;
+
 	do {
+
 		if (opts & OPT_VERBOSE)
 			printf("Getting state from addr %p\n", ips.ips_next);
-		if (ioctl(fd, SIOCSTGET, &ipsp)) {
+		if (ioctl(fd, SIOCSTGET, &obj)) {
 			if (errno == ENOENT)
 				break;
 			perror("state:SIOCSTGET");
@@ -430,6 +439,7 @@ char *file;
 {
 	ipstate_save_t ips, *is, *ipshead = NULL, *is1, *ipstail = NULL;
 	int sfd = -1, i;
+	ipfobj_t obj;
 
 	if (!file)
 		file = IPF_STATEFILE;
@@ -498,6 +508,10 @@ char *file;
 
 	close(sfd);
 
+	obj.ipfo_rev = IPFILTER_VERSION;
+	obj.ipfo_size = sizeof(*is);
+	obj.ipfo_type = IPFOBJ_STATESAVE;
+
 	for (is = ipshead; is; is = is->ips_next) {
 		if (opts & OPT_VERBOSE)
 			printf("Loading new state table entry\n");
@@ -505,8 +519,10 @@ char *file;
 			if (opts & OPT_VERBOSE)
 				printf("Loading new filter rule\n");
 		}
+
+		obj.ipfo_ptr = is;
 		if (!(opts & OPT_DONOTHING))
-			if (ioctl(fd, SIOCSTPUT, &is)) {
+			if (ioctl(fd, SIOCSTPUT, &obj)) {
 				perror("SIOCSTPUT");
 				return 1;
 			}
@@ -529,6 +545,7 @@ int fd;
 char *file;
 {
 	nat_save_t ipn, *in, *ipnhead = NULL, *in1, *ipntail = NULL;
+	ipfobj_t obj;
 	int nfd, i;
 	nat_t *nat;
 	char *s;
@@ -632,6 +649,9 @@ char *file;
 	close(nfd);
 	nfd = -1;
 
+	obj.ipfo_rev = IPFILTER_VERSION;
+	obj.ipfo_type = IPFOBJ_NATSAVE;
+
 	for (in = ipnhead; in; in = in->ipn_next) {
 		if (opts & OPT_VERBOSE)
 			printf("Loading new NAT table entry\n");
@@ -640,8 +660,12 @@ char *file;
 			if (opts & OPT_VERBOSE)
 				printf("Loading new filter rule\n");
 		}
+
+		obj.ipfo_ptr = in;
+		obj.ipfo_size = in->ipn_dsize;
 		if (!(opts & OPT_DONOTHING))
-			if (ioctl(fd, SIOCSTPUT, &in)) {
+			if (ioctl(fd, SIOCSTPUT, &obj)) {
+				fprintf(stderr, "in=%p:", in);
 				perror("SIOCSTPUT");
 				return 1;
 			}
@@ -664,6 +688,7 @@ int fd;
 char *file;
 {
 	nat_save_t *ipnp = NULL, *next = NULL;
+	ipfobj_t obj;
 	int nfd = -1;
 	natget_t ng;
 
@@ -677,6 +702,8 @@ char *file;
 		return 1;
 	}
 
+	obj.ipfo_rev = IPFILTER_VERSION;
+	obj.ipfo_type = IPFOBJ_NATSAVE;
 
 	do {
 		if (opts & OPT_VERBOSE)
@@ -708,8 +735,11 @@ char *file;
 		}
 
 		bzero((char *)ipnp, ng.ng_sz);
+		obj.ipfo_size = ng.ng_sz;
+		obj.ipfo_ptr = ipnp;
+		ipnp->ipn_dsize = ng.ng_sz;
 		ipnp->ipn_next = next;
-		if (ioctl(fd, SIOCSTGET, &ipnp)) {
+		if (ioctl(fd, SIOCSTGET, &obj)) {
 			if (errno == ENOENT)
 				break;
 			perror("nat:SIOCSTGET");
@@ -719,7 +749,8 @@ char *file;
 		}
 
 		if (opts & OPT_VERBOSE)
-			printf("Got nat next %p\n", ipnp->ipn_next);
+			printf("Got nat next %p ipn_dsize %d ng_sz %d\n",
+				ipnp->ipn_next, ipnp->ipn_dsize, ng.ng_sz);
 		if (write(nfd, ipnp, ng.ng_sz) != ng.ng_sz) {
 			perror("nat:write");
 			close(nfd);
