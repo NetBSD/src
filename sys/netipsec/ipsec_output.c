@@ -1,9 +1,9 @@
-/*	$NetBSD: ipsec_output.c,v 1.7 2003/10/06 22:05:15 tls Exp $	*/
+/*	$NetBSD: ipsec_output.c,v 1.8 2004/01/16 11:06:27 scw Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/ipsec_output.c,v 1.3.2.1 2003/01/24 05:11:35 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.7 2003/10/06 22:05:15 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.8 2004/01/16 11:06:27 scw Exp $");
 
 /*
  * IPsec output processing.
@@ -409,8 +409,11 @@ ipsec4_process_packet(
 				error = EFAULT;
 			}
 			if (error) {
-				if (mp)
+				if (mp) {
+					/* XXX: Should never happen! */
 					m_freem(mp);
+				}
+				m = NULL; /* ipip_output() already freed it */
 				goto bad;
 			}
 			m = mp, mp = NULL;
