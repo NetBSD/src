@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_tag.c,v 1.11 2001/03/31 11:37:50 aymeric Exp $	*/
+/*	$NetBSD: ex_tag.c,v 1.12 2001/05/01 16:46:12 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -601,7 +601,7 @@ ex_tag_display(sp)
 	TAGQ *tqp;
 	int cnt;
 	size_t len;
-	char *p, *sep;
+	char *p;
 
 	exp = EXP(sp);
 	if ((tqp = exp->tq.cqh_first) == (void *)&exp->tq) {
@@ -1064,7 +1064,6 @@ gtag_slist(sp, tag, ref)
 	char *tag;
 	int ref;
 {
-	EX_PRIVATE *exp;
 	TAGF *tfp;
 	TAGQ *tqp;
 	size_t len;
