@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.63 2003/01/18 10:06:32 thorpej Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.64 2003/02/03 23:39:41 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.63 2003/01/18 10:06:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.64 2003/02/03 23:39:41 nathanw Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -578,6 +578,7 @@ sys_timer_create(struct lwp *l, void *v, register_t *retval)
 	pt->pt_proc = p;
 	pt->pt_overruns = 0;
 	pt->pt_poverruns = 0;
+	pt->pt_entry = timerid;
 	timerclear(&pt->pt_time.it_value);
 	if (id == CLOCK_REALTIME)
 		callout_init(&pt->pt_ch);
@@ -841,13 +842,21 @@ sys_timer_getoverrun(struct lwp *l, void *v, register_t *retval)
 static void
 timerupcall(struct lwp *l, void *arg)
 {
-	struct ptimer *pt = (struct ptimer *)arg;
-
+	struct ptimers *pt = (struct ptimers *)arg;
+	unsigned int i, fired, done;
 	KERNEL_PROC_LOCK(l);
-
-	/* The upcall should be generated exactly once. */
-	if (sa_upcall(l, SA_UPCALL_SIGEV | SA_UPCALL_DEFER, NULL, l,
-	    sizeof(siginfo_t), &pt->pt_info) == 0)
+	
+	fired = pt->pts_fired;
+	done = 0;
+	while ((i = ffs(fired)) != 0) {
+		i--;
+		if (sa_upcall(l, SA_UPCALL_SIGEV | SA_UPCALL_DEFER, NULL, l,
+		    sizeof(siginfo_t), &pt->pts_timers[i]->pt_info) == 0)
+			done |= 1 << i;
+		fired &= ~(1 << i);
+	}
+	pt->pts_fired &= ~done;
+	if (pt->pts_fired == 0)
 		l->l_proc->p_userret = NULL;
 
 	KERNEL_PROC_UNLOCK(l);
@@ -977,6 +986,7 @@ sys_setitimer(struct lwp *l, void *v, register_t *retval)
 		pt->pt_overruns = 0;
 		pt->pt_proc = p;
 		pt->pt_type = which;
+		pt->pt_entry = which;
 		switch (which) {
 		case ITIMER_REAL:
 			callout_init(&pt->pt_ch);
@@ -1016,6 +1026,7 @@ timers_alloc(struct proc *p)
 	LIST_INIT(&pts->pts_prof);
 	for (i = 0; i < TIMER_MAX; i++)
 		pts->pts_timers[i] = NULL;
+	pts->pts_fired = 0;
 	p->p_timers = pts;
 }
 
@@ -1149,6 +1160,7 @@ void
 itimerfire(struct ptimer *pt)
 {
 	struct proc *p = pt->pt_proc;
+	int s;
 
 	if (pt->pt_ev.sigev_notify == SIGEV_SIGNAL) {
 		/*
@@ -1166,16 +1178,35 @@ itimerfire(struct ptimer *pt)
 	} else if (pt->pt_ev.sigev_notify == SIGEV_SA && (p->p_flag & P_SA)) {
 		/* Cause the process to generate an upcall when it returns. */
 		struct sadata *sa = p->p_sa;
+		unsigned int i;
 
 		if (p->p_userret == NULL) {
-			if (sa->sa_idle)
-				wakeup(p);
+			if (sa->sa_idle) {
+				SCHED_LOCK(s);
+				setrunnable(sa->sa_idle);
+				SCHED_UNLOCK(s);
+			}
 			pt->pt_poverruns = pt->pt_overruns;
 			pt->pt_overruns = 0;
+			i = 1 << pt->pt_entry;
+			p->p_timers->pts_fired = i;
 			p->p_userret = timerupcall;
-			p->p_userret_arg = pt;
-		} else
+			p->p_userret_arg = p->p_timers;
+		} else if (p->p_userret == timerupcall) {
+			i = 1 << pt->pt_entry;
+			if ((p->p_timers->pts_fired & i) == 0) {
+				pt->pt_poverruns = pt->pt_overruns;
+				pt->pt_overruns = 0;
+				p->p_timers->pts_fired |= 1 << i;
+			} else
+				pt->pt_overruns++;
+		} else {
 			pt->pt_overruns++;
+			printf("itimerfire(%d): overrun %d on timer %x (userret is %p)\n",
+			    p->p_pid, pt->pt_overruns,
+			    pt->pt_ev.sigev_value.sival_int,
+			    p->p_userret);
+		}
 	}
 
 }
