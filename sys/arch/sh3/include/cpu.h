@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.10 2000/08/25 01:04:10 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.11 2001/02/02 18:25:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -133,15 +133,15 @@ void	delay __P((int));
 /*
  * Logical address space of SH3 CPU.
  */
-#define SH3_P0SEG_BASE	0x00000000
+#define SH3_P0SEG_BASE	0x00000000	/* TLB mapped, also U0SEG */
 #define SH3_P0SEG_END	0x7fffffff
 #define SH3_P1SEG_BASE	0x80000000	/* pa == va */
 #define SH3_P1SEG_END	0x9fffffff
 #define SH3_P2SEG_BASE	0xa0000000	/* pa == va, non-cacheable */
 #define SH3_P2SEG_END	0xbfffffff
-#define SH3_P3SEG_BASE	0xc0000000
+#define SH3_P3SEG_BASE	0xc0000000	/* TLB mapped, supervisor mode */
 #define SH3_P3SEG_END	0xdfffffff
-#define SH3_P4SEG_BASE	0xe0000000
+#define SH3_P4SEG_BASE	0xe0000000	/* peripheral space */
 #define SH3_P4SEG_END	0xffffffff
 
 #define SH3_PHYS_MASK	0x1fffffff
