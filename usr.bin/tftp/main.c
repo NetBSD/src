@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.5 1994/12/08 09:51:26 jtc Exp $	*/
+/*	$NetBSD: main.c,v 1.6 1995/05/21 16:54:10 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: main.c,v 1.5 1994/12/08 09:51:26 jtc Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.6 1995/05/21 16:54:10 mycroft Exp $";
 #endif /* not lint */
 
 /* Many bug fixes are from Jim Guyton <guyton@rand-unix> */
@@ -210,20 +210,19 @@ setpeer(argc, argv)
 		printf("usage: %s host-name [port]\n", argv[0]);
 		return;
 	}
-	host = gethostbyname(argv[1]);
-	if (host) {
-		peeraddr.sin_family = host->h_addrtype;
-		bcopy(host->h_addr, &peeraddr.sin_addr, host->h_length);
-		strcpy(hostname, host->h_name);
-	} else {
+	if (inet_aton(argv[1], &peeraddr.sin_addr) != 0) {
 		peeraddr.sin_family = AF_INET;
-		peeraddr.sin_addr.s_addr = inet_addr(argv[1]);
-		if (peeraddr.sin_addr.s_addr == -1) {
+		(void) strcpy(hostname, argv[1]);
+	} else {
+		host = gethostbyname(argv[1]);
+		if (host == 0) {
 			connected = 0;
 			printf("%s: unknown host\n", argv[1]);
 			return;
 		}
-		strcpy(hostname, argv[1]);
+		peeraddr.sin_family = host->h_addrtype;
+		bcopy(host->h_addr, &peeraddr.sin_addr, host->h_length);
+		(void) strcpy(hostname, host->h_name);
 	}
 	port = sp->s_port;
 	if (argc == 3) {
