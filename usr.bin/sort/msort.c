@@ -1,4 +1,4 @@
-/*	$NetBSD: msort.c,v 1.6 2000/10/17 15:16:27 jdolecek Exp $	*/
+/*	$NetBSD: msort.c,v 1.7 2001/01/11 14:05:24 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -40,7 +40,7 @@
 #include "fsort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: msort.c,v 1.6 2000/10/17 15:16:27 jdolecek Exp $");
+__RCSID("$NetBSD: msort.c,v 1.7 2001/01/11 14:05:24 jdolecek Exp $");
 __SCCSID("@(#)msort.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -69,18 +69,18 @@ static int cmp __P((struct recheader *, struct recheader *));
 static int insert __P((struct mfile **, struct mfile **, int, int));
 
 void
-fmerge(binno, files, nfiles, get, outfp, fput, ftbl)
-	union f_handle files;
-	int binno, nfiles;
-	int (*get) __P((int, union f_handle, int, struct recheader *, u_char *,
-	    struct field *));
+fmerge(binno, top, filelist, nfiles, get, outfp, fput, ftbl)
+	int binno, top;
+	struct filelist *filelist;
+	int nfiles;
+	get_func_t get;
 	FILE *outfp;
-	void (*fput) __P((const struct recheader *, FILE *));
+	put_func_t fput;
 	struct field *ftbl;
 {
 	FILE *tout;
 	int i, j, last;
-	void (*put)(const struct recheader *, FILE *);
+	put_func_t put;
 	struct tempfile *l_fstack;
 
 	wts = ftbl->weights;
@@ -101,7 +101,7 @@ fmerge(binno, files, nfiles, get, outfp, fput, ftbl)
 	}
 
 	if (binno >= 0)
-		l_fstack = fstack + files.top;
+		l_fstack = fstack + top;
 	else
 		l_fstack = fstack;
 	while (nfiles) {
@@ -115,16 +115,21 @@ fmerge(binno, files, nfiles, get, outfp, fput, ftbl)
 				tout = ftmp();
 			last = min(16, nfiles - j);
 			if (binno < 0) {
-				for (i = 0; i < last; i++)
-					if (!(l_fstack[i+MAXFCT-1-16].fp =
-					    fopen(files.names[j + i], "r")))
-						err(2, "%s", files.names[j+i]);
+				FILE *fp;
+				for (i = 0; i < last; i++) { 
+					fp = fopen(filelist->names[j+i], "r");
+					if (!fp) {
+						err(2, "%s",
+							filelist->names[j+i]);
+					}
+					l_fstack[i+MAXFCT-1-16].fp = fp;
+				}
 				merge(MAXFCT-1-16, last, get, tout, put, ftbl);
 			}
 			else {
 				for (i = 0; i< last; i++)
 					rewind(l_fstack[i+j].fp);
-				merge(files.top+j, last, get, tout, put, ftbl);
+				merge(top+j, last, get, tout, put, ftbl);
 			}
 			if (nfiles > 16) l_fstack[j/16].fp = tout;
 		}
@@ -134,7 +139,7 @@ fmerge(binno, files, nfiles, get, outfp, fput, ftbl)
 		if (binno < 0) {
 			binno = 0;
 			get = geteasy;
-			files.top = 0;
+			top = 0;
 		}
 	}
 }
@@ -142,14 +147,12 @@ fmerge(binno, files, nfiles, get, outfp, fput, ftbl)
 void
 merge(infl0, nfiles, get, outfp, put, ftbl)
 	int infl0, nfiles;
-	int (*get) __P((int, union f_handle, int, struct recheader *, u_char *,
-	    struct field *));
-	void (*put)(const struct recheader *, FILE *);
+	get_func_t get;
+	put_func_t put;
 	FILE *outfp;
 	struct field *ftbl;
 {
 	int c, i, j;
-	union f_handle dummy = {0};
 	struct mfile *flist[16], *cfile;
 	for (i = j = 0; i < nfiles; i++) {
 		cfile = (MFILE *) (buffer +
@@ -157,7 +160,7 @@ merge(infl0, nfiles, get, outfp, put, ftbl)
 		cfile->flno = j + infl0;
 		cfile->end = cfile->rec->data + DEFLLEN;
 		for (c = 1; c == 1;) {
-			if (EOF == (c = get(j+infl0, dummy, nfiles,
+			if (EOF == (c = get(j+infl0, 0, NULL, nfiles,
 			   cfile->rec, cfile->end, ftbl))) {
 				--i;
 				--nfiles;
@@ -175,7 +178,7 @@ merge(infl0, nfiles, get, outfp, put, ftbl)
 	cfile->end = cfile->rec->data + DEFLLEN;
 	while (nfiles) {
 		for (c = 1; c == 1;) {
-			if (EOF == (c = get(cfile->flno, dummy, nfiles,
+			if (EOF == (c = get(cfile->flno, 0, NULL, nfiles,
 			   cfile->rec, cfile->end, ftbl))) {
 				put(flist[0]->rec, outfp);
 				memmove(flist, flist + 1,
@@ -249,10 +252,9 @@ insert(flist, rec, ttop, delete)
  * check order on one file
  */
 void
-order(infile, get, ftbl)
-	union f_handle infile;
-	int (*get) __P((int, union f_handle, int, struct recheader *, u_char *,
-	    struct field *));
+order(filelist, get, ftbl)
+	struct filelist *filelist;
+	get_func_t get;
 	struct field *ftbl;
 {
 	u_char *crec_end, *prec_end, *trec_end;
@@ -271,8 +273,8 @@ order(infile, get, ftbl)
 		wts1 = ftbl->flags & R ? Rascii : ascii;
 	else
 		wts1 = 0;
-	if (0 == get(-1, infile, 1, prec, prec_end, ftbl))
-	while (0 == get(-1, infile, 1, crec, crec_end, ftbl)) {
+	if (0 == get(-1, 0, filelist, 1, prec, prec_end, ftbl))
+	while (0 == get(-1, 0, filelist, 1, crec, crec_end, ftbl)) {
 		if (0 < (c = cmp(prec, crec))) {
 			crec->data[crec->length-1] = 0;
 			errx(1, "found disorder: %s", crec->data+crec->offset);

@@ -1,4 +1,4 @@
-/*	$NetBSD: append.c,v 1.7 2001/01/08 18:00:31 jdolecek Exp $	*/
+/*	$NetBSD: append.c,v 1.8 2001/01/11 14:05:24 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -39,7 +39,7 @@
 #include "sort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: append.c,v 1.7 2001/01/08 18:00:31 jdolecek Exp $");
+__RCSID("$NetBSD: append.c,v 1.8 2001/01/11 14:05:24 jdolecek Exp $");
 __SCCSID("@(#)append.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -71,7 +71,7 @@ append(keylist, nelem, depth, fp, put, ftbl)
 	int nelem;
 	int depth;
 	FILE *fp;
-	void (*put)(const RECHEADER *, FILE *);
+	put_func_t put;
 	struct field *ftbl;
 {
 	u_char *wts, *wts1;
@@ -169,16 +169,18 @@ append(keylist, nelem, depth, fp, put, ftbl)
  */
 void
 rd_append(binno, infl0, nfiles, outfp, buffer, bufend)
-	u_char *buffer, *bufend;
+	u_char *buffer;
+	int infl0;
 	int binno, nfiles;
-	union f_handle infl0;
 	FILE *outfp;
+	u_char *bufend;
 {
 	struct recheader *rec;
 	rec = (RECHEADER *) buffer;
-	if (!getnext(binno, infl0, nfiles, (RECHEADER *) buffer, bufend, 0)) {
+	if (!getnext(binno, infl0, NULL, nfiles,
+			(RECHEADER *) buffer, bufend, 0)) {
 		putline(rec, outfp);
-		while (getnext(binno, infl0, nfiles, (RECHEADER *) buffer,
+		while (getnext(binno, infl0, NULL, nfiles, (RECHEADER *) buffer,
 			bufend, 0) == 0) {
 			if (!UNIQUE)
 				putline(rec, outfp);

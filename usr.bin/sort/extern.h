@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.3 2000/10/16 21:38:44 jdolecek Exp $	*/
+/*	$NetBSD: extern.h,v 1.4 2001/01/11 14:05:24 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -46,33 +46,25 @@ length_t enterkey __P((struct recheader *,
 void	 fixit __P((int *, char **));
 void	 fldreset __P((struct field *));
 FILE	*ftmp __P((void));
-void	 fmerge __P((int, union f_handle, int,
-	    int (*)(int, union f_handle, int, struct recheader *, u_char *,
-		struct field *), FILE *,
-		void (*)(const struct recheader *, FILE *),
-	    struct field *));
-void	 fsort __P((int, int, union f_handle, int, FILE *, struct field *));
-int	 geteasy __P((int, union f_handle,
+void	 fmerge __P((int, int, struct filelist *, int,
+		get_func_t, FILE *, put_func_t, struct field *));
+void	 fsort __P((int, int, int, struct filelist *, int, FILE *,
+		struct field *));
+int	 geteasy __P((int, int, struct filelist *,
 	    int, struct recheader *, u_char *, struct field *));
-int	 getnext __P((int, union f_handle,
+int	 getnext __P((int, int, struct filelist *,
 	    int, struct recheader *, u_char *, struct field *));
-int	 makekey __P((int, union f_handle,
+int	 makekey __P((int, int, struct filelist *,
 	    int, struct recheader *, u_char *, struct field *));
-int	 makeline __P((int, union f_handle,
+int	 makeline __P((int, int, struct filelist *,
 	    int, struct recheader *, u_char *, struct field *));
-void	 merge __P((int, int,
-	    int (*)(int, union f_handle, int, struct recheader *, u_char *,
-		struct field *), FILE *,
-		void (*)(const struct recheader *, FILE *),
-	    struct field *));
+void	 merge __P((int, int, get_func_t, FILE *, put_func_t, struct field *));
 void	 num_init __P((void));
 void	 onepass __P((const u_char **, int, long, long *, u_char *, FILE *));
 int	 optval __P((int, int));
-void	 order __P((union f_handle,
-	    int (*)(int, union f_handle, int, struct recheader *, u_char *,
-		struct field *), struct field *));
+void	 order __P((struct filelist *, get_func_t, struct field *));
 void	 putline __P((const struct recheader *, FILE *));
 void	 putrec __P((const struct recheader *, FILE *));
-void	 rd_append __P((int, union f_handle, int, FILE *, u_char *, u_char *));
+void	 rd_append __P((int, int, int, FILE *, u_char *, u_char *));
 int	 setfield __P((const char *, struct field *, int));
 void	 settables __P((int));

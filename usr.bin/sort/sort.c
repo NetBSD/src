@@ -1,4 +1,4 @@
-/*	$NetBSD: sort.c,v 1.12 2001/01/08 19:16:50 jdolecek Exp $	*/
+/*	$NetBSD: sort.c,v 1.13 2001/01/11 14:05:24 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\n\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: sort.c,v 1.12 2001/01/08 19:16:50 jdolecek Exp $");
+__RCSID("$NetBSD: sort.c,v 1.13 2001/01/11 14:05:24 jdolecek Exp $");
 __SCCSID("@(#)sort.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -98,13 +98,12 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	int (*get) __P((int, union f_handle, int, struct recheader *, u_char *,
-	    struct field *));
+	get_func_t get;
 	int ch, i, stdinflag = 0, tmp = 0;
 	char cflag = 0, mflag = 0;
 	char *outfile, *outpath = 0;
 	struct field fldtab[ND+2], *ftpos;
-	union f_handle filelist;
+	struct filelist filelist;
 	FILE *outfp = NULL;
 
 	setlocale(LC_ALL, "");
@@ -226,7 +225,7 @@ main(argc, argv)
 	else
 		get = makekey;
 	if (cflag) {
-		order(filelist, get, fldtab);
+		order(&filelist, get, fldtab);
 		/* NOT REACHED */
 	}
 	if (!outpath) {
@@ -254,12 +253,16 @@ main(argc, argv)
 			sigaction(sigtable[i], &act, 0);
 	} else
 		outfile = outpath;
+
 	if (outfp == NULL && (outfp = fopen(outfile, "w")) == NULL)
 		err(2, "output file %s", outfile);
-	if (mflag)
-		fmerge(-1, filelist, argc-optind, get, outfp, putline, fldtab);
-	else
-		fsort(-1, 0, filelist, argc-optind, outfp, fldtab);
+
+	if (mflag) {
+		fmerge(-1, 0, &filelist, argc-optind, get, outfp, putline,
+			fldtab);
+	} else
+		fsort(-1, 0, 0, &filelist, argc-optind, outfp, fldtab);
+
 	if (outfile != outpath) {
 		if (access(outfile, 0))
 			err(2, "%s", outfile);

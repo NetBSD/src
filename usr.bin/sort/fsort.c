@@ -1,4 +1,4 @@
-/*	$NetBSD: fsort.c,v 1.7 2001/01/08 18:00:31 jdolecek Exp $	*/
+/*	$NetBSD: fsort.c,v 1.8 2001/01/11 14:05:24 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -47,7 +47,7 @@
 #include "fsort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: fsort.c,v 1.7 2001/01/08 18:00:31 jdolecek Exp $");
+__RCSID("$NetBSD: fsort.c,v 1.8 2001/01/11 14:05:24 jdolecek Exp $");
 __SCCSID("@(#)fsort.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -62,10 +62,13 @@ extern char *toutpath;
 #define FSORTMAX 4
 int PANIC = FSORTMAX;
 
+#define MSTART		(MAXFCT - 16)
+
 void
-fsort(binno, depth, infiles, nfiles, outfp, ftbl)
-	int binno, depth, nfiles;
-	union f_handle infiles;
+fsort(binno, depth, top, filelist, nfiles, outfp, ftbl)
+	int binno, depth, top;
+	struct filelist *filelist;
+	int nfiles;
 	FILE *outfp;
 	struct field *ftbl;
 {
@@ -73,11 +76,9 @@ fsort(binno, depth, infiles, nfiles, outfp, ftbl)
 	u_char *bufend, *tmpbuf;
 	u_char *weights;
 	int ntfiles, mfct = 0, total, i, maxb, lastb, panic = 0;
-	int c, nelem;
+	int c, nelem, base;
 	long sizes [NBINS+1];
-	union f_handle tfiles, mstart = {MAXFCT-16};
-	int (*get)(int, union f_handle, int, RECHEADER *,
-		u_char *, struct field *);
+	get_func_t get;
 	struct recheader *crec;
 	struct field tfield[2];
 	FILE *prevfp, *tailfp[FSORTMAX+1];
@@ -102,10 +103,10 @@ fsort(binno, depth, infiles, nfiles, outfp, ftbl)
 	}
 	bufend = buffer + bufsize;
 	if (binno >= 0) {
-		tfiles.top = infiles.top + nfiles;
+		base = top + nfiles;
 		get = getnext;
 	} else {
-		tfiles.top = 0;
+		base = 0;
 		if (SINGL_FLD)
 			get = makeline;
 		else
@@ -116,8 +117,8 @@ fsort(binno, depth, infiles, nfiles, outfp, ftbl)
 		c = ntfiles = 0;
 		if (binno == weights[REC_D] &&
 		    !(SINGL_FLD && ftbl[0].flags & F)) {	/* pop */
-			rd_append(weights[REC_D],
-			    infiles, nfiles, prevfp, buffer, bufend);
+			rd_append(weights[REC_D], top,
+			    nfiles, prevfp, buffer, bufend);
 			break;
 		} else if (binno == weights[REC_D]) {
 			depth = 0;		/* start over on flat weights */
@@ -128,8 +129,8 @@ fsort(binno, depth, infiles, nfiles, outfp, ftbl)
 			keypos = keylist;
 			nelem = 0;
 			crec = (RECHEADER *) buffer;
-			while((c = get(binno, infiles, nfiles, crec, bufend,
-			    ftbl)) == 0) {
+			while((c = get(binno, top, filelist, nfiles, crec,
+			    bufend, ftbl)) == 0) {
 				*keypos++ = crec->data + depth;
 				if (++nelem == MAXNUM) {
 					c = BUFFEND;
@@ -168,10 +169,11 @@ fsort(binno, depth, infiles, nfiles, outfp, ftbl)
 						    crec->data);
 						memmove(tmpbuf, crec->data,
 						    bufend - crec->data);
-						fstack[tfiles.top + ntfiles].fp
+						fstack[base + ntfiles].fp
 						    = ftmp();
-						fmerge(0, mstart, mfct, geteasy,
-						  fstack[tfiles.top+ntfiles].fp,
+						fmerge(0, MSTART, filelist,
+						  mfct, geteasy,
+						  fstack[base].fp,
 						  putrec, ftbl);
 						++ntfiles;
 						mfct = 0;
@@ -180,14 +182,13 @@ fsort(binno, depth, infiles, nfiles, outfp, ftbl)
 						free(tmpbuf);
 					}
 				} else {
-					fstack[tfiles.top + ntfiles].fp= ftmp();
+					fstack[base + ntfiles].fp= ftmp();
 					onepass(keylist, depth, nelem, sizes,
-					weights, fstack[tfiles.top+ntfiles].fp);
+					weights, fstack[base + ntfiles].fp);
 					++ntfiles;
 				}
 			}
 		}
-		get = getnext;
 		if (!ntfiles && !mfct) {	/* everything in memory--pop */
 			if (nelem > 1) {
 			   if ((stable_sort)
@@ -200,10 +201,10 @@ fsort(binno, depth, infiles, nfiles, outfp, ftbl)
 		}
 		if (panic >= PANIC) {
 			if (!ntfiles)
-				fmerge(0, mstart, mfct, geteasy,
+				fmerge(0, MSTART, filelist, mfct, geteasy,
 				    outfp, putline, ftbl);
 			else
-				fmerge(0, tfiles, ntfiles, geteasy,
+				fmerge(0, base, filelist, ntfiles, geteasy,
 				    outfp, putline, ftbl);
 			break;
 				
@@ -218,34 +219,41 @@ fsort(binno, depth, infiles, nfiles, outfp, ftbl)
 		}
 		if (sizes[maxb] < max((total / 2) , BUFSIZE))
 			maxb = lastb;	/* otherwise pop after last bin */
-		fstack[tfiles.top].lastb = lastb;
-		fstack[tfiles.top].maxb = maxb;
+		fstack[base].lastb = lastb;
+		fstack[base].maxb = maxb;
 
-			/* start refining next level. */
-		get(-1, tfiles, ntfiles, crec, bufend, 0);	/* rewind */
+		/* start refining next level. */
+		getnext(-1, base, NULL, ntfiles, crec, bufend, 0); /* rewind */
 		for (i = 0; i < maxb; i++) {
 			if (!sizes[i])	/* bin empty; step ahead file offset */
-				get(i, tfiles, ntfiles, crec, bufend, 0);
-			else
-				fsort(i, depth+1, tfiles, ntfiles, outfp, ftbl);
+				getnext(i, base, NULL,ntfiles, crec, bufend, 0);
+			else {
+				fsort(i, depth+1, base, filelist, ntfiles,
+					outfp, ftbl);
+			}
 		}
+
+		get = getnext;
+
 		if (lastb != maxb) {
 			if (prevfp != outfp)
 				tailfp[panic] = prevfp;
 			prevfp = ftmp();
 			for (i = maxb+1; i <= lastb; i++)
-				if (!sizes[i])
-					get(i, tfiles, ntfiles, crec, bufend,0);
-				else
-					fsort(i, depth+1, tfiles, ntfiles,
-					    prevfp, ftbl);
+				if (!sizes[i]) {
+					getnext(i, base, NULL, ntfiles, crec,
+						bufend,0);
+				} else {
+					fsort(i, depth+1, base, filelist,
+						ntfiles, prevfp, ftbl);
+				}
 		}
 
 		/* sort biggest (or last) bin at this level */
 		depth++;
 		panic++;
 		binno = maxb;
-		infiles.top = tfiles.top;	/* getnext will free tfiles, */
+		top = base;
 		nfiles = ntfiles;		/* so overwrite them */
 	}
 	if (prevfp != outfp) {
