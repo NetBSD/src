@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.18 1998/01/21 22:34:39 mark Exp $	*/
+/*	$NetBSD: pmap.c,v 1.19 1998/03/21 21:42:02 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -567,6 +567,11 @@ pmap_bootstrap(kernel_l1pt, kernel_ptpt)
 	kernel_pmap->pm_pptpt = kernel_ptpt;
 	simple_lock_init(&kernel_pmap->pm_lock);
 	kernel_pmap->pm_count = 1;
+
+	/*
+	 * Initialize PAGE_SIZE-dependent variables.
+	 */
+	vm_set_page_size();
 
 	virtual_start = VM_KERNEL_VIRTUAL_MIN;
 	virtual_end = VM_KERNEL_VIRTUAL_MAX;
