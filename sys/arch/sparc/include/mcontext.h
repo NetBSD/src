@@ -1,11 +1,11 @@
-/*	$NetBSD: mcontext.h,v 1.1.2.2 2002/06/21 06:55:18 gmcgarry Exp $	 */
+/*	$NetBSD: mcontext.h,v 1.1.2.3 2002/12/17 02:23:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Paul Kranenburg,
+ * by Klaus Klein.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,84 +36,132 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	_SPARC_MCONTEXT_H_
-#define	_SPARC_MCONTEXT_H_
+#ifndef _SPARC_MCONTEXT_H_
+#define _SPARC_MCONTEXT_H_
 
 /*
- * Machine dependent mcontext_t for the SPARC architecture.
+ * Layout of mcontext_t according the System V Application Binary Interface,
+ * Edition 4.1, SPARC Processor ABI Supplement and updated for SPARC v9.
  */
 
-#define _REG_PSR	0
-#define _REG_PC		1
-#define _REG_nPC	2
-#define _REG_Y		3
-#define _REG_G1		4
-#define _REG_G2		5
-#define _REG_G3		6
-#define _REG_G4		7
-#define _REG_G5		8
-#define _REG_G6		9
-#define _REG_G7		10
-#define _REG_O0		11
-#define _REG_O1		12
-#define _REG_O2		13
-#define _REG_O3		14
-#define _REG_O4		15
-#define _REG_O5		16
-#define _REG_O6		17
-#define _REG_O7		18
-#define _NGREG		19
+#ifdef __arch64__
+#define	_NGREG	21	/* %ccr, pc, npc, %g1-7, %o0-7, %asi, %fprs */
+#else
+#define	_NGREG	19	/* %psr, pc, npc, %g1-7, %o0-7 */
+#endif
+typedef	long int	__greg_t;
+typedef	__greg_t	__gregset_t[_NGREG];
 
-#define _REG_SP		_REG_O6
-#define _REG_PS		_REG_PSR
+/* Offsets into gregset_t, for convenience. */
+#ifdef __arch64__
+#define	_REG_CCR	0
+#else
+#define	_REG_PSR	0
+#endif
+#define	_REG_PC		1
+#define	_REG_nPC	2
+#define	_REG_Y		3
+#define	_REG_G1		4
+#define	_REG_G2		5
+#define	_REG_G3		6
+#define	_REG_G4		7
+#define	_REG_G5		8
+#define	_REG_G6		9
+#define	_REG_G7		10
+#define	_REG_O0		11
+#define	_REG_O1		12
+#define	_REG_O2		13
+#define	_REG_O3		14
+#define	_REG_O4		15
+#define	_REG_O5		16
+#define	_REG_O6		17
+#define	_REG_O7		18
+#ifdef __arch64__
+#define	_REG_ASI	19
+#define	_REG_FPRS	20
+#endif
 
-#define __SPARC_MAXWIN	31
 
-typedef int __greg_t;
-typedef __greg_t __gregset_t[_NGREG];
+#define	_SPARC_MAXREGWINDOW	31
 
 /* Layout of a register window. */
 typedef struct {
-	__greg_t	__rw_local[8];		/* %l0-%l7 */
-	__greg_t	__rw_in[8];		/* %i0-%i7 */
+	__greg_t	__rw_local[8];	/* %l0-7 */
+	__greg_t	__rw_in[8];	/* %i0-7 */
 } __rwindow_t;
 
 /* Description of available register windows. */
 typedef struct {
 	int		__wbcnt;
-	int		*__spbuf[__SPARC_MAXWIN];
-	__rwindow_t	__wbuf[__SPARC_MAXWIN];
-} __gwindow_t;
+	__greg_t *	__spbuf[_SPARC_MAXREGWINDOW];
+	__rwindow_t	__wbuf[_SPARC_MAXREGWINDOW];
+} __gwindows_t;
 
+/* FPU address queue */
+struct __fpq {
+	unsigned int *	__fpq_addr;	/* address */
+	unsigned int	__fpq_instr;	/* instruction */
+};
 
+struct __fq {
+	union {
+		double		__whole;
+		struct __fpq	__fpq;
+	} _FQu;
+};
+
+/* FPU state description */
 typedef struct {
 	union {
-		u_int	__fp_ri[32];
-		double	__fp_rd[16];
-	} __fpu_regs;
-	void		*__fp_q;
-	unsigned	__fp_fsr;
-	u_char		__fp_nqel;
-	u_char		__fp_nqsize;
-	u_char		__fp_busy;
-} __fregset_t;
+		unsigned int	__fpu_regs[32];
+#ifdef __arch64__
+		double		__fpu_dregs[32];
+		long double	__fpu_qregs[16];
+#else
+		double		__fpu_dregs[16];
+#endif
+	} __fpu_fr;				/* FPR contents */
+	struct __fq *	__fpu_q;		/* pointer to FPU insn queue */
+	unsigned long	__fpu_fsr;		/* %fsr */
+	unsigned char	__fpu_qcnt;		/* # entries in __fpu_q */
+	unsigned char	__fpu_q_entrysize; 	/* size of a __fpu_q entry */
+	unsigned char	__fpu_en;		/* this context valid? */
+} __fpregset_t;
 
 /* `Extra Register State'(?) */
 typedef struct {
-	u_int		__id;
-#define __XRS_ID	(('x' << 24) | ('r' << 16) | ('s' << 8))
-	void		*__ptr;
+	unsigned int	__xrs_id;	/* See below */
+	char *		__xrs_ptr;	/* points into filler area */
 } __xrs_t;
 
+#define	_XRS_ID		0x78727300	/* 'xrs\0' */
 
-typedef struct __mcontext {
-	__gregset_t	__greg;
-	__gwindow_t	*__gwin;
-	__fregset_t	__freg;
-	__xrs_t		__xrs;
-	long		__pad[19];
-} mcontext_t;
+#ifdef __arch64__
+/* Ancillary State Registers, 16-31 are available to user programs */
+typedef	long		__asrset_t[16];	/* %asr16-31 */
+#endif
 
-#define _UC_MACHINE_SP(uc)	((uc)->uc_mcontext.__greg[_REG_SP])
+typedef struct {
+	__gregset_t	__gregs;	/* GPR state */
+	__gwindows_t *	__gwins;	/* may point to register windows */
+	__fpregset_t	__fpregs;	/* FPU state, if any */
+	__xrs_t		__xrs;		/* may indicate extra reg state */
+#ifdef __arch64__
+	__asrset_t	__asrs;		/* ASR state */
+#endif
+#ifdef __arch64__
+	long int	__filler[4];
+#else
+	long int	__filler[19];
+#endif
+} mcontext_t;	
 
-#endif /* !_SPARC_MCONTEXT_H_ */
+#ifdef __arch64__
+#define _UC_MACHINE_PAD	4		/* Padding appended to ucontext_t */
+#define	_UC_MACHINE_SP(uc)	(((uc)->uc_mcontext.__gregs[_REG_O6])+0x7ff)
+#else
+#define _UC_MACHINE_PAD	23		/* Padding appended to ucontext_t */
+#define	_UC_MACHINE_SP(uc)	((uc)->uc_mcontext.__gregs[_REG_O6])
+#endif
+
+#endif	/* !_SPARC_MCONTEXT_H_ */
