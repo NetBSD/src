@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.62 2000/05/25 17:21:48 mycroft Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.63 2000/10/17 01:50:40 shin Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -317,7 +317,7 @@ struct ne2000dev {
     { PCMCIA_STR_SOCEKT_LP_ETHER_CF,
       PCMCIA_VENDOR_SOCKET, PCMCIA_PRODUCT_SOCEKT_LP_ETHER_CF,
       PCMCIA_CIS_SOCEKT_LP_ETHER_CF,
-      0, -1, { 0x00, 0xc0, 0x1b} },
+      0, -1, { 0x00, 0xc0, 0x1b } },
 
     { PCMCIA_STR_XIRCOM_CFE_10,
       PCMCIA_VENDOR_XIRCOM, PCMCIA_PRODUCT_XIRCOM_CFE_10,
