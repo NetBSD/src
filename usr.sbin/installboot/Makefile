@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2002/04/22 17:17:35 lukem Exp $
+#	$NetBSD: Makefile,v 1.13 2002/04/22 21:11:45 fredette Exp $
 #
 
 PROG=	installboot
@@ -29,7 +29,7 @@ CLEANFILES+=	sun68k_bbinfo.h
 # XXX: or /usr/mdec/installboot is replaced with a shell script that
 # XXX: tells the user to use /usr/sbin/installboot instead
 #
-COMPATLINKS?=	pmax
+COMPATLINKS?=	pmax sun2
 afterinstall:
 .for l in ${COMPATLINKS}
 .if (${MACHINE} == ${l})
