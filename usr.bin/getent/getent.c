@@ -1,4 +1,4 @@
-/*	$NetBSD: getent.c,v 1.1 2004/11/23 07:35:06 lukem Exp $	*/
+/*	$NetBSD: getent.c,v 1.2 2004/11/26 04:52:45 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: getent.c,v 1.1 2004/11/23 07:35:06 lukem Exp $");
+__RCSID("$NetBSD: getent.c,v 1.2 2004/11/26 04:52:45 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/socket.h>
@@ -64,6 +64,7 @@ static int	usage(void);
 static int	parsenum(const char *, unsigned long *);
 static int	group(int, char *[]);
 static int	hosts(int, char *[]);
+static int	networks(int, char *[]);
 static int	passwd(int, char *[]);
 static int	shells(int, char *[]);
 
@@ -83,7 +84,7 @@ main(int argc, char *argv[])
 	} *curdb, dbs[] = {
 		{	"group",	group,		},
 		{	"hosts",	hosts,		},
-		    /* networks */
+		{	"networks",	networks,	},
 		{	"passwd",	passwd,		},
 		{	"shells",	shells,		},
 
@@ -245,6 +246,67 @@ hosts(int argc, char *argv[])
 		}
 	}
 	endhostent();
+	return rv;
+}
+
+
+		/*
+		 * networks
+		 */
+
+static void
+networksprint(const struct netent *ne)
+{
+	char		buf[INET6_ADDRSTRLEN];
+	struct	in_addr	ianet;
+	int		i;
+	char		prefix;
+
+	assert(ne != NULL);
+	ianet = inet_makeaddr(ne->n_net, 0);
+	if (inet_ntop(ne->n_addrtype, &ianet, buf, sizeof(buf)) == NULL)
+		strlcpy(buf, "# unknown", sizeof(buf));
+	printf("%s\t%s",
+	    ne->n_name, buf);
+	prefix = '\t';
+	for (i = 0; ne->n_aliases[i] != NULL; i++) {
+		printf("%c%s", prefix, ne->n_aliases[i]);
+		prefix = ' ';
+	}
+	printf("\n");
+}
+
+static int
+networks(int argc, char *argv[])
+{
+	struct netent	*ne;
+	in_addr_t	net;
+	int		i, rv;
+
+	assert(argc > 1);
+	assert(argv != NULL);
+
+	setnetent(1);
+	rv = RV_OK;
+	if (argc == 2) {
+		while ((ne = getnetent()) != NULL)
+			networksprint(ne);
+	} else {
+		for (i = 2; i < argc; i++) {
+			net = inet_network(argv[i]);
+			if (net != INADDR_NONE)
+				ne = getnetbyaddr(net, AF_INET);
+			else
+				ne = getnetbyname(argv[i]);
+			if (ne != NULL)
+				networksprint(ne);
+			else {
+				rv = RV_NOTFOUND;
+				break;
+			}
+		}
+	}
+	endnetent();
 	return rv;
 }
 
