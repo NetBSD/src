@@ -1,4 +1,4 @@
-/*	$NetBSD: mknod.c,v 1.17 1998/10/13 16:41:20 tron Exp $	*/
+/*	$NetBSD: mknod.c,v 1.18 1998/11/24 22:56:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1998 The NetBSD Foundation, Inc.  All rights reserved.\n");
-__RCSID("$NetBSD: mknod.c,v 1.17 1998/10/13 16:41:20 tron Exp $");
+__RCSID("$NetBSD: mknod.c,v 1.18 1998/11/24 22:56:26 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -318,13 +318,14 @@ main(argc, argv)
 {
 	char *name;
 	mode_t mode;
-	dev_t dev;
+	dev_t dev = 0;
 	pack_t *pack;
 	u_long numbers[8];
-	struct format *format;
+	struct format *format = NULL;
 	char *p;
 	int n;
 	int ch;
+	int fifo = 0;
 
 	pack = pack_native;
 
@@ -347,7 +348,7 @@ main(argc, argv)
 	argc -= optind;
 	argv += optind;
 
-	if (argc < 3 || argc > 10)
+	if (argc < 2 || argc > 10)
 		usage();
 
 	name = *argv;
@@ -355,14 +356,29 @@ main(argc, argv)
 	argv++;
 
 	mode = S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH;
-	if (*argv[0] == 'c')
+	switch (*argv[0]) {
+	case 'c':
 		mode |= S_IFCHR;
-	else if (*argv[0] == 'b')
+		break;
+
+	case 'b':
 		mode |= S_IFBLK;
-	else
-		errx(1, "node type must be 'b' or 'c'.");
+		break;
+
+	case 'p':
+		if (format)
+			errx(1, "format is meaningless for fifos");
+		fifo = 1;
+		break;
+
+	default:
+		errx(1, "node type must be 'b', 'c' or 'p'.");
+	}
 	argc--;
 	argv++;
+
+	if (!fifo == (argc == 0))
+		usage();
 
 	for (n = 0; n < argc; n++) {
 		numbers[n] = strtoul(argv[n], &p, 0);
@@ -370,27 +386,41 @@ main(argc, argv)
 			errx(1, "invalid number: %s", argv[n]);
 	}
 
-	if (argc == 1)
+	switch (argc) {
+	case 0:
+		dev = 0;
+		break;
+
+	case 1:
 		dev = numbers[0];
-	else
+		break;
+
+	default:
 		dev = (*pack)(argc, numbers);
+		break;
+	}
 
 #if 0
 	printf("name: %s\nmode: %05o\ndev:  %08x\n", name, mode, dev);
 #else
-	if (mknod(name, mode, dev) < 0)
+	if ((fifo ? mkfifo(name, mode) : mknod(name, mode, dev)) < 0)
 		err(1, "%s", name);
 #endif
 
-	exit(0);
+	return(0);
 }
 
-void
+static void
 usage()
 {
+	extern char *__progname;
 
-	fprintf(stderr, "usage: mknod [-F format] name [b | c] major minor\n");
-	fprintf(stderr, "       mknod [-F format] name [b | c] major unit subunit\n");
-	fprintf(stderr, "       mknod name [b | c] number\n");
+	(void)fprintf(stderr,
+	    "Usage: %s [-F format] name [b | c] major minor\n", __progname);
+	(void)fprintf(stderr,
+	    "       %s [-F format] name [b | c] major unit subunit\n",
+	    __progname);
+	(void)fprintf(stderr, "       %s name [b | c] number\n", __progname);
+	(void)fprintf(stderr, "       %s name p\n", __progname);
 	exit(1);
 }
