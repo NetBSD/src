@@ -1,4 +1,4 @@
-.\"	$NetBSD: malloc.3,v 1.11 1999/09/10 10:38:06 kleink Exp $
+.\"	$NetBSD: malloc.3,v 1.12 2000/01/09 16:14:04 hubertf Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -80,7 +80,8 @@ bytes in length (see
 the returned memory will be page boundary aligned as well.
 If
 .Fn malloc
-fails, a NULL pointer is returned.
+fails, a NULL pointer is returned, and the errno variable is
+set to ENOMEM.
 .Pp
 The
 .Fn calloc
