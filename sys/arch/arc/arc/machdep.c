@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.80 2003/08/07 16:26:47 agc Exp $	*/
+/*	$NetBSD: machdep.c,v 1.81 2003/09/26 16:00:28 simonb Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -78,7 +78,7 @@
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.80 2003/08/07 16:26:47 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.81 2003/09/26 16:00:28 simonb Exp $");
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
@@ -561,7 +561,7 @@ cpu_startup()
 	 * and usually occupy more virtual memory than physical.
 	 */
 	size = MAXBSIZE * nbuf;
-	if (uvm_map(kernel_map, (vaddr_t *)&buffers, round_page(size),
+	if (uvm_map(kernel_map, (vaddr_t *)(void *)&buffers, round_page(size),
 		    NULL, UVM_UNKNOWN_OFFSET, 0,
 		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
 				UVM_ADV_NORMAL, 0)) != 0)

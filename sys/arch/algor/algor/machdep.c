@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.24 2003/08/07 16:26:31 agc Exp $	*/
+/*	$NetBSD: machdep.c,v 1.25 2003/09/26 16:00:28 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -113,7 +113,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.24 2003/08/07 16:26:31 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.25 2003/09/26 16:00:28 simonb Exp $");
 
 #include "opt_algor_p4032.h"
 #include "opt_algor_p5064.h" 
@@ -678,7 +678,7 @@ cpu_startup(void)
 	 * and usually occupy more virtual memory than physical.
 	 */
 	size = MAXBSIZE * nbuf;
-	if (uvm_map(kernel_map, (vaddr_t *) &buffers, round_page(size),
+	if (uvm_map(kernel_map, (vaddr_t *)(void *) &buffers, round_page(size),
 		    NULL, UVM_UNKNOWN_OFFSET, 0,
 		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
 				UVM_ADV_NORMAL, 0)) != 0)
