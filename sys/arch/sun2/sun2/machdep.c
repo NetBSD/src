@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.32 2003/12/30 12:33:19 pk Exp $	*/
+/*	$NetBSD: machdep.c,v 1.33 2004/02/13 10:14:17 wiz Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -160,7 +160,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.32 2003/12/30 12:33:19 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.33 2004/02/13 10:14:17 wiz Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -277,7 +277,7 @@ static void initcpu __P((void));
 
 /*
  * cpu_startup: allocate memory for variable-sized tables,
- * initialize cpu, and do autoconfiguration.
+ * initialize CPU, and do autoconfiguration.
  *
  * This is called early in init_main.c:main(), after the
  * kernel memory allocator is ready for use, but before
