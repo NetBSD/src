@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsd.c,v 1.28 1999/03/26 07:15:23 lukem Exp $	*/
+/*	$NetBSD: nfsd.c,v 1.29 1999/06/07 06:06:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)nfsd.c	8.9 (Berkeley) 3/29/95";
 #else
-__RCSID("$NetBSD: nfsd.c,v 1.28 1999/03/26 07:15:23 lukem Exp $");
+__RCSID("$NetBSD: nfsd.c,v 1.29 1999/06/07 06:06:20 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -342,6 +342,7 @@ main(argc, argv)
 				if ((nsd.nsd_ttl - 1) == ntohl(kout.w2))
 				    nfssvc_flag = NFSSVC_NFSD | NFSSVC_AUTHIN;
 			}
+		    }
 #endif /* NFSKERB */
 		}
 		exit(0);
