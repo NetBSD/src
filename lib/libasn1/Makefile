@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.17 2001/10/30 09:48:14 jmc Exp $
+# $NetBSD: Makefile,v 1.18 2001/10/31 16:15:00 tv Exp $
 
 .include <bsd.own.mk>
 
@@ -10,7 +10,7 @@ MKLINT= no
 
 LIB=	asn1
 
-.if !defined(USETOOLS) || (${USETOOLS} == "no")
+.if ${USETOOLS} != "yes"
 COMPILEETOBJ!=	cd ${.CURDIR}/../libcom_err/compile_et && ${PRINTOBJDIR}
 COMPILE_ET?=	${COMPILEETOBJ}/compile_et
 
@@ -115,12 +115,12 @@ ${SRCS}: krb5_asn1.h
 
 CLEANFILES = ${BUILT_SOURCES} ${gen_files} asn1_files krb5_asn1.h krb5_asn1.hx
 
-.if !defined(USETOOLS) || (${USETOOLS} == "no")
+.if ${USETOOLS} != "yes"
 SUBDIR=	asn1_compile
 .endif
 
 .include <bsd.lib.mk>
-.if !defined(USETOOLS) || (${USETOOLS} == "no")
+.if ${USETOOLS} != "yes"
 .include <bsd.subdir.mk>
 .endif
 
