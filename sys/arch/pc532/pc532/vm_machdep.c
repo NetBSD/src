@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.60 2004/01/23 04:12:39 simonb Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.61 2004/08/28 22:12:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.60 2004/01/23 04:12:39 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.61 2004/08/28 22:12:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -325,49 +325,6 @@ setredzone(pte, vaddr)
    and take the dump while still in mapped mode */
 }
 #endif
-
-/*
- * Move pages from one kernel virtual address to another.
- * Both addresses are assumed to reside in the Sysmap,
- * and size must be a multiple of PAGE_SIZE.
- */
-void
-pagemove(from, to, size)
-	register caddr_t from, to;
-	size_t size;
-{
-	register pt_entry_t *fpte, *tpte, ofpte, otpte;
-
-	if (size % PAGE_SIZE)
-		panic("pagemove");
-	fpte = kvtopte((vaddr_t)from);
-	tpte = kvtopte((vaddr_t)to);
-
-	if (size <= PAGE_SIZE * 16) {
-		while (size > 0) {
-			otpte = *tpte;
-			ofpte = *fpte;
-			*tpte++ = *fpte;
-			*fpte++ = 0;
-			if (otpte & PG_V)
-				tlbflush_entry((vaddr_t) to);
-			if (ofpte & PG_V)
-				tlbflush_entry((vaddr_t) from);
-			from += PAGE_SIZE;
-			to += PAGE_SIZE;
-			size -= PAGE_SIZE;
-		}
-	} else {
-		while (size > 0) {
-			*tpte++ = *fpte;
-			*fpte++ = 0;
-			from += PAGE_SIZE;
-			to += PAGE_SIZE;
-			size -= PAGE_SIZE;
-		}
-		tlbflush();
-	}
-}
 
 /*
  * Convert kernel VA to physical address

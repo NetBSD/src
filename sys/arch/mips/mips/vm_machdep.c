@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.102 2004/02/28 16:02:03 simonb Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.103 2004/08/28 22:12:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -79,7 +79,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.102 2004/02/28 16:02:03 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.103 2004/08/28 22:12:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -306,39 +306,6 @@ cpu_coredump(struct lwp *l, struct vnode *vp, struct ucred *cred,
 		chdr->c_nseg++;
 
 	return error;
-}
-
-/*
- * Move pages from one kernel virtual address to another.
- * Both addresses are assumed to reside in the Sysmap,
- * and size must be a multiple of PAGE_SIZE.
- */
-void
-pagemove(caddr_t from, caddr_t to, size_t size)
-{
-	pt_entry_t *fpte, *tpte;
-	paddr_t invalid;
-
-	if (size % PAGE_SIZE)
-		panic("pagemove");
-	fpte = kvtopte(from);
-	tpte = kvtopte(to);
-#ifdef MIPS3_PLUS
-	if (CPUISMIPS3 &&
-	    (mips_cache_indexof(from) != mips_cache_indexof(to)))
-		mips_dcache_wbinv_range((vaddr_t) from, size);
-#endif
-	invalid = (MIPS_HAS_R4K_MMU) ? MIPS3_PG_NV | MIPS3_PG_G : MIPS1_PG_NV;
-	while (size > 0) {
-		tpte->pt_entry = fpte->pt_entry;
-		fpte->pt_entry = invalid;
-		MIPS_TBIS((vaddr_t)from);
-		MIPS_TBIS((vaddr_t)to);
-		fpte++; tpte++;
-		size -= PAGE_SIZE;
-		from += PAGE_SIZE;
-		to += PAGE_SIZE;
-	}
 }
 
 /*
