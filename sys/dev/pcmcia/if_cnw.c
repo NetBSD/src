@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cnw.c,v 1.12 2000/07/05 18:42:19 itojun Exp $	*/
+/*	$NetBSD: if_cnw.c,v 1.13 2000/07/05 18:47:51 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -353,8 +353,8 @@ cnw_reset(sc)
 	wait_WOC(sc, 0);
 #ifndef MEMORY_MAPPED
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, CNW_REG_PMR, CNW_PMR_RESET);
-#eles
-	bus_space_write_1(sc->sc_memt, sc->sc_meh,
+#else
+	bus_space_write_1(sc->sc_memt, sc->sc_memh,
 	    sc->sc_memoff + CNW_IOM_OFF + CNW_REG_PMR, CNW_PMR_RESET);
 #endif
 	bus_space_write_1(sc->sc_memt, sc->sc_memh,
