@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.4 1997/10/31 22:21:19 jonathan Exp $	*/
+/*	$NetBSD: md.c,v 1.5 1997/11/01 23:44:23 jonathan Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -83,7 +83,16 @@ int	md_get_info (void)
 	dlsec = disklabel.d_nsectors;
 	sectorsize = disklabel.d_secsize;
 	dlcylsize = disklabel.d_secpercyl;
+
+	/*
+	 * Compute whole disk size. Take max of (dlcyl*dlhead*dlsec)
+	 * and secperunit,  just in case the disk is already labelled.  
+	 * (If our new label's RAW_PART size ends up smaller than the
+	 * in-core RAW_PART size  value, updating the label will fail.)
+	 */
 	dlsize = dlcyl*dlhead*dlsec;
+	if (disklabel.d_secperunit > dlsize)
+		dlsize = disklabel.d_secperunit;
 
 	/* Compute minimum NetBSD partition sizes (in sectors). */
 	minfsdmb = (80 + 4*rammb) * (MEG / sectorsize);
@@ -103,10 +112,8 @@ void	md_post_newfs (void)
 {
 	/* XXX boot blocks ... */
 	printf (msg_string(MSG_dobootblks), diskdev);
-#ifdef notyet
 	run_prog ("/sbin/disklabel -B -b /usr/mdec/rzboot -s /usr/mdec/bootrz "
 		  "/dev/r%sa", diskdev);
-#endif
 }
 
 void	md_copy_filesystem (void)
@@ -170,6 +177,7 @@ void md_make_bsd_partitions (void)
 		/* Root */
 		i = NUMSEC(20+2*rammb, MEG/sectorsize, dlcylsize) + partstart;
 #if 0
+		/* i386 md code uses: */
 		partsize = NUMSEC (i/(MEG/sectorsize)+1, MEG/sectorsize,
 				   dlcylsize) - partstart;
 #else
