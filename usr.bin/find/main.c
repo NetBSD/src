@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.10 1998/02/10 21:52:51 cgd Exp $	*/
+/*	$NetBSD: main.c,v 1.10.2.1 1999/04/29 14:34:20 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)main.c	8.4 (Berkeley) 5/4/95";
 #else
 __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\n\
 	The Regents of the University of California.  All rights reserved.\n");
-__RCSID("$NetBSD: main.c,v 1.10 1998/02/10 21:52:51 cgd Exp $");
+__RCSID("$NetBSD: main.c,v 1.10.2.1 1999/04/29 14:34:20 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -86,7 +86,7 @@ main(argc, argv)
 	p = start = alloca(argc * sizeof (char *));
 
 	ftsoptions = FTS_NOSTAT | FTS_PHYSICAL;
-	while ((ch = getopt(argc, argv, "HLPXdf:x")) != EOF)
+	while ((ch = getopt(argc, argv, "HLPXdf:hx")) != EOF)
 		switch(ch) {
 		case 'H':
 			ftsoptions |= FTS_COMFOLLOW;
