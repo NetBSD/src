@@ -38,7 +38,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: asm.h,v 1.7 1994/03/01 07:50:49 glass Exp $
+ *	$Id: asm.h,v 1.8 1994/03/18 21:18:07 brezak Exp $
  */
 
 #ifndef _ASM_H_
@@ -53,10 +53,10 @@
 
 #ifndef KERNEL
 #define	_ENTRY(name) \
-	.even; .globl name; .type name,@function; name:
+	.text; .even; .globl name; .type name,@function; name:
 #else
 #define	_ENTRY(name) \
-	.even; .globl name; name:
+	.text; .even; .globl name; name:
 #endif
 
 
@@ -70,5 +70,7 @@
 #define ALTENTRY(name, rname)	_ENTRY(_C_LABEL(name))
 #endif
 #define	ASENTRY(name)		_ENTRY(_ASM_LABEL(name))
+
+#define RCSID(x)		.text; .asciz x
 
 #endif /* _ASM_H_ */
