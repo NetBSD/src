@@ -1,4 +1,4 @@
-/*	$NetBSD: ultra14f.c,v 1.55 1995/09/26 19:31:24 thorpej Exp $	*/
+/*	$NetBSD: ultra14f.c,v 1.56 1995/10/03 20:59:01 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -798,13 +798,39 @@ uha_free_mscp(uha, mscp, flags)
 	TAILQ_INSERT_HEAD(&uha->free_mscp, mscp, chain);
 
 	/*
-	 * If there were none, wake abybody waiting for
-	 * one to come free, starting with queued entries
+	 * If there were none, wake anybody waiting for one to come free,
+	 * starting with queued entries.
 	 */
-	if (!mscp->chain.tqe_next)
+	if (mscp->chain.tqe_next == 0)
 		wakeup(&uha->free_mscp);
 
 	splx(s);
+}
+
+static inline void
+uha_init_mscp(uha, mscp)
+	struct uha_softc *uha;
+	struct uha_mscp *mscp;
+{
+	int hashnum;
+
+	bzero(mscp, sizeof(struct uha_mscp));
+	/*
+	 * put in the phystokv hash table
+	 * Never gets taken out.
+	 */
+	mscp->hashkey = KVTOPHYS(mscp);
+	hashnum = CCB_HASH(mscp->hashkey);
+	mscp->nexthash = uha->mscphash[hashnum];
+	uha->mscphash[hashnum] = mscp;
+}
+
+static inline void
+uha_reset_mscp(uha, mscp)
+	struct uha_softc *uha;
+	struct uha_mscp *mscp;
+{
+
 }
 
 /*
@@ -818,9 +844,8 @@ uha_get_mscp(uha, flags)
 	struct uha_softc *uha;
 	int flags;
 {
-	int s;
 	struct uha_mscp *mscp;
-	int hashnum;
+	int s;
 
 	s = splbio();
 
@@ -837,27 +862,24 @@ uha_get_mscp(uha, flags)
 		if (uha->nummscps < UHA_MSCP_MAX) {
 			if (mscp = (struct uha_mscp *) malloc(sizeof(struct uha_mscp),
 			    M_TEMP, M_NOWAIT)) {
-				bzero(mscp, sizeof(struct uha_mscp));
+				uha_init_mscp(uha, mscp);
 				uha->nummscps++;
-				/*
-				 * put in the phystokv hash table
-				 * Never gets taken out.
-				 */
-				mscp->hashkey = KVTOPHYS(mscp);
-				hashnum = MSCP_HASH(mscp->hashkey);
-				mscp->nexthash = uha->mscphash[hashnum];
-				uha->mscphash[hashnum] = mscp;
 			} else {
 				printf("%s: can't malloc mscp\n",
 				    uha->sc_dev.dv_xname);
+				goto out;
 			}
 			break;
 		}
 		if ((flags & SCSI_NOSLEEP) != 0)
-			break;
+			goto out;
 		tsleep(&uha->free_mscp, PRIBIO, "uhamsc", 0);
 	}
 
+	uha_reset_mscp(uha, mscp);
+	mscp->flags = MSCP_ACTIVE;
+
+out:
 	splx(s);
 	return mscp;
 }
@@ -1144,7 +1166,6 @@ uha_scsi_cmd(xs)
 		xs->error = XS_DRIVER_STUFFUP;
 		return TRY_AGAIN_LATER;
 	}
-	mscp->flags = MSCP_ACTIVE;
 	mscp->xs = xs;
 
 	/*

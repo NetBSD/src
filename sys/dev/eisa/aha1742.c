@@ -1,4 +1,4 @@
-/*	$NetBSD: aha1742.c,v 1.50 1995/09/26 19:32:26 thorpej Exp $	*/
+/*	$NetBSD: aha1742.c,v 1.51 1995/10/03 20:59:06 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -714,13 +714,39 @@ ahb_free_ecb(ahb, ecb, flags)
 	TAILQ_INSERT_HEAD(&ahb->free_ecb, ecb, chain);
 
 	/*
-	 * If there were none, wake abybody waiting for
-	 * one to come free, starting with queued entries
+	 * If there were none, wake anybody waiting for one to come free,
+	 * starting with queued entries.
 	 */
-	if (!ecb->chain.tqe_next)
+	if (ecb->chain.tqe_next == 0)
 		wakeup(&ahb->free_ecb);
 
 	splx(s);
+}
+
+static inline void
+ahb_init_ecb(ahb, ecb)
+	struct ahb_softc *ahb;
+	struct ahb_ecb *ecb;
+{
+	int hashnum;
+
+	bzero(ecb, sizeof(struct ahb_ecb));
+	/*
+	 * put in the phystokv hash table
+	 * Never gets taken out.
+	 */
+	ecb->hashkey = KVTOPHYS(ecb);
+	hashnum = CCB_HASH(ecb->hashkey);
+	ecb->nexthash = ahb->ecbhash[hashnum];
+	ahb->ecbhash[hashnum] = ecb;
+}
+
+static inline void
+ahb_reset_ecb(ahb, ecb)
+	struct ahb_softc *ahb;
+	struct ahb_ecb *ecb;
+{
+
 }
 
 /*
@@ -734,9 +760,8 @@ ahb_get_ecb(ahb, flags)
 	struct ahb_softc *ahb;
 	int flags;
 {
-	int s;
 	struct ahb_ecb *ecb;
-	int hashnum;
+	int s;
 
 	s = splbio();
 
@@ -753,27 +778,24 @@ ahb_get_ecb(ahb, flags)
 		if (ahb->numecbs < AHB_ECB_MAX) {
 			if (ecb = (struct ahb_ecb *) malloc(sizeof(struct ahb_ecb),
 			    M_TEMP, M_NOWAIT)) {
-				bzero(ecb, sizeof(struct ahb_ecb));
+				ahb_init_ecb(ahb, ecb);
 				ahb->numecbs++;
-				/*
-				 * put in the phystokv hash table
-				 * Never gets taken out.
-				 */
-				ecb->hashkey = KVTOPHYS(ecb);
-				hashnum = ECB_HASH(ecb->hashkey);
-				ecb->nexthash = ahb->ecbhash[hashnum];
-				ahb->ecbhash[hashnum] = ecb;
 			} else {
 				printf("%s: can't malloc ecb\n",
 				    ahb->sc_dev.dv_xname);
+				goto out;
 			}
 			break;
-		} else {
-			if ((flags & SCSI_NOSLEEP) == 0)
-				tsleep(&ahb->free_ecb, PRIBIO, "ahbecb", 0);
 		}
+		if ((flags & SCSI_NOSLEEP) != 0)
+			goto out;
+		tsleep(&ahb->free_ecb, PRIBIO, "ahbecb", 0);
 	}
 
+	ahb_reset_ecb(ahb, ecb);
+	ecb->flags = ECB_ACTIVE;
+
+out:
 	splx(s);
 	return ecb;
 }
@@ -937,7 +959,6 @@ ahb_scsi_cmd(xs)
 		xs->error = XS_DRIVER_STUFFUP;
 		return TRY_AGAIN_LATER;
 	}
-	ecb->flags = ECB_ACTIVE;
 	ecb->xs = xs;
 
 	/*
