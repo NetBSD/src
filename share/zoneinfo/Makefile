@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.37 2004/01/30 04:30:51 lukem Exp $
+#	$NetBSD: Makefile,v 1.37.2.1 2004/06/22 07:56:26 tron Exp $
 
 .include <bsd.own.mk>
 
@@ -107,6 +107,6 @@ afterinstall:
 .endif	# ${MKSHARE} == "no"
 
 clean:
-	rm -rf ${TZBUILDDIR}
+	-rm -rf ${TZBUILDDIR}
 
 .include <bsd.prog.mk>
