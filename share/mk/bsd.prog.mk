@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.69 1997/04/17 06:40:32 thorpej Exp $
+#	$NetBSD: bsd.prog.mk,v 1.70 1997/04/18 14:30:25 christos Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .if exists(${.CURDIR}/../Makefile.inc)
@@ -38,6 +38,7 @@ LIBKVM?=	${DESTDIR}/usr/lib/libkvm.a
 LIBL?=		${DESTDIR}/usr/lib/libl.a
 LIBM?=		${DESTDIR}/usr/lib/libm.a
 LIBMP?=		${DESTDIR}/usr/lib/libmp.a
+LIBNTP?=	${DESTDIR}/usr/lib/libntp.a
 LIBPC?=		${DESTDIR}/usr/lib/libpc.a
 LIBPCAP?=	${DESTDIR}/usr/lib/libpcap.a
 LIBPLOT?=	${DESTDIR}/usr/lib/libplot.a
