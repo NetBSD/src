@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.23 1999/06/16 17:25:39 minoura Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.24 1999/06/17 21:05:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -335,6 +335,15 @@ sys_mmap(p, v, retval)
 	pos = SCARG(uap, pos);
 
 	/*
+	 * Fixup the old deprecated MAP_COPY into MAP_PRIVATE, and
+	 * validate the flags.
+	 */
+	if (flags & MAP_COPY)
+		flags = (flags & ~MAP_COPY) | MAP_PRIVATE;
+	if ((flags & (MAP_SHARED|MAP_PRIVATE)) == (MAP_SHARED|MAP_PRIVATE))
+		return (EINVAL);
+
+	/*
 	 * make sure that the newsize fits within a vaddr_t
 	 * XXX: need to revise addressing data types
 	 */
@@ -418,7 +427,7 @@ sys_mmap(p, v, retval)
 		 *
 		 * XXX: how does MAP_ANON fit in the picture?
 		 */
-		if ((flags & (MAP_SHARED|MAP_PRIVATE|MAP_COPY)) == 0) {
+		if ((flags & (MAP_SHARED|MAP_PRIVATE)) == 0) {
 #if defined(DEBUG)
 			printf("WARNING: defaulted mmap() share type to "
 			   "%s (pid %d comm %s)\n", vp->v_type == VCHR ?
@@ -488,11 +497,13 @@ sys_mmap(p, v, retval)
 		handle = (caddr_t)vp;
 
 	} else {		/* MAP_ANON case */
-
+		/*
+		 * XXX What do we do about (MAP_SHARED|MAP_PRIVATE) == 0?
+		 */
 		if (fd != -1)
 			return (EINVAL);
 
-is_anon:		/* label for SunOS style /dev/zero */
+ is_anon:		/* label for SunOS style /dev/zero */
 		handle = NULL;
 		maxprot = VM_PROT_ALL;
 		pos = 0;
