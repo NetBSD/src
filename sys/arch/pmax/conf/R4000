@@ -2,7 +2,7 @@
 # R4000 (any  model) kernel config file
 
 #
-# 	$NetBSD: R4000,v 1.8 1998/06/26 01:54:08 lukem Exp $
+# 	$NetBSD: R4000,v 1.9 1998/11/15 06:27:11 jonathan Exp $
 #
 include		"arch/pmax/conf/std.pmax"
 
@@ -79,6 +79,9 @@ options 	EXEC_ECOFF	# Ultrix RISC binaries are ECOFF format
 options 	"HZ=256"	# RTC rate required
 
 config		netbsd		root on ? type ?
+
+mainbus0	at root
+cpu*		at mainbus0
 
 
 ########################################################################
