@@ -1,4 +1,4 @@
-$NetBSD: IMPLEMENTATION,v 1.12 2000/05/28 23:44:30 itojun Exp $
+$NetBSD: IMPLEMENTATION,v 1.13 2000/06/10 08:21:11 itojun Exp $
 
 # NOTE: this is from original KAME distribution.
 # Some portion of this document is not applicable to the code merged into
@@ -8,7 +8,7 @@ $NetBSD: IMPLEMENTATION,v 1.12 2000/05/28 23:44:30 itojun Exp $
 
 			KAME Project
 			http://www.kame.net/
-			KAME Date: 2000/05/28 23:36:16
+			KAME Date: 2000/06/10 08:18:06
 
 1. IPv6
 
@@ -107,7 +107,7 @@ draft-ietf-ngtrans-tcpudp-relay-01.txt:
 	An IPv6-to-IPv4 transport relay translator
     * FAITH tcp relay translator (faithd) implements this.  See 3.1 for more
       details.
-draft-ietf-ngtrans-6to4-05.txt:
+draft-ietf-ngtrans-6to4-06.txt:
 	Connection of IPv6 Domains via IPv4 Clouds without Explicit Tunnels
     * "stf" interface implements it.  Be sure to read the next item before
       configuring it, there are security issues.
@@ -119,6 +119,7 @@ http://playground.iijlab.net/i-d/draft-itojun-ipv6-transition-abuse-00.txt:
       we do not include "stf" interface into GENERIC.v6 compilation.
     * kame/openbsd completely disables IPv4 mapped address support.
     * kame/netbsd makes IPv4 mapped address support off by default.
+    * See section 12.6 and 14 for more details.
 
 1.2 Neighbor Discovery
 
@@ -425,39 +426,93 @@ automatically assigned to the gif interface.
 
 1.6 Source Address Selection
 
-Source selection of KAME is scope oriented (there are some exceptions -
-see below).  For a given destination, a source IPv6 address is selected
-by the following rule:
-    1. If the source address is explicitly specified by the user
-       (e.g. via the advanced API), the specified address is used.
-    2. If there is an address assigned to the outgoing interface
-       (which is usually determined by looking up the routing table)
-       that has the same scope as the destination address, the address
-       is used.
-       This is the most typical case.
-    3. If there is no address that satisfies the above condition,
-       choose a global address assigned to one of the interfaces
-       on the sending node.
-    4. If there is no address that satisfies the above condition and
-       there is no global address on the sending node, choose the
-       address associated with the routing table entry for the destination.
-       This is the last resort, which may cause scope violation.
+KAME's source address selection takes care of the following
+conditions:
+- address scope
+- prefix matching against the destination
+- outgoing interface
+- whether an address is deprecated
 
-For instance, ::1 is selected for ff01::1, fe80:1::200:f8ff:fe01:6317
-for fe80:1::2a0:24ff:feab:839b (note that embedded interface index -
-described in 1.3 - helps us choose the right source address.  Those
-embedded indices will not be on the wire).
-If the outgoing interface has multiple address for the scope,
-a source is selected longest match basis (rule 3).  Suppose
+Roughly speaking, the selection policy is as follows:
+- always use an address that belongs to the same scope zone as the
+  destination.
+- addresses that have equal or larger scope than the scope of the
+  destination are preferred.
+- if multiple addresses have the equal scope, one which is longest
+  prefix matching against the destination is preferred.
+- a deprecated address is not used in new communications if an
+  alternate (non-deprecated) address is available and has sufficient
+  scope.
+- if none of above conditions tie-breaks, addresses assigned on the
+  outgoing interface are preferred.
+
+For instance, ::1 is selected for ff01::1,
+fe80::200:f8ff:fe01:6317%ne0 for fe80::2a0:24ff:feab:839b%ne0.
+To see how longest-matching works, suppose that
 3ffe:501:808:1:200:f8ff:fe01:6317 and 3ffe:2001:9:124:200:f8ff:fe01:6317
-are given to the outgoing interface.  3ffe:501:808:1:200:f8ff:fe01:6317
-is chosen as the source for the destination 3ffe:501:800::1.
+are given on the outgoing interface. Then the former is chosen as the
+source for the destination 3ffe:501:800::1. Note that even if all
+available addresses have smaller scope than the scope of the
+destination, we choose one anyway. For example, if we have link-local
+and site-local addresses only, we choose a site-local addresses for a
+global destination. If the packet is going to break a site boundary,
+the boundary router will return an ICMPv6 destination unreachable
+error with code 2 - beyond scope of source address.
 
-Note that the above rule is not documented in the IPv6 spec.  It is
-considered "up to implementation" item.
+The precise desripction of the algorithm is quite complicated. To
+describe the algorithm, we introduce the following notation:
+
+For a given destination D,
+  samescope(D): A set of addresses that have the same scope as D.
+  largerscope(D): A set of addresses that have a larger scope than D.
+  smallerscope(D): A set of addresses that have a smaller scope than D.
+
+For a given set of addresses A,
+  DEP(A): a set of deprecated addresses in A.
+  nonDEP(A): A - DEP(A).
+
+Also, the algorithm assumes that the outgoing interface for the
+destination D is determined. We call the interface "I".
+
+The algorithm is as follows. Selection proceeds step by step as
+described; For example, if an address is selected by item 1, item 2 or
+later are not considered at all.
+
+  0. If there is no address in the same scope zone as D, just give up;
+     the packet will not be sent.
+  1. If nonDEP(samescope(D)) is not empty,
+     choose a longest matching address against D. If more than one
+     address is longest matching, choose arbitrary one provided that
+     an address on I is always preferred.
+  2. If nonDEP(largerscope(D)) is not empty,
+     choose an address that has the smallest scope. If more than one
+     address has the smallest scope, choose arbitrary one provided
+     that an address on I is always preferred.
+  3. If DEP(samescope(D)) is not empty,
+     choose a longest matching address against D. If more than one
+     address is longest matching, choose arbitrary one provided that
+     an address on I is always preferred.
+  4. If DEP(largerscope(D)) is not empty,
+     choose an address that has the smallest scope. If more than one
+     address has the smallest scope, choose arbitrary one provided
+     that an address on I is always preferred.
+  5. if nonDEP(smallerscope(D)) is not empty,
+     choose an address that has the largest scope. If more than one
+     address has the largest scope, choose arbitrary one provided
+     that an address on I is always preferred.
+  6. if DEP(smallerscope(D)) is not empty,
+     choose an address that has the largest scope. If more than one
+     address has the largest scope, choose arbitrary one provided
+     that an address on I is always preferred.
+
+There exists a document about source address selection
+(draft-ietf-ipngwg-default-addr-select-xx.txt). KAME's algorithm
+described above takes a similar approach to the document, but there
+are some differences. See the document for more details.
+
 There are some cases where we do not use the above rule.  One
-example is connected TCP session, and we use the address kept in tcb
-as the source.
+example is connected TCP session, and we use the address kept in TCP
+protocol control block (tcb) as the source.
 Another example is source address for Neighbor Advertisement.
 Under the spec (RFC2461 7.2.2) NA's source should be the target
 address of the corresponding NS's target.  In this case we follow
@@ -840,6 +895,51 @@ KAME/FreeBSD228 (see 1.12.1 for more detail).
 KAME/OpenBSD does not support connection initiation to IPv4 mapped address
 (like ::ffff:10.1.1.1).
 
+1.12.6 More issues
+
+IPv4 mapped address support adds a big requirement to EVERY userland codebase.
+Every userland code should check if an AF_INET6 sockaddr contains IPv4
+mapped address or not.  This adds many twists:
+
+- Access controls code becomes harder to write.
+  For example, if you would like to reject packets from 10.0.0.0/8,
+  you need to reject packets to AF_INET socket from 10.0.0.0/8,
+  and to AF_INET6 socket from ::ffff:10.0.0.0/104.
+- If a protocol on top of IPv4 is defined differently with IPv6, we will get
+  very tricky situation.
+  For example, with FTP protocol, we can not simply use sa_family to determine
+  FTP command sets.  The following example is incorrect:
+	if (sa_family == AF_INET)
+		use EPSV/EPRT or PASV/PORT;	/*IPv4*/
+	else if (sa_family == AF_INET6)
+		use EPSV/EPRT or LPSV/LPRT;	/*IPv6*/
+	else
+		error;
+  Under SIIT environment, the correct code would be:
+	if (sa_family == AF_INET)
+		use EPSV/EPRT or PASV/PORT;	/*IPv4*/
+	else if (sa_family == AF_INET6 && IPv4 mapped address)
+		use EPSV/EPRT or PASV/PORT;	/*IPv4 command set on AF_INET6*/
+	else if (sa_family == AF_INET6 && !IPv4 mapped address)
+		use EPSV/EPRT or LPSV/LPRT;	/*IPv6*/
+	else
+		error;
+  (not sure if the above code fragment is perfect for all situations)
+- By enabling kernel support for IPv4 mapped address (outgoing direction),
+  servers on the kernel can be hosed by IPv6 native packet that has IPv4
+  mapped address in IPv6 header source, and can generate unwanted IPv4 packets.
+  http://playground.iijlab.net/i-d/draft-itojun-ipv6-transition-abuse-00.txt
+  talks more about this scenario.
+
+Due to the above twists, some of KAME userland programs has restrictions on
+the use of IPv4 mapped addresses:
+- rshd/rlogind do not accept connections from IPv4 mapped address.
+  This is to avoid malicious use of IPv4 mapped address in IPv6 native
+  packet, to bypass source-address based authentication.
+- ftp/ftpd does not support SIIT environment.  IPv4 mapped address will be
+  decoded in userland, and will be passed to AF_INET sockets
+  (SIIT client should pass IPv4 mapped address as is, to AF_INET6 sockets).
+
 1.13 sockaddr_storage
 
 When RFC2553 was about to be finalized, there was discussion on how struct
@@ -881,19 +981,35 @@ dealing with it is to:
 
 1.14 Invalid addresses on the wire
 
-IPv6 specifications reserve IPv6 address range that are used internally
-in IPv6 nodes (not on the wire).  They are:
-- IPv4 mapped address (like ::ffff:10.1.1.1)
-- IPv4 compatible address (like ::10.1.1.1)
-They are defined and used to ease IPv4-to-IPv6 transition.  However,
-if they mistakingly appear on the wire, they can confuse IPv6 implementations.
-It is also possible to use the above addresses as tools to attack IPv6 hosts,
-to bypass certain security checks (like using source address of
+Some of IPv6 transition technologies embed IPv4 address into IPv6 address.
+These specifications themselves are fine, however, there can be certain
+set of attacks enabled by these specifications.  Recent speicifcation
+documents covers up those issues, however, there are already-published RFCs
+that does not have protection against those (like using source address of
 ::ffff:127.0.0.1 to bypass "reject packet from remote" filter).
 
+To name a few, these address ranges can be used to hose an IPv6 implementation,
+or bypass security controls:
+- IPv4 mapped address that embeds unspecified/multicast/loopback/broadcast
+  IPv4 address (if they are in IPv6 native packet header, they are malicious)
+	::ffff:0.0.0.0/104	::ffff:127.0.0.0/104
+	::ffff:224.0.0.0/100	::ffff:255.0.0.0/104 
+- 6to4 prefix generated from unspecified/multicast/loopback/broadcast/private
+  IPv4 address
+	2002:0000::/24		2002:7f00::/24		2002:e000::/24
+	2002:ff00::/24		2002:0a00::/24		2002:ac10::/28	
+	2002:c0a8::/32
+
+Also, since KAME does not support RFC1933 auto tunnels, seeing IPv4 compatible
+is very rare.  You should take caution if you see those on the wire.
+
 KAME code is carefully written to avoid such incidents.  More specifically,
-KAME kernel will reject packets if the above addresses are used in IPv6
-source/dstination address, or IPv6 routing header.
+KAME kernel will reject packets with certain source/dstination address in IPv6
+base header, or IPv6 routing header.  Also, KAME default configuration file
+is written carefully, to avoid those attacks.
+
+http://playground.iijlab.net/i-d/draft-itojun-ipv6-transition-abuse-00.txt
+talks about more about this.
 
 1.15 Node's required addresses
 
