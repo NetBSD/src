@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.11 2001/09/26 20:53:12 eeh Exp $ */
+/*	$NetBSD: autoconf.h,v 1.12 2001/10/05 15:27:56 pooka Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -175,6 +175,7 @@ int	nextsibling __P((int));
 void	callrom __P((void));
 struct device *getdevunit __P((char *, int));
 void	*findzs __P((int));
+void	rominterpret __P((char *));
 int	romgetcursoraddr __P((int **, int **));
 int	findroot __P((void));
 int	findnode __P((int, const char *));
