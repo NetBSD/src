@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.h,v 1.14 2001/03/19 22:59:13 bjh21 Exp $ */
+/* $NetBSD: podulebus.h,v 1.15 2001/03/19 23:03:59 bjh21 Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -43,6 +43,7 @@
 
 #include <sys/param.h>
 #include <machine/bus.h>
+#include <machine/io.h>
 
 /* Define the structures used to describe the "known" podules */
 
