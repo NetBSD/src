@@ -9,6 +9,8 @@
 #					to SUBDIR
 #
 
+# BROKEN: tn3270
+
 SUBDIR=	ar awk biff basename cal calendar \
 	checknr chpass cksum cmp col colcrt colrm column comm compress \
 	cpio crontab ctags cut diff diff3 dirname du egrep elvis elvisrecover \
@@ -21,7 +23,7 @@ SUBDIR=	ar awk biff basename cal calendar \
 	rdist renice rlogin rsh ruptime rwho script sed \
 	shar showmount size soelim sort split strings \
 	strip su symorder tail talk tar tee telnet tftp time \
-	tip tn3270 touch tput tr true tsort tty ul unexpand unifdef uniq \
+	tip touch tput tr true tsort tty ul unexpand unifdef uniq \
 	unvis users uudecode uuencode vacation vis \
 	w wall wc what whereis which who whoami whois \
 	write xargs xinstall xstr yacc yes
