@@ -1,11 +1,11 @@
-/*	$NetBSD: extract.c,v 1.24 2002/10/17 03:31:33 christos Exp $	*/
+/*	$NetBSD: extract.c,v 1.25 2002/11/28 23:52:31 taca Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "FreeBSD - Id: extract.c,v 1.17 1997/10/08 07:45:35 charnier Exp";
 #else
-__RCSID("$NetBSD: extract.c,v 1.24 2002/10/17 03:31:33 christos Exp $");
+__RCSID("$NetBSD: extract.c,v 1.25 2002/11/28 23:52:31 taca Exp $");
 #endif
 #endif
 
@@ -34,7 +34,7 @@ __RCSID("$NetBSD: extract.c,v 1.24 2002/10/17 03:31:33 christos Exp $");
 #include "add.h"
 
 #define TAR_ARGS	" cf - "
-#define TARX_CMD	"|" TAR_CMD " xf - -C "
+#define TARX_CMD	"|" TAR_CMD " xpf - -C "
 
 /* 
  * This macro is used to determine if the 'where_args'  buffer is big enough to add the
