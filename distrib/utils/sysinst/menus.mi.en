@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi.en,v 1.38 2000/01/05 01:50:45 itojun Exp $	*/
+/*	$NetBSD: menus.mi.en,v 1.39 2000/03/14 22:42:49 fvdl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -111,7 +111,7 @@ menu sizechoice, title  "Choose your size specifier";
 		  multname = msg_string(MSG_megname);
 		};
 	option "Cylinders", exit, action 
-		{ sizemult = dlcylsize; 
+		{ sizemult = current_cylsize; 
 		  multname = msg_string(MSG_cylname);
 		};
 	option "Sectors", exit, action 
