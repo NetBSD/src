@@ -1,7 +1,9 @@
 #!/bin/sh -
 #
-# Copyright (c) 1991 The Regents of the University of California.
-# All rights reserved.
+#	$NetBSD: mkdep.sh,v 1.3 1994/12/23 07:35:02 jtc Exp $
+#
+# Copyright (c) 1991, 1993
+#	The Regents of the University of California.  All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -31,10 +33,10 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-#	@(#)mkdep.sh	5.19 (Berkeley) 4/12/91
+#	@(#)mkdep.sh	8.1 (Berkeley) 6/6/93
 #
 
-PATH=/bin:/usr/bin:/usr/ucb
+PATH=/bin:/usr/bin:/usr/ucb:/usr/old/bin
 export PATH
 
 D=.depend			# default dependency file is .depend
@@ -55,7 +57,7 @@ while :
 		# the -p flag produces "program: program.c" style dependencies
 		# so .o's don't get produced
 		-p)
-			SED='s;\.o *: ; : ;'
+			SED='s;\.o ; ;'
 			shift ;;
 		*)
 			break ;;
