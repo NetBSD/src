@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.11 1997/03/20 12:00:46 matthias Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.12 1997/04/21 16:17:36 matthias Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -217,29 +217,29 @@ bounds_check_with_label(struct buf *bp, struct disklabel *lp, int wlabel)
 		sz = (bp->b_bcount + DEV_BSIZE - 1) >> DEV_BSHIFT;
 
 	/* Check to see if it is the label sector and it is write only. */
-        if (bp->b_blkno + p->p_offset <= LABELSECTOR &&
-            (bp->b_flags & B_READ) == 0 && wlabel == 0) {
-                bp->b_error = EROFS;
-                goto bad;
-        }
+	if (bp->b_blkno + p->p_offset <= LABELSECTOR &&
+	    (bp->b_flags & B_READ) == 0 && wlabel == 0) {
+		bp->b_error = EROFS;
+		goto bad;
+	}
 	/* beyond partition? */
-        if (bp->b_blkno < 0 || bp->b_blkno + sz > maxsz) {
-                /* if exactly at end of disk, return an EOF */
-                if (bp->b_blkno == maxsz) {
-                        bp->b_resid = bp->b_bcount;
-                        return(0);
-                }
-                /* or truncate if part of it fits */
-                sz = maxsz - bp->b_blkno;
-                if (sz <= 0) {
-			bp->b_error = EINVAL;
-                        goto bad;
+	if (bp->b_blkno < 0 || bp->b_blkno + sz > maxsz) {
+		/* if exactly at end of disk, return an EOF */
+		if (bp->b_blkno == maxsz) {
+			bp->b_resid = bp->b_bcount;
+			return(0);
 		}
-                bp->b_bcount = sz << DEV_BSHIFT;
-        }
+		/* or truncate if part of it fits */
+		sz = maxsz - bp->b_blkno;
+		if (sz <= 0) {
+			bp->b_error = EINVAL;
+			goto bad;
+		}
+		bp->b_bcount = sz << DEV_BSHIFT;
+	}
 
 	/* calculate cylinder for disksort to order transfers with */
-        bp->b_cylin = (bp->b_blkno + p->p_offset) / lp->d_secpercyl;
+	bp->b_cylin = (bp->b_blkno + p->p_offset) / lp->d_secpercyl;
 	return(1);
 
 bad:
@@ -260,8 +260,14 @@ dk_establish(dk, dev)
 	struct device *dev;
 {
 	struct scsibus_softc *sbsc;
-	int target = (bootdev >> B_UNITSHIFT) & B_UNITMASK;
-	int lun = 0;
+	int major, target, lun;
+
+	major  = B_TYPE(bootdev);
+	target = B_UNIT(bootdev);
+	lun    = 0;
+
+	if (booted_device != NULL || major != 0)
+		return;
 
 	/*
  	 * scsi: sd, cd
@@ -269,15 +275,14 @@ dk_establish(dk, dev)
 
 	if (strncmp("sd", dev->dv_xname, 2) == 0 ||
 	    strncmp("cd", dev->dv_xname, 2) == 0) {
+		sbsc = (struct scsibus_softc *)dev->dv_parent;
 
-        	sbsc = (struct scsibus_softc *)dev->dv_parent;
-
-        	if (sbsc->sc_link[target][lun] != NULL &&
-            	    sbsc->sc_link[target][lun]->device_softc == (void *)dev) {
+		if (sbsc->sc_link[target][lun] != NULL &&
+		    sbsc->sc_link[target][lun]->device_softc == (void *)dev) {
 			booted_device = dev;
-                	return;
+			return;
 		}
-        }
+	}
 
 	return;
 }
