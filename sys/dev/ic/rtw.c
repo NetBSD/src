@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.8 2004/12/20 01:13:45 dyoung Exp $ */
+/* $NetBSD: rtw.c,v 1.9 2004/12/20 01:28:24 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.8 2004/12/20 01:13:45 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.9 2004/12/20 01:28:24 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -2506,7 +2506,7 @@ rtw_start(struct ifnet *ifp)
 		RTW_WRITE8(&sc->sc_regs, RTW_TPPOLL,
 		    RTW_TPPOLL_NPQ | RTW_TPPOLL_LPQ | RTW_TPPOLL_HPQ |
 		    RTW_TPPOLL_BQ);
-		RTW_SYNC(regs, RTW_TPPOLL, RTW_TPPOLL);
+		RTW_SYNC(&sc->sc_regs, RTW_TPPOLL, RTW_TPPOLL);
 	}
 	DPRINTF2(sc, ("%s: leave\n", __func__));
 	return;
