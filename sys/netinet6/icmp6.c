@@ -1,5 +1,5 @@
-/*	$NetBSD: icmp6.c,v 1.40 2000/08/03 14:31:05 itojun Exp $	*/
-/*	$KAME: icmp6.c,v 1.130 2000/08/03 14:22:10 itojun Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.41 2000/08/03 16:30:38 itojun Exp $	*/
+/*	$KAME: icmp6.c,v 1.131 2000/08/03 15:24:34 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1285,7 +1285,7 @@ ni6_input(m, off)
 		nni6->ni_code = ICMP6_NI_SUCCESS;
 		nni6->ni_flags = htons(0x0000);	/* raw bitmap */
 		/* supports NOOP, SUPTYPES, FQDN, and NODEADDR */
-		*(u_int32_t *)(nni6 + 1) = htonl(0x000f);
+		*(u_int32_t *)(nni6 + 1) = htonl(0x0000000f);
 		break;
 	case NI_QTYPE_FQDN:
 		nni6->ni_code = ICMP6_NI_SUCCESS;
