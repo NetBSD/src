@@ -1,4 +1,4 @@
-.\"	$NetBSD: setlocale.3,v 1.12 2002/02/07 07:00:19 ross Exp $
+.\"	$NetBSD: setlocale.3,v 1.13 2002/05/19 13:44:31 yamt Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -369,3 +369,5 @@ conversion function.
 and
 .Dv LC_TIME
 are personal choices and should not be wrapped up with the other categories.
+.Pp
+Multibyte locales aren't supported for static binaries.
