@@ -27,24 +27,23 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: mdprologue.S,v 1.4 1996/07/31 06:22:41 phil Exp $
+ *	$Id: mdprologue.S,v 1.5 1997/07/09 19:32:54 matthias Exp $
  */
 
 /*
  * Run-time link editor entry points for ns32k architecture.
  */
 
-	.text
-	.globl	_rtld_entry, _binder_entry, _binder
+#include <machine/asm.h>
 
 /*
- * _rtld_entry(int version, struct crt_ldso *crtp)
+ * rtld_entry(int version, struct crt_ldso *crtp)
  */
 
-_rtl_entry:
+ENTRY_NOPROFILE(rtl_entry)
 	enter	[],0
 	sprd	sb,tos
-	addr	__GLOBAL_OFFSET_TABLE_(pc),r0
+	addr	_C_LABEL(_GLOBAL_OFFSET_TABLE_)(pc),r0
 	lprd	sb,r0			/* PIC function prologue	*/
 	movd	12(fp),r0		/* -> crt_ldso structure	*/
 	movd	0(r0),r1 		/* base address 		*/
@@ -53,7 +52,7 @@ _rtl_entry:
 	addr	0(0(sb))[r1:b],tos	/* gives address of __DYNAMIC	*/
 	movd	r0,tos			/* crt_ldso pointer		*/
 	movd	8(fp),tos		/* version			*/
-	jsr	0(_rtld(sb))[r1:b]	/* call _rtld function		*/
+	jsr	0(_C_LABEL(rtld)(sb))[r1:b] /* call _rtld function	*/
 	lprd	sb,-4(fp)
 	exit	[]
 	ret	0
@@ -63,14 +62,111 @@ _rtl_entry:
  * binding.
  */
 
-_binder_entry:
+ENTRY_NOPROFILE(binder_entry)
 	save	[r0,r1,r2]		/* preserve scratch registers	*/
 					/* save r0 (for cerror) 	*/
 					/* save r1 (maybe static chain) */
 					/* save r2 (maybe struct addr)	*/
 	addr	-6(12(sp)),tos		/* push address of PLT slot	*/
-	bsr	_binder			/* relocate function address	*/
+	bsr	_C_LABEL(binder)	/* relocate function address	*/
 	cmpqd	0,tos
 	movd	r0,12(sp)		/* prepare for jump		*/
 	restore	[r0,r1,r2]		/* restore scratch registers	*/
 	ret	0			/* jump into function		*/
+
+
+/* Force cache line corresponding to address argument to be loaded */
+
+	.text
+	/* 
+	 * Now we have to 0x200-align the text segment.
+	 * We know that the a.out header is 0x20 bytes long.
+	 * The code so far is less then 0x60 bytes.
+	 * So we first do a 0x80-align.
+	 */
+
+	.align 7,0xa2
+
+	/*
+	 * Now we are at address 0xa0. Skip over the 
+	 * remaining 0x60 bytes.
+	 */
+	.long	0,0,0,0,0,0,0,0
+	.long	0,0,0,0,0,0,0,0
+	.long	0,0,0,0,0,0,0,0
+
+	/*
+	 * We are at address 0x100 now.
+	 */
+
+0:	ret	0;			/* 0000 */
+ASGLOBAL(_C_LABEL(cinv))
+	movd	S_ARG0,r0		/* 0002 */
+	andd	0x1f0,r0		/* 0005 */
+	jump	0b(pc)[r0:b]		/* 000b */
+					/* 000f */
+
+	.align 4,0xa2; ret 0		/* 0010 */
+	.align 4,0xa2; ret 0		/* 0020 */
+	.align 4,0xa2; ret 0		/* 0030 */
+	.align 4,0xa2; ret 0		/* 0040 */
+	.align 4,0xa2; ret 0		/* 0050 */
+	.align 4,0xa2; ret 0		/* 0060 */
+	.align 4,0xa2; ret 0		/* 0070 */
+	.align 4,0xa2; ret 0		/* 0080 */
+	.align 4,0xa2; ret 0		/* 0090 */
+	.align 4,0xa2; ret 0		/* 00a0 */
+	.align 4,0xa2; ret 0		/* 00b0 */
+	.align 4,0xa2; ret 0		/* 00c0 */
+	.align 4,0xa2; ret 0		/* 00d0 */
+	.align 4,0xa2; ret 0		/* 00e0 */
+	.align 4,0xa2; ret 0		/* 00f0 */
+	.align 4,0xa2; ret 0		/* 0100 */
+	.align 4,0xa2; ret 0		/* 0110 */
+	.align 4,0xa2; ret 0		/* 0120 */
+	.align 4,0xa2; ret 0		/* 0130 */
+	.align 4,0xa2; ret 0		/* 0140 */
+	.align 4,0xa2; ret 0		/* 0150 */
+	.align 4,0xa2; ret 0		/* 0160 */
+	.align 4,0xa2; ret 0		/* 0170 */
+	.align 4,0xa2; ret 0		/* 0180 */
+	.align 4,0xa2; ret 0		/* 0190 */
+	.align 4,0xa2; ret 0		/* 01a0 */
+	.align 4,0xa2; ret 0		/* 01b0 */
+	.align 4,0xa2; ret 0		/* 01c0 */
+	.align 4,0xa2; ret 0		/* 01d0 */
+	.align 4,0xa2; ret 0		/* 01e0 */
+	.align 4,0xa2; ret 0		/* 01f0 */
+	.align 4,0xa2; ret 0		/* 0000 */
+	.align 4,0xa2; ret 0		/* 0010 */
+	.align 4,0xa2; ret 0		/* 0020 */
+	.align 4,0xa2; ret 0		/* 0030 */
+	.align 4,0xa2; ret 0		/* 0040 */
+	.align 4,0xa2; ret 0		/* 0050 */
+	.align 4,0xa2; ret 0		/* 0060 */
+	.align 4,0xa2; ret 0		/* 0070 */
+	.align 4,0xa2; ret 0		/* 0080 */
+	.align 4,0xa2; ret 0		/* 0090 */
+	.align 4,0xa2; ret 0		/* 00a0 */
+	.align 4,0xa2; ret 0		/* 00b0 */
+	.align 4,0xa2; ret 0		/* 00c0 */
+	.align 4,0xa2; ret 0		/* 00d0 */
+	.align 4,0xa2; ret 0		/* 00e0 */
+	.align 4,0xa2; ret 0		/* 00f0 */
+	.align 4,0xa2; ret 0		/* 0100 */
+	.align 4,0xa2; ret 0		/* 0110 */
+	.align 4,0xa2; ret 0		/* 0120 */
+	.align 4,0xa2; ret 0		/* 0130 */
+	.align 4,0xa2; ret 0		/* 0140 */
+	.align 4,0xa2; ret 0		/* 0150 */
+	.align 4,0xa2; ret 0		/* 0160 */
+	.align 4,0xa2; ret 0		/* 0170 */
+	.align 4,0xa2; ret 0		/* 0180 */
+	.align 4,0xa2; ret 0		/* 0190 */
+	.align 4,0xa2; ret 0		/* 01a0 */
+	.align 4,0xa2; ret 0		/* 01b0 */
+	.align 4,0xa2; ret 0		/* 01c0 */
+	.align 4,0xa2; ret 0		/* 01d0 */
+	.align 4,0xa2; ret 0		/* 01e0 */
+	.align 4,0xa2; ret 0		/* 01f0 */
+
