@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.18 2002/08/15 18:29:02 briggs Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.19 2002/08/15 18:35:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -39,13 +39,6 @@
  * Device driver for the Intel i8254x family of Gigabit Ethernet chips.
  *
  * TODO (in order of importance):
- *
- *	- Fix TCP/UDP checksums.
- *		Status: Several successful transmissions with offloaded
- *		checksums occur.  After several successful transmissions,
- *		the chip goes catatonic.  The watchdog timer fires, which
- *		resets the chip, and gets things moving again, until the
- *		cycle repeats.
  *
  *	- Make GMII work on the i82543.
  *
