@@ -1,14 +1,14 @@
-#	$NetBSD: Makefile.inc,v 1.2 1995/06/09 22:03:46 gwr Exp $
+#	$NetBSD: Makefile.inc,v 1.3 1995/08/08 21:02:04 gwr Exp $
 
 .if defined(SA_PROG)
 
 # Must have S=/usr/src/sys (or equivalent)
 # But note: this is w.r.t. a subdirectory
-S=	../../../..
+S=	${.CURDIR}/../../../..
 
 RELOC?= 240000
 DEFS?= -DSTANDALONE
-INCL?= -I. -I../libsa -I${S}/lib/libsa -I${S}
+INCL?= -I${.CURDIR} -I${.CURDIR}/../libsa -I${S}/lib/libsa -I${S}
 COPTS?= -msoft-float ${DEFS} ${INCL}
 
 LIBSA?= ../libsa
