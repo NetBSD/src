@@ -1,4 +1,4 @@
-/*	$NetBSD: rshd.c,v 1.34 2005/02/20 05:45:55 christos Exp $	*/
+/*	$NetBSD: rshd.c,v 1.35 2005/02/20 06:11:51 christos Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -69,7 +69,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)rshd.c	8.2 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: rshd.c,v 1.34 2005/02/20 05:45:55 christos Exp $");
+__RCSID("$NetBSD: rshd.c,v 1.35 2005/02/20 06:11:51 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -516,6 +516,7 @@ doit(struct sockaddr *fromp)
 		errormsg = __rcmd_errstr ? __rcmd_errstr : "unknown error";
 		if (errorstr == NULL)
 			errorstr = "Permission denied.";
+		goto badlogin;
 	}
 #endif
 
