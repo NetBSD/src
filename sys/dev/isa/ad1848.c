@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848.c,v 1.52 1998/07/09 02:26:55 mycroft Exp $	*/
+/*	$NetBSD: ad1848.c,v 1.53 1998/07/28 12:13:35 augustss Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -242,35 +242,52 @@ wait_for_calibration(sc)
      *
      * 1) Wait until the chip becomes ready (reads don't return 0x80).
      * 2) Wait until the ACI bit of I11 gets on and then off.
+     *    Because newer chips are fast we may never see the ACI
+     *    bit go on.  Just delay a little instead.
      */
-    timeout = 100000;
-    while (timeout > 0 && ADREAD(sc, AD1848_IADDR) == SP_IN_INIT)
+    timeout = 10000;
+    while (timeout > 0 && ADREAD(sc, AD1848_IADDR) == SP_IN_INIT) {
+        delay(10);
 	timeout--;
-
-    if (ADREAD(sc, AD1848_IADDR) == SP_IN_INIT)
+    }
+    if (timeout <= 0)
 	DPRINTF(("ad1848: Auto calibration timed out(1).\n"));
 
+    /* Set register addr */
     ADWRITE(sc, AD1848_IADDR, SP_TEST_AND_INIT);
+    /* Wait for address to appear when read back. */
     timeout = 100000;
-    while (timeout > 0 && ADREAD(sc, AD1848_IADDR) != SP_TEST_AND_INIT)
+    while (timeout > 0 && 
+           (ADREAD(sc, AD1848_IADDR) & SP_IADDR_MASK) != SP_TEST_AND_INIT) {
+        delay(10);
 	timeout--;
-
-    if (ADREAD(sc, AD1848_IADDR) == SP_TEST_AND_INIT)
+    }
+    if (timeout <= 0)
 	DPRINTF(("ad1848: Auto calibration timed out(1.5).\n"));
 
     if (!(ad_read(sc, SP_TEST_AND_INIT) & AUTO_CAL_IN_PROG)) {
-	timeout = 100000;
-	while (timeout > 0 && !(ad_read(sc, SP_TEST_AND_INIT) & AUTO_CAL_IN_PROG))
-	    timeout--;
+        if (sc->mode > 1) {
+            /* A new chip, just delay a little. */
+            delay(100);         /* XXX what should it be? */
+        } else {
+            timeout = 10000;
+            while (timeout > 0 && 
+                   !(ad_read(sc, SP_TEST_AND_INIT) & AUTO_CAL_IN_PROG)) {
+                delay(10);
+                timeout--;
+            }
 
-	if (!(ad_read(sc, SP_TEST_AND_INIT) & AUTO_CAL_IN_PROG))
-	    DPRINTF(("ad1848: Auto calibration timed out(2).\n"));
+            if (timeout <= 0)
+                DPRINTF(("ad1848: Auto calibration timed out(2).\n"));
+        }
     }
 
-    timeout = 100000;
-    while (timeout > 0 && ad_read(sc, SP_TEST_AND_INIT) & AUTO_CAL_IN_PROG)
+    timeout = 10000;
+    while (timeout > 0 && ad_read(sc, SP_TEST_AND_INIT) & AUTO_CAL_IN_PROG) {
+        delay(10);
 	timeout--;
-    if (ad_read(sc, SP_TEST_AND_INIT) & AUTO_CAL_IN_PROG)
+    }
+    if (timeout <= 0)
         DPRINTF(("ad1848: Auto calibration timed out(3).\n"));
 }
 
