@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.6 1994/11/23 22:28:12 deraadt Exp $ */
+/*	$NetBSD: if_ie.c,v 1.7 1994/11/25 23:11:23 deraadt Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -238,6 +238,8 @@ struct ie_softc {
 	void    (*run_586)();	/* card dependent "go on-line" function */
 
 	enum ie_hardware hard_type;	/* card type */
+	void (*memcopy) __P((const void *, void *, u_int));
+	void (*memzero) __P((void *, u_int));
 
 	int     want_mcsetup;	/* flag for multicast setup */
 	int     promisc;	/* are we in promisc mode? */
@@ -332,6 +334,11 @@ struct cfdriver iecd = {
 			    t[0] = f[3]; t[1] = f[2]; t[2] = f[1]; /*t[3] = f[0];*/ \
 			}
 #define MEM sc->sc_maddr
+
+/*
+ * zero/copy functions: OBIO can use the normal functions, but VME
+ *    must do only byte or half-word (16 bit) accesses...
+ */
 
 /*
  * Here are a few useful functions.  We could have done these as macros,
@@ -495,6 +502,9 @@ ieattach(parent, self, aux)
 	switch (ca->ca_bustype) {
 	case BUS_OBIO:
 		printf("unsupported (for now)\n");
+		sc->hard_type = IE_OBIO;
+		sc->memcopy = bcopy;
+		sc->memzero = bzero;
 		return;
 	case BUS_VME16:
 	    {
@@ -506,6 +516,8 @@ ieattach(parent, self, aux)
 		sc->chan_attn = ie_vmeattend;
 		sc->run_586 = ie_vmerun;
 		sc->hard_type = IE_VME;
+		sc->memcopy = wcopy;
+		sc->memzero = wzero;
 		sc->sc_msize = 65536;	/* XXX */
 		sc->sc_reg = mapiodev(ca->ca_ra.ra_paddr, sizeof(struct ievme),
 		    ca->ca_bustype);
@@ -528,7 +540,7 @@ ieattach(parent, self, aux)
 		for (lcv = 0; lcv < IEVME_MAPSZ - 1; lcv++)
 			iev->pgmap[lcv] = IEVME_SBORDR | IEVME_OBMEM | lcv;
 		iev->pgmap[IEVME_MAPSZ - 1] = IEVME_SBORDR | IEVME_OBMEM | 0;
-		wzero(sc->sc_maddr, sc->sc_msize);
+		(sc->memzero)(sc->sc_maddr, sc->sc_msize);
 
 		/*
 		 * set up pointers to data structures and buffer area.
@@ -1012,7 +1024,7 @@ ieget(sc, mp, ehp, to_bpf)
 	/*
 	 * Snarf the Ethernet header.
 	 */
-	wcopy((caddr_t)sc->cbuffs[i], (caddr_t)ehp, sizeof *ehp);
+	(sc->memcopy)((caddr_t)sc->cbuffs[i], (caddr_t)ehp, sizeof *ehp);
 
 	/*
 	 * As quickly as possible, check if this packet is for us.
@@ -1098,7 +1110,7 @@ ieget(sc, mp, ehp, to_bpf)
 		 */
 		if (thislen > m->m_len - thismboff) {
 			int     newlen = m->m_len - thismboff;
-			wcopy((caddr_t)(sc->cbuffs[head] + offset),
+			(sc->memcopy)((caddr_t)(sc->cbuffs[head] + offset),
 			    mtod(m, caddr_t) + thismboff, (u_int)newlen);
 			m = m->m_next;
 			thismboff = 0;	/* new mbuf, so no offset */
@@ -1114,7 +1126,7 @@ ieget(sc, mp, ehp, to_bpf)
 		 * and so on.
 		 */
 		if (thislen < m->m_len - thismboff) {
-			wcopy((caddr_t)(sc->cbuffs[head] + offset),
+			(sc->memcopy)((caddr_t)(sc->cbuffs[head] + offset),
 			    mtod(m, caddr_t) + thismboff, (u_int)thislen);
 			thismboff += thislen;	/* we are this far into the
 						 * mbuf */
@@ -1126,7 +1138,7 @@ ieget(sc, mp, ehp, to_bpf)
 		 * contents into the current mbuf.  Do the combination of the above
 		 * actions.
 		 */
-		wcopy((caddr_t)(sc->cbuffs[head] + offset),
+		(sc->memcopy)((caddr_t)(sc->cbuffs[head] + offset),
 		    mtod(m, caddr_t) + thismboff, (u_int)thislen);
 		m = m->m_next;
 		thismboff = 0;	/* new mbuf, start at the beginning */
@@ -1174,7 +1186,7 @@ ie_readframe(sc, num)
 	int     bpf_gets_it = 0;
 #endif
 
-	wcopy((caddr_t)(sc->rframes[num]), &rfd,
+	(sc->memcopy)((caddr_t)(sc->rframes[num]), &rfd,
 	    sizeof(struct ie_recv_frame_desc));
 
 	/* Immediately advance the RFD list, since we have copied ours now. */
@@ -1307,7 +1319,7 @@ iestart(ifp)
 		len = 0;
 
 		for (m0 = m; m && len < IE_TBUF_SIZE; m = m->m_next) {
-			wcopy(mtod(m, caddr_t), buffer, m->m_len);
+			(sc->memcopy)(mtod(m, caddr_t), buffer, m->m_len);
 			buffer += m->m_len;
 			len += m->m_len;
 		}
@@ -1373,13 +1385,13 @@ ie_setupram(sc)
 	s = splimp();
 
 	scp = sc->scp;
-	wzero((char *) scp, sizeof *scp);
+	(sc->memzero)((char *) scp, sizeof *scp);
 
 	iscp = sc->iscp;
-	wzero((char *) iscp, sizeof *iscp);
+	(sc->memzero)((char *) iscp, sizeof *iscp);
 
 	scb = sc->scb;
-	wzero((char *) scb, sizeof *scb);
+	(sc->memzero)((char *) scb, sizeof *scb);
 
 	scp->ie_bus_use = 0;	/* 16-bit */
 	ST_24(scp->ie_iscp_ptr, MK_24(sc->sc_iobase, iscp));
@@ -1592,7 +1604,7 @@ setup_bufs(sc)
 	 * step 0: zero memory and figure out how many recv buffers and
 	 * frames we can have.   XXX CURRENTLY HARDWIRED AT MAX
 	 */
-	wzero(ptr, sc->buf_area_sz);
+	(sc->memzero)(ptr, sc->buf_area_sz);
 	ptr = Align(ptr);	/* set alignment and stick with it */
 
 	n = (int)Align(sizeof(struct ie_xmit_cmd)) +
@@ -1712,7 +1724,7 @@ mc_setup(sc, ptr)
 	cmd->com.ie_cmd_cmd = IE_CMD_MCAST | IE_CMD_LAST;
 	cmd->com.ie_cmd_link = SWAP(0xffff);
 
-	wcopy((caddr_t)sc->mcast_addrs, (caddr_t)cmd->ie_mcast_addrs,
+	(sc->memcopy)((caddr_t)sc->mcast_addrs, (caddr_t)cmd->ie_mcast_addrs,
 	    sc->mcast_count * sizeof *sc->mcast_addrs);
 
 	cmd->ie_mcast_bytes =
@@ -1775,8 +1787,8 @@ ieinit(sc)
 		cmd->com.ie_cmd_cmd = IE_CMD_IASETUP | IE_CMD_LAST;
 		cmd->com.ie_cmd_link = SWAP(0xffff);
 
-		wcopy(sc->sc_arpcom.ac_enaddr, (caddr_t)&cmd->ie_address,
-		    sizeof cmd->ie_address);
+		(sc->memcopy)(sc->sc_arpcom.ac_enaddr,
+		    (caddr_t)&cmd->ie_address, sizeof cmd->ie_address);
 
 		scb->ie_command_list = MK_16(MEM, cmd);
 		if (command_and_wait(sc, IE_CU_START, cmd, IE_STAT_COMPL) ||
@@ -1975,30 +1987,5 @@ print_rbd(rbd)
 	    "length %04x, mbz %04x\n", (u_long)rbd, rbd->ie_rbd_actual,
 	    rbd->ie_rbd_next, rbd->ie_rbd_buffer, rbd->ie_rbd_length,
 	    rbd->mbz);
-}
-#endif
-
-#if 0
-/*
- * ugly copy routines for debugging
- */
-wzero(b, l)
-	char   *b;
-	int     l;
-{
-	while (l > 0) {
-		*b++ = 0;
-		l--;
-	}
-}
-
-wcopy(b1, b2, l)
-	char   *b1, *b2;
-	int     l;
-{
-	while (l > 0) {
-		*b2++ = *b1++;
-		l--;
-	}
 }
 #endif
