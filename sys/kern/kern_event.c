@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.1.1.1.2.16 2002/10/01 20:29:33 jdolecek Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.1.1.1.2.17 2002/10/02 18:46:44 jdolecek Exp $	*/
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
  * All rights reserved.
@@ -74,7 +74,8 @@ static struct fileops kqueueops = {
 };
 
 static void	knote_attach(struct knote *kn, struct filedesc *fdp);
-static void	knote_drop(struct knote *kn, struct proc *p);
+static void	knote_drop(struct knote *kn, struct proc *p,
+		    struct filedesc *fdp);
 static void	knote_enqueue(struct knote *kn);
 static void	knote_dequeue(struct knote *kn);
 
@@ -703,7 +704,7 @@ kqueue_register(struct kqueue *kq, struct kevent *kev, struct proc *p)
 
 			knote_attach(kn, fdp);
 			if ((error = kfilter->filtops->f_attach(kn)) != 0) {
-				knote_drop(kn, p);
+				knote_drop(kn, p, fdp);
 				goto done;
 			}
 		} else {
@@ -726,7 +727,7 @@ kqueue_register(struct kqueue *kq, struct kevent *kev, struct proc *p)
 
 	} else if (kev->flags & EV_DELETE) {	/* delete knote */
 		kn->kn_fop->f_detach(kn);
-		knote_drop(kn, p);
+		knote_drop(kn, p, fdp);
 		goto done;
 	}
 
@@ -866,7 +867,7 @@ kqueue_scan(struct file *fp, size_t maxevents, struct kevent *ulistp,
 			kq->kq_count--;
 			splx(s);
 			kn->kn_fop->f_detach(kn);
-			knote_drop(kn, p);
+			knote_drop(kn, p, p->p_fd);
 			s = splhigh();
 		} else if (kn->kn_flags & EV_CLEAR) {
 			/* clear state after retrieval */
@@ -1150,7 +1151,7 @@ knote_remove(struct proc *p, struct klist *list)
 
 	while ((kn = SLIST_FIRST(list)) != NULL) {
 		kn->kn_fop->f_detach(kn);
-		knote_drop(kn, p);
+		knote_drop(kn, p, p->p_fd);
 	}
 }
 
@@ -1231,12 +1232,10 @@ knote_attach(struct knote *kn, struct filedesc *fdp)
  * while calling FILE_UNUSE and free.
  */
 static void
-knote_drop(struct knote *kn, struct proc *p)
+knote_drop(struct knote *kn, struct proc *p, struct filedesc *fdp)
 {
-	struct filedesc	*fdp;
 	struct klist	*list;
 
-	fdp = p->p_fd;
 	if (kn->kn_fop->f_isfd)
 		list = &fdp->fd_knlist[kn->kn_id];
 	else
