@@ -1,4 +1,4 @@
-/*	$NetBSD: union.h,v 1.4 1994/06/29 06:35:19 cgd Exp $	*/
+/*	$NetBSD: union.h,v 1.5 1994/12/14 16:31:17 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -36,7 +36,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)union.h	8.5 (Berkeley) 5/17/94
+ *	@(#)union.h	8.9 (Berkeley) 12/10/94
  */
 
 struct union_args {
@@ -81,6 +81,7 @@ struct union_node {
 	int			un_hash;	/* saved un_path hash value */
 	int			un_openl;	/* # of opens on lowervp */
 	unsigned int		un_flags;
+	struct vnode		**un_dircache;	/* cached union stack */
 	off_t			un_uppersz;	/* size of upper object */
 	off_t			un_lowersz;	/* size of lower object */
 #ifdef DIAGNOSTIC
@@ -97,13 +98,17 @@ struct union_node {
 extern int union_allocvp __P((struct vnode **, struct mount *,
 				struct vnode *, struct vnode *,
 				struct componentname *, struct vnode *,
-				struct vnode *));
+				struct vnode *, int));
 extern int union_copyfile __P((struct vnode *, struct vnode *,
 					struct ucred *, struct proc *));
 extern int union_copyup __P((struct union_node *, int, struct ucred *,
 				struct proc *));
+extern int union_dowhiteout __P((struct union_node *, struct ucred *,
+					struct proc *));
 extern int union_mkshadow __P((struct union_mount *, struct vnode *,
 				struct componentname *, struct vnode **));
+extern int union_mkwhiteout __P((struct union_mount *, struct vnode *,
+				struct componentname *, char *));
 extern int union_vn_create __P((struct vnode **, struct union_node *,
 				struct proc *));
 extern int union_cn_close __P((struct vnode *, int, struct ucred *,
