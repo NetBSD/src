@@ -1,4 +1,4 @@
-/*	$NetBSD: thread-stub.c,v 1.5 2003/01/19 21:58:23 thorpej Exp $	*/
+/*	$NetBSD: thread-stub.c,v 1.6 2003/01/20 01:30:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -354,7 +354,7 @@ thr_t
 __libc_thr_self_stub(void)
 {
 
-	return (NULL);
+	return ((thr_t) -1);
 }
 
 void
