@@ -3,8 +3,8 @@
    System dependencies for Ultrix 4.2 (tested on 4.2a+multicast)... */
 
 /*
- * Copyright (c) 1996, 1999
- * The Internet Software Consortium.    All rights reserved.
+ * Copyright (c) 1996-1999 Internet Software Consortium.
+ * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -15,25 +15,30 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of The Internet Software Consortium nor the names of its
- *    contributors may be used to endorse or promote products derived
+ * 3. Neither the name of The Internet Software Consortium nor the names
+ *    of its contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE INTERNET SOFTWARE CONSORTIUM AND
- * CONTRIBUTORS ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING,
- * BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
- * FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL
- * THE INTERNET SOFTWARE CONSORTIUM OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
- * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
- * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
+ * CONTRIBUTORS ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
+ * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED.  IN NO EVENT SHALL THE INTERNET SOFTWARE CONSORTIUM OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
+ * USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+ * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
  *
- * This software was written for the Internet Software Consortium by Ted Lemon
- * under a contract with Vixie Laboratories.
+ * This software has been written for the Internet Software Consortium
+ * by Ted Lemon in cooperation with Vixie Enterprises and Nominum, Inc.
+ * To learn more about the Internet Software Consortium, see
+ * ``http://www.isc.org/''.  To learn more about Vixie Enterprises,
+ * see ``http://www.vix.com''.   To learn more about Nominum, Inc., see
+ * ``http://www.nominum.com''.
  */
 
 /* Ultrix uses the old 4.2BSD-style syslog(). */
@@ -66,6 +71,7 @@ extern int h_errno;
 #define int8_t		char
 #define int16_t		short 
 #define int32_t		long 
+#define	ssize_t		long
 
 #define u_int8_t	unsigned char		/* Not quite POSIX... */
 #define u_int16_t	unsigned short 
@@ -89,6 +95,7 @@ extern int h_errno;
 #define VA_start(list, last) va_start (list)
 #define vsnprintf(buf, size, fmt, list) vsprintf (buf, fmt, list)
 #define NO_SNPRINTF
+#define NEED_INET_ATON
 
 #define INADDR_LOOPBACK	((u_int32_t)0x7f000001)
 #define EOL	'\n'
@@ -113,3 +120,35 @@ extern int h_errno;
 #if defined (USE_DEFAULT_NETWORK)
 #  define USE_UPF
 #endif
+
+#ifdef NEED_PRAND_CONF
+const char *cmds[] = {
+	"/bin/ps -aux 2>&1",
+	"/usr/etc/arp -an 2>&1",
+	"/usr/ucb/netstat -an 2>&1",
+	"/usr/bin/df  2>&1",
+	"/usr/ucb/uptime  2>&1",
+	"/usr/ucb/netstat -an 2>&1",
+	"/usr/bin/iostat  2>&1",
+	NULL
+};
+
+const char *dirs[] = {
+	"/tmp",
+	"/var/tmp",
+	".",
+	"/",
+	"/var/spool",
+	"/var/adm",
+	"/dev",
+	"/var/spool/mail",
+	NULL
+};
+
+const char *files[] = {
+	"/var/spool/mqueue/syslog",
+	"/var/adm/wtmp",
+	"/var/adm/lastlog",
+	NULL
+};
+#endif /* NEED_PRAND_CONF */

@@ -1,6 +1,8 @@
 /* irix.h */
+
 /*
- * Copyright (c) 1996 The Internet Software Consortium.  All rights reserved.
+ * Copyright (c) 1996, 1999 The Internet Software Consortium.
+ * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -27,7 +29,6 @@
  * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
  * OF THE POSSIBILITY OF SUCH DAMAGE.
- *
  */
 
 #define int8_t		char
@@ -78,8 +79,7 @@ extern int h_errno;
 #define NO_SNPRINTF
 
 #if defined (USE_DEFAULT_NETWORK)
-# define USE_RAW_SEND
-# define USE_SOCKET_RECEIVE
+# define USE_RAW_SOCKETS
 #endif
 
 #define EOL '\n'
@@ -91,3 +91,34 @@ extern int h_errno;
 #define GET_TIME(x)	time ((x))
 
 #define random	rand
+#ifdef NEED_PRAND_CONF
+const char *cmds[] = {
+	"/bin/ps -ef 2>&1",
+	"/usr/etc/arp -a 2>&1",
+	"/usr/etc/netstat -an 2>&1",
+	"/bin/df  2>&1",
+	"/usr/bin/dig com. soa +ti=1 2>&1",
+	"/usr/bsd/uptime  2>&1",
+	"/usr/bin/printenv  2>&1",
+	"/usr/etc/netstat -s 2>&1",
+	"/usr/bin/dig . soa +ti=1 2>&1",
+	"/usr/bsd/w  2>&1",
+	NULL
+};
+
+const char *dirs[] = {
+	"/tmp",
+	"/var/tmp",
+	".",
+	"/",
+	"/var/spool",
+	"/var/adm",
+	"/dev",
+	"/var/mail",
+	NULL
+};
+
+const char *files[] = {
+	NULL
+};
+#endif /* NEED_PRAND_CONF */
