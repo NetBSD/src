@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.33 1998/05/11 23:13:40 thorpej Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.34 1998/06/02 15:48:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -156,7 +156,8 @@ struct	ipstat {
 
 #define	IPFLOW_HASHBITS			6 /* should not be a multiple of 8 */
 struct ipflow {
-	LIST_ENTRY(ipflow) ipf_next;	/* next ipflow in bucket */
+	LIST_ENTRY(ipflow) ipf_list;	/* next in active list */
+	LIST_ENTRY(ipflow) ipf_hash;	/* next ipflow in bucket */
 	struct in_addr ipf_dst;		/* destination address */
 	struct in_addr ipf_src;		/* source address */
 	u_int8_t ipf_tos;		/* type-of-service */
@@ -165,7 +166,7 @@ struct ipflow {
 	u_long ipf_last_uses;		/* number of uses in last period */
 	u_long ipf_dropped;		/* ENOBUFS returned by if_output */
 	u_long ipf_errors;		/* other errors returned by if_output */
-	int ipf_timer;			/* remaining lifetime of this entry */
+	u_int ipf_timer;		/* lifetime timer */
 	time_t ipf_start;		/* creation time */
 };
 
