@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "from: @(#)pwd_mkdb.c	8.5 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: pwd_mkdb.c,v 1.11 1998/04/13 23:12:45 fair Exp $");
+__RCSID("$NetBSD: pwd_mkdb.c,v 1.12 1998/04/14 04:51:19 fair Exp $");
 #endif
 #endif /* not lint */
 
@@ -330,21 +330,21 @@ main(argc, argv)
 		memmove(tbuf + 1, pwd.pw_name, len);
 		key.size = len + 1;
 		if ((edp->put)(edp, &key, &data, R_NOOVERWRITE) == -1)
-			error("put");
+			wr_error(pwd_Sdb_tmp);
 
 		/* Store secure by number. */
 		tbuf[0] = _PW_KEYBYNUM;
 		memmove(tbuf + 1, &cnt, sizeof(cnt));
 		key.size = sizeof(cnt) + 1;
 		if ((edp->put)(edp, &key, &data, R_NOOVERWRITE) == -1)
-			error("put");
+			wr_error(pwd_Sdb_tmp);
 
 		/* Store secure by uid. */
 		tbuf[0] = _PW_KEYBYUID;
 		memmove(tbuf + 1, &pwd.pw_uid, sizeof(pwd.pw_uid));
 		key.size = sizeof(pwd.pw_uid) + 1;
 		if ((edp->put)(edp, &key, &data, R_NOOVERWRITE) == -1)
-			error("put");
+			wr_error(pwd_Sdb_tmp);
 	}
 
 	/* Store YP token, if needed. */
@@ -355,7 +355,7 @@ main(argc, argv)
 		ypdata.size = 0;
 
 		if((edp->put)(edp, &ypkey, &ypdata, R_NOOVERWRITE) == -1)
-			error("put");
+			wr_error(pwd_Sdb_tmp);
 	}
 
 	if ((edp->close)(edp) < 0) {
