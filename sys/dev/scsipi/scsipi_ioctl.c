@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_ioctl.c,v 1.35 1998/11/17 14:38:43 bouyer Exp $	*/
+/*	$NetBSD: scsipi_ioctl.c,v 1.36 1999/01/11 22:07:08 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -182,6 +182,10 @@ scsipi_user_done(xs)
 		printf("host adapter code inconsistency\n");
 		screq->retsts = SCCMD_UNKNOWN;
 		break;
+	case XS_SELTIMEOUT:
+		SC_DEBUG(sc_link, SDEV_DB3, ("seltimeout\n"));
+		screq->retsts = SCCMD_TIMEOUT;
+		break;
 	case XS_TIMEOUT:
 		SC_DEBUG(sc_link, SDEV_DB3, ("timeout\n"));
 		screq->retsts = SCCMD_TIMEOUT;
@@ -192,7 +196,8 @@ scsipi_user_done(xs)
 		break;
 	default:
 		sc_link->sc_print_addr(sc_link);
-		printf("unknown error category from host adapter code\n");
+		printf("unknown error category %d from host adapter code\n",
+		    xs->error);
 		screq->retsts = SCCMD_UNKNOWN;
 		break;
 	}
