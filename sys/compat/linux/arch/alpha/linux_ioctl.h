@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ioctl.h,v 1.1 1998/09/30 21:36:25 erh Exp $	*/
+/*	$NetBSD: linux_ioctl.h,v 1.1.22.1 2001/03/30 21:32:42 he Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -39,54 +39,15 @@
 #ifndef _ALPHA_LINUX_IOCTL_H
 #define _ALPHA_LINUX_IOCTL_H
 
-/* Note: Linux looks to have tried to switch to a structured way of defining
- *	ioctls.  Doesn't look like they finished.  Some ioctls use these
- *	defines.  Other are still just a number.  (But they could
- *	probably be encoded as _LINUX_IO('T', #) )
- */
 #define	_LINUX_IOC_NRBITS	8
 #define	_LINUX_IOC_TYPEBITS	8
 #define	_LINUX_IOC_SIZEBITS	13
 #define	_LINUX_IOC_DIRBITS	3
 
-#define	_LINUX_IOC_NRMASK	((1 << _LINUX_IOC_NRBITS) - 1)
-#define	_LINUX_IOC_TYPEMASK	((1 << _LINUX_IOC_TYPEBITS) - 1)
-#define	_LINUX_IOC_SIZEMAEK	((1 << _LINUX_IOC_SIZEBITS) - 1)
-#define _LINUX_IOC_DIRMASK	((1 << _LINUX_IOC_DIRBITS) - 1)
-
 #define	_LINUX_IOC_NRSHIFT	0
-#define	_LINUX_IOC_TYPESHIFT	(_LINUX_IOC_NRSHIFT + _LINUX_IOC_NRBITS)
-#define	_LINUX_IOC_SIZESHIFT	(_LINUX_IOC_TYPESHIFT + _LINUX_IOC_TYPEBITS)
-#define	_LINUX_IOC_DIRSHIFT	(_LINUX_IOC_SIZESHIFT + _LINUX_IOC_SIZEBITS)
 
 #define	_LINUX_IOC_NONE		1U
 #define	_LINUX_IOC_READ		2U
 #define	_LINUX_IOC_WRITE	4U
 
-#define	_LINUX_IOC(dir,type,nr,size)		\
-	((unsigned int)				\
-	 (((nr)   << _LINUX_IOC_NRSHIFT) |	\
-	  ((type) << _LINUX_IOC_TYPESHIFT) |	\
-	  ((size) << _LINUX_IOC_SIZESHIFT) |	\
-	  ((dir)  << _LINUX_IOC_DIRSHIFT)))
-
-#define _LINUX_IO(type,nr)		\
-	_LINUX_IOC(_LINUX_IOC_NONE,(type),(nr),0)
-#define	_LINUX_IOR(type,nr,size)	\
-	_LINUX_IOC(_LINUX_IOC_READ,(type),(nr),sizeof(size))
-#define	_LINUX_IOW(type,nr,size)	\
-	_LINUX_IOC(_LINUX_IOC_WRITE,(type),(nr),sizeof(size))
-#define	_LINUX_IOWR(type,nr,size)	\
-	_LINUX_IOC(_LINUX_IOC_READ|_LINUX_IOC_WRITE,(type),(nr),sizeof(size))
-
-#define _LINUX_IOC_DIR(nr)	\
-	(((nr) >> _LINUX_IOC_DIRSHIFT) & _LINUX_IOC_DIRMASK)
-#define _LINUX_IOC_TYPE(nr)	\
-	(((nr) >> _LINUX_IOC_TYPESHIFT) & _LINUX_IOC_TYPEMASK)
-#define _LINUX_IOC_NR(nr)	\
-	(((nr) >> _LINUX_IOC_NRSHIFT) & _LINUX_IOC_NRMASK)
-#define _LINUX_IOC_SIZE(nr)	\
-	(((nr) >> _LINUX_IOC_SIZESHIFT) & _LINUX_IOC_SIZEMASK)
-
-#define LINUX_IOCGROUP(x)	_LINUX_IOC_TYPE(x)
 #endif /* !_ALPHA_LINUX_IOCTL_H */
