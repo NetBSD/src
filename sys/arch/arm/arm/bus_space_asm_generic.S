@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space_asm_generic.S,v 1.1 2002/04/12 18:56:57 thorpej Exp $	*/
+/*	$NetBSD: bus_space_asm_generic.S,v 1.2 2002/08/29 17:27:48 briggs Exp $	*/
 
 /*
  * Copyright (c) 1997 Causality Limited.
@@ -273,6 +273,19 @@ ENTRY(generic_armv4_bs_sr_2)
 
 	mov	pc, lr
 #endif
+
+ENTRY(generic_bs_sr_4)
+	add	r0, r1, r2
+	mov	r1, r3
+	ldr	r2, [sp, #0]
+	teq	r2, #0
+	moveq	pc, lr
+
+1:	str	r1, [r0], #4
+	subs	r2, r2, #1
+	bne	1b
+
+	mov	pc, lr
 
 /*
  * copy region
