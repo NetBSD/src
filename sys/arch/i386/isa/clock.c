@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)clock.c	7.2 (Berkeley) 5/12/91
- *	$Id: clock.c,v 1.13.2.4 1993/09/30 20:19:10 mycroft Exp $
+ *	$Id: clock.c,v 1.13.2.5 1993/10/06 12:08:11 mycroft Exp $
  */
 /* 
  * Mach Operating System
@@ -144,7 +144,7 @@ clockattach(parent, self, aux)
 	u_short iobase = ia->ia_iobase;
 	u_char d;
 
-	printf(": Intel XXXX\n");
+	printf(": mc16458\n");
 	sc->sc_iobase = iobase;
 
 	/* check and clear diagnostic flags */
