@@ -1,4 +1,4 @@
-/*	$NetBSD: readmsg.c,v 1.13 2002/09/19 00:01:33 mycroft Exp $	*/
+/*	$NetBSD: readmsg.c,v 1.14 2003/05/16 18:28:18 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)readmsg.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: readmsg.c,v 1.13 2002/09/19 00:01:33 mycroft Exp $");
+__RCSID("$NetBSD: readmsg.c,v 1.14 2003/05/16 18:28:18 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -408,7 +408,7 @@ masterack(void)
 
 	resp = msgin;
 	resp.tsp_vers = TSPVERSION;
-	(void)strcpy(resp.tsp_name, hostname);
+	(void)strlcpy(resp.tsp_name, hostname, sizeof(resp.tsp_name));
 
 	switch(msgin.tsp_type) {
 

@@ -36,7 +36,7 @@
 #if 0
 static char sccsid[] = "@(#)candidate.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: candidate.c,v 1.8 2002/07/06 22:08:31 wiz Exp $");
+__RCSID("$NetBSD: candidate.c,v 1.9 2003/05/16 18:28:18 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -80,7 +80,7 @@ again:
 		fprintf(fd, "This machine is a candidate time master\n");
 	msg.tsp_type = TSP_ELECTION;
 	msg.tsp_vers = TSPVERSION;
-	(void)strcpy(msg.tsp_name, hostname);
+	(void)strlcpy(msg.tsp_name, hostname, sizeof(msg.tsp_name));
 	bytenetorder(&msg);
 	if (sendto(sock, (char *)&msg, sizeof(struct tsp), 0,
 		   (struct sockaddr*)&net->dest_addr,
@@ -139,7 +139,8 @@ again:
 			/* no master for another round */
 			htp = addmach(resp->tsp_name,&from,fromnet);
 			msg.tsp_type = TSP_REFUSE;
-			(void)strcpy(msg.tsp_name, hostname);
+			(void)strlcpy(msg.tsp_name, hostname,
+				      sizeof(msg.tsp_name));
 			answer = acksend(&msg, &htp->addr, htp->name,
 					 TSP_ACK, 0, htp->noanswer);
 			if (!answer) {
