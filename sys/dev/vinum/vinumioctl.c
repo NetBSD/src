@@ -41,7 +41,7 @@
  * otherwise) arising in any way out of the use of this software, even if
  * advised of the possibility of such damage.
  *
- * $Id: vinumioctl.c,v 1.2 2004/09/17 19:21:03 jdolecek Exp $
+ * $Id: vinumioctl.c,v 1.3 2004/09/18 07:38:26 jdolecek Exp $
  * $FreeBSD$
  */
 
@@ -92,7 +92,7 @@ vinumioctl(dev_t dev,
 	    switch (cmd) {
 	    case DIOCGDINFO:				    /* get disk label */
 		get_volume_label(sd->name, 1, sd->sectors, (struct disklabel *) data);
-		break;
+		return 0;
 
 		/*
 		 * We don't have this stuff on hardware,
@@ -106,6 +106,7 @@ vinumioctl(dev_t dev,
 	    default:
 		return ENOTTY;				    /* not my kind of ioctl */
 	    }
+	    break;
 
 	case VINUM_PLEX_TYPE:
 	    objno = Plexno(dev);
@@ -115,7 +116,7 @@ vinumioctl(dev_t dev,
 	    switch (cmd) {
 	    case DIOCGDINFO:				    /* get disk label */
 		get_volume_label(plex->name, 1, plex->length, (struct disklabel *) data);
-		break;
+		return 0;
 
 		/*
 		 * We don't have this stuff on hardware,
@@ -129,6 +130,7 @@ vinumioctl(dev_t dev,
 	    default:
 		return ENOTTY;				    /* not my kind of ioctl */
 	    }
+	    break;
 
 	case VINUM_VOLUME_TYPE:
 	    objno = Volno(dev);
@@ -142,7 +144,7 @@ vinumioctl(dev_t dev,
 	    switch (cmd) {
 	    case DIOCGDINFO:				    /* get disk label */
 		get_volume_label(vol->name, vol->plexes, vol->size, (struct disklabel *) data);
-		break;
+		return 0;
 
 		/*
 		 * Care!  DIOCGPART returns *pointers* to
@@ -153,7 +155,8 @@ vinumioctl(dev_t dev,
 		get_volume_label(vol->name, vol->plexes, vol->size, &vol->label);
 		((struct partinfo *) data)->disklab = &vol->label;
 		((struct partinfo *) data)->part = &vol->label.d_partitions[0];
-		break;
+		return 0;
+
 		/*
 		 * We don't have this stuff on hardware,
 		 * so just pretend to do it so that
