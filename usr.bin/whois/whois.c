@@ -1,4 +1,4 @@
-/*	$NetBSD: whois.c,v 1.5 1994/11/14 05:13:25 jtc Exp $	*/
+/*	$NetBSD: whois.c,v 1.6 1997/10/19 14:46:19 mrg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -33,17 +33,18 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1980, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)whois.c	8.1 (Berkeley) 6/6/93";
+#else
+__RCSID("$NetBSD: whois.c,v 1.6 1997/10/19 14:46:19 mrg Exp $");
 #endif
-static char rcsid[] = "$NetBSD: whois.c,v 1.5 1994/11/14 05:13:25 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -57,7 +58,8 @@ static char rcsid[] = "$NetBSD: whois.c,v 1.5 1994/11/14 05:13:25 jtc Exp $";
 
 #define	NICHOST	"whois.internic.net"
 
-static void usage();
+int main __P((int, char **));
+static void usage __P((void));
 
 int
 main(argc, argv)
@@ -66,8 +68,8 @@ main(argc, argv)
 {
 	extern char *optarg;
 	extern int optind;
-	register FILE *sfi, *sfo;
-	register int ch;
+	FILE *sfi, *sfo;
+	int ch;
 	struct sockaddr_in sin;
 	struct hostent *hp;
 	struct servent *sp;

@@ -1,4 +1,4 @@
-.\"	$NetBSD: whois.1,v 1.5 1995/08/31 21:51:32 jtc Exp $
+.\"	$NetBSD: whois.1,v 1.6 1997/10/19 14:46:16 mrg Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -44,7 +44,7 @@
 .Op Fl h Ar hostname
 .Ar name ...
 .Sh DESCRIPTION
-.Nm Whois
+.Nm
 looks up records in the Network Information Center
 .Pq Tn NIC
 database.
@@ -56,10 +56,10 @@ Use the specified host instead of the default NIC (whois.internic.net).
 .El
 .Pp
 The operands specified to
-.Nm whois
+.Nm
 are concatenated together (separated by white-space) and presented to
 the
-.Nm whois
+.Nm
 server.
 .Pp
 The default action, unless directed otherwise with a special
@@ -77,6 +77,6 @@ the special name
 RFC 812: Nicname/Whois
 .Sh HISTORY
 The
-.Nm whois
+.Nm
 command appeared in
 .Bx 4.3 .
