@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.80 2002/02/04 17:24:56 christos Exp $	*/
+/*	$NetBSD: parse.c,v 1.81 2002/02/17 23:53:46 pk Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: parse.c,v 1.80 2002/02/04 17:24:56 christos Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.81 2002/02/17 23:53:46 pk Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.80 2002/02/04 17:24:56 christos Exp $");
+__RCSID("$NetBSD: parse.c,v 1.81 2002/02/17 23:53:46 pk Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2842,6 +2842,7 @@ Parse_MainName()
     }
     else
 	(void) Lst_AtEnd (mainList, (ClientData)mainNode);
+    Var_Append(".TARGETS", mainNode->name, VAR_GLOBAL);
     return (mainList);
 }
 
