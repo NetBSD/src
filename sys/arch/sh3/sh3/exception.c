@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.c,v 1.14 2003/10/31 02:59:29 uwe Exp $	*/
+/*	$NetBSD: exception.c,v 1.15 2003/10/31 03:28:13 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.14 2003/10/31 02:59:29 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.15 2003/10/31 03:28:13 simonb Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -332,7 +332,7 @@ syscall(struct lwp *l, struct trapframe *tf)
 	if (error)
 		goto bad;
 
-	if ((error = trace_enter(l, code, code, NULL, args, rval)) != 0)
+	if ((error = trace_enter(l, code, code, NULL, args)) != 0)
 		goto bad;
 
 	rval[0] = 0;
