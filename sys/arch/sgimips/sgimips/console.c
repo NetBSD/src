@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.19 2004/01/18 00:47:21 sekiya Exp $	*/
+/*	$NetBSD: console.c,v 1.20 2004/01/18 01:00:48 sekiya Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.19 2004/01/18 00:47:21 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.20 2004/01/18 01:00:48 sekiya Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_machtypes.h"
@@ -111,7 +111,6 @@ consinit()
 #endif
 			break;
 
-#if defined(IP32)
 		case MACH_SGI_IP32:
 #if (NCOM > 0)
 			if ( (strlen(consdev) == 9) &&
@@ -130,7 +129,6 @@ consinit()
 #endif
 			panic("ip32 supports serial console only.  sorry.");
 			break;
-#endif	/* IP32 */
 		default:
 			printf("Using ARCS for console I/O.\n");
 			break;
@@ -141,12 +139,12 @@ consinit()
 void
 kgdb_port_init()
 {
-# if defined(IP32) && (NCOM > 0)
+# if (NCOM > 0)
 #  define KGDB_DEVMODE ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8)
 	if (mach_type == MACH_SGI_IP32)
 		com_kgdb_attach(3, 0xbf398000, 9600, COM_FREQ, COM_TYPE_NORMAL,
 		    KGDB_DEVMODE);
-# endif	/* IP32 && (NCOM > 0) */
+# endif	/* (NCOM > 0) */
 
 # if (NZSC > 0)
 	if (mach_type == MACH_SGI_IP20 || mach_type == MACH_SGI_IP22)
