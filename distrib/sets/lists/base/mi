@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.330 2002/06/06 23:05:34 thorpej Exp $
+# $NetBSD: mi,v 1.331 2002/06/09 19:31:43 itojun Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -634,7 +634,6 @@
 ./usr/sbin/fixmount		base-nfsclient-bin
 ./usr/sbin/fsinfo		base-sysutil-bin
 ./usr/sbin/getencstat		base-sysutil-bin
-./usr/sbin/greconfig		base-netutil-bin
 ./usr/sbin/group		base-sysutil-bin
 ./usr/sbin/groupadd		base-sysutil-bin
 ./usr/sbin/groupdel		base-sysutil-bin

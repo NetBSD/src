@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.173 2002/05/29 19:40:52 drochner Exp $
+#	$NetBSD: Makefile,v 1.174 2002/06/09 19:31:45 itojun Exp $
 #	from: @(#)Makefile	5.20 (Berkeley) 6/12/93
 
 .include <bsd.own.mk>
@@ -6,7 +6,7 @@
 SUBDIR=	ac accton altq amd apm apmd arp bad144 bind bootp catman \
 	chown chroot chrtbl cnwctl config cron dev_mkdb \
 	dhcp diskpart dumpfs dumplfs edquota eeprom \
-	envstat eshconfig etcupdate greconfig grfconfig \
+	envstat eshconfig etcupdate grfconfig \
 	grfinfo gspa hilinfo ifwatchd inetd installboot \
 	iopctl iostat ipf irdaattach isdn iteconfig \
 	kgmon kvm_mkdb lastlogin link lpr mailwrapper makefs map-mbone \
