@@ -1,4 +1,4 @@
-/*	$NetBSD: pfil.h,v 1.8 1997/10/10 05:40:26 mrg Exp $	*/
+/*	$NetBSD: pfil.h,v 1.9 1998/03/19 15:45:30 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996 Matthew R. Green
@@ -41,7 +41,7 @@
  * possibly intercept the packet.
  */
 struct packet_filter_hook {
-        LIST_ENTRY(packet_filter_hook) pfil_link;
+        TAILQ_ENTRY(packet_filter_hook) pfil_link;
         int	(*pfil_func) __P((void *, int, struct ifnet *, int,
 				  struct mbuf **));
 	int	pfil_flags;
