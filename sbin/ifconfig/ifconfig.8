@@ -1,4 +1,4 @@
-.\"	$NetBSD: ifconfig.8,v 1.23 1998/08/09 00:44:58 thorpej Exp $
+.\"	$NetBSD: ifconfig.8,v 1.24 1998/09/06 17:51:32 christos Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -48,11 +48,13 @@
 .Oc
 .Op Ar parameters
 .Nm ""
+.Op Fl A
 .Op Fl m
 .Ar interface
 .Op Ar protocol_family
 .Nm ""
 .Fl a
+.Op Fl A
 .Op Fl m
 .Op Fl d
 .Op Fl u
@@ -326,6 +328,11 @@ to display information about all interfaces in the system.
 limits this to interfaces that are down, and
 .Fl u
 limits this to interfaces that are up.
+.Pp
+If the
+.Fl A
+flag is also specified, any relevant interface alias information is also
+displayed.
 .Pp
 The
 .Fl l
