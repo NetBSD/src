@@ -1,4 +1,4 @@
-# $NetBSD: ALPHA,v 1.201 2005/02/18 21:05:50 dsl Exp $
+# $NetBSD: ALPHA,v 1.202 2005/02/25 13:46:48 simonb Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
@@ -6,7 +6,7 @@ include 	"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident		"ALPHA-$Revision: 1.201 $"
+ident		"ALPHA-$Revision: 1.202 $"
 
 maxusers 32
 
@@ -113,6 +113,7 @@ options 	COMPAT_12
 options 	COMPAT_13
 options 	COMPAT_14
 options 	COMPAT_16
+options 	COMPAT_20
 
 # OSF/1 binary compatibility
 options 	COMPAT_OSF1

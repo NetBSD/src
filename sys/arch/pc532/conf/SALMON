@@ -1,4 +1,4 @@
-#	$NetBSD: SALMON,v 1.23 2005/02/18 21:05:53 dsl Exp $
+#	$NetBSD: SALMON,v 1.24 2005/02/25 13:46:51 simonb Exp $
 #
 # SALMON: Phil Nelson's 2nd (test) pc532
 #
@@ -27,6 +27,10 @@ options 	COMPAT_09	# NetBSD-0.9
 options 	COMPAT_10	# NetBSD-1.0
 options 	COMPAT_11
 options 	COMPAT_12
+options 	COMPAT_13
+options 	COMPAT_14
+options 	COMPAT_16
+options 	COMPAT_20
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 

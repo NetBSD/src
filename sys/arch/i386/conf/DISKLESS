@@ -1,4 +1,4 @@
-#	$NetBSD: DISKLESS,v 1.101 2005/01/31 16:54:34 hannken Exp $
+#	$NetBSD: DISKLESS,v 1.102 2005/02/25 13:46:49 simonb Exp $
 #
 # DISKLESS -- Generic machine setup for diskless boot.
 # This kernel can be loaded from a bootable floppy (i.e. kernel-copy)
@@ -58,6 +58,8 @@ options 	COMPAT_12	# NetBSD 1.2, 386BSD, and BSDI
 options 	COMPAT_13	# NetBSD 1.3, 386BSD, and BSDI
 options 	COMPAT_14	# NetBSD 1.4
 options 	COMPAT_15	# NetBSD 1.5
+options 	COMPAT_16	# NetBSD 1.6
+options 	COMPAT_20	# NetBSD 2.0
 options 	COMPAT_43	# 4.3BSD, 386BSD, and BSDI
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
