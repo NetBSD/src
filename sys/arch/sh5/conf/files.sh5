@@ -1,4 +1,4 @@
-#	$NetBSD: files.sh5,v 1.9 2002/10/14 14:13:27 scw Exp $
+#	$NetBSD: files.sh5,v 1.10 2002/10/19 09:01:44 scw Exp $
 
 
 #
@@ -146,8 +146,7 @@ file	dev/cninit.c
 # the two architectures.
 file	arch/sh3/sh3/disksubr.c
 
-file	arch/sh5/sh5/in_cksum.c			inet
-file	netinet/in4_cksum.c			inet
+file	arch/sh5/sh5/in_cksum.S			inet
 file	netns/ns_cksum.c			ns
 
 defflag	opt_sh5_debug.h		SH5_SIM SH5_DEBUG_ST50

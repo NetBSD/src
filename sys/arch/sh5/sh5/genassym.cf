@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.11 2002/10/12 11:39:54 scw Exp $
+#	$NetBSD: genassym.cf,v 1.12 2002/10/19 09:01:45 scw Exp $
 
 # Copyright 2002 Wasabi Systems, Inc.
 # All rights reserved.
@@ -38,8 +38,14 @@ include "opt_kernel_ipt.h"
 include <sys/param.h>
 include <sys/types.h>
 include <sys/proc.h>
+include <sys/mbuf.h>
 include <sys/signal.h>
 include <sys/syscall.h>
+include <netinet/in.h>
+include <netinet/in_systm.h>
+include <netinet/ip.h>
+include <netinet/ip6.h>
+include <netinet/ip_var.h>
 
 include <uvm/uvm_extern.h>
 
@@ -363,3 +369,12 @@ define	SYS_exit			SYS_exit
 define	MR_START			offsetof(struct mem_region, mr_start)
 define	MR_SIZE				offsetof(struct mem_region, mr_size)
 define	SIZEOF_MEM_REGION		sizeof(struct mem_region)
+
+# Constants required for in_cksum() and friends.
+define	M_LEN				offsetof(struct mbuf, m_len)
+define	M_DATA				offsetof(struct mbuf, m_data)
+define	M_NEXT				offsetof(struct mbuf, m_next)
+define	IP_SRC				offsetof(struct ip, ip_src)
+define	IP_DST				offsetof(struct ip, ip_dst)
+define	IP6_SRC				offsetof(struct ip6_hdr, ip6_src)
+define	IP6_DST				offsetof(struct ip6_hdr, ip6_dst)
