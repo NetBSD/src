@@ -28,10 +28,9 @@
 #include <rpcsvc/rquota.h>
 #include <arpa/inet.h>
 
-void rquota_svc __P((struct svc_req *request, SVCXPRT *transport));
-void exit_svc __P((int signo));
-void sendquota __P((struct svc_req *request, SVCXPRT *transport));
-void printerr_reply __P((SVCXPRT *transport));
+void rquota_service __P((struct svc_req *request, SVCXPRT *transp));
+void sendquota __P((struct svc_req *request, SVCXPRT *transp));
+void printerr_reply __P((SVCXPRT *transp));
 void initfs __P((void));
 int getfsquota __P((long id, char *path, struct dqblk *dqblk));
 int hasquota __P((struct fstab *fs, char **qfnamep));
@@ -48,17 +47,25 @@ struct fs_stat {
 } fs_stat;
 struct fs_stat *fs_begin = NULL;
 
+int from_inetd = 1;
+
+void 
+cleanup()
+{
+	(void) pmap_unset(RQUOTAPROG, RQUOTAVERS);
+	exit(0);
+}
+
 int
 main(argc, argv)
 	int     argc;
 	char   *argv[];
 {
-	SVCXPRT *transport;
-	int     sock = 0;
-	int     proto = 0;
-	int     from_inetd = 1;
+	SVCXPRT *transp;
+	int sock = 0;
+	int proto = 0;
 	struct sockaddr_in from;
-	int     fromlen;
+	int fromlen;
 
 	fromlen = sizeof(from);
 	if (getsockname(0, (struct sockaddr *)&from, &fromlen) < 0) {
@@ -70,77 +77,77 @@ main(argc, argv)
 	if (!from_inetd) {
 		daemon(0, 0);
 
-		pmap_unset(RQUOTAPROG, RQUOTAVERS);
+		(void) pmap_unset(RQUOTAPROG, RQUOTAVERS);
 
-		signal(SIGINT, exit_svc);	/* trap some signals */
-		signal(SIGQUIT, exit_svc);	/* to unregister the service */
-		signal(SIGTERM, exit_svc);	/* before exiting */
+		(void) signal(SIGINT, cleanup);
+		(void) signal(SIGTERM, cleanup);
+		(void) signal(SIGHUP, cleanup);
 	}
 
-	openlog("rpc.rquotad", LOG_PID, LOG_DAEMON);
+	openlog("rpc.rquotad", LOG_CONS|LOG_PID, LOG_DAEMON);
 
 	/* create and register the service */
-	if ((transport = svcudp_create(sock)) == NULL) {
-		syslog(LOG_ERR, "couldn't create UDP transport");
+	transp = svcudp_create(sock);
+	if (transp == NULL) {
+		syslog(LOG_ERR, "couldn't create udp service.");
 		exit(1);
 	}
-	if (svc_register(transport, RQUOTAPROG, RQUOTAVERS,
-	    rquota_svc, proto) == 0) {
-		syslog(LOG_ERR, "couldn't register service");
+	if (!svc_register(transp, RQUOTAPROG, RQUOTAVERS, rquota_service, proto)) {
+		syslog(LOG_ERR, "unable to register (RQUOTAPROG, RQUOTAVERS, %s).", proto?"udp":"(inetd)");
 		exit(1);
 	}
+
 	initfs();		/* init the fs_stat list */
 	svc_run();
-	syslog(LOG_ERR, "svc_run has returned !");
-	exit(1);		/* svc_run don't return */
+	syslog(LOG_ERR, "svc_run returned");
+	exit(1);
 }
 
-/* rquota service */
 void 
-rquota_svc(request, transport)
+rquota_service(request, transp)
 	struct svc_req *request;
-	SVCXPRT *transport;
+	SVCXPRT *transp;
 {
 	switch (request->rq_proc) {
 	case NULLPROC:
-		errno = 0;
-		if (svc_sendreply(transport, xdr_void, 0) == 0)
-			printerr_reply(transport);
+		(void)svc_sendreply(transp, xdr_void, (char *)NULL);
 		break;
+
 	case RQUOTAPROC_GETQUOTA:
 	case RQUOTAPROC_GETACTIVEQUOTA:
-		sendquota(request, transport);
+		sendquota(request, transp);
 		break;
+
 	default:
-		svcerr_noproc(transport);
+		svcerr_noproc(transp);
 		break;
 	}
-	return;
+	if (from_inetd)
+		exit(0);
 }
 
 /* read quota for the specified id, and send it */
 void 
-sendquota(request, transport)
+sendquota(request, transp)
 	struct svc_req *request;
-	SVCXPRT *transport;
+	SVCXPRT *transp;
 {
 	struct getquota_args getq_args;
 	struct getquota_rslt getq_rslt;
 	struct dqblk dqblk;
 	struct timeval timev;
 
-	getq_args.gqa_pathp = NULL;	/* allocated by svc_getargs */
-	if (svc_getargs(transport, xdr_getquota_args,
-	    (caddr_t)&getq_args) == 0) {
-		svcerr_decode(transport);
+	bzero((char *)&getq_args, sizeof(getq_args));
+	if (!svc_getargs(transp, xdr_getquota_args, (caddr_t)&getq_args)) {
+		svcerr_decode(transp);
 		return;
 	}
 	if (request->rq_cred.oa_flavor != AUTH_UNIX) {
 		/* bad auth */
 		getq_rslt.status = Q_EPERM;
-	} else if (getfsquota(getq_args.gqa_uid, getq_args.gqa_pathp,
-	    &dqblk) == 0) {
-		getq_rslt.status = Q_NOQUOTA;	/* failed, return noquota */
+	} else if (!getfsquota(getq_args.gqa_uid, getq_args.gqa_pathp, &dqblk)) {
+		/* failed, return noquota */
+		getq_rslt.status = Q_NOQUOTA;
 	} else {
 		gettimeofday(&timev, NULL);
 		getq_rslt.status = Q_OK;
@@ -163,23 +170,18 @@ sendquota(request, transport)
 		getq_rslt.getquota_rslt_u.gqr_rquota.rq_ftimeleft =
 		    dqblk.dqb_itime - timev.tv_sec;
 	}
-	if (svc_sendreply(transport, xdr_getquota_rslt, (char *)&getq_rslt) == 0)
-		printerr_reply(transport);
-	return;
+	if (!svc_sendreply(transp, xdr_getquota_rslt, (char *)&getq_rslt)) {
+		svcerr_systemerr(transp);
+	}
+	if (!svc_freeargs(transp, xdr_getquota_args, (caddr_t)&getq_args)) {
+		syslog(LOG_ERR, "unable to free arguments");
+		exit(1);
+	}
 }
 
 void 
-exit_svc(signo)			/* signal trapped */
-	int     signo;
-{
-	syslog(LOG_ERR, "exiting on signal %d", signo);
-	pmap_unset(RQUOTAPROG, RQUOTAVERS);
-	exit(0);
-}
-
-void 
-printerr_reply(transport)	/* when a reply to a request failed */
-	SVCXPRT *transport;
+printerr_reply(transp)	/* when a reply to a request failed */
+	SVCXPRT *transp;
 {
 	char   *name;
 	struct sockaddr_in *caller;
@@ -187,14 +189,13 @@ printerr_reply(transport)	/* when a reply to a request failed */
 
 	save_errno = errno;
 
-	caller = svc_getcaller(transport);
+	caller = svc_getcaller(transp);
 	name = (char *)inet_ntoa(caller->sin_addr);
 	errno = save_errno;
 	if (errno == 0)
 		syslog(LOG_ERR, "couldn't send reply to %s", name);
 	else
 		syslog(LOG_ERR, "couldn't send reply to %s: %m", name);
-	return;
 }
 
 /* initialise the fs_tab list from entries in /etc/fstab */
@@ -263,7 +264,7 @@ getfsquota(id, path, dqblk)
 			return (1);
 
 		if ((fd = open(fs->qfpathname, O_RDONLY)) < 0) {
-			syslog(LOG_ERR, "couldn't read %s:%m", fs->qfpathname);
+			syslog(LOG_ERR, "open error: %s: %m", fs->qfpathname);
 			return (0);
 		}
 		if (lseek(fd, (off_t)(id * sizeof(struct dqblk)), L_SET) == (off_t)-1) {
