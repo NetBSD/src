@@ -1,4 +1,4 @@
-/*	$NetBSD: res_comp.c,v 1.1.1.1 2004/05/20 17:18:55 christos Exp $	*/
+/*	$NetBSD: res_comp.c,v 1.2 2004/05/20 19:31:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993
@@ -162,7 +162,7 @@ res_hnok(const char *dn) {
 		int nch = *dn++;
 
 		if (periodchar(ch)) {
-			(void)NULL;
+			;
 		} else if (periodchar(pch)) {
 			if (!borderchar(ch))
 				return (0);
