@@ -1,4 +1,4 @@
-/*      $NetBSD: locore.S,v 1.7 2001/02/18 19:08:15 is Exp $   */
+/*      $NetBSD: locore.S,v 1.8 2001/12/03 21:10:48 aymeric Exp $   */
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -1100,7 +1100,7 @@ s_dsitrap:
 	mfctr	31			/* & CTR */
 	mfdar	3
 s_pte_spill:
-	bl	_C_LABEL(pte_spill)	/* try a spill */
+	bl	_C_LABEL(pmap_pte_spill) /* try a spill */
 	or.	3,3,3
 	mtctr	31			/* restore CTR */
 	mtlr	30			/* and trap type */
