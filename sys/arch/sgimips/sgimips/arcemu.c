@@ -1,4 +1,4 @@
-/*	$NetBSD: arcemu.c,v 1.7 2004/10/02 08:53:09 sekiya Exp $	*/
+/*	$NetBSD: arcemu.c,v 1.8 2004/11/12 23:28:05 sekiya Exp $	*/
 
 /*
  * Copyright (c) 2004 Steve Rumble 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arcemu.c,v 1.7 2004/10/02 08:53:09 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcemu.c,v 1.8 2004/11/12 23:28:05 sekiya Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -188,11 +188,22 @@ arcemu_ip12_eeprom_read()
 	 * case, but the seeprom driver has to know how many addressing
 	 * bits to feed the chip.
 	 */
+
+	/* 
+	 * This appears to not be the case on my 4D/35.  We'll assume that
+	 * we use eight-bit addressing mode for all IP12 variants.
+	 */
+
 	reg = *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1fbd0000);
+
+#if 0
 	if ((reg & 0x8000) == 0)
 		sd.sd_chip = C46;
 	else
 		sd.sd_chip = C56_66;
+#endif
+
+	sd.sd_chip = C56_66;
 
 	sd.sd_tag = tag;
 	sd.sd_bsh = bsh;
@@ -277,6 +288,8 @@ arcemu_ip12_GetEnvironmentVariable(char *var)
 {
 
 	/* 'd'ebug (serial), 'g'raphics, 'G'raphics w/ logo */
+
+	/* XXX This does not indicate the actual current console */
 	if (strcasecmp("ConsoleOut", var) == 0) {
 		switch (ip12nvram.console) {
 		case 'd':
@@ -288,8 +301,9 @@ arcemu_ip12_GetEnvironmentVariable(char *var)
 		case 'G':
 			return "video()";
 		default:
-			printf("arcemu: unknown console type %c\n",
+			printf("arcemu: unknown console \"%c\", using serial\n",
 			    ip12nvram.console);
+			return "serial(0)";
 		}
 	}
 
