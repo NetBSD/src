@@ -34,7 +34,7 @@
 #include "kdc_locl.h"
 
 __RCSID("$Heimdal: kaserver.c,v 1.20 2002/09/09 14:03:02 nectar Exp $"
-        "$NetBSD: kaserver.c,v 1.1.1.6 2002/09/12 12:41:39 joda Exp $");
+        "$NetBSD: kaserver.c,v 1.2 2002/09/12 15:35:02 joda Exp $");
 
 
 #include <rx.h>
@@ -271,7 +271,7 @@ create_reply_ticket (struct rx_header *hdr,
     krb_create_ticket (&ticket, 0, name, instance, realm,
 		       addr->sin_addr.s_addr,
 		       &session, life, kdc_time,
-		       sname, sinstance, skey->key.keyvalue.data);
+		       (char*)sname, (char*)sinstance, skey->key.keyvalue.data);
 
     /* create the encrypted part of the reply */
     sp = krb5_storage_emem ();
