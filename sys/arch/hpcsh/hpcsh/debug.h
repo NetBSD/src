@@ -1,7 +1,7 @@
-/*	$NetBSD: debug.h,v 1.2 2001/06/28 18:59:06 uch Exp $	*/
+/*	$NetBSD: debug.h,v 1.3 2002/01/27 05:15:37 uch Exp $	*/
 
 /*-
- * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -36,44 +36,63 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_interrupt_monitor.h"
+
+/*
+ * debug version exports all symbols.
+ */
 #ifdef DEBUG
-//#define INTERRUPT_MONITOR
+#define STATIC
+#else
+#define STATIC static
+#endif
 
-#define __bitdisp(a, s, e, m, c)					\
-({									\
-	u_int32_t __j, __j1;						\
-	int __i, __s, __e, __n;						\
-	__n = sizeof(typeof(a)) * NBBY - 1;				\
-	__j1 = 1 << __n;						\
-	__e = e ? e : __n;						\
-	__s = s;							\
-	for (__j = __j1, __i = __n; __j > 0; __j >>=1, __i--) {		\
-		if (__i > __e || __i < __s) {				\
-			printf("%c", a & __j ? '+' : '-');		\
-		} else {						\
-			printf("%c", a & __j ? '|' : '.');		\
-		}							\
-	}								\
-	if (m) {							\
-		printf("[%s]", (char*)m);				\
-	}								\
-	if (c) {							\
-		for (__j = __j1, __i = __n; __j > 0; __j >>=1, __i--) {	\
-			if (!(__i > __e || __i < __s) && (a & __j)) {	\
-				printf(" %d", __i);			\
-			}						\
-		}							\
-	}								\
-	printf(" [0x%08x] %d", a, a);					\
-	printf("\n");							\
-})
-#define bitdisp(a) __bitdisp((a), 0, 0, 0, 1)
+/*
+ * printf control
+ *	sample:
+ * #ifdef FOO_DEBUG
+ * #define DPRINTF_ENABLE
+ * #define DPRINTF_DEBUG	foo_debug
+ * #define DPRINTF_LEVEL	2
+ * #endif
+ */
+#define	PRINTF(fmt, args...)	printf("%s: " fmt, __FUNCTION__ , ##args) 
+#ifdef DPRINTF_ENABLE
+#ifndef DPRINTF_DEBUG
+#error "specify unique debug symbol"
+#endif
+#ifndef DPRINTF_LEVEL
+#define DPRINTF_LEVEL	1
+#endif
+int	DPRINTF_DEBUG = DPRINTF_LEVEL;
+#define	DPRINTF(fmt, args...)	if (DPRINTF_DEBUG) PRINTF(fmt, ##args)
+#define	_DPRINTF(fmt, args...)	if (DPRINTF_DEBUG) printf(fmt, ##args)
+#define DPRINTFN(n, fmt, args...)					\
+			   	if (DPRINTF_DEBUG > (n)) PRINTF(fmt, ##args)
+#else /* DPRINTF_ENABLE */
+#define	DPRINTF(args...)	((void)0)
+#define	_DPRINTF(args...)	((void)0)
+#define DPRINTFN(n, args...)	((void)0)
+#endif /* DPRINTF_ENABLE */
 
-__BEGIN_DECLS
-void	dbg_bit_print(u_int32_t, u_int32_t, const char *);
-void	dbg_banner_start(const char *, size_t);
-void	dbg_banner_end(void);
+/*
+ * debug print utility
+ */
+#define dbg_bit_print(a) __dbg_bit_print((a), sizeof(typeof(a)), 0, 0, 0, 1)
+void __dbg_bit_print(u_int32_t, int, int, int, char *, int);
+void dbg_bitmask_print(u_int32_t, u_int32_t, const char *);
+void dbg_draw_line(int);
+void dbg_banner_title(const char *, size_t);
+void dbg_banner_line(void);
+#define dbg_banner_function()						\
+{									\
+	const char funcname[] = __FUNCTION__;				\
+	dbg_banner_title(funcname, sizeof funcname);			\
+}
 
+/*
+ * interrupt monitor
+ */
 #ifdef INTERRUPT_MONITOR
 enum heart_beat {
 	HEART_BEAT_CYAN = 0,
@@ -85,17 +104,7 @@ enum heart_beat {
 	HEART_BEAT_WHITE,
 	HEART_BEAT_BLACK
 };
-void	__dbg_heart_beat(enum heart_beat);
+void __dbg_heart_beat(enum heart_beat);
 #else
 #define __dbg_heart_beat(x)	((void)0)
 #endif /* INTERRUPT_MONITOR */
-__END_DECLS
-
-#else /* DEBUG */
-
-#define bitdisp(...)		((void)0)
-#define dbg_bit_print(...)	((void)0)
-#define dbg_banner_start(...)	((void)0)
-#define dbg_banner_end(...)	((void)0)
-#define __dbg_heart_beat(...)	((void)0)
-#endif /* DEBUG */

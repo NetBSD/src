@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.2 2001/07/09 18:18:25 uch Exp $	*/
+/*	$NetBSD: clock.c,v 1.3 2002/01/27 05:15:37 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,6 +34,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
 
