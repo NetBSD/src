@@ -1,4 +1,4 @@
-#  $NetBSD: platid_copyright.awk,v 1.2 2000/02/06 08:47:06 takemura Exp $
+#  $NetBSD: platid_copyright.awk,v 1.1 2001/01/28 02:52:22 uch Exp $
 #
 #  Copyright (c) 1999
 #         Shin Takemura and PocketBSD Project. All rights reserved.
@@ -35,8 +35,7 @@
 # 
 BEGIN{
   words = ""
-  printf("/* $Id")
-  printf(": $ */\n\n")
+  printf("/*	$NetBSD: platid_copyright.awk,v 1.1 2001/01/28 02:52:22 uch Exp $	*/\n\n")
 }
 /\/\*/,/\*\//{
   words=sprintf("%s%s\n", words, $0)

@@ -1,7 +1,7 @@
-/* $Id: platid_mask.c,v 1.26 2000/12/28 07:10:15 sato Exp $ */
+/*	$NetBSD: platid_mask.c,v 1.27 2001/01/28 02:52:35 uch Exp $	*/
 
 /*-
- * Copyright (c) 1999, 2000
+ * Copyright (c) 1999-2001
  *         Shin Takemura and PocketBSD Project. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
