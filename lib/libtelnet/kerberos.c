@@ -1,4 +1,4 @@
-/*	$NetBSD: kerberos.c,v 1.9 2002/08/29 14:53:22 itojun Exp $	*/
+/*	$NetBSD: kerberos.c,v 1.10 2002/11/05 22:34:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)kerberos.c	8.3 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: kerberos.c,v 1.9 2002/08/29 14:53:22 itojun Exp $");
+__RCSID("$NetBSD: kerberos.c,v 1.10 2002/11/05 22:34:50 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -526,20 +526,12 @@ kerberos4_cksum(d, n)
 	 * Some compilers will spit out a warning message
 	 * about the loop not being entered at the top.
 	 */
-	switch (n&03)
-	while (n > 0) {
-	case 0:
-		ck ^= (int)*d++ << 24;
-		--n;
-	case 3:
-		ck ^= (int)*d++ << 16;
-		--n;
-	case 2:
-		ck ^= (int)*d++ << 8;
-		--n;
-	case 1:
-		ck ^= (int)*d++;
-		--n;
+	switch (n&03) {
+	case 0:	do {	ck ^= (int)*d++ << 24;	--n;
+	case 3:		ck ^= (int)*d++ << 16;	--n;
+	case 2:		ck ^= (int)*d++ << 8;	--n;
+	case 1:		ck ^= (int)*d++;	--n;
+		} while (n);
 	}
 	return(ck);
 }
