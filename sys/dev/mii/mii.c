@@ -1,4 +1,4 @@
-/*	$NetBSD: mii.c,v 1.3 1998/01/12 09:28:52 thorpej Exp $	*/
+/*	$NetBSD: mii.c,v 1.4 1998/02/11 19:02:11 bouyer Exp $	*/
  
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -74,6 +74,15 @@ int mii_print __P((void *, const char *));
 struct cfattach mii_ca = {
 	sizeof(struct mii_softc), miimatch, miiattach
 };
+
+int mii_adapter_print(aux, pnp)
+    void *aux;
+	const char *pnp;
+{
+	if (pnp)
+		printf("mii at %s", pnp);
+	return UNCONF;
+}
 
 int
 mii_print(aux, pnp)
