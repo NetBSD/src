@@ -1,4 +1,4 @@
-/*	$NetBSD: atareg.h,v 1.17 2004/03/14 20:11:24 wiz Exp $	*/
+/*	$NetBSD: atareg.h,v 1.18 2004/05/03 20:11:40 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -120,6 +120,7 @@
 #define	WDCC_UNLOCK		0xdf	/* unlock drawer */
 
 #define	WDCC_FLUSHCACHE		0xe7	/* Flush cache */
+#define	WDCC_FLUSHCACHE_EXT	0xea	/* Flush cache ext */
 #define	WDCC_IDENTIFY		0xec	/* read parameters from controller */
 #define	SET_FEATURES		0xef	/* set features */
 
