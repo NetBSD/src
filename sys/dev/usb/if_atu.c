@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atu.c,v 1.3 2005/02/24 06:06:11 joff Exp $ */
+/*	$NetBSD: if_atu.c,v 1.4 2005/02/25 14:47:19 joff Exp $ */
 /*	$OpenBSD: if_atu.c,v 1.48 2004/12/30 01:53:21 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.3 2005/02/24 06:06:11 joff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.4 2005/02/25 14:47:19 joff Exp $");
 
 #include "bpfilter.h"
 
@@ -2155,6 +2155,7 @@ atu_stop(struct ifnet *ifp, int disable)
 	int s;
 
 	s = splnet();
+	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 	ifp->if_timer = 0;
 
 	/* Stop transfers. */
@@ -2194,6 +2195,5 @@ atu_stop(struct ifnet *ifp, int disable)
 	/* Let's be nice and turn off the radio before we leave */
 	atu_switch_radio(sc, 0);
 
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 	splx(s);
 }
