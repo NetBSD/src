@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2001/01/28 00:42:20 martin Exp $
+#	$NetBSD: Makefile,v 1.14 2001/01/28 01:43:26 itojun Exp $
 
 .include <bsd.own.mk>
 
@@ -87,7 +87,7 @@ SRCS+=	bgclrbit.c bgmdmpyx.c bgmdsqx.c bgmodexp.c\
 .if ${MACHINE_ARCH} == "sparc64"
 sha.o:	sha.c
 	@echo "Compiling without optimization due to toolchain bugs"
-	${CC} -o ${.OBJDIR}/sha.o ${CPPFLAGS} -c ${BIND_CRYPTO_DIST_DIR}/lib/cylink/sha.c
+	${COMPILE.c:N-O*} ${.IMPSRC}
 .endif
 
 # only needed during build
