@@ -61,14 +61,15 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  * 
- *	$Id: write.c,v 1.1 1994/01/26 02:04:03 brezak Exp $
+ *	$Id: write.c,v 1.2 1994/08/22 21:56:17 brezak Exp $
  */
 
 #include "stand.h"
 
+int
 write(fd, dest, bcount)
 	int fd;
-	char *dest;
+	void *dest;
 	u_int bcount;
 {
 	register struct open_file *f = &files[fd];
@@ -86,7 +87,7 @@ write(fd, dest, bcount)
 		return (resid);
 	}
 	resid = bcount;
-	if (errno = (f->f_ops->write)(f, dest, bcount, &resid))
+	if ((errno = (f->f_ops->write)(f, dest, bcount, &resid)))
 		return (-1);
 	return (0);
 }

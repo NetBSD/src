@@ -31,9 +31,12 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)gets.c	8.1 (Berkeley) 6/11/93
- *	     $Id: gets.c,v 1.3 1994/08/09 14:00:06 pk Exp $
+ *	     $Id: gets.c,v 1.4 1994/08/22 21:56:07 brezak Exp $
  */
 
+#include "stand.h"
+
+void
 gets(buf)
 	char *buf;
 {

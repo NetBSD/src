@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)printf.c	8.1 (Berkeley) 6/11/93
- *	     $Id: printf.c,v 1.2 1994/07/27 07:37:25 cgd Exp $
+ *	     $Id: printf.c,v 1.3 1994/08/22 21:56:10 brezak Exp $
  */
 
 /*
@@ -59,19 +59,18 @@
 
 #include <sys/cdefs.h>
 #include <sys/types.h>
+#ifdef __STDC__
+#include <stdarg.h>
+#else
+#include <varargs.h>
+#endif
 
-/*
- * Note that stdarg.h and the ANSI style va_start macro is used for both
- * ANSI and traditional C compilers.
- */
-#define KERNEL
-#include <machine/stdarg.h>
-#undef KERNEL
+#include "stand.h"
 
 static void kprintn __P((u_long, int));
 
 void
-#if __STDC__
+#ifdef __STDC__
 printf(const char *fmt, ...)
 #else
 printf(fmt, va_alist)
@@ -84,7 +83,11 @@ printf(fmt, va_alist)
 	int lflag, set;
 	va_list ap;
 
+#ifdef __STDC__
 	va_start(ap, fmt);
+#else
+	va_start(ap);
+#endif
 	for (;;) {
 		while ((ch = *fmt++) != '%') {
 			if (ch == '\0')
@@ -104,7 +107,7 @@ reswitch:	switch (ch = *fmt++) {
 			if (!ul)
 				break;
 
-			for (set = 0; n = *p++;) {
+			for (set = 0; (n = *p++);) {
 				if (ul & (1 << (n - 1))) {
 					putchar(set ? ',' : '<');
 					for (; (n = *p) > ' '; ++p)
@@ -122,7 +125,7 @@ reswitch:	switch (ch = *fmt++) {
 			break;
 		case 's':
 			p = va_arg(ap, char *);
-			while (ch = *p++)
+			while ((ch = *p++))
 				putchar(ch);
 			break;
 		case 'd':

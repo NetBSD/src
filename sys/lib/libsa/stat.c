@@ -31,11 +31,12 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)stat.c	8.1 (Berkeley) 6/11/93
- *	     $Id: stat.c,v 1.1 1994/01/26 02:03:59 brezak Exp $
+ *	     $Id: stat.c,v 1.2 1994/08/22 21:56:14 brezak Exp $
  */
 
 #include "stand.h"
 
+int
 fstat(fd, sb)
 	int fd;
 	struct stat *sb;
@@ -57,6 +58,7 @@ fstat(fd, sb)
 	return (0);
 }
 
+int
 stat(str, sb)
 	const char *str;
 	struct stat *sb;

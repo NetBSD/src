@@ -31,9 +31,11 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)getfile.c	8.1 (Berkeley) 6/11/93
- *	     $Id: getfile.c,v 1.1 1994/01/26 02:03:45 brezak Exp $
+ *	     $Id: getfile.c,v 1.2 1994/08/22 21:56:06 brezak Exp $
  */
+#include "stand.h"
 
+int
 getfile(prompt, mode)
 	char *prompt;
 	int mode;

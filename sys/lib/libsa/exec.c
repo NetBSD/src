@@ -30,11 +30,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: exec.c,v 1.1 1994/05/08 16:11:21 brezak Exp $
+ *	$Id: exec.c,v 1.2 1994/08/22 21:56:03 brezak Exp $
  */
 
-#include <unistd.h>
-#include <fcntl.h>
 #include <string.h>
 #include <sys/param.h>
 #include <sys/reboot.h>
