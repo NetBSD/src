@@ -1,4 +1,4 @@
-.\"	$NetBSD: ldconfig.8,v 1.5 1996/07/03 03:28:09 thorpej Exp $
+.\"	$NetBSD: ldconfig.8,v 1.6 1997/01/05 12:07:53 mrg Exp $
 .\"
 .\" Copyright (c) 1993,1995 Paul Kranenburg
 .\" All rights reserved.
@@ -53,7 +53,12 @@ libraries and stores the results in the file
 to forestall the overhead that would otherwise result from the
 directory search operations
 .Xr ld.so
-would have to perform to load the required shared libraries.
+would have to perform to load the required shared libraries.  The system
+reads the file
+.Pa /etc/ld.so.conf
+as a list of directories to pass to
+.Nm
+at boot time.
 .Pp
 The shared libraries so found will be automatically available for loading
 if needed by the program being prepared for execution. This obviates the need
@@ -116,9 +121,11 @@ further assists set-user-Id programs by erasing the
 from the environment.
 
 .Sh FILES
-.Xr /var/run/ld.so.hints
+.Xr /var/run/ld.so.hints ,
+.Xr /etc/ld.so.conf
 .Sh SEE ALSO
 .Xr ld 1 ,
+.Xr ld.so.conf 5 ,
 .Xr link 5
 .Sh HISTORY
 A
