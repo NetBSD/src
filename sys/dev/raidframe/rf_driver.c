@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.45 2001/11/15 09:48:13 lukem Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.46 2002/01/07 01:58:03 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -73,7 +73,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.45 2001/11/15 09:48:13 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.46 2002/01/07 01:58:03 oster Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -699,6 +699,7 @@ bp_in is a buf pointer.  void * to facilitate ignoring it outside the kernel
 
 	return (0);
 }
+#if 0
 /* force the array into reconfigured mode without doing reconstruction */
 int 
 rf_SetReconfiguredMode(raidPtr, row, col)
@@ -722,6 +723,7 @@ rf_SetReconfiguredMode(raidPtr, row, col)
 	RF_UNLOCK_MUTEX(raidPtr->mutex);
 	return (0);
 }
+#endif
 
 int 
 rf_FailDisk(
