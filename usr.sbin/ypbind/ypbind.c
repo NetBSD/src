@@ -1,4 +1,4 @@
-/*	$NetBSD: ypbind.c,v 1.40 1999/08/16 03:12:32 simonb Exp $	*/
+/*	$NetBSD: ypbind.c,v 1.41 2000/02/20 14:31:28 itojun Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef LINT
-__RCSID("$NetBSD: ypbind.c,v 1.40 1999/08/16 03:12:32 simonb Exp $");
+__RCSID("$NetBSD: ypbind.c,v 1.41 2000/02/20 14:31:28 itojun Exp $");
 #endif
 
 #include <sys/param.h>
@@ -865,12 +865,12 @@ broadcast(buf, outlen)
 	ifr = ifc.ifc_req;
 	ifreq.ifr_name[0] = '\0';
 	for (i = 0; i < ifc.ifc_len; i += len, ifr = (struct ifreq *)((caddr_t)ifr + len)) {
+		memcpy(&ifreq, ifr, sizeof(ifreq));
 #if defined(BSD) && BSD >= 199103
-		len = sizeof ifr->ifr_name + ifr->ifr_addr.sa_len;
+		len = sizeof ifreq.ifr_name + ifreq.ifr_addr.sa_len;
 #else
 		len = sizeof ifc.ifc_len / sizeof(struct ifreq);
 #endif
-		ifreq = *ifr;
 		if (ifreq.ifr_addr.sa_family != AF_INET)
 			continue;
 		if (ioctl(sock, SIOCGIFFLAGS, &ifreq) < 0) {
