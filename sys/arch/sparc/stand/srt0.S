@@ -1,3 +1,4 @@
+#include <machine/psl.h>
 
 #define	CCFSZ	96
 
@@ -34,6 +35,21 @@ start:
 	 nop
 
 4:
+#ifdef notyet
+	/*
+	 * Enable traps
+	 */
+	wr	%g0, 0, %wim		! make sure we can set psr
+	nop; nop; nop
+	wr	%g0, PSR_S|PSR_PS|PSR_PIL, %psr	! set initial psr
+	nop; nop; nop
+	wr	%g0, 2, %wim		! set initial %wim (w1 invalid)
+
+	rd	%psr, %l0
+	wr	%l0, PSR_ET, %psr
+	nop; nop; nop
+#endif
+
 	/*
 	 * Clear BSS
 	 */
@@ -56,6 +72,9 @@ start:
 
 	ret
 	 restore
+
+
+#ifdef TIGHT
 
 /*
  * XXX - Space saving .div & .rem routines (small & non-negative numbres only)
@@ -94,3 +113,4 @@ start:
 	retl
 	 nop
 
+#endif /* TIGHT */

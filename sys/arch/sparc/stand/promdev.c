@@ -27,13 +27,14 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: promdev.c,v 1.2 1994/07/01 10:46:59 pk Exp $
+ *	$Id: promdev.c,v 1.3 1994/07/20 20:47:22 pk Exp $
  */
 
 #include <sys/param.h>
-#include <sys/disklabel.h>
-#include <machine/bsd_openprom.h>
-#include "stand.h"
+
+#include "defs.h"
+
+struct promvec	*promvec;
 
 int promopen __P((struct open_file *, ...));
 int promclose __P((struct open_file *));
@@ -46,152 +47,79 @@ struct devsw devsw[] = {
 
 int	ndevs = (sizeof(devsw)/sizeof(devsw[0]));
 
-
-struct promvec	*promvec;
-struct prom_softc {
-	int	fd;	/* Prom file descriptor */
-	int	poff;	/* Partition offset */
-	int	psize;	/* Partition size */
-} prom_softc[1];
-
-static struct disklabel sdlabel;
-
 int
 devopen(f, fname, file)
 	struct open_file *f;
 	char *fname;
 	char **file;
 {
-	int	v2 = promvec->pv_romvec_vers == 2;
-	register struct prom_softc	*pp = &prom_softc[0];
-	int	error, i, pn = 0;
+	int	error, fd;
 	char	*dev, *cp;
-static	char	iobuf[MAXBSIZE];
 
-	if (v2)
+	if (promvec->pv_romvec_vers >= 2) {
 		dev = *promvec->pv_v2bootargs.v2_bootpath;
-	else
-		dev = (*promvec->pv_v0bootargs)->ba_bootdev;
+		fd = (*promvec->pv_v2devops.v2_open)(dev);
+	} else {
+		char *cp;
+		static char bdev[100];
 
-	/*
-	 * Extract partition # from boot device string.
-	 */
-	for (cp = dev; *cp; cp++) /* void */;
-	while (*cp != '/' && cp > dev) {
-		if (*cp == ':')
-			pn = *(cp+1) - 'a';
-		--cp;
+		dev = bdev;
+		cp = (*promvec->pv_v0bootargs)->ba_argv[0];
+		while (*cp) {
+			*dev++ = *cp;
+			if (*cp++ == ')')
+				break;
+		}
+		*dev = '\0';
+		dev = bdev;
+		fd = (*promvec->pv_v0devops.v0_open)(dev);
 	}
 
-	if (v2)
-		pp->fd = (*promvec->pv_v2devops.v2_open)(dev);
-	else
-		pp->fd = (*promvec->pv_v0devops.v0_open)(dev);
-
-	if (pp->fd == 0) {
+	if (fd == 0) {
 		printf("Can't open device `%s'\n", dev);
 		return ENXIO;
 	}
-	error = promstrategy(pp, F_READ, LABELSECTOR, DEV_BSIZE, iobuf, &i);
-	if (error)
-		return error;
-	if (i != DEV_BSIZE)
-		return EINVAL;
-
-	if (sun_disklabel(iobuf, &sdlabel) == 0) {
-		printf("WARNING: no label\n");
-		/* some default label */
-		return EINVAL;
-	} else {
-		pp->poff = sdlabel.d_partitions[pn].p_offset;
-		pp->psize = sdlabel.d_partitions[pn].p_size;
-	}
 
 	f->f_dev = devsw;
-	f->f_devdata = (void *)pp;
+	f->f_devdata = (void *)fd;
 	*file = fname;
 	return 0;
 }
 
-#include <sparc/scsi/sun_disklabel.h>
-
-/*
- * Take a sector (cp) containing a SunOS disk label and set lp to a BSD
- * disk label.
- */
 int
-sun_disklabel(cp, lp)
-	register caddr_t cp;
-	register struct disklabel *lp;
-{
-	register u_short *sp;
-	register struct sun_disklabel *sl;
-	register int i, v;
-
-	sp = (u_short *)(cp + sizeof(struct sun_disklabel));
-	--sp;
-	v = 0;
-	while (sp >= (u_short *)cp)
-		v ^= *sp--;
-	if (v)
-		return (0);
-	sl = (struct sun_disklabel *)cp;
-	lp->d_magic = 0;	/* denote as pseudo */
-	lp->d_ncylinders = sl->sl_ncylinders;
-	lp->d_acylinders = sl->sl_acylinders;
-	v = (lp->d_ntracks = sl->sl_ntracks) *
-	    (lp->d_nsectors = sl->sl_nsectors);
-	lp->d_secpercyl = v;
-	lp->d_npartitions = 8;
-	for (i = 0; i < 8; i++) {
-		lp->d_partitions[i].p_offset =
-		    sl->sl_part[i].sdkp_cyloffset * v;
-		lp->d_partitions[i].p_size = sl->sl_part[i].sdkp_nsectors;
-#ifdef DEBUG
-printf("P%d: off %x, size %x\n", i,
-		lp->d_partitions[i].p_offset, lp->d_partitions[i].p_size);
-#endif
-	}
-	return (1);
-}
-
-int
-promstrategy(devdata, func, dblk, size, buf, rsize)
+promstrategy(devdata, flag, dblk, size, buf, rsize)
 	void *devdata;
-	int func;
+	int flag;
 	daddr_t dblk;
 	u_int size;
 	char *buf;
 	u_int *rsize;
 {
-	register struct prom_softc *pp = (struct prom_softc *)devdata;
-	register u_int	(*pf)();
-	int	v2 = promvec->pv_romvec_vers == 2;
-	daddr_t	blk = dblk + pp->poff;
 	int	error = 0;
 
 #ifdef DEBUG
-	printf("promstrategy: size=%d blk=%d dblk=%d\n", size, blk, dblk);
+	printf("promstrategy: size=%d dblk=%d\n", size, dblk);
 #endif
 	twiddle();
 
-	if (func == F_READ)
-		pf = v2 ? (u_int (*)())promvec->pv_v2devops.v2_read:
-			  (u_int (*)())promvec->pv_v0devops.v0_rbdev;
-	else
-		pf = v2 ? (u_int (*)())promvec->pv_v2devops.v2_write:
-			  (u_int (*)())promvec->pv_v0devops.v0_wbdev;
+	if (promvec->pv_romvec_vers >= 2) {
+		(*promvec->pv_v2devops.v2_seek)((int)devdata, 0, dbtob(dblk));
 
-	if (v2)
-		(*promvec->pv_v2devops.v2_seek)(pp->fd, 0, blk<<DEV_BSHIFT);
-	else
-		(*promvec->pv_v0devops.v0_seek)(pp->fd, blk<<DEV_BSHIFT, 0);
+		*rsize = (*((flag == F_READ)
+				? (u_int (*)())promvec->pv_v2devops.v2_read
+				: (u_int (*)())promvec->pv_v2devops.v2_write
+			 ))((int)devdata, buf, size);
+	} else {
+		int n = (*((flag == F_READ)
+				? (u_int (*)())promvec->pv_v0devops.v0_rbdev
+				: (u_int (*)())promvec->pv_v0devops.v0_wbdev
+			))((int)devdata, btodb(size), dblk, buf);
+		*rsize = dbtob(n);
+	}
 
-	if (v2) {
-		*rsize = (*pf)(pp->fd, buf, size);
-	} else
-		*rsize = (*pf)(pp->fd, size>>DEV_BSHIFT, blk, buf);
-
+#ifdef DEBUG
+	printf("rsize = %x\n", *rsize);
+#endif
 	return error;
 }
 
@@ -202,8 +130,6 @@ promopen(f)
 #ifdef DEBUG
 	printf("promopen:\n");
 #endif
-
-	f->f_devdata = (void *)prom_softc;
 	return 0;
 }
 
@@ -225,19 +151,54 @@ promioctl(f, cmd, data)
 
 getchar()
 {
-	register int c;
+	char c;
+	int n;
  
-	c = (*promvec->pv_getchar)();
+	if (promvec->pv_romvec_vers > 2)
+		while ((n = (*promvec->pv_v2devops.v2_read)
+			(*promvec->pv_v2bootargs.v2_fd0, (caddr_t)&c, 1)) != 1);
+	else
+		c = (*promvec->pv_getchar)();
+
 	if (c == '\r')
 		c = '\n';
 	return (c);
 }
  
-putchar(c)
-	register int c;
+peekchar()
 {
+	register int c;
+ 
+	c = (*promvec->pv_nbgetchar)();
+	if (c == '\r')
+		c = '\n';
+	return (c);
+}
+
+static void
+pv_putchar(c)
+	int c;
+{
+	char c0 = c;
+	if (promvec->pv_romvec_vers > 2)
+		(*promvec->pv_v2devops.v2_write)
+			(*promvec->pv_v2bootargs.v2_fd1, &c0, 1);
+	else
+		(*promvec->pv_putchar)(c);
+}
+
+putchar(c)
+	int c;
+{
+ 
+	if (c == '\n')
+		pv_putchar('\r');
+	pv_putchar(c);
+
+#if 0
 	if (c == '\n')
 		(*promvec->pv_putchar)('\r');
 	(*promvec->pv_putchar)(c);
+#endif
 }
 
