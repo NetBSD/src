@@ -1,4 +1,4 @@
-/* $NetBSD: lfs.c,v 1.6 2000/03/30 12:19:48 augustss Exp $ */
+/* $NetBSD: lfs.c,v 1.7 2002/05/07 02:02:41 simonb Exp $ */
 
 /*-
  * Copyright (c) 1993
@@ -619,9 +619,7 @@ lfs_open(path, f)
 				/*
 				 * Read file for symbolic link
 				 */
-				size_t buf_size;
 				daddr_t	disk_block;
-				struct fs *fs = fp->f_fs;
 
 				if (!buf)
 					buf = alloc(fs->fs_bsize);
