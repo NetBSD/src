@@ -1,4 +1,4 @@
-/* $NetBSD: mainbus.c,v 1.9 1997/07/17 01:48:38 jtk Exp $ */
+/* $NetBSD: mainbus.c,v 1.10 1997/07/28 17:58:56 mark Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -85,7 +85,7 @@ mainbusprint(aux, mainbus)
 {
 	struct mainbus_attach_args *mb = aux;
 
-	if (mb->mb_iobase)
+	if (mb->mb_iobase != MAINBUSCF_BASE_DEFAULT)
 		printf(" base 0x%x", mb->mb_iobase);
 	if (mb->mb_iosize > 1)
 		printf("-0x%x", mb->mb_iobase + mb->mb_iosize - 1);
@@ -112,7 +112,7 @@ mainbusscan(parent, match)
 		panic("eekkk, I'm stuffed");
 
 	if (cf->cf_loc[MAINBUSCF_BASE] == MAINBUSCF_BASE_DEFAULT) {
-		mb.mb_iobase = 0;	/* XXX MAINBUSCF_BASE_DEFAULT? */
+		mb.mb_iobase = MAINBUSCF_BASE_DEFAULT;
 		mb.mb_iosize = 0;
 		mb.mb_drq = MAINBUSCF_DACK_DEFAULT;
 		mb.mb_irq = MAINBUSCF_IRQ_DEFAULT;
