@@ -1,4 +1,4 @@
-/*	$NetBSD: kerberos5.c,v 1.4 2000/06/22 06:47:44 thorpej Exp $	*/
+/*	$NetBSD: kerberos5.c,v 1.5 2000/07/17 02:25:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -130,12 +130,15 @@ Data(Authenticator *ap, int type, void *d, int c)
 int
 kerberos5_init(Authenticator *ap, int server)
 {
+	krb5_error_code ret;
 
-	if (telnet_context == 0)
-		krb5_init_context(&telnet_context);
+	if (telnet_context == 0) {
+		ret = krb5_init_context(&telnet_context);
+		if (ret)
+			return 0;
+	}
 
 	if (server) {
-		krb5_error_code ret;
 		krb5_keytab kt;
 		krb5_kt_cursor cursor;
 
