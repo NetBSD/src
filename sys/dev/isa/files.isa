@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.135 2004/09/14 17:19:34 drochner Exp $
+#	$NetBSD: files.isa,v 1.136 2005/01/08 02:56:35 joff Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -218,6 +218,8 @@ define	cs_isa_common
 file	dev/isa/cs89x0isa.c		cs_isa_common
 attach	cs at isa with cs_isa: cs_isa_common, isadma
 file	dev/isa/if_cs_isa.c		cs_isa
+attach	tscs at isa with tscs_isa
+file	dev/isa/if_tscs_isa.c		tscs_isa
 
 # Fujitsu MB86960-based boards
 # (Fujitsu FMV-180 series)
