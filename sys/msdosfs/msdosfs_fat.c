@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_fat.c,v 1.26.2.1 1997/11/18 23:51:10 mellon Exp $	*/
+/*	$NetBSD: msdosfs_fat.c,v 1.26.2.2 1998/07/16 19:06:15 mellon Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -353,7 +353,7 @@ updatefats(pmp, bp, fatbn)
 			 * The cluster indicated in FSInfo isn't free
 			 * any longer.  Got get a new free one.
 			 */
-			for (cn = 0; cn < pmp->pm_maxcluster;)
+			for (cn = 0; cn < pmp->pm_maxcluster; cn++)
 				if (pmp->pm_inusemap[cn / N_INUSEBITS] != (u_int)-1)
 					break;
 			pmp->pm_nxtfree = cn
