@@ -1,4 +1,4 @@
-/*	$NetBSD: aed.c,v 1.3 1998/10/18 09:31:41 tsubai Exp $	*/
+/*	$NetBSD: aed.c,v 1.4 1999/02/17 14:56:56 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -68,7 +68,7 @@ extern int adb_polling;			/* Are we polling?  (Debugger mode) */
 /*
  * Local variables.
  */
-static struct aed_softc * aed_sc = NULL;
+static struct aed_softc *aed_sc = NULL;
 static int aed_options = 0; /* | AED_MSEMUL; */
 
 /* Driver definition */
@@ -84,7 +84,7 @@ aedmatch(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
-	struct adb_attach_args * aa_args = (struct adb_attach_args *)aux;
+	struct adb_attach_args *aa_args = (struct adb_attach_args *)aux;
 	static int aed_matched = 0;
 
 	/* Allow only one instance. */
@@ -100,7 +100,7 @@ aedattach(parent, self, aux)
 	struct device *parent, *self;
 	void   *aux;
 {
-	struct adb_attach_args * aa_args = (struct adb_attach_args *)aux;
+	struct adb_attach_args *aa_args = (struct adb_attach_args *)aux;
 	struct aed_softc *sc = (struct aed_softc *)self;
 
 	sc->origaddr = aa_args->origaddr;
@@ -150,6 +150,7 @@ aed_input(event)
 			aed_dokeyupdown(&new_event);
 		break;
 	case ADBADDR_MS:
+		new_event.u.m.buttons |= aed_sc->sc_buttons;
 		aed_handoff(&new_event);
 		break;
 	default:                /* God only knows. */
@@ -199,7 +200,7 @@ aed_emulate_mouse(event)
 			aed_handoff(&new_event);
 			break;
 		case ADBK_KEYUP(ADBK_1):
-			aed_c->sc_buttons &= ~1;	/* left up */
+			aed_sc->sc_buttons &= ~1;	/* left up */
 			new_event.def_addr = ADBADDR_MS;
 			new_event.u.m.buttons = aed_sc->sc_buttons;
 			new_event.u.m.dx = new_event.u.m.dy = 0;
@@ -241,7 +242,9 @@ aed_emulate_mouse(event)
 			aed_handoff(&new_event);
 			break;
 		case ADBK_KEYUP(ADBK_RIGHT):
+#ifdef ALTXBUTTONS
 		case ADBK_KEYUP(ADBK_3):
+#endif
 			aed_sc->sc_buttons &= ~4;	/* right up */
 			new_event.def_addr = ADBADDR_MS;
 			new_event.u.m.buttons = aed_sc->sc_buttons;
@@ -249,9 +252,12 @@ aed_emulate_mouse(event)
 			microtime(&new_event.timestamp);
 			aed_handoff(&new_event);
 			break;
-		case ADBK_KEYVAL(ADBK_SHIFT):
-		case ADBK_KEYVAL(ADBK_CONTROL):
-		case ADBK_KEYVAL(ADBK_FLOWER):
+		case ADBK_KEYUP(ADBK_SHIFT):
+		case ADBK_KEYDOWN(ADBK_SHIFT):
+		case ADBK_KEYUP(ADBK_CONTROL):
+		case ADBK_KEYDOWN(ADBK_CONTROL):
+		case ADBK_KEYUP(ADBK_FLOWER):
+		case ADBK_KEYDOWN(ADBK_FLOWER):
 			/* ctrl, shift, cmd */
 			aed_dokeyupdown(event);
 			break;
@@ -303,7 +309,7 @@ static void
 aed_kbdrpt(kstate)
 	void *kstate;
 {
-	struct aed_softc * aed_sc = (struct aed_softc *)kstate;
+	struct aed_softc *aed_sc = (struct aed_softc *)kstate;
 
 	aed_sc->sc_rptevent.bytes[0] |= 0x80;
 	microtime(&aed_sc->sc_rptevent.timestamp);
@@ -526,8 +532,8 @@ aedioctl(dev, cmd, data, flag, p)
 		for (i = 1; i <= totaldevs; i++) {
 			adbaddr = GetIndADB(&adbdata, i);
 			di->dev[adbaddr].addr = adbaddr;
-			di->dev[adbaddr].default_addr = adbdata.origADBAddr;
-			di->dev[adbaddr].handler_id = adbdata.devType;
+			di->dev[adbaddr].default_addr = (int)(adbdata.origADBAddr);
+			di->dev[adbaddr].handler_id = (int)(adbdata.devType);
 			}
 
 		/* Must call ADB Manager to get devices now */
