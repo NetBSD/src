@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.16 1998/11/27 21:59:18 thorpej Exp $	*/
+/*	$NetBSD: i82365.c,v 1.17 1998/12/20 17:53:28 nathanw Exp $	*/
 
 #define	PCICDEBUG
 
@@ -136,7 +136,6 @@ pcic_vendor(h)
 				return (PCIC_VENDOR_CIRRUS_PD6710);
 		}
 	}
-	/* XXX how do I identify the GD6729? */
 
 	reg = pcic_read(h, PCIC_IDENT);
 
@@ -205,27 +204,37 @@ pcic_attach(sc)
 
 	DPRINTF((" 0x%02x", reg));
 
+	/*
+	 * The CL-PD6729 has only one controller and always returns 0
+	 * if you try to read from the second one. Maybe pcic_ident_ok
+	 * shouldn't accept 0?
+	 */
 	sc->handle[2].sc = sc;
 	sc->handle[2].sock = C1SA;
-	if (pcic_ident_ok(reg = pcic_read(&sc->handle[2], PCIC_IDENT))) {
-		sc->handle[2].flags = PCIC_FLAG_SOCKETP;
-		count++;
-	} else {
-		sc->handle[2].flags = 0;
+	if (pcic_vendor(&sc->handle[0]) != PCIC_VENDOR_CIRRUS_PD672X ||
+	    pcic_read(&sc->handle[2], PCIC_IDENT) != 0) {
+		if (pcic_ident_ok(reg = pcic_read(&sc->handle[2],
+						  PCIC_IDENT))) {
+			sc->handle[2].flags = PCIC_FLAG_SOCKETP;
+			count++;
+		} else {
+			sc->handle[2].flags = 0;
+		}
+
+		DPRINTF((" 0x%02x", reg));
+
+		sc->handle[3].sc = sc;
+		sc->handle[3].sock = C1SB;
+		if (pcic_ident_ok(reg = pcic_read(&sc->handle[3],
+						  PCIC_IDENT))) {
+			sc->handle[3].flags = PCIC_FLAG_SOCKETP;
+			count++;
+		} else {
+			sc->handle[3].flags = 0;
+		}
+
+		DPRINTF((" 0x%02x\n", reg));
 	}
-
-	DPRINTF((" 0x%02x", reg));
-
-	sc->handle[3].sc = sc;
-	sc->handle[3].sock = C1SB;
-	if (pcic_ident_ok(reg = pcic_read(&sc->handle[3], PCIC_IDENT))) {
-		sc->handle[3].flags = PCIC_FLAG_SOCKETP;
-		count++;
-	} else {
-		sc->handle[3].flags = 0;
-	}
-
-	DPRINTF((" 0x%02x\n", reg));
 
 	if (count == 0)
 		panic("pcic_attach: attach found no sockets");

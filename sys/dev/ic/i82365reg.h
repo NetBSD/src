@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365reg.h,v 1.2 1997/10/16 23:18:18 thorpej Exp $	*/
+/*	$NetBSD: i82365reg.h,v 1.3 1998/12/20 17:53:28 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -330,3 +330,8 @@
 #define	PCIC_CIRRUS_CHIP_INFO_CHIP_ID		0xC0
 #define	PCIC_CIRRUS_CHIP_INFO_SLOTS		0x20
 #define	PCIC_CIRRUS_CHIP_INFO_REV		0x1F
+
+#define PCIC_CIRRUS_EXTENDED_INDEX		0x2E
+#define PCIC_CIRRUS_EXTENDED_DATA		0x2F
+#define PCIC_CIRRUS_EXT_CONTROL_1		0x03
+#define PCIC_CIRRUS_EXT_CONTROL_1_PCI_INTR_MASK	0x18

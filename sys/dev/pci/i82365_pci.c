@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_pci.c,v 1.6 1998/12/17 17:45:08 msaitoh Exp $	*/
+/*	$NetBSD: i82365_pci.c,v 1.7 1998/12/20 17:53:28 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -40,6 +40,7 @@
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
+#include <dev/pci/i82365_pcivar.h>
 
 /*
  * PCI constants.
@@ -49,10 +50,6 @@
 
 int	pcic_pci_match __P((struct device *, struct cfdata *, void *));
 void	pcic_pci_attach __P((struct device *, struct device *, void *));
-
-void	*pcic_pci_chip_intr_establish __P((pcmcia_chipset_handle_t,
-	    struct pcmcia_function *, int, int (*) (void *), void *));
-void	pcic_pci_chip_intr_disestablish __P((pcmcia_chipset_handle_t, void *));
 
 struct cfattach pcic_pci_ca = {
 	sizeof(struct pcic_softc), pcic_pci_match, pcic_pci_attach
@@ -69,12 +66,14 @@ static struct pcmcia_chip_functions pcic_pci_functions = {
 	pcic_chip_io_map,
 	pcic_chip_io_unmap,
 
-	pcic_pci_chip_intr_establish,
-	pcic_pci_chip_intr_disestablish,
+	pcic_pci_machdep_chip_intr_establish,
+	pcic_pci_machdep_chip_intr_disestablish,
 
 	pcic_chip_socket_enable,
 	pcic_chip_socket_disable,
 };
+
+static void pcic_pci_callback(struct device *);
 
 int
 pcic_pci_match(parent, match, aux)
@@ -84,16 +83,18 @@ pcic_pci_match(parent, match, aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *) aux;
 
-	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_CIRRUS)
-		return (0);
-
-	switch (PCI_PRODUCT(pa->pa_id)) {
-	case PCI_PRODUCT_CIRRUS_CL_PD6729:
+	switch (PCI_VENDOR(pa->pa_id)) {
+	case PCI_VENDOR_CIRRUS:
+		switch(PCI_PRODUCT(pa->pa_id)) {
+		case PCI_PRODUCT_CIRRUS_CL_PD6729:
+			break;
+		default:
+			return (0);
+		}
 		break;
 	default:
 		return (0);
 	}
-
 	return (1);
 }
 
@@ -107,9 +108,7 @@ pcic_pci_attach(parent, self, aux)
 	pci_chipset_tag_t pc = pa->pa_pc;
 	bus_space_tag_t memt = pa->pa_memt;
 	bus_space_handle_t memh;
-	pci_intr_handle_t ih;
 	char *model;
-	const char *intrstr = NULL;
 
 	if (pci_mapreg_map(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0,
 	    &sc->iot, &sc->ioh, NULL, NULL)) {
@@ -141,7 +140,6 @@ pcic_pci_attach(parent, self, aux)
 
 	/* end XXX */
 
-	sc->intr_est = pc;
 	sc->pct = (pcmcia_chipset_tag_t) & pcic_pci_functions;
 
 	sc->memt = memt;
@@ -165,83 +163,44 @@ pcic_pci_attach(parent, self, aux)
 
 	pcic_attach(sc);
 
+	/*
+	 * Check to see if we're using PCI or ISA interrupts. I don't
+	 * know of any i386 systems that use the 6729 in PCI interrupt
+	 * mode, but maybe when the PCMCIA code runs on other platforms
+	 * we'll need to fix this.
+	 */
+	pcic_write(&sc->handle[0], PCIC_CIRRUS_EXTENDED_INDEX,
+		   PCIC_CIRRUS_EXT_CONTROL_1);
+	if (pcic_read(&sc->handle[0], PCIC_CIRRUS_EXTENDED_DATA) &
+	    PCIC_CIRRUS_EXT_CONTROL_1_PCI_INTR_MASK) {
+		printf("%s: PCI interrupts not supported\n",
+		       sc->dev.dv_xname);
+		return;
+	}
+
+	sc->intr_est = pcic_pci_machdep_intr_est(pc);
+
 	/* Map and establish the interrupt. */
-	if (pci_intr_map(pc, pa->pa_intrtag, pa->pa_intrpin,
-	    pa->pa_intrline, &ih)) {
+	sc->ih = pcic_pci_machdep_pcic_intr_establish(sc, pcic_intr);
+	if (sc->ih == NULL) {
 		printf("%s: couldn't map interrupt\n", sc->dev.dv_xname);
 		return;
 	}
-	intrstr = pci_intr_string(pc, ih);
-	sc->ih = pci_intr_establish(pc, ih, IPL_NET, pcic_intr, sc);
-	if (sc->ih == NULL) {
-		printf("%s: couldn't establish interrupt",
-		       sc->dev.dv_xname);
-		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
-		return;
-	}
-	printf("%s: interrupting at %s\n", sc->dev.dv_xname, intrstr);
-
-	pcic_attach_sockets(sc);
-}
-
-/*
- * XXX This is almost totally wrong!  We need to map to PCI interupts,
- * XXX which themselves map to somthing else.
- */
-
-#include <dev/isa/isareg.h>
-#include <dev/isa/isavar.h>
-
-void *
-pcic_pci_chip_intr_establish(pch, pf, ipl, fct, arg)
-	pcmcia_chipset_handle_t pch;
-	struct pcmcia_function *pf;
-	int ipl;
-	int (*fct) (void *);
-	void *arg;
-{
-	struct pcic_handle *h = (struct pcic_handle *) pch;
-	pci_chipset_tag_t pc = h->sc->intr_est;
-	int irq;
-	pci_intr_handle_t piht;
-	void *ih;
-	int reg;
 
 	/*
-	 * XXX this will work for x86, but is guaranteed to lose elsewhere.
-	 * Hopefully Jason can bail me out of this one, too.
+	 * Defer configuration of children until ISA has had its chance
+	 * to use up whatever IO space and IRQs it wants. XXX This will
+	 * only work if ISA is attached to a pcib, AND the PCI probe finds
+	 * and defers the ISA attachment before this one.
 	 */
-
-	isa_intr_alloc(NULL, 0xffff, IST_PULSE, &irq);
-
-	if (pci_intr_map(pc, pci_make_tag(NULL, 0, 0, 0),
-	    1, irq, &piht)) {
-		printf("%s: couldn't map interrupt\n", h->sc->dev.dv_xname);
-		return (NULL);
-	}
-	if ((ih = pci_intr_establish(pc, piht, ipl, fct,
-	    arg)) == NULL)
-		return (NULL);
-
-	reg = pcic_read(h, PCIC_INTR);
-	reg |= PCIC_INTR_ENABLE;
-	reg |= irq;
-	pcic_write(h, PCIC_INTR, reg);
-
-	printf("%s: card irq %d\n", h->pcmcia->dv_xname, irq);
-
-	return (ih);
+	config_defer(self, pcic_pci_callback);
 }
 
-void 
-pcic_pci_chip_intr_disestablish(pch, ih)
-	pcmcia_chipset_handle_t pch;
-	void *ih;
+static void
+pcic_pci_callback(self)
+	struct device *self;
 {
-	struct pcic_handle *h = (struct pcic_handle *) pch;
-	pci_chipset_tag_t pc = h->sc->intr_est;
+	struct pcic_softc *sc = (void *) self;
 
-	pci_intr_disestablish(pc, ih);
+	pcic_attach_sockets(sc);
 }
