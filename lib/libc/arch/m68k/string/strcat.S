@@ -38,12 +38,12 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 	.text
 	/*.asciz "from: @(#)strcpy.s	5.1 (Berkeley) 5/12/90"*/
-	.asciz "$Id: strcat.S,v 1.1 1995/10/21 20:24:50 jtc Exp $"
+	.asciz "$Id: strcat.S,v 1.2 1995/11/17 19:32:26 jtc Exp $"
 #endif /* LIBC_SCCS and not lint */
 
 #include "DEFS.h"
 
-ENTRY(strcpy)
+ENTRY(strcat)
 	movl	sp@(8),a0		| a0 = fromaddr
 	movl	sp@(4),d0		| return value is toaddr
 	movl	d0,a1			| a1 = toaddr
