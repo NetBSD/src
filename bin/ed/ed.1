@@ -1,4 +1,4 @@
-.\"	$NetBSD: ed.1,v 1.24 2003/03/29 18:09:03 perry Exp $
+.\"	$NetBSD: ed.1,v 1.25 2003/05/01 13:50:59 wiz Exp $
 .\"
 .TH ED 1 "21 May 1993"
 .SH NAME
@@ -308,7 +308,7 @@ used by the
 .I `s'
 command for selecting old text to be replaced with new.
 
-In addition to a specifying string literals, regular expressions can
+In addition to specifying string literals, regular expressions can
 represent classes of strings.
 Strings thus represented are said to be matched
 by the corresponding regular expression.
@@ -790,14 +790,14 @@ match is replaced.
 The
 .I `r'
 suffix causes
-the regular expression of the last search to be used instead of the
+the regular expression of the last search to be used instead of
 that of the last substitution.
 The
 .I `g'
 suffix toggles the global suffix of the last substitution.
 The
 .I `p'
-suffix toggles the print suffix of the last substitution
+suffix toggles the print suffix of the last substitution.
 The current address is set to the last line affected.
 
 .TP 8
@@ -846,7 +846,7 @@ Writes the addressed lines to
 .IR file .
 Any previous contents of
 .I file
-is lost without warning.
+are lost without warning.
 If there is no default filename, then the default filename is set to
 .IR file,
 otherwise it is unchanged.
