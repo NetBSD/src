@@ -1,4 +1,4 @@
-/*	$NetBSD: pdq.c,v 1.6 1996/06/07 23:35:04 cgd Exp $	*/
+/*	$NetBSD: pdq.c,v 1.7 1996/07/10 18:53:32 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1995,1996 Matt Thomas <matt@3am-software.com>
@@ -538,6 +538,7 @@ pdq_queue_commands(
 	    pdq_os_addr_fill(pdq, addr, 61);
 	    break;
 	}
+	default:
     }
     /*
      * At this point the command is done.  All that needs to be done is to
@@ -1243,6 +1244,7 @@ pdq_run(
 	}
 	case PDQS_RING_MEMBER: {
 	}
+	default:
     }
 }
 
