@@ -1,4 +1,4 @@
-/* $NetBSD: j720ssp.c,v 1.15 2002/10/05 17:12:09 chs Exp $ */
+/* $NetBSD: j720ssp.c,v 1.16 2002/11/07 17:26:34 manu Exp $ */
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -961,11 +961,7 @@ hpcarm_apm_getpower(api, parent)
 		if (j720ssp_readwrite(sc, 0, 0x8800, &pmdata[i], 500) < 0)
 			goto out;
 		BIT_INVERT(pmdata[i]);
-#if 0
-		printf("pmdata%d = %d ", i, pmdata[i]);
-#endif
 	}
-	printf("\n");
 
 	bus_space_write_4(sc->sc_iot, sc->sc_gpioh, SAGPIO_PSR, 0x2000000);
 
