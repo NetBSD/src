@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgereg.h,v 1.18 2004/03/20 01:58:51 jonathan Exp $	*/
+/*	$NetBSD: if_bgereg.h,v 1.19 2004/04/10 19:23:50 thorpej Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -2335,6 +2335,7 @@ struct bge_softc {
 	u_int32_t		bge_tx_buf_ratio;
 	int			bge_if_flags;
 	int			bge_flags;
+	int			bge_flowflags;
 	int			bge_txcnt;
 	int			bge_link;
 	struct callout		bge_timeout;
