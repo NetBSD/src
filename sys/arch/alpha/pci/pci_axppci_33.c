@@ -1,4 +1,4 @@
-/* $NetBSD: pci_axppci_33.c,v 1.17 1998/04/14 22:20:59 thorpej Exp $ */
+/* $NetBSD: pci_axppci_33.c,v 1.18 1998/04/16 19:50:55 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_axppci_33.c,v 1.17 1998/04/14 22:20:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_axppci_33.c,v 1.18 1998/04/16 19:50:55 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -117,7 +117,8 @@ dec_axppci_33_intr_map(lcv, bustag, buspin, line, ihp)
                 return 1;
         }
         if (buspin > 4) {
-                printf("pci_map_int: bad interrupt pin %d\n", buspin);
+                printf("dec_axppci_33_intr_map: bad interrupt pin %d\n",
+                    buspin);
                 return 1;
         }
 
@@ -142,7 +143,7 @@ dec_axppci_33_intr_map(lcv, bustag, buspin, line, ihp)
 			break;
 #ifdef DIAGNOSTIC
 		default:			/* XXX gcc -Wuninitialized */
-			panic("dec_axppci_33_intr_map bogus PCI pin %d\n",
+			panic("dec_axppci_33_intr_map: bogus PCI pin %d\n",
 			    buspin);
 #endif
 		};
@@ -162,7 +163,7 @@ dec_axppci_33_intr_map(lcv, bustag, buspin, line, ihp)
 			break;
 #ifdef DIAGNOSTIC
 		default:			/* XXX gcc -Wuninitialized */
-			panic("dec_axppci_33_intr_map bogus PCI pin %d\n",
+			panic("dec_axppci_33_intr_map: bogus PCI pin %d\n",
 			    buspin);
 #endif
 		};
@@ -182,7 +183,7 @@ dec_axppci_33_intr_map(lcv, bustag, buspin, line, ihp)
 			break;
 #ifdef DIAGNOSTIC
 		default:			/* XXX gcc -Wuninitialized */
-			panic("dec_axppci_33_intr_map bogus PCI pin %d\n",
+			panic("dec_axppci_33_intr_map bogus: PCI pin %d\n",
 			    buspin);
 #endif
 		};
@@ -197,7 +198,7 @@ dec_axppci_33_intr_map(lcv, bustag, buspin, line, ihp)
 	pirqreg = pci_conf_read(pc, pci_make_tag(pc, 0, LCA_SIO_DEVICE, 0),
 	    SIO_PCIREG_PIRQ_RTCTRL);
 #if 0
-	printf("pci_axppci_33_map_int: device %d pin %c: pirq %d, reg = %x\n",
+	printf("dec_axppci_33_intr_map: device %d pin %c: pirq %d, reg = %x\n",
 		device, '@' + buspin, pirq, pirqreg);
 #endif
 	pirqline = (pirqreg >> (pirq * 8)) & 0xff;
@@ -206,7 +207,7 @@ dec_axppci_33_intr_map(lcv, bustag, buspin, line, ihp)
 	pirqline &= 0xf;
 
 #if 0
-	printf("pci_axppci_33_map_int: device %d pin %c: mapped to line %d\n",
+	printf("dec_axppci_33_intr_map: device %d pin %c: mapped to line %d\n",
 	    device, '@' + buspin, pirqline);
 #endif
 
