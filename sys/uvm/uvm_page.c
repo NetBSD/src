@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.84 2003/02/17 23:48:24 perseant Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.85 2003/04/09 16:34:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.84 2003/02/17 23:48:24 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.85 2003/04/09 16:34:10 thorpej Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -417,8 +417,16 @@ uvm_page_init(kvm_startp, kvm_endp)
 void
 uvm_setpagesize()
 {
-	if (uvmexp.pagesize == 0)
-		uvmexp.pagesize = DEFAULT_PAGE_SIZE;
+
+	/*
+	 * If uvmexp.pagesize is 0 at this point, we expect PAGE_SIZE
+	 * to be a constant (indicated by being a non-zero value).
+	 */
+	if (uvmexp.pagesize == 0) {
+		if (PAGE_SIZE == 0)
+			panic("uvm_setpagesize: uvmexp.pagesize not set");
+		uvmexp.pagesize = PAGE_SIZE;
+	}
 	uvmexp.pagemask = uvmexp.pagesize - 1;
 	if ((uvmexp.pagemask & uvmexp.pagesize) != 0)
 		panic("uvm_setpagesize: page size not a power of two");
