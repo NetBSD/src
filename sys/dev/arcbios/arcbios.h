@@ -1,4 +1,4 @@
-/*	$NetBSD: arcbios.h,v 1.1 2001/07/08 19:58:02 thorpej Exp $	*/
+/*	$NetBSD: arcbios.h,v 1.2 2001/07/08 23:56:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -200,9 +200,10 @@ struct arcbios_component {
 /*
  * ARC system ID
  */
+#define	ARCBIOS_SYSID_FIELDLEN		8
 struct arcbios_sysid {
-	char		Vendor[8];
-	char		Serial[8];
+	char		VendorId[ARCBIOS_SYSID_FIELDLEN];
+	char		ProductId[ARCBIOS_SYSID_FIELDLEN];
 };
 
 /*
