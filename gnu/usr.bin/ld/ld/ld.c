@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.64 1999/02/27 03:31:12 tv Exp $	*/
+/*	$NetBSD: ld.c,v 1.65 1999/06/25 12:10:42 pk Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -88,7 +88,7 @@
 
 #ifndef lint
 /* from: "@(#)ld.c	6.10 (Berkeley) 5/22/91"; */
-__RCSID("$NetBSD: ld.c,v 1.64 1999/02/27 03:31:12 tv Exp $");
+__RCSID("$NetBSD: ld.c,v 1.65 1999/06/25 12:10:42 pk Exp $");
 #endif /* not lint */
 
 #define GNU_BINUTIL_COMPAT	/* forwards compatiblity with binutils 2.x */
@@ -2312,7 +2312,7 @@ printf("pass1: SO definition for %s, type %x in %s at %#x\n",
 	if (setv_fill_count != set_sect_size/sizeof(long))
 		errx(1, "internal error: allocated set symbol space (%d) "
 			"doesn't match actual (%d)",
-			set_sect_size/sizeof(long), setv_fill_count);
+			set_sect_size/(int)sizeof(long), setv_fill_count);
 }
 
 
