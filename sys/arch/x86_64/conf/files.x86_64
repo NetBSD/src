@@ -1,4 +1,4 @@
-#	$NetBSD: files.x86_64,v 1.8.2.3 2002/07/15 01:41:07 gehenna Exp $
+#	$NetBSD: files.x86_64,v 1.8.2.4 2002/07/17 02:14:50 gehenna Exp $
 #
 # new style config file for x86_64 architecture
 #
@@ -47,6 +47,7 @@ file	arch/x86_64/x86_64/kgdb_machdep.c	kgdb
 file	arch/x86_64/x86_64/machdep.c
 file	arch/x86_64/x86_64/math_emulate.c	math_emulate
 file	arch/x86_64/x86_64/mem.c
+file	arch/x86_64/x86_64/mtrr.c
 file	netns/ns_cksum.c			ns
 file	arch/x86_64/x86_64/pmap.c
 file	arch/x86_64/x86_64/process_machdep.c

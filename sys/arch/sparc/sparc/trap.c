@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.108.8.1 2002/07/15 01:21:33 gehenna Exp $ */
+/*	$NetBSD: trap.c,v 1.108.8.2 2002/07/17 02:10:51 gehenna Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1285,15 +1285,12 @@ syscall(code, tf, pc)
 		}
 		copywords(ap, args.i, i * sizeof(register_t));
 	}
-#ifdef SYSCALL_DEBUG
-	scdebug_call(p, code, args.i);
-#endif /* SYSCALL_DEBUG */
 
 	/* Lock the kernel if the syscall isn't MP-safe. */
 	if ((callp->sy_flags & SYCALL_MPSAFE) == 0)
 		KERNEL_PROC_LOCK(p);
 
-	f ((error = trace_enter(p, code, args.i, rval)) != 0)
+	if ((error = trace_enter(p, code, args.i, rval)) != 0)
 		goto bad;
 
 	rval[0] = 0;

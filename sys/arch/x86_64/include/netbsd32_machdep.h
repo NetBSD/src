@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.h,v 1.1 2001/06/19 00:20:11 fvdl Exp $	*/
+/*	$NetBSD: netbsd32_machdep.h,v 1.1.14.1 2002/07/17 02:14:52 gehenna Exp $	*/
 
 #ifndef _MACHINE_NETBSD32_H_
 #define _MACHINE_NETBSD32_H_
@@ -65,10 +65,10 @@ struct netbsd32_sigcontext {
 #define sc_ps sc_eflags
 
 struct netbsd32_sigframe {
+	uint32_t sf_ra;
 	int	sf_signum;
 	int	sf_code;
-	u_int32_t sf_scp;		/* struct  sigcontext *sf_scp */
-	u_int32_t sf_handler;		/* sig_t sf_handler; */
+	uint32_t sf_scp;
 	struct	netbsd32_sigcontext sf_sc;
 };
 
@@ -95,11 +95,29 @@ struct fpreg32 {
 	char	__data[108];
 };
 
+struct mtrr32 {
+	uint64_t base;
+	uint64_t len;
+	uint8_t type;
+	uint8_t __pad0[3];
+	int flags;
+	uint32_t owner;
+} __attribute__((packed));
+
+struct x86_64_get_mtrr_args32 {
+	uint32_t mtrrp;
+	uint32_t n;
+};
+
+struct x86_64_set_mtrr_args32 {
+	uint32_t mtrrp;
+	uint32_t n;
+};
 
 struct exec_package;
 void netbsd32_setregs(struct proc *p, struct exec_package *pack, u_long stack);
 int netbsd32_sigreturn(struct proc *p, void *v, register_t *retval);
-void netbsd32_sendsig(sig_t catcher, int sig, sigset_t *mask, u_long code);
+void netbsd32_sendsig(int sig, sigset_t *mask, u_long code);
 
 extern char netbsd32_sigcode[], netbsd32_esigcode[];
 

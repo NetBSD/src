@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.123.2.1 2002/05/17 13:50:02 gehenna Exp $	 */
+/* $NetBSD: machdep.c,v 1.123.2.2 2002/07/17 02:12:41 gehenna Exp $	 */
 
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
@@ -415,18 +415,19 @@ struct trampframe {
 };
 
 void
-sendsig(catcher, sig, mask, code)
-	sig_t		catcher;
+sendsig(sig, mask, code)
 	int		sig;
 	sigset_t	*mask;
 	u_long		code;
 {
 	struct	proc	*p = curproc;
+	struct	sigacts *ps = p->p_sigacts;
 	struct	trapframe *syscf;
 	struct	sigcontext *sigctx, gsigctx;
 	struct	trampframe *trampf, gtrampf;
 	unsigned	cursp;
 	int	onstack;
+	sig_t	catcher = SIGACTION(p, sig).sa_handler;
 
 	syscf = p->p_addr->u_pcb.framep;
 
@@ -471,7 +472,25 @@ sendsig(catcher, sig, mask, code)
 	    copyout(&gsigctx, sigctx, sizeof(gsigctx)))
 		sigexit(p, SIGILL);
 
-	syscf->pc = (int)p->p_sigctx.ps_sigcode;
+	/*
+	 * Note the trampoline version numbers are coordinated with
+	 * machine-dependent code in libc.
+	 */
+	switch (ps->sa_sigdesc[sig].sd_vers) {
+#if 1 /* COMPAT_16 */
+	case 0:
+		syscf->pc = (int)p->p_sigctx.ps_sigcode;
+		break;
+#endif /* COMPAT_16 */
+
+	case 1:
+		syscf->pc = (int)ps->sa_sigdesc[sig].sd_tramp;
+		break;
+
+	default:
+		/* Don't know what trampoline version; kill it. */
+		sigexit(p, SIGILL);
+	}
 	syscf->psl = PSL_U | PSL_PREVU;
 	syscf->ap = cursp;
 	syscf->sp = cursp;
