@@ -1,4 +1,4 @@
-/*	$NetBSD: print-icmp6.c,v 1.8 2000/08/01 17:29:48 itojun Exp $	*/
+/*	$NetBSD: print-icmp6.c,v 1.9 2000/08/03 14:31:04 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1993, 1994
@@ -27,7 +27,7 @@ static const char rcsid[] =
     "@(#) /master/usr.sbin/tcpdump/tcpdump/print-icmp.c,v 2.1 1995/02/03 18:14:42 polk Exp (LBL)";
 #else
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: print-icmp6.c,v 1.8 2000/08/01 17:29:48 itojun Exp $");
+__RCSID("$NetBSD: print-icmp6.c,v 1.9 2000/08/03 14:31:04 itojun Exp $");
 #endif
 #endif
 
@@ -689,7 +689,7 @@ icmp6_nodeinfo_print(int icmp6len, const u_char *bp, const u_char *ep)
 		printf("icmp6: node information query");
 		printf(" (");	/*)*/
 		switch (ni6->ni_code) {
-		case ICMP6_NI_SUCESS:
+		case ICMP6_NI_SUCCESS:
 			if (vflag) {
 				printf("success");
 				needcomma++;
@@ -711,7 +711,7 @@ icmp6_nodeinfo_print(int icmp6len, const u_char *bp, const u_char *ep)
 			break;
 		}
 
-		if (ni6->ni_code != ICMP6_NI_SUCESS) {
+		if (ni6->ni_code != ICMP6_NI_SUCCESS) {
 			/*(*/
 			printf(")");
 			break;
