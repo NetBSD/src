@@ -1,4 +1,4 @@
-/*	$NetBSD: ansi.h,v 1.2 2002/07/10 12:23:08 scw Exp $	*/
+/*	$NetBSD: ansi.h,v 1.3 2002/07/12 11:19:08 scw Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -81,11 +81,15 @@
  * XXX: Yet another hack for the non-native sh5 toolchain
  */
 #if __GNUC__ < 3
+#ifndef __cplusplus
 #define	_BSD_WCHAR_T_		unsigned short int		/* wchar_t */
+#endif
 #define	_BSD_WINT_T_		int				/* wint_t */
 #define	_BSD_RUNE_T_		unsigned short int		/* rune_t */
 #else
+#ifndef __cplusplus
 #define	_BSD_WCHAR_T_		int		/* wchar_t */
+#endif
 #define	_BSD_WINT_T_		int		/* wint_t */
 #define	_BSD_RUNE_T_		int		/* rune_t */
 #endif
