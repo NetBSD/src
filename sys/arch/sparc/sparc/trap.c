@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.149 2003/11/01 01:38:46 cl Exp $ */
+/*	$NetBSD: trap.c,v 1.150 2003/11/04 14:24:25 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.149 2003/11/01 01:38:46 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.150 2003/11/04 14:24:25 pk Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -536,7 +536,7 @@ badtrap:
 			sig = SIGFPE;
 			KSI_INIT_TRAP(&ksi);
 			ksi.ksi_trap = type;
-			ksi.ksi_code = 0; /* XXX - ucode? */
+			ksi.ksi_code = SI_NOINFO;
 			ksi.ksi_addr = (void *)pc;
 #endif
 			break;
@@ -719,7 +719,7 @@ badtrap:
 		sig = SIGEMT;
 		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_trap = type;
-		ksi.ksi_code = 0;
+		ksi.ksi_code = SI_NOINFO;
 		ksi.ksi_addr = (void *)pc;
 		break;
 
@@ -774,7 +774,6 @@ badtrap:
 		ksi.ksi_trap = type;
 		ksi.ksi_code = ILL_ILLADR;
 		ksi.ksi_addr = (void *)pc;
-		/* XXX - ucode? */
 		break;
 
 	case T_FIXALIGN:
@@ -1057,12 +1056,13 @@ kfault:
 			       p->p_cred && p->p_ucred ?
 			       p->p_ucred->cr_uid : -1);
 			ksi.ksi_signo = SIGKILL;
-			ksi.ksi_code = 0;
+			ksi.ksi_code = SI_NOINFO;
 		} else {
 			ksi.ksi_signo = SIGSEGV;
 			ksi.ksi_code = (rv == EACCES
 				? SEGV_ACCERR : SEGV_MAPERR);
 		}
+		ksi.ksi_errno = rv;
 		ksi.ksi_trap = type;
 		ksi.ksi_addr = (void *)v;
 		trapsignal(l, &ksi);
@@ -1350,12 +1350,13 @@ kfault:
 			       p->p_cred && p->p_ucred ?
 			       p->p_ucred->cr_uid : -1);
 			ksi.ksi_signo = SIGKILL;
-			ksi.ksi_code = 0;
+			ksi.ksi_code = SI_NOINFO;
 		} else {
 			ksi.ksi_signo = SIGSEGV;
 			ksi.ksi_code = (rv == EACCES)
 				? SEGV_ACCERR : SEGV_MAPERR;
 		}
+		ksi.ksi_errno = rv;
 		ksi.ksi_trap = type;
 		ksi.ksi_addr = (void *)sfva;
 		trapsignal(l, &ksi);
