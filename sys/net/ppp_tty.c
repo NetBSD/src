@@ -1,4 +1,4 @@
-/*	$NetBSD: ppp_tty.c,v 1.33 2003/02/26 06:31:13 matt Exp $	*/
+/*	$NetBSD: ppp_tty.c,v 1.34 2003/09/01 16:51:27 christos Exp $	*/
 /*	Id: ppp_tty.c,v 1.3 1996/07/01 01:04:11 paulus Exp 	*/
 
 /*
@@ -93,7 +93,7 @@
 /* from NetBSD: if_ppp.c,v 1.15.2.2 1994/07/28 05:17:58 cgd Exp */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppp_tty.c,v 1.33 2003/02/26 06:31:13 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppp_tty.c,v 1.34 2003/09/01 16:51:27 christos Exp $");
 
 #include "ppp.h"
 
@@ -1038,14 +1038,13 @@ pppinput(c, tp)
 	sc->sc_flags |= SC_RCV_EVNP;
     splx(s);
 
-    if (sc->sc_flags & SC_LOG_RAWIN)
-	ppplogchar(sc, c);
+    ppplogchar(sc, c);
 
     if (c == PPP_FLAG) {
 	ilen = sc->sc_ilen;
 	sc->sc_ilen = 0;
 
-	if (sc->sc_rawin_count > 0) 
+	if ((sc->sc_flags & SC_LOG_RAWIN) && sc->sc_rawin.count > 0) 
 	    ppplogchar(sc, -1);
 
 	/*
@@ -1234,13 +1233,20 @@ ppplogchar(sc, c)
     struct ppp_softc *sc;
     int c;
 {
-    if (c >= 0)
-	sc->sc_rawin[sc->sc_rawin_count++] = c;
-    if (sc->sc_rawin_count >= sizeof(sc->sc_rawin)
-	|| (c < 0 && sc->sc_rawin_count > 0)) {
-	printf("%s input: ", sc->sc_if.if_xname);
-	pppdumpb(sc->sc_rawin, sc->sc_rawin_count);
-	sc->sc_rawin_count = 0;
+    if (c >= 0) {
+	sc->sc_rawin.buf[sc->sc_rawin_start++] = c;
+	if (sc->sc_rawin.count < sizeof(sc->sc_rawin.buf))
+	    sc->sc_rawin.count++;
+    }
+    if (sc->sc_rawin_start >= sizeof(sc->sc_rawin.buf)
+	|| (c < 0 && sc->sc_rawin_start > 0)) {
+	if (sc->sc_flags & (SC_LOG_FLUSH|SC_LOG_RAWIN)) {
+	    printf("%s input: ", sc->sc_if.if_xname);
+	    pppdumpb(sc->sc_rawin.buf, sc->sc_rawin_start);
+	}
+	if (c < 0)
+	    sc->sc_rawin.count = 0;
+	sc->sc_rawin_start = 0;
     }
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pppvar.h,v 1.17 2003/07/08 07:13:51 itojun Exp $	*/
+/*	$NetBSD: if_pppvar.h,v 1.18 2003/09/01 16:51:27 christos Exp $	*/
 /*	Id: if_pppvar.h,v 1.3 1996/07/01 01:04:37 paulus Exp	 */
 
 /*
@@ -141,8 +141,8 @@ struct ppp_softc {
 	u_int16_t sc_ilen;		/* length of input packet so far */
 	u_int16_t sc_fcs;		/* FCS so far (input) */
 	u_int16_t sc_outfcs;		/* FCS so far for output packet */
-	u_char	sc_rawin[16];		/* chars as received */
-	int	sc_rawin_count;		/* # in sc_rawin */
+	u_char sc_rawin_start;		/* current char start */
+	struct ppp_rawin sc_rawin;	/* chars as received */
 };
 
 #ifdef _KERNEL
