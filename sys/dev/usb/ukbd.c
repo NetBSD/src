@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.17 1998/12/28 12:52:38 augustss Exp $        */
+/*      $NetBSD: ukbd.c,v 1.18 1998/12/29 15:42:30 augustss Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -209,6 +209,7 @@ int	ukbd_enable __P((void *, int));
 void	ukbd_set_leds __P((void *, int));
 #if defined(__NetBSD__)
 int	ukbd_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
+int	ukbd_cnattach __P((void *v));
 
 const struct wskbd_accessops ukbd_accessops = {
 	ukbd_enable,
@@ -587,6 +588,20 @@ ukbd_cnpollc(v, on)
 
 	usbd_set_polling(sc->sc_iface, on);
 }
+
+#if 0
+/* XXX We're not ready for this yet... */
+int
+ukbd_cnattach(v)
+	void *v;
+{
+	struct ukbd_softc *sc = v;
+
+	wskbd_cnattach(&ukbd_consops, sc, &ukbd_keymapdata);
+	return (0);
+}
+#endif
+
 #endif
 
 #if defined(__FreeBSD__)
