@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)ttyname.c	5.10 (Berkeley) 5/6/91";*/
-static char *rcsid = "$Id: ttyname.c,v 1.7 1994/01/28 01:19:11 cgd Exp $";
+static char *rcsid = "$Id: ttyname.c,v 1.7.4.1 1995/04/26 00:35:56 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -93,7 +93,7 @@ __oldttyname(fd, sb)
 	register struct dirent *dirp;
 	register DIR *dp;
 	struct stat dsb;
-	char *rval, *strcpy();
+	char *rval;
 
 	if ((dp = opendir(_PATH_DEV)) == NULL)
 		return(NULL);
