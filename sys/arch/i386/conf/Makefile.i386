@@ -63,7 +63,7 @@ PROFILE_C=	${CC} -S -c ${CFLAGS} $< ; \
 %LOAD
 
 clean:
-	rm -f eddep *386bsd tags *.o locore.i [a-uw-z]*.s \
+	rm -f eddep *bsd tags *.o locore.i [a-uw-z]*.s \
 		errs linterrs makelinks
 
 lint: /tmp param.c
