@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.11 1995/03/21 09:06:40 cgd Exp $	*/
+/*	$NetBSD: util.c,v 1.12 1995/09/07 06:43:02 jtc Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -38,9 +38,9 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)util.c	8.4 (Berkeley) 7/27/94";
+static char sccsid[] = "@(#)util.c	8.5 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$NetBSD: util.c,v 1.11 1995/03/21 09:06:40 cgd Exp $";
+static char rcsid[] = "$NetBSD: util.c,v 1.12 1995/09/07 06:43:02 jtc Exp $";
 #endif
 #endif /* not lint */
 
@@ -72,7 +72,7 @@ prcopy(src, dest, len)
 void
 usage()
 {
-
-	(void)fprintf(stderr, "usage: ls [-1ACFLRSTWacdfikloqrstu] [file ...]\n");
+	(void)fprintf(stderr, 
+	    "usage: ls [-1ACFLRSTWacdfikloqrstu] [file ...]\n");
 	exit(1);
 }
