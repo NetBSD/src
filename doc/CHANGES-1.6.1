@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.1,v 1.1.2.130 2003/03/23 01:30:11 jmc Exp $
+#	$NetBSD: CHANGES-1.6.1,v 1.1.2.131 2003/03/25 20:01:35 jmc Exp $
 
 A complete list of changes from NetBSD 1.6 to NetBSD 1.6.1:
 
@@ -3839,3 +3839,23 @@ sys/arch/vax/boot/boot/Makefile			1.31
 
 	Bring back "START=start", otherwise booting via real VMB don't work.
 	[jklos, ticket #1227]
+
+sys/conf/osrelease.sh                           patched by hand
+share/tmac/doc-common                           patched by hand
+
+        Update to 1.6.1_RC3
+
+gnu/usr.bin/tar/extract.c			patched by hand
+
+	If an entry for a directory into which files are to be extracted is
+	missing in an archive, tar handles this by noticing it, and creating
+	the necessary directory itself. Since the mode for that directory is
+	not regietered in the incomplete archive, tar creates these
+	directories mode 0777, expecting the user's umask to strip of all
+	unwanted permission bits. However, if tar is called with the "-p"
+	option (preserve modes) the umask is cleared, and thus directories not
+	contained in the archive are created mode 0777. The attached patch
+	fixes this by honouring the umask in this special case.
+	[wennmach, ticket #1229]
+
+	[Moved RC3 tag for this file]
