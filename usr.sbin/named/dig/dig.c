@@ -1,4 +1,4 @@
-/*	$NetBSD: dig.c,v 1.2 1997/04/13 10:50:15 mrg Exp $	*/
+/*	$NetBSD: dig.c,v 1.3 1997/04/21 05:46:59 mrg Exp $	*/
 
 #ifndef lint
 #if 0
@@ -634,7 +634,7 @@ main(argc, argv)
 					       inet_ntoa(_res.nsaddr_list[i]
 							 .sin_addr));
 					printf(";; WHEN: %s",
-					       ctime(&(exectime.tv_sec)));
+					    ctime((time_t *)&(exectime.tv_sec)));
 				}
 				if (!x)
 					break;	/* success */
@@ -689,7 +689,7 @@ main(argc, argv)
 			printf(";; FROM: %s to SERVER: %s\n",
 			       myhostname, srvmsg);
 			printf(";; WHEN: %s",
-			       ctime(&(exectime.tv_sec)));
+			       ctime((time_t *)&(exectime.tv_sec)));
 			printf(";; MSG SIZE  sent: %d  rcvd: %d\n",
 			       bytes_out, bytes_in);
 		}
