@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw.c,v 1.18 2002/08/21 18:34:33 thorpej Exp $	*/
+/*	$NetBSD: ofw.c,v 1.19 2002/08/22 01:13:58 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -1050,7 +1050,9 @@ ofw_callbackhandler(args)
 
 			ap_bits >>= 10;
 			for (; npages > 0; pte++, pa += NBPG, npages--)
-				*pte = (pa | L2_AP(ap_bits) | L2_TYPE_S | cb_bits);
+				*pte = (pa | L2_AP(ap_bits) | L2_TYPE_S |
+				    cb_bits);
+			PTE_SYNC_RANGE(vtopte(va), size >> PGSHIFT);
 		}
 
 		/* Clean out tlb. */
@@ -1092,6 +1094,7 @@ ofw_callbackhandler(args)
 
 			for (; npages > 0; pte++, npages--)
 				*pte = 0;
+			PTE_SYNC_RANGE(vtopte(va), size >> PGSHIFT);
 		}
 
 		/* Clean out tlb. */

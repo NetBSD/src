@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.111 2002/08/21 21:22:52 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.112 2002/08/22 01:13:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -143,7 +143,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.111 2002/08/21 21:22:52 thorpej Exp $");        
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.112 2002/08/22 01:13:55 thorpej Exp $");        
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
 	if (pmap_debug_level >= (_lev_)) \
@@ -965,6 +965,7 @@ pmap_map(vaddr_t va, paddr_t spa, paddr_t epa, vm_prot_t prot)
 
 		*pte = L2_S_PROTO | spa |
 		    L2_S_PROT(PTE_KERNEL, prot) | pte_l2_s_cache_mode;
+		PTE_SYNC(pte);
 		cpu_tlb_flushID_SE(va);
 		va += NBPG;
 		spa += NBPG;
@@ -1305,6 +1306,7 @@ pmap_ptpt_page_alloc(struct pool *pp, int flags)
 
 	*pte = L2_S_PROTO | VM_PAGE_TO_PHYS(pg) |
 	     L2_S_PROT(PTE_KERNEL, VM_PROT_READ|VM_PROT_WRITE);
+	PTE_SYNC(pte);
 #ifdef PMAP_ALIAS_DEBUG
     {
 	int s = splhigh();
@@ -2871,12 +2873,15 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 
 	*pte = L2_S_PROTO | pa |
 	    L2_S_PROT(PTE_KERNEL, prot) | pte_l2_s_cache_mode;
+	PTE_SYNC(pte);
 }
 
 void
 pmap_kremove(vaddr_t va, vsize_t len)
 {
 	pt_entry_t *pte;
+	vaddr_t ova = va;
+	vaddr_t olen = len;
 
 	for (len >>= PAGE_SHIFT; len > 0; len--, va += PAGE_SIZE) {
 
@@ -2910,6 +2915,7 @@ pmap_kremove(vaddr_t va, vsize_t len)
 		*pte = 0;
 		cpu_tlb_flushID_SE(va);
 	}
+	PTE_SYNC_RANGE(vtopte(ova), olen >> PAGE_SHIFT);
 }
 
 /*
@@ -3641,6 +3647,7 @@ vector_page_setprot(int prot)
 	pte = vtopte(vector_page);
 
 	*pte = (*pte & ~L1_S_PROT_MASK) | L2_S_PROT(PTE_KERNEL, prot);
+	PTE_SYNC(pte);
 	cpu_tlb_flushD_SE(vector_page);
 	cpu_cpwait();
 }
