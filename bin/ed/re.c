@@ -46,7 +46,10 @@ static char sccsid[] = "@(#)re.c	5.5 (Berkeley) 3/28/93";
 
 #include "ed.h"
 
+extern char *lhbuf;
+extern int lhbufsz;
 extern char *ibufp;
+extern int ibufsz;
 extern int patlock;
 
 char errmsg[MAXFNAME + 40] = "";
@@ -96,50 +99,53 @@ optpat()
 }
 
 
+extern int isbinary;
+
 /* getlhs: copy a pattern string from the command buffer; return pointer
    to the copy */
 char *
 getlhs(delim)
 	int delim;
 {
-	static char buf[MAXLINE];
 	char *nd;
+	int len;
 
 	for (nd = ibufp; *nd != delim && *nd != '\n'; nd++)
 		switch (*nd) {
 		default:
 			break;
-		case CCL:
-			if ((nd = ccl(CCLEND, ++nd)) == NULL) {
+		case '[':
+			if ((nd = ccl(++nd)) == NULL) {
 				sprintf(errmsg, "unbalanced brackets ([])");
 				return NULL;
 			}
 			break;
-		case ESCHAR:
+		case '\\':
 			if (*++nd == '\n') {
 				sprintf(errmsg, "trailing backslash (\\)");
 				return NULL;
 			}
 			break;
 		}
-	strncpy(buf, ibufp, nd - ibufp);
-	buf[nd - ibufp] = '\0';
+	len = nd - ibufp;
+	CKBUF(lhbuf, lhbufsz, len + 1, NULL);
+	memcpy(lhbuf, ibufp, len);
+	lhbuf[len] = '\0';
 	ibufp = nd;
-	return buf;
+	return (isbinary) ? nultonl(lhbuf, len) : lhbuf;
 }
 
 
 /* ccl: expand a character class */
 char *
-ccl(delim, src)
-	int	delim;
+ccl(src)
 	char	*src;
 {
 	if (*src == '^')
 		src++;
-	if (*src == delim)
+	if (*src == ']')
 		src++;
-	while (*src != delim && *src != '\n')
+	while (*src != ']' && *src != '\n')
 		src++;
-	return  (*src == delim) ? src : NULL;
+	return  (*src == ']') ? src : NULL;
 }

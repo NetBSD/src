@@ -39,38 +39,35 @@
 
 #include <unistd.h>
 #include <errno.h>
-#if defined(BSD) && BSD >= 199103 || defined(__386BSD__) || defined(__NetBSD__)
+#if defined(BSD) && BSD >= 199103 || defined(__386BSD__)
 # include <sys/param.h>		/* for MAXPATHLEN */
 #endif
 #include <regex.h>
+#include <signal.h>
 
 #define BITSPERBYTE 8
 #define BITS(type)  (BITSPERBYTE * (int)sizeof(type))
 #define CHARBITS    BITS(char)
 #define INTBITS     BITS(int)
+#define INTHIBIT    (1 << (INTBITS - 1))
 
-#define	ESCHAR	'\\'
-#define CCL	'['	/* Character class: [...] */
-#define CCLEND	']'
-#define DITTO	'&'
-
-#define TRUE 	1
-#define FALSE	0
 #define ERR		(-2)
-#define EMOD		(ERR - 1)
+#define EMOD		(-3)
+#define FATAL		(-4)
 
 #ifndef MAXPATHLEN
 # define MAXPATHLEN 255		/* _POSIX_PATH_MAX */
 #endif
 
 #define MAXFNAME MAXPATHLEN	/* max file name size */
-#define MAXLINE	(4 << 10)	/* max number of chars per line */
+#define MINBUFSZ 512		/* minimum buffer size - must be > 0 */
+#define LINECHARS (INTHIBIT - 1) /* max chars per line */
 #define SE_MAX 30		/* max subexpressions in a regular expression */
 
 typedef regex_t pattern_t;
 
 #ifdef GNU_REGEX
-# define FASTMAP_SIZE 256	/* size of fastmap for 8 bit character set */
+# define FASTMAP_SIZE 256	/* size of fasmap for 8 bit character set */
 #endif
 
 /* Line node */
@@ -79,7 +76,7 @@ typedef struct	line {
 	struct line	*prev;
 	off_t		seek;		/* address of line in scratch buffer */
 
-#define ACTV	(1 << (INTBITS - 1))	/* active status: high bit of len */
+#define ACTV INTHIBIT			/* active bit: high bit of len */
 
 	int		len;		/* length of line */
 } line_t;
@@ -99,11 +96,10 @@ typedef struct undo {
 } undo_t;
 
 #ifndef max
-#  define max(a,b)	((a) > (b) ? (a) : (b))
+# define max(a,b) ((a) > (b) ? (a) : (b))
 #endif
-
 #ifndef min
-#  define min(a,b)	((a) < (b) ? (a) : (b))
+# define min(a,b) ((a) < (b) ? (a) : (b))
 #endif
 
 /* nextln: return line after l mod k */
@@ -124,6 +120,51 @@ if (--mutex == 0) { \
 	if (sigflags & (1 << SIGINT)) dointr(SIGINT); \
 }
 
+#if defined(sun) || defined(NO_REALLOC_NULL)
+/* CKBUF: assure at least a minimum size for buffer b */
+#define CKBUF(b,n,i,err) \
+if ((i) > (n)) { \
+	int ti = (n); \
+	char *ts; \
+	spl1(); \
+	if ((b) != NULL) { \
+		if ((ts = (char *) realloc((b), ti += max((i), MINBUFSZ))) == NULL) { \
+			fprintf(stderr, "%s\n", strerror(errno)); \
+			sprintf(errmsg, "out of memory"); \
+			spl0(); \
+			return err; \
+		} \
+	} else { \
+		if ((ts = (char *) malloc(ti += max((i), MINBUFSZ))) == NULL) { \
+			fprintf(stderr, "%s\n", strerror(errno)); \
+			sprintf(errmsg, "out of memory"); \
+			spl0(); \
+			return err; \
+		} \
+	} \
+	(n) = ti; \
+	(b) = ts; \
+	spl0(); \
+}
+#else /* NO_REALLOC_NULL */
+/* CKBUF: assure at least a minimum size for buffer b */
+#define CKBUF(b,n,i,err) \
+if ((i) > (n)) { \
+	int ti = (n); \
+	char *ts; \
+	spl1(); \
+	if ((ts = (char *) realloc((b), ti += max((i), MINBUFSZ))) == NULL) { \
+		fprintf(stderr, "%s\n", strerror(errno)); \
+		sprintf(errmsg, "out of memory"); \
+		spl0(); \
+		return err; \
+	} \
+	(n) = ti; \
+	(b) = ts; \
+	spl0(); \
+}
+#endif /* NO_REALLOC_NULL */
+
 /* requeue: link pred before succ */
 #define requeue(pred, succ) (pred)->next = (succ), (succ)->prev = (pred)
 
@@ -136,6 +177,12 @@ if (--mutex == 0) { \
 
 /* remqueue: remove elem from circular queue */
 #define remqueue(elem) requeue((elem)->prev, (elem)->next);
+
+/* nultonl: overwrite ASCII NULs with newlines */
+#define nultonl(s, l) translit(s, l, '\0', '\n')
+
+/* nltonul: overwrite newlines with ASCII NULs */
+#define nltonul(s, l) translit(s, l, '\n', '\0')
 
 #ifndef strerror
 # define strerror(n) sys_errlist[n]
@@ -153,62 +200,67 @@ if (--mutex == 0) { \
 int append __P((long, int));
 int cbcdec __P((char *, FILE *));
 int cbcenc __P((char *, int, FILE *));
-void cbcinit __P((void));
 int ckglob __P((void));
-int deflt __P((long, long));
-int del __P((long, long));
+int ckrange __P((long, long));
+int desflush __P((FILE *));
 int desgetc __P((FILE *));
-FILE *desopen __P((char *, char *));
+void desinit __P((void));
 int desputc __P((int, FILE *));
 int docmd __P((int));
-int err __P((char *));
-char *ccl __P((int, char *));
-int cvtkey __P((char *, char *));
+void err __P((char *));
+char *ccl __P((char *));
+void cvtkey __P((char *, char *));
 long doglob __P((int));
 void dohup __P((int));
 void dointr __P((int));
 void dowinch __P((int));
-int doprnt __P((long, long, int));
+int doprint __P((long, long, int));
 long doread __P((long, char *));
 long dowrite __P((long, long, char *, char *));
 char *esctos __P((char *));
-long find __P((pattern_t *, int));
+long patscan __P((pattern_t *, int));
 long getaddr __P((line_t *));
-char *getcmdv __P((int));
+char *getcmdv __P((int *, int));
 char *getfn __P((void));
 int getkey __P((void));
 char *getlhs __P((int));
-int getline __P((char *, int));
+int getline __P((void));
 int getlist __P((void));
 long getnum __P((int));
 long getone __P((void));
-line_t *getptr __P((long));
-int getrhs __P((char *, int));
-int getshcmd __P((char **));
+line_t *getlp __P((long));
+int getrhs __P((int));
+int getshcmd __P((void));
 char *gettxt __P((line_t *));
+void init_buf __P((void));
 int join __P((long, long));
+int lndelete __P((long, long));
 line_t *lpdup __P((line_t *));
 void lpqueue __P((line_t *));
-int makekey __P((char *));
-char *makesub __P((char *, int, int));
+void makekey __P((char *));
+char *makesub __P((int));
+char *translit __P((char *, int, int, int));
 int move __P((long));
 int oddesc __P((char *, char *));
 void onhup __P((int));
 void onintr __P((int));
 pattern_t *optpat __P((void));
-void prntln __P((char *, long, int));
+void putstr __P((char *, int, long, int));
 char *puttxt __P((char *));
 void quit __P((int));
-char *regsub __P((pattern_t *, char *, char *, int));
+int regsub __P((pattern_t *, line_t *, int));
 int sbclose __P((void));
 int sbopen __P((void));
-int sgetline __P((char *, int, FILE *));
-char *subcat __P((char *, regmatch_t *, char *, char *, char *));
-int subst __P((pattern_t *, char *, int));
+int sgetline __P((FILE *));
+int catsub __P((char *, regmatch_t *, int));
+int subst __P((pattern_t *, int));
 int tobinhex __P((int, int));
 int transfer __P((long));
 int undo __P((void));
 undo_t *upush __P((int, long, long));
 void ureset __P((void));
 
+
 extern char *sys_errlist[];
+extern int mutex;
+extern int sigflags;

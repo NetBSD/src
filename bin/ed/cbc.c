@@ -57,7 +57,6 @@ static char sccsid[] = "@(#)cbc.c	5.5 (Berkeley) 6/27/91";
  * or the technical report for a complete reference).
  */
 
-#ifdef DES
 #include <errno.h>
 #include <pwd.h>
 #include <unistd.h>
@@ -79,8 +78,8 @@ static char sccsid[] = "@(#)cbc.c	5.5 (Berkeley) 6/27/91";
  * BSD and System V systems offer special library calls that do
  * block moves and fills, so if possible we take advantage of them
  */
-#define	MEMCPY(dest,src,len)	bcopy((src),(dest),(len))
-#define	MEMZERO(dest,len)	bzero((dest),(len))
+#define	MEMCPY(dest,src,len)	memcpy((dest),(src),(len))
+#define	MEMZERO(dest,len)	memset((dest), 0, (len))
 
 /* Hide the calls to the primitive encryption routines. */
 #define	DES_KEY(buf) \
@@ -120,13 +119,19 @@ char bits[] = {				/* used to extract bits from a char */
 };
 int pflag;				/* 1 to preserve parity bits */
 
-/*
- * initialize cbc
- */
+char des_buf[8];		/* shared buffer for desgetc/desputc */
+int des_ct = 0;			/* count for desgetc/desputc */
+int des_n = 0;			/* index for desputc/desgetc */
+
+
+/* desinit: initialize DES */
 void
-cbcinit()
+desinit()
 {
+#ifdef DES
 	int i;
+
+	des_ct = des_n = 0;
 
 	/* initialize the initialization vctor */
 	MEMZERO(ivec, 8);
@@ -135,8 +140,53 @@ cbcinit()
 	srand((unsigned) time((time_t *) 0));
 	for (i = 0; i < 8; i++)
 		CHAR(pvec, i) = (char) (rand()/RAND_DIV);
+#endif
 }
 
+
+/* desgetc: return next char in an encrypted file */
+desgetc(fp)
+	FILE *fp;
+{
+#ifdef DES
+	if (des_n >= des_ct) {
+		des_n = 0;
+		des_ct = cbcdec(des_buf, fp);
+	}
+	return (des_ct > 0) ? des_buf[des_n++] : EOF;
+#endif
+}
+
+
+/* desputc: write a char to an encrypted file; return char written */
+desputc(c, fp)
+	int c;
+	FILE *fp;
+{
+#ifdef DES
+	if (des_n == sizeof des_buf) {
+		des_ct = cbcenc(des_buf, des_n, fp);
+		des_n = 0;
+	}
+	return (des_ct >= 0) ? (des_buf[des_n++] = c) : EOF;
+#endif
+}
+
+
+/* desflush: flush an encrypted file's output; return status */
+desflush(fp)
+	FILE *fp;
+{
+#ifdef DES
+	if (des_n == sizeof des_buf) {
+		des_ct = cbcenc(des_buf, des_n, fp);
+		des_n = 0;
+	}
+	return (des_ct >= 0 && cbcenc(des_buf, des_n, fp) >= 0) ? 0 : EOF;
+#endif
+}
+
+#ifdef DES
 /*
  * get keyword from tty or stdin
  */
@@ -168,6 +218,7 @@ extern char errmsg[];
 /*
  * print a warning message and, possibly, terminate
  */
+void
 err(s)
 	char *s;		/* the message */
 {
@@ -208,6 +259,7 @@ tobinhex(c, radix)
 /*
  * convert the key to a bit pattern
  */
+void
 cvtkey(obuf, ibuf)
 	char *obuf;			/* bit pattern */
 	char *ibuf;			/* the key itself */
@@ -275,6 +327,7 @@ cvtkey(obuf, ibuf)
  * systems set the parity (high) bit of each character to 0, and the
  * DES ignores the low order bit of each character.
  */
+void
 makekey(buf)
 	Desbuf buf;				/* key block */
 {
