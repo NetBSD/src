@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.42 1998/04/26 03:59:18 scottr Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.43 1998/05/24 06:15:50 scottr Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -64,7 +64,7 @@ extern char *extiobase, *proc0paddr;
 extern st_entry_t *Sysseg;
 extern pt_entry_t *Sysptmap, *Sysmap;
 
-extern int maxmem, physmem;
+extern int physmem;
 extern int avail_remaining, avail_range, avail_end;
 extern vm_offset_t avail_start, avail_next;
 extern vm_offset_t virtual_avail, virtual_end;
@@ -76,9 +76,10 @@ extern	int	zsinited;
 /*
  * These are used to map the RAM:
  */
-int		numranges; /* = 0 == don't use the ranges */
+int	numranges;	/* = 0 == don't use the ranges */
 u_long	low[8];
 u_long	high[8];
+u_long	maxaddr;	/* PA of the last physical page */
 int	vidlen;
 #define VIDMAPSIZE	btoc(vidlen)
 extern u_int32_t	mac68k_vidlog;
@@ -317,7 +318,7 @@ pmap_bootstrap(nextpa, firstpa)
 		*pte = lkptpa | PG_RW | PG_CI | PG_V;
 	}
 	/*
-	 * Invalidate all but the final entry in the last kernel PT page
+	 * Invalidate all entries in the last kernel PT page
 	 * (u-area PTEs will be validated later).
 	 */
 	pte = PA2VA(lkptpa, u_int *);
@@ -445,6 +446,15 @@ pmap_bootstrap(nextpa, firstpa)
 	/*
 	 * VM data structures are now initialized, set up data for
 	 * the pmap module.
+	 *
+	 * Note about avail_end: msgbuf is initialized just after
+	 * avail_end in machdep.c.  Since the last page is used
+	 * for rebooting the system (code is copied there and
+	 * excution continues from copied code before the MMU
+	 * is disabled), the msgbuf will get trounced between
+	 * reboots if it's placed in the last physical page.
+	 * To work around this, we move avail_end back one more
+	 * page so the msgbuf can be preserved.
 	 */
 	avail_next = avail_start = m68k_round_page(nextpa);
 	avail_remaining = 0;
@@ -459,8 +469,9 @@ pmap_bootstrap(nextpa, firstpa)
 	}
 	physmem = m68k_btop(avail_remaining + nextpa - firstpa);
 
-	avail_remaining -= m68k_round_page(MSGBUFSIZE);
-	high[numranges - 1] -= m68k_round_page(MSGBUFSIZE);
+	maxaddr = high[numranges - 1] - m68k_ptob(1);
+	high[numranges - 1] -= (m68k_round_page(MSGBUFSIZE) + m68k_ptob(1));
+	avail_remaining -= (m68k_round_page(MSGBUFSIZE) + m68k_ptob(1));
 	avail_end = high[numranges - 1];
 	avail_remaining = m68k_btop(m68k_trunc_page(avail_remaining));
 
