@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sa.c,v 1.1.2.36 2003/01/02 06:41:08 nathanw Exp $	*/
+/*	$NetBSD: pthread_sa.c,v 1.1.2.37 2003/01/14 19:27:42 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -232,6 +232,7 @@ pthread__find_interrupted(struct sa_t *sas[], int nsas, pthread_t *qhead,
 		victim->preempts++;
 #endif
 		victim->pt_uc = sas[i]->sa_context;
+		victim->pt_uc->uc_flags &= ~_UC_SIGMASK;
 		SDPRINTF(("(fi %p) victim %d %p(%d)", self, i, victim,
 		    victim->pt_type));
 		if (victim->pt_type == PT_THREAD_UPCALL) {
