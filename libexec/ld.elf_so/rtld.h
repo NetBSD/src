@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.55 2002/09/24 09:45:59 junyoung Exp $	 */
+/*	$NetBSD: rtld.h,v 1.56 2002/09/24 12:52:20 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -49,13 +49,6 @@
 #define	RTLD_DEFAULT_LIBRARY_PATH	"/usr/lib"
 #endif
 #define _PATH_LD_HINTS			"/etc/ld.so.conf"
-
-#if 0
-#define SVR4_LIBDIR	"/usr/lib"
-#endif
-
-#define LIBDIRLEN	(sizeof LIBDIR - 1)
-#define SVR4_LIBDIRLEN	(sizeof SVR4_LIBDIR - 1)
 
 extern int _rtld_pagesz;
 
