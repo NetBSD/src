@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_r5k.h,v 1.1 2003/03/08 04:43:26 rafal Exp $	*/
+/*	$NetBSD: cache_r5k.h,v 1.2 2004/12/13 08:39:50 sekiya Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -64,7 +64,7 @@ void	r5k_enable_sdcache(void);
 
 void	r5k_sdcache_wbinv_all(void);
 void	r5k_sdcache_wbinv_range(vaddr_t, vsize_t);
-void	r5k_sdcache_wbinv_rangeall(vaddr_t, vsize_t);
+void	r5k_sdcache_wbinv_range_index(vaddr_t, vsize_t);
 void	r5k_sdcache_inv_range(vaddr_t, vsize_t);
 void	r5k_sdcache_wb_range(vaddr_t, vsize_t);
 
