@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.4 2000/03/17 09:54:15 sato Exp $	*/
+/*	$NetBSD: rtc.c,v 1.5 2001/05/17 05:25:32 enami Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura. All rights reserved.
@@ -35,6 +35,8 @@
  *
  */
 
+#include "opt_vr41xx.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -45,6 +47,7 @@
 #include <machine/cpu.h>
 
 #include <hpcmips/vr/vr.h>
+#include <hpcmips/vr/vrcpudef.h>
 #include <hpcmips/vr/vripvar.h>
 #include <hpcmips/vr/rtcreg.h>
 #include <dev/dec/clockvar.h>
