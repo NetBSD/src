@@ -1,4 +1,4 @@
-/*      $NetBSD: clockctl.c,v 1.6.6.1 2002/05/16 04:49:35 gehenna Exp $ */
+/*      $NetBSD: clockctl.c,v 1.6.6.2 2002/07/15 01:48:03 gehenna Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clockctl.c,v 1.6.6.1 2002/05/16 04:49:35 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clockctl.c,v 1.6.6.2 2002/07/15 01:48:03 gehenna Exp $");
 
 #include "opt_ntp.h"
 
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: clockctl.c,v 1.6.6.1 2002/05/16 04:49:35 gehenna Exp
 #include <sys/ioctl.h>
 #include <sys/device.h>
 #include <sys/time.h>
+#include <sys/conf.h>
 #ifdef NTP
 #include <sys/timex.h>
 #endif /* NTP */
