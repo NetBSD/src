@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.21 1996/01/31 03:49:33 mycroft Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.22 1996/01/31 05:56:56 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993, 1994
@@ -1207,7 +1207,7 @@ dodata:							/* XXX */
 	 * case PRU_RCVD).  If a FIN has already been received on this
 	 * connection then we just ignore the text.
 	 */
-	if ((ti->ti_len || (tiflags&TH_FIN)) &&
+	if ((ti->ti_len || (tiflags & TH_FIN)) &&
 	    TCPS_HAVERCVDFIN(tp->t_state) == 0) {
 		TCP_REASS(tp, ti, m, so, tiflags);
 		/*
@@ -1223,9 +1223,10 @@ dodata:							/* XXX */
 
 	/*
 	 * If FIN is received ACK the FIN and let the user know
-	 * that the connection is closing.
+	 * that the connection is closing.  Ignore a FIN received before
+	 * the connection is fully established.
 	 */
-	if (tiflags & TH_FIN) {
+	if ((tiflags & TH_FIN) && TCPS_HAVEESTABLISHED(tp->t_state)) {
 		if (TCPS_HAVERCVDFIN(tp->t_state) == 0) {
 			socantrcvmore(so);
 			tp->t_flags |= TF_ACKNOW;
@@ -1234,10 +1235,8 @@ dodata:							/* XXX */
 		switch (tp->t_state) {
 
 	 	/*
-		 * In SYN_RECEIVED and ESTABLISHED STATES
-		 * enter the CLOSE_WAIT state.
+		 * In ESTABLISHED STATE enter the CLOSE_WAIT state.
 		 */
-		case TCPS_SYN_RECEIVED:
 		case TCPS_ESTABLISHED:
 			tp->t_state = TCPS_CLOSE_WAIT;
 			break;
