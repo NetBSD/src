@@ -552,6 +552,26 @@ static int smtpd_check_reject(SMTPD_STATE *state, int error_class,
     printable(STR(error_text), ' ');
 
     /*
+     * XXX The code below also appears in the SMTP server reply output
+     * routine. It is duplicated here in order to avoid discrepancies between
+     * the reply codes that are shown in "reject" logging and the reply codes
+     * that are actually sent to the SMTP client.
+     * 
+     * Implementing the soft_bounce safety net in the SMTP server reply output
+     * routine has the advantage that it covers all 5xx replies, including
+     * SMTP protocol or syntax errors, which makes soft_bounce great for
+     * non-destructive tests (especially by people who are paranoid about
+     * losing mail).
+     * 
+     * We could eliminate the code duplication and implement the soft_bounce
+     * safety net only in the code below. But then the safety net would cover
+     * the UCE restrictions only. This would be at odds with the documentation
+     * which says soft_bounce changes all 5xx replies into 4xx ones.
+     */
+    if (var_soft_bounce && STR(error_text)[0] == '5')
+	STR(error_text)[0] = '4';
+
+    /*
      * Log what is happening. When the sysadmin discards policy violation
      * postmaster notices, this may be the only trace left that service was
      * rejected. Print the request, client name/address, and response.
