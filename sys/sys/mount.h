@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.72 1999/02/26 23:44:48 wrstuden Exp $	*/
+/*	$NetBSD: mount.h,v 1.73 1999/02/27 00:47:35 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -314,7 +314,7 @@ struct vfsops {
 #define VFS_SYNC(MP, WAIT, C, P)  (*(MP)->mnt_op->vfs_sync)(MP, WAIT, C, P)
 #define VFS_VGET(MP, INO, VPP)	  (*(MP)->mnt_op->vfs_vget)(MP, INO, VPP)
 #define VFS_FHTOVP(MP, FIDP, VPP) (*(MP)->mnt_op->vfs_fhtovp)(MP, FIDP, VPP)
-#define VFS_CHKEXP(MP, NAM, EXFLG, CRED) \
+#define VFS_CHECKEXP(MP, NAM, EXFLG, CRED) \
 	(*(MP)->mnt_op->vfs_checkexp)(MP, NAM, EXFLG, CRED)
 #define	VFS_VPTOFH(VP, FIDP)	  (*(VP)->v_mount->mnt_op->vfs_vptofh)(VP, FIDP)
 #endif /* _KERNEL */
