@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative,v 1.2 2002/02/26 22:31:59 tv Exp $
+#	$NetBSD: mknative,v 1.3 2002/02/27 16:12:10 tv Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of src/gnu/dist/toolchain.
@@ -102,10 +102,9 @@ get_libg2c () {
 
 ##### gnu/lib/libgcc #####
 
-get_libgcc () {
+get_libgcc_boot () {
 	# DPBIT, FPBIT only used on mn10[23]00, we don't need them.
 	getvars gcc/Makefile \
-		CXX_EXTRA_HEADERS CXX_LIB2FUNCS CXX_LIB2SRCS \
 		INCLUDES LIB2ADD LIB2FUNCS LIB2FUNCS_EH \
 		LIBGCC2_CFLAGS MAYBE_USE_COLLECT2 \
 		| write_mk gnu/lib/libgcc/$MACHINE_ARCH.mk
@@ -115,6 +114,15 @@ get_libgcc () {
 	for f in tconfig tm; do
 		write_c gnu/usr.bin/gcc/arch/$MACHINE_ARCH/$f.h <$_TMPDIR/gcc/$f.h
 	done
+}
+
+get_libgcc () {
+	# DPBIT, FPBIT only used on mn10[23]00, we don't need them.
+	getvars gcc/Makefile \
+		CXX_EXTRA_HEADERS CXX_LIB2FUNCS CXX_LIB2SRCS \
+		INCLUDES LIB2ADD LIB2FUNCS LIB2FUNCS_EH \
+		LIBGCC2_CFLAGS MAYBE_USE_COLLECT2 \
+		| write_mk gnu/lib/libgcc/$MACHINE_ARCH.mk
 }
 
 ##### gnu/lib/libiberty #####
@@ -243,7 +251,7 @@ get_gcc () {
 			F77_OBJS
 	} | write_mk gnu/usr.bin/gcc/arch/$MACHINE_ARCH/defs.mk
 
-	for f in auto-host config gencheck options specs; do
+	for f in auto-host config gencheck options specs tconfig tm; do
 		write_c gnu/usr.bin/gcc/arch/$MACHINE_ARCH/$f.h <$_TMPDIR/gcc/$f.h
 	done
 }
@@ -296,7 +304,7 @@ _VPATH=`grep VPATH ${_TMPDIR}/Makefile | sed 's,^.*= ,,'`
 
 case $1 in
 libgcc)	# .mk and .h files for libgcc bootstrap (from host build)
-	get_libgcc
+	get_libgcc_boot
 	exit 0
 	;;
 
