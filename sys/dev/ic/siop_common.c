@@ -1,4 +1,4 @@
-/*	$NetBSD: siop_common.c,v 1.25 2002/04/29 15:45:05 bouyer Exp $	*/
+/*	$NetBSD: siop_common.c,v 1.26 2002/05/04 18:11:06 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000, 2002 Manuel Bouyer.
@@ -33,7 +33,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop_common.c,v 1.25 2002/04/29 15:45:05 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop_common.c,v 1.26 2002/05/04 18:11:06 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -229,7 +229,6 @@ siop_common_reset(sc)
 		/* reset SCNTL4 */
 		bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_SCNTL4, 0);
 	}
-		
 	sc->sc_reset(sc);
 }
 
@@ -250,6 +249,17 @@ siop_setuptables(siop_cmd)
 	    sizeof(siop_cmd->siop_tables->msg_out));
 	/* request sense doesn't disconnect */
 	if (xs->xs_control & XS_CTL_REQSENSE)
+		siop_cmd->siop_tables->msg_out[0] = MSG_IDENTIFY(lun, 0);
+	else if ((sc->features & SF_CHIP_GEBUG) &&
+	    (sc->targets[target]->flags & TARF_ISWIDE) == 0)
+		/*
+		 * 1010 bug: it seems that the 1010 has problems with reselect
+		 * when not in wide mode (generate false SCSI gross error).
+		 * The FreeBSD sym driver has comments about it but their
+		 * workaround (disable SCSI gross error reporting) doesn't
+		 * work with my adapter. So disable disconnect when not
+		 * wide.
+		 */
 		siop_cmd->siop_tables->msg_out[0] = MSG_IDENTIFY(lun, 0);
 	else
 		siop_cmd->siop_tables->msg_out[0] = MSG_IDENTIFY(lun, 1);
@@ -877,6 +887,11 @@ siop_update_xfer_mode(sc, target)
 	xm.xm_mode = 0;
 	xm.xm_period = 0;
 	xm.xm_offset = 0;
+
+	/* 1010 workaround: can't do disconnect if not wide, so can't do tag */
+	if ((sc->features & SF_CHIP_GEBUG) &&
+	    (sc->targets[target]->flags & TARF_ISWIDE) == 0)
+		siop_target->flags &= ~TARF_TAG;
 
 	if (siop_target->flags & TARF_ISWIDE)
 		xm.xm_mode |= PERIPH_CAP_WIDE16;
