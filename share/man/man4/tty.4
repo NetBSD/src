@@ -1,4 +1,4 @@
-.\"	$NetBSD: tty.4,v 1.10 2000/03/23 19:48:29 mycroft Exp $
+.\"	$NetBSD: tty.4,v 1.11 2001/02/10 23:24:12 eeh Exp $
 .\"
 .\" Copyright (c) 1991, 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -158,41 +158,22 @@ name of the request, a description of its purpose, and the typed
 parameter (if any)
 are listed.  For example, the first entry says
 .Pp
-.D1 Em "TIOCSETD int *ldisc"
+.D1 Em "TIOCSLINED char name[32]"
 .Pp
 and would be called on the terminal associated with
 file descriptor zero by the following code fragment:
 .Bd -literal
-	int ldisc;
-
-	ldisc = TTYDISC;
-	ioctl(0, TIOCSETD, &ldisc);
+	ioctl(0, TIOCSLINED, "termios");
 .Ed
 .Ss Terminal File Request Descriptions
 .Bl -tag -width TIOCGWINSZ
-.It Dv TIOCSETD Fa int *ldisc
-Change to the new line discipline pointed to by
-.Fa ldisc .
-The available line disciplines are listed in
-.Pa Aq sys/ttycom.h
-and currently are:
+.It Dv TIOCSLINEDD Fa char name[32]
+Change to the new line discipline called
+.Fa name .
 .Pp
-.Bl -tag -width TIOCGWINSZ -compact
-.It TTYDISC
-Termios interactive line discipline.
-.It TABLDISC
-Tablet line discipline.
-.It SLIPDISC
-Serial IP line discipline.
-.It PPPDISC
-Point to Point Protocol line discipline.
-.It STRIPDISC
-Starmode Radio IP line discipline.
-.El
-.Pp
-.It Dv TIOCGETD Fa int *ldisc
-Return the current line discipline in the integer pointed to by
-.Fa ldisc .
+.It Dv TIOCGLINED Fa char name[32]
+Return the current line discipline in the string pointed to by
+.Fa name .
 .It Dv TIOCSBRK Fa void
 Set the terminal hardware into BREAK condition.
 .It Dv TIOCCBRK Fa void
@@ -427,6 +408,35 @@ Return the current state of the serial port as represented
 above in the integer pointed to by
 .Fa state .
 .El
+.Sh COMPATIBILITY
+Two ioctls are maintained for backwards compatibility.  They provide
+methods to get and set the current line discipline, but are not
+extensible.
+.Bl -tag -width TIOCGWINSZ
+.It Dv TIOCSETD Fa int *ldisc
+Change to the new line discipline pointed to by
+.Fa ldisc .
+The old list of available line disciplines are listed in
+.Pa Aq sys/ttycom.h
+and are:
+.Pp
+.Bl -tag -width TIOCGWINSZ -compact
+.It TTYDISC
+Termios interactive line discipline.
+.It TABLDISC
+Tablet line discipline.
+.It SLIPDISC
+Serial IP line discipline.
+.It PPPDISC
+Point to Point Protocol line discipline.
+.It STRIPDISC
+Starmode Radio IP line discipline.
+.El
+.Pp
+.It Dv TIOCGETD Fa int *ldisc
+Return the current line discipline in the integer pointed to by
+.Fa ldisc .
+.El
 .Sh HISTORY
 Separate dialout device files were implemented in SunOS 4.  They were cloned
 by Charles M. Hannum for
@@ -436,4 +446,5 @@ by Charles M. Hannum for
 .Xr ioctl 2 ,
 .Xr pty 4 ,
 .Xr stty 1 ,
-.Xr termios 4
+.Xr termios 4,
+.Xr linedisc 9
