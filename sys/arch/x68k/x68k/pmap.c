@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.45 1999/09/16 14:35:42 minoura Exp $	*/
+/*	$NetBSD: pmap.c,v 1.46 1999/09/16 14:40:21 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -1368,6 +1368,20 @@ pmap_enter(pmap, va, pa, prot, wired, access_type)
 			}
 #endif
 		}
+
+		/*
+		 * Speed pmap_is_referenced() or pmap_is_modified() based
+		 * on the hint provided in access_type.
+		 */
+#ifdef DIAGNOSTIC
+		if (access_type & ~prot)
+			panic("pmap_enter: access_type exceeds prot");
+#endif
+		if (access_type & VM_PROT_WRITE)
+			*pa_to_attribute(pa) |= (PG_U|PG_M);
+		else if (access_type & VM_PROT_ALL)
+			*pa_to_attribute(pa) |= PG_U;
+
 		splx(s);
 	}
 	/*
@@ -1645,7 +1659,7 @@ pmap_unwire(pmap, va)
 	}
 #endif
 	/*
-	 * If wiring actually changed (always?) set the wire bit and
+	 * If wiring actually changed (always?) clear the wire bit and
 	 * update the wire count.  Note that wiring is not a hardware
 	 * characteristic so there is no need to invalidate the TLB.
 	 */
