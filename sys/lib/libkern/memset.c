@@ -1,4 +1,4 @@
-/*	$NetBSD: memset.c,v 1.6 1998/03/27 05:35:47 cgd Exp $	*/
+/*	$NetBSD: memset.c,v 1.7 1998/09/14 11:50:59 leo Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)memset.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: memset.c,v 1.6 1998/03/27 05:35:47 cgd Exp $");
+__RCSID("$NetBSD: memset.c,v 1.7 1998/09/14 11:50:59 leo Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -80,7 +80,9 @@ memset(dst0, c0, length)
 #endif
 {
 	size_t t;
+#ifndef BZERO
 	u_int c;
+#endif
 	u_char *dst;
 
 	dst = dst0;
