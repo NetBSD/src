@@ -16,11 +16,6 @@
 /* Log base 2 of 1024 is 10 (2^10 == 1024) */
 #define LOG1024		10
 
-char *itoa();
-char *itoa7();
-
-char *version_string();
-
 /* Special atoi routine returns either a non-negative number or one of: */
 #define Infinity	-1
 #define Invalid		-2
@@ -34,3 +29,11 @@ char *version_string();
 
 #define NUM_AVERAGES    3
 
+void reset_display __P((void));
+sigret_t leave __P((int));
+sigret_t tstop __P((int));
+sigret_t winch __P((int));
+sigret_t onalrm __P((int));
+void quit __P((int));
+
+char *version_string __P((void));
