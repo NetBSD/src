@@ -1,11 +1,11 @@
-/*	$NetBSD: __sigaction14_sigtramp.c,v 1.3 2003/09/06 22:10:40 christos Exp $	*/
+/*	$NetBSD: __sigtramp2.S,v 1.1 2003/09/06 22:10:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Jason R. Thorpe.
+ * by Christos Zoulas.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,20 +36,24 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define	__LIBC12_SOURCE__
+#include "SYS.h"
 
-#include <sys/types.h>
-#include <signal.h>
-
-#include "extern.h"
-
-__weak_alias(__sigaction14, __libc_sigaction14)
-
-int
-__libc_sigaction14(int sig, const struct sigaction *act, struct sigaction *oact)
-{
-	extern int __sigtramp_siginfo_2[];
-
-	return (__sigaction_sigtramp(sig, act, oact,
-				     __sigtramp_siginfo_2, 2));
-}
+/*
+ * The i386 signal trampoline is invoked only to return from
+ * the signal; the kernel calls the signal handler directly.
+ *
+ * On entry, stack looks like:
+ *
+ *		ucontext structure			[12+sizeof(siginfo_t)]
+ *		siginfo structure			[12]
+ *		pointer to ucontext structure		[8]
+ *		pointer to siginfo structure		[4]
+ *	sp->	signal number				[0]
+ */
+NENTRY(__sigtramp_siginfo_2)
+	movl	8(%esp),%eax	/* get pointer to ucontext */
+	movl	%eax,4(%esp)	/* put it in the argument slot */
+				/* fake return address already there */
+	SYSTRAP(setcontext)	/* do setcontext */
+	movl	%eax,4(%esp)	/* error code */
+	SYSTRAP(exit)		/* exit */
