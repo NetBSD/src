@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.13.4.3 2002/10/18 02:37:58 nathanw Exp $	*/
+/*	$NetBSD: proc.h,v 1.13.4.4 2002/11/25 21:40:04 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1991 Regents of the University of California.
@@ -56,6 +56,7 @@ struct mdproc {
 					/* Syscall handling function */
 	int	md_flags;
 	void	(*md_syscall) __P((struct trapframe));
+	__volatile int md_astpending;	/* AST pending for this process */
 };
 
 #endif /* _I386_PROC_H_ */

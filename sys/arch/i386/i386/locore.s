@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.233.2.21 2002/11/17 19:47:30 skrll Exp $	*/
+/*	$NetBSD: locore.s,v 1.233.2.22 2002/11/25 21:40:02 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -155,9 +155,14 @@
 #define GET_CURPCB(reg)			movl	CPUVAR(CURPCB),reg
 #define SET_CURPCB(reg)			movl	reg,CPUVAR(CURPCB)
 
-#define CHECK_ASTPENDING()		cmpl $0,CPUVAR(ASTPENDING)
-#define CLEAR_ASTPENDING()		movl $0,CPUVAR(ASTPENDING)
-	
+#define CHECK_ASTPENDING(reg)		movl	CPUVAR(CURLWP),reg	; \
+					cmpl	$0, reg			; \
+					je 1f				; \
+					movl	L_PROC(reg),reg		; \
+					cmpl	$0, P_MD_ASTPENDING(reg); \
+					1:	
+#define CLEAR_ASTPENDING(reg)		movl	$0, P_MD_ASTPENDING(reg)
+
 #define CLEAR_RESCHED(reg)		movl	reg,CPUVAR(RESCHED)
 
 /* XXX temporary kluge; these should not be here */
@@ -2617,7 +2622,7 @@ calltrap:
 	call	_C_LABEL(trap)
 2:	/* Check for ASTs on exit to user mode. */
 	cli
-	CHECK_ASTPENDING()
+	CHECK_ASTPENDING(%eax)
 	je	1f
 	testb	$SEL_RPL,TF_CS(%esp)
 #ifdef VM86
@@ -2625,7 +2630,7 @@ calltrap:
 	testl	$PSL_VM,TF_EFLAGS(%esp)
 #endif
 	jz	1f
-5:	CLEAR_ASTPENDING()
+5:	CLEAR_ASTPENDING(%eax)
 	sti
 	movl	$T_ASTFLT,TF_TRAPNO(%esp)
 	call	_C_LABEL(trap)
@@ -2770,10 +2775,10 @@ syscall1:
 	call	*P_MD_SYSCALL(%edx)	# get pointer to syscall() function
 2:	/* Check for ASTs on exit to user mode. */
 	cli
-	CHECK_ASTPENDING()
+	CHECK_ASTPENDING(%eax)
 	je	1f
 	/* Always returning to user mode here. */
-	CLEAR_ASTPENDING()
+	CLEAR_ASTPENDING(%eax)
 	sti
 	/* Pushed T_ASTFLT into tf_trapno on entry. */
 	call	_C_LABEL(trap)

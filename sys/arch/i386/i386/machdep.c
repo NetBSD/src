@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.429.2.31 2002/11/11 21:59:06 nathanw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.429.2.32 2002/11/25 21:40:02 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.429.2.31 2002/11/11 21:59:06 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.429.2.32 2002/11/25 21:40:02 nathanw Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -3773,7 +3773,8 @@ void cpu_initclocks()
 void need_resched(struct cpu_info *ci)
 {
 	ci->ci_want_resched = 1;
-	aston(ci);
+	if ((ci)->ci_curlwp != NULL)
+		aston((ci)->ci_curlwp->l_proc);
 }
 #endif
 
