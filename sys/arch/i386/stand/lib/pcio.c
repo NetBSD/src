@@ -1,4 +1,4 @@
-/*	$NetBSD: pcio.c,v 1.5 1997/09/17 17:48:00 drochner Exp $	 */
+/*	$NetBSD: pcio.c,v 1.5.2.1 1997/10/28 04:38:50 mellon Exp $	 */
 
 /*
  * Copyright (c) 1996, 1997
@@ -193,6 +193,7 @@ int
 getchar()
 {
 #ifdef SUPPORT_SERIAL
+	int c;
 	switch (iodev) {
 	    default: /* to make gcc -Wall happy... */
 	    case CONSDEV_PC:
@@ -203,9 +204,23 @@ getchar()
 	    case CONSDEV_COM1:
 	    case CONSDEV_COM2:
 	    case CONSDEV_COM3:
-		return (comgetc(SERIAL_ARG));
-	}
+#ifdef DIRECT_SERIAL
+		c = comgetc(SERIAL_ARG);
+#else
+		do {
+			c = comgetc(SERIAL_ARG);
+		} while ((c >> 8) == 0xe0); /* catch timeout */
+#ifdef COMDEBUG
+		if (c & 0x8000) {
+			printf("com input %x, status %x\n",
+			       c, comstatus(SERIAL_ARG));
+		}
 #endif
+		c &= 0xff;
+#endif /* DIRECT_SERIAL */
+		return (c);
+	}
+#endif /* SUPPORT_SERIAL */
 }
 
 int
