@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.5 1997/03/01 09:50:16 matthias Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.6 1997/03/20 12:02:37 matthias Exp $	*/
 
 /* 
  * Mach Operating System
@@ -98,5 +98,13 @@ extern int db_active_ipl;
 typedef long kgdb_reg_t;
 #define KGDB_NUMREGS	25
 #define KGDB_BUFLEN	512
+
+#ifdef _KERNEL
+
+int	kdb_trap __P((int, int, db_regs_t *));
+struct insn;
+int	db_dasm_ns32k __P((struct insn *insn, db_addr_t loc));
+
+#endif /* _KERNEL */
 
 #endif
