@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.4 2000/06/07 20:49:02 thorpej Exp $
+#	$NetBSD: list,v 1.5 2000/06/18 10:33:20 minoura Exp $
 
 # copy the crunched binary, link to it, and kill it
 COPY	${OBJDIR}/ramdiskbin		ramdiskbin
@@ -21,8 +21,6 @@ LINK	ramdiskbin			bin/rm
 LINK	ramdiskbin			bin/sh
 LINK	ramdiskbin			bin/stty
 LINK	ramdiskbin			bin/sync
-LINK	ramdiskbin			bin/test
-LINK	ramdiskbin			bin/[
 LINK	ramdiskbin			sbin/cd9660
 LINK	ramdiskbin			sbin/disklabel
 LINK	ramdiskbin			sbin/ffs
@@ -43,41 +41,39 @@ LINK	ramdiskbin			sbin/msdos
 LINK	ramdiskbin			sbin/newfs
 LINK	ramdiskbin			sbin/nfs
 LINK	ramdiskbin			sbin/ping
+LINK	ramdiskbin			sbin/ping6
 LINK	ramdiskbin			sbin/reboot
 LINK	ramdiskbin			sbin/restore
 LINK	ramdiskbin			sbin/route
 LINK	ramdiskbin			sbin/rrestore
+LINK	ramdiskbin			sbin/rtsol
 LINK	ramdiskbin			sbin/shutdown
 LINK	ramdiskbin			sbin/slattach
 LINK	ramdiskbin			sbin/swapctl
+LINK	ramdiskbin			sbin/test
 LINK	ramdiskbin			sbin/umount
 SYMLINK	/bin/cat		usr/bin/chgrp
 SYMLINK	/bin/cat		usr/bin/ftp
 SYMLINK	/bin/cat		usr/bin/gunzip
 SYMLINK	/bin/cat		usr/bin/gzcat
 SYMLINK	/bin/cat		usr/bin/gzip
-SYMLINK	/bin/cat		usr/bin/hexdump
 SYMLINK	/bin/cat		usr/bin/less
 SYMLINK	/bin/cat		usr/bin/more
-SYMLINK	/bin/cat		usr/bin/od
 SYMLINK	/bin/cat		usr/bin/sed
 SYMLINK	/bin/cat		usr/bin/tar
 SYMLINK	/bin/cat		usr/bin/tip
+SYMLINK	/bin/cat		usr/mdec/newdisk
 SYMLINK	/bin/cat		usr/sbin/chown
 SYMLINK	/bin/cat		usr/sbin/chroot
-SYMLINK /bin/cat		usr/sbin/memswitch
+SYMLINK	/bin/cat		usr/sbin/memswitch
 SPECIAL	/bin/rm ramdiskbin
 
 # various files that we need in /etc for the install
 COPY	${CURDIR}/../../../../etc/group		etc/group
-COPY	${CURDIR}/../../../../etc/master.passwd	etc/master.passwd
+COPY	${OBJDIR}/passwd			etc/passwd
 COPY	${CURDIR}/../../../../etc/protocols	etc/protocols
 COPY	${CURDIR}/../../../../etc/netconfig	etc/netconfig
 COPY	${CURDIR}/../../../../etc/services	etc/services
-
-SPECIAL	pwd_mkdb -p -d ./ etc/master.passwd
-SPECIAL /bin/rm etc/spwd.db
-SPECIAL /bin/rm etc/pwd.db
 
 # copy the MAKEDEV script and make some devices
 COPY	${CURDIR}/../../../../etc/etc.x68k/MAKEDEV	dev/MAKEDEV
@@ -85,11 +81,11 @@ SPECIAL	cd dev; sh MAKEDEV ramdisk
 SPECIAL	/bin/rm dev/MAKEDEV
 
 # we need the boot blocks in /usr/mdec
-COPY	${DESTDIR}/usr/mdec/installboot	usr/mdec/installboot
+COPY	${CURDIR}/installboot.sh	usr/mdec/installboot
+SPECIAL	/bin/chmod 555 usr/mdec/installboot
 COPY	${DESTDIR}/usr/mdec/sdboot	usr/mdec/sdboot
 LINK	usr/mdec/sdboot			usr/mdec/fdboot
 COPY	${DESTDIR}/usr/mdec/mboot	usr/mdec/mboot
-COPY	${DESTDIR}/usr/mdec/newdisk	usr/mdec/newdisk
 
 # and the common installation tools
 COPY	${CURDIR}/termcap.vt		usr/share/misc/termcap
