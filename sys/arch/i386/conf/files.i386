@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.225 2002/12/28 17:51:16 jmcneill Exp $
+#	$NetBSD: files.i386,v 1.226 2003/01/07 18:55:36 fvdl Exp $
 #
 # new style config file for i386 architecture
 #
@@ -46,7 +46,9 @@ defparam opt_realmem.h	REALBASEMEM REALEXTMEM
 # understand boot device passed by pre-1.3 bootblocks
 defflag			COMPAT_OLDBOOT
 
-defflag	opt_mpbios.h MPVERBOSE MPDEBUG
+defflag	opt_mpbios.h MPBIOS MPVERBOSE MPDEBUG
+
+defflag opt_mpacpi.h MPACPI
 
 # PCI BIOS options
 defflag	opt_pcibios.h	PCIBIOS PCIBIOSVERBOSE
@@ -318,9 +320,11 @@ attach	apm at mainbus
 file	arch/i386/i386/apm.c		apm needs-count
 file	arch/i386/i386/apmcall.S	apm
 
-# Intel SMP specification 1.4
-define mpbios
-file    arch/i386/i386/mpbios.c		mpbios needs-flag
+# MP configuration using Intel SMP specification 1.4
+file    arch/i386/i386/mpbios.c		mpbios
+
+# MP configuration using ACPI
+file	arch/i386/i386/mpacpi.c		mpacpi & acpi
 
 # CPUS
 
@@ -337,7 +341,7 @@ define lapic
 file	arch/i386/i386/lapic.c		lapic needs-flag
 
 # I/O apics
-device ioapic: bioscall, mpbios, lapic
+device ioapic: bioscall, lapic
 attach ioapic at mainbus
 file	arch/i386/i386/ioapic.c		ioapic needs-flag
 
