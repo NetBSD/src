@@ -1,4 +1,4 @@
-/*	$NetBSD: rtadvd.h,v 1.6 2001/01/15 06:14:06 itojun Exp $	*/
+/*	$NetBSD: rtadvd.h,v 1.7 2002/05/21 14:22:06 itojun Exp $	*/
 /*	$KAME: rtadvd.h,v 1.14 2000/11/11 06:57:22 jinmei Exp $	*/
 
 /*
@@ -53,7 +53,7 @@
 #define MAXROUTERLIFETIME 9000
 #define MIN_MAXINTERVAL (mobileip6 ? 1.5 : 4.0)
 #define MAX_MAXINTERVAL 1800
-#define MIN_MININTERVAL	(mobileip6 ? 0.5 : 3)
+#define MIN_MININTERVAL	(mobileip6 ? 0.05 : 3.0)
 #define MAXREACHABLETIME 3600000
 
 #ifndef MIP6
