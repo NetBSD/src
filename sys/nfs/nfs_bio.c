@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.88 2003/04/09 14:27:58 yamt Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.89 2003/04/09 14:30:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.88 2003/04/09 14:27:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.89 2003/04/09 14:30:30 yamt Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -520,7 +520,7 @@ nfs_write(v)
 	void *win;
 	voff_t oldoff, origoff;
 	vsize_t bytelen;
-	int error = 0, iomode, must_commit;
+	int error = 0, iomode, stalewriteverf;
 	int extended = 0, wrotedta = 0;
 
 #ifdef DIAGNOSTIC
@@ -583,8 +583,8 @@ nfs_write(v)
 
 	if ((np->n_flag & NQNFSNONCACHE) && uio->uio_iovcnt == 1) {
 		iomode = NFSV3WRITE_FILESYNC;
-		error = nfs_writerpc(vp, uio, &iomode, &must_commit);
-		if (must_commit)
+		error = nfs_writerpc(vp, uio, &iomode, &stalewriteverf);
+		if (stalewriteverf)
 			nfs_clearcommit(vp->v_mount);
 		return (error);
 	}
@@ -879,7 +879,7 @@ nfs_doio(bp, p)
 	struct vnode *vp;
 	struct nfsnode *np;
 	struct nfsmount *nmp;
-	int error = 0, diff, len, iomode, must_commit = 0;
+	int error = 0, diff, len, iomode, stalewriteverf = 0;
 	int pushedrange;
 	struct uio uio;
 	struct iovec io;
@@ -916,7 +916,7 @@ nfs_doio(bp, p)
 		iomode = NFSV3WRITE_DATASYNC;
 		uiop->uio_rw = UIO_WRITE;
 		nfsstats.write_physios++;
-		error = nfs_writerpc(vp, uiop, &iomode, &must_commit);
+		error = nfs_writerpc(vp, uiop, &iomode, &stalewriteverf);
 	    }
 	    if (error) {
 		bp->b_flags |= B_ERROR;
@@ -1073,7 +1073,7 @@ nfs_doio(bp, p)
 	    io.iov_len = uiop->uio_resid = bp->b_bcount;
 	    uiop->uio_rw = UIO_WRITE;
 	    nfsstats.write_bios++;
-	    error = nfs_writerpc(vp, uiop, &iomode, &must_commit);
+	    error = nfs_writerpc(vp, uiop, &iomode, &stalewriteverf);
 	    if (!error && iomode == NFSV3WRITE_UNSTABLE) {
 		lockmgr(&np->n_commitlock, LK_EXCLUSIVE, NULL);
 		nfs_add_tobecommitted_range(vp, off, cnt);
@@ -1110,7 +1110,7 @@ nfs_doio(bp, p)
 	    }
 	}
 	bp->b_resid = uiop->uio_resid;
-	if (must_commit || (error == NFSERR_STALEWRITEVERF)) {
+	if (stalewriteverf || (error == NFSERR_STALEWRITEVERF)) {
 		nfs_clearcommit(vp->v_mount);
 	}
 	biodone(bp);
