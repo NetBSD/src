@@ -1,6 +1,6 @@
-.\"	$NetBSD: upgrade,v 1.9 2000/12/23 00:09:05 lukem Exp $
+.\"	$NetBSD: upgrade,v 1.10 2001/04/07 15:19:59 jhawk Exp $
 .\"
-.\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -137,7 +137,7 @@ If you've changed the contents of
 by hand, you will need to be careful about this, but if
 not, you can just cd into
 .Pa /dev ,
-and run the command
+and run the command:
 .Pp
 .Dl # Ic "sh MAKEDEV all"
 .Pp
