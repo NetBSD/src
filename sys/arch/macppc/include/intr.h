@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.3 1998/08/15 10:11:02 mycroft Exp $	*/
+/*	$NetBSD: intr.h,v 1.4 1999/01/11 09:44:51 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,8 +36,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _POWERMAC_INTR_H_
-#define _POWERMAC_INTR_H_
+#ifndef _MACPPC_INTR_H_
+#define _MACPPC_INTR_H_
 
 /* Interrupt priority `levels'. */
 #define	IPL_NONE	9	/* nothing */
@@ -193,6 +193,14 @@ softintr(ipl)
 #define	setsoftnet()	softintr(SIR_NET)
 #define	setsoftserial()	softintr(SIR_SERIAL)
 
+extern long intrcnt[];
+
+#define CNT_IRQ0	0
+#define CNT_CLOCK	64
+#define CNT_SOFTCLOCK	65
+#define CNT_SOFTNET	66
+#define CNT_SOFTSERIAL	67
+
 #endif /* !_LOCORE */
 
-#endif /* !_POWERMAC_INTR_H_ */
+#endif /* !_MACPPC_INTR_H_ */
