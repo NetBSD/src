@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.1 2003/04/26 18:39:33 fvdl Exp $	*/
+/*	$NetBSD: trap.c,v 1.2 2003/05/04 23:51:56 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -152,7 +152,7 @@ int	trapdebug = 0;
 
 #define	IDTVEC(name)	__CONCAT(X, name)
 
-#ifdef DEBUG
+#ifdef TRAP_SIGDEBUG
 static void frame_dump(struct trapframe *);
 #endif
 
@@ -310,9 +310,9 @@ copyfault:
 	case T_STKFLT|T_USER:
 	case T_ALIGNFLT|T_USER:
 	case T_NMI|T_USER:
+#ifdef TRAP_SIGDEBUG
 		printf("pid %d (%s): BUS at rip %lx addr %lx\n",
 		    p->p_pid, p->p_comm, frame.tf_rip, rcr2());
-#ifdef DEBUG
 		frame_dump(&frame);
 #endif
 		KERNEL_PROC_LOCK(l);
@@ -322,9 +322,9 @@ copyfault:
 
 	case T_PRIVINFLT|T_USER:	/* privileged instruction fault */
 	case T_FPOPFLT|T_USER:		/* coprocessor operand fault */
+#ifdef TRAP_SIGDEBUG
 		printf("pid %d (%s): ILL at rip %lx addr %lx\n",
 		    p->p_pid, p->p_comm, frame.tf_rip, rcr2());
-#ifdef DEBUG
 		frame_dump(&frame);
 #endif
 		KERNEL_PROC_LOCK(l);
@@ -482,12 +482,10 @@ faultcommon:
 			       p->p_ucred->cr_uid : -1);
 			(*p->p_emul->e_trapsignal)(l, SIGKILL, T_PAGEFLT);
 		} else {
-#if 1
+#ifdef TRAP_SIGDEBUG
 			printf("pid %d (%s): SEGV at rip %lx addr %lx\n",
 			    p->p_pid, p->p_comm, frame.tf_rip, va);
-#ifdef DEBUG
 			frame_dump(&frame);
-#endif
 #endif
 			(*p->p_emul->e_trapsignal)(l, SIGSEGV, T_PAGEFLT);
 		}
@@ -574,7 +572,7 @@ upcallret(struct lwp *l)
 	userret(l);
 }
 
-#ifdef DEBUG
+#ifdef TRAP_SIGDEBUG
 static void
 frame_dump(struct trapframe *tf)
 {
