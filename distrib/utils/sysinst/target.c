@@ -1,4 +1,4 @@
-/*	$NetBSD: target.c,v 1.3 1997/11/02 23:43:13 jonathan Exp $	*/
+/*	$NetBSD: target.c,v 1.4 1997/11/03 02:38:52 jonathan Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -55,7 +55,8 @@
 static void make_prefixed_dir __P((const char *prefix, const char *path));
 const char* target_prefix __P((void));
 static int do_target_chdir __P((const char *dir, int flag));
-
+static const char* concat_paths __P((const char *prefix, const char *suffix));
+static const char * target_expand __P((const char *pathname));
 
 /*
  * Pathname  prefixing glue to support installation either 
@@ -73,6 +74,49 @@ const char* target_prefix(void)
 	 * to the devicename of the instllal target disk.
 	 */
 	return("/mnt");
+}
+
+/*
+ * concatenate two pathnames.
+ * XXX returns either input args or result in a static buffer.
+ * The caller must copy if it wants to use the pathname past the 
+ * next call to a target-prefixing  function, or to modify the inputs..
+ * Used only  internally so this is probably safe.
+ */
+static const char* 
+concat_paths(const char* prefix, const char *suffix)
+{
+	static char realpath[STRSIZE];
+
+	/* absolute prefix and null suffix? */
+	if (prefix[0] == '/' && suffix[0] == 0)
+		return prefix;
+
+	/* null prefix and absolute suffix? */
+	if (prefix[0] == 0 && suffix[0] == '/')
+		return suffix;
+
+	/* avoid "//" */
+	if (suffix[0] == '/' || suffix[0] == 0)
+		snprintf(realpath, STRSIZE, "%s%s", prefix, suffix);
+	else
+		snprintf(realpath, STRSIZE, "%s/%s", prefix, suffix);
+	return realpath;
+}
+
+
+
+/*
+ * Do target prefix expansion on a pathname.
+ * XXX uses concat_paths and so returns result in a static buffer.
+ * The caller must copy if it wants to use the pathname past the 
+ * next call to a target-prefixing  function, or to modify the inputs..
+ * Used only  internally so this is probably safe.
+ */
+static const char* 
+target_expand(const char *tgtpath)
+{
+	return concat_paths(target_prefix(), tgtpath);
 }
 
 
@@ -95,10 +139,7 @@ int is_active_rootpart(const char *partname)
 static void 
 make_prefixed_dir(const char *prefix, const char *path)
 {
- 	if (path[0] == '/' || prefix[0] == 0 || path[0] == 0)
-		run_prog_or_continue("/bin/mkdir -p %s%s", prefix, path);
-	else
-		run_prog_or_continue("/bin/mkdir -p %s/%s", prefix, path);
+	run_prog_or_continue("/bin/mkdir -p %s", concat_paths(prefix, path));
 }
 
 
@@ -130,7 +171,7 @@ make_ramdisk_dir(const char *path)
 void
 append_to_target_file(const char *path, const char *string)
 {
-	run_prog_or_die("echo %s >> %s/%s", string, target_prefix(), path);
+	run_prog_or_die("echo %s >> %s", target_expand(path));
 }
 
 /*
@@ -162,19 +203,15 @@ sprintf_to_target_file(const char *path, const char *format, ...)
 void
 trunc_target_file(const char *path)
 {
-	run_prog_or_die("cat < /dev/null > %s/%s", target_prefix(), path);
+	run_prog_or_die("cat < /dev/null > %s",  target_expand(path));
 }
 
 static int do_target_chdir(const char *dir, int must_succeed)
 {
-	char tgt_dir[STRSIZE];
+	const char *tgt_dir;
 	int error = 0;
 
-	if (dir[0] == '/')
-		snprintf(tgt_dir, STRSIZE, "%s%s", target_prefix(), dir);
-	else
-		snprintf(tgt_dir, STRSIZE, "%s/%s", target_prefix(), dir);
-
+	tgt_dir = target_expand(dir);
 
 #ifndef DEBUG
 	error = chdir(tgt_dir);
@@ -209,16 +246,44 @@ int target_chdir(const char *dir)
 void dup_file_into_target(const char *filename)
 {
 	if (!target_already_root()) {
-		run_prog ("/bin/cp %s %s/%s", 
-		    filename, target_prefix(), filename);
+		const char *realpath = target_expand(filename);
+		run_prog ("/bin/cp %s %s", filename, realpath);
 	}
 }
 
 
 /* Do a mv where both pathnames are  within the target filesystem. */
-void mv_within_target_or_die(const char *from, const char *to)
+void mv_within_target_or_die(const char *frompath, const char *topath)
 {
-	run_prog_or_die("mv %s/%s", 
-	    target_prefix(), from,
-	    target_prefix(), to);
+	char realfrom[STRSIZE];
+	char realto[STRSIZE];
+
+	strncpy(realfrom, target_expand(frompath), STRSIZE);
+	strncpy(realto, target_expand(topath), STRSIZE);
+
+	run_prog_or_die("mv %s %s", realfrom, realto);
+}
+
+/* fopen a pathname in the target. */
+FILE*	target_fopen (const char *filename, const char *type)
+{
+	return fopen(target_expand(filename), type);
+}
+
+/*
+ * Do a mount onto a moutpoint in the install target.
+ * NB: does not prefix mount-from, which probably breaks  nullfs mounts.
+ */
+int target_mount(const char *fstype, const char *from, const char *on)
+{
+	int error;
+	const char *realmount = target_expand(on);
+
+	error = run_prog("/sbin/mount %s %s %s", fstype, from, realmount);
+	return (error);
+}
+
+int	target_collect_file(int kind, char **buffer, char *name)
+{
+	return collect(kind, buffer, target_expand(name));
 }
