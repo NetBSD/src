@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_var.h,v 1.9 2000/02/02 23:28:10 thorpej Exp $	*/
+/*	$NetBSD: in6_var.h,v 1.10 2000/02/04 14:34:26 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -568,6 +568,7 @@ int	in6_prefix_ioctl __P((struct socket *so, u_long cmd, caddr_t data,
 			      struct ifnet *ifp));
 int	in6_prefix_add_ifid __P((int iilen, struct in6_ifaddr *ia));
 void	in6_prefix_remove_ifid __P((int iilen, struct in6_ifaddr *ia));
+void	in6_purgeprefix __P((struct ifnet *));
 #endif /* _KERNEL */
 
 #endif /* _NETINET6_IN6_VAR_H_ */
