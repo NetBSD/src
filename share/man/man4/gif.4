@@ -1,4 +1,4 @@
-.\"	$NetBSD: gif.4,v 1.20 2002/03/14 21:29:02 kleink Exp $
+.\"	$NetBSD: gif.4,v 1.21 2002/03/15 00:09:43 wiz Exp $
 .\"	$KAME: gif.4,v 1.24 2001/02/20 12:54:01 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -106,20 +106,16 @@ With
 .Dv IFF_LINK1 ,
 .Nm
 will copy ECN bits
-.Po
-.Dv 0x02
+.Dv ( 0x02
 and
 .Dv 0x01
-on IPv4 TOS byte or IPv6 traffic class byte
-.Pc
+on IPv4 TOS byte or IPv6 traffic class byte)
 on egress and ingress, as follows:
 .Bl -tag -width "Ingress" -offset indent
 .It Ingress
 Copy TOS bits except for ECN CE
-.Po
-masked with
-.Dv 0xfe
-.Pc
+(masked with
+.Dv 0xfe )
 from
 inner to outer.
 set ECN CE bit to
@@ -142,13 +138,13 @@ type of inner packet.
 .Pp
 When the inner packet is IPv4, the protocol field of the outer packet
 is 4
-.Po Dv IPPROTO_IPV4 Pc .
+.Dv ( IPPROTO_IPV4 ) .
 When the inner packet is IPv6, the protocol field of the outer packet
 is 41
-.Po Dv IPPROTO_IPV6 Pc .
+.Dv ( IPPROTO_IPV6 ) .
 When the inner packet is ISO CNLP, the protocol field of the outer packet
 is 80
-.Po Dv IPPROTO_EON Pc .
+.Dv ( IPPROTO_EON ) .
 .Ss Security
 Malicious party may try to circumvent security filters by using
 tunnelled packets.
