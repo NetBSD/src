@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.117 2000/10/04 02:09:07 augustss Exp $
+$NetBSD: usbdevs,v 1.118 2000/10/08 20:51:00 augustss Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -458,6 +458,9 @@ product FREECOM DVD		0xfc01	Connector for DVD drive
 
 /* Future Technology Devices products */
 product FTDI SERIAL		0x8372	Serial converter
+
+/* Fuji photo products */
+product FUJIPHOTO MASS0100	0x0100	Mass Storage
 
 /* Handspring, Inc. */
 product HANDSPRING VISOR	0x0100	Handspring Visor
