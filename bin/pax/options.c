@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.38 2002/01/31 22:43:35 tv Exp $	*/
+/*	$NetBSD: options.c,v 1.39 2002/02/02 12:34:39 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: options.c,v 1.38 2002/01/31 22:43:35 tv Exp $");
+__RCSID("$NetBSD: options.c,v 1.39 2002/02/02 12:34:39 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -63,7 +63,9 @@ __RCSID("$NetBSD: options.c,v 1.38 2002/01/31 22:43:35 tv Exp $");
 #include "cpio.h"
 #include "tar.h"
 #include "extern.h"
+#ifndef SMALL
 #include "mtree.h"
+#endif	/* SMALL */
 
 /*
  * Routines which handle command line options
@@ -467,6 +469,12 @@ pax_options(int argc, char **argv)
 			Lflag = 1;
 			flg |= CLF;
 			break;
+#ifdef SMALL
+		case 'M':
+		case 'N':
+			tty_warn(1, "Support for -%c is not compiled in", c);
+			exit(1);
+#else	/* !SMALL */
 		case 'M':
 			/*
 			 * Treat list of filenames on stdin as an
@@ -486,6 +494,7 @@ pax_options(int argc, char **argv)
 				pax_usage();
 			}
 			break;
+#endif	/* !SMALL */
 		case 'O':
 			/*
 			 * Force one volume.  Non standard option.
