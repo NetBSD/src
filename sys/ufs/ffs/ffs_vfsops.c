@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.68 2000/06/27 23:39:17 fvdl Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.69 2000/06/27 23:51:22 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -1024,7 +1024,7 @@ ffs_vget(mp, ino, vpp)
 	 */
 	do {
 		if ((*vpp = ufs_ihashget(dev, ino, LK_EXCLUSIVE)) != NULL) {
-			vinsheadfree(vp);
+			ungetnewvnode(vp);
 			return (0);
 		}
 	} while (lockmgr(&ufs_hashlock, LK_EXCLUSIVE|LK_SLEEPFAIL, 0));
