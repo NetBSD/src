@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.8 1999/11/25 16:40:19 ad Exp $	*/
+/*	$NetBSD: fb.c,v 1.9 1999/12/06 19:25:58 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -67,7 +67,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1999 Shin Takemura.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$Id: fb.c,v 1.8 1999/11/25 16:40:19 ad Exp $";
+    "$Id: fb.c,v 1.9 1999/12/06 19:25:58 drochner Exp $";
 
 
 #include <sys/param.h>
@@ -118,7 +118,8 @@ static int	fb_getdevconfig __P((struct fb_devconfig *dc));
 static int	fb_alloc_screen __P((void *, const struct wsscreen_descr *,
 				     void **, int *, int *, long *));
 static void	fb_free_screen __P((void *, void *));
-static void	fb_show_screen __P((void *, void *));
+static int	fb_show_screen __P((void *, void *, int,
+				    void (*) (void *, int, int), void *));
 
 static int	pow __P((int, int));
 #if defined(USE_RASTERCONS) & defined(WSCONS_FONT_HACK)
@@ -499,12 +500,16 @@ fb_free_screen(v, cookie)
 	sc->nscreens--;
 }
 
-void
-fb_show_screen(v, cookie)
+int
+fb_show_screen(v, cookie, waitok, cb, cbarg)
 	void *v;
 	void *cookie;
+	int waitok;
+	void (*cb) __P((void *, int, int));
+	void *cbarg;
 {
 	DPRINTF(("%s(%d): fb_show_screen()\n", __FILE__, __LINE__));
+	return (0);
 }
 
 #if defined(USE_RASTERCONS) & defined(WSCONS_FONT_HACK)
