@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: hpux.h 1.18 91/02/09
  *	from: @(#)hpux.h	7.4 (Berkeley) 5/7/91
- *	$Id: hpux.h,v 1.4 1994/01/07 00:43:39 mycroft Exp $
+ *	$Id: hpux.h,v 1.5 1994/01/08 15:09:01 cgd Exp $
  */
 
 #include "hpux_exec.h"
@@ -166,10 +166,6 @@ struct hpux_user {
 #define HPUXFSYNCIO	00100000
 #define HPUXFREMOTE	01000000
 #define FUSECACHE	04000000
-
-/* HP-UX only sysV shmctl() commands */
-#define SHM_LOCK	3	/* Lock segment in core */
-#define SHM_UNLOCK	4	/* Unlock segment */
 
 /* HP-UX rtprio values */
 #define RTPRIO_MIN	0
