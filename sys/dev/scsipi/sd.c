@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.109 1997/02/21 23:03:38 thorpej Exp $	*/
+/*	$NetBSD: sd.c,v 1.110 1997/03/04 06:25:22 mikel Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -102,7 +102,7 @@ struct scsi_mode_sense_data {
 	struct scsi_mode_header header;
 	struct scsi_blk_desc blk_desc;
 	union disk_pages pages;
-} scsi_sense;
+};
 
 #ifdef __BROKEN_INDIRECT_CONFIG
 int	sdmatch __P((struct device *, void *, void *));
