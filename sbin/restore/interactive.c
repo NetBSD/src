@@ -1,4 +1,4 @@
-/*	$NetBSD: interactive.c,v 1.10 1997/03/19 08:42:52 lukem Exp $	*/
+/*	$NetBSD: interactive.c,v 1.11 1997/07/06 08:51:30 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)interactive.c	8.3 (Berkeley) 9/13/94";
 #else
-static char rcsid[] = "$NetBSD: interactive.c,v 1.10 1997/03/19 08:42:52 lukem Exp $";
+static char rcsid[] = "$NetBSD: interactive.c,v 1.11 1997/07/06 08:51:30 lukem Exp $";
 #endif
 #endif /* not lint */
 
@@ -310,6 +310,7 @@ getcmd(curdir, cmd, name, ap)
 	char *curdir, *cmd, *name;
 	struct arglist *ap;
 {
+	extern char *__progname;	/* from crt0.o */
 	char *cp;
 	static char input[BUFSIZ];
 	char output[BUFSIZ];
@@ -326,7 +327,7 @@ getcmd(curdir, cmd, name, ap)
 	 * Read a command line and trim off trailing white space.
 	 */
 	do	{
-		fprintf(stderr, "restore > ");
+		fprintf(stderr, "%s > ", __progname);
 		(void) fflush(stderr);
 		(void) fgets(input, BUFSIZ, terminal);
 	} while (!feof(terminal) && input[0] == '\n');
@@ -506,6 +507,7 @@ printlist(name, basename)
 	char locname[MAXPATHLEN + 1];
 
 	dp = pathsearch(name);
+	listp = NULL;
 	if (dp == NULL || (!dflag && TSTINO(dp->d_ino, dumpmap) == 0) ||
 	    (!vflag && dp->d_ino == WINO))
 		return;
@@ -521,7 +523,7 @@ printlist(name, basename)
 		}
 	} else {
 		entries = 0;
-		while (dp = rst_readdir(dirp))
+		while ((dp = rst_readdir(dirp)) != NULL)
 			entries++;
 		rst_closedir(dirp);
 		list = (struct afile *)malloc(entries * sizeof(struct afile));
@@ -537,7 +539,7 @@ printlist(name, basename)
 		(void) strncpy(locname, name, MAXPATHLEN);
 		(void) strncat(locname, "/", MAXPATHLEN);
 		namelen = strlen(locname);
-		while (dp = rst_readdir(dirp)) {
+		while ((dp = rst_readdir(dirp)) != NULL) {
 			if (dp == NULL)
 				break;
 			if (!dflag && TSTINO(dp->d_ino, dumpmap) == 0)
@@ -652,6 +654,7 @@ formatf(list, nentry)
 	width = 0;
 	haveprefix = 0;
 	havepostfix = 0;
+	precision = 0;
 	bigino = ROOTINO;
 	endlist = &list[nentry];
 	for (fp = &list[0]; fp < endlist; fp++) {

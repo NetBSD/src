@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.4 1995/03/18 14:59:43 cgd Exp $	*/
+/*	$NetBSD: extern.h,v 1.5 1997/07/06 08:51:29 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,6 +37,7 @@
 
 struct entry	*addentry __P((char *, ino_t, int));
 long		 addfile __P((char *, ino_t, int));
+int		 addwhiteout __P((char *));
 void		 badentry __P((struct entry *, char *));
 void	 	 canon __P((char *, char *));
 void		 checkrestore __P((void));
@@ -47,6 +48,7 @@ void		 createleaves __P((char *));
 void		 createlinks __P((void));
 long		 deletefile __P((char *, ino_t, int));
 void		 deleteino __P((ino_t));
+void		 delwhiteout __P((struct entry *));
 ino_t		 dirlookup __P((const char *));
 void		 dumpsymtable __P((char *, long));
 void	 	 extractdirs __P((int));
