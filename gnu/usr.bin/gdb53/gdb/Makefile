@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2003/08/14 18:10:09 christos Exp $
+#	$NetBSD: Makefile,v 1.2 2003/08/16 16:03:05 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -50,27 +50,12 @@ INFOFLAGS=	-I${DIST}/gdb/doc -I${DIST}/gdb/mi \
 .include <bsd.prog.mk>
 .include <bsd.info.mk>
 
-.if ${MKGDB} != "no" && ${MKBFD} != "no" && \
-    exists(${.CURDIR}/../arch/${MACHINE_ARCH}/defs.mk)
-
 # PSIM support for PowerPC.
 #.if ${MACHINE_ARCH} == powerpc || ${MACHINE_ARCH} == powerpcle
-#PSIMOBJ!=	cd ${TOP}/usr.bin/sim/ppc && ${PRINTOBJDIR}
-#LDADD+=		-L${PSIMOBJ} -lsim
-#DPADD+=		${PSIMOBJ}/libsim.a
+PSIMOBJ!=	cd ${TOP}/usr.bin/sim/ppc && ${PRINTOBJDIR}
+LDADD+=		-L${PSIMOBJ} -lsim
+DPADD+=		${PSIMOBJ}/libsim.a
 #.endif
-
-#OPCODESOBJ!=	cd ${TOP}/lib/libopcodes && ${PRINTOBJDIR}
-#LDADD+=		-L${OPCODESOBJ} -lopcodes
-#DPADD+=		${OPCODESOBJ}/libopcodes_pic.a
-
-#BFDOBJ!=	cd ${TOP}/lib/libbfd && ${PRINTOBJDIR}
-#LDADD+=		-L${BFDOBJ} -lbfd
-#DPADD+=		${BFDOBJ}/libbfd_pic.a
-
-#IBERTYOBJ!=	cd ${TOP}/lib/libiberty && ${PRINTOBJDIR}
-#LDADD+=		-L${IBERTYOBJ} -liberty
-#DPADD+=		${IBERTYOBJ}/libiberty.a
 
 .PATH: ${DIST}/gdb ${DIST}/gdb/mi ${DIST}/gdb/cli ${DIST}/gdb/tui \
 	${DIST}/gdb/doc ${DIST}/libiberty ${DIST}/bfd ${DIST}/opcodes \
@@ -90,5 +75,3 @@ bfd-corefile.o: ${DIST}/bfd/corefile.c
 
 bfd-init.o: ${DIST}/bfd/init.c
 	${CC} ${CPPFLAGS} ${CFLAGS} -c ${.ALLSRC} -o ${.TARGET}
-
-.endif	# MKGDB != no && MKBFD != no
