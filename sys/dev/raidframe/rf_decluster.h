@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_decluster.h,v 1.3 1999/02/05 00:06:09 oster Exp $	*/
+/*	$NetBSD: rf_decluster.h,v 1.4 2001/10/04 15:58:52 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -38,19 +38,13 @@
 #ifndef _RF__RF_DECLUSTER_H_
 #define _RF__RF_DECLUSTER_H_
 
-#include "rf_types.h"
+#include <dev/raidframe/raidframevar.h>
 
 /*
  * These structures define the tables used to locate the spare unit
  * associated with a particular data or parity unit, and to perform
  * the associated inverse mapping.
  */
-struct RF_SpareTableEntry_s {
-	u_int   spareDisk;	/* disk to which this block is spared */
-	u_int   spareBlockOffsetInSUs;	/* offset into spare table for that
-					 * disk */
-};
-#define RF_SPAREMAP_NAME_LEN 128
 
 /* this is the layout-specific info structure for the declustered layout.
  */

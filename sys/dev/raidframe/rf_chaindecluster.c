@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_chaindecluster.c,v 1.6 2001/01/26 04:27:16 oster Exp $	*/
+/*	$NetBSD: rf_chaindecluster.c,v 1.7 2001/10/04 15:58:51 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -36,7 +36,8 @@
 
 #if (RF_INCLUDE_CHAINDECLUSTER > 0) 
 
-#include "rf_types.h"
+#include <dev/raidframe/raidframevar.h>
+
 #include "rf_raid.h"
 #include "rf_chaindecluster.h"
 #include "rf_dag.h"

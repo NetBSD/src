@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsd.h,v 1.12 2000/05/28 22:53:49 oster Exp $	*/
+/*	$NetBSD: rf_netbsd.h,v 1.13 2001/10/04 15:58:54 oster Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,71 +39,12 @@
 #ifndef _RF__RF_NETBSDSTUFF_H_
 #define _RF__RF_NETBSDSTUFF_H_
 
-#ifdef _KERNEL
 #include <sys/fcntl.h>
 #include <sys/systm.h>
 #include <sys/namei.h>
 #include <sys/vnode.h>
-#endif /* _KERNEL */
 
-/* The per-component label information that the user can set */
-typedef struct RF_ComponentInfo_s {
-	int row;              /* the row number of this component */
-	int column;           /* the column number of this component */
-	int serial_number;    /* a user-specified serial number for this
-				 RAID set */
-} RF_ComponentInfo_t;
-
-/* The per-component label information */
-typedef struct RF_ComponentLabel_s {
-	int version;          /* The version of this label. */
-	int serial_number;    /* a user-specified serial number for this
-				 RAID set */
-	int mod_counter;      /* modification counter.  Changed (usually
-				 by incrementing) every time the label 
-				 is changed */
-	int row;              /* the row number of this component */
-	int column;           /* the column number of this component */
-	int num_rows;         /* number of rows in this RAID set */
-	int num_columns;      /* number of columns in this RAID set */
-	int clean;            /* 1 when clean, 0 when dirty */
-	int status;           /* rf_ds_optimal, rf_ds_dist_spared, whatever. */
-	/* stuff that will be in version 2 of the label */
-	int sectPerSU;        /* Sectors per Stripe Unit */
-	int SUsPerPU;         /* Stripe Units per Parity Units */
-	int SUsPerRU;         /* Stripe Units per Reconstruction Units */
-	int parityConfig;     /* '0' == RAID0, '1' == RAID1, etc. */
-	int maxOutstanding;   /* maxOutstanding disk requests */
-	int blockSize;        /* size of component block. 
-				 (disklabel->d_secsize) */
-	int numBlocks;        /* number of blocks on this component.  May
-			         be smaller than the partition size. */
-	int partitionSize;    /* number of blocks on this *partition*. 
-				 Must exactly match the partition size
-				 from the disklabel. */
-	int future_use[33];   /* Future expansion */
-	int autoconfigure;    /* automatically configure this RAID set. 
-				 0 == no, 1 == yes */
-	int root_partition;   /* Use this set as /
-				 0 == no, 1 == yes*/
-	int last_unit;        /* last unit number (e.g. 0 for /dev/raid0) 
-				 of this component.  Used for autoconfigure
-				 only. */
-	int config_order;     /* 0 .. n.  The order in which the component
-				 should be auto-configured.  E.g. 0 is will 
-				 done first, (and would become raid0).
-				 This may be in conflict with last_unit!!?! */
-	                      /* Not currently used. */
-	int future_use2[44];  /* More future expansion */
-} RF_ComponentLabel_t;
-
-typedef struct RF_SingleComponent_s {
-	int row;
-	int column;
-	char component_name[50]; /* name of the component */
-} RF_SingleComponent_t; 
-
-#ifdef _KERNEL
+#include <dev/raidframe/raidframevar.h>
 
 struct raidcinfo {
 	struct vnode *ci_vp;	/* component device's vnode */
@@ -136,5 +77,4 @@ typedef struct RF_ConfigSet_s {
 	struct RF_ConfigSet_s *next;
 } RF_ConfigSet_t;
 
-#endif /* _KERNEL */
 #endif /* _RF__RF_NETBSDSTUFF_H_ */

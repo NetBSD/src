@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagdegrd.c,v 1.8 2001/06/08 12:51:17 mrg Exp $	*/
+/*	$NetBSD: rf_dagdegrd.c,v 1.9 2001/10/04 15:58:51 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -32,8 +32,9 @@
  * code for creating degraded read DAGs
  */
 
+#include <dev/raidframe/raidframevar.h>
+
 #include "rf_archs.h"
-#include "rf_types.h"
 #include "rf_raid.h"
 #include "rf_dag.h"
 #include "rf_dagutils.h"

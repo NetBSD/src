@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_sstf.c,v 1.6 2001/01/27 20:18:55 oster Exp $	*/
+/*	$NetBSD: rf_sstf.c,v 1.7 2001/10/04 15:58:56 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -31,6 +31,7 @@
  * sstf.c --  prioritized shortest seek time first disk queueing code
  *
  ******************************************************************************/
+#include <dev/raidframe/raidframevar.h>
 
 #include "rf_alloclist.h"
 #include "rf_stripelocks.h"
@@ -41,7 +42,6 @@
 #include "rf_general.h"
 #include "rf_options.h"
 #include "rf_raid.h"
-#include "rf_types.h"
 
 #define DIR_LEFT   1
 #define DIR_RIGHT  2

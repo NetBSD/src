@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.h,v 1.5 2001/07/27 03:30:07 oster Exp $	*/
+/*	$NetBSD: rf_driver.h,v 1.6 2001/10/04 15:58:53 oster Exp $	*/
 /*
  * rf_driver.h
  */
@@ -32,11 +32,11 @@
 #ifndef _RF__RF_DRIVER_H_
 #define _RF__RF_DRIVER_H_
 
+#include <dev/raidframe/raidframevar.h>
+
 #include "rf_threadstuff.h"
-#include "rf_types.h"
 #include "rf_netbsd.h"
 
-#if _KERNEL
 RF_DECLARE_EXTERN_MUTEX(rf_printf_mutex)
 int     rf_BootRaidframe(void);
 int     rf_UnbootRaidframe(void);
@@ -68,5 +68,5 @@ void    rf_StartUserStats(RF_Raid_t * raidPtr);
 void    rf_StopUserStats(RF_Raid_t * raidPtr);
 void    rf_UpdateUserStats(RF_Raid_t * raidPtr, int rt, int numsect);
 void    rf_PrintUserStats(RF_Raid_t * raidPtr);
-#endif /* _KERNEL */
+
 #endif				/* !_RF__RF_DRIVER_H_ */
