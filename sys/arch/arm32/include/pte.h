@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.7 1998/08/04 16:16:22 mark Exp $	*/
+/*	$NetBSD: pte.h,v 1.8 1998/08/30 23:15:14 mark Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -37,7 +37,6 @@
 
 #define PDSHIFT		20		/* LOG2(NBPDR) */
 #define NBPD		(1 << PDSHIFT)	/* bytes/page dir */
-/*# define PDOFSET	(NBPD-1)*/	/* byte offset into page dir */
 #define NPTEPD		(NBPD / NBPG)
 
 #ifndef _LOCORE
@@ -45,8 +44,8 @@ typedef	int	pd_entry_t;		/* page directory entry */
 typedef	int	pt_entry_t;		/* page table entry */
 #endif
 
-#define PD_MASK	0xfff00000		/* page directory address bits */
-#define PT_MASK	0x000ff000		/* page table address bits */
+#define PD_MASK		0xfff00000	/* page directory address bits */
+#define PT_MASK		0x000ff000	/* page table address bits */
 
 #define PG_FRAME	0xfffff000
 
@@ -61,45 +60,60 @@ typedef	int	pt_entry_t;		/* page table entry */
 #define PT_SIZE		0x1000
 #define PD_SIZE		0x4000
 
+/* Access permissions for L1 sections and L2 pages */
 #define AP_KR		0x00
 #define AP_KRW		0x01
 #define AP_KRWUR	0x02
 #define AP_KRWURW	0x03
 
-#define AP_W           0x01
-#define AP_U           0x02
+#define AP_W		0x01
+#define AP_U		0x02
 
+/* Physical bits in a pte */
 #define PT_B		0x04	/* Phys - Buffered (write) */
 #define PT_C		0x08	/* Phys - Cacheable */
 #define PT_U		0x10	/* Phys - Updateable */
 
+#define PT_CACHEABLE	(PT_B | PT_C)
+
+/* Virtual bits in a pte (maintained in software) */
 #define PT_M		0x01	/* Virt - Modified */
 #define PT_H		0x02	/* Virt - Handled (Used) */
 #define PT_W		0x40	/* Virt - Wired */
 #define PT_Wr		0x10	/* Virt / Phys Write */
 #define PT_Us		0x20	/* Virt / Phys User */
 
+/* access permissions for L2 pages (all sub pages have the same perms) */
 #define PT_AP(x)	((x << 10) | (x << 8) | (x << 6)  | (x << 4))
 
+/* shift for access permissions in a L1 section mapping */
 #define AP_SECTION_SHIFT	10
 
-#define L1_PAGE		0x01
-#define L1_SECTION	0x02
-#define L1_MASK		0x03
-#define L2_LPAGE	0x01
-#define L2_SPAGE	0x02
-#define L2_MASK		0x03
-#define L2_INVAL	0x00
+/* Page table types and masks */
+#define L1_PAGE		0x01	/* L1 page table mapping */
+#define L1_SECTION	0x02	/* L1 section mapping */
+#define L1_MASK		0x03	/* Mask for L1 entry type */
+#define L2_LPAGE	0x01	/* L2 large page (64KB) */
+#define L2_SPAGE	0x02	/* L2 small page (4KB) */
+#define L2_MASK		0x03	/* Mask for L2 entry type */
+#define L2_INVAL	0x00	/* L2 invalid type */
 
-#define L2_PTE(p, a)	((p) | PT_AP(a) | L2_SPAGE | PT_C | PT_B)
-#define L2_PTE_NC(p, a) ((p) | PT_AP(a) | L2_SPAGE | PT_B)
-#define L2_PTE_NC_NB(p, a) ((p) | PT_AP(a) | L2_SPAGE)
+/* PTE construction macros */
+#define	L2_LPTE(p, a, f)	((p) | PT_AP(a) | L2_LPAGE | (f))
+#define L2_SPTE(p, a, f)	((p) | PT_AP(a) | L2_SPAGE | (f))
+#define L2_PTE(p, a)		L2_SPTE((p), (a), PT_CACHEABLE)
+#define L2_PTE_NC(p, a)		L2_SPTE((p), (a), PT_B)
+#define L2_PTE_NC_NB(p, a)	L2_SPTE((p), (a), 0)
+#define L1_SECPTE(p, a, f)	((p) | ((a) << AP_SECTION_SHIFT) | (f) \
+				| L1_SECTION | PT_U)
 
-#define L1_PTE(p)	((p) | 0x00 | PT_U | L1_PAGE)
-#define L1_SEC(p, c)	((p) | (AP_KRW << AP_SECTION_SHIFT) | PT_U | (c) \
-			| L1_SECTION)
+#define L1_PTE(p)	((p) | 0x00 | L1_PAGE | PT_U)
+#define L1_SEC(p, c)	L1_SECPTE((p), AP_KRW, (c))
+
 #define L1_SEC_SIZE	(1 << PDSHIFT)
+#define L2_LPAGE_SIZE	(NBPG * 16)
 
+/* Domain types */
 #define DOMAIN_FAULT		0x00
 #define DOMAIN_CLIENT		0x01
 #define DOMAIN_RESERVED		0x02
