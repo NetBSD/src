@@ -1,4 +1,4 @@
-/*	$NetBSD: ctu.c,v 1.4 1996/10/11 01:51:06 christos Exp $ */
+/*	$NetBSD: ctu.c,v 1.5 1996/10/13 03:35:36 christos Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -171,7 +171,7 @@ ctustrategy(bp)
 	int	s;
 
 #ifdef TUDEBUG
-	kprintf("addr %x, block %x, nblock %x, read %x\n",
+	printf("addr %x, block %x, nblock %x, read %x\n",
 		bp->b_un.b_addr, bp->b_blkno, bp->b_bcount,
 		bp->b_flags & B_READ);
 #endif
@@ -252,7 +252,7 @@ cturintr(arg)
 	switch (tu_sc.sc_state) {
 
 	case SC_UNUSED:
-		kprintf("stray console storage interrupt, got %o\n", status);
+		printf("stray console storage interrupt, got %o\n", status);
 		break;
 
 	case SC_INIT:
@@ -266,7 +266,7 @@ cturintr(arg)
 			tu_sc.sc_bbytes++;
 			if (tu_sc.sc_bbytes == 146) { /* We're finished! */
 #ifdef TUDEBUG
-				kprintf("Xfer ok\n");
+				printf("Xfer ok\n");
 #endif
 				tu_sc.sc_q.b_actf = bp->b_actf;
 				iodone(bp);
@@ -291,7 +291,7 @@ cturintr(arg)
 
 	case SC_GET_WCONT:
 		if (status != 020)
-			kprintf("SC_GET_WCONT: status %o\n", status);
+			printf("SC_GET_WCONT: status %o\n", status);
 		else
 			ctutintr(0);
 		tu_sc.sc_xmtok = 0;
@@ -307,7 +307,7 @@ cturintr(arg)
 			mtpr(RSP_TYP_INIT, PR_CSTD);
 			return;
 		}
-		kprintf("Unknown receive ctuintr state %d, pack %o\n",
+		printf("Unknown receive ctuintr state %d, pack %o\n",
 		    tu_sc.sc_state, status);
 	}
 
@@ -366,7 +366,7 @@ ctutintr(arg)
 		break;
 
 	default:
-		kprintf("Unknown xmit ctuintr state %d\n",tu_sc.sc_state);
+		printf("Unknown xmit ctuintr state %d\n",tu_sc.sc_state);
 	}
 }
 
@@ -401,7 +401,7 @@ ctuwatch(arg)
 
 	if (tu_sc.sc_state == SC_GET_RESP && tu_sc.sc_tpblk != 0 &&
 	    tu_sc.sc_tpblk == oldtp && (tu_sc.sc_tpblk % 128 != 0)) {
-		kprintf("tu0: lost recv interrupt\n");
+		printf("tu0: lost recv interrupt\n");
 		ctustart(tu_sc.sc_q.b_actf);
 		return;
 	}

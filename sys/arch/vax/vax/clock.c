@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.17 1996/10/11 01:51:03 christos Exp $	 */
+/*	$NetBSD: clock.c,v 1.18 1996/10/13 03:35:33 christos Exp $	 */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -116,11 +116,11 @@ inittodr(fs_time)
 
 	default: /* System clock OK, no warning if we don't want to. */
 		if (time.tv_sec > fs_time + 3 * SEC_PER_DAY) {
-			kprintf("Clock has gained %d days",
+			printf("Clock has gained %d days",
 			    (time.tv_sec - fs_time) / SEC_PER_DAY);
 			rv = CLKREAD_WARN;
 		} else if (time.tv_sec + SEC_PER_DAY < fs_time) {
-			kprintf("Clock has lost %d day(s)",
+			printf("Clock has lost %d day(s)",
 			    (fs_time - time.tv_sec) / SEC_PER_DAY);
 			rv = CLKREAD_WARN;
 		}
@@ -128,7 +128,7 @@ inittodr(fs_time)
 	}
 
 	if (rv < CLKREAD_OK)
-		kprintf(" - CHECK AND RESET THE DATE.\n");
+		printf(" - CHECK AND RESET THE DATE.\n");
 }
 
 /*   
@@ -253,9 +253,9 @@ generic_clkread(base)
 	 */
 	if (klocka < TODRBASE) {
 		if (klocka == 0)
-			kprintf("TODR stopped");
+			printf("TODR stopped");
 		else
-			kprintf("TODR too small");
+			printf("TODR too small");
 		return CLKREAD_BAD;
 	}
 

@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: rd.c,v 1.4 1996/10/11 00:41:04 christos Exp $
+ *	$Id: rd.c,v 1.5 1996/10/13 03:30:20 christos Exp $
  */
 
 #include <sys/param.h>
@@ -79,7 +79,7 @@ rdattach(parent, self, aux)
 {
 	struct rdsoftc *sc = (struct rdsoftc *)self;
 
-	kprintf(" addr 0x%x, size 0x%x\n", ram_disk, RD_SIZE);
+	printf(" addr 0x%x, size 0x%x\n", ram_disk, RD_SIZE);
 
 	/*
 	 * Initialize and attach the disk structure.

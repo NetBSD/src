@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.3 1996/10/11 00:39:48 christos Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.4 1996/10/13 03:35:29 christos Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -158,7 +158,7 @@ pmap_bootstrap(nextpa, firstpa)
 #ifdef MACHINE_NONCONTIG
 	setmemrange();
 	if (nextpa > high[0]) {
-		kprintf("Failure in BSD boot.  nextpa=0x%lx, high[0]=0x%lx.\n",
+		printf("Failure in BSD boot.  nextpa=0x%lx, high[0]=0x%lx.\n",
 			nextpa, high[0]);
 		panic("You're hosed!\n");
 	}

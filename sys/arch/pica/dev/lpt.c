@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.3 1996/10/10 23:45:01 christos Exp $	*/
+/*	$NetBSD: lpt.c,v 1.4 1996/10/13 03:31:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -79,7 +79,7 @@
 #if !defined(DEBUG) || !defined(notdef)
 #define lprintf
 #else
-#define lprintf		if (lptdebug) kprintf
+#define lprintf		if (lptdebug) printf
 int lptdebug = 1;
 #endif
 
@@ -186,7 +186,7 @@ lptprobe(parent, match, aux)
 		return (0);
 
 #ifdef DEBUG
-#define	ABORT	do {kprintf("lptprobe: mask %x data %x failed\n", mask, data); \
+#define	ABORT	do {printf("lptprobe: mask %x data %x failed\n", mask, data); \
 		    return 0;} while (0)
 #else
 #define	ABORT	return 0
@@ -230,7 +230,7 @@ lptattach(parent, self, aux)
 	struct confargs *ca = aux;
 	int iobase = (int)BUS_CVTADDR(ca);
 
-	kprintf("\n");
+	printf("\n");
 
 	sc->sc_iobase = iobase;
 	sc->sc_state = 0;
@@ -263,7 +263,7 @@ lptopen(dev, flag)
 
 #ifdef DIAGNOSTIC
 	if (sc->sc_state)
-		kprintf("%s: stat=0x%x not zero\n", sc->sc_dev.dv_xname,
+		printf("%s: stat=0x%x not zero\n", sc->sc_dev.dv_xname,
 		    sc->sc_state);
 #endif
 

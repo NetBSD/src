@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.2 1996/10/11 00:41:49 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.3 1996/10/13 03:31:36 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -267,35 +267,35 @@ identifycpu()
 	cpu = pvr >> 16;
 	switch (cpu) {
 	case 1:
-		ksprintf(cpu_model, "601");
+		sprintf(cpu_model, "601");
 		break;
 	case 3:
-		ksprintf(cpu_model, "603");
+		sprintf(cpu_model, "603");
 		break;
 	case 4:
-		ksprintf(cpu_model, "604");
+		sprintf(cpu_model, "604");
 		break;
 	case 5:
-		ksprintf(cpu_model, "602");
+		sprintf(cpu_model, "602");
 		break;
 	case 6:
-		ksprintf(cpu_model, "603e");
+		sprintf(cpu_model, "603e");
 		break;
 	case 7:
-		ksprintf(cpu_model, "603ev");
+		sprintf(cpu_model, "603ev");
 		break;
 	case 9:
-		ksprintf(cpu_model, "604ev");
+		sprintf(cpu_model, "604ev");
 		break;
 	case 20:
-		ksprintf(cpu_model, "620");
+		sprintf(cpu_model, "620");
 		break;
 	default:
-		ksprintf(cpu_model, "Version %x", cpu);
+		sprintf(cpu_model, "Version %x", cpu);
 		break;
 	}
 	sprintf(cpu_model + strlen(cpu_model), " (Revision %x)", pvr & 0xffff);
-	kprintf("CPU: %s\n", cpu_model);
+	printf("CPU: %s\n", cpu_model);
 }
 
 void
@@ -334,10 +334,10 @@ cpu_startup()
 	proc0.p_addr = proc0paddr;
 	v = (caddr_t)proc0paddr + USPACE;
 
-	kprintf("%s", version);
+	printf("%s", version);
 	identifycpu();
 	
-	kprintf("real mem = %d\n", ctob(physmem));
+	printf("real mem = %d\n", ctob(physmem));
 	
 	/*
 	 * Find out how much space we need, allocate it,
@@ -405,8 +405,8 @@ cpu_startup()
 	for (i = 1; i < ncallout; i++)
 		callout[i - 1].c_next = &callout[i];
 	
-	kprintf("avail mem = %d\n", ptoa(cnt.v_free_count));
-	kprintf("using %d buffers containing %d bytes of memory\n",
+	printf("avail mem = %d\n", ptoa(cnt.v_free_count));
+	printf("using %d buffers containing %d bytes of memory\n",
 	       nbuf, bufpages * CLBYTES);
 	
 	/*
@@ -631,7 +631,7 @@ long dumplo = -1;			/* blocks */
 void
 dumpsys()
 {
-	kprintf("dumpsys: TBD\n");
+	printf("dumpsys: TBD\n");
 }
 
 int cpl;
@@ -851,16 +851,16 @@ boot(howto, what)
 	splhigh();
 	if (howto & RB_HALT) {
 		doshutdownhooks();
-		kprintf("halted\n\n");
+		printf("halted\n\n");
 		ppc_exit();
 	}
 	if (!cold && (howto & RB_DUMP))
 		dumpsys();
 	doshutdownhooks();
-	kprintf("rebooting\n\n");
+	printf("rebooting\n\n");
 	if (what && *what) {
 		if (strlen(what) > sizeof str - 5)
-			kprintf("boot string too large, ignored\n");
+			printf("boot string too large, ignored\n");
 		else {
 			strcpy(str, what);
 			ap1 = ap = str + strlen(str);

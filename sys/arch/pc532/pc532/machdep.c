@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.50 1996/10/11 00:41:20 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.51 1996/10/13 03:30:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -166,8 +166,8 @@ cpu_startup()
 		    avail_end + i * NBPG, VM_PROT_ALL, TRUE);
 	msgbufmapped = 1;
 
-	kprintf(version);
-	kprintf("real mem  = %d\n", ctob(physmem));
+	printf(version);
+	printf("real mem  = %d\n", ctob(physmem));
 
 	/*
 	 * Find out how much space we need, allocate it,
@@ -243,8 +243,8 @@ cpu_startup()
 	for (i = 1; i < ncallout; i++)
 		callout[i-1].c_next = &callout[i];
 
-	kprintf("avail mem = %ld\n", ptoa(cnt.v_free_count));
-	kprintf("using %d buffers containing %d bytes of memory\n",
+	printf("avail mem = %ld\n", ptoa(cnt.v_free_count));
+	printf("using %d buffers containing %d bytes of memory\n",
 		nbuf, bufpages * CLBYTES);
 
 	/*
@@ -545,10 +545,10 @@ boot(howto, bootstr)
 			int i=0;
 			sprd(fp, fp);
 			while ((u_int)fp < limit) {
-				kprintf ("0x%x (@0x%x), ", fp[1], fp);
+				printf ("0x%x (@0x%x), ", fp[1], fp);
 				fp = (int *)fp[0];
 				if (++i == 3) {
-					kprintf("\n");
+					printf("\n");
 					i=0;
 				}
 			}
@@ -575,13 +575,13 @@ haltsys:
 	doshutdownhooks();
 
 	if (howto & RB_HALT) {
-		kprintf("\n");
-		kprintf("The operating system has halted.\n");
-		kprintf("Please press any key to reboot.\n\n");
+		printf("\n");
+		printf("The operating system has halted.\n");
+		printf("Please press any key to reboot.\n\n");
 		cngetc();
 	}
 
-	kprintf("rebooting...\n");
+	printf("rebooting...\n");
 	cpu_reset();
 	for(;;) ;
 	/*NOTREACHED*/
@@ -669,12 +669,12 @@ dumpsys()
 		dumpconf();
 	if (dumplo < 0)
 		return;
-	kprintf("\ndumping to dev %x, offset %ld\n", dumpdev, dumplo);
+	printf("\ndumping to dev %x, offset %ld\n", dumpdev, dumplo);
 
 	psize = (*bdevsw[major(dumpdev)].d_psize)(dumpdev);
-	kprintf("dump ");
+	printf("dump ");
 	if (psize == -1) {
-		kprintf("area unavailable\n");
+		printf("area unavailable\n");
 		return;
 	}
 
@@ -692,7 +692,7 @@ dumpsys()
 		/* Print out how many MBs we to go. */
 		n = bytes - i;
 		if (n && (n % (1024*1024)) == 0)
-			kprintf("%d ", n / (1024 * 1024));
+			printf("%d ", n / (1024 * 1024));
 
 		/* Limit size for next transfer. */
 		if (n > BYTES_PER_DUMP)
@@ -717,34 +717,34 @@ dumpsys()
 	switch (error) {
 
 	case ENXIO:
-		kprintf("device bad\n");
+		printf("device bad\n");
 		break;
 
 	case EFAULT:
-		kprintf("device not ready\n");
+		printf("device not ready\n");
 		break;
 
 	case EINVAL:
-		kprintf("area improper\n");
+		printf("area improper\n");
 		break;
 
 	case EIO:
-		kprintf("i/o error\n");
+		printf("i/o error\n");
 		break;
 
 	case EINTR:
-		kprintf("aborted from console\n");
+		printf("aborted from console\n");
 		break;
 
 	case 0:
-		kprintf("succeeded\n");
+		printf("succeeded\n");
 		break;
 
 	default:
-		kprintf("error %d\n", error);
+		printf("error %d\n", error);
 		break;
 	}
-	kprintf("\n\n");
+	printf("\n\n");
 	DELAY(5000000);		/* 5 seconds */
 }
 

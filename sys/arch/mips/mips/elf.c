@@ -1,4 +1,4 @@
-/*	$NetBSD: elf.c,v 1.6 1996/10/11 00:22:11 christos Exp $	*/
+/*	$NetBSD: elf.c,v 1.7 1996/10/13 03:29:08 christos Exp $	*/
 /* from: NetBSD: exec_elf.c,v 1.3 1995/09/16 00:28:08 thorpej Exp 	*/
 
 /*       mips elf shared-library support from Per Fogelstrom's OpenBSD code */
@@ -290,7 +290,7 @@ elf_load_psection(vcset, vp, ph, addr, size, prot)
 		psize = trunc_page(*size);
 
 #ifdef ELF_DEBUG
-/*XXX*/		kprintf("mi elf: NEW_VNCMD len %x va %x off %x prot %x\n",
+/*XXX*/		printf("mi elf: NEW_VNCMD len %x va %x off %x prot %x\n",
 			psize, *addr, offset, *prot);
 #endif	/*ELF_DEBUG*/
 
@@ -300,7 +300,7 @@ elf_load_psection(vcset, vp, ph, addr, size, prot)
 			NEW_VMCMD(vcset, vmcmd_map_readvn, *size - psize, *addr + psize, vp, offset + psize, *prot);
 
 #ifdef ELF_DEBUG
-/*XXX*/		kprintf("mi elf: NEW_VNCMD, size!=psize,  len %x va %x off %x prot %x\n",
+/*XXX*/		printf("mi elf: NEW_VNCMD, size!=psize,  len %x va %x off %x prot %x\n",
 
 			*size - psize, *addr + psize, offset + psize, *prot);
 #endif	/*ELF_DEBUG*/
@@ -319,7 +319,7 @@ elf_load_psection(vcset, vp, ph, addr, size, prot)
 	if (rm != rf) {
 
 #ifdef ELFDEBUG
-/*XXX*/		kprintf("mi elf: rounding VNCMD len %x va %x off %x prot %x\n",
+/*XXX*/		printf("mi elf: rounding VNCMD len %x va %x off %x prot %x\n",
 			rm - rf, rf, offset, *prot);
 #endif /*ELF_DEBUG*/
 		NEW_VMCMD(vcset, vmcmd_map_zero, rm - rf, rf, NULLVP, 0, *prot);
@@ -366,7 +366,7 @@ elf_set_segment(epp, vaddr, size, prot)
 			 * Support for sbss extra segment, by extending
 			 * the data segment appropriately
 			 */
-/*XXX DEBUG*/	kprintf("elf_set_segment(): prot %x, bad rw size  %x\n",
+/*XXX DEBUG*/	printf("elf_set_segment(): prot %x, bad rw size  %x\n",
 			prot, epp->ep_dsize);
 
 			if (epp->ep_daddr > vaddr)	
@@ -618,7 +618,7 @@ exec_elf_makecmds(p, epp)
 			 * This fails on binaries made by the old
 			 * NetBSD pre-1.1 ELF toolchain, which had
 			 */
-				kprintf("exec_elf_makecmds: set_segment failed\n");
+				printf("exec_elf_makecmds: set_segment failed\n");
 #endif /*ELF_DEBUG*/
 				goto bad;
 

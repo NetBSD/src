@@ -1,4 +1,4 @@
-/*	$NetBSD: minidebug.c,v 1.3 1996/10/10 23:45:35 christos Exp $	*/
+/*	$NetBSD: minidebug.c,v 1.4 1996/10/13 03:31:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -163,7 +163,7 @@ int gethex(u_int *val, u_int dotval)
 		}
 		else if(c == '\b') {
 			*val = *val >> 4;
-			kprintf("\b \b");
+			printf("\b \b");
 		}
 		else if(c == ',') {
 			cnputc(c);
@@ -186,33 +186,33 @@ void dump(u_int *addr, u_int size)
 	size = (size + 3) / 4;
 	while(size--) {
 		if((cnt++ & 3) == 0)
-			kprintf("\n%08x: ",(int)addr);
-		kprintf("%08x ",*addr++);
+			printf("\n%08x: ",(int)addr);
+		printf("%08x ",*addr++);
 	}
 }
 
 void print_regs()
 {
-	kprintf("\n");
-	kprintf("T0-7 %08x %08x %08x %08x %08x %08x %08x %08x\n",
+	printf("\n");
+	printf("T0-7 %08x %08x %08x %08x %08x %08x %08x %08x\n",
 		mdbpcb.pcb_regs[T0],mdbpcb.pcb_regs[T1],
 		mdbpcb.pcb_regs[T2],mdbpcb.pcb_regs[T3],
 		mdbpcb.pcb_regs[T4],mdbpcb.pcb_regs[T5],
 		mdbpcb.pcb_regs[T6],mdbpcb.pcb_regs[T7]);
-	kprintf("T8-9 %08x %08x     A0-4 %08x %08x %08x %08x\n",
+	printf("T8-9 %08x %08x     A0-4 %08x %08x %08x %08x\n",
 		mdbpcb.pcb_regs[T8],mdbpcb.pcb_regs[T9],
 		mdbpcb.pcb_regs[A0],mdbpcb.pcb_regs[A1],
 		mdbpcb.pcb_regs[A2],mdbpcb.pcb_regs[A3]);
-	kprintf("S0-7 %08x %08x %08x %08x %08x %08x %08x %08x\n",
+	printf("S0-7 %08x %08x %08x %08x %08x %08x %08x %08x\n",
 		mdbpcb.pcb_regs[S0],mdbpcb.pcb_regs[S1],
 		mdbpcb.pcb_regs[S2],mdbpcb.pcb_regs[S3],
 		mdbpcb.pcb_regs[S4],mdbpcb.pcb_regs[S5],
 		mdbpcb.pcb_regs[S6],mdbpcb.pcb_regs[S7]);
-	kprintf("  S8 %08x     V0-1 %08x %08x       GP %08x       SP %08x\n",
+	printf("  S8 %08x     V0-1 %08x %08x       GP %08x       SP %08x\n",
 		mdbpcb.pcb_regs[S8],mdbpcb.pcb_regs[V0],
 		mdbpcb.pcb_regs[V1],mdbpcb.pcb_regs[GP],
 		mdbpcb.pcb_regs[SP]);
-	kprintf("  AT %08x       PC %08x       RA %08x       SR %08x",
+	printf("  AT %08x       PC %08x       RA %08x       SR %08x",
 		mdbpcb.pcb_regs[AST],mdbpcb.pcb_regs[PC],
 		mdbpcb.pcb_regs[RA],mdbpcb.pcb_regs[SR]);
 }
@@ -229,7 +229,7 @@ set_break(va)
 			return;
 		}
 	}
-	kprintf(" Break table full!!");
+	printf(" Break table full!!");
 }
 
 del_break(va)
@@ -243,7 +243,7 @@ del_break(va)
 			return;
 		}
 	}
-	kprintf(" Break to remove not found!!");
+	printf(" Break to remove not found!!");
 }
 
 break_insert()
@@ -291,7 +291,7 @@ prt_break()
 
 	for(i = 0; i < MAXBRK; i++) {
 		if(brk_tab[i].addr != 0) {
-			kprintf("\n    %08x\t", brk_tab[i].addr);
+			printf("\n    %08x\t", brk_tab[i].addr);
 			mdbprintins(brk_tab[i].inst, brk_tab[i].addr);
 		}
 	}
@@ -312,21 +312,21 @@ static int ssandrun;	/* Single step and run flag (when cont at brk) */
 		if(*(int *)newaddr == MACH_BREAK_SOVER) {
 			break_restore();
 			mdbpcb.pcb_regs[PC] += 4;
-			kprintf("\nStop break (panic)\n# ");
-			kprintf("    %08x\t",newaddr);
+			printf("\nStop break (panic)\n# ");
+			printf("    %08x\t",newaddr);
 			mdbprintins(*(int *)newaddr, newaddr);
-			kprintf("\n# ");
+			printf("\n# ");
 			break;
 		}
 		if(*(int *)newaddr == MACH_BREAK_BRKPT) {
 			break_restore();
-			kprintf("\rBRK %08x\t",newaddr);
+			printf("\rBRK %08x\t",newaddr);
 			if(mdbprintins(*(int *)newaddr, newaddr)) {
 				newaddr += 4;
-				kprintf("\n    %08x\t",newaddr);
+				printf("\n    %08x\t",newaddr);
 				mdbprintins(*(int *)newaddr, newaddr);
 			}
-			kprintf("\n# ");
+			printf("\n# ");
 			break;
 		}
 		if(mdbclrsstep(causeReg)) {
@@ -335,18 +335,18 @@ static int ssandrun;	/* Single step and run flag (when cont at brk) */
 				break_insert();
 				return(TRUE);
 			}
-			kprintf("\r    %08x\t",newaddr);
+			printf("\r    %08x\t",newaddr);
 			if(mdbprintins(*(int *)newaddr, newaddr)) {
 				newaddr += 4;
-				kprintf("\n    %08x\t",newaddr);
+				printf("\n    %08x\t",newaddr);
 				mdbprintins(*(int *)newaddr, newaddr);
 			}
-			kprintf("\n# ");
+			printf("\n# ");
 		}
 		break;
 
 	default:
-		kprintf("\n-- %s --\n# ",trap_type[cause]);
+		printf("\n-- %s --\n# ",trap_type[cause]);
 	}
 	ssandrun = 0;
 	break_restore();
@@ -357,11 +357,11 @@ static int ssandrun;	/* Single step and run flag (when cont at brk) */
 			trapDump("Debugger");
 			break;
 		case 'b':
-			kprintf("break-");
+			printf("break-");
 			c = cngetc();
 			switch(c) {
 			case 's':
-				kprintf("set at ");
+				printf("set at ");
 				c = gethex(&newaddr, newaddr);
 				if(c != '\e') {
 					set_break(newaddr);
@@ -369,7 +369,7 @@ static int ssandrun;	/* Single step and run flag (when cont at brk) */
 				break;
 
 			case 'd':
-				kprintf("delete at ");
+				printf("delete at ");
 				c = gethex(&newaddr, newaddr);
 				if(c != '\e') {
 					del_break(newaddr);
@@ -377,7 +377,7 @@ static int ssandrun;	/* Single step and run flag (when cont at brk) */
 				break;
 
 			case 'p':
-				kprintf("print");
+				printf("print");
 				prt_break();
 				break;
 			}
@@ -388,10 +388,10 @@ static int ssandrun;	/* Single step and run flag (when cont at brk) */
 			break;
 
 		case 'I':
-			kprintf("Instruction at ");
+			printf("Instruction at ");
 			c = gethex(&newaddr, newaddr);
 			while(c != '\e') {
-				kprintf("\n    %08x\t",newaddr);
+				printf("\n    %08x\t",newaddr);
 				mdbprintins(*(int *)newaddr, newaddr);
 				newaddr += 4;
 				c = cngetc();
@@ -399,7 +399,7 @@ static int ssandrun;	/* Single step and run flag (when cont at brk) */
 			break;
 
 		case 'c':
-			kprintf("continue");
+			printf("continue");
 			if(break_find((int)(mdbpcb.pcb_regs[PC])) >= 0) {
 				ssandrun = 1;
 				mdbsetsstep();
@@ -417,7 +417,7 @@ static int ssandrun;	/* Single step and run flag (when cont at brk) */
 			return(TRUE);
 
 		case 'd':
-			kprintf("dump ");
+			printf("dump ");
 			c = gethex(&newaddr, newaddr);
 			if(c == ',') {
 				c = gethex(&size,256);
@@ -432,7 +432,7 @@ static int ssandrun;	/* Single step and run flag (when cont at brk) */
 			break;
 
 		case 'm':
-			kprintf("mod ");
+			printf("mod ");
 			c = gethex(&newaddr, newaddr);
 			while(c == ',') {
 				c = gethex(&size, 0);
@@ -442,30 +442,30 @@ static int ssandrun;	/* Single step and run flag (when cont at brk) */
 			break;
 
 		case 'i':
-			kprintf("in-");
+			printf("in-");
 			c = cngetc();
 			switch(c) {
 			case 'b':
-				kprintf("byte ");
+				printf("byte ");
 				c = gethex(&newaddr, newaddr);
 				if(c == '\n') {
-					kprintf("= %02x",
+					printf("= %02x",
 						*(u_char *)newaddr);	
 				}
 				break;
 			case 'h':
-				kprintf("halfword ");
+				printf("halfword ");
 				c = gethex(&newaddr, newaddr);
 				if(c == '\n') {
-					kprintf("= %04x",
+					printf("= %04x",
 						*(u_short *)newaddr);	
 				}
 				break;
 			case 'w':
-				kprintf("word ");
+				printf("word ");
 				c = gethex(&newaddr, newaddr);
 				if(c == '\n') {
-					kprintf("= %08x",
+					printf("= %08x",
 						*(u_int *)newaddr);	
 				}
 				break;
@@ -473,11 +473,11 @@ static int ssandrun;	/* Single step and run flag (when cont at brk) */
 			break;
 
 		case 'o':
-			kprintf("out-");
+			printf("out-");
 			c = cngetc();
 			switch(c) {
 			case 'b':
-				kprintf("byte ");
+				printf("byte ");
 				c = gethex(&newaddr, newaddr);
 				if(c == ',') {
 					c = gethex(&size, 0);
@@ -487,7 +487,7 @@ static int ssandrun;	/* Single step and run flag (when cont at brk) */
 				}
 				break;
 			case 'h':
-				kprintf("halfword ");
+				printf("halfword ");
 				c = gethex(&newaddr, newaddr);
 				if(c == ',') {
 					c = gethex(&size, 0);
@@ -497,7 +497,7 @@ static int ssandrun;	/* Single step and run flag (when cont at brk) */
 				}
 				break;
 			case 'w':
-				kprintf("word ");
+				printf("word ");
 				c = gethex(&newaddr, newaddr);
 				if(c == ',') {
 					c = gethex(&size, 0);
@@ -510,23 +510,23 @@ static int ssandrun;	/* Single step and run flag (when cont at brk) */
 			break;
 
 		case 't':
-			kprintf("tlb-dump\n");
+			printf("tlb-dump\n");
 			pica_dump_tlb(0,23);
 			(void)cngetc();
 			pica_dump_tlb(24,47);
 			break;
 
 		case 'f':
-			kprintf("flush-");
+			printf("flush-");
 			c = cngetc();
 			switch(c) {
 			case 't':
-				kprintf("tlb");
+				printf("tlb");
 				MachTLBFlush();
 				break;
 
 			case 'c':
-				kprintf("cache");
+				printf("cache");
 				MachFlushCache();
 				break;
 			}
@@ -536,7 +536,7 @@ static int ssandrun;	/* Single step and run flag (when cont at brk) */
 			cnputc('\a');
 			break;
 		}
-		kprintf("\n# ");
+		printf("\n# ");
 	}
 }
 
@@ -557,7 +557,7 @@ mdbsetsstep()
 		va = locr0[PC] + 4;
 	}
 	if (mdb_ss_addr) {
-		kprintf("mdbsetsstep: breakpoint already set at %x (va %x)\n",
+		printf("mdbsetsstep: breakpoint already set at %x (va %x)\n",
 			mdb_ss_addr, va);
 		return;
 	}
@@ -603,7 +603,7 @@ mdbclrsstep(cr)
 		return(TRUE);
 	}
 
-	kprintf("can't clear break at %x\n", va);
+	printf("can't clear break at %x\n", va);
 	mdb_ss_addr = 0;
 	return(FALSE);
 }
@@ -640,16 +640,16 @@ mdbprintins(ins, mdbdot)
 	switch (i.JType.op) {
 	case OP_SPECIAL:
 		if (i.word == 0) {
-			kprintf("nop");
+			printf("nop");
 			break;
 		}
 		if (i.RType.func == OP_ADDU && i.RType.rt == 0) {
-			kprintf("move\t%s,%s",
+			printf("move\t%s,%s",
 				reg_name[i.RType.rd],
 				reg_name[i.RType.rs]);
 			break;
 		}
-		kprintf("%s", spec_name[i.RType.func]);
+		printf("%s", spec_name[i.RType.func]);
 		switch (i.RType.func) {
 		case OP_SLL:
 		case OP_SRL:
@@ -660,7 +660,7 @@ mdbprintins(ins, mdbdot)
 		case OP_DSLL32:
 		case OP_DSRL32:
 		case OP_DSRA32:
-			kprintf("\t%s,%s,%d",
+			printf("\t%s,%s,%d",
 				reg_name[i.RType.rd],
 				reg_name[i.RType.rt],
 				i.RType.shamt);
@@ -672,7 +672,7 @@ mdbprintins(ins, mdbdot)
 		case OP_DSLLV:
 		case OP_DSRLV:
 		case OP_DSRAV:
-			kprintf("\t%s,%s,%s",
+			printf("\t%s,%s,%s",
 				reg_name[i.RType.rd],
 				reg_name[i.RType.rt],
 				reg_name[i.RType.rs]);
@@ -680,7 +680,7 @@ mdbprintins(ins, mdbdot)
 
 		case OP_MFHI:
 		case OP_MFLO:
-			kprintf("\t%s", reg_name[i.RType.rd]);
+			printf("\t%s", reg_name[i.RType.rd]);
 			break;
 
 		case OP_JR:
@@ -689,7 +689,7 @@ mdbprintins(ins, mdbdot)
 			/* FALLTHROUGH */
 		case OP_MTLO:
 		case OP_MTHI:
-			kprintf("\t%s", reg_name[i.RType.rs]);
+			printf("\t%s", reg_name[i.RType.rs]);
 			break;
 
 		case OP_MULT:
@@ -700,7 +700,7 @@ mdbprintins(ins, mdbdot)
 		case OP_DIVU:
 		case OP_DDIV:
 		case OP_DDIVU:
-			kprintf("\t%s,%s",
+			printf("\t%s,%s",
 				reg_name[i.RType.rs],
 				reg_name[i.RType.rt]);
 			break;
@@ -710,11 +710,11 @@ mdbprintins(ins, mdbdot)
 			break;
 
 		case OP_BREAK:
-			kprintf("\t%d", (i.RType.rs << 5) | i.RType.rt);
+			printf("\t%d", (i.RType.rs << 5) | i.RType.rt);
 			break;
 
 		default:
-			kprintf("\t%s,%s,%s",
+			printf("\t%s,%s,%s",
 				reg_name[i.RType.rd],
 				reg_name[i.RType.rs],
 				reg_name[i.RType.rt]);
@@ -722,7 +722,7 @@ mdbprintins(ins, mdbdot)
 		break;
 
 	case OP_BCOND:
-		kprintf("%s\t%s,", bcond_name[i.IType.rt],
+		printf("%s\t%s,", bcond_name[i.IType.rt],
 			reg_name[i.IType.rs]);
 		goto pr_displ;
 
@@ -730,61 +730,61 @@ mdbprintins(ins, mdbdot)
 	case OP_BLEZL:
 	case OP_BGTZ:
 	case OP_BGTZL:
-		kprintf("%s\t%s,", op_name[i.IType.op],
+		printf("%s\t%s,", op_name[i.IType.op],
 			reg_name[i.IType.rs]);
 		goto pr_displ;
 
 	case OP_BEQ:
 	case OP_BEQL:
 		if (i.IType.rs == 0 && i.IType.rt == 0) {
-			kprintf("b\t");
+			printf("b\t");
 			goto pr_displ;
 		}
 		/* FALLTHROUGH */
 	case OP_BNE:
 	case OP_BNEL:
-		kprintf("%s\t%s,%s,", op_name[i.IType.op],
+		printf("%s\t%s,%s,", op_name[i.IType.op],
 			reg_name[i.IType.rs],
 			reg_name[i.IType.rt]);
 	pr_displ:
 		delay = 1;
-		kprintf("0x%08x", mdbdot + 4 + ((short)i.IType.imm << 2));
+		printf("0x%08x", mdbdot + 4 + ((short)i.IType.imm << 2));
 		break;
 
 	case OP_COP0:
 		switch (i.RType.rs) {
 		case OP_BCx:
 		case OP_BCy:
-			kprintf("bc0%c\t",
+			printf("bc0%c\t",
 				"ft"[i.RType.rt & COPz_BC_TF_MASK]);
 			goto pr_displ;
 
 		case OP_MT:
-			kprintf("mtc0\t%s,%s",
+			printf("mtc0\t%s,%s",
 				reg_name[i.RType.rt],
 				c0_reg[i.RType.rd]);
 			break;
 
 		case OP_DMT:
-			kprintf("dmtc0\t%s,%s",
+			printf("dmtc0\t%s,%s",
 				reg_name[i.RType.rt],
 				c0_reg[i.RType.rd]);
 			break;
 
 		case OP_MF:
-			kprintf("mfc0\t%s,%s",
+			printf("mfc0\t%s,%s",
 				reg_name[i.RType.rt],
 				c0_reg[i.RType.rd]);
 			break;
 
 		case OP_DMF:
-			kprintf("dmfc0\t%s,%s",
+			printf("dmfc0\t%s,%s",
 				reg_name[i.RType.rt],
 				c0_reg[i.RType.rd]);
 			break;
 
 		default:
-			kprintf("%s", c0_opname[i.FRType.func]);
+			printf("%s", c0_opname[i.FRType.func]);
 		};
 		break;
 
@@ -792,36 +792,36 @@ mdbprintins(ins, mdbdot)
 		switch (i.RType.rs) {
 		case OP_BCx:
 		case OP_BCy:
-			kprintf("bc1%c\t",
+			printf("bc1%c\t",
 				"ft"[i.RType.rt & COPz_BC_TF_MASK]);
 			goto pr_displ;
 
 		case OP_MT:
-			kprintf("mtc1\t%s,f%d",
+			printf("mtc1\t%s,f%d",
 				reg_name[i.RType.rt],
 				i.RType.rd);
 			break;
 
 		case OP_MF:
-			kprintf("mfc1\t%s,f%d",
+			printf("mfc1\t%s,f%d",
 				reg_name[i.RType.rt],
 				i.RType.rd);
 			break;
 
 		case OP_CT:
-			kprintf("ctc1\t%s,f%d",
+			printf("ctc1\t%s,f%d",
 				reg_name[i.RType.rt],
 				i.RType.rd);
 			break;
 
 		case OP_CF:
-			kprintf("cfc1\t%s,f%d",
+			printf("cfc1\t%s,f%d",
 				reg_name[i.RType.rt],
 				i.RType.rd);
 			break;
 
 		default:
-			kprintf("%s.%s\tf%d,f%d,f%d",
+			printf("%s.%s\tf%d,f%d,f%d",
 				cop1_name[i.FRType.func],
 				fmt_name[i.FRType.fmt],
 				i.FRType.fd, i.FRType.fs, i.FRType.ft);
@@ -830,14 +830,14 @@ mdbprintins(ins, mdbdot)
 
 	case OP_J:
 	case OP_JAL:
-		kprintf("%s\t", op_name[i.JType.op]);
-		kprintf("0x%8x",(mdbdot & 0xF0000000) | (i.JType.target << 2));
+		printf("%s\t", op_name[i.JType.op]);
+		printf("0x%8x",(mdbdot & 0xF0000000) | (i.JType.target << 2));
 		delay = 1;
 		break;
 
 	case OP_LWC1:
 	case OP_SWC1:
-		kprintf("%s\tf%d,", op_name[i.IType.op],
+		printf("%s\tf%d,", op_name[i.IType.op],
 			i.IType.rt);
 		goto loadstore;
 
@@ -852,31 +852,31 @@ mdbprintins(ins, mdbdot)
 	case OP_SH:
 	case OP_SW:
 	case OP_SD:
-		kprintf("%s\t%s,", op_name[i.IType.op],
+		printf("%s\t%s,", op_name[i.IType.op],
 			reg_name[i.IType.rt]);
 	loadstore:
-		kprintf("%d(%s)", (short)i.IType.imm,
+		printf("%d(%s)", (short)i.IType.imm,
 			reg_name[i.IType.rs]);
 		break;
 
 	case OP_ORI:
 	case OP_XORI:
 		if (i.IType.rs == 0) {
-			kprintf("li\t%s,0x%x",
+			printf("li\t%s,0x%x",
 				reg_name[i.IType.rt],
 				i.IType.imm);
 			break;
 		}
 		/* FALLTHROUGH */
 	case OP_ANDI:
-		kprintf("%s\t%s,%s,0x%x", op_name[i.IType.op],
+		printf("%s\t%s,%s,0x%x", op_name[i.IType.op],
 			reg_name[i.IType.rt],
 			reg_name[i.IType.rs],
 			i.IType.imm);
 		break;
 
 	case OP_LUI:
-		kprintf("%s\t%s,0x%x", op_name[i.IType.op],
+		printf("%s\t%s,0x%x", op_name[i.IType.op],
 			reg_name[i.IType.rt],
 			i.IType.imm);
 		break;
@@ -886,14 +886,14 @@ mdbprintins(ins, mdbdot)
 	case OP_ADDIU:
 	case OP_DADDIU:
 		if (i.IType.rs == 0) {
- 			kprintf("li\t%s,%d",
+ 			printf("li\t%s,%d",
 				reg_name[i.IType.rt],
 				(short)i.IType.imm);
 			break;
 		}
 		/* FALLTHROUGH */
 	default:
-		kprintf("%s\t%s,%s,%d", op_name[i.IType.op],
+		printf("%s\t%s,%s,%d", op_name[i.IType.op],
 			reg_name[i.IType.rt],
 			reg_name[i.IType.rs],
 			(short)i.IType.imm);
@@ -935,7 +935,7 @@ loop:
 	/* check for current PC in the kernel interrupt handler code */
 	if (pc >= (u_int)MachKernIntr && pc < (u_int)MachUserIntr) {
 		/* NOTE: the offsets depend on the code in locore.s */
-		kprintf("interupt\n");
+		printf("interupt\n");
 		a0 = mdbchkget(sp + 36, DSP);
 		a1 = mdbchkget(sp + 40, DSP);
 		a2 = mdbchkget(sp + 44, DSP);
@@ -1049,8 +1049,8 @@ loop:
 	}
 
 done:
-	kprintf("%x+%x ", subr, pc - subr); /* XXX */
-	kprintf("(%x,%x,%x,%x)\n", a0, a1, a2, a3);
+	printf("%x+%x ", subr, pc - subr); /* XXX */
+	printf("(%x,%x,%x,%x)\n", a0, a1, a2, a3);
 
 	if (ra) {
 		pc = ra;
@@ -1091,20 +1091,20 @@ void pica_dump_tlb(int first,int last)
 	while(tlbno <= last) {
 		MachTLBRead(tlbno, &tlb);
 		if(tlb.tlb_lo0 & PG_V || tlb.tlb_lo1 & PG_V) {
-			kprintf("TLB %2d vad 0x%08x ", tlbno, tlb.tlb_hi);
+			printf("TLB %2d vad 0x%08x ", tlbno, tlb.tlb_hi);
 		}
 		else {
-			kprintf("TLB*%2d vad 0x%08x ", tlbno, tlb.tlb_hi);
+			printf("TLB*%2d vad 0x%08x ", tlbno, tlb.tlb_hi);
 		}
-		kprintf("0=0x%08x ", pfn_to_vad(tlb.tlb_lo0));
-		kprintf("%c", tlb.tlb_lo0 & PG_M ? 'M' : ' ');
-		kprintf("%c", tlb.tlb_lo0 & PG_G ? 'G' : ' ');
-		kprintf(" atr %x ", (tlb.tlb_lo0 >> 3) & 7);
-		kprintf("1=0x%08x ", pfn_to_vad(tlb.tlb_lo1));
-		kprintf("%c", tlb.tlb_lo1 & PG_M ? 'M' : ' ');
-		kprintf("%c", tlb.tlb_lo1 & PG_G ? 'G' : ' ');
-		kprintf(" atr %x ", (tlb.tlb_lo1 >> 3) & 7);
-		kprintf(" sz=%x\n", tlb.tlb_mask);
+		printf("0=0x%08x ", pfn_to_vad(tlb.tlb_lo0));
+		printf("%c", tlb.tlb_lo0 & PG_M ? 'M' : ' ');
+		printf("%c", tlb.tlb_lo0 & PG_G ? 'G' : ' ');
+		printf(" atr %x ", (tlb.tlb_lo0 >> 3) & 7);
+		printf("1=0x%08x ", pfn_to_vad(tlb.tlb_lo1));
+		printf("%c", tlb.tlb_lo1 & PG_M ? 'M' : ' ');
+		printf("%c", tlb.tlb_lo1 & PG_G ? 'G' : ' ');
+		printf(" atr %x ", (tlb.tlb_lo1 >> 3) & 7);
+		printf(" sz=%x\n", tlb.tlb_mask);
 
 		tlbno++;
 	}
