@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.129 2003/03/01 23:48:44 enami Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.130 2003/03/05 11:46:49 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.129 2003/03/01 23:48:44 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.130 2003/03/05 11:46:49 dsl Exp $");
 
 #include "opt_ddb.h"
 #include "opt_insecure.h"
@@ -1794,6 +1794,8 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki)
 {
 	struct tty *tp;
 	struct lwp *l;
+	struct timeval ut, st;
+
 	memset(ki, 0, sizeof(*ki));
 
 	ki->p_paddr = PTRTOINT64(p);
@@ -1928,10 +1930,11 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki)
 		ki->p_ustart_sec = p->p_stats->p_start.tv_sec;
 		ki->p_ustart_usec = p->p_stats->p_start.tv_usec;
 
-		ki->p_uutime_sec = p->p_stats->p_ru.ru_utime.tv_sec;
-		ki->p_uutime_usec = p->p_stats->p_ru.ru_utime.tv_usec;
-		ki->p_ustime_sec = p->p_stats->p_ru.ru_stime.tv_sec;
-		ki->p_ustime_usec = p->p_stats->p_ru.ru_stime.tv_usec;
+		calcru(p, &ut, &st, 0);
+		ki->p_uutime_sec = ut.tv_sec;
+		ki->p_uutime_usec = ut.tv_usec;
+		ki->p_ustime_sec = st.tv_sec;
+		ki->p_ustime_usec = st.tv_usec;
 
 		ki->p_uru_maxrss = p->p_stats->p_ru.ru_maxrss;
 		ki->p_uru_ixrss = p->p_stats->p_ru.ru_ixrss;
@@ -1948,10 +1951,10 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki)
 		ki->p_uru_nvcsw = p->p_stats->p_ru.ru_nvcsw;
 		ki->p_uru_nivcsw = p->p_stats->p_ru.ru_nivcsw;
 
-		ki->p_uctime_sec = p->p_stats->p_cru.ru_utime.tv_sec +
-		    p->p_stats->p_cru.ru_stime.tv_sec;
-		ki->p_uctime_usec = p->p_stats->p_cru.ru_utime.tv_usec +
-		    p->p_stats->p_cru.ru_stime.tv_usec;
+		timeradd(&p->p_stats->p_cru.ru_utime,
+			 &p->p_stats->p_cru.ru_stime, &ut);
+		ki->p_uctime_sec = ut.tv_sec;
+		ki->p_uctime_usec = ut.tv_usec;
 	}
 #ifdef MULTIPROCESSOR
 	if (l && l->l_cpu != NULL)
