@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.52 1997/10/20 08:14:01 scottr Exp $	*/
+/*	$NetBSD: cpu.h,v 1.52.2.1 1998/11/23 05:23:16 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -189,6 +189,7 @@ int	want_resched;	/* resched() was called */
 #define MACH_MACPB280		102
 #define MACH_MACPB280C		103
 #define MACH_MACPB150		115
+#define MACH_MACPB190		122
 
 /*
  * Machine classes.  These define subsets of the above machines.
