@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.108 1998/11/20 04:12:57 kml Exp $	*/
+/*	$NetBSD: conf.c,v 1.109 1998/11/22 15:51:04 oster Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -364,8 +364,6 @@ struct cdevsw	cdevsw[] =
 	cdev_midi_init(NMIDI,midi),	/* 58: MIDI I/O */
 	cdev_midi_init(NSEQUENCER,sequencer),	/* 59: sequencer I/O */
 	cdev_vc_nb_init(NVCODA,vc_nb_), /* 60: coda file system psdev */
-	cdev_scsibus_init(NSCSIBUS,scsibus), /* 61: SCSI bus */
-	cdev_vc_nb_init(NVCODA,vc_nb_),  /* 60: coda file system psdev */
 	cdev_scsibus_init(NSCSIBUS,scsibus), /* 61: SCSI bus */
 	cdev_disk_init(NRAID,raid),	/* 62: RAIDframe disk driver */
 	cdev_esh_init(NESH, esh_fp),	/* 63: HIPPI (esh) raw device */
