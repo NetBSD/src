@@ -1,4 +1,4 @@
-/*	$NetBSD: walnut_start.S,v 1.6 2003/03/11 10:40:17 hannken Exp $	*/
+/*	$NetBSD: walnut_start.S,v 1.7 2003/04/27 10:42:50 ragge Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -76,6 +76,7 @@
 #include "opt_ppcarch.h"
 #include "opt_ppcparam.h"
 #include "assym.h"
+#include "ksyms.h"
 
 #include <sys/syscall.h>
 
@@ -188,7 +189,7 @@ __start_cpu0:
 	cmpw	3,8
 	bne+	2b
 
-#if defined(DDB)
+#if NKSYMS || defined(DDB) || defined(LKM)
 	/* If we had symbol table location we'd store it here and would've adjusted r8 here */
 	lis	7,_C_LABEL(startsym)@ha
 	addi	7,7,_C_LABEL(startsym)@l

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.91 2003/04/08 22:57:57 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.92 2003/04/27 10:42:51 ragge Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -54,6 +54,7 @@
 #include <machine/asm.h>
 #include <machine/trap.h>
 
+#include "ksyms.h"
 
 /*
  * Temporary stack for a variety of purposes.
@@ -554,7 +555,7 @@ Lstart1:
 /*
  * configure kernel and lwp0 VA space so we can get going
  */
-#ifdef DDB
+#if NKSYMS || defined(DDB) || defined(LKM)
 	RELOC(esym,%a0)			| end of static kernel text/data syms
 	movl	%a0@,%d2
 	jne	Lstart2
