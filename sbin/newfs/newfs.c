@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)newfs.c	6.27 (Berkeley) 7/3/91";*/
-static char rcsid[] = "$Id: newfs.c,v 1.7 1994/01/28 06:02:57 cgd Exp $";
+static char rcsid[] = "$Id: newfs.c,v 1.8 1994/02/06 08:19:56 cgd Exp $";
 #endif /* not lint */
 
 #ifndef lint
@@ -403,9 +403,9 @@ main(argc, argv)
 	}
 	if (density == 0)
 		density = NFPI * fsize;
-	if (minfree < 10 && opt != FS_OPTSPACE) {
+	if (minfree < MINFREE && opt != FS_OPTSPACE) {
 		fprintf(stderr, "Warning: changing optimization to space ");
-		fprintf(stderr, "because minfree is less than 10%%\n");
+		fprintf(stderr, "because minfree is less than %d%%\n", MINFREE);
 		opt = FS_OPTSPACE;
 	}
 	if (trackspares == -1) {
