@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.134.2.4 2000/08/18 13:55:44 sommerfeld Exp $	*/
+/*	$NetBSD: trap.c,v 1.134.2.5 2000/08/23 18:27:59 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -522,8 +522,10 @@ trap(frame)
 		}
 
 		if (type == T_PAGEFLT) {
-			if (pcb->pcb_onfault != 0)
+			if (pcb->pcb_onfault != 0) {
+				KERNEL_UNLOCK();
 				goto copyfault;
+			}
 			printf("uvm_fault(%p, 0x%lx, 0, %d) -> %x\n",
 			    map, va, ftype, rv);
 			goto we_re_toast;
