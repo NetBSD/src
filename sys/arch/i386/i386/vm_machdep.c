@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.86.2.9 2000/12/31 18:01:22 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.86.2.10 2001/01/02 06:58:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -335,7 +335,7 @@ pagemove(from, to, size)
 	}
 #if defined(I386_CPU)
 	if (cpu_class == CPUCLASS_386)
-		pmap_update();
+		tlbflush();
 #endif
 }
 

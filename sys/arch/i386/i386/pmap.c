@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.83.2.18 2001/01/02 04:13:16 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.83.2.19 2001/01/02 06:58:08 thorpej Exp $	*/
 
 /*
  *
@@ -784,7 +784,7 @@ pmap_kremove(va, len)
 	}
 #if defined(I386_CPU)
 	if (cpu_class == CPUCLASS_386)
-		pmap_update();
+		tlbflush();
 #endif
 }
 
@@ -827,7 +827,7 @@ pmap_kenter_pgs(va, pgs, npgs)
 	}
 #if defined(I386_CPU)
 	if (need_update && cpu_class == CPUCLASS_386)
-		pmap_update();
+		tlbflush();
 #endif
 }
 
@@ -1092,7 +1092,7 @@ pmap_bootstrap(kva_start)
 	 * ensure the TLB is sync'd with reality by flushing it...
 	 */
 
-	pmap_update();
+	tlbflush();
 }
 
 /*
@@ -1854,7 +1854,7 @@ pmap_steal_ptp(obj, offset)
 #endif
 				
 				if (pmap_is_curpmap(pmaps_hand))
-					pmap_update();
+					tlbflush();
 				else if (pmap_valid_entry(*APDP_PDE) &&
 					 (*APDP_PDE & PG_FRAME) ==
 					 pmaps_hand->pm_pdirpa) {
@@ -2429,7 +2429,7 @@ pmap_flush_deferred (prr, pmap)
 {
 #if defined(I386_CPU)
 	if (cpu_class == CPUCLASS_386) {
-		pmap_update();
+		tlbflush();
 	} else
 #endif
 		pmap_tlb_shootnow();
@@ -2929,7 +2929,7 @@ pmap_page_remove(pg)
 	PMAP_HEAD_TO_MAP_UNLOCK();
 #if defined(I386_CPU)
 	if (needs_update)
-		pmap_update();
+		tlbflush();
 #endif
 }
 
@@ -3076,7 +3076,7 @@ pmap_clear_attrs(pg, clearbits)
 
 #if defined(I386_CPU)
 	if (needs_update)
-		pmap_update();
+		tlbflush();
 #endif
 	return(result != 0);
 }
@@ -4252,7 +4252,7 @@ void pmap_do_tlbflushg()
 
 void pmap_do_tlbflush()
 {
-	pmap_update();
+	tlbflush();
 }
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.43.2.7 2000/12/31 18:01:22 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.43.2.8 2001/01/02 06:58:10 thorpej Exp $	*/
 
 /*
  *
@@ -385,7 +385,7 @@ extern int pmap_pg_g;			/* do we support PG_G? */
 
 #define	pmap_kernel()			(&kernel_pmap_store)
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
-#define	pmap_update()			tlbflush()
+#define	pmap_update()			/* nothing (yet) */
 
 #define pmap_clear_modify(pg)		pmap_clear_attrs(pg, PG_M)
 #define pmap_clear_reference(pg)	pmap_clear_attrs(pg, PG_U)
@@ -449,7 +449,7 @@ pmap_update_pg(va)
 {
 #if defined(I386_CPU)
 	if (cpu_class == CPUCLASS_386)
-		pmap_update();
+		tlbflush();
 	else
 #endif
 		invlpg((u_int) va);
@@ -465,7 +465,7 @@ pmap_update_2pg(va, vb)
 {
 #if defined(I386_CPU)
 	if (cpu_class == CPUCLASS_386)
-		pmap_update();
+		tlbflush();
 	else
 #endif
 	{
