@@ -1,4 +1,4 @@
-/*	$NetBSD: tz.c,v 1.4 1994/10/26 21:09:23 cgd Exp $	*/
+/*	$NetBSD: tz.c,v 1.5 1995/07/12 07:24:27 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -104,6 +104,8 @@ struct	tz_softc {
 #ifdef DEBUG
 int	tzdebug = 0;
 #endif
+
+void tzstrategy __P((register struct buf *bp));
 
 /*
  * Test to see if device is present.
@@ -696,6 +698,43 @@ tzclose(dev, flag)
 	return (error);
 }
 
+int
+tzread(dev, uio)
+	dev_t dev;
+	struct uio *uio;
+{
+	register struct tz_softc *sc = &tz_softc[tzunit(dev)];
+
+	/*XXX*/ /* check for hardware write-protect? */
+#if 0
+	if (sc->sc_type == SCSI_ROM_TYPE)
+		return (EROFS);
+
+	if (sc->sc_format_pid && sc->sc_format_pid != curproc->p_pid)
+		return (EPERM);
+#endif
+
+	return (physio(tzstrategy, (struct buf *)0, dev,
+		B_READ, minphys, uio));
+}
+
+int
+tzwrite(dev, uio)
+	dev_t dev;
+	struct uio *uio;
+{
+	register struct tz_softc *sc = &tz_softc[tzunit(dev)];
+
+#if 0
+	if (sc->sc_format_pid && sc->sc_format_pid != curproc->p_pid)
+		return (EPERM);
+#endif
+
+	return (physio(tzstrategy, (struct buf *)0, dev,
+		B_WRITE, minphys, uio));
+}
+
+int
 tzioctl(dev, cmd, data, flag)
 	dev_t dev;
 	int cmd;
