@@ -1,4 +1,4 @@
-/*	$NetBSD: scn.c,v 1.36 1997/03/13 10:24:14 matthias Exp $ */
+/*	$NetBSD: scn.c,v 1.37 1997/03/20 12:03:03 matthias Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Philip L. Budne.
@@ -48,7 +48,6 @@
 
 #include "scn.h"
 
-#if NSCN > 0
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/ioctl.h>
@@ -56,7 +55,6 @@
 #include <sys/tty.h>
 #include <sys/proc.h>
 #include <sys/user.h>
-#include <sys/conf.h>
 #include <sys/file.h>
 #include <sys/uio.h>
 #include <sys/kernel.h>
@@ -64,11 +62,14 @@
 #include <sys/types.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#ifdef KGDB
+#include <sys/kgdb.h>
+#endif
 
 #include <dev/cons.h>
 
 #include <machine/autoconf.h>
-#include <machine/icu.h>
+#include <machine/conf.h>
 
 #include "scnreg.h"
 #include "scnvar.h"
@@ -122,6 +123,11 @@ static void scnsoft __P((void *));
 static void scn_setchip __P((struct scn_softc *sc));
 static int scniter __P((int *, int, int*, int*, struct chan *, int));
 static int scn_config __P((int, int, int, u_char, u_char));
+static void scn_rxenable __P((struct scn_softc *));
+static void scn_rxdisable __P((struct scn_softc *));
+static void dcd_int __P((struct scn_softc *, struct tty *, u_char));
+static void scnoverrun __P((int, long *, char *));
+static unsigned char opbits __P((struct scn_softc *, int));
 
 static int scnsir = -1;		/* s/w intr number */
 #define setsoftscn()	softintr(scnsir)
@@ -758,7 +764,8 @@ scnattach(parent, self, aux)
 	u_char unit;
 	u_char duart;
 	u_char delim = ':';
-	enum scntype scntype;
+	enum scntype scntype = SCNUNK;
+	char *duart_type = "Unknown";
 
 	sc = (void *) self;
 	unit = self->dv_unit;	/* sc->sc_dev.dv_unit ??? */
@@ -788,7 +795,6 @@ scnattach(parent, self, aux)
 	duart_base = (volatile u_char *) scn_first_adr + DUART_SZ * duart;
 
 	if (channel == 0) {
-		char *duart_type;
 		/* Probe DUART type */
 		unsigned char mr1, mr2;
 		s = spltty();
@@ -838,9 +844,6 @@ scnattach(parent, self, aux)
 					scntype = SCN2692;
 				}
 			}
-		} else {
-			duart_type = "Unknown";
-			scntype = SCNUNK;
 		}
 
 		/* If a 2681, the CR_CMD_MR0 is interpreted as a TX_RESET */
@@ -973,8 +976,11 @@ scnattach(parent, self, aux)
 		speed = scndefaultrate;
 
 	scn_config(unit, speed, speed, MR1_PNONE | MR1_CS8, MR2_STOP1);
-	if (scnconsole == unit)
+	if (scnconsole == unit) {
 		shutdownhook_establish(scncnreinit, (void *) makedev(scnmajor, unit));
+		/* Make sure console can do scncngetc */
+		duart_base[DU_OPSET] = (unit & 1) ? (OP_RTSB | OP_DTRB) : (OP_RTSA | OP_DTRA);
+	}
 
 	/* Turn on the receiver and transmitters */
 	ch_base[CH_CR] = CR_ENA_RX | CR_ENA_TX;
@@ -1458,7 +1464,7 @@ scnrxintr(arg)
 
 	if (scn_soft_rts || !sc0->sc_rx_blocked)
 		work = scn_rxintr(sc0, line0);
-	if (scn_soft_rts || !sc1->sc_rx_blocked
+	if ((scn_soft_rts || !sc1->sc_rx_blocked)
 #ifdef KGDB
 	    && line1 < scn_cd.cd_ndevs
 #endif
@@ -1619,7 +1625,7 @@ opbits(sc, tioc_bits)
 int
 scnioctl(dev, cmd, data, flag, p)
 	dev_t dev;
-	int cmd;
+	u_long cmd;
 	caddr_t	data;
 	int flag;
 	struct proc *p;
@@ -1990,28 +1996,3 @@ scncnputc(dev, c)
 
 	splx(s);
 }
-
-void scn_ei(enabled)
-     int enabled;
-{
-	/*
-	 * Ideas: to make this go faster, precompute addresses and bits to
-	 * set when channel is opened, blocked or unblocked or closed. Do
-         * both channels of DUART at once.
-	 */
-	int unit;
-	for (unit = 0; unit < scn_cd.cd_ndevs; unit++) {
-		register struct scn_softc *sc;
-
-		sc = SOFTC(unit);
-		if (!sc->sc_rx_blocked && sc->sc_swflags & SCN_SW_CRTSCTS) {
-			if (enabled) {
-				SCN_OP_BIS(sc, sc->sc_op_rts);
-			} else {
-				SCN_OP_BIC(sc, sc->sc_op_rts);	/* "istop" */
-			}
-		}
-	}
-}
-
-#endif
