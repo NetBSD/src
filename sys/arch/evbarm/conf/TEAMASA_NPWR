@@ -1,4 +1,4 @@
-#	$NetBSD: TEAMASA_NPWR,v 1.26.2.3 2004/09/21 13:14:40 skrll Exp $
+#	$NetBSD: TEAMASA_NPWR,v 1.26.2.4 2004/11/14 08:15:06 skrll Exp $
 #
 #	TEAMASA_NPWR -- Team ASA, Inc. Npwr -- XScale/IOP310-based
 #	server appliance.
@@ -91,6 +91,7 @@ options 	COMPAT_14	# NetBSD 1.4 compatibility.
 #options 	COMPAT_10	# NetBSD 1.0 compatibility.
 #options 	COMPAT_09	# NetBSD 0.9 compatibility.
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
+options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # Shared memory options
 

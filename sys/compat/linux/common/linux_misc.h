@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.h,v 1.8.2.2 2004/10/19 15:56:43 skrll Exp $	*/
+/*	$NetBSD: linux_misc.h,v 1.8.2.3 2004/11/14 08:15:43 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -114,6 +114,7 @@ struct linux_sysinfo {
 #define	LINUX_SYSV4_SUPER_MAGIC		(LINUX_SYSV_MAGIC_BASE + 2)
 #define	LINUX_SYSV_MAGIC_BASE		0x012FF7B3
 #define	LINUX_USBDEVICE_SUPER_MAGIC	0x00009fa2
+#define	LINUX_DEVPTS_SUPER_MAGIC	0x00001cd1
 #define	LINUX_XENIX_SUPER_MAGIC		(LINUX_SYSV_MAGIC_BASE + 1)
 
 struct linux_mnttypes {

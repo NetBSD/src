@@ -1,4 +1,4 @@
-/*	$NetBSD: sysarch.h,v 1.5.6.3 2004/09/21 13:18:39 skrll Exp $ */
+/*	$NetBSD: sysarch.h,v 1.5.6.4 2004/11/14 08:15:16 skrll Exp $ */
 
 #ifndef _MIPS_SYSARCH_H_
 #define _MIPS_SYSARCH_H_
@@ -11,13 +11,13 @@
 
 struct mips_cacheflush_args {
 	vaddr_t va;
-	int nbytes;
+	size_t nbytes;
 	int whichcache;
 };
 
 struct mips_cachectl_args {
 	vaddr_t va;
-	int nbytes;
+	size_t nbytes;
 	int ctl;
 };
 

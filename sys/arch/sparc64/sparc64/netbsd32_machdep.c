@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.34.2.4 2004/09/21 13:22:58 skrll Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.34.2.5 2004/11/14 08:15:32 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.34.2.4 2004/09/21 13:22:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.34.2.5 2004/11/14 08:15:32 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -689,7 +689,7 @@ netbsd32_cpu_getmcontext(l, mcp, flags)
 		sigexit(l, SIGILL);
 
 	/* For now: Erase any random indicators for optional state. */
-	(void)memset(mcp, '0', sizeof (*mcp));
+	(void)memset(mcp, 0, sizeof (*mcp));
 
 	/* Save general register context. */
 	gr[_REG_PSR] = TSTATECCR_TO_PSR(tf->tf_tstate);

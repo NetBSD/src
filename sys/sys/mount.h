@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.109.2.7 2004/09/21 13:38:47 skrll Exp $	*/
+/*	$NetBSD: mount.h,v 1.109.2.8 2004/11/14 08:16:13 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -102,10 +102,11 @@ struct statfs12 {
 #define	MOUNT_ADOSFS	"adosfs"	/* AmigaDOS Filesystem */
 #define	MOUNT_EXT2FS	"ext2fs"	/* Second Extended Filesystem */
 #define	MOUNT_CFS	"coda"		/* Coda Filesystem */
-#define	MOUNT_CODA	"coda"		/* Coda Filesystem */
+#define	MOUNT_CODA	MOUNT_CFS	/* Coda Filesystem */
 #define	MOUNT_FILECORE	"filecore"	/* Acorn Filecore Filesystem */
 #define	MOUNT_NTFS	"ntfs"		/* Windows/NT Filesystem */
 #define	MOUNT_SMBFS	"smbfs"		/* CIFS (SMB) */
+#define	MOUNT_PTYFS	"ptyfs"		/* Pseudo tty filesystem */
 
 /*
  * Structure per mounted file system.  Each mounted file system has an

@@ -1,5 +1,5 @@
 #
-# 	$NetBSD: RC3230,v 1.14.2.3 2004/09/21 13:18:54 skrll Exp $
+# 	$NetBSD: RC3230,v 1.14.2.4 2004/11/14 08:15:16 skrll Exp $
 #
 include		"arch/mipsco/conf/std.mipsco"
 
@@ -45,6 +45,7 @@ options 	COMPAT_16		# NetBSD 1.6 binary compatibility
 #options 	EXEC_AOUT		# exec a.out binaries
 #options 	EXEC_ECOFF		# exec ecoff binaries
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
+options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # Filesystem options
 file-system	FFS		# Berkeley Fast Filesystem

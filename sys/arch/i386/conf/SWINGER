@@ -1,4 +1,4 @@
-#	$NetBSD: SWINGER,v 1.43.2.4 2004/11/02 07:50:35 skrll Exp $
+#	$NetBSD: SWINGER,v 1.43.2.5 2004/11/14 08:15:16 skrll Exp $
 #	from NetBSD: GENERIC,v 1.325 2000/04/14 14:53:32 augustss Exp
 #
 #	SWINGER -- thorpej's Abit BP6+dual Celeron
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"SWINGER-$Revision: 1.43.2.4 $"
+#ident 		"SWINGER-$Revision: 1.43.2.5 $"
 
 maxusers	64		# estimated number of users
 
@@ -89,6 +89,7 @@ options 	COMPAT_43	# 4.3BSD, 386BSD, and BSDI
 #options 	COMPAT_IBCS2	# binary compatibility with SCO and ISC
 options 	COMPAT_LINUX	# binary compatibility with Linux
 #options 	COMPAT_FREEBSD	# binary compatibility with FreeBSD
+options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # File systems
 file-system 	FFS		# UFS

@@ -1,4 +1,4 @@
-/* $NetBSD: dwlpx.c,v 1.28.2.3 2004/09/21 13:12:01 skrll Exp $ */
+/* $NetBSD: dwlpx.c,v 1.28.2.4 2004/11/14 08:15:04 skrll Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dwlpx.c,v 1.28.2.3 2004/09/21 13:12:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwlpx.c,v 1.28.2.4 2004/11/14 08:15:04 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,6 +58,10 @@ __KERNEL_RCSID(0, "$NetBSD: dwlpx.c,v 1.28.2.3 2004/09/21 13:12:01 skrll Exp $")
 	    ((((unsigned long)((sc)->dwlpx_node - 4))	<< 36) |	\
 	     (((unsigned long) (sc)->dwlpx_hosenum)	<< 34) |	\
 	     (1LL					<< 39))
+#define	DWLPX_SYSBASE1(node, hosenum)	\
+	    ((((unsigned long)(node - 4))	<< 36) |	\
+	     (((unsigned long) hosenum)	        << 34) |	\
+	     (1LL					<< 39))
 
 
 static int	dwlpxmatch __P((struct device *, struct cfdata *, void *));
@@ -76,9 +80,29 @@ dwlpxmatch(parent, cf, aux)
 	void *aux;
 {
 	struct kft_dev_attach_args *ka = aux;
+	unsigned long ls;
+	u_int32_t ctl;
 
 	if (strcmp(ka->ka_name, dwlpx_cd.cd_name) != 0)
 		return (0);
+
+	ls = DWLPX_SYSBASE1(ka->ka_node, ka->ka_hosenum);
+	
+	/*
+	 * Probe the first HPC to make sure this really is a dwlpx and
+	 * nothing else.
+	 */ 
+	if (badaddr(KV(PCIA_CTL(1) + ls), sizeof (ctl)) != 0) {
+		/*
+		 * If we are here something went wrong. One reason
+		 * could be that this is a dwlma and not a dwlpx.
+		 *
+		 * We can not clear potential illegal CSR errors here
+		 * since it is unknown hardware. 
+		 */
+		return (0);
+	}
+
 	return (1);
 }
 

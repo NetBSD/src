@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.90.2.4 2004/11/02 07:50:57 skrll Exp $
+# $NetBSD: GENERIC,v 1.90.2.5 2004/11/14 08:15:33 skrll Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/x68k/conf/std.x68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.90.2.4 $"
+#ident 		"GENERIC-$Revision: 1.90.2.5 $"
 
 maxusers	8
 
@@ -168,6 +168,7 @@ options 	COMPAT_AOUT_M68K # compatibility with NetBSD/m68k a.out
 #options 	COMPAT_SVR4	# SVR4 binary compatibility; broken
 #options 	COMPAT_LINUX	# Linux/m68k binary compatibility
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
+options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 ## File systems.
 file-system	FFS		# Berkeley Fast Filesystem

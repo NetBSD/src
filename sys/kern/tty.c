@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.154.2.5 2004/10/19 15:58:06 skrll Exp $	*/
+/*	$NetBSD: tty.c,v 1.154.2.6 2004/11/14 08:15:57 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.154.2.5 2004/10/19 15:58:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.154.2.6 2004/11/14 08:15:57 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -878,6 +878,20 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		s = spltty();
 		TTY_LOCK(tp);
 		*(int *)data = ttnread(tp);
+		TTY_UNLOCK(tp);
+		splx(s);
+		break;
+	case FIONWRITE:			/* get # bytes to written & unsent */
+		s = spltty();
+		TTY_LOCK(tp);
+		*(int *)data = tp->t_outq.c_cc;
+		TTY_UNLOCK(tp);
+		splx(s);
+		break;
+	case FIONSPACE:			/* get # bytes to written & unsent */
+		s = spltty();
+		TTY_LOCK(tp);
+		*(int *)data = tp->t_outq.c_cn - tp->t_outq.c_cc;
 		TTY_UNLOCK(tp);
 		splx(s);
 		break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vnops.c,v 1.47.2.5 2004/10/27 06:48:24 skrll Exp $	*/
+/*	$NetBSD: portal_vnops.c,v 1.47.2.6 2004/11/14 08:16:13 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: portal_vnops.c,v 1.47.2.5 2004/10/27 06:48:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: portal_vnops.c,v 1.47.2.6 2004/11/14 08:16:13 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -415,7 +415,7 @@ portal_open(v)
 	auio.uio_iovcnt = 2;
 	auio.uio_rw = UIO_WRITE;
 	auio.uio_segflg = UIO_SYSSPACE;
-	auio.uio_lwp = NULL;
+	auio.uio_lwp = l;
 	auio.uio_offset = 0;
 	auio.uio_resid = aiov[0].iov_len + aiov[1].iov_len;
 

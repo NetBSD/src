@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2003/03/17 09:18:54 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.5.2.1 2004/11/14 08:16:13 skrll Exp $
 
 SUBDIR=	fdesc kernfs nullfs overlay portal procfs umapfs union
 
