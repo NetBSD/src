@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_reloc.c,v 1.2 1999/10/25 13:57:12 kleink Exp $	*/
+/*	$NetBSD: mips_reloc.c,v 1.3 1999/11/07 08:01:51 mycroft Exp $	*/
 
 /*
  * Copyright 1997 Michael L. Hitch <mhitch@montana.edu>
@@ -30,6 +30,7 @@
 
 #include <stdarg.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 
 #include "debug.h"
 #include "rtld.h"
