@@ -1,4 +1,4 @@
-/* $NetBSD: psm.c,v 1.2 1998/04/07 16:02:25 drochner Exp $ */
+/* $NetBSD: psm.c,v 1.3 1998/05/03 10:01:00 drochner Exp $ */
 
 /*-
  * Copyright (c) 1994 Charles Hannum.
@@ -90,21 +90,19 @@ pmsprobe(parent, match, aux)
 	cmd[0] = PMS_RESET;
 	res = pckbc_poll_cmd(pa->pa_tag, pa->pa_slot, cmd, 1, 2, resp, 1);
 	if (res) {
-#ifdef DIAGNOSTIC
-		printf("pmsprobe: command error\n");
+#ifdef DEBUG
+		printf("pmsprobe: reset error %d\n", res);
 #endif
 		return (0);
 	}
 	if (resp[0] != PMS_RSTDONE) {
-#ifdef DIAGNOSTIC
-		printf("pmsprobe: reset error\n");
-#endif
+		printf("pmsprobe: reset response 0x%x\n", resp[0]);
 		return (0);
 	}
 
 	/* get type number (0 = mouse) */
 	if (resp[1] != 0) {
-#ifdef DIAGNOSTIC
+#ifdef DEBUG
 		printf("pmsprobe: type 0x%x\n", resp[1]);
 #endif
 		return (0);
