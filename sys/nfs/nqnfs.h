@@ -1,4 +1,4 @@
-/*	$NetBSD: nqnfs.h,v 1.14 2003/08/07 16:33:57 agc Exp $	*/
+/*	$NetBSD: nqnfs.h,v 1.15 2003/08/16 18:08:27 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,7 +49,6 @@
 #define	NQ_MINLEASE	5	/* Min lease duration (sec) */
 #define	NQ_DEFLEASE	30	/* Default lease duration (sec) */
 #define	NQ_RENEWAL	3	/* Time before expiry (sec) to renew */
-#define	NQ_TRYLATERDEL	15	/* Initial try later delay (sec) */
 #define	NQ_MAXNUMLEASE	2048	/* Upper bound on number of server leases */
 #define	NQ_DEADTHRESH	NQ_NEVERDEAD	/* Default nm_deadthresh */
 #define	NQ_NEVERDEAD	9	/* Greater than max. nm_timeouts */

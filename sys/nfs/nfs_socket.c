@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.96 2003/08/07 16:33:52 agc Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.97 2003/08/16 18:08:27 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.96 2003/08/07 16:33:52 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.97 2003/08/16 18:08:27 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -927,7 +927,7 @@ nfs_request(np, mrest, procnum, procp, cred, mrp, mdp, dposp)
 	time_t reqtime, waituntil;
 	caddr_t dpos, cp2;
 	int t1, s, error = 0, mrest_len, auth_len, auth_type;
-	int trylater_delay = NQ_TRYLATERDEL, trylater_cnt = 0, failed_auth = 0;
+	int trylater_delay = NFS_TRYLATERDEL, failed_auth = 0;
 	int verf_len, verf_type;
 	u_int32_t xid;
 	char *auth_str, *verf_str;
@@ -1130,10 +1130,9 @@ tryagain:
 				while (time.tv_sec < waituntil)
 					(void) tsleep((caddr_t)&lbolt,
 						PSOCK, "nqnfstry", 0);
-				trylater_delay *= nfs_backoff[trylater_cnt];
-				if (trylater_cnt + 1 <
-				   sizeof(nfs_backoff) / sizeof(nfs_backoff[0]))
-					trylater_cnt++;
+				trylater_delay *= NFS_TRYLATERDELMUL;
+				if (trylater_delay > NFS_TRYLATERDELMAX)
+					trylater_delay = NFS_TRYLATERDELMAX;
 				/*
 				 * RFC1813:
 				 * The client should wait and then try

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.h,v 1.40 2003/08/07 16:33:49 agc Exp $	*/
+/*	$NetBSD: nfs.h,v 1.41 2003/08/16 18:08:27 yamt Exp $	*/
 /*
  * Copyright (c) 1989, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -57,6 +57,9 @@
 #ifndef NFS_MAXATTRTIMO
 #define	NFS_MAXATTRTIMO 60
 #endif
+#define	NFS_TRYLATERDEL	1		/* Initial try later delay (sec) */
+#define	NFS_TRYLATERDELMAX (1*60)	/* Maximum try later delay (sec) */
+#define	NFS_TRYLATERDELMUL 2		/* Exponential backoff multiplier */
 
 /*
  * These can be overridden through <machine/param.h>, included via
