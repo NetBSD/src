@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo.c,v 1.26 1996/04/01 17:30:15 christos Exp $ */
+/*	$NetBSD: bwtwo.c,v 1.26.4.1 1996/12/10 19:24:43 mycroft Exp $ */
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -325,7 +325,8 @@ bwtwoattach(parent, self, args)
 	if (isconsole) {
 		printf(" (console)\n");
 #ifdef RASTERCONSOLE
-		fbrcons_init(fb);
+		if (sc->sc_ovtype == BWO_NONE)
+			fbrcons_init(fb);
 #endif
 	} else
 		printf("\n");
