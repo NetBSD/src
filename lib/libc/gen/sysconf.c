@@ -1,4 +1,4 @@
-/*	$NetBSD: sysconf.c,v 1.3 1995/03/04 01:56:09 cgd Exp $	*/
+/*	$NetBSD: sysconf.c,v 1.4 1997/07/13 19:32:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -36,11 +36,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)sysconf.c	8.2 (Berkeley) 3/20/94";
 #else
-static char rcsid[] = "$NetBSD: sysconf.c,v 1.3 1995/03/04 01:56:09 cgd Exp $";
+__RCSID("$NetBSD: sysconf.c,v 1.4 1997/07/13 19:32:15 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -68,7 +69,6 @@ long
 sysconf(name)
 	int name;
 {
-	struct clockinfo clk;
 	struct rlimit rl;
 	size_t len;
 	int mib[2], value;
