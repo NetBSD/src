@@ -1,7 +1,7 @@
 /* Authors: Markus Wild, Bryan Ford, Niklas Hallqvist 
  *          Michael L. Hitch - initial 68040 support
  *
- *	$Id: amiga_init.c,v 1.15 1994/05/21 10:05:27 chopps Exp $
+ *	$Id: amiga_init.c,v 1.16 1994/05/22 07:22:10 chopps Exp $
  */
 
 
@@ -50,6 +50,8 @@ extern u_int 	lowram;
 extern u_int	Sysptmap, Sysptsize, Sysseg, Umap, proc0paddr;
 extern u_int	Sysseg1;
 extern u_int	virtual_avail;
+
+extern char *esym;
 
 /* virtual addresses specific to the AMIGA */
 u_int CIAADDR, CUSTOMADDR; /* SCSIADDR;*/
@@ -106,6 +108,9 @@ alloc_z2mem(amount)			/* XXX */
 static struct exec kernel_exec;
 static u_char *kernel_image;
 static u_long kernel_text_size, kernel_load_ofs;
+static u_long kernel_load_phase;
+static u_long kernel_load_endseg;
+static u_long kernel_symbol_size, kernel_symbol_esym;
 
 u_long orig_fastram_start, orig_fastram_size, orig_chipram_size;
 
@@ -139,7 +144,6 @@ start_c(id, fastram_start, fastram_size, chipram_size, esym_addr)
   extern char end[];
   extern void etext();
   extern u_int protorp[2];
-  extern char *esym;
   u_int pstart, pend, vstart, vend, avail;
   u_int Sysseg_pa, Sysptmap_pa, umap_pa;
   u_int Sysseg1_pa, Sysptmap1_pa, umap1_pa;
@@ -725,16 +729,25 @@ kernel_reload_write(uio)
 	  if (kernel_exec.a_magic != NMAGIC)
 	    return EFAULT;	/* XXX */
 #endif
-	  printf("loading kernel %d+%d+%d\n", kernel_exec.a_text, kernel_exec.a_data, kernel_exec.a_bss);
+	  printf("loading kernel %d+%d+%d+%d\n", kernel_exec.a_text,
+	    kernel_exec.a_data, kernel_exec.a_bss,
+	    esym == NULL ? 0 : kernel_exec.a_syms);
 
 	  /* Looks good - allocate memory for a kernel image.  */
 	  kernel_text_size = (kernel_exec.a_text
 			      + __LDPGSZ - 1) & (-__LDPGSZ);
+	  if (esym != NULL) {
+	    kernel_symbol_size = kernel_exec.a_syms;
+	    kernel_symbol_size += 16 * (kernel_symbol_size / 12);
+	  }
 	  kernel_image = malloc(kernel_text_size + kernel_exec.a_data
 				+ kernel_exec.a_bss
+				+ kernel_symbol_size
 				+ kernel_image_magic_size(),
 				M_TEMP, M_WAITOK);
 	  kernel_load_ofs = 0;
+	  kernel_load_phase = 0;
+	  kernel_load_endseg = kernel_exec.a_text;
 	}
     }
   else
@@ -742,43 +755,81 @@ kernel_reload_write(uio)
       int c;
 
       /* Continue loading in the kernel image.  */
-      if (kernel_load_ofs < kernel_exec.a_text)
-	{
-	  c = MIN(iov->iov_len, kernel_exec.a_text - kernel_load_ofs);
-	  c = MIN(c, MAXPHYS);
-	}
-      else
-	{
-	  if (kernel_load_ofs == kernel_exec.a_text)
-	    kernel_load_ofs = kernel_text_size;
-	  c = MIN(iov->iov_len,
-		  kernel_text_size + kernel_exec.a_data - kernel_load_ofs);
-	  c = MIN(c, MAXPHYS);
-	}
+      c = MIN(iov->iov_len, kernel_load_endseg - kernel_load_ofs);
+      c = MIN(c, MAXPHYS);
       error = uiomove(kernel_image + kernel_load_ofs, (int)c, uio);
+
       if (error == 0)
 	{
 	  kernel_load_ofs += c;
-	  if (kernel_load_ofs == kernel_text_size + kernel_exec.a_data)
-	    {
+
+	  /*
+	   * Fun and games to handle loading symbols - the length of the
+	   * string table isn't know until after the symbol table has
+	   * been loaded.  We have to load the kernel text, data, and
+	   * the symbol table, then get the size of the strings.  A
+	   * new kernel image is then allocated and the data currently
+	   * loaded moved to the new image.  Then continue reading the
+	   * string table.  This has problems if there isn't enough
+	   * room to allocate space for the two copies of the kernel
+	   * image.  So the approach I took is to guess at the size
+	   * of the symbol strings.  If the guess is wrong, the symbol
+	   * table is ignored.
+	   */
+
+	  if (kernel_load_ofs == kernel_load_endseg)
+	    switch (kernel_load_phase) {
+	    case 0:		/* done loading kernel text */
+	      kernel_load_ofs = kernel_text_size;
+	      kernel_load_endseg = kernel_load_ofs + kernel_exec.a_data;
+	      kernel_load_phase = 1;
+	      break;
+	    case 1:		/* done loading kernel data */
+	      for(c = 0; c < kernel_exec.a_bss; c++)
+		kernel_image[kernel_load_ofs + c] = 0;
+	      kernel_load_ofs += kernel_exec.a_bss;
+	      if (esym) {
+		kernel_load_endseg = kernel_load_ofs + kernel_exec.a_syms + 8;
+		*((u_long *)(kernel_image + kernel_load_ofs)) =
+		  kernel_exec.a_syms;
+		kernel_load_ofs += 4;
+		kernel_load_phase = 3;
+		break;
+	      }
+	      /* Fall Through */
+	    case 2:		/* done loading kernel */
 
 	      /* Put the finishing touches on the kernel image.  */
-	      for(c = 0; c < kernel_exec.a_bss; c++)
-		kernel_image[kernel_text_size + kernel_exec.a_data + c] = 0;
-	      kernel_image_magic_copy(kernel_image + kernel_text_size
-				      + kernel_exec.a_data
-				      + kernel_exec.a_bss);
+	      kernel_image_magic_copy(kernel_image + kernel_load_ofs);
 
 	      /* Get everything in a clean state for rebooting.  */
 	      bootsync();
 
 	      /* Start the new kernel with code in locore.s.  */
 	      kernel_reload(kernel_image,
-			    (kernel_text_size + kernel_exec.a_data
-			     + kernel_exec.a_bss + kernel_image_magic_size()),
+			    (kernel_load_ofs + kernel_image_magic_size()),
 			    kernel_exec.a_entry,
 			    orig_fastram_start, orig_fastram_size,
-			    orig_chipram_size, NULL);
+			    orig_chipram_size, kernel_symbol_esym);
+	      /* Not reached */
+	    case 3:		/* done loading kernel symbol table */
+	      c = *((u_long *)(kernel_image + kernel_load_ofs - 4));
+	      if (c > 16 * (kernel_exec.a_syms / 12))
+		c = 16 * (kernel_exec.a_syms / 12);
+	      kernel_load_endseg += c - 4;
+	      kernel_symbol_esym = kernel_load_endseg;
+#ifdef notyet
+	      kernel_image_copy = kernel_image;
+	      kernel_image = malloc(kernel_load_ofs + c
+		+ kernel_image_magic_size(), M_TEMP, M_WAITOK);
+	      if (kernel_image == NULL)
+		panic("kernel_reload failed second malloc");
+	      for (c = 0; c < kernel_load_ofs; c += MAXPHYS)
+		bcopy(kernel_image_copy + c, kernel_image + c,
+		  (kernel_load_ofs - c) > MAXPHYS ? MAXPHYS :
+		   kernel_load_ofs - c);
+#endif
+	      kernel_load_phase = 2;
 	    }
 	}
     }

@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)dma.c
- *	$Id: zssc.c,v 1.2 1994/05/12 05:57:26 chopps Exp $
+ *	$Id: zssc.c,v 1.3 1994/05/22 07:22:34 chopps Exp $
  */
 
 #include <sys/param.h>
@@ -125,7 +125,7 @@ zsscattach(pdp, dp, auxp)
 	sc->sc_link.device = &zssc_scsidev;
 	TAILQ_INIT(&sc->sc_xslist);
 
-#if 0
+#if 1
 	custom.intreq = INTF_EXTER;
 	custom.intena = INTF_SETCLR | INTF_EXTER;
 #endif

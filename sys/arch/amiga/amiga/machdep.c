@@ -38,7 +38,7 @@
  * from: Utah $Hdr: machdep.c 1.63 91/04/24$
  *
  *	@(#)machdep.c	7.16 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.25 1994/05/12 05:56:34 chopps Exp $
+ *	$Id: machdep.c,v 1.26 1994/05/22 07:22:13 chopps Exp $
  */
 
 #include <sys/param.h>
@@ -90,7 +90,6 @@
 #include <amiga/amiga/cc.h>
 #include <amiga/amiga/memlist.h>
 #include <amiga/dev/ztwobusvar.h>
-#include <amiga/dev/zthreebusvar.h>
 /* 
  * most of these can be killed by adding a server chain for 
  * int2 (PORTS)
@@ -384,9 +383,6 @@ again:
 			printf ("memory segment %d at %08lx size %08lx\n", i,
 				mem_list->mem_seg[i].mem_start,
 				mem_list->mem_seg[i].mem_size);
-	if (ZTHREEAVAIL)
-	  	printf ("Found %d bytes within Zorro III space\n",
-			ZTHREEAVAIL);
 	/*
 	 * Set up CPU-specific registers, cache, etc.
 	 */
