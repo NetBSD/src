@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.663 2004/11/16 09:18:20 skrll Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.664 2004/11/17 03:06:03 junyoung Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.664 2004/11/16 09:17:20 skrll Exp 
+ *	NetBSD: pcidevs,v 1.665 2004/11/17 03:04:45 junyoung Exp 
  */
 
 /*
@@ -45,7 +45,7 @@ const struct pci_vendor pci_vendors[] = {
 	},
 	{
 	    PCI_VENDOR_MARTINMARIETTA,
-	    "Martin-Marietta Corporation",
+	    "Martin-Marietta",
 	},
 	{
 	    PCI_VENDOR_HAUPPAUGE,
@@ -65,7 +65,7 @@ const struct pci_vendor pci_vendors[] = {
 	},
 	{
 	    PCI_VENDOR_ATI,
-	    "ATI",
+	    "ATI Technologies",
 	},
 	{
 	    PCI_VENDOR_ULSI,
@@ -133,7 +133,7 @@ const struct pci_vendor pci_vendors[] = {
 	},
 	{
 	    PCI_VENDOR_LSIL,
-	    "LSI Logic Corp of Canada",
+	    "LSI Logic of Canada",
 	},
 	{
 	    PCI_VENDOR_ICLPERSONAL,
@@ -273,7 +273,7 @@ const struct pci_vendor pci_vendors[] = {
 	},
 	{
 	    PCI_VENDOR_TATUNGAMERICA,
-	    "Tatung Co. of America",
+	    "Tatung of America",
 	},
 	{
 	    PCI_VENDOR_HP,
@@ -313,7 +313,7 @@ const struct pci_vendor pci_vendors[] = {
 	},
 	{
 	    PCI_VENDOR_IPCCORP,
-	    "IPC Corporation",
+	    "IPC",
 	},
 	{
 	    PCI_VENDOR_GENOA,
@@ -485,7 +485,7 @@ const struct pci_vendor pci_vendors[] = {
 	},
 	{
 	    PCI_VENDOR_GIT,
-	    "GIT Co.",
+	    "GIT",
 	},
 	{
 	    PCI_VENDOR_YAMAHA,
@@ -509,7 +509,7 @@ const struct pci_vendor pci_vendors[] = {
 	},
 	{
 	    PCI_VENDOR_CYRIX,
-	    "Cyrix Corporation",
+	    "Cyrix",
 	},
 	{
 	    PCI_VENDOR_IBUS,
@@ -537,7 +537,7 @@ const struct pci_vendor pci_vendors[] = {
 	},
 	{
 	    PCI_VENDOR_DATATECH,
-	    "Data Technology Corporation",
+	    "Data Technology",
 	},
 	{
 	    PCI_VENDOR_CONTAQ,
@@ -549,7 +549,7 @@ const struct pci_vendor pci_vendors[] = {
 	},
 	{
 	    PCI_VENDOR_EFA,
-	    "EFA Corporation of America",
+	    "EFA of America",
 	},
 	{
 	    PCI_VENDOR_FOREX,
@@ -577,11 +577,11 @@ const struct pci_vendor pci_vendors[] = {
 	},
 	{
 	    PCI_VENDOR_DG,
-	    "Data General Corporation",
+	    "Data General",
 	},
 	{
 	    PCI_VENDOR_BIT3,
-	    "Bit3 Computer Corp.",
+	    "Bit3 Computer",
 	},
 	{
 	    PCI_VENDOR_ELONEX,
@@ -593,7 +593,7 @@ const struct pci_vendor pci_vendors[] = {
 	},
 	{
 	    PCI_VENDOR_SUN,
-	    "Sun Microsystems, Inc.",
+	    "Sun Microsystems",
 	},
 	{
 	    PCI_VENDOR_SYSTEMSOFT,
@@ -913,7 +913,7 @@ const struct pci_vendor pci_vendors[] = {
 	},
 	{
 	    PCI_VENDOR_NVIDIA,
-	    "Nvidia Corporation",
+	    "Nvidia",
 	},
 	{
 	    PCI_VENDOR_EMULEX,
@@ -929,7 +929,7 @@ const struct pci_vendor pci_vendors[] = {
 	},
 	{
 	    PCI_VENDOR_APTIX,
-	    "Aptix Corporation",
+	    "Aptix",
 	},
 	{
 	    PCI_VENDOR_NEWBRIDGE,
@@ -973,7 +973,7 @@ const struct pci_vendor pci_vendors[] = {
 	},
 	{
 	    PCI_VENDOR_ASCIICORP,
-	    "ASCII Corporation",
+	    "ASCII",
 	},
 	{
 	    PCI_VENDOR_XILINX,
@@ -1005,7 +1005,7 @@ const struct pci_vendor pci_vendors[] = {
 	},
 	{
 	    PCI_VENDOR_NKK,
-	    "NKK Corporation",
+	    "NKK",
 	},
 	{
 	    PCI_VENDOR_CREATIVE,
@@ -1341,7 +1341,7 @@ const struct pci_vendor pci_vendors[] = {
 	},
 	{
 	    PCI_VENDOR_IC,
-	    "IC Corporation",
+	    "IC",
 	},
 	{
 	    PCI_VENDOR_NIKON,
@@ -1425,7 +1425,7 @@ const struct pci_vendor pci_vendors[] = {
 	},
 	{
 	    PCI_VENDOR_RENDITION,
-	    "Rendition, Inc.",
+	    "Rendition",
 	},
 	{
 	    PCI_VENDOR_APT,
@@ -1473,7 +1473,7 @@ const struct pci_vendor pci_vendors[] = {
 	},
 	{
 	    PCI_VENDOR_ALTERA,
-	    "Altera Corperation",
+	    "Altera",
 	},
 	{
 	    PCI_VENDOR_ADOBE,
@@ -1677,11 +1677,11 @@ const struct pci_vendor pci_vendors[] = {
 	},
 	{
 	    PCI_VENDOR_SCITEX,
-	    "Scitex Corporation",
+	    "Scitex",
 	},
 	{
 	    PCI_VENDOR_AVID,
-	    "Avid Technology Inc.",
+	    "Avid Technology",
 	},
 	{
 	    PCI_VENDOR_V3,
@@ -1801,7 +1801,7 @@ const struct pci_vendor pci_vendors[] = {
 	},
 	{
 	    PCI_VENDOR_ZORAN,
-	    "Zoran Corporation",
+	    "Zoran",
 	},
 	{
 	    PCI_VENDOR_COMPEX,
@@ -1821,7 +1821,7 @@ const struct pci_vendor pci_vendors[] = {
 	},
 	{
 	    PCI_VENDOR_O2MICRO,
-	    "O2 Micro, Inc.",
+	    "O2 Micro",
 	},
 	{
 	    PCI_VENDOR_3DFX,
@@ -1849,7 +1849,7 @@ const struct pci_vendor pci_vendors[] = {
 	},
 	{
 	    PCI_VENDOR_JNI,
-	    "JNI Corporation",
+	    "JNI",
 	},
 	{
 	    PCI_VENDOR_AVM,
@@ -1857,7 +1857,7 @@ const struct pci_vendor pci_vendors[] = {
 	},
 	{
 	    PCI_VENDOR_SAMSUNGELEC2,
-	    "Samsung Electronics Co. Ltd. (2nd vendor ID)",
+	    "Samsung Electronics (2nd vendor ID)",
 	},
 	{
 	    PCI_VENDOR_STALLION,
@@ -1881,7 +1881,7 @@ const struct pci_vendor pci_vendors[] = {
 	},
 	{
 	    PCI_VENDOR_ESSTECH,
-	    "ESS Technology, Inc.",
+	    "ESS Technology",
 	},
 	{
 	    PCI_VENDOR_INTERSIL,
@@ -1889,7 +1889,7 @@ const struct pci_vendor pci_vendors[] = {
 	},
 	{
 	    PCI_VENDOR_SILMOTION,
-	    "Silicon Motion, Inc.",
+	    "Silicon Motion",
 	},
 	{
 	    PCI_VENDOR_ENSONIQ,
@@ -1901,7 +1901,7 @@ const struct pci_vendor pci_vendors[] = {
 	},
 	{
 	    PCI_VENDOR_TRANSMETA,
-	    "Transmeta Corp",
+	    "Transmeta",
 	},
 	{
 	    PCI_VENDOR_ROCKWELL,
@@ -1913,11 +1913,11 @@ const struct pci_vendor pci_vendors[] = {
 	},
 	{
 	    PCI_VENDOR_ITE,
-	    "Integrated Technology Express, Inc.",
+	    "Integrated Technology Express",
 	},
 	{
 	    PCI_VENDOR_ESSTECH2,
-	    "ESS Technology, Inc.",
+	    "ESS Technology",
 	},
 	{
 	    PCI_VENDOR_TRITECH,
@@ -1949,7 +1949,7 @@ const struct pci_vendor pci_vendors[] = {
 	},
 	{
 	    PCI_VENDOR_NVIDIA_SGS,
-	    "Nvidia Corporation & SGS-Thomson Microelectronics",
+	    "Nvidia & SGS-Thomson Microelectronics",
 	},
 	{
 	    PCI_VENDOR_RAINBOW,
@@ -1973,7 +1973,7 @@ const struct pci_vendor pci_vendors[] = {
 	},
 	{
 	    PCI_VENDOR_SIIG,
-	    "Siig, Inc.",
+	    "Siig",
 	},
 	{
 	    PCI_VENDOR_DOMEX,
@@ -1981,7 +1981,7 @@ const struct pci_vendor pci_vendors[] = {
 	},
 	{
 	    PCI_VENDOR_LMC,
-	    "LAN Media Corporation",
+	    "LAN Media",
 	},
 	{
 	    PCI_VENDOR_NETGEAR,
@@ -2017,35 +2017,35 @@ const struct pci_vendor pci_vendors[] = {
 	},
 	{
 	    PCI_VENDOR_CMEDIA,
-	    "C-Media Electronics, Inc.",
+	    "C-Media Electronics",
 	},
 	{
 	    PCI_VENDOR_LAVA,
-	    "Lava Semiconductor Manufacturing, Inc.",
+	    "Lava Semiconductor Manufacturing",
 	},
 	{
 	    PCI_VENDOR_ETIMEDIA,
-	    "eTIMedia Technology Co. Ltd.",
+	    "eTIMedia Technology",
 	},
 	{
 	    PCI_VENDOR_MICROSOFT,
-	    "Microsoft Corporation",
+	    "Microsoft",
 	},
 	{
 	    PCI_VENDOR_OXFORDSEMI,
-	    "Oxford Semiconductor Ltd.",
+	    "Oxford Semiconductor",
 	},
 	{
 	    PCI_VENDOR_TAMARACK,
-	    "Tamarack Microelectronics, Inc.",
+	    "Tamarack Microelectronics",
 	},
 	{
 	    PCI_VENDOR_SAMSUNGELEC3,
-	    "Samsung Electronics Co. Ltd. (3rd vendor ID)",
+	    "Samsung Electronics (3rd vendor ID)",
 	},
 	{
 	    PCI_VENDOR_ASKEY,
-	    "Askey Computer Corp.",
+	    "Askey Computer",
 	},
 	{
 	    PCI_VENDOR_AVERMEDIA,
@@ -2057,15 +2057,15 @@ const struct pci_vendor pci_vendors[] = {
 	},
 	{
 	    PCI_VENDOR_COMPAL,
-	    "COMPAL Electronics, Inc.",
+	    "COMPAL Electronics",
 	},
 	{
 	    PCI_VENDOR_TITAN,
-	    "Titan Electronics, Inc.",
+	    "Titan Electronics",
 	},
 	{
 	    PCI_VENDOR_AVLAB,
-	    "Avlab Technology, Inc.",
+	    "Avlab Technology",
 	},
 	{
 	    PCI_VENDOR_INVERTEX,
@@ -2073,11 +2073,11 @@ const struct pci_vendor pci_vendors[] = {
 	},
 	{
 	    PCI_VENDOR_BROADCOM,
-	    "Broadcom Corporation",
+	    "Broadcom",
 	},
 	{
 	    PCI_VENDOR_PLANEX,
-	    "Planex Communications, Inc.",
+	    "Planex Communications",
 	},
 	{
 	    PCI_VENDOR_CONEXANT,
@@ -2089,7 +2089,7 @@ const struct pci_vendor pci_vendors[] = {
 	},
 	{
 	    PCI_VENDOR_ENE,
-	    "ENE Technology, Inc.",
+	    "ENE Technology",
 	},
 	{
 	    PCI_VENDOR_TERRATEC,
@@ -2097,7 +2097,7 @@ const struct pci_vendor pci_vendors[] = {
 	},
 	{
 	    PCI_VENDOR_SOLIDUM,
-	    "Solidum Systems Corp.",
+	    "Solidum Systems",
 	},
 	{
 	    PCI_VENDOR_GEOCAST,
@@ -2121,7 +2121,7 @@ const struct pci_vendor pci_vendors[] = {
 	},
 	{
 	    PCI_VENDOR_SIBYTE,
-	    "Broadcom Corp. (SiByte)",
+	    "Broadcom (SiByte)",
 	},
 	{
 	    PCI_VENDOR_MYSON,
@@ -2129,15 +2129,15 @@ const struct pci_vendor pci_vendors[] = {
 	},
 	{
 	    PCI_VENDOR_NDC,
-	    "National Datacomm Corp.",
+	    "National Datacomm",
 	},
 	{
 	    PCI_VENDOR_ACTIONTEC,
-	    "Action Tec Electronics, Inc.",
+	    "Action Tec Electronics",
 	},
 	{
 	    PCI_VENDOR_ATHEROS,
-	    "Atheros Communications, Inc.",
+	    "Atheros Communications",
 	},
 	{
 	    PCI_VENDOR_GLOBALSUN,
@@ -2153,7 +2153,7 @@ const struct pci_vendor pci_vendors[] = {
 	},
 	{
 	    PCI_VENDOR_ANTARES,
-	    "Antares Microsystems, Inc.",
+	    "Antares Microsystems",
 	},
 	{
 	    PCI_VENDOR_CAVIUM,
@@ -2169,7 +2169,7 @@ const struct pci_vendor pci_vendors[] = {
 	},
 	{
 	    PCI_VENDOR_SANDBURST,
-	    "Sandburst, Inc.",
+	    "Sandburst",
 	},
 	{
 	    PCI_VENDOR_I4,
@@ -2221,7 +2221,7 @@ const struct pci_vendor pci_vendors[] = {
 	},
 	{
 	    PCI_VENDOR_MEDIAQ,
-	    "MediaQ, Inc.",
+	    "MediaQ",
 	},
 	{
 	    PCI_VENDOR_GUILLEMOT,
@@ -2241,7 +2241,7 @@ const struct pci_vendor pci_vendors[] = {
 	},
 	{
 	    PCI_VENDOR_KURUSUGAWA,
-	    "Kurusugawa Electronics, Inc.",
+	    "Kurusugawa Electronics",
 	},
 	{
 	    PCI_VENDOR_PCHDTV,
@@ -2265,7 +2265,7 @@ const struct pci_vendor pci_vendors[] = {
 	},
 	{
 	    PCI_VENDOR_COMPUTONE,
-	    "Computone Corperation",
+	    "Computone",
 	},
 	{
 	    PCI_VENDOR_KTI,
@@ -2293,7 +2293,7 @@ const struct pci_vendor pci_vendors[] = {
 	},
 	{
 	    PCI_VENDOR_MIDDLE_DIGITAL,
-	    "Middle Digital, Inc.",
+	    "Middle Digital",
 	},
 	{
 	    PCI_VENDOR_ARC,
