@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.14 1999/01/16 20:41:24 chuck Exp $	*/
+/*	$NetBSD: pmap.c,v 1.15 1999/02/04 12:45:31 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -414,7 +414,7 @@ pmap_bootstrap(kernelstart, kernelend)
 	 * Find suitably aligned memory for HTAB.
 	 */
 	for (mp = avail; mp->size; mp++) {
-		s = mp->size % HTABSIZE;
+		s = roundup(mp->start, HTABSIZE) - mp->start;
 		if (mp->size < s + HTABSIZE)
 			continue;
 		ptable = (pte_t *)(mp->start + s);
