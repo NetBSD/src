@@ -1,4 +1,4 @@
-.\"	$NetBSD: pac.8,v 1.8 2000/10/04 11:40:51 jdolecek Exp $
+.\"	$NetBSD: pac.8,v 1.9 2002/01/19 03:24:14 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -97,9 +97,9 @@ total price for this print (column "price") and user login with host name
 .Ar name
 was not used and hence
 .Nm
-is printing information for all users, 
+is printing information for all users,
 a summary line with print totals (runs, pages, price) is appended.
-
+.Pp
 Note that
 .Nm
 on other system might print the price as price per copy.
@@ -114,11 +114,11 @@ printer capability data base
 .El
 .Sh SEE ALSO
 .Xr printcap 5
-.Sh BUGS
-The relationship between the computed price and reality is
-as yet unknown.
 .Sh HISTORY
 The
 .Nm
 command appeared in
 .Bx 4.0 .
+.Sh BUGS
+The relationship between the computed price and reality is
+as yet unknown.
