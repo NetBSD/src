@@ -3,7 +3,7 @@
  */
 
 /* 
- * Copyright (C) 1986, 1988, 1989, 1991, 1992 the Free Software Foundation, Inc.
+ * Copyright (C) 1986, 1988, 1989, 1991, 1992, 1993 the Free Software Foundation, Inc.
  * 
  * This file is part of GAWK, the GNU implementation of the
  * AWK Progamming Language.
@@ -24,8 +24,8 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: eval.c,v 1.3 1993/11/13 02:26:39 jtc Exp $";
-#endif /* not lint */
+static char rcsid[] = "$Id: eval.c,v 1.4 1994/02/17 01:22:11 jtc Exp $";
+#endif
 
 #include "awk.h"
 
@@ -322,7 +322,10 @@ register NODE *volatile tree;
 		break;
 
 	case Node_K_delete:
-		do_delete(tree->lnode, tree->rnode);
+		if (tree->rnode != NULL)
+			do_delete(tree->lnode, tree->rnode);
+		else
+			assoc_clear(tree->lnode);
 		break;
 
 	case Node_K_next:
@@ -971,18 +974,20 @@ NODE *arg_list;		/* Node_expression_list of calling args. */
 			/* should we free arg->var_value ? */
 			arg->var_array = n->var_array;
 			arg->type = Node_var_array;
+			arg->array_size = n->array_size;
+			arg->table_size = n->table_size;
 		}
-		unref(n->lnode);
+		/* n->lnode overlays the array size, don't unref it if array */
+		if (n->type != Node_var_array)
+			unref(n->lnode);
 		freenode(n);
 		count--;
 	}
 	while (count-- > 0) {
 		n = *sp++;
 		/* if n is an (local) array, all the elements should be freed */
-		if (n->type == Node_var_array) {
+		if (n->type == Node_var_array)
 			assoc_clear(n);
-			free(n->var_array);
-		}
 		unref(n->lnode);
 		freenode(n);
 	}
