@@ -1,4 +1,4 @@
-/*	$NetBSD: stdarg.h,v 1.18 2000/02/03 16:16:07 kleink Exp $	*/
+/*	$NetBSD: stdarg.h,v 1.19 2000/02/19 09:23:44 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -53,14 +53,15 @@ typedef _BSD_VA_LIST_	va_list;
 #if BYTE_ORDER == LITTLE_ENDIAN
 #define	va_arg(ap, T)							\
 	(((T *)(							\
-	    (ap) += (sizeof(T) <= sizeof(int)				\
+	    (ap) += (/*CONSTCOND*/ sizeof(T) <= sizeof(int)		\
 		? sizeof(int) : ((long)(ap) & 4) + sizeof(T)),		\
-	    (ap) - (sizeof(T) <= sizeof(int) ? sizeof(int) : sizeof(T))	\
+	    (ap) - (/*CONSTCOND*/ sizeof(T) <= sizeof(int)		\
+		? sizeof(int) : sizeof(T))				\
  	))[0])
 #else
 #define	va_arg(ap, T)							\
 	(((T *)(							\
-	    (ap) += (sizeof(T) <= sizeof(int)				\
+	    (ap) += (/*CONSTCOND*/ sizeof(T) <= sizeof(int)		\
 		? sizeof(int) : ((long)(ap) & 4) + sizeof(T))		\
  	))[-1])
 #endif
