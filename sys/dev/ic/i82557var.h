@@ -1,7 +1,7 @@
-/*	$NetBSD: i82557var.h,v 1.22 2001/05/22 01:23:25 thorpej Exp $	*/
+/*	$NetBSD: i82557var.h,v 1.23 2001/05/22 15:29:30 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998, 1999, 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -193,12 +193,16 @@ struct fxp_softc {
 	int	sc_rev;			/* chip revision */
 	int	sc_flags;		/* misc. flags */
 
-#define	FXPF_MII		0x01	/* device uses MII */
-#define	FXPF_ATTACHED		0x02	/* attach has succeeded */
-#define	FXPF_WANTINIT		0x04	/* want a re-init */
-#define	FXPF_HAS_RESUME_BUG	0x08	/* has the resume bug */
-#define	FXPF_FIX_RESUME_BUG	0x10	/* currently need to work-around
+#define	FXPF_MII		0x0001	/* device uses MII */
+#define	FXPF_ATTACHED		0x0002	/* attach has succeeded */
+#define	FXPF_WANTINIT		0x0004	/* want a re-init */
+#define	FXPF_HAS_RESUME_BUG	0x0008	/* has the resume bug */
+#define	FXPF_FIX_RESUME_BUG	0x0010	/* currently need to work-around
 					   the resume bug */
+#define	FXPF_MWI		0x0020	/* enable PCI MWI */
+#define	FXPF_READ_ALIGN		0x0040	/* align read access w/ cacheline */
+#define	FXPF_WRITE_ALIGN	0x0080	/* end write on cacheline */
+#define	FXPF_EXT_TXCB		0x0100	/* enable extended TxCB */
 
 	int	sc_txpending;		/* number of TX requests pending */
 	int	sc_txdirty;		/* first dirty TX descriptor */

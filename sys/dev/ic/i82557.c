@@ -1,7 +1,7 @@
-/*	$NetBSD: i82557.c,v 1.51 2001/05/22 00:27:01 thorpej Exp $	*/
+/*	$NetBSD: i82557.c,v 1.52 2001/05/22 15:29:30 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998, 1999, 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -39,6 +39,7 @@
 
 /*
  * Copyright (c) 1995, David Greenman
+ * Copyright (c) 2001 Jonathan Lemon <jlemon@freebsd.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -63,7 +64,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	Id: if_fxp.c,v 1.47 1998/01/08 23:42:29 eivind Exp
+ *	Id: if_fxp.c,v 1.113 2001/05/17 23:50:24 jlemon
  */
 
 /*
@@ -134,32 +135,36 @@
 #define	RFA_ALIGNMENT_FUDGE	2
 
 /*
- * Template for default configuration parameters.
- * See struct fxp_cb_config for the bit definitions.
+ * The configuration byte map has several undefined fields which
+ * must be one or must be zero.  Set up a template for these bits
+ * only (assuming an i82557 chip), leaving the actual configuration
+ * for fxp_init().
+ *
+ * See the definition of struct fxp_cb_config for the bit definitions.
  */
-u_int8_t fxp_cb_config_template[] = {
+const u_int8_t fxp_cb_config_template[] = {
 	0x0, 0x0,		/* cb_status */
-	0x80, 0x2,		/* cb_command */
-	0xff, 0xff, 0xff, 0xff,	/* link_addr */
-	0x16,	/*  0 */
-	0x8,	/*  1 */
+	0x0, 0x0,		/* cb_command */
+	0x0, 0x0, 0x0, 0x0,	/* link_addr */
+	0x0,	/*  0 */
+	0x0,	/*  1 */
 	0x0,	/*  2 */
 	0x0,	/*  3 */
 	0x0,	/*  4 */
-	0x80,	/*  5 */
-	0xb2,	/*  6 */
-	0x3,	/*  7 */
-	0x1,	/*  8 */
+	0x0,	/*  5 */
+	0x32,	/*  6 */
+	0x0,	/*  7 */
+	0x0,	/*  8 */
 	0x0,	/*  9 */
-	0x26,	/* 10 */
+	0x6,	/* 10 */
 	0x0,	/* 11 */
-	0x60,	/* 12 */
+	0x0,	/* 12 */
 	0x0,	/* 13 */
 	0xf2,	/* 14 */
 	0x48,	/* 15 */
 	0x0,	/* 16 */
 	0x40,	/* 17 */
-	0xf3,	/* 18 */
+	0xf0,	/* 18 */
 	0x0,	/* 19 */
 	0x3f,	/* 20 */
 	0x5	/* 21 */
@@ -253,6 +258,14 @@ fxp_attach(struct fxp_softc *sc)
 	struct fxp_phytype *fp;
 
 	callout_init(&sc->sc_callout);
+
+	/*
+	 * Enable some good stuff on i82558 and later.
+	 */
+	if (sc->sc_rev >= FXP_REV_82558_A4) {
+		/* Enable the extended TxCB. */
+		sc->sc_flags |= FXPF_EXT_TXCB;
+	}
 
 	/*
 	 * Allocate the control data structures, and create and load the
@@ -1283,7 +1296,7 @@ fxp_init(struct ifnet *ifp)
 	struct fxp_cb_ias *cb_ias;
 	struct fxp_txdesc *txd;
 	bus_dmamap_t rxmap;
-	int i, prm, save_bf, allm, error = 0;
+	int i, prm, save_bf, lrxen, allm, error = 0;
 
 	if ((error = fxp_enable(sc)) != 0)
 		goto out;
@@ -1326,9 +1339,17 @@ fxp_init(struct ifnet *ifp)
 	/*
 	 * In order to support receiving 802.1Q VLAN frames, we have to
 	 * enable "save bad frames", since they are 4 bytes larger than
-	 * the normal Ethernet maximum frame length.
+	 * the normal Ethernet maximum frame length.  On i82558 and later,
+	 * we have a better mechanism for this.
 	 */
-	save_bf = (sc->sc_ethercom.ec_capenable & ETHERCAP_VLAN_MTU) ? 1 : 0;
+	save_bf = 0;
+	lrxen = 0;
+	if (sc->sc_ethercom.ec_capenable & ETHERCAP_VLAN_MTU) {
+		if (sc->sc_rev < FXP_REV_82558_A4)
+			save_bf = 1;
+		else
+			lrxen = 1;
+	}
 
 	/*
 	 * Initialize base of dump-stats buffer.
@@ -1359,17 +1380,32 @@ fxp_init(struct ifnet *ifp)
 	cbp->rx_fifo_limit =	8;	/* rx fifo threshold (32 bytes) */
 	cbp->tx_fifo_limit =	0;	/* tx fifo threshold (0 bytes) */
 	cbp->adaptive_ifs =	0;	/* (no) adaptive interframe spacing */
+	cbp->mwi_enable =	(sc->sc_flags & FXPF_MWI) ? 1 : 0;
+	cbp->type_enable =	0;	/* actually reserved */
+	cbp->read_align_en =	(sc->sc_flags & FXPF_READ_ALIGN) ? 1 : 0;
+	cbp->end_wr_on_cl =	(sc->sc_flags & FXPF_WRITE_ALIGN) ? 1 : 0;
 	cbp->rx_dma_bytecount =	0;	/* (no) rx DMA max */
 	cbp->tx_dma_bytecount =	0;	/* (no) tx DMA max */
-	cbp->dma_bce =		0;	/* (disable) dma max counters */
+	cbp->dma_mbce =		0;	/* (disable) dma max counters */
 	cbp->late_scb =		0;	/* (don't) defer SCB update */
-	cbp->tno_int =		0;	/* (disable) tx not okay interrupt */
+	cbp->tno_int_or_tco_en =0;	/* (disable) tx not okay interrupt */
 	cbp->ci_int =		1;	/* interrupt on CU idle */
+	cbp->ext_txcb_dis =	(sc->sc_flags & FXPF_EXT_TXCB) ? 0 : 1;
+	cbp->ext_stats_dis =	1;	/* disable extended counters */
+	cbp->keep_overrun_rx =	0;	/* don't pass overrun frames to host */
 	cbp->save_bf =		save_bf;/* save bad frames */
 	cbp->disc_short_rx =	!prm;	/* discard short packets */
 	cbp->underrun_retry =	1;	/* retry mode (1) on DMA underrun */
+	cbp->two_frames =	0;	/* do not limit FIFO to 2 frames */
+	cbp->dyn_tbd =		0;	/* (no) dynamic TBD mode */
 					/* interface mode */
 	cbp->mediatype =	(sc->sc_flags & FXPF_MII) ? 1 : 0;
+	cbp->csma_dis =		0;	/* (don't) disable link */
+	cbp->tcp_udp_cksum =	0;	/* (don't) enable checksum */
+	cbp->vlan_tco =		0;	/* (don't) enable vlan wakeup */
+	cbp->link_wake_en =	0;	/* (don't) assert PME# on link change */
+	cbp->arp_wake_en =	0;	/* (don't) assert PME# on arp */
+	cbp->mc_wake_en =	0;	/* (don't) assert PME# on mcmatch */
 	cbp->nsai =		1;	/* (don't) disable source addr insert */
 	cbp->preamble_length =	2;	/* (7 byte) preamble */
 	cbp->loopback =		0;	/* (don't) loopback */
@@ -1378,14 +1414,45 @@ fxp_init(struct ifnet *ifp)
 	cbp->interfrm_spacing =	6;	/* (96 bits of) interframe spacing */
 	cbp->promiscuous =	prm;	/* promiscuous mode */
 	cbp->bcast_disable =	0;	/* (don't) disable broadcasts */
-	cbp->crscdt =		0;	/* (CRS only) */
+	cbp->wait_after_win =	0;	/* (don't) enable modified backoff alg*/
+	cbp->ignore_ul =	0;	/* consider U/L bit in IA matching */
+	cbp->crc16_en =		0;	/* (don't) enable crc-16 algorithm */
+	cbp->crscdt =		(sc->sc_flags & FXPF_MII) ? 0 : 1;
 	cbp->stripping =	!prm;	/* truncate rx packet to byte count */
 	cbp->padding =		1;	/* (do) pad short tx packets */
 	cbp->rcv_crc_xfer =	0;	/* (don't) xfer CRC to host */
+	cbp->long_rx_en =	lrxen;	/* long packet receive enable */
+	cbp->ia_wake_en =	0;	/* (don't) wake up on address match */
+	cbp->magic_pkt_dis =	0;	/* (don't) disable magic packet */
+					/* must set wake_en in PMCSR also */
 	cbp->force_fdx =	0;	/* (don't) force full duplex */
 	cbp->fdx_pin_en =	1;	/* (enable) FDX# pin */
 	cbp->multi_ia =		0;	/* (don't) accept multiple IAs */
 	cbp->mc_all =		allm;	/* accept all multicasts */
+
+	if (sc->sc_rev < FXP_REV_82558_A4) {
+		/*
+		 * The i82557 has no hardware flow control, the values
+		 * here are the defaults for the chip.
+		 */
+		cbp->fc_delay_lsb =	0;
+		cbp->fc_delay_msb =	0x40;
+		cbp->pri_fc_thresh =	3;
+		cbp->tx_fc_dis =	0;
+		cbp->rx_fc_restop =	0;
+		cbp->rx_fc_restart =	0;
+		cbp->fc_filter =	0;
+		cbp->pri_fc_loc =	1;
+	} else {
+		cbp->fc_delay_lsb =	0x1f;
+		cbp->fc_delay_msb =	0x01;
+		cbp->pri_fc_thresh =	3;
+		cbp->tx_fc_dis =	0;	/* enable transmit FC */
+		cbp->rx_fc_restop =	1;	/* enable FC restop frames */
+		cbp->rx_fc_restart =	1;	/* enable FC restart frames */
+		cbp->fc_filter =	!prm;	/* drop FC frames to host */
+		cbp->pri_fc_loc =	1;	/* FC pri location (byte31) */
+	}
 
 	FXP_CDCONFIGSYNC(sc, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
@@ -1450,9 +1517,15 @@ fxp_init(struct ifnet *ifp)
 		memset(txd, 0, sizeof(*txd));
 		txd->txd_txcb.cb_command =
 		    htole16(FXP_CB_COMMAND_NOP | FXP_CB_COMMAND_S);
-		txd->txd_txcb.tbd_array_addr = htole32(FXP_CDTBDADDR(sc, i));
 		txd->txd_txcb.link_addr =
 		    htole32(FXP_CDTXADDR(sc, FXP_NEXTTX(i)));
+		if (sc->sc_flags & FXPF_EXT_TXCB)
+			txd->txd_txcb.tbd_array_addr =
+			    htole32(FXP_CDTBDADDR(sc, i) +
+				    (2 * sizeof(struct fxp_tbd)));
+		else
+			txd->txd_txcb.tbd_array_addr =
+			    htole32(FXP_CDTBDADDR(sc, i));
 		FXP_CDTXSYNC(sc, i, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 	}
 	sc->sc_txpending = 0;

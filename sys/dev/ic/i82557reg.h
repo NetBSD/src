@@ -1,7 +1,7 @@
-/*	$NetBSD: i82557reg.h,v 1.7 2001/05/22 01:23:25 thorpej Exp $	*/
+/*	$NetBSD: i82557reg.h,v 1.8 2001/05/22 15:29:30 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999, 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -39,6 +39,7 @@
 
 /*
  * Copyright (c) 1995, David Greenman
+ * Copyright (c) 2001 Jonathan Lemon <jlemon@freebsd.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -63,11 +64,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	Id: if_fxpreg.h,v 1.11 1997/09/29 11:27:42 davidg Exp
+ *	Id: if_fxpreg.h,v 1.24 2001/05/15 18:52:40 jlemon Exp
  */
-
-#define FXP_VENDORID_INTEL	0x8086
-#define FXP_DEVICEID_i82557	0x1229
 
 #define FXP_PCI_MMBA	0x10
 #define FXP_PCI_IOBA	0x14
@@ -172,12 +170,18 @@ struct fxp_cb_ias {
 #define	__FXP_BITFIELD2(a, b)			a, b
 #define	__FXP_BITFIELD3(a, b, c)		a, b, c
 #define	__FXP_BITFIELD4(a, b, c, d)		a, b, c, d
+#define	__FXP_BITFIELD5(a, b, c, d, e)		a, b, c, d, e
 #define	__FXP_BITFIELD6(a, b, c, d, e, f)	a, b, c, d, e, f
+#define	__FXP_BITFIELD7(a, b, c, d, e, f, g)	a, b, c, d, e, f, g
+#define	__FXP_BITFIELD8(a, b, c, d, e, f, g, h)	a, b, c, d, e, f, g, h
 #else
 #define	__FXP_BITFIELD2(a, b)			b, a
 #define	__FXP_BITFIELD3(a, b, c)		c, b, a
 #define	__FXP_BITFIELD4(a, b, c, d)		d, c, b, a
+#define	__FXP_BITFIELD5(a, b, c, d, e)		e, d, c, b, a,
 #define	__FXP_BITFIELD6(a, b, c, d, e, f)	f, e, d, c, b, a
+#define	__FXP_BITFIELD6(a, b, c, d, e, f, g)	g, f, e, d, c, b, a
+#define	__FXP_BITFIELD8(a, b, c, d, e, f, g, h)	h, g, f, e, d, c, b, a
 #endif
 
 /*
@@ -192,38 +196,76 @@ struct fxp_cb_config {
 				    tx_fifo_limit:3,
 				    :1);
 	volatile u_int8_t	adaptive_ifs;
-	volatile u_int8_t	:8;
-	volatile u_int8_t	__FXP_BITFIELD2(rx_dma_bytecount:7, :1);
+	volatile u_int8_t	__FXP_BITFIELD5(mwi_enable:1,	/* 8,9 */
+				    type_enable:1,		/* 8,9 */
+				    read_align_en:1,		/* 8,9 */
+				    end_wr_on_cl:1,		/* 8,9 */
+				    :4);
+	volatile u_int8_t	__FXP_BITFIELD2(rx_dma_bytecount:7,
+				    :1);
 	volatile u_int8_t	__FXP_BITFIELD2(tx_dma_bytecount:7,
-				    dma_bce:1);
-	volatile u_int8_t	__FXP_BITFIELD6(late_scb:1, :1,
-				    tno_int:1,
-				    ci_int:1, :3,
+				    dma_mbce:1);
+	volatile u_int8_t	__FXP_BITFIELD8(late_scb:1,	/* 7 */
+				    direct_dma_dis:1,		/* 8,9 */
+				    tno_int_or_tco_en:1,	/* 7,9 */
+				    ci_int:1,
+				    ext_txcb_dis:1,		/* 8,9 */
+				    ext_stats_dis:1,		/* 8,9 */
+				    keep_overrun_rx:1,
 				    save_bf:1);
-	volatile u_int8_t	__FXP_BITFIELD3(disc_short_rx:1,
-				    underrun_retry:2, :5);
-	volatile u_int8_t	__FXP_BITFIELD2(mediatype:1, :7);
-	volatile u_int8_t	:8;
+	volatile u_int8_t	__FXP_BITFIELD5(disc_short_rx:1,
+				    underrun_retry:2,
+				    :3,
+				    two_frames:1,		/* 8,9 */
+				    dyn_tbd:1);			/* 8,9 */
+	volatile u_int8_t	__FXP_BITFIELD3(mediatype:1,	/* 7 */
+				    :6,
+				    csma_dis:1);		/* 8,9 */
+	volatile u_int8_t	__FXP_BITFIELD6(tcp_udp_cksum:1,/* 9 */
+				    :3,
+				    vlan_tco:1,			/* 8,9 */
+				    link_wake_en:1,		/* 8,9 */
+				    arp_wake_en:1,		/* 8 */
+				    mc_wake_en:1);		/* 8 */
 	volatile u_int8_t	__FXP_BITFIELD4(:3,
 				    nsai:1,
 				    preamble_length:2,
 				    loopback:2);
-	volatile u_int8_t	__FXP_BITFIELD2(linear_priority:3, :5);
-	volatile u_int8_t	__FXP_BITFIELD3(linear_pri_mode:1, :3,
+	volatile u_int8_t	__FXP_BITFIELD2(linear_priority:3,/* 7 */
+				    :5);
+	volatile u_int8_t	__FXP_BITFIELD3(linear_pri_mode:1,/* 7 */
+				    :3,
 				    interfrm_spacing:4);
 	volatile u_int8_t	:8;
 	volatile u_int8_t	:8;
-	volatile u_int8_t	__FXP_BITFIELD4(promiscuous:1,
-				    bcast_disable:1, :5,
+	volatile u_int8_t	__FXP_BITFIELD8(promiscuous:1,
+				    bcast_disable:1,
+				    wait_after_win:1,		/* 8,9 */
+				    :1,
+				    ignore_ul:1,		/* 8,9 */
+				    crc16_en:1,			/* 9 */
+				    :1,
 				    crscdt:1);
-	volatile u_int8_t	:8;
-	volatile u_int8_t	:8;
-	volatile u_int8_t	__FXP_BITFIELD4(stripping:1,
+	volatile u_int8_t	fc_delay_lsb:8;			/* 8,9 */
+	volatile u_int8_t	fc_delay_msb:8;			/* 8,9 */
+	volatile u_int8_t	__FXP_BITFIELD6(stripping:1,
 				    padding:1,
-				    rcv_crc_xfer:1, :5);
-	volatile u_int8_t	__FXP_BITFIELD3(:6, force_fdx:1,
+				    rcv_crc_xfer:1,
+				    long_rx_en:1,		/* 8,9 */
+				    pri_fc_thresh:3,		/* 8,9 */
+				    :1);
+	volatile u_int8_t	__FXP_BITFIELD8(ia_wake_en:1,	/* 8 */
+				    magic_pkt_dis:1,		/* 8,9,!9ER */
+				    tx_fc_dis:1,		/* 8,9 */
+				    rx_fc_restop:1,		/* 8,9 */
+				    rx_fc_restart:1,		/* 8,9 */
+				    fc_filter:1,		/* 8,9 */
+				    force_fdx:1,
 				    fdx_pin_en:1);
-	volatile u_int8_t	__FXP_BITFIELD3(:6, multi_ia:1, :1);
+	volatile u_int8_t	__FXP_BITFIELD4(:5,
+				    pri_fc_loc:1		/* 8,9 */,
+				    multi_ia:1,
+				    :1);
 	volatile u_int8_t	__FXP_BITFIELD3(:3, mc_all:1, :4);
 };
 
@@ -252,7 +294,7 @@ struct fxp_cb_tx {
 	volatile u_int8_t tbd_number;
 	/*
 	 * If using the extended TxCB feature, there is a
-	 * single TBD right here.  We handle this in the
+	 * two TBDs right here.  We handle this in the
 	 * fxp_control_data in i82557var.h.
 	 */
 };
