@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.70 1998/11/13 20:08:06 thorpej Exp $	*/
+/*	$NetBSD: mount.h,v 1.71 1998/12/01 23:16:23 kenh Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -140,6 +140,7 @@ struct mount {
 #define	MNT_ASYNC	0x00000040	/* file system written asynchronously */
 #define	MNT_NOCOREDUMP	0x00008000	/* don't write core dumps to this FS */
 #define MNT_NOATIME	0x04000000	/* Never update access times in fs */
+#define MNT_NODEVMTIME	0x08000000	/* Never update mod times for devs */
 #define MNT_SYMPERM	0x20000000	/* recognize symlink permission */
 
 /*
