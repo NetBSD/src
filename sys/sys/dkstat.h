@@ -1,4 +1,4 @@
-/*	$NetBSD: dkstat.h,v 1.11 2000/05/29 11:35:19 simonb Exp $	*/
+/*	$NetBSD: dkstat.h,v 1.12 2000/06/03 20:42:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -43,16 +43,8 @@
 #ifndef _SYS_DKSTAT_H_
 #define _SYS_DKSTAT_H_
 
-#define	CP_USER		0
-#define	CP_NICE		1
-#define	CP_SYS		2
-#define	CP_INTR		3
-#define	CP_IDLE		4
-#define	CPUSTATES	5
-
 #define	DK_NDRIVE	8
 #ifdef _KERNEL
-u_int64_t cp_time[CPUSTATES];
 
 u_int64_t tk_cancc;
 u_int64_t tk_nin;
