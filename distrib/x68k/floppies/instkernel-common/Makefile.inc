@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile.inc,v 1.1 2001/12/07 06:57:50 minoura Exp $
+#	$NetBSD: Makefile.inc,v 1.2 2002/04/26 15:08:22 lukem Exp $
+
+# XXXDISTRIB: NDWO
 
 .include <bsd.kernobj.mk>
 
@@ -36,8 +38,7 @@ release:
 	-mkdir -p ${RELEASEDIR}/installation/floppy
 	-mkdir -p ${RELEASEDIR}/installation/misc
 .ifndef NOKERNCOPY
-	cp -p ${KERNNAME} ${RELEASEDIR}/binary/kernel
-	cp -p ${GZNAME} ${RELEASEDIR}/binary/kernel
+	${RELINSTALL} ${KERNNAME} ${GZNAME} ${RELEASEDIR}/binary/kernel
 .endif
 
 clean cleandir distclean:

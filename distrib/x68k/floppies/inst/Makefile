@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2001/11/14 00:58:49 tv Exp $
+#	$NetBSD: Makefile,v 1.10 2002/04/26 15:08:22 lukem Exp $
 
 .include <bsd.prog.mk>
 .MAIN:	all
@@ -21,4 +21,4 @@ ${RAMDISKDIR}/ramdisk.fs:
 
 release:
 	-mkdir -p ${RELEASEDIR}/installation/floppy
-	cp -p inst.fs inst.fs.gz ${RELEASEDIR}/installation/floppy
+	${RELINSTALL} inst.fs inst.fs.gz ${RELEASEDIR}/installation/floppy
