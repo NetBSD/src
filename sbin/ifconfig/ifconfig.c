@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.153 2005/03/18 11:11:51 yamt Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.154 2005/03/18 14:30:08 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.153 2005/03/18 11:11:51 yamt Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.154 2005/03/18 14:30:08 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -2880,6 +2880,7 @@ usage(void)
 		"\t[ media type ] [ mediaopt opts ] [ -mediaopt opts ] "
 		"[ instance minst ]\n"
 		"\t[ vlan n vlanif i ]\n"
+		"\t[ agrport i ] [ -agrport i ]\n"
 		"\t[ anycast | -anycast ] [ deprecated | -deprecated ]\n"
 		"\t[ tentative | -tentative ] [ pltime n ] [ vltime n ] [ eui64 ]\n"
 		"\t[ link0 | -link0 ] [ link1 | -link1 ] [ link2 | -link2 ]\n"
