@@ -1,4 +1,4 @@
-/*	$NetBSD: forward.c,v 1.11 1998/02/17 17:44:55 augustss Exp $	*/
+/*	$NetBSD: forward.c,v 1.12 1998/02/20 07:34:59 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)forward.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: forward.c,v 1.11 1998/02/17 17:44:55 augustss Exp $");
+__RCSID("$NetBSD: forward.c,v 1.12 1998/02/20 07:34:59 mycroft Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -254,9 +254,8 @@ rlines(fp, off, sbp)
 		return;
 	}
 
-	if ((start = mmap(NULL, (size_t)size,
-	    PROT_READ, MAP_PRIVATE|MAP_FILE, 
-	    fileno(fp), (off_t)0)) == (caddr_t)-1) {
+	if ((start = mmap(NULL, (size_t)size, PROT_READ,
+	    MAP_FILE|MAP_SHARED, fileno(fp), (off_t)0)) == (caddr_t)-1) {
 		err(0, "%s: %s", fname, strerror(EFBIG));
 		return;
 	}
