@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.70 2002/06/15 18:24:58 wiz Exp $	*/
+/*	$NetBSD: var.c,v 1.71 2003/03/14 05:19:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: var.c,v 1.70 2002/06/15 18:24:58 wiz Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.71 2003/03/14 05:19:43 thorpej Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.70 2002/06/15 18:24:58 wiz Exp $");
+__RCSID("$NetBSD: var.c,v 1.71 2003/03/14 05:19:43 thorpej Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -471,7 +471,14 @@ Var_Set(char *name, char *val, GNode *ctxt, int flags)
      */
     if (ctxt == VAR_CMD && (flags & VAR_NO_EXPORT) == 0) {
 
-	setenv(name, val, 1);
+	/*
+	 * If requested, don't export these in the environment
+	 * individually.  We still put them in MAKEOVERRIDES so
+	 * that the command-line settings continue to override
+	 * Makefile settings.
+	 */
+	if (varNoExportEnv != TRUE)
+	    setenv(name, val, 1);
 
 	Var_Append(MAKEOVERRIDES, name, VAR_GLOBAL);
     }
