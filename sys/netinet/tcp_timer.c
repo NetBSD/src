@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_timer.c,v 1.17.8.1 1997/05/14 18:06:50 mellon Exp $	*/
+/*	$NetBSD: tcp_timer.c,v 1.17.8.2 1997/06/28 04:24:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -308,12 +308,12 @@ tcp_timers(tp, timer)
 			 * to get a 4.2 host to respond.
 			 */
 			(void)tcp_respond(tp, tp->t_template,
-					  (struct mbuf *)NULL,
-					  tp->rcv_nxt - 1, tp->snd_una - 1, 0);
+			    (struct mbuf *)NULL, tp->rcv_nxt - 1,
+			    tp->snd_una - 1, 0);
 #else
 			(void)tcp_respond(tp, tp->t_template,
-					  (struct mbuf *)NULL,
-					  tp->rcv_nxt, tp->snd_una - 1, 0);
+			    (struct mbuf *)NULL, tp->rcv_nxt,
+			    tp->snd_una - 1, 0);
 #endif
 			tp->t_timer[TCPT_KEEP] = tcp_keepintvl;
 		} else
