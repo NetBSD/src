@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1989 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,40 +30,48 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)dirent.h	5.18 (Berkeley) 2/23/91
- *	$Id: dirent.h,v 1.5 1993/12/15 00:50:19 jtc Exp $
+ *	from: @(#)dirent.h	8.1 (Berkeley) 6/8/93
+ *	$Id: dirent.h,v 1.6 1994/08/29 18:11:08 mycroft Exp $
  */
 
 #ifndef _DIRENT_H_
 #define _DIRENT_H_
 
+/*
+ * The kernel defines the format of directory entries returned by 
+ * the getdirentries(2) system call.
+ */
 #include <sys/dirent.h>
 
+#ifdef _POSIX_SOURCE
+typedef void *	DIR;
+#else
+
+#define	d_ino		d_fileno	/* backward compatibility */
+
+/* definitions for library routines operating on directories. */
+#define	DIRBLKSIZ	1024
+
 /* structure describing an open directory. */
-typedef struct {
+typedef struct _dirdesc {
 	int	dd_fd;		/* file descriptor associated with directory */
 	long	dd_loc;		/* offset in current buffer */
 	long	dd_size;	/* amount of data returned by getdirentries */
 	char	*dd_buf;	/* data buffer */
 	int	dd_len;		/* size of data buffer */
 	long	dd_seek;	/* magic cookie returned by getdirentries */
-	void	*dd_ddloc;	/* Linked list of ddloc structs for telldir/seekdir */
+	long	dd_rewind;	/* magic cookie for rewinding */
 } DIR;
-
-
-#ifndef _POSIX_SOURCE
-#define	d_ino		d_fileno	/* backward compatibility */
-
-/* definitions for library routines operating on directories. */
-#define	DIRBLKSIZ	1024
 
 #define	dirfd(dirp)	((dirp)->dd_fd)
 
 #ifndef NULL
 #define	NULL	0
 #endif
+
 #endif /* _POSIX_SOURCE */
 
+#ifndef KERNEL
 
 #include <sys/cdefs.h>
 
@@ -81,5 +89,7 @@ int alphasort __P((const void *, const void *));
 int getdirentries __P((int, char *, int, long *));
 #endif /* not POSIX */
 __END_DECLS
+
+#endif /* !KERNEL */
 
 #endif /* !_DIRENT_H_ */
