@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.11 2004/07/18 23:21:35 chs Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.12 2004/07/24 18:59:06 chs Exp $	*/
 
 /*	$OpenBSD: vm_machdep.c,v 1.25 2001/09/19 20:50:56 mickey Exp $	*/
 
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.11 2004/07/18 23:21:35 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.12 2004/07/24 18:59:06 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -168,6 +168,13 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	/* Now copy the parent PCB into the child. */
 	pcbp = &l2->l_addr->u_pcb;
 	bcopy(&l1->l_addr->u_pcb, pcbp, sizeof(*pcbp));
+	fdcache(HPPA_SID_KERNEL, (vaddr_t)&l1->l_addr->u_pcb,
+		sizeof(pcbp->pcb_fpregs));
+	/* reset any of the pending FPU exceptions from parent */
+	pcbp->pcb_fpregs[0] = HPPA_FPU_FORK(pcbp->pcb_fpregs[0]);
+	pcbp->pcb_fpregs[1] = 0;
+	pcbp->pcb_fpregs[2] = 0;
+	pcbp->pcb_fpregs[3] = 0;
 
 	sp = (register_t)l2->l_addr + PAGE_SIZE;
 	l2->l_md.md_regs = tf = (struct trapframe *)sp;
