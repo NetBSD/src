@@ -1,4 +1,4 @@
-/* $NetBSD: s3c24x0reg.h,v 1.1 2003/07/31 19:49:43 bsh Exp $ */
+/* $NetBSD: s3c24x0reg.h,v 1.2 2003/08/04 12:19:38 bsh Exp $ */
 
 /*
  * Copyright (c) 2003  Genetec corporation  All rights reserved.
@@ -180,11 +180,20 @@
 #define	 TCON_START(n)		(1 << TCON_SHIFT(n))
 #define  TCON_MANUALUPDATE(n)	(1 << (TCON_SHIFT(n) + 1))
 #define  TCON_INVERTER(n)	(1 << (TCON_SHIFT(n) + 2))
-#define  TCON_AUTORELOAD(n)	(1 << (TCON_SHIFT(n) + 3))
+#define  __TCON_AUTORELOAD(n)	(1 << (TCON_SHIFT(n) + 3)) /* n=0..3 */
+#define	 TCON_AUTORELOAD4 	(1<<22)	       /* stupid hardware design */
+#define	 TCON_AUTORELOAD(n)	((n)==4 ? TCON_AUTORELOAD4 : __TCON_AUTORELOAD(n))
 #define	 TCON_MASK(n)		(0x0f << TCON_SHIFT(n))
 #define	TIMER_TB(n) 	(0x0c+0x0c*(n))	/* count buffer */
 #define	TIMER_TCMPB(n)	(0x10+0x0c*(n))	/* compare buffer 0 */
 #define	TIMER_TO(n)	(0x14+0x0c*(n))	/* count observation 0 */
+
+/* UART */
+/* diffs to s3c2800 */
+#define  UMCON_AFC	(1<<4)	/* auto flow control */
+#define  UMSTAT_DCTS	(1<<2)	/* CTS change */
+#define	 ULCON_IR  	(1<<6)
+#define	 ULCON_PARITY_SHIFT  3
 
 /* USB device */
 /* XXX */
