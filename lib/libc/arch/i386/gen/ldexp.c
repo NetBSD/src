@@ -1,4 +1,4 @@
-/*	$NetBSD: ldexp.c,v 1.6 1999/03/10 08:15:43 mycroft Exp $	*/
+/*	$NetBSD: ldexp.c,v 1.7 2001/11/04 13:57:29 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: ldexp.c,v 1.6 1999/03/10 08:15:43 mycroft Exp $");
+__RCSID("$NetBSD: ldexp.c,v 1.7 2001/11/04 13:57:29 lukem Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -49,20 +49,20 @@ __RCSID("$NetBSD: ldexp.c,v 1.6 1999/03/10 08:15:43 mycroft Exp $");
  * ldexp(value, exp): return value * (2 ** exp).
  */
 double
-ldexp(value, exp)
+ldexp(value, expon)
 	double value;
-	int exp;
+	int expon;
 {
 	double temp;
 
 #if __GNUC__ >= 2
 	__asm ("fscale"
 		: "=t" (temp)
-		: "0" (value), "u" ((double)exp));
+		: "0" (value), "u" ((double)expon));
 #else
 	__asm ("fscale; fstp %%st(1)"
 		: "=f" (temp)
-		: "f" (value), "0" ((double)exp));
+		: "f" (value), "0" ((double)expon));
 #endif
 	return (temp);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: rcmd.c,v 1.44 2000/07/07 08:03:39 itohy Exp $	*/
+/*	$NetBSD: rcmd.c,v 1.45 2001/11/04 13:57:30 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthew R. Green.
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)rcmd.c	8.3 (Berkeley) 3/26/94";
 #else
-__RCSID("$NetBSD: rcmd.c,v 1.44 2000/07/07 08:03:39 itohy Exp $");
+__RCSID("$NetBSD: rcmd.c,v 1.45 2001/11/04 13:57:30 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -636,15 +636,15 @@ iruserok(raddr, superuser, ruser, luser)
 	int superuser;
 	const char *ruser, *luser;
 {
-	struct sockaddr_in sin;
+	struct sockaddr_in irsin;
 
-	memset(&sin, 0, sizeof(sin));
-	sin.sin_family = AF_INET;
+	memset(&irsin, 0, sizeof(irsin));
+	irsin.sin_family = AF_INET;
 #ifdef BSD4_4
-	sin.sin_len = sizeof(struct sockaddr_in);
+	irsin.sin_len = sizeof(struct sockaddr_in);
 #endif
-	memcpy(&sin.sin_addr, &raddr, sizeof(sin.sin_addr));
-	return iruserok_sa(&sin, sizeof(struct sockaddr_in), superuser, ruser,
+	memcpy(&irsin.sin_addr, &raddr, sizeof(irsin.sin_addr));
+	return iruserok_sa(&irsin, sizeof(struct sockaddr_in), superuser, ruser,
 		    luser);
 }
 
@@ -752,15 +752,15 @@ __ivaliduser(hostf, raddr, luser, ruser)
 	u_int32_t raddr;
 	const char *luser, *ruser;
 {
-	struct sockaddr_in sin;
+	struct sockaddr_in ivusin;
 
-	memset(&sin, 0, sizeof(sin));
-	sin.sin_family = AF_INET;
+	memset(&ivusin, 0, sizeof(ivusin));
+	ivusin.sin_family = AF_INET;
 #ifdef BSD4_4
-	sin.sin_len = sizeof(struct sockaddr_in);
+	ivusin.sin_len = sizeof(struct sockaddr_in);
 #endif
-	memcpy(&sin.sin_addr, &raddr, sizeof(sin.sin_addr));
-	return __ivaliduser_sa(hostf, (struct sockaddr *)(void *)&sin,
+	memcpy(&ivusin.sin_addr, &raddr, sizeof(ivusin.sin_addr));
+	return __ivaliduser_sa(hostf, (struct sockaddr *)(void *)&ivusin,
 	    sizeof(struct sockaddr_in), luser, ruser);
 }
 

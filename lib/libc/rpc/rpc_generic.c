@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_generic.c,v 1.8 2001/05/26 00:22:22 kristerw Exp $	*/
+/*	$NetBSD: rpc_generic.c,v 1.9 2001/11/04 13:57:30 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -619,7 +619,7 @@ char *
 __rpc_taddr2uaddr_af(int af, const struct netbuf *nbuf)
 {
 	char *ret;
-	struct sockaddr_in *sin;
+	struct sockaddr_in *sinp;
 	struct sockaddr_un *sun;
 	char namebuf[INET_ADDRSTRLEN];
 #ifdef INET6
@@ -632,11 +632,11 @@ __rpc_taddr2uaddr_af(int af, const struct netbuf *nbuf)
 
 	switch (af) {
 	case AF_INET:
-		sin = nbuf->buf;
-		if (inet_ntop(af, &sin->sin_addr, namebuf, sizeof namebuf)
+		sinp = nbuf->buf;
+		if (inet_ntop(af, &sinp->sin_addr, namebuf, sizeof namebuf)
 		    == NULL)
 			return NULL;
-		port = ntohs(sin->sin_port);
+		port = ntohs(sinp->sin_port);
 		if (asprintf(&ret, "%s.%u.%u", namebuf, ((u_int32_t)port) >> 8,
 		    port & 0xff) < 0)
 			return NULL;
@@ -671,7 +671,7 @@ __rpc_uaddr2taddr_af(int af, const char *uaddr)
 	struct netbuf *ret = NULL;
 	char *addrstr, *p;
 	unsigned port, portlo, porthi;
-	struct sockaddr_in *sin;
+	struct sockaddr_in *sinp;
 #ifdef INET6
 	struct sockaddr_in6 *sin6;
 #endif
@@ -708,20 +708,20 @@ __rpc_uaddr2taddr_af(int af, const char *uaddr)
 	
 	switch (af) {
 	case AF_INET:
-		sin = (struct sockaddr_in *)malloc(sizeof *sin);
-		if (sin == NULL)
+		sinp = (struct sockaddr_in *)malloc(sizeof *sinp);
+		if (sinp == NULL)
 			goto out;
-		memset(sin, 0, sizeof *sin);
-		sin->sin_family = AF_INET;
-		sin->sin_port = htons(port);
-		if (inet_pton(AF_INET, addrstr, &sin->sin_addr) <= 0) {
-			free(sin);
+		memset(sinp, 0, sizeof *sinp);
+		sinp->sin_family = AF_INET;
+		sinp->sin_port = htons(port);
+		if (inet_pton(AF_INET, addrstr, &sinp->sin_addr) <= 0) {
+			free(sinp);
 			free(ret);
 			ret = NULL;
 			goto out;
 		}
-		sin->sin_len = ret->maxlen = ret->len = sizeof *sin;
-		ret->buf = sin;
+		sinp->sin_len = ret->maxlen = ret->len = sizeof *sinp;
+		ret->buf = sinp;
 		break;
 #ifdef INET6
 	case AF_INET6:

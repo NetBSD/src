@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_bcast.c,v 1.6 2001/09/28 08:45:41 yamt Exp $	*/
+/*	$NetBSD: clnt_bcast.c,v 1.7 2001/11/04 13:57:30 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -135,7 +135,7 @@ __rpc_getbroadifs(int af, int proto, int socktype, broadlist_t *list)
 #ifdef INET6
 	struct sockaddr_in6 *sin6;
 #endif
-	struct sockaddr_in *sin;
+	struct sockaddr_in *gbsin;
 	struct addrinfo hints, *res;
 
 	_DIAGASSERT(list != NULL);
@@ -172,8 +172,8 @@ __rpc_getbroadifs(int af, int proto, int socktype, broadlist_t *list)
 		    (ifap->ifa_flags & IFF_BROADCAST)) {
 			memcpy(&bip->broadaddr, ifap->ifa_broadaddr,
 			    (size_t)ifap->ifa_broadaddr->sa_len);
-			sin = (struct sockaddr_in *)(void *)&bip->broadaddr;
-			sin->sin_port =
+			gbsin = (struct sockaddr_in *)(void *)&bip->broadaddr;
+			gbsin->sin_port =
 			    ((struct sockaddr_in *)
 			    (void *)res->ai_addr)->sin_port;
 		}
@@ -593,13 +593,13 @@ rpc_broadcast_exp(prog, vers, proc, xargs, argsp, xresults, resultsp,
 				if ((msg.rm_reply.rp_stat == MSG_ACCEPTED) &&
 				    (msg.acpted_rply.ar_stat == SUCCESS)) {
 					struct netbuf taddr, *np;
-					struct sockaddr_in *sin;
+					struct sockaddr_in *bsin;
 
 #ifdef PORTMAP
 					if (pmap_flag && pmap_reply_flag) {
-						sin = (struct sockaddr_in *)
+						bsin = (struct sockaddr_in *)
 						    (void *)&fdlist[i].raddr;
-						sin->sin_port =
+						bsin->sin_port =
 						    htons((u_short)port);
 						taddr.len = taddr.maxlen = 
 						    fdlist[i].raddr.ss_len;

@@ -1,4 +1,4 @@
-/*	$NetBSD: getopt_long.c,v 1.12 2001/04/24 09:07:43 joda Exp $	*/
+/*	$NetBSD: getopt_long.c,v 1.13 2001/11/04 13:57:31 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getopt_long.c,v 1.12 2001/04/24 09:07:43 joda Exp $");
+__RCSID("$NetBSD: getopt_long.c,v 1.13 2001/11/04 13:57:31 lukem Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -127,9 +127,9 @@ gcd(a, b)
  * in each block).
  */
 static void
-permute_args(nonopt_start, nonopt_end, opt_end, nargv)
-	int nonopt_start;
-	int nonopt_end;
+permute_args(panonopt_start, panonopt_end, opt_end, nargv)
+	int panonopt_start;
+	int panonopt_end;
 	int opt_end;
 	char * const *nargv;
 {
@@ -141,16 +141,16 @@ permute_args(nonopt_start, nonopt_end, opt_end, nargv)
 	/*
 	 * compute lengths of blocks and number and size of cycles
 	 */
-	nnonopts = nonopt_end - nonopt_start;
-	nopts = opt_end - nonopt_end;
+	nnonopts = panonopt_end - panonopt_start;
+	nopts = opt_end - panonopt_end;
 	ncycle = gcd(nnonopts, nopts);
-	cyclelen = (opt_end - nonopt_start) / ncycle;
+	cyclelen = (opt_end - panonopt_start) / ncycle;
 
 	for (i = 0; i < ncycle; i++) {
-		cstart = nonopt_end+i;
+		cstart = panonopt_end+i;
 		pos = cstart;
 		for (j = 0; j < cyclelen; j++) {
-			if (pos >= nonopt_end)
+			if (pos >= panonopt_end)
 				pos -= nnonopts;
 			else
 				pos += nopts;
