@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.39 1997/03/27 21:01:56 thorpej Exp $  */
+/* $NetBSD: machdep.c,v 1.40 1997/04/03 17:35:56 christos Exp $  */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -84,6 +84,9 @@
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
 #include <netinet/ip_var.h>
+#endif
+#ifdef NETATALK
+#include <netatalk/at_extern.h>
 #endif
 #ifdef NS
 #include <netns/ns_var.h>
@@ -607,6 +610,12 @@ netintr()
 	if (netisr & (1 << NETISR_IP)) {
 		netisr &= ~(1 << NETISR_IP);
 		ipintr();
+	}
+#endif
+#ifdef NETATALK
+	if (netisr & (1 << NETISR_ATALK)) {
+		netisr &= ~(1 << NETISR_ATALK);
+		atintr();
 	}
 #endif
 #ifdef NS
