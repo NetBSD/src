@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_s3c24x0.c,v 1.1 2003/08/05 11:28:59 bsh Exp $ */
+/*	$NetBSD: ohci_s3c24x0.c,v 1.2 2003/08/29 12:38:48 bsh Exp $ */
 
 /* derived from ohci_pci.c */
 
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci_s3c24x0.c,v 1.1 2003/08/05 11:28:59 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci_s3c24x0.c,v 1.2 2003/08/29 12:38:48 bsh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,6 +99,8 @@ ohci_ssio_attach(struct device *parent, struct device *self, void *aux)
 	usbd_status r;
 	char *devname = sc->sc.sc_bus.bdev.dv_xname;
 
+	aprint_normal("\n");
+
 	sc->sc.iot = sa->sa_iot;
 	/*ohcidebug=15;*/
 
@@ -112,7 +114,6 @@ ohci_ssio_attach(struct device *parent, struct device *self, void *aux)
 	bus_space_write_4(sc->sc.iot, sc->sc.ioh, OHCI_INTERRUPT_DISABLE,
 			  OHCI_ALL_INTRS);
 
-	printf("dmat = %p\n", sa->sa_dmat);
 	sc->sc.sc_bus.dmatag = sa->sa_dmat;
 
 	/* Enable the device. */
@@ -125,7 +126,7 @@ ohci_ssio_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	/*strlcpy(sc->sc.sc_vendor, "Samsung", sizeof sc->sc.sc_id_vendor);*/
+	strlcpy(sc->sc.sc_vendor, "Samsung", sizeof sc->sc.sc_vendor);
 	
 	r = ohci_init(&sc->sc);
 	if (r != USBD_NORMAL_COMPLETION) {
