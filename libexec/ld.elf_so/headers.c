@@ -1,4 +1,4 @@
-/*	$NetBSD: headers.c,v 1.7 2000/07/18 22:33:55 eeh Exp $	 */
+/*	$NetBSD: headers.c,v 1.8 2000/07/26 02:07:34 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -64,8 +64,8 @@ _rtld_digest_dynamic(obj)
 	Needed_Entry  **needed_tail = &obj->needed;
 	const Elf_Dyn  *dyn_rpath = NULL;
 	Elf_Sword	plttype = DT_REL;
-	Elf_Word        relsz = 0, relasz = 0;
-	Elf_Word	pltrelsz = 0, pltrelasz = 0;
+	Elf_Addr        relsz = 0, relasz = 0;
+	Elf_Addr	pltrelsz = 0;
 
 	for (dynp = obj->dynamic; dynp->d_tag != DT_NULL; ++dynp) {
 		switch (dynp->d_tag) {
@@ -94,11 +94,7 @@ _rtld_digest_dynamic(obj)
 			break;
 
 		case DT_PLTRELSZ:
-			if (plttype == DT_REL) {
-				pltrelsz = dynp->d_un.d_val;
-			} else {
-				pltrelasz = dynp->d_un.d_val;
-			}
+			pltrelsz = dynp->d_un.d_val;
 			break;
 
 		case DT_RELA:
@@ -118,7 +114,7 @@ _rtld_digest_dynamic(obj)
 			plttype = dynp->d_un.d_val;
 			assert(plttype == DT_REL ||
 			    plttype == DT_RELA);
-#if !defined(__sparc__) && !defined(__archv9__)
+#if !defined(__sparc__) && !defined(__archv9__) && !defined(__sparc_v9__)
 			/* 
 			 * sparc v9 has both DT_PLTREL and DT_JMPREL.
 			 * But they point to different things.
@@ -127,8 +123,6 @@ _rtld_digest_dynamic(obj)
 			if (plttype == DT_RELA) {
 				obj->pltrela = (const Elf_RelA *) obj->pltrel;
 				obj->pltrel = NULL;
-				pltrelasz = pltrelsz;
-				pltrelsz = 0;
 			}
 #endif
 			break;
@@ -244,8 +238,13 @@ _rtld_digest_dynamic(obj)
 
 	obj->rellim = (const Elf_Rel *)((caddr_t)obj->rel + relsz);
 	obj->relalim = (const Elf_RelA *)((caddr_t)obj->rela + relasz);
-	obj->pltrellim = (const Elf_Rel *)((caddr_t)obj->pltrel + pltrelsz);
-	obj->pltrelalim = (const Elf_RelA *)((caddr_t)obj->pltrela + pltrelasz);
+	if (plttype == DT_REL) {
+		obj->pltrellim = (const Elf_Rel *)((caddr_t)obj->pltrel + pltrelsz);
+		obj->pltrelalim = 0;
+	} else {
+		obj->pltrellim = 0;
+		obj->pltrelalim = (const Elf_RelA *)((caddr_t)obj->pltrela + pltrelsz);
+	}
 
 	if (dyn_rpath != NULL) {
 		_rtld_add_paths(&obj->rpaths, obj->strtab +
