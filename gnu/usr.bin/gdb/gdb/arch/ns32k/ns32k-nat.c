@@ -17,16 +17,16 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-	$Id: ns32k-nat.c,v 1.3 1995/08/29 08:03:29 phil Exp $
+	$Id: ns32k-nat.c,v 1.4 1995/09/26 20:23:38 phil Exp $
 */
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <signal.h>
+#include <sys/ptrace.h>
 #include <sys/user.h>
 #include <machine/reg.h>
 #include <machine/frame.h>
-#include <sys/ptrace.h>
 
 #include "defs.h"
 #include "inferior.h"
@@ -47,9 +47,9 @@ fetch_inferior_registers (regno)
   struct fpreg inferior_fpregisters;
 
   ptrace (PT_GETREGS, inferior_pid,
-  		(PTRACE_ARG3_TYPE) &inferior_registers, 0);
+		(PTRACE_ARG3_TYPE) &inferior_registers, 0);
   ptrace (PT_GETFPREGS, inferior_pid,
-  		(PTRACE_ARG3_TYPE) &inferior_fpregisters, 0);
+		(PTRACE_ARG3_TYPE) &inferior_fpregisters, 0);
 
   RF(R0_REGNUM + 0, inferior_registers.r_r0);
   RF(R0_REGNUM + 1, inferior_registers.r_r1);
@@ -106,16 +106,87 @@ store_inferior_registers (regno)
   		(PTRACE_ARG3_TYPE) &inferior_fpregisters, 0);
 }
 
+/* XXX - Add this to machine/regs.h instead? */
+struct coreregs {
+	struct reg intreg;
+	struct fpreg freg;
+};
+
+/* Get registers from a core file. */
+void
+fetch_core_registers (core_reg_sect, core_reg_size, which, ignore)
+  char *core_reg_sect;
+  unsigned core_reg_size;
+  int which;
+  unsigned int ignore;	/* reg addr, unused in this version */
+{
+  struct coreregs *core_reg;
+
+  core_reg = (struct coreregs *)core_reg_sect;
+
+  /*
+   * We have *all* registers
+   * in the first core section.
+   * Ignore which.
+   */
+
+  /* Integer registers */
+  RF(R0_REGNUM + 0, core_reg->intreg.r_r0);
+  RF(R0_REGNUM + 1, core_reg->intreg.r_r1);
+  RF(R0_REGNUM + 2, core_reg->intreg.r_r2);
+  RF(R0_REGNUM + 3, core_reg->intreg.r_r3);
+  RF(R0_REGNUM + 4, core_reg->intreg.r_r4);
+  RF(R0_REGNUM + 5, core_reg->intreg.r_r5);
+  RF(R0_REGNUM + 6, core_reg->intreg.r_r6);
+  RF(R0_REGNUM + 7, core_reg->intreg.r_r7);
+
+  RF(SP_REGNUM	  , core_reg->intreg.r_sp);
+  RF(FP_REGNUM	  , core_reg->intreg.r_fp);
+  RF(PC_REGNUM	  , core_reg->intreg.r_pc);
+  RF(PS_REGNUM	  , core_reg->intreg.r_psr);
+
+  /* Floating point registers */
+  RF(FPS_REGNUM   , core_reg->freg.r_fsr);
+  RF(FP0_REGNUM +0, core_reg->freg.r_freg[0]);
+  RF(FP0_REGNUM +2, core_reg->freg.r_freg[2]);
+  RF(FP0_REGNUM +4, core_reg->freg.r_freg[4]);
+  RF(FP0_REGNUM +6, core_reg->freg.r_freg[6]);
+}
+
 void
 fetch_kcore_registers (pcb)
 struct pcb *pcb;
 {
-	return;
+  return;
 }
 
 void
 clear_regs()
 {
-	return;
+  double zero = 0.0;
+  int null = 0;
+  
+  /* Integer registers */
+  RF(R0_REGNUM + 0, null);
+  RF(R0_REGNUM + 1, null);
+  RF(R0_REGNUM + 2, null);
+  RF(R0_REGNUM + 3, null);
+  RF(R0_REGNUM + 4, null);
+  RF(R0_REGNUM + 5, null);
+  RF(R0_REGNUM + 6, null);
+  RF(R0_REGNUM + 7, null);
+
+  RF(SP_REGNUM	  , null);
+  RF(FP_REGNUM	  , null);
+  RF(PC_REGNUM	  , null);
+  RF(PS_REGNUM	  , null);
+
+  /* Floating point registers */
+  RF(FPS_REGNUM   , zero);
+  RF(FP0_REGNUM +0, zero);
+  RF(FP0_REGNUM +2, zero);
+  RF(FP0_REGNUM +4, zero);
+  RF(FP0_REGNUM +6, zero);
+  return;
 }
 
