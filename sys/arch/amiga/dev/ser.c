@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.43 1998/01/12 10:40:11 thorpej Exp $	*/
+/*	$NetBSD: ser.c,v 1.44 1998/04/11 19:30:56 is Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -90,23 +90,22 @@ extern struct cfdriver ser_cd;
 #define splser() spl5()
 
 void	serstart __P((struct tty *));
+void	ser_shutdown __P((struct ser_softc *));
 int	serparam __P((struct tty *, struct termios *)); 
-void	serintr __P((int));
+void	serintr __P((void));
 int	serhwiflow __P((struct tty *, int));
 int	sermctl __P((dev_t dev, int, int));
 void	ser_fastint __P((void));
-void	sereint __P((int, int));
+void	sereint __P((int));
 static	void ser_putchar __P((struct tty *, u_short));
 void	ser_outintr __P((void));
 void	sercnprobe __P((struct consdev *));
 void	sercninit __P((struct consdev *));
-void	serinit __P((int, int));          
+void	serinit __P((int));          
 int	sercngetc __P((dev_t dev));
 void	sercnputc __P((dev_t, int));
 void	sercnpollc __P((dev_t, int));
 
-int	ser_active;
-int	ser_hasfifo;
 int	nser = NSER;
 #ifdef SERCONSOLE
 int	serconsole = SERCONSOLE;
@@ -117,11 +116,17 @@ int	serconsinit;
 int	serdefaultrate = TTYDEF_SPEED;
 int	sermajor;
 int	serswflags;
-#define SWFLAGS(dev) (serswflags | (DIALOUT(dev) ? TIOCFLAG_SOFTCAR : 0))
 
-struct	vbl_node ser_vbl_node[NSER];
+struct	vbl_node ser_vbl_node;
 struct	tty ser_cons;
-struct	tty *ser_tty[NSER];
+struct	tty *ser_tty;
+
+static u_short serbuf[SERIBUF_SIZE];
+static u_short *sbrpt = serbuf;
+static u_short *sbwpt = serbuf;
+static u_short sbcnt;
+static u_short sbovfl;
+static u_char serdcd;
 
 /* 
  * Since this UART is not particularly bright (to put it nicely), we'll
@@ -190,21 +195,24 @@ serattach(pdp, dp, auxp)
 	struct device *pdp, *dp;
 	void *auxp;
 {
+	struct ser_softc *sc;
+	struct tty *tp;
 	u_short ir;
+
+	sc = (struct ser_softc *)dp;
 
 	ir = custom.intenar;
 	if (serconsole == 0)
 		DELAY(100000);
 
-	ser_active |= 1;
-	ser_vbl_node[0].function = (void (*) (void *)) sermint;
-	add_vbl_function(&ser_vbl_node[0], SER_VBL_PRIORITY, (void *) 0);
+	ser_vbl_node.function = (void (*) (void *)) sermint;
+	add_vbl_function(&ser_vbl_node, SER_VBL_PRIORITY, (void *) 0);
 #ifdef KGDB
 	if (kgdb_dev == makedev(sermajor, 0)) {
 		if (serconsole == 0)
 			kgdb_dev = NODEV; /* can't debug over console port */
 		else {
-			(void) serinit(0, kgdb_rate);
+			(void) serinit(kgdb_rate);
 			serconsinit = 1;       /* don't re-init in serputc */
 			if (kgdb_debug_init == 0)
 				printf(" kgdb enabled\n");
@@ -224,6 +232,14 @@ serattach(pdp, dp, auxp)
 	 */
 	if (0 == serconsole)
 		serconsinit = 0;
+
+	tp = ttymalloc();
+	tp->t_oproc = (void (*) (struct tty *)) serstart;
+	tp->t_param = serparam;
+	tp->t_hwiflow = serhwiflow;
+	tty_attach(tp);
+	sc->ser_tty = ser_tty = tp;
+
 	if (dp)
 		printf(": input fifo %d output fifo %d\n", SERIBUF_SIZE,
 		    SEROBUF_SIZE);
@@ -237,99 +253,97 @@ seropen(dev, flag, mode, p)
 	int flag, mode;
 	struct proc *p;
 {
+	struct ser_softc *sc;
 	struct tty *tp;
-	int unit, error, s;
+	int unit, error, s, s2;
 
 	error = 0;
 	unit = SERUNIT(dev);
 
-	if (unit >= NSER || (ser_active & (1 << unit)) == 0)
+	if (unit >= ser_cd.cd_ndevs)
 		return (ENXIO);
+
+	sc = ser_cd.cd_devs[unit];
+	if (sc == 0)
+		return (ENXIO);
+
+	/* XXX com.c: insert KGDB check here */
+
+	/* XXX ser.c had: s = spltty(); */
+
+	tp = sc->ser_tty;
+
+	if ((tp->t_state & TS_ISOPEN) &&
+	    (tp->t_state & TS_XCLUDE) &&
+	    p->p_ucred->cr_uid != 0)
+		return (EBUSY);
 
 	s = spltty();
 
-	if (ser_tty[unit]) 
-		tp = ser_tty[unit];
-	else {
-		tp = ((struct ser_softc *)ser_cd.cd_devs[unit])->ser_tty =
-		    ser_tty[unit] =  ttymalloc();
-		tty_attach(tp);
-	}
+	/*
+	 * If this is a first open...
+	 */
 
-	tp->t_oproc = (void (*) (struct tty *)) serstart;
-	tp->t_param = serparam;
-	tp->t_dev = dev;
-	tp->t_hwiflow = serhwiflow;
+	if ((tp->t_state & TS_ISOPEN) == 0 && tp->t_wopen == 0) {
+		struct termios t;
 
-	if ((tp->t_state & TS_ISOPEN) == 0) {
-		tp->t_state |= TS_WOPEN;
-		ttychars(tp);
-		if (tp->t_ispeed == 0) {
-			/*
-			 * only when cleared do we reset to defaults.
-			 */
-			tp->t_iflag = TTYDEF_IFLAG;
-			tp->t_oflag = TTYDEF_OFLAG;
-			tp->t_cflag = TTYDEF_CFLAG;
-			tp->t_lflag = TTYDEF_LFLAG;
-			tp->t_ispeed = tp->t_ospeed = serdefaultrate;
-		}
+		tp->t_dev = dev;
+
+		s2 = splser();
 		/*
-		 * do these all the time
+		 * XXX here: hw enable,
+		 * fetch current modem control status
 		 */
+
+		splx(s2);
+		t.c_ispeed = 0;
+
+		/* XXX serconsolerate? */
+		t.c_ospeed = TTYDEF_SPEED;
+		t.c_cflag = TTYDEF_CFLAG;
+
 		if (serswflags & TIOCFLAG_CLOCAL)
-			tp->t_cflag |= CLOCAL;
+			t.c_cflag |= CLOCAL;
 		if (serswflags & TIOCFLAG_CRTSCTS)
-			tp->t_cflag |= CRTSCTS;
+			t.c_cflag |= CRTSCTS;
 		if (serswflags & TIOCFLAG_MDMBUF)
-			tp->t_cflag |= MDMBUF;
-		serparam(tp, &tp->t_termios);
+			t.c_cflag |= MDMBUF;
+
+		/* Make sure serparam() will do something. */
+		tp->t_ospeed = 0;
+		serparam(tp, &t);
+		tp->t_iflag = TTYDEF_IFLAG;
+		tp->t_oflag = TTYDEF_OFLAG;
+		tp->t_lflag = TTYDEF_LFLAG;
+		ttychars(tp);
 		ttsetwater(tp);
-		
+
+		s2 = splser();
 		(void)sermctl(dev, TIOCM_DTR | TIOCM_RTS, DMSET);
-		if ((SWFLAGS(dev) & TIOCFLAG_SOFTCAR) || 
-		    (sermctl(dev, 0, DMGET) & TIOCM_CD))
-			tp->t_state |= TS_CARR_ON;
-		else
-			tp->t_state &= ~TS_CARR_ON;
-	} else if (tp->t_state & TS_XCLUDE && p->p_ucred->cr_uid != 0) {
-		splx(s);
-		return(EBUSY);
-	}
-
-	/*
-	 * if NONBLOCK requested, ignore carrier
-	 */
-	if (flag & O_NONBLOCK)
-		goto done;
-
-	/*
-	 * block waiting for carrier
-	 */
-	while ((tp->t_state & TS_CARR_ON) == 0 && (tp->t_cflag & CLOCAL) == 0) {
-		tp->t_state |= TS_WOPEN;
-		error = ttysleep(tp, (caddr_t)&tp->t_rawq, 
-		    TTIPRI | PCATCH, ttopen, 0);
-		if (error) {
-			splx(s);
-			return(error);
-		}
-	}
-done:
-	/* This is a way to handle lost XON characters */
-	if ((flag & O_TRUNC) && (tp->t_state & TS_TTSTOP)) {
-		tp->t_state &= ~TS_TTSTOP;
-	        ttstart (tp);
+		/* clear input ring */
+		sbrpt = sbwpt = serbuf;
+		sbcnt = 0;
+		splx(s2);
 	}
 
 	splx(s);
-	/*
-	 * Reset the tty pointer, as there could have been a dialout
-	 * use of the tty with a dialin open waiting.
-	 */
-	tp->t_dev = dev;
-	ser_open_speed = tp->t_ispeed;
-	return((*linesw[tp->t_line].l_open)(dev, tp));
+
+	error = ttyopen(tp, DIALOUT(dev), flag & O_NONBLOCK);
+	if (error)
+		goto bad;
+
+	error =  (*linesw[tp->t_line].l_open)(dev, tp);
+	if (error)
+		goto bad;
+
+	return (0);
+
+bad:
+	if (!(tp->t_state & TS_ISOPEN) && tp->t_wopen == 0) {
+		ser_shutdown(sc);
+	}
+
+	return (error);
 }
 
 /*ARGSUSED*/
@@ -339,50 +353,66 @@ serclose(dev, flag, mode, p)
 	int flag, mode;
 	struct proc *p;
 {
+	struct ser_softc *sc;
 	struct tty *tp;
-	int unit;
-	int closebits;
 
-	unit = SERUNIT(dev);
+	sc = ser_cd.cd_devs[0];
+	tp = ser_tty;
 
-	tp = ser_tty[unit];
+	/* XXX This is for cons.c, according to com.c */
+	if (!(tp->t_state & TS_ISOPEN))
+		return (0);
+
 	(*linesw[tp->t_line].l_close)(tp, flag);
+	ttyclose(tp);
+
+	if (!(tp->t_state & TS_ISOPEN) && tp->t_wopen == 0) {
+		ser_shutdown(sc);
+	}
+	return (0);
+}
+
+void
+ser_shutdown(sc)
+	struct ser_softc *sc;
+{
+	struct tty *tp = sc->ser_tty;
+	int s;
+
+	s = splser();
+
 	custom.adkcon = ADKCONF_UARTBRK;	/* clear break */
-#ifdef KGDB
+#if 0 /* XXX fix: #ifdef KGDB */
 	/* 
 	 * do not disable interrupts if debugging
 	 */
 	if (dev != kgdb_dev)
 #endif
-		custom.intena = INTF_RBF | INTF_TBE;	/* disable interrups */
+		custom.intena = INTF_RBF | INTF_TBE;	/* disable interrupts */
 	custom.intreq = INTF_RBF | INTF_TBE;		/* clear intr request */
 
 	/*
 	 * If HUPCL is not set, leave DTR unchanged.
 	 */
-	if (tp->t_cflag & HUPCL)
-		closebits = 0;
-	else
-		closebits = sermctl(dev, 0, DMGET) & TIOCM_DTR;
+	if (tp->t_cflag & HUPCL) {
+		(void)sermctl(tp->t_dev, TIOCM_DTR, DMBIC);
+		/*
+		 * Idea from dev/ic/com.c: 
+		 * sleep a bit so that other side will notice, even if we
+		 * reopen immediately.
+		 */
+		(void) tsleep(tp, TTIPRI, ttclos, hz);
+	}
 
-	(void) sermctl(dev, closebits, DMSET);
-
-	/*
-	 * Idea from dev/isa/com.c: 
-	 * sleep a bit so that other side will notice, even if we reopen
-	 * immediately.
-	 */
-	(void) tsleep(tp, TTIPRI, ttclos, hz);
-	ttyclose(tp);
 #if not_yet
 	if (tp != &ser_cons) {
-		remove_vbl_function(&ser_vbl_node[unit]);
+		remove_vbl_function(&ser_vbl_node);
 		ttyfree(tp);
-		ser_tty[unit] = (struct tty *) NULL;
+		ser_tty = (struct tty *) NULL;
 	}
 #endif
 	ser_open_speed = tp->t_ispeed;
-	return (0);
+	return;
 }
 
 int
@@ -391,10 +421,9 @@ serread(dev, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-	struct tty *tp;
-	if ((tp = ser_tty[SERUNIT(dev)]) == NULL)
-		return(ENXIO);
-	return((*linesw[tp->t_line].l_read)(tp, uio, flag));
+	/* ARGSUSED */
+
+	return((*linesw[ser_tty->t_line].l_read)(ser_tty, uio, flag));
 }
 
 int
@@ -403,18 +432,18 @@ serwrite(dev, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-	struct tty *tp;
+	/* ARGSUSED */
 
-	if((tp = ser_tty[SERUNIT(dev)]) == NULL)
-		return(ENXIO);
-	return((*linesw[tp->t_line].l_write)(tp, uio, flag));
+	return((*linesw[ser_tty->t_line].l_write)(ser_tty, uio, flag));
 }
 
 struct tty *
 sertty(dev)
 	dev_t dev;
 {
-	return (ser_tty[SERUNIT(dev)]);
+	/* ARGSUSED */
+
+	return (ser_tty);
 }
 
 /*
@@ -423,13 +452,8 @@ sertty(dev)
  * 11kcps, so 16k buffer should be more than enough, interrupt
  * latency of 1s should never happen, or something is seriously
  * wrong..
+ * buffers moved to above seropen()	-is
  */
-
-static u_short serbuf[SERIBUF_SIZE];
-static u_short *sbrpt = serbuf;
-static u_short *sbwpt = serbuf;
-static u_short sbcnt;
-static u_short sbovfl;
 
 /*
  * This is a replacement for the lack of a hardware fifo.  32k should be
@@ -446,6 +470,7 @@ ser_fastint()
 	 */
 	register u_short ints, code;
 
+	/* XXX should this ever happen? */
 	ints = custom.intreqr & INTF_RBF;
 	if (ints == 0)
 		return;
@@ -458,7 +483,7 @@ ser_fastint()
 	/* 
 	 * clear interrupt 
 	 */
-	custom.intreq = ints;
+	custom.intreq = INTF_RBF;
 
 	/*
 	 * check for buffer overflow.
@@ -480,11 +505,10 @@ ser_fastint()
 
 
 void
-serintr(unit)
-	int unit;
+serintr()
 {
 	int s1, s2, ovfl;
-	struct tty *tp = ser_tty[unit];
+	struct tty *tp = ser_tty;
 
 	/*
 	 * Make sure we're not interrupted by another
@@ -499,7 +523,7 @@ serintr(unit)
 		/* 
 		 * no collision with ser_fastint()
 		 */
-		sereint(unit, *sbrpt++);
+		sereint(*sbrpt++);
 
 		ovfl = 0;
 		/* lock against ser_fastint() */
@@ -524,21 +548,21 @@ serintr(unit)
 }
 
 void
-sereint(unit, stat)
-	int unit, stat;
+sereint(stat)
+	int stat;
 {
 	struct tty *tp;
 	u_char ch;
 	int c;
 
-	tp = ser_tty[unit];
+	tp = ser_tty;
 	ch = stat & 0xff;
 	c = ch;
 
 	if ((tp->t_state & TS_ISOPEN) == 0) {
 #ifdef KGDB
 		/* we don't care about parity errors */
-		if (kgdb_dev == makedev(sermajor, unit) && c == FRAME_END)
+		if (kgdb_dev == makedev(sermajor, 0) && c == FRAME_END)
 			kgdb_connect(0);	/* trap into kgdb */
 #endif
 		return;
@@ -573,18 +597,20 @@ sermint(unit)
 	struct tty *tp;
 	u_char stat, last, istat;
 
-	tp = ser_tty[unit];
+	tp = ser_tty;
 	if (!tp)
 		return;
 
-	if ((tp->t_state & (TS_ISOPEN | TS_WOPEN)) == 0) {
+	/*
+	if ((tp->t_state & TS_ISOPEN) == 0 || tp->t_wopen == 0) {
 		sbrpt = sbwpt = serbuf;
 		return;
 	}
+	*/
 	/*
 	 * empty buffer
 	 */
-	serintr(unit);
+	serintr();
 
 	stat = ciab.pra;
 	last = last_ciab_pra;
@@ -595,17 +621,10 @@ sermint(unit)
 	 */
 	istat = stat ^ last;
 
-	if ((istat & CIAB_PRA_CD) && 
-	    (SWFLAGS(tp->t_dev) & TIOCFLAG_SOFTCAR) == 0) {
-		if (ISDCD(stat))
-			(*linesw[tp->t_line].l_modem)(tp, 1);
-		else if ((*linesw[tp->t_line].l_modem)(tp, 0) == 0) {
-			CLRDTR(stat);
-			CLRRTS(stat);
-			ciab.pra = stat;
-			last_ciab_pra = stat;
-		}
+	if (istat & serdcd) {
+		(*linesw[tp->t_line].l_modem)(tp, ISDCD(stat));
 	}
+
 	if ((istat & CIAB_PRA_CTS) && (tp->t_state & TS_ISOPEN) &&
 	    (tp->t_cflag & CRTSCTS)) {
 #if 0
@@ -637,10 +656,9 @@ serioctl(dev, cmd, data, flag, p)
 	struct proc *p;
 {
 	register struct tty *tp;
-	register int unit = SERUNIT(dev);
 	register int error;
 
-	tp = ser_tty[unit];
+	tp = ser_tty;
 	if (!tp)
 		return ENXIO;
 
@@ -662,11 +680,11 @@ serioctl(dev, cmd, data, flag, p)
 		break;
 
 	case TIOCSDTR:
-		(void) sermctl(dev, TIOCM_DTR | TIOCM_RTS, DMBIS);
+		(void) sermctl(dev, TIOCM_DTR, DMBIS);
 		break;
 
 	case TIOCCDTR:
-		(void) sermctl(dev, TIOCM_DTR | TIOCM_RTS, DMBIC);
+		(void) sermctl(dev, TIOCM_DTR, DMBIC);
 		break;
 
 	case TIOCMSET:
@@ -685,7 +703,7 @@ serioctl(dev, cmd, data, flag, p)
 		*(int *)data = sermctl(dev, 0, DMGET);
 		break;
 	case TIOCGFLAGS:
-		*(int *)data = SWFLAGS(dev);
+		*(int *)data = serswflags;
 		break;
 	case TIOCSFLAGS:
 		error = suser(p->p_ucred, &p->p_acflag); 
@@ -708,11 +726,8 @@ serparam(tp, t)
 	struct tty *tp;
 	struct termios *t;
 {
-	int cflag, unit, ospeed = 0;
+	int cflag, ospeed = 0;
 	
-	cflag = t->c_cflag;
-	unit = SERUNIT(tp->t_dev);
-
 	if (t->c_ospeed > 0) {
 		if (t->c_ospeed < 110)
 			return(EINVAL);
@@ -721,6 +736,25 @@ serparam(tp, t)
 
 	if (t->c_ispeed && t->c_ispeed != t->c_ospeed)
 		return(EINVAL);
+
+	/* XXX missing here: console test */
+	if (serswflags & TIOCFLAG_SOFTCAR) {
+		t->c_cflag = (t->c_cflag & ~HUPCL) | CLOCAL;
+	}
+
+	/* if no changes, dont do anything. com.c explains why. */
+	if (tp->t_ospeed == t->c_ospeed &&
+	    tp->t_cflag == t->c_cflag)
+		return (0);
+
+	cflag = t->c_cflag;
+
+	if (cflag & (CLOCAL | MDMBUF))
+		serdcd = 0;
+	else
+		serdcd = CIAB_PRA_CD;
+
+	/* TODO: support multiple flow control protocols like com.c */
 
 	/* 
 	 * copy to tty
@@ -798,10 +832,10 @@ static u_char *sob_ptr = ser_outbuf, *sob_end = ser_outbuf;
 void
 ser_outintr()
 {
-	struct tty *tp = ser_tty[0];
+	struct tty *tp;
 	int s;
 
-	tp = ser_tty[0];
+	tp = ser_tty;
 	s = spltty();
 
 	if (tp == 0)
@@ -841,14 +875,21 @@ void
 serstart(tp)
 	struct tty *tp;
 {
-	int cc, s, unit, hiwat;
+	int cc, s, hiwat;
+#ifdef DIAGNOSTIC
+	int unit;
+#endif
 	
 	hiwat = 0;
 
 	if ((tp->t_state & TS_ISOPEN) == 0)
 		return;
 
+#ifdef DIAGNOSTIC
 	unit = SERUNIT(tp->t_dev);
+	if (unit)
+		panic("serstart: unit is %d\n", unit);
+#endif
 
 	s = spltty();
 	if (tp->t_state & (TS_TIMEOUT | TS_TTSTOP))
@@ -922,10 +963,8 @@ sermctl(dev, bits, how)
 	dev_t dev;
 	int bits, how;
 {
-	int unit, s;
+	int s;
 	u_char ub = 0;
-
-	unit = SERUNIT(dev);
 
 	/*
 	 * convert TIOCM* mask into CIA mask
@@ -993,7 +1032,7 @@ void
 sercnprobe(cp)
 	struct consdev *cp;
 {
-	int unit = CONUNIT;
+	int unit;
 	
 	/* locate the major number */
 	for (sermajor = 0; sermajor < nchrdev; sermajor++)
@@ -1025,14 +1064,14 @@ sercninit(cp)
 
 	unit = SERUNIT(cp->cn_dev);
 
-	serinit(unit, serdefaultrate);
+	serinit(serdefaultrate);
 	serconsole = unit;
 	serconsinit = 1;
 }
 
 void
-serinit(unit, rate)
-	int unit, rate;
+serinit(rate)
+	int rate;
 {
 	int s;
 
@@ -1080,7 +1119,7 @@ sercnputc(dev, c)
 	s = splhigh();
 
 	if (serconsinit == 0) {
-		(void)serinit(SERUNIT(dev), serdefaultrate);
+		(void)serinit(serdefaultrate);
 		serconsinit = 1;
 	}
 
