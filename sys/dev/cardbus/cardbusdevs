@@ -1,4 +1,4 @@
-$NetBSD: cardbusdevs,v 1.10.2.3 2002/02/05 12:54:48 he Exp $
+$NetBSD: cardbusdevs,v 1.10.2.4 2002/12/15 15:49:34 he Exp $
 
 /*
  * Copyright (C) 1999  Hayakawa Koichi.
@@ -51,6 +51,7 @@ vendor OPTI		0x1045	Opti
 vendor XIRCOM		0x115d	Xircom
 vendor ACCTON		0x1113	Accton Technology
 vendor ABOCOM		0x13d1	AboCom Systems
+vendor PLANEX		0x14ea	Planex Communications Inc
 vendor REALTEK		0x10ec	Realtek Semiconductor
 vendor INTEL		0x8086	Intel
 vendor INVALID		0xffff	INVALID VENDOR ID
@@ -68,6 +69,9 @@ product 3COM 3C575CTX	0x5257	3c575C-TX
 /* AboCom products */
 product ABOCOM FE2500	0xab02	FE2500 10/100 Ethernet
 product ABOCOM PCM200	0xab03	FE2500 10/100 Ethernet
+
+/* Planex products */
+product PLANEX FNW_3603_TX 0xab06 FNW-3603-TX 10/100 Ethernet
 
 /* Adaptec products */
 product ADP 1480        0x6075  APA-1480
