@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.76 2000/12/02 16:43:51 jdolecek Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.77 2000/12/13 21:41:23 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -1231,4 +1231,41 @@ linux_sys_setdomainname(p, v, retval)
 	name = KERN_DOMAINNAME;
 	return (kern_sysctl(&name, 1, 0, 0, SCARG(uap, domainname),
 			    SCARG(uap, len), p));
+}
+
+/*
+ * sysinfo()
+ */
+/* ARGSUSED */
+int
+linux_sys_sysinfo(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct linux_sys_sysinfo_args /* {
+		syscallarg(struct linux_sysinfo *) arg;
+	} */ *uap = v;
+	struct linux_sysinfo si;
+	struct loadavg *la;
+
+	si.uptime = time.tv_sec - boottime.tv_sec;
+	la = &averunnable;
+	si.loads[0] = la->ldavg[0] * LINUX_SYSINFO_LOADS_SCALE / la->fscale;
+	si.loads[1] = la->ldavg[1] * LINUX_SYSINFO_LOADS_SCALE / la->fscale;
+	si.loads[2] = la->ldavg[2] * LINUX_SYSINFO_LOADS_SCALE / la->fscale;
+	si.totalram = ctob(physmem);
+	si.freeram = uvmexp.free * uvmexp.pagesize;
+	si.sharedram = 0;	/* XXX */
+	si.bufferram = uvmexp.vnodepages * uvmexp.pagesize;
+	si.totalswap = uvmexp.swpages * uvmexp.pagesize;
+	si.freeswap = (uvmexp.swpages - uvmexp.swpginuse) * uvmexp.pagesize;
+	si.procs = nprocs;
+
+	/* The following are only present in newer Linux kernels. */
+	si.totalbig = 0;
+	si.freebig = 0;
+	si.mem_unit = 1;
+
+	return (copyout(&si, SCARG(uap, arg), sizeof si));
 }
