@@ -1,4 +1,4 @@
-/*	$KAME: policy_parse.y,v 1.10 2000/05/07 05:25:03 itojun Exp $	*/
+/*	$KAME: policy_parse.y,v 1.11 2001/08/31 09:44:18 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
@@ -86,6 +86,8 @@ static caddr_t policy_parse __P((char *msg, int msglen));
 extern void __policy__strbuffer__init__ __P((char *msg));
 extern int yyparse __P((void));
 extern int yylex __P((void));
+
+extern char *__libyytext;	/*XXX*/
 
 %}
 
@@ -209,8 +211,6 @@ void
 yyerror(msg)
 	char *msg;
 {
-	extern char *__libyytext;	/*XXX*/
-
 	fprintf(stderr, "libipsec: %s while parsing \"%s\"\n",
 		msg, __libyytext);
 

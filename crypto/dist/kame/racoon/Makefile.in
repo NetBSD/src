@@ -1,4 +1,4 @@
-#	$KAME: Makefile.in,v 1.35 2001/08/08 22:09:26 sakane Exp $
+#	$KAME: Makefile.in,v 1.36 2001/11/16 04:34:55 sakane Exp $
 
 @SET_MAKE@
 srcdir=	@srcdir@
@@ -30,7 +30,7 @@ OBJS=	main.o session.o isakmp.o handler.o random.o \
 	policy.o localconf.o remoteconf.o crypto_openssl.o algorithm.o \
 	proposal.o sainfo.o cfparse.o cftoken.o strnames.o \
 	vmbuf.o plog.o logger.o schedule.o str2val.o misc.o sockmisc.o \
-	safefile.o backupsa.o @LIBOBJS@ @CRYPTOBJS@
+	safefile.o backupsa.o @LIBOBJS@ @CRYPTOBJS@ @DEBUGRMOBJS@
 # under samples
 CONF=	psk.txt racoon.conf
 
@@ -40,14 +40,15 @@ racoon: $(OBJS)
 	$(CC) $(LDFLAGS) -o $@ $(OBJS) $(LIBS)
 
 racoonctl: kmpstat.o misc_noplog.o vmbuf.o str2val.o
-	$(CC) $(LDFLAGS) -o $@ kmpstat.o misc_noplog.o vmbuf.o str2val.o $(LIBS)
+	$(CC) $(LDFLAGS) -o $@ kmpstat.o misc_noplog.o vmbuf.o str2val.o \
+		$(LIBS) @DEBUGRMOBJS@
 
 pfkey: dummy.o
 	$(CC) $(LDFLAGS) -o $@ dummy.o
 
 eaytest: eaytest.o crypto_openssl_test.o misc_noplog.o vmbuf.o str2val.o
 	$(CC) $(LDFLAGS) -o $@ eaytest.o crypto_openssl_test.o misc_noplog.o \
-		vmbuf.o str2val.o $(LIBS) @CRYPTOBJS@
+		vmbuf.o str2val.o $(LIBS) @CRYPTOBJS@ @DEBUGRMOBJS@
 
 # special object rules
 crypto_openssl_test.o: crypto_openssl.c
