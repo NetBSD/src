@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.14 1995/08/13 00:16:08 mycroft Exp $	*/
+/*	$NetBSD: locore.S,v 1.15 1995/09/21 23:28:31 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -2017,11 +2017,12 @@ END(splx)
 
 /*----------------------------------------------------------------------------
  *
- * MachEmptyWriteBuffer --
+ * wbflush --
  *
  *	Return when the write buffer is empty.
  *
- *	MachEmptyWriteBuffer()
+ *	wbflush()
+ *	MachEmptyWriteBuffer()	[[backwards compatibility]]
  *
  * Results:
  *	None.
@@ -2031,7 +2032,8 @@ END(splx)
  *
  *----------------------------------------------------------------------------
  */
-LEAF(MachEmptyWriteBuffer)
+LEAF(wbflush)
+ALEAF(MachEmptyWriteBuffer)
 	nop
 	nop
 	nop
