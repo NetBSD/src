@@ -1,4 +1,4 @@
-/*	$NetBSD: hlfsd.c,v 1.7 1999/02/01 19:05:13 christos Exp $	*/
+/*	$NetBSD: hlfsd.c,v 1.7.2.1 1999/09/21 04:57:26 cgd Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Erez Zadok
@@ -40,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: hlfsd.c,v 1.3 1999/01/10 21:54:32 ezk Exp 
+ * Id: hlfsd.c,v 1.4 1999/02/04 07:24:45 ezk Exp 
  *
  * HLFSD was written at Columbia University Computer Science Department, by
  * Erez Zadok <ezk@cs.columbia.edu> and Alexander Dupuy <dupuy@cs.columbia.edu>
@@ -85,10 +85,6 @@ char *alt_spooldir = ALT_SPOOLDIR;
 char *home_subdir = HOME_SUBDIR;
 char *logfile = DEFAULT_LOGFILE;
 char *passwdfile = NULL;	/* alternate passwd file to use */
-#if 0
-char *progname;
-int foreground = 1;		/* This is the top-level server */
-#endif
 char *slinkname = 0;
 char hostname[MAXHOSTNAMELEN + 1] = "localhost";
 int cache_interval = DEFAULT_CACHE_INTERVAL;
@@ -98,10 +94,6 @@ int noverify = 0;
 int orig_umask = 022;
 int serverpid = 0;
 nfstime startup;
-#if 0
-pid_t mypid;			/* Current process id */
-#endif
-serv_state amd_state;
 u_short nfs_port;
 
 /* symbol must be available always */
@@ -110,12 +102,6 @@ char *mnttab_file_name = MNTTAB_FILE_NAME;
 #else /* not MOUNT_TABLE_ON_FILE */
 char *mnttab_file_name = NULL;
 #endif /* not MOUNT_TABLE_ON_FILE */
-
-#if 0
-#ifdef DEBUG
-int debug_flags = 0;
-#endif /* DEBUG */
-#endif
 
 /* forward declarations */
 void hlfsd_going_down(int rc);
