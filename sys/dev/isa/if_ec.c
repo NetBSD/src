@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ec.c,v 1.14 2001/07/08 17:55:50 thorpej Exp $	*/
+/*	$NetBSD: if_ec.c,v 1.15 2001/11/13 08:01:16 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -53,6 +53,9 @@
 /*
  * Device driver for the 3Com Etherlink II (3c503).
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_ec.c,v 1.15 2001/11/13 08:01:16 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sm_isa.c,v 1.7 2001/07/08 17:55:50 thorpej Exp $	*/
+/*	$NetBSD: if_sm_isa.c,v 1.8 2001/11/13 08:01:20 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -36,6 +36,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_sm_isa.c,v 1.8 2001/11/13 08:01:20 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tribm_isa.c,v 1.2 1999/03/22 23:01:37 bad Exp $	*/
+/*	$NetBSD: if_tribm_isa.c,v 1.3 2001/11/13 08:01:21 lukem Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_tribm_isa.c,v 1.3 2001/11/13 08:01:21 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ai.c,v 1.11 2001/07/18 20:39:53 thorpej Exp $	*/
+/*	$NetBSD: if_ai.c,v 1.12 2001/11/13 08:01:15 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_ai.c,v 1.12 2001/11/13 08:01:15 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

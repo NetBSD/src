@@ -1,4 +1,4 @@
-/*	$NetBSD: wss_isa.c,v 1.10 2001/07/18 20:39:53 thorpej Exp $	*/
+/*	$NetBSD: wss_isa.c,v 1.11 2001/11/13 08:01:35 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -39,6 +39,10 @@
  * SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: wss_isa.c,v 1.11 2001/11/13 08:01:35 lukem Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
