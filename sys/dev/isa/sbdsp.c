@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.38 1997/03/20 20:15:25 mycroft Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.39 1997/03/20 21:42:11 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -33,6 +33,7 @@
  * SUCH DAMAGE.
  *
  */
+
 /*
  * SoundBlaster Pro code provided by John Kohl, based on lots of
  * information he gleaned from Steve Haehnichen <steve@vigra.com>'s
@@ -139,7 +140,7 @@ sb_printsc(sc)
 	int i;
     
 	printf("open %d dmachan %d/%d/%d iobase %x\n",
-	    sc->sc_open, sc->sc_drq, sc->sc_drq8, sc->sc_drq16, sc->sc_iobase);
+	    sc->sc_open, sc->dmachan, sc->sc_drq8, sc->sc_drq16, sc->sc_iobase);
 	printf("irate %d itc %d imode %d orate %d otc %d omode %d encoding %x\n",
 	    sc->sc_irate, sc->sc_itc, sc->sc_imode,
 	    sc->sc_orate, sc->sc_otc, sc->sc_omode, sc->sc_encoding);
@@ -754,7 +755,7 @@ sbdsp_reset(sc)
 
 	sc->sc_intr = 0;
 	if (sc->sc_dmadir != SB_DMA_NONE) {
-		isa_dmaabort(sc->sc_drq);
+		isa_dmaabort(sc->dmachan);
 		sc->sc_dmadir = SB_DMA_NONE;
 	}
 	sc->sc_last_hs_size = 0;
@@ -1136,16 +1137,23 @@ sbdsp_dma_input(addr, p, cc, intr, arg)
 				goto giveup;
 		} else
 			sbdsp_set_timeconst(sc, sc->sc_itc);
+
 		sc->sc_dmadir = SB_DMA_IN;
+		sc->dmaflags = DMAMODE_READ;
+		if (ISSB2CLASS(sc))
+			sc->dmaflags |= DMAMODE_LOOP;
+	} else {
+		/* Already started; just return. */
+		if (ISSB2CLASS(sc))
+			return 0;
 	}
 
-	sc->sc_drq = sc->sc_precision == 16 ? sc->sc_drq16 : sc->sc_drq8;
-	isa_dmastart(DMAMODE_READ, p, cc, sc->sc_drq);
+	sc->dmaaddr = p;
+	sc->dmacnt = ISSB2CLASS(sc) ? (NBPG/cc)*cc : cc;
+	sc->dmachan = sc->sc_precision == 16 ? sc->sc_drq16 : sc->sc_drq8;
+	isa_dmastart(sc->dmaflags, sc->dmaaddr, sc->dmacnt, sc->dmachan);
 	sc->sc_intr = intr;
 	sc->sc_arg = arg;
-	sc->dmaflags = DMAMODE_READ;
-	sc->dmaaddr = p;
-	sc->dmacnt = cc;		/* DMA controller is strange...? */
 
 	if (sc->sc_precision == 16)
 		cc >>= 1;
@@ -1161,25 +1169,27 @@ sbdsp_dma_input(addr, p, cc, intr, arg)
 			DPRINTF(("sbdsp_dma_input: SB16 DMA start failed\n"));
 			goto giveup;
 		}
-	} else if (sc->sc_imode == SB_ADAC_LS) {
-		if (sbdsp_wdsp(sc, SB_DSP_RDMA) < 0 ||
-		    sbdsp_wdsp(sc, cc) < 0 ||
-		    sbdsp_wdsp(sc, cc >> 8) < 0) {
-		        DPRINTF(("sbdsp_dma_input: LS DMA start failed\n"));
-			goto giveup;
-		}
-	} else {
+	} else if (ISSB2CLASS(sc)) {
 		if (cc != sc->sc_last_hs_size) {
 			if (sbdsp_wdsp(sc, SB_DSP_BLOCKSIZE) < 0 ||
 			    sbdsp_wdsp(sc, cc) < 0 ||
 			    sbdsp_wdsp(sc, cc >> 8) < 0) {
-				DPRINTF(("sbdsp_dma_input: HS DMA start failed\n"));
+				DPRINTF(("sbdsp_dma_input: SB2 DMA start failed\n"));
 				goto giveup;
 			}
 			sc->sc_last_hs_size = cc;
 		}
-		if (sbdsp_wdsp(sc, SB_DSP_HS_INPUT) < 0) {
-			DPRINTF(("sbdsp_dma_input: HS DMA restart failed\n"));
+		if (sbdsp_wdsp(sc,
+		    sc->sc_imode == SB_ADAC_LS ? SB_DSP_RDMA_LOOP :
+						 SB_DSP_HS_INPUT) < 0) {
+			DPRINTF(("sbdsp_dma_input: SB2 DMA restart failed\n"));
+			goto giveup;
+		}
+	} else {
+		if (sbdsp_wdsp(sc, SB_DSP_RDMA) < 0 ||
+		    sbdsp_wdsp(sc, cc) < 0 ||
+		    sbdsp_wdsp(sc, cc >> 8) < 0) {
+		        DPRINTF(("sbdsp_dma_input: SB1 DMA start failed\n"));
 			goto giveup;
 		}
 	}
@@ -1245,16 +1255,23 @@ sbdsp_dma_output(addr, p, cc, intr, arg)
 				goto giveup;
 		} else
 			sbdsp_set_timeconst(sc, sc->sc_otc);
+
 		sc->sc_dmadir = SB_DMA_OUT;
+		sc->dmaflags = DMAMODE_WRITE;
+		if (ISSB2CLASS(sc))
+			sc->dmaflags |= DMAMODE_LOOP;
+	} else {
+		/* Already started; just return. */
+		if (ISSB2CLASS(sc))
+			return 0;
 	}
 
-	sc->sc_drq = sc->sc_precision == 16 ? sc->sc_drq16 : sc->sc_drq8;
-	isa_dmastart(DMAMODE_WRITE, p, cc, sc->sc_drq);
+	sc->dmaaddr = p;
+	sc->dmacnt = ISSB2CLASS(sc) ? (NBPG/cc)*cc : cc;
+	sc->dmachan = sc->sc_precision == 16 ? sc->sc_drq16 : sc->sc_drq8;
+	isa_dmastart(sc->dmaflags, sc->dmaaddr, sc->dmacnt, sc->dmachan);
 	sc->sc_intr = intr;
 	sc->sc_arg = arg;
-	sc->dmaflags = DMAMODE_WRITE;
-	sc->dmaaddr = p;
-	sc->dmacnt = cc;	/* a vagary of how DMA works, apparently. */
 
 	if (sc->sc_precision == 16)
 		cc >>= 1;
@@ -1270,25 +1287,27 @@ sbdsp_dma_output(addr, p, cc, intr, arg)
 			DPRINTF(("sbdsp_dma_output: SB16 DMA start failed\n"));
 			goto giveup;
 		}
-	} else if (sc->sc_omode == SB_ADAC_LS) {
-		if (sbdsp_wdsp(sc, SB_DSP_WDMA) < 0 ||
-		    sbdsp_wdsp(sc, cc) < 0 ||
-		    sbdsp_wdsp(sc, cc >> 8) < 0) {
-		        DPRINTF(("sbdsp_dma_output: LS DMA start failed\n"));
-			goto giveup;
-		}
-	} else {
+	} else if (ISSB2CLASS(sc)) {
 		if (cc != sc->sc_last_hs_size) {
 			if (sbdsp_wdsp(sc, SB_DSP_BLOCKSIZE) < 0 ||
 			    sbdsp_wdsp(sc, cc) < 0 ||
 			    sbdsp_wdsp(sc, cc >> 8) < 0) {
-				DPRINTF(("sbdsp_dma_output: HS DMA start failed\n"));
+				DPRINTF(("sbdsp_dma_output: SB2 DMA start failed\n"));
 				goto giveup;
 			}
 			sc->sc_last_hs_size = cc;
 		}
-		if (sbdsp_wdsp(sc, SB_DSP_HS_OUTPUT) < 0) {
-			DPRINTF(("sbdsp_dma_output: HS DMA restart failed\n"));
+		if (sbdsp_wdsp(sc,
+		    sc->sc_omode == SB_ADAC_LS ? SB_DSP_WDMA_LOOP :
+						 SB_DSP_HS_OUTPUT) < 0) {
+			DPRINTF(("sbdsp_dma_output: SB2 DMA restart failed\n"));
+			goto giveup;
+		}
+	} else {
+		if (sbdsp_wdsp(sc, SB_DSP_WDMA) < 0 ||
+		    sbdsp_wdsp(sc, cc) < 0 ||
+		    sbdsp_wdsp(sc, cc >> 8) < 0) {
+		        DPRINTF(("sbdsp_dma_output: SB1 DMA start failed\n"));
 			goto giveup;
 		}
 	}
@@ -1317,11 +1336,13 @@ sbdsp_intr(arg)
 	if (sbdspdebug > 1)
 		Dprintf("sbdsp_intr: intr=0x%x\n", sc->sc_intr);
 #endif
-	if (!isa_dmafinished(sc->sc_drq)) {
-#ifdef AUDIO_DEBUG
-		printf("sbdsp_intr: not finished\n");
-#endif
-		return 0;
+	if (ISSB16CLASS(sc)) {
+		x = sbdsp_mix_read(sc, SBP_IRQ_STATUS);
+		if ((x & 3) == 0)
+			return 0;
+	} else {
+		if (!isa_dmafinished(sc->dmachan))
+			return 0;
 	}
 	sc->sc_interrupts++;
 	delay(10);
@@ -1336,7 +1357,9 @@ sbdsp_intr(arg)
 		x = bus_space_read_1(sc->sc_iot, sc->sc_ioh,
 		    sc->sc_precision == 16 ? SBP_DSP_IRQACK16 :
 					     SBP_DSP_IRQACK8);
-		isa_dmadone(sc->dmaflags, sc->dmaaddr, sc->dmacnt, sc->sc_drq);
+		if (!ISSB2CLASS(sc))
+			isa_dmadone(sc->dmaflags, sc->dmaaddr, sc->dmacnt,
+			    sc->dmachan);
 		(*sc->sc_intr)(sc->sc_arg);
 	} else {
 		return 0;
