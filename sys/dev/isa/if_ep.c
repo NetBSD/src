@@ -21,7 +21,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: if_ep.c,v 1.1 1993/12/14 04:26:45 hpeyerl Exp $
+ *	$Id: if_ep.c,v 1.2 1993/12/16 00:40:05 hpeyerl Exp $
  */
 /*
  * TODO: 
@@ -139,7 +139,7 @@ epprobe(is)
 		return(0);
 
 	k = get_eeprom_data(id_port, EEPROM_ADDR_CFG); /* get addr cfg */
-	k = (k & 0x17)*0x10+0x200;	/* decode base addr. */
+	k = (k & 0x1f)*0x10+0x200;	/* decode base addr. */
 	if (k != is->id_iobase)
 		return(0);
 
