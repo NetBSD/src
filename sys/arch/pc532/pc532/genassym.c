@@ -35,7 +35,7 @@
  *
  *	@(#)genassym.c	5.11 (Berkeley) 5/10/91
  *
- *	$Id: genassym.c,v 1.3 1994/04/19 17:14:14 phil Exp $
+ *	$Id: genassym.c,v 1.4 1994/05/17 17:31:34 phil Exp $
  */
 
 #include "sys/param.h"
@@ -65,12 +65,11 @@ main()
 
 	printf("#define\tKERNBASE 0x%x\n", KERNBASE);
 	printf("#define\tUDOT_SZ %d\n", sizeof(struct user));
-	printf("#define\tP_LINK %d\n", &p->p_link);
-	printf("#define\tP_RLINK %d\n", &p->p_rlink);
+	printf("#define\tP_FORW %d\n", &p->p_forw);
+	printf("#define\tP_BACK %d\n", &p->p_back);
 	printf("#define\tP_VMSPACE %d\n", &p->p_vmspace);
 	printf("#define\tP_ADDR %d\n", &p->p_addr);
-	printf("#define\tP_REGS %d\n", &p->p_regs);
-	printf("#define\tP_PRI %d\n", &p->p_pri);
+	printf("#define\tP_PRIORITY %d\n", &p->p_priority);
 	printf("#define\tP_STAT %d\n", &p->p_stat);
 	printf("#define\tP_WCHAN %d\n", &p->p_wchan);
 	printf("#define\tP_FLAG %d\n", &p->p_flag);

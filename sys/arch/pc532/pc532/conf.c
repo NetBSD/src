@@ -38,8 +38,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: (i386) @(#)conf.c	5.8 (Berkeley) 5/12/91
- *	$Id: conf.c,v 1.6 1994/05/17 02:17:17 cgd Exp $
+ *	@(#)conf.c	5.8 (Berkeley) 5/12/91
+ *
+ *	$Id: conf.c,v 1.7 1994/05/17 17:31:33 phil Exp $
  */
 
 #include "param.h"
@@ -59,7 +60,7 @@ int	rawread(), rawwrite();
 #if NSD > 0
 int	sdopen(), sdclose(), sdioctl();
 int	/*sddump(),*/ sdsize();
-void	sdstrategy();
+int	sdstrategy();
 #define	sddump		enxio
 #else
 #define	sdopen		enxio
@@ -74,7 +75,7 @@ void	sdstrategy();
 #if NST > 0
 int	stopen(), stclose(), stioctl();
 /*int	stdump(), stsize();*/
-void	ststrategy();
+int	ststrategy();
 #define	stdump		enxio
 #define	stsize		NULL
 #else
@@ -90,7 +91,7 @@ void	ststrategy();
 #if NCD > 0
 int	cdopen(), cdclose(), cdioctl();
 int	/*cddump(), */cdsize();
-void	cdstrategy();
+int	cdstrategy();
 #define	cddump		enxio
 #else
 #define	cdopen		enxio
@@ -114,11 +115,11 @@ int	chopen(), chclose(), chioctl();
 
 #ifdef RAMD_SIZE
 int rdopen(), rdclose(), rdsize();
-void  rdstrategy();
+int  rdstrategy();
 #endif
 
 int	swread(), swwrite();
-void	swstrategy();
+int	swstrategy();
 
 struct bdevsw	bdevsw[] =
 {
@@ -217,14 +218,14 @@ struct cdevsw	cdevsw[] =
 	  scnioctl,	enodev,		scnreset,	scn_tty, /* ttyXX */
 	  ttselect,	enodev,		NULL },
 	{ enxio,	enxio,		enxio,		enxio, /*9*/
-	  enxio,	enxio,		nullop,		NULL,	/* nothing */
-	  enxio,	enxio,		voidop },
+	  enxio,	enxio,		enxio,		NULL,	/* nothing */
+	  enxio,	enxio,		enxio },
 	{ stopen,	stclose,	rawread,	rawwrite,	/*10*/
 	  stioctl,	enodev,		nullop,		NULL,	/* rstXX */
 	  seltrue,	enodev,		ststrategy },
 	{ fdopen,	enxio,		enxio,		enxio,		/*11*/
 	  enxio,	enxio,		enxio,		NULL,	/* fd */
-	  enxio,	enxio,		voidop },
+	  enxio,	enxio,		enxio },
 };
 int	nchrdev = sizeof (cdevsw) / sizeof (cdevsw[0]);
 
