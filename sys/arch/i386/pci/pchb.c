@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.25 2001/09/10 10:54:46 fvdl Exp $	*/
+/*	$NetBSD: pchb.c,v 1.26 2001/09/12 08:25:17 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998, 2000 The NetBSD Foundation, Inc.
@@ -113,10 +113,11 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 	pcireg_t bcreg;
 	u_char bdnum, pbnum;
 	pcitag_t tag;
-	int doattach;
+	int doattach, attachflags;
 
 	printf("\n");
 	doattach = 0;
+	attachflags = pa->pa_flags;
 
 	/*
 	 * Print out a description, and configure certain chipsets which
@@ -138,6 +139,16 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 		 * Configure it.
 		 */
 		doattach = 1;
+		switch (PCI_PRODUCT(pa->pa_id)) {
+		case PCI_PRODUCT_SERVERWORKS_XX5:
+		case PCI_PRODUCT_SERVERWORKS_CNB20HE:
+		case PCI_PRODUCT_SERVERWORKS_CIOB20:
+			if ((attachflags &
+			    (PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED)) ==
+			    PCI_FLAGS_MEM_ENABLED)
+				attachflags |= PCI_FLAGS_IO_ENABLED;
+			break;
+		}
 		break;
 
 	case PCI_VENDOR_INTEL:
@@ -248,7 +259,7 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 		pba.pba_memt = pa->pa_memt;
 		pba.pba_dmat = pa->pa_dmat;
 		pba.pba_bus = pbnum;
-		pba.pba_flags = pa->pa_flags;
+		pba.pba_flags = attachflags;
 		pba.pba_pc = pa->pa_pc;
 		config_found(self, &pba, pchb_print);
 	}
