@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.108 2000/11/27 06:38:54 soren Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.109 2000/12/20 05:48:06 jeffs Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.108 2000/11/27 06:38:54 soren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.109 2000/12/20 05:48:06 jeffs Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
@@ -264,6 +264,9 @@ mips3_vector_init(mips3_csizebase)
 	extern char mips3_TLBMiss[], mips3_TLBMissEnd[];
 	extern char mips3_XTLBMiss[], mips3_XTLBMissEnd[];
 
+	/* Cache error handler */
+	extern char mips3_cache[], mips3_cacheEnd[];
+
 	/*
 	 * Copy down exception vector code.
 	 */
@@ -273,6 +276,9 @@ mips3_vector_init(mips3_csizebase)
 	if (mips3_XTLBMissEnd - mips3_XTLBMiss > 0x80)
 		panic("startup: XTLB code too large");
 
+	if (mips3_cacheEnd - mips3_cache > 0x80)
+		panic("startup: Cache error code too large");
+
 	memcpy((void *)MIPS_UTLB_MISS_EXC_VEC, mips3_TLBMiss,
 	      mips3_TLBMissEnd - mips3_TLBMiss);
 
@@ -281,6 +287,9 @@ mips3_vector_init(mips3_csizebase)
 
 	memcpy((void *)MIPS3_GEN_EXC_VEC, mips3_exception,
 	      mips3_exceptionEnd - mips3_exception);
+
+	memcpy((void *)MIPS3_CACHE_ERR_EXC_VEC, mips3_cache,
+	      mips3_cacheEnd - mips3_cache);
 
 	/*
 	 * Copy locore-function vector.
