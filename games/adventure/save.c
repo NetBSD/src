@@ -1,4 +1,4 @@
-/*	$NetBSD: save.c,v 1.6 1999/07/16 01:38:20 hubertf Exp $	*/
+/*	$NetBSD: save.c,v 1.7 1999/07/17 20:02:48 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -43,10 +43,11 @@
 #if 0
 static char sccsid[] = "@(#)save.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: save.c,v 1.6 1999/07/16 01:38:20 hubertf Exp $");
+__RCSID("$NetBSD: save.c,v 1.7 1999/07/17 20:02:48 hubertf Exp $");
 #endif
 #endif				/* not lint */
 
+#include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include "hdr.h"
@@ -152,7 +153,10 @@ save(outfile)			/* Two passes on data: first to get checksum,
 			*s = (*s ^ random()) & 0xFF;	/* Lightly encrypt */
 		fwrite(p->address, p->width, 1, out);
 	}
-	fclose(out);
+	if (fclose(out) != 0) {
+		warn("writing %s", outfile);
+		return 1;
+	}
 	return 0;
 }
 
