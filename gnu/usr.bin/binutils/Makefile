@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2002/02/11 21:45:19 tv Exp $
+#	$NetBSD: Makefile,v 1.19 2002/06/18 08:21:58 itojun Exp $
 
 .include <bsd.own.mk>
 
@@ -7,7 +7,7 @@
 .if ${MKBFD} != "no" && exists(${.CURDIR}/common/arch/${MACHINE_ARCH}/defs.mk)
 .include "${.CURDIR}/common/arch/${MACHINE_ARCH}/defs.mk"
 
-SUBDIR=		common gas gprof ld ${G_PROGRAMS:C/-new$//:cxxfilt=c++filt}
+SUBDIR=		common gas gprof ld ${G_PROGRAMS:C/-new$//:C/sysdump//:C/srconv//:cxxfilt=c++filt}
 SUBDIR:=	${SUBDIR:O} # alphabetize
 .endif	# MKBFD != no
 
