@@ -1,4 +1,4 @@
-/*	$NetBSD: getgrent.c,v 1.45 2003/02/16 01:22:44 elric Exp $	*/
+/*	$NetBSD: getgrent.c,v 1.46 2003/02/17 00:11:54 simonb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)getgrent.c	8.2 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: getgrent.c,v 1.45 2003/02/16 01:22:44 elric Exp $");
+__RCSID("$NetBSD: getgrent.c,v 1.46 2003/02/17 00:11:54 simonb Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -127,7 +127,7 @@ getgrent(void)
 }
 
 /*
- * _getgrent_user() is desgined only to be called by getgrouplist(3) and
+ * _getgrent_user() is designed only to be called by getgrouplist(3) and
  * hence makes no guarantees about filling the entire structure that it
  * returns.  It may only fill in the group name and gid fields.
  */
