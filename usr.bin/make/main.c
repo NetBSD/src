@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.93 2003/09/10 18:04:22 jmmv Exp $	*/
+/*	$NetBSD: main.c,v 1.94 2003/12/07 20:30:28 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: main.c,v 1.93 2003/09/10 18:04:22 jmmv Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.94 2003/12/07 20:30:28 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.93 2003/09/10 18:04:22 jmmv Exp $");
+__RCSID("$NetBSD: main.c,v 1.94 2003/12/07 20:30:28 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -326,6 +326,10 @@ rearg:	while((c = getopt(argc, argv, OPTFLAGS)) != -1) {
 					}
 					else if (modules[1] == '2') {
 						debug |= DEBUG_GRAPH2;
+						++modules;
+					}
+					else if (modules[1] == '3') {
+						debug |= DEBUG_GRAPH3;
 						++modules;
 					}
 					break;
@@ -1423,7 +1427,7 @@ Fatal(const char *fmt, ...)
 
 	PrintOnError(NULL);
 
-	if (DEBUG(GRAPH2))
+	if (DEBUG(GRAPH2) || DEBUG(GRAPH3))
 		Targ_PrintGraph(2);
 	Trace_Log(MAKEERROR, 0);
 	exit(2);		/* Not 1 so -q can distinguish error */
