@@ -1,4 +1,4 @@
-/* $NetBSD: isp_pci.c,v 1.37 1999/03/26 22:42:57 mjacob Exp $ */
+/* $NetBSD: isp_pci.c,v 1.38 1999/03/27 01:08:59 mjacob Exp $ */
 /* release_03_25_99 */
 /*
  * PCI specific probe and attach routines for Qlogic ISP SCSI adapters.
@@ -86,10 +86,10 @@ static struct ispmdvec mdvec_1080 = {
 	NULL,
 	isp_pci_reset1,
 	isp_pci_dumpregs,
-	0,
-	0,
-	0,
-	0,
+	ISP1080_RISC_CODE,
+	ISP1080_CODE_LENGTH,
+	ISP1080_CODE_ORG,
+	ISP1080_CODE_VERSION,
 	BIU_BURST_ENABLE|BIU_PCI_CONF1_FIFO_64,
 	0
 };
