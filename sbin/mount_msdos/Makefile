@@ -1,11 +1,16 @@
 #
-#	$Id: Makefile,v 1.5 1994/04/08 01:26:59 cgd Exp $
+#	$Id: Makefile,v 1.6 1994/07/16 21:32:06 cgd Exp $
 #
 
-PROG = mount_msdos
-MAN8 = mount_msdos.0
+PROG=	mount_msdos
+SRCS=	mount_msdos.c getmntopts.c
+MAN8=	mount_msdos.0
 
 BINOWN=	root
 BINMODE= 4555
+
+MOUNT=	${.CURDIR}/../mount
+CFLAGS+= -I${MOUNT}
+.PATH:	${MOUNT}
 
 .include <bsd.prog.mk>

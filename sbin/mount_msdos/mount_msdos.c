@@ -29,7 +29,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: mount_msdos.c,v 1.7 1994/04/08 01:40:51 cgd Exp $";
+static char rcsid[] = "$Id: mount_msdos.c,v 1.8 1994/07/16 21:32:08 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/cdefs.h>
@@ -45,11 +45,18 @@ static char rcsid[] = "$Id: mount_msdos.c,v 1.7 1994/04/08 01:40:51 cgd Exp $";
 #include <string.h>
 #include <unistd.h>
 
+#include "mntopts.h"
+
+struct mntopt mopts[] = {
+	MOPT_STDOPTS,
+	{ NULL }
+};
+
 gid_t	a_gid __P((char *));
 uid_t	a_uid __P((char *));
 mode_t	a_mask __P((char *));
 void	usage __P((void));
-		
+
 int
 main(argc, argv)
 	int argc;
@@ -57,17 +64,14 @@ main(argc, argv)
 {
 	struct msdosfs_args args;
 	struct stat sb;
-	int c, opts, set_gid, set_uid, set_mask;
+	int c, mntflags, set_gid, set_uid, set_mask;
 	char *dev, *dir, ndir[MAXPATHLEN+1];
 
-	opts = set_gid = set_uid = set_mask = 0;
+	mntflags = set_gid = set_uid = set_mask = 0;
 	(void)memset(&args, '\0', sizeof(args));
 
-	while ((c = getopt(argc, argv, "F:u:g:m:")) != EOF) {
+	while ((c = getopt(argc, argv, "u:g:m:o:")) != EOF) {
 		switch (c) {
-		case 'F':
-			opts |= atoi(optarg);
-			break;
 		case 'u':
 			args.uid = a_uid(optarg);
 			set_uid = 1;
@@ -79,6 +83,9 @@ main(argc, argv)
 		case 'm':
 			args.mask = a_mask(optarg);
 			set_mask = 1;
+			break;
+		case 'o':
+			getmntopts(optarg, mopts, &mntflags);
 			break;
 		case '?':
 		default:
@@ -103,6 +110,11 @@ main(argc, argv)
 	}
 
 	args.fspec = dev;
+	args.export.ex_root = -2;	/* unchecked anyway on DOS fs */
+	if (mntflags & MNT_RDONLY)
+		args.export.ex_flags = MNT_EXRDONLY;
+	else
+		args.export.ex_flags = 0;
 	if (!set_gid || !set_uid || !set_mask) {
 		if (stat(dir, &sb) == -1)
 			err(1, "stat %s", dir);
@@ -115,7 +127,7 @@ main(argc, argv)
 			args.mask = sb.st_mode & (S_IRWXU | S_IRWXG | S_IRWXO);
 	}
 
-	if (mount(MOUNT_MSDOS, dir, opts, &args) < 0)
+	if (mount(MOUNT_MSDOS, dir, mntflags, &args) < 0)
 		err(1, "mount");
 
 	exit (0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfsmount.h,v 1.4 1994/06/29 06:35:47 cgd Exp $	*/
+/*	$NetBSD: msdosfsmount.h,v 1.5 1994/07/16 21:33:29 cgd Exp $	*/
 
 /*
  * Written by Paul Popelka (paulp@uts.amdahl.com)
@@ -49,6 +49,7 @@ struct msdosfsmount {
 	u_char *pm_inusemap;	/* ptr to bitmap of in-use clusters */
 	char pm_ronly;		/* read only if non-zero */
 	char pm_waitonfat;	/* wait for writes of the fat to complt, when 0 use bdwrite, else use bwrite */
+	struct netexport pm_export;	/* export information */
 };
 
 /*
@@ -117,21 +118,20 @@ struct msdosfsmount {
  * Convert pointer to buffer -> pointer to direntry
  */
 #define	bptoep(pmp, bp, dirofs) \
-	((struct direntry *)((bp)->b_un.b_addr)	\
+	((struct direntry *)((bp)->b_data)	\
 	 + (dirofs) % (pmp)->pm_depclust)
 
 
 /*
  * Prototypes for MSDOSFS virtual filesystem operations
  */
-int msdosfs_mount __P((struct mount * mp, char *path, caddr_t data, struct nameidata * ndp, struct proc * p));
-int msdosfs_start __P((struct mount * mp, int flags, struct proc * p));
-int msdosfs_unmount __P((struct mount * mp, int mntflags, struct proc * p));
-int msdosfs_root __P((struct mount * mp, struct vnode ** vpp));
-int msdosfs_quotactl __P((struct mount * mp, int cmds, uid_t uid, caddr_t arg,
-	struct proc * p));
-int msdosfs_statfs __P((struct mount * mp, struct statfs * sbp, struct proc * p));
-int msdosfs_sync __P((struct mount * mp, int waitfor));
-int msdosfs_fhtovp __P((struct mount * mp, struct fid * fhp, struct vnode ** vpp));
-int msdosfs_vptofh __P((struct vnode * vp, struct fid * fhp));
+int msdosfs_mount __P((struct mount *, char *, caddr_t, struct nameidata *, struct proc *));
+int msdosfs_start __P((struct mount *, int, struct proc *));
+int msdosfs_unmount __P((struct mount *, int, struct proc *));
+int msdosfs_root __P((struct mount *, struct vnode **));
+int msdosfs_quotactl __P((struct mount *, int, uid_t, caddr_t, struct proc *));
+int msdosfs_statfs __P((struct mount *, struct statfs *, struct proc *));
+int msdosfs_sync __P((struct mount *, int, struct ucred *, struct proc *));
+int msdosfs_fhtovp __P((struct mount *, struct fid *, struct mbuf *, struct vnode **, int *, struct ucred **));
+int msdosfs_vptofh __P((struct vnode *, struct fid *));
 int msdosfs_init __P(());

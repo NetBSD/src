@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_fat.c,v 1.6 1994/06/30 07:27:17 deraadt Exp $	*/
+/*	$NetBSD: msdosfs_fat.c,v 1.7 1994/07/16 21:33:21 cgd Exp $	*/
 
 /*
  * Written by Paul Popelka (paulp@uts.amdahl.com)
@@ -78,18 +78,21 @@ fatblock(pmp, ofs, bnp, sizep, bop)
 
 /*
  * Map the logical cluster number of a file into a physical disk sector
- * that is filesystem relative. dep - address of denode representing the
- * file of interest findcn - file relative cluster whose filesystem
- * relative cluster number and/or block number are/is to be found bnp -
- * address of where to place the file system relative block number.  If
- * this pointer is null then don't return this quantity. cnp - address of
- * where to place the file system relative cluster number.  If this pointer
- * is null then don't return this quantity. NOTE: Either bnp or cnp must be
- * non-null. This function has one side effect.  If the requested file
- * relative cluster is beyond the end of file, then the actual number of
- * clusters in the file is returned in *cnp.  This is useful for
- * determining how long a directory is.  If cnp is null, nothing is
- * returned.
+ * that is filesystem relative.
+ *
+ * dep	  - address of denode representing the file of interest
+ * findcn - file relative cluster whose filesystem relative cluster number
+ *	    and/or block number are/is to be found
+ * bnp	  - address of where to place the file system relative block number.
+ *	    If this pointer is null then don't return this quantity.
+ * cnp	  - address of where to place the file system relative cluster number.
+ *	    If this pointer is null then don't return this quantity.
+ *
+ * NOTE: Either bnp or cnp must be non-null.
+ * This function has one side effect.  If the requested file relative cluster
+ * is beyond the end of file, then the actual number of clusters in the file
+ * is returned in *cnp.  This is useful for determining how long a directory is.
+ *  If cnp is null, nothing is returned.
  */
 int
 pcbmap(dep, findcn, bnp, cnp)
@@ -175,7 +178,7 @@ pcbmap(dep, findcn, bnp, cnp)
 			bp_bn = bn;
 		}
 		prevcn = cn;
-		cn = getushort(&bp->b_un.b_addr[bo]);
+		cn = getushort(&bp->b_data[bo]);
 		if (fat12) {
 			if (prevcn & 1)
 				cn >>= 4;
@@ -252,16 +255,18 @@ fc_purge(dep, frcn)
 
 	fcp = dep->de_fc;
 	for (i = 0; i < FC_SIZE; i++, fcp++) {
-		if (fcp->fc_frcn != FCE_EMPTY && fcp->fc_frcn >= frcn)
+		if (fcp->fc_frcn >= frcn)
 			fcp->fc_frcn = FCE_EMPTY;
 	}
 }
 
 /*
  * Once the first fat is updated the other copies of the fat must also be
- * updated.  This function does this. pmp - msdosfsmount structure for
- * filesystem to update bp - addr of modified fat block fatbn - block
- * number relative to begin of filesystem of the modified fat block.
+ * updated.  This function does this.
+ *
+ * pmp	 - msdosfsmount structure for filesystem to update
+ * bp	 - addr of modified fat block
+ * fatbn - block number relative to begin of filesystem of the modified fat block.
  */
 void
 updateotherfats(pmp, bp, fatbn)
@@ -274,7 +279,7 @@ updateotherfats(pmp, bp, fatbn)
 
 #if defined(MSDOSFSDEBUG)
 	printf("updateotherfats(pmp %08x, bp %08x, fatbn %d)\n",
-	    pmp, bp, fatbn);
+	       pmp, bp, fatbn);
 #endif				/* defined(MSDOSFSDEBUG) */
 
 	/*
@@ -291,8 +296,7 @@ updateotherfats(pmp, bp, fatbn)
 		fatbn += pmp->pm_FATsecs;
 		/* getblk() never fails */
 		bpn = getblk(pmp->pm_devvp, fatbn, bp->b_bcount, 0, 0);
-		bcopy(bp->b_un.b_addr, bpn->b_un.b_addr,
-		    bp->b_bcount);
+		bcopy(bp->b_data, bpn->b_data, bp->b_bcount);
 		if (pmp->pm_waitonfat)
 			bwrite(bpn);
 		else
@@ -306,20 +310,20 @@ updateotherfats(pmp, bp, fatbn)
  * The following picture shows where nibbles go when moving from a 12 bit
  * cluster number into the appropriate bytes in the FAT.
  * 
- * byte m        byte m+1      byte m+2 +----+----+   +----+----+ +----+----+
- * |  0    1 |   |  2    3 |   |  4    5 |   FAT bytes +----+----+
- * +----+----+   +----+----+
+ *	byte m        byte m+1      byte m+2
+ *	+----+----+   +----+----+   +----+----+
+ *	|  0    1 |   |  2    3 |   |  4    5 |   FAT bytes
+ *	+----+----+   +----+----+   +----+----+
  * 
- * +----+----+----+ +----+----+----+ |  3    0    1 | |  4    5    2 |
- * +----+----+----+ +----+----+----+ cluster n        cluster n+1
+ *	+----+----+----+   +----+----+----+
+ *	|  3    0    1 |   |  4    5    2 |
+ *	+----+----+----+   +----+----+----+
+ *	cluster n  	   cluster n+1
  * 
  * Where n is even. m = n + (n >> 2)
  * 
- * (Function no longer used)
  */
-
-
-extern inline void
+extern __inline void
 usemap_alloc(pmp, cn)
 	struct msdosfsmount *pmp;
 	u_long cn;
@@ -330,7 +334,7 @@ usemap_alloc(pmp, cn)
 	pmp->pm_lookhere = cn + 1;
 }
 
-extern inline void
+extern __inline void
 usemap_free(pmp, cn)
 	struct msdosfsmount *pmp;
 	u_long cn;
@@ -365,13 +369,16 @@ clusterfree(pmp, cluster, oldcnp)
 }
 
 /*
- * Get or Set or 'Get and Set' the cluster'th entry in the fat. function -
- * whether to get or set a fat entry pmp - address of the msdosfsmount
- * structure for the filesystem whose fat is to be manipulated. cluster -
- * which cluster is of interest oldcontents - address of a word that is to
- * receive the contents of the cluster'th entry if this is a get function
- * newcontents - the new value to be written into the cluster'th element of
- * the fat if this is a set function.
+ * Get or Set or 'Get and Set' the cluster'th entry in the fat.
+ *
+ * function	- whether to get or set a fat entry
+ * pmp		- address of the msdosfsmount structure for the filesystem
+ *		  whose fat is to be manipulated.
+ * cn		- which cluster is of interest
+ * oldcontents	- address of a word that is to receive the contents of the
+ *		  cluster'th entry if this is a get function
+ * newcontents	- the new value to be written into the cluster'th element of
+ *		  the fat if this is a set function.
  * 
  * This function can also be used to free a cluster by setting the fat entry
  * for a cluster to 0.
@@ -394,9 +401,8 @@ fatentry(function, pmp, cn, oldcontents, newcontents)
 	struct buf *bp;
 
 	/*
-	 * printf("fatentry(func %d, pmp %08x, clust %d, oldcon %08x,
-	 * newcon %d)\n", function, pmp, cluster, oldcontents,
-	 * newcontents);
+	 * printf("fatentry(func %d, pmp %08x, clust %d, oldcon %08x, newcon %d)\n",
+	 *	  function, pmp, cluster, oldcontents, newcontents);
 	 */
 
 #ifdef DIAGNOSTIC
@@ -428,7 +434,7 @@ fatentry(function, pmp, cn, oldcontents, newcontents)
 	fatblock(pmp, byteoffset, &bn, &bsize, &bo);
 	error = bread(pmp->pm_devvp, bn, bsize, NOCRED, &bp);
 	if (function & FAT_GET) {
-		readcn = getushort(&bp->b_un.b_addr[bo]);
+		readcn = getushort(&bp->b_data[bo]);
 		if (FAT12(pmp)) {
 			if (cn & 1)
 				readcn >>= 4;
@@ -441,17 +447,17 @@ fatentry(function, pmp, cn, oldcontents, newcontents)
 	}
 	if (function & FAT_SET) {
 		if (FAT12(pmp)) {
-			readcn = getushort(&bp->b_un.b_addr[bo]);
+			readcn = getushort(&bp->b_data[bo]);
 			if (cn & 1) {
 				readcn &= 0x000f;
-				readcn |= (newcontents << 4);
+				readcn |= newcontents << 4;
 			} else {
 				readcn &= 0xf000;
-				readcn |= (newcontents << 0);
+				readcn |= newcontents & 0xfff;
 			}
-			putushort(&bp->b_un.b_addr[bo], readcn);
+			putushort(&bp->b_data[bo], readcn);
 		} else
-			putushort(&bp->b_un.b_addr[bo], newcontents);
+			putushort(&bp->b_data[bo], newcontents);
 		updateotherfats(pmp, bp, bn);
 		/*
 		 * Write out the first fat last.
@@ -469,9 +475,12 @@ fatentry(function, pmp, cn, oldcontents, newcontents)
 }
 
 /*
- * Allocate a free cluster. pmp - retcluster - put the allocated cluster's
- * number here. fillwith - put this value into the fat entry for the
- * allocated cluster.
+ * Allocate a free cluster.
+ *
+ * pmp	      -
+ * retcluster - put the allocated cluster's number here.
+ * fillwith   - put this value into the fat entry for the
+ *		allocated cluster.
  */
 int
 clusteralloc(pmp, retcluster, fillwith)
@@ -510,10 +519,12 @@ found_one:;
 }
 
 /*
- * Free a chain of clusters. pmp - address of the msdosfs mount structure
- * for the filesystem containing the cluster chain to be freed.
+ * Free a chain of clusters.
+ *
+ * pmp		- address of the msdosfs mount structure for the filesystem
+ *		  containing the cluster chain to be freed.
  * startcluster - number of the 1st cluster in the chain of clusters to be
- * freed.
+ *		  freed.
  */
 int
 freeclusterchain(pmp, startcluster)
@@ -558,7 +569,7 @@ fillinusemap(pmp)
 
 	/*
 	 * Figure how many free clusters are in the filesystem by ripping
-	 * thougth the fat counting the number of entries whose content is
+	 * through the fat counting the number of entries whose content is
 	 * zero.  These represent free clusters.
 	 */
 	pmp->pm_freeclustercount = 0;
@@ -575,7 +586,7 @@ fillinusemap(pmp)
 			if (error)
 				return error;
 		}
-		readcn = getushort(&bp->b_un.b_addr[bo]);
+		readcn = getushort(&bp->b_data[bo]);
 		if (fat12) {
 			if (cn & 1)
 				readcn >>= 4;
@@ -590,13 +601,15 @@ fillinusemap(pmp)
 }
 
 /*
- * Allocate a new cluster and chain it onto the end of the file. dep - the
- * file to extend bpp - where to return the address of the buf header for
- * the new file block ncp - where to put cluster number of the newly
- * allocated file block If this pointer is 0, do not return the cluster
- * number.
+ * Allocate a new cluster and chain it onto the end of the file.
+ *
+ * dep - the file to extend
+ * bpp - where to return the address of the buf header for the new
+ *	 file block
+ * ncp - where to put cluster number of the newly allocated file block
+ *	 If this pointer is 0, do not return the cluster number.
  * 
- * NOTE: This function is not responsible for turning on the DEUPD bit if the
+ * NOTE: This function is not responsible for turning on the DEUPD bit of the
  * de_flag field of the denode and it does not change the de_FileSize
  * field.  This is left for the caller to do.
  */
@@ -669,7 +682,7 @@ extendfile(dep, bpp, ncp)
 	 */
 	if (dep->de_Attributes & ATTR_DIRECTORY)
 		*bpp = getblk(pmp->pm_devvp, cntobn(pmp, cn),
-		    pmp->pm_bpcluster, 0, 0);
+			      pmp->pm_bpcluster, 0, 0);
 	else
 		*bpp = getblk(DETOV(dep), frcn, pmp->pm_bpcluster, 0, 0);
 	clrbuf(*bpp);

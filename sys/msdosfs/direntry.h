@@ -1,4 +1,4 @@
-/*	$NetBSD: direntry.h,v 1.4 1994/06/29 06:35:31 cgd Exp $	*/
+/*	$NetBSD: direntry.h,v 1.5 1994/07/16 21:33:19 cgd Exp $	*/
 
 /*
  * Written by Paul Popelka (paulp@uts.amdahl.com)
@@ -63,15 +63,6 @@ struct direntry {
 #define DD_MONTH_SHIFT		5
 #define DD_YEAR_MASK		0xFE00	/* year - 1980 */
 #define DD_YEAR_SHIFT		9
-
-/*
- * The following defines are used to rename fields in the ufs_specific
- * structure in the nameidata structure in namei.h
- */
-#define	ni_msdosfs	ni_ufs
-#define	msdosfs_count	ufs_count
-#define	msdosfs_offset	ufs_offset
-#define	msdosfs_cluster	ufs_ino
 
 #if defined(KERNEL)
 void unix2dostime __P((struct timespec * tsp, u_short * ddp, u_short * dtp));
