@@ -1,4 +1,4 @@
-/*	$NetBSD: if_levar.h,v 1.3 1997/10/09 07:41:03 jtc Exp $	*/
+/*	$NetBSD: if_levar.h,v 1.4 1998/12/09 07:33:59 leo Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -42,6 +42,8 @@
  */
 #define	LER_RDP		0	/* Data port			*/
 #define	LER_RAP		2	/* Register select port		*/
+#define	BVME410_IVEC	4	/* Interrupt ID Register	*/
+#define	BVME410_BAR	6	/* BVME410 RAM Base Address Reg */
 #define	LER_IVEC	7	/* Interrupt vector		*/
 #define	LER_EEPROM	13	/* PAM's Eeprom enable port	*/
 #define	LER_MEME	15	/* PAM's Mem enable port	*/
@@ -72,6 +74,7 @@ struct le_softc {
 #define	LE_PAM		0
 #define	LE_OLD_RIEBL	1
 #define	LE_NEW_RIEBL	2
+#define	LE_BVME410	3
 
 /*
  * Determine type of RIEBL card by magic
@@ -94,3 +97,12 @@ struct le_softc {
  */
 #define	RIEBL_RES_START		0xee70
 #define	RIEBL_RES_END		0xeec0
+
+/*
+ * Bits in the BVME410 RAM Base Address Register, when node address
+ * serial EEPROM is enabled.
+ */
+#define	BVME410_CS_SHIFT	1
+#define	BVME410_CLK_SHIFT	2
+#define	BVME410_DIN_SHIFT	3
+
