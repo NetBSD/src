@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.14 2000/05/26 21:19:58 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.15 2000/05/27 14:25:00 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -58,7 +58,7 @@
 
 #include <sys/sched.h>
 struct cpu_info {
-	struct schedcpu_percpu ci_schedstate; /* scheduler state */
+	struct schedstate_percpu ci_schedstate; /* scheduler state */
 #if defined(DIAGNOSTIC) || defined(LOCKDEBUG)
 	u_long ci_spin_locks;		/* # of spin locks held */
 	u_long ci_simple_locks;		/* # of simple locks held */
