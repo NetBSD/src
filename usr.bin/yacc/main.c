@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.9 1997/10/30 16:41:49 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.10 1997/10/31 07:46:08 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989 The Regents of the University of California
 #if 0
 static char sccsid[] = "@(#)main.c	5.5 (Berkeley) 5/24/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.9 1997/10/30 16:41:49 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.10 1997/10/31 07:46:08 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -369,18 +369,19 @@ create_file_names()
     {
 	if (explicit_file_name)
 	{
-    char *suffix;
-    defines_file_name = MALLOC(strlen(output_file_name)+1);
+	    char *suffix;
+	    defines_file_name = MALLOC(strlen(output_file_name) + 1);
 	    if (defines_file_name == 0)
 		no_space();
 	    strcpy(defines_file_name, output_file_name);
 	    /* does the output_file_name have a known suffix */
-            if ((suffix = strrchr(output_file_name,'.')) != 0
-            &&  (!strcmp(suffix,".c") ||   /* good, old-fashioned C */
-                 !strcmp(suffix,".C") ||   /* C++, or C on Windows */
-                 !strcmp(suffix,".cc") ||  /* C++ */
-                 !strcmp(suffix,".cxx") || /* C++ */
-                 !strcmp(suffix,".cpp")))  /* C++ (Windows) */
+            suffix = strrchr(output_file_name, '.');
+            if (suffix != 0 &&
+		(!strcmp(suffix, ".c") ||   /* good, old-fashioned C */
+                 !strcmp(suffix, ".C") ||   /* C++, or C on Windows */
+                 !strcmp(suffix, ".cc") ||  /* C++ */
+                 !strcmp(suffix, ".cxx") || /* C++ */
+                 !strcmp(suffix, ".cpp")))  /* C++ (Windows) */
             {
                 strncpy(defines_file_name, output_file_name,
                         suffix - output_file_name + 1);
