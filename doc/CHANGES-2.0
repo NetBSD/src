@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.41 2004/04/06 04:00:01 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.42 2004/04/06 04:02:10 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -456,3 +456,12 @@ sys/netinet/tcp_subr.c				1.161
 	Invoking tcpcb's get erroneously free'd resulting in to_ticks <= 0 
 	assertion.  PR#22551
 	[christos, ticket #69]
+
+sys/dev/ic/com.c				1.225
+
+	Fix race condition introduced in rev 1.189; after the change, if there 
+	is THRE interrupt occurs between the LSR read and IIR read, we won't 
+	see the LSR_TXRDY bit when testing it in the variable 'lsr' and we 
+	don't get interrupted again (as the corresponding bit in the IIR is 
+	cleared by reading, except for some broken devices). PR#25010
+	[enami, ticket #70]
