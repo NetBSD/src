@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.239 2003/10/21 20:59:31 kleink Exp $ */
+/*	$NetBSD: machdep.c,v 1.240 2003/10/28 15:25:27 chs Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.239 2003/10/21 20:59:31 kleink Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.240 2003/10/28 15:25:27 chs Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -643,6 +643,7 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	default:
 		/* Don't know what trampoline version; kill it. */
+		addr = 0;
 		sigexit(l, SIGILL);
 	}
 
