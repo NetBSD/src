@@ -1,4 +1,4 @@
-/*	$NetBSD: ite8181.c,v 1.5 2001/01/23 08:51:48 sato Exp $	*/
+/*	$NetBSD: ite8181.c,v 1.6 2001/02/15 09:17:18 sato Exp $	*/
 
 /*-
  * Copyright (c) 2000 SATO Kazumi
@@ -249,8 +249,20 @@ ite8181_attach(sc)
 	struct hpcfb_attach_args ha;
 	int console = (bootinfo->bi_cnuse & BI_CNUSE_SERIAL) ? 0 : 1;
 
+	printf(": ");
+	if (ite8181_fbinit(&sc->sc_fbconf) != 0) {
+		/* just return so that hpcfb will not be attached */
+		return;
+	}
+
 	regval = ite8181_config_read_4(sc->sc_iot, sc->sc_ioh, ITE8181_CLASS);
-	printf(": ITE8181 Rev.%02lx\n", regval & ITE8181_REV_MASK);
+	printf("ITE8181 Rev.%02lx", regval & ITE8181_REV_MASK);
+	if (console) {
+		printf(", console");	
+	}
+	printf("\n");
+	printf("%s: framebuffer address: 0x%08lx\n", 
+		sc->sc_dev.dv_xname, (u_long)bootinfo->fb_addr);
 
 	/* set base offsets */
 	sc->sc_mba = ite8181_config_read_4(sc->sc_iot, sc->sc_ioh, ITE8181_MBA);
@@ -278,11 +290,6 @@ ite8181_attach(sc)
 	if (sc->sc_hardpowerhook == NULL)
 		printf("%s: WARNING: unable to establish hard power hook\n",
 			sc->sc_dev.dv_xname);
-
-	if (ite8181_fbinit(&sc->sc_fbconf) != 0) {
-		/* just return so that hpcfb will not be attached */
-		return;
-	}
 
 	ite8181_erase_cursor(sc);
 
