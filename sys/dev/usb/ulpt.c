@@ -1,4 +1,4 @@
-/*	$NetBSD: ulpt.c,v 1.14 1999/08/14 14:49:32 augustss Exp $	*/
+/*	$NetBSD: ulpt.c,v 1.15 1999/08/22 22:22:43 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -400,7 +400,7 @@ ulpt_do_write(sc, uio, flags)
 	struct uio *uio;
 	int flags;
 {
-	size_t n;
+	u_int32_t n;
 	int error = 0;
 	char buf[ULPT_BSIZE];
 	usbd_request_handle reqh;
@@ -415,18 +415,11 @@ ulpt_do_write(sc, uio, flags)
 		error = uiomove(buf, n, uio);
 		if (error)
 			break;
-		/* XXX use callback to enable interrupt? */
-		r = usbd_setup_request(reqh, sc->sc_bulkpipe, 0, buf, n,
-				       0, USBD_NO_TIMEOUT, 0);
-		if (r != USBD_NORMAL_COMPLETION) {
-			error = EIO;
-			break;
-		}
 		DPRINTFN(1, ("ulptwrite: transfer %d bytes\n", n));
-		r = usbd_sync_transfer(reqh);
+		r = usbd_bulk_transfer(reqh, sc->sc_bulkpipe, 0, 
+				       USBD_NO_TIMEOUT, buf, &n, "ulptwr");
 		if (r != USBD_NORMAL_COMPLETION) {
 			DPRINTF(("ulptwrite: error=%d\n", r));
-			usbd_clear_endpoint_stall(sc->sc_bulkpipe);
 			error = EIO;
 			break;
 		}
