@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.30.2.7 2002/07/12 03:06:36 nathanw Exp $	*/
+/*	$NetBSD: time.h,v 1.30.2.8 2002/10/03 23:49:30 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -177,7 +177,13 @@ struct clockinfo {
  * Structure used to manage timers in a process.
  */
 struct 	ptimer {
-	struct	callout pt_ch;
+	union {
+		struct	callout	pt_ch;
+		struct {
+			LIST_ENTRY(ptimer)	pt_list;
+			int	pt_active;
+		} pt_nonreal;
+	} pt_data;
 	struct	sigevent pt_ev;
 	struct	itimerval pt_time;
 	siginfo_t	pt_info;
@@ -186,12 +192,25 @@ struct 	ptimer {
 	struct proc *pt_proc; 
 };
 
+#define pt_ch	pt_data.pt_ch
+#define pt_list	pt_data.pt_nonreal.pt_list
+#define pt_active	pt_data.pt_nonreal.pt_active
+
 #define	TIMER_MAX	32
 #define	TIMERS_ALL	0
 #define	TIMERS_POSIX	1
 
+LIST_HEAD(ptlist, ptimer);
+
+struct	ptimers {
+	struct ptlist pts_virtual;
+	struct ptlist pts_prof;
+	struct ptimer *pts_timers[TIMER_MAX];
+};
+
 int	itimerfix __P((struct timeval *tv));
-int	itimerdecr __P((struct itimerval *itp, int usec));
+int	itimerdecr __P((struct ptimer *, int usec));
+void	itimerfire __P((struct ptimer *));
 void	microtime __P((struct timeval *tv));
 int	settime __P((struct timeval *));
 int	ratecheck __P((struct timeval *, const struct timeval *));
@@ -200,6 +219,8 @@ int	settimeofday1 __P((const struct timeval *, const struct timezone *,
 	    struct proc *));
 int	adjtime1 __P((const struct timeval *, struct timeval *, struct proc *));
 int	clock_settime1 __P((clockid_t, const struct timespec *));
+void	timer_settime __P((struct ptimer *));
+void	timer_gettime __P((struct ptimer *, struct itimerval *));
 void	timers_alloc __P((struct proc *));
 void	timers_free __P((struct proc *, int));
 void	realtimerexpire __P((void *));
