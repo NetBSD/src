@@ -1,4 +1,4 @@
-/*	$NetBSD: ahbreg.h,v 1.11 2003/05/03 18:11:10 wiz Exp $	*/
+/*	$NetBSD: ahbreg.h,v 1.11.8.1 2005/04/02 21:59:17 he Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -210,7 +210,7 @@ struct ahb_ecb {
 	u_char  req_sense_length;
 	u_char  scsi_cmd_length;
 	short   cksum;
-	struct scsi_generic scsi_cmd;
+	u_char	scsi_cmd[12];
 
 	struct ahb_dma_seg ahb_dma[AHB_NSEG];
 	struct ahb_ecb_status ecb_status;
