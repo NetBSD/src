@@ -1,4 +1,4 @@
-/*	$NetBSD: db_variables.c,v 1.19 2000/07/05 16:29:25 jhawk Exp $	*/
+/*	$NetBSD: db_variables.c,v 1.20 2001/01/17 19:50:04 jdolecek Exp $	*/
 
 /* 
  * Mach Operating System
@@ -64,11 +64,11 @@ int		db_onpanic = DDB_ONPANIC;
 int		db_fromconsole = DDB_FROMCONSOLE;
 
 
-static int	db_rw_internal_variable __P((struct db_variable *, db_expr_t *,
-		    int));
+static int	db_rw_internal_variable __P((const struct db_variable *,
+			db_expr_t *, int));
 
 /* XXX must all be ints for sysctl. */
-struct db_variable db_vars[] = {
+const struct db_variable db_vars[] = {
 	{ "radix",	(long *)&db_radix,	db_rw_internal_variable },
 	{ "maxoff",	(long *)&db_maxoff,	db_rw_internal_variable },
 	{ "maxwidth",	(long *)&db_max_width,	db_rw_internal_variable },
@@ -77,14 +77,14 @@ struct db_variable db_vars[] = {
 	{ "onpanic",	(long *)&db_onpanic,	db_rw_internal_variable },
 	{ "fromconsole", (long *)&db_onpanic,	db_rw_internal_variable },
 };
-struct db_variable *db_evars = db_vars + sizeof(db_vars)/sizeof(db_vars[0]);
+const struct db_variable * const db_evars = db_vars + sizeof(db_vars)/sizeof(db_vars[0]);
 
 /*
  * ddb command line access to the DDB variables defined above.
  */
 static int
 db_rw_internal_variable(vp, valp, rw)
-	struct db_variable *vp;
+	const struct db_variable *vp;
 	db_expr_t *valp;
 	int rw;
 {
@@ -145,10 +145,10 @@ ddb_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 
 int
 db_find_variable(varp)
-	struct db_variable	**varp;
+	const struct db_variable	**varp;
 {
 	int	t;
-	struct db_variable *vp;
+	const struct db_variable *vp;
 
 	t = db_read_token();
 	if (t == tIDENT) {
@@ -174,7 +174,7 @@ int
 db_get_variable(valuep)
 	db_expr_t	*valuep;
 {
-	struct db_variable *vp;
+	const struct db_variable *vp;
 
 	if (!db_find_variable(&vp))
 	    return (0);
@@ -188,7 +188,7 @@ int
 db_set_variable(value)
 	db_expr_t	value;
 {
-	struct db_variable *vp;
+	const struct db_variable *vp;
 
 	if (!db_find_variable(&vp))
 	    return (0);
@@ -201,10 +201,10 @@ db_set_variable(value)
 
 void
 db_read_variable(vp, valuep)
-	struct db_variable *vp;
+	const struct db_variable *vp;
 	db_expr_t	*valuep;
 {
-	int	(*func) __P((struct db_variable *, db_expr_t *, int)) = vp->fcn;
+	int	(*func) __P((const struct db_variable *, db_expr_t *, int)) = vp->fcn;
 
 	if (func == FCN_NULL)
 	    *valuep = *(vp->valuep);
@@ -214,10 +214,10 @@ db_read_variable(vp, valuep)
 
 void
 db_write_variable(vp, valuep)
-	struct db_variable *vp;
+	const struct db_variable *vp;
 	db_expr_t	*valuep;
 {
-	int	(*func) __P((struct db_variable *, db_expr_t *, int)) = vp->fcn;
+	int	(*func) __P((const struct db_variable *, db_expr_t *, int)) = vp->fcn;
 
 	if (func == FCN_NULL)
 	    *(vp->valuep) = *valuep;
@@ -235,7 +235,7 @@ db_set_cmd(addr, have_addr, count, modif)
 {
 	db_expr_t	value;
 	db_expr_t	old_value;
-	struct db_variable *vp;
+	const struct db_variable *vp;
 	int	t;
 
 	t = db_read_token();
