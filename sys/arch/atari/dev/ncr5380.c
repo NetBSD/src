@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380.c,v 1.10 1995/10/05 08:52:58 leo Exp $	*/
+/*	$NetBSD: ncr5380.c,v 1.11 1995/10/08 13:34:23 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -711,7 +711,7 @@ SC_REQ	*reqp;
 	 * Interrupts are lowered when the 5380 is setup to arbitrate for the
 	 * bus.
 	 */
-	if (connected || (GET_5380_REG(NCR5380_IDSTAT) & SC_S_BSY)) {
+	if (connected) {
 		splx(sps);
 		PID("scsi_select2");
 		return (-1);
@@ -732,34 +732,15 @@ SC_REQ	*reqp;
  
 	splx(sps);
 
-	cnt = 10000;
+	cnt = 10;
 	while (!(GET_5380_REG(NCR5380_ICOM) & SC_AIP) && --cnt)
 		delay(1);
 
 	if (!(GET_5380_REG(NCR5380_ICOM) & SC_AIP)) {
 		SET_5380_REG(NCR5380_MODE, IMODE_BASE);
-		delay(1);
+		SET_5380_REG(NCR5380_ICOM, 0);
+		DBG_SELPRINT ("Arbitration lost, bus not free\n",0);
 		PID("scsi_select3");
-
-		if (GET_5380_REG(NCR5380_IDSTAT) & SC_S_BSY) {
-			/*
-			 * Damn, we have a connected target that we don't know
-			 * of. Some targets seem to respond to a selection
-			 * AFTER the selection-timeout. Try to get the target
-			 * into the Message-out phase so we can send an ABORT
-			 * message. We try to avoid resetting the SCSI-bus!
-			 */
-			if (!reach_msg_out(sc, sizeof(struct scsi_generic))) {
-				u_long	len   = 1;
-				u_char	phase = PH_MSGOUT;
-				u_char	msg   = MSG_ABORT;
-
-				transfer_pio(&phase, &msg, &len, 0);
-			}
-			else if (GET_5380_REG(NCR5380_IDSTAT) & SC_S_BSY)
-					scsi_reset(sc);
-		}
-		PID("scsi_select4");
 		return (-1);
 	}
 
@@ -770,36 +751,47 @@ SC_REQ	*reqp;
 	 * Check the result of the arbitration. If we failed, return -1.
 	 */
 	if (GET_5380_REG(NCR5380_ICOM) & SC_LA) {
-		/*
-		 * The spec requires that we should read the data register to
-		 * check for higher id's and check the SC_LA again.
-		 */
-		tmp[0] = GET_5380_REG(NCR5380_DATA);
-		if (GET_5380_REG(NCR5380_ICOM) & SC_LA) {
-			SET_5380_REG(NCR5380_MODE, IMODE_BASE);
-			SET_5380_REG(NCR5380_ICOM, 0);
-			DBG_SELPRINT ("Arbitration lost,deassert SC_ARBIT\n",0);
-			PID("scsi_select5");
-			return (-1);
-		}
+		SET_5380_REG(NCR5380_MODE, IMODE_BASE);
+		SET_5380_REG(NCR5380_ICOM, 0);
+		PID("scsi_select4");
+		return (-1);
+	}
+
+	/*
+	 * The spec requires that we should read the data register to
+	 * check for higher id's and check the SC_LA again.
+	 */
+	tmp[0] = GET_5380_REG(NCR5380_DATA);
+	if (tmp[0] & ~((SC_HOST_ID << 1) - 1)) {
+		SET_5380_REG(NCR5380_MODE, IMODE_BASE);
+		SET_5380_REG(NCR5380_ICOM, 0);
+		DBG_SELPRINT ("Arbitration lost, higher id present\n",0);
+		PID("scsi_select5");
+		return (-1);
+	}
+	if (GET_5380_REG(NCR5380_ICOM) & SC_LA) {
+		SET_5380_REG(NCR5380_MODE, IMODE_BASE);
+		SET_5380_REG(NCR5380_ICOM, 0);
+		DBG_SELPRINT ("Arbitration lost,deassert SC_ARBIT\n",0);
+		PID("scsi_select6");
+		return (-1);
 	}
 	SET_5380_REG(NCR5380_ICOM, SC_A_SEL | SC_A_BSY);
 	if (GET_5380_REG(NCR5380_ICOM) & SC_LA) {
 		SET_5380_REG(NCR5380_MODE, IMODE_BASE);
 		SET_5380_REG(NCR5380_ICOM, 0);
 		DBG_SELPRINT ("Arbitration lost, deassert SC_A_SEL\n", 0);
-		PID("scsi_select6");
+		PID("scsi_select7");
 		return (-1);
 	}
 	/* Bus settle delay + Bus clear delay = 1.2 usecs */
 	delay(2);
 	DBG_SELPRINT ("Arbitration complete\n", 0);
 
-	targ_bit = 1 << reqp->targ_id;
-
 	/*
 	 * Now that we won the arbitration, start the selection.
 	 */
+	targ_bit = 1 << reqp->targ_id;
 	SET_5380_REG(NCR5380_DATA, SC_HOST_ID | targ_bit);
 
 	if (sc->sc_noselatn & targ_bit)
@@ -832,7 +824,7 @@ SC_REQ	*reqp;
 	 * Wait for the target to react, the specs call for a timeout of
 	 * 250 ms.
 	 */
-	cnt = 25000 /* 250 */;
+	cnt = 25000;
 	while (!(GET_5380_REG(NCR5380_IDSTAT) & SC_S_BSY) && --cnt)
 		delay(10);
 
@@ -845,7 +837,7 @@ SC_REQ	*reqp;
 		 * When BSY is asserted, we assume the selection succeeded,
 		 * otherwise we release the bus.
 		 */
-		SET_5380_REG(NCR5380_ICOM, SC_A_SEL | SC_A_ATN);
+		SET_5380_REG(NCR5380_ICOM, SC_A_SEL | atn_flag);
 		delay(201);
 		if (!(GET_5380_REG(NCR5380_IDSTAT) & SC_S_BSY)) {
 			SET_5380_REG(NCR5380_ICOM, 0);
@@ -853,7 +845,7 @@ SC_REQ	*reqp;
 			DBG_SELPRINT ("Target %d not responding to sel\n",
 								reqp->targ_id);
 			finish_req(reqp);
-			PID("scsi_select7");
+			PID("scsi_select8");
 			return (0);
 		}
 	}
@@ -921,7 +913,7 @@ SC_REQ	*reqp;
 		SET_5380_REG(NCR5380_ICOM, 0);
 		reqp->xs->error = code ? code : XS_DRIVER_STUFFUP;
 		finish_req(reqp);
-		PID("scsi_select8");
+		PID("scsi_select9");
 		return (0);
 	}
 	reqp->phase = PH_MSGOUT;
@@ -938,7 +930,7 @@ identify_failed:
 
 	connected  = reqp;
 	busy      |= targ_bit;
-	PID("scsi_select9");
+	PID("scsi_select10");
 	return (0);
 }
 
@@ -986,7 +978,6 @@ information_transfer()
 
 	switch (phase) {
 	    case PH_DATAOUT:
-
 #ifdef DBG_NOWRITE
 		ncr_tprint(reqp, "NOWRITE set -- write attempt aborted.");
 		reqp->msgout = MSG_ABORT;
@@ -1198,6 +1189,13 @@ struct ncr_softc *sc;
 	SET_5380_REG(NCR5380_ICOM, SC_A_BSY);
 	len = 1000;
 	while ((GET_5380_REG(NCR5380_IDSTAT) & SC_S_SEL) && (len > 0)) {
+		if(!GET_5380_REG(NCR5380_DATA)) {
+			/*
+			 * We stepped into the reselection timeout....
+			 */
+			SET_5380_REG(NCR5380_ICOM, 0);
+			return;
+		}
 		delay(1);
 		len--;
 	}
@@ -1457,9 +1455,11 @@ dma_ready()
 
 	/*
 	 * DMA mode should always be reset even when we will continue with the
-	 * next chain.
+	 * next chain. It is also essential to clear the MON_BUSY because
+	 * when LOST_BUSY is unexpectedly set, we will not be able to drive
+	 * the bus....
 	 */
-	SET_5380_REG(NCR5380_MODE, GET_5380_REG(NCR5380_MODE) & ~SC_M_DMA);
+	SET_5380_REG(NCR5380_MODE, IMODE_BASE);
 
 
 	if ((dmstat & SC_BSY_ERR) || !(dmstat & SC_PHS_MTCH)
