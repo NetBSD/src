@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.70 2001/11/12 15:29:50 lukem Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.71 2001/11/17 18:56:46 perry Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.70 2001/11/12 15:29:50 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.71 2001/11/17 18:56:46 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -695,7 +695,7 @@ cd9660_readlink(v)
 		return (error);
 	}
 	uio->uio_resid -= symlen;
-	(char *)uio->uio_iov->iov_base += symlen;
+	uio->uio_iov->iov_base = (char *)uio->uio_iov->iov_base + symlen;
 	uio->uio_iov->iov_len -= symlen;
 	return (0);
 }
