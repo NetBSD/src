@@ -1,4 +1,4 @@
-/*	$NetBSD: vfscanf.c,v 1.25 2000/01/21 19:56:07 mycroft Exp $	*/
+/*	$NetBSD: vfscanf.c,v 1.26 2000/01/21 23:12:33 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)vfscanf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: vfscanf.c,v 1.25 2000/01/21 19:56:07 mycroft Exp $");
+__RCSID("$NetBSD: vfscanf.c,v 1.26 2000/01/21 23:12:33 wrstuden Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -59,6 +59,7 @@ __RCSID("$NetBSD: vfscanf.c,v 1.25 2000/01/21 19:56:07 mycroft Exp $");
 #endif
 
 #include "local.h"
+#include "reentrant.h"
 
 #ifdef FLOATING_POINT
 #include "floatio.h"
