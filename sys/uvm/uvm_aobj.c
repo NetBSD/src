@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.58 2003/08/11 16:48:05 pk Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.59 2003/08/11 16:54:11 pk Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.58 2003/08/11 16:48:05 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.59 2003/08/11 16:54:11 pk Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -1452,6 +1452,9 @@ uao_pagein_page(aobj, pageidx)
 		 */
 
 		return FALSE;
+
+	default:
+		return TRUE;
 	}
 
 	/*
@@ -1468,7 +1471,10 @@ uao_pagein_page(aobj, pageidx)
 		uvm_pagedeactivate(pg);
 	uvm_unlock_pageq();
 
-	pg->flags &= ~(PG_BUSY|PG_CLEAN|PG_FAKE);
+	if (pg->flags & PG_WANTED) {
+		wakeup(pg);
+	}
+	pg->flags &= ~(PG_WANTED|PG_BUSY|PG_CLEAN|PG_FAKE);
 	UVM_PAGE_OWN(pg, NULL);
 
 	return FALSE;
