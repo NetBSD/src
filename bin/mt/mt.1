@@ -1,4 +1,4 @@
-.\"	$NetBSD: mt.1,v 1.14 1997/10/20 08:52:42 enami Exp $
+.\"	$NetBSD: mt.1,v 1.15 1998/07/03 11:08:08 fair Exp $
 .\"
 .\" Copyright (c) 1981, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -38,20 +38,22 @@
 .Os BSD 4
 .Sh NAME
 .Nm mt
-.Nd magnetic tape manipulating program
+.Nd magnetic tape manipulation
 .Sh SYNOPSIS
 .Nm
 .Op Fl f Ar tapename
 .Ar command
 .Op Ar count
 .Sh DESCRIPTION
+The
 .Nm
-is used to give commands to a magnetic tape drive.
+program is used to give commands to a magnetic tape drive.
 By default
 .Nm
-performs the requested operation once.  Operations
-may be performed multiple times by specifying
+performs the requested operation once.
+Operations may be performed multiple times by specifying
 .Ar count  .
+.Pp
 Note
 that
 .Ar tapename
@@ -59,15 +61,25 @@ must reference a raw (not block) tape device.
 If
 .Ar tapename
 is of the form
-.Dq host:tapename ,
+.Qq host:tapename ,
 or
-.Dq user@host:tapename ,
+.Qq user@host:tapename ,
 .Nm
 writes to the named tape device on the remote host using
 .Xr rmt 8 .
 .Pp
-The available commands are listed below.  Only as many
-characters as are required to uniquely identify a command
+The
+.Xr rmt 8
+process on the remote host is typically initiated via
+.Xr rsh 1 ,
+although an alternate method such as
+.Xr ssh 1
+can be specified via the
+.Ev RCMD_CMD
+environment variable.
+.Pp
+The available commands are listed below.
+Only as many characters as are required to uniquely identify a command
 need be specified.
 .Bl -tag -width "eof, weof"
 .It Cm asf
@@ -122,7 +134,9 @@ of zero sets variable blocksize.
 .It Cm density
 Set the tape density code to
 .Ar count
-as specified in the SCSI2 specification.
+as specified in the
+.Tn SCSI-2
+specification.
 .It Cm rdspos
 Read the logical block position of the tape (not all tape
 drives support this feature, count is ignored).
@@ -140,8 +154,8 @@ Set the hardware block position of the tape to
 .It Cm compress
 If
 .Ar count
-is zero, disable compression.  Otherwise enable compression (not all tape
-drives support this feature).
+is zero, disable compression.
+Otherwise enable compression (not all tape drives support this feature).
 .El
 .Pp
 If a tape name is not specified, and the environment variable
@@ -155,30 +169,43 @@ uses the device
 returns a 0 exit status when the operation(s) were successful,
 1 if the command was unrecognized, and 2 if an operation failed.
 .Sh ENVIRONMENT
-If the following environment variable exists, it is utilized by
+If the following environment variables exist, they are utilized by
 .Nm "" .
 .Bl -tag -width Fl
 .It Ev TAPE
 .Nm
-checks the
+uses device filename given in the
 .Ev TAPE
 environment variable if the
-argument
 .Ar tapename
-is not given.
+argument is not given.
+.It Ev RCMD_CMD
+.Nm
+will use
+.Ev RCMD_CMD
+rather than
+.Pa /usr/bin/rsh
+to invoke
+.Xr rmt 8
+on a remote machine.
+The full path name must be specified.
 .Sh FILES
 .Bl -tag -width src/sys/dev/scsipi/scsi_tape.h -compact
 .It Pa /dev/rst*
-Raw SCSI tape interface
+Raw
+.Tn SCSI
+tape interface
 .It Pa /dev/rmt*
 Raw magnetic tape interface
 .It Pa src/sys/dev/scsipi/scsi_tape.h
-List of SCSI2 density codes
+List of
+.Tn SCSI-2
+density codes
 .El
 .Sh SEE ALSO
 .Xr dd 1 ,
 .Xr ioctl 2 ,
-.\".Xr mtio 4 ,
+.Xr mtio 4 ,
 .Xr environ 7
 .Sh HISTORY
 The
