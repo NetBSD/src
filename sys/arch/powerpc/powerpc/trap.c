@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.75 2003/01/18 06:23:35 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.76 2003/01/18 21:28:12 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -187,7 +187,7 @@ trap(struct trapframe *frame)
 				      19 * sizeof(register_t));
 			return;
 		}
-		printf("trap: kernel %s DSI @ %#lx by %#x (DSISR %#x, err"
+		printf("trap: kernel %s DSI @ %#lx by %#lx (DSISR %#x, err"
 		    "=%d)\n", (frame->dsisr & DSISR_STORE) ? "write" : "read",
 		    va, frame->srr0, frame->dsisr, rv);
 		goto brain_damage2;
@@ -223,16 +223,16 @@ trap(struct trapframe *frame)
 		}
 		ci->ci_ev_udsi_fatal.ev_count++;
 		if (cpu_printfataltraps) {
-			printf("trap: pid %d (%s): user %s DSI @ %#x "
-			    "by %#x (DSISR %#x, err=%d)\n",
-			    p->p_pid, p->p_comm,
+			printf("trap: pid %d.%d (%s): user %s DSI @ %#lx "
+			    "by %#lx (DSISR %#x, err=%d)\n",
+			    p->p_pid, l->l_lid, p->p_comm,
 			    (frame->dsisr & DSISR_STORE) ? "write" : "read",
 			    frame->dar, frame->srr0, frame->dsisr, rv);
 		}
 		if (rv == ENOMEM) {
-			printf("UVM: pid %d (%s) lid %d, uid %d killed: "
+			printf("UVM: pid %d.%d (%s), uid %d killed: "
 			       "out of swap\n",
-			       p->p_pid, p->p_comm, l->l_lid,
+			       p->p_pid, l->l_lid, p->p_comm,
 			       p->p_cred && p->p_ucred ?
 			       p->p_ucred->cr_uid : -1);
 			trapsignal(l, SIGKILL, EXC_DSI);
@@ -243,7 +243,7 @@ trap(struct trapframe *frame)
 		break;
 
 	case EXC_ISI:
-		printf("trap: kernel ISI by %#x (SRR1 %#x)\n",
+		printf("trap: kernel ISI by %#lx (SRR1 %#lx)\n",
 		    frame->srr0, frame->srr1);
 		goto brain_damage2;
 
@@ -271,8 +271,8 @@ trap(struct trapframe *frame)
 		}
 		ci->ci_ev_isi_fatal.ev_count++;
 		if (cpu_printfataltraps) {
-			printf("trap: pid %d (%s) lid %d: user ISI trap @ %#x "
-			    "(SSR1=%#x)\n", p->p_pid, p->p_comm, l->l_lid,
+			printf("trap: pid %d.%d (%s): user ISI trap @ %#lx "
+			    "(SSR1=%#lx)\n", p->p_pid, l->l_lid, p->p_comm,
 			    frame->srr0, frame->srr1);
 		}
 		trapsignal(l, SIGSEGV, EXC_ISI);
@@ -307,8 +307,8 @@ trap(struct trapframe *frame)
 		if (fix_unaligned(l, frame) != 0) {
 			ci->ci_ev_ali_fatal.ev_count++;
 			if (cpu_printfataltraps) {
-				printf("trap: pid %d.%d (%s): user ALI @ %#x "
-				    "by %#x (DSISR %#x)\n",
+				printf("trap: pid %d.%d (%s): user ALI @ %#lx "
+				    "by %#lx (DSISR %#x)\n",
 				    p->p_pid, l->l_lid, p->p_comm,
 				    frame->dar, frame->srr0, frame->dsisr);
 			}
@@ -330,9 +330,10 @@ trap(struct trapframe *frame)
 #else
 		KERNEL_PROC_LOCK(l);
 		if (cpu_printfataltraps) {
-			printf("trap: pid %d (%s): user VEC trap @ %#x "
-			    "(SSR1=%#x)\n",
-			    p->p_pid, p->p_comm, frame->srr0, frame->srr1);
+			printf("trap: pid %d.%d (%s): user VEC trap @ %#lx "
+			    "(SSR1=%#lx)\n",
+			    p->p_pid, l->l_lid, p->p_comm,
+			    frame->srr0, frame->srr1);
 		}
 		trapsignal(l, SIGILL, EXC_PGM);
 		KERNEL_PROC_UNLOCK(l);
@@ -342,8 +343,8 @@ trap(struct trapframe *frame)
 		ci->ci_ev_umchk.ev_count++;
 		KERNEL_PROC_LOCK(l);
 		if (cpu_printfataltraps) {
-			printf("trap: pid %d (%s): user MCHK trap @ %#x "
-			    "(SSR1=%#x)\n",
+			printf("trap: pid %d (%s): user MCHK trap @ %#lx "
+			    "(SSR1=%#lx)\n",
 			    p->p_pid, p->p_comm, frame->srr0, frame->srr1);
 		}
 		trapsignal(l, SIGBUS, EXC_PGM);
@@ -353,8 +354,8 @@ trap(struct trapframe *frame)
 		ci->ci_ev_pgm.ev_count++;
 		KERNEL_PROC_LOCK(l);
 		if (cpu_printfataltraps) {
-			printf("trap: pid %d (%s) lid %d: user PGM trap @ %#x "
-			    "(SSR1=%#x)\n", p->p_pid, p->p_comm, l->l_lid,
+			printf("trap: pid %d.%d (%s): user PGM trap @ %#lx "
+			    "(SSR1=%#lx)\n", p->p_pid, l->l_lid, p->p_comm,
 			    frame->srr0, frame->srr1);
 		}
 		if (frame->srr1 & 0x00020000)	/* Bit 14 is set if trap */
@@ -382,7 +383,7 @@ trap(struct trapframe *frame)
 
 	default:
 brain_damage:
-		printf("trap type %x at %x\n", type, frame->srr0);
+		printf("trap type %x at %lx\n", type, frame->srr0);
 brain_damage2:
 #ifdef DDBX
 		if (kdb_trap(type, frame))
