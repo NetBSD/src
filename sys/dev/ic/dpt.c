@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt.c,v 1.37 2003/01/27 23:31:19 ad Exp $	*/
+/*	$NetBSD: dpt.c,v 1.38 2003/01/28 18:16:18 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.37 2003/01/27 23:31:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.38 2003/01/28 18:16:18 kleink Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1152,9 +1152,9 @@ dptioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 	case DPT_EATAUSRCMD:
 		if (IOCPARM_LEN(cmd) < sizeof(struct eata_ucp)) {
-			DPRINTF(("%s: ucp %d vs %d bytes\n",
+			DPRINTF(("%s: ucp %lu vs %lu bytes\n",
 			    sc->sc_dv.dv_xname, IOCPARM_LEN(cmd),
-			    sizeof(struct eata_ucp)));
+			    (unsigned long int)sizeof(struct eata_ucp)));
 			return (EINVAL);
 		}
 
