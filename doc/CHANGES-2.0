@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.96 2004/04/18 02:22:15 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.97 2004/04/18 02:24:37 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -973,21 +973,31 @@ usr.bin/gzip/gzip.c				1.36
 	Don't try to remove an output file we haven't actually created. PR#25189
 	[mrg, ticket #146]
 
-sys/arch/hpcmips/conf/GENERIC				1.147
-sys/arch/hpcmips/conf/LROUTER				1.18
-sys/arch/hpcmips/conf/NULLCONF				1.18
-sys/arch/hpcmips/conf/VR41XX				1.18
-sys/arch/hpcmips/conf/MPC303				1.26
-sys/arch/hpcmips/conf/Makefile.hpcmips.inc		deleted
-sys/arch/hpcmips/conf/TX3912				1.50
-sys/arch/hpcmips/conf/TX3922				1.53
-sys/arch/hpcmips/conf/std.lcard				1.4
+sys/arch/hpcmips/conf/GENERIC			1.147
+sys/arch/hpcmips/conf/LROUTER			1.18
+sys/arch/hpcmips/conf/NULLCONF			1.18
+sys/arch/hpcmips/conf/VR41XX			1.18
+sys/arch/hpcmips/conf/MPC303			1.26
+sys/arch/hpcmips/conf/Makefile.hpcmips.inc	deleted
+sys/arch/hpcmips/conf/TX3912			1.50
+sys/arch/hpcmips/conf/TX3922			1.53
+sys/arch/hpcmips/conf/std.lcard			1.4
 
 	Move -mips2 to CPUFLAGS in each kernel config file.
 	[tv, ticket #147]
 
-sys/arch/i386/conf/Makefile.i386			1.134
+sys/arch/i386/conf/Makefile.i386		1.134
 
 	We need to also clean out athhal-elf-o, so that "make clean; make"
 	after an initial "make" will also (re)build athhal-elf.o.
 	[he, ticket #148]
+
+sys/dev/ic/wdcvar.h				1.56
+sys/dev/ata/ata.c				1.28
+
+	Make wdc_channel->ch_flags volatile, and cast it to (void *) when used
+	in tsleep()/wakeup() to appease gcc. Otherwise, the ch_flags value may
+	be cached in a register in atabus_thread(), and when it sets the 
+	WDCF_TH_RUN bit after tsleep() it may loose loose the changes made by 
+	an interrupt handler or another thread.
+	[bouyer, ticket #149]
