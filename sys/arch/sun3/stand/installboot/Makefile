@@ -1,15 +1,14 @@
-#	$NetBSD: Makefile,v 1.10 2001/03/21 10:58:54 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.11 2001/03/21 11:08:52 tsutsui Exp $
 
 .include <bsd.own.mk>
 
 PROG=	installboot
 MKMAN= no
-NOMAN= yes
 BINDIR=/usr/mdec
 S= ${.CURDIR}/../../../..
 LIBSA=${S}/lib/libsa
-COPTS+= -Wall -Wstrict-prototypes -Wmissing-prototypes
 CPPFLAGS+= -I${LIBSA} -I.
+WARNS?= 1
 
 # Need this to work in the miniroot
 LDSTATIC?=	-static
