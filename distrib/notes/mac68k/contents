@@ -75,8 +75,8 @@ in the "mac68k/security" subdirectory of the NetBSD 1.2 distribution
 tree.  It contains the crypt libraries (for the DES encryption algorithm)
 and the binaries which depend on it.  It can only be found on those sites
 which carry the complete NetBSD distribution and that can legally obtain
-it.  (Remember, because of United States law, this distribution set may
-not be exported to locations outside of the United States and Canada.)
+it.  (Remember, because of United States law, it may not be legal to
+distribute this set to locations outside of the United States and Canada.)
 [ 432K gzipped, 1.5M uncompressed ]
 
 The mac68k binary distribution sets are distributed as full .tar.gz

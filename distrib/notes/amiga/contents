@@ -113,8 +113,8 @@ in the "amiga/security" subdirectory of the NetBSD 1.2 distribution
 tree.  It contains crypt.c (the source file for the DES encryption
 algorithm) and the binaries which depend on it.  It can only be found
 on those sites which carry the complete NetBSD distribution and that
-can legally obtain it.  (Remember, because of United States law, this
-distribution set may not be exported to locations outside of the
+can legally obtain it.  (Remember, because of United States law, it
+may not be legal to distribute this set to locations outside of the
 United States and Canada.)  [ 128K gzipped, 307K uncompressed ]
 
 The Amiga binary distribution sets are distributed in the same form as
