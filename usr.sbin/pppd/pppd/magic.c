@@ -1,4 +1,4 @@
-/*	$NetBSD: magic.c,v 1.8 1999/08/25 02:07:44 christos Exp $	*/
+/*	$NetBSD: magic.c,v 1.9 2000/09/23 22:39:37 christos Exp $	*/
 
 /*
  * magic.c - PPP Magic Number routines.
@@ -24,7 +24,7 @@
 #if 0
 #define RCSID	"Id: magic.c,v 1.9 1999/08/13 06:46:15 paulus Exp "
 #else
-__RCSID("$NetBSD: magic.c,v 1.8 1999/08/25 02:07:44 christos Exp $");
+__RCSID("$NetBSD: magic.c,v 1.9 2000/09/23 22:39:37 christos Exp $");
 #endif
 #endif
 
