@@ -1,4 +1,4 @@
-/*	$NetBSD: memreg.h,v 1.4 1996/03/31 22:52:13 pk Exp $ */
+/*	$NetBSD: memreg.h,v 1.5 1998/09/06 21:14:56 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -71,4 +71,8 @@ volatile u_int	*par_err_reg;	/* virtual address; NULL if not yet mapped */
  * sun4m ...
  */
 struct trapframe;
+void memerr4 __P((unsigned, u_int, u_int, u_int, u_int, struct trapframe *));
+void memerr4c __P((unsigned, u_int, u_int, u_int, u_int, struct trapframe *));
 void memerr4m __P((unsigned, u_int, u_int, u_int, u_int, struct trapframe *));
+void viking_memerr __P((unsigned, u_int, u_int, u_int, u_int, struct trapframe *));
+void hypersparc_memerr __P((unsigned, u_int, u_int, u_int, u_int, struct trapframe *));
