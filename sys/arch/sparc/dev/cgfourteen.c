@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteen.c,v 1.12 1998/04/07 20:18:18 pk Exp $ */
+/*	$NetBSD: cgfourteen.c,v 1.13 1998/07/29 18:36:08 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -174,11 +174,9 @@ cgfourteenattach(parent, self, aux)
 	struct cgfourteen_softc *sc = (struct cgfourteen_softc *)self;
 	struct fbdevice *fb = &sc->sc_fb;
 	bus_space_handle_t bh;
-	int nreg;
 	int node, ramsize;
 	u_int32_t *lut;
 	int i, isconsole;
-	void *p;
 
 	node = sa->sa_node;
 
@@ -206,15 +204,13 @@ cgfourteenattach(parent, self, aux)
 	fb->fb_type.fb_cmsize = CG14_CLUT_SIZE;
 	fb->fb_type.fb_size = ramsize;
 
-	p = sc->sc_physadr;
-	if (getpropA(node, "reg", sizeof(struct rom_reg), &nreg, &p) != 0) {
-		printf("%s: cannot get register property\n", self->dv_xname);
+	if (sa->sa_nreg < 2) {
+		printf("%s: only %d register sets\n",
+			self->dv_xname, sa->sa_nreg);
 		return;
 	}
-	if (nreg < 2) {
-		printf("%s: only %d register sets\n", self->dv_xname, nreg);
-		return;
-	}
+	bcopy(sa->sa_reg, sc->sc_physadr,
+	      sa->sa_nreg * sizeof(struct sbus_reg));
 
 	/*
 	 * Now map in the 8 useful pages of registers
@@ -570,8 +566,8 @@ cgfourteenmmap(dev, off, prot)
 	if ((u_int)off >= 0x10000000 && (u_int)off < 0x10000000 + 16*4096) {
 		off -= 0x10000000;
 		if (bus_space_mmap(sc->sc_bustag,
-				   sc->sc_physadr[CG14_CTL_IDX].rr_iospace,
-				   sc->sc_physadr[CG14_CTL_IDX].rr_paddr + off,
+				   sc->sc_physadr[CG14_CTL_IDX].sbr_slot,
+				   sc->sc_physadr[CG14_CTL_IDX].sbr_offset+off,
 				   BUS_SPACE_MAP_LINEAR, &bh))
 			return (-1);
 
@@ -603,8 +599,8 @@ cgfourteenmmap(dev, off, prot)
 	}
 
 	if (bus_space_mmap(sc->sc_bustag,
-			   sc->sc_physadr[CG14_PXL_IDX].rr_iospace,
-			   sc->sc_physadr[CG14_PXL_IDX].rr_paddr + off,
+			   sc->sc_physadr[CG14_PXL_IDX].sbr_slot,
+			   sc->sc_physadr[CG14_PXL_IDX].sbr_offset + off,
 			   BUS_SPACE_MAP_LINEAR, &bh))
 		return (-1);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcx.c,v 1.12 1998/04/07 20:18:18 pk Exp $ */
+/*	$NetBSD: tcx.c,v 1.13 1998/07/29 18:36:09 pk Exp $ */
 
 /*
  *  Copyright (c) 1996,1998 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@ struct tcx_softc {
 	struct sbusdev	sc_sd;		/* sbus device */
 	struct fbdevice	sc_fb;		/* frame buffer device */
 	bus_space_tag_t	sc_bustag;
-	struct rom_reg	sc_physadr[TCX_NREG];	/* phys addr of h/w */
+	struct sbus_reg	sc_physadr[TCX_NREG];	/* phys addr of h/w */
 
 	volatile struct bt_regs *sc_bt;	/* Brooktree registers */
 	volatile struct tcx_thc *sc_thc;/* THC registers */
@@ -140,9 +140,7 @@ tcxattach(parent, self, args)
 	volatile struct bt_regs *bt;
 	struct fbdevice *fb = &sc->sc_fb;
 	bus_space_handle_t bh;
-	int nreg;
 	int isconsole;
-	void *p;
 	extern struct tty *fbconstty;
 
 	sc->sc_bustag = sa->sa_bustag;
@@ -175,25 +173,22 @@ tcxattach(parent, self, args)
 	fb->fb_type.fb_type = FBTYPE_RESERVED3;
 
 
-	/* Get device registers */
-	p = sc->sc_physadr;
-	if (getpropA(node, "reg", sizeof(struct rom_reg), &nreg, &p) != 0) {
-		printf("%s: cannot get register property\n", self->dv_xname);
+	if (sa->sa_nreg != TCX_NREG) {
+		printf("%s: only %d register sets\n",
+			self->dv_xname, sa->sa_nreg);
 		return;
 	}
-	if (nreg != TCX_NREG) {
-		printf("%s: only %d register sets\n", self->dv_xname, nreg);
-		return;
-	}
+	bcopy(sa->sa_reg, sc->sc_physadr,
+	      sa->sa_nreg * sizeof(struct sbus_reg));
 
 	/* XXX - fix THC and TEC offsets */
-	sc->sc_physadr[TCX_REG_TEC].rr_paddr += 0x1000;
-	sc->sc_physadr[TCX_REG_THC].rr_paddr += 0x1000;
+	sc->sc_physadr[TCX_REG_TEC].sbr_offset += 0x1000;
+	sc->sc_physadr[TCX_REG_THC].sbr_offset += 0x1000;
 
 	/* Map the register banks we care about */
 	if (sbus_bus_map(sa->sa_bustag,
-			 (bus_type_t)sc->sc_physadr[TCX_REG_THC].rr_iospace,
-			 (bus_addr_t)sc->sc_physadr[TCX_REG_THC].rr_paddr,
+			 (bus_type_t)sc->sc_physadr[TCX_REG_THC].sbr_slot,
+			 (bus_addr_t)sc->sc_physadr[TCX_REG_THC].sbr_offset,
 			 sizeof (struct tcx_thc),
 			 BUS_SPACE_MAP_LINEAR,
 			 0, &bh) != 0) {
@@ -203,8 +198,8 @@ tcxattach(parent, self, args)
 	sc->sc_thc = (volatile struct tcx_thc *)bh;
 
 	if (sbus_bus_map(sa->sa_bustag,
-			 (bus_type_t)sc->sc_physadr[TCX_REG_CMAP].rr_iospace,
-			 (bus_addr_t)sc->sc_physadr[TCX_REG_CMAP].rr_paddr,
+			 (bus_type_t)sc->sc_physadr[TCX_REG_CMAP].sbr_slot,
+			 (bus_addr_t)sc->sc_physadr[TCX_REG_CMAP].sbr_offset,
 			 sizeof (struct bt_regs),
 			 BUS_SPACE_MAP_LINEAR,
 			 0, &bh) != 0) {
@@ -444,7 +439,7 @@ tcxmmap(dev, off, prot)
 {
 	struct tcx_softc *sc = tcx_cd.cd_devs[minor(dev)];
 	bus_space_handle_t bh;
-	struct rom_reg *rr = sc->sc_physadr;
+	struct sbus_reg *rr = sc->sc_physadr;
 	struct mmo *mo;
 	u_int u, sz;
 	static struct mmo mmo[] = {
@@ -482,8 +477,8 @@ tcxmmap(dev, off, prot)
 		u = off - mo->mo_uaddr;
 		sz = mo->mo_size ? mo->mo_size : sc->sc_fb.fb_type.fb_size;
 		if (u < sz) {
-			bus_type_t t = (bus_type_t)rr[mo->mo_bank].rr_iospace;
-			bus_addr_t a = (bus_addr_t)rr[mo->mo_bank].rr_paddr;
+			bus_type_t t = (bus_type_t)rr[mo->mo_bank].sbr_slot;
+			bus_addr_t a = (bus_addr_t)rr[mo->mo_bank].sbr_offset;
 
 			if (bus_space_mmap(sc->sc_bustag,
 					   t,
@@ -494,11 +489,5 @@ tcxmmap(dev, off, prot)
 			return ((int)bh);
 		}
 	}
-#ifdef DEBUG
-	{
-	  struct proc *p = curproc;	/* XXX */
-	  log(LOG_NOTICE, "tcxmmap(0x%x) (%s[%d])\n", off, p->p_comm, p->p_pid);
-	}
-#endif
 	return (-1);	/* not a user-map offset */
 }
