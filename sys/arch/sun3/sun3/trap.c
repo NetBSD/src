@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.36 1995/01/11 20:39:21 gwr Exp $	*/
+/*	$NetBSD: trap.c,v 1.37 1995/01/16 04:31:30 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -452,13 +452,13 @@ trap(type, code, v, frame)
 			if (mmudebug & MDB_WBFAILED)
 				Debugger();
 #endif	/* DDB */
+		}
 #endif	/* DEBUG */
 #ifdef VMFAULT_TRACE
 		printf("vm_fault(%x, %x, %x, 0) -> %x\n",
 		       map, va, ftype, rv);
 		printf("  type=%x, code=%x, pc=%x\n",
 		       type, code, ((int *) frame.f_regs)[PC]);
-);
 #endif
 		/*
 		 * If this was a stack access we keep track of the maximum
