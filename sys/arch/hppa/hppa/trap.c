@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.9 2003/08/31 01:26:36 chs Exp $	*/
+/*	$NetBSD: trap.c,v 1.10 2003/10/13 21:12:12 cl Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.9 2003/08/31 01:26:36 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.10 2003/10/13 21:12:12 cl Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -84,6 +84,8 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.9 2003/08/31 01:26:36 chs Exp $");
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/syscall.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 #ifdef KTRACE
 #include <sys/ktrace.h>
 #endif
@@ -702,7 +704,6 @@ trap(type, frame)
 	case T_ITLBMISSNA:	case T_USER | T_ITLBMISSNA:
 	case T_DTLBMISSNA:	case T_USER | T_DTLBMISSNA:
 	case T_TLB_DIRTY:	case T_USER | T_TLB_DIRTY:
-		va = hppa_trunc_page(va);
 		vm = p->p_vmspace;
 
 		if (!vm) {
@@ -717,8 +718,16 @@ trap(type, frame)
 		 */
 		if (!(type & T_USER) && space == HPPA_SID_KERNEL)
 			map = kernel_map;
-		else
+		else {
 			map = &vm->vm_map;
+			if (l->l_flag & L_SA) {
+				KDASSERT(p != NULL && p->p_sa != NULL);
+				p->p_sa->sa_vp_faultaddr = va;
+				l->l_flag |= L_SA_PAGEFAULT;
+			}
+		}
+
+		va = hppa_trunc_page(va);
 
 		if (map->pmap->pmap_space != space) {
 #ifdef TRAPDEBUG
@@ -739,6 +748,8 @@ trap(type, frame)
 		    map, (u_int)va, 0, vftype, ret);
 #endif
 
+		if (map != kernel_map)
+			l->l_flag &= ~L_SA_PAGEFAULT;
 		/*
 		 * If this was a stack access we keep track of the maximum
 		 * accessed stack size.  Also, if uvm_fault gets a protection
