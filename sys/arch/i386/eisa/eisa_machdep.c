@@ -1,4 +1,4 @@
-/*	$NetBSD: eisa_machdep.c,v 1.10.22.3 2000/08/21 02:25:16 sommerfeld Exp $	*/
+/*	$NetBSD: eisa_machdep.c,v 1.10.22.4 2001/01/07 22:12:40 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -287,4 +287,48 @@ eisa_mem_free(t, bah, size)
 {
 
 	bus_space_free(t, bah, size);
+}
+
+int
+eisa_conf_read_mem(ec, slot, func, entry, ecm)
+	eisa_chipset_tag_t ec;
+	int slot, func, entry;
+	struct eisa_cfg_mem *ecm;
+{
+
+	/* XXX XXX XXX */
+	return (ENOENT);
+}
+
+int
+eisa_conf_read_irq(ec, slot, func, entry, eci)
+	eisa_chipset_tag_t ec;
+	int slot, func, entry;
+	struct eisa_cfg_irq *eci;
+{
+
+	/* XXX XXX XXX */
+	return (ENOENT);
+}
+
+int
+eisa_conf_read_dma(ec, slot, func, entry, ecd)
+	eisa_chipset_tag_t ec;
+	int slot, func, entry;
+	struct eisa_cfg_dma *ecd;
+{
+
+	/* XXX XXX XXX */
+	return (ENOENT);
+}
+
+int
+eisa_conf_read_io(ec, slot, func, entry, ecio)
+	eisa_chipset_tag_t ec;
+	int slot, func, entry;
+	struct eisa_cfg_io *ecio;
+{
+
+	/* XXX XXX XXX */
+	return (ENOENT);
 }

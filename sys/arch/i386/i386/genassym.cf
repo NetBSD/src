@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.17.10.7 2000/08/25 03:56:27 sommerfeld Exp $
+#	$NetBSD: genassym.cf,v 1.17.10.8 2001/01/07 22:12:41 sommerfeld Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -74,10 +74,12 @@
 #	@(#)genassym.c	5.11 (Berkeley) 5/10/91
 #
 
+if defined(_KERNEL) && !defined(_LKM)
 include "opt_compat_svr4.h"
 include "opt_compat_freebsd.h"
 include "opt_compat_linux.h"
 include "opt_multiprocessor.h"
+endif
 
 include <sys/param.h>
 include <sys/proc.h>
@@ -92,7 +94,9 @@ include <machine/trap.h>
 include <machine/pmap.h>
 include <machine/vmparam.h>
 
+if defined(_KERNEL) && !defined(_LKM)
 include "apm.h"
+endif
 if NAPM > 0
 include <machine/bioscall.h>
 include <machine/apmvar.h>
@@ -115,7 +119,9 @@ ifdef MULTIPROCESSOR
 include <machine/cpu.h>
 endif
 
+if defined(_KERNEL) && !defined(_LKM)
 include "isa.h"
+endif
 if NISA > 0
 include <machine/isa_machdep.h>
 endif
@@ -139,9 +145,11 @@ define	P_FORW			offsetof(struct proc, p_forw)
 define	P_PRIORITY		offsetof(struct proc, p_priority)
 define	P_STAT			offsetof(struct proc, p_stat)
 define	P_WCHAN			offsetof(struct proc, p_wchan)
-define	P_VMSPACE		offsetof(struct proc, p_vmspace)
 define	P_FLAG			offsetof(struct proc, p_flag)
 define	P_CPU			offsetof(struct proc, p_cpu)
+define	P_MD_TSS_SEL		offsetof(struct proc, p_md.md_tss_sel)
+define	P_MD_REGS		offsetof(struct proc, p_md.md_regs)
+define	P_MD_SYSCALL		offsetof(struct proc, p_md.md_syscall)
 
 define	P_SYSTEM		P_SYSTEM
 
@@ -159,7 +167,6 @@ define	PCB_FS			offsetof(struct pcb, pcb_fs)
 define	PCB_GS			offsetof(struct pcb, pcb_gs)
 define	PCB_CR0			offsetof(struct pcb, pcb_cr0)
 define	PCB_LDT_SEL		offsetof(struct pcb, pcb_ldt_sel)
-define	PCB_TSS_SEL		offsetof(struct pcb, pcb_tss_sel)
 define	PCB_ONFAULT		offsetof(struct pcb, pcb_onfault)
 define	PCB_FPCPU		offsetof(struct pcb, pcb_fpcpu)
 
@@ -230,6 +237,7 @@ ifdef MULTIPROCESSOR
 define	CPU_INFO_CURPROC	offsetof(struct cpu_info, ci_curproc)
 define	CPU_INFO_CURPCB		offsetof(struct cpu_info, ci_curpcb)
 define	CPU_INFO_IDLE_PCB	offsetof(struct cpu_info, ci_idle_pcb)
+define  CPU_INFO_IDLE_TSS_SEL	offsetof(struct cpu_info, ci_idle_tss_sel)
 define	CPU_INFO_LEVEL		offsetof(struct cpu_info, ci_level)
 define	CPU_INFO_VENDOR		offsetof(struct cpu_info, ci_vendor[0])
 define	CPU_INFO_SIGNATURE	offsetof(struct cpu_info, ci_signature)

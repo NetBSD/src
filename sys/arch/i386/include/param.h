@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.40.2.2 2000/08/07 01:08:56 sommerfeld Exp $	*/
+/*	$NetBSD: param.h,v 1.40.2.3 2001/01/07 22:12:47 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -68,7 +68,8 @@
  *
  */
 #define ALIGNBYTES		(sizeof(int) - 1)
-#define ALIGN(p)		(((u_int)(p) + ALIGNBYTES) &~ ALIGNBYTES)
+#define ALIGN(p)		(((u_int)(u_long)(p) + ALIGNBYTES) &~ \
+    ALIGNBYTES)
 #define ALIGNED_POINTER(p,t)	1
 
 #define	PGSHIFT		12		/* LOG2(NBPG) */
@@ -119,9 +120,9 @@
 #endif /* _KERNEL && ! _LKM */
 
 #ifdef GATEWAY
-#define	NMBCLUSTERS	512		/* map size, max cluster allocation */
+#define	NMBCLUSTERS	2048		/* map size, max cluster allocation */
 #else
-#define	NMBCLUSTERS	256		/* map size, max cluster allocation */
+#define	NMBCLUSTERS	1024		/* map size, max cluster allocation */
 #endif
 #endif
 

@@ -1,7 +1,7 @@
-/*	$NetBSD: machdep.c,v 1.376.2.12 2001/01/04 04:44:32 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.376.2.13 2001/01/07 22:12:42 sommerfeld Exp $	*/
 
 /*-
- * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -118,6 +118,7 @@
 #include <dev/cons.h>
 
 #include <uvm/uvm_extern.h>
+#include <uvm/uvm_page.h>
 
 #include <sys/sysctl.h>
 
@@ -168,6 +169,8 @@
 char machine[] = "i386";		/* cpu "architecture" */
 char machine_arch[] = "i386";		/* machine == machine_arch */
 
+u_int cpu_serial[3];
+
 char bootinfo[BOOTINFO_MAXSIZE];
 
 /* Our exported CPU info; we have only one right now. */  
@@ -207,7 +210,6 @@ vm_map_t mb_map = NULL;
 vm_map_t phys_map = NULL;
 
 extern	paddr_t avail_start, avail_end;
-extern	paddr_t hole_start, hole_end;
 
 void (*delay_func) __P((int)) = i8254_delay;
 void (*microtime_func) __P((struct timeval *)) = i8254_microtime;
@@ -219,11 +221,77 @@ void (*initclock_func) __P((void)) = i8254_initclocks;
 phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
 int	mem_cluster_cnt;
 
+/*
+ * The number of CPU cycles in one second.
+ */
+u_int64_t cpu_tsc_freq;
+
 int	cpu_dump __P((void));
 int	cpu_dumpsize __P((void));
 u_long	cpu_dump_mempagecnt __P((void));
 void	dumpsys __P((void));
 void	init386 __P((paddr_t));
+
+const struct i386_cache_info *cpu_itlb_info, *cpu_dtlb_info, *cpu_icache_info,
+    *cpu_dcache_info, *cpu_l2cache_info;
+
+const struct i386_cache_info {
+	u_int8_t	cai_desc;
+	const struct i386_cache_info **cai_var;
+	const char	*cai_string;
+	u_int		cai_totalsize;
+	u_int		cai_linesize;
+} i386_cache_info[] = {
+	{ 0x01,		&cpu_itlb_info,		"32 4K entries 4-way",
+	  32,		4 * 1024 },
+	{ 0x02,		&cpu_itlb_info,		"2 4M entries",
+	  2,		4 * 1024 * 1024 },
+	{ 0x03,		&cpu_dtlb_info,		"64 4K entries 4-way",
+	  64,		4 * 1024 },
+	{ 0x04,		&cpu_dtlb_info,		"8 4M entries 4-way",
+	  8,		4 * 1024 * 1024 },
+	{ 0x06,		&cpu_icache_info,	"8K 32b/line 4-way",
+	  8 * 1024,	32 },
+	{ 0x08,		&cpu_icache_info,	"16K 32b/line 4-way",
+	  16 * 1024,	32 },
+	{ 0x0a,		&cpu_dcache_info,	"8K 32b/line 2-way",
+	  8 * 1024,	32 },
+	{ 0x0c,		&cpu_dcache_info,	"16K 32b/line 2/4-way",
+	  16 * 1024,	32 },
+	{ 0x40,		&cpu_l2cache_info,	"not present",
+	  0,		0 },
+	{ 0x41,		&cpu_l2cache_info,	"128K 32b/line 4-way",
+	  128 * 1024,	32 },
+	{ 0x42,		&cpu_l2cache_info,	"256K 32b/line 4-way",
+	  256 * 1024,	32 },
+	{ 0x43,		&cpu_l2cache_info,	"512K 32b/line 4-way",
+	  512 * 1024,	32 },
+	{ 0x44,		&cpu_l2cache_info,	"1M 32b/line 4-way",
+	  1 * 1024 * 1024, 32 },
+	{ 0x45,		&cpu_l2cache_info,	"2M 32b/line 4-way",
+	  2 * 1024 * 1024, 32 },
+	{ 0x82,		&cpu_l2cache_info,	"256K 32b/line 8-way",
+	  256 * 1024,	32 },
+	{ 0x84,		&cpu_l2cache_info,	"1M 32b/line 8-way",
+	  1 * 1024 * 1024, 32 },
+	{ 0x85,		&cpu_l2cache_info,	"2M 32b/line 8-way",
+	  2 * 1024 * 1024, 32 },
+
+	{ 0,		NULL,		NULL,	0,	0 },
+};
+
+const struct i386_cache_info *i386_cache_info_lookup __P((u_int8_t));
+
+/*
+ * Map Brand ID from cpuid instruction to brand name.
+ * Source: Intel Processor Identification and the CPUID Instruction, AP-485
+ */
+const char * const i386_p3_brand[] = {
+	"",		/* Unsupported */
+	"Celeron",	/* Intel (R) Celeron (TM) processor */
+	"",		/* Intel (R) Pentium (R) III processor */	
+	"Xeon",		/* Intel (R) Pentium (R) III Xeon (TM) processor */
+};
 
 #ifdef COMPAT_NOMID
 static int exec_nomid	__P((struct proc *, struct exec_package *));
@@ -256,6 +324,7 @@ cpu_startup()
 	int sz, x;
 	vaddr_t minaddr, maxaddr;
 	vsize_t size;
+	char buf[160];				/* about 2 line */
 	char pbuf[9];
 #if NBIOSCALL > 0
 	extern int biostramp_image_size;
@@ -271,12 +340,13 @@ cpu_startup()
 
 	/* msgbuf_paddr was init'd in pmap */
 	for (x = 0; x < btoc(MSGBUFSIZE); x++)
-		pmap_kenter_pa((vaddr_t)msgbuf_vaddr + x * NBPG,
-		    msgbuf_paddr + x * NBPG, VM_PROT_READ|VM_PROT_WRITE);
+		pmap_kenter_pa((vaddr_t)msgbuf_vaddr + x * PAGE_SIZE,
+		    msgbuf_paddr + x * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE);
 
 	initmsgbuf((caddr_t)msgbuf_vaddr, round_page(MSGBUFSIZE));
 
 	printf("%s", version);
+
 	format_bytes(pbuf, sizeof(pbuf), ptoa(physmem));
 	printf("total memory = %s\n", pbuf);
 
@@ -296,7 +366,7 @@ cpu_startup()
 	 */
 	size = MAXBSIZE * nbuf;
 	if (uvm_map(kernel_map, (vaddr_t *) &buffers, round_page(size),
-	    	    NULL, UVM_UNKNOWN_OFFSET, 0,
+		    NULL, UVM_UNKNOWN_OFFSET, 0,
 		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
 				UVM_ADV_NORMAL, 0)) != KERN_SUCCESS)
 		panic("cpu_startup: cannot allocate VM for buffers");
@@ -347,7 +417,7 @@ cpu_startup()
 	 */
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free - bufpages));
 	printf("avail memory = %s\n", pbuf);
-	format_bytes(pbuf, sizeof(pbuf), bufpages * NBPG);
+	format_bytes(pbuf, sizeof(pbuf), bufpages * PAGE_SIZE);
 	printf("using %d buffers containing %s of memory\n", nbuf, pbuf);
 
 #if NBIOSCALL > 0
@@ -356,9 +426,9 @@ cpu_startup()
 	 * in case someone tries to fake it out...
 	 */
 #ifdef DIAGNOSTIC
-	if (biostramp_image_size > NBPG)
+	if (biostramp_image_size > PAGE_SIZE)
 	    panic("biostramp_image_size too big: %x vs. %x\n",
-		  biostramp_image_size, NBPG);
+		  biostramp_image_size, PAGE_SIZE);
 #endif
 	pmap_kenter_pa((vaddr_t)BIOSTRAMP_BASE,	/* virtual */
 		       (paddr_t)BIOSTRAMP_BASE,	/* physical */
@@ -389,10 +459,11 @@ i386_proc0_tss_ldt_init()
 
 	i386_init_pcb_tss_ldt(pcb);
 	
-	ltr(pcb->pcb_tss_sel);
-	lldt(pcb->pcb_ldt_sel);
-
 	proc0.p_md.md_regs = (struct trapframe *)pcb->pcb_tss.tss_esp0 - 1;
+	proc0.p_md.md_tss_sel = mumble.ci_idle_tss_sel;
+
+	ltr(proc0.p_md.md_tss_sel);
+	lldt(pcb->pcb_ldt_sel);
 }
 
 /*
@@ -400,23 +471,23 @@ i386_proc0_tss_ldt_init()
  */
 
 void
-i386_init_pcb_tss_ldt(pcb)
-	struct pcb *pcb;
+i386_init_pcb_tss_ldt(ci)
+	struct cpu_info *ci;
 {
 	int x;
-
+	struct pcb *pcb = ci->ci_idle_pcb;
+	
 	pcb->pcb_flags = 0;
 	pcb->pcb_tss.tss_ioopt =
 	    ((caddr_t)pcb->pcb_iomap - (caddr_t)&pcb->pcb_tss) << 16;
 	for (x = 0; x < sizeof(pcb->pcb_iomap) / 4; x++)
 		pcb->pcb_iomap[x] = 0xffffffff;
 
-	pcb->pcb_ldt_sel = GSEL(GLDT_SEL, SEL_KPL);
+	pcb->pcb_ldt_sel = pmap_kernel()->pm_ldt_sel = GSEL(GLDT_SEL, SEL_KPL);
 	pcb->pcb_cr0 = rcr0();
-	tss_alloc(pcb);
+
+	ci->ci_idle_tss_sel = tss_alloc(pcb);
 }
-
-
 
 /*
  * XXX Finish up the deferred buffer cache allocation and initialization.
@@ -440,7 +511,7 @@ i386_bufinit()
 		 * "base" pages for the rest.
 		 */
 		curbuf = (vaddr_t) buffers + (i * MAXBSIZE);
-		curbufsize = NBPG * ((i < residual) ? (base+1) : base);
+		curbufsize = PAGE_SIZE * ((i < residual) ? (base+1) : base);
 
 		while (curbufsize) {
 			/*
@@ -465,6 +536,19 @@ i386_bufinit()
 	bufinit();
 }
 
+const struct i386_cache_info *
+i386_cache_info_lookup(u_int8_t desc)
+{
+	const struct i386_cache_info *cai;
+
+	for (cai = i386_cache_info; cai->cai_string != NULL; cai++) {
+		if (cai->cai_desc == desc)
+			return (cai);
+	}
+
+	return (NULL);
+}
+
 /*  
  * Info for CTL_HW
  */
@@ -474,7 +558,7 @@ char	cpu_model[120];
  * Note: these are just the ones that may not have a cpuid instruction.
  * We deal with the rest in a different way.
  */
-struct cpu_nocpuid_nameclass i386_nocpuid_cpus[] = {
+const struct cpu_nocpuid_nameclass i386_nocpuid_cpus[] = {
 	{ CPUVENDOR_INTEL, "Intel", "386SX",	CPUCLASS_386,
 		NULL},				/* CPU_386SX */
 	{ CPUVENDOR_INTEL, "Intel", "386DX",	CPUCLASS_386,
@@ -505,7 +589,7 @@ const char *modifiers[] = {
 	""
 };
 
-struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
+const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 	{
 		"GenuineIntel",
 		CPUVENDOR_INTEL,
@@ -540,11 +624,23 @@ struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			{
 				"Pentium Pro (A-step)", "Pentium Pro", 0,
 				"Pentium II (Klamath)", "Pentium Pro",
-				"Pentium II (Deschutes)",
-				"Pentium II (Celeron)",
-				"Pentium III", "Pentium III (E)",
-				0, 0, 0, 0, 0, 0, 0,
+				"Pentium II/Celeron (Deschutes)",
+				"Celeron (Mendocino)",
+				"Pentium III (Katmai)",
+				"Pentium III (Coppermine)",
+				0, "Pentium III (Cascades)", 0, 0,
+				0, 0,
 				"Pentium Pro, II or III"	/* Default */
+			},
+			NULL
+		},
+		/* Family > 6 */
+		{
+			CPUCLASS_686,
+			{
+				0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0, 0,
+				"Pentium 4"	/* Default */
 			},
 			NULL
 		} }
@@ -572,7 +668,8 @@ struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			CPUCLASS_586,
 			{
 				"K5", "K5", "K5", "K5", 0, 0, "K6",
-				"K6", "K6-2", "K6-III", 0, 0, 0, 0, 0, 0,
+				"K6", "K6-2", "K6-III", 0, 0, 0,
+				"K6-2+/III+", 0, 0,
 				"K5 or K6"		/* Default */
 			},
 			NULL
@@ -581,9 +678,20 @@ struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 		{
 			CPUCLASS_686,
 			{
-				0, "K7 (Athlon)", 0, 0, 0, 0, 0,
-				0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, "Athlon Model 1", "Athlon Model 2",
+				"Duron", "Athlon Model 4 (Thunderbird)",
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 				"K7 (Athlon)"	/* Default */
+			},
+			NULL
+		},
+		/* Family > 6 */
+		{
+			CPUCLASS_686,
+			{
+				0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0, 0,
+				"Unknown K7 (Athlon)"	/* Default */
 			},
 			NULL
 		} }
@@ -622,6 +730,15 @@ struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				"6x86MX"		/* Default */
 			},
 			cyrix6x86_cpu_setup
+		},
+		/* Family > 6 */
+		{
+			CPUCLASS_686,
+			{
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				"Unknown 6x86MX"		/* Default */
+			},
+			NULL
 		} }
 	},
 	{
@@ -657,11 +774,19 @@ struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				"Pentium Pro compatible"	/* Default */
 			},
 			NULL
+		},
+		/* Family > 6, not yet available from IDT */
+		{
+			CPUCLASS_686,
+			{
+				0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0, 0,
+				"Pentium Pro compatible"	/* Default */
+			},
+			NULL
 		} }
 	}
 };
-
-#define CPUDEBUG
 
 void
 cyrix6x86_cpu_setup()
@@ -678,6 +803,12 @@ cyrix6x86_cpu_setup()
 	cyrix_write_reg(0x3c, cyrix_read_reg(0x3c) | 0x87);
 	/* disable access to ccr4/ccr5 */
 	cyrix_write_reg(0xC3, cyrix_read_reg(0xC3) & ~0x10);
+
+	/*	
+	 * XXX disable page zero in the idle loop, it seems to
+	 * cause panics on these CPUs.
+	 */
+	vm_page_zero_enable = FALSE;
 }
 
 void
@@ -709,17 +840,52 @@ winchip_cpu_setup()
  * all processors are of the same vendor.
  */
  
+static void
+do_cpuid(u_int which, u_int *rv)
+{
+	register u_int eax __asm("%eax") = which;
+
+	__asm __volatile(
+	"	cpuid			;"
+	"	movl	%%eax,0(%2)	;"
+	"	movl	%%ebx,4(%2)	;"
+	"	movl	%%ecx,8(%2)	;"
+	"	movl	%%edx,12(%2)	"
+	: "=a" (eax)
+	: "0" (eax), "S" (rv)
+	: "ebx", "ecx", "edx");
+}
+
+static void
+do_cpuid_serial(u_int *serial)
+{
+	__asm __volatile(
+	"	movl	$1,%%eax	;"
+	"	cpuid			;"
+	"	movl	%%eax,0(%0)	;"
+	"	movl	$3,%%eax	;"
+	"	cpuid			;"
+	"	movl	%%edx,4(%0)	;"
+	"	movl	%%ecx,8(%0)	"
+	: /* no imputs */
+	: "S" (serial)
+	: "eax", "ebx", "ecx", "edx");
+}
+
+>>>>>>> 1.426
 void
 identifycpu(ci)
 	struct cpu_info *ci;
 {
 	extern char cpu_vendor[];
-	const char *name, *modifier, *vendorname;
+	extern int cpu_id;
+	extern int cpu_brand_id;
+	const char *name, *modifier, *vendorname, *brand = "";
 	int class = CPUCLASS_386, vendor, i, max;
 	int family, model, step, modif;
-	struct cpu_cpuid_nameclass *cpup = NULL;
+	const struct cpu_cpuid_nameclass *cpup = NULL;
 	char *cpuname = ci->ci_dev->dv_xname;
-	
+
 	if (cpuid_level == -1) {
 #ifdef DIAGNOSTIC
 		if (cpu < 0 || cpu >=
@@ -780,10 +946,19 @@ identifycpu(ci)
 			    name = cpup->cpu_family[i].cpu_models[CPU_DEFMODEL];
 			class = cpup->cpu_family[i].cpu_class;
 			ci->cpu_setup = cpup->cpu_family[i].cpu_setup;
+
+			/*
+			 * Intel processors family >= 6, model 8 allow to
+			 * recognize brand by Brand ID value.
+			 */
+			if (vendor == CPUVENDOR_INTEL && family >= 6
+			    && model >= 8 && cpu_brand_id && cpu_brand_id <= 3)
+				brand = i386_p3_brand[cpu_brand_id];
 		}
 	}
 
-	sprintf(cpu_model, "%s %s%s (%s-class)", vendorname, modifier, name,
+	sprintf(cpu_model, "%s %s%s%s%s (%s-class)", vendorname, modifier, name,
+		(*brand) ? " " : "", brand,
 		classnames[class]);
 	printf("%s: %s\n", cpuname, cpu_model);
 
@@ -800,6 +975,79 @@ identifycpu(ci)
 	cpu_class = class;
 	ci->cpu_class = class;
 	
+	/*
+	 * Parse the cache info from `cpuid', if we have it.
+	 * XXX This is kinda ugly, but hey, so is the architecture...
+	 */
+	if (cpuid_level != -1) {
+		const struct i386_cache_info *cai;
+		u_int descs[4];
+		int iterations, j;
+		u_int8_t desc;
+
+		do_cpuid(2, descs);
+		iterations = descs[0] & 0xff;
+		while (iterations-- > 0) {
+			for (i = 0; i < 4; i++) {
+				if (descs[i] & 0x80000000)
+					continue;
+				for (j = 0; j < 4; j++) {
+					if (i == 0 && j == 0)
+						continue;
+					desc = (descs[i] >> (j * 8)) & 0xff;
+					cai = i386_cache_info_lookup(desc);
+					if (cai != NULL)
+						*cai->cai_var = cai;
+				}
+			}
+
+			do_cpuid(2, descs);
+		}
+	}
+
+#if XXX
+	printf("cpu0: %s", cpu_model);
+	if (cpu_tsc_freq != 0)
+		printf(", %qd.%02qd MHz", (cpu_tsc_freq + 4999) / 1000000,
+		    ((cpu_tsc_freq + 4999) / 10000) % 100);
+	printf("\n");
+	if (cpu_icache_info != NULL || cpu_dcache_info != NULL) {
+		printf("cpu0:");
+		if (cpu_icache_info)
+			printf(" I-cache %s", cpu_icache_info->cai_string);
+		if (cpu_dcache_info)
+			printf("%sD-cache %s",
+			    (cpu_icache_info != NULL) ? ", " : " ",
+			    cpu_dcache_info->cai_string);
+		printf("\n");
+	}
+	if (cpu_l2cache_info)
+		printf("cpu0: L2 cache %s\n", cpu_l2cache_info->cai_string);
+	if ((cpu_feature & CPUID_MASK1) != 0) {
+		bitmask_snprintf(cpu_feature, CPUID_FLAGS1,
+		    buf, sizeof(buf));
+		printf("cpu0: features %s\n", buf);
+	}
+	if ((cpu_feature & CPUID_MASK2) != 0) {
+		bitmask_snprintf(cpu_feature, CPUID_FLAGS2,
+		    buf, sizeof(buf));
+		printf("cpu0: features %s\n", buf);
+	}
+
+	if (cpuid_level >= 3 && ((cpu_feature & CPUID_PN) != 0)) {
+		printf("cpu0: serial number %04X-%04X-%04X-%04X-%04X-%04X\n",
+			cpu_serial[0] / 65536, cpu_serial[0] % 65536,
+			cpu_serial[1] / 65536, cpu_serial[1] % 65536,
+			cpu_serial[2] / 65536, cpu_serial[2] % 65536);
+	}
+#endif /* XXX */
+	/*
+	 * If the processor serial number misfeature is present and supported,
+	 * extract it here.
+	 */
+	if (cpuid_level >= 3 && (cpu_feature & CPUID_PN) != 0)
+		do_cpuid_serial(cpu_serial);
+
 	/*
 	 * Now that we have told the user what they have,
 	 * let them know if that machine type isn't configured.
@@ -855,6 +1103,30 @@ identifycpu(ci)
 #endif
 #endif
 	}
+
+#ifdef XXX
+#if defined(I486_CPU) || defined(I586_CPU) || defined(I686_CPU)
+	/*
+	 * On a 486 or above, enable ring 0 write protection.
+	 */
+	if (cpu_class >= CPUCLASS_486)
+		lcr0(rcr0() | CR0_WP);
+#endif
+
+#if defined(I586_CPU) || defined(I686_CPU)
+	/*
+	 * If we have a cycle counter, compute the approximate
+	 * CPU speed in MHz.
+	 */
+	if (cpu_feature & CPUID_TSC) {
+		u_int64_t last_tsc;
+
+		last_tsc = rdtsc();
+		delay(100000);
+		cpu_tsc_freq = (rdtsc() - last_tsc) * 10;
+	}
+#endif
+#endif /* XXX */
 }
 
 /*  
@@ -947,7 +1219,7 @@ sendsig(catcher, sig, mask, code)
 	/* Allocate space for the signal handler context. */
 	if (onstack)
 		fp = (struct sigframe *)((caddr_t)p->p_sigctx.ps_sigstk.ss_sp +
-		                          p->p_sigctx.ps_sigstk.ss_size);
+					  p->p_sigctx.ps_sigstk.ss_size);
 	else
 		fp = (struct sigframe *)tf->tf_esp;
 	fp--;
@@ -966,6 +1238,7 @@ sendsig(catcher, sig, mask, code)
 		frame.sf_sc.sc_es = tf->tf_vm86_es;
 		frame.sf_sc.sc_ds = tf->tf_vm86_ds;
 		frame.sf_sc.sc_eflags = get_vflags(p);
+		(*p->p_emul->e_syscall_intern)(p);
 	} else
 #endif
 	{
@@ -1067,11 +1340,14 @@ sys___sigreturn14(p, v, retval)
 	tf = p->p_md.md_regs;
 #ifdef VM86
 	if (context.sc_eflags & PSL_VM) {
+		void syscall_vm86 __P((struct trapframe));
+
 		tf->tf_vm86_gs = context.sc_gs;
 		tf->tf_vm86_fs = context.sc_fs;
 		tf->tf_vm86_es = context.sc_es;
 		tf->tf_vm86_ds = context.sc_ds;
 		set_vflags(p, context.sc_eflags);
+		p->p_md.md_syscall = syscall_vm86;
 	} else
 #endif
 	{
@@ -1266,7 +1542,7 @@ cpu_dump()
 
 /*
  * This is called by main to set dumplo and dumpsize.
- * Dumps always skip the first NBPG of disk space
+ * Dumps always skip the first PAGE_SIZE of disk space
  * in case there might be a disk label stored there.
  * If there is extra space, put dump at the end to
  * reduce the chance that swapping trashes it.
@@ -1313,7 +1589,7 @@ cpu_dumpconf()
  * getting on the dump stack, either when called above, or by
  * the auto-restart code.
  */
-#define BYTES_PER_DUMP  NBPG	/* must be a multiple of pagesize XXX small */
+#define BYTES_PER_DUMP  PAGE_SIZE /* must be a multiple of pagesize XXX small */
 static vaddr_t dumpspace;
 
 vaddr_t
@@ -1589,8 +1865,11 @@ init386(first_avail)
 {
 	extern void consinit __P((void));
 	extern struct extent *iomem_ex;
+	struct btinfo_memmap *bim;
 	struct region_descriptor region;
-	int x;
+	int x, first16q;
+	u_int64_t seg_start, seg_end;
+	u_int64_t seg_start1, seg_end1;
 
 	proc0.p_addr = proc0paddr;
 	curpcb = &proc0.p_addr->u_pcb;
@@ -1600,40 +1879,15 @@ init386(first_avail)
 	consinit();	/* XXX SHOULD NOT BE DONE HERE */
 
 	/*
-	 * Allocate the physical addresses used by RAM from the iomem
-	 * extent map.  This is done before the addresses are
-	 * page rounded just to make sure we get them all.
+	 * Initailize PAGE_SIZE-dependent variables.
 	 */
-	if (extent_alloc_region(iomem_ex, 0, KBTOB(biosbasemem), EX_NOWAIT)) {
-		/* XXX What should we do? */
-		printf("WARNING: CAN'T ALLOCATE BASE MEMORY FROM IOMEM EXTENT MAP!\n");
-	}
-	if (extent_alloc_region(iomem_ex, IOM_END, KBTOB(biosextmem),
-	    EX_NOWAIT)) {
-		/* XXX What should we do? */
-		printf("WARNING: CAN'T ALLOCATE EXTENDED MEMORY FROM IOMEM EXTENT MAP!\n");
-	}
+	uvm_setpagesize();
 
-#if NISADMA > 0
 	/*
-	 * Some motherboards/BIOSes remap the 384K of RAM that would
-	 * normally be covered by the ISA hole to the end of memory
-	 * so that it can be used.  However, on a 16M system, this
-	 * would cause bounce buffers to be allocated and used.
-	 * This is not desirable behaviour, as more than 384K of
-	 * bounce buffers might be allocated.  As a work-around,
-	 * we round memory down to the nearest 1M boundary if
-	 * we're using any isadma devices and the remapped memory
-	 * is what puts us over 16M.
+	 * A quick sanity check.
 	 */
-	if (biosextmem > (15*1024) && biosextmem < (16*1024)) {
-		char pbuf[9];
-
-		format_bytes(pbuf, sizeof(pbuf), biosextmem - (15*1024));
-		printf("Warning: ignoring %s of remapped memory\n", pbuf);
-		biosextmem = (15*1024);
-	}
-#endif
+	if (PAGE_SIZE != NBPG)
+		panic("init386: PAGE_SIZE != NBPG");
 
 #ifdef MULTIPROCESSOR
 	/* leave room for bioscall just to avoid too much chaos */
@@ -1641,27 +1895,341 @@ init386(first_avail)
 				 one additional PT page! */
 #else
 #if NBIOSCALL > 0
-	avail_start = 3*NBPG;	/* save us a page for trampoline code and
-				   one additional PT page! */
+	avail_start = 3*PAGE_SIZE; /* save us a page for trampoline code and
+				      one additional PT page! */
 #else
-	avail_start = NBPG;	/* BIOS leaves data in low memory */
-				/* and VM system doesn't work with phys 0 */
+	avail_start = PAGE_SIZE; /* BIOS leaves data in low memory */
+				 /* and VM system doesn't work with phys 0 */
 #endif
 #endif
-	avail_end = IOM_END + trunc_page(KBTOB(biosextmem));
 
-	hole_start = trunc_page(KBTOB(biosbasemem));
-	/* we load right after the I/O hole; adjust hole_end to compensate */
-	hole_end = round_page(first_avail);
-
-	/* Call pmap initialization to make new kernel address space. */
+	/*
+	 * Call pmap initialization to make new kernel address space.
+	 * We must do this before loading pages into the VM system.
+	 */
 	pmap_bootstrap((vaddr_t)atdevbase + IOM_SIZE);
+
+	/*
+	 * Check to see if we have a memory map from the BIOS (passed
+	 * to us by the boot program.
+	 */
+	bim = lookup_bootinfo(BTINFO_MEMMAP);
+	if (bim != NULL && bim->num > 0) {
+#if DEBUG_MEMLOAD
+		printf("BIOS MEMORY MAP (%d ENTRIES):\n", bim->num);
+#endif
+		for (x = 0; x < bim->num; x++) {
+#if DEBUG_MEMLOAD
+			printf("    addr 0x%qx  size 0x%qx  type 0x%x\n",
+			    bim->entry[x].addr,
+			    bim->entry[x].size,
+			    bim->entry[x].type);
+#endif
+
+			/*
+			 * If the segment is not memory, skip it.
+			 */
+			switch (bim->entry[x].type) {
+			case BIM_Memory:
+			case BIM_ACPI:
+			case BIM_NVS:
+				break;
+			default:
+				continue;
+			}
+
+			/*
+			 * Sanity check the entry.
+			 * XXX Need to handle uint64_t in extent code
+			 * XXX and 64-bit physical addresses in i386
+			 * XXX port.
+			 */
+			seg_start = bim->entry[x].addr;
+			seg_end = bim->entry[x].addr + bim->entry[x].size;
+
+			if (seg_end > 0x100000000ULL) {
+				printf("WARNING: skipping large "
+				    "memory map entry: "
+				    "0x%qx/0x%qx/0x%x\n",
+				    bim->entry[x].addr,
+				    bim->entry[x].size,
+				    bim->entry[x].type);
+				continue;
+			}
+
+			/*
+			 * XXX Chop the last page off the size so that
+			 * XXX it can fit in avail_end.
+			 */
+			if (seg_end == 0x100000000ULL)
+				seg_end -= PAGE_SIZE;
+
+			/*
+			 * Allocate the physical addresses used by RAM
+			 * from the iomem extent map.  This is done before
+			 * the addresses are page rounded just to make
+			 * sure we get them all.
+			 */
+			if (extent_alloc_region(iomem_ex, seg_start,
+			    seg_end - seg_start, EX_NOWAIT)) {
+				/* XXX What should we do? */
+				printf("WARNING: CAN'T ALLOCATE "
+				    "MEMORY SEGMENT %d "
+				    "(0x%qx/0x%qx/0x%x) FROM "
+				    "IOMEM EXTENT MAP!\n",
+				    x, seg_start, seg_end - seg_start,
+				    bim->entry[x].type);
+			}
+
+			/*
+			 * If it's not free memory, skip it.
+			 */
+			if (bim->entry[x].type != BIM_Memory)
+				continue;
+
+			/* XXX XXX XXX */
+			if (mem_cluster_cnt >= VM_PHYSSEG_MAX)
+				panic("init386: too many memory segments");
+
+			seg_start = round_page(seg_start);
+			seg_end = trunc_page(seg_end);
+
+			if (seg_start == seg_end)
+				continue;
+
+			mem_clusters[mem_cluster_cnt].start = seg_start;
+			mem_clusters[mem_cluster_cnt].size =
+			    seg_end - seg_start;
+
+			if (avail_end < seg_end)
+				avail_end = seg_end;
+			physmem += atop(mem_clusters[mem_cluster_cnt].size);
+			mem_cluster_cnt++;
+		}
+	}
+
+	/*
+	 * If the loop above didn't find any valid segment, fall back to
+	 * former code.
+	 */
+	if (mem_cluster_cnt == 0) {
+		/*
+		 * Allocate the physical addresses used by RAM from the iomem
+		 * extent map.  This is done before the addresses are
+		 * page rounded just to make sure we get them all.
+		 */
+		if (extent_alloc_region(iomem_ex, 0, KBTOB(biosbasemem),
+		    EX_NOWAIT)) {
+			/* XXX What should we do? */
+			printf("WARNING: CAN'T ALLOCATE BASE MEMORY FROM "
+			    "IOMEM EXTENT MAP!\n");
+		}
+		mem_clusters[0].start = 0;
+		mem_clusters[0].size = trunc_page(KBTOB(biosbasemem));
+		physmem += atop(mem_clusters[0].size);
+		if (extent_alloc_region(iomem_ex, IOM_END, KBTOB(biosextmem),
+		    EX_NOWAIT)) {
+			/* XXX What should we do? */
+			printf("WARNING: CAN'T ALLOCATE EXTENDED MEMORY FROM "
+			    "IOMEM EXTENT MAP!\n");
+		}
+#if NISADMA > 0
+		/*
+		 * Some motherboards/BIOSes remap the 384K of RAM that would
+		 * normally be covered by the ISA hole to the end of memory
+		 * so that it can be used.  However, on a 16M system, this
+		 * would cause bounce buffers to be allocated and used.
+		 * This is not desirable behaviour, as more than 384K of
+		 * bounce buffers might be allocated.  As a work-around,
+		 * we round memory down to the nearest 1M boundary if
+		 * we're using any isadma devices and the remapped memory
+		 * is what puts us over 16M.
+		 */
+		if (biosextmem > (15*1024) && biosextmem < (16*1024)) {
+			char pbuf[9];
+
+			format_bytes(pbuf, sizeof(pbuf),
+			    biosextmem - (15*1024));
+			printf("Warning: ignoring %s of remapped memory\n",
+			    pbuf);
+			biosextmem = (15*1024);
+		}
+#endif
+		mem_clusters[1].start = IOM_END;
+		mem_clusters[1].size = trunc_page(KBTOB(biosextmem));
+		physmem += atop(mem_clusters[1].size);
+
+		mem_cluster_cnt = 2;
+
+		avail_end = IOM_END + trunc_page(KBTOB(biosextmem));
+	}
+
+	/*
+	 * If we have 16M of RAM or less, just put it all on
+	 * the default free list.  Otherwise, put the first
+	 * 16M of RAM on a lower priority free list (so that
+	 * all of the ISA DMA'able memory won't be eaten up
+	 * first-off).
+	 */
+	if (avail_end <= (16 * 1024 * 1024))
+		first16q = VM_FREELIST_DEFAULT;
+	else
+		first16q = VM_FREELIST_FIRST16;
+
+	/* Make sure the end of the space used by the kernel is rounded. */
+	first_avail = round_page(first_avail);
+
+	/*
+	 * Now, load the memory clusters (which have already been
+	 * rounded and truncated) into the VM system.
+	 *
+	 * NOTE: WE ASSUME THAT MEMORY STARTS AT 0 AND THAT THE KERNEL
+	 * IS LOADED AT IOM_END (1M).
+	 */
+	for (x = 0; x < mem_cluster_cnt; x++) {
+		seg_start = mem_clusters[x].start;
+		seg_end = mem_clusters[x].start + mem_clusters[x].size;
+		seg_start1 = 0;
+		seg_end1 = 0;
+
+		/*
+		 * Skip memory before our available starting point.
+		 */
+		if (seg_end <= avail_start)
+			continue;
+
+		if (avail_start >= seg_start && avail_start < seg_end) {
+			if (seg_start != 0)
+				panic("init386: memory doesn't start at 0");
+			seg_start = avail_start;
+			if (seg_start == seg_end)
+				continue;
+		}
+
+		/*
+		 * If this segment contains the kernel, split it
+		 * in two, around the kernel.
+		 */
+		if (seg_start <= IOM_END && first_avail <= seg_end) {
+			seg_start1 = first_avail;
+			seg_end1 = seg_end;
+			seg_end = IOM_END;
+		}
+
+		/* First hunk */
+		if (seg_start != seg_end) {
+			if (seg_start <= (16 * 1024 * 1024) &&
+			    first16q != VM_FREELIST_DEFAULT) {
+				u_int64_t tmp;
+
+				if (seg_end > (16 * 1024 * 1024))
+					tmp = (16 * 1024 * 1024);
+				else
+					tmp = seg_end;
+#if DEBUG_MEMLOAD
+				printf("loading 0x%qx-0x%qx (0x%lx-0x%lx)\n",
+				    seg_start, tmp,
+				    atop(seg_start), atop(tmp));
+#endif
+				uvm_page_physload(atop(seg_start),
+				    atop(tmp), atop(seg_start),
+				    atop(tmp), first16q);
+				seg_start = tmp;
+			}
+
+			if (seg_start != seg_end) {
+#if DEBUG_MEMLOAD
+				printf("loading 0x%qx-0x%qx (0x%lx-0x%lx)\n",
+				    seg_start, seg_end,
+				    atop(seg_start), atop(seg_end));
+#endif
+				uvm_page_physload(atop(seg_start),
+				    atop(seg_end), atop(seg_start),
+				    atop(seg_end), VM_FREELIST_DEFAULT);
+			}
+		}
+
+		/* Second hunk */
+		if (seg_start1 != seg_end1) {
+			if (seg_start1 <= (16 * 1024 * 1024) &&
+			    first16q != VM_FREELIST_DEFAULT) {
+				u_int64_t tmp;
+
+				if (seg_end1 > (16 * 1024 * 1024))
+					tmp = (16 * 1024 * 1024);
+				else
+					tmp = seg_end1;
+#if DEBUG_MEMLOAD
+				printf("loading 0x%qx-0x%qx (0x%lx-0x%lx)\n",
+				    seg_start1, tmp,
+				    atop(seg_start1), atop(tmp));
+#endif
+				uvm_page_physload(atop(seg_start1),
+				    atop(tmp), atop(seg_start1),
+				    atop(tmp), first16q);
+				seg_start1 = tmp;
+			}
+
+			if (seg_start1 != seg_end1) {
+#if DEBUG_MEMLOAD
+				printf("loading 0x%qx-0x%qx (0x%lx-0x%lx)\n",
+				    seg_start1, seg_end1,
+				    atop(seg_start1), atop(seg_end1));
+#endif
+				uvm_page_physload(atop(seg_start1),
+				    atop(seg_end1), atop(seg_start1),
+				    atop(seg_end1), VM_FREELIST_DEFAULT);
+			}
+		}
+	}
+
+	/*
+	 * Steal memory for the message buffer (at end of core).
+	 */
+	{
+		struct vm_physseg *vps;
+		psize_t sz = round_page(MSGBUFSIZE);
+		psize_t reqsz = sz;
+
+		for (x = 0; x < vm_nphysseg; x++) {
+			vps = &vm_physmem[x];
+			if (ptoa(vps->avail_end) == avail_end)
+				break;
+		}
+		if (x == vm_nphysseg)
+			panic("init386: can't find end of memory");
+
+		/* Shrink so it'll fit in the last segment. */
+		if ((vps->avail_end - vps->avail_start) < atop(sz))
+			sz = ptoa(vps->avail_end - vps->avail_start);
+
+		vps->avail_end -= atop(sz);
+		vps->end -= atop(sz);
+		msgbuf_paddr = ptoa(vps->avail_end);
+
+		/* Remove the last segment if it now has no pages. */
+		if (vps->start == vps->end) {
+			for (vm_nphysseg--; x < vm_nphysseg; x++)
+				vm_physmem[x] = vm_physmem[x + 1];
+		}
+
+		/* Now find where the new avail_end is. */
+		for (avail_end = 0, x = 0; x < vm_nphysseg; x++)
+			if (vm_physmem[x].avail_end > avail_end)
+				avail_end = vm_physmem[x].avail_end;
+		avail_end = ptoa(avail_end);
+
+		/* Warn if the message buffer had to be shrunk. */
+		if (sz != reqsz)
+			printf("WARNING: %ld bytes not available for msgbuf "
+			    "in last cluster (%ld used)\n", reqsz, sz);
+	}
 
 #if NBIOSCALL > 0 || defined(MULTIPROCESSOR)
 	/* install page 2 (reserved above) as PT page for first 4M */
-	pmap_enter(pmap_kernel(), (u_long)vtopte(0), 2*NBPG,
+	pmap_enter(pmap_kernel(), (vaddr_t)vtopte(0), 2*PAGE_SIZE,
 	    VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED|VM_PROT_READ|VM_PROT_WRITE);
-	memset(vtopte(0), 0, NBPG);  /* make sure it is clean before using */
+	memset(vtopte(0), 0, PAGE_SIZE);/* make sure it is clean before using */
 #endif
 
 	pmap_enter(pmap_kernel(), idt_vaddr, idt_paddr,
@@ -1776,17 +2344,6 @@ init386(first_avail)
 	splraise(IPL_SERIAL);	/* XXX MP clean me */
 	enable_intr();
 
-	/* number of pages of physmem addr space */
-	physmem = btoc(KBTOB(biosbasemem)) + btoc(KBTOB(biosextmem));
-
-	mem_clusters[0].start = 0;
-	mem_clusters[0].size  = trunc_page(KBTOB(biosbasemem));
-
-	mem_clusters[1].start = IOM_END;
-	mem_clusters[1].size  = trunc_page(KBTOB(biosextmem));
-
-	mem_cluster_cnt = 2;
-
 	if (physmem < btoc(2 * 1024 * 1024)) {
 		printf("warning: too little memory available; "
 		       "have %lu bytes, want %lu bytes\n"
@@ -1795,6 +2352,8 @@ init386(first_avail)
 		       ptoa(physmem), 2*1024*1024UL);
 		cngetc();
 	}
+
+	identifycpu();
 }
 
 struct queue {
@@ -1980,7 +2539,7 @@ cpu_reset()
 	 * Try to cause a triple fault and watchdog reset by unmapping the
 	 * entire address space and doing a TLB flush.
 	 */
-	memset((caddr_t)PTD, 0, NBPG);
+	memset((caddr_t)PTD, 0, PAGE_SIZE);
 	tlbflush(); 
 #endif
 

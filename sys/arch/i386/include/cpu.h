@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.59.2.16 2001/01/04 06:07:46 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.59.2.17 2001/01/07 22:12:46 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -89,6 +89,7 @@ struct cpu_info {
 	
 	struct pcb *ci_curpcb;		/* VA of current HW PCB */
 	struct pcb *ci_idle_pcb;	/* VA of current PCB */
+	int ci_idle_tss_sel;		/* TSS selector of idle PCB */
 	
 	paddr_t ci_idle_pcb_paddr;	/* PA of idle PCB */
 	u_int32_t ci_flags;		/* flags; see below */
@@ -223,6 +224,12 @@ do {									\
 #define	CLKF_INTR(frame)	((frame)->if_ppl & (1 << IPL_TAGINTR))
 
 /*
+ * This is used during profiling to integrate system time.  It can safely
+ * assume that the process is resident.
+ */
+#define	PROC_PC(p)		((p)->p_md.md_regs->tf_eip)
+
+/*
  * Give a profiling tick to the current process when the user profiling
  * buffer pages are invalid.  On the i386, request an ast to send us
  * through trap(), marking the proc as needing a profiling tick.
@@ -280,8 +287,8 @@ extern int cpu_feature;
 extern int cpu_id;
 extern char cpu_vendor[];
 extern int cpuid_level;
-extern struct cpu_nocpuid_nameclass i386_nocpuid_cpus[];
-extern struct cpu_cpuid_nameclass i386_cpuid_cpus[];
+extern const struct cpu_nocpuid_nameclass i386_nocpuid_cpus[];
+extern const struct cpu_cpuid_nameclass i386_cpuid_cpus[];
 
 /* machdep.c */
 void	dumpconf __P((void));

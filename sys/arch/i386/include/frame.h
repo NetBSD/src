@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.13.20.1 2000/08/24 02:33:16 sommerfeld Exp $	*/
+/*	$NetBSD: frame.h,v 1.13.20.2 2001/01/07 22:12:46 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -73,6 +73,9 @@
  *
  *	@(#)frame.h	5.2 (Berkeley) 1/18/91
  */
+
+#ifndef _I386_FRAME_H_
+#define _I386_FRAME_H_
 
 #include <sys/signal.h>
 
@@ -154,3 +157,5 @@ struct sigframe {
 	sig_t	sf_handler;
 	struct	sigcontext sf_sc;
 };
+
+#endif  /* _I386_FRAME_H_ */

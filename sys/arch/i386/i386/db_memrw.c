@@ -1,37 +1,61 @@
-/*	$NetBSD: db_memrw.c,v 1.8.2.2 2001/01/02 06:58:07 thorpej Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.8.2.3 2001/01/07 22:12:40 sommerfeld Exp $	*/
 
-/* 
- * Mach Operating System
- * Copyright (c) 1991,1990 Carnegie Mellon University
- * All Rights Reserved.
- * 
- * Permission to use, copy, modify and distribute this software and its
- * documentation is hereby granted, provided that both the copyright
- * notice and this permission notice appear in all copies of the
- * software, derivative works or modified versions, and any portions
- * thereof, and that both notices appear in supporting documentation.
- * 
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
- * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND FOR
- * ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
- * Carnegie Mellon requests users of this software to return to
- * 
- *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
- *  School of Computer Science
- *  Carnegie Mellon University
- *  Pittsburgh PA 15213-3890
- * 
- * any improvements or extensions that they make and grant Carnegie the
- * rights to redistribute these changes.
+/*-
+ * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
+ * All rights reserved.
  *
- *	db_interface.c,v 2.4 1991/02/05 17:11:13 mrt (CMU)
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Gordon W. Ross and Jason R. Thorpe.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
 
 /*
- * Routines to read and write memory on behalf of the debugger, used
- * by DDB and KGDB.
+ * Interface to the debugger for virtual memory read/write.
+ * This file is shared by DDB and KGDB, and must work even
+ * when only KGDB is included (thus no db_printf calls).
+ *
+ * To write in the text segment, we have to first make
+ * the page writable, do the write, then restore the PTE.
+ * For writes outside the text segment, and all reads,
+ * just do the access -- if it causes a fault, the debugger
+ * will recover with a longjmp to an appropriate place.
+ *
+ * ALERT!  If you want to access device registers with a
+ * specific size, then the read/write functions have to
+ * make sure to do the correct sized pointer access.
+ *
+ * Modified for i386 from hp300 version by
+ * Jason R. Thorpe <thorpej@zembu.com>.
  */
+
+#include "opt_largepages.h"
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -47,61 +71,148 @@
  * Read bytes from kernel address space for debugger.
  */
 void
-db_read_bytes(addr, size, data)
-	vaddr_t		addr;
-	register size_t	size;
-	register char	*data;
+db_read_bytes(vaddr_t addr, size_t size, char *data)
 {
-	register char	*src;
+	char *src;
 
 	src = (char *)addr;
+
+	if (size == 4) {
+		*((int *)data) = *((int *)src);
+		return;
+	}
+
+	if (size == 2) {
+		*((short *)data) = *((short *)src);
+		return;
+	}
+
 	while (size-- > 0)
 		*data++ = *src++;
+}
+
+/*
+ * Write bytes somewhere in the kernel text.  Make the text
+ * pages writable temporarily.
+ */
+static void
+db_write_text(vaddr_t addr, size_t size, char *data)
+{
+	pt_entry_t *pte, oldpte, tmppte;
+	vaddr_t pgva;
+	size_t limit;
+	char *dst;
+
+	if (size == 0)
+		return;
+
+	dst = (char *)addr;
+
+	do {
+		/*
+		 * Get the PTE for the page.
+		 */
+		pte = kvtopte(addr);
+		oldpte = *pte;
+
+		if ((oldpte & PG_V) == 0) {
+			printf(" address %p not a valid page\n", dst);
+			return;
+		}
+
+		/*
+		 * Get the VA for the page.
+		 */
+#ifdef LARGEPAGES
+		if (oldpte & PG_PS)
+			pgva = (vaddr_t)dst & PG_LGFRAME;
+		else
+#endif
+			pgva = i386_trunc_page(dst);
+
+		/*
+		 * Compute number of bytes that can be written
+		 * with this mapping and subtract it from the
+		 * total size.
+		 */
+#ifdef LARGEPAGES
+		if (oldpte & PG_PS)
+			limit = NBPD - ((vaddr_t)dst & (NBPD - 1));
+		else
+#endif
+			limit = PAGE_SIZE - ((vaddr_t)dst & PGOFSET);
+		if (limit > size)
+			limit = size;
+		size -= limit;
+
+		tmppte = (oldpte & ~PG_KR) | PG_KW;
+		*pte = tmppte;
+		pmap_update_pg(pgva);
+		/*
+		 * MULTIPROCESSOR: no shootdown required as the PTE continues to
+		 * map the same page and other CPU's don't need write access.
+		 */
+
+		/*
+		 * Page is now writeable.  Do as much access as we
+		 * can in this page.
+		 */
+		for (; limit > 0; limit--)
+			*dst++ = *data++;
+
+		/*
+		 * Restore the old PTE.
+		 */
+		*pte = oldpte;
+
+#if 0 
+		/*
+		 * XXXSMP Not clear if this is needed for 100% correctness.
+		 */
+		{
+			int cpumask = 0;
+			/*
+			 * shoot down in case other cpu mistakenly caches page.
+			 */
+			pmap_tlb_shootdown(pmap_kernel(), va, oldpte, &cpumask);
+			pmap_tlb_shootnow(cpumask);
+		}
+#else
+		pmap_update_pg(va);
+#endif
+		
+	} while (size != 0);
 }
 
 /*
  * Write bytes to kernel address space for debugger.
  */
 void
-db_write_bytes(addr, size, data)
-	vaddr_t		addr;
-	register size_t	size;
-	register char	*data;
+db_write_bytes(vaddr_t addr, size_t size, char *data)
 {
-	register char	*dst;
+	extern char etext;
+	char *dst;
 
-	register pt_entry_t *ptep0 = 0;
-	pt_entry_t	oldmap0 = { 0 };
-	vaddr_t		addr1;
-	register pt_entry_t *ptep1 = 0;
-	pt_entry_t	oldmap1 = { 0 };
-	extern char	etext;
+	dst = (char *)addr;
 
-	if (addr >= VM_MIN_KERNEL_ADDRESS &&
-	    addr < (vaddr_t)&etext) {
-		ptep0 = PTE_BASE + i386_btop(addr);
-		oldmap0 = *ptep0;
-		*(int *)ptep0 |= /* INTEL_PTE_WRITE */ PG_RW;
-
-		addr1 = i386_trunc_page(addr + size - 1);
-		if (i386_trunc_page(addr) != addr1) {
-			/* data crosses a page boundary */
-			ptep1 = PTE_BASE + i386_btop(addr1);
-			oldmap1 = *ptep1;
-			*(int *)ptep1 |= /* INTEL_PTE_WRITE */ PG_RW;
-		}
-		tlbflush();
+	/* If any part is in kernel text, use db_write_text() */
+	if (addr >= KERNBASE && addr < (vaddr_t)&etext) {
+		db_write_text(addr, size, data);
+		return;
 	}
 
 	dst = (char *)addr;
 
+	if (size == 4) {
+		*((int *)dst) = *((int *)data);
+		return;
+	}
+
+	if (size == 2) {
+		*((short *)dst) = *((short *)data);
+		return;
+	}
+
 	while (size-- > 0)
 		*dst++ = *data++;
-
-	if (ptep0) {
-		*ptep0 = oldmap0;
-		if (ptep1)
-			*ptep1 = oldmap1;
-		tlbflush();
-	}
 }
