@@ -1,10 +1,10 @@
-/*	$NetBSD: podule_data.h,v 1.13 2003/01/26 19:35:52 chris Exp $	*/
+/*	$NetBSD: podule_data.h,v 1.14 2004/01/07 22:02:23 bjh21 Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: podules,v 1.15 2003/01/26 19:35:04 chris Exp 
+ *	NetBSD: podules,v 1.16 2004/01/07 22:00:51 bjh21 Exp 
  */
 
 /*
@@ -182,7 +182,7 @@ static struct podule_description known_podules[] = {
 	{ PODULE_LINGENUITY_SCSI8SHARE,	"8 bit SCSIShare interface" },
 	{ PODULE_VTI_SCSI,	"SCSI interface" },
 	{ PODULE_ATOMWIDE_PIA,	"PIA" },
-	{ PODULE_NEXUSNS,	"Nexus interface (A3020 netslot)" },
+	{ PODULE_NEXUSNS,	"Nexus interface (A3020/RiscPC netslot)" },
 	{ PODULE_ATOMWIDE_SERIAL,	"multiport serial interface" },
 	{ PODULE_WATFORD_IDE,	"IDE interface" },
 	{ PODULE_ATOMWIDE_IDE,	"IDE interface" },
