@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nonints.h	5.6 (Berkeley) 4/18/91
- *	$Id: nonints.h,v 1.4 1994/06/06 22:45:37 jtc Exp $
+ *	$Id: nonints.h,v 1.5 1994/06/16 18:50:16 jtc Exp $
  */
 
 /* arch.c */
@@ -89,7 +89,7 @@ Lst Parse_MainName __P((void));
 void str_init __P((void));
 void str_end __P((void));
 char *str_concat __P((char *, char *, int));
-char **brk_string __P((char *, int *));
+char **brk_string __P((char *, int *, Boolean));
 char *Str_FindSubstring __P((char *, char *));
 int Str_Match __P((char *, char *));
 char *Str_SYSVMatch __P((char *, char *, int *len));
