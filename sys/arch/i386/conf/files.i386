@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.84.2.1 1997/07/01 17:33:56 bouyer Exp $
+#	$NetBSD: files.i386,v 1.84.2.2 1997/07/17 13:42:34 bouyer Exp $
 #
 # new style config file for i386 architecture
 #
@@ -12,10 +12,12 @@ file	arch/i386/i386/autoconf.c
 file	arch/i386/i386/conf.c
 file	arch/i386/i386/db_disasm.c	ddb
 file	arch/i386/i386/db_interface.c	ddb
+file	arch/i386/i386/db_memrw.c	ddb | kgdb
 file	arch/i386/i386/db_trace.c	ddb
 file	arch/i386/i386/disksubr.c	disk
 file	arch/i386/i386/gdt.c
 file	arch/i386/i386/in_cksum.s	inet
+file	arch/i386/i386/kgdb_machdep.c	kgdb
 file	arch/i386/i386/machdep.c
 file	arch/i386/i386/math_emulate.c	math_emulate
 file	arch/i386/i386/mem.c
