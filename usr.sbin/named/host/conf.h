@@ -1,3 +1,5 @@
+/*	$NetBSD: conf.h,v 1.2 1997/04/13 10:50:20 mrg Exp $	*/
+
 /*
 ** Various configuration definitions.
 **

@@ -1,3 +1,5 @@
+.\"	$NetBSD: resolver.5,v 1.2 1997/04/13 10:51:02 mrg Exp $
+.\"
 .\" Copyright (c) 1986 The Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -14,9 +16,9 @@
 .\" WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 .\"
 .\"	@(#)resolver.5	5.9 (Berkeley) 12/14/89
-.\"	$Id: resolver.5,v 1.1.1.1 1997/04/13 09:07:30 mrg Exp $
+.\"	from: Id: resolver.5,v 8.3 1995/12/06 20:34:35 vixie Exp
 .\"
-.TH RESOLVER @FORMAT_EXT_U@ ""November 11, 1993""
+.TH RESOLVER 5 ""November 11, 1993""
 .UC 4
 .SH NAME
 resolver \- resolver configuration file
@@ -27,7 +29,7 @@ resolver \- resolver configuration file
 The
 .I resolver
 is a set of routines in the C library (\c
-.IR resolv (@LIB_NETWORK_EXT@))
+.IR resolv (3))
 that provide access to the Internet Domain Name System.
 The resolver configuration file contains information that is read
 by the resolver routines the first time they are invoked by a process.
@@ -61,7 +63,7 @@ Most queries for names within this domain can use short names
 relative to the local domain.
 If no \fBdomain\fP entry is present, the domain is determined
 from the local host name returned by
-\fIgethostname\fP\|(@BSD_SYSCALL_EXT@);
+\fIgethostname\fP\|(2);
 the domain part is taken to be everything after the first `.'.
 Finally, if the host name does not contain a domain part, the root
 domain is assumed.
@@ -103,7 +105,7 @@ where \fIoption\fP is one of the following:
 \fBdebug\fP \(em sets RES_DEBUG in _res.options.
 .IP
 \fBndots:\fP\fIn\fP \(em sets a threshold for the number of dots which
-must appear in a name given to \fBres_query\fP (see \fIresolver\fP(@LIB_NETWORK_EXT@))
+must appear in a name given to \fBres_query\fP (see \fIresolver\fP(3))
 before an \fIinitial absolute query\fP will be made.  The default for
 \fIn\fP is ``1'', meaning that if there are any dots in a name, the name
 will be tried first as an absolute name before any \fIsearch list\fP
@@ -128,6 +130,6 @@ the keyword, separated by white space.
 .SH FILES
 .I /etc/resolv.conf
 .SH SEE ALSO
-gethostbyname(@LIB_NETWORK_EXT@), resolver(@LIB_NETWORK_EXT@), hostname(@DESC_EXT@), @INDOT@named(@SYS_OPS_EXT@)
+gethostbyname(3), resolver(3), hostname(7), named(8)
 .br
 Name Server Operations Guide for BIND

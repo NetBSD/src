@@ -1,5 +1,3 @@
-/*	$NetBSD: send.c,v 1.1 1996/02/02 15:30:27 mrg Exp $	*/
-
 /*
  * ++Copyright++ 1985, 1989
  * -
@@ -57,7 +55,7 @@
 
 #ifndef lint
 static char sccsid[] = "@(#)send.c	5.18 (Berkeley) 3/2/91";
-static char rcsid[] = "$Id: send.c,v 8.1 1994/12/15 06:24:31 vixie Exp ";
+static char rcsid[] = "$Id: send.c,v 1.2 1997/04/13 10:52:19 mrg Exp $";
 #endif /* not lint */
 
 /*
@@ -88,7 +86,6 @@ static char rcsid[] = "$Id: send.c,v 8.1 1994/12/15 06:24:31 vixie Exp ";
 #include <arpa/inet.h>
 #include <resolv.h>
 #include "res.h"
-#include "conf/portability.h"
 
 static int s = -1;	/* socket used for communications */
 

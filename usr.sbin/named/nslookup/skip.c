@@ -1,5 +1,3 @@
-/*	$NetBSD: skip.c,v 1.1 1996/02/02 15:30:28 mrg Exp $	*/
-
 /*
  * ++Copyright++ 1985, 1989
  * -
@@ -57,7 +55,7 @@
 
 #ifndef lint
 static char sccsid[] = "@(#)skip.c	5.12 (Berkeley) 3/21/91";
-static char rcsid[] = "$Id: skip.c,v 8.1 1994/12/15 06:24:31 vixie Exp ";
+static char rcsid[] = "$Id: skip.c,v 1.2 1997/04/13 10:52:20 mrg Exp $";
 #endif /* not lint */
 
 /*
@@ -82,7 +80,6 @@ static char rcsid[] = "$Id: skip.c,v 8.1 1994/12/15 06:24:31 vixie Exp ";
 #include <arpa/nameser.h>
 #include <resolv.h>
 #include <stdio.h>
-#include "conf/portability.h"
 
 char *res_skip_rr();
 

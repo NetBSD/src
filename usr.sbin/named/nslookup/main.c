@@ -1,5 +1,3 @@
-/*	$NetBSD: main.c,v 1.1 1996/02/02 15:30:13 mrg Exp $	*/
-
 /*
  * ++Copyright++ 1985, 1989
  * -
@@ -63,7 +61,7 @@ char copyright[] =
 
 #ifndef lint
 static char sccsid[] = "@(#)main.c	5.42 (Berkeley) 3/3/91";
-static char rcsid[] = "$Id: main.c,v 8.2 1995/12/22 10:20:42 vixie Exp ";
+static char rcsid[] = "$Id: main.c,v 1.2 1997/04/13 10:52:14 mrg Exp $";
 #endif /* not lint */
 
 /*
@@ -92,11 +90,12 @@ static char rcsid[] = "$Id: main.c,v 8.2 1995/12/22 10:20:42 vixie Exp ";
 #include <setjmp.h>
 #include <ctype.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <errno.h>
 #include <limits.h>
 #include "res.h"
 #include "pathnames.h"
-#include "conf/portability.h"
 
 
 /*
@@ -145,7 +144,7 @@ int		queryClass = C_IN;
  * Stuff for Interrupt (control-C) signal handler.
  */
 
-extern SIG_FN	IntrHandler();
+extern void	IntrHandler();
 FILE		*filePtr;
 jmp_buf		env;
 
@@ -518,7 +517,14 @@ SetDefaultServer(string, local)
 			newServer, newDefPtr, 1);
     }
 
-    if (result == SUCCESS || result == NONAUTH) {
+    /* If we ask for an A record and get none back, but get an NS
+       record for the NS server, this is the NONAUTH case.
+       We must check whether we got an IP address for the NS
+       server or not.  */
+    if ((result == SUCCESS || result == NONAUTH) &&
+	((newDefPtr->addrList && newDefPtr->addrList[0] != 0) || 
+	 (newDefPtr->servers && newDefPtr->servers[0] &&
+			newDefPtr->servers[0]->addrList[0] != 0))) {
 	    /*
 	     *  Found info about the new server. Free the resources for
 	     *  the old server.
@@ -1097,7 +1103,9 @@ ReadRC()
     register char *cp;
     char buf[PATH_MAX];
 
-    if ((cp = getenv("HOME")) != NULL) {
+    if ((cp = getenv("HOME")) != NULL &&
+	(strlen(cp) + strlen(_PATH_NSLOOKUPRC)) < sizeof(buf)) {
+
 	(void) strcpy(buf, cp);
 	(void) strcat(buf, _PATH_NSLOOKUPRC);
 

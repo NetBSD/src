@@ -1,5 +1,3 @@
-/*	$NetBSD: debug.c,v 1.1 1996/02/02 15:30:01 mrg Exp $	*/
-
 /*
  * ++Copyright++ 1985, 1989
  * -
@@ -57,7 +55,7 @@
 
 #ifndef lint
 static char sccsid[] = "@(#)debug.c	5.26 (Berkeley) 3/21/91";
-static char rcsid[] = "$Id: debug.c,v 8.2 1995/06/29 09:26:34 vixie Exp ";
+static char rcsid[] = "$Id: debug.c,v 1.2 1997/04/13 10:52:07 mrg Exp $";
 #endif /* not lint */
 
 /*
@@ -73,6 +71,7 @@ static char rcsid[] = "$Id: debug.c,v 8.2 1995/06/29 09:26:34 vixie Exp ";
  */
 
 #include <sys/param.h>
+#include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/nameser.h>
 #include <arpa/inet.h>
@@ -80,7 +79,6 @@ static char rcsid[] = "$Id: debug.c,v 8.2 1995/06/29 09:26:34 vixie Exp ";
 #include <netdb.h>
 #include <stdio.h>
 #include "res.h"
-#include "conf/portability.h"
 
 /*
  *  Imported from res_debug.c
@@ -142,6 +140,12 @@ Fprint_query(msg, eom, printHeader,file)
 		    fprintf(file,", want recursion");
 	    if (hp->ra)
 		    fprintf(file,", recursion avail.");
+	    if (hp->unused)
+		    fprintf(file,", UNUSED-QUERY_BIT");
+	    if (hp->ad)
+		    fprintf(file,", authentic data");
+	    if (hp->cd)
+		    fprintf(file,", checking disabled");
 	    fprintf(file,"\n\tquestions = %d", ntohs(hp->qdcount));
 	    fprintf(file,",  answers = %d", ntohs(hp->ancount));
 	    fprintf(file,",  authority records = %d", ntohs(hp->nscount));
@@ -171,6 +175,11 @@ Fprint_query(msg, eom, printHeader,file)
 	 */
 	if (n = ntohs(hp->ancount)) {
 		fprintf(file,"    ANSWERS:\n");
+		if (type == T_A && n > MAXADDRS) {
+			printf("Limiting response to MAX Addrs = %d \n",
+			       MAXADDRS);
+			n = MAXADDRS;
+		}
 		while (--n >= 0) {
 			fprintf(file, INDENT);
 			cp = Print_rr(cp, msg, eom, file);
@@ -249,17 +258,17 @@ Print_cdname2(cp, msg, eom, file)
  * Print resource record fields in human readable form.
  */
 u_char *
-Print_rr(cp, msg, eom, file)
-	u_char *cp, *msg, *eom;
+Print_rr(ocp, msg, eom, file)
+	u_char *ocp, *msg, *eom;
 	FILE *file;
 {
 	int type, class, dlen, n, c;
 	u_int32_t rrttl, ttl;
 	struct in_addr inaddr;
-	u_char *cp1, *cp2;
+	u_char *cp, *cp1, *cp2;
 	int debug;
 
-	if ((cp = Print_cdname(cp, msg, eom, file)) == NULL) {
+	if ((cp = Print_cdname(ocp, msg, eom, file)) == NULL) {
 		fprintf(file, "(name truncated?)\n");
 		return (NULL);			/* compression error */
 	}
@@ -334,13 +343,60 @@ Print_rr(cp, msg, eom, file)
 		cp += INT16SZ;
 		fprintf(file,", mail exchanger = ");
 		goto doname;
+
+	case T_NAPTR: 
+		fprintf(file, "\torder = %u",_getshort((u_char*)cp));
+		cp += INT16SZ;
+		fprintf(file,", preference = %u\n", _getshort((u_char*)cp));
+		cp += INT16SZ;
+		/* Flags */
+		n = *cp++;
+		fprintf(file,"\tflags = \"%.*s\"\n", (int)n, cp);
+		cp += n;
+		/* Service */
+		n = *cp++;
+		fprintf(file,"\tservices = \"%.*s\"\n", (int)n, cp);
+		cp += n;
+		/* Regexp */
+		n = *cp++;
+		fprintf(file,"\trule = \"%.*s\"\n", (int)n, cp);
+		cp += n;
+		/* Replacement */
+		fprintf(file,"\treplacement = ");
+                cp = Print_cdname(cp, msg, eom, file);
+		if (cp == NULL) {
+			fprintf(file, "(replacement truncated?)\n");
+			return (NULL);			/* compression error */
+		}
+                (void) putc('\n', file);
+
+		break;
+	case T_SRV: 
+		fprintf(file, "\tpriority = %u",_getshort((u_char*)cp));
+		cp += INT16SZ;
+		fprintf(file,", weight = %u", _getshort((u_char*)cp));
+		cp += INT16SZ;
+		fprintf(file,", port= %u\n", _getshort((u_char*)cp));
+		cp += INT16SZ;
+
+		fprintf(file,"\thost = ");
+		goto doname;
+
         case T_PX:
                 fprintf(file,"\tpreference = %u",_getshort((u_char*)cp));
                 cp += INT16SZ;
                 fprintf(file,", RFC 822 = ");
                 cp = Print_cdname(cp, msg, eom, file);
+		if (cp == NULL) {
+			fprintf(file, "(name truncated?)\n");
+			return (NULL);			/* compression error */
+		}
                 fprintf(file,"\nX.400 = ");
                 cp = Print_cdname(cp, msg, eom, file);
+		if (cp == NULL) {
+			fprintf(file, "(name truncated?)\n");
+			return (NULL);			/* compression error */
+		}
                 (void) putc('\n', file);
                 break;
 	case T_RT:
@@ -360,6 +416,10 @@ Print_rr(cp, msg, eom, file)
 		fprintf(file,"\tname = ");
 doname:
 		cp = Print_cdname(cp, msg, eom, file);
+		if (cp == NULL) {
+			fprintf(file, "(name truncated?)\n");
+			return (NULL);			/* compression error */
+		}
 		(void) putc('\n', file);
 		break;
 
@@ -393,8 +453,16 @@ doname:
 		    (void) putc('\n', file);
 		fprintf(file,"\torigin = ");
 		cp = Print_cdname(cp, msg, eom, file);
+		if (cp == NULL) {
+			fprintf(file, "(name truncated?)\n");
+			return (NULL);			/* compression error */
+		}
 		fprintf(file,"\n\tmail addr = ");
 		cp = Print_cdname(cp, msg, eom, file);
+		if (cp == NULL) {
+			fprintf(file, "(name truncated?)\n");
+			return (NULL);			/* compression error */
+		}
 		fprintf(file,"\n\tserial = %lu", _getlong((u_char*)cp));
 		cp += INT32SZ;
 		ttl = _getlong((u_char*)cp);
@@ -417,8 +485,16 @@ doname:
 		    (void) putc('\n', file);
 		fprintf(file,"\trequests = ");
 		cp = Print_cdname(cp, msg, eom, file);
+		if (cp == NULL) {
+			fprintf(file, "(name truncated?)\n");
+			return (NULL);			/* compression error */
+		}
 		fprintf(file,"\n\terrors = ");
 		cp = Print_cdname(cp, msg, eom, file);
+		if (cp == NULL) {
+			fprintf(file, "(name truncated?)\n");
+			return (NULL);			/* compression error */
+		}
 		(void) putc('\n', file);
 		break;
 	case T_RP:
@@ -426,25 +502,36 @@ doname:
 		    (void) putc('\n', file);
 		fprintf(file,"\tmailbox = ");
 		cp = Print_cdname(cp, msg, eom, file);
+		if (cp == NULL) {
+			fprintf(file, "(name truncated?)\n");
+			return (NULL);			/* compression error */
+		}
 		fprintf(file,"\n\ttext = ");
 		cp = Print_cdname(cp, msg, eom, file);
+		if (cp == NULL) {
+			fprintf(file, "(name truncated?)\n");
+			return (NULL);			/* compression error */
+		}
 		(void) putc('\n', file);
 		break;
 
 	case T_TXT:
-		(void) fputs("\ttext = \"", file);
+		(void) fputs("\ttext = ", file);
 		cp2 = cp1 + dlen;
 		while (cp < cp2) {
+			(void) putc('"', file);
 			if (n = (unsigned char) *cp++) {
-				for (c = n; c > 0 && cp < cp2; c--)
-					if ((*cp == '\n') || (*cp == '"')) {
-					    (void) putc('\\', file);
-					    (void) putc(*cp++, file);
-					} else
-					    (void) putc(*cp++, file);
+				for (c = n; c > 0 && cp < cp2; c--) {
+					if ((*cp == '\n') || (*cp == '"') || (*cp == '\\'))
+						(void) putc('\\', file);
+					(void) putc(*cp++, file);
+				}
 			}
+			(void) putc('"', file);
+			if (cp < cp2)
+				(void) putc(' ', file);
 		}
-		(void) fputs("\"\n", file);
+		(void) putc('\n', file);
   		break;
 
 	case T_X25:
@@ -467,6 +554,15 @@ doname:
 		fprintf(file, "\tnsap = %s\n", inet_nsap_ntoa(dlen, cp, NULL));
 		cp += dlen;
   		break;
+
+	case T_AAAA: {
+		char t[sizeof "ffff:ffff:ffff:ffff:ffff:ffff:255.255.255.255"];
+
+		fprintf(file, "\tIPv6 address = %s\n",
+			inet_ntop(AF_INET6, cp, t, sizeof t));
+		cp += IN6ADDRSZ;
+		break;
+	}
 
 	case T_UINFO:
 		fprintf(file,"\tuser info = %s\n", cp);
@@ -531,7 +627,9 @@ doname:
 		break;
 
 	default:
-		fprintf(file,"\t??? unknown type %d ???\n", type);
+		fprintf(file,"\trecord type %d, interpreted as:\n", type);
+		/* Let resolver library try to print it */
+		p_rr(ocp, msg, file);
 		cp += dlen;
 	}
 	if (_res.options & RES_DEBUG && type != T_SOA) {

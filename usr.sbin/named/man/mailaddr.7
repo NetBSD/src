@@ -1,3 +1,5 @@
+.\"	$NetBSD: mailaddr.7,v 1.2 1997/04/13 10:50:53 mrg Exp $
+.\"
 .\" Copyright (c) 1983, 1987 The Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -15,7 +17,7 @@
 .\"
 .\"	@(#)mailaddr.7	6.5 (Berkeley) 2/14/89
 .\"
-.TH MAILADDR @DESC_EXT_U@ "February 14, 1989"
+.TH MAILADDR 7 "February 14, 1989"
 .UC 5
 .SH NAME
 mailaddr \- mail addressing description
@@ -69,7 +71,7 @@ is converted to
 .PP
 		user@host
 .PP
-to be consistent with the \fIrcp\fP(@CMD_EXT@) command.
+to be consistent with the \fIrcp\fP(1) command.
 .PP
 Also, the syntax
 .PP
@@ -128,7 +130,7 @@ Route-Address syntax is grotty.
 .PP
 UUCP- and ARPANET-style addresses do not coexist politely.
 .SH SEE ALSO
-mail(@CMD_EXT@), sendmail(@SYS_OPS_EXT@);
+mail(1), sendmail(8);
 Crocker, D. H.,
 .ul
 Standard for the Format of Arpa Internet Text Messages,

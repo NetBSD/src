@@ -1,9 +1,9 @@
-/*	$NetBSD: dmalloc.h,v 1.1 1996/02/02 15:28:40 mrg Exp $	*/
+/*	$NetBSD: dmalloc.h,v 1.2 1997/04/13 10:51:25 mrg Exp $	*/
 
 /* dmalloc - debugging layer on top of malloc
  * vix 22mar92 [written]
  *
- * $Id: dmalloc.h,v 8.1 1994/12/15 06:24:14 vixie Exp 
+ * Id: dmalloc.h,v 8.1 1994/12/15 06:24:14 vixie Exp 
  */
 
 /*

@@ -1,3 +1,5 @@
+/*	$NetBSD: defs.h,v 1.2 1997/04/13 10:50:22 mrg Exp $	*/
+
 /*
 ** Declaration of functions.
 **
@@ -136,49 +138,7 @@ void _res_perror	PROTO((struct sockaddr_in *, char *, char *));
 ** External library functions
 ** --------------------------
 */
-	/* extern */
 
-ipaddr_t inet_addr	PROTO((CONST char *));
-char *inet_ntoa		PROTO((struct in_addr));
-char *hostalias		PROTO((CONST char *));
-
-	/* avoid <strings.h> */
-
-#if !defined(index)
-
-char *index		PROTO((const char *, int));
-char *rindex		PROTO((const char *, int));
-
-#endif
-
-	/* <string.h> */
-
-#if !defined(NO_STRING_H)
 #include <string.h>
-#else
-
-char *strcpy		PROTO((char *, const char *));
-char *strncpy		PROTO((char *, const char *, siz_t));
-
-#endif
-
-	/* <stdlib.h> */
-
-#if defined(__STDC__) && !defined(apollo)
 #include <stdlib.h>
-#else
-
-char *getenv		PROTO((const char *));
-ptr_t *malloc		PROTO((siz_t));
-ptr_t *realloc		PROTO((ptr_t *, siz_t));
-free_t free		PROTO((ptr_t *));
-void exit		PROTO((int));
-void qsort		PROTO((ptr_t *, siz_t, siz_t, int (*)(const ptr_t *, const ptr_t *)));
-
-#endif
-
-	/* <unistd.h> */
-
-#if defined(__STDC__) && !defined(apollo)
 #include <unistd.h>
-#endif

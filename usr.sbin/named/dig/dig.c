@@ -1,5 +1,9 @@
+/*	$NetBSD: dig.c,v 1.2 1997/04/13 10:50:15 mrg Exp $	*/
+
 #ifndef lint
-static char rcsid[] = "$Id: dig.c,v 1.1.1.1 1997/04/13 09:07:00 mrg Exp $";
+#if 0
+static char rcsid[] = "Id: dig.c,v 8.8 1996/05/21 07:32:40 vixie Exp";
+#endif
 #endif
 
 /*

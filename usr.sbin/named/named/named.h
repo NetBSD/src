@@ -1,7 +1,7 @@
 /* named.h - include the local definitions in the right order
  * vix 28aug93 [original]
  *
- * $Id: named.h,v 1.1.1.1 1997/04/13 09:06:40 mrg Exp $
+ * $Id: named.h,v 1.2 1997/04/13 10:51:27 mrg Exp $
  */
 
 #include "../conf/portability.h"

@@ -1,6 +1,6 @@
 /*
  *	from ns.h	4.33 (Berkeley) 8/23/90
- *	$Id: ns_glob.h,v 1.1.1.1 1997/04/13 09:06:34 mrg Exp $
+ *	$Id: ns_glob.h,v 1.2 1997/04/13 10:51:34 mrg Exp $
  */
 
 /*

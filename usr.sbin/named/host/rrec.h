@@ -1,3 +1,5 @@
+/*	$NetBSD: rrec.h,v 1.2 1997/04/13 10:50:36 mrg Exp $	*/
+
 /*
 ** Resource record structures.
 **

@@ -1,7 +1,9 @@
+/*	$NetBSD: options.h,v 1.2 1997/04/13 10:50:09 mrg Exp $	*/
+
 /* options.h - specify the conditionally-compiled features
  * vix 28mar92 [moved out of the Makefile because they were getting too big]
  *
- * $Id: options.h,v 1.1.1.1 1997/04/13 09:06:59 mrg Exp $
+ * from: Id: options.h,v 8.12 1996/11/11 06:36:43 vixie Exp
  */
 
 /*
