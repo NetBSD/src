@@ -1,4 +1,4 @@
-/*	$NetBSD: dtop.c,v 1.44 2000/01/09 03:55:35 simonb Exp $	*/
+/*	$NetBSD: dtop.c,v 1.45 2000/01/10 03:24:32 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -94,47 +94,39 @@ SOFTWARE.
 ********************************************************/
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: dtop.c,v 1.44 2000/01/09 03:55:35 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtop.c,v 1.45 2000/01/10 03:24:32 simonb Exp $");
 
 #include "rasterconsole.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/ioctl.h>
 #include <sys/tty.h>
 #include <sys/proc.h>
-#include <sys/map.h>
-#include <sys/buf.h>
 #include <sys/conf.h>
 #include <sys/file.h>
-#include <sys/uio.h>
 #include <sys/kernel.h>
-#include <sys/syslog.h>
-
 #include <sys/device.h>
-#include <machine/autoconf.h>
-#include <machine/conf.h>
 
 #include <dev/cons.h>
+#include <dev/dec/lk201.h>
+#include <dev/tc/tcvar.h>
+#include <dev/tc/ioasicvar.h>
 
-#include <mips/cpuregs.h>		/* mips cached->uncached */
+#include <machine/conf.h>
 #include <machine/dc7085cons.h>		/*  mdmctl bits same on dtop and dc? */
 
 #include <machine/pmioctl.h>
 #include <machine/fbio.h>
 #include <machine/fbvar.h>
+
+#include <pmax/dev/dtopreg.h>
+#include <pmax/dev/dtopvar.h>
 #include <pmax/dev/fbreg.h>
+#include <pmax/dev/lk201var.h>
 #include <pmax/dev/rconsvar.h>
 
 #include <pmax/pmax/asic.h>
 #include <pmax/pmax/maxine.h>
-#include <dev/tc/tcvar.h>
-#include <dev/tc/ioasicvar.h>
-#include <dev/dec/lk201.h>
-
-#include <pmax/dev/dtopreg.h>
-#include <pmax/dev/lk201var.h>
-#include <pmax/dev/dtopvar.h>
 
 
 #define	DTOP_MAX_POLL	0x70000		/* about half a sec */

@@ -1,4 +1,4 @@
-/*	$NetBSD: rz.c,v 1.53 2000/01/09 03:55:43 simonb Exp $	*/
+/*	$NetBSD: rz.c,v 1.54 2000/01/10 03:24:33 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: rz.c,v 1.53 2000/01/09 03:55:43 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rz.c,v 1.54 2000/01/10 03:24:33 simonb Exp $");
 
 /*
  * SCSI CCS (Command Command Set) disk driver.
@@ -54,44 +54,41 @@ __KERNEL_RCSID(0, "$NetBSD: rz.c,v 1.53 2000/01/09 03:55:43 simonb Exp $");
 
 #if NRZ > 0
 
-#include <sys/types.h>
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/buf.h>
+#include <sys/conf.h>
+#include <sys/device.h>
+#include <sys/disk.h>
+#include <sys/disklabel.h>
 #include <sys/errno.h>
 #include <sys/fcntl.h>
 #include <sys/ioctl.h>
-#include <sys/disklabel.h>
-#include <sys/disk.h>
+#include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>
-#include <sys/uio.h>
 #include <sys/stat.h>
 #include <sys/syslog.h>
-#include <sys/device.h>
+#include <sys/systm.h>
 
 #if NRND > 0
 #include <sys/rnd.h>
 #endif	/* NRND */
 
-#include <ufs/ufs/dinode.h>		/* XXX */
-#include <ufs/ffs/fs.h>			/* XXX */
-
-#include <pmax/dev/device.h>		/* 4.4bsdpmax driver definitions */
-#include <pmax/dev/scsi.h>
+#include <ufs/ufs/dinode.h>		/* XXX for fs.h */
+#include <ufs/ffs/fs.h>			/* XXX for BBSIZE & SBSIZE */
 
 #include <dev/scsipi/scsi_all.h>	/* MI SCSI defs for mode-sense */
-#include <dev/scsipi/scsipi_all.h>
-#include <dev/scsipi/scsipiconf.h>
 #include <dev/scsipi/scsi_disk.h>	/* disk-specific sense data */
-#include <dev/scsipi/scsipi_disk.h>	/* disk-specific sense data */
+#include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsipi_cd.h>	/* cd-specific sense data */
-#include <dev/scsipi/scsipi_debug.h>
+#include <dev/scsipi/scsipi_disk.h>	/* disk-specific sense data */
+#include <dev/scsipi/scsipiconf.h>
 
-
-#include <sys/conf.h>
 #include <machine/conf.h>
+
+#include <pmax/dev/device.h>		/* 4.4BSD/pmax driver definitions */
+#include <pmax/dev/scsi.h>
+
 
 #define	SDRETRIES	4
 #define	CDRETRIES	4

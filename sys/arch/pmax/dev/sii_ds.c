@@ -1,4 +1,4 @@
-/*	$NetBSD: sii_ds.c,v 1.11 2000/01/09 03:55:47 simonb Exp $	*/
+/*	$NetBSD: sii_ds.c,v 1.12 2000/01/10 03:24:34 simonb Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -17,13 +17,8 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/types.h>
 #include <sys/device.h>
-#include <sys/tty.h>
 
-#include <machine/autoconf.h>
-#include <machine/intr.h>
-#include <machine/bus.h>
 #include <machine/locore.h>
 
 #include <pmax/dev/device.h>		/* XXX old pmax SCSI drivers */
@@ -31,6 +26,7 @@
 #include <pmax/dev/siivar.h>
 
 #include <pmax/ibus/ibusvar.h>		/* interrupt etablish */
+
 #include <pmax/pmax/kn01.h>		/* kn01 (ds3100) address constants */
 #include <pmax/pmax/pmaxtype.h>
 

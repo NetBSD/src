@@ -1,4 +1,4 @@
-/*	$NetBSD: bt478.c,v 1.14 2000/01/09 03:55:28 simonb Exp $	*/
+/*	$NetBSD: bt478.c,v 1.15 2000/01/10 03:24:31 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -62,8 +62,6 @@
 
 #include <machine/bus.h>			/*  wbflush() */
 
-#include <mips/cpuregs.h>
-
 #include <machine/fbio.h>
 #include <machine/fbvar.h>
 
@@ -72,11 +70,9 @@
 #include <pmax/pmax/kn01.h>
 
 
-
 /*
  * Forward references.
  */
-
 
 static u_char	bg_RGB[3];	/* background color for the cursor */
 static u_char	fg_RGB[3];	/* foreground color for the cursor */

@@ -1,4 +1,4 @@
-/*	$NetBSD: mfb.c,v 1.43 2000/01/09 03:55:37 simonb Exp $	*/
+/*	$NetBSD: mfb.c,v 1.44 2000/01/10 03:24:32 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -81,22 +81,18 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.43 2000/01/09 03:55:37 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.44 2000/01/10 03:24:32 simonb Exp $");
 
 #include "fb.h"
 #include "mfb.h"
 #if NMFB > 0
 #include <sys/param.h>
-#include <sys/fcntl.h>
-#include <sys/errno.h>
 #include <sys/device.h>
 #include <sys/systm.h>
 
 #include <dev/tc/tcvar.h>
 
 #include <machine/autoconf.h>
-#include <machine/bus.h>		/* XXX wbflush() */
-#include <mips/cpuregs.h>		/* XXX mips cached->uncached */
 #include <machine/pmioctl.h>
 #include <machine/fbio.h>
 #include <machine/fbvar.h>
@@ -114,7 +110,6 @@ static struct pmax_fbtty mfbfb;
 
 static void	mfbPosCursor __P((struct fbinfo *fi, int x, int y));
 
-
 #if 1	/* these  go away when we use the abstracted-out chip drivers */
 static void	mfbLoadCursor __P((struct fbinfo *fi, u_short *ptr));
 static void	mfbRestoreCursorColor __P((struct fbinfo *fi));
@@ -129,9 +124,7 @@ static int	mfbLoadColorMapNoop __P((struct fbinfo *fi,
 #endif /* 1 */
 
 /* new-style raster-cons "driver" methods */
-
 static int	mfbGetColorMap __P((struct fbinfo *fi, u_char *, int, int));
-
 
 static int	bt455_video_on __P((struct fbinfo *));
 static int	bt455_video_off __P((struct fbinfo *));

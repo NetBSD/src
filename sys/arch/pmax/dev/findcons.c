@@ -1,4 +1,4 @@
-/*	$NetBSD: findcons.c,v 1.24 2000/01/09 03:55:36 simonb Exp $	*/
+/*	$NetBSD: findcons.c,v 1.25 2000/01/10 03:24:32 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone
@@ -34,7 +34,7 @@
 
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: findcons.c,v 1.24 2000/01/09 03:55:36 simonb Exp $$");
+__KERNEL_RCSID(0, "$NetBSD: findcons.c,v 1.25 2000/01/10 03:24:32 simonb Exp $$");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,14 +42,22 @@ __KERNEL_RCSID(0, "$NetBSD: findcons.c,v 1.24 2000/01/09 03:55:36 simonb Exp $$"
 #include <sys/device.h>
 #include <sys/termios.h>
 
+#include <dev/tc/tcvar.h>		/* find TC fraembuffer device. */
+
+#include <machine/pmioctl.h>
+#include <machine/fbio.h>		/* framebuffer decls used below */
+#include <machine/fbvar.h>
+
+#include <pmax/dev/lk201var.h>
+#include <pmax/dev/rconsvar.h>
+
 #include <pmax/pmax/pmaxtype.h>
 #include <pmax/pmax/machdep.h>
-
-/*
- * Default consdev, for errors or warnings before
- * consinit runs: use the PROM.
- */
-static struct consdev cd;
+#include <pmax/pmax/asic.h>		/* scc serial console addresses */
+#include <pmax/pmax/kn01.h>
+#include <pmax/pmax/kn03.h>
+#include <pmax/pmax/kmin.h>
+#include <pmax/pmax/maxine.h>
 
 /*
  * Kernel configuration dependencies.
@@ -65,25 +73,6 @@ static struct consdev cd;
 #include "scc.h"
 #include "tc.h"
 #include "rasterconsole.h"
-
-#include <dev/tc/tcvar.h>		/* find TC fraembuffer device. */
-
-#include <machine/tc_machdep.h>
-
-#include <pmax/pmax/asic.h>		/* scc serial console addresses */
-#include <pmax/pmax/kn01.h>
-#include <pmax/pmax/kn03.h>
-#include <pmax/pmax/kmin.h>
-#include <pmax/pmax/maxine.h>
-
-#include <machine/pmioctl.h>
-#include <machine/fbio.h>		/* framebuffer decls used below */
-#include <machine/fbvar.h>
-#include <pmax/dev/fbreg.h>
-
-#include <pmax/dev/lk201var.h>
-#include <pmax/dev/rconsvar.h>
-
 /* pmax serial interface */
 #if NDC > 0
 #include <machine/dc7085cons.h>
@@ -143,6 +132,12 @@ static int	find_screen __P((int prom_slot));
 static int	find_serial __P((int prom_slot));
 
 extern struct consdev promcd;		/* XXX */
+
+/*
+ * Default consdev, for errors or warnings before
+ * consinit runs: use the PROM.
+ */
+static struct consdev cd;
 
 /*
  * Keyboard physically present and driver configured on 3100?

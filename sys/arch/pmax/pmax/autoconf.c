@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.44 2000/01/09 03:55:53 simonb Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.45 2000/01/10 03:24:36 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.44 2000/01/09 03:55:53 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.45 2000/01/10 03:24:36 simonb Exp $");
 
 /*
  * Setup the system to run on the current machine.
@@ -55,15 +55,11 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.44 2000/01/09 03:55:53 simonb Exp $")
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/map.h>
-#include <sys/buf.h>
 #include <sys/dkstat.h>
 #include <sys/conf.h>
 #include <sys/reboot.h>
 #include <sys/device.h>
 
-#include <machine/cpu.h>
 #include <machine/autoconf.h>
 #include <machine/sysconf.h>
 

@@ -1,4 +1,4 @@
-/* $NetBSD: dec_5100.c,v 1.16 2000/01/09 03:55:59 simonb Exp $ */
+/* $NetBSD: dec_5100.c,v 1.17 2000/01/10 03:24:37 simonb Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -30,14 +30,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- *  Prototypes
- */
-
-
-/*
- * Local declarations
- */
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -45,8 +37,6 @@
 
 #include <machine/cpu.h>
 #include <machine/intr.h>
-#include <machine/reg.h>
-#include <machine/psl.h>
 #include <machine/locore.h>
 #include <machine/sysconf.h>
 
@@ -54,9 +44,9 @@
 
 #include <pmax/pmax/turbochannel.h>
 #include <pmax/pmax/machdep.h>
-
 #include <pmax/pmax/kn01.h>		/* common definitions */
 #include <pmax/pmax/kn230.h>
+
 #include <pmax/ibus/ibusvar.h>
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi.c,v 1.9 1999/09/05 06:31:52 simonb Exp $	*/
+/*	$NetBSD: scsi.c,v 1.10 2000/01/10 03:24:33 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -42,10 +42,8 @@
  * SCSI utility routines for making SCSI device drivers easier.
  */
 
-#include <sys/param.h>
 #include <sys/systm.h>
 
-#include <pmax/dev/device.h>
 #include <pmax/dev/scsi.h>
 
 /*

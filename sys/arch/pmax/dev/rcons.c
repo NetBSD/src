@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons.c,v 1.37 2000/01/09 03:55:42 simonb Exp $	*/
+/*	$NetBSD: rcons.c,v 1.38 2000/01/10 03:24:33 simonb Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -41,41 +41,26 @@
 #if NRASTERCONSOLE > 0
 
 #include <sys/param.h>
+#include <sys/conf.h>
+#include <sys/device.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
-#include <sys/buf.h>
-#include <sys/ioctl.h>
 #include <sys/tty.h>
-#include <sys/file.h>
-#include <sys/stat.h>
-#include <sys/conf.h>
-#include <machine/conf.h>
-#include <sys/vnode.h>
 
-#include <pmax/dev/sccreg.h>
-#include <pmax/pmax/kn01.h>
-#include <pmax/pmax/kn02.h>
-#include <pmax/pmax/kmin.h>
-#include <pmax/pmax/maxine.h>
-#include <pmax/pmax/kn03.h>
-#include <pmax/pmax/asic.h>
-#include <pmax/pmax/cons.h>
-#include <pmax/pmax/turbochannel.h>
-#include <pmax/pmax/pmaxtype.h>
-#include <pmax/dev/rconsvar.h>
-
-#include <sys/device.h>
-#include <machine/fbio.h>
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/wscons/wsconsio.h>
-#include <dev/rcons/rcons.h>
 #include <dev/wsfont/wsfont.h>
 #include <dev/rasops/rasops.h>
-#include <machine/fbvar.h>
+#include <dev/rcons/rcons.h>
 
-#include <machine/pmioctl.h>
-#include <pmax/dev/fbreg.h>
+#include <machine/fbio.h>
+#include <machine/fbvar.h>
+#include <machine/conf.h>
+
+#include <pmax/pmax/cons.h>
+
 #include <pmax/dev/lk201var.h>
+#include <pmax/dev/rconsvar.h>
 
 #include "fb.h"
 #include "px.h"

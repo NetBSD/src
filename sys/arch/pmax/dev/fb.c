@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.33 2000/01/09 03:55:36 simonb Exp $	*/
+/*	$NetBSD: fb.c,v 1.34 2000/01/10 03:24:32 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -66,25 +66,13 @@
 #include <sys/ioctl.h>
 #include <sys/device.h>
 #include <sys/poll.h>
-#include <sys/tty.h>
-#include <sys/ioctl.h>
-#include <sys/file.h>
-#include <sys/errno.h>
-#include <sys/syslog.h>
 #include <sys/malloc.h>
-
-#include <vm/vm.h>
-#include <miscfs/specfs/specdev.h>
-
-#include <machine/autoconf.h>
 #include <sys/conf.h>
+
 #include <machine/conf.h>
-
-#include <mips/cpuregs.h>		/* mips cached->uncached */
-#include <machine/pmioctl.h>
-
 #include <machine/fbio.h>
 #include <machine/fbvar.h>
+#include <machine/pmioctl.h>
 
 #include <pmax/dev/fbreg.h>
 #include <pmax/dev/qvssvar.h>

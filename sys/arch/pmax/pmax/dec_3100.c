@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3100.c,v 1.21 2000/01/09 03:55:56 simonb Exp $ */
+/* $NetBSD: dec_3100.c,v 1.22 2000/01/10 03:24:37 simonb Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -77,16 +77,12 @@
 
 #include <machine/cpu.h>
 #include <machine/intr.h>
-#include <machine/reg.h>
-#include <machine/psl.h>
-#include <machine/locore.h>
 #include <machine/sysconf.h>
 
 #include <mips/mips/mips_mcclock.h>	/* mcclock CPUspeed estimation */
 
 #include <pmax/pmax/turbochannel.h>
 #include <pmax/pmax/machdep.h>
-
 #include <pmax/pmax/kn01.h>
 
 #include <pmax/ibus/ibusvar.h>

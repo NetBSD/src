@@ -1,4 +1,4 @@
-/*	$NetBSD: qvss_compat.c,v 1.24 2000/01/09 03:55:42 simonb Exp $	*/
+/*	$NetBSD: qvss_compat.c,v 1.25 2000/01/10 03:24:33 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -66,7 +66,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/select.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/mman.h>
@@ -74,32 +73,28 @@
 #include <sys/resourcevar.h>
 
 #include <vm/vm.h>
-
-#include <uvm/uvm_extern.h>
-
 #include <miscfs/specfs/specdev.h>
 
 #include <dev/dec/lk201.h>		/* LK-201 keycodes */
 
-#include <machine/pmioctl.h>		/* X11R5 Xserver ioctls */
-
 #include <machine/fbio.h>
 #include <machine/fbvar.h>
+#include <machine/pmioctl.h>		/* X11R5 Xserver ioctls */
+
+#include <pmax/dev/dcvar.h>			/* DZ-11 chip console I/O */
+#include <pmax/dev/dtopvar.h>			/* dtop console I/O decls */
 #include <pmax/dev/fbreg.h>		/* XXX should be renamed fbvar.h */
+#include <pmax/dev/qvssvar.h>			/* our own externs */
 
 #include <pmax/pmax/cons.h>
 #include <pmax/pmax/pmaxtype.h>
+
+#include <pmax/tc/sccvar.h>			/* ioasic z8530 I/O decls */
 
 #include "dc.h"
 #include "scc.h"
 #include "dtop.h"
 
-#include <pmax/dev/qvssvar.h>			/* our own externs */
-
-struct termios; struct dcregs;
-#include <pmax/dev/dtopvar.h>			/* dtop console I/O decls */
-#include <pmax/tc/sccvar.h>			/* ioasic z8530 I/O decls */
-#include <pmax/dev/dcvar.h>			/* DZ-11 chip console I/O */
 
 /*
  * Prototypes of local functions

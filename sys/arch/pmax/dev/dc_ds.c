@@ -1,4 +1,4 @@
-/*	$NetBSD: dc_ds.c,v 1.14 2000/01/09 03:55:32 simonb Exp $	*/
+/*	$NetBSD: dc_ds.c,v 1.15 2000/01/10 03:24:31 simonb Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -17,15 +17,13 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/types.h>
 #include <sys/device.h>
-#include <sys/tty.h>
-#include <machine/autoconf.h>
-#include <machine/intr.h>
+
 #include <machine/dc7085cons.h>		/* XXX */
 
 #include <pmax/ibus/ibusvar.h>
 #include <pmax/dev/dcvar.h>
+
 #include <pmax/pmax/kn01.h>
 #include <pmax/pmax/kn02.h>
 #include <pmax/pmax/kn230.h>

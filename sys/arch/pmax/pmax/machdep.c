@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.158 2000/01/09 22:31:44 simonb Exp $	*/
+/*	$NetBSD: machdep.c,v 1.159 2000/01/10 03:24:40 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.158 2000/01/09 22:31:44 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.159 2000/01/10 03:24:40 simonb Exp $");
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
@@ -51,48 +51,32 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.158 2000/01/09 22:31:44 simonb Exp $")
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/map.h>
-#include <sys/proc.h>
 #include <sys/buf.h>
 #include <sys/reboot.h>
-#include <sys/conf.h>
-#include <sys/file.h>
 #include <sys/callout.h>
-#include <sys/malloc.h>
-#include <sys/mbuf.h>
-#include <sys/msgbuf.h>
-#include <sys/ioctl.h>
 #include <sys/user.h>
 #include <sys/mount.h>
-#include <sys/syscallargs.h>
 #include <sys/kcore.h>
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
-#include <uvm/uvm_extern.h>
 #include <sys/sysctl.h>			/* XXX after <vm/vm.h> */
 
 #include <dev/cons.h>
 
 #include <ufs/mfs/mfs_extern.h>		/* mfs_initminiroot() */
 
-#include <machine/cpu.h>
-#include <machine/reg.h>
 #include <machine/psl.h>
-#include <machine/pte.h>
 #include <machine/autoconf.h>
 #include <machine/dec_prom.h>
 #include <machine/sysconf.h>
 #include <machine/bootinfo.h>
 #include <machine/locore.h>
 #include <pmax/pmax/machdep.h>
-#include <pmax/pmax/turbochannel.h>
 
 #ifdef DDB
 #include <sys/exec_aout.h>		/* XXX backwards compatilbity for DDB */
 #include <machine/db_machdep.h>
-#include <ddb/db_access.h>
-#include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
 #endif
 

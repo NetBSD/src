@@ -1,4 +1,4 @@
-/*	$NetBSD: sii.c,v 1.38 2000/01/09 03:55:46 simonb Exp $	*/
+/*	$NetBSD: sii.c,v 1.39 2000/01/10 03:24:34 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -47,30 +47,20 @@
  * SCSI interface driver
  */
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/dkstat.h>
 #include <sys/buf.h>
 #include <sys/conf.h>
-#include <sys/errno.h>
 #include <sys/device.h>
+#include <sys/dkstat.h>
+#include <sys/systm.h>
 
-#ifdef notyet
-#include <dev/scsipi/scsi_all.h>
-#include <dev/scsipi/scsipi_all.h>
-#include <dev/scsipi/scsiconf.h>
-#endif
+#include <machine/locore.h>
 
-#include <machine/autoconf.h>
-#include <machine/bus.h>		/* XXX wbflush() */
-
-/* old 4.4bsd/pmax scsi drivers */
+/* old 4.4BSD/pmax scsi drivers */
 #include <pmax/dev/device.h>
 #include <pmax/dev/scsi.h>
-
 #include <pmax/dev/siireg.h>		/* device registers */
 #include <pmax/dev/siivar.h>		/* softc and prototypes */
 
-#include <pmax/pmax/pmaxtype.h>		/* Definition of DS_PMAX */
 #include <pmax/pmax/machdep.h>		/* prom_scsiid prototype */
 
 extern struct cfdriver sii_cd;

@@ -1,4 +1,4 @@
-/* $NetBSD: mcclock_ibus.c,v 1.5 2000/01/09 03:55:51 simonb Exp $ */
+/* $NetBSD: mcclock_ibus.c,v 1.6 2000/01/10 03:24:36 simonb Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,19 +29,16 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcclock_ibus.c,v 1.5 2000/01/09 03:55:51 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_ibus.c,v 1.6 2000/01/10 03:24:36 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
-#include <sys/systm.h>
 #include <sys/device.h>
 
-#include <dev/dec/clockvar.h>
 #include <dev/dec/mcclockvar.h>
-#include <dev/ic/mc146818reg.h>
+#include <dev/dec/mcclock_pad32.h>
 
 #include <pmax/ibus/ibusvar.h>
-#include <dev/dec/mcclock_pad32.h>
 
 
 static int	mcclock_ibus_match __P((struct device *, struct cfdata *,

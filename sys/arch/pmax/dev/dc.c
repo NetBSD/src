@@ -1,4 +1,4 @@
-/*	$NetBSD: dc.c,v 1.58 2000/01/09 03:55:30 simonb Exp $	*/
+/*	$NetBSD: dc.c,v 1.59 2000/01/10 03:24:31 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.58 2000/01/09 03:55:30 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.59 2000/01/10 03:24:31 simonb Exp $");
 
 /*
  * devDC7085.c --
@@ -69,44 +69,29 @@ __KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.58 2000/01/09 03:55:30 simonb Exp $");
 #include <sys/ioctl.h>
 #include <sys/tty.h>
 #include <sys/proc.h>
-#include <sys/map.h>
-#include <sys/buf.h>
 #include <sys/conf.h>
 #include <sys/file.h>
-#include <sys/uio.h>
 #include <sys/kernel.h>
 #include <sys/syslog.h>
 
 #include <dev/dec/lk201.h>
 
-#include <machine/autoconf.h>
 #include <machine/conf.h>
-#include <machine/bus.h>			/*  wbflush() */
-
-#include <dev/tc/tcvar.h>
-#include <dev/tc/ioasicvar.h>
-
 #include <machine/dc7085cons.h>
+#include <machine/locore.h>		/* wbflush() */
 #include <machine/pmioctl.h>
 
+#include <pmax/dev/dcvar.h>
+#include <pmax/dev/lk201var.h>		/* XXX lk_reset and friends */
+#include <pmax/dev/qvssvar.h>		/* XXX mouseInput() */
+#include <pmax/dev/rconsvar.h>
 
-#include <pmax/pmax/pmaxtype.h>
 #include <pmax/pmax/cons.h>
+#include <pmax/pmax/pmaxtype.h>
 
-
-/*
- * XXX in dcvar.h or not?
- * #include <pmax/dev/pdma.h>
- */
 #include "dcvar.h"
 #include "tc.h"
 #include "rasterconsole.h"
-
-#include <pmax/dev/lk201var.h>		/* XXX KbdReset and friends */
-
-#include <pmax/dev/dcvar.h>
-#include <pmax/dev/rconsvar.h>
-#include <pmax/dev/qvssvar.h>		/* XXX mouseInput() */
 
 #define DCUNIT(dev) (minor(dev) >> 2)
 #define DCLINE(dev) (minor(dev) & 3)

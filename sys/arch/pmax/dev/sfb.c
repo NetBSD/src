@@ -1,4 +1,4 @@
-/*	$NetBSD: sfb.c,v 1.35 2000/01/09 03:55:45 simonb Exp $	*/
+/*	$NetBSD: sfb.c,v 1.36 2000/01/10 03:24:34 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -84,24 +84,21 @@
 #include "sfb.h"
 
 #include <sys/param.h>
-#include <sys/systm.h>					/* printf() */
-#include <sys/errno.h>
+#include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/fcntl.h>
+
 #include <dev/tc/tcvar.h>
 
 #include <machine/autoconf.h>
 #include <machine/fbio.h>
 #include <machine/fbvar.h>
-#include <pmax/dev/sfbvar.h>		/* XXX dev/tc ? */
+#include <machine/pmioctl.h>
 
 #include <pmax/dev/bt459.h>
+#include <pmax/dev/fbreg.h>
+#include <pmax/dev/sfbvar.h>		/* XXX dev/tc ? */
 #include <pmax/dev/sfbreg.h>
 
-#include <mips/cpuregs.h>		/* mips cached->uncached */
-
-#include <machine/pmioctl.h>
-#include <pmax/dev/fbreg.h>
 
 /*  turn on SFB-driver debugging  */
 /* #define SFBDEBUG */
