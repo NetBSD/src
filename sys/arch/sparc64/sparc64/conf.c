@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.10 2000/09/21 23:46:50 eeh Exp $ */
+/*	$NetBSD: conf.c,v 1.11 2000/10/28 23:19:31 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -84,6 +84,8 @@
 #include "zstty.h"
 #include "pcons.h"
 #include "com.h"
+#include "bpp.h"
+#include "magma.h"		/* has NMTTY and NMBPP */
 
 #include "fdc.h"		/* has NFDC and NFD; see files.sparc */
 #include "bwtwo.h"
@@ -165,7 +167,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 33 */
 	cdev_notdef(),			/* 34 */
 	cdev_notdef(),			/* 35 */
-	cdev_notdef(),			/* 36 */
+	cdev_tty_init(NCOM,com),	/* 36: NS16x50 compatible ports */
 	cdev_notdef(),			/* 37 */
 	cdev_notdef(),			/* 38 */
 	cdev_notdef(),			/* 39: /dev/cgfour */
@@ -236,7 +238,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 104 */
 	cdev_bpftun_init(NBPFILTER,bpf),/* 105: packet filter */
 	cdev_notdef(),			/* 106 */
-	cdev_notdef(),			/* 107 */
+	cdev_gen_init(NBPP,bpp),	/* 107: on-board parallel port */
 	cdev_notdef(),			/* 108 */
 	cdev_fb_init(NTCX,tcx),		/* 109: /dev/tcx */
 	cdev_disk_init(NVND,vnd),	/* 110: vnode disk driver */
@@ -252,7 +254,6 @@ struct cdevsw	cdevsw[] =
 	cdev_scsibus_init(NSCSIBUS,scsibus), /* 120: SCSI bus */
 	cdev_disk_init(NRAID,raid),	/* 121: RAIDframe disk driver */
 	cdev_tty_init(NPCONS,pcons),	/* 122: PROM console */
-	cdev_tty_init(NCOM,com),	/* 123: com driver */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
