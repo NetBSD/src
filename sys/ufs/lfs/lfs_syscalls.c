@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.31 1999/06/09 04:52:11 christos Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.32 1999/06/09 12:18:19 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -139,11 +139,11 @@ sys_lfs_markv(p, v, retval)
     void *v;
     register_t *retval;
 {
-	struct lfs_markv_args /* {
+	struct sys_lfs_markv_args /* {
 		syscallarg(fsid_t *) fsidp;
 		syscallarg(struct block_info *) blkiov;
 		syscallarg(int) blkcnt;
-		} */ *uap = v;
+	} */ *uap = v;
 	BLOCK_INFO *blkp;
 	IFILE *ifp;
 	struct buf *bp, *nbp;
@@ -516,11 +516,11 @@ sys_lfs_bmapv(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	struct lfs_bmapv_args /* {
-				 syscallarg(fsid_t *) fsidp;
-				 syscallarg(struct block_info *) blkiov;
-				 syscallarg(int) blkcnt;
-				 } */ *uap = v;
+	struct sys_lfs_bmapv_args /* {
+		syscallarg(fsid_t *) fsidp;
+		syscallarg(struct block_info *) blkiov;
+		syscallarg(int) blkcnt;
+	} */ *uap = v;
 	BLOCK_INFO *blkp;
 	IFILE *ifp;
 	struct buf *bp;
@@ -733,10 +733,10 @@ sys_lfs_segclean(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	struct lfs_segclean_args /* {
-				    syscallarg(fsid_t *) fsidp;
-				    syscallarg(u_long) segment;
-				    } */ *uap = v;
+	struct sys_lfs_segclean_args /* {
+		syscallarg(fsid_t *) fsidp;
+		syscallarg(u_long) segment;
+	} */ *uap = v;
 	CLEANERINFO *cip;
 	SEGUSE *sup;
 	struct buf *bp;
@@ -824,10 +824,10 @@ sys_lfs_segwait(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	struct lfs_segwait_args /* {
-				   syscallarg(fsid_t *) fsidp;
-				   syscallarg(struct timeval *) tv;
-				   } */ *uap = v;
+	struct sys_lfs_segwait_args /* {
+		syscallarg(fsid_t *) fsidp;
+		syscallarg(struct timeval *) tv;
+	} */ *uap = v;
 	extern int lfs_allclean_wakeup;
 	struct mount *mntp;
 	struct timeval atv;
