@@ -1,4 +1,4 @@
-/*	$NetBSD: ukbd.c,v 1.3 1998/07/26 17:42:49 augustss Exp $	*/
+/*	$NetBSD: ukbd.c,v 1.4 1998/07/29 20:50:11 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -141,8 +141,6 @@ struct ukbd_softc {
 	struct ukbd_data sc_ndata;
 	struct ukbd_data sc_odata;
 
-	int sc_state;
-#define UKBD_NEEDCLEAR	0x01		/* needs clearing endpoint stall */
 	int sc_disconnected;		/* device is gone */
 
 	int sc_leds;
@@ -308,7 +306,7 @@ ukbd_intr(reqh, addr, status)
 
 	if (status != USBD_NORMAL_COMPLETION) {
 		DPRINTF(("ukbd_intr: status=%d\n", status));
-		sc->sc_state |= UKBD_NEEDCLEAR;
+		usbd_clear_endpoint_stall_async(sc->sc_intrpipe);
 		return;
 	}
 
@@ -391,7 +389,7 @@ ukbd_set_leds(v, leds)
 		res |= NUM_LOCK;
 	if (leds & WSKBD_LED_CAPS)
 		res |= CAPS_LOCK;
-	usbd_set_report(sc->sc_iface, UHID_OUTPUT_REPORT, 0, &res, 1);
+	usbd_set_report_async(sc->sc_iface, UHID_OUTPUT_REPORT, 0, &res, 1);
 }
 
 int
@@ -432,7 +430,9 @@ ukbd_cngetc(v, type, data)
 	struct ukbd_softc *sc = v;
 	usbd_lock_token s;
 	extern int usbd_use_polling;
+	int c;
 
+	DPRINTFN(1,("ukbd_cngetc: enter\n"));
 	s = usbd_lock();
 	usbd_use_polling = 1;
 	sc->sc_polling = 1;
@@ -441,9 +441,11 @@ ukbd_cngetc(v, type, data)
 		usbd_dopoll(sc->sc_iface);
 	sc->sc_polling = 0;
 	usbd_use_polling = 0;
-	*type = sc->sc_pollchar&0x80?WSCONS_EVENT_KEY_UP:WSCONS_EVENT_KEY_DOWN;
-	*data = sc->sc_pollchar & 0x7f;
+	c = sc->sc_pollchar;
+	*type = c & 0x80 ? WSCONS_EVENT_KEY_UP : WSCONS_EVENT_KEY_DOWN;
+	*data = c & 0x7f;
 	usbd_unlock(s);
+	DPRINTFN(1,("ukbd_cngetc: return 0x%02x\n", c));
 }
 
 void
@@ -451,5 +453,5 @@ ukbd_cnpollc(v, on)
 	void *v;
         int on;
 {
-	DPRINTF(("ukbd_cnpollc: sc=%p on=%d\n", v, on));
+	DPRINTFN(1,("ukbd_cnpollc: sc=%p on=%d\n", v, on));
 }

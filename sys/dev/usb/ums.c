@@ -1,4 +1,4 @@
-/*	$NetBSD: ums.c,v 1.6 1998/07/28 21:21:47 augustss Exp $	*/
+/*	$NetBSD: ums.c,v 1.7 1998/07/29 20:50:12 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -91,8 +91,6 @@ struct ums_softc {
 	struct hid_location sc_loc_x, sc_loc_y, sc_loc_z,
 		sc_loc_btn1, sc_loc_btn2, sc_loc_btn3;
 
-	u_char sc_state;	/* mouse driver state */
-#define UMS_NEEDCLEAR	0x04	/* needs clearing endpoint stall */
 	u_char sc_buttons;	/* mouse button status */
 	int sc_disconnected;	/* device is gone */
 
@@ -294,7 +292,7 @@ ums_intr(reqh, addr, status)
 
 	if (status != USBD_NORMAL_COMPLETION) {
 		DPRINTF(("ums_intr: status=%d\n", status));
-		sc->sc_state |= UMS_NEEDCLEAR;
+		usbd_clear_endpoint_stall_async(sc->sc_intrpipe);
 		return;
 	}
 

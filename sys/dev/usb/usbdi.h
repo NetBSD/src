@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.h,v 1.3 1998/07/26 17:42:49 augustss Exp $	*/
+/*	$NetBSD: usbdi.h,v 1.4 1998/07/29 20:50:12 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -150,6 +150,7 @@ usbd_status usbd_abort_interface __P((usbd_interface_handle iface));
 usbd_status usbd_reset_pipe __P((usbd_pipe_handle pipe));
 usbd_status usbd_reset_interface __P((usbd_interface_handle iface));
 usbd_status usbd_clear_endpoint_stall __P((usbd_pipe_handle pipe));
+usbd_status usbd_clear_endpoint_stall_async __P((usbd_pipe_handle pipe));
 usbd_status usbd_set_pipe_state 
 	__P((usbd_pipe_handle pipe, usbd_pipe_state state));
 usbd_status usbd_get_pipe_state 
@@ -206,6 +207,8 @@ usbd_status usbd_open_pipe_intr
 	     usbd_private_handle priv, void *buffer,
 	     u_int32_t length, usbd_callback));
 usbd_status usbd_do_request 
+	__P((usbd_device_handle pipe, usb_device_request_t *req, void *data));
+usbd_status usbd_do_request_async
 	__P((usbd_device_handle pipe, usb_device_request_t *req, void *data));
 usb_interface_descriptor_t *usbd_get_interface_descriptor
 	__P((usbd_interface_handle iface));
