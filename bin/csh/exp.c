@@ -1,4 +1,4 @@
-/*	$NetBSD: exp.c,v 1.9 1997/10/19 17:38:05 mycroft Exp $	*/
+/*	$NetBSD: exp.c,v 1.10 1998/07/28 02:23:38 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)exp.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: exp.c,v 1.9 1997/10/19 17:38:05 mycroft Exp $");
+__RCSID("$NetBSD: exp.c,v 1.10 1998/07/28 02:23:38 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -405,15 +405,19 @@ exp5(vp, ignore)
 
 	    case '/':
 		i = egetn(p2);
-		if (i == 0)
+		if (i == 0) {
 		    stderror(ERR_DIV0);
+		    /* NOTREACHED */
+		}
 		i = egetn(p1) / i;
 		break;
 
 	    case '%':
 		i = egetn(p2);
-		if (i == 0)
+		if (i == 0) {
 		    stderror(ERR_MOD0);
+		    /* NOTREACHED */
+		}
 		i = egetn(p1) % i;
 		break;
 	    }
@@ -432,8 +436,10 @@ exp6(vp, ignore)
     int     ccode, i = 0;
     Char *cp, *dp, *ep;
 
-    if (**vp == 0)
+    if (**vp == 0) {
 	stderror(ERR_NAME | ERR_EXPRESSION);
+	/* NOTREACHED */
+    }
     if (eq(**vp, STRbang)) {
 	(*vp)++;
 	cp = exp6(vp, ignore);
@@ -460,8 +466,10 @@ exp6(vp, ignore)
 #ifdef EDEBUG
 	etraci("exp6 () ccode", ccode, vp);
 #endif
-	if (*vp == 0 || **vp == 0 || ***vp != ')')
+	if (*vp == 0 || **vp == 0 || ***vp != ')') {
 	    stderror(ERR_NAME | ERR_EXPRESSION);
+	    /* NOTREACHED */
+	}
 	(*vp)++;
 	return (putn(ccode));
     }
@@ -479,8 +487,10 @@ exp6(vp, ignore)
 	(*vp)++;
 	v = *vp;
 	for (;;) {
-	    if (!**vp)
+	    if (!**vp) {
 		stderror(ERR_NAME | ERR_MISSING, '}');
+		/* NOTREACHED */
+	    }
 	    if (eq(*(*vp)++, STRRbrace))
 		break;
 	}
@@ -491,6 +501,7 @@ exp6(vp, ignore)
 	    *--(*vp) = 0;
 	    evalav(v);
 	    exitstat();
+	    /* NOTREACHED */
 	}
 	pwait();
 	prestjob();
@@ -505,8 +516,10 @@ exp6(vp, ignore)
     if (*cp == '-' && any("erwxfdzopls", cp[1])) {
 	struct stat stb;
 
-	if (cp[2] != '\0')
+	if (cp[2] != '\0') {
 	    stderror(ERR_NAME | ERR_FILEINQ);
+	    /* NOTREACHED */
+	}
 	/*
 	 * Detect missing file names by checking for operator in the file name
 	 * position.  However, if an operator name appears there, we must make
@@ -514,8 +527,10 @@ exp6(vp, ignore)
 	 * an error.  Even this check isn't quite right, since it doesn't take
 	 * globbing into account.
 	 */
-	if (isa(**vp, ANYOP) && stat(short2str(**vp), &stb))
+	if (isa(**vp, ANYOP) && stat(short2str(**vp), &stb)) {
 	    stderror(ERR_NAME | ERR_FILENAME);
+	    /* NOTREACHED */
+	}
 
 	dp = *(*vp)++;
 	if (ignore & IGNORE)
@@ -625,8 +640,10 @@ evalav(v)
     hp->prev = wdp;
     alias(&paraml1);
     t = syntax(paraml1.next, &paraml1, 0);
-    if (seterr)
+    if (seterr) {
 	stderror(ERR_OLD);
+	/* NOTREACHED */
+    }
     execute(t, -1, NULL, NULL);
     freelex(&paraml1), freesyn(t);
 }
@@ -684,8 +701,10 @@ static int
 egetn(cp)
     Char *cp;
 {
-    if (*cp && *cp != '-' && !Isdigit(*cp))
+    if (*cp && *cp != '-' && !Isdigit(*cp)) {
 	stderror(ERR_NAME | ERR_EXPRESSION);
+	/* NOTREACHED */
+    }
     return (getn(cp));
 }
 

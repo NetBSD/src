@@ -1,4 +1,4 @@
-/*	$NetBSD: glob.c,v 1.14 1998/06/19 22:58:04 kleink Exp $	*/
+/*	$NetBSD: glob.c,v 1.15 1998/07/28 02:23:39 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)glob.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: glob.c,v 1.14 1998/06/19 22:58:04 kleink Exp $");
+__RCSID("$NetBSD: glob.c,v 1.15 1998/07/28 02:23:39 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -121,6 +121,7 @@ globtilde(nv, s)
 	    stderror(ERR_UNKUSER, vis_str(gstart));
 	else
 	    stderror(ERR_NOHOME);
+	/* NOTREACHED */
     }
     b = &gstart[Strlen(gstart)];
     while (*s)
@@ -251,6 +252,7 @@ expbrace(nvp, elp, size)
 	    if ((len = globbrace(s, b, &bl)) < 0) {
 		xfree((ptr_t) nv);
 		stderror(ERR_MISSING, -len);
+		/* NOTREACHED */
 	    }
 	    xfree((ptr_t) s);
 	    if (len == 1) {
@@ -366,7 +368,7 @@ handleone(str, vl, action)
 	setname(vis_str(str));
 	blkfree(vl);
 	stderror(ERR_NAME | ERR_AMBIG);
-	break;
+	/* NOTREACHED */
     case G_APPEND:
 	trim(vlp);
 	str = Strsave(*vlp++);
@@ -481,6 +483,7 @@ globone(str, action)
     if (vl == NULL) {
 	setname(vis_str(str));
 	stderror(ERR_NAME | ERR_NOMATCH);
+	/* NOTREACHED */
     }
     if (vl[0] == NULL) {
 	xfree((ptr_t) vl);
@@ -641,8 +644,11 @@ dobackp(cp, literal)
 		if (!*rp)
 		    goto oops;
 	    }
-	if (!*rp)
-    oops:  stderror(ERR_UNMATCHED, '`');
+	if (!*rp) {
+	oops:
+	    stderror(ERR_UNMATCHED, '`');
+	    /* NOTREACHED */
+	}
 	ep = Strsave(lp);
 	ep[rp - lp] = 0;
 	backeval(ep, literal);
@@ -718,12 +724,16 @@ backeval(cp, literal)
 	alvecp = NULL;
 	evalp = NULL;
 	(void) lex(&paraml);
-	if (seterr)
+	if (seterr) {
 	    stderror(ERR_OLD);
+	    /* NOTREACHED */
+	}
 	alias(&paraml);
 	t = syntax(paraml.next, &paraml, 0);
-	if (seterr)
+	if (seterr) {
 	    stderror(ERR_OLD);
+	    /* NOTREACHED */
+	}
 	if (t)
 	    t->t_dflg |= F_NOFORK;
 	(void) signal(SIGTSTP, SIG_IGN);
@@ -731,6 +741,7 @@ backeval(cp, literal)
 	(void) signal(SIGTTOU, SIG_IGN);
 	execute(t, -1, NULL, NULL);
 	exitstat();
+	/* NOTREACHED */
     }
     xfree((ptr_t) cp);
     (void) close(pvec[1]);
@@ -792,8 +803,10 @@ static void
 psave(c)
     int    c;
 {
-    if (--pnleft <= 0)
+    if (--pnleft <= 0) {
 	stderror(ERR_WTOOLONG);
+	/* NOTREACHED */
+    }
     *pargcp++ = c;
 }
 
@@ -879,8 +892,10 @@ pmatch(string, pattern)
 		else 
 		    match = (stringc == (rangec & TRIM));
 	    }
-	    if (rangec == 0)
+	    if (rangec == 0) {
 		stderror(ERR_NAME | ERR_MISSING, ']');
+		/* NOTREACHED */
+	    }
 	    if (match == negate_range)
 		return (0);
 	    break;

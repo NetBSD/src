@@ -1,4 +1,4 @@
-/*	$NetBSD: lex.c,v 1.12 1998/03/29 04:36:29 mrg Exp $	*/
+/*	$NetBSD: lex.c,v 1.13 1998/07/28 02:23:39 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)lex.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: lex.c,v 1.12 1998/03/29 04:36:29 mrg Exp $");
+__RCSID("$NetBSD: lex.c,v 1.13 1998/07/28 02:23:39 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -277,7 +277,7 @@ loop:
 	    } while (c != '\n');
 	    if (c1 == '\\')
 		goto loop;
-	    /* fall into ... */
+	    /* FALLTHROUGH */
 
 	case ';':
 	case '(':
@@ -296,6 +296,7 @@ loop:
 	    if (c != HIST)
 		*wp++ = '\\', --i;
 	    c |= QUOTE;
+	    break;
 	}
     c1 = 0;
     dolflg = DOALL;
@@ -367,7 +368,7 @@ getC1(flag)
 {
     Char c;
 
-    while (1) {
+    for (;;) {
 	if ((c = peekc) != '\0') {
 	    peekc = 0;
 	    return (c);
@@ -598,8 +599,10 @@ getdol()
 		c = 's';
 	    }
 	    if (!any("htrqxes", c)) {
-		if ((amodflag || gmodflag) && c == '\n')
+		if ((amodflag || gmodflag) && c == '\n') {
 		    stderror(ERR_VARSYN);	/* strike */
+		    /* NOTREACHED */
+		}
 		seterror(ERR_VARMOD, c);
 		*np = 0;
 		addla(name);
@@ -760,8 +763,7 @@ getsub(en)
 	case 'x':
 	case 'q':
 	    global |= 1;
-
-	    /* fall into ... */
+	    /* FALLTHROUGH */
 
 	case 'h':
 	case 'r':
@@ -960,7 +962,7 @@ subword(cp, type, adid)
 		    case '\\':
 			if (np[1] == '&')
 			    np++;
-			/* fall into ... */
+			/* FALLTHROUGH */
 
 		    default:
 			if (--i < 0) {
@@ -1182,7 +1184,7 @@ gethent(sc)
 	case '-':
 	    back = 1;
 	    c = getC(0);
-	    /* FALLSTHROUGH */
+	    /* FALLTHROUGH */
 
 	default:
 	    if (any("(=~", c)) {
@@ -1390,6 +1392,7 @@ top:
 	    if (wanteof)
 		return (-1);
 	    exitstat();
+	    /* NOTREACHED */
 	}
 	if (arginp) {
 	    if ((c = *arginp++) == 0) {
