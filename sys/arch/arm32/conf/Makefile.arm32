@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.arm32,v 1.25 1997/02/04 06:19:08 mark Exp $
+#	$NetBSD: Makefile.arm32,v 1.26 1997/09/30 22:47:55 christos Exp $
 
 # Makefile for NetBSD
 #
@@ -125,11 +125,17 @@ newvers: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
 	sh $S/conf/newvers.sh
 	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c vers.c
 
-
-clean: cleankernel
-cleankernel:
+__CLEANKERNEL: .USE
+	@echo "${.TARGET}ing the kernel objects"
 	rm -f eddep *netbsd netbsd.gdb tags *.[io] [a-z]*.s \
-	    [Ee]rrs linterrs makelinks genassym genassym.o assym.h
+	    [Ee]rrs linterrs makelinks assym.h.tmp assym.h
+
+__CLEANDEPEND: .USE
+	rm -f .depend
+
+clean: __CLEANKERNEL
+
+cleandir: __CLEANKERNEL __CLEANDEPEND
 
 lint:
 	@lint -hbxncez -Dvolatile= ${CPPFLAGS} -UKGDB \
