@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.3 2004/05/07 14:01:33 cl Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.4 2004/12/10 18:47:52 christos Exp $	*/
 /*	NetBSD: cpufunc.h,v 1.28 2004/01/14 11:31:55 yamt Exp 	*/
 
 /*-
@@ -48,6 +48,8 @@
 #include <sys/types.h>
 
 #include <machine/specialreg.h>
+#include <machine/xen.h>
+#include <machine/hypervisor.h>
 
 static __inline void
 x86_pause(void)
@@ -221,19 +223,17 @@ ldr6(u_int val)
 
 /* XXXX ought to be in psl.h with spl() functions */
 
-#if 0
 static __inline void
 disable_intr(void)
 {
-	__asm __volatile("cli");
+	__cli();
 }
 
 static __inline void
 enable_intr(void)
 {
-	__asm __volatile("sti");
+	__sti();
 }
-#endif
 
 static __inline u_long
 read_eflags(void)
