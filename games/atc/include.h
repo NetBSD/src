@@ -1,4 +1,4 @@
-/*	$NetBSD: include.h,v 1.4 1995/04/24 12:21:46 cgd Exp $	*/
+/*	$NetBSD: include.h,v 1.5 1995/04/27 21:22:23 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -53,9 +53,9 @@
 #include <ctype.h>
 #include <sys/types.h>
 #include <pwd.h>
+#include <termios.h>
 
 #ifdef BSD
-#include <sgtty.h>
 #include <sys/time.h>
 #include <sys/file.h>
 #endif
@@ -78,9 +78,6 @@
 #define	bzero(a,b)	memset((a), '\0', (b))
 #define	srandom	srand
 #define	random	rand
-#define	sgttyb	termio
-#define	sg_erase c_cc[2]
-#define	sg_kill c_cc[3]
 #endif
 
 #include "def.h"
