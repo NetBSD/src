@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_add.1,v 1.6 1998/02/06 06:21:47 perry Exp $
+.\" $NetBSD: pkg_add.1,v 1.7 1998/05/28 02:30:39 jeremy Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintainance
 .\" of non-core utilities.
@@ -197,30 +197,34 @@ passive mode
 .Ef
 ftp.
 .Sh TECHNICAL DETAILS
-.Nm
-is fairly simple.  It extracts each package's "packing list"
-into a special staging directory in /tmp (or $PKG_TMPDIR if set), parses it,
-and then runs through the following sequence to fully extract the contents:
+.Nm 
+extracts each package's "packing list"
+into a special staging directory in /tmp (or $PKG_TMPDIR if set)
+and then runs through the following sequence to fully extract the contents
+of the package:
 .Bl -enum -indent indent
 .It
-Check if the package is already recorded as installed.  If so,
-terminate installation.
+A check is made to determine if the package is already recorded as installed.
+If it is,
+installation is terminated.
 .It
-Scan all the package dependencies (from
+All package dependencies (from
 .Cm @pkgdep
 directives, see
 .Xr pkg_create 1 )
-and make sure each one is met.  If not, try and find the missing
-dependencies' packages and auto-install them; if they can't be found
+are read from the packing list.
+If any of these required packages is not currently installed,
+an attempt is made to find and install it;
+if the missing package cannot be found or installed,
 the installation is terminated.
 .It
-Search for any
+A search is made for any
 .Cm @option
 directives which control how the package is added to the system.
-At the time of this writing, the only currently implemented option is
-.Cm @option extract-in-place
-which will cause the package to be extracted directly into its
-prefix directory without moving through a staging area in
+The only currently implemented option is
+.Cm @option extract-in-place ,
+which causes the package to be extracted directly into its
+prefix directory rather than moving it through a staging area in
 .Pa /tmp .
 .It
 If
@@ -230,38 +234,41 @@ final location, otherwise it is extracted into the staging area.
 .It
 If the package contains a
 .Ar require
-file (see 
+script (see 
 .Xr pkg_create 1 ),
-then execute it with the following arguments:
-.Bd -filled -offset indent -compact
-.Ar pkg-name
-.Ar INSTALL
-.Ed
-where
-.Ar pkg-name
-is the name of the package in question and the
-.Ar INSTALL
-keyword denotes this as an installation requirements check (useful if
-you want to have one script serving multiple functions).
+it is executed with the following arguments:
+.Bl -tag -width indentindent
+.It Ar pkg-name
+The name of the package being installed
+.It Cm INSTALL
+Keyword denoting to the script that it is to run an installation requirements
+check.
+(The keyword is useful only to scripts which serve multiple functions).
+.El
+.Pp
+If the
+.Ar require
+script exits with a non-zero status code, the installation is terminated.
 .It
-If an
+If the package contains an
 .Ar install
-script exists for the package, it is then executed with the following arguments:
-.Bd -filled -offset indent -compact
-.Ar pkg-name
-.Ar PRE-INSTALL 
-.Ed
-where
-.Ar pkg-name
-is the name of the package in question and
-.Ar PRE-INSTALL
-is a keyword denoting this as the preinstallation phase.
+script, it is executed with the following arguments:
+.Bl -tag -width indentindent
+.It Ar pkg-name
+The name of the package being installed.
+.It Cm PRE-INSTALL
+Keyword denoting that the script is to perform any actions needed before
+the package is installed.
+.El
+.Pp
+If the
+.Ar install
+script exits with a non-zero status code, the installation is terminated.
 .It
 If
 .Cm @option extract-in-place
-is not used, then the packing list (this is the
-.Pa +CONTENTS
-file) is now used as a guide for moving (or copying, as necessary) files from
+is not present in the packing list,
+then it is used as a guide for moving (or copying, as necessary) files from
 the staging area into their final locations.
 .It
 If the package contains an
@@ -291,15 +298,14 @@ directive within this package.
 .It
 If an
 .Ar install
-script exists for the package, it is then executed as 
-.Bd -filled -offset indent -compact
-.Cm script
-.Ar pkg-name
-.Ar POST-INSTALL 
-.Ed
-This all allows you to write a single
-.Ar install
-script that does both ``before and after'' actions.
+script exists for the package, it is executed with the following arguments:
+.Bl -tag -width indentindent
+.It Ar pkg_name
+The name of the package being installed.
+.It Cm POST-INSTALL
+Keyword denoting that the script is to perform any actions needed
+after the package has been installed.
+.El
 .It
 After installation is complete, a copy of the packing list,
 .Ar deinstall
@@ -317,7 +323,11 @@ path shown above).
 Finally, the staging area is deleted and the program terminates.
 .El
 .Pp
-All the scripts are called with the environment variable
+The
+.Ar install
+and
+.Ar require
+scripts are called with the environment variable
 .Ev PKG_PREFIX
 set to the installation prefix (see the
 .Fl p
