@@ -27,7 +27,7 @@
  *	i4b daemon - config file processing
  *	-----------------------------------
  *
- *	$Id: rc_config.c,v 1.13 2002/04/16 17:07:58 drochner Exp $ 
+ *	$Id: rc_config.c,v 1.14 2002/04/17 15:26:13 drochner Exp $ 
  *
  * $FreeBSD$
  *
@@ -1069,7 +1069,7 @@ cfg_setval(int keyword)
 			DBGL(DL_RCCF, (log(LL_DBG, "entry %s: usrdevicename = %s", current_cfe->name, yylval.str)));
 			strncpy(current_cfe->usrdevicename, yylval.str, sizeof(current_cfe->usrdevicename));
 			current_cfe->usrdevice = lookup_l4_driver(yylval.str);
-			if (current_cfe->usrdevicename < 0)
+			if (current_cfe->usrdevice < 0)
 			{
 				log(LL_ERR, "ERROR parsing config file: unknown parameter for keyword \"usrdevicename\" at line %d!", lineno);
 				config_error_flag++;
