@@ -1,4 +1,4 @@
-/*	$NetBSD: pcibios.c,v 1.3 2000/04/28 17:15:15 uch Exp $	*/
+/*	$NetBSD: pcibios.c,v 1.4 2000/07/18 11:15:25 soda Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -92,6 +92,10 @@
 #endif
 
 #include <machine/bios32.h> 
+
+#ifdef PCIBIOSVERBOSE
+int	pcibiosverbose = 1;
+#endif
 
 int pcibios_present;
 
@@ -273,8 +277,8 @@ pcibios_pir_init()
 
 		printf("PCI Interrupt Router at %03d:%02d:%01d",
 		    pcibios_pir_header.router_bus,
-		    (pcibios_pir_header.router_devfunc >> 3) & 0x1f,
-		    pcibios_pir_header.router_devfunc & 7);
+		    PIR_DEVFUNC_DEVICE(pcibios_pir_header.router_devfunc),
+		    PIR_DEVFUNC_FUNCTION(pcibios_pir_header.router_devfunc));
 		if (pcibios_pir_header.compat_router != 0) {
 			pci_devinfo(pcibios_pir_header.compat_router, 0, 0,
 			    devinfo);
@@ -469,7 +473,7 @@ pcibios_print_pir_table()
 		printf("PIR Entry %d:\n", i);
 		printf("\tBus: %d  Device: %d\n",
 		    pcibios_pir_table[i].bus,
-		    pcibios_pir_table[i].device >> 3);
+		    PIR_DEVFUNC_DEVICE(pcibios_pir_table[i].device));
 		for (j = 0; j < 4; j++) {
 			printf("\t\tINT%c: link 0x%02x bitmap 0x%04x\n",
 			    'A' + j,
