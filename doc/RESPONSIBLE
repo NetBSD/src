@@ -1,4 +1,4 @@
-#	$NetBSD: RESPONSIBLE,v 1.41 2004/08/28 16:42:02 schmonz Exp $
+#	$NetBSD: RESPONSIBLE,v 1.42 2004/08/29 06:50:46 jlam Exp $
 
 List of sections of the system, and who is responsible for them (or at
 least considered an expert on them).
@@ -217,20 +217,3 @@ Man Pages	wiz
 Release Tools	lukem
 Standards Guru	kleink
 i386 pkg ISOs	hubertf
-
-pkgsrc Infrastructure:
-
-buildlink2	jlam
-buildlink3	jlam
-pkgviews	jlam
-bulk build	hubertf, dmcmahill, grant
-README.html generation	dmcmahill
-
-pkgsrc platforms:
-
-bootstrap	grant
-Solaris		seb, salo, grant
-Darwin		grant, schmonz
-IRIX		jschauma
-Linux		jschauma, grant
-FreeBSD		grant
