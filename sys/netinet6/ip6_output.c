@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.36 2001/06/11 13:49:18 itojun Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.37 2001/10/15 09:51:17 itojun Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -1257,75 +1257,87 @@ ip6_ctloutput(op, so, level, optname, mp)
 			case IPV6_RTHDR:
 			case IPV6_CHECKSUM:
 			case IPV6_FAITH:
-#ifndef INET6_BINDV6ONLY
-			case IPV6_BINDV6ONLY:
-#endif
-				if (!m || m->m_len != sizeof(int))
+			case IPV6_V6ONLY:
+				if (!m || m->m_len != sizeof(int)) {
 					error = EINVAL;
-				else {
-					optval = *mtod(m, int *);
-					switch (optname) {
+					break;
+				}
+				optval = *mtod(m, int *);
+				switch (optname) {
 
-					case IPV6_UNICAST_HOPS:
-						if (optval < -1 || optval >= 256)
-							error = EINVAL;
-						else {
-							/* -1 = kernel default */
-							in6p->in6p_hops = optval;
-						}
-						break;
-#define OPTSET(bit) \
-	if (optval) \
-		in6p->in6p_flags |= bit; \
-	else \
-		in6p->in6p_flags &= ~bit;
-
-					case IPV6_RECVOPTS:
-						OPTSET(IN6P_RECVOPTS);
-						break;
-
-					case IPV6_RECVRETOPTS:
-						OPTSET(IN6P_RECVRETOPTS);
-						break;
-
-					case IPV6_RECVDSTADDR:
-						OPTSET(IN6P_RECVDSTADDR);
-						break;
-
-					case IPV6_PKTINFO:
-						OPTSET(IN6P_PKTINFO);
-						break;
-
-					case IPV6_HOPLIMIT:
-						OPTSET(IN6P_HOPLIMIT);
-						break;
-
-					case IPV6_HOPOPTS:
-						OPTSET(IN6P_HOPOPTS);
-						break;
-
-					case IPV6_DSTOPTS:
-						OPTSET(IN6P_DSTOPTS);
-						break;
-
-					case IPV6_RTHDR:
-						OPTSET(IN6P_RTHDR);
-						break;
-
-					case IPV6_CHECKSUM:
-						in6p->in6p_cksum = optval;
-						break;
-
-					case IPV6_FAITH:
-						OPTSET(IN6P_FAITH);
-						break;
-
-#ifndef INET6_BINDV6ONLY
-					case IPV6_BINDV6ONLY:
-						OPTSET(IN6P_BINDV6ONLY);
-						break;
-#endif
+				case IPV6_UNICAST_HOPS:
+					if (optval < -1 || optval >= 256)
+						error = EINVAL;
+					else {
+						/* -1 = kernel default */
+						in6p->in6p_hops = optval;
 					}
+					break;
+#define OPTSET(bit) \
+if (optval) \
+	in6p->in6p_flags |= bit; \
+else \
+	in6p->in6p_flags &= ~bit;
+
+				case IPV6_RECVOPTS:
+					OPTSET(IN6P_RECVOPTS);
+					break;
+
+				case IPV6_RECVRETOPTS:
+					OPTSET(IN6P_RECVRETOPTS);
+					break;
+
+				case IPV6_RECVDSTADDR:
+					OPTSET(IN6P_RECVDSTADDR);
+					break;
+
+				case IPV6_PKTINFO:
+					OPTSET(IN6P_PKTINFO);
+					break;
+
+				case IPV6_HOPLIMIT:
+					OPTSET(IN6P_HOPLIMIT);
+					break;
+
+				case IPV6_HOPOPTS:
+					OPTSET(IN6P_HOPOPTS);
+					break;
+
+				case IPV6_DSTOPTS:
+					OPTSET(IN6P_DSTOPTS);
+					break;
+
+				case IPV6_RTHDR:
+					OPTSET(IN6P_RTHDR);
+					break;
+
+				case IPV6_CHECKSUM:
+					in6p->in6p_cksum = optval;
+					break;
+
+				case IPV6_FAITH:
+					OPTSET(IN6P_FAITH);
+					break;
+
+				case IPV6_V6ONLY:
+					/*
+					 * make setsockopt(IPV6_V6ONLY)
+					 * available only prior to bind(2).
+					 * see ipng mailing list, Jun 22 2001.
+					 */
+					if (in6p->in6p_lport ||
+					    !IN6_IS_ADDR_UNSPECIFIED(&in6p->in6p_laddr))
+					{
+						error = EINVAL;
+						break;
+					}
+#ifdef INET6_BINDV6ONLY
+					if (!optval)
+						error = EINVAL;
+#else
+					OPTSET(IN6P_IPV6_V6ONLY);
+#endif
+					break;
 				}
 				break;
 #undef OPTSET
@@ -1439,9 +1451,7 @@ ip6_ctloutput(op, so, level, optname, mp)
 			case IPV6_RTHDR:
 			case IPV6_CHECKSUM:
 			case IPV6_FAITH:
-#ifndef INET6_BINDV6ONLY
-			case IPV6_BINDV6ONLY:
-#endif
+			case IPV6_V6ONLY:
 				*mp = m = m_get(M_WAIT, MT_SOOPTS);
 				m->m_len = sizeof(int);
 				switch (optname) {
@@ -1505,11 +1515,9 @@ ip6_ctloutput(op, so, level, optname, mp)
 					optval = OPTBIT(IN6P_FAITH);
 					break;
 
-#ifndef INET6_BINDV6ONLY
-				case IPV6_BINDV6ONLY:
-					optval = OPTBIT(IN6P_BINDV6ONLY);
+				case IPV6_V6ONLY:
+					optval = OPTBIT(IN6P_IPV6_V6ONLY);
 					break;
-#endif
 				}
 				*mtod(m, int *) = optval;
 				break;

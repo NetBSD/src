@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.h,v 1.17 2001/07/02 15:25:36 itojun Exp $	*/
+/*	$NetBSD: in6_pcb.h,v 1.18 2001/10/15 09:51:16 itojun Exp $	*/
 /*	$KAME: in6_pcb.h,v 1.45 2001/02/09 05:59:46 itojun Exp $	*/
 
 /*
@@ -122,6 +122,7 @@ struct	in6pcb {
 #define IN6P_RECVOPTS		0x001000 /* receive incoming IP6 options */
 #define IN6P_RECVRETOPTS	0x002000 /* receive IP6 options for reply */
 #define IN6P_RECVDSTADDR	0x004000 /* receive IP6 dst address */
+#define IN6P_IPV6_V6ONLY	0x008000 /* restrict AF_INET6 socket for v6 */
 #define IN6P_PKTINFO		0x010000 /* receive IP6 dst and I/F */
 #define IN6P_HOPLIMIT		0x020000 /* receive hoplimit */
 #define IN6P_HOPOPTS		0x040000 /* receive hop-by-hop options */
@@ -133,7 +134,9 @@ struct	in6pcb {
 #define IN6P_LOWPORT		0x2000000 /* user wants "low" port binding */
 #define IN6P_ANONPORT		0x4000000 /* port chosen for user */
 #define IN6P_FAITH		0x8000000 /* accept FAITH'ed connections */
+#if 0 /* obsoleted */
 #define IN6P_BINDV6ONLY		0x10000000 /* do not grab IPv4 traffic */
+#endif
 
 #define IN6P_CONTROLOPTS	(IN6P_PKTINFO|IN6P_HOPLIMIT|IN6P_HOPOPTS|\
 				 IN6P_DSTOPTS|IN6P_RTHDR|IN6P_RTHDRDSTOPTS)
