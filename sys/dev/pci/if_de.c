@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.110 2003/05/03 18:11:35 wiz Exp $	*/
+/*	$NetBSD: if_de.c,v 1.110.6.1 2005/01/24 21:39:10 he Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -37,7 +37,7 @@
  *   board which support 21040, 21041, or 21140 (mostly).
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.110 2003/05/03 18:11:35 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.110.6.1 2005/01/24 21:39:10 he Exp $");
 
 #define	TULIP_HDR_DATA
 
@@ -4852,8 +4852,10 @@ tulip_ifioctl(
 		error = ether_delmulti(ifr, TULIP_ETHERCOM(sc));
 
 	    if (error == ENETRESET) {
-		tulip_addr_filter(sc);		/* reset multicast filtering */
-		tulip_init(sc);
+		if (ifp->if_flags & IFF_RUNNING) {
+		    tulip_addr_filter(sc);	/* reset multicast filtering */
+		    tulip_init(sc);
+		}
 		error = 0;
 	    }
 	    break;
