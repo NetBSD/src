@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.33 2002/06/05 06:02:52 simonb Exp $	*/
+/*	$NetBSD: asm.h,v 1.34 2003/06/27 08:22:05 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -148,11 +148,29 @@ _C_LABEL(x): ;				\
 	.frame	sp, 0, ra
 
 /*
+ * STATIC_LEAF
+ *	Declare a local leaf function.
+ */
+#define STATIC_LEAF(x)			\
+	.ent	_C_LABEL(x), 0;		\
+_C_LABEL(x): ;				\
+	.frame sp, 0, ra;		\
+	MCOUNT
+
+/*
  * XLEAF
  *	declare alternate entry to leaf routine
  */
 #define XLEAF(x)			\
 	.globl	_C_LABEL(x);		\
+	AENT (_C_LABEL(x));		\
+_C_LABEL(x):
+
+/*
+ * STATIC_XLEAF
+ *	declare alternate entry to a static leaf routine
+ */
+#define STATIC_XLEAF(x)			\
 	AENT (_C_LABEL(x));		\
 _C_LABEL(x):
 
