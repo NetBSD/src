@@ -1,4 +1,4 @@
-#	$NetBSD: CATS,v 1.29 2000/04/03 00:03:29 augustss Exp $
+#	$NetBSD: CATS,v 1.30 2000/04/22 13:13:21 tsutsui Exp $
 #
 #	CATS -- CHALTECH CATS Development kernel
 #
@@ -276,7 +276,7 @@ ne*	at pci? dev ? function ?	# NE2000 compat ethernet
 #options 	TLP_MATCH_21142
 vr*	at pci? dev ? function ?	# VIA Rhine Fast Ethernet
 #lmc*	at pci? dev ? function ?	# Lan Media Corp SSI/HSSI/DS3
-rl*	at pci? dev ? function ?	# Realtek 8129/8139
+rtk*	at pci? dev ? function ?	# Realtek 8129/8139
 
 # MII/PHY support
 exphy*	at mii? phy ?			# 3Com internal PHYs
