@@ -1,4 +1,4 @@
-/*	$NetBSD: res_init.c,v 1.9 1996/02/02 15:22:30 mrg Exp $	*/
+/*	$NetBSD: res_init.c,v 1.9.6.1 1996/11/06 00:49:12 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1989, 1993
@@ -58,7 +58,7 @@
 static char sccsid[] = "@(#)res_init.c	8.1 (Berkeley) 6/7/93";
 static char rcsid[] = "$Id: res_init.c,v 8.3 1995/06/29 09:26:28 vixie Exp ";
 #else
-static char rcsid[] = "$NetBSD: res_init.c,v 1.9 1996/02/02 15:22:30 mrg Exp $";
+static char rcsid[] = "$NetBSD: res_init.c,v 1.9.6.1 1996/11/06 00:49:12 lukem Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -133,7 +133,6 @@ res_init()
 	_res.nscount = 1;
 	_res.ndots = 1;
 	_res.pfcode = 0;
-	strncpy(_res.lookups, "f", sizeof _res.lookups);
 
 	/* Allow user to override the local domain definition */
 	if ((cp = getenv("LOCALDOMAIN")) != NULL) {
@@ -172,7 +171,6 @@ res_init()
 	}
 
 	if ((fp = fopen(_PATH_RESCONF, "r")) != NULL) {
-	    strncpy(_res.lookups, "bf", sizeof _res.lookups);
 
 	    /* read the config file */
 	    while (fgets(buf, sizeof(buf), fp) != NULL) {
@@ -196,32 +194,8 @@ res_init()
 		    continue;
 		}
 		/* lookup types */
-		if (!strncmp(buf, "lookup", sizeof("lookup") -1)) {
-		    char *sp = NULL;
-
-		    bzero(_res.lookups, sizeof _res.lookups);
-		    cp = buf + sizeof("lookup") - 1;
-		    for (n = 0;; cp++) {
-		    	    if (n == MAXDNSLUS)
-				    break;
-			    if ((*cp == '\0') || (*cp == '\n')) {
-				    if (sp) {
-					    if (*sp=='y' || *sp=='b' || *sp=='f')
-						    _res.lookups[n++] = *sp;
-					    sp = NULL;
-				    }
-				    break;
-			    } else if ((*cp == ' ') || (*cp == '\t') || (*cp == ',')) {
-				    if (sp) {
-					    if (*sp=='y' || *sp=='b' || *sp=='f')
-						    _res.lookups[n++] = *sp;
-					    sp = NULL;
-				    }
-			    } else if (sp == NULL)
-				    sp = cp;
-		    }
+		if (!strncmp(buf, "lookup", sizeof("lookup") -1))
 		    continue;
-		}
 		/* set search list */
 		if (!strncmp(buf, "search", sizeof("search") - 1)) {
 		    if (haveenv)	/* skip if have from environ */
