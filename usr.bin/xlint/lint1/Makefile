@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.22 2001/12/19 18:10:40 tv Exp $
+#	$NetBSD: Makefile,v 1.23 2002/01/18 21:01:39 thorpej Exp $
 
 .include <bsd.own.mk>
 
 PROG=		lint1
 SRCS=		cgram.y scan.l mem1.c mem.c err.c main1.c decl.c tree.c func.c \
-		init.c emit.c emit1.c
+		init.c emit.c emit1.c inittyp.c
 MAN=		lint.7
 LDADD+=		-ll
 DPADD+=		${LIBL}
