@@ -1,4 +1,4 @@
-/*	$NetBSD: ka860.c,v 1.10 1998/05/22 09:26:33 ragge Exp $	*/
+/*	$NetBSD: ka860.c,v 1.11 1998/11/29 14:48:53 ragge Exp $	*/
 /*
  * Copyright (c) 1986, 1988 Regents of the University of California.
  * All rights reserved.
@@ -293,7 +293,7 @@ ka86_steal_pages()
 	    (u_int)IOA8600(3) + IOAMAPSIZ, VM_PROT_READ|VM_PROT_WRITE);
 
 	/* Map in possible nexus space */
-	MAPVIRT(nexus, btoc(NEXSIZE * MAXNNEXUS));
+	MAPVIRT(nexus, vax_btoc(NEXSIZE * MAXNNEXUS));
 	pmap_map((vm_offset_t)nexus, (u_int)NEXA8600,
 	    (u_int)NEXA8600 + NNEX8600 * NEXSIZE, VM_PROT_READ|VM_PROT_WRITE);
 	pmap_map((vm_offset_t)&nexus[NNEXSBI], (u_int)NEXB8600,

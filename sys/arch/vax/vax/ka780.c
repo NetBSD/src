@@ -1,4 +1,4 @@
-/*	$NetBSD: ka780.c,v 1.9 1998/05/22 09:26:33 ragge Exp $	*/
+/*	$NetBSD: ka780.c,v 1.10 1998/11/29 14:48:53 ragge Exp $	*/
 /*-
  * Copyright (c) 1982, 1986, 1988 The Regents of the University of California.
  * All rights reserved.
@@ -342,7 +342,7 @@ ka780_steal_pages()
 	int	junk;
 
 	MAPPHYS(junk, 4, VM_PROT_READ|VM_PROT_WRITE);
-	MAPVIRT(nexus, btoc(8192*16));
+	MAPVIRT(nexus, vax_btoc(8192*16));
 	pmap_map((vm_offset_t)nexus, 0x20000000, 0x20020000,
 	    VM_PROT_READ|VM_PROT_WRITE);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ka650.c,v 1.13 1998/05/22 09:26:33 ragge Exp $	*/
+/*	$NetBSD: ka650.c,v 1.14 1998/11/29 14:48:53 ragge Exp $	*/
 /*
  * Copyright (c) 1988 The Regents of the University of California.
  * All rights reserved.
@@ -119,7 +119,7 @@ uvaxIII_steal_pages()
 	 * interprocessor registers and cache diag space.
 	 */
 	MAPPHYS(junk, 2, VM_PROT_READ|VM_PROT_WRITE); /* SCB & vectors */
-	MAPVIRT(nexus, btoc(0x400000)); /* Qbus map registers */
+	MAPVIRT(nexus, vax_btoc(0x400000)); /* Qbus map registers */
 	pmap_map((vm_offset_t)nexus, 0x20088000, 0x20090000,
 	    VM_PROT_READ|VM_PROT_WRITE);
 

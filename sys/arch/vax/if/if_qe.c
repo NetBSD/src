@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qe.c,v 1.32 1998/11/05 19:48:46 ragge Exp $ */
+/*	$NetBSD: if_qe.c,v 1.33 1998/11/29 14:48:52 ragge Exp $ */
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -479,7 +479,7 @@ qeinit(sc)
 		 * init buffers and maps
 		 */
 		if (if_ubaminit(&sc->qe_uba, (void *)sc->qe_dev.dv_parent,
-		    sizeof (struct ether_header), (int)btoc(MAXPACKETSIZE),
+		    sizeof (struct ether_header), (int)vax_btoc(MAXPACKETSIZE),
 		    sc->qe_ifr, NRCV, sc->qe_ifw, NXMT) == 0) {
 	fail:
 			printf("%s: can't allocate uba resources\n", 

@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.17 1998/11/05 19:46:18 ragge Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.18 1998/11/29 14:48:53 ragge Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -264,7 +264,7 @@ disk_reallymapin(bp, map, reg, flag)
 	caddr_t addr;
 
 	o = (int)bp->b_un.b_addr & PGOFSET;
-	npf = btoc(bp->b_bcount + o) + 1;
+	npf = vax_btoc(bp->b_bcount + o) + 1;
 	addr = bp->b_un.b_addr;
 	p = bp->b_proc;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_uba.c,v 1.13 1998/11/05 19:48:46 ragge Exp $	*/
+/*	$NetBSD: if_uba.c,v 1.14 1998/11/29 14:48:52 ragge Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -237,7 +237,7 @@ if_ubaget(ifu, ifr, totlen, ifp)
 			pp = mtod(m, char *);
 			cpte = (struct pte *)kvtopte(cp);
 			ppte = (struct pte *)kvtopte(pp);
-			x = btop(cp - ifr->ifrw_addr);
+			x = vax_btop(cp - ifr->ifrw_addr);
 			ip = (int *)&ifr->ifrw_mr[x];
 			for (i = 0; i < MCLBYTES/NBPG; i++) {
 				struct pte t;
@@ -352,7 +352,7 @@ if_ubaput(ifu, ifw, m)
 			int *ip;
 
 			pte = (struct pte *)kvtopte(dp);
-			x = btop(cp - ifw->ifw_addr);
+			x = vax_btop(cp - ifw->ifw_addr);
 			ip = (int *)&ifw->ifw_mr[x];
 			for (i = 0; i < MCLBYTES/NBPG; i++)
 				*ip++ = ifw->ifw_proto | pte++->pg_pfn;

@@ -1,4 +1,4 @@
-/*      $NetBSD: param.h,v 1.32 1998/08/25 17:35:23 ragge Exp $    */
+/*      $NetBSD: param.h,v 1.33 1998/11/29 14:48:51 ragge Exp $    */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -135,17 +135,20 @@
  */
 
 /* pages ("clicks") to disk blocks */
-#define	ctod(x)		((x) << (PGSHIFT - DEV_BSHIFT))
-#define	dtoc(x)		((x) >> (PGSHIFT - DEV_BSHIFT))
+#define	ctod(x)		((x) << (CLSHIFT - DEV_BSHIFT))
+#define	dtoc(x)		((x) >> (CLSHIFT - DEV_BSHIFT))
 
 /* clicks to bytes */
-#define	ctob(x)		((x) << PGSHIFT)
-#define	btoc(x)		(((unsigned)(x) + PGOFSET) >> PGSHIFT)
-#define	btop(x)		(((unsigned)(x)) >> PGSHIFT)
+#define	ctob(x)		((x) << CLSHIFT)
+#define	btoc(x)		(((unsigned)(x) + CLOFSET) >> CLSHIFT)
+#define	btop(x)		(((unsigned)(x)) >> CLSHIFT)
 
 /* bytes to disk blocks */
 #define	btodb(x)	((x) >> DEV_BSHIFT)
 #define	dbtob(x)	((x) << DEV_BSHIFT)
+
+#define	vax_btoc(x)	(((unsigned)(x) + PGOFSET) >> PGSHIFT)
+#define	vax_btop(x)	(((unsigned)(x)) >> PGSHIFT)
 
 /*
  * Map a ``block device block'' to a file system block.
@@ -156,6 +159,8 @@
 
 #define	bdbtofsb(bn)	((bn) / (BLKDEV_IOSIZE/DEV_BSIZE))
 
+#ifdef _KERNEL
+#ifndef lint
 #define splx(reg)                                       \
 ({                                                      \
         register int val;                               \
@@ -164,7 +169,7 @@
                         : "g" (reg));                   \
         val;                                            \
 })
-
+#endif
 
 #define	spl0()		splx(0)		/* IPL0  */
 #define splsoftclock()  splx(8)		/* IPL08 */
@@ -189,7 +194,6 @@
 #define vunmapbuf(p,q)
 #endif
 
-#ifdef _KERNEL
 /* Prototype needed for delay() */
 #ifndef	_LOCORE
 void	delay __P((int));
