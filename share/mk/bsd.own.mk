@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.136.4.5 2000/10/07 01:14:24 itojun Exp $
+#	$NetBSD: bsd.own.mk,v 1.136.4.6 2001/04/05 23:30:46 he Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -69,6 +69,8 @@ RENAME?=	-r
 INSTPRIV?=	-U
 .endif
 STRIPFLAG?=	-s
+
+PRINTOBJDIR=	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}\n" | ${MAKE} -B -s -f-
 
 # Define SYS_INCLUDE to indicate whether you want symbolic links to the system
 # source (``symlinks''), or a separate copy (``copies''); (latter useful
