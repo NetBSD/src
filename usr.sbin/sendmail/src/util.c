@@ -418,7 +418,7 @@ buildfname(gecos, login, buf, buflen)
 	{
 		if (*p == '&')
 		{
-			snprintf(bp, SPACELEFT(buf, bp), "%s", login);
+			snprintf(bp, buflen - (bp - buf), "%s", login);
 			*bp = toupper(*bp);
 			bp += strlen(bp);
 		}
@@ -1884,7 +1884,7 @@ get_column(line, col, delim, buf, buflen)
 	char *p;
 	char *begin, *end;
 	int i;
-	char delimbuf[3];
+	char delimbuf[4];
 	
 	if (delim == '\0')
 		strcpy(delimbuf, "\n\t ");
