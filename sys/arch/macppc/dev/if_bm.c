@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bm.c,v 1.9 2000/06/16 14:18:55 tsubai Exp $	*/
+/*	$NetBSD: if_bm.c,v 1.9.2.1 2000/11/01 15:02:49 tv Exp $	*/
 
 /*-
  * Copyright (C) 1998, 1999, 2000 Tsubai Masanari.  All rights reserved.
@@ -490,7 +490,7 @@ bmac_rint(v)
 		if ((status & DBDMA_CNTRL_ACTIVE) == 0)	/* 0x9440 | 0x8440 */
 			continue;
 		count = dbdma_ld16(&cmd->d_count);
-		datalen = count - resid;
+		datalen = count - resid - 2;		/* 2 == framelen */
 		if (datalen < sizeof(struct ether_header)) {
 			printf("%s: short packet len = %d\n",
 				ifp->if_xname, datalen);
@@ -498,12 +498,17 @@ bmac_rint(v)
 		}
 		DBDMA_BUILD_CMD(cmd, DBDMA_CMD_STOP, 0, 0, 0, 0);
 		data = sc->sc_rxbuf + BMAC_BUFLEN * i;
+
+		/* XXX Sometimes bmac reads one extra byte. */
+		if (datalen == ETHER_MAX_LEN + 1)
+			datalen--;
 		m = bmac_get(sc, data, datalen);
 
 		if (m == NULL) {
 			ifp->if_ierrors++;
 			goto next;
 		}
+		m->m_flags |= M_HASFCS;
 
 #if NBPFILTER > 0
 		/*
@@ -668,6 +673,7 @@ bmac_get(sc, pkt, totlen)
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == 0)
 		return 0;
+	m->m_flags |= M_HASFCS;
 	m->m_pkthdr.rcvif = &sc->sc_if;
 	m->m_pkthdr.len = totlen;
 	len = MHLEN;
@@ -861,6 +867,7 @@ bmac_setladrf(sc)
 	struct ether_multistep step;
 	u_int32_t crc;
 	u_int16_t hash[4];
+	int x;
 
 	/*
 	 * Set up multicast address filter by passing all multicast addresses
@@ -916,7 +923,10 @@ chipit:
 	bmac_write_reg(sc, HASH1, hash[1]);
 	bmac_write_reg(sc, HASH2, hash[2]);
 	bmac_write_reg(sc, HASH3, hash[3]);
-	/* bmac_set_bits(sc, RXCFG, RxHashFilterEnable); */
+	x = bmac_read_reg(sc, RXCFG);
+	x &= ~RxPromiscEnable;
+	x |= RxHashFilterEnable;
+	bmac_write_reg(sc, RXCFG, x);
 }
 
 int
