@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993, 1994
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,8 +32,8 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)pw_scan.c	5.1 (Berkeley) 2/12/91";*/
-static char rcsid[] = "$Id: pw_scan.c,v 1.2 1993/08/01 17:57:14 mycroft Exp $";
+/*static char sccsid[] = "from: @(#)pw_scan.c	8.3 (Berkeley) 4/2/94";*/
+static char *rcsid = "$Id: pw_scan.c,v 1.3 1994/08/28 23:32:49 mycroft Exp $";
 #endif /* not lint */
 
 /*
@@ -42,23 +42,26 @@ static char rcsid[] = "$Id: pw_scan.c,v 1.2 1993/08/01 17:57:14 mycroft Exp $";
  */
 
 #include <sys/param.h>
+
+#include <err.h>
 #include <fcntl.h>
 #include <pwd.h>
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <unistd.h>
 
-extern char *progname;
+#include "pw_scan.h"
 
+int
 pw_scan(bp, pw)
 	char *bp;
 	struct passwd *pw;
 {
-	register long id;
-	register int root;
-	register char *p, *sh;
-	char *getusershell();
+	long id;
+	int root;
+	char *p, *sh;
 
 	if (!(pw->pw_name = strsep(&bp, ":")))		/* login */
 		goto fmt;
@@ -71,13 +74,12 @@ pw_scan(bp, pw)
 		goto fmt;
 	id = atol(p);
 	if (root && id) {
-		(void)fprintf(stderr, "%s: root uid should be 0", progname);
-		return(0);
+		warnx("root uid should be 0");
+		return (0);
 	}
 	if (id > USHRT_MAX) {
-		(void)fprintf(stderr,
-		    "%s: %s > max uid value (%d)", progname, p, USHRT_MAX);
-		return(0);
+		warnx("%s > max uid value (%d)", p, USHRT_MAX);
+		return (0);
 	}
 	pw->pw_uid = id;
 
@@ -85,9 +87,8 @@ pw_scan(bp, pw)
 		goto fmt;
 	id = atol(p);
 	if (id > USHRT_MAX) {
-		(void)fprintf(stderr,
-		    "%s: %s > max gid value (%d)", progname, p, USHRT_MAX);
-		return(0);
+		warnx("%s > max gid value (%d)", p, USHRT_MAX);
+		return (0);
 	}
 	pw->pw_gid = id;
 
@@ -107,9 +108,7 @@ pw_scan(bp, pw)
 	if (root && *p)					/* empty == /bin/sh */
 		for (setusershell();;) {
 			if (!(sh = getusershell())) {
-				(void)fprintf(stderr,
-				    "%s: warning, unknown root shell\n",
-				    progname);
+				warnx("warning, unknown root shell");
 				break;
 			}
 			if (!strcmp(p, sh))
@@ -117,8 +116,8 @@ pw_scan(bp, pw)
 		}
 
 	if (p = strsep(&bp, ":")) {			/* too many */
-fmt:		(void)fprintf(stderr, "%s: corrupted entry\n", progname);
-		return(0);
+fmt:		warnx("corrupted entry");
+		return (0);
 	}
-	return(1);
+	return (1);
 }
