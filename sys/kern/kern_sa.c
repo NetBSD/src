@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.1.2.38 2002/10/27 21:12:39 nathanw Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.1.2.39 2002/11/09 02:30:06 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.1.2.39 2002/11/09 02:30:06 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -138,10 +141,7 @@ sys_sa_register(struct lwp *l, void *v, register_t *retval)
 		sa->sa_concurrency = 1;
 		sa->sa_stacks = malloc(sizeof(stack_t) * SA_NUMSTACKS,
 		    M_SA, M_WAITOK);
-		sa->sa_rstacks = malloc(sizeof(stack_t) * SA_NUMSTACKS,
-		    M_SA, M_WAITOK);
 		sa->sa_nstacks = 0;
-		sa->sa_nrstacks = 0;
 		LIST_INIT(&sa->sa_lwpcache);
 		SIMPLEQ_INIT(&sa->sa_upcalls);
 		p->p_sa = sa;
@@ -185,8 +185,9 @@ sys_sa_stacks(struct lwp *l, void *v, register_t *retval)
 	if (error)
 		return (error);
 	sa->sa_nstacks += count;
-	DPRINTFN(9, ("sa_stacks(%d.%d) nstacks + %d = %2d, nrstacks   = %d\n",
-	    l->l_proc->p_pid, l->l_lid, count, sa->sa_nstacks, sa->sa_nrstacks));
+	wakeup((caddr_t)&sa->sa_nstacks);
+	DPRINTFN(9, ("sa_stacks(%d.%d) nstacks + %d = %2d\n",
+	    l->l_proc->p_pid, l->l_lid, count, sa->sa_nstacks));
 
 	*retval = count;
 	return (0);
@@ -378,8 +379,8 @@ sa_upcall(struct lwp *l, int type, struct lwp *event, struct lwp *interrupted,
 		return (ENOMEM);
 	}
 	st = sa->sa_stacks[--sa->sa_nstacks];
-	DPRINTFN(9,("sa_upcall(%d.%d) nstacks--   = %2d, nrstacks   = %d\n",
-	    l->l_proc->p_pid, l->l_lid, sa->sa_nstacks, sa->sa_nrstacks));
+	DPRINTFN(9,("sa_upcall(%d.%d) nstacks--   = %2d\n", 
+	    l->l_proc->p_pid, l->l_lid, sa->sa_nstacks));
 
 	return sa_upcall0(l, type, event, interrupted, argsize, arg, sau, &st);
 }
@@ -505,11 +506,7 @@ sa_switch(struct lwp *l, int type)
 		 * XXX allocate the sadata_upcall structure on the stack, here.
 		 */
 
-		/*
-		 * Take one stack and reserve a second one; the reserved one
-		 * will be used for the UNBLOCKED upcall.
-		 */
-		if (sa->sa_nstacks < 2) {
+		if (sa->sa_nstacks == 0) {
 #ifdef DIAGNOSTIC
 			printf("sa_switch(%d.%d flag %x): Not enough stacks.\n",
 			    p->p_pid, l->l_lid, l->l_flag);
@@ -518,8 +515,8 @@ sa_switch(struct lwp *l, int type)
 		}
 
 		st = sa->sa_stacks[--sa->sa_nstacks];
-		sa->sa_rstacks[sa->sa_nrstacks++] =
-		    sa->sa_stacks[--sa->sa_nstacks];
+		DPRINTFN(9,("sa_switch(%d.%d) nstacks--   = %2d\n", 
+		    l->l_proc->p_pid, l->l_lid, sa->sa_nstacks));
 		sau = sadata_upcall_alloc(0);
 		if (sau == NULL) {
 #ifdef DIAGNOSTIC
@@ -764,14 +761,45 @@ sa_upcall_userret(struct lwp *l)
 		DPRINTFN(8,("sa_upcall_userret(%d.%d) unblocking ",
 		    p->p_pid, l->l_lid));
 
+		while (sa->sa_nstacks == 0) {
+			/*
+			 * This should be a transient condition, so we'll just
+			 * sleep until some stacks come in; presumably, some
+			 * userland LWP is busy and hasn't gotten to return
+			 * stacks yet.
+			 *
+			 * XXX There is a slight protocol breach here, in
+			 * that control is not handed back directly to the
+			 * LWP that was running before we were woken up from
+			 * the sleep that invoked the UNBLOCKED upcall.
+			 * If it was a running one, it is on the runqueue
+			 * and it will get to run again when the system
+			 * gets to it, just not this second. If it's idle,
+			 * it will remain idle, because we don't touch it.
+			 *
+			 * Ideally, tsleep() would have a variant that took
+			 * a LWP to switch to.
+			 */
+			l->l_flag &= ~L_SA;
+			DPRINTFN(7, ("sa_upcall_userret(%d.%d) sleeping"
+			    " for stacks\n", l->l_proc->p_pid, l->l_lid));
+			tsleep((caddr_t) &sa->sa_nstacks, PWAIT|PCATCH, 
+			    "sastacks", 0);
+			if (p->p_flag & P_WEXIT)
+				lwp_exit(l);
+			l->l_flag |= L_SA;
+		}
 		l2 = sa_vp_repossess(l);
 
 		l->l_flag &= ~L_SA;
 		sau = sadata_upcall_alloc(1);
 		l->l_flag |= L_SA;
+		
+		KDASSERT(sa->sa_nstacks > 0);
 
-		KDASSERT(sa->sa_nrstacks > 0);
-		st = sa->sa_rstacks[--sa->sa_nrstacks];
+		st = sa->sa_stacks[--sa->sa_nstacks];
+		DPRINTFN(9,("sa_upcall_userret(%d.%d) nstacks--   = %2d\n",
+		    l->l_proc->p_pid, l->l_lid, sa->sa_nstacks));
 		if (sa_upcall0(l, SA_UPCALL_UNBLOCKED | SA_UPCALL_DEFER, l, l2, 0, NULL, sau,
 		    &st) != 0) {
 			/*
@@ -816,12 +844,12 @@ sa_upcall_userret(struct lwp *l)
 		    sau->sau_state.captured.e_sa.sa_context,
 		    sizeof(ucontext_t)) != 0) {
 #ifdef DIAGNOSTIC
-		printf("sa_upcall_userret(%d.%d): couldn't copyout"
-		    " context of event LWP %d\n",
-		    p->p_pid, l->l_lid, sau->sau_state.captured.e_sa.sa_id);
+			printf("sa_upcall_userret(%d.%d): couldn't copyout"
+			    " context of event LWP %d\n",
+			    p->p_pid, l->l_lid, sau->sau_state.captured.e_sa.sa_id);
 #endif
-		sigexit(l, SIGILL);
-		/* NOTREACHED */
+			sigexit(l, SIGILL);
+			/* NOTREACHED */
 		}
 		sas[nsas] = &sau->sau_state.captured.e_sa;
 		nsas++;
@@ -834,12 +862,12 @@ sa_upcall_userret(struct lwp *l)
 		    sau->sau_state.captured.i_sa.sa_context,
 		    sizeof(ucontext_t)) != 0) {
 #ifdef DIAGNOSTIC
-		printf("sa_upcall_userret(%d.%d): couldn't copyout"
-		    " context of interrupted LWP %d\n",
-		    p->p_pid, l->l_lid, sau->sau_state.captured.i_sa.sa_id);
+			printf("sa_upcall_userret(%d.%d): couldn't copyout"
+			    " context of interrupted LWP %d\n",
+			    p->p_pid, l->l_lid, sau->sau_state.captured.i_sa.sa_id);
 #endif
-		sigexit(l, SIGILL);
-		/* NOTREACHED */
+			sigexit(l, SIGILL);
+			/* NOTREACHED */
 		}
 		sas[nsas] = &sau->sau_state.captured.i_sa;
 		nsas++;
@@ -873,8 +901,8 @@ sa_upcall_userret(struct lwp *l)
 			/* Copying onto the stack didn't work. Die. */
 			sadata_upcall_free(sau);
 #ifdef DIAGNOSTIC
-		printf("sa_upcall_userret: couldn't copyout sa_t "
-		    "%d for %d.%d\n", i, p->p_pid, l->l_lid);
+			printf("sa_upcall_userret: couldn't copyout sa_t "
+			    "%d for %d.%d\n", i, p->p_pid, l->l_lid);
 #endif
 			sigexit(l, SIGILL);
 			/* NOTREACHED */
@@ -988,8 +1016,7 @@ debug_print_sa(struct proc *p)
 		if (sa->sa_idle)
 			printf("SA idle: %d\n", sa->sa_idle->l_lid);
 		printf("SAs: %d cached LWPs\n", sa->sa_ncached);
-		printf("%d upcall stacks, %d reserved (unblock) stacks\n",
-		    sa->sa_nstacks, sa->sa_nrstacks);
+		printf("%d upcall stacks\n", sa->sa_nstacks);
 		LIST_FOREACH(l, &sa->sa_lwpcache, l_sibling)
 		    debug_print_lwp(l);
 	}
