@@ -1,6 +1,6 @@
 NetBSD Mirror Site List
 
-The following sites mirror NetBSD as of May 30, 1998.
+The following sites mirror NetBSD as of June 03, 1998.
 
 If you wish to become a distribution site for NetBSD, contact
 mirrors@netbsd.org.
@@ -74,8 +74,6 @@ USA
 *   ftp://ftp.netbsd.org/pub/NetBSD
 
 *   ftp://ftp.cs.umn.edu/pub/NetBSD
-
-*   ftp://ftp.cslab.vt.edu/pub/NetBSD
 
 *   ftp://ftp.eecs.umich.edu/pub/NetBSD
 
