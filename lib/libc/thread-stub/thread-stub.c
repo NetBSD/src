@@ -1,4 +1,4 @@
-/*	$NetBSD: thread-stub.c,v 1.6 2003/01/20 01:30:15 thorpej Exp $	*/
+/*	$NetBSD: thread-stub.c,v 1.7 2003/01/20 01:58:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -238,7 +238,19 @@ __libc_rwlock_catchall_stub(rwlock_t *l)
 }
 
 
-/* thread-specific data */
+/*
+ * thread-specific data; we need to actually provide a simple TSD
+ * implementation, since some thread-safe libraries want to use it.
+ */
+
+#define	TSD_KEYS_MAX	64
+
+static struct {
+	void *tsd_val;
+	void (*tsd_dtor)(void *);
+	int tsd_inuse;
+} __libc_tsd[TSD_KEYS_MAX];
+static int __libc_tsd_nextkey;
 
 int	__libc_thr_keycreate_stub(thread_key_t *, void (*)(void *));
 int	__libc_thr_setspecific_stub(thread_key_t, const void *);
@@ -253,12 +265,29 @@ __weak_alias(__libc_thr_keydelete,__libc_thr_keydelete_stub)
 int
 __libc_thr_keycreate_stub(thread_key_t *k, void (*d)(void *))
 {
-	/* LINTED deliberate lack of effect */
-	(void)k;
-	/* LINTED deliberate lack of effect */
-	(void)d;
+	int i;
 
-	CHECK_NOT_THREADED();
+	for (i = __libc_tsd_nextkey; i < TSD_KEYS_MAX; i++) {
+		if (__libc_tsd[i].tsd_inuse == 0)
+			goto out;
+	}
+
+	for (i = 0; i < __libc_tsd_nextkey; i++) {
+		if (__libc_tsd[i].tsd_inuse == 0)
+			goto out;
+	}
+
+	return (EAGAIN);
+
+ out:
+	/*
+	 * XXX We don't actually do anything with the destructor.  We
+	 * XXX probably should.
+	 */
+	__libc_tsd[i].tsd_inuse = 1;
+	__libc_tsd_nextkey = (i + i) % TSD_KEYS_MAX;
+	__libc_tsd[i].tsd_dtor = d;
+	*k = i;
 
 	return (0);
 }
@@ -266,12 +295,9 @@ __libc_thr_keycreate_stub(thread_key_t *k, void (*d)(void *))
 int
 __libc_thr_setspecific_stub(thread_key_t k, const void *v)
 {
-	/* LINTED deliberate lack of effect */
-	(void)k;
-	/* LINTED deliberate lack of effect */
-	(void)v;
 
-	DIE();
+	/* LINTED cast away const */
+	__libc_tsd[k].tsd_val = (void *) v;
 
 	return (0);
 }
@@ -279,21 +305,19 @@ __libc_thr_setspecific_stub(thread_key_t k, const void *v)
 void *
 __libc_thr_getspecific_stub(thread_key_t k)
 {
-	/* LINTED deliberate lack of effect */
-	(void)k;
 
-	DIE();
-
-	return (NULL);
+	return (__libc_tsd[k].tsd_val);
 }
 
 int
 __libc_thr_keydelete_stub(thread_key_t k)
 {
-	/* LINTED deliberate lack of effect */
-	(void)k;
 
-	CHECK_NOT_THREADED();
+	/*
+	 * XXX Do not recycle key; see big comment in libpthread.
+	 */
+
+	__libc_tsd[k].tsd_dtor = NULL;
 
 	return (0);
 }
