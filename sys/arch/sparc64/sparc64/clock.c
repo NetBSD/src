@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.8 1998/09/06 21:53:42 eeh Exp $ */
+/*	$NetBSD: clock.c,v 1.9 1998/11/22 23:56:49 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -489,10 +489,12 @@ cpu_initclocks()
 	stxa(&timerreg_4u.t_timer[0].t_limit, ASI_NUCLEUS, tmr_ustolim(tick)|TMR_LIM_IEN|TMR_LIM_PERIODIC|TMR_LIM_RELOAD); 
 	stxa(&timerreg_4u.t_mapintr[0], ASI_NUCLEUS, timerreg_4u.t_mapintr[0]|INTMAP_V); 
 
+#ifdef DEBUG
 	if (intrdebug)
 		/* Neglect to enable timer */
 		stxa(&timerreg_4u.t_timer[1].t_limit, ASI_NUCLEUS, tmr_ustolim(statint)|TMR_LIM_RELOAD); 
 	else
+#endif
 		stxa(&timerreg_4u.t_timer[1].t_limit, ASI_NUCLEUS, tmr_ustolim(statint)|TMR_LIM_IEN|TMR_LIM_RELOAD); 
 	stxa(&timerreg_4u.t_mapintr[1], ASI_NUCLEUS, timerreg_4u.t_mapintr[1]|INTMAP_V); 
 #endif
