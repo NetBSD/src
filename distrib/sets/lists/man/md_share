@@ -1,4 +1,4 @@
-# $NetBSD: md_share,v 1.92 2000/07/04 07:59:13 gmcgarry Exp $
+# $NetBSD: md_share,v 1.93 2000/07/22 23:15:39 bjh21 Exp $
 ./usr/share/man/cat1/atari/edahdi.0
 ./usr/share/man/cat1/atari/msconfig.0
 ./usr/share/man/cat1/grfinfo.0
@@ -52,6 +52,7 @@
 ./usr/share/man/cat4/arm26/arcwsmouse.0
 ./usr/share/man/cat4/arm26/cpu.0
 ./usr/share/man/cat4/arm26/dtide.0
+./usr/share/man/cat4/arm26/ea.0
 ./usr/share/man/cat4/arm26/ei.0
 ./usr/share/man/cat4/arm32/asc.0
 ./usr/share/man/cat4/arm32/autoconf.0
@@ -399,6 +400,7 @@
 ./usr/share/man/man4/arm26/arcwsmouse.4
 ./usr/share/man/man4/arm26/cpu.4
 ./usr/share/man/man4/arm26/dtide.4
+./usr/share/man/man4/arm26/ea.4
 ./usr/share/man/man4/arm26/ei.4
 ./usr/share/man/man4/arm32/asc.4
 ./usr/share/man/man4/arm32/autoconf.4
