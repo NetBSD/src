@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.53 2004/04/25 04:24:06 matt Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.54 2004/07/13 09:07:54 uebayasi Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -299,7 +299,7 @@ MKDEP_CFLAGS?=	${CFLAGS}
 	cat ${GENASSYM} ${GENASSYM_EXTRAS} | \
 	    ${HOST_SH} $S/kern/genassym.sh ${MKDEP} -f assym.dep -- \
 	    ${CFLAGS} ${CPPFLAGS}
-	@sed -e 's/.*\.o:.*\.c/assym.h:/' < assym.dep >> .depend
+	@sed -e 's/^.*\.o:.*\.c /assym.h: /' < assym.dep >> .depend
 	@rm -f assym.dep
 .endif
 
