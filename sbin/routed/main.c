@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.17 1997/09/15 10:38:15 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.18 1998/06/02 18:02:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -40,7 +40,7 @@ char copyright[] =
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/5/93";
 #elif defined(__NetBSD__)
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: main.c,v 1.17 1997/09/15 10:38:15 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.18 1998/06/02 18:02:55 thorpej Exp $");
 #endif
 
 #include "defs.h"
@@ -51,11 +51,19 @@ __RCSID("$NetBSD: main.c,v 1.17 1997/09/15 10:38:15 lukem Exp $");
 #include <signal.h>
 #include <fcntl.h>
 #include <sys/file.h>
+#if defined(sgi) && !defined(PRE_KUDZU)
+#include <cap_net.h>
+#else
+#define cap_socket socket
+#define cap_bind bind
+#endif
 
 pid_t	mypid;
 
 naddr	myaddr;				/* system address */
 char	myname[MAXHOSTNAMELEN+1];
+
+int	verbose;
 
 int	supplier;			/* supply or broadcast updates */
 int	supplier_set;
@@ -77,6 +85,8 @@ time_t	now_garbage;
 
 struct timeval next_bcast;		/* next general broadcast */
 struct timeval no_flash = {EPOCH+SUPPLY_INTERVAL};  /* inhibit flash update */
+
+struct timeval flush_kern_timer;
 
 fd_set	fdbits;
 int	sock_max;
@@ -126,7 +136,7 @@ main(int argc,
 	(void)gethostname(myname, sizeof(myname)-1);
 	(void)gethost(myname, &myaddr);
 
-	while ((n = getopt(argc, argv, "sqdghmpAtT:F:P:")) != -1) {
+	while ((n = getopt(argc, argv, "sqdghmpAtvT:F:P:")) != -1) {
 		switch (n) {
 		case 's':
 			supplier = 1;
@@ -200,16 +210,19 @@ main(int argc,
 			break;
 
 		case 'P':
-			/* handle arbirary, (usually) per-interface
-			 * parameters.
+			/* handle arbitrary parameters.
 			 */
-			p = parse_parms(optarg, 0);
-			if (p != 0) {
-				if (strcasecmp(p,optarg))
-					msglog("%s in \"%s\"", p, optarg);
-				else
-					msglog("bad \"-P %s\"", optarg);
-			}
+			q = strdup(optarg);
+			p = parse_parms(q, 0);
+			if (p != 0)
+				msglog("%s in \"-P %s\"", p, optarg);
+			free(q);
+			break;
+
+		case 'v':
+			/* display version */
+			verbose++;
+			msglog("version 2.10");
 			break;
 
 		default:
@@ -227,11 +240,14 @@ main(int argc,
 		goto usage;
 	if (argc != 0) {
 usage:
-		logbad(0, "usage: routed [-sqdghmpAt] [-T tracefile]"
+		logbad(0, "usage: routed [-sqdghmpAtv] [-T tracefile]"
 		       " [-F net[,metric]] [-P parms]");
 	}
-	if (geteuid() != 0)
+	if (geteuid() != 0) {
+		if (verbose)
+			exit(0);
 		logbad(0, "requires UID 0");
+	}
 
 	mib[0] = CTL_NET;
 	mib[1] = PF_INET;
@@ -272,12 +288,10 @@ usage:
 	/* get into the background */
 #ifdef sgi
 	if (0 > _daemonize(background ? 0 : (_DF_NOCHDIR|_DF_NOFORK),
-			   new_tracelevel == 0 ? -1 : STDOUT_FILENO,
-			   new_tracelevel == 0 ? -1 : STDERR_FILENO,
-			   -1))
+			   STDIN_FILENO, STDOUT_FILENO, STDERR_FILENO))
 		BADERR(0, "_daemonize()");
 #else
-	if (background && daemon(0, new_tracelevel) < 0)
+	if (background && daemon(0, 1) < 0)
 		BADERR(0,"daemon()");
 #endif
 
@@ -286,7 +300,7 @@ usage:
 
 	/* prepare socket connected to the kernel.
 	 */
-	rt_sock = socket(AF_ROUTE, SOCK_RAW, 0);
+	rt_sock = cap_socket(AF_ROUTE, SOCK_RAW, 0);
 	if (rt_sock < 0)
 		BADERR(1,"rt_sock = socket()");
 	if (fcntl(rt_sock, F_SETFL, O_NONBLOCK) == -1)
@@ -299,8 +313,6 @@ usage:
 	fix_select();
 
 
-	if (background && new_tracelevel == 0)
-		ftrace = 0;
 	if (tracename != 0) {
 		strncpy(inittracename, tracename, sizeof(inittracename)-1);
 		set_tracefile(inittracename, "%s", -1);
@@ -331,11 +343,14 @@ usage:
 	 */
 	gwkludge();
 	ifinit();
-	flush_kern();
 
 	/* Ask for routes */
 	rip_query();
 	rdisc_sol();
+
+	/* Now turn off stdio if not tracing */
+	if (new_tracelevel == 0)
+		trace_close(background);
 
 	/* Loop forever, listening and broadcasting.
 	 */
@@ -377,6 +392,19 @@ usage:
 			rip_query();
 			continue;
 		}
+
+		/* Check the kernel table occassionally for mysteriously
+		 * evaporated routes
+		 */
+		timevalsub(&t2, &flush_kern_timer, &now);
+		if (t2.tv_sec <= 0) {
+			flush_kern();
+			flush_kern_timer.tv_sec = (now.tv_sec
+						   + CHECK_QUIET_INTERVAL);
+			continue;
+		}
+		if (timercmp(&t2, &wtime, <))
+			wtime = t2;
 
 		/* If it is time, then broadcast our routes.
 		 */
@@ -448,7 +476,7 @@ usage:
 			wtime = t2;
 
 		/* take care of router discovery,
-		 * but do it to the millisecond
+		 * but do it in the correct the millisecond
 		 */
 		if (!timercmp(&rdisc_timer, &now, >)) {
 			rdisc_age(0);
@@ -612,7 +640,7 @@ get_rip_sock(naddr addr,
 	sin.sin_family = AF_INET;
 	sin.sin_port = htons(RIP_PORT);
 	sin.sin_addr.s_addr = addr;
-	if (bind(s, (struct sockaddr *)&sin,sizeof(sin)) < 0) {
+	if (cap_bind(s, (struct sockaddr *)&sin, sizeof(sin)) < 0) {
 		if (serious)
 			BADERR(errno != EADDRINUSE, "bind(rip_sock)");
 		return -1;
@@ -702,8 +730,10 @@ rip_on(struct interface *ifp)
 
 	/* If the main RIP socket is off and it makes sense to turn it on,
 	 * then turn it on for all of the interfaces.
+	 * It makes sense if either router discovery is off, or if
+	 * router discover is on and at most one interface is doing RIP.
 	 */
-	if (rip_interfaces > 0 && !rdisc_ok) {
+	if (rip_interfaces > 0 && (!rdisc_ok || rip_interfaces > 1)) {
 		trace_act("turn on RIP");
 
 		/* Close all of the query sockets so that we can open
@@ -753,7 +783,7 @@ rtmalloc(size_t size,
 {
 	void *p = malloc(size);
 	if (p == 0)
-		logbad(1,"malloc() failed in %s", msg);
+		logbad(1,"malloc(%d) failed in %s", size, msg);
 	return p;
 }
 
