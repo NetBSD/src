@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.14 1995/06/01 21:36:22 mycroft Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.15 1995/06/01 21:46:27 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -327,16 +327,11 @@ icmp_input(m, hlen)
 		 */
 		if (icmplen < ICMP_MASKLEN)
 			break;
-		switch (ip->ip_dst.s_addr) {
-
-		case INADDR_BROADCAST:
-		case INADDR_ANY:
+		if (ip->ip_dst.s_addr == INADDR_BROADCAST ||
+		    ip->ip_dst.s_addr == INADDR_ANY)
 			icmpdst.sin_addr = ip->ip_src;
-			break;
-
-		default:
+		else
 			icmpdst.sin_addr = ip->ip_dst;
-		}
 		ia = (struct in_ifaddr *)ifaof_ifpforaddr(
 			    (struct sockaddr *)&icmpdst, m->m_pkthdr.rcvif);
 		if (ia == 0)
