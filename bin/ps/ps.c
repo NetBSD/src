@@ -1,4 +1,4 @@
-/*	$NetBSD: ps.c,v 1.46.2.2 2002/04/23 20:41:14 nathanw Exp $	*/
+/*	$NetBSD: ps.c,v 1.46.2.3 2002/04/23 21:59:20 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: ps.c,v 1.46.2.2 2002/04/23 20:41:14 nathanw Exp $");
+__RCSID("$NetBSD: ps.c,v 1.46.2.3 2002/04/23 21:59:20 nathanw Exp $");
 #endif
 #endif /* not lint */
 
@@ -469,7 +469,7 @@ pick_representative_lwp(ki, kl, nlwps)
 	struct kinfo_lwp *kl;
 	int nlwps;
 {
-	int i, onproc, run, sleep;
+	int i, onproc, running, sleeping;
 
 	/* Trivial case: only one LWP */
 	if (nlwps == 1)
@@ -485,26 +485,26 @@ pick_representative_lwp(ki, kl, nlwps)
 		break;
 	case SACTIVE:
 		/* Pick the most live LWP */
-		onproc = run = sleep = 0;
+		onproc = running = sleeping = 0;
 		for (i = 0; i < nlwps; i++) {
 			switch (kl[i].l_stat) {
 			case LSONPROC:
 				onproc = i;
 				break;
 			case LSRUN:
-				run = i;
+				running = i;
 				break;
 			case LSSLEEP:
-				sleep = i;
+				sleeping = i;
 				break;
 			}
 		}
 		if (onproc)
 			return &kl[onproc];
-		if (run)
-			return &kl[run];
-		if (sleep)
-			return &kl[sleep];
+		if (running)
+			return &kl[running];
+		if (sleeping)
+			return &kl[sleeping];
 		break;
 	case SDEAD:
 	case SZOMB:
