@@ -1,4 +1,4 @@
-/*	$NetBSD: fiq.h,v 1.1 2001/05/09 15:58:07 matt Exp $	*/
+/*	$NetBSD: dnard_fiq.h,v 1.1 2002/01/13 20:20:13 thorpej Exp $	*/
 
 /*
  * Copyright 1997
