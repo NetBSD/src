@@ -1,3 +1,5 @@
+/*	$NetBSD: config.h,v 1.2 2001/05/22 14:41:59 fredette Exp $	*/
+
 /* config.h.  Generated automatically by configure.  */
 /* config.h.in.  Generated automatically from configure.in by autoheader.  */
 

@@ -1,3 +1,5 @@
+/*	$NetBSD: ndbootd.h,v 1.2 2001/05/22 14:41:59 fredette Exp $	*/
+
 /* ndbootd.h - header file for the Sun Network Disk (nd) daemon: */
 
 /*
