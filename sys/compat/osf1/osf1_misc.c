@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_misc.c,v 1.22 1999/04/26 05:57:53 cgd Exp $ */
+/* $NetBSD: osf1_misc.c,v 1.23 1999/04/26 06:10:37 cgd Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -475,8 +475,8 @@ osf1_sys_fstat(p, v, retval)
 	return (error);
 }
 
-#define	bsd2osf_dev(dev)	(major(dev) << 20 | minor(dev))
-#define	osf2bsd_dev(dev)	makedev((dev >> 20) & 0xfff, dev & 0xfffff)
+#define	bsd2osf_dev(dev)	osf1_makedev(major(dev), minor(dev))
+#define	osf2bsd_dev(dev)	makedev(osf1_major(dev), osf1_minor(dev))
 
 /*
  * Convert from a stat structure to an osf1 stat structure.
