@@ -1,4 +1,4 @@
-/* $NetBSD: mount_ados.c,v 1.16 2003/03/22 11:15:45 jdolecek Exp $ */
+/* $NetBSD: mount_ados.c,v 1.17 2003/05/03 15:37:07 christos Exp $ */
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mount_ados.c,v 1.16 2003/03/22 11:15:45 jdolecek Exp $");
+__RCSID("$NetBSD: mount_ados.c,v 1.17 2003/05/03 15:37:07 christos Exp $");
 #endif /* not lint */
 
 #include <sys/cdefs.h>
@@ -159,7 +159,7 @@ mount_ados(argc, argv)
 		err(1, "%s on %s", dev, dir);
 
 	if (mntflags & MNT_GETARGS)
-		printf("uid=%d, gid=%d, mask=%d\n", args.uid, args.gid,
+		printf("uid=%d, gid=%d, mask=0%o\n", args.uid, args.gid,
 		    args.mask);
 
 	exit (0);
