@@ -1,4 +1,6 @@
-#	$NetBSD: INDY,v 1.17 2002/05/04 20:06:49 pooka Exp $
+#	$NetBSD: INDY,v 1.18 2002/05/08 13:52:17 pooka Exp $
+#
+# Indy
 
 include		"arch/sgimips/conf/std.sgimips"
 
@@ -6,8 +8,8 @@ include		"arch/sgimips/conf/std.sgimips"
 
 # XXX _LOW _HOW og/eller TEXTADDR
 
-makeoptions	TEXTADDR=0x80069000	# O2
-#makeoptions	TEXTADDR=0x88069000	# Indy
+#makeoptions	TEXTADDR=0x80069000	# O2
+makeoptions	TEXTADDR=0x88069000	# Indy
 #makeoptions	TEXTADDR=0x8001c000	# IP27
 #makeoptions	TEXTADDR=0x80300000	# IP27 Symmon
 
@@ -67,53 +69,24 @@ config		netbsd		root on ? type ?
 mainbus0 	at root
 cpu0 		at mainbus0
 
-# O2
-crime0 		at mainbus0 addr 0x14000000
-mace0 		at mainbus0 addr 0x1f000000
-macepci0 	at mace0 offset 0x080000 intr 7
-pci0 		at macepci0 bus 0
-mec0 		at mace0 offset 0x280000 intr 3
-pckbc0		at mace0 offset 0x320000 intr 5
-lpt0 		at mace0 offset 0x380000 intr 4
-com0 		at mace0 offset 0x390000 intr 4
-com1 		at mace0 offset 0x398000 intr 4
-mcclock0	at mace0 offset 0x3a0000
-tlp* 		at pci? dev ? function ?
-ne* 		at pci? dev ? function ?
-fxp* 		at pci? dev ? function ?
-inphy*		at mii? phy ?
-nsphy*		at mii? phy ?
-ahc0 		at pci0 dev 1 function ?
-ahc1 		at pci0 dev 2 function ?
-scsibus0 	at ahc0 channel ?
-#scsibus1 	at ahc1 channel ?
-sd*		at scsibus? target ? lun ?
-cd*		at scsibus? target ? lun ?
-
-#pckbd*		at pckbc?
-#pms*		at pckbc?
-#wskbd*		at pckbd? console ?
-#wsmouse* 	at pms? mux 0
-#wsdisplay* 	at foofb? console ?
-
 # Indy
-#imc0 		at mainbus0 addr 0x1fa00000
-#gio0 		at imc0
-#eisa0 		at imc0
+imc0 		at mainbus0 addr 0x1fa00000
+gio0 		at imc0
+eisa0 		at imc0
 
-#hpc0 		at gio? addr 0x1fb80000
-#hpc1 		at gio? addr 0x1fb00000
-#hpc2 		at gio? addr 0x1f980000
-#sq0 		at hpc0 # net 0
-#sbic0 		at hpc0 # hd 0
-#sbic1 		at hpc0 # hd 1
+hpc0 		at gio? addr 0x1fb80000
+hpc1 		at gio? addr 0x1fb00000
+hpc2 		at gio? addr 0x1f980000
+sq0 		at hpc0 # net 0
+sbic0 		at hpc0 # hd 0
+sbic1 		at hpc0 # hd 1
 
-#zsc* 		at hpc0 # pbus0 device ?
-#zstty*		at zsc? channel ?
+zsc* 		at hpc0 # pbus0 device ?
+zstty*		at zsc? channel ?
 
-#pbus0 		at hpc0
+pbus0 		at hpc0
 
-#pckbc0 	at pbus0 device ?
+pckbc0  	at pbus0 device ?
 
 
 pseudo-device	loop
