@@ -1,4 +1,4 @@
-/*	$NetBSD: wi_ieee.h,v 1.13 2002/03/31 05:54:19 ichiro Exp $	*/
+/*	$NetBSD: wi_ieee.h,v 1.14 2002/04/16 07:24:07 onoe Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -337,6 +337,11 @@ struct wi_ltv_keys {
 /*
  * Scan Information
  */
+#define	WI_RID_BCAST_SCAN_REQ	0xFCAB /* Broadcast Scan request (Symbol) */
+#define	 BSCAN_5SEC		0x01
+#define	 BSCAN_ONETIME		0x02
+#define	 BSCAN_PASSIVE		0x40
+#define	 BSCAN_BCAST		0x80
 #define WI_RID_SCAN_REQ		0xFCE1 /* Scan request (STA only) */
 #define WI_RID_JOIN_REQ		0xFCE2 /* Join request (STA only) */
 #define	WI_RID_AUTH_STATION	0xFCE3 /* Authenticates Station (AP) */
