@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.9 1999/09/27 05:06:10 mrg Exp $	*/
+/*	$NetBSD: audio.c,v 1.9.6.1 2001/03/11 21:29:46 he Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -161,13 +161,14 @@ audio_get_sun_encoding(sun_encoding, encp, precp)
  * find a .wav header, etc. returns header length on success
  */
 size_t
-audio_parse_wav_hdr(hdr, sz, enc, prec, sample, channels)
+audio_parse_wav_hdr(hdr, sz, enc, prec, sample, channels, datasize)
 	void	*hdr;
 	size_t	sz;
 	int	*enc;
 	int	*prec;
 	int	*sample;
 	int	*channels;
+	size_t *datasize;
 {
 	char	*where = hdr;
 	wav_audioheaderpart *part;
@@ -257,6 +258,8 @@ printf("part `%c%c%c%c' len = %d\n", part->name[0], part->name[1], part->name[2]
 		*sample = getle32(fmt->sample_rate);
 		*enc = newenc;
 		*prec = newprec;
+		if (datasize)
+			*datasize = (size_t)getle32(part->len);
 		part++;
 		return ((char *)part - (char *)hdr);
 	}
