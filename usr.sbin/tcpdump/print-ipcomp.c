@@ -1,4 +1,4 @@
-/*	$NetBSD: print-ipcomp.c,v 1.2 1999/09/04 03:36:41 itojun Exp $	*/
+/*	$NetBSD: print-ipcomp.c,v 1.3 2001/01/28 10:05:06 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1993, 1994
@@ -27,7 +27,7 @@ static const char rcsid[] =
     "@(#) /master/usr.sbin/tcpdump/tcpdump/print-icmp.c,v 2.1 1995/02/03 18:14:42 polk Exp (LBL)";
 #else
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: print-ipcomp.c,v 1.2 1999/09/04 03:36:41 itojun Exp $");
+__RCSID("$NetBSD: print-ipcomp.c,v 1.3 2001/01/28 10:05:06 itojun Exp $");
 #endif
 #endif
 
@@ -37,33 +37,15 @@ __RCSID("$NetBSD: print-ipcomp.c,v 1.2 1999/09/04 03:36:41 itojun Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 
-#include <net/route.h>
-#include <net/if.h>
-
 #include <netinet/in.h>
-#include <netinet/if_ether.h>
-#include <netinet/in_systm.h>
-#include <netinet/ip.h>
-#include <netinet/ip_icmp.h>
-#include <netinet/ip_var.h>
-#include <netinet/udp.h>
-#include <netinet/udp_var.h>
-#include <netinet/tcp.h>
 
 #include <stdio.h>
 
-#ifdef INET6
-#include <netinet/ip6.h>
-#endif
-#ifdef HAVE_NETINET6_IPCOMP_H
-#include <netinet6/ipcomp.h>
-#else
 struct ipcomp {
 	u_int8_t comp_nxt;	/* Next Header */
 	u_int8_t comp_flags;	/* Length of data, in 32bit */
 	u_int16_t comp_cpi;	/* Compression parameter index */
 };
-#endif
 
 #if defined(HAVE_LIBZ) && defined(HAVE_ZLIB_H)
 #include <zlib.h>
@@ -85,14 +67,14 @@ ipcomp_print(register const u_char *bp, register const u_char *bp2, int *nhdr)
 	ipcomp = (struct ipcomp *)bp;
 	cpi = (u_int16_t)ntohs(ipcomp->comp_cpi);
 
-	/* 'ep' points to the end of avaible data. */
+	/* 'ep' points to the end of available data. */
 	ep = snapend;
 
 	if ((u_char *)(ipcomp + 1) >= ep - sizeof(struct ipcomp)) {
 		fputs("[|IPCOMP]", stdout);
 		goto fail;
 	}
-	printf("IPComp(cpi=%u)", cpi);
+	printf("IPComp(cpi=0x%04x)", cpi);
 
 #if defined(HAVE_LIBZ) && defined(HAVE_ZLIB_H)
 	if (1)

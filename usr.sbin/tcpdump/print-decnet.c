@@ -1,4 +1,4 @@
-/*	$NetBSD: print-decnet.c,v 1.3 1997/10/03 19:55:05 christos Exp $	*/
+/*	$NetBSD: print-decnet.c,v 1.4 2001/01/28 10:05:06 itojun Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995, 1996, 1997
@@ -27,7 +27,7 @@
 static const char rcsid[] =
     "@(#) Header: print-decnet.c,v 1.26 97/05/28 12:51:29 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-decnet.c,v 1.3 1997/10/03 19:55:05 christos Exp $");
+__RCSID("$NetBSD: print-decnet.c,v 1.4 2001/01/28 10:05:06 itojun Exp $");
 #endif
 #endif
 
@@ -743,13 +743,14 @@ char *
 dnnum_string(u_short dnaddr)
 {
 	char *str;
+	size_t siz;
 	int area = (u_short)(dnaddr & AREAMASK) >> AREASHIFT;
 	int node = dnaddr & NODEMASK;
 
-	str = (char *)malloc(sizeof("00.0000"));
+	str = (char *)malloc(siz = sizeof("00.0000"));
 	if (str == NULL)
 		error("dnnum_string: malloc");
-	sprintf(str, "%d.%d", area, node);
+	snprintf(str, siz, "%d.%d", area, node);
 	return(str);
 }
 
@@ -761,7 +762,7 @@ dnname_string(u_short dnaddr)
 
 	dna.a_len = sizeof(short);
 	memcpy((char *)dna.a_addr, (char *)&dnaddr, sizeof(short));
-	return (savestr(dnet_htoa(&dna)));
+	return (strdup(dnet_htoa(&dna)));
 #else
 	return(dnnum_string(dnaddr));	/* punt */
 #endif
@@ -776,10 +777,7 @@ pdata(u_char *dp, u_int maxlen)
 
 	while (x-- > 0) {
 	    c = *dp++;
-	    if (isprint(c))
-		putchar(c);
-	    else
-		printf("\\%o", c & 0xFF);
+	    safeputchar(c);
 	}
 }
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: print-tcp.c,v 1.19 2000/08/01 17:39:46 itojun Exp $	*/
+/*	$NetBSD: print-tcp.c,v 1.20 2001/01/28 10:05:07 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -27,7 +27,7 @@
 static const char rcsid[] =
     "@(#) Header: print-tcp.c,v 1.55 97/06/15 13:20:28 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-tcp.c,v 1.19 2000/08/01 17:39:46 itojun Exp $");
+__RCSID("$NetBSD: print-tcp.c,v 1.20 2001/01/28 10:05:07 itojun Exp $");
 #endif
 #endif
 
@@ -149,7 +149,7 @@ static int tcp_cksum(register const struct ip *ip,
 		sum += *sp++;
 
 	if (tlen & 1) {
-		sum += htons( (*(const char *)sp) << 8);
+		sum += htons( (*(const u_int8_t *)sp) << 8);
 	}
 
 	while (sum > 0xffff)
@@ -197,7 +197,7 @@ static int tcp6_cksum(const struct ip6_hdr *ip6, const struct tcphdr *tp,
 		sum += *sp++;
 
 	if (tlen & 1)
-		sum += htons((*(const char *)sp) << 8);
+		sum += htons((*(const u_int8_t *)sp) << 8);
 
 	while (sum > 0xffff)
 		sum = (sum & 0xffff) + (sum >> 16);
@@ -207,10 +207,9 @@ static int tcp6_cksum(const struct ip6_hdr *ip6, const struct tcphdr *tp,
 }
 #endif
 
-
 void
 tcp_print(register const u_char *bp, register u_int length,
-	  register const u_char *bp2)
+	  register const u_char *bp2, int fragmented)
 {
 	register const struct tcphdr *tp;
 	register const struct ip *ip;
@@ -232,9 +231,10 @@ tcp_print(register const u_char *bp, register u_int length,
 		ip6 = NULL;
 #endif /*INET6*/
 	ch = '\0';
-	TCHECK(*tp);
-	if (length < sizeof(*tp)) {
-		(void)printf("truncated-tcp %d", length);
+	if (!TTEST(tp->th_dport)) {
+		(void)printf("%s > %s: [|tcp]",
+			ipaddr_string(&ip->ip_src),
+			ipaddr_string(&ip->ip_dst));
 		return;
 	}
 
@@ -329,7 +329,7 @@ tcp_print(register const u_char *bp, register u_int length,
 		 * both directions).
 		 */
 #ifdef INET6
-		bzero(&tha, sizeof(tha));
+		memset(&tha, 0, sizeof(tha));
 		rev = 0;
 		if (ip6) {
 			if (sport > dport) {
@@ -390,7 +390,7 @@ tcp_print(register const u_char *bp, register u_int length,
 				  sizeof(th->addr)))
 				break;
 
-		if (!th->nxt || flags & TH_SYN) {
+		if (!th->nxt || (flags & TH_SYN)) {
 			/* didn't find it or new conversation */
 			if (th->nxt == NULL) {
 				th->nxt = (struct tcp_seq_hash *)
@@ -416,7 +416,7 @@ tcp_print(register const u_char *bp, register u_int length,
 		return;
 	}
 
-	if (ip->ip_v == 4 && vflag) {
+	if (ip->ip_v == 4 && vflag && !fragmented) {
 		int sum;
 		if (TTEST2(tp->th_sport, length)) {
 			sum = tcp_cksum(ip, tp, length);
@@ -427,7 +427,7 @@ tcp_print(register const u_char *bp, register u_int length,
 		}
 	}
 #ifdef INET6
-	if (ip->ip_v == 6 && ip6->ip6_plen && vflag) {
+	if (ip->ip_v == 6 && ip6->ip6_plen && vflag && !fragmented) {
 		int sum;
 		if (TTEST2(tp->th_sport, length)) {
 			sum = tcp6_cksum(ip6, tp, length);
@@ -440,9 +440,8 @@ tcp_print(register const u_char *bp, register u_int length,
 #endif
 
 	length -= hlen;
-	if (length > 0 || flags & (TH_SYN | TH_FIN | TH_RST))
-		(void)printf(" %lu:%lu(%d)", (long) seq, (long) (seq + length),
-		    length);
+	if (vflag > 1 || length > 0 || flags & (TH_SYN | TH_FIN | TH_RST))
+		(void)printf(" %u:%u(%d)", seq, seq + length, length);
 	if (flags & TH_ACK)
 		(void)printf(" ack %u", ack);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: print-isakmp.c,v 1.7 2000/12/29 02:38:23 itojun Exp $	*/
+/*	$NetBSD: print-isakmp.c,v 1.8 2001/01/28 10:05:06 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -36,7 +36,7 @@ static const char rcsid[] =
     "@(#) KAME Header: /cvsroot/kame/kame/kame/kame/tcpdump/print-isakmp.c,v 1.3 1999/12/01 01:41:25 itojun Exp";
 #else
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: print-isakmp.c,v 1.7 2000/12/29 02:38:23 itojun Exp $");
+__RCSID("$NetBSD: print-isakmp.c,v 1.8 2001/01/28 10:05:06 itojun Exp $");
 #endif
 #endif
 
@@ -706,12 +706,8 @@ isakmp_id_print(struct isakmp_gen *ext, u_char *ep, u_int32_t phase,
 		    {
 			int i;
 			printf(" len=%d ", len);
-			for (i = 0; i < len; i++) {
-				if (isprint(data[i]))
-					printf("%c", data[i]);
-				else
-					printf("\\%03o", data[i]);
-			}
+			for (i = 0; i < len; i++)
+				safeputchar(data[i]);
 			len = 0;
 			break;
 		    }

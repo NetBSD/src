@@ -1,4 +1,4 @@
-/*	$NetBSD: print-ospf6.c,v 1.4 1999/09/04 03:36:42 itojun Exp $	*/
+/*	$NetBSD: print-ospf6.c,v 1.5 2001/01/28 10:05:07 itojun Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995, 1996, 1997
@@ -25,7 +25,7 @@
 
 #ifndef lint
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: print-ospf6.c,v 1.4 1999/09/04 03:36:42 itojun Exp $");
+__RCSID("$NetBSD: print-ospf6.c,v 1.5 2001/01/28 10:05:07 itojun Exp $");
 #endif
 
 #include <sys/param.h>
@@ -66,6 +66,13 @@ static const struct bits ospf6_rla_flag_bits[] = {
 	{ RLA_FLAG_E,		"E" },
 	{ RLA_FLAG_V,		"V" },
 	{ RLA_FLAG_W,		"W" },
+	{ 0,			NULL }
+};
+
+static const struct bits ospf6_asla_flag_bits[] = {
+	{ ASLA_FLAG_EXTERNAL,	"E" },
+	{ ASLA_FLAG_FWDADDR,	"F" },
+	{ ASLA_FLAG_ROUTETAG,	"T" },
 	{ 0,			NULL }
 };
 
@@ -239,6 +246,8 @@ ospf6_print_lsaprefix(register const struct lsa_prefix *lsapp)
 		lsapp->lsa_p_len);
 	if (lsapp->lsa_p_opt)
 		printf("(opt=%x)", lsapp->lsa_p_opt);
+	if (lsapp->lsa_p_mbz)
+		printf("(mbz=%x)", ntohs(lsapp->lsa_p_mbz)); /* XXX */
 	return sizeof(*lsapp) - 4 + k * 4;
 
 trunc:
@@ -252,7 +261,7 @@ trunc:
 static int
 ospf6_print_lsa(register const struct lsa *lsap)
 {
-	register const u_char *ls_end;
+	register const u_char *ls_end, *ls_opt;
 	register const struct rlalink *rlp;
 #if 0
 	register const struct tos_metric *tosp;
@@ -268,6 +277,7 @@ ospf6_print_lsa(register const struct lsa *lsap)
 	register const u_int32_t *lp;
 #endif
 	register int j, k;
+	u_int32_t flags32;
 
 	if (ospf6_print_lshdr(&lsap->ls_hdr))
 		return (1);
@@ -340,12 +350,51 @@ ospf6_print_lsa(register const struct lsa *lsap)
 		lsapp = lsap->lsa_un.un_inter_ap.inter_ap_prefix;
 		while (lsapp + sizeof(lsapp) <= (struct lsa_prefix *)ls_end) {
 			k = ospf6_print_lsaprefix(lsapp);
-			if (k < 0)
+			if (k)
 				goto trunc;
 			lsapp = (struct lsa_prefix *)(((u_char *)lsapp) + k);
 		}
 		break;
+	case LS_SCOPE_AS | LS_TYPE_ASE:
+		TCHECK(lsap->lsa_un.un_asla.asla_metric);
+		flags32 = ntohl(lsap->lsa_un.un_asla.asla_metric);
+		ospf6_print_bits(ospf6_asla_flag_bits, flags32);
+		printf(" metric %u",
+		       ntohl(lsap->lsa_un.un_asla.asla_metric) &
+		       ASLA_MASK_METRIC);
+		lsapp = lsap->lsa_un.un_asla.asla_prefix;
+		k = ospf6_print_lsaprefix(lsapp);
+		if (k < 0)
+			goto trunc;
+		if ((ls_opt = (u_char *)(((u_char *)lsapp) + k)) < ls_end) {
+			struct in6_addr *fwdaddr6;
 
+			if ((flags32 & ASLA_FLAG_FWDADDR) != 0) {
+				fwdaddr6 = (struct in6_addr *)ls_opt;
+				TCHECK(*fwdaddr6);
+				printf(" forward %s",
+				       ip6addr_string(fwdaddr6));
+
+				ls_opt += sizeof(struct in6_addr);
+			}
+
+			if ((flags32 & ASLA_FLAG_ROUTETAG) != 0) {
+				TCHECK(*(u_int32_t *)ls_opt);
+				printf(" tag %s", 
+				       ipaddr_string((u_int32_t *)ls_opt));
+
+				ls_opt += sizeof(u_int32_t);
+			}
+
+			if (lsapp->lsa_p_mbz) {
+				TCHECK(*(u_int32_t *)ls_opt);
+				printf(" RefLSID: %s",
+				       ipaddr_string((u_int32_t *)ls_opt));
+
+				ls_opt += sizeof(u_int32_t);
+			}
+		}
+		break;
 #if 0
 	case LS_TYPE_SUM_ABR:
 		TCHECK(lsap->lsa_un.un_sla.sla_tosmetric);
@@ -359,36 +408,6 @@ ospf6_print_lsa(register const struct lsa *lsap)
 			    (ul & SLA_MASK_TOS) >> SLA_SHIFT_TOS,
 			    ul & SLA_MASK_METRIC);
 			++lp;
-		}
-		break;
-
-	case LS_TYPE_ASE:
-		TCHECK(lsap->lsa_un.un_nla.nla_mask);
-		printf(" mask %s",
-		    ipaddr_string(&lsap->lsa_un.un_asla.asla_mask));
-
-		TCHECK(lsap->lsa_un.un_sla.sla_tosmetric);
-		almp = lsap->lsa_un.un_asla.asla_metric;
-		while ((u_char *)almp < ls_end) {
-			register u_int32_t ul;
-
-			TCHECK(almp->asla_tosmetric);
-			ul = ntohl(almp->asla_tosmetric);
-			printf(" type %d tos %d metric %d",
-			    (ul & ASLA_FLAG_EXTERNAL) ? 2 : 1,
-			    (ul & ASLA_MASK_TOS) >> ASLA_SHIFT_TOS,
-			    (ul & ASLA_MASK_METRIC));
-			TCHECK(almp->asla_forward);
-			if (almp->asla_forward.s_addr) {
-				printf(" forward %s",
-				    ipaddr_string(&almp->asla_forward));
-			}
-			TCHECK(almp->asla_tag);
-			if (almp->asla_tag.s_addr) {
-				printf(" tag %s",
-				    ipaddr_string(&almp->asla_tag));
-			}
-			++almp;
 		}
 		break;
 
@@ -430,7 +449,7 @@ ospf6_print_lsa(register const struct lsa *lsap)
 		lsapp = llsap->llsa_prefix;
 		for (j = 0; j < ntohl(llsap->llsa_nprefix); j++) {
 			k = ospf6_print_lsaprefix(lsapp);
-			if (k < 0)
+			if (k)
 				goto trunc;
 			lsapp = (struct lsa_prefix *)(((u_char *)lsapp) + k);
 		}
@@ -453,7 +472,7 @@ ospf6_print_lsa(register const struct lsa *lsap)
 		     j < ntohs(lsap->lsa_un.un_intra_ap.intra_ap_nprefix);
 		     j++) {
 			k = ospf6_print_lsaprefix(lsapp);
-			if (k < 0)
+			if (k)
 				goto trunc;
 			lsapp = (struct lsa_prefix *)(((u_char *)lsapp) + k);
 		}
@@ -622,7 +641,7 @@ ospf6_print(register const u_char *bp, register u_int length)
 	/* value.  If it's not valid, say so and return */
 	TCHECK(op->ospf6_type);
 	cp = tok2str(type2str, "type%d", op->ospf6_type);
-	printf(" OSPFv%d-%s %d:", op->ospf6_version, cp, length);
+	printf("OSPFv%d-%s %d:", op->ospf6_version, cp, length);
 	if (*cp == 't')
 		return;
 

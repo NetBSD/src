@@ -1,4 +1,4 @@
-/*	$NetBSD: print-nfs.c,v 1.14 2001/01/05 03:21:53 lukem Exp $	*/
+/*	$NetBSD: print-nfs.c,v 1.15 2001/01/28 10:05:06 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -27,7 +27,7 @@
 static const char rcsid[] =
     "@(#) Header: print-nfs.c,v 1.65 97/08/17 13:24:22 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-nfs.c,v 1.14 2001/01/05 03:21:53 lukem Exp $");
+__RCSID("$NetBSD: print-nfs.c,v 1.15 2001/01/28 10:05:06 itojun Exp $");
 #endif
 #endif
 
@@ -65,6 +65,10 @@ struct rtentry;
 
 #include "nfs.h"
 #include "nfsfh.h"
+
+#ifdef __NetBSD__
+#define nfs_type	nfstype
+#endif
 
 static void nfs_printfh(const u_int32_t *, const u_int);
 static void xid_map_enter(const struct rpc_msg *, const u_char *);
@@ -106,6 +110,55 @@ u_int32_t nfsv3_procid[NFS_NPROCS] = {
 	NFSPROC_NOOP,
 	NFSPROC_NOOP,
 	NFSPROC_NOOP
+};
+
+/*
+ * NFS V2 and V3 status values.
+ *
+ * Some of these come from the RFCs for NFS V2 and V3, with the message
+ * strings taken from the FreeBSD C library "errlst.c".
+ *
+ * Others are errors that are not in the RFC but that I suspect some
+ * NFS servers could return; the values are FreeBSD errno values, as
+ * the first NFS server was the SunOS 2.0 one, and until 5.0 SunOS
+ * was primarily BSD-derived.
+ */
+static struct tok status2str[] = {
+	{ 1,     "Operation not permitted" },	/* EPERM */
+	{ 2,     "No such file or directory" },	/* ENOENT */
+	{ 5,     "Input/output error" },	/* EIO */
+	{ 6,     "Device not configured" },	/* ENXIO */
+	{ 11,    "Resource deadlock avoided" },	/* EDEADLK */
+	{ 12,    "Cannot allocate memory" },	/* ENOMEM */
+	{ 13,    "Permission denied" },		/* EACCES */
+	{ 17,    "File exists" },		/* EEXIST */
+	{ 18,    "Cross-device link" },		/* EXDEV */
+	{ 19,    "Operation not supported by device" }, /* ENODEV */
+	{ 20,    "Not a directory" },		/* ENOTDIR */
+	{ 21,    "Is a directory" },		/* EISDIR */
+	{ 22,    "Invalid argument" },		/* EINVAL */
+	{ 26,    "Text file busy" },		/* ETXTBSY */
+	{ 27,    "File too large" },		/* EFBIG */
+	{ 28,    "No space left on device" },	/* ENOSPC */
+	{ 30,    "Read-only file system" },	/* EROFS */
+	{ 31,    "Too many links" },		/* EMLINK */
+	{ 45,    "Operation not supported" },	/* EOPNOTSUPP */
+	{ 62,    "Too many levels of symbolic links" }, /* ELOOP */
+	{ 63,    "File name too long" },	/* ENAMETOOLONG */
+	{ 66,    "Directory not empty" },	/* ENOTEMPTY */
+	{ 69,    "Disc quota exceeded" },	/* EDQUOT */
+	{ 70,    "Stale NFS file handle" },	/* ESTALE */
+	{ 71,    "Too many levels of remote in path" }, /* EREMOTE */
+	{ 99,    "Write cache flushed to disk" }, /* NFSERR_WFLUSH (not used) */
+	{ 10001, "Illegal NFS file handle" },	/* NFS3ERR_BADHANDLE */
+	{ 10002, "Update synchronization mismatch" }, /* NFS3ERR_NOT_SYNC */
+	{ 10003, "READDIR/READDIRPLUS cookie is stale" }, /* NFS3ERR_BAD_COOKIE */
+	{ 10004, "Operation not supported" },	/* NFS3ERR_NOTSUPP */
+	{ 10005, "Buffer or request is too small" }, /* NFS3ERR_TOOSMALL */
+	{ 10006, "Unspecified error on server" }, /* NFS3ERR_SERVERFAULT */
+	{ 10007, "Object of that type not supported" }, /* NFS3ERR_BADTYPE */
+	{ 10008, "Request couldn't be completed in time" }, /* NFS3ERR_JUKEBOX */
+	{ 0,     NULL }
 };
 
 static struct tok nfsv3_writemodes[] = {
@@ -413,7 +466,7 @@ nfsreq_print(register const u_char *bp, u_int length,
 {
 	register const struct rpc_msg *rp;
 	register const u_int32_t *dp;
-	nfstype type;
+	nfs_type type;
 	int v3;
 	u_int32_t proc;
 	struct nfsv3_sattr sa3;
@@ -567,7 +620,7 @@ nfsreq_print(register const u_char *bp, u_int length,
 		if ((dp = parsereq(rp, length)) != 0 &&
 		    (dp = parsefhn(dp, v3)) != 0) {
 			TCHECK(*dp);
-			type = (nfstype)ntohl(*dp++);
+			type = (nfs_type)ntohl(*dp++);
 			if ((dp = parse_sattr3(dp, &sa3)) == 0)
 				break;
 			printf(" %s", tok2str(type2str, "unk-ft %d", type));
@@ -979,7 +1032,8 @@ parsestatus(const u_int32_t *dp, int *er)
 		*er = errnum;
 	if (errnum != 0) {
 		if (!qflag)
-			printf(" ERROR: %s", pcap_strerror(errnum));
+			printf(" ERROR: %s",
+			    tok2str(status2str, "unk %d", errnum));
 		nfserr = 1;
 		return (NULL);
 	}
@@ -1118,7 +1172,7 @@ parsestatfs(const u_int32_t *dp, int v3)
 			return (0);
 	}
 
-	TCHECK2(dp[0], (v3 ? NFSX_V3STATFS : NFSX_V2STATFS));
+	TCHECK2(dp, (v3 ? NFSX_V3STATFS : NFSX_V2STATFS));
 
 	sfsp = (const struct nfs_statfs *)dp;
 
@@ -1196,7 +1250,7 @@ parse_pre_op_attr(const u_int32_t *dp, int verbose)
 	if (!ntohl(dp[0]))
 		return (dp + 1);
 	dp++;
-	TCHECK2(dp[0], 24);
+	TCHECK2(dp, 24);
 	if (verbose > 1) {
 		return parse_wcc_attr(dp);
 	} else {

@@ -1,4 +1,4 @@
-/*	$NetBSD: print-esp.c,v 1.3 1999/09/04 03:36:41 itojun Exp $	*/
+/*	$NetBSD: print-esp.c,v 1.4 2001/01/28 10:05:06 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1993, 1994
@@ -27,7 +27,7 @@ static const char rcsid[] =
     "@(#) /master/usr.sbin/tcpdump/tcpdump/print-icmp.c,v 2.1 1995/02/03 18:14:42 polk Exp (LBL)";
 #else
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: print-esp.c,v 1.3 1999/09/04 03:36:41 itojun Exp $");
+__RCSID("$NetBSD: print-esp.c,v 1.4 2001/01/28 10:05:06 itojun Exp $");
 #endif
 #endif
 
@@ -81,16 +81,15 @@ esp_print(register const u_char *bp, register const u_char *bp2, int *nhdr)
 	esp = (struct esp *)bp;
 	spi = (u_int32_t)ntohl(esp->esp_spi);
 
-	/* 'ep' points to the end of avaible data. */
+	/* 'ep' points to the end of available data. */
 	ep = snapend;
 
 	if ((u_char *)(esp + 1) >= ep - sizeof(struct esp)) {
 		fputs("[|ESP]", stdout);
 		goto fail;
 	}
-	printf("ESP(spi=%u", spi);
-	if (Rflag)
-		printf(",seq=0x%x", (u_int32_t)ntohl(*(u_int32_t *)(esp + 1)));
+	printf("ESP(spi=0x%08x", spi);
+	printf(",seq=0x%x", (u_int32_t)ntohl(*(u_int32_t *)(esp + 1)));
 	printf(")");
 
 fail:
