@@ -1,4 +1,4 @@
-/*	$NetBSD: gethnamaddr.c,v 1.14 1999/01/20 23:31:02 lukem Exp $	*/
+/*	$NetBSD: gethnamaddr.c,v 1.14.2.1 2000/01/08 17:50:49 he Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1988, 1993
@@ -61,7 +61,7 @@
 static char sccsid[] = "@(#)gethostnamadr.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: gethnamaddr.c,v 8.21 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: gethnamaddr.c,v 1.14 1999/01/20 23:31:02 lukem Exp $");
+__RCSID("$NetBSD: gethnamaddr.c,v 1.14.2.1 2000/01/08 17:50:49 he Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -344,10 +344,11 @@ getanswer(answer, anslen, qname, qtype)
 			continue;
 		}
 		if (type != qtype) {
-			syslog(LOG_NOTICE|LOG_AUTH,
+			if (type != T_KEY && type != T_SIG)
+				syslog(LOG_NOTICE|LOG_AUTH,
 	       "gethostby*.getanswer: asked for \"%s %s %s\", got type \"%s\"",
-			       qname, p_class(C_IN), p_type(qtype),
-			       p_type(type));
+				       qname, p_class(C_IN), p_type(qtype),
+				       p_type(type));
 			cp += n;
 			continue;		/* XXX - had_error++ ? */
 		}
