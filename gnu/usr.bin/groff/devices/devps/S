@@ -75,7 +75,7 @@ tf	"
 rB	"
 pp	658,674	3	0136	perpendicular
 _	500,0,252	3	0137	underscore
-rn	500,917	3	0140	radicalex
+radicalex	500,917	3	0140	radicalex
 *a	631,500,18	3	0141	alpha
 *b	549,741,223	3	0142	beta
 *x	549,499,231	3	0143	chi
@@ -146,7 +146,7 @@ di	"
 ~=	"
 ---	1000,95,17	3	0274	ellipsis
 arrowvertex	603,1010,120	3	0275	arrowvertex
----	1000,276	3	0276	arrowhorizex
+an	1000,276	3	0276	arrowhorizex
 CR	658,629,16	3	0277	carriagereturn
 Ah	823,658,18	3	0300	aleph
 Im	686,740,53	3	0301	Ifraktur
@@ -159,7 +159,7 @@ ca	768,509	3	0307	intersection
 cu	768,492,17	3	0310	union
 sp	713,470	3	0311	propersuperset
 ip	713,470,125	3	0312	reflexsuperset
----	713,540,70	3	0313	notsubset
+nb	713,540,70	3	0313	notsubset
 sb	713,470	3	0314	propersubset
 ib	713,470,125	3	0315	reflexsubset
 mo	713,468	3	0316	element

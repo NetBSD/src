@@ -3,10 +3,10 @@ is given in the file VERSION.
 
 Included in this release are implementations of troff, pic, eqn, tbl,
 refer, the -man macros and the -ms macros, and drivers for PostScript,
-TeX dvi format, and typewriter-like devices.  Also included is a
-modified version of the Berkeley -me macros, an enhanced version of
-the X11 xditview previewer, and an implementation of the -mm macros
-contributed by Joergen Haegg (jh@efd.lth.se).
+TeX dvi format, HP LaserJet 4 printers, and typewriter-like devices.
+Also included is a modified version of the Berkeley -me macros, an
+enhanced version of the X11 xditview previewer, and an implementation
+of the -mm macros contributed by Joergen Haegg (jh@efd.lth.se).
 
 See the file INSTALL for installation instructions.  You will require
 a C++ compiler.
@@ -30,9 +30,7 @@ this is to make sure that I have all the information I need to fix the
 bug.  At the very least, read the BUG-REPORT form and make sure that
 you supply all the information that it asks for.  Even if you are not
 sure that something is a bug, report it using BUG-REPORT: this will
-enable me to determine whether it really is a bug or not.  As well as
-bug reports, I welcome suggestions for improvements to groff (no
-matter how small).
+enable me to determine whether it really is a bug or not.
 
 James Clark
 jjc@jclark.com

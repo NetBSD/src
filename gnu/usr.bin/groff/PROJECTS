@@ -1,7 +1,5 @@
 Here are some things that would be useful additions to groff:
 
-  a driver for the HP Laserjet 2 and 3
-
   grap
 
   -mv macros (for typesetting viewgraphs and slides)
@@ -11,7 +9,7 @@ Here are some things that would be useful additions to groff:
   a page-makeup postprocessor and associated macro package
   (like pm and -mpm)
 
-  a complete, self-contained manual
+  a complete, self-contained manual (trent@cs.pdx.edu is working on this)
 
 If you want to work on one of these, I suggest you contact me first.
 

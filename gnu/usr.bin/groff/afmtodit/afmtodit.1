@@ -1,11 +1,28 @@
-.\"	$Id: afmtodit.1,v 1.2 1993/08/02 17:41:50 mycroft Exp $	-*- nroff -*-
+.ig \"-*- nroff -*-
+Copyright (C) 1989-1995 Free Software Foundation, Inc.
+
+Permission is granted to make and distribute verbatim copies of
+this manual provided the copyright notice and this permission notice
+are preserved on all copies.
+
+Permission is granted to copy and distribute modified versions of this
+manual under the conditions for verbatim copying, provided that the
+entire resulting derived work is distributed under the terms of a
+permission notice identical to this one.
+
+Permission is granted to copy and distribute translations of this
+manual into another language, under the above conditions for modified
+versions, except that this permission notice may be included in
+translations approved by the Free Software Foundation instead of in
+the original English.
+..
 .\" Like TP, but if specified indent is more than half
 .\" the current line-length - indent, use the default indent.
 .de Tp
 .ie \\n(.$=0:((0\\$1)*2u>(\\n(.lu-\\n(.iu)) .TP
 .el .TP "\\$1"
 ..
-.TH AFMTODIT 1 "23 February 1993" "Groff Version 1.08"
+.TH AFMTODIT 1 "August 10, 1996" "Groff Version 1.10"
 .SH NAME
 afmtodit \- create font files for use with groff \-Tps
 .SH SYNOPSIS
@@ -183,7 +200,7 @@ for italic fonts.
 .SH FILES
 .Tp \w'\fB/usr/share/groff_font/devps/download'u+2n
 .B /usr/share/groff_font/devps/DESC
-Device desciption file.
+Device description file.
 .TP
 .BI /usr/share/groff_font/devps/ F
 Font description file for font
