@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.2 2003/07/19 20:20:41 tshiozak Exp $
+# $NetBSD: Makefile.inc,v 1.3 2003/10/19 14:08:50 lukem Exp $
 
 .PATH: ${.CURDIR}/JIS
 
@@ -25,14 +25,14 @@ MAPS_JIS=		JISX0201-KANA%UCS.mps \
 			UCS%JISX0212UDC.mps
 
 mapper.dir.JIS: ${.CURDIR}/JIS/mapper.dir.JIS.src
-	echo "# JIS" > $@
-	cat $> >> $@
-	echo >> $@
+	${_MKMSGCREATE}
+	${_MKCMD}\
+	(echo "# JIS" ; cat ${.ALLSRC} ; echo ) > ${.TARGET}
 
 charset.pivot.JIS: ${.CURDIR}/JIS/charset.pivot.JIS.src
-	echo "# JIS" > $@
-	cat $> >> $@
-	echo >> $@
+	${_MKMSGCREATE}
+	${_MKCMD}\
+	(echo "# JIS" ; cat ${.ALLSRC} ; echo ) > ${.TARGET}
 
 FILES+= ${MAPS_JIS}
 CLEANFILES+= ${MAPS_JIS}

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.1 2003/06/27 08:40:44 tshiozak Exp $
+# $NetBSD: Makefile.inc,v 1.2 2003/10/19 14:08:50 lukem Exp $
 
 .PATH: ${.CURDIR}/ISO646
 
@@ -8,22 +8,31 @@ CLEANFILES+=		mapper.dir.ISO646 charset.pivot.ISO646
 PART_ISO646!=		sed '/^\#/d;/^$$/d;' ${.CURDIR}/ISO646/ISO646.part
 
 mapper.dir.ISO646: ${.CURDIR}/ISO646/ISO646.part
-	echo "# ISO646" > $@
-.for i in ${PART_ISO646}
-	printf '%-32s%-16s%s\n' 'ISO646-$i/UCS' 'mapper_646' \
-		'ISO646/ISO646-${i:S/:/@/}%UCS.646' >> $@
-	printf '%-32s%-16s%s\n' 'UCS/ISO646-$i' 'mapper_646' \
-		'!ISO646/ISO646-${i:S/:/@/}%UCS.646' >> $@
-.endfor
-	echo >> $@
+	${_MKMSGCREATE}
+	${_MKCMD}\
+	(\
+	    echo "# ISO646";\
+	    for i in ${PART_ISO646}; do \
+		j=`echo $$i | tr : @`;\
+		printf '%-32s%-16s%s\n' ISO646-$$i'/UCS' mapper_646 \
+		    ISO646/ISO646-$$j'%UCS.646';\
+		printf '%-32s%-16s%s\n' UCS/ISO646-$$i mapper_646 \
+		    '!ISO646/ISO646-'$$j'%UCS.646';\
+	    done;\
+	    echo;\
+	) > ${.TARGET}
 
 charset.pivot.ISO646: ${.CURDIR}/ISO646/ISO646.part
-	echo "# ISO646" > $@
-.for i in ${PART_ISO646}
-	printf "%-32s%-32s%d\n" 'ISO646-$i' 'UCS' '1' >> $@
-	printf "%-32s%-32s%d\n" 'UCS' 'ISO646-$i' '1' >> $@
-.endfor
-	echo >> $@
+	${_MKMSGCREATE}
+	${_MKCMD}\
+	(\
+	    echo "# ISO646";\
+	    for i in ${PART_ISO646}; do \
+		printf "%-32s%-32s%d\n" ISO646-$$i UCS 1;\
+		printf "%-32s%-32s%d\n" UCS ISO646-$$i 1;\
+	    done;\
+	    echo;\
+	) > ${.TARGET}
 
 .for i in ${PART_ISO646}
 FILES+=	ISO646-${i:S/:/@/}%UCS.646

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.1 2003/06/27 08:40:56 tshiozak Exp $
+# $NetBSD: Makefile.inc,v 1.2 2003/10/19 14:08:52 lukem Exp $
 
 .PATH: ${.CURDIR}/ISO-8859
 
@@ -7,6 +7,8 @@ CODE:=		ISO-8859
 
 .for i in ${ISO-8859_PART}
 ISO-8859-$i.src: ISO-8859.src
+	${_MKMSGCREATE}
+	${_MKCMD}\
 	sed 's/ISO-8859-x/ISO-8859-$i/' $> > $@
 CLEANFILES+= ISO-8859-$i.src
 .endfor
