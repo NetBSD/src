@@ -1,8 +1,8 @@
-/*	$NetBSD: ftpio.c,v 1.24 2000/09/01 04:42:57 hubertf Exp $	*/
+/*	$NetBSD: ftpio.c,v 1.25 2000/10/01 20:34:30 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ftpio.c,v 1.24 2000/09/01 04:42:57 hubertf Exp $");
+__RCSID("$NetBSD: ftpio.c,v 1.25 2000/10/01 20:34:30 hubertf Exp $");
 #endif
 
 /*
@@ -356,7 +356,7 @@ ftp_stop(void)
 	/* (Only) the last one closes the link */
 	if (tmp1 != NULL && tmp2 != NULL) {
 		if (needclose)
-			ftp_cmd("close\n", "\n(221 Goodbye.|Not connected.)\n");
+			ftp_cmd("close\n", "\n(221 .*|Not connected.)\n");
 		
 		(void) close(ftpio.command);
 		(void) close(ftpio.answer);
