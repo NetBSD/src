@@ -1,6 +1,7 @@
-/* $NetBSD: intr.h,v 1.5 1997/04/06 08:47:29 cgd Exp $ */
+/* $NetBSD: intr.h,v 1.6 1997/06/05 17:08:06 cgd Exp $ */
 
 /*
+ * Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.
  * Copyright (c) 1996 Carnegie-Mellon University.
  * All rights reserved.
  *
@@ -45,18 +46,23 @@
 #define	IST_EDGE	2	/* edge-triggered */
 #define	IST_LEVEL	3	/* level-triggered */
 
+/* IPL-lowering/restoring macros */
 #define splx(s)								\
-	    (s == ALPHA_PSL_IPL_0 ? spl0() : alpha_pal_swpipl(s))
+    (s == ALPHA_PSL_IPL_0 ? spl0() : alpha_pal_swpipl(s))
 #define splsoft()               alpha_pal_swpipl(ALPHA_PSL_IPL_SOFT)
 #define splsoftclock()          splsoft()
 #define splsoftnet()            splsoft()
-#define splnet()                alpha_pal_swpipl(ALPHA_PSL_IPL_IO)
-#define splbio()                alpha_pal_swpipl(ALPHA_PSL_IPL_IO)
-#define splimp()                alpha_pal_swpipl(ALPHA_PSL_IPL_IO)
-#define spltty()                alpha_pal_swpipl(ALPHA_PSL_IPL_IO)
-#define splclock()              alpha_pal_swpipl(ALPHA_PSL_IPL_CLOCK)
-#define splstatclock()          alpha_pal_swpipl(ALPHA_PSL_IPL_CLOCK)
-#define splhigh()               alpha_pal_swpipl(ALPHA_PSL_IPL_HIGH)
+
+/* IPL-raising macros */
+#define	_splraise(s)							\
+    (alpha_pal_swpipl(max(alpha_pal_rdps() & ALPHA_PSL_IPL_MASK, (s))))
+#define splnet()                _splraise(ALPHA_PSL_IPL_IO)
+#define splbio()                _splraise(ALPHA_PSL_IPL_IO)
+#define splimp()                _splraise(ALPHA_PSL_IPL_IO)
+#define spltty()                _splraise(ALPHA_PSL_IPL_IO)
+#define splclock()              _splraise(ALPHA_PSL_IPL_CLOCK)
+#define splstatclock()          _splraise(ALPHA_PSL_IPL_CLOCK)
+#define splhigh()               _splraise(ALPHA_PSL_IPL_HIGH)
 
 /*
  * simulated software interrupt register
