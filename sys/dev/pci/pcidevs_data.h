@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs_data.h,v 1.448 2002/06/27 09:52:54 pooka Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.449 2002/07/03 16:51:36 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -5680,10 +5680,28 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "CIOB30",
 	},
 	{
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CIOBX2,
+	    0,
+	    "ServerWorks",
+	    "CIOB-X2",
+	},
+	{
 	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CMIC_HE,
 	    0,
 	    "ServerWorks",
 	    "CMIC_HE Host",
+	},
+	{
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CMIC_LE,
+	    0,
+	    "ServerWorks",
+	    "CMIC_LE Host",
+	},
+	{
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CMIC_SL,
+	    0,
+	    "ServerWorks",
+	    "CMIC_SL Host",
 	},
 	{
 	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_OSB4_IDE,
