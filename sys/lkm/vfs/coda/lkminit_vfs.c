@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_vfs.c,v 1.3.8.1 2002/05/16 12:38:39 gehenna Exp $ */
+/* $NetBSD: lkminit_vfs.c,v 1.3.8.2 2002/05/19 14:15:09 gehenna Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_vfs.c,v 1.3.8.1 2002/05/16 12:38:39 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_vfs.c,v 1.3.8.2 2002/05/19 14:15:09 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -73,11 +73,11 @@ struct lkm_vfs coda_lkm_vfs = {
 extern const struct cdevsw vcoda_cdevsw;
 
 /*
-MOD_DEV("codadev", NULL, NULL, -1, &vcoda_cdevsw, 60);
+MOD_DEV("vcoda", NULL, NULL, -1, &vcoda_cdevsw, -1);
 */
 struct lkm_dev coda_lkm_dev = {
-	LM_DEV, LKM_VERSION, "codadev", -1, NULL,
-	NULL, -1, &vcoda_cdevsw, 60,
+	LM_DEV, LKM_VERSION, "vcoda", -1, NULL,
+	NULL, -1, &vcoda_cdevsw, -1,
 };
 
 
