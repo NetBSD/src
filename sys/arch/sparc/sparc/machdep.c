@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.172 2000/12/22 22:58:55 jdolecek Exp $ */
+/*	$NetBSD: machdep.c,v 1.173 2001/01/20 13:44:30 pk Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -621,6 +621,7 @@ cpu_reboot(howto, user_boot_string)
 	boothowto = howto;
 	if ((howto & RB_NOSYNC) == 0 && waittime < 0) {
 		extern struct proc proc0;
+		extern int sparc_clock_time_is_ok;
 
 		/* XXX protect against curproc->p_stats.foo refs in sync() */
 		if (curproc == NULL)
@@ -631,8 +632,12 @@ cpu_reboot(howto, user_boot_string)
 		/*
 		 * If we've been adjusting the clock, the todr
 		 * will be out of synch; adjust it now.
+		 * Do this only if the TOD clock has already been read out
+		 * successfully by inittodr() or set by an explicit call
+		 * to resettodr() (e.g. from settimeofday()).
 		 */
-		resettodr();
+		if (sparc_clock_time_is_ok)
+			resettodr();
 	}
 
 	/* Disable interrupts. */

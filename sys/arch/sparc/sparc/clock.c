@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.77 2000/11/12 21:07:21 pk Exp $ */
+/*	$NetBSD: clock.c,v 1.78 2001/01/20 13:44:29 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -1051,6 +1051,13 @@ statintr(cap)
 
 
 /*
+ * `sparc_clock_time_is_ok' is used in cpu_reboot() to determine
+ * whether it is appropriate to call resettodr() to consolidate
+ * pending time adjustments.
+ */
+int sparc_clock_time_is_ok;
+
+/*
  * Set up the system's time, given a `reasonable' time value.
  */
 void
@@ -1085,6 +1092,8 @@ inittodr(base)
 	} else {
 		int deltat = time.tv_sec - base;
 
+		sparc_clock_time_is_ok = 1;
+
 		if (deltat < 0)
 			deltat = -deltat;
 		if (waszero || deltat < 2 * SECDAY)
@@ -1108,6 +1117,7 @@ resettodr()
 	if (time.tv_sec == 0)
 		return;
 
+	sparc_clock_time_is_ok = 1;
 	if (todr_settime(todr_handle, (struct timeval *)&time) != 0)
 		printf("Cannot set time in time-of-day clock\n");
 }
