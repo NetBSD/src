@@ -1,4 +1,4 @@
-/*	$NetBSD: utime.c,v 1.5 1995/02/25 15:39:58 cgd Exp $	*/
+/*	$NetBSD: utime.c,v 1.6 1997/07/13 19:46:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)utime.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: utime.c,v 1.5 1995/02/25 15:39:58 cgd Exp $";
+__RCSID("$NetBSD: utime.c,v 1.6 1997/07/13 19:46:25 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 

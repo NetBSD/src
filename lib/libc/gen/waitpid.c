@@ -1,4 +1,4 @@
-/*	$NetBSD: waitpid.c,v 1.4 1995/02/25 15:40:17 cgd Exp $	*/
+/*	$NetBSD: waitpid.c,v 1.5 1997/07/13 19:46:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)waitpid.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: waitpid.c,v 1.4 1995/02/25 15:40:17 cgd Exp $";
+__RCSID("$NetBSD: waitpid.c,v 1.5 1997/07/13 19:46:29 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
