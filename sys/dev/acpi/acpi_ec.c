@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.14 2003/11/01 08:27:37 mycroft Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.15 2003/11/01 08:34:54 mycroft Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -172,7 +172,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.14 2003/11/01 08:27:37 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.15 2003/11/01 08:34:54 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -207,7 +207,6 @@ struct acpi_ec_softc {
 	int		sc_flags;	/* see below */
 
 	uint32_t	sc_csrvalue;	/* saved control register */
-	UINT32		sc_lockhandle;
 };
 
 #define	EC_F_LOCKED	0x01		/* EC is locked */
