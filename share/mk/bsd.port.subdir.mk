@@ -1,6 +1,6 @@
 #	from: @(#)bsd.subdir.mk	5.9 (Berkeley) 2/1/91
 #	Id: bsd.port.subdir.mk,v 1.19 1997/03/09 23:10:56 wosch Exp 
-#	$NetBSD: bsd.port.subdir.mk,v 1.2 1997/08/20 10:51:40 agc Exp $
+#	$NetBSD: bsd.port.subdir.mk,v 1.3 1997/09/25 19:09:35 thorpej Exp $
 #
 # The include file <bsd.port.subdir.mk> contains the default targets
 # for building ports subdirectories. 
@@ -109,7 +109,7 @@ readme:
 .endif
 
 .if (${OPSYS} == "NetBSD")
-PORTSDIR ?= /usr/pkg/src
+PORTSDIR ?= /usr/pkgsrc
 .else
 PORTSDIR ?= /usr/ports
 .endif
