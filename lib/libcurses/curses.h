@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.39 2000/04/20 13:12:14 blymn Exp $	*/
+/*	$NetBSD: curses.h,v 1.40 2000/04/22 13:29:01 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -95,11 +95,11 @@ extern char	*AC, *AE, *AL, *AS, *BC, *BL, *BT, *CD, *CE, *CL, *CM,
 		*CR, *CS, *DC, *DL, *DM, *DO, *Ea, *ED, *EI, *K0, *K1,
 		*K2, *K3, *K4, *K5, *K6, *K7, *K8, *K9, *HO, *IC, *IM,
 		*IP, *KD, *KE, *KH, *KL, *KR, *KS, *KU, *LL, *MA, *MB,
-		*MD, *ME, *MH, *MK, *MP, *MR, *ND, *NL, *OC, *OP, *RC,
-		*SC, *SE, *SF, *SO, *SP, *SR, *TA, *TE, *TI, *UC, *UE,
-		*UP, *US, *VB, *VS, *VE, *ab, *af, *al, *dl, *iC, *iP,
-		*sB, *sF, *sf, *sr, *AL_PARM, *DL_PARM, *UP_PARM, *DOWN_PARM,
-		*LEFT_PARM, *RIGHT_PARM;
+		*MD, *ME, *MH, *MK, *MM, *MO, *MP, *MR, *ND, *NL, *OC,
+		*OP, *RC, *SC, *SE, *SF, *SO, *SP, *SR, *TA, *TE, *TI,
+		*UC, *UE, *UP, *US, *VB, *VI, *VS, *VE, *ab, *af, *al, *dl,
+		*iC, *iP, *sB, *sF, *sf, *sr, *AL_PARM, *DL_PARM, *UP_PARM,
+		*DOWN_PARM, *LEFT_PARM, *RIGHT_PARM;
 
 /* END BACKWARD COMPATIBILITY ONLY. */
 
@@ -485,13 +485,14 @@ int mvwinsch(WINDOW *win, int y, int x, chtype ch);
 __BEGIN_DECLS
 int	 beep(void);
 int	 box(WINDOW *win, chtype vert, chtype horiz);
+bool	 can_change_colors(void);
 int	 cbreak(void);
 int	 clearok(WINDOW *win, bool flag);
-bool	 can_change_colors(void);
 int	 color_content(short colour, short *redp, short *greenp, short *bluep);
 int      copywin(const WINDOW *srcwin, WINDOW *dstwin, int sminrow,
 		 int smincol, int dminrow, int dmincol, int dmaxrow, 
 		 int dmaxcol, int overlay);
+int      curs_set(int visibility);
 int	 def_prog_mode(void);
 int	 def_shell_mode(void);
 int	 delwin(WINDOW *win);
@@ -522,6 +523,7 @@ bool	 isendwin(void);
 void	 keypad(WINDOW *win, bool bf);
 int	 leaveok(WINDOW *win, bool bf);
 char	*longname(void);
+int      meta(WINDOW *win, bool bf);
 int	 mvcur(int ly, int lx, int y, int x);
 int	 mvprintw(int y, int x, const char *fmt, ...);
 int	 mvscanw(int y, int x, const char *fmt, ...);

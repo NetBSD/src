@@ -1,4 +1,4 @@
-/*	$NetBSD: setterm.c,v 1.18 2000/04/19 13:52:39 blymn Exp $	*/
+/*	$NetBSD: setterm.c,v 1.19 2000/04/22 13:29:02 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)setterm.c	8.8 (Berkeley) 10/25/94";
 #else
-__RCSID("$NetBSD: setterm.c,v 1.18 2000/04/19 13:52:39 blymn Exp $");
+__RCSID("$NetBSD: setterm.c,v 1.19 2000/04/22 13:29:02 blymn Exp $");
 #endif
 #endif /* not lint */
 
@@ -81,18 +81,18 @@ static char	*_PC,
 			&K7, &K8, &K9, &HO, &IC, &IM, &IP, &KD, &KE,
 		/*	 kh   kl   kr   ks   ku   ll   ma   mb   md  */
 			&KH, &KL, &KR, &KS, &KU, &LL, &MA, &MB, &MD,
-		/*	 me   mh   mk   mp   mr   nd   nl   oc   op  */
-			&ME, &MH, &MK, &MP, &MR, &ND, &NL, &OC, &OP,
-		/*	  pc   rc   sc   se   SF   so   sp   SR   ta */
-			&_PC, &RC, &SC, &SE, &SF, &SO, &SP, &SR, &TA,
-		/*	 te   ti   uc   ue   up   us   vb   vs   ve  */
-			&TE, &TI, &UC, &UE, &UP, &US, &VB, &VS, &VE,
-		/*	 AB   AF   al   dl   Ic   Ip   Sb   Sf   sf  */
-			&ab, &af, &al, &dl, &iC, &iP, &sB, &sF, &sf,
-		/*	 sr   AL        DL        UP        DO  */
-			&sr, &AL_PARM, &DL_PARM, &UP_PARM, &DOWN_PARM,
-		/*	 LE          RI */
-			&LEFT_PARM, &RIGHT_PARM,
+		/*	 me   mh   mk   mm   mo   mp   mr   nd   nl  */
+			&ME, &MH, &MK, &MM, &MO, &MP, &MR, &ND, &NL,
+		/*	 oc   op    pc   rc   sc   se   SF   so   sp */
+			&OC, &OP, &_PC, &RC, &SC, &SE, &SF, &SO, &SP,
+		/*	 SR   ta   te   ti   uc   ue   up   us   vb  */
+			&SR, &TA, &TE, &TI, &UC, &UE, &UP, &US, &VB,
+		/*	 vi   vs   ve   AB   AF   al   dl   Ic   Ip  */
+			&VI, &VS, &VE, &ab, &af, &al, &dl, &iC, &iP,
+		/*	 Sb   Sf   sf   sr   AL        DL        UP  */
+			&sB, &sF, &sf, &sr, &AL_PARM, &DL_PARM, &UP_PARM, 
+		/*	   DO        LE          RI                  */
+			&DOWN_PARM, &LEFT_PARM, &RIGHT_PARM,
 		};
 
 static char	*aoftspace;		/* Address of _tspace for relocation */
@@ -202,7 +202,7 @@ setterm(char *type)
 static int
 zap(struct tinfo *tinfo)
 {
-	const char *namp;
+	const char *nampstr, *namp;
         char ***sp;
 	int  **vp;
 	char **fp;
@@ -239,7 +239,8 @@ zap(struct tinfo *tinfo)
 	} while (*namp);
 
 	  /* calculate the size of tspace.... */
-	namp = "acaeALasbcblbtcdceclcmcrcsdcDLdmdoeAedeik0k1k2k3k4k5k6k7k8k9hoicimipkdkekhklkrkskullmambmdmemhmkmpmrndnlocoppcprscseSFsospSRtatetiucueupusvbvsveABAFaldlIcIpSbSfsfsrALDLUPDOLERI";
+	nampstr = "acaeALasbcblbtcdceclcmcrcsdcDLdmdoeAedeik0k1k2k3k4k5k6k7k8k9hoicimipkdkekhklkrkskullmambmdmemhmkmmmompmrndnlocoppcprscseSFsospSRtatetiucueupusvbvivsveABAFaldlIcIpSbSfsfsrALDLUPDOLERI";
+	namp = nampstr;
 	tspace_size = 0;
 	do {
 		*tmp = *namp;
@@ -257,7 +258,7 @@ zap(struct tinfo *tinfo)
 #endif
 	aoftspace = tspace;
 	
-	namp = "acaeALasbcblbtcdceclcmcrcsdcDLdmdoeAedeik0k1k2k3k4k5k6k7k8k9hoicimipkdkekhklkrkskullmambmdmemhmkmpmrndnlocoppcprscseSFsospSRtatetiucueupusvbvsveABAFaldlIcIpSbSfsfsrALDLUPDOLERI";
+	namp = nampstr;
 	sp = sstrs;
 	do {
 		*tmp = *namp;
