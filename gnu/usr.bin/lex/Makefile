@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.4 (Berkeley) 6/24/90
-#	$Id: Makefile,v 1.4 1993/10/07 07:25:46 cgd Exp $
+#	Makefile,v 1.3 1993/08/01 05:41:56 mycroft Exp
 #
 # By default, flex will be configured to generate 8-bit scanners only if the
 # -8 flag is given.  If you want it to always generate 8-bit scanners, add
@@ -14,26 +14,33 @@
 
 PROG=	lex
 CFLAGS+=-I. -I${.CURDIR}
-LFLAGS=	-is8
+LFLAGS=	-is8 -p
 SRCS=	ccl.c dfa.c ecs.c gen.c main.c misc.c nfa.c parse.c sym.c tblcmp.c \
 	yylex.c
-OBJS+=	scan.o
-LDADD+=	-lgnumalloc
-DPADD+=	/usr/lib/libgnumalloc.a
-
+OBJS+=	scan.o skel.o
 SUBDIR=	lib
-CLEANFILES+=parse.c parse.h scan.c y.tab.h
-MAN1 = lex.0 flexdoc.0
+CLEANFILES+=parse.c parse.h scan.c skel.c y.tab.c y.tab.h
+LDADD=	-ll
+DPADD=	${LIBL}
 
-parse.h parse.c:
+MAN1 = flex.0 flexdoc.0
+
+LINKS=	${BINDIR}/lex ${BINDIR}/flex \
+	${BINDIR}/lex ${BINDIR}/flex++
+MLINKS=	flex.1 lex.1 flexdoc.1 lexdoc.1
+
+parse.h parse.c: parse.y
 	${YACC} -d ${.IMPSRC}
 	mv y.tab.c parse.c
 	mv y.tab.h parse.h
 
-beforeinstall:
-	install -c -o ${BINOWN} -g ${BINGRP} -m 444 ${.CURDIR}/lex.skel \
-	    ${DESTDIR}/usr/share/misc
+skel.c:	flex.skl mkskel.sh
+	${.CURDIR}/mkskel.sh ${.CURDIR}/flex.skl > skel.c
 
 scan.o: parse.c
+
+afterinstall:
+	install -c -o ${BINOWN} -g ${BINOWN} -m 444 ${.CURDIR}/FlexLexer.h \
+		${DESTDIR}/usr/include/g++
 
 .include <bsd.prog.mk>
