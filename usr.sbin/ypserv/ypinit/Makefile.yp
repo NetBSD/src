@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.yp,v 1.13 2000/10/11 16:51:55 itojun Exp $
+#	$NetBSD: Makefile.yp,v 1.14 2001/01/16 07:15:18 scottr Exp $
 #
 # This is the YP Makefile, used to create and push YP maps.
 #
@@ -271,7 +271,21 @@ ipnodes.time: ${DIR}/hosts
 
 netgroup.time: ${DIR}/netgroup
 	-@if [ -f ${.ALLSRC} ]; then \
-		${CAT} ${.ALLSRC} | ${SORT} | ${MAKEDBM} - netgroup; \
+		${SED} -e "s/#.*$$//" -e "/^$$/d" ${.ALLSRC} | \
+		${AWK} '{ \
+			    for (i = 1; i <= NF; i++) \
+				if (i == NF) { \
+				    if (substr($$i, length($$i), 1) == "\\") { \
+					printf("%s", \
+					    substr($$i, 1, length($$i) - 1)); \
+				    } \
+				    else \
+					printf("%s\n", $$i); \
+				} \
+				else \
+				    printf("%s ", $$i); \
+			}' | \
+		${SORT} | ${MAKEDBM} - netgroup; \
 		${CAT} ${.ALLSRC} | ${REVNETGROUP} -u -f - | \
 		${SORT} | ${MAKEDBM} - netgroup.byuser; \
 		${CAT} ${.ALLSRC} | ${REVNETGROUP} -h -f - | \
