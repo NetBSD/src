@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee80211subr.c,v 1.27 2003/05/13 09:22:31 dyoung Exp $	*/
+/*	$NetBSD: if_ieee80211subr.c,v 1.28 2003/05/13 09:31:56 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ieee80211subr.c,v 1.27 2003/05/13 09:22:31 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ieee80211subr.c,v 1.28 2003/05/13 09:31:56 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -1299,6 +1299,20 @@ ieee80211_end_scan(struct ifnet *ifp)
 		ieee80211_new_state(ifp, IEEE80211_S_RUN, -1);
 	} else
 		ieee80211_new_state(ifp, IEEE80211_S_AUTH, -1);
+}
+
+int
+ieee80211_get_rate(struct ieee80211com *ic)
+{
+	int rate;
+	if (ic->ic_fixed_rate == -1) {
+		if (ic->ic_state == IEEE80211_S_RUN)
+			rate = ic->ic_bss.ni_rates[ic->ic_bss.ni_txrate];
+		else
+			rate = 0;
+	} else
+		rate = ic->ic_sup_rates[ic->ic_fixed_rate];
+	return rate & IEEE80211_RATE_VAL;
 }
 
 struct ieee80211_node *
