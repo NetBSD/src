@@ -1,3 +1,5 @@
+#	$NetBSD: 4.4BSD.root,v 1.2 1996/05/12 23:30:32 thorpej Exp $
+#
 #	   user: bostic
 #	machine: vangogh.CS.Berkeley.EDU
 #	   tree: /

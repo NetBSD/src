@@ -1,5 +1,5 @@
+#	$NetBSD: 4.4BSD.dist,v 1.21 1996/05/12 23:30:23 thorpej Exp $
 #	from: @(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
-#	$Id: 4.4BSD.dist,v 1.20 1996/05/08 21:23:06 pk Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
