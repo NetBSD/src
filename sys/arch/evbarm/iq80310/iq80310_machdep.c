@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_machdep.c,v 1.27 2002/02/21 21:58:02 thorpej Exp $	*/
+/*	$NetBSD: iq80310_machdep.c,v 1.28 2002/02/22 04:49:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -332,7 +332,6 @@ initarm(void *arg)
 	int loop;
 	int loop1;
 	u_int l1pagetable;
-	u_int l2pagetable;
 	extern char page0[], page0_end[];
 	pv_addr_t kernel_l1pt;
 	pv_addr_t kernel_ptpt;
@@ -615,7 +614,6 @@ initarm(void *arg)
 #endif
 
 	/* Now we fill in the L2 pagetable for the kernel static code/data */
-	l2pagetable = kernel_pt_table[KERNEL_PT_KERNEL].pv_va;
 
 	{
 		extern char etext[], _end[];
@@ -668,7 +666,7 @@ initarm(void *arg)
 	    NBPG, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 
 	/* Map the page table that maps the kernel pages */
-	pmap_map_entry(l2pagetable, kernel_ptpt.pv_pa, kernel_ptpt.pv_pa,
+	pmap_map_entry(l1pagetable, kernel_ptpt.pv_pa, kernel_ptpt.pv_pa,
 	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 
 	/*
@@ -676,20 +674,23 @@ initarm(void *arg)
 	 * Basically every kernel page table gets mapped here
 	 */
 	/* The -2 is slightly bogus, it should be -log2(sizeof(pt_entry_t)) */
-	l2pagetable = kernel_ptpt.pv_pa;
-	for (loop = 0; loop < KERNEL_PT_KERNEL_NUM; loop++)
-		pmap_map_entry(l2pagetable, ((KERNEL_BASE +
+	for (loop = 0; loop < KERNEL_PT_KERNEL_NUM; loop++) {
+		pmap_map_entry(l1pagetable,
+		    PROCESS_PAGE_TBLS_BASE + ((KERNEL_BASE +
 		    (loop * 0x00400000)) >> (PGSHIFT-2)),
 		    kernel_pt_table[KERNEL_PT_KERNEL + loop].pv_pa,
 		    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
-	pmap_map_entry(l2pagetable, (PROCESS_PAGE_TBLS_BASE >> (PGSHIFT-2)),
-	    kernel_ptpt.pv_pa,
-	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
-	pmap_map_entry(l2pagetable, (0x00000000 >> (PGSHIFT-2)),
+	}
+	pmap_map_entry(l1pagetable,
+	    PROCESS_PAGE_TBLS_BASE + (PROCESS_PAGE_TBLS_BASE >> (PGSHIFT-2)),
+	    kernel_ptpt.pv_pa, VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
+	pmap_map_entry(l1pagetable,
+	    PROCESS_PAGE_TBLS_BASE + (0x00000000 >> (PGSHIFT-2)),
 	    kernel_pt_table[KERNEL_PT_SYS].pv_pa,
 	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 	for (loop = 0; loop < KERNEL_PT_VMDATA_NUM; loop++)
-		pmap_map_entry(l2pagetable, ((KERNEL_VM_BASE +
+		pmap_map_entry(l1pagetable,
+		    PROCESS_PAGE_TBLS_BASE + ((KERNEL_VM_BASE +
 		    (loop * 0x00400000)) >> (PGSHIFT-2)),
 		    kernel_pt_table[KERNEL_PT_VMDATA + loop].pv_pa,
 		    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
@@ -698,8 +699,7 @@ initarm(void *arg)
 	 * Map the system page in the kernel page table for the bottom 1Meg
 	 * of the virtual memory map.
 	 */
-	l2pagetable = kernel_pt_table[KERNEL_PT_SYS].pv_va;
-	pmap_map_entry(l2pagetable, 0x00000000, systempage.pv_pa,
+	pmap_map_entry(l1pagetable, 0x00000000, systempage.pv_pa,
 	    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 
 	/*
@@ -727,7 +727,6 @@ initarm(void *arg)
 	 * Map the PCI I/O spaces and i80312 registers.  These are too
 	 * small to be mapped w/ section mappings.
 	 */
-	l2pagetable = kernel_pt_table[KERNEL_PT_IOPXS].pv_va;
 #ifdef VERBOSE_INIT_ARM
 	printf("Mapping PIOW 0x%08lx -> 0x%08lx @ 0x%08lx\n",
 	    I80312_PCI_XLATE_PIOW_BASE,
