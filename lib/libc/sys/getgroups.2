@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)getgroups.2	6.7 (Berkeley) 3/10/91
-.\"	$Id: getgroups.2,v 1.6 1994/04/15 22:44:06 jtc Exp $
+.\"	$Id: getgroups.2,v 1.7 1994/04/19 00:09:04 jtc Exp $
 .\"
 .Dd March 10, 1991
 .Dt GETGROUPS 2
@@ -57,7 +57,7 @@ indicates the number of entries that may be placed in
 returns the actual number of groups returned in
 .Fa gidset .
 No more than
-.Dv NGROUPS_MAX
+.Dv {NGROUPS_MAX}
 will ever
 be returned.
 If
