@@ -1,4 +1,4 @@
-/*	$NetBSD: syncicache.c,v 1.7 2002/03/26 21:20:24 matt Exp $	*/
+/*	$NetBSD: syncicache.c,v 1.8 2002/03/28 00:46:08 matt Exp $	*/
 
 /*
  * Copyright (C) 1995-1997, 1999 Wolfgang Solfrank.
@@ -125,5 +125,5 @@ __syncicache(void *from, size_t len)
 			p += linesz;
 		} while ((l -= linesz) != 0);
 	}
-	__asm__ __volatile ("isync");
+	__asm__ __volatile ("sync; isync");
 }
