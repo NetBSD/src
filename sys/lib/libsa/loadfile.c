@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile.c,v 1.2 1999/04/28 09:12:24 christos Exp $ */
+/* $NetBSD: loadfile.c,v 1.3 1999/10/08 03:55:06 itohy Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -450,8 +450,8 @@ aout_exec(fd, x, marks, flags)
 	u_long magic = N_GETMAGIC(*x);
 	int sub;
 
-	/* In OMAGIC, exec header isn't part of text segment */
-	if (magic == OMAGIC)
+	/* In OMAGIC and NMAGIC, exec header isn't part of text segment */
+	if (magic == OMAGIC || magic == NMAGIC)
 		sub = 0;
 	else
 		sub = sizeof(*x);
@@ -468,7 +468,7 @@ aout_exec(fd, x, marks, flags)
 	 * The kernel may use this to verify that the
 	 * symbols were loaded by this boot program.
 	 */
-	if (magic == OMAGIC) {
+	if (magic == OMAGIC || magic == NMAGIC) {
 		if (flags & LOAD_HDR)
 			BCOPY(x, maxp - sizeof(*x), sizeof(*x));
 	}
@@ -502,7 +502,7 @@ aout_exec(fd, x, marks, flags)
 	 * Provide alignment if required
 	 */
 	if (magic == ZMAGIC || magic == NMAGIC) {
-		int size = (int)maxp & __LDPGSZ;
+		int size = -(unsigned int)maxp & (__LDPGSZ - 1);
 
 		if (flags & LOAD_TEXTA) {
 			PROGRESS(("/%d", size));
