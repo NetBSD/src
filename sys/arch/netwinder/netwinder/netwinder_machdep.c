@@ -1,4 +1,4 @@
-/*	$NetBSD: netwinder_machdep.c,v 1.7 2001/07/12 07:01:12 matt Exp $	*/
+/*	$NetBSD: netwinder_machdep.c,v 1.8 2001/09/03 01:50:02 matt Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -78,15 +78,24 @@
 #include <dev/isa/isavar.h>
 #endif
 
+static bus_space_handle_t isa_base = (bus_space_handle_t) DC21285_PCI_IO_VBASE;
+
+u_int8_t footbridge_bs_r_1(void *, bus_space_handle_t, bus_size_t);
+void footbridge_bs_w_1(void *, bus_space_handle_t, bus_size_t, u_int8_t);
+
+#define	ISA_GETBYTE(r)		footbridge_bs_r_1(0, isa_base, (r))
+#define	ISA_PUTBYTE(r,v)	footbridge_bs_w_1(0, isa_base, (r), (v))
+
+static void netwinder_reset(void);
 /*
  * Address to call from cpu_reset() to reset the machine.
  * This is machine architecture dependant as it varies depending
  * on where the ROM appears when you turn the MMU off.
  */
 
-u_int cpu_reset_address = DC21285_ROM_BASE;
+u_int cpu_reset_address = (u_int) netwinder_reset;
 
-u_int dc21285_fclk = FCLK;
+u_int dc21285_fclk = 63750000;
 
 /* Define various stack sizes in pages */
 #define IRQ_STACK_SIZE	1
@@ -284,6 +293,16 @@ cpu_reboot(howto, bootstr)
 	/*NOTREACHED*/
 }
 
+static void
+netwinder_reset(void)
+{
+	ISA_PUTBYTE(0x370, 0x07); 	/* Select Logical Dev 7 (GPIO) */
+	ISA_PUTBYTE(0x371, 0x07);
+	ISA_PUTBYTE(0x370, 0xe6);	/* Select GP16 Control Reg */
+	ISA_PUTBYTE(0x371, 0x00);	/* Make GP16 an output */
+	ISA_PUTBYTE(0x338, 0xc4);	/* Set GP17/GP16 & GP12 */
+}
+
 /*
  * Mapping table for core kernel memory. This memory is mapped at init
  * time with section mappings.
@@ -354,14 +373,6 @@ initarm(bootinfo)
 	 */
 	if (set_cpufuncs())
 		panic("cpu not recognized!");
-#if 0
-	/* Copy the boot configuration structure */
-	nwbootinfo = *bootinfo;
-
-	if (nwbootinfo.bt_fclk >= 50000000
-	    && nwbootinfo.bt_fclk <= 66000000)
-		dc21285_fclk = nwbootinfo.bt_fclk;
-#endif
 
 	/* Fake bootconfig structure for the benefit of pmap.c */
 	/* XXX must make the memory description h/w independant */
