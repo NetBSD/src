@@ -1,4 +1,4 @@
-/*	$NetBSD: vidc.h,v 1.9 2001/02/18 00:56:42 reinoud Exp $	*/
+/*	$NetBSD: vidc.h,v 1.10 2001/02/25 17:17:55 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -63,6 +63,15 @@
 
 #define VIDC_HW_BASE 0x03400000
 #define VIDC_BASE    0xf6100000
+
+/*
+ * Current VIDC base set in initarm()
+ * since the current code isnt busspaceified, we need to set it manually ...
+ * this is to allow the VIDC to be moved.
+ */
+extern int *vidc_base;
+
+
 /* Video registers */
 
 #define VIDC_PALETTE 0x00000000
