@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.11 1997/10/12 14:21:49 lukem Exp $
+#	$NetBSD: Makefile,v 1.12 1997/10/13 02:18:06 lukem Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
-WARNS=	0
 PROG=	phantasia
-SRCS=	main.c fight.c io.c interplayer.c gamesupport.c misc.c phantglobs.c
+SRCS=	fight.c gamesupport.c interplayer.c io.c main.c misc.c phantglobs.c
+
 DPADD=	${LIBM} ${LIBCURSES} ${LIBTERM} ${LIBCOMPAT}
 LDADD=	-lm -lcurses -ltermlib -lcompat
 HIDEGAME=hidegame
