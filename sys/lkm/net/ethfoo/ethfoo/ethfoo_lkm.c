@@ -1,4 +1,4 @@
-/*	$NetBSD: ethfoo_lkm.c,v 1.8 2004/12/04 18:40:45 peter Exp $	*/
+/*	$NetBSD: ethfoo_lkm.c,v 1.9 2004/12/12 21:46:58 cube Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004 The NetBSD Foundation.
@@ -47,6 +47,7 @@
  * 5. example sysctl interface use from a LKM.
  * 6. example LKM character device, with read, write, ioctl, poll
  *    and kqueue available.
+ * 7. example cloning device, using the MOVEFD semantics.
  *
  * XXX Hacks
  * 1. NetBSD doesn't offer a way to change an Ethernet address, so I chose
@@ -62,6 +63,7 @@
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/file.h>
+#include <sys/filedesc.h>
 #if __NetBSD_Version__ > 106200000
 #include <sys/ksyms.h>
 #endif
@@ -75,6 +77,8 @@
 #include <net/if_dl.h>
 #include <net/if_ether.h>
 #include <net/if_media.h>
+
+#include "ethfoo.h"
 
 /* autoconf(9) structures */
 
@@ -121,6 +125,7 @@ struct ethfoo_softc {
 #define	ETHFOO_INUSE	0x00000001	/* ethfoo device can only be opened once */
 #define ETHFOO_ASYNCIO	0x00000002	/* user is using async I/O (SIGIO) on the device */
 #define ETHFOO_NBIO	0x00000004	/* user wants calls to avoid blocking */
+#define ETHFOO_GOING	0x00000008	/* interface is being destroyed */
 	struct selinfo	sc_rsel;
 	pid_t		sc_pgid; /* For async. IO */
 	struct lock	sc_rdlock;
@@ -147,6 +152,39 @@ static int	ethfoo_ether_aton(u_char *, char *);
 CFATTACH_DECL(ethfoo, sizeof(struct ethfoo_softc),
     ethfoo_match, ethfoo_attach, ethfoo_detach, NULL);
 
+/* Real device access routines */
+static int	ethfoo_dev_close(struct ethfoo_softc *);
+static int	ethfoo_dev_read(int, struct uio *, int);
+static int	ethfoo_dev_write(int, struct uio *, int);
+static int	ethfoo_dev_ioctl(int, u_long, caddr_t, struct proc *);
+static int	ethfoo_dev_poll(int, int, struct proc *);
+static int	ethfoo_dev_kqfilter(int, struct knote *);
+
+/* Fileops access routines */
+static int	ethfoo_fops_close(struct file *, struct proc *);
+static int	ethfoo_fops_read(struct file *, off_t *, struct uio *,
+    struct ucred *, int);
+static int	ethfoo_fops_write(struct file *, off_t *, struct uio *,
+    struct ucred *, int);
+static int	ethfoo_fops_ioctl(struct file *, u_long, void *,
+    struct proc *);
+static int	ethfoo_fops_poll(struct file *, int, struct proc *);
+static int	ethfoo_fops_kqfilter(struct file *, struct knote *);
+
+static struct fileops ethfoo_fileops = {
+	ethfoo_fops_read,
+	ethfoo_fops_write,
+	ethfoo_fops_ioctl,
+	fnullop_fcntl,
+	ethfoo_fops_poll,
+	fbadop_stat,
+	ethfoo_fops_close,
+	ethfoo_fops_kqfilter,
+};
+
+/* Helper for cloning open() */
+static int	ethfoo_dev_cloner(struct proc *);
+
 /* Character device routines */
 static int	ethfoo_cdev_open(dev_t, int, int, struct proc *);
 static int	ethfoo_cdev_close(dev_t, int, int, struct proc *);
@@ -163,6 +201,8 @@ static struct cdevsw ethfoo_cdevsw = {
 	ethfoo_cdev_poll, nommap,
 	ethfoo_cdev_kqfilter,
 };
+
+#define ETHFOO_CLONER	0xfffff		/* Maximal minor value */
 
 /* kqueue-related routines */
 static void	ethfoo_kqdetach(struct knote *);
@@ -214,6 +254,10 @@ static int	ethfoo_clone_destroy(struct ifnet *);
 struct if_clone ethfoo_cloners = IF_CLONE_INITIALIZER("ethfoo",
 					ethfoo_clone_create,
 					ethfoo_clone_destroy);
+
+/* Helper functionis shared by the two cloning code paths */
+static struct ethfoo_softc *	ethfoo_clone_creator(int);
+static int	ethfoo_clone_destroyer(struct device *);
 
 /* We don't have anything to do on 'modstat' */
 int
@@ -466,6 +510,7 @@ ethfoo_detach(struct device* self, int flags)
 	 * The LK_DRAIN operation will wait for every locked process to
 	 * release their hold.
 	 */
+	sc->sc_flags |= ETHFOO_GOING;
 	s = splnet();
 	ethfoo_stop(ifp, 1);
 	if_down(ifp);
@@ -659,23 +704,13 @@ ethfoo_stop(struct ifnet *ifp, int disable)
  * The 'create' command of ifconfig can be used to create
  * any numbered instance of a given device.  Thus we have to
  * make sure we have enough room in cd_devs to create the
- * user-specified instance.
- *
- * config_attach_pseudo can be called with unit = DVUNIT_ANY to have
- * autoconf(9) choose a unit number for us.
+ * user-specified instance.  config_attach_pseudo will do this
+ * for us.
  */
 static int
 ethfoo_clone_create(struct if_clone *ifc, int unit)
 {
-	struct cfdata *cf;
-
-	cf = malloc(sizeof(*cf), M_DEVBUF, M_WAITOK);
-	cf->cf_name = ethfoo_cd.cd_name;
-	cf->cf_atname = ethfoo_ca.ca_name;
-	cf->cf_unit = unit;
-	cf->cf_fstate = FSTATE_NOTFOUND;
-
-	if (config_attach_pseudo(cf) == NULL) {
+	if (ethfoo_clone_creator(unit) == NULL) {
 		aprint_error("%s%d: unable to attach an instance\n",
                     ethfoo_cd.cd_name, unit);
 		return (ENXIO);
@@ -685,30 +720,87 @@ ethfoo_clone_create(struct if_clone *ifc, int unit)
 }
 
 /*
+ * ethfoo(4) can be cloned by two ways:
+ *   using 'ifconfig ethfoo0 create', which will use the network
+ *     interface cloning API, and call ethfoo_clone_create above.
+ *   opening the cloning device node, whose minor number is ETHFOO_CLONER.
+ *     See below for an explanation on how this part work.
+ *
+ * config_attach_pseudo can be called with unit = DVUNIT_ANY to have
+ * autoconf(9) choose a unit number for us.  This is what happens when
+ * the cloner is openend, while the ifcloner interface creates a device
+ * with a specific unit number.
+ */
+static struct ethfoo_softc *
+ethfoo_clone_creator(int unit)
+{
+	struct cfdata *cf;
+
+	cf = malloc(sizeof(*cf), M_DEVBUF, M_WAITOK);
+	cf->cf_name = ethfoo_cd.cd_name;
+	cf->cf_atname = ethfoo_ca.ca_name;
+	cf->cf_unit = unit;
+	cf->cf_fstate = FSTATE_NOTFOUND;
+
+	return (struct ethfoo_softc *)config_attach_pseudo(cf);
+}
+
+/*
  * The clean design of if_clone and autoconf(9) makes that part
  * really straightforward.  The second argument of config_detach
- * means neither QUIET not FORCED.
+ * means neither QUIET nor FORCED.
  */
 static int
 ethfoo_clone_destroy(struct ifnet *ifp)
 {
-	struct device *dev = (struct device *)ifp->if_softc;
-	struct cfdata *cf = dev->dv_cfdata;
+	return ethfoo_clone_destroyer((struct device *)ifp->if_softc);
+}
 
-	if (config_detach(dev, 0) != 0)
+static int
+ethfoo_clone_destroyer(struct device *dev)
+{
+	struct cfdata *cf = dev->dv_cfdata;
+	int error;
+
+	if ((error = config_detach(dev, 0)) != 0)
 		aprint_error("%s: unable to detach instance\n",
 		    dev->dv_xname);
 	free(cf, M_DEVBUF);
 
-	return (0);
+	return (error);
 }
+
+/*
+ * ethfoo(4) is a bit of an hybrid device.  It can be used in two different
+ * ways:
+ *  1. ifconfig ethfooN create, then use /dev/ethfooN to read/write off it.
+ *  2. open /dev/ethfoo, get a new interface created and read/write off it.
+ *     That interface is destroyed when the process that had it created exits.
+ *
+ * The first way is managed by the cdevsw structure, and you access interfaces
+ * through a (major, minor) mapping:  ethfoo4 is obtained by the minor number
+ * 4.  The entry points for the cdevsw interface are prefixed by ethfoo_cdev_.
+ *
+ * The second way is the so-called "cloning" device.  It's a special minor
+ * number (chosen as the maximal number, to allow as much ethfoo devices as
+ * possible).  The user first opens the cloner (e.g., /dev/ethfoo), and that
+ * call ends in ethfoo_cdev_open.  The actual place where it is handled is
+ * ethfoo_dev_cloner.
+ *
+ * An ethfoo device cannot be opened more than once at a time, so the cdevsw
+ * part of open() does nothing but noting that the interface is being used and
+ * hence ready to actually handle packets.
+ */
 
 static int
 ethfoo_cdev_open(dev_t dev, int flags, int fmt, struct proc *p)
 {
-	struct ethfoo_softc *sc =
-	    (struct ethfoo_softc *)device_lookup(&ethfoo_cd, minor(dev));
+	struct ethfoo_softc *sc;
 
+	if (minor(dev) == ETHFOO_CLONER)
+		return ethfoo_dev_cloner(p);
+
+	sc = (struct ethfoo_softc *)device_lookup(&ethfoo_cd, minor(dev));
 	if (sc == NULL)
 		return (ENXIO);
 
@@ -719,16 +811,107 @@ ethfoo_cdev_open(dev_t dev, int flags, int fmt, struct proc *p)
 	return (0);
 }
 
+/*
+ * There are several kinds of cloning devices, and the most simple is the one
+ * ethfoo(4) uses.  What it does is change the file descriptor with a new one,
+ * with its own fileops structure (which maps to the various read, write,
+ * ioctl functions).  It starts allocating a new file descriptor with falloc,
+ * then actually creates the new ethfoo devices.
+ *
+ * Once those two steps are successful, we can re-wire the existing file
+ * descriptor to its new self.  This is done with fdclone():  it fills the fp
+ * structure as needed (notably f_data gets filled with the fifth parameter
+ * passed, the unit of the ethfoo device which will allows us identifying the
+ * device later), and returns EMOVEFD.
+ *
+ * That magic value is interpreted by sys_open() which then replaces the
+ * current file descriptor by the new one (through a magic member of struct
+ * proc, p_dupfd).
+ *
+ * The ethfoo device is flagged as being busy since it otherwise could be
+ * externally accessed through the corresponding device node with the cdevsw
+ * interface.
+ */
+
+static int
+ethfoo_dev_cloner(struct proc *p)
+{
+	struct ethfoo_softc *sc;
+	struct file *fp;
+	int error, fd;
+
+	if ((error = falloc(p, &fp, &fd)) != 0)
+		return (error);
+
+	if ((sc = ethfoo_clone_creator(DVUNIT_ANY)) == NULL) {
+		FILE_UNUSE(fp, p);
+		ffree(fp);
+		return (ENXIO);
+	}
+
+	sc->sc_flags |= ETHFOO_INUSE;
+
+	return fdclone(p, fp, fd, &ethfoo_fileops, (void *)sc->sc_dev.dv_unit);
+}
+
+/*
+ * While all other operations (read, write, ioctl, poll and kqfilter) are
+ * really the same whether we are in cdevsw or fileops mode, the close()
+ * function is slightly different in the two cases.
+ *
+ * As for the other, the core of it is shared in ethfoo_dev_close.  What
+ * it does is sufficient for the cdevsw interface, but the cloning interface
+ * needs another thing:  the interface is destroyed when the processes that
+ * created it closes it.
+ */
 static int
 ethfoo_cdev_close(dev_t dev, int flags, int fmt, struct proc *p)
 {
 	struct ethfoo_softc *sc =
 	    (struct ethfoo_softc *)device_lookup(&ethfoo_cd, minor(dev));
-	struct ifnet *ifp;
-	int s;
 
 	if (sc == NULL)
 		return (ENXIO);
+
+	return ethfoo_dev_close(sc);
+}
+
+/*
+ * It might happen that the administrator used ifconfig to externally destroy
+ * the interface.  In that case, ethfoo_fops_close will be called while
+ * ethfoo_detach is already happening.  If we called it again from here, we
+ * would dead lock.  ETHFOO_GOING ensures that this situation doesn't happen.
+ */
+static int
+ethfoo_fops_close(struct file *fp, struct proc *p)
+{
+	int unit = (int)fp->f_data;
+	struct ethfoo_softc *sc;
+	int error;
+
+	sc = (struct ethfoo_softc *)device_lookup(&ethfoo_cd, unit);
+	if (sc == NULL)
+		return (ENXIO);
+
+	/* ethfoo_dev_close currently always succeeds, but it might not
+	 * always be the case. */
+	if ((error = ethfoo_dev_close(sc)) != 0)
+		return (error);
+
+	/* Destroy the device now that it is no longer useful,
+	 * unless it's already being destroyed. */
+	if ((sc->sc_flags & ETHFOO_GOING) != 0)
+		return (0);
+
+	return ethfoo_clone_destroyer((struct device *)sc);
+}
+
+static int
+ethfoo_dev_close(struct ethfoo_softc *sc)
+{
+	struct ifnet *ifp;
+	int s;
+
 	sc->sc_flags = 0;	/* Remove ASYNCIO flag, too */
 
 	s = splnet();
@@ -758,8 +941,21 @@ ethfoo_cdev_close(dev_t dev, int flags, int fmt, struct proc *p)
 static int
 ethfoo_cdev_read(dev_t dev, struct uio *uio, int flags)
 {
+	return ethfoo_dev_read(minor(dev), uio, flags);
+}
+
+static int
+ethfoo_fops_read(struct file *fp, off_t *offp, struct uio *uio,
+    struct ucred *cred, int flags)
+{
+	return ethfoo_dev_read((int)fp->f_data, uio, flags);
+}
+
+static int
+ethfoo_dev_read(int unit, struct uio *uio, int flags)
+{
 	struct ethfoo_softc *sc =
-	    (struct ethfoo_softc *)device_lookup(&ethfoo_cd, minor(dev));
+	    (struct ethfoo_softc *)device_lookup(&ethfoo_cd, unit);
 	struct ifnet *ifp;
 	struct mbuf *m, *n;
 	int error = 0, s;
@@ -842,14 +1038,28 @@ out:
 static int
 ethfoo_cdev_write(dev_t dev, struct uio *uio, int flags)
 {
+	return ethfoo_dev_write(minor(dev), uio, flags);
+}
+
+static int
+ethfoo_fops_write(struct file *fp, off_t *offp, struct uio *uio,
+    struct ucred *cred, int flags)
+{
+	return ethfoo_dev_write((int)fp->f_data, uio, flags);
+}
+
+static int
+ethfoo_dev_write(int unit, struct uio *uio, int flags)
+{
 	struct ethfoo_softc *sc =
-	    (struct ethfoo_softc *)device_lookup(&ethfoo_cd, minor(dev));
+	    (struct ethfoo_softc *)device_lookup(&ethfoo_cd, unit);
 	struct ifnet *ifp;
 	struct mbuf *m, **mp;
 	int error = 0;
 
 	if (sc == NULL)
 		return (ENXIO);
+
 	ifp = &sc->sc_ec.ec_if;
 
 	/* One write, one packet, that's the rule */
@@ -893,8 +1103,20 @@ static int
 ethfoo_cdev_ioctl(dev_t dev, u_long cmd, caddr_t data, int flags,
     struct proc *p)
 {
+	return ethfoo_dev_ioctl(minor(dev), cmd, data, p);
+}
+
+static int
+ethfoo_fops_ioctl(struct file *fp, u_long cmd, void *data, struct proc *p)
+{
+	return ethfoo_dev_ioctl((int)fp->f_data, cmd, (caddr_t)data, p);
+}
+
+static int
+ethfoo_dev_ioctl(int unit, u_long cmd, caddr_t data, struct proc *p)
+{
 	struct ethfoo_softc *sc =
-	    (struct ethfoo_softc *)device_lookup(&ethfoo_cd, minor(dev));
+	    (struct ethfoo_softc *)device_lookup(&ethfoo_cd, unit);
 	int error = 0;
 
 	if (sc == NULL)
@@ -936,6 +1158,9 @@ ethfoo_cdev_ioctl(dev_t dev, u_long cmd, caddr_t data, int flags,
 		else
 			sc->sc_flags &= ~ETHFOO_NBIO;
 		break;
+	case ETHFOO_GETMINOR:
+		*(int *)data = sc->sc_dev.dv_unit;
+		break;
 	default:
 		error = ENOTTY;
 		break;
@@ -947,8 +1172,20 @@ ethfoo_cdev_ioctl(dev_t dev, u_long cmd, caddr_t data, int flags,
 static int
 ethfoo_cdev_poll(dev_t dev, int events, struct proc *p)
 {
+	return ethfoo_dev_poll(minor(dev), events, p);
+}
+
+static int
+ethfoo_fops_poll(struct file *fp, int events, struct proc *p)
+{
+	return ethfoo_dev_poll((int)fp->f_data, events, p);
+}
+
+static int
+ethfoo_dev_poll(int unit, int events, struct proc *p)
+{
 	struct ethfoo_softc *sc =
-	    (struct ethfoo_softc *)device_lookup(&ethfoo_cd, minor(dev));
+	    (struct ethfoo_softc *)device_lookup(&ethfoo_cd, unit);
 	int revents = 0;
 
 	if (sc == NULL)
@@ -984,8 +1221,20 @@ static struct filterops ethfoo_seltrue_filterops = { 1, NULL, ethfoo_kqdetach,
 static int
 ethfoo_cdev_kqfilter(dev_t dev, struct knote *kn)
 {
+	return ethfoo_dev_kqfilter(minor(dev), kn);
+}
+
+static int
+ethfoo_fops_kqfilter(struct file *fp, struct knote *kn)
+{
+	return ethfoo_dev_kqfilter((int)fp->f_data, kn);
+}
+
+static int
+ethfoo_dev_kqfilter(int unit, struct knote *kn)
+{
 	struct ethfoo_softc *sc =
-	    (struct ethfoo_softc *)device_lookup(&ethfoo_cd, minor(dev));
+	    (struct ethfoo_softc *)device_lookup(&ethfoo_cd, unit);
 
 	if (sc == NULL)
 		return (ENXIO);
