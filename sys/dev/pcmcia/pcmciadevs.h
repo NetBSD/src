@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.92.2.7 2001/06/16 19:19:37 he Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.92.2.8 2002/02/14 20:09:00 he Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.93.2.6 2001/05/26 16:16:05 he Exp 
+ *	NetBSD: pcmciadevs,v 1.93.2.8 2002/02/14 20:08:32 he Exp 
  */
 
 /*-
@@ -79,8 +79,10 @@
 #define	PCMCIA_VENDOR_NOKIA	0x023d	/* Nokia Communications */
 #define	PCMCIA_VENDOR_LASAT	0x3401	/* Lasat Communications A/S */
 #define	PCMCIA_VENDOR_LEXARMEDIA	0x4e01	/* Lexar Media */
+#define	PCMCIA_VENDOR_EDIMAX	0x890f	/* Edimax Technology Inc. */
 #define	PCMCIA_VENDOR_COMPEX	0x8a01	/* Compex Corporation */
 #define	PCMCIA_VENDOR_MELCO	0x8a01	/* Melco Corporation */
+#define	PCMCIA_VENDOR_ZONET	0x8a01	/* Zonet Technology Inc. */
 #define	PCMCIA_VENDOR_CONTEC	0xc001	/* Contec */
 #define	PCMCIA_VENDOR_COREGA	0xc00f	/* Corega K.K. */
 #define	PCMCIA_VENDOR_ALLIEDTELESIS	0xc00f	/* Allied Telesis K.K. */
@@ -155,6 +157,11 @@
 #define	PCMCIA_CIS_DIGITAL_MOBILE_MEDIA_CDROM	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_DIGITAL_MOBILE_MEDIA_CDROM	0x0d00
 #define	PCMCIA_STR_DIGITAL_MOBILE_MEDIA_CDROM	"Digital Mobile Media CD-ROM"
+
+/* Edimax Products */
+#define	PCMCIA_CIS_EDIMAX_EP4000A	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_EDIMAX_EP4000A	0x0100
+#define	PCMCIA_STR_EDIMAX_EP4000A	"Edimax EP4000A"
 
 /* Fujutsu Products */
 #define	PCMCIA_CIS_FUJITSU_SCSI600	{ NULL, NULL, NULL, NULL }
@@ -376,6 +383,11 @@
 #define	PCMCIA_CIS_SMC_EZCARD	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_SMC_EZCARD	0x8022
 #define	PCMCIA_STR_SMC_EZCARD	"SMC EZCard 10 PCMCIA"
+
+/* ZONET */
+#define	PCMCIA_CIS_ZONET_ZEN	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_ZONET_ZEN	0x0100
+#define	PCMCIA_STR_ZONET_ZEN	"Zonet Zen 10/10"
 
 /* Contec C-NET(PC) */
 #define	PCMCIA_CIS_CONTEC_CNETPC	{ NULL, NULL, NULL, NULL }
