@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_netbsd.h,v 1.2 2001/11/08 20:30:55 jmc Exp $	*/
+/*	$NetBSD: nb_rmd.c,v 1.1 2001/11/08 20:30:55 jmc Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -36,11 +36,21 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __COMPAT_NETBSD_H__
-#define __COMPAT_NETBSD_H__
+/* Stub for RMD160File (just to link..this isn't needed for a build) */
 
-extern void setprogname(const char *);
-extern const char *getprogname(void);
-extern char *RMD160File(char *, char *);
+#ifdef __NetBSD__
+#include <sys/param.h>
+#if !defined(__NetBSD_Version__) || (__NetBSD_Version__ < 106000000)
+#undef __NetBSD__
+#endif
+#endif
 
+#ifndef __NetBSD__
+#include <stdio.h>
+
+char    *RMD160File(char *x, char *y)
+{
+	fprintf(stderr, "RMD160File not implemented...\n");
+	return NULL;
+}
 #endif
