@@ -1,4 +1,4 @@
-/*	$NetBSD: fp.S,v 1.13 1999/03/30 14:27:56 soda Exp $	*/
+/*	$NetBSD: fp.S,v 1.14 1999/11/18 06:47:49 jun Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -84,6 +84,9 @@
  *
  *	MachEmulateFP(instr)
  *		unsigned instr;
+ *	MachEmulateFP(instr, frame)	: SOFTFLOAT case
+ *		unsigned instr;
+ *		mips_reg_t *frame;
  *
  * Results:
  *	None.
@@ -97,536 +100,550 @@ NESTED(MachEmulateFP, CALLFRAME_SIZ, ra)
 	subu	sp, sp, CALLFRAME_SIZ
 	sw	ra, CALLFRAME_RA(sp)
 /*
- * Decode the FMT field (bits 24-21) and FUNCTION field (bits 5-0).
+ * Decode the FMT field (bits 25-21) and FUNCTION field (bits 5-0).
  */
 	srl	v0, a0, 21 - 2			# get FMT field
-	and	v0, v0, 0xF << 2		# mask FMT field
-	and	v1, a0, 0x3F			# mask FUNC field
-	sll	v1, v1, 5			# align for table lookup
-	bgt	v0, 4 << 2, ill			# illegal format
-
-	or	v1, v1, v0
-	cfc1	a1, MIPS_FPU_CSR		# get exception register
-	lw	a3, func_fmt_tbl(v1)		# switch on FUNC & FMT
-	and	a1, a1, ~MIPS_FPU_EXCEPTION_UNIMPL	# clear exception
-	ctc1	a1, MIPS_FPU_CSR
+	andi	v0, v0, 0x1F << 2		# mask FMT field
+#ifdef SOFTFLOAT
+	la	t0, _C_LABEL(fpcurproc)
+	lw	t0, 0(t0)
+	lw	t0, P_ADDR(t0)			# get pointer to pcb for proc
+	lw	a2, U_PCB_FPREGS+FRAME_FSR(t0)
+	lw	a3, fmt_tbl(v0)			# switch on FUNC & FMT
+	and	a2, a2, ~MIPS_FPU_EXCEPTION_UNIMPL	# clear exception
+	sw	a2, U_PCB_FPREGS+FRAME_FSR(t0)
+#else
+	cfc1	a2, MIPS_FPU_CSR		# get exception register
+	lw	a3, fmt_tbl(v0)			# switch on FUNC & FMT
+	and	a2, a2, ~MIPS_FPU_EXCEPTION_UNIMPL	# clear exception
+	ctc1	a2, MIPS_FPU_CSR
+#endif
 	j	a3
 
+single_op:
+	andi	v0, a0, 0x3F		# get FUNC field
+	sll	v0, v0, 2
+	lw	v0, func_single_tbl(v0)
+	j	v0
+double_op:
+	andi	v0, a0, 0x3F		# get FUNC field
+	sll	v0, v0, 2
+	lw	v0, func_double_tbl(v0)
+	j	v0
+single_fixed_op:
+	andi	v0, a0, 0x3F		# get FUNC field
+	sll	v0, v0, 2
+	lw	v0, func_single_fixed_tbl(v0)
+	j	v0
+long_fixed_op:
+	andi	v0, a0, 0x3F		# get FUNC field
+	sll	v0, v0, 2
+	lw	v0, func_long_fixed_tbl(v0)
+	j	v0
+
 	.rdata
-func_fmt_tbl:
-	.word	add_s		# 0
-	.word	add_d		# 0
-	.word	ill		# 0
-	.word	ill		# 0
-	.word	ill		# 0
-	.word	ill		# 0
-	.word	ill		# 0
-	.word	ill		# 0
-	.word	sub_s		# 1
-	.word	sub_d		# 1
-	.word	ill		# 1
-	.word	ill		# 1
-	.word	ill		# 1
-	.word	ill		# 1
-	.word	ill		# 1
-	.word	ill		# 1
-	.word	mul_s		# 2
-	.word	mul_d		# 2
-	.word	ill		# 2
-	.word	ill		# 2
-	.word	ill		# 2
-	.word	ill		# 2
-	.word	ill		# 2
-	.word	ill		# 2
-	.word	div_s		# 3
-	.word	div_d		# 3
-	.word	ill		# 3
-	.word	ill		# 3
-	.word	ill		# 3
-	.word	ill		# 3
-	.word	ill		# 3
-	.word	ill		# 3
-	.word	ill		# 4
-	.word	ill		# 4
-	.word	ill		# 4
-	.word	ill		# 4
-	.word	ill		# 4
-	.word	ill		# 4
-	.word	ill		# 4
-	.word	ill		# 4
-	.word	abs_s		# 5
-	.word	abs_d		# 5
-	.word	ill		# 5
-	.word	ill		# 5
-	.word	ill		# 5
-	.word	ill		# 5
-	.word	ill		# 5
-	.word	ill		# 5
-	.word	mov_s		# 6
-	.word	mov_d		# 6
-	.word	ill		# 6
-	.word	ill		# 6
-	.word	ill		# 6
-	.word	ill		# 6
-	.word	ill		# 6
-	.word	ill		# 6
-	.word	neg_s		# 7
-	.word	neg_d		# 7
-	.word	ill		# 7
-	.word	ill		# 7
-	.word	ill		# 7
-	.word	ill		# 7
-	.word	ill		# 7
-	.word	ill		# 7
-	.word	ill		# 8
-	.word	ill		# 8
-	.word	ill		# 8
-	.word	ill		# 8
-	.word	ill		# 8
-	.word	ill		# 8
-	.word	ill		# 8
-	.word	ill		# 8
-	.word	ill		# 9
-	.word	ill		# 9
-	.word	ill		# 9
-	.word	ill		# 9
-	.word	ill		# 9
-	.word	ill		# 9
-	.word	ill		# 9
-	.word	ill		# 9
-	.word	ill		# 10
-	.word	ill		# 10
-	.word	ill		# 10
-	.word	ill		# 10
-	.word	ill		# 10
-	.word	ill		# 10
-	.word	ill		# 10
-	.word	ill		# 10
-	.word	ill		# 11
-	.word	ill		# 11
-	.word	ill		# 11
-	.word	ill		# 11
-	.word	ill		# 11
-	.word	ill		# 11
-	.word	ill		# 11
-	.word	ill		# 11
-	.word	ill		# 12
-	.word	ill		# 12
-	.word	ill		# 12
-	.word	ill		# 12
-	.word	ill		# 12
-	.word	ill		# 12
-	.word	ill		# 12
-	.word	ill		# 12
-	.word	ill		# 13
-	.word	ill		# 13
-	.word	ill		# 13
-	.word	ill		# 13
-	.word	ill		# 13
-	.word	ill		# 13
-	.word	ill		# 13
-	.word	ill		# 13
-	.word	ill		# 14
-	.word	ill		# 14
-	.word	ill		# 14
-	.word	ill		# 14
-	.word	ill		# 14
-	.word	ill		# 14
-	.word	ill		# 14
-	.word	ill		# 14
-	.word	ill		# 15
-	.word	ill		# 15
-	.word	ill		# 15
-	.word	ill		# 15
-	.word	ill		# 15
-	.word	ill		# 15
-	.word	ill		# 15
-	.word	ill		# 15
-	.word	ill		# 16
-	.word	ill		# 16
-	.word	ill		# 16
-	.word	ill		# 16
-	.word	ill		# 16
-	.word	ill		# 16
-	.word	ill		# 16
-	.word	ill		# 16
-	.word	ill		# 17
-	.word	ill		# 17
-	.word	ill		# 17
-	.word	ill		# 17
-	.word	ill		# 17
-	.word	ill		# 17
-	.word	ill		# 17
-	.word	ill		# 17
-	.word	ill		# 18
-	.word	ill		# 18
-	.word	ill		# 18
-	.word	ill		# 18
-	.word	ill		# 18
-	.word	ill		# 18
-	.word	ill		# 18
-	.word	ill		# 18
-	.word	ill		# 19
-	.word	ill		# 19
-	.word	ill		# 19
-	.word	ill		# 19
-	.word	ill		# 19
-	.word	ill		# 19
-	.word	ill		# 19
-	.word	ill		# 19
-	.word	ill		# 20
-	.word	ill		# 20
-	.word	ill		# 20
-	.word	ill		# 20
-	.word	ill		# 20
-	.word	ill		# 20
-	.word	ill		# 20
-	.word	ill		# 20
-	.word	ill		# 21
-	.word	ill		# 21
-	.word	ill		# 21
-	.word	ill		# 21
-	.word	ill		# 21
-	.word	ill		# 21
-	.word	ill		# 21
-	.word	ill		# 21
-	.word	ill		# 22
-	.word	ill		# 22
-	.word	ill		# 22
-	.word	ill		# 22
-	.word	ill		# 22
-	.word	ill		# 22
-	.word	ill		# 22
-	.word	ill		# 22
-	.word	ill		# 23
-	.word	ill		# 23
-	.word	ill		# 23
-	.word	ill		# 23
-	.word	ill		# 23
-	.word	ill		# 23
-	.word	ill		# 23
-	.word	ill		# 23
-	.word	ill		# 24
-	.word	ill		# 24
-	.word	ill		# 24
-	.word	ill		# 24
-	.word	ill		# 24
-	.word	ill		# 24
-	.word	ill		# 24
-	.word	ill		# 24
-	.word	ill		# 25
-	.word	ill		# 25
-	.word	ill		# 25
-	.word	ill		# 25
-	.word	ill		# 25
-	.word	ill		# 25
-	.word	ill		# 25
-	.word	ill		# 25
-	.word	ill		# 26
-	.word	ill		# 26
-	.word	ill		# 26
-	.word	ill		# 26
-	.word	ill		# 26
-	.word	ill		# 26
-	.word	ill		# 26
-	.word	ill		# 26
-	.word	ill		# 27
-	.word	ill		# 27
-	.word	ill		# 27
-	.word	ill		# 27
-	.word	ill		# 27
-	.word	ill		# 27
-	.word	ill		# 27
-	.word	ill		# 27
-	.word	ill		# 28
-	.word	ill		# 28
-	.word	ill		# 28
-	.word	ill		# 28
-	.word	ill		# 28
-	.word	ill		# 28
-	.word	ill		# 28
-	.word	ill		# 28
-	.word	ill		# 29
-	.word	ill		# 29
-	.word	ill		# 29
-	.word	ill		# 29
-	.word	ill		# 29
-	.word	ill		# 29
-	.word	ill		# 29
-	.word	ill		# 29
-	.word	ill		# 30
-	.word	ill		# 30
-	.word	ill		# 30
-	.word	ill		# 30
-	.word	ill		# 30
-	.word	ill		# 30
-	.word	ill		# 30
-	.word	ill		# 30
-	.word	ill		# 31
-	.word	ill		# 31
-	.word	ill		# 31
-	.word	ill		# 31
-	.word	ill		# 31
-	.word	ill		# 31
-	.word	ill		# 31
-	.word	ill		# 31
-	.word	ill		# 32
-	.word	cvt_s_d		# 32
-	.word	ill		# 32
-	.word	ill		# 32
-	.word	cvt_s_w		# 32
-	.word	ill		# 32
-	.word	ill		# 32
-	.word	ill		# 32
-	.word	cvt_d_s		# 33
-	.word	ill		# 33
-	.word	ill		# 33
-	.word	ill		# 33
-	.word	cvt_d_w		# 33
-	.word	ill		# 33
-	.word	ill		# 33
-	.word	ill		# 33
-	.word	ill		# 34
-	.word	ill		# 34
-	.word	ill		# 34
-	.word	ill		# 34
-	.word	ill		# 34
-	.word	ill		# 34
-	.word	ill		# 34
-	.word	ill		# 34
-	.word	ill		# 35
-	.word	ill		# 35
-	.word	ill		# 35
-	.word	ill		# 35
-	.word	ill		# 35
-	.word	ill		# 35
-	.word	ill		# 35
-	.word	ill		# 35
-	.word	cvt_w_s		# 36
-	.word	cvt_w_d		# 36
-	.word	ill		# 36
-	.word	ill		# 36
-	.word	ill		# 36
-	.word	ill		# 36
-	.word	ill		# 36
-	.word	ill		# 36
-	.word	ill		# 37
-	.word	ill		# 37
-	.word	ill		# 37
-	.word	ill		# 37
-	.word	ill		# 37
-	.word	ill		# 37
-	.word	ill		# 37
-	.word	ill		# 37
-	.word	ill		# 38
-	.word	ill		# 38
-	.word	ill		# 38
-	.word	ill		# 38
-	.word	ill		# 38
-	.word	ill		# 38
-	.word	ill		# 38
-	.word	ill		# 38
-	.word	ill		# 39
-	.word	ill		# 39
-	.word	ill		# 39
-	.word	ill		# 39
-	.word	ill		# 39
-	.word	ill		# 39
-	.word	ill		# 39
-	.word	ill		# 39
-	.word	ill		# 40
-	.word	ill		# 40
-	.word	ill		# 40
-	.word	ill		# 40
-	.word	ill		# 40
-	.word	ill		# 40
-	.word	ill		# 40
-	.word	ill		# 40
-	.word	ill		# 41
-	.word	ill		# 41
-	.word	ill		# 41
-	.word	ill		# 41
-	.word	ill		# 41
-	.word	ill		# 41
-	.word	ill		# 41
-	.word	ill		# 41
-	.word	ill		# 42
-	.word	ill		# 42
-	.word	ill		# 42
-	.word	ill		# 42
-	.word	ill		# 42
-	.word	ill		# 42
-	.word	ill		# 42
-	.word	ill		# 42
-	.word	ill		# 43
-	.word	ill		# 43
-	.word	ill		# 43
-	.word	ill		# 43
-	.word	ill		# 43
-	.word	ill		# 43
-	.word	ill		# 43
-	.word	ill		# 43
-	.word	ill		# 44
-	.word	ill		# 44
-	.word	ill		# 44
-	.word	ill		# 44
-	.word	ill		# 44
-	.word	ill		# 44
-	.word	ill		# 44
-	.word	ill		# 44
-	.word	ill		# 45
-	.word	ill		# 45
-	.word	ill		# 45
-	.word	ill		# 45
-	.word	ill		# 45
-	.word	ill		# 45
-	.word	ill		# 45
-	.word	ill		# 45
-	.word	ill		# 46
-	.word	ill		# 46
-	.word	ill		# 46
-	.word	ill		# 46
-	.word	ill		# 46
-	.word	ill		# 46
-	.word	ill		# 46
-	.word	ill		# 46
-	.word	ill		# 47
-	.word	ill		# 47
-	.word	ill		# 47
-	.word	ill		# 47
-	.word	ill		# 47
-	.word	ill		# 47
-	.word	ill		# 47
-	.word	ill		# 47
-	.word	cmp_s		# 48
-	.word	cmp_d		# 48
-	.word	ill		# 48
-	.word	ill		# 48
-	.word	ill		# 48
-	.word	ill		# 48
-	.word	ill		# 48
-	.word	ill		# 48
-	.word	cmp_s		# 49
-	.word	cmp_d		# 49
-	.word	ill		# 49
-	.word	ill		# 49
-	.word	ill		# 49
-	.word	ill		# 49
-	.word	ill		# 49
-	.word	ill		# 49
-	.word	cmp_s		# 50
-	.word	cmp_d		# 50
-	.word	ill		# 50
-	.word	ill		# 50
-	.word	ill		# 50
-	.word	ill		# 50
-	.word	ill		# 50
-	.word	ill		# 50
-	.word	cmp_s		# 51
-	.word	cmp_d		# 51
-	.word	ill		# 51
-	.word	ill		# 51
-	.word	ill		# 51
-	.word	ill		# 51
-	.word	ill		# 51
-	.word	ill		# 51
-	.word	cmp_s		# 52
-	.word	cmp_d		# 52
-	.word	ill		# 52
-	.word	ill		# 52
-	.word	ill		# 52
-	.word	ill		# 52
-	.word	ill		# 52
-	.word	ill		# 52
-	.word	cmp_s		# 53
-	.word	cmp_d		# 53
-	.word	ill		# 53
-	.word	ill		# 53
-	.word	ill		# 53
-	.word	ill		# 53
-	.word	ill		# 53
-	.word	ill		# 53
-	.word	cmp_s		# 54
-	.word	cmp_d		# 54
-	.word	ill		# 54
-	.word	ill		# 54
-	.word	ill		# 54
-	.word	ill		# 54
-	.word	ill		# 54
-	.word	ill		# 54
-	.word	cmp_s		# 55
-	.word	cmp_d		# 55
-	.word	ill		# 55
-	.word	ill		# 55
-	.word	ill		# 55
-	.word	ill		# 55
-	.word	ill		# 55
-	.word	ill		# 55
-	.word	cmp_s		# 56
-	.word	cmp_d		# 56
-	.word	ill		# 56
-	.word	ill		# 56
-	.word	ill		# 56
-	.word	ill		# 56
-	.word	ill		# 56
-	.word	ill		# 56
-	.word	cmp_s		# 57
-	.word	cmp_d		# 57
-	.word	ill		# 57
-	.word	ill		# 57
-	.word	ill		# 57
-	.word	ill		# 57
-	.word	ill		# 57
-	.word	ill		# 57
-	.word	cmp_s		# 58
-	.word	cmp_d		# 58
-	.word	ill		# 58
-	.word	ill		# 58
-	.word	ill		# 58
-	.word	ill		# 58
-	.word	ill		# 58
-	.word	ill		# 58
-	.word	cmp_s		# 59
-	.word	cmp_d		# 59
-	.word	ill		# 59
-	.word	ill		# 59
-	.word	ill		# 59
-	.word	ill		# 59
-	.word	ill		# 59
-	.word	ill		# 59
-	.word	cmp_s		# 60
-	.word	cmp_d		# 60
-	.word	ill		# 60
-	.word	ill		# 60
-	.word	ill		# 60
-	.word	ill		# 60
-	.word	ill		# 60
-	.word	ill		# 60
-	.word	cmp_s		# 61
-	.word	cmp_d		# 61
-	.word	ill		# 61
-	.word	ill		# 61
-	.word	ill		# 61
-	.word	ill		# 61
-	.word	ill		# 61
-	.word	ill		# 61
-	.word	cmp_s		# 62
-	.word	cmp_d		# 62
-	.word	ill		# 62
-	.word	ill		# 62
-	.word	ill		# 62
-	.word	ill		# 62
-	.word	ill		# 62
-	.word	ill		# 62
-	.word	cmp_s		# 63
-	.word	cmp_d		# 63
-	.word	ill		# 63
-	.word	ill		# 63
-	.word	ill		# 63
-	.word	ill		# 63
-	.word	ill		# 63
-	.word	ill		# 63
+fmt_tbl:
+#ifdef SOFTFLOAT
+	.word	mfromc1		# sub 0
+#else
+	.word	ill		# sub 0
+#endif
+	.word	ill		# sub 1
+#ifdef SOFTFLOAT
+	.word	cfromc1		# sub 2
+#else
+	.word	ill		# sub 2
+#endif
+	.word	ill		# sub 3
+#ifdef SOFTFLOAT
+	.word	mtoc1		# sub 4
+#else
+	.word	ill		# sub 4
+#endif
+	.word	ill		# sub 5
+#ifdef SOFTFLOAT
+	.word	ctoc1		# sub 6
+#else
+	.word	ill		# sub 6
+#endif
+	.word	ill		# sub 7
+#ifdef SOFTFLOAT
+	.word	branchc1	# sub 8
+#else
+	.word	ill		# sub 8
+#endif
+	.word	ill		# sub 9
+	.word	ill		# sub 10
+	.word	ill		# sub 11
+	.word	ill		# sub 12
+	.word	ill		# sub 13
+	.word	ill		# sub 14
+	.word	ill		# sub 15
+	.word	single_op	# sub 16
+	.word	double_op	# sub 17
+	.word	ill		# sub 18
+	.word	ill		# sub 19
+	.word	single_fixed_op	# sub 20
+	.word	long_fixed_op	# sub 21
+	.word	ill		# sub 22
+	.word	ill		# sub 23
+	.word	ill		# sub 24
+	.word	ill		# sub 25
+	.word	ill		# sub 26
+	.word	ill		# sub 27
+	.word	ill		# sub 28
+	.word	ill		# sub 29
+	.word	ill		# sub 30
+	.word	ill		# sub 31
+
+func_single_tbl:
+	.word	add_s		# func 0
+	.word	sub_s		# func 1
+	.word	mul_s		# func 2
+	.word	div_s		# func 3
+	.word	ill		# func 4
+	.word	abs_s		# func 5
+	.word	mov_s		# func 6
+	.word	neg_s		# func 7
+	.word	ill		# func 8
+	.word	ill		# func 9
+	.word	ill		# func 10
+	.word	ill		# func 11
+	.word	ill		# func 12
+	.word	ill		# func 13
+	.word	ill		# func 14
+	.word	ill		# func 15
+	.word	ill		# func 16
+	.word	ill		# func 17
+	.word	ill		# func 18
+	.word	ill		# func 19
+	.word	ill		# func 20
+	.word	ill		# func 21
+	.word	ill		# func 22
+	.word	ill		# func 23
+	.word	ill		# func 24
+	.word	ill		# func 25
+	.word	ill		# func 26
+	.word	ill		# func 27
+	.word	ill		# func 28
+	.word	ill		# func 29
+	.word	ill		# func 30
+	.word	ill		# func 31
+	.word	ill		# func 32
+	.word	cvt_d_s		# func 33
+	.word	ill		# func 34
+	.word	ill		# func 35
+	.word	cvt_w_s		# func 36
+	.word	ill		# func 37
+	.word	ill		# func 38
+	.word	ill		# func 39
+	.word	ill		# func 40
+	.word	ill		# func 41
+	.word	ill		# func 42
+	.word	ill		# func 43
+	.word	ill		# func 44
+	.word	ill		# func 45
+	.word	ill		# func 46
+	.word	ill		# func 47
+	.word	cmp_s		# func 48
+	.word	cmp_s		# func 49
+	.word	cmp_s		# func 50
+	.word	cmp_s		# func 51
+	.word	cmp_s		# func 52
+	.word	cmp_s		# func 53
+	.word	cmp_s		# func 54
+	.word	cmp_s		# func 55
+	.word	cmp_s		# func 56
+	.word	cmp_s		# func 57
+	.word	cmp_s		# func 58
+	.word	cmp_s		# func 59
+	.word	cmp_s		# func 60
+	.word	cmp_s		# func 61
+	.word	cmp_s		# func 62
+	.word	cmp_s		# func 63
+
+func_double_tbl:
+	.word	add_d		# func 0
+	.word	sub_d		# func 1
+	.word	mul_d		# func 2
+	.word	div_d		# func 3
+	.word	ill		# func 4
+	.word	abs_d		# func 5
+	.word	mov_d		# func 6
+	.word	neg_d		# func 7
+	.word	ill		# func 8
+	.word	ill		# func 9
+	.word	ill		# func 10
+	.word	ill		# func 11
+	.word	ill		# func 12
+	.word	ill		# func 13
+	.word	ill		# func 14
+	.word	ill		# func 15
+	.word	ill		# func 16
+	.word	ill		# func 17
+	.word	ill		# func 18
+	.word	ill		# func 19
+	.word	ill		# func 20
+	.word	ill		# func 21
+	.word	ill		# func 22
+	.word	ill		# func 23
+	.word	ill		# func 24
+	.word	ill		# func 25
+	.word	ill		# func 26
+	.word	ill		# func 27
+	.word	ill		# func 28
+	.word	ill		# func 29
+	.word	ill		# func 30
+	.word	ill		# func 31
+	.word	cvt_s_d		# func 32
+	.word	ill		# func 33
+	.word	ill		# func 34
+	.word	ill		# func 35
+	.word	cvt_w_d		# func 36
+	.word	ill		# func 37
+	.word	ill		# func 38
+	.word	ill		# func 39
+	.word	ill		# func 40
+	.word	ill		# func 41
+	.word	ill		# func 42
+	.word	ill		# func 43
+	.word	ill		# func 44
+	.word	ill		# func 45
+	.word	ill		# func 46
+	.word	ill		# func 47
+	.word	cmp_d		# func 48
+	.word	cmp_d		# func 49
+	.word	cmp_d		# func 50
+	.word	cmp_d		# func 51
+	.word	cmp_d		# func 52
+	.word	cmp_d		# func 53
+	.word	cmp_d		# func 54
+	.word	cmp_d		# func 55
+	.word	cmp_d		# func 56
+	.word	cmp_d		# func 57
+	.word	cmp_d		# func 58
+	.word	cmp_d		# func 59
+	.word	cmp_d		# func 60
+	.word	cmp_d		# func 61
+	.word	cmp_d		# func 62
+	.word	cmp_d		# func 63
+
+func_single_fixed_tbl:
+	.word	ill		# func 0
+	.word	ill		# func 1
+	.word	ill		# func 2
+	.word	ill		# func 3
+	.word	ill		# func 4
+	.word	ill		# func 5
+	.word	ill		# func 6
+	.word	ill		# func 7
+	.word	ill		# func 8
+	.word	ill		# func 9
+	.word	ill		# func 10
+	.word	ill		# func 11
+	.word	ill		# func 12
+	.word	ill		# func 13
+	.word	ill		# func 14
+	.word	ill		# func 15
+	.word	ill		# func 16
+	.word	ill		# func 17
+	.word	ill		# func 18
+	.word	ill		# func 19
+	.word	ill		# func 20
+	.word	ill		# func 21
+	.word	ill		# func 22
+	.word	ill		# func 23
+	.word	ill		# func 24
+	.word	ill		# func 25
+	.word	ill		# func 26
+	.word	ill		# func 27
+	.word	ill		# func 28
+	.word	ill		# func 29
+	.word	ill		# func 30
+	.word	ill		# func 31
+	.word	cvt_s_w		# func 32
+	.word	cvt_d_w		# func 33
+	.word	ill		# func 34
+	.word	ill		# func 35
+	.word	ill		# func 36
+	.word	ill		# func 37
+	.word	ill		# func 38
+	.word	ill		# func 39
+	.word	ill		# func 40
+	.word	ill		# func 41
+	.word	ill		# func 42
+	.word	ill		# func 43
+	.word	ill		# func 44
+	.word	ill		# func 45
+	.word	ill		# func 46
+	.word	ill		# func 47
+	.word	ill		# func 48
+	.word	ill		# func 49
+	.word	ill		# func 50
+	.word	ill		# func 51
+	.word	ill		# func 52
+	.word	ill		# func 53
+	.word	ill		# func 54
+	.word	ill		# func 55
+	.word	ill		# func 56
+	.word	ill		# func 57
+	.word	ill		# func 58
+	.word	ill		# func 59
+	.word	ill		# func 60
+	.word	ill		# func 61
+	.word	ill		# func 62
+	.word	ill		# func 63
+
+func_long_fixed_tbl:
+	.word	ill		# func 0
+	.word	ill		# func 1
+	.word	ill		# func 2
+	.word	ill		# func 3
+	.word	ill		# func 4
+	.word	ill		# func 5
+	.word	ill		# func 6
+	.word	ill		# func 7
+	.word	ill		# func 8
+	.word	ill		# func 9
+	.word	ill		# func 10
+	.word	ill		# func 11
+	.word	ill		# func 12
+	.word	ill		# func 13
+	.word	ill		# func 14
+	.word	ill		# func 15
+	.word	ill		# func 16
+	.word	ill		# func 17
+	.word	ill		# func 18
+	.word	ill		# func 19
+	.word	ill		# func 20
+	.word	ill		# func 21
+	.word	ill		# func 22
+	.word	ill		# func 23
+	.word	ill		# func 24
+	.word	ill		# func 25
+	.word	ill		# func 26
+	.word	ill		# func 27
+	.word	ill		# func 28
+	.word	ill		# func 29
+	.word	ill		# func 30
+	.word	ill		# func 31
+	.word	ill		# func 32
+	.word	ill		# func 33
+	.word	ill		# func 34
+	.word	ill		# func 35
+	.word	ill		# func 36
+	.word	ill		# func 37
+	.word	ill		# func 38
+	.word	ill		# func 39
+	.word	ill		# func 40
+	.word	ill		# func 41
+	.word	ill		# func 42
+	.word	ill		# func 43
+	.word	ill		# func 44
+	.word	ill		# func 45
+	.word	ill		# func 46
+	.word	ill		# func 47
+	.word	ill		# func 48
+	.word	ill		# func 49
+	.word	ill		# func 50
+	.word	ill		# func 51
+	.word	ill		# func 52
+	.word	ill		# func 53
+	.word	ill		# func 54
+	.word	ill		# func 55
+	.word	ill		# func 56
+	.word	ill		# func 57
+	.word	ill		# func 58
+	.word	ill		# func 59
+	.word	ill		# func 60
+	.word	ill		# func 61
+	.word	ill		# func 62
+	.word	ill		# func 63
+
 	.text
+
+#ifdef SOFTFLOAT
+mfromc1:
+	la	t0, _C_LABEL(fpcurproc)
+	lw	t0, 0(t0)
+	lw	t0, P_ADDR(t0)			# get pointer to pcb for proc
+
+	srl	t1, a0, 11-2
+	andi	t1, t1, 0x007C
+	addu	t0, t0, t1
+
+	lw	v0, U_PCB_FPREGS+FRAME_FP0(t0)
+
+	srl	t0, a0, 16-2
+	andi	t0, t0, 0x007C
+	addu	t0, t0, a1
+
+	sw	v0, FRAME_ZERO(t0)
+
+	move	v0, zero
+	b	done
+
+mtoc1:
+	srl	t0, a0, 16-2
+	andi	t0, t0, 0x007C
+	addu	v0, a1, t0
+	lw	v0, FRAME_ZERO(v0)
+
+	la	t0, _C_LABEL(fpcurproc)
+	lw	t0, 0(t0)
+	lw	t0, P_ADDR(t0)			# get pointer to pcb for proc
+
+	srl	t1, a0, 11-2
+	andi	t1, t1, 0x007C
+	addu	t0, t0, t1
+
+	sw	v0, U_PCB_FPREGS+FRAME_FP0(t0)
+
+	move	v0, zero
+	b	done
+
+cfromc1:
+	la	t0, _C_LABEL(fpcurproc)
+	lw	t0, 0(t0)
+	lw	t0, P_ADDR(t0)			# get pointer to pcb for proc
+
+	srl	t1, a0, 11
+	andi	t1, t1, 0x001F
+	li	t2, 0x1F
+	move	v0, zero
+	bne	t1, t2, cfinvalid
+
+	lw	v0, U_PCB_FPREGS+FRAME_FSR(t0)
+
+cfinvalid:
+
+	srl	t0, a0, 16-2
+	andi	t0, t0, 0x007C
+	addu	t0, t0, a1
+
+	sw	v0, FRAME_ZERO(t0)
+
+	move	v0, zero
+	b	done
+
+ctoc1:
+	srl	t0, a0, 11
+	andi	t0, t0, 0x001F
+	li	t1, 0x1F	
+	move	v0, zero
+	bne	t0, t1, done
+
+	srl	t0, a0, 16-2
+	andi	t0, t0, 0x007C
+	addu	v0, a1, t0
+	lw	v0, FRAME_ZERO(v0)
+
+	la	t0, _C_LABEL(fpcurproc)
+	lw	t0, 0(t0)
+	lw	t0, P_ADDR(t0)			# get pointer to pcb for proc
+
+	sw	v0, U_PCB_FPREGS+FRAME_FSR(t0)
+
+	move	v0, zero
+	b	done
+
+branchc1:
+	srl	v0, a0, 16-2
+	andi	v0, v0, 0x007C
+	lw	v0, branchc1_tbl(v0)
+	j	v0
+
+	.rdata
+branchc1_tbl:
+	.word	bcfalse		# br 0
+	.word	bctrue		# br 1
+	.word	bcfalse_l	# br 2
+	.word	bctrue_l	# br 3
+	.word	ill		# br 4
+	.word	ill		# br 5
+	.word	ill		# br 6
+	.word	ill		# br 7
+	.word	ill		# br 8
+	.word	ill		# br 9
+	.word	ill		# br 10
+	.word	ill		# br 11
+	.word	ill		# br 12
+	.word	ill		# br 13
+	.word	ill		# br 14
+	.word	ill		# br 15
+	.word	ill		# br 16
+	.word	ill		# br 17
+	.word	ill		# br 18
+	.word	ill		# br 19
+	.word	ill		# br 20
+	.word	ill		# br 21
+	.word	ill		# br 22
+	.word	ill		# br 23
+	.word	ill		# br 24
+	.word	ill		# br 25
+	.word	ill		# br 26
+	.word	ill		# br 27
+	.word	ill		# br 28
+	.word	ill		# br 29
+	.word	ill		# br 30
+	.word	ill		# br 31
+
+	.text
+
+bcfalse:
+	li	v0, MIPS_FPU_COND_BIT
+	and	v0, v0, a2
+	beq	v0, zero, bcemul_branch
+	move	v0, zero
+	b	done
+bctrue:
+	li	v0, MIPS_FPU_COND_BIT
+	and	v0, v0, a2
+	bne	v0, zero, bcemul_branch
+	move	v0, zero
+	b	done
+bcfalse_l:
+	li	v0, MIPS_FPU_COND_BIT
+	and	v0, v0, a2
+	beq	v0, zero, bcemul_branch
+	lw	v0, FRAME_EPC(a1)
+	addiu	v0, v0, 4
+	sw	v0, FRAME_EPC(a1)
+	move	v0, zero
+	b	done
+bctrue_l:
+	li	v0, MIPS_FPU_COND_BIT
+	and	v0, v0, a2
+	bne	v0, zero, bcemul_branch
+	lw	v0, FRAME_EPC(a1)
+	addiu	v0, v0, 4
+	sw	v0, FRAME_EPC(a1)
+	move	v0, zero
+	b	done
+
+bcemul_branch:
+	/* Fetch delay slot instruction */
+	sw	a0, 0(sp)
+	sw	a1, 4(sp)
+	lw	a0, FRAME_EPC(a1)
+	jal	_C_LABEL(fuiword)
+	lw	a0, 0(sp)
+	lw	a1, 4(sp)
+
+	/* Calculate branch destination */
+	sll	t0, a0, 16
+	sra	t0, t0, 16-2
+	lw	t1, FRAME_EPC(a1)
+	addu	t1, t1, t0
+	sw	t1, FRAME_EPC(a1)
+	move	a0, v0
+
+	/* Free MachEmulateFP call frame */
+	lw	ra, CALLFRAME_RA(sp)
+	addu	sp, sp, CALLFRAME_SIZ
+
+	j	_C_LABEL(bcemul_delay_slot)
+#endif
 
 /*
  * Single precision subtract.
@@ -664,7 +681,7 @@ add_sub_s:
 3:
 	bne	t5, zero, result_ft_s		# if FT != 0, result=FT
 	bne	t6, zero, result_ft_s
-	and	v0, a1, MIPS_FPU_ROUNDING_BITS	# get rounding mode
+	and	v0, a2, MIPS_FPU_ROUNDING_BITS	# get rounding mode
 	bne	v0, MIPS_FPU_ROUND_RM, 1f	# round to -infinity?
 	or	t0, t0, t4			# compute result sign
 	b	result_fs_s
@@ -723,7 +740,7 @@ add_sub_s:
 	bne	t2, t6, 2f			# if same, result=0
 	move	t1, zero			# result=0
 	move	t2, zero
-	and	v0, a1, MIPS_FPU_ROUNDING_BITS	# get rounding mode
+	and	v0, a2, MIPS_FPU_ROUNDING_BITS	# get rounding mode
 	bne	v0, MIPS_FPU_ROUND_RM, 1f	# round to -infinity?
 	or	t0, t0, t4			# compute result sign
 	b	result_fs_s
@@ -787,7 +804,7 @@ add_sub_d:
 	bne	t5, zero, result_ft_d		# if FT != 0, result=FT
 	bne	t6, zero, result_ft_d
 	bne	t7, zero, result_ft_d
-	and	v0, a1, MIPS_FPU_ROUNDING_BITS	# get rounding mode
+	and	v0, a2, MIPS_FPU_ROUNDING_BITS	# get rounding mode
 	bne	v0, MIPS_FPU_ROUND_RM, 1f	# round to -infinity?
 	or	t0, t0, t4			# compute result sign
 	b	result_fs_d
@@ -881,7 +898,7 @@ add_sub_d:
 	move	t1, zero			# result=0
 	move	t2, zero
 	move	t3, zero
-	and	v0, a1, MIPS_FPU_ROUNDING_BITS	# get rounding mode
+	and	v0, a2, MIPS_FPU_ROUNDING_BITS	# get rounding mode
 	bne	v0, MIPS_FPU_ROUND_RM, 1f	# round to -infinity?
 	or	t0, t0, t4			# compute result sign
 	b	result_fs_d
@@ -1077,10 +1094,17 @@ div_s:
 3:
 	bne	t5, zero, 2f			# is FT zero?
 	bne	t6, zero, 1f
-	or	a1, a1, MIPS_FPU_EXCEPTION_DIV0 | MIPS_FPU_STICKY_DIV0
-	and	v0, a1, MIPS_FPU_ENABLE_DIV0	# trap enabled?
+	or	a2, a2, MIPS_FPU_EXCEPTION_DIV0 | MIPS_FPU_STICKY_DIV0
+	and	v0, a2, MIPS_FPU_ENABLE_DIV0	# trap enabled?
 	bne	v0, zero, fpe_trap
-	ctc1	a1, MIPS_FPU_CSR		# save exceptions
+#ifdef SOFTFLOAT
+	la	t1, _C_LABEL(fpcurproc)
+	lw	t1, 0(t1)
+	lw	t1, P_ADDR(t1)			# get pointer to pcb for proc
+	sw	a2, U_PCB_FPREGS+FRAME_FSR(t1)
+#else
+	ctc1	a2, MIPS_FPU_CSR		# save exceptions
+#endif
 	li	t1, SEXP_INF			# result is infinity
 	move	t2, zero
 	b	result_fs_s
@@ -1151,10 +1175,17 @@ div_d:
 	bne	t5, zero, 2f			# is FT zero?
 	bne	t6, zero, 1f
 	bne	t7, zero, 1f
-	or	a1, a1, MIPS_FPU_EXCEPTION_DIV0 | MIPS_FPU_STICKY_DIV0
-	and	v0, a1, MIPS_FPU_ENABLE_DIV0	# trap enabled?
+	or	a2, a2, MIPS_FPU_EXCEPTION_DIV0 | MIPS_FPU_STICKY_DIV0
+	and	v0, a2, MIPS_FPU_ENABLE_DIV0	# trap enabled?
 	bne	v0, zero, fpe_trap
-	ctc1	a1, MIPS_FPU_CSR		# Save exceptions
+#ifdef SOFTFLOAT
+	la	t1, _C_LABEL(fpcurproc)
+	lw	t1, 0(t1)
+	lw	t1, P_ADDR(t1)			# get pointer to pcb for proc
+	sw	a2, U_PCB_FPREGS+FRAME_FSR(t1)
+#else
+	ctc1	a2, MIPS_FPU_CSR		# Save exceptions
+#endif
 	li	t1, DEXP_INF			# result is infinity
 	move	t2, zero
 	move	t3, zero
@@ -1469,7 +1500,26 @@ cvt_w_d:
 	subu	t1, t1, DEXP_BIAS		# unbias exponent
 	or	t2, t2, DIMPL_ONE		# add implied one bit
 cvt_w:
+#if 0
 	blt	t1, WEXP_MIN, underflow_w	# is exponent too small?
+#else
+	bge	t1, WEXP_MIN, 3f		# is exponent too small?
+	and	v0, a2, MIPS_FPU_ROUNDING_BITS	# get rounding mode
+	beq	v0, MIPS_FPU_ROUND_RP, 1f	# round to +infinity
+	beq	v0, MIPS_FPU_ROUND_RM, 2f	# round to -infinity
+
+	move	t2, zero
+	b	result_fs_w
+1:
+	xori	t2, t0, 1
+	b	result_fs_w
+2:
+	sll	t2, t0, 31
+	sra	t2, t2, 31
+	b	result_fs_w
+
+3:
+#endif
 	li	v0, WEXP_MAX+1
 	bgt	t1, v0, overflow_w		# is exponent too large?
 	bne	t1, v0, 1f			# special check for INT_MIN
@@ -1503,7 +1553,7 @@ cvt_w:
  * round result (t0 is sign, t2 is integer part, t3 is fractional part).
  */
 2:
-	and	v0, a1, MIPS_FPU_ROUNDING_BITS	# get rounding mode
+	and	v0, a2, MIPS_FPU_ROUNDING_BITS	# get rounding mode
 	beq	v0, MIPS_FPU_ROUND_RN, 3f	# round to nearest
 	beq	v0, MIPS_FPU_ROUND_RZ, 5f	# round to zero (truncate)
 	beq	v0, MIPS_FPU_ROUND_RP, 1f	# round to +infinity
@@ -1535,10 +1585,17 @@ cvt_w:
  * Handle inexact exception.
  */
 inexact_w:
-	or	a1, a1, MIPS_FPU_EXCEPTION_INEXACT | MIPS_FPU_STICKY_INEXACT
-	and	v0, a1, MIPS_FPU_ENABLE_INEXACT
+	or	a2, a2, MIPS_FPU_EXCEPTION_INEXACT | MIPS_FPU_STICKY_INEXACT
+	and	v0, a2, MIPS_FPU_ENABLE_INEXACT
 	bne	v0, zero, fpe_trap
-	ctc1	a1, MIPS_FPU_CSR		# save exceptions
+#ifdef SOFTFLOAT
+	la	v0, _C_LABEL(fpcurproc)
+	lw	v0, 0(v0)
+	lw	v0, P_ADDR(v0)			# get pointer to pcb for proc
+	sw	a2, U_PCB_FPREGS+FRAME_FSR(v0)
+#else
+	ctc1	a2, MIPS_FPU_CSR		# save exceptions
+#endif
 	b	result_fs_w
 
 /*
@@ -1547,10 +1604,10 @@ inexact_w:
  * or generate an invalid exception.
  */
 overflow_w:
-	or	a1, a1, MIPS_FPU_EXCEPTION_OVERFLOW | MIPS_FPU_STICKY_OVERFLOW
-	and	v0, a1, MIPS_FPU_ENABLE_OVERFLOW
+	or	a2, a2, MIPS_FPU_EXCEPTION_OVERFLOW | MIPS_FPU_STICKY_OVERFLOW
+	and	v0, a2, MIPS_FPU_ENABLE_OVERFLOW
 	bne	v0, zero, fpe_trap
-	and	v0, a1, MIPS_FPU_ENABLE_INEXACT
+	and	v0, a2, MIPS_FPU_ENABLE_INEXACT
 	bne	v0, zero, inexact_w		# inexact traps enabled?
 	b	invalid_w
 
@@ -1560,10 +1617,10 @@ overflow_w:
  * or generate an invalid exception.
  */
 underflow_w:
-	or	a1, a1, MIPS_FPU_EXCEPTION_UNDERFLOW | MIPS_FPU_STICKY_UNDERFLOW
-	and	v0, a1, MIPS_FPU_ENABLE_UNDERFLOW
+	or	a2, a2, MIPS_FPU_EXCEPTION_UNDERFLOW | MIPS_FPU_STICKY_UNDERFLOW
+	and	v0, a2, MIPS_FPU_ENABLE_UNDERFLOW
 	bne	v0, zero, fpe_trap
-	and	v0, a1, MIPS_FPU_ENABLE_INEXACT
+	and	v0, a2, MIPS_FPU_ENABLE_INEXACT
 	bne	v0, zero, inexact_w		# inexact traps enabled?
 	b	invalid_w
 
@@ -1639,29 +1696,45 @@ test_cond:
 	and	v0, v0, a0			# condition match instruction?
 set_cond:
 	bne	v0, zero, 1f
-	and	a1, a1, ~MIPS_FPU_COND_BIT	# clear condition bit
+	and	a2, a2, ~MIPS_FPU_COND_BIT	# clear condition bit
 	b	2f
 1:
-	or	a1, a1, MIPS_FPU_COND_BIT	# set condition bit
+	or	a2, a2, MIPS_FPU_COND_BIT	# set condition bit
 2:
-	ctc1	a1, MIPS_FPU_CSR		# save condition bit
+#ifdef SOFTFLOAT
+	la	v0, _C_LABEL(fpcurproc)
+	lw	v0, 0(v0)
+	lw	v0, P_ADDR(v0)			# get pointer to pcb for proc
+	sw	a2, U_PCB_FPREGS+FRAME_FSR(v0)
+#else
+	ctc1	a2, MIPS_FPU_CSR		# save condition bit
+#endif
+	move	v0, zero
 	b	done
 
 unordered:
 	and	v0, a0, COND_UNORDERED		# this cmp match unordered?
 	bne	v0, zero, 1f
-	and	a1, a1, ~MIPS_FPU_COND_BIT	# clear condition bit
+	and	a2, a2, ~MIPS_FPU_COND_BIT	# clear condition bit
 	b	2f
 1:
-	or	a1, a1, MIPS_FPU_COND_BIT	# set condition bit
+	or	a2, a2, MIPS_FPU_COND_BIT	# set condition bit
 2:
 	and	v0, a0, COND_SIGNAL
 	beq	v0, zero, 1f			# is this a signaling cmp?
-	or	a1, a1, MIPS_FPU_EXCEPTION_INVALID | MIPS_FPU_STICKY_INVALID
-	and	v0, a1, MIPS_FPU_ENABLE_INVALID
+	or	a2, a2, MIPS_FPU_EXCEPTION_INVALID | MIPS_FPU_STICKY_INVALID
+	and	v0, a2, MIPS_FPU_ENABLE_INVALID
 	bne	v0, zero, fpe_trap
 1:
-	ctc1	a1, MIPS_FPU_CSR		# save condition bit
+#ifdef SOFTFLOAT
+	la	v0, _C_LABEL(fpcurproc)
+	lw	v0, 0(v0)
+	lw	v0, P_ADDR(v0)			# get pointer to pcb for proc
+	sw	a2, U_PCB_FPREGS+FRAME_FSR(v0)
+#else
+	ctc1	a2, MIPS_FPU_CSR		# save condition bit
+#endif
+	move	v0, zero
 	b	done
 
 /*
@@ -1726,7 +1799,7 @@ norm_s:
 norm_noshift_s:
 	move	t5, t1				# save unrounded exponent
 	move	t6, t2				# save unrounded fraction
-	and	v0, a1, MIPS_FPU_ROUNDING_BITS	# get rounding mode
+	and	v0, a2, MIPS_FPU_ROUNDING_BITS	# get rounding mode
 	beq	v0, MIPS_FPU_ROUND_RN, 3f	# round to nearest
 	beq	v0, MIPS_FPU_ROUND_RZ, 5f	# round to zero (truncate)
 	beq	v0, MIPS_FPU_ROUND_RP, 1f	# round to +infinity
@@ -1769,10 +1842,18 @@ inexact_s:
 	and	t2, t2, ~SIMPL_ONE		# clear implied one bit
 inexact_nobias_s:
 	jal	_C_LABEL(set_fd_s)		# save result
-	or	a1, a1, MIPS_FPU_EXCEPTION_INEXACT | MIPS_FPU_STICKY_INEXACT
-	and	v0, a1, MIPS_FPU_ENABLE_INEXACT
+	or	a2, a2, MIPS_FPU_EXCEPTION_INEXACT | MIPS_FPU_STICKY_INEXACT
+	and	v0, a2, MIPS_FPU_ENABLE_INEXACT
 	bne	v0, zero, fpe_trap
-	ctc1	a1, MIPS_FPU_CSR		# save exceptions
+#ifdef SOFTFLOAT
+	la	v0, _C_LABEL(fpcurproc)
+	lw	v0, 0(v0)
+	lw	v0, P_ADDR(v0)			# get pointer to pcb for proc
+	sw	a2, U_PCB_FPREGS+FRAME_FSR(v0)
+#else
+	ctc1	a2, MIPS_FPU_CSR		# save exceptions
+#endif
+	move	v0, zero
 	b	done
 
 /*
@@ -1781,15 +1862,15 @@ inexact_nobias_s:
  * or generate an infinity.
  */
 overflow_s:
-	or	a1, a1, MIPS_FPU_EXCEPTION_OVERFLOW | MIPS_FPU_STICKY_OVERFLOW
-	and	v0, a1, MIPS_FPU_ENABLE_OVERFLOW
+	or	a2, a2, MIPS_FPU_EXCEPTION_OVERFLOW | MIPS_FPU_STICKY_OVERFLOW
+	and	v0, a2, MIPS_FPU_ENABLE_OVERFLOW
 	beq	v0, zero, 1f
 	subu	t1, t1, 192			# bias exponent
 	and	t2, t2, ~SIMPL_ONE		# clear implied one bit
 	jal	_C_LABEL(set_fd_s)		# save result
 	b	fpe_trap
 1:
-	and	v0, a1, MIPS_FPU_ROUNDING_BITS	# get rounding mode
+	and	v0, a2, MIPS_FPU_ROUNDING_BITS	# get rounding mode
 	beq	v0, MIPS_FPU_ROUND_RN, 3f	# round to nearest
 	beq	v0, MIPS_FPU_ROUND_RZ, 1f	# round to zero (truncate)
 	beq	v0, MIPS_FPU_ROUND_RP, 2f	# round to +infinity
@@ -1810,7 +1891,7 @@ overflow_s:
  * "loss of accuracy" is detected as "an inexact result".
  */
 underflow_s:
-	and	v0, a1, MIPS_FPU_ENABLE_UNDERFLOW
+	and	v0, a2, MIPS_FPU_ENABLE_UNDERFLOW
 	beq	v0, zero, 1f
 /*
  * Underflow is enabled so compute the result and trap.
@@ -1818,7 +1899,7 @@ underflow_s:
 	addu	t1, t1, 192			# bias exponent
 	and	t2, t2, ~SIMPL_ONE		# clear implied one bit
 	jal	_C_LABEL(set_fd_s)		# save result
-	or	a1, a1, MIPS_FPU_EXCEPTION_UNDERFLOW | MIPS_FPU_STICKY_UNDERFLOW
+	or	a2, a2, MIPS_FPU_EXCEPTION_UNDERFLOW | MIPS_FPU_STICKY_UNDERFLOW
 	b	fpe_trap
 /*
  * Underflow is not enabled so compute the result,
@@ -1832,12 +1913,12 @@ underflow_s:
 	blt	t9, SFRAC_BITS+2, 3f		# shift all the bits out?
 	move	t1, zero			# result is inexact zero
 	move	t2, zero
-	or	a1, a1, MIPS_FPU_EXCEPTION_UNDERFLOW | MIPS_FPU_STICKY_UNDERFLOW
+	or	a2, a2, MIPS_FPU_EXCEPTION_UNDERFLOW | MIPS_FPU_STICKY_UNDERFLOW
 /*
  * Now round the zero result.
  * Only need to worry about rounding to +- infinity when the sign matches.
  */
-	and	v0, a1, MIPS_FPU_ROUNDING_BITS	# get rounding mode
+	and	v0, a2, MIPS_FPU_ROUNDING_BITS	# get rounding mode
 	beq	v0, MIPS_FPU_ROUND_RN, inexact_nobias_s	# round to nearest
 	beq	v0, MIPS_FPU_ROUND_RZ, inexact_nobias_s	# round to zero
 	beq	v0, MIPS_FPU_ROUND_RP, 1f	# round to +infinity
@@ -1858,7 +1939,7 @@ underflow_s:
 /*
  * Now round the denormalized result.
  */
-	and	v0, a1, MIPS_FPU_ROUNDING_BITS	# get rounding mode
+	and	v0, a2, MIPS_FPU_ROUNDING_BITS	# get rounding mode
 	beq	v0, MIPS_FPU_ROUND_RN, 3f	# round to nearest
 	beq	v0, MIPS_FPU_ROUND_RZ, 5f	# round to zero (truncate)
 	beq	v0, MIPS_FPU_ROUND_RP, 1f	# round to +infinity
@@ -1882,12 +1963,21 @@ underflow_s:
 5:
 	move	t1, zero			# denorm or zero exponent
 	jal	_C_LABEL(set_fd_s)		# save result
+	move	v0, zero
 	beq	t8, zero, done			# check for exact result
-	or	a1, a1, MIPS_FPU_EXCEPTION_UNDERFLOW | MIPS_FPU_STICKY_UNDERFLOW
-	or	a1, a1, MIPS_FPU_EXCEPTION_INEXACT | MIPS_FPU_STICKY_INEXACT
-	and	v0, a1, MIPS_FPU_ENABLE_INEXACT
+	or	a2, a2, MIPS_FPU_EXCEPTION_UNDERFLOW | MIPS_FPU_STICKY_UNDERFLOW
+	or	a2, a2, MIPS_FPU_EXCEPTION_INEXACT | MIPS_FPU_STICKY_INEXACT
+	and	v0, a2, MIPS_FPU_ENABLE_INEXACT
 	bne	v0, zero, fpe_trap
-	ctc1	a1, MIPS_FPU_CSR		# save exceptions
+#ifdef SOFTFLOAT
+	la	v0, _C_LABEL(fpcurproc)
+	lw	v0, 0(v0)
+	lw	v0, P_ADDR(v0)			# get pointer to pcb for proc
+	sw	a2, U_PCB_FPREGS+FRAME_FSR(v0)
+#else
+	ctc1	a2, MIPS_FPU_CSR		# save exceptions
+#endif
+	move	v0, zero
 	b	done
 
 /*
@@ -1972,7 +2062,7 @@ norm_noshift_d:
 	move	t5, t1				# save unrounded exponent
 	move	t6, t2				# save unrounded fraction (MS)
 	move	t7, t3				# save unrounded fraction (LS)
-	and	v0, a1, MIPS_FPU_ROUNDING_BITS	# get rounding mode
+	and	v0, a2, MIPS_FPU_ROUNDING_BITS	# get rounding mode
 	beq	v0, MIPS_FPU_ROUND_RN, 3f	# round to nearest
 	beq	v0, MIPS_FPU_ROUND_RZ, 5f	# round to zero (truncate)
 	beq	v0, MIPS_FPU_ROUND_RP, 1f	# round to +infinity
@@ -2019,10 +2109,18 @@ inexact_d:
 	and	t2, t2, ~DIMPL_ONE		# clear implied one bit
 inexact_nobias_d:
 	jal	_C_LABEL(set_fd_d)		# save result
-	or	a1, a1, MIPS_FPU_EXCEPTION_INEXACT | MIPS_FPU_STICKY_INEXACT
-	and	v0, a1, MIPS_FPU_ENABLE_INEXACT
+	or	a2, a2, MIPS_FPU_EXCEPTION_INEXACT | MIPS_FPU_STICKY_INEXACT
+	and	v0, a2, MIPS_FPU_ENABLE_INEXACT
 	bne	v0, zero, fpe_trap
-	ctc1	a1, MIPS_FPU_CSR		# save exceptions
+#ifdef SOFTFLOAT
+	la	v0, _C_LABEL(fpcurproc)
+	lw	v0, 0(v0)
+	lw	v0, P_ADDR(v0)			# get pointer to pcb for proc
+	sw	a2, U_PCB_FPREGS+FRAME_FSR(v0)
+#else
+	ctc1	a2, MIPS_FPU_CSR		# save exceptions
+#endif
+	move	v0, zero
 	b	done
 
 /*
@@ -2031,15 +2129,15 @@ inexact_nobias_d:
  * or generate an infinity.
  */
 overflow_d:
-	or	a1, a1, MIPS_FPU_EXCEPTION_OVERFLOW | MIPS_FPU_STICKY_OVERFLOW
-	and	v0, a1, MIPS_FPU_ENABLE_OVERFLOW
+	or	a2, a2, MIPS_FPU_EXCEPTION_OVERFLOW | MIPS_FPU_STICKY_OVERFLOW
+	and	v0, a2, MIPS_FPU_ENABLE_OVERFLOW
 	beq	v0, zero, 1f
 	subu	t1, t1, 1536			# bias exponent
 	and	t2, t2, ~DIMPL_ONE		# clear implied one bit
 	jal	_C_LABEL(set_fd_d)		# save result
 	b	fpe_trap
 1:
-	and	v0, a1, MIPS_FPU_ROUNDING_BITS	# get rounding mode
+	and	v0, a2, MIPS_FPU_ROUNDING_BITS	# get rounding mode
 	beq	v0, MIPS_FPU_ROUND_RN, 3f	# round to nearest
 	beq	v0, MIPS_FPU_ROUND_RZ, 1f	# round to zero (truncate)
 	beq	v0, MIPS_FPU_ROUND_RP, 2f	# round to +infinity
@@ -2062,7 +2160,7 @@ overflow_d:
  * "loss of accuracy" is detected as "an inexact result".
  */
 underflow_d:
-	and	v0, a1, MIPS_FPU_ENABLE_UNDERFLOW
+	and	v0, a2, MIPS_FPU_ENABLE_UNDERFLOW
 	beq	v0, zero, 1f
 /*
  * Underflow is enabled so compute the result and trap.
@@ -2070,7 +2168,7 @@ underflow_d:
 	addu	t1, t1, 1536			# bias exponent
 	and	t2, t2, ~DIMPL_ONE		# clear implied one bit
 	jal	_C_LABEL(set_fd_d)		# save result
-	or	a1, a1, MIPS_FPU_EXCEPTION_UNDERFLOW | MIPS_FPU_STICKY_UNDERFLOW
+	or	a2, a2, MIPS_FPU_EXCEPTION_UNDERFLOW | MIPS_FPU_STICKY_UNDERFLOW
 	b	fpe_trap
 /*
  * Underflow is not enabled so compute the result,
@@ -2086,12 +2184,12 @@ underflow_d:
 	move	t1, zero			# result is inexact zero
 	move	t2, zero
 	move	t3, zero
-	or	a1, a1, MIPS_FPU_EXCEPTION_UNDERFLOW | MIPS_FPU_STICKY_UNDERFLOW
+	or	a2, a2, MIPS_FPU_EXCEPTION_UNDERFLOW | MIPS_FPU_STICKY_UNDERFLOW
 /*
  * Now round the zero result.
  * Only need to worry about rounding to +- infinity when the sign matches.
  */
-	and	v0, a1, MIPS_FPU_ROUNDING_BITS	# get rounding mode
+	and	v0, a2, MIPS_FPU_ROUNDING_BITS	# get rounding mode
 	beq	v0, MIPS_FPU_ROUND_RN, inexact_nobias_d	# round to nearest
 	beq	v0, MIPS_FPU_ROUND_RZ, inexact_nobias_d	# round to zero
 	beq	v0, MIPS_FPU_ROUND_RP, 1f	# round to +infinity
@@ -2126,7 +2224,7 @@ underflow_d:
  * Now round the denormalized result.
  */
 2:
-	and	v0, a1, MIPS_FPU_ROUNDING_BITS	# get rounding mode
+	and	v0, a2, MIPS_FPU_ROUNDING_BITS	# get rounding mode
 	beq	v0, MIPS_FPU_ROUND_RN, 3f	# round to nearest
 	beq	v0, MIPS_FPU_ROUND_RZ, 5f	# round to zero (truncate)
 	beq	v0, MIPS_FPU_ROUND_RP, 1f	# round to +infinity
@@ -2154,12 +2252,21 @@ underflow_d:
 5:
 	move	t1, zero			# denorm or zero exponent
 	jal	_C_LABEL(set_fd_d)		# save result
+	move	v0, zero
 	beq	t8, zero, done			# check for exact result
-	or	a1, a1, MIPS_FPU_EXCEPTION_UNDERFLOW | MIPS_FPU_STICKY_UNDERFLOW
-	or	a1, a1, MIPS_FPU_EXCEPTION_INEXACT | MIPS_FPU_STICKY_INEXACT
-	and	v0, a1, MIPS_FPU_ENABLE_INEXACT
+	or	a2, a2, MIPS_FPU_EXCEPTION_UNDERFLOW | MIPS_FPU_STICKY_UNDERFLOW
+	or	a2, a2, MIPS_FPU_EXCEPTION_INEXACT | MIPS_FPU_STICKY_INEXACT
+	and	v0, a2, MIPS_FPU_ENABLE_INEXACT
 	bne	v0, zero, fpe_trap
-	ctc1	a1, MIPS_FPU_CSR		# save exceptions
+#ifdef SOFTFLOAT
+	la	v0, _C_LABEL(fpcurproc)
+	lw	v0, 0(v0)
+	lw	v0, P_ADDR(v0)			# get pointer to pcb for proc
+	sw	a2, U_PCB_FPREGS+FRAME_FSR(v0)
+#else
+	ctc1	a2, MIPS_FPU_CSR		# save exceptions
+#endif
+	move	v0, zero
 	b	done
 
 /*
@@ -2167,14 +2274,22 @@ underflow_d:
  * the result is a quiet NAN.
  */
 invalid_s:					# trap invalid operation
-	or	a1, a1, MIPS_FPU_EXCEPTION_INVALID | MIPS_FPU_STICKY_INVALID
-	and	v0, a1, MIPS_FPU_ENABLE_INVALID
+	or	a2, a2, MIPS_FPU_EXCEPTION_INVALID | MIPS_FPU_STICKY_INVALID
+	and	v0, a2, MIPS_FPU_ENABLE_INVALID
 	bne	v0, zero, fpe_trap
-	ctc1	a1, MIPS_FPU_CSR		# save exceptions
+#ifdef SOFTFLOAT
+	la	v0, _C_LABEL(fpcurproc)
+	lw	v0, 0(v0)
+	lw	v0, P_ADDR(v0)			# get pointer to pcb for proc
+	sw	a2, U_PCB_FPREGS+FRAME_FSR(v0)
+#else
+	ctc1	a2, MIPS_FPU_CSR		# save exceptions
+#endif
 	move	t0, zero			# result is a quiet NAN
 	li	t1, SEXP_INF
 	li	t2, SQUIET_NAN
 	jal	_C_LABEL(set_fd_s)		# save result (in t0,t1,t2)
+	move	v0, zero
 	b	done
 
 /*
@@ -2182,15 +2297,23 @@ invalid_s:					# trap invalid operation
  * the result is a quiet NAN.
  */
 invalid_d:					# trap invalid operation
-	or	a1, a1, MIPS_FPU_EXCEPTION_INVALID | MIPS_FPU_STICKY_INVALID
-	and	v0, a1, MIPS_FPU_ENABLE_INVALID
+	or	a2, a2, MIPS_FPU_EXCEPTION_INVALID | MIPS_FPU_STICKY_INVALID
+	and	v0, a2, MIPS_FPU_ENABLE_INVALID
 	bne	v0, zero, fpe_trap
-	ctc1	a1, MIPS_FPU_CSR		# save exceptions
+#ifdef SOFTFLOAT
+	la	v0, _C_LABEL(fpcurproc)
+	lw	v0, 0(v0)
+	lw	v0, P_ADDR(v0)			# get pointer to pcb for proc
+	sw	a2, U_PCB_FPREGS+FRAME_FSR(v0)
+#else
+	ctc1	a2, MIPS_FPU_CSR		# save exceptions
+#endif
 	move	t0, zero			# result is a quiet NAN
 	li	t1, DEXP_INF
 	li	t2, DQUIET_NAN0
 	li	t3, DQUIET_NAN1
 	jal	_C_LABEL(set_fd_d)		# save result (in t0,t1,t2,t3)
+	move	v0, zero
 	b	done
 
 /*
@@ -2198,10 +2321,17 @@ invalid_d:					# trap invalid operation
  * the result is INT_MAX or INT_MIN.
  */
 invalid_w:					# trap invalid operation
-	or	a1, a1, MIPS_FPU_EXCEPTION_INVALID | MIPS_FPU_STICKY_INVALID
-	and	v0, a1, MIPS_FPU_ENABLE_INVALID
+	or	a2, a2, MIPS_FPU_EXCEPTION_INVALID | MIPS_FPU_STICKY_INVALID
+	and	v0, a2, MIPS_FPU_ENABLE_INVALID
 	bne	v0, zero, fpe_trap
-	ctc1	a1, MIPS_FPU_CSR		# save exceptions
+#ifdef SOFTFLOAT
+	la	v0, _C_LABEL(fpcurproc)
+	lw	v0, 0(v0)
+	lw	v0, P_ADDR(v0)			# get pointer to pcb for proc
+	sw	a2, U_PCB_FPREGS+FRAME_FSR(v0)
+#else
+	ctc1	a2, MIPS_FPU_CSR		# save exceptions
+#endif
 	bne	t0, zero, 1f
 	li	t2, INT_MAX			# result is INT_MAX
 	b	result_fs_w
@@ -2213,17 +2343,32 @@ invalid_w:					# trap invalid operation
  * Trap if the hardware should have handled this case.
  */
 fpe_trap:
-	move	a2, a1				# code = FP CSR
-	ctc1	a1, MIPS_FPU_CSR		# save exceptions
-	break	0
+#ifdef SOFTFLOAT
+	la	v0, _C_LABEL(fpcurproc)
+	lw	v0, 0(v0)
+	lw	v0, P_ADDR(v0)			# get pointer to pcb for proc
+	sw	a2, U_PCB_FPREGS+FRAME_FSR(v0)
+#else
+	ctc1	a2, MIPS_FPU_CSR		# save exceptions
+#endif
+	li	v0, SIGFPE
+	b	done
 
 /*
  * Send an illegal instruction signal to the current process.
  */
 ill:
-	ctc1	a1, MIPS_FPU_CSR		# save exceptions
+#ifdef SOFTFLOAT
+	la	v0, _C_LABEL(fpcurproc)
+	lw	v0, 0(v0)
+	lw	v0, P_ADDR(v0)			# get pointer to pcb for proc
+	sw	a2, U_PCB_FPREGS+FRAME_FSR(v0)
+#else
+	ctc1	a2, MIPS_FPU_CSR		# save exceptions
+#endif
 	move	a2, a0				# code = FP instruction
-	break	0
+	li	v0, SIGILL
+	b	done
 
 result_ft_s:
 	move	t0, t4				# result is FT
@@ -2231,10 +2376,12 @@ result_ft_s:
 	move	t2, t6
 result_fs_s:					# result is FS
 	jal	_C_LABEL(set_fd_s)		# save result (in t0,t1,t2)
+	move	v0, zero
 	b	done
 
 result_fs_w:
 	jal	_C_LABEL(set_fd_word)		# save result (in t2)
+	move	v0, zero
 	b	done
 
 result_ft_d:
@@ -2244,7 +2391,7 @@ result_ft_d:
 	move	t3, t7
 result_fs_d:					# result is FS
 	jal	_C_LABEL(set_fd_d)		# save result (in t0,t1,t2,t3)
-
+	move	v0, zero
 done:
 	lw	ra, CALLFRAME_RA(sp)
 	addu	sp, sp, CALLFRAME_SIZ
@@ -2264,6 +2411,23 @@ END(MachEmulateFP)
  *----------------------------------------------------------------------------
  */
 LEAF(get_fs_int)
+#ifdef SOFTFLOAT
+	la	t0, _C_LABEL(fpcurproc)
+	lw	t0, 0(t0)
+	lw	t0, P_ADDR(t0)			# get pointer to pcb for proc
+
+	srl	t2, a0, 11-2
+	andi	t2, t2, 0x0078			# Even regs only
+	addu	t0, t0, t2
+
+	lw	t2, U_PCB_FPREGS+FRAME_FP0(t0)
+
+	srl	t0, t2, 31		# init the sign bit
+	bge	t2, zero, 1f
+	negu	t2
+1:
+	j	ra
+#else
 	srl	a3, a0, 12 - 2			# get FS field (even regs only)
 	and	a3, a3, 0xF << 2		# mask FS field
 	lw	a3, get_fs_int_tbl(a3)		# switch on register number
@@ -2342,6 +2506,7 @@ get_fs_int_done:
 	negu	t2
 1:
 	j	ra
+#endif
 END(get_fs_int)
 
 /*----------------------------------------------------------------------------
@@ -2362,6 +2527,27 @@ END(get_fs_int)
  *----------------------------------------------------------------------------
  */
 LEAF(get_ft_fs_s)
+#ifdef SOFTFLOAT
+	la	t5, _C_LABEL(fpcurproc)
+	lw	t5, 0(t5)
+	lw	t5, P_ADDR(t5)			# get pointer to pcb for proc
+
+	srl	t4, a0, 16-2
+	andi	t4, t4, 0x0078			# Even regs only
+	addu	t5, t5, t4
+
+	lw	t4, U_PCB_FPREGS+FRAME_FP0(t5)
+
+	srl	t5, t4, 23			# get exponent
+	and	t5, t5, 0xFF
+	and	t6, t4, 0x7FFFFF		# get fraction
+	srl	t4, t4, 31			# get sign
+	bne	t5, SEXP_INF, 1f		# is it a signaling NAN?
+	and	v0, t6, SSIGNAL_NAN
+	bne	v0, zero, invalid_s
+1:
+	/* fall through to get FS */
+#else
 	srl	a3, a0, 17 - 2			# get FT field (even regs only)
 	and	a3, a3, 0xF << 2		# mask FT field
 	lw	a3, get_ft_s_tbl(a3)		# switch on register number
@@ -2444,6 +2630,7 @@ get_ft_s_done:
 	bne	v0, zero, invalid_s
 1:
 	/* fall through to get FS */
+#endif
 
 /*----------------------------------------------------------------------------
  * get_fs_s --
@@ -2460,6 +2647,27 @@ get_ft_s_done:
  *----------------------------------------------------------------------------
  */
 XLEAF(get_fs_s)
+#ifdef SOFTFLOAT
+	la	t1, _C_LABEL(fpcurproc)
+	lw	t1, 0(t1)
+	lw	t1, P_ADDR(t1)			# get pointer to pcb for proc
+
+	srl	t0, a0, 11-2
+	andi	t0, t0, 0x0078			# Even regs only
+	addu	t1, t1, t0
+
+	lw	t0, U_PCB_FPREGS+FRAME_FP0(t1)
+
+	srl	t1, t0, 23			# get exponent
+	and	t1, t1, 0xFF
+	and	t2, t0, 0x7FFFFF		# get fraction
+	srl	t0, t0, 31			# get sign
+	bne	t1, SEXP_INF, 1f		# is it a signaling NAN?
+	and	v0, t2, SSIGNAL_NAN
+	bne	v0, zero, invalid_s
+1:
+	j	ra
+#else
 	srl	a3, a0, 12 - 2			# get FS field (even regs only)
 	and	a3, a3, 0xF << 2		# mask FS field
 	lw	a3, get_fs_s_tbl(a3)		# switch on register number
@@ -2542,6 +2750,7 @@ get_fs_s_done:
 	bne	v0, zero, invalid_s
 1:
 	j	ra
+#endif
 END(get_ft_fs_s)
 
 /*----------------------------------------------------------------------------
@@ -2564,6 +2773,28 @@ END(get_ft_fs_s)
  *----------------------------------------------------------------------------
  */
 LEAF(get_ft_fs_d)
+#ifdef SOFTFLOAT
+	la	t4, _C_LABEL(fpcurproc)
+	lw	t4, 0(t4)
+	lw	t4, P_ADDR(t4)			# get pointer to pcb for proc
+
+	srl	t7, a0, 16-2
+	andi	t7, t7, 0x0078			# Even regs only
+	addu	t4, t4, t7
+
+	lw	t7, U_PCB_FPREGS+FRAME_FP0(t4)
+	lw	t4, U_PCB_FPREGS+FRAME_FP0+4(t4)
+
+	srl	t5, t4, 20			# get exponent
+	and	t5, t5, 0x7FF
+	and	t6, t4, 0xFFFFF			# get fraction
+	srl	t4, t4, 31			# get sign
+	bne	t5, DEXP_INF, 1f		# is it a signaling NAN?
+	and	v0, t6, DSIGNAL_NAN
+	bne	v0, zero, invalid_d
+1:
+	/* fall through to get FS */
+#else
 	srl	a3, a0, 17 - 2			# get FT field (even regs only)
 	and	a3, a3, 0xF << 2		# mask FT field
 	lw	a3, get_ft_d_tbl(a3)		# switch on register number
@@ -2662,6 +2893,7 @@ get_ft_d_done:
 	bne	v0, zero, invalid_d
 1:
 	/* fall through to get FS */
+#endif
 
 /*----------------------------------------------------------------------------
  * get_fs_d --
@@ -2679,6 +2911,28 @@ get_ft_d_done:
  *----------------------------------------------------------------------------
  */
 XLEAF(get_fs_d)
+#ifdef SOFTFLOAT
+	la	t0, _C_LABEL(fpcurproc)
+	lw	t0, 0(t0)
+	lw	t0, P_ADDR(t0)			# get pointer to pcb for proc
+
+	srl	t3, a0, 11-2
+	andi	t3, t3, 0x0078			# Even regs only
+	addu	t0, t0, t3
+
+	lw	t3, U_PCB_FPREGS+FRAME_FP0(t0)
+	lw	t0, U_PCB_FPREGS+FRAME_FP0+4(t0)
+
+	srl	t1, t0, 20			# get exponent
+	and	t1, t1, 0x7FF
+	and	t2, t0, 0xFFFFF			# get fraction
+	srl	t0, t0, 31			# get sign
+	bne	t1, DEXP_INF, 1f		# is it a signaling NAN?
+	and	v0, t2, DSIGNAL_NAN
+	bne	v0, zero, invalid_d
+1:
+	j	ra
+#else
 	srl	a3, a0, 12 - 2			# get FS field (even regs only)
 	and	a3, a3, 0xF << 2		# mask FS field
 	lw	a3, get_fs_d_tbl(a3)		# switch on register number
@@ -2777,6 +3031,7 @@ get_fs_d_done:
 	bne	v0, zero, invalid_d
 1:
 	j	ra
+#endif
 END(get_ft_fs_d)
 
 /*----------------------------------------------------------------------------
@@ -2797,6 +3052,34 @@ END(get_ft_fs_d)
  *----------------------------------------------------------------------------
  */
 LEAF(get_cmp_s)
+#ifdef SOFTFLOAT
+	la	t6, _C_LABEL(fpcurproc)
+	lw	t6, 0(t6)
+	lw	t6, P_ADDR(t6)			# get pointer to pcb for proc
+
+	srl	t1, a0, 11-2
+	andi	t1, t1, 0x0078			# Even regs only
+	addu	t0, t6, t1
+
+	lw	t0, U_PCB_FPREGS+FRAME_FP0(t0)
+
+	srl	t1, t0, 23			# get exponent
+	and	t1, t1, 0xFF
+	and	t2, t0, 0x7FFFFF		# get fraction
+	srl	t0, t0, 31			# get sign
+
+	srl	t4, a0, 16-2
+	andi	t4, t4, 0x0078			# Even regs only
+	addu	t6, t6, t4
+
+	lw	t4, U_PCB_FPREGS+FRAME_FP0(t6)
+
+	srl	t5, t4, 23			# get exponent
+	and	t5, t5, 0xFF
+	and	t6, t4, 0x7FFFFF		# get fraction
+	srl	t4, t4, 31			# get sign
+	j	ra
+#else
 	srl	a3, a0, 12 - 2			# get FS field (even regs only)
 	and	a3, a3, 0xF << 2		# mask FS field
 	lw	a3, cmp_fs_s_tbl(a3)		# switch on register number
@@ -2953,6 +3236,7 @@ cmp_ft_s_done:
 	and	t6, t4, 0x7FFFFF		# get fraction
 	srl	t4, t4, 31			# get sign
 	j	ra
+#endif
 END(get_cmp_s)
 
 /*----------------------------------------------------------------------------
@@ -2975,6 +3259,36 @@ END(get_cmp_s)
  *----------------------------------------------------------------------------
  */
 LEAF(get_cmp_d)
+#ifdef SOFTFLOAT
+	la	t6, _C_LABEL(fpcurproc)
+	lw	t6, 0(t6)
+	lw	t6, P_ADDR(t6)			# get pointer to pcb for proc
+
+	srl	t1, a0, 11-2
+	andi	t1, t1, 0x0078			# Even regs only
+	addu	t0, t6, t1
+
+	lw	t3, U_PCB_FPREGS+FRAME_FP0(t0)
+	lw	t0, U_PCB_FPREGS+FRAME_FP0+4(t0)
+
+	srl	t1, t0, 20			# get exponent
+	and	t1, t1, 0x7FF
+	and	t2, t0, 0xFFFFF			# get fraction
+	srl	t0, t0, 31			# get sign
+
+	srl	t4, a0, 16-2
+	andi	t4, t4, 0x0078			# Even regs only
+	addu	t6, t6, t4
+
+	lw	t7, U_PCB_FPREGS+FRAME_FP0(t6)
+	lw	t4, U_PCB_FPREGS+FRAME_FP0+4(t6)
+
+	srl	t5, t4, 20			# get exponent
+	and	t5, t5, 0x7FF
+	and	t6, t4, 0xFFFFF			# get fraction
+	srl	t4, t4, 31			# get sign
+	j	ra
+#else
 	srl	a3, a0, 12 - 2			# get FS field (even regs only)
 	and	a3, a3, 0xF << 2		# mask FS field
 	lw	a3, cmp_fs_d_tbl(a3)		# switch on register number
@@ -3163,6 +3477,7 @@ cmp_ft_d_done:
 	and	t6, t4, 0xFFFFF			# get fraction
 	srl	t4, t4, 31			# get sign
 	j	ra
+#endif
 END(get_cmp_d)
 
 /*----------------------------------------------------------------------------
@@ -3194,6 +3509,18 @@ LEAF(set_fd_s)
 	or	t2, t2, t0
 	or	t2, t2, t1
 XLEAF(set_fd_word)
+#ifdef SOFTFLOAT
+	la	t0, _C_LABEL(fpcurproc)
+	lw	t0, 0(t0)
+	lw	t0, P_ADDR(t0)			# get pointer to pcb for proc
+
+	srl	t1, a0, 6-2
+	andi	t1, t1, 0x0078			# Even regs only
+	addu	t0, t0, t1
+
+	sw	t2, U_PCB_FPREGS+FRAME_FP0(t0)
+	j	ra
+#else
 	srl	a3, a0, 7 - 2			# get FD field (even regs only)
 	and	a3, a3, 0xF << 2		# mask FT field
 	lw	a3, set_fd_s_tbl(a3)		# switch on register number
@@ -3267,6 +3594,7 @@ set_fd_s_f28:
 set_fd_s_f30:
 	mtc1	t2, $f30
 	j	ra
+#endif
 END(set_fd_s)
 
 /*----------------------------------------------------------------------------
@@ -3285,6 +3613,24 @@ END(set_fd_s)
  *----------------------------------------------------------------------------
  */
 LEAF(set_fd_d)
+#ifdef SOFTFLOAT
+	sll	t0, t0, 31			# set sign
+	sll	t1, t1, 20			# set exponent
+	or	t0, t0, t1
+	or	t0, t0, t2			# set fraction
+
+	la	t2, _C_LABEL(fpcurproc)
+	lw	t2, 0(t2)
+	lw	t2, P_ADDR(t2)			# get pointer to pcb for proc
+
+	srl	t1, a0, 6-2
+	andi	t1, t1, 0x0078			# Even regs only
+	addu	t2, t2, t1
+
+	sw	t3, U_PCB_FPREGS+FRAME_FP0(t2)
+	sw	t0, U_PCB_FPREGS+FRAME_FP0+4(t2)
+	j	ra
+#else
 	sll	t0, t0, 31			# set sign
 	sll	t1, t1, 20			# set exponent
 	or	t0, t0, t1
@@ -3378,6 +3724,7 @@ set_fd_d_f30:
 	mtc1	t3, $f30
 	mtc1	t0, $f31
 	j	ra
+#endif
 END(set_fd_d)
 
 /*----------------------------------------------------------------------------
@@ -3605,3 +3952,696 @@ LEAF(renorm_ft_d)
 	sll	t7, t7, t9
 	j	ra
 END(renorm_ft_d)
+
+#ifdef SOFTFLOAT
+/*
+ * Emulate branch delay slot CPU instruction.
+ * Enter from BC1x emulation.
+ * These instructions are not implemented and causes SIGILL.
+ *  jump/branch
+ *  COP0
+ *  64bit operation
+ *  trap/syscall/break
+ */
+LEAF(bcemul_delay_slot)
+	srl	t0, a0, 26-2
+	andi	t0, t0, 0x00FC
+	lw	t0, bcemul_optbl(t0)
+	j	t0
+
+bcemul_special:
+	sll	t0, a0, 2
+	andi	t0, t0, 0x00FC
+	lw	t0, bcemul_specialtbl(t0)
+	j	t0
+
+	.rdata
+bcemul_optbl:
+	.word	bcemul_special		# 0
+	.word	bcemul_ill		# 1
+	.word	bcemul_ill		# 2
+	.word	bcemul_ill		# 3
+	.word	bcemul_ill		# 4
+	.word	bcemul_ill		# 5
+	.word	bcemul_ill		# 6
+	.word	bcemul_ill		# 7
+	.word	bcemul_addi		# 8
+	.word	bcemul_addiu		# 9
+	.word	bcemul_slti		# 10
+	.word	bcemul_sltiu		# 11
+	.word	bcemul_andi		# 12
+	.word	bcemul_ori		# 13
+	.word	bcemul_xori		# 14
+	.word	bcemul_lui		# 15
+	.word	bcemul_ill		# 16
+	.word	_C_LABEL(MachEmulateFP)	# 17
+	.word	bcemul_ill		# 18
+	.word	bcemul_ill		# 19
+	.word	bcemul_ill		# 20
+	.word	bcemul_ill		# 21
+	.word	bcemul_ill		# 22
+	.word	bcemul_ill		# 23
+	.word	bcemul_ill		# 24
+	.word	bcemul_ill		# 25
+	.word	bcemul_ill		# 26
+	.word	bcemul_ill		# 27
+	.word	bcemul_ill		# 28
+	.word	bcemul_ill		# 29
+	.word	bcemul_ill		# 30
+	.word	bcemul_ill		# 31
+	.word	_C_LABEL(bcemul_lb)	# 32
+	.word	_C_LABEL(bcemul_lh)	# 33
+	.word	_C_LABEL(bcemul_lwl)	# 34
+	.word	_C_LABEL(bcemul_lw)	# 35
+	.word	_C_LABEL(bcemul_lbu)	# 36
+	.word	_C_LABEL(bcemul_lhu)	# 37
+	.word	_C_LABEL(bcemul_lwr)	# 38
+	.word	bcemul_ill		# 39
+	.word	_C_LABEL(bcemul_sb)	# 40
+	.word	_C_LABEL(bcemul_sh)	# 41
+	.word	_C_LABEL(bcemul_swl)	# 42
+	.word	_C_LABEL(bcemul_sw)	# 43
+	.word	bcemul_ill		# 44
+	.word	bcemul_ill		# 45
+	.word	_C_LABEL(bcemul_swr)	# 46
+	.word	bcemul_ill		# 47
+	.word	bcemul_ill		# 48
+	.word	_C_LABEL(MachEmulateLWC1) # 49
+	.word	bcemul_ill		# 50
+	.word	bcemul_ill		# 51
+	.word	bcemul_ill		# 52
+	.word	_C_LABEL(MachEmulateLDC1) # 53
+	.word	bcemul_ill		# 54
+	.word	bcemul_ill		# 55
+	.word	bcemul_ill		# 56
+	.word	_C_LABEL(MachEmulateSWC1) # 57
+	.word	bcemul_ill		# 58
+	.word	bcemul_ill		# 59
+	.word	bcemul_ill		# 60
+	.word	_C_LABEL(MachEmulateSDC1) # 61
+	.word	bcemul_ill		# 62
+	.word	bcemul_ill		# 63
+
+bcemul_specialtbl:
+	.word	bcemul_sll		# 0
+	.word	bcemul_ill		# 1
+	.word	bcemul_srl		# 2
+	.word	bcemul_sra		# 3
+	.word	bcemul_sllv		# 4
+	.word	bcemul_ill		# 5
+	.word	bcemul_srlv		# 6
+	.word	bcemul_srav		# 7
+	.word	bcemul_ill		# 8
+	.word	bcemul_ill		# 9
+	.word	bcemul_ill		# 10
+	.word	bcemul_ill		# 11
+	.word	bcemul_ill		# 12
+	.word	bcemul_ill		# 13
+	.word	bcemul_ill		# 14
+	.word	bcemul_sync		# 15
+	.word	bcemul_mfhi		# 16
+	.word	bcemul_mthi		# 17
+	.word	bcemul_mflo		# 18
+	.word	bcemul_mtlo		# 19
+	.word	bcemul_ill		# 20
+	.word	bcemul_ill		# 21
+	.word	bcemul_ill		# 22
+	.word	bcemul_ill		# 23
+	.word	bcemul_mult		# 24
+	.word	bcemul_multu		# 25
+	.word	bcemul_div		# 26
+	.word	bcemul_divu		# 27
+	.word	bcemul_ill		# 28
+	.word	bcemul_ill		# 29
+	.word	bcemul_ill		# 30
+	.word	bcemul_ill		# 31
+	.word	bcemul_add		# 32
+	.word	bcemul_addu		# 33
+	.word	bcemul_sub		# 34
+	.word	bcemul_subu		# 35
+	.word	bcemul_and		# 36
+	.word	bcemul_or		# 37
+	.word	bcemul_xor		# 38
+	.word	bcemul_nor		# 39
+	.word	bcemul_ill		# 40
+	.word	bcemul_ill		# 41
+	.word	bcemul_slt		# 42
+	.word	bcemul_sltu		# 43
+	.word	bcemul_ill		# 44
+	.word	bcemul_ill		# 45
+	.word	bcemul_ill		# 46
+	.word	bcemul_ill		# 47
+	.word	bcemul_ill		# 48
+	.word	bcemul_ill		# 49
+	.word	bcemul_ill		# 50
+	.word	bcemul_ill		# 51
+	.word	bcemul_ill		# 52
+	.word	bcemul_ill		# 53
+	.word	bcemul_ill		# 54
+	.word	bcemul_ill		# 55
+	.word	bcemul_ill		# 56
+	.word	bcemul_ill		# 57
+	.word	bcemul_ill		# 58
+	.word	bcemul_ill		# 59
+	.word	bcemul_ill		# 60
+	.word	bcemul_ill		# 61
+	.word	bcemul_ill		# 62
+	.word	bcemul_ill		# 63
+
+	.text
+
+bcemul_addi:
+	srl	t0, a0, 21-2		# rs
+	srl	t1, a0, 16-2		# rt
+	andi	t0, t0, 0x007C
+	andi	t1, t1, 0x007C
+	addu	t0, a1, t0
+	addu	t1, a1, t1
+	sll	t2, a0, 16
+	sra	t2, t2, 16
+	lw	v0, FRAME_ZERO(t0)
+	addu	t0, v0, t2
+
+	/* Overflow check */
+	xor	t2, v0, t2
+	srl	t2, t2, 31
+	bne	t2, zero, addiok
+
+	xor	v0, v0, t0
+	srl	v0, v0, 31
+	beq	v0, zero, addiok
+	
+	li	v0, SIGFPE
+	j	ra
+
+addiok:
+	sw	t0, FRAME_ZERO(t1)
+	move	v0, zero
+	j	ra
+
+bcemul_addiu:
+	srl	t0, a0, 21-2		# rs
+	srl	t1, a0, 16-2		# rt
+	andi	t0, t0, 0x007C
+	andi	t1, t1, 0x007C
+	addu	t0, a1, t0
+	addu	t1, a1, t1
+	sll	t2, a0, 16
+	sra	t2, t2, 16
+	lw	v0, FRAME_ZERO(t0)
+	addu	v0, v0, t2
+	sw	v0, FRAME_ZERO(t1)
+	move	v0, zero
+	j	ra
+
+bcemul_slti:
+	srl	t0, a0, 21-2		# rs
+	srl	t1, a0, 16-2		# rt
+	andi	t0, t0, 0x007C
+	andi	t1, t1, 0x007C
+	addu	t0, a1, t0
+	addu	t1, a1, t1
+	sll	t2, a0, 16
+	sra	t2, t2, 16
+	lw	v0, FRAME_ZERO(t0)
+	slt	v0, v0, t2
+	sw	v0, FRAME_ZERO(t1)
+	move	v0, zero
+	j	ra
+
+bcemul_sltiu:
+	srl	t0, a0, 21-2		# rs
+	srl	t1, a0, 16-2		# rt
+	andi	t0, t0, 0x007C
+	andi	t1, t1, 0x007C
+	addu	t0, a1, t0
+	addu	t1, a1, t1
+	sll	t2, a0, 16
+	sra	t2, t2, 16
+	lw	v0, FRAME_ZERO(t0)
+	sltu	v0, v0, t2
+	sw	v0, FRAME_ZERO(t1)
+	move	v0, zero
+	j	ra
+
+bcemul_andi:
+	srl	t0, a0, 21-2		# rs
+	srl	t1, a0, 16-2		# rt
+	andi	t0, t0, 0x007C
+	andi	t1, t1, 0x007C
+	addu	t0, a1, t0
+	addu	t1, a1, t1
+	andi	t2, a0, 0xFFFF
+	lw	v0, FRAME_ZERO(t0)
+	and	v0, v0, t2
+	sw	v0, FRAME_ZERO(t1)
+	move	v0, zero
+	j	ra
+
+bcemul_ori:
+	srl	t0, a0, 21-2		# rs
+	srl	t1, a0, 16-2		# rt
+	andi	t0, t0, 0x007C
+	andi	t1, t1, 0x007C
+	addu	t0, a1, t0
+	addu	t1, a1, t1
+	andi	t2, a0, 0xFFFF
+	lw	v0, FRAME_ZERO(t0)
+	or	v0, v0, t2
+	sw	v0, FRAME_ZERO(t1)
+	move	v0, zero
+	j	ra
+
+bcemul_xori:
+	srl	t0, a0, 21-2		# rs
+	srl	t1, a0, 16-2		# rt
+	andi	t0, t0, 0x007C
+	andi	t1, t1, 0x007C
+	addu	t0, a1, t0
+	addu	t1, a1, t1
+	andi	t2, a0, 0xFFFF
+	lw	v0, FRAME_ZERO(t0)
+	xor	v0, v0, t2
+	sw	v0, FRAME_ZERO(t1)
+	move	v0, zero
+	j	ra
+
+bcemul_lui:
+	srl	t0, a0, 16-2		# rt
+	andi	t0, t0, 0x007C
+	addu	t0, a1, t0
+	sll	v0, a0, 16
+	sw	v0, FRAME_ZERO(t0)
+	move	v0, zero
+	j	ra
+
+bcemul_sll:
+	srl	t0, a0, 16-2		# rt
+	srl	t1, a0, 11-2		# rd
+	srl	t2, a0, 6		# sa
+	andi	t0, t0, 0x007C
+	andi	t1, t1, 0x007C
+	andi	t2, t2, 0x001F
+	addu	t0, a1, t0
+	addu	t1, a1, t1
+	lw	v0, FRAME_ZERO(t0)
+	sllv	v0, v0, t2
+	sw	v0, FRAME_ZERO(t1)
+	move	v0, zero
+	j	ra
+
+bcemul_srl:
+	srl	t0, a0, 16-2		# rt
+	srl	t1, a0, 11-2		# rd
+	srl	t2, a0, 6		# sa
+	andi	t0, t0, 0x007C
+	andi	t1, t1, 0x007C
+	andi	t2, t2, 0x001F
+	addu	t0, a1, t0
+	addu	t1, a1, t1
+	lw	v0, FRAME_ZERO(t0)
+	srlv	v0, v0, t2
+	sw	v0, FRAME_ZERO(t1)
+	move	v0, zero
+	j	ra
+
+bcemul_sra:
+	srl	t0, a0, 16-2		# rt
+	srl	t1, a0, 11-2		# rd
+	srl	t2, a0, 6		# sa
+	andi	t0, t0, 0x007C
+	andi	t1, t1, 0x007C
+	andi	t2, t2, 0x001F
+	addu	t0, a1, t0
+	addu	t1, a1, t1
+	lw	v0, FRAME_ZERO(t0)
+	srav	v0, v0, t2
+	sw	v0, FRAME_ZERO(t1)
+	move	v0, zero
+	j	ra
+
+bcemul_sllv:
+	srl	t0, a0, 21-2		# rs
+	srl	t1, a0, 16-2		# rt
+	srl	t2, a0, 11-2		# rd
+	andi	t0, t0, 0x007C
+	andi	t1, t1, 0x007C
+	andi	t2, t2, 0x007C
+	addu	t0, a1, t0
+	addu	t1, a1, t1
+	addu	t2, a1, t2
+	lw	v0, FRAME_ZERO(t0)
+	lw	v1, FRAME_ZERO(t1)
+	sllv	v0, v1, v0
+	sw	v0, FRAME_ZERO(t2)
+	move	v0, zero
+	j	ra
+
+bcemul_srlv:
+	srl	t0, a0, 21-2		# rs
+	srl	t1, a0, 16-2		# rt
+	srl	t2, a0, 11-2		# rd
+	andi	t0, t0, 0x007C
+	andi	t1, t1, 0x007C
+	andi	t2, t2, 0x007C
+	addu	t0, a1, t0
+	addu	t1, a1, t1
+	addu	t2, a1, t2
+	lw	v0, FRAME_ZERO(t0)
+	lw	v1, FRAME_ZERO(t1)
+	srlv	v0, v1, v0
+	sw	v0, FRAME_ZERO(t2)
+	move	v0, zero
+	j	ra
+
+bcemul_srav:
+	srl	t0, a0, 21-2		# rs
+	srl	t1, a0, 16-2		# rt
+	srl	t2, a0, 11-2		# rd
+	andi	t0, t0, 0x007C
+	andi	t1, t1, 0x007C
+	andi	t2, t2, 0x007C
+	addu	t0, a1, t0
+	addu	t1, a1, t1
+	addu	t2, a1, t2
+	lw	v0, FRAME_ZERO(t0)
+	lw	v1, FRAME_ZERO(t1)
+	srav	v0, v1, v0
+	sw	v0, FRAME_ZERO(t2)
+	move	v0, zero
+	j	ra
+
+bcemul_sync:
+	move	v0, zero
+	j	ra
+
+bcemul_mfhi:
+	srl	t0, a0, 11-2		# rd
+	andi	t0, t0, 0x007C
+	addu	t0, a1, t0
+	lw	v0, FRAME_MULHI(a1)
+	sw	v0, FRAME_ZERO(t0)
+	move	v0, zero
+	j	ra
+
+bcemul_mthi:
+	srl	t0, a0, 21-2		# rs
+	andi	t0, t0, 0x007C
+	addu	t0, a1, t0
+	lw	v0, FRAME_ZERO(t0)
+	sw	v0, FRAME_MULHI(a1)
+	move	v0, zero
+	j	ra
+
+bcemul_mflo:
+	srl	t0, a0, 11-2		# rd
+	andi	t0, t0, 0x007C
+	addu	t0, a1, t0
+	lw	v0, FRAME_MULLO(a1)
+	sw	v0, FRAME_ZERO(t0)
+	move	v0, zero
+	j	ra
+
+bcemul_mtlo:
+	srl	t0, a0, 21-2		# rs
+	andi	t0, t0, 0x007C
+	addu	t0, a1, t0
+	lw	v0, FRAME_ZERO(t0)
+	sw	v0, FRAME_MULLO(a1)
+	move	v0, zero
+	j	ra
+
+bcemul_mult:
+	srl	t0, a0, 21-2		# rs
+	srl	t1, a0, 16-2		# rt
+	andi	t0, t0, 0x007C
+	andi	t1, t1, 0x007C
+	addu	t0, a1, t0
+	addu	t1, a1, t1
+	lw	v0, FRAME_ZERO(t0)
+	lw	v1, FRAME_ZERO(t1)
+	mult	v0, v1
+	mflo	v0
+	mfhi	v1
+	sw	v0, FRAME_MULLO(a1)
+	sw	v1, FRAME_MULHI(a1)
+	move	v0, zero
+	j	ra
+
+bcemul_multu:
+	srl	t0, a0, 21-2		# rs
+	srl	t1, a0, 16-2		# rt
+	andi	t0, t0, 0x007C
+	andi	t1, t1, 0x007C
+	addu	t0, a1, t0
+	addu	t1, a1, t1
+	lw	v0, FRAME_ZERO(t0)
+	lw	v1, FRAME_ZERO(t1)
+	multu	v0, v1
+	mflo	v0
+	mfhi	v1
+	sw	v0, FRAME_MULLO(a1)
+	sw	v1, FRAME_MULHI(a1)
+	move	v0, zero
+	j	ra
+
+bcemul_div:
+	srl	t0, a0, 21-2		# rs
+	srl	t1, a0, 16-2		# rt
+	andi	t0, t0, 0x007C
+	andi	t1, t1, 0x007C
+	addu	t0, a1, t0
+	addu	t1, a1, t1
+	lw	v0, FRAME_ZERO(t0)
+	lw	v1, FRAME_ZERO(t1)
+	div	v0, v1
+	mflo	v0
+	mfhi	v1
+	sw	v0, FRAME_MULLO(a1)
+	sw	v1, FRAME_MULHI(a1)
+	move	v0, zero
+	j	ra
+
+bcemul_divu:
+	srl	t0, a0, 21-2		# rs
+	srl	t1, a0, 16-2		# rt
+	andi	t0, t0, 0x007C
+	andi	t1, t1, 0x007C
+	addu	t0, a1, t0
+	addu	t1, a1, t1
+	lw	v0, FRAME_ZERO(t0)
+	lw	v1, FRAME_ZERO(t1)
+	divu	v0, v1
+	mflo	v0
+	mfhi	v1
+	sw	v0, FRAME_MULLO(a1)
+	sw	v1, FRAME_MULHI(a1)
+	move	v0, zero
+	j	ra
+
+bcemul_add:
+	srl	t0, a0, 21-2		# rs
+	srl	t1, a0, 16-2		# rt
+	srl	t2, a0, 11-2		# rd
+	andi	t0, t0, 0x007C
+	andi	t1, t1, 0x007C
+	andi	t2, t2, 0x007C
+	addu	t0, a1, t0
+	addu	t1, a1, t1
+	addu	t2, a1, t2
+	lw	v0, FRAME_ZERO(t0)
+	lw	v1, FRAME_ZERO(t1)
+	addu	t0, v0, v1
+
+	/* Overflow check */
+	xor	v1, v0, v1
+	srl	v1, v1, 31
+	bne	v1, zero, addok
+
+	xor	v0, v0, t0
+	srl	v0, v0, 31
+	beq	v0, zero, addok
+	
+	li	v0, SIGFPE
+	j	ra
+
+addok:
+	sw	t0, FRAME_ZERO(t2)
+	move	v0, zero
+	j	ra
+
+bcemul_addu:
+	srl	t0, a0, 21-2		# rs
+	srl	t1, a0, 16-2		# rt
+	srl	t2, a0, 11-2		# rd
+	andi	t0, t0, 0x007C
+	andi	t1, t1, 0x007C
+	andi	t2, t2, 0x007C
+	addu	t0, a1, t0
+	addu	t1, a1, t1
+	addu	t2, a1, t2
+	lw	v0, FRAME_ZERO(t0)
+	lw	v1, FRAME_ZERO(t1)
+	addu	v0, v0, v1
+	sw	v0, FRAME_ZERO(t2)
+	move	v0, zero
+	j	ra
+
+bcemul_sub:
+	srl	t0, a0, 21-2		# rs
+	srl	t1, a0, 16-2		# rt
+	srl	t2, a0, 11-2		# rd
+	andi	t0, t0, 0x007C
+	andi	t1, t1, 0x007C
+	andi	t2, t2, 0x007C
+	addu	t0, a1, t0
+	addu	t1, a1, t1
+	addu	t2, a1, t2
+	lw	v0, FRAME_ZERO(t0)
+	lw	v1, FRAME_ZERO(t1)
+	subu	t0, v0, v1
+
+	/* Overflow check */
+	xor	v1, v0, v1
+	srl	v1, v1, 31
+	beq	v1, zero, subok
+
+	xor	v0, v0, t0
+	srl	v0, v0, 31
+	beq	v0, zero, subok
+	
+	li	v0, SIGFPE
+	j	ra
+
+subok:
+	sw	t0, FRAME_ZERO(t2)
+	move	v0, zero
+	j	ra
+
+bcemul_subu:
+	srl	t0, a0, 21-2		# rs
+	srl	t1, a0, 16-2		# rt
+	srl	t2, a0, 11-2		# rd
+	andi	t0, t0, 0x007C
+	andi	t1, t1, 0x007C
+	andi	t2, t2, 0x007C
+	addu	t0, a1, t0
+	addu	t1, a1, t1
+	addu	t2, a1, t2
+	lw	v0, FRAME_ZERO(t0)
+	lw	v1, FRAME_ZERO(t1)
+	subu	v0, v0, v1
+	sw	v0, FRAME_ZERO(t2)
+	move	v0, zero
+	j	ra
+
+bcemul_and:
+	srl	t0, a0, 21-2		# rs
+	srl	t1, a0, 16-2		# rt
+	srl	t2, a0, 11-2		# rd
+	andi	t0, t0, 0x007C
+	andi	t1, t1, 0x007C
+	andi	t2, t2, 0x007C
+	addu	t0, a1, t0
+	addu	t1, a1, t1
+	addu	t2, a1, t2
+	lw	v0, FRAME_ZERO(t0)
+	lw	v1, FRAME_ZERO(t1)
+	and	v0, v0, v1
+	sw	v0, FRAME_ZERO(t2)
+	move	v0, zero
+	j	ra
+
+bcemul_or:
+	srl	t0, a0, 21-2		# rs
+	srl	t1, a0, 16-2		# rt
+	srl	t2, a0, 11-2		# rd
+	andi	t0, t0, 0x007C
+	andi	t1, t1, 0x007C
+	andi	t2, t2, 0x007C
+	addu	t0, a1, t0
+	addu	t1, a1, t1
+	addu	t2, a1, t2
+	lw	v0, FRAME_ZERO(t0)
+	lw	v1, FRAME_ZERO(t1)
+	or	v0, v0, v1
+	sw	v0, FRAME_ZERO(t2)
+	move	v0, zero
+	j	ra
+
+bcemul_xor:
+	srl	t0, a0, 21-2		# rs
+	srl	t1, a0, 16-2		# rt
+	srl	t2, a0, 11-2		# rd
+	andi	t0, t0, 0x007C
+	andi	t1, t1, 0x007C
+	andi	t2, t2, 0x007C
+	addu	t0, a1, t0
+	addu	t1, a1, t1
+	addu	t2, a1, t2
+	lw	v0, FRAME_ZERO(t0)
+	lw	v1, FRAME_ZERO(t1)
+	xor	v0, v0, v1
+	sw	v0, FRAME_ZERO(t2)
+	move	v0, zero
+	j	ra
+
+bcemul_nor:
+	srl	t0, a0, 21-2		# rs
+	srl	t1, a0, 16-2		# rt
+	srl	t2, a0, 11-2		# rd
+	andi	t0, t0, 0x007C
+	andi	t1, t1, 0x007C
+	andi	t2, t2, 0x007C
+	addu	t0, a1, t0
+	addu	t1, a1, t1
+	addu	t2, a1, t2
+	lw	v0, FRAME_ZERO(t0)
+	lw	v1, FRAME_ZERO(t1)
+	nor	v0, v0, v1
+	sw	v0, FRAME_ZERO(t2)
+	move	v0, zero
+	j	ra
+
+bcemul_slt:
+	srl	t0, a0, 21-2		# rs
+	srl	t1, a0, 16-2		# rt
+	srl	t2, a0, 11-2		# rd
+	andi	t0, t0, 0x007C
+	andi	t1, t1, 0x007C
+	andi	t2, t2, 0x007C
+	addu	t0, a1, t0
+	addu	t1, a1, t1
+	addu	t2, a1, t2
+	lw	v0, FRAME_ZERO(t0)
+	lw	v1, FRAME_ZERO(t1)
+	slt	v0, v0, v1
+	sw	v0, FRAME_ZERO(t2)
+	move	v0, zero
+	j	ra
+
+bcemul_sltu:
+	srl	t0, a0, 21-2		# rs
+	srl	t1, a0, 16-2		# rt
+	srl	t2, a0, 11-2		# rd
+	andi	t0, t0, 0x007C
+	andi	t1, t1, 0x007C
+	andi	t2, t2, 0x007C
+	addu	t0, a1, t0
+	addu	t1, a1, t1
+	addu	t2, a1, t2
+	lw	v0, FRAME_ZERO(t0)
+	lw	v1, FRAME_ZERO(t1)
+	sltu	v0, v0, v1
+	sw	v0, FRAME_ZERO(t2)
+	move	v0, zero
+	j	ra
+
+bcemul_ill:
+
+	move	a2, a0				# code = instruction
+	li	v0, SIGILL
+	j	ra
+END(bcemul_delay_slot)
+
+#endif
