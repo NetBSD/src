@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.15 2003/05/21 17:57:21 kristerw Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.16 2003/05/28 22:17:20 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.15 2003/05/21 17:57:21 kristerw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.16 2003/05/28 22:17:20 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -278,7 +278,7 @@ sa_yield(struct lwp *l)
 	struct lwp *l2;
 	struct proc *p = l->l_proc;
 	struct sadata *sa = p->p_sa;
-	int s;
+	int s, ret;
 	
 	/*
 	 * If we're the last running LWP, stick around to recieve
@@ -299,15 +299,18 @@ sa_yield(struct lwp *l)
 		 * going to sleep. It might make more sense for this to
 		 * be handled inside of tsleep....
 		 */
-		if (p->p_userret == NULL) {
+		ret = 0;
+		while  ((ret == 0) && (p->p_userret == NULL)) {
 			sa->sa_idle = l;
 			l->l_flag &= ~L_SA;
-			tsleep((caddr_t) l, PUSER | PCATCH, "sawait", 0);
+			ret = tsleep((caddr_t) l, PUSER | PCATCH, "sawait", 0);
 			l->l_flag |= L_SA;
 			sa->sa_idle = NULL;
 			sa->sa_vp = l;
 		}
 		splx(s);
+		DPRINTFN(1,("sa_yield(%d.%d) returned\n",
+		    p->p_pid, l->l_lid));
 	} else {
 		DPRINTFN(1,("sa_yield(%d.%d) stepping aside\n", p->p_pid, l->l_lid));
 	
