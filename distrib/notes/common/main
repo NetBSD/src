@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.143 2001/11/15 12:16:37 someya Exp $
+.\"	$NetBSD: main,v 1.144 2001/11/23 16:30:54 bjh21 Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1466,6 +1466,7 @@ them, and would like to mentioned, tell us!)
 .It Ta Leo Weppelman Ta Mt leo@netbsd.org Ta Sy atari
 .It Ta Nathan Williams Ta Mt nathanw@netbsd.org Ta Sy sun3
 .It Ta Steve Woodford Ta Mt scw@netbsd.org Ta Sy mvme68k
+.It Ta Reinoud Zandijk Ta Mt reinoud@netbsd.org Ta Sy acorn32
 .It Ta Ta
 .br_ne 1i
 .It-span Em "The NetBSD \*V Release Engineering team:"
@@ -1654,7 +1655,6 @@ them, and would like to mentioned, tell us!)
 .It Ta Colin Wood Ta Mt ender@netbsd.org
 .It Ta YAMAMOTO Takashi Ta Mt yamt@netbsd.org
 .It Ta Yuji Yamano Ta Mt yyamano@netbsd.org
-.It Ta Reinoud Zandijk Ta Mt reinoud@netbsd.org
 .
 .El
 .
