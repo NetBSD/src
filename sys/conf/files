@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.400 2000/11/08 19:20:33 ad Exp $
+#	$NetBSD: files,v 1.401 2000/11/08 22:41:58 eeh Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -701,6 +701,7 @@ file isofs/cd9660/cd9660_rrip.c		cd9660
 file isofs/cd9660/cd9660_util.c		cd9660
 file isofs/cd9660/cd9660_vfsops.c	cd9660
 file isofs/cd9660/cd9660_vnops.c	cd9660
+file kern/cnmagic.c
 file kern/exec_aout.c			exec_aout
 file kern/exec_conf.c
 file kern/exec_ecoff.c			exec_ecoff
