@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2000/06/19 14:39:24 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.18.2.1 2001/04/21 18:37:29 he Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -23,9 +23,9 @@ VND_DEV?=	/dev/${VND}a
 VND_RDEV?=	/dev/r${VND}a
 VND_CRDEV?=	/dev/r${VND}c
 
-# These are all the parameters for the miniroot: (10MB)
+# These are all the parameters for the miniroot: (12MB)
 DISKTYPE=	miniroot
-SIZE=		10
+SIZE=		12
 # bigendian, old format, minfree, opt, b/i, cpg
 NEWFSARGS= -B be -O -m 0 -o space -i 8192 -c 16
 
@@ -36,7 +36,7 @@ all: ${IMAGE}.gz
 ${IMAGE}.gz: ${TREE} ${LISTS} install.sub
 	dd if=/dev/zero of=${IMAGE} bs=1024k count=${SIZE}
 	vnconfig -t ${DISKTYPE} -v -c ${VND} ${IMAGE}
-	disklabel -rw ${VND} ${DISKTYPE}
+	disklabel -f ${.CURDIR}/disktab -rw ${VND} ${DISKTYPE}
 	newfs ${NEWFSARGS} ${VND_RDEV}
 	mount ${VND_DEV} ${MOUNT_POINT}
 	mtree -def ${TREE} -p ${MOUNT_POINT}/ -u
@@ -56,6 +56,11 @@ ${IMAGE}.gz: ${TREE} ${LISTS} install.sub
 	vnconfig -u ${VND}
 	gzip -9 -c ${IMAGE} > ${IMAGE}.tmp
 	-mv -f ${IMAGE}.tmp ${IMAGE}.gz
+
+unconfig:
+	-umount -f ${MOUNT_POINT}
+	-vnconfig -u ${VND_DEV}
+	-/bin/rm -f ${IMAGE} ${IMAGE}.tmp
 
 # Do not delete this if I change my mind and kill make...
 .PRECIOUS: ${IMAGE}.gz
