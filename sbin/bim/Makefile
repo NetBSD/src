@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.3 1997/06/23 04:23:48 mrg Exp $
+#	$NetBSD: Makefile,v 1.4 1997/08/06 19:06:56 phil Exp $
 
 .if ${MACHINE} == "pc532"
 PROG   = bim
 SRCS   = bim.c command.c
 .endif
 
-NOMAN  = noman
+MAN  = bim.8
 
 .include <bsd.prog.mk>
 
