@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.54 2000/05/22 15:38:47 matt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.55 2000/05/23 19:55:55 matt Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -170,11 +170,19 @@ static int jmfr(char *, struct device *, int);
 static int booted_qe(struct device *, void *);
 static int booted_le(struct device *, void *);
 static int booted_ze(struct device *, void *);
-static int booted_sd(struct device *, void *);
-static int booted_rl(struct device *, void *);
-static int booted_ra(struct device *, void *);
-static int booted_hp(struct device *, void *);
 static int booted_de(struct device *, void *);
+#if NSD > 0 || NCD > 0
+static int booted_sd(struct device *, void *);
+#endif
+#if NRL > 0
+static int booted_rl(struct device *, void *);
+#endif
+#if NRA
+static int booted_ra(struct device *, void *);
+#endif
+#if NHP
+static int booted_hp(struct device *, void *);
+#endif
 
 int (*devreg[])(struct device *, void *) = {
 	booted_qe,
