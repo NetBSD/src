@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)trsp.8	6.4 (Berkeley) 3/16/91
-.\"	$Id: trsp.8,v 1.5 1997/01/19 10:52:10 tls Exp $
+.\"	$NetBSD: trsp.8,v 1.6 1997/02/07 06:53:17 mikel Exp $
 .\"
 .Dd March 16, 1991
 .Dt TRSP 8
@@ -41,15 +41,15 @@
 .Sh SYNOPSIS
 .Nm trsp
 .Op Fl a
-.Op Fl s
-.Op Fl t
 .Op Fl j
 .Op Fl p Ar hex-address
+.Op Fl s
+.Op Fl t
 .Oo
 .Ar system Op Ar core
 .Oc
 .Sh DESCRIPTION
-.Xr Trpt
+.Nm Trsp
 interrogates the buffer of
 .Tn SPP
 trace records created
@@ -78,16 +78,16 @@ Just give a list of the protocol control block
 addresses for which there are trace records.
 .It Fl p
 Show only trace records associated with the protocol
-control block at the given address,
+control block at the given address
 .Ar hex-address .
 .It Fl s
-in addition to the normal output,
+In addition to the normal output,
 print a detailed description of the packet
 sequencing information.
 .It Fl t
 in addition to the normal output,
 print the values for all timers at each
-point in the trace,
+point in the trace.
 .El
 .Pp
 The recommended use of
@@ -124,13 +124,15 @@ default system namelist
 .El
 .Sh SEE ALSO
 .Xr netstat 1 ,
-.Xr setsockopt 2
+.Xr setsockopt 2 ,
+.Xr trpt 8
 .Sh DIAGNOSTICS
 .Bl -tag -width Ds
 .It Sy no namelist
 When the system image doesn't
 contain the proper symbols to find the trace buffer;
 others which should be self explanatory.
+.El
 .Sh BUGS
 Should also print the data for each input or output,
 but this is not saved in the trace record.
