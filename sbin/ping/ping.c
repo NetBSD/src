@@ -1,4 +1,4 @@
-/*	$NetBSD: ping.c,v 1.41 1998/10/25 13:51:33 christos Exp $	*/
+/*	$NetBSD: ping.c,v 1.42 1998/10/26 04:45:35 enami Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -62,7 +62,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping.c,v 1.41 1998/10/25 13:51:33 christos Exp $");
+__RCSID("$NetBSD: ping.c,v 1.42 1998/10/26 04:45:35 enami Exp $");
 #endif
 
 #include <stdio.h>
@@ -1652,11 +1652,12 @@ gethost(const char *arg,
 static void
 usage(void)
 {
+
 	(void)fprintf(stderr, "Usage: \n"
-		      "%s [-dDfnoqrvRLP] [-c count] [-s size] [-l preload]"
-		      " [-p pattern]\n"
-		      "     [-i interval] [-i maxwait] [-t tos] [-T ttl]"
-		      " [-I addr] [-g gateway] host\n",
-		      __progname);
+	    "%s [-dDfLnoPqQrRv] [-c count] [-g gateway] [-h host]"
+	    " [-i interval] [-I addr]\n"
+	    "     [-l preload] [-p pattern] [-s size] [-t tos] [-T ttl]"
+	    " [-w maxwait] host\n",
+	    __progname);
 	exit(1);
 }
