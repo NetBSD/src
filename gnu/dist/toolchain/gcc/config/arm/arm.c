@@ -5397,6 +5397,18 @@ output_return_instruction (operand, really_return, reverse)
   return "";
 }
 
+/* Generate a sequence of insns that will generate the correct return
+   address mask depending on the physical architecture that the program
+   is running on.  */
+rtx
+arm_gen_return_addr_mask ()
+{
+  rtx reg = gen_reg_rtx (Pmode);
+
+  emit_insn (gen_return_addr_mask (reg));
+  return reg;
+}
+
 /* Return nonzero if optimizing and the current function is volatile.
    Such functions never return, and many memory cycles can be saved
    by not storing register values that will never be needed again.
