@@ -1,3 +1,5 @@
+/*	$NetBSD: cname.h,v 1.3 1995/02/27 13:28:33 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
  * Copyright (c) 1992, 1993, 1994

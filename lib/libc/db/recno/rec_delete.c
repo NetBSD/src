@@ -1,3 +1,5 @@
+/*	$NetBSD: rec_delete.c,v 1.7 1995/02/27 13:24:48 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1990, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -35,7 +37,11 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
+#if 0
 static char sccsid[] = "@(#)rec_delete.c	8.6 (Berkeley) 6/4/94";
+#else
+static char rcsid[] = "$NetBSD: rec_delete.c,v 1.7 1995/02/27 13:24:48 cgd Exp $";
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
