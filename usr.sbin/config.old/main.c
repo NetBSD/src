@@ -143,7 +143,7 @@ usage:		fputs("usage: config [-gkp] sysname\n", stderr);
 	{
 	char xxx[80];
 
-	(void) sprintf(xxx, "../../%s/include", machinename);
+	(void) sprintf(xxx, "../../include", machinename);
 	(void) symlink(xxx, path("machine"));
 	}
 	makefile();			/* build Makefile */
@@ -296,7 +296,7 @@ path(file)
 {
 	register char *cp;
 
-#define	CDIR	"../../compile/"
+#define	CDIR	"../compile/"
 	cp = malloc((unsigned int)(sizeof(CDIR) + strlen(PREFIX) +
 	    (file ? strlen(file) : 0) + 2));
 	(void) strcpy(cp, CDIR);
