@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_commpage.c,v 1.4 2004/07/03 22:17:18 manu Exp $ */
+/*	$NetBSD: darwin_commpage.c,v 1.5 2004/07/04 15:27:26 christos Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_commpage.c,v 1.4 2004/07/03 22:17:18 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_commpage.c,v 1.5 2004/07/04 15:27:26 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -53,7 +53,9 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_commpage.c,v 1.4 2004/07/03 22:17:18 manu Exp
 
 #include <compat/darwin/darwin_commpage.h>
 
+#ifdef __powerpc__
 #include "opt_altivec.h"
+#endif
 
 static struct uvm_object *darwin_commpage_uao = NULL;
 
@@ -116,7 +118,7 @@ darwin_commpage_map(p)
 		return -1;
 	}
 
-#ifdef DEBIG_DARWIN
+#ifdef DEBUG_DARWIN
 	printf("mapped darwin_commpage at 0x%08lx\n", (long)pvaddr);
 #endif
 
