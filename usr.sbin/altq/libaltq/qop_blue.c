@@ -1,5 +1,5 @@
-/*	$NetBSD: qop_blue.c,v 1.3 2001/08/16 07:48:13 itojun Exp $	*/
-/*	$KAME: qop_blue.c,v 1.3 2000/10/18 09:15:18 kjc Exp $	*/
+/*	$NetBSD: qop_blue.c,v 1.4 2001/08/22 08:52:37 itojun Exp $	*/
+/*	$KAME: qop_blue.c,v 1.5 2001/08/16 10:39:13 kjc Exp $	*/
 /*
  * Copyright (C) 1999-2000
  *	Sony Computer Science Laboratories, Inc.  All rights reserved.
@@ -125,7 +125,7 @@ blue_interface_parser(const char *ifname, int argc, char **argv)
 		} else if (EQUAL(*argv, "ecn")) {
 			flags |= BLUEF_ECN;
 		} else {
-			LOG(LOG_ERR, 0, "Unknown keyword '%s'\n", argv);
+			LOG(LOG_ERR, 0, "Unknown keyword '%s'", argv);
 			return (0);
 		}
 		argc--; argv++;
@@ -154,7 +154,7 @@ qcmd_blue_add_if(const char *ifname, u_int bandwidth, int max_pmark,
 	error = qop_blue_add_if(NULL, ifname, bandwidth, max_pmark, hold_time,
 				qlimit, pkttime, flags);
 	if (error != 0)
-		LOG(LOG_ERR, errno, "%s: can't add blue on interface '%s'\n",
+		LOG(LOG_ERR, errno, "%s: can't add blue on interface '%s'",
 		    qoperror(error), ifname);
 	return (error);
 }
@@ -204,7 +204,7 @@ blue_attach(struct ifinfo *ifinfo)
 	if (blue_fd < 0 &&
 	    (blue_fd = open(BLUE_DEVICE, O_RDWR)) < 0 &&
 	    (blue_fd = open_module(BLUE_DEVICE, O_RDWR)) < 0) {
-		LOG(LOG_ERR, errno, "BLUE open\n");
+		LOG(LOG_ERR, errno, "BLUE open");
 		return (QOPERR_SYSCALL);
 	}
 
@@ -228,7 +228,7 @@ blue_attach(struct ifinfo *ifinfo)
 		return (QOPERR_SYSCALL);
 
 #if 1
-	LOG(LOG_INFO, 0, "blue attached to %s\n", iface.blue_ifname);
+	LOG(LOG_INFO, 0, "blue attached to %s", iface.blue_ifname);
 #endif
 	return (0);
 }

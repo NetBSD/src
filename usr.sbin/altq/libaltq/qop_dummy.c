@@ -1,5 +1,5 @@
-/*	$NetBSD: qop_dummy.c,v 1.4 2001/08/16 07:48:13 itojun Exp $	*/
-/*	$KAME: qop_dummy.c,v 1.2 2000/10/18 09:15:19 kjc Exp $	*/
+/*	$NetBSD: qop_dummy.c,v 1.5 2001/08/22 08:52:37 itojun Exp $	*/
+/*	$KAME: qop_dummy.c,v 1.4 2001/08/16 10:39:14 kjc Exp $	*/
 /*
  * Copyright (C) 1999-2000
  *	Sony Computer Science Laboratories, Inc.  All rights reserved.
@@ -89,7 +89,7 @@ null_interface_parser(const char *ifname, int argc, char **argv)
 			if (argc > 0)
 				tbrsize = atobytes(*argv);
 		} else {
-			LOG(LOG_ERR, 0, "Unknown keyword '%s'\n", argv);
+			LOG(LOG_ERR, 0, "Unknown keyword '%s'", argv);
 			return (0);
 		}
 		argc--; argv++;
@@ -112,7 +112,7 @@ null_class_parser(const char *ifname, const char *class_name,
 		  const char *parent_name, int argc, char **argv)
 {
 	LOG(LOG_ERR, 0,
-	    "class cannot be defined without a queueing discipline in %s, line %d\n",
+	    "class cannot be defined without a queueing discipline in %s, line %d",
 	    altqconfigfile, line_no);
 	return (0);
 }
@@ -127,7 +127,7 @@ qcmd_nop_add_if(const char *ifname)
 	
 	error = qop_add_if(NULL, ifname, 0, &nop_qdisc, NULL);
 	if (error != 0)
-		LOG(LOG_ERR, errno, "%s: can't add nop on interface '%s'\n",
+		LOG(LOG_ERR, errno, "%s: can't add nop on interface '%s'",
 		    qoperror(error), ifname);
 	return (error);
 }

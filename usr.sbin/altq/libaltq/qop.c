@@ -1,5 +1,5 @@
-/*	$NetBSD: qop.c,v 1.3 2001/08/16 07:48:13 itojun Exp $	*/
-/*	$KAME: qop.c,v 1.8 2001/08/16 04:31:41 kjc Exp $	*/
+/*	$NetBSD: qop.c,v 1.4 2001/08/22 08:52:37 itojun Exp $	*/
+/*	$KAME: qop.c,v 1.10 2001/08/16 10:39:13 kjc Exp $	*/
 /*
  * Copyright (C) 1999-2000
  *	Sony Computer Science Laboratories, Inc.  All rights reserved.
@@ -108,13 +108,12 @@ qcmd_init(void)
 
 	/* read config file and execute commands */
 	error = qcmd_config();
-
-	if (error == 0)
-		error = qcmd_enableall();
-
 	if (error != 0)
-		LOG(LOG_ERR, errno, "%s: qcmd_init failed.\n",
-		    qoperror(error));
+		return (error);
+
+	error = qcmd_enableall();
+	if (error != 0)
+		LOG(LOG_ERR, errno, "%s: qcmd_init failed", qoperror(error));
 	return (error);
 }
 
@@ -131,10 +130,10 @@ qcmd_enable(const char *ifname)
 		error = qop_enable(ifinfo);
 
 	if (error == 0) {
-		LOG(LOG_INFO, 0, "%s enabled on interface %s (mtu:%d)\n",
+		LOG(LOG_INFO, 0, "%s enabled on interface %s (mtu:%d)",
 		    ifinfo->qdisc->qname, ifname, ifinfo->ifmtu);
 	} else
-		LOG(LOG_ERR, errno, "%s: enable failed!\n", qoperror(error));
+		LOG(LOG_ERR, errno, "%s: enable failed!", qoperror(error));
 	return (error);
 }
 
@@ -151,7 +150,7 @@ qcmd_disable(const char *ifname)
 		error = qop_disable(ifinfo);
 
 	if (error != 0)
-		LOG(LOG_ERR, errno, "%s: disable failed!\n", qoperror(error));
+		LOG(LOG_ERR, errno, "%s: disable failed!", qoperror(error));
 	return (error);
 }
 
@@ -164,7 +163,7 @@ qcmd_enableall()
 	LIST_FOREACH(ifinfo, &qop_iflist, next) {
 		if ((error = qop_enable(ifinfo)) != 0)
 			return (error);
-		LOG(LOG_INFO, 0, "%s enabled on interface %s (mtu:%d)\n",
+		LOG(LOG_INFO, 0, "%s enabled on interface %s (mtu:%d)",
 		    ifinfo->qdisc->qname, ifinfo->ifname, ifinfo->ifmtu);
 	}
 	return (0);
@@ -195,7 +194,7 @@ qcmd_clear(const char *ifname)
 	if (error == 0)
 		error = qop_clear(ifinfo);
 	if (error != 0)
-		LOG(LOG_ERR, errno, "%s: clear failed!\n", qoperror(error));
+		LOG(LOG_ERR, errno, "%s: clear failed!", qoperror(error));
 	return (error);
 }
 
@@ -231,7 +230,7 @@ qcmd_delete_class(const char *ifname, const char *clname)
 	if (error == 0)
 		error = qop_delete_class(clinfo);
 	if (error != 0)
-		LOG(LOG_ERR, errno, "%s: delete_class failed\n",
+		LOG(LOG_ERR, errno, "%s: delete_class failed",
 		    qoperror(error));
 	return (error);
 }
@@ -262,10 +261,10 @@ qcmd_add_filter(const char *ifname, const char *clname, const char *flname,
 		error = qop_add_filter(NULL, clinfo, flname, fltr, NULL);
 
 	if (error != 0)
-		LOG(LOG_ERR, errno, "%s: add filter failed!\n",
+		LOG(LOG_ERR, errno, "%s: add filter failed!",
 		    qoperror(error));
 	else if (IsDebug(DEBUG_ALTQ)) {
-		LOG(LOG_DEBUG, 0, "%s: add a filter %s to class %s\n",
+		LOG(LOG_DEBUG, 0, "%s: add a filter %s to class %s",
 		    ifname, flname ? flname : "(null)",
 		    clname ? clname : "(null)");
 		print_filter(fltr);
@@ -302,7 +301,7 @@ qcmd_delete_filter(const char *ifname, const char *clname, const char *flname)
 	if (error == 0)
 		error = qop_delete_filter(fltrinfo);
 	if (error != 0)
-		LOG(LOG_ERR, errno, "%s: delete filter failed!\n",
+		LOG(LOG_ERR, errno, "%s: delete filter failed!",
 		    qoperror(error));
 	return (error);
 }
@@ -335,7 +334,7 @@ qop_add_if(struct ifinfo **rp, const char *ifname, u_int bandwidth,
 	int error;
 
 	if (ifname2ifinfo(ifname) != NULL) {
-		LOG(LOG_ERR, 0, "qop_add_if: %s already exists!\n", ifname);
+		LOG(LOG_ERR, 0, "qop_add_if: %s already exists!", ifname);
 		return (QOPERR_BADIF);
 	}
 
@@ -885,7 +884,7 @@ tbr_install(const char *ifname)
 	if (req.tb_prof.rate != 0) {
 		LOG(LOG_INFO, 0,
 		    "tbr is already installed on %s,\n"
-		    "  using the current setting (rate:%.2fM  size:%.2fK).\n",
+		    "  using the current setting (rate:%.2fM  size:%.2fK).",
 		    info->ifname,
 		    (double)req.tb_prof.rate/1000000.0,
 		    (double)req.tb_prof.depth/1024.0);
@@ -917,7 +916,7 @@ tbr_install(const char *ifname)
 	if (ioctl(fd, ALTQTBRSET, &req) < 0)
 		err(1, "ALTQTBRSET for interface %s", req.ifname);
 	LOG(LOG_INFO, 0,
-	    "tbr installed on %s (rate:%.2fM  size:%.2fK)\n",
+	    "tbr installed on %s (rate:%.2fM  size:%.2fK)",
 	    info->ifname,
 	    (double)info->tb_prof.rate/1000000.0,
 	    (double)info->tb_prof.depth/1024.0);
@@ -961,15 +960,15 @@ print_filter(const struct flow_filter *filt)
 
 		in_addr.s_addr = filt->ff_flow.fi_dst.s_addr;
 		LOG(LOG_DEBUG, 0,
-		    " Filter Dest Addr: %s (mask %#x) Port: %d\n",
+		    " Filter Dest Addr: %s (mask %#x) Port: %d",
 		    inet_ntoa(in_addr), ntoh32(filt->ff_mask.mask_dst.s_addr),
 		    ntoh16(filt->ff_flow.fi_dport));
 		in_addr.s_addr = filt->ff_flow.fi_src.s_addr;
 		LOG(LOG_DEBUG, 0,
-		    "        Src Addr: %s (mask %#x) Port: %d\n",
+		    "        Src Addr: %s (mask %#x) Port: %d",
 		    inet_ntoa(in_addr), ntoh32(filt->ff_mask.mask_src.s_addr),
 		    ntoh16(filt->ff_flow.fi_sport));
-		LOG(LOG_DEBUG, 0, "        Protocol: %d TOS %#x (mask %#x)\n",
+		LOG(LOG_DEBUG, 0, "        Protocol: %d TOS %#x (mask %#x)",
 		    filt->ff_flow.fi_proto, filt->ff_flow.fi_tos,
 		    filt->ff_mask.mask_tos);
 	}
@@ -991,7 +990,7 @@ print_filter(const struct flow_filter *filt)
 		    inet_ntop(AF_INET6, &sfilt6->ff_mask6.mask6_src,
 			      str2, sizeof(str2)),
 		    ntoh16(sfilt6->ff_flow6.fi6_sport));
-		LOG(LOG_DEBUG, 0, "        Protocol: %d TCLASS %#x (mask %#x)\n",
+		LOG(LOG_DEBUG, 0, "        Protocol: %d TCLASS %#x (mask %#x)",
 		    sfilt6->ff_flow6.fi6_proto, sfilt6->ff_flow6.fi6_tclass,
 		    sfilt6->ff_mask6.mask6_tclass);
 	}
@@ -1056,7 +1055,7 @@ add_filter_rule(struct ifinfo *ifinfo, struct fltrinfo *fltrinfo,
 		case FILT_SUPERSET:
 			if (front->dontwarn == 0 && back->dontwarn == 0)
 				LOG(LOG_ERR, 0,
-				    "filters for \"%s\" at line %d and for \"%s\" at line %d has an order problem!\n", 
+				    "filters for \"%s\" at line %d and for \"%s\" at line %d has an order problem!", 
 				    front->clinfo->clname, front->line_no,
 				    back->clinfo->clname, back->line_no);
 
@@ -1074,7 +1073,7 @@ add_filter_rule(struct ifinfo *ifinfo, struct fltrinfo *fltrinfo,
 				break;
 			if (front->dontwarn == 0 && back->dontwarn == 0)
 				LOG(LOG_WARNING, 0,
-				    "warning: filter for \"%s\" at line %d could override filter for \"%s\" at line %d\n", 
+				    "warning: filter for \"%s\" at line %d could override filter for \"%s\" at line %d", 
 				    front->clinfo->clname, front->line_no,
 				    back->clinfo->clname, back->line_no);
 			break;
@@ -1354,7 +1353,7 @@ qop_red_set_defaults(int th_min, int th_max, int inv_pmax)
 	int fd;
 
 	if ((fd = open(RED_DEVICE, O_RDWR)) < 0) {
-		LOG(LOG_ERR, errno, "RED open\n");
+		LOG(LOG_ERR, errno, "RED open");
 		return (QOPERR_SYSCALL);
 	}
 
@@ -1363,7 +1362,7 @@ qop_red_set_defaults(int th_min, int th_max, int inv_pmax)
 	params.inv_pmax = inv_pmax;
 
 	if (ioctl(fd, RED_SETDEFAULTS, &params) < 0) {
-		LOG(LOG_ERR, errno, "RED_SETDEFAULTS\n");
+		LOG(LOG_ERR, errno, "RED_SETDEFAULTS");
 		return (QOPERR_SYSCALL);
 	}
 
@@ -1380,16 +1379,16 @@ qop_rio_set_defaults(struct redparams *params)
 	for (i = 1; i < RIO_NDROPPREC; i++) {
 		if (params[i].th_max > params[i-1].th_min)
 			LOG(LOG_WARNING, 0,
-			    "warning: overlap found in RIO thresholds\n");
+			    "warning: overlap found in RIO thresholds");
 	}
 
 	if ((fd = open(RIO_DEVICE, O_RDWR)) < 0) {
-		LOG(LOG_ERR, errno, "RIO open\n");
+		LOG(LOG_ERR, errno, "RIO open");
 		return (QOPERR_SYSCALL);
 	}
 
 	if (ioctl(fd, RIO_SETDEFAULTS, params) < 0) {
-		LOG(LOG_ERR, errno, "RIO_SETDEFAULTS\n");
+		LOG(LOG_ERR, errno, "RIO_SETDEFAULTS");
 		return (QOPERR_SYSCALL);
 	}
 
@@ -1399,6 +1398,7 @@ qop_rio_set_defaults(struct redparams *params)
 
 /*
  * try to load and open KLD module
+ * (also check the altq device file)
  */
 int
 open_module(const char *devname, int flags)
@@ -1406,8 +1406,16 @@ open_module(const char *devname, int flags)
 #if defined(__FreeBSD__) && (__FreeBSD_version > 300000)
 	char modname[64], filename[MAXPATHLEN], *cp;
 	int fd;
+#endif
 	struct stat sbuf;
 
+	/* check if the altq device exists */
+	if (stat(devname, &sbuf) < 0) {
+		LOG(LOG_ERR, errno, "can't access %s!", devname);
+		return (-1);
+	}
+
+#if defined(__FreeBSD__) && (__FreeBSD_version > 300000)
 	/* turn discipline name into module name */
 	strlcpy(modname, "altq_", sizeof(modname));
 	if ((cp = strrchr(devname, '/')) == NULL)
@@ -1422,12 +1430,12 @@ open_module(const char *devname, int flags)
 	}
 
 	if (kldload(modname) < 0) {
-		LOG(LOG_ERR, errno, "kldload %s failed!\n", modname);
+		LOG(LOG_ERR, errno, "kldload %s failed!", modname);
 		return (-1);
 	}
 
 	/* successfully loaded, open the device */
-	LOG(LOG_INFO, 0, "kld module %s loaded\n", modname);
+	LOG(LOG_INFO, 0, "kld module %s loaded", modname);
 	fd = open(devname, flags);
 	return (fd);
 #else
