@@ -1,4 +1,4 @@
-#	$NetBSD: ALPHA,v 1.18 1996/06/13 19:18:16 cgd Exp $
+#	$NetBSD: ALPHA,v 1.19 1996/07/14 21:14:46 cgd Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
@@ -121,15 +121,18 @@ pci*	at	lca?
 pci*	at	ppb?
 
 # PCI devices
-de*	at	pci?
-le*	at	pci?
-ncr*	at	pci?
-pceb*	at	pci?
-pcivga*	at	pci?
-ppb*	at	pci?
-sio*	at	pci?
-tga*	at	pci?
+#ahc*	at	pci? dev ? function ?		# AHA-28xx SCSI (NOT 64-BIT)
+de*	at	pci? dev ? function ?		# 21x4[012]-based Ethernet
+en*	at	pci? dev ? function ?		# ENI PCI ATM (untested)
+ep*	at	pci? dev ? function ?		# 3COM 3c59x (untested)
 fpa*	at	pci? dev ? function ?		# DEC DEFPA FDDI cards
+le*	at	pci? dev ? function ?		# PCI LANCE Ethernet (untested)
+ncr*	at	pci? dev ? function ?		# NCR 53c8xx SCSI
+pceb*	at	pci? dev ? function ?		# Intel PCI-EISA brige
+pcivga*	at	pci? dev ? function ?		# PCI VGA graphics
+ppb*	at	pci? dev ? function ?		# PCI-PCI bridges
+sio*	at	pci? dev ? function ?		# Intel PCI-ISA bridge
+tga*	at	pci? dev ? function ?		# DEC ZLXp-E[123] graphics
 
 # ISA/EISA bus support
 isa*	at	pceb?
