@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_statistics.h	7.2 (Berkeley) 4/21/91
- *	$Id: vm_statistics.h,v 1.3 1993/05/20 03:59:46 cgd Exp $
+ *	$Id: vm_statistics.h,v 1.4 1993/07/29 21:45:43 jtc Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -91,7 +91,7 @@ typedef struct vm_statistics	vm_statistics_data_t;
 
 #ifdef	KERNEL
 vm_statistics_data_t	vm_stat;
-#endif	KERNEL
+#endif	/* KERNEL */
 
 /*
  *	Each machine dependent implementation is expected to

@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)disklabel.h	7.19 (Berkeley) 5/7/91
- *	$Id: disklabel.h,v 1.5 1993/05/22 09:00:32 deraadt Exp $
+ *	$Id: disklabel.h,v 1.6 1993/07/29 21:45:22 jtc Exp $
  */
 
 #ifndef _SYS_DISKLABEL_H_
@@ -164,7 +164,7 @@ struct disklabel {
 		u_short	p_cpg;		/* filesystem cylinders per group */
 	} d_partitions[MAXPARTITIONS];	/* actually may be more */
 };
-#else LOCORE
+#else /* LOCORE */
 	/*
 	 * offsets for asm boot files.
 	 */
@@ -175,7 +175,7 @@ struct disklabel {
 	.set	d_secpercyl,56
 	.set	d_secperunit,60
 	.set	d_end_,276		/* size of disk label */
-#endif LOCORE
+#endif /* LOCORE */
 
 /* d_type values: */
 #define	DTYPE_SMD		1		/* SMD, XSMD; VAX hp/up */
@@ -376,7 +376,7 @@ int cpu_writedisklabel __P((int, int (*)(), struct disklabel *,
 	struct cpu_disklabel *));
 
 #endif
-#endif LOCORE
+#endif /* LOCORE */
 
 #if !defined(KERNEL) && !defined(LOCORE)
 

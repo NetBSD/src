@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_page.h	7.3 (Berkeley) 4/21/91
- *	$Id: vm_page.h,v 1.3 1993/05/20 03:59:38 cgd Exp $
+ *	$Id: vm_page.h,v 1.4 1993/07/29 21:45:41 jtc Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -116,7 +116,7 @@ struct vm_page {
 			:0;		/* (force to 'long' boundary) */
 #ifdef	ns32000
 	int		pad;		/* extra space for ns32000 bit ops */
-#endif	ns32000
+#endif	/* ns32000 */
 	boolean_t	clean;		/* page has not been modified */
 	unsigned int
 	/* boolean_t */	busy:1,		/* page is in transit (O) */
@@ -144,9 +144,9 @@ typedef struct vm_page	*vm_page_t;
 		     (mem->active && mem->inactive) \
 		    ) panic("vm_page_check: not valid!"); \
 		}
-#else	VM_PAGE_DEBUG
+#else	/* VM_PAGE_DEBUG */
 #define	VM_PAGE_CHECK(mem)
-#endif	VM_PAGE_DEBUG
+#endif	/* VM_PAGE_DEBUG */
 
 #ifdef	KERNEL
 /*
@@ -258,6 +258,6 @@ void		vm_set_page_size();
 #define	vm_page_unlock_queues()	simple_unlock(&vm_page_queue_lock)
 
 #define vm_page_set_modified(m)	{ (m)->clean = FALSE; }
-#endif	KERNEL
+#endif	/* KERNEL */
 
-#endif /* !_VM_VM_PAGE_H_ */
+#endif	/* !_VM_VM_PAGE_H_ */

@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)lock.h	7.3 (Berkeley) 4/21/91
- *	$Id: lock.h,v 1.3 1993/05/20 03:59:12 cgd Exp $
+ *	$Id: lock.h,v 1.4 1993/07/29 21:45:38 jtc Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -102,7 +102,7 @@ struct lock {
 			:0;
 
 	simple_lock_data_t	interlock;
-#else	vax
+#else	/* vax */
 #ifdef	ns32000
 	/*
 	 *	Efficient ns32000 implementation --
@@ -116,7 +116,7 @@ struct lock {
 			can_sleep:1,
 			:0;
 
-#else	ns32000
+#else	/* ns32000 */
 	/*	Only the "interlock" field is used for hardware exclusion;
 	 *	other fields are modified with normal instructions after
 	 *	acquiring the interlock bit.
@@ -144,7 +144,7 @@ void		simple_lock_init();
 void		simple_lock();
 void		simple_unlock();
 boolean_t	simple_lock_try();
-#else	NCPUS > 1
+#else	/* NCPUS > 1 */
 /*
  *	No multiprocessor locking is necessary.
  */
