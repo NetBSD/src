@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.40 2001/01/14 02:38:15 mrg Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.41 2001/06/06 23:12:50 scottr Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -392,6 +392,7 @@ serveur:	%s
 répertoire:	%s
 utilisateur:	%s
 mot de passe:	%s
+proxy:		%s
 }
 
 message host
@@ -405,6 +406,9 @@ message user
 
 message passwd
 {mot de passe}
+
+message proxy
+{proxy}
 
 message email
 { adresse e-mail }

@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.66 2001/04/15 11:08:51 itojun Exp $	*/
+/*	$NetBSD: defs.h,v 1.67 2001/06/06 23:12:49 scottr Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -212,6 +212,7 @@ EXTERN char ftp_dir[STRSIZE]  INIT(STRING(FTP_DIR));
 EXTERN char ftp_prefix[STRSIZE] INIT("/binary/sets");
 EXTERN char ftp_user[STRSIZE] INIT("ftp");
 EXTERN char ftp_pass[STRSIZE] INIT("");
+EXTERN char ftp_proxy[STRSIZE] INIT("");
 
 EXTERN char nfs_host[STRSIZE] INIT("");
 EXTERN char nfs_dir[STRSIZE] INIT("");
