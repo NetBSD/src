@@ -1,7 +1,7 @@
-/*	$NetBSD: cardslot.c,v 1.6 2000/01/24 18:34:44 thorpej Exp $	*/
+/*	$NetBSD: cardslot.c,v 1.7 2000/01/26 09:04:59 haya Exp $	*/
 
 /*
- * Copyright (c) 1999
+ * Copyright (c) 1999 and 2000
  *       HAYAKAWA Koichi.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -55,7 +55,6 @@
 #if defined CARDSLOT_DEBUG
 #define STATIC
 #define DPRINTF(a) printf a
-#define DDELAY(x) delay((x)*1000*1000)
 #else
 #define STATIC static
 #define DPRINTF(a)
@@ -426,11 +425,10 @@ cardslot_event_thread(arg)
     case CARDSLOT_EVENT_REMOVAL_CB:
       if (CARDSLOT_CARDTYPE(sc->sc_status) == CARDSLOT_STATUS_CARD_CB) {
 	/* CardBus card has not been inserted. */
-#if notyet
 	if (CARDSLOT_WORK(sc->sc_status) == CARDSLOT_STATUS_WORKING) {
 	  cardbus_detach_card(sc->sc_cb_softc);
+	  CARDSLOT_SET_WORK(sc->sc_status, CARDSLOT_STATUS_NOTWORK);
 	}
-#endif
 	CARDSLOT_SET_CARDTYPE(sc->sc_status, CARDSLOT_STATUS_CARD_NONE);
       } else if (CARDSLOT_CARDTYPE(sc->sc_status) != CARDSLOT_STATUS_CARD_16) {
 	/* Unknown card... */

@@ -1,7 +1,7 @@
-/*	$NetBSD: cardbus.c,v 1.17 2000/01/13 10:27:31 joda Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.18 2000/01/26 09:04:59 haya Exp $	*/
 
 /*
- * Copyright (c) 1997, 1998 and 1999
+ * Copyright (c) 1997, 1998, 1999 and 2000
  *     HAYAKAWA Koichi.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -58,7 +58,6 @@
 #if defined CARDBUS_DEBUG
 #define STATIC
 #define DPRINTF(a) printf a
-#define DDELAY(x) delay((x)*1000*1000)
 #else
 #define STATIC static
 #define DPRINTF(a)
@@ -624,6 +623,45 @@ cardbusprint(aux, pnp)
 
 
 /*
+ * void cardbus_detach_card(struct cardbus_softc *sc)
+ *
+ *    This function detaches the card on the slot: detach device data
+ *    structure and turns off the power.
+ *
+ *    This function must not be called under interrupt context.
+ */
+void
+cardbus_detach_card(sc)
+     struct cardbus_softc *sc;
+{
+    struct cardbus_devfunc *ct, *ct_next, **prev_next;
+
+    prev_next = &(sc->sc_funcs->ct_next);
+
+    for (ct = sc->sc_funcs; ct != NULL; ct = ct_next) {
+	struct device *fndev = ct->ct_device;
+	ct_next = ct->ct_next;
+
+	printf("%s: detaching %s\n", sc->sc_dev.dv_xname, fndev->dv_xname);
+	/* call device detach function */
+
+
+	if (0 != config_detach(fndev, 0)) {
+	    printf("%s: cannot detaching dev %s, function %d\n",
+		   sc->sc_dev.dv_xname, fndev->dv_xname, ct->ct_func);
+	    prev_next = &(ct->ct_next);
+	} else {
+	    sc->sc_poweron_func &= ~(1 << ct->ct_func);
+	    *prev_next = ct->ct_next;
+	    free(ct, M_DEVBUF);
+	}
+    }
+}
+
+
+
+
+/*
  * void *cardbus_intr_establish(cc, cf, irq, level, func, arg)
  *   Interrupt handler of pccard.
  *  args:
@@ -675,6 +713,7 @@ enable_function(sc, cdstatus, function)
      int cdstatus;
      int function;
 {
+
     if(sc->sc_poweron_func == 0) {
 	if (cdstatus & CARDBUS_3V_CARD) {
 	    sc->sc_cf->cardbus_power(sc->sc_cc, CARDBUS_VCC_3V);
@@ -689,6 +728,7 @@ disable_function(sc, function)
      struct cardbus_softc *sc; 
      int function;
 {
+
     sc->sc_poweron_func &= ~(1 << function);
     if(sc->sc_poweron_func == 0) {
 	/* power-off because no functions are enabled */
