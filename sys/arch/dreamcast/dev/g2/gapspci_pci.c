@@ -1,4 +1,4 @@
-/*	$NetBSD: gapspci_pci.c,v 1.6 2003/07/15 01:31:38 lukem Exp $	*/
+/*	$NetBSD: gapspci_pci.c,v 1.7 2005/02/19 15:37:35 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: gapspci_pci.c,v 1.6 2003/07/15 01:31:38 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gapspci_pci.c,v 1.7 2005/02/19 15:37:35 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,7 +116,7 @@ int
 gaps_bus_maxdevs(void *v, int bus)
 {
 
-	return (1);
+	return 1;
 }
 
 pcitag_t
@@ -124,9 +124,9 @@ gaps_make_tag(void *v, int bus, int dev, int func)
 {
 
 	if (bus == 0 && dev == 0 && func == 0)
-		return (GAPS_PCITAG_MAGIC);
+		return GAPS_PCITAG_MAGIC;
 
-	return (0);
+	return 0;
 }
 
 void
@@ -160,17 +160,17 @@ gaps_conf_read(void *v, pcitag_t tag, int reg)
 	struct gaps_softc *sc = v;
 
 	if (tag != GAPS_PCITAG_MAGIC)
-		return (-1);
+		return -1;
 
 	if (reg == (PCI_MAPREG_START + 4)) {
 		/*
 		 * We fake the BAR -- just return the physical address
 		 * to which the device is mapped.
 		 */
-		return (0x01001700);
+		return 0x01001700;
 	}
 
-	return (bus_space_read_4(sc->sc_memt, sc->sc_pci_memh, reg));
+	return bus_space_read_4(sc->sc_memt, sc->sc_pci_memh, reg);
 }
 
 void
@@ -193,7 +193,7 @@ gaps_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 
 	*ihp = SYSASIC_EVENT_EXT;
-	return (0);
+	return 0;
 }
 
 const char *
@@ -208,12 +208,12 @@ gaps_intr_establish(void *v, pci_intr_handle_t ih, int level,
     int (*func)(void *), void *arg)
 {
 
-	return (sysasic_intr_establish(ih, IPL_NET, func, arg));
+	return sysasic_intr_establish(ih, IPL_NET, func, arg);
 }
 
 void
 gaps_intr_disestablish(void *v, void *ih)
 {
 
-	return (sysasic_intr_disestablish(ih));
+	return sysasic_intr_disestablish(ih);
 }

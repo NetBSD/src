@@ -1,4 +1,4 @@
-/*	$NetBSD: gapspci_dma.c,v 1.8 2003/07/15 01:31:38 lukem Exp $	*/
+/*	$NetBSD: gapspci_dma.c,v 1.9 2005/02/19 15:37:35 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: gapspci_dma.c,v 1.8 2003/07/15 01:31:38 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gapspci_dma.c,v 1.9 2005/02/19 15:37:35 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h> 
@@ -160,7 +160,7 @@ gaps_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 	gmap = malloc(sizeof(*gmap), M_DMAMAP,
 	    (flags & BUS_DMA_NOWAIT) ? M_NOWAIT : M_WAITOK);
 	if (gmap == NULL)
-		return (ENOMEM);
+		return ENOMEM;
 
 	memset(gmap, 0, sizeof(*gmap));
 
@@ -183,7 +183,7 @@ gaps_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 		    (flags & BUS_DMA_NOWAIT) ? EX_NOWAIT : EX_WAITOK, &res);
 		if (error) {
 			free(gmap, M_DEVBUF);
-			return (error);
+			return error;
 		}
 
 		map->dm_segs[0].ds_addr = res;
@@ -198,7 +198,7 @@ gaps_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 
 	*dmamap = map;
 
-	return (0);
+	return 0;
 }
 
 void
@@ -234,16 +234,16 @@ gaps_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *addr,
 
 	/* XXX Don't support DMA to process space right now. */
 	if (p != NULL)
-		return (EINVAL);
+		return EINVAL;
 
 	if (size > map->_dm_size)
-		return (EINVAL);
+		return EINVAL;
 
 	error = extent_alloc(sc->sc_dma_ex, size, 1024 /* XXX */,
 	    map->_dm_boundary,
 	    (flags & BUS_DMA_NOWAIT) ? EX_NOWAIT : EX_WAITOK, &res);
 	if (error)
-		return (error);
+		return error;
 
 	map->dm_segs[0].ds_addr = res;
 	map->dm_segs[0].ds_len = size;
@@ -254,7 +254,7 @@ gaps_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *addr,
 	map->dm_mapsize = size;
 	map->dm_nsegs = 1;
 
-	return (0);
+	return 0;
 }
 
 int
@@ -281,13 +281,13 @@ gaps_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
 #endif
 
 	if (m0->m_pkthdr.len > map->_dm_size)
-		return (EINVAL);
+		return EINVAL;
 
 	error = extent_alloc(sc->sc_dma_ex, m0->m_pkthdr.len, 1024 /* XXX */,
 	    map->_dm_boundary,
 	    (flags & BUS_DMA_NOWAIT) ? EX_NOWAIT : EX_WAITOK, &res);
 	if (error)
-		return (error);
+		return error;
 
 	map->dm_segs[0].ds_addr = res;
 	map->dm_segs[0].ds_len = m0->m_pkthdr.len;
@@ -298,7 +298,7 @@ gaps_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
 	map->dm_mapsize = m0->m_pkthdr.len;
 	map->dm_nsegs = 1;
 
-	return (0);
+	return 0;
 }
 
 int
@@ -307,7 +307,7 @@ gaps_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
 {
 
 	printf("gaps_dmamap_load_uio: not implemented\n");
-	return (EINVAL);
+	return EINVAL;
 }
 
 int
@@ -316,7 +316,7 @@ gaps_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
 {
 
 	printf("gaps_dmamap_load_raw: not implemented\n");
-	return (EINVAL);
+	return EINVAL;
 }
 
 void
@@ -389,7 +389,7 @@ gaps_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 			bus_space_write_region_1(sc->sc_memt,
 			    sc->sc_dma_memh,
 			    dmaoff + offset,
-			    (u_int8_t *)gmap->gd_origbuf + offset, len);
+			    (uint8_t *)gmap->gd_origbuf + offset, len);
 		}
 
 		if (ops & BUS_DMASYNC_POSTREAD) {
@@ -399,7 +399,7 @@ gaps_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 			bus_space_read_region_1(sc->sc_memt,
 			    sc->sc_dma_memh,
 			    dmaoff + offset,
-			    (u_int8_t *)gmap->gd_origbuf + offset, len);
+			    (uint8_t *)gmap->gd_origbuf + offset, len);
 		}
 
 		/*
@@ -438,7 +438,7 @@ gaps_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 
 				bus_space_write_region_1(sc->sc_memt,
 				    sc->sc_dma_memh, dmaoff + offset,
-				    mtod(m, u_int8_t *) + moff, minlen);
+				    mtod(m, uint8_t *) + moff, minlen);
 
 				moff = 0;
 				len -= minlen;
@@ -468,7 +468,7 @@ gaps_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 
 				bus_space_read_region_1(sc->sc_memt,
 				    sc->sc_dma_memh, dmaoff + offset,
-				    mtod(m, u_int8_t *) + moff, minlen);
+				    mtod(m, uint8_t *) + moff, minlen);
 
 				moff = 0;
 				len -= minlen;
@@ -509,7 +509,7 @@ gaps_dmamem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 	error = uvm_pglistalloc(size, avail_start, avail_end - PAGE_SIZE,
 	    alignment, boundary, &mlist, nsegs, (flags & BUS_DMA_NOWAIT) == 0);
 	if (error)
-		return (error);
+		return error;
 
 	/*
 	 * Compute the location, size, and number of segments actually
@@ -535,7 +535,7 @@ gaps_dmamem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 
 	*rsegs = curseg + 1;
 
-	return (0);
+	return 0;
 }
 
 void
@@ -575,8 +575,8 @@ gaps_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 	 * TLB thrashing.
 	 */
 	if (nsegs == 1) {
-		*kvap = (caddr_t) SH3_PHYS_TO_P2SEG(segs[0].ds_addr);
-		return (0);
+		*kvap = (caddr_t)SH3_PHYS_TO_P2SEG(segs[0].ds_addr);
+		return 0;
 	}
 
 	size = round_page(size);
@@ -584,9 +584,9 @@ gaps_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 	va = uvm_km_valloc(kernel_map, size);
 
 	if (va == 0)
-		return (ENOMEM);
+		return ENOMEM;
 
-	*kvap = (caddr_t) va;
+	*kvap = (caddr_t)va;
 
 	for (curseg = 0; curseg < nsegs; curseg++) {
 		for (addr = segs[curseg].ds_addr;
@@ -600,7 +600,7 @@ gaps_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 	}
 	pmap_update(pmap_kernel());
 
-	return (0);
+	return 0;
 }
 
 void
@@ -615,8 +615,8 @@ gaps_dmamem_unmap(bus_dma_tag_t t, caddr_t kva, size_t size)
 	/*
 	 * Nothing to do if we mapped it with P2SEG.
 	 */
-	if (kva >= (caddr_t) SH3_P2SEG_BASE &&
-	    kva <= (caddr_t) SH3_P2SEG_END)
+	if (kva >= (caddr_t)SH3_P2SEG_BASE &&
+	    kva <= (caddr_t)SH3_P2SEG_END)
 		return;
 
 	size = round_page(size);
@@ -631,5 +631,5 @@ gaps_dmamem_mmap(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 {
 
 	/* Not implemented. */
-	return (-1);
+	return -1;
 }

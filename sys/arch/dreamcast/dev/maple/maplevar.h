@@ -1,4 +1,4 @@
-/*	$NetBSD: maplevar.h,v 1.7 2003/02/15 02:36:53 itohy Exp $	*/
+/*	$NetBSD: maplevar.h,v 1.8 2005/02/19 15:37:35 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@ struct maple_func {
 			    int /*len*/, int /*flags*/);
 	void 		*f_arg;
 
-	u_int32_t	f_work;		/* for periodic GETCOND and ping */
+	uint32_t	f_work;		/* for periodic GETCOND and ping */
 
 	/* periodic command request */
 	enum maple_periodic_stat {
@@ -115,9 +115,9 @@ struct maple_func {
 struct maple_unit {
 	int		port, subunit;
 	struct maple_func u_func[MAPLE_NFUNC];
-	u_int32_t	getcond_func_set;
+	uint32_t	getcond_func_set;
 	int		u_ping_func;	/* function used for ping */
-	u_int32_t	u_noping;	/* stop ping (bitmap of function) */
+	uint32_t	u_noping;	/* stop ping (bitmap of function) */
 #ifdef MAPLE_MEMCARD_PING_HACK
 	enum maple_ping_stat {
 		MAPLE_PING_NORMAL,	/* ping with GETCOND */
@@ -142,8 +142,8 @@ struct maple_unit {
 	SIMPLEQ_ENTRY(maple_unit)	u_dmaq;
 
 	/* start of each receive buffer */
-	u_int32_t	*u_rxbuf;
-  	u_int32_t	u_rxbuf_phys;
+	uint32_t	*u_rxbuf;
+  	uint32_t	u_rxbuf_phys;
 
 	/* for restarting command */
 	int		u_command;
@@ -184,11 +184,11 @@ struct maple_softc {
 
 	struct maple_unit sc_unit[MAPLE_PORTS][MAPLE_SUBUNITS];
 
-	u_int32_t *sc_txbuf;	/* start of allocated transmit buffer */
-	u_int32_t *sc_txpos;	/* current write position in tx buffer */
-	u_int32_t *sc_txlink;   /* start of last written frame */
+	uint32_t *sc_txbuf;	/* start of allocated transmit buffer */
+	uint32_t *sc_txpos;	/* current write position in tx buffer */
+	uint32_t *sc_txlink;	/* start of last written frame */
 
-	u_int32_t sc_txbuf_phys;	/* 29-bit physical address */
+	uint32_t sc_txbuf_phys;	/* 29-bit physical address */
 
 	void	*sc_intrhand;
 	int	sc_dmadone;		/* wchan */

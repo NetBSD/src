@@ -1,4 +1,4 @@
-/*	$NetBSD: mkbdvar.h,v 1.4 2002/11/15 13:30:21 itohy Exp $	*/
+/*	$NetBSD: mkbdvar.h,v 1.5 2005/02/19 15:37:35 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -33,10 +33,10 @@
  */
 
 struct mkbd_condition {
-	u_int32_t func_code;	/* function code (big endian) */
-	u_int8_t shift;
-	u_int8_t led;
-	u_int8_t key[6];
+	uint32_t func_code;	/* function code (big endian) */
+	uint8_t shift;
+	uint8_t led;
+	uint8_t key[6];
 };
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: maplereg.h,v 1.3 2002/03/25 18:59:40 uch Exp $	*/
+/*	$NetBSD: maplereg.h,v 1.4 2005/02/19 15:37:35 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -33,11 +33,11 @@
  */
 
 #define MAPLE_DMAADDR	(*(volatile paddr_t *)		0xa05f6c04)
-#define MAPLE_RESET2	(*(volatile u_int32_t *)	0xa05f6c10)
-#define MAPLE_ENABLE	(*(volatile u_int32_t *)	0xa05f6c14)
-#define MAPLE_STATE	(*(volatile u_int32_t *)	0xa05f6c18)
-#define MAPLE_SPEED	(*(volatile u_int32_t *)	0xa05f6c80)
-#define MAPLE_RESET	(*(volatile u_int32_t *)	0xa05f6c8c)
+#define MAPLE_RESET2	(*(volatile uint32_t *)		0xa05f6c10)
+#define MAPLE_ENABLE	(*(volatile uint32_t *)		0xa05f6c14)
+#define MAPLE_STATE	(*(volatile uint32_t *)		0xa05f6c18)
+#define MAPLE_SPEED	(*(volatile uint32_t *)		0xa05f6c80)
+#define MAPLE_RESET	(*(volatile uint32_t *)		0xa05f6c8c)
 
 #define RESET_MAGIC 0x6155404f
 
