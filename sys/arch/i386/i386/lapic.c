@@ -1,4 +1,4 @@
-/* $NetBSD: lapic.c,v 1.1.2.10 2000/08/12 16:14:09 sommerfeld Exp $ */
+/* $NetBSD: lapic.c,v 1.1.2.11 2000/08/18 03:26:44 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -425,6 +425,12 @@ i386_ipi(vec,target,dl)
 	int vec,target,dl;
 {
 	unsigned j;
+	int result;
+
+	for (j=100000;
+	     j > 0 && (i82489_readreg(LAPIC_ICRLO) & LAPIC_DLSTAT_BUSY);
+	     j--)
+		;
 
 	if ((target & LAPIC_DEST_MASK) == 0)
 		i82489_writereg(LAPIC_ICRHI, target << LAPIC_ID_SHIFT);
@@ -437,6 +443,8 @@ i386_ipi(vec,target,dl)
 	     j--)
 		;
 
-	return (i82489_readreg(LAPIC_ICRLO) & LAPIC_DLSTAT_BUSY)?EBUSY:0;
+	result = (i82489_readreg(LAPIC_ICRLO) & LAPIC_DLSTAT_BUSY) ? EBUSY : 0;
+		
+	return result;
 }
 
