@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.h,v 1.15 2001/05/25 04:06:11 chs Exp $	*/
+/*	$NetBSD: uvm_amap.h,v 1.16 2001/05/26 16:32:46 chs Exp $	*/
 
 /*
  *
@@ -158,7 +158,7 @@ void		amap_wipeout	/* remove all anons from amap */
  */
 
 struct vm_amap {
-	simple_lock_data_t am_l; /* simple lock [locks all vm_amap fields] */
+	struct simplelock am_l; /* simple lock [locks all vm_amap fields] */
 	int am_ref;		/* reference count */
 	int am_flags;		/* flags */
 	int am_maxslot;		/* max # of slots allocated */

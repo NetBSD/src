@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.21 2001/05/16 19:06:46 scw Exp $	*/
+/*	$NetBSD: pmap.h,v 1.22 2001/05/26 16:32:43 chs Exp $	*/
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -55,7 +55,7 @@ struct pmap {
 	st_entry_t		*pm_stpa;	/* 040: ST phys addr */
 	short			pm_sref;	/* segment table ref count */
 	short			pm_count;	/* pmap reference count */
-	simple_lock_data_t	pm_lock;	/* lock on pmap */
+	struct simplelock	pm_lock;	/* lock on pmap */
 	struct pmap_statistics	pm_stats;	/* pmap statistics */
 	long			pm_ptpages;	/* more stats: PT pages */
 };
