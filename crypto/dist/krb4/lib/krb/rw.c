@@ -34,11 +34,12 @@
 /* Almost all programs use these routines (implicitly) so it's a good
  * place to put the version string. */
 
+#define	__KRB4_VERSION
 #include "version.h"
 
 #include "krb_locl.h"
 
-RCSID("$Id: rw.c,v 1.1.1.1 2000/06/16 18:45:55 thorpej Exp $");
+RCSID("$Id: rw.c,v 1.1.1.1.2.1 2000/07/15 00:44:27 thorpej Exp $");
 
 int
 krb_get_int(void *f, u_int32_t *to, int size, int lsb)
