@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: makewhatis.sh,v 1.15 1998/05/23 13:42:25 tv Exp $
+#	$NetBSD: makewhatis.sh,v 1.16 1998/05/23 14:26:05 frueauf Exp $
 #
 # written by matthew green <mrg@eterna.com.au>, based on the
 # original by J.T. Conklin <jtc@netbsd.org> and Thorsten
@@ -35,6 +35,12 @@ find $MANDIR \( -type f -o -type l \) -name '*.[0-9]*' -ls | \
 egrep '\.[1-9]$' $LIST | xargs /usr/libexec/getNAME | \
 	sed -e 's/ [a-zA-Z0-9]* \\-/ -/' > $TMP
 
+egrep '\.[1-9].(gz|Z)$' $LIST | while read file
+do
+	gzip -fdc $file | nroff -man | \
+	sed -n -f $MKWHATIS;
+done >> $TMP
+
 egrep '\.0$' $LIST | while read file
 do
 	sed -n -f $MKWHATIS $file;
@@ -42,7 +48,7 @@ done >> $TMP
 
 egrep '\.[0].(gz|Z)$' $LIST | while read file
 do
-	gzip -fdc $file | sed -n -f $MANDIR/makewhatis.sed;
+	gzip -fdc $file | sed -n -f $MKWHATIS;
 done >> $TMP
 
 sort -u -o $TMP $TMP
