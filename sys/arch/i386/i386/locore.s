@@ -37,7 +37,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)locore.s	7.3 (Berkeley) 5/13/91
- *	$Id: locore.s,v 1.77.2.3 1994/10/06 03:40:09 mycroft Exp $
+ *	$Id: locore.s,v 1.77.2.4 1994/10/11 10:00:54 mycroft Exp $
  */
 
 /*
@@ -88,7 +88,13 @@
  * These are used on interrupt or trap entry or exit.
  */
 #define	INTRENTRY \
-	pushal			; \
+	pushl	%eax		; \
+	pushl	%ecx		; \
+	pushl	%edx		; \
+	pushl	%ebx		; \
+	pushl	%ebp		; \
+	pushl	%esi		; \
+	pushl	%edi		; \
 	pushl	%ds		; \
 	pushl	%es		; \
 	movl	$KDSEL,%eax	; \
@@ -99,7 +105,13 @@
 #define	INTRFASTEXIT \
 	popl	%es		; \
 	popl	%ds		; \
-	popal			; \
+	popl	%edi		; \
+	popl	%esi		; \
+	popl	%ebp		; \
+	popl	%ebx		; \
+	popl	%edx		; \
+	popl	%ecx		; \
+	popl	%eax		; \
 	addl	$8,%esp		; \
 	iret
 

@@ -24,7 +24,7 @@
  * rights to redistribute these changes.
  *
  *	From: db_interface.c,v 2.4 1991/02/05 17:11:13 mrt (CMU)
- *	$Id: db_interface.c,v 1.7.4.2 1994/10/09 09:14:21 mycroft Exp $
+ *	$Id: db_interface.c,v 1.7.4.3 1994/10/11 10:00:41 mycroft Exp $
  */
 
 /*
@@ -38,7 +38,6 @@
 
 #include <vm/vm.h>
 
-#include <machine/cpufunc.h>
 #include <machine/db_machdep.h>
 
 extern jmp_buf	*db_recover;
@@ -49,7 +48,7 @@ int	db_active = 0;
  * Received keyboard interrupt sequence.
  */
 kdb_kbd_trap(regs)
-	struct i386_saved_state *regs;
+	db_regs_t *regs;
 {
 	if (db_active == 0 && (boothowto & RB_KDB)) {
 		printf("\n\nkernel: keyboard interrupt\n");
@@ -61,8 +60,8 @@ kdb_kbd_trap(regs)
  *  kdb_trap - field a TRACE or BPT trap
  */
 kdb_trap(type, code, regs)
-	int	type, code;
-	register struct i386_saved_state *regs;
+	int type, code;
+	register db_regs_t *regs;
 {
 	int s;
 
@@ -110,29 +109,23 @@ kdb_trap(type, code, regs)
 	db_active--;
 	splx(s);
 
-	regs->tf_eip = ddb_regs.tf_eip;
+	regs->tf_es     = ddb_regs.tf_es;
+	regs->tf_ds     = ddb_regs.tf_ds;
+	regs->tf_edi    = ddb_regs.tf_edi;
+	regs->tf_esi    = ddb_regs.tf_esi;
+	regs->tf_ebp    = ddb_regs.tf_ebp;
+	regs->tf_ebx    = ddb_regs.tf_ebx;
+	regs->tf_edx    = ddb_regs.tf_edx;
+	regs->tf_ecx    = ddb_regs.tf_ecx;
+	regs->tf_eax    = ddb_regs.tf_eax;
+	regs->tf_eip    = ddb_regs.tf_eip;
+	regs->tf_cs     = ddb_regs.tf_cs;
 	regs->tf_eflags = ddb_regs.tf_eflags;
-	regs->tf_eax = ddb_regs.tf_eax;
-	regs->tf_ecx = ddb_regs.tf_ecx;
-	regs->tf_edx = ddb_regs.tf_edx;
-	regs->tf_ebx = ddb_regs.tf_ebx;
 	if (regs->tf_cs & 0x3) {
-		/*
-		 * user mode - saved esp and ss valid
-		 */
-		regs->tf_esp = ddb_regs.tf_esp;		/* user stack pointer */
-		regs->tf_ss  = ddb_regs.tf_ss & 0xffff;	/* user stack segment */
+		/* ring transit - saved esp and ss valid */
+		regs->tf_esp    = ddb_regs.tf_esp;
+		regs->tf_ss     = ddb_regs.tf_ss;
 	}
-	regs->tf_ebp = ddb_regs.tf_ebp;
-	regs->tf_esi = ddb_regs.tf_esi;
-	regs->tf_edi = ddb_regs.tf_edi;
-	regs->tf_es = ddb_regs.tf_es & 0xffff;
-	regs->tf_cs = ddb_regs.tf_cs & 0xffff;
-	regs->tf_ds = ddb_regs.tf_ds & 0xffff;
-#if 0
-	regs->tf_fs = ddb_regs.tf_fs & 0xffff;
-	regs->tf_gs = ddb_regs.tf_gs & 0xffff;
-#endif
 
 	return (1);
 }
@@ -144,7 +137,7 @@ extern int trap_types;
  * Print trap reason.
  */
 kdbprinttrap(type, code)
-	int	type, code;
+	int type, code;
 {
 	printf("kernel: ");
 	if (type >= trap_types || type < 0)
@@ -203,7 +196,7 @@ db_write_bytes(addr, size, data)
 			oldmap1 = *ptep1;
 			*(int *)ptep1 |= /* INTEL_PTE_WRITE */ PG_RW;
 		}
-		tlbflush();
+		pmap_update();
 	}
 
 	dst = (char *)addr;
@@ -215,7 +208,7 @@ db_write_bytes(addr, size, data)
 		*ptep0 = oldmap0;
 		if (ptep1)
 			*ptep1 = oldmap1;
-		tlbflush();
+		pmap_update();
 	}
 }
 

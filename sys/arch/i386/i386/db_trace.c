@@ -23,7 +23,7 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  *
- *	$Id: db_trace.c,v 1.7 1994/04/05 19:52:16 mycroft Exp $
+ *	$Id: db_trace.c,v 1.7.2.1 1994/10/11 10:00:46 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -39,24 +39,20 @@
  * Machine register set.
  */
 struct db_variable db_regs[] = {
-	"cs",	(int *)&ddb_regs.tf_cs,  FCN_NULL,
-	"ds",	(int *)&ddb_regs.tf_ds,  FCN_NULL,
-	"es",	(int *)&ddb_regs.tf_es,  FCN_NULL,
-#if 0
-	"fs",	(int *)&ddb_regs.tf_fs,  FCN_NULL,
-	"gs",	(int *)&ddb_regs.tf_gs,  FCN_NULL,
-#endif
-	"ss",	(int *)&ddb_regs.tf_ss,  FCN_NULL,
-	"eax",	(int *)&ddb_regs.tf_eax, FCN_NULL,
-	"ecx",	(int *)&ddb_regs.tf_ecx, FCN_NULL,
-	"edx",	(int *)&ddb_regs.tf_edx, FCN_NULL,
-	"ebx",	(int *)&ddb_regs.tf_ebx, FCN_NULL,
-	"esp",	(int *)&ddb_regs.tf_esp,FCN_NULL,
-	"ebp",	(int *)&ddb_regs.tf_ebp, FCN_NULL,
-	"esi",	(int *)&ddb_regs.tf_esi, FCN_NULL,
-	"edi",	(int *)&ddb_regs.tf_edi, FCN_NULL,
-	"eip",	(int *)&ddb_regs.tf_eip, FCN_NULL,
-	"efl",	(int *)&ddb_regs.tf_eflags, FCN_NULL,
+	"es",	  &ddb_regs.tf_es,     FCN_NULL,
+	"ds",	  &ddb_regs.tf_ds,     FCN_NULL,
+	"edi",	  &ddb_regs.tf_edi,    FCN_NULL,
+	"esi",	  &ddb_regs.tf_esi,    FCN_NULL,
+	"ebp",	  &ddb_regs.tf_ebp,    FCN_NULL,
+	"ebx",	  &ddb_regs.tf_ebx,    FCN_NULL,
+	"edx",	  &ddb_regs.tf_edx,    FCN_NULL,
+	"ecx",	  &ddb_regs.tf_ecx,    FCN_NULL,
+	"eax",	  &ddb_regs.tf_eax,    FCN_NULL,
+	"eip",	  &ddb_regs.tf_eip,    FCN_NULL,
+	"cs",	  &ddb_regs.tf_cs,     FCN_NULL,
+	"eflags", &ddb_regs.tf_eflags, FCN_NULL,
+	"esp",	  &ddb_regs.tf_esp,    FCN_NULL,
+	"ss",	  &ddb_regs.tf_ss,     FCN_NULL,
 };
 struct db_variable *db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
 
@@ -71,9 +67,10 @@ struct i386_frame {
 	int			f_arg0;
 };
 
+#define	NONE		0
 #define	TRAP		1
-#define	INTERRUPT	2
-#define	SYSCALL		3
+#define	SYSCALL		2
+#define	INTERRUPT	3
 
 db_addr_t	db_trap_symbol_value = 0;
 db_addr_t	db_syscall_symbol_value = 0;
@@ -138,42 +135,33 @@ db_nextframe(fp, ip, argp, is_trap)
 	int *argp;			/* in */
 	int is_trap;			/* in */
 {
-	struct i386_saved_state *saved_regs;
 
 	switch (is_trap) {
-	    case 0:
+	    case NONE:
 		*ip = (db_addr_t)
 			db_get_value((int) &(*fp)->f_retaddr, 4, FALSE);
 		*fp = (struct i386_frame *)
 			db_get_value((int) &(*fp)->f_frame, 4, FALSE);
 		break;
-	    case TRAP:
-	    default:
-		/*
-		 * We know that trap() has 1 argument and we know that
-		 * it is an (int *).
-		 */
-#if 0
-		saved_regs = (struct i386_saved_state *)
-			     db_get_value((int)argp, 4, FALSE);
-#endif
-		saved_regs = (struct i386_saved_state *)argp;
-		db_printf("--- trap (number %d) ---\n",
-			  saved_regs->tf_trapno & 0xffff);
-		db_printsym(saved_regs->tf_eip, DB_STGY_XTRN);
-		db_printf(":\n");
-		*fp = (struct i386_frame *)saved_regs->tf_ebp;
-		*ip = (db_addr_t)saved_regs->tf_eip;
-		break;
 
-	    case SYSCALL: {
-		struct trapframe	*saved_regs = (struct trapframe *)argp;
+	    default: {
+		struct trapframe *tf;
 
-		db_printf("--- syscall (number %d) ---\n", saved_regs->tf_eax);
-		db_printsym(saved_regs->tf_eip, DB_STGY_XTRN);
-		db_printf(":\n");
-		*fp = (struct i386_frame *)saved_regs->tf_ebp;
-		*ip = (db_addr_t)saved_regs->tf_eip;
+		/* The only argument to trap() or syscall() is the trapframe. */
+		tf = (struct trapframe *)argp;
+		switch (is_trap) {
+		case TRAP:
+			db_printf("--- trap (number %d) ---\n", tf->tf_trapno);
+			break;
+		case SYSCALL:
+			db_printf("--- syscall (number %d) ---\n", tf->tf_eax);
+			break;
+		case INTERRUPT:
+			db_printf("--- interrupt ---\n");
+			break;
+		}
+		*fp = (struct i386_frame *)tf->tf_ebp;
+		*ip = (db_addr_t)tf->tf_eip;
 		break;
 	    }
 	}
@@ -225,7 +213,7 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 	}
 
 	lastframe = 0;
-	while (count-- && frame != 0) {
+	while (count && frame != 0) {
 		int		narg;
 		char *	name;
 		db_expr_t	offset;
@@ -248,19 +236,28 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 				offset = 0;
 			}
 		}
-#define STRCMP(s1,s2) ((s1) && (s2) && strcmp((s1), (s2)) == 0)
-		if (INKERNEL((int)frame) && STRCMP(name, "_trap")) {
-			narg = 1;
-			is_trap = TRAP;
-		} else if (INKERNEL((int)frame) && STRCMP(name, "_kdintr")) {
-			is_trap = INTERRUPT;
-			narg = 0;
-		} else if (INKERNEL((int)frame) && STRCMP(name, "_syscall")) {
-			is_trap = SYSCALL;
+		if (INKERNEL((int)frame) && name) {
+			if (!strcmp(name, "_trap")) {
+				is_trap = TRAP;
+			} else if (!strcmp(name, "_syscall")) {
+				is_trap = SYSCALL;
+			} else if (name[0] == '_' && name[1] == 'X') {
+				if (!strncmp(name, "_Xintr", 6) ||
+				    !strncmp(name, "_Xresume", 8) ||
+				    !strncmp(name, "_Xstray", 7) ||
+				    !strncmp(name, "_Xhold", 6) ||
+				    !strncmp(name, "_Xrecurse", 9) ||
+				    !strcmp(name, "_Xdoreti") ||
+				    !strncmp(name, "_Xsoft", 6)) {
+					is_trap = INTERRUPT;
+				} else
+					goto normal;
+			} else
+				goto normal;
 			narg = 0;
 		} else {
-#undef STRCMP
-			is_trap = 0;
+		normal:
+			is_trap = NONE;
 			narg = MAXNARG;
 			if (db_sym_numargs(sym, &narg, argnames))
 				argnp = argnames;
@@ -325,5 +322,11 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 				break;
 			}
 		}
+		--count;
+	}
+
+	if (count && is_trap != NONE) {
+		db_printsym(callpc, DB_STGY_XTRN);
+		db_printf(":\n");
 	}
 }

@@ -31,11 +31,11 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)endian.h	7.8 (Berkeley) 4/3/91
- *	$Id: endian.h,v 1.10.2.2 1994/09/12 20:40:35 cgd Exp $
+ *	$Id: endian.h,v 1.10.2.3 1994/10/11 10:03:46 mycroft Exp $
  */
 
-#ifndef _MACHINE_ENDIAN_H_
-#define _MACHINE_ENDIAN_H_
+#ifndef _I386_ENDIAN_H_
+#define	_I386_ENDIAN_H_
 
 /*
  * Define the order of 32-bit words in 64-bit words.
@@ -108,4 +108,4 @@ __END_DECLS
 
 #endif /* _POSIX_SOURCE */
 
-#endif /* _MACHINE_ENDIAN_H_ */
+#endif /* !_I386_ENDIAN_H_ */
