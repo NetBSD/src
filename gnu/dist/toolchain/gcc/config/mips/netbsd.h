@@ -37,11 +37,21 @@ Boston, MA 02111-1307, USA.  */
 #define DBX_DEBUGGING_INFO
 #define PREFERRED_DEBUGGING_TYPE DBX_DEBUG
 
+/* Include the generic MIPS ELF configuration.  */
 #include <mips/elf.h>
+
+/* Now clean up after it.  */
 #undef OBJECT_FORMAT_COFF
 #undef DWARF_FRAME_REGNUM
 #undef DWARF_FRAME_RETURN_COLUMN
 #undef INCOMING_RETURN_ADDR_RTX
+#undef INVOKE__main
+#undef NAME__MAIN
+#undef SYMBOL__MAIN
+#undef CTOR_LIST_BEGIN
+#undef CTOR_LIST_END
+#undef DTOR_LIST_BEGIN
+#undef DTOR_LIST_END
 
 /* Get generic NetBSD definitions. */
 
@@ -133,3 +143,64 @@ Boston, MA 02111-1307, USA.  */
 /* Turn off special section processing by default.  */
 #undef MIPS_DEFAULT_GVALUE
 #define MIPS_DEFAULT_GVALUE 0
+
+/* This defines which switch letters take arguments.  -G is a mips special. */
+#undef SWITCH_TAKES_ARG
+#define SWITCH_TAKES_ARG(CHAR) \
+  (DEFAULT_SWITCH_TAKES_ARG(CHAR) || (CHAR) == 'R' || (CHAR) == 'G')
+
+/* Support const sections and the ctors and dtors sections for g++.
+   Note that there appears to be two different ways to support const
+   sections at the moment.  You can either #define the symbol
+   READONLY_DATA_SECTION (giving it some code which switches to the
+   readonly data section) or else you can #define the symbols
+   EXTRA_SECTIONS, EXTRA_SECTION_FUNCTIONS, SELECT_SECTION, and
+   SELECT_RTX_SECTION.  We do both here just to be on the safe side.  */
+
+#define CONST_SECTION_ASM_OP	".section\t.rodata"
+
+/* On svr4, we *do* have support for the .init and .fini sections, and we
+   can put stuff in there to be executed before and after `main'.  We let
+   crtstuff.c and other files know this by defining the following symbols.
+   The definitions say how to change sections to the .init and .fini
+   sections.  This is the same for all known svr4 assemblers.  */
+
+#define INIT_SECTION_ASM_OP	".section\t.init"
+#define FINI_SECTION_ASM_OP	".section\t.fini"
+
+/* A default list of other sections which we might be "in" at any given
+   time.  For targets that use additional sections (e.g. .tdesc) you
+   should override this definition in the target-specific file which
+   includes this file.  */
+/* Note that this is to be like the generic ELF EXTRA_SECTIONS, with the
+   MIPS specific in_sdata and in_rdata added.  */
+
+#undef EXTRA_SECTIONS
+#define EXTRA_SECTIONS in_const, in_ctors, in_dtors, in_sdata, in_rdata
+
+/* A default list of extra section function definitions.  For targets
+   that use additional sections (e.g. .tdesc) you should override this
+   definition in the target-specific file which includes this file.  */
+
+#undef EXTRA_SECTION_FUNCTIONS
+#define EXTRA_SECTION_FUNCTIONS						\
+  SECTION_FUNCTION_TEMPLATE(const_section, in_const, CONST_SECTION_ASM_OP) \
+  SECTION_FUNCTION_TEMPLATE(ctors_section, in_ctors, CTORS_SECTION_ASM_OP) \
+  SECTION_FUNCTION_TEMPLATE(dtors_section, in_dtors, DTORS_SECTION_ASM_OP) \
+  SECTION_FUNCTION_TEMPLATE(sdata_section, in_sdata, SDATA_SECTION_ASM_OP) \
+  SECTION_FUNCTION_TEMPLATE(rdata_section, in_rdata, RDATA_SECTION_ASM_OP)
+
+#undef READONLY_DATA_SECTION
+#define READONLY_DATA_SECTION() const_section ()
+
+#undef SECTION_FUNCTION_TEMPLATE
+#define SECTION_FUNCTION_TEMPLATE(FN, ENUM, OP)				\
+void									\
+FN ()									\
+{									\
+  if (in_section != ENUM)						\
+    {									\
+      fprintf (asm_out_file, "%s\n", OP);				\
+      in_section = ENUM;						\
+    }									\
+}
