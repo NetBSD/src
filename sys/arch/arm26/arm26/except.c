@@ -1,4 +1,4 @@
-/* $NetBSD: except.c,v 1.21 2000/12/27 16:57:09 bjh21 Exp $ */
+/* $NetBSD: except.c,v 1.22 2000/12/27 18:35:18 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.21 2000/12/27 16:57:09 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.22 2000/12/27 18:35:18 bjh21 Exp $");
 
 #include "opt_cputypes.h"
 #include "opt_ddb.h"
@@ -65,8 +65,10 @@ __KERNEL_RCSID(0, "$NetBSD: except.c,v 1.21 2000/12/27 16:57:09 bjh21 Exp $");
 #endif
 
 void syscall(struct trapframe *);
+static void do_fault(struct trapframe *, struct proc *, vm_map_t, vaddr_t,
+    vm_prot_t);
 static void data_abort_fixup(struct trapframe *);
-static vaddr_t data_abort_address(struct trapframe *);
+static vaddr_t data_abort_address(struct trapframe *, vsize_t *);
 static vm_prot_t data_abort_atype(struct trapframe *);
 static boolean_t data_abort_usrmode(struct trapframe *);
 #ifdef DEBUG
@@ -349,7 +351,6 @@ prefetch_abort_handler(struct trapframe *tf)
 	u_quad_t sticks;
 	vaddr_t pc;
 	struct proc *p;
-	int ret;
 
 	/* Enable interrupts if they were enabled before the trap. */
 	if ((tf->tf_r15 & R15_IRQ_DISABLE) == 0)
@@ -382,28 +383,8 @@ prefetch_abort_handler(struct trapframe *tf)
 	/* User-mode prefetch abort */
 	pc = tf->tf_r15 & R15_PC;
 
-	if (pmap_fault(p->p_vmspace->vm_map.pmap, pc, VM_PROT_EXECUTE))
-		goto out;
-	for (;;) {
-		ret = uvm_fault(&p->p_vmspace->vm_map, pc, 0, VM_PROT_EXECUTE);
-		if (ret != KERN_RESOURCE_SHORTAGE)
-			break;
-		log(LOG_WARNING, "pid %d: VM shortage, sleeping\n", p->p_pid);
-		tsleep(&lbolt, PVM, "abtretry", 0);
-	}
+	do_fault(tf, p, &p->p_vmspace->vm_map, pc, VM_PROT_EXECUTE);
 
-	if (ret != KERN_SUCCESS) {
-#ifdef DEBUG
-		printf("unhandled fault at %p (ret = %d)\n", (void *)pc, ret);
-		printf("Prefetch abort:\n");
-		printregs(tf);
-#ifdef DDB
-		Debugger();
-#endif
-#endif
-		trapsignal(p, SIGSEGV, pc);
-	}
-out:
 	userret(p, pc, sticks);
 }
 
@@ -412,12 +393,11 @@ data_abort_handler(struct trapframe *tf)
 {
 	u_quad_t sticks;
 	vaddr_t pc, va;
-	int ret;
+	vsize_t asize;
 	struct proc *p;
 	vm_prot_t atype;
-	boolean_t usrmode;
+	boolean_t usrmode, twopages;
 	vm_map_t map;
-	struct pcb *curpcb;
 
 	/*
 	 * Data aborts in kernel mode are possible (copyout etc), so
@@ -442,15 +422,34 @@ data_abort_handler(struct trapframe *tf)
 	sticks = p->p_sticks;
 	pc = tf->tf_r15 & R15_PC;
 	data_abort_fixup(tf);
-	va = data_abort_address(tf);
+	va = data_abort_address(tf, &asize);
 	atype = data_abort_atype(tf);
 	usrmode = data_abort_usrmode(tf);
+	twopages = (trunc_page(va) != round_page(va + asize) - PAGE_SIZE);
 	if (!usrmode && va >= VM_MIN_KERNEL_ADDRESS)
 		map = kernel_map;
 	else
 		map = &p->p_vmspace->vm_map;
+	do_fault(tf, p, map, va, atype);
+	if (twopages)
+		do_fault(tf, p, map, va + asize - 4, atype);
+
+	if ((tf->tf_r15 & R15_MODE) == R15_MODE_USR)
+		userret(p, pc, sticks);
+}
+
+/*
+ * General page fault handler.
+ */
+void
+do_fault(struct trapframe *tf, struct proc *p,
+    vm_map_t map, vaddr_t va, vm_prot_t atype)
+{
+	int ret;
+	struct pcb *curpcb;
+
 	if (pmap_fault(map->pmap, va, atype))
-		goto out;
+		return;
 	for (;;) {
 		ret = uvm_fault(map, va, 0, atype);
 		if (ret != KERN_RESOURCE_SHORTAGE)
@@ -462,7 +461,6 @@ data_abort_handler(struct trapframe *tf)
 	if (ret != KERN_SUCCESS) {
 #ifdef DEBUG
 		printf("unhandled fault at %p (ret = %d)\n", (void *)va, ret);
-		printf("Data abort:\n");
 		printregs(tf);
 		printf("pc -> ");
 		disassemble(tf->tf_r15 & R15_PC);
@@ -480,10 +478,6 @@ data_abort_handler(struct trapframe *tf)
 			longjmp(curpcb->pcb_onfault_lj);
 		trapsignal(p, SIGSEGV, va);
 	}
-
-out:
-	if ((tf->tf_r15 & R15_MODE) == R15_MODE_USR)
-		userret(p, pc, sticks);
 }
 
 #define getreg(r) (((register_t *)tf)[r])
@@ -527,7 +521,7 @@ data_abort_fixup(struct trapframe *tf)
  * abort fixup stuff too.
  */
 static vaddr_t
-data_abort_address(struct trapframe *tf)
+data_abort_address(struct trapframe *tf, vsize_t *vsp)
 {
 	register_t insn;
 	int rn, rm, offset, shift, p, i, u;
@@ -537,6 +531,7 @@ data_abort_address(struct trapframe *tf)
        	insn = *(register_t *)(tf->tf_r15 & R15_PC);
 	if ((insn & 0x0c000000) == 0x04000000) {
 		/* Single data transfer */
+		*vsp = 1; /* or 4, but it doesn't really matter */
 		rn = (insn & 0x000f0000) >> 16;
 		base = getreg(rn);
 		if (rn == 15)
@@ -585,41 +580,33 @@ data_abort_address(struct trapframe *tf)
 		else
 			return base + offset;
 	} else if ((insn & 0x0e000000) == 0x08000000) {
-		vaddr_t sva, eva;
 		int loop, count;
 
 		/* LDM/STM */
 		rn = (insn >> 16) & 0x0f;
-		/* Need to find both ends of the range being transferred. */
 		p = insn & 1 << 24;
 		u = insn & 1 << 23;
-		if (p == 0)
-			sva = getreg(rn);
-		else
-			if (u == 0)
-				sva = getreg(rn) - 4;
-			else
-				sva = getreg(rn) + 4;
-		/*
-		 * This is currently bogus.  We should check the
-		 * lowest address first.  I doubt they'll notice.
-		 */
-		if (pmap_confess(sva, data_abort_atype(tf)))
-			return sva;
 		/* Count registers transferred */
 		count = 0;
-		for (loop = 0; loop < 16; ++loop) {
+		for (loop = 0; loop < 16; ++loop)
 			if (insn & (1<<loop))
 				++count;
-		}
+		*vsp = count * 4;
+		/* Need to find both ends of the range being transferred. */
 		if (u == 0) /* up/down bit */
-			eva = sva - count * 4;
+			if (p == 0) /* pre/post bit */
+				return getreg(rn) - *vsp + 4;	/* ...DA */
+			else
+				return getreg(rn) - *vsp;	/* ...DB */
 		else
-			eva = sva + count * 4;
-		return eva;
+			if (p == 0)
+				return getreg(rn);		/* ...IA */
+			else
+				return getreg(rn) + 4;		/* ...IB */
 #if defined(CPU_ARM250) || defined(CPU_ARM3)
 	} else if ((insn & 0x0fb00ff0) == 0x01000090) {
 		/* SWP */
+		*vsp = 1; /* or 4, but who cares? */
 		rm = insn & 0x0000000f;
 		base = getreg(rm);
 		if (rm == 15)
