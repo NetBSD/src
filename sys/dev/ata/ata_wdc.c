@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.46 2003/12/14 05:33:29 thorpej Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.47 2003/12/14 05:35:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.46 2003/12/14 05:33:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.47 2003/12/14 05:35:34 thorpej Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -97,7 +97,6 @@ __KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.46 2003/12/14 05:33:29 thorpej Exp $")
 #include <dev/ata/atavar.h>
 #include <dev/ic/wdcreg.h>
 #include <dev/ic/wdcvar.h>
-#include <dev/ata/wdvar.h>
 
 #define DEBUG_INTR   0x01
 #define DEBUG_XFERS  0x02
