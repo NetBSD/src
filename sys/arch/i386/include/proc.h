@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.12 2000/12/11 05:29:00 mycroft Exp $	*/
+/*	$NetBSD: proc.h,v 1.13 2000/12/11 10:22:55 tron Exp $	*/
 
 /*
  * Copyright (c) 1991 Regents of the University of California.
@@ -34,6 +34,8 @@
  *
  *	@(#)proc.h	7.1 (Berkeley) 5/15/91
  */
+
+#include <machine/frame.h>
 
 /*
  * Machine-dependent part of the proc structure for i386.
