@@ -1,7 +1,15 @@
-/*	$NetBSD: crtend.c,v 1.10 2002/11/22 06:44:59 thorpej Exp $	*/
+/*	$NetBSD: crtend.c,v 1.11 2004/08/28 00:19:22 thorpej Exp $	*/
 
 #include <sys/cdefs.h>
 #include "dot_init.h"
+
+/* 
+ * WE SHOULD BE USING GCC-SUPPLIED crtend.o FOR GCC 3.3 AND      
+ * LATER!!!
+ */
+#if __GNUC_PREREQ__(3, 3)
+#error "Use GCC-supplied crtend.o"
+#endif
 
 static void (*__CTOR_LIST__[1]) __P((void))
     __attribute__((__unused__))
