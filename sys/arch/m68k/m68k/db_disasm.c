@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.26 2001/12/24 18:20:50 chs Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.27 2001/12/26 19:00:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -1352,6 +1352,7 @@ opcode_coproc(dbuf, opc)
 	case 4:
 	case 5:
 	default:
+		/* Nothing */ ;
 	}
 	addstr(dbuf, "UNKNOWN COPROC OPCODE");
 	return;
