@@ -1,4 +1,4 @@
-/*	$NetBSD: bsd_audiovar.h,v 1.2 1994/11/20 20:51:54 deraadt Exp $ */
+/*	$NetBSD: amd7930var.h,v 1.1 1995/04/25 20:05:38 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,50 +44,39 @@
  *	@(#)bsd_audiovar.h	8.1 (Berkeley) 6/11/93
  */
 
-#define AUCB_SIZE 4096
-#define AUCB_MOD(k)	((k) & (AUCB_SIZE - 1))
-
-#define AUCB_INIT(cb)	((cb)->cb_head = (cb)->cb_tail = (cb)->cb_drops = \
-			 (cb)->cb_pdrops = 0)
-
-#define AUCB_EMPTY(cb)	((cb)->cb_head == (cb)->cb_tail)
-#define AUCB_FULL(cb)	(AUCB_MOD((cb)->cb_tail + 1) == (cb)->cb_head)
-#define AUCB_LEN(cb)	(AUCB_MOD((cb)->cb_tail - (cb)->cb_head))
-
-#define MAXBLKSIZE (AUCB_SIZE / 2)
-#define DEFBLKSIZE 128
-
 #ifndef LOCORE
-/*
- * aucb's are used for communication between the trap handler and
- * the software interrupt.
- */
-struct aucb {
-	int	cb_head;		/* queue head */
-	int	cb_tail;		/* queue tail */
-	int	cb_thresh;		/* threshold for wakeup */
-	u_short	cb_waking;		/* needs wakeup at softint level */
-	u_short	cb_pause;		/* io paused */
-	u_long	cb_drops;		/* missed samples from over/underrun */
-	u_long	cb_pdrops;		/* sun compat -- paused samples */
-	u_char	cb_data[AUCB_SIZE];	/* data buffer */
-};
 
-#if !defined(__STDC__) && !defined(volatile)
-#define volatile
-#endif
-#if !defined(__STDC__) && !defined(const)
-#define const
-#endif
+/* XXX I think these defines should go into some other header file */
+#define SUNAUDIO_MIC_PORT	0
+#define SUNAUDIO_SPEAKER	1
+#define SUNAUDIO_HEADPHONES	2
+#define SUNAUDIO_MONITOR	3
+#define SUNAUDIO_INPUT_CLASS	4
+#define SUNAUDIO_OUTPUT_CLASS	5
 
 struct auio {
 	volatile struct amd7930 *au_amd;/* chip registers */
-	u_long	au_stamp;		/* time stamp */
-	int	au_lowat;		/* xmit low water mark (for wakeup) */
-	int	au_hiwat;		/* xmit high water mark (for wakeup) */
-	int	au_blksize;		/* recv block (chunk) size */
-	int	au_backlog;		/* # samples of xmit backlog to gen. */
-	struct	aucb au_rb;		/* read (recv) buffer */
-	struct	aucb au_wb;		/* write (xmit) buffer */
+
+	u_char	*au_rdata;		/* record data */
+	u_char	*au_rend;		/* end of record data */
+	u_char	*au_pdata;		/* play data */
+	u_char	*au_pend;		/* end of play data */
 };
-#endif
+
+/*
+ * Chip interface
+ */
+struct mapreg {
+        u_short mr_x[8];
+        u_short mr_r[8];
+        u_short mr_gx;
+        u_short mr_gr;
+        u_short mr_ger;
+        u_short mr_stgr;
+        u_short mr_ftgr;
+        u_short mr_atgr;
+        u_char  mr_mmr1;
+        u_char  mr_mmr2;
+};
+
+#endif /* !LOCORE */
