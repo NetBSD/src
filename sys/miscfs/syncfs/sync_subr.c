@@ -1,4 +1,4 @@
-/*	$NetBSD: sync_subr.c,v 1.11 2001/12/06 04:29:55 chs Exp $	*/
+/*	$NetBSD: sync_subr.c,v 1.12 2003/01/18 09:18:07 thorpej Exp $	*/
 
 /*
  * Copyright 1997 Marshall Kirk McKusick. All Rights Reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sync_subr.c,v 1.11 2001/12/06 04:29:55 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sync_subr.c,v 1.12 2003/01/18 09:18:07 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,7 +65,7 @@ static int stat_rush_requests;		/* number of times I/O speeded up */
 static int syncer_delayno = 0;
 static long syncer_last;
 static struct synclist *syncer_workitem_pending;
-struct proc *updateproc = NULL;
+struct lwp *updateproc = NULL;
 
 void
 vn_initialize_syncerd()
@@ -165,7 +165,7 @@ sched_sync(v)
 	long starttime;
 	int s;
 
-	updateproc = curproc;
+	updateproc = curlwp;
 	
 	for (;;) {
 		starttime = time.tv_sec;

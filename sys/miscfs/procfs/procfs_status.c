@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_status.c,v 1.18 2002/11/07 08:18:34 thorpej Exp $	*/
+/*	$NetBSD: procfs_status.c,v 1.19 2003/01/18 09:18:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_status.c,v 1.18 2002/11/07 08:18:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_status.c,v 1.19 2003/01/18 09:18:06 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,15 +55,16 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_status.c,v 1.18 2002/11/07 08:18:34 thorpej E
 #include <miscfs/procfs/procfs.h>
 
 int
-procfs_dostatus(curp, p, pfs, uio)
+procfs_dostatus(curp, l, pfs, uio)
 	struct proc *curp;
-	struct proc *p;
+	struct lwp *l;
 	struct pfsnode *pfs;
 	struct uio *uio;
 {
 	struct session *sess;
 	struct tty *tp;
 	struct ucred *cr;
+	struct proc *p = l->l_proc;
 	char *ps;
 	char *sep;
 	int pid, ppid, pgid, sid;
@@ -107,7 +108,7 @@ procfs_dostatus(curp, p, pfs, uio)
 	if (*sep != ',')
 		ps += sprintf(ps, "noflags");
 
-	if (p->p_flag & P_INMEM)
+	if (l->l_flag & L_INMEM)
 		ps += sprintf(ps, " %ld,%ld",
 			p->p_stats->p_start.tv_sec,
 			p->p_stats->p_start.tv_usec);
@@ -126,7 +127,7 @@ procfs_dostatus(curp, p, pfs, uio)
 	}
 
 	ps += sprintf(ps, " %s",
-	    (p->p_wchan && p->p_wmesg) ? p->p_wmesg : "nochan");
+	    (l->l_wchan && l->l_wmesg) ? l->l_wmesg : "nochan");
 
 	cr = p->p_ucred;
 

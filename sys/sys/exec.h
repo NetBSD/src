@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.88 2002/10/29 12:31:25 blymn Exp $	*/
+/*	$NetBSD: exec.h,v 1.89 2003/01/18 09:53:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -79,6 +79,7 @@ struct ps_strings {
  * in creating the new process's vmspace.
  */
 
+struct lwp;
 struct proc;
 struct exec_package;
 struct vnode;
@@ -103,10 +104,10 @@ struct execsw {
 	int	(*es_copyargs) __P((struct proc *, struct exec_package *,
 			struct ps_strings *, char **, void *));
 					/* Set registers before execution */
-	void	(*es_setregs) __P((struct proc *, struct exec_package *,
+	void	(*es_setregs) __P((struct lwp *, struct exec_package *,
 				   u_long));
 					/* Dump core */
-	int	(*es_coredump) __P((struct proc *, struct vnode *,
+	int	(*es_coredump) __P((struct lwp *, struct vnode *,
 				    struct ucred *));
 };
 
@@ -186,7 +187,7 @@ int	vmcmd_readvn		__P((struct proc *, struct exec_vmcmd *));
 int	vmcmd_map_zero		__P((struct proc *, struct exec_vmcmd *));
 int	copyargs		__P((struct proc *, struct exec_package *,
     struct ps_strings *, char **, void *));
-void	setregs			__P((struct proc *, struct exec_package *,
+void	setregs			__P((struct lwp *, struct exec_package *,
 				     u_long));
 #ifdef VERIFIED_EXEC
 int	check_veriexec		__P((struct proc *, struct vnode *,

@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.66 2002/11/27 13:47:15 wiz Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.67 2003/01/18 09:53:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -808,7 +808,7 @@ int	exec_elf32_makecmds __P((struct proc *, struct exec_package *));
 int	elf32_copyargs __P((struct proc *, struct exec_package *, struct ps_strings *,
     char **, void *));
 
-int	coredump_elf32 __P((struct proc *, struct vnode *, struct ucred *));
+int	coredump_elf32 __P((struct lwp *, struct vnode *, struct ucred *));
 int	coredump_writenote_elf32 __P((struct proc *, struct vnode *,
 	    struct ucred *, off_t, Elf32_Nhdr *, const char *, void *));
 #endif
@@ -820,7 +820,7 @@ int	elf64_read_from __P((struct proc *, struct vnode *, u_long,
 int	elf64_copyargs __P((struct proc *, struct exec_package *, struct ps_strings *,
     char **, void *));
 
-int	coredump_elf64 __P((struct proc *, struct vnode *, struct ucred *));
+int	coredump_elf64 __P((struct lwp *, struct vnode *, struct ucred *));
 int	coredump_writenote_elf64 __P((struct proc *, struct vnode *,
 	    struct ucred *, off_t, Elf64_Nhdr *, const char *, void *));
 #endif

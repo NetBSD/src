@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs.h,v 1.39 2003/01/03 13:21:18 christos Exp $	*/
+/*	$NetBSD: procfs.h,v 1.40 2003/01/18 09:18:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -140,15 +140,15 @@ int procfs_freevp __P((struct vnode *));
 int procfs_allocvp __P((struct mount *, struct vnode **, pid_t, pfstype, int));
 int procfs_donote __P((struct proc *, struct proc *, struct pfsnode *,
     struct uio *));
-int procfs_doregs __P((struct proc *, struct proc *, struct pfsnode *,
+int procfs_doregs __P((struct proc *, struct lwp *, struct pfsnode *,
     struct uio *));
-int procfs_dofpregs __P((struct proc *, struct proc *, struct pfsnode *,
+int procfs_dofpregs __P((struct proc *, struct lwp *, struct pfsnode *,
     struct uio *));
 int procfs_domem __P((struct proc *, struct proc *, struct pfsnode *,
     struct uio *));
-int procfs_doctl __P((struct proc *, struct proc *, struct pfsnode *,
+int procfs_doctl __P((struct proc *, struct lwp *, struct pfsnode *,
     struct uio *));
-int procfs_dostatus __P((struct proc *, struct proc *, struct pfsnode *,
+int procfs_dostatus __P((struct proc *, struct lwp *, struct pfsnode *,
     struct uio *));
 int procfs_domap __P((struct proc *, struct proc *, struct pfsnode *,
     struct uio *, int));
@@ -189,7 +189,7 @@ int	procfs_root __P((struct mount *, struct vnode **));
 struct vattr;
 
 void	procfs_machdep_allocvp(struct vnode *);
-int	procfs_machdep_rw(struct proc *, struct proc *, struct pfsnode *,
+int	procfs_machdep_rw(struct proc *, struct lwp *, struct pfsnode *,
 	    struct uio *);
 int	procfs_machdep_getattr(struct vnode *, struct vattr *, struct proc *);
 #endif
