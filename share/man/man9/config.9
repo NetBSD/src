@@ -1,4 +1,4 @@
-.\"     $NetBSD: config.9,v 1.18 2003/09/27 14:52:58 kei Exp $
+.\"     $NetBSD: config.9,v 1.19 2004/04/11 16:33:02 fredb Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -72,11 +72,11 @@ The pairing is denoted by "child at parent".
 These pairings form the links in a directed graph.
 The root device is the only exception, as it does not have a parent.
 .It Locators
-Locators are used to augment the parent/child pairings the locate
+Locators are used to augment the parent/child pairings that locate
 specific devices.
 Each locator value is simply an integer that represents some sort of
 device address on the parent bus or controller.
-This can be a memory address, and I/O port, a driver number, or any
+This can be a memory address, an I/O port, a driver number, or any
 other value.
 Locators can sometimes be wildcarded on devices that support direct
 connection.
