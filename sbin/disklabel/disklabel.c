@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.47.2.1 1998/11/23 08:12:08 cgd Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.47.2.2 1999/01/20 07:25:44 cgd Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: disklabel.c,v 1.47.2.1 1998/11/23 08:12:08 cgd Exp $");
+__RCSID("$NetBSD: disklabel.c,v 1.47.2.2 1999/01/20 07:25:44 cgd Exp $");
 #endif
 #endif /* not lint */
 
@@ -471,7 +471,7 @@ writelabel(f, boot, lp)
 		if (dosdp) {
 			if (dosdp->dp_start != pp->p_offset)
 				confirm("Write outside MBR partition? [n]: ");
-		        sectoffset = pp->p_offset * lp->d_secsize;
+		        sectoffset = (off_t)pp->p_offset * lp->d_secsize;
 		} else {
 			if (mbrpt_nobsd)
 				confirm("Erase the previous contents "
@@ -480,7 +480,7 @@ writelabel(f, boot, lp)
 		}
 #endif
 #ifdef __arm32__
-		sectoffset = filecore_partition_offset * DEV_BSIZE;
+		sectoffset = (off_t)filecore_partition_offset * DEV_BSIZE;
 #endif	/* __arm32__ */
 		/*
 		 * First set the kernel disk label,
@@ -553,7 +553,7 @@ writelabel(f, boot, lp)
 
 		alt = lp->d_ncylinders * lp->d_secpercyl - lp->d_nsectors;
 		for (i = 1; i < 11 && i < lp->d_nsectors; i += 2) {
-			(void)lseek(f, (off_t)((alt + i) * lp->d_secsize),
+			(void)lseek(f, (off_t)(alt + i) * lp->d_secsize,
 			    SEEK_SET);
 			if (write(f, boot, lp->d_secsize) < lp->d_secsize)
 				warn("alternate label %d write", i/2);
@@ -774,10 +774,10 @@ readlabel(f)
 
 #ifdef __i386__
 		if (dosdp)
-			sectoffset = dosdp->dp_start * DEV_BSIZE;
+			sectoffset = (off_t)dosdp->dp_start * DEV_BSIZE;
 #endif
 #ifdef __arm32__
-		sectoffset = filecore_partition_offset * DEV_BSIZE;
+		sectoffset = (off_t)filecore_partition_offset * DEV_BSIZE;
 #endif	/* __arm32__ */
 		if (lseek(f, sectoffset, SEEK_SET) < 0 ||
 		    read(f, bootarea, BBSIZE) < BBSIZE)
