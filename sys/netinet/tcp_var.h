@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.53 1998/09/10 10:47:01 mouse Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.54 1998/10/04 21:33:53 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -124,6 +124,7 @@ struct tcpcb {
 	tcp_seq	snd_wl2;		/* window update seg ack number */
 	tcp_seq	iss;			/* initial send sequence number */
 	u_long	snd_wnd;		/* send window */
+	tcp_seq snd_recover;		/* for use in fast recovery */
 /* receive sequence variables */
 	u_long	rcv_wnd;		/* receive window */
 	tcp_seq	rcv_nxt;		/* receive next */
@@ -520,6 +521,7 @@ int	 syn_cache_respond __P((struct syn_cache *, struct mbuf *,
 	    register struct tcpiphdr *, long, u_long));
 void	 syn_cache_timer __P((void));
 
+int	tcp_newreno __P((struct tcpcb *, struct tcpiphdr *));
 #endif
 
 #endif /* _NETINET_TCP_VAR_H_ */
