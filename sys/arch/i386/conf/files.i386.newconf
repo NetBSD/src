@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386.newconf,v 1.38 1995/01/27 06:06:00 cgd Exp $
+#	$NetBSD: files.i386.newconf,v 1.39 1995/01/29 07:37:37 cgd Exp $
 #
 # new style config file for i386 architecture
 #
@@ -95,19 +95,19 @@ file	arch/i386/isa/pcvt/pcvt_vtf.c	vt needs-count
 
 define	commulti {[slave = -1]}
 device	ast at isa: commulti
-file	arch/i386/isa/ast.c		ast
+file	dev/isa/ast.c			ast
 device	boca at isa: commulti
-file	arch/i386/isa/boca.c		boca
+file	dev/isa/boca.c			boca
 device	rtfps at isa: commulti
-file	arch/i386/isa/rtfps.c		rtfps
+file	dev/isa/rtfps.c			rtfps
 
 device	com at isa, commulti: tty
-file	arch/i386/isa/com.c		com needs-count
+file	dev/isa/com.c			com needs-count
 device	cy at isa: tty
-file	arch/i386/isa/cy.c		cy needs-count
+file	dev/isa/cy.c			cy needs-count
 
 device	lpt at isa
-file	arch/i386/isa/lpt.c		lpt needs-flag
+file	dev/isa/lpt.c			lpt needs-flag
 
 device	lms at isa
 file	arch/i386/isa/lms.c		lms needs-flag
@@ -117,52 +117,52 @@ device	pms at isa
 file	arch/i386/isa/pms.c		pms needs-flag
 
 device	aha at isa: scsi, dma
-file	arch/i386/isa/aha1542.c		aha
+file	dev/isa/aha1542.c		aha
 device	aic at isa: scsi, dma
-file	arch/i386/isa/aic6360.c		aic
+file	dev/isa/aic6360.c		aic
 device	bt at isa: scsi, dma
-file	arch/i386/isa/bt742a.c		bt
+file	dev/isa/bt742a.c		bt
 device	sea at isa: scsi, dma
-file	arch/i386/isa/seagate.c		sea
+file	dev/isa/seagate.c		sea
 device	uha at isa: scsi, dma
-file	arch/i386/isa/ultra14f.c	uha
+file	dev/isa/ultra14f.c		uha
 device	wds at isa: scsi, dma
-file	arch/i386/isa/wd7000.c		wds
+file	dev/isa/wd7000.c		wds
 
 device	fdc at isa {drive = -1}
 device	fd at fdc: disk, dma
 file	arch/i386/isa/fd.c		fdc needs-flag
 major	{fd = 2}
 device	mcd at isa: disk, dma
-file	arch/i386/isa/mcd.c		mcd needs-flag
+file	dev/isa/mcd.c			mcd needs-flag
 major	{mcd = 7}
 device	wdc at isa {drive = -1}
 device	wd at wdc: disk
-file	arch/i386/isa/wd.c		wdc needs-flag
+file	dev/isa/wd.c			wdc needs-flag
 major	{wd = 0}
 device	wt at isa: tape, dma
-file	arch/i386/isa/wt.c		wt needs-flag
+file	dev/isa/wt.c			wt needs-flag
 major	{wt = 3}
 
 define	elink
-file	arch/i386/isa/elink.c		elink
+file	dev/isa/elink.c			elink
 
 device	ed at isa: ether, ifnet
-file	arch/i386/isa/if_ed.c		ed
+file	dev/isa/if_ed.c			ed
 device	eg at isa: ether, ifnet
-file	arch/i386/isa/if_eg.c		eg
+file	dev/isa/if_eg.c			eg
 device	el at isa: ether, ifnet
-file	arch/i386/isa/if_el.c		el
+file	dev/isa/if_el.c			el
 device	ep at isa: ether, ifnet, elink
-file	arch/i386/isa/if_ep.c		ep
+file	dev/isa/if_ep.c			ep
 #device	hp at isa: ether, ifnet
-#file	arch/i386/isa/if_hp.c		hp
+#file	dev/isa/if_hp.c			hp
 device	ie at isa: ether, ifnet, elink
-file	arch/i386/isa/if_ie.c		ie
+file	dev/isa/if_ie.c			ie
 device	ix at isa: ether, ifnet
-file	arch/i386/isa/if_ix.c		ix
+file	dev/isa/if_ix.c			ix
 device	le at isa: ether, ifnet, dma
-file	arch/i386/isa/if_le.c		le
+file	dev/isa/if_le.c			le
 
 device	sb at isa: audio
 file	arch/i386/isa/sb.c		sb needs-flag
