@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_signal.c,v 1.14 2003/12/16 16:13:59 manu Exp $ */
+/*	$NetBSD: darwin_signal.c,v 1.15 2003/12/24 22:53:59 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_signal.c,v 1.14 2003/12/16 16:13:59 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_signal.c,v 1.15 2003/12/24 22:53:59 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -130,9 +130,6 @@ darwin_trapsignal(l, ksi)
 	struct lwp *l;
 	const struct ksiginfo *ksi;
 {
-	if (darwin_sigfilter(l, ksi) == 0)
-		return;
-
 	if (mach_trapsignal1(l, ksi) != 0)
 		trapsignal(l, ksi);
 
@@ -140,17 +137,15 @@ darwin_trapsignal(l, ksi)
 }
 
 int
-darwin_sigfilter(l, ksi)
+darwin_tracesig(l, signo)
 	struct lwp *l;
-	const struct ksiginfo *ksi;
+	int signo;
 {
 	struct proc *p = l->l_proc;
 	struct darwin_emuldata *ded;
 	int code[2];
 	int error;
 	int signo;
-
-	signo = ksi->ksi_signo;
 
 	/* 
 	 * Don't generate Mach exeption for non 
