@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.194 2002/03/17 19:40:57 atatat Exp $	*/
+/*	$NetBSD: com.c,v 1.195 2002/04/12 19:32:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.194 2002/03/17 19:40:57 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.195 2002/04/12 19:32:30 thorpej Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -1725,7 +1725,7 @@ comstart(tp)
 	}
 
 	/* Output the first chunk of the contiguous buffer. */
-	{
+	if (!ISSET(sc->sc_hwflags, COM_HW_NO_TXPRELOAD)) {
 		int n;
 
 		n = sc->sc_tbc;
