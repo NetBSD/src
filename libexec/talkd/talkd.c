@@ -1,6 +1,8 @@
+/*	$NetBSD: talkd.c,v 1.5 1997/06/29 18:01:16 christos Exp $	*/
+
 /*
- * Copyright (c) 1983 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1983, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -31,15 +33,18 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1983 Regents of the University of California.\n\
- All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)talkd.c	5.8 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$Id: talkd.c,v 1.4 1997/01/29 10:30:14 explorer Exp $";
+#if 0
+static char sccsid[] = "@(#)talkd.c	8.1 (Berkeley) 6/4/93";
+#else
+__RCSID("$NetBSD: talkd.c,v 1.5 1997/06/29 18:01:16 christos Exp $");
+#endif
 #endif /* not lint */
 
 /*
@@ -84,7 +89,7 @@ main(argc, argv)
 	int cc;
 
 	if (getuid()) {
-		fprintf(stderr, "%s: getuid: not super-user", argv[0]);
+		fprintf(stderr, "%s: getuid: not super-user\n", argv[0]);
 		exit(1);
 	}
 	openlog("talkd", LOG_PID, LOG_DAEMON);
@@ -92,7 +97,7 @@ main(argc, argv)
 		syslog(LOG_ERR, "gethostname: %m");
 		_exit(1);
 	}
-	hostname[MAXHOSTNAMELEN] = 0;  /* ensure null termination */
+	hostname[MAXHOSTNAMELEN] = '\0';  /* ensure null termination */
 	if (chdir(_PATH_DEV) < 0) {
 		syslog(LOG_ERR, "chdir: %s: %m", _PATH_DEV);
 		_exit(1);
