@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_conf.c,v 1.46 2000/11/27 17:21:22 jdolecek Exp $	*/
+/*	$NetBSD: exec_conf.c,v 1.47 2000/11/27 18:04:32 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -74,7 +74,8 @@
 #ifdef EXEC_ELF32
 int ELF32NAME2(netbsd,probe)(struct proc *, struct exec_package *,
     void *, char *, vaddr_t *);
-#else /* EXEC_ELF64 */
+#endif
+#ifdef EXEC_ELF64
 int ELF64NAME2(netbsd,probe)(struct proc *, struct exec_package *,
     void *, char *, vaddr_t *);
 #endif
