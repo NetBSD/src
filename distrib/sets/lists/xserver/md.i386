@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.19 2004/01/17 05:42:47 lukem Exp $
+# $NetBSD: md.i386,v 1.20 2004/01/19 00:32:41 lukem Exp $
 ./usr/X11R6/bin/X
 ./usr/X11R6/bin/XFree86
 ./usr/X11R6/bin/Xnest
@@ -74,8 +74,6 @@
 ./usr/X11R6/lib/X11/doc/Status
 ./usr/X11R6/lib/X11/doc/Versions
 ./usr/X11R6/lib/X11/doc/VideoBoard98
-./usr/X11R6/lib/X11/etc/sun.termcap
-./usr/X11R6/lib/X11/etc/sun.terminfo
 ./usr/X11R6/lib/X11/etc/xmodmap.std
 ./usr/X11R6/lib/libXxf86dga.so
 ./usr/X11R6/lib/libXxf86dga.so.1
