@@ -1,4 +1,4 @@
-/*	$NetBSD: shell.h,v 1.9 1996/03/01 01:59:00 jtc Exp $	*/
+/*	$NetBSD: shell.h,v 1.10 1996/10/16 15:21:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -56,7 +56,6 @@
 #ifndef BSD
 #define BSD 1
 #endif
-#define DEBUG 1
 
 #ifdef __STDC__
 typedef void *pointer;
