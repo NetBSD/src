@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.201 2000/03/06 02:32:31 mark Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.202 2000/03/09 09:53:03 jdolecek Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.194 2000/03/06 02:31:19 mark Exp 
+ *	NetBSD: pcidevs,v 1.195 2000/03/09 09:50:49 jdolecek Exp 
  */
 
 /*
@@ -523,6 +523,7 @@
 #define	PCI_VENDOR_FORTEMEDIA	0x1319		/* Forte Media */
 #define	PCI_VENDOR_DOMEX	0x134a		/* Domex */
 #define	PCI_VENDOR_LMC	0x1376		/* LAN Media Corporation */
+#define	PCI_VENDOR_CONEXANT	0x14f1		/* Conexant Systems */
 #define	PCI_VENDOR_NETGEAR	0x1385		/* Netgear */
 #define	PCI_VENDOR_SUNDANCETI	0x13f0		/* Sundance Technology */
 #define	PCI_VENDOR_CMEDIA	0x13f6		/* C-Media Electronics Inc */
@@ -846,6 +847,9 @@
 #define	PCI_PRODUCT_COMPEX_NE2KETHER	0x1401		/* Ethernet */
 #define	PCI_PRODUCT_COMPEX_RL100ATX	0x2011		/* RL100-ATX 10/100 Ethernet */
 #define	PCI_PRODUCT_COMPEX_RL100TX	0x9881		/* RL100-TX 10/100 Ethernet */
+
+/* Conexant Systems products  */
+#define	PCI_PRODUCT_CONEXANT_SOFTK56	0x2443		/* SoftK56 PCI Software Modem */
 
 /* Contaq Microsystems products */
 #define	PCI_PRODUCT_CONTAQ_82C599	0x0600		/* 82C599 PCI-VLB Bridge */
@@ -1293,6 +1297,8 @@
   
 /* Sony products */
 #define	PCI_PRODUCT_SONY_CXD1947A	0x8009		/* CXD1947A FireWire Host Controller */
+#define	PCI_PRODUCT_SONY_CXD32222	0x8039		/* CXD3222 OHCI i.LINK(IEEE 1394) PCI controller */
+#define	PCI_PRODUCT_SONY_MEMSTICK	0x808a		/* Memory Stick I/F Controller */
 
 /* Sun Microsystems products */
 #define	PCI_PRODUCT_SUN_EBUS	0x1000		/* SPARC Ebus */
