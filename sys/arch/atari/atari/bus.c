@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.12 1999/03/24 05:50:57 mrg Exp $	*/
+/*	$NetBSD: bus.c,v 1.13 1999/03/26 23:41:28 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@ bus_space_handle_t	*mhp;
 
 	for(; pa < endpa; pa += NBPG, va += NBPG) {
 		pmap_enter(pmap_kernel(), (vaddr_t)va, pa,
-				VM_PROT_READ|VM_PROT_WRITE, TRUE);
+				VM_PROT_READ|VM_PROT_WRITE, TRUE, 0);
 		if (!(flags & BUS_SPACE_MAP_CACHEABLE))
 			pmap_changebit(pa, PG_CI, TRUE);
 	}
@@ -505,7 +505,7 @@ bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 			    VM_PROT_READ | VM_PROT_WRITE);
 #else
 			pmap_enter(pmap_kernel(), va, addr - offset,
-			    VM_PROT_READ | VM_PROT_WRITE, TRUE);
+			    VM_PROT_READ | VM_PROT_WRITE, TRUE, 0);
 #endif
 		}
 	}

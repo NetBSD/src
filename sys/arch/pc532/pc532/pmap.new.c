@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.new.c,v 1.9 1998/10/11 23:21:02 chuck Exp $	*/
+/*	$NetBSD: pmap.new.c,v 1.10 1999/03/26 23:41:33 mycroft Exp $	*/
 
 /*
  *
@@ -1899,7 +1899,7 @@ int prot;
 
 {
   while (spa < epa) {
-    pmap_enter(pmap_kernel(), va, spa, prot, FALSE);
+    pmap_enter(pmap_kernel(), va, spa, prot, FALSE, 0);
     va += NBPG;
     spa += NBPG;
   }
@@ -3183,13 +3183,14 @@ boolean_t move;
  * => we set pmap => pv_head locking
  */
 
-void pmap_enter(pmap, va, pa, prot, wired)
+void pmap_enter(pmap, va, pa, prot, wired, access_type)
 
 struct pmap *pmap;
 vaddr_t va;
 paddr_t pa;
 vm_prot_t prot;
 boolean_t wired;
+vm_prot_t access_type;
 
 {
   pt_entry_t *ptes, opte, npte;

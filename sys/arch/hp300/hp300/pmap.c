@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.67 1999/03/24 05:51:00 mrg Exp $	*/
+/*	$NetBSD: pmap.c,v 1.68 1999/03/26 23:41:29 mycroft Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -670,7 +670,7 @@ pmap_map(va, spa, epa, prot)
 	    ("pmap_map(%lx, %lx, %lx, %x)\n", va, spa, epa, prot));
 
 	while (spa < epa) {
-		pmap_enter(pmap_kernel(), va, spa, prot, FALSE);
+		pmap_enter(pmap_kernel(), va, spa, prot, FALSE, 0);
 		va += NBPG;
 		spa += NBPG;
 	}
@@ -1115,12 +1115,13 @@ pmap_protect(pmap, sva, eva, prot)
  *	insert this page into the given map NOW.
  */
 void
-pmap_enter(pmap, va, pa, prot, wired)
+pmap_enter(pmap, va, pa, prot, wired, access_type)
 	pmap_t pmap;
 	vaddr_t va;
 	paddr_t pa;
 	vm_prot_t prot;
 	boolean_t wired;
+	vm_prot_t access_type;
 {
 	pt_entry_t *pte;
 	int npte;

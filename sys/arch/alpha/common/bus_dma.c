@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.c,v 1.28 1999/03/24 05:50:52 mrg Exp $ */
+/* $NetBSD: bus_dma.c,v 1.29 1999/03/26 23:41:27 mycroft Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.28 1999/03/24 05:50:52 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.29 1999/03/26 23:41:27 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -588,7 +588,7 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 			pmap_kenter_pa(va, addr, VM_PROT_READ | VM_PROT_WRITE);
 #else
 			pmap_enter(pmap_kernel(), va, addr,
-			    VM_PROT_READ | VM_PROT_WRITE, TRUE);
+			    VM_PROT_READ | VM_PROT_WRITE, TRUE, 0);
 #endif
 		}
 	}

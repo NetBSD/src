@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.47 1999/03/24 05:51:15 mrg Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.48 1999/03/26 23:41:37 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -311,13 +311,10 @@ pagemove(fptr, tptr, len)
 
 	kpmap = vm_map_pmap(kernel_map);
 	while (len > 0) {
-		pa = pmap_extract(kpmap, fva);
-		if (pa != 0) {
-			/* this does the cache flush work itself */
-			pmap_remove(kpmap, fva, fva + NBPG);
-			pmap_enter(kpmap, tva, pa,
-			    VM_PROT_READ|VM_PROT_WRITE, 1);
-		}
+		/* this does the cache flush work itself */
+		pmap_remove(kpmap, fva, fva + NBPG);
+		pmap_enter(kpmap, tva, pa,
+		    VM_PROT_READ|VM_PROT_WRITE, 1, VM_PROT_READ|VM_PROT_WRITE);
 		fva += NBPG;
 		tva += NBPG;
 		len -= NBPG;
@@ -369,7 +366,7 @@ vmapbuf(bp, len)
 #endif
 		/* Now map the page into kernel space. */
 		pmap_enter(kpmap, kva, pa | PMAP_NC,
-		    VM_PROT_READ|VM_PROT_WRITE, TRUE);
+		    VM_PROT_READ|VM_PROT_WRITE, TRUE, 0);
 		uva += NBPG;
 		kva += NBPG;
 		len -= NBPG;

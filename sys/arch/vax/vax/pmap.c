@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.60 1999/03/24 05:51:17 mrg Exp $	   */
+/*	$NetBSD: pmap.c,v 1.61 1999/03/26 23:41:38 mycroft Exp $	   */
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -557,12 +557,13 @@ printf("pmap_kenter_pgs: va: %lx, pgs %p, npgs %x\n", va, pgs, npgs);
 #endif
 
 void 
-pmap_enter(pmap, v, p, prot, wired)
+pmap_enter(pmap, v, p, prot, wired, access_type)
 	register pmap_t pmap;
 	vaddr_t	v;
 	paddr_t	p;
 	vm_prot_t	prot;
 	boolean_t	wired;
+	vm_prot_t	access_type;
 {
 	struct	pv_entry *pv, *tmp;
 	int	i, s, nypte, *patch;

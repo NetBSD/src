@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.18 1999/03/24 05:51:10 mrg Exp $	*/
+/*	$NetBSD: pmap.c,v 1.19 1999/03/26 23:41:34 mycroft Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -965,12 +965,13 @@ pmap_remove_pv(pteidx, va, pa, pte)
  * Insert physical page at pa into the given pmap at virtual address va.
  */
 void
-pmap_enter(pm, va, pa, prot, wired)
+pmap_enter(pm, va, pa, prot, wired, access_type)
 	struct pmap *pm;
 	vaddr_t va;
 	paddr_t pa;
 	vm_prot_t prot;
 	int wired;
+	vm_prot_t access_type;
 {
 	sr_t sr;
 	int idx, i, s;

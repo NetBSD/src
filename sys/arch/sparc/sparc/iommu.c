@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.31 1999/03/25 22:13:40 pk Exp $ */
+/*	$NetBSD: iommu.c,v 1.32 1999/03/26 23:41:35 mycroft Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -740,7 +740,7 @@ iommu_dmamem_map(t, segs, nsegs, size, kvap, flags)
 
 		addr = VM_PAGE_TO_PHYS(m);
 		pmap_enter(pmap_kernel(), va, addr | cbit,
-			   VM_PROT_READ | VM_PROT_WRITE, TRUE);
+		    VM_PROT_READ | VM_PROT_WRITE, TRUE, 0);
 #if 0
 			if (flags & BUS_DMA_COHERENT)
 				/* XXX */;

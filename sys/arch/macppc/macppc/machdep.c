@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.36 1999/03/24 05:51:04 mrg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.37 1999/03/26 23:41:31 mycroft Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -378,7 +378,8 @@ restore_ofw_mapping()
 			continue;
 
 		while (size > 0) {
-			pmap_enter(&ofw_pmap, va, pa, VM_PROT_ALL, 1);
+			pmap_enter(&ofw_pmap, va, pa, VM_PROT_ALL, 1,
+			    VM_PROT_ALL);
 			pa += NBPG;
 			va += NBPG;
 			size -= NBPG;
@@ -528,7 +529,8 @@ cpu_startup()
 				panic("cpu_startup: not enough memory for "
 				    "buffer cache");
 			pmap_enter(kernel_map->pmap, curbuf,
-				   VM_PAGE_TO_PHYS(pg), VM_PROT_ALL, TRUE);
+			    VM_PAGE_TO_PHYS(pg), VM_PROT_READ|VM_PROT_WRITE,
+			    TRUE, VM_PROT_READ|VM_PROT_WRITE);
 			curbuf += PAGE_SIZE;
 			curbufsize -= PAGE_SIZE;
 		}
@@ -1075,7 +1077,7 @@ mapiodev(pa, len)
 
 	for (; len > 0; len -= NBPG) {
 		pmap_enter(pmap_kernel(), taddr, faddr,
-			   VM_PROT_READ | VM_PROT_WRITE, 1);
+			   VM_PROT_READ | VM_PROT_WRITE, 1, 0);
 		faddr += NBPG;
 		taddr += NBPG;
 	}

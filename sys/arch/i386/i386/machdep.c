@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.345 1999/03/24 05:51:00 mrg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.346 1999/03/26 23:41:29 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -416,7 +416,8 @@ cpu_startup()
 #else
 	for (x = 0; x < btoc(MSGBUFSIZE); x++)
 		pmap_enter(pmap_kernel(), (vaddr_t)msgbuf_vaddr + x * NBPG,
-		    msgbuf_paddr + x * NBPG, VM_PROT_ALL, TRUE);
+		    msgbuf_paddr + x * NBPG, VM_PROT_READ|VM_PROT_WRITE, TRUE,
+		    VM_PROT_READ|VM_PROT_WRITE);
 #endif
 	initmsgbuf((caddr_t)msgbuf_vaddr, round_page(MSGBUFSIZE));
 
@@ -519,8 +520,9 @@ cpu_startup()
 	pmap_enter(pmap_kernel(),
 		   (vaddr_t)BIOSTRAMP_BASE,	/* virtual */
 		   (paddr_t)BIOSTRAMP_BASE,	/* physical */
-		   VM_PROT_ALL,			/* protection */
-		   TRUE);			/* wired down */
+		   VM_PROT_READ|VM_PROT_WRITE,	/* protection */
+		   TRUE,			/* wired down */
+		   VM_PROT_READ|VM_PROT_WRITE);
 #endif
 	memcpy((caddr_t)BIOSTRAMP_BASE, biostramp_image, biostramp_image_size);
 #ifdef DEBUG
@@ -597,7 +599,8 @@ i386_bufinit()
 			pmap_kenter_pgs(curbuf, &pg, 1);
 #else
 			pmap_enter(kernel_map->pmap, curbuf,
-				   VM_PAGE_TO_PHYS(pg), VM_PROT_ALL, TRUE);
+			    VM_PAGE_TO_PHYS(pg), VM_PROT_READ|VM_PROT_WRITE,
+			    TRUE, VM_PROT_READ|VM_PROT_WRITE);
 #endif
 			curbuf += PAGE_SIZE;
 			curbufsize -= PAGE_SIZE;
@@ -1842,15 +1845,17 @@ init386(first_avail)
 
 #if NBIOSCALL > 0
 	/* install page 2 (reserved above) as PT page for first 4M */
-	pmap_enter(pmap_kernel(), (u_long)vtopte(0), 2*NBPG, VM_PROT_ALL, TRUE);
+	pmap_enter(pmap_kernel(), (u_long)vtopte(0), 2*NBPG,
+	    VM_PROT_READ|VM_PROT_WRITE, TRUE, VM_PROT_READ|VM_PROT_WRITE);
 	memset(vtopte(0), 0, NBPG);  /* make sure it is clean before using */
 #endif
 
-	pmap_enter(pmap_kernel(), idt_vaddr, idt_paddr, VM_PROT_ALL, TRUE);
+	pmap_enter(pmap_kernel(), idt_vaddr, idt_paddr,
+	    VM_PROT_READ|VM_PROT_WRITE, TRUE, VM_PROT_READ|VM_PROT_WRITE);
 	idt = (union descriptor *)idt_vaddr;
 #ifdef I586_CPU
-	pmap_enter(pmap_kernel(), pentium_idt_vaddr, idt_paddr, VM_PROT_READ,
-	    TRUE);
+	pmap_enter(pmap_kernel(), pentium_idt_vaddr, idt_paddr,
+	    VM_PROT_READ, TRUE, VM_PROT_READ);
 	pentium_idt = (union descriptor *)pentium_idt_vaddr;
 #endif
 	gdt = idt + NIDT;
@@ -2417,7 +2422,7 @@ i386_mem_add_mapping(bpa, size, cacheable, bshp)
 
 	for (; pa < endpa; pa += NBPG, va += NBPG) {
 		pmap_enter(pmap_kernel(), va, pa,
-		    VM_PROT_READ | VM_PROT_WRITE, TRUE);
+		    VM_PROT_READ | VM_PROT_WRITE, TRUE, 0);
 
 		/*
 		 * PG_N doesn't exist on 386's, so we assume that
@@ -2851,7 +2856,7 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 			pmap_kenter_pa(va, addr, VM_PROT_READ | VM_PROT_WRITE);
 #else
 			pmap_enter(pmap_kernel(), va, addr,
-			    VM_PROT_READ | VM_PROT_WRITE, TRUE);
+			    VM_PROT_READ | VM_PROT_WRITE, TRUE, 0);
 #endif
 		}
 	}

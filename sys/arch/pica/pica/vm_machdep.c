@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.4 1998/11/11 06:43:50 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.5 1999/03/26 23:41:34 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -274,7 +274,7 @@ vmapbuf(bp)
 		if (pa == 0)
 			panic("vmapbuf: null page frame");
 		pmap_enter(vm_map_pmap(phys_map), kva, trunc_page(pa),
-			VM_PROT_READ|VM_PROT_WRITE, TRUE);
+		    VM_PROT_READ|VM_PROT_WRITE, TRUE, 0);
 		addr += PAGE_SIZE;
 		kva += PAGE_SIZE;
 	}

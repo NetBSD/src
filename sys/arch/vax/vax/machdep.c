@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.74 1999/03/24 05:51:16 mrg Exp $	 */
+/* $NetBSD: machdep.c,v 1.75 1999/03/26 23:41:38 mycroft Exp $	 */
 
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
@@ -261,7 +261,8 @@ cpu_startup()
 				panic("cpu_startup: "
 				    "not enough RAM for buffer cache");
 			pmap_enter(kernel_map->pmap, curbuf,
-			    VM_PAGE_TO_PHYS(pg), VM_PROT_ALL, TRUE);
+			    VM_PAGE_TO_PHYS(pg), VM_PROT_READ|VM_PROT_WRITE,
+			    TRUE, VM_PROT_READ|VM_PROT_WRITE);
 			curbuf += CLBYTES;
 			curbufsize -= CLBYTES;
 		}

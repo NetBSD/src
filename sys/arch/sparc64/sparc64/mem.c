@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.6 1999/03/24 05:51:13 mrg Exp $ */
+/*	$NetBSD: mem.c,v 1.7 1999/03/26 23:41:36 mycroft Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -97,6 +97,7 @@ mmrw(dev, uio, flags)
 	register struct iovec *iov;
 	int error = 0;
 	static int physlock;
+	vm_prot_t prot;
 	extern caddr_t vmmap;
 
 	if (minor(dev) == 0) {
@@ -129,9 +130,10 @@ mmrw(dev, uio, flags)
 				error = EFAULT;
 				goto unlock;
 			}
-			pmap_enter(pmap_kernel(), (vaddr_t)vmmap,
-			    trunc_page(v), uio->uio_rw == UIO_READ ?
-			    VM_PROT_READ : VM_PROT_WRITE, TRUE);
+			prot = uio->uio_rw == UIO_READ ? VM_PROT_READ :
+			    VM_PROT_WRITE;
+			pmap_enter(pmap_kernel(), (vm_offset_t)vmmap,
+			    trunc_page(v), prot, TRUE, prot);
 			o = uio->uio_offset & PGOFSET;
 			c = min(uio->uio_resid, (int)(NBPG - o));
 			error = uiomove((caddr_t)vmmap + o, c, uio);

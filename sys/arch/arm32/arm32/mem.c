@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.10 1999/03/26 22:00:25 mycroft Exp $	*/
+/*	$NetBSD: mem.c,v 1.11 1999/03/26 23:41:28 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -95,6 +95,7 @@ mmrw(dev, uio, flags)
 	register int c;
 	register struct iovec *iov;
 	int error = 0;
+	vm_prot_t prot;
 
 	if (minor(dev) == 0) {
 		/* lock against other uses of shared vmmap */
@@ -121,9 +122,10 @@ mmrw(dev, uio, flags)
 		/* minor device 0 is physical memory */
 		case 0:
 			v = uio->uio_offset;
+			prot = uio->uio_rw == UIO_READ ? VM_PROT_READ :
+			    VM_PROT_WRITE;
 			pmap_enter(pmap_kernel(), (vm_offset_t)memhook,
-			    trunc_page(v), uio->uio_rw == UIO_READ ?
-			    VM_PROT_READ : VM_PROT_WRITE, TRUE, 0);
+			    trunc_page(v), prot, TRUE, prot);
 			o = uio->uio_offset & PGOFSET;
 			c = min(uio->uio_resid, (int)(NBPG - o));
 			error = uiomove((caddr_t)memhook + o, c, uio);
