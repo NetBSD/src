@@ -1,4 +1,37 @@
-/* $NetBSD: qp.c,v 1.3 2002/03/27 03:43:39 jmc Exp $ */
+/* $NetBSD: qp.c,v 1.4 2003/02/06 20:23:35 petrov Exp $ */
+
+/*-
+ * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 #include <sys/cdefs.h>
 #include <memory.h>
@@ -8,16 +41,42 @@
 
 
 void _Qp_add(float128 *c, float128 *a, float128 *b);
+int  _Qp_cmp(float128 *a, float128 *b);
+int  _Qp_cmpe(float128 *a, float128 *b);
+void _Qp_div(float128 *c, float128 *a, float128 *b);
+void _Qp_dtoq(float128 *c, double a);
+int  _Qp_feq(float128 *a, float128 *b);
+int  _Qp_fge(float128 *a, float128 *b);
+int  _Qp_fgt(float128 *a, float128 *b);
+int  _Qp_fle(float128 *a, float128 *b);
+int  _Qp_flt(float128 *a, float128 *b);
+int  _Qp_fne(float128 *a, float128 *b);
+void _Qp_itoq(float128 *c, int a);
+void _Qp_mul(float128 *c, float128 *a, float128 *b);
+void _Qp_neg(float128 *c, float128 *a);
+double _Qp_qtod(float128 *a);
+int _Qp_qtoi(float128 *a);
+float _Qp_qtos(float128 *a);
+unsigned int _Qp_qtoui(float128 *a);
+unsigned long _Qp_qtoux(float128 *a);
+long _Qp_qtox(float128 *a);
+void _Qp_sqrt(float128 *c, float128 *a);
+void _Qp_stoq(float128 *c, float a);
+void _Qp_sub(float128 *c, float128 *a, float128 *b);
+void _Qp_uitoq(float128 *c, unsigned int a);
+void _Qp_uxtoq(float128 *c, unsigned long a);
+void _Qp_xtoq(float128 *c, long a);
 
-void _Qp_add(float128 *c, float128 *a, float128 *b)
+
+void
+_Qp_add(float128 *c, float128 *a, float128 *b)
 {
 	 *c =  float128_add(*a, *b);
 }
 
 
-int _Qp_cmp(float128 *a, float128 *b);
-
-int _Qp_cmp(float128 *a, float128 *b)
+int
+_Qp_cmp(float128 *a, float128 *b)
 {
 
 	if (float128_eq(*a, *b))
@@ -33,115 +92,100 @@ int _Qp_cmp(float128 *a, float128 *b)
 /*
  * XXX 
  */
-int _Qp_cmpe(float128 *a, float128 *b);
-
-int _Qp_cmpe(float128 *a, float128 *b)
+int
+_Qp_cmpe(float128 *a, float128 *b)
 {
 	return _Qp_cmp(a, b);
 }
 
 
-void _Qp_div(float128 *c, float128 *a, float128 *b);
-
-void _Qp_div(float128 *c, float128 *a, float128 *b)
+void
+_Qp_div(float128 *c, float128 *a, float128 *b)
 {
 	*c = float128_div(*a, *b);
 }
 
 
-void _Qp_dtoq(float128 *c, double a);
-
-void _Qp_dtoq(float128 *c, double a)
+void
+_Qp_dtoq(float128 *c, double a)
 {
 	float64 _b;
+
 	memcpy (&_b, &a, sizeof(float64));
 	*c = float64_to_float128(_b);
 }
 
 
-
-int _Qp_feq(float128 *a, float128 *b);
-
-int _Qp_feq(float128 *a, float128 *b)
+int
+_Qp_feq(float128 *a, float128 *b)
 {
 	return float128_eq(*a, *b);
 }
 
 
-int _Qp_fge(float128 *a, float128 *b);
-
-int _Qp_fge(float128 *a, float128 *b)
+int
+_Qp_fge(float128 *a, float128 *b)
 {
 	return float128_le(*b, *a);
 }
 
 
-int _Qp_fgt(float128 *a, float128 *b);
-
-int _Qp_fgt(float128 *a, float128 *b)
+int
+_Qp_fgt(float128 *a, float128 *b)
 {
 	return float128_lt(*b, *a);
 }
 
 
-int _Qp_fle(float128 *a, float128 *b);
-
-int _Qp_fle(float128 *a, float128 *b)
+int
+_Qp_fle(float128 *a, float128 *b)
 {
 	return float128_le(*a, *b);
 }
 
 
-int _Qp_flt(float128 *a, float128 *b);
-
-int _Qp_flt(float128 *a, float128 *b)
+int
+_Qp_flt(float128 *a, float128 *b)
 {
 	return float128_lt(*a, *b);
 }
 
 
-int _Qp_fne(float128 *a, float128 *b);
-
-int _Qp_fne(float128 *a, float128 *b)
+int
+_Qp_fne(float128 *a, float128 *b)
 {
 	return !float128_eq(*a, *b);
 }
 
 
-void _Qp_itoq(float128 *c, int a);
-
-void _Qp_itoq(float128 *c, int a)
+void
+_Qp_itoq(float128 *c, int a)
 {
 	*c = int32_to_float128(a);
 }
 
 
-
-void _Qp_mul(float128 *c, float128 *a, float128 *b);
-
-void _Qp_mul(float128 *c, float128 *a, float128 *b)
+void
+_Qp_mul(float128 *c, float128 *a, float128 *b)
 {
 	*c = float128_mul(*a, *b);
 }
 
 
 /*
- * XXX easy way to do this, softfloat function
+ * XXX need corresponding softfloat function
  */
-void _Qp_neg(float128 *c, float128 *a);
-
 static float128 __zero = {0x4034000000000000, 0x00000000};
 
-void _Qp_neg(float128 *c, float128 *a)
+void
+_Qp_neg(float128 *c, float128 *a)
 {
 	*c = float128_sub(__zero, *a);
 }
 
 
-
-double _Qp_qtod(float128 *a);
-
-double _Qp_qtod(float128 *a)
+double
+_Qp_qtod(float128 *a)
 {
 	float64 _c;
 	double c;
@@ -154,17 +198,15 @@ double _Qp_qtod(float128 *a)
 }
 
 
-int _Qp_qtoi(float128 *a);
-
-int _Qp_qtoi(float128 *a)
+int
+_Qp_qtoi(float128 *a)
 {
 	return float128_to_int32(*a);
 }
 
 
-float _Qp_qtos(float128 *a);
-
-float _Qp_qtos(float128 *a)
+float
+ _Qp_qtos(float128 *a)
 {
 	float c;
 	float32 _c;
@@ -177,43 +219,36 @@ float _Qp_qtos(float128 *a)
 }
 
 
-unsigned int _Qp_qtoui(float128 *a);
-
-unsigned int _Qp_qtoui(float128 *a)
+unsigned int
+_Qp_qtoui(float128 *a)
 {
 	return (unsigned int)float128_to_int32(*a);
 }
 
 
-
-unsigned long _Qp_qtoux(float128 *a);
-
-unsigned long _Qp_qtoux(float128 *a)
+unsigned long
+_Qp_qtoux(float128 *a)
 {
 	return (unsigned long)float128_to_int64(*a);
 }
 
 
-
-long _Qp_qtox(float128 *a);
-
-long _Qp_qtox(float128 *a)
+long
+_Qp_qtox(float128 *a)
 {
 	return (long)float128_to_int64(*a);
 }
 
 
-void _Qp_sqrt(float128 *c, float128 *a);
-
-void _Qp_sqrt(float128 *c, float128 *a)
+void
+_Qp_sqrt(float128 *c, float128 *a)
 {
 	*c = float128_sqrt(*a);
 }
 
 
-void _Qp_stoq(float128 *c, float a);
-
-void _Qp_stoq(float128 *c, float a)
+void
+_Qp_stoq(float128 *c, float a)
 {
 	float32 _a;
 
@@ -223,33 +258,35 @@ void _Qp_stoq(float128 *c, float a)
 }
 
 
-void _Qp_sub(float128 *c, float128 *a, float128 *b);
-
-void _Qp_sub(float128 *c, float128 *a, float128 *b)
+void
+_Qp_sub(float128 *c, float128 *a, float128 *b)
 {
 	*c = float128_sub(*a, *b);
 }
 
 
-void _Qp_uitoq(float128 *c, unsigned int a);
-
-void _Qp_uitoq(float128 *c, unsigned int a)
-{
-	*c = int32_to_float128(a);
-}
-
-
-void _Qp_uxtoq(float128 *c, unsigned long a);
-
-void _Qp_uxtoq(float128 *c, unsigned long a)
+void
+_Qp_uitoq(float128 *c, unsigned int a)
 {
 	*c = int64_to_float128(a);
 }
 
 
-void _Qp_xtoq(float128 *c, long a);
+void
+_Qp_uxtoq(float128 *c, unsigned long a)
+{
 
-void _Qp_xtoq(float128 *c, long a)
+	if (a & 0x8000000000000000ULL) {
+		a = (a >> 1) | (a & 1);
+		*c = int64_to_float128(a);
+		*c = float128_add(*c, *c);
+	} else
+		*c = int64_to_float128(a);
+}
+
+
+void
+_Qp_xtoq(float128 *c, long a)
 {
 	*c = int64_to_float128(a);
 }
