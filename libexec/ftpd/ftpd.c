@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.48 1998/06/03 13:21:42 mouse Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.49 1998/06/08 07:13:13 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1988, 1990, 1992, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.48 1998/06/03 13:21:42 mouse Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.49 1998/06/08 07:13:13 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -195,7 +195,7 @@ static char	*gunique __P((char *));
 static void	 lostconn __P((int));
 static int	 receive_data __P((FILE *, FILE *));
 static void	 replydirname __P((const char *, const char *));
-static void	 send_data __P((FILE *, FILE *, off_t));
+static int	 send_data __P((FILE *, FILE *, off_t));
 static struct passwd *
 		 sgetpwnam __P((char *));
 static char	*sgetsave __P((char *));
@@ -803,19 +803,30 @@ retrieve(cmd, name)
 	FILE *fin = NULL, *dout;
 	struct stat st;
 	int (*closefunc) __P((FILE *)) = NULL;
-	int log;
+	int log, sendrv, closerv, stderrfd, isconversion;
 
+	sendrv = closerv = stderrfd = -1;
+	isconversion = 0;
 	log = (cmd == 0);
-	if (cmd == 0) {
+	if (cmd == NULL) {
 		fin = fopen(name, "r"), closefunc = fclose;
 		if (fin == NULL)
 			cmd = do_conversion(name);
+		if (cmd != NULL) {
+			isconversion++;
+			syslog(LOG_INFO, "get command: '%s'", cmd);
+		}
 	}
-	if (cmd) {
+	if (cmd != NULL) {
 		char line[BUFSIZ];
+		char temp[MAXPATHLEN];
 
+		(void)snprintf(temp, sizeof(temp), "%s", TMPFILE);
+		stderrfd = mkstemp(temp);
+		if (stderrfd != -1)
+			(void)unlink(temp);
 		(void)snprintf(line, sizeof(line), cmd, name), name = line;
-		fin = ftpd_popen(line, "r", 1), closefunc = ftpd_pclose;
+		fin = ftpd_popen(line, "r", stderrfd), closefunc = ftpd_pclose;
 		st.st_size = -1;
 		st.st_blksize = BUFSIZ;
 	}
@@ -826,21 +837,22 @@ retrieve(cmd, name)
 				LOGCMD("get", name);
 			}
 		}
+		if (stderrfd != -1)
+			(void)close(stderrfd);
 		return;
 	}
 	byte_count = -1;
-	if (cmd == 0 && (fstat(fileno(fin), &st) < 0 || !S_ISREG(st.st_mode))) {
+	if (cmd == NULL
+	    && (fstat(fileno(fin), &st) < 0 || !S_ISREG(st.st_mode))) {
 		reply(550, "%s: not a plain file.", name);
 		goto done;
 	}
 	if (restart_point) {
 		if (type == TYPE_A) {
-			off_t i, n;
+			off_t i;
 			int c;
 
-			n = restart_point;
-			i = 0;
-			while (i++ < n) {
+			for (i = 0; i < restart_point; i++) {
 				if ((c=getc(fin)) == EOF) {
 					perror_reply(550, name);
 					goto done;
@@ -856,14 +868,48 @@ retrieve(cmd, name)
 	dout = dataconn(name, st.st_size, "w");
 	if (dout == NULL)
 		goto done;
-	send_data(fin, dout, st.st_blksize);
+	sendrv = send_data(fin, dout, st.st_blksize);
 	(void) fclose(dout);
 	data = -1;
 	pdata = -1;
 done:
 	if (log)
 		LOGBYTES("get", name, byte_count);
-	(*closefunc)(fin);
+	closerv = (*closefunc)(fin);
+	if (sendrv == 0) {
+		FILE *err;
+		struct stat sb;
+
+		if (cmd != NULL && closerv != 0) {
+			lreply(226,
+			    "Command returned an exit status of %d",
+			    closerv);
+			if (isconversion)
+				syslog(LOG_INFO,
+				    "get command: '%s' returned %d",
+				    cmd, closerv);
+		}
+		if (cmd != NULL && stderrfd != -1 &&
+		    (fstat(stderrfd, &sb) == 0) && sb.st_size > 0 &&
+		    ((err = fdopen(stderrfd, "r")) != NULL)) {
+			char *cp, line[LINE_MAX];
+
+			lreply(226, "Command error messages:");
+			rewind(err);
+			while (fgets(line, sizeof(line), err) != NULL) {
+				if ((cp = strchr(line, '\n')) != NULL)
+					*cp = '\0';
+				lreply(226, " %s", line);
+			}
+			(void) fflush(stdout);
+			(void) fclose(err);
+			lreply(226, "End of command error messages.");
+				/* a reply(226,) must follow */
+		}
+		reply(226, "Transfer complete.");
+	}
+	if (stderrfd != -1)
+		(void)close(stderrfd);
 }
 
 void
@@ -893,12 +939,10 @@ store(name, mode, unique)
 	byte_count = -1;
 	if (restart_point) {
 		if (type == TYPE_A) {
-			off_t i, n;
+			off_t i;
 			int c;
 
-			n = restart_point;
-			i = 0;
-			while (i++ < n) {
+			for (i = 0; i < restart_point; i++) {
 				if ((c=getc(fout)) == EOF) {
 					perror_reply(550, name);
 					goto done;
@@ -1062,7 +1106,7 @@ dataconn(name, size, mode)
  *
  * NB: Form isn't handled.
  */
-static void
+static int
 send_data(instr, outstr, blksize)
 	FILE *instr, *outstr;
 	off_t blksize;
@@ -1073,7 +1117,7 @@ send_data(instr, outstr, blksize)
 	transflag++;
 	if (setjmp(urgcatch)) {
 		transflag = 0;
-		return;
+		return (-1);
 	}
 
 	switch (type) {
@@ -1094,15 +1138,14 @@ send_data(instr, outstr, blksize)
 			goto file_err;
 		if (ferror(outstr))
 			goto data_err;
-		reply(226, "Transfer complete.");
-		return;
+		return (0);
 
 	case TYPE_I:
 	case TYPE_L:
 		if ((buf = malloc((u_int)blksize)) == NULL) {
 			transflag = 0;
 			perror_reply(451, "Local resource failure: malloc");
-			return;
+			return (-1);
 		}
 		netfd = fileno(outstr);
 		filefd = fileno(instr);
@@ -1116,22 +1159,22 @@ send_data(instr, outstr, blksize)
 				goto file_err;
 			goto data_err;
 		}
-		reply(226, "Transfer complete.");
-		return;
+		return (0);
 	default:
 		transflag = 0;
 		reply(550, "Unimplemented TYPE %d in send_data", type);
-		return;
+		return (-1);
 	}
 
 data_err:
 	transflag = 0;
 	perror_reply(426, "Data connection");
-	return;
+	return (-1);
 
 file_err:
 	transflag = 0;
 	perror_reply(551, "Error on input file");
+	return (-1);
 }
 
 /*
@@ -1232,7 +1275,7 @@ statfilecmd(filename)
 	char line[LINE_MAX];
 
 	(void)snprintf(line, sizeof(line), "/bin/ls -lgA %s", filename);
-	fin = ftpd_popen(line, "r", 0);
+	fin = ftpd_popen(line, "r", STDOUT_FILENO);
 	lreply(211, "status of %s:", filename);
 	while ((c = getc(fin)) != EOF) {
 		if (c == '\n') {
