@@ -1,4 +1,4 @@
-/*	$NetBSD: btl.c,v 1.17 2005/01/22 07:44:33 tsutsui Exp $	*/
+/*	$NetBSD: btl.c,v 1.18 2005/02/21 00:29:06 thorpej Exp $	*/
 /*	NetBSD: bt.c,v 1.10 1996/05/12 23:51:54 mycroft Exp 	*/
 
 #undef BTDIAG
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btl.c,v 1.17 2005/01/22 07:44:33 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btl.c,v 1.18 2005/02/21 00:29:06 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -797,7 +797,7 @@ bt_start_ccbs(struct bt_softc *sc)
 void
 bt_done(struct bt_softc *sc, struct bt_ccb *ccb)
 {
-	struct scsipi_sense_data *s1, *s2;
+	struct scsi_sense_data *s1, *s2;
 	struct scsipi_xfer *xs = ccb->xs;
 
 	u_long thiskv, thisbounce;

@@ -1,4 +1,4 @@
-/*      $NetBSD: adw.h,v 1.11 2005/02/04 02:10:36 perry Exp $        */
+/*      $NetBSD: adw.h,v 1.12 2005/02/21 00:29:07 thorpej Exp $        */
 
 /*
  * Generic driver definitions and exported functions for the Advanced
@@ -68,7 +68,7 @@ struct adw_ccb {
 	ADW_SCSI_REQ_Q		scsiq;
 	ADW_SG_BLOCK		sg_block[ADW_NUM_SG_BLOCK];
 
-	struct scsipi_sense_data scsi_sense;
+	struct scsi_sense_data scsi_sense;
 
 	TAILQ_ENTRY(adw_ccb)	chain;
 	struct adw_ccb		*nexthash;

@@ -1,4 +1,4 @@
-/*	$NetBSD: uha.c,v 1.34 2005/02/04 02:10:37 perry Exp $	*/
+/*	$NetBSD: uha.c,v 1.35 2005/02/21 00:29:07 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uha.c,v 1.34 2005/02/04 02:10:37 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uha.c,v 1.35 2005/02/21 00:29:07 thorpej Exp $");
 
 #undef UHADEBUG
 #ifdef DDB
@@ -343,7 +343,7 @@ uha_done(sc, mscp)
 	struct uha_mscp *mscp;
 {
 	bus_dma_tag_t dmat = sc->sc_dmat;
-	struct scsipi_sense_data *s1, *s2;
+	struct scsi_sense_data *s1, *s2;
 	struct scsipi_xfer *xs = mscp->xs;
 
 	SC_DEBUG(xs->xs_periph, SCSIPI_DB2, ("uha_done\n"));

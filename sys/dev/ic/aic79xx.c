@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx.c,v 1.28 2004/04/21 18:03:13 itojun Exp $	*/
+/*	$NetBSD: aic79xx.c,v 1.29 2005/02/21 00:29:07 thorpej Exp $	*/
 
 /*
  * Core routines and tables shareable across OS platforms.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic79xx.c,v 1.28 2004/04/21 18:03:13 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic79xx.c,v 1.29 2005/02/21 00:29:07 thorpej Exp $");
 
 #include <dev/ic/aic79xx_osm.h>
 #include <dev/ic/aic79xx_inline.h>
@@ -7930,7 +7930,7 @@ ahd_handle_scsi_status(struct ahd_softc *ahd, struct scb *scb)
 	{
 		struct ahd_devinfo devinfo;
 		struct ahd_dma_seg *sg;
-		struct scsipi_sense *sc;
+		struct scsi_request_sense *sc;
 		struct ahd_initiator_tinfo *targ_info;
 		struct ahd_tmode_tstate *tstate;
 		struct ahd_transinfo *tinfo;
@@ -7957,7 +7957,7 @@ ahd_handle_scsi_status(struct ahd_softc *ahd, struct scb *scb)
 						&tstate);
 		tinfo = &targ_info->curr;
 		sg = scb->sg_list;
-		sc = (struct scsipi_sense *)hscb->shared_data.idata.cdb;
+		sc = (struct scsi_request_sense *)hscb->shared_data.idata.cdb;
 		/*
 		 * Save off the residual if there is one.
 		 */
@@ -7972,12 +7972,9 @@ ahd_handle_scsi_status(struct ahd_softc *ahd, struct scb *scb)
 		sg = ahd_sg_setup(ahd, scb, sg, ahd_get_sense_bufaddr(ahd, scb),
 				  ahd_get_sense_bufsize(ahd, scb),
 				  /*last*/TRUE);
-		sc->opcode = REQUEST_SENSE;
-		sc->byte2 = 0;
-		sc->unused[0] = 0;
-		sc->unused[1] = 0;
+		memset(sc, 0, sizeof(*sc));
+		sc->opcode = SCSI_REQUEST_SENSE;
 		sc->length = ahd_get_sense_bufsize(ahd, scb);
-		sc->control = 0;
 
 		/*
 		 * We can't allow the target to disconnect.

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsictl.c,v 1.26 2005/02/05 13:37:39 xtraeme Exp $	*/
+/*	$NetBSD: scsictl.c,v 1.27 2005/02/21 00:29:08 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: scsictl.c,v 1.26 2005/02/05 13:37:39 xtraeme Exp $");
+__RCSID("$NetBSD: scsictl.c,v 1.27 2005/02/21 00:29:08 thorpej Exp $");
 #endif
 
 
@@ -60,8 +60,8 @@ __RCSID("$NetBSD: scsictl.c,v 1.26 2005/02/05 13:37:39 xtraeme Exp $");
 #include <unistd.h>
 #include <util.h>
 
+#include <dev/scsipi/scsi_spc.h>
 #include <dev/scsipi/scsipi_all.h>
-#include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsi_disk.h>
 #include <dev/scsipi/scsipiconf.h>
 
@@ -461,7 +461,7 @@ device_format(int argc, char *argv[])
 	    PC*1, PC*2, PC*3, PC*4, PC*5, PC*6, PC*7, PC*8, PC*9, 65536
 	};
 	char *cp, buffer[64];
-	struct scsipi_sense_data sense;
+	struct scsi_sense_data sense;
 	struct scsi_format_unit cmd;
 	struct {
 		struct scsi_format_unit_defect_list_header header;
@@ -469,13 +469,13 @@ device_format(int argc, char *argv[])
 		/* optional defect list */
 	} dfl;
 	struct {
-		struct scsipi_mode_header header;
-		struct scsi_blk_desc blk_desc;
+		struct scsi_mode_parameter_header_6 header;
+		struct scsi_general_block_descriptor blk_desc;
 		struct page_disk_format format_page;
 	} mode_page;
 	struct {
-		struct scsipi_mode_header header;
-		struct scsi_blk_desc blk_desc;
+		struct scsi_mode_parameter_header_6 header;
+		struct scsi_general_block_descriptor blk_desc;
 	} data_select;
 	
 
@@ -491,7 +491,7 @@ device_format(int argc, char *argv[])
 	 */
 	for (i = 0; i < 8; i++) {
 		scsi_request_sense(fd, &sense, sizeof (sense));
-		if ((j = sense.flags & SSD_KEY) == SKEY_NO_SENSE)
+		if ((j = SSD_SENSE_KEY(sense.flags)) == SKEY_NO_SENSE)
 			break;
 	}
 	/*
@@ -541,7 +541,8 @@ device_format(int argc, char *argv[])
 
 		memset(&data_select, 0, sizeof(data_select));
 
-		data_select.header.blk_desc_len = sizeof(struct scsi_blk_desc);
+		data_select.header.blk_desc_len =
+		    sizeof(struct scsi_general_block_descriptor);
 		/*
 		 * blklen in desc is 3 bytes with a leading reserved byte
 		 */
@@ -591,10 +592,10 @@ device_format(int argc, char *argv[])
 		fflush(stdout);
 		do {
 			scsireq_t req;
-			struct scsipi_test_unit_ready tcmd;
+			struct scsi_test_unit_ready tcmd;
 
 			memset(&tcmd, 0, sizeof(cmd));
-			tcmd.opcode = TEST_UNIT_READY;
+			tcmd.opcode = SCSI_TEST_UNIT_READY;
 
 			memset(&req, 0, sizeof(req));
 			memcpy(req.cmd, &tcmd, 6);
@@ -623,16 +624,16 @@ device_format(int argc, char *argv[])
 				break;
 			}
 			memcpy(&sense, req.sense, SENSEBUFLEN);
-			if (sense.sense_key_spec_1 == SSD_SCS_VALID) {
-				j = (sense.sense_key_spec_2 << 8) |
-				    (sense.sense_key_spec_3);
+			if (sense.sks.sks_bytes[0] & SSD_SKSV) {
+				j = (sense.sks.sks_bytes[1] << 8) |
+				    (sense.sks.sks_bytes[2]);
 				if (j >= complete[i]) {
 					printf(".%d0%%.", ++i);
 					fflush(stdout);
 				}
 			}
 			sleep(10);
-		} while ((sense.flags & SSD_KEY) == SKEY_NOT_READY);
+		} while (SSD_SENSE_KEY(sense.flags) == SKEY_NOT_READY);
 		printf(".100%%..done.\n");
 	}
 	return;
@@ -746,7 +747,7 @@ device_reassign(int argc, char *argv[])
 void
 device_release(int argc, char *argv[])
 {
-	struct scsipi_test_unit_ready cmd;	/* close enough */
+	struct scsi_test_unit_ready cmd;	/* close enough */
 
 	/* No arguments. */
 	if (argc != 0)
@@ -774,7 +775,7 @@ device_release(int argc, char *argv[])
 void
 device_reserve(int argc, char *argv[])
 {
-	struct scsipi_test_unit_ready cmd;	/* close enough */
+	struct scsi_test_unit_ready cmd;	/* close enough */
 
 	/* No arguments. */
 	if (argc != 0)
@@ -839,8 +840,8 @@ void
 device_getcache(int argc, char *argv[])
 {
 	struct {
-		struct scsipi_mode_header header;
-		struct scsi_blk_desc blk_desc;
+		struct scsi_mode_parameter_header_6 header;
+		struct scsi_general_block_descriptor blk_desc;
 		struct page_caching caching_params;
 	} data;
 
@@ -872,8 +873,8 @@ void
 device_setcache(int argc, char *argv[])
 {
 	struct {
-		struct scsipi_mode_header header;
-		struct scsi_blk_desc blk_desc;
+		struct scsi_mode_parameter_header_6 header;
+		struct scsi_general_block_descriptor blk_desc;
 		struct page_caching caching_params;
 	} data;
 	int dlen;
@@ -928,7 +929,7 @@ device_setcache(int argc, char *argv[])
 void
 device_flushcache(int argc, char *argv[])
 {
-	struct scsipi_test_unit_ready cmd;	/* close enough */
+	struct scsi_test_unit_ready cmd;	/* close enough */
 
 	/* No arguments. */
 	if (argc != 0)
@@ -951,7 +952,7 @@ device_flushcache(int argc, char *argv[])
 void
 device_prevent(int argc, char *argv[])
 {
-	struct scsipi_prevent cmd;
+	struct scsi_prevent_allow_medium_removal cmd;
 
 	/* No arguments. */
 	if (argc != 0)
@@ -959,8 +960,8 @@ device_prevent(int argc, char *argv[])
 
 	memset(&cmd, 0, sizeof(cmd));
 
-	cmd.opcode = PREVENT_ALLOW;
-	cmd.how = PR_PREVENT;
+	cmd.opcode = SCSI_PREVENT_ALLOW_MEDIUM_REMOVAL;
+	cmd.how = SPAMR_PREVENT_DT;	/* XXX SMAMR_PREVENT_ALL? */
 
 	scsi_command(fd, &cmd, sizeof(cmd), NULL, 0, 10000, 0);
 
@@ -975,7 +976,7 @@ device_prevent(int argc, char *argv[])
 void
 device_allow(int argc, char *argv[])
 {
-	struct scsipi_prevent cmd;
+	struct scsi_prevent_allow_medium_removal cmd;
 
 	/* No arguments. */
 	if (argc != 0)
@@ -983,8 +984,8 @@ device_allow(int argc, char *argv[])
 
 	memset(&cmd, 0, sizeof(cmd));
 
-	cmd.opcode = PREVENT_ALLOW;
-	cmd.how = PR_ALLOW;
+	cmd.opcode = SCSI_PREVENT_ALLOW_MEDIUM_REMOVAL;
+	cmd.how = SPAMR_ALLOW;
 
 	scsi_command(fd, &cmd, sizeof(cmd), NULL, 0, 10000, 0);
 
@@ -1047,7 +1048,7 @@ device_stop(int argc, char *argv[])
 void
 device_tur(int argc, char *argv[])
 {
-	struct scsipi_test_unit_ready cmd;
+	struct scsi_test_unit_ready cmd;
 
 	/* No arguments. */
 	if (argc != 0)
@@ -1055,7 +1056,7 @@ device_tur(int argc, char *argv[])
 
 	memset(&cmd, 0, sizeof(cmd));
 
-	cmd.opcode = TEST_UNIT_READY;
+	cmd.opcode = SCSI_TEST_UNIT_READY;
 
 	scsi_command(fd, &cmd, sizeof(cmd), NULL, 0, 10000, 0);
 
