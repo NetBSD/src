@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: sbrk.c,v 1.1 1993/12/08 10:33:45 pk Exp $
+ *	$Id: sbrk.c,v 1.2 1994/01/21 18:59:19 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -88,7 +88,7 @@ init_brk()
 	} else
 		cp = (char *)&cp;
 
-#define TRY_THIS_FOR_A_CHANGE 0
+#define TRY_THIS_FOR_A_CHANGE 1
 
 #if TRY_THIS_FOR_A_CHANGE
 	curbrk = (caddr_t)
