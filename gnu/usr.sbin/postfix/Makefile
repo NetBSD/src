@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2000/05/02 03:03:21 sommerfeld Exp $
+#	$NetBSD: Makefile,v 1.4 2000/05/02 13:16:56 perry Exp $
 
 # Note that the order here is picked to look much like that in the
 # original Makefile.in in order to make it easier to visually compare
@@ -12,13 +12,18 @@ SUBDIR=	util global dns masterlib master postfix sendmail error \
 	postmap postsuper man conf # postfix-script
 
 # We don't want to build postfix-script (at least for now) because
-# we're treating it as a configuration file.  So, we have
-# conf/Makefile install a copy into share/examples/postfix, and only
-# invoke postfix-script/Makefile from the make distribution target in
-# src/etc/Makefile via make distribution in here).
+# we're now treating it as a configuration file, per Wietse Venema's
+# request. We now have conf/Makefile install a copy into
+# share/examples/postfix, and postfix-etc/Makefile (only called by
+# make distribution) installs a copy in /etc/postfix
 
-# not built: smtpstone (unneeded), spawn (experimental),
+# also not built: smtpstone (unneeded), spawn (experimental),
 # and html (unsure what to do with it (yet))
+
+# The distribution: target is invoked from the make distribution
+# target in src/etc/Makefile. It is there for building the /etc/
+# set. You don't want to run it normally as it would blow away your
+# /etc/postfix directory.
 
 distribution:
 	cd ${.CURDIR}/postfix-etc; ${MAKE} install
