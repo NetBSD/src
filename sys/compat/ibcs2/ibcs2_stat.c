@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_stat.c,v 1.10 1998/08/09 20:37:54 perry Exp $	*/
+/*	$NetBSD: ibcs2_stat.c,v 1.11 1999/02/09 20:48:20 christos Exp $	*/
 /*
  * Copyright (c) 1995, 1998 Scott Bartram
  * All rights reserved.
@@ -130,7 +130,7 @@ ibcs2_sys_statfs(p, v, retval)
 	register_t *retval;
 {
 	struct ibcs2_sys_statfs_args /* {
-		syscallarg(char *) path;
+		syscallarg(const char *) path;
 		syscallarg(struct ibcs2_statfs *) buf;
 		syscallarg(int) len;
 		syscallarg(int) fstype;
@@ -188,7 +188,7 @@ ibcs2_sys_statvfs(p, v, retval)
 	register_t *retval;
 {
 	struct ibcs2_sys_statvfs_args /* {
-		syscallarg(char *) path;
+		syscallarg(const char *) path;
 		syscallarg(struct ibcs2_statvfs *) buf;
 	} */ *uap = v;
 	register struct mount *mp;
@@ -244,7 +244,7 @@ ibcs2_sys_stat(p, v, retval)
 	register_t *retval;
 {
 	struct ibcs2_sys_stat_args /* {
-		syscallarg(char *) path;
+		syscallarg(const char *) path;
 		syscallarg(struct ibcs2_stat *) st;
 	} */ *uap = v;
 	struct stat st;
@@ -272,7 +272,7 @@ ibcs2_sys_lstat(p, v, retval)
 	register_t *retval;
 {
 	struct ibcs2_sys_lstat_args /* {
-		syscallarg(char *) path;
+		syscallarg(const char *) path;
 		syscallarg(struct ibcs2_stat *) st;
 	} */ *uap = v;
 	struct stat st;
