@@ -1,10 +1,9 @@
-/* freebsd.h
+/* netbsd.h
 
-   System dependencies for FreeBSD... */
+   System dependencies for NetBSD... */
 
 /*
- * Copyright (c) 1996, 1998 The Internet Software Consortium.
- * All rights reserved.
+ * Copyright (c) 1996 The Internet Software Consortium.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,8 +35,6 @@
  * under a contract with Vixie Laboratories.
  */
 
-#define _ANSI_SOURCE
-
 #include <syslog.h>
 #include <sys/types.h>
 #include <string.h>
@@ -54,10 +51,10 @@ extern int h_errno;
 
 #include <net/if.h>
 #include <net/if_dl.h>
-#include <net/if_arp.h>
-#if !defined (INADDR_LOOPBACK)
-# define INADDR_LOOPBACK ((u_int32_t)0x7f000001)
-#endif
+#include <net/route.h>
+#include <sys/sockio.h>
+
+#define ifr_netmask ifr_addr
 
 /* Varargs stuff... */
 #include <stdarg.h>
@@ -69,7 +66,7 @@ extern int h_errno;
 #define _PATH_DHCPD_PID	"/var/run/dhcpd.pid"
 #endif
 #ifndef _PATH_DHCPD_DB
-#define _PATH_DHCPD_DB	"/var/db/dhcpd.leases"
+#define _PATH_DHCPD_DB "/var/db/dhcpd.leases"
 #endif
 #ifndef _PATH_DHCLIENT_PID
 #define _PATH_DHCLIENT_PID "/var/run/dhclient.pid"
@@ -87,7 +84,12 @@ extern int h_errno;
 #define GET_TIME(x)	time ((x))
 
 #define HAVE_SA_LEN
+#define HAVE_MKSTEMP
 
 #if defined (USE_DEFAULT_NETWORK)
 #  define USE_BPF
+#endif
+
+#ifdef __alpha__
+#define PTRSIZE_64BIT
 #endif
