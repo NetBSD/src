@@ -1,4 +1,4 @@
-/*	$NetBSD: passwd.c,v 1.11 1997/01/07 04:08:18 tls Exp $	*/
+/*	$NetBSD: passwd.c,v 1.12 1997/10/19 12:30:00 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -33,17 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1988, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "from: @(#)passwd.c    8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$NetBSD: passwd.c,v 1.11 1997/01/07 04:08:18 tls Exp $";
+__RCSID("$NetBSD: passwd.c,v 1.12 1997/10/19 12:30:00 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -70,10 +70,13 @@ int yflag;
 
 extern	char *__progname;		/* from crt0.o */
 
+int	main __P((int, char **));
+
 #ifdef YP
 extern int _yp_check __P((char **));	/* buried deep inside libc */
 #endif
 
+int
 main(argc, argv)
 	int argc;
 	char **argv;
@@ -81,9 +84,9 @@ main(argc, argv)
 	extern int optind;
 	int ch;
 	char *username;
+#if defined(KERBEROS) || defined(KERBEROS5)
 	char *iflag = 0, *rflag = 0, *uflag = 0;
 
-#if defined(KERBEROS) || defined(KERBEROS5)
 	if (strcmp(__progname, "kpasswd") == 0)
 		use_kerberos = 1;
 	else

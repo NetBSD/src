@@ -1,4 +1,4 @@
-/*	$NetBSD: krb5_passwd.c,v 1.4 1997/02/11 09:35:56 mrg Exp $	*/
+/*	$NetBSD: krb5_passwd.c,v 1.5 1997/10/19 12:29:44 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)krb_passwd.c	5.4 (Berkeley) 3/1/91";
 #else
-static char rcsid[] = "$NetBSD: krb5_passwd.c,v 1.4 1997/02/11 09:35:56 mrg Exp $";
+__RCSID("$NetBSD: krb5_passwd.c,v 1.5 1997/10/19 12:29:44 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -48,13 +48,14 @@ static char rcsid[] = "$NetBSD: krb5_passwd.c,v 1.4 1997/02/11 09:35:56 mrg Exp 
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <netinet/in.h>
-#include <netdb.h>
-#include <signal.h>
-#include <pwd.h>
+#include <err.h>
 #include <errno.h>
+#include <netdb.h>
+#include <pwd.h>
+#include <signal.h>
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
 #include <krb5/adm_defs.h>
 #include <krb5/krb5.h>
 #include <krb5/kdb.h>
@@ -151,8 +152,7 @@ krb_passwd()
      *	Network() verifies the terminal device is not a pseudo tty
      */
     if (networked() && krb_secure) {
-	fprintf(stderr,"passwd: Sorry but you cannot %s from a\n", argv[0]);
-	fprintf(stderr,"        pseudo tty terminal.\n");
+	warnx("Sorry but you cannot %s from a pseudo tty terminal", argv[0]);
 	retval = 1;
 	goto finish;
     }
@@ -160,13 +160,13 @@ krb_passwd()
 
     /* (3 * 255) + 1 (/) + 1 (@) + 1 (NULL) */
     if ((client_name = (char *) calloc (1, (3 * 256))) == NULL) {
-	fprintf(stderr, "passwd: No Memory for Client_name\n");
+	warnx("No Memory for Client_name");
 	retval = 1;
 	goto finish;
     }
 
     if ((requested_realm.data = (char *) calloc (1, 256)) == NULL) {
-	fprintf(stderr, "passwd: No Memory for realm_name\n");
+	warnx("No Memory for realm_name");
 	retval = 1;
 	free(client_name);
 	goto finish;
@@ -177,8 +177,7 @@ krb_passwd()
     (void)signal(SIGTSTP, SIG_IGN);
 
     if (setrlimit(RLIMIT_CORE, &rl) < 0) {
-	(void)fprintf(stderr,
-	    "passwd: setrlimit: %s\n", strerror(errno));
+	warn("setrlimit");
 	return(1);
     }
 
@@ -187,7 +186,7 @@ krb_passwd()
     
     /* Identify Default Credentials Cache */
     if ((retval = krb5_cc_default(&cache))) {
-	fprintf(stderr, "passwd: Error while getting default ccache.\n");
+	warnx("Error while getting default ccache.");
 	goto finish;
     }
 
@@ -205,20 +204,19 @@ krb_passwd()
 	    (void)strncpy(default_name, pw->pw_name, sizeof(default_name) - 1);
 	}
 	else {
-	    fprintf(stderr, 
-		    "passwd: Unable to Identify Customer from Password File\n");
+	    warnx("Unable to Identify Customer from Password File");
 	    retval = 1;
 	    goto finish;
 	}
 
 	/* Use this to get default_realm and format client_name */
 	if ((retval = krb5_parse_name(default_name, &client))) {
-	    fprintf(stderr, "passwd: Unable to Parse Client Name\n");
+	    warnx("Unable to Parse Client Name");
 	    goto finish;
 	}
 
 	if ((retval = krb5_unparse_name(client, &client_name))) {
-	    fprintf(stderr, "passwd: Unable to Parse Client Name\n");
+	    warnx("Unable to Parse Client Name");
 	    goto finish;
 	}
 
@@ -230,12 +228,12 @@ krb_passwd()
     else {
 	/* Read Client from Cache */
 	if ((retval = krb5_cc_get_principal(cache, (krb5_principal *) &client))) {
-	    fprintf(stderr, "passwd: Unable to Read Customer Credentials File\n");
+	    warnx("Unable to Read Customer Credentials File");
 	    goto finish;
 	}
 
 	if ((retval = krb5_unparse_name(client, &client_name))) {
-	    fprintf(stderr, "passwd: Unable to Parse Client Name\n");
+	    warnx("Unable to Parse Client Name");
 	    goto finish;
 	}
 
@@ -252,11 +250,11 @@ krb_passwd()
 	getpid());
 
     if ((retval = krb5_cc_resolve(cache_name, &cache))) {
-	fprintf(stderr, "passwd: Unable to Resolve Cache: %s\n", cache_name);
+	warnx("Unable to Resolve Cache: %s", cache_name);
     }
     
     if ((retval = krb5_cc_initialize(cache, client))) {
-        fprintf(stderr, "passwd: Error initializing cache: %s\n", cache_name);
+        warnx("Error initializing cache: %s", cache_name);
         goto finish;
     }
  
@@ -280,7 +278,7 @@ krb_passwd()
 
     retval = krb5_net_write(local_socket, (char *) &msg_length + 2, 2);
     if (retval < 0) {
-        fprintf(stderr, "passwd: krb5_net_write failure\n");
+        warnx("krb5_net_write failure");
         goto finish;
     }
 }
@@ -296,7 +294,7 @@ krb_passwd()
     /* compute checksum, using CRC-32 */
     if (!(send_cksum.contents = (krb5_octet *)
 	malloc(krb5_checksum_size(CKSUMTYPE_CRC32)))) {
-        fprintf(stderr, "passwd: Insufficient Memory while Allocating Checksum\n");
+        warnx("Insufficient Memory while Allocating Checksum");
         goto finish;
     }
     cksum_alloc++;
@@ -308,8 +306,7 @@ krb_passwd()
 					 0, /* if length is 0, crc-32 doesn't
                                                use the seed */
 					 &send_cksum)) {
-        fprintf(stderr, "Error while Computing Checksum: %s\n",
-		error_message(retval));
+        warnx("Error while Computing Checksum: %s", error_message(retval));
         goto finish;
     }
 
@@ -329,27 +326,24 @@ krb_passwd()
 			0,           /* don't need a subsession key */
 			&err_ret,
 			&rep_ret))) {
-	fprintf(stderr, "passwd: Error while performing sendauth: %s\n",
-		error_message(retval));
+	warnx("Error while performing sendauth: %s", error_message(retval));
         goto finish;
     }
 
     /* Get credentials : to use for safe and private messages */
     if (retval = krb5_get_credentials(0, cache, &my_creds)){
-	fprintf(stderr, "passwd: Error Obtaining Credentials: %s\n", 
-		error_message(retval));
+	warnx("Error Obtaining Credentials: %s", error_message(retval));
 	goto finish;
     }
 
     /* Read back what the server has to say... */
     if (retval = krb5_read_message(&local_socket, &inbuf)){
-	fprintf(stderr, "passwd: Read Message Error: %s\n",
-	        error_message(retval));
+	warnx("Read Message Error: %s", error_message(retval));
         goto finish;
     }
     if ((inbuf.length != 2) || (inbuf.data[0] != KADMIND) ||
 	(inbuf.data[1] != KADMSAG)){
-	fprintf(stderr, "passwd: Invalid ack from admin server.\n");
+	warnx("Invalid ack from admin server.");
 	goto finish;
     }
 
@@ -367,15 +361,14 @@ krb_passwd()
 			0,
 			0,
 			&msg_data))) {
-        fprintf(stderr, "passwd: Error during First Message Encoding: %s\n",
-			error_message(retval));
+        warnx("Error during First Message Encoding: %s", error_message(retval));
         goto finish;
     }
     free(inbuf.data);
 
     /* write private message to server */
     if (krb5_write_message(&local_socket, &msg_data)){
-        fprintf(stderr, "passwd: Write Error During First Message Transmission\n");
+        warnx("Write Error During First Message Transmission");
 	retval = 1;
         goto finish;
     } 
@@ -387,8 +380,7 @@ krb_passwd()
 #ifdef MACH_PASS /* Machine-generated Passwords */
     /* Ok Now let's get the private message */
     if (retval = krb5_read_message(&local_socket, &inbuf)){
-        fprintf(stderr, "passwd: Read Error During First Reply: %s\n",
-		error_message(retval));
+        warnx("Read Error During First Reply: %s", error_message(retval));
 	retval = 1;
         goto finish;
     }
@@ -402,15 +394,14 @@ krb_passwd()
 			0,
 			0,
 			&msg_data))) {
-        fprintf(stderr, "passwd: Error during First Read Decoding: %s\n", 
-		error_message(retval));
+        warnx("Error during First Read Decoding: %s", error_message(retval));
         goto finish;
     }
     free(inbuf.data);
 #endif
 
     if ((new_password = (char *) calloc (1, ADM_MAX_PW_LENGTH+1)) == NULL) {
-	fprintf(stderr, "passwd: Unable to Allocate Space for New Password\n");
+	warnx("Unable to Allocate Space for New Password");
 	goto finish;
     }
 
@@ -449,8 +440,8 @@ krb_passwd()
 			0,
 			0,
 			&msg_data))) {
-        fprintf(stderr, "passwd: Error during Second Message Encoding: %s\n",
-		error_message(retval));
+        warnx("Error during Second Message Encoding: %s",
+	    error_message(retval));
         goto finish;
     }
     memset(inbuf.data,0,inbuf.length);
@@ -458,7 +449,7 @@ krb_passwd()
 
     /* write private message to server */
     if (krb5_write_message(&local_socket, &msg_data)){
-        fprintf(stderr, "passwd: Write Error During Second Message Transmission\n");
+        warnx("Write Error During Second Message Transmission");
 	retval = 1;
         goto finish;
     } 
@@ -466,8 +457,7 @@ krb_passwd()
 
     /* Ok Now let's get the private message */
     if (retval = krb5_read_message(&local_socket, &inbuf)){
-        fprintf(stderr, "passwd: Read Error During Second Reply: %s\n",
-			error_message(retval));
+        warnx("Read Error During Second Reply: %s", error_message(retval));
 	retval = 1;
         goto finish;
     }
@@ -481,8 +471,7 @@ krb_passwd()
 			0,
 			0,
 			&msg_data))) {
-        fprintf(stderr, "passwd: Error during Second Read Decoding :%s\n", 
-		error_message(retval));
+        warnx("Error during Second Read Decoding :%s", error_message(retval));
         goto finish;
     }
 
@@ -505,14 +494,14 @@ krb_passwd()
     if (rd_priv_resp.appl_code == KPASSWD) {
 	if (rd_priv_resp.retn_code == KPASSBAD) {
 	    if (rd_priv_resp.message)
-		fprintf(stderr, "passwd: %s\n", rd_priv_resp.message);
+		warnx("%s", rd_priv_resp.message);
 	    else
-		fprintf(stderr, "passwd: Server returned KPASSBAD.\n");
+		warnx("Server returned KPASSBAD.");
 	} else if (rd_priv_resp.retn_code != KPASSGOOD)
-	    fprintf(stderr, "passwd: Server returned unknown kerberos code.\n");
+	    warnx("Server returned unknown kerberos code.");
     } else
-	fprintf(stderr, "passwd: Server returned bad application code %d\n",
-		rd_priv_resp.appl_code);
+	warnx("Server returned bad application code %d",
+	    rd_priv_resp.appl_code);
     
     if (rd_priv_resp.message)
 	free(rd_priv_resp.message);
@@ -523,10 +512,8 @@ krb_passwd()
     free(client_name);
     free(requested_realm.data);
     if (cksum_alloc) free(send_cksum.contents);
-    if (retval) {
-	fprintf(stderr, "passwd: Protocol Failure - Password NOT changed\n");
-	exit(1);
-    }
+    if (retval)
+	errx(1, "Protocol Failure - Password NOT changed");
 
     exit(0);
 }
@@ -558,14 +545,14 @@ get_first_ticket(cache, client)
     krb5_error_code retval;
     
     if ((retval = krb5_unparse_name(client, &client_name))) {
-	fprintf(stderr, "Unable to Unparse Client Name\n");
+	warnx("Unable to Unparse Client Name");
 	return(1);
     }
 
     (void) printf("Changing Kerberos password for %s\n", client_name);
 
     if ((retval = krb5_os_localaddr(&my_addresses))) {
-	fprintf(stderr, "passwd: Unable to Get Customers Address\n");
+	warnx("Unable to Get Customers Address");
 	return(1);
     }
 
@@ -582,13 +569,13 @@ get_first_ticket(cache, client)
 					   /* instance is local realm */
 					client->realm.data,
                                         0))) {
-        fprintf(stderr, "Error %s while building server name\n");
+        warnx("Error %s while building server name");
         return(1);
     }
 
 
     if ((old_password = (char *) calloc (1, 255)) == NULL) {
-	fprintf(stderr, "passwd: No Memory for Retrieving old password\n");
+	warnx("No Memory for Retrieving old password");
 	return(1);
     }
 
@@ -621,8 +608,7 @@ get_first_ticket(cache, client)
     }
 	
     if (retval) {
-	fprintf(stderr, "passwd: Unable to Get Initial Credentials : %s\n",
-		error_message(retval));
+	warnx("Unable to Get Initial Credentials : %s", error_message(retval));
     }
 
     /* Do NOT Forget to zap password  */
@@ -661,8 +647,8 @@ print_and_choose_password(new_password, decodable_pwd_string)
 
      /* Decode Password and Phrase Information Obtained from krb5_rd_priv */
      if ((retval = decode_krb5_pwd_data(decodable_pwd_string , &pwd_data))) { 
-	fprintf(stderr, "passwd: Unable to Decode Passwords and Phrases\n");
-        fprintf(stderr, "	 Notify your System Administrator or the Kerberos Administrator\n");
+	warnx("Unable to Decode Passwords and Phrases\n%s",
+"	 Notify your System Administrator or the Kerberos Administrator");
 	return(1);
    }
 
@@ -671,10 +657,11 @@ print_and_choose_password(new_password, decodable_pwd_string)
    memset((char *) phrase_in, 0, ADM_MAX_PHRASE_LENGTH);
    for ( j = 0; j <= ADM_MAX_PW_ITERATIONS; j++) {
 	if (j == ADM_MAX_PW_ITERATIONS) {
-	    fprintf(stderr, "passwd: Sorry - You Have Exceeded the List of Choices (%d) Allowed for Password\n",
-		    ADM_MAX_PW_ITERATIONS * ADM_MAX_PW_CHOICES);
-	    fprintf(stderr, "	     Modification.  You Must Repeat this Operation in order to Successfully\n");
-	    fprintf(stderr, "	     Change your Password.\n");
+	    warnx("Sorry - You Have Exceeded the List of Choices (%d)\n%s%s%s",
+		ADM_MAX_PW_ITERATIONS * ADM_MAX_PW_CHOICES,
+		"\tAllowed for Password Modification.\n",
+		"\tYou Must Repeat this Operation in order\n",
+		"\tto Successfully Change your Password.");
 	    break;
 	}
 
@@ -687,7 +674,7 @@ print_and_choose_password(new_password, decodable_pwd_string)
 	for ( i = 0; i < ADM_MAX_PW_CHOICES; i++){
 	    if ((password_list[i] = (char *) calloc (1, 
 			ADM_MAX_PW_LENGTH + 1)) == NULL) {
-		fprintf(stderr, "passwd: Unable to Allocate Password List.\n");
+		warnx("Unable to Allocate Password List.");
 		return(1);
 	    }
 
@@ -732,8 +719,7 @@ print_and_choose_password(new_password, decodable_pwd_string)
 	/* Read New Password from Terminal (Do Not Print on Screen) */
 	if ((retval = krb5_read_password(&prompt[0], 0, 
 	                                 new_password, &new_passwd_length))) {
-	    fprintf(stderr, 
-		"passwd: Error Reading Password Input or Input Aborted\n");
+	    warnx("Error Reading Password Input or Input Aborted");
 	    free_local_password_list();
 	    break;;
 	}
@@ -786,8 +772,7 @@ int * local_socket;
     (void) memset((char *)&remote_sin, 0, sizeof(remote_sin));
 
     if ((service_process = getservbyname(CPW_SNAME, "tcp")) == NULL) {
-	fprintf(stderr, "passwd: Unable to find Service (%s) Check services file\n",
-		CPW_SNAME);
+	warnx("Unable to find Service (%s) Check services file", CPW_SNAME);
 	return(1);
     }
 
@@ -798,7 +783,7 @@ int * local_socket;
 
 		/* Identify all Hosts Associated with this Realm */
     if ((retval = krb5_get_krbhst (realm_of_server, &hostlist))) {
-        fprintf(stderr, "passwd: Unable to Determine Server Name\n");
+        warnx("Unable to Determine Server Name");
         return(1);
     }
 
@@ -808,7 +793,7 @@ int * local_socket;
 
     if (count == 0) {
         host_count = 0;
-        fprintf(stderr, "passwd: No hosts found\n");
+        warnx("No hosts found");
         return(1);
     }
 
@@ -830,12 +815,12 @@ int * local_socket;
     /* open a TCP socket */
     *local_socket = socket(PF_INET, SOCK_STREAM, 0);
     if (*local_socket < 0) {
-	fprintf(stderr, "passwd: Cannot Open Socket\n");
+	warnx("Cannot Open Socket");
 	return(1);
     }
     /* connect to the server */
     if (connect(*local_socket, (struct sockaddr *)&remote_sin, sizeof(remote_sin)) < 0) {
-	fprintf(stderr, "passwd: Cannot Connect to Socket\n");
+	warnx("Cannot Connect to Socket");
 	close(*local_socket);
 	return(1);
     }
@@ -844,7 +829,7 @@ int * local_socket;
     namelen = sizeof(local_sin);
     if (getsockname(*local_socket, 
 		(struct sockaddr *) &local_sin, &namelen) < 0) {
-	fprintf(stderr, "passwd: Cannot Perform getsockname\n");
+	warnx("Cannot Perform getsockname");
 	close(*local_socket);
 	return(1);
     }
@@ -957,7 +942,7 @@ char *username,*tmpname;
 	endutent();
 	return(1);
     }
-    bcopy((char *)&retutent, (char *)tmpptr, sizeof(struct utmp));
+    memmove((char *)tmpptr, (char *)&retutent, sizeof(struct utmp));
     endutent();
 #ifdef DEBUG
 #ifdef NO_UT_HOST
