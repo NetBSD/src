@@ -752,6 +752,7 @@
 ./usr/include/search.h
 ./usr/include/setjmp.h
 ./usr/include/sgtty.h
+./usr/include/sha1.h
 ./usr/include/signal.h
 ./usr/include/skey.h
 ./usr/include/soundcard.h
@@ -1345,6 +1346,13 @@
 ./usr/share/man/cat3/MD5Final.0
 ./usr/share/man/cat3/MD5Init.0
 ./usr/share/man/cat3/MD5Update.0
+./usr/share/man/cat3/SHA1Data.0
+./usr/share/man/cat3/SHA1End.0
+./usr/share/man/cat3/SHA1File.0
+./usr/share/man/cat3/SHA1Final.0
+./usr/share/man/cat3/SHA1Init.0
+./usr/share/man/cat3/SHA1Transform.0
+./usr/share/man/cat3/SHA1Update.0
 ./usr/share/man/cat3/_longjmp.0
 ./usr/share/man/cat3/_setjmp.0
 ./usr/share/man/cat3/a64l.0
@@ -2358,6 +2366,13 @@
 ./usr/share/man/man3/MD5Final.3
 ./usr/share/man/man3/MD5Init.3
 ./usr/share/man/man3/MD5Update.3
+./usr/share/man/man3/SHA1Data.3
+./usr/share/man/man3/SHA1End.3
+./usr/share/man/man3/SHA1File.3
+./usr/share/man/man3/SHA1Final.3
+./usr/share/man/man3/SHA1Init.3
+./usr/share/man/man3/SHA1Transform.3
+./usr/share/man/man3/SHA1Update.3
 ./usr/share/man/man3/_longjmp.3
 ./usr/share/man/man3/_setjmp.3
 ./usr/share/man/man3/a64l.3
