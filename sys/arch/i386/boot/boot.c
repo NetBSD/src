@@ -25,7 +25,7 @@
  * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
  *
- *	$Id: boot.c,v 1.17 1994/02/04 00:02:42 mycroft Exp $
+ *	$Id: boot.c,v 1.18 1994/03/30 11:19:12 cgd Exp $
  */
 
 /*
@@ -246,7 +246,7 @@ getbootdev(howto)
 	int *howto;
 {
 	char c, *ptr = namebuf;
-	printf("Boot: [[[%s(%d,%c)]%s][-s][-a][-d]] :- ",
+	printf("Boot: [[[%s(%d,%c)]%s][-a][-d][-r][-s]] :- ",
 	    devs[maj], unit, 'a'+part, name);
 	if (gets(namebuf)) {
 		while (c = *ptr) {
@@ -260,14 +260,17 @@ getbootdev(howto)
 					case 'a':
 						*howto |= RB_ASKNAME;
 						continue;
-					case 's':
-						*howto |= RB_SINGLE;
+					case 'b':
+						*howto |= RB_HALT;
 						continue;
 					case 'd':
 						*howto |= RB_KDB;
 						continue;
-					case 'b':
-						*howto |= RB_HALT;
+					case 'r':
+						*howto |= RB_DFLTROOT;
+						continue;
+					case 's':
+						*howto |= RB_SINGLE;
 						continue;
 					}
 			else {
