@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.60 2001/01/08 17:55:28 itojun Exp $	*/
+/*	$NetBSD: print.c,v 1.61 2001/01/08 18:03:45 itojun Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.60 2001/01/08 17:55:28 itojun Exp $");
+__RCSID("$NetBSD: print.c,v 1.61 2001/01/08 18:03:45 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -930,21 +930,11 @@ printval(bp, v, mode)
 			vok = VUNSIGN;
 			break;
 		case KPTR:
-			if (sizeof(void *) == sizeof(u_int32_t))
-				uval = GET(u_int32_t);
-			else if (sizeof(void *) == sizeof(u_int64_t))
-				uval = GET(u_int64_t);
-			else
-				errx(1, "assumption failed");
+			uval = (unsigned long)GET(void *);
 			vok = VPTR;
 			break;
 		case KPTR24:
-			if (sizeof(void *) == sizeof(u_int32_t))
-				uval = GET(u_int32_t);
-			else if (sizeof(void *) == sizeof(u_int64_t))
-				uval = GET(u_int64_t);
-			else
-				errx(1, "assumption failed");
+			uval = (unsigned long)GET(void *);
 			uval &= 0xffffff;
 			vok = VPTR;
 			break;
@@ -1041,10 +1031,12 @@ printval(bp, v, mode)
 		(void)printf(ofmt, width, CHK_INF127(GET(u_long)));
 		return;
 	case KPTR:
-		(void)printf(ofmt, width, GET(u_long));
+		(void)printf(ofmt, width,
+		    (unsigned long long)(unsigned long)GET(void *));
 		return;
 	case KPTR24:
-		(void)printf(ofmt, width, GET(u_long) & 0xffffff);
+		(void)printf(ofmt, width,
+		    (unsigned long long)(unsigned long)GET(void *));
 		return;
 	case SIGLIST:
 		{
