@@ -1,4 +1,4 @@
-/*	$NetBSD: vr.c,v 1.33 2001/12/29 04:27:33 takemura Exp $	*/
+/*	$NetBSD: vr.c,v 1.34 2002/01/02 13:08:35 uch Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -216,9 +216,6 @@ vr_mem_init(paddr_t kernend)
 	vr_find_dram(0x02000000, 0x04000000);
 	vr_find_dram(0x04000000, 0x06000000);
 	vr_find_dram(0x06000000, 0x08000000);
-
-	/* Clear currently unused D-RAM area (For reboot Windows CE clearly)*/
-	memset((void *)(KERNBASE + 0x400), 0, KERNTEXTOFF - (KERNBASE + 0x800));
 }
 
 void
