@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_fcntl.c,v 1.12 1995/10/07 06:27:39 mycroft Exp $	 */
+/*	$NetBSD: svr4_fcntl.c,v 1.13 1995/10/09 23:56:17 thorpej Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -281,6 +281,7 @@ svr4_sys_fcntl(p, v, retval)
 
 	case F_GETLK:
 	case F_SETLK:
+	case F_SETLKW:
 		{
 			struct svr4_flock	 ifl;
 			struct flock		*flp, fl;
