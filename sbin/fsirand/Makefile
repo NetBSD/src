@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.5 2001/11/16 04:25:42 lukem Exp $
+#	$NetBSD: Makefile,v 1.6 2002/08/19 10:16:54 lukem Exp $
+
+.include <bsd.own.mk>
 
 PROG=	fsirand
 SRCS=	fsirand.c ffs_bswap.c
@@ -8,6 +10,6 @@ LDADD+=	-lutil
 
 WARNS=	2
 
-.PATH:  ${.CURDIR}/../../sys/ufs/ffs
+.PATH:  ${NETBSDSRCDIR}/sys/ufs/ffs
 
 .include <bsd.prog.mk>
