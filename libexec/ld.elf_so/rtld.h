@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.24 2000/02/08 16:23:00 scottb Exp $	 */
+/*	$NetBSD: rtld.h,v 1.25 2000/04/15 05:41:46 erh Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -240,6 +240,7 @@ void _rtld_error __P((const char *, ...));
 void _rtld_die __P((void));
 char *_rtld_dlerror __P((void));
 void *_rtld_dlopen __P((const char *, int));
+void *_rtld_objmain_sym __P((const char *));
 void *_rtld_dlsym __P((void *, const char *));
 int _rtld_dlclose __P((void *));
 int _rtld_dladdr __P((const void *, Dl_info *));

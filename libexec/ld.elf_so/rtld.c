@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.30 2000/04/15 05:27:49 christos Exp $	 */
+/*	$NetBSD: rtld.c,v 1.31 2000/04/15 05:41:46 erh Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -277,6 +277,8 @@ _rtld(sp)
 	const char     *ld_bind_now;
 	const char    **argv;
 	Obj_Entry	*obj;
+	const char **real___progname;
+	char ***real_environ;
 #if defined(RTLD_DEBUG) && !defined(RTLD_RELOCATE_SELF)
 	int             i = 0;
 #endif
@@ -456,6 +458,21 @@ _rtld(sp)
 	dbg(("doing copy relocations"));
 	if (_rtld_do_copy_relocations(_rtld_objmain, true) == -1)
 		_rtld_die();
+
+	/*
+	 * Set the __progname and environ before calling
+	 * anything that might use them.
+	 */
+	real___progname = _rtld_objmain_sym("__progname");
+	if (real___progname) {
+		if ((*real___progname = strrchr(argv[0], '/')) == NULL)
+			(*real___progname) = argv[0];
+		else
+			(*real___progname)++;
+	}
+	real_environ = _rtld_objmain_sym("environ");
+	if (real_environ)
+		*real_environ = environ;
 
 	dbg(("calling _init functions"));
 	_rtld_call_init_functions(_rtld_objmain->next);
@@ -658,6 +675,28 @@ _rtld_dlopen(name, mode)
 	_rtld_debug_state();
 
 	return obj;
+}
+
+/*
+ * Find a symbol in the main program.
+ */
+void *
+_rtld_objmain_sym(name)
+	const char *name;
+{
+	unsigned long hash;
+	const Elf_Sym *def;
+	const Obj_Entry *obj;
+
+	hash = _rtld_elf_hash(name);
+	obj = _rtld_objmain;
+
+	_rtld_curmark++;
+	def = _rtld_symlook_list(name, hash, &_rtld_list_main, &obj, true);
+
+	if (def != NULL)
+		return obj->relocbase + def->st_value;
+	return(NULL);
 }
 
 void *
