@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.46 1997/10/10 01:53:25 fvdl Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.47 1997/10/10 13:21:51 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -2237,19 +2237,18 @@ nfs_cookieheuristic(vp, flagp, p, cred)
 	cp = buf;
 	for (cop = cookies; len > 0; len -= dp->d_reclen) {
 		dp = (struct dirent *)cp;
-		if (dp->d_fileno != 0)
+		if (dp->d_fileno != 0 && len >= dp->d_reclen) {
+			if ((*cop >> 32) != 0 && (*cop & 0xffffffffLL) == 0) {
+				*flagp |= NFSMNT_SWAPCOOKIE;
+				nfs_invaldircache(vp);
+				nfs_vinvalbuf(vp, 0, cred, p, 1);
+			}
 			break;
+		}
 		cop++;
 		cp += dp->d_reclen;
 	}
 
-	if (len > 0 && len > dp->d_reclen) {
-		if ((*cop >> 32) != 0 && (*cop & 0xffffffffLL) == 0) {
-			*flagp |= NFSMNT_SWAPCOOKIE;
-			nfs_invaldircache(vp);
-			nfs_vinvalbuf(vp, 0, cred, p, 1);
-		}
-	}
 	FREE(buf, M_TEMP);
 	FREE(cookies, M_TEMP);
 }
