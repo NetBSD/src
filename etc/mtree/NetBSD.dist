@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.107 2000/05/12 18:11:50 thorpej Exp $
+#	$NetBSD: NetBSD.dist,v 1.108 2000/05/12 18:12:55 thorpej Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -1838,9 +1838,9 @@ amiga
 # ./usr/share/man/man9/amiga
 ..
 
-# ./usr/share/man/man8/arm26
+# ./usr/share/man/man9/arm26
 arm26
-# ./usr/share/man/man8/arm26
+# ./usr/share/man/man9/arm26
 ..
 
 # ./usr/share/man/man9/arm32
