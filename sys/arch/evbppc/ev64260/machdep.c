@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.5 2003/03/17 23:28:09 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.6 2003/03/18 14:59:12 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -52,6 +52,7 @@
 #include <sys/extent.h>
 #include <sys/syslog.h>
 #include <sys/systm.h>
+#include <sys/termios.h>
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_extern.h>
@@ -94,13 +95,19 @@ void isa_intr_init(void);
 
 #include "com.h"
 #if (NCOM > 0)
-#include <sys/termios.h>
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>
 #endif
 
 #include <dev/marvell/gtreg.h>
 #include <dev/marvell/gtvar.h>
+
+#include "gtmpsc.h"
+#if (NGTMPSC > 0)
+#include <dev/marvell/gtsdmareg.h>
+#include <dev/marvell/gtmpscreg.h>
+#include <dev/marvell/gtmpscvar.h>
+#endif
 
 /*
  * Global variables used here and there
@@ -138,7 +145,7 @@ struct powerpc_bus_space gt_pci1_io_bs_tag = {
 	0x00000000, 0x00000000, 0x00000000,
 };
 struct powerpc_bus_space gt_obio2_bs_tag = {
-	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_MEM_TYPE|2,
+	_BUS_SPACE_BIG_ENDIAN|_BUS_SPACE_MEM_TYPE|2,
 	0x00000000, 0x00000000, 0x00000000,
 };
 struct powerpc_bus_space gt_mem_bs_tag = {
@@ -266,12 +273,14 @@ cpu_startup()
 void
 consinit()
 {
-#if 1
+#ifdef MPSC_CONSOLE
+	/* PMON using MPSC0 @ 9600 */
+	gtmpsccnattach(&gt_mem_bs_tag, gt_memh, 0, 9600,
+	    (TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8);
+#else
 	/* PPCBOOT using COM1 @ 57600 */
 	comcnattach(&gt_obio2_bs_tag, 0, 57600, COM_FREQ*2, 
 	    (TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8);
-#else
-	cninit();
 #endif
 }
 
@@ -387,7 +396,7 @@ gt_bus_space_init(void)
 	int error;
 
 	error = bus_space_init(&gt_mem_bs_tag, "gtmem",
-	    ex_storage[1], sizeof(ex_storage[0]));
+	    ex_storage[0], sizeof(ex_storage[0]));
 
 
 	error = bus_space_map(gt_memt, 0, 4096, 0, &gt_memh);
@@ -409,9 +418,14 @@ gt_bus_space_init(void)
 	error = bus_space_init(&gt_pci0_mem_bs_tag, "pci0-mem",
 	    ex_storage[2], sizeof(ex_storage[2]));
 
+	/*
+	 * Make sure that I/O space start at 0.
+	 */
+	bus_space_write_4(gt_memt, gt_memh, GT_PCI1_IO_Remap, 0);
+
 	datal = bus_space_read_4(gt_memt, gt_memh, GT_PCI0_IO_Low_Decode);
 	datah = bus_space_read_4(gt_memt, gt_memh, GT_PCI0_IO_High_Decode);
-	gt_pci0_io_bs_tag.pbs_base  = GT_LowAddr_GET(datal);
+	gt_pci0_io_bs_tag.pbs_offset  = GT_LowAddr_GET(datal);
 	gt_pci0_io_bs_tag.pbs_limit = GT_HighAddr_GET(datah) + 1 -
 	    gt_pci0_io_bs_tag.pbs_offset;
 
@@ -434,10 +448,16 @@ gt_bus_space_init(void)
 	error = bus_space_init(&gt_pci1_mem_bs_tag, "pci1-mem",
 	    ex_storage[4], sizeof(ex_storage[4]));
 
+	/*
+	 * Make sure that I/O space start at 0.
+	 */
+	bus_space_write_4(gt_memt, gt_memh, GT_PCI1_IO_Remap, 0);
+
 	datal = bus_space_read_4(gt_memt, gt_memh, GT_PCI1_IO_Low_Decode);
 	datah = bus_space_read_4(gt_memt, gt_memh, GT_PCI1_IO_High_Decode);
-	gt_pci1_io_bs_tag.pbs_base  = GT_LowAddr_GET(datal);
-	gt_pci1_io_bs_tag.pbs_limit = GT_HighAddr_GET(datah) + 1;
+	gt_pci1_io_bs_tag.pbs_offset = GT_LowAddr_GET(datal);
+	gt_pci1_io_bs_tag.pbs_limit = GT_HighAddr_GET(datah) + 1 -
+	    gt_pci1_io_bs_tag.pbs_offset;
 
 	error = bus_space_init(&gt_pci1_io_bs_tag, "pci1-ioport",
 	    ex_storage[5], sizeof(ex_storage[5]));
