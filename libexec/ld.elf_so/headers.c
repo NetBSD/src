@@ -1,4 +1,4 @@
-/*	$NetBSD: headers.c,v 1.19 2004/10/22 05:39:56 skrll Exp $	 */
+/*	$NetBSD: headers.c,v 1.20 2005/01/09 12:43:23 simonb Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: headers.c,v 1.19 2004/10/22 05:39:56 skrll Exp $");
+__RCSID("$NetBSD: headers.c,v 1.20 2005/01/09 12:43:23 simonb Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -192,11 +192,18 @@ _rtld_digest_dynamic(Obj_Entry *obj)
 			fini = dynp->d_un.d_ptr;
 			break;
 
+		/*
+		 * Don't process DT_DEBUG on MIPS as the dynamic section
+		 * is mapped read-only. DT_MIPS_RLD_MAP is used instead.
+		 * XXX: n32/n64 may use DT_DEBUG, not sure yet.
+		 */
+#ifndef __mips__
 		case DT_DEBUG:
 #ifdef RTLD_LOADER
 			dynp->d_un.d_ptr = (Elf_Addr)&_rtld_debug;
 #endif
 			break;
+#endif
 
 #ifdef __mips__
 		case DT_MIPS_LOCAL_GOTNO:
