@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.28 2003/07/21 22:24:09 nathanw Exp $	*/
+/*	$NetBSD: pthread.c,v 1.29 2003/08/13 18:52:01 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001,2002,2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.28 2003/07/21 22:24:09 nathanw Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.29 2003/08/13 18:52:01 nathanw Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -109,6 +109,7 @@ void *pthread__static_lib_binder[] = {
 	pthread_rwlock_init,
 	pthread_barrier_init,
 	pthread_key_create,
+	pthread_setspecific,
 	&pthread__sched_binder,
 	&pthread__nanosleeping
 };

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2003/08/01 17:03:59 lukem Exp $
+#	$NetBSD: Makefile,v 1.21 2003/08/13 18:52:01 nathanw Exp $
 #
 
 WARNS=	2
@@ -54,6 +54,7 @@ SRCS+=	pthread_sig.c
 SRCS+=	pthread_sleep.c
 SRCS+=	pthread_specific.c
 SRCS+=  pthread_stack.c
+SRCS+=	pthread_tsd.c
 SRCS+=  pthread_debug.c
 SRCS+=	sched.c
 SRCS+=	sem.c
@@ -62,6 +63,14 @@ SRCS+=	pthread_switch.S _context_u.S
 .if exists(${ARCHDIR}/pthread_md.c)
 SRCS+= pthread_md.c
 .endif
+
+# The TSD routines are used in the implementation of profiling, and so
+# can't be profiled themselves.
+pthread_specific.po: pthread_specific.o
+	cp pthread_specific.o pthread_specific.po
+
+_context_u.po: _context_u.o
+	cp _context_u.o _context_u.po
 
 MAN+=	pthread.3 \
 	pthread_attr.3 \
