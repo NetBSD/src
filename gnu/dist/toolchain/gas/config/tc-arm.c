@@ -80,11 +80,14 @@
 #define FPU_CORE	0x80000000
 #define FPU_FPA10	0x40000000
 #define FPU_FPA11	0x40000000
+#define FPU_ARCH_VFP	0x20000000	/* use VFP word ordering */
 #define FPU_NONE	0
 
 /* Some useful combinations.  */
 #define FPU_ALL		0xff000000	/* Note this is ~ARM_ANY.  */
-#define FPU_MEMMULTI	0x7f000000	/* Not fpu_core.  */
+#define FPU_MEMMULTI	(FPU_FPA10)	/* Not fpu_core.  */
+
+#define FPU_FPA		(FPU_CORE|FPU_FPA10)
 
 #ifndef CPU_DEFAULT
 #if defined __XSCALE__
@@ -99,7 +102,7 @@
 #endif
 
 #ifndef FPU_DEFAULT
-#define FPU_DEFAULT FPU_ALL
+#define FPU_DEFAULT FPU_FPA
 #endif
 
 #define streq(a, b)           (strcmp (a, b) == 0)
@@ -794,52 +797,54 @@ static CONST struct asm_opcode insns[] =
   {"bx",    0x012fff10, NULL,   NULL,        ARM_EXT_THUMB,    do_bx},
 
 /* Floating point instructions.  */
-  {"wfs",   0x0e200110, NULL,   NULL,        FPU_ALL,      do_fp_ctrl},
-  {"rfs",   0x0e300110, NULL,   NULL,        FPU_ALL,      do_fp_ctrl},
-  {"wfc",   0x0e400110, NULL,   NULL,        FPU_ALL,      do_fp_ctrl},
-  {"rfc",   0x0e500110, NULL,   NULL,        FPU_ALL,      do_fp_ctrl},
-  {"ldf",   0x0c100100, "sdep", NULL,        FPU_ALL,      do_fp_ldst},
-  {"stf",   0x0c000100, "sdep", NULL,        FPU_ALL,      do_fp_ldst},
+/* XXXJRT This is not quite right for softvfp, but that flag exists
+   only to hold us over right now.  */
+  {"wfs",   0x0e200110, NULL,   NULL,        FPU_FPA,      do_fp_ctrl},
+  {"rfs",   0x0e300110, NULL,   NULL,        FPU_FPA,      do_fp_ctrl},
+  {"wfc",   0x0e400110, NULL,   NULL,        FPU_FPA,      do_fp_ctrl},
+  {"rfc",   0x0e500110, NULL,   NULL,        FPU_FPA,      do_fp_ctrl},
+  {"ldf",   0x0c100100, "sdep", NULL,        FPU_FPA,      do_fp_ldst},
+  {"stf",   0x0c000100, "sdep", NULL,        FPU_FPA,      do_fp_ldst},
   {"lfm",   0x0c100200, NULL,   lfm_flags,   FPU_MEMMULTI, do_fp_ldmstm},
   {"sfm",   0x0c000200, NULL,   sfm_flags,   FPU_MEMMULTI, do_fp_ldmstm},
-  {"mvf",   0x0e008100, "sde",  round_flags, FPU_ALL,      do_fp_monadic},
-  {"mnf",   0x0e108100, "sde",  round_flags, FPU_ALL,      do_fp_monadic},
-  {"abs",   0x0e208100, "sde",  round_flags, FPU_ALL,      do_fp_monadic},
-  {"rnd",   0x0e308100, "sde",  round_flags, FPU_ALL,      do_fp_monadic},
-  {"sqt",   0x0e408100, "sde",  round_flags, FPU_ALL,      do_fp_monadic},
-  {"log",   0x0e508100, "sde",  round_flags, FPU_ALL,      do_fp_monadic},
-  {"lgn",   0x0e608100, "sde",  round_flags, FPU_ALL,      do_fp_monadic},
-  {"exp",   0x0e708100, "sde",  round_flags, FPU_ALL,      do_fp_monadic},
-  {"sin",   0x0e808100, "sde",  round_flags, FPU_ALL,      do_fp_monadic},
-  {"cos",   0x0e908100, "sde",  round_flags, FPU_ALL,      do_fp_monadic},
-  {"tan",   0x0ea08100, "sde",  round_flags, FPU_ALL,      do_fp_monadic},
-  {"asn",   0x0eb08100, "sde",  round_flags, FPU_ALL,      do_fp_monadic},
-  {"acs",   0x0ec08100, "sde",  round_flags, FPU_ALL,      do_fp_monadic},
-  {"atn",   0x0ed08100, "sde",  round_flags, FPU_ALL,      do_fp_monadic},
-  {"urd",   0x0ee08100, "sde",  round_flags, FPU_ALL,      do_fp_monadic},
-  {"nrm",   0x0ef08100, "sde",  round_flags, FPU_ALL,      do_fp_monadic},
-  {"adf",   0x0e000100, "sde",  round_flags, FPU_ALL,      do_fp_dyadic},
-  {"suf",   0x0e200100, "sde",  round_flags, FPU_ALL,      do_fp_dyadic},
-  {"rsf",   0x0e300100, "sde",  round_flags, FPU_ALL,      do_fp_dyadic},
-  {"muf",   0x0e100100, "sde",  round_flags, FPU_ALL,      do_fp_dyadic},
-  {"dvf",   0x0e400100, "sde",  round_flags, FPU_ALL,      do_fp_dyadic},
-  {"rdf",   0x0e500100, "sde",  round_flags, FPU_ALL,      do_fp_dyadic},
-  {"pow",   0x0e600100, "sde",  round_flags, FPU_ALL,      do_fp_dyadic},
-  {"rpw",   0x0e700100, "sde",  round_flags, FPU_ALL,      do_fp_dyadic},
-  {"rmf",   0x0e800100, "sde",  round_flags, FPU_ALL,      do_fp_dyadic},
-  {"fml",   0x0e900100, "sde",  round_flags, FPU_ALL,      do_fp_dyadic},
-  {"fdv",   0x0ea00100, "sde",  round_flags, FPU_ALL,      do_fp_dyadic},
-  {"frd",   0x0eb00100, "sde",  round_flags, FPU_ALL,      do_fp_dyadic},
-  {"pol",   0x0ec00100, "sde",  round_flags, FPU_ALL,      do_fp_dyadic},
-  {"cmf",   0x0e90f110, NULL,   except_flag, FPU_ALL,      do_fp_cmp},
-  {"cnf",   0x0eb0f110, NULL,   except_flag, FPU_ALL,      do_fp_cmp},
+  {"mvf",   0x0e008100, "sde",  round_flags, FPU_FPA,      do_fp_monadic},
+  {"mnf",   0x0e108100, "sde",  round_flags, FPU_FPA,      do_fp_monadic},
+  {"abs",   0x0e208100, "sde",  round_flags, FPU_FPA,      do_fp_monadic},
+  {"rnd",   0x0e308100, "sde",  round_flags, FPU_FPA,      do_fp_monadic},
+  {"sqt",   0x0e408100, "sde",  round_flags, FPU_FPA,      do_fp_monadic},
+  {"log",   0x0e508100, "sde",  round_flags, FPU_FPA,      do_fp_monadic},
+  {"lgn",   0x0e608100, "sde",  round_flags, FPU_FPA,      do_fp_monadic},
+  {"exp",   0x0e708100, "sde",  round_flags, FPU_FPA,      do_fp_monadic},
+  {"sin",   0x0e808100, "sde",  round_flags, FPU_FPA,      do_fp_monadic},
+  {"cos",   0x0e908100, "sde",  round_flags, FPU_FPA,      do_fp_monadic},
+  {"tan",   0x0ea08100, "sde",  round_flags, FPU_FPA,      do_fp_monadic},
+  {"asn",   0x0eb08100, "sde",  round_flags, FPU_FPA,      do_fp_monadic},
+  {"acs",   0x0ec08100, "sde",  round_flags, FPU_FPA,      do_fp_monadic},
+  {"atn",   0x0ed08100, "sde",  round_flags, FPU_FPA,      do_fp_monadic},
+  {"urd",   0x0ee08100, "sde",  round_flags, FPU_FPA,      do_fp_monadic},
+  {"nrm",   0x0ef08100, "sde",  round_flags, FPU_FPA,      do_fp_monadic},
+  {"adf",   0x0e000100, "sde",  round_flags, FPU_FPA,      do_fp_dyadic},
+  {"suf",   0x0e200100, "sde",  round_flags, FPU_FPA,      do_fp_dyadic},
+  {"rsf",   0x0e300100, "sde",  round_flags, FPU_FPA,      do_fp_dyadic},
+  {"muf",   0x0e100100, "sde",  round_flags, FPU_FPA,      do_fp_dyadic},
+  {"dvf",   0x0e400100, "sde",  round_flags, FPU_FPA,      do_fp_dyadic},
+  {"rdf",   0x0e500100, "sde",  round_flags, FPU_FPA,      do_fp_dyadic},
+  {"pow",   0x0e600100, "sde",  round_flags, FPU_FPA,      do_fp_dyadic},
+  {"rpw",   0x0e700100, "sde",  round_flags, FPU_FPA,      do_fp_dyadic},
+  {"rmf",   0x0e800100, "sde",  round_flags, FPU_FPA,      do_fp_dyadic},
+  {"fml",   0x0e900100, "sde",  round_flags, FPU_FPA,      do_fp_dyadic},
+  {"fdv",   0x0ea00100, "sde",  round_flags, FPU_FPA,      do_fp_dyadic},
+  {"frd",   0x0eb00100, "sde",  round_flags, FPU_FPA,      do_fp_dyadic},
+  {"pol",   0x0ec00100, "sde",  round_flags, FPU_FPA,      do_fp_dyadic},
+  {"cmf",   0x0e90f110, NULL,   except_flag, FPU_FPA,      do_fp_cmp},
+  {"cnf",   0x0eb0f110, NULL,   except_flag, FPU_FPA,      do_fp_cmp},
 /* The FPA10 data sheet suggests that the 'E' of cmfe/cnfe should not
    be an optional suffix, but part of the instruction.  To be compatible,
    we accept either.  */
-  {"cmfe",  0x0ed0f110, NULL,   NULL,        FPU_ALL,      do_fp_cmp},
-  {"cnfe",  0x0ef0f110, NULL,   NULL,        FPU_ALL,      do_fp_cmp},
-  {"flt",   0x0e000110, "sde",  round_flags, FPU_ALL,      do_fp_from_reg},
-  {"fix",   0x0e100110, NULL,   fix_flags,   FPU_ALL,      do_fp_to_reg},
+  {"cmfe",  0x0ed0f110, NULL,   NULL,        FPU_FPA,      do_fp_cmp},
+  {"cnfe",  0x0ef0f110, NULL,   NULL,        FPU_FPA,      do_fp_cmp},
+  {"flt",   0x0e000110, "sde",  round_flags, FPU_FPA,      do_fp_from_reg},
+  {"fix",   0x0e100110, NULL,   fix_flags,   FPU_FPA,      do_fp_to_reg},
 
 /* Generic copressor instructions.  */
   {"cdp",   0x0e000000, NULL,  NULL,         ARM_2UP,      do_cdp},
@@ -6495,7 +6500,11 @@ md_begin ()
     if (support_interwork) flags |= F_INTERWORK;
     if (uses_apcs_float)   flags |= F_APCS_FLOAT;
     if (pic_code)          flags |= F_PIC;
-    if ((cpu_variant & FPU_ALL) == FPU_NONE) flags |= F_SOFT_FLOAT;
+    if ((cpu_variant & FPU_ALL) == FPU_NONE
+	|| (cpu_variant & FPU_ALL) == FPU_ARCH_VFP) /* VFP layout only */
+      flags |= F_SOFT_FLOAT;
+    /* Using VFP conventions (even if soft-float).  */
+    if (cpu_variant & FPU_ARCH_VFP) flags |= F_VFP_FLOAT;
 
     bfd_set_private_flags (stdoutput, flags);
 
@@ -6683,14 +6692,21 @@ md_atof (type, litP, sizeP)
     }
   else
     {
-      /* For a 4 byte float the order of elements in `words' is 1 0.  For an
-	 8 byte float the order is 1 0 3 2.  */
-      for (i = 0; i < prec; i += 2)
-	{
-	  md_number_to_chars (litP, (valueT) words[i + 1], 2);
-	  md_number_to_chars (litP + 2, (valueT) words[i], 2);
-	  litP += 4;
-	}
+      if (cpu_variant & FPU_ARCH_VFP)
+	for (i = prec - 1; i >= 0; i--)
+	  {
+	    md_number_to_chars (litP, (valueT) words[i], 2);
+	    litP += 2;
+	  }
+      else
+        /* For a 4 byte float the order of elements in `words' is 1 0.  For an
+	   8 byte float the order is 1 0 3 2.  */
+        for (i = 0; i < prec; i += 2)
+	  {
+	    md_number_to_chars (litP, (valueT) words[i + 1], 2);
+	    md_number_to_chars (litP + 2, (valueT) words[i], 2);
+	    litP += 4;
+	  }
     }
 
   return 0;
@@ -8000,6 +8016,8 @@ md_parse_option (c, arg)
 	    cpu_variant = (cpu_variant & ~FPU_ALL) | FPU_FPA11;
 	  else if (streq (str, "fpe-old"))
 	    cpu_variant = (cpu_variant & ~FPU_ALL) | FPU_CORE;
+	  else if (streq (str, "fpu=softvfp"))
+	    cpu_variant = (cpu_variant & ~FPU_ALL) | FPU_ARCH_VFP;
 	  else
 	    goto bad;
 	  break;
@@ -8039,7 +8057,7 @@ md_parse_option (c, arg)
 	default:
 	  if (streq (str, "all"))
 	    {
-	      cpu_variant = ARM_ALL | FPU_ALL;
+	      cpu_variant = ARM_ALL | FPU_FPA;
 	      return 1;
 	    }
 #if defined OBJ_COFF || defined OBJ_ELF
