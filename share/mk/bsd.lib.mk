@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.152 1999/03/30 09:30:43 fair Exp $
+#	$NetBSD: bsd.lib.mk,v 1.152.2.1 1999/09/10 22:55:14 he Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .if !target(__initialized__)
@@ -295,7 +295,7 @@ libinstall:: ${DESTDIR}${LIBDIR}/lib${LIB}.a
 .if !defined(UPDATE)
 .PHONY: ${DESTDIR}${LIBDIR}/lib${LIB}.a
 .endif
-.if !defined(BUILD)
+.if !defined(BUILD) && !make(all) && !make(lib${LIB}.a)
 ${DESTDIR}${LIBDIR}/lib${LIB}.a: .MADE
 .endif
 
@@ -308,7 +308,7 @@ libinstall:: ${DESTDIR}${LIBDIR}/lib${LIB}_p.a
 .if !defined(UPDATE)
 .PHONY: ${DESTDIR}${LIBDIR}/lib${LIB}_p.a
 .endif
-.if !defined(BUILD)
+.if !defined(BUILD) && !make(all) && !make(lib${LIB}_p.a)
 ${DESTDIR}${LIBDIR}/lib${LIB}_p.a: .MADE
 .endif
 
@@ -321,7 +321,7 @@ libinstall:: ${DESTDIR}${LIBDIR}/lib${LIB}_pic.a
 .if !defined(UPDATE)
 .PHONY: ${DESTDIR}${LIBDIR}/lib${LIB}_pic.a
 .endif
-.if !defined(BUILD)
+.if !defined(BUILD) && !make(all) && !make(lib${LIB}_pic.a)
 ${DESTDIR}${LIBDIR}/lib${LIB}_pic.a: .MADE
 .endif
 
@@ -334,7 +334,7 @@ libinstall:: ${DESTDIR}${LIBDIR}/lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}
 .if !defined(UPDATE)
 .PHONY: ${DESTDIR}${LIBDIR}/lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}
 .endif
-.if !defined(BUILD)
+.if !defined(BUILD) && !make(all) && !make(lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR})
 ${DESTDIR}${LIBDIR}/lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}: .MADE
 .endif
 
@@ -362,7 +362,7 @@ libinstall:: ${DESTDIR}${LINTLIBDIR}/llib-l${LIB}.ln
 .if !defined(UPDATE)
 .PHONY: ${DESTDIR}${LINTLIBDIR}/llib-l${LIB}.ln
 .endif
-.if !defined(BUILD)
+.if !defined(BUILD) && !make(all) && !make(llib-l${LIB}.ln)
 ${DESTDIR}${LINTLIBDIR}/llib-l${LIB}.ln: .MADE
 .endif
 
