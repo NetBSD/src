@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_mv.c,v 1.20 1997/04/10 20:34:25 briggs Exp $	*/
+/*	$NetBSD: grf_mv.c,v 1.21 1997/04/14 16:28:35 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -52,7 +52,6 @@
 
 static void	load_image_data __P((caddr_t data, struct image_data *image));
 
-static char zero = 0;
 static void	grfmv_intr_generic __P((void *vsc, int slot));
 static void	grfmv_intr_cti __P((void *vsc, int slot));
 static void	grfmv_intr_cb264 __P((void *vsc, int slot));
@@ -101,7 +100,7 @@ grfmv_match(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
-	struct nubus_attach_args *na = (struct nubus_attach_args *) aux;
+	struct nubus_attach_args *na = (struct nubus_attach_args *)aux;
 
 	if (na->category != NUBUS_CATEGORY_DISPLAY)
 		return 0;
@@ -127,8 +126,8 @@ grfmv_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct grfbus_softc *sc = (struct grfbus_softc *) self;
-	struct nubus_attach_args *na = (struct nubus_attach_args *) aux;
+	struct grfbus_softc *sc = (struct grfbus_softc *)self;
+	struct nubus_attach_args *na = (struct nubus_attach_args *)aux;
 	struct image_data image_store, image;
 	struct grfmode *gm;
 	char cardname[CARD_NAME_LEN];
@@ -169,7 +168,7 @@ grfmv_attach(parent, self, aux)
 		return;
 	}
 
-	if (nubus_get_ind_data(&sc->sc_slot, &dirent, (caddr_t) &image_store,
+	if (nubus_get_ind_data(&sc->sc_slot, &dirent, (caddr_t)&image_store,
 				sizeof(struct image_data)) <= 0) {
 		printf("\n%s: probe failed to get indirect mode data.\n",
 		    sc->sc_dev.dv_xname);
@@ -178,11 +177,11 @@ grfmv_attach(parent, self, aux)
 
 	/* Need to load display info (and driver?), etc... (?) */
 
-	load_image_data((caddr_t) &image_store, &image);
+	load_image_data((caddr_t)&image_store, &image);
 
 	gm = &sc->curr_mode;
 	gm->mode_id = mode;
-	gm->fbbase = (caddr_t) (sc->sc_slot.virtual_base + image.offset);
+	gm->fbbase = (caddr_t)(sc->sc_slot.virtual_base + image.offset);
 	gm->fboff = image.offset;
 	gm->rowbytes = image.rowbytes;
 	gm->width = image.right - image.left;
@@ -196,6 +195,7 @@ grfmv_attach(parent, self, aux)
 	strncpy(cardname, nubus_get_card_name(&sc->sc_slot),
 		CARD_NAME_LEN);
 	cardname[CARD_NAME_LEN-1] = '\0';
+	printf(": %s\n", cardname);
 
 	if (sc->card_id == NUBUS_DRHW_TFB) {
 		/*
@@ -204,16 +204,12 @@ grfmv_attach(parent, self, aux)
 		 * value here, even though the cards are different, so we
 		 * so we try to differentiate here.
 		 */
-		if (strncmp(cardname, "Samsung 768", 11) == 0) {
+		if (strncmp(cardname, "Samsung 768", 11) == 0)
 			sc->card_id = NUBUS_DRHW_SAM768;
-		} else if (strncmp(cardname, "Toby frame", 10) == 0) {
-			/* Do nothing. */
-		} else {
-			printf("This display card pretends to be a TFB!");
-		}
+		else if (strncmp(cardname, "Toby frame", 10) != 0)
+			printf("%s: This display card pretends to be a TFB!",
+			    sc->sc_dev.dv_xname);
 	}
-
-	printf(": %s\n", cardname);
 
 	switch (sc->card_id) {
 	case NUBUS_DRHW_M2HRVC:
@@ -237,8 +233,9 @@ grfmv_attach(parent, self, aux)
 	case NUBUS_DRHW_MICRON:
 		/* What do we know about this one? */
 	default:
-		printf("        Unknown video card ID 0x%x--", sc->card_id);
-		printf("Not installing interrupt routine.\n");
+		printf("%s: Unknown video card ID 0x%x --",
+		    sc->sc_dev.dv_xname, sc->card_id);
+		printf(" Not installing interrupt routine.\n");
 		break;
 	}
 
@@ -271,7 +268,7 @@ grfmv_phys(gp, addr)
 	struct grf_softc *gp;
 	vm_offset_t addr;
 {
-	return (caddr_t) (NUBUS_SLOT2PA(gp->sc_slot->slot) +
+	return (caddr_t)(NUBUS_SLOT2PA(gp->sc_slot->slot) +
 				(addr - gp->sc_slot->virtual_base));
 }
 
@@ -287,11 +284,12 @@ grfmv_intr_generic(vsc, slot)
 	void	*vsc;
 	int	slot;
 {
-	caddr_t			 slotbase;
-	struct grfbus_softc	*sc;
+	static char zero = 0;
+	struct grfbus_softc *sc;
+	volatile char *slotbase;
 
-	sc = (struct grfbus_softc *) vsc;
-	slotbase = (caddr_t) sc->sc_slot.virtual_base;
+	sc = (struct grfbus_softc *)vsc;
+	slotbase = (volatile char *)sc->sc_slot.virtual_base;
 	slotbase[sc->cli_offset] = zero;
 }
 
@@ -310,11 +308,11 @@ grfmv_intr_cti(vsc, slot)
 	void	*vsc;
 	int	slot;
 {
-	volatile char		*slotbase;
-	struct grfbus_softc	*sc;
+	struct grfbus_softc *sc;
+	volatile char *slotbase;
 
-	sc = (struct grfbus_softc *) vsc;
-	slotbase = ((volatile char *) sc->sc_slot.virtual_base) + 0x00080000;
+	sc = (struct grfbus_softc *)vsc;
+	slotbase = ((volatile char *)sc->sc_slot.virtual_base) + 0x00080000;
 	*slotbase = (*slotbase | 0x02);
 	*slotbase = (*slotbase & 0xFD);
 }
@@ -326,10 +324,10 @@ grfmv_intr_cb264(vsc, slot)
 	int	slot;
 {
 	struct grfbus_softc *sc;
-	caddr_t slotbase;
+	volatile char *slotbase;
 
-	sc = (struct grfbus_softc *) vsc;
-	slotbase = (caddr_t) sc->sc_slot.virtual_base;
+	sc = (struct grfbus_softc *)vsc;
+	slotbase = (volatile char *)sc->sc_slot.virtual_base;
 	asm volatile("	movl	%0,a0
 			movl	a0@(0xff6028),d0
 			andl	#0x2,d0
