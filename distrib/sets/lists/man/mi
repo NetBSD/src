@@ -369,6 +369,7 @@
 ./usr/share/man/cat4/ns.0
 ./usr/share/man/cat4/nsip.0
 ./usr/share/man/cat4/null.0
+./usr/share/man/cat4/opl.0
 ./usr/share/man/cat4/options.0
 ./usr/share/man/cat4/pci.0
 ./usr/share/man/cat4/pcmcia.0
@@ -1392,6 +1393,7 @@
 ./usr/share/man/man4/ns.4
 ./usr/share/man/man4/nsip.4
 ./usr/share/man/man4/null.4
+./usr/share/man/man4/opl.4
 ./usr/share/man/man4/options.4
 ./usr/share/man/man4/pci.4
 ./usr/share/man/man4/pcmcia.4
