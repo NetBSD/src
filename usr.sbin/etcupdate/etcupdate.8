@@ -1,4 +1,4 @@
-.\"	$NetBSD: etcupdate.8,v 1.3 2003/01/24 13:08:22 wiz Exp $
+.\"	$NetBSD: etcupdate.8,v 1.4 2003/02/14 16:11:35 grant Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -140,7 +140,8 @@ argument or by defining the
 .Ev SRCDIR
 variable.
 .It Ev PAGER
-The pager to use when displaying files.  By default this is
+The pager to use when displaying files.
+By default this is
 .Xr more 1
 but it can be changed either with the
 .Fl p Ar pager
@@ -148,8 +149,8 @@ argument or by defining the
 .Ev PAGER
 variable.
 .It Ev WIDTH
-The screen width used during interactive merge. By default this is
-80 but it can be changed either with the
+The screen width used during interactive merge.
+By default this is 80 but it can be changed either with the
 .Fl w Ar width
 argument or by defining the
 .Ev WIDTH
@@ -160,7 +161,8 @@ users with wider shell windows.
 .El
 .Sh FILES
 The environment variables can also be defined in the following configuration
-files.  The user's personal configuration file settings override the global
+files.
+The user's personal configuration file settings override the global
 settings.
 .Pp
 /etc/etcupdate.conf
@@ -211,19 +213,22 @@ The
 command appeared in
 .Nx 1.6 .
 .Sh AUTHORS
-The
-script was written by Martti Kuparinen <martti@netbsd.org> and
-improved by several other
+The script was written by
+.An Martti Kuparinen
+.Aq martti@NetBSD.org
+and improved by several other
 .Nx
 users.
 .Pp
 The idea for this script (including code fragments, variable names etc.)
 came from the
 .Fx
-mergemaster (by Douglas Barton).  Unlike the
+mergemaster (by Douglas Barton).
+Unlike the
 .Fx
 mergemaster, this does not use CVS version tags to compare if
-the files need to be updated. Files are compared with
+the files need to be updated.
+Files are compared with
 .Xr cmp 1
 as this is more reliable and the only way if the version numbers are the
 same even though the files are different.
