@@ -1,5 +1,5 @@
-/*	$NetBSD: servconf.h,v 1.1.1.10 2002/04/22 07:37:39 itojun Exp $	*/
-/*	$OpenBSD: servconf.h,v 1.57 2002/03/20 19:12:25 stevesk Exp $	*/
+/*	$NetBSD: servconf.h,v 1.1.1.11 2002/06/24 05:25:56 itojun Exp $	*/
+/*	$OpenBSD: servconf.h,v 1.58 2002/06/20 23:05:55 markus Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -99,6 +99,7 @@ typedef struct {
 	int     permit_empty_passwd;	/* If false, do not permit empty
 					 * passwords. */
 	int     use_login;	/* If true, login(1) is used */
+	int     compression;	/* If true, compression is allowed */
 	int	allow_tcp_forwarding;
 	u_int num_allow_users;
 	char   *allow_users[MAX_ALLOW_USERS];
