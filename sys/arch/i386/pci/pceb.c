@@ -1,4 +1,4 @@
-/*	$NetBSD: pceb.c,v 1.3 1998/06/08 06:45:55 thorpej Exp $	*/
+/*	$NetBSD: pceb.c,v 1.4 1998/06/09 18:49:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@ struct cfattach pceb_ca = {
 	sizeof(struct device), pcebmatch, pcebattach
 };
 
-void	pceb_callback __P((void *));
+void	pceb_callback __P((struct device *));
 int	pceb_print __P((void *, const char *));
 
 union pceb_attach_args {
@@ -104,21 +104,20 @@ pcebattach(parent, self, aux)
 	printf("\n");
 
 	/*
-	 * Just print out a description and set the EISA bus
-	 * callback.
+	 * Just print out a description and defer configuration
+	 * until all PCI devices have been attached.
 	 */
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
 	printf("%s: %s (rev. 0x%02x)\n", self->dv_xname, devinfo,
 	    PCI_REVISION(pa->pa_class));
 
-	set_pci_isa_bridge_callback(pceb_callback, self);
+	config_defer(self, pceb_callback);
 }
 
 void
-pceb_callback(arg)
-	void *arg;
+pceb_callback(self)
+	struct device *self;
 {
-	struct device *self = arg;
 	union pceb_attach_args ea;
 
 	/*

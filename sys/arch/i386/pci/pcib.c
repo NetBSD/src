@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.13 1998/06/08 06:45:55 thorpej Exp $	*/
+/*	$NetBSD: pcib.c,v 1.14 1998/06/09 18:49:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@ struct cfattach pcib_ca = {
 	sizeof(struct device), pcibmatch, pcibattach
 };
 
-void	pcib_callback __P((void *));
+void	pcib_callback __P((struct device *));
 int	pcib_print __P((void *, const char *));
 
 int
@@ -129,21 +129,20 @@ pcibattach(parent, self, aux)
 	printf("\n");
 
 	/*
-	 * Just print out a description and set the ISA bus
-	 * callback.
+	 * Just print out a description and defer configuration
+	 * until all PCI devices have been attached.
 	 */
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
 	printf("%s: %s (rev. 0x%02x)\n", self->dv_xname, devinfo,
 	    PCI_REVISION(pa->pa_class));
 
-	set_pci_isa_bridge_callback(pcib_callback, self);
+	config_defer(self, pcib_callback);
 }
 
 void
-pcib_callback(arg)
-	void *arg;
+pcib_callback(self)
+	struct device *self;
 {
-	struct device *self = arg;
 	struct isabus_attach_args iba;
 
 	/*
