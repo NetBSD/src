@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.10 2000/02/11 19:30:30 thorpej Exp $ */
+/*	$NetBSD: vmparam.h,v 1.11 2000/07/13 06:23:36 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -97,9 +97,7 @@
  */
 
 /*
- * User/kernel map constants.  Note that sparc64/vaddrs.h defines the
- * IO space virtual base, which must be the same as VM_MAX_KERNEL_ADDRESS:
- * tread with care.
+ * User/kernel map constants.
  */
 #define VM_MIN_ADDRESS		((vaddr_t)0)
 #define VM_MAX_ADDRESS		((vaddr_t)KERNBASE)
