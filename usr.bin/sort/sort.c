@@ -1,4 +1,4 @@
-/*	$NetBSD: sort.c,v 1.7 2000/10/11 19:16:39 thorpej Exp $	*/
+/*	$NetBSD: sort.c,v 1.8 2000/10/16 21:48:15 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\n\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: sort.c,v 1.7 2000/10/11 19:16:39 thorpej Exp $");
+__RCSID("$NetBSD: sort.c,v 1.8 2000/10/16 21:48:15 jdolecek Exp $");
 __SCCSID("@(#)sort.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -81,11 +81,11 @@ extern int ncols;
 
 char devstdin[] = _PATH_STDIN;
 char toutpath[_POSIX_PATH_MAX];
-char *tmpdir = _PATH_VARTMP;
+const char *tmpdir = _PATH_TMP;
 
 static void cleanup __P((void));
 static void onsignal __P((int));
-static void usage __P((char *));
+static void usage __P((const char *));
 
 int main __P((int argc, char **argv));
 
@@ -240,7 +240,7 @@ main(argc, argv)
 		(void)snprintf(toutpath, sizeof(toutpath), "%sXXXX", outpath);
 		if ((outfd = mkstemp(toutpath)) < 0 ||
 		    (outfp = fdopen(outfd, "w")) == 0)
-			err(2, "%s", toutpath);
+			err(2, "temporary file %s", toutpath);
 		outfile = toutpath;
 		(void)atexit(cleanup);
 		for (i = 0; sigtable[i]; ++i)	/* always unlink toutpath */
@@ -248,7 +248,7 @@ main(argc, argv)
 	} else
 		outfile = outpath;
 	if (outfp == NULL && (outfp = fopen(outfile, "w")) == NULL)
-		err(2, "%s", outfile);
+		err(2, "output file %s", outfile);
 	if (mflag)
 		fmerge(-1, filelist, argc-optind, get, outfp, putline, fldtab);
 	else
@@ -281,7 +281,7 @@ cleanup()
 
 static void
 usage(msg)
-	char *msg;
+	const char *msg;
 {
 	if (msg)
 		(void)fprintf(stderr, "sort: %s\n", msg);
