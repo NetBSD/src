@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.c,v 1.7 1996/05/06 00:04:06 mark Exp $ */
+/* $NetBSD: podulebus.c,v 1.8 1996/05/16 19:05:35 mark Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -301,7 +301,6 @@ podulechunkdirectory(podule)
 			if (addr < 0x800) {
 				for (loop = 0; loop < size; ++loop)
 					printf("%c", poduleread(podule->slow_base, (addr + loop)*4, podule->slottype));
-				printf("\n");
 			}
 		}
 		address += 32;
@@ -362,14 +361,13 @@ poduleexamine(podule, dev, slottype)
 						break;
 					++pod_desc;
 				}
-				if (!pod_desc->description)
-					printf("prod=%04x\n", podule->product);
-				else
+				if (!pod_desc->description) {
+					printf("prod=%04x : ", podule->product);
+					if (podule->flags1 & PODULE_FLAGS_CD)
+						podulechunkdirectory(podule);
+					printf("\n");
+				} else
 					printf("%s\n", pod_desc->description);
-
-				if (pod_desc->description == NULL
-				    && podule->flags1 & PODULE_FLAGS_CD)
-					podulechunkdirectory(podule);
 			}
 		}
 	}
