@@ -1,4 +1,4 @@
-.\"	$NetBSD: systrace.4,v 1.4 2002/06/18 14:17:05 wiz Exp $
+.\"	$NetBSD: systrace.4,v 1.5 2002/06/26 06:44:59 gmcgarry Exp $
 .\"	$OpenBSD: systrace.4,v 1.2 2002/06/03 15:44:17 mpech Exp $
 .\"
 .\" Copyright (c) 2002 CubeSoft Communications, Inc.
@@ -34,30 +34,38 @@
 .Sh SYNOPSIS
 .Cd "options SYSTRACE"
 .Sh DESCRIPTION
+The 
 .Nm
-attaches to processes and enforces policies for system calls.
-A pseudo-device,
-.Pa /dev/systrace ,
-allows userland processes to control the behavior of
+kernel facility provides a mechanism to manipulate and enforce access
+policies for system calls.  Using the
 .Nm
+facility it is possible to monitor and control a process's access to
+the kernel through system calls.
+.Pp
+Access to the
+.Nm
+facility is provided to userland processes, such as
+.Xr systrace 1 ,
 through an
 .Xr ioctl 2
-interface.
-.Sh SYSTEM CALL POLICIES
+interface on the pseudo-device
+.Pa /dev/systrace .
+This interface allows messages to be sent from the kernel to the
+userland process to request confirmation of an access policy.
+.Pp
+The
 .Nm
-can assign the following policies to system calls:
-.Bl -tag -enum -width "xxxxxx"
+facility can assign the following policies to system calls for a
+specific process:
+.Bl -tag -offset indent -width "XXXXXX"
 .It SYSTR_POLICY_ASK
-Send a message of the type
-.Dv SYSTR_MSG_ASK ,
-and put the process to sleep until a
-.Dv STRIOCANSWER
-.Xr ioctl 2
-is made.
+Send a message on
+.Pa /dev/systrace
+requesting the access policy for the system call.
 .It SYSTR_POLICY_PERMIT
 Immediately allow the system call.
 .It SYSTR_POLICY_NEVER
-Immediately return an error code.
+Immediately deny the system call and return an error code.
 .El
 .Sh SYSTRACE MESSAGES
 A
@@ -99,7 +107,12 @@ struct str_msg_child {
 };
 .Ed
 .Sh IOCTL INTERFACE
-.Bl -tag -width "xxxxxx"
+The
+.Nm
+facility supports the following
+.Xr ioctl 2
+operations:
+.Bl -tag -width "XXXXXX"
 .It Dv SYSTR_CLONE Fa "int"
 Return a
 .Nm
@@ -107,36 +120,35 @@ file descriptor for
 further
 .Xr ioctl 2
 operations.
-.El
-.Nm
-supports the following
-.Xr ioctl 2
-command:
-.Bl -tag -width "xxxxxx"
 .It Dv STRIOCATTACH Fa "pid_t"
-Attach to a process, unless:
-.Bl -enum -compact -width 2n
+Attach to the process with the specified process ID.  This operation
+will fail under the following conditions:
+.Pp
+.Bl -enum -offset indent -compact -width 2n
 .It
-It's the process that's doing the attaching.
+The process is trying to attach to itself.
 .It
-It's a system process.
+The process is a system process.
 .It
-It's being traced already.
+The process is being traced already.
 .It
-You do not own the process and you're not root.
+You do not own the process and you are not root.
 .It
-It's
+The process is
 .Xr init 8 ,
 and the
 kernel was not compiled with
 .Cd option INSECURE .
 .El
 .It Dv STRIOCDETACH Fa "pid_t"
-Wake up a process if it is waiting for an answer, and detach from it.
+Wake up the process if it is waiting for an answer, and detach from
+it.
 .It Dv STRIOCANSWER Fa "struct systrace_answer"
-Tell
+Notify the
 .Nm
-what to do with a system call that was assigned a policy of
+facility in response to a
+SYSTR_MSG_ASK
+message what to do with a system call that was assigned a policy of
 .Dv SYSTR_POLICY_ASK .
 .Bd -literal
 struct systrace_answer {
@@ -148,6 +160,11 @@ struct systrace_answer {
 #define	SYSTR_FLAGS_RESULT 0x0001    /* Report syscall result */
 };
 .Ed
+.Pp
+Valid return values for
+.Em stra_policy
+are
+SYSTR_POLICY_PERMIT, SYSTR_POLICY_ASK and SYSTR_POLICY_NEVER.
 .It Dv STRIOCIO Fa "struct systrace_io"
 Copy data in/out of the process being traced.
 .Bd -literal
@@ -211,7 +228,7 @@ to
 .Va strp_policy .
 .It Dv STRIOCGETCWD Fa "pid_t"
 Set the working directory of the current process to that of the
-named process.
+specified process.
 .It Dv STRIOCRESCWD
 Restore the working directory of the current process.
 .El
@@ -231,5 +248,7 @@ The
 .Nm
 facility first appeared in
 .Ox 3.2 .
+It appeared in
+.Nx 1.7 .
 .\" .Sh BUGS
 .\" .Sh CAVEATS
