@@ -1,4 +1,4 @@
-/*	$NetBSD: term.h,v 1.4 1997/01/11 06:48:14 lukem Exp $	*/
+/*	$NetBSD: term.h,v 1.5 1997/11/13 04:48:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -80,6 +80,13 @@ typedef struct {
 #define A_K_RT		3
 #define A_K_NKEYS	4
 
+/*
+ * XXX HACK!  term_beep() is needed by readline emulation, which is
+ * XXX not built as OSRCS (like the rest of libedit).  It must be
+ * XXX un-"protected", and renamed __term_beep().
+ */
+#define	term_beep	__term_beep
+
 protected void term_move_to_line	__P((EditLine *, int));
 protected void term_move_to_char	__P((EditLine *, int));
 protected void term_clear_EOL		__P((EditLine *, int));
@@ -87,7 +94,7 @@ protected void term_overwrite		__P((EditLine *, char *, int));
 protected void term_insertwrite		__P((EditLine *, char *, int));
 protected void term_deletechars		__P((EditLine *, int));
 protected void term_clear_screen	__P((EditLine *));
-protected void term_beep		__P((EditLine *));
+/* protected */ void term_beep		__P((EditLine *));
 protected void term_change_size		__P((EditLine *, int, int));
 protected int  term_get_size		__P((EditLine *, int *, int *));
 protected int  term_init		__P((EditLine *));
