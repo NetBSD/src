@@ -1,4 +1,4 @@
-/*	$NetBSD: cz.c,v 1.20 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: cz.c,v 1.21 2002/09/27 20:39:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cz.c,v 1.20 2002/09/06 13:18:43 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cz.c,v 1.21 2002/09/27 20:39:52 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -169,7 +169,7 @@ int	cz_match(struct device *, struct cfdata *, void *);
 void	cz_attach(struct device *, struct device *, void *);
 int	cz_wait_pci_doorbell(struct cz_softc *, const char *);
 
-struct cfattach cz_ca = {
+const struct cfattach cz_ca = {
 	sizeof(struct cz_softc), cz_match, cz_attach
 };
 

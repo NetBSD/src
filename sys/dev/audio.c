@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.162 2002/09/23 05:51:10 simonb Exp $	*/
+/*	$NetBSD: audio.c,v 1.163 2002/09/27 20:37:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.162 2002/09/23 05:51:10 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.163 2002/09/27 20:37:28 thorpej Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -198,7 +198,7 @@ const struct cdevsw audio_cdevsw = {
 struct audio_params audio_default =
 	{ 8000, AUDIO_ENCODING_ULAW, 8, 1, 0, 1, 1 };
 
-struct cfattach audio_ca = {
+const struct cfattach audio_ca = {
 	sizeof(struct audio_softc), audioprobe, audioattach,
 	audiodetach, audioactivate
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.7 2001/05/30 12:28:47 mrg Exp $	*/
+/*	$NetBSD: if_le.c,v 1.8 2002/09/27 20:34:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@ struct	le_softc {
 static int	le_match __P((struct device *, struct cfdata *, void *));
 static void	le_attach __P((struct device *, struct device *, void *));
 
-struct cfattach le_ca = {
+const struct cfattach le_ca = {
 	sizeof(struct le_softc), le_match, le_attach
 };
 

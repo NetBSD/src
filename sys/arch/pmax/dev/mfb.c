@@ -1,4 +1,4 @@
-/*	$NetBSD: mfb.c,v 1.47 2001/09/19 19:04:16 thorpej Exp $	*/
+/*	$NetBSD: mfb.c,v 1.48 2002/09/27 20:34:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.47 2001/09/19 19:04:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.48 2002/09/27 20:34:46 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -182,7 +182,7 @@ static void	mfbattach __P((struct device *, struct device *, void *));
 static int	mfbinit __P((struct fbinfo *, caddr_t, int, int));
 static int	mfb_intr __P((void *sc));
 
-struct cfattach mfb_ca = {
+const struct cfattach mfb_ca = {
 	sizeof(struct fbinfo), mfbmatch, mfbattach
 };
 

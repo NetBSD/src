@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.74 2002/01/07 21:47:05 thorpej Exp $	*/
+/*	$NetBSD: gus.c,v 1.75 2002/09/27 20:38:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1999 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gus.c,v 1.74 2002/01/07 21:47:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gus.c,v 1.75 2002/09/27 20:38:23 thorpej Exp $");
 
 #include "gus.h"
 #if NGUS > 0
@@ -443,7 +443,7 @@ void	stereo_dmaintr __P((void *));
 int	gusprobe __P((struct device *, struct cfdata *, void *));
 void	gusattach __P((struct device *, struct device *, void *));
 
-struct cfattach gus_ca = {
+const struct cfattach gus_ca = {
 	sizeof(struct gus_softc), gusprobe, gusattach,
 };
 

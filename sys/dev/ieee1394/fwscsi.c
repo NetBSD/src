@@ -1,4 +1,4 @@
-/*	$NetBSD: fwscsi.c,v 1.6 2002/09/27 15:37:21 provos Exp $	*/
+/*	$NetBSD: fwscsi.c,v 1.7 2002/09/27 20:38:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwscsi.c,v 1.6 2002/09/27 15:37:21 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwscsi.c,v 1.7 2002/09/27 20:38:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -90,7 +90,7 @@ struct fwscsi_softc {
 	TAILQ_HEAD(, sbp2_orb) sc_orbs;
 };
 
-struct cfattach fwscsi_ca = {
+const struct cfattach fwscsi_ca = {
 	sizeof(struct fwscsi_softc), fwscsi_match, fwscsi_attach, fwscsi_detach
 };
 

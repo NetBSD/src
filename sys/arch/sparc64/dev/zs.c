@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.40 2002/09/27 15:36:50 provos Exp $	*/
+/*	$NetBSD: zs.c,v 1.41 2002/09/27 20:36:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -162,11 +162,11 @@ static void zs_attach __P((struct zsc_softc *, struct zsdevice *, int));
 static int  zs_print __P((void *, const char *name));
 
 /* Do we really need this ? */
-struct cfattach zs_ca = {
+const struct cfattach zs_ca = {
 	sizeof(struct zsc_softc), zs_match_mainbus, zs_attach_mainbus
 };
 
-struct cfattach zs_mainbus_ca = {
+const struct cfattach zs_mainbus_ca = {
 	sizeof(struct zsc_softc), zs_match_mainbus, zs_attach_mainbus
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.19 2002/07/18 02:07:13 mjl Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.20 2002/09/27 20:40:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -197,7 +197,7 @@ int	bgedebug = 0;
 #define	BGE_QUIRK_LINK_STATE_BROKEN	0x00000001
 #define	BGE_QUIRK_CSUM_BROKEN		0x00000002
 
-struct cfattach bge_ca = {
+const struct cfattach bge_ca = {
 	sizeof(struct bge_softc), bge_probe, bge_attach
 };
 

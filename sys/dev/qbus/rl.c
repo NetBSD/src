@@ -1,4 +1,4 @@
-/*	$NetBSD: rl.c,v 1.13 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: rl.c,v 1.14 2002/09/27 20:41:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rl.c,v 1.13 2002/09/06 13:18:43 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rl.c,v 1.14 2002/09/27 20:41:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -78,11 +78,11 @@ static	void rlcstart(struct rlc_softc *, struct buf *);
 static	void waitcrdy(struct rlc_softc *);
 static	void rlcreset(struct device *);
 
-struct cfattach rlc_ca = {
+const struct cfattach rlc_ca = {
 	sizeof(struct rlc_softc), rlcmatch, rlcattach
 };
 
-struct cfattach rl_ca = {
+const struct cfattach rl_ca = {
 	sizeof(struct rl_softc), rlmatch, rlattach
 };
 

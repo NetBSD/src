@@ -1,4 +1,4 @@
-/*	$NetBSD: tcbus.c,v 1.14 2001/09/19 19:04:17 thorpej Exp $	*/
+/*	$NetBSD: tcbus.c,v 1.15 2002/09/27 20:34:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Tohru Nishimura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: tcbus.c,v 1.14 2001/09/19 19:04:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcbus.c,v 1.15 2002/09/27 20:34:55 thorpej Exp $");
 
 /*
  * Which system models were configured?
@@ -68,7 +68,7 @@ extern struct tcbus_attach_args kn03_tc_desc[];	/* XXX */
 static int	tcbus_match __P((struct device *, struct cfdata *, void *));
 static void	tcbus_attach __P((struct device *, struct device *, void *));
 
-struct cfattach tcbus_ca = {
+const struct cfattach tcbus_ca = {
 	sizeof(struct tc_softc), tcbus_match, tcbus_attach,
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd_atapi.c,v 1.20 2002/04/23 20:41:19 bouyer Exp $	*/
+/*	$NetBSD: cd_atapi.c,v 1.21 2002/09/27 20:41:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd_atapi.c,v 1.20 2002/04/23 20:41:19 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd_atapi.c,v 1.21 2002/09/27 20:41:40 thorpej Exp $");
 
 #include "rnd.h"
 
@@ -73,7 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: cd_atapi.c,v 1.20 2002/04/23 20:41:19 bouyer Exp $")
 int	cd_atapibus_match __P((struct device *, struct cfdata *, void *));
 void	cd_atapibus_attach __P((struct device *, struct device *, void *));
 
-struct cfattach cd_atapibus_ca = {
+const struct cfattach cd_atapibus_ca = {
 	sizeof(struct cd_softc), cd_atapibus_match, cd_atapibus_attach,
 	cddetach, cdactivate
 };

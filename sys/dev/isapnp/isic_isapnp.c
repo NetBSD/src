@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isapnp.c,v 1.12 2002/04/14 12:24:27 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isapnp.c,v 1.13 2002/09/27 20:39:06 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -89,7 +89,7 @@ static int isic_isapnp_probe __P((struct device *, struct cfdata *, void *));
 #endif
 static void isic_isapnp_attach __P((struct device *, struct device *, void *));
 
-struct cfattach isic_isapnp_ca = {
+const struct cfattach isic_isapnp_ca = {
 	sizeof(struct isic_softc), isic_isapnp_probe, isic_isapnp_attach
 };
 

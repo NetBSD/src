@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.25 2001/05/31 18:46:07 scw Exp $	*/
+/*	$NetBSD: if_le.c,v 1.26 2002/09/27 20:33:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -112,7 +112,7 @@
 int le_pcc_match __P((struct device *, struct cfdata *, void *));
 void le_pcc_attach __P((struct device *, struct device *, void *));
 
-struct cfattach le_pcc_ca = {
+const struct cfattach le_pcc_ca = {
 	sizeof(struct le_softc), le_pcc_match, le_pcc_attach
 };
 

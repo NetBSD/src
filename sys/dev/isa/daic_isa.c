@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: daic_isa.c,v 1.7 2002/04/14 12:24:26 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: daic_isa.c,v 1.8 2002/09/27 20:38:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -72,7 +72,7 @@ static int daic_isa_probe __P((struct device *, struct cfdata *, void *));
 static void daic_isa_attach __P((struct device *, struct device *, void *));
 static int daic_isa_intr __P((void *));
 
-struct cfattach daic_isa_ca = {
+const struct cfattach daic_isa_ca = {
 	sizeof(struct daic_isa_softc), daic_isa_probe, daic_isa_attach
 };
 

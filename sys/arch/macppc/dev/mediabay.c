@@ -1,4 +1,4 @@
-/*	$NetBSD: mediabay.c,v 1.4 2001/07/22 11:29:46 wiz Exp $	*/
+/*	$NetBSD: mediabay.c,v 1.5 2002/09/27 20:33:35 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -55,7 +55,7 @@ int mediabay_intr __P((void *));
 void mediabay_create_kthread __P((void *));
 void mediabay_kthread __P((void *));
 
-struct cfattach mediabay_ca = {
+const struct cfattach mediabay_ca = {
 	sizeof(struct mediabay_softc), mediabay_match, mediabay_attach
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.96 2002/09/15 17:43:48 bouyer Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.97 2002/09/27 20:41:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.96 2002/09/15 17:43:48 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.97 2002/09/27 20:41:00 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,7 +90,7 @@ u_int8_t *
 	    u_int8_t [ETHER_ADDR_LEN]));
 int	ne_pcmcia_ax88190_set_iobase __P((struct ne_pcmcia_softc *));
 
-struct cfattach ne_pcmcia_ca = {
+const struct cfattach ne_pcmcia_ca = {
 	sizeof(struct ne_pcmcia_softc), ne_pcmcia_match, ne_pcmcia_attach,
 	    ne_pcmcia_detach, dp8390_activate
 };

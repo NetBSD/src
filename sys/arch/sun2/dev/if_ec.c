@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ec.c,v 1.3 2001/12/17 18:14:17 fredette Exp $	*/
+/*	$NetBSD: if_ec.c,v 1.4 2002/09/27 20:36:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -150,7 +150,7 @@ void ec_mediastatus __P((struct ifnet *, struct ifmediareq *));
 int ec_match __P((struct device *, struct cfdata *, void *));
 void ec_attach __P((struct device *, struct device *, void *));
 
-struct cfattach ec_ca = {
+const struct cfattach ec_ca = {
 	sizeof(struct ec_softc), ec_match, ec_attach
 };
 

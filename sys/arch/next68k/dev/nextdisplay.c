@@ -1,4 +1,4 @@
-/* $NetBSD: nextdisplay.c,v 1.10 2002/09/11 07:06:17 mycroft Exp $ */
+/* $NetBSD: nextdisplay.c,v 1.11 2002/09/27 20:34:30 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 Matt DeBergalis
@@ -56,7 +56,7 @@ extern int turbo;
 int nextdisplay_match __P((struct device *, struct cfdata *, void *));
 void nextdisplay_attach __P((struct device *, struct device *, void *));
 
-struct cfattach nextdisplay_ca = {
+const struct cfattach nextdisplay_ca = {
 	sizeof(struct nextdisplay_softc), 
 	nextdisplay_match,
 	nextdisplay_attach,

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.3 2002/09/02 20:04:25 scw Exp $	*/
+/*	$NetBSD: rtc.c,v 1.4 2002/09/27 20:35:30 thorpej Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -66,7 +66,7 @@ struct rtc_softc {
 static int rtcmatch(struct device *, struct cfdata *, void *);
 static void rtcattach(struct device *, struct device *, void *);
 
-struct cfattach rtc_ca = {
+const struct cfattach rtc_ca = {
 	sizeof(struct rtc_softc), rtcmatch, rtcattach
 };
 extern struct cfdriver rtc_cd;

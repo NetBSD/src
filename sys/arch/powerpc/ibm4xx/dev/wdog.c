@@ -1,4 +1,4 @@
-/* $NetBSD: wdog.c,v 1.3 2002/09/27 02:24:21 thorpej Exp $ */
+/* $NetBSD: wdog.c,v 1.4 2002/09/27 20:35:03 thorpej Exp $ */
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -62,7 +62,7 @@ struct wdog_softc {
 	int sc_wdog_period;
 };
 
-struct cfattach wdog_ca = {
+const struct cfattach wdog_ca = {
 	sizeof(struct wdog_softc), wdog_match, wdog_attach,
 };
 

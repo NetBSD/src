@@ -1,4 +1,4 @@
-/*	$NetBSD: kb_kbc.c,v 1.1 2001/01/25 14:33:30 tsutsui Exp $	*/
+/*	$NetBSD: kb_kbc.c,v 1.2 2002/09/27 20:34:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Izumi Tsutsui.
@@ -52,7 +52,7 @@ void	kb_kbc_init(struct kb_softc *);
 int	kb_kbc_intr(void *);
 int	kb_kbc_cnattach(void);
 
-struct cfattach kb_kbc_ca = {
+const struct cfattach kb_kbc_ca = {
 	sizeof(struct kb_softc), kb_kbc_match, kb_kbc_attach
 };
 

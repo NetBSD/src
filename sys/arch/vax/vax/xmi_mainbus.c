@@ -1,4 +1,4 @@
-/*	$NetBSD: xmi_mainbus.c,v 1.1 2000/07/06 17:41:37 ragge Exp $	   */
+/*	$NetBSD: xmi_mainbus.c,v 1.2 2002/09/27 20:36:58 thorpej Exp $	   */
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -45,7 +45,7 @@
 static	int xmi_mainbus_match __P((struct device *, struct cfdata *, void *));
 static	void xmi_mainbus_attach __P((struct device *, struct device *, void *));
 
-struct	cfattach xmi_mainbus_ca = {
+const struct cfattach xmi_mainbus_ca = {
 	sizeof(struct xmi_softc), xmi_mainbus_match, xmi_mainbus_attach
 };
 

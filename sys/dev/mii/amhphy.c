@@ -1,4 +1,4 @@
-/*	$NetBSD: amhphy.c,v 1.5 2002/07/03 06:25:50 simonb Exp $	*/
+/*	$NetBSD: amhphy.c,v 1.6 2002/09/27 20:39:18 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amhphy.c,v 1.5 2002/07/03 06:25:50 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amhphy.c,v 1.6 2002/09/27 20:39:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,7 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: amhphy.c,v 1.5 2002/07/03 06:25:50 simonb Exp $");
 int	amhphymatch(struct device *, struct cfdata *, void *);
 void	amhphyattach(struct device *, struct device *, void *);
 
-struct cfattach amhphy_ca = {
+const struct cfattach amhphy_ca = {
 	sizeof(struct mii_softc), amhphymatch, amhphyattach,
 	    mii_phy_detach, mii_phy_activate
 };

@@ -35,14 +35,14 @@
  *	Fritz!Card PCI driver
  *	------------------------------------------------
  *
- *	$Id: ifpci.c,v 1.10 2002/09/27 15:37:27 provos Exp $
+ *	$Id: ifpci.c,v 1.11 2002/09/27 20:40:24 thorpej Exp $
  *
  *      last edit-date: [Fri Jan  5 11:38:58 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ifpci.c,v 1.10 2002/09/27 15:37:27 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ifpci.c,v 1.11 2002/09/27 20:40:24 thorpej Exp $");
 
 
 #include <sys/param.h>
@@ -138,7 +138,7 @@ static void ifpci_attach(struct device *parent, struct device *self, void *aux);
 static int ifpci_detach(struct device *self, int flags);
 static int ifpci_activate(struct device *self, enum devact act);
 
-struct cfattach ifpci_ca = {
+const struct cfattach ifpci_ca = {
 	sizeof(struct ifpci_softc), ifpci_match, ifpci_attach,
 	ifpci_detach, ifpci_activate
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: dma_obio.c,v 1.4 2002/03/11 16:27:02 pk Exp $ */
+/*	$NetBSD: dma_obio.c,v 1.5 2002/09/27 20:35:45 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
 int	dmamatch_obio	__P((struct device *, struct cfdata *, void *));
 void	dmaattach_obio	__P((struct device *, struct device *, void *));
 
-struct cfattach dma_obio_ca = {
+const struct cfattach dma_obio_ca = {
 	sizeof(struct lsi64854_softc), dmamatch_obio, dmaattach_obio
 };
 

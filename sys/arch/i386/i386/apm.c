@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.70 2002/09/25 22:21:09 thorpej Exp $ */
+/*	$NetBSD: apm.c,v 1.71 2002/09/27 20:32:54 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.70 2002/09/25 22:21:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.71 2002/09/27 20:32:54 thorpej Exp $");
 
 #include "apm.h"
 #if NAPM > 1
@@ -175,7 +175,7 @@ static const char *apm_strerror __P((int));
 static void	apm_suspend __P((struct apm_softc *));
 static void	apm_resume __P((struct apm_softc *, struct bioscallregs *));
 
-struct cfattach apm_ca = {
+const struct cfattach apm_ca = {
 	sizeof(struct apm_softc), apmmatch, apmattach
 };
 

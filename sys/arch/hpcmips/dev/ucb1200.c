@@ -1,4 +1,4 @@
-/*	$NetBSD: ucb1200.c,v 1.10 2002/09/27 03:17:54 thorpej Exp $ */
+/*	$NetBSD: ucb1200.c,v 1.11 2002/09/27 20:32:16 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -87,7 +87,7 @@ int	ucb1200_check_id(u_int16_t, int);
 void	ucb1200_dump(struct ucb1200_softc *);
 #endif
 
-struct cfattach ucb_ca = {
+const struct cfattach ucb_ca = {
 	sizeof(struct ucb1200_softc), ucb1200_match, ucb1200_attach
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: wdsc.c,v 1.8 2002/09/27 02:24:22 thorpej Exp $	*/
+/*	$NetBSD: wdsc.c,v 1.9 2002/09/27 20:35:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wayne Knowles
@@ -75,7 +75,7 @@ struct wdsc_softc {
 void	wdsc_attach	__P((struct device *, struct device *, void *));
 int	wdsc_match	__P((struct device *, struct cfdata *, void *));
 
-struct cfattach wdsc_ca = {
+const struct cfattach wdsc_ca = {
 	sizeof(struct wdsc_softc), wdsc_match, wdsc_attach
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_cardbus.c,v 1.11 2001/11/13 12:51:13 lukem Exp $	*/
+/*	$NetBSD: ohci_cardbus.c,v 1.12 2002/09/27 20:37:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci_cardbus.c,v 1.11 2001/11/13 12:51:13 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci_cardbus.c,v 1.12 2002/09/27 20:37:46 thorpej Exp $");
 
 #include "ehci.h"
 
@@ -89,7 +89,7 @@ struct ohci_cardbus_softc {
 	void 			*sc_ih;		/* interrupt vectoring */
 };
 
-struct cfattach ohci_cardbus_ca = {
+const struct cfattach ohci_cardbus_ca = {
 	sizeof(struct ohci_cardbus_softc), ohci_cardbus_match,
 	ohci_cardbus_attach, ohci_cardbus_detach, ohci_activate
 };

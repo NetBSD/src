@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.52 2002/09/27 15:36:49 provos Exp $	*/
+/*	$NetBSD: psycho.c,v 1.53 2002/09/27 20:36:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Eduardo E. Horvath
@@ -125,7 +125,7 @@ static	int	psycho_match __P((struct device *, struct cfdata *, void *));
 static	void	psycho_attach __P((struct device *, struct device *, void *));
 static	int	psycho_print __P((void *aux, const char *p));
 
-struct cfattach psycho_ca = {
+const struct cfattach psycho_ca = {
         sizeof(struct psycho_softc), psycho_match, psycho_attach
 };
 

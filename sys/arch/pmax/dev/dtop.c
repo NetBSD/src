@@ -1,4 +1,4 @@
-/*	$NetBSD: dtop.c,v 1.59 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: dtop.c,v 1.60 2002/09/27 20:34:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -94,7 +94,7 @@ SOFTWARE.
 ********************************************************/
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: dtop.c,v 1.59 2002/09/06 13:18:43 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtop.c,v 1.60 2002/09/27 20:34:45 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "rasterconsole.h"
@@ -226,7 +226,7 @@ static int	dtopmatch __P((struct device * parent, struct cfdata *match, void *au
 static void	dtopattach __P((struct device *parent, struct device *self, void *aux));
 static int	dtopintr __P((void *sc));
 
-struct cfattach dtop_ca = {
+const struct cfattach dtop_ca = {
 	sizeof(struct dtop_softc), dtopmatch, dtopattach
 };
 

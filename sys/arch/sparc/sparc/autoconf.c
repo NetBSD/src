@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.178 2002/09/27 15:36:46 provos Exp $ */
+/*	$NetBSD: autoconf.c,v 1.179 2002/09/27 20:35:57 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1336,7 +1336,7 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 #endif /* SUN4C || SUN4M */
 }
 
-struct cfattach mainbus_ca = {
+const struct cfattach mainbus_ca = {
 	sizeof(struct device), mainbus_match, mainbus_attach
 };
 

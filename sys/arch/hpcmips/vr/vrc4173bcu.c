@@ -1,4 +1,4 @@
-/*	$NetBSD: vrc4173bcu.c,v 1.9 2002/09/27 03:17:55 thorpej Exp $	*/
+/*	$NetBSD: vrc4173bcu.c,v 1.10 2002/09/27 20:32:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001,2002 Enami Tsugutomo.
@@ -208,7 +208,7 @@ static struct vrc4173bcu_unit vrc4173bcu_units[] = {
 	},
 };
 
-struct cfattach vrc4173bcu_ca = {
+const struct cfattach vrc4173bcu_ca = {
 	sizeof(struct vrc4173bcu_softc), vrc4173bcu_match, vrc4173bcu_attach,
 };
 

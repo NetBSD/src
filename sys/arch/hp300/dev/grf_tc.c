@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_tc.c,v 1.22 2002/03/17 05:44:49 gmcgarry Exp $	*/
+/*	$NetBSD: grf_tc.c,v 1.23 2002/09/27 20:31:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_tc.c,v 1.22 2002/03/17 05:44:49 gmcgarry Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: grf_tc.c,v 1.23 2002/09/27 20:31:48 thorpej Exp $");                                                  
 
 #include "opt_compat_hpux.h"
 
@@ -128,11 +128,11 @@ void	topcat_dio_attach __P((struct device *, struct device *, void *));
 
 int	topcatcnattach __P((bus_space_tag_t, bus_addr_t, int));
 
-struct cfattach topcat_intio_ca = {
+const struct cfattach topcat_intio_ca = {
 	sizeof(struct grfdev_softc), topcat_intio_match, topcat_intio_attach
 };
 
-struct cfattach topcat_dio_ca = {
+const struct cfattach topcat_dio_ca = {
 	sizeof(struct grfdev_softc), topcat_dio_match, topcat_dio_attach
 };
 

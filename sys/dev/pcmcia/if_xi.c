@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xi.c,v 1.23 2002/09/22 10:13:32 martin Exp $ */
+/*	$NetBSD: if_xi.c,v 1.24 2002/09/27 20:41:05 thorpej Exp $ */
 /*	OpenBSD: if_xe.c,v 1.9 1999/09/16 11:28:42 niklas Exp 	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.23 2002/09/22 10:13:32 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.24 2002/09/27 20:41:05 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -182,7 +182,7 @@ struct xi_pcmcia_softc {
 #define XI_RES_MI	8
 };
 
-struct cfattach xi_pcmcia_ca = {
+const struct cfattach xi_pcmcia_ca = {
 	sizeof(struct xi_pcmcia_softc),
 	xi_pcmcia_match,
 	xi_pcmcia_attach,

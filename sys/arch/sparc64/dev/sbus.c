@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.52 2002/09/27 02:24:25 thorpej Exp $ */
+/*	$NetBSD: sbus.c,v 1.53 2002/09/27 20:36:12 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999-2002 Eduardo Horvath
@@ -93,7 +93,7 @@ int	sbus_match __P((struct device *, struct cfdata *, void *));
 void	sbus_attach __P((struct device *, struct device *, void *));
 
 
-struct cfattach sbus_ca = {
+const struct cfattach sbus_ca = {
 	sizeof(struct sbus_softc), sbus_match, sbus_attach
 };
 

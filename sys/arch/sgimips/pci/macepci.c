@@ -1,4 +1,4 @@
-/*	$NetBSD: macepci.c,v 1.5 2002/05/16 01:01:40 thorpej Exp $	*/
+/*	$NetBSD: macepci.c,v 1.6 2002/09/27 20:35:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -63,7 +63,7 @@ pcireg_t	macepci_conf_read(pci_chipset_tag_t, pcitag_t, int);
 void		macepci_conf_write(pci_chipset_tag_t, pcitag_t, int, pcireg_t);
 int		macepci_intr(void *);
 
-struct cfattach macepci_ca = {
+const struct cfattach macepci_ca = {
 	sizeof(struct macepci_softc), macepci_match, macepci_attach
 };
 

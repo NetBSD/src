@@ -1,4 +1,4 @@
-/* $NetBSD: pcppi.c,v 1.6 2002/01/07 21:47:12 thorpej Exp $ */
+/* $NetBSD: pcppi.c,v 1.7 2002/09/27 20:38:47 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcppi.c,v 1.6 2002/01/07 21:47:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcppi.c,v 1.7 2002/09/27 20:38:47 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,7 +71,7 @@ struct pcppi_softc {
 int	pcppi_match __P((struct device *, struct cfdata *, void *));
 void	pcppi_attach __P((struct device *, struct device *, void *));
 
-struct cfattach pcppi_ca = {
+const struct cfattach pcppi_ca = {
 	sizeof(struct pcppi_softc), pcppi_match, pcppi_attach,
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ds17485.c,v 1.2 2002/06/12 23:33:56 augustss Exp $	*/
+/*	$NetBSD: ds17485.c,v 1.3 2002/09/27 20:34:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -164,7 +164,7 @@ struct rtc_softc *rtc_sc = NULL;
 static int	rtc_match(struct device *, struct cfdata *, void *);
 static void	rtc_attach(struct device *, struct device *, void *);
 
-struct cfattach rtc_ca = {
+const struct cfattach rtc_ca = {
 	sizeof(struct rtc_softc), rtc_match, rtc_attach
 };
 

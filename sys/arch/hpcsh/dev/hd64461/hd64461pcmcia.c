@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461pcmcia.c,v 1.17 2002/09/27 03:17:56 thorpej Exp $	*/
+/*	$NetBSD: hd64461pcmcia.c,v 1.18 2002/09/27 20:32:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -196,7 +196,7 @@ STATIC void hd64461pcmcia_attach(struct device *, struct device *, void *);
 STATIC int hd64461pcmcia_print(void *, const char *);
 STATIC int hd64461pcmcia_submatch(struct device *, struct cfdata *, void *);
 
-struct cfattach hd64461pcmcia_ca = {
+const struct cfattach hd64461pcmcia_ca = {
 	sizeof(struct hd64461pcmcia_softc), hd64461pcmcia_match,
 	hd64461pcmcia_attach
 };

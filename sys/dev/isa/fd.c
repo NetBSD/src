@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.26 2002/09/11 07:22:19 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.27 2002/09/27 20:38:22 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -92,7 +92,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.26 2002/09/11 07:22:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.27 2002/09/27 20:38:22 thorpej Exp $");
 
 #include "rnd.h"
 #include "opt_ddb.h"
@@ -269,7 +269,7 @@ void fdattach __P((struct device *, struct device *, void *));
 
 extern struct cfdriver fd_cd;
 
-struct cfattach fd_ca = {
+const struct cfattach fd_ca = {
 	sizeof(struct fd_softc), fdprobe, fdattach,
 };
 

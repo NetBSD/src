@@ -1,4 +1,4 @@
-/*	$NetBSD: cpc_mainbus.c,v 1.1 2002/05/30 20:02:03 augustss Exp $	*/
+/*	$NetBSD: cpc_mainbus.c,v 1.2 2002/09/27 20:34:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@ cpc_attach(struct device *self, pci_chipset_tag_t pc, bus_space_tag_t mem,
 static int	cpc_mainbus_match(struct device *, struct cfdata *, void *);
 static void	cpc_mainbus_attach(struct device *, struct device *, void *);
 
-struct cfattach cpc_mainbus_ca = {
+const struct cfattach cpc_mainbus_ca = {
 	sizeof(struct device), cpc_mainbus_match, cpc_mainbus_attach
 };
 

@@ -1,4 +1,4 @@
-/* $NetBSD: vesa_text.c,v 1.1 2002/07/10 19:15:43 drochner Exp $ */
+/* $NetBSD: vesa_text.c,v 1.2 2002/09/27 20:32:53 thorpej Exp $ */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -20,7 +20,7 @@ struct vesatextsc {
 	int sc_nmodes;
 };
 
-struct cfattach vesatext_ca = {
+const struct cfattach vesatext_ca = {
 	sizeof(struct vesatextsc), vesatext_match, vesatext_attach
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: scif.c,v 1.2 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: scif.c,v 1.3 2002/09/27 20:35:30 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -258,7 +258,7 @@ unsigned int scifcn_speed = 9600;
 
 u_int scif_rbuf_size = SCIF_RING_SIZE;
 
-struct cfattach scif_ca = {
+const struct cfattach scif_ca = {
 	sizeof(struct scif_softc), scif_match, scif_attach
 };
 

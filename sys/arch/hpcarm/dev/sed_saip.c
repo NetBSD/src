@@ -1,4 +1,4 @@
-/*	$NetBSD: sed_saip.c,v 1.10 2002/03/17 19:40:39 atatat Exp $	*/
+/*	$NetBSD: sed_saip.c,v 1.11 2002/09/27 20:32:08 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -93,7 +93,7 @@ void	sed1356_set_contrast(struct sed1356_softc *, int);
 /*
  *  static variables
  */
-struct cfattach sed_ca = {
+const struct cfattach sed_ca = {
 	sizeof(struct sed1356_softc), sed1356match, sed1356attach,
 };
 struct hpcfb_accessops sed1356_ha = {

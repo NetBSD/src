@@ -1,4 +1,4 @@
-/* $NetBSD: rtc.c,v 1.1 2002/06/04 08:32:42 simonb Exp $ */
+/* $NetBSD: rtc.c,v 1.2 2002/09/27 20:35:12 thorpej Exp $ */
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -103,7 +103,7 @@ static int time_writertc(int, int, int, int);
 	time_readrtc((sc)->sc_smbus_chan, (sc)->sc_smbus_addr, (dev))
 
 
-struct cfattach rtc_ca = {
+const struct cfattach rtc_ca = {
 	sizeof(struct rtc_softc), rtc_match, rtc_attach
 };
 

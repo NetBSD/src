@@ -1,4 +1,4 @@
-/*	$NetBSD: ms_ap.c,v 1.2 2002/03/17 19:40:46 atatat Exp $	*/
+/*	$NetBSD: ms_ap.c,v 1.3 2002/09/27 20:34:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -60,7 +60,7 @@ int ms_ap_enable(void *);
 int ms_ap_ioctl(void *, u_long, caddr_t, int, struct proc *);
 void ms_ap_disable(void *);
 
-struct cfattach ms_ap_ca = {
+const struct cfattach ms_ap_ca = {
 	sizeof(struct ms_ap_softc), ms_ap_match, ms_ap_attach
 };
 

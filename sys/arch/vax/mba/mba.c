@@ -1,4 +1,4 @@
-/*	$NetBSD: mba.c,v 1.26 2002/07/22 21:48:36 hannken Exp $ */
+/*	$NetBSD: mba.c,v 1.27 2002/09/27 20:36:48 thorpej Exp $ */
 /*
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -79,11 +79,11 @@ void	mbaqueue(struct mba_device *);
 void	mbastart(struct mba_softc *);
 void	mbamapregs(struct mba_softc *);
 
-struct	cfattach mba_cmi_ca = {
+const struct cfattach mba_cmi_ca = {
 	sizeof(struct mba_softc), mbamatch, mbaattach
 };
 
-struct	cfattach mba_sbi_ca = {
+const struct cfattach mba_sbi_ca = {
 	sizeof(struct mba_softc), mbamatch, mbaattach
 };
 

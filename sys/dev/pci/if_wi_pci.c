@@ -1,4 +1,4 @@
-/*      $NetBSD: if_wi_pci.c,v 1.8 2002/09/23 14:12:35 thorpej Exp $  */
+/*      $NetBSD: if_wi_pci.c,v 1.9 2002/09/27 20:40:22 thorpej Exp $  */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pci.c,v 1.8 2002/09/23 14:12:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pci.c,v 1.9 2002/09/27 20:40:22 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,7 +97,7 @@ static void	wi_pci_powerhook __P((int, void *));
 static const struct wi_pci_product
 	*wi_pci_lookup __P((struct pci_attach_args *));
 
-struct cfattach wi_pci_ca = {
+const struct cfattach wi_pci_ca = {
 	sizeof(struct wi_pci_softc), wi_pci_match, wi_pci_attach
 };
 

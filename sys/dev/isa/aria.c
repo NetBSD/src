@@ -1,4 +1,4 @@
-/*	$NetBSD: aria.c,v 1.12 2002/01/07 21:47:04 thorpej Exp $	*/
+/*	$NetBSD: aria.c,v 1.13 2002/09/27 20:38:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996, 1998 Roland C. Dowdeswell.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aria.c,v 1.12 2002/01/07 21:47:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aria.c,v 1.13 2002/09/27 20:38:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -184,7 +184,7 @@ int	aria_mixer_set_port __P((void *, mixer_ctrl_t *));
 int	aria_mixer_get_port __P((void *, mixer_ctrl_t *));
 int	aria_mixer_query_devinfo __P((void *, mixer_devinfo_t *));
 
-struct cfattach aria_ca = {
+const struct cfattach aria_ca = {
 	sizeof(struct aria_softc), ariaprobe, ariaattach
 };
 

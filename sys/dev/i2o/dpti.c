@@ -1,4 +1,4 @@
-/*	$NetBSD: dpti.c,v 1.5 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: dpti.c,v 1.6 2002/09/27 20:38:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpti.c,v 1.5 2002/09/06 13:18:43 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpti.c,v 1.6 2002/09/27 20:38:00 thorpej Exp $");
 
 #include "opt_i2o.h"
 
@@ -152,7 +152,7 @@ const struct cdevsw dpti_cdevsw = {
 
 extern struct cfdriver dpti_cd;
 
-struct cfattach dpti_ca = {
+const struct cfattach dpti_ca = {
 	sizeof(struct dpti_softc), dpti_match, dpti_attach
 };
 

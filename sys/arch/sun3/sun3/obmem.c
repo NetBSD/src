@@ -1,4 +1,4 @@
-/*	$NetBSD: obmem.c,v 1.15 1998/02/05 04:57:46 gwr Exp $	*/
+/*	$NetBSD: obmem.c,v 1.16 2002/09/27 20:36:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
 static int  obmem_match __P((struct device *, struct cfdata *, void *));
 static void obmem_attach __P((struct device *, struct device *, void *));
 
-struct cfattach obmem_ca = {
+const struct cfattach obmem_ca = {
 	sizeof(struct device), obmem_match, obmem_attach
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.39 2002/07/07 13:25:43 drochner Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.40 2002/09/27 20:32:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.39 2002/07/07 13:25:43 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.40 2002/09/27 20:32:55 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,7 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.39 2002/07/07 13:25:43 drochner Exp $"
 int	mainbus_match __P((struct device *, struct cfdata *, void *));
 void	mainbus_attach __P((struct device *, struct device *, void *));
 
-struct cfattach mainbus_ca = {
+const struct cfattach mainbus_ca = {
 	sizeof(struct device), mainbus_match, mainbus_attach
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lmcvar.h,v 1.9 2002/05/31 17:53:03 thorpej Exp $	*/
+/*	$NetBSD: if_lmcvar.h,v 1.10 2002/09/27 20:40:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 LAN Media Corporation (LMC)
@@ -636,7 +636,7 @@ extern struct cfdriver lmccd;
 #if defined(__NetBSD__)
 #define	ifnet_ret_t void
 typedef u_long ioctl_cmd_t;
-extern struct cfattach de_ca;
+extern const struct cfattach de_ca;
 extern struct cfdriver de_cd;
 #define	LMC_UNIT_TO_SOFTC(unit)	((lmc_softc_t *) de_cd.cd_devs[unit])
 #define LMC_IFP_TO_SOFTC(ifp)	((lmc_softc_t *)((ifp)->if_softc))

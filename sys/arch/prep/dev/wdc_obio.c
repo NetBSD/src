@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_obio.c,v 1.1 2002/05/02 15:17:59 nonaka Exp $	*/
+/*	$NetBSD: wdc_obio.c,v 1.2 2002/09/27 20:35:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@ struct wdc_obio_softc {
 static int	wdc_obio_probe(struct device *, struct cfdata *, void *);
 static void	wdc_obio_attach(struct device *, struct device *, void *);
 
-struct cfattach wdc_obio_ca = {
+const struct cfattach wdc_obio_ca = {
 	sizeof(struct wdc_obio_softc), wdc_obio_probe, wdc_obio_attach
 };
 

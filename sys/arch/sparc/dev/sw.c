@@ -1,4 +1,4 @@
-/*	$NetBSD: sw.c,v 1.7 2002/09/27 15:36:46 provos Exp $	*/
+/*	$NetBSD: sw.c,v 1.8 2002/09/27 20:35:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -219,7 +219,7 @@ void	sw_intr_off __P((struct ncr5380_softc *));
 
 
 /* The Sun "SCSI Weird" 4/100 obio controller. */
-struct cfattach sw_ca = {
+const struct cfattach sw_ca = {
 	sizeof(struct sw_softc), sw_match, sw_attach
 };
 

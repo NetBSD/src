@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ntwoc_pci.c,v 1.6 2001/11/13 07:48:44 lukem Exp $	*/
+/*	$NetBSD: if_ntwoc_pci.c,v 1.7 2002/09/27 20:40:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Vixie Enterprises
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ntwoc_pci.c,v 1.6 2001/11/13 07:48:44 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ntwoc_pci.c,v 1.7 2002/09/27 20:40:13 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,7 +125,7 @@ static	int ntwoc_pci_intr __P((void *));
 static	void ntwoc_pci_setup_dma __P((struct sca_softc *));
 static	void ntwoc_pci_shutdown __P((void *sc));
 
-struct cfattach ntwoc_pci_ca = {
+const struct cfattach ntwoc_pci_ca = {
   sizeof(struct ntwoc_pci_softc), ntwoc_pci_match, ntwoc_pci_attach,
 };
 

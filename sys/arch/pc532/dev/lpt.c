@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.35 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: lpt.c,v 1.36 2002/09/27 20:34:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Matthias Pfaller.
@@ -205,7 +205,7 @@ static
 	int	pliptransmit __P((volatile struct i8255 *, u_char *, int));
 #endif
 
-struct cfattach lpt_ca = {
+const struct cfattach lpt_ca = {
 	sizeof(struct lpt_softc), lptmatch, lptattach
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: txsim.c,v 1.9 2002/09/27 03:17:55 thorpej Exp $ */
+/*	$NetBSD: txsim.c,v 1.10 2002/09/27 20:32:30 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@ struct txsim_softc {
 	int sc_pri; /* attaching device priority */
 };
 
-struct cfattach txsim_ca = {
+const struct cfattach txsim_ca = {
 	sizeof(struct txsim_softc), txsim_match, txsim_attach
 };
 

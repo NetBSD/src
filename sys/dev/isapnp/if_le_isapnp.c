@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_isapnp.c,v 1.20 2001/11/13 07:56:40 lukem Exp $	*/
+/*	$NetBSD: if_le_isapnp.c,v 1.21 2002/09/27 20:39:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_isapnp.c,v 1.20 2001/11/13 07:56:40 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_isapnp.c,v 1.21 2002/09/27 20:39:04 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,7 +107,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_le_isapnp.c,v 1.20 2001/11/13 07:56:40 lukem Exp 
 int le_isapnp_match __P((struct device *, struct cfdata *, void *));
 void le_isapnp_attach __P((struct device *, struct device *, void *));
 
-struct cfattach le_isapnp_ca = {
+const struct cfattach le_isapnp_ca = {
 	sizeof(struct le_softc), le_isapnp_match, le_isapnp_attach
 };
 

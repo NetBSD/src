@@ -1,4 +1,4 @@
-/*	$NetBSD: if_we_mca.c,v 1.5 2001/11/13 07:46:26 lukem Exp $	*/
+/*	$NetBSD: if_we_mca.c,v 1.6 2002/09/27 20:39:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_we_mca.c,v 1.5 2001/11/13 07:46:26 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_we_mca.c,v 1.6 2002/09/27 20:39:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,7 +91,7 @@ int we_mca_probe __P((struct device *, struct cfdata *, void *));
 void we_mca_attach __P((struct device *, struct device *, void *));
 void we_mca_init_hook __P((struct we_softc *));
 
-struct cfattach we_mca_ca = {
+const struct cfattach we_mca_ca = {
 	sizeof(struct we_softc), we_mca_probe, we_mca_attach
 };
 

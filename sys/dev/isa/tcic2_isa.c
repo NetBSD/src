@@ -1,4 +1,4 @@
-/*	$NetBSD: tcic2_isa.c,v 1.6 2002/01/07 21:47:13 thorpej Exp $	*/
+/*	$NetBSD: tcic2_isa.c,v 1.7 2002/09/27 20:38:52 thorpej Exp $	*/
 
 /*
  *
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcic2_isa.c,v 1.6 2002/01/07 21:47:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcic2_isa.c,v 1.7 2002/09/27 20:38:52 thorpej Exp $");
 
 #undef	TCICISADEBUG
 
@@ -117,7 +117,7 @@ void	*tcic_isa_chip_intr_establish __P((pcmcia_chipset_handle_t,
 	    struct pcmcia_function *, int, int (*) (void *), void *));
 void	tcic_isa_chip_intr_disestablish __P((pcmcia_chipset_handle_t, void *));
 
-struct cfattach tcic_isa_ca = {
+const struct cfattach tcic_isa_ca = {
 	sizeof(struct tcic_softc), tcic_isa_probe, tcic_isa_attach
 };
 

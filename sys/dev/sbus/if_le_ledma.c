@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_ledma.c,v 1.18 2002/09/27 02:24:32 thorpej Exp $	*/
+/*	$NetBSD: if_le_ledma.c,v 1.19 2002/09/27 20:41:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_ledma.c,v 1.18 2002/09/27 02:24:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_ledma.c,v 1.19 2002/09/27 20:41:30 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -111,7 +111,7 @@ void	lesetaui __P((struct lance_softc *));
 int	lemediachange __P((struct lance_softc *));
 void	lemediastatus __P((struct lance_softc *, struct ifmediareq *));
 
-struct cfattach le_ledma_ca = {
+const struct cfattach le_ledma_ca = {
 	sizeof(struct le_softc), lematch_ledma, leattach_ledma
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ka820.c,v 1.31 2001/06/03 15:07:20 ragge Exp $	*/
+/*	$NetBSD: ka820.c,v 1.32 2002/09/27 20:36:55 thorpej Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -131,7 +131,7 @@ struct ka820_softc {
 	int sc_binid;		/* CPU node ID */
 };
 
-struct cfattach cpu_bi_ca = {
+const struct cfattach cpu_bi_ca = {
 	sizeof(struct ka820_softc), ka820_match, ka820_attach
 };
 
@@ -304,7 +304,7 @@ struct mem_bi_softc {
 	bus_space_handle_t sc_ioh;
 };
 
-struct cfattach mem_bi_ca = {
+const struct cfattach mem_bi_ca = {
 	sizeof(struct mem_bi_softc), ms820_match, ms820_attach
 };
 

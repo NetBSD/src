@@ -94,7 +94,7 @@ const struct wsmouse_accessops vrdsiu_accessops = {
 	vrdsiu_mouse_disable
 };
 
-struct cfattach vrdsiu_mouse_ca = {
+const struct cfattach vrdsiu_mouse_ca = {
 	sizeof(struct vrdsiu_softc), vrdsiu_match, vrdsiu_attach
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: bivideo.c,v 1.14 2002/09/27 02:24:29 thorpej Exp $	*/
+/*	$NetBSD: bivideo.c,v 1.15 2002/09/27 20:37:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bivideo.c,v 1.14 2002/09/27 02:24:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bivideo.c,v 1.15 2002/09/27 20:37:55 thorpej Exp $");
 
 #define FBDEBUG
 static const char _copyright[] __attribute__ ((unused)) =
@@ -122,7 +122,7 @@ void	bivideo_set_contrast(struct bivideo_softc *, int);
 /*
  *  static variables
  */
-struct cfattach bivideo_ca = {
+const struct cfattach bivideo_ca = {
 	sizeof(struct bivideo_softc), bivideomatch, bivideoattach,
 };
 struct hpcfb_accessops bivideo_ha = {

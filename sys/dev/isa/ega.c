@@ -1,4 +1,4 @@
-/* $NetBSD: ega.c,v 1.12 2002/07/07 07:05:40 junyoung Exp $ */
+/* $NetBSD: ega.c,v 1.13 2002/09/27 20:38:21 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ega.c,v 1.12 2002/07/07 07:05:40 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ega.c,v 1.13 2002/09/27 20:38:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,7 +120,7 @@ static void ega_setfont(struct ega_config *, struct egascreen *);
 static int ega_allocattr(void *, int, int, int, long *);
 void ega_copyrows(void *, int, int, int);
 
-struct cfattach ega_ca = {
+const struct cfattach ega_ca = {
 	sizeof(struct ega_softc), ega_match, ega_attach,
 };
 
