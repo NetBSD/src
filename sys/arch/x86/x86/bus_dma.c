@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.16 2004/06/12 17:22:04 yamt Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.17 2004/06/20 18:04:08 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.16 2004/06/12 17:22:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.17 2004/06/20 18:04:08 thorpej Exp $");
 
 /*
  * The following is included because _bus_dma_uiomove is derived from
@@ -196,9 +196,9 @@ _bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 	}
 
 	if (map->_dm_bounce_thresh != 0)
-		cookieflags |= X86_DMA_ID_MIGHT_NEED_BOUNCE;
+		cookieflags |= X86_DMA_MIGHT_NEED_BOUNCE;
 
-	if ((cookieflags & X86_DMA_ID_MIGHT_NEED_BOUNCE) == 0)
+	if ((cookieflags & X86_DMA_MIGHT_NEED_BOUNCE) == 0)
 		return 0;
 
 	cookiesize = sizeof(struct x86_bus_dma_cookie) +
@@ -226,7 +226,7 @@ _bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 }
 
 /*
- * Destroy an ISA DMA map.
+ * Destroy a DMA map.
  */
 void
 _bus_dmamap_destroy(bus_dma_tag_t t, bus_dmamap_t map)
@@ -237,7 +237,7 @@ _bus_dmamap_destroy(bus_dma_tag_t t, bus_dmamap_t map)
 	 * Free any bounce pages this map might hold.
 	 */
 	if (cookie != NULL) {
-		if (cookie->id_flags & X86_DMA_ID_HAS_BOUNCE)
+		if (cookie->id_flags & X86_DMA_HAS_BOUNCE)
 			_bus_dma_free_bouncebuf(t, map);
 		free(cookie, M_DMAMAP);
 	}
@@ -246,7 +246,7 @@ _bus_dmamap_destroy(bus_dma_tag_t t, bus_dmamap_t map)
 }
 
 /*
- * Load an ISA DMA map with a linear buffer.
+ * Load a DMA map with a linear buffer.
  */
 int
 _bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
@@ -274,7 +274,7 @@ _bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 
 	if (cookie == NULL)
 		return error;
-	if ((cookie->id_flags & X86_DMA_ID_MIGHT_NEED_BOUNCE) == 0)
+	if ((cookie->id_flags & X86_DMA_MIGHT_NEED_BOUNCE) == 0)
 		return error;
 
 
@@ -287,7 +287,7 @@ _bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	/*
 	 * Allocate bounce pages, if necessary.
 	 */
-	if ((cookie->id_flags & X86_DMA_ID_HAS_BOUNCE) == 0) {
+	if ((cookie->id_flags & X86_DMA_HAS_BOUNCE) == 0) {
 		error = _bus_dma_alloc_bouncebuf(t, map, buflen, flags);
 		if (error)
 			return (error);
@@ -299,7 +299,7 @@ _bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	 */
 	cookie->id_origbuf = buf;
 	cookie->id_origbuflen = buflen;
-	cookie->id_buftype = X86_DMA_ID_BUFTYPE_LINEAR;
+	cookie->id_buftype = X86_DMA_BUFTYPE_LINEAR;
 	map->dm_nsegs = 0;
 	error = _bus_dmamap_load(t, map, cookie->id_bouncebuf, buflen,
 	    p, flags);
@@ -307,7 +307,7 @@ _bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 		return (error);
 
 	/* ...so _bus_dmamap_sync() knows we're bouncing */
-	cookie->id_flags |= X86_DMA_ID_IS_BOUNCING;
+	cookie->id_flags |= X86_DMA_IS_BOUNCING;
 	return (0);
 }
 
@@ -468,7 +468,7 @@ _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
 	map->dm_nsegs = 0;
 
 	if (cookie == NULL ||
-	    ((cookie->id_flags & X86_DMA_ID_MIGHT_NEED_BOUNCE) == 0))
+	    ((cookie->id_flags & X86_DMA_MIGHT_NEED_BOUNCE) == 0))
 		return error;
 
 	/*
@@ -480,7 +480,7 @@ _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
 	/*
 	 * Allocate bounce pages, if necessary.
 	 */
-	if ((cookie->id_flags & X86_DMA_ID_HAS_BOUNCE) == 0) {
+	if ((cookie->id_flags & X86_DMA_HAS_BOUNCE) == 0) {
 		error = _bus_dma_alloc_bouncebuf(t, map, m0->m_pkthdr.len,
 		    flags);
 		if (error)
@@ -493,14 +493,14 @@ _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
 	 */
 	cookie->id_origbuf = m0;
 	cookie->id_origbuflen = m0->m_pkthdr.len;	/* not really used */
-	cookie->id_buftype = X86_DMA_ID_BUFTYPE_MBUF;
+	cookie->id_buftype = X86_DMA_BUFTYPE_MBUF;
 	error = _bus_dmamap_load(t, map, cookie->id_bouncebuf,
 	    m0->m_pkthdr.len, NULL, flags);
 	if (error)
 		return (error);
 
 	/* ...so _bus_dmamap_sync() knows we're bouncing */
-	cookie->id_flags |= X86_DMA_ID_IS_BOUNCING;
+	cookie->id_flags |= X86_DMA_IS_BOUNCING;
 	return (0);
 }
 
@@ -557,7 +557,7 @@ _bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
 	map->dm_nsegs = 0;
 
 	if (cookie == NULL ||
-	    ((cookie->id_flags & X86_DMA_ID_MIGHT_NEED_BOUNCE) == 0))
+	    ((cookie->id_flags & X86_DMA_MIGHT_NEED_BOUNCE) == 0))
 		return error;
 
 	STAT_INCR(bus_dma_stats_bounces);
@@ -565,7 +565,7 @@ _bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
 	/*
 	 * Allocate bounce pages, if necessary.
 	 */
-	if ((cookie->id_flags & X86_DMA_ID_HAS_BOUNCE) == 0) {
+	if ((cookie->id_flags & X86_DMA_HAS_BOUNCE) == 0) {
 		error = _bus_dma_alloc_bouncebuf(t, map, uio->uio_resid,
 		    flags);
 		if (error)
@@ -578,14 +578,14 @@ _bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
 	 */
 	cookie->id_origbuf = uio;
 	cookie->id_origbuflen = uio->uio_resid;
-	cookie->id_buftype = X86_DMA_ID_BUFTYPE_UIO;
+	cookie->id_buftype = X86_DMA_BUFTYPE_UIO;
 	error = _bus_dmamap_load(t, map, cookie->id_bouncebuf,
 	    uio->uio_resid, NULL, flags);
 	if (error)
 		return (error);
 
 	/* ...so _bus_dmamap_sync() knows we're bouncing */
-	cookie->id_flags |= X86_DMA_ID_IS_BOUNCING;
+	cookie->id_flags |= X86_DMA_IS_BOUNCING;
 	return (0);
 }
 
@@ -602,7 +602,7 @@ _bus_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map, bus_dma_segment_t *segs,
 }
 
 /*
- * Unload an ISA DMA map.
+ * Unload a DMA map.
  */
 void
 _bus_dmamap_unload(bus_dma_tag_t t, bus_dmamap_t map)
@@ -614,15 +614,15 @@ _bus_dmamap_unload(bus_dma_tag_t t, bus_dmamap_t map)
 	 * reserved for our exclusive use.
 	 */
 	if (cookie != NULL) {
-		cookie->id_flags &= ~X86_DMA_ID_IS_BOUNCING;
-		cookie->id_buftype = X86_DMA_ID_BUFTYPE_INVALID;
+		cookie->id_flags &= ~X86_DMA_IS_BOUNCING;
+		cookie->id_buftype = X86_DMA_BUFTYPE_INVALID;
 	}
 	map->dm_mapsize = 0;
 	map->dm_nsegs = 0;
 }
 
 /*
- * Synchronize an ISA DMA map.
+ * Synchronize a DMA map.
  */
 void
 _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
@@ -650,11 +650,11 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 	 * If we're not bouncing, just return; nothing to do.
 	 */
 	if (len == 0 || cookie == NULL ||
-	    (cookie->id_flags & X86_DMA_ID_IS_BOUNCING) == 0)
+	    (cookie->id_flags & X86_DMA_IS_BOUNCING) == 0)
 		return;
 
 	switch (cookie->id_buftype) {
-	case X86_DMA_ID_BUFTYPE_LINEAR:
+	case X86_DMA_BUFTYPE_LINEAR:
 		/*
 		 * Nothing to do for pre-read.
 		 */
@@ -680,7 +680,7 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 		 */
 		break;
 
-	case X86_DMA_ID_BUFTYPE_MBUF:
+	case X86_DMA_BUFTYPE_MBUF:
 	    {
 		struct mbuf *m, *m0 = cookie->id_origbuf;
 		bus_size_t minlen, moff;
@@ -732,7 +732,7 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 		 */
 		break;
 	    }
-	case X86_DMA_ID_BUFTYPE_UIO:
+	case X86_DMA_BUFTYPE_UIO:
 	    {
 		struct uio *uio;
 
@@ -761,12 +761,12 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 		break;
 	    }
 
-	case X86_DMA_ID_BUFTYPE_RAW:
-		panic("_bus_dmamap_sync: X86_DMA_ID_BUFTYPE_RAW");
+	case X86_DMA_BUFTYPE_RAW:
+		panic("_bus_dmamap_sync: X86_DMA_BUFTYPE_RAW");
 		break;
 
-	case X86_DMA_ID_BUFTYPE_INVALID:
-		panic("_bus_dmamap_sync: X86_DMA_ID_BUFTYPE_INVALID");
+	case X86_DMA_BUFTYPE_INVALID:
+		panic("_bus_dmamap_sync: X86_DMA_BUFTYPE_INVALID");
 		break;
 
 	default:
@@ -776,7 +776,7 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 }
 
 /*
- * Allocate memory safe for ISA DMA.
+ * Allocate memory safe for DMA.
  */
 int
 _bus_dmamem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
@@ -823,7 +823,7 @@ _bus_dma_alloc_bouncebuf(bus_dma_tag_t t, bus_dmamap_t map,
 		cookie->id_bouncebuflen = 0;
 		cookie->id_nbouncesegs = 0;
 	} else {
-		cookie->id_flags |= X86_DMA_ID_HAS_BOUNCE;
+		cookie->id_flags |= X86_DMA_HAS_BOUNCE;
 		STAT_INCR(bus_dma_stats_nbouncebufs);
 	}
 
@@ -847,7 +847,7 @@ _bus_dma_free_bouncebuf(bus_dma_tag_t t, bus_dmamap_t map)
 	    cookie->id_nbouncesegs);
 	cookie->id_bouncebuflen = 0;
 	cookie->id_nbouncesegs = 0;
-	cookie->id_flags &= ~X86_DMA_ID_HAS_BOUNCE;
+	cookie->id_flags &= ~X86_DMA_HAS_BOUNCE;
 }
 
 

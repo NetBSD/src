@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.10 2003/10/30 21:19:54 fvdl Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.11 2004/06/20 18:04:08 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.10 2003/10/30 21:19:54 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.11 2004/06/20 18:04:08 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -353,6 +353,6 @@ _isa_dma_may_bounce(bus_dma_tag_t t, bus_dmamap_t map, int flags,
 		map->_dm_bounce_thresh = 0;
 
 	if (((map->_dm_size / PAGE_SIZE) + 1) > map->_dm_segcnt)
-		*cookieflagsp |= X86_DMA_ID_MIGHT_NEED_BOUNCE;
+		*cookieflagsp |= X86_DMA_MIGHT_NEED_BOUNCE;
 	return 0;
 }
