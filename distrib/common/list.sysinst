@@ -1,4 +1,4 @@
-#	$NetBSD: list.sysinst,v 1.5 2002/04/12 02:07:15 lukem Exp $
+#	$NetBSD: list.sysinst,v 1.6 2003/01/22 05:57:37 jhawk Exp $
 #
 # list file (c.f. parselist.awk) for sysinst-using install media.
 #
@@ -6,6 +6,7 @@
 #
 
 PROG	sysinst
+PROG	usr/bin/progress
 
 SPECIAL	sysinst	srcdir	distrib/utils/sysinst/arch/${MACHINE}
 
