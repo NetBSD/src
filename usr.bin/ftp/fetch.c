@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.120 2000/07/30 06:10:43 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.121 2000/08/01 22:47:27 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.120 2000/07/30 06:10:43 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.121 2000/08/01 22:47:27 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -557,8 +557,8 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 		if (verbose) {
 			fprintf(ttyout, "Copying %s", decodedpath);
 			if (restart_point)
-				fprintf(ttyout, " (restarting at " QUADF ")",
-				    (QUADT)restart_point);
+				fprintf(ttyout, " (restarting at " LLF ")",
+				    (LLT)restart_point);
 			fputs("\n", ttyout);
 		}
 	} else {				/* ftp:// or http:// URLs */
@@ -742,10 +742,10 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 			fprintf(fin, "Connection: close\r\n");
 			if (restart_point) {
 				fputs(leading, ttyout);
-				fprintf(fin, "Range: bytes=" QUADF "-\r\n",
-				    (QUADT)restart_point);
-				fprintf(ttyout, "restarting at " QUADF,
-				    (QUADT)restart_point);
+				fprintf(fin, "Range: bytes=" LLF "-\r\n",
+				    (LLT)restart_point);
+				fprintf(ttyout, "restarting at " LLF,
+				    (LLT)restart_point);
 				leading = ", ";
 				hasleading++;
 			}
@@ -828,8 +828,8 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 					goto improper;
 				if (debug)
 					fprintf(ttyout,
-					    "parsed len as: " QUADF "\n",
-					    (QUADT)filesize);
+					    "parsed len as: " LLF "\n",
+					    (LLT)filesize);
 
 #define CONTENTRANGE "Content-Range: bytes "
 			} else if (strncasecmp(cp, CONTENTRANGE,
@@ -851,10 +851,10 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 				if (debug)
 					fprintf(ttyout,
 					    "parsed range as: "
-					    QUADF "-" QUADF "/" QUADF "\n",
-					    (QUADT)rangestart,
-					    (QUADT)rangeend,
-					    (QUADT)entitylen);
+					    LLF "-" LLF "/" LLF "\n",
+					    (LLT)rangestart,
+					    (LLT)rangeend,
+					    (LLT)entitylen);
 				if (! restart_point) {
 					warnx(
 				    "Received unexpected Content-Range header");
@@ -1110,8 +1110,8 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 				goto cleanup_fetch_url;
 			}
 			if (debug)
-				fprintf(ttyout, "got chunksize of " QUADF "\n",
-				    (QUADT)chunksize);
+				fprintf(ttyout, "got chunksize of " LLF "\n",
+				    (LLT)chunksize);
 			if (chunksize == 0)
 				break;
 		}
