@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.44 2002/02/28 21:48:06 thorpej Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.45 2002/06/25 21:18:32 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.44 2002/02/28 21:48:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.45 2002/06/25 21:18:32 drochner Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -130,10 +130,8 @@ do {									\
 
 #define _m1tag(b, d, f) \
 	(PCI_MODE1_ENABLE | ((b) << 16) | ((d) << 11) | ((f) << 8))
-#define _id(v, p) \
-	(((v) << PCI_VENDOR_SHIFT) | ((p) << PCI_PRODUCT_SHIFT))
 #define _qe(bus, dev, fcn, vend, prod) \
-	{_m1tag(bus, dev, fcn), _id(vend, prod)}
+	{_m1tag(bus, dev, fcn), PCI_ID_CODE(vend, prod)}
 struct {
 	u_int32_t tag;
 	pcireg_t id;
