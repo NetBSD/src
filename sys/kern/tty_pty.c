@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.73 2004/02/22 17:51:26 jdolecek Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.74 2004/03/05 07:27:22 dbj Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.73 2004/02/22 17:51:26 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.74 2004/03/05 07:27:22 dbj Exp $");
 
 #include "opt_compat_sunos.h"
 
@@ -508,7 +508,9 @@ ptcwakeup(tp, flag)
 	int flag;
 {
 	struct pt_softc *pti = pt_softc[minor(tp->t_dev)];
+	int s;
 
+	s = spltty();
 	TTY_LOCK(tp);
 	if (flag & FREAD) {
 		selnotify(&pti->pt_selr, NOTE_SUBMIT);
@@ -519,6 +521,7 @@ ptcwakeup(tp, flag)
 		wakeup((caddr_t)&tp->t_rawq.c_cf);
 	}
 	TTY_UNLOCK(tp);
+	splx(s);
 }
 
 /*ARGSUSED*/
