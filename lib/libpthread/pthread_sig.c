@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sig.c,v 1.1.2.12 2002/05/20 19:18:44 nathanw Exp $	*/
+/*	$NetBSD: pthread_sig.c,v 1.1.2.13 2002/08/02 22:19:48 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,6 +38,7 @@
 
 #include <assert.h>
 #include <errno.h>
+#include <lwp.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <ucontext.h>
@@ -110,8 +111,10 @@ sigaction(int sig, const struct sigaction *act, struct sigaction *oact)
 {
 	pthread_t self;
 	struct sigaction realact;
-	quad_t q;
-	int rv;
+	
+	int __sigaction_sigtramp __P((int, const struct sigaction *,
+	    struct sigaction *, void *, int));
+	extern int __sigtramp_sigcontext_1[];
 
 	self = pthread__self();
 	if (act != NULL) {
@@ -132,13 +135,8 @@ sigaction(int sig, const struct sigaction *act, struct sigaction *oact)
 		act = &realact;
 	}
 
-	q = __syscall((quad_t)SYS___sigaction14, sig, act, oact);
-	if (/* LINTED constant */ sizeof (quad_t) == sizeof (register_t) ||
-	    /* LINTED constant */ BYTE_ORDER == LITTLE_ENDIAN)
-		rv = (int)(long)q;
-	else
-		rv = (int)(long)((u_quad_t)q >> 32);
-	return rv;
+	return __sigaction_sigtramp(sig, act, oact,
+	    __sigtramp_sigcontext_1, 1);
 }
 
 int
@@ -158,6 +156,7 @@ sigsuspend(const sigset_t *sigmask)
 	}
 	pthread_sigmask(SIG_SETMASK, sigmask, &oldmask);
 
+	self->pt_flags |= PT_FLAG_SIGCATCH;
 	self->pt_state = PT_STATE_BLOCKED_QUEUE;
 	self->pt_sleepobj = &pt_sigsuspended_cond;
 	self->pt_sleepq = &pt_sigsuspended;
@@ -168,6 +167,7 @@ sigsuspend(const sigset_t *sigmask)
 	pthread__block(self, &pt_sigsuspended_lock);
 
 	pthread__testcancel(self);
+	self->pt_flags &= ~PT_FLAG_SIGCATCH;
 
 	pthread_sigmask(SIG_SETMASK, &oldmask, NULL);
 
@@ -474,9 +474,10 @@ pthread__signal(pthread_t t, int sig, int code)
 		break;
 	case PT_STATE_BLOCKED_SYS:
 		/*
-		 * The target is not on a queue at all, and 
-		 * won't run again for a while. Suck.
+		 * The target is not on a queue at all, and won't run
+		 * again for a while. Try to wake it from its torpor.
 		 */
+		_lwp_wakeup(target->pt_blockedlwp);
 		break;
 	default:
 		;
@@ -556,12 +557,11 @@ pthread__signal_tramp(int sig, int code, struct sigaction *act,
        	pthread_sigmask(SIG_SETMASK, oldmask, NULL);
 
 	/*
-	 * Go back to whatever queue we were found on (exception: if
-	 * we were on the pt_sigsuspended queue, just continue). When
-	 * we are continued, the first thing we do will be to jump
-	 * back to the previous context.  
+	 * Go back to whatever queue we were found on, unless SIGCATCH
+	 * is set.  When we are continued, the first thing we do will
+	 * be to jump back to the previous context.
 	 */
-	if (oldsleepq == &pt_sigsuspended)
+	if (self->pt_flags & PT_FLAG_SIGCATCH)
 		_setcontext_u(uc);
 		
 	next = pthread__next(self);
