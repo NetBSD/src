@@ -1,4 +1,4 @@
-/*	$NetBSD: stand.h,v 1.19 1997/01/16 04:06:16 cgd Exp $	*/
+/*	$NetBSD: stand.h,v 1.20 1997/01/22 00:37:23 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -130,6 +130,7 @@ int	close __P((int));
 void	closeall __P((void));
 ssize_t	read __P((int, void *, size_t));
 ssize_t	write __P((int, void *, size_t));
+off_t	lseek __P((int, off_t, int));
     
 int	nodev __P((void));
 int	noioctl __P((struct open_file *, u_long, void *));
@@ -148,3 +149,10 @@ int	null_stat __P((struct open_file *f, struct stat *sb));
 void	machdep_start __P((char *, int, char *, char *, char *));
 int	getchar __P((void));
 void	putchar __P((int));    
+
+#ifdef __INTERNAL_LIBSA_CREAD
+int	oopen __P((const char *, int));
+int	oclose __P((int));
+ssize_t	oread __P((int, void *, size_t));
+off_t	olseek __P((int, off_t, int));
+#endif
