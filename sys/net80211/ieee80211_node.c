@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_node.c,v 1.7 2003/10/29 21:50:57 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_node.c,v 1.8 2003/11/02 01:29:05 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_node.c,v 1.6 2003/08/19 22:17:03 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.7 2003/10/29 21:50:57 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.8 2003/11/02 01:29:05 dyoung Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -537,26 +537,24 @@ ieee80211_find_txnode(struct ieee80211com *ic, u_int8_t *macaddr)
 	 * unless this is a multicast/broadcast frames or we are
 	 * in station mode.
 	 */
-	if (IEEE80211_IS_MULTICAST(macaddr) ||
-	    ic->ic_opmode == IEEE80211_M_STA)
-		ni = ic->ic_bss;
-	else {
-		ieee80211_node_critsec_begin(ic, s);
-		ni = ieee80211_find_node(ic, macaddr);
+	if (IEEE80211_IS_MULTICAST(macaddr) || ic->ic_opmode == IEEE80211_M_STA)
+		return ic->ic_bss;
+
+	ieee80211_node_critsec_begin(ic, s);
+	ni = ieee80211_find_node(ic, macaddr);
+	if (ni == NULL) {
+		if (ic->ic_opmode != IEEE80211_M_MONITOR)
+			ni = ieee80211_dup_bss(ic, macaddr);
+		IEEE80211_DPRINTF(("%s: faked-up node %p for %s\n",
+		    __func__, ni, ether_sprintf(macaddr)));
 		if (ni == NULL) {
-			if (ic->ic_opmode != IEEE80211_M_MONITOR)
-				ni = ieee80211_dup_bss(ic, macaddr);
-			IEEE80211_DPRINTF(("%s: faked-up node %p for %s\n",
-			    __func__, ni, ether_sprintf(macaddr)));
-			if (ni == NULL) {
-				ieee80211_node_critsec_end(ic, s);
-				/* ic->ic_stats.st_tx_nonode++; XXX statistic */
-				return NULL;
-			}
-			(void)ieee80211_ref_node(ni);
+			ieee80211_node_critsec_end(ic, s);
+			/* ic->ic_stats.st_tx_nonode++; XXX statistic */
+			return NULL;
 		}
-		ieee80211_node_critsec_end(ic, s);
+		(void)ieee80211_ref_node(ni);
 	}
+	ieee80211_node_critsec_end(ic, s);
 	return ni;
 }
 
