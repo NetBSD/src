@@ -1,4 +1,4 @@
-/* $Id: hpccmap_gen.c,v 1.1 2001/02/22 18:37:55 uch Exp $ */
+/*	$NetBSD: hpccmap_gen.c,v 1.2 2001/05/08 14:46:06 uch Exp $	*/
 
 /*-
  * Copyright (c) 1999
