@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.39 1997/08/27 11:24:04 bouyer Exp $	*/
+/*	$NetBSD: ncr.c,v 1.39.4.1 1997/11/24 23:10:39 mellon Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Matthias Pfaller.
@@ -293,8 +293,10 @@ ncr_pdma_in(sc, phase, datalen, data)
 		}
 		for (i = (NCR_TSIZE_IN/NCR_UNROLL_SIZE); i--;
 		     data += NCR_UNROLL_SIZE) {
+			di();
 			R4(0); R4(1); R4(2); R4(3);
 			R4(4); R4(5); R4(6); R4(7);
+			ei();
 		}
 	}
 
@@ -309,8 +311,10 @@ ncr_pdma_in(sc, phase, datalen, data)
 			rem = t % NCR_UNROLL_TIMES;
 			nchunk = t / NCR_UNROLL_TIMES;
 			data += (rem - 1) * sizeof(u_long);
+			di();
 			switch(rem) {
 				while(nchunk--) {
+					di();
 					data += NCR_UNROLL_SIZE;
 					R4(-7);
 				case 7: R4(-6);
@@ -321,6 +325,7 @@ ncr_pdma_in(sc, phase, datalen, data)
 				case 2: R4(-1);
 				case 1: R4(0);
 				case 0:
+					ei();
 				}
 			}
 			data += sizeof(u_long);
@@ -329,8 +334,10 @@ ncr_pdma_in(sc, phase, datalen, data)
 		t *= sizeof(int);
 		resid -= t;
 
+		di();
 		for(; resid--; data++)
 			R1(0);
+		ei();
 		resid = 0;
 	}
 	ncr_wait_not_req(sc);
