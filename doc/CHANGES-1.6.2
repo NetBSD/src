@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.55 2003/06/19 11:41:59 grant Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.56 2003/06/19 14:14:27 grant Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -700,3 +700,20 @@ sys/arch/macppc/include/keyboard.h		1.4
 
 	add (commented out) option WSDISPLAY_COMPAT_RAWKBD
 	[aymeric, ticket #1324]
+
+sys/dev/pci/yds.c				1.17
+sys/dev/pci/ydsreg.h				1.3-1.4
+
+	Typo.
+	Register value symbols YDS_PCI_EX_LEGACY_SBMOD_* ->
+	YDS_PCI_EX_LEGACY_SMOD_*.
+
+	Disable ISA DMA emulation for SoundBlaster module explicitly.
+	This fixes the floppy access problem on some hardware.
+	Problem reported by Miroslav Kure via Jason Wright <jason [at]
+	thought [dot] net> of OpenBSD. Thanks.
+
+	Fix from ALSA driver; although this setting is undocumented but
+	according to Jaroslav Kysela <perex [at] suse [dot] cz> of ALSA,
+	there's no error reported so far.
+	[hubertf, ticket #1322]
