@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.81 2004/03/21 13:26:44 mrg Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.82 2004/03/26 18:38:55 drochner Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.81 2004/03/21 13:26:44 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.82 2004/03/26 18:38:55 drochner Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -97,7 +97,6 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.81 2004/03/21 13:26:44 mrg Exp
 #include <ddb/ddbvar.h>
 #endif
 
-extern char netbsd32_sigcode[], netbsd32_esigcode[];
 extern struct sysent netbsd32_sysent[];
 #ifdef SYSCALL_DEBUG
 extern const char * const netbsd32_syscallnames[];
@@ -108,7 +107,11 @@ void netbsd32_syscall_intern __P((struct proc *));
 void syscall __P((void));
 #endif
 
+#ifdef COMPAT_16
+extern char netbsd32_sigcode[], netbsd32_esigcode[];
 struct uvm_object *emul_netbsd32_object;
+#endif
+
 extern struct sysctlnode netbsd32_sysctl_root;
 
 const struct emul emul_netbsd32 = {
@@ -129,9 +132,15 @@ const struct emul emul_netbsd32 = {
 	netbsd32_sendsig,
 	trapsignal,
 	NULL,
+#ifdef COMPAT_16
 	netbsd32_sigcode,
 	netbsd32_esigcode,
 	&emul_netbsd32_object,
+#else
+	NULL,
+	NULL,
+	NULL,
+#endif
 	netbsd32_setregs,
 	NULL,
 	NULL,
