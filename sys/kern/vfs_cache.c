@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.11 1995/05/30 09:02:02 mycroft Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.12 1995/09/08 14:15:07 ws Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -105,7 +105,7 @@ cache_lookup(dvp, vpp, cnp)
 		cnp->cn_flags &= ~MAKEENTRY;
 		return (0);
 	}
-	ncpp = &nchashtbl[cnp->cn_hash & nchash];
+	ncpp = &nchashtbl[(cnp->cn_hash ^ dvp->v_id) & nchash];
 	for (ncp = ncpp->lh_first; ncp != 0; ncp = ncp->nc_hash.le_next) {
 		if (ncp->nc_dvp == dvp &&
 		    ncp->nc_dvpid == dvp->v_id &&
@@ -213,7 +213,7 @@ cache_enter(dvp, vp, cnp)
 	ncp->nc_nlen = cnp->cn_namelen;
 	bcopy(cnp->cn_nameptr, ncp->nc_name, (unsigned)ncp->nc_nlen);
 	TAILQ_INSERT_TAIL(&nclruhead, ncp, nc_lru);
-	ncpp = &nchashtbl[cnp->cn_hash & nchash];
+	ncpp = &nchashtbl[(cnp->cn_hash ^ dvp->v_id) & nchash];
 	LIST_INSERT_HEAD(ncpp, ncp, nc_hash);
 }
 
