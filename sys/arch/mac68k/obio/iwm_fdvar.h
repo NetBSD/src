@@ -1,4 +1,4 @@
-/* $Id: iwm_fdvar.h,v 1.1 1999/02/18 07:38:26 scottr Exp $ */
+/* $Id: iwm_fdvar.h,v 1.2 1999/02/18 07:50:54 scottr Exp $ */
 
 /*
  * Copyright (c) 1997, 1998 Hauke Fath.  All rights reserved.
@@ -191,5 +191,29 @@ dev_type_write(fdwrite);
 dev_type_ioctl(fdioctl);
 dev_type_size(fdsize);
 dev_type_dump(fddump);
+
+
+int	iwmSelectDrive __P((int drive));
+int	iwmSelectSide __P((int side));
+int	iwmTrack00 __P((void));
+int	iwmSeek __P((int steps));
+
+int	iwmReadSector __P((caddr_t buf, sectorHdr_t *hdr));
+int	iwmWriteSector __P((caddr_t buf, sectorHdr_t *hdr));
+
+int	iwmDiskEject __P((int drive));		/* drive = [0..1]	 */
+int	iwmMotor __P((int drive, int onOff));	/* on(1)/off(0)		 */
+
+/*
+ * Debugging only
+ */
+int	iwmQueryDrvFlag __P((int drive, int reg)); /* reg = [0..15]	 */
+
+/* Make sure we run at splhigh when calling! */
+int	iwmReadSectHdr __P((sectorHdr_t *hdr));
+
+int	iwmReadRawSector __P((int ID, caddr_t buf));
+int	iwmWriteRawSector __P((int ID, caddr_t buf));
+int	iwmReadRawTrack __P((int mode, caddr_t buf));
 
 #endif /* _MAC68K_FDVAR_H */
