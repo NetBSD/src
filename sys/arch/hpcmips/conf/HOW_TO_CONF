@@ -1,4 +1,4 @@
-# $NetBSD: HOW_TO_CONF,v 1.1.1.1 1999/09/16 12:23:18 takemura Exp $
+# $NetBSD: HOW_TO_CONF,v 1.2 1999/09/24 04:52:46 enami Exp $
 # Written by Shin Takemura. This document is public domain.
 
 If you get many errors like below:
@@ -7,7 +7,8 @@ If you get many errors like below:
   ioconf.c:102: initializer element for `loc[12]' is not constant
 
 The file ioconf.incl.hpcmis in this directry is not correctly included into
-ioconf.c. You must run config as following steps:
+ioconf.c. You must upgrade config(8) so that mkioconf.c of rev. 1.52 or higher
+is used, or run config as following steps:
 
 1) Make target directry by hand if it dose not exist.
 
