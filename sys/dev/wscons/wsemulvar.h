@@ -1,4 +1,4 @@
-/* $NetBSD: wsemulvar.h,v 1.4 1998/06/15 17:48:33 drochner Exp $ */
+/* $NetBSD: wsemulvar.h,v 1.5 1999/01/13 15:30:59 drochner Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -33,6 +33,11 @@
 struct device;
 struct wsdisplay_emulops;
 
+enum wsemul_resetops {
+	WSEMUL_RESET,
+	WSEMUL_SYNCFONT
+};
+
 struct wsemul_ops {
 	const char *name;
 
@@ -44,6 +49,7 @@ struct wsemul_ops {
 			       int));
 	int	(*translate) __P((void *, keysym_t, char **));
 	void	(*detach) __P((void *cookie, u_int *crow, u_int *ccol));
+	void    (*reset) __P((void *, enum wsemul_resetops));
 };
 
 #if defined(_KERNEL) && !defined(_LKM)
