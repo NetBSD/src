@@ -1,4 +1,4 @@
-#	$NetBSD: SUN_LAMP,v 1.73 1996/08/26 23:40:21 mrg Exp $
+#	$NetBSD: SUN_LAMP,v 1.74 1996/08/31 20:39:26 mycroft Exp $
 #
 #	SUN_LAMP -- kernel for one of cgd's 486/50 EISA boxes...
 #
@@ -121,17 +121,17 @@ ahb*	at eisa? slot ?			# Adaptec 174[024] SCSI controllers
 scsibus* at ahb?
 #aic0	at isa? port 0x340 irq 12	# Adaptec 152[02] SCSI controllers
 #scsibus* at aic?
-bt0	at isa? port 0x130 irq ? drq ?	# BusLogic [57]4X SCSI controllers
-#bt1	at isa? port 0x334 irq ? drq ?	# BusLogic [57]4X SCSI controllers
-#bt2	at isa? port ? irq ?
-scsibus* at bt?
+bha0	at isa? port 0x130 irq ? drq ?	# BusLogic [57]4X SCSI controllers
+#bha1	at isa? port 0x334 irq ? drq ?	# BusLogic [57]4X SCSI controllers
+#bha*	at eisa? slot ?
+scsibus* at bha?
 #ncr*	at pci? dev ? function ?	# NCR 538XX SCSI controllers
 #scsibus* at ncr?
 #sea0	at isa? iomem 0xc8000 irq 5
 #scsibus* at sea?
 #uha0	at isa? port 0x330 irq ? drq ?	# UltraStor [13]4f SCSI controllers
 #uha1	at isa? port 0x334 irq ? drq ?	# UltraStor [13]4f SCSI controllers
-#uha2	at isa? port ? irq ?		# UltraStor 24f SCSI controllers
+#uha*	at eisa? slot ?			# UltraStor 24f SCSI controllers
 #scsibus* at uha?
 sd0	at scsibus? target 0 lun 0
 sd1	at scsibus? target 1 lun 0
