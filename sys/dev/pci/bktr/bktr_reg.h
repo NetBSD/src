@@ -1,4 +1,4 @@
-/*	$NetBSD: bktr_reg.h,v 1.2 2000/05/07 00:24:34 wiz Exp $	*/
+/*	$NetBSD: bktr_reg.h,v 1.3 2000/05/07 14:49:11 veego Exp $	*/
 
 /*
  * FreeBSD: src/sys/dev/bktr/bktr_reg.h,v 1.36 1999/10/28 13:58:17 roger Exp
@@ -51,6 +51,11 @@
 #include <machine/bus.h>		/* struct device */
 #include <sys/device.h>
 #include <sys/select.h>			/* struct selinfo */
+# ifdef DEBUG
+#  define	bootverbose 0
+# else
+#  define	bootverbose 0
+# endif
 #endif
 
 #ifndef PCI_LATENCY_TIMER
