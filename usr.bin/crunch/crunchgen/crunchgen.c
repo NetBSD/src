@@ -1,4 +1,4 @@
-/*	$NetBSD: crunchgen.c,v 1.11 1999/06/21 05:57:10 cgd Exp $	*/
+/*	$NetBSD: crunchgen.c,v 1.12 2000/01/09 04:54:53 tsutsui Exp $	*/
 /*
  * Copyright (c) 1994 University of Maryland
  * All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: crunchgen.c,v 1.11 1999/06/21 05:57:10 cgd Exp $");
+__RCSID("$NetBSD: crunchgen.c,v 1.12 2000/01/09 04:54:53 tsutsui Exp $");
 #endif
 
 #include <stdlib.h>
@@ -45,6 +45,7 @@ __RCSID("$NetBSD: crunchgen.c,v 1.11 1999/06/21 05:57:10 cgd Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/param.h>
+#include <sys/utsname.h>
 
 #define CRUNCH_VERSION	"0.2"
 
@@ -117,8 +118,15 @@ int main(int argc, char **argv)
     extern int optind;
     extern char *optarg;
 
-    if ((machine = getenv("MACHINE")) == NULL)
-	machine = MACHINE;
+    if ((machine = getenv("MACHINE")) == NULL) {
+	struct utsname utsname;
+
+	if (uname(&utsname) == -1) {
+	    perror("uname");
+	    exit(1);
+	}
+	machine = utsname.machine;
+    }
     verbose = 1;
     readcache = 1;
     *outmkname = *outcfname = *execfname = '\0';
