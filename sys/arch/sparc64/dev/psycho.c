@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.48.2.2 2002/06/21 06:26:12 lukem Exp $	*/
+/*	$NetBSD: psycho.c,v 1.48.2.3 2002/06/21 06:33:11 lukem Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Eduardo E. Horvath
@@ -490,6 +490,7 @@ found:
 		/* Point the strbuf_ctl at the iommu_state */
 		pp->pp_sb.sb_is = sc->sc_is;
 
+		sc->sc_is->is_sb[0] = sc->sc_is->is_sb[1] = NULL;
 		if (PROM_getproplen(sc->sc_node, "no-streaming-cache") < 0) {
 			struct strbuf_ctl *sb = &pp->pp_sb;
 			vaddr_t va = (vaddr_t)&pp->pp_flush[0x40];
@@ -1050,7 +1051,7 @@ psycho_intr_establish(t, ihandle, level, flags, handler, arg)
 		/* Hunt thru obio first */
 		for (intrmapptr = &sc->sc_regs->scsi_int_map,
 			     intrclrptr = &sc->sc_regs->scsi_clr_int;
-		     intrmapptr <= &sc->sc_regs->ffb1_int_map;
+		     intrmapptr < &sc->sc_regs->ffb0_int_map;
 		     intrmapptr++, intrclrptr++) {
 			if (INTINO(*intrmapptr) == ino)
 				goto found;
@@ -1066,6 +1067,16 @@ psycho_intr_establish(t, ihandle, level, flags, handler, arg)
 				goto found;
 			}
 		}
+
+		/* Finally check the two FFB slots */
+		intrclrptr = NULL; /* XXX? */
+		for (intrmapptr = &sc->sc_regs->ffb0_int_map;
+		     intrmapptr <= &sc->sc_regs->ffb1_int_map;
+		     intrmapptr++) {
+			if (INTVEC(*intrmapptr) == ino)
+				goto found;
+		}
+
 		printf("Cannot find interrupt vector %lx\n", vec);
 		return (NULL);
 
