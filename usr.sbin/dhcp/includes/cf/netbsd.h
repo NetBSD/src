@@ -82,6 +82,14 @@ extern int h_errno;
 #define _PATH_DHCLIENT_DB "/var/db/dhclient.leases"
 #endif
 
+/*
+ * If building "SMALL" (e.g. for an installation disk), do not configure
+ * for DNS update functionality -- overrides default set in ../site.h.
+ */
+#if defined(SMALL) && defined(NSUPDATE)
+#undef NSUPDATE
+#endif
+
 #define EOL	'\n'
 #define VOIDPTR void *
 
