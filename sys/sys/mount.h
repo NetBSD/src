@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.64 1998/03/01 02:24:13 fvdl Exp $	*/
+/*	$NetBSD: mount.h,v 1.65 1998/03/03 02:22:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -367,6 +367,7 @@ extern	struct vfsops *vfssw[];			/* filesystem type table */
 extern	int nvfssw;
 extern	struct nfs_public nfs_pub;
 extern	struct simplelock mountlist_slock;
+extern	struct simplelock spechash_slock;
 long	makefstype __P((char *));
 int	dounmount __P((struct mount *, int, struct proc *));
 void	vfsinit __P((void));
