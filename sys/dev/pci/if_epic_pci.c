@@ -1,7 +1,7 @@
-/*	$NetBSD: if_epic_pci.c,v 1.6 1999/03/24 01:05:15 thorpej Exp $	*/
+/*	$NetBSD: if_epic_pci.c,v 1.7 1999/07/27 00:37:34 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -107,6 +107,34 @@ struct cfattach epic_pci_ca = {
 	sizeof(struct epic_pci_softc), epic_pci_match, epic_pci_attach,
 };
 
+const struct epic_pci_product {
+	u_int32_t	epp_prodid;	/* PCI product ID */
+	const char	*epp_name;	/* device name */
+} epic_pci_products[] = {
+	{ PCI_PRODUCT_SMC_83C170,	"SMC 83c170 Fast Ethernet" },
+	{ PCI_PRODUCT_SMC_83C175,	"SMC 83c175 Fast Ethernet" },
+	{ 0,				NULL },
+};
+
+const struct epic_pci_product *epic_pci_lookup
+    __P((const struct pci_attach_args *));
+
+const struct epic_pci_product *
+epic_pci_lookup(pa)
+	const struct pci_attach_args *pa;
+{
+	const struct epic_pci_product *epp;
+
+	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_SMC)
+		return (NULL);
+
+	for (epp = epic_pci_products; epp->epp_name != NULL; epp++)
+		if (PCI_PRODUCT(pa->pa_id) == epp->epp_prodid)
+			return (epp);
+
+	return (NULL);
+}
+
 int
 epic_pci_match(parent, match, aux)
 	struct device *parent;
@@ -115,8 +143,7 @@ epic_pci_match(parent, match, aux)
 {
 	struct pci_attach_args *pa = aux;
 
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_SMC &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_SMC_83C170)
+	if (epic_pci_lookup(pa) != NULL)
 		return (1);
 
 	return (0);
@@ -133,6 +160,7 @@ epic_pci_attach(parent, self, aux)
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pci_intr_handle_t ih;
 	const char *intrstr = NULL;
+	const struct epic_pci_product *epp;
 	bus_space_tag_t iot, memt;
 	bus_space_handle_t ioh, memh;
 	int ioh_valid, memh_valid;
@@ -160,7 +188,13 @@ epic_pci_attach(parent, self, aux)
 
 	sc->sc_dmat = pa->pa_dmat;
 
-	printf(": SMC EPIC/100 Fast Ethernet\n");
+	epp = epic_pci_lookup(pa);
+	if (epp == NULL) {
+		printf("\n");
+		panic("epic_pci_attach: impossible");
+	}
+
+	printf(": %s, rev. %d\n", epp->epp_name, PCI_REVISION(pa->pa_class));
 
 	/* Make sure bus mastering is enabled. */
 	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
