@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.2 1995/07/24 07:38:13 cgd Exp $	*/
+/*	$NetBSD: si.c,v 1.3 1995/08/16 23:01:16 pk Exp $	*/
 
 /*
  * Copyright (C) 1994 Adam Glass, Gordon W. Ross
@@ -68,7 +68,6 @@ static int si_flags = 0 /* | SDEV_DB2 */ ;
 
 static int	si_match __P((struct device *, void *, void *));
 static void	si_attach __P((struct device *, struct device *, void *));
-static u_int	si_minphys __P((struct buf *));
 static int	si_intr __P((void *));
 static void	si_dma_intr __P((struct ncr5380_softc *));
 static int	reset_adapter __P((struct ncr5380_softc *));
@@ -78,7 +77,7 @@ static char scsi_name[] = "si";
 
 struct scsi_adapter	ncr5380_switch = {
 	ncr5380_scsi_cmd,		/* scsi_cmd()		*/
-	si_minphys,			/* scsi_minphys()	*/
+	minphys,			/* scsi_minphys()	*/
 	NULL,				/* open_target_lu()	*/
 	NULL,				/* close_target_lu()	*/
 };
@@ -191,19 +190,6 @@ si_attach(parent, self, aux)
 	ncr5380_reset_scsibus(ncr5380);
 	config_found(self, &(ncr5380->sc_link), si_print);
 }
-
-#define MIN_PHYS	65536	/*BARF!!!!*/
-static u_int
-si_minphys(bp)
-	struct buf *bp;
-{
-	if (bp->b_bcount > MIN_PHYS) {
-		printf("Uh-oh...  ncr5380_minphys setting bp->b_bcount = %x.\n", MIN_PHYS);
-		bp->b_bcount = MIN_PHYS;
-	}
-	return (minphys(bp));
-}
-#undef MIN_PHYS
 
 static void
 si_dma_intr(ncr5380)
