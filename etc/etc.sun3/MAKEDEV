@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.10 1997/01/01 23:46:27 pk Exp $
+#	$NetBSD: MAKEDEV,v 1.11 1997/05/06 18:42:27 gwr Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -103,6 +103,7 @@ std)
 	mk null		c 3 2
 	mk eeprom	c 3 11 640 kmem
 	mk zero		c 3 12
+	mk leds		c 3 13
 	mk drum		c 7 0 640 kmem
 
 	mk ttya		c 12 0
