@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.17 2000/01/19 02:52:21 msaitoh Exp $	*/
+/*	$NetBSD: clock.c,v 1.18 2001/02/03 12:40:59 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -133,7 +133,7 @@ oclock_match(parent, cf, args)
 	struct confargs *ca = args;
 
 	/* This driver only supports one unit. */
-	if (cf->cf_unit != 0)
+	if (intersil_va)
 		return (0);
 
 	/*
@@ -221,7 +221,7 @@ clock_match(parent, cf, args)
 	struct confargs *ca = args;
 
 	/* This driver only supports one unit. */
-	if (cf->cf_unit != 0)
+	if (mostek_clk_va)
 		return (0);
 
 	/* If intersil was found, use that. */
