@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.11 2003/10/19 20:17:33 dsl Exp $	*/
+/*	$NetBSD: md.c,v 1.12 2003/11/13 02:33:39 sekiya Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -113,7 +113,7 @@ int
 md_post_disklabel(void)
 {
 	set_swap(diskdev, bsdlabel);
-        if (strstr(instsys.version, "(INSTALL_IP32)"))   
+        if (strstr(instsys.version, "(INSTALL32_IP3x)"))   
 		return run_prog(RUN_DISPLAY, MSG_cmdfail,
 	    		"%s %s", "/usr/mdec/sgivol -f -w boot /usr/mdec/boot.ip32",
 			diskdev);
@@ -190,7 +190,7 @@ md_init()
          * enable the installation of the corresponding GENERIC kernel.
          */
         uname(&instsys);
-        if (strstr(instsys.version, "(INSTALL_IP32)"))
+        if (strstr(instsys.version, "(INSTALL32_IP3x)"))
                 sets_selected = (sets_selected & ~SET_KERNEL) | SET_KERNEL_2;
         else
                 sets_selected = (sets_selected & ~SET_KERNEL) | SET_KERNEL_1;
