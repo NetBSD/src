@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_usrreq.c,v 1.9 1995/04/22 13:08:30 cgd Exp $	*/
+/*	$NetBSD: raw_usrreq.c,v 1.10 1995/06/12 00:46:55 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -55,7 +55,7 @@ void
 raw_init()
 {
 
-	rawcb.rcb_next = rawcb.rcb_prev = &rawcb;
+	LIST_INIT(&rawcb);
 }
 
 
@@ -79,7 +79,7 @@ raw_input(m0, proto, src, dst)
 	struct socket *last;
 
 	last = 0;
-	for (rp = rawcb.rcb_next; rp != &rawcb; rp = rp->rcb_next) {
+	for (rp = rawcb.lh_first; rp != 0; rp = rp->rcb_list.le_next) {
 		if (rp->rcb_proto.sp_family != proto->sp_family)
 			continue;
 		if (rp->rcb_proto.sp_protocol  &&

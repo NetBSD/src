@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.25 1995/06/04 05:06:49 mycroft Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.26 1995/06/12 00:47:23 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -88,7 +88,7 @@ static	struct llinfo_arp *arplookup __P((u_int32_t, int, int));
 static	void in_arpinput __P((struct mbuf *));
 
 extern	struct ifnet loif;
-struct	llinfo_arp llinfo_arp = {&llinfo_arp, &llinfo_arp};
+LIST_HEAD(, llinfo_arp) llinfo_arp;
 struct	ifqueue arpintrq = {0, 0, 0, 50};
 int	arp_inuse, arp_allocated, arp_intimer;
 int	arp_maxtries = 5;
@@ -109,16 +109,17 @@ static void
 arptimer(arg)
 	void *arg;
 {
-	int s = splnet();
-	register struct llinfo_arp *la = llinfo_arp.la_next;
+	int s;
+	register struct llinfo_arp *la, *nla;
 
+	s = splnet();
 	timeout(arptimer, NULL, arpt_prune * hz);
-	while (la != &llinfo_arp) {
+	for (la = llinfo_arp.lh_first; la != 0; la = nla) {
 		register struct rtentry *rt = la->la_rt;
 
-		la = la->la_next;
+		nla = la->la_list.le_next;
 		if (rt->rt_expire && rt->rt_expire <= time.tv_sec)
-			arptfree(la->la_prev); /* timer has expired; clear */
+			arptfree(la); /* timer has expired; clear */
 	}
 	splx(s);
 }
@@ -208,7 +209,7 @@ arp_rtrequest(req, rt, sa)
 		Bzero(la, sizeof(*la));
 		la->la_rt = rt;
 		rt->rt_flags |= RTF_LLINFO;
-		insque(la, &llinfo_arp);
+		LIST_INSERT_HEAD(&llinfo_arp, la, la_list);
 		if (SIN(rt_key(rt))->sin_addr.s_addr ==
 		    (IA_SIN(rt->rt_ifa))->sin_addr.s_addr) {
 			/*
@@ -235,7 +236,7 @@ arp_rtrequest(req, rt, sa)
 		if (la == 0)
 			break;
 		arp_inuse--;
-		remque(la);
+		LIST_REMOVE(la, la_list);
 		rt->rt_llinfo = 0;
 		rt->rt_flags &= ~RTF_LLINFO;
 		if (la->la_hold)
@@ -448,11 +449,11 @@ in_arpinput(m)
 	op = ntohs(ea->arp_op);
 	bcopy((caddr_t)ea->arp_spa, (caddr_t)&isaddr, sizeof (isaddr));
 	bcopy((caddr_t)ea->arp_tpa, (caddr_t)&itaddr, sizeof (itaddr));
-	for (ia = in_ifaddr; ia; ia = ia->ia_next)
+	for (ia = in_ifaddr.tqh_first; ia != 0; ia = ia->ia_list.tqe_next)
 		if (ia->ia_ifp == &ac->ac_if) {
 			maybe_ia = ia;
-			if ((itaddr.s_addr == ia->ia_addr.sin_addr.s_addr) ||
-			     (isaddr.s_addr == ia->ia_addr.sin_addr.s_addr))
+			if (itaddr.s_addr == ia->ia_addr.sin_addr.s_addr ||
+			    isaddr.s_addr == ia->ia_addr.sin_addr.s_addr)
 				break;
 		}
 	if (maybe_ia == 0)

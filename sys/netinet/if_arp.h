@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.h,v 1.19 1995/05/16 05:26:36 cgd Exp $	*/
+/*	$NetBSD: if_arp.h,v 1.20 1995/06/12 00:47:27 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -120,13 +120,12 @@ struct	arpcom {
 	struct	 ifnet ac_if;			/* network-visible interface */
 	u_int8_t ac_enaddr[ETHER_ADDR_LEN];	/* ethernet hardware address */
 	struct	 in_addr ac_ipaddr;		/* copy of ip address- XXX */
-	struct	 ether_multi *ac_multiaddrs; /* list of ether multicast addrs */
+	LIST_HEAD(, ether_multi) ac_multiaddrs;	/* list of ether multicast addrs */
 	int	 ac_multicnt;			/* length of ac_multiaddrs list */
 };
 
 struct llinfo_arp {
-	struct	llinfo_arp *la_next;
-	struct	llinfo_arp *la_prev;
+	LIST_ENTRY(llinfo_arp) la_list;
 	struct	rtentry *la_rt;
 	struct	mbuf *la_hold;		/* last packet until resolved/timeout */
 	long	la_asked;		/* last time we QUERIED for this addr */
@@ -156,8 +155,6 @@ u_int8_t ether_ipmulticast_min[ETHER_ADDR_LEN];
 u_int8_t ether_ipmulticast_max[ETHER_ADDR_LEN];
 struct	ifqueue arpintrq;
 
-struct	llinfo_arp llinfo_arp;		/* head of the llinfo queue */
-
 void	arpwhohas __P((struct arpcom *, struct in_addr *));
 void	arpintr __P((void));
 int	arpresolve __P((struct arpcom *,
@@ -182,7 +179,7 @@ struct ether_multi {
 	u_int8_t enm_addrhi[ETHER_ADDR_LEN]; /* high or only address of range */
 	struct	 arpcom *enm_ac;	/* back pointer to arpcom */
 	u_int	 enm_refcount;		/* no. claims to this addr/range */
-	struct	 ether_multi *enm_next;	/* ptr to next ether_multi */
+	LIST_ENTRY(ether_multi) enm_list;
 };
 
 /*
@@ -204,11 +201,11 @@ struct ether_multistep {
 	/* struct arpcom *ac; */					\
 	/* struct ether_multi *enm; */					\
 {									\
-	for ((enm) = (ac)->ac_multiaddrs;				\
+	for ((enm) = (ac)->ac_multiaddrs.lh_first;			\
 	    (enm) != NULL &&						\
 	    (bcmp((enm)->enm_addrlo, (addrlo), ETHER_ADDR_LEN) != 0 ||	\
 	     bcmp((enm)->enm_addrhi, (addrhi), ETHER_ADDR_LEN) != 0);	\
-		(enm) = (enm)->enm_next);				\
+		(enm) = (enm)->enm_list.le_next);			\
 }
 
 /*
@@ -223,7 +220,7 @@ struct ether_multistep {
 	/* struct ether_multi *enm; */  \
 { \
 	if (((enm) = (step).e_enm) != NULL) \
-		(step).e_enm = (enm)->enm_next; \
+		(step).e_enm = (enm)->enm_list.le_next; \
 }
 
 #define ETHER_FIRST_MULTI(step, ac, enm) \
@@ -231,6 +228,6 @@ struct ether_multistep {
 	/* struct arpcom *ac; */ \
 	/* struct ether_multi *enm; */ \
 { \
-	(step).e_enm = (ac)->ac_multiaddrs; \
+	(step).e_enm = (ac)->ac_multiaddrs.lh_first; \
 	ETHER_NEXT_MULTI((step), (enm)); \
 }

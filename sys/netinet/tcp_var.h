@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.12 1995/06/11 20:39:26 mycroft Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.13 1995/06/12 00:48:03 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993, 1994
@@ -43,8 +43,8 @@
  * Tcp control block, one per tcp; fields:
  */
 struct tcpcb {
-	struct	tcpiphdr *seg_next;	/* sequencing queue */
-	struct	tcpiphdr *seg_prev;
+	struct	tcpiphdr *seg_next, *seg_prev;
+					/* list of control blocks */
 	short	t_state;		/* state of this connection */
 	short	t_timer[TCPT_NTIMERS];	/* tcp timers */
 	short	t_rxtshift;		/* log(2) of rexmt exp. backoff */
@@ -234,7 +234,7 @@ struct	tcpstat {
 };
 
 #ifdef _KERNEL
-struct	inpcb tcb;		/* head of queue of active tcpcb's */
+struct	inpcbtable tcbtable;	/* head of queue of active tcpcb's */
 struct	tcpstat tcpstat;	/* tcp statistics */
 u_int32_t tcp_now;		/* for RFC 1323 timestamps */
 

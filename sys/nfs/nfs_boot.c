@@ -1,4 +1,4 @@
-/*    $NetBSD: nfs_boot.c,v 1.18 1995/05/23 00:14:06 cgd Exp $ */
+/*    $NetBSD: nfs_boot.c,v 1.19 1995/06/12 00:48:31 mycroft Exp $ */
 
 /*
  * Copyright (c) 1995 Adam Glass, Gordon Ross
@@ -131,7 +131,7 @@ nfs_boot_init(nd, procp)
 	if (nfsbootdevname)
 		ifp = ifunit(nfsbootdevname);
 	else
-		for (ifp = ifnet; ifp; ifp = ifp->if_next)
+		for (ifp = ifnet.tqh_first; ifp != 0; ifp = ifp->if_list.tqe_next)
 			if ((ifp->if_flags &
 			     (IFF_LOOPBACK|IFF_POINTOPOINT)) == 0)
 				break;
