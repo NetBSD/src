@@ -32,7 +32,7 @@
  */
 
 /*
-** @(#) $RCSfile: essvar.h,v $ $Revision: 1.2 $ (SHARK) $Date: 1998/07/30 14:11:45 $
+** @(#) $RCSfile: essvar.h,v $ $Revision: 1.3 $ (SHARK) $Date: 1998/07/31 15:17:18 $
 **
 **++
 **
@@ -92,9 +92,6 @@
 struct ess_audio_channel
 {
 	int	drq;			/* DMA channel */
-	int	mode;			/* DMA mode */
-#define	ESS_MODE_8BIT	0
-#define	ESS_MODE_16BIT	1
 	int	irq;			/* IRQ line for this DMA channel */
 	int	ist;
 	void	*ih;			/* interrupt vectoring */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ess_ofisa.c,v 1.2 1998/07/30 21:22:59 thorpej Exp $	*/
+/*	$NetBSD: ess_ofisa.c,v 1.3 1998/07/31 15:17:18 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -104,9 +104,9 @@ ess_ofisa_attach(parent, self, aux)
 	 *
 	 * We expect:
 	 *
-	 *	1 i/o register region
-	 *	2 interrupts
-	 *	2 dma channels
+	 *	1      i/o register region
+	 *	1 or 2 interrupts
+	 *	2      dma channels
 	 */
 
 	n = ofisa_reg_get(aa->oba.oba_phandle, &reg, 1);
@@ -125,14 +125,20 @@ ess_ofisa_attach(parent, self, aux)
 	}
 
 	n = ofisa_intr_get(aa->oba.oba_phandle, intr, 2);
-	if (n != 2) {
+	if (n == 1) {
+		sc->sc_in.irq = intr[0].irq;
+		sc->sc_in.ist = intr[0].share;
+		sc->sc_out.irq = intr[0].irq;
+		sc->sc_out.ist = intr[0].share;
+	} else if (n == 2) {
+		sc->sc_in.irq = intr[0].irq;
+		sc->sc_in.ist = intr[0].share;
+		sc->sc_out.irq = intr[1].irq;
+		sc->sc_out.ist = intr[1].share;
+	} else {
 		printf(": error getting interrupt data\n");
 		return;
 	}
-	sc->sc_in.irq = intr[0].irq;
-	sc->sc_in.ist = intr[0].share;
-	sc->sc_out.irq = intr[1].irq;
-	sc->sc_out.ist = intr[1].share;
 
 	ndrq = ofisa_dma_get(aa->oba.oba_phandle, dma, 2);
 	if (ndrq != 2) {
@@ -141,9 +147,6 @@ ess_ofisa_attach(parent, self, aux)
 	}
 	sc->sc_in.drq = dma[0].drq;
 	sc->sc_out.drq = dma[1].drq;
-
-	sc->sc_in.mode = ESS_DMA_SIZE(sc->sc_in.drq);
-	sc->sc_out.mode = ESS_DMA_SIZE(sc->sc_out.drq);
 
 	sc->sc_ic = aa->ic;
 
@@ -154,10 +157,6 @@ ess_ofisa_attach(parent, self, aux)
 		printf(": unable to map register space\n");
 		return;
 	}
-
-printf("ess attach irq i=%d o=%d, drq i=%d o=%d\n", 
-       sc->sc_in.irq, sc->sc_out.irq, 
-       sc->sc_in.drq, sc->sc_out.drq);
 
 	if (essmatch(sc) == 0) {
 		printf(": essmatch failed\n");
