@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.181 2002/06/08 02:06:49 mbw Exp $
+.\"	$NetBSD: main,v 1.182 2002/06/12 12:19:53 grant Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -172,12 +172,12 @@ your machine.
 You will at a minimum need
 .ie r_i386 \{\
 one of the kernel sets, typically
-.Pa kern.tgz ,
+.Pa kern-GENERIC.tgz ,
 as well as
 .\}
 .el \{\
 the following sets:
-.Pa kern.tgz ,
+.Pa kern-GENERIC.tgz ,
 .\}
 .Pa base.tgz
 and
