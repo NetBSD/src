@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.56 2000/08/03 03:41:17 thorpej Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.57 2000/11/08 14:28:13 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -195,7 +195,7 @@ fdesc_init()
 		if (cdevsw[cttymajor].d_open == cttyopen)
 			break;
 	devctty = makedev(cttymajor, 0);
-	fdhashtbl = hashinit(NFDCACHE, M_CACHE, M_NOWAIT, &fdhash);
+	fdhashtbl = hashinit(NFDCACHE, HASH_LIST, M_CACHE, M_NOWAIT, &fdhash);
 }
 
 /*

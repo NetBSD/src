@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_node.c,v 1.23 2000/03/30 12:13:31 augustss Exp $	*/
+/*	$NetBSD: cd9660_node.c,v 1.24 2000/11/08 14:28:13 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1994
@@ -85,11 +85,12 @@ static u_int cd9660_chars2ui __P((u_char *, int));
 void
 cd9660_init()
 {
-	isohashtbl = hashinit(desiredvnodes, M_ISOFSMNT, M_WAITOK, &isohash);
+	isohashtbl = hashinit(desiredvnodes, HASH_LIST, M_ISOFSMNT, M_WAITOK,
+	    &isohash);
 	simple_lock_init(&cd9660_ihash_slock);
 #ifdef ISODEVMAP
-	idvhashtbl = hashinit(desiredvnodes / 8, M_ISOFSMNT, M_WAITOK,
-			&idvhash);
+	idvhashtbl = hashinit(desiredvnodes / 8, HASH_LIST, M_ISOFSMNT,
+	    M_WAITOK, &idvhash);
 #endif
 	pool_init(&cd9660_node_pool, sizeof(struct iso_node), 0, 0, 0,
 	    "cd9660nopl", 0, pool_page_alloc_nointr, pool_page_free_nointr,
