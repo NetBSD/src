@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.6 2000/10/10 12:55:17 lukem Exp $
+.\"	$NetBSD: prep,v 1.7 2000/10/19 06:39:25 leo Exp $
 .
 Note you will be modifying your HD's if you mess something up here you
 could lose everything on all the drives that you work with.  It is
@@ -10,14 +10,14 @@ by writing down all partition info (especially their sizes).
 .Em Back up the partitions you are keeping.
 .bullet)
 .Pp
-If NetBSD has a disk of it's own, you can delay the partitioning until
-the installer requests you to do it. This means that you can safely skip
-the rest of this section.
+If NetBSD has to share the disk with another operating system, you can
+either take care of partitioning your harddisk before installing NetBSD or
+delay this until the installer requests you to do it. If you decide to do
+it now, please create space for at least root, swap and /usr partitions and
+possibly at least one more for /local if you have the space.  Whatever you
+decide, take note of the paragraphs below! You need this info to create
+bootable disks.
 .Pp
-If NetBSD has to share the disk with another operating system, you must
-take care of partitioning your harddisk before installing NetBSD; creating
-space for at least root, swap and /usr partitions and possibly at
-least one more for /local if you have the space.
 .(tag Warning:
 .It Em Warning:
 The AHDI partioning function erases all partions on your harddisk
