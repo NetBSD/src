@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_xxx.c,v 1.31 1996/02/09 18:59:54 christos Exp $	*/
+/*	$NetBSD: kern_xxx.c,v 1.32 1996/04/22 01:38:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -42,7 +42,6 @@
 #include <sys/reboot.h>
 #include <vm/vm.h>
 #include <sys/sysctl.h>
-#include <sys/cpu.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 
