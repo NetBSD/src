@@ -1,4 +1,4 @@
-/* $NetBSD: adw.c,v 1.31 2001/07/07 15:53:13 thorpej Exp $	 */
+/* $NetBSD: adw.c,v 1.32 2001/07/07 16:13:45 thorpej Exp $	 */
 
 /*
  * Generic driver for the Advanced Systems Inc. SCSI controllers
@@ -428,7 +428,7 @@ adw_attach(ADW_SOFTC *sc)
 	if (error)
 		return; /* (error) */ ;
 
-	bzero(sc->sc_control, sizeof(struct adw_control));
+	memset(sc->sc_control, 0, sizeof(struct adw_control));
 
 	/*
 	 * Create and initialize the Control Blocks.
@@ -454,7 +454,7 @@ adw_attach(ADW_SOFTC *sc)
 	/*
 	 * Zero's the freeze_device status
 	 */
-	 bzero(sc->sc_freeze_dev, sizeof(sc->sc_freeze_dev));
+	 memset(sc->sc_freeze_dev, 0, sizeof(sc->sc_freeze_dev));
 
 	/*
 	 * Initialize the adapter
@@ -637,7 +637,7 @@ adw_build_req(ADW_SOFTC *sc, ADW_CCB *ccb)
 	int             error;
 
 	scsiqp = &ccb->scsiq;
-	bzero(scsiqp, sizeof(ADW_SCSI_REQ_Q));
+	memset(scsiqp, 0, sizeof(ADW_SCSI_REQ_Q));
 
 	/*
 	 * Set the ADW_SCSI_REQ_Q 'ccb_ptr' to point to the
@@ -719,7 +719,8 @@ out_bad:
 		scsiqp->data_cnt = xs->datalen;
 		scsiqp->vdata_addr = xs->data;
 		scsiqp->data_addr = ccb->dmamap_xfer->dm_segs[0].ds_addr;
-		bzero(ccb->sg_block, sizeof(ADW_SG_BLOCK) * ADW_NUM_SG_BLOCK);
+		memset(ccb->sg_block, 0,
+		    sizeof(ADW_SG_BLOCK) * ADW_NUM_SG_BLOCK);
 		adw_build_sglist(ccb, scsiqp, ccb->sg_block);
 	} else {
 		/*

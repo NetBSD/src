@@ -1,4 +1,4 @@
-/*	$NetBSD: adv.c,v 1.26 2001/06/09 18:08:20 briggs Exp $	*/
+/*	$NetBSD: adv.c,v 1.27 2001/07/07 16:13:44 thorpej Exp $	*/
 
 /*
  * Generic driver for the Advanced Systems Inc. Narrow SCSI controllers
@@ -182,7 +182,7 @@ adv_create_ccbs(sc, ccbstore, count)
 	ADV_CCB        *ccb;
 	int             i, error;
 
-	bzero(ccbstore, sizeof(ADV_CCB) * count);
+	memset(ccbstore, 0, sizeof(ADV_CCB) * count);
 	for (i = 0; i < count; i++) {
 		ccb = &ccbstore[i];
 		if ((error = adv_init_ccb(sc, ccb)) != 0) {

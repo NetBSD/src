@@ -1,4 +1,4 @@
-/*	$NetBSD: midway.c,v 1.52 2001/07/07 16:00:09 thorpej Exp $	*/
+/*	$NetBSD: midway.c,v 1.53 2001/07/07 16:13:49 thorpej Exp $	*/
 /*	(sync'd to midway.c 1.68)	*/
 
 /*
@@ -838,8 +838,8 @@ done_probe:
 #ifdef ATM_PVCEXT
     sc->txrrp = NULL;
 #endif
-    bzero(&sc->txslot[lcv].indma, sizeof(sc->txslot[lcv].indma));
-    bzero(&sc->txslot[lcv].q, sizeof(sc->txslot[lcv].q));
+    memset(&sc->txslot[lcv].indma, 0, sizeof(sc->txslot[lcv].indma));
+    memset(&sc->txslot[lcv].q, 0, sizeof(sc->txslot[lcv].q));
 #ifdef EN_DEBUG
     printf("%s: tx%d: start 0x%x, stop 0x%x\n", sc->sc_dev.dv_xname, lcv,
 		sc->txslot[lcv].start, sc->txslot[lcv].stop);
@@ -865,8 +865,8 @@ done_probe:
   for (lcv = 0 ; lcv < sc->en_nrx ; lcv++) {
     sc->rxslot[lcv].rxhand = NULL;
     sc->rxslot[lcv].oth_flags = ENOTHER_FREE;
-    bzero(&sc->rxslot[lcv].indma, sizeof(sc->rxslot[lcv].indma));
-    bzero(&sc->rxslot[lcv].q, sizeof(sc->rxslot[lcv].q));
+    memset(&sc->rxslot[lcv].indma, 0, sizeof(sc->rxslot[lcv].indma));
+    memset(&sc->rxslot[lcv].q, 0, sizeof(sc->rxslot[lcv].q));
     midvloc = sc->rxslot[lcv].start = ptr;
     ptr += (EN_RXSZ * 1024);
     sz -= (EN_RXSZ * 1024);
@@ -1581,14 +1581,14 @@ struct en_softc *sc;
   for (vc = 0 ; vc < MID_N_VC ; vc++) 
     en_loadvc(sc, vc);
 
-  bzero(&sc->drq, sizeof(sc->drq));
+  memset(&sc->drq, 0, sizeof(sc->drq));
   sc->drq_free = MID_DRQ_N - 1;		/* N - 1 */
   sc->drq_chip = MID_DRQ_REG2A(EN_READ(sc, MID_DMA_RDRX));
   EN_WRITE(sc, MID_DMA_WRRX, MID_DRQ_A2REG(sc->drq_chip)); 
 						/* ensure zero queue */
   sc->drq_us = sc->drq_chip;
 
-  bzero(&sc->dtq, sizeof(sc->dtq));
+  memset(&sc->dtq, 0, sizeof(sc->dtq));
   sc->dtq_free = MID_DTQ_N - 1;		/* N - 1 */
   sc->dtq_chip = MID_DTQ_REG2A(EN_READ(sc, MID_DMA_RDTX));
   EN_WRITE(sc, MID_DMA_WRTX, MID_DRQ_A2REG(sc->dtq_chip)); 
@@ -1811,12 +1811,12 @@ struct ifnet *ifp;
 	lastm->m_len += toadd;
 	mlen += toadd;
 	if (aal == MID_TBD_AAL5) {
-	  bzero(cp, toadd - MID_PDU_SIZE);
+	  memset(cp, 0, toadd - MID_PDU_SIZE);
 	  dat = (u_int32_t *)(cp + toadd - MID_PDU_SIZE);
 	  /* make sure the PDU is in proper byte order */
 	  *dat = htonl(MID_PDU_MK1(0, 0, got));
 	} else {
-	  bzero(cp, toadd);
+	  memset(cp, 0, toadd);
 	}
 	atm_flags |= EN_OBTRL;
       }

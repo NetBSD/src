@@ -1,4 +1,4 @@
-/*	$NetBSD: lance.c,v 1.24 2001/07/07 15:59:37 thorpej Exp $	*/
+/*	$NetBSD: lance.c,v 1.25 2001/07/07 16:13:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -739,9 +739,9 @@ lance_zerobuf_contig(sc, boff, len)
 	volatile caddr_t buf = sc->sc_mem;
 
 	/*
-	 * Just let bzero() do the work
+	 * Just let memset() do the work
 	 */
-	bzero(buf + boff, len);
+	memset(buf + boff, 0, len);
 }
 
 #if 0
@@ -906,7 +906,7 @@ lance_zerobuf_gap16(sc, boff, len)
 	boff &= 0xf;
 	xfer = min(len, 16 - boff);
 	while (len > 0) {
-		bzero(bptr + boff, xfer);
+		memset(bptr + boff, 0, xfer);
 		bptr += 32;
 		boff = 0;
 		len -= xfer;

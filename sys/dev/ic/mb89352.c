@@ -1,4 +1,4 @@
-/*	$NetBSD: mb89352.c,v 1.7 2001/07/07 15:53:19 thorpej Exp $	*/
+/*	$NetBSD: mb89352.c,v 1.8 2001/07/07 16:13:49 thorpej Exp $	*/
 /*	NecBSD: mb89352.c,v 1.4 1998/03/14 07:31:20 kmatsuda Exp	*/
 
 #ifdef DDB
@@ -356,12 +356,12 @@ spc_init(sc)
 		TAILQ_INIT(&sc->free_list);
 		sc->sc_nexus = NULL;
 		acb = sc->sc_acb;
-		bzero(acb, sizeof(sc->sc_acb));
+		memset(acb, 0, sizeof(sc->sc_acb));
 		for (r = 0; r < sizeof(sc->sc_acb) / sizeof(*acb); r++) {
 			TAILQ_INSERT_TAIL(&sc->free_list, acb, chain);
 			acb++;
 		}
-		bzero(&sc->sc_tinfo, sizeof(sc->sc_tinfo));
+		memset(&sc->sc_tinfo, 0, sizeof(sc->sc_tinfo));
 	} else {
 		/* Cancel any active commands. */
 		sc->sc_state = SPC_CLEANING;

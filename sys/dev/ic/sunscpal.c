@@ -1,4 +1,4 @@
-/*	$NetBSD: sunscpal.c,v 1.3 2001/05/18 12:51:58 fredette Exp $	*/
+/*	$NetBSD: sunscpal.c,v 1.4 2001/07/07 16:13:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Matthew Fredette
@@ -1957,7 +1957,7 @@ void
 sunscpal_clear_trace()
 {
 	sunscpal_traceidx = 0;
-	bzero((char*) sunscpal_tracebuf, sizeof(sunscpal_tracebuf));
+	memset((char*) sunscpal_tracebuf, 0, sizeof(sunscpal_tracebuf));
 }
 
 void

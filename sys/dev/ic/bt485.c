@@ -1,4 +1,4 @@
-/* $NetBSD: bt485.c,v 1.3 2000/06/28 17:12:56 mrg Exp $ */
+/* $NetBSD: bt485.c,v 1.4 2001/07/07 16:13:47 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -371,8 +371,8 @@ bt485_set_cursor(rc, cursorp)
 	if (v & WSDISPLAY_CURSOR_DOSHAPE) {
 		data->cursize = cursorp->size;
 		count = (CURSOR_MAX_SIZE / NBBY) * data->cursize.y;
-		bzero(data->curimage, sizeof data->curimage);
-		bzero(data->curmask, sizeof data->curmask);
+		memset(data->curimage, 0, sizeof data->curimage);
+		memset(data->curmask, 0, sizeof data->curmask);
 		copyin(cursorp->image, data->curimage, count);	/* can't fail */
 		copyin(cursorp->mask, data->curmask, count);	/* can't fail */
 		data->changed |= DATA_CURSHAPE_CHANGED;

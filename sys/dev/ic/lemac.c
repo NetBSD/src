@@ -1,4 +1,4 @@
-/* $NetBSD: lemac.c,v 1.21 2001/07/07 15:59:38 thorpej Exp $ */
+/* $NetBSD: lemac.c,v 1.22 2001/07/07 16:13:48 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1997 Matt Thomas <matt@3am-software.com>
@@ -482,7 +482,7 @@ lemac_multicast_filter(
     struct ether_multistep step;
     struct ether_multi *enm;
 
-    bzero(sc->sc_mctbl, LEMAC_MCTBL_BITS / 8);
+    memset(sc->sc_mctbl, 0, LEMAC_MCTBL_BITS / 8);
 
     lemac_multicast_op(sc->sc_mctbl, etherbroadcastaddr, TRUE);
 

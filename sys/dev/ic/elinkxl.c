@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.53 2001/07/07 15:57:51 thorpej Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.54 2001/07/07 16:13:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -284,7 +284,7 @@ ex_config(sc)
 		    sc->sc_dev.dv_xname, error);
 		goto fail;
 	}
-	bzero(sc->sc_dpd, EX_NDPD * sizeof (struct ex_dpd));
+	memset(sc->sc_dpd, 0, EX_NDPD * sizeof (struct ex_dpd));
 
 	attach_stage = 6;
 

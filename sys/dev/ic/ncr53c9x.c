@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.81 2001/07/07 15:53:19 thorpej Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.82 2001/07/07 16:13:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -434,7 +434,7 @@ ncr53c9x_init(sc, doreset)
 
 		TAILQ_INIT(&sc->ready_list);
 		sc->sc_nexus = NULL;
-		bzero(sc->sc_tinfo, sizeof(sc->sc_tinfo));
+		memset(sc->sc_tinfo, 0, sizeof(sc->sc_tinfo));
 		for (r = 0; r < NCR_NTARG; r++) {
 			LIST_INIT(&sc->sc_tinfo[r].luns);
 		}
@@ -794,7 +794,7 @@ ncr53c9x_get_ecb(sc, flags)
 	ecb = (struct ncr53c9x_ecb *)pool_get(&ecb_pool, PR_NOWAIT);
 	splx(s);
 	if (ecb) {
-		bzero(ecb, sizeof(*ecb));
+		memset(ecb, 0, sizeof(*ecb));
 		ecb->flags |= ECB_ALLOC;
 	}
 	return (ecb);
@@ -1070,7 +1070,7 @@ ncr53c9x_sched(sc)
 				splx(s);
 				continue;
 			}
-			bzero(li, sizeof(*li));
+			memset(li, 0, sizeof(*li));
 			li->lun = lun;
 
 			LIST_INSERT_HEAD(&ti->luns, li, link);
@@ -1137,7 +1137,7 @@ ncr53c9x_sense(sc, ecb)
 
 	NCR_MISC(("requesting sense "));
 	/* Next, setup a request sense command block */
-	bzero(ss, sizeof(*ss));
+	memset(ss, 0, sizeof(*ss));
 	ss->opcode = REQUEST_SENSE;
 	ss->byte2 = periph->periph_lun << SCSI_CMD_LUN_SHIFT;
 	ss->length = sizeof(struct scsipi_sense_data);

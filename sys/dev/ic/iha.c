@@ -1,4 +1,4 @@
-/*	$NetBSD: iha.c,v 1.3 2001/06/07 03:44:00 thorpej Exp $ */
+/*	$NetBSD: iha.c,v 1.4 2001/07/07 16:13:48 thorpej Exp $ */
 /*
  * Initio INI-9xxxU/UW SCSI Device Driver
  *
@@ -383,7 +383,7 @@ iha_attach(sc)
 		printf(": cannot allocate SCB\n");
 		return;
 	}
-	bzero(sc->sc_scb, sizeof(struct iha_scsi_req_q) * IHA_MAX_SCB);
+	memset(sc->sc_scb, 0, sizeof(struct iha_scsi_req_q) * IHA_MAX_SCB);
 
 	for (i = 0, scb = sc->sc_scb; i < IHA_MAX_SCB; i++, scb++) {
 		scb->scb_tagid = i;
@@ -553,8 +553,8 @@ tul_append_free_scb(sc, scb)
 	scb->xs = NULL;
 	scb->tcs = NULL;
 
-	bzero(scb->cmd, sizeof(scb->cmd));
-	bzero(scb->sglist, sizeof(scb->sglist));
+	memset(scb->cmd, 0, sizeof(scb->cmd));
+	memset(scb->sglist, 0, sizeof(scb->sglist));
 
 	/*
 	 * scb_tagid, sg_addr, sglist
@@ -2661,7 +2661,7 @@ tul_alloc_sglist(sc)
 		return (error);
 	}
 
-	bzero(sc->sc_sglist, IHA_SG_SIZE * IHA_MAX_SCB);
+	memset(sc->sc_sglist, 0, IHA_SG_SIZE * IHA_MAX_SCB);
 
 	return (0);
 }

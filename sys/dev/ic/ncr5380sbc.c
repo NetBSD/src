@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380sbc.c,v 1.41 2001/06/13 18:27:27 bjh21 Exp $	*/
+/*	$NetBSD: ncr5380sbc.c,v 1.42 2001/07/07 16:13:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -2468,7 +2468,7 @@ void
 ncr5380_clear_trace()
 {
 	ncr5380_traceidx = 0;
-	bzero((char*) ncr5380_tracebuf, sizeof(ncr5380_tracebuf));
+	memset((char*) ncr5380_tracebuf, 0, sizeof(ncr5380_tracebuf));
 }
 
 void

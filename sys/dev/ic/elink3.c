@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.94 2001/07/07 15:57:50 thorpej Exp $	*/
+/*	$NetBSD: elink3.c,v 1.95 2001/07/07 16:13:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -1614,7 +1614,7 @@ epget(sc, totlen)
 		sc->next_mb = (sc->next_mb + 1) % MAX_MBS;
 		m->m_data = m->m_pktdat;
 		m->m_flags = M_PKTHDR;
-		bzero(&m->m_pkthdr, sizeof(m->m_pkthdr));
+		memset(&m->m_pkthdr, 0, sizeof(m->m_pkthdr));
 	}
 	m->m_pkthdr.rcvif = ifp;
 	m->m_pkthdr.len = totlen;

@@ -1,4 +1,4 @@
-/*      $NetBSD: adwmcode.c,v 1.7 2000/06/28 17:12:51 mrg Exp $        */
+/*      $NetBSD: adwmcode.c,v 1.8 2001/07/07 16:13:45 thorpej Exp $        */
 
 /*
  * Generic driver definitions and exported functions for the Advanced
@@ -86,7 +86,7 @@ AdwInitCarriers(carr_dmap, carriers)
 	u_int32_t	carr_next = NULL;
 	int		i;
 
-	bzero(carriers, sizeof(ADW_CARRIER) * ADW_MAX_CARRIER);
+	memset(carriers, 0, sizeof(ADW_CARRIER) * ADW_MAX_CARRIER);
 
 	for(i=0; i < ADW_MAX_CARRIER; i++) {
 		carr = (ADW_CARRIER *)(((u_int8_t *)carriers) +

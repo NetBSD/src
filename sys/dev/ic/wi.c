@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.20 2001/07/07 15:53:22 thorpej Exp $	*/
+/*	$NetBSD: wi.c,v 1.21 2001/07/07 16:13:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -232,7 +232,7 @@ wi_attach(sc)
 	wi_read_record(sc, &gen);
 	sc->wi_channel = le16toh(gen.wi_val);
 
-	bzero((char *)&sc->wi_stats, sizeof(sc->wi_stats));
+	memset((char *)&sc->wi_stats, 0, sizeof(sc->wi_stats));
 
 	/*
 	 * Find out if we support WEP on this card.
@@ -931,7 +931,7 @@ static void wi_setmulti(sc)
 	if ((ifp->if_flags & IFF_PROMISC) != 0) {
 allmulti:
 		ifp->if_flags |= IFF_ALLMULTI;
-		bzero((char *)&mcast, sizeof(mcast));
+		memset((char *)&mcast, 0, sizeof(mcast));
 		mcast.wi_type = WI_RID_MCAST;
 		mcast.wi_len = ((ETHER_ADDR_LEN / 2) * 16) + 1;
 
@@ -1222,7 +1222,7 @@ wi_ioctl(ifp, command, data)
 		} else if (wreq.wi_type == WI_RID_DEFLT_CRYPT_KEYS) {
 			/* For non-root user, return all-zeroes keys */
 			if (suser(p->p_ucred, &p->p_acflag))
-				bzero((char *)&wreq,
+				memset((char *)&wreq, 0,
 				    sizeof(struct wi_ltv_keys));
 			else
 				memcpy((char *)&wreq, (char *)&sc->wi_keys,
@@ -1470,7 +1470,7 @@ wi_start(ifp)
 	if (m0 == NULL)
 		return;
 
-	bzero((char *)&tx_frame, sizeof(tx_frame));
+	memset((char *)&tx_frame, 0, sizeof(tx_frame));
 	id = sc->wi_tx_data_id;
 	eh = mtod(m0, struct ether_header *);
 
@@ -1555,7 +1555,7 @@ wi_mgmt_xmit(sc, data, len)
 	hdr = (struct wi_80211_hdr *)data;
 	dptr = data + sizeof(struct wi_80211_hdr);
 
-	bzero((char *)&tx_frame, sizeof(tx_frame));
+	memset((char *)&tx_frame, 0, sizeof(tx_frame));
 	id = sc->wi_tx_mgmt_id;
 
 	memcpy((char *)&tx_frame.wi_frame_ctl, (char *)hdr,

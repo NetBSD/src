@@ -169,8 +169,8 @@ daic_attach(self, sc)
 	num_ports = sc->sc_cardtype == DAIC_TYPE_QUAD ? 4 : 1;
 
 	/* init sc */
-	bzero(sc->sc_assign_res, sizeof sc->sc_assign_res);
-	bzero(sc->sc_assign, sizeof sc->sc_assign);
+	memset(sc->sc_assign_res, 0, sizeof sc->sc_assign_res);
+	memset(sc->sc_assign, 0, sizeof sc->sc_assign);
 	for (i = 0; i < num_ports; i++) {
 		sc->sc_state[i] = DAIC_STATE_COLD;
 	}
