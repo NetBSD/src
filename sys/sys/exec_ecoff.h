@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: exec_ecoff.h,v 1.2 1994/05/27 15:30:45 glass Exp $
+ *	$Id: exec_ecoff.h,v 1.3 1994/05/28 20:21:33 glass Exp $
  */
 
 #ifndef	_SYS_EXEC_ECOFF_H_
@@ -76,12 +76,27 @@ struct ecoff_scnhdr {		/* needed for size info */
 			sizeof(struct ecoff_aouthdr))
 
 #define ECOFF_OMAGIC 0407
+#define ECOFF_NMAGIC 0410
 #define ECOFF_ZMAGIC 0413
+
+#define ECOFF_ROUND(value, by) \
+        (((value) + by - 1) & ~(by - 1))
+
+#define ECOFF_BLOCK_ALIGN(eap, value) \
+        (eap->ea_magic == ECOFF_ZMAGIC ? ECOFF_ROUND(value, ECOFF_LDPGSZ) : \
+	 value)
 
 #define ECOFF_TXTOFF(efp, eap) \
         (eap->ea_magic == ECOFF_ZMAGIC ? 0 : \
-	 ((ECOFF_HDR_SIZE + efp->ef_nsecs * sizeof(struct ecoff_scnhdr) + \
-	   ECOFF_TXTOFF_ROUND(eap)) & ~ECOFF_TXTOFF_ROUND(eap)))
+	 ECOFF_ROUND(ECOFF_HDR_SIZE + efp->ef_nsecs * \
+		     sizeof(struct ecoff_scnhdr),ECOFF_SEGMENT_ALIGNMENT(eap)))
+
+#define ECOFF_DATOFF(efp, eap) \
+        (ECOFF_BLOCK_ALIGN(eap, ECOFF_TXTOFF(efp, eap) + eap->ea_tsize))
+
+#define ECOFF_SEGMENT_ALIGN(eap, value) \
+        (ECOFF_ROUND(value, (eap->ea_magic == ECOFF_ZMAGIC ? ECOFF_LDPGSZ : \
+         ECOFF_SEGMENT_ALIGNMENT(eap))))
 
 #ifdef KERNEL
 int	exec_ecoff_makecmds __P((struct proc *, struct exec_package *));
