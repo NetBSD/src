@@ -1,3 +1,4 @@
+/*	$NetBSD: qop_wfq.c,v 1.3 2001/08/16 07:48:15 itojun Exp $	*/
 /*	$KAME: qop_wfq.c,v 1.3 2000/10/18 09:15:20 kjc Exp $	*/
 /*
  * Copyright (C) 1999-2000

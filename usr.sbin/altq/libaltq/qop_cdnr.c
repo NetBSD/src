@@ -1,3 +1,4 @@
+/*	$NetBSD: qop_cdnr.c,v 1.3 2001/08/16 07:48:13 itojun Exp $	*/
 /*	$KAME: qop_cdnr.c,v 1.7 2001/08/15 12:51:57 kjc Exp $	*/
 /*
  * Copyright (C) 1999-2000
