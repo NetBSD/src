@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_attr.c,v 1.2 2004/04/21 01:05:36 christos Exp $ */
+/*	$NetBSD: darwin_attr.c,v 1.3 2004/05/02 12:32:22 pk Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_attr.c,v 1.2 2004/04/21 01:05:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_attr.c,v 1.3 2004/05/02 12:32:22 pk Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -194,9 +194,7 @@ darwin_sys_getattrlist(l, v, retval)
 	 * vnode structure
 	 */
 
-	cred = crget();
-	(void)memcpy(cred, p->p_ucred, sizeof(*cred));
-	cred->cr_ref = 1;
+	cred = crdup(p->p_ucred);
 	cred->cr_uid = p->p_cred->p_ruid;
 	cred->cr_gid = p->p_cred->p_rgid;
 
