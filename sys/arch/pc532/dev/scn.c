@@ -1,4 +1,4 @@
-/*	$NetBSD: scn.c,v 1.59 2002/11/22 13:26:39 simonb Exp $ */
+/*	$NetBSD: scn.c,v 1.60 2003/06/24 04:57:59 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Philip L. Budne.
@@ -48,6 +48,7 @@
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
+#include "opt_cpu30mhz.h"
 #include "scn.h"
 
 #include <sys/param.h>
