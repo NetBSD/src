@@ -1,9 +1,8 @@
 /* TODO
 Add intrinfo.
 Indicator light bit.
-Check 7.1.7.3
 */
-/*	$NetBSD: ehci.c,v 1.13 2001/11/20 16:08:10 augustss Exp $	*/
+/*	$NetBSD: ehci.c,v 1.14 2001/11/20 16:25:35 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -52,7 +51,7 @@ Check 7.1.7.3
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.13 2001/11/20 16:08:10 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.14 2001/11/20 16:25:35 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1301,6 +1300,15 @@ ehci_root_ctrl_start(usbd_xfer_handle xfer)
 		case UHF_PORT_POWER:
 			EOWRITE4(sc, port, v &~ EHCI_PS_PP);
 			break;
+		case UHF_PORT_TEST:
+			DPRINTFN(2,("ehci_root_ctrl_transfer: clear port test "
+				    "%d\n", index));
+			break;
+		case UHF_PORT_INDICATOR:
+			DPRINTFN(2,("ehci_root_ctrl_transfer: clear port ind "
+				    "%d\n", index));
+			EOWRITE4(sc, port, v &~ EHCI_PS_PIC);
+			break;
 		case UHF_C_PORT_CONNECTION:
 			EOWRITE4(sc, port, v | EHCI_PS_CSC);
 			break;
@@ -1345,7 +1353,9 @@ ehci_root_ctrl_start(usbd_xfer_handle xfer)
 		hubd.bNbrPorts = sc->sc_noport;
 		v = EOREAD4(sc, EHCI_HCSPARAMS);
 		USETW(hubd.wHubCharacteristics,
-		      EHCI_HCS_PPC(v) ? UHD_PWR_INDIVIDUAL : UHD_PWR_NO_SWITCH);
+		    EHCI_HCS_PPC(v) ? UHD_PWR_INDIVIDUAL : UHD_PWR_NO_SWITCH |
+		    EHCI_HCS_P_INCICATOR(EREAD4(sc, EHCI_HCSPARAMS))
+		        ? UHD_PORT_IND : 0);
 		hubd.bPwrOn2PwrGood = 200; /* XXX can't find out? */
 		for (i = 0, l = sc->sc_noport; l > 0; i++, l -= 8, v >>= 8) 
 			hubd.DeviceRemovable[i++] = 0; /* XXX can't find out? */
@@ -1458,7 +1468,7 @@ ehci_root_ctrl_start(usbd_xfer_handle xfer)
 		case UHF_PORT_INDICATOR:
 			DPRINTFN(2,("ehci_root_ctrl_transfer: set port ind "
 				    "%d\n", index));
-			/* XXX */
+			EOWRITE4(sc, port, v | EHCI_PS_PIC);
 			break;
 		default:
 			err = USBD_IOERROR;
