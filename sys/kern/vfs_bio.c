@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.134 2004/10/03 08:47:48 enami Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.135 2004/10/04 00:46:05 enami Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -81,7 +81,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.134 2004/10/03 08:47:48 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.135 2004/10/04 00:46:05 enami Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,6 +118,7 @@ u_int	bufcache = BUFCACHE;	/* max % of RAM to use for buffer cache */
 /* Function prototypes */
 struct bqueue;
 
+static void buf_setwm(void);
 static int buf_trim(void);
 static void *bufpool_page_alloc(struct pool *, int);
 static void bufpool_page_free(struct pool *, void *);
@@ -249,6 +250,20 @@ buf_setvalimit(vsize_t sz)
 	return 0;
 }
 
+static void
+buf_setwm(void)
+{
+
+	bufmem_hiwater = buf_memcalc();
+	/* lowater is approx. 2% of memory (with bufcache = 15) */
+#define	BUFMEM_WMSHIFT	3
+#define	BUFMEM_HIWMMIN	(64 * 1024 << BUFMEM_WMSHIFT)
+	if (bufmem_hiwater < BUFMEM_HIWMMIN)
+		/* Ensure a reasonable minimum value */
+		bufmem_hiwater = BUFMEM_HIWMMIN;
+	bufmem_lowater = bufmem_hiwater >> BUFMEM_WMSHIFT;
+}
+
 #ifdef DEBUG
 int debug_verify_freelist = 0;
 static int
@@ -356,12 +371,7 @@ bufinit(void)
 	 * Initialize buffer cache memory parameters.
 	 */
 	bufmem = 0;
-	bufmem_hiwater = buf_memcalc();
-	/* lowater is approx. 2% of memory (with bufcache=15) */
-	bufmem_lowater = (bufmem_hiwater >> 3);
-	if (bufmem_lowater < 64 * 1024)
-		/* Ensure a reasonable minimum value */
-		bufmem_lowater = 64 * 1024;
+	buf_setwm();
 
 	if (bufmem_valimit != 0) {
 		vaddr_t minaddr = 0, maxaddr;
@@ -1601,12 +1611,7 @@ sysctl_bufvm_update(SYSCTLFN_ARGS)
 		if (t < 0 || t > 100)
 			return (EINVAL);
 		bufcache = t;
-		bufmem_hiwater = buf_memcalc();
-		bufmem_lowater = (bufmem_hiwater >> 3);
-		if (bufmem_lowater < 64 * 1024) 
-			/* Ensure a reasonable minimum value */
-			bufmem_lowater = 64 * 1024;
-
+		buf_setwm();
 	} else if (rnode->sysctl_data == &bufmem_lowater) {
 		bufmem_lowater = t;
 	} else if (rnode->sysctl_data == &bufmem_hiwater) {
