@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.84 2000/06/29 07:14:33 mrg Exp $	   */
+/*	$NetBSD: pmap.c,v 1.85 2000/07/19 21:08:06 ragge Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -749,7 +749,7 @@ if (startpmapdebug)
 	/* No mapping change. Can this happen??? */
 	if (newpte == oldpte) {
 		RECURSEEND;
-		mtpr(1, PR_TBIA); /* Always; safety belt */
+		mtpr(0, PR_TBIA); /* Always; safety belt */
 		return (KERN_SUCCESS);
 	}
 
@@ -808,7 +808,7 @@ if (startpmapdebug)
 	if (pventries < 10)
 		more_pventries();
 
-	mtpr(1, PR_TBIA); /* Always; safety belt */
+	mtpr(0, PR_TBIA); /* Always; safety belt */
 	return (KERN_SUCCESS);
 }
 
@@ -985,7 +985,7 @@ if(startpmapdebug) printf("pmap_protect: pmap %p, start %lx, end %lx, prot %x\n"
 		pts += LTOHPN;
 	}
 	RECURSEEND;
-	mtpr(1, PR_TBIA);
+	mtpr(0, PR_TBIA);
 }
 
 int pmap_simulref(int bits, int addr);
@@ -1098,7 +1098,7 @@ pmap_clear_reference(pg)
 		    pv->pv_pte[4].pg_v = pv->pv_pte[5].pg_v = 
 		    pv->pv_pte[6].pg_v = pv->pv_pte[7].pg_v = 0;
 	RECURSEEND;
-	mtpr(1, PR_TBIA);
+	mtpr(0, PR_TBIA);
 	return TRUE; /* XXX */
 }
 
