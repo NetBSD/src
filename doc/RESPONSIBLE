@@ -1,4 +1,4 @@
-#	$NetBSD: RESPONSIBLE,v 1.48 2005/02/19 16:55:04 thorpej Exp $
+#	$NetBSD: RESPONSIBLE,v 1.49 2005/03/21 23:39:11 dyoung Exp $
 
 List of sections of the system, and who is responsible for them (or at
 least considered an expert on them).
@@ -91,6 +91,7 @@ irda		augustss, kenh
 isdn		martin
 firewire	jmc
 mca		jdolecek
+net80211	dyoung
 podulebus	bjh21
 scsi		mycroft, bouyer, thorpej
 raid(hard)	ad
@@ -106,9 +107,12 @@ eap		pooka
 
 network device drivers:
 
+ath		dyoung
+atw		dyoung
 bge		fvdl, jonathan, thorpej
 gsip		thorpej
 mb86960		tsutsui
+rtw		dyoung
 seeq8005	bjh21
 tl		bouyer
 ti		bouyer
