@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mac68k,v 1.57.2.1 1997/11/12 23:45:34 thorpej Exp $
+#	$NetBSD: Makefile.mac68k,v 1.57.2.2 1997/11/26 04:00:39 mellon Exp $
 
 # Makefile for NetBSD
 #
@@ -158,12 +158,10 @@ SRCS=	${MAC68K}/mac68k/locore.s \
 	param.c ioconf.c ${CFILES} ${SFILES}
 depend: .depend
 .depend: ${SRCS} assym.h param.c
-	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${MAC68K}/mac68k/locore.s
+	${MKDEP} -x assembler-with-cpp ${AFLAGS} ${CPPFLAGS} \
+	    ${MAC68K}/mac68k/locore.s
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
-	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
-	-if test -n "${SFILES}"; then \
-		${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}; \
-	fi
+	${MKDEP} -a -x assembler-with-cpp ${AFLAGS} ${CPPFLAGS} ${SFILES}
 	sh $S/kern/genassym.sh ${MKDEP} -f assym.dep ${CFLAGS} \
 	  ${CPPFLAGS} < ${MAC68K}/mac68k/genassym.cf
 	@sed -e 's/.*\.o:.*\.c/assym.h:/' < assym.dep >> .depend
