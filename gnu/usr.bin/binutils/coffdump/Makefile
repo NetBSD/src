@@ -1,13 +1,7 @@
-#	$NetBSD: Makefile,v 1.1 2002/06/18 08:21:59 itojun Exp $
+#	$NetBSD: Makefile,v 1.2 2002/09/16 16:22:18 thorpej Exp $
 
 PROG=		coffdump
 
 .include <bsd.own.mk>
-.if defined(USE_NEW_TOOLCHAIN)
-.include "${.CURDIR}/../common/Makefile.prog"
-.else
-SRCS=		coffdump.c coffgrok.c
-NOMAN=		yes
 
-.include <bsd.prog.mk>
-.endif
+.include "${.CURDIR}/../common/Makefile.prog"
