@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)siop.c	7.5 (Berkeley) 5/4/91
- *	$Id: siop.c,v 1.15 1994/06/27 04:56:29 chopps Exp $
+ *	$Id: siop.c,v 1.16 1994/07/18 08:06:40 chopps Exp $
  */
 
 /*
@@ -261,6 +261,8 @@ int	siopsync_debug = 0;
 int	siopdma_hits = 0;
 int	siopdma_misses = 0;
 int	siopchain_ints = 0;
+#else
+#define QPRINTF(a)
 #endif
 
 
