@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ste.c,v 1.7 2001/11/13 07:48:44 lukem Exp $	*/
+/*	$NetBSD: if_ste.c,v 1.8 2002/06/01 17:20:13 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ste.c,v 1.7 2001/11/13 07:48:44 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ste.c,v 1.8 2002/06/01 17:20:13 bouyer Exp $");
 
 #include "bpfilter.h"
 
@@ -1263,8 +1263,19 @@ ste_init(struct ifnet *ifp)
 	/*
 	 * Initialize the interrupt mask.
 	 */
+# if 0
 	sc->sc_IntEnable = IE_HostError | IE_TxComplete | IE_UpdateStats |
 	    IE_TxDMAComplete | IE_RxDMAComplete;
+#else
+	/*
+	 * On a Dlink DFE580-TX (DL-1002), attempting to transmit packets
+	 * while the link is down cause the chip to create an IE_UpdateStats
+	 * condition which can't be cleared, causing the driver to enter
+	 * an interrupt loop. workaround: mask IE_UpdateStats
+	 */
+	sc->sc_IntEnable = IE_HostError | IE_TxComplete | /*IE_UpdateStats |*/
+	    IE_TxDMAComplete | IE_RxDMAComplete;
+#endif
 	bus_space_write_2(st, sh, STE_IntStatus, 0xffff);
 	bus_space_write_2(st, sh, STE_IntEnable, sc->sc_IntEnable);
 
