@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.136 2000/05/02 11:44:20 simonb Exp $
+#	$NetBSD: bsd.own.mk,v 1.136.4.1 2000/06/24 06:59:38 thorpej Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -11,12 +11,6 @@ _BSD_OWN_MK_=1
 
 # Defining `SKEY' causes support for S/key authentication to be compiled in.
 SKEY=		yes
-# Defining `KERBEROS' causes support for Kerberos authentication to be
-# compiled in.
-#KERBEROS=	yes
-# Defining 'KERBEROS5' causes support for Kerberos5 authentication to be
-# compiled in.
-#KERBEROS5=	yes
 
 # where the system object and source trees are kept; can be configurable
 # by the user in case they want them in ~/foosrc and ~/fooobj, for example
@@ -255,5 +249,34 @@ MKMAN=no
 MKNLS=no
 .endif
 
+.if defined(NOCRYPTO)
+MKCRYPTO=no
+.else
+MKCRYPTO?=yes
+.endif
+
+.if defined(NOCRYPTO_RSA)
+MKCRYPTO_RSA=no
+.else
+MKCRYPTO_RSA?=yes
+.endif
+
+.if defined(NOCRYPTO_IDEA)
+MKCRYPTO_IDEA=no
+.else
+MKCRYPTO_IDEA?=yes
+.endif
+
+.if defined(NOCRYPTO_RC5)
+MKCRYPTO_RC5=no
+.else
+MKCRYPTO_RC5?=yes
+.endif
+
+.if defined(NOKERBEROS) || (${MKCRYPTO} == "no")
+MKKERBEROS=no
+.else
+MKKERBEROS?=yes
+.endif
 
 .endif		# _BSD_OWN_MK_

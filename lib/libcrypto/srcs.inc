@@ -7,11 +7,7 @@
 .include "cast.inc"
 .include "comp.inc"
 .include "conf.inc"
-
 .include "des.inc"
-# NetBSD local addition to des library.
-SRCS+=	rnd_keys.c
-
 .include "dh.inc"
 .include "dsa.inc"
 .include "err.inc"
@@ -34,8 +30,15 @@ SRCS+=	rnd_keys.c
 .include "txt_db.inc"
 .include "x509.inc"
 .include "x509v3.inc"
-.if !defined(USELESS_CRYPTO)
+
+.if (${MKCRYPTO_RSA} != "no")
 .include "rsa.inc"
-.include "rc5.inc"
+.endif
+
+.if (${MKCRYPTO_IDEA} != "no")
 .include "idea.inc"
+.endif
+
+.if (${MKCRYPTO_RC5} != "no")
+.include "rc5.inc"
 .endif

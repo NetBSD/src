@@ -1,8 +1,14 @@
-#	$NetBSD: Makefile,v 1.31 2000/06/16 16:33:06 thorpej Exp $
+#	$NetBSD: Makefile,v 1.31.2.1 2000/06/24 06:59:31 thorpej Exp $
+
+.include <bsd.own.mk>
 
 PROG=	ed
 CPPFLAGS+=-DBACKWARDS
+
+.if (${MKCRYPTO} != "no")
 CPPFLAGS+=-DDES
+.endif
+
 SRCS=	buf.c cbc.c glbl.c io.c main.c re.c sub.c undo.c
 
 LDADD+= -lcrypt
