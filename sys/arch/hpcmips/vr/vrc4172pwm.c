@@ -1,4 +1,4 @@
-/*	$Id: vrc4172pwm.c,v 1.8 2001/02/27 08:48:38 sato Exp $	*/
+/*	$Id: vrc4172pwm.c,v 1.9 2001/03/06 03:14:39 sato Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 SATO Kazumi. All rights reserved.
@@ -95,6 +95,13 @@ struct vrc4172pwm_param vrc4172pwm_mcr700_param = {
 	{ 0x12, 0x15, 0x18, 0x1d, 0x24, 0x2d, 0x38, 0x3f }
 };
 
+struct vrc4172pwm_param vrc4172pwm_sigmarion_param = {
+	0,
+	8,
+	{ 0xe, 0x13, 0x18, 0x1c, 0x23, 0x29, 0x32, 0x3f }
+};
+
+
 struct platid_data vrc4172pwm_platid_param_table[] = {
 	{ &platid_mask_MACH_NEC_MCR_430, 
 		&vrc4172pwm_mcr530_param},
@@ -103,7 +110,7 @@ struct platid_data vrc4172pwm_platid_param_table[] = {
 	{ &platid_mask_MACH_NEC_MCR_530A, 
 		&vrc4172pwm_mcr530_param},
 	{ &platid_mask_MACH_NEC_MCR_SIGMARION, 
-		&vrc4172pwm_mcr530_param},
+		&vrc4172pwm_sigmarion_param},
 	{ &platid_mask_MACH_NEC_MCR_700, 
 		&vrc4172pwm_mcr700_param},
 	{ &platid_mask_MACH_NEC_MCR_700A, 
