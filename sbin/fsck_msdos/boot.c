@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.1 1996/05/14 17:39:28 ws Exp $	*/
+/*	$NetBSD: boot.c,v 1.2 1996/09/23 16:27:57 christos Exp $	*/
 
 /*
  * Copyright (C) 1995 Wolfgang Solfrank
@@ -34,7 +34,7 @@
 
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: boot.c,v 1.1 1996/05/14 17:39:28 ws Exp $";
+static char rcsid[] = "$NetBSD: boot.c,v 1.2 1996/09/23 16:27:57 christos Exp $";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -44,6 +44,7 @@ static char rcsid[] = "$NetBSD: boot.c,v 1.1 1996/05/14 17:39:28 ws Exp $";
 #include <unistd.h>
 
 #include "ext.h"
+#include "util.h"
 
 int
 readboot(dosfs, boot)

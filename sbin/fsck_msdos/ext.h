@@ -1,4 +1,4 @@
-/*	$NetBSD: ext.h,v 1.3 1996/05/28 19:51:24 ws Exp $	*/
+/*	$NetBSD: ext.h,v 1.4 1996/09/23 16:27:59 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank
@@ -56,11 +56,7 @@ extern struct dosDirEntry *rootDir;
 /* 
  * function declarations
  */
-void errexit __P((const char *, ...));
-void pfatal __P((const char *, ...));
-void pwarn __P((const char *, ...));
 int ask __P((int, const char *, ...));
-void perror __P((const char *));
 
 /*
  * Check filesystem given as arg

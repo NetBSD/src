@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.5 1996/09/17 15:34:05 ws Exp $	*/
+/*	$NetBSD: dir.c,v 1.6 1996/09/23 16:27:58 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank
@@ -36,7 +36,7 @@
 
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: dir.c,v 1.5 1996/09/17 15:34:05 ws Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.6 1996/09/23 16:27:58 christos Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -50,6 +50,7 @@ static char rcsid[] = "$NetBSD: dir.c,v 1.5 1996/09/17 15:34:05 ws Exp $";
 #include <sys/param.h>
 
 #include "ext.h"
+#include "util.h"
 
 #define	SLOT_EMPTY	0x00		/* slot has never been used */
 #define	SLOT_E5		0x05		/* the real value is 0xe5 */
@@ -88,6 +89,23 @@ static char rcsid[] = "$NetBSD: dir.c,v 1.5 1996/09/17 15:34:05 ws Exp $";
 #define DD_MONTH_SHIFT		5
 #define DD_YEAR_MASK		0xFE00	/* year - 1980 */
 #define DD_YEAR_SHIFT		9
+
+
+/* dir.c */
+static struct dosDirEntry *newDosDirEntry __P((void));
+static void freeDosDirEntry __P((struct dosDirEntry *));
+static struct dirTodoNode *newDirTodo __P((void));
+static void freeDirTodo __P((struct dirTodoNode *));
+static char *fullpath __P((struct dosDirEntry *));
+static u_char calcShortSum __P((u_char *));
+static int delete __P((int, struct bootblock *, struct fatEntry *, cl_t, int,
+    cl_t, int, int));
+static int removede __P((int, struct bootblock *, struct fatEntry *, u_char *,
+    u_char *, cl_t, cl_t, cl_t, char *, int));
+static int checksize __P((struct bootblock *, struct fatEntry *, u_char *,
+    struct dosDirEntry *));
+static int readDosDirSection __P((int, struct bootblock *, struct fatEntry *,
+    struct dosDirEntry *));
 
 /*
  * Manage free dosDirEntry structures.
@@ -366,7 +384,7 @@ checksize(boot, fat, p, dir)
 		physicalSize = fat[dir->head].length * boot->ClusterSize;
 	}
 	if (physicalSize < dir->size) {
-		pwarn("size of %s is %lu, should at most be %lu\n",
+		pwarn("size of %s is %u, should at most be %u\n",
 		      fullpath(dir), dir->size, physicalSize);
 		if (ask(1, "Truncate")) {
 			dir->size = physicalSize;
@@ -470,7 +488,7 @@ readDosDirSection(f, boot, fat, dir)
 						dir->fsckflags &= ~DIREMPTY;
 						if (delete(f, boot, fat,
 							   empcl, empty - buffer,
-							   cl, p - buffer) == FSFATAL)
+							   cl, p - buffer, 0) == FSFATAL)
 							return FSFATAL;
 					} else if (ask(0, "Truncate"))
 						dir->fsckflags |= DIREMPWARN;

@@ -1,4 +1,4 @@
-/*	$NetBSD: fat.c,v 1.2 1996/05/28 19:51:30 ws Exp $	*/
+/*	$NetBSD: fat.c,v 1.3 1996/09/23 16:28:00 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank
@@ -34,7 +34,7 @@
 
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: fat.c,v 1.2 1996/05/28 19:51:30 ws Exp $";
+static char rcsid[] = "$NetBSD: fat.c,v 1.3 1996/09/23 16:28:00 christos Exp $";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -44,6 +44,10 @@ static char rcsid[] = "$NetBSD: fat.c,v 1.2 1996/05/28 19:51:30 ws Exp $";
 #include <unistd.h>
 
 #include "ext.h"
+#include "util.h"
+
+static int checkclnum __P((struct bootblock *, int, cl_t, cl_t *));
+static int clustdiffer __P((cl_t, cl_t *, cl_t *, int));
 
 /*
  * Check a cluster number for valid value
