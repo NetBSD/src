@@ -1,4 +1,4 @@
-.\" $NetBSD: main,v 1.6.2.23 2000/02/24 23:02:48 he Exp $
+.\" $NetBSD: main,v 1.6.2.24 2000/04/30 12:20:32 he Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -237,6 +237,20 @@ In addition, many, many bugs have been fixed -- more than 100
 problems reported through our problem tracking system have been
 fixed, and many other non-reported problems have also been found
 and fixed.  See the CHANGES-1.4.2 file for the complete list.
+.Ss Known caveats with 1.4.3
+The following are the major known issues with
+.Nx
+1.4.3.
+.Bl -bullet
+.It
+As part s part of fixing a kernel bug, ``struct proc'' needed to change
+size.  This will unfortunately, and contrary to tradition for patch
+releases cause incompatibilities for users of
+.Dq kernel-grovellers
+such as top, ps, w, or corresponding binary packages., and these
+need to be upgraded shortly after a kernel upgrade to work as
+advertised.
+.El
 .Ss Known caveats with 1.4.2
 The following are the major known issues with
 .Nx
