@@ -83,3 +83,8 @@ value, leading to wrong transfer counts in certain situations. Fix this.
 [kernel/amiga]: Fix the Cybervision driver, which used to fail on boards with
 new revisions of the S3 chipset.
 
+[kernel/generic]: Fix the hardware independent ARCnet driver, which
+could cause the kernel to panic if the interface was ifconfig'd down
+right before the IP layer tried to output through it.
+
+
