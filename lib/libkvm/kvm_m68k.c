@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_m68k.c,v 1.13 1997/10/28 16:52:25 gwr Exp $	*/
+/*	$NetBSD: kvm_m68k.c,v 1.14 1998/01/17 15:14:03 veego Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  * kvm_m68k_cmn.c kvm_sun3.c ...
  *
  * Note: This file has to build on ALL m68k machines,
- * so do NOT include any <machine/*.h> files here.
+ * so do NOT include any <machine/[*].h> files here.
  */
 
 #include <sys/param.h>
