@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char sccsid[] = "from: @(#)login.c	5.4 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: login.c,v 1.2 1993/08/01 18:31:54 mycroft Exp $";
+static char rcsid[] = "$Id: login.c,v 1.3 1994/04/01 03:06:40 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -47,11 +47,10 @@ login(ut)
 {
 	register int fd;
 	int tty;
-	off_t lseek();
 
 	tty = ttyslot();
 	if (tty > 0 && (fd = open(_PATH_UTMP, O_WRONLY|O_CREAT, 0644)) >= 0) {
-		(void)lseek(fd, (long)(tty * sizeof(struct utmp)), L_SET);
+		(void)lseek(fd, (off_t)(tty * sizeof(struct utmp)), L_SET);
 		(void)write(fd, (char *)ut, sizeof(struct utmp));
 		(void)close(fd);
 	}
