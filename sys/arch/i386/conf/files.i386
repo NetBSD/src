@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.109 1998/02/22 08:21:33 mycroft Exp $
+#	$NetBSD: files.i386,v 1.110 1998/03/04 06:40:29 cgd Exp $
 #
 # new style config file for i386 architecture
 #
@@ -94,6 +94,7 @@ file	arch/i386/i386/bioscall.s	bioscall needs-flag
 
 include "dev/pci/files.pci"
 file	arch/i386/pci/pci_machdep.c	pci
+file	arch/i386/pci/pciide_machdep.c	pciide
 
 # PCI-Host bridge chipsets
 device	pchb: pcibus
@@ -118,6 +119,17 @@ include "dev/isa/files.isa"
 major	{mcd = 7}
 #major	{scd = 15}
 major	{wt = 3}
+
+# XXX THE FOLLOWING BLOCK SHOULD GO INTO dev/pci/files.pci, BUT CANNOT
+# XXX BECAUSE NOT ALL PORTS USE THE MI DRIVER YET.  (when the conf/files
+# XXX and files.isa bogons are fixed, this can be fixed as well.)
+
+# PCI IDE controllers
+device	pciide {[channel = -1]}
+attach	pciide at pci
+file	dev/pci/pciide.c		pciide
+attach	wdc at pciide with wdc_pciide
+file	dev/pci/wdc_pciide.c		wdc_pciide
 
 file	arch/i386/isa/isa_machdep.c	isa
 
