@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.65 1997/08/04 09:29:56 augustss Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.66 1997/08/11 01:08:13 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -179,6 +179,8 @@ int	sbdsp16_set_rate __P((struct sbdsp_softc *, int, int));
 int	sbdsp_set_in_ports __P((struct sbdsp_softc *, int));
 void	sbdsp_set_ifilter __P((void *, int));
 int	sbdsp_get_ifilter __P((void *));
+
+static	int sbdsp_adjust __P((int, int));
 
 #ifdef AUDIO_DEBUG
 void sb_printsc __P((struct sbdsp_softc *));
@@ -1528,6 +1530,18 @@ sbdsp_midi_output(sc, v)
 		++sberr.wmidi;
 }
 #endif
+
+/* Mask a value 0-255, but round it first */
+#define MAXVAL 256
+static int
+sbdsp_adjust(val, mask)
+	int val, mask;
+{
+	val += (MAXVAL - mask) >> 1;
+	if (val >= MAXVAL)
+		val = MAXVAL-1;
+	return val & mask;
+}
 
 void
 sbdsp_set_mixer_gain(sc, port)

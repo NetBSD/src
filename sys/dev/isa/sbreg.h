@@ -1,4 +1,4 @@
-/*	$NetBSD: sbreg.h,v 1.22 1997/07/31 22:33:40 augustss Exp $	*/
+/*	$NetBSD: sbreg.h,v 1.23 1997/08/11 01:08:15 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -135,9 +135,11 @@
 
 #define SB_STEREO_GAIN(left, right) ((left) | ((right) >> 4))
 #define SB_MIC_GAIN(v) ((v) >> 5)
-#define SB_ADJUST_MIC_GAIN(sc, x) (ISSB16CLASS(sc) ? (x) & 0xf8 : (x) & 0xc0)
-#define SB_ADJUST_GAIN(sc, x) (ISSB16CLASS(sc) ? (x) & 0xf8 : (x) & 0xe0)
-#define SB_ADJUST_2_GAIN(sc, x) (x & 0xc0)
+
+#define SB_ADJUST_MIC_GAIN(sc, x) sbdsp_adjust((x), ISSB16CLASS(sc) ? 0xf8 : 0xc0)
+#define SB_ADJUST_GAIN(sc, x)     sbdsp_adjust((x), ISSB16CLASS(sc) ? 0xf8 : 0xe0)
+#define SB_ADJUST_2_GAIN(sc, x)   sbdsp_adjust((x), 0xc0)
+
 #define SB_1335_GAIN(x) ((x) >> 4)
 #define SB_1335_MASTER_GAIN(x) ((x) >> 5)
 
