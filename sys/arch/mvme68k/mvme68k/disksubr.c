@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.21 2001/07/07 07:51:38 scw Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.22 2002/02/19 17:09:46 wiz Exp $	*/
 
 /*
  * Copyright (c) 1995 Dale Rahn.
@@ -61,7 +61,7 @@ static void printclp __P((struct cpu_disklabel *clp, char *str));
 
 /*
  * Attempt to read a disk label from a device
- * using the indicated stategy routine.
+ * using the indicated strategy routine.
  * The label must be partly set up before this:
  * secpercyl and anything required in the strategy routine
  * (e.g., sector size) must be filled in before calling us.

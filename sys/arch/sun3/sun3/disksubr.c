@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.28 2001/10/27 18:32:35 he Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.29 2002/02/19 17:09:49 wiz Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -62,7 +62,7 @@ static int disklabel_bsd_to_sun(struct disklabel *, char *);
 
 /*
  * Attempt to read a disk label from a device
- * using the indicated stategy routine.
+ * using the indicated strategy routine.
  * The label must be partly set up before this:
  * secpercyl, secsize and anything required for a block i/o read
  * operation in the driver's strategy/start routines
