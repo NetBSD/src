@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.21 2002/01/19 18:59:21 oster Exp $
+#	$NetBSD: MAKEDEV,v 1.22 2002/01/21 16:19:23 abs Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -79,7 +79,7 @@ do
 case $i in
 
 all)
-	sh $0 std fd sd0 sd1 sd2 sd3 cd0 st0 st1
+	sh $0 std wscons fd sd0 sd1 sd2 sd3 cd0 st0 st1
 	sh $0 pty0 pty1 pty2 pty3 tty0 tty1
 	sh $0 vnd0 vnd1 vnd2 vnd3 ccd0 ccd1 ccd2 ccd3 md0 md1
 	sh $0 tun0 tun1 tun2 tun3 
@@ -87,7 +87,7 @@ all)
 	sh $0 bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7
 	sh $0 scsibus0 scsibus1 scsibus2 scsibus3
 	sh $0 ipl raid0 raid1 raid2 raid3
-	sh $0 lkm random wscons local
+	sh $0 lkm random local
 	sh $0 clockctl
 	;;
 
