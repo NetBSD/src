@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.43 1999/07/23 08:56:14 veego Exp $	*/
+/*	$NetBSD: print.c,v 1.44 1999/10/11 09:18:09 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.43 1999/07/23 08:56:14 veego Exp $");
+__RCSID("$NetBSD: print.c,v 1.44 1999/10/11 09:18:09 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -362,7 +362,8 @@ tname(k, ve)
 	if (dev == NODEV || (ttname = devname(dev, S_IFCHR)) == NULL)
 		(void)printf("%-*s", v->width, "??");
 	else {
-		if (strncmp(ttname, "tty", 3) == 0)
+		if (strncmp(ttname, "tty", 3) == 0 ||
+		    strncmp(ttname, "dty", 3) == 0)
 			ttname += 3;
 		(void)printf("%*.*s%c", v->width-1, v->width-1, ttname,
 			KI_EPROC(k)->e_flag & EPROC_CTTY ? ' ' : '-');
