@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.59 2000/02/20 08:17:36 lukem Exp $
+$NetBSD: acronyms,v 1.60 2000/05/14 01:32:58 wiz Exp $
 
 AFAICR	as far as I can recall
 AFAICT	as far as I can tell
@@ -78,6 +78,7 @@ OTL	out to lunch
 OTOH	on the other hand
 OTTOMH	off the top of my head
 PITA	pain in the ass
+PNG	persona non grata
 POLA	principle of least astonishment
 PPL	pretty please
 QED	quod erat demonstrandum
