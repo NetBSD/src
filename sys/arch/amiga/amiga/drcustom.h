@@ -1,5 +1,5 @@
 /*
- * $NetBSD: drcustom.h,v 1.7 2002/05/14 00:08:21 matt Exp $
+ * $NetBSD: drcustom.h,v 1.8 2003/04/09 01:54:43 thorpej Exp $
  *
  * Motherboard addresses for the DraCo.
  *
@@ -15,7 +15,7 @@
 
 #define DRCIABASE 0x02800000
 #define DRCIATOP  0x02802000
-#define NDRCIAPG ((DRCIATOP - DRCIABASE) / NBPG)	/* which is 1 */
+#define NDRCIAPG ((DRCIATOP - DRCIABASE) / PAGE_SIZE)	/* which is 1 */
 
 #define NDRCCPG (8+1+1) /* (3 int+msc+ctrl+superio+cia+1stkick)+scsi+altais */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380reg.h,v 1.14 2001/04/25 17:53:13 bouyer Exp $	*/
+/*	$NetBSD: ncr5380reg.h,v 1.15 2003/04/09 01:54:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -177,7 +177,7 @@ struct	ncr_softc {
 /*
  * Max. number of dma-chains per request
  */
-#define	MAXDMAIO	(MAXPHYS/NBPG + 1)
+#define	MAXDMAIO	(MAXPHYS/PAGE_SIZE + 1)
 
 /*
  * Some requests are not contiguous in physical memory. We need to break them

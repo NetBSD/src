@@ -1,4 +1,4 @@
-/*	$NetBSD: hdfdreg.h,v 1.3 1999/10/22 08:50:59 leo Exp $	*/
+/*	$NetBSD: hdfdreg.h,v 1.4 2003/04/09 01:54:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -76,7 +76,7 @@
 #define	FDI_DCHG	0x80	/* diskette has been changed */
 
 #define	FDC_BSIZE	512
-#define	FDC_MAXIOSIZE	NBPG	/* XXX should be MAXBSIZE */
+#define	FDC_MAXIOSIZE	PAGE_SIZE	/* XXX should be MAXBSIZE */
 
 /*
  * Copyright (C) 1992-1994 by Joerg Wunsch, Dresden

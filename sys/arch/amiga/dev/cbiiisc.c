@@ -1,4 +1,4 @@
-/*	$NetBSD: cbiiisc.c,v 1.10 2002/10/02 04:55:48 thorpej Exp $ */
+/*	$NetBSD: cbiiisc.c,v 1.11 2003/04/09 01:54:44 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994,1998 Michael L. Hitch
@@ -37,12 +37,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cbiiisc.c,v 1.10 2002/10/02 04:55:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cbiiisc.c,v 1.11 2003/04/09 01:54:44 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
+
+#include <uvm/uvm_extern.h>
+
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
