@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.8.2.1 2001/08/03 04:12:10 lukem Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.8.2.2 2001/09/13 01:14:13 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -79,11 +79,8 @@ get_long(p)
  * Get real NetBSD disk label
  */
 static int
-get_netbsd_label(dev, strat, lp, bno)
-	dev_t dev;
-	void (*strat)();
-	struct disklabel *lp;
-	daddr_t bno;
+get_netbsd_label(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
+	daddr_t bno)
 {
 	struct buf *bp;
 	struct disklabel *dlp;
@@ -123,14 +120,9 @@ done:
  * Construct disklabel entries from partition entries.
  */
 static int
-mbr_to_label(dev, strat, bno, lp, pnpart, osdep, off)
-	dev_t dev;
-	void (*strat)();
-	daddr_t bno;
-	struct disklabel *lp;
-	unsigned short *pnpart;
-	struct cpu_disklabel *osdep;
-	daddr_t off;
+mbr_to_label(dev_t dev, void (*strat)(struct buf *), daddr_t bno,
+	struct disklabel *lp, unsigned short *pnpart,
+	struct cpu_disklabel *osdep, daddr_t off)
 {
 	static int recursion = 0;
 	struct mbr_partition *mp;
@@ -178,9 +170,10 @@ mbr_to_label(dev, strat, bno, lp, pnpart, osdep, off)
 					pp->p_offset = off + get_long(&mp->mbrp_start);
 					++*pnpart;
 				}
-				if (found = mbr_to_label(dev, strat,
-							 off + get_long(&mp->mbrp_start),
-							 lp, pnpart, osdep, off))
+				found = mbr_to_label(dev, strat,
+				    off + get_long(&mp->mbrp_start),
+				    lp, pnpart, osdep, off);
+				if (found)
 					goto done;
 				break;
 #ifdef COMPAT_386BSD_MBRPART
@@ -191,7 +184,9 @@ mbr_to_label(dev, strat, bno, lp, pnpart, osdep, off)
 			case MBR_PTYPE_NETBSD:
 				/* Found the real NetBSD partition, use it */
 				osdep->cd_start = off + get_long(&mp->mbrp_start);
-				if (found = get_netbsd_label(dev, strat, lp, osdep->cd_start))
+				found = get_netbsd_label(dev, strat, lp,
+				    osdep->cd_start);
+				if (found)
 					goto done;
 				/* FALLTHROUGH */
 			default:
@@ -220,15 +215,9 @@ done:
  * based on the MBR (and extended partition) information
  */
 char *
-readdisklabel(dev, strat, lp, osdep)
-	dev_t dev;
-	void (*strat)();
-	struct disklabel *lp;
-	struct cpu_disklabel *osdep;
+readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
+	struct cpu_disklabel *osdep)
 {
-	struct mbr_partition *mp;
-	struct buf *bp;
-	char *msg = 0;
 	int i;
 
 	/* Initialize disk label with some defaults */
@@ -290,11 +279,8 @@ setdisklabel(olp, nlp, openmask, osdep)
  * Write disk label back to device after modification.
  */
 int
-writedisklabel(dev, strat, lp, osdep)
-	dev_t dev;
-	void (*strat)();
-	struct disklabel *lp;
-	struct cpu_disklabel *osdep;
+writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
+	struct cpu_disklabel *osdep)
 {
 	struct buf *bp;
 	int error;

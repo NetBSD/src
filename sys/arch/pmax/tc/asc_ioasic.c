@@ -1,4 +1,4 @@
-/* $NetBSD: asc_ioasic.c,v 1.11 2001/04/25 17:53:22 bouyer Exp $ */
+/* $NetBSD: asc_ioasic.c,v 1.11.2.1 2001/09/13 01:14:21 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: asc_ioasic.c,v 1.11 2001/04/25 17:53:22 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_ioasic.c,v 1.11.2.1 2001/09/13 01:14:21 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -78,7 +78,7 @@ struct asc_softc {
 static int  asc_ioasic_match __P((struct device *, struct cfdata *, void *));
 static void asc_ioasic_attach __P((struct device *, struct device *, void *));
 
-struct cfattach xasc_ioasic_ca = {
+struct cfattach asc_ioasic_ca = {
 	sizeof(struct asc_softc), asc_ioasic_match, asc_ioasic_attach
 };
 

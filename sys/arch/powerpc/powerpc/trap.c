@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.50.2.1 2001/08/03 04:12:15 lukem Exp $	*/
+/*	$NetBSD: trap.c,v 1.50.2.2 2001/09/13 01:14:24 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -88,8 +88,16 @@ trap(frame)
 	int type = frame->exc;
 	int ftype, rv;
 
+	curcpu()->ci_ev_traps.ev_count++;
+
 	if (frame->srr1 & PSL_PR)
 		type |= EXC_USER;
+
+#ifdef DIAGNOSTIC
+	if (curpcb->pcb_pmreal != curpm)
+		panic("trap: curpm (%p) != curpcb->pcb_pmreal (%p)",
+		    curpm, curpcb->pcb_pmreal);
+#endif
 
 	switch (type) {
 	case EXC_TRC|EXC_USER:
@@ -104,6 +112,7 @@ trap(frame)
 		 * Only query UVM if no interrupts are active (this applies
 		 * "on-fault" as well.
 		 */
+		curcpu()->ci_ev_kdsi.ev_count++;
 		if (intr_depth < 0) {
 			struct vm_map *map;
 			vaddr_t va;
@@ -159,6 +168,7 @@ trap(frame)
 	}
 	case EXC_DSI|EXC_USER:
 		KERNEL_PROC_LOCK(p);
+		curcpu()->ci_ev_udsi.ev_count++;
 		if (frame->dsisr & DSISR_STORE)
 			ftype = VM_PROT_READ | VM_PROT_WRITE;
 		else
@@ -172,6 +182,14 @@ trap(frame)
 			uvm_grow(p, trunc_page(frame->dar));
 			KERNEL_PROC_UNLOCK(p);
 			break;
+		}
+		curcpu()->ci_ev_udsi_fatal.ev_count++;
+		if (cpu_printfataltraps) {
+			printf("trap: pid %d (%s): user %s DSI @ %#x "
+			    "by %#x (DSISR %#x, err=%d)\n",
+			    p->p_pid, p->p_comm,
+			    (frame->dsisr & DSISR_STORE) ? "write" : "read",
+			    frame->dar, frame->srr0, frame->dsisr, rv);
 		}
 		if (rv == ENOMEM) {
 			printf("UVM: pid %d (%s), uid %d killed: "
@@ -191,21 +209,25 @@ trap(frame)
 		goto brain_damage2;
 	case EXC_ISI|EXC_USER:
 		KERNEL_PROC_LOCK(p);
+		curcpu()->ci_ev_isi.ev_count++;
 		ftype = VM_PROT_READ | VM_PROT_EXECUTE;
-#ifdef PMAPDEBUG
-		printf("trap: user ISI trap @ %#x (ssr1=%#x)\n",
-		    frame->srr0, frame->srr1);
-#endif
 		rv = uvm_fault(&p->p_vmspace->vm_map, trunc_page(frame->srr0),
 		    0, ftype);
 		if (rv == 0) {
 			KERNEL_PROC_UNLOCK(p);
 			break;
 		}
+		curcpu()->ci_ev_isi_fatal.ev_count++;
+		if (cpu_printfataltraps) {
+			printf("trap: pid %d (%s): user ISI trap @ %#x "
+			    "(SSR1=%#x)\n",
+			    p->p_pid, p->p_comm, frame->srr0, frame->srr1);
+		}
 		trapsignal(p, SIGSEGV, EXC_ISI);
 		KERNEL_PROC_UNLOCK(p);
 		break;
 	case EXC_SC|EXC_USER:
+		curcpu()->ci_ev_scalls.ev_count++;
 		{
 			const struct sysent *callp;
 			size_t argsize;
@@ -297,8 +319,11 @@ syscall_bad:
 		break;
 
 	case EXC_FPU|EXC_USER:
-		if (fpuproc)
+		curcpu()->ci_ev_fpu.ev_count++;
+		if (fpuproc) {
+			curcpu()->ci_ev_fpusw.ev_count++;
 			save_fpu(fpuproc);
+		}
 #if defined(MULTIPROCESSOR)
 		if (p->p_addr->u_pcb.pcb_fpcpu)
 			save_fpu_proc(p);
@@ -310,8 +335,11 @@ syscall_bad:
 
 #ifdef ALTIVEC
 	case EXC_VEC|EXC_USER:
-		if (vecproc)
+		curcpu()->ci_ev_vec.ev_count++;
+		if (vecproc) {
+			curcpu()->ci_ev_vecsw.ev_count++;
 			save_vec(vecproc);
+		}
 		vecproc = p;
 		enable_vec(p);
 		break;
@@ -333,9 +361,17 @@ syscall_bad:
 
 	case EXC_ALI|EXC_USER:
 		KERNEL_PROC_LOCK(p);
-		if (fix_unaligned(p, frame) != 0)
+		curcpu()->ci_ev_ali.ev_count++;
+		if (fix_unaligned(p, frame) != 0) {
+			curcpu()->ci_ev_ali_fatal.ev_count++;
+			if (cpu_printfataltraps) {
+				printf("trap: pid %d (%s): user ALI trap @ %#x "
+				    "(SSR1=%#x)\n",
+				    p->p_pid, p->p_comm, frame->srr0,
+				    frame->srr1);
+			}
 			trapsignal(p, SIGBUS, EXC_ALI);
-		else
+		} else
 			frame->srr0 += 4;
 		KERNEL_PROC_UNLOCK(p);
 		break;
@@ -343,6 +379,12 @@ syscall_bad:
 	case EXC_PGM|EXC_USER:
 /* XXX temporarily */
 		KERNEL_PROC_LOCK(p);
+		curcpu()->ci_ev_pgm.ev_count++;
+		if (cpu_printfataltraps) {
+			printf("trap: pid %d (%s): user PGM trap @ %#x "
+			    "(SSR1=%#x)\n",
+			    p->p_pid, p->p_comm, frame->srr0, frame->srr1);
+		}
 		if (frame->srr1 & 0x0002000)
 			trapsignal(p, SIGTRAP, EXC_PGM);
 		else
@@ -350,28 +392,27 @@ syscall_bad:
 		KERNEL_PROC_UNLOCK(p);
 		break;
 
-	case EXC_MCHK:
-		{
-			faultbuf *fb;
+	case EXC_MCHK: {
+		faultbuf *fb;
 
-			if ((fb = p->p_addr->u_pcb.pcb_onfault) != NULL) {
-				frame->srr0 = (*fb)[0];
-				frame->fixreg[1] = (*fb)[1];
-				frame->fixreg[2] = (*fb)[2];
-				frame->fixreg[3] = EFAULT;
-				frame->cr = (*fb)[3];
-				memcpy(&frame->fixreg[13], &(*fb)[4],
-				      19 * sizeof(register_t));
-				return;
-			}
+		if ((fb = p->p_addr->u_pcb.pcb_onfault) != NULL) {
+			frame->srr0 = (*fb)[0];
+			frame->fixreg[1] = (*fb)[1];
+			frame->fixreg[2] = (*fb)[2];
+			frame->fixreg[3] = EFAULT;
+			frame->cr = (*fb)[3];
+			memcpy(&frame->fixreg[13], &(*fb)[4],
+			      19 * sizeof(register_t));
+			return;
 		}
 		goto brain_damage;
+	}
 
 	default:
 brain_damage:
 		printf("trap type %x at %x\n", type, frame->srr0);
 brain_damage2:
-#ifdef DDB
+#ifdef DDBX
 		if (kdb_trap(type, frame))
 			return;
 #endif

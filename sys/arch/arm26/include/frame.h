@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.6 2001/04/24 18:15:44 bjh21 Exp $	*/
+/*	$NetBSD: frame.h,v 1.6.2.1 2001/09/13 01:13:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999 Ben Harris.
@@ -106,7 +106,7 @@ struct fpframe {
 	register_t	ff_regs[8*3];
 };
  
-#endif _LOCORE
+#endif /* _LOCORE */
 
 #endif /* _ARM26_FRAME_H_ */
   

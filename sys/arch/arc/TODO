@@ -1,4 +1,4 @@
-$NetBSD: TODO,v 1.15 2001/06/13 15:41:53 soda Exp $
+$NetBSD: TODO,v 1.15.2.1 2001/09/13 01:13:02 thorpej Exp $
 
 To do list (not in any particular order).
 
@@ -128,7 +128,7 @@ To do list (not in any particular order).
 
     o	fix kernel start address
 
-    o	allocate PICA_TL_BASE and SONICBUF dynamically
+    o	allocate PICA_TL_BASE dynamically
 
     o	fix mem_clusters[] usage.
 
@@ -149,13 +149,6 @@ To do list (not in any particular order).
     o	wscons / VGA character generator (fix initialization on RISCserver)
 
     o	asc.c scsi clock/NCR53CF94 handling clean up
-
-    o	if_sn.c
-
-	-   bus_dma'fy
-	-   bus_space'fy
-	-   split frontend and backend
-	-   make this MI, and share with mac68k, newsmips/apbus
 
     o	com_jazzio.c
 

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.43 2001/07/08 16:32:22 abs Exp $
+# $NetBSD: GENERIC,v 1.43.2.1 2001/09/13 01:14:09 thorpej Exp $
 #
 # GENERIC next68k
 #
@@ -6,7 +6,7 @@
 
 include "arch/next68k/conf/std.next68k"
 
-#ident 		"GENERIC-$Revision: 1.43 $"
+#ident 		"GENERIC-$Revision: 1.43.2.1 $"
 
 # Needs to be set per system.  i.e change these as you see fit
 maxusers	16
@@ -194,6 +194,7 @@ pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
 #pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
+#pseudo-device	bridge			# simple inter-network bridging
 pseudo-device	rnd			# /dev/random and in-kernel generator
 #pseudo-device	wsmux		2	# mouse & keyboard multiplexor
 

@@ -1,4 +1,4 @@
-/* $NetBSD: irq.c,v 1.18.2.1 2001/08/25 06:15:11 thorpej Exp $ */
+/* $NetBSD: irq.c,v 1.18.2.2 2001/09/13 01:13:11 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -33,7 +33,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: irq.c,v 1.18.2.1 2001/08/25 06:15:11 thorpej Exp $");
+__RCSID("$NetBSD: irq.c,v 1.18.2.2 2001/09/13 01:13:11 thorpej Exp $");
 
 #include <sys/device.h>
 #include <sys/kernel.h> /* for cold */
@@ -149,6 +149,7 @@ irq_handler(struct irqframe *irqf)
 #if NFIQ > 0
 	/* Check for downgraded FIQs. */
 	if (fiq_want_downgrade) {
+		KASSERT(fiq_downgrade_handler != NULL);
 		fiq_want_downgrade = 0;
 		(fiq_downgrade_handler)();
 		goto handled;
@@ -188,7 +189,10 @@ irq_handler(struct irqframe *irqf)
 		    "mask = 0x%x\n", status, s, irqmask[s]);
 		Debugger();
 	}
+#if NFIQ > 0
 handled:
+#endif	/* NFIQ > 0 */
+
 #if 0
 	printf(" handled\n");
 #endif

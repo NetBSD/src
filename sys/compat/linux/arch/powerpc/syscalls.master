@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.6 2001/05/30 11:37:27 mrg Exp $  
+	$NetBSD: syscalls.master,v 1.6.2.1 2001/09/13 01:15:23 thorpej Exp $  
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -93,7 +93,8 @@
 7	STD		{ int linux_sys_waitpid(int pid, int *status, \
 			    int options);}
 8	STD		{ int linux_sys_creat(const char *path, int mode); }
-9	STD		{ int linux_sys_link(const char *path, const char *link); }
+9	STD		{ int linux_sys_link(const char *path, const \
+			    char *link); }
 10	STD		{ int linux_sys_unlink(const char *path); }
 11	STD		{ int linux_sys_execve(const char *path, char **argp, \
 			    char **envp); }
@@ -115,7 +116,7 @@
 24	NOARGS		{ uid_t sys_getuid(void); }
 25	STD		{ int linux_sys_stime(linux_time_t *t); }
 26	STD		{ int linux_sys_ptrace(int request, int pid, \
-			  int addr, int data); }
+			    int addr, int data); }
 27	STD		{ int linux_sys_alarm(unsigned int secs); }
 28	OBSOL		ofstat
 29	STD		{ int linux_sys_pause(void); }
@@ -152,7 +153,8 @@
 56	OBSOL		mpx
 57	NOARGS		{ int sys_setpgid(int pid, int pgid); }
 58	OBSOL		ulimit
-59 STD      { int linux_sys_olduname(struct linux_old_utsname *up); }
+59 	STD		{ int linux_sys_olduname(struct linux_old_utsname \
+			   *up); }
 60	NOARGS		{ int sys_umask(int newmask); }
 61	NOARGS		{ int sys_chroot(char *path); }
 62	UNIMPL		ustat
@@ -198,14 +200,14 @@
 			    int cmd, void *arg); }
 89	STD		{ int linux_sys_readdir(int fd, caddr_t dent, \
 			    unsigned int count); }
-90	 STD      { int linux_sys_powerpc_mmap(unsigned long addr, size_t len, \
-             int prot, int flags, int fd, linux_off_t offset); }
+90	NOARGS		{ int linux_sys_mmap(unsigned long addr, size_t len, \
+			    int prot, int flags, int fd, linux_off_t offset); }
 91	NOARGS		{ int sys_munmap(caddr_t addr, int len); }
 92	STD		{ int linux_sys_truncate(const char *path, \
 			    long length); }
 93	NOARGS		{ int compat_43_sys_ftruncate(int fd, long length); }
 94	NOARGS		{ int sys_fchmod(int fd, int mode); }
-95 NOARGS		{ int sys___posix_fchown(int fd, int uid, int gid); }
+95	NOARGS		{ int sys___posix_fchown(int fd, int uid, int gid); }
 96	NOARGS		{ int sys_getpriority(int which, int who); }
 97	NOARGS		{ int sys_setpriority(int which, int who, int prio); }
 98	NOARGS		{ int sys_profil(caddr_t samples, u_int size, \
@@ -214,8 +216,8 @@
 			    struct linux_statfs *sp); }
 100	STD		{ int linux_sys_fstatfs(int fd, \
 			    struct linux_statfs *sp); }
-101	STD	{ int linux_sys_ioperm(unsigned int lo, \
-             unsigned int hi, int val); }
+101	STD		{ int linux_sys_ioperm(unsigned int lo, \
+			    unsigned int hi, int val); }
 102	STD		{ int linux_sys_socketcall(int what, void *args); }
 103	UNIMPL		syslog
 104	NOARGS		{ int sys_setitimer(u_int which, \
@@ -234,17 +236,17 @@
 113	UNIMPL		vm86old 
 114	STD		{ int linux_sys_wait4(int pid, int *status, \
 			    int options, struct rusage *rusage); }
-115	STD      { int linux_sys_swapoff(const char *path); }
-116	STD      { int linux_sys_sysinfo(struct linux_sysinfo *arg); }
+115	STD		{ int linux_sys_swapoff(const char *path); }
+116	STD		{ int linux_sys_sysinfo(struct linux_sysinfo *arg); }
 117	STD		{ int linux_sys_ipc(int what, int a1, int a2, int a3, \
 			    caddr_t ptr); }
 118	NOARGS		{ int sys_fsync(int fd); }
 119	STD		{ int linux_sys_sigreturn(struct linux_sigcontext *scp); }
 120	STD		{ int linux_sys_clone(int flags, void *stack); }
 121	STD		{ int linux_sys_setdomainname(char *domainname, \
-             int len); }
+			    int len); }
 122	STD		{ int linux_sys_new_uname(struct linux_utsname *up); }
-123	UNIMPL	modify_ldt	
+123	UNIMPL		modify_ldt	
 124	UNIMPL		adjtimex
 125	NOARGS		{ int sys_mprotect(caddr_t addr, int len, int prot); }
 126	STD		{ int linux_sys_sigprocmask(int how, \
@@ -267,7 +269,7 @@
 			    u_int32_t olow, caddr_t res, int whence); }
 141	STD		{ int linux_sys_getdents(int fd, \
 			    struct linux_dirent *dent, unsigned int count); }
-142	STD			{ int linux_sys_new_select(int nfds, fd_set *readfds, \
+142	STD		{ int linux_sys_new_select(int nfds, fd_set *readfds, \
 			    fd_set *writefds, fd_set *exceptfds, \
 			    struct timeval *timeout); }
 143	NOARGS		{ int sys_flock(int fd, int how); }
@@ -312,7 +314,7 @@
 			    gid_t *sgid); }
 171	UNIMPL		prctl
 172	STD		{ int linux_sys_rt_sigreturn( \
-             struct linux_rt_sigframe *sfp); }
+			    struct linux_rt_sigframe *sfp); }
 173	STD		{ int linux_sys_rt_sigaction(int signum, \
 			    const struct linux_sigaction *nsa, \
 			    struct linux_sigaction *osa, \

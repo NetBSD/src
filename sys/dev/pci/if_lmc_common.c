@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lmc_common.c,v 1.6 2001/06/13 10:46:04 wiz Exp $	*/
+/*	$NetBSD: if_lmc_common.c,v 1.6.2.1 2001/09/13 01:15:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 LAN Media Corporation (LMC)
@@ -243,7 +243,7 @@ lmc_dec_reset(lmc_softc_t * const sc)
 {
 #ifndef __linux__
 	lmc_ringinfo_t *ri;
-	tulip_desc_t *di;
+	lmc_desc_t *di;
 #endif
 	u_int32_t val;
 
@@ -319,15 +319,22 @@ lmc_dec_reset(lmc_softc_t * const sc)
 	/*
 	 * reprogram the tx desc, rx desc, and PCI bus options
 	 */
+#if defined(LMC_BUS_DMA) && !defined(LMC_BUS_DMA_NOTX)
+	LMC_CSR_WRITE(sc, csr_txlist, sc->lmc_txdescmap->dm_segs[0].ds_addr);
+#else
 	LMC_CSR_WRITE(sc, csr_txlist,
 			LMC_KVATOPHYS(sc, &sc->lmc_txinfo.ri_first[0]));
+#endif
+#if defined(LMC_BUS_DMA) && !defined(LMC_BUS_DMA_NORX)
+	LMC_CSR_WRITE(sc, csr_rxlist, sc->lmc_rxdescmap->dm_segs[0].ds_addr);
+#else
 	LMC_CSR_WRITE(sc, csr_rxlist,
 			LMC_KVATOPHYS(sc, &sc->lmc_rxinfo.ri_first[0]));
+#endif
 	LMC_CSR_WRITE(sc, csr_busmode,
-			(1 << (LMC_BURSTSIZE(sc->lmc_unit) + 8))
-			|TULIP_BUSMODE_CACHE_ALIGN8
-			|TULIP_BUSMODE_READMULTIPLE
-			|(BYTE_ORDER != LITTLE_ENDIAN ? TULIP_BUSMODE_BIGENDIAN : 0));
+		(1 << (LMC_BURSTSIZE(sc->lmc_unit) + 8))
+		|TULIP_BUSMODE_CACHE_ALIGN8
+		|TULIP_BUSMODE_READMULTIPLE);
 
 	sc->lmc_txq.ifq_maxlen = LMC_TXDESCS;
 
@@ -335,11 +342,19 @@ lmc_dec_reset(lmc_softc_t * const sc)
 	 * Free all the mbufs that were on the transmit ring.
 	 */
 	for (;;) {
+#if defined(LMC_BUS_DMA) && !defined(LMC_BUS_DMA_NOTX)
+		bus_dmamap_t map;
+#endif
 		struct mbuf *m;
 
 		IF_DEQUEUE(&sc->lmc_txq, m);
 		if (m == NULL)
 			break;
+#if defined(LMC_BUS_DMA) && !defined(LMC_BUS_DMA_NOTX)
+		map = M_GETCTX(m, bus_dmamap_t);
+		bus_dmamap_unload(sc->lmc_dmatag, map);
+		sc->lmc_txmaps[sc->lmc_txmaps_free++] = map;
+#endif
 		m_freem(m);
 	}
 
@@ -351,6 +366,11 @@ lmc_dec_reset(lmc_softc_t * const sc)
 	ri->ri_free = ri->ri_max;
 	for (di = ri->ri_first; di < ri->ri_last; di++)
 		di->d_status = 0;
+#if defined(LMC_BUS_DMA) && !defined(LMC_BUS_DMA_NOTX)
+	bus_dmamap_sync(sc->lmc_dmatag, sc->lmc_txdescmap,
+		0, sc->lmc_txdescmap->dm_mapsize,
+		BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+#endif
 
 	/*
 	 * We need to collect all the mbufs were on the 
@@ -362,15 +382,30 @@ lmc_dec_reset(lmc_softc_t * const sc)
 	ri->ri_nextin = ri->ri_nextout = ri->ri_first;
 	ri->ri_free = ri->ri_max;
 	for (di = ri->ri_first; di < ri->ri_last; di++) {
+		u_int32_t ctl = di->d_ctl;
 		di->d_status = 0;
-		di->d_length1 = 0; di->d_addr1 = 0;
-		di->d_length2 = 0; di->d_addr2 = 0;
+		di->d_ctl = LMC_CTL(LMC_CTL_FLGS(ctl),0,0);
+		di->d_addr1 = 0;
+		di->d_addr2 = 0;
 	}
+#if defined(LMC_BUS_DMA) && !defined(LMC_BUS_DMA_NORX)
+	bus_dmamap_sync(sc->lmc_dmatag, sc->lmc_rxdescmap,
+		0, sc->lmc_rxdescmap->dm_mapsize,
+		BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+#endif
 	for (;;) {
+#if defined(LMC_BUS_DMA) && !defined(LMC_BUS_DMA_NORX)
+		bus_dmamap_t map;
+#endif
 		struct mbuf *m;
 		IF_DEQUEUE(&sc->lmc_rxq, m);
 		if (m == NULL)
 			break;
+#if defined(LMC_BUS_DMA) && !defined(LMC_BUS_DMA_NORX)
+		map = M_GETCTX(m, bus_dmamap_t);
+		bus_dmamap_unload(sc->lmc_dmatag, map);
+		sc->lmc_rxmaps[sc->lmc_rxmaps_free++] = map;
+#endif
 		m_freem(m);
 	}
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: intrcnt.h,v 1.3 1998/06/17 11:41:21 leo Exp $	*/
+/*	$NetBSD: intrcnt.h,v 1.3.28.1 2001/09/13 01:13:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,9 +37,7 @@
  */
 
 /* interrupt counters */
-	.globl	_intrcnt,_eintrcnt,_intrnames,_eintrnames
-	.globl	_intrcnt_auto, _intrcnt_user
-_intrnames:
+GLOBAL(intrnames)
 	.asciz	"spur"
 	.asciz	"clock"
 	.asciz	"kbd/mouse"
@@ -253,14 +251,14 @@ _intrnames:
 	.asciz	"uservec191"
 	.asciz	"uservec192"
 
-_eintrnames:
+GLOBAL(eintrnames)
 	.even
-_intrcnt:
+GLOBAL(intrcnt)
 	.long	0,0,0,0,0,0,0,0,0,0,0
 	.long	0		| spurious
-_intrcnt_auto:
+GLOBAL(intrcnt_auto)
 	.long	0,0,0,0,0,0,0	| auto-vectors
-_intrcnt_user:
+GLOBAL(intrcnt_user)
 	.long	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 	.long	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 	.long	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
@@ -273,5 +271,5 @@ _intrcnt_user:
 	.long	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 	.long	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 	.long	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
-_intrcnt_special:
-_eintrcnt:
+GLOBAL(intrcnt_special)
+GLOBAL(eintrcnt)

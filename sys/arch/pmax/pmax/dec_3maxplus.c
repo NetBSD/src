@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3maxplus.c,v 1.43.2.1 2001/08/25 06:15:44 thorpej Exp $ */
+/* $NetBSD: dec_3maxplus.c,v 1.43.2.2 2001/09/13 01:14:20 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.43.2.1 2001/08/25 06:15:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.43.2.2 2001/09/13 01:14:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -380,8 +380,10 @@ dec_3maxplus_intr(status, cause, pc, ipending)
 			}
 		} while (ifound);
 	}
-	if (ipending & MIPS_INT_MASK_3)
+	if (ipending & MIPS_INT_MASK_3) {
 		dec_3maxplus_errintr();
+		pmax_memerr_evcnt.ev_count++;
+	}
 
 	_splset(MIPS_SR_INT_IE | (status & ~cause & MIPS_HARD_INT_MASK));
 }

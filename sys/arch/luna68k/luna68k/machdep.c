@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.17 2001/06/02 18:09:14 chs Exp $ */
+/* $NetBSD: machdep.c,v 1.17.2.1 2001/09/13 01:13:52 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.17 2001/06/02 18:09:14 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.17.2.1 2001/09/13 01:13:52 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -177,7 +177,7 @@ luna68k_init()
 		pmap_enter(pmap_kernel(), (vaddr_t)msgbufaddr + i * NBPG,
 		    avail_end + i * NBPG, VM_PROT_READ|VM_PROT_WRITE,
 		    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
-	pmap_update();
+	pmap_update(pmap_kernel());
 	initmsgbuf(msgbufaddr, m68k_round_page(MSGBUFSIZE));
 
 
@@ -315,7 +315,7 @@ cpu_startup()
 			curbufsize -= PAGE_SIZE;
 		}
 	}
-	pmap_update();
+	pmap_update(pmap_kernel());
 
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively
@@ -739,7 +739,7 @@ dumpsys()
 		pmap_enter(pmap_kernel(), (vaddr_t)vmmap, maddr,
 		    VM_PROT_READ, VM_PROT_READ|PMAP_WIRED);
 
-		pmap_update();
+		pmap_update(pmap_kernel());
 		error = (*dump)(dumpdev, blkno, vmmap, NBPG);
  bad:
 		switch (error) {
@@ -952,15 +952,15 @@ struct consdev *cn_tab = &romcons;
 ({					\
 	register _r;			\
 	asm volatile ("			\
-		movc	vbr,%0		; \
-		movel	%0,sp@-		; \
+		movc	%%vbr,%0	; \
+		movel	%0,%%sp@-	; \
 		clrl	%0		; \
-		movc	%0,vbr"		\
+		movc	%0,%%vbr"	\
 		: "=r" (_r));		\
 	PUTC(x);			\
 	asm volatile ("			\
-		movel	sp@+,%0		; \
-		movc	%0,vbr"		\
+		movel	%%sp@+,%0	; \
+		movc	%0,%%vbr"	\
 		: "=r" (_r));		\
 })
 
@@ -968,15 +968,15 @@ struct consdev *cn_tab = &romcons;
 ({					\
 	register _r, _c;		\
 	asm volatile ("			\
-		movc	vbr,%0		; \
-		movel	%0,sp@-		; \
+		movc	%%vbr,%0	; \
+		movel	%0,%%sp@-	; \
 		clrl	%0		; \
-		movc	%0,vbr"		\
+		movc	%0,%%vbr"	\
 		: "=r" (_r));		\
 	_c = GETC();			\
 	asm volatile ("			\
-		movel	sp@+,%0		; \
-		movc	%0,vbr"		\
+		movel	%%sp@+,%0	; \
+		movc	%0,%%vbr"	\
 		: "=r" (_r));		\
 	_c;				\
 })

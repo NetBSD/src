@@ -1,4 +1,4 @@
-/*	$NetBSD: sun3.c,v 1.3 1999/03/04 07:56:41 gwr Exp $	*/
+/*	$NetBSD: sun3.c,v 1.3.22.1 2001/09/13 01:14:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -227,7 +227,7 @@ dvma3_free(char *dvma, int len)
 
 u_int
 get_pte(va)
-	vm_offset_t va;
+	vaddr_t va;
 {
 	va = CONTROL_ADDR_BUILD(PGMAP_BASE, va);
 	return (get_control_word(va));
@@ -235,7 +235,7 @@ get_pte(va)
 
 void
 set_pte(va, pte)
-	vm_offset_t va;
+	vaddr_t va;
 	u_int pte;
 {
 	va = CONTROL_ADDR_BUILD(PGMAP_BASE, va);
@@ -244,7 +244,7 @@ set_pte(va, pte)
 
 int
 get_segmap(va)
-	vm_offset_t va;
+	vaddr_t va;
 {
 	va = CONTROL_ADDR_BUILD(SEGMAP_BASE, va);
 	return (get_control_byte(va));
@@ -252,7 +252,7 @@ get_segmap(va)
 
 void
 set_segmap(va, sme)
-	vm_offset_t va;
+	vaddr_t va;
 	int sme;
 {
 	va = CONTROL_ADDR_BUILD(SEGMAP_BASE, va);
@@ -266,7 +266,7 @@ set_segmap(va, sme)
 void
 sun3_getidprom(u_char *dst)
 {
-	vm_offset_t src;	/* control space address */
+	vaddr_t src;		/* control space address */
 	int len, x;
 
 	src = IDPROM_BASE;

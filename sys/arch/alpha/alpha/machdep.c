@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.245.2.1 2001/08/03 04:10:39 lukem Exp $ */
+/* $NetBSD: machdep.c,v 1.245.2.2 2001/09/13 01:12:53 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.245.2.1 2001/08/03 04:10:39 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.245.2.2 2001/09/13 01:12:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -919,7 +919,7 @@ cpu_startup()
 			curbufsize -= PAGE_SIZE;
 		}
 	}
-	pmap_update();
+	pmap_update(pmap_kernel());
 
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively

@@ -1,4 +1,4 @@
-/*	$NetBSD: leds.c,v 1.5 1998/02/05 04:57:38 gwr Exp $	*/
+/*	$NetBSD: leds.c,v 1.5.28.1 2001/09/13 01:14:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -108,7 +108,7 @@ leds_init()
 void
 leds_intr()
 {
-	register u_char i;
+	u_char i;
 
 	if (led_countdown) {
 		led_countdown--;

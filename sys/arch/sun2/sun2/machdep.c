@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.9 2001/06/27 03:16:02 fredette Exp $	*/
+/*	$NetBSD: machdep.c,v 1.9.2.1 2001/09/13 01:14:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Matthew Fredette.
@@ -356,7 +356,7 @@ cpu_startup()
 			curbufsize -= PAGE_SIZE;
 		}
 	}
-	pmap_update();
+	pmap_update(pmap_kernel());
 
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively
@@ -810,10 +810,10 @@ dumpsys()
 			printf("\r%4d", todo);
 		pmap_enter(pmap_kernel(), vmmap, paddr | PMAP_NC,
 		    VM_PROT_READ, VM_PROT_READ);
-		pmap_update();
+		pmap_update(pmap_kernel());
 		error = (*dsw->d_dump)(dumpdev, blkno, vaddr, NBPG);
 		pmap_remove(pmap_kernel(), vmmap, vmmap + NBPG);
-		pmap_update();
+		pmap_update(pmap_kernel());
 		if (error)
 			goto fail;
 		paddr += NBPG;
@@ -956,7 +956,7 @@ _bus_dmamap_load_raw(t, map, segs, nsegs, size, flags)
 		dva += pagesz;
 		sgsize -= pagesz;
 	}
-	pmap_update();
+	pmap_update(pmap_kernel());
 
 	/* Make the map truly valid. */
 	map->dm_nsegs = 1;
@@ -982,6 +982,7 @@ _bus_dmamap_load(t, map, buf, buflen, p, flags)
 	int pagesz = PAGE_SIZE;
 	bus_addr_t dva;
 	pmap_t pmap;
+	int rv;
 
 	/*
 	 * Make sure that on error condition we return "no valid mappings".
@@ -1042,7 +1043,11 @@ _bus_dmamap_load(t, map, buf, buflen, p, flags)
 		/*
 		 * Get the physical address for this page.
 		 */
-		(void) pmap_extract(pmap, va, &pa);
+		rv = pmap_extract(pmap, va, &pa);
+#ifdef	DIAGNOSTIC
+		if (!rv)
+			panic("_bus_dmamap_load: no page");
+#endif	/* DIAGNOSTIC */
 
 		/*
 		 * Compute the segment size, and adjust counts.
@@ -1059,11 +1064,11 @@ _bus_dmamap_load(t, map, buf, buflen, p, flags)
 		va += sgsize;
 		buflen -= sgsize;
 	}
-	pmap_update();
+	pmap_update(pmap_kernel());
 
 	/* Make the map truly valid. */
 	map->dm_nsegs = 1;
-	map->dm_mapsize = buflen;
+	map->dm_mapsize = map->dm_segs[0].ds_len;
 
 	return (0);
 }
@@ -1107,7 +1112,7 @@ _bus_dmamap_unload(t, map)
 		 * Unmap the DVMA addresses.
 		 */
 		pmap_remove(pmap_kernel(), dva, dva + len);
-		pmap_update();
+		pmap_update(pmap_kernel());
 
 		/*
 		 * Free the DVMA addresses.

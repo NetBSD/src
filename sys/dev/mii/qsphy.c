@@ -1,4 +1,4 @@
-/*	$NetBSD: qsphy.c,v 1.24 2001/06/02 21:39:41 thorpej Exp $	*/
+/*	$NetBSD: qsphy.c,v 1.24.2.1 2001/09/13 01:15:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -87,17 +87,17 @@
 
 #include <dev/mii/qsphyreg.h>
 
-int	qsphymatch __P((struct device *, struct cfdata *, void *));
-void	qsphyattach __P((struct device *, struct device *, void *));
+int	qsphymatch(struct device *, struct cfdata *, void *);
+void	qsphyattach(struct device *, struct device *, void *);
 
 struct cfattach qsphy_ca = {
 	sizeof(struct mii_softc), qsphymatch, qsphyattach, mii_phy_detach,
 	    mii_phy_activate
 };
 
-int	qsphy_service __P((struct mii_softc *, struct mii_data *, int));
-void	qsphy_status __P((struct mii_softc *));
-void	qsphy_reset __P((struct mii_softc *));
+int	qsphy_service(struct mii_softc *, struct mii_data *, int);
+void	qsphy_status(struct mii_softc *);
+void	qsphy_reset(struct mii_softc *);
 
 const struct mii_phy_funcs qsphy_funcs = {
 	qsphy_service, qsphy_status, qsphy_reset,
@@ -112,10 +112,7 @@ const struct mii_phydesc qsphys[] = {
 };
 
 int
-qsphymatch(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+qsphymatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
 	
@@ -126,9 +123,7 @@ qsphymatch(parent, match, aux)
 }
 
 void
-qsphyattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+qsphyattach(struct device *parent, struct device *self, void *aux)
 {
 	struct mii_softc *sc = (struct mii_softc *)self;
 	struct mii_attach_args *ma = aux;
@@ -158,10 +153,7 @@ qsphyattach(parent, self, aux)
 }
 
 int
-qsphy_service(sc, mii, cmd)
-	struct mii_softc *sc;
-	struct mii_data *mii;
-	int cmd;
+qsphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	int reg;
@@ -223,8 +215,7 @@ qsphy_service(sc, mii, cmd)
 }
 
 void
-qsphy_status(sc)
-	struct mii_softc *sc;
+qsphy_status(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
@@ -282,8 +273,7 @@ qsphy_status(sc)
 }
 
 void
-qsphy_reset(sc)
-	struct mii_softc *sc;
+qsphy_reset(struct mii_softc *sc)
 {
 
 	mii_phy_reset(sc);

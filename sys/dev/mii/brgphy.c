@@ -1,4 +1,4 @@
-/*	$NetBSD: brgphy.c,v 1.3 2001/06/30 17:53:58 bjh21 Exp $	*/
+/*	$NetBSD: brgphy.c,v 1.3.2.1 2001/09/13 01:15:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -90,16 +90,16 @@
 
 #include <dev/mii/brgphyreg.h>
 
-int	brgphymatch __P((struct device *, struct cfdata *, void *));
-void	brgphyattach __P((struct device *, struct device *, void *));
+int	brgphymatch(struct device *, struct cfdata *, void *);
+void	brgphyattach(struct device *, struct device *, void *);
 
 struct cfattach brgphy_ca = {
 	sizeof(struct mii_softc), brgphymatch, brgphyattach,
 	    mii_phy_detach, mii_phy_activate
 };
 
-int	brgphy_service __P((struct mii_softc *, struct mii_data *, int));
-void	brgphy_status __P((struct mii_softc *));
+int	brgphy_service(struct mii_softc *, struct mii_data *, int);
+void	brgphy_status(struct mii_softc *);
 
 const struct mii_phy_funcs brgphy_funcs = {
 	brgphy_service, brgphy_status, mii_phy_reset,
@@ -120,10 +120,7 @@ const struct mii_phydesc brgphys[] = {
 };
 
 int
-brgphymatch(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+brgphymatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
 
@@ -134,9 +131,7 @@ brgphymatch(parent, match, aux)
 }
 
 void
-brgphyattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+brgphyattach(struct device *parent, struct device *self, void *aux)
 {
 	struct mii_softc *sc = (struct mii_softc *)self;
 	struct mii_attach_args *ma = aux;
@@ -170,10 +165,7 @@ brgphyattach(parent, self, aux)
 }
 
 int
-brgphy_service(sc, mii, cmd)
-	struct mii_softc *sc;
-	struct mii_data *mii;
-	int cmd;
+brgphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	int reg;
@@ -232,8 +224,7 @@ brgphy_service(sc, mii, cmd)
 }
 
 void
-brgphy_status(sc)
-	struct mii_softc *sc;
+brgphy_status(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;

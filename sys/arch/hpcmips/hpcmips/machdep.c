@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.57 2001/07/03 02:37:06 enami Exp $	*/
+/*	$NetBSD: machdep.c,v 1.57.2.1 2001/09/13 01:13:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura, All rights reserved.
@@ -72,7 +72,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.57 2001/07/03 02:37:06 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.57.2.1 2001/09/13 01:13:41 thorpej Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 #include "opt_vr41xx.h"
@@ -610,7 +610,7 @@ cpu_startup()
 			curbufsize -= PAGE_SIZE;
 		}
 	}
-	pmap_update();
+	pmap_update(pmap_kernel());
 
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively

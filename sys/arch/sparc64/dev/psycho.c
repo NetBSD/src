@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.33.2.1 2001/08/03 04:12:26 lukem Exp $	*/
+/*	$NetBSD: psycho.c,v 1.33.2.2 2001/09/13 01:14:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -169,10 +169,20 @@ struct cfattach psycho_ca = {
  * We really should attach handlers for each.
  *
  */
+
 #define	ROM_PCI_NAME		"pci"
-#define ROM_SABRE_MODEL		"SUNW,sabre"
-#define ROM_SIMBA_MODEL		"SUNW,simba"
-#define ROM_PSYCHO_MODEL	"SUNW,psycho"
+
+struct psycho_names {
+	char *p_name;
+	int p_type;
+} psycho_names[] = {
+	{ "SUNW,psycho",        PSYCHO_MODE_PSYCHO      },
+	{ "pci108e,8000",       PSYCHO_MODE_PSYCHO      },
+	{ "SUNW,sabre",         PSYCHO_MODE_SABRE       },
+	{ "pci108e,a000",       PSYCHO_MODE_SABRE       },
+	{ "pci108e,a001",       PSYCHO_MODE_SABRE       },
+	{ NULL, 0 }
+};
 
 static	int
 psycho_match(parent, match, aux)
@@ -182,13 +192,19 @@ psycho_match(parent, match, aux)
 {
 	struct mainbus_attach_args *ma = aux;
 	char *model = getpropstring(ma->ma_node, "model");
+	int i;
 
 	/* match on a name of "pci" and a sabre or a psycho */
-	if (strcmp(ma->ma_name, ROM_PCI_NAME) == 0 &&
-	    (strcmp(model, ROM_SABRE_MODEL) == 0 ||
-	     strcmp(model, ROM_PSYCHO_MODEL) == 0))
-		return (1);
+	if (strcmp(ma->ma_name, ROM_PCI_NAME) == 0) {
+		for (i=0; psycho_names[i].p_name; i++)
+			if (strcmp(model, psycho_names[i].p_name) == 0)
+				return (1);
 
+		model = getpropstring(ma->ma_node, "compatible");
+		for (i=0; psycho_names[i].p_name; i++)
+			if (strcmp(model, psycho_names[i].p_name) == 0)
+				return (1);
+	}
 	return (0);
 }
 
@@ -216,7 +232,7 @@ psycho_attach(parent, self, aux)
 	struct mainbus_attach_args *ma = aux;
 	bus_space_handle_t bh;
 	u_int64_t csr;
-	int psycho_br[2], n;
+	int psycho_br[2], n, i;
 	struct pci_ctl *pci_ctl;
 	char *model = getpropstring(ma->ma_node, "model");
 
@@ -229,13 +245,21 @@ psycho_attach(parent, self, aux)
 	/*
 	 * call the model-specific initialisation routine.
 	 */
+	for (i=0; psycho_names[i].p_name; i++)
+		if (strcmp(model, psycho_names[i].p_name) == 0) {
+			sc->sc_mode = psycho_names[i].p_type;
+			goto found;
+		}
 
-	if (strcmp(model, ROM_SABRE_MODEL) == 0)
-		sc->sc_mode = PSYCHO_MODE_SABRE;
-	else if (strcmp(model, ROM_PSYCHO_MODEL) == 0)
-		sc->sc_mode = PSYCHO_MODE_PSYCHO;
-	else
-		panic("psycho_attach: unknown model %s?", model);
+	model = getpropstring(ma->ma_node, "compatible");
+	for (i=0; psycho_names[i].p_name; i++)
+		if (strcmp(model, psycho_names[i].p_name) == 0) {
+			sc->sc_mode = psycho_names[i].p_type;
+			goto found;
+		}
+
+	panic("unknown psycho model %s", model);
+found:
 
 	/*
 	 * The psycho gets three register banks:
@@ -600,7 +624,8 @@ psycho_bus_a(arg)
 
 	panic("%s: PCI bus A error AFAR %llx AFSR %llx\n",
 		sc->sc_dev.dv_xname, 
-		(long long)regs->psy_ue_afar, (long long)regs->psy_ue_afsr);
+		(long long)regs->psy_pcictl[0].pci_afar, 
+		(long long)regs->psy_pcictl[0].pci_afsr);
 	return (1);
 }
 static int 
@@ -616,7 +641,8 @@ psycho_bus_b(arg)
 
 	panic("%s: PCI bus B error AFAR %llx AFSR %llx\n",
 		sc->sc_dev.dv_xname, 
-		(long long)regs->psy_ue_afar, (long long)regs->psy_ue_afsr);
+		(long long)regs->psy_pcictl[0].pci_afar, 
+		(long long)regs->psy_pcictl[0].pci_afsr);
 	return (1);
 }
 static int 

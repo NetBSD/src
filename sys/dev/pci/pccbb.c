@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.65.2.1 2001/08/25 06:16:24 thorpej Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.65.2.2 2001/09/13 01:15:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -806,19 +806,34 @@ pccbb_chipinit(sc)
 		reg = pci_conf_read(pc, tag, PCI_SYSCTRL);
 		reg |= PCI12XX_SYSCTRL_VCCPROT;
 		pci_conf_write(pc, tag, PCI_SYSCTRL, reg);
+		reg = pci_conf_read(pc, tag, PCI_CBCTRL);
+		reg |= PCI12XX_CBCTRL_CSC;
+		pci_conf_write(pc, tag, PCI_CBCTRL, reg);
 		break;
 
 	case CB_TOPIC95B:
 		reg = pci_conf_read(pc, tag, TOPIC_SOCKET_CTRL);
 		reg |= TOPIC_SOCKET_CTRL_SCR_IRQSEL;
 		pci_conf_write(pc, tag, TOPIC_SOCKET_CTRL, reg);
-
 		reg = pci_conf_read(pc, tag, TOPIC_SLOT_CTRL);
 		DPRINTF(("%s: topic slot ctrl reg 0x%x -> ",
 		    sc->sc_dev.dv_xname, reg));
 		reg |= (TOPIC_SLOT_CTRL_SLOTON | TOPIC_SLOT_CTRL_SLOTEN |
 		    TOPIC_SLOT_CTRL_ID_LOCK | TOPIC_SLOT_CTRL_CARDBUS);
 		reg &= ~TOPIC_SLOT_CTRL_SWDETECT;
+		DPRINTF(("0x%x\n", reg));
+		pci_conf_write(pc, tag, TOPIC_SLOT_CTRL, reg);
+		break;
+
+	case CB_TOPIC97:
+		reg = pci_conf_read(pc, tag, TOPIC_SLOT_CTRL);
+		DPRINTF(("%s: topic slot ctrl reg 0x%x -> ",
+		    sc->sc_dev.dv_xname, reg));
+		reg |= (TOPIC_SLOT_CTRL_SLOTON | TOPIC_SLOT_CTRL_SLOTEN |
+		    TOPIC_SLOT_CTRL_ID_LOCK | TOPIC_SLOT_CTRL_CARDBUS);
+		reg &= ~TOPIC_SLOT_CTRL_SWDETECT;
+		reg |= TOPIC97_SLOT_CTRL_PCIINT;
+		reg &= ~(TOPIC97_SLOT_CTRL_STSIRQP | TOPIC97_SLOT_CTRL_IRQP);
 		DPRINTF(("0x%x\n", reg));
 		pci_conf_write(pc, tag, TOPIC_SLOT_CTRL, reg);
 		break;

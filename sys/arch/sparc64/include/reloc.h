@@ -1,4 +1,4 @@
-/*	$NetBSD: reloc.h,v 1.2 2000/07/14 20:59:08 eeh Exp $ */
+/*	$NetBSD: reloc.h,v 1.2.4.1 2001/09/13 01:14:41 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,8 +46,7 @@
 
 /*
  * SPARC relocations.  The linker has, unfortunately, a large number
- * of link types.  We do not do dynamic linking (yet?) but we define
- * the dynamic link types.
+ * of link types.
  */
 enum reloc_type {
 		/* architecturally-required types */
@@ -74,6 +73,7 @@ enum reloc_type {
 		/* gnu ld does not use these but Sun linker does */
 		/* we define them anyway (note that they are included
 		   in the freely-available gas sources!) */
+		/* actually, newer gnu ld does generate some of these. */
 	RELOC_PC10,		/* ? */
 	RELOC_PC22,		/* ? */
 	RELOC_JMP_TBL,		/* ? */
@@ -81,7 +81,7 @@ enum reloc_type {
 	RELOC_GLOB_DAT,		/* ? */
 	RELOC_JMP_SLOT,		/* ? */
 	RELOC_RELATIVE,		/* ? */
-	RELOC_UA_32,
+	RELOC_UA_32,		/* unaligned 32bit relocation */
 
 		/* The following are LP64 relocations */
 

@@ -1,4 +1,4 @@
-#	$NetBSD: std.sandpoint,v 1.2 2001/06/10 03:16:29 briggs Exp $
+#	$NetBSD: std.sandpoint,v 1.2.2.1 2001/09/13 01:14:28 thorpej Exp $
 #
 # standard, required NetBSD/sandpoint 'options'
 
@@ -9,3 +9,6 @@ options 	EXEC_ELF32	# exec ELF binaries
 options 	EXEC_SCRIPT	# exec #! scripts
 
 options		OPENPIC
+
+makeoptions	TEXTADDR=0x90000
+makeoptions	NEED_SREC=yes

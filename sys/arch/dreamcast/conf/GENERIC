@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.11 2001/06/30 11:00:33 darcy Exp $
+#	$NetBSD: GENERIC,v 1.11.2.1 2001/09/13 01:13:34 thorpej Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -149,6 +149,7 @@ ukphy*		at mii? phy ?
 
 #pseudo-device	vnd		4	# disk-like interface to files
 #pseudo-device	bpfilter	8	# Berkeley packet filter
+#pseudo-device	bridge			# simple inter-network bridging
 #pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	loop			# network loopback
 pseudo-device	pty			# pseudo-terminals

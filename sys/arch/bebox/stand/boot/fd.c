@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.3 1999/06/28 01:20:44 sakamoto Exp $	*/
+/*	$NetBSD: fd.c,v 1.3.16.1 2001/09/13 01:13:29 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1997-1998 Kazuki Sakamoto (sakamoto@netbsd.org)
@@ -193,7 +193,7 @@ fdinit(un)
 
 #if 0
 	irq_init();
-#endif 0
+#endif
 	fdReset(ctlr);
 
 	if (fdc_out(ctlr, CMD_VERSION) != SUCCESS) {  /* version check */

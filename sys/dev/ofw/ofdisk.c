@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdisk.c,v 1.15 2001/01/08 02:03:47 fvdl Exp $	*/
+/*	$NetBSD: ofdisk.c,v 1.15.4.1 2001/09/13 01:15:49 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -34,6 +34,7 @@
 #include <sys/param.h>
 #include <sys/buf.h>
 #include <sys/device.h>
+#include <sys/conf.h>
 #include <sys/disklabel.h>
 #include <sys/disk.h>
 #include <sys/fcntl.h>
@@ -55,11 +56,14 @@ struct ofdisk_softc {
 	char sc_name[16];
 };
 
+bdev_decl(ofdisk_);
+cdev_decl(ofdisk_);
+
 /* sc_flags */
 #define OFDF_ISFLOPPY	0x01		/* we are a floppy drive */
 
-static int ofdisk_match __P((struct device *, struct cfdata *, void *));
-static void ofdisk_attach __P((struct device *, struct device *, void *));
+static int ofdisk_match (struct device *, struct cfdata *, void *);
+static void ofdisk_attach (struct device *, struct device *, void *);
 
 struct cfattach ofdisk_ca = {
 	sizeof(struct ofdisk_softc), ofdisk_match, ofdisk_attach
@@ -67,18 +71,15 @@ struct cfattach ofdisk_ca = {
 
 extern struct cfdriver ofdisk_cd;
 
-void ofdisk_strategy __P((struct buf *));
+void ofdisk_strategy (struct buf *);
 
 struct dkdriver ofdisk_dkdriver = { ofdisk_strategy };
 
-void ofdisk_getdefaultlabel __P((struct ofdisk_softc *, struct disklabel *));
-void ofdisk_getdisklabel __P((dev_t));
+void ofdisk_getdefaultlabel (struct ofdisk_softc *, struct disklabel *);
+void ofdisk_getdisklabel (dev_t);
 
 static int
-ofdisk_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+ofdisk_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct ofbus_attach_args *oba = aux;
 	char type[8];
@@ -96,9 +97,7 @@ ofdisk_match(parent, match, aux)
 }
 
 static void
-ofdisk_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+ofdisk_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ofdisk_softc *of = (void *)self;
 	struct ofbus_attach_args *oba = aux;
@@ -130,11 +129,7 @@ ofdisk_attach(parent, self, aux)
 }
 
 int
-ofdisk_open(dev, flags, fmt, p)
-	dev_t dev;
-	int flags;
-	int fmt;
-	struct proc *p;
+ofdisk_open(dev_t dev, int flags, int fmt, struct proc *p)
 {
 	int unit = DISKUNIT(dev);
 	struct ofdisk_softc *of;
@@ -197,11 +192,7 @@ ofdisk_open(dev, flags, fmt, p)
 }
 
 int
-ofdisk_close(dev, flags, fmt, p)
-	dev_t dev;
-	int flags;
-	int fmt;
-	struct proc *p;
+ofdisk_close(dev_t dev, int flags, int fmt, struct proc *p)
 {
 	struct ofdisk_softc *of = ofdisk_cd.cd_devs[DISKUNIT(dev)];
 
@@ -230,8 +221,7 @@ ofdisk_close(dev, flags, fmt, p)
 }
 
 void
-ofdisk_strategy(bp)
-	struct buf *bp;
+ofdisk_strategy(struct buf *bp)
 {
 	struct ofdisk_softc *of = ofdisk_cd.cd_devs[DISKUNIT(bp->b_dev)];
 	struct partition *p;
@@ -279,8 +269,7 @@ done:
 }
 
 static void
-ofminphys(bp)
-	struct buf *bp;
+ofminphys(struct buf *bp)
 {
 	struct ofdisk_softc *of = ofdisk_cd.cd_devs[DISKUNIT(bp->b_dev)];
 	
@@ -289,28 +278,19 @@ ofminphys(bp)
 }
 
 int
-ofdisk_read(dev, uio)
-	dev_t dev;
-	struct uio *uio;
+ofdisk_read(dev_t dev, struct uio *uio, int flags)
 {
 	return physio(ofdisk_strategy, NULL, dev, B_READ, ofminphys, uio);
 }
 
 int
-ofdisk_write(dev, uio)
-	dev_t dev;
-	struct uio *uio;
+ofdisk_write(dev_t dev, struct uio *uio, int flags)
 {
 	return physio(ofdisk_strategy, NULL, dev, B_WRITE, ofminphys, uio);
 }
 
 int
-ofdisk_ioctl(dev, cmd, data, flag, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+ofdisk_ioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct ofdisk_softc *of = ofdisk_cd.cd_devs[DISKUNIT(dev)];
 	int error;
@@ -391,18 +371,13 @@ ofdisk_ioctl(dev, cmd, data, flag, p)
 }
 
 int
-ofdisk_dump(dev, blkno, va, size)
-	dev_t dev;
-	daddr_t blkno;
-	caddr_t va;
-	size_t size;
+ofdisk_dump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
 {
 	return EINVAL;
 }
 
 int
-ofdisk_size(dev)
-	dev_t dev;
+ofdisk_size(dev_t dev)
 {
 	struct ofdisk_softc *of;
 	struct disklabel *lp;
@@ -433,12 +408,10 @@ ofdisk_size(dev)
 }
 
 void
-ofdisk_getdefaultlabel(of, lp)
-	struct ofdisk_softc *of;
-	struct disklabel *lp;
+ofdisk_getdefaultlabel(struct ofdisk_softc *of, struct disklabel *lp)
 {
 
-	bzero(lp, sizeof *lp);
+	memset(lp, 0, sizeof *lp);
 
 	/*
 	 * XXX Firmware bug?  Asking for block size gives a

@@ -1,0 +1,27 @@
+#	$NetBSD: files.xscale,v 1.2.4.2 2001/09/13 01:13:08 thorpej Exp $
+#
+# Shared xscale files information
+
+defopt	I80312
+
+#
+# obio is used for when devices are attached to one or both
+# of the flash regions.  Since it
+#
+define	obiobus { bank=-1 }
+define	obio { instance=-1 }
+device	obio
+attach	obio at obiobus
+file	arch/arm/xscale/obio_common.c		obio
+
+# i80312 specific files
+define	iopxs {}
+device	iopxs: pcibus, obiobus
+attach	iopxs at mainbus
+file	arch/arm/xscale/iopxs.c			iopxs
+file	arch/arm/xscale/iopxs_machdep.c		iopxs
+file	arch/arm/xscale/iopxs_io.c		iopxs
+file	arch/arm/xscale/iopxs_io_asm.S		iopxs
+file	arch/arm/xscale/iopxs_pci.c		iopxs
+file	arch/arm/xscale/iopxs_irq.S		iopxs
+file	arch/arm/xscale/iopxs_irqhandler.c	iopxs

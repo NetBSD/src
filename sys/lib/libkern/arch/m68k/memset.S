@@ -1,4 +1,4 @@
-/*	$NetBSD: memset.S,v 1.2 1999/11/11 01:32:12 thorpej Exp $	*/
+/*	$NetBSD: memset.S,v 1.2.8.1 2001/09/13 01:16:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
 #if 0
 	RCSID("from: @(#)bzero.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: memset.S,v 1.2 1999/11/11 01:32:12 thorpej Exp $")
+	RCSID("$NetBSD: memset.S,v 1.2.8.1 2001/09/13 01:16:19 thorpej Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -112,7 +112,9 @@ ENTRY(memset)
 	jeq	Lbzalgndw		| 
 	movb	%d2,%a0@+		|	*(char *)dst++ = X
 	subql	#1,%d1			|	len--
+	addql	#1,%d0
 Lbzalgndw:
+#ifndef	__mc68010__
 	/* long word align */
 	btst	#1,%d0			| if (dst & 2)
 	jeq	Lbzalgndl		|
@@ -138,6 +140,7 @@ Lbz32loop:
 	clrw	%d0
 	subql	#1,%d0
 	jcc	Lbz32loop
+#endif	/* !__mc68010__ */
 
 Lbzlong:
 	/* set by longwords */
@@ -148,6 +151,11 @@ Lbzlong:
 Lbzlloop:
 	movl	%d2,%a0@+		|	clear longwords
 	dbf	%d0,Lbzlloop		|	till done
+#ifdef	__mc68010__
+	clrw	%d0
+	subql	#1,%d0
+	jcc	Lbzlloop
+#endif	/* __mc68010__ */
 	andl	#3,%d1			|	len %= 4
 	jeq	Lbzdone
 

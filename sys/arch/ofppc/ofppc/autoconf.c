@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.9.6.1 2001/08/25 06:15:40 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.9.6.2 2001/09/13 01:14:13 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -37,9 +37,9 @@
 #include <sys/reboot.h>
 #include <sys/systm.h>
 
+#include <machine/autoconf.h>
 #include <machine/powerpc.h>
 
-void configure __P((void));
 static void findroot __P((void));
 
 struct device *booted_device;	/* boot device */

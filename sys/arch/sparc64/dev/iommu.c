@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.35.2.2 2001/08/25 06:15:54 thorpej Exp $	*/
+/*	$NetBSD: iommu.c,v 1.35.2.3 2001/09/13 01:14:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -208,7 +208,7 @@ iommu_init(name, is, tsbsize, iovabase)
 			VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
 		va += NBPG;
 	}
-	pmap_update();
+	pmap_update(pmap_kernel());
 	bzero(is->is_tsb, size);
 
 #ifdef DEBUG
@@ -940,7 +940,7 @@ iommu_dvmamem_map(t, is, segs, nsegs, size, kvap, flags)
 		va += PAGE_SIZE;
 		size -= PAGE_SIZE;
 	}
-	pmap_update();
+	pmap_update(pmap_kernel());
 
 	return (0);
 }
@@ -966,7 +966,7 @@ iommu_dvmamem_unmap(t, is, kva, size)
 	
 	size = round_page(size);
 	pmap_remove(pmap_kernel(), (vaddr_t)kva, size);
-	pmap_update();
+	pmap_update(pmap_kernel());
 #if 0
 	/*
 	 * XXX ? is this necessary? i think so and i think other

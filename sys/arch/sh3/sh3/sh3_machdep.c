@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.15.2.1 2001/08/25 06:15:51 thorpej Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.15.2.2 2001/09/13 01:14:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -146,7 +146,7 @@ sh3_startup()
 		    NULL, UVM_UNKNOWN_OFFSET, 0,
 		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
 				UVM_ADV_NORMAL, 0)) != 0)
-		panic("cpu_startup: cannot allocate VM for buffers");
+		panic("sh3_startup: cannot allocate VM for buffers");
 	minaddr = (vaddr_t)buffers;
 	if ((bufpages / nbuf) >= btoc(MAXBSIZE)) {
 		/* don't want to alloc more physical mem than needed */
@@ -172,7 +172,7 @@ sh3_startup()
 		while (curbufsize) {
 			pg = uvm_pagealloc(NULL, 0, NULL, 0);
 			if (pg == NULL)
-				panic("cpu_startup: not enough memory for "
+				panic("sh3_startup: not enough memory for "
 				    "buffer cache");
 			pmap_kenter_pa(curbuf, VM_PAGE_TO_PHYS(pg),
 					VM_PROT_READ|VM_PROT_WRITE);
@@ -180,7 +180,7 @@ sh3_startup()
 			curbufsize -= PAGE_SIZE;
 		}
 	}
-	pmap_update();
+	pmap_update(pmap_kernel());
 
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively

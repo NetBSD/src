@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.101.2.1 2001/08/03 04:11:56 lukem Exp $	*/
+/*	$NetBSD: machdep.c,v 1.101.2.2 2001/09/13 01:13:59 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -400,13 +400,12 @@ restore_ofmap(ofmap, len)
 			len -= NBPG;
 		}
 	}
-	pmap_update();
+	pmap_update(&ofw_pmap);
 }
 
 /*
  * This should probably be in autoconf!				XXX
  */
-char cpu_model[80];
 char machine[] = MACHINE;		/* from <machine/param.h> */
 char machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 
@@ -450,7 +449,7 @@ cpu_startup()
 	v = (caddr_t)proc0paddr + USPACE;
 
 	printf("%s", version);
-	identifycpu(cpu_model);
+	cpu_identify(NULL, 0);
 
 	format_bytes(pbuf, sizeof(pbuf), ctob((u_int)physmem));
 	printf("total memory = %s\n", pbuf);
@@ -503,7 +502,7 @@ cpu_startup()
 			curbufsize -= PAGE_SIZE;
 		}
 	}
-	pmap_update();
+	pmap_update(pmap_kernel());
 
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively
@@ -762,7 +761,7 @@ mapiodev(pa, len)
 		faddr += NBPG;
 		taddr += NBPG;
 	}
-	pmap_update();
+	pmap_update(pmap_kernel());
 	return (void *)(va + off);
 }
 

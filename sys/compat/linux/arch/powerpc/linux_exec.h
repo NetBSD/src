@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.h,v 1.2.6.1 2001/08/03 04:12:42 lukem Exp $  */
+/*	$NetBSD: linux_exec.h,v 1.2.6.2 2001/09/13 01:15:21 thorpej Exp $  */
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -64,6 +64,7 @@
  * Linux Elf32 format parameters
  */
 
+#define LINUX_GCC_SIGNATURE 1
 /*
  * LINUX_ATEXIT_SIGNATURE enable the atexit_signature test. See 
  * sys/compat/linux/common/linux_exec_elf32.c:linux_atexit_signature()

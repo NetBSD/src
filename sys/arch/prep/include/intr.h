@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.10 2001/06/20 14:19:28 nonaka Exp $	*/
+/*	$NetBSD: intr.h,v 1.10.2.1 2001/09/13 01:14:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -94,6 +94,10 @@ void intr_disestablish(void *);
 
 void softnet(void);
 void softserial(void);
+int isa_intr(void);
+void isa_intr_mask(int);
+void isa_intr_clr(int);
+void isa_setirqstat(int, int, int);
 
 static __inline int splraise(int);
 static __inline void spllower(int);

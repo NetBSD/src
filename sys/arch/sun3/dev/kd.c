@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.35 2001/05/02 10:32:20 scw Exp $	*/
+/*	$NetBSD: kd.c,v 1.35.2.1 2001/09/13 01:14:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -311,7 +311,7 @@ kdstart(tp)
 	struct tty *tp;
 {
 	struct clist *cl;
-	register int s;
+	int s;
 
 	s = spltty();
 	if (tp->t_state & (TS_BUSY|TS_TTSTOP|TS_TIMEOUT))
@@ -362,7 +362,7 @@ kd_later(tpaddr)
 	void *tpaddr;
 {
 	struct tty *tp = tpaddr;
-	register int s;
+	int s;
 
 	kd_putfb(tp);
 

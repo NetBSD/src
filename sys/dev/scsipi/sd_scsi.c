@@ -1,4 +1,4 @@
-/*	$NetBSD: sd_scsi.c,v 1.17.2.1 2001/08/03 04:13:32 lukem Exp $	*/
+/*	$NetBSD: sd_scsi.c,v 1.17.2.2 2001/09/13 01:16:11 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -167,7 +167,8 @@ sd_scsibus_mode_sense(sd, scsipi_sense, page, flags)
 	 */
 	memset(scsipi_sense, 0, sizeof(*scsipi_sense));
 
-	if (sd->sc_periph->periph_quirks & PQUIRK_ONLYBIG) {
+	if ((sd->sc_periph->periph_quirks & PQUIRK_ONLYBIG) &&
+	    !(sd->sc_periph->periph_quirks & PQUIRK_NOBIGMODESENSE)) {
 		return scsipi_mode_sense_big(sd->sc_periph, 0, page,
 		   (struct scsipi_mode_header_big*)&scsipi_sense->header,
 		    sizeof(*scsipi_sense),

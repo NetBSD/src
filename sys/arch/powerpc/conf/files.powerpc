@@ -1,6 +1,7 @@
-#	$NetBSD: files.powerpc,v 1.22 2001/06/20 02:40:14 briggs Exp $
+#	$NetBSD: files.powerpc,v 1.22.2.1 2001/09/13 01:14:22 thorpej Exp $
 defopt	opt_altivec.h	ALTIVEC K_ALTIVEC
-defopt	OPENPIC
+defopt	opt_openpic.h	OPENPIC OPENPIC_SERIAL_MODE
+defopt	L2CR_CONFIG
 defopt	opt_ppcarch.h	PPC_MPC6XX PPC_MPC8XX PPC_IBM4XX
 
 file	arch/powerpc/powerpc/Locore.c
@@ -37,6 +38,7 @@ file	arch/powerpc/ibm4xx/copyoutstr.c		ppc_ibm4xx
 # MPC (Motorola PowerPC) 6xx Family files (60x,74x,75x,74xx)
 #
 file	arch/powerpc/mpc6xx/pmap.c			ppc_mpc6xx & newpmap
+file	arch/powerpc/mpc6xx/cpu_subr.c			ppc_mpc6xx
 file	arch/powerpc/powerpc/fpu.c			ppc_mpc6xx
 file	arch/powerpc/powerpc/pmap.c			ppc_mpc6xx & !newpmap
 file	arch/powerpc/powerpc/trap.c			ppc_mpc6xx

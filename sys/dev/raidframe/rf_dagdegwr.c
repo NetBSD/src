@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagdegwr.c,v 1.6 2001/01/26 04:05:08 oster Exp $	*/
+/*	$NetBSD: rf_dagdegwr.c,v 1.6.4.1 2001/09/13 01:16:05 thorpej Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -87,13 +87,12 @@ rf_CreateDegradedWriteDAG(raidPtr, asmap, dag_h, bp, flags, allocList)
 	RF_RaidAccessFlags_t flags;
 	RF_AllocListElem_t *allocList;
 {
-	RF_RaidLayout_t *layoutPtr = &(raidPtr->Layout);
-	RF_PhysDiskAddr_t *failedPDA = asmap->failedPDAs[0];
 
 	RF_ASSERT(asmap->numDataFailed == 1);
 	dag_h->creator = "DegradedWriteDAG";
 
-	/* if the access writes only a portion of the failed unit, and also
+	/*
+	 * if the access writes only a portion of the failed unit, and also
 	 * writes some portion of at least one surviving unit, we create two
 	 * DAGs, one for the failed component and one for the non-failed
 	 * component, and do them sequentially.  Note that the fact that we're
@@ -101,9 +100,13 @@ rf_CreateDegradedWriteDAG(raidPtr, asmap, dag_h, bp, flags, allocList)
 	 * access either starts or ends in the failed unit, and hence we need
 	 * create only two dags.  This is inefficient in that the same data or
 	 * parity can get read and written twice using this structure.  I need
-	 * to fix this to do the access all at once. */
-	RF_ASSERT(!(asmap->numStripeUnitsAccessed != 1 && failedPDA->numSector != layoutPtr->sectorsPerStripeUnit));
-	rf_CreateSimpleDegradedWriteDAG(raidPtr, asmap, dag_h, bp, flags, allocList);
+	 * to fix this to do the access all at once.
+	 */
+	RF_ASSERT(!(asmap->numStripeUnitsAccessed != 1 &&
+		    asmap->failedPDAs[0]->numSector !=
+			raidPtr->Layout.sectorsPerStripeUnit));
+	rf_CreateSimpleDegradedWriteDAG(raidPtr, asmap, dag_h, bp, flags,
+	    allocList);
 }
 
 

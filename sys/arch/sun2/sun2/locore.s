@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.7.2.1 2001/08/25 06:16:00 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.7.2.2 2001/09/13 01:14:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Matthew Fredette
@@ -784,6 +784,9 @@ ENTRY(getdfc)
 
 ENTRY(getvbr)
 	movc	%vbr,%d0
+#ifdef __ELF__
+	movl	%d0, %a0
+#endif /* __ELF__ */
 	rts
 
 ENTRY(setvbr)

@@ -1,7 +1,7 @@
-/*	$NetBSD: netbsd32_compat_43.c,v 1.17.2.1 2001/08/25 06:16:05 thorpej Exp $	*/
+/*	$NetBSD: netbsd32_compat_43.c,v 1.17.2.2 2001/09/13 01:15:26 thorpej Exp $	*/
 
 /*
- * Copyright (c) 1998 Matthew R. Green
+ * Copyright (c) 1998, 2001 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

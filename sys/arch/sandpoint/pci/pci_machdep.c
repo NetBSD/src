@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.4.2.1 2001/08/25 06:15:48 thorpej Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.4.2.2 2001/09/13 01:14:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -41,6 +41,7 @@
  * using `options PCI_CONF_MODE=N', where `N' is the configuration mode
  * as defined section 3.6.4.1, `Generating Configuration Cycles'.
  */
+#include "opt_openpic.h"
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -228,7 +229,11 @@ pci_intr_map(pa, ihp)
 	 * interrupt, but subtract off the lowest dev (13) to get
 	 * the IRQ.
 	 */
+#if defined(OPENPIC_SERIAL_MODE)
+	line -= 11;
+#else
 	line -= 13;
+#endif
 	
 	*ihp = line;
 	return 0;
@@ -270,8 +275,10 @@ pci_intr_establish(pc, ih, level, func, arg)
 	int level, (*func) __P((void *));
 	void *arg;
 {
-	if (ih < 0 || ih >= 4)
+#if 0
+	if (ih < SANDPOINT_INTR_PCI0 || ih > SANDPOINT_INTR_PCI3)
 		panic("pci_intr_establish: bogus handle 0x%x\n", ih);
+#endif
 
 	/*
 	 * ih is the value assigned in pci_intr_map(), above.

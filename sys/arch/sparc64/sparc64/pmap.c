@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.101.2.2 2001/08/25 06:15:58 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.101.2.3 2001/09/13 01:14:44 thorpej Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
 /*
@@ -704,10 +704,23 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 	BDPRINTF(PDB_BOOT1, 
 		("Kernel data is mapped at %lx, next free seg: %lx, %lx\r\n",
 			(long)kdata, (u_long)mp1->start, (u_long)mp1->size));
-	/* 
-	 * This it bogus and will be changed when the kernel is rounded to 4MB.
+
+	/*
+	 * We save where we can start allocating memory.
 	 */
 	firstaddr = (ekdata + 07) & ~ 07;	/* Longword align */
+
+	/*
+	 * We reserve 100K to grow.
+	 */
+	ekdata += 100*KB;
+
+	/*
+	 * And set the end of the data segment to the end of what our
+	 * bootloader allocated for us, if we still fit in there.
+	 */
+	if (ekdata < mp1->start)
+		ekdata = mp1->start;
 
 #if 1
 #define	valloc(name, type, num) (name) = (type *)firstaddr; firstaddr += (num)
@@ -731,15 +744,14 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 	 * rest should be less than 1K, so 100KB extra should be plenty.
 	 */
 	kdsize = round_page(ekdata - kdata);
+	BDPRINTF(PDB_BOOT1, ("Kernel data size is %lx\r\n", (long)kdsize));
 
 	if ((kdatap & (4*MEG-1)) == 0) {
 		/* We were at a 4MB boundary -- claim the rest */
-		psize_t szdiff = 4*MEG - (kdsize & (4*MEG-1));
+		psize_t szdiff = (4*MEG - kdsize) & (4*MEG - 1);
 
-		if (szdiff < 100*KB /* ~100KB slack */ ) {
-			/* We've overflowed, or soon will, get another page */
-			szdiff += 4*MEG;
-		}
+		BDPRINTF(PDB_BOOT1, ("Need to extend dseg by %lx\r\n",
+			(long)szdiff));
 		if (szdiff) {
 			/* Claim the rest of the physical page. */
 			newkp = kdatap + kdsize;
@@ -770,7 +782,7 @@ remap_data:
 		 * Leave 1MB of extra fiddle space in the calculations.
 		 */
 
-		sz = (kdsize + 4*MEG + 100*KB) & ~(4*MEG-1);
+		sz = (kdsize + 4*MEG - 1) & ~(4*MEG-1);
 		BDPRINTF(PDB_BOOT1, 
 			 ("Allocating new %lx kernel data at 4MB boundary\r\n",
 			  (u_long)sz));
@@ -3859,7 +3871,7 @@ pmap_testout()
 	pg = vm_page_alloc1();
 	pa = (paddr_t)VM_PAGE_TO_PHYS(pg);
 	pmap_enter(pmap_kernel(), va, pa, VM_PROT_ALL, VM_PROT_ALL);
-	pmap_update();
+	pmap_update(pmap_kernel());
 
 	/* Now clear reference and modify */
 	ref = pmap_clear_reference(pg);
@@ -3920,7 +3932,7 @@ pmap_testout()
 
 	/* Check pmap_protect() */
 	pmap_protect(pmap_kernel(), va, va+1, VM_PROT_READ);
-	pmap_update();
+	pmap_update(pmap_kernel());
 	ref = pmap_is_referenced(pg);
 	mod = pmap_is_modified(pg);
 	printf("pmap_protect(VM_PROT_READ): ref %d, mod %d\n",
@@ -3935,7 +3947,7 @@ pmap_testout()
 
 	/* Modify page */
 	pmap_enter(pmap_kernel(), va, pa, VM_PROT_ALL, VM_PROT_ALL);
-	pmap_update();
+	pmap_update(pmap_kernel());
 	*loc = 1;
 
 	ref = pmap_is_referenced(pg);
@@ -3945,7 +3957,7 @@ pmap_testout()
 
 	/* Check pmap_protect() */
 	pmap_protect(pmap_kernel(), va, va+1, VM_PROT_NONE);
-	pmap_update();
+	pmap_update(pmap_kernel());
 	ref = pmap_is_referenced(pg);
 	mod = pmap_is_modified(pg);
 	printf("pmap_protect(VM_PROT_READ): ref %d, mod %d\n",
@@ -3960,7 +3972,7 @@ pmap_testout()
 
 	/* Modify page */
 	pmap_enter(pmap_kernel(), va, pa, VM_PROT_ALL, VM_PROT_ALL);
-	pmap_update();
+	pmap_update(pmap_kernel());
 	*loc = 1;
 
 	ref = pmap_is_referenced(pg);
@@ -3985,7 +3997,7 @@ pmap_testout()
 
 	/* Modify page */
 	pmap_enter(pmap_kernel(), va, pa, VM_PROT_ALL, VM_PROT_ALL);
-	pmap_update();
+	pmap_update(pmap_kernel());
 	*loc = 1;
 
 	ref = pmap_is_referenced(pg);
@@ -4009,7 +4021,7 @@ pmap_testout()
 
 	/* Unmap page */
 	pmap_remove(pmap_kernel(), va, va+1);
-	pmap_update();
+	pmap_update(pmap_kernel());
 	ref = pmap_is_referenced(pg);
 	mod = pmap_is_modified(pg);
 	printf("Unmapped page: ref %d, mod %d\n", ref, mod);
@@ -4027,7 +4039,7 @@ pmap_testout()
 	       ref, mod);
 
 	pmap_remove(pmap_kernel(), va, va+1);
-	pmap_update();
+	pmap_update(pmap_kernel());
 	vm_page_free1(pg);
 }
 #endif

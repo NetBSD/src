@@ -1,4 +1,4 @@
-/* $NetBSD: asc_pmaz.c,v 1.7 2001/04/25 17:53:22 bouyer Exp $ */
+/* $NetBSD: asc_pmaz.c,v 1.7.2.1 2001/09/13 01:14:21 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: asc_pmaz.c,v 1.7 2001/04/25 17:53:22 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_pmaz.c,v 1.7.2.1 2001/09/13 01:14:21 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -76,7 +76,7 @@ struct asc_softc {
 static int  asc_pmaz_match __P((struct device *, struct cfdata *, void *));
 static void asc_pmaz_attach __P((struct device *, struct device *, void *));
 
-struct cfattach xasc_pmaz_ca = {
+struct cfattach asc_pmaz_ca = {
 	sizeof(struct asc_softc), asc_pmaz_match, asc_pmaz_attach
 };
 
@@ -118,7 +118,7 @@ static struct ncr53c9x_glue asc_pmaz_glue = {
 
 #define PMAZ_DMAR_WRITE		0x80000000	/* DMA direction bit */
 #define PMAZ_DMAR_MASK		0x1ffff		/* 17 bits, 128k */
-#define PMAZ_DMA_ADDR(x)	((unsigned)(x) & PMAZ_DMAR_MASK)
+#define PMAZ_DMA_ADDR(x)	((unsigned long)(x) & PMAZ_DMAR_MASK)
 
 static int
 asc_pmaz_match(parent, cfdata, aux)
@@ -256,15 +256,15 @@ asc_pmaz_setup(sc, addr, len, datain, dmasize)
 	asc->sc_dmalen = len;
 	asc->sc_ispullup = datain;
 
-	NCR_DMA(("pmaz_setup: start %d@%p, %s\n",
-		*asc->sc_dmalen, *asc->sc_dmaaddr, datain ? "IN" : "OUT"));
+	NCR_DMA(("pmaz_setup: start %ld@%p, %s\n", (long)*asc->sc_dmalen,
+		*asc->sc_dmaaddr, datain ? "IN" : "OUT"));
 
 	size = *dmasize;
 	if (size > PER_TGT_DMA_SIZE)
 		size = PER_TGT_DMA_SIZE;
 	*dmasize = asc->sc_dmasize = size;
 
-	NCR_DMA(("pmaz_setup: dmasize = %d\n", asc->sc_dmasize));
+	NCR_DMA(("pmaz_setup: dmasize = %ld\n", (long)asc->sc_dmasize));
 
 	asc->sc_bounce = asc->sc_base + PMAZ_OFFSET_RAM;
 	asc->sc_bounce += PER_TGT_DMA_SIZE *

@@ -1,4 +1,4 @@
-/*	$NetBSD: intreg.c,v 1.16 2001/05/27 06:32:55 chs Exp $	*/
+/*	$NetBSD: intreg.c,v 1.16.2.1 2001/09/13 01:14:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@ soft1intr(arg)
 void isr_soft_request(level)
 	int level;
 {
-	register u_char bit;
+	u_char bit;
 
 	if ((level < 1) || (level > 3))
 		return;
@@ -183,7 +183,7 @@ void isr_soft_request(level)
 void isr_soft_clear(level)
 	int level;
 {
-	register u_char bit;
+	u_char bit;
 
 	if ((level < 1) || (level > 3))
 		return;

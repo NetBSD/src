@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.4 2001/06/10 03:16:31 briggs Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.4.2.1 2001/09/13 01:14:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -38,10 +38,15 @@
 
 #include <machine/bus.h>
 
+#include "mainbus.h"
 #include "pci.h"
 #include "opt_pci.h"
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pciconf.h>
+
+#if NCPU == 0
+#error	A cpu device is now required
+#endif
 
 int	mainbus_match __P((struct device *, void *, void *));
 void	mainbus_attach __P((struct device *, struct device *, void *));
@@ -85,6 +90,12 @@ mainbus_attach(parent, self, aux)
 	printf("\n");
 
 	/*
+	 * Always find the CPU
+	 */
+	mba.mba_busname = "cpu";
+	config_found(self, &mba, mainbus_print);
+
+	/*
 	 * XXX Note also that the presence of a PCI bus should
 	 * XXX _always_ be checked, and if present the bus should be
 	 * XXX 'found'.  However, because of the structure of the code,
@@ -115,6 +126,35 @@ mainbus_attach(parent, self, aux)
 
 	config_found(self, &mba.mba_pba, mainbus_print);
 #endif
+}
+
+static int	cpu_match(struct device *, struct cfdata *, void *);
+static void	cpu_attach(struct device *, struct device *, void *);
+
+struct cfattach cpu_ca = {
+	sizeof(struct device), cpu_match, cpu_attach
+};
+
+extern struct cfdriver cpu_cd;
+
+int
+cpu_match(struct device *parent, struct cfdata *cf, void *aux)
+{
+	union mainbus_attach_args *mba = aux;
+
+	if (strcmp(mba->mba_busname, cpu_cd.cd_name) != 0)
+		return 0;
+
+	if (cpu_info_store.ci_dev != NULL)
+		return 0;
+
+	return 1;
+}
+
+void
+cpu_attach(struct device *parent, struct device *self, void *aux)
+{
+	(void) cpu_attach_common(self, 0);
 }
 
 int

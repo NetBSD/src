@@ -1,8 +1,8 @@
-# 	$NetBSD: GENERIC,v 1.121 2001/06/30 11:00:36 darcy Exp $
+# 	$NetBSD: GENERIC,v 1.121.2.1 2001/09/13 01:14:33 thorpej Exp $
 
 include "arch/sparc/conf/std.sparc"
 
-#ident 		"GENERIC-$Revision: 1.121 $"
+#ident 		"GENERIC-$Revision: 1.121.2.1 $"
 
 maxusers	32
 
@@ -506,6 +506,9 @@ pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 
 ## IEEE 802.1Q Virtual LAN encapsulation, see vlan(4).
 pseudo-device	vlan
+
+## Simple inter-network traffic bridging
+#pseudo-device	bridge
 
 #### Audio and video devices
 

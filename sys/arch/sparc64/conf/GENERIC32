@@ -1,8 +1,8 @@
-# 	$NetBSD: GENERIC32,v 1.16.2.1 2001/08/03 04:12:24 lukem Exp $
+# 	$NetBSD: GENERIC32,v 1.16.2.2 2001/09/13 01:14:38 thorpej Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
-#ident 		"GENERIC-$Revision: 1.16.2.1 $"
+#ident 		"GENERIC-$Revision: 1.16.2.2 $"
 
 maxusers	64
 
@@ -469,6 +469,9 @@ pseudo-device	tun		4
 ## Berkeley Packet Filter, required to run RARPD.  A generic C-language
 ## interface that allows selective examining of incoming packets.
 pseudo-device	bpfilter	8
+
+## Simple inter-network traffic bridging
+pseudo-device	bridge
 
 ## IP Filter, used in firewall and NAT applications.  See ipnat(8) for
 ## one example of the use of the IP Filter.

@@ -1,4 +1,4 @@
-#	$NetBSD: files.tc,v 1.22 2001/01/16 05:49:41 nisimura Exp $
+#	$NetBSD: files.tc,v 1.22.4.1 2001/09/13 01:16:12 thorpej Exp $
 #
 # Config file and device description for machine-independent
 # TURBOchannel code.  Included by ports that need it.
@@ -79,7 +79,8 @@ attach	tcds at tc
 file	dev/tc/tcds.c			tcds
 
 # XXX waiting on pmax MI scsi being `asc'.
-# 53C[F]90 SCSI
+#	ref arch/alpha/conf/files.alpha
+# 53C[F]90 PMAZ single channel SCSI
 #device	asc: scsi, ncr53c9x
 #attach	asc at tcds with asc_tcds
 #file	dev/tc/asc_tcds.c		asc_tcds

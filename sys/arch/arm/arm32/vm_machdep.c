@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.1.2.3 2001/08/25 06:15:09 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.1.2.4 2001/09/13 01:13:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -133,8 +133,9 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	 * Set up the undefined stack for the process.
 	 * Note: this stack is not in use if we are forking from p1
 	 */
-	pcb->pcb_und_sp = (u_int)p2->p_addr + USPACE_UNDEF_STACK_TOP;
-	pcb->pcb_sp = (u_int)p2->p_addr + USPACE_SVC_STACK_TOP;
+	pcb->pcb_un.un_32.pcb32_und_sp = (u_int)p2->p_addr +
+	    USPACE_UNDEF_STACK_TOP;
+	pcb->pcb_un.un_32.pcb32_sp = (u_int)p2->p_addr + USPACE_SVC_STACK_TOP;
 
 #ifdef STACKCHECKS
 	/* Fill the undefined stack with a known pattern */
@@ -164,7 +165,8 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	arm_fpe_copycontext(FP_CONTEXT(p1), FP_CONTEXT(p2));
 #endif	/* ARMFPE */
 
-	p2->p_addr->u_pcb.pcb_tf = tf = (struct trapframe *)pcb->pcb_sp - 1;
+	p2->p_addr->u_pcb.pcb_tf = tf =
+	    (struct trapframe *)pcb->pcb_un.un_32.pcb32_sp - 1;
 	*tf = *p1->p_addr->u_pcb.pcb_tf;
 
 	/*
@@ -178,7 +180,7 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	sf->sf_r4 = (u_int)func;
 	sf->sf_r5 = (u_int)arg;
 	sf->sf_pc = (u_int)proc_trampoline;
-	pcb->pcb_sp = (u_int)sf;
+	pcb->pcb_un.un_32.pcb32_sp = (u_int)sf;
 }
 
 /*
@@ -234,7 +236,7 @@ cpu_swapin(p)
 	/* Map the system page */
 	pmap_enter(p->p_vmspace->vm_map.pmap, 0x00000000, systempage.pv_pa,
 	    VM_PROT_READ, VM_PROT_READ|PMAP_WIRED);
-	pmap_update();
+	pmap_update(p->p_vmspace->vm_map.pmap);
 }
 
 
@@ -251,7 +253,7 @@ cpu_swapout(p)
 
 	/* Free the system page mapping */
 	pmap_remove(p->p_vmspace->vm_map.pmap, 0x00000000, 0x00000000 + NBPG);
-	pmap_update();
+	pmap_update(p->p_vmspace->vm_map.pmap);
 }
 
 
@@ -342,7 +344,7 @@ vmapbuf(bp, len)
 		taddr += PAGE_SIZE;
 		len -= PAGE_SIZE;
 	}
-	pmap_update();
+	pmap_update(pmap_kernel());
 }
 
 /*
@@ -373,7 +375,7 @@ vunmapbuf(bp, len)
 	len = round_page(off + len);
 	
 	pmap_remove(pmap_kernel(), addr, addr + len);
-	pmap_update();
+	pmap_update(pmap_kernel());
 	uvm_km_free_wakeup(phys_map, addr, len);
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.24.2.1 2001/08/25 06:15:40 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.24.2.2 2001/09/13 01:14:11 thorpej Exp $	*/
 
 /*
  * This file was taken from mvme68k/mvme68k/vm_machdep.c
@@ -235,7 +235,7 @@ pagemove(from, to, size)
 		to += PAGE_SIZE;
 		size -= PAGE_SIZE;
 	}
-	pmap_update();
+	pmap_update(pmap_kernel());
 }
 
 extern struct vm_map *phys_map;
@@ -274,7 +274,7 @@ vmapbuf(bp, len)
 		kva += PAGE_SIZE;
 		len -= PAGE_SIZE;
 	} while (len);
-	pmap_update();
+	pmap_update(kpmap);
 }
 
 /*
@@ -296,7 +296,7 @@ vunmapbuf(bp, len)
 	len = m68k_round_page(off + len);
 
 	pmap_kremove(kva, len);
-	pmap_update();
+	pmap_update(pmap_kernel());
 	uvm_km_free_wakeup(phys_map, kva, len);
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = 0;

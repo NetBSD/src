@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.11.2.2 2001/08/25 06:15:48 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.11.2.3 2001/09/13 01:14:30 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -141,7 +141,6 @@ paddr_t avail_end;			/* XXX temporary */
 void install_extint __P((void (*)(void)));
 
 void initppc __P((u_int, u_int, u_int, void *)); /* Called from locore */
-void identifycpu __P((void));
 void dumpsys __P((void));
 void strayintr __P((int));
 void lcsplx __P((int));
@@ -200,8 +199,10 @@ initppc(startkernel, endkernel, args, btinfo)
 	{	/* XXX AKB */
 		extern u_long ticks_per_sec, ns_per_tick;
 
-		ticks_per_sec = 66000000;	/* 66 MHz */
-		ticks_per_sec /= 4;	/* 4 cycles per DEC tick on 603 */
+		ticks_per_sec = 100000000;	/* 100 MHz */
+		/* ticks_per_sec = 66000000;	* 66 MHz */
+		ticks_per_sec /= 4;	/* 4 cycles per DEC tick */
+		cpu_timebase = ticks_per_sec;
 		ns_per_tick = 1000000000 / ticks_per_sec;
 	}
 
@@ -423,11 +424,11 @@ cpu_startup()
 		pmap_enter(pmap_kernel(), msgbuf_vaddr + i * NBPG,
 		    msgbuf_paddr + i * NBPG, VM_PROT_READ|VM_PROT_WRITE,
 		    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
-	pmap_update();
+	pmap_update(pmap_kernel());
 	initmsgbuf((caddr_t)msgbuf_vaddr, round_page(MSGBUFSIZE));
 
 	printf("%s", version);
-	identifycpu();
+	cpu_identify(NULL, 0);
 
 	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
 	printf("total memory = %s\n", pbuf);
@@ -485,7 +486,7 @@ cpu_startup()
 			curbufsize -= PAGE_SIZE;
 		}
 	}
-	pmap_update();
+	pmap_update(kernel_map->pmap);
 
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively

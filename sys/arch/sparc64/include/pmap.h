@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.16 2001/04/22 23:19:30 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.16.2.1 2001/09/13 01:14:41 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -161,7 +161,7 @@ int pmap_count_res __P((pmap_t pmap));
 #define pmap_resident_count(pm)		pmap_count_res((pm))
 #define pmap_from_phys_address(x,f)	((x)>>PGSHIFT)
 #define	pmap_phys_address(x)		((((paddr_t)(x))<<PGSHIFT)|PMAP_NC)
-#define	pmap_update()			/* nothing (yet) */
+#define	pmap_update(pmap)		/* nothing (yet) */
 
 void pmap_bootstrap __P((u_long kernelstart, u_long kernelend, u_int numctx));
 /* make sure all page mappings are modulo 16K to prevent d$ aliasing */
@@ -184,5 +184,13 @@ void	ctx_free __P((struct pmap*));
 
 
 #endif	/* _KERNEL */
+
+/* This is only for compatibility with the SPARC */ 
+struct segmap {
+	int	*sg_pte;		/* points to NPTESG PTEs */
+	pmeg_t	sg_pmeg;		/* the MMU segment number (4c) */
+	u_char	sg_npte;		/* number of valid PTEs per seg */
+};
+
 #endif	/* _LOCORE */
 #endif	/* _MACHINE_PMAP_H_ */

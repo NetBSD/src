@@ -1,8 +1,3 @@
-/*	$NetBSD: ieeefp.h,v 1.1 2001/05/28 16:22:18 thorpej Exp $	*/
-
-/*
- * Written by J.T. Conklin, Apr 11, 1995
- * Public domain.
- */
+/*	$NetBSD: ieeefp.h,v 1.1.2.1 2001/09/13 01:12:51 thorpej Exp $	*/
 
 #include <mips/ieeefp.h>

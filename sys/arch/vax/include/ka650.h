@@ -1,4 +1,4 @@
-/*	$NetBSD: ka650.h,v 1.7 1999/08/07 10:36:46 ragge Exp $	*/
+/*	$NetBSD: ka650.h,v 1.7.16.1 2001/09/13 01:15:06 thorpej Exp $	*/
 /*
  * Copyright (c) 1988 The Regents of the University of California.
  * All rights reserved.
@@ -208,7 +208,7 @@ struct ka650_ipcr {
 };
 #define KA650_IPCR	0x20001e00
 
-#endif	_LOCORE
+#endif	/* _LOCORE */
 
 /*
  * Physical start address of the Qbus memory.

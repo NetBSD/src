@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.13 2000/12/11 10:22:55 tron Exp $	*/
+/*	$NetBSD: proc.h,v 1.13.6.1 2001/09/13 01:13:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991 Regents of the University of California.
@@ -50,3 +50,4 @@ struct mdproc {
 
 /* md_flags */
 #define	MDP_USEDFPU	0x0001	/* has used the FPU */
+#define MDP_USEDMTRR	0x0002	/* has set volatile MTRRs */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ofrom.c,v 1.10 2001/04/24 04:30:54 thorpej Exp $	*/
+/*	$NetBSD: ofrom.c,v 1.10.2.1 2001/09/13 01:13:16 thorpej Exp $	*/
 
 /*
  * Copyright 1998
@@ -186,13 +186,13 @@ ofromrw(dev, uio, flags)
 		pmap_enter(pmap_kernel(), (vm_offset_t)memhook,
 		    trunc_page(v), uio->uio_rw == UIO_READ ?
 		    VM_PROT_READ : VM_PROT_WRITE, PMAP_WIRED);
-		pmap_update();
+		pmap_update(pmap_kernel());
 		o = uio->uio_offset & PGOFSET;
 		c = min(uio->uio_resid, (int)(NBPG - o));
 		error = uiomove((caddr_t)memhook + o, c, uio);
 		pmap_remove(pmap_kernel(), (vm_offset_t)memhook,
 		    (vm_offset_t)memhook + NBPG);
-		pmap_update();
+		pmap_update(pmap_kernel());
 	}
 
 	if (physlock > 1)

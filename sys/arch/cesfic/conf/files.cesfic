@@ -1,4 +1,4 @@
-#	$NetBSD: files.cesfic,v 1.1 2001/05/14 18:23:06 drochner Exp $
+#	$NetBSD: files.cesfic,v 1.1.2.1 2001/09/13 01:13:31 thorpej Exp $
 #
 # cesfic-specific configuration info
 
@@ -64,6 +64,9 @@ file	arch/cesfic/cesfic/vm_machdep.c
 file	dev/cons.c
 
 major	{vnd = 6}
+
+# NetBSD m68k a.out Binary Compatibility (COMPAT_AOUT_M68K)
+include "compat/aoutm68k/files.aoutm68k"
 
 # SunOS Binary Compatibility (COMPAT_SUNOS)
 include	"compat/sunos/files.sunos"

@@ -1,4 +1,3 @@
-/*	$NetBSD: endian.h,v 1.1 2000/08/12 22:58:18 wdk Exp $	*/
+/*	$NetBSD: endian.h,v 1.1.6.1 2001/09/13 01:14:01 thorpej Exp $	*/
 
-#define _BYTE_ORDER _BIG_ENDIAN
-#include <mips/endian.h>
+#include <sys/endian.h>

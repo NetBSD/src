@@ -1,4 +1,4 @@
-/*	$NetBSD: control.h,v 1.19 1998/02/05 04:57:30 gwr Exp $	*/
+/*	$NetBSD: control.h,v 1.19.28.1 2001/09/13 01:14:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -66,23 +66,17 @@
 #if defined(_KERNEL) || defined(_STANDALONE)
 
 /* ctrlsp.S */
-int   get_control_byte __P((vm_offset_t));
-void  set_control_byte __P((vm_offset_t, int));
-u_int get_control_word __P((vm_offset_t));
-void  set_control_word __P((vm_offset_t, u_int));
+int   get_control_byte __P((vaddr_t));
+void  set_control_byte __P((vaddr_t, int));
+u_int get_control_word __P((vaddr_t));
+void  set_control_word __P((vaddr_t, u_int));
 
 /* control.c */
 int  get_context __P((void));
 void set_context __P((int));
 
-int  get_segmap __P((vm_offset_t));
-void set_segmap __P((vm_offset_t, int));
-void set_segmap_allctx __P((vm_offset_t, int));
-
-#if 0
-/* Moved to pte.h (now a common interface). */
-int  get_pte __P((vm_offset_t));
-void set_pte __P((vm_offset_t, int));
-#endif
+int  get_segmap __P((vaddr_t));
+void set_segmap __P((vaddr_t, int));
+void set_segmap_allctx __P((vaddr_t, int));
 
 #endif	/* _KERNEL | _STANDALONE */

@@ -1,4 +1,4 @@
-#	$NetBSD: files.bebox,v 1.27 2001/06/18 02:00:49 christos Exp $
+#	$NetBSD: files.bebox,v 1.27.2.1 2001/09/13 01:13:27 thorpej Exp $
 #
 # First try for bebox specific configuration info
 #
@@ -68,8 +68,11 @@ include "dev/i2o/files.i2o"
 define mainbus { }
 device	mainbus: isabus, pcibus, mainbus
 attach	mainbus at root
-file	arch/bebox/bebox/mainbus.c	mainbus
 
+device	cpu
+attach	cpu at mainbus
+
+file	arch/bebox/bebox/mainbus.c	mainbus|cpu needs-flag
 #
 # PCI-only drivers
 # XXX MUST BE INCLUDED BEFORE files.isa, as long as files.isa attaches

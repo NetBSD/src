@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.15.2.1 2001/08/03 04:14:11 lukem Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.15.2.2 2001/09/13 01:16:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -336,7 +336,7 @@ again:
 		UVM_PAGE_OWN(pg, NULL);
 	}
 	simple_unlock(&uobj->vmobjlock);
-	pmap_update();
+	pmap_update(ufi->orig_map->pmap);
 	return 0;
 }
 
@@ -422,7 +422,7 @@ again:
 		va = (vaddr_t)(ubc_object.kva +
 			       ((umap - ubc_object.umap) << ubc_winshift));
 		pmap_remove(pmap_kernel(), va, va + ubc_winsize);
-		pmap_update();
+		pmap_update(pmap_kernel());
 	}
 
 	if (umap->refcount == 0) {
@@ -494,7 +494,7 @@ ubc_release(va, wlen)
 			va = (vaddr_t)(ubc_object.kva +
 			    ((umap - ubc_object.umap) << ubc_winshift));
 			pmap_remove(pmap_kernel(), va, va + ubc_winsize);
-			pmap_update();
+			pmap_update(pmap_kernel());
 			LIST_REMOVE(umap, hash);
 			umap->uobj = NULL;
 			TAILQ_INSERT_HEAD(UBC_QUEUE(umap->offset), umap,
@@ -548,7 +548,7 @@ ubc_flush(uobj, start, end)
 		va = (vaddr_t)(ubc_object.kva +
 			       ((umap - ubc_object.umap) << ubc_winshift));
 		pmap_remove(pmap_kernel(), va, va + ubc_winsize);
-		pmap_update();
+		pmap_update(pmap_kernel());
 
 		LIST_REMOVE(umap, hash);
 		umap->uobj = NULL;

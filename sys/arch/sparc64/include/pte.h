@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.6.2.1 2001/08/03 04:12:28 lukem Exp $ */
+/*	$NetBSD: pte.h,v 1.6.2.2 2001/09/13 01:14:41 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996-1999 Eduardo Horvath
@@ -54,9 +54,13 @@
  */
 
 /* virtual address to virtual page number */
+#define	VA_SUN4_VPG(va)		(((int)(va) >> 13) & 31)
+#define	VA_SUN4C_VPG(va)	(((int)(va) >> 12) & 63)
 #define	VA_SUN4U_VPG(va)	(((int)(va) >> 13) & 31)
 
 /* virtual address to offset within page */
+#define VA_SUN4_OFF(va)       	(((int)(va)) & 0x1FFF)
+#define VA_SUN4C_OFF(va)     	(((int)(va)) & 0xFFF)
 #define VA_SUN4U_OFF(va)       	(((int)(va)) & 0x1FFF)
 
 /* When we go to 64-bit VAs we need to handle the hole */
@@ -234,3 +238,37 @@ extern void tlb_flush_ctx __P((int ctx));
 #define IOPTE_RSVD      0x000000f1
 #define IOPTE_WRITE     0x00000004
 #define IOPTE_VALID     0x00000002
+
+/*
+ * This is purely for compatibility with the old SPARC machines.
+ */
+#define	NBPRG	(1 << 24)	/* bytes per region */
+#define	RGSHIFT	24		/* log2(NBPRG) */
+#define NSEGRG	(NBPRG / NBPSG)	/* segments per region */
+
+#define	NBPSG	(1 << 18)	/* bytes per segment */
+#define	SGSHIFT	18		/* log2(NBPSG) */
+
+/* there is no `struct pte'; we just use `int'; this is for non-4M only */
+#define	PG_V		0x80000000
+#define	PG_PFNUM	0x0007ffff	/* n.b.: only 16 bits on sun4c */
+
+/* virtual address to virtual region number */
+#define	VA_VREG(va)	(((unsigned int)(va) >> RGSHIFT) & 255)
+
+/* virtual address to virtual segment number */
+#define	VA_VSEG(va)	(((unsigned int)(va) >> SGSHIFT) & 63)
+
+#ifndef _LOCORE
+typedef u_short pmeg_t;		/* 10 bits needed per Sun-4 segmap entry */
+#endif
+
+/*
+ * Here are the bit definitions for 4M/SRMMU pte's
+ */
+		/* MMU TABLE ENTRIES */
+#define SRMMU_TETYPE	0x3		/* mask for table entry type */
+#define SRMMU_TEPTE	0x2		/* Page Table Entry */
+		/* PTE FIELDS */
+#define SRMMU_PPNMASK	0xFFFFFF00
+#define SRMMU_PPNPASHIFT 0x4 		/* shift to put ppn into PAddr */

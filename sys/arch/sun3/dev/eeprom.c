@@ -1,4 +1,4 @@
-/*	$NetBSD: eeprom.c,v 1.20 2001/06/05 05:20:20 thorpej Exp $	*/
+/*	$NetBSD: eeprom.c,v 1.20.2.1 2001/09/13 01:14:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -139,7 +139,7 @@ eeprom_attach(parent, self, args)
 
 	if (ee_size < EEPROM_SIZE) {
 		/* Clear out the last part. */
-		bzero(dst, (EEPROM_SIZE - ee_size));
+		memset(dst, 0, (EEPROM_SIZE - ee_size));
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: dlt.h,v 1.2 2001/04/29 09:50:37 martin Exp $	*/
+/*	$NetBSD: dlt.h,v 1.2.2.1 2001/09/13 01:16:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -68,6 +68,8 @@
 /* NetBSD-specific types */
 #define	DLT_PPP_SERIAL	50	/* PPP over serial (async and sync) */
 #define	DLT_PPP_ETHER	51	/* XXX - depreceated! PPP over Ethernet; session only, w/o ether header */
+
+#define DLT_ECONET	115	/* Acorn Econet */
 
 /*
  * NetBSD-specific generic "raw" link type.  The upper 16-bits indicate

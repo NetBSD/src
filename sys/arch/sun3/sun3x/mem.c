@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.19 2001/04/24 04:31:15 thorpej Exp $	*/
+/*	$NetBSD: mem.c,v 1.19.2.1 2001/09/13 01:15:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -64,7 +64,7 @@
 #include <sun3/sun3/machdep.h>
 
 /* XXX - Put this in pmap_pvt.h or something? */
-extern vm_offset_t avail_start;
+extern paddr_t avail_start;
 
 #define	mmread	mmrw
 cdev_decl(mm);
@@ -101,9 +101,9 @@ mmrw(dev, uio, flags)
 	struct uio *uio;
 	int flags;
 {
-	register struct iovec *iov;
-	register vm_offset_t o, v;
-	register int c, rw;
+	struct iovec *iov;
+	vaddr_t o, v;
+	int c, rw;
 	int error = 0;
 	static int physlock;
 	vm_prot_t prot;
@@ -154,13 +154,13 @@ mmrw(dev, uio, flags)
 			    VM_PROT_WRITE;
 			pmap_enter(pmap_kernel(), (vaddr_t)vmmap,
 			    trunc_page(v), prot, prot|PMAP_WIRED);
-			pmap_update();
+			pmap_update(pmap_kernel());
 			o = v & PGOFSET;
 			c = min(uio->uio_resid, (int)(NBPG - o));
 			error = uiomove((caddr_t)vmmap + o, c, uio);
 			pmap_remove(pmap_kernel(), (vaddr_t)vmmap,
 			    (vaddr_t)vmmap + NBPG);
-			pmap_update();
+			pmap_update(pmap_kernel());
 			break;
 
 		case 1:                        /*  /dev/kmem  */
@@ -206,7 +206,7 @@ mmrw(dev, uio, flags)
 			if (devzeropage == NULL) {
 				devzeropage = (caddr_t)
 				    malloc(NBPG, M_TEMP, M_WAITOK);
-				bzero(devzeropage, NBPG);
+				memset(devzeropage, 0, NBPG);
 			}
 			c = min(iov->iov_len, NBPG);
 			error = uiomove(devzeropage, c, uio);
@@ -299,10 +299,10 @@ promacc(va, len, rw)
 	caddr_t va;
 	int len, rw;
 {
-	vm_offset_t sva, eva;
+	vaddr_t sva, eva;
 
-	sva = (vm_offset_t)va;
-	eva = (vm_offset_t)va + len;
+	sva = (vaddr_t)va;
+	eva = (vaddr_t)va + len;
 
 	/* Test for the most common case first. */
 	if (sva < SUN3X_PROM_BASE)

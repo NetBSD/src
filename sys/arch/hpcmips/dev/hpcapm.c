@@ -1,8 +1,8 @@
-/*	$NetBSD: hpcapm.c,v 1.6 2001/01/04 07:43:37 sato Exp $	*/
+/*	$NetBSD: hpcapm.c,v 1.6.4.1 2001/09/13 01:13:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Takemura Shin
- * Copyright (c) 2000 SATO Kazumi
+ * Copyright (c) 2000-2001 SATO Kazumi
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -229,17 +229,41 @@ hpcapm_hook(ctx, type, id, msg)
 			sc->battery_state = APM_BATT_FLAG_HIGH;
 			sc->battery_state |= charge;
 			break;
+		case CONFIG_HOOK_BATT_10P:
+			DPRINTF(("hpcapm: battery life 10%%\n"));
+			sc->battery_life = 10;
+			break;
 		case CONFIG_HOOK_BATT_20P:
 			DPRINTF(("hpcapm: battery life 20%%\n"));
 			sc->battery_life = 20;
+			break;
+		case CONFIG_HOOK_BATT_30P:
+			DPRINTF(("hpcapm: battery life 30%%\n"));
+			sc->battery_life = 30;
+			break;
+		case CONFIG_HOOK_BATT_40P:
+			DPRINTF(("hpcapm: battery life 40%%\n"));
+			sc->battery_life = 40;
 			break;
 		case CONFIG_HOOK_BATT_50P:
 			DPRINTF(("hpcapm: battery life 50%%\n"));
 			sc->battery_life = 50;
 			break;
+		case CONFIG_HOOK_BATT_60P:
+			DPRINTF(("hpcapm: battery life 60%%\n"));
+			sc->battery_life = 60;
+			break;
+		case CONFIG_HOOK_BATT_70P:
+			DPRINTF(("hpcapm: battery life 70%%\n"));
+			sc->battery_life = 70;
+			break;
 		case CONFIG_HOOK_BATT_80P:
 			DPRINTF(("hpcapm: battery life 80%%\n"));
 			sc->battery_life = 80;
+			break;
+		case CONFIG_HOOK_BATT_90P:
+			DPRINTF(("hpcapm: battery life 90%%\n"));
+			sc->battery_life = 90;
 			break;
 		case CONFIG_HOOK_BATT_100P:
 			DPRINTF(("hpcapm: battery life 100%%\n"));

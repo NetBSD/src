@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pmap.h,v 1.7.2.1 2001/08/25 06:17:23 thorpej Exp $	*/
+/*	$NetBSD: uvm_pmap.h,v 1.7.2.2 2001/09/13 01:16:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -149,7 +149,7 @@ void		 pmap_protect __P((pmap_t,
 		    vaddr_t, vaddr_t, vm_prot_t));
 void		 pmap_reference __P((pmap_t));
 void		 pmap_remove __P((pmap_t, vaddr_t, vaddr_t));
-void		 pmap_update __P((void));
+void		 pmap_update __P((pmap_t));
 #if !defined(pmap_resident_count)
 long		 pmap_resident_count __P((pmap_t));
 #endif

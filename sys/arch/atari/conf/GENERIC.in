@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.in,v 1.6 2001/07/09 13:37:38 leo Exp $
+#	$NetBSD: GENERIC.in,v 1.6.2.1 2001/09/13 01:13:19 thorpej Exp $
 #
 # Generic atari
 #
@@ -134,9 +134,10 @@ options 	COMPAT_14	# Compatibility to NetBSD1.4
 #options 	COMPAT_SUNOS	# Support to run Sun-3 executables
 #options 	COMPAT_SVR4	# Support to run SVR4 executables
 #options 	COMPAT_LINUX	# Support to run Linux/m68k executables
-#options 	EXEC_ELF32	# 32-bit ELF executables (Linux, SVR4)
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 #endif
+options		COMPAT_AOUT_M68K # Compatibility to a.out executables
+options		EXEC_AOUT	# a.out format executables
 
 #ifndef INSTALL_KERNEL
 #
@@ -215,6 +216,7 @@ pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
 #pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
+#pseudo-device	bridge			# simple inter-network bridging
 pseudo-device	ccd		4	# concatenating disk driver
 #pseudo-device	raid		4	# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components

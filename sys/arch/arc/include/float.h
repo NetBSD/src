@@ -1,5 +1,3 @@
-/*	$NetBSD: float.h,v 1.4 2000/01/23 21:01:56 soda Exp $	*/
-/*	$OpenBSD: float.h,v 1.2 1996/07/30 20:24:25 pefo Exp $	*/
-/*	NetBSD: float.h,v 1.7 1995/06/20 20:45:50 jtc Exp 	*/
+/*	$NetBSD: float.h,v 1.4.10.1 2001/09/13 01:13:04 thorpej Exp $	*/
 
 #include <mips/float.h>

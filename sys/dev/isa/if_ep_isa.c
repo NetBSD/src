@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_isa.c,v 1.27 2001/07/08 17:55:50 thorpej Exp $	*/
+/*	$NetBSD: if_ep_isa.c,v 1.27.2.1 2001/09/13 01:15:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -207,11 +207,11 @@ ep_isa_probe(parent, match, aux)
 		if (slot == 0)
 			bus_space_write_1(iot, ioh, 0, TAG_ADAPTER + 0);
 
-		vendor = htons(epreadeeprom(iot, ioh, EEPROM_MFG_ID));
+		vendor = bswap16(epreadeeprom(iot, ioh, EEPROM_MFG_ID));
 		if (vendor != MFG_ID)
 			continue;
 
-		model = htons(epreadeeprom(iot, ioh, EEPROM_PROD_ID));
+		model = bswap16(epreadeeprom(iot, ioh, EEPROM_PROD_ID));
 		/*
 		 * XXX: Add a new product id to check for other cards
 		 * (3c515?) and fix the check in ep_isa_attach.

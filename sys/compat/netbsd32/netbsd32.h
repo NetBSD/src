@@ -1,7 +1,7 @@
-/*	$NetBSD: netbsd32.h,v 1.19 2001/06/19 00:36:21 fvdl Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.19.2.1 2001/09/13 01:15:26 thorpej Exp $	*/
 
 /*
- * Copyright (c) 1998 Matthew R. Green
+ * Copyright (c) 1998, 2001 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

@@ -1,4 +1,4 @@
-#	$NetBSD: files.amiga,v 1.108 2001/06/18 02:00:48 christos Exp $
+#	$NetBSD: files.amiga,v 1.108.2.1 2001/09/13 01:13:00 thorpej Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -96,6 +96,10 @@ file	arch/amiga/dev/aucc.c		aucc needs-flag
 device	melody: audio, tms320av110
 attach	melody at zbus
 file	arch/amiga/dev/melody.c		melody
+
+device repulse: audio, ac97, mulaw
+attach	repulse at zbus
+file	arch/amiga/dev/repulse.c	repulse
 
 # mouse
 device	ms: event

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.1.4.1 2001/08/03 04:11:01 lukem Exp $	*/
+/*	$NetBSD: bus.h,v 1.1.4.2 2001/09/13 01:13:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -115,6 +115,9 @@ struct bus_space {
 
 	/* get kernel virtual address */
 	void *		(*bs_vaddr) __P((void *, bus_space_handle_t));
+
+	/* mmap bus space for user */
+	paddr_t		(*bs_mmap) __P((void *, bus_addr_t, off_t, int, int));
 
 	/* barrier */
 	void		(*bs_barrier) __P((void *, bus_space_handle_t,
@@ -256,6 +259,12 @@ struct bus_space {
  */
 #define	bus_space_vaddr(t, h)						\
 	(*(t)->bs_vaddr)((t)->bs_cookie, (h))
+
+/*
+ * MMap bus space for a user application.
+ */
+#define bus_space_mmap(t, a, o, p, f)					\
+	(*(t)->bs_mmap)((t)->bs_cookie, (a), (o), (p), (f))
 
 /*
  * Bus barrier operations.
@@ -404,6 +413,9 @@ void	__bs_c(f,_bs_free) __P((void *t, bus_space_handle_t bsh,	\
 
 #define bs_vaddr_proto(f)						\
 void *	__bs_c(f,_bs_vaddr) __P((void *t, bus_space_handle_t bsh));
+
+#define bs_mmap_proto(f)						\
+paddr_t	__bs_c(f,_bs_mmap) __P((void *, bus_addr_t, off_t, int, int));
 
 #define bs_barrier_proto(f)						\
 void	__bs_c(f,_bs_barrier) __P((void *t, bus_space_handle_t bsh,	\
@@ -564,6 +576,7 @@ bs_subregion_proto(f);		\
 bs_alloc_proto(f);		\
 bs_free_proto(f);		\
 bs_vaddr_proto(f);		\
+bs_mmap_proto(f);		\
 bs_barrier_proto(f);		\
 bs_r_1_proto(f);		\
 bs_r_2_proto(f);		\

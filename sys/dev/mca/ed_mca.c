@@ -1,4 +1,4 @@
-/*	$NetBSD: ed_mca.c,v 1.7 2001/05/14 07:35:33 jdolecek Exp $	*/
+/*	$NetBSD: ed_mca.c,v 1.7.4.1 2001/09/13 01:15:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -150,7 +150,7 @@ ed_mca_attach(parent, self, aux)
 	edc_add_disk(sc, ed, eda->sc_devno);
 
 	BUFQ_INIT(&ed->sc_q);
-	spinlockinit(&ed->sc_q_lock, "edbqlock", 0);
+	simple_lock_init(&ed->sc_q_lock);
 	lockinit(&ed->sc_lock, PRIBIO | PCATCH, "edlck", 0, 0);
 
 	if (ed_get_params(ed)) {
@@ -173,7 +173,7 @@ ed_mca_attach(parent, self, aux)
 		(ed->drv_flags & (1 << 3)) ? "ZeroDefect" : "Defects",
 		(ed->drv_flags & (1 << 4)) ? "InvalidSecondary" : "SecondaryOK"
 		);
-	
+
 	/* Create a DMA map for mapping individual transfer bufs */
 	if ((error = bus_dmamap_create(ed->sc_dmat, 65536, 1,
 		65536, 65536, BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW,
@@ -207,7 +207,7 @@ ed_mca_attach(parent, self, aux)
 		bus_dmamap_destroy(ed->sc_dmat, ed->dmamap_xfer);
 		return;
 	}
-		
+
 
 	/*
 	 * Initialize and attach the disk structure.
@@ -221,7 +221,7 @@ ed_mca_attach(parent, self, aux)
 	ed->sc_sdhook = shutdownhook_establish(ed_shutdown, ed);
 	if (ed->sc_sdhook == NULL)
 		printf("%s: WARNING: unable to establish shutdown hook\n",
-		    ed->sc_dev.dv_xname); 
+		    ed->sc_dev.dv_xname);
 #if NRND > 0
 	rnd_attach_source(&ed->rnd_source, ed->sc_dev.dv_xname,
 			  RND_TYPE_DISK, 0);
@@ -264,7 +264,7 @@ edmcastrategy(bp)
 
 	WDCDEBUG_PRINT(("edmcastrategy (%s)\n", wd->sc_dev.dv_xname),
 	    DEBUG_XFERS);
-	
+
 	/* Valid request?  */
 	if (bp->b_blkno < 0 ||
 	    (bp->b_bcount % lp->d_secsize) != 0 ||
@@ -272,7 +272,7 @@ edmcastrategy(bp)
 		bp->b_error = EINVAL;
 		goto bad;
 	}
-	
+
 	/* If device invalidated (e.g. media change, door open), error. */
 	if ((wd->sc_flags & WDF_LOADED) == 0) {
 		bp->b_error = EIO;
@@ -363,7 +363,7 @@ ed_bio(struct ed_softc *ed, int async, int poll)
 	track = ed->sc_rawblkno / ed->sectors;
 	head = track % ed->heads;
 	cyl = track / ed->heads;
-	sector = ed->sc_rawblkno % ed->sectors; 
+	sector = ed->sc_rawblkno % ed->sectors;
 
 	WDCDEBUG_PRINT(("__edstart %s: map: %u %u %u\n", ed->sc_dev.dv_xname,
 		cyl, sector, head),
@@ -559,7 +559,7 @@ edmcaopen(dev, flag, fmt, p)
 		error = ENXIO;
 		goto bad;
 	}
-	
+
 	/* Insure only one open at a time. */
 	switch (fmt) {
 	case S_IFCHR:
@@ -594,7 +594,7 @@ edmcaclose(dev, flag, fmt, p)
 	struct ed_softc *wd = device_lookup(&ed_cd, DISKUNIT(dev));
 	int part = DISKPART(dev);
 	int error;
-	
+
 	WDCDEBUG_PRINT(("edmcaclose\n"), DEBUG_FUNCS);
 	if ((error = ed_lock(wd)) != 0)
 		return error;
@@ -759,7 +759,7 @@ edmcaioctl(dev, xfer, addr, flag, p)
 		((struct partinfo *)addr)->part =
 		    &wd->sc_dk.dk_label->d_partitions[DISKPART(dev)];
 		return 0;
-	
+
 	case DIOCWDINFO:
 	case DIOCSDINFO:
 #ifdef __HAVE_OLD_DISKLABEL
@@ -814,7 +814,7 @@ edmcaioctl(dev, xfer, addr, flag, p)
 		else
 			wd->sc_flags &= ~WDF_KLABEL;
 		return 0;
-	
+
 	case DIOCWLABEL:
 		if ((flag & FWRITE) == 0)
 			return EBADF;
@@ -844,7 +844,7 @@ edmcaioctl(dev, xfer, addr, flag, p)
 		register struct format_op *fop;
 		struct iovec aiov;
 		struct uio auio;
-	
+
 		fop = (struct format_op *)addr;
 		aiov.iov_base = fop->df_buf;
 		aiov.iov_len = fop->df_count;
@@ -958,7 +958,7 @@ edmcadump(dev, blkno, va, size)
 
 	/* Check transfer bounds against partition size. */
 	if ((blkno < 0) || ((blkno + nblks) > lp->d_partitions[part].p_size))
-		return EINVAL;  
+		return EINVAL;
 
 	/* Offset block number to start of partition. */
 	blkno += lp->d_partitions[part].p_offset;
@@ -971,7 +971,7 @@ edmcadump(dev, blkno, va, size)
 		wd->drvp->state = RESET;
 #endif
 	}
-  
+
 	while (nblks > 0) {
 		ed->sc_data = va;
 		ed->sc_rawblkno = blkno;

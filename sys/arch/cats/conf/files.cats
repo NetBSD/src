@@ -1,4 +1,4 @@
-#	$NetBSD: files.cats,v 1.7.2.1 2001/08/03 04:11:22 lukem Exp $
+#	$NetBSD: files.cats,v 1.7.2.2 2001/09/13 01:13:29 thorpej Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -70,9 +70,10 @@ include "dev/scsipi/files.scsipi"
 major   {sd = 24}
 major   {cd = 26}
 
+file	arch/arm/arm32/conf.c
+
 # Generic MD files
 file	arch/cats/cats/autoconf.c
-file	arch/cats/cats/conf.c
 file	arch/cats/cats/cats_machdep.c
 
 # library functions
@@ -136,4 +137,5 @@ include "dev/usb/files.usb"
 # Include WSCONS stuff
 include "dev/wscons/files.wscons"
 include "dev/rasops/files.rasops"
+include "dev/wsfont/files.wsfont"
 include "dev/pckbc/files.pckbc"

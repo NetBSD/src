@@ -1,4 +1,4 @@
-/*	$NetBSD: kbdvar.h,v 1.3 1997/06/29 20:30:52 leo Exp $	*/
+/*	$NetBSD: kbdvar.h,v 1.3.36.1 2001/09/13 01:13:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -73,6 +73,6 @@ void	kbd_write __P((u_char *, int));
 int	kbdgetcn __P((void));
 void	kbdbell __P((void));
 void	kbdenable __P((void));
-#endif _KERNEL
+#endif /* _KERNEL */
 
 #endif /* _KBDVAR_H */

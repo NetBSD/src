@@ -1,7 +1,7 @@
-/*	$NetBSD: netbsd32_exec.h,v 1.8.4.1 2001/08/03 04:12:47 lukem Exp $	*/
+/*	$NetBSD: netbsd32_exec.h,v 1.8.4.2 2001/09/13 01:15:27 thorpej Exp $	*/
 
 /*
- * Copyright (c) 1998 Matthew R. Green
+ * Copyright (c) 1998, 2001 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

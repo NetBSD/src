@@ -1,4 +1,4 @@
-/*	$NetBSD: gets.c,v 1.1.1.2 1995/06/01 20:37:58 gwr Exp $	*/
+/*	$NetBSD: gets.c,v 1.1.1.2.48.1 2001/09/13 01:14:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -52,8 +52,8 @@ void
 gets(buf)
 	char *buf;
 {
-	register int c;
-	register char *lp;
+	int c;
+	char *lp;
 
 top:
 	lp = buf;
@@ -89,7 +89,7 @@ top:
 		 * (It costs you 52 bytes on m68k, gcc -O3).
 		 */
 		case 'r'&037: {
-			register char *p;
+			char *p;
 			putchar('\n');
 			for (p = buf; p < lp; ++p)
 				putchar(*p);

@@ -1,4 +1,4 @@
-/*	$NetBSD: md_hooks.c,v 1.16 2000/06/29 08:53:00 mrg Exp $	*/
+/*	$NetBSD: md_hooks.c,v 1.16.4.1 2001/09/13 01:13:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross

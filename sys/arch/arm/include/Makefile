@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18.2.1 2001/08/03 04:11:00 lukem Exp $
+#	$NetBSD: Makefile,v 1.18.2.2 2001/09/13 01:13:09 thorpej Exp $
 
 KDIR=	/sys/arch/arm/include
 INCSDIR= /usr/include/arm
@@ -15,7 +15,7 @@ INCS=	ansi.h aout_machdep.h armreg.h asm.h \
 	limits.h lock.h \
 	math.h \
 	ofisa_machdep.h ofw.h \
-	param.h pci_machdep.h pio.h pmap.h proc.h profile.h profileio.h \
+	param.h pcb.h pci_machdep.h pio.h pmap.h proc.h profile.h profileio.h \
 	pte.h ptrace.h \
 	reg.h \
 	setjmp.h signal.h stdarg.h sysarch.h \

@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus.c,v 1.22.2.1 2001/08/03 04:12:25 lukem Exp $	*/
+/*	$NetBSD: ebus.c,v 1.22.2.2 2001/09/13 01:14:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -137,6 +137,13 @@ ebus_match(parent, match, aux)
 	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_BRIDGE &&
 	    PCI_VENDOR(pa->pa_id) == PCI_VENDOR_SUN &&
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_SUN_EBUS &&
+		strcmp(name, "ebus") == 0)
+		return (1);
+
+	/* Or a real ebus III */
+	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_BRIDGE &&
+	    PCI_VENDOR(pa->pa_id) == PCI_VENDOR_SUN &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_SUN_EBUSIII &&
 		strcmp(name, "ebus") == 0)
 		return (1);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cmpcireg.h,v 1.2 2001/02/12 18:47:12 tshiozak Exp $	*/
+/*	$NetBSD: cmpcireg.h,v 1.2.4.1 2001/09/13 01:15:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -72,6 +72,7 @@
 #  define CMPCI_REG_ADC_FS_MASK		0x00000007
 
 #define CMPCI_REG_CHANNEL_FORMAT	0x08
+#  define CMPCI_REG_SPDIN_PHASE		0x80
 #  define CMPCI_REG_CH0_FORMAT_SHIFT	0
 #  define CMPCI_REG_CH0_FORMAT_MASK	0x00000003
 #  define CMPCI_REG_CH1_FORMAT_SHIFT	2
@@ -174,8 +175,6 @@
 #  define CMPCI_REG_SURROUND		0x02
 #  define CMPCI_REG_INDIVIDUAL		0x20
 #  define CMPCI_REG_REVERSE_FR		0x10
-#define CMPCI_REG_MIXER27		0x27
-#  define CMPCI_REG_PHASE		0x04
 
 #define CMPCI_REG_MPU_BASE		0x40
 #define CMPCI_REG_MPU_SIZE		0x10

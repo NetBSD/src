@@ -1,4 +1,4 @@
-/*	$NetBSD: acphyreg.h,v 1.2.2.2 2001/08/25 06:16:21 thorpej Exp $	*/
+/*	$NetBSD: acphyreg.h,v 1.2.2.3 2001/09/13 01:15:44 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,6 +40,12 @@
 
 /*
  * Altima AC101 PHY registers.
+ *
+ * Note the AC101 and the AMD Ac79c874 are the same PHY core.  There
+ * are some registers documented in the AC101 manual that are not in
+ * the Am79c874 manual, and vice-versa.  I have no idea how to tell
+ * the two apart, but we don't really use the registers that fall into
+ * this category, anyhow.
  */
 
 #define	MII_ACPHY_PILR		0x10	/* polarity and interrupt control */
@@ -92,11 +98,12 @@
 #define	PLR_REDUCE_TIMER	0x0001	/* reduce time constant for aneg */
 
 
+/*	AC101 only	*/
 #define	MII_ACPHY_CMR		0x14	/* cable measurement register */
 #define	CMR_MASK		0x00f0	/* cable measurement mask */
 
 
-#define	MII_ACPHY_MCR		0x17	/* mode control register */
+#define	MII_ACPHY_MCR		0x15	/* mode control register */
 #define	MCR_NLP_DISABLE		0x4000	/* force good 10BASE-T link */
 #define	MCR_FORCE_LINK_UP	0x2000	/* force good 100BASE-TX link */
 #define	MCR_JABBER_DISABLE	0x1000	/* disable jabber function */
@@ -114,7 +121,11 @@
 #define	MCR_FX_SEL		0x0001	/* FX mode selected */
 
 
-#define	MII_ACPHY_AUX_CSR	0x18	/* receive error counter register */
+/*	Am79c874 only	*/
+#define	MII_ACPHY_DCR		0x17	/* disconnect counter register */
+
+
+#define	MII_ACPHY_RECR		0x18	/* receive error counter register */
 
 
 #endif /* _DEV_MII_ACPHYREG_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.19.2.2 2001/08/25 06:15:46 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.19.2.3 2001/09/13 01:14:23 thorpej Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -223,6 +223,7 @@ STATIC void pmap_pvo_check(const struct pvo_entry *);
 #else
 #define	PMAP_PVO_CHECK(pvo)	do { } while (/*CONSTCOND*/0)
 #endif
+STATIC int pmap_pte_insert(int, pte_t *);
 STATIC int pmap_pvo_enter(pmap_t, struct pool *, struct pvo_head *,
 	vaddr_t, paddr_t, u_int, int);
 STATIC void pmap_pvo_remove(struct pvo_entry *, int, int);
@@ -580,7 +581,7 @@ pmap_pte_change(volatile pte_t *pt, pte_t *pvo_pt, vaddr_t va)
  *
  * Note: both the destination and source PTEs must not have PTE_VALID set.
  */
-static int
+STATIC int
 pmap_pte_insert(int ptegidx, pte_t *pvo_pt)
 {
 	volatile pte_t *pt;
@@ -911,7 +912,7 @@ pmap_copy(pmap_t dst_pmap, pmap_t src_pmap, vaddr_t dst_addr,
  * incorrect entries NOW.
  */
 void
-pmap_update(void)
+pmap_update(struct pmap *pmap)
 {
 #ifdef MULTIPROCESSOR
 	TLBSYNC();
@@ -1418,6 +1419,7 @@ pmap_pvo_enter(pmap_t pm, struct pool *pl, struct pvo_head *pvo_head,
 				if ((flags & PMAP_CANFAIL) == 0)
 					panic("pmap_pvo_enter: failed");
 				pmap_pvo_enter_depth--;
+				pmap_interrupts_restore(msr);
 				return ENOMEM;
 #if 0
 			}
@@ -1621,6 +1623,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 {
 	struct mem_region *mp;
 	u_int32_t pte_lo;
+	u_int32_t msr;
 	int error;
 	int s;
 
@@ -1645,8 +1648,10 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 		pte_lo |= PTE_BR;
 
 	s = splvm();
+	msr = pmap_interrupts_off();
 	error = pmap_pvo_enter(pmap_kernel(), &pmap_upvo_pool, &pmap_pvo_kunmanaged,
 	    va, pa, pte_lo, prot|PMAP_WIRED);
+	pmap_interrupts_restore(msr);
 	splx(s);
 
 	if (error != 0 && error != ENOENT)

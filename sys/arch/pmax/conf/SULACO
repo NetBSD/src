@@ -1,4 +1,4 @@
-#	$NetBSD: SULACO,v 1.8 2001/07/08 16:32:23 abs Exp $
+#	$NetBSD: SULACO,v 1.8.2.1 2001/09/13 01:14:16 thorpej Exp $
 #
 # sulaco.nas.nasa.gov - thorpej's DECstation 5000/200
 #
@@ -152,10 +152,12 @@ fta*	at	tc? slot ? offset ?	# PMAF-F FDDI
 #le*	at	ibus0 addr ?		# 3100 onboard LANCE
 #sii*	at	ibus0 addr ?		# DC7061 onboard SCSI
 
-# XXX Old DECstation SCSI code.
-#oldscsibus*	at sii?
-oldscsibus*	at asc?
-include "arch/pmax/conf/scsi.pmax"
+# SCSI configuration
+#scsibus* at sii?
+scsibus* at asc?
+sd*	at scsibus? target ? lun ?	# SCSI disks
+st*	at scsibus? target ? lun ?	# SCSI tapes
+cd*	at scsibus? target ? lun ?	# SCSI CD-ROMs 
 
 pseudo-device	loop		1	# network loopback
 #pseudo-device	sl		4	# serial-line IP ports

@@ -1,4 +1,4 @@
-/* $NetBSD: pci_bwx_bus_mem_chipdep.c,v 1.14 2000/11/29 06:21:12 thorpej Exp $ */
+/* $NetBSD: pci_bwx_bus_mem_chipdep.c,v 1.14.4.1 2001/09/13 01:12:56 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -111,6 +111,9 @@ void		__C(CHIP,_mem_free) __P((void *, bus_space_handle_t,
 
 /* get kernel virtual address */
 void *		__C(CHIP,_mem_vaddr) __P((void *, bus_space_handle_t));
+
+/* mmap for user */
+paddr_t		__C(CHIP,_mem_mmap) __P((void *, bus_addr_t, off_t, int, int));
 
 /* barrier */
 inline void	__C(CHIP,_mem_barrier) __P((void *, bus_space_handle_t,
@@ -241,6 +244,9 @@ __C(CHIP,_bus_mem_init)(t, v)
 
 	/* get kernel virtual address */
 	t->abs_vaddr =		__C(CHIP,_mem_vaddr);
+
+	/* mmap for user */
+	t->abs_mmap =		__C(CHIP,_mem_mmap);
 
 	/* barrier */
 	t->abs_barrier =	__C(CHIP,_mem_barrier);
@@ -497,6 +503,18 @@ __C(CHIP,_mem_vaddr)(v, bsh)
 	 * so it should be OK if the caller doesn't use BWX instructions.
 	 */
 	return ((void *)bsh);
+}
+
+paddr_t
+__C(CHIP,_mem_mmap)(v, addr, off, prot, flags)
+	void *v;
+	bus_addr_t addr;
+	off_t off;
+	int prot;
+	int flags;
+{
+
+	return (alpha_btop(CHIP_MEM_SYS_START(v) + addr + off));
 }
 
 inline void

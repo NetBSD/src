@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.13 2001/06/17 13:39:33 simonb Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.13.2.1 2001/09/13 01:14:24 thorpej Exp $	*/
 /*	$OpenBSD: db_trace.c,v 1.3 1997/03/21 02:10:48 niklas Exp $	*/
 
 /* 
@@ -110,7 +110,7 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 	char *symname;
 	boolean_t kernel_only = TRUE;
 	boolean_t trace_thread = FALSE;
-	extern int trapexit[];
+	extern int trapexit[], end[];
 	boolean_t full = FALSE;
 
 	{
@@ -129,17 +129,23 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 
 	frame = (db_addr_t)ddb_regs.r[1];
 	for (;;) {
-		if (kernel_only && frame < VM_MIN_KERNEL_ADDRESS)
+		if (frame < NBPG)
 			break;
-		if (!kernel_only && frame < NBPG)
+		if (kernel_only &&
+		    ((frame > (db_addr_t) end &&
+		      frame < VM_MIN_KERNEL_ADDRESS) ||
+		     frame >= VM_MAX_KERNEL_ADDRESS))
 			break;
  
 		frame = *(db_addr_t *)frame;
 	    next_frame:
 		args = (db_addr_t *)(frame + 8);
-		if (kernel_only && frame < VM_MIN_KERNEL_ADDRESS)
+		if (frame < NBPG)
 			break;
-		if (!kernel_only && frame < NBPG)
+		if (kernel_only &&
+		    ((frame > (db_addr_t) end &&
+		      frame < VM_MIN_KERNEL_ADDRESS) ||
+		     frame >= VM_MAX_KERNEL_ADDRESS))
 			break;
 	        if (count-- == 0)
 			break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: bcu_vrip.c,v 1.10 2001/05/17 13:10:46 enami Exp $	*/
+/*	$NetBSD: bcu_vrip.c,v 1.10.2.1 2001/09/13 01:13:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001 SATO Kazumi. All rights reserved.
@@ -130,7 +130,7 @@ vrbcu_dump_regs()
 	cpuid = vrbcu_vrip_getcpuid();
 #if !defined(ONLY_VR4181) && !defined(ONLY_VR4102)
 	if (cpuid != BCUREVID_FIXRID_4181 
-		&& cpuid <= BCUREVID_RID_4122
+		&& cpuid <= BCUREVID_RID_4131
 		&& cpuid >= BCUREVID_RID_4111) {
 		spdreg = vrbcu_read(sc, BCUCLKSPEED_REG_W);
 #ifdef VRBCUDEBUG
@@ -201,8 +201,9 @@ vrbcu_dump_regs()
 		}
 		break;
 #endif /* VR4121 */
-#if defined VR4122
+#if defined VR4122 || defined VR4131
 	case BCUREVID_RID_4122:
+	case BCUREVID_RID_4131:
 		{
 			int vtdiv;
 
@@ -217,7 +218,7 @@ vrbcu_dump_regs()
 				BCUCLKSPEED_TDIVSHFT) ? 4 : 2);
 		}
 		break;
-#endif /* VR4122 */
+#endif /* VR4122 || VR4131 */
 	default:
 		break;
 	}
@@ -247,7 +248,7 @@ vrbcu_dump_regs()
 		bitdisp16(reg);
 	}
 #endif /* !defined ONLY_VR4181 */
-#if !defined(ONLY_VR4181) || !defined(ONLY_VR4122)
+#if !defined(ONLY_VR4181) || !defined(ONLY_VR4122_4131)
 	if (cpuid != BCUREVID_FIXRID_4181
 		&& cpuid <= BCUREVID_RID_4121
 		&& cpuid >= BCUREVID_RID_4102) {
@@ -262,10 +263,10 @@ vrbcu_dump_regs()
 		reg = vrbcu_read(sc, BCUREFCOUNT_REG_W);
 		printf("vrbcu: RFCOUNT %x\n",  reg);
 	}
-#endif /* !defined(ONLY_VR4181) || !defined(ONLY_VR4122) */
+#endif /* !defined(ONLY_VR4181) || !defined(ONLY_VR4122_4131) */
 #if !defined(ONLY_VR4181)
 	if (cpuid != BCUREVID_FIXRID_4181 
-		&& cpuid <= BCUREVID_RID_4122
+		&& cpuid <= BCUREVID_RID_4131
 		&& cpuid >= BCUREVID_RID_4111)
 	{
 		reg = vrbcu_read(sc, BCUCNT3_REG_W);
@@ -283,7 +284,7 @@ static char *cpuname[] = {
 	"VR4111",	/* 2 */
 	"VR4121",	/* 3 */
 	"VR4122",	/* 4 */
-	"UNKNOWN",
+	"VR4131",	/* 5 */
 	"UNKNOWN",
 	"UNKNOWN",
 	"UNKNOWN",
@@ -408,6 +409,11 @@ vrbcu_vrip_getcpuclock(void)
 		cpuspeed = (cpuclock / 3 + MHZ / 2) / MHZ;
 		break;
 	case BCUREVID_RID_4122:
+		cpuclock = CLKX / clksp * 98;
+		/* branch delay is 2 clock; 3 clock/loop */
+		cpuspeed = (cpuclock / 3 + MHZ / 2) / MHZ;
+		break;
+	case BCUREVID_RID_4131:
 		cpuclock = CLKX / clksp * 98;
 		/* branch delay is 2 clock; 3 clock/loop */
 		cpuspeed = (cpuclock / 3 + MHZ / 2) / MHZ;

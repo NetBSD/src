@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_stripelocks.c,v 1.6 2000/12/04 11:35:46 fvdl Exp $	*/
+/*	$NetBSD: rf_stripelocks.c,v 1.6.4.1 2001/09/13 01:16:06 thorpej Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -336,12 +336,11 @@ rf_ReleaseStripeLock(
 {
 	RF_StripeLockDesc_t *lockDesc, *ld_t;
 	RF_LockReqDesc_t *lr, *lr_t, *callbacklist, *t;
-	RF_IoType_t type = lockReqDesc->type;
 	int     tid = 0, hashval = HASH_STRIPEID(stripeID);
 	int     release_it, consider_it;
 	RF_LockReqDesc_t *candidate, *candidate_t, *predecessor;
 
-	RF_ASSERT(RF_IO_IS_R_OR_W(type));
+	RF_ASSERT(RF_IO_IS_R_OR_W(lockReqDesc->type));
 
 	if (rf_stripeLockDebug) {
 		if (stripeID == -1)

@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.132.2.2 2001/08/25 06:16:22 thorpej Exp $
+#	$NetBSD: files.pci,v 1.132.2.3 2001/09/13 01:15:53 thorpej Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -124,6 +124,12 @@ file	dev/pci/if_fpa.c		fpa
 # device declaration in sys/conf/files
 attach	le at pci with le_pci: le32
 file	dev/pci/if_le_pci.c		le_pci
+
+# AMD PCnet-PCI Ethernet controller family
+# Supersedes if_le_pci.c
+device	pcn: ether, ifnet, arp, mii
+attach	pcn at pci
+file	dev/pci/if_pcn.c		pcn
 
 # common code for siop/esiop pci front end
 define	siop_pci_common
@@ -287,6 +293,12 @@ file	dev/pci/opl_sv.c		opl_sv
 device	cmpci { }: audio, auconv, mulaw
 attach	cmpci at pci
 file	dev/pci/cmpci.c			cmpci
+
+attach	opl at cmpci with opl_cmpci
+file	dev/pci/opl_cmpci.c		opl_cmpci
+
+attach	mpu at cmpci with mpu_cmpci
+file	dev/pci/mpu_cmpci.c		mpu_cmpci
 
 # Yamaha YMF724/740/744/754 PCI audio controller
 device	yds { }: audio, auconv, mulaw, ac97

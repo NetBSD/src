@@ -1,4 +1,4 @@
-/* $NetBSD: pcb.h,v 1.2 2001/02/23 21:23:52 reinoud Exp $ */
+/* $NetBSD: pcb.h,v 1.2.6.1 2001/09/13 01:13:40 thorpej Exp $ */
 
-#include <arm/arm32/pcb.h>
+#include <arm/pcb.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: stubs.c,v 1.1.2.3 2001/08/25 06:15:09 thorpej Exp $	*/
+/*	$NetBSD: stubs.c,v 1.1.2.4 2001/09/13 01:13:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -48,7 +48,7 @@
 #include <sys/msgbuf.h>
 #include <uvm/uvm_extern.h>
 #include <machine/cpu.h>
-#include <machine/irqhandler.h>
+#include <machine/intr.h>
 #include <machine/bootconfig.h>
 #include <machine/pcb.h>
 
@@ -198,6 +198,7 @@ dumpsys()
 	delay(1000000);
 }
 
+#ifndef NEWINTR
 /* This is interrupt / SPL related */
 
 int current_spl_level = _SPL_HIGH;
@@ -247,5 +248,7 @@ dump_spl_masks()
 	}
 }
 #endif
+
+#endif /* !NEWINTR */
 
 /* End of stubs.c */

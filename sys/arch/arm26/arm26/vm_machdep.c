@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.17.2.1 2001/08/25 06:15:12 thorpej Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.17.2.2 2001/09/13 01:13:13 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -66,7 +66,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: vm_machdep.c,v 1.17.2.1 2001/08/25 06:15:12 thorpej Exp $");
+__RCSID("$NetBSD: vm_machdep.c,v 1.17.2.2 2001/09/13 01:13:13 thorpej Exp $");
 
 #include <sys/buf.h>
 #include <sys/mount.h> /* XXX syscallargs.h uses fhandle_t and fsid_t */
@@ -203,7 +203,7 @@ vmapbuf(struct buf *bp, vsize_t len)
 		faddr += PAGE_SIZE;
 		taddr += PAGE_SIZE;
 	}
-	pmap_update();
+	pmap_update(vm_map_pmap(phys_map));
 }
 
 /*
@@ -220,7 +220,7 @@ vunmapbuf(struct buf *bp, vsize_t len)
 	off = (vaddr_t)bp->b_data - addr;
 	len = round_page(off + len);
 	pmap_remove(vm_map_pmap(phys_map), addr, addr + len);
-	pmap_update();
+	pmap_update(vm_map_pmap(phys_map));
 	uvm_km_free_wakeup(phys_map, addr, len);
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = NULL;

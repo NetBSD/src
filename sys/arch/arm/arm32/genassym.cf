@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.1.2.2 2001/08/03 04:10:58 lukem Exp $
+#	$NetBSD: genassym.cf,v 1.1.2.3 2001/09/13 01:13:07 thorpej Exp $
 
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -47,7 +47,7 @@ include <uvm/uvm_extern.h>
 include <machine/pmap.h>
 include <machine/frame.h>
 include <machine/vmparam.h>
-include <machine/irqhandler.h>
+include <machine/intr.h>
 
 define	VM_MIN_ADDRESS		VM_MIN_ADDRESS
 define	VM_MAXUSER_ADDRESS	VM_MAXUSER_ADDRESS
@@ -76,23 +76,15 @@ define	SONPROC			SONPROC
 
 define	PCB_PAGEDIR		offsetof(struct pcb, pcb_pagedir)
 define	PCB_FLAGS		offsetof(struct pcb, pcb_flags)
-define	PCB_R0			offsetof(struct pcb, pcb_r0)
-define	PCB_R1			offsetof(struct pcb, pcb_r1)
-define	PCB_R2			offsetof(struct pcb, pcb_r2)
-define	PCB_R3			offsetof(struct pcb, pcb_r3)
-define	PCB_R4			offsetof(struct pcb, pcb_r4)
-define	PCB_R5			offsetof(struct pcb, pcb_r5)
-define	PCB_R6			offsetof(struct pcb, pcb_r6)
-define	PCB_R7			offsetof(struct pcb, pcb_r7)
-define	PCB_R8			offsetof(struct pcb, pcb_r8)
-define	PCB_R9			offsetof(struct pcb, pcb_r9)
-define	PCB_R10			offsetof(struct pcb, pcb_r10)
-define	PCB_R11			offsetof(struct pcb, pcb_r11)
-define	PCB_R12			offsetof(struct pcb, pcb_r12)
-define	PCB_SP			offsetof(struct pcb, pcb_sp)
-define	PCB_LR			offsetof(struct pcb, pcb_lr)
-define	PCB_PC			offsetof(struct pcb, pcb_pc)
-define	PCB_UND_SP		offsetof(struct pcb, pcb_und_sp)
+define	PCB_R8			offsetof(struct pcb, pcb_un.un_32.pcb32_r8)
+define	PCB_R9			offsetof(struct pcb, pcb_un.un_32.pcb32_r9)
+define	PCB_R10			offsetof(struct pcb, pcb_un.un_32.pcb32_r10)
+define	PCB_R11			offsetof(struct pcb, pcb_un.un_32.pcb32_r11)
+define	PCB_R12			offsetof(struct pcb, pcb_un.un_32.pcb32_r12)
+define	PCB_SP			offsetof(struct pcb, pcb_un.un_32.pcb32_sp)
+define	PCB_LR			offsetof(struct pcb, pcb_un.un_32.pcb32_lr)
+define	PCB_PC			offsetof(struct pcb, pcb_un.un_32.pcb32_pc)
+define	PCB_UND_SP		offsetof(struct pcb, pcb_un.un_32.pcb32_und_sp)
 define	PCB_ONFAULT		offsetof(struct pcb, pcb_onfault)
 
 define	USER_SIZE		sizeof(struct user)
@@ -109,23 +101,27 @@ define	PR_SIZE			offsetof(struct uprof, pr_size)
 define	PR_OFF			offsetof(struct uprof, pr_off)
 define	PR_SCALE		offsetof(struct uprof, pr_scale)
 
-define	IH_FUNC			offsetof(irqhandler_t, ih_func)
-define	IH_ARG			offsetof(irqhandler_t, ih_arg)
-define	IH_LEVEL		offsetof(irqhandler_t, ih_level)
-define	IH_NUM			offsetof(irqhandler_t, ih_num)
-define	IH_FLAGS		offsetof(irqhandler_t, ih_flags)
-define	IH_MASKADDR		offsetof(irqhandler_t, ih_maskaddr)
-define	IH_MASKBITS		offsetof(irqhandler_t, ih_maskbits)
-define	IH_NEXT			offsetof(irqhandler_t, ih_next)
+define	IH_FUNC			offsetof(struct irqhandler, ih_func)
+define	IH_ARG			offsetof(struct irqhandler, ih_arg)
+define	IH_FLAGS		offsetof(struct irqhandler, ih_flags)
+ifndef NEWINTR
+define	IH_LEVEL		offsetof(struct irqhandler, ih_level)
+define	IH_NUM			offsetof(struct irqhandler, ih_num)
+define	IH_MASKADDR		offsetof(struct irqhandler, ih_maskaddr)
+define	IH_MASKBITS		offsetof(struct irqhandler, ih_maskbits)
+define	IH_NEXT			offsetof(struct irqhandler, ih_next)
+endif
 
-define	FH_FUNC			offsetof(fiqhandler_t, fh_func)
-define	FH_MASK			offsetof(fiqhandler_t, fh_mask)
-define	FH_R8			offsetof(fiqhandler_t, fh_r8)
-define	FH_R9			offsetof(fiqhandler_t, fh_r9)
-define	FH_R10			offsetof(fiqhandler_t, fh_r10)
-define	FH_R11			offsetof(fiqhandler_t, fh_r11)
-define	FH_R12			offsetof(fiqhandler_t, fh_r12)
-define	FH_R13			offsetof(fiqhandler_t, fh_r13)
+define	FH_FUNC			offsetof(struct fiqhandler, fh_func)
+define	FH_R8			offsetof(struct fiqhandler, fh_r8)
+define	FH_R9			offsetof(struct fiqhandler, fh_r9)
+define	FH_R10			offsetof(struct fiqhandler, fh_r10)
+define	FH_R11			offsetof(struct fiqhandler, fh_r11)
+define	FH_R12			offsetof(struct fiqhandler, fh_r12)
+define	FH_R13			offsetof(struct fiqhandler, fh_r13)
+ifndef NEWINTR
+define	FH_MASK			offsetof(struct fiqhandler, fh_mask)
+endif
 
 define	SIGF_HANDLER		offsetof(struct sigframe, sf_handler)
 define	SIGF_SC			offsetof(struct sigframe, sf_sc)

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.75 2001/05/06 13:46:34 simonb Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.75.2.1 2001/09/13 01:16:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -91,6 +91,9 @@
 #include <sys/sysctl.h>
 #include <sys/timex.h>
 #include <sys/sched.h>
+#ifdef CALLWHEEL_STATS
+#include <sys/device.h>
+#endif
 
 #include <machine/cpu.h>
 #ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
@@ -354,17 +357,18 @@ int	callwheelsize, callwheelbits, callwheelmask;
 static struct callout *nextsoftcheck;	/* next callout to be checked */
 
 #ifdef CALLWHEEL_STATS
-int	callwheel_collisions;		/* number of hash collisions */
-int	callwheel_maxlength;		/* length of the longest hash chain */
-int	*callwheel_sizes;		/* per-bucket length count */
-u_int64_t callwheel_count;		/* # callouts currently */
-u_int64_t callwheel_established;	/* # callouts established */
-u_int64_t callwheel_fired;		/* # callouts that fired */
-u_int64_t callwheel_disestablished;	/* # callouts disestablished */
-u_int64_t callwheel_changed;		/* # callouts changed */
-u_int64_t callwheel_softclocks;		/* # times softclock() called */
-u_int64_t callwheel_softchecks;		/* # checks per softclock() */
-u_int64_t callwheel_softempty;		/* # empty buckets seen */
+int	     *callwheel_sizes;		/* per-bucket length count */
+struct evcnt callwheel_collisions;	/* number of hash collisions */
+struct evcnt callwheel_maxlength;	/* length of the longest hash chain */
+struct evcnt callwheel_count;		/* # callouts currently */
+struct evcnt callwheel_established;	/* # callouts established */
+struct evcnt callwheel_fired;		/* # callouts that fired */
+struct evcnt callwheel_disestablished;	/* # callouts disestablished */
+struct evcnt callwheel_changed;		/* # callouts changed */
+struct evcnt callwheel_softclocks;	/* # times softclock() called */
+struct evcnt callwheel_softchecks;	/* # checks per softclock() */
+struct evcnt callwheel_softempty;	/* # empty buckets seen */
+struct evcnt callwheel_hintworked;	/* # times hint saved scan */
 #endif /* CALLWHEEL_STATS */
 
 /*
@@ -881,7 +885,7 @@ hardclock(struct clockframe *frame)
 	 */
 	simple_lock(&callwheel_slock);	/* already at splclock() */
 	hardclock_ticks++;
-	if (TAILQ_FIRST(&callwheel[hardclock_ticks & callwheelmask]) != NULL) {
+	if (! TAILQ_EMPTY(&callwheel[hardclock_ticks & callwheelmask].cq_q)) {
 		simple_unlock(&callwheel_slock);
 		if (CLKF_BASEPRI(frame)) {
 			/*
@@ -931,23 +935,34 @@ softclock(void *v)
 	softclock_running = 1;
 
 #ifdef CALLWHEEL_STATS
-	callwheel_softclocks++;
+	callwheel_softclocks.ev_count++;
 #endif
 
 	while (softclock_ticks != hardclock_ticks) {
 		softclock_ticks++;
 		idx = (int)(softclock_ticks & callwheelmask);
 		bucket = &callwheel[idx];
-		c = TAILQ_FIRST(bucket);
+		c = TAILQ_FIRST(&bucket->cq_q);
+		if (c == NULL) {
 #ifdef CALLWHEEL_STATS
-		if (c == NULL)
-			callwheel_softempty++;
+			callwheel_softempty.ev_count++;
 #endif
+			continue;
+		}
+		if (softclock_ticks < bucket->cq_hint) {
+#ifdef CALLWHEEL_STATS
+			callwheel_hintworked.ev_count++;
+#endif
+			continue;
+		}
+		bucket->cq_hint = UQUAD_MAX;
 		while (c != NULL) {
 #ifdef CALLWHEEL_STATS
-			callwheel_softchecks++;
+			callwheel_softchecks.ev_count++;
 #endif
 			if (c->c_time != softclock_ticks) {
+				if (c->c_time < bucket->cq_hint)
+					bucket->cq_hint = c->c_time;
 				c = TAILQ_NEXT(c, c_link);
 				if (++steps >= MAX_SOFTCLOCK_STEPS) {
 					nextsoftcheck = c;
@@ -959,11 +974,11 @@ softclock(void *v)
 				}
 			} else {
 				nextsoftcheck = TAILQ_NEXT(c, c_link);
-				TAILQ_REMOVE(bucket, c, c_link);
+				TAILQ_REMOVE(&bucket->cq_q, c, c_link);
 #ifdef CALLWHEEL_STATS
 				callwheel_sizes[idx]--;
-				callwheel_fired++;
-				callwheel_count--;
+				callwheel_fired.ev_count++;
+				callwheel_count.ev_count--;
 #endif
 				func = c->c_func;
 				arg = c->c_arg;
@@ -976,6 +991,8 @@ softclock(void *v)
 				c = nextsoftcheck;
 			}
 		}
+		if (TAILQ_EMPTY(&bucket->cq_q))
+			bucket->cq_hint = UQUAD_MAX;
 	}
 	nextsoftcheck = NULL;
 	softclock_running = 0;
@@ -1007,10 +1024,35 @@ callout_startup(void)
 {
 	int i;
 
-	for (i = 0; i < callwheelsize; i++)
-		TAILQ_INIT(&callwheel[i]);
+	for (i = 0; i < callwheelsize; i++) {
+		callwheel[i].cq_hint = UQUAD_MAX;
+		TAILQ_INIT(&callwheel[i].cq_q);
+	}
 
 	simple_lock_init(&callwheel_slock);
+
+#ifdef CALLWHEEL_STATS
+	evcnt_attach_dynamic(&callwheel_collisions, EVCNT_TYPE_MISC,
+	    NULL, "callwheel", "collisions");
+	evcnt_attach_dynamic(&callwheel_maxlength, EVCNT_TYPE_MISC,
+	    NULL, "callwheel", "maxlength");
+	evcnt_attach_dynamic(&callwheel_count, EVCNT_TYPE_MISC,
+	    NULL, "callwheel", "count");
+	evcnt_attach_dynamic(&callwheel_established, EVCNT_TYPE_MISC,
+	    NULL, "callwheel", "established");
+	evcnt_attach_dynamic(&callwheel_fired, EVCNT_TYPE_MISC,
+	    NULL, "callwheel", "fired");
+	evcnt_attach_dynamic(&callwheel_disestablished, EVCNT_TYPE_MISC,
+	    NULL, "callwheel", "disestablished");
+	evcnt_attach_dynamic(&callwheel_changed, EVCNT_TYPE_MISC,
+	    NULL, "callwheel", "changed");
+	evcnt_attach_dynamic(&callwheel_softclocks, EVCNT_TYPE_MISC,
+	    NULL, "callwheel", "softclocks");
+	evcnt_attach_dynamic(&callwheel_softempty, EVCNT_TYPE_MISC,
+	    NULL, "callwheel", "softempty");
+	evcnt_attach_dynamic(&callwheel_hintworked, EVCNT_TYPE_MISC,
+	    NULL, "callwheel", "hintworked");
+#endif /* CALLWHEEL_STATS */
 }
 
 /*
@@ -1049,7 +1091,7 @@ callout_reset(struct callout *c, int ticks, void (*func)(void *), void *arg)
 	if (c->c_flags & CALLOUT_PENDING) {
 		callout_stop_locked(c);	/* Already locked */
 #ifdef CALLWHEEL_STATS
-		callwheel_changed++;
+		callwheel_changed.ev_count++;
 #endif
 	}
 
@@ -1061,17 +1103,20 @@ callout_reset(struct callout *c, int ticks, void (*func)(void *), void *arg)
 	bucket = &callwheel[c->c_time & callwheelmask];
 
 #ifdef CALLWHEEL_STATS
-	if (TAILQ_FIRST(bucket) != NULL)
-		callwheel_collisions++;
+	if (! TAILQ_EMPTY(&bucket->cq_q))
+		callwheel_collisions.ev_count++;
 #endif
 
-	TAILQ_INSERT_TAIL(bucket, c, c_link);
+	TAILQ_INSERT_TAIL(&bucket->cq_q, c, c_link);
+	if (c->c_time < bucket->cq_hint)
+		bucket->cq_hint = c->c_time;
 
 #ifdef CALLWHEEL_STATS
-	callwheel_count++;
-	callwheel_established++;
-	if (++callwheel_sizes[c->c_time & callwheelmask] > callwheel_maxlength)
-		callwheel_maxlength =
+	callwheel_count.ev_count++;
+	callwheel_established.ev_count++;
+	if (++callwheel_sizes[c->c_time & callwheelmask] >
+	    callwheel_maxlength.ev_count)
+		callwheel_maxlength.ev_count =
 		    callwheel_sizes[c->c_time & callwheelmask];
 #endif
 
@@ -1086,6 +1131,7 @@ callout_reset(struct callout *c, int ticks, void (*func)(void *), void *arg)
 static void
 callout_stop_locked(struct callout *c)
 {
+	struct callout_queue *bucket;
 
 	/*
 	 * Don't attempt to delete a callout that's not on the queue.
@@ -1100,10 +1146,13 @@ callout_stop_locked(struct callout *c)
 	if (nextsoftcheck == c)
 		nextsoftcheck = TAILQ_NEXT(c, c_link);
 
-	TAILQ_REMOVE(&callwheel[c->c_time & callwheelmask], c, c_link);
+	bucket = &callwheel[c->c_time & callwheelmask];
+	TAILQ_REMOVE(&bucket->cq_q, c, c_link);
+	if (TAILQ_EMPTY(&bucket->cq_q))
+		bucket->cq_hint = UQUAD_MAX;
 #ifdef CALLWHEEL_STATS
-	callwheel_count--;
-	callwheel_disestablished++;
+	callwheel_count.ev_count--;
+	callwheel_disestablished.ev_count++;
 	callwheel_sizes[c->c_time & callwheelmask]--;
 #endif
 
@@ -1143,18 +1192,29 @@ callout_showstats(void)
 	splx(s);
 
 	printf("Callwheel statistics:\n");
-	printf("\tCallouts currently queued: %llu\n", callwheel_count);
-	printf("\tCallouts established: %llu\n", callwheel_established);
-	printf("\tCallouts disestablished: %llu\n", callwheel_disestablished);
-	if (callwheel_changed != 0)
-		printf("\t\tOf those, %llu were changes\n", callwheel_changed);
-	printf("\tCallouts that fired: %llu\n", callwheel_fired);
+	printf("\tCallouts currently queued: %llu\n",
+	    (long long) callwheel_count.ev_count);
+	printf("\tCallouts established: %llu\n",
+	    (long long) callwheel_established.ev_count);
+	printf("\tCallouts disestablished: %llu\n",
+	    (long long) callwheel_disestablished.ev_count);
+	if (callwheel_changed.ev_count != 0)
+		printf("\t\tOf those, %llu were changes\n",
+		    (long long) callwheel_changed.ev_count);
+	printf("\tCallouts that fired: %llu\n",
+	    (long long) callwheel_fired.ev_count);
 	printf("\tNumber of buckets: %d\n", callwheelsize);
-	printf("\tNumber of hash collisions: %d\n", callwheel_collisions);
-	printf("\tMaximum hash chain length: %d\n", callwheel_maxlength);
+	printf("\tNumber of hash collisions: %llu\n",
+	    (long long) callwheel_collisions.ev_count);
+	printf("\tMaximum hash chain length: %llu\n",
+	    (long long) callwheel_maxlength.ev_count);
 	printf("\tSoftclocks: %llu, Softchecks: %llu\n",
-	    callwheel_softclocks, callwheel_softchecks);
-	printf("\t\tEmpty buckets seen: %llu\n", callwheel_softempty);
+	    (long long) callwheel_softclocks.ev_count,
+	    (long long) callwheel_softchecks.ev_count);
+	printf("\t\tEmpty buckets seen: %llu\n",
+	    (long long) callwheel_softempty.ev_count);
+	printf("\t\tTimes hint saved scan: %llu\n",
+	    (long long) callwheel_hintworked.ev_count);
 }
 #endif
 

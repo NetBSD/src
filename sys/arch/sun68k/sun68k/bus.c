@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.1.2.1 2001/08/03 04:12:35 lukem Exp $	*/
+/*	$NetBSD: bus.c,v 1.1.2.2 2001/09/13 01:15:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Matthew Fredette.
@@ -338,7 +338,7 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 		va += PAGE_SIZE;
 		size -= PAGE_SIZE;
 	}
-	pmap_update();
+	pmap_update(pmap_kernel());
 
 	return (0);
 }

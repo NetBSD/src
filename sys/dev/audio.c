@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.137.2.1 2001/09/08 20:03:43 thorpej Exp $	*/
+/*	$NetBSD: audio.c,v 1.137.2.2 2001/09/13 01:15:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -1408,19 +1408,14 @@ audio_fill_silence(params, p, n)
 	case AUDIO_ENCODING_ADPCM: /* is this right XXX */
 	case AUDIO_ENCODING_SLINEAR_LE:
 	case AUDIO_ENCODING_SLINEAR_BE:
-		auzero0 = 0;/* fortunately this works for both 8 and 16 bits */
+		auzero0 = 0;/* fortunately this works for any number of bits */
 		break;
 	case AUDIO_ENCODING_ULINEAR_LE:
 	case AUDIO_ENCODING_ULINEAR_BE:
-		if (params->precision == 16) {
-			nfill = 2;
-			if (params->encoding == AUDIO_ENCODING_ULINEAR_LE) {
-				auzero0 = 0;
-				auzero1 = 0x80;
-			} else {
-				auzero0 = 0x80;
-				auzero1 = 0;
-			}
+		if (params->precision > 8) {
+			nfill = (params->precision + NBBY - 1)/ NBBY;
+			auzero0 = 0x80;
+			auzero1 = 0;
 		} else
 			auzero0 = 0x80;
 		break;
@@ -1432,12 +1427,23 @@ audio_fill_silence(params, p, n)
 	if (nfill == 1) {
 		while (--n >= 0)
 			*p++ = auzero0; /* XXX memset */
-	} else /* nfill must be 2 */ {
-		while (n > 1) {
-			*p++ = auzero0;
-			*p++ = auzero1;
-			n -= 2;
+	} else /* nfill must no longer be 2 */ {
+		if (params->encoding == AUDIO_ENCODING_ULINEAR_LE) {
+			int k = nfill;
+			while (--k > 0)
+				*p++ = auzero1;
+			n -= nfill - 1;
 		}
+		while (n >= nfill) {
+			int k;
+			*p++ = auzero0;
+			while (--k > 0)
+				*p++ = auzero1;
+
+			n -= nfill;
+		}
+		if (n-- > 0)	/* XXX must be 1 - DIAGNOSTIC check? */
+			*p++ = auzero0;
 	}
 }
 
@@ -2351,7 +2357,9 @@ audio_check_params(p)
 	case AUDIO_ENCODING_SLINEAR_BE:
 	case AUDIO_ENCODING_ULINEAR_LE:
 	case AUDIO_ENCODING_ULINEAR_BE:
-		if (p->precision != 8 && p->precision != 16)
+		/* XXX is: our zero-fill can handle any multiple of 8 */
+		if (p->precision !=  8 && p->precision != 16 &&
+		    p->precision != 24 && p->precision != 32)
 			return (EINVAL);
 		break;
 	case AUDIO_ENCODING_MPEG_L1_STREAM:

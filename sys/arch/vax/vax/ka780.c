@@ -1,4 +1,4 @@
-/*	$NetBSD: ka780.c,v 1.16 2000/06/04 18:02:35 ragge Exp $ */
+/*	$NetBSD: ka780.c,v 1.16.6.1 2001/09/13 01:15:07 thorpej Exp $ */
 /*-
  * Copyright (c) 1982, 1986, 1988 The Regents of the University of California.
  * All rights reserved.
@@ -298,7 +298,7 @@ memlog(int m, struct mcr780 *mcr)
 	printf ("mcr%d: multiple errors, not traceable\n", m);
 	break;
 }
-#endif TRENDATA
+#endif /* TRENDATA */
 
 char *mc780[]={"0","1","2","3","4","5","6","7","8","9","10","11","12","13",
 	"14","15"};

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 1999/03/15 07:46:11 leo Exp $
+#	$NetBSD: Makefile,v 1.8.22.1 2001/09/13 01:13:22 thorpej Exp $
 
 LIB=	sa
 
@@ -7,7 +7,7 @@ MKPROFILE=no
 OBJMACHINE=
 
 CPPFLAGS+=	${DEFS} ${INCL}
-CFLAGS+=	-fomit-frame-pointer -Wall
+CFLAGS+=	-fomit-frame-pointer -Wall -fno-function-cse -fstrength-reduce
 NO_NET=
 
 DEFS=	-D_STANDALONE
@@ -18,7 +18,7 @@ INCL=	-I- -I${S_MACHSA} -I${S_KERN} -I${S_SA} -I${S}
 #
 
 # machine dependant routines
-SRCS=	consio.s diskio.c
+SRCS=	consio.S diskio.c
 
 # from lib/libkern
 SRCS+=	ashrdi3.c bzero.c strcmp.c strlen.c

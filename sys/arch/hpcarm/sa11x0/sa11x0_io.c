@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_io.c,v 1.3.2.1 2001/08/03 04:11:34 lukem Exp $	*/
+/*	$NetBSD: sa11x0_io.c,v 1.3.2.2 2001/09/13 01:13:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -72,6 +72,9 @@ struct bus_space sa11x0_bs_tag = {
 
 	/* get kernel virtual address */
 	sa11x0_bs_vaddr,
+
+	/* mmap bus space for userland */
+	bs_notimpl_bs_mmap,
 
 	/* barrier */
 	sa11x0_bs_barrier,
@@ -170,7 +173,7 @@ sa11x0_bs_map(t, bpa, size, cacheable, bshp)
 		else
 			*pte &= ~PT_CACHEABLE;
 	}
-	pmap_update();
+	pmap_update(pmap_kernel());
 
 	return(0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.192.2.1 2001/08/25 06:15:45 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.192.2.2 2001/09/13 01:14:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.192.2.1 2001/08/25 06:15:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.192.2.2 2001/09/13 01:14:21 thorpej Exp $");
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
@@ -462,7 +462,7 @@ cpu_startup()
 			curbufsize -= PAGE_SIZE;
 		}
 	}
-	pmap_update();
+	pmap_update(pmap_kernel());
 
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively
@@ -656,7 +656,7 @@ memsize_scan(first)
 	 * mem cluster array.
 	 */
 	mem_clusters[0].start = 0;		/* XXX is this correct? */
-	mem_clusters[0].size  = ctob(physmem);
+	mem_clusters[0].size  = ctob(mem);
 	mem_cluster_cnt = 1;
 
 	/* clear any memory error conditions possibly caused by probe */

@@ -1,4 +1,4 @@
-#	$NetBSD: PCCONS,v 1.8.2.1 2001/08/25 06:15:07 thorpej Exp $
+#	$NetBSD: PCCONS,v 1.8.2.2 2001/09/13 01:13:03 thorpej Exp $
 #	$OpenBSD: GENERIC,v 1.29 1999/08/29 12:14:03 niklas Exp $
 #
 #	PCCONS -- generic but pccons rather than wscons
@@ -262,14 +262,20 @@ scsibus*	at ahc?
 iha*		at pci? dev ? function ?	# Initio INIC-940/950 SCSI
 scsibus*	at iha?
 
-#siop*		at pci? dev ? function ?	# NCR/Symbios 53c8xx SCSI
-#scsibus* 	at siop?
+pcscp*		at pci? dev ? function ?	# AMD Am53c974 PCscsi-PCI SCSI
+scsibus* 	at pcscp?
+
+siop*		at pci? dev ? function ?	# NCR/Symbios 53c8xx SCSI
+scsibus* 	at siop?
 
 #de*		at pci? dev ? function ?
+epic*		at pci? dev ? function ?	# SMC EPIC/100 Ethernet
 ex*		at pci? dev ? function ?	# 3Com 90x[BC]
 fxp*		at pci? dev ? function ?	# Intel EtherExpress PRO
-le*		at pci? dev ? function ?	# PCnet-PCI
 ne*		at pci? dev ? function ?	# NE2000-compatible
+pcn*		at pci? dev ? function ?	# AMD PCnet-PCI Ethernet
+rtk*		at pci? dev ? function ?	# Realtek 8129/8139
+sip*		at pci? dev ? function ?	# SiS 900/DP83815 Ethernet
 tlp*		at pci? dev ? function ?	# DECchip 21x4x (and clones)
 #options 	TLP_MATCH_21040
 #options 	TLP_MATCH_21041

@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_io.c,v 1.7 2000/04/17 17:39:18 drochner Exp $	*/
+/*	$NetBSD: isa_io.c,v 1.7.8.1 2001/09/13 01:13:16 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -73,6 +73,9 @@ struct bus_space isa_io_bs_tag = {
 
 	/* get kernel virtual address */
 	isa_bs_vaddr,
+
+	/* mmap bus space for userland */
+	bs_notimpl_bs_mmap,		/* XXX possible even? XXX */
 
 	/* barrier */
 	isa_bs_barrier,
@@ -151,6 +154,9 @@ struct bus_space isa_mem_bs_tag = {
 
 	/* get kernel virtual address */
 	isa_bs_vaddr,
+
+	/* mmap bus space for userland */
+	bs_notimpl_bs_mmap,		/* XXX open for now ... XXX */
 
 	/* barrier */
 	isa_bs_barrier,

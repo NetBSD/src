@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.77.2.1 2001/08/25 06:15:29 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.77.2.2 2001/09/13 01:13:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -704,7 +704,7 @@ pmap_map(va, spa, epa, prot)
 		va += NBPG;
 		spa += NBPG;
 	}
-	pmap_update();
+	pmap_update(pmap_kernel());
 	return (va);
 }
 
@@ -1563,7 +1563,7 @@ pmap_collect(pmap)
 		 * all necessary locking.
 		 */
 		pmap_do_remove(pmap, VM_MIN_ADDRESS, VM_MAX_ADDRESS, 0);
-		pmap_update();
+		pmap_update(pmap);
 	}
 
 #ifdef notyet
@@ -2359,7 +2359,7 @@ pmap_enter_ptpage(pmap, va)
 		bzero((caddr_t)kpt->kpt_va, NBPG);
 		pmap_enter(pmap, va, ptpa, VM_PROT_READ | VM_PROT_WRITE,
 		    VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED);
-		pmap_update();
+		pmap_update(pmap);
 #ifdef DEBUG
 		if (pmapdebug & (PDB_ENTER|PDB_PTPAGE)) {
 			int ix = pmap_ste(pmap, va) - pmap_ste(pmap, 0);

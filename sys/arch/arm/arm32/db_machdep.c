@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.3 2001/06/24 07:32:20 chs Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.3.2.1 2001/09/13 01:13:06 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1996 Mark Brinicombe
@@ -39,7 +39,7 @@
 #include <ddb/db_sym.h>
 #include <ddb/db_output.h>
 
-#include <machine/irqhandler.h>
+#include <machine/intr.h>
 
 void
 db_show_intrchain_cmd(addr, have_addr, count, modif)
@@ -48,8 +48,9 @@ db_show_intrchain_cmd(addr, have_addr, count, modif)
 	db_expr_t       count;
 	char            *modif;
 {
+#ifndef NEWINTR
 	int loop;
-	irqhandler_t *ptr;
+	struct irqhandler *ptr;
 	char *name;
 	db_expr_t offset;
 
@@ -72,6 +73,7 @@ db_show_intrchain_cmd(addr, have_addr, count, modif)
 			}
 		}
 	}
+#endif	/* NEWINTR */
 }
 
 

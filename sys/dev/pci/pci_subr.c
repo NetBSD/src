@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.42 2001/01/18 13:12:13 jdolecek Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.42.4.1 2001/09/13 01:15:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -414,7 +414,7 @@ pci_devinfo(id_reg, class_reg, showclass, cp)
  *
  *	#ifdef MYDEV_DEBUG
  *		printf("%s: ", sc->sc_dev.dv_xname);
- *		pci_conf_print(pa->pa_pc, pa->pa_tag);
+ *		pci_conf_print(pa->pa_pc, pa->pa_tag, NULL);
  *	#endif
  */
 

@@ -1,4 +1,4 @@
-/* $NetBSD: pte.h,v 1.1 2000/05/09 21:56:00 bjh21 Exp $ */
+/* $NetBSD: pte.h,v 1.1.10.1 2001/09/13 01:13:14 thorpej Exp $ */
 /*-
  * Copyright (c) 1998 Ben Harris
  * All rights reserved.
@@ -29,5 +29,11 @@
 
 #ifndef _ARM26_PTE_H
 #define _ARM26_PTE_H
+
+/*
+ * <arm/pte.h> is the arm32 pte.h (arm26 doesn't have one) but is needed for
+ * the shared pcb.h
+ */
+#include <arm/pte.h>
 
 #endif

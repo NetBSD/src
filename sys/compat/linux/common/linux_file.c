@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.39.2.1 2001/08/03 04:12:44 lukem Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.39.2.2 2001/09/13 01:15:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -56,6 +56,7 @@
 #include <sys/tty.h>
 #include <sys/socketvar.h>
 #include <sys/conf.h>
+#include <sys/pipe.h>
 
 #include <sys/syscallargs.h>
 
@@ -318,63 +319,59 @@ linux_sys_fcntl(p, v, retval)
 			return error;
 		retval[0] = bsd_to_linux_ioflags(retval[0]);
 		return 0;
-	case LINUX_F_SETFL:
+	case LINUX_F_SETFL: {
+		struct file	*fp = NULL;
+
 		val = linux_to_bsd_ioflags((unsigned long)SCARG(uap, arg));
-		SCARG(&fca, fd) = fd;
-		SCARG(&fca, cmd) = F_SETFL;
-		SCARG(&fca, arg) = (caddr_t) val;
-		error = sys_fcntl(p, &fca, retval);
+
 		/*
-		 * Linux does not send a SIGIO to the write end of a socket,
-		 * neither it does send any SIGIO for pipes. If async I/O
-		 * was requested, we keep the SS_ASYNC in struct socket flag 
-		 * set, but we clear SB_ASYNC flags on the sending buffer 
-		 * (for socket), and on the sending and the receiving buffer 
-		 * (for pipes). 
+		 * Linux seems to have same semantics for sending SIGIO to the
+		 * read side of socket, but slighly different semantics
+		 * for SIGIO to the write side.  Rather than sending the SIGIO
+		 * every time it's possible to write (directly) more data, it
+		 * only sends SIGIO if last write(2) failed due to insufficient
+		 * memory to hold the data. This is compatible enough
+		 * with NetBSD semantics to not do anything about the
+		 * difference.
 		 * 
-		 * Because we do not alter to SS_ASYNC in struct socket, 
-		 * the Linux process keeps a consistent view of async I/O
-		 * status if it attemps to read the async flag (SS_ASYNC)
-		 * 
-		 * This async I/O problem does matters, since some Linux 
-		 * programs such as the JDK request async I/O on pipes, 
-		 * but they fail if they happen to get a SIGIO to the write
-		 * end of the pipe.
+		 * Linux does NOT send SIGIO for pipes. Deal with socketpair
+		 * ones and DTYPE_PIPE ones. For these, we don't set
+		 * the underlying flags (we don't pass O_ASYNC flag down
+		 * to sys_fcntl()), but set the FASYNC flag for file descriptor,
+		 * so that F_GETFL would report the ASYNC i/o is on.
 		 */
-		if ((error == 0) && (val & O_ASYNC)) {
-			struct filedesc	*fdp;
-			struct file	*fp;
-			struct socket *so;
-
-			fdp = p->p_fd;
-
-			if (((fp = fd_getfile(fdp, fd)) == NULL) ||
-			    (fp->f_iflags & FIF_WANTCLOSE) != 0)
+		if (val & O_ASYNC) {
+			if (((fp = fd_getfile(p->p_fd, fd)) == NULL))
 			    return (EBADF);
 
 			FILE_USE(fp);
 
-			if ((fp->f_type == DTYPE_SOCKET) && 
-			    (so = (struct socket*)fp->f_data)) {
-				/*
-				 * Clear async I/O on sending buffer 
-				 * This will disable SIGIO for the 
-				 * write end of sockets and pipes.
-				 */
-				so->so_snd.sb_flags &= ~SB_ASYNC;
-				/*
-				 * If it's a pipe, also clear
-				 * it on the receiving buffer.
-				 * This will disable SIGIO for the
-				 * read end of pipes.
-				 */
-				if (so->so_state & SS_ISAPIPE)
-					so->so_rcv.sb_flags &= ~SB_ASYNC;
+			if (((fp->f_type == DTYPE_SOCKET) && fp->f_data
+			      && ((struct socket *)fp->f_data)->so_state & SS_ISAPIPE)
+			    || (fp->f_type == DTYPE_PIPE))
+				val &= ~O_ASYNC;
+			else {
+				/* not a pipe, do not modify anything */
+				FILE_UNUSE(fp, p);
+				fp = NULL;
 			}
+		}
 
+		SCARG(&fca, fd) = fd;
+		SCARG(&fca, cmd) = F_SETFL;
+		SCARG(&fca, arg) = (caddr_t) val;
+
+		error = sys_fcntl(p, &fca, retval);
+
+		/* Now set the FASYNC flag for pipes */
+		if (fp) {
+			if (!error)
+				fp->f_flag |= FASYNC;
 			FILE_UNUSE(fp, p);
 		}
-		return error;
+
+		return (error);
+	    }
 	case LINUX_F_GETLK:
 		sg = stackgap_init(p->p_emul);
 		bfp = (struct flock *) stackgap_alloc(&sg, sizeof *bfp);

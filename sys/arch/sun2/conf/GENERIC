@@ -1,11 +1,11 @@
-# $NetBSD: GENERIC,v 1.6 2001/07/08 16:32:25 abs Exp $
+# $NetBSD: GENERIC,v 1.6.2.1 2001/09/13 01:14:45 thorpej Exp $
 
 # GENERIC Sun2 (2/120, 2/170, 2/50, ...)
 # Supports root on: ie0, sd*, ...
 
 include "arch/sun2/conf/std.sun2"
 
-#ident 		"GENERIC-$Revision: 1.6 $"
+#ident 		"GENERIC-$Revision: 1.6.2.1 $"
 
 # Machines to be supported by this kernel
 #options 	FPU_EMULATE
@@ -206,6 +206,7 @@ pcons0	at mainbus0			# PROM console
 #### Miscellaneous.
 pseudo-device	loop		1	# network loopback
 #pseudo-device	bpfilter	8	# packet filter
+#pseudo-device	bridge			# simple inter-network bridging
 #pseudo-device	sl		2	# CSLIP
 #pseudo-device	ppp		2	# PPP
 #pseudo-device	tun		2	# network tunneling over tty

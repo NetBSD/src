@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.2.2.3 2001/08/25 06:15:08 thorpej Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.2.2.4 2001/09/13 01:13:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -348,7 +348,7 @@ cpu_startup()
 	for (loop = 0; loop < btoc(MSGBUFSIZE); ++loop)
 		pmap_kenter_pa((vaddr_t)msgbufaddr + loop * NBPG,
 		    msgbufphys + loop * NBPG, VM_PROT_READ|VM_PROT_WRITE);
-	pmap_update();
+	pmap_update(pmap_kernel());
 	initmsgbuf(msgbufaddr, round_page(MSGBUFSIZE));
 
 	/*
@@ -415,7 +415,7 @@ cpu_startup()
 			curbufsize -= PAGE_SIZE;
 		}
 	}
-	pmap_update();
+	pmap_update(pmap_kernel());
 
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively
@@ -449,12 +449,14 @@ cpu_startup()
 
 	curpcb = &proc0.p_addr->u_pcb;
 	curpcb->pcb_flags = 0;
-	curpcb->pcb_und_sp = (u_int)proc0.p_addr + USPACE_UNDEF_STACK_TOP;
-	curpcb->pcb_sp = (u_int)proc0.p_addr + USPACE_SVC_STACK_TOP;
+	curpcb->pcb_un.un_32.pcb32_und_sp = (u_int)proc0.p_addr +
+	    USPACE_UNDEF_STACK_TOP;
+	curpcb->pcb_un.un_32.pcb32_sp = (u_int)proc0.p_addr +
+	    USPACE_SVC_STACK_TOP;
 	(void) pmap_extract(pmap_kernel(), (vaddr_t)(pmap_kernel())->pm_pdir,
 	    (paddr_t *)&curpcb->pcb_pagedir);
 
-        curpcb->pcb_tf = (struct trapframe *)curpcb->pcb_sp - 1;
+        curpcb->pcb_tf = (struct trapframe *)curpcb->pcb_un.un_32.pcb32_sp - 1;
 }
 
 /*
