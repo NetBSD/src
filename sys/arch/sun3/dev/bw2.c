@@ -1,4 +1,4 @@
-/*	$NetBSD: bw2.c,v 1.17 2001/09/19 18:10:34 thorpej Exp $	*/
+/*	$NetBSD: bw2.c,v 1.18 2002/05/30 22:19:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -169,6 +169,7 @@ bw2match(parent, cf, args)
 		printf("bwtwo at 0x%x match p4id=0x%x fails\n",
 			   ca->ca_paddr, p4id & 0xFF);
 #endif
+		break;
 	}
 
 	return (0);
