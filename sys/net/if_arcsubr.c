@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arcsubr.c,v 1.43 2003/08/07 16:32:50 agc Exp $	*/
+/*	$NetBSD: if_arcsubr.c,v 1.44 2003/08/11 15:13:59 itojun Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arcsubr.c,v 1.43 2003/08/07 16:32:50 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arcsubr.c,v 1.44 2003/08/11 15:13:59 itojun Exp $");
 
 #include "opt_inet.h"
 
@@ -438,7 +438,7 @@ arc_defrag(ifp, m)
 	struct mbuf *m1;
 	char *s;
 	int newflen;
-	u_char src,dst,typ;
+	u_char src, dst, typ;
 	
 	ac = (struct arccom *)ifp;
 
@@ -532,7 +532,7 @@ arc_defrag(ifp, m)
 		if (ah->arc_flag == af->af_lastseen + 2) {
 			/* ok, this is next fragment */
 			af->af_lastseen = ah->arc_flag;
-			m_adj(m,ARC_HDRNEWLEN);
+			m_adj(m, ARC_HDRNEWLEN);
 
 			/* 
 			 * m_cat might free the first mbuf (with pkthdr)
@@ -541,7 +541,7 @@ arc_defrag(ifp, m)
 
 			newflen = m->m_pkthdr.len;	
 
-			m_cat(m1,m);
+			m_cat(m1, m);
 
 			m1->m_pkthdr.len += newflen;
 
