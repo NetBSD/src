@@ -2139,6 +2139,17 @@ typedef struct mips_args {
 
 #define TRAMPOLINE_ALIGNMENT (TARGET_LONG64 ? 64 : 32)
 
+/* Function to call to flush mips I-cache for onstack trampolines.
+   On pre-POSIX systems (Ultrix) we have to use "cacheflush".  On
+   newer systems, call "_cacheflush" in case the user defines a
+   function called "cacheflush". On POSIX-compatible systems which
+   have "_cacheflush"Define MIPS_CACHEFLUSH_FUNC to be
+   "_cacheflush" * in the target-specific header file.  */
+
+#ifndef MIPS_CACHEFLUSH_FUNC
+#define MIPS_CACHEFLUSH_FUNC "cacheflush"
+#endif
+
 /* A C statement to initialize the variable parts of a trampoline. 
    ADDR is an RTX for the address of the trampoline; FNADDR is an
    RTX for the address of the nested function; STATIC_CHAIN is an
@@ -2162,7 +2173,7 @@ typedef struct mips_args {
   /* Flush the instruction cache.  */					    \
   /* ??? Are the modes right? Maybe they should depend on -mint64/-mlong64? */\
   /* ??? Should check the return value for errors.  */			    \
-  emit_library_call (gen_rtx (SYMBOL_REF, Pmode, "cacheflush"),		    \
+  emit_library_call (gen_rtx (SYMBOL_REF, Pmode, MIPS_CACHEFLUSH_FUNC),	    \
 		     0, VOIDmode, 3, addr, Pmode,			    \
 		     GEN_INT (TRAMPOLINE_SIZE), SImode,  		    \
 		     GEN_INT (1), SImode);				    \
