@@ -1,4 +1,4 @@
-.\"	$NetBSD: stdio.3,v 1.6 1998/02/05 18:49:35 perry Exp $
+.\"	$NetBSD: stdio.3,v 1.7 1998/04/28 20:58:01 fair Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -153,9 +153,9 @@ Alternatively, these defaults may be modified via the
 function.
 .Pp
 The
-.Nm stdio
+.Nm
 library is a part of the library
-.Xr libc
+.Pa libc.a
 and routines are automatically loaded as needed by the compilers
 .Xr cc 1
 and
@@ -166,8 +166,7 @@ sections of the following manual pages indicate which include files
 are to be used, what the compiler declaration for the function
 looks like and which external variables are of interest.
 .Pp
-The following are defined as macros;
-these names may not be re-used
+The following are defined as macros; these names may not be re-used
 without first removing their current definitions with
 .Dv #undef :
 .Dv BUFSIZ ,
@@ -182,31 +181,30 @@ without first removing their current definitions with
 .Dv SEEK_SET ,
 .Dv SEE_CUR ,
 .Dv TMP_MAX ,
-.Dv clearerr ,
-.Dv feof ,
-.Dv ferror ,
-.Dv fileno ,
-.Dv freopen ,
-.Dv fwopen ,
-.Dv getc ,
-.Dv getchar ,
-.Dv putc ,
-.Dv putchar ,
+.Fn clearerr ,
+.Fn feof ,
+.Fn ferror ,
+.Fn fileno ,
+.Fn freopen ,
+.Fn fwopen ,
+.Fn getc ,
+.Fn getchar ,
+.Fn putc ,
+.Fn putchar ,
 .Dv stderr ,
 .Dv stdin ,
 .Dv stdout .
 Function versions of the macro functions
-.Xr feof ,
-.Xr ferror ,
-.Xr clearerr ,
-.Xr fileno ,
-.Xr getc ,
-.Xr getchar ,
-.Xr putc ,
+.Fn feof ,
+.Fn ferror ,
+.Fn clearerr ,
+.Fn fileno ,
+.Fn getc ,
+.Fn getchar ,
+.Fn putc ,
 and
-.Xr putchar
-exist and will be used if the macros
-definitions are explicitly removed.
+.Fn putchar
+exist and will be used if the macros definitions are explicitly removed.
 .Sh SEE ALSO
 .Xr open 2 ,
 .Xr close 2 ,
@@ -215,12 +213,12 @@ definitions are explicitly removed.
 .Sh BUGS
 The standard buffered functions do not interact well with certain other
 library and system functions, especially
-.Xr vfork
+.Xr vfork 2
 and
-.Xr abort .
+.Xr abort 3 .
 .Sh STANDARDS
 The
-.Nm stdio
+.Nm
 library conforms to
 .St -ansiC .
 .Sh LIST OF FUNCTIONS
