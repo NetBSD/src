@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.h,v 1.2 2000/06/06 01:33:17 sommerfeld Exp $	*/
+/*	$NetBSD: rnd.h,v 1.3 2000/07/02 21:05:14 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@ cpu_hascounter(void)
 #endif
 }
 
-static __inline u_int32_t
+static __inline u_int64_t
 cpu_counter(void)
 {
 	return rdtsc();
