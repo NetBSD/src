@@ -12,7 +12,7 @@
 #define	MAXGDTSIZ	8192
 
 union descriptor *dynamic_gdt = gdt;
-int gdt_size = NGDT + 2;
+int gdt_size = NGDT;
 int gdt_next = NGDT;
 int gdt_count = NGDT;
 

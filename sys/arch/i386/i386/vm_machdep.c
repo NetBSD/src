@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.52 1995/10/11 04:19:53 mycroft Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.53 1995/10/11 19:32:49 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -105,10 +105,11 @@ cpu_fork(p1, p2)
 	pmap_activate(&p2->p_vmspace->vm_pmap, pcb);
 
 	/*
-	 * Pre-zero these so that gdt_compact() doesn't get confused if called
-	 * during the allocations below.
+	 * Preset these so that gdt_compact() doesn't get confused if called during
+	 * the allocations below.
 	 */
-	pcb->pcb_tss_sel = pcb->pcb_ldt_sel = GSEL(GNULL_SEL, SEL_KPL);
+	pcb->pcb_tss_sel = GSEL(GNULL_SEL, SEL_KPL);
+	pcb->pcb_ldt_sel = GSEL(GPROC0LDT_SEL, SEL_KPL);
 
 	/* Fix up the TSS, etc. */
 	pcb->pcb_cr0 |= CR0_TS;
@@ -127,9 +128,8 @@ cpu_fork(p1, p2)
 		bcopy(pcb->pcb_ldt, new_ldt, len);
 		pcb->pcb_ldt = new_ldt;
 		ldt_alloc(pcb, new_ldt, len);
-	} else
+	}
 #endif
-		pcb->pcb_ldt_sel = proc0.p_addr->u_pcb.pcb_ldt_sel;
 
 	/*
 	 * Copy the trapframe, and arrange for the child to return directly
