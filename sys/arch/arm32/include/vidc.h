@@ -1,4 +1,4 @@
-/*	$NetBSD: vidc.h,v 1.8 1999/06/01 03:37:02 mark Exp $	*/
+/*	$NetBSD: vidc.h,v 1.9 2001/02/18 00:56:42 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -62,9 +62,7 @@
 /* VIDC20 Base addresses */
 
 #define VIDC_HW_BASE 0x03400000
-
 #define VIDC_BASE    0xf6100000
-
 /* Video registers */
 
 #define VIDC_PALETTE 0x00000000
@@ -154,12 +152,12 @@
 /* Video display addresses */
 
 /* Where the display memory is mapped */
-
-#define VMEM_VBASE 0xf4000000
-
+/* note that there's not normally more than 2MB */
+#define VMEM_VBASE 0xf7000000
+ 
 /* Where the VRAM will be found */
 
-#define VRAM_BASE 0x02000000
+#define VRAM_BASE  0x02000000
 
 #ifndef _LOCORE
 
