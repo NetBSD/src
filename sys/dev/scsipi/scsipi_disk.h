@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_disk.h,v 1.9 2003/09/17 23:33:43 mycroft Exp $	*/
+/*	$NetBSD: scsipi_disk.h,v 1.10 2004/12/03 20:20:32 thorpej Exp $	*/
 
 /*
  * SCSI and SCSI-like interfaces description
@@ -86,6 +86,28 @@ struct scsipi_read_cap_data {
 	u_int8_t length[4];
 } __attribute__((packed));
 
+#define	READ_CAPACITY_16	0x9e	/* really SERVICE ACTION IN */
+struct scsipi_read_capacity_16 {
+	u_int8_t opcode;
+	u_int8_t byte2;
+#define	SRC16_SERVICE_ACTION	0x10
+	u_int8_t addr[8];
+	u_int8_t len[4];
+	u_int8_t byte15;
+#define	SRC16_PMI		0x01
+	u_int8_t control;
+};
+
+struct scsipi_read_capacity_16_data {
+	u_int8_t addr[8];
+	u_int8_t length[4];
+	u_int8_t byte13;
+#define	SRC16D_PROT_EN		0x01
+#define	SRC16D_RTO_EN		0x02
+	u_int8_t reserved[19];
+};
+
+/* XXX SBC-2 says this is vendor-specific */
 #define READ_FORMAT_CAPACITIES	0x23
 struct scsipi_read_format_capacities {
 	u_int8_t opcode;
