@@ -33,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: kernfs_vfsops.c,v 1.4 1993/03/27 02:00:45 cgd Exp $
+ *	$Id: kernfs_vfsops.c,v 1.5 1993/05/28 16:47:04 cgd Exp $
  */
 
 /*
@@ -113,7 +113,7 @@ kernfs_init()
 
   /* this isn't fatal... */
   if (error) {
-    printf("kernfs: no raw boot device\n");
+    printf("kernfs: no raw root device\n");
     rrootdevvp = 0;
   }
 }
@@ -151,6 +151,7 @@ kernfs_mount(mp, path, data, ndp, p)
 				 M_UFSMNT, M_WAITOK);	/* XXX */
 	rvp->v_type = VDIR;
 	rvp->v_flag |= VROOT;
+	VTOKERN(rvp)->kf_kt = &kernfs_targets[KERNFS_TARGET_ROOT];
 #ifdef KERNFS_DIAGNOSTIC
 	printf("kernfs_mount: root vp = %x\n", rvp);
 #endif
