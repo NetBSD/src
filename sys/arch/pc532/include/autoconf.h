@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.3 1997/07/17 02:05:15 jtk Exp $ */
+/*	$NetBSD: autoconf.h,v 1.4 2000/06/01 00:49:50 matt Exp $ */
 
 /*
  * Copyright (c) 1994 Matthias Pfaller.
@@ -46,4 +46,3 @@ struct confargs {
 #define cf_irq		cf_loc[MAINBUSCF_IRQ]
 
 extern u_long bootdev;
-extern struct device *booted_device;

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.32 1999/09/17 19:59:38 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.33 2000/06/01 00:49:52 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -70,8 +70,8 @@ extern void	startrtclock __P((void));
 
 #include "podulebus.h"
 
-static	struct device *booted_device;
-static	int booted_partition;
+struct device *booted_device;
+int booted_partition;
 
 extern dev_t dumpdev;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.47 2000/03/23 13:49:49 ad Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.48 2000/06/01 00:49:55 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -87,6 +87,9 @@ extern int i386_ndisks;
 #include <i386/pci/pcibios.h>
 #endif
 
+struct device *booted_device;
+int booted_partition;
+
 /*
  * Determine i/o configuration for a machine.
  */
@@ -122,9 +125,6 @@ cpu_configure()
 void
 cpu_rootconf()
 {
-	struct device *booted_device;
-	int booted_partition;
-
 	findroot(&booted_device, &booted_partition);
 	matchbiosdisks();
 
@@ -261,7 +261,6 @@ matchbiosdisks()
 #ifdef COMPAT_OLDBOOT
 u_long	bootdev = 0;		/* should be dev_t, but not until 32 bits */
 #endif
-struct device *booted_device;
 
 /*
  * helper function for "findroot()":

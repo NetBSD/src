@@ -1,4 +1,4 @@
-/*	$NetBSD: powerpc.h,v 1.3 1998/08/26 04:54:17 sakamoto Exp $	*/
+/*	$NetBSD: powerpc.h,v 1.4 2000/06/01 00:50:00 matt Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -52,7 +52,6 @@ int dk_match __P((char *name));
 
 void ofrootfound __P((void));
 
-extern	struct device *booted_device;
 extern	int booted_partition;
 
 #endif	/* _MACHINE_POWERPC_H_ */

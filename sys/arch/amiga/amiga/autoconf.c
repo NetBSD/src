@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.73 2000/05/18 15:39:22 kleink Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.74 2000/06/01 00:49:51 matt Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -50,6 +50,8 @@ int mbmatch __P((struct device *, struct cfdata *, void *));
 #include <sys/kernel.h>
 
 u_long boot_partition;
+struct device *booted_device;
+int booted_partition;
 
 /*
  * called at boot time, configure all devices on system
@@ -110,9 +112,6 @@ cpu_configure()
 void
 cpu_rootconf()
 {
-	struct device *booted_device;
-	int booted_partition;
-
 	findroot(&booted_device, &booted_partition);
 #ifdef DEBUG_KERNEL_START
 	printf("survived findroot()\n");

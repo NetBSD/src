@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.11 1999/12/22 05:55:26 tsubai Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.12 2000/06/01 00:49:56 matt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -76,6 +76,9 @@
  */
 int	cpuspeed = 10;	/* approx # instr per usec. */
 
+struct device *booted_device;
+int booted_partition;
+
 void	findroot __P((struct device **, int *));
 
 /*
@@ -117,9 +120,6 @@ cpu_configure()
 void
 cpu_rootconf()
 {
-	struct device *booted_device;
-	int booted_partition;
-
 	findroot(&booted_device, &booted_partition);
 
 	printf("boot device: %s\n",
