@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)cmds.c	5.26 (Berkeley) 3/5/91";*/
-static char rcsid[] = "$Id: cmds.c,v 1.2 1993/08/01 18:15:31 mycroft Exp $";
+static char rcsid[] = "$Id: cmds.c,v 1.3 1994/03/27 10:05:14 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -1997,7 +1997,7 @@ restart(argc, argv)
 		printf("restart: offset not specified\n");
 	else {
 		restart_point = atol(argv[1]);
-		printf("restarting at %ld. %s\n", restart_point,
+		printf("restarting at %qd. %s\n", restart_point,
 		    "execute get, put or append to initiate transfer");
 	}
 }
