@@ -1,4 +1,4 @@
-#	$NetBSD: hmac.inc,v 1.1.1.1 2000/06/16 04:21:32 thorpej Exp $
+#	$NetBSD: hmac.inc,v 1.2 2000/06/21 19:34:25 thorpej Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -7,7 +7,7 @@
 
 .PATH:	${OPENSSLSRC}/crypto/hmac
 
-CFLAGS+=	-I${OPENSSLSRC}/crypto/hmac
+CPPFLAGS+=	-I${OPENSSLSRC}/crypto/hmac
 
 SRCS+=hmac.c
 
