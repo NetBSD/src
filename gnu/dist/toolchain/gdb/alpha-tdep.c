@@ -1553,12 +1553,15 @@ alpha_software_single_step (sig, insert_breakpoints_p)
 
   if (insert_breakpoints_p)
     {
-      pc = read_register (PC_REGNUM);
+      pc = read_pc ();
       next_pc = alpha_next_pc (pc);
 
       target_insert_breakpoint (next_pc, break_mem);
     }
   else
-    target_remove_breakpoint (next_pc, break_mem);
+    {
+      target_remove_breakpoint (next_pc, break_mem);
+      write_pc (next_pc);
+    }
 }
 #endif /* SOFTWARE_SINGLE_STEP_P */
