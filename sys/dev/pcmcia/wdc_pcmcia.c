@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.16 1998/11/21 15:41:42 drochner Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.17 1998/11/22 21:58:50 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -62,7 +62,6 @@
 #include <dev/pcmcia/pcmciavar.h>
 #include <dev/pcmcia/pcmciadevs.h>
 
-#include <dev/isa/isavar.h>
 #include <dev/ata/atavar.h>
 #include <dev/ic/wdcvar.h>
 
