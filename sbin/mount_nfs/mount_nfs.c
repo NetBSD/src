@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_nfs.c,v 1.17 1997/09/15 05:31:36 lukem Exp $	*/
+/*	$NetBSD: mount_nfs.c,v 1.18 1997/10/19 01:24:51 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_nfs.c	8.11 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: mount_nfs.c,v 1.17 1997/09/15 05:31:36 lukem Exp $");
+__RCSID("$NetBSD: mount_nfs.c,v 1.18 1997/10/19 01:24:51 fvdl Exp $");
 #endif
 #endif /* not lint */
 
@@ -226,7 +226,7 @@ main(argc, argv)
 	nfsargs = nfsdefargs;
 	nfsargsp = &nfsargs;
 	while ((c = getopt(argc, argv,
-	    "23a:bcCdD:g:I:iKL:lm:o:PpqR:r:sTt:w:x:U")) != -1)
+	    "23a:bcCdD:g:I:iKL:lm:o:PpqR:r:sTt:w:x:UX")) != -1)
 		switch (c) {
 		case '3':
 			if (force2)
@@ -412,6 +412,9 @@ main(argc, argv)
 				errx(1, "illegal -x value -- %s", optarg);
 			nfsargsp->retrans = num;
 			nfsargsp->flags |= NFSMNT_RETRANS;
+			break;
+		case 'X':
+			nfsargsp->flags |= NFSMNT_XLATECOOKIE;
 			break;
 		case 'U':
 			mnttcp_ok = 0;
