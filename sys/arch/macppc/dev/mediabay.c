@@ -1,4 +1,4 @@
-/*	$NetBSD: mediabay.c,v 1.9 2003/07/15 02:43:29 lukem Exp $	*/
+/*	$NetBSD: mediabay.c,v 1.10 2005/01/08 04:24:05 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mediabay.c,v 1.9 2003/07/15 02:43:29 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mediabay.c,v 1.10 2005/01/08 04:24:05 briggs Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -104,7 +104,7 @@ mediabay_attach(parent, self, aux)
 {
 	struct mediabay_softc *sc = (struct mediabay_softc *)self;
 	struct confargs *ca = aux;
-	int irq, type;
+	int irq, itype;
 
 	ca->ca_reg[0] += ca->ca_baseaddr;
 
@@ -113,13 +113,14 @@ mediabay_attach(parent, self, aux)
 	sc->sc_node = ca->ca_node;
 	sc->sc_baseaddr = ca->ca_baseaddr;
 	irq = ca->ca_intr[0];
-	type = IST_LEVEL;
+	itype = IST_LEVEL;
 
 	if (ca->ca_nintr == 8 && ca->ca_intr[1] == 0)
-		type = IST_EDGE;
+		itype = IST_EDGE;
 
-	printf(" irq %d %s\n", irq, intr_typename(type));
-	intr_establish(irq, type, IPL_BIO, mediabay_intr, sc);
+	printf(" irq %d %s\n", irq, intr_typename(itype));
+
+	intr_establish(irq, itype, IPL_BIO, mediabay_intr, sc);
 
 	kthread_create(mediabay_create_kthread, sc);
 
@@ -203,6 +204,7 @@ mediabay_intr(v)
 	struct mediabay_softc *sc = v;
 
 	wakeup(&sc->sc_kthread);
+
 	return 1;
 }
 
@@ -222,47 +224,48 @@ mediabay_kthread(v)
 	struct mediabay_softc *sc = v;
 	u_int x, fcr;
 
-sleep:
-	tsleep(&sc->sc_kthread, PRIBIO, "mbayev", 0);
+	for (;;) {
+		tsleep(&sc->sc_kthread, PRIBIO, "mbayev", 0);
 
-	/* sleep 0.25 sec */
-	tsleep(mediabay_kthread, PRIBIO, "mbayev", hz/4);
+		/* sleep 0.25 sec */
+		tsleep(mediabay_kthread, PRIBIO, "mbayev", hz/4);
 
-	DPRINTF("%s: ", sc->sc_dev.dv_xname);
-	x = in32rb(sc->sc_addr);
+		DPRINTF("%s: ", sc->sc_dev.dv_xname);
+		x = in32rb(sc->sc_addr);
 
-	switch (MEDIABAY_ID(x)) {
-	case MEDIABAY_ID_NONE:
-		DPRINTF("removed\n");
-		if (sc->sc_content != NULL) {
-			config_detach(sc->sc_content, DETACH_FORCE);
-			DPRINTF("%s: detach done\n", sc->sc_dev.dv_xname);
-			sc->sc_content = NULL;
+		switch (MEDIABAY_ID(x)) {
+		case MEDIABAY_ID_NONE:
+			DPRINTF("removed\n");
+			if (sc->sc_content != NULL) {
+				config_detach(sc->sc_content, DETACH_FORCE);
+				DPRINTF("%s: detach done\n",
+					sc->sc_dev.dv_xname);
+				sc->sc_content = NULL;
 
-			/* disable media-bay */
-			fcr = in32rb(sc->sc_fcr);
-			fcr &= ~(FCR_MEDIABAY_ENABLE |
-				 FCR_MEDIABAY_IDE_ENABLE |
-				 FCR_MEDIABAY_CD_POWER |
-				 FCR_MEDIABAY_FD_ENABLE);
-			out32rb(sc->sc_fcr, fcr);
+				/* disable media-bay */
+				fcr = in32rb(sc->sc_fcr);
+				fcr &= ~(FCR_MEDIABAY_ENABLE |
+					 FCR_MEDIABAY_IDE_ENABLE |
+					 FCR_MEDIABAY_CD_POWER |
+					 FCR_MEDIABAY_FD_ENABLE);
+				out32rb(sc->sc_fcr, fcr);
+			}
+			break;
+		case MEDIABAY_ID_FD:
+			DPRINTF("FD inserted\n");
+			break;
+		case MEDIABAY_ID_CD:
+			DPRINTF("CD inserted\n");
+
+			if (sc->sc_content == NULL)
+				mediabay_attach_content(sc);
+			break;
+		default:
+			printf("unknown event (0x%x)\n", x);
 		}
-		break;
-	case MEDIABAY_ID_FD:
-		DPRINTF("FD inserted\n");
-		break;
-	case MEDIABAY_ID_CD:
-		DPRINTF("CD inserted\n");
-
-		if (sc->sc_content == NULL)
-			mediabay_attach_content(sc);
-		break;
-	default:
-		printf("unknown event (0x%x)\n", x);
 	}
-
-	goto sleep;
 }
 
 /* PBG3: 0x7025X0c0 */
+/* 3400: 0x7070X080 */
 /* 2400: 0x0070X0a8 */
