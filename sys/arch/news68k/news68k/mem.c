@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.8 2001/09/10 21:19:33 chris Exp $	*/
+/*	$NetBSD: mem.c,v 1.9 2001/12/16 04:17:02 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -180,11 +180,9 @@ mmrw(dev, uio, flags)
 			 * On the first call, allocate and zero a page
 			 * of memory for use with /dev/zero.
 			 */
-			if (devzeropage == NULL) {
+			if (devzeropage == NULL)
 				devzeropage = (caddr_t)
-				    malloc(NBPG, M_TEMP, M_WAITOK);
-				memset(devzeropage, 0, NBPG);
-			}
+				    malloc(NBPG, M_TEMP, M_WAITOK|M_ZERO);
 			c = min(iov->iov_len, NBPG);
 			error = uiomove(devzeropage, c, uio);
 			continue;
