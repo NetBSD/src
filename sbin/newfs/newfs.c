@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.45 2001/08/08 07:34:53 lukem Exp $	*/
+/*	$NetBSD: newfs.c,v 1.46 2001/08/30 14:37:26 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.13 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.45 2001/08/08 07:34:53 lukem Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.46 2001/08/30 14:37:26 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -168,8 +168,6 @@ int	sectorsize;		/* bytes/sector */
 int	rpm;			/* revolutions/minute of drive */
 int	interleave;		/* hardware sector interleave */
 int	trackskew = -1;		/* sector 0 skew, per track */
-int	headswitch;		/* head switch time, usec */
-int	trackseek;		/* track-to-track seek, usec */
 int	fsize = 0;		/* fragment size */
 int	bsize = 0;		/* block size */
 int	cpg = DESCPG;		/* cylinders/cylinder group */
@@ -622,8 +620,6 @@ main(int argc, char *argv[])
 			"disagrees with disk label", lp->d_secpercyl);
 	if (maxbpg == 0)
 		maxbpg = MAXBLKPG(bsize);
-	headswitch = lp->d_headswitch;
-	trackseek = lp->d_trkseek;
 #ifdef notdef /* label may be 0 if faked up by kernel */
 	bbsize = lp->d_bbsize;
 	sbsize = lp->d_sbsize;
