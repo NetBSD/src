@@ -1,4 +1,4 @@
-/*	$NetBSD: clmpcc.c,v 1.20 2002/03/17 19:40:57 atatat Exp $ */
+/*	$NetBSD: clmpcc.c,v 1.20.4.1 2002/05/16 12:16:27 gehenna Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clmpcc.c,v 1.20 2002/03/17 19:40:57 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clmpcc.c,v 1.20.4.1 2002/05/16 12:16:27 gehenna Exp $");
 
 #include "opt_ddb.h"
 
@@ -83,9 +83,6 @@ static void	clmpcc_set_params __P((struct clmpcc_chan *));
 static void	clmpcc_start	__P((struct tty *));
 static int 	clmpcc_modem_control	__P((struct clmpcc_chan *, int, int));
 
-
-cdev_decl(clmpcc);
-
 #define	CLMPCCUNIT(x)		(minor(x) & 0x7fffc)
 #define CLMPCCCHAN(x)		(minor(x) & 0x00003)
 #define	CLMPCCDIALOUT(x)	(minor(x) & 0x80000)
@@ -101,6 +98,19 @@ cdev_decl(clmpcc);
 
 extern struct cfdriver clmpcc_cd;
 
+dev_type_open(clmpccopen);
+dev_type_close(clmpccclose);
+dev_type_read(clmpccread);
+dev_type_write(clmpccwrite);
+dev_type_ioctl(clmpccioctl);
+dev_type_stop(clmpccstop);
+dev_type_tty(clmpcctty);
+dev_type_poll(clmpccpoll);
+
+const struct cdevsw clmpcc_cdevsw = {
+	clmpccopen, clmpccclose, clmpccread, clmpccwrite, clmpccioctl,
+	clmpccstop, clmpcctty, clmpccpoll, nommap, D_TTY
+};
 
 /*
  * Make this an option variable one can patch.
