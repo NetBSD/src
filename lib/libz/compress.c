@@ -1,9 +1,9 @@
+/*	$NetBSD: compress.c,v 1.2 1996/09/13 00:29:56 cgd Exp $	*/
+
 /* compress.c -- compress a memory buffer
  * Copyright (C) 1995-1996 Jean-loup Gailly.
  * For conditions of distribution and use, see copyright notice in zlib.h 
  */
-
-/* $Id: compress.c,v 1.1.1.1 1996/09/12 15:33:09 gwr Exp $ */
 
 #include "zlib.h"
 

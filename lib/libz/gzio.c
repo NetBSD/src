@@ -1,9 +1,9 @@
+/*	$NetBSD: gzio.c,v 1.4 1996/09/13 00:30:06 cgd Exp $	*/
+
 /* gzio.c -- IO on .gz files
  * Copyright (C) 1995-1996 Jean-loup Gailly.
  * For conditions of distribution and use, see copyright notice in zlib.h
  */
-
-/* $Id: gzio.c,v 1.3 1996/09/12 19:50:28 gwr Exp $ */
 
 #include <stdio.h>
 
