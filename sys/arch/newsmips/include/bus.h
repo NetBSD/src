@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.1 2000/10/12 03:07:59 onoe Exp $	*/
+/*	$NetBSD: bus.h,v 1.2 2000/10/18 12:47:38 onoe Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -485,6 +485,7 @@ __NEWSMIPS_copy_region(4)
 #define	BUS_DMA_BUS4		0x80
 
 #define	NEWSMIPS_DMAMAP_COHERENT 0x100	/* no cache flush necessary on sync */
+#define	NEWSMIPS_DMAMAP_MAPTBL	0x200	/* use DMA maping table */
 
 /* Forwards needed by prototypes below. */
 struct mbuf;
@@ -605,6 +606,8 @@ struct newsmips_bus_dmamap {
 	bus_size_t	_dm_maxsegsz;	/* largest possible segment */
 	bus_size_t	_dm_boundary;	/* don't cross this */
 	int		_dm_flags;	/* misc. flags */
+	int		_dm_maptbl;	/* DMA mapping table index */
+	int		_dm_maptblcnt;	/* number of DMA mapping table */
 
 	/*
 	 * PUBLIC MEMBERS: these are used by machine-independent code.

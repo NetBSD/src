@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.2 2000/10/12 15:42:47 tsubai Exp $	*/
+/*	$NetBSD: bus.c,v 1.3 2000/10/18 12:47:38 onoe Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -232,16 +232,6 @@ _bus_dmamap_load_buffer(map, buf, buflen, p, flags,
 			    vaddr, &curaddr);
 		else
 			curaddr = kvtophys(vaddr);
-
-		/*
-		 * XXX
-		 * set MSB to indicate unmapped DMA.
-		 * also need bit 30 for memory over 256MB.
-		 */
-		if (curaddr < 0x10000000)
-			curaddr |= 0x80000000;
-		else
-			curaddr |= 0xc0000000;
 
 		/*
 		 * Compute the segment size, and adjust counts.

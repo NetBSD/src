@@ -1,4 +1,4 @@
-/*	$NetBSD: adrsmap.h,v 1.5 2000/10/12 03:07:02 onoe Exp $	*/
+/*	$NetBSD: adrsmap.h,v 1.6 2000/10/18 12:47:38 onoe Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -294,6 +294,12 @@
 #define	NEWS5000_APBUS_DER_A	0xb400005c	/* DMA error address */
 #define	NEWS5000_APBUS_DER_S	0xb4c0006c	/* DMA error slot */
 #define	NEWS5000_APBUS_DMA	0xb4c00084	/* unmapped DMA coherency */
+
+#define	NEWS5000_APBUS_DMAMAP	0xb4c20000	/* DMA mapping RAM */
+#define		NEWS5000_APBUS_MAPSIZE	0x20000	/* size of mapping RAM */
+#define		NEWS5000_APBUS_MAPENT	0x8	/* size of mapping entry */
+#define		NEWS5000_APBUS_MAP_VALID	0x80000000
+#define		NEWS5000_APBUS_MAP_COHERENT	0x40000000
 
 #define	NEWS5000_SCCPORT0A	0xbe950000
 

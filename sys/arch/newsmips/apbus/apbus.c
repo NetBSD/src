@@ -1,4 +1,4 @@
-/*	$NetBSD: apbus.c,v 1.3 2000/10/12 03:11:38 onoe Exp $	*/
+/*	$NetBSD: apbus.c,v 1.4 2000/10/18 12:47:37 onoe Exp $	*/
 
 /*-
  * Copyright (C) 1999 SHIMIZU Ryo.  All rights reserved.
@@ -30,6 +30,8 @@
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/adrsmap.h>
 #include <machine/autoconf.h>
@@ -239,6 +241,229 @@ apbus_intr_establish(level, mask, priority, func, aux, name, ctlno)
 	return (void *)ai;
 }
 
+static void
+apbus_dma_unmapped(t, map)
+	bus_dma_tag_t t;
+	bus_dmamap_t map;
+{
+	int seg;
+
+	for (seg = 0; seg < map->dm_nsegs; seg++) {
+		/*
+		 * set MSB to indicate unmapped DMA.
+		 * also need bit 30 for memory over 256MB.
+		 */
+		if ((map->dm_segs[seg].ds_addr & 0x30000000) == 0)
+			map->dm_segs[seg].ds_addr |= 0x80000000;
+		else
+			map->dm_segs[seg].ds_addr |= 0xc0000000;
+	}
+}
+
+#define	APBUS_NDMAMAP	(NEWS5000_APBUS_MAPSIZE / NEWS5000_APBUS_MAPENT)
+#define	APBUS_MAPTBL(n, v)	(*(volatile u_int *)(NEWS5000_APBUS_DMAMAP + \
+			 NEWS5000_APBUS_MAPENT * (n) + 1) = (v))
+static u_char apbus_dma_maptbl[APBUS_NDMAMAP];
+
+static int
+apbus_dma_mapalloc(t, map, flags)
+	bus_dma_tag_t t;
+	bus_dmamap_t map;
+	int flags;
+{
+	int i, j, cnt;
+
+	cnt = round_page(map->_dm_size) / NBPG;
+
+  again:
+	for (i = 0; i < APBUS_NDMAMAP; i += j + 1) {
+		for (j = 0; j < cnt; j++) {
+			if (apbus_dma_maptbl[i + j])
+				break;
+		}
+		if (j == cnt) {
+			for (j = 0; j < cnt; j++)
+				apbus_dma_maptbl[i + j] = 1;
+			map->_dm_maptbl = i;
+			map->_dm_maptblcnt = cnt;
+			return 0;
+		}
+	}
+	if ((flags & BUS_DMA_NOWAIT) == 0) {
+		tsleep(&apbus_dma_maptbl, PRIBIO, "apdmat", 0);
+		goto again;
+	}
+	return ENOMEM;
+}
+
+static void
+apbus_dma_mapfree(t, map)
+	bus_dma_tag_t t;
+	bus_dmamap_t map;
+{
+	int i, n;
+
+	if (map->_dm_maptblcnt > 0) {
+		n = map->_dm_maptbl;
+		for (i = 0; i < map->_dm_maptblcnt; i++, n++) {
+#ifdef DIAGNOSTIC
+			if (apbus_dma_maptbl[n] == 0)
+				panic("freeing free dma map");
+			APBUS_MAPTBL(n, 0xffffffff);	/* causes DMA error */
+#endif
+			apbus_dma_maptbl[n] = 0;
+		}
+		wakeup(&apbus_dma_maptbl);
+		map->_dm_maptblcnt = 0;
+	}
+}
+
+static void
+apbus_dma_mapset(t, map)
+	bus_dma_tag_t t;
+	bus_dmamap_t map;
+{
+	int i;
+	bus_addr_t addr, eaddr;
+	int seg;
+	bus_dma_segment_t *segs;
+
+	i = 0;
+	for (seg = 0; seg < map->dm_nsegs; seg++) {
+		segs = &map->dm_segs[seg];
+		for (addr = segs->ds_addr, eaddr = addr + segs->ds_len;
+		    addr < eaddr; addr += NBPG, i++) {
+#ifdef DIAGNOSTIC
+			if (i >= map->_dm_maptblcnt)
+				panic("dma map table overflow");
+#endif
+			APBUS_MAPTBL(map->_dm_maptbl + i,
+				NEWS5000_APBUS_MAP_VALID |
+				NEWS5000_APBUS_MAP_COHERENT |
+				(addr >> PGSHIFT));
+		}
+	}
+	map->dm_segs[0].ds_addr = map->_dm_maptbl << PGSHIFT;
+	map->dm_segs[0].ds_len = map->dm_mapsize;
+	map->dm_nsegs = 1;
+}
+
+int
+apbus_dmamap_create(t, size, nsegments, maxsegsz, boundary, flags, dmamp)
+	bus_dma_tag_t t;
+	bus_size_t size;
+	int nsegments;
+	bus_size_t maxsegsz;
+	bus_size_t boundary;
+	int flags;
+	bus_dmamap_t *dmamp;
+{
+	int error;
+
+	if (flags & NEWSMIPS_DMAMAP_MAPTBL)
+		nsegments = round_page(size) / NBPG;
+	error = _bus_dmamap_create(t, size, nsegments, maxsegsz, boundary,
+	    flags, dmamp);
+	if (error == 0 && (flags & NEWSMIPS_DMAMAP_MAPTBL)) {
+		error = apbus_dma_mapalloc(t, *dmamp, flags);
+		if (error) {
+			_bus_dmamap_destroy(t, *dmamp);
+			*dmamp = NULL;
+		}
+	}
+	return error;
+}
+
+void
+apbus_dmamap_destroy(t, map)
+	bus_dma_tag_t t;
+	bus_dmamap_t map;
+{
+	if (map->_dm_flags & NEWSMIPS_DMAMAP_MAPTBL)
+		apbus_dma_mapfree(t, map);
+	_bus_dmamap_destroy(t, map);
+}
+
+int
+apbus_dmamap_load(t, map, buf, buflen, p, flags)
+	bus_dma_tag_t t;
+	bus_dmamap_t map;
+	void *buf;
+	bus_size_t buflen;
+	struct proc *p;
+	int flags;
+{
+	int error;
+
+	error = _bus_dmamap_load(t, map, buf, buflen, p, flags);
+	if (error == 0) {
+		if (map->_dm_flags & NEWSMIPS_DMAMAP_MAPTBL)
+			apbus_dma_mapset(t, map);
+		else
+			apbus_dma_unmapped(t, map);
+	}
+	return error;
+}
+
+int
+apbus_dmamap_load_mbuf(t, map, m0, flags)
+	bus_dma_tag_t t;
+	bus_dmamap_t map;
+	struct mbuf *m0;
+	int flags;
+{
+	int error;
+
+	error = _bus_dmamap_load_mbuf(t, map, m0, flags);
+	if (error == 0) {
+		if (map->_dm_flags & NEWSMIPS_DMAMAP_MAPTBL)
+			apbus_dma_mapset(t, map);
+		else
+			apbus_dma_unmapped(t, map);
+	}
+	return error;
+}
+
+int
+apbus_dmamap_load_uio(t, map, uio, flags)
+	bus_dma_tag_t t;
+	bus_dmamap_t map;
+	struct uio *uio;
+	int flags;
+{
+	int error;
+
+	error = _bus_dmamap_load_uio(t, map, uio, flags);
+	if (error == 0) {
+		if (map->_dm_flags & NEWSMIPS_DMAMAP_MAPTBL)
+			apbus_dma_mapset(t, map);
+		else
+			apbus_dma_unmapped(t, map);
+	}
+	return error;
+}
+
+int
+apbus_dmamap_load_raw(t, map, segs, nsegs, size, flags)
+	bus_dma_tag_t t;
+	bus_dmamap_t map;
+	bus_dma_segment_t *segs;
+	int nsegs;
+	bus_size_t size;
+	int flags;
+{
+	int error;
+
+	error = _bus_dmamap_load_raw(t, map, segs, nsegs, size, flags);
+	if (error == 0) {
+		if (map->_dm_flags & NEWSMIPS_DMAMAP_MAPTBL)
+			apbus_dma_mapset(t, map);
+		else
+			apbus_dma_unmapped(t, map);
+	}
+	return error;
+}
+
 void
 apbus_dmamap_sync(t, map, offset, len, ops)
 	bus_dma_tag_t t;
@@ -257,12 +482,12 @@ apbus_dmamap_sync(t, map, offset, len, ops)
 }
 
 struct newsmips_bus_dma_tag apbus_dma_tag = {
-	_bus_dmamap_create, 
-	_bus_dmamap_destroy,
-	_bus_dmamap_load,
-	_bus_dmamap_load_mbuf,
-	_bus_dmamap_load_uio,
-	_bus_dmamap_load_raw,
+	apbus_dmamap_create, 
+	apbus_dmamap_destroy,
+	apbus_dmamap_load,
+	apbus_dmamap_load_mbuf,
+	apbus_dmamap_load_uio,
+	apbus_dmamap_load_raw,
 	_bus_dmamap_unload,
 	apbus_dmamap_sync,
 	_bus_dmamem_alloc,
