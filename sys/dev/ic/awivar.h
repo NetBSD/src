@@ -1,4 +1,4 @@
-/* $NetBSD: awivar.h,v 1.3 1999/11/06 16:43:54 sommerfeld Exp $ */
+/* $NetBSD: awivar.h,v 1.4 1999/11/09 14:58:07 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -133,6 +133,16 @@ struct awi_softc
 	int			sc_mgt_timer;
 	int			sc_cmd_timer;
 	int			sc_selftest_tries;
+
+	/*
+	 * packet parsing state.
+	 */
+
+	struct mbuf		*sc_nextpkt;
+	struct mbuf		*sc_m;
+	u_int8_t		*sc_mptr;
+	u_int32_t		sc_mleft;
+	int			sc_flushpkt;
 };
 
 extern int awi_activate __P((struct device *, enum devact));
