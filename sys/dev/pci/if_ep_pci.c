@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_pci.c,v 1.6 1996/05/12 18:48:21 thorpej Exp $	*/
+/*	$NetBSD: if_ep_pci.c,v 1.7 1996/05/13 00:03:15 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@beer.org>
@@ -66,6 +66,7 @@
 
 #include <machine/cpu.h>
 #include <machine/bus.h>
+#include <machine/intr.h>
 
 #include <dev/ic/elink3var.h>
 #include <dev/ic/elink3reg.h>

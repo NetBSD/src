@@ -1,4 +1,4 @@
-/*    $NetBSD: if_de.c,v 1.21 1996/05/11 14:00:15 mycroft Exp $       */
+/*    $NetBSD: if_de.c,v 1.22 1996/05/13 00:03:09 mycroft Exp $       */
 
 /*-
  * Copyright (c) 1994, 1995 Matt Thomas (matt@lkg.dec.com)
@@ -108,9 +108,8 @@
 
 #if defined(__NetBSD__)
 #include <machine/bus.h>
-#ifdef __alpha__
 #include <machine/intr.h>
-#endif
+
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/ic/dc21040reg.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.15 1996/05/03 22:35:24 jtk Exp $	*/
+/*	$NetBSD: gus.c,v 1.16 1996/05/12 23:52:08 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -110,6 +110,7 @@
 #include <sys/kernel.h>
 
 #include <machine/cpu.h>
+#include <machine/intr.h>
 #include <machine/pio.h>
 #include <machine/cpufunc.h>
 #include <sys/audioio.h>

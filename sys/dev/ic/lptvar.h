@@ -1,4 +1,4 @@
-/*	$NetBSD: lptvar.h,v 1.38 1996/04/29 20:30:48 christos Exp $	*/
+/*	$NetBSD: lptvar.h,v 1.39 1996/05/12 23:53:06 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -65,12 +65,8 @@
 #include <sys/conf.h>
 #include <sys/syslog.h>
 
-#ifdef i386							/* XXX */
-#include <machine/cpu.h>					/* XXX */
-#else								/* XXX */
-#include <machine/intr.h>
-#endif								/* XXX */
 #include <machine/bus.h>
+#include <machine/intr.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/lptreg.h>
