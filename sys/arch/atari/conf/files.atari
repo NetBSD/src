@@ -1,11 +1,14 @@
 #
-#	$NetBSD: files.atari,v 1.87 2001/06/18 02:00:48 christos Exp $
+#	$NetBSD: files.atari,v 1.88 2001/07/09 14:49:49 leo Exp $
 
 maxpartitions 16
 
 maxusers 2 8 64
 
 defopt	opt_mbtype.h			_MILANHW_ _ATARIHW_
+
+defopt	opt_atariscsi.h			TT_SCSI FALCON_SCSI
+defopt	opt_atariscsi.h			TRY_SCSI_LINKED_COMMANDS
 
 device	mainbus {}
 attach	mainbus at root
