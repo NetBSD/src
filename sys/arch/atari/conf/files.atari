@@ -1,6 +1,5 @@
 #
-#	$NetBSD: files.atari,v 1.35 1997/03/26 15:46:20 leo Exp $
-
+#	$NetBSD: files.atari,v 1.36 1997/04/01 08:18:01 leo Exp $
 
 maxpartitions 16
 
@@ -59,6 +58,15 @@ attach	hdfd at fdc
 file	arch/atari/dev/hdfd.c		hdfd needs-flag
 file	arch/atari/dev/hdfd_intr.s	hdfd
 major	{hdfd = 2}
+
+# IDE driver also called wd driver
+# The problem with calling it wd here is a name clash with the driver in ISA.
+device	idec {[drive = -1], [option = 0]}
+attach	idec at mainbus
+device	ide: disk
+attach	ide at idec
+file	arch/atari/dev/wd.c		idec needs-flag
+major	{ide = 14}
 
 # The generic VME-bus driver
 device	vmebus {}
@@ -121,7 +129,6 @@ attach	pcibus at mainbus
 
 include "dev/pci/files.pci"
 
-#
 # XXX: Some scsi-devices must be at fixed major#
 major   {sd = 4}
 major   {st = 5}

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.23 1997/01/01 21:08:02 leo Exp $	*/
+/*	$NetBSD: conf.c,v 1.24 1997/04/01 08:17:47 leo Exp $	*/
 
 /*
  * Copyright (c) 1991 The Regents of the University of California.
@@ -68,6 +68,8 @@ bdev_decl(st);
 bdev_decl(cd);
 #include "ccd.h"
 bdev_decl(ccd);
+#include "idec.h"
+bdev_decl(wd);
 
 struct bdevsw	bdevsw[] =
 {
@@ -85,6 +87,7 @@ struct bdevsw	bdevsw[] =
 	bdev_lkm_dummy(),		/* 11 */
 	bdev_lkm_dummy(),		/* 12 */
 	bdev_disk_init(NCCD,ccd),	/* 13: concatenated disk driver */
+	bdev_disk_init(NIDEC,wd),	/* 14: IDE disk driver */
 };
 int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 
@@ -172,6 +175,7 @@ cdev_decl(bpf);
 #include "tun.h"
 cdev_decl(tun);
 cdev_decl(lpt);
+cdev_decl(wd);
 
 struct cdevsw	cdevsw[] =
 {
@@ -209,6 +213,7 @@ struct cdevsw	cdevsw[] =
 	cdev_uk_init(NUK,uk),		/* 31: SCSI unknown	*/
 	cdev_ss_init(NSS,ss),		/* 32: SCSI scanner	*/
 	cdev_rtc_init(1,rtc),		/* 33: RealTimeClock	*/
+	cdev_disk_init(NIDEC,wd),	/* 34: IDE disk driver	*/
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.20 1997/03/26 22:38:56 gwr Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.21 1997/04/01 08:17:44 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -56,6 +56,7 @@ struct devnametobdevmaj atari_nam2blk[] = {
 	{ "fd",		2 },
 	{ "sd",		4 },
 	{ "cd",		6 },
+	{ "wd",		14 },
 	{ NULL,		0 },
 };
 
@@ -157,7 +158,11 @@ config_console()
 #include "fd.h"
 #include "sd.h"
 #include "cd.h"
+#include "idec.h"
 
+#if NIDEC
+extern	struct cfdriver ide_cd;
+#endif
 #if NSD > 0
 extern	struct cfdriver sd_cd;  
 #endif
@@ -169,6 +174,9 @@ extern	struct cfdriver fd_cd;
 #endif
 
 struct cfdriver *genericconf[] = {
+#if NIDEC > 0
+	&ide_cd,
+#endif
 #if NSD > 0
 	&sd_cd,
 #endif
@@ -285,6 +293,7 @@ mbattach(pdp, dp, auxp)
 	config_found(dp, "ncrscsi", simple_devprint);
 	config_found(dp, "nvr"    , simple_devprint);
 	config_found(dp, "lpt"    , simple_devprint);
+	config_found(dp, "wdc"    , simple_devprint);
 }
 
 int
