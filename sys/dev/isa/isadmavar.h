@@ -1,4 +1,4 @@
-/*	$NetBSD: isadmavar.h,v 1.6.2.1 1997/05/13 03:14:21 thorpej Exp $	*/
+/*	$NetBSD: isadmavar.h,v 1.6.2.2 1997/05/17 00:32:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -44,11 +44,22 @@
 struct proc;
 
 void	   isa_dmacascade __P((struct device *, int));
+
 int	   isa_dmamap_create __P((struct device *, int, bus_size_t, int));
 void	   isa_dmamap_destroy __P((struct device *, int));
+
 int	   isa_dmastart __P((struct device *, int, void *, bus_size_t,
 	       struct proc *, int, int));
 void	   isa_dmaabort __P((struct device *, int));
 bus_size_t isa_dmacount __P((struct device *, int));
 int	   isa_dmafinished __P((struct device *, int));
 void	   isa_dmadone __P((struct device *, int));
+
+int	   isa_dmamem_alloc __P((struct device *, int, bus_size_t,
+	       bus_addr_t *, int));
+void	   isa_dmamem_free __P((struct device *, int, bus_addr_t, bus_size_t));
+int	   isa_dmamem_map __P((struct device *, int, bus_addr_t, bus_size_t,
+	       caddr_t *, int));
+void	   isa_dmamem_unmap __P((struct device *, int, caddr_t, size_t));
+int	   isa_dmamem_mmap __P((struct device *, int, bus_addr_t, bus_size_t,
+	       int, int, int));
