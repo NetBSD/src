@@ -841,7 +841,7 @@ if (aclocal --version) < /dev/null > /dev/null 2>&1; then
    ACLOCAL=aclocal
    echo "$ac_t""found" 1>&6
 else
-   ACLOCAL="$missing_dir/missing aclocal"
+   ACLOCAL="sh $missing_dir/missing aclocal"
    echo "$ac_t""missing" 1>&6
 fi
 
@@ -854,7 +854,7 @@ if (autoconf --version) < /dev/null > /dev/null 2>&1; then
    AUTOCONF=autoconf
    echo "$ac_t""found" 1>&6
 else
-   AUTOCONF="$missing_dir/missing autoconf"
+   AUTOCONF="sh $missing_dir/missing autoconf"
    echo "$ac_t""missing" 1>&6
 fi
 
@@ -867,7 +867,7 @@ if (automake --version) < /dev/null > /dev/null 2>&1; then
    AUTOMAKE=automake
    echo "$ac_t""found" 1>&6
 else
-   AUTOMAKE="$missing_dir/missing automake"
+   AUTOMAKE="sh $missing_dir/missing automake"
    echo "$ac_t""missing" 1>&6
 fi
 
@@ -880,7 +880,7 @@ if (autoheader --version) < /dev/null > /dev/null 2>&1; then
    AUTOHEADER=autoheader
    echo "$ac_t""found" 1>&6
 else
-   AUTOHEADER="$missing_dir/missing autoheader"
+   AUTOHEADER="sh $missing_dir/missing autoheader"
    echo "$ac_t""missing" 1>&6
 fi
 
@@ -893,7 +893,7 @@ if (makeinfo --version) < /dev/null > /dev/null 2>&1; then
    MAKEINFO=makeinfo
    echo "$ac_t""found" 1>&6
 else
-   MAKEINFO="$missing_dir/missing makeinfo"
+   MAKEINFO="sh $missing_dir/missing makeinfo"
    echo "$ac_t""missing" 1>&6
 fi
 
@@ -952,7 +952,7 @@ fi
 
 
 # Make sure we can run config.sub.
-if $ac_config_sub sun4 >/dev/null 2>&1; then :
+if sh $ac_config_sub sun4 >/dev/null 2>&1; then :
 else { echo "configure: error: can not run $ac_config_sub" 1>&2; exit 1; }
 fi
 
@@ -964,14 +964,14 @@ case "$host_alias" in
 NONE)
   case $nonopt in
   NONE)
-    if host_alias=`$ac_config_guess`; then :
+    if host_alias=`sh $ac_config_guess`; then :
     else { echo "configure: error: can not guess host type; you must specify one" 1>&2; exit 1; }
     fi ;;
   *) host_alias=$nonopt ;;
   esac ;;
 esac
 
-host=`$ac_config_sub $host_alias`
+host=`sh $ac_config_sub $host_alias`
 host_cpu=`echo $host | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\1/'`
 host_vendor=`echo $host | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\2/'`
 host_os=`echo $host | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\3/'`
