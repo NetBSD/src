@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.4 1997/10/14 02:07:58 lukem Exp $	*/
+/*	$NetBSD: misc.c,v 1.5 1997/10/20 01:07:52 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,9 +38,10 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 6/9/93";
 #endif
-__RCSID("$NetBSD: misc.c,v 1.4 1997/10/14 02:07:58 lukem Exp $");
+__RCSID("$NetBSD: misc.c,v 1.5 1997/10/20 01:07:52 lukem Exp $");
 #endif /* not lint */
 
+#include <err.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
@@ -57,13 +58,13 @@ cat(file)
 	char buf[1024];
 
 	if ((fd = open(file, O_RDONLY, 0)) < 0)
-		err("%s: %s", file, strerror(errno));
+		err(1, "%s", file);
 
 	while ((nr = read(fd, buf, sizeof(buf))) > 0)
 		if ((nw = write(STDERR_FILENO, buf, nr)) == -1)
-			err("write to stderr: %s", strerror(errno));
+			err(1, "write to stderr");
 	if (nr != 0)
-		err("%s: %s", file, strerror(errno));
+		err(1, "%s", file);
 	(void)close(fd);
 }
 
@@ -72,33 +73,4 @@ outc(c)
 	int c;
 {
 	(void)putc(c, stderr);
-}
-
-#if __STDC__
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
-
-void
-#if __STDC__
-err(const char *fmt, ...)
-#else
-err(fmt, va_alist)
-	char *fmt;
-        va_dcl
-#endif
-{
-	va_list ap;
-#if __STDC__
-	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
-	(void)fprintf(stderr, "tset: ");
-	(void)vfprintf(stderr, fmt, ap);
-	va_end(ap);
-	(void)fprintf(stderr, "\n");
-	exit(1);
-	/* NOTREACHED */
 }
