@@ -1,4 +1,4 @@
-/*	$NetBSD: iommureg.h,v 1.3.2.2 1998/05/05 11:59:06 mycroft Exp $ */
+/*	$NetBSD: iommureg.h,v 1.3.2.3 1998/11/22 07:11:47 cgd Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -66,11 +66,11 @@ struct iommureg {
  */
 #define IOMMU_FLUSHPAGE(sc, va)	do {				\
 	(sc)->sc_reg->io_flushpage = (va) & IOMMU_FLUSH_MASK;	\
-	__asm("nop;nop;nop;");					\
+	__asm("nop;nop;nop;nop;nop;nop;");			\
 } while (0);
 #define IOMMU_FLUSHALL(sc)	do {				\
 	(sc)->sc_reg->io_flashclear = 0;			\
-	__asm("nop;nop;nop;");					\
+	__asm("nop;nop;nop;nop;nop;nop;");			\
 } while (0)
 
 /* to pte.h ? */
