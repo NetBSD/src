@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.91 2004/06/22 02:06:55 christos Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.92 2004/09/17 14:11:25 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.91 2004/06/22 02:06:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.92 2004/09/17 14:11:25 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -314,7 +314,7 @@ sys_ptrace(l, v, retval)
 		uio.uio_resid = sizeof(tmp);
 		uio.uio_segflg = UIO_SYSSPACE;
 		uio.uio_rw = write ? UIO_WRITE : UIO_READ;
-		uio.uio_procp = p;
+		uio.uio_procp = NULL;
 		error = process_domem(p, t, &uio);
 		if (!write)
 			*retval = tmp;

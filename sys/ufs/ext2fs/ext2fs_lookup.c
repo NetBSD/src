@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_lookup.c,v 1.29 2004/08/15 07:19:56 mycroft Exp $	*/
+/*	$NetBSD: ext2fs_lookup.c,v 1.30 2004/09/17 14:11:27 skrll Exp $	*/
 
 /* 
  * Modified for NetBSD 1.2E
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.29 2004/08/15 07:19:56 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.30 2004/09/17 14:11:27 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -821,7 +821,7 @@ ext2fs_direnter(ip, dvp, cnp)
 		auio.uio_iovcnt = 1;
 		auio.uio_rw = UIO_WRITE;
 		auio.uio_segflg = UIO_SYSSPACE;
-		auio.uio_procp = (struct proc *)0;
+		auio.uio_procp = NULL;
 		error = VOP_WRITE(dvp, &auio, IO_SYNC, cnp->cn_cred);
 		if (dirblksiz > dvp->v_mount->mnt_stat.f_bsize)
 			/* XXX should grow with balloc() */
@@ -1007,7 +1007,7 @@ ext2fs_dirempty(ip, parentino, cred)
 
 	for (off = 0; off < ip->i_e2fs_size; off += fs2h16(dp->e2d_reclen)) {
 		error = vn_rdwr(UIO_READ, ITOV(ip), (caddr_t)dp, MINDIRSIZ, off,
-		   UIO_SYSSPACE, IO_NODELOCKED, cred, &count, (struct proc *)0);
+		   UIO_SYSSPACE, IO_NODELOCKED, cred, &count, NULL);
 		/*
 		 * Since we read MINDIRSIZ, residual must
 		 * be 0 unless we're at end of file.
@@ -1073,7 +1073,7 @@ ext2fs_checkpath(source, target, cred)
 		error = vn_rdwr(UIO_READ, vp, (caddr_t)&dirbuf,
 			sizeof (struct ext2fs_dirtemplate), (off_t)0,
 			UIO_SYSSPACE, IO_NODELOCKED, cred, (size_t *)0,
-			(struct proc *)0);
+			NULL);
 		if (error != 0)
 			break;
 		namlen = dirbuf.dotdot_namlen;

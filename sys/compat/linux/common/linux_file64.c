@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file64.c,v 1.22 2003/08/10 20:16:27 jdolecek Exp $	*/
+/*	$NetBSD: linux_file64.c,v 1.23 2004/09/17 14:11:24 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.22 2003/08/10 20:16:27 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.23 2004/09/17 14:11:24 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -449,7 +449,7 @@ again:
 	auio.uio_iovcnt = 1;
 	auio.uio_rw = UIO_READ;
 	auio.uio_segflg = UIO_SYSSPACE;
-	auio.uio_procp = p;
+	auio.uio_procp = NULL;
 	auio.uio_resid = buflen;
 	auio.uio_offset = off;
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_subr.c,v 1.41 2003/08/29 01:44:02 junyoung Exp $	*/
+/*	$NetBSD: exec_subr.c,v 1.42 2004/09/17 14:11:25 skrll Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.41 2003/08/29 01:44:02 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.42 2004/09/17 14:11:25 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -280,7 +280,7 @@ exec_read_from(struct proc *p, struct vnode *vp, u_long off, void *buf,
 	size_t resid;
 
 	if ((error = vn_rdwr(UIO_READ, vp, buf, size, off, UIO_SYSSPACE,
-	    0, p->p_ucred, &resid, p)) != 0)
+	    0, p->p_ucred, &resid, NULL)) != 0)
 		return error;
 	/*
 	 * See if we got all of it

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_acct.c,v 1.57 2004/04/21 01:05:38 christos Exp $	*/
+/*	$NetBSD: kern_acct.c,v 1.58 2004/09/17 14:11:25 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.57 2004/04/21 01:05:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.58 2004/09/17 14:11:25 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -372,7 +372,7 @@ acct_process(p)
 	VOP_LEASE(acct_vp, p, p->p_ucred, LEASE_WRITE);
 	error = vn_rdwr(UIO_WRITE, acct_vp, (caddr_t)&acct,
 	    sizeof(acct), (off_t)0, UIO_SYSSPACE, IO_APPEND|IO_UNIT,
-	    acct_ucred, NULL, p);
+	    acct_ucred, NULL, NULL);
 	if (error != 0)
 		log(LOG_ERR, "Accounting: write failed %d\n", error);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_acct.c,v 1.17 2003/08/07 16:33:03 agc Exp $	*/
+/*	$NetBSD: pk_acct.c,v 1.18 2004/09/17 14:11:25 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pk_acct.c,v 1.17 2003/08/07 16:33:03 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pk_acct.c,v 1.18 2004/09/17 14:11:25 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -180,5 +180,5 @@ pk_acct(lcp)
 	(void) vn_rdwr(UIO_WRITE, vp, (caddr_t)&acbuf, sizeof (acbuf),
 		(off_t)0, UIO_SYSSPACE, IO_UNIT|IO_APPEND,
 		curproc -> p_ucred, (size_t *)0,
-		(struct proc *)0);
+		NULL);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.31 2004/08/15 07:19:58 mycroft Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.32 2004/09/17 14:11:27 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.31 2004/08/15 07:19:58 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.32 2004/09/17 14:11:27 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -806,7 +806,7 @@ dqget(vp, id, ump, type, dqp)
 	auio.uio_offset = (off_t)(id * sizeof (struct dqblk));
 	auio.uio_segflg = UIO_SYSSPACE;
 	auio.uio_rw = UIO_READ;
-	auio.uio_procp = (struct proc *)0;
+	auio.uio_procp = NULL;
 	error = VOP_READ(dqvp, &auio, 0, ump->um_cred[type]);
 	if (auio.uio_resid == sizeof(struct dqblk) && error == 0)
 		memset((caddr_t)&dq->dq_dqb, 0, sizeof(struct dqblk));
@@ -917,7 +917,7 @@ dqsync(vp, dq)
 	auio.uio_offset = (off_t)(dq->dq_id * sizeof (struct dqblk));
 	auio.uio_segflg = UIO_SYSSPACE;
 	auio.uio_rw = UIO_WRITE;
-	auio.uio_procp = (struct proc *)0;
+	auio.uio_procp = NULL;
 	error = VOP_WRITE(dqvp, &auio, 0, dq->dq_ump->um_cred[dq->dq_type]);
 	if (auio.uio_resid && error == 0)
 		error = EIO;

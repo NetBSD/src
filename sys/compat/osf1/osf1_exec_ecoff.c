@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_exec_ecoff.c,v 1.9 2003/08/08 18:57:07 christos Exp $ */
+/* $NetBSD: osf1_exec_ecoff.c,v 1.10 2004/09/17 14:11:24 skrll Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_exec_ecoff.c,v 1.9 2003/08/08 18:57:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_exec_ecoff.c,v 1.10 2004/09/17 14:11:24 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -256,7 +256,7 @@ osf1_exec_ecoff_dynamic(struct proc *p, struct exec_package *epp)
 	 */
         if ((error = vn_rdwr(UIO_READ, ldr_vp, (caddr_t)&ldr_exechdr,
 	    sizeof ldr_exechdr, 0, UIO_SYSSPACE, 0, p->p_ucred,
-	    &resid, p)) != 0)
+	    &resid, NULL)) != 0)
                 goto bad;
         if (resid != 0) {
                 error = ENOEXEC;

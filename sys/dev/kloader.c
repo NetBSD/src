@@ -1,4 +1,4 @@
-/*	$NetBSD: kloader.c,v 1.1 2004/07/06 13:09:18 uch Exp $	*/
+/*	$NetBSD: kloader.c,v 1.2 2004/09/17 14:11:24 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kloader.c,v 1.1 2004/07/06 13:09:18 uch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kloader.c,v 1.2 2004/09/17 14:11:24 skrll Exp $");
 
 #include "debug_kloader.h"
 
@@ -633,7 +633,7 @@ kloader_read(size_t ofs, size_t size, void *buf)
 	int error;
 
 	error = vn_rdwr(UIO_READ, vp, buf, size, ofs, UIO_SYSSPACE,
-	    IO_NODELOCKED | IO_SYNC, p->p_ucred, &resid, p);
+	    IO_NODELOCKED | IO_SYNC, p->p_ucred, &resid, NULL);
 
 	if (error)
 		PRINTF("read error.\n");

@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_exec_coff.c,v 1.11 2003/11/19 15:46:16 christos Exp $	*/
+/*	$NetBSD: ibcs2_exec_coff.c,v 1.12 2004/09/17 14:11:23 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec_coff.c,v 1.11 2003/11/19 15:46:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec_coff.c,v 1.12 2004/09/17 14:11:23 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -333,7 +333,7 @@ coff_find_section(p, vp, fp, sh, s_type)
 		siz = sizeof(struct coff_scnhdr);
 		error = vn_rdwr(UIO_READ, vp, (caddr_t) sh,
 		    siz, pos, UIO_SYSSPACE, IO_NODELOCKED, p->p_ucred,
-		    &resid, p);
+		    &resid, NULL);
 		if (error) {
 			DPRINTF(("section hdr %d read error %d\n", i, error));
 			return error;
@@ -461,7 +461,7 @@ exec_ibcs2_coff_prep_zmagic(p, epp, fp, ap)
 		error = vn_rdwr(UIO_READ, epp->ep_vp, (caddr_t) buf,
 				len, sh.s_scnptr,
 				UIO_SYSSPACE, IO_NODELOCKED, p->p_ucred,
-				&resid, p);
+				&resid, NULL);
 		if (error) {
 			DPRINTF(("shlib section read error %d\n", error));
 			free(buf, M_TEMP);

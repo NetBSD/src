@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_uselib.c,v 1.12 2003/06/29 22:29:33 fvdl Exp $	*/
+/*	$NetBSD: linux_uselib.c,v 1.13 2004/09/17 14:11:24 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_uselib.c,v 1.12 2003/06/29 22:29:33 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_uselib.c,v 1.13 2004/09/17 14:11:24 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,7 +119,7 @@ linux_sys_uselib(l, v, retval)
 
 	if ((error = vn_rdwr(UIO_READ, vp, (caddr_t) &hdr, LINUX_AOUT_HDR_SIZE,
 			     0, UIO_SYSSPACE, IO_NODELOCKED, p->p_ucred,
-			     &rem, p))) {
+			     &rem, NULL))) {
 		vrele(vp);
 		return error;
 	}

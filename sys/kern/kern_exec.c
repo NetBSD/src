@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.189 2004/09/10 06:09:15 jdolecek Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.190 2004/09/17 14:11:25 skrll Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.189 2004/09/10 06:09:15 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.190 2004/09/17 14:11:25 skrll Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -272,7 +272,7 @@ check_exec(struct proc *p, struct exec_package *epp)
 	/* now we have the file, get the exec header */
 	uvn_attach(vp, VM_PROT_READ);
 	error = vn_rdwr(UIO_READ, vp, epp->ep_hdr, epp->ep_hdrlen, 0,
-			UIO_SYSSPACE, 0, p->p_ucred, &resid, p);
+			UIO_SYSSPACE, 0, p->p_ucred, &resid, NULL);
 	if (error)
 		goto bad2;
 	epp->ep_hdrvalid = epp->ep_hdrlen - resid;

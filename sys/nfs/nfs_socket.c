@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.110 2004/08/24 20:09:44 yamt Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.111 2004/09/17 14:11:26 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.110 2004/08/24 20:09:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.111 2004/09/17 14:11:26 skrll Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -610,7 +610,7 @@ tryagain:
 			auio.uio_rw = UIO_READ;
 			auio.uio_offset = 0;
 			auio.uio_resid = sizeof(u_int32_t);
-			auio.uio_procp = p;
+			auio.uio_procp = NULL;
 			do {
 			   rcvflg = MSG_WAITALL;
 			   error = (*so->so_receive)(so, (struct mbuf **)0, &auio,
