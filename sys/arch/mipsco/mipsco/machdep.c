@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.2 2000/08/15 04:56:46 wdk Exp $	*/
+/*	$NetBSD: machdep.c,v 1.3 2000/08/16 21:54:44 wdk Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.2 2000/08/15 04:56:46 wdk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.3 2000/08/16 21:54:44 wdk Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -86,6 +86,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.2 2000/08/15 04:56:46 wdk Exp $");
 #include <machine/intr.h>
 #include <machine/mainboard.h>
 #include <machine/sysconf.h>
+#include <machine/autoconf.h>
 #include <dev/clock_subr.h>
 #include <dev/cons.h>
 
@@ -207,7 +208,7 @@ mach_init(argc, argv, envp)
 	caddr_t kernend, v;
 	vsize_t size;
 	char *cp;
-	extern u_long bootdev;
+	int i;
 	extern char edata[], end[];
 
 	/* clear the BSS segment */
@@ -219,8 +220,7 @@ mach_init(argc, argv, envp)
 	 */
 	uvm_setpagesize();
 
-	boothowto = RB_SINGLE;
-	bootdev = 0;
+	consinit();
 
 	/*
          * The MIPS Rc3230 series machine have a really ugly memory
@@ -273,16 +273,64 @@ mach_init(argc, argv, envp)
 	 */
 	mips_vector_init();
 
+	/* Look at argv[0] and compute bootdev */
+	makebootdev(argv[0]);
+
+	/*
+	 * Look at arguments passed to us and compute boothowto.
+	 */
+	boothowto = RB_SINGLE;
+	for (i = 1; i < argc; i++) {
+		for (cp = argv[i]; *cp; cp++) {
+			switch (*cp) {
+			case 'a': /* autoboot */
+			case 'A':
+				boothowto &= ~RB_SINGLE;
+				break;
+
+#if defined(KGDB) || defined(DDB)
+			case 'd': /* break into the kernel debugger ASAP */
+			case 'D':
+				boothowto |= RB_KDB;
+				break;
+#endif
+
+			case 'm': /* mini root present in memory */
+			case 'M':
+				boothowto |= RB_MINIROOT;
+				break;
+
+			case 'n': /* ask for names */
+				boothowto |= RB_ASKNAME;
+				break;
+
+			case 'N': /* don't ask for names */
+				boothowto &= ~RB_ASKNAME;
+				break;
+
+			case 's': /* single-user (default) */
+			case 'S':
+				boothowto |= RB_SINGLE;
+				break;
+
+			case '-': /* Ignore superfluous '-' */
+				break;
+
+			default:
+				printf("bootflag '%c' not recognised", *cp);
+			}
+		}
+	}
+
+
 #ifdef DDB
 	/*
 	 * Initialize machine-dependent DDB commands, in case of early panic.
 	 */
 	db_machine_init();
-#endif
 
-	boothowto &= ~RB_ASKNAME;	/* for lack of cn_getc */
-#ifdef KADB
-	boothowto |= RB_KDB;
+	if (boothowto & RB_KDB)
+		Debugger();
 #endif
 
 #ifdef MFS
