@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.108 2004/01/28 22:00:06 augustss Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.109 2004/01/28 22:37:50 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.108 2004/01/28 22:00:06 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.109 2004/01/28 22:37:50 augustss Exp $");
 
 #include "opt_usbverbose.h"
 
@@ -255,7 +255,7 @@ usbd_devinfo_vp(usbd_device_handle dev, char *v, char *p, int usedev)
 		usbd_trim_spaces(vendor);
 		product = usbd_get_string(dev, udd->iProduct, p);
 		usbd_trim_spaces(product);
-		f (vendor && !*vendor)
+		if (vendor && !*vendor)
 			vendor = NULL;
 		if (product && !*product)
 			product = NULL;
