@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.36 1999/08/24 17:47:44 tron Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.37 1999/09/09 18:12:05 is Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -88,6 +88,11 @@ struct ne2000dev {
     int enet_maddr;
     unsigned char enet_vendor[3];
 } ne2000devs[] = {
+    { PCMCIA_STR_AMBICOM_AMB8002T,
+      PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
+      PCMCIA_CIS_AMBICOM_AMB8002T,
+      0, -1, { 0x00, 0x10, 0x7a } },
+
     { PCMCIA_STR_PREMAX_PE200,
       PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
       PCMCIA_CIS_PREMAX_PE200,
