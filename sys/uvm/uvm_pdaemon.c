@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.12.2.2 1999/02/25 04:33:55 chs Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.12.2.3 1999/04/09 04:46:43 chs Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -188,10 +188,8 @@ void
 uvm_pageout()
 {
 	int npages = 0;
-	int s;
-	struct uvm_aiodesc *aio, *nextaio;
 	UVMHIST_FUNC("uvm_pageout"); UVMHIST_CALLED(pdhist);
-	 
+
 	UVMHIST_LOG(pdhist,"<starting uvm pagedaemon>", 0, 0, 0, 0);
 
 	/*
@@ -210,55 +208,16 @@ uvm_pageout()
 	 */
 	while (TRUE) {
 
-		/*
-		 * carefully attempt to go to sleep (without losing "wakeups"!).
-		 * we need splbio because we want to make sure the aio_done list
-		 * is totally empty before we go to sleep.
-		 */
-
-		s = splbio();
 		simple_lock(&uvm.pagedaemon_lock);
 
-		/*
-		 * if we've got done aio's, then bypass the sleep
-		 */
+		UVMHIST_LOG(pdhist,"  <<SLEEPING>>",0,0,0,0);
+		UVM_UNLOCK_AND_WAIT(&uvm.pagedaemon,
+		    &uvm.pagedaemon_lock, FALSE, "pgdaemon", 0);
+		UVMHIST_LOG(pdhist,"  <<WOKE UP>>",0,0,0,0);
 
-		if (TAILQ_FIRST(&uvm.aio_done) == NULL) {
-			UVMHIST_LOG(maphist,"  <<SLEEPING>>",0,0,0,0);
-			UVM_UNLOCK_AND_WAIT(&uvm.pagedaemon,
-			    &uvm.pagedaemon_lock, FALSE, "daemon_slp", 0);
-			uvmexp.pdwoke++;
-			UVMHIST_LOG(pdhist,"  <<WOKE UP>>",0,0,0,0);
+		simple_unlock(&uvm.pagedaemon_lock);
 
-			/* relock pagedaemon_lock, still at splbio */
-			simple_lock(&uvm.pagedaemon_lock);
-		}
-
-		/*
-		 * check for done aio structures
-		 */
-
-		aio = TAILQ_FIRST(&uvm.aio_done);/* save current list (if any)*/
-		if (aio) {
-			TAILQ_INIT(&uvm.aio_done);	/* zero global list */
-		}
-
-		simple_unlock(&uvm.pagedaemon_lock);	/* unlock */
-		splx(s);				/* drop splbio */
- 
-		/*
-		 * first clear out any pending aios (to free space in case we
-		 * want to pageout more stuff).
-		 */
-
-		for (/*null*/; aio != NULL ; aio = nextaio) {
-			/* XXX uvmexp.paging needs spinlock */
-			uvmexp.paging -= aio->npages;
-			nextaio = TAILQ_NEXT(aio, aioq);
-			aio->aiodone(aio);
-		}
-
-		/* Next, drain pool resources */
+		/* drain pool resources */
 		pool_drain(0);
 
 		/*
@@ -300,6 +259,71 @@ uvm_pageout()
 	}
 	/*NOTREACHED*/
 }
+
+
+/*
+ * uvm_aiodone_daemon:  main loop for the aiodone daemon.
+ */
+
+void
+uvm_aiodone_daemon()
+{
+	int s;
+	struct uvm_aiodesc *aio, *nextaio;
+	UVMHIST_FUNC("uvm_aiodoned"); UVMHIST_CALLED(pdhist);
+
+	UVMHIST_LOG(pdhist,"<starting uvm aiodone daemon>", 0, 0, 0, 0);
+
+	for (;;) {
+
+		/*
+		 * carefully attempt to go to sleep (without losing "wakeups"!).
+		 * we need splbio because we want to make sure the aio_done list
+		 * is totally empty before we go to sleep.
+		 */
+
+		s = splbio();
+		simple_lock(&uvm.aiodoned_lock);
+
+		/*
+		 * if we've got done aio's, then bypass the sleep
+		 */
+
+		if (TAILQ_FIRST(&uvm.aio_done) == NULL) {
+			UVMHIST_LOG(pdhist,"  <<SLEEPING>>",0,0,0,0);
+			UVM_UNLOCK_AND_WAIT(&uvm.aiodoned,
+			    &uvm.aiodoned_lock, FALSE, "aiodoned", 0);
+			UVMHIST_LOG(pdhist,"  <<WOKE UP>>",0,0,0,0);
+
+			/* relock aiodoned_lock, still at splbio */
+			simple_lock(&uvm.aiodoned_lock);
+		}
+
+		/*
+		 * check for done aio structures
+		 */
+
+		aio = TAILQ_FIRST(&uvm.aio_done);
+		if (aio) {
+			TAILQ_INIT(&uvm.aio_done);
+		}
+
+		simple_unlock(&uvm.aiodoned_lock);
+		splx(s);
+ 
+		/*
+		 * process each i/o that's done.
+		 */
+
+		for (/*null*/; aio != NULL ; aio = nextaio) {
+			uvmexp.paging -= aio->npages;
+			nextaio = TAILQ_NEXT(aio, aioq);
+			aio->aiodone(aio);
+		}
+	}
+}
+
+
 
 /*
  * uvmpd_scan_inactive: the first loop of uvmpd_scan broken out into
@@ -723,6 +747,7 @@ uvmpd_scan_inactive(pglst)
 		 */
 
 		if (result == VM_PAGER_PEND) {
+			uvmexp.paging += npages;
 			uvm_lock_pageq();		/* relock page queues */
 			uvmexp.pdpending++;
 			if (p) {
