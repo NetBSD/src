@@ -42,13 +42,14 @@
  *	@(#)param.h	8.1 (Berkeley) 6/11/93
  *
  * from: Header: param.h,v 1.13 92/11/26 02:04:38 torek Exp  (LBL)
- * $Id: param.h,v 1.1 1993/10/02 10:23:16 deraadt Exp $
+ * $Id: param.h,v 1.2 1993/10/11 02:28:27 deraadt Exp $
  */
 
 /*
  * Machine dependent constants for Sun-4c (SPARCstation)
  */
-#define	MACHINE	"sparc"
+#define	MACHINE		"sparc"
+#define	MID_MACHINE	MID_SPARC
 
 #ifdef KERNEL				/* XXX */
 #include <machine/cpu.h>		/* XXX */
