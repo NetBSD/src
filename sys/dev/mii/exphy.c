@@ -1,4 +1,4 @@
-/*	$NetBSD: exphy.c,v 1.6 1998/10/23 01:43:09 thorpej Exp $	*/
+/*	$NetBSD: exphy.c,v 1.7 1998/10/23 01:52:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -143,8 +143,7 @@ exphyattach(parent, self, aux)
 	struct mii_attach_args *ma = aux;
 	struct mii_data *mii = ma->mii_data;
 
-	printf(": 3Com internal media interface, rev. %d\n",
-	    MII_REV(ma->mii_id2));
+	printf(": 3Com internal media interface\n");
 
 	sc->sc_mii.mii_inst = mii->mii_instance;
 	sc->sc_mii.mii_phy = ma->mii_phyno;
