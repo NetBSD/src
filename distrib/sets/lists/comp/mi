@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.222 2000/05/31 08:02:45 enami Exp $
+#	$NetBSD: mi,v 1.223 2000/06/04 08:53:58 itojun Exp $
 ./sys			comp-sysutil-root
 ./usr/bin/addr2line	comp-miscutil-bin
 ./usr/bin/ar		comp-util-bin
@@ -844,6 +844,7 @@
 ./usr/include/strings.h		comp-c-include
 ./usr/include/struct.h		comp-c-include
 ./usr/include/sys/acct.h		comp-c-include
+./usr/include/sys/ansi.h		comp-c-include
 ./usr/include/sys/ataio.h		comp-c-include
 ./usr/include/sys/audioio.h		comp-c-include
 ./usr/include/sys/bswap.h		comp-c-include
