@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.72 2003/07/09 09:38:05 wiz Exp $
+# $NetBSD: obsolete.mi,v 1.73 2003/07/16 11:57:15 dsl Exp $
 ./usr/share/info/g++FAQ.info
 ./usr/share/info/tar.info
 ./usr/share/man/cat1/amq.0
@@ -129,6 +129,7 @@
 ./usr/share/man/cat8/arm26/makedev.0
 ./usr/share/man/cat8/arm32/MAKEDEV.0
 ./usr/share/man/cat8/arm32/makedev.0
+./usr/share/man/cat8/bootselect.0
 ./usr/share/man/cat8/gettable.0
 ./usr/share/man/cat8/greconfig.0
 ./usr/share/man/cat8/grfconfig.0
@@ -146,6 +147,7 @@
 ./usr/share/man/cat8/ispppcontrol.0
 ./usr/share/man/cat8/kfd.0
 ./usr/share/man/cat8/kvm_mkdb.0
+./usr/share/man/cat8/mbr.0
 ./usr/share/man/cat8/mtrace6.0
 ./usr/share/man/cat8/newlfs.0
 ./usr/share/man/cat8/nfsiod.0
@@ -301,6 +303,7 @@
 ./usr/share/man/man8/arm26/makedev.8
 ./usr/share/man/man8/arm32/MAKEDEV.8
 ./usr/share/man/man8/arm32/makedev.8
+./usr/share/man/man8/bootselect.8
 ./usr/share/man/man8/gettable.8
 ./usr/share/man/man8/greconfig.8
 ./usr/share/man/man8/grfconfig.8
@@ -318,6 +321,7 @@
 ./usr/share/man/man8/ispppcontrol.8
 ./usr/share/man/man8/kfd.8
 ./usr/share/man/man8/kvm_mkdb.8
+./usr/share/man/man8/mbr.8
 ./usr/share/man/man8/mtrace6.8
 ./usr/share/man/man8/newlfs.8
 ./usr/share/man/man8/nfsiod.8
