@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: named-bootconf.sh,v 1.1.1.1 1998/10/05 18:02:00 tron Exp $
+# $NetBSD: named-bootconf.sh,v 1.2 1998/10/05 21:06:23 tron Exp $
 #
 # Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -153,7 +153,28 @@ do
   (echo "	topology {"
    for ARG in $ARGS
    do
-    case $ARGS in
+    case $ARG in
+    *.0.0.0 )
+     echo "		$ARG/8;"
+     ;;
+    *.0.0 )
+     echo "		$ARG/16;"
+     ;;
+    *.0 )
+     echo "		$ARG/24;"
+     ;;
+    * )
+     echo "		$ARG;"
+     ;;
+    esac
+   done
+   echo "	};") >>$OPTIONFILE
+  ;;
+ tcplist | xfrnets )
+  (echo "	allow-transfer {"
+   for ARG in $ARGS
+   do
+    case $ARG in
     *.0.0.0 )
      echo "		$ARG/8;"
      ;;
