@@ -1,4 +1,4 @@
-/*	$NetBSD: newwin.c,v 1.19 2000/04/17 12:25:46 blymn Exp $	*/
+/*	$NetBSD: newwin.c,v 1.20 2000/04/18 12:23:01 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)newwin.c	8.3 (Berkeley) 7/27/94";
 #else
-__RCSID("$NetBSD: newwin.c,v 1.19 2000/04/17 12:25:46 blymn Exp $");
+__RCSID("$NetBSD: newwin.c,v 1.20 2000/04/18 12:23:01 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -52,6 +52,20 @@ extern struct __winlist	*winlistp;
 static WINDOW *__makenew(int nlines, int ncols, int by, int bx, int sub);
 
 void __set_subwin(WINDOW *orig, WINDOW *win);
+
+/*
+ * derwin --
+ *      Create a new window in the same manner as subwin but (by, bx)
+ *      are relative to the origin of window orig instead of absolute.
+ */
+WINDOW *
+derwin(WINDOW *orig, int nlines, int ncols, int by, int bx)
+{
+	if (orig == NULL)
+		return ERR;
+	
+	return subwin(orig, nlines, ncols, orig->begy + by, orig->begx + bx);
+}
 
 /*
  * newwin --

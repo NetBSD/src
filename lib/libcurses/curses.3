@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses.3,v 1.17 2000/04/12 21:49:29 jdc Exp $
+.\"	$NetBSD: curses.3,v 1.18 2000/04/18 12:23:01 blymn Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -106,12 +106,20 @@ and applies this rendition to
 .It clrtoeol()	clear to end of line on
 .Em stdscr
 .It color_content(c, r, g, b)	get rgb values of color
+.It copywin(srcwin,dstwin,sminrow,smincol,dminrow,dmincol,dmaxrow,dmaxcol,overlay)
+ Copy rectangle from
+.Em srcwin 
+to 
+.Em dstwin.
+If overlay is true then copy is nondestructive.
 .It def_prog_mode()	define program (in curses) terminal modes
 .It def_shell_mode()	define shell (not in curses) terminal modes
 .It delch()	delete a character
 .It deleteln()	delete a line
 .It delwin(win)	delete
 .Em win
+.It derwin(win,lines,cols,begin_y,begin_x)\ 	create a subwindow
+relative to win.
 .It echo()	set echo mode
 .It endwin()	end window modes
 .It erase()	erase
@@ -120,7 +128,7 @@ and applies this rendition to
 .It flushinp()	flush terminal input
 .It flushok(win,boolf)	set flush-on-refresh flag for
 .Em win
-.It fullname(termbuf,name) get full name from
+.It fullname(termbuf,name)	get full name from
 .Em termbuf
 .It getbkgd(win)	get background rendition for
 .Em win
