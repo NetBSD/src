@@ -1,10 +1,10 @@
-/* $NetBSD: extract.c,v 1.2 1997/06/05 12:59:24 agc Exp $ */
+/* $NetBSD: extract.c,v 1.3 1997/06/09 15:24:32 agc Exp $ */
 
 #ifndef lint
 #if 0
 static const char *rcsid = "FreeBSD - Id: extract.c,v 1.13 1997/05/24 21:45:55 ache Exp";
 #else
-static const char *rcsid = "$NetBSD: extract.c,v 1.2 1997/06/05 12:59:24 agc Exp $";
+static const char *rcsid = "$NetBSD: extract.c,v 1.3 1997/06/09 15:24:32 agc Exp $";
 #endif
 #endif
 
@@ -60,10 +60,10 @@ extract_plist(char *home, Package *pkg)
     int maxargs, where_count = 0, perm_count = 0, add_count;
 
     maxargs = sysconf(_SC_ARG_MAX) / 2;	/* Just use half the argument space */
-    where_args = alloca(maxargs);
+    where_args = malloc(maxargs);
     if (!where_args)
 	barf("can't get argument list space");
-    perm_args = alloca(maxargs);
+    perm_args = malloc(maxargs);
     if (!perm_args)
 	barf("can't get argument list space");
 
@@ -186,4 +186,6 @@ extract_plist(char *home, Package *pkg)
 	p = p->next;
     }
     PUSHOUT(Directory);
+    free(where_args);
+    free(perm_args);
 }

@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_info.1,v 1.2 1997/06/05 12:59:41 agc Exp $
+.\" $NetBSD: pkg_info.1,v 1.3 1997/06/09 15:24:38 agc Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintainance
 .\" of non-core utilities.
@@ -80,14 +80,14 @@ are generated.
 If the package identified by
 .Ar pkg-name
 is currently installed, return 0, otherwise return 1.  This option
-allows you to easily test for the presence of another (perhaps
+allows you easily to test for the presence of another (perhaps
 prerequisite) package from a script.
 .It Fl l Ar str
-Prefix each information catagory header (see
+Prefix each information category header (see
 .Fl q )
 shown with
 .Ar str .
-This is primarily of use to front-end programs who want to request a
+This is primarily of use to front-end programs which want to request a
 lot of different information fields at once for a package, but don't
 necessary want the output intermingled in such a way that they can't
 organize it.  This lets you add a special token to the start of
