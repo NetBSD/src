@@ -1,3 +1,5 @@
+.\"	$NetBSD: clnp_input.nr,v 1.2 1998/01/09 06:34:59 perry Exp $
+.\"
 .(z
 .br
 .nr g1 3456u

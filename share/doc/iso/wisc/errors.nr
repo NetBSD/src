@@ -1,3 +1,5 @@
+.\"	$NetBSD: errors.nr,v 1.3 1998/01/09 06:34:44 perry Exp $
+.\"
 .\"WISC: Header: errors.nr,v 1.2 88/12/06 16:06:07 nhall Exp $
 .\"WISC: Source: /usr/argo/doc/kernel/RCS/errors.nr,v $
 .NC "Error Handling"

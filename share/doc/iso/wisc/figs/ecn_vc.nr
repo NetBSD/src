@@ -1,3 +1,5 @@
+.\"	$NetBSD: ecn_vc.nr,v 1.2 1998/01/09 06:35:05 perry Exp $
+.\"
 .(z
 .hl
 .br

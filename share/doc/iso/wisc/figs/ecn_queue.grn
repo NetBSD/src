@@ -1,3 +1,5 @@
+.\"	$NetBSD: ecn_queue.grn,v 1.2 1998/01/09 06:35:03 perry Exp $
+.\"
 .(z
 .hl
 .GS C

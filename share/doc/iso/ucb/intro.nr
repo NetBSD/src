@@ -1,3 +1,5 @@
+.\"	$NetBSD: intro.nr,v 1.2 1998/01/09 06:34:30 perry Exp $
+.\"
 .NC "Introduction"
 .sh 1 "Introduction"
 .pp

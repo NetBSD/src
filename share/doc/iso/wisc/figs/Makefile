@@ -1,4 +1,4 @@
-#
+#	$NetBSD: Makefile,v 1.2 1998/01/09 06:34:56 perry Exp $
 #
 .SUFFIXES: .nr .grn
 

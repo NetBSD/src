@@ -1,3 +1,5 @@
+.\"	$NetBSD: eicon.nr,v 1.2 1998/01/09 06:34:43 perry Exp $
+.\"
 .sh 2 "X.25 Public Data Network Support"
 .pp
 This ARGO release includes support for an X.25 Public Data Network (PDN)
