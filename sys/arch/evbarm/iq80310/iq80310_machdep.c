@@ -1,7 +1,7 @@
-/*	$NetBSD: iq80310_machdep.c,v 1.14 2002/01/16 23:37:05 thorpej Exp $	*/
+/*	$NetBSD: iq80310_machdep.c,v 1.15 2002/01/18 19:47:05 thorpej Exp $	*/
 
 /*
- * Copyright (c) 2001 Wasabi Systems, Inc.
+ * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
  * All rights reserved.
  *
  * Written by Jason R. Thorpe for Wasabi Systems, Inc.
@@ -205,9 +205,13 @@ extern void dumpsys(void);
 #ifndef CONMODE
 #define CONMODE ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8) /* 8N1 */
 #endif
+#ifndef CONUNIT
+#define	CONUNIT	0
+#endif
 
 int comcnspeed = CONSPEED;
 int comcnmode = CONMODE;
+int comcnunit = CONUNIT;
 
 /*
  * void cpu_reboot(int howto, char *bootstr)
@@ -888,6 +892,10 @@ process_kernel_args(char *args)
 void
 consinit(void)
 {
+	static const bus_addr_t comcnaddrs[] = {
+		IQ80310_UART2,		/* com0 (J9) */
+		IQ80310_UART1,		/* com1 (J10) */
+	};
 	static int consinit_called;
 
 	if (consinit_called != 0)
@@ -896,7 +904,7 @@ consinit(void)
 	consinit_called = 1;
 
 #if NCOM > 0
-	if (comcnattach(&obio_bs_tag, IQ80310_UART2, comcnspeed,
+	if (comcnattach(&obio_bs_tag, comcnaddrs[comcnunit], comcnspeed,
 	    COM_FREQ, comcnmode))
 			panic("can't init serial console @%lx", IQ80310_UART2);
 #else
