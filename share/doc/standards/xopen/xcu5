@@ -1,16 +1,16 @@
-.\" $NetBSD: xcu5,v 1.3 1999/06/01 16:48:21 jwise Exp $
+.\" $NetBSD: xcu5,v 1.4 1999/06/01 16:51:44 jwise Exp $
 .\"
 .\" Copyright (c) 1999 Jim Wise
 .\" All rights reserved.
-.\" 
+.\"
 .\" Permission to use, copy, modify, and distribute this software and
 .\" its documentation for any purpose is hereby granted, provided that
 .\" the above copyright notice appears in all copies.
-.\" 
-.\" The copyrigh holder makes no representations about the suitability of
+.\"
+.\" The copyright holder makes no representations about the suitability of
 .\" this software for any purpose.  It is provided "as is" without
 .\" express or implied warranty.
-.\" 
+.\"
 .de xopen
 .Tn X/Open
 ..
@@ -403,7 +403,7 @@ or
 .unfinished
 .
 .\" ---- fc ----
-.Ss fc - process the command history list 
+.Ss fc - process the command history list
 .unfinished
 .
 .\" ---- fg ----
@@ -695,7 +695,7 @@ or
 .unfinished
 .
 .\" ---- spell ----
-.Ss spell - find spelling errors (LEGACY) 
+.Ss spell - find spelling errors (LEGACY)
 .unfinished
 .
 .\" ---- split ----
