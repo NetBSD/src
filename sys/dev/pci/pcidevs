@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.654 2004/10/11 13:01:25 jmmv Exp $
+$NetBSD: pcidevs,v 1.655 2004/10/13 14:14:19 drochner Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1046,6 +1046,7 @@ product AMCIRCUITS LANAI	0x8043	Myrinet LANai Interface
 product AMCIRCUITS CAMAC	0x812d	FZJ/ZEL CAMAC controller
 product AMCIRCUITS VICBUS	0x812e	FZJ/ZEL VICBUS interface
 product AMCIRCUITS PCISYNC	0x812f	FZJ/ZEL Synchronisation module
+product AMCIRCUITS ADDI7800	0x818e	ADDI-DATA APCI-7800 8-port serial
 product AMCIRCUITS S5920	0x5920	S5920 PCI Target
 
 /* Atheros Communications, Inc. products */
