@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.341 1999/03/09 16:05:34 fvdl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.342 1999/03/10 01:28:24 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -225,6 +225,9 @@ char machine[] = "i386";		/* cpu "architecture" */
 char machine_arch[] = "i386";		/* machine == machine_arch */
 
 char bootinfo[BOOTINFO_MAXSIZE];
+
+struct bi_devmatch *native_disks = NULL;
+int nnative_disks = 0;
 
 /*
  * Declare these as initialized data so we can patch them.
@@ -1158,12 +1161,17 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	        if(!bibp)
 			return(ENOENT); /* ??? */
 		return (sysctl_rdstring(oldp, oldlenp, newp, bibp->bootpath));
-	case CPU_BIOS_GEOM:
+	case CPU_BIOS_DISKS:
 		bigp = lookup_bootinfo(BTINFO_BIOSGEOM);
 		if (!bigp)
 			return (ENOENT);
 		return (sysctl_rdstruct(oldp, oldlenp, newp, bigp->disk,
 		    bigp->num * sizeof (struct bi_biosgeom_entry)));
+	case CPU_NATIVE_DISKS:
+		if (native_disks == NULL)
+			return (ENOENT);
+		return (sysctl_rdstruct(oldp, oldlenp, newp, native_disks,
+		    nnative_disks * sizeof (struct bi_devmatch)));
 
 	default:
 		return (EOPNOTSUPP);
