@@ -1,4 +1,4 @@
-/* $NetBSD: mcpcia_dma.c,v 1.3 1998/05/13 21:21:17 thorpej Exp $ */
+/* $NetBSD: mcpcia_dma.c,v 1.4 1998/05/21 23:38:04 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcpcia_dma.c,v 1.3 1998/05/13 21:21:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcpcia_dma.c,v 1.4 1998/05/21 23:38:04 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,7 +111,7 @@ mcpcia_dma_init(ccp)
 	t = &ccp->cc_dmat_direct;
 	t->_cookie = ccp;
 	t->_wbase = MCPCIA_DIRECT_MAPPED_BASE;
-	t->_wbase = MCPCIA_DIRECT_MAPPED_SIZE;
+	t->_wsize = MCPCIA_DIRECT_MAPPED_SIZE;
 	t->_next_window = NULL;			/* XXX See above. */
 	t->_sgmap = NULL;
 	t->_get_tag = mcpcia_dma_get_tag;
