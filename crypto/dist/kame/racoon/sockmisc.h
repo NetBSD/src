@@ -1,4 +1,4 @@
-/*	$KAME: sockmisc.h,v 1.10 2001/03/23 01:19:08 sakane Exp $	*/
+/*	$KAME: sockmisc.h,v 1.11 2001/08/16 14:37:29 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -46,7 +46,7 @@ extern int setsockopt_bypass __P((int, int));
 
 extern struct sockaddr *newsaddr __P((int));
 extern struct sockaddr *dupsaddr __P((struct sockaddr *));
-extern char *saddr2str __P((struct sockaddr *));
+extern char *saddr2str __P((const struct sockaddr *));
 extern char *saddrwop2str __P((struct sockaddr *));
 extern struct sockaddr *str2saddr __P((char *, char *));
 extern void mask_sockaddr __P((struct sockaddr *, const struct sockaddr *,

@@ -1,4 +1,4 @@
-/*	$KAME: pfkey.c,v 1.123 2001/07/27 10:29:06 sakane Exp $	*/
+/*	$KAME: pfkey.c,v 1.128 2001/08/20 06:46:28 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -191,7 +191,7 @@ pfkey_handler()
 
 	plog(LLV_DEBUG, LOCATION, NULL, "get pfkey %s message\n",
 		s_pfkey_type(msg->sadb_msg_type));
-	plogdump(LLV_DEBUG, msg, msg->sadb_msg_len << 3);
+	plogdump(LLV_DEBUG2, msg, msg->sadb_msg_len << 3);
 
 	/* validity check */
 	if (msg->sadb_msg_errno) {
@@ -610,75 +610,35 @@ static u_int
 keylen_aalg(hashtype)
 	u_int hashtype;
 {
-	switch (hashtype) {
-	case IPSECDOI_ATTR_AUTH_HMAC_MD5:
-		return 128;
-	case IPSECDOI_ATTR_AUTH_HMAC_SHA1:
-		return 160;
-	case IPSECDOI_ATTR_AUTH_KPDK:		/* need special care */
-		return 0;
+	int res;
 
-	/* not supported */
-	case IPSECDOI_ATTR_AUTH_DES_MAC:
-		plog(LLV_ERROR, LOCATION, NULL,
-			"Not supported hash type: %u\n", hashtype);
-		return ~0;
-
-	case 0: /* reserved */
-	default:
+	if (hashtype == 0)
 		return SADB_AALG_NONE;
 
+	res = alg_ipsec_hmacdef_hashlen(hashtype);
+	if (res == -1) {
 		plog(LLV_ERROR, LOCATION, NULL,
-			"Invalid hash type: %u\n", hashtype);
+			"invalid hmac algorithm %u.\n", hashtype);
 		return ~0;
 	}
-	/*NOTREACHED*/
+	return res;
 }
 
 /* default key length for encryption algorithm */
 static u_int
-keylen_ealg(t_id, encklen)
-	u_int t_id;
+keylen_ealg(enctype, encklen)
+	u_int enctype;
 	int encklen;
 {
-	switch (t_id) {
-	case IPSECDOI_ESP_DES_IV64:		/* sa_flags |= SADB_X_EXT_OLD */
-		return 64;
-	case IPSECDOI_ESP_DES:
-		return 64;
-	case IPSECDOI_ESP_3DES:
-		return 192;
-	case IPSECDOI_ESP_RC5:
-		return encklen ? encklen : 128;
-	case IPSECDOI_ESP_CAST:
-		return encklen ? encklen : 128;
-	case IPSECDOI_ESP_BLOWFISH:
-		return encklen ? encklen : 128;
-	case IPSECDOI_ESP_DES_IV32:	/* flags |= (SADB_X_EXT_OLD|
-							SADB_X_EXT_IV4B)*/
-		return 64;
-	case IPSECDOI_ESP_NULL:
-		return 0;
-	case IPSECDOI_ESP_RIJNDAEL:
-		return encklen ? encklen : 128;
-	case IPSECDOI_ESP_TWOFISH:
-		return encklen ? encklen : 128;
+	int res;
 
-	/* not supported */
-	case IPSECDOI_ESP_3IDEA:
-	case IPSECDOI_ESP_IDEA:
-	case IPSECDOI_ESP_RC4:
+	res = alg_ipsec_encdef_keylen(enctype, encklen);
+	if (res == -1) {
 		plog(LLV_ERROR, LOCATION, NULL,
-			"Not supported transform: %u\n", t_id);
-		return ~0;
-
-	case 0: /* reserved */
-	default:
-		plog(LLV_ERROR, LOCATION, NULL,
-			"Invalid transform id: %u\n", t_id);
+			"invalid encryption algorithm %u.\n", enctype);
 		return ~0;
 	}
-	/*NOTREACHED*/
+	return res;
 }
 
 int
@@ -956,6 +916,7 @@ pk_sendupdate(iph2)
 	struct sockaddr *src = NULL, *dst = NULL;
 	int e_type, e_keylen, a_type, a_keylen, flags;
 	u_int satype, mode;
+	u_int64_t lifebyte = 0;
 
 	/* sanity check */
 	if (iph2->approval == NULL) {
@@ -1001,6 +962,12 @@ pk_sendupdate(iph2)
 				&a_type, &a_keylen, &flags) < 0)
 			return -1;
 
+#if 0
+		lifebyte = iph2->approval->lifebyte * 1024,
+#else
+		lifebyte = 0;
+#endif
+
 		plog(LLV_DEBUG, LOCATION, NULL, "call pfkey_send_update\n");
 
 		if (pfkey_send_update(
@@ -1014,8 +981,7 @@ pk_sendupdate(iph2)
 				4,	/* XXX static size of window */
 				pr->keymat->v,
 				e_type, e_keylen, a_type, a_keylen, flags,
-				0, iph2->approval->lifebyte * 1024,
-				iph2->approval->lifetime, 0,
+				0, lifebyte, iph2->approval->lifetime, 0,
 				iph2->seq) < 0) {
 			plog(LLV_ERROR, LOCATION, NULL,
 				"libipsec failed send update (%s)\n",
@@ -1191,6 +1157,7 @@ pk_sendadd(iph2)
 	struct sockaddr *src = NULL, *dst = NULL;
 	int e_type, e_keylen, a_type, a_keylen, flags;
 	u_int satype, mode;
+	u_int64_t lifebyte = 0;
 
 	/* sanity check */
 	if (iph2->approval == NULL) {
@@ -1236,6 +1203,12 @@ pk_sendadd(iph2)
 				&a_type, &a_keylen, &flags) < 0)
 			return -1;
 
+#if 0
+		lifebyte = iph2->approval->lifebyte * 1024,
+#else
+		lifebyte = 0;
+#endif
+
 		plog(LLV_DEBUG, LOCATION, NULL, "call pfkey_send_add\n");
 
 		if (pfkey_send_add(
@@ -1249,8 +1222,7 @@ pk_sendadd(iph2)
 				4,	/* XXX static size of window */
 				pr->keymat_p->v,
 				e_type, e_keylen, a_type, a_keylen, flags,
-				0, iph2->approval->lifebyte * 1024,
-				iph2->approval->lifetime, 0,
+				0, lifebyte, iph2->approval->lifetime, 0,
 				iph2->seq) < 0) {
 			plog(LLV_ERROR, LOCATION, NULL,
 				"libipsec failed send add (%s)\n",
@@ -2255,8 +2227,9 @@ pk_checkalg(class, calg, keylen)
 		sup = SADB_EXT_SUPPORTED_AUTH;
 		break;
 	case IPSECDOI_PROTO_IPCOMP:
-		plog(LLV_WARNING, LOCATION, NULL,
-			"compression algorithm can not be checked.\n");
+		plog(LLV_DEBUG, LOCATION, NULL,
+			"compression algorithm can not be checked "
+			"because sadb message doesn't support it.\n");
 		return 0;
 	default:
 		plog(LLV_ERROR, LOCATION, NULL,
@@ -2537,18 +2510,24 @@ sadbsecas2str(src, dst, proto, spi, mode)
 		s_ipsecdoi_proto(doi_proto),
 		mode ? "/" : "",
 		mode ? s_ipsecdoi_encmode(doi_mode) : "");
+	if (i < 0 || i >= blen)
+		return NULL;
 	p += i;
 	blen -= i;
 
 	i = snprintf(p, blen, "%s->", saddrwop2str(src));
+	if (i < 0 || i >= blen)
+		return NULL;
 	p += i;
 	blen -= i;
 
 	i = snprintf(p, blen, "%s ", saddrwop2str(dst));
+	if (i < 0 || i >= blen)
+		return NULL;
+	p += i;
+	blen -= i;
 
 	if (spi) {
-		p += i;
-		blen -= i;
 		snprintf(p, blen, "spi=%lu(0x%lx)", (unsigned long)ntohl(spi),
 		    (unsigned long)ntohl(spi));
 	}

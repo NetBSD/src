@@ -1,4 +1,4 @@
-/*	$KAME: eaytest.c,v 1.22 2001/07/11 13:17:53 sakane Exp $	*/
+/*	$KAME: eaytest.c,v 1.28 2001/08/16 21:44:50 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -45,6 +45,7 @@
 #include "str2val.h"
 
 #include "oakley.h"
+#include "dhgroup.h"
 #include "crypto_openssl.h"
 
 #define PVDUMP(var) hexdump((var)->v, (var)->l)
@@ -159,6 +160,7 @@ char *certs[] = {
 void certtest __P((void));
 void ciphertest __P((void));
 void hmactest __P((void));
+void sha2test __P((void));
 void sha1test __P((void));
 void md5test __P((void));
 void dhtest __P((int));
@@ -296,29 +298,37 @@ ciphertest()
 {
 	vchar_t data;
 	vchar_t key;
-	vchar_t *res1, *res2;
-	char iv[8];
+	vchar_t iv0;
+	vchar_t *res1, *res2, *iv;
 
 	printf("\n**Test for CIPHER.**\n");
 
-	data.v = str2val("a7c3a855 a328a6d4 b1bd9c06 c5bd5c17 b8c5f657 bd8ea245 2a6726d0 ce3689f5", 16, &data.l);
-	key.v = str2val("fadc3844 61d6114e fadc3844 61d6114e fadc3844 61d6114e", 16, &key.l);
+	data.v = str2val("\
+06000017 03000000 73616b61 6e65406b 616d652e 6e657409 0002c104 308202b8 \
+04f05a90 \
+	", 16, &data.l);
+	key.v = str2val("f59bd70f 81b9b9cc 2a32c7fd 229a4b37", 16, &key.l);
+	iv0.v = str2val("26b68c90 9467b4ab 7ec29fa0 0b696b55", 16, &iv0.l);
+
+	iv = vmalloc(8);
 
 	/* des */
 	printf("DES\n");
 	printf("data:\n");
 	PVDUMP(&data);
 
-	memset(iv, 0, sizeof(iv));
-	res1 = eay_des_encrypt(&data, &key, (caddr_t)iv);
+	memcpy(iv->v, iv0.v, 8);
+	res1 = eay_des_encrypt(&data, &key, iv);
 	printf("encrypto:\n");
 	PVDUMP(res1);
 
-	memset(iv, 0, sizeof(iv));
-	res2 = eay_des_decrypt(res1, &key, (caddr_t)iv);
+	memcpy(iv->v, iv0.v, 8);
+	res2 = eay_des_decrypt(res1, &key, iv);
 	printf("decrypto:\n");
 	PVDUMP(res2);
 
+	if (memcmp(data.v, res2->v, data.l))
+		printf("XXX NG XXX\n");
 	vfree(res1);
 	vfree(res2);
 
@@ -328,16 +338,18 @@ ciphertest()
 	printf("data:\n");
 	PVDUMP(&data);
 
-	memset(iv, 0, sizeof(iv));
-	res1 = eay_idea_encrypt(&data, &key, (caddr_t)iv);
+	memcpy(iv->v, iv0.v, 8);
+	res1 = eay_idea_encrypt(&data, &key, iv);
 	printf("encrypto:\n");
 	PVDUMP(res1);
 
-	memset(iv, 0, sizeof(iv));
-	res2 = eay_idea_decrypt(res1, &key, (caddr_t)iv);
+	memcpy(iv->v, iv0.v, 8);
+	res2 = eay_idea_decrypt(res1, &key, iv);
 	printf("decrypto:\n");
 	PVDUMP(res2);
 
+	if (memcmp(data.v, res2->v, data.l))
+		printf("XXX NG XXX\n");
 	vfree(res1);
 	vfree(res2);
 #endif
@@ -347,16 +359,18 @@ ciphertest()
 	printf("data:\n");
 	PVDUMP(&data);
 
-	memset(iv, 0, sizeof(iv));
-	res1 = eay_bf_encrypt(&data, &key, (caddr_t)iv);
+	memcpy(iv->v, iv0.v, 8);
+	res1 = eay_bf_encrypt(&data, &key, iv);
 	printf("encrypto:\n");
 	PVDUMP(res1);
 
-	memset(iv, 0, sizeof(iv));
-	res2 = eay_bf_decrypt(res1, &key, (caddr_t)iv);
+	memcpy(iv->v, iv0.v, 8);
+	res2 = eay_bf_decrypt(res1, &key, iv);
 	printf("decrypto:\n");
 	PVDUMP(res2);
 
+	if (memcmp(data.v, res2->v, data.l))
+		printf("XXX NG XXX\n");
 	vfree(res1);
 	vfree(res2);
 
@@ -366,16 +380,18 @@ ciphertest()
 	printf("data:\n");
 	PVDUMP(&data);
 
-	memset(iv, 0, sizeof(iv));
-	res1 = eay_bf_encrypt(&data, &key, (caddr_t)iv);
+	memcpy(iv->v, iv0.v, 8);
+	res1 = eay_bf_encrypt(&data, &key, iv);
 	printf("encrypto:\n");
 	PVDUMP(res1);
 
-	memset(iv, 0, sizeof(iv));
-	res2 = eay_bf_decrypt(res1, &key, (caddr_t)iv);
+	memcpy(iv->v, iv0.v, 8);
+	res2 = eay_bf_decrypt(res1, &key, iv);
 	printf("decrypto:\n");
 	PVDUMP(res2);
 
+	if (memcmp(data.v, res2->v, data.l))
+		printf("XXX NG XXX\n");
 	vfree(res1);
 	vfree(res2);
 #endif
@@ -385,16 +401,20 @@ ciphertest()
 	printf("data:\n");
 	PVDUMP(&data);
 
-	memset(iv, 0, sizeof(iv));
-	res1 = eay_3des_encrypt(&data, &key, (caddr_t)iv);
+	memcpy(iv->v, iv0.v, 8);
+	res1 = eay_3des_encrypt(&data, &key, iv);
 	printf("encrypto:\n");
-	PVDUMP(res1);
+	if (res1)
+		PVDUMP(res1);
 
-	memset(iv, 0, sizeof(iv));
-	res2 = eay_3des_decrypt(res1, &key, (caddr_t)iv);
+	memcpy(iv->v, iv0.v, 8);
+	res2 = eay_3des_decrypt(res1, &key, iv);
 	printf("decrypto:\n");
-	PVDUMP(res2);
+	if (res1)
+		PVDUMP(res2);
 
+	if (res2 && memcmp(data.v, res2->v, data.l))
+		printf("XXX NG XXX\n");
 	vfree(res1);
 	vfree(res2);
 
@@ -403,18 +423,49 @@ ciphertest()
 	printf("data:\n");
 	PVDUMP(&data);
 
-	memset(iv, 0, sizeof(iv));
-	res1 = eay_cast_encrypt(&data, &key, (caddr_t)iv);
+	memcpy(iv->v, iv0.v, 8);
+	res1 = eay_cast_encrypt(&data, &key, iv);
 	printf("encrypto:\n");
 	PVDUMP(res1);
 
-	memset(iv, 0, sizeof(iv));
-	res2 = eay_cast_decrypt(res1, &key, (caddr_t)iv);
+	memcpy(iv->v, iv0.v, 8);
+	res2 = eay_cast_decrypt(res1, &key, iv);
 	printf("decrypto:\n");
 	PVDUMP(res2);
 
+	if (memcmp(data.v, res2->v, data.l))
+		printf("XXX NG XXX\n");
 	vfree(res1);
 	vfree(res2);
+
+	/* aes */
+	iv = vrealloc(iv, 16);
+
+	printf("AES\n");
+	printf("data:\n");
+	PVDUMP(&data);
+
+    {
+	vchar_t *buf;
+	int padlen = 16 - data.l % 16;
+	buf = vmalloc(data.l + padlen);
+	memcpy(buf->v, data.v, data.l);
+
+	memcpy(iv->v, iv0.v, 16);
+	res1 = eay_aes_encrypt(buf, &key, iv);
+	printf("encrypto:\n");
+	PVDUMP(res1);
+
+	memcpy(iv->v, iv0.v, 16);
+	res2 = eay_aes_decrypt(res1, &key, iv);
+	printf("decrypto:\n");
+	PVDUMP(res2);
+
+	if (memcmp(data.v, res2->v, data.l))
+		printf("XXX NG XXX\n");
+	vfree(res1);
+	vfree(res2);
+    }
 }
 
 void
@@ -426,6 +477,7 @@ hmactest()
 	char *object2 =                 "8bb74958b9fee94e";
 	char *r_hmd5  = "5702d7d1 fd1bfc7e 210fc9fa cda7d02c";
 	char *r_hsha1 = "309999aa 9779a43e ebdea839 1b4e7ee1 d8646874";
+	char *r_hsha2 = "d47262d8 a5b6f39d d8686939 411b3e79 ed2e27f9 2c4ea89f dd0a06ae 0c0aa396";
 	vchar_t *key, *data, *data1, *data2, *res;
 	vchar_t mod;
 	caddr_t ctx;
@@ -460,6 +512,16 @@ hmactest()
 	res = eay_hmacmd5_final(ctx);
 	PVDUMP(res);
 	mod.v = str2val(r_hmd5, 16, &mod.l);
+	if (memcmp(res->v, mod.v, mod.l))
+		printf(" XXX NG XXX\n");
+	free(mod.v);
+	vfree(res);
+
+	/* HMAC SHA2 */
+	printf("HMAC SHA2 by eay_hmacsha2_256_one()\n");
+	res = eay_hmacsha2_256_one(key, data);
+	PVDUMP(res);
+	mod.v = str2val(r_hsha2, 16, &mod.l);
 	if (memcmp(res->v, mod.v, mod.l))
 		printf(" XXX NG XXX\n");
 	free(mod.v);

@@ -1,4 +1,4 @@
-/*	$KAME: plog.c,v 1.17 2001/06/01 08:26:05 sakane Exp $	*/
+/*	$KAME: plog.c,v 1.18 2001/08/20 06:46:28 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -107,11 +107,14 @@ plog_common(pri, fmt, func)
 
 	if (pri < ARRAYLEN(ptab)) {
 		len = snprintf(p, reslen, "%s: ", ptab[pri].name);
-		p += len;
-		reslen -= len;
+		if (len >= 0 && len < reslen) {
+			p += len;
+			reslen -= len;
+		} else
+			*p = '\0';
 	}
 
-	len = snprintf(p, reslen, "%s: %s", func, fmt);
+	snprintf(p, reslen, "%s: %s", func, fmt);
 
 	return buf;
 }

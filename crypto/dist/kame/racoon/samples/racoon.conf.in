@@ -1,4 +1,4 @@
-# $KAME: racoon.conf.in,v 1.16 2000/12/17 21:17:53 sakane Exp $
+# $KAME: racoon.conf.in,v 1.18 2001/08/16 06:33:40 itojun Exp $
 
 # "path" must be placed before it should be used.
 # You can overwrite which you defined, but it should not use due to confusing.
@@ -62,7 +62,6 @@ remote anonymous
 
 	nonce_size 16;
 	lifetime time 1 min;	# sec,min,hour
-	lifetime byte 5 MB;	# B,KB,GB
 	initial_contact on;
 	support_mip6 on;
 	proposal_check obey;	# obey, strict or claim
@@ -88,7 +87,6 @@ remote ::1 [8000]
 
 	nonce_size 16;
 	lifetime time 1 min;	# sec,min,hour
-	lifetime byte 5 MB;	# B,KB,GB
 
 	proposal {
 		encryption_algorithm 3des;
@@ -102,7 +100,6 @@ sainfo anonymous
 {
 	pfs_group 1;
 	lifetime time 30 sec;
-	lifetime byte 5000 KB;
 	encryption_algorithm 3des ;
 	authentication_algorithm hmac_sha1;
 	compression_algorithm deflate ;
@@ -112,7 +109,6 @@ sainfo address 203.178.141.209 any address 203.178.141.218 any
 {
 	pfs_group 1;
 	lifetime time 30 sec;
-	lifetime byte 5000 KB;
 	encryption_algorithm des ;
 	authentication_algorithm hmac_md5;
 	compression_algorithm deflate ;
@@ -122,8 +118,7 @@ sainfo address ::1 icmp6 address ::1 icmp6
 {
 	pfs_group 1;
 	lifetime time 60 sec;
-	lifetime byte 5000 KB;
-	encryption_algorithm 3des, cast128, blowfish, des ;
+	encryption_algorithm 3des, cast128, blowfish 448, des ;
 	authentication_algorithm hmac_sha1, hmac_md5 ;
 	compression_algorithm deflate ;
 }
