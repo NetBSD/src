@@ -1,4 +1,4 @@
-/*	$NetBSD: backupfile.c,v 1.8 2002/03/11 18:47:51 kristerw Exp $	*/
+/*	$NetBSD: backupfile.c,v 1.9 2002/03/16 22:36:42 kristerw Exp $	*/
 
 /* backupfile.c -- make Emacs style backup file names
    Copyright (C) 1990 Free Software Foundation, Inc.
@@ -15,7 +15,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: backupfile.c,v 1.8 2002/03/11 18:47:51 kristerw Exp $");
+__RCSID("$NetBSD: backupfile.c,v 1.9 2002/03/16 22:36:42 kristerw Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -23,6 +23,10 @@ __RCSID("$NetBSD: backupfile.c,v 1.8 2002/03/11 18:47:51 kristerw Exp $");
 #include <string.h>
 #include <ctype.h>
 #include <sys/types.h>
+
+#include "EXTERN.h"
+#include "common.h"
+#include "util.h"
 #include "backupfile.h"
 
 #include <dirent.h>
@@ -64,9 +68,8 @@ static char *dirname(char *);
 static int argmatch(char *, char **);
 static void invalid_arg(char *, char *, int);
 
-#ifndef NODIR
 /* Return the name of the new backup file for file FILE,
-   allocated with malloc.  Return 0 if out of memory.
+   allocated with malloc.
    FILE must not end with a '/' unless it is the root directory.
    Do not call this function if backup_type == none. */
 
@@ -131,16 +134,14 @@ max_backup_version(char *file, char *dir)
 }
 
 /* Return a string, allocated with malloc, containing
-   "FILE.~VERSION~".  Return 0 if out of memory. */
+   "FILE.~VERSION~". */
 
 static char *
 make_version_name(char *file, int version)
 {
   char *backup_name;
 
-  backup_name = malloc (strlen (file) + 16);
-  if (backup_name == 0)
-    return 0;
+  backup_name = xmalloc(strlen (file) + 16);
   sprintf (backup_name, "%s.~%d~", file, version);
   return backup_name;
 }
@@ -166,8 +167,7 @@ version_number(char *base, char *backup, int base_length)
   return version;
 }
 
-/* Return the newly-allocated concatenation of STR1 and STR2.
-   If out of memory, return 0. */
+/* Return the newly-allocated concatenation of STR1 and STR2. */
 
 static char *
 concat(char *str1, char *str2)
@@ -175,9 +175,7 @@ concat(char *str1, char *str2)
   char *newstr;
   char str1_length = strlen (str1);
 
-  newstr = malloc (str1_length + strlen (str2) + 1);
-  if (newstr == 0)
-    return 0;
+  newstr = xmalloc(str1_length + strlen (str2) + 1);
   strcpy (newstr, str1);
   strcpy (newstr + str1_length, str2);
   return newstr;
@@ -195,7 +193,7 @@ basename(char *name)
 }
 
 /* Return the leading directories part of PATH,
-   allocated with malloc.  If out of memory, return 0.
+   allocated with malloc.
    Assumes that trailing slashes have already been
    removed.  */
 
@@ -221,9 +219,7 @@ dirname(char *path)
 
 	  length = slash - path + 1;
 	}
-  newpath = malloc (length + 1);
-  if (newpath == 0)
-    return 0;
+  newpath = xmalloc(length + 1);
   strncpy (newpath, path, length);
   newpath[length] = 0;
   return newpath;
@@ -308,4 +304,3 @@ get_version(char *version)
   invalid_arg ("version control type", version, i);
   exit (1);
 }
-#endif /* NODIR */
