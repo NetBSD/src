@@ -1,4 +1,4 @@
-/*	$NetBSD: savestr.c,v 1.2 1997/10/08 20:47:38 cjs Exp $	*/
+/*	$NetBSD: savestr.c,v 1.3 2003/05/15 00:08:10 itojun Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -27,7 +27,7 @@
 static const char rcsid[] =
     "@(#) Header: savestr.c,v 1.2 97/05/09 14:52:31 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: savestr.c,v 1.2 1997/10/08 20:47:38 cjs Exp $");
+__RCSID("$NetBSD: savestr.c,v 1.3 2003/05/15 00:08:10 itojun Exp $");
 #endif
 #endif
 
@@ -67,7 +67,7 @@ savestr(const char *str)
 			exit(1);
 		}
 	}
-	(void)strcpy(strptr, str);
+	(void)strlcpy(strptr, str, strsize);
 	p = strptr;
 	strptr += size;
 	strsize -= size;
