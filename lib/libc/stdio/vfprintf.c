@@ -1,4 +1,4 @@
-/*	$NetBSD: vfprintf.c,v 1.21 1997/08/29 05:31:11 phil Exp $	*/
+/*	$NetBSD: vfprintf.c,v 1.22 1997/12/19 14:08:44 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -41,7 +41,7 @@
 #if 0
 static char *sccsid = "@(#)vfprintf.c	5.50 (Berkeley) 12/16/92";
 #else
-__RCSID("$NetBSD: vfprintf.c,v 1.21 1997/08/29 05:31:11 phil Exp $");
+__RCSID("$NetBSD: vfprintf.c,v 1.22 1997/12/19 14:08:44 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -121,7 +121,7 @@ __sbprintf(fp, fmt, ap)
 	/* do the work, then copy any error status */
 	ret = vfprintf(&fake, fmt, ap);
 	if (ret >= 0 && fflush(&fake))
-		ret = EOF;
+		ret = -1;
 	if (fake._flags & __SERR)
 		fp->_flags |= __SERR;
 	return (ret);
@@ -265,10 +265,10 @@ vfprintf(fp, fmt0, ap)
 	    flags&SHORTINT ? (u_long)(u_short)va_arg(ap, int) : \
 	    (u_long)va_arg(ap, u_int))
 
-	/* sorry, fprintf(read_only_file, "") returns EOF, not 0 */
+	/* sorry, fprintf(read_only_file, "") returns -1, not 0 */
 	if (cantwrite(fp)) {
 		errno = EBADF;
-		return (EOF);
+		return (-1);
 	}
 
 	/* optimise fprintf(stderr) (and other unbuffered Unix files) */
@@ -710,7 +710,7 @@ number:			if ((dprec = prec) >= 0)
 done:
 	FLUSH();
 error:
-	return (__sferror(fp) ? EOF : ret);
+	return (__sferror(fp) ? -1 : ret);
 	/* NOTREACHED */
 }
 
