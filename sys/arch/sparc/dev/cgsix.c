@@ -1,4 +1,40 @@
-/*	$NetBSD: cgsix.c,v 1.38 1998/03/21 20:11:31 pk Exp $ */
+/*	$NetBSD: cgsix.c,v 1.39 1998/03/23 17:37:04 pk Exp $ */
+
+/*-
+ * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Paul Kranenburg.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1993
@@ -216,8 +252,8 @@ cgsixattach_sbus(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	register struct cgsix_softc *sc = (struct cgsix_softc *)self;
-	register struct sbus_attach_args *sa = aux;
+	struct cgsix_softc *sc = (struct cgsix_softc *)self;
+	struct sbus_attach_args *sa = aux;
 	struct fbdevice *fb = &sc->sc_fb;
 	int node, isconsole;
 	char *name;
@@ -245,7 +281,7 @@ cgsixattach_sbus(parent, self, aux)
 	 * (the FHC, THC, and Brooktree registers).
 	 */
 	if (sbus_bus_map(sa->sa_bustag, sa->sa_slot,
-			 sa->sa_offset + CGSIX_RAM_OFFSET,
+			 sa->sa_offset + CGSIX_BT_OFFSET,
 			 sizeof(*sc->sc_bt),
 			 BUS_SPACE_MAP_LINEAR,
 			 0, &bh) != 0) {
@@ -497,11 +533,11 @@ int
 cgsixioctl(dev, cmd, data, flags, p)
 	dev_t dev;
 	u_long cmd;
-	register caddr_t data;
+	caddr_t data;
 	int flags;
 	struct proc *p;
 {
-	register struct cgsix_softc *sc = cgsix_cd.cd_devs[minor(dev)];
+	struct cgsix_softc *sc = cgsix_cd.cd_devs[minor(dev)];
 	u_int count;
 	int v, error;
 	union cursor_cmap tcm;
@@ -689,11 +725,11 @@ cgsixpoll(dev, events, p)
  */
 static void
 cg6_reset(sc)
-	register struct cgsix_softc *sc;
+	struct cgsix_softc *sc;
 {
-	register volatile struct cg6_tec_xxx *tec;
-	register int fhc;
-	register volatile struct bt_regs *bt;
+	volatile struct cg6_tec_xxx *tec;
+	int fhc;
+	volatile struct bt_regs *bt;
 
 	/* hide the cursor, just in case */
 	sc->sc_thc->thc_cursxy = (THC_CURSOFF << 16) | THC_CURSOFF;
@@ -726,7 +762,7 @@ cg6_reset(sc)
 
 static void
 cg6_setcursor(sc)
-	register struct cgsix_softc *sc;
+	struct cgsix_softc *sc;
 {
 
 	/* we need to subtract the hot-spot value here */
@@ -739,11 +775,11 @@ cg6_setcursor(sc)
 
 static void
 cg6_loadcursor(sc)
-	register struct cgsix_softc *sc;
+	struct cgsix_softc *sc;
 {
-	register volatile struct cg6_thc *thc;
-	register u_int edgemask, m;
-	register int i;
+	volatile struct cg6_thc *thc;
+	u_int edgemask, m;
+	int i;
 
 	/*
 	 * Keep the top size.x bits.  Here we *throw out* the top
@@ -769,12 +805,12 @@ cg6_loadcursor(sc)
  */
 static void
 cg6_loadcmap(sc, start, ncolors)
-	register struct cgsix_softc *sc;
-	register int start, ncolors;
+	struct cgsix_softc *sc;
+	int start, ncolors;
 {
-	register volatile struct bt_regs *bt;
-	register u_int *ip, i;
-	register int count;
+	volatile struct bt_regs *bt;
+	u_int *ip, i;
+	int count;
 
 	ip = &sc->sc_cmap.cm_chip[BT_D4M3(start)];	/* start/4 * 3 */
 	count = BT_D4M3(start + ncolors - 1) - BT_D4M3(start) + 3;
@@ -795,10 +831,10 @@ cg6_loadcmap(sc, start, ncolors)
  */
 static void
 cg6_loadomap(sc)
-	register struct cgsix_softc *sc;
+	struct cgsix_softc *sc;
 {
-	register volatile struct bt_regs *bt;
-	register u_int i;
+	volatile struct bt_regs *bt;
+	u_int i;
 
 	bt = sc->sc_bt;
 	bt->bt_addr = 0x01 << 24;	/* set background color */
@@ -859,9 +895,9 @@ cgsixmmap(dev, off, prot)
 	dev_t dev;
 	int off, prot;
 {
-	register struct cgsix_softc *sc = cgsix_cd.cd_devs[minor(dev)];
-	register struct mmo *mo;
-	register u_int u, sz;
+	struct cgsix_softc *sc = cgsix_cd.cd_devs[minor(dev)];
+	struct mmo *mo;
+	u_int u, sz;
 	static struct mmo mmo[] = {
 		{ CG6_USER_RAM, 0, CGSIX_RAM_OFFSET },
 
@@ -892,19 +928,15 @@ cgsixmmap(dev, off, prot)
 		u = off - mo->mo_uaddr;
 		sz = mo->mo_size ? mo->mo_size : sc->sc_fb.fb_type.fb_size;
 		if (u < sz)
-#if 0
-			return (REG2PHYS(&sc->sc_physadr, u + mo->mo_physoff) |
-				PMAP_NC);
-#else
 			return (bus_space_mmap (sc->sc_bustag,
 						sc->sc_btype,
 						sc->sc_paddr+u+mo->mo_physoff,
 						BUS_SPACE_MAP_LINEAR));
-#endif
 	}
+
 #ifdef DEBUG
 	{
-	  register struct proc *p = curproc;	/* XXX */
+	  struct proc *p = curproc;	/* XXX */
 	  log(LOG_NOTICE, "cgsixmmap(0x%x) (%s[%d])\n",
 		off, p->p_comm, p->p_pid);
 	}
