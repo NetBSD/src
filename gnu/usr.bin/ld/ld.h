@@ -1,5 +1,5 @@
 /*
- *	$Id: ld.h,v 1.12 1994/06/29 11:18:50 pk Exp $
+ *	$Id: ld.h,v 1.12.2.1 1994/07/22 03:38:14 cgd Exp $
  */
 /*-
  * This code is derived from software copyrighted by the Free Software
@@ -342,6 +342,7 @@ typedef struct localsymbol {
 #define LS_WRITE		2	/* Symbol goes in output symtable */
 #define LS_RENAME		4	/* xlat name to `<file>.<name>' */
 #define LS_GOTSLOTCLAIMED	8	/* This symbol has a GOT entry */
+#define LS_WARNING		16	/* Second part of a N_WARNING duo */
 } localsymbol_t;
 
 /* Symbol table */
@@ -428,7 +429,8 @@ extern int	multiple_def_count;
 extern int	common_defined_global_count;
 
 /* # of warning symbols encountered. */
-extern int	warning_count;
+extern int	warn_sym_count;
+extern int	list_warning_symbols;
 
 /*
  * Define a linked list of strings which define symbols which should be
