@@ -35,7 +35,7 @@
  *	i4b daemon - charging rates description file handling
  *	-----------------------------------------------------
  *
- *	$Id: rates.c,v 1.2 2001/12/04 17:56:34 wiz Exp $ 
+ *	$Id: rates.c,v 1.3 2002/03/27 13:46:35 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -383,7 +383,7 @@ rate_error:
  *	get unit length time from configured source
  *---------------------------------------------------------------------------*/
 int
-get_current_rate(cfg_entry_t *cep, int logit)
+get_current_rate(struct cfg_entry *cep, int logit)
 {
 	int rt;
 	

@@ -27,7 +27,7 @@
  *	exec.h - supplemental program/script execution
  *	----------------------------------------------
  *
- *	$Id: exec.c,v 1.2 2002/03/16 17:03:42 martin Exp $ 
+ *	$Id: exec.c,v 1.3 2002/03/27 13:46:35 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -47,7 +47,7 @@
 
 static struct pid_tab {
 	pid_t	pid;
-	cfg_entry_t *cep;
+	struct cfg_entry *cep;
 } pid_tab[MAX_PIDS];
 
 /*---------------------------------------------------------------------------*
@@ -162,17 +162,15 @@ exec_prog(char *prog, char **arglist)
  *	run interface up/down script
  *---------------------------------------------------------------------------*/
 int
-exec_connect_prog(cfg_entry_t *cep, const char *prog, int link_down)
+exec_connect_prog(struct cfg_entry *cep, const char *prog, int link_down)
 {
 	char *argv[32], **av = argv;
 	char devicename[MAXPATHLEN], addr[100];
-	char *device;
 	int s;
 	struct ifreq ifr;
 
 	/* the obvious things */
-	device = bdrivername(cep->usrdevicename);
-	snprintf(devicename, sizeof(devicename), "%s%d", device, cep->usrdeviceunit);
+	snprintf(devicename, sizeof(devicename), "%s%d", cep->usrdevicename, cep->usrdeviceunit);
 	*av++ = (char*)prog;
 	*av++ = "-d";
 	*av++ = devicename;
@@ -205,16 +203,13 @@ exec_connect_prog(cfg_entry_t *cep, const char *prog, int link_down)
  *	run answeringmachine application
  *---------------------------------------------------------------------------*/
 int
-exec_answer(cfg_entry_t *cep)
+exec_answer(struct cfg_entry *cep)
 {
 	char *argv[32];
 	u_char devicename[MAXPATHLEN];	
 	int pid;
-	char *device;
-	
-	device = bdrivername(cep->usrdevicename);
 
-	snprintf(devicename, sizeof(devicename), "/dev/isdn%s%d", device, cep->usrdeviceunit);
+	snprintf(devicename, sizeof(devicename), "/dev/isdn%s%d", cep->usrdevicename, cep->usrdeviceunit);
 
 	argv[0] = cep->answerprog;
 	argv[1] = "-D";
@@ -272,7 +267,7 @@ exec_answer(cfg_entry_t *cep)
  *	check if a connection has an outstanding process, if yes, kill it
  *---------------------------------------------------------------------------*/
 void
-check_and_kill(cfg_entry_t *cep)
+check_and_kill(struct cfg_entry *cep)
 {
 	int i;
 	
