@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.pl,v 1.4 2003/05/07 19:02:55 dsl Exp $	*/
+/*	$NetBSD: menus.md.pl,v 1.5 2003/05/18 18:54:06 dsl Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: menus.md.en,v 1.14 2001/11/29 23:20:57 thorpej Exp 	*/
 
@@ -40,10 +40,6 @@
 
 /* Menu definitions for sysinst. bebox version, machine dependent. */
 
-menu fullpart, title  "Wybierz";
-	option "Uzyj tylko czesci dysku", exit, action  {usefull = 0;};
-	option "Uzyj calego dysku", 	    exit, action  {usefull = 1;};
-
 menu wdtype, title  "Wybierz typ";
 	display action { msg_display (MSG_wdtype, diskdev); };
 	option "IDE", 	exit;
@@ -76,49 +72,6 @@ menu dlgeom, title "Wybierz opcje";
 			disk->dd_head = dlhead;
 			disk->dd_sec = dlsec;
 		};
-
-menu editparttable, title  "Wybierz swoje partycje", exit;
-	display action  { msg_display (MSG_editparttable);
-			  disp_cur_part(&mbr.mbr_parts[0], activepart,-1);
-			};
-	option "Edytuj partycje 0",  sub menu editpart,
-		action  { editpart = 0; };
-	option "Edytuj partycje 1",  sub menu editpart,
-		action  { editpart = 1; };
-	option "Edytuj partycje 2",  sub menu editpart,
-		action  { editpart = 2; };
-	option "Edytuj partycje 3",  sub menu editpart,
-		action  { editpart = 3; };
-	option "Zmien specyfikator rozmiaru",
-		action  { reask_sizemult(bcylsize); }; 
-
-menu editpart, title  "Wybierz aby zmienic";
-	display action { msg_display (MSG_editpart, editpart);
-			   disp_cur_part(&mbr.mbr_parts[0], activepart,editpart);
-			   msg_display_add(MSG_newline);
-			};
-	option "Rodzaj", sub menu chooseid;
-	option "Poczatek i rozmiar", action { edit_ptn_bounds(); };
-	option "Ustaw aktywna", action { activepart = editpart; };
-	option "Partycje OK", exit;
-
-menu chooseid, title  "Rodzaj partycji?";
-	option "NetBSD", 	exit,	action
-	{
-		part[editpart].mbrp_typ = 165;
-	};
-	option "DOS < 32 Meg",	exit,	action
-	{
-		part[editpart].mbrp_typ = 4;
-	};
-	option "DOS > 32 Meg",	exit,	action
-	{
-		part[editpart].mbrp_typ = 6;
-	};
-	option "nie uzywana",	exit,	action
-	{
-		part[editpart].mbrp_typ = 0;
-	};
 
 menu cyl1024;
 	display action {
