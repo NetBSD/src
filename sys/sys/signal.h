@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.16 1995/05/28 02:55:09 jtc Exp $	*/
+/*	$NetBSD: signal.h,v 1.17 1995/05/28 03:06:31 jtc Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -43,9 +43,13 @@
 #ifndef	_SYS_SIGNAL_H_
 #define	_SYS_SIGNAL_H_
 
+#include <machine/signal.h>	/* sigcontext; codes for SIGILL, SIGFPE */
+
 #define _NSIG	32		/* counting 0; could be 33 (mask is 1-32) */
 
-#include <machine/signal.h>	/* sigcontext; codes for SIGILL, SIGFPE */
+#if !defined(_ANSI_SOURCE) && !defined(_POSIX_SOURCE)
+#define NSIG _NSIG
+#endif
 
 #define	SIGHUP	1	/* hangup */
 #define	SIGINT	2	/* interrupt */
@@ -105,6 +109,8 @@
 #define	SIG_IGN		(void (*)())1
 #define	SIG_ERR		(void (*)())-1
 #endif
+
+#if 
 
 #ifndef _ANSI_SOURCE
 typedef unsigned int sigset_t;
