@@ -1,4 +1,4 @@
-/*	$NetBSD: netdb.h,v 1.33 2004/02/23 16:05:19 christos Exp $	*/
+/*	$NetBSD: netdb.h,v 1.34 2004/03/20 18:22:22 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -314,7 +314,7 @@ char		*gai_strerror __P((int));
 #endif
 void		setservent __P((int));
 
-#if defined(_NETBSD_SOURCE)
+#if defined(_NETBSD_SOURCE) && defined(_LIBC)
 
 struct protoent_data {
         FILE *fp;
@@ -353,7 +353,7 @@ struct servent	*getservbyport_r __P((int, const char *,
 void setservent_r __P((int, struct servent_data *));
 void endservent_r __P((struct servent_data *));
 
-#endif /* _NETBSD_SOURCE */
+#endif /* _NETBSD_SOURCE && _LIBC */
 __END_DECLS
 
 #endif /* !_NETDB_H_ */
