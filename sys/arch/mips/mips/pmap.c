@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.58 1999/05/17 01:10:51 nisimura Exp $	*/
+/*	$NetBSD: pmap.c,v 1.59 1999/05/17 11:12:44 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.58 1999/05/17 01:10:51 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.59 1999/05/17 11:12:44 nisimura Exp $");
 
 /*
  *	Manages physical address maps.
@@ -176,7 +176,6 @@ struct pmap	kernel_pmap_store;
 
 paddr_t avail_start;	/* PA of first available physical page */
 paddr_t avail_end;	/* PA of last available physical page */
-psize_t mem_size;	/* memory size in bytes */
 vaddr_t virtual_avail;  /* VA of first avail page (after kernel bss)*/
 vaddr_t virtual_end;	/* VA of last avail page (end of kernel AS) */
 
@@ -251,47 +250,6 @@ mips_flushcache_allpvh(paddr_t pa)
  */
 void
 pmap_bootstrap()
-{
-#ifdef MIPS3
-	pt_entry_t *spte;
-#endif
-	extern int physmem;
-
-	/* XXX change vallocs to direct calls to pmap_steal_meory (later) */
-#define	valloc(name, type, num) \
-	(name) = (type *)pmap_steal_memory(sizeof (type) * (num), NULL, NULL)
-
-	/*
-	 * Allocate a PTE table for the kernel.
-	 * We also reserve space for kmem_alloc_pageable() for vm_fork().
-	 */
-	Sysmapsize = (VM_KMEM_SIZE + VM_PHYS_SIZE +
-		nbuf * MAXBSIZE + 16 * NCARGS) / NBPG;
-	/*
-	 * Allocate PTE space space for u-areas (XXX)
-	 */
-	Sysmapsize += (maxproc * UPAGES);
-
-	/*
-	 * Allocate kernel virtual-address space for swap maps.
-	 * (This should be kept in sync with vm).
-	 */
-	Sysmapsize += 2048;
-
-#ifdef SYSVSHM
-	Sysmapsize += shminfo.shmall;
-#endif
-	valloc(Sysmap, pt_entry_t, Sysmapsize);
-
-	/*
-	 * Allocate memory for pv_table heads.
-	 * This will allocate more entries than we really need.
-	 * We could do this in pmap_init when we know the actual
-	 * phys_start and phys_end but its better to use kseg0 addresses
-	 * rather than kernel virtual addresses mapped through the TLB.
-	 */
-	pv_table_npages = physmem;
-	valloc(pv_table, struct pv_entry, pv_table_npages);
 
 	/*
 	 * Initialize `FYI' variables.  Note we're relying on
@@ -303,8 +261,6 @@ pmap_bootstrap()
 	virtual_avail = VM_MIN_KERNEL_ADDRESS;
 	virtual_end = VM_MIN_KERNEL_ADDRESS + Sysmapsize * NBPG;
 
-	mem_size = avail_end - avail_start;
-
 	/* XXX need to decide how to set cnt.v_page_size */
 	mipspagesperpage = 1;
 
@@ -313,6 +269,12 @@ pmap_bootstrap()
 	 */
 	simple_lock_init(&pmap_kernel()->pm_lock);
 	pmap_kernel()->pm_count = 1;
+	pmap_kernel()->pm_tlbpid = 1;
+	pmap_kernel()->pm_tlbgen = tlbpid_gen;
+
+#if 0	/* no need, no good, no use */
+	proc0paddr->u_pcb.pcb_segtab = pmap_kernel()->pm_segtab = NULL;
+#endif
 
 #ifdef MIPS3
 	/*
@@ -324,6 +286,7 @@ pmap_bootstrap()
 	 */
 	if (CPUISMIPS3) {
 		int i;
+		pt_entry_t *spte;
 
 		for (i = 0, spte = Sysmap; i < Sysmapsize; i++, spte++)
 			spte->pt_entry = MIPS3_PG_G;
@@ -495,10 +458,7 @@ void
 pmap_pinit(pmap)
 	struct pmap *pmap;
 {
-	int i;
-	int s;
-	extern struct vmspace vmspace0;
-	extern struct user *proc0paddr;
+	int i, s;
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_CREATE))
@@ -544,18 +504,8 @@ pmap_pinit(pmap)
 		if (pmap->pm_segtab->seg_tab[i] != 0)
 			panic("pmap_pinit: pm_segtab != 0");
 #endif
-	if (pmap == vmspace0.vm_map.pmap) {
-		/*
-		 * The initial process has already been allocated a TLBPID
-		 * in mach_init().
-		 */
-		pmap->pm_tlbpid = 1;
-		pmap->pm_tlbgen = tlbpid_gen;
-		proc0paddr->u_pcb.pcb_segtab = (void *)pmap->pm_segtab;
-	} else {
-		pmap->pm_tlbpid = 0;
-		pmap->pm_tlbgen = 0;
-	}
+	pmap->pm_tlbpid = 0;
+	pmap->pm_tlbgen = 0;
 }
 
 /*
@@ -719,7 +669,7 @@ pmap_remove(pmap, sva, eva)
 	if (pmap == NULL)
 		return;
 
-	if (!pmap->pm_segtab) {
+	if (pmap == pmap_kernel()) {
 		pt_entry_t *pte;
 
 		/* remove entries from kernel pmap */
@@ -901,7 +851,7 @@ pmap_protect(pmap, sva, eva, prot)
 
 	p = (prot & VM_PROT_WRITE) ? mips_pg_rw_bit() : mips_pg_ro_bit();
 
-	if (!pmap->pm_segtab) {
+	if (pmap == pmap_kernel()) {
 		/*
 		 * Change entries in kernel pmap.
 		 * This will trap if the page is writeable (in order to set
@@ -1049,7 +999,7 @@ pmap_page_cache(pa, mode)
 	s = splimp();
 	while (pv) {
 		pv->pv_flags = (pv->pv_flags & ~PV_UNCACHED) | mode;
-		if (!pv->pv_pmap->pm_segtab) {
+		if (pv->pv_pmap == pmap_kernel()) {
 		/*
 		 * Change entries in kernel pmap.
 		 */
@@ -1120,7 +1070,7 @@ pmap_enter(pmap, va, pa, prot, wired, access_type)
 #ifdef DIAGNOSTIC
 	if (!pmap)
 		panic("pmap_enter: pmap");
-	if (!pmap->pm_segtab) {
+	if (pmap == pmap_kernel()) {
 #ifdef DEBUG
 		enter_stats.kernel++;
 #endif
@@ -1198,7 +1148,7 @@ pmap_enter(pmap, va, pa, prot, wired, access_type)
 	}
 #endif
 
-	if (!pmap->pm_segtab) {
+	if (pmap == pmap_kernel()) {
 		/* enter entries into kernel pmap */
 		pte = kvtopte(va);
 
@@ -1347,7 +1297,7 @@ pmap_change_wiring(pmap, va, wired)
 	/*
 	 * Don't need to flush the TLB since PG_WIRED is only in software.
 	 */
-	if (!pmap->pm_segtab) {
+	if (pmap == pmap_kernel()) {
 		/* change entries in kernel pmap */
 #ifdef DIAGNOSTIC
 		if (va < VM_MIN_KERNEL_ADDRESS || va >= virtual_end)
@@ -1391,7 +1341,7 @@ pmap_extract(pmap, va)
 		printf("pmap_extract(%p, %lx) -> ", pmap, va);
 #endif
 
-	if (!pmap->pm_segtab) {
+	if (pmap == pmap_kernel()) {
 #ifdef DIAGNOSTIC
 		if (va < VM_MIN_KERNEL_ADDRESS || va >= virtual_end)
 			panic("pmap_extract");
@@ -1912,7 +1862,7 @@ pmap_enter_pv(pmap, va, pa, npte)
 				pt_entry_t *pte;
 				unsigned entry;
 
-				if (!pmap->pm_segtab)
+				if (pmap == pmap_kernel())
 					entry = kvtopte(va)->pt_entry;
 				else {
 					pte = pmap_segmap(pmap, va);
@@ -2024,7 +1974,7 @@ pmap_pte(pmap, va)
 {
 	pt_entry_t *pte = NULL;
 
-	if (pmap->pm_segtab == NULL)
+	if (pmap == pmap_kernel())
 		pte = kvtopte(va);
 	else if ((pte = pmap_segmap(pmap, va)) != NULL)
 		pte += (va >> PGSHIFT) & (NPTEPG - 1);
