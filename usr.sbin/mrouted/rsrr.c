@@ -1,4 +1,4 @@
-/*	$NetBSD: rsrr.c,v 1.4 1998/07/18 05:04:40 lukem Exp $	*/
+/*	$NetBSD: rsrr.c,v 1.5 2002/07/14 16:30:42 wiz Exp $	*/
 
 /*
  * Copyright (c) 1993 by the University of Southern California
@@ -45,7 +45,7 @@
  * checks for scoped multicast addresses
  */
 #define GET_SCOPE(gt) { \
-	register int _i; \
+	int _i; \
 	if (((gt)->gt_mcastgrp & 0xff000000) == 0xef000000) \
 	    for (_i = 0; _i < numvifs; _i++) \
 		if (scoped_addr(_i, (gt)->gt_mcastgrp)) \
@@ -70,13 +70,12 @@ int client_length = sizeof(client_addr);
 /*
  * Procedure definitions needed internally.
  */
-static void	rsrr_accept __P((int recvlen));
-static void	rsrr_accept_iq __P((void));
-static int	rsrr_accept_rq __P((struct rsrr_rq *route_query, int flags,
-					struct gtable *gt_notify));
-static int	rsrr_send __P((int sendlen));
-static void	rsrr_cache __P((struct gtable *gt,
-					struct rsrr_rq *route_query));
+static void	rsrr_accept(int recvlen);
+static void	rsrr_accept_iq(void);
+static int	rsrr_accept_rq(struct rsrr_rq *route_query, int flags,
+			       struct gtable *gt_notify);
+static int	rsrr_send(int sendlen);
+static void	rsrr_cache(struct gtable *gt, struct rsrr_rq *route_query);
 
 /* Initialize RSRR socket */
 void
@@ -113,8 +112,8 @@ rsrr_read(f, rfd)
 	int f;
 	fd_set *rfd;
 {
-    register int rsrr_recvlen;
-    register int omask;
+    int rsrr_recvlen;
+    int omask;
     
     bzero((char *) &client_addr, sizeof(client_addr));
     rsrr_recvlen = recvfrom(rsrr_socket, rsrr_recv_buf, sizeof(rsrr_recv_buf),
