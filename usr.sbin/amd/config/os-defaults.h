@@ -35,9 +35,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)os-defaults.h	8.1 (Berkeley) 6/6/93
- *
- * $Id: os-defaults.h,v 1.2 1994/06/13 19:48:51 mycroft Exp $
+ *	from: @(#)os-defaults.h	8.1 (Berkeley) 6/6/93
+ *	$Id: os-defaults.h,v 1.3 1994/06/13 20:49:24 mycroft Exp $
  *
  * Common OS definitions.  These may be overridden in
  * the OS specific files ("os-foo.h").

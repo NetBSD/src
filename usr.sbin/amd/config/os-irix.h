@@ -35,9 +35,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)os-irix.h	8.1 (Berkeley) 6/6/93
- *
- * $Id: os-irix.h,v 1.1.1.1 1994/06/13 19:55:40 mycroft Exp $
+ *	from: @(#)os-irix.h	8.1 (Berkeley) 6/6/93
+ *	$Id: os-irix.h,v 1.2 1994/06/13 20:49:31 mycroft Exp $
  *
  * IRIX 3.3 definitions for Amd (automounter)
  * Contributed by Scott R. Presnell <srp@cgl.ucsf.edu>

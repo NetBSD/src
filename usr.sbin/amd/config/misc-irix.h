@@ -35,10 +35,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)misc-irix.h	8.1 (Berkeley) 6/6/93
- *
- * $Id: misc-irix.h,v 1.2 1994/06/13 19:48:32 mycroft Exp $
- *
+ *	from: @(#)misc-irix.h	8.1 (Berkeley) 6/6/93
+ *	$Id: misc-irix.h,v 1.3 1994/06/13 20:48:50 mycroft Exp $
  */
 
 #include <sys/fs/nfs_clnt.h>

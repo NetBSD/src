@@ -35,10 +35,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)nfsx_ops.c	8.1 (Berkeley) 6/6/93
- *
- * $Id: nfsx_ops.c,v 1.2 1994/06/13 19:47:54 mycroft Exp $
- *
+ *	from: @(#)nfsx_ops.c	8.1 (Berkeley) 6/6/93
+ *	$Id: nfsx_ops.c,v 1.3 1994/06/13 20:47:50 mycroft Exp $
  */
 
 #include "am.h"

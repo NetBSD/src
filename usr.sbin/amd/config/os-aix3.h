@@ -35,9 +35,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)os-aix3.h	8.1 (Berkeley) 6/6/93
- *
- * $Id: os-aix3.h,v 1.2 1994/06/13 19:48:46 mycroft Exp $
+ *	from: @(#)os-aix3.h	8.1 (Berkeley) 6/6/93
+ *	$Id: os-aix3.h,v 1.3 1994/06/13 20:49:17 mycroft Exp $
  *
  * AIX 3.1 definitions for Amd (automounter)
  */

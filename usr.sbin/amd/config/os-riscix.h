@@ -35,9 +35,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)os-riscix.h	8.1 (Berkeley) 6/6/93
- *
- * $Id: os-riscix.h,v 1.2 1994/06/13 19:49:05 mycroft Exp $
+ *	from: @(#)os-riscix.h	8.1 (Berkeley) 6/6/93
+ *	$Id: os-riscix.h,v 1.3 1994/06/13 20:49:37 mycroft Exp $
  *
  * Acorn Archimedes RISC iX definitions for Amd (automounter)
  * Contributed by Piete Brooks.
