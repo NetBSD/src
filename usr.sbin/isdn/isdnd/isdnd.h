@@ -27,7 +27,7 @@
  *	i4b daemon - main header file
  *	-----------------------------
  *
- *	$Id: isdnd.h,v 1.5 2002/03/24 20:37:48 martin Exp $ 
+ *	$Id: isdnd.h,v 1.6 2002/03/27 13:46:35 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -240,7 +240,10 @@ typedef struct {
 /*---------------------------------------------------------------------------*
  *	this struct describes one complete configuration entry
  *---------------------------------------------------------------------------*/
-typedef struct cfg_entry {
+struct cfg_entry {
+
+	SIMPLEQ_ENTRY(cfg_entry) cfgq;
+	int index;
 
 	/* ====== filled in at startup configuration, then static ===========*/
 
@@ -251,8 +254,9 @@ typedef struct cfg_entry {
 
 	int isdntxdelin;		/* tx delay, incoming connections */
 	int isdntxdelout;		/* tx delay, outgoing connections */
-	
-	int usrdevicename;		/* userland device to use */
+
+	char usrdevicename[16];
+	int usrdevice;			/* B channel device name & index */
 	int usrdeviceunit;		/* userland unit to use */
 
 	int remote_numbers_count;	/* number of remote numbers	*/
@@ -505,15 +509,17 @@ typedef struct cfg_entry {
 #define	BUDGET_TYPE_CBACK 1
 #define	BUDGET_TYPE_COUT  2
 
-} cfg_entry_t;
+};
 
 /*---------------------------------------------------------------------------*
  *	this struct describes state of controller with 2 b channels
  *---------------------------------------------------------------------------*/
-typedef struct isdn_ctrl_state {
+struct isdn_ctrl_state {
+	SLIST_ENTRY(isdn_ctrl_state) ctrlq;
+
 	char device_name[80];		/* device name, e.g. "isic0"	*/
 	char controller[80];		/* manufacturer/name	 	*/
-	int present;			/* 0 = detached, 1 = available 	*/
+	int bri;
 	int protocol;			/* ISDN D-channel protocol 	*/	
 	int state;			/* controller state		*/
 #define  CTRL_DOWN 	0		/* controller inoparable	*/
@@ -527,7 +533,7 @@ typedef struct isdn_ctrl_state {
 	int tei;			/* tei or -1 if invalid		*/
 	int l1stat;			/* layer 1 state		*/
 	int l2stat;			/* layer 2 state		*/
-} isdn_ctrl_state_t;
+};
 
 /*---------------------------------------------------------------------------*
  *	this struct describes a logging regular expression
@@ -584,12 +590,6 @@ int do_print = 0;				/* config file printout */
 
 int got_unitlen = 0;				/* flag, got length of a unit */
 time_t unit_length;				/* length of a unit */
-
-cfg_entry_t cfg_entry_tab[CFG_ENTRY_MAX];	/* configuration table */
-isdn_ctrl_state_t isdn_ctrl_tab[ISDN_CTRL_MAX];	/* controller states table */
-
-int ncontroller = 0;				/* # of controllers available */
-int nentries = 0;				/* # of entries in config tab */
 
 int uselogfile = 0;				/* flag, use a logfile */
 char logfile[MAXPATHLEN] = LOG_FILE_DEF;	/* log filename */
@@ -675,12 +675,6 @@ int do_print;
 int got_unitlen;
 time_t unit_length;
 
-cfg_entry_t cfg_entry_tab[CFG_ENTRY_MAX];	/* configuration table */
-isdn_ctrl_state_t isdn_ctrl_tab[ISDN_CTRL_MAX];	/* controller states table */
-
-int ncontroller;
-int nentries;
-
 int uselogfile;
 char logfile[MAXPATHLEN];
 FILE *logfp;
@@ -730,46 +724,61 @@ char holidayfile[MAXPATHLEN];
 
 #endif /* MAIN */
 
-char * bdrivername ( int drivertype );
+
+struct cfg_entry * find_cfg_entry(int index);
+struct cfg_entry * get_first_cfg_entry(void);
+int add_cfg_entry(struct cfg_entry *cfe);
+#define	NEXT_CFE(c)	SIMPLEQ_NEXT(c, cfgq)
+int count_cfg_entries(void);
+void remove_all_cfg_entries(void);
+struct isdn_ctrl_state * find_ctrl_state(int controller);
+struct isdn_ctrl_state * get_first_ctrl_state(void);
+#define	NEXT_CTRL(c)	SLIST_NEXT(c, ctrlq)
+int count_ctrl_states(void);
+int add_ctrl_state(struct isdn_ctrl_state *cstate);
+int remove_ctrl_state(int controller);
+void remove_all_ctrl_state(void);
+
 void cfg_setval ( int keyword );
-void check_and_kill ( cfg_entry_t *cep );
+void check_and_kill ( struct cfg_entry *cep );
 void check_pid ( void );
 void close_allactive ( void );
 void configure ( char *filename, int reread );
 void daemonize ( void );
-void dialresponse(cfg_entry_t *cep, int dstat);
-void display_acct ( cfg_entry_t *cep );
+void dialresponse(struct cfg_entry *cep, int dstat);
+void display_acct ( struct cfg_entry *cep );
 void display_bell ( void );
-void display_ccharge ( cfg_entry_t *cep, int units );
+void display_ccharge ( struct cfg_entry *cep, int units );
 void display_chans ( void );
-void display_charge ( cfg_entry_t *cep );
-void display_connect ( cfg_entry_t *cep );
-void display_disconnect ( cfg_entry_t *cep );
+void display_charge ( struct cfg_entry *cep );
+void display_connect ( struct cfg_entry *cep );
+void display_disconnect ( struct cfg_entry *cep );
 void display_l12stat(int controller, int layer, int state);
 void display_tei(int controller, int tei);
-void display_updown ( cfg_entry_t *cep, int updown );
+void display_updown ( struct cfg_entry *cep, int updown );
 void do_exit ( int exitval );
 void do_menu ( void );
-int exec_answer ( cfg_entry_t *cep );
-int exec_connect_prog ( cfg_entry_t *cep, const char *prog, int link_down );
+int exec_answer ( struct cfg_entry *cep );
+int exec_connect_prog ( struct cfg_entry *cep, const char *prog, int link_down );
 pid_t exec_prog ( char *prog, char **arglist );
-cfg_entry_t * find_by_device_for_dialout ( int drivertype, int driverunit );
-cfg_entry_t *find_by_device_for_dialoutnumber(int drivertype, int driverunit, int cmdlen, char *cmd);
-cfg_entry_t * find_matching_entry_incoming ( msg_connect_ind_t *mp );
-cfg_entry_t * find_active_entry_by_driver ( int drivertype, int driverunit );
+struct cfg_entry * find_by_device_for_dialout ( int drivertype, int driverunit );
+struct cfg_entry *find_by_device_for_dialoutnumber(int drivertype, int driverunit, int cmdlen, char *cmd);
+struct cfg_entry * find_matching_entry_incoming ( msg_connect_ind_t *mp );
+struct cfg_entry * find_active_entry_by_driver ( int drivertype, int driverunit );
 void finish_log ( void );
 char * getlogdatetime ( void );
 int get_cdid ( void );
-cfg_entry_t * get_cep_by_cc ( int ctrlr, int chan );
-cfg_entry_t * get_cep_by_driver ( int drivertype, int driverunit );
-cfg_entry_t * get_cep_by_cdid ( int cdid );
-int get_current_rate ( cfg_entry_t *cep, int logit );
-void handle_charge ( cfg_entry_t *cep );
+struct cfg_entry * get_cep_by_cc ( int ctrlr, int chan );
+struct cfg_entry * get_cep_by_driver ( int drivertype, int driverunit );
+struct cfg_entry * get_cep_by_cdid ( int cdid );
+int get_current_rate ( struct cfg_entry *cep, int logit );
+void handle_charge ( struct cfg_entry *cep );
 void handle_recovery ( void );
 void handle_scrprs(int cdid, int scr, int prs, char *caller);
-void if_up(cfg_entry_t *cep);
-void if_down(cfg_entry_t *cep);
+void if_up(struct cfg_entry *cep);
+void if_down(struct cfg_entry *cep);
 void init_controller ( void );
+void init_new_controller(int bri);
 void init_controller_protocol ( void );
 void init_log ( void );
 void init_screen ( void );
@@ -792,27 +801,25 @@ void msg_l12stat_ind(msg_l12stat_ind_t *ml);
 void msg_teiasg_ind(msg_teiasg_ind_t *mt);
 void msg_proceeding_ind ( msg_proceeding_ind_t *mp );
 void msg_packet_ind( msg_packet_ind_t *mp );
-void next_state ( cfg_entry_t *cep, int event );
+void msg_ctrl_ev_ind( msg_ctrl_ev_ind_t *mp );
+void next_state ( struct cfg_entry *cep, int event );
 char * print_i4b_cause( cause_t code );
-char * printstate ( cfg_entry_t *cep );
+char * printstate ( struct cfg_entry *cep );
 int readrates ( char *filename );
-int ret_channel_state(int controller, int channel);
 void reopenfiles ( int dummy );
 void rereadconfig ( int dummy );
-void select_first_dialno ( cfg_entry_t *cep );
-void select_next_dialno ( cfg_entry_t *cep );
-void select_this_dialno ( cfg_entry_t *cep );
-int sendm_alert_req ( cfg_entry_t *cep );
-int sendm_connect_req ( cfg_entry_t *cep );
-int sendm_connect_resp ( cfg_entry_t *cep, int cdid, int response, cause_t cause );
-int sendm_disconnect_req ( cfg_entry_t *cep, cause_t cause );
-int set_channel_busy(int controller, int channel);
-int set_channel_idle(int controller, int channel);
-int setup_dialout(cfg_entry_t *cep);
+void select_first_dialno ( struct cfg_entry *cep );
+void select_next_dialno ( struct cfg_entry *cep );
+void select_this_dialno ( struct cfg_entry *cep );
+int sendm_alert_req ( struct cfg_entry *cep );
+int sendm_connect_req ( struct cfg_entry *cep );
+int sendm_connect_resp ( struct cfg_entry *cep, int cdid, int response, cause_t cause );
+int sendm_disconnect_req ( struct cfg_entry *cep, cause_t cause );
+int setup_dialout(struct cfg_entry *cep);
 void sigchild_handler ( int sig );
-void start_timer ( cfg_entry_t *cep, int seconds );
-void stop_timer ( cfg_entry_t *cep );
-void unitlen_chkupd( cfg_entry_t *cep );
+void start_timer ( struct cfg_entry *cep, int seconds );
+void stop_timer ( struct cfg_entry *cep );
+void unitlen_chkupd( struct cfg_entry *cep );
 void write_pid ( void );
 void yyerror ( const char *msg );
 
@@ -842,27 +849,27 @@ int monitor_create_remote_socket(int portno);
 void monitor_prepselect(fd_set *selset, int *max_fd);
 void monitor_handle_input(fd_set *selset);
 void monitor_handle_connect(int sockfd, int is_local);
-void monitor_evnt_charge(cfg_entry_t *cep, int units, int estimated);
-void monitor_evnt_connect(cfg_entry_t *cep);
-void monitor_evnt_disconnect(cfg_entry_t *cep);
-void monitor_evnt_updown(cfg_entry_t *cep, int up);
+void monitor_evnt_charge(struct cfg_entry *cep, int units, int estimated);
+void monitor_evnt_connect(struct cfg_entry *cep);
+void monitor_evnt_disconnect(struct cfg_entry *cep);
+void monitor_evnt_updown(struct cfg_entry *cep, int up);
 void monitor_evnt_log(int prio, const char * what, const char * msg);
 
 void monitor_evnt_l12stat(int controller, int layer, int state);
 void monitor_evnt_tei(int controller, int tei);
-void monitor_evnt_acct(cfg_entry_t *cep);
+void monitor_evnt_acct(struct cfg_entry *cep);
 
 /* controller.c */
 
 void init_active_controller(void);
-int set_controller_state(int controller, int state);
-int get_controller_state(int controller);
-int decr_free_channels(int controller);
-int incr_free_channels(int controller);
-int get_free_channels(int controller);
-int set_channel_busy(int controller, int channel);
-int set_channel_idle(int controller, int channel);
-int ret_channel_state(int controller, int channel);
+int set_controller_state(struct isdn_ctrl_state *cstate, int state);
+int get_controller_state(struct isdn_ctrl_state *cstate);
+int decr_free_channels(struct isdn_ctrl_state *cstate);
+int incr_free_channels(struct isdn_ctrl_state *cstate);
+int get_free_channels(struct isdn_ctrl_state *cstate);
+int set_channel_busy(struct isdn_ctrl_state *cstate, int channel);
+int set_channel_idle(struct isdn_ctrl_state *cstate, int channel);
+int ret_channel_state(struct isdn_ctrl_state *cstate, int channel);
 
 /* alias.c */
 
