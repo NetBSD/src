@@ -1,4 +1,4 @@
-/*	$NetBSD: akbdmap.h,v 1.4 2003/02/23 18:09:26 manu Exp $	*/
+/*	$NetBSD: akbdmap.h,v 1.5 2004/07/19 13:31:08 jmmv Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -109,25 +109,25 @@ static const keysym_t akbd_keydesc_us[] = {
     KC(65),			KS_KP_Decimal,
     KC(67),			KS_KP_Multiply,
     KC(69),			KS_KP_Add,
-    KC(71),			KS_Clear,
+    KC(71),			KS_Num_Lock,
     KC(75),			KS_KP_Divide,
     KC(76),			KS_KP_Enter,
     KC(78),			KS_KP_Subtract,
 
     KC(81),			KS_KP_Equal,
-    KC(82),			KS_KP_0,
-    KC(83),			KS_KP_1,
-    KC(84),			KS_KP_2,
-    KC(85),			KS_KP_3,
-    KC(86),			KS_KP_4,
-    KC(87),			KS_KP_5,
-    KC(88),			KS_KP_6,
-    KC(89),			KS_KP_7,
+    KC(82),			KS_KP_Insert,	KS_KP_0,
+    KC(83),			KS_KP_End,	KS_KP_1,
+    KC(84),			KS_KP_Down,	KS_KP_2,
+    KC(85),			KS_KP_Next,	KS_KP_3,
+    KC(86),			KS_KP_Left,	KS_KP_4,
+    KC(87),			KS_KP_Begin,	KS_KP_5,
+    KC(88),			KS_KP_Right,	KS_KP_6,
+    KC(89),			KS_KP_Home,	KS_KP_7,
 
-    KC(91),			KS_KP_8,
-    KC(92),			KS_KP_9,
+    KC(91),			KS_KP_Up,	KS_KP_8,
+    KC(92),			KS_KP_Prior,	KS_KP_9,
 
-    KC(95),			KS_comma,	/* XXX KS_KP_comma */
+    KC(95),			KS_KP_Delete,	KS_KP_Decimal,
     KC(96),			KS_f5,
     KC(97),			KS_f6,
     KC(98),			KS_f7,
@@ -138,15 +138,19 @@ static const keysym_t akbd_keydesc_us[] = {
 
     KC(103),			KS_f11,
 
+    KC(105),			KS_Print_Screen,
     KC(106),			KS_KP_Enter,
+    KC(107),			KS_Hold_Screen,
 
     KC(109),			KS_f10,
 
     KC(111),			KS_f12,
 
+    KC(113),			KS_Pause,
+    KC(114),			KS_Insert,
     KC(115),			KS_Home,
     KC(116),			KS_Prior,
-
+    KC(117),			KS_Delete,
     KC(118),			KS_f4,
     KC(119),			KS_End,
     KC(120),			KS_f2,
@@ -349,6 +353,35 @@ static const keysym_t akbd_keydesc_sf[] = {
     KC(47),	KS_minus,	KS_underscore,
     KC(50),	KS_less,	KS_greater,
 };
+
+static const keysym_t akbd_keydesc_es[] = {
+/*  pos		normal		shifted		altgr		shift-altgr */
+    KC(10),	KS_degree,	KS_ordfeminine,	KS_backslash,
+    KC(18),	KS_1,		KS_exclam,	KS_bar,
+    KC(19),	KS_2,		KS_quotedbl,	KS_at,
+    KC(20),	KS_3,		KS_periodcentered, KS_numbersign,
+    KC(21),	KS_4,		KS_dollar,	KS_asciitilde,
+    KC(22),	KS_6,		KS_ampersand,	KS_notsign,
+    KC(23),	KS_5,		KS_percent,
+    KC(24),	KS_exclamdown,	KS_questiondown,
+    KC(25),	KS_9,		KS_parenright,
+    KC(26),	KS_7,		KS_slash,
+    KC(27),	KS_apostrophe,	KS_question,
+    KC(28),	KS_8,		KS_parenleft,
+    KC(29),	KS_0,		KS_equal,
+    KC(30),	KS_plus,	KS_asterisk,	KS_bracketright,
+    KC(33),	KS_dead_grave,	KS_dead_circumflex, KS_bracketleft,
+    KC(39),	KS_dead_acute,	KS_dead_diaeresis, KS_braceleft,
+    KC(41),	KS_ntilde,
+    KC(42),	KS_ccedilla,	KS_Ccedilla,	KS_braceright,
+    KC(43),	KS_comma,	KS_semicolon,
+    KC(44),	KS_minus,	KS_underscore,
+    KC(47),	KS_period,	KS_colon,
+    KC(50),	KS_less,	KS_greater,
+    KC(55),	KS_Alt_L,				/* Command */
+    KC(58),	KS_Mode_switch, KS_Multi_key,		/* Option */
+};
+
 #define KBD_MAP(name, base, map) \
 			{ name, base, sizeof(map)/sizeof(keysym_t), map }
 
@@ -363,6 +396,7 @@ static const struct wscons_keydesc akbd_keydesctab[] = {
 	KBD_MAP(KB_DE,			KB_US,  akbd_keydesc_de),
 	KBD_MAP(KB_DE | KB_NODEAD,	KB_DE,  akbd_keydesc_de_nodead),
 	KBD_MAP(KB_UK,			KB_US,  akbd_keydesc_uk),
+	KBD_MAP(KB_ES,			KB_US,	akbd_keydesc_es),
 	{0, 0, 0, 0}
 };
 
