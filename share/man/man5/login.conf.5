@@ -1,4 +1,4 @@
-.\"	$NetBSD: login.conf.5,v 1.6 2000/07/16 08:17:07 jdolecek Exp $
+.\"	$NetBSD: login.conf.5,v 1.7 2000/11/07 05:44:51 lukem Exp $
 .\"
 .\" Copyright (c) 1995,1996,1997 Berkeley Software Design, Inc.
 .\" All rights reserved.
@@ -143,7 +143,9 @@ Maximum number of open files per process.
 .\"
 .sp
 .It passwordtime Ta time Ta "" Ta
-Used by passwd(1) to set next password expiry date.
+Used by
+.Xr passwd 1
+to set next password expiry date.
 .\"
 .sp
 .It password-warn Ta time Ta Dv 2w Ta
