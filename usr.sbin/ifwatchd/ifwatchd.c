@@ -1,4 +1,4 @@
-/*	$NetBSD: ifwatchd.c,v 1.10 2003/03/05 09:03:49 martin Exp $	*/
+/*	$NetBSD: ifwatchd.c,v 1.11 2003/03/06 13:33:29 martin Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -177,14 +177,14 @@ main(int argc, char **argv)
 	if (!verbose)
 		daemon(0,0);
 
-	if (!inhibit_initial)
-		run_initial_ups();
-
 	s = socket(PF_ROUTE, SOCK_RAW, 0);
 	if (s < 0) {
 		perror("open routing socket");
 		exit(EXIT_FAILURE);
 	}
+
+	if (!inhibit_initial)
+		run_initial_ups();
 
 	for (;;) {
 		n = read(s, msg, sizeof msg);
@@ -430,19 +430,24 @@ static void run_initial_ups()
 
 	if (getifaddrs(&res) == 0) {
 	    for (p = res; p; p = p->ifa_next) {
+		SLIST_FOREACH(ifd, &ifs, next) {
+		    if (strcmp(ifd->ifname, p->ifa_name) == 0)
+			break;
+		}
+		if (ifd == NULL)
+		    continue;
+
+		if (p->ifa_addr && p->ifa_addr->sa_family == AF_LINK)
+		    invoke_script(NULL, NULL, ARRIVAL, ifd->index, NULL);
+
 		if ((p->ifa_flags & IFF_UP) == 0)
 		    continue;
 		if (p->ifa_addr == NULL)
 		    continue;
 		if (p->ifa_addr->sa_family == AF_LINK)
 		    continue;
-		SLIST_FOREACH(ifd, &ifs, next) {
-		    if (strcmp(ifd->ifname, p->ifa_name) == 0) {
-		    	if (if_is_connected(ifd->ifname))
-			    invoke_script(p->ifa_addr, p->ifa_dstaddr, UP, ifd->index, ifd->ifname);
-			break;
-		    }
-		}
+		if (if_is_connected(ifd->ifname))
+		    invoke_script(p->ifa_addr, p->ifa_dstaddr, UP, ifd->index, ifd->ifname);
 	    }
 	    freeifaddrs(res);
 	}
