@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.50 2000/04/29 00:23:00 perseant Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.51 2000/05/19 04:34:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -423,7 +423,7 @@ lfs_mountfs(devvp, mp, p)
 	fs->lfs_diropwait = 0;
 	fs->lfs_activesb = 0;
 #ifdef LFS_CANNOT_ROLLFW
-	fs->lfs_sbactive = NULL;
+	fs->lfs_sbactive = 0;
 #endif
 #ifdef LFS_TRACK_IOS
 	for (i=0;i<LFS_THROTTLE;i++)
