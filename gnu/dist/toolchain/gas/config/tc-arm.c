@@ -36,6 +36,10 @@
 #include "elf/arm.h"
 #endif
 
+/* Parser fixup to handle complicated __GLOBAL_OFFSET_TABLE_ expressions */
+#define TC_PARSE_CONS_EXPRESSION(EXP, NBYTES)\
+	parse_cons_expression_arm(EXP)
+
 /* Types of processor to assemble for.  */
 #define ARM_1		0x00000001
 #define ARM_2		0x00000002
@@ -95,12 +99,13 @@
 static unsigned long	cpu_variant = CPU_DEFAULT | FPU_DEFAULT;
 static int target_oabi = 0;
 
+static boolean		pic_code = false;
+
 #if defined OBJ_COFF || defined OBJ_ELF
 /* Flags stored in private area of BFD structure */
 static boolean		uses_apcs_26 = false;
 static boolean		support_interwork = false;
 static boolean		uses_apcs_float = false;
-static boolean		pic_code = false;
 #endif
 
 /* This array holds the chars that always start a comment.  If the
@@ -936,6 +941,10 @@ static void s_code PARAMS ((int));
 static void s_force_thumb PARAMS ((int));
 static void s_thumb_func PARAMS ((int));
 static void s_thumb_set PARAMS ((int));
+static void s_cons PARAMS ((int));
+static void s_type PARAMS ((int));
+static void s_weak PARAMS ((int));
+static void s_size PARAMS ((int));
 static void arm_s_text PARAMS ((int));
 static void arm_s_data PARAMS ((int));
 #ifdef OBJ_ELF
@@ -970,7 +979,9 @@ CONST pseudo_typeS md_pseudo_table[] =
   { "word",        s_arm_elf_cons, 4 },
   { "long",        s_arm_elf_cons, 4 },
 #else
-  { "word",        cons, 4},
+  { "word",        s_cons, 4},
+  { "type",        s_type, 4},
+  { "weak",        s_weak, 4},
 #endif
   { "extend",      float_cons, 'x' },
   { "ldouble",     float_cons, 'x' },
@@ -5980,6 +5991,14 @@ tc_gen_reloc (section, fixp)
 	}
 
     case BFD_RELOC_32:
+      if (pic_code && fixp->fx_pcrel == 0 && fixp->fx_addsy != NULL)
+	{
+	  if (section == text_section) 
+	    code = BFD_RELOC_ARM_GOT32;
+	  else
+	    code = fixp->fx_r_type;
+	  break;
+	}
       if (fixp->fx_pcrel)
 	{
 	  code = BFD_RELOC_32_PCREL;
@@ -5987,6 +6006,11 @@ tc_gen_reloc (section, fixp)
 	}
 
     case BFD_RELOC_ARM_PCREL_BRANCH:
+      if (pic_code)
+	{
+	  code = BFD_RELOC_ARM_JMPSLOT;
+	  break;
+	}
     case BFD_RELOC_RVA:      
     case BFD_RELOC_THUMB_PCREL_BRANCH9:
     case BFD_RELOC_THUMB_PCREL_BRANCH12:
@@ -6029,6 +6053,12 @@ tc_gen_reloc (section, fixp)
 		    _("Internal_relocation (type %d) not fixed up (OFFSET_IMM)"),
 		    fixp->fx_r_type);
       return NULL;
+
+    case BFD_RELOC_ARM_GOTPC:
+      assert(fixp->fx_pcrel != 0);
+      code = fixp->fx_r_type;
+      code = BFD_RELOC_32_PCREL;
+      break;
 
     default:
       {
@@ -6779,11 +6809,9 @@ md_parse_option (c, arg)
 	}
       break;
 
-#if defined OBJ_ELF || defined OBJ_COFF
     case 'k':
       pic_code = 1;
       break;
-#endif
       
     default:
       return 0;
@@ -7042,6 +7070,306 @@ arm_canonicalize_symbol_name (name)
     *(name + len - 5) = 0;
 
   return name;
+}
+
+/* Treat expressions starting __GLOBAL_OFFSET_TABLE_ + as special. Evaluate
+ * RHS first.
+ *
+ * XXX - This is a complete hack. No idea what the *right* way to do this
+ * is.
+ *
+ * This is probably no longer needed with gcc 2.8+
+ */
+void
+parse_cons_expression_arm(exp)
+     expressionS *exp;
+{
+  static const char* got = GLOBAL_OFFSET_TABLE_NAME;
+  static int strlen_got = 0;
+  static char* line_space = NULL; /* Horrible hack because I'm not sure that 
+				     free() is okay to call at the end of 
+				     this fn */
+
+  char *tmp_line_pointer;
+  char *eol_pointer;
+  char *rhs;
+  char *saved_line_pointer;
+  expressionS right;
+  char c;
+  symbolS *symbolP;	/* points to symbol */
+  char *name;		/* points to name of symbol */
+  segT segment;
+
+  if (strlen_got == 0) 
+    strlen_got = strlen(got);
+
+  if (strncmp(input_line_pointer, got, strlen_got) != 0)
+    {
+      /* Not a GOT expression, proceed as normal. */
+      expression(exp);
+      return;
+    }
+  
+  saved_line_pointer = input_line_pointer;
+
+  name = input_line_pointer;
+  c = get_symbol_end();
+  symbolP = symbol_find_or_make (name);
+
+  segment = S_GET_SEGMENT (symbolP);
+  if (segment == undefined_section) 
+    {
+      exp->X_op = O_symbol;
+      exp->X_add_symbol = symbolP;
+      exp->X_add_number = 0;
+    }
+
+  *input_line_pointer = c;
+
+  SKIP_WHITESPACE();
+  if (*input_line_pointer == '+')
+  	++input_line_pointer;
+
+  expression(&right);
+
+  input_line_pointer = saved_line_pointer + strlen_got;
+  SKIP_WHITESPACE();
+
+  if (*input_line_pointer != '+' && *input_line_pointer != '-')
+    {
+      /* Not an operator we can deal with. */
+      input_line_pointer = saved_line_pointer;
+      expression(exp);
+      return;
+    }
+
+  /* Shut your eyes - you don't want to see this bit.
+   * Build a buffer to hold a munged input line and
+   * hand that on to the generic expression parser.
+   */
+
+  rhs = input_line_pointer + 1;
+
+  while (*input_line_pointer != '\n' && *input_line_pointer != '\0' && 
+	 *input_line_pointer != ';')
+    input_line_pointer++;
+  eol_pointer = input_line_pointer;
+
+  if (line_space != NULL) 
+    free (line_space);
+  input_line_pointer = line_space = malloc(eol_pointer - 
+					   saved_line_pointer + 3);
+  strncpy (input_line_pointer, saved_line_pointer, rhs - saved_line_pointer);
+  input_line_pointer[rhs - saved_line_pointer] = '\0';
+  strcat (input_line_pointer, "(");
+  strncat (input_line_pointer, rhs, eol_pointer - rhs);
+  input_line_pointer[eol_pointer - saved_line_pointer + 1] = 0;
+  strcat (input_line_pointer, ")");
+
+  /* Okay, you can open your eyes again now. */
+
+  expression(exp);
+
+/* XXX - Hack to check whether any pointers are left referring to the 
+ * line_space buffer
+ * Note: free() to be moved down here if this turns out to be safe.
+ */
+
+  while(input_line_pointer > line_space)
+    {
+      input_line_pointer--;
+      input_line_pointer[0] = 'X';
+    }
+  *input_line_pointer = '\0';
+
+  /* Restore the input_line_pointer to point to where the caller expects it to be and exit. */
+
+  input_line_pointer = eol_pointer;
+}
+
+/*
+ * Called to deal with an expression part of an .word instruction
+ * i.e.
+ * 	.word <expression>
+ *
+ * This is an expression that could have a GOT reference of the form
+ * __GLOBAL_OFFSET_TABLE + . - (L2 + 4)
+ *
+ * This is something that the expression parser cannot handle
+ * We need to perform the . - (L2 + 4) part first as this resolves
+ * to an absolute.
+ */
+
+static void
+s_cons(size)
+	int size;
+{
+#if 0
+	if (pic_code) 
+	  abort();		/* Whoops */
+#endif
+	cons (size);
+}
+
+/*
+ * This fix_new is called by cons via TC_CONS_FIX_NEW
+ *
+ * We check the expression to see if it is of the form
+ *  __GLOBAL_OFFSET_TABLE + ???
+ * If it is then this is a PC relative reference to the GOT.
+ * i.e.
+ * 	ldr	sl, L1
+ * 	add	sl, pc, sl
+ * L2:
+ * 	...
+ * L1:
+ *	.word	__GLOBAL_OFFSET_TABLE + (. - (L2 + 4))
+ *
+ * In this case use a reloc type BFD_RELOC_ARM_GOTPC instead of the
+ * normal BFD_RELOC_{16,32,64}
+ */
+
+void
+cons_fix_new_arm(frag, where, size, exp)
+	fragS *frag;
+	int where;
+	int size;
+	expressionS *exp;
+{
+	bfd_reloc_code_real_type type;
+	int pcrel = 0;
+
+	/* Pick a reloc ...
+	 *
+	 * @@ Should look at CPU word size.
+	 */
+	switch (size) 
+	  {
+	  case 2:
+	    type = BFD_RELOC_16;
+	    break;
+	  case 4:
+	  default:
+	    type = BFD_RELOC_32;
+	    break;
+	  case 8:
+	    type = BFD_RELOC_64;
+	    break;
+	  }
+	
+	/* Look for possible GOTPC reloc */
+
+	/*
+	 * Look for pic assembler and 'undef symbol + expr symbol' expression
+	 * and a 32 bit size
+	 */
+
+	if (pic_code != 0 && size == 4 && exp->X_op == O_add
+	    && exp->X_add_symbol
+	    && S_GET_SEGMENT (exp->X_add_symbol) == undefined_section
+	    && exp->X_op_symbol
+	    && S_GET_SEGMENT (exp->X_op_symbol) == expr_section) 
+	  {
+	    /*
+	     * This could be it
+	     * Is the primary symbol name "__GLOBAL_OFFSET_TABLE" ?
+	     */
+	    if (strcmp (S_GET_NAME(exp->X_add_symbol),
+		       GLOBAL_OFFSET_TABLE_NAME) == 0) 
+	      {
+		type = BFD_RELOC_ARM_GOTPC;
+		pcrel = 1;
+	      }
+	  }
+	
+	fix_new_exp (frag, where, (int) size, exp, pcrel, type);
+}
+
+#define AUX_OBJECT	1
+#define AUX_FUNCTION	2
+
+static void
+s_type(a)
+	int a;
+{
+  /* Strip out the section name */
+  char *symbol_name, *symbol_name_end;
+  char *type_name, *type_name_end;
+  char c;
+  register symbolS *symbolP;
+  unsigned int len;
+
+  symbol_name = input_line_pointer;
+  c = get_symbol_end ();
+  symbol_name_end = input_line_pointer;
+  input_line_pointer++;
+  len = symbol_name_end - symbol_name;
+
+  SKIP_WHITESPACE ();
+
+  if (c == ',')
+    {
+      /* Allow some leeway here, as .type has used several different 
+	 characters at different times.  `%' is the current favourite
+	 and this is what gcc 2.8 outputs, but `@' is traditional on
+	 other machines and there was a time when `#' got used by some
+	 people.  */
+      if (input_line_pointer[0] == '#' || input_line_pointer[0] == '@'
+	  || input_line_pointer[0] == '%')
+        ++input_line_pointer;
+
+      if (strncmp (input_line_pointer, "object", 6) == 0) 
+	{
+	  symbolP = symbol_find_or_make (symbol_name);
+	  S_SET_OTHER (symbolP, S_GET_OTHER(symbolP) | AUX_OBJECT);
+	  input_line_pointer += 6;
+	} 
+      else 
+	if (strncmp (input_line_pointer, "function", 8) == 0) 
+	  {
+	    symbolP = symbol_find_or_make (symbol_name);
+	    S_SET_OTHER (symbolP, S_GET_OTHER(symbolP) | AUX_FUNCTION);
+	    input_line_pointer += 8;
+	  }
+    }
+
+  demand_empty_rest_of_line ();
+}
+
+#define BIND_WEAK	0x20
+
+static void
+s_weak(a)
+	int a;
+{
+
+  char *name;
+  int c;
+  symbolS *symbolP;
+
+  do
+    {
+      name = input_line_pointer;
+      c = get_symbol_end ();
+      symbolP = symbol_find_or_make (name);
+      *input_line_pointer = c;
+      SKIP_WHITESPACE ();
+      S_SET_OTHER(symbolP, S_GET_OTHER(symbolP) | BIND_WEAK);
+      /*
+       * Anything declared weak becomes global.
+       * Not sure why but this is required to work with the netbsd linker
+       * The NetBSD assembler does this.
+       */
+      if (c == ',')
+	{
+	  input_line_pointer++;
+	  SKIP_WHITESPACE ();
+	  if (*input_line_pointer == '\n')
+	    c = '\n';
+	}
+    }
+  while (c == ',');
+  demand_empty_rest_of_line ();
 }
 
 boolean
