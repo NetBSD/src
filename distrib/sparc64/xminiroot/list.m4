@@ -1,4 +1,4 @@
-#	$NetBSD: list.m4,v 1.4 2002/01/05 07:42:10 mrg Exp $
+#	$NetBSD: list.m4,v 1.5 2002/01/21 13:46:27 mrg Exp $
 
 # copy the crunched binary, link to it, and kill it
 COPY	${OBJDIR}/ramdiskbin		ramdiskbin
@@ -55,8 +55,6 @@ LINK	ramdiskbin			sbin/shutdown
 LINK	ramdiskbin			sbin/slattach
 LINK	ramdiskbin			sbin/swapctl
 LINK	ramdiskbin			sbin/umount
-ifelse(MACHINE,i386,	LINK	ramdiskbin	sbin/fdisk)
-ifelse(MACHINE,i386,	LINK	ramdiskbin	sbin/mbrlabel)
 LINK	ramdiskbin			usr/libexec/lfs_cleanerd
 LINK	ramdiskbin			usr/bin/chgrp
 LINK	ramdiskbin			usr/bin/ftp
@@ -71,11 +69,10 @@ LINK	ramdiskbin			usr/bin/tip
 LINK	ramdiskbin			usr/mdec/installboot
 LINK	ramdiskbin			usr/sbin/chown
 LINK	ramdiskbin			usr/sbin/chroot
-ifelse(MACHINE,i386,	LINK	ramdiskbin	usr/sbin/bad144)
-ifelse(MACHINE,sparc64,	LINK	ramdiskbin	usr/sbin/chat)
-ifelse(MACHINE,sparc64,	LINK	ramdiskbin	usr/sbin/pppd)
-ifelse(MACHINE,sparc64,	LINK	ramdiskbin	usr/bin/getopt)
-ifelse(MACHINE,sparc64,	LINK	ramdiskbin	sbin/sysctl)
+LINK	ramdiskbin			usr/sbin/chat
+LINK	ramdiskbin			usr/sbin/pppd
+LINK	ramdiskbin			usr/bin/getopt
+LINK	ramdiskbin			sbin/sysctl
 SPECIAL	/bin/rm ramdiskbin
 
 # various files that we need in /etc for the install
@@ -97,16 +94,10 @@ SPECIAL	cd dev; sh MAKEDEV ramdisk
 SPECIAL	/bin/rm dev/MAKEDEV
 
 # we need the boot block in /usr/mdec + the arch specific extras
-ifelse(MACHINE,sparc, COPY ${DESTDIR}/usr/mdec/boot usr/mdec/boot)
-ifelse(MACHINE,sparc, COPY ${DESTDIR}/usr/mdec/bootxx usr/mdec/bootxx)
-ifelse(MACHINE,sparc, COPY ${DESTDIR}/usr/mdec/binstall usr/mdec/binstall)
-ifelse(MACHINE,sparc64, COPY ${DESTDIR}/usr/mdec/ofwboot usr/mdec/ofwboot)
-ifelse(MACHINE,sparc64, COPY ${DESTDIR}/usr/mdec/ofwboot ofwboot)
-ifelse(MACHINE,sparc64, COPY ${DESTDIR}/usr/mdec/bootblk usr/mdec/bootblk)
-ifelse(MACHINE,sparc64, COPY ${DESTDIR}/usr/mdec/binstall usr/mdec/binstall)
-ifelse(MACHINE,i386,  COPY ${DESTDIR}/usr/mdec/biosboot.sym usr/mdec/biosboot.sym)
-ifelse(MACHINE,i386,  COPY ${DESTDIR}/usr/mdec/mbr         usr/mdec/mbr)
-ifelse(MACHINE,i386,  COPY ${DESTDIR}/usr/mdec/mbr_bootsel	usr/mdec/mbr_bootsel)
+COPY ${DESTDIR}/usr/mdec/ofwboot usr/mdec/ofwboot
+COPY ${DESTDIR}/usr/mdec/ofwboot ofwboot
+COPY ${DESTDIR}/usr/mdec/bootblk usr/mdec/bootblk
+COPY ${DESTDIR}/usr/mdec/binstall usr/mdec/binstall
 
 # and the common installation tools
 COPY	termcap.mini		usr/share/misc/termcap
@@ -133,4 +124,4 @@ COPY	${OBJDIR}/dot.profile			.profile
 #the lists of obsolete files used by sysinst  
 SPECIAL sh ${CURDIR}/../../sets/makeobsolete -b -s ${CURDIR}/../../sets -t ./dist
 
-ifelse(MACHINE,sparc64, SPECIAL gzip -9 < ${KERNOBJDIR}/GENERIC/netbsd > netbsd)
+#SPECIAL gzip -9 < ${KERNOBJDIR}/GENERIC/netbsd > netbsd

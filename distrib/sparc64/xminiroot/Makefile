@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2002/01/20 05:57:10 mrg Exp $
+#	$NetBSD: Makefile,v 1.12 2002/01/21 13:46:26 mrg Exp $
 
 TOP=		${.CURDIR}/..
 MINIROOT=	${TOP}/../miniroot
@@ -11,7 +11,8 @@ MINIROOT=	${TOP}/../miniroot
 HACKSRC=	${TOP}/../utils/libhack
 SRCROOT=	${TOP}/../..
 WARNS=1
-KERN?=		${KERNOBJDIR}/INSTALL/netbsd
+INSTKERN?=	${KERNOBJDIR}/INSTALL/netbsd
+GENERICKERN?=	${KERNOBJDIR}/GENERIC/netbsd
 
 AUXDEPENDS= 	dot.profile disktab.preinstall termcap.mini \
 		dist/base_obsolete dist/comp_obsolete \
@@ -24,6 +25,8 @@ CBIN=		ramdiskbin
 
 CSIZE?=		15360
 IMAGE?=		miniroot.fs
+INSTALLSIZE?=	10240
+INSTALLIMAGE?=	install.fs
 MDEC=		${DESTDIR}/usr/mdec
 MOUNT_POINT?=	${.OBJDIR}/mountpoint
 
@@ -36,18 +39,20 @@ MDSETIMAGE?=	mdsetimage
 MTREE?=		mtree
 DISKTYPE?=	miniroot
 
-MAKEFSOPTS?=	-o optimization=space,minfree=1,nsectors=1,ntracks=${CSIZE},bsize=16k,fsize=2k
+MAKEFSOPTS?=	-o optimization=space,minfree=1,bsize=16k,fsize=2k
 
-all: netbsd.INSTALL ${IMAGE}
+all: netbsd.INSTALL ${INSTALLIMAGE} ${IMAGE}
 
-netbsd.INSTALL: ${KERN} ${IMAGE}
-	cp ${KERN} netbsd.tmp
-	${MDSETIMAGE} -v netbsd.tmp ${IMAGE}
+netbsd.gz: ${GENERICKERN}
+	gzip -9 < ${GENERICKERN} > netbsd.gz
+
+netbsd.INSTALL: ${INSTKERN} ${INSTALLIMAGE}
+	cp ${INSTKERN} netbsd.tmp
+	${MDSETIMAGE} -v netbsd.tmp ${INSTALLIMAGE}
 	${STRIP} netbsd.tmp
 	mv netbsd.tmp ${.TARGET}
 
-
-${IMAGE}: ${CBIN} ${AUXDEPENDS} ${MTREECONF} ${LISTS} dot.profile
+${INSTALLIMAGE} ${IMAGE}: ${CBIN} ${AUXDEPENDS} ${MTREECONF} ${LISTS} dot.profile netbsd.gz
 	@echo "Building miniroot tree..."
 	-rm -rf ${MOUNT_POINT}
 	mkdir -m 755 ${MOUNT_POINT}
@@ -55,9 +60,17 @@ ${IMAGE}: ${CBIN} ${AUXDEPENDS} ${MTREECONF} ${LISTS} dot.profile
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
 	    KERNOBJDIR=${KERNOBJDIR} \
 	    TARGDIR=${MOUNT_POINT} sh ${TOP}/runlist.sh ${LISTS}
+	@echo "Creating install image..."
+	-rm -f ${INSTALLIMAGE}
+	${MAKEFS} -t ffs -B be -s ${INSTALLSIZE}b ${MAKEFSOPTS} \
+		-o nsectors=1,ntracks=${INSTALLSIZE} \
+		${INSTALLIMAGE}.tmp ${MOUNT_POINT} && mv ${INSTALLIMAGE}.tmp ${INSTALLIMAGE}
+	@echo "Copying in GENERIC kernel..."
+	cp netbsd.gz ${MOUNT_POINT}/netbsd
 	@echo "Creating miniroot image..."
 	-rm -f ${IMAGE}
 	${MAKEFS} -t ffs -B be -s ${CSIZE}b ${MAKEFSOPTS} \
+		-o nsectors=1,ntracks=${CSIZE} \
 		${IMAGE}.tmp ${MOUNT_POINT} && mv ${IMAGE}.tmp ${IMAGE}
 	# use sunlabel?
 	#-disklabel -f ${.CURDIR}/disktab -rw ${VND_CDEV} ${DISKTYPE}
