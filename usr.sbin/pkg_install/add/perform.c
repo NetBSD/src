@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.52.2.3 2000/10/17 19:50:27 tv Exp $	*/
+/*	$NetBSD: perform.c,v 1.52.2.4 2000/12/15 04:05:44 he Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.44 1997/10/13 15:03:46 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.52.2.3 2000/10/17 19:50:27 tv Exp $");
+__RCSID("$NetBSD: perform.c,v 1.52.2.4 2000/12/15 04:05:44 he Exp $");
 #endif
 #endif
 
@@ -151,7 +151,7 @@ pkg_do(char *pkg)
 					 */
 					return 1;
 
-				if (strstr(pkg, ".tgz") != NULL) {
+				if ((strstr(pkg, ".tgz") != NULL) || (strstr(pkg, ".tbz") != NULL)) {
 					/* There already is a ".tgz" - give up 
 					 * (We don't want to pretend to be exceedingly
 					 *  clever - the user should give something sane!)
@@ -163,14 +163,14 @@ pkg_do(char *pkg)
 				/* Second chance - maybe just a package name was given,
 				 * without even a wildcard as a version. Tack on
 				 * the same pattern as we do for local packages: "-[0-9]*",
-				 * plus a ".tgz" as we're talking binary pkgs here.
+				 * plus a ".t[bg]z" as we're talking binary pkgs here.
 				 * Then retry.
 				 */
 				{
 					char *s;
 					char buf2[FILENAME_MAX];
 					
-					snprintf(buf2, sizeof(buf2), "%s-[0-9]*.tgz", tmppkg);
+					snprintf(buf2, sizeof(buf2), "%s-[0-9]*.t[bg]z", tmppkg);
 					s=fileFindByPath(NULL, buf2);
 					if (s == NULL) {
 						warnx("no pkg found for '%s' on 2nd try, sorry.", buf2);
@@ -422,11 +422,20 @@ pkg_do(char *pkg)
 
 					char    path[FILENAME_MAX], *cp = NULL;
 
-					(void) snprintf(path, sizeof(path), "%s/%s.tgz", Home, p->name);
+					/* is there a .tbz file? */
+					(void) snprintf(path, sizeof(path), "%s/%s.tbz", Home, p->name);
 					if (fexists(path))
 						cp = path;
-					else
-						cp = fileFindByPath(pkg, p->name); /* files & wildcards */
+					else {
+						/* no, maybe .tgz? */
+						(void) snprintf(path, sizeof(path), "%s/%s.tgz", Home, p->name);
+						if (fexists(path)) {
+							cp = path;
+						} else {
+							/* neither - let's do some digging! */
+							cp = fileFindByPath(pkg, p->name); /* files & wildcards */
+						}
+					}
 					if (cp) {
 						if (Verbose)
 							printf("Loading it from %s.\n", cp);
@@ -463,10 +472,6 @@ pkg_do(char *pkg)
 
 						char *s;
 						s=fileFindByPath(pkg, p->name);
-						if (Verbose) {
-							printf("HF: pkg='%s'\n", pkg);
-							printf("HF: s='%s'\n", s);
-						}
 
 						/* adjust new_pkg and new_name */
 						new_pkg = NULL;
@@ -505,7 +510,7 @@ pkg_do(char *pkg)
 
 					} else {
 						if (Verbose)
-							warnx("HF: fileGetURL('%s', '%s') failed", new_pkg, new_name);
+							warnx("fileGetURL('%s', '%s') failed", new_pkg, new_name);
 						if (!Force)
 							code++;
 					}
