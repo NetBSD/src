@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.148 2003/10/11 02:00:16 kochi Exp $
+#	$NetBSD: 3RDPARTY,v 1.149 2003/10/17 16:57:16 fredb Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -488,14 +488,13 @@ X11 support and other things we don't want.
 
 Package:	ntp
 Version:	4.0.99i
-Current Vers:	4.1.2/4.1.80
+Current Vers:	4.2.0
 Maintainer:	David L. Mills <mills@udel.edu>
 Archive Site:	ftp://ftp.udel.edu/pub/ntp/ntp4/
 Mailing List:	
 Responsible:	simonb, jonathan
 Notes:
 See /usr/src/dist/ntp/ntp2netbsd for update instructions.
-Patches have been sent to the author [again].
 NOTE: As of 20010405 -current includes a fix for the "ntpdx" root
 exploit/DoS attack which has been pulled up to the 1.4 and 1.5 branches.
 
