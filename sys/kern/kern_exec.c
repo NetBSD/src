@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.131 2000/12/09 12:38:23 jdolecek Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.132 2000/12/10 12:42:30 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -815,7 +815,7 @@ emul_unregister(name)
 	}
 
 	/* test if any execw[] entry is still using this */
-	for(i=0; execsw[i]; i++) {
+	for(i=0; i < nexecs; i++) {
 		if (execsw[i]->es_emul == it->el_emul) {
 			error = EBUSY;
 			goto out;
