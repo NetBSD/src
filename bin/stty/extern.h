@@ -30,9 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)extern.h	5.4 (Berkeley) 6/10/91
- *
- *	$Header: /cvsroot/src/bin/stty/extern.h,v 1.3 1993/03/23 00:30:15 cgd Exp $
+ *	from: @(#)extern.h	5.4 (Berkeley) 6/10/91
+ *	$Id: extern.h,v 1.4 1993/06/01 14:42:11 cgd Exp $
  */
 
 __BEGIN_DECLS
