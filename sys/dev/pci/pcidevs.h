@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.489 2002/11/15 22:20:02 tsutsui Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.490 2002/11/19 06:52:08 bsh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.486 2002/11/15 22:13:11 tsutsui Exp 
+ *	NetBSD: pcidevs,v 1.487 2002/11/19 06:47:24 bsh Exp 
  */
 
 /*
@@ -506,6 +506,7 @@
 #define	PCI_VENDOR_3DO	0x1239		/* The 3D0 Company */
 #define	PCI_VENDOR_CCUBE	0x123f		/* C-Cube Microsystems */
 #define	PCI_VENDOR_AVM	0x1244		/* AVM */
+#define	PCI_VENDOR_SAMSUNGELEC2	0x1249		/* Samsung Electronics Co. Ltd. (2nd vendor ID) */
 #define	PCI_VENDOR_STALLION	0x124d		/* Stallion Technologies */
 #define	PCI_VENDOR_LINEARSYS	0x1254		/* Linear Systems */
 #define	PCI_VENDOR_ASIX	0x125b		/* ASIX Electronics */
@@ -544,6 +545,7 @@
 #define	PCI_VENDOR_ETIMEDIA	0x1409		/* eTIMedia Technology Co. Ltd. */
 #define	PCI_VENDOR_OXFORDSEMI	0x1415		/* Oxford Semiconductor Ltd. */
 #define	PCI_VENDOR_TAMARACK	0x143d		/* Tamarack Microelectronics, Inc. */
+#define	PCI_VENDOR_SAMSUNGELEC3	0x144d		/* Samsung Electronics Co. Ltd. (3rd vendor ID) */
 #define	PCI_VENDOR_ASKEY	0x144f		/* Askey Computer Corp. */
 #define	PCI_VENDOR_AVERMEDIA	0x1461		/* Avermedia Technologies */
 #define	PCI_VENDOR_AIRONET	0x14b9		/* Aironet Wireless Communications */
