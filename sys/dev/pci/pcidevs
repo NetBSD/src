@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.160 1999/10/29 07:57:38 haya Exp $
+$NetBSD: pcidevs,v 1.161 1999/10/29 21:30:19 matt Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -616,6 +616,7 @@ product ADP AIC5900	0x5900	AIC-5900 ATM
 product ADP AIC5905	0x5905	AIC-5905 ATM
 product ADP AIC6915	0x6915	AIC-6915 10/100 Ethernet
 product ADP AIC7860	0x6078	AIC-7860
+product ADP APA1480	0x6075  APA-1480 Ultra
 product ADP 2940AU	0x6178	AHA-2940A Ultra
 product ADP AIC7870	0x7078	AIC-7870
 product ADP 2940	0x7178	AHA-2940
