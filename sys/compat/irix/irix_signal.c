@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_signal.c,v 1.16 2002/06/17 05:01:56 manu Exp $ */
+/*	$NetBSD: irix_signal.c,v 1.17 2002/06/22 13:02:39 manu Exp $ */
 
 /*-
  * Copyright (c) 1994, 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.16 2002/06/17 05:01:56 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.17 2002/06/22 13:02:39 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -936,7 +936,7 @@ irix_sys_sigaction(p, v, retval)
 	int signum;
 	struct svr4_sys_sigaction_args cup;
 	struct irix_emuldata *ied;
-#ifdef DBUG_IRIX
+#ifdef DEBUG_IRIX
 	void *sigtramp;
 #endif
 
