@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.14 1995/06/04 05:07:14 mycroft Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.15 1995/06/11 09:36:28 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993, 1994
@@ -440,7 +440,8 @@ findpcb:
 		if (ti->ti_len == 0) {
 			if (SEQ_GT(ti->ti_ack, tp->snd_una) &&
 			    SEQ_LEQ(ti->ti_ack, tp->snd_max) &&
-			    tp->snd_cwnd >= tp->snd_wnd) {
+			    tp->snd_cwnd >= tp->snd_wnd &&
+			    tp->t_dupacks < tcprexmtthresh) {
 				/*
 				 * this is a pure ack for outstanding data.
 				 */
