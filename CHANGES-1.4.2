@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.2,v 1.1.2.104 2000/01/18 20:18:09 he Exp $
+#	$NetBSD: CHANGES-1.4.2,v 1.1.2.105 2000/01/21 00:48:41 he Exp $
 
 A complete list of changes from NetBSD 1.4.1 to NetBSD 1.4.2:
 
@@ -2702,3 +2702,121 @@ distrib/notes/amiga/prep			1.20
 distrib/notes/amiga/install			1.20-1.21
 
   Correct a few typos.  Add a few recommendations and warnings.
+
+sys/dev/isa/ess.c				1.49
+
+  Make CD passthrough work when the audio playback/record device
+  is closed.
+
+sys/dev/scsipi/ss.c				1.28
+
+  Newline terminate 'ss:' attach message.
+
+sys/ufs/lfs/lfs.h				1.20
+sys/ufs/lfs/lfs_alloc.c				1.31 via patch
+sys/ufs/lfs/lfs_extern.h			1.16
+sys/ufs/lfs/lfs_inode.c				1.29-1.30
+sys/ufs/lfs/lfs_segment.c			1.39
+sys/ufs/lfs/lfs_syscalls.c			1.40
+sys/ufs/lfs/lfs_subr.c				1.10
+sys/ufs/lfs/lfs_vfsops.c			1.46 via patch
+
+  Files removed (through unlink, rmdir) are now really removed, though the
+  removal is postponed until the dirop is complete to ensure validity of
+  the filesystem through a crash.  Use a separate per-fs lock, instead of
+  ufs_hashlock, to protect the inode free list.  Change calling semantics 
+  of lfs_ifind, to give better error reporting:  If fed a struct buf, it
+  can report the block number of the offending inode block as well as the
+  inode number.
+
+sys/arch/bebox/bebox/locore.s			1.13
+sys/arch/bebox/bebox/machdep.c			1.47
+sys/arch/macppc/macppc/locore.S			1.19
+sys/arch/macppc/macppc/machdep.c		1.64
+sys/arch/ofppc/ofppc/locore.S			1.14
+sys/arch/ofppc/ofppc/machdep.c			1.50
+sys/arch/powerpc/include/trap.h			1.2
+sys/arch/powerpc/powerpc/trap.c			1.23
+
+  Add (the beginnings of) an unaligned access handler for the
+  powerpc, to get around the fact that gcc currently generates bad
+  floating point copies sometimes, which breaks various things,
+
+sys/arch/macppc/dev/if_bm.c			1.3
+
+  Work around a problem where the 'bm' (iMac and Blue G3 built-in
+  ethernet) driver only works if initialized from Open Firmware.
+
+sys/sys/timepps.h				1.2-1.3
+sys/dev/ic/z8530tty.c				1.61-1.62
+sys/dev/ic/com.c				1.162-1.163
+
+  Fix TIMEVAL/TIMESPEC botches and update to the -05 draft version
+  of the PPS-API specification.
+
+sys/arch/next68k/next68k/nextrom.c		1.11
+
+  Fix boot failure on machines which do not have 32M of memory.
+  Fixes PR#8962.
+
+distrib/notes/sparc/install			1.21
+
+  Reduce block size in dd command to 4K; this should make the
+  blocking factor OK when reading from a pipe.
+
+usr.sbin/user/Makefile				1.1-1.6 (new)
+usr.sbin/user/defs.h				1.1-1.5 (new)
+usr.sbin/user/dot.cshrc				1.1 (new)
+usr.sbin/user/dot.login				1.1 (new)
+usr.sbin/user/dot.profile			1.1 (new)
+usr.sbin/user/group.8				1.1-1.3 (new)
+usr.sbin/user/groupadd.8			1.1-1.3 (new)
+usr.sbin/user/groupdel.8			1.1-1.4 (new)
+usr.sbin/user/groupinfo.8			1.1 (new)
+usr.sbin/user/groupmod.8			1.1-1.3 (new)
+usr.sbin/user/main.c				1.1 (new)
+usr.sbin/user/user.8				1.1-1.4 (new)
+usr.sbin/user/user.c				1.1-1.10 (new)
+usr.sbin/user/useradd.8				1.1-1.4 (new)
+usr.sbin/user/userdel.8				1.1-1.3 (new)
+usr.sbin/user/userinfo.8			1.1 (new)
+usr.sbin/user/usermgmt.h			1.1-1.4 (new)
+usr.sbin/user/usermod.8				1.1-1.3 (new)
+usr.sbin/Makefile				1.128 via patch
+distrib/sets/lists/base/mi			1.136,1.138
+distrib/sets/lists/man/mi			1.178,1.180,1.189 via patch
+
+  Add tools to manage users and groups.
+
+usr.bin/netstat/route.c				1.46
+
+  Properly print "B" for "Blackhole" routes.  Fixes PR#9190.
+
+bin/pax/tar.c					1.17
+
+  Fix bugs handling files larger than 2GB.
+
+usr.sbin/pkg_install/info/pkg_info.1		1.20
+
+  Reverse wording for -R.  Fixes PR#9141.
+
+sys/arch/atari/dev/clock.c			1.21
+
+  Fix Y2K buglet in /dev/rtc.  Note that the input and output format
+  of that device has now changed.
+
+sys/arch/next68k/dev/nextdma.c			1.21 via patch
+
+  Fix problem that causes xe0 to get frequent weird DMA Rx interrupts
+  and panics.  Fixes PR#8847.
+
+sbin/fsck_lfs/fsck.h				1.3
+sbin/fsck_lfs/inode.c				1.4
+sbin/fsck_lfs/pass1.c				1.4
+
+  Fix name collision error due to recent kernel prototype updates.
+  Fixes PR#9253.
+
+sys/dev/isa/ioat66.c				1.1
+
+  Add a driver for BOCA 6-port ISA serial adapter.
