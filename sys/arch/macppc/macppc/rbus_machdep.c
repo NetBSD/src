@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_machdep.c,v 1.9 2001/06/08 05:43:00 chs Exp $	*/
+/*	$NetBSD: rbus_machdep.c,v 1.10 2001/06/10 15:32:58 tsubai Exp $	*/
 
 /*
  * Copyright (c) 1999
@@ -33,8 +33,8 @@
 
 #include <uvm/uvm_extern.h>
 
+#include <machine/bat.h>
 #include <machine/bus.h>
-#include <powerpc/mpc6xx/bat.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
