@@ -1,10 +1,10 @@
 #	from: @(#)Makefile	5.8 (Berkeley) 9/2/92
-#	$Id: Makefile,v 1.10 1994/01/04 21:41:36 pk Exp $
+#	$Id: Makefile,v 1.11 1994/12/22 09:34:57 cgd Exp $
 
 PROG=	monop
 SRCS=	monop.c cards.c execute.c getinp.c houses.c jail.c misc.c morg.c \
 	print.c prop.c rent.c roll.c spec.c trade.c
-MAN6=	monop.0
+MAN=	monop.6
 DPADD+=	${LIBCOMPAT}
 LDADD+=	-lcompat
 HIDEGAME=hidegame

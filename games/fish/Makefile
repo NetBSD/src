@@ -1,8 +1,8 @@
 #	from: @(#)Makefile	5.5 (Berkeley) 1/18/91
-#	$Id: Makefile,v 1.3 1994/12/15 08:12:59 jtc Exp $
+#	$Id: Makefile,v 1.4 1994/12/22 09:34:07 cgd Exp $
 
 PROG=	fish
-MAN6=	fish.0
+MAN=	fish.6
 HIDEGAME=hidegame
 
 beforeinstall: 

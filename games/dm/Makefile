@@ -1,10 +1,9 @@
 #	from: @(#)Makefile	5.7 (Berkeley) 9/30/90
-#	$Id: Makefile,v 1.5 1994/01/28 05:08:25 cgd Exp $
+#	$Id: Makefile,v 1.6 1994/12/22 09:33:58 cgd Exp $
 
 # -DLOG		log games
 PROG=	dm
-MAN8=	dm.0
-MAN5=	dm.conf.0
+MAN=	dm.8 dm.conf.5
 BINOWN= games
 BINMODE=4555
 

@@ -1,5 +1,5 @@
 # Makefile for uucico
-# $Id: Makefile,v 1.3 1994/10/24 22:27:09 jtc Exp $
+# $Id: Makefile,v 1.4 1994/12/22 09:32:23 cgd Exp $
 
 BINDIR=		$(sbindir)
 BINOWN=		$(owner)
@@ -15,7 +15,7 @@ CFLAGS+=	-I$(.CURDIR)/../common_sources\
 		-DOWNER=\"$(owner)\" \
 		-DVERSION=\"$(VERSION)\"
 
-MAN8=		uucico.0
+MAN=		uucico.8
 
 .include <bsd.prog.mk>
 .PATH: $(.CURDIR)/../common_sources

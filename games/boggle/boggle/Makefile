@@ -5,7 +5,7 @@ SRCS=	bog.c help.c mach.c prtable.c timer.c word.c
 DPADD=	${LIBCURSES} ${LIBTERM}
 LDADD=	-lcurses -ltermlib
 HIDEGAME=hidegame
-MAN6=	boggle.0
+MAN=	boggle.6
 
 beforeinstall:
 	install -c -o ${BINOWN} -g ${BINGRP} -m 444 ${.CURDIR}/helpfile \

@@ -1,9 +1,9 @@
-#	$Id: Makefile,v 1.14 1994/12/14 01:50:14 jtc Exp $
+#	$Id: Makefile,v 1.15 1994/12/22 09:35:22 cgd Exp $
 
 PROG=	gzip
 SRCS=	gzip.c zip.c deflate.c trees.c bits.c unzip.c inflate.c util.c \
 	crypt.c lzw.c unlzw.c unlzh.c unpack.c getopt.c
-MAN1=	gzexe.0 gzip.0 zdiff.0 zforce.0 zgrep.0 zmore.0 znew.0
+MAN=	gzexe.1 gzip.1 zdiff.1 zforce.1 zgrep.1 zmore.1 znew.1
 CFLAGS+=-DSTDC_HEADERS=1 -DHAVE_UNISTD_H=1 -DDIRENT=1
 
 .if (${MACHINE_ARCH} == "m68k" || ${MACHINE_ARCH} == "i386")
