@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.14 1998/10/14 13:54:09 tsubai Exp $
+#	$NetBSD: GENERIC,v 1.15 1998/10/18 09:31:40 tsubai Exp $
 #
 # POWERMAC config file
 #
@@ -127,6 +127,7 @@ ams*	at adb?				# ADB mouse
 ofb0	at pci? dev ? function ?	# Generic Open Firmware Framebuffer
 wsdisplay* at ofb? console ?
 wskbd*	at akbd? console ?
+wsmouse* at ams?
 
 mc0	at obio0			# MACE ethernet
 esp0	at obio0 flags 0x00ff		# 53c9x SCSI

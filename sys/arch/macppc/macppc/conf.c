@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.9 1998/10/14 12:21:21 tsubai Exp $	*/
+/*	$NetBSD: conf.c,v 1.10 1998/10/18 09:31:43 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -116,6 +116,10 @@ cdev_decl(scsibus);
 
 #include "wsdisplay.h"
 cdev_decl(wsdisplay);
+#include "wskbd.h"
+cdev_decl(wskbd);
+#include "wsmouse.h"
+cdev_decl(wsmouse);
 
 struct cdevsw cdevsw[] = {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
@@ -154,8 +158,8 @@ struct cdevsw cdevsw[] = {
 	cdev_mm_init(1,nvram),		/* 33: nvram device */
 	cdev_scsibus_init(NSCSIBUS,scsibus), /* 34: SCSI bus */
 	cdev_wsdisplay_init(NWSDISPLAY,wsdisplay), /* 35: wsdisplay */
-	cdev_notdef(),			/* 36: reserved for wskbd */
-	cdev_notdef(),			/* 37: reserved for wsmouse */
+	cdev_mouse_init(NWSKBD,wskbd),	/* 36: wskbd */
+	cdev_mouse_init(NWSMOUSE,wsmouse), /* 37: wsmouse */
 };
 int nchrdev = sizeof cdevsw / sizeof cdevsw[0];
 
