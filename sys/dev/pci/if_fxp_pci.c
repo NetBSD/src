@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp_pci.c,v 1.7 2000/05/12 13:46:32 jhawk Exp $	*/
+/*	$NetBSD: if_fxp_pci.c,v 1.8 2000/05/12 18:46:34 jhawk Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -100,7 +100,6 @@ struct fxp_pci_softc {
 	pci_chipset_tag_t psc_pc;	/* pci chipset tag */
 	pcireg_t psc_regs[0x20>>2];	/* saved PCI config regs (sparse) */
 	pcitag_t psc_tag;		/* pci register tag */
-	void *psc_ih;			/* interrupt handler cookie */
 	void *psc_powerhook;		/* power hook */
 };
 
@@ -371,8 +370,8 @@ fxp_pci_attach(parent, self, aux)
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
-	psc->psc_ih = pci_intr_establish(pc, ih, IPL_NET, fxp_intr, sc);
-	if (psc->psc_ih == NULL) {
+	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, fxp_intr, sc);
+	if (sc->sc_ih == NULL) {
 		printf("%s: couldn't establish interrupt",
 		    sc->sc_dev.dv_xname);
 		if (intrstr != NULL)
