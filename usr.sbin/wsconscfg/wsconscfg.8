@@ -1,0 +1,55 @@
+.\"	$NetBSD: wsconscfg.8,v 1.1 1999/01/13 17:15:44 drochner Exp $
+.\"
+.Dd January 12, 1999
+.Os
+.Dt WSCONSCFG 8
+.Sh NAME
+.Nm wsconscfg
+.Nd configure virtual terminals on a wscons display
+.Sh SYNOPSIS
+.Nm
+.Op Fl f Ar <ctldev>
+.Op Fl d Op Fl F
+.Op Fl t Ar <type>
+.Op Fl e Ar <emul>
+.Ar index
+.Sh DESCRIPTION
+The
+.Nm
+tool allows to create and delete virtual terminals on display devices
+controlled by the wscons terminal framework if the underlying display hardware
+driver supports multiple screens.
+The
+.Ar index
+argument specifies which virtual terminal is to be configured; the allowed
+numbers are from 0 to an implementation-specified value (currently 7, allowing
+for 8 virtual terminals on a display).
+Without further option arguments, a virtual terminal is created with
+implementation specific properties and a default terminal emulation variant
+selected at kernel compile time.
+.Pp
+The options are:
+.Bl -tag -width xxxxxxxxx
+.It Fl f Ar ctldev
+Specify the control device of the wscons display to operate on.
+Default is
+.Pa /dev/ttyEcfg .
+.It Fl d
+Delete the specified terminal. A terminal opened by a program will not be
+deleted unless the
+.Fl F
+option is applied. Terminals used by the operating system console or a
+graphics program (X server) cannot be deleted.
+.It Fl F
+Force deleting of a terminal even if it is in use by a user space program.
+.It Fl t Ar type
+Specify a screen type to use. Screen types refer to display format, colour
+depth and other low-level display properties. Valid
+.Ar type
+arguments are defined by the underlying display device driver.
+.It Fl e Ar emul
+Specify the terminal emulation to use for the virtual terminal. The set of
+available terminal emulations is determined at kernel compile time.
+.El
+.Sh "SEE ALSO"
+.Xr wscons 4
