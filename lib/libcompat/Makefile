@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 1997/10/16 23:02:45 christos Exp $
+#	$NetBSD: Makefile,v 1.17 1997/10/20 15:49:39 christos Exp $
 
 LIB=	compat
 CFLAGS+=-DLIBC_SCCS -DSYSLIBC_SCCS
@@ -40,8 +40,8 @@ MLINKS+=re_comp.3 re_exec.3
 
 
 # compat 4.4 sources
-SRCS+=	cuserid.c getdirentries.c swapon.c timezone.c
-MAN+=	cuserid.3 getdirentries.3 swapon.3 timezone.3
+SRCS+=	cuserid.c
+MAN+=	cuserid.3
 
 
 # regexp sources
