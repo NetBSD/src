@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.92 2003/09/10 00:45:22 dan Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.93 2003/09/10 03:24:38 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.92 2003/09/10 00:45:22 dan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.93 2003/09/10 03:24:38 simonb Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -651,7 +651,7 @@ kernfs_getattr(v)
 	vap->va_blocksize = DEV_BSIZE;
 	/*
 	 * Make all times be current TOD, except for the "boottime" node.
-         * Avoid microtime(9), it's slow.
+	 * Avoid microtime(9), it's slow.
 	 * We don't guard the read from time(9) with splclock(9) since we
 	 * don't actually need to be THAT sure the access is atomic. 
 	 */
