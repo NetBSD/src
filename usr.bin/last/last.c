@@ -1,4 +1,4 @@
-/*	$NetBSD: last.c,v 1.15 2000/06/30 06:19:58 simonb Exp $	*/
+/*	$NetBSD: last.c,v 1.16 2003/02/17 15:08:57 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)last.c	8.2 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: last.c,v 1.15 2000/06/30 06:19:58 simonb Exp $");
+__RCSID("$NetBSD: last.c,v 1.16 2003/02/17 15:08:57 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -60,7 +60,23 @@ __RCSID("$NetBSD: last.c,v 1.15 2000/06/30 06:19:58 simonb Exp $");
 #include <time.h>
 #include <tzfile.h>
 #include <unistd.h>
+#ifdef SUPPORT_UTMPX
+#include <utmpx.h>
+#endif
+#ifdef SUPPORT_UTMP
 #include <utmp.h>
+#endif
+
+#ifndef UT_NAMESIZE
+#define UT_NAMESIZE 8
+#define UT_LINESIZE 8
+#define UT_HOSTSIZE 16
+#endif
+#ifndef SIGNATURE
+#define SIGNATURE -1
+#endif
+
+
 
 #define	NO	0			/* false/no */
 #define	YES	1			/* true/yes */
@@ -76,7 +92,7 @@ __RCSID("$NetBSD: last.c,v 1.15 2000/06/30 06:19:58 simonb Exp $");
 #define	TIMEONLY	0x2		/* show time only, not date */
 #define	GMT		0x4		/* show time at GMT, for offsets only */
 
-static struct utmp	buf[1024];	/* utmp read buffer */
+#define MAXUTMP		1024;
 
 typedef struct arg {
 	char	*name;			/* argument */
@@ -86,40 +102,61 @@ typedef struct arg {
 	int	type;			/* type of arg */
 	struct arg	*next;		/* linked list pointer */
 } ARG;
-ARG	*arglist;			/* head of linked list */
+static ARG	*arglist;		/* head of linked list */
 
 typedef struct ttytab {
 	time_t	logout;			/* log out time */
-	char	tty[UT_LINESIZE + 1];	/* terminal name */
+	char	tty[128];		/* terminal name */
 	struct ttytab	*next;		/* linked list pointer */
 } TTY;
-TTY	*ttylist;			/* head of linked list */
+static TTY	*ttylist;		/* head of linked list */
 
 static time_t	currentout;		/* current logout value */
 static long	maxrec;			/* records to display */
-static char	*file = _PATH_WTMP;	/* wtmp file */
 static int	fulltime = 0;		/* Display seconds? */
 
-int	 main __P((int, char *[]));
-void	 addarg __P((int, char *));
-TTY	*addtty __P((char *));
-void	 hostconv __P((char *));
-void	 onintr __P((int));
-char	*ttyconv __P((char *));
-int	 want __P((struct utmp *, int));
-void	 wtmp __P((void));
-char	*fmttime __P((time_t, int));
+int	 main(int, char *[]);
+
+static void	 addarg(int, char *);
+static TTY	*addtty(const char *);
+static void	 hostconv(char *);
+static char	*ttyconv(char *);
+#ifdef SUPPORT_UTMPX
+static void	 wtmpx(const char *, int, int, int);
+#endif
+#ifdef SUPPORT_UTMP
+static void	 wtmp(const char *, int, int, int);
+#endif
+static char	*fmttime(time_t, int);
+static void	 usage(void);
+
+static
+void usage(void)
+{
+	(void)fprintf(stderr, "Usage: %s [-#%s] [-f file] [-t tty]"
+	    " [-h hostname] [-T] [user ...]\n", getprogname(),
+#ifdef SUPPORT_UTMPX
+	    "w"
+#else
+	    ""
+#endif
+	);
+	exit(1);
+}
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int ch;
 	char *p;
+	char	*file = NULL;
+	int namesize = UT_NAMESIZE;
+	int linesize = UT_LINESIZE;
+	int hostsize = UT_HOSTSIZE;
 
 	maxrec = -1;
-	while ((ch = getopt(argc, argv, "0123456789f:h:t:T")) != -1)
+
+	while ((ch = getopt(argc, argv, "0123456789f:h:H:L:N:t:T")) != -1)
 		switch (ch) {
 		case '0': case '1': case '2': case '3': case '4':
 		case '5': case '6': case '7': case '8': case '9':
@@ -147,14 +184,21 @@ main(argc, argv)
 		case 't':
 			addarg(TTY_TYPE, ttyconv(optarg));
 			break;
+		case 'U':
+			namesize = atoi(optarg);
+			break;
+		case 'L':
+			linesize = atoi(optarg);
+			break;
+		case 'H':
+			hostsize = atoi(optarg);
+			break;
 		case 'T':
 			fulltime = 1;
 			break;
 		case '?':
 		default:
-			(void)fprintf(stderr,
-	"usage: last [-#] [-f file] [-t tty] [-h hostname] [-T] [user ...]\n");
-			exit(1);
+			usage();
 		}
 
 	if (argc) {
@@ -168,186 +212,50 @@ main(argc, argv)
 			addarg(USER_TYPE, *argv);
 		}
 	}
-	wtmp();
+	if (file == NULL) {
+#ifdef SUPPORT_UTMPX
+		if (access(_PATH_WTMPX, R_OK) == 0)
+			file = _PATH_WTMPX;
+		else
+#endif
+#ifdef SUPPORT_UTMP
+		if (access(_PATH_WTMP, R_OK) == 0)
+			file = _PATH_WTMP;
+#endif
+		if (file == NULL)
+#if defined(SUPPORT_UTMPX) && defined(SUPPORT_UTMP)
+			errx(1, "Cannot access `%s' or `%s'", _PATH_WTMPX,
+			    _PATH_WTMP);
+#elif defined(SUPPORT_UTMPX)
+			errx(1, "Cannot access `%s'", _PATH_WTMPX);
+#elif defined(SUPPORT_UTMP)
+			errx(1, "Cannot access `%s'", _PATH_WTMP);
+#else
+			errx(1, "No utmp or utmpx support compiled in.");
+#endif
+	}
+#if defined(SUPPORT_UTMPX) && defined(SUPPORT_UTMP)
+	if (file[strlen(file) - 1] == 'x')
+		wtmpx(file, namesize, linesize, hostsize);
+	else
+		wtmp(file, namesize, linesize, hostsize);
+#elif defined(SUPPORT_UTMPX)
+	wtmpx(file, namesize, linesize, hostsize);
+#elif defined(SUPPORT_UTMP)
+	wtmp(file, namesize, linesize, hostsize);
+#else
+	errx(1, "Nu utmp or utmpx support compiled in.");
+#endif
 	exit(0);
 }
 
-/*
- * wtmp --
- *	read through the wtmp file
- */
-void
-wtmp()
-{
-	struct utmp	*bp;		/* current structure */
-	TTY	*T;			/* tty list entry */
-	struct stat	stb;		/* stat of file for size */
-	time_t	delta;			/* time difference */
-	off_t	bl;
-	int	bytes, wfd;
-	char	*ct, *crmsg;
-
-	crmsg = NULL;
-
-	if ((wfd = open(file, O_RDONLY, 0)) < 0 || fstat(wfd, &stb) == -1)
-		err(1, "%s", file);
-	bl = (stb.st_size + sizeof(buf) - 1) / sizeof(buf);
-
-	(void)time(&buf[0].ut_time);
-	(void)signal(SIGINT, onintr);
-	(void)signal(SIGQUIT, onintr);
-
-	while (--bl >= 0) {
-		if (lseek(wfd, bl * sizeof(buf), SEEK_SET) == -1 ||
-		    (bytes = read(wfd, buf, sizeof(buf))) == -1)
-			err(1, "%s", file);
-		for (bp = &buf[bytes / sizeof(buf[0]) - 1]; bp >= buf; --bp) {
-			/*
-			 * if the terminal line is '~', the machine stopped.
-			 * see utmp(5) for more info.
-			 */
-			if (bp->ut_line[0] == '~' && !bp->ut_line[1]) {
-				/* everybody just logged out */
-				for (T = ttylist; T; T = T->next)
-					T->logout = -bp->ut_time;
-				currentout = -bp->ut_time;
-				crmsg = strncmp(bp->ut_name, "shutdown",
-				    UT_NAMESIZE) ? "crash" : "shutdown";
-				if (want(bp, NO)) {
-					ct = fmttime(bp->ut_time, fulltime);
-				printf("%-*.*s  %-*.*s %-*.*s %s\n",
-					    (int)UT_NAMESIZE, (int)UT_NAMESIZE,
-					    bp->ut_name, (int)UT_LINESIZE,
-					    (int)UT_LINESIZE, bp->ut_line,
-					    (int)UT_HOSTSIZE, (int)UT_HOSTSIZE,
-					    bp->ut_host, ct);
-					if (maxrec != -1 && !--maxrec)
-						return;
-				}
-				continue;
-			}
-			/*
-			 * if the line is '{' or '|', date got set; see
-			 * utmp(5) for more info.
-			 */
-			if ((bp->ut_line[0] == '{' || bp->ut_line[0] == '|')
-			    && !bp->ut_line[1]) {
-				if (want(bp, NO)) {
-					ct = fmttime(bp->ut_time, fulltime);
-				printf("%-*.*s  %-*.*s %-*.*s %s\n",
-				    (int)UT_NAMESIZE, (int)UT_NAMESIZE,
-				    bp->ut_name,
-				    (int)UT_LINESIZE, (int)UT_LINESIZE,
-				    bp->ut_line,
-				    (int)UT_HOSTSIZE, (int)UT_HOSTSIZE,
-				    bp->ut_host,
-				    ct);
-					if (maxrec && !--maxrec)
-						return;
-				}
-				continue;
-			}
-			/* find associated tty */
-			for (T = ttylist;; T = T->next) {
-				if (!T) {
-					/* add new one */
-					T = addtty(bp->ut_line);
-					break;
-				}
-				if (!strncmp(T->tty, bp->ut_line, UT_LINESIZE))
-					break;
-			}
-			if (bp->ut_name[0] && want(bp, YES)) {
-				ct = fmttime(bp->ut_time, fulltime);
-				printf("%-*.*s  %-*.*s %-*.*s %s ",
-				(int)UT_NAMESIZE, (int)UT_NAMESIZE, bp->ut_name,
-				(int)UT_LINESIZE, (int)UT_LINESIZE, bp->ut_line,
-				(int)UT_HOSTSIZE, (int)UT_HOSTSIZE, bp->ut_host,
-				ct);
-				if (!T->logout)
-					puts("  still logged in");
-				else {
-					if (T->logout < 0) {
-						T->logout = -T->logout;
-						printf("- %s", crmsg);
-					}
-					else
-						printf("- %s",
-						    fmttime(T->logout,
-						    fulltime | TIMEONLY));
-					delta = T->logout - bp->ut_time;
-					if (delta < SECSPERDAY)
-						printf("  (%s)\n",
-						    fmttime(delta,
-						    fulltime | TIMEONLY | GMT));
-					else
-						printf(" (%ld+%s)\n",
-						    delta / SECSPERDAY,
-						    fmttime(delta,
-						    fulltime | TIMEONLY | GMT));
-				}
-				if (maxrec != -1 && !--maxrec)
-					return;
-			}
-			T->logout = bp->ut_time;
-		}
-	}
-	fulltime = 1;	/* show full time */
-	ct = fmttime(buf[0].ut_time, FULLTIME);
-	printf("\nwtmp begins %s\n", ct);
-}
-
-/*
- * want --
- *	see if want this entry
- */
-int
-want(bp, check)
-	struct utmp *bp;
-	int check;
-{
-	ARG *step;
-
-	if (check) {
-		/*
-		 * when uucp and ftp log in over a network, the entry in
-		 * the utmp file is the name plus their process id.  See
-		 * etc/ftpd.c and usr.bin/uucp/uucpd.c for more information.
-		 */
-		if (!strncmp(bp->ut_line, "ftp", sizeof("ftp") - 1))
-			bp->ut_line[3] = '\0';
-		else if (!strncmp(bp->ut_line, "uucp", sizeof("uucp") - 1))
-			bp->ut_line[4] = '\0';
-	}
-	if (!arglist)
-		return (YES);
-
-	for (step = arglist; step; step = step->next)
-		switch(step->type) {
-		case HOST_TYPE:
-			if (!strncasecmp(step->name, bp->ut_host, UT_HOSTSIZE))
-				return (YES);
-			break;
-		case TTY_TYPE:
-			if (!strncmp(step->name, bp->ut_line, UT_LINESIZE))
-				return (YES);
-			break;
-		case USER_TYPE:
-			if (!strncmp(step->name, bp->ut_name, UT_NAMESIZE))
-				return (YES);
-			break;
-	}
-	return (NO);
-}
 
 /*
  * addarg --
  *	add an entry to a linked list of arguments
  */
-void
-addarg(type, arg)
-	int type;
-	char *arg;
+static void
+addarg(int type, char *arg)
 {
 	ARG *cur;
 
@@ -363,9 +271,8 @@ addarg(type, arg)
  * addtty --
  *	add an entry to a linked list of ttys
  */
-TTY *
-addtty(ttyname)
-	char *ttyname;
+static TTY *
+addtty(const char *ttyname)
 {
 	TTY *cur;
 
@@ -373,7 +280,7 @@ addtty(ttyname)
 		err(1, "malloc failure");
 	cur->next = ttylist;
 	cur->logout = currentout;
-	memmove(cur->tty, ttyname, UT_LINESIZE);
+	memmove(cur->tty, ttyname, sizeof(cur->tty));
 	return (ttylist = cur);
 }
 
@@ -383,9 +290,8 @@ addtty(ttyname)
  *	has a domain attached that is the same as the current domain, rip
  *	off the domain suffix since that's what login(1) does.
  */
-void
-hostconv(arg)
-	char *arg;
+static void
+hostconv(char *arg)
 {
 	static int first = 1;
 	static char *hostdot, name[MAXHOSTNAMELEN + 1];
@@ -408,9 +314,8 @@ hostconv(arg)
  * ttyconv --
  *	convert tty to correct name.
  */
-char *
-ttyconv(arg)
-	char *arg;
+static char *
+ttyconv(char *arg)
 {
 	char *mval;
 
@@ -439,10 +344,8 @@ ttyconv(arg)
  * fmttime --
  *	return pointer to (static) formatted time string.
  */
-char *
-fmttime(t, flags)
-	time_t t;
-	int flags;
+static char *
+fmttime(time_t t, int flags)
 {
 	struct tm *tm;
 	static char tbuf[TBUFLEN];
@@ -456,17 +359,33 @@ fmttime(t, flags)
 	return (tbuf);
 }
 
-/*
- * onintr --
- *	on interrupt, we inform the user how far we've gotten
- */
-void
-onintr(signo)
-	int signo;
-{
+#ifdef SUPPORT_UTMP
+#define TYPE(a)	0
+#define NAMESIZE UT_NAMESIZE
+#define LINESIZE UT_LINESIZE
+#define HOSTSIZE UT_HOSTSIZE
+#define ut_timefld ut_time
+#define FIRSTVALID 0
+#include "want.c"
+#undef TYPE(a)
+#undef NAMESIZE
+#undef LINESIZE
+#undef HOSTSIZE
+#undef ut_timefld
+#undef FIRSTVALID
+#endif
 
-	printf("\ninterrupted %s\n", fmttime(buf[0].ut_time, FULLTIME));
-	if (signo == SIGINT)
-		exit(1);
-	(void)fflush(stdout);		/* fix required for rsh */
-}
+#ifdef SUPPORT_UTMPX
+#define utmp utmpx
+#define want wantx
+#define wtmp wtmpx
+#define buf bufx
+#define onintr onintrx
+#define TYPE(a) (a)->ut_type
+#define NAMESIZE UTX_USERSIZE
+#define LINESIZE UTX_LINESIZE
+#define HOSTSIZE UTX_HOSTSIZE
+#define ut_timefld ut_xtime
+#define FIRSTVALID 1
+#include "want.c"
+#endif
