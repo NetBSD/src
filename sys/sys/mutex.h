@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.1.2.6 2002/03/18 01:16:44 thorpej Exp $	*/
+/*	$NetBSD: mutex.h,v 1.1.2.7 2002/03/22 00:15:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -119,6 +119,11 @@ typedef int kmutex_type_t;
  */
 #define	MUTEX_DEFAULT		MUTEX_ADAPTIVE
 #define	MUTEX_DRIVER		MUTEX_SPIN
+
+struct mutex_debug_info {
+	vaddr_t		mtx_locked;	/* PC where mutex was locked */
+	vaddr_t		mtx_unlocked;	/* PC where mutex was unlocked */
+};
 
 typedef struct mutex kmutex_t;
 
