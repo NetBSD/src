@@ -1,4 +1,4 @@
-/*	$NetBSD: emuxki.c,v 1.17 2003/02/18 18:47:06 wiz Exp $	*/
+/*	$NetBSD: emuxki.c,v 1.18 2003/02/22 04:57:48 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.17 2003/02/18 18:47:06 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.18 2003/02/22 04:57:48 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -1358,7 +1358,7 @@ emuxki_voice_set_audioparms(struct emuxki_voice *voice, u_int8_t stereo,
 		return (0);
 
 #ifdef EMUXKI_DEBUG
-	printf("Setting %s voice params : %s, %u bits, %u hz\n",
+	printf("Setting %s voice params : %s, %u bits, %u Hz\n",
 	       (voice->use & EMU_VOICE_USE_PLAY) ? "play" : "record",
 	       stereo ? "stereo" : "mono", (b16 + 1) * 8, srate);
 #endif
