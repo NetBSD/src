@@ -1,6 +1,6 @@
 .\"  -*- nroff -*-
 .\"
-.\" $NetBSD: sshd.8,v 1.2 2000/10/03 09:56:38 lukem Exp $
+.\" $NetBSD: sshd.8,v 1.3 2001/01/14 05:22:33 itojun Exp $
 .\"
 .\" Author: Tatu Ylonen <ylo@cs.hut.fi>
 .\" Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -44,7 +44,7 @@
 .Nd secure shell daemon
 .Sh SYNOPSIS
 .Nm sshd
-.Op Fl diqQ46
+.Op Fl diqDQ46
 .Op Fl b Ar bits
 .Op Fl f Ar config_file
 .Op Fl g Ar login_grace_time
@@ -58,17 +58,20 @@
 (Secure Shell Daemon) is the server side companion to
 .Xr ssh 1 .
 Together these programs replace rlogin and rsh, and
-provide secure encrypted communications between two untrusted
-hosts over an insecure network.  The programs are intended
-to be as easy to use as possible.
+provide secure encrypted communications between two untrusted hosts
+over an insecure network.
+The programs are intended to be as easy to
+use as possible.
 .Pp
 .Nm
 is the daemon that listens for connections from clients.
 It is normally started at boot time from
 .Pa /etc/rc.d/sshd .
-It forks a new daemon for each incoming connection.
-The forked daemons handle key exchange, encryption,
-authentication, command execution, and data exchange.
+It forks a new
+daemon for each incoming connection.
+The forked daemons handle
+key exchange, encryption, authentication, command execution,
+and data exchange.
 This implementation of
 .Nm
 supports both SSH protocol version 1 and 2 simultaneously.
@@ -77,34 +80,42 @@ works as follows.
 .Pp
 .Ss SSH protocol version 1
 .Pp
-Each host has a host-specific RSA key (normally 1024 bits) used
-to identify the host.  Additionally, when the daemon starts, it
-generates a server RSA key (normally 768 bits).  This key is
-normally regenerated every hour if it has been used, and is never
-stored on disk.
+Each host has a host-specific RSA key
+(normally 1024 bits) used to identify the host.
+Additionally, when
+the daemon starts, it generates a server RSA key (normally 768 bits).
+This key is normally regenerated every hour if it has been used, and
+is never stored on disk.
 .Pp
 Whenever a client connects the daemon responds with its public
-host and server keys.  The client compares the RSA host key against
-its own database to verify that it has not changed.  The client
-then generates a 256 bit random number.  It encrypts this
+host and server keys.
+The client compares the
+RSA host key against its own database to verify that it has not changed.
+The client then generates a 256 bit random number.
+It encrypts this
 random number using both the host key and the server key, and sends
-the encrypted number to the server.  Both sides then use this
+the encrypted number to the server.
+Both sides then use this
 random number as a session key which is used to encrypt all further
-communications in the session.  The rest of the session is encrypted
-using a conventional cipher.  This implementation currently supports
-Blowfish and 3DES; 3DES is the default cipher.  The client selects the
-encryption algorithm to use from those offered by the server.
+communications in the session.
+The rest of the session is encrypted
+using a conventional cipher, currently Blowfish or 3DES, with 3DES
+being used by default.
+The client selects the encryption algorithm
+to use from those offered by the server.
 .Pp
 Next, the server and the client enter an authentication dialog.
 The client tries to authenticate itself using
 .Pa .rhosts
 authentication,
 .Pa .rhosts
-authentication combined with RSA host authentication, RSA
-challenge-response authentication, or password based authentication.
+authentication combined with RSA host
+authentication, RSA challenge-response authentication, or password
+based authentication.
 .Pp
-Rhosts authentication is normally disabled because it is fundamentally
-insecure, but can be enabled in the server configuration file if desired.
+Rhosts authentication is normally disabled
+because it is fundamentally insecure, but can be enabled in the server
+configuration file if desired.
 System security is not improved unless
 .Xr rshd 8 ,
 .Xr rlogind 8 ,
@@ -123,26 +134,32 @@ Version 2 works similarly:
 Each host has a host-specific DSA key used to identify the host.
 However, when the daemon starts, it does not generate a server key.
 Forward security is provided through a Diffie-Hellman key agreement.
-This key agreement results in a shared session key.  The rest of the
-session is encrypted using a symmetric cipher.  This implemenation
-currently supports Blowfish, 3DES, CAST128-CBC, and ARC4.  The client
-selects the encryption algorithm to use from those offered by the server.
-Additionally, session integrity is provided through a cryptographic
-message authentication code (HMAC-SHA1 or HMAC-MD5).
+This key agreement results in a shared session key.
+The rest of the session is encrypted
+using a symmetric cipher, currently
+Blowfish, 3DES or CAST128 in CBC mode or Arcfour.
+The client selects the encryption algorithm
+to use from those offered by the server.
+Additionally, session integrity is provided
+through a cryptographic message authentication code
+(hmac-sha1 or hmac-md5).
 .Pp
-Protocol version 2 provides a public key based user authentication
-method (DSAAuthentication) and conventional password authentication.
+Protocol version 2 provides a public key based
+user authentication method (PubkeyAuthentication)
+and conventional password authentication.
 .Pp
 .Ss Command execution and data forwarding
 .Pp
 If the client successfully authenticates itself, a dialog for
-preparing the session is entered.  At this time the client may request
+preparing the session is entered.
+At this time the client may request
 things like allocating a pseudo-tty, forwarding X11 connections,
 forwarding TCP/IP connections, or forwarding the authentication agent
 connection over the secure channel.
 .Pp
 Finally, the client either requests a shell or execution of a command.
-The sides then enter session mode.  In this mode, either side may send
+The sides then enter session mode.
+In this mode, either side may send
 data at any time, and such data is forwarded to/from the shell or
 command on the server side, and the user terminal in the client side.
 .Pp
@@ -152,7 +169,8 @@ the client, and both sides exit.
 .Pp
 .Nm
 can be configured using command-line options or a configuration
-file.  Command-line options override values specified in the
+file.
+Command-line options override values specified in the
 configuration file.
 .Pp
 .Nm
@@ -170,46 +188,58 @@ The server sends verbose debug output to the system
 log, and does not put itself in the background.
 The server also will not fork and will only process one connection.
 This option is only intended for debugging for the server.
-Multiple -d options increases the debugging level. Maximum is 3.
+Multiple -d options increases the debugging level.
+Maximum is 3.
 .It Fl f Ar configuration_file
-Specifies the name of the configuration file.  The default is
+Specifies the name of the configuration file.
+The default is
 .Pa /etc/sshd.conf .
 .Nm
 refuses to start if there is no configuration file.
 .It Fl g Ar login_grace_time
 Gives the grace time for clients to authenticate themselves (default
-300 seconds).  If the client fails to authenticate the user within
-this many seconds, the server disconnects and exits.  A value of zero
-indicates no limit.
+600 seconds).
+If the client fails to authenticate the user within
+this many seconds, the server disconnects and exits.
+A value of zero indicates no limit.
 .It Fl h Ar host_key_file
-Specifies the file from which the RSA host key is read (default
+Specifies the file from which the host key is read (default
 .Pa /etc/ssh_host_key ) .
 This option must be given if
 .Nm
-is not run as root (as the normal host file is normally not readable
-by anyone but root).
+is not run as root (as the normal
+host file is normally not readable by anyone but root).
+It is possible to have multiple host key files for
+the different protocol versions.
 .It Fl i
 Specifies that
 .Nm
 is being run from inetd.
 .Nm
-is normally not run from inetd because it needs to generate the server
-key before it can respond to the client, and this may take tens of seconds.
+is normally not run
+from inetd because it needs to generate the server key before it can
+respond to the client, and this may take tens of seconds.
 Clients would have to wait too long if the key was regenerated every time.
 However, with small key sizes (e.g., 512) using
 .Nm
-from inetd may be feasible.
+from inetd may
+be feasible.
 .It Fl k Ar key_gen_time
 Specifies how often the server key is regenerated (default 3600
-seconds, or one hour).  The motivation for regenerating the key fairly
+seconds, or one hour).
+The motivation for regenerating the key fairly
 often is that the key is not stored anywhere, and after about an hour,
 it becomes impossible to recover the key for decrypting intercepted
 communications even if the machine is cracked into or physically
-seized.  A value of zero indicates that the key will never be regenerated.
+seized.
+A value of zero indicates that the key will never be regenerated.
 .It Fl p Ar port
-Specifies the port on which the server listens for connections (default 22).
+Specifies the port on which the server listens for connections
+(default 22).
 .It Fl q
-Quiet mode.  Nothing is sent to the system log.  Normally the beginning,
+Quiet mode.
+Nothing is sent to the system log.
+Normally the beginning,
 authentication, and termination of each connection is logged.
 .It Fl u Ar len
 This option is used to specify the size of the field
@@ -227,13 +257,22 @@ indicates that only dotted decimal addresses
 should be put into the
 .Pa utmp
 file.
+.It Fl D
+When this option is specified
+.Nm
+will not detach and does not become a daemon.
+This allows easy monitoring of
+.Nm sshd .
 .It Fl Q
 Do not print an error message if RSA support is missing.
 .It Fl V Ar client_protocol_id
-SSH2 compatibility mode.  When this option is specified
+SSH-2 compatibility mode.
+When this option is specified
 .Nm
 assumes the client has sent the supplied version string
-and skips the Protocol Version Identification Exchange.
+and skips the
+Protocol Version Identification Exchange.
+This option is not intended to be called directly.
 .It Fl 4
 Forces
 .Nm
@@ -250,7 +289,8 @@ reads configuration data from
 (or the file specified with
 .Fl f
 on the command line).
-The file contains keyword-value pairs, one per line.  Lines starting with
+The file contains keyword-value pairs, one per line.
+Lines starting with
 .Ql #
 and empty lines are interpreted as comments.
 .Pp
@@ -262,7 +302,8 @@ Default is
 .Dq yes .
 .It Cm AllowGroups
 This keyword can be followed by a number of group names, separated
-by spaces.  If specified, login is allowed only for users whose primary
+by spaces.
+If specified, login is allowed only for users whose primary
 group matches one of the patterns.
 .Ql \&*
 and
@@ -272,10 +313,19 @@ wildcards in the patterns.
 Only group names are valid; a numerical group ID isn't recognized.
 By default login is allowed regardless of the primary group.
 .Pp
+.It Cm AllowTcpForwarding
+Specifies whether TCP forwarding is permitted.
+The default is
+.Dq yes .
+Note that disabling TCP forwarding does not improve security unless
+users are also denied shell access, as they can always install their
+own forwarders.
+.Pp
 .It Cm AllowUsers
-This keyword can be followed by a number of user names, separated by spaces.
-If specified, login is allowed only for users names that match one of the
-patterns.
+This keyword can be followed by a number of user names, separated
+by spaces.
+If specified, login is allowed only for users names that
+match one of the patterns.
 .Ql \&*
 and
 .Ql ?
@@ -285,17 +335,20 @@ Only user names are valid; a numerical user ID isn't recognized.
 By default login is allowed regardless of the user name.
 .Pp
 .It Cm Ciphers
-Specifies the ciphers allowed for protocol version 2.  Multiple ciphers
-must be comma-separated.  The default is
-.Dq 3des-cbc,blowfish-cbc,arcfour,cast128-cbc .
+Specifies the ciphers allowed for protocol version 2.
+Multiple ciphers must be comma-separated.
+The default is
+.Dq 3des-cbc,blowfish-cbc,cast128-cbc,arcfour,aes128-cbc .
 .It Cm CheckMail
 Specifies whether
 .Nm
-should check for new mail for interactive logins.  The default is
+should check for new mail for interactive logins.
+The default is
 .Dq no .
 .It Cm DenyGroups
 This keyword can be followed by a number of group names, separated
-by spaces.  Users whose primary group matches one of the patterns
+by spaces.
+Users whose primary group matches one of the patterns
 aren't allowed to log in.
 .Ql \&*
 and
@@ -307,41 +360,42 @@ By default login is allowed regardless of the primary group.
 .Pp
 .It Cm DenyUsers
 This keyword can be followed by a number of user names, separated
-by spaces.  Login is disallowed for user names that match one of
-the patterns.
+by spaces.
+Login is disallowed for user names that match one of the patterns.
 .Ql \&*
 and
 .Ql ?
 can be used as wildcards in the patterns.
 Only user names are valid; a numerical user ID isn't recognized.
 By default login is allowed regardless of the user name.
-.It Cm DSAAuthentication
-Specifies whether DSA authentication is allowed.
+.It Cm PubkeyAuthentication
+Specifies whether public key authentication is allowed.
 The default is
 .Dq yes .
 Note that this option applies to protocol version 2 only.
 .It Cm GatewayPorts
 Specifies whether remote hosts are allowed to connect to ports
-forwarded for the client.  The argument must be
+forwarded for the client.
+The argument must be
 .Dq yes
 or
 .Dq no .
 The default is
 .Dq no .
-.It Cm HostDSAKey
-Specifies the file containing the private DSA host key (default
-.Pa /etc/ssh_host_dsa_key )
-used by SSH protocol 2.0.
-Note that
-.Nm
-disables protocol 2.0 if this file is group/world-accessible.
 .It Cm HostKey
-Specifies the file containing the private RSA host key (default
+Specifies the file containing the private host keys (default
 .Pa /etc/ssh_host_key )
-used by SSH protocols 1.3 and 1.5.
+used by SSH protocol versions 1 and 2.
 Note that
 .Nm
-disables protocols 1.3 and 1.5 if this file is group/world-accessible.
+if this file is group/world-accessible.
+It is possible to have multiple host key files.
+.Dq rsa1
+keys are used for version 1 and
+.Dq dsa
+or
+.Dq rsa
+are used for version 2 of the SSH protocol.
 .It Cm IgnoreRhosts
 Specifies that
 .Pa .rhosts
@@ -379,28 +433,33 @@ The default is
 .Dq no .
 .It Cm KeepAlive
 Specifies whether the system should send keepalive messages to the
-other side.  If they are sent, death of the connection or crash of one
-of the machines will be properly noticed.  However, this means that
+other side.
+If they are sent, death of the connection or crash of one
+of the machines will be properly noticed.
+However, this means that
 connections will die if the route is down temporarily, and some people
-find it annoying.  On the other hand, if keepalives are not sent,
+find it annoying.
+On the other hand, if keepalives are not sent,
 sessions may hang indefinitely on the server, leaving
 .Dq ghost
 users and consuming server resources.
 .Pp
 The default is
 .Dq yes
-(to send keepalives), and the server will notice if the network goes
-down or the client host reboots.  This avoids infinitely hanging sessions.
+(to send keepalives), and the server will notice
+if the network goes down or the client host reboots.
+This avoids infinitely hanging sessions.
 .Pp
 To disable keepalives, the value should be set to
 .Dq no
 in both the server and the client configuration files.
 .It Cm KerberosAuthentication
-Specifies whether Kerberos authentication is allowed.  This can be in
-the form of a Kerberos ticket, or if
+Specifies whether Kerberos authentication is allowed.
+This can be in the form of a Kerberos ticket, or if
 .Cm PasswordAuthentication
 is yes, the password provided by the user will be validated through
-the Kerberos KDC.  To use this option, the server needs a 
+the Kerberos KDC.
+To use this option, the server needs a
 Kerberos servtab which allows the verification of the KDC's identity.
 Default is
 .Dq yes .
@@ -418,44 +477,53 @@ Default is
 as this only works when the Kerberos KDC is actually an AFS kaserver.
 .It Cm KerberosTicketCleanup
 Specifies whether to automatically destroy the user's ticket cache
-file on logout.  Default is
+file on logout.
+Default is
 .Dq yes .
 .It Cm KeyRegenerationInterval
 The server key is automatically regenerated after this many seconds
-(if it has been used).  The purpose of regeneration is to prevent
+(if it has been used).
+The purpose of regeneration is to prevent
 decrypting captured sessions by later breaking into the machine and
-stealing the keys.  The key is never stored anywhere.  If the value
-is 0, the key is never regenerated.  The default is 3600 (seconds).
+stealing the keys.
+The key is never stored anywhere.
+If the value is 0, the key is never regenerated.
+The default is 3600 (seconds).
 .It Cm ListenAddress
 Specifies what local address
 .Nm
-should listen on.  The default is to listen to all local addresses.
-Multiple options of this type are permitted.  Additionally, the
+should listen on.
+The default is to listen to all local addresses.
+Multiple options of this type are permitted.
+Additionally, the
 .Cm Ports
 options must precede this option.
 .It Cm LoginGraceTime
-The server disconnects after this time if the user has not successfully
-logged in.  If the value is 0, there is no time limit.
+The server disconnects after this time if the user has not
+successfully logged in.
+If the value is 0, there is no time limit.
 The default is 600 (seconds).
 .It Cm LogLevel
 Gives the verbosity level that is used when logging messages from
 .Nm sshd .
 The possible values are:
-QUIET, FATAL, ERROR, INFO, VERBOSE and DEBUG.  The default is INFO.
-Logging with level DEBUG violates the privacy of users and is not
-recommended.
+QUIET, FATAL, ERROR, INFO, VERBOSE and DEBUG.
+The default is INFO.
+Logging with level DEBUG violates the privacy of users
+and is not recommended.
 .It Cm MaxStartups
 Specifies the maximum number of concurrent unauthenticated connections to the
 .Nm
-daemon.  Additional connections will be dropped until authentication
-succeeds or the
+daemon.
+Additional connections will be dropped until authentication succeeds or the
 .Cm LoginGraceTime
-expires for a connection.  The default is 10.
+expires for a connection.
+The default is 10.
 .Pp
-Alternatively, random early drop can be enabled by specifying the three
-colon separated values
+Alternatively, random early drop can be enabled by specifying
+the three colon separated values
 .Dq start:rate:full
-(e.g. "10:30:60").
+(e.g., "10:30:60").
 .Nm
 will refuse connection attempts with a probabillity of
 .Dq rate/100
@@ -463,13 +531,14 @@ will refuse connection attempts with a probabillity of
 if there are currently
 .Dq start
 (10)
-unauthenticated connections.  The probabillity increases linearly and all
-connection attempts are refused if the number of unauthenticated connections
-reaches
+unauthenticated connections.
+The probabillity increases linearly and all connection attempts
+are refused if the number of unauthenticated connections reaches
 .Dq full
 (60).
 .It Cm PasswordAuthentication
-Specifies whether password authentication is allowed.  The default is
+Specifies whether password authentication is allowed.
+The default is
 .Dq yes .
 Note that this option applies to both protocol versions 1 and 2.
 .It Cm PermitEmptyPasswords
@@ -493,9 +562,10 @@ only password authentication is disabled for root.
 .Pp
 Root login with RSA authentication when the
 .Ar command
-option has been specified will be allowed regardless of the value of
-this setting (which may be useful for taking remote backups even if
-root login is normally not allowed).
+option has been
+specified will be allowed regardless of the value of this setting
+(which may be useful for taking remote backups even if root login is
+normally not allowed).
 .It Cm PidFile
 Specifies the file that contains the process identifier of the
 .Nm
@@ -505,15 +575,16 @@ The default is
 .It Cm Port
 Specifies the port number that
 .Nm
-listens on.  The default is 22.  Multiple options of this type are
-permitted.
+listens on.
+The default is 22.
+Multiple options of this type are permitted.
 .It Cm PrintMotd
 Specifies whether
 .Nm
 should print
 .Pa /etc/motd
-when a user logs in interactively.  (On some systems it is also printed
-by the shell,
+when a user logs in interactively.
+(On some systems it is also printed by the shell,
 .Pa /etc/profile ,
 or equivalent.)
 The default is
@@ -521,7 +592,8 @@ The default is
 .It Cm Protocol
 Specifies the protocol versions
 .Nm
-should support.  The possible values are
+should support.
+The possible values are
 .Dq 1
 and
 .Dq 2 .
@@ -533,12 +605,13 @@ Obsolete.
 Random number generation uses other techniques.
 .It Cm RhostsAuthentication
 Specifies whether authentication using rhosts or /etc/hosts.equiv
-files is sufficient.  Normally, this method should not be permitted
-because it is insecure.
+files is sufficient.
+Normally, this method should not be permitted because it is insecure.
 .Cm RhostsRSAAuthentication
-should be used instead, because it performs RSA-based host
-authentication in addition to normal rhosts or /etc/hosts.equiv
-authentication.  The default is
+should be used
+instead, because it performs RSA-based host authentication in addition
+to normal rhosts or /etc/hosts.equiv authentication.
+The default is
 .Dq no .
 .It Cm RhostsRSAAuthentication
 Specifies whether rhosts or /etc/hosts.equiv authentication together
@@ -546,36 +619,41 @@ with successful RSA host authentication is allowed.
 The default is
 .Dq no .
 .It Cm RSAAuthentication
-Specifies whether pure RSA authentication is allowed.  The default is
+Specifies whether pure RSA authentication is allowed.
+The default is
 .Dq yes .
 Note that this option applies to protocol version 1 only.
 .It Cm ServerKeyBits
-Defines the number of bits in the server key.  The minimum value is 512,
-and the default is 768.
+Defines the number of bits in the server key.
+The minimum value is 512, and the default is 768.
 .It Cm SkeyAuthentication
-Specifies whether One Time Password authentication via
+Specifies whether
 .Xr skey 1
-is allowed.  The default is
+authentication is allowed.
+The default is
 .Dq yes .
-Note that One Time Password authentication is enabled only if
+Note that s/key authentication is enabled only if
 .Cm PasswordAuthentication
-is also allowed.
+is allowed, too.
 .It Cm StrictModes
 Specifies whether
 .Nm
-should check file modes and ownership of the user's files and home
-directory before accepting login.  This is normally desirable because
-novices sometimes accidentally leave their directory or files
-world-writable.  The default is
+should check file modes and ownership of the
+user's files and home directory before accepting login.
+This is normally desirable because novices sometimes accidentally leave their
+directory or files world-writable.
+The default is
 .Dq yes .
 .It Cm Subsystem
-Configures an external subsystem (e.g. file transfer daemon).
-Arguments should be a subsystem name and a command to execute upon
-subsystem request. The command
+Configures an external subsystem (e.g., file transfer daemon).
+Arguments should be a subsystem name and a command to execute upon subsystem
+request.
+The command
 .Xr sftp-server 8
 implements the
 .Dq sftp
-file transfer subsystem.  By default no subsystems are defined.
+file transfer subsystem.
+By default no subsystems are defined.
 Note that this option applies to protocol version 2 only.
 .It Cm SyslogFacility
 Gives the facility code that is used when logging messages from
@@ -665,26 +743,37 @@ file lists the RSA keys that are
 permitted for RSA authentication in SSH protocols 1.3 and 1.5
 Similarly, the
 .Pa $HOME/.ssh/authorized_keys2
-file lists the DSA keys that are
-permitted for DSA authentication in SSH protocol 2.0.
+file lists the DSA and RSA keys that are
+permitted for public key authentication (PubkeyAuthentication)
+in SSH protocol 2.0.
+.Pp
 Each line of the file contains one
 key (empty lines and lines starting with a
 .Ql #
 are ignored as
 comments).
-Each line consists of the following fields, separated by
+Each RSA public key consists of the following fields, separated by
 spaces: options, bits, exponent, modulus, comment.
-The options field
-is optional; its presence is determined by whether the line starts
+Each protocol version 2 public key consists of:
+options, keytype, base64 encoded key, comment.
+The options fields
+are optional; its presence is determined by whether the line starts
 with a number or not (the option field never starts with a number).
-The bits, exponent, modulus and comment fields give the RSA key; the
+The bits, exponent, modulus and comment fields give the RSA key for
+protocol version 1; the
 comment field is not used for anything (but may be convenient for the
 user to identify the key).
+For protocol version 2 the keytype is
+.Dq ssh-dss
+or
+.Dq ssh-rsa .
 .Pp
 Note that lines in this file are usually several hundred bytes long
 (because of the size of the RSA key modulus).
 You don't want to type them in; instead, copy the
 .Pa identity.pub
+or the
+.Pa id_dsa.pub
 file and edit it.
 .Pp
 The options (if present) consist of comma-separated option
@@ -830,6 +919,8 @@ really used for anything; it is only provided for the convenience of
 the user so its contents can be copied to known hosts files.
 These two files are created using
 .Xr ssh-keygen 1 .
+.It Pa /etc/primes
+Contains Diffie-Hellman groups used for the "Diffie-Hellman Group Exchange".
 .It Pa /var/run/sshd.pid
 Contains the process ID of the
 .Nm
@@ -985,8 +1076,9 @@ machine-specific login-time initializations globally.
 This file should be writable only by root, and should be world-readable.
 .El
 .Sh AUTHOR
-Tatu Ylonen <ylo@cs.hut.fi>, Markus Friedl, Theo de Raadt, Niels Provos,
-Dug Song, Aaron Campbell
+Tatu Ylonen <ylo@cs.hut.fi>,
+Aaron Campbell, Bob Beck, Markus Friedl,
+Niels Provos, Theo de Raadt, and Dug Song.
 .Sh SEE ALSO
 .Xr login.conf 5 ,
 .Xr scp 1 ,

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2000/10/17 23:51:24 tv Exp $
+#	$NetBSD: Makefile,v 1.4 2001/01/14 05:22:33 itojun Exp $
 
 .include <bsd.own.mk>
 
@@ -16,7 +16,7 @@ MLINKS=	ssh.1 slogin.1
 .if (${MKKERBEROS} != "no")
 # XXX Needs krb5
 #CPPFLAGS+=-DAFS
-#LDADD+=	-lkafs
+#LDADD+=	-lkrb5 -lkafs -lasn1
 #DPADD+=	${LIBKAFS}
 
 CPPFLAGS+=-DKRB4 -I${DESTDIR}/usr/include/kerberosIV
