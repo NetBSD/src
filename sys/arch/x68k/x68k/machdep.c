@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.60.2.1 1999/04/16 16:26:27 chs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.60.2.2 1999/06/21 13:51:18 perry Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -527,9 +527,9 @@ char	cpu_model[120];
 extern	char version[];
 static char *fpu_descr[] = {
 #ifdef	FPU_EMULATE
-	"emulator FPU", 	/* 0 */
+	" emulator FPU", 	/* 0 */
 #else
-	"no math support",	/* 0 */
+	" no math support",	/* 0 */
 #endif
 	" m68881 FPU",		/* 1 */
 	" m68882 FPU",		/* 2 */
