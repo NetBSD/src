@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcivar.h,v 1.14 2004/10/22 09:58:00 augustss Exp $ */
+/*	$NetBSD: ehcivar.h,v 1.15 2004/10/22 10:38:17 augustss Exp $ */
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -52,6 +52,7 @@ typedef struct ehci_soft_qh {
 	struct ehci_soft_qh *next;
 	struct ehci_soft_qtd *sqtd;
 	ehci_physaddr_t physaddr;
+	int islot;
 } ehci_soft_qh_t;
 #define EHCI_SQH_SIZE ((sizeof (struct ehci_soft_qh) + EHCI_QH_ALIGN - 1) / EHCI_QH_ALIGN * EHCI_QH_ALIGN)
 #define EHCI_SQH_CHUNK (EHCI_PAGE_SIZE / EHCI_SQH_SIZE)
@@ -67,6 +68,18 @@ struct ehci_xfer {
 #endif
 };
 #define EXFER(xfer) ((struct ehci_xfer *)(xfer))
+
+/* Information about an entry in the interrupt list. */
+struct ehci_soft_islot {
+	ehci_soft_qh_t *sqh;	/* Queue Head. */
+};
+
+#define EHCI_FRAMELIST_MAXCOUNT	1024
+#define EHCI_IPOLLRATES		8 /* Poll rates (1ms, 2, 4, 8 .. 128) */
+#define EHCI_INTRQHS		((1 << EHCI_IPOLLRATES) - 1)
+#define EHCI_IQHIDX(lev, pos) \
+	((((pos) & ((1 << (lev)) - 1)) | (1 << (lev))) - 1)
+#define EHCI_ILEV_IVAL(lev)	(1 << (lev))
 
 
 #define EHCI_HASH_SIZE 128
@@ -91,7 +104,11 @@ typedef struct ehci_softc {
 	struct usbd_bus *sc_comps[EHCI_COMPANION_MAX];
 
 	usb_dma_t sc_fldma;
+	ehci_link_t *sc_flist;
 	u_int sc_flsize;
+	u_int sc_rand;			/* XXX need proper intr scheduling */
+
+	struct ehci_soft_islot sc_islots[EHCI_INTRQHS];
 
 	LIST_HEAD(, ehci_xfer) sc_intrhead;
 
