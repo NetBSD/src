@@ -2,7 +2,7 @@
 
 PROG=	strip
 
-install: maninstall
+realinstall:
 	install -c -o ${BINOWN} -g ${BINOWN} -m ${BINMODE} strip \
 	    ${DESTDIR}${BINDIR}
 	./strip ${DESTDIR}${BINDIR}/strip
