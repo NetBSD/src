@@ -2,7 +2,7 @@
 # DECstation (3100 or 5000/xxx)
 #
 #	Generic config.new configuration for NetBSD/pmax
-# 	$NetBSD: GENERIC,v 1.3 1996/08/28 05:49:35 jonathan Exp $
+# 	$NetBSD: GENERIC,v 1.4 1996/08/28 05:50:59 jonathan Exp $
 #
 include		"std.pmax"
 
@@ -69,6 +69,7 @@ options		GATEWAY		# IP packet forwarding
 
 options		COMPAT_10	# Pre-NetBSD 1.1 compatibility
 options		COMPAT_11
+options		COMPAT_12
 
 # pmax specific
 options		COMPAT_ULTRIX	# ultrix compatibility
