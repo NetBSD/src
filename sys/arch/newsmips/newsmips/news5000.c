@@ -1,4 +1,4 @@
-/*	$NetBSD: news5000.c,v 1.8 2001/04/27 12:55:51 tsutsui Exp $	*/
+/*	$NetBSD: news5000.c,v 1.9 2003/04/26 18:50:19 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 1999 SHIMIZU Ryo.  All rights reserved.
@@ -39,15 +39,13 @@
 
 extern void (*readmicrotime) (struct timeval *tvp);
 
-static void level1_intr (void);
-static void level0_intr (void);
+static void news5000_level1_intr(void);
+static void news5000_level0_intr(void);
 
-static void enable_intr_5000 (void);
-static void disable_intr_5000 (void);
-static void readmicrotime_5000 (struct timeval *);
-static void readidrom_5000 (u_char *);
-
-void news5000_init (void);
+static void news5000_enable_intr(void);
+static void news5000_disable_intr(void);
+static void news5000_readmicrotime(struct timeval *);
+static void news5000_readidrom(u_char *);
 
 static u_int freerun_off;
 
@@ -113,7 +111,8 @@ news5000_intr(status, cause, pc, ipending)
 			u_int stat = *(volatile u_int *)NEWS5000_APBUS_INTST;
 			printf("APbus error 0x%04x\n", stat & 0xffff);
 			if (stat & NEWS5000_APBUS_INT_DMAADDR) {
-				printf("DMA Address Error: slot=%x, addr=0x%08x\n",
+				printf("DMA Address Error: "
+				    "slot=%x, addr=0x%08x\n",
 				    *(volatile u_int *)NEWS5000_APBUS_DER_S,
 				    *(volatile u_int *)NEWS5000_APBUS_DER_A);
 			}
@@ -139,13 +138,13 @@ news5000_intr(status, cause, pc, ipending)
 	}
 
 	if (ipending & MIPS_INT_MASK_1) {
-		level1_intr();
+		news5000_level1_intr();
 		apbus_wbflush();
 		cause &= ~MIPS_INT_MASK_1;
 	}
 
 	if (ipending & MIPS_INT_MASK_0) {
-		level0_intr();
+		news5000_level0_intr();
 		apbus_wbflush();
 		cause &= ~MIPS_INT_MASK_0;
 	}
@@ -155,7 +154,7 @@ news5000_intr(status, cause, pc, ipending)
 
 
 static void
-level1_intr(void)
+news5000_level1_intr(void)
 {
 	u_int int1stat;
 
@@ -170,7 +169,7 @@ level1_intr(void)
 }
 
 static void
-level0_intr(void)
+news5000_level0_intr(void)
 {
 	u_int int0stat;
 
@@ -185,7 +184,7 @@ level0_intr(void)
 }
 
 static void
-enable_intr_5000(void)
+news5000_enable_intr(void)
 {
 
 	/* INT0 and INT1 has been enabled at attach */
@@ -200,8 +199,9 @@ enable_intr_5000(void)
 }
 
 static void
-disable_intr_5000(void)
+news5000_disable_intr(void)
 {
+
 	*(volatile u_int *)NEWS5000_INTEN0 = 0;
 	*(volatile u_int *)NEWS5000_INTEN1 = 0;
 	*(volatile u_int *)NEWS5000_INTEN2 = 0;
@@ -211,7 +211,7 @@ disable_intr_5000(void)
 }
 
 static void
-readmicrotime_5000(tvp)
+news5000_readmicrotime(tvp)
 	struct timeval *tvp;
 {
 	u_int freerun;
@@ -229,7 +229,7 @@ readmicrotime_5000(tvp)
 }
 
 static void
-readidrom_5000(rom)
+news5000_readidrom(rom)
 	u_char *rom;
 {
 	u_int32_t *p = (void *)NEWS5000_IDROM;
@@ -244,11 +244,12 @@ extern struct idrom idrom;
 void
 news5000_init(void)
 {
-	enable_intr = enable_intr_5000;
-	disable_intr = disable_intr_5000;
 
-	readidrom_5000((u_char *)&idrom);
-	readmicrotime = readmicrotime_5000;
+	enable_intr = news5000_enable_intr;
+	disable_intr = news5000_disable_intr;
+
+	news5000_readidrom((u_char *)&idrom);
+	readmicrotime = news5000_readmicrotime;
 	hostid = idrom.id_serial;
 
 	/* XXX reset uPD72067 FDC to avoid spurious interrupts */

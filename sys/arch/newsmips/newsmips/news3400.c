@@ -1,4 +1,4 @@
-/*	$NetBSD: news3400.c,v 1.6 2003/01/19 16:38:43 thorpej Exp $	*/
+/*	$NetBSD: news3400.c,v 1.7 2003/04/26 18:50:19 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -37,16 +37,18 @@
 #include <machine/psl.h>
 #include <newsmips/newsmips/machid.h>
 
-void level0_intr (void);
-void level1_intr (void);
-void hb_intr_dispatch (int);
-void MachFPInterrupt (unsigned, unsigned, unsigned, struct frame *);
+extern void hb_intr_dispatch(int);
+#if !defined(SOFTFLOAT)
+extern void MachFPInterrupt(unsigned, unsigned, unsigned, struct frame *);
+#endif
 
-int news3400_badaddr (void *, u_int);
-static void enable_intr_3400 (void);
-static void disable_intr_3400 (void);
-static void readidrom_3400 (u_char *);
-void news3400_init (void);
+int news3400_badaddr(void *, u_int);
+
+static void news3400_level0_intr(void);
+static void news3400_level1_intr(void);
+static void news3400_enable_intr(void);
+static void news3400_disable_intr(void);
+static void news3400_readidrom(u_char *);
 
 static int badaddr_flag;
 
@@ -66,7 +68,7 @@ news3400_intr(status, cause, pc, ipending)
 
 	/* handle clock interrupts ASAP */
 	if (ipending & MIPS_INT_MASK_2) {
-		register int stat;
+		int stat;
 
 		stat = *(volatile u_char *)INTST0;
 		stat &= INTST0_TIMINT|INTST0_KBDINT|INTST0_MSINT;
@@ -102,12 +104,12 @@ news3400_intr(status, cause, pc, ipending)
 	}
 
 	if (ipending & MIPS_INT_MASK_1) {
-		level1_intr();
+		news3400_level1_intr();
 		cause &= ~MIPS_INT_MASK_1;
 	}
 
 	if (ipending & MIPS_INT_MASK_0) {
-		level0_intr();
+		news3400_level0_intr();
 		cause &= ~MIPS_INT_MASK_0;
 	}
 
@@ -129,8 +131,8 @@ news3400_intr(status, cause, pc, ipending)
 #define LEVEL0_MASK \
 	(INTST1_DMA|INTST1_SLOT1|INTST1_SLOT3|INTST1_EXT1|INTST1_EXT3)
 
-void
-level0_intr()
+static void
+news3400_level0_intr()
 {
 	volatile u_char *istat1 = (void *)INTST1;
 	volatile u_char *iclr1 = (void *)INTCLR1;
@@ -150,8 +152,8 @@ level0_intr()
 #define LEVEL1_MASK0	(INTST0_CFLT|INTST0_CBSY)
 #define LEVEL1_MASK1	(INTST1_BEEP|INTST1_SCC|INTST1_LANCE)
 
-void
-level1_intr()
+static void
+news3400_level1_intr()
 {
 	volatile u_char *ien1 = (void *)INTEN1;
 	volatile u_char *istat1 = (void *)INTST1;
@@ -202,7 +204,7 @@ news3400_badaddr(addr, size)
 }
 
 static void
-enable_intr_3400(void)
+news3400_enable_intr(void)
 {
 	volatile u_int8_t *inten0 = (void *)INTEN0;
 	volatile u_int8_t *inten1 = (void *)INTEN1;
@@ -230,8 +232,9 @@ enable_intr_3400(void)
 }
 
 static void
-disable_intr_3400(void)
+news3400_disable_intr(void)
 {
+
 	volatile u_int8_t *inten0 = (void *)INTEN0;
 	volatile u_int8_t *inten1 = (void *)INTEN1;
 
@@ -240,11 +243,11 @@ disable_intr_3400(void)
 }
 
 static void
-readidrom_3400(rom)
+news3400_readidrom(rom)
 	register u_char *rom;
 {
-	register u_char *p = (u_char *)IDROM;
-	register int i;
+	u_char *p = (u_char *)IDROM;
+	int i;
 
 	for (i = 0; i < sizeof (struct idrom); i++, p += 2)
 		*rom++ = ((*p & 0x0f) << 4) + (*(p + 1) & 0x0f);
@@ -255,9 +258,10 @@ extern struct idrom idrom;
 void
 news3400_init()
 {
-	enable_intr = enable_intr_3400;
-	disable_intr = disable_intr_3400;
 
-	readidrom_3400((u_char *)&idrom);
+	enable_intr = news3400_enable_intr;
+	disable_intr = news3400_disable_intr;
+
+	news3400_readidrom((u_char *)&idrom);
 	hostid = idrom.id_serial;
 }

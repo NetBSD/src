@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.68 2003/04/26 11:05:17 ragge Exp $	*/
+/*	$NetBSD: machdep.c,v 1.69 2003/04/26 18:50:19 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.68 2003/04/26 11:05:17 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.69 2003/04/26 18:50:19 tsutsui Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -132,10 +132,6 @@ struct idrom idrom;
 void (*enable_intr) __P((void));
 void (*disable_intr) __P((void));
 void (*readmicrotime) __P((struct timeval *tvp));
-
-/* System type dependent initializations. */
-extern void news3400_init __P((void));
-extern void news5000_init __P((void));
 
 static void (*hardware_intr) __P((u_int, u_int, u_int, u_int));
 u_int ssir;
