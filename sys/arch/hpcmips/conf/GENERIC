@@ -2,11 +2,11 @@
 # Distribution kernel (NEC VR based model) kernel config file
 
 #
-# 	$NetBSD: GENERIC,v 1.54.2.2 2000/08/06 04:05:55 takemura Exp $
+# 	$NetBSD: GENERIC,v 1.54.2.3 2000/08/23 15:02:20 takemura Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
-#ident 		"GENERIC-$Revision: 1.54.2.2 $"
+#ident 		"GENERIC-$Revision: 1.54.2.3 $"
 
 maxusers	8
 
@@ -70,7 +70,6 @@ options 	SOFTDEP         # FFS soft updates support.
 #options 	GATEWAY		# IP packet forwarding
 options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
-options 	PULLDOWN_TEST	# use m_pulldown for IPv4/v6 processing
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/ IPSEC)
 #options 	IPSEC_DEBUG	# debug for IP security
