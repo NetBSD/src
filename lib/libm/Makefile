@@ -1,5 +1,5 @@
 #  @(#)Makefile 5.1beta 93/09/24 
-#  $Id: Makefile,v 1.22 1994/08/10 20:30:00 jtc Exp $
+#  $Id: Makefile,v 1.23 1994/09/25 17:31:51 jtc Exp $
 # 
 #  ====================================================
 #  Copyright (C) 1993 by Sun Microsystems, Inc. All rights reserved.
@@ -77,7 +77,7 @@ COMMON_SRCS = e_acos.c e_acosf.c e_acosh.c e_acoshf.c e_asin.c e_asinf.c \
 	s_ceilf.c s_copysign.c s_copysignf.c s_cos.c s_cosf.c s_erf.c s_erff.c \
 	s_expm1.c s_expm1f.c s_fabsf.c s_finite.c s_finitef.c \
 	s_floor.c s_floorf.c s_frexpf.c s_ilogb.c s_ilogbf.c \
-	s_isnanf.c s_ldexpf.c s_lib_version.c s_log1p.c \
+	s_isinff.c s_isnanf.c s_ldexpf.c s_lib_version.c s_log1p.c \
 	s_log1pf.c s_logb.c s_logbf.c s_matherr.c s_modff.c \
 	s_nextafter.c s_nextafterf.c s_rint.c s_rintf.c s_scalbn.c s_scalbnf.c \
 	s_signgam.c s_significand.c s_significandf.c s_sin.c s_sinf.c s_tan.c \
@@ -92,7 +92,7 @@ COMMON_SRCS = e_acos.c e_acosf.c e_acosh.c e_acoshf.c e_asin.c e_asinf.c \
 	w_sinh.c w_sinhf.c w_sqrt.c w_sqrtf.c
 
 # NetBSD's C library supplies these functions:
-#COMMON_SRCS+=	s_fabs.c s_frexp.c s_isnan.c s_ldexp.c s_modf.c
+#COMMON_SRCS+=	s_fabs.c s_frexp.c s_isinf.c s_isnan.c s_ldexp.c s_modf.c
 
 
 SRCS=${COMMON_SRCS}
