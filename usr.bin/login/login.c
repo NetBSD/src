@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)login.c	5.78 (Berkeley) 6/29/92";*/
-static char rcsid[] = "$Id: login.c,v 1.7 1993/12/02 04:24:05 mycroft Exp $";
+static char rcsid[] = "$Id: login.c,v 1.8 1993/12/02 04:30:47 mycroft Exp $";
 #endif /* not lint */
 
 /*
@@ -235,7 +235,7 @@ main(argc, argv)
 			if (pwd->pw_uid == 0)
 				rootlogin = 1;
 
-			if (fflag && (uid == 0 || uid == pwd->pw_uid))) {
+			if (fflag && (uid == 0 || uid == pwd->pw_uid)) {
 				/* already authenticated */
 				break;
 			} else if (pwd->pw_passwd[0] == '\0') {
