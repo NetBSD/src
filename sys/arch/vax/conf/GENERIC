@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.86 2001/02/04 20:36:26 ragge Exp $
+#	$NetBSD: GENERIC,v 1.87 2001/02/05 17:32:08 abs Exp $
 #
 # GENERIC VAX configuration file; all supported devices.
 #
 
 include		"arch/vax/conf/std.vax"
 
-#ident 		"GENERIC-$Revision: 1.86 $"
+#ident 		"GENERIC-$Revision: 1.87 $"
 
 # Here are all different supported CPU types listed.
 #options 	"VAX8800"	# VAX 8500, 8530, 8550, 8700, 8800
@@ -39,14 +39,26 @@ options 	KTRACE
 
 options 	SCSIVERBOSE		# Verbose SCSI errors
 
-# Network support
-#options 	GATEWAY
+# Networking options
+#options 	GATEWAY		# packet forwarding
 options		NTP		# NTP kernel support
-options         INET		# IPv4
+options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_DEBUG	# debug for IP security
+#options 	MROUTING	# IP multicast routing
+#options 	NS		# XNS
+#options 	NSIP		# XNS tunneling over IP
+#options 	ISO,TPIP	# OSI
+#options 	EON		# OSI tunneling over IP
+#options 	CCITT,LLC,HDLC	# X.25
+#options 	NETATALK	# AppleTalk networking protocols
+#options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
+#options 	PPP_DEFLATE	# Deflate compression support for PPP
+#options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
+#options 	PFIL_HOOKS	# pfil(9) packet filter hooks
+#options 	IPFILTER_LOG	# ipmon(8) log support
 
 # All supported filesystem types
 file-system 	FFS
@@ -214,6 +226,7 @@ wsmouse*	at lkms?
 pseudo-device   loop	1
 pseudo-device   pty			# pseudo-terminals
 pseudo-device	bpfilter 8		# Not supported by de yet.
+pseudo-device	ipfilter		# IP filter (firewall) and NAT
 #pseudo-device	sl	2
 #pseudo-device	ppp	2
 pseudo-device	tun	2
