@@ -1,4 +1,4 @@
-/*	$NetBSD: netstat.c,v 1.3 1995/06/18 23:53:07 cgd Exp $	*/
+/*	$NetBSD: netstat.c,v 1.4 1996/08/11 04:19:16 explorer Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)netstat.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: netstat.c,v 1.3 1995/06/18 23:53:07 cgd Exp $";
+static char rcsid[] = "$NetBSD: netstat.c,v 1.4 1996/08/11 04:19:16 explorer Exp $";
 #endif /* not lint */
 
 /*
@@ -467,6 +467,8 @@ cmdnetstat(cmd, args)
 			p->ni_flags |= NIF_LACHG|NIF_FACHG;
 		}
 		nflag = new;
+		wclear(wnd);
+		labelnetstat();
 		goto redisplay;
 	}
 	if (!netcmd(cmd, args))
