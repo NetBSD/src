@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.c,v 1.1 2000/01/05 08:49:02 nisimura Exp $ */
+/* $NetBSD: autoconf.c,v 1.2 2000/01/15 02:06:31 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.1 2000/01/05 08:49:02 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.2 2000/01/15 02:06:31 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,6 +60,8 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.1 2000/01/05 08:49:02 nisimura Exp $"
  */
 struct device *booted_device;	/* set by device drivers (if found) */
 
+static struct device *find_dev_byname __P((char *));
+
 /*
  * Determine mass storage and memory configuration for a machine.
  */
@@ -79,38 +81,41 @@ cpu_configure()
 void
 cpu_rootconf()
 {
+#if 1 /* XXX to be reworked with helps of 2nd stage loaders XXX */
+	int i;
+	char *devname, *cp;
+	extern char bootarg[64];
+
+	cp = bootarg;
+	devname = "sd0";
+	for (i = 0; i < sizeof(bootarg); i++) {
+		if (*cp == '\0')
+			break;
+		if (*cp == 'E' && memcmp("ENADDR=", cp, 7) == 0) {
+			devname = "le0";
+			break;
+		}
+		cp++;
+	}
+	booted_device = find_dev_byname(devname);
+
+#endif
 	printf("boot device: %s\n",
 		(booted_device) ? booted_device->dv_xname : "<unknown>");
 
-	setroot(booted_device, 0);
+	setroot(booted_device, 0); /* XXX partition 'a' XXX */
 }
 
-#if 0 /* What is this for !? */
-/*
- * find a device matching "name" and unit number
- */
-struct device *
-getdevunit(name, unit)
+static struct device *
+find_dev_byname(name)
 	char *name;
-	int unit;
 {
-	struct device *dev = alldevs.tqh_first;
-	char num[10], fullname[16];
-	int lunit;
+	struct device *dv;
 
-	/* compute length of name and decimal expansion of unit number */
-	sprintf(num, "%d", unit);
-	lunit = strlen(num);
-	if (strlen(name) + lunit >= sizeof(fullname) - 1)
-		panic("config_attach: device name too long");
-
-	strcpy(fullname, name);
-	strcat(fullname, num);
-
-	while (strcmp(dev->dv_xname, fullname) != 0) {
-		if ((dev = dev->dv_list.tqe_next) == NULL)
-			return NULL;
+	for (dv = alldevs.tqh_first; dv != NULL; dv = dv->dv_list.tqe_next) {
+		if (!strcmp(dv->dv_xname, name)) {
+			return dv;
+		}
 	}
-	return dev;
+	return NULL;
 }
-#endif
