@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.55 1999/10/22 21:14:34 ragge Exp $	     */
+/*	$NetBSD: vm_machdep.c,v 1.56 2000/01/20 22:19:00 sommerfeld Exp $	     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -84,6 +84,22 @@ pagemove(from, to, size)
 }
 
 /*
+ * Finish a fork operation, with process p2 nearly set up.
+ * Copy and update the pcb and trap frame, making the child ready to run.
+ * 
+ * Rig the child's kernel stack so that it will start out in
+ * proc_trampoline() and call child_return() with p2 as an
+ * argument. This causes the newly-created child process to go
+ * directly to user level with an apparent return value of 0 from
+ * fork(), while the parent process returns normally.
+ *
+ * p1 is the process being forked; if p1 == &proc0, we are creating
+ * a kernel thread, and the return path will later be changed in cpu_set_kpc.
+ *
+ * If an alternate user-level stack is requested (with non-zero values
+ * in both the stack and stacksize args), set up the user stack pointer
+ * accordingly.
+ *
  * cpu_fork() copies parent process trapframe directly into child PCB
  * so that when we swtch() to the child process it will go directly
  * back to user mode without any need to jump back through kernel.
