@@ -1,4 +1,4 @@
-/*	$NetBSD: rsh.c,v 1.15 2002/06/14 00:51:04 wiz Exp $	*/
+/*	$NetBSD: rsh.c,v 1.16 2002/11/16 13:47:34 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)rsh.c	8.4 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: rsh.c,v 1.15 2002/06/14 00:51:04 wiz Exp $");
+__RCSID("$NetBSD: rsh.c,v 1.16 2002/11/16 13:47:34 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -194,8 +194,8 @@ main(int argc, char **argv)
 			break;
 #ifdef KERBEROS
 		case 'k':
+			strlcpy(dest_realm_buf, optarg, sizeof(dest_realm_buf));
 			dest_realm = dst_realm_buf;
-			strncpy(dest_realm, optarg, REALM_SZ);
 			break;
 #endif
 		case 'n':
