@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.c,v 1.2 2002/04/30 14:21:17 lukem Exp $	*/
+/*	$NetBSD: ffs.c,v 1.3 2002/05/02 13:03:32 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: ffs.c,v 1.2 2002/04/30 14:21:17 lukem Exp $");
+__RCSID("$NetBSD: ffs.c,v 1.3 2002/05/02 13:03:32 lukem Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -251,6 +251,7 @@ ffs_findstage2_ino(ib_params *params, void *_ino,
 	uint32_t	ino;
 
 	assert(params != NULL);
+	assert(params->stage2 != NULL);
 	assert(_ino != NULL);
 
 	/* Skip directory holes. */
@@ -294,6 +295,7 @@ ffs_findstage2_blocks(ib_params *params, void *_state,
 	struct findblks_state *state = _state;
 
 	assert(params != NULL);
+	assert(params->stage2 != NULL);
 	assert(_state != NULL);
 
 	if (state->nblk == state->maxblk) {
@@ -316,7 +318,6 @@ ffs_match(ib_params *params)
 	struct fs	*fs;
 
 	assert(params != NULL);
-	assert(params->stage2 != NULL);
 
 	/* Read and check the superblock. */
 	if (! ffs_read_disk_block(params, SBLOCK, SBSIZE, sbbuf))
