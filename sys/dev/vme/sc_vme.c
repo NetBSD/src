@@ -1,4 +1,4 @@
-/*	$NetBSD: sc_vme.c,v 1.2 2001/06/27 20:17:20 fredette Exp $	*/
+/*	$NetBSD: sc_vme.c,v 1.3 2001/11/13 06:17:07 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996,2000,2001 The NetBSD Foundation, Inc.
@@ -67,6 +67,9 @@
  * for the sake of testing.  Andrew Gillham helped work out the bugs
  * the 4/100 DMA code.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sc_vme.c,v 1.3 2001/11/13 06:17:07 lukem Exp $");
 
 #include "opt_ddb.h"
 

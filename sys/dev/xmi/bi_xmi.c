@@ -1,4 +1,4 @@
-/*	$NetBSD: bi_xmi.c,v 1.1 2000/07/06 17:45:52 ragge Exp $	*/
+/*	$NetBSD: bi_xmi.c,v 1.2 2001/11/13 06:08:32 lukem Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -34,6 +34,9 @@
 /*
  * DWMBA XMI-BI adapter.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: bi_xmi.c,v 1.2 2001/11/13 06:08:32 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
