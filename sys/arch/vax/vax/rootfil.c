@@ -1,4 +1,4 @@
-/*	$NetBSD: rootfil.c,v 1.8 1996/02/02 18:09:03 mycroft Exp $	*/
+/*	$NetBSD: rootfil.c,v 1.9 1996/02/24 21:20:01 ragge Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,16 +45,20 @@
  /* All bugs are subject to removal without further notice */
 
 #include <sys/param.h>
-#include <machine/sid.h>
 #include <sys/buf.h>
 #include <sys/mbuf.h>
-#include <machine/pte.h>
-#include "uda.h"
 #include <sys/reboot.h>
 #include <sys/conf.h>
+
 #include <machine/macros.h>
 #include <machine/nexus.h>
+#include <machine/sid.h>
+#include <machine/pte.h>
+
 #include <vax/uba/ubavar.h>
+
+#include "uda.h"
+#include "hp.h"
 
 #define DOSWAP                  /* Change swdevt, argdev, and dumpdev too */
 u_long  bootdev;                /* should be dev_t, but not until 32 bits */
@@ -109,43 +113,10 @@ setroot()
         part = B_PARTITION(bootdev);
         unit = B_UNIT(bootdev);
         if (majdev == 0) {      /* MBA device */
-#if NMBA > 0
-                register struct mba_device *mbap;
-                int mask;
-
-/*
- * The MBA number used at boot time is not necessarily the same as the
- * MBA number used by the kernel.  In order to change the rootdev we need to
- * convert the boot MBA number to the kernel MBA number.  The address space
- * for an MBA used by the boot code is 0x20010000 + 0x2000 * MBA_number
- * on the 78? and 86?0, 0xf28000 + 0x2000 * MBA_number on the 750.
- * Therefore we can search the mba_hd table for the MBA that has the physical
- * address corresponding to the boot MBA number.
- */
-#define PHYSADRSHFT     13
-#define PHYSMBAMASK780  0x7
-#define PHYSMBAMASK750  0x3
-
-                switch (MACHID(cpu_type)) {
-
-                case VAX_780:
-/*              case VAX_8600: */
-                default:
-                        mask = PHYSMBAMASK780;
-                        break;
-
-                case VAX_750:
-                        mask = PHYSMBAMASK750;
-                        break;
-                }
-                for (mbap = mbdinit; mbap->driver; mbap++)
-                        if (mbap->alive && mbap->drive == unit &&
-                            (((long)mbap->hd->mh_physmba >> PHYSADRSHFT)
-                              & mask) == adaptor)
-                                break;
-                if (mbap->driver == 0)
-                        return;
-                mindev = mbap->unit;
+#if NHP > 0
+		mindev = hp_getdev(adaptor, unit);
+		if (mindev < 0)
+			return;
 #else
                 return;
 #endif
@@ -153,7 +124,6 @@ setroot()
                 register struct uba_device *ubap;
 
                 for (ubap = ubdinit; ubap->ui_driver; ubap++){
-			printf("ubap %x\n",ubap);
                         if (ubap->ui_alive && ubap->ui_slave == unit &&
                            ubap->ui_ctlr == controller &&
                            ubap->ui_ubanum == adaptor &&
@@ -164,7 +134,6 @@ setroot()
                 if (ubap->ui_driver == 0)
                         return;
                 mindev = ubap->ui_unit;
-		printf("mindev %x, majdev %x\n",mindev,majdev);
         }
         mindev = (mindev << PARTITIONSHIFT) + part;
         orootdev = rootdev;
