@@ -5,6 +5,6 @@ CFLAGS+=-g -Wall
 CLEANFILES+= crunched_skel.c
 
 crunched_skel.c: crunched_main.c
-	${.CURDIR}/mkskel.sh ${.CURDIR}/crunched_main.c >crunched_skel.c
+	sh ${.CURDIR}/mkskel.sh ${.CURDIR}/crunched_main.c > crunched_skel.c
 
 .include <bsd.prog.mk>
