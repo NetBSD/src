@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.53 2003/10/08 18:20:15 dsl Exp $
+#	$NetBSD: Makefile.booters,v 1.54 2003/10/08 18:38:43 dsl Exp $
 
 .include <bsd.own.mk>
 
@@ -72,6 +72,7 @@ lib:
 .ifdef LIBOBJ
 	-rm -f $@
 	ln -s ${LIBOBJ}/lib .
+	[ -d ${LIBOBJ}/lib ] || mkdir ${LIBOBJ}/lib
 .else
 	mkdir lib
 .endif

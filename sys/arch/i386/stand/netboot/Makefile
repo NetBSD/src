@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.27 2003/10/08 18:20:15 dsl Exp $
+#	$NetBSD: Makefile,v 1.28 2003/10/08 18:38:43 dsl Exp $
 
 SUBDIR+=	3c509
 SUBDIR+=	.WAIT
@@ -14,3 +14,8 @@ LIBOBJ=	${.OBJDIR}
 .MAKEOVERRIDES+= LIBOBJ
 
 .include <bsd.subdir.mk>
+
+cleandir distclean: cleanlibdir
+
+cleanlibdir:
+	-rm -rf lib
