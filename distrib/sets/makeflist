@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: makeflist,v 1.52 2002/10/06 17:28:47 thorpej Exp $
+# $NetBSD: makeflist,v 1.53 2002/10/09 01:22:37 thorpej Exp $
 #
 # Print out the files in some or all lists.
 # Usage: makeflist [-b] [-x] [-a arch] [-m machine] [-s setsdir] [setname ...]
@@ -99,11 +99,6 @@ unset _lists
 
 for setname in $lists; do
 	cat $setd/lists/$setname/mi
-	# XXX MIPS does not support rescue right now.
-	if [ -f $setd/lists/$setname/rescue.mi -a \
-	     ${machine_cpu} != "mips" ]; then
-		cat $setd/lists/$setname/rescue.mi
-	fi
 	if [ "$machine" != "$machine_arch" ]; then
 		# Prefer an ad.${machine_arch} over an ad.${machine_cpu},
 		# since the arch-specific one will be more specific than
@@ -148,6 +143,33 @@ for setname in $lists; do
 			if [ -f $setd/lists/$setname/tc.shl ]; then
 				cat $setd/lists/$setname/tc.shl
 			fi
+		fi
+	fi
+
+	# XXX MIPS does not support rescue right now.
+	if [ ${machine_cpu} = "mips" ]; then
+		continue
+	fi
+
+	if [ -f $setd/lists/$setname/rescue.mi ]; then
+		cat $setd/lists/$setname/rescue.mi
+	fi
+	if [ -f $setd/lists/$setname/rescue.${machine} ]; then
+		cat $setd/lists/$setname/rescue.${machine}
+	fi
+	if [ "$machine" != "$machine_arch" ]; then
+		# Prefer a rescue.ad.${machine_arch} over a
+		# rescue.ad.${machine_cpu}, since the arch-
+		# specific one will be more specific than the
+		# cpu-specific one.
+		if [ -f $setd/lists/$setname/rescue.ad.${machine_arch} ]; then
+			cat $setd/lists/$setname/rescue.ad.${machine_arch}
+		elif [ -f $setd/lists/$setname/rescue.ad.${machine_cpu} ]; then
+			cat $setd/lists/$setname/rescue.ad.${machine_cpu}
+		fi
+		if [ "$shlib" != "no" -a \
+		     -f $setd/lists/$setname/rescue.ad.${machine_cpu}.shl]; then
+			cat $setd/lists/$setname/rescue.ad.${machine_cpu}.shl
 		fi
 	fi
 done | awk -- '/^[^#]/ {print $1}' | sort -u
