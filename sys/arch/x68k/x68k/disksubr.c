@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.9 1999/03/16 16:30:23 minoura Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.10 2000/01/18 19:52:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -43,8 +43,6 @@
 #include <sys/disklabel.h>
 #include <sys/syslog.h>
 #include <sys/disk.h>
-
-#define	b_cylin	b_resid
 
 /* was this the boot device ? */
 void
@@ -108,7 +106,7 @@ readdisklabel(dev, strat, lp, osdep)
 		bp->b_blkno = DOSBBSECTOR;
 		bp->b_bcount = lp->d_secsize;
 		bp->b_flags = B_BUSY | B_READ;
-		bp->b_cylin = DOSBBSECTOR / lp->d_secpercyl;
+		bp->b_cylinder = DOSBBSECTOR / lp->d_secpercyl;
 		(*strat)(bp);
 
 		if (biowait(bp)) {
@@ -124,7 +122,7 @@ readdisklabel(dev, strat, lp, osdep)
 		bp->b_blkno = DOSPARTOFF;
 		bp->b_bcount = lp->d_secsize;
 		bp->b_flags = B_BUSY | B_READ;
-		bp->b_cylin = DOSPARTOFF / lp->d_secpercyl;
+		bp->b_cylinder = DOSPARTOFF / lp->d_secpercyl;
 		(*strat)(bp);
 
 		/* if successful, wander through dos partition table */
@@ -174,7 +172,7 @@ readdisklabel(dev, strat, lp, osdep)
 
 	/* next, dig out disk label */
 	bp->b_blkno = dospartoff + LABELSECTOR;
-	bp->b_cylin = cyl;
+	bp->b_cylinder = cyl;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_BUSY | B_READ;
 	(*strat)(bp);
@@ -217,7 +215,7 @@ readdisklabel(dev, strat, lp, osdep)
 			else
 				bp->b_blkno /= DEV_BSIZE / lp->d_secsize;
 			bp->b_bcount = lp->d_secsize;
-			bp->b_cylin = lp->d_ncylinders - 1;
+			bp->b_cylinder = lp->d_ncylinders - 1;
 			(*strat)(bp);
 
 			/* if successful, validate, otherwise try another */
@@ -328,7 +326,7 @@ writedisklabel(dev, strat, lp, osdep)
 		bp->b_blkno = DOSBBSECTOR;
 		bp->b_bcount = lp->d_secsize;
 		bp->b_flags = B_BUSY | B_READ;
-		bp->b_cylin = DOSBBSECTOR / lp->d_secpercyl;
+		bp->b_cylinder = DOSBBSECTOR / lp->d_secpercyl;
 		(*strat)(bp);
 		if (biowait(bp))
 			goto done;
@@ -343,7 +341,7 @@ writedisklabel(dev, strat, lp, osdep)
 		bp->b_blkno = DOSPARTOFF;
 		bp->b_bcount = lp->d_secsize;
 		bp->b_flags = B_BUSY | B_READ;
-		bp->b_cylin = DOSPARTOFF / lp->d_secpercyl;
+		bp->b_cylinder = DOSPARTOFF / lp->d_secpercyl;
 		(*strat)(bp);
 
 		if ((error = biowait(bp)) == 0) {
@@ -411,7 +409,7 @@ writedisklabel(dev, strat, lp, osdep)
 
 	/* next, dig out disk label */
 	bp->b_blkno = dospartoff + LABELSECTOR;
-	bp->b_cylin = cyl;
+	bp->b_cylinder = cyl;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_READ;
 	(*strat)(bp);
@@ -483,7 +481,7 @@ bounds_check_with_label(bp, lp, wlabel)
 	}
 
 	/* calculate cylinder for disksort to order transfers with */
-	bp->b_cylin = (bp->b_blkno + p->p_offset) /
+	bp->b_cylinder = (bp->b_blkno + p->p_offset) /
 	    (lp->d_secsize / DEV_BSIZE) / lp->d_secpercyl;
 	return (1);
 
