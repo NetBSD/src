@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.c,v 1.35 2001/02/27 20:23:13 reinoud Exp $ */
+/* $NetBSD: podulebus.c,v 1.36 2001/03/17 18:46:26 bjh21 Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -115,9 +115,9 @@ podulebusprint(aux, name)
 	}
 
 	if (pa->pa_podule->slottype == SLOT_POD)
-		printf(" [ podule %d ]:", pa->pa_podule_number);
+		printf(" [ podule %d ]", pa->pa_podule_number);
 	else if (pa->pa_podule->slottype == SLOT_NET)
-		printf(" [ netslot %d ]:", pa->pa_podule_number - MAX_PODULES);
+		printf(" [ netslot %d ]", pa->pa_podule_number - MAX_PODULES);
 	else
 		panic("Invalid slot type\n");
 

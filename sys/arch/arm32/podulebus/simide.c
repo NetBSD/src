@@ -1,4 +1,4 @@
-/*	$NetBSD: simide.c,v 1.10 1998/12/03 18:24:30 bouyer Exp $	*/
+/*	$NetBSD: simide.c,v 1.11 2001/03/17 18:46:26 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe
@@ -213,6 +213,7 @@ simide_attach(parent, self, aux)
 	status = bus_space_read_1(sc->sc_ctliot, sc->sc_ctlioh,
 	    STATUS_REGISTER_OFFSET);
 
+	printf(":");
 	/* If any of the bits in STATUS_FAULT are zero then we have a fault. */
 	if ((status & STATUS_FAULT) != STATUS_FAULT)
 		printf(" card/cable fault (%02x) -", status);

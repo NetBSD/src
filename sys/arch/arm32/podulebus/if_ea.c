@@ -1,4 +1,4 @@
-/* $NetBSD: if_ea.c,v 1.24 2000/11/15 01:02:12 thorpej Exp $ */
+/* $NetBSD: if_ea.c,v 1.25 2001/03/17 18:46:25 bjh21 Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -326,7 +326,7 @@ eaattach(parent, self, aux)
 
 	/* Print out some information for the user. */
 
-	printf(" SEEQ8005 address %s", ether_sprintf(myaddr));
+	printf(": SEEQ8005 address %s", ether_sprintf(myaddr));
 
 	sc->sc_irqclaimed = 0;
 

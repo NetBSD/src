@@ -1,4 +1,4 @@
-/* $NetBSD: if_ie.c,v 1.28 2000/11/15 01:02:12 thorpej Exp $ */
+/* $NetBSD: if_ie.c,v 1.29 2001/03/17 18:46:26 bjh21 Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson.
@@ -464,7 +464,7 @@ void ieattach ( struct device *parent, struct device *self, void *aux )
 	/* "Hmm," said nuts, "what if the attach fails" */
     
 	/* Write some pretty things on the annoucement line */
-	printf ( " %s using %dk card ram",
+	printf ( ": %s using %dk card ram",
 	    ether_sprintf(hwaddr),
 	    ((NRXBUF*IE_RXBUF_SIZE)+(NTXBUF*IE_TXBUF_SIZE))/1024 );
 

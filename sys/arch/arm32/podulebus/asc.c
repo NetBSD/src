@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.26 1999/09/30 22:59:53 thorpej Exp $	*/
+/*	$NetBSD: asc.c,v 1.27 2001/03/17 18:46:25 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -179,7 +179,7 @@ ascattach(pdp, dp, auxp)
 	(void)get_bootconf_option(boot_args, "asc.hostid",
 	    BOOTOPT_TYPE_INT, &sbic->sc_link.scsipi_scsi.adapter_target);
 
-	printf(" hostid=%d", sbic->sc_link.scsipi_scsi.adapter_target);
+	printf(": hostid=%d", sbic->sc_link.scsipi_scsi.adapter_target);
 
 #if ASC_POLL > 0
         if (boot_args) {

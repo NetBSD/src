@@ -1,4 +1,4 @@
-/*	$NetBSD: icside.c,v 1.11 1998/12/03 18:24:30 bouyer Exp $	*/
+/*	$NetBSD: icside.c,v 1.12 2001/03/17 18:46:25 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe
@@ -208,10 +208,10 @@ icside_attach(parent, self, aux)
 
 	/* Report the version and name */
 	if (ide == NULL || ide->name == NULL) {
-		printf(" rev %d is unsupported\n", id);
+		printf(": rev %d is unsupported\n", id);
 		return;
 	} else
-		printf(" %s\n", ide->name);
+		printf(": %s\n", ide->name);
 
 	/*
 	 * Ok we need our own bus tag as the register spacing
