@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231_ebus.c,v 1.6 2000/07/09 20:57:50 pk Exp $	*/
+/*	$NetBSD: cs4231_ebus.c,v 1.7 2001/10/22 07:06:20 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
-#include <sparc64/dev/ebusreg.h>
+#include <dev/ebus/ebusreg.h>
 #include <sparc64/dev/ebusvar.h>
 
 #include <sys/audioio.h>
