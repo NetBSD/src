@@ -37,7 +37,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)process.c	8.1 (Berkeley) 6/6/93"; */
-static char *rcsid = "$Id: process.c,v 1.16 1995/03/15 12:12:16 mycroft Exp $";
+static char *rcsid = "$Id: process.c,v 1.17 1995/07/11 04:09:50 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -229,7 +229,7 @@ redirect:
 				break;
 			case 'x':
 				if (hs == NULL)
-					cspace(&HS, "", 0, REPLACE);
+					cspace(&HS, "\n", 1, REPLACE);
 				tspace = PS;
 				PS = HS;
 				HS = tspace;
