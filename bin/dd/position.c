@@ -1,4 +1,4 @@
-/*	$NetBSD: position.c,v 1.14 2003/08/07 09:05:10 agc Exp $	*/
+/*	$NetBSD: position.c,v 1.15 2003/08/20 10:43:55 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)position.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: position.c,v 1.14 2003/08/07 09:05:10 agc Exp $");
+__RCSID("$NetBSD: position.c,v 1.15 2003/08/20 10:43:55 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -112,7 +112,8 @@ pos_in(void)
 		 */
 		if (ddflags & C_NOERROR) {
 			if (!warned) {
-				char * fn;
+				char *fn;
+
 				fn = printescaped(in.name);
 				warn("%s", fn);
 				free(fn);
