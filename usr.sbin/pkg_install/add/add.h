@@ -1,4 +1,6 @@
-/* FreeBSD Id: add.h,v 1.8 1997/02/22 16:09:15 peter Exp  */
+/* $NetBSD: add.h,v 1.2 1997/06/05 12:59:23 agc Exp $ */
+
+/* from FreeBSD Id: add.h,v 1.8 1997/02/22 16:09:15 peter Exp  */
 
 /*
  * FreeBSD install - a package for the installation and maintainance

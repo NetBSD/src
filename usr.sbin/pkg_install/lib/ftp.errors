@@ -1,4 +1,5 @@
 # FreeBSD - Id: ftp.errors,v 1.3 1997/02/22 15:06:47 peter Exp
+# $NetBSD: ftp.errors,v 1.2 1997/06/05 12:59:46 agc Exp $
 #
 # This list is taken from RFC 959.
 # It probably needs a going over.
