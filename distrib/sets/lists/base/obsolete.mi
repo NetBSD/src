@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.30 2001/06/03 06:19:14 itojun Exp $
+# $NetBSD: obsolete.mi,v 1.31 2001/10/12 07:29:36 lukem Exp $
 /bin/rcorder
 /dev/log
 /etc/disklabels
@@ -134,3 +134,13 @@
 /usr/share/zoneinfo/GMT9
 /usr/share/zoneinfo/Moscow
 /var/games/save
+/var/named
+/var/named/dev
+/var/named/etc
+/var/named/etc/namedb
+/var/named/etc/namedb/cache
+/var/named/usr
+/var/named/usr/libexec
+/var/named/var
+/var/named/var/run
+/var/named/var/tmp
