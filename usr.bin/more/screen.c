@@ -34,7 +34,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)screen.c	5.8 (Berkeley) 6/28/92"; */
-static char *rcsid = "$Id: screen.c,v 1.3 1994/04/16 08:14:52 andrew Exp $";
+static char *rcsid = "$Id: screen.c,v 1.4 1994/04/17 02:45:13 andrew Exp $";
 #endif /* not lint */
 
 /*
@@ -57,9 +57,10 @@ static char *rcsid = "$Id: screen.c,v 1.3 1994/04/16 08:14:52 andrew Exp $";
 #endif
 #endif
 
-#ifdef TIOCGWINSZ
+/* pull in TIOCGWINSZ on BSD systems */
 #include <sys/ioctl.h>
-#else
+
+#ifndef TIOCGWINSZ
 /*
  * For the Unix PC (ATT 7300 & 3B1):
  * Since WIOCGETD is defined in sys/window.h, we can't use that to decide
