@@ -1,4 +1,4 @@
-/* $NetBSD: alpha_cpu.h,v 1.21 1998/07/08 16:48:49 thorpej Exp $ */
+/* $NetBSD: alpha_cpu.h,v 1.22 1998/07/08 17:20:42 mjacob Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -182,16 +182,6 @@ struct alpha_logout_area {
 #define	ALPHA_PROC_ERROR	0x630	/* Processor correctable error	*/
 #define	ALPHA_SYS_MCHECK	0x660	/* System machine check		*/
 #define	ALPHA_PROC_MCHECK	0x670	/* Processor machine check	*/
-
-/* Per-CPU info for handling machine checks, an array of which		*/
-/* is allocated early in startup					*/
-struct mchkinfo {
-	volatile u_int		mc_expected;	/* machine check expected */
-	volatile u_int		mc_received;	/* machine check received */
-	/*
-	 * We don't really need more info at this time.
-	 */
-};
 
 /*
  * Virtual Memory Management definitions [OSF/1 PALcode Specific]
