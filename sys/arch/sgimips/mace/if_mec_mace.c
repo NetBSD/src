@@ -1,4 +1,31 @@
-/* $NetBSD: if_mec_mace.c,v 1.2 2004/01/19 10:28:28 sekiya Exp $	 */
+/* $NetBSD: if_mec_mace.c,v 1.3 2004/07/11 03:13:04 tsutsui Exp $ */
+
+/*
+ * Copyright (c) 2004 Izumi Tsutsui.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 2003 Christopher SEKIYA
@@ -37,11 +64,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mec_mace.c,v 1.2 2004/01/19 10:28:28 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mec_mace.c,v 1.3 2004/07/11 03:13:04 tsutsui Exp $");
 
-#include "opt_inet.h"
-#include "opt_ns.h"
+#include "opt_ddb.h"
 #include "bpfilter.h"
+#include "rnd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,7 +81,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_mec_mace.c,v 1.2 2004/01/19 10:28:28 sekiya Exp $
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 
-#include <machine/endian.h>
+#if NRND > 0
+#include <sys/rnd.h>
+#endif
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -65,16 +94,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_mec_mace.c,v 1.2 2004/01/19 10:28:28 sekiya Exp $
 #include <net/bpf.h>
 #endif
 
-#ifdef INET
-#include <netinet/in.h>
-#include <netinet/if_inarp.h>
-#endif
-
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
-
 #include <machine/bus.h>
 #include <machine/intr.h>
 #include <machine/machtype.h>
@@ -83,216 +102,370 @@ __KERNEL_RCSID(0, "$NetBSD: if_mec_mace.c,v 1.2 2004/01/19 10:28:28 sekiya Exp $
 #include <dev/mii/miivar.h>
 
 #include <sgimips/mace/macevar.h>
-
 #include <sgimips/mace/if_mecreg.h>
+
 #include <dev/arcbios/arcbios.h>
 #include <dev/arcbios/arcbiosvar.h>
 
-struct mec_tx_dma_desc {
-	u_int64_t       command;
-	u_int64_t       concat[3];
-	u_int8_t        buffer[120];
+/* #define MEC_DEBUG */
+
+#ifdef MEC_DEBUG
+#define MEC_DEBUG_RESET		0x01
+#define MEC_DEBUG_START		0x02
+#define MEC_DEBUG_STOP		0x04
+#define MEC_DEBUG_INTR		0x08
+#define MEC_DEBUG_RXINTR	0x10
+#define MEC_DEBUG_TXINTR	0x20
+uint32_t mec_debug = 0;
+#define DPRINTF(x, y)	if (mec_debug & (x)) printf y
+#else
+#define DPRINTF(x, y)	/* nothing */
+#endif
+
+/*
+ * Transmit descriptor list size
+ */
+#define MEC_NTXDESC		64
+#define MEC_NTXDESC_MASK	(MEC_NTXDESC - 1)
+#define MEC_NEXTTX(x)		(((x) + 1) & MEC_NTXDESC_MASK)
+
+/*
+ * software state for TX
+ */
+struct mec_txsoft {
+	struct mbuf *txs_mbuf;		/* head of our mbuf chain */
+	bus_dmamap_t txs_dmamap;	/* our DMA map */
+	uint32_t txs_flags;
+#define MEC_TXS_BUFLEN_MASK	0x0000007f	/* data len in txd_buf */
+#define MEC_TXS_TXDBUF		0x00000080	/* txd_buf is used */
+#define MEC_TXS_TXDPTR1		0x00000100	/* txd_ptr[0] is used */
 };
 
-#define MEC_NTXDESC             64
-#define MEC_NRXDESC             16
+/*
+ * Transmit buffer descriptor
+ */
+#define MEC_TXDESCSIZE		128
+#define MEC_NTXPTR		3
+#define MEC_TXD_BUFOFFSET	\
+	(sizeof(uint64_t) + MEC_NTXPTR * sizeof(uint64_t))
+#define MEC_TXD_BUFSIZE		(MEC_TXDESCSIZE - MEC_TXD_BUFOFFSET)
+#define MEC_TXD_BUFSTART(len)	(MEC_TXD_BUFSIZE - (len))
+#define MEC_TXD_ALIGN		8
+#define MEC_TXD_ROUNDUP(addr)	\
+	(((addr) + (MEC_TXD_ALIGN - 1)) & ~((uint64_t)MEC_TXD_ALIGN - 1))
 
-struct mec_control {
-	struct mec_tx_dma_desc tx_desc[MEC_NRXDESC];
+struct mec_txdesc {
+	volatile uint64_t txd_cmd;
+#define MEC_TXCMD_DATALEN	0x000000000000ffff	/* data length */
+#define MEC_TXCMD_BUFSTART	0x00000000007f0000	/* start byte offset */
+#define  TXCMD_BUFSTART(x)	((x) << 16)
+#define MEC_TXCMD_TERMDMA	0x0000000000800000	/* stop DMA on abort */
+#define MEC_TXCMD_TXINT		0x0000000001000000	/* INT after TX done */
+#define MEC_TXCMD_PTR1		0x0000000002000000	/* valid 1st txd_ptr */
+#define MEC_TXCMD_PTR2		0x0000000004000000	/* valid 2nd txd_ptr */
+#define MEC_TXCMD_PTR3		0x0000000008000000	/* valid 3rd txd_ptr */
+#define MEC_TXCMD_UNUSED	0xfffffffff0000000ULL	/* should be zero */
+
+#define txd_stat	txd_cmd
+#define MEC_TXSTAT_LEN		0x000000000000ffff	/* TX length */
+#define MEC_TXSTAT_COLCNT	0x00000000000f0000	/* collision count */
+#define MEC_TXSTAT_COLCNT_SHIFT	16
+#define MEC_TXSTAT_LATE_COL	0x0000000000100000	/* late collision */
+#define MEC_TXSTAT_CRCERROR	0x0000000000200000	/* */
+#define MEC_TXSTAT_DEFERRED	0x0000000000400000	/* */
+#define MEC_TXSTAT_SUCCESS	0x0000000000800000	/* TX complete */
+#define MEC_TXSTAT_TOOBIG	0x0000000001000000	/* */
+#define MEC_TXSTAT_UNDERRUN	0x0000000002000000	/* */
+#define MEC_TXSTAT_COLLISIONS	0x0000000004000000	/* */
+#define MEC_TXSTAT_EXDEFERRAL	0x0000000008000000	/* */
+#define MEC_TXSTAT_COLLIDED	0x0000000010000000	/* */
+#define MEC_TXSTAT_UNUSED	0x7fffffffe0000000ULL	/* should be zero */
+#define MEC_TXSTAT_SENT		0x8000000000000000ULL	/* packet sent */
+
+	uint64_t txd_ptr[MEC_NTXPTR];
+#define MEC_TXPTR_UNUSED2	0x0000000000000007	/* should be zero */
+#define MEC_TXPTR_DMAADDR	0x00000000fffffff8	/* TX DMA address */
+#define MEC_TXPTR_LEN		0x0000ffff00000000ULL	/* buffer length */
+#define  TXPTR_LEN(x)		((uint64_t)(x) << 32)
+#define MEC_TXPTR_UNUSED1	0xffff000000000000ULL	/* should be zero */
+
+	uint8_t txd_buf[MEC_TXD_BUFSIZE];
 };
 
+/*
+ * Receive buffer size
+ */
+#define MEC_NRXDESC		16
+#define MEC_NRXDESC_MASK	(MEC_NRXDESC - 1)
+#define MEC_NEXTRX(x)		(((x) + 1) & MEC_NRXDESC_MASK)
+
+/*
+ * Receive buffer description
+ */
+#define MEC_RXDESCSIZE		4096	/* umm, should be 4kbyte aligned */
+#define MEC_RXD_NRXPAD		3
+#define MEC_RXD_DMAOFFSET	(1 + MEC_RXD_NRXPAD)
+#define MEC_RXD_BUFOFFSET	(MEC_RXD_DMAOFFSET * sizeof(uint64_t))
+#define MEC_RXD_BUFSIZE		(MEC_RXDESCSIZE - MEC_RXD_BUFOFFSET)
+
+struct mec_rxdesc {
+	volatile uint64_t rxd_stat;
+#define MEC_RXSTAT_LEN		0x000000000000ffff	/* data length */
+#define MEC_RXSTAT_VIOLATION	0x0000000000010000	/* code violation (?) */
+#define MEC_RXSTAT_UNUSED2	0x0000000000020000	/* unknown (?) */
+#define MEC_RXSTAT_CRCERROR	0x0000000000040000	/* CRC error */
+#define MEC_RXSTAT_MULTICAST	0x0000000000080000	/* multicast packet */
+#define MEC_RXSTAT_BROADCAST	0x0000000000100000	/* broadcast packet */
+#define MEC_RXSTAT_INVALID	0x0000000000200000	/* invalid preamble */
+#define MEC_RXSTAT_LONGEVENT	0x0000000000400000	/* long packet */
+#define MEC_RXSTAT_BADPACKET	0x0000000000800000	/* bad packet */
+#define MEC_RXSTAT_CAREVENT	0x0000000001000000	/* carrier event */
+#define MEC_RXSTAT_MATCHMCAST	0x0000000002000000	/* match multicast */
+#define MEC_RXSTAT_MATCHMAC	0x0000000004000000	/* match MAC */
+#define MEC_RXSTAT_SEQNUM	0x00000000f8000000	/* sequence number */
+#define MEC_RXSTAT_CKSUM	0x0000ffff00000000ULL	/* IP checksum */
+#define MEC_RXSTAT_UNUSED1	0x7fff000000000000ULL	/* should be zero */
+#define MEC_RXSTAT_RECEIVED	0x8000000000000000ULL	/* set to 1 on RX */
+	uint64_t rxd_pad1[MEC_RXD_NRXPAD];
+	uint8_t  rxd_buf[MEC_RXD_BUFSIZE];
+};
+
+/*
+ * control structures for DMA ops
+ */
+struct mec_control_data {
+	/*
+	 * TX descriptors and buffers
+	 */
+	struct mec_txdesc mcd_txdesc[MEC_NTXDESC];
+
+	/*
+	 * RX descriptors and buffers
+	 */
+	struct mec_rxdesc mcd_rxdesc[MEC_NRXDESC];
+};
+
+/*
+ * It _seems_ there are some restrictions on descriptor address:
+ *
+ * - Base address of txdescs should be 64kbyte aligned
+ * - Each txdesc should be 128byte aligned
+ * - Each rxdesc should be 4kbyte aligned
+ *
+ * So we should specify 64k align to allocalte txdescs.
+ * In this case, sizeof(struct mec_txdesc) * MEC_NTXDESC is 8192
+ * so rxdescs are also allocated at 4kbyte aligned.
+ */
+#define MEC_CONTROL_DATA_ALIGN	(64 * 1024)
+
+#define MEC_CDOFF(x)	offsetof(struct mec_control_data, x)
+#define MEC_CDTXOFF(x)	MEC_CDOFF(mcd_txdesc[(x)])
+#define MEC_CDRXOFF(x)	MEC_CDOFF(mcd_rxdesc[(x)])
+
+/*
+ * software state per device
+ */
 struct mec_softc {
-	struct device   sc_dev;
+	struct device sc_dev;		/* generic device structures */
 
-	bus_space_tag_t sc_st;
-	bus_space_handle_t sc_sh;
-	bus_dma_tag_t   sc_dmat;
+	bus_space_tag_t sc_st;		/* bus_space tag */
+	bus_space_handle_t sc_sh;	/* bus_space handle */
+	bus_dma_tag_t sc_dmat;		/* bus_dma tag */
+	void *sc_sdhook;		/* shoutdown hook */
 
-	struct ethercom sc_ethercom;
+	struct ethercom sc_ethercom;	/* Ethernet common part */
 
-	unsigned char   sc_enaddr[ETHER_ADDR_LEN];
+	struct mii_data sc_mii;		/* MII/media information */
+	int sc_phyaddr;			/* MII address */
+	struct callout sc_tick_ch;	/* tick callout */
 
-	void           *sc_sdhook;
+	uint8_t sc_enaddr[ETHER_ADDR_LEN]; /* MAC address */
 
-	struct mii_data sc_mii;
-	int             phy;
-	struct callout  sc_callout;
+	bus_dmamap_t sc_cddmamap;	/* bus_dma map for control data */
+#define sc_cddma	sc_cddmamap->dm_segs[0].ds_addr
 
-	struct mec_control *sc_control;
+	/* pointer to allocalted control data */
+	struct mec_control_data *sc_control_data;
+#define sc_txdesc	sc_control_data->mcd_txdesc
+#define sc_rxdesc	sc_control_data->mcd_rxdesc
 
-	/* DMA structures for control data (DMA RX/TX descriptors) */
-	int             sc_ncdseg;
-	bus_dma_segment_t sc_cdseg;
-	bus_dmamap_t    sc_cdmap;
-	int             sc_nextrx;
+	/* software state for TX descs */
+	struct mec_txsoft sc_txsoft[MEC_NTXDESC];
 
-	/* DMA structures for TX packet data */
-	bus_dma_segment_t sc_txseg[MEC_NTXDESC];
-	bus_dmamap_t    sc_txmap[MEC_NTXDESC];
-	struct mbuf    *sc_txmbuf[MEC_NTXDESC];
+	int sc_txpending;		/* number of TX requests pending */
+	int sc_txdirty;			/* first dirty TX descriptor */
+	int sc_txlast;			/* last used TX descriptor */
 
-	int             sc_nexttx;
-	int             sc_prevtx;
-	int             sc_nfreetx;
-
-
-	bus_dma_segment_t rx_seg[16];
-	bus_dmamap_t    rx_map[16];
-	unsigned char  *rx_buf[16];
-	struct mbuf    *rx_mbuf[16];
-	int             rx_nseg;
-
-
-	caddr_t        *rx_buffer[16];
-	caddr_t        *tx_buffer;
-	u_int64_t       rx_read_ptr;
-	u_int64_t       rx_write_ptr;
-	u_int64_t       rx_read_length;
-	u_int64_t       rx_boffset;
-	u_int64_t       tx_read_ptr;
-	u_int64_t       tx_write_ptr;
-	u_int64_t       tx_available;
-	u_int64_t       tx_read_length;
-	u_int64_t       tx_boffset;
-	u_int64_t       me_rxdelay;
+	int sc_rxptr;			/* next ready RX buffer */
 
 #if NRND > 0
-	rndsource_element_t rnd_source;	/* random source */
+	rndsource_element_t sc_rnd_source; /* random source */
 #endif
 };
 
-#define TX_RING_SIZE	16
+#define MEC_CDTXADDR(sc, x)	((sc)->sc_cddma + MEC_CDTXOFF(x))
+#define MEC_CDRXADDR(sc, x)	((sc)->sc_cddma + MEC_CDRXOFF(x))
 
-static int      mec_match(struct device *, struct cfdata *, void *);
-static void     mec_attach(struct device *, struct device *, void *);
-static void     mec_start(struct ifnet *);
-static void     mec_watchdog(struct ifnet *);
-static int      mec_ioctl(struct ifnet *, u_long, caddr_t);
-static int      mec_mii_readreg(struct device *, int, int);
-static void     mec_mii_writereg(struct device *, int, int, int);
-static int      mec_mii_wait(struct mec_softc *);
-static void     mec_statchg(struct device *);
-int             mec_mediachange(struct ifnet *);
-void            mec_mediastatus(struct ifnet *, struct ifmediareq *);
-void            enaddr_aton(const char *, u_int8_t *);
-void            mec_reset(struct mec_softc *);
-int             mec_init(struct ifnet * ifp);
-int             mec_intr(void *arg);
-void            mec_stop(struct ifnet * ifp, int disable);
+#define MEC_TXDESCSYNC(sc, x, ops)					\
+	bus_dmamap_sync((sc)->sc_dmat, (sc)->sc_cddmamap,		\
+	    MEC_CDTXOFF(x), MEC_TXDESCSIZE, (ops))
+#define MEC_TXCMDSYNC(sc, x, ops)					\
+	bus_dmamap_sync((sc)->sc_dmat, (sc)->sc_cddmamap,		\
+	    MEC_CDTXOFF(x), sizeof(uint64_t), (ops))
 
-static void     mec_rxintr(struct mec_softc * sc, u_int64_t status);
+#define MEC_RXSTATSYNC(sc, x, ops)					\
+	bus_dmamap_sync((sc)->sc_dmat, (sc)->sc_cddmamap,		\
+	    MEC_CDRXOFF(x), sizeof(uint64_t), (ops))
+#define MEC_RXBUFSYNC(sc, x, len, ops)					\
+	bus_dmamap_sync((sc)->sc_dmat, (sc)->sc_cddmamap,		\
+	    MEC_CDRXOFF(x) + MEC_RXD_BUFOFFSET,				\
+	    MEC_ETHER_ALIGN + (len), (ops))
+
+/* XXX these values should be moved to <net/if_ether.h> ? */
+#define ETHER_PAD_LEN	(ETHER_MIN_LEN - ETHER_CRC_LEN)
+#define MEC_ETHER_ALIGN	2
+
+#ifdef DDB
+#define STATIC
+#else
+#define STATIC static
+#endif
+
+STATIC int	mec_match(struct device *, struct cfdata *, void *);
+STATIC void	mec_attach(struct device *, struct device *, void *);
+
+STATIC int	mec_mii_readreg(struct device *, int, int);
+STATIC void	mec_mii_writereg(struct device *, int, int, int);
+STATIC int	mec_mii_wait(struct mec_softc *);
+STATIC void	mec_statchg(struct device *);
+STATIC void	mec_mediastatus(struct ifnet *, struct ifmediareq *);
+STATIC int	mec_mediachange(struct ifnet *);
+
+static void	enaddr_aton(const char *, uint8_t *);
+
+STATIC int	mec_init(struct ifnet * ifp);
+STATIC void	mec_start(struct ifnet *);
+STATIC void	mec_watchdog(struct ifnet *);
+STATIC void	mec_tick(void *);
+STATIC int	mec_ioctl(struct ifnet *, u_long, caddr_t);
+STATIC void	mec_reset(struct mec_softc *);
+STATIC void	mec_setfilter(struct mec_softc *);
+STATIC int	mec_intr(void *arg);
+STATIC void	mec_stop(struct ifnet *, int);
+STATIC void	mec_rxintr(struct mec_softc *);
+STATIC void	mec_txintr(struct mec_softc *);
+STATIC void	mec_shutdown(void *);
 
 CFATTACH_DECL(mec, sizeof(struct mec_softc),
-	      mec_match, mec_attach, NULL, NULL);
+    mec_match, mec_attach, NULL, NULL);
 
-static int
-mec_match(struct device * parent, struct cfdata * match, void *aux)
+static int mec_matched = 0;
+
+STATIC int
+mec_match(struct device *parent, struct cfdata *match, void *aux)
 {
+
+	/* allow only one device */
+	if (mec_matched)
+		return 0;
+
+	mec_matched = 1;
 	return 1;
 }
 
-static void
-mec_attach(struct device * parent, struct device * self, void *aux)
+STATIC void
+mec_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct mec_softc *sc = (void *) self;
+	struct mec_softc *sc = (void *)self;
 	struct mace_attach_args *maa = aux;
-	struct ifnet   *ifp = &sc->sc_ethercom.ec_if;
-	u_int64_t       command;
-	u_int64_t	address = 0;
-	char           *macaddr;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	uint32_t command;
+	char *macaddr;
 	struct mii_softc *child;
-	int             i, err;
+	bus_dma_segment_t seg;
+	int i, err, rseg;
 
 	sc->sc_st = maa->maa_st;
 	if (bus_space_subregion(sc->sc_st, maa->maa_sh,
-				maa->maa_offset, 0,
-				&sc->sc_sh) != 0) {
+	    maa->maa_offset, 0,	&sc->sc_sh) != 0) {
 		printf(": can't map i/o space\n");
 		return;
 	}
 
-	/* Reset device */
-	bus_space_write_8(sc->sc_st, sc->sc_sh, MEC_MAC_CONTROL, MEC_MAC_CORE_RESET);
-	bus_space_write_8(sc->sc_st, sc->sc_sh, MEC_MAC_CONTROL, 0);
-
-	printf(": MAC-110 Ethernet, ");
-	command = bus_space_read_8(sc->sc_st, sc->sc_sh, MEC_MAC_CONTROL);
-	printf("rev %lld\n",
-	       (command & MEC_MAC_REVISION) >> MEC_MAC_REVISION_SHIFT);
-
 	/* set up DMA structures */
-
 	sc->sc_dmat = maa->maa_dmat;
 
 	/*
 	 * Allocate the control data structures, and create and load the
 	 * DMA map for it.
 	 */
-	if ((err = bus_dmamem_alloc(sc->sc_dmat, sizeof(struct mec_control),
-				    PAGE_SIZE, PAGE_SIZE, &sc->sc_cdseg,
-				 1, &sc->sc_ncdseg, BUS_DMA_NOWAIT)) != 0) {
+	if ((err = bus_dmamem_alloc(sc->sc_dmat,
+	    sizeof(struct mec_control_data), MEC_CONTROL_DATA_ALIGN, 0,
+	    &seg, 1, &rseg, BUS_DMA_NOWAIT)) != 0) {
 		printf(": unable to allocate control data, error = %d\n", err);
 		goto fail_0;
 	}
-	if ((err = bus_dmamem_map(sc->sc_dmat, &sc->sc_cdseg, sc->sc_ncdseg,
-				  sizeof(struct mec_control),
-				  (caddr_t *) & sc->sc_control,
-				  BUS_DMA_NOWAIT | BUS_DMA_COHERENT)) != 0) {
+	/*
+	 * XXX needs re-think...
+	 * control data structures contain whole RX data buffer, so
+	 * BUS_DMA_COHERENT (which disables cache) may cause some performance
+	 * issue on copying data from the RX buffer to mbuf on normal memory,
+	 * though we have to make sure all bus_dmamap_sync(9) ops are called
+	 * proprely in that case.
+	 */
+	if ((err = bus_dmamem_map(sc->sc_dmat, &seg, rseg,
+	    sizeof(struct mec_control_data),
+	    (caddr_t *)&sc->sc_control_data, /*BUS_DMA_COHERENT*/ 0)) != 0) {
 		printf(": unable to map control data, error = %d\n", err);
 		goto fail_1;
 	}
-	memset(sc->sc_control, 0, sizeof(struct mec_control));
+	memset(sc->sc_control_data, 0, sizeof(struct mec_control_data));
 
-	if ((err = bus_dmamap_create(sc->sc_dmat, sizeof(struct mec_control),
-				   1, sizeof(struct mec_control), PAGE_SIZE,
-				     BUS_DMA_NOWAIT, &sc->sc_cdmap)) != 0) {
-		printf(": unable to create DMA map for control data, error "
-		       "= %d\n", err);
+	if ((err = bus_dmamap_create(sc->sc_dmat,
+	    sizeof(struct mec_control_data), 1,
+	    sizeof(struct mec_control_data), 0, 0, &sc->sc_cddmamap)) != 0) {
+		printf(": unable to create control data DMA map, error = %d\n",
+		    err);
 		goto fail_2;
 	}
-	if ((err = bus_dmamap_load(sc->sc_dmat, sc->sc_cdmap, sc->sc_control,
-				   sizeof(struct mec_control),
-				   NULL, BUS_DMA_NOWAIT)) != 0) {
-		printf(": unable to load DMA map for control data, error "
-		       "= %d\n", err);
+	if ((err = bus_dmamap_load(sc->sc_dmat, sc->sc_cddmamap,
+	    sc->sc_control_data, sizeof(struct mec_control_data), NULL,
+	    BUS_DMA_NOWAIT)) != 0) {
+		printf(": unable to load control data DMA map, error = %d\n",
+		    err);
 		goto fail_3;
 	}
-	/* Create transmit buffer DMA maps */
+
+	/* create TX buffer DMA maps */
 	for (i = 0; i < MEC_NTXDESC; i++) {
-		if ((err = bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1, MCLBYTES,
-					     0, BUS_DMA_NOWAIT,
-					     &sc->sc_txmap[i])) != 0) {
+		if ((err = bus_dmamap_create(sc->sc_dmat,
+		    MCLBYTES, 1, MCLBYTES, 0, 0,
+		    &sc->sc_txsoft[i].txs_dmamap)) != 0) {
 			printf(": unable to create tx DMA map %d, error = %d\n",
-			       i, err);
+			    i, err);
 			goto fail_4;
 		}
 	}
 
-	/* Create the receive buffer DMA maps */
-	for (i = 0; i < 16; i++) {
-		if ((err = bus_dmamap_create(sc->sc_dmat, 4096,
-					     1, 4096, PAGE_SIZE,
-				    BUS_DMA_NOWAIT, &sc->rx_map[i])) != 0) {
-			printf("%s: unable to create rx DMA map %d",
-			       sc->sc_dev.dv_xname, err);
-			goto fail_5;
-		}
-	}
+	callout_init(&sc->sc_tick_ch);
 
+	/* get ehternet address from ARCBIOS */
 	if ((macaddr = ARCBIOS->GetEnvironmentVariable("eaddr")) == NULL) {
-		panic(": unable to get MAC address!");
+		printf(": unable to get MAC address!\n");
+		goto fail_4;
 	}
 	enaddr_aton(macaddr, sc->sc_enaddr);
 
-	for (i = 0; i < 6; i++) {
-		address = address << 8;
-		address += sc->sc_enaddr[i];
-	}
+	/* reset device */
+	mec_reset(sc);
 
-	bus_space_write_8(sc->sc_st, sc->sc_sh, MEC_STATION, (address));
+	command = bus_space_read_8(sc->sc_st, sc->sc_sh, MEC_MAC_CONTROL);
 
-	printf("%s: station address %s\n", sc->sc_dev.dv_xname,
-	       ether_sprintf(sc->sc_enaddr));
+	printf(": MAC-110 Ethernet, rev %d\n",
+	    (command & MEC_MAC_REVISION) >> MEC_MAC_REVISION_SHIFT);
+
+	printf("%s: Ethernet address %s\n", sc->sc_dev.dv_xname,
+	    ether_sprintf(sc->sc_enaddr));
 
 	/* Done, now attach everything */
 
@@ -303,18 +476,19 @@ mec_attach(struct device * parent, struct device * self, void *aux)
 
 	/* Set up PHY properties */
 	ifmedia_init(&sc->sc_mii.mii_media, 0, mec_mediachange,
-		     mec_mediastatus);
+	    mec_mediastatus);
 	mii_attach(&sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
-		   MII_OFFSET_ANY, 0);
+	    MII_OFFSET_ANY, 0);
 
 	child = LIST_FIRST(&sc->sc_mii.mii_phys);
 	if (child == NULL) {
 		/* No PHY attached */
-		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER | IFM_MANUAL, 0, NULL);
+		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER | IFM_MANUAL,
+		    0, NULL);
 		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER | IFM_MANUAL);
 	} else {
 		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER | IFM_AUTO);
-		sc->phy = child->mii_phy;
+		sc->sc_phyaddr = child->mii_phy;
 	}
 
 	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
@@ -328,123 +502,112 @@ mec_attach(struct device * parent, struct device * self, void *aux)
 	ifp->if_mtu = ETHERMTU;
 	IFQ_SET_READY(&ifp->if_snd);
 
-	sc->sc_ethercom.ec_if.if_capabilities |= IFCAP_CSUM_IPv4 |
-		IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4;
-
 	if_attach(ifp);
 	ether_ifattach(ifp, sc->sc_enaddr);
+
+	/* establish interrupt */
+	cpu_intr_establish(maa->maa_intr, maa->maa_intrmask, mec_intr, sc);
+
 #if NRND > 0
-	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
-			  RND_TYPE_NET, 0);
+	rnd_attach_source(&sc->sc_rnd_source, sc->sc_dev.dv_xname,
+	    RND_TYPE_NET, 0);
 #endif
+
+	/* set shutdown hook to reset interface on powerdown */
+	sc->sc_sdhook = shutdownhook_establish(mec_shutdown, sc);
+
 	return;
 
 	/*
 	 * Free any resources we've allocated during the failed attach
 	 * attempt.  Do this in reverse order and fall though.
 	 */
-fail_5:
-	for (i = 0; i < 16; i++) {
-		if (sc->rx_map[i] != NULL)
-			bus_dmamap_destroy(sc->sc_dmat, sc->rx_map[i]);
-	}
-fail_4:
+ fail_4:
 	for (i = 0; i < MEC_NTXDESC; i++) {
-		if (sc->sc_txmap[i] != NULL)
-			bus_dmamap_destroy(sc->sc_dmat, sc->sc_txmap[i]);
+		if (sc->sc_txsoft[i].txs_dmamap != NULL)
+			bus_dmamap_destroy(sc->sc_dmat,
+			    sc->sc_txsoft[i].txs_dmamap);
 	}
-	bus_dmamap_unload(sc->sc_dmat, sc->sc_cdmap);
-fail_3:
-	bus_dmamap_destroy(sc->sc_dmat, sc->sc_cdmap);
-fail_2:
-	bus_dmamem_unmap(sc->sc_dmat, (caddr_t) sc->sc_control,
-			 sizeof(struct mec_control));
-fail_1:
-	bus_dmamem_free(sc->sc_dmat, &sc->sc_cdseg, sc->sc_ncdseg);
-fail_0:
+	bus_dmamap_unload(sc->sc_dmat, sc->sc_cddmamap);
+ fail_3:
+	bus_dmamap_destroy(sc->sc_dmat, sc->sc_cddmamap);
+ fail_2:
+	bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->sc_control_data,
+	    sizeof(struct mec_control_data));
+ fail_1:
+	bus_dmamem_free(sc->sc_dmat, &seg, rseg);
+ fail_0:
 	return;
 }
 
-void
-mec_stop(struct ifnet * ifp, int disable)
+STATIC int
+mec_mii_readreg(struct device *self, int phy, int reg)
 {
-	printf("mec_stop\n");
-}
+	struct mec_softc *sc = (void *)self;
+	bus_space_tag_t st = sc->sc_st;
+	bus_space_handle_t sh = sc->sc_sh;
+	uint32_t val;
+	int i;
 
-static int
-mec_mii_readreg(struct device * self, int phy, int reg)
-{
-	struct mec_softc *sc = (struct mec_softc *) self;
-	u_int64_t       val;
-	int             i = 0;
+	if (mec_mii_wait(sc) != 0)
+		return 0;
 
-        if (mec_mii_wait(sc) != 0)
-                return 0;
-
-	bus_space_write_8(sc->sc_st, sc->sc_sh, MEC_PHY_ADDRESS,
-			  (phy << MEC_PHY_ADDR_DEVSHIFT) | (reg & 0x1f));
-	bus_space_write_8(sc->sc_st, sc->sc_sh, MEC_PHY_READ_INITIATE, 1);
+	bus_space_write_4(st, sh, MEC_PHY_ADDRESS,
+	    (phy << MEC_PHY_ADDR_DEVSHIFT) | (reg & MEC_PHY_ADDR_REGISTER));
+	bus_space_write_8(st, sh, MEC_PHY_READ_INITIATE, 1);
 	delay(25);
 
 	for (i = 0; i < 20; i++) {
 		delay(30);
 
-		val = bus_space_read_8(sc->sc_st, sc->sc_sh, MEC_PHY_DATA);
+		val = bus_space_read_4(st, sh, MEC_PHY_DATA);
 
 		if ((val & MEC_PHY_DATA_BUSY) == 0)
-			return (int) val & MEC_PHY_DATA_VALUE;
+			return val & MEC_PHY_DATA_VALUE;
 	}
 	return 0;
-
 }
 
-void
-mec_mii_writereg(struct device * self, int phy, int reg, int val)
+STATIC void
+mec_mii_writereg(struct device *self, int phy, int reg, int val)
 {
-	struct mec_softc *sc = (struct mec_softc *) self;
+	struct mec_softc *sc = (void *)self;
+	bus_space_tag_t st = sc->sc_st;
+	bus_space_handle_t sh = sc->sc_sh;
 
-	if (mec_mii_wait(sc) != 0)
-	{
+	if (mec_mii_wait(sc) != 0) {
 		printf("timed out writing %x: %x\n", reg, val);
 		return;
 	}
 
-	bus_space_write_8(sc->sc_st, sc->sc_sh, MEC_PHY_ADDRESS,
-			  (phy << MEC_PHY_ADDR_DEVSHIFT) | (reg & 0x1f));
+	bus_space_write_4(st, sh, MEC_PHY_ADDRESS,
+	    (phy << MEC_PHY_ADDR_DEVSHIFT) | (reg & MEC_PHY_ADDR_REGISTER));
 
 	delay(60);
 
-	bus_space_write_8(sc->sc_st, sc->sc_sh, MEC_PHY_DATA,
-			  val & MEC_PHY_DATA_VALUE);
+	bus_space_write_4(st, sh, MEC_PHY_DATA, val & MEC_PHY_DATA_VALUE);
 
 	delay(60);
 
-	(void) mec_mii_wait(sc);
-
-	return;
+	mec_mii_wait(sc);
 }
 
-static int
-mec_mii_wait(struct mec_softc * sc)
+STATIC int
+mec_mii_wait(struct mec_softc *sc)
 {
-	int             i;
-	int s;
+	uint32_t busy;
+	int i, s;
 
 	for (i = 0; i < 100; i++) {
-		u_int64_t       busy;
-
 		delay(30);
 
 		s = splhigh();
-
-		/* i have absolutely no idea why this must be _4.  if it is
-		   _8, writes will busy out. */
 		busy = bus_space_read_4(sc->sc_st, sc->sc_sh, MEC_PHY_DATA);
 		splx(s);
 
 		if ((busy & MEC_PHY_DATA_BUSY) == 0)
 			return 0;
-		if (busy == 0xffff)
+		if (busy == 0xffff) /* XXX ? */
 			return 0;
 	}
 
@@ -452,32 +615,31 @@ mec_mii_wait(struct mec_softc * sc)
 	return 1;
 }
 
-void
-mec_statchg(struct device * self)
+STATIC void
+mec_statchg(struct device *self)
 {
-	struct mec_softc *sc = (void *) self;
-	u_int32_t       control;
+	struct mec_softc *sc = (void *)self;
+	bus_space_tag_t st = sc->sc_st;
+	bus_space_handle_t sh = sc->sc_sh;
+	uint32_t control;
 
-	printf("mec_statchg\n");
-	control = bus_space_read_8(sc->sc_st, sc->sc_sh, MEC_MAC_CONTROL);
-	control &= ~(0x1ffff00 | MEC_MAC_FULL_DUPLEX | MEC_MAC_SPEED_SELECT);
+	control = bus_space_read_8(st, sh, MEC_MAC_CONTROL);
+	control &= ~(MEC_MAC_IPGT | MEC_MAC_IPGR1 | MEC_MAC_IPGR2 |
+	    MEC_MAC_FULL_DUPLEX | MEC_MAC_SPEED_SELECT);
 
 	/* must also set IPG here for duplex stuff ... */
 	if ((sc->sc_mii.mii_media_active & IFM_FDX) != 0) {
 		control |= MEC_MAC_FULL_DUPLEX;
 	} else {
 		/* set IPG */
+		control |= MEC_MAC_IPG_DEFAULT;
 	}
 
-	bus_space_write_8(sc->sc_st, sc->sc_sh, MEC_MAC_CONTROL, control);
-
-	/* turn on TX DMA via dma_control here */
-
-	return;
+	bus_space_write_8(st, sh, MEC_MAC_CONTROL, control);
 }
 
-void
-mec_mediastatus(struct ifnet * ifp, struct ifmediareq * ifmr)
+STATIC void
+mec_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
 	struct mec_softc *sc = ifp->if_softc;
 
@@ -489,22 +651,27 @@ mec_mediastatus(struct ifnet * ifp, struct ifmediareq * ifmr)
 	ifmr->ifm_active = sc->sc_mii.mii_media_active;
 }
 
-int
-mec_mediachange(struct ifnet * ifp)
+STATIC int
+mec_mediachange(struct ifnet *ifp)
 {
 	struct mec_softc *sc = ifp->if_softc;
 
 	if ((ifp->if_flags & IFF_UP) == 0)
 		return 0;
 
-	return (mii_mediachg(&sc->sc_mii));
+	return mii_mediachg(&sc->sc_mii);
 }
 
-void
-enaddr_aton(const char *str, u_int8_t * eaddr)
+/*
+ * XXX
+ * maybe this function should be moved to common part
+ * (sgimips/machdep.c or elsewhere) for all on-board network devices.
+ */
+static void
+enaddr_aton(const char *str, uint8_t *eaddr)
 {
-	int             i;
-	char            c;
+	int i;
+	char c;
 
 	for (i = 0; i < ETHER_ADDR_LEN; i++) {
 		if (*str == ':')
@@ -525,171 +692,414 @@ enaddr_aton(const char *str, u_int8_t * eaddr)
 	}
 }
 
-static void
-mec_start(struct ifnet * ifp)
+STATIC int
+mec_init(struct ifnet *ifp)
 {
-#if 0
-	struct device  *self = ifp->if_softc;
 	struct mec_softc *sc = ifp->if_softc;
-	int             i;
-	for (i = 4; i < 7; i++)
-		printf("mec_statchg: phy reg %x %x\n", i, mec_mii_readreg(self,
-							       sc->phy, i));
+	bus_space_tag_t st = sc->sc_st;
+	bus_space_handle_t sh = sc->sc_sh;
+	struct mec_rxdesc *rxd;
+	int i;
 
-	struct mbuf    *m0, *m;
+	/* cancel any pending I/O */
+	mec_stop(ifp, 0);
 
-	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
+	/* reset device */
+	mec_reset(sc);
+
+	/* setup filter for multicast or promisc mode */
+	mec_setfilter(sc);
+
+	/* set the TX ring pointer to the base address */
+	bus_space_write_8(st, sh, MEC_TX_RING_BASE, MEC_CDTXADDR(sc, 0));
+
+	sc->sc_txpending = 0;
+	sc->sc_txdirty = 0;
+	sc->sc_txlast = MEC_NTXDESC - 1;
+
+	/* put RX buffers into FIFO */
+	for (i = 0; i < MEC_NRXDESC; i++) {
+		rxd = &sc->sc_rxdesc[i];
+		rxd->rxd_stat = 0;
+		MEC_RXSTATSYNC(sc, i, BUS_DMASYNC_PREREAD);
+		MEC_RXBUFSYNC(sc, i, ETHER_MAX_LEN, BUS_DMASYNC_PREREAD);
+		bus_space_write_8(st, sh, MEC_MCL_RX_FIFO, MEC_CDRXADDR(sc, i));
+	}
+	sc->sc_rxptr = 0;
+
+#if 0	/* XXX no info */
+	bus_space_write_8(st, sh, MEC_TIMER, 0);
+#endif
+
+	/*
+	 * MEC_DMA_TX_INT_ENABLE will be set later otherwise it causes
+	 * spurious interrupts when TX buffers are empty
+	 */
+	bus_space_write_8(st, sh, MEC_DMA_CONTROL,
+	    (MEC_RXD_DMAOFFSET << MEC_DMA_RX_DMA_OFFSET_SHIFT) |
+	    (MEC_NRXDESC << MEC_DMA_RX_INT_THRESH_SHIFT) |
+	    MEC_DMA_TX_DMA_ENABLE | /* MEC_DMA_TX_INT_ENABLE | */
+	    MEC_DMA_RX_DMA_ENABLE | MEC_DMA_RX_INT_ENABLE);
+
+	callout_reset(&sc->sc_tick_ch, hz, mec_tick, sc);
+
+	ifp->if_flags |= IFF_RUNNING;
+	ifp->if_flags &= ~IFF_OACTIVE;
+	mec_start(ifp);
+
+	mii_mediachg(&sc->sc_mii);
+
+	return 0;
+}
+
+STATIC void
+mec_reset(struct mec_softc *sc)
+{
+	bus_space_tag_t st = sc->sc_st;
+	bus_space_handle_t sh = sc->sc_sh;
+	uint64_t address, control;
+	int i;
+
+	/* reset chip */
+	bus_space_write_8(st, sh, MEC_MAC_CONTROL, MEC_MAC_CORE_RESET);
+	bus_space_write_8(st, sh, MEC_MAC_CONTROL, 0);
+	delay(1000);
+
+	/* set ethernet address */
+	address = 0;
+	for (i = 0; i < ETHER_ADDR_LEN; i++) {
+		address = address << 8;
+		address += sc->sc_enaddr[i];
+	}
+	bus_space_write_8(st, sh, MEC_STATION, address);
+
+	/* Default to 100/half and let autonegotiation work its magic */
+	control = MEC_MAC_SPEED_SELECT | MEC_MAC_FILTER_MATCHMULTI |
+	    MEC_MAC_IPG_DEFAULT;
+
+	bus_space_write_8(st, sh, MEC_MAC_CONTROL, control);
+	bus_space_write_8(st, sh, MEC_DMA_CONTROL, 0);
+
+	DPRINTF(MEC_DEBUG_RESET, ("mec: control now %llx\n",
+	    bus_space_read_8(st, sh, MEC_MAC_CONTROL)));
+}
+
+STATIC void
+mec_start(struct ifnet *ifp)
+{
+	struct mec_softc *sc = ifp->if_softc;
+	struct mbuf *m0, *m;
+	struct mec_txdesc *txd;
+	struct mec_txsoft *txs;
+	bus_dmamap_t dmamap;
+	bus_space_tag_t st = sc->sc_st;
+	bus_space_handle_t sh = sc->sc_sh;
+	uint64_t txdaddr;
+	int error, firsttx, nexttx, opending;
+	int len, bufoff, buflen, unaligned, txdlen;
+
+	if ((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)
 		return;
 
+	/*
+	 * Remember the previous txpending and the first transmit descriptor.
+	 */
+	opending = sc->sc_txpending;
+	firsttx = MEC_NEXTTX(sc->sc_txlast);
+
+	DPRINTF(MEC_DEBUG_START,
+	    ("mec_start: opending = %d, firsttx = %d\n", opending, firsttx));
+
 	for (;;) {
-		/*
-                 * Grab a packet off the queue.
-                 */
+		/* Grab a packet off the queue. */
 		IFQ_POLL(&ifp->if_snd, m0);
 		if (m0 == NULL)
 			break;
 		m = NULL;
 
-		if (sc->sc_txpending == fXP_NTXCB) {
-			FXP_EVCNT_INCR(&sc->sc_ev_txstall);
+		if (sc->sc_txpending == MEC_NTXDESC) {
 			break;
 		}
-		/*
-                 * Get the next available transmit descriptor.
-                 */
-		nexttx = FXP_NEXTTX(sc->sc_txlast);
-		txd = FXP_CDTX(sc, nexttx);
-		txs = FXP_DSTX(sc, nexttx);
-		dmamap = txs->txs_dmamap;
 
 		/*
-                 * Load the DMA map.  If this fails, the packet either
-                 * didn't fit in the allotted number of frags, or we were
-                 * short on resources.  In this case, we'll copy and try
-                 * again.
-                 */
-		if (bus_dmamap_load_mbuf(sc->sc_dmat, dmamap, m0,
-				     BUS_DMA_WRITE | BUS_DMA_NOWAIT) != 0) {
-			MGETHDR(m, M_DONTWAIT, MT_DATA);
-			if (m == NULL) {
-				printf("%s: unable to allocate Tx mbuf\n",
-				       sc->sc_dev.dv_xname);
-				break;
-			}
-			if (m0->m_pkthdr.len > MHLEN) {
-				MCLGET(m, M_DONTWAIT);
-				if ((m->m_flags & M_EXT) == 0) {
-					printf("%s: unable to allocate Tx "
-					  "cluster\n", sc->sc_dev.dv_xname);
-					m_freem(m);
+		 * Get the next available transmit descriptor.
+		 */
+		nexttx = MEC_NEXTTX(sc->sc_txlast);
+		txd = &sc->sc_txdesc[nexttx];
+		txs = &sc->sc_txsoft[nexttx];
+
+		buflen = 0;
+		bufoff = 0;
+		txdaddr = 0; /* XXX gcc */
+		txdlen = 0; /* XXX gcc */
+
+		len = m0->m_pkthdr.len;
+
+		DPRINTF(MEC_DEBUG_START,
+		    ("mec_start: len = %d, nexttx = %d\n", len, nexttx));
+
+		if (len < ETHER_PAD_LEN) {
+			/*
+			 * I don't know if MEC chip does auto padding,
+			 * so if the packet is small enough,
+			 * just copy it to the buffer in txdesc.
+			 * Maybe this is the simple way.
+			 */
+			DPRINTF(MEC_DEBUG_START, ("mec_start: short packet\n"));
+
+			IFQ_DEQUEUE(&ifp->if_snd, m0);
+			bufoff = MEC_TXD_BUFSTART(ETHER_PAD_LEN);
+			m_copydata(m0, 0, m0->m_pkthdr.len,
+			    txd->txd_buf + bufoff);
+			memset(txd->txd_buf + bufoff + len, 0,
+			    ETHER_PAD_LEN - len);
+			len = buflen = ETHER_PAD_LEN;
+
+			txs->txs_flags = MEC_TXS_TXDBUF | buflen;
+		} else {
+			/*
+			 * If the packet won't fit the buffer in txdesc,
+			 * we have to use concatinate pointer to handle it.
+			 * While MEC can handle up to three segments to
+			 * concatinate, MEC requires that both the second and
+			 * third segments have to be 8 byte aligned.
+			 * Since it's unlikely for mbuf clusters, we use
+			 * only the first concatinate pointer. If the packet
+			 * doesn't fit in one DMA segment, allocate new mbuf
+			 * and copy the packet to it.
+			 *
+			 * Besides, if the start address of the first segments
+			 * is not 8 byte aligned, such part have to be copied
+			 * to the txdesc buffer. (XXX see below comments)
+	                 */
+			DPRINTF(MEC_DEBUG_START, ("mec_start: long packet\n"));
+
+			dmamap = txs->txs_dmamap;
+			if (bus_dmamap_load_mbuf(sc->sc_dmat, dmamap, m0,
+			    BUS_DMA_WRITE | BUS_DMA_NOWAIT) != 0) {
+				DPRINTF(MEC_DEBUG_START,
+				    ("mec_start: re-allocating mbuf\n"));
+				MGETHDR(m, M_DONTWAIT, MT_DATA);
+				if (m == NULL) {
+					printf("%s: unable to allocate "
+					    "TX mbuf\n", sc->sc_dev.dv_xname);
+					break;
+				}
+				if (len > (MHLEN - MEC_ETHER_ALIGN)) {
+					MCLGET(m, M_DONTWAIT);
+					if ((m->m_flags & M_EXT) == 0) {
+						printf("%s: unable to allocate "
+						    "TX cluster\n",
+						    sc->sc_dev.dv_xname);
+						m_freem(m);
+						break;
+					}
+				}
+				/*
+				 * Each packet has the Ethernet header, so
+				 * in many case the header isn't 4-byte aligned
+				 * and data after the header is 4-byte aligned.
+				 * Thus adding 2-byte offset before copying to
+				 * new mbuf avoids unaligned copy and this may
+				 * improve some performance.
+				 * As noted above, unaligned part has to be
+				 * copied to txdesc buffer so this may cause
+				 * extra copy ops, but for now MEC always
+				 * requires some data in txdesc buffer,
+				 * so we always have to copy some data anyway.
+				 */
+				m->m_data += MEC_ETHER_ALIGN;
+				m_copydata(m0, 0, len, mtod(m, caddr_t));
+				m->m_pkthdr.len = m->m_len = len;
+				error = bus_dmamap_load_mbuf(sc->sc_dmat,
+				    dmamap, m, BUS_DMA_WRITE | BUS_DMA_NOWAIT);
+				if (error) {
+					printf("%s: unable to load TX buffer, "
+					    "error = %d\n",
+					    sc->sc_dev.dv_xname, error);
 					break;
 				}
 			}
-			m_copydata(m0, 0, m0->m_pkthdr.len, mtod(m, caddr_t));
-			m->m_pkthdr.len = m->m_len = m0->m_pkthdr.len;
-			error = bus_dmamap_load_mbuf(sc->sc_dmat, dmamap,
-					 m, BUS_DMA_WRITE | BUS_DMA_NOWAIT);
-			if (error) {
-				printf("%s: unable to load Tx buffer, "
-				"error = %d\n", sc->sc_dev.dv_xname, error);
-				break;
+			IFQ_DEQUEUE(&ifp->if_snd, m0);
+			if (m != NULL) {
+				m_freem(m0);
+				m0 = m;
 			}
+
+			/* handle unaligned part */
+			txdaddr = MEC_TXD_ROUNDUP(dmamap->dm_segs[0].ds_addr);
+			txs->txs_flags = MEC_TXS_TXDPTR1;
+			unaligned =
+			    dmamap->dm_segs[0].ds_addr & (MEC_TXD_ALIGN - 1);
+			DPRINTF(MEC_DEBUG_START,
+			    ("mec_start: ds_addr = 0x%08x, unaligned = %d\n",
+			    (u_int)dmamap->dm_segs[0].ds_addr, unaligned));
+			if (unaligned != 0) {
+				buflen = MEC_TXD_ALIGN - unaligned;
+				bufoff = MEC_TXD_BUFSTART(buflen);
+				DPRINTF(MEC_DEBUG_START,
+				    ("mec_start: unaligned, "
+				    "buflen = %d, bufoff = %d\n",
+				    buflen, bufoff));
+				memcpy(txd->txd_buf + bufoff,
+				    mtod(m0, caddr_t), buflen);
+				txs->txs_flags |= MEC_TXS_TXDBUF | buflen;
+			}
+#if 1
+			else {
+				/*
+				 * XXX needs hardware info XXX
+				 * It seems MEC always requires some data
+				 * in txd_buf[] even if buffer is
+				 * 8-byte aligned otherwise DMA abort error
+				 * occurs later...
+				 */
+				buflen = MEC_TXD_ALIGN;
+				bufoff = MEC_TXD_BUFSTART(buflen);
+				memcpy(txd->txd_buf + bufoff,
+				    mtod(m0, caddr_t), buflen);
+				DPRINTF(MEC_DEBUG_START,
+				    ("mec_start: aligned, "
+				    "buflen = %d, bufoff = %d\n",
+				    buflen, bufoff));
+				txs->txs_flags |= MEC_TXS_TXDBUF | buflen;
+				txdaddr += MEC_TXD_ALIGN;
+			}
+#endif
+			txdlen  = len - buflen;
+			DPRINTF(MEC_DEBUG_START,
+			    ("mec_start: txdaddr = 0x%08llx, txdlen = %d\n",
+			    txdaddr, txdlen));
+
+			/*
+			 * sync the DMA map for TX mbuf
+			 *
+			 * XXX unaligned part doesn't have to be sync'ed,
+			 *     but it's harmless...
+			 */
+			bus_dmamap_sync(sc->sc_dmat, dmamap, 0,
+			    dmamap->dm_mapsize,	BUS_DMASYNC_PREWRITE);
 		}
-		IFQ_DEQUEUE(&ifp->if_snd, m0);
-		if (m != NULL) {
-			m_freem(m0);
-			m0 = m;
-		}
-		/* Initialize the fraglist. */
-		for (seg = 0; seg < dmamap->dm_nsegs; seg++) {
-			txd->txd_tbd[seg].tb_addr =
-				htole32(dmamap->dm_segs[seg].ds_addr);
-			txd->txd_tbd[seg].tb_size =
-		}
-
-		/* Sync the DMA map. */
-		bus_dmamap_sync(sc->sc_dmat, dmamap, 0, dmamap->dm_mapsize,
-				BUS_DMASYNC_PREWRITE);
-
-		/*
-                 * Store a pointer to the packet so we can free it later.
-                 */
-		txs->txs_mbuf = m0;
-
-		/*
-                 * Initialize the transmit descriptor.
-                 */
-		/* BIG_ENDIAN: no need to swap to store 0 */
-		txd->txd_txcb.cb_status = 0;
-		txd->txd_txcb.cb_command =
-			htole16(FXP_CB_COMMAND_XMIT | FXP_CB_COMMAND_SF);
-		txd->txd_txcb.tx_threshold = tx_threshold;
-		txd->txd_txcb.tbd_number = dmamap->dm_nsegs;
-
-		FXP_CDTXSYNC(sc, nexttx,
-			     BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
-		/* Advance the tx pointer. */
-		sc->sc_txpending++;
-		sc->sc_txlast = nexttx;
 
 #if NBPFILTER > 0
 		/*
-                 * Pass packet to bpf if there is a listener.
-                 */
+		 * Pass packet to bpf if there is a listener.
+		 */
 		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m0);
 #endif
+
+		/*
+		 * setup the transmit descriptor.
+		 */
+
+		/* TXINT bit will be set later on the last packet */
+		txd->txd_cmd = (len - 1);
+		/* but also set TXINT bit on a half of TXDESC */
+		if (sc->sc_txpending == (MEC_NTXDESC / 2))
+			txd->txd_cmd |= MEC_TXCMD_TXINT;
+			
+		if (txs->txs_flags & MEC_TXS_TXDBUF)
+			txd->txd_cmd |= TXCMD_BUFSTART(MEC_TXDESCSIZE - buflen);
+		if (txs->txs_flags & MEC_TXS_TXDPTR1) {
+			txd->txd_cmd |= MEC_TXCMD_PTR1;
+			txd->txd_ptr[0] = TXPTR_LEN(txdlen - 1) | txdaddr;
+			/*
+			 * Store a pointer to the packet so we can
+			 * free it later.
+			 */
+			txs->txs_mbuf = m0;
+		} else {
+			txd->txd_ptr[0] = 0;
+			/*
+			 * In this case all data are copied to buffer in txdesc,
+			 * we can free TX mbuf here.
+			 */
+			m_freem(m0);
+		}
+
+		DPRINTF(MEC_DEBUG_START,
+		    ("mec_start: txd_cmd = 0x%016llx, txd_ptr = 0x%016llx\n",
+		    txd->txd_cmd, txd->txd_ptr[0]));
+		DPRINTF(MEC_DEBUG_START,
+		    ("mec_start: len = %d (0x%04x), buflen = %d (0x%02x)\n",
+		    len, len, buflen, buflen));
+
+		/* sync TX descriptor */
+		MEC_TXDESCSYNC(sc, nexttx,
+		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+
+		/* advance the TX pointer. */
+		sc->sc_txpending++;
+		sc->sc_txlast = nexttx;
 	}
 
-	if (sc->sc_txpending == FXP_NTXCB) {
+	if (sc->sc_txpending == MEC_NTXDESC) {
 		/* No more slots; notify upper layer. */
 		ifp->if_flags |= IFF_OACTIVE;
 	}
+
 	if (sc->sc_txpending != opending) {
 		/*
-                 * We enqueued packets.  If the transmitter was idle,
-                 * reset the txdirty pointer.
-                 */
-		if (opending == 0)
-			sc->sc_txdirty = FXP_NEXTTX(lasttx);
+		 * Cause a TX interrupt to happen on the last packet
+		 * we enqueued.
+		 */
+		sc->sc_txdesc[sc->sc_txlast].txd_cmd |= MEC_TXCMD_TXINT;
+		MEC_TXCMDSYNC(sc, sc->sc_txlast,
+		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+		
+		/* start TX */
+		bus_space_write_8(st, sh, MEC_TX_RING_PTR,
+		    MEC_NEXTTX(sc->sc_txlast));
 
 		/*
-                 * Cause the chip to interrupt and suspend command
-                 * processing once the last packet we've enqueued
-                 * has been transmitted.
-                 */
-		FXP_CDTX(sc, sc->sc_txlast)->txd_txcb.cb_command |=
-			htole16(FXP_CB_COMMAND_I | FXP_CB_COMMAND_S);
-		FXP_CDTXSYNC(sc, sc->sc_txlast,
-			     BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
-
-		/*
-                 * The entire packet chain is set up.  Clear the suspend bit
-                 * on the command prior to the first packet we set up.
-                 */
-		FXP_CDTXSYNC(sc, lasttx,
-			     BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
-		FXP_CDTX(sc, lasttx)->txd_txcb.cb_command &=
-			htole16(~FXP_CB_COMMAND_S);
-		FXP_CDTXSYNC(sc, lasttx,
-			     BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
-		FXP_CDTX(sc, lasttx)->txd_txcb.cb_command &=
-			htole16(~FXP_CB_COMMAND_S);
-		FXP_CDTXSYNC(sc, lasttx,
-			     BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+		 * If the transmitter was idle,
+		 * reset the txdirty pointer and reenable TX interrupt.
+		 */
+		if (opending == 0) {
+			sc->sc_txdirty = firsttx;
+			bus_space_write_8(st, sh, MEC_DMA_CONTROL,
+			    bus_space_read_8(st, sh, MEC_DMA_CONTROL) |
+			    MEC_DMA_TX_INT_ENABLE);
+		}
 
 		/* Set a watchdog timer in case the chip flakes out. */
 		ifp->if_timer = 5;
 	}
-#endif
 }
 
-static int
-mec_ioctl(struct ifnet * ifp, u_long cmd, caddr_t data)
+STATIC void
+mec_stop(struct ifnet *ifp, int disable)
 {
 	struct mec_softc *sc = ifp->if_softc;
-	struct ifreq   *ifr = (struct ifreq *) data;
-	int             s, error;
+	struct mec_txsoft *txs;
+	int i;
+
+	DPRINTF(MEC_DEBUG_STOP, ("mec_stop\n"));
+
+	ifp->if_timer = 0;
+	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+
+	callout_stop(&sc->sc_tick_ch);
+	mii_down(&sc->sc_mii);
+
+	/* release any TX buffers */
+	for (i = 0; i < MEC_NTXDESC; i++) {
+		txs = &sc->sc_txsoft[i];
+		if ((txs->txs_flags & MEC_TXS_TXDPTR1) != 0) {
+			bus_dmamap_unload(sc->sc_dmat, txs->txs_dmamap);
+			m_freem(txs->txs_mbuf);
+			txs->txs_mbuf = NULL;
+		}
+	}
+}
+
+STATIC int
+mec_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+{
+	struct mec_softc *sc = ifp->if_softc;
+	struct ifreq *ifr = (void *)data;
+	int s, error;
 
 	s = splnet();
 
@@ -703,9 +1113,9 @@ mec_ioctl(struct ifnet * ifp, u_long cmd, caddr_t data)
 		error = ether_ioctl(ifp, cmd, data);
 		if (error == ENETRESET) {
 			/*
-                         * Multicast list has changed; set the hardware filter
-                         * accordingly.
-                         */
+			 * Multicast list has changed; set the hardware filter
+			 * accordingly.
+			 */
 			error = mec_init(ifp);
 		}
 		break;
@@ -715,169 +1125,351 @@ mec_ioctl(struct ifnet * ifp, u_long cmd, caddr_t data)
 	mec_start(ifp);
 
 	splx(s);
-	return (error);
+	return error;
 }
 
-int
-mec_init(struct ifnet * ifp)
+STATIC void
+mec_watchdog(struct ifnet *ifp)
 {
 	struct mec_softc *sc = ifp->if_softc;
-	u_int64_t       address = 0;
-	u_int64_t	control = 0;
-	int             i;
 
-	/* stop things via mec_stop(sc) */
+	printf("%s: device timeout\n", sc->sc_dev.dv_xname);
+	ifp->if_oerrors++;
 
-	/* Reset device */
-	bus_space_write_8(sc->sc_st, sc->sc_sh, MEC_MAC_CONTROL, MEC_MAC_CORE_RESET);
-	bus_space_write_8(sc->sc_st, sc->sc_sh, MEC_MAC_CONTROL, 0);
+	mec_init(ifp);
+}
 
-	for (i = 0; i < 6; i++) {
-		address = address << 8;
-		address += sc->sc_enaddr[i];
+STATIC void
+mec_tick(void *arg)
+{
+	struct mec_softc *sc = arg;
+	int s;
+
+	s = splnet();
+	mii_tick(&sc->sc_mii);
+	splx(s);
+
+	callout_reset(&sc->sc_tick_ch, hz, mec_tick, sc);
+}
+
+STATIC void
+mec_setfilter(struct mec_softc *sc)
+{
+	struct ethercom *ec = &sc->sc_ethercom;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct ether_multi *enm;
+	struct ether_multistep step;
+	bus_space_tag_t st = sc->sc_st;
+	bus_space_handle_t sh = sc->sc_sh;
+	uint64_t mchash;
+	uint32_t control, hash;
+	int mcnt;
+
+	control = bus_space_read_8(st, sh, MEC_MAC_CONTROL);
+	control &= ~MEC_MAC_FILTER_MASK;
+
+	if (ifp->if_flags & IFF_PROMISC) {
+		control |= MEC_MAC_FILTER_PROMISC;
+		bus_space_write_8(st, sh, MEC_MULTICAST, 0xffffffffffffffffULL);
+		bus_space_write_8(st, sh, MEC_MAC_CONTROL, control);
+		return;
 	}
 
-	bus_space_write_8(sc->sc_st, sc->sc_sh, MEC_STATION, (address));
+	mcnt = 0;
+	mchash = 0;
+	ETHER_FIRST_MULTI(step, ec, enm);
+	while (enm != NULL) {
+		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
+			/* set allmulti for a range of multicast addresses */
+			control |= MEC_MAC_FILTER_ALLMULTI;
+			bus_space_write_8(st, sh, MEC_MULTICAST,
+			    0xffffffffffffffffULL);
+			bus_space_write_8(st, sh, MEC_MAC_CONTROL, control);
+			return;
+		}
 
-	/* Default to 100/half and let autonegotiation work its magic */
-	control = MEC_MAC_SPEED_SELECT;
+/* XXX not sure hash CRC for MEC is be or le */
+#define mec_calchash(addr)	(ether_crc32_be((addr), ETHER_ADDR_LEN) >> 26)
 
-	bus_space_write_8(sc->sc_st, sc->sc_sh, MEC_MAC_CONTROL, control);
+		hash = mec_calchash(enm->enm_addrlo);
+		mchash |= 1 << hash;
+		mcnt++;
+		ETHER_NEXT_MULTI(step, enm);
+	}
 
+	ifp->if_flags &= ~IFF_ALLMULTI;
 
-	/* Initialize TX/RX pointers, start DMA */
+	if (mcnt > 0)
+		control |= MEC_MAC_FILTER_MATCHMULTI;
 
-	/* set the TX ring pointer to the base address */
-	bus_space_write_8(sc->sc_st, sc->sc_sh, MEC_TX_RING_BASE,
-			  MIPS_KSEG1_TO_PHYS(sc->sc_control));
-
-	/* Set the RX pointers to the 4k boundaries */
-
-	for (i = 0; i < 16; i++)
-		bus_space_write_8(sc->sc_st, sc->sc_sh, MEC_MCL_RX_FIFO,
-				  MIPS_KSEG1_TO_PHYS(sc->rx_buf[i]));
-
-	sc->rx_read_ptr = 0;
-	sc->rx_read_length = 16;
-#if 0
-	sc->rx_boffset = boffset * sizeof(u_int64_t);
-	bus_space_write_8(sc->sc_st, sc->sc_sh, MEC_TIMER, me_rxdelay);
-
-	memset(sc->tx_buffer, 0, TX_RING_SIZE * sizeof(struct tx_fifo));
-#endif
-
-	bus_space_write_8(sc->sc_st, sc->sc_sh, MEC_TX_RING_BASE,
-			  MIPS_KSEG1_TO_PHYS(sc->tx_buffer));
-	sc->tx_read_ptr = 0;
-	sc->tx_write_ptr = 0;
-	sc->tx_available = TX_RING_SIZE;
-
-
-	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
-	mec_start(ifp);
-
-	mii_mediachg(&sc->sc_mii);
-	return 0;
+	bus_space_write_8(st, sh, MEC_MULTICAST, mchash);
+	bus_space_write_8(st, sh, MEC_MAC_CONTROL, control);
 }
 
-void
-mec_reset(struct mec_softc * sc)
-{
-	bus_space_write_8(sc->sc_st, sc->sc_sh, MEC_MAC_CONTROL, MEC_MAC_CORE_RESET);
-	bus_space_write_8(sc->sc_st, sc->sc_sh, MEC_MAC_CONTROL, 0x00);
-	/*
-         * bus_space_write_8(sc->sc_st, sc->sc_sh, MEC_MAC_CONTROL,
-         * MEC_MAC_FULL_DUPLEX | );
-         */
-	delay(1000);
-
-	printf("mec: control now %llx\n", bus_space_read_8(sc->sc_st, sc->sc_sh,
-							   MEC_MAC_CONTROL));
-
-}
-
-void
-mec_watchdog(struct ifnet * ifp)
-{
-#if 0
-	/* struct mec_softc *sc = ifp->if_softc; */
-
-	/*
-         * Since we're not interrupting every packet, sweep
-         * up before we report an error.
-         */
-	//pcn_txintr(sc);
-
-	if (sc->sc_txfree != PCN_NTXDESC) {
-		printf("%s: device timeout (txfree %d txsfree %d)\n",
-		       sc->sc_dev.dv_xname, sc->sc_txfree, sc->sc_txsfree);
-		ifp->if_oerrors++;
-
-		/* Reset the interface. */
-		(void) mec_init(ifp);
-	} */
-#endif
-
-	/* Try to get more packets going. */
-		mec_start(ifp);
-}
-
-
-int
+STATIC int
 mec_intr(void *arg)
 {
 	struct mec_softc *sc = arg;
-	struct ifnet   *ifp = &sc->sc_ethercom.ec_if;
-	u_int32_t       stat;
+	bus_space_tag_t st = sc->sc_st;
+	bus_space_handle_t sh = sc->sc_sh;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	uint32_t statreg, statack, dmac;
+	int handled, sent;
 
-	if ((ifp->if_flags & IFF_RUNNING) == 0 ||
-	    (sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
-		return (0);
+	DPRINTF(MEC_DEBUG_INTR, ("mec_intr: called\n"));
 
-	stat = bus_space_read_8(sc->sc_st, sc->sc_sh, MEC_INT_STATUS);
+	handled = sent = 0;
 
-	while (stat) {
-		if (stat & MEC_INT_RX_THRESHOLD) {
-			mec_rxintr(sc, stat);
-			stat &= ~MEC_INT_RX_THRESHOLD;
+	for (;;) {
+		statreg = bus_space_read_8(st, sh, MEC_INT_STATUS);
+
+		DPRINTF(MEC_DEBUG_INTR,
+		    ("mec_intr: INT_STAT = 0x%08x\n", statreg));
+
+		statack = statreg & MEC_INT_STATUS_MASK;
+		if (statack == 0)
+			break;
+		bus_space_write_8(st, sh, MEC_INT_STATUS, statack);
+
+		handled = 1;
+
+		if (statack &
+		    (MEC_INT_RX_THRESHOLD |
+		     MEC_INT_RX_FIFO_UNDERFLOW)) {
+			mec_rxintr(sc);
 		}
-		if (stat & (MEC_INT_TX_EMPTY | MEC_INT_TX_PACKET_SENT)) {
-			/* mec_txstat(sc); */
-			stat &= ~(MEC_INT_TX_EMPTY | MEC_INT_TX_PACKET_SENT);
+
+		dmac = bus_space_read_8(st, sh, MEC_DMA_CONTROL);
+		DPRINTF(MEC_DEBUG_INTR,
+		    ("mec_intr: DMA_CONT = 0x%08x\n", dmac));
+
+		if (statack &
+		    (MEC_INT_TX_EMPTY |
+		     MEC_INT_TX_PACKET_SENT |
+		     MEC_INT_TX_ABORT)) {
+			mec_txintr(sc);
+			sent = 1;
+			if ((statack & MEC_INT_TX_EMPTY) != 0 &&
+			    (dmac & MEC_DMA_TX_INT_ENABLE) != 0) {
+				/*
+				 * disable TX interrupt to stop
+				 * TX empty interrupt
+				 */
+				bus_space_write_8(st, sh, MEC_DMA_CONTROL,
+				    dmac & ~MEC_DMA_TX_INT_ENABLE);
+				DPRINTF(MEC_DEBUG_INTR,
+				    ("mec_intr: disable TX_INT\n"));
+			}
+		}
+
+		if (statack &
+		    (MEC_INT_TX_LINK_FAIL |
+		     MEC_INT_TX_MEM_ERROR |
+		     MEC_INT_TX_ABORT |
+		     MEC_INT_RX_FIFO_UNDERFLOW |
+		     MEC_INT_RX_DMA_UNDERFLOW)) {
+			printf("%s: mec_intr: interrupt status = 0x%08x\n",
+			    sc->sc_dev.dv_xname, statreg);
 		}
 	}
 
-	bus_space_write_8(sc->sc_st, sc->sc_sh, MEC_INT_STATUS, 0xff);
+	if (sent) {
+		/* try to get more packets going */
+		mec_start(ifp);
+	}
 
-	return 0;
+#if NRND > 0
+	if (handled)
+		rnd_add_uint32(&sc->sc_rnd_source, statreg);
+#endif
+
+	return handled;
 }
 
-static void
-mec_rxintr(struct mec_softc * sc, u_int64_t status)
+STATIC void
+mec_rxintr(struct mec_softc *sc)
 {
-#if 0
-	int             count = 0;
-	struct mbuf    *m;
-	int             i, framelen;
-	u_int8_t        pktstat;
-	u_int32_t       status;
-	int             new_end, orig_end;
-	unsigned int    rx_fifo_ptr;
-	unsigned int    rx_sequence_no;
-	u_int64_t       ptr;
-	struct ifnet   *ifp = &sc->sc_ethercom.ec_if;
+	bus_space_tag_t st = sc->sc_st;
+	bus_space_handle_t sh = sc->sc_sh;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct mbuf *m;
+	struct mec_rxdesc *rxd;
+	uint64_t rxstat;
+	u_int len;
+	int i;
 
-	rx_fifo_ptr = (status & MEC_INT_RX_MCL_FIFO_ALIAS) >> 8;
-	rx_sequence_no = (status & MEC_INT_RX_SEQUENCE_NUMBER) >> 25;
+	DPRINTF(MEC_DEBUG_RXINTR, ("mec_rxintr: called\n"));
 
-	if (rx_fifo_ptr >= 32)
-		panic("mec_rxintr: rx_fifo_ptr is %i\n", rx_fifo_ptr);
+	for (i = sc->sc_rxptr;; i = MEC_NEXTRX(i)) {
+		rxd = &sc->sc_rxdesc[i];
 
-	ptr = sc->rptr;		/* XXX */
+		MEC_RXSTATSYNC(sc, i, BUS_DMASYNC_POSTREAD);
+		rxstat = rxd->rxd_stat;
 
-	while (rx_fifo_ptr != ptr) {
-		m = sc->rx_fifo[RXRINGINDEX(ptr)];
-	}
+		DPRINTF(MEC_DEBUG_RXINTR,
+		    ("mec_rxintr: rxstat = 0x%016llx, rxptr = %d\n",
+		    rxstat, i));
+		DPRINTF(MEC_DEBUG_RXINTR, ("mec_rxintr: rxfifo = 0x%08x\n",
+		    (u_int)bus_space_read_8(st, sh, MEC_RX_FIFO)));
+
+		if ((rxstat & MEC_RXSTAT_RECEIVED) == 0) {
+			MEC_RXSTATSYNC(sc, i, BUS_DMASYNC_PREREAD);
+			break;
+		}
+
+		len = rxstat & MEC_RXSTAT_LEN;
+
+		if (len < ETHER_MIN_LEN ||
+		    len > ETHER_MAX_LEN) {
+			/* invalid length packet; drop it. */
+			DPRINTF(MEC_DEBUG_RXINTR,
+			    ("mec_rxintr: wrong packet\n"));
+ dropit:
+			ifp->if_ierrors++;
+			rxd->rxd_stat = 0;
+			MEC_RXSTATSYNC(sc, i, BUS_DMASYNC_PREREAD);
+			bus_space_write_8(st, sh, MEC_MCL_RX_FIFO,
+			    MEC_CDRXADDR(sc, i));
+			continue;
+		}
+
+		if (rxstat &
+		    (MEC_RXSTAT_BADPACKET |
+		     MEC_RXSTAT_LONGEVENT |
+		     MEC_RXSTAT_INVALID   |
+		     MEC_RXSTAT_CRCERROR  |
+		     MEC_RXSTAT_VIOLATION)) {
+			printf("%s: mec_rxintr: status = 0x%016llx\n",
+			    sc->sc_dev.dv_xname, rxstat);
+			goto dropit;
+		}
+
+		/*
+		 * now allocate an mbuf (and possibly a cluster) to hold
+		 * the received packet.
+		 */
+		MGETHDR(m, M_DONTWAIT, MT_DATA);
+		if (m == NULL) {
+			printf("%s: unable to allocate RX mbuf\n",
+			    sc->sc_dev.dv_xname);
+			goto dropit;
+		}
+		if (len > (MHLEN - MEC_ETHER_ALIGN)) {
+			MCLGET(m, M_DONTWAIT);
+			if ((m->m_flags & M_EXT) == 0) {
+				printf("%s: unable to allocate RX cluster\n",
+				    sc->sc_dev.dv_xname);
+				m_freem(m);
+				m = NULL;
+				goto dropit;
+			}
+		}
+
+		/*
+		 * Note MEC chip seems to insert 2 byte paddingat the top of
+		 * RX buffer, but we copy whole buffer to avoid unaligned copy.
+		 */
+		MEC_RXBUFSYNC(sc, i, len, BUS_DMASYNC_POSTREAD);
+		memcpy(mtod(m, caddr_t), rxd->rxd_buf, MEC_ETHER_ALIGN + len);
+		MEC_RXBUFSYNC(sc, i, ETHER_MAX_LEN, BUS_DMASYNC_PREREAD);
+		m->m_data += MEC_ETHER_ALIGN;
+
+		/* put RX buffer into FIFO again */
+		rxd->rxd_stat = 0;
+		MEC_RXSTATSYNC(sc, i, BUS_DMASYNC_PREREAD);
+		bus_space_write_8(st, sh, MEC_MCL_RX_FIFO, MEC_CDRXADDR(sc, i));
+
+		m->m_pkthdr.rcvif = ifp;
+		m->m_pkthdr.len = m->m_len = len;
+		m->m_flags |= M_HASFCS;
+
+		ifp->if_ipackets++;
+
+#if NBPFILTER > 0
+		/*
+		 * Pass this up to any BPF listeners, but only
+		 * pass it up the stack it its for us.
+		 */
+		if (ifp->if_bpf)
+			bpf_mtap(ifp->if_bpf, m);
 #endif
+
+		/* Pass it on. */
+		(*ifp->if_input)(ifp, m);
+	}
+
+	/* update RX pointer */
+	sc->sc_rxptr = i;
+}
+
+STATIC void
+mec_txintr(struct mec_softc *sc)
+{
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct mec_txdesc *txd;
+	struct mec_txsoft *txs;
+	bus_dmamap_t dmamap;
+	uint64_t txstat;
+	int i;
+	u_int col;
+
+	ifp->if_flags &= ~IFF_OACTIVE;
+
+	DPRINTF(MEC_DEBUG_TXINTR, ("mec_txintr: called\n"));
+
+	for (i = sc->sc_txdirty; sc->sc_txpending != 0;
+	    i = MEC_NEXTTX(i), sc->sc_txpending--) {
+		txd = &sc->sc_txdesc[i];
+
+		MEC_TXDESCSYNC(sc, i,
+		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+
+		txstat = txd->txd_stat;
+		DPRINTF(MEC_DEBUG_TXINTR,
+		    ("mec_txintr: dirty = %d, txstat = 0x%016llx\n",
+		    i, txstat));
+		if ((txstat & MEC_TXSTAT_SENT) == 0) {
+			MEC_TXCMDSYNC(sc, i, BUS_DMASYNC_PREREAD);
+			break;
+		}
+
+		if ((txstat & MEC_TXSTAT_SUCCESS) == 0) {
+			printf("%s: TX error: txstat = 0x%016llx\n",
+			    sc->sc_dev.dv_xname, txstat);
+			ifp->if_oerrors++;
+			continue;
+		}
+
+		txs = &sc->sc_txsoft[i];
+		if ((txs->txs_flags & MEC_TXS_TXDPTR1) != 0) {
+			dmamap = txs->txs_dmamap;
+			bus_dmamap_sync(sc->sc_dmat, dmamap, 0,
+			    dmamap->dm_mapsize, BUS_DMASYNC_POSTWRITE);
+			bus_dmamap_unload(sc->sc_dmat, dmamap);
+			m_freem(txs->txs_mbuf);
+			txs->txs_mbuf = NULL;
+		}
+
+		col = (txstat & MEC_TXSTAT_COLCNT) >> MEC_TXSTAT_COLCNT_SHIFT;
+		ifp->if_collisions += col;
+		ifp->if_opackets++;
+	}
+
+	/* update the dirty TX buffer pointer */
+	sc->sc_txdirty = i;
+	DPRINTF(MEC_DEBUG_INTR,
+	    ("mec_txintr: sc_txdirty = %2d, sc_txpending = %2d\n",
+	    sc->sc_txdirty, sc->sc_txpending));
+
+	/* cancel the watchdog timer if there are no pending TX packets */
+	if (sc->sc_txpending == 0)
+		ifp->if_timer = 0;
+}
+
+STATIC void
+mec_shutdown(void *arg)
+{
+	struct mec_softc *sc = arg;
+
+	mec_stop(&sc->sc_ethercom.ec_if, 1);
 }
