@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# $NetBSD: linkfarm.sh,v 1.1.2.1 2002/07/22 16:47:35 agc Exp $
+# $NetBSD: linkfarm.sh,v 1.1.2.2 2003/07/13 11:09:29 jlam Exp $
 
 #
 # Copyright (c) 2002 Alistair G. Crooks.  All rights reserved.
@@ -72,7 +72,7 @@ create=yes
 while [ $# -gt 1 ]; do
 	case "$1" in
 	-D)		delete=yes; create=no ;;
-	-R)		restow=yes ;;
+	-R)		delete=yes; create=yes ;;
 	-V)		version ;;
 	-c)		check=yes; doit=":" ;;
 	-d)		stowdir=$2; shift ;;
