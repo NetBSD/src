@@ -1,4 +1,4 @@
-/*	$NetBSD: domacro.c,v 1.15 1999/11/11 01:19:11 lukem Exp $	*/
+/*	$NetBSD: domacro.c,v 1.16 2000/05/01 10:35:17 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)domacro.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: domacro.c,v 1.15 1999/11/11 01:19:11 lukem Exp $");
+__RCSID("$NetBSD: domacro.c,v 1.16 2000/05/01 10:35:17 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -49,9 +49,7 @@ __RCSID("$NetBSD: domacro.c,v 1.15 1999/11/11 01:19:11 lukem Exp $");
 #include "ftp_var.h"
 
 void
-domacro(argc, argv)
-	int argc;
-	char *argv[];
+domacro(int argc, char *argv[])
 {
 	int i, j, count = 2, loopflg = 0;
 	char *cp1, *cp2, line2[200];

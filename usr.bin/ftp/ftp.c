@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.94 2000/05/01 09:44:55 lukem Exp $	*/
+/*	$NetBSD: ftp.c,v 1.95 2000/05/01 10:35:18 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-2000 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.94 2000/05/01 09:44:55 lukem Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.95 2000/05/01 10:35:18 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -128,11 +128,7 @@ __RCSID("$NetBSD: ftp.c,v 1.94 2000/05/01 09:44:55 lukem Exp $");
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
-#ifdef __STDC__
 #include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 #ifndef __USE_SELECT
 #include <poll.h>
 #endif
@@ -146,7 +142,7 @@ int	ptabflg;
 int	ptflag = 0;
 char	pasv[BUFSIZ];	/* passive port for proxy data connection */
 
-static int empty __P((FILE *, FILE *, int));
+static int empty(FILE *, FILE *, int);
 
 union sockunion {
 	struct sockinet {
@@ -181,9 +177,7 @@ union sockunion {
 union sockunion myctladdr, hisctladdr, data_addr;
 
 char *
-hookup(host, port)
-	char *host;
-	char *port;
+hookup(char *host, char *port)
 {
 	int s = -1, len, error;
 #if defined(NI_NUMERICHOST) && defined(INET6)
@@ -393,8 +387,7 @@ bad:
 }
 
 void
-cmdabort(notused)
-	int notused;
+cmdabort(int notused)
 {
 	int oerrno = errno;
 
@@ -408,8 +401,7 @@ cmdabort(notused)
 }
 
 void
-cmdtimeout(notused)
-	int notused;
+cmdtimeout(int notused)
 {
 	int oerrno = errno;
 
@@ -425,28 +417,15 @@ cmdtimeout(notused)
 
 /*VARARGS*/
 int
-#ifdef __STDC__
 command(const char *fmt, ...)
-#else
-command(va_alist)
-	va_dcl
-#endif
 {
 	va_list ap;
 	int r;
 	sigfunc oldsigint;
-#ifndef __STDC__
-	const char *fmt;
-#endif
 
 	if (debug) {
 		fputs("---> ", ttyout);
-#ifdef __STDC__
 		va_start(ap, fmt);
-#else
-		va_start(ap);
-		fmt = va_arg(ap, const char *);
-#endif
 		if (strncmp("PASS ", fmt, 5) == 0)
 			fputs("PASS XXXX", ttyout);
 		else if (strncmp("ACCT ", fmt, 5) == 0)
@@ -466,12 +445,7 @@ command(va_alist)
 
 	oldsigint = xsignal(SIGINT, cmdabort);
 
-#ifdef __STDC__
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-	fmt = va_arg(ap, char *);
-#endif
 	vfprintf(cout, fmt, ap);
 	va_end(ap);
 	fputs("\r\n", cout);
@@ -485,8 +459,7 @@ command(va_alist)
 }
 
 int
-getreply(expecteof)
-	int expecteof;
+getreply(int expecteof)
 {
 	char current_line[BUFSIZ];	/* last line of previous reply */
 	int c, n, line;
@@ -636,10 +609,7 @@ getreply(expecteof)
 }
 
 static int
-empty(cin, din, sec)
-	FILE *cin;
-	FILE *din;
-	int sec;
+empty(FILE *cin, FILE *din, int sec)
 {
 	int nr;
 	int nfd = 0;
@@ -700,8 +670,7 @@ empty(cin, din, sec)
 sigjmp_buf	xferabort;
 
 void
-abortxfer(notused)
-	int notused;
+abortxfer(int notused)
 {
 	char msgbuf[100];
 	int len;
@@ -727,14 +696,13 @@ abortxfer(notused)
 }
 
 void
-sendrequest(cmd, local, remote, printnames)
-	const char *cmd, *local, *remote;
-	int printnames;
+sendrequest(const char *cmd, const char *local, const char *remote,
+	    int printnames)
 {
 	struct stat st;
 	int c, d;
 	FILE *fin, *dout;
-	int (*closefunc) __P((FILE *));
+	int (*closefunc)(FILE *);
 	sigfunc oldintr, oldintp;
 	volatile off_t hashbytes;
 	char *lmode, *bufp;
@@ -1031,12 +999,11 @@ cleanupsend:
 }
 
 void
-recvrequest(cmd, local, remote, lmode, printnames, ignorespecial)
-	const char *cmd, *local, *remote, *lmode;
-	int printnames, ignorespecial;
+recvrequest(const char *cmd, const char *local, const char *remote,
+	    const char *lmode, int printnames, int ignorespecial)
 {
 	FILE *fout, *din;
-	int (*closefunc) __P((FILE *));
+	int (*closefunc)(FILE *);
 	sigfunc oldintr, oldintp;
 	int c, d;
 	volatile int is_retr, tcrflag, bare_lfs;
@@ -1411,7 +1378,7 @@ cleanuprecv:
  * otherwise the server's connect may fail.
  */
 int
-initconn()
+initconn(void)
 {
 	char *p, *a;
 	int result, len, tmpno = 0;
@@ -1812,8 +1779,7 @@ bad:
 }
 
 FILE *
-dataconn(lmode)
-	const char *lmode;
+dataconn(const char *lmode)
 {
 	union sockunion from;
 	int s, fromlen = myctladdr.su_len;
@@ -1842,8 +1808,7 @@ dataconn(lmode)
 }
 
 void
-psabort(notused)
-	int notused;
+psabort(int notused)
 {
 	int oerrno = errno;
 
@@ -1853,8 +1818,7 @@ psabort(notused)
 }
 
 void
-pswitch(flag)
-	int flag;
+pswitch(int flag)
 {
 	sigfunc oldintr;
 	static struct comvars {
@@ -1941,8 +1905,7 @@ pswitch(flag)
 }
 
 void
-abortpt(notused)
-	int notused;
+abortpt(int notused)
 {
 
 	alarmtimer(0);
@@ -1955,8 +1918,7 @@ abortpt(notused)
 }
 
 void
-proxtrans(cmd, local, remote)
-	const char *cmd, *local, *remote;
+proxtrans(const char *cmd, const char *local, const char *remote)
 {
 	sigfunc oldintr;
 	int prox_type, nfnd;
@@ -2095,9 +2057,7 @@ abort:
 }
 
 void
-reset(argc, argv)
-	int argc;
-	char *argv[];
+reset(int argc, char *argv[])
 {
 	int nfnd = 1;
 
@@ -2117,8 +2077,7 @@ reset(argc, argv)
 }
 
 char *
-gunique(local)
-	const char *local;
+gunique(const char *local)
 {
 	static char new[MAXPATHLEN];
 	char *cp = strrchr(local, '/');
@@ -2170,8 +2129,7 @@ gunique(local)
  *	needs to get back to a known state.
  */
 void
-abort_squared(dummy)
-	int dummy;
+abort_squared(int dummy)
 {
 	char msgbuf[100];
 	int len;
@@ -2185,8 +2143,7 @@ abort_squared(dummy)
 }
 
 void
-abort_remote(din)
-	FILE *din;
+abort_remote(FILE *din)
 {
 	char buf[BUFSIZ];
 	int nfnd;

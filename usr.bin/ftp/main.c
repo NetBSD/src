@@ -1,7 +1,7 @@
-/*	$NetBSD: main.c,v 1.69 1999/11/28 06:32:05 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.70 2000/05/01 10:35:19 lukem Exp $	*/
 
 /*-
- * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996-2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -108,7 +108,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.69 1999/11/28 06:32:05 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.70 2000/05/01 10:35:19 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -136,13 +136,11 @@ __RCSID("$NetBSD: main.c,v 1.69 1999/11/28 06:32:05 lukem Exp $");
 #define	NO_PROXY	"no_proxy"	/* env var with list of non-proxied
 					 * hosts, comma or space separated */
 
-static void	setupoption __P((char *, char *, char *));
-int		main __P((int, char **));
+static void	setupoption(char *, char *, char *);
+int		main(int, char *[]);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int ch, rval;
 	struct passwd *pw = NULL;
@@ -504,7 +502,7 @@ main(argc, argv)
  * Generate a prompt
  */
 char *
-prompt()
+prompt(void)
 {
 	static char	**prompt;
 	static char	  buf[MAXPATHLEN];
@@ -525,7 +523,7 @@ prompt()
  * Generate an rprompt
  */
 char *
-rprompt()
+rprompt(void)
 {
 	static char	**rprompt;
 	static char	  buf[MAXPATHLEN];
@@ -546,7 +544,7 @@ rprompt()
  * Command parser.
  */
 void
-cmdscanner()
+cmdscanner(void)
 {
 	struct cmd	*c;
 	char		*p;
@@ -644,8 +642,7 @@ cmdscanner()
 }
 
 struct cmd *
-getcmd(name)
-	const char *name;
+getcmd(const char *name)
 {
 	const char *p, *q;
 	struct cmd *c, *found;
@@ -682,7 +679,7 @@ getcmd(name)
 int slrflag;
 
 void
-makeargv()
+makeargv(void)
 {
 	char *argp;
 
@@ -725,7 +722,7 @@ makeargv()
  * handle quoting and strings
  */
 char *
-slurpstring()
+slurpstring(void)
 {
 	int got_one = 0;
 	char *sb = stringbase;
@@ -857,9 +854,7 @@ OUT:
  * Call each command handler with argc == 0 and argv[0] == name.
  */
 void
-help(argc, argv)
-	int argc;
-	char *argv[];
+help(int argc, char *argv[])
 {
 	struct cmd *c;
 	char *nargv[1], *p, *cmd;
@@ -911,8 +906,7 @@ help(argc, argv)
 }
 
 struct option *
-getoption(name)
-	const char *name;
+getoption(const char *name)
 {
 	const char *p;
 	struct option *c;
@@ -927,8 +921,7 @@ getoption(name)
 }
 
 char *
-getoptionvalue(name)
-	const char *name;
+getoptionvalue(const char *name)
 {
 	struct option *c;
 
@@ -941,8 +934,7 @@ getoptionvalue(name)
 }
 
 static void
-setupoption(name, value, defaultvalue)
-	char *name, *value, *defaultvalue;
+setupoption(char *name, char *value, char *defaultvalue)
 {
 	char *nargv[3];
 	int overbose;
@@ -957,7 +949,7 @@ setupoption(name, value, defaultvalue)
 }
 
 void
-usage()
+usage(void)
 {
 	(void)fprintf(stderr,
 "usage: %s [-AadefginpRtvV] [-o outfile] [-P port] [-r retry] [-T dir,max[,inc]\n"
