@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.123 2002/03/06 13:10:22 tsutsui Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.124 2002/03/11 16:39:40 uch Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -120,7 +120,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.123 2002/03/06 13:10:22 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.124 2002/03/11 16:39:40 uch Exp $");
 
 #include "opt_cputype.h"
 #include "opt_compat_netbsd.h"
@@ -170,10 +170,11 @@ extern long	*mips1_locoresw[];
 #if defined(MIPS3)
 #if defined(MIPS3_5900)
 static void	r5900_vector_init(void);
+extern long	*mips5900_locoresw[];
 #else
 static void	mips3_vector_init(void);
-#endif
 extern long	*mips3_locoresw[];
+#endif
 #endif
 
 #if defined(MIPS32)
@@ -436,6 +437,7 @@ mips1_vector_init(void)
 #endif /* MIPS1 */
 
 #if defined(MIPS3)
+#ifndef MIPS3_5900	/* XXX */
 /*
  * MIPS III locore function vector
  */
@@ -448,7 +450,6 @@ static const mips_locore_jumpvec_t mips3_locore_vec =
 	mips3_wbflush,
 };
 
-#ifndef MIPS3_5900	/* XXX */
 static void
 mips3_vector_init(void)
 {
@@ -827,15 +828,19 @@ mips_vector_init(void)
 #if defined(MIPS3)
 	case CPU_ARCH_MIPS3:
 	case CPU_ARCH_MIPS4:
+#ifdef MIPS3_5900	/* XXX */
+		mips3_cp0_wired_write(0);
+		mips5900_TBIA(mips_num_tlb_entries);
+		mips3_cp0_wired_write(MIPS3_TLB_WIRED_UPAGES);
+		r5900_vector_init();
+		memcpy(mips_locoresw, mips5900_locoresw, sizeof(mips_locoresw));
+#else /* MIPS3_5900 */
 		mips3_cp0_wired_write(0);
 		mips3_TBIA(mips_num_tlb_entries);
 		mips3_cp0_wired_write(MIPS3_TLB_WIRED_UPAGES);
-#ifdef MIPS3_5900	/* XXX */
-		r5900_vector_init();
-#else
 		mips3_vector_init();
-#endif /* MIPS3_5900 */
 		memcpy(mips_locoresw, mips3_locoresw, sizeof(mips_locoresw));
+#endif /* MIPS3_5900 */
 		break;
 #endif
 #ifdef MIPS32
