@@ -1,8 +1,8 @@
-#	$NetBSD: ramdisk.list,v 1.1.1.1 1995/10/08 23:07:46 gwr Exp $
+#	$NetBSD: ramdisk.list,v 1.2 1997/05/26 03:26:07 jeremy Exp $
 
 # copy the MAKEDEV script and make some devices
 COPY	${DESTDIR}/dev/MAKEDEV	dev/MAKEDEV
-SPECIAL	cd dev; sh MAKEDEV std rd0 sd0 sd2 st0
+SPECIAL	cd dev; sh MAKEDEV std rd0 sd0 sd1 sd2 st0
 SPECIAL	/bin/rm dev/MAKEDEV
 SPECIAL	mkfifo dev/pipe
 SPECIAL ln -s . usr
