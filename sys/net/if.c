@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.36 1996/05/22 13:55:08 mycroft Exp $	*/
+/*	$NetBSD: if.c,v 1.37 1996/06/13 21:49:43 cgd Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -459,9 +459,8 @@ ifioctl(so, cmd, data, p)
 		break;
 
 	case SIOCGIFMTU:
-		if (ifp->if_ioctl == 0)
-			return (EOPNOTSUPP);
-		return ((*ifp->if_ioctl)(ifp, cmd, data));
+		ifr->ifr_mtu = ifp->if_mtu;
+		break;
 
 	case SIOCSIFFLAGS:
 		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
