@@ -1,4 +1,4 @@
-/*	$NetBSD: mcd.c,v 1.61 1998/06/09 07:25:04 thorpej Exp $	*/
+/*	$NetBSD: mcd.c,v 1.62 1998/06/23 03:26:19 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -90,6 +90,15 @@
 
 /* toc */
 #define MCD_MAXTOCS	104	/* from the Linux driver */
+
+/* control promiscuous match */
+#include "opt_mcd_promisc.h"
+
+#ifdef MCD_PROMISC
+int mcd_promisc = 1;
+#else
+int mcd_promisc = 0;
+#endif
 
 struct mcd_mbx {
 	int		retry, count;
@@ -845,6 +854,13 @@ mcd_find(iot, ioh, sc)
 		sc->readcmd = MCD_CMDREADDOUBLESPEED;
 		break;
 	default:
+		/*
+		 * mcd_send() says the  response looked OK but the
+		 * drive type is unknown. If mcd_promisc,  match anyway.
+		 */
+		if (mcd_promisc != 0)
+			return 0;
+
 #ifdef MCDDEBUG
 		printf("%s: unrecognized drive version %c%02x; will try to use it anyway\n",
 		    sc->sc_dev.dv_xname,
