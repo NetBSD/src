@@ -1,11 +1,11 @@
-/*	$NetBSD: crtbegin.c,v 1.16 2001/12/30 23:45:01 thorpej Exp $	*/
+/*	$NetBSD: crtbegin.c,v 1.17 2001/12/31 00:40:11 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Paul Kranenburg and Ross Harvey.
+ * by Paul Kranenburg, Ross Harvey, and Jason R. Thorpe.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -73,6 +73,25 @@ extern void _Jv_RegisterClasses(void *) __attribute__((weak));
 
 static void *__JCR_LIST__[]
     __attribute__((section(".jcr"))) = { };
+#endif
+
+#if defined(DSO_HANDLE) && defined(__GNUC__)
+/*
+ * The __dso_handle variable is used to hang C++ local destructors off
+ * of.  In the main program (i.e. using crtbegin.o), the value is 0.
+ * In shared objects (i.e. using crtbeginS.o), the value must be unique.
+ * The symbol is hidden, but the dynamic linker will still relocate it.
+ */
+#ifdef SHARED
+void	*__dso_handle = &__dso_handle;
+#else
+void	*__dso_handle = NULL;
+#endif
+__asm(".hidden	__dso_handle");
+
+#ifdef SHARED
+extern void __cxa_finalize(void *) __attribute__((weak));
+#endif
 #endif
 
 static void __dtors(void);
@@ -148,6 +167,14 @@ _init()
 void
 _fini()
 {
+
+#if defined(DSO_HANDLE) && defined(__GNUC__) && defined(SHARED)
+	/*
+	 * Call local destructors.
+	 */
+	if (__cxa_finalize != NULL)
+		__cxa_finalize(__dso_handle);
+#endif /* DSO_HANDLE && __GNUC__ && SHARED */
 
 	/*
 	 * Call global destructors.
