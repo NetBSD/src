@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_swap_12.c,v 1.1.2.2 1997/02/14 15:33:14 mrg Exp $	*/
+/*	$NetBSD: vm_swap_12.c,v 1.1.2.2.2.1 1997/05/06 12:50:34 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthew R. Green
@@ -33,6 +33,9 @@
  */
 
 #include <sys/param.h>
+#include <sys/mount.h>		/* needed for next include! */
+#include <sys/syscallargs.h>
+
 #include <vm/vm_swap.h>
 
 #ifdef COMPAT_12
