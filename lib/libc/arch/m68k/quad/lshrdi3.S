@@ -1,4 +1,4 @@
-/*	$NetBSD: lshrdi3.S,v 1.3 1999/10/25 23:48:14 thorpej Exp $	*/
+/*	$NetBSD: lshrdi3.S,v 1.4 2000/11/28 11:34:14 scw Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
 
 ENTRY(__lshrdi3)
 	link	%a6,#0
-	moveml	%d2-d4,%sp@-
+	moveml	%d2-%d4,%sp@-
 	movel	%a6@(8),%d0
 	movel	%a6@(12),%d1
 	movel	%a6@(16),%d2
