@@ -1,4 +1,4 @@
-# $Id: Makefile.sun3,v 1.15 1994/03/01 08:24:01 glass Exp $
+# $Id: Makefile.sun3,v 1.16 1994/04/24 20:10:13 glass Exp $
 # Makefile for 4.4 BSD
 #
 # This makefile is constructed from a machine description:
@@ -33,7 +33,7 @@ S=	../../../..
 SUN3=	../..
 LIBKERN=../libkern.a
 
-INCLUDES= -I. -I../.. -I$S -I$S/sys
+INCLUDES= -I. -I../.. -I$S -I$S/sys -I$S/arch
 COPTS=	${INCLUDES} ${IDENT} -DKERNEL -Dmc68020 -Dsun3
 CFLAGS=	${COPTS}
 
