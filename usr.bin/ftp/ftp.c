@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.81 1999/10/09 03:00:56 lukem Exp $	*/
+/*	$NetBSD: ftp.c,v 1.82 1999/10/09 12:48:12 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.81 1999/10/09 03:00:56 lukem Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.82 1999/10/09 12:48:12 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -1329,12 +1329,15 @@ abort:
 			/*
 			 * abort using RFC 959 recommended IP,SYNC sequence
 			 */
-	(void)xsignal(SIGINT, SIG_IGN);
-	if (!cpend) {
-		code = -1;
-		goto cleanuprecv;
+	if (! sigsetjmp(xferabort, 1)) {
+			/* this is the first call */
+		(void)xsignal(SIGINT, abort_squared);
+		if (!cpend) {
+			code = -1;
+			goto cleanuprecv;
+		}
+		abort_remote(din);
 	}
-	abort_remote(din);
 	code = -1;
 	if (bytes > 0)
 		ptransfer(0);
@@ -1968,7 +1971,11 @@ proxtrans(cmd, local, remote)
 	fprintf(ttyout, "local: %s remote: %s\n", local, remote);
 	return;
 abort:
-	(void)xsignal(SIGINT, SIG_IGN);
+	if (sigsetjmp(xferabort, 1)) {
+		(void)xsignal(SIGINT, oldintr);
+		return;
+	}
+	(void)xsignal(SIGINT, abort_squared);
 	ptflag = 0;
 	if (strcmp(cmd, "RETR") && !proxy)
 		pswitch(1);
@@ -2088,6 +2095,27 @@ gunique(local)
 		}
 	}
 	return (new);
+}
+
+/*
+ * abort_squared --
+ *	aborts abort_remote(). lostpeer() is called because if the user is
+ *	too impatient to wait or there's another problem then ftp really
+ *	needs to get back to a known state.
+ */
+void
+abort_squared(dummy)
+	int dummy;
+{
+	char msgbuf[100];
+	int len;
+
+	alarmtimer(0);
+	len = strlcpy(msgbuf, "\nremote abort aborted; closing connection.\n",
+	    sizeof(msgbuf));
+	write(fileno(ttyout), msgbuf, len);
+	lostpeer();
+	siglongjmp(xferabort, 1);
 }
 
 void
