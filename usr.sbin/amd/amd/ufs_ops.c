@@ -37,7 +37,7 @@
  *
  *	@(#)ufs_ops.c	8.1 (Berkeley) 6/6/93
  *
- * $Id: ufs_ops.c,v 1.3 1994/06/13 19:48:04 mycroft Exp $
+ * $Id: ufs_ops.c,v 1.4 1994/06/13 20:17:45 mycroft Exp $
  *
  */
 
@@ -95,11 +95,7 @@ char *opts;
 	/*
 	 * Figure out the name of the file system type.
 	 */
-#ifdef M_NEWTYPE
-	char *type = MOUNT_TYPE_UFS;
-#else
-	int type = MOUNT_TYPE_UFS;
-#endif /* M_NEWTYPE */
+	MTYPE_TYPE type = MOUNT_TYPE_UFS;
 
 	bzero((voidp) &ufs_args, sizeof(ufs_args));	/* Paranoid */
 
