@@ -1,7 +1,7 @@
-/*	$NetBSD: db.c,v 1.12 2004/01/05 23:23:34 jmmv Exp $	*/
+/*	$NetBSD: db.c,v 1.13 2004/10/04 10:56:12 lukem Exp $	*/
 
 /*-
- * Copyright (c) 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002-2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #ifdef __RCSID
-__RCSID("$NetBSD: db.c,v 1.12 2004/01/05 23:23:34 jmmv Exp $");
+__RCSID("$NetBSD: db.c,v 1.13 2004/10/04 10:56:12 lukem Exp $");
 #endif /* __RCSID */
 #endif /* not lint */
 
@@ -356,16 +356,17 @@ main(int argc, char *argv[])
 void
 db_print(DBT *key, DBT *val)
 {
+	int	len;
+	char	*data;
 
-	int len;
-	char *data;
+#define	MINUSNUL(x)	((x) > 0  ?  (x) - (flags & F_NO_NUL ? 0 : 1)  :  0)
 
 	if (flags & F_SHOW_KEY) {
-		if (flags & F_ENCODE_KEY)
-			len = encode_data(key->size - 1, (char *)key->data,
-					 &data);
-		else {
-			len = (int)key->size;
+		if (flags & F_ENCODE_KEY) {
+			len = encode_data(MINUSNUL(key->size),
+			    (char *)key->data, &data);
+		} else {
+			len = (int)MINUSNUL(key->size);
 			data = (char *)key->data;
 		}
 		printf("%.*s", len, data);
@@ -373,11 +374,11 @@ db_print(DBT *key, DBT *val)
 	if ((flags & F_SHOW_KEY) && (flags & F_SHOW_VALUE))
 		printf("%s", outputsep);
 	if (flags & F_SHOW_VALUE) {
-		if (flags & F_ENCODE_VAL)
-			len = encode_data(val->size - 1, (char *)val->data,
-					 &data);
-		else {
-			len = (int)val->size;
+		if (flags & F_ENCODE_VAL) {
+			len = encode_data(MINUSNUL(val->size),
+			    (char *)val->data, &data);
+		} else {
+			len = (int)MINUSNUL(val->size);
 			data = (char *)val->data;
 		}	
 		printf("%.*s", len, data);
