@@ -1,4 +1,4 @@
-/*	$NetBSD: session.c,v 1.1.1.1.2.4 2001/12/11 00:04:05 he Exp $	*/
+/*	$NetBSD: session.c,v 1.1.1.1.2.5 2003/09/17 23:46:42 christos Exp $	*/
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -705,8 +705,9 @@ static void
 child_set_env(char ***envp, u_int *envsizep, const char *name,
 	      const char *value)
 {
-	u_int i, namelen;
 	char **env;
+	u_int envsize;
+	u_int i, namelen;
 
 	/*
 	 * Find the slot where the value should be stored.  If the variable
@@ -723,9 +724,11 @@ child_set_env(char ***envp, u_int *envsizep, const char *name,
 		xfree(env[i]);
 	} else {
 		/* New variable.  Expand if necessary. */
-		if (i >= (*envsizep) - 1) {
-			(*envsizep) += 50;
-			env = (*envp) = xrealloc(env, (*envsizep) * sizeof(char *));
+		envsize = *envsizep;
+		if (i >= envsize - 1) {
+			envsize += 50;
+			env = (*envp) = xrealloc(env, envsize * sizeof(char *));
+			*envsizep = envsize;
 		}
 		/* Need to set the NULL pointer at end of array beyond the new slot. */
 		env[i + 1] = NULL;
