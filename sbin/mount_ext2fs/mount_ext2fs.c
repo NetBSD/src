@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_ext2fs.c,v 1.1 1997/06/11 11:21:44 bouyer Exp $	*/
+/*	$NetBSD: mount_ext2fs.c,v 1.2 1997/09/15 04:31:50 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -33,17 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1993, 1994\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)mount_ufs.c	8.2 (Berkeley) 3/27/94";
 #else
-static char rcsid[] = "$NetBSD: mount_ext2fs.c,v 1.1 1997/06/11 11:21:44 bouyer Exp $";
+__RCSID("$NetBSD: mount_ext2fs.c,v 1.2 1997/09/15 04:31:50 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,6 +60,7 @@ static char rcsid[] = "$NetBSD: mount_ext2fs.c,v 1.1 1997/06/11 11:21:44 bouyer 
 #include "mntopts.h"
 
 void	ext2fs_usage __P((void));
+int	main __P((int, char *[]));
 
 static const struct mntopt mopts[] = {
 	MOPT_STDOPTS,
@@ -73,7 +74,7 @@ static const struct mntopt mopts[] = {
 int
 main(argc, argv)
 	int argc;
-	char * const argv[];
+	char *argv[];
 {
 	extern int optreset;
 	struct ufs_args args;		/* XXX ffs_args */
@@ -82,7 +83,7 @@ main(argc, argv)
 
 	mntflags = 0;
 	optind = optreset = 1;		/* Reset for parse of new argv. */
-	while ((ch = getopt(argc, argv, "o:")) != EOF)
+	while ((ch = getopt(argc, argv, "o:")) != -1)
 		switch (ch) {
 		case 'o':
 			getmntopts(optarg, mopts, &mntflags);
