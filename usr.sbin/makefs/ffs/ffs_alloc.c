@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.6 2002/01/07 16:56:27 lukem Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.7 2002/01/08 06:00:14 lukem Exp $	*/
 /* From: NetBSD: ffs_alloc.c,v 1.50 2001/09/06 02:16:01 lukem Exp */
 
 /*
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint
-__RCSID("$NetBSD: ffs_alloc.c,v 1.6 2002/01/07 16:56:27 lukem Exp $");
+__RCSID("$NetBSD: ffs_alloc.c,v 1.7 2002/01/08 06:00:14 lukem Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -49,6 +49,7 @@ __RCSID("$NetBSD: ffs_alloc.c,v 1.6 2002/01/07 16:56:27 lukem Exp $");
 
 #include "makefs.h"
 
+#include <ufs/ufs/dinode.h>
 #include <ufs/ufs/ufs_bswap.h>
 #include <ufs/ffs/fs.h>
 
