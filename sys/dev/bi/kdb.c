@@ -1,4 +1,4 @@
-/*	$NetBSD: kdb.c,v 1.17 2000/03/26 11:45:04 ragge Exp $ */
+/*	$NetBSD: kdb.c,v 1.18 2000/05/19 18:54:30 thorpej Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -220,7 +220,7 @@ kdbgo(usc, mxi)
 	struct kdb_softc *sc = (void *)usc;
 	struct buf *bp = mxi->mxi_bp;
 	struct mscp *mp = mxi->mxi_mp;
-	u_int32_t addr = (u_int32_t)bp->b_un.b_addr;
+	u_int32_t addr = (u_int32_t)bp->b_data;
 	u_int32_t mapaddr;
 	int err;
 
@@ -232,7 +232,7 @@ kdbgo(usc, mxi)
 	 * On VAX, point to the corresponding page tables. (user/sys)
 	 * On other systems, do something else... 
 	 */
-	err = bus_dmamap_load(sc->sc_dmat, mxi->mxi_dmam, bp->b_un.b_addr,
+	err = bus_dmamap_load(sc->sc_dmat, mxi->mxi_dmam, bp->b_data,
 	    bp->b_bcount, bp->b_proc, BUS_DMA_NOWAIT);
 
 	if (err) /* Shouldn't happen */

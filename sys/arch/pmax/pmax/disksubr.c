@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.31 2000/05/16 05:45:49 thorpej Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.32 2000/05/19 18:54:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -88,8 +88,8 @@ readdisklabel(dev, strat, lp, osdep)
 	(*strat)(bp);
 	if (biowait(bp)) {
 		msg = "I/O error";
-	} else for (dlp = (struct disklabel *)bp->b_un.b_addr;
-	    dlp <= (struct disklabel *)(bp->b_un.b_addr+DEV_BSIZE-sizeof(*dlp));
+	} else for (dlp = (struct disklabel *)bp->b_data;
+	    dlp <= (struct disklabel *)(bp->b_data+DEV_BSIZE-sizeof(*dlp));
 	    dlp = (struct disklabel *)((char *)dlp + sizeof(long))) {
 		if (dlp->d_magic != DISKMAGIC || dlp->d_magic2 != DISKMAGIC) {
 			if (msg == NULL)
@@ -151,8 +151,8 @@ compat_label(dev, strat, lp, osdep)
 		goto done;
 	}
 
-	for (dlp = (dec_disklabel *)bp->b_un.b_addr;
-	     dlp <= (dec_disklabel *)(bp->b_un.b_addr+DEV_BSIZE-sizeof(*dlp));
+	for (dlp = (dec_disklabel *)bp->b_data;
+	     dlp <= (dec_disklabel *)(bp->b_data+DEV_BSIZE-sizeof(*dlp));
 	     dlp = (dec_disklabel *)((char *)dlp + sizeof(long))) {
 
 		int part;
@@ -275,9 +275,9 @@ writedisklabel(dev, strat, lp, osdep)
 	(*strat)(bp);
 	if ((error = biowait(bp)) != 0)
 		goto done;
-	for (dlp = (struct disklabel *)bp->b_un.b_addr;
+	for (dlp = (struct disklabel *)bp->b_data;
 	    dlp <= (struct disklabel *)
-	      (bp->b_un.b_addr + lp->d_secsize - sizeof(*dlp));
+	      (bp->b_data + lp->d_secsize - sizeof(*dlp));
 	    dlp = (struct disklabel *)((char *)dlp + sizeof(long))) {
 		if (dlp->d_magic == DISKMAGIC && dlp->d_magic2 == DISKMAGIC &&
 		    dkcksum(dlp) == 0) {

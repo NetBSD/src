@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.40 2000/02/10 23:02:16 thorpej Exp $	*/
+/*	$NetBSD: sd.c,v 1.41 2000/05/19 18:54:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -349,7 +349,7 @@ sdgetcapacity(sc, dev)
 		bcopy(&cap, &sc->sc_cmdstore, sizeof cap);
 		bp->b_dev = dev;
 		bp->b_flags = B_READ | B_BUSY;
-		bp->b_un.b_addr = (caddr_t)capbuf;
+		bp->b_data = (caddr_t)capbuf;
 		bp->b_bcount = capbufsize;
 		sdstrategy(bp);
 		i = biowait(bp) ? sc->sc_sensestore.status : 0;
@@ -627,7 +627,7 @@ sdlblkstrat(bp, bsize)
 	cbp->b_dev = bp->b_dev;
 	bn = bp->b_blkno;
 	resid = bp->b_bcount;
-	addr = bp->b_un.b_addr;
+	addr = bp->b_data;
 #ifdef DEBUG
 	if (sddebug & SDB_PARTIAL)
 		printf("sdlblkstrat: bp %p flags %lx bn %x resid %x addr %p\n",
@@ -643,7 +643,7 @@ sdlblkstrat(bp, bsize)
 			count = min(resid, bsize - boff);
 			cbp->b_flags = B_BUSY | B_PHYS | B_READ;
 			cbp->b_blkno = bn - btodb(boff);
-			cbp->b_un.b_addr = cbuf;
+			cbp->b_data = cbuf;
 			cbp->b_bcount = bsize;
 #ifdef DEBUG
 			if (sddebug & SDB_PARTIAL)
@@ -670,7 +670,7 @@ sdlblkstrat(bp, bsize)
 		} else {
 			count = resid & ~(bsize - 1);
 			cbp->b_blkno = bn;
-			cbp->b_un.b_addr = addr;
+			cbp->b_data = addr;
 			cbp->b_bcount = count;
 #ifdef DEBUG
 			if (sddebug & SDB_PARTIAL)
@@ -894,7 +894,7 @@ sdstart(arg)
 		while (1) {
 			sts = scsi_immed_command(sc->sc_dev.dv_parent->dv_unit,
 			    sc->sc_target, sc->sc_lun, &sc->sc_cmdstore,
-			    bp->b_un.b_addr, bp->b_bcount,
+			    bp->b_data, bp->b_bcount,
 			    bp->b_flags & B_READ);
 			sc->sc_sensestore.status = sts;
 			if ((sts & 0xfe) == 0 ||
@@ -961,7 +961,7 @@ sdgo(arg)
 		printf("%s: sdstart: %s adr %p blk %ld len %ld ecnt %d\n",
 		       sc->sc_dev.dv_xname,
 		       bp->b_flags & B_READ? "read" : "write",
-		       bp->b_un.b_addr, bp->b_rawblkno, bp->b_bcount,
+		       bp->b_data, bp->b_rawblkno, bp->b_bcount,
 		       sc->sc_errcnt);
 #endif
 	bp->b_flags |= B_ERROR;

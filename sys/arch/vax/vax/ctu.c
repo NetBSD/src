@@ -1,4 +1,4 @@
-/*	$NetBSD: ctu.c,v 1.10 2000/03/23 06:46:44 thorpej Exp $ */
+/*	$NetBSD: ctu.c,v 1.11 2000/05/19 18:54:32 thorpej Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -175,7 +175,7 @@ ctustrategy(bp)
 
 #ifdef TUDEBUG
 	printf("addr %x, block %x, nblock %x, read %x\n",
-		bp->b_un.b_addr, bp->b_blkno, bp->b_bcount,
+		bp->b_data, bp->b_blkno, bp->b_bcount,
 		bp->b_flags & B_READ);
 #endif
 
@@ -198,7 +198,7 @@ ctustart(bp)
 	struct rsp *rsp = (struct rsp *)tu_sc.sc_rsp;
 
 
-	tu_sc.sc_xfptr = tu_sc.sc_blk = bp->b_un.b_addr;
+	tu_sc.sc_xfptr = tu_sc.sc_blk = bp->b_data;
 	tu_sc.sc_tpblk = bp->b_blkno;
 	tu_sc.sc_nbytes = bp->b_bcount;
 	tu_sc.sc_xbytes = tu_sc.sc_bbytes = 0;

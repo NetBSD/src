@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.41 2000/03/23 06:37:24 thorpej Exp $	*/
+/*	$NetBSD: rd.c,v 1.42 2000/05/19 18:54:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -738,7 +738,7 @@ rdustart(rs)
 	struct buf *bp;
 
 	bp = BUFQ_FIRST(&rs->sc_tab);
-	rs->sc_addr = bp->b_un.b_addr;
+	rs->sc_addr = bp->b_data;
 	rs->sc_resid = bp->b_bcount;
 	if (hpibreq(rs->sc_dev.dv_parent, &rs->sc_hq))
 		rdstart(rs);
@@ -837,7 +837,7 @@ again:
 	bp->b_error = EIO;
 	bp = rdfinish(rs, bp);
 	if (bp) {
-		rs->sc_addr = bp->b_un.b_addr;
+		rs->sc_addr = bp->b_data;
 		rs->sc_resid = bp->b_bcount;
 		if (hpibreq(rs->sc_dev.dv_parent, &rs->sc_hq))
 			goto again;

@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.34 2000/05/16 05:45:47 thorpej Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.35 2000/05/19 18:54:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -447,14 +447,14 @@ readdisklabel(dev, strat, lp, osdep)
 	} else {
 		u_int16_t *sbSigp;
 
-		sbSigp = (u_int16_t *)bp->b_un.b_addr;
+		sbSigp = (u_int16_t *)bp->b_data;
 		if (*sbSigp == 0x4552) {
 			msg = read_mac_label(dev, strat, lp, osdep);
 		} else if (bswap16(*(u_int16_t *)(bp->b_data + MBR_MAGICOFF))
 			   == MBR_MAGIC) {
 			msg = read_dos_label(dev, strat, lp, osdep);
 		} else {
-			dlp = (struct disklabel *)(bp->b_un.b_addr + 0);
+			dlp = (struct disklabel *)(bp->b_data + 0);
 			if (dlp->d_magic == DISKMAGIC) {
 				*lp = *dlp;
 			} else {
@@ -544,9 +544,9 @@ writedisklabel(dev, strat, lp, osdep)
 	(*strat)(bp);
 	if (error = biowait(bp))
 		goto done;
-	for (dlp = (struct disklabel *)bp->b_un.b_addr;
+	for (dlp = (struct disklabel *)bp->b_data;
 	    dlp <= (struct disklabel *)
-	    (bp->b_un.b_addr + lp->d_secsize - sizeof(*dlp));
+	    (bp->b_data + lp->d_secsize - sizeof(*dlp));
 	    dlp = (struct disklabel *)((char *)dlp + sizeof(long))) {
 		if (dlp->d_magic == DISKMAGIC && dlp->d_magic2 == DISKMAGIC &&
 		    dkcksum(dlp) == 0) {
