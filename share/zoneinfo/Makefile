@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.24 2001/11/24 21:37:23 perry Exp $
+#	$NetBSD: Makefile,v 1.25 2001/11/26 15:24:20 perry Exp $
 
 .include <bsd.own.mk>
 
@@ -56,22 +56,20 @@ ZIC=zic
 posix_only: ${TDATA}
 	${ZIC} -y ${YEARISTYPE} -d ${TZDIR} -L /dev/null ${TDATA}
 
-## XXX Is any of this needed, or is it just baggage that we never use?
-## XXX Commented out for now, pending an answer.
-#.PHONY:	right_only
-#right_only: leapseconds ${TDATA}
-#	${ZIC} -y ${YEARISTYPE} -d ${TZDIR} -L leapseconds ${TDATA}
-#
-#.PHONY:	other_two
-#other_two: leapseconds ${TDATA}
-#	${ZIC} -y ${YEARISTYPE} -d ${TZDIR}/posix -L /dev/null ${TDATA}
-#	${ZIC} -y ${YEARISTYPE} -d ${TZDIR}/right -L leapseconds ${TDATA}
-#
-#.PHONY:	posix_right
-#posix_right: posix_only other_two
-#
-#.PHONY:	right_posix
-#right_posix: right_only other_two
+.PHONY:	right_only
+right_only: leapseconds ${TDATA}
+	${ZIC} -y ${YEARISTYPE} -d ${TZDIR} -L leapseconds ${TDATA}
+
+.PHONY:	other_two
+other_two: leapseconds ${TDATA}
+	${ZIC} -y ${YEARISTYPE} -d ${TZDIR}/posix -L /dev/null ${TDATA}
+	${ZIC} -y ${YEARISTYPE} -d ${TZDIR}/right -L leapseconds ${TDATA}
+
+.PHONY:	posix_right
+posix_right: posix_only other_two
+
+.PHONY:	right_posix
+right_posix: right_only other_two
 
 .if ${MKSHARE} != "no"
 afterinstall: ${DATA} ${REDO}
