@@ -1,4 +1,4 @@
-.\" $NetBSD: wscons.4,v 1.1 1998/07/26 17:50:13 augustss Exp $
+.\" $NetBSD: wscons.4,v 1.2 1999/01/30 18:01:24 drochner Exp $
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
@@ -49,14 +49,18 @@
 
 .Cd "pckbc0     at isa?"
 .Cd "pckbd*     at pckbc?"
-.Cd "psm*       at pckbc?"
+.Cd "pms*       at pckbc?"
 .Cd "vga0       at isa?"
 .Cd "vga*       at pci?"
 .Cd "pcdisplay0 at isa?"
 .Cd "wsdisplay* at vga? console ?"
 .Cd "wsdisplay* at pcdisplay? console ?"
+.Cd "lms0       at isa? port 0x23c irq 5"
+.Cd "mms0       at isa? port 0x23c irq 5"
 .Cd "wskbd*     at pckbd? console ?"
-.Cd "wsmouse*   at psm?"
+.Cd "wsmouse*   at pms?"
+.Cd "wsmouse*   at lms?"
+.Cd "wsmouse*   at mms?"
 .Pp
 .Sh DESCRIPTION
 The
