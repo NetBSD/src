@@ -1,4 +1,4 @@
-/*	$NetBSD: pm_direct.c,v 1.8 1999/03/05 06:45:41 scottr Exp $	*/
+/*	$NetBSD: pm_direct.c,v 1.9 1999/06/28 01:56:56 briggs Exp $	*/
 
 /*
  * Copyright (C) 1997 Takashi Hamada
@@ -173,13 +173,13 @@ int	pm_wait_free __P((int));
 int	pm_receive_pm1 __P((u_char *));
 int	pm_send_pm1 __P((u_char,int));
 int	pm_pmgrop_pm1 __P((PMData *));
-void	pm_intr_pm1 __P((void));
+void	pm_intr_pm1 __P((void *));
 
 /* these functions are for the PB Duo series and the PB 5XX series */
 int	pm_receive_pm2 __P((u_char *));
 int	pm_send_pm2 __P((u_char));
 int	pm_pmgrop_pm2 __P((PMData *));
-void	pm_intr_pm2 __P((void));
+void	pm_intr_pm2 __P((void *));
 
 /* this function is MRG-Based (for testing) */
 int	pm_pmgrop_mrg __P((PMData *));
@@ -187,8 +187,9 @@ int	pm_pmgrop_mrg __P((PMData *));
 /* these functions are called from adb_direct.c */
 void	pm_setup_adb __P((void));
 void	pm_check_adb_devices __P((int));
-void	pm_intr __P((void));
+void	pm_intr __P((void *));
 int	pm_adb_op __P((u_char *, void *, void *, int));
+void	pm_hw_setup __P((void));
 
 /* these functions also use the variables of adb_direct.c */
 void	pm_adb_get_TALK_result __P((PMData *));
@@ -558,7 +559,8 @@ pm_pmgrop_pm1(pmdata)
  * My PM interrupt routine for PB1XX series
  */
 void
-pm_intr_pm1()
+pm_intr_pm1(arg)
+	void *arg;
 {
 	int s;
 	int rval;
@@ -827,7 +829,8 @@ pm_pmgrop_pm2(pmdata)
  * My PM interrupt routine for the PB Duo series and the PB 5XX series
  */
 void
-pm_intr_pm2()
+pm_intr_pm2(arg)
+	void *arg;
 {
 	int s;
 	int rval;
@@ -952,20 +955,38 @@ pmgrop(pmdata)
  * My PM interrupt routine
  */
 void
-pm_intr()
+pm_intr(arg)
+	void *arg;
 {
 	switch (pmHardware) {
 		case PM_HW_PB1XX:
-			pm_intr_pm1();
+			pm_intr_pm1(arg);
 			break;
 		case PM_HW_PB5XX:
-			pm_intr_pm2();
+			pm_intr_pm2(arg);
 			break;
 		default:
 			break;
 	}
 }
 
+
+void
+pm_hw_setup()
+{
+	switch (pmHardware) {
+		case PM_HW_PB1XX:
+			via1_register_irq(4, pm_intr_pm1, (void *)0);
+			PM_VIA_CLR_INTR();
+			break;
+		case PM_HW_PB5XX:
+			via1_register_irq(4, pm_intr_pm2, (void *)0);
+			PM_VIA_CLR_INTR();
+			break;
+		default:
+			break;
+	}
+}
 
 
 /*
@@ -1019,7 +1040,7 @@ pm_adb_op(buffer, compRout, data, command)
 		pmdata.data[2] = 0;
 
 	if ((command & 0xc) != 0xc) {		/* if the command is not TALK */
-		/* set up stuff for adb_pass_up */
+		/* set up stuff fNULLor adb_pass_up */
 		packet.data[0] = 1 + pmdata.data[2];
 		packet.data[1] = command;
 		for (i = 0; i < pmdata.data[2]; i++)
@@ -1048,7 +1069,7 @@ pm_adb_op(buffer, compRout, data, command)
 	delay = 0x80000;
 	while (adbWaiting == 1) {
 		if ((via_reg(VIA1, vIFR) & 0x10) == 0x10)
-			pm_intr();
+			pm_intr((void *)0);
 #ifdef PM_GRAB_SI
 #if 0
 			zshard(0);		/* grab any serial interrupts */

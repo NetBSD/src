@@ -1,4 +1,4 @@
-#	$NetBSD: files.mac68k,v 1.90 1999/06/07 20:31:31 thorpej Exp $
+#	$NetBSD: files.mac68k,v 1.91 1999/06/28 01:56:55 briggs Exp $
 
 # mac68k-specific configuration info
 
@@ -136,6 +136,7 @@ file	arch/mac68k/mac68k/clock.c
 file	arch/mac68k/mac68k/conf.c
 file	arch/mac68k/mac68k/disksubr.c		disk
 file	arch/mac68k/mac68k/intr.c
+file	arch/mac68k/mac68k/iop.c
 file	arch/mac68k/mac68k/kgdb_machdep.c	kgdb
 file	arch/mac68k/mac68k/machdep.c
 file	arch/mac68k/mac68k/macrom.c

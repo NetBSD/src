@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.4 1999/03/24 05:51:03 mrg Exp $	*/
+/*	$NetBSD: intr.c,v 1.5 1999/06/28 01:56:57 briggs Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -92,8 +92,8 @@ int	intr_debug = 0;
 
 /*
  * Some of the below are not used yet, but might be used someday on the
- * Q700/900/950 where the interrupt controller may be reprogrammed to
- * interrupt on different levels as listed in locore.s
+ * IIfx/Q700/900/950/etc. where the interrupt controller may be reprogrammed
+ * to interrupt on different levels as listed in locore.s
  */
 u_short	mac68k_ttyipl;
 u_short	mac68k_bioipl;
@@ -108,23 +108,59 @@ extern	int intrcnt[];		/* from locore.s */
 
 void	intr_computeipl __P((void));
 
+#define MAX_INAME_LENGTH 53
+#define STD_INAMES \
+	"spur\0via1\0via2\0unused1\0scc\0unused2\0unused3\0nmi\0clock\0"
+#define AUX_INAMES \
+	"spur\0soft\0via2\0ethernet\0scc\0sound\0via1\0nmi\0clock\0    "
+#define AV_INAMES \
+	"spur\0via1\0via2\0ethernet\0scc\0dsp\0unused1\0nmi\0clock\0   "
+
 void
 intr_init()
 {
-	/* Standard spl(9) interrupt priorities */
-	mac68k_ttyipl = (PSL_S | PSL_IPL1);
-	mac68k_bioipl = (PSL_S | PSL_IPL2);
-	mac68k_netipl = (PSL_S | PSL_IPL2);
-	mac68k_impipl = (PSL_S | PSL_IPL2);
-	mac68k_statclockipl = (PSL_S | PSL_IPL2);
-	mac68k_clockipl = (PSL_S | PSL_IPL2);
-	mac68k_schedipl = (PSL_S | PSL_IPL3);
+	extern long	intrnames;
+	char		*inames, *g_inames;
 
-	/* Non-standard interrupt priority */
-	mac68k_audioipl = (PSL_S | PSL_IPL2);
+	g_inames = (char *) &intrnames;
+	if (mac68k_machine.aux_interrupts) {
 
-	if (current_mac_model->class == MACH_CLASSAV)
-		mac68k_bioipl = mac68k_netipl = (PSL_S | PSL_IPL4);
+		inames = AUX_INAMES;
+
+		/* Standard spl(9) interrupt priorities */
+		mac68k_ttyipl = (PSL_S | PSL_IPL1);
+		mac68k_bioipl = (PSL_S | PSL_IPL2);
+		mac68k_netipl = (PSL_S | PSL_IPL3);
+		mac68k_impipl = (PSL_S | PSL_IPL6);
+		mac68k_statclockipl = (PSL_S | PSL_IPL6);
+		mac68k_clockipl = (PSL_S | PSL_IPL6);
+		mac68k_schedipl = (PSL_S | PSL_IPL4);
+
+		/* Non-standard interrupt priority */
+		mac68k_audioipl = (PSL_S | PSL_IPL5);
+
+	} else {
+		inames = STD_INAMES;
+
+		/* Standard spl(9) interrupt priorities */
+		mac68k_ttyipl = (PSL_S | PSL_IPL1);
+		mac68k_bioipl = (PSL_S | PSL_IPL2);
+		mac68k_netipl = (PSL_S | PSL_IPL2);
+		mac68k_impipl = (PSL_S | PSL_IPL2);
+		mac68k_statclockipl = (PSL_S | PSL_IPL2);
+		mac68k_clockipl = (PSL_S | PSL_IPL2);
+		mac68k_schedipl = (PSL_S | PSL_IPL3);
+
+		/* Non-standard interrupt priority */
+		mac68k_audioipl = (PSL_S | PSL_IPL2);
+
+		if (current_mac_model->class == MACH_CLASSAV) {
+			inames = AV_INAMES;
+			mac68k_bioipl = mac68k_netipl = (PSL_S | PSL_IPL4);
+		}
+	}
+
+	memcpy(g_inames, inames, MAX_INAME_LENGTH);
 
 	intr_computeipl();
 }

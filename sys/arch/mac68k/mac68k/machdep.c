@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.236 1999/06/26 18:29:28 briggs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.237 1999/06/28 01:56:57 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -129,6 +129,7 @@
 
 #include <dev/cons.h>
 
+#include <machine/iopreg.h>
 #include <machine/psc.h>
 #include <machine/viareg.h>
 #include <mac68k/mac68k/macrom.h>
@@ -265,6 +266,9 @@ mac68k_init()
 
 	/* Initialize the VIAs */
 	via_init();
+
+	/* Initialize the IOPs (if present) */
+	iop_init(1);
 
 	/* Initialize the PSC (if present) */
 	psc_init();
@@ -2076,6 +2080,10 @@ setmachdep()
 	cpui = &(cpu_models[mac68k_machine.cpu_model_index]);
 	current_mac_model = cpui;
 
+	mac68k_machine.via1_ipl = 1;
+	mac68k_machine.via2_ipl = 2;
+	mac68k_machine.aux_interrupts = 0;
+
 	/*
 	 * Set up any machine specific stuff that we have to before
 	 * ANYTHING else happens
@@ -2122,7 +2130,33 @@ setmachdep()
 		break;
 	case MACH_CLASSQ:
 	case MACH_CLASSQ2:
+		VIA2 = 1;
+		IOBase = 0x50f00000;
+		Via1Base = (volatile u_char *)IOBase;
 		mac68k_machine.sonic = 1;
+		mac68k_machine.scsi96 = 1;
+		mac68k_machine.zs_chip = 0;
+		via_reg(VIA1, vIER) = 0x7f;	/* disable VIA1 int */
+		via_reg(VIA2, vIER) = 0x7f;	/* disable VIA2 int */
+
+#if 1
+		switch (current_mac_model->machineid) {
+		default:
+	/*	case MACH_MACQ900: These three, at least, support the
+		case MACH_MACQ950: A/UX interrupts.  What Quadras don't?
+		case MACH_MACQ700: */
+			/* Enable A/UX interrupt scheme */
+			mac68k_machine.aux_interrupts = 1;
+
+			via_reg(VIA1, vBufB) &= (0xff ^ DB1O_AuxIntEnb);
+			via_reg(VIA1, vDirB) |= DB1O_AuxIntEnb;
+			mac68k_machine.via1_ipl = 6;
+			mac68k_machine.via2_ipl = 2;
+			break;
+		}
+#endif
+
+		break;
 	case MACH_CLASSAV:
 	case MACH_CLASSP580:
 		VIA2 = 1;
@@ -2214,6 +2248,7 @@ mac68k_set_io_offsets(base)
 		case MACH_MACQ950:
 			mac68k_machine.scsi96_2 = 1;
 			sccA = (volatile u_char *)base + 0xc020;
+			iop_init(0);	/* For console */
 			break;
 		case MACH_MACQ700:
 			break;
@@ -2267,6 +2302,7 @@ mac68k_set_io_offsets(base)
 		Via1Base = (volatile u_char *)base;
 		sccA = (volatile u_char *)base + 0x4020;
 		SCSIBase = base;
+		iop_init(0);	/* For console */
 		break;
 	default:
 	case MACH_CLASSH:
