@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.113 1999/03/25 03:28:17 explorer Exp $
+$NetBSD: pcidevs,v 1.113.2.1 1999/04/13 22:52:42 jonathan Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -970,6 +970,8 @@ product OPTI 82C558	0xc558	82C558
 product OPTI 82C621	0xc621	82C621
 product OPTI 82C822	0xc822	82C822
 product OPTI RM861HA	0xc861	RM861HA
+product OPTI 82C700	0xc700	82C700
+product OPTI 82C701	0xc701	82C701
 
 /* PC Tech products */
 product PCTECH RZ1000	0x1000	RZ1000
@@ -996,6 +998,14 @@ product QUANTUMDESIGNS 8580	0x0002	8580
 product	REALTEK	RT8029	0x8029	8029 Ethernet
 product REALTEK	RT8129	0x8129	8129 10/100 Ethernet
 product REALTEK RT8139	0x8139	8139 10/100 Ethernet
+
+/* RICOH products */
+product RICOH RF5C465	0x0465 5C465 PCI-CardBus bridge
+product RICOH RF5C466	0x0466 5C466 PCI-CardBus bridge
+product RICOH RF5C475	0x0475 5C475 PCI-CardBus bridge
+product RICOH RF5C476	0x0476 5C476 PCI-CardBus bridge
+product RICOH RF5C477	0x0477 5C477 PCI-CardBus bridge
+product RICOH RF5C478	0x0478 5C478 PCI-CardBus bridge
 
 /* RISCom (SDL Communications, Inc?) products */
 product RISCOM N2	0x5568	N2
@@ -1072,14 +1082,23 @@ product TEKRAM2	DC690C		0x690c	DC-690C
 
 /* Texas Instruments products */
 product	TI	TLAN		0x0500	TLAN
-product TI	PCI1130		0xac12	PCI1130
-product TI	PCI1131		0xac15	PCI1131
-product TI	PCI1250		0xac16	PCI1250
-product TI	PCI2030		0xac20	PCI2030
+product TI	PCI1130		0xac12	PCI1130 PCI-CardBus Bridge
+product TI	PCI1031		0xac13	PCI1031 PCI-pcmcia Bridge
+product TI	PCI1131		0xac15	PCI1131 PCI-CardBus Bridge
+product TI	PCI1250		0xac16	PCI1250 PCI-CardBus Bridge
+product TI	PCI1220		0xac17	PCI1220 PCI-CardBus Bridge
+product TI	PCI1221		0xac19	PCI1221 PCI-CardBus Bridge
+product TI	PCI1225		0xac1C	PCI1225 PCI-CardBus Bridge
+product TI	PCI2030		0xac20	PCI2030 PCI-CardBus Bridge
   
 /* Toshiba products */
 product TOSHIBA R4X00		0x0009	R4x00 Host-PCI Bridge
 product TOSHIBA TC35856F	0x0020	TC35856F ATM (\"Meteor\")
+
+/* Toshiba2 products */
+product TOSHIBA2 ToPIC95	0x0603	ToPIC95 CardBus-PCI Bridge
+product TOSHIBA2 ToPIC95B	0x060a	ToPIC95B CardBus-PCI Bridge
+product TOSHIBA2 ToPIC97	0x060f	ToPIC97 CardBus-PCI Bridge
 
 /* Trident products */
 product TRIDENT	TGUI_9320	0x9320	TGUI 9320
