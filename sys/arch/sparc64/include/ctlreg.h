@@ -1,4 +1,4 @@
-/*	$NetBSD: ctlreg.h,v 1.35 2004/07/01 14:57:46 heas Exp $ */
+/*	$NetBSD: ctlreg.h,v 1.36 2004/07/01 22:59:16 petrov Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -189,8 +189,23 @@
  */
 
 /* Get the CPU's UPAID */
-#define	UPA_CR_MID(x)	(((x)>>17)&0x1f)	
+#define	UPA_CR_MID_SHIFT	(17)
+#define	UPA_CR_MID_SIZE		(5)
+#define	UPA_CR_MID_MASK \
+	(((1 << UPA_CR_MID_SIZE) - 1) << UPA_CR_MID_SHIFT)
+
+#define	UPA_CR_MID(x)	(((x)>>UPA_CR_MID_SHIFT)&((1 << UPA_CR_MID_SIZE) - 1))	
+
+#ifdef _LOCORE
+
+#define	UPA_GET_MID(r1) \
+	ldxa	[%g0] ASI_MID_REG, r1 ; \
+	srlx	r1, UPA_CR_MID_SHIFT, r1 ; \
+	and	r1, (1 << UPA_CR_MID_SIZE) - 1, r1
+
+#else
 #define	CPU_UPAID	UPA_CR_MID(ldxa(0, ASI_MID_REG))
+#endif
 
 /*
  * [4u] MMU and Cache Control Register (MCCR)
@@ -460,9 +475,8 @@ lduba(paddr_t loc, int asi)
 	register unsigned int _lduba_v;
 
 	__asm __volatile(
-		"wr %2,%%g0,%%asi;   "
-		"lduba [%1]%%asi,%0; "
-		"wr %%g0, 0x82, %%asi"
+		"wr %2, %%g0, %%asi;	"
+		"lduba [%1]%%asi, %0	"
 		: "=r" (_lduba_v) 
 		: "r" ((unsigned long)(loc)), "r" (asi));
 	return (_lduba_v);
@@ -510,9 +524,8 @@ lduha(paddr_t loc, int asi)
 	register unsigned int _lduha_v;
 
 	__asm __volatile(
-		"wr %2,%%g0,%%asi;	"
-		"lduha [%1]%%asi,%0;	"
-		"wr %%g0, 0x82, %%asi	"
+		"wr %2, %%g0, %%asi;	"
+		"lduha [%1]%%asi, %0	"
 		: "=r" (_lduha_v)
 		: "r" ((unsigned long)(loc)), "r" (asi));
 	return (_lduha_v);
@@ -578,7 +591,6 @@ ldswa(paddr_t loc, int asi)
 	__asm __volatile(
 		"wr %2,%%g0,%%asi;	"
 		"ldswa [%1]%%asi,%0;	"
-		"wr %%g0, 0x82, %%asi	"
 		: "=r" (_lda_v)
 		: "r" ((unsigned long)(loc)), "r" (asi));
 	return (_lda_v);
@@ -662,8 +674,7 @@ ldda(paddr_t loc, int asi)
 
 	__asm __volatile(
 		"wr %2,%%g0,%%asi;	"
-		"ldda [%1]%%asi,%0;	"
-		"wr %%g0, 0x82, %%asi	"
+		"ldda [%1]%%asi,%0	"
 		: "=r" (_lda_v)
 		: "r" ((unsigned long)(loc)), "r" (asi));
 	return (_lda_v);
@@ -714,8 +725,7 @@ ldxa(paddr_t loc, int asi)
 
 	__asm __volatile(
 		"wr %2,%%g0,%%asi;	"
-		"ldxa [%1]%%asi,%0;	"
-		"wr %%g0, 0x82, %%asi	"
+		"ldxa [%1]%%asi,%0	"
 		: "=r" (_lda_v)
 		: "r" ((unsigned long)(loc)), "r" (asi));
 	return (_lda_v);
@@ -767,8 +777,7 @@ stba(paddr_t loc, int asi, u_char value)
 {
 	__asm __volatile(
 		"wr %2, %%g0, %%asi;	"
-		"stba %0, [%1]%%asi;	"
-		"wr %%g0, 0x82, %%asi	"
+		"stba %0, [%1]%%asi	"
 		: : "r" ((int)(value)), "r" ((unsigned long)(loc)), "r" (asi));
 }
 #else
@@ -811,8 +820,7 @@ stha(paddr_t loc, int asi, u_short value)
 {
 	__asm __volatile(
 		"wr %2,%%g0,%%asi;	"
-		"stha %0,[%1]%%asi;	"
-		"wr %%g0, 0x82, %%asi	"
+		"stha %0,[%1]%%asi	"
 		: : "r" ((int)(value)), "r" ((unsigned long)(loc)),
 		"r" (asi) : "memory");
 }
@@ -859,8 +867,7 @@ sta(paddr_t loc, int asi, u_int value)
 {
 	__asm __volatile(
 		"wr %2,%%g0,%%asi;	"
-		"sta %0,[%1]%%asi;	"
-		"wr %%g0, 0x82, %%asi	"
+		"sta %0,[%1]%%asi	"
 		: : "r" ((int)(value)), "r" ((unsigned long)(loc)),
 		"r" (asi) : "memory");
 }
@@ -906,8 +913,7 @@ stda(paddr_t loc, int asi, u_int64_t value)
 {
 	__asm __volatile(
 		"wr %2,%%g0,%%asi;	"
-		"stda %0,[%1]%%asi;	"
-		"wr %%g0, 0x82, %%asi	"
+		"stda %0,[%1]%%asi	"
 		: : "r" ((long long)(value)), "r" ((unsigned long)(loc)), "r" (asi)
 		: "memory");
 }
@@ -955,8 +961,7 @@ stxa(paddr_t loc, int asi, u_int64_t value)
 {
 	__asm __volatile(
 		"wr %2,%%g0,%%asi;	"
-		"stxa %0,[%1]%%asi;	"
-		"wr %%g0, 0x82, %%asi	"
+		"stxa %0,[%1]%%asi	"
 		: : "r" ((unsigned long)(value)),
 		"r" ((unsigned long)(loc)), "r" (asi)
 		: "memory");
@@ -1006,22 +1011,33 @@ stxa(paddr_t loc, int asi, u_int64_t value)
 }
 #endif
 
-#if 0
 #ifdef __arch64__
+/* native store 32-bit int to alternate address space w/64-bit compiler*/
+static __inline__ u_int32_t
+casa(paddr_t loc, int asi, u_int32_t value, u_int32_t oldvalue)
+{
+	__asm __volatile(
+		"wr %3,%%g0,%%asi;	"
+		"casa [%1]%%asi,%2,%0	"
+		: "+r" (value)
+		: "r" ((unsigned long)(loc)), "r" (oldvalue), "r" (asi)
+		: "memory");
+	return (value);
+}
 /* native store 64-bit int to alternate address space w/64-bit compiler*/
 static __inline__ u_int64_t
 casxa(paddr_t loc, int asi, u_int64_t value, u_int64_t oldvalue)
 {
 	__asm __volatile(
 		"wr %3,%%g0,%%asi;	"
-		"casxa [%1]%%asi,%2,%0;	"
-		"wr %%g0, 0x82, %%asi	"
+		"casxa [%1]%%asi,%2,%0	"
 		: "+r" (value)
 		: "r" ((unsigned long)(loc)), "r" (oldvalue), "r" (asi)
 		: "memory");
 	return (value);
 }
 #else
+#if 0
 /* native store 64-bit int to alternate address space w/32-bit compiler*/
 static __inline__ u_int64_t
 casxa(paddr_t loc, int asi, u_int64_t value, u_int64_t oldvalue)
@@ -1082,7 +1098,7 @@ casxa(paddr_t loc, int asi, u_int64_t value, u_int64_t oldvalue)
 	return (((u_int64_t)_casxa_hi<<32)|(u_int64_t)_casxa_lo);
 }
 #endif
-#endif /* 0 */
+#endif
 
 /* flush address from data cache */
 #define	flush(loc) ({ \
@@ -1127,6 +1143,9 @@ casxa(paddr_t loc, int asi, u_int64_t value, u_int64_t oldvalue)
 #define	membar_memissue() __asm __volatile("membar #MemIssue" : :)
 /* Complete all outstanding stores before any new loads */
 #define	membar_lookaside() __asm __volatile("membar #Lookaside" : :)
+
+#define membar_load() __asm __volatile("membar #LoadLoad | #LoadStore" : :)
+#define membar_store() __asm __volatile("membar #LoadStore | #StoreStore" : :)
 
 #ifdef __arch64__
 /* read 64-bit %tick register */
