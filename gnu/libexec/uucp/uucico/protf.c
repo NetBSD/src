@@ -26,7 +26,7 @@
 #include "uucp.h"
 
 #if USE_RCS_ID
-const char protf_rcsid[] = "$Id: protf.c,v 1.3 1995/08/24 05:22:52 jtc Exp $";
+const char protf_rcsid[] = "$Id: protf.c,v 1.4 1998/04/17 23:39:29 ross Exp $";
 #endif
 
 #include <ctype.h>
@@ -508,7 +508,7 @@ ffprocess_data (qdaemon, pfexit, pcneed)
 	{
 	  DEBUG_MESSAGE1 (DEBUG_PROTO,
 			  "ffprocess_data: Got %d bytes",
-			  zto - zstart);
+			  (int)(zto - zstart));
 
 	  cFrec_data += zto - zstart;
 	  if (! fgot_data (qdaemon, zstart, (size_t) (zto - zstart),

@@ -181,7 +181,7 @@
 #include "uucp.h"
 
 #if USE_RCS_ID
-const char protz_rcsid[] = "$Id: protz.c,v 1.3 1995/08/24 05:23:01 jtc Exp $";
+const char protz_rcsid[] = "$Id: protz.c,v 1.4 1998/04/17 23:39:29 ross Exp $";
 #endif
 
 #include <errno.h>
@@ -743,7 +743,7 @@ int ilocal;
 int iremote;
 long ipos;
 {
-	DEBUG_MESSAGE1 (DEBUG_PROTO, "fzsenddata: %d bytes", cdata);
+	DEBUG_MESSAGE1 (DEBUG_PROTO, "fzsenddata: %ld bytes", (long)cdata);
 
 	if (! fzsend_data (qdaemon, zdata, cdata, cdata == 0))
 		return FALSE;
@@ -819,8 +819,8 @@ boolean fendofmessage;
 		default : type = "UNKNOWN!!!"; break;
 		}
 		DEBUG_MESSAGE3 (DEBUG_PROTO,
-				"fzsend_data: %s, pos 0x%lx, %d bytes",
-				type, wpZtxpos, n);
+				"fzsend_data: %s, pos 0x%lx, %ld bytes",
+				type, wpZtxpos, (long)n);
 	}
 #endif
 
