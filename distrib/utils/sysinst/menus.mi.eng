@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi.eng,v 1.7 1997/10/20 06:13:32 phil Exp $	*/
+/*	$NetBSD: menus.mi.eng,v 1.8 1997/10/22 15:28:53 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -64,17 +64,13 @@ menu netbsd, title "  NetBSD-@@VERSION@@ Install System";
 	option "Upgrade NetBSD on a hard disk",
 		action { do_upgrade(); };
 	option "Run /bin/sh",
-		action (endwin) { system("/bin/sh"); puts(CL); 
-};
+		action (endwin) { system("/bin/sh"); puts(CL); };
+	option "Configure network",
+		action { config_network(); };
 	option "Reboot the computer", exit,
 		action (endwin) { run_prog("/sbin/reboot"); };
 	option "Halt the system", exit,
 		action (endwin) { run_prog("/sbin/halt"); };
-
-menu upgrade, title "  Upgrade NetBSD";
-	display action { msg_display(MSG_upgr); };
-	option "Not completed, exit", exit;
-	exit action { msg_clear(); };
 
 menu yesno, title "  yes or no?  ";
 	option "Yes", exit, action  {yesno = 1;};
