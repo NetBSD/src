@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.392 2002/01/21 18:55:28 eeh Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.393 2002/01/21 21:45:46 ichiro Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.389 2002/01/21 18:51:44 eeh Exp 
+ *	NetBSD: pcidevs,v 1.390 2002/01/21 21:43:55 ichiro Exp 
  */
 
 /*
@@ -2467,7 +2467,7 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_EUMITCOM, PCI_PRODUCT_EUMITCOM_WL11000P,
 	    0,
 	    "Eumitcom",
-	    "WL11000P",
+	    "WL11000P PCI WaveLAN/IEEE 802.11",
 	},
 	{
 	    PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_OZ6729,
@@ -2623,13 +2623,13 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_GLOBALSUN, PCI_PRODUCT_GLOBALSUN_GL24110P,
 	    0,
 	    "Global Sun Tech",
-	    "GL24110P",
+	    "GL24110P PCI IEEE 802.11b",
 	},
 	{
 	    PCI_VENDOR_GLOBALSUN, PCI_PRODUCT_GLOBALSUN_GL24110P02,
 	    0,
 	    "Global Sun Tech",
-	    "GL24110P",
+	    "GL24110P PCI IEEE 802.11b",
 	},
 	{
 	    PCI_VENDOR_GUILLEMOT, PCI_PRODUCT_GUILLEMOT_MAXIRADIO,
@@ -4393,7 +4393,7 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_NETGEAR, PCI_PRODUCT_NETGEAR_MA301,
 	    0,
 	    "Netgear",
-	    "MA301",
+	    "MA301 PCI IEEE 802.11b",
 	},
 	{
 	    PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_NM9835,
