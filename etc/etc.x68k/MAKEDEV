@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.20 1999/01/16 01:40:30 abs Exp $
+#	$NetBSD: MAKEDEV,v 1.21 1999/06/25 15:11:02 minoura Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -345,7 +345,7 @@ grf*)
 	rm -f grf${unit}
 	case $unit in
 	0|1)
-		mknod grf${unit} c 10 ${unit}; chmod 666 grf${unit}
+		mknod grf${unit} c 10 ${unit}; chmod 600 grf${unit}
 		;;
 	*)
 		echo bad unit for grf in: $i
@@ -358,7 +358,7 @@ mouse*)
 	rm -f mouse${unit}
 	case $unit in
 	0|1)
-		mknod mouse${unit} c 15 ${unit}; chmod 666 mouse${unit}
+		mknod mouse${unit} c 15 ${unit}; chmod 600 mouse${unit}
 		if [ $unit = 0 ]
 		then 
 			rm -f mouse; ln -s mouse${unit} mouse
@@ -373,6 +373,7 @@ mouse*)
 kbd)
 	rm -f kbd
 	mknod kbd c 14 0
+	chmod 600 kbd
 	;;
 
 
