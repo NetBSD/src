@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.48 1995/09/16 15:35:05 briggs Exp $	*/
+/*	$NetBSD: locore.s,v 1.49 1995/09/18 13:51:25 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -108,10 +108,11 @@ Ljmp0panic:
  * Trap/interrupt vector routines
  */ 
 
-	.globl	_trap, _nofault, _longjmp
+	.globl	_trap, _nofault, _longjmp, _mac68k_buserr_addr
 _buserr:
 	tstl	_nofault		| device probe?
 	jeq	Lberr			| no, handle as usual
+	movl	sp@(0x10),_mac68k_buserr_addr
 	movl	_nofault,sp@-		| yes,
 	jbsr	_longjmp		|  longjmp(nofault)
 Lberr:
@@ -196,7 +197,7 @@ Lbe10:
 	movl	d1,sp@-			| push fault VA
 	movl	d0,sp@-			| and padded SSW
 	movw	a1@(6),d0		| get frame format/vector offset
-	andw	#0x0FFF,d0		| clear out fram format
+	andw	#0x0FFF,d0		| clear out frame format
 	cmpw	#12,d0			| address error vector?
 	jeq	Lisaerr			| yes, go to it
 	movl	d1,a0			| fault address
@@ -2267,5 +2268,7 @@ _mac68k_vrsrc_cnt:
 	.long	0
 _mac68k_vrsrc_vec:
 	.word	0, 0, 0, 0, 0, 0
+_mac68k_buserr_addr:
+	.long	0
 _locore_dodebugmarks:
 	.long	0
