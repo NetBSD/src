@@ -1,4 +1,9 @@
-# $NetBSD: Makefile,v 1.6 2000/12/30 14:54:41 sommerfeld Exp $
+# $NetBSD: Makefile,v 1.7 2000/12/30 15:25:21 sommerfeld Exp $
+
+NOMAN=
+
+.include <bsd.own.mk>
+
 DIST=		${.CURDIR}/../../crypto/dist
 .PATH: ${DIST}/heimdal/kdc
 
@@ -28,7 +33,5 @@ LDADD=	-lkrb5 \
 	-L${VERS} -lvers \
 	-lroken \
 	-lcrypt
-
-NOMAN=
 
 .include <bsd.prog.mk>
