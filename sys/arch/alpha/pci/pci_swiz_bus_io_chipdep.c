@@ -1,4 +1,4 @@
-/* $NetBSD: pci_swiz_bus_io_chipdep.c,v 1.19 1997/09/02 12:40:23 thorpej Exp $ */
+/* $NetBSD: pci_swiz_bus_io_chipdep.c,v 1.20 1997/09/02 19:39:15 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -166,7 +166,7 @@ static long
 #define	CHIP_IO_EX_STORE_SIZE(v)	(sizeof __C(CHIP, _io_ex_storage))
 #endif
 
-bus_space_tag_t
+void
 __C(CHIP,_bus_io_init)(t, v)
 	bus_space_tag_t t;
 	void *v;
@@ -273,8 +273,6 @@ __C(CHIP,_bus_io_init)(t, v)
 	extent_print(ex);
 #endif
 	CHIP_IO_EXTENT(v) = ex;
-
-	return (t);
 }
 
 int
