@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.32 1994/11/23 06:46:30 gwr Exp $	*/
+/*	$NetBSD: trap.c,v 1.33 1994/11/23 08:18:17 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -225,12 +225,10 @@ trap(type, code, v, frame)
 	switch (type) {
 	default:
 	dopanic:
-		printf("trap type %x, code=%x, v=%x\n", type, code, v);
-#ifdef DDB
-		if (kdb_trap(type, &frame))
-			return;
-#endif
-		regdump(&frame, 128);
+		if (panicstr == NULL) {
+			printf("trap type %x, code=%x, v=%x\n", type, code, v);
+			regdump(&frame, 128);
+		}
 		type &= ~T_USER;
 		if ((u_int)type < trap_types)
 			panic(trap_type[type]);
