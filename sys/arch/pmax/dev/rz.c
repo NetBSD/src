@@ -1,4 +1,4 @@
-/*	$NetBSD: rz.c,v 1.40 1998/11/06 01:59:25 mhitch Exp $	*/
+/*	$NetBSD: rz.c,v 1.41 1998/11/20 06:24:02 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: rz.c,v 1.40 1998/11/06 01:59:25 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rz.c,v 1.41 1998/11/20 06:24:02 mhitch Exp $");
 
 /*
  * SCSI CCS (Command Command Set) disk driver.
@@ -348,6 +348,13 @@ rzready(sc)
 			rzstart(sc->sc_cmd.unit);
 			if (biowait(&sc->sc_buf))
 				return (0);
+			/*
+			 * The RZ25 seems to need a short delay here.  It
+			 * appears to take the test unit ready command OK,
+			 * but then fails with a "not ready" when getting
+			 * thie size.
+			 */
+			DELAY(1000);
 			continue;
 		}
 	again:
