@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0var.h,v 1.1 2002/07/15 16:27:17 ichiro Exp $ */
+/*	$NetBSD: ixp12x0var.h,v 1.2 2002/10/09 00:09:37 thorpej Exp $ */
 /*
  * Copyright (c) 2002
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -107,5 +107,6 @@ void	*ixp12x0_intr_establish(int irq, int ipl, int (*)(void *), void *);
 void	ixp12x0_intr_disestablish(void *);
 void	ixp12x0_pmap_chunk_table(vaddr_t l1pt, struct pmap_ent* m);
 void	ixp12x0_pmap_io_reg(vaddr_t l1pt);
+void	ixp12x0_reset(void);
 
 #endif /* _IXP12X0VAR_H_ */
