@@ -1,4 +1,4 @@
-/*	$NetBSD: eap.c,v 1.16 1998/08/17 21:16:16 augustss Exp $	*/
+/*	$NetBSD: eap.c,v 1.17 1998/08/25 04:56:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -696,11 +696,12 @@ eap_set_params(addr, setmode, usemode, play, rec)
 				p->sw_code = change_sign8;
 			break;
 		case AUDIO_ENCODING_ULINEAR_BE:
-			if (p->precision == 16)
+			if (p->precision == 16) {
 				if (mode == AUMODE_PLAY)
 					p->sw_code = swap_bytes_change_sign16;
 				else
 					p->sw_code = change_sign16_swap_bytes;
+			}
 			break;
 		case AUDIO_ENCODING_ULINEAR_LE:
 			if (p->precision == 16)

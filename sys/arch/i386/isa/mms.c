@@ -1,4 +1,4 @@
-/*	$NetBSD: mms.c,v 1.32 1998/08/15 03:02:39 mycroft Exp $	*/
+/*	$NetBSD: mms.c,v 1.33 1998/08/25 04:59:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -369,11 +369,12 @@ mmspoll(dev, events, p)
 	int revents = 0;
 	int s = spltty();
 
-	if (events & (POLLIN | POLLRDNORM))
+	if (events & (POLLIN | POLLRDNORM)) {
 		if (sc->sc_q.c_cc > 0)
 			revents |= events & (POLLIN | POLLRDNORM);
 		else
 			selrecord(p, &sc->sc_rsel);
+	}
 
 	splx(s);
 	return (revents);
