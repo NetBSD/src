@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.12 1999/12/08 14:23:34 simonb Exp $	*/
+/*	$NetBSD: boot.c,v 1.13 2000/07/11 01:02:44 soren Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -148,7 +148,7 @@ main(argc, argv)
 	name = argv[0];
 	printf("Boot: %s\n", name);
 
-	/* NOTE: devname() can modify name[]. */
+	/* NOTE: devname() can modify bootname[]. */
 	strcpy(bootname, argv[0]);
 	if ((kernel = devname(bootname)) == NULL) {
 		dev = bootname;
