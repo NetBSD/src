@@ -72,8 +72,8 @@ struct fd_type {
 };
 
 struct fd_type fd_types[NUMTYPES] = {
-	{ 0 },				/* non-existant */
- 	{ 18,2,0xFF,0x1B,80,2880,1,0 },	/* 1.44 meg HD 3.5in floppy    */
+	{ 0,0,0,0, 0,0,0,0},		/* non-existtant */
+	{ 18,2,0xFF,0x1B,80,2880,1,0 },	/* 1.44 meg HD 3.5in floppy    */
 	{ 15,2,0xFF,0x1B,80,2400,1,0 },	/* 1.2 meg HD floppy           */
 	{ 9,2,0xFF,0x23,40,720,2,1 },	/* 360k floppy in 1.2meg drive */
 	{ 9,2,0xFF,0x2A,40,720,1,1 },	/* 360k floppy in DD drive     */
@@ -137,7 +137,7 @@ fdprobe(struct isa_device *dev)
 fdattach(struct isa_device *dev)
 {
 	unsigned fdt, unit, fddrive, fdunit;
-	extern struct isa_device isa_biotab_fdc[];
+	extern struct isa_device isa_biotab_dktp[];
 	struct isa_device *fdutab;
 	unsigned st0, cyl;
 
@@ -148,7 +148,11 @@ fdattach(struct isa_device *dev)
 	if (unit >= NFDC)
 		return;
 
-	for (fdutab = isa_biotab_fdc; fdutab->id_driver != 0; fdutab++) {
+	for (fdutab = isa_biotab_dktp; fdutab->id_driver != 0; fdutab++) {
+		if (fdutab->id_driver != &fdcdriver)
+			continue;
+		if (fdutab->id_masunit != dev->id_unit)
+			continue;
 		fdunit = fdutab->id_unit;
 		if (fdunit >= NFD)
 			continue;
@@ -178,6 +182,7 @@ fdattach(struct isa_device *dev)
 			printf("fd%d at fdc%d slave %d: <1.2M>\n", fddrive,
 				dev->id_unit, fdunit);
 			fd_unit[fdunit].type = 2;
+		
 		}
 		if ((fdt & 0xf0) == RTCFDT_144M) {
 			printf("fd%d at fdc%d slave %d: <1.44M>\n", fddrive,
@@ -199,7 +204,7 @@ dev_t	dev;
 }
 
 /****************************************************************************/
-/*                               fdstrategy                                 */
+/*			       fdstrategy				 */
 /****************************************************************************/
 fdstrategy(bp)
 	register struct buf *bp;	/* IO operation to perform */
@@ -211,7 +216,7 @@ fdstrategy(bp)
  	unit = FDUNIT(minor(bp->b_dev));
  	/*type = FDTYPE(minor(bp->b_dev));*/
 	type = fd_unit[unit].type;
-	if(type == 0) {
+	if(type==0) {
 		bp->b_error = EINVAL;
 		bp->b_flags |= B_ERROR;
 		goto bad;
@@ -266,7 +271,7 @@ bad:
 }
 
 /****************************************************************************/
-/*                            motor control stuff                           */
+/*			    motor control stuff			   */
 /****************************************************************************/
 set_motor(unit,reset)
 int unit,reset;
@@ -296,7 +301,7 @@ int unit;
 }
 
 /****************************************************************************/
-/*                             fdc in/out                                   */
+/*			     fdc in/out				   */
 /****************************************************************************/
 int
 in_fdc()
@@ -323,35 +328,36 @@ int x;
 
 static fdopenf;
 /****************************************************************************/
-/*                           fdopen/fdclose                                 */
+/*			   fdopen/fdclose				 */
 /****************************************************************************/
 Fdopen(dev, flags)
-	dev_t	dev;
-	int	flags;
+dev_t	dev;
+int	flags;
 {
  	int unit = FDUNIT(minor(dev));
-	int type = fd_unit[unit].type;
+ 	int type = fd_unit[unit].type;
 	int s;
 
 	fdopenf = 1;
 	/* check bounds */
-	if (unit >= NFD) return(ENXIO);
+	if (unit >= NFD)
+		return(ENXIO);
 	if (type >= NUMTYPES || type==0)
-		return ENXIO;
+		return(ENXIO);
 
 	/* Set proper disk type, only allow one type */
 	return 0;
 }
 
 fdclose(dev, flags)
-	dev_t dev;
+dev_t dev;
 {
 	return(0);
 }
 
 
 /****************************************************************************/
-/*                                 fdstart                                  */
+/*				 fdstart				  */
 /****************************************************************************/
 fdstart(unit)
 int unit;
@@ -428,7 +434,7 @@ st0, NE7_ST0BITS, cyl, st3, NE7_ST3BITS);
 }
 
 /****************************************************************************/
-/*                                 fdintr                                   */
+/*				 fdintr				   */
 /****************************************************************************/
 fdintr(unit)
 {
@@ -437,6 +443,7 @@ fdintr(unit)
 	int read,head,trac,sec,i,s,sectrac,cyl,st0;
 	unsigned long blknum;
 	struct fd_type *ft;
+	int type;
 
 #ifdef FDTEST
 	printf("state %d, unit %d, dr %d|",fd_state,unit,fd_drive);
@@ -446,8 +453,9 @@ fdintr(unit)
 	dp = &fd_unit[fd_drive].head;
 	bp = dp->b_actf;
 	read = bp->b_flags & B_READ;
+	type = fd_unit[fd_drive].type;
  	/*ft = &fd_types[FDTYPE(bp->b_dev)];*/
- 	ft = &fd_types[fd_unit[fd_drive].type];
+ 	ft = &fd_types[type];
 
 	switch (fd_state) {
 	case 1 : /* SEEK DONE, START DMA */

@@ -223,7 +223,7 @@ int
 wdattach(struct isa_device *dvp)
 {
 	int unit, lunit;
-	extern struct isa_device isa_biotab_wdc[];
+	extern struct isa_device isa_biotab_dktp[];
 	struct isa_device *wdup;
 	struct disk *du;
 	int first = 0;
@@ -231,8 +231,10 @@ wdattach(struct isa_device *dvp)
 	if (dvp->id_unit >= NWDC)
 		return(0);
     
-	for (wdup = isa_biotab_wdc; wdup->id_driver != 0; wdup++) {
-		if (wdup->id_iobase != dvp->id_iobase)
+	for (wdup = isa_biotab_dktp; wdup->id_driver != 0; wdup++) {
+		if (wdup->id_driver != &wdcdriver)
+			continue;
+		if (wdup->id_masunit != dvp->id_unit)
 			continue;
 		lunit = wdup->id_unit;
 		if (lunit >= NWD)
@@ -1026,7 +1028,7 @@ badopen:
 static int
 wdcommand(struct disk *du, int cmd)
 {
-	int timeout = 5000000, stat, wdc;
+	int timeout = 1000000, stat, wdc;
     
 	DELAY(2000);
 	/* controller ready for command? */

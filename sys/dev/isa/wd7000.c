@@ -19,25 +19,26 @@
 #include "wds.h"
 #if NWDS > 0
 
-#include <sys/types.h>
-#include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/errno.h>
-#include <sys/ioctl.h>
-#include <sys/buf.h>
-#include <sys/proc.h>
-#include <sys/user.h>
+#include "sys/types.h"
+#include "sys/param.h"
+#include "sys/systm.h"
+#include "sys/errno.h"
+#include "sys/ioctl.h"
+#include "sys/buf.h"
+#include "sys/proc.h"
+#include "sys/user.h"
 
-#include <i386/isa/isa_device.h>
-#include <scsi/scsi_all.h>
-#include <scsi/scsiconf.h>
+#include "i386/isa/isa_device.h"
+#include "sys/dkbad.h"
+#include "sys/disklabel.h"
+#include "scsi/scsi_all.h"
+#include "scsi/scsiconf.h"
 
 extern int delaycount;  /* from clock setup code */
 
 #define PHYSTOKV(x)	( (u_long)(x) | 0xFE000000)
 #define KVTOPHYS(x)	vtophys(x)
 #define PAGESIZ 	4096
-#define INVALIDATE_CACHE {asm volatile( ".byte	0x0F ;.byte 0x08" ); }
 
 
 /* WD7000 registers */
@@ -113,7 +114,6 @@ struct wds_req {
 #define WDSX_GETFIRMREV		0x8c
 #define WDSX_EXECDIAG		0x8d
 #define WDSX_SETEXECPARM	0x8e
-#define WDSX_SETEXECPARM	0x8e
 #define WDSX_GETEXECPARM	0x8f
 
 struct wds_mb {
@@ -156,19 +156,23 @@ struct wds {
 static int wdsunit = 0;
 int wds_debug = 0;
 
-int wdsprobe(), wdsattach(), wdsintr();
+void p2x(u_char *, u_long);
+u_char *x2p(u_char *);
+int wdsprobe(struct isa_device *);
+void wds_minphys(struct buf *);
+struct wds_req *wdsr_alloc(int);
+int wds_scsi_cmd(struct scsi_xfer *);
+long wds_adapter_info(int);
+int wdsintr(int);
+int wds_done(int, struct wds_cmd *, u_char);
+int wdsattach(struct isa_device *);
+int wds_init(struct isa_device *);
+int wds_cmd(u_short, u_char *, int);
+void wds_wait(int, int, int);
 
-struct isa_driver wdsdriver = {
-	wdsprobe,
-	wdsattach,
-	"wds",
-};
-
-int wds_scsi_cmd();
-void wds_minphys();
-long wds_adapter_info();
 
 struct scsi_switch wds_switch = {
+	"wds",
 	wds_scsi_cmd,
 	wds_minphys,
 	0, 0,
@@ -176,9 +180,26 @@ struct scsi_switch wds_switch = {
 	0, 0, 0,
 };
 
-p2x(p, x)
-u_char *p;
-u_long x;
+struct isa_driver wdsdriver = {
+	wdsprobe,
+	wdsattach,
+	"wds",
+};
+
+
+void
+flushcache(void)
+{
+	extern main();
+	volatile char *p, c;
+	int i;
+
+	for(p=(char *)main, i=0; i<256*1024; i++)
+		c = *p++;
+}
+
+void
+p2x(u_char *p, u_long x)
 {
 	p[0] = (x & 0x00ff0000) >> 16;
 	p[1] = (x & 0x0000ff00) >> 8;
@@ -186,8 +207,7 @@ u_long x;
 }
 
 u_char *
-x2p(x)
-u_char *x;
+x2p(u_char *x)
 {
 	u_long q;
 
@@ -195,11 +215,11 @@ u_char *x;
 	return (u_char *)q;
 }
 
-wdsprobe(dev)
-struct isa_device *dev;
+int
+wdsprobe(struct isa_device *dev)
 {
-	scsi_debug = PRINTROUTINES | TRACEOPENS | TRACEINTERRUPTS |
-		SHOWREQUESTS | SHOWSCATGATH | SHOWINQUIRY | SHOWCOMMANDS;
+	/*scsi_debug = PRINTROUTINES | TRACEOPENS | TRACEINTERRUPTS |
+		SHOWREQUESTS | SHOWSCATGATH | SHOWINQUIRY | SHOWCOMMANDS;*/
 
 	if(wdsunit > NWDS)
 		return 0;
@@ -210,12 +230,11 @@ struct isa_device *dev;
 	if(wds_init(dev) != 0)
 		return 0;
 	wdsunit++;
-	return 1;
+	return 8;
 }
 
 void
-wds_minphys(bp)
-struct buf *bp;
+wds_minphys(struct buf *bp)
 {
 	int base = (int)bp->b_un.b_addr & (PAGESIZ-1);
 
@@ -224,8 +243,7 @@ struct buf *bp;
 }
 
 struct wds_req *
-wdsr_alloc(unit)
-int unit;
+wdsr_alloc(int unit)
 {
 	struct wds_req *r;
 	int x;
@@ -261,8 +279,7 @@ int unit;
 }
 
 int
-wds_scsi_cmd(sxp)
-struct scsi_xfer *sxp;
+wds_scsi_cmd(struct scsi_xfer *sxp)
 {
 	struct wds_req *r;
 	int unit = sxp->adapter;
@@ -277,13 +294,6 @@ struct scsi_xfer *sxp;
 	if( sxp->flags & SCSI_RESET) {
 		printf("reset!\n");
 		return COMPLETE;
-	}
-
-	/* XXX DEBUG */
-	if( sxp->targ != 1) {
-		printf("ignoring target %d/%d\n", sxp->targ, sxp->lu);
-		sxp->error = XS_TIMEOUT;
-		return HAD_ERROR;
 	}
 
 	r = wdsr_alloc(unit);
@@ -343,6 +353,7 @@ struct scsi_xfer *sxp;
 		r->polled = 0;
 
 	c = WDSC_MSTART(r->ombn);
+	flushcache();
 	if( wds_cmd(base, &c, sizeof c) != 0) {
 		printf("wds%d: unable to start outgoing mbox\n", unit);
 		r->busy = 0;
@@ -368,6 +379,7 @@ repoll:		printf("wds%d: polling.", unit);
 				return HAD_ERROR;
 			}
 		}
+		flushcache();
 		printf("got one!\n");
 		wdsintr(unit);
 		if(r->done) {
@@ -387,14 +399,13 @@ repoll:		printf("wds%d: polling.", unit);
 }
 
 long
-wds_adapter_info(unit)
-int unit;
+wds_adapter_info(int unit)
 {
 	return 1;
 }
 
 int
-wdsintr(unit)
+wdsintr(int unit)
 {
 	struct wds_cmd *pc, *vc;
 	struct wds_mb *in;
@@ -408,6 +419,7 @@ wdsintr(unit)
 	if( (c&WDSI_MASK) == WDSI_MSVC) {
 		DELAY(1000);
 		c = c & ~WDSI_MASK;
+		flushcache();
 		in = &wds[unit].imbs[c];
 
 		printf("incoming mailbox %02x@%08x: ", c, in);
@@ -416,18 +428,17 @@ wdsintr(unit)
 		pc = (struct wds_cmd *)x2p(&in->addr[0]);
 		vc = (struct wds_cmd *)PHYSTOKV(pc);
 		stat = in->stat;
-		printf("p=%08x v=%08x stat %02xx\n", pc, vc, stat);
+		printf("p=%08x v=%08x stat %02x\n", pc, vc, stat);
 		wds_done(unit, vc, stat);
 		in->stat = 0;
 
 		outb(wds[unit].addr + WDS_IRQACK, 0xff);
 	}
+	return 1;
 }
 
-wds_done(unit, c, stat)
-int unit;
-struct wds_cmd *c;
-u_char stat;
+int
+wds_done(int unit, struct wds_cmd *c, u_char stat)
 {
 	struct wds_req *r;
 	int i;
@@ -441,7 +452,7 @@ u_char stat;
 		}
 	if(r == (struct wds_req *)NULL) {
 		printf("failed to find request!\n");
-		return;
+		return 1;
 	}
 
 	printf("wds%d: cmd %8x stat %2x/%2x %2x/%2x\n", unit, c,
@@ -483,23 +494,123 @@ u_char stat;
 			(*r->sxp->when_done)(r->sxp->done_arg, r->sxp->done_arg2);
 		r->busy = 0;
 	}
-	return;
+	return 0;
 }
 
 int
-wdsattach(dev)
-struct isa_device *dev;
+wds_getvers(int unit)
 {
-	int unit = dev->id_unit;
+	struct wds_req *r;
+	u_short base;
+	u_char c, *p;
+	int i;
 
-	/*printf("start attach...\n");*/
-	scsi_attachdevs(unit, wds[unit].devs, &wds_switch);
-	/*printf("done attach...\n");*/
-	return;
+	base = wds[unit].addr;
+
+	/*printf("scsi_cmd\n");*/
+
+	r = wdsr_alloc(unit);
+	if(r==NULL) {
+		printf("wds%d: no request slot available!\n", unit);
+		return -1;
+	}
+	r->done = 0;
+	r->sxp = NULL;
+
+	printf("wds%d: getvers req %8x\n", unit, r);
+
+	p2x(&wds[unit].ombs[r->ombn].addr[0], KVTOPHYS(&r->cmd));
+	printf("%08x/%08x mbox@%08x: %02x %02x %02x %02x\n",
+		&r->cmd, KVTOPHYS(&r->cmd), &wds[unit].ombs[0], 
+		wds[unit].ombs[r->ombn].stat, wds[unit].ombs[r->ombn].addr[0],
+		wds[unit].ombs[r->ombn].addr[1], wds[unit].ombs[r->ombn].addr[2]);
+
+	bzero(&r->cmd, sizeof r->cmd);
+	r->cmd.cmd = WDSX_GETFIRMREV;
+	r->cmd.write = 0x80;
+
+	printf("wdscmd: ");
+	for(i=0, p=(u_char *)&r->cmd; i<sizeof r->cmd; i++)
+		printf("%02x ", p[i]);
+	printf("\n");
+
+	outb(base+WDS_HCR, WDSH_DRQEN);
+	r->polled = 1;
+
+	c = WDSC_MSTART(r->ombn);
+	flushcache();
+	if( wds_cmd(base, &c, sizeof c) != 0) {
+		printf("wds%d: unable to start outgoing mbox\n", unit);
+		r->busy = 0;
+		/* XXX need to free mailbox */
+		return -1;
+	}
+
+	DELAY(10000);
+	/*printf("%08x/%08x mbox: %02x %02x %02x %02x\n", &r->cmd, KVTOPHYS(&r->cmd),
+		wds[unit].ombs[r->ombn].stat, wds[unit].ombs[r->ombn].addr[0],
+		wds[unit].ombs[r->ombn].addr[1], wds[unit].ombs[r->ombn].addr[2]);*/
+
+	while(1) {
+		printf("wds%d: polling.", unit);
+		i = 0;
+		while( (inb(base+WDS_STAT) & WDS_IRQ) == 0) {
+			printf(".");
+			DELAY(10000);
+			if(++i == 10) {
+				printf("failed %02x\n", inb(base+WDS_IRQSTAT));
+				/*r->busy = 0;*/
+				return -1;
+			}
+		}
+		flushcache();
+		printf("got one!\n");
+		wdsintr(unit);
+		if(r->done) {
+			printf("wds%d: version %02x %02x\n", unit,
+				r->cmd.targ, r->cmd.scb.opcode);
+			r->busy = 0;
+			return 0;
+		}
+	}
 }
 
-wds_init(dev)
-struct isa_device *dev;
+int
+wdsattach(struct isa_device *dev)
+{
+	int unit = dev->id_unit;
+	extern struct isa_device isa_biotab_dktp[];
+	struct isa_device *dvp;
+
+	if(wds_getvers(unit)==-1)
+		printf("wds%d: getvers failed\n", unit);
+
+	for (dvp = isa_biotab_dktp; dvp->id_driver != 0; dvp++) {
+		if (dvp->id_driver != &wdsdriver)
+			continue;
+		if (dvp->id_masunit != dev->id_unit)
+			continue;
+		if (dvp->id_physid == -1)
+			continue;
+		scsi_attach(dev->id_unit, wds[unit].devs, &wds_switch,
+			&dvp->id_physid, &dvp->id_unit, 0);
+	}
+	for (dvp = isa_biotab_dktp; dvp->id_driver != 0; dvp++) {
+		if (dvp->id_driver != &wdsdriver)
+			continue;
+		if (dvp->id_masunit != dev->id_unit)
+			continue;
+		if (dvp->id_physid != -1)
+			continue;
+		scsi_attach(dev->id_unit, wds[unit].devs, &wds_switch,
+			&dvp->id_physid, &dvp->id_unit, 0);
+	}
+	scsi_warn(dev->id_unit, wds[unit].devs, &wds_switch);
+	return 0;
+}
+
+int
+wds_init(struct isa_device *dev)
 {
 	struct wds_setup init;
 	u_short base;
@@ -533,7 +644,12 @@ ready:
 	outb(base+WDS_HCR, WDSH_DRQEN);
 	DELAY(20000);
 
+#if 1
+	outb(0xd6, 0xc3);
+	outb(0xd4, 0x03);
+#else
 	isa_dmacascade(dev->id_drq);
+#endif
 
 	if( (inb(base+WDS_STAT) & (WDS_RDY)) != WDS_RDY) {
 		printf("wds%d: waiting for controller to become ready", unit);
@@ -567,7 +683,8 @@ ready:
 	printf("\n");*/
 
 	wds_wait(base+WDS_STAT, WDS_RDY, WDS_RDY);
-	if( wds_cmd(base, &init, sizeof init) != 0) {
+	flushcache();
+	if( wds_cmd(base, (u_char *)&init, sizeof init) != 0) {
 		printf("wds%d: wds_cmd failed\n", unit);
 		return 1;
 	}
@@ -583,10 +700,8 @@ ready:
 	return 0;
 }
 
-wds_cmd(base, p, l)
-u_short base;
-u_char *p;
-int l;
+int
+wds_cmd(u_short base, u_char *p, int l)
 {
 	int i;
 	u_char c;
@@ -614,7 +729,8 @@ int l;
 	return 0;
 }
 
-wds_wait(reg, mask, val)
+void
+wds_wait(int reg, int mask, int val)
 {
 	while( (inb(reg) & mask) != val)
 		;
