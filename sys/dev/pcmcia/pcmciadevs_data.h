@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.102 2000/12/08 18:38:16 drochner Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.103 2000/12/19 16:54:14 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.103 2000/12/08 18:37:24 drochner Exp 
+ *	NetBSD: pcmciadevs,v 1.104 2000/12/19 16:53:41 thorpej Exp 
  */
 
 /*-
@@ -890,6 +890,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Melco Corporation",
 	    "Melco LPC2-TX"	},
+	},
+	{
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_SMC_2632W,
+	    PCMCIA_CIS_SMC_2632W,
+	    0,
+	    "Standard Microsystems Corporation",
+	    "} SMC 2632 EZ Connect Wireless PC Card"	},
 	},
 	{
 	    PCMCIA_VENDOR_FUJITSU, 0,
