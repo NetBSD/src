@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.72 1998/06/30 14:42:00 augustss Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.73 1998/07/10 20:41:36 tron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.66 1998/06/30 14:41:29 augustss Exp 
+ *	NetBSD: pcidevs,v 1.67 1998/07/10 20:40:06 tron Exp 
  */
 
 /*
@@ -489,6 +489,7 @@
 #define	PCI_VENDOR_CYCLADES	0x120e		/* Cyclades */
 #define	PCI_VENDOR_ESSENTIAL	0x120f		/* Essential Communications */
 #define	PCI_VENDOR_2MICRO	0x1217		/* 2 Micro Inc */
+#define	PCI_VENDOR_3DFX	0x121A		/* 3Dfx Interactive */
 #define	PCI_VENDOR_ARIEL	0x1220		/* Ariel */
 #define	PCI_VENDOR_AZTECH	0x122d		/* Aztech */
 #define	PCI_VENDOR_3DO	0x1239		/* The 3D0 Company */
@@ -535,6 +536,9 @@
 #define	PCI_PRODUCT_3COM_3C900COMBO	0x9001		/* 3c900 10Mbps-Combo */
 #define	PCI_PRODUCT_3COM_3C905TX	0x9050		/* 3c905 100Base-TX */
 #define	PCI_PRODUCT_3COM_3C905T4	0x9051		/* 3c905 100Base-T4 */
+
+/* 3Dfx Interactive producs */
+#define	PCI_PRODUCT_3DFX_VOODOO	0x0001		/* Voodoo */
 
 /* 3D Labs products */
 #define	PCI_PRODUCT_3DLABS_300SX	0x0001		/* GLINT 300SX */
@@ -803,6 +807,8 @@
 #define	PCI_PRODUCT_INTEL_82371AB_PMC	0x7113		/* 82371AB Power Management Controller (PIIX4) */
 #define	PCI_PRODUCT_INTEL_82443LX	0x7180		/* 82443LX PCI AGP Controller (PAC) */
 #define	PCI_PRODUCT_INTEL_82443LX_AGP	0x7181		/* 82443LX AGP Device (PAC) */
+#define	PCI_PRODUCT_INTEL_82443BX	0x7190		/* 82443BX PCI AGP Controller (PAC) */
+#define	PCI_PRODUCT_INTEL_82443BX_AGP	0x7191		/* 82443BX AGP Device (PAC) */
 #define	PCI_PRODUCT_INTEL_PCI450_PB	0x84c4		/* 82454KX/GX PCI Bridge (PB) */
 #define	PCI_PRODUCT_INTEL_PCI450_MC	0x84c5		/* 82451KX/GX Memory Controller (MC) */
 

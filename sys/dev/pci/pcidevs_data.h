@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.71 1998/06/30 14:42:00 augustss Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.72 1998/07/10 20:41:36 tron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.66 1998/06/30 14:41:29 augustss Exp 
+ *	NetBSD: pcidevs,v 1.67 1998/07/10 20:40:06 tron Exp 
  */
 
 /*
@@ -86,6 +86,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "3Com",
 	    "3c905 100Base-T4",
+	},
+	{
+	    PCI_VENDOR_3DFX, PCI_PRODUCT_3DFX_VOODOO,
+	    0,
+	    "3Dfx Interactive",
+	    "Voodoo",
 	},
 	{
 	    PCI_VENDOR_3DLABS, PCI_PRODUCT_3DLABS_300SX,
@@ -1166,6 +1172,18 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Intel",
 	    "82443LX AGP Device (PAC)",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82443BX,
+	    0,
+	    "Intel",
+	    "82443BX PCI AGP Controller (PAC)",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82443BX_AGP,
+	    0,
+	    "Intel",
+	    "82443BX AGP Device (PAC)",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PCI450_PB,
@@ -4825,6 +4843,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_2MICRO, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "2 Micro Inc",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_3DFX, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "3Dfx Interactive",
 	    NULL,
 	},
 	{
