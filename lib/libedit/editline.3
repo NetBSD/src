@@ -1,4 +1,4 @@
-.\"	$NetBSD: editline.3,v 1.9 1998/02/05 18:51:37 perry Exp $
+.\"	$NetBSD: editline.3,v 1.10 1998/05/20 01:05:27 christos Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -60,7 +60,7 @@
 .Sh SYNOPSIS
 .Fd #include <histedit.h>
 .Ft EditLine *
-.Fn el_init "const char *prog" "FILE *fin" "FILE *fout"
+.Fn el_init "const char *prog" "FILE *fin" "FILE *fout" "FILE *ferr"
 .Ft void
 .Fn el_end "EditLine *e"
 .Ft void
@@ -122,10 +122,11 @@ to be used by all other line editing functions.
 is the name of the invoking program, used when reading the
 .Xr editrc 5
 file to determine which settings to use.
-.Fa fin
-and
+.Fa fin ,
 .Fa fout
-are the input and output streams (respectively) to use.
+and
+.Fa ferr
+are the input, output, and error streams (respectively) to use.
 In this documentation, references to
 .Dq the tty
 are actually to this input/output stream combination.
@@ -429,7 +430,7 @@ The following values for
 .Fa op
 are supported, along with the required argument list:
 .Bl -tag -width 4n
-.It Dv H_SETMAXSIZE , Fa "int size"
+.It Dv H_SETSIZE , Fa "int size"
 Set size of history to
 .Fa size
 elements.
@@ -449,6 +450,7 @@ Clear the history.
 .Fa "history_gfun_t last" ,
 .Fa "history_gfun_t prev" ,
 .Fa "history_gfun_t curr" ,
+.Fa "history_sfun_t set" ,
 .Fa "history_vfun_t clear" ,
 .Fa "history_efun_t enter" ,
 .Fa "history_efun_t add"
@@ -466,6 +468,8 @@ Return the previous element in the history.
 Return the next element in the history.
 .It Dv H_CURR
 Return the current element in the history.
+.It Dv H_SET
+Set the cursor to point to the requested element.
 .It Dv H_ADD , Fa "const char *str"
 Append
 .Fa str
