@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.161 1998/07/09 20:59:38 perry Exp $
+#	$NetBSD: GENERIC,v 1.162 1998/07/12 19:51:56 augustss Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -131,6 +131,7 @@ options 	EISAVERBOSE	# verbose EISA device autoconfig messages
 options 	PCIVERBOSE	# verbose PCI device autoconfig messages
 #options 	PCMCIAVERBOSE	# verbose PCMCIA configuration messages
 options 	SCSIVERBOSE	# human readable SCSI error messages
+options 	USBVERBOSE	# verbose USB device autoconfig messages
 
 options 	NFS_BOOT_BOOTP,NFS_BOOT_BOOTPARAM
 
@@ -394,6 +395,35 @@ tlphy*	at mii? dev ?			# ThunderLAN PHYs
 nsphy*	at mii? dev ?			# NS and compatible PHYs
 
 
+# USB Controller and Devices
+
+# PCI USB controllers
+uhci*	at pci?				# Universal Host Controller (Intel)
+ohci*	at pci?				# Open Host Controller
+
+# USB bus support
+usb*	at uhci?
+usb*	at ohci?
+
+# USB Hubs
+uhub*	at usb?
+uhub*	at uhub? port ?
+
+# USB Mice
+ums*	at uhub? port ?
+
+# USB Keyboards
+ukbd*	at uhub? port ?
+
+# USB Generic HID devices
+uhid*	at uhub? port ?
+
+# USB Printer
+ulpt*	at uhub? port ?
+
+# USB Generic driver
+#ugen*	at uhub? port ?
+
 # Audio Devices
 
 # PCI audio devices
@@ -413,6 +443,9 @@ sp0	at pss0 port 0x530 irq 10 drq 0		# 	sound port driver
 sb0	at isa? port 0x220 irq 5 drq 1 drq2 5	# SoundBlaster
 wss0	at isa? port 0x530 irq 10 drq 0	drq2 1	# Windows Sound System
 
+# USB Audio devices
+#uaudio*	at uhub? port ?
+
 # Audio support
 audio*	at aria?
 audio*	at eap?
@@ -421,6 +454,7 @@ audio*	at guspnp?
 audio*	at pas?
 audio*	at sb?
 audio*	at sp?
+#audio*	at uaudio?
 audio*	at wss?
 audio*	at ym?
 
