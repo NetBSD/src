@@ -1,9 +1,9 @@
-/*	$NetBSD: var.c,v 1.9 2004/07/07 19:20:09 mycroft Exp $	*/
+/*	$NetBSD: var.c,v 1.10 2004/10/28 20:15:37 dsl Exp $	*/
 
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: var.c,v 1.9 2004/07/07 19:20:09 mycroft Exp $");
+__RCSID("$NetBSD: var.c,v 1.10 2004/10/28 20:15:37 dsl Exp $");
 #endif
 
 
@@ -557,11 +557,11 @@ formatstr(vp, s)
 	if (vp->flag & UCASEV_AL) {
 		for (q = p; *q; q++)
 			if (islower((unsigned char)*q))
-				*q = toupper(*q);
+				*q = toupper((unsigned char)*q);
 	} else if (vp->flag & LCASEV) {
 		for (q = p; *q; q++)
 			if (isupper((unsigned char)*q))
-				*q = tolower(*q);
+				*q = tolower((unsigned char)*q);
 	}
 
 	return p;

@@ -1,4 +1,4 @@
-/*	$NetBSD: vi.c,v 1.8 2004/07/07 19:20:09 mycroft Exp $	*/
+/*	$NetBSD: vi.c,v 1.9 2004/10/28 20:15:37 dsl Exp $	*/
 
 /*
  *	vi command editing
@@ -9,7 +9,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: vi.c,v 1.8 2004/07/07 19:20:09 mycroft Exp $");
+__RCSID("$NetBSD: vi.c,v 1.9 2004/10/28 20:15:37 dsl Exp $");
 #endif
 
 #include "config.h"
@@ -1123,10 +1123,10 @@ vi_cmd(argcnt, cmd)
 				p = &es->cbuf[es->cursor];
 				if (islower((unsigned char)*p)) {
 					modified = 1; hnum = hlast;
-					*p = toupper(*p);
+					*p = toupper((unsigned char)*p);
 				} else if (isupper((unsigned char)*p)) {
 					modified = 1; hnum = hlast;
-					*p = tolower(*p);
+					*p = tolower((unsigned char)*p);
 				}
 				if (es->cursor < es->linelen - 1)
 					es->cursor++;
