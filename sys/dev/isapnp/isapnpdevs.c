@@ -1,10 +1,10 @@
-/*	$NetBSD: isapnpdevs.c,v 1.8 1998/10/04 18:31:14 christos Exp $	*/
+/*	$NetBSD: isapnpdevs.c,v 1.9 1998/11/12 14:09:20 drochner Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: isapnpdevs,v 1.8 1998/10/04 18:30:50 christos Exp 
+ *	NetBSD: isapnpdevs,v 1.9 1998/11/12 14:06:34 drochner Exp 
  */
 
 /*-
@@ -139,7 +139,7 @@ const struct isapnp_devinfo isapnp_gus_devinfo = {
 
 /* Lance Ethernet */
 static const char *isapnp_le_devlogic[] = {
-	"TKN0010",	/* Lance Ethernet */
+	"TKN0010",	/* Lance Ethernet on TEKNOR board */
 	NULL
 };
 static const char *isapnp_le_devcompat[] = {
@@ -151,6 +151,7 @@ const struct isapnp_devinfo isapnp_le_devinfo = {
 
 /* NE2000 Ethernet */
 static const char *isapnp_ne_devlogic[] = {
+	"@@@1980",	/* OvisLink LE-8019R */
 	NULL
 };
 static const char *isapnp_ne_devcompat[] = {
