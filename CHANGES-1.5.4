@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.4,v 1.1.2.114 2003/09/19 05:00:20 msaitoh Exp $
+#	$NetBSD: CHANGES-1.5.4,v 1.1.2.115 2003/10/01 09:19:04 msaitoh Exp $
 
 A complete list of changes from NetBSD 1.5.3 to NetBSD 1.5.4:
 
@@ -2247,3 +2247,9 @@ crypto/dist/ssh/buffer.c		1.5
 	protect against double free; #660;  zardoz at users.sf.net
 	from openbsd
 	[christos, ticket #83]
+
+sys/netinet/if_arp.c			1.94 (via patch)
+
+	On arplookup() failure, nuke cloned route - otherwise outsider could
+	use massive number of bogus ARPs for DoS attack.  FreeBSD-SA-03:14.arp
+	[itojun, ticket #86]
