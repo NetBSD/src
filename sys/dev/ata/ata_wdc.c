@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.74 2004/08/20 23:26:53 thorpej Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.75 2004/08/21 02:17:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.74 2004/08/20 23:26:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.75 2004/08/21 02:17:07 thorpej Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -140,31 +140,6 @@ const struct ata_bustype wdc_ata_bustype = {
 	wdc_ata_delref,
 	ata_kill_pending,
 };
-
-/*
- * Convert a 32 bit command to a 48 bit command.
- */
-static __inline
-int to48(int cmd32)
-{
-	switch (cmd32) {
-	case WDCC_READ:
-		return WDCC_READ_EXT;
-	case WDCC_WRITE:
-		return WDCC_WRITE_EXT;
-	case WDCC_READMULTI:
-		return WDCC_READMULTI_EXT;
-	case WDCC_WRITEMULTI:
-		return WDCC_WRITEMULTI_EXT;
-	case WDCC_READDMA:
-		return WDCC_READDMA_EXT;
-	case WDCC_WRITEDMA:
-		return WDCC_WRITEDMA_EXT;
-	default:
-		panic("ata_wdc: illegal 32 bit command %d", cmd32);
-		/*NOTREACHED*/
-	}
-}
 
 /*
  * Handle block I/O operation. Return ATACMD_COMPLETE, ATACMD_QUEUED, or
@@ -444,7 +419,7 @@ again:
 				return;
 			}
 			if (ata_bio->flags & ATA_LBA48) {
-			    wdccommandext(chp, xfer->c_drive, to48(cmd),
+			    wdccommandext(chp, xfer->c_drive, atacmd_to48(cmd),
 				(u_int64_t)ata_bio->blkno, nblks);
 			} else {
 			    wdccommand(chp, xfer->c_drive, cmd, cyl,
@@ -485,7 +460,7 @@ again:
 			return;
 		}
 		if (ata_bio->flags & ATA_LBA48) {
-		    wdccommandext(chp, xfer->c_drive, to48(cmd),
+		    wdccommandext(chp, xfer->c_drive, atacmd_to48(cmd),
 			(u_int64_t) ata_bio->blkno, nblks);
 		} else {
 		    wdccommand(chp, xfer->c_drive, cmd, cyl,
