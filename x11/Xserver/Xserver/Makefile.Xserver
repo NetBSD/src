@@ -1,6 +1,4 @@
-#	$NetBSD: Makefile.Xserver,v 1.13 2004/01/18 05:35:03 rtr Exp $
-
-.PATH:		${NETBSDSRCDIR}/x11/Xserver/Xserver
+#	$NetBSD: Makefile.Xserver,v 1.14 2004/02/07 05:23:56 lukem Exp $
 
 .for _SL in	dix os mi printer printer/pcl printer/ps printer/raster \
 		Xext/ext Xext/exts GL/glx GL/GLcore xkb xinput lbx dbe \
