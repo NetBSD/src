@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.188 2001/10/29 01:19:19 perry Exp $
+#	$NetBSD: Makefile,v 1.189 2001/10/29 22:18:28 perry Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -186,6 +186,7 @@ distribution: distrib-dirs
 		    ${DESTDIR}/root/.profile; \
 		${INSTALL} ${INSTPRIV} -c -o root -g wheel -m 644 dot.shrc \
 		    ${DESTDIR}/root/.shrc; \
+		rm -f ${DESTDIR}/.cshrc ${DESTDIR}/.profile; \
 		${INSTALL} ${INSTPRIV} -l h \
 			${DESTDIR}/root/.cshrc ${DESTDIR}/.cshrc; \
 		${INSTALL} ${INSTPRIV} -l h \
@@ -276,6 +277,7 @@ distribution: distrib-dirs
 distrib-dirs:
 	${INSTALL} ${INSTPRIV} -d -o root -g wheel -m 755 ${DESTDIR}
 	${MTREE} -def mtree/NetBSD.dist -p ${DESTDIR}/ -U ${UNPRIVILEGED:D-W}
+	rm -f ${DESTDIR}/sys
 	${INSTALL} ${INSTPRIV} -l s -o root -g wheel -m 755 \
 		usr/src/sys ${DESTDIR}/sys
 
