@@ -63,14 +63,14 @@
 
 #undef STARTFILE_SPEC
 #define STARTFILE_SPEC \
-  "%{!shared:%{pg:gcrt0%O%s}%{!pg:%{p:mcrt0%O%s}%{!p:%{!static:crt0%O%s}%{static:scrt0%O%s}}}}"
+  "%{!shared:%{pg:gcrt0%O%s}%{!pg:%{p:mcrt0%O%s}%{!p:%{!static:crt0%O%s}%{static:scrt0%O%s}}}} %{shared:c++rt0%O%s}"
 
 /* Provide a LINK_SPEC appropriate for NetBSD a.out.  Here we provide
    support for the special GCC options -static, -assert, and -nostdlib.  */
 
 #undef LINK_SPEC
 #define LINK_SPEC \
-  "%{nostdlib:-nostdlib} %{!nostdlib:%{!r*:%{!e*:-e start}}} -dc -dp %{R*} %{static:-Bstatic} %{assert*}"
+  "%{nostdlib:-nostdlib} %{!shared:%{!nostdlib:%{!r*:%{!e*:-e start}}} -dc -dp %{static:-Bstatic}} %{shared:-Bshareable} %{R*} %{assert*}"
 
 /* #endif NETBSD_AOUT */
 
