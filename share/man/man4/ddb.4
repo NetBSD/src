@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.74 2003/11/18 18:26:18 dbj Exp $
+.\"	$NetBSD: ddb.4,v 1.75 2003/11/18 18:51:23 wiz Exp $
 .\"
 .\" Copyright (c) 1997 - 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -63,7 +63,7 @@
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
 .\"
-.Dd October 26, 2003
+.Dd November 18, 2003
 .Dt DDB 4
 .Os
 .Sh NAME
@@ -954,7 +954,11 @@ Print cache entries
 Print switch frame and trap frames.
 .It Ic stack
 Print kernel stack usage.
-Only works in NetBSD kernels compiled with the KSTACK_DEBUG option.
+Only works in
+.Nx
+kernels compiled with the
+.Dv KSTACK_DEBUG
+option.
 .El
 .Ss SPARC
 .Bl -tag -width "intrchain" -compact
