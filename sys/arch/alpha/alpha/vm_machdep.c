@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.32 1998/03/09 20:17:03 thorpej Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.33 1998/03/18 20:38:07 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.32 1998/03/09 20:17:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.33 1998/03/18 20:38:07 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,6 +121,13 @@ cpu_exit(p)
 
 	if (p == fpcurproc)
 		fpcurproc = NULL;
+
+	/*
+	 * Deactivate the exiting address space before the vmspace
+	 * is freed.  Note that we will continue to run on this
+	 * vmspace's context until the switch to proc0 in switch_exit().
+	 */
+	pmap_deactivate(p);
 
 #if defined(UVM)
 	uvmspace_free(p->p_vmspace);
