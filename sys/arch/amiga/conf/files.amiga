@@ -1,4 +1,4 @@
-#	$NetBSD: files.amiga,v 1.47 1996/05/12 16:17:19 thorpej Exp $
+#	$NetBSD: files.amiga,v 1.48 1996/05/19 21:04:50 veego Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -108,7 +108,13 @@ device	grfrh: grfbus
 attach	grfrh at zbus
 file	arch/amiga/dev/grf_rh.c		grfrh needs-flag
 file	arch/amiga/dev/ite_rh.c		grfrh & ite
-  
+
+# Tseng grf
+device	grfet: grfbus
+attach	grfet at zbus
+file	arch/amiga/dev/grf_et.c		grfet needs-flag
+file	arch/amiga/dev/ite_et.c		grfet & ite
+
 # handle gvp's odd autoconf info..
 device	gvpbus {}
 attach	gvpbus at zbus
