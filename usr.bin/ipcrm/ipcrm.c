@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcrm.c,v 1.6 1997/09/09 11:06:31 drochner Exp $	*/
+/*	$NetBSD: ipcrm.c,v 1.7 1998/12/19 17:04:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass
@@ -30,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $NetBSD: ipcrm.c,v 1.6 1997/09/09 11:06:31 drochner Exp $
+ * $NetBSD: ipcrm.c,v 1.7 1998/12/19 17:04:11 christos Exp $
  */
 
 #include <stdio.h>
@@ -158,7 +158,7 @@ int main(argc, argv)
 	    if (result < 0) {
 		errflg++;
 		if (!signaled)
-		    warn("%skey(%ld): ", IPC_TO_STR(c), target_key);
+		    warn("%skey(%ld): ", IPC_TO_STR(c), (long) target_key);
 		else
 		    warnx("%ss are not configured in the running kernel",
 			  IPC_TO_STRING(c));
