@@ -1,4 +1,4 @@
-/*	$NetBSD: symtab.c,v 1.15 2002/08/12 02:40:20 itojun Exp $	*/
+/*	$NetBSD: symtab.c,v 1.16 2002/11/18 04:28:03 enami Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)symtab.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: symtab.c,v 1.15 2002/08/12 02:40:20 itojun Exp $");
+__RCSID("$NetBSD: symtab.c,v 1.16 2002/11/18 04:28:03 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -233,15 +233,20 @@ addentry(name, inum, type)
 {
 	struct entry *np, *ep;
 
-	if (freelist != NULL) {
-		np = freelist;
-		freelist = np->e_next;
-		memset(np, 0, (long)sizeof(struct entry));
-	} else {
-		np = (struct entry *)calloc(1, sizeof(struct entry));
+	if (freelist == NULL) {
+		np = malloc(pagesize);
 		if (np == NULL)
 			panic("no memory to extend symbol table\n");
+		for (ep = (struct entry *)((char *)np + pagesize) - 1;
+		    np <= ep; np++) {
+			np->e_next = freelist;
+			freelist = np;
+		}
 	}
+	np = freelist;
+	freelist = np->e_next;
+	memset(np, 0, (long)sizeof(struct entry));
+
 	np->e_type = type & ~LINK;
 	ep = lookupparent(name);
 	if (ep == NULL) {
