@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.6 1995/04/09 11:51:10 pk Exp $ */
+/*	$NetBSD: db_interface.c,v 1.7 1996/02/14 01:03:17 pk Exp $ */
 
 /* 
  * Mach Operating System
@@ -35,7 +35,6 @@
 #include <sys/proc.h>
 #include <sys/reboot.h>
 #include <sys/systm.h> /* just for boothowto --eichin */
-#include <setjmp.h>
 
 #include <vm/vm.h>
 
@@ -89,7 +88,7 @@ struct db_variable db_regs[] = {
 };
 struct db_variable *db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
 
-extern jmp_buf	*db_recover;
+extern label_t	*db_recover;
 
 int	db_active = 0;
 
