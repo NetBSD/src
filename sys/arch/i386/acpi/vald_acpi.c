@@ -1,4 +1,4 @@
-/*	$NetBSD: vald_acpi.c,v 1.6 2003/04/23 15:48:35 yamt Exp $	*/
+/*	$NetBSD: vald_acpi.c,v 1.7 2003/05/20 12:09:56 kanaoka Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vald_acpi.c,v 1.6 2003/04/23 15:48:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vald_acpi.c,v 1.7 2003/05/20 12:09:56 kanaoka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -148,6 +148,9 @@ void	vald_acpi_attach(struct device *, struct device *, void *);
 void		vald_acpi_event(void *);
 static void	vald_acpi_tick(void *);
 static void	vald_acpi_notifyhandler(ACPI_HANDLE, UINT32, void *);
+
+#define ACPI_NOTIFY_ValdStatusChanged	0x80
+
 
 ACPI_STATUS	vald_acpi_ghci_get(struct vald_acpi_softc *, UINT32, UINT32 *,
     UINT32 *);
@@ -285,12 +288,29 @@ vald_acpi_attach(struct device *parent, struct device *self, void *aux)
 static void
 vald_acpi_notifyhandler(ACPI_HANDLE handle, UINT32 value, void *context)
 {
+	struct vald_acpi_softc *sc = context;
+	ACPI_STATUS rv;
+	
+	switch (value) {
+	case ACPI_NOTIFY_ValdStatusChanged:
+#ifdef VALD_ACPI_DEBUG
+		printf("%s: recived ValdStatusChanged message. \n",
+		    sc->sc_dev.dv_xname);
+#endif /* ACPI_VALD_DEBUG */
 
-	if (value == 0x80)
-		vald_acpi_event(context);
-	else
+		rv = AcpiOsQueueForExecution(OSD_PRIORITY_LO,
+		    vald_acpi_event, sc);
+
+		if (ACPI_FAILURE(rv))
+			printf("%s : WARNING: unable to queue vald change "
+			    "event: %04x\n", sc->sc_dev.dv_xname, (uint)rv);
+		break;
+
+	default:
 		printf("vald_acpi_notifyhandler: unknown event: %04"
 		    PRIu32 "\n", value);
+		break;
+	}
 }
 
 /*
