@@ -4578,6 +4578,152 @@ output_cbranch (op, label, reversed, annul, noop, insn)
   return string;
 }
 
+/* Emit a library call comparison between floating point X and Y.
+   COMPARISON is the rtl operator to compare with (EQ, NE, GT, etc.).
+   TARGET_ARCH64 uses _Qp_* functions, which use pointers to TFmode
+   values as arguments instead of the TFmode registers themselves,
+   that's why we cannot call emit_float_lib_cmp.  */
+void
+sparc_emit_float_lib_cmp (x, y, comparison)
+     rtx x, y;
+     enum rtx_code comparison;
+{
+  char *qpfunc;
+  rtx slot0, slot1, result, tem, tem2;
+  enum machine_mode mode;
+
+  switch (comparison)
+    {
+    case EQ:
+      qpfunc = (TARGET_ARCH64) ? "_Qp_feq" : "_Q_feq";
+      break;
+
+    case NE:
+      qpfunc = (TARGET_ARCH64) ? "_Qp_fne" : "_Q_fne";
+      break;
+
+    case GT:
+      qpfunc = (TARGET_ARCH64) ? "_Qp_fgt" : "_Q_fgt";
+      break;
+
+    case GE:
+      qpfunc = (TARGET_ARCH64) ? "_Qp_fge" : "_Q_fge";
+      break;
+
+    case LT:
+      qpfunc = (TARGET_ARCH64) ? "_Qp_flt" : "_Q_flt";
+      break;
+
+    case LE:
+      qpfunc = (TARGET_ARCH64) ? "_Qp_fle" : "_Q_fle";
+      break;
+
+      /*    case UNORDERED:
+    case UNGT:
+    case UNLT:
+    case UNEQ:
+    case UNGE:
+    case UNLE:
+    case LTGT:
+      qpfunc = (TARGET_ARCH64) ? "_Qp_cmp" : "_Q_cmp";
+      break;
+      */
+    default:
+      abort();
+      break;
+    }
+
+  if (TARGET_ARCH64)
+    {
+      if (GET_CODE (x) != MEM)
+        {
+          slot0 = assign_stack_temp (TFmode, GET_MODE_SIZE(TFmode), 0);
+          emit_insn (gen_rtx_SET (VOIDmode, slot0, x));
+        }
+      else
+        slot0 = x;
+
+      if (GET_CODE (y) != MEM)
+        {
+          slot1 = assign_stack_temp (TFmode, GET_MODE_SIZE(TFmode), 0);
+          emit_insn (gen_rtx_SET (VOIDmode, slot1, y));
+        }
+      else
+        slot1 = y;
+
+      emit_library_call (gen_rtx_SYMBOL_REF (Pmode, qpfunc), 1,
+                         DImode, 2,
+                         XEXP (slot0, 0), Pmode,
+                         XEXP (slot1, 0), Pmode);
+
+      mode = DImode;
+    }
+  else
+    {
+      emit_library_call (gen_rtx_SYMBOL_REF (Pmode, qpfunc), 1,
+                         SImode, 2,
+                         x, TFmode, y, TFmode);
+
+      mode = SImode;
+    }
+
+
+  /* Immediately move the result of the libcall into a pseudo
+     register so reload doesn't clobber the value if it needs
+     the return register for a spill reg.  */
+  result = gen_reg_rtx (mode);
+  emit_move_insn (result, hard_libcall_value (mode));
+
+  switch (comparison)
+    {
+    default:
+      emit_cmp_insn (result, const0_rtx, NE,
+                     NULL_RTX, mode, 0, 0);
+      break;
+      /*    case ORDERED:
+    case UNORDERED:
+      emit_cmp_insn (result, GEN_INT(3),
+                     (comparison == UNORDERED) ? EQ : NE,
+                     NULL_RTX, mode, 0, 0);
+      break;
+    case UNGT:
+    case UNGE:
+      emit_cmp_insn (result, const1_rtx,
+                     (comparison == UNGT) ? GT : NE,
+                     NULL_RTX, mode, 0, 0);
+      break;
+    case UNLE:
+      emit_cmp_insn (result, const2_rtx, NE,
+                     NULL_RTX, mode, 0, 0);
+      break;
+    case UNLT:
+      tem = gen_reg_rtx (mode);
+      if (TARGET_ARCH32)
+        emit_insn (gen_andsi3 (tem, result, const1_rtx));
+      else
+        emit_insn (gen_anddi3 (tem, result, const1_rtx));
+      emit_cmp_insn (tem, const0_rtx, NE,
+                     NULL_RTX, mode, 0, 0);
+      break;
+    case UNEQ:
+    case LTGT:
+      tem = gen_reg_rtx (mode);
+      if (TARGET_ARCH32)
+        emit_insn (gen_addsi3 (tem, result, const1_rtx));
+      else
+        emit_insn (gen_adddi3 (tem, result, const1_rtx));
+      tem2 = gen_reg_rtx (mode);
+      if (TARGET_ARCH32)
+        emit_insn (gen_andsi3 (tem2, tem, const2_rtx));
+      else
+        emit_insn (gen_anddi3 (tem2, tem, const2_rtx));
+      emit_cmp_insn (tem2, const0_rtx,
+                     (comparison == UNEQ) ? EQ : NE,
+                     NULL_RTX, mode, 0, 0);
+		     break;*/
+    }
+}
+
 /* Return the string to output a conditional branch to LABEL, testing
    register REG.  LABEL is the operand number of the label; REG is the
    operand number of the reg.  OP is the conditional expression.  The mode
