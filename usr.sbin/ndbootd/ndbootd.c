@@ -1,4 +1,4 @@
-/*	$NetBSD: ndbootd.c,v 1.7 2002/09/19 16:45:59 mycroft Exp $	*/
+/*	$NetBSD: ndbootd.c,v 1.8 2003/08/17 22:34:17 itojun Exp $	*/
 
 /* ndbootd.c - the Sun Network Disk (nd) daemon: */
 
@@ -81,7 +81,7 @@
 #if 0
 static const char _ndbootd_c_rcsid[] = "<<Id: ndbootd.c,v 1.9 2001/06/13 21:19:11 fredette Exp >>";
 #else
-__RCSID("$NetBSD: ndbootd.c,v 1.7 2002/09/19 16:45:59 mycroft Exp $");
+__RCSID("$NetBSD: ndbootd.c,v 1.8 2003/08/17 22:34:17 itojun Exp $");
 #endif
 
 /* includes: */
@@ -122,9 +122,9 @@ __RCSID("$NetBSD: ndbootd.c,v 1.7 2002/09/19 16:45:59 mycroft Exp $");
 
 /* this macro helps us size a struct ifreq: */
 #ifdef HAVE_SOCKADDR_SA_LEN
-#define SIZEOF_IFREQ(ifr) (sizeof(ifr->ifr_name) + ifr->ifr_addr.sa_len)
+#define SIZEOF_IFREQ(ifr) (sizeof((ifr)->ifr_name) + (ifr)->ifr_addr.sa_len)
 #else				/* !HAVE_SOCKADDR_SA_LEN */
-#define SIZEOF_IFREQ(ifr) (sizeof(ifr->ifr_name) + sizeof(struct sockaddr))
+#define SIZEOF_IFREQ(ifr) (sizeof((ifr)->ifr_name) + sizeof(struct sockaddr))
 #endif				/* !HAVE_SOCKADDR_SA_LEN */
 
 /* prototypes: */
@@ -204,103 +204,66 @@ _ndbootd_ip_cksum(struct ip * ip_packet)
 static struct ndbootd_interface *
 _ndbootd_find_interface(const char *ifr_name_user)
 {
-	int saved_errno;
-	int dummy_fd;
-	char ifreq_buffer[16384];	/* FIXME - magic constant. */
-	struct ifconf ifc;
-	struct ifreq *ifr;
-	struct ifreq *ifr_user;
-	size_t ifr_offset;
-	struct sockaddr_in saved_ip_address;
-	short saved_flags;
+	struct ifreq ifr;
 #ifdef HAVE_AF_LINK
-	struct ifreq *link_ifreqs[20];	/* FIXME - magic constant. */
-	size_t link_ifreqs_count;
-	size_t link_ifreqs_i;
+	struct ifaddrs *link_ifas[20];	/* FIXME - magic constant. */
+	size_t link_ifas_count;
+	size_t link_ifas_i;
 	struct sockaddr_dl *sadl;
 #endif				/* HAVE_AF_LINK */
 	struct ndbootd_interface *interface;
+	struct ifaddrs *ifap, *ifa, *ifa_user;
 
-	/* make a dummy socket so we can read the interface list: */
-	if ((dummy_fd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
-		return (NULL);
-	}
 	/* read the interface list: */
-	ifc.ifc_len = sizeof(ifreq_buffer);
-	ifc.ifc_buf = ifreq_buffer;
-	if (ioctl(dummy_fd, SIOCGIFCONF, &ifc) < 0) {
-		saved_errno = errno;
-		close(dummy_fd);
-		errno = saved_errno;
+	if (getifaddrs(&ifap) != 0) {
 		return (NULL);
 	}
 #ifdef HAVE_AF_LINK
-	/* start our list of link address ifreqs: */
-	link_ifreqs_count = 0;
+	/* start our list of link address ifas: */
+	link_ifas_count = 0;
 #endif				/* HAVE_AF_LINK */
 
 	/* walk the interface list: */
-	ifr_user = NULL;
-	for (ifr_offset = 0;; ifr_offset += SIZEOF_IFREQ(ifr)) {
-
-		/* stop walking if we have run out of space in the buffer.
-		 * note that before we can use SIZEOF_IFREQ, we have to make
-		 * sure that there is a minimum number of bytes in the buffer
-		 * to use it (namely, that there's a whole struct sockaddr
-		 * available): */
-		ifr = (struct ifreq *) (ifreq_buffer + ifr_offset);
-		if ((ifr_offset + sizeof(ifr->ifr_name) + sizeof(struct sockaddr)) > ifc.ifc_len
-		    || (ifr_offset + SIZEOF_IFREQ(ifr)) > ifc.ifc_len) {
-			errno = ENOENT;
-			break;
-		}
+	ifa_user = NULL;
+	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
 #ifdef HAVE_AF_LINK
 		/* if this is a hardware address, save it: */
-		if (ifr->ifr_addr.sa_family == AF_LINK) {
-			if (link_ifreqs_count < (sizeof(link_ifreqs) / sizeof(link_ifreqs[0]))) {
-				link_ifreqs[link_ifreqs_count++] = ifr;
+		if (ifa->ifa_addr->sa_family == AF_LINK) {
+			if (link_ifas_count < (sizeof(link_ifas) / sizeof(link_ifas[0]))) {
+				link_ifas[link_ifas_count++] = ifa;
 			}
 			continue;
 		}
 #endif				/* HAVE_AF_LINK */
 
 		/* ignore this interface if it doesn't do IP: */
-		if (ifr->ifr_addr.sa_family != AF_INET) {
+		if (ifa->ifa_addr->sa_family != AF_INET) {
 			continue;
 		}
-		/* get the interface flags, preserving the IP address in the
-		 * struct ifreq across the call: */
-		saved_ip_address = *((struct sockaddr_in *) & ifr->ifr_addr);
-		if (ioctl(dummy_fd, SIOCGIFFLAGS, ifr) < 0) {
-			ifr = NULL;
-			break;
-		}
-		saved_flags = ifr->ifr_flags;
-		*((struct sockaddr_in *) & ifr->ifr_addr) = saved_ip_address;
 
 		/* ignore this interface if it isn't up and running: */
-		if ((saved_flags & (IFF_UP | IFF_RUNNING)) != (IFF_UP | IFF_RUNNING)) {
+		if ((ifa->ifa_flags & (IFF_UP | IFF_RUNNING)) !=
+		    (IFF_UP | IFF_RUNNING)) {
 			continue;
 		}
 		/* if we don't have an interface yet, take this one depending
 		 * on whether the user asked for an interface by name or not.
 		 * if he did, and this is it, take this one.  if he didn't,
 		 * and this isn't a loopback interface, take this one: */
-		if (ifr_user == NULL
+		if (ifa_user == NULL
 		    && (ifr_name_user != NULL
-			? !strncmp(ifr->ifr_name, ifr_name_user, sizeof(ifr->ifr_name))
-			: !(ifr->ifr_flags & IFF_LOOPBACK))) {
-			ifr_user = ifr;
+			? !strcmp(ifa->ifa_name, ifr_name_user)
+			: !(ifa->ifa_flags & IFF_LOOPBACK))) {
+			ifa_user = ifa;
 		}
 	}
 
-	/* close the dummy socket: */
-	saved_errno = errno;
-	close(dummy_fd);
-	errno = saved_errno;
+	if (ifa == NULL)
+		errno = ENOENT;
 
 	/* if we don't have an interface to return: */
-	if (ifr_user == NULL) {
+	if (ifa_user == NULL) {
+		freeifaddrs(ifap);
 		return (NULL);
 	}
 	/* start the interface description: */
@@ -310,21 +273,20 @@ _ndbootd_find_interface(const char *ifr_name_user)
 
 	/* we must be able to find an AF_LINK ifreq that gives us the
 	 * interface's Ethernet address. */
-	ifr = NULL;
-	for (link_ifreqs_i = 0; link_ifreqs_i < link_ifreqs_count; link_ifreqs_i++) {
-		if (!strncmp(link_ifreqs[link_ifreqs_i]->ifr_name,
-			ifr_user->ifr_name,
-			sizeof(ifr_user->ifr_name))) {
-			ifr = link_ifreqs[link_ifreqs_i];
+	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
+		if (!strcmp(link_ifas[link_ifas_i]->ifa_name,
+		    ifa_user->ifa_name)) {
+			ifa = link_ifas[link_ifas_i];
 			break;
 		}
 	}
-	if (ifr == NULL) {
+	if (ifa == NULL) {
+		freeifaddrs(ifap);
 		free(interface);
 		return (NULL);
 	}
 	/* copy out the Ethernet address: */
-	sadl = (struct sockaddr_dl *) & ifr->ifr_addr;
+	sadl = (struct sockaddr_dl *)ifa->ifa_addr;
 	memcpy(interface->ndbootd_interface_ether, LLADDR(sadl), sadl->sdl_alen);
 
 #else				/* !HAVE_AF_LINK */
@@ -332,8 +294,12 @@ _ndbootd_find_interface(const char *ifr_name_user)
 #endif				/* !HAVE_AF_LINK */
 
 	/* finish this interface and return it: */
-	interface->ndbootd_interface_ifreq = (struct ifreq *) ndbootd_memdup(ifr_user, SIZEOF_IFREQ(ifr_user));
+	strlcpy(ifr.ifr_name, ifa_user->ifa_name, sizeof(ifr.ifr_name));
+	assert(sizeof(ifr.ifr_addr) >= ifa_user->ifa_addr->sa_len);
+	memcpy(&ifr.ifr_addr, ifa_user->ifa_addr, ifa_user->ifa_addr->sa_len);
+	interface->ndbootd_interface_ifreq = (struct ifreq *) ndbootd_memdup(&ifr, SIZEOF_IFREQ(&ifr));
 	interface->ndbootd_interface_fd = -1;
+	freeifaddrs(ifap);
 	return (interface);
 }
 
