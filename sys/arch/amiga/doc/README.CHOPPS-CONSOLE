@@ -1,0 +1,83 @@
+The reason I chose 804, thats 709 plus my local version increments since
+709.
+
+Ok first let me say that this is just a beta.  There are known cosmetic
+(small) bugs with some of the code.  I felt it was necsesary to get
+this stuff into the public ASAP.  For instance the X window people
+really need to be using the new graphics system.  I am very concerned
+that they have spent alot of time on code they will be re-writing now.
+I asked them to drop me a note but no one replied.
+
+Anyway, there are few patches to the main amiga source tree all of 
+which were nec. and proper.  Note however that I made a patch to
+the main sources, sys/sys/ioctl.h had a bug (IOCBASECMD(x) was incorrect.)
+my code depends on this being right so I included my change.
+
+I did not get to clean up my include messiness in amiga/cc_* stuff
+or in grf_cc stuff, however I did switch the grf_* stuff over to
+the BSD style of users including what they need.
+
+This release is a major update in the area of graphics.  All parts 
+are not fully done yet but they work and work solidly.  The interface
+(grf) for monitors can be considered frozen (we may add cosmetics 
+later but nothing funcitonal.)  So that people wishing to write 
+monitor code can do so now.  
+
+If you are going to write a monitor you can use my code as an example
+it may get complex and overwhelming though because of the complexity
+of supporting the custom chips.  So you may want to start of only 
+with the grf_* stuff and then consult the grf_cc stuff when needed.
+
+In the area of the ite.  I have consolidated all the monitor dependent
+files into a single ite_std.c file.  This was possible due to the 
+new view device (more on that in a little bit)  The ite now has 
+support for _underline_ and BOLD attributes as well as continuing 
+support of inverse as before.  Becuase of these additions the font
+programs need to be updated (I added the code in fontdumper and
+changed the kernel_font.c.distrib to get you started.)  The only
+thing that gets added is kernel_font_(baseline|boldsmear) attributes.
+
+All known ite scrolling bugs and repeating bugs are fixed in this version.
+(actually there is one, but I need to get this out.)
+
+The new ``/dev/view??'' are the character devices that replace the
+old ``/dev/grf''.  These new psuedo-devices represent a single monitor
+screen.  They go through the new grf interface in a portable way.
+All programs will interface graphics on Amiga-BSD through these devices.
+(ite does)
+
+I will shortly (a day or two) be releasing some example code on how
+to program with the view?? devices.  For now let me give you an
+example on how to map the bitmap data into your process with the
+view device.
+
+bitplane_data = mmap (0, size, PROT_READ|PROT_WRITE, MAP_FILE, fdesc, 0);
+
+``size'' is the number of bytes of bitmap data to map. ``fdesc'' is the
+file descriptor returned from open().
+
+There are some major bugs with mmap()'ing the 709 grf device.  The largest
+being the allowing of processes to quickly vm_fault the kernel. (one access).
+These are gone now.
+
+Support for the custom hardware is now in the kernel, things such as a 
+``/dev/audio'' will probably be written.  Its easy now.  Any way, the ite
+bell now goes through this interface.
+
+Some missing stuff: mouse pointer.  sorry sprites are not retargetable* 
+X windows is however and when that is done you will get your pointer 
+back (exactly what was it doing there anyway?)
+
+A screen blanker.  This is a very easy one I hope to have installed
+into the system in a upcoming patch (maybe 20 lines of code needed)
+Again I need to get this out now so it was skipped.
+
+I hope everyone enjoys the new code features.  Now i can try and get 
+emacs working...
+
+Chris...
+
+(this was written after a 20 hour stint to try and finalize stuff please
+forgive mispellings and improper grammar.  thanks)
+--
+(* spites could be but I didn't make them.)

@@ -1,0 +1,25 @@
+The HP300 version uses a kernel which is loaded into the range 0xfffxxx... but
+is linked for range 0x000.. This causes the problem that with switching the
+MMU to the mapped kernel, the PC becomes invalid. The HP version solves the
+problem by mapping 1:1 the last page of physical memory into virtual memory.
+
+On the Amiga, there *is* memory at PA 0x0, so we might as well use it, causes
+much less grief and weirdness in locore.s. However, since memory down there
+is CHIPMEM, inherently slower than FASTMEM, and badly needed for framebuffer
+storage space, we'll copy the kernel over to the first bank of FASTRAM, and
+when enabling the MMU, the kernel will execute in FASTRAM, although the PC
+stays the same.
+
+This strategy has the big advantage (compared to the solution in Amiga MACH)
+that we can link the kernel absolutely to VA 0, for all memory models, since
+we'll never execute the kernel in the FASTMEM space while the MMU is turned
+off.
+
+This strategy also means, that we don't have to relocate any addresses while
+bootstrapping the mmu!!
+
+Initialization of the MMU happens in amiga_init.c. This file is quite a mess,
+I have generated it trying to understand what's happening in the hp300 locore.s
+file. I think, it should be able to handle MMU initialization much cleaner
+now that we don't have to think about relocation until the MMU is enabled.
+If you need your daily bit of horror, take a look at amiga_init.c...

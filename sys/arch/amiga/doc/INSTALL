@@ -1,0 +1,121 @@
+How to install BSD on your Amiga:
+--------------------------------
+
+*Please* (re)read the README.amiga file, and make sure your system is 
+supported by the current kernel.
+
+Since BSD doesn't yet have a floppy driver, and you'll need a root fs
+to start using commands (chicken and egg problem..) to make your own
+fs, installation of the root fs is a bit hacky...
+
+vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+> We copy a binary image (8M) of the root fs directly to the place on	<
+> your harddisk. This is an extremely dangerous thing to do, since if	<
+> you get the offsets wrong, you'll destroy data on other partitions of	<
+> the drive!								<
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+If you don't feel like risking the life of innocent data on your disk,
+better stop installing now, and wait until installation gets safer in
+the future!!!
+
+
+Ok.. if you're reading on, start up hdtoolbox, and create some partitions
+for use by BSD. You'll have to at least create two partitions:
+
+o  a root partition:
+   Must have FileSystem:	Custom File System
+   	     Identifier:	0x42534452		(`BSDR')
+	     Reserved begin:	0
+		      end:	0
+	     Use custom boot code: NO (ie. no checkmark)
+	     FS block size:	512
+   You don't have to check Automount, the partition could only
+   confuse AmigaDOS.
+
+o  a swap partition:
+   Must have FileSystem:	Custom File System
+   	     Identifier:	0x42534453		(`BSDS')
+	     Reserved begin:	0
+		      end:	0
+	     Use custom boot code: NO (ie. no checkmark)
+	     FS block size:	512
+   You don't have to check Automount, the partition could only
+   confuse AmigaDOS.
+
+
+You might also add a /usr partition, for example on BSDD:
+   Must have FileSystem:	Custom File System
+   	     Identifier:	0x42534444		(`BSDD')
+	     Reserved begin:	0
+		      end:	0
+	     Use custom boot code: NO (ie. no checkmark)
+	     FS block size:	512
+   You don't have to check Automount, the partition might only
+   confuse AmigaDOS.
+
+
+Other settings (like MaxTransfer and Mask) are ignored.
+
+Now, you'll have to find out about the exact block start address and length
+in blocks of the BSDR fs (BSD will find out about the data of the other
+partitions once it's started up). Go into "Change Drive Type" menu, and
+write down the "Blocks per Cylinder" value it shows you for this drive. Then
+go into the "Partition Drive" menu, select your BSDR partition, enable
+"Advanced Options", and write down the "Start Cyl" and "End Cyl" values.
+
+Doing "Blocks per Cylinder" * "Start Cyl" gives you the block start number
+of the BSDR partition, doing "Blocks per Cylinder" * ("End Cyl" - "Start Cyl")
+results in the length of the partition in blocks. You'll need these values
+to install the root fs onto the drive, so please write them down, and PLEASE
+make sure you calculated them right, since if not, you'll scribble anywhere
+on the drive, and that just might be.. (insert worst imaginations..).
+
+**************************************************************************
+The rootfs has a length of ~8M, 16448 blocks. Your root fs must have at 
+least (!) the same amount of blocks. You don't have to make it exactly 
+16448 blocks though, a task that could even be impossible if the number of 
+blocks per cylinder on your drive is not a divisor of 16448.
+**************************************************************************
+
+Now you're almost ready to do the installation. Unzip the distributed rootfs.gz
+file (you'll need 8M of free space on your amigados partition for this!), and
+then do:
+
+  filetodev {START_NUMBER} 16448 rootfs scsi.device {UNIT} 1000
+
+with:
+  {START_NUMBER}:	above calculated block start number
+  {UNIT}:		the scsi unit you're installing on, 0-6
+
+
+The filetodev program is included in the bffs11.lzh archive, and was written
+by Chris Hooper (cdh@mtu.edu).
+
+
+
+How to start BSD
+----------------
+
+You start BSD with a loader program from AmigaDOS. This loader is called 
+`loadbsd', and it takes as parameter the kernel file, normally vmunix.
+
+So, 
+
+	loadbsd vmunix
+
+will (try to...) boot BSD. The kernel as distributed prefers to boot from
+SCSI unit 6. It will probably boot from other units as well (can't test
+this at the moment, since I don't want to repartition my other drives). If
+you run into problems (ie. BSD says it can't mount the root filesystem), 
+you'll have to recompile the kernel. Please see the RECOMPILE file for
+how to do this.
+
+
+What about /usr ?
+-----------------
+For the first distribution of the kernel, I decided not to distribute
+binaries for the /usr filesystem. Simply, because /usr is huge compared
+to root, and a.out headers are likely to change in the future, rendering
+a distributed /usr filesystem almost useless.
+
