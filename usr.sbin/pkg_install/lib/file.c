@@ -1,11 +1,11 @@
-/*	$NetBSD: file.c,v 1.66 2003/09/23 14:23:54 wiz Exp $	*/
+/*	$NetBSD: file.c,v 1.67 2003/09/23 14:55:01 wiz Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: file.c,v 1.29 1997/10/08 07:47:54 charnier Exp";
 #else
-__RCSID("$NetBSD: file.c,v 1.66 2003/09/23 14:23:54 wiz Exp $");
+__RCSID("$NetBSD: file.c,v 1.67 2003/09/23 14:55:01 wiz Exp $");
 #endif
 #endif
 
@@ -521,15 +521,15 @@ move_file(char *dir, char *fname, char *to)
 }
 
 void
-remove_files(char *path, char *pattern)
+remove_files(const char *path, const char *pattern)
 {
 	char	fpath[FILENAME_MAX];
 	glob_t	globbed;
-	int	err, i;
+	int	i;
 
 	(void) snprintf(fpath, sizeof(fpath), "%s/%s", path, pattern);
-	if ((err=glob(fpath, GLOB_NOSORT, NULL, &globbed)) != 0) {
-		switch(err) {
+	if ((i=glob(fpath, GLOB_NOSORT, NULL, &globbed)) != 0) {
+		switch(i) {
 		case GLOB_NOMATCH:
 			warn("no files matching ``%s'' found", fpath);
 			break;
