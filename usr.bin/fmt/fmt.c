@@ -1,4 +1,4 @@
-/*	$NetBSD: fmt.c,v 1.8 1998/02/12 21:11:00 ross Exp $	*/
+/*	$NetBSD: fmt.c,v 1.9 1998/12/19 16:05:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fmt.c	8.1 (Berkeley) 7/20/93";
 #endif
-__RCSID("$NetBSD: fmt.c,v 1.8 1998/02/12 21:11:00 ross Exp $");
+__RCSID("$NetBSD: fmt.c,v 1.9 1998/12/19 16:05:18 christos Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -296,7 +296,7 @@ split(line)
 		 * space. 
 		 */
 		while (*cp && *cp != ' ') {
-			if (*cp == '\\' && isspace(cp[1]))
+			if (*cp == '\\' && isspace((unsigned char)cp[1]))
 				*cp2++ = *cp++;
 			*cp2++ = *cp++;
 			wordl++;/* LIZ@UOM 6/18/85 */
