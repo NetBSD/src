@@ -1,4 +1,4 @@
-.\"	$NetBSD: iostat.8,v 1.15 2001/05/06 23:48:33 wiz Exp $
+.\"	$NetBSD: iostat.8,v 1.16 2001/07/08 18:19:16 wiz Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -53,7 +53,7 @@ statistics
 .Nm
 displays kernel
 .Tn I/O
-statistics on terminal, disk and cpu operations.  By default,
+statistics on terminal, disk and CPU operations.  By default,
 .Nm
 displays one line of statistics averaged over the machine's run time.
 The use of
@@ -88,7 +88,7 @@ If no
 .Ar wait
 interval is specified, the default is 1 second.
 .It Fl C
-Show cpu statistics.  This is enabled by default unless the
+Show CPU statistics.  This is enabled by default unless the
 .Fl d ,
 .Fl D ,
 .Fl T ,
@@ -98,7 +98,7 @@ flags are used.
 .It Fl d
 Show disk statistics.  This is the default.  Displays kilobytes per
 transfer, number of transfers, and megabytes transferred.  Use of this
-flag disables display of cpu and tty statistics.
+flag disables display of CPU and tty statistics.
 .It Fl D
 Show alternative disk statistics.  Displays kilobytes transferred, number of
 transfers, and time spent in transfers.  Use of this flag disables the
@@ -179,13 +179,13 @@ Seconds spent in disk activity
 .It cpu
 .Bl -tag -width indent -compact
 .It \&us
-% of cpu time in user mode
+% of CPU time in user mode
 .It \&ni
-% of cpu time in user mode running niced processes
+% of CPU time in user mode running niced processes
 .It \&sy
-% of cpu time in system mode
+% of CPU time in system mode
 .It \&id
-% of cpu time in idle mode
+% of CPU time in idle mode
 .El
 .El
 .Sh FILES
