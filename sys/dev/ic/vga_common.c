@@ -1,4 +1,4 @@
-/* $NetBSD: vga_common.c,v 1.2 2003/01/27 14:46:10 tsutsui Exp $ */
+/* $NetBSD: vga_common.c,v 1.3 2003/01/27 15:16:11 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -56,7 +56,7 @@ vga_common_probe(bus_space_tag_t iot, bus_space_tag_t memt)
 	gotio_vga = 1;
 
 	/* read "misc output register" */
-	regval = bus_space_read_1(iot, ioh_vga, 0xc);
+	regval = bus_space_read_1(iot, ioh_vga, VGA_MISC_DATAR);
 	mono = !(regval & 1);
 
 	if (bus_space_map(iot, (mono ? 0x3b0 : 0x3d0), 0x10, 0, &ioh_6845))

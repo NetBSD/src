@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.66 2003/01/27 14:46:10 tsutsui Exp $ */
+/* $NetBSD: vga.c,v 1.67 2003/01/27 15:16:10 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.66 2003/01/27 14:46:10 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.67 2003/01/27 15:16:10 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -501,7 +501,7 @@ vga_init(struct vga_config *vc, bus_space_tag_t iot, bus_space_tag_t memt)
 		panic("vga_init: couldn't map vga io");
 
 	/* read "misc output register" */
-	mor = bus_space_read_1(vh->vh_iot, vh->vh_ioh_vga, 0xc);
+	mor = bus_space_read_1(vh->vh_iot, vh->vh_ioh_vga, VGA_MISC_DATAR);
 	vh->vh_mono = !(mor & 1);
 
 	if (bus_space_map(vh->vh_iot, (vh->vh_mono ? 0x3b0 : 0x3d0), 0x10, 0,
@@ -665,12 +665,11 @@ vga_is_console(bus_space_tag_t iot, int type)
 	return (0);
 }
 
-#define	VGA_TS_BLANK	0x20
-
 static int
 vga_get_video(struct vga_config *vc)
 {
-	return (vga_ts_read(&vc->hdl, mode) & VGA_TS_BLANK) == 0;
+
+	return (vga_ts_read(&vc->hdl, mode) & VGA_TS_MODE_BLANK) == 0;
 }
 
 static void
@@ -681,14 +680,14 @@ vga_set_video(struct vga_config *vc, int state)
 	vga_ts_write(&vc->hdl, syncreset, 0x01);
 	if (state) {					/* unblank screen */
 		val = vga_ts_read(&vc->hdl, mode);
-		vga_ts_write(&vc->hdl, mode, val & ~VGA_TS_BLANK);
+		vga_ts_write(&vc->hdl, mode, val & ~VGA_TS_MODE_BLANK);
 #ifndef VGA_NO_VBLANK
 		val = vga_6845_read(&vc->hdl, mode);
 		vga_6845_write(&vc->hdl, mode, val | 0x80);
 #endif
 	} else {					/* blank screen */
 		val = vga_ts_read(&vc->hdl, mode);
-		vga_ts_write(&vc->hdl, mode, val | VGA_TS_BLANK);
+		vga_ts_write(&vc->hdl, mode, val | VGA_TS_MODE_BLANK);
 #ifndef VGA_NO_VBLANK
 		val = vga_6845_read(&vc->hdl, mode);
 		vga_6845_write(&vc->hdl, mode, val & ~0x80);

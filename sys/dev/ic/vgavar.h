@@ -1,4 +1,4 @@
-/* $NetBSD: vgavar.h,v 1.16 2003/01/27 14:46:11 tsutsui Exp $ */
+/* $NetBSD: vgavar.h,v 1.17 2003/01/27 15:16:12 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -90,8 +90,6 @@ static inline u_int8_t 	_vga_ts_read(struct vga_handle *, int);
 static inline void 	_vga_ts_write(struct vga_handle *, int, u_int8_t);
 static inline u_int8_t 	_vga_gdc_read(struct vga_handle *, int);
 static inline void 	_vga_gdc_write(struct vga_handle *, int, u_int8_t);
-static inline u_int8_t 	_vga_crtc_read(struct vga_handle *, int);
-static inline void 	_vga_crtc_write(struct vga_handle *, int, u_int8_t);
 
 static inline u_int8_t
 _vga_attr_read(struct vga_handle *vh, int reg)
@@ -162,22 +160,6 @@ _vga_gdc_write(struct vga_handle *vh, int reg, u_int8_t val)
 	bus_space_write_1(vh->vh_iot, vh->vh_ioh_vga, VGA_GDC_DATA, val);
 }
 
-static inline u_int8_t
-_vga_crtc_read(struct vga_handle *vh, int reg)
-{
-
-	bus_space_write_1(vh->vh_iot, vh->vh_ioh_vga, VGA_CRTC_INDEX, reg);
-	return (bus_space_read_1(vh->vh_iot, vh->vh_ioh_vga, VGA_CRTC_DATA));
-}
-
-static inline void
-_vga_crtc_write(struct vga_handle *vh, int reg, u_int8_t val)
-{
-
-	bus_space_write_1(vh->vh_iot, vh->vh_ioh_vga, VGA_CRTC_INDEX, reg);
-	bus_space_write_1(vh->vh_iot, vh->vh_ioh_vga, VGA_CRTC_DATA, val);
-}
-
 #define vga_attr_read(vh, reg) \
 	_vga_attr_read(vh, offsetof(struct reg_vgaattr, reg))
 #define vga_attr_write(vh, reg, val) \
@@ -195,6 +177,10 @@ _vga_crtc_write(struct vga_handle *vh, int reg, u_int8_t val)
 	pcdisplay_6845_read(&(vh)->vh_ph, reg)
 #define vga_6845_write(vh, reg, val) \
 	pcdisplay_6845_write(&(vh)->vh_ph, reg, val)
+#define _vga_6845_read(vh, reg) \
+	_pcdisplay_6845_read(&(vh)->vh_ph, reg)
+#define _vga_6845_write(vh, reg, val) \
+	_pcdisplay_6845_write(&(vh)->vh_ph, reg, val)
 
 int	vga_common_probe(bus_space_tag_t, bus_space_tag_t);
 void	vga_common_attach(struct vga_softc *, bus_space_tag_t,

@@ -1,4 +1,4 @@
-/*	$NetBSD: vga_raster.c,v 1.6 2003/01/27 14:46:11 tsutsui Exp $	*/
+/*	$NetBSD: vga_raster.c,v 1.7 2003/01/27 15:16:11 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Bang Jun-Young
@@ -135,7 +135,7 @@ struct vgascreen {
 
 struct vga_moderegs {
 	u_int8_t miscout;		/* Misc. output */
-	u_int8_t crtc[VGA_CRTC_NREGS];	/* CRTC controller */
+	u_int8_t crtc[MC6845_NREGS];	/* CRTC controller */
 	u_int8_t atc[VGA_ATC_NREGS];	/* Attribute controller */
 	u_int8_t ts[VGA_TS_NREGS];	/* Time sequencer */
 	u_int8_t gdc[VGA_GDC_NREGS];	/* Graphics display controller */
@@ -367,7 +367,7 @@ vga_raster_init(struct vga_config *vc, bus_space_tag_t iot,
 		panic("vga_raster_init: couldn't map vga io");
 
 	/* read "misc output register" */
-	mor = bus_space_read_1(vh->vh_iot, vh->vh_ioh_vga, 0xc);
+	mor = bus_space_read_1(vh->vh_iot, vh->vh_ioh_vga, VGA_MISC_DATAR);
 	vh->vh_mono = !(mor & 1);
 
 	if (bus_space_map(vh->vh_iot, (vh->vh_mono ? 0x3b0 : 0x3d0), 0x10, 0,
@@ -537,12 +537,11 @@ vga_is_console(bus_space_tag_t iot, int type)
 	return (0);
 }
 
-#define	VGA_TS_BLANK	0x20
-
 static int
 vga_get_video(struct vga_config *vc)
 {
-	return (vga_ts_read(&vc->hdl, mode) & VGA_TS_BLANK) == 0;
+
+	return (vga_ts_read(&vc->hdl, mode) & VGA_TS_MODE_BLANK) == 0;
 }
 
 static void
@@ -553,14 +552,14 @@ vga_set_video(struct vga_config *vc, int state)
 	vga_ts_write(&vc->hdl, syncreset, 0x01);
 	if (state) {					/* unblank screen */
 		val = vga_ts_read(&vc->hdl, mode);
-		vga_ts_write(&vc->hdl, mode, val & ~VGA_TS_BLANK);
+		vga_ts_write(&vc->hdl, mode, val & ~VGA_TS_MODE_BLANK);
 #ifndef VGA_NO_VBLANK
 		val = vga_6845_read(&vc->hdl, mode);
 		vga_6845_write(&vc->hdl, mode, val | 0x80);
 #endif
 	} else {					/* blank screen */
 		val = vga_ts_read(&vc->hdl, mode);
-		vga_ts_write(&vc->hdl, mode, val | VGA_TS_BLANK);
+		vga_ts_write(&vc->hdl, mode, val | VGA_TS_MODE_BLANK);
 #ifndef VGA_NO_VBLANK
 		val = vga_6845_read(&vc->hdl, mode);
 		vga_6845_write(&vc->hdl, mode, val & ~0x80);
@@ -937,7 +936,7 @@ vga_set_mode(struct vga_handle *vh, struct vga_moderegs *regs)
 	int i;
 
 	/* Disable display. */
-	vga_ts_write(vh, mode, vga_ts_read(vh, mode) | 0x20);
+	vga_ts_write(vh, mode, vga_ts_read(vh, mode) | VGA_TS_MODE_BLANK);
 
 	/* Write misc output register. */
 	bus_space_write_1(vh->vh_iot, vh->vh_ioh_vga, VGA_MISC_DATAW,
@@ -945,17 +944,17 @@ vga_set_mode(struct vga_handle *vh, struct vga_moderegs *regs)
 
 	/* Set synchronous reset. */
 	vga_ts_write(vh, syncreset, 0x01);
-	vga_ts_write(vh, mode, regs->ts[1] | 0x20);
+	vga_ts_write(vh, mode, regs->ts[1] | VGA_TS_MODE_BLANK);
 	for (i = 2; i < VGA_TS_NREGS; i++)
 		_vga_ts_write(vh, i, regs->ts[i]);
 	/* Clear synchronous reset. */
 	vga_ts_write(vh, syncreset, 0x03);
 
 	/* Unprotect CRTC registers 0-7. */
-	_vga_crtc_write(vh, 17, _vga_crtc_read(vh, 17) & 0x7f);
+	vga_6845_write(vh, vsynce, vga_6845_read(vh, vsynce) & ~0x80);
 	/* Write CRTC registers. */
-	for (i = 0; i < VGA_CRTC_NREGS; i++)
-		_vga_crtc_write(vh, i, regs->crtc[i]);
+	for (i = 0; i < MC6845_NREGS; i++)
+		_vga_6845_write(vh, i, regs->crtc[i]);
 
 	/* Write graphics display registers. */
 	for (i = 0; i < VGA_GDC_NREGS; i++)
@@ -966,7 +965,7 @@ vga_set_mode(struct vga_handle *vh, struct vga_moderegs *regs)
 		_vga_attr_write(vh, i, regs->atc[i]);
 
 	/* Enable display. */
-	vga_ts_write(vh, mode, vga_ts_read(vh, mode) & 0xdf);
+	vga_ts_write(vh, mode, vga_ts_read(vh, mode) & ~VGA_TS_MODE_BLANK);
 }
 
 void
@@ -1105,7 +1104,7 @@ vga_raster_putchar(void *id, int row, int col, u_int c, long attr)
 		 * Put a single width space character no matter what the
 		 * actual width of the character is.
 		 */
-		_vga_raster_putchar(scr, row, col, 0x20, attr,
+		_vga_raster_putchar(scr, row, col, ' ', attr,
 		    &vga_console_fontset_ascii);
 	scr->mem[off].ch = c;
 	scr->mem[off].attr = attr;
