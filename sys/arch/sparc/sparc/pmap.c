@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.220 2003/01/03 16:24:50 mrg Exp $ */
+/*	$NetBSD: pmap.c,v 1.221 2003/01/05 19:31:12 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -542,6 +542,23 @@ void 		(*pmap_rmu_p) __P((struct pmap *, vaddr_t, vaddr_t, int, int));
 /*
  * SP versions of the tlb flush routines.
  */
+static void sp_tlb_flush(int va, int ctx, int lvl)
+{
+	__asm__("rd	%psr, %o3");
+	__asm__("wr	%%o3, %0, %%psr" : : "n" (PSR_ET));
+	__asm__("mov	%0, %%o4" : : "n"(SRMMU_CXR));
+	__asm__("lda	[%%o4]%0, %%o5" : : "n"(ASI_SRMMU));
+	__asm__("andn	%o0, 0xfff, %o0");
+	__asm__("sta	%o1, [%o4]4");
+	__asm__("or	%o0, %o2, %o0");
+	__asm__("sta	%g0, [%o0]3");
+	__asm__("sta	%o5, [%o4]4");
+	__asm__("wr	%o3, 0, %psr");
+	__asm__("nop");
+	__asm__("retl");
+	__asm__("nop");
+}
+
 static __inline__ void sp_tlb_flush_page(int va, int ctx)
 {
 	int octx = getcontext4m();
@@ -1901,7 +1918,7 @@ ctx_alloc(pm)
 	if (pm->pm_ctx)
 		panic("ctx_alloc pm_ctx");
 	if (pmapdebug & PDB_CTX_ALLOC)
-		printf("ctx_alloc(%p)\n", pm);
+		printf("ctx_alloc[%d](%p)\n", cpu_number(), pm);
 #endif
 	if (CPU_ISSUN4 || CPU_ISSUN4C) {
 		gap_start = pm->pm_gap_start;
@@ -1927,8 +1944,8 @@ ctx_alloc(pm)
 		if (c->c_pmap == NULL)
 			panic("ctx_alloc cu_pmap");
 		if (pmapdebug & (PDB_CTX_ALLOC | PDB_CTX_STEAL))
-			printf("ctx_alloc: steal context %d from %p\n",
-			    cnum, c->c_pmap);
+			printf("ctx_alloc[%d]: steal context %d from %p\n",
+			    cpu_number(), cnum, c->c_pmap);
 #endif
 		c->c_pmap->pm_ctx = NULL;
 		c->c_pmap->pm_ctxnum = 0;
@@ -3985,7 +4002,7 @@ pmap_create()
 	pm->pm_refcount = 1;
 #ifdef DEBUG
 	if (pmapdebug & PDB_CREATE)
-		printf("pmap_create: created %p\n", pm);
+		printf("pmap_create[%d]: created %p\n", cpu_number(), pm);
 	pmap_quiet_check(pm);
 #endif
 	return (pm);
@@ -4003,7 +4020,7 @@ pmap_destroy(pm)
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_DESTROY)
-		printf("pmap_destroy(%p)\n", pm);
+		printf("pmap_destroy[%d](%p)\n", cpu_number(), pm);
 #endif
 	simple_lock(&pm->pm_lock);
 	count = --pm->pm_refcount;
@@ -4050,7 +4067,8 @@ pmap_remove(pm, va, endva)
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_REMOVE)
-		printf("pmap_remove(%p, 0x%lx, 0x%lx)\n", pm, va, endva);
+		printf("pmap_remove[%d](%p, 0x%lx, 0x%lx)\n",
+			cpu_number(), pm, va, endva);
 #endif
 
 	if (pm == pmap_kernel()) {
@@ -4935,7 +4953,8 @@ pmap_page_protect4m(pg, prot)
 #ifdef DEBUG
 	if ((pmapdebug & PDB_CHANGEPROT) ||
 	    (pmapdebug & PDB_REMOVE && prot == VM_PROT_NONE))
-		printf("pmap_page_protect(0x%lx, 0x%x)\n", pa, prot);
+		printf("pmap_page_protect[%d](0x%lx, 0x%x)\n",
+			cpu_number(), pa, prot);
 #endif
 	/*
 	 * Skip unmanaged pages, or operations that do not take
@@ -5070,7 +5089,8 @@ pmap_protect4m(pm, sva, eva, prot)
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_CHANGEPROT)
-		printf("pmap_protect[curpid %d, ctx %d](%lx, %lx, %x)\n",
+		printf("pmap_protect[%d][curpid %d, ctx %d,%d](%lx, %lx, %x)\n",
+			cpu_number(), getcontext4m(),
 			curproc==NULL ? -1 : curproc->p_pid,
 			pm->pm_ctx ? pm->pm_ctxnum : -1, sva, eva, prot);
 #endif
@@ -5155,8 +5175,8 @@ pmap_changeprot4m(pm, va, prot, wired)
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_CHANGEPROT)
-		printf("pmap_changeprot(%p, 0x%lx, 0x%x, 0x%x)\n",
-		    pm, va, prot, wired);
+		printf("pmap_changeprot[%d](%p, 0x%lx, 0x%x, 0x%x)\n",
+		    cpu_number(), pm, va, prot, wired);
 #endif
 
 	write_user_windows();	/* paranoia */
@@ -5816,10 +5836,10 @@ pmap_enter4m(pm, va, pa, prot, flags)
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_ENTER)
-		printf("pmap_enter[curpid %d, ctx %d]"
+		printf("pmap_enter[curcpu %d, curpid %d, ctx %d,%d]"
 			"(%p, 0x%lx, 0x%lx, 0x%x, 0x%x)\n",
-			curproc==NULL ? -1 : curproc->p_pid,
-			pm->pm_ctx==NULL ? -1 : pm->pm_ctxnum,
+			cpu_number(), curproc==NULL ? -1 : curproc->p_pid,
+			getcontext4m(), pm->pm_ctx==NULL ? -1 : pm->pm_ctxnum,
 			pm, va, pa, prot, flags);
 #endif
 
@@ -7232,7 +7252,6 @@ pm_check_u(s, pm)
 					 :(*pte & PG_V)))
 					m++;
 				if (m != sp->sg_npte)
-				    /*if (pmapdebug & 0x10000)*/
 					printf("%s: cpu %d: user CHK(vr %d, vs %d): "
 					    "npte(%d) != # valid(%d)\n",
 						s, cpu, vr, vs, sp->sg_npte, m);
@@ -7254,7 +7273,7 @@ pm_check_k(s, pm)		/* Note: not as extensive as pm_check_u. */
 	struct regmap *rp;
 	int cpu, vr, vs, n;
 
-	cpu = cpuinfo.ci_cpuid;
+	cpu = cpu_number();
 
 	if (pm->pm_regmap == NULL)
 		panic("%s: CHK(pmap %p): no region mapping", s, pm);
