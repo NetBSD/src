@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.31 2004/01/04 11:33:29 jdolecek Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.32 2004/08/28 22:12:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.31 2004/01/04 11:33:29 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.32 2004/08/28 22:12:40 thorpej Exp $");
 
 #include "opt_armfpe.h"
 #include "opt_pmap_debug.h"
@@ -305,41 +305,6 @@ cpu_swapout(l)
 		pmap_update(p->p_vmspace->vm_map.pmap);
 	}
 #endif
-}
-
-
-/*
- * Move pages from one kernel virtual address to another.
- * Both addresses are assumed to reside in the Sysmap,
- * and size must be a multiple of PAGE_SIZE.
- */
-
-void
-pagemove(from, to, size)
-	caddr_t from, to;
-	size_t size;
-{
-	paddr_t pa;
-	boolean_t rv;
-
-	if (size % PAGE_SIZE)
-		panic("pagemove: size=%08lx", (u_long) size);
-
-	while (size > 0) {
-		rv = pmap_extract(pmap_kernel(), (vaddr_t) from, &pa);
-#ifdef DEBUG
-		if (rv == FALSE)
-			panic("pagemove 2");
-		if (pmap_extract(pmap_kernel(), (vaddr_t) to, NULL) == TRUE)
-			panic("pagemove 3");
-#endif
-		pmap_kremove((vaddr_t) from, PAGE_SIZE);
-		pmap_kenter_pa((vaddr_t) to, pa, VM_PROT_READ|VM_PROT_WRITE);
-		from += PAGE_SIZE;
-		to += PAGE_SIZE;
-		size -= PAGE_SIZE;
-	}
-	pmap_update(pmap_kernel());
 }
 
 /*
