@@ -1,10 +1,9 @@
-#	$NetBSD: Makefile,v 1.3 2004/03/06 03:31:08 rtr Exp $
+#	$NetBSD: Makefile,v 1.4 2004/07/23 16:28:18 sketch Exp $
 
 .include "../../../Makefile.serverlib"
 
 
 LIB=	dummy
-.PATH:		${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/dummylib
 
 .PATH:	${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/dummylib
 SRCS=	fatalerror.c getvalidbios.c logvwrite.c pcitestmulti.c \
