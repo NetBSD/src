@@ -1,5 +1,5 @@
 #
-#	$NetBSD: files.atari,v 1.82 2001/05/14 13:10:45 leo Exp $
+#	$NetBSD: files.atari,v 1.83 2001/05/15 14:14:48 leo Exp $
 
 maxpartitions 16
 
@@ -141,6 +141,8 @@ include "dev/i2o/files.i2o"
 # PCI-devices
 #
 file	arch/atari/pci/pci_machdep.c	pci | grfet
+file	arch/atari/pci/pci_hades.c	pci & _atarihw_
+file 	arch/atari/pci/pci_milan.c	pci & _milanhw_
 file	arch/atari/pci/pci_vga.c	pci
 file	arch/atari/pci/pci_tseng.c	pci
 
