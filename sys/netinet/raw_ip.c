@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.28 1996/05/23 17:03:27 mycroft Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.29 1996/05/24 19:03:13 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -263,6 +263,27 @@ rip_ctloutput(op, so, level, optname, m)
 }
 
 int
+rip_bind(inp, nam)
+	struct inpcb *inp;
+	struct mbuf *nam;
+{
+	struct sockaddr_in *addr = mtod(nam, struct sockaddr_in *);
+
+	if (nam->m_len != sizeof(*addr))
+		return (EINVAL);
+	if (ifnet.tqh_first == 0)
+		return (EADDRNOTAVAIL);
+	if (addr->sin_family != AF_INET &&
+	    addr->sin_family != AF_IMPLINK)
+		return (EAFNOSUPPORT);
+	if (addr->sin_addr.s_addr != INADDR_ANY &&
+	    ifa_ifwithaddr(sintosa(addr)) == 0)
+		return (EADDRNOTAVAIL);
+	inp->inp_laddr = addr->sin_addr;
+	return (0);
+}
+
+int
 rip_connect(inp, nam)
 	struct inpcb *inp;
 	struct mbuf *nam;
@@ -353,30 +374,8 @@ rip_usrreq(so, req, m, nam, control, p)
 		break;
 
 	case PRU_BIND:
-	    {
-		struct sockaddr_in *addr = mtod(nam, struct sockaddr_in *);
-
-		if (nam->m_len != sizeof(*addr)) {
-			error = EINVAL;
-			break;
-		}
-		if (ifnet.tqh_first == 0) {
-			error = EADDRNOTAVAIL;
-			break;
-		}
-		if (addr->sin_family != AF_INET &&
-		    addr->sin_family != AF_IMPLINK) {
-			error = EAFNOSUPPORT;
-			break;
-		}
-		if (addr->sin_addr.s_addr != INADDR_ANY &&
-		    ifa_ifwithaddr(sintosa(addr)) == 0) {
-			error = EADDRNOTAVAIL;
-			break;
-		}
-		inp->inp_laddr = addr->sin_addr;
+		error = rip_bind(inp, nam);
 		break;
-	    }
 
 	case PRU_LISTEN:
 		error = EOPNOTSUPP;
