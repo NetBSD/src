@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.88 2002/02/07 09:24:04 ross Exp $
+.\"	$NetBSD: sysctl.3,v 1.89 2002/02/10 01:21:38 ross Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -42,8 +42,8 @@
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
-.Fd #include \*(ltsys/param.h\*(gt
-.Fd #include \*(ltsys/sysctl.h\*(gt
+.Fd #include \*[Lt]sys/param.h\*[Gt]
+.Fd #include \*[Lt]sys/sysctl.h\*[Gt]
 .Ft int
 .Fn sysctl "int *name" "u_int namelen" "void *oldp" "size_t *oldlenp" "void *newp" "size_t newlen"
 .Sh DESCRIPTION
@@ -1431,7 +1431,7 @@ for more details.
 .Sh CTL_VENDOR
 The "vendor" toplevel name is reserved to be used by vendors who wish to
 have their own private MIB tree. Intended use is to store values under
-.Dq vendor.\*(ltyourname\*(gt.* .
+.Dq vendor.\*[Lt]yourname\*[Gt].* .
 .Sh RETURN VALUES
 If the call to
 .Nm
