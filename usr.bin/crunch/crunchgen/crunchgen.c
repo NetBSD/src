@@ -1,4 +1,4 @@
-/*	$NetBSD: crunchgen.c,v 1.25 2001/10/05 22:52:56 jmc Exp $	*/
+/*	$NetBSD: crunchgen.c,v 1.26 2001/10/21 23:06:59 jmc Exp $	*/
 /*
  * Copyright (c) 1994 University of Maryland
  * All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: crunchgen.c,v 1.25 2001/10/05 22:52:56 jmc Exp $");
+__RCSID("$NetBSD: crunchgen.c,v 1.26 2001/10/21 23:06:59 jmc Exp $");
 #endif
 
 #include <stdlib.h>
@@ -98,6 +98,7 @@ int reading_cache;
 char *machine;
 char *makeobjdirprefix;
 char *makebin;
+char *makeflags;
 
 /* general library routines */
 
@@ -122,6 +123,9 @@ int main(int argc, char **argv)
 
     if ((makebin = getenv("MAKE")) == NULL)
 	makebin = strdup("make");
+
+    if ((makeflags = getenv("MAKEFLAGS")) == NULL)
+	makeflags = strdup("");
 
     if ((machine = getenv("MACHINE")) == NULL) {
 	struct utsname utsname;
@@ -607,7 +611,8 @@ void fillin_program_objs(prog_t *p, char *dirpath)
     fclose(f);
 
     (void)snprintf(line, sizeof(line),
-	"cd %s && %s -f %s crunchgen_objs 2>&1", dirpath, makebin, tempfname);
+	"cd %s && %s -f %s %s crunchgen_objs 2>&1", dirpath, makebin, 
+	tempfname, makeflags);
     if((f = popen(line, "r+")) == NULL) {
 	perror("submake pipe");
 	goterror = 1;
@@ -804,6 +809,7 @@ void top_makefile_rules(FILE *outmk)
 
     fprintf(outmk, "DBG=%s\n", dbg);
     fprintf(outmk, "STRIP?=strip\n");
+    fprintf(outmk, "MAKE?=make\n");
 #ifdef NEW_TOOLCHAIN
     fprintf(outmk, "OBJCOPY?=objcopy\n");
 #else
@@ -852,7 +858,7 @@ void prog_makefile_rules(FILE *outmk, prog_t *p)
 	    p->ident, p->ident, p->ident);
 	fprintf(outmk, "\tprintf \".PATH: ${%s_SRCDIR}\\n.CURDIR:= ${%s_SRCDIR}\\n"
 	    ".include \\\"\\$${.CURDIR}/Makefile\\\"\\n\" \\\n", p->ident, p->ident);
-	fprintf(outmk, "\t| make DBG=\"${DBG}\" -f- depend ${%s_OBJS}\n\n",
+	fprintf(outmk, "\t| ${MAKE} DBG=\"${DBG}\" -f- depend ${%s_OBJS}\n\n",
 	    p->ident);
     }
     else
