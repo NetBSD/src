@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.126 2002/09/06 13:18:43 gehenna Exp $	 */
+/* $NetBSD: machdep.c,v 1.127 2002/09/12 18:22:23 ragge Exp $	 */
 
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
@@ -403,7 +403,9 @@ sys___sigreturn14(p, v, retval)
 	return (EJUSTRETURN);
 }
 
-struct trampframe {
+#if defined(COMPAT_16) || defined(COMPAT_ULTRIX) || defined(COMPAT_IBCS2)
+
+struct otrampframe {
 	unsigned	sig;	/* Signal number */
 	unsigned	code;	/* Info code */
 	unsigned	scp;	/* Pointer to struct sigcontext */
@@ -414,17 +416,14 @@ struct trampframe {
 				 * argument */
 };
 
-void
-sendsig(sig, mask, code)
-	int		sig;
-	sigset_t	*mask;
-	u_long		code;
+static void
+oldsendsig(int sig, sigset_t *mask, u_long code)
 {
 	struct	proc	*p = curproc;
 	struct	sigacts *ps = p->p_sigacts;
 	struct	trapframe *syscf;
 	struct	sigcontext *sigctx, gsigctx;
-	struct	trampframe *trampf, gtrampf;
+	struct	otrampframe *trampf, gtrampf;
 	unsigned	cursp;
 	int	onstack;
 	sig_t	catcher = SIGACTION(p, sig).sa_handler;
@@ -443,8 +442,8 @@ sendsig(sig, mask, code)
 
 	/* Set up positions for structs on stack */
 	sigctx = (struct sigcontext *) (cursp - sizeof(struct sigcontext));
-	trampf = (struct trampframe *) ((unsigned)sigctx -
-	    sizeof(struct trampframe));
+	trampf = (struct otrampframe *) ((unsigned)sigctx -
+	    sizeof(struct otrampframe));
 
 	 /* Place for pointer to arg list in sigreturn */
 	cursp = (unsigned)sigctx - 8;
@@ -477,23 +476,104 @@ sendsig(sig, mask, code)
 	 * machine-dependent code in libc.
 	 */
 	switch (ps->sa_sigdesc[sig].sd_vers) {
-#if 1 /* COMPAT_16 */
 	case 0:
 		syscf->pc = (int)p->p_sigctx.ps_sigcode;
 		break;
-#endif /* COMPAT_16 */
-
 	case 1:
 		syscf->pc = (int)ps->sa_sigdesc[sig].sd_tramp;
 		break;
 
 	default:
-		/* Don't know what trampoline version; kill it. */
+		/* ``cannot happen'' */
 		sigexit(p, SIGILL);
 	}
 	syscf->psl = PSL_U | PSL_PREVU;
 	syscf->ap = cursp;
 	syscf->sp = cursp;
+
+	if (onstack)
+		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
+}
+
+#endif
+
+struct trampoline {
+	unsigned int narg;	/* Argument count (== 3) */
+	unsigned int sig;	/* Signal number */
+	unsigned int code;	/* Info code */
+	unsigned int scp;	/* Pointer to struct sigcontext */
+};
+
+/*
+ * Brief description of how sendsig() works:
+ * A struct sigcontext is allocated on the user stack. The relevant
+ * registers are saved in it. Below it is a struct trampframe constructed, it
+ * is actually an argument list for callg. The user
+ * stack pointer is put below all structs.
+ *
+ * The registers will contain when the signal handler is called:
+ * pc, psl	- Obvious
+ * sp		- An address below all structs
+ * fp 		- The address of the signal handler
+ * ap		- The address to the callg frame
+ *
+ * The trampoline code will save r0-r5 before doing anything else.
+ */
+void
+sendsig(int sig, sigset_t *mask, u_long code)
+{
+	struct proc *p = curproc;
+	struct sigacts *ps = p->p_sigacts;
+	struct trampoline tramp;
+	struct sigcontext sigctx;
+	struct trapframe *tf = p->p_addr->u_pcb.framep;
+	sig_t catcher = SIGACTION(p, sig).sa_handler;
+	int onstack =
+	    (p->p_sigctx.ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
+	    (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
+	int cursp = onstack == 0 ? tf->sp :
+	    ((int)p->p_sigctx.ps_sigstk.ss_sp + p->p_sigctx.ps_sigstk.ss_size);
+
+#if defined(COMPAT_16) || defined(COMPAT_ULTRIX) || defined(COMPAT_IBCS2)
+	if (ps->sa_sigdesc[sig].sd_vers < 2)
+		return oldsendsig(sig, mask, code);
+#endif
+
+	/*
+	 * The sigcontext struct will be passed back to sigreturn().
+	 */
+	sigctx.sc_pc = tf->pc;
+	sigctx.sc_ps = tf->psl;
+	sigctx.sc_ap = tf->ap;
+	sigctx.sc_fp = tf->fp;
+	sigctx.sc_sp = tf->sp;
+	sigctx.sc_onstack = p->p_sigctx.ps_sigstk.ss_flags & SS_ONSTACK;
+	sigctx.sc_mask = *mask;
+
+	/*
+	 * Arguments given to the signal handler.
+	 */
+	tramp.narg = 3;
+	tramp.sig = sig;
+	tramp.code = code;
+	tramp.scp = cursp - sizeof(struct sigcontext);
+
+	if (copyout(&sigctx, (char *)tramp.scp, sizeof(struct sigcontext)) ||
+	    copyout(&tramp, (char *)tramp.scp - sizeof(tramp), sizeof(tramp)))
+		sigexit(p, SIGILL);
+
+	switch (ps->sa_sigdesc[sig].sd_vers) {
+	case 2:
+		tf->pc = (int)ps->sa_sigdesc[sig].sd_tramp;
+		break;
+	default:
+		/* Don't know what trampoline version; kill it. */
+		sigexit(p, SIGILL);
+	}
+	tf->psl = PSL_U | PSL_PREVU;
+	tf->ap = tramp.scp - sizeof(tramp);
+	tf->fp = (int)catcher;
+	tf->sp = tf->ap;
 
 	if (onstack)
 		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
