@@ -1,4 +1,4 @@
-/*	$NetBSD: int_limits.h,v 1.2 2001/04/26 16:25:21 kleink Exp $	*/
+/*	$NetBSD: int_limits.h,v 1.3 2001/09/03 01:51:39 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -105,9 +105,15 @@
 
 /* 7.18.2.4 Limits of integer types capable of holding object pointers */
 
+#ifdef __ELF__
+#define	INTPTR_MIN	(-0x7fffffffL-1)		/* intptr_t	  */
+#define	INTPTR_MAX	0x7fffffffL			/* intptr_t	  */
+#define	UINTPTR_MAX	0xffffffffUL			/* uintptr_t	  */
+#else
 #define	INTPTR_MIN	(-0x7fffffff-1)			/* intptr_t	  */
 #define	INTPTR_MAX	0x7fffffff			/* intptr_t	  */
 #define	UINTPTR_MAX	0xffffffffU			/* uintptr_t	  */
+#endif
 
 /* 7.18.2.5 Limits of greatest-width integer types */
 
@@ -121,15 +127,24 @@
  */
 
 /* limits of ptrdiff_t */
+#ifdef __ELF__
+#define	PTRDIFF_MIN	(-0x7fffffffL-1)		/* ptrdiff_t	  */
+#define	PTRDIFF_MAX	0x7fffffffL			/* ptrdiff_t	  */
+#else
 #define	PTRDIFF_MIN	(-0x7fffffff-1)			/* ptrdiff_t	  */
 #define	PTRDIFF_MAX	0x7fffffff			/* ptrdiff_t	  */
+#endif
 
 /* limits of sig_atomic_t */
 #define	SIG_ATOMIC_MIN	(-0x7fffffff-1)			/* sig_atomic_t	  */
 #define	SIG_ATOMIC_MAX	0x7fffffff			/* sig_atomic_t	  */
 
 /* limit of size_t */
+#ifdef __ELF__
+#define	SIZE_MAX	0xffffffffUL			/* size_t	  */
+#else
 #define	SIZE_MAX	0xffffffffU			/* size_t	  */
+#endif
 
 #ifndef WCHAR_MIN /* also possibly defined in <wchar.h> */
 /* limits of wchar_t */
