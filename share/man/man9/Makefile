@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.169 2005/01/02 17:34:43 thorpej Exp $
+#       $NetBSD: Makefile,v 1.170 2005/04/01 12:07:42 yamt Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -512,10 +512,9 @@ MLINKS+=uvm.9 uvm_init.9 uvm.9 uvm_init_limits.9 uvm.9 uvm_setpagesize.9 \
 	uvm.9 uvmspace_fork.9 uvm.9 uvmspace_free.9 uvm.9 uvmspace_share.9 \
 	uvm.9 uvmspace_unshare.9 uvm.9 uvm_fault.9 uvm.9 uvn_attach.9 \
 	uvm.9 uvm_vnp_setsize.9 \
-	uvm.9 uvm_io.9 uvm.9 uvm_km_alloc.9 uvm.9 uvm_km_zalloc.9 \
-	uvm.9 uvm_km_alloc1.9 uvm.9 uvm_km_kmemalloc.9 uvm.9 uvm_km_valloc.9 \
-	uvm.9 uvm_km_valloc_wait.9 uvm.9 uvm_km_suballoc.9 uvm.9 uvm_km_free.9 \
-	uvm.9 uvm_km_free_wakeup.9 uvm.9 uvm_pagealloc.9 \
+	uvm.9 uvm_io.9 uvm.9 uvm_km_alloc.9 \
+	uvm.9 uvm_km_suballoc.9 uvm.9 uvm_km_free.9 \
+	uvm.9 uvm_pagealloc.9 \
 	uvm.9 uvm_pagerealloc.9 uvm.9 uvm_pagefree.9 uvm.9 uvm_pglistalloc.9 \
 	uvm.9 uvm_pglistfree.9 uvm.9 uvm_page_physload.9 uvm.9 uvm_pageout.9 \
 	uvm.9 uvm_scheduler.9 uvm.9 uvm_swapin.9 uvm.9 uao_create.9 \
