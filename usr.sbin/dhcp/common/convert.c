@@ -4,7 +4,7 @@
    can't be assumed to be aligned. */
 
 /*
- * Copyright (c) 1995, 1996 The Internet Software Consortium.
+ * Copyright (c) 1996-1999 Internet Software Consortium.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -35,21 +35,22 @@
  * SUCH DAMAGE.
  *
  * This software has been written for the Internet Software Consortium
- * by Ted Lemon <mellon@fugue.com> in cooperation with Vixie
- * Enterprises.  To learn more about the Internet Software Consortium,
- * see ``http://www.vix.com/isc''.  To learn more about Vixie
- * Enterprises, see ``http://www.vix.com''.
+ * by Ted Lemon in cooperation with Vixie Enterprises and Nominum, Inc.
+ * To learn more about the Internet Software Consortium, see
+ * ``http://www.isc.org/''.  To learn more about Vixie Enterprises,
+ * see ``http://www.vix.com''.   To learn more about Nominum, Inc., see
+ * ``http://www.nominum.com''.
  */
 
 #ifndef lint
 static char copyright[] =
-"$Id: convert.c,v 1.1.1.3 1999/02/18 21:48:49 mellon Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: convert.c,v 1.1.1.4 2000/04/22 07:11:32 mellon Exp $ Copyright (c) 1996-1999 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
 
 u_int32_t getULong (buf)
-	unsigned char *buf;
+	const unsigned char *buf;
 {
 	unsigned long ibuf;
 
@@ -58,7 +59,7 @@ u_int32_t getULong (buf)
 }
 
 int32_t getLong (buf)
-	unsigned char *buf;
+	const unsigned char *buf;
 {
 	long ibuf;
 
@@ -66,8 +67,8 @@ int32_t getLong (buf)
 	return ntohl (ibuf);
 }
 
-u_int16_t getUShort (buf)
-	unsigned char *buf;
+u_int32_t getUShort (buf)
+	const unsigned char *buf;
 {
 	unsigned short ibuf;
 
@@ -75,8 +76,8 @@ u_int16_t getUShort (buf)
 	return ntohs (ibuf);
 }
 
-int16_t getShort (buf)
-	unsigned char *buf;
+int32_t getShort (buf)
+	const unsigned char *buf;
 {
 	short ibuf;
 
@@ -102,7 +103,7 @@ void putLong (obuf, val)
 
 void putUShort (obuf, val)
 	unsigned char *obuf;
-	unsigned int val;
+	u_int32_t val;
 {
 	u_int16_t tmp = htons (val);
 	memcpy (obuf, &tmp, sizeof tmp);
@@ -110,9 +111,83 @@ void putUShort (obuf, val)
 
 void putShort (obuf, val)
 	unsigned char *obuf;
-	int val;
+	int32_t val;
 {
 	int16_t tmp = htons (val);
 	memcpy (obuf, &tmp, sizeof tmp);
 }
 
+void putUChar (obuf, val)
+	unsigned char *obuf;
+	u_int32_t val;
+{
+	*obuf = val;
+}
+
+u_int32_t getUChar (obuf)
+	const unsigned char *obuf;
+{
+	return obuf [0];
+}
+
+int converted_length (buf, base, width)
+	const unsigned char *buf;
+	unsigned int base;
+	unsigned int width;
+{
+	u_int32_t number;
+	u_int32_t column;
+	int power = 1;
+	u_int32_t newcolumn = base;
+
+	if (base > 16)
+		return 0;
+
+	if (width == 1)
+		number = getUChar (buf);
+	else if (width == 2)
+		number = getUShort (buf);
+	else if (width == 4)
+		number = getULong (buf);
+
+	do {
+		column = newcolumn;
+
+		if (number < column)
+			return power;
+		power++;
+		newcolumn = column * base;
+		/* If we wrap around, it must be the next power of two up. */
+	} while (newcolumn > column);
+
+	return power;
+}
+
+int binary_to_ascii (outbuf, inbuf, base, width)
+	unsigned char *outbuf;
+	const unsigned char *inbuf;
+	unsigned int base;
+	unsigned int width;
+{
+	u_int32_t number;
+	static char h2a [] = "0123456789abcdef";
+	int power = converted_length (inbuf, base, width);
+	int i, j;
+
+	if (base > 16)
+		return 0;
+
+	if (width == 1)
+		number = getUChar (inbuf);
+	else if (width == 2)
+		number = getUShort (inbuf);
+	else if (width == 4)
+		number = getULong (inbuf);
+
+	for (i = power - 1 ; i >= 0; i--) {
+		outbuf [i] = h2a [number % base];
+		number /= base;
+	}
+
+	return power;
+}

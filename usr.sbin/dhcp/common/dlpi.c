@@ -3,7 +3,7 @@
    Data Link Provider Interface (DLPI) network interface code. */
 
 /*
- * Copyright (c) 1998, 1999 The Internet Software Consortium.
+ * Copyright (c) 1996-2000 Internet Software Consortium.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,9 +33,9 @@
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * This software has been written for the Internet Software Consortium
+ * This software was written for the Internet Software Consortium
  * by Eric James Negaard, <lmdejn@lmd.ericsson.se>.  To learn more about
- * the Internet Software Consortium, see ``http://www.vix.com/isc''.
+ * the Internet Software Consortium, see ``http://www.isc.org''.
  */
 
 /*
@@ -84,7 +84,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: dlpi.c,v 1.1.1.5 1999/04/26 15:43:06 mellon Exp $ Copyright (c) 1998, 1999 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: dlpi.c,v 1.1.1.6 2000/04/22 07:11:33 mellon Exp $ Copyright (c) 1996-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -208,7 +208,7 @@ int if_register_dlpi (info)
 
 	/* Open a DLPI device */
 	if ((sock = dlpiopen (info -> name)) < 0) {
-	    error ("Can't open DLPI device for %s: %m", info -> name);
+	    log_fatal ("Can't open DLPI device for %s: %m", info -> name);
 	}
 
 	/*
@@ -220,18 +220,22 @@ int if_register_dlpi (info)
 	 * the dl_mac_type and dl_provider_style
 	 */
 	if (dlpiinforeq(sock) < 0 || dlpiinfoack(sock, (char *)buf) < 0) {
-	    error ("Can't get DLPI MAC type for %s: %m", info -> name);
+	    log_fatal ("Can't get DLPI MAC type for %s: %m", info -> name);
 	} else {
 	    switch (dlp -> info_ack.dl_mac_type) {
 	      case DL_CSMACD: /* IEEE 802.3 */
 	      case DL_ETHER:
-		info -> hw_address.htype = HTYPE_ETHER;
+		info -> hw_address.hbuf [0] = HTYPE_ETHER;
+		break;
+	      /* adding token ring 5/1999 - mayer@ping.at  */ 
+	      case DL_TPR:
+		info -> hw_address.hbuf [0] = HTYPE_IEEE802;
 		break;
 	      case DL_FDDI:
-		info -> hw_address.htype = HTYPE_FDDI;
+		info -> hw_address.hbuf [0] = HTYPE_FDDI;
 		break;
 	      default:
-		error ("%s: unknown DLPI MAC type %d",
+		log_fatal ("%s: unknown DLPI MAC type %ld",
 		       info -> name,
 		       dlp -> info_ack.dl_mac_type);
 		break;
@@ -247,7 +251,7 @@ int if_register_dlpi (info)
 	
 	    if (dlpiattachreq (sock, unit) < 0
 		|| dlpiokack (sock, (char *)buf) < 0) {
-		error ("Can't attach DLPI device for %s: %m", info -> name);
+		log_fatal ("Can't attach DLPI device for %s: %m", info -> name);
 	    }
 	}
 
@@ -256,7 +260,7 @@ int if_register_dlpi (info)
 	 */
 	if (dlpibindreq (sock, DLPI_DEFAULTSAP, 0, DL_CLDLS, 0, 0) < 0
 	    || dlpibindack (sock, (char *)buf) < 0) {
-	    error ("Can't bind DLPI device for %s: %m", info -> name);
+	    log_fatal ("Can't bind DLPI device for %s: %m", info -> name);
 	}
 
 	/*
@@ -265,25 +269,25 @@ int if_register_dlpi (info)
 	 */
 	if (dlpiphysaddrreq (sock, DL_CURR_PHYS_ADDR) < 0
 	    || dlpiphysaddrack (sock, (char *)buf) < 0) {
-	    error ("Can't get DLPI hardware address for %s: %m",
+	    log_fatal ("Can't get DLPI hardware address for %s: %m",
 		   info -> name);
 	}
 
-	info -> hw_address.hlen = dlp -> physaddr_ack.dl_addr_length;
-	memcpy (info -> hw_address.haddr,
+	info -> hw_address.hlen = dlp -> physaddr_ack.dl_addr_length + 1;
+	memcpy (&info -> hw_address.hbuf [1],
 		(char *)buf + dlp -> physaddr_ack.dl_addr_offset,
 		dlp -> physaddr_ack.dl_addr_length);
 
 #ifdef USE_DLPI_RAW
 	if (strioctl (sock, DLIOCRAW, INFTIM, 0, 0) < 0) {
-	    error ("Can't set DLPI RAW mode for %s: %m",
+	    log_fatal ("Can't set DLPI RAW mode for %s: %m",
 		   info -> name);
 	}
 #endif
 
 #ifdef USE_DLPI_PFMOD
 	if (ioctl (sock, I_PUSH, "pfmod") < 0) {
-	    error ("Can't push packet filter onto DLPI for %s: %m",
+	    log_fatal ("Can't push packet filter onto DLPI for %s: %m",
 		   info -> name);
 	}
 #endif
@@ -336,7 +340,7 @@ void if_register_send (info)
 	/* Install the filter */
 	if (strioctl (info -> wfdesc, PFIOCSETF, INFTIM,
 		      sizeof (pf), (char *)&pf) < 0) {
-	    error ("Can't set PFMOD send filter on %s: %m", info -> name);
+	    log_fatal ("Can't set PFMOD send filter on %s: %m", info -> name);
 	}
 
 # endif /* USE_DLPI_PFMOD */
@@ -349,11 +353,11 @@ void if_register_send (info)
 #endif
 
         if (!quiet_interface_discovery)
-		note ("Sending on   DLPI/%s/%s%s%s",
+		log_info ("Sending on   DLPI/%s/%s%s%s",
 		      info -> name,
-		      print_hw_addr (info -> hw_address.htype,
-				     info -> hw_address.hlen,
-				     info -> hw_address.haddr),
+		      print_hw_addr (info -> hw_address.hbuf [0],
+				     info -> hw_address.hlen - 1,
+				     &info -> hw_address.hbuf [1]),
 		      (info -> shared_network ? "/" : ""),
 		      (info -> shared_network ?
 		       info -> shared_network -> name : ""));
@@ -366,6 +370,27 @@ void if_register_send (info)
 	sleep (DLPI_FIRST_SEND_WAIT);
 # endif
 #endif
+}
+
+void if_deregister_send (info)
+	struct interface_info *info;
+{
+	/* If we're using the DLPI API for sending and receiving,
+	   we don't need to register this interface twice. */
+#ifndef USE_DLPI_RECEIVE
+	close (info -> wfdesc);
+#endif
+	info -> wfdesc = -1;
+
+        if (!quiet_interface_discovery)
+		log_info ("Disabling output on DLPI/%s/%s%s%s",
+		      info -> name,
+		      print_hw_addr (info -> hw_address.hbuf [0],
+				     info -> hw_address.hlen - 1,
+				     &info -> hw_address.hbuf [1]),
+		      (info -> shared_network ? "/" : ""),
+		      (info -> shared_network ?
+		       info -> shared_network -> name : ""));
 }
 #endif /* USE_DLPI_SEND */
 
@@ -396,17 +421,14 @@ void if_register_receive (info)
 	pf.Pf_Filter [pf.Pf_FilterLen++] = ENF_PUSHWORD + 6;
 	pf.Pf_Filter [pf.Pf_FilterLen++] = ENF_PUSHLIT + ENF_CAND;
 	pf.Pf_Filter [pf.Pf_FilterLen++] = htons (ETHERTYPE_IP);
-	pf.Pf_Filter [pf.Pf_FilterLen++] = ENF_PUSHWORD + 11;
-#if defined(i386) || defined(__i386)
-	pf.Pf_Filter [pf.Pf_FilterLen++] = ENF_PUSHFF00 + ENF_AND;
-#else
-	pf.Pf_Filter [pf.Pf_FilterLen++] = ENF_PUSH00FF + ENF_AND;
-#endif
-	pf.Pf_Filter [pf.Pf_FilterLen++] = ENF_PUSHLIT + ENF_CAND;
+	pf.Pf_Filter [pf.Pf_FilterLen++] = ENF_PUSHLIT;
 	pf.Pf_Filter [pf.Pf_FilterLen++] = htons (IPPROTO_UDP);
+	pf.Pf_Filter [pf.Pf_FilterLen++] = ENF_PUSHWORD + 11;
+	pf.Pf_Filter [pf.Pf_FilterLen++] = ENF_PUSH00FF + ENF_AND;
+	pf.Pf_Filter [pf.Pf_FilterLen++] = ENF_CAND;
 	pf.Pf_Filter [pf.Pf_FilterLen++] = ENF_PUSHWORD + 18;
 	pf.Pf_Filter [pf.Pf_FilterLen++] = ENF_PUSHLIT + ENF_CAND;
-	pf.Pf_Filter [pf.Pf_FilterLen++] = local_port;
+	pf.Pf_Filter [pf.Pf_FilterLen++] = htons (local_port);
 #else
 	/*
 	 * The packets that will be received on this file descriptor
@@ -417,32 +439,29 @@ void if_register_receive (info)
 	 * to the local port.  All offsets are relative to the start
 	 * of an IP packet.
 	 */
-	pf.Pf_Filter [pf.Pf_FilterLen++] = ENF_PUSHWORD + 4;
-#if defined(i386) || defined(__i386)
-	pf.Pf_Filter [pf.Pf_FilterLen++] = ENF_PUSHFF00 + ENF_AND;
-#else
-	pf.Pf_Filter [pf.Pf_FilterLen++] = ENF_PUSH00FF + ENF_AND;
-#endif
-	pf.Pf_Filter [pf.Pf_FilterLen++] = ENF_PUSHLIT + ENF_CAND;
+	pf.Pf_Filter [pf.Pf_FilterLen++] = ENF_PUSHLIT;
 	pf.Pf_Filter [pf.Pf_FilterLen++] = htons (IPPROTO_UDP);
+	pf.Pf_Filter [pf.Pf_FilterLen++] = ENF_PUSHWORD + 4;
+	pf.Pf_Filter [pf.Pf_FilterLen++] = ENF_PUSH00FF + ENF_AND;
+	pf.Pf_Filter [pf.Pf_FilterLen++] = ENF_CAND;
 	pf.Pf_Filter [pf.Pf_FilterLen++] = ENF_PUSHWORD + 11;
 	pf.Pf_Filter [pf.Pf_FilterLen++] = ENF_PUSHLIT + ENF_CAND;
-	pf.Pf_Filter [pf.Pf_FilterLen++] = local_port;
+	pf.Pf_Filter [pf.Pf_FilterLen++] = htons (local_port);
 #endif
 
 	/* Install the filter... */
 	if (strioctl (info -> rfdesc, PFIOCSETF, INFTIM,
 		      sizeof (pf), (char *)&pf) < 0) {
-	    error ("Can't set PFMOD receive filter on %s: %m", info -> name);
+	    log_fatal ("Can't set PFMOD receive filter on %s: %m", info -> name);
 	}
 #endif
 
         if (!quiet_interface_discovery)
-		note ("Listening on DLPI/%s/%s%s%s",
+		log_info ("Listening on DLPI/%s/%s%s%s",
 		      info -> name,
-		      print_hw_addr (info -> hw_address.htype,
-				     info -> hw_address.hlen,
-				     info -> hw_address.haddr),
+		      print_hw_addr (info -> hw_address.hbuf [0],
+				     info -> hw_address.hlen - 1,
+				     &info -> hw_address.hbuf [1]),
 		      (info -> shared_network ? "/" : ""),
 		      (info -> shared_network ?
 		       info -> shared_network -> name : ""));
@@ -456,6 +475,27 @@ void if_register_receive (info)
 # endif
 #endif
 }
+
+void if_deregister_receive (info)
+	struct interface_info *info;
+{
+	/* If we're using the DLPI API for sending and receiving,
+	   we don't need to register this interface twice. */
+#ifndef USE_DLPI_SEND
+	close (info -> rfdesc);
+#endif
+	info -> rfdesc = -1;
+
+        if (!quiet_interface_discovery)
+		log_info ("Disabling input on DLPI/%s/%s%s%s",
+		      info -> name,
+		      print_hw_addr (info -> hw_address.hbuf [0],
+				     info -> hw_address.hlen - 1,
+				     &info -> hw_address.hbuf [1]),
+		      (info -> shared_network ? "/" : ""),
+		      (info -> shared_network ?
+		       info -> shared_network -> name : ""));
+}
 #endif /* USE_DLPI_RECEIVE */
 
 #ifdef USE_DLPI_SEND
@@ -468,7 +508,7 @@ ssize_t send_packet (interface, packet, raw, len, from, to, hto)
 	struct sockaddr_in *to;
 	struct hardware *hto;
 {
-	int dbuflen;
+	unsigned dbuflen;
 	unsigned char dbuf [1536];
 	unsigned char sap [2];
 	unsigned char dstaddr [DLPI_MAXDLADDR];
@@ -505,7 +545,8 @@ ssize_t send_packet (interface, packet, raw, len, from, to, hto)
 
 	/* Setup the destination address */
 	if (hto && hto -> hlen == interface -> hw_address.hlen) {
-	    dlpi_makeaddr (hto -> haddr, hto -> hlen, sap, saplen, dstaddr);
+		dlpi_makeaddr (&hto -> hbuf [1],
+			       hto -> hlen - 1, sap, saplen, dstaddr);
 	} else {
 	    /* XXX: Assumes broadcast addr is all ones */
 	    /* Really should get the broadcast address as part of the
@@ -513,18 +554,19 @@ ssize_t send_packet (interface, packet, raw, len, from, to, hto)
 	     */
 	    unsigned char bcast_ether [DLPI_MAXDLADDR];
 
-	    memset ((char *)bcast_ether, 0xFF, interface -> hw_address.hlen);
-	    dlpi_makeaddr (bcast_ether, interface -> hw_address.hlen,
-			 sap, saplen, dstaddr);
+	    memset ((char *)bcast_ether, 0xFF,
+		    interface -> hw_address.hlen - 1);
+	    dlpi_makeaddr (bcast_ether, interface -> hw_address.hlen - 1,
+			   sap, saplen, dstaddr);
 	}
-	addrlen = interface -> hw_address.hlen + ABS (saplen);
+	addrlen = interface -> hw_address.hlen - 1 + ABS (saplen);
 
 	/* Send the packet down the wire... */
 	result = dlpiunitdatareq (interface -> wfdesc, dstaddr, addrlen,
 				  0, 0, dbuf, dbuflen);
 #endif
 	if (result < 0)
-		warn ("send_packet: %m");
+		log_error ("send_packet: %m");
 	return result;
 }
 #endif /* USE_DLPI_SEND */
@@ -545,6 +587,7 @@ ssize_t receive_packet (interface, buf, len, from, hfrom)
 	int flags = 0;
 	int length = 0;
 	int offset = 0;
+	int rslt;
 	int bufix = 0;
 	
 #ifdef USE_DLPI_RAW
@@ -563,13 +606,14 @@ ssize_t receive_packet (interface, buf, len, from, hfrom)
 	/* Copy sender info */
 	/* XXX: Assumes ethernet, where SAP comes at end of haddr */
 	saplen = -2;
-	if (hfrom && srcaddrlen == ABS(saplen) + interface -> hw_address.hlen) {
-	    hfrom -> htype = interface -> hw_address.htype;
-	    hfrom -> hlen = interface -> hw_address.hlen;
-	    dlpi_parseaddr (srcaddr, hfrom -> haddr,
-			    interface -> hw_address.hlen, sap, saplen);
+	if (hfrom && (srcaddrlen ==
+		      ABS (saplen) + interface -> hw_address.hlen - 1)) {
+		hfrom -> hbuf [0] = interface -> hw_address.hbuf [0];
+		hfrom -> hlen = interface -> hw_address.hlen;
+		dlpi_parseaddr (srcaddr, &hfrom -> hbuf [1],
+				interface -> hw_address.hlen - 1, sap, saplen);
 	} else if (hfrom) {
-	    memset ((char *)hfrom, '\0', sizeof (*hfrom));
+		memset (hfrom, '\0', sizeof *hfrom);
 	}
 #endif
 
@@ -1173,14 +1217,14 @@ static int strgetmsg (fd, ctlp, datap, flagsp, caller)
 		count = poll (&pfd, 1, to_msec);
 		
 		if (count == 0) {
-			/* error ("strgetmsg: timeout"); */
+			/* log_fatal ("strgetmsg: timeout"); */
 			return -1;
 		} else if (count < 0) {
 			if (errno == EAGAIN || errno == EINTR) {
 				time (&now);
 				continue;
 			} else {
-				/* error ("poll: %m"); */
+				/* log_fatal ("poll: %m"); */
 				return -1;
 			}
 		} else {
@@ -1195,7 +1239,7 @@ static int strgetmsg (fd, ctlp, datap, flagsp, caller)
 	(void) sigset (SIGALRM, sigalrm);
 	
 	if (alarm (DLPI_MAXWAIT) < 0) {
-		/* error ("alarm: %m"); */
+		/* log_fatal ("alarm: %m"); */
 		return -1;
 	}
 #endif /* !defined (USE_POLL) */
@@ -1213,7 +1257,7 @@ static int strgetmsg (fd, ctlp, datap, flagsp, caller)
 	 * Stop timer.
 	 */	
 	if (alarm (0) < 0) {
-		/* error ("alarm: %m"); */
+		/* log_fatal ("alarm: %m"); */
 		return -1;
 	}
 #endif
@@ -1247,7 +1291,8 @@ static void sigalrm (sig)
 }
 #endif /* !defined (USE_POLL) */
 
-int can_unicast_without_arp ()
+int can_unicast_without_arp (ip)
+	struct interface_info *ip;
 {
 	return 1;
 }
@@ -1260,12 +1305,19 @@ int can_receive_unicast_unconfigured (ip)
 
 void maybe_setup_fallback ()
 {
+	isc_result_t status;
 	struct interface_info *fbi;
 	fbi = setup_fallback ();
 	if (fbi) {
 		if_register_fallback (fbi);
-		add_protocol ("fallback", fallback_interface -> wfdesc,
-			      fallback_discard, fallback_interface);
+		fbi -> refcnt = 1;
+		fbi -> type = dhcp_type_interface;
+		status = omapi_register_io_object ((omapi_object_t *)fbi,
+						   if_readsocket, 0,
+						   fallback_discard, 0, 0);
+		if (status != ISC_R_SUCCESS)
+			log_fatal ("Can't register I/O handle for %s: %s",
+				   fbi -> name, isc_result_totext (status));
 	}
 }
 #endif /* USE_DLPI */

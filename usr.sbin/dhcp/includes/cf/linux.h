@@ -5,7 +5,7 @@
    Based on a configuration originally supplied by Jonathan Stone. */
 
 /*
- * Copyright (c) 1996, 1998, 1999 The Internet Software Consortium.
+ * Copyright (c) 1996-1999 Internet Software Consortium.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -17,22 +17,30 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of The Internet Software Consortium nor the names of its
- *    contributors may be used to endorse or promote products derived
+ * 3. Neither the name of The Internet Software Consortium nor the names
+ *    of its contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE INTERNET SOFTWARE CONSORTIUM AND
- * CONTRIBUTORS ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING,
- * BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
- * FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL
- * THE INTERNET SOFTWARE CONSORTIUM OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
- * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
- * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
+ * CONTRIBUTORS ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
+ * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED.  IN NO EVENT SHALL THE INTERNET SOFTWARE CONSORTIUM OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
+ * USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+ * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ * This software has been written for the Internet Software Consortium
+ * by Ted Lemon in cooperation with Vixie Enterprises and Nominum, Inc.
+ * To learn more about the Internet Software Consortium, see
+ * ``http://www.isc.org/''.  To learn more about Vixie Enterprises,
+ * see ``http://www.vix.com''.   To learn more about Nominum, Inc., see
+ * ``http://www.nominum.com''.
  */
 
 #include <features.h>
@@ -119,11 +127,17 @@ extern int h_errno;
 #  define LINUX_SLASHPROC_DISCOVERY
 #  define PROCDEV_DEVICE "/proc/net/dev"
 #  define HAVE_ARPHRD_TUNNEL
+#  define HAVE_TR_SUPPORT
 # endif
 # define HAVE_ARPHRD_METRICOM
 # define HAVE_ARPHRD_IEEE802
 # define HAVE_ARPHRD_LOOPBACK
 # define HAVE_SO_BINDTODEVICE
+# define HAVE_SIOCGIFHWADDR
+# define HAVE_SETFD
+#endif
+
+#if defined (SIOCGIFHWADDR) && !defined (HAVE_SIOCGIFHWADDR)
 # define HAVE_SIOCGIFHWADDR
 #endif
 
@@ -136,3 +150,48 @@ extern int h_errno;
 
 #define ALIAS_NAMES_PERMUTED
 #define SKIP_DUMMY_INTERFACES
+
+#ifdef NEED_PRAND_CONF
+#ifndef HAVE_DEV_RANDOM
+ # define HAVE_DEV_RANDOM 1
+ #endif /* HAVE_DEV_RANDOM */
+
+const char *cmds[] = {
+	"/bin/ps -axlw 2>&1",
+	"/sbin/arp -an 2>&1",
+	"/bin/netstat -an 2>&1",
+	"/bin/df  2>&1",
+	"/usr/bin/dig com. soa +ti=1 +retry=0 2>&1",
+	"/usr/bin/uptime  2>&1",
+	"/bin/netstat -s 2>&1",
+	"/usr/bin/dig . soa +ti=1 +retry=0 2>&1",
+	"/usr/bin/vmstat  2>&1",
+	"/usr/bin/w  2>&1",
+	NULL
+};
+
+const char *dirs[] = {
+	"/tmp",
+	"/usr/tmp",
+	".",
+	"/",
+	"/var/spool",
+	"/dev",
+	"/var/spool/mail",
+	"/home",
+	"/usr/home",
+	NULL
+};
+
+const char *files[] = {
+	"/proc/stat",
+	"/proc/rtc",
+	"/proc/meminfo",
+	"/proc/interrupts",
+	"/proc/self/status",
+	"/var/log/messages",
+	"/var/log/wtmp",
+	"/var/log/lastlog",
+	NULL
+};
+#endif /* NEED_PRAND_CONF */

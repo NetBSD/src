@@ -1,40 +1,20 @@
 .\"	dhclient.conf.5
 .\"
-.\" Copyright (c) 1997 The Internet Software Consortium.
-.\" All rights reserved.
+.\" Copyright (c) 1996-1999 Internet Software Consortium.
+.\" Use is subject to license terms which appear in the file named
+.\" ISC-LICENSE that should have accompanied this file when you
+.\" received it.   If a file named ISC-LICENSE did not accompany this
+.\" file, or you are not sure the one you have is correct, you may
+.\" obtain an applicable copy of the license at:
 .\"
-.\" Redistribution and use in source and binary forms, with or without
-.\" modification, are permitted provided that the following conditions
-.\" are met:
+.\"             http://www.isc.org/isc-license-1.0.html. 
 .\"
-.\" 1. Redistributions of source code must retain the above copyright
-.\"    notice, this list of conditions and the following disclaimer.
-.\" 2. Redistributions in binary form must reproduce the above copyright
-.\"    notice, this list of conditions and the following disclaimer in the
-.\"    documentation and/or other materials provided with the distribution.
-.\" 3. Neither the name of The Internet Software Consortium nor the names
-.\"    of its contributors may be used to endorse or promote products derived
-.\"    from this software without specific prior written permission.
+.\" This file is part of the ISC DHCP distribution.   The documentation
+.\" associated with this file is listed in the file DOCUMENTATION,
+.\" included in the top-level directory of this release.
 .\"
-.\" THIS SOFTWARE IS PROVIDED BY THE INTERNET SOFTWARE CONSORTIUM AND
-.\" CONTRIBUTORS ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
-.\" INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
-.\" MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-.\" DISCLAIMED.  IN NO EVENT SHALL THE INTERNET SOFTWARE CONSORTIUM OR
-.\" CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-.\" SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-.\" LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
-.\" USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-.\" ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-.\" OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
-.\" OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
-.\" SUCH DAMAGE.
-.\"
-.\" This software has been written for the Internet Software Consortium
-.\" by Ted Lemon <mellon@fugue.com> in cooperation with Vixie
-.\" Enterprises.  To learn more about the Internet Software Consortium,
-.\" see ``http://www.isc.org/isc''.  To learn more about Vixie
-.\" Enterprises, see ``http://www.vix.com''.
+.\" Support and other services are available for ISC products - see
+.\" http://www.isc.org for more information.
 .TH dhclient.conf 5
 .SH NAME
 dhclient.conf - DHCP client configuration file
@@ -190,7 +170,17 @@ are called \fIDHCP Options\fR.  DHCP Options are defined in
 The request statement causes the client to request that any server
 responding to the client send the client its values for the specified
 options.   Only the option names should be specified in the request
-statement - not option parameters.
+statement - not option parameters.   By default, the DHCP server
+requests the subnet-mask, broadcast-address, time-offset, routers,
+domain-name, domain-name-servers and host-name options. 
+.PP
+In some cases, it may be desirable to send no parameter request list
+at all.   To do this, simply write the request statement but specify
+no parameters:
+.PP
+.nf
+	request;
+.fi
 .PP
 .I The
 .B require
@@ -230,10 +220,9 @@ needs, several option modifiers are available.
 .B default
 .I statement
 .PP
- \fBdefault { [ \fIoption declaration\fR ]
-[\fB,\fI ... \fIoption declaration\fR ]\fB}\fR
+ \fBdefault [ \fIoption declaration\fR ] \fB;\fR
 .PP
-If for some set of options the client should use the value supplied by
+If for some option the client should use the value supplied by
 the server, but needs to use some default value if no value was supplied
 by the server, these values can be defined in the
 .B default
@@ -243,12 +232,11 @@ statement.
 .B supersede
 .I statement
 .PP
- \fBsupersede { [ \fIoption declaration\fR ]
-[\fB,\fI ... \fIoption declaration\fR ]\fB}\fR
+ \fBsupersede [ \fIoption declaration\fR ] \fB;\fR
 .PP
-If for some set of options the client should always use its own value
-rather than any value supplied by the server, these values can be
-defined in the 
+If for some option the client should always use a locally-configured
+value or values rather than whatever is supplied by the server, these
+values can be defined in the 
 .B supersede
 statement.
 .PP
@@ -256,8 +244,7 @@ statement.
 .B prepend
 .I statement
 .PP
- \fBprepend { [ \fIoption declaration\fR ]
-[\fB,\fI ... \fIoption declaration\fR ]\fB}\fR
+ \fBprepend [ \fIoption declaration\fR ] \fB;\fR
 .PP
 If for some set of options the client should use a value you
 supply, and then use the values supplied by
@@ -267,14 +254,13 @@ statement.   The
 .B prepend
 statement can only be used for options which
 allow more than one value to be given.   This restriction is not
-enforced - if violated, the results are unpredictable.
+enforced - if you ignore it, the behaviour will be unpredictable.
 .PP
 .I The
 .B append
 .I statement
 .PP
- \fBappend { [ \fIoption declaration\fR ]
-[\fB,\fI ... \fIoption declaration\fR ]\fB}\fR
+ \fBappend [ \fIoption declaration\fR ] \fB;\fR
 .PP
 If for some set of options the client should first use the values
 supplied by the server, if any, and then use values you supply, these
@@ -380,7 +366,7 @@ interface's final configuration once a lease has been acquired.   If
 no lease is acquired, the script is used to test predefined leases, if
 any, and also called once if no valid lease can be identified.   For
 more information, see
-.B dhclient-lease(8).
+.B dhclient-script(8).
 .PP
  \fBmedium "\fImedia setup\fB";\fR
 .PP
@@ -432,8 +418,8 @@ specified as zero.  The year is specified with the century, so it
 should generally be four digits except for really long leases.  The
 month is specified as a number starting with 1 for January.  The day
 of the month is likewise specified starting with 1.  The hour is a
-number between 0 and 23, the minute a number between 0 and 69, and the
-second also a number between 0 and 69.
+number between 0 and 23, the minute a number between 0 and 59, and the
+second also a number between 0 and 59.
 .SH ALIAS DECLARATIONS
  \fBalias { \fI declarations ... \fB}\fR
 .PP
@@ -473,6 +459,36 @@ parameters will then be used only for the interface that matches the
 specified name.   Interfaces for which there is no interface
 declaration will use the parameters declared outside of any interface
 declaration, or the default settings.
+.PP
+ \fBpseudo "\fIname\fR" "\fIreal-name\fB" { \fIdeclarations ... \fB }
+.PP
+Under some circumstances it can be useful to declare a pseudo-interface 
+and have the DHCP client acquire a configuration for that interface.
+Each interface that the DHCP client is supporting normally has a DHCP
+client state machine running on it to acquire and maintain its lease.
+A pseudo-interface is just another state machine running on the
+interface named \fIreal-name\fR, with its own lease and its own
+state.   If you use this feature, you must provide a client identifier
+for both the pseudo-interface and the actual interface, and the two
+identifiers must be different.   You must also provide a seperate
+client script for the pseudo-interface to do what you want with the IP
+address.   For example:
+.PP
+.nf
+	interface "ep0" {
+		send dhcp-client-identifier "my-client-ep0";
+	}
+	pseudo "secondary" "ep0" {
+		send dhcp-client-identifier "my-client-ep0-secondary";
+		script "/etc/dhclient-secondary";
+	}
+.fi
+.PP
+The client script for the pseudo-interface should not configure the
+interface up or down - essentially, all it needs to handle are the
+states where a lease has been acquired or renewed, and the states
+where a lease has expired.   See \fBdhclient-script(8)\fR for more
+information.
 .PP
  \fBmedia "\fImedia setup\fB"\fI [ \fB, "\fImedia setup\fB", \fI... ]\fB;\fR
 .PP
@@ -540,6 +556,6 @@ RFC2131.
 .B dhclient(8)
 was written by Ted Lemon <mellon@vix.com>
 under a contract with Vixie Labs.   Funding
-for this project was provided by the Internet Software Corporation.
+for this project was provided by the Internet Software Consortium.
 Information about the Internet Software Consortium can be found at
 .B http://www.isc.org/isc.

@@ -4,8 +4,8 @@
    Support Services in Vancouver, B.C. */
 
 /*
- * Copyright (c) 1995, 1996, 1998, 1999
- * The Internet Software Consortium.    All rights reserved.
+ * Copyright (c) 1996-2000 Internet Software Consortium.
+ * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,17 +33,11 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * This software has been written for the Internet Software Consortium
- * by Ted Lemon <mellon@fugue.com> in cooperation with Vixie
- * Enterprises.  To learn more about the Internet Software Consortium,
- * see ``http://www.vix.com/isc''.  To learn more about Vixie
- * Enterprises, see ``http://www.vix.com''.
  */
 
 #ifndef lint
 static char copyright[] =
-"$Id: lpf.c,v 1.1.1.4 1999/03/29 23:00:52 mellon Exp $ Copyright (c) 1995, 1996, 1998, 1999 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: lpf.c,v 1.1.1.5 2000/04/22 07:11:35 mellon Exp $ Copyright (c) 1996-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -92,13 +86,12 @@ int if_register_lpf (info)
 	if ((sock = socket(PF_PACKET, SOCK_PACKET, htons(ETH_P_ALL))) < 0) {
 		if (errno == ENOPROTOOPT || errno == EPROTONOSUPPORT ||
 		    errno == ESOCKTNOSUPPORT || errno == EPFNOSUPPORT ||
-		    errno == EAFNOSUPPORT || errno == EINVAL) {
-			warn ("socket: %m");
-			error ("Make sure to set %s %s!",
-			       "CONFIG_PACKET=y and CONFIG_FILTER=y",
-			       "in your kernel configuration");
-		}
-		error("Open a socket for LPF: %m");
+		    errno == EAFNOSUPPORT || errno == EINVAL)
+			log_fatal ("socket: %m - make sure %s %s %s!",
+				   "CONFIG_PACKET (Packet socket)"
+				   "and CONFIG_FILTER (Socket Filtering) are",
+				   "enabled in your kernel configuration");
+		log_fatal ("Open a socket for LPF: %m");
 	}
 
 	/* Bind to the interface name */
@@ -108,13 +101,12 @@ int if_register_lpf (info)
 	if (bind (sock, &sa, sizeof sa)) {
 		if (errno == ENOPROTOOPT || errno == EPROTONOSUPPORT ||
 		    errno == ESOCKTNOSUPPORT || errno == EPFNOSUPPORT ||
-		    errno == EAFNOSUPPORT || errno == EINVAL) {
-			warn ("bind: %m");
-			error ("Set %s %s!",
-			       "CONFIG_PACKET=y and CONFIG_FILTER=y",
-			       "in your kernel configuration");
-		}
-		error("Bind socket to interface: %m");
+		    errno == EAFNOSUPPORT || errno == EINVAL)
+			log_fatal ("socket: %m - make sure %s %s %s!",
+				   "CONFIG_PACKET (Packet socket)"
+				   "and CONFIG_FILTER (Socket Filtering) are",
+				   "enabled in your kernel configuration");
+		log_fatal ("Bind socket to interface: %m");
 	}
 
 	return sock;
@@ -128,16 +120,38 @@ void if_register_send (info)
 	/* If we're using the lpf API for sending and receiving,
 	   we don't need to register this interface twice. */
 #ifndef USE_LPF_RECEIVE
-	info -> wfdesc = if_register_lpf (info, interface);
+	info -> wfdesc = if_register_lpf (info);
 #else
 	info -> wfdesc = info -> rfdesc;
 #endif
 	if (!quiet_interface_discovery)
-		note ("Sending on   LPF/%s/%s%s%s",
+		log_info ("Sending on   LPF/%s/%s%s%s",
 		      info -> name,
-		      print_hw_addr (info -> hw_address.htype,
-				     info -> hw_address.hlen,
-				     info -> hw_address.haddr),
+		      print_hw_addr (info -> hw_address.hbuf [0],
+				     info -> hw_address.hlen - 1,
+				     &info -> hw_address.hbuf [1]),
+		      (info -> shared_network ? "/" : ""),
+		      (info -> shared_network ?
+		       info -> shared_network -> name : ""));
+}
+
+void if_deregister_send (info)
+	struct interface_info *info;
+{
+	/* don't need to close twice if we are using lpf for sending and
+	   receiving */
+#ifndef USE_LPF_RECEIVE
+	/* for LPF this is simple, packet filters are removed when sockets
+	   are closed */
+	close (info -> wfdesc);
+#endif
+	info -> wfdesc = -1;
+	if (!quiet_interface_discovery)
+		log_info ("Disabling output on LPF/%s/%s%s%s",
+		      info -> name,
+		      print_hw_addr (info -> hw_address.hbuf [0],
+				     info -> hw_address.hlen - 1,
+				     &info -> hw_address.hbuf [1]),
 		      (info -> shared_network ? "/" : ""),
 		      (info -> shared_network ?
 		       info -> shared_network -> name : ""));
@@ -149,14 +163,56 @@ void if_register_send (info)
    in bpf includes... */
 extern struct sock_filter dhcp_bpf_filter [];
 extern int dhcp_bpf_filter_len;
+extern struct sock_filter dhcp_bpf_tr_filter [];
+extern int dhcp_bpf_tr_filter_len;
+
+static void lpf_gen_filter_setup (struct interface_info *);
+static void lpf_tr_filter_setup (struct interface_info *);
 
 void if_register_receive (info)
 	struct interface_info *info;
 {
-	struct sock_fprog p;
-
 	/* Open a LPF device and hang it on this interface... */
 	info -> rfdesc = if_register_lpf (info);
+
+	if (info -> hw_address.hbuf [0] == HTYPE_IEEE802)
+		lpf_tr_filter_setup (info);
+	else
+		lpf_gen_filter_setup (info);
+
+	if (!quiet_interface_discovery)
+		log_info ("Listening on LPF/%s/%s%s%s",
+			  info -> name,
+			  print_hw_addr (info -> hw_address.hbuf [0],
+					 info -> hw_address.hlen - 1,
+					 &info -> hw_address.hbuf [1]),
+			  (info -> shared_network ? "/" : ""),
+			  (info -> shared_network ?
+			   info -> shared_network -> name : ""));
+}
+
+void if_deregister_receive (info)
+	struct interface_info *info;
+{
+	/* for LPF this is simple, packet filters are removed when sockets
+	   are closed */
+	close (info -> rfdesc);
+	info -> rfdesc = -1;
+	if (!quiet_interface_discovery)
+		log_info ("Disabling input on LPF/%s/%s%s%s",
+			  info -> name,
+			  print_hw_addr (info -> hw_address.hbuf [0],
+					 info -> hw_address.hlen - 1,
+					 &info -> hw_address.hbuf [1]),
+			  (info -> shared_network ? "/" : ""),
+			  (info -> shared_network ?
+			   info -> shared_network -> name : ""));
+}
+
+static void lpf_gen_filter_setup (info)
+	struct interface_info *info;
+{
+	struct sock_fprog p;
 
 	/* Set up the bpf filter program structure.    This is defined in
 	   bpf.c */
@@ -173,20 +229,42 @@ void if_register_receive (info)
 		if (errno == ENOPROTOOPT || errno == EPROTONOSUPPORT ||
 		    errno == ESOCKTNOSUPPORT || errno == EPFNOSUPPORT ||
 		    errno == EAFNOSUPPORT)
-			error ("socket: %m - make sure %s %s!",
-			       "CONFIG_PACKET and CONFIG_FILTER are defined",
-			       "in your kernel configuration");
-		error ("Can't install packet filter program: %m");
+			log_fatal ("socket: %m - make sure %s %s %s!",
+				   "CONFIG_PACKET (Packet socket)"
+				   "and CONFIG_FILTER (Socket Filtering) are",
+				   "enabled in your kernel configuration");
+		log_fatal ("Can't install packet filter program: %m");
 	}
-	if (!quiet_interface_discovery)
-		note ("Listening on LPF/%s/%s%s%s",
-		      info -> name,
-		      print_hw_addr (info -> hw_address.htype,
-				     info -> hw_address.hlen,
-				     info -> hw_address.haddr),
-		      (info -> shared_network ? "/" : ""),
-		      (info -> shared_network ?
-		       info -> shared_network -> name : ""));
+}
+
+static void lpf_tr_filter_setup (info)
+	struct interface_info *info;
+{
+	struct sock_fprog p;
+
+	/* Set up the bpf filter program structure.    This is defined in
+	   bpf.c */
+	p.len = dhcp_bpf_tr_filter_len;
+	p.filter = dhcp_bpf_tr_filter;
+
+        /* Patch the server port into the LPF  program...
+	   XXX changes to filter program may require changes
+	   XXX to the insn number(s) used below!
+	   XXX Token ring filter is null - when/if we have a filter 
+	   XXX that's not, we'll need this code.
+	   XXX dhcp_bpf_filter [?].k = ntohs (local_port); */
+
+	if (setsockopt (info -> rfdesc, SOL_SOCKET, SO_ATTACH_FILTER, &p,
+			sizeof p) < 0) {
+		if (errno == ENOPROTOOPT || errno == EPROTONOSUPPORT ||
+		    errno == ESOCKTNOSUPPORT || errno == EPFNOSUPPORT ||
+		    errno == EAFNOSUPPORT)
+			log_fatal ("socket: %m - make sure %s %s %s!",
+				   "CONFIG_PACKET (Packet socket)"
+				   "and CONFIG_FILTER (Socket Filtering) are",
+				   "enabled in your kernel configuration");
+		log_fatal ("Can't install packet filter program: %m");
+	}
 }
 #endif /* USE_LPF_RECEIVE */
 
@@ -200,7 +278,7 @@ ssize_t send_packet (interface, packet, raw, len, from, to, hto)
 	struct sockaddr_in *to;
 	struct hardware *hto;
 {
-	int bufp = 0;
+	unsigned bufp = 0;
 	unsigned char buf [1500];
 	struct sockaddr sa;
 	int result;
@@ -226,7 +304,7 @@ ssize_t send_packet (interface, packet, raw, len, from, to, hto)
 	result = sendto (interface -> wfdesc, buf, bufp + len, 0,
 			 &sa, sizeof sa);
 	if (result < 0)
-		warn ("send_packet: %m");
+		log_error ("send_packet: %m");
 	return result;
 }
 #endif /* USE_LPF_SEND */
@@ -279,7 +357,8 @@ ssize_t receive_packet (interface, buf, len, from, hfrom)
 	return length;
 }
 
-int can_unicast_without_arp ()
+int can_unicast_without_arp (ip)
+	struct interface_info *ip;
 {
 	return 1;
 }
@@ -292,12 +371,19 @@ int can_receive_unicast_unconfigured (ip)
 
 void maybe_setup_fallback ()
 {
+	isc_result_t status;
 	struct interface_info *fbi;
 	fbi = setup_fallback ();
 	if (fbi) {
 		if_register_fallback (fbi);
-		add_protocol ("fallback", fallback_interface -> wfdesc,
-			      fallback_discard, fallback_interface);
+		fbi -> refcnt = 1;
+		fbi -> type = dhcp_type_interface;
+		status = omapi_register_io_object ((omapi_object_t *)fbi,
+						   if_readsocket, 0,
+						   fallback_discard, 0, 0);
+		if (status != ISC_R_SUCCESS)
+			log_fatal ("Can't register I/O handle for %s: %s",
+				   fbi -> name, isc_result_totext (status));
 	}
 }
 #endif
