@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_stdenc.h,v 1.2 2003/06/26 12:09:56 tshiozak Exp $	*/
+/*	$NetBSD: citrus_stdenc.h,v 1.3 2003/07/10 08:50:44 tshiozak Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -47,7 +47,7 @@ static __inline int
 _citrus_stdenc_init_state(struct _citrus_stdenc * __restrict ce,
 			  void * __restrict ps)
 {
-	_DIAGASSERT(ce && ce->ci_ops && ce->ce_ops->eo_init_state);
+	_DIAGASSERT(ce && ce->ce_ops && ce->ce_ops->eo_init_state);
 	return (*ce->ce_ops->eo_init_state)(ce, ps);
 }
 
