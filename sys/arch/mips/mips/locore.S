@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.138 2002/04/14 21:52:25 manu Exp $	*/
+/*	$NetBSD: locore.S,v 1.139 2002/04/25 06:55:53 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -510,12 +510,14 @@ LEAF(switch_exit)
 	REG_PROLOGUE
 	REG_L	sp, U_PCB_CONTEXT+SF_REG_SP(v0)	# restore stack pointer
 	REG_EPILOGUE
+	jal	_C_LABEL(exit2)			# proc already in a0
+	nop
 #if defined(LOCKDEBUG)
 	jal	_C_LABEL(sched_lock_idle)	# acquire sched_lock
 	nop
 #endif
 	la	ra, cpu_switch_queuescan	# rathole to cpu_switch()
-	j	_C_LABEL(exit2)			# proc already in a0
+	j	ra
 	sub	sp, sp, CALLFRAME_SIZ		#BDSlot: set stack call frame
 END(switch_exit)
 
