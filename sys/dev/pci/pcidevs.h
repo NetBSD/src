@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.514 2003/03/06 22:10:26 bouyer Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.515 2003/03/06 22:25:43 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.511 2003/03/06 22:09:46 bouyer Exp 
+ *	NetBSD: pcidevs,v 1.512 2003/03/06 22:25:23 bouyer Exp 
  */
 
 /*
@@ -2005,7 +2005,6 @@
 #define	PCI_PRODUCT_SIS_645	0x0645		/* SiS 645 Host Bridge */
 #define	PCI_PRODUCT_SIS_646	0x0646		/* SiS 646 Host Bridge */
 #define	PCI_PRODUCT_SIS_648	0x0648		/* SiS 648 Host Bridge */
-#define	PCI_PRODUCT_SIS_645	0x0645		/* SiS 645 Host Bridge */
 #define	PCI_PRODUCT_SIS_650	0x0650		/* SiS 650 Host Bridge */
 #define	PCI_PRODUCT_SIS_651	0x0651		/* SiS 651 Host Bridge */
 #define	PCI_PRODUCT_SIS_652	0x0652		/* SiS 652 Host Bridge */
