@@ -1,4 +1,4 @@
-.\"	$NetBSD: upgrade,v 1.6 2000/10/10 12:55:17 lukem Exp $
+.\"	$NetBSD: upgrade,v 1.7 2000/10/29 14:08:06 lukem Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -32,18 +32,21 @@
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
 Before updating, you probably would want to backup your original
-filesystems!
+file systems!
 .Pp
 The update procedure will not overwrite or remove any files not present
 in the sets you install. If you've replaced programs present in the
 distribution, you have to replace them again after you did the update.
 The etc-set needs special caution. You generally don't want to install
 this one when upgrading. It is recommended that you get a copy of this
-set and _carefully_ upgrade your configuration files by hand.
+set and
+.Em carefully
+upgrade your configuration files by hand.
 .(enum
 Starting the upgrade
 .Pp
-Ok, let's go. Insert the bootfloppy and follow the 'normal'
+Ok, let's go. Insert the bootfloppy and follow the
+.Sq normal
 installation procedure until it asks you if you wish to install or
 upgrade. At this time, select upgrade.
 You will now be greeted and reminded of the fact that this is a
@@ -54,7 +57,7 @@ Selecting your root disk
 .Pp
 When you decide to proceed, you will be prompted to enter
 your root disk. After you've done this, it will be checked
-automatically to make sure that the filesystem is in a sane
+automatically to make sure that the file system is in a sane
 state before making any modifications. After this is done,
 you will be asked if you want to configure your network. You
 can skip this section on
@@ -67,16 +70,18 @@ You are now allowed to edit your fstab. Normally you don't have
 to. Note that the upgrade-kit uses it's own copy of the fstab.
 Whatever you do here *won't* affect your actual fstab.
 After you are satisfied with your fstab, the upgrade-kit will check
-all filesystems mentioned in it. When they're ok, they will be
+all file systems mentioned in it. When they're ok, they will be
 mounted.
 .It
 The actual upgrade
 .Pp
 You will now be asked if your sets are stored on a normally
-mounted filesystem. You should answer 'y' to this question if
-you have the sets stored on a filesystem that was present in
+mounted file system. You should answer
+.Sq Ic y
+to this question if
+you have the sets stored on a file system that was present in
 the fstab. The actions you should take for the set extraction
-are pretty logical (I think). You might want to read the notes
+are pretty logical (we think). You might want to read the notes
 in section 9 (Installing the distribution sets) of the
 installation section.
 .It

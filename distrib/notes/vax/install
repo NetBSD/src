@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.7 2000/10/10 12:55:23 lukem Exp $
+.\"	$NetBSD: install,v 1.8 2000/10/29 14:08:12 lukem Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -35,8 +35,10 @@ Installation of
 .Nx*M
 is now easier than ever!
 For the latest news, problem reports, and discussion, join
-the port-vax mainlist by mailing a line saying
-.Dl subscribe port-vax
+the port-\*M mainlist by mailing a line saying
+.Pp
+.Dl subscribe port-\*M
+.Pp
 to
 .Mt majordomo@netsbd.org .
 Also, see
@@ -47,10 +49,14 @@ If you encounter any problems, please report them via the mailing list or the
 .Xr send-pr 1
 program so that they can be fixed for the next release.
 .Pp
-To install or upgrade NetBSD, you need to first boot the installation
+To install or upgrade
+.Nx ,
+you need to first boot the installation
 program and then interact with the screen-menu program
 .Ic sysinst .
-The installation program actually consists of the NetBSD kernel plus
+The installation program actually consists of the
+.Nx
+kernel plus
 an in-memory file system of utility programs.
 .Pp
 The usual procedure is to write the installation system to the
@@ -59,23 +65,42 @@ install media, as described earlier.
 Booting from install media
 .Pp
 The built-in console monitor understands a bunch of commands, dependent
-of which VAX you have. To just boot from a device, type 'B' at the '>>>'
+of which VAX you have. To just boot from a device, type
+.Sq Ic B
+at the
+.Li >>>
 prompt. Device naming in the console monitor differs a lot from the
-Unix counterparts. A device looks like "ddcu", where dd is the device
-type, c is the controller number and u is the device unit. Many console
-monitors also support the 'SHOW DEV' command, which shows available
-units to boot from.
+.Ux
+counterparts. A device looks like
+.Li "ddcu" , where
+.Sq Li dd
+is the device
+type,
+.Sq Li c
+is the controller number and
+.Sq Li u
+is the device unit. Many console
+monitors also support the
+.Ic SHOW DEV
+command, which shows available units to boot from.
 .Pp
 A summary of the most common boot devices and their name:
-.D1 Ic "B DUA0 - first MSCP controller, unit 0.
-.D1 Ic "B MUA0 - first TMSCP tape controller, unit 0.
-.D1 Ic "B DKB0 - second SCSI bus, unit 0.
-.D1 Ic "B XQA0 - first Q22 bus Ethernet controller.
-.D1 Ic "B ESA0 - first LANCE Ethernet controller on VAXstations.
+.(tag "Ic B DUA0"
+.It Ic "B DUA0"
+first MSCP controller, unit 0.
+.It Ic "B MUA0"
+first TMSCP tape controller, unit 0.
+.It Ic "B DKB0"
+second SCSI bus, unit 0.
+.It Ic "B XQA0"
+first Q22 bus Ethernet controller.
+.It Ic "B ESA0"
+first LANCE Ethernet controller on VAXstations.
+.tag)
 Other devices may be appropriate for your configuration.
 .Pp
 Then just proceed with the program sysinst. The install descriptions
-for sysinst that follows can be easily adopted to vax.
+for sysinst that follows can be easily adopted to VAX.
 .Pp
 .\" Sad that the sysinst install instructions are so i386-specific.
 .so ../common/sysinst

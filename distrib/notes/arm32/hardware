@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.6 2000/10/10 12:55:17 lukem Exp $
+.\"	$NetBSD: hardware,v 1.7 2000/10/29 14:08:05 lukem Exp $
 .
 .Nx*M
 \*V runs on a number of systems with
@@ -83,7 +83,8 @@ Most ATAPI CD-ROM drives
 .(Note
 Some low-priced IDE CD-ROM drives are known for being not or not fully
 ATAPI compliant, and thus requires some hack (generally an entry to a
-quirk table) to work with NetBSD.
+quirk table) to work with
+.Nx .
 .Note)
 .bullet)
 .It
@@ -197,7 +198,9 @@ DANPEX EN-9400P3
 .It
 Digital Celebris GL, GLST on-board ethernet
 .It
-Digital (DEC) PCI Ethernet/Fast Ethernet adapters (all)
+.Tn DEC
+.Pq Tn Digital
+PCI Ethernet/Fast Ethernet adapters (all)
 .It
 JCIS Condor JC1260
 .It
@@ -266,8 +269,11 @@ S3 based interfaces
 .bullet)
 .bullet)
 .Pp
-Drivers for hardware marked with "[*]" are NOT present in installation
-kernels.
+Drivers for hardware marked with
+.Dq [*]
+are
+.Em not
+present in installation kernels.
 .Pp
 Other PCI devices may be supported by Intel EBSA285 & Chalice CATS but
 have not been tested.

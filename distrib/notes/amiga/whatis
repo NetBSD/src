@@ -1,4 +1,4 @@
-.\"	$NetBSD: whatis,v 1.14 2000/10/14 22:27:41 lukem Exp $
+.\"	$NetBSD: whatis,v 1.15 2000/10/29 14:08:05 lukem Exp $
 .
 This is the seventh major release of
 .Nx
@@ -7,10 +7,12 @@ for the Amiga and DraCo line of computers.
 New port-specific features include:
 .(bullet
 Support Amiga partition tables that fake more than one sector per
-filesystem block (for Adosfs), and partition tables on media with more
+file system block (for Adosfs), and partition tables on media with more
 than 512 bytes per sector.
 .It
 PCMCIA support.
 .It
-Recognize Linux ext2fs partitions.
+Recognize
+.Tn Linux
+ext2fs partitions.
 .bullet)

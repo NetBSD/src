@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.5 2000/10/10 12:55:20 lukem Exp $
+.\"	$NetBSD: hardware,v 1.6 2000/10/29 14:08:08 lukem Exp $
 .
 .Nx*M
 \*V runs on Motorola
@@ -14,7 +14,7 @@ when running the X Window System.
 Here is a table of recommended HD partition sizes for a full install:
 .Bl -column -offset indent Partition Suggested Needed
 .It Partition Ta Suggested Ta Needed
-.It root\ (/) Ta "20 MB"   Ta "12 MB"
+.It /\ (root) Ta "20 MB"   Ta "12 MB"
 .It /usr      Ta "100 MB"  Ta "80 MB"
 .It /var      Ta "20 MB"   Ta "5 MB"
 .It swap      Ta Em "2-3 *RAM" Ta 6 MB

@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.8 2000/10/10 12:55:18 lukem Exp $
+.\"	$NetBSD: hardware,v 1.9 2000/10/29 14:08:06 lukem Exp $
 .
 .Nx*M
 \*V will run on most HP 9000/300- and 400-series machines.
@@ -8,7 +8,7 @@ run X, more RAM is recommended.
 Here is a table of recommended HD partition sizes for a full install:
 .Bl -column -offset indent Partition Suggested Needed
 .It Partition Ta Suggested Ta Needed
-.It root\ (/) Ta "25 MB"   Ta "15 MB"
+.It /\ (root) Ta "25 MB"   Ta "15 MB"
 .It /usr      Ta "150 MB"  Ta "100 MB"
 .It /var      Ta "20 MB"   Ta "5 MB"
 .It swap      Ta Em "2-3 *RAM" Ta 6 MB
@@ -18,7 +18,9 @@ Anything else is up to you!
 .item)
 .Pp
 .(Note
-The hp300 installation procedure uses a `miniroot' filesystem
+The \*M installation procedure uses a
+.Em miniroot
+file system
 which is placed into the swap area of the disk.  The swap partition
 must be large enough to hold this miniroot image.
 .Note)
@@ -94,7 +96,9 @@ Battery-backed real-time clock.
 .It
 98624 built-in HP-IB interface.
 .It
-98625A and 98625B `fast' HP-IB interface.
+98625A and 98625B
+.Sq fast
+HP-IB interface.
 .It
 98658A built-in and add-on SCSI interface.
 .It
@@ -108,13 +112,15 @@ SCSI autochanger.
 .It [1]
 400-series machines configured for Domain/OS
 are not fully supported.
-Notably, the keyboard doesn't work and the ROMs must be in `HP-UX mode'.
+Notably, the keyboard doesn't work and the ROMs must be in
+.Dq HP-UX mode .
 .It [2]
 SCSI-II drives are known to work,
 though this may require changing a
 jumper on some drives.  See your disk's documentation for details.
 .It [3]
-Serial mice connected to a `HIL to quad'
+Serial mice connected to a
+.Sq HIL to quad
 converter are also known to work.
 .tag)
 .Pp

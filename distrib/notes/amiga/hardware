@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.37 2000/10/10 12:55:16 lukem Exp $
+.\"	$NetBSD: hardware,v 1.38 2000/10/29 14:08:04 lukem Exp $
 .
 .Nx \*V
 runs on any Amiga that has a 68020 or better CPU with
@@ -17,11 +17,11 @@ however it won't be speedy. X really isn't usable on a 6 MB system.)
 Here is a table of recommended HD partition sizes for a full install:
 .Bl -column -offset indent Partition Suggested 100xMBxx Needed 100xMB
 .It Partition Ta Suggested Ta +\ X     Ta Needed   Ta +\ X
-.It root\ (/) Ta "25 MB"   Ta "25 MB"  Ta "20 MB"  Ta "20 MB"
+.It /\ (root) Ta "25 MB"   Ta "25 MB"  Ta "20 MB"  Ta "20 MB"
 .It /usr      Ta "245 MB"  Ta "270 MB" Ta "120 MB" Ta "145 MB"
 .It /var      Ta "20 MB"   Ta "20 MB"  Ta "5 MB"   Ta "5 MB"
 .It swap      Ta Em "2*RAM below 32 MB, then up to you"
-.El   
+.El
 .(item -offset indent
 Anything else is up to you!
 .item)
@@ -148,7 +148,9 @@ MultiFaceCard II and III
 A2232 (normal and clockdoubled)
 .bullet)
 .It
-Amiga floppy drives with Amiga (880/1760kB) and IBM (720/1440kB) encoding.
+Amiga floppy drives with Amiga (880/1760kB) and
+.Tn IBM
+(720/1440kB) encoding.
 Our floppy driver doesn't notice when mounted floppies are
 write-protected at the moment. Your floppy will stay
 unchanged, but you might not notice that you didn't write

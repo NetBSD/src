@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.10 2000/10/10 12:55:15 lukem Exp $
+.\"	$NetBSD: hardware,v 1.11 2000/10/29 14:08:04 lukem Exp $
 .
 .Nx*M
 \*V runs on most of the
@@ -10,9 +10,11 @@ and on the 4100 series.
 The SRM console is required.
 This
 console can be distinguished from the ARC console (which is used to
-boot Windows NT) by the fact that it has a command line interface,
+boot
+.Tn "Windows NT" )
+by the fact that it has a command line interface,
 rather than a menu-driven interface. The SRM prompt is
-.Dq Li \*>\*>\*> .
+.Sq Li \*>\*>\*> .
 .Pp
 Some platforms have both the SRM console and
 the ARC console, and can switch between them, and other platforms have
@@ -24,7 +26,7 @@ to download SRM from
 You may want to buy a firmware update CD from Compaq Computer Corporation.
 .Pp
 More information on supported platforms and devices can be found on the
-alpha port web pages at
+\*M port web pages at
 .Lk http://www.netbsd.org/ .
 .Pp
 A basic system will fit on a 200 MB disk (including swap) without too
@@ -45,15 +47,15 @@ system, many device drivers are the same as used in other ports that
 use the same bus. For example, the
 .Em de
 network card driver is shared
-by the i386 and Alpha ports. Some drivers on inspection appear as if
-they will work on the alpha but have not been tested because that
+by the i386 and \*M ports. Some drivers on inspection appear as if
+they will work on the \*M but have not been tested because that
 hardware was not available to
 .Nx
 testers; these are marked as
 .Em UNTESTED
 below. If you have one of these devices, and it does work,
 please get in touch with
-.Mt port-alpha-maintainer@netbsd.org
+.Mt port-\*M-maintainer@netbsd.org
 and let us know that it works. If it doesn't work, do the same thing and we
 can probably fix it pretty easily.
 .
@@ -62,52 +64,53 @@ can probably fix it pretty easily.
 Graphics Adapters
 .(bullet -compact
 VGA-compatible video
-.Em ( pcivga )
+.Pq Em pcivga
 .It
 ZLXp-E1
 DECchip 21030-based video
-.Em ( tga )
+.Pq Em tga
 .It
 ZLXp-E2 and ZLXp-E3 video
-.Em ( tga )
+.Pq Em tga
 .bullet)
 .It
 Network Cards
 .(bullet -compact
 DECchip 21x40-family 10 and 100 Mbps Ethernet
-.Em ( de , tlp )
+.Pq Em de , tlp
 .It
-DEC DEFPA FDDI
-.Em ( fpa )
+.Tn DEC
+DEFPA FDDI
+.Pq Em fpa
 .It
 PCI LANCE Ethernet
-.Em ( le ; UNTESTED )
+.Pq Em le ; UNTESTED
 .It
 Efficient Networks ENI-155p ATM
-.Em ( en ; UNTESTED )
+.Pq Em en ; UNTESTED
 .It
 3Com 3c59x and 3c90x (except 3c906) 10 and 100 Mbps Ethernet
-.Em ( ep )
+.Pq Em ep
 .It
 Intel EtherExpress Pro 10/100B PCI Ethernet
-.Em ( fxp )
+.Pq Em fxp
 .It
 SMC EPIC/100 Fast Ethernet boards
-.Em ( epic )
+.Pq Em epic
 .bullet)
 .It
 SCSI Controllers
 .(bullet -compact
 Adaptec 291x, 2920, 2930C, 294x, 295x, 39xx, 19160, 29160 and
 AIC-78xx SCSI
-.Em ( ahc )
+.Pq Em ahc
 .It
 BusLogic 9xx SCSI
 .Em ( bha ,
-Works on Alpha PC164)
+Works on \*M PC164)
 .It
 Qlogic ISP 10x0-family SCSI
-.Em ( isp )
+.Pq Em isp
 .It
 NCR/Symbios 53c8xx-family SCSI
 .Em ( ncr , siop ;
@@ -117,11 +120,12 @@ The latter is preferred. NCR825 Doesn't always work)
 Miscellaneous Devices
 .(bullet -compact
 Cyclades Cyclom-Y serial boards
-.Em ( cy ; UNTESTED )
+.Pq Em cy ; UNTESTED
 .It
 PCI-PCI bridges
 .Em ( ppb ;
-Tested with the DECchip 21050, but should work with all bridges and system
+Tested with the
+DECchip 21050, but should work with all bridges and system
 firmware revisions that comply with the PCI-PCI bridge specification)
 .bullet)
 .bullet)
@@ -138,22 +142,24 @@ Text console only)
 Network Cards
 .(bullet -compact
 3Com 3c509 Ethernet
-.Em ( ep )
+.Pq Em ep
 .It
-DEC DE200,DE201,DE202
-.Em ( le )
+.Tn DEC
+DE200,DE201,DE202
+.Pq Em le
 .It
-DEC DE203,DE204,DE205
-.Em ( lc )
+.Tn DEC
+DE203,DE204,DE205
+.Pq Em lc
 .bullet)
 .It
 Miscellaneous Devices
 .(bullet -compact
 PC-style parallel ports
-.Em ( lpt )
+.Pq Em lpt
 .It
 NS16450 and NS16550 UARTs
-.Em ( com )
+.Pq Em com
 .It
 ISA multi-port 16x50 boards
 .Em ( ast , boca ;
@@ -165,20 +171,21 @@ Only the latter has been tested )
 .(bullet -offset indent
 Network Cards
 .(bullet -compact
-DEC DEFEA FDDI
-.Em ( fea )
+.Tn DEC
+DEFEA FDDI
+.Pq Em fea
 .It
 3Com 3c5xx series
-.Em ( ed ; UNTESTED )
+.Pq Em ed ; UNTESTED
 .bullet)
 .It
 SCSI Controllers
 .(bullet -compact
 Adaptec 274x and aic7770 SCSI
-.Em ( ahc ; UNTESTED )
+.Pq Em ahc ; UNTESTED
 .It
 BusLogic 7xx SCSI
-.Em ( bha ; UNTESTED )
+.Pq Em bha ; UNTESTED
 .bullet)
 .bullet)
 .
@@ -197,15 +204,17 @@ Although these boards are supported by
 .Nx*M
 since there is no keyboard or mouse support available for the
 TurboChannel systems, they aren't very useful.
-XXX: is this still true now that the MI sfb.c is used??? 
+XXX: is this still true now that the MI sfb.c is used???
 .Note)
 .It
 Network Cards
 .(bullet -compact
-DEC LANCE Ethernet (PMAD-AA,
+.Tn DEC
+LANCE Ethernet (PMAD-AA,
 .Em le ; UNTESTED )
 .It
-DEC DEFTA FDDI (PMAF-F,
+.Tn DEC
+DEFTA FDDI (PMAF-F,
 .Em fta )
 .bullet)
 .bullet)
@@ -232,7 +241,7 @@ Parallel ports  lpt0    0x378   7               [interrupt-driven or polling]
 AHA-174x SCSI host adapters (in enhanced mode)
                 ahb0    any     any     any
 
-AHA-2X4X or AIC-7XXX-based SCSI host adapters
+AHA-2X4X or AIC-7xxx-based SCSI host adapters
                 ahc0    any     any     any
 
 Bus Logic BT445, BT74x, or BT9xx SCSI host adapters
@@ -248,7 +257,7 @@ SCSI disks      sd0, sd1, ...
 SCSI tapes      st0, st1, ...
 SCSI and ATAPI CD-ROMs cd0, cd1, ...
         For each SCSI and IDE controller found, the SCSI or ATA(PI) devices
-        present on the bus are probed in increasing id order for SCSI and
+        present on the bus are probed in increasing ID order for SCSI and
         master/slave order for ATA(PI). So the first SCSI drive found will
         be called sd0, the second sd1, and so on ...
 

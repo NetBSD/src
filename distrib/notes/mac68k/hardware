@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.17 2000/10/10 12:55:19 lukem Exp $
+.\"	$NetBSD: hardware,v 1.18 2000/10/29 14:08:07 lukem Exp $
 .
 .Nx*M
 \*V runs on several of the older Macintosh computers.
@@ -37,7 +37,7 @@ Quadra/Centris 660AV, Quadra 840AV
 .(bullet -compact -offset indent
 Onboard SCSI bus and most SCSI tapes, hard drives, and CD-ROMs
 .It
-Internal sound--enough to beep on some machines, anyway
+Internal sound - enough to beep on some machines, anyway
 .It
 Most basic NuBus video cards (there have been some
 problems with some 24-bit color cards and with most
@@ -50,7 +50,7 @@ multi-button mice and trackballs are supported)
 .It
 Ethernet cards based on the National Semiconductor 8390 and the
 SONIC (DP83932) chips
-(Asante, Apple, and a few others--problems still
+(Asante, Apple, and a few others - problems still
 with Ethernet and many NuBus video cards)
 .It
 Ethernet cards based on the SMC 91c92 and 91c100 (FEAST) chips.
@@ -100,7 +100,8 @@ PowerPC-based Macs
 .Pp
 This is a separate effort from the \*M port. PowerMacs use hardware that
 is often fairly different from that of the \*M port.  If you are
-interested in this, you might want to take a look at the new NetBSD/macppc
+interested in this, you might want to take a look at the new
+.Nx Ns /macppc
 port:
 .Lk http://www.netbsd.org/Ports/macppc/index.html
 .bullet)
@@ -113,18 +114,24 @@ Due to oddities of the Macintosh hardware interrupt priority scheme,
 .Nx*M
 keeps very poor time. Under a high interrupt load (e.g.
 SCSI or serial port activity) , a machine can lose several minutes
-per hour. A consequence of this problem is that attempting to run xntpd
-is rather pointless unless you periodically call ntpdate.
+per hour. A consequence of this problem is that attempting to run
+.Ic xntpd
+is rather pointless unless you periodically call
+.Ic ntpdate .
 .It
 SCSI difficulties
 .Pp
 The
 .Nx*M
 SCSI drivers are not quite as
-robust as their MacOS counterparts. Symptoms of these
+robust as their
+.Tn MacOS
+counterparts. Symptoms of these
 problems are that some SCSI disks will not work under
-NetBSD that work fine under MacOS. Other problems include
-occasional filesystem corruption with some types of drives
+NetBSD that work fine under
+.Tn MacOS .
+Other problems include
+occasional file system corruption with some types of drives
 and the general unreliability of removable SCSI media.
 Keep in mind that there are no clear patterns with these
 problems, and they do not appear to affect the majority of

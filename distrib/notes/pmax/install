@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.24 2000/10/10 12:55:21 lukem Exp $
+.\"	$NetBSD: install,v 1.25 2000/10/29 14:08:09 lukem Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -36,20 +36,30 @@
 There may be updates to this procedure available from the
 .Nx*M
 web page, at
-.Lk http://www.netbsd.org/Ports/pmax .
+.Lk http://www.netbsd.org/Ports/\*M .
 .Note)
 .Pp
-To install or upgrade NetBSD, you need to first boot an installation
+To install or upgrade
+.Nx ,
+you need to first boot an installation
 program and then interact with the screen-menu program
 .Ic sysinst .
-The installation program actually consists of the NetBSD kernel plus
+The installation program actually consists of the
+.Nx
+kernel plus
 an in-memory file system of utility programs.
 .Pp
 From most convenient to least convenient, the installation methods
 are:
 .(enum
-Installation from an existing NetBSD or Ultrix system by booting the
-install kernel from an existing root filesystem.  See the
+Installation from an existing
+.Nx
+or
+.Tn Ultrix
+system by booting the
+install kernel from an existing root file system
+.Pq Pa / .
+See the
 .Sx Installing from an existing system
 section later in these INSTALL notes.
 .It
@@ -70,9 +80,9 @@ target machine.  See the
 section later in these INSTALL notes.
 .It
 For machines with some PROMs that cannot netboot standard kernels, you
-will need to set up an NFS server with a diskless root filesystem for
+will need to set up an NFS server with a diskless root file system for
 trimmed-down network install kernel and run the installation system from
-the NFS root filesystem. See the
+the NFS root file system. See the
 .Sx Install via diskless boot
 section later in these INSTALL notes.
 .enum)
@@ -84,30 +94,44 @@ use a completely different syntax.  Be sure you know how to print
 the configuration of your machine, and how to boot from disk or
 network, as appropriate.
 .Pp
-On the 2100/3100, that's
-.(disp
-boot -f rz(0,N,0)netbsd (boot from rzN)
-boot -f tftp()          (boot diskless via TFTP)
-boot -f mop()           (boot via MOP from an Ultrix server)
-.disp)
+To boot from disk, use:
 .Pp
-On the 5000/200, the equivalent is
-.(disp
-boot 5/rzN/netbsd
-boot 6/tftp
-boot 6/mop
-.disp)
+.(tag 12n -offset indent -compact
+.It "2100 or 3100:"
+.Ic "boot -f rz(0," Ns Ar X Ns Ic ",0)netbsd"
+.It "5000/200:"
+.Ic "boot 5/rz" Ns Ar X Ns Ic "/netbsd"
+.It "other 5000s:"
+.Ic "boot 3/rz" Ns Ar X Ns Ic "/netbsd"
+.tag)
 .Pp
-And on other 5000 series machines,
-.(disp
-boot 3/rzN/netbsd
-boot 3/tftp
-boot 3/mop
-.disp)
+To boot via TFTP, use:
+.Pp
+.(tag 12n -offset indent -compact
+.It "2100 or 3100:"
+.Ic "boot -f tftp()"
+.It "5000/200:"
+.Ic "boot 6/tftp"
+.It "other 5000s:"
+.Ic "boot 3/tftp"
+.tag)
+.Pp
+To boot via MOP, use:
+.Pp
+.(tag 12n -offset indent -compact
+.It "2100 or 3100:"
+.Ic "boot -f mop()"
+.It "5000/200:"
+.Ic "boot 6/mop"
+.It "other 5000s:"
+.Ic "boot 3/mop"
+.tag)
 .Pp
 You will also need to know the total size (in sectors) and the
 approximate geometry of the disks you are installing onto, so that you
-can label your disks for the BSD fast filesystem (FFS).  For most SCSI
+can label your disks for the
+.Bx
+fast file system (FFS).  For most SCSI
 drives (including all SCSI-2 drives), the kernel will correctly detect
 the disk geometry. The
 .Ic sysinst
@@ -117,19 +141,34 @@ If you're installing
 .Nx*M
 for the first time it's a very
 good idea to pre-plan partition sizes for the disks on which you're
-installing NetBSD.  Changing the size of partitions after you've
+installing
+.Nx .
+Changing the size of partitions after you've
 installed is difficult.  If you do not have a spare bootable disk, it
-may be simpler to re-install NetBSD again from scratch.
+may be simpler to re-install
+.Nx
+again from scratch.
 .Pp
-Assuming a classic partition scheme with separate root (`/') and /usr
-filesystems, a comfortable size for the NetBSD root filesystem partition
-is about 32 MB.  A good initial size for the swap partition is twice the
-amount of physical memory in your machine (though, unlike Ultrix, there
-are no restrictions on the size of the swap partition that would render
+Assuming a classic partition scheme with separate
+.Pa /
+(root)
+and
+.Pa /usr
+file systems, a comfortable size for the
+.Nx
+.Pa /
+partition is about 32 MB.
+A good initial size for the swap partition is twice the
+amount of physical memory in your machine (though, unlike
+.Tn Ultrix ,
+there are no restrictions on the size of the swap partition that would render
 part of your memory unusable).  The default swap size is 64 MB, which
 is adequate for doing a full system build.  A full binary installation,
-with X11R6.3, takes about 150 MB in `/usr' - a 200 MB `/usr' should be
-ample.
+with X11R6.3 takes about 150 MB in
+.Pa /usr ;
+a 200 MB
+.Pa /usr
+should be ample.
 .
 .Ss2 Install via a NetBSD CD-ROM
 .
@@ -140,25 +179,39 @@ You can obtain the disk image or diskless boot tar file from the
 To mount the CD-ROM from a
 .Nx*M
 host, type
-.D1 Ic mount\ -r\ -t\ cd9660\ /dev/rz Ns Ar X Ns Ic c\ /mnt
-and from an Ultrix host
-.D1 Ic mount\ -r\ -t\ cdfs\ -o\ nodefperm,noversion\ /dev/rz Ns Ar X Ns Ic c\ /mnt
-.No where Ar X
-is the SCSI id of the CD-ROM.
+.Pp
+.Dl # Ic "mount -r -t cd9660 /dev/rz" Ns Ar X Ns Ic " c /mnt"
+.Pp
+and from an
+.Tn Ultrix
+host
+.Pp
+.Dl # Ic "mount -r -t cdfs -o nodefperm,noversion /dev/rz" Ns Ar X Ns Ic "c /mnt"
+.Pp
+where
+.Ar X
+is the SCSI-ID of the CD-ROM.
 .(Note
-Ultrix does not have Rock Ridge extensions so leave out everything
-between the first and last period (.) in the paths on the CD.  For
+.Tn Ultrix
+does not have Rock Ridge extensions so leave out everything
+between the first and last period
+.Pq Sq \&.
+in the paths on the CD.  For
 example, the path
-.Pa NetBSD-1.3.2
+.Pa NetBSD-1.4.3
 would show up as
-.Pa NetBSD-1.2 .
+.Pa NetBSD-1.3 .
 .Note)
 .Pp
 The diskimage file can be found on the CD-ROM at the following location
 (relative to the mount point of the CD)
-.Dl pmax/installation/diskimage/diskimage.gz
+.Pp
+.Dl Pa \*M/installation/diskimage/diskimage.gz
+.Pp
 and the diskless boot tar file can be found at
-.Dl pmax/installation/netboot/diskimage.tgz
+.Pp
+.Dl Pa \*M/installation/netboot/diskimage.tgz
+.Pp
 Once you have located these files, continue on to either
 .Sx Install via netboot install kernel ,
 .Sx Install via diskless boot ,
@@ -170,82 +223,171 @@ section later in the INSTALL notes.
 .Ss2 Installing from an existing system
 .
 .(Note
-If you are installing NetBSD using an existing NetBSD system that
-is older than NetBSD-1.4, you will need to install new bootblocks
-before installing NetBSD-\*V.  New bootblocks are in the
-tar file:
-.Dl pmax/installation/misc/bootblocks.tgz
-in the NetBSD-\*V distribution.  To install the new bootblocks,
+If you are installing
+.Nx
+using an existing
+.Nx
+system that is older than
+.Nx 1.4 , you will need to install new bootblocks
+before installing
+.Nx \*V.
+New bootblocks are in the tar file:
+.Pp
+.Dl Pa \*M/installation/misc/bootblocks.tgz
+.Pp
+in the
+.Nx \*V
+distribution.  To install the new bootblocks,
 use the following commands:
-.D1 # Ic "cd /
-.D1 # Ic "tar xvpfz .../pmax/installation/misc/bootblocks.tgz
-.D1 # Ic "/usr/mdec/installboot /dev/rrzXc /usr/mdec/bootxx_ffs
-where X is your boot disk SCSI ID.
+.Pp
+.Dl # Ic "cd /"
+.Dl # Ic "tar -zxpvf .../\*M/installation/misc/bootblocks.tgz"
+.Dl # Ic "/usr/mdec/installboot /dev/rrz" Ns Ar X Ns Ic "c /usr/mdec/bootxx_ffs"
+.Pp
+where
+.Ar X
+is your boot disk SCSI-ID.
 .Note)
 .Pp
-With new NetBSD bootblocks or using the Ultrix bootloader,
-you can boot the kernel located in:
-.Dl pmax/binary/kernel/install.gz
-On Ultrix systems you will need to gunzip this kernel before booting it.
-A copy of the gunzip binary for Ultrix systems is located in:
-.Dl pmax/installation/misc/gunzip.ultrix
+With new
+.Nx
+bootblocks or using the
+.Tn Ultrix
+bootloader, you can boot the kernel located in:
 .Pp
-Then boot using:
-.D1 >> Ic "boot -f rz(0,X,0)install
-.D1 >> Ic "boot 5/rzX/install
-or
-.D1 >> Ic "boot 3/rzX/install
-where X is your boot disk SCSI ID, and continue to the
+.Dl Pa \*M/binary/kernel/install.gz
+.Pp
+On
+.Tn Ultrix
+systems you will need to
+.Ic gunzip
+this kernel before booting it.
+A copy of the
+.Ic gunzip
+binary for
+.Tn Ultrix
+systems is located in:
+.Pp
+.Dl Pa \*M/installation/misc/gunzip.ultrix
+.Pp
+Then boot using one of:
+.Pp
+.(tag 12n -offset indent -compact
+.It "2100 or 3100:"
+.Ic "boot -f rz(0," Ns Ar X Ns Ic ",0)install"
+.It "5000/200:"
+.Ic "boot 5/rz" Ns Ar X Ns Ic "/install"
+.It "other 5000s:"
+.Ic "boot 3/rz" Ns Ar X Ns Ic "/install"
+.tag)
+.Pp
+where
+.Ar X
+is your boot disk SCSI-ID, and continue to the
 .Sx Once you've booted the diskimage
 section
 .
 .Ss2 Install via diskimage
 .
 The diskimage file is in
-.Dl pmax/installation/diskimage/diskimage.gz .
+.Pp
+.Dl Pa \*M/installation/diskimage/diskimage.gz .
+.Pp
 It is shipped compressed and is around 1150 kbytes, uncompressing to
 exactly 2 MB.
 .Pp
-To install the diskimage onto disk rzX on a
+To install the diskimage onto disk
+.Li rz Ns Ar X
+on a
 .Nx*M
 system, do:
-.D1 Ic disklabel -W /dev/rrzXc
-.D1 Ic gunzip -c diskimage.gz\ |\ dd of=/dev/rrzXc bs=10240
 .Pp
-When installing on a disk with no NetBSD or Ultrix label, you may get a
+.Dl # Ic "disklabel -W /dev/rrz" Ns Ar X Ns Ic "c"
+.Dl # Ic "gunzip -c diskimage.gz\ |\ dd of=/dev/rrz" Ns Ar X Ns Ic "c bs=10240"
+.Pp
+When installing on a disk with no
+.Nx
+or
+.Tn Ultrix
+label, you may get a
 message like:
+.Pp
 .Dl rzX: WARNING: trying Ultrix label, no disk label
-or when installing on an old Ultrix disk, you may get a message like:
+.Pp
+or when installing on an old
+.Tn Ultrix
+disk, you may get a message like:
+.Pp
 .Dl rzX: WARNING: using ULTRIX partition information
-when issuing the "disklabel -W /dev/rrzXc" command.  This can safely be
-ignored.
 .Pp
-Most other NetBSD ports are similar, but use rsdXc instead of rrzXc.
+when issuing the
+.Ic "disklabel -W /dev/rrz" Ns Ar X Ns Ic "c"
+command.  This can safely be ignored.
 .Pp
-On NetBSD/i386, the `raw disk partition' is the 'd' parttion, so do:
-.D1 Ic disklabel -W /dev/rsdXd
-.D1 Ic gunzip -c diskimage.gz\ |\ dd of=/dev/rsdXd bs=10240
+Most other
+.Nx
+ports are similar, but use
+.Sq rsd Ns Ar X Ns Ic c
+instead of
+.Sq rrz Ns Ar X Ns Ic c .
 .Pp
-On NetBSD, be sure to use
+On
+.Nx Ns /i386,
+the
+.Dq raw disk partition
+is the
+.Sq Li d
+parttion, so do:
+.Pp
+.Dl # Ic "disklabel -W /dev/rsd" Ns Ar X Ns Ic "d"
+.Dl # Ic "gunzip -c diskimage.gz\ |\ dd of=/dev/rsd" Ns Ar X Ns Ic "d bs=10240"
+.Pp
+On
+.Nx ,
+be sure to use
 .Ic disklabel -W
 to enable writing to the label
-area of the disk. If you forget this and/or use the `block' device,
-the dd command may silently fail.
+area of the disk. If you forget this and/or use the
+.Sq block
+device, the
+.Ic dd
+command may silently fail.
 .Pp
-On Ultrix systems, do:
-.D1 Ic gunzip -c diskimage.gz\ |\ dd of=/dev/rrzXc bs=10240
-A copy of the gunzip program is located in
-.Dl pmax/installation/misc/gunzip.ultrix
+On
+.Tn Ultrix
+systems, do:
+.Pp
+.Dl # Ic "gunzip -c diskimage.gz | dd of=/dev/rrz" Ns Ar X Ns Ic "c bs=10240"
+.Pp
+A copy of the
+.Ic gunzip
+program is located in
+.Pp
+.Dl Pa \*M/installation/misc/gunzip.ultrix
+.Pp
 if you do not already have it.
 .Pp
-On MS-DOS, use an unzip utlility, then use rawrite.
+On
+.Tn MS-DOS ,
+use an
+.Sq unzip
+utlility, then use
+.Ic rawrite .
 .Pp
-Then boot using:
-.D1 >> Ic "boot -f rz(0,X,0)netbsd
-.D1 >> Ic "boot 5/rzX/netbsd
-or
-.D1 >> Ic "boot 3/rzX/netbsd
-where X is your boot disk SCSI ID, and continue to the
+Then boot using one of:
+.Pp
+.(tag 12n -offset indent -compact
+.It "2100 or 3100:"
+.Ic "boot -f rz(0," Ns Ar X Ns Ic ",0)install"
+.It "5000/200:"
+.Ic "boot 5/rz" Ns Ar X Ns Ic "/install"
+.It "other 5000s:"
+.Ic "boot 3/rz" Ns Ar X Ns Ic "/install"
+.tag)
+.Pp
+where
+.Ar X
+is your boot disk SCSI-ID, and continue to the
 .Sx Once you've booted the diskimage
 section.
 .
@@ -259,7 +401,7 @@ same machine.)  There are two basic stages to the boot:
 .Pp
 .
 .(bullet
-The pmax PROM software sends a BOOTP request to get its own address, the
+The \*M PROM software sends a BOOTP request to get its own address, the
 address of the TFTP server and the file to download.
 .It
 It downloads the file name obtained from BOOTP, which is the install
@@ -287,18 +429,24 @@ name of the kernel loaded via TFTP
 .bullet)
 .
 .Pp
-Here's an example for a Unix system running bootpd:
+Here's an example for a
+.Ul
+system running
+.Ic bootpd :
 .(disp
 myhost.mydom.com:\e
 	 :ht=ethernet:ha=08002b123456:\e
 	 :ip=192.168.1.2:sm=255.255.255.0:\e
 	 :sa=192.168.1.1:bf=install:\e
-	 :rp=/usr/export/pmax:
+	 :rp=/usr/export/\*M:
 .disp)
 .Pp
-And here's an example for a Unix system running the ISC dhcpd:
+And here's an example for a
+.Ul
+system running the ISC
+.Ic dhcpd :
 .(disp
-host pmax {
+host \*M {
 	hardware ethernet 08:0:2b:12:34:56;
 	fixed-address 192.168.1.2;
 	option host-name "myhost.mydom.com";
@@ -306,20 +454,25 @@ host pmax {
 	option domain-name-servers 192.168.1.1;
 	option broadcast-address 255.255.255.0;
 	option domain-name "my.domain";
-	option root-path "/usr/export/pmax";
+	option root-path "/usr/export/\*M";
 }
 .disp)
 .Pp
 For the TFTP server, You will need to copy the
 .Ic install.ecoff
 kernel to the directory used by the TFTP server.  This file must be
-gunziped.
+gunzipped.
 .Pp
-Then boot using:
-.D1 >> Ic "boot -f tftp()
-.D1 >> Ic "boot 6/tftp
-or
-.D1 >> Ic "boot 3/tftp
+Then boot using one of:
+.Pp
+.(tag 12n -offset indent -compact
+.It "2100 or 3100:"
+.Ic "boot -f tftp()"
+.It "5000/200:"
+.Ic "boot 6/tftp"
+.It "other 5000s:"
+.Ic "boot 3/tftp"
+.tag)
 .Pp
 and continue to the
 .Sx Once you've booted the diskimage
@@ -328,17 +481,17 @@ section.
 .Ss2 Install via diskless boot
 .
 The file
-.Dl pmax/installation/netboot/diskimage.tar.gz
+.Pa \*M/installation/netboot/diskimage.tar.gz
 contains a suitable set of files for installing on an NFS server to set
 up a diskless root filesytem.  (It is a tar copy of the contents of an
-installation ramdisk filesystem contained in the install kernel.)  You
+installation ramdisk file system contained in the install kernel.)  You
 will need to find an NFS server, unpack the tarfile, and setup
-BOOTP/dhcp service for your pmax.  Instructions for setting up
+BOOTP/dhcp service for your \*M.  Instructions for setting up
 an NFS server and diskless booting are on the
 .Nx*M
 netboot
 webpage at
-.Lk http://www.netbsd.org/Ports/pmax/netboot.html
+.Lk http://www.netbsd.org/Ports/\*M/netboot.html
 .Pp
 Since the system install utility, sysinst, requires a read/write root,
 installing via diskless boot is only feasible if your NFS server exports
@@ -353,7 +506,7 @@ section.
 .
 Once you'e booted the installation kernel you will need to
 select your terminal type.  Use
-.Ic pmax
+.Ic \*M
 for a framebuffer console,
 .Ic vt100
 for a serial console with a vt100-compatible terminal, or

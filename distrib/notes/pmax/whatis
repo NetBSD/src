@@ -1,9 +1,9 @@
-.\"	$NetBSD: whatis,v 1.9 2000/10/14 22:27:44 lukem Exp $
+.\"	$NetBSD: whatis,v 1.10 2000/10/29 14:08:09 lukem Exp $
 .
 This is the fifth major release of
 .Nx
 for the DECstation and DECsystem family of computers.
-Some pmax-specific changes from the previous major release include:
+Some \*M-specific changes from the previous major release include:
 .(bullet
 (Optional) use of the MI SCSI subsystem.
 .It
@@ -12,5 +12,5 @@ Support for the DECsystem 5100.
 5000/xx audio support.
 .It
 Support for booting off RAIDframe RAID1 mirrors, and support for booting
-off ISO9660 (CD-ROM) and LFS filesystems.
+off ISO9660 (CD-ROM) and LFS file systems.
 .bullet)

@@ -1,11 +1,12 @@
-.\"	$NetBSD: hardware,v 1.17 2000/10/19 06:10:03 leo Exp $
+.\"	$NetBSD: hardware,v 1.18 2000/10/29 14:08:06 lukem Exp $
 .
 .Nx*M
 \*V runs on a TT030, Falcon and Hades. An FPU is not required.
 The minimum amount of RAM required is 4 MB. On the Hades, only the Tseng PCI
-VGA cards (et4000/et6000/et6100) are supported in the \*V release. When
-an unsupported video card is present, you can use NetBSD with a serial console
-only.
+VGA cards (ET4000/ET6000/ET6100) are supported in the \*V release. When
+an unsupported video card is present, you can use
+.Nx
+with a serial console only.
 .Pp
 Here is a table of recommended HD partition sizes for a full install:
 .Bl -column -offset indent Partition Suggested 100xMBxx Needed 100xMB
@@ -26,7 +27,9 @@ Another item is the add-on packages. You might want 20-30M (or more) in
 .Pa /usr/local
 (or added to
 .Pa /usr )
-to store packages from the NetBSD package system.
+to store packages from the
+.Nx
+package system.
 As you may note the recommended size of
 .Pa /usr
 is 125 MB greater than needed.
@@ -47,7 +50,7 @@ Should support most tape drives.
 .It
 Should support most CD-ROM drives.
 .It
-Should support most ZIP/MO drives.
+Should support most ZIP/M-O drives.
 .bullet)
 .It
 The builtin video controller
@@ -95,5 +98,5 @@ Teles S0/16.3-ISA ISDN adapter (with I4B)
 This list is incomplete by definition. We can not test all SCSI peripherals,
 ISA cards or PCI cards. If you have problems with such a peripheral, please
 contact the
-.Mt port-atari@netbsd.org
+.Mt port-\*M@netbsd.org
 mailing list.

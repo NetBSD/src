@@ -1,4 +1,4 @@
-.\"	$NetBSD: whatis,v 1.6 2000/10/10 12:55:16 lukem Exp $
+.\"	$NetBSD: whatis,v 1.7 2000/10/29 14:08:04 lukem Exp $
 .
 There have been many \*M-specific enhancements since the
 1.4 release.
@@ -17,7 +17,7 @@ Ability to boot off RAIDframe RAID-1 (mirrored) FFS partitions.
 .It
 Ability to boot off LFS partitions.
 .It
-.Ic ddb
+.Xr ddb 4
 traceback code added.
 .It
 Emulate user program use of BWX instructions on CPUs which don't
@@ -28,8 +28,7 @@ support for the: 8bpp TGA2, and 32bpp ZLXp-E2 and -E3.
 .bullet)
 .Pp
 .Nx
-\*V on alpha is, as usual, also fully backward compatible
-with old
+\*V on \*M is, as usual, also fully backward compatible with old
 .Nx*M
 binaries, so you don't need to recompile all
 your local programs.

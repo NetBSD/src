@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.3 2000/10/10 12:55:22 lukem Exp $
+.\"	$NetBSD: install,v 1.4 2000/10/29 14:08:10 lukem Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -55,37 +55,49 @@ by using a diskless setup' below).
 .
 The miniroot is a self-contained
 .Nx
-filesystem holding all utilities
+file system holding all utilities
 necessary to install
 .Nx
 on a local disk. It is distributed as a plain
 file designed to be transferred to a raw disk partition from which it can
-be booted using the appropriate PROM command. Usually, the miniroot will
-be loaded into the swap partition of a disk. If needed, you can use any
+be booted using the appropriate OpenBoot PROM command. Usually, the miniroot
+will be loaded into the swap partition of a disk. If needed, you can use any
 other unused partition, but remember that the partition will then not
 available during the installation process.
 .Pp
 Loading the miniroot onto your raw partition is simple. On
 .Nx
-as well
-as Solaris you use a command like:
-.Dl # Ic dd if=miniroot.fs of=/dev/rdsk/c0t0d0s1 bs=4k conv=sync
-(Here, `/dev/rdsk/c0t0d0s1' is assumed to be your swap partition.) There's a
-potential problem here if /dev/rsd0b is actually in use as a swap
+as well as
+.Tn Solaris
+you use a command like:
+.Pp
+.Dl # Ic "dd if=miniroot.fs of=/dev/rdsk/c0t0d0s1 bs=4k conv=sync"
+.Pp
+(Here,
+.Li /dev/rdsk/c0t0d0s1
+is assumed to be your swap partition.) There's a
+potential problem here if
+.Pa /dev/rdsk/c0t0d0s1
+is actually in use as a swap
 partition by your currently running system. If you don't have another
 disk or partition to spare, you can usually get away with running this
 command anyway after first booting into single-user mode to ensure a
 quiet system.
 .Pp
 After transferring the miniroot to disk, bring the system down by:
+.Pp
 .Dl # Ic halt
 .Pp
-Then boot the miniroot by typing the appropriate command at the PROM:
-.Dl ok Ic "boot disk:b netbsd -s
+Then boot the miniroot by typing the appropriate command at the OpenBoot PROM:
 .Pp
-If you've loaded the miniroot onto some other disk than `sd0' adapt
+.Dl ok Ic "boot disk:b netbsd -s"
+.Pp
+If you've loaded the miniroot onto some other disk than
+.Li sd0
+adapt
 the boot specifier accordingly, e.g.:
-.Dl ok Ic boot disk1:b netbsd -s
+.Pp
+.Dl ok Ic "boot disk1:b netbsd -s"
 .Pp
 The monitor boot command will cause the
 .Nx
@@ -104,15 +116,21 @@ system as the boot-server, have a look at the
 .Xr diskless 8
 manual page for guidelines on how to proceed with this.
 If the server runs another operating system, you'll have to consult
-documentation that came with it. (On SunOS systems, add_client(8) is a
-good start.)
+documentation that came with it. (On
+.Tn SunOS
+systems,
+.Xr add_client 8
+is a good start.)
 .Pp
-Your Sparcstation expects to be able to download a second stage bootstrap
+Your SPARCstation expects to be able to download a second stage bootstrap
 program via TFTP after having acquired its IP address through RevARP when
-instructed to boot "over the net". It will look for a filename composed of
+instructed to boot
+.Sq "over the net" .
+It will look for a filename composed of
 the machine's IP address followed by the machine's architecture, separated
 by a period. For example, a sun4c machine which has been assigned IP
-address 130.115.144.11, will make an TFTP request for `8273900B.SUN4U'.
+address 130.115.144.11, will make an TFTP request for
+.Pa 8273900B.SUN4U .
 Normally, this file is a symbolic link to an appropriate second-stage
 boot program, which should be located in a place where the TFTP daemon
 can find it (remember, many TFTP daemons run in a chroot'ed environment).
@@ -128,35 +146,46 @@ does not know about netbooting.
 .Note)
 .Pp
 After the boot program has been loaded into memory and given control by
-the PROM, it starts locating the machine's remote root directory through
-the BOOTPARAM protocol. First a BOOTPARAM WHOAMI request is broadcast
+the OpenBoot PROM, it starts locating the machine's remote root directory
+through the BOOTPARAM protocol. First a BOOTPARAM WHOAMI request is broadcast
 on the local net. The answer to this request (if it comes in) contains
 the client's name. This name is used in next step, a BOOTPARAM GETFILE
-request -- sent to the server that responded to the WHOAMI request --
+request - sent to the server that responded to the WHOAMI request -
 requesting the name and address of the machine that will serve the client's
 root directory, as well as the path of the client's root on that server.
 .Pp
 Finally, this information (if it comes in) is used to issue a REMOTE MOUNT
-request to the client's root filesystem server, asking for an NFS file
-handle corresponding to the root filesystem. If successful, the boot
-program starts reading from the remote root filesystem in search of the
+request to the client's root file system server, asking for an NFS file
+handle corresponding to the root file system. If successful, the boot
+program starts reading from the remote root file system in search of the
 kernel which is then read into memory.
 .Pp
 As noted above in the section
 .Sx Preparing your System for Nx Installation
 you have several options when choosing a location to store the installation
 filesets. However, the easiest way is to put the
-.Pa *.tar.gz
+.Pa *.tgz
 files you want
 to install into the root directory for your client on the server.
 .Pp
-Next, unpack `base.tar.gz' and `etc.tar.gz' on the server in the root
+Next, unpack
+.Pa base.tgz
+and
+.Pa etc.tgz
+on the server in the root
 directory for your machine. If you elect to use a separately NFS-mounted
-filesystem for `/usr' with your diskless setup, make sure the "./usr" base
-files in base.tar.gz end up in the correct location. One way to do this is
+file system for
+.Pa /usr
+with your diskless setup, make sure the
+.Pa ./usr
+base
+files in
+.Pa base.tgz
+end up in the correct location. One way to do this is
 to temporarily use a loopback mount on the server, re-routing
 .Ar root Ns Pa /usr
-to your server's exported NetBSD
+to your server's exported
+.Nx
 .Pa /usr
 directory. Also put the kernel and the
 install/upgrade scripts into the root directory.
@@ -169,44 +198,62 @@ Add the IP addresses of both server and client.
 This files contains the client's hostname; use the same
 name as in \*<root\*>/etc/hosts.
 .It Ar root Ns Pa /etc/fstab
-Enter the entries for the remotely mounted filesystems.
+Enter the entries for the remotely mounted file systems.
 For example:
+.Pp
 .Dl server:/export/root/client        /     nfs  rw 0 0
 .Dl server:/export/exec/sun4u.netbsd  /usr  nfs  rw 0 0
 .tag)
 .Pp
-Now you must populate the `/dev' directory for your client. If yoarserver
-runs SunOS 4.x, you can simply change your working directory to
+Now you must populate the
+.Pa /dev
+directory for your client. If your server
+runs
+.Tn SunOS
+4.x, you can simply change your working directory to
 .Ar root Ns Pa /dev
 and run the MAKEDEV script:
 .Ic sh MAKEDEV all .
 .Pp
-On SunOS 5.x systems, MAKEDEV can also be used, but there'll be error
+On
+.Tn Solaris
+systems,
+.Ic MAKEDEV
+can also be used, but there'll be error
 messages about unknown user and groups. These errors are inconsequential
-for the purpose of installing NetBSD. However, you may want to correct them
+for the purpose of installing
+.Nx .
+However, you may want to correct them
 if you plan to use the diskless setup regularly. In that case, you may re-run
-MAKEDEV on your
+.Ic MAKEDEV
+on your
 .Nx
 machine once it has booted.
 .Pp
-Boot your workstation from the server by entering the appropriate `boot'
-command at the monitor prompt. Depending on the PROM version in your machine,
-this command takes one of the following forms:
-.Dl "ok boot net netbsd -s
+Boot your workstation from the server by entering the appropriate
+.Ic boot
+command at the monitor prompt. Depending on the OpenBoot PROM version in your
+machine, this command takes one of the following forms:
+.Pp
+.Dl "ok boot net netbsd -s"
 .Pp
 This will boot the
 .Nx
 kernel in single-user mode.
 .Pp
-If you use a diskless setup with a separately NFS-mounted /usr filesystem,
+If you use a diskless setup with a separately NFS-mounted
+.Pa /usr
+file system,
 mount
 .Pa /usr
 by hand now:
-.Dl netbsd# Ic mount /usr
+.Pp
+.Dl netbsd# Ic "mount /usr"
 .Pp
 .(Note
 For miniroot installs, the text editor is vi.
 .Note)
+.Pp
 When using
 .Xr disklabel 8
 to edit disklabels the -e switch will invoke the editor on the
@@ -217,55 +264,92 @@ the disk you want to install
 .Nx
 onto.
 .Nx
-understands SunOS-style
-disklabels, so if your disk was previously used by SunOS there will be
-a usable label on it. Use `disklabel -e \*<disk\*>' or `disklabel -i
-\*<disk\*>' (where \*<disk\*> is the device name assigned by the NetBSD
-kernel, e.g. `sd0') to view and
+understands
+.Tn SunOS Ns No -style
+disklabels, so if your disk was previously used by
+.Tn SunOS
+there will be
+a usable label on it. Use
+.Ic "disklabel -e \*<disk\*>"
+or
+.Ic "disklabel -i \*<disk\*>"
+(where
+.Em \*<disk\*>
+is the device name assigned by the
+.Nx
+kernel, e.g.
+.Li sd0 )
+to view and
 modify the partition sizes. See the section
 .Sx Preparing your System for Nx Installation
 above for suggestions about disk partition sizes.
 .Pp
 If you are installing on a SCSI disk that does
 .Em not
-have a SunOS or
-NetBSD label on it, you may still be able to use disklabel(8) but you'll
-have to create all partitions from scratch. If your disk is listed in
-`/etc/disktab', you may use the entry (which in most cases only defines
-a `c' partition to describe the whole disk) to put an initial label on
-the disk. Then proceed with `disklabel -e \*<disk\*>' or `disklabel -i
-\*<disk\*>' to create a partition layout that suits your needs.
+have a
+.Tn SunOS
+or
+.Nx
+label on it, you may still be able to use
+.Xr disklabel 8
+but you'll have to create all partitions from scratch.
+If your disk is listed in
+.Pa /etc/disktab ,
+you may use the entry (which in most cases only defines a
+.Sq Li c
+partition to describe the whole disk) to put an initial label on
+the disk. Then proceed with
+.Ic "disklabel -e \*<disk\*>"
+.Ic "disklabel -i \*<disk\*>"
+to create a partition layout that suits your needs.
 .(Note
-Because of the built-in compatibility with SunOS-style labels,
-.Em Always make sure all your partitions
-.Em start and end on cylinder boundaries.
+Because of the built-in compatibility with
+.Tn SunOS Ns No -style
+labels,
+.Em "Always make sure all your partitions start and end on cylinder boundaries."
 .Note)
 .Pp
 Here follows an example of what you'll see while in the dislabel editor.
-Do not touch any of the parameters except for the `label: ' entry and
+Do not touch any of the parameters except for the
+.Sq Li label:
+entry and
 the actual partition size information at the bottom (the lines starting
-with `a:', `b:', ...).
+with
+.Sq Li a: ,
+.Sq Li b: ,
+...).
 .Pp
 The size and offset fields are given in sector units. Be sure to make
 these numbers multiples of the of the number of sectors per cylinder:
 the kernel might be picky about these things, but aside from this you'll
 have the least chance of wasting disk space.
-Partitions on which you intend to have a mountable filesystem, should
-be given fstype `4.2BSD'. Remember, the `c' partition should describe
+Partitions on which you intend to have a mountable file system, should
+be given fstype
+.Li 4.2BSD .
+Remember, the
+.Sq Li c
+partition should describe
 The whole disk and typically does not require editing.
-The `(Cyl. x - y)' info that appears after the hash (`#') character is
+The
+.Sq Li "(Cyl. x - y)"
+info that appears after the hash
+.Sq Li #
+character is
 treated as a comment and need not be filled in when altering partitions.
 .(Note
-The line containing `8 partitions:' is best left alone,
+The line containing
+.Sq Li "8 partitions:"
+is best left alone,
 even if you define less then eight partitions. If this line displays
 a different number and the program complains about it (after you leave
-the editor), then try setting it to `8 partitions:'.
+the editor), then try setting it to
+.Sq Li "8 partitions:" .
 .Note)
 .
 .Ss2 Sample disklabel screen
 .(disp
 netbsd# disklabel sd2
- # /dev/rsd2c:
+# /dev/rsd2c:
 type: SCSI
 disk: SCSI disk
 label: Hold Your Breath
@@ -292,6 +376,7 @@ drivedata: 0
 .disp)
 .Pp
 To begin installation or the upgrade procedure, run sysinst:
+.Pp
 .Dl netbsd# Ic sysinst
 .
 .Ss2 Running sysinst
@@ -304,7 +389,9 @@ installation process.
 Occasionally, you will have to provide a piece of information such as the
 name of the disk you want to install on or IP addresses and domain names
 you want to assign. If your system has more than one disk, you may want
-to look at the output of the dmesg(8) command to see how your disks
+to look at the output of the
+.Xr dmesg 8
+command to see how your disks
 have been identified by the kernel.
 .Pp
 The installation script goes through the following phases:
@@ -319,7 +406,7 @@ setting of the local timezone
 .It
 creating and mounting the
 .Nx
-filesystems
+file systems
 .It
 setup of IP configuration
 .It
@@ -328,12 +415,16 @@ extraction of the distribution tar files
 installation of boot programs
 .bullet)
 .Pp
-Now try a reboot.  Initially I'd suggest you "boot netbsd -bs", then
-try multiuser after that. If you boot single-user the
+Now try a reboot.  Initially we'd suggest you
+.Ic "boot netbsd -bs" ,
+then try multiuser after that. If you boot single-user the
 .Nx
-incantation
-to make the root filesystem writable is
-.Dl netbsd# Ic mount -u /dev/sd0a /
+incantation to make the root file system
+.Pq Pa /
+writable is
+.Pp
+.Dl netbsd# Ic "mount -u /dev/sd0a /"
+.Pp
 .Em Congratulations ,
 you have successfully installed
 .Nx

@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.4 2000/10/10 12:55:17 lukem Exp $
+.\"	$NetBSD: prep,v 1.5 2000/10/29 14:08:05 lukem Exp $
 .
 First and foremost, before beginning the installation process,
 .Em make sure you have a reliable backup
@@ -7,9 +7,10 @@ wish to keep. Repartitioning your hard disk is an excellent way to
 destroy important data.
 .Pp
 Second, read and perform the instructions in
-.Pa arm32/ Ns Ar platform Ns Pa /prep
+.Pa \*M/ Ns Ar platform Ns Pa /prep
 that are specific to your platform for partitioning and booting (even if you're
-dedicating a device to NetBSD).
+dedicating a device to
+.Nx ) .
 .Pp
 Finally, when you are happy with your
 .Nx
