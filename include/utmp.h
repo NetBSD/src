@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)utmp.h	8.2 (Berkeley) 1/21/94
- *	$Id: utmp.h,v 1.4 1994/05/16 10:59:04 cgd Exp $
+ *	$Id: utmp.h,v 1.5 1994/10/19 03:43:38 cgd Exp $
  */
 
 #ifndef	_UTMP_H_
@@ -60,7 +60,7 @@ struct utmp {
 	char	ut_line[UT_LINESIZE];
 	char	ut_name[UT_NAMESIZE];
 	char	ut_host[UT_HOSTSIZE];
-	long	ut_time;
+	time_t	ut_time;
 };
 
 #endif /* !_UTMP_H_ */
