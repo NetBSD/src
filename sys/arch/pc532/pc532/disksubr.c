@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.16 2000/03/07 15:55:16 tsutsui Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.17 2000/05/19 18:54:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -85,8 +85,8 @@ readdisklabel(dev, strat, lp, osdep)
 	(*strat)(bp);
 	if (biowait(bp)) {
 		msg = "I/O error";
-	} else for (dlp = (struct disklabel *)bp->b_un.b_addr;
-	    dlp <= (struct disklabel *)(bp->b_un.b_addr+DEV_BSIZE-sizeof(*dlp));
+	} else for (dlp = (struct disklabel *)bp->b_data;
+	    dlp <= (struct disklabel *)(bp->b_data+DEV_BSIZE-sizeof(*dlp));
 	    dlp = (struct disklabel *)((char *)dlp + sizeof(long))) {
 		if (dlp->d_magic != DISKMAGIC || dlp->d_magic2 != DISKMAGIC) {
 			if (msg == NULL)
@@ -178,9 +178,9 @@ writedisklabel(dev, strat, lp, osdep)
 	/* if successful, locate disk label within block and validate */
 	if ((error = biowait(bp)) != 0)
 		goto done;
-	for (dlp = (struct disklabel *)bp->b_un.b_addr;
+	for (dlp = (struct disklabel *)bp->b_data;
 	    dlp <= (struct disklabel *)
-	      (bp->b_un.b_addr + lp->d_secsize - sizeof(*dlp));
+	      (bp->b_data + lp->d_secsize - sizeof(*dlp));
 	    dlp = (struct disklabel *)((char *)dlp + sizeof(long))) {
 		if (dlp->d_magic == DISKMAGIC && dlp->d_magic2 == DISKMAGIC &&
 		    dkcksum(dlp) == 0) {

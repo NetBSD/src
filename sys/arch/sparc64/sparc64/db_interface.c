@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.30 2000/04/14 08:29:03 mrg Exp $ */
+/*	$NetBSD: db_interface.c,v 1.31 2000/05/19 18:54:27 thorpej Exp $ */
 
 /*
  * Mach Operating System
@@ -829,7 +829,7 @@ db_dump_buf(addr, have_addr, count, modif)
 	db_printf("flags:%x => %b\n", buf->b_flags, buf->b_flags, flagnames);
 	db_printf("error:%x bufsiz:%x bcount:%x resid:%x dev:%x un.addr:%x\n",
 		  buf->b_error, buf->b_bufsize, buf->b_bcount, buf->b_resid,
-		  buf->b_dev, buf->b_un.b_addr);
+		  buf->b_dev, buf->b_data);
 	db_printf("saveaddr:%p lblkno:%x blkno:%x iodone:%x",
 		  buf->b_saveaddr, buf->b_lblkno, buf->b_blkno, buf->b_iodone);
 	db_printsym((long)buf->b_iodone, DB_STGY_PROC);

@@ -1,4 +1,4 @@
-/*	$NetBSD: rl.c,v 1.2 2000/04/30 11:46:49 ragge Exp $	*/
+/*	$NetBSD: rl.c,v 1.3 2000/05/19 18:54:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -511,7 +511,7 @@ rlcstart(struct rlc_softc *sc, struct buf *ob)
 		if (bp == NULL)
 			return;	/* Nothing to do */
 		BUFQ_REMOVE(&sc->sc_q, bp);
-		sc->sc_bufaddr = bp->b_un.b_addr;
+		sc->sc_bufaddr = bp->b_data;
 		sc->sc_diskblk = bp->b_rawblkno;
 		sc->sc_bytecnt = bp->b_bcount;
 		bp->b_resid = 0;
