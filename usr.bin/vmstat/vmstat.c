@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.114 2003/06/11 17:26:32 drochner Exp $ */
+/* $NetBSD: vmstat.c,v 1.115 2003/07/02 12:47:00 simonb Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.114 2003/06/11 17:26:32 drochner Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.115 2003/07/02 12:47:00 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -401,7 +401,7 @@ main(int argc, char *argv[])
 
 		argv = choosedrives(argv);	/* Select disks. */
 		winsize.ws_row = 0;
-		(void)ioctl(STDOUT_FILENO, TIOCGWINSZ, (char *)&winsize);
+		(void)ioctl(STDOUT_FILENO, TIOCGWINSZ, &winsize);
 		if (winsize.ws_row > 0)
 			winlines = winsize.ws_row;
 
