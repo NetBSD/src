@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.37 2002/05/12 15:05:41 ichiro Exp $	*/
+/*	$NetBSD: cpu.c,v 1.37.4.1 2002/06/07 18:33:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -45,7 +45,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.37 2002/05/12 15:05:41 ichiro Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.37.4.1 2002/06/07 18:33:14 thorpej Exp $");
 
 #include <sys/systm.h>
 #include <sys/malloc.h>
@@ -293,7 +293,9 @@ const struct cpuidtab cpuids[] = {
 	{ CPU_ID_80200,		CPU_CLASS_XSCALE,	"i80200",
 	  xscale_steppings },
 
-	{ CPU_ID_80321,		CPU_CLASS_XSCALE,	"i80321",
+	{ CPU_ID_80321_400,	CPU_CLASS_XSCALE,	"i80321 400MHz",
+	  xscale_steppings },
+	{ CPU_ID_80321_600,	CPU_CLASS_XSCALE,	"i80321 600MHz",
 	  xscale_steppings },
 
 	{ CPU_ID_PXA250,	CPU_CLASS_XSCALE,	"PXA250",
