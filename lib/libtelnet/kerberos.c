@@ -1,4 +1,4 @@
-/*	$NetBSD: kerberos.c,v 1.4 2000/06/22 06:47:44 thorpej Exp $	*/
+/*	$NetBSD: kerberos.c,v 1.5 2001/01/06 23:36:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)kerberos.c	8.3 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: kerberos.c,v 1.4 2000/06/22 06:47:44 thorpej Exp $");
+__RCSID("$NetBSD: kerberos.c,v 1.5 2001/01/06 23:36:37 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -84,8 +84,6 @@ __RCSID("$NetBSD: kerberos.c,v 1.4 2000/06/22 06:47:44 thorpej Exp $");
 #include <sys/cdefs.h>
 
 int kerberos4_cksum __P((unsigned char *, int));
-
-extern int auth_debug_mode;
 
 static unsigned char str_data[1024] = { IAC, SB, TELOPT_AUTHENTICATION, 0,
 			  		AUTHTYPE_KERBEROS_V4, };
