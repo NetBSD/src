@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_subr.c,v 1.9 1994/12/12 18:59:15 gwr Exp $	*/
+/*	$NetBSD: if_le_subr.c,v 1.10 1994/12/13 18:31:51 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -76,7 +76,8 @@ le_md_match(parent, vcf, args)
 		ca->ca_intpri = 3;
 
 	/* The peek returns non-zero on bus error. */
-	return (!bus_peek(ca, 0, 1, &x));
+	x = bus_peek(ca->ca_bustype, ca->ca_paddr, 1);
+	return (x != -1);
 }
 
 void

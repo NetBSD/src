@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_subr.c,v 1.1 1994/12/12 18:59:10 gwr Exp $	*/
+/*	$NetBSD: if_ie_subr.c,v 1.2 1994/12/13 18:31:48 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -86,6 +86,8 @@ ie_md_match(parent, vcf, args)
 
 	case BUS_VME16:
 		/* No default VME address. */
+		if (ca->ca_paddr == -1)
+			return(0);
 		sz = 2;
 		break;
 
@@ -98,7 +100,8 @@ ie_md_match(parent, vcf, args)
 		ca->ca_intpri = 3;
 
 	/* The peek returns non-zero on bus error. */
-	return (!bus_peek(ca, 0, sz, &x));
+	x = bus_peek(ca->ca_bustype, ca->ca_paddr, sz);
+	return (x != -1);
 }
 
 void
