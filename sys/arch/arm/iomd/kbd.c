@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.3 2002/10/05 17:16:35 chs Exp $	*/
+/*	$NetBSD: kbd.c,v 1.4 2002/10/22 20:20:35 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -151,7 +151,6 @@ extern struct cfdriver kbd_cd;
 
 dev_type_open(kbdopen);
 dev_type_close(kbdclose);
-dev_type_poll(kbdpoll);
 dev_type_read(kbdread);
 dev_type_ioctl(kbdioctl);
 
@@ -324,33 +323,6 @@ kbdread(dev, uio, flag)
 			break;
 	}
 	return error;
-}
-
-
-int
-kbdpoll(dev, events, p)
-	dev_t dev;
-	int events;
-	struct proc *p;
-{
-	struct kbd_softc *sc = kbd_cd.cd_devs[KBDUNIT(dev)];
-	int revents = 0;
-	int s = spltty();
-
-	if (KBDFLAG(dev) == KBDFLAG_CONUNIT) {
-		splx(s);
-		return(ENXIO);
-	}
-
-	if (events & (POLLIN | POLLRDNORM)) {
-		if (sc->sc_q.c_cc > 0)
-			revents |= events & (POLLIN | POLLRDNORM);
-		else
-			selrecord(p, &sc->sc_rsel);
-	}
-
-	splx(s);
-	return (revents);
 }
 
 
