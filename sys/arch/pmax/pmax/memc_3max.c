@@ -1,4 +1,4 @@
-/*	$NetBSD: memc_3max.c,v 1.7 1999/05/20 14:14:39 nisimura Exp $	*/
+/*	$NetBSD: memc_3max.c,v 1.8 1999/05/26 04:23:59 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: memc_3max.c,v 1.7 1999/05/20 14:14:39 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: memc_3max.c,v 1.8 1999/05/26 04:23:59 nisimura Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -40,7 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: memc_3max.c,v 1.7 1999/05/20 14:14:39 nisimura Exp $
 #include <machine/locore.h>		/* wbflush() */
 
 #include <pmax/pmax/kn02.h>	/* error-register defs copied into kn03.h */
-#include <pmax/pmax/dec_3max_subr.h>
+#include <pmax/pmax/memc.h>
 
 /*
  * the 3max and 3maxplus have compatible memory subsystems;
