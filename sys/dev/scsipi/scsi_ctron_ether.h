@@ -1,16 +1,16 @@
-/*	$NetBSD: scsi_ctron_ether.h,v 1.4 1997/08/27 11:26:38 bouyer Exp $	*/
+/*	$NetBSD: scsi_ctron_ether.h,v 1.5 1998/02/13 04:19:22 enami Exp $	*/
 
 /*
  * SCSI interface description
  */
 
+#ifndef _DEV_SCSIPI_SCSI_CTRON_ETHER_H_
+#define _DEV_SCSIPI_SCSI_CTRON_ETHER_H_
+
 
 /*
  * SCSI command format
  */
-
-#ifndef	_SCSI_CTRON_ETHER_H
-#define _SCSI_CTRON_ETHER_H 1
 
 #define CTRON_ETHERCMD2(OP, SUB) {OP, SUB}
 #define CTRON_ETHER_SEND CTRON_ETHERCMD2(0xc, 0x1)
@@ -105,4 +105,4 @@ enum scsi_ctron_ether_media {
 	CMEDIA_AUTOSENSE=2		/* set_media command only */
 };
 
-#endif /* _SCSI_CTRON_ETHER_H */
+#endif /* _DEV_SCSIPI_SCSI_CTRON_ETHER_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_changer.h,v 1.9 1997/09/29 00:55:26 mjacob Exp $	*/
+/*	$NetBSD: scsi_changer.h,v 1.10 1998/02/13 04:19:21 enami Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe <thorpej@and.com>
@@ -36,6 +36,9 @@
  * SUCH DAMAGE.
  */
 
+#ifndef _DEV_SCSIPI_SCSI_CHANGER_H_
+#define _DEV_SCSIPI_SCSI_CHANGER_H_
+
 /*
  * SCSI changer interface description
  */
@@ -58,9 +61,6 @@
  *
  * Ported to run under 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
  */
-
-#ifndef _SCSI_SCSI_CHANGER_H
-#define _SCSI_SCSI_CHANGER_H 1
 
 /*
  * SCSI command format
@@ -397,4 +397,4 @@ struct page_transport_geometry_parameters {
 	u_int8_t	member;
 };
 
-#endif /* _SCSI_SCSI_CHANGER_H */
+#endif /* _DEV_SCSIPI_SCSI_CHANGER_H_ */

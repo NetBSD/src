@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_tape.h,v 1.12 1997/10/01 01:19:01 enami Exp $	*/
+/*	$NetBSD: scsi_tape.h,v 1.13 1998/02/13 04:19:26 enami Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -29,6 +29,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _DEV_SCSIPI_SCSI_TAPE_H_
+#define _DEV_SCSIPI_SCSI_TAPE_H_
+
 /*
  * Originally written by Julian Elischer (julian@tfs.com)
  * for TRW Financial Systems.
@@ -49,9 +52,6 @@
 /*
  * SCSI tape interface description
  */
-
-#ifndef	_SCSI_TAPE_H_
-#define _SCSI_TAPE_H_ 1
 
 /*
  * SCSI command formats
@@ -276,4 +276,4 @@ struct scsi_tape_read_position {
 #define DAT_1		0x13
 #define QIC_3095	0x45
 
-#endif /* _SCSI_TAPE_H_ */
+#endif /* _DEV_SCSIPI_SCSI_TAPE_H_ */
