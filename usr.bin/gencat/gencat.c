@@ -1,4 +1,4 @@
-/*	$NetBSD: gencat.c,v 1.9 1998/10/09 17:00:56 itohy Exp $	*/
+/*	$NetBSD: gencat.c,v 1.10 2001/02/19 23:03:47 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: gencat.c,v 1.9 1998/10/09 17:00:56 itohy Exp $");
+__RCSID("$NetBSD: gencat.c,v 1.10 2001/02/19 23:03:47 cgd Exp $");
 #endif
 
 /***********************************************************
@@ -103,8 +103,6 @@ static struct _setT *curSet;
 static char *curline = NULL;
 static long lineno = 0;
 
-extern	char	*__progname;		/* from crt0.o */
-
 #if 0	/* XXX unused */
 static	void	corrupt __P((void));
 #endif
@@ -133,7 +131,7 @@ void	usage __P((void));
 void
 usage()
 {
-	fprintf(stderr, "Usage: %s catfile msgfile ...\n", __progname);
+	fprintf(stderr, "Usage: %s catfile msgfile ...\n", getprogname());
 	exit(1);
 }
 
@@ -181,7 +179,7 @@ warning(cptr, msg)
 	char   *cptr;
 	char   *msg;
 {
-	fprintf(stderr, "%s: %s on line %ld\n", __progname, msg, lineno);
+	fprintf(stderr, "%s: %s on line %ld\n", getprogname(), msg, lineno);
 	fprintf(stderr, "%s\n", curline);
 	if (cptr) {
 		char   *tptr;

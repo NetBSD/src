@@ -1,4 +1,4 @@
-/*	$NetBSD: renice.c,v 1.8 2000/08/23 07:01:58 kleink Exp $	*/
+/*	$NetBSD: renice.c,v 1.9 2001/02/19 23:03:50 cgd Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993\n\
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)renice.c	8.1 (Berkeley) 6/9/93";*/
-__RCSID("$NetBSD: renice.c,v 1.8 2000/08/23 07:01:58 kleink Exp $");
+__RCSID("$NetBSD: renice.c,v 1.9 2001/02/19 23:03:50 cgd Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -174,10 +174,9 @@ donice(which, who, prio, incr)
 static void
 usage()
 {
-	extern char *__progname;
 
 	(void)fprintf(stderr, "Usage: %s [<priority> | -n <incr>] ",
-	    __progname);
+	    getprogname());
 	(void)fprintf(stderr, "[[-p] <pids>...] [-g <pgrp>...] ");
 	(void)fprintf(stderr, "[-u <user>...]\n");
 	exit(1);

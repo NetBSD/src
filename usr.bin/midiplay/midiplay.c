@@ -1,4 +1,4 @@
-/*	$NetBSD: midiplay.c,v 1.11 2000/08/12 22:24:52 augustss Exp $	*/
+/*	$NetBSD: midiplay.c,v 1.12 2001/02/19 23:03:49 cgd Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -91,8 +91,6 @@ void playfile __P((FILE *, char *));
 void playdata __P((u_char *, u_int, char *));
 int main __P((int argc, char **argv));
 
-extern char *__progname;
-
 #define P(c) 1,0x90,c,0x7f,4,0x80,c,0
 #define PL(c) 1,0x90,c,0x7f,8,0x80,c,0
 #define C 0x3c
@@ -130,7 +128,7 @@ void
 usage()
 {
 	printf("Usage: %s [-d unit] [-f file] [-l] [-m] [-p pgm] [-q] [-t tempo] [-v] [-x] [file ...]\n",
-		__progname);
+		getprogname());
 	exit(1);
 }
 
