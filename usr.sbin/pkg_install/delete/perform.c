@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.45 2003/09/08 22:11:13 jlam Exp $	*/
+/*	$NetBSD: perform.c,v 1.46 2003/09/09 06:43:10 jlam Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.15 1997/10/13 15:03:52 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.45 2003/09/08 22:11:13 jlam Exp $");
+__RCSID("$NetBSD: perform.c,v 1.46 2003/09/09 06:43:10 jlam Exp $");
 #endif
 #endif
 
@@ -828,7 +828,7 @@ pkg_do(char *pkg)
 		if (is_depoted_pkg) {
 			(void) vsystem("%s %s/+*", REMOVE_CMD, LogDir);
 			if (isemptydir(LogDir))
-				(void) vsystem("%s %s", RMDIR_CMD, LogDir);
+				(void) fexec(RMDIR_CMD, LogDir, NULL);
 			else
 				warnx("%s is not empty", LogDir);
 			return 0;
