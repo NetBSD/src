@@ -1,4 +1,4 @@
-/*	$NetBSD: piixide.c,v 1.14 2004/08/20 06:39:39 thorpej Exp $	*/
+/*	$NetBSD: piixide.c,v 1.15 2004/08/21 00:28:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -441,7 +441,7 @@ piix3_4_setup_channel(struct ata_channel *chp)
 	struct pciide_channel *cp = CHAN_TO_PCHAN(chp);
 	struct pciide_softc *sc = CHAN_TO_PCIIDE(chp);
 	struct wdc_softc *wdc = &sc->sc_wdcdev;
-	int drive;
+	int drive, s;
 	int channel = chp->ch_channel;
 
 	oidetim = pci_conf_read(sc->sc_pc, sc->sc_tag, PIIX_IDETIM);
@@ -520,13 +520,17 @@ piix3_4_setup_channel(struct ata_channel *chp)
 		if ((wdc->sc_atac.atac_cap & ATAC_CAP_UDMA) &&
 		    (drvp->drive_flags & DRIVE_UDMA)) {
 			/* use Ultra/DMA */
+			s = splbio();
 			drvp->drive_flags &= ~DRIVE_DMA;
+			splx(s);
 			udmareg |= PIIX_UDMACTL_DRV_EN( channel, drive);
 			udmareg |= PIIX_UDMATIM_SET(
 			    piix4_sct_udma[drvp->UDMA_mode], channel, drive);
 		} else {
 			/* use Multiword DMA */
+			s = splbio();
 			drvp->drive_flags &= ~DRIVE_UDMA;
+			splx(s);
 			if (drive == 0) {
 				idetim |= piix_setup_idetim_timings(
 				    drvp->DMA_mode, 1, channel);

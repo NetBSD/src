@@ -1,4 +1,4 @@
-/*	$NetBSD: cmdide.c,v 1.16 2004/08/20 06:39:38 thorpej Exp $	*/
+/*	$NetBSD: cmdide.c,v 1.17 2004/08/21 00:28:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -364,7 +364,7 @@ cmd0643_9_setup_channel(struct ata_channel *chp)
 	struct ata_drive_datas *drvp;
 	u_int8_t tim;
 	u_int32_t idedma_ctl, udma_reg;
-	int drive;
+	int drive, s;
 	struct pciide_channel *cp = CHAN_TO_PCHAN(chp);
 	struct pciide_softc *sc = CHAN_TO_PCIIDE(chp);
 
@@ -382,7 +382,9 @@ cmd0643_9_setup_channel(struct ata_channel *chp)
 		if (drvp->drive_flags & (DRIVE_DMA | DRIVE_UDMA)) {
 			if (drvp->drive_flags & DRIVE_UDMA) {
 				/* UltraDMA on a 646U2, 0648 or 0649 */
+				s = splbio();
 				drvp->drive_flags &= ~DRIVE_DMA;
+				splx(s);
 				udma_reg = pciide_pci_read(sc->sc_pc,
 				    sc->sc_tag, CMD_UDMATIM(chp->ch_channel));
 				if (drvp->UDMA_mode > 2 &&
@@ -546,7 +548,7 @@ cmd680_setup_channel(struct ata_channel *chp)
 	u_int8_t mode, off, scsc;
 	u_int16_t val;
 	u_int32_t idedma_ctl;
-	int drive;
+	int drive, s;
 	struct pciide_channel *cp = CHAN_TO_PCHAN(chp);
 	struct pciide_softc *sc = CHAN_TO_PCIIDE(chp);
 	pci_chipset_tag_t pc = sc->sc_pc;
@@ -571,7 +573,9 @@ cmd680_setup_channel(struct ata_channel *chp)
 			continue;
 		mode &= ~(0x03 << (drive * 4));
 		if (drvp->drive_flags & DRIVE_UDMA) {
+			s = splbio();
 			drvp->drive_flags &= ~DRIVE_DMA;
+			splx(s);
 			off = 0xa0 + chp->ch_channel * 16;
 			if (drvp->UDMA_mode > 2 &&
 			    (pciide_pci_read(pc, pa, off) & 0x01) == 0)

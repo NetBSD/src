@@ -1,4 +1,4 @@
-/*	$NetBSD: hptide.c,v 1.15 2004/08/20 06:39:39 thorpej Exp $	*/
+/*	$NetBSD: hptide.c,v 1.16 2004/08/21 00:28:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -275,7 +275,7 @@ static void
 hpt_setup_channel(struct ata_channel *chp)
 {
 	struct ata_drive_datas *drvp;
-	int drive;
+	int drive, s;
 	int cable;
 	u_int32_t before, after;
 	u_int32_t idedma_ctl;
@@ -341,7 +341,9 @@ hpt_setup_channel(struct ata_channel *chp)
 		/* add timing values, setup DMA if needed */
 		if (drvp->drive_flags & DRIVE_UDMA) {
 			/* use Ultra/DMA */
+			s = splbio();
 			drvp->drive_flags &= ~DRIVE_DMA;
+			splx(s);
 			if ((cable & HPT_CSEL_CBLID(chp->ch_channel)) != 0 &&
 			    drvp->UDMA_mode > 2)
 				drvp->UDMA_mode = 2;

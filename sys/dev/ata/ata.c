@@ -1,4 +1,4 @@
-/*      $NetBSD: ata.c,v 1.57 2004/08/20 23:50:13 thorpej Exp $      */
+/*      $NetBSD: ata.c,v 1.58 2004/08/21 00:28:34 thorpej Exp $      */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.57 2004/08/20 23:50:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.58 2004/08/21 00:28:34 thorpej Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -167,7 +167,7 @@ atabusconfig(struct atabus_softc *atabus_sc)
 {
 	struct ata_channel *chp = atabus_sc->sc_chan;
 	struct atac_softc *atac = chp->ch_atac;
-	int i;
+	int i, s;
 	struct atabus_initq *atabus_initq = NULL;
 
 	/* Probe for the drives. */
@@ -213,8 +213,10 @@ atabusconfig(struct atabus_softc *atabus_sc)
 			aprint_normal("atapibus at %s not configured\n",
 			    atac->atac_dev.dv_xname);
 			chp->atapibus = NULL;
+			s = splbio();
 			for (i = 0; i < chp->ch_ndrive; i++)
 				chp->ch_drive[i].drive_flags &= ~DRIVE_ATAPI;
+			splx(s);
 #endif
 			break;
 		}
@@ -235,9 +237,12 @@ atabusconfig(struct atabus_softc *atabus_sc)
 		    &adev, ataprint);
 		if (chp->ata_drives[i] != NULL)
 			ata_probe_caps(&chp->ch_drive[i]);
-		else
+		else {
+			s = splbio();
 			chp->ch_drive[i].drive_flags &=
 			    ~(DRIVE_ATA | DRIVE_OLD);
+			splx(s);
+		}
 	}
 
 	/* now that we know the drives, the controller can set its modes */
@@ -256,12 +261,14 @@ atabusconfig(struct atabus_softc *atabus_sc)
 	 * reset drive_flags for unattached devices, reset state for attached
 	 * ones
 	 */
+	s = splbio();
 	for (i = 0; i < chp->ch_ndrive; i++) {
 		if (chp->ch_drive[i].drv_softc == NULL)
 			chp->ch_drive[i].drive_flags = 0;
 		else
 			chp->ch_drive[i].state = 0;
 	}
+	splx(s);
 
  out:
 	if (atabus_initq == NULL) {
@@ -1010,7 +1017,7 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 	struct ata_channel *chp = drvp->chnl_softc;
 	struct atac_softc *atac = chp->ch_atac;
 	struct device *drv_dev = drvp->drv_softc;
-	int i, printed;
+	int i, printed, s;
 	char *sep = "";
 	int cf_flags;
 
@@ -1025,11 +1032,15 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 		 * Re-do an IDENTIFY with 32-bit transfers,
 		 * and compare results.
 		 */
+		s = splbio();
 		drvp->drive_flags |= DRIVE_CAP32;
+		splx(s);
 		ata_get_params(drvp, AT_WAIT, &params2);
 		if (memcmp(&params, &params2, sizeof(struct ataparams)) != 0) {
 			/* Not good. fall back to 16bits */
+			s = splbio();
 			drvp->drive_flags &= ~DRIVE_CAP32;
+			splx(s);
 		} else {
 			aprint_normal("%s: 32-bit data port\n",
 			    drv_dev->dv_xname);
@@ -1109,7 +1120,9 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 			 */
 			return;
 		}
+		s = splbio();
 		drvp->drive_flags |= DRIVE_MODE;
+		splx(s);
 		printed = 0;
 		for (i = 7; i >= 0; i--) {
 			if ((params.atap_dmamode_supp & (1 << i)) == 0)
@@ -1130,7 +1143,9 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 					continue;
 				drvp->DMA_mode = i;
 				drvp->DMA_cap = i;
+				s = splbio();
 				drvp->drive_flags |= DRIVE_DMA;
+				splx(s);
 			}
 			break;
 		}
@@ -1165,7 +1180,9 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 						continue;
 					drvp->UDMA_mode = i;
 					drvp->UDMA_cap = i;
+					s = splbio();
 					drvp->drive_flags |= DRIVE_UDMA;
+					splx(s);
 				}
 				break;
 			}
@@ -1173,6 +1190,7 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 		aprint_normal("\n");
 	}
 
+	s = splbio();
 	drvp->drive_flags &= ~DRIVE_NOSTREAM;
 	if (drvp->drive_flags & DRIVE_ATAPI) {
 		if (atac->atac_cap & ATAC_CAP_ATAPI_NOSTREAM)	
@@ -1181,6 +1199,7 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 		if (atac->atac_cap & ATAC_CAP_ATA_NOSTREAM)	
 			drvp->drive_flags |= DRIVE_NOSTREAM;
 	}
+	splx(s);
 
 	/* Try to guess ATA version here, if it didn't get reported */
 	if (drvp->ata_vers == 0) {
@@ -1191,15 +1210,18 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 	}
 	cf_flags = drv_dev->dv_cfdata->cf_flags;
 	if (cf_flags & ATA_CONFIG_PIO_SET) {
+		s = splbio();
 		drvp->PIO_mode =
 		    (cf_flags & ATA_CONFIG_PIO_MODES) >> ATA_CONFIG_PIO_OFF;
 		drvp->drive_flags |= DRIVE_MODE;
+		splx(s);
 	}
 	if ((atac->atac_cap & ATAC_CAP_DMA) == 0) {
 		/* don't care about DMA modes */
 		return;
 	}
 	if (cf_flags & ATA_CONFIG_DMA_SET) {
+		s = splbio();
 		if ((cf_flags & ATA_CONFIG_DMA_MODES) ==
 		    ATA_CONFIG_DMA_DISABLE) {
 			drvp->drive_flags &= ~DRIVE_DMA;
@@ -1208,12 +1230,14 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 			    ATA_CONFIG_DMA_OFF;
 			drvp->drive_flags |= DRIVE_DMA | DRIVE_MODE;
 		}
+		splx(s);
 	}
 	if ((atac->atac_cap & ATAC_CAP_UDMA) == 0) {
 		/* don't care about UDMA modes */
 		return;
 	}
 	if (cf_flags & ATA_CONFIG_UDMA_SET) {
+		s = splbio();
 		if ((cf_flags & ATA_CONFIG_UDMA_MODES) ==
 		    ATA_CONFIG_UDMA_DISABLE) {
 			drvp->drive_flags &= ~DRIVE_UDMA;
@@ -1222,6 +1246,7 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 			    ATA_CONFIG_UDMA_OFF;
 			drvp->drive_flags |= DRIVE_UDMA | DRIVE_MODE;
 		}
+		splx(s);
 	}
 }
 
