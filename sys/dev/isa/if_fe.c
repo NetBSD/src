@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fe.c,v 1.21 1998/03/22 12:48:41 drochner Exp $	*/
+/*	$NetBSD: if_fe.c,v 1.22 1998/03/29 23:02:27 mycroft Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -2307,9 +2307,15 @@ fe_getmcaf(ec, af)
 {
 	struct ifnet *ifp = &ec->ec_if;
 	struct ether_multi *enm;
-	register u_char *cp, c;
-	register u_long crc;
-	register int i, len;
+	register u_char *cp;
+	register u_int32_t crc;
+	static const u_int32_t crctab[] = {
+		0x00000000, 0x1db71064, 0x3b6e20c8, 0x26d930ac,
+		0x76dc4190, 0x6b6b51f4, 0x4db26158, 0x5005713c,
+		0xedb88320, 0xf00f9344, 0xd6d6a3e8, 0xcb61b38c,
+		0x9b64c2b0, 0x86d3d2d4, 0xa00ae278, 0xbdbdf21c
+	};
+	register int len;
 	struct ether_multistep step;
 
 	/*
@@ -2342,15 +2348,9 @@ fe_getmcaf(ec, af)
 		cp = enm->enm_addrlo;
 		crc = 0xffffffff;
 		for (len = sizeof(enm->enm_addrlo); --len >= 0;) {
-			c = *cp++;
-			for (i = 8; --i >= 0;) {
-				if ((crc & 0x01) ^ (c & 0x01)) {
-					crc >>= 1;
-					crc ^= 0xedb88320;
-				} else
-					crc >>= 1;
-				c >>= 1;
-			}
+			crc ^= *cp++;
+			crc = (crc >> 4) ^ crctab[crc & 0xf];
+			crc = (crc >> 4) ^ crctab[crc & 0xf];
 		}
 		/* Just want the 6 most significant bits. */
 		crc >>= 26;
