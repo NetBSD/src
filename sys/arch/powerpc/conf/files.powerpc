@@ -1,4 +1,4 @@
-#	$NetBSD: files.powerpc,v 1.4 1998/01/05 20:51:54 perry Exp $
+#	$NetBSD: files.powerpc,v 1.5 1998/01/27 09:15:58 sakamoto Exp $
 #
 # First try for powerpc-specific configuration info
 #
@@ -41,6 +41,11 @@ file	arch/powerpc/powerpc/trap.c
 file	arch/powerpc/powerpc/vm_machdep.c
 file	dev/cons.c
 file	dev/cninit.c
+file    arch/powerpc/powerpc/setjmp.S                   ddb
+file    arch/powerpc/powerpc/db_memrw.c                 ddb
+file    arch/powerpc/powerpc/db_disasm.c                ddb
+file    arch/powerpc/powerpc/db_interface.c             ddb
+file    arch/powerpc/powerpc/db_trace.c                 ddb
 
 # For now, hardwire soft interrupt handling
 file	arch/powerpc/powerpc/soft_spl.c
