@@ -1,13 +1,13 @@
-# $NetBSD: std.sun3,v 1.23 1998/02/08 05:10:56 gwr Exp $
+# $NetBSD: std.sun3x,v 1.1 1998/02/08 05:10:57 gwr Exp $
 
-# Standard information for Sun3 machines.
+# Standard information for Sun3X machines.
 machine	sun3 m68k
 
 # Machine type to be supported by this kernel.  Note:
 # The SUN3 and SUN3X options are mutually exclusive!
 # (Your kernel will only run on one or the other.)
-makeoptions	MACHTYPE=sun3
-options 	_SUN3_
+makeoptions	MACHTYPE=sun3x
+options 	_SUN3X_
 
 # The root node (required)
 mainbus0 at root
