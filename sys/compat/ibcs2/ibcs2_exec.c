@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_exec.c,v 1.30 2000/06/21 06:40:04 matt Exp $	*/
+/*	$NetBSD: ibcs2_exec.c,v 1.31 2000/06/23 22:03:22 matt Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -397,9 +397,10 @@ exec_ibcs2_coff_prep_nmagic(p, epp, fp, ap)
 	struct coff_filehdr *fp;
 	struct coff_aouthdr *ap;
 {
-	u_long tsize, tend, toverlap, doverlap;
+	long toverlap, doverlap;
+	u_long tsize, tend;
 
-	epp->ep_taddr = COFF_SEGMENT_ALIGN(fp, ap, ap->a_tstart);
+	epp->ep_taddr = ap->a_tstart;
 	epp->ep_tsize = ap->a_tsize;
 	epp->ep_daddr = ap->a_dstart;
 	epp->ep_dsize = ap->a_dsize;
@@ -431,11 +432,8 @@ exec_ibcs2_coff_prep_nmagic(p, epp, fp, ap)
 		if (epp->ep_daddr - epp->ep_taddr ==
 		    COFF_DATOFF(fp, ap) - COFF_TXTOFF(fp, ap)) {
 			u_long diff = epp->ep_daddr - trunc_page(epp->ep_daddr);
-			epp->ep_daddr -= diff;
-			epp->ep_dsize += diff;
-			epp->ep_tsize = tsize;
 			toverlap = 0;
-			doverlap = 0;
+			doverlap = -diff;
 		} else {
 			/* otherwise copy the individual pieces */
 			toverlap = epp->ep_tsize - tsize;
@@ -474,7 +472,7 @@ exec_ibcs2_coff_prep_nmagic(p, epp, fp, ap)
 			COFF_DATOFF(fp, ap)));
 	}
 
-	if (epp->ep_dsize > doverlap) {
+	if (epp->ep_dsize > doverlap || doverlap < 0) {
 		/* set up command for data segment */
 		NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_readvn,
 			  epp->ep_dsize - doverlap, epp->ep_daddr + doverlap,
