@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_namespace.h,v 1.1 2003/06/25 09:51:38 tshiozak Exp $	*/
+/*	$NetBSD: citrus_namespace.h,v 1.2 2003/06/26 12:09:56 tshiozak Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -206,6 +206,7 @@
 #define _stdenc_cstomb		_citrus_stdenc_cstomb
 #define _stdenc_mbtowc		_citrus_stdenc_mbtowc
 #define _stdenc_wctomb		_citrus_stdenc_wctomb
+#define _stdenc_put_state_reset	_citrus_stdenc_put_state_reset
 #define _stdenc_get_state_size	_citrus_stdenc_get_state_size
 #define _stdenc_get_mb_cur_max	_citrus_stdenc_get_mb_cur_max
 #endif /* _CITRUS_STDENC_NO_NAMESPACE */

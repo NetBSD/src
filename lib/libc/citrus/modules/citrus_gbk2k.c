@@ -1,4 +1,4 @@
-/* $NetBSD: citrus_gbk2k.c,v 1.3 2003/06/25 09:51:42 tshiozak Exp $ */
+/* $NetBSD: citrus_gbk2k.c,v 1.4 2003/06/26 12:09:57 tshiozak Exp $ */
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_gbk2k.c,v 1.3 2003/06/25 09:51:42 tshiozak Exp $");
+__RCSID("$NetBSD: citrus_gbk2k.c,v 1.4 2003/06/26 12:09:57 tshiozak Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -283,12 +283,6 @@ _citrus_GBK2K_wcrtomb_priv(_GBK2KEncodingInfo * __restrict ei,
 	if (psenc->chlen != 0) {
 		ret = EINVAL;
 		goto err;
-	}
-
-	/* reset state */
-	if (wc == 0) {
-		*nresult = 0; /* stateless */
-		return 0;
 	}
 
 	len = _mb_count(wc);
