@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_3maxplus.c,v 1.22 1999/05/29 09:31:02 nisimura Exp $	*/
+/*	$NetBSD: dec_3maxplus.c,v 1.23 1999/06/08 23:42:36 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.22 1999/05/29 09:31:02 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.23 1999/06/08 23:42:36 simonb Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -97,6 +97,7 @@ __KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.22 1999/05/29 09:31:02 nisimura E
 #include <pmax/pmax/clockreg.h>
 #include <pmax/pmax/turbochannel.h>
 #include <pmax/pmax/pmaxtype.h>
+#include <pmax/pmax/machdep.h>
 
 #include <pmax/pmax/kn03.h>
 #include <pmax/pmax/memc.h>
@@ -126,7 +127,6 @@ static unsigned latched_cycle_cnt;
 void kn03_wbflush __P((void));
 unsigned kn03_clkread __P((void));
 extern unsigned (*clkread) __P((void));
-extern void prom_haltbutton __P((void));
 
 extern volatile struct chiptime *mcclock_addr; /* XXX */
 extern char cpu_model[];

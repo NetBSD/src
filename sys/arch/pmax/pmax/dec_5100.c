@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_5100.c,v 1.8 1999/05/26 04:23:59 nisimura Exp $	*/
+/*	$NetBSD: dec_5100.c,v 1.9 1999/06/08 23:42:36 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -56,6 +56,7 @@
 #include <pmax/pmax/clockreg.h>
 #include <pmax/pmax/turbochannel.h>
 #include <pmax/pmax/pmaxtype.h>
+#include <pmax/pmax/machdep.h>
 
 #include <pmax/pmax/kn01.h>		/* common definitions */
 #include <pmax/pmax/kn230.h>
@@ -86,7 +87,6 @@ extern void kn230_wbflush __P((void));
 
 extern unsigned nullclkread __P((void));
 extern unsigned (*clkread) __P((void));
-extern void prom_haltbutton __P((void));
 
 extern volatile struct chiptime *mcclock_addr; /* XXX */
 extern char cpu_model[];

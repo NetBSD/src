@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.146 1999/05/26 19:16:34 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.147 1999/06/08 23:42:37 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.146 1999/05/26 19:16:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.147 1999/06/08 23:42:37 simonb Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -90,6 +90,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.146 1999/05/26 19:16:34 thorpej Exp $"
 #include <machine/locore.h>
 #include <pmax/pmax/pmaxtype.h>
 #include <pmax/pmax/clockreg.h>
+#include <pmax/pmax/machdep.h>
 
 #ifdef DDB
 #include <sys/exec_aout.h>		/* XXX backwards compatilbity for DDB */
@@ -133,8 +134,6 @@ void	mach_init __P((int, char *[], int, int, u_int, char *));
 unsigned (*clkread) __P((void)); /* high resolution timer if available */
 unsigned nullclkread __P((void));
 
-void	prom_halt __P((int, char *)) __attribute__((__noreturn__));
-int	prom_systype __P((void));
 int	initcpu __P((void));
 
 /* XXX XXX XXX */
