@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.508 2003/02/28 22:05:00 enami Exp $
+$NetBSD: pcidevs,v 1.509 2003/03/02 00:33:10 salo Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2007,12 +2007,12 @@ product SIS 7016		0x7016	SiS 7016 10/100 Ethernet
 product SIS 7018		0x7018	SiS 7018 Sound
 
 /* Silicon Motion, Inc. products */
-product SILMOTION SM710		0x0710	Lynx EM
-product SILMOTION SM712		0x0712	Lynx EM+
-product SILMOTION SM720		0x0720	Lynx 3DM
-product SILMOTION SM810		0x0810	Lynx E
-product SILMOTION SM811		0x0811	Lynx E
-product SILMOTION SM820		0x0820	Lynx 3D
+product SILMOTION SM710		0x0710	LynxEM
+product SILMOTION SM712		0x0712	LynxEM+
+product SILMOTION SM720		0x0720	Lynx3DM
+product SILMOTION SM810		0x0810	LynxE
+product SILMOTION SM811		0x0811	LynxE
+product SILMOTION SM820		0x0820	Lynx3D
 product SILMOTION SM910		0x0910	Lynx
 
 /* SMC products */
