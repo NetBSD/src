@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.26 2005/03/22 13:45:46 tron Exp $
+# $NetBSD: mi,v 1.27 2005/03/23 15:43:42 tron Exp $
 ./etc/mtree/set.xcomp			xcomp-sys-root
 ./usr/X11R6/bin/bdftruncate.pl		xcomp-obsolete	obsolete
 ./usr/X11R6/bin/ccmakedep
@@ -675,6 +675,25 @@
 ./usr/X11R6/man/cat3/DisplayString.0		-unknown-		.cat
 ./usr/X11R6/man/cat3/DisplayWidth.0		-unknown-		.cat
 ./usr/X11R6/man/cat3/DisplayWidthMM.0		-unknown-		.cat
+./usr/X11R6/man/cat3/DMX.0			-unknown-		.cat
+./usr/X11R6/man/cat3/DMXAddBackendInput.0	-unknown-		.cat
+./usr/X11R6/man/cat3/DMXAddConsoleInput.0	-unknown-		.cat
+./usr/X11R6/man/cat3/DMXAddInput.0		-unknown-		.cat
+./usr/X11R6/man/cat3/DMXAddScreen.0		-unknown-		.cat
+./usr/X11R6/man/cat3/DMXChangeDesktopAttributes.0	-unknown-		.cat
+./usr/X11R6/man/cat3/DMXChangeScreensAttributes.0	-unknown-		.cat
+./usr/X11R6/man/cat3/DMXForceWindowCreation.0	-unknown-		.cat
+./usr/X11R6/man/cat3/DMXGetDesktopAttributes.0	-unknown-		.cat
+./usr/X11R6/man/cat3/DMXGetInputAttributes.0	-unknown-		.cat
+./usr/X11R6/man/cat3/DMXGetInputCount.0		-unknown-		.cat
+./usr/X11R6/man/cat3/DMXGetScreenAttributes.0	-unknown-		.cat
+./usr/X11R6/man/cat3/DMXGetScreenCount.0	-unknown-		.cat
+./usr/X11R6/man/cat3/DMXGetWindowAttributes.0	-unknown-		.cat
+./usr/X11R6/man/cat3/DMXQueryExtension.0	-unknown-		.cat
+./usr/X11R6/man/cat3/DMXQueryVersion.0		-unknown-		.cat
+./usr/X11R6/man/cat3/DMXRemoveInput.0		-unknown-		.cat
+./usr/X11R6/man/cat3/DMXRemoveScreen.0		-unknown-		.cat
+./usr/X11R6/man/cat3/DMXSync.0			-unknown-		.cat
 ./usr/X11R6/man/cat3/DoesBackingStore.0		-unknown-		.cat
 ./usr/X11R6/man/cat3/DoesSaveUnders.0		-unknown-		.cat
 ./usr/X11R6/man/cat3/EventMaskOfScreen.0	-unknown-		.cat
@@ -2242,6 +2261,25 @@
 ./usr/X11R6/man/man3/DisplayString.3		-unknown-		.man
 ./usr/X11R6/man/man3/DisplayWidth.3		-unknown-		.man
 ./usr/X11R6/man/man3/DisplayWidthMM.3		-unknown-		.man
+./usr/X11R6/man/man3/DMX.3			-unknown-		.man
+./usr/X11R6/man/man3/DMXAddBackendInput.3	-unknown-		.man
+./usr/X11R6/man/man3/DMXAddConsoleInput.3	-unknown-		.man
+./usr/X11R6/man/man3/DMXAddInput.3		-unknown-		.man
+./usr/X11R6/man/man3/DMXAddScreen.3		-unknown-		.man
+./usr/X11R6/man/man3/DMXChangeDesktopAttributes.3	-unknown-		.man
+./usr/X11R6/man/man3/DMXChangeScreensAttributes.3	-unknown-		.man
+./usr/X11R6/man/man3/DMXForceWindowCreation.3	-unknown-		.man
+./usr/X11R6/man/man3/DMXGetDesktopAttributes.3	-unknown-		.man
+./usr/X11R6/man/man3/DMXGetInputAttributes.3	-unknown-		.man
+./usr/X11R6/man/man3/DMXGetInputCount.3		-unknown-		.man
+./usr/X11R6/man/man3/DMXGetScreenAttributes.3	-unknown-		.man
+./usr/X11R6/man/man3/DMXGetScreenCount.3	-unknown-		.man
+./usr/X11R6/man/man3/DMXGetWindowAttributes.3	-unknown-		.man
+./usr/X11R6/man/man3/DMXQueryExtension.3	-unknown-		.man
+./usr/X11R6/man/man3/DMXQueryVersion.3		-unknown-		.man
+./usr/X11R6/man/man3/DMXRemoveInput.3		-unknown-		.man
+./usr/X11R6/man/man3/DMXRemoveScreen.3		-unknown-		.man
+./usr/X11R6/man/man3/DMXSync.3			-unknown-		.man
 ./usr/X11R6/man/man3/DoesBackingStore.3		-unknown-		.man
 ./usr/X11R6/man/man3/DoesSaveUnders.3		-unknown-		.man
 ./usr/X11R6/man/man3/EventMaskOfScreen.3	-unknown-		.man
