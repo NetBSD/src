@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC,v 1.76 1999/01/17 20:45:26 pk Exp $
+# 	$NetBSD: GENERIC,v 1.76.2.1 1999/05/02 22:24:28 perry Exp $
 
 include "arch/sparc/conf/std.sparc"
 
@@ -184,8 +184,9 @@ xbox*	at sbus? slot ? offset ?
 sbus*	at xbox?
 
 ## SBus to PCMCIA bridge
-nell*	at sbus? slot ? offset ?		# PCMCIA bridge
-pcmcia*	at nell?
+# Currently enabling nell* with audioamd* causes panic at attach
+#nell*	at sbus? slot ? offset ?		# PCMCIA bridge
+#pcmcia*	at nell?
 
 #### Standard system devices -- all required for a given architecture
 
@@ -256,9 +257,9 @@ mtty*	at magma?
 mbpp*	at magma?
 
 ## PCMCIA serial interfaces
-com*	at pcmcia?
-pcmcom*	at pcmcia?
-com*	at pcmcom?
+#com*	at pcmcia?
+#pcmcom*	at pcmcia?
+#com*	at pcmcom?
 
 #### Disk controllers and disks
 
@@ -321,8 +322,8 @@ sw0	at obio0 addr 0x0a000000 level 3
 scsibus* at sw?
 
 ## PCMCIA SCSI controllers
-aic*	at pcmcia?
-scsibus* at aic?
+#aic*	at pcmcia?
+#scsibus* at aic?
 
 
 ## These entries find devices on all SCSI busses and assign
@@ -357,8 +358,8 @@ fdc0	at obio0				# sun4m controller
 fd*	at fdc0					# the drive itself
 
 ## PCMCIA IDE controllers
-wdc*	at pcmcia?
-wd*	at wdc?
+#wdc*	at pcmcia?
+#wd*	at wdc?
 
 ## A disk-like interface to files.  Can be used to create floppy, CD,
 ## miniroot images, etc.
@@ -418,10 +419,10 @@ qe*		at qec?
 en0	at sbus? slot ? offset ?
 
 # PCMCIA ethernet devices
-ep*	at pcmcia?
-mbe*	at pcmcia?
-ne*	at pcmcia?
-sm*	at pcmcia?
+#ep*	at pcmcia?
+#mbe*	at pcmcia?
+#ne*	at pcmcia?
+#sm*	at pcmcia?
 
 # MII/PHY support
 exphy*	at mii? phy ?			# 3Com internal PHYs
