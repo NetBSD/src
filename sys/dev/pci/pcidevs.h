@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.40 1997/10/01 18:08:23 drochner Exp 
+ *	NetBSD: pcidevs,v 1.41 1997/10/06 06:18:07 lonhyn Exp 
  */
 
 /*
@@ -528,7 +528,10 @@
 #define	PCI_PRODUCT_3COM_3C905T4	0x9051		/* 3c905 100Base-T4 */
 
 /* 3D Labs products */
-#define	PCI_PRODUCT_3DLABS_300SX	0x0001		/* 300SX (\"Glint\") */
+#define	PCI_PRODUCT_3DLABS_300SX	0x0001		/* GLINT 300SX */
+#define	PCI_PRODUCT_3DLABS_500TX	0x0002		/* GLINT 500TX */
+#define	PCI_PRODUCT_3DLABS_DELTA	0x0003		/* GLINT DELTA */
+#define	PCI_PRODUCT_3DLABS_500MX	0x0006		/* GLINT 500MX */
 
 /* ACC Products */
 #define	PCI_PRODUCT_ACC_2188	0x0000		/* ACCM 2188 VL-PCI Bridge */
