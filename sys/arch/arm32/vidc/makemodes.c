@@ -1,4 +1,4 @@
-/* $NetBSD: makemodes.c,v 1.1 1996/01/31 23:16:30 mark Exp $ */
+/* $NetBSD: makemodes.c,v 1.2 1996/03/13 21:47:15 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -45,7 +45,7 @@
  * Created      : 17/05/95
  * Last updated : 17/05/95
  *
- *    $Id: makemodes.c,v 1.1 1996/01/31 23:16:30 mark Exp $
+ *    $Id: makemodes.c,v 1.2 1996/03/13 21:47:15 mark Exp $
  */
 
 #include <stdio.h>
@@ -85,6 +85,7 @@ main(argc, argv)
 	int loop;		/* loop counter */
 	int x, y, c, f;		/* mode specifier variables */
 	int params;
+	char *ptr;
 
 /* Check the args */
 	
@@ -125,14 +126,21 @@ main(argc, argv)
 		if (fgets(line, 99, mdf_fd) == NULL)
 			break;
 
+		ptr = line;
+
+/* Skip any spaces or tabs */
+
+		while (*ptr == ' ' || *ptr == '\t')
+			++ptr;
+
 /* Ignore comment or blank lines */
 
-		if (line[0] == '#' || strlen(line) < 2)
+		if (*ptr == '#' || strlen(ptr) < 2)
 			continue;
 
 /* Do we have a startmode or endmode token ? */
 
-		if (sscanf(line, "%s", token) == 1) {
+		if (sscanf(ptr, "%s", token) == 1) {
 			if (strcmp(token, "startmode") == 0) {
 				if (md < MAX_MD)
 					startmode = 1;
@@ -145,7 +153,7 @@ main(argc, argv)
 
 /* Do we have a token:value line ? */
 
-		if (sscanf(line, "%[^:]:%[^\n]\n", token, value) == 2) {
+		if (sscanf(ptr, "%[^:]:%[^\n]\n", token, value) == 2) {
 			if (strcmp(token, "monitor_title") == 0)
 				strcpy(monitor, value);
 			if (strcmp(token, "file_format") == 0) {
