@@ -1,90 +1,96 @@
-#	$NetBSD: list,v 1.6 2001/06/15 19:26:42 tsutsui Exp $
+#	$NetBSD: list,v 1.7 2002/03/16 07:27:10 tsutsui Exp $
 
-# copy the crunched binary, link to it, and kill it
-COPY	${OBJDIR}/ramdiskbin		ramdiskbin
-LINK	ramdiskbin			sysinst
-LINK	ramdiskbin			bin/cat
-LINK	ramdiskbin			bin/chmod
-LINK	ramdiskbin			bin/cp
-LINK	ramdiskbin			bin/dd
-LINK	ramdiskbin			bin/df
-LINK	ramdiskbin			bin/ed
-LINK	ramdiskbin			bin/ln
-LINK	ramdiskbin			bin/ls
-LINK	ramdiskbin			bin/mkdir
-LINK	ramdiskbin			bin/mt
-LINK	ramdiskbin			bin/mv
-LINK	ramdiskbin			bin/pax
-LINK	ramdiskbin			bin/pwd
-LINK	ramdiskbin			bin/rcmd
-LINK	ramdiskbin			bin/rcp
-LINK	ramdiskbin			bin/rm
-LINK	ramdiskbin			bin/sh
-LINK	ramdiskbin			bin/stty
-LINK	ramdiskbin			bin/sync
-LINK	ramdiskbin			bin/test
-LINK	ramdiskbin			bin/[
-LINK	ramdiskbin			sbin/disklabel
-LINK	ramdiskbin			sbin/dmesg
-LINK	ramdiskbin			sbin/fsck
-LINK	ramdiskbin			sbin/fsck_ffs
-LINK	ramdiskbin			sbin/halt
-LINK	ramdiskbin			sbin/ifconfig
-LINK	ramdiskbin			sbin/init
-LINK	ramdiskbin			sbin/mknod
-LINK	ramdiskbin			sbin/mount
-LINK	ramdiskbin			sbin/mount_cd9660
-LINK	ramdiskbin			sbin/mount_ffs
-LINK	ramdiskbin			sbin/mount_mfs
-LINK	ramdiskbin			sbin/mount_msdos
-LINK	ramdiskbin			sbin/mount_nfs
-LINK	ramdiskbin			sbin/newfs
-LINK	ramdiskbin			sbin/ping
-LINK	ramdiskbin			sbin/reboot
-LINK	ramdiskbin			sbin/restore
-LINK	ramdiskbin			sbin/route
-LINK	ramdiskbin			sbin/rrestore
-LINK	ramdiskbin			sbin/shutdown
-LINK	ramdiskbin			sbin/slattach
-LINK	ramdiskbin			sbin/umount
-LINK	ramdiskbin			usr/bin/chgrp
-LINK	ramdiskbin			usr/bin/ftp
-LINK	ramdiskbin			usr/bin/gunzip
-LINK	ramdiskbin			usr/bin/gzcat
-LINK	ramdiskbin			usr/bin/gzip
-LINK	ramdiskbin			usr/bin/more
-LINK	ramdiskbin			usr/bin/sed
-LINK	ramdiskbin			usr/bin/tar
-LINK	ramdiskbin			usr/bin/tset
-LINK	ramdiskbin			usr/mdec/installboot
-LINK	ramdiskbin			usr/sbin/chown
-LINK	ramdiskbin			usr/sbin/chroot
-SPECIAL	/bin/rm ramdiskbin
+SRCDIRS	bin sbin usr.bin usr.sbin sys/arch/${MACHINE}/stand
 
-# copy the MAKEDEV script and make some devices
-COPY	${DESTDIR}/dev/MAKEDEV		dev/MAKEDEV
-SPECIAL cd dev; sh MAKEDEV floppy
-SPECIAL /bin/rm dev/MAKEDEV
+PROG	bin/cat
+PROG	bin/chmod
+PROG	bin/cp
+PROG	bin/dd
+PROG	bin/df
+PROG	bin/ed
+PROG	bin/ln
+PROG	bin/ls
+PROG	bin/mkdir
+PROG	bin/mt
+PROG	bin/mv
+PROG	bin/pax		usr/bin/tar
+PROG	bin/pwd
+PROG	bin/rcmd
+PROG	bin/rcp
+PROG	bin/rm
+PROG	bin/sh
+PROG	bin/stty
+PROG	bin/sync
+PROG	bin/test	bin/[
 
-# we need the boot blocks /usr/mdec
-COPY	${DESTDIR}/usr/mdec/boot		usr/mdec/boot
-COPY	${DESTDIR}/usr/mdec/bootxx		usr/mdec/bootxx
+PROG	sbin/disklabel
+PROG	sbin/dmesg
+PROG	sbin/fsck
+PROG	sbin/fsck_ffs
+PROG	sbin/ifconfig
+PROG	sbin/init
+PROG	sbin/mknod
+PROG	sbin/mount
+PROG	sbin/mount_cd9660
+PROG	sbin/mount_ffs
+PROG	sbin/mount_msdos
+PROG	sbin/mount_nfs
+PROG	sbin/newfs	sbin/mount_mfs
+PROG	sbin/ping
+PROG	sbin/reboot	sbin/halt
+PROG	sbin/restore	sbin/rrestore
+PROG	sbin/route
+PROG	sbin/shutdown
+PROG	sbin/slattach
+PROG	sbin/swapctl	sbin/swapon
+PROG	sbin/umount
 
-# and the termcap file
-COPY	${CURDIR}/termcap.src 			usr/share/misc/termcap
+PROG	usr/bin/ftp
+PROG	usr/bin/gzip	usr/bin/gzcat	usr/bin/gunzip
+PROG	usr/bin/more
+PROG	usr/bin/sed
+PROG	usr/bin/tset
+
+PROG	usr/sbin/chown	usr/bin/chgrp
+PROG	usr/sbin/chroot
+
+PROG	usr/mdec/installboot
+
+SPECIAL	dd		srcdir	distrib/utils/x_dd
+SPECIAL	dmesg		srcdir	distrib/utils/x_dmesg
+SPECIAL	ftp		srcdir	distrib/utils/x_ftp
+SPECIAL	gzip		srcdir	distrib/utils/x_gzip
+SPECIAL	ifconfig	srcdir	distrib/utils/x_ifconfig
+SPECIAL	init		srcdir	distrib/utils/init_s
+SPECIAL	more		srcdir	distrib/utils/more
+SPECIAL	mount		srcdir	distrib/utils/x_mount
+SPECIAL	ping		srcdir	distrib/utils/x_ping
+SPECIAL	route		srcdir	distrib/utils/x_route
+SPECIAL	sh		srcdir	distrib/utils/x_sh
+SPECIAL	umount		srcdir	distrib/utils/x_umount
+
+LIBS	libhack.o -ledit -lutil -lcurses -ltermcap -lrmt -lcrypt -ll -lm -lz
+
+COPY	${DESTDIR}/usr/mdec/bootxx	usr/mdec/bootxx
+COPY	${DESTDIR}/usr/mdec/boot	usr/mdec/boot
+
+# init invokes the shell as -sh
+ARGVLN	sh	-sh
 
 # various files that we need in /etc for the install
-#COPY	${DESTDIR}/etc/disktab			etc/disktab
-COPY	${CURDIR}/../../../../etc/group		etc/group
-COPY	${CURDIR}/../../../../etc/master.passwd	etc/master.passwd
-COPY	${CURDIR}/../../../../etc/protocols	etc/protocols
-COPY	${CURDIR}/../../../../etc/netconfig	etc/netconfig
-COPY	${CURDIR}/../../../../etc/services	etc/services
-SPECIAL	pwd_mkdb -p -d . etc/master.passwd
-SPECIAL /bin/rm etc/spwd.db etc/pwd.db
+COPY	${_SRC_TOP_}/etc/group		etc/group
+COPY	${_SRC_TOP_}/etc/master.passwd	etc/master.passwd
+COPY	${_SRC_TOP_}/etc/netconfig	etc/netconfig
+COPY	${_SRC_TOP_}/etc/protocols	etc/protocols
+COPY	${_SRC_TOP_}/etc/services	etc/services
+# generate Version 7 style etc/passwd
+CMD	${PWD_MKDB} -B -p -d . etc/master.passwd
+# ..but db files are not needed for libhack's getpwent.c
+CMD	rm etc/spwd.db etc/pwd.db
 
-# the disktab explanation file
-COPY	${CURDIR}/disktab.preinstall		etc/disktab.preinstall
+# and the common installation tools
+COPY	${CURDIR}/termcap.src		usr/share/misc/termcap
 
-# and the installation scripts
-COPY	${CURDIR}/dot.profile			.profile
+# and the boot script
+COPY	${CURDIR}/dot.profile		.profile
+MTREE	./.profile	type=file uname=root gname=wheel mode=0644

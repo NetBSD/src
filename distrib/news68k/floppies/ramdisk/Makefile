@@ -1,69 +1,46 @@
-#	$NetBSD: Makefile,v 1.18 2002/02/04 11:03:08 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.19 2002/03/16 07:27:09 tsutsui Exp $
 
-TOP=		${.CURDIR}/..
+.include "${.CURDIR}/../../../Makefile.inc"
+.include <bsd.own.mk>
 
-.include "${TOP}/Makefile.inc"
 IMAGE=		ramdisk.fs
+IMAGESIZE=	1440k
 
-CBIN=		ramdiskbin
+WARNS=		1
 
-MOUNT_POINT?=	/mnt
-# DEV/RDEV file system device
-VND?=		vnd1
-VND_DEV=	/dev/${VND}a
-VND_RDEV=	/dev/r${VND}a
-MDEC=		${DESTDIR}/usr/mdec
+CRUNCHBIN=	ramdiskbin
+LISTS=		${.CURDIR}/list ${DISTRIBDIR}/common/list.sysinst
+MTREECONF=	${DISTRIBDIR}/common/mtree.common
+IMAGEENDIAN=	be
+MAKEDEVTARGETS=	floppy
+PARSELISTENV=	PWD_MKDB=${PWD_MKDB:Q}
+IMAGEDEPENDS=	${CRUNCHBIN} \
+		dot.profile termcap.src \
+		${DESTDIR}/usr/mdec/installboot \
+		${DESTDIR}/usr/mdec/boot \
+		${DESTDIR}/usr/mdec/bootxx \
+		${_SRC_TOP_}/etc/group \
+		${_SRC_TOP_}/etc/master.passwd \
+		${_SRC_TOP_}/etc/netconfig \
+		${_SRC_TOP_}/etc/protocols \
+		${_SRC_TOP_}/etc/services
 
-LISTS=		list
-CRUNCHCONF=	${CBIN}.conf
-MTREECONF=	mtree.conf
-
-CRUNCHGEN?=	crunchgen
-MTREE?=		mtree
-
-RAMDISKSIZE=	1440k
-DISKTYPE=	floppyinstfs
-
-all: ${CBIN} 
-	dd if=/dev/zero of=${IMAGE} bs=${RAMDISKSIZE} count=1
-	vnconfig -t ${DISKTYPE} -v -c ${VND} ${IMAGE}
-	disklabel -rw ${VND} ${DISKTYPE}
-	newfs -B be -m 0 -o space -i 4096 -c 80 ${VND_RDEV}
-	mount ${VND_DEV} ${MOUNT_POINT}
-	${MTREE} -def ${.CURDIR}/${MTREECONF} -p ${MOUNT_POINT}/ -u
-	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
-	    KERNOBJDIR=${KERNOBJDIR} DESTDIR=${DESTDIR} \
-	    TARGDIR=${MOUNT_POINT} sh ${TOP}/runlist.sh ${.CURDIR}/${LISTS}
-	@echo ""
-	@df -i ${MOUNT_POINT}
-	@echo ""
-	umount ${MOUNT_POINT}
-	vnconfig -u ${VND}
-
-unconfig:
-	-umount -f ${MOUNT_POINT}
-	-vnconfig -u ${VND}
-	-rm -f ${IMAGE}
-
-${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
-	${CRUNCHGEN} -D ${TOP}/../../.. -L ${DESTDIR}/usr/lib ${.ALLSRC}
-
-${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c libhack.o
-	${MAKE} -f ${CBIN}.mk all
-
-HACKSRC=${TOP}/../../utils/libhack
-.include "${HACKSRC}/Makefile.inc"
-# turn off small gethostby* temporarily
-HACKOBJS:= ${HACKOBJS:Ngethost.o}
-
+realall: ${IMAGE}
 
 release:
 
-clean cleandir distclean:
-	if [ -f ${CBIN}.mk ]; then ${MAKE} -f ${CBIN}.mk clean; fi;
-	rm -f ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache
-	rm -f *.core *.o *.cro *.c
+# Use stubs to eliminate some large stuff from libc
+HACKSRC=${DISTRIBDIR}/utils/libhack
+.include "${HACKSRC}/Makefile.inc"
 
-.include <bsd.obj.mk>
-.include <bsd.subdir.mk>
+# Turn off libhack's gethostby*() as it only supports /etc/hosts
+HACKOBJS:=	${HACKOBJS:Ngethost.o}
+
+# This is listed in "list" file but is built here.
+${CRUNCHBIN}:	libhack.o
+
+.include "${DISTRIBDIR}/common/Makefile.crunch"
+.include "${DISTRIBDIR}/common/Makefile.makedev"
+.include "${DISTRIBDIR}/common/Makefile.image"
+
 .include <bsd.prog.mk>
