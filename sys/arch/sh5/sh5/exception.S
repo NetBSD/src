@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.S,v 1.3.2.3 2002/08/31 14:52:09 gehenna Exp $	*/
+/*	$NetBSD: exception.S,v 1.3.2.4 2002/08/31 16:38:12 gehenna Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -178,7 +178,7 @@
 	sub	r15, r0, r15		/* Make space for trapframe */	      ;\
 	getcon	sr, r1			/* Fetch current status register */   ;\
 	LDC32(SH5_CONREG_SR_BL, r0)	/* Unblock exceptions. This allows */ ;\
-	andc	r0, r1, r1		/* us to take a TLB miss exception */ ;\
+	andc	r1, r0, r1		/* us to take a TLB miss exception */ ;\
 	ori	r1, SH5_CONREG_SR_IMASK_ALL, r0 /* But don't allow IRQs */    ;\
 	or	r24, r63, r2		/* Drop use of r24 now */	      ;\
 	putcon	r0, sr			/* Now safe to touch kernel stack */  ;\
@@ -845,6 +845,21 @@ Ltrapexit:
 Lsh5_event_interrupt:
 	_INTR_FRAME_SAVE(SZ_INTRFRAME)
 
+#ifdef DEBUG
+	/*
+	 * Catch NMIs early so that we can convert the interrupt frame
+	 * to a regular trapframe and drop into DDB if the NMI button
+	 * is pressed.
+	 *
+	 * This provides a handy way to regain control if the CPU should
+	 * decide to spin at a high ipl.
+	 */
+	pta/u	Lsh5_event_nmi, tr0
+	ld.q	r15, SFO(SF_INTEVT, SZ_INTRFRAME), r0 /* Fetch INTEVT */
+	movi	0x1c0, r1		/* The NMI event code */
+	beq/u	r0, r1, tr0		/* Jump if NMI */
+#endif
+
 	/* sh5_intr_dispatch(struct intrframe *f); */
 	LEAF(_C_LABEL(sh5_intr_dispatch), r0)
 	ptabs/l	r0, tr0
@@ -910,6 +925,19 @@ Lintrexit:
 	_EXCEPTION_EXIT(SZ_INTRFRAME)
 	/* NOTREACHED */
 
+
+#ifdef DEBUG
+Lsh5_event_nmi:
+	/*
+	 * Convert the interrupt frame to a trapframe
+	 */
+	addi	r15, -(SZ_TRAPFRAME - SZ_INTRFRAME), r15
+	_TRAP_FRAME_SAVE(SZ_TRAPFRAME)
+	pta/l	Ltrapagain, tr0
+	movi	T_NMI, r0		/* Fabricate an "NMI" event */
+	st.q	r15, SFO(SF_EXPEVT, SZ_TRAPFRAME), r0
+	blink	tr0, r63		/* Go back around to deal with it */
+#endif /* DEBUG */
 
 
 /******************************************************************************
@@ -1180,29 +1208,6 @@ Ltlbmiss_dotrap:
 
 
 
-
-/******************************************************************************
- *
- * void check_softint_loweripl(int newipl)
- *
- * [Note: Do not call directly from C code]
- *
- * Check for pending soft interrupt BEFORE lowering the interrupt priority
- * to "newipl" in r2. Called from splx().
- */
-Lcheck_softint_loweripl:
-	ptabs/l	r18, tr0		/* Return address to tr0 */
-	pta/l	Lcheck_softint_lower, tr1
-	LEA(_C_LABEL(ssir), r0)		/* Get bitmap of pending soft ints */
-	ld.l	r0, 0, r1
-	beq/l	r1, r63, tr0		/* Return if no soft ints pending */
-	pta/u	1f, tr0
-	blink	tr1, r63
-1:	ptabs/l	r18, tr0		/* Return address to tr0 */
-	putcon	r2, sr
-	blink	tr0, r63
-
-
 /******************************************************************************
  *
  * void Lcheck_softint(void)	[Note: Do not call directly from C code]
@@ -1223,23 +1228,17 @@ Lcheck_softint:
 	getcon	sr, r2
 
 Lcheck_softint_lower:
+	pta/u	1f, tr1			/* Preload the exit path */
+	ori	r2, SH5_CONREG_SR_IMASK_ALL, r3
+	putcon	r3, sr			/* Disable interrupts */
 	shlri	r2, SH5_CONREG_SR_IMASK_SHIFT, r3
 	andi	r3, SH5_CONREG_SR_IMASK_MASK, r3	/* current spl to r3 */
+	ld.l	r0, 0, r1		/* Re-fetch ssir */
 	movi	1, r4
 	shlld	r4, r3, r4		/* r4 = 1 << curspl */
 	addi	r4, -1, r4
 	andc	r1, r4, r1		/* r1 &= ~((1 << curspl) - 1) */
-	beq/l	r1, r63, tr0		/* Return if ipl is too high */
-
-	/*
-	 * Disable interrupts and re-check in case we were pre-emted.
-	 */
-	pta/u	1f, tr1
-	ori	r2, SH5_CONREG_SR_IMASK_ALL, r3
-	putcon	r3, sr
-	ld.l	r0, 0, r1		/* Re-fetch softint-pending bitmap */
-	andc	r1, r4, r1		/* r1 &= ~((1 << curspl) - 1) */
-	beq/u	r1, r63, tr1		/* Exit if we were pre-emted */
+	beq/l	r1, r63, tr1		/* Return if ipl is too high */
 
 	/*
 	 * Raise spl to the level of the highest priority pending soft int.
@@ -1264,6 +1263,7 @@ Lcheck_softint_lower:
 	and	r2, r0, r2
 	and	r3, r0, r3
 	blink	tr0, r63
+
 1:	putcon	r2, sr
 	blink	tr0, r63
 

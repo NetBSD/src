@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.81.2.2 2002/08/29 05:23:15 gehenna Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.81.2.3 2002/08/31 16:38:25 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -51,7 +51,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.81.2.2 2002/08/29 05:23:15 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.81.2.3 2002/08/31 16:38:25 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -443,18 +443,6 @@ bawrite(bp)
 }
 
 /*
- * Ordered block write; asynchronous, but I/O will occur in order queued.
- */
-void
-bowrite(bp)
-	struct buf *bp;
-{
-
-	SET(bp->b_flags, B_ASYNC | B_ORDERED);
-	VOP_BWRITE(bp);
-}
-
-/*
  * Same as first half of bdwrite, mark buffer dirty, but do not release it.
  */
 void
@@ -582,7 +570,7 @@ brelse(bp)
 
 already_queued:
 	/* Unlock the buffer. */
-	CLR(bp->b_flags, B_AGE|B_ASYNC|B_BUSY|B_NOCACHE|B_ORDERED);
+	CLR(bp->b_flags, B_AGE|B_ASYNC|B_BUSY|B_NOCACHE);
 	SET(bp->b_flags, B_CACHE);
 
 	/* Allow disk interrupts. */

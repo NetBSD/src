@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.2.2.3 2002/08/31 14:52:10 gehenna Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.2.2.4 2002/08/31 16:38:12 gehenna Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -243,14 +243,18 @@ ENTRY_NOPROFILE(_cpu_intr_set)
  * the lowered spl permits them.
  */
 ENTRY_NOPROFILE(splx)
+	ptabs/l	r18, tr0
+	pta/u	Lcheck_softint_lower, tr1
 	getcon	sr, r4
-	LEAF(Lcheck_softint_loweripl, r0)
-	ptabs/l	r0, tr0
+	LEA(_C_LABEL(ssir), r0)		/* Get bitmap of pending soft ints */
 	movi	SH5_CONREG_SR_IMASK_ALL, r3
 	shlli	r2, SH5_CONREG_SR_IMASK_SHIFT, r2
 	andc	r4, r3, r4
 	and	r2, r3, r2
 	or	r4, r2, r2
+	ld.l	r0, 0, r1
+	bne/u	r1, r63, tr1		/* Go deal with them if any pending */
+	putcon	r2, sr			/* Restore interrupt level */
 	blink	tr0, r63
 
 
@@ -728,6 +732,8 @@ ALTENTRY(suswintr)
 	blink	tr0, r63
 
 
+#include "dtfcons.h"
+#if NDTFCONS > 0
 /******************************************************************************
  *
  * void _dtf_trap(paddr_t fpfreg, paddr_t trapbuff, paddr_t _dtf_trap_frob)
@@ -777,7 +783,11 @@ ENTRY_NOPROFILE(_dtf_trap_frob)
 	synci
 	pta/u	2f, tr0
 	pta/u	3f, tr1
+#ifndef SH5_SIM
 	LDC32(0x100000, r0)
+#else
+	LDC32(0x4000, r0)
+#endif
 
 2:	ld.l	r1, 0, r2		/* Fetch "sync" value */
 	synco
@@ -799,6 +809,8 @@ ENTRY_NOPROFILE(_dtf_trap_frob)
 
 
 	.comm	_C_LABEL(_dtf_buffer),NBPG,32
+#endif	/* NDTFCONS */
+
 
 /*
  * Reserve space in the BSS for proc0's PCB

@@ -1,4 +1,4 @@
-/*	$NetBSD: softintr.c,v 1.1.2.2 2002/07/16 00:41:22 gehenna Exp $	*/
+/*	$NetBSD: softintr.c,v 1.1.2.3 2002/08/31 16:38:12 gehenna Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -128,7 +128,7 @@ softintr_init(void)
 
 		simple_lock_init(&si->si_slock);
 		si->si_evcnt = &_sh5_intr_events[i];
-		si->si_ipl = soft_intr_prio[i];
+		si->si_ipl = soft_intr_prio[i] - 1;
 	}
 
 	ssir = 0;
@@ -221,6 +221,7 @@ netintr(void *arg)
 	n = netisr;
 	netisr = 0;
 	splx(s);
+
 #include <net/netisr_dispatch.h>
 
 #undef DONETISR
@@ -247,11 +248,11 @@ softintr_dispatch(u_int oldspl, u_int softspl)
 
 	KDASSERT(softspl > oldspl);
 
-	for (i = _IPL_NSOFT - 1, softspl -= 1; i >= 0; i--)
+	for (i = _IPL_NSOFT - 1; i >= 0; i--)
 		if (softspl == soft_intr_prio[i])
 			break;
 
-	KDASSERT(i != _IPL_NSOFT);
+	KDASSERT(i >= 0);
 
 	for ( ; i >= 0 && soft_intr_prio[i] > oldspl; i--) {
 		si = &soft_intrs[i];

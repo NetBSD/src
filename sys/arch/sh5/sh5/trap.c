@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.3.2.3 2002/08/31 14:52:10 gehenna Exp $	*/
+/*	$NetBSD: trap.c,v 1.3.2.4 2002/08/31 16:38:13 gehenna Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -163,8 +163,8 @@ trap(struct proc *p, struct trapframe *tf)
 		kdb_trap(traptype, tf);
 #else
 		dump_trapframe(tf);
-		panic("trap");
 #endif
+		panic("trap");
 		/* NOTREACHED */
 
 	case T_EXECPROT|T_USER:
@@ -471,6 +471,9 @@ trap_type(int traptype)
 		break;
 	case T_AST:
 		t = "AST";
+		break;
+	case T_NMI:
+		t = "NMI";
 		break;
 	default:
 		t = "Unknown Exception";

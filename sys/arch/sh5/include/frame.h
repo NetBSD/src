@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.1.2.3 2002/08/31 14:52:06 gehenna Exp $	*/
+/*	$NetBSD: frame.h,v 1.1.2.4 2002/08/31 16:38:11 gehenna Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -162,6 +162,7 @@ struct switchframe {
 	register_t	sf_pc;			/* Saved program counter */
 	register_t	sf_sr;			/* Status register */
 	register_t	sf_sp;			/* Kernel stack pointer */
+	register_t	sf_fp;			/* Kernel frame pointer */
 	struct exc_calleesave sf_regs;		/* Saved registers */
 	struct fpregs	sf_fpregs;
 };

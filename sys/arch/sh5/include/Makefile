@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.4.2.3 2002/08/31 14:52:05 gehenna Exp $
+#	$NetBSD: Makefile,v 1.4.2.4 2002/08/31 16:38:10 gehenna Exp $
 
 KDIR=	/sys/arch/sh5/include
 INCSDIR= /usr/include/sh5
 
 INCS=	ansi.h aout_machdep.h asm.h \
-	bswap.h \
+	bswap.h byte_swap.h \
 	cdefs.h conreg.h cpu.h cputypes.h \
 	disklabel.h \
 	elf_machdep.h endian.h endian_machdep.h \

@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.183.2.3 2002/08/29 05:22:54 gehenna Exp $	*/
+/*	$NetBSD: sd.c,v 1.183.2.4 2002/08/31 16:38:21 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.183.2.3 2002/08/29 05:22:54 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.183.2.4 2002/08/31 16:38:21 gehenna Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -801,15 +801,11 @@ sdstart(periph)
 		/*
 		 * Figure out what flags to use.
 		 */
-		flags = XS_CTL_NOSLEEP|XS_CTL_ASYNC;
+		flags = XS_CTL_NOSLEEP|XS_CTL_ASYNC|XS_CTL_SIMPLE_TAG;
 		if (bp->b_flags & B_READ)
 			flags |= XS_CTL_DATA_IN;
 		else
 			flags |= XS_CTL_DATA_OUT;
-		if (bp->b_flags & B_ORDERED)
-			flags |= XS_CTL_ORDERED_TAG;
-		else
-			flags |= XS_CTL_SIMPLE_TAG;
 
 		/*
 		 * Call the routine that chats with the adapter.

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.h,v 1.1.2.3 2002/08/31 14:52:07 gehenna Exp $	*/
+/*	$NetBSD: trap.h,v 1.1.2.4 2002/08/31 16:38:11 gehenna Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -88,6 +88,7 @@
 
 /* Software Exception Types */
 #define	T_AST		0x0002	/* Asynchronous System Trap */
+#define	T_NMI		0x0004	/* NMI trap */
 
 /* Bit 0 set == trap came from user mode */
 #define	T_USER		0x0001
