@@ -1,4 +1,4 @@
-/*	$NetBSD: dcareg.h,v 1.7 2003/08/07 16:27:26 agc Exp $	*/
+/*	$NetBSD: dcareg.h,v 1.1 2003/11/08 11:19:30 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
