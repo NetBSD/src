@@ -1,4 +1,4 @@
-#	$NetBSD: files.mips,v 1.21 1999/11/18 06:47:48 jun Exp $
+#	$NetBSD: files.mips,v 1.22 1999/12/22 04:54:14 jun Exp $
 #
 
 defopt 	opt_cputype.h	NOTHING_YET 	# reserved for  CPU level
@@ -12,7 +12,6 @@ file	arch/mips/mips/mem.c
 file	arch/mips/mips/mips_mcclock.c	mcclock	# CPU speed via mcclock
 file	arch/mips/mips/pmap.c
 file	arch/mips/mips/trap.c			# interrupt, trap handlers
-file	arch/mips/mips/fpemu.c			# FPU emulation
 file	arch/mips/mips/vm_machdep.c
 file	arch/mips/mips/mips_machdep.c		# shared mips machdep.c
 file	arch/mips/mips/sys_machdep.c		# shared mips sys_machdep
@@ -20,6 +19,8 @@ file	arch/mips/mips/process_machdep.c	# shared process_machdep
 
 file	arch/mips/mips/in_cksum.c	inet
 file	netns/ns_cksum.c		ns
+
+file	arch/mips/mips/fpemu.c		softfloat
 
 # Binary compatibility with previous NetBSD releases (COMPAT_XX)
 file	arch/mips/mips/compat_13_machdep.c	compat_13 | compat_ultrix
