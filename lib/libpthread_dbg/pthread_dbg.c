@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_dbg.c,v 1.1.2.4 2002/10/01 20:43:39 nathanw Exp $	*/
+/*	$NetBSD: pthread_dbg.c,v 1.1.2.5 2002/10/04 00:44:55 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -470,6 +470,7 @@ td_sync_info(td_sync_t *s, td_sync_info_t *info)
 				ptm_owner),
 			    &taddr, sizeof(pthread_t))) != 0)
 				return val;
+			taddr = pthread__id(taddr);
 			td__getthread(s->proc, (caddr_t)taddr, 
 			    &info->sync_data.mutex.owner);
 		} else
