@@ -1,4 +1,4 @@
-.\"	$NetBSD: lkm.conf.5,v 1.1 1997/01/05 11:50:16 mrg Exp $
+.\"	$NetBSD: lkm.conf.5,v 1.2 1997/07/14 11:56:31 drochner Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" All rights reserved.
@@ -52,7 +52,7 @@ at system boot time, if it exists.
 Each line of the file is of the form
 .Pp
 .Bd -unfilled -offset indent -compact
-path options entry postinstall output
+path options entry postinstall output when
 .Ed
 .Pp
 Except for the 
@@ -85,9 +85,33 @@ The output of the
 .Xr ld 1
 command is stored in
 .Em output .
+.Pp
+The
+.Em when
+field specifies at which time in the startup process the LKM is loaded.
+There are three predefined values which correspond to three points in
+the processing of the system startup script
+.Pa /etc/rc :
+.Bl -tag -width XXX
+.It BEFORENET - before networking is started. This works only
+if the
+.Pa /usr
+filesystem can already be mounted at this time.
+.It BEFOREMOUNT - before all filesystems listed in
+.Pa /etc/fstab
+are mounted (the
+.Pa /usr
+and
+.Pa /var
+filesystems are already present).
+.It AFTERMOUNT - after all filesystems are mounted.
+.El
+.Pp
+A "-" entry defaults to BEFORENET.
 .Sh FILES
 .Pa /etc/rc.lkm
 .Pa /etc/lkm.conf
+.Pa /etc/rc
 .Sh SEE ALSO
 .Xr modload 8 ,
 .Xr lkm 4
