@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.6 (Berkeley) 3/5/91
-#	$NetBSD: Makefile.inc,v 1.41 1997/10/22 23:14:27 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.42 1998/01/23 18:58:05 cgd Exp $
 
 # string sources
 .PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/string ${.CURDIR}/string
@@ -28,17 +28,22 @@ SRCS+=	memccpy.c
 .if empty(SRCS:Mmemmove.S)
 OBJS+=	memmove.o
 memmove.o: bcopy.c
-	${COMPILE.c} -DMEMMOVE ${.ALLSRC} -o ${.TARGET}
-	@${LD} -x -r ${.TARGET}
-	@mv a.out ${.TARGET}
+	@echo ${COMPILE.c:Q} -DMEMMOVE ${.ALLSRC} -o ${.TARGET}
+	@${COMPILE.c} -DMEMMOVE ${.ALLSRC} -o ${.TARGET}.o
+	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
 
 memmove.po: bcopy.c
-	${COMPILE.c} -DMEMMOVE -p ${.ALLSRC} -o ${.TARGET}
-	@${LD} -X -r ${.TARGET}
-	@mv a.out ${.TARGET}
+	@echo ${COMPILE.c:Q} -DMEMMOVE -pg ${.ALLSRC} -o ${.TARGET}
+	@${COMPILE.c} -DMEMMOVE -pg ${.ALLSRC} -o ${.TARGET}.o
+	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
 
 memmove.so: bcopy.c
-	${COMPILE.c} ${PICFLAG} -DPIC -DMEMMOVE ${.ALLSRC} -o ${.TARGET}
+	@echo ${COMPILE.c:Q} -DMEMMOVE ${CPICFLAGS} ${.ALLSRC} -o ${.TARGET}
+	@${COMPILE.c} -DMEMMOVE ${CPICFLAGS} ${.ALLSRC} -o ${.TARGET}.o
+	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
 
 LOBJS+= memmove.ln
 memmove.ln: bcopy.c
@@ -53,17 +58,22 @@ memmove.ln: bcopy.c
 .if empty(SRCS:Mmemmove.S)
 OBJS+=	memcpy.o
 memcpy.o: bcopy.c
-	${COMPILE.c} -DMEMCOPY ${.ALLSRC} -o ${.TARGET}
-	@${LD} -x -r ${.TARGET}
-	@mv a.out ${.TARGET}
+	@echo ${COMPILE.c:Q} -DMEMCOPY ${.ALLSRC} -o ${.TARGET}
+	@${COMPILE.c} -DMEMCOPY ${.ALLSRC} -o ${.TARGET}.o
+	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
 
 memcpy.po: bcopy.c
-	${COMPILE.c} -DMEMCOPY -p ${.ALLSRC} -o ${.TARGET}
-	@${LD} -X -r ${.TARGET}
-	@mv a.out ${.TARGET}
+	@echo ${COMPILE.c:Q} -DMEMCOPY -pg ${.ALLSRC} -o ${.TARGET}
+	@${COMPILE.c} -DMEMCOPY -pg ${.ALLSRC} -o ${.TARGET}.o
+	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
 
 memcpy.so: bcopy.c
-	${COMPILE.c} ${PICFLAG} -DPIC -DMEMCOPY ${.ALLSRC} -o ${.TARGET}
+	@echo ${COMPILE.c:Q} -DMEMCOPY ${CPICFLAGS} ${.ALLSRC} -o ${.TARGET}
+	@${COMPILE.c} -DMEMCOPY ${CPICFLAGS} ${.ALLSRC} -o ${.TARGET}.o
+	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
 
 LOBJS+= memcpy.ln
 memcpy.ln: bcopy.c
@@ -76,17 +86,22 @@ memcpy.ln: bcopy.c
 .if empty(SRCS:Mstrchr.S)
 OBJS+=	strchr.o
 strchr.o: index.c
-	${COMPILE.c} -DSTRCHR ${.ALLSRC} -o ${.TARGET}
-	@${LD} -x -r ${.TARGET}
-	@mv a.out ${.TARGET}
+	@echo ${COMPILE.c:Q} -DSTRCHR ${.ALLSRC} -o ${.TARGET}
+	@${COMPILE.c} -DSTRCHR ${.ALLSRC} -o ${.TARGET}.o
+	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
 
 strchr.po: index.c
-	${COMPILE.c} -DSTRCHR -p ${.ALLSRC} -o ${.TARGET}
-	@${LD} -X -r ${.TARGET}
-	@mv a.out ${.TARGET}
+	@echo ${COMPILE.c:Q} -DSTRCHR -pg ${.ALLSRC} -o ${.TARGET}
+	@${COMPILE.c} -DSTRCHR -pg ${.ALLSRC} -o ${.TARGET}.o
+	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
 
 strchr.so: index.c
-	${COMPILE.c} ${PICFLAG} -DPIC -DSTRCHR ${.ALLSRC} -o ${.TARGET}
+	@echo ${COMPILE.c:Q} -DSTRCHR ${CPICFLAGS} ${.ALLSRC} -o ${.TARGET}
+	@${COMPILE.c} -DSTRCHR ${CPICFLAGS} ${.ALLSRC} -o ${.TARGET}.o
+	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
 
 LOBJS+= strchr.ln
 strchr.ln: index.c
@@ -98,17 +113,22 @@ strchr.ln: index.c
 .if empty(SRCS:Mstrrchr.S)
 OBJS+=	strrchr.o
 strrchr.o: rindex.c
-	${COMPILE.c} -DSTRRCHR ${.ALLSRC} -o ${.TARGET}
-	@${LD} -x -r ${.TARGET}
-	@mv a.out ${.TARGET}
+	@echo ${COMPILE.c:Q} -DSTRRCHR ${.ALLSRC} -o ${.TARGET}
+	@${COMPILE.c} -DSTRRCHR ${.ALLSRC} -o ${.TARGET}.o
+	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
 
 strrchr.po: rindex.c
-	${COMPILE.c} -DSTRRCHR -p ${.ALLSRC} -o ${.TARGET}
-	@${LD} -X -r ${.TARGET}
-	@mv a.out ${.TARGET}
+	@echo ${COMPILE.c:Q} -DSTRRCHR -pg ${.ALLSRC} -o ${.TARGET}
+	@${COMPILE.c} -DSTRRCHR -pg ${.ALLSRC} -o ${.TARGET}.o
+	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
 
 strrchr.so: rindex.c
-	${COMPILE.c} ${PICFLAG} -DPIC -DSTRRCHR ${.ALLSRC} -o ${.TARGET}
+	@echo ${COMPILE.c:Q} -DSTRRCHR ${CPICFLAGS} ${.ALLSRC} -o ${.TARGET}
+	@${COMPILE.c} -DSTRRCHR ${CPICFLAGS} ${.ALLSRC} -o ${.TARGET}.o
+	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
 
 LOBJS+= strrchr.ln
 strrchr.ln: rindex.c
