@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.146.2.2 2004/06/24 08:37:09 tron Exp $	*/
+/*	$NetBSD: ohci.c,v 1.146.2.3 2004/07/02 17:13:21 he Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.146.2.2 2004/06/24 08:37:09 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.146.2.3 2004/07/02 17:13:21 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1090,7 +1090,7 @@ ohci_intr(void *p)
 	/* If we get an interrupt while polling, then just ignore it. */
 	if (sc->sc_bus.use_polling) {
 #ifdef DIAGNOSTIC
-		printf("ohci_intr: ignored interrupt while polling\n");
+		DPRINTFN(16, ("ohci_intr: ignored interrupt while polling\n"));
 #endif
 		return (0);
 	}
