@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.35 2001/07/06 20:20:55 thorpej Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.36 2001/08/30 02:53:56 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -337,7 +337,7 @@ typedef u_int8_t pci_revision_t;
 
 #define	PCI_MAPREG_TYPE_MEM			0x00000000
 #define	PCI_MAPREG_TYPE_IO			0x00000001
-#define	PCI_MAPREG_TYPE_ROM			0x00000001
+#define	PCI_MAPREG_ROM_ENABLE			0x00000001
 
 #define	PCI_MAPREG_MEM_TYPE(mr)						\
 	    ((mr) & PCI_MAPREG_MEM_TYPE_MASK)
