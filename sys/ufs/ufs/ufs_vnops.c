@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.55 1999/03/05 21:09:50 mycroft Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.56 1999/03/22 19:21:10 kleink Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -1861,6 +1861,9 @@ ufs_pathconf(v)
 		return (0);
 	case _PC_SYNC_IO:
 		*ap->a_retval = 1;
+		return (0);
+	case _PC_FILESIZEBITS:
+		*ap->a_retval = 42;
 		return (0);
 	default:
 		return (EINVAL);
