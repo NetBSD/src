@@ -1,11 +1,11 @@
-#	$Id: files.amiga.old,v 1.10 1994/02/13 21:14:33 chopps Exp $
+#	$Id: files.amiga.old,v 1.11 1994/02/17 09:09:58 chopps Exp $
 
 arch/amiga/amiga/amiga_init.c	standard
 arch/amiga/amiga/autoconf.c	standard
 arch/amiga/amiga/cia.c		standard
 arch/amiga/amiga/clock.c	standard
 arch/amiga/amiga/conf.c		standard
-arch/amiga/amiga/cons.c		standard
+dev/cons.c			standard
 arch/amiga/amiga/disksubr.c	standard
 arch/amiga/amiga/dkbad.c	standard
 arch/amiga/amiga/machdep.c	standard config-dependent
