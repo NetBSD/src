@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.26 1995/09/26 20:16:25 phil Exp $	*/
+/*	$NetBSD: conf.c,v 1.27 1996/03/14 21:30:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -98,6 +98,7 @@ cdev_decl(scn);
 cdev_decl(rd);
 cdev_decl(st);
 cdev_decl(fd);
+dev_decl(filedesc,open);
 cdev_decl(cd);
 cdev_decl(vnd);
 cdev_decl(ccd);
@@ -121,7 +122,7 @@ struct cdevsw	cdevsw[] =
 	cdev_tty_init(NSCN,scn),	/* 8: serial ports */
 	cdev_disk_init(NRD,rd),		/* 9: RAM disk */
 	cdev_tape_init(NST,st),		/* 10: SCSI tape */
-	cdev_fd_init(1,fd),		/* 11: file descriptor pseudo-device */
+	cdev_fd_init(1,filedesc),	/* 11: file descriptor pseudo-device */
 	cdev_disk_init(NCD,cd),		/* 12: SCSI CD-ROM */
 	cdev_disk_init(NVND,vnd),	/* 13: vnode disk driver */
 	cdev_bpftun_init(NBPFILTER,bpf),/* 14: Berkeley packet filter */
