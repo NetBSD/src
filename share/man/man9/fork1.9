@@ -1,4 +1,4 @@
-.\"	$NetBSD: fork1.9,v 1.6 2002/07/11 10:45:58 pooka Exp $
+.\"	$NetBSD: fork1.9,v 1.7 2002/08/06 14:00:03 pooka Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -81,6 +81,9 @@ The child process will share the parent's file descriptors.
 The child process will share the parent's signal actions.
 .It FORK_NOWAIT
 The child process will at creation time be inherited by the init process.
+.It FORK_CLEANFILES
+The child process will not copy or share the parent's descriptors, but
+rather will start out with a clean set.
 .El
 .Pp
 A
