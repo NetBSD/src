@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.85 2003/01/24 01:17:52 lukem Exp $
+#	$NetBSD: build.sh,v 1.86 2003/01/26 05:34:32 lukem Exp $
 #
 # Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -234,15 +234,16 @@ usage()
 
 Usage: ${progname} [-EnorUu] [-a arch] [-B buildid] [-D dest] [-j njob] [-M obj]
 		[-m mach] [-O obj] [-R release] [-T tools] [-V var=[value]]
-		[-w wrapper]   [operation [...] ]
+		[-w wrapper]   operation [...]
 
- System build operations (all imply "obj" and "tools"):
+ Build operations (all imply "obj" and "tools"):
     build		Run "make build"
     distribution	Run "make distribution" (includes etc/ files)
     release		Run "make release" (includes kernels & distrib media)
 
  Other operations:
-    obj			Run "make obj" (default unless -o)
+    makewrapper		Create ${toolprefix}make-${MACHINE} wrapper and ${toolprefix}make.  (Always done)
+    obj			Run "make obj" (default unless -o is used)
     tools 		Build and install tools
     kernel=conf		Build kernel with config file \`conf'
     install=idir	Run "make installworld" to \`idir'
@@ -262,12 +263,12 @@ Usage: ${progname} [-EnorUu] [-a arch] [-B buildid] [-D dest] [-j njob] [-M obj]
     -R release	Set RELEASEDIR to release
     -r		Remove contents of TOOLDIR and DESTDIR before building
     -T tools	Set TOOLDIR to tools.  If unset, and TOOLDIR is not set in
-		the environment, ${toolprefix}make will be (re)built unconditionally.
-    -U		Set UNPRIVED
-    -u		Set UPDATE
+		the environment, ${toolprefix}make will be (re)built unconditionally
+    -U		Set UNPRIVED (build without requiring root privileges)
+    -u		Set UPDATE (do not run "make clean" first)
     -V v=[val]	Set variable \`v' to \`val'
     -w wrapper	Create ${toolprefix}make script as wrapper
-		(default: \${TOOLDIR}/bin/${toolprefix}make-\${MACHINE})
+		(Default: \${TOOLDIR}/bin/${toolprefix}make-\${MACHINE})
 
 _usage_
 	exit 1
@@ -314,7 +315,7 @@ parseoptions()
 			;;
 
 		-b)
-			usage "'-b' has been removed; it is the default operation"
+			usage "'-b' has been replaced by 'makewrapper'"
 			;;
 
 		-D)
@@ -451,13 +452,13 @@ parseoptions()
 
 		case "$op" in
 
-		tools|obj|build|distribution|release)
+		makewrapper|obj|tools|build|distribution|release)
 			;;
 
 		kernel=*)
 			arg=${op#*=}
 			op=${op%%=*}
-			if [ "${arg}" = "" ]; then
+			if [ -z "${arg}" ]; then
 				bomb "Must supply a kernel name with \`kernel=...'"
 			fi
 			;;
@@ -465,7 +466,7 @@ parseoptions()
 		install=*)
 			arg=${op#*=}
 			op=${op%%=*}
-			if [ "${arg}" = "" ]; then
+			if [ -z "${arg}" ]; then
 				bomb "Must supply a directory with \`install=...'"
 			fi
 			;;
@@ -477,6 +478,9 @@ parseoptions()
 		esac
 		eval do_$op=true
 	done
+	if [ -z "${operations}" ]; then
+		usage "Missing operation to perform."
+	fi
 
 	# Set up MACHINE*.  On a NetBSD host, these are allowed to be unset.
 	#
@@ -554,7 +558,7 @@ validatemakeparams()
 		EXTERNAL_TOOLCHAIN=$(getmakevar EXTERNAL_TOOLCHAIN)
 	fi
 	if [ "${TOOLCHAIN_MISSING}" = "yes" ] && \
-	   [ "${EXTERNAL_TOOLCHAIN}" = "" ]; then
+	   [ -z "${EXTERNAL_TOOLCHAIN}" ]; then
 		$runcmd echo "ERROR: build.sh (in-tree cross-toolchain) is not yet available for"
 		$runcmd echo "	MACHINE:      ${MACHINE}"
 		$runcmd echo "	MACHINE_ARCH: ${MACHINE_ARCH}"
@@ -619,6 +623,13 @@ validatemakeparams()
 	else
 		removedirs="$removedirs $DESTDIR"
 	fi
+	if $do_build || $do_distribution || $do_release; then
+		if ! $do_expertmode && \
+		    [ $(id -u 2>/dev/null) -ne 0 ] &&\
+		    [ -z "$UNPRIVED" ] ; then
+			bomb "-U or -E must be set for build as an unprivileged user."
+		fi
+        fi
 }
 
 
@@ -670,7 +681,7 @@ createmakewrapper()
 	eval cat <<EOF $makewrapout
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.85 2003/01/24 01:17:52 lukem Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.86 2003/01/26 05:34:32 lukem Exp $
 #
 
 EOF
@@ -695,7 +706,7 @@ buildtools()
 		    bomb "failed to make obj-tools"
 	fi
 	$runcmd cd tools
-	if [ "$UPDATE" = "" ]; then
+	if [ -z "$UPDATE" ]; then
 		cleandir=cleandir
 	else
 		cleandir=
@@ -745,7 +756,7 @@ buildkernel()
 	$runcmd echo "===> Kernel build directory: ${kernbuilddir}"
 	$runcmd mkdir -p "${kernbuilddir}" ||
 	    bomb "cannot mkdir: ${kernbuilddir}"
-	if [ "$UPDATE" = "" ]; then
+	if [ -z "$UPDATE" ]; then
 		$runcmd cd "${kernbuilddir}"
 		$runcmd "$makewrapper" cleandir ||
 		    bomb "make cleandir failed in ${kernbuilddir}"
@@ -783,6 +794,10 @@ main()
 	#
 	for op in $operations; do
 		case "$op" in
+
+		makewrapper)
+			# no-op
+			;;
 
 		tools)
 			buildtools

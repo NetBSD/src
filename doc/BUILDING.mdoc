@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.9 2003/01/23 16:24:08 lukem Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.10 2003/01/26 05:34:32 lukem Exp $
 .\"
 .\" Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -38,7 +38,7 @@
 .\" NOTE: After changing this file, run "make build-docs" to generate the
 .\" proper plaintext versions, and check in all BUILDING.* files!
 .\"
-.Dd January 24, 2003
+.Dd January 26, 2003
 .Dt BUILDING 8
 .Os NetBSD
 .
@@ -865,6 +865,13 @@ This option implies the
 .Sy distribution
 operation.
 .
+.It Sy makewrapper
+Create the
+.Sy nbmake-MACHINE
+wrapper.
+This operation is automatically performed for any of the other
+operations.
+.
 .It Sy obj
 Perform
 .Dq make obj .
@@ -940,9 +947,17 @@ to
 .It Fl E
 Set
 .Sq expert
-mode;
+mode.
+This overrides various sanity checks, and allows:
 .Sy DESTDIR
-does not have to be set to a non-root path for builds when this is set.
+does not have to be set to a non-root path for builds,
+and
+.Sy UNPRIVED
+does not have to be set when building as a non-root user.
+.Pp
+.Em Note :
+It is highly recommended that you know what you are doing when
+you use this option.
 .
 .It Fl j Ar njob
 Passed through to 
@@ -1049,9 +1064,6 @@ Set the variable
 to
 .Ar value
 (which is optional).
-This is useful for setting
-.Sy RELEASEDIR
-without actually building a release.
 .
 .It Fl w Ar wrapper
 Create the nbmake wrapper script (see below) in a custom location,
@@ -1095,44 +1107,35 @@ This script can be symlinked into a directory listed in
 or called with an absolute path.
 .
 .Sh EXAMPLES
+.
 .Bl -tag -width "build.sh"
-.
-.It Li "./build.sh tools"
-Build a new toolchain.
-.
-.It Li "cd ${KERNCONFDIR} ; ${TOOLDIR}/bin/nbconfig GENERIC"
-Use the new version of
-.Xr config 8
-to prepare to build a new GENERIC kernel.
-.
-.It Li "cd ${KERNOBJDIR}/GENERIC ; ${TOOLDIR}/bin/nbmake-${MACHINE} dependall"
-Use the new toolchain to build a new GENERIC kernel.
 .
 .It Li "./build.sh tools kernel=GENERIC"
 Build a new toolchain, and use the new toolchain to
 configure and build a new GENERIC kernel.
 This is a simpler way to achieve what the first three examples do.
 .
-.It Li "./build.sh -U distribution"
+.It Li "./build.sh -U -D /some/DESTDIR distribution"
 Using unprivileged mode,
 build a complete distribution in
-.Sy DESTDIR .
+.Pa /some/DESTDIR .
 .
-.It Li "# ./build.sh -U installworld=/"
+.It Li "# ./build.sh -U -D /some/DESTDIR installworld=/"
 As root, install the distribution that was built with unprivileged mode from
-.Sy DESTDIR
+.Pa /some/DESTDIR
 to
 .Pa / .
 (Even though this is run as root,
 .Fl U
 is required so that the permissions stored in
-.Sy DESTDIR Ns Pa /METALOG
+.Pa /some/DESTDIR/METALOG
 are correctly applied to the files as they're copied to
 .Pa / ) .
 .
-.It Li "./build.sh -U -R /some/dir/RELEASE release"
+.It Li "./build.sh -U -D /some/dir/DESTDIR -R /some/dir/RELEASE release"
 Using unprivileged mode,
-build a complete release in the specified release directory.
+build a complete release in
+.Pa /some/dir/RELEASE .
 .El
 .
 .Sh OBSOLETE VARIABLES
