@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: dhcp.c,v 1.1.1.1 1997/03/29 21:52:18 mellon Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: dhcp.c,v 1.1.1.2 1997/06/03 02:49:56 mellon Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -178,8 +178,9 @@ void dhcprequest (packet)
 
 	/* Find the lease that matches the address requested by the
 	   client. */
-	if (packet -> shared_network)
-		lease = find_lease (packet, packet -> shared_network);
+
+	if (subnet)
+		lease = find_lease (packet, subnet -> shared_network);
 	else
 		lease = (struct lease *)0;
 
@@ -192,25 +193,50 @@ void dhcprequest (packet)
 	      ? inet_ntoa (packet -> raw -> giaddr)
 	      : packet -> interface -> name);
 
-	/* If a client on a given network wants to request a lease on
-	   an address on a different network, NAK it.   If the Requested
-	   Address option was used, the protocol says that it must have
-	   been broadcast, so we can trust the source network information.
+	/* If a client on a given network REQUESTs a lease on an
+	   address on a different network, NAK it.  If the Requested
+	   Address option was used, the protocol says that it must
+	   have been broadcast, so we can trust the source network
+	   information.
 
 	   If ciaddr was specified and Requested Address was not, then
 	   we really only know for sure what network a packet came from
 	   if it came through a BOOTP gateway - if it came through an
 	   IP router, we'll just have to assume that it's cool.
 
-	   This violates the protocol spec in the case that the client
-	   is in the INIT-REBOOT state and broadcasts a DHCPREQUEST on
-	   the local wire.  We're supposed to check ciaddr for
-	   validity in that case, but if the packet was unicast
-	   through a router from a client in the RENEWING state, it
-	   would look exactly the same to us and it would be very
-	   bad to send a DHCPNAK.   I think we just have to live with
-	   this. */
-	if ((packet -> raw -> ciaddr.s_addr &&
+	   If we don't think we know where the packet came from, it
+	   came through a gateway from an unknown network, so it's not
+	   from a RENEWING client.  If we recognize the network it
+	   *thinks* it's on, we can NAK it even though we don't
+	   recognize the network it's *actually* on; otherwise we just
+	   have to ignore it.
+
+	   We don't currently try to take advantage of access to the
+	   raw packet, because it's not available on all platforms.
+	   So a packet that was unicast to us through a router from a
+	   RENEWING client is going to look exactly like a packet that
+	   was broadcast to us from an INIT-REBOOT client.
+
+	   Since we can't tell the difference between these two kinds
+	   of packets, if the packet appears to have come in off the
+	   local wire, we have to treat it as if it's a RENEWING
+	   client.  This means that we can't NAK a RENEWING client on
+	   the local wire that has a bogus address.  The good news is
+	   that we won't ACK it either, so it should revert to INIT
+	   state and send us a DHCPDISCOVER, which we *can* work with.
+
+	   Because we can't detect that a RENEWING client is on the
+	   wrong wire, it's going to sit there trying to renew until
+	   it gets to the REBIND state, when we *can* NAK it because
+	   the packet will get to us through a BOOTP gateway.  We
+	   shouldn't actually see DHCPREQUEST packets from RENEWING
+	   clients on the wrong wire anyway, since their idea of their
+	   local router will be wrong.  In any case, the protocol
+	   doesn't really allow us to NAK a DHCPREQUEST from a
+	   RENEWING client, so we can punt on this issue. */
+
+	if (!packet -> shared_network ||
+	    (packet -> raw -> ciaddr.s_addr &&
 	     packet -> raw -> giaddr.s_addr) ||
 	    packet -> options [DHO_DHCP_REQUESTED_ADDRESS].len) {
 		
@@ -226,9 +252,8 @@ void dhcprequest (packet)
 			return;
 		}
 
-		/* If we do know where it came from and either we don't
-		   know where it came from at all or it came from a different
-		   shared network than the packet came from, send a nak. */ 
+		/* If we do know where it came from and it asked for an
+		   address that is not on that shared network, nak it. */
 		subnet = find_grouped_subnet (packet -> shared_network, cip);
 		if (!subnet) {
 			nak_lease (packet, &cip);
@@ -430,7 +455,7 @@ void nak_lease (packet, cip)
 #endif
 	} else {
 		to.sin_addr.s_addr = htonl (INADDR_BROADCAST);
-		to.sin_port = packet->client_port;
+		to.sin_port = remote_port;
 	}
 
 	errno = 0;
@@ -487,6 +512,31 @@ void ack_lease (packet, lease, offer, when)
 				    options [DHO_DHCP_USER_CLASS_ID].len);
 	} else {
 		user_class = (struct class *)0;
+	}
+
+	/* Replace the old lease hostname with the new one, if it's changed. */
+	if (packet -> options [DHO_HOST_NAME].len &&
+	    lease -> client_hostname &&
+	    (strlen (lease -> client_hostname) ==
+	     packet -> options [DHO_HOST_NAME].len) &&
+	    !memcmp (lease -> client_hostname,
+		     packet -> options [DHO_HOST_NAME].data,
+		     packet -> options [DHO_HOST_NAME].len)) {
+	} else if (packet -> options [DHO_HOST_NAME].len) {
+		if (lease -> client_hostname)
+			free (lease -> client_hostname);
+		lease -> client_hostname =
+			malloc (packet -> options [DHO_HOST_NAME].len + 1);
+		if (!lease -> client_hostname)
+			error ("no memory for client hostname.\n");
+		memcpy (lease -> client_hostname,
+			packet -> options [DHO_HOST_NAME].data,
+			packet -> options [DHO_HOST_NAME].len);
+		lease -> client_hostname
+			[packet -> options [DHO_HOST_NAME].len] = 0;
+	} else if (lease -> client_hostname) {
+		free (lease -> client_hostname);
+		lease -> client_hostname = 0;
 	}
 
 	/* Choose a filename; first from the host_decl, if any, then from
@@ -633,7 +683,7 @@ void ack_lease (packet, lease, offer, when)
 
 	/* Remember the giaddr, xid, secs, flags and hops. */
 	state -> giaddr = packet -> raw -> giaddr;
-	state -> ciaddr = packet -> raw -> giaddr;
+	state -> ciaddr = packet -> raw -> ciaddr;
 	state -> xid = packet -> raw -> xid;
 	state -> secs = packet -> raw -> secs;
 	state -> bootp_flags = packet -> raw -> flags;
