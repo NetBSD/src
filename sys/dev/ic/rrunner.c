@@ -1,4 +1,4 @@
-/*	$NetBSD: rrunner.c,v 1.20 2000/12/12 18:00:24 thorpej Exp $	*/
+/*	$NetBSD: rrunner.c,v 1.21 2000/12/14 06:27:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -413,6 +413,7 @@ eshconfig(sc)
 	ifp->if_ioctl = eshioctl;
 	ifp->if_watchdog = eshwatchdog;
 	ifp->if_flags = IFF_SIMPLEX | IFF_NOTRAILERS | IFF_NOARP;
+	IFQ_SET_READY(&ifp->if_snd);
 
 	if_attach(ifp);
 	hippi_ifattach(ifp, sc->sc_ula);
@@ -2003,7 +2004,7 @@ eshstart(ifp)
 	while ((sc->sc_flags & ESH_FL_SNAP_RING_UP) != 0 &&
 	       (m = send->ec_cur_mbuf) == NULL && send->ec_cur_buf == NULL &&
 		send->ec_cur_dmainfo == NULL) {
-		IF_DEQUEUE(&ifp->if_snd, m);
+		IFQ_DEQUEUE(&ifp->if_snd, m);
 		if (m == 0)		/* not really needed */
 			break;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: an.c,v 1.7 2000/12/14 04:11:26 onoe Exp $	*/
+/*	$NetBSD: an.c,v 1.8 2000/12/14 06:27:24 thorpej Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -270,6 +270,7 @@ int an_attach(sc)
 	ifp->if_init = an_init;
 	ifp->if_stop = an_stop;
 	ifp->if_watchdog = an_watchdog;
+	IFQ_SET_READY(&ifp->if_snd);
 
 	memcpy(ifp->if_xname, sc->an_dev.dv_xname, IFNAMSIZ);
 
@@ -591,7 +592,7 @@ int an_intr(xsc)
 	/* Re-enable interrupts. */
 	CSR_WRITE_2(sc, AN_INT_EN, AN_INTRS);
 
-	if (ifp->if_snd.ifq_head != NULL)
+	if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
 		an_start(ifp);
 
 	return 1;
@@ -1365,7 +1366,7 @@ static void an_start(ifp)
 	bzero((char *)&tx_frame_802_3, sizeof(tx_frame_802_3));
 
 	while(sc->an_rdata.an_tx_ring[idx] == 0) {
-		IF_DEQUEUE(&ifp->if_snd, m0);
+		IFQ_DEQUEUE(&ifp->if_snd, m0);
 		if (m0 == NULL)
 			break;
 

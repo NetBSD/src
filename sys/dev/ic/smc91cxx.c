@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.31 2000/11/15 01:02:17 thorpej Exp $	*/
+/*	$NetBSD: smc91cxx.c,v 1.32 2000/12/14 06:27:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -283,6 +283,7 @@ smc91cxx_attach(sc, myea)
 	ifp->if_watchdog = smc91cxx_watchdog;
 	ifp->if_flags =
 	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
+	IFQ_SET_READY(&ifp->if_snd);
 
 	/* Attach the interface. */
 	if_attach(ifp);
@@ -580,7 +581,8 @@ smc91cxx_start(ifp)
 	/*
 	 * Peek at the next packet.
 	 */
-	if ((m = ifp->if_snd.ifq_head) == NULL)
+	IFQ_POLL(&ifp->if_snd, m);
+	if (m == NULL)
 		return;
 
 	/*
@@ -599,7 +601,7 @@ smc91cxx_start(ifp)
 	if ((len + pad) > (ETHER_MAX_LEN - ETHER_CRC_LEN)) {
 		printf("%s: large packet discarded\n", sc->sc_dev.dv_xname);
 		ifp->if_oerrors++;
-		IF_DEQUEUE(&ifp->if_snd, m);
+		IFQ_DEQUEUE(&ifp->if_snd, m);
 		m_freem(m);
 		goto readcheck;
 	}
@@ -676,7 +678,7 @@ smc91cxx_start(ifp)
 	 * Get the packet from the kernel.  This will include the Ethernet
 	 * frame header, MAC address, etc.
 	 */
-	IF_DEQUEUE(&ifp->if_snd, m);
+	IFQ_DEQUEUE(&ifp->if_snd, m);
 
 	/*
 	 * Push the packet out to the card.

@@ -1,4 +1,4 @@
-/*      $NetBSD: sgec.c,v 1.10 2000/11/15 01:02:17 thorpej Exp $ */
+/*      $NetBSD: sgec.c,v 1.11 2000/12/14 06:27:26 thorpej Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -206,6 +206,7 @@ sgec_attach(sc)
 	ifp->if_start = zestart;
 	ifp->if_ioctl = zeioctl;
 	ifp->if_watchdog = zetimeout;
+	IFQ_SET_READY(&ifp->if_snd);
 
 	/*
 	 * Attach the interface.
@@ -325,7 +326,7 @@ zestart(ifp)
 			continue;
 		}
 		idx = sc->sc_nexttx;
-		IF_DEQUEUE(&sc->sc_if.if_snd, m);
+		IFQ_POLL(&sc->sc_if.if_snd, m);
 		if (m == 0)
 			goto out;
 		/*
@@ -340,7 +341,6 @@ zestart(ifp)
 			panic("zestart"); /* XXX */
 
 		if ((i + sc->sc_inq) >= (TXDESCS - 1)) {
-			IF_PREPEND(&sc->sc_if.if_snd, m);
 			ifp->if_flags |= IFF_OACTIVE;
 			goto out;
 		}
@@ -382,6 +382,7 @@ zestart(ifp)
 				idx = 0;
 			sc->sc_inq++;
 		}
+		IFQ_DEQUEUE(&ifp->if_snd, m);
 #ifdef DIAGNOSTIC
 		if (totlen != m->m_pkthdr.len)
 			panic("zestart: len fault");

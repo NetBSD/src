@@ -1,4 +1,4 @@
-/*	$NetBSD: lance.c,v 1.16 2000/11/15 01:02:16 thorpej Exp $	*/
+/*	$NetBSD: lance.c,v 1.17 2000/12/14 06:27:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -226,6 +226,7 @@ lance_config(sc)
 #ifdef LANCE_REVC_BUG
 	ifp->if_flags &= ~IFF_MULTICAST;
 #endif
+	IFQ_SET_READY(&ifp->if_snd);
 
 	/* Initialize ifmedia structures. */
 	ifmedia_init(&sc->sc_media, 0, lance_mediachange, lance_mediastatus);

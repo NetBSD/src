@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.42 2000/11/26 11:08:58 takemura Exp $	*/
+/*	$NetBSD: i82557.c,v 1.43 2000/12/14 06:27:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -334,6 +334,7 @@ fxp_attach(sc)
 	ifp->if_watchdog = fxp_watchdog;
 	ifp->if_init = fxp_init;
 	ifp->if_stop = fxp_stop;
+	IFQ_SET_READY(&ifp->if_snd);
 
 	/*
 	 * We can support 802.1Q VLAN-sized frames.
@@ -730,7 +731,7 @@ fxp_start(ifp)
 		/*
 		 * Grab a packet off the queue.
 		 */
-		IF_DEQUEUE(&ifp->if_snd, m0);
+		IFQ_POLL(&ifp->if_snd, m0);
 		if (m0 == NULL)
 			break;
 
@@ -755,7 +756,6 @@ fxp_start(ifp)
 			if (m == NULL) {
 				printf("%s: unable to allocate Tx mbuf\n",
 				    sc->sc_dev.dv_xname);
-				IF_PREPEND(&ifp->if_snd, m0);
 				break;
 			}
 			if (m0->m_pkthdr.len > MHLEN) {
@@ -764,7 +764,6 @@ fxp_start(ifp)
 					printf("%s: unable to allocate Tx "
 					    "cluster\n", sc->sc_dev.dv_xname);
 					m_freem(m);
-					IF_PREPEND(&ifp->if_snd, m0);
 					break;
 				}
 			}
@@ -777,10 +776,11 @@ fxp_start(ifp)
 			if (error) {
 				printf("%s: unable to load Tx buffer, "
 				    "error = %d\n", sc->sc_dev.dv_xname, error);
-				IF_PREPEND(&ifp->if_snd, m0);
 				break;
 			}
 		}
+
+		IFQ_DEQUEUE(&ifp->if_snd, m0);
 
 		/* Initialize the fraglist. */
 		for (seg = 0; seg < dmamap->dm_nsegs; seg++) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86960.c,v 1.43 2000/11/15 01:02:17 thorpej Exp $	*/
+/*	$NetBSD: mb86960.c,v 1.44 2000/12/14 06:27:25 thorpej Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -210,6 +210,7 @@ mb86960_config(sc, media, nmedia, defmedia)
 	ifp->if_watchdog = mb86960_watchdog;
 	ifp->if_flags =
 	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
+	IFQ_SET_READY(&ifp->if_snd);
 
 #if FE_DEBUG >= 3
 	log(LOG_INFO, "%s: mb86960_config()\n", sc->sc_dev.dv_xname);
@@ -767,7 +768,7 @@ mb86960_start(ifp)
 		/*
 		 * Get the next mbuf chain for a packet to send.
 		 */
-		IF_DEQUEUE(&ifp->if_snd, m);
+		IFQ_DEQUEUE(&ifp->if_snd, m);
 		if (m == 0) {
 			/* No more packets to send. */
 			goto indicate_inactive;

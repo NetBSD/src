@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.24 2000/12/09 02:02:20 tsutsui Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.25 2000/12/14 06:27:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -717,6 +717,7 @@ rtk_attach(sc)
 	ifp->if_watchdog = rtk_watchdog;
 	ifp->if_init = rtk_init;
 	ifp->if_stop = rtk_stop;
+	IFQ_SET_READY(&ifp->if_snd);
 
 	/*
 	 * Do ifmedia setup.
@@ -1231,9 +1232,8 @@ int rtk_intr(arg)
 	/* Re-enable interrupts. */
 	CSR_WRITE_2(sc, RTK_IMR, RTK_INTRS);
 
-	if (ifp->if_snd.ifq_head != NULL) {
+	if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
 		rtk_start(ifp);
-	}
 
 	return (handled);
 }
@@ -1252,7 +1252,7 @@ STATIC void rtk_start(ifp)
 	sc = ifp->if_softc;
 
 	while(RTK_CUR_TXMBUF(sc) == NULL) {
-		IF_DEQUEUE(&ifp->if_snd, m_head);
+		IFQ_POLL(&ifp->if_snd, m_head);
 		if (m_head == NULL)
 			break;
 
@@ -1270,7 +1270,6 @@ STATIC void rtk_start(ifp)
 			if (m_new == NULL) {
 				printf("%s: unable to allocate Tx mbuf\n",
 				    sc->sc_dev.dv_xname);
-				IF_PREPEND(&ifp->if_snd, m_new);
 				break;
 			}
 			if (m_head->m_pkthdr.len > MHLEN) {
@@ -1279,7 +1278,6 @@ STATIC void rtk_start(ifp)
 					printf("%s: unable to allocate Tx "
 					    "cluster\n", sc->sc_dev.dv_xname);
 					m_freem(m_new);
-					IF_PREPEND(&ifp->if_snd, m_head);
 					break;
 				}
 			}
@@ -1294,10 +1292,10 @@ STATIC void rtk_start(ifp)
 			if (error) {
 				printf("%s: unable to load Tx buffer, "
 				    "error = %d\n", sc->sc_dev.dv_xname, error);
-				IF_PREPEND(&ifp->if_snd, m_head);
 				break;
 			}
 		}
+		IFQ_DEQUEUE(&ifp->if_snd, m_head);
 
 		RTK_CUR_TXMBUF(sc) = m_head;
 

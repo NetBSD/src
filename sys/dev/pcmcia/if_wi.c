@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wi.c,v 1.44 2000/12/12 04:04:29 thorpej Exp $	*/
+/*	$NetBSD: if_wi.c,v 1.45 2000/12/14 06:29:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -398,6 +398,7 @@ wi_attach(parent, self, aux)
 	ifp->if_init = wi_init;
 	ifp->if_stop = wi_stop;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
+	IFQ_SET_READY(&ifp->if_snd);
 
 	(void)wi_set_ssid(&sc->wi_nodeid, WI_DEFAULT_NODENAME,
 	    sizeof(WI_DEFAULT_NODENAME) - 1);
@@ -730,7 +731,7 @@ int wi_intr(arg)
 	/* Re-enable interrupts. */
 	CSR_WRITE_2(sc, WI_INT_EN, WI_INTRS);
 
-	if (ifp->if_snd.ifq_head != NULL)
+	if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
 		wi_start(ifp);
 
 #if NRND > 0
@@ -1577,7 +1578,7 @@ static void wi_start(ifp)
 	if (ifp->if_flags & IFF_OACTIVE)
 		return;
 
-	IF_DEQUEUE(&ifp->if_snd, m0);
+	IFQ_DEQUEUE(&ifp->if_snd, m0);
 	if (m0 == NULL)
 		return;
 
