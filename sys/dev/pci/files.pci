@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.128 2001/05/18 02:03:53 thorpej Exp $
+#	$NetBSD: files.pci,v 1.129 2001/05/22 16:58:23 thorpej Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -351,7 +351,7 @@ attach	sip at pci
 file	dev/pci/if_sip.c		sip
 
 # National Semiconductor DP83820 Gigabit Ethernet
-device	gsip: ether, ifnet, arp, mii
+device	gsip: ether, ifnet, arp, mii, mii_bitbang
 attach	gsip at pci
 file	dev/pci/if_gsip.c		gsip
 
