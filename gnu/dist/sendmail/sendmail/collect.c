@@ -12,7 +12,7 @@
  */
 
 #ifndef lint
-static char id[] = "@(#)Id: collect.c,v 8.136.4.15 2001/02/21 01:05:59 gshapiro Exp";
+static char id[] = "@(#)Id: collect.c,v 8.136.4.22 2001/06/07 21:01:02 ca Exp";
 #endif /* ! lint */
 
 #include <sendmail.h>
@@ -47,8 +47,8 @@ static void	eatfrom __P((char *volatile, ENVELOPE *));
 */
 
 static jmp_buf	CtxCollectTimeout;
-static bool	CollectProgress;
-static EVENT	*CollectTimeout;
+static bool	volatile CollectProgress;
+static EVENT	*volatile CollectTimeout = NULL;
 
 /* values for input state machine */
 #define IS_NORM		0	/* middle of line */
@@ -212,10 +212,12 @@ collect(fp, smtpmode, hdrp, e)
 				if (TrafficLogFile != NULL && !headeronly)
 				{
 					if (istate == IS_BOL)
-						(void) fprintf(TrafficLogFile, "%05d <<< ",
-							(int) getpid());
+						(void) fprintf(TrafficLogFile,
+							       "%05d <<< ",
+							       (int) getpid());
 					if (c == EOF)
-						(void) fprintf(TrafficLogFile, "[EOF]\n");
+						(void) fprintf(TrafficLogFile,
+							       "[EOF]\n");
 					else
 						(void) putc(c, TrafficLogFile);
 				}
@@ -312,7 +314,6 @@ bufferchar:
 				/* just put the character out */
 				if (!bitset(EF_TOOBIG, e->e_flags))
 					(void) putc(c, df);
-
 				/* FALLTHROUGH */
 
 			  case MS_DISCARD:
@@ -337,7 +338,7 @@ bufferchar:
 				memmove(buf, obuf, bp - obuf);
 				bp = &buf[bp - obuf];
 				if (obuf != bufbuf)
-					free(obuf);
+					sm_free(obuf);
 			}
 			if (c >= 0200 && c <= 0237)
 			{
@@ -351,7 +352,8 @@ bufferchar:
 			{
 				*bp++ = c;
 				hdrslen++;
-				if (MaxHeadersLength > 0 &&
+				if (!headeronly &&
+				    MaxHeadersLength > 0 &&
 				    hdrslen > MaxHeadersLength)
 				{
 					sm_syslog(LOG_NOTICE, e->e_id,
@@ -479,7 +481,8 @@ readerr:
 	}
 
 	/* reset global timer */
-	clrevent(CollectTimeout);
+	if (CollectTimeout != NULL)
+		clrevent(CollectTimeout);
 
 	if (headeronly)
 		return;
@@ -721,15 +724,37 @@ static void
 collecttimeout(timeout)
 	time_t timeout;
 {
-	/* if no progress was made, die now */
-	if (!CollectProgress)
-		longjmp(CtxCollectTimeout, 1);
+	int save_errno = errno;
 
-	/* otherwise reset the timeout */
-	CollectTimeout = setevent(timeout, collecttimeout, timeout);
-	CollectProgress = FALSE;
+	/*
+	**  NOTE: THIS CAN BE CALLED FROM A SIGNAL HANDLER.  DO NOT ADD
+	**	ANYTHING TO THIS ROUTINE UNLESS YOU KNOW WHAT YOU ARE
+	**	DOING.
+	*/
+
+	if (CollectProgress)
+	{
+		/* reset the timeout */
+		CollectTimeout = sigsafe_setevent(timeout, collecttimeout,
+						  timeout);
+		CollectProgress = FALSE;
+	}
+	else
+	{
+		/* event is done */
+		CollectTimeout = NULL;
+	}
+
+	/* if no progress was made or problem resetting event, die now */
+	if (CollectTimeout == NULL)
+	{
+		errno = ETIMEDOUT;
+		longjmp(CtxCollectTimeout, 1);
+	}
+
+	errno = save_errno;
 }
-/*
+/*
 **  DFERROR -- signal error on writing the data file.
 **
 **	Parameters:

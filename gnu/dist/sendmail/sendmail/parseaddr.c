@@ -12,7 +12,7 @@
  */
 
 #ifndef lint
-static char id[] = "@(#)Id: parseaddr.c,v 8.234.4.11 2001/02/14 04:07:27 gshapiro Exp";
+static char id[] = "@(#)Id: parseaddr.c,v 8.234.4.13 2001/08/14 23:08:13 ca Exp";
 #endif /* ! lint */
 
 #include <sendmail.h>
@@ -767,9 +767,6 @@ struct match
 	char	**match_pattern;	/* pointer to pattern */
 };
 
-#define MAXMATCH	9	/* max params per rewrite */
-
-
 int
 rewrite(pvp, ruleset, reclevel, e)
 	char **pvp;
@@ -1157,7 +1154,7 @@ rewrite(pvp, ruleset, reclevel, e)
 					if ((size_t) trsize > pvpb1_size)
 					{
 						if (pvpb1 != NULL)
-							free(pvpb1);
+							sm_free(pvpb1);
 						pvpb1 = (char **)xalloc(trsize);
 						pvpb1_size = trsize;
 					}
@@ -1583,7 +1580,7 @@ map_lookup(smap, key, argvect, pstat, e)
 		if (i > rwbuflen)
 		{
 			if (rwbuf != NULL)
-				free(rwbuf);
+				sm_free(rwbuf);
 			rwbuflen = i;
 			rwbuf = (char *) xalloc(rwbuflen);
 		}
@@ -2461,7 +2458,7 @@ maplocaluser(a, sendq, aliaslevel, e)
 		if (tTd(29, 9))
 			dprintf("maplocaluser: address unchanged\n");
 		if (a1 != NULL)
-			free(a1);
+			sm_free(a1);
 		return;
 	}
 
@@ -2808,7 +2805,7 @@ rscheck(rwset, p1, p2, e, rmcomm, cnt, logl, host)
 	QuickAbort = saveQuickAbort;
 	setstat(rstat);
 	if (buf != buf0)
-		free(buf);
+		sm_free(buf);
 
 	if (rstat != EX_OK && QuickAbort)
 		longjmp(TopFrame, 2);
