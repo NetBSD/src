@@ -1,6 +1,6 @@
-#	$NetBSD: list.ramdisk,v 1.5 2002/03/14 22:26:09 lukem Exp $
+#	$NetBSD: list.ramdisk,v 1.6 2002/04/09 00:31:41 lukem Exp $
 
-SRCDIRS	bin sbin usr.bin usr.sbin gnu/usr.bin sys/arch/${MACHINE}/stand
+SRCDIRS	bin sbin usr.bin usr.sbin gnu/usr.bin
 
 # init invokes the shell as -sh
 ARGVLN	sh -sh
