@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.35 2000/02/29 21:37:01 augustss Exp $	*/
+/*	$NetBSD: ugen.c,v 1.36 2000/03/06 20:59:17 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ugen.c,v 1.26 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -585,6 +585,8 @@ ugen_do_write(sc, endpt, uio, flag)
 			if (err) {
 				if (err == USBD_INTERRUPTED)
 					error = EINTR;
+				else if (err == USBD_TIMEOUT)
+					error = ETIMEDOUT;
 				else
 					error = EIO;
 				break;
@@ -1151,7 +1153,7 @@ ugenpoll(dev, events, p)
 		return (EINVAL);
 #ifdef DIAGNOSTIC
 	if (!sce->edesc) {
-		printf("ugenwrite: no edesc\n");
+		printf("ugenpoll: no edesc\n");
 		return (EIO);
 	}
 	if (!sce->pipeh) {
