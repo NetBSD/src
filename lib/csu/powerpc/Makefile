@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 1997/05/26 03:57:14 cjs Exp $
+#	$NetBSD: Makefile,v 1.3 1997/05/29 15:13:12 cjs Exp $
 
 CFLAGS+=	-DLIBC_SCCS -DPIC # -DDYNAMIC
 CFLAGS+=	-I${.CURDIR}/../../../libexec/ld.elf_so
@@ -6,6 +6,8 @@ CFLAGS+=	-I${.CURDIR}/../../../libexec/ld.elf_so
 OBJS=		crt0.o gcrt0.o crtbegin.o crtend.o
 
 CLEANFILES+=	core a.out
+
+.include	<bsd.own.mk>	# for OBJDIR and BUILDDIR
 
 all: ${OBJS}
 

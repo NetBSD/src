@@ -1,9 +1,11 @@
-#	$NetBSD: Makefile,v 1.11 1997/05/26 03:57:02 cjs Exp $
+#	$NetBSD: Makefile,v 1.12 1997/05/29 15:13:09 cjs Exp $
 #	from: @(#)Makefile	5.5 (Berkeley) 5/21/91
 
 CFLAGS+=	-DLIBC_SCCS -I${.CURDIR}/..
 OBJS=		crt0.o gcrt0.o scrt0.o
 SRCS=		crt0.c
+
+.include	<bsd.own.mk>	# for OBJDIR and BUILDDIR
 
 all: ${OBJS}
 
