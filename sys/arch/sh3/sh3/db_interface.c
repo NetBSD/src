@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.7 2002/02/12 15:26:49 uch Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.8 2002/02/17 20:58:35 uch Exp $	*/
 
 /*-
  * Copyright (C) 2002 UCHIYAMA Yasushi.  All rights reserved.
@@ -40,6 +40,12 @@
 #include <machine/db_machdep.h>
 
 #include <sh3/ubcreg.h>
+#include <sh3/cache.h>
+#include <sh3/cache_sh3.h>
+#include <sh3/cache_sh4.h>
+#include <sh3/mmu.h>
+#include <sh3/mmu_sh3.h>
+#include <sh3/mmu_sh4.h>
 
 #include <ddb/db_command.h>
 #include <ddb/db_extern.h>
@@ -51,6 +57,18 @@ void kdb_printtrap(u_int, int);
 void db_tlbdump_cmd(db_expr_t, int, db_expr_t, char *);
 void __db_tlbdump_page_size_sh4(u_int32_t);
 void __db_tlbdump_pfn(u_int32_t);
+void db_cachedump_cmd(db_expr_t, int, db_expr_t, char *);
+void __db_cachedump_sh3(vaddr_t);
+void __db_cachedump_sh4(vaddr_t);
+
+void i_sync_all(db_expr_t, int, db_expr_t, char *);
+void i_sync_range_index(db_expr_t, int, db_expr_t, char *);
+void i_sync_range(db_expr_t, int, db_expr_t, char *);
+void d_wbinv_all(db_expr_t, int, db_expr_t, char *);
+void d_wbinv_range_index(db_expr_t, int, db_expr_t, char *);
+void d_wbinv_range(db_expr_t, int, db_expr_t, char *);
+void d_inv_range(db_expr_t, int, db_expr_t, char *);
+void d_wb_range(db_expr_t, int, db_expr_t, char *);
 
 extern label_t *db_recover;
 extern char *trap_type[];
@@ -58,6 +76,7 @@ extern int trap_types;
 
 const struct db_command db_machine_command_table[] = {
 	{ "tlb",	db_tlbdump_cmd,		0,	0 },
+	{ "cache",	db_cachedump_cmd,	0,	0 },
 	{ 0 }
 };
 
@@ -180,22 +199,21 @@ db_clear_single_step(db_regs_t *regs)
 	regs->tf_ubc = 0;
 }
 
+/*
+ * MMU
+ */
+#define ON(x, c)	((x) & (c) ? '|' : '.')
 void
 db_tlbdump_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
-#define ON(x, c)	((x) & (c) ? '|' : '.')
 	static const char *pr[] = { "_r", "_w", "rr", "ww" };
 	static const char title[] = 
 	    "   VPN    ASID    PFN  AREA VDCGWtPR  SZ";
 	static const char title2[] = "\t\t\t      (user/kernel)";
-	int i, cpu_is_sh4;
 	u_int32_t r, e, a;
-#ifdef SH4
-	cpu_is_sh4 = 1;
-#else
-	cpu_is_sh4 = 0;
-#endif	
-	if (!cpu_is_sh4) {
+	int i;
+
+	if (CPU_IS_SH3) {
 		/* MMU configuration. */
 		r = _reg_read_4(SH3_MMUCR);
 		printf("%s-mode, %s virtual storage mode\n",
@@ -212,7 +230,7 @@ db_tlbdump_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 
 				r = _reg_read_4(SH3_MMUAA | a);
 				printf("0x%08x %3d",
-				    r & SH3_MMUAA_D_VPN_MASK,
+				    r & SH3_MMUAA_D_VPN_MASK_1K,
 				    r & SH3_MMUAA_D_ASID_MASK);
 				r = _reg_read_4(SH3_MMUDA | a);
 
@@ -230,9 +248,11 @@ db_tlbdump_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 	} else {
 		/* MMU configuration */
 		r = _reg_read_4(SH4_MMUCR);
-		printf("%s virtual storage mode,  SQ access: (kernel%s)\n",
+		printf("%s virtual storage mode, SQ access: (kernel%s)\n",
 		    r & SH3_MMUCR_SV ? "single" : "multiple",
 		    r & SH4_MMUCR_SQMD ? "" : "/user");
+		printf("random counter limit=%d\n", (r & SH4_MMUCR_URB_MASK) >>
+		    SH4_MMUCR_URB_SHIFT);
 
 		/* Dump ITLB */
 		printf("---ITLB DUMP ---\n%s TC SA\n%s\n", title, title2);
@@ -282,9 +302,17 @@ db_tlbdump_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 			    r & SH4_UTLB_DA2_SA_MASK);
 		}
 	}
-#undef ON
 }
 
+void
+__db_tlbdump_pfn(u_int32_t r)
+{
+	u_int32_t pa = (r & SH3_MMUDA_D_PPN_MASK);
+
+	printf(" 0x%08x %d", pa, (pa >> 26) & 7);
+}
+
+#ifdef SH4
 void
 __db_tlbdump_page_size_sh4(u_int32_t r)
 {
@@ -303,11 +331,114 @@ __db_tlbdump_page_size_sh4(u_int32_t r)
 		break;
 	}
 }
+#endif /* SH4 */
 
+/*
+ * CACHE
+ */
 void
-__db_tlbdump_pfn(u_int32_t r)
+db_cachedump_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
-	u_int32_t pa = (r & SH3_MMUDA_D_PPN_MASK);
-
-	printf(" 0x%08x %d", pa, (pa >> 26) & 7);
+	
+	if (CPU_IS_SH3)
+		__db_cachedump_sh3(have_addr ? addr : 0);
+	else
+		__db_cachedump_sh4(have_addr ? addr : 0);
 }
+
+#ifdef SH3
+void
+__db_cachedump_sh3(vaddr_t va_start)
+{
+	u_int32_t r;
+	vaddr_t va, va_end, cca;
+	int entry, way;
+
+	RUN_P2;
+	/* disable cache */
+	_reg_write_4(SH3_CCR,
+	    _reg_read_4(SH3_CCR) & ~SH3_CCR_CE);
+
+	if (va_start) {
+		va = va_start & ~(sh_cache_line_size - 1);
+		va_end = va + sh_cache_line_size;
+	} else {
+		va = 0;
+		va_end = sh_cache_way_size;
+	}
+
+	printf("%d-way, way-size=%dB, way-shift=%d, entry-mask=%08x, "
+	    "line-size=%dB \n", sh_cache_ways, sh_cache_way_size,
+	    sh_cache_way_shift, sh_cache_entry_mask, sh_cache_line_size);
+	printf("Entry  Way 0  UV   Way 1  UV   Way 2  UV   Way 3  UV\n");
+	for (; va < va_end; va += sh_cache_line_size) {
+		entry = va & sh_cache_entry_mask;
+		cca = SH3_CCA | entry;
+		printf(" %3d ", entry >> CCA_ENTRY_SHIFT);
+		for (way = 0; way < sh_cache_ways; way++) {
+			r = _reg_read_4(cca | (way << sh_cache_way_shift));
+			printf("%08x %c%c ", r & CCA_TAGADDR_MASK,
+			    ON(r, CCA_U), ON(r, CCA_V));
+		}
+		printf("\n");
+	}
+
+	/* enable cache */
+	_reg_write_4(SH3_CCR, _reg_read_4(SH3_CCR) | SH3_CCR_CE);
+	sh_icache_sync_all();
+
+	RUN_P1;
+}
+#endif /* SH3 */
+
+#ifdef SH4
+void
+__db_cachedump_sh4(vaddr_t va)
+{
+	u_int32_t r, e;
+	int i, istart, iend;
+	
+	RUN_P2; /* must access from P2 */
+
+	/* disable I/D-cache */
+	_reg_write_4(SH4_CCR,
+	    _reg_read_4(SH4_CCR) & ~(SH4_CCR_ICE | SH4_CCR_OCE));
+
+	if (va) {
+		istart = ((va & CCIA_ENTRY_MASK) >> CCIA_ENTRY_SHIFT) & ~3;
+		iend = istart + 4;
+	} else {
+		istart = 0;
+		iend = SH4_ICACHE_SIZE / SH4_CACHE_LINESZ;
+	}
+		
+	printf("[I-cache]\n");
+	printf("  Entry             V           V           V           V\n");
+	for (i = istart; i < iend; i++) {
+		if ((i & 3) == 0)
+			printf("\n[%3d-%3d] ", i, i + 3);
+		r = _reg_read_4(SH4_CCIA | (i << CCIA_ENTRY_SHIFT));
+		printf("%08x _%c ", r & CCIA_TAGADDR_MASK, ON(r, CCIA_V));
+	}
+
+	printf("\n[D-cache]\n");
+	printf("  Entry            UV          UV          UV          UV\n");
+	for (i = istart; i < iend; i++) {
+		if ((i & 3) == 0)
+			printf("\n[%3d-%3d] ", i, i + 3);
+		e = (i << CCDA_ENTRY_SHIFT);
+		r = _reg_read_4(SH4_CCDA | e);
+		printf("%08x %c%c ", r & CCDA_TAGADDR_MASK, ON(r, CCDA_U),
+		    ON(r, CCDA_V));
+
+	}
+	printf("\n");
+	
+	_reg_write_4(SH4_CCR,
+	    _reg_read_4(SH4_CCR) | SH4_CCR_ICE | SH4_CCR_OCE);
+	sh_icache_sync_all();
+
+	RUN_P1;
+}
+#endif /* SH4 */
+#undef ON
