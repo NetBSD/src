@@ -1,4 +1,4 @@
-/*	$NetBSD: msort.c,v 1.16 2003/10/18 03:03:20 itojun Exp $	*/
+/*	$NetBSD: msort.c,v 1.17 2004/02/17 19:09:36 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 #include "fsort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: msort.c,v 1.16 2003/10/18 03:03:20 itojun Exp $");
+__RCSID("$NetBSD: msort.c,v 1.17 2004/02/17 19:09:36 jdolecek Exp $");
 __SCCSID("@(#)msort.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -118,10 +118,12 @@ fmerge(binno, top, filelist, nfiles, get, outfp, fput, ftbl)
 		buffer = malloc(bufsize);
 		if (!buffer)
 			err(2, "fmerge(): malloc");
+		memset(buffer, 0, bufsize);
 
 		if (!linebuf && !SINGL_FLD) {
 			linebuf_size = DEFLLEN;
 			linebuf = malloc(linebuf_size);
+			memset(linebuf, 0, linebuf_size);
 		}
 	}
 
@@ -193,6 +195,7 @@ merge(infl0, nfiles, get, outfp, put, ftbl)
 		bufs[i] = malloc(DEFLLEN);
 		if (!bufs[i])
 			err(2, "merge: malloc");
+		memset(bufs[i], 0, DEFLLEN);
 		bufs_sz[i] = DEFLLEN;
 	}
 
