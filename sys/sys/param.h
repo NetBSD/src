@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.66 1999/07/15 22:00:40 wrstuden Exp $	*/
+/*	$NetBSD: param.h,v 1.67 1999/07/16 20:49:34 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -46,7 +46,7 @@
 /*
  * Historic BSD #defines -- probably will remain untouched for all time.
  */
-#define	BSD	199507		/* System version (year & month). */
+#define	BSD	199506		/* System version (year & month). */
 #define BSD4_3	1
 #define BSD4_4	1
 
