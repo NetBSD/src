@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.274 2001/08/19 17:18:01 mrg Exp $
+# $NetBSD: mi,v 1.275 2001/08/23 01:41:36 wiz Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -1148,6 +1148,7 @@
 ./usr/share/man/cat8/mipsco		base-man-share
 ./usr/share/man/cat8/mmeye		base-man-share
 ./usr/share/man/cat8/mvme68k		base-man-share
+./usr/share/man/cat8/netwinder		base-man-share
 ./usr/share/man/cat8/news68k		base-man-share
 ./usr/share/man/cat8/newsmips		base-man-share
 ./usr/share/man/cat8/next68k		base-man-share
@@ -1226,6 +1227,7 @@
 ./usr/share/man/man8/mipsco		base-man-share
 ./usr/share/man/man8/mmeye		base-man-share
 ./usr/share/man/man8/mvme68k		base-man-share
+./usr/share/man/man8/netwinder		base-man-share
 ./usr/share/man/man8/news68k		base-man-share
 ./usr/share/man/man8/newsmips		base-man-share
 ./usr/share/man/man8/next68k		base-man-share
