@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.4,v 1.1.2.141 2004/04/08 02:52:28 jmc Exp $
+#	$NetBSD: CHANGES-1.5.4,v 1.1.2.142 2004/04/08 03:14:05 jmc Exp $
 
 A complete list of changes from NetBSD 1.5.3 to NetBSD 1.5.4:
 
@@ -2563,3 +2563,9 @@ sys/miscfs/fifofs/fifo_vnops.c			patch
 	get access to the vnode, this is our last chance.
 	Fixes memory leak in revoke(2) path.
 	[wrstuden, ticket #125]
+
+sys/kern/sysv_shm.c				patch
+
+	Don't use uao_ functions directly; use them through the pgops methods.
+	Fix missing reference leak in the error path of shmat().
+	[groo, ticket #122]
