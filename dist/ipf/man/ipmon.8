@@ -1,4 +1,4 @@
-.\"	$NetBSD: ipmon.8,v 1.11 2002/10/29 16:23:10 wiz Exp $
+.\"	$NetBSD: ipmon.8,v 1.12 2003/01/04 01:18:02 wiz Exp $
 .\"
 .TH ipmon 8
 .SH NAME
@@ -84,11 +84,11 @@ are displayed to the same output 'device' (stderr or syslog).
 .TP
 .B \-b
 For rules which log the body of a packet, generate hex output representing
-the packet contents afte the headers.
+the packet contents after the headers.
 .TP
 .B \-D
 Cause ipmon to turn itself into a daemon.  Using subshells or backgrounding
-of ipmon is not required to turn it into an orphan so it can run indefinately.
+of ipmon is not required to turn it into an orphan so it can run indefinitely.
 .TP
 .B "\-f <device>"
 specify an alternative device/file from which to read the log information
