@@ -1,4 +1,4 @@
-/* $NetBSD: if_ea.c,v 1.4 2000/08/07 22:21:44 bjh21 Exp $ */
+/* $NetBSD: if_ea.c,v 1.5 2000/08/08 21:16:59 bjh21 Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -56,6 +56,9 @@
 
 #include <sys/types.h>
 #include <sys/param.h>
+
+__RCSID("$NetBSD: if_ea.c,v 1.5 2000/08/08 21:16:59 bjh21 Exp $");
+
 #include <sys/systm.h>
 #include <sys/errno.h>
 #include <sys/ioctl.h>
@@ -133,31 +136,31 @@ struct ea_softc {
  * prototypes
  */
 
-int eaintr __P((void *));
-static int ea_init __P((struct ea_softc *));
-static int ea_ioctl __P((struct ifnet *, u_long, caddr_t));
-static void ea_start __P((struct ifnet *));
-static void ea_watchdog __P((struct ifnet *));
-static void ea_reinit __P((struct ea_softc *));
-static void ea_chipreset __P((struct ea_softc *));
-static void ea_ramtest __P((struct ea_softc *));
-static int ea_stoptx __P((struct ea_softc *));
-static int ea_stoprx __P((struct ea_softc *));
-static void ea_stop __P((struct ea_softc *));
-static void ea_writebuf __P((struct ea_softc *, u_char *, int, int));
-static void ea_readbuf __P((struct ea_softc *, u_char *, int, int));
-static void earead __P((struct ea_softc *, caddr_t, int));
-static struct mbuf *eaget __P((caddr_t, int, struct ifnet *));
-static void ea_hardreset __P((struct ea_softc *));
-static void eagetpackets __P((struct ea_softc *));
-static void eatxpacket __P((struct ea_softc *));
+int eaintr(void *);
+static int ea_init(struct ea_softc *);
+static int ea_ioctl(struct ifnet *, u_long, caddr_t);
+static void ea_start(struct ifnet *);
+static void ea_watchdog(struct ifnet *);
+static void ea_reinit(struct ea_softc *);
+static void ea_chipreset(struct ea_softc *);
+static void ea_ramtest(struct ea_softc *);
+static int ea_stoptx(struct ea_softc *);
+static int ea_stoprx(struct ea_softc *);
+static void ea_stop(struct ea_softc *);
+static void ea_writebuf(struct ea_softc *, u_char *, int, int);
+static void ea_readbuf(struct ea_softc *, u_char *, int, int);
+static void earead(struct ea_softc *, caddr_t, int);
+static struct mbuf *eaget(caddr_t, int, struct ifnet *);
+static void ea_hardreset(struct ea_softc *);
+static void eagetpackets(struct ea_softc *);
+static void eatxpacket(struct ea_softc *);
 
-int eaprobe __P((struct device *, struct cfdata *, void *));
-void eaattach __P((struct device *, struct device *, void *));
+int eaprobe(struct device *, struct cfdata *, void *);
+void eaattach(struct device *, struct device *, void *);
 
-void ea_dump_buffer __P((struct ea_softc *, int));
-void ea_claimirq __P((struct ea_softc *));
-void ea_releaseirq __P((struct ea_softc *));
+void ea_dump_buffer(struct ea_softc *, int);
+void ea_claimirq(struct ea_softc *);
+void ea_releaseirq(struct ea_softc *);
 
 /* driver structure for autoconf */
 
@@ -172,8 +175,7 @@ struct cfattach ea_ca = {
  */
 
 void
-eadump(iobase)
-	u_int iobase;
+eadump(u_int iobase)
 {
 	dprintf(("%08x: %04x %04x %04x %04x %04x %04x %04x %04x\n", iobase,
 	    ReadShort(iobase + 0x00), ReadShort(iobase + 0x40),
@@ -188,9 +190,7 @@ eadump(iobase)
  */
 
 void
-ea_dump_buffer(sc, offset)
-	struct ea_softc *sc;
-	int offset;
+ea_dump_buffer(struct ea_softc *sc, int offset)
 {
 #ifdef EA_PACKET_DEBUG
 	u_int iobase = sc->sc_iobase;
@@ -232,18 +232,13 @@ ea_dump_buffer(sc, offset)
  */
 
 /*
- * int eaprobe(struct device *parent, struct cfdata *cf, void *aux)
- *
  * Probe for the ether3 podule.
  */
 
 int
-eaprobe(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+eaprobe(struct device *parent, struct cfdata *cf, void *aux)
 {
-	struct podulebus_attach_args *pa = (void *)aux;
+	struct podulebus_attach_args *pa = aux;
 	u_int iobase;
 	
 	/* Look for a network slot interface */
@@ -267,19 +262,14 @@ eaprobe(parent, cf, aux)
 
 
 /*
- * void eaattach(struct device *parent, struct device *dev, void *aux)
- *
  * Attach podule.
  */
 
 void
-eaattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+eaattach(struct device *parent, struct device *self, void *aux)
 {
 	struct ea_softc *sc = (void *)self;
-	struct podulebus_attach_args *pa = (void *)aux;
+	struct podulebus_attach_args *pa = aux;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	u_int8_t myaddr[ETHER_ADDR_LEN];
 	char *ptr;
@@ -359,12 +349,11 @@ eaattach(parent, self, aux)
  */
 
 void
-ea_ramtest(sc)
-	struct ea_softc *sc;
+ea_ramtest(struct ea_softc *sc)
 {
-	register u_int iobase = sc->sc_iobase;
-	register int loop;
-	register u_int sum = 0;
+	u_int iobase = sc->sc_iobase;
+	int loop;
+	u_int sum = 0;
 	char pbuf[9];
 
 /*	dprintf(("ea_ramtest()\n"));*/
@@ -468,8 +457,7 @@ ea_ramtest(sc)
 /* Claim an irq for the board */
 
 void
-ea_claimirq(sc)
-	struct ea_softc *sc;
+ea_claimirq(struct ea_softc *sc)
 {
 
 	/* Have we claimed one already ? */
@@ -485,8 +473,7 @@ ea_claimirq(sc)
 /* Release an irq */
 
 void
-ea_releaseirq(sc)
-	struct ea_softc *sc;
+ea_releaseirq(struct ea_softc *sc)
 {
 
 	/* Have we claimed one ? */
@@ -503,8 +490,7 @@ ea_releaseirq(sc)
  */
 
 static void
-ea_reinit(sc)
-	struct ea_softc *sc;
+ea_reinit(struct ea_softc *sc)
 {
 	int s;
 
@@ -526,8 +512,7 @@ ea_reinit(sc)
  */
 
 static int
-ea_stoptx(sc)
-	struct ea_softc *sc;
+ea_stoptx(struct ea_softc *sc)
 {
 	u_int iobase = sc->sc_iobase;
 	int timeout;
@@ -563,8 +548,7 @@ ea_stoptx(sc)
  */
 
 static int
-ea_stoprx(sc)
-	struct ea_softc *sc;
+ea_stoprx(struct ea_softc *sc)
 {
 	u_int iobase = sc->sc_iobase;
 	int timeout;
@@ -601,8 +585,7 @@ ea_stoprx(sc)
  */
 
 static void
-ea_stop(sc)
-	struct ea_softc *sc;
+ea_stop(struct ea_softc *sc)
 {
 	u_int iobase = sc->sc_iobase;
 
@@ -635,8 +618,7 @@ ea_stop(sc)
  */
 
 static void
-ea_chipreset(sc)
-	struct ea_softc *sc;
+ea_chipreset(struct ea_softc *sc)
 {
 	u_int iobase = sc->sc_iobase;
 
@@ -659,8 +641,7 @@ ea_chipreset(sc)
  */
 
 static void
-ea_hardreset(sc)
-	struct ea_softc *sc;
+ea_hardreset(struct ea_softc *sc)
 {
 	u_int iobase = sc->sc_iobase;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
@@ -706,11 +687,7 @@ ea_hardreset(sc)
  */
 
 static void
-ea_writebuf(sc, buf, addr, len)
-	struct ea_softc *sc;
-	u_char *buf;
-	int addr;
-	int len;
+ea_writebuf(struct ea_softc *sc, u_char *buf, int addr, int len)
 {
 	u_int iobase = sc->sc_iobase;
 	int loop;
@@ -759,11 +736,7 @@ ea_writebuf(sc, buf, addr, len)
  */
 
 static void
-ea_readbuf(sc, buf, addr, len)
-	struct ea_softc *sc;
-	u_char *buf;
-	int addr;
-	int len;
+ea_readbuf(struct ea_softc *sc, u_char *buf, int addr, int len)
 {
 	u_int iobase = sc->sc_iobase;
 	int loop;
@@ -831,8 +804,7 @@ ea_readbuf(sc, buf, addr, len)
  */
 
 static int
-ea_init(sc)
-	struct ea_softc *sc;
+ea_init(struct ea_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	u_int iobase = sc->sc_iobase;
@@ -926,8 +898,7 @@ ea_init(sc)
  */
 
 static void
-ea_start(ifp)
-	struct ifnet *ifp;
+ea_start(struct ifnet *ifp)
 {
 	struct ea_softc *sc = ifp->if_softc;
 	int s;
@@ -960,8 +931,7 @@ ea_start(ifp)
  */
  
 void
-eatxpacket(sc)
-	struct ea_softc *sc;
+eatxpacket(struct ea_softc *sc)
 {
 	u_int iobase = sc->sc_iobase;
 	struct mbuf *m, *m0;
@@ -1079,8 +1049,7 @@ eatxpacket(sc)
  */
 
 int
-eaintr(arg)
-	void *arg;
+eaintr(void *arg)
 {
 	register struct ea_softc *sc = arg;
 	u_int iobase = sc->sc_iobase;
@@ -1190,8 +1159,7 @@ eaintr(arg)
 
 
 void
-eagetpackets(sc)
-	struct ea_softc *sc;
+eagetpackets(struct ea_softc *sc)
 {
 	u_int iobase = sc->sc_iobase;
 	int addr;
@@ -1310,10 +1278,7 @@ eagetpackets(sc)
  */
 
 static void
-earead(sc, buf, len)
-	struct ea_softc *sc;
-	caddr_t buf;
-	int len;
+earead(struct ea_softc *sc, caddr_t buf, int len)
 {
 	register struct ether_header *eh;
 	struct mbuf *m;
@@ -1360,10 +1325,7 @@ earead(sc, buf, len)
  */
 
 struct mbuf *
-eaget(buf, totlen, ifp)
-        caddr_t buf;
-        int totlen;
-        struct ifnet *ifp;
+eaget(caddr_t buf, int totlen, struct ifnet *ifp)
 {
         struct mbuf *top, **mp, *m;
         int len;
@@ -1434,10 +1396,7 @@ eaget(buf, totlen, ifp)
  * Process an ioctl request. This code needs some work - it looks pretty ugly.
  */
 static int
-ea_ioctl(ifp, cmd, data)
-	register struct ifnet *ifp;
-	u_long cmd;
-	caddr_t data;
+ea_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct ea_softc *sc = ifp->if_softc;
 	struct ifaddr *ifa = (struct ifaddr *)data;
@@ -1536,8 +1495,7 @@ ea_ioctl(ifp, cmd, data)
  */
 
 static void
-ea_watchdog(ifp)
-	struct ifnet *ifp;
+ea_watchdog(struct ifnet *ifp)
 {
 	struct ea_softc *sc = ifp->if_softc;
 
