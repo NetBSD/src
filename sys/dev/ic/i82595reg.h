@@ -1,4 +1,4 @@
-/*	$NetBSD: i82595reg.h,v 1.1 1996/05/06 21:36:51 is Exp $	*/
+/*	$NetBSD: i82595reg.h,v 1.2 1998/07/28 16:03:49 is Exp $	*/
 
 /*
  * Copyright (c) 1996, Ignatios Souvatzis.
@@ -129,13 +129,15 @@
 #define RECV_MODES_REG 2
 
 #define		PROMISC_MODE	0x01
+#define		NO_BRDCST	0x02
 #define		NO_RX_CRC	0x04
 #define		NO_ADD_INS	0x10
 #define		MULTI_IA	0x20
 
-#define		MATCH_ID	(NO_ADD_INS | NO_RX_CRC | 0x02)
-#define		MATCH_ALL	(NO_ADD_INS | NO_RX_CRC | 0x01)
+#define		MATCH_ID	(NO_ADD_INS | NO_RX_CRC | NO_BRDCST)
 #define		MATCH_BRDCST	(NO_ADD_INS | NO_RX_CRC)
+#define		MATCH_MULTI	(NO_ADD_INS | NO_RX_CRC | MULTI_IA)
+#define		MATCH_ALL	(NO_ADD_INS | NO_RX_CRC | PROMISC_MODE)
 
 #define MEDIA_SELECT 3
 
