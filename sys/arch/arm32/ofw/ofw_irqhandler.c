@@ -1,4 +1,4 @@
-/* $NetBSD: ofw_irqhandler.c,v 1.1.1.1 1998/05/01 21:08:55 cgd Exp $ */
+/* $NetBSD: ofw_irqhandler.c,v 1.2 1998/05/01 21:13:59 cgd Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.

@@ -439,7 +439,6 @@ OF_open(dname)
 		1,
 		1,
 	};
-	int l;
 	
 	args.dname = dname;
 	if (openfirmware(&args) == -1)
@@ -631,7 +630,6 @@ OF_boot(bootspec)
 		1,
 		0,
 	};
-	int l;
 	
 	args.bootspec = bootspec;
 	openfirmware(&args);

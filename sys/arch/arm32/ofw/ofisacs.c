@@ -37,6 +37,7 @@
 
 #include <sys/param.h>
 #include <sys/device.h>
+#include <sys/systm.h>
 #include <sys/socket.h>
 
 #include <machine/intr.h>
@@ -59,9 +60,7 @@ struct cfattach ofisacs_ca = {
 	sizeof(struct device), ofisacsprobe, ofisacsattach
 };
 
-struct cfdriver ofisacs_cd = {
-	NULL, "ofisacs", DV_DULL
-};
+extern struct cfdriver ofisacs_cd;
 
 
 int
@@ -70,26 +69,26 @@ ofisacsprobe(parent, cf, aux)
     struct cfdata *cf;
     void *aux;
 {
-    struct ofprobe *ofp = aux;
+    struct ofbus_attach_args *oba = aux;
     char type[64];
     char name[64];
     char model[64];
     char compatible[64];
 
     /* At a minimum, must match type and name properties. */
-    if ( OF_getprop(ofp->phandle, "device_type", type, sizeof(type)) < 0 ||
+    if ( OF_getprop(oba->oba_phandle, "device_type", type, sizeof(type)) < 0 ||
 	 strcmp(type, "network") != 0 ||
-	 OF_getprop(ofp->phandle, "name", name, sizeof(name)) < 0 ||
+	 OF_getprop(oba->oba_phandle, "name", name, sizeof(name)) < 0 ||
 	 strcmp(name, "ethernet") != 0)
 	return 0;
 
     /* Full match on model. */
-    if ( OF_getprop(ofp->phandle, "model", model, sizeof(model)) > 0 &&
+    if ( OF_getprop(oba->oba_phandle, "model", model, sizeof(model)) > 0 &&
 	 strcmp(model, "CS8900") == 0)
 	return 3;
 
     /* Check for compatible match. */
-    if ( OF_getprop(ofp->phandle, "compatible", compatible, sizeof(compatible)) > 0 &&
+    if ( OF_getprop(oba->oba_phandle, "compatible", compatible, sizeof(compatible)) > 0 &&
 	 strstr(compatible, "CS8900") != NULL)
 	return 2;
 
@@ -103,7 +102,7 @@ ofisacsattach(parent, dev, aux)
     struct device *parent, *dev;
     void *aux;
 {
-    struct ofprobe *ofp = aux;
+    struct ofbus_attach_args *oba = aux;
     struct isa_attach_args ia;
 
     printf("\n");
@@ -116,7 +115,7 @@ ofisacsattach(parent, dev, aux)
     ia.ia_iosize = CS8900_IOSIZE;
     ia.ia_irq = IRQ_ETHERNET;
 
-    if (OF_getproplen(ofp->phandle, "no-dma") < 0)
+    if (OF_getproplen(oba->oba_phandle, "no-dma") < 0)
       ia.ia_drq = 6;
     else {
       ia.ia_drq = DRQUNK;
@@ -124,8 +123,7 @@ ofisacsattach(parent, dev, aux)
     }
     ia.ia_maddr = 0xd0000;
     ia.ia_msize = 4096;
-    ia.ia_aux = (void *)ofp->phandle;
-    ia.ia_delaybah = 0;			/* don't have this! */
+    ia.ia_aux = (void *)oba->oba_phandle;
 
     config_found(dev, &ia, NULL);
 }

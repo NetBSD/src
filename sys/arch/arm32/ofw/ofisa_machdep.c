@@ -1,4 +1,4 @@
-/*	$NetBSD: ofisa_machdep.c,v 1.1.1.1 1998/05/01 21:08:55 cgd Exp $	*/
+/*	$NetBSD: ofisa_machdep.c,v 1.2 1998/05/01 21:13:55 cgd Exp $	*/
 
 /*
  * Copyright 1998
@@ -72,7 +72,7 @@ ofisa_md_match(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
-	struct ofprobe *ofp = aux;
+	struct ofbus_attach_args *oba = aux;
 	char type[8];
 	char name[8];
 	int rv;
@@ -80,10 +80,10 @@ ofisa_md_match(parent, cf, aux)
 	rv = 0;
 	if (1) {		/* XXX old firmware compat enabled */
 		/* match type and name properties */
-		if (OF_getprop(ofp->phandle, "device_type", type,
+		if (OF_getprop(oba->oba_phandle, "device_type", type,
 		      sizeof(type)) > 0 &&
 		    strcmp(type, "isa") == 0 &&
-		    OF_getprop(ofp->phandle, "name", name,
+		    OF_getprop(oba->oba_phandle, "name", name,
 		      sizeof(name)) > 0 &&
 		    strcmp(name, "isa") == 0)
 			rv = 4;

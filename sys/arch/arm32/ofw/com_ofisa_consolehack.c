@@ -37,7 +37,7 @@
 
 #include <sys/param.h>
 #include <sys/device.h>
-#include <sys/socket.h>
+#include <sys/systm.h>
 #include <sys/tty.h>
 
 #include <machine/intr.h>

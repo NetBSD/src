@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_ofisa_machdep.c,v 1.1.1.1 1998/05/01 21:08:55 cgd Exp $	*/
+/*	$NetBSD: wdc_ofisa_machdep.c,v 1.2 1998/05/01 21:14:00 cgd Exp $	*/
 
 /*
  * Copyright 1998
@@ -58,10 +58,10 @@ wdc_ofisa_md_match(parent, cf, aux)
 	rv = 0;
 	if (1) {		/* XXX old firmware compat enabled */
 		/* match type and name properties */
-		if (OF_getprop(aa->ofp.phandle, "device_type",
+		if (OF_getprop(aa->oba.oba_phandle, "device_type",
 		      type, sizeof(type)) > 0 &&
 		    strcmp(type, "ide") == 0 &&
-		    OF_getprop(aa->ofp.phandle, "name", name,
+		    OF_getprop(aa->oba.oba_phandle, "name", name,
 		      sizeof(name)) > 0 &&
 		    strcmp(name, "ide") == 0)
 			rv = 4;
