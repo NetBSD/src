@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.121 2003/05/22 14:16:23 yamt Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.122 2003/06/09 13:10:31 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.121 2003/05/22 14:16:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.122 2003/06/09 13:10:31 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -2137,9 +2137,12 @@ out:
 /*
  * A fiddled version of m_adj() that ensures null fill to a 32-bit
  * boundary and only trims off the back end
+ *
+ * 1. trim off 'len' bytes as m_adj(mp, -len).
+ * 2. add zero-padding 'nul' bytes at the end of the mbuf chain.
  */
 void
-nfsm_adj(mp, len, nul)
+nfs_zeropad(mp, len, nul)
 	struct mbuf *mp;
 	int len;
 	int nul;
@@ -2159,65 +2162,56 @@ nfsm_adj(mp, len, nul)
 	m = mp;
 	for (;;) {
 		count += m->m_len;
-		if (m->m_next == (struct mbuf *)0)
+		if (m->m_next == NULL)
 			break;
 		m = m->m_next;
 	}
-	if (m->m_len > len) {
+
+	KDASSERT(count >= len);
+
+	if (m->m_len >= len) {
 		m->m_len -= len;
-		if (nul > 0) {
-			if (M_ROMAP(m)) {
-				struct mbuf *n;
-
-				KDASSERT(MLEN >= nul);
-				n = m_get(M_WAIT, MT_DATA);
-				MCLAIM(n, &nfs_mowner);
-				n->m_len = nul;
-				n->m_next = m->m_next;
-				m->m_len -= nul;
-				m->m_next = n;
-				m = n;
+	} else {
+		count -= len;
+		/*
+		 * Correct length for chain is "count".
+		 * Find the mbuf with last data, adjust its length,
+		 * and toss data from remaining mbufs on chain.
+		 */
+		for (m = mp; m; m = m->m_next) {
+			if (m->m_len >= count) {
+				m->m_len = count;
+				break;
 			}
-			cp = mtod(m, caddr_t)+m->m_len-nul;
-			for (i = 0; i < nul; i++)
-				*cp++ = '\0';
+			count -= m->m_len;
 		}
-		return;
+		m_freem(m->m_next);
+		m->m_next = NULL;
 	}
-	count -= len;
-	if (count < 0)
-		count = 0;
+
 	/*
-	 * Correct length for chain is "count".
-	 * Find the mbuf with last data, adjust its length,
-	 * and toss data from remaining mbufs on chain.
+	 * zero-padding.
 	 */
-	for (m = mp; m; m = m->m_next) {
-		if (m->m_len >= count) {
-			m->m_len = count;
-			if (nul > 0) {
-				if (M_ROMAP(m)) {
-					struct mbuf *n;
+	if (nul > 0) {
+		if (M_ROMAP(m) || M_TRAILINGSPACE(m) < nul) {
+			struct mbuf *n;
 
-					KDASSERT(MLEN >= nul);
-					n = m_get(M_WAIT, MT_DATA);
-					MCLAIM(n, &nfs_mowner);
-					n->m_len = nul;
-					n->m_next = m->m_next;
-					m->m_len -= nul;
-					m->m_next = n;
-					m = n;
-				}
-				cp = mtod(m, caddr_t)+m->m_len-nul;
-				for (i = 0; i < nul; i++)
-					*cp++ = '\0';
-			}
-			break;
+			KDASSERT(MLEN >= nul);
+			n = m_get(M_WAIT, MT_DATA);
+			MCLAIM(n, &nfs_mowner);
+			n->m_len = nul;
+			n->m_next = m->m_next;
+			m->m_next = n;
+			m = n;
+			cp = mtod(n, caddr_t);
+		} else {
+			cp = mtod(m, caddr_t) + m->m_len;
+			m->m_len += nul;
 		}
-		count -= m->m_len;
+		for (i = 0; i < nul; i++)
+			*cp++ = '\0';
 	}
-	for (m = m->m_next;m;m = m->m_next)
-		m->m_len = 0;
+	return;
 }
 
 /*
