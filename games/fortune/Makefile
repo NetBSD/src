@@ -1,12 +1,6 @@
-#	$NetBSD: Makefile,v 1.5 1995/03/23 08:28:23 cgd Exp $
+#	$NetBSD: Makefile,v 1.6 1997/04/28 23:52:50 thorpej Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
-SUBDIR=	fortune
-
-.ifmake !(install)
-SUBDIR+= strfile
-.endif
-
-SUBDIR+= datfiles
+SUBDIR=	fortune strfile datfiles
 
 .include <bsd.subdir.mk>
