@@ -1,4 +1,4 @@
-/*	$NetBSD: stand.h,v 1.47 2003/04/11 10:34:38 dsl Exp $	*/
+/*	$NetBSD: stand.h,v 1.48 2003/04/15 22:26:42 dsl Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -259,6 +259,7 @@ int	getopt(int, char * const *, const char *);
 
 char	*getpass(const char *);
 int	checkpasswd(void);
+int	check_password(const char *);
 
 int	nodev(void);
 int	noioctl(struct open_file *, u_long, void *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: checkpasswd.c,v 1.4 2000/03/30 12:19:47 augustss Exp $	*/
+/*	$NetBSD: checkpasswd.c,v 1.5 2003/04/15 22:26:42 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -96,7 +96,13 @@ getpass(prompt)
 char bootpasswd[16] = {'\0'}; /* into data segment! */
 
 int
-checkpasswd()
+checkpasswd(void)
+{
+	return check_password(bootpasswd);
+}
+
+int
+check_password(const char *password)
 {
 	int i;
 	char *passwd;
@@ -104,7 +110,7 @@ checkpasswd()
 	char pwdigest[16];
 
 	for (i = 0; i < 16; i++)
-		if (bootpasswd[i])
+		if (password[i])
 			break;
 	if (i == 16)
 		return (1); /* no password set */
@@ -114,7 +120,7 @@ checkpasswd()
 		MD5Init(&md5ctx);
 		MD5Update(&md5ctx, passwd, strlen(passwd));
 		MD5Final(pwdigest, &md5ctx);
-		if (bcmp(pwdigest, bootpasswd, 16) == 0)
+		if (bcmp(pwdigest, password, 16) == 0)
 			return (1);
 	}
 
