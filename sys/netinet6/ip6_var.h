@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_var.h,v 1.12 2000/03/21 23:53:31 itojun Exp $	*/
+/*	$NetBSD: ip6_var.h,v 1.12.4.1 2000/07/14 06:14:34 itojun Exp $	*/
 /*	$KAME: ip6_var.h,v 1.28 2000/03/09 00:46:12 itojun Exp $	*/
 
 /*
@@ -170,20 +170,6 @@ struct	ip6stat {
 	u_quad_t ip6s_exthdrtoolong;	/* ext hdr are not continuous */
 	u_quad_t ip6s_nogif;		/* no match gif found */
 	u_quad_t ip6s_toomanyhdr;	/* discarded due to too many headers */
-	/* XXX the following two items are not really AF_INET6 thing */
-	u_quad_t ip6s_exthdrget;	/* # of calls to IP6_EXTHDR_GET */
-	u_quad_t ip6s_exthdrget0;	/* # of calls to IP6_EXTHDR_GET0 */
-	u_quad_t ip6s_pulldown;		/* # of calls to m_pulldown */
-	u_quad_t ip6s_pulldown_copy;	/* # of mbuf copies in m_pulldown */
-	u_quad_t ip6s_pulldown_alloc;	/* # of mbuf allocs in m_pulldown */
-	u_quad_t ip6s_pullup;		/* # of calls to m_pullup */
-	u_quad_t ip6s_pullup_copy;	/* # of possible m_pullup copies */
-	u_quad_t ip6s_pullup_alloc;	/* # of possible m_pullup mallocs */
-	u_quad_t ip6s_pullup_fail;	/* # of possible m_pullup failures */
-	u_quad_t ip6s_pullup2;		/* # of calls to m_pullup2 */
-	u_quad_t ip6s_pullup2_copy;	/* # of possible m_pullup2 copies */
-	u_quad_t ip6s_pullup2_alloc;	/* # of possible m_pullup2 mallocs */
-	u_quad_t ip6s_pullup2_fail;	/* # of possible m_pullup2 failures */
 
 	/*
 	 * statistics for improvement of the source address selection
