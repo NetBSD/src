@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi.eng,v 1.29 1999/06/20 01:23:32 cgd Exp $	*/
+/*	$NetBSD: menus.mi.eng,v 1.30 1999/06/20 02:09:20 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -60,7 +60,8 @@ default x=20, y=12, no exit, scrollable;
 
 allow dynamic menus;
 
-menu netbsd, x=15, title "NetBSD-@@VERSION@@ Install System";
+menu netbsd, x=15, title "NetBSD-@@VERSION@@ Install System",
+    exit, exitstring "Exit Install System";
 	display action  { toplevel(); };
 	option "Install NetBSD to hard disk",
 		action { do_install(); };
@@ -71,7 +72,6 @@ menu netbsd, x=15, title "NetBSD-@@VERSION@@ Install System";
 	option "Reboot the computer", exit,
 		action { run_prog(0, 0, NULL, "/sbin/reboot"); };
 	option "Utility menu", sub menu utility;
-	option "Exit Install System", exit;
 
 menu utility, title "NetBSD-@@VERSION@@ Utility", exit;
 	option "Run /bin/sh",
