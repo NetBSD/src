@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)sd.c	7.8 (Berkeley) 6/9/91
- *	$Id: sd.c,v 1.6 1994/02/10 13:59:44 mycroft Exp $
+ *	$Id: sd.c,v 1.7 1994/02/22 07:17:22 hpeyerl Exp $
  */
 
 /*
@@ -83,8 +83,13 @@ struct	driver sddriver = {
 	sdinit, "sd", (int (*)())sdstart, (int (*)())sdgo, (int (*)())sdintr,
 };
 
-#if 0
-struct sdinfo sddefaultpart = {
+struct sdinfo {
+	u_int	strtblk;
+	u_int	endblk;
+	u_int	nblocks;
+};
+
+struct sdinfo sddefaultpart[8] = {
 	     1024,   17408,   16384   ,	/* A */
 	    17408,   82944,   65536   ,	/* B */
 	        0,       0,       0   ,	/* C */
@@ -94,7 +99,6 @@ struct sdinfo sddefaultpart = {
 	    82944,       0,       0   ,	/* G */
 	   115712,       0,       0   ,	/* H */
 };
-#endif
 
 struct	sd_softc {
 	struct	hp_device *sc_hd;
@@ -108,11 +112,16 @@ struct	sd_softc {
 	int	sc_blksize;	/* device block size in bytes */
 	u_int	sc_wpms;	/* average xfer rate in 16 bit wds/sec. */
 	struct	disklabel sc_label; /* drive partition table & label info */
+	struct	{
+		u_long	si_open;
+		struct	sdinfo *part;
+	} sc_info;
 } sd_softc[NSD];
 
 /* sc_flags values */
 #define	SDF_ALIVE	0x1
 #define	SDF_LABEL	0x2
+#define SDF_WLABEL	0x4
 
 #ifdef DEBUG
 int sddebug = 1;
@@ -366,9 +375,9 @@ sdopen(dev, flags, mode, p)
 	    &notused)) {
 		printf("sd%d: %s\n", unit, error);
 		/* XXX need to fix this */
-#ifdef notyet
+
 		/* Build a default disk label. */
-		sc->sc_info = sddefaultpart;
+		sc->sc_info.part = sddefaultpart;
 		/* C gets everything */
 		sc->sc_info.part[2].nblocks = sc->sc_blks;
 		sc->sc_info.part[2].endblk = sc->sc_blks;
@@ -401,9 +410,6 @@ sdopen(dev, flags, mode, p)
 		} else {
 			sc->sc_info.part[7].strtblk = 0;
 		}
-#else
-		return(ENXIO);
-#endif
 	} else
 		sc->sc_flags |= SDF_LABEL;
 	return(0);
@@ -826,16 +832,16 @@ sdioctl(dev, cmd, data, flag, p)
 		if ((flag & FWRITE) == 0)
 			return (EBADF);
 		error = setdisklabel(lp, (struct disklabel *)data,
-				     /*(sc->sc_flags & SDF_WLABEL) ? 0
-				     : sc->sc_info.si_open*/0, &cd);
+				     (sc->sc_flags & SDF_WLABEL) ? 0
+				     : sc->sc_info.si_open, &cd);
 		return (error);
 
 	case DIOCWDINFO:
 		if ((flag & FWRITE) == 0)
 			return (EBADF);
 		error = setdisklabel(lp, (struct disklabel *)data,
-				     /*(sc->sc_flags & SDF_WLABEL) ? 0
-				     : sc->sc_info.si_open*/0, &cd);
+				     (sc->sc_flags & SDF_WLABEL) ? 0
+				     : sc->sc_info.si_open, &cd);
 		if (error)
 			return (error);
 		flags = sc->sc_flags;
