@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.400 2004/08/13 16:47:35 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.401 2004/08/13 18:53:40 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -6633,6 +6633,7 @@ dist/ipf/test/regress/ni9.nat			1.1.1.1
 sys/netinet/ipl.h				1.16
 sys/netinet/ip_frag.h				1.20
 sys/netinet/ip_auth.c				1.34
+usr.sbin/ipf/ipftest/Makefile			1.28
 
 	Bring up to ipf 4.1.3
 	[christos, ticket #759]
