@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rwhod.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: rwhod.c,v 1.13 1998/07/06 06:58:26 mrg Exp $");
+__RCSID("$NetBSD: rwhod.c,v 1.14 1998/07/08 15:17:57 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -88,7 +88,7 @@ char	myname[MAXHOSTNAMELEN + 1];
 struct	neighbor {
 	struct	neighbor *n_next;
 	char	*n_name;		/* interface name */
-	struct	sockaddr *n_addr;		/* who to send to */
+	struct	sockaddr *n_addr;	/* who to send to */
 	int	n_addrlen;		/* size of address */
 	int	n_flags;		/* should forward?, interface flags */
 };
@@ -135,7 +135,7 @@ main(argc, argv)
 #endif
 	if (chdir(_PATH_RWHODIR) < 0)
 		err(1, "%s", _PATH_RWHODIR);
-	(void) signal(SIGHUP, getboottime);
+	(void)signal(SIGHUP, getboottime);
 	openlog("rwhod", LOG_PID, LOG_DAEMON);
 	/*
 	 * Establish host name as returned by system.
@@ -147,7 +147,7 @@ main(argc, argv)
 	myname[sizeof(myname) - 1] = '\0';
 	if ((cp = strchr(myname, '.')) != NULL)
 		*cp = '\0';
-	strncpy(mywd.wd_hostname, myname, sizeof(myname) - 1);
+	strncpy(mywd.wd_hostname, myname, sizeof(mywd.wd_hostname) - 1);
 	utmpf = open(_PATH_UTMP, O_RDONLY|O_CREAT, 0644);
 	if (utmpf < 0) {
 		syslog(LOG_ERR, "%s: %m", _PATH_UTMP);
@@ -232,11 +232,11 @@ main(argc, argv)
 			}
 		}
 #endif
-		(void) time((time_t *)&wd.wd_recvtime);
-		(void) write(whod, (char *)&wd, cc);
+		(void)time((time_t *)&wd.wd_recvtime);
+		(void)write(whod, (char *)&wd, cc);
 		if (fstat(whod, &st) < 0 || st.st_size > cc)
 			ftruncate(whod, cc);
-		(void) close(whod);
+		(void)close(whod);
 	}
 }
 
@@ -281,7 +281,7 @@ onalrm(signo)
 	if (alarmcount % 10 == 0)
 		getboottime(0);
 	alarmcount++;
-	(void) fstat(utmpf, &stb);
+	(void)fstat(utmpf, &stb);
 	if ((stb.st_mtime != utmptime) || (stb.st_size > utmpsize)) {
 		utmptime = stb.st_mtime;
 		if (stb.st_size > utmpsize) {
@@ -348,7 +348,7 @@ onalrm(signo)
 		exit(1);
 	}
 done:
-	(void) alarm(AL_INTERVAL);
+	(void)alarm(AL_INTERVAL);
 }
 
 void
@@ -527,17 +527,17 @@ interval(time, updown)
 	int days, hours, minutes;
 
 	if (time < 0 || time > 3*30*24*60*60) {
-		(void) sprintf(resbuf, "   %s ??:??", updown);
+		(void)sprintf(resbuf, "   %s ??:??", updown);
 		return (resbuf);
 	}
 	minutes = (time + 59) / 60;		/* round to minutes */
 	hours = minutes / 60; minutes %= 60;
 	days = hours / 24; hours %= 24;
 	if (days)
-		(void) sprintf(resbuf, "%s %2d+%02d:%02d",
+		(void)sprintf(resbuf, "%s %2d+%02d:%02d",
 		    updown, days, hours, minutes);
 	else
-		(void) sprintf(resbuf, "%s    %2d:%02d",
+		(void)sprintf(resbuf, "%s    %2d:%02d",
 		    updown, hours, minutes);
 	return (resbuf);
 }
