@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.2 1999/06/07 20:16:10 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.3 1999/08/23 22:29:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -52,7 +52,6 @@
 #include <sys/dkstat.h>
 #include <sys/disklabel.h>
 #include <sys/conf.h>
-#include <sys/dmap.h>
 #include <sys/reboot.h>
 #include <sys/device.h>
 

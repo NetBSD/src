@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.20 1999/06/07 20:16:11 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.21 1999/08/23 22:29:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -56,7 +56,6 @@
 #include <sys/buf.h>
 #include <sys/dkstat.h>
 #include <sys/conf.h>
-#include <sys/dmap.h>
 #include <sys/reboot.h>
 #include <sys/device.h>
 

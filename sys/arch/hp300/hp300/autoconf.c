@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.46 1999/06/07 20:16:10 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.47 1999/08/23 22:29:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -105,7 +105,6 @@
 #include <sys/device.h>
 #include <sys/device.h>
 #include <sys/disklabel.h>
-#include <sys/dmap.h>
 #include <sys/malloc.h>
 #include <sys/map.h>
 #include <sys/mount.h>
