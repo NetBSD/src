@@ -1,4 +1,4 @@
-/*	$NetBSD: satlink.c,v 1.11.4.1 2001/08/03 04:13:11 lukem Exp $	*/
+/*	$NetBSD: satlink.c,v 1.11.4.2 2001/09/11 21:53:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -409,6 +409,70 @@ satlinkpoll(dev, events, p)
 	splx(s);
 
 	return (revents);
+}
+
+static void
+filt_satlinkrdetach(struct knote *kn)
+{
+	struct satlink_softc *sc = (void *) kn->kn_hook;
+	int s;
+
+	s = splsoftclock();
+	SLIST_REMOVE(&sc->sc_selq.si_klist, kn, knote, kn_selnext);
+	splx(s);
+}
+
+static int
+filt_satlinkread(struct knote *kn, long hint)
+{
+	struct satlink_softc *sc = (void *) kn->kn_hook;
+
+	if (sc->sc_uptr == sc->sc_sptr)
+		return (0);
+
+	if (sc->sc_sptr > sc->sc_uptr)
+		kn->kn_data = sc->sc_sptr - sc->sc_uptr;
+	else
+		kn->kn_data = (sc->sc_bufsize - sc->sc_uptr) +
+		    sc->sc_sptr;
+	return (1);
+}
+
+static const struct filterops satlinkread_filtops =
+	{ 1, NULL, filt_satlinkrdetach, filt_satlinkread };
+
+static const struct filterops satlink_seltrue_filtops =
+	{ 1, NULL, filt_satlinkrdetach, filt_seltrue };
+
+int
+satlinkkqfilter(dev_t dev, struct knote *kn)
+{
+	struct satlink_softc *sc = device_lookup(&satlink_cd, minor(dev));
+	struct klist *klist;
+	int s;
+
+	switch (kn->kn_filter) {
+	case EVFILT_READ:
+		klist = &sc->sc_selq.si_klist;
+		kn->kn_fop = &satlinkread_filtops;
+		break;
+
+	case EVFILT_WRITE:
+		klist = &sc->sc_selq.si_klist;
+		kn->kn_fop = &satlink_seltrue_filtops;
+		break;
+
+	default:
+		return (1);
+	}
+
+	kn->kn_hook = (void *) sc;
+
+	s = splsoftclock();
+	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
+	splx(s);
+
+	return (0);
 }
 
 void
