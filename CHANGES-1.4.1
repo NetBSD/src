@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.1,v 1.1.2.3 1999/08/08 21:12:41 cgd Exp $
+#	$NetBSD: CHANGES-1.4.1,v 1.1.2.4 1999/08/09 03:09:24 simonb Exp $
 
 Woefully incomplete partial list of changes from NetBSD 1.4 to NetBSD 1.4.1:
 
@@ -406,6 +406,16 @@ sys/arch/alpha/tc/sccvar.h			1.6
   firmware was using the display.  Tell users what's happening when
   we switch, otherwise almost everyone just thinks the installation
   has locked up.  (ross)
+
+sys/arch/pmax/conf/INSTALL			1.22
+
+  Add CD9660 filesystem - useful for installing from CD-ROMs.  (simonb)
+
+distrib/notes/pmax/install			1.20-1.21
+
+  The name of the kernel on the diskimage is "netbsd" and not
+  "install", and include the root-path in the bootptab and dhcpd.conf
+  examples.  (simonb)
 
 distrib/utils/sysinst/arch/pmax/md.c		1.33
 
