@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.41 2002/03/05 09:40:39 simonb Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.42 2003/01/06 12:46:07 wiz Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.41 2002/03/05 09:40:39 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.42 2003/01/06 12:46:07 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.41 2002/03/05 09:40:39 simonb Exp $")
  * block numbers, it changes from DEV_BSIZE units to physical units:
  * blkno = bp->b_blkno / (lp->d_secsize / DEV_BSIZE);
  * As long as media with sector sizes of 512 bytes are used, this
- * doesn't matter (divide by 1), but for successfull usage of media with
+ * doesn't matter (divide by 1), but for successful usage of media with
  * greater sector sizes (e.g. 640MB MO-media with 2048 bytes/sector)
  * we must multiply block numbers with (lp->d_secsize / DEV_BSIZE)
  * to keep "unchanged" physical block numbers.
