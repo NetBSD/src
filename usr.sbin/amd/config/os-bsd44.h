@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)os-bsd44.h	8.1 (Berkeley) 6/6/93
- *	$Id: os-bsd44.h,v 1.8 1994/06/13 20:49:19 mycroft Exp $
+ *	$Id: os-bsd44.h,v 1.9 1994/06/15 04:12:24 deraadt Exp $
  *
  * 4.4 BSD definitions for Amd (automounter)
  */
@@ -67,9 +67,11 @@
 #define OS_HAS_NDBM
 
 /*
- * 4.4 doesn't provide NIS.
+ * 4.4 doesn't provide NIS, but NetBSD does.
  */
+#ifndef __NetBSD__
 #undef HAS_NIS_MAPS
+#endif
 
 /*
  * OS provides strerror()
