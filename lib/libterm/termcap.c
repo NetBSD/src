@@ -1,4 +1,4 @@
-/*	$NetBSD: termcap.c,v 1.14 1998/07/27 01:57:25 mycroft Exp $	*/
+/*	$NetBSD: termcap.c,v 1.15 1998/10/14 13:51:36 agc Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)termcap.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: termcap.c,v 1.14 1998/07/27 01:57:25 mycroft Exp $");
+__RCSID("$NetBSD: termcap.c,v 1.15 1998/10/14 13:51:36 agc Exp $");
 #endif
 #endif /* not lint */
 
@@ -84,11 +84,9 @@ tgetent(bp, name)
 	int    i;
 	char   pathbuf[PBUFSIZ];	/* holds raw path of filenames */
 	char  *pathvec[PVECSIZ];	/* to point to names in pathbuf */
-	char **pvec;			/* holds usable tail of path vector */
 	char  *termpath;
 
 	fname = pathvec;
-	pvec = pathvec;
 	tbuf = bp;
 	p = pathbuf;
 	cp = getenv("TERMCAP");
@@ -115,7 +113,7 @@ tgetent(bp, name)
 				    sizeof(pathbuf) - 1);	/* $HOME first */
 				*p++ = '/';
 			}	/* if no $HOME look in current directory */
-			strncpy(p, _PATH_DEF, PBUFSIZ - (p - pathbuf));
+			strncpy(p, _PATH_DEF, PBUFSIZ - (size_t)(p - pathbuf));
 		}
 	}
 	else				/* user-defined name in TERMCAP */
@@ -177,7 +175,7 @@ tgetnum(id)
 	long num;
 
 	if (cgetnum(tbuf, id, &num) == 0)
-		return (num);
+		return (int)(num);
 	else
 		return (-1);
 }
