@@ -1,4 +1,6 @@
-#	$NetBSD: bsd.links.mk,v 1.22 2003/07/20 14:49:44 lukem Exp $
+#	$NetBSD: bsd.links.mk,v 1.23 2003/07/20 14:53:10 lukem Exp $
+
+.include <bsd.init.mk>
 
 ##### Basic targets
 .PHONY:		linksinstall
