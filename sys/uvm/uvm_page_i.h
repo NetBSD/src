@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page_i.h,v 1.20 2001/09/15 20:36:47 chs Exp $	*/
+/*	$NetBSD: uvm_page_i.h,v 1.20.6.1 2002/03/12 00:03:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -78,40 +78,6 @@
  */
 
 #if defined(UVM_PAGE_INLINE) || defined(UVM_PAGE)
-
-/*
- * uvm_lock_fpageq: lock the free page queue
- *
- * => free page queue can be accessed in interrupt context, so this
- *	blocks all interrupts that can cause memory allocation, and
- *	returns the previous interrupt level.
- */
-
-PAGE_INLINE int
-uvm_lock_fpageq()
-{
-	int s;
-
-	s = splvm();
-	simple_lock(&uvm.fpageqlock);
-	return (s);
-}
-
-/*
- * uvm_unlock_fpageq: unlock the free page queue
- *
- * => caller must supply interrupt level returned by uvm_lock_fpageq()
- *	so that it may be restored.
- */
-
-PAGE_INLINE void
-uvm_unlock_fpageq(s)
-	int s;
-{
-
-	simple_unlock(&uvm.fpageqlock);
-	splx(s);
-}
 
 /*
  * uvm_pagelookup: look up a page
