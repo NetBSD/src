@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_ofisa.c,v 1.3 1998/10/12 16:09:20 bouyer Exp $	*/
+/*	$NetBSD: wdc_ofisa.c,v 1.4 1998/10/23 13:58:17 bouyer Exp $	*/
 
 /*
  * Copyright 1997, 1998
@@ -140,7 +140,7 @@ wdc_ofisa_attach(parent, self, aux)
         }
 
 	sc->sc_ih = isa_intr_establish(aa->ic, intr.irq, intr.share,
-	    IPL_BIO, wdcintr, sc);
+	    IPL_BIO, wdcintr, &sc->wdc_channel);
 
 	printf("\n");
 	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16;
