@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.66.4.1 2002/06/11 01:59:49 lukem Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.66.4.2 2002/11/08 09:31:35 tron Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.66.4.1 2002/06/11 01:59:49 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.66.4.2 2002/11/08 09:31:35 tron Exp $");
 
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
@@ -1073,6 +1073,23 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 		    !sosendallatonce(so) && !nextrecord) {
 			if (so->so_error || so->so_state & SS_CANTRCVMORE)
 				break;
+			/*
+			 * If we are peeking and the socket receive buffer is
+			 * full, stop since we can't get more data to peek at.
+			 */
+			if ((flags & MSG_PEEK) && sbspace(&so->so_rcv) <= 0)
+				break;
+			/*
+			 * If we've drained the socket buffer, tell the
+			 * protocol in case it needs to do something to
+			 * get it filled again.
+			 */
+			if ((pr->pr_flags & PR_WANTRCVD) && so->so_pcb)
+				(*pr->pr_usrreq)(so, PRU_RCVD,
+				    (struct mbuf *)0,
+				    (struct mbuf *)(long)flags,
+				    (struct mbuf *)0,
+				    (struct proc *)0);
 			error = sbwait(&so->so_rcv);
 			if (error) {
 				sbunlock(&so->so_rcv);
