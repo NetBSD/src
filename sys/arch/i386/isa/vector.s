@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.s,v 1.46.2.2 2001/07/19 08:57:30 sommerfeld Exp $	*/
+/*	$NetBSD: vector.s,v 1.46.2.3 2001/09/22 23:01:21 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -202,7 +202,7 @@ IDTVEC(resume/**/irq_num)						\
 	jnz	4f							;\
 	movl	%esp,%eax		/* 0 means frame pointer */	;\
 4:	pushl	%eax							;\
-	call	IH_FUN(%ebx)		/* call it */			;\
+	call	*IH_FUN(%ebx)		/* call it */			;\
 	addl	$4,%esp			/* toss the arg */		;\
 	STRAY_INTEGRATE			/* maybe he claimed it */	;\
 	incl	IH_COUNT(%ebx)		/* count the intrs */		;\

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_sigcode.s,v 1.1.4.5 2001/06/18 03:33:31 sommerfeld Exp $	*/
+/*	$NetBSD: svr4_sigcode.s,v 1.1.4.6 2001/09/22 23:01:14 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -126,8 +126,8 @@
 	pushl	%ds		; \
 	pushl	%es		; \
 	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax	; \
-	movl	%ax,%ds		; \
-	movl	%ax,%es
+	movw	%ax,%ds		; \
+	movw	%ax,%es
 #define	INTRFASTEXIT \
 	popl	%es		; \
 	popl	%ds		; \
@@ -167,7 +167,7 @@
  */
 /* LINTSTUB: Var: char svr4_sigcode[1], svr4_esigcode[1]; */
 NENTRY(svr4_sigcode)
-	call	SVR4_SIGF_HANDLER(%esp)
+	call	*SVR4_SIGF_HANDLER(%esp)
 	leal	SVR4_SIGF_UC(%esp),%eax	# ucp (the call may have clobbered the
 					# copy at SIGF_UCP(%esp))
 	pushl	%eax

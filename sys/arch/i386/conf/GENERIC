@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.300.2.21 2001/09/03 19:48:06 sommerfeld Exp $
+#	$NetBSD: GENERIC,v 1.300.2.22 2001/09/22 23:00:55 sommerfeld Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.300.2.21 $"
+#ident 		"GENERIC-$Revision: 1.300.2.22 $"
 
 maxusers	32		# estimated number of users
 
@@ -21,6 +21,8 @@ options 	VM86		# virtual 8086 emulation
 options 	USER_LDT	# user-settable LDT; used by WINE
 # eliminate delay no-ops in I/O; recommended on all but very old machines
 #options 	DUMMY_NOPS
+
+options 	MTRR		# memory-type range register syscall support
 
 # delay between "rebooting ..." message and hardware reset, in milliseconds
 #options 	CPURESET_DELAY=2000
@@ -52,10 +54,10 @@ options 	KTRACE		# system call tracing via ktrace(1)
 
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
-#options	SEMMNI=10	# number of semaphore identifiers
-#options	SEMMNS=60	# number of semaphores in system
-#options	SEMUME=10	# max number of undo entries per process
-#options	SEMMNU=30	# number of undo structures in system
+#options 	SEMMNI=10	# number of semaphore identifiers
+#options 	SEMMNS=60	# number of semaphores in system
+#options 	SEMUME=10	# max number of undo entries per process
+#options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V-like memory sharing
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
 
@@ -88,8 +90,8 @@ options 	COMPAT_SVR4	# binary compatibility with SVR4
 options 	COMPAT_IBCS2	# binary compatibility with SCO and ISC
 options 	COMPAT_LINUX	# binary compatibility with Linux
 options 	COMPAT_FREEBSD	# binary compatibility with FreeBSD
-#options	COMPAT_MACH	# binary compatibility with Mach binaries
-#options	EXEC_MACHO	# exec MACH-O binaries
+#options 	COMPAT_MACH	# binary compatibility with Mach binaries
+#options 	EXEC_MACHO	# exec MACH-O binaries
 #options 	COMPAT_PECOFF	# kernel support to run Win32 apps
 
 # File systems
@@ -150,7 +152,7 @@ options 	PCIVERBOSE	# verbose PCI device autoconfig messages
 options 	SCSIVERBOSE	# human readable SCSI error messages
 options 	USBVERBOSE	# verbose USB device autoconfig messages
 #options 	PNPBIOSVERBOSE	# verbose PnP BIOS messages
-#options	PNPBIOSDEBUG	# more fulsome PnP BIOS debugging messages
+#options 	PNPBIOSDEBUG	# more fulsome PnP BIOS debugging messages
 options 	I2OVERBOSE	# verbose I2O driver messages
 options 	MCAVERBOSE	# verbose MCA device autoconfig messages
 
@@ -256,14 +258,16 @@ ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 # XXX 'puc's aren't really bridges, but there's no better place for them here
 puc*	at pci? dev ? function ?	# PCI "universal" comm. cards
 
+#agp* 	at pchb?
+
 # EISA bus support
-eisa*	at mainbus?
-eisa*	at pceb?
+eisa0	at mainbus?
+eisa0	at pceb?
 
 # ISA bus support
-isa*	at mainbus?
-isa*	at pceb?
-isa*	at pcib?
+isa0	at mainbus?
+isa0	at pceb?
+isa0	at pcib?
 
 # PCMCIA bus support
 pcmcia*	at pcic? controller ? socket ?
@@ -401,6 +405,7 @@ lpt2	at isa? port 0x3bc
 iop*	at pci? dev ? function ?	# I/O processor
 iopsp*	at iop? tid ?			# SCSI/FC-AL ports
 ld*	at iop? tid ?			# block devices
+dpti*	at iop? tid 0			# DPT/Adaptec control interface
 
 
 # SCSI Controllers and Devices
@@ -619,7 +624,8 @@ mbe*	at pcmcia? function ?		# MB8696x based Ethernet
 ne*	at pcmcia? function ?		# NE2000-compatible Ethernet
 ray*	at pcmcia? function ?		# Raytheon Raylink (802.11)
 sm*	at pcmcia? function ?		# Megahertz Ethernet
-tr*	at pcmcia? function ?		# TROPIC based Token-Ring
+# tr at pcmcia has problems with Cardbus bridges
+#tr*	at pcmcia? function ?		# TROPIC based Token-Ring
 wi*	at pcmcia? function ?		# Lucent WaveLan IEEE (802.11)
 xi*	at pcmcia? function ?		# Xircom CreditCard Ethernet
 

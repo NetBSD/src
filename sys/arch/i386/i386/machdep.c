@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.376.2.28 2001/09/03 19:48:10 sommerfeld Exp $	*/
+/*	$NetBSD: machdep.c,v 1.376.2.29 2001/09/22 23:01:08 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -86,6 +86,7 @@
 #include "opt_compat_svr4.h"
 #include "opt_realmem.h"
 #include "opt_compat_mach.h"	/* need to get the right segment def */
+#include "opt_mtrr.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -134,6 +135,7 @@
 #include <machine/reg.h>
 #include <machine/specialreg.h>
 #include <machine/bootinfo.h>
+#include <machine/mtrr.h>
 
 #include <dev/isa/isareg.h>
 #include <machine/isa_machdep.h>
@@ -183,6 +185,10 @@ int	cpureset_delay = CPURESET_DELAY;
 int     cpureset_delay = 2000; /* default to 2s */
 #endif
 
+#ifdef MTRR
+struct mtrr_funcs *mtrr_funcs;
+#endif
+
 
 int	physmem;
 int	dumpmem_low;
@@ -197,7 +203,9 @@ int	i386_use_fxsave;
 int	i386_has_sse;
 int	i386_has_sse2;
 
+#define	CPUID2FAMILY(cpuid)	(((cpuid) >> 8) & 15)
 #define	CPUID2MODEL(cpuid)	(((cpuid) >> 4) & 15)
+#define	CPUID2STEPPING(cpuid)	((cpuid) & 15)
 
 vaddr_t	msgbuf_vaddr;
 paddr_t msgbuf_paddr;
@@ -421,11 +429,34 @@ cpu_startup()
 	for (x = 0; x < btoc(MSGBUFSIZE); x++)
 		pmap_kenter_pa((vaddr_t)msgbuf_vaddr + x * PAGE_SIZE,
 		    msgbuf_paddr + x * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE);
-	pmap_update();
+	pmap_update(pmap_kernel());
 
 	initmsgbuf((caddr_t)msgbuf_vaddr, round_page(MSGBUFSIZE));
 
 	printf("%s", version);
+
+#if 0
+#ifdef MTRR
+	if (cpu_feature & CPUID_MTRR) {
+		mtrr_funcs = &i686_mtrr_funcs;
+		i686_mtrr_init_first();
+		mtrr_init_cpu(ci);
+	} else if (strcmp(cpu_vendor, "AuthenticAMD") == 0) {
+		/*
+		 * Must be a K6-2 Step >= 7 or a K6-III.
+		 */
+		if (CPUID2FAMILY(cpu_id) == 5) {
+			if (CPUID2MODEL(cpu_id) > 8 ||
+			    (CPUID2MODEL(cpu_id) == 8 &&
+			     CPUID2STEPPING(cpu_id) >= 7)) {
+				mtrr_funcs = &k6_mtrr_funcs;
+				k6_mtrr_init_first();
+				mtrr_init_cpu(ci);
+			}
+		}
+	}
+#endif
+#endif
 
 	format_bytes(pbuf, sizeof(pbuf), ptoa(physmem));
 	printf("total memory = %s\n", pbuf);
@@ -599,7 +630,7 @@ i386_bufinit()
 			curbufsize -= PAGE_SIZE;
 		}
 	}
-	pmap_update();
+	pmap_update(pmap_kernel());
 
 	/*
 	 * Set up buffers, so they can be used to read disk labels.
@@ -642,8 +673,8 @@ const char *classnames[] = {
 
 const char *modifiers[] = {
 	"",
-	"OverDrive ",
-	"Dual ",
+	"OverDrive",
+	"Dual",
 	""
 };
 
@@ -1261,6 +1292,7 @@ identifycpu(struct cpu_info *ci)
 	int class = CPUCLASS_386, vendor, i, max;
 	int family, model, step, modif;
 	const struct cpu_cpuid_nameclass *cpup = NULL;
+	const struct cpu_cpuid_family *cpufam;
 	char *cpuname = ci->ci_dev->dv_xname;
 	char buf[1024];
 	char *sep;
@@ -1268,7 +1300,7 @@ identifycpu(struct cpu_info *ci)
 	if (ci->ci_cpuid_level == -1) {
 #ifdef DIAGNOSTIC
 		if (cpu < 0 || cpu >=
-		    (sizeof i386_nocpuid_cpus/sizeof(struct cpu_nocpuid_nameclass)))
+		    sizeof(i386_nocpuid_cpus) / sizeof(i386_nocpuid_cpus[0]))
 			panic("unknown cpu type %d\n", cpu);
 #endif
 		name = i386_nocpuid_cpus[cpu].cpu_name;
@@ -1319,19 +1351,19 @@ identifycpu(struct cpu_info *ci)
 				model = CPU_DEFMODEL;
 			} else if (model > CPU_MAXMODEL)
 				model = CPU_DEFMODEL;
-			i = family - CPU_MINFAMILY;
-			name = cpup->cpu_family[i].cpu_models[model];
+			cpufam = &cpup->cpu_family[family - CPU_MINFAMILY];
+			name = cpufam->cpu_models[model];
 			if (name == NULL)
-			    name = cpup->cpu_family[i].cpu_models[CPU_DEFMODEL];
-			class = cpup->cpu_family[i].cpu_class;
-			ci->cpu_setup = cpup->cpu_family[i].cpu_setup;
+			    name = cpufam->cpu_models[CPU_DEFMODEL];
+			class = cpufam->cpu_class;
+			ci->cpu_setup = cpufam->cpu_setup;
 
 			/*
 			 * Intel processors family >= 6, model 8 allow to
 			 * recognize brand by Brand ID value.
 			 */
-			if (vendor == CPUVENDOR_INTEL && family >= 6
-			    && model >= 8 && ci->ci_brand_id &&
+			if (vendor == CPUVENDOR_INTEL && family >= 6 &&
+			    model >= 8 && ci->ci_brand_id &&
 			    ci->ci_brand_id <= 8)
 				brand = i386_intel_brand[ci->ci_brand_id];
 		}
@@ -1357,8 +1389,12 @@ identifycpu(struct cpu_info *ci)
 	/* XXX end XXX */
 #endif
 
-	sprintf(cpu_model, "%s %s%s%s%s (%s-class)", vendorname, modifier,
-	    name, (*brand) ? " " : "", brand, classnames[class]);
+	snprintf(cpu_model, sizeof(cpu_model), "%s%s%s%s%s%s%s (%s-class)",
+	    vendorname,
+	    *modifier ? " " : "", modifier,
+	    *name ? " " : "", name,
+	    *brand ? " " : "", brand,
+	    classnames[class]);
 	printf("%s: %s", cpuname, cpu_model);
 
 	if (ci->ci_tsc_freq != 0)
@@ -2702,7 +2738,7 @@ init386(first_avail)
 	/* install page 2 (reserved above) as PT page for first 4M */
 	pmap_enter(pmap_kernel(), (vaddr_t)vtopte(0), 2*PAGE_SIZE,
 	    VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED|VM_PROT_READ|VM_PROT_WRITE);
-	pmap_update();
+	pmap_update(pmap_kernel());
 	memset(vtopte(0), 0, PAGE_SIZE);/* make sure it is clean before using */
 
 	/*
@@ -2717,7 +2753,7 @@ init386(first_avail)
 	pmap_kenter_pa((vaddr_t)BIOSTRAMP_BASE,	/* virtual */
 		       (paddr_t)BIOSTRAMP_BASE,	/* physical */
 		       VM_PROT_ALL);		/* protection */
-	pmap_update();
+	pmap_update(pmap_kernel());
 	memcpy((caddr_t)BIOSTRAMP_BASE, biostramp_image, biostramp_image_size);
 #ifdef DEBUG_BIOSCALL
 	printf("biostramp installed @ %x\n", BIOSTRAMP_BASE);
@@ -2726,15 +2762,14 @@ init386(first_avail)
 
 	pmap_enter(pmap_kernel(), idt_vaddr, idt_paddr,
 	    VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED|VM_PROT_READ|VM_PROT_WRITE);
-	pmap_update();
 	idt = (union descriptor *)idt_vaddr;
 
 #ifdef I586_CPU
 	pmap_enter(pmap_kernel(), pentium_idt_vaddr, idt_paddr,
 	    VM_PROT_READ, PMAP_WIRED|VM_PROT_READ);
-	pmap_update();
 	pentium_idt = (union descriptor *)pentium_idt_vaddr;
 #endif
+	pmap_update(pmap_kernel());
 
 	gdt = idt + NIDT;
 	ldt = gdt + NGDT;

@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.56.2.5 2001/09/03 19:48:09 sommerfeld Exp $ */
+/*	$NetBSD: apm.c,v 1.56.2.6 2001/09/22 23:01:00 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -1679,9 +1679,13 @@ apmioctl(dev, cmd, data, flag, p)
 		}
 		break;
 
+	case OAPM_IOC_GETPOWER:
 	case APM_IOC_GETPOWER:
 		powerp = (struct apm_power_info *)data;
-		batteryid = 0;	/* need a way to pass it from the userland */
+		if (cmd == OAPM_IOC_GETPOWER)
+			batteryid = 0;
+		else
+			batteryid = powerp->batteryid;
 		if (apm_minver >= 2) {
 			apm_get_capabilities(&regs);
 			if (batteryid > APM_NBATTERIES(&regs)) {

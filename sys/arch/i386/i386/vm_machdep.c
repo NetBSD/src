@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.86.2.15 2001/06/18 03:33:31 sommerfeld Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.86.2.16 2001/09/22 23:01:16 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -47,6 +47,7 @@
 
 #include "opt_user_ldt.h"
 #include "opt_largepages.h"
+#include "opt_mtrr.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,6 +66,7 @@
 #include <machine/gdt.h>
 #include <machine/reg.h>
 #include <machine/specialreg.h>
+#include <machine/mtrr.h>
 
 #include "npx.h"
 
@@ -73,7 +75,7 @@ void	setredzone __P((u_short *, caddr_t));
 /*
  * Finish a fork operation, with process p2 nearly set up.
  * Copy and update the pcb and trap frame, making the child ready to run.
- * 
+ *
  * Rig the child's kernel stack so that it will start out in
  * proc_trampoline() and call child_return() with p2 as an
  * argument. This causes the newly-created child process to go
@@ -187,6 +189,11 @@ cpu_exit(p)
 		npxsave_proc(p, 0);
 #endif
 
+#ifdef MTRR
+	if (p->p_md.md_flags & MDP_USEDMTRR)
+		mtrr_clean(p);
+#endif
+
 	/*
 	 * No need to do user LDT cleanup here; it's handled in
 	 * pmap_destroy().
@@ -220,7 +227,7 @@ cpu_wait(p)
 
 /*
  * Dump the machine specific segment at the start of a core dump.
- */     
+ */
 struct md_core {
 	struct reg intreg;
 	struct fpreg freg;
@@ -351,7 +358,7 @@ extern struct vm_map *phys_map;
 /*
  * Map a user I/O request into kernel virtual address space.
  * Note: the pages are already locked by uvm_vslock(), so we
- * do not need to pass an access_type to pmap_enter().   
+ * do not need to pass an access_type to pmap_enter().
  */
 void
 vmapbuf(bp, len)
@@ -372,7 +379,7 @@ vmapbuf(bp, len)
 	 * The region is locked, so we expect that pmap_pte() will return
 	 * non-NULL.
 	 * XXX: unwise to expect this in a multithreaded environment.
-	 * anything can happen to a pmap between the time we lock a 
+	 * anything can happen to a pmap between the time we lock a
 	 * region, release the pmap lock, and then relock it for
 	 * the pmap_extract().
 	 *
@@ -388,7 +395,7 @@ vmapbuf(bp, len)
 		taddr += PAGE_SIZE;
 		len -= PAGE_SIZE;
 	}
-	pmap_update();
+	pmap_update(pmap_kernel());
 }
 
 /*
@@ -407,7 +414,7 @@ vunmapbuf(bp, len)
 	off = (vaddr_t)bp->b_data - addr;
 	len = round_page(off + len);
 	pmap_kremove(addr, len);
-	pmap_update();
+	pmap_update(pmap_kernel());
 	uvm_km_free_wakeup(phys_map, addr, len);
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = 0;
