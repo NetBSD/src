@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.40 1999/02/19 16:41:58 tron Exp $	
+.\"	$NetBSD: hardware,v 1.41 1999/03/24 12:42:47 dante Exp $	
 .Nx \*V
 runs on ISA (AT-Bus), EISA, PCI, and VL-bus systems
 with 386-family processors, with or without math coprocessors. It
@@ -45,6 +45,7 @@ Supported devices include:
 			using the AIC-7770, AIC-7850, AIC-7860, AIC-7870, or
 			AIC-7880 chip.
 		Adaptec AHA-3940[U][W] cards [b]
+		AdvanSys ABP9x0[U][W] cards
 		BusLogic 54x (Adaptec AHA-154x clones)
 		BusLogic 445, 74x, 9xx  (But not the new "FlashPoint" series
 			of BusLogic SCSI adapters)
@@ -259,6 +260,12 @@ AHA-152x, AIC-6260- or AIC-6360-based SCSI host adapters
 AHA-2X4X or AIC-7XXX-based SCSI host adapters	[precise list: see NetBSD
 		ahc0	any  	any any		 System Requirements and
 						 Supported Devices]
+
+AdvanSys ABP920, ABP930[U][A], ABP960[U] SCSI host adapters
+		adv0	any	any	any
+
+AdvanSys ABP940[U][W], ABP970[U][W] SCSI host adapters
+		adw0	any	any	any
 
 BusLogic BT445, BT74x, or BT9xx SCSI host adapters
 		bha0 	0x330	any	any
