@@ -1,4 +1,4 @@
-#	$NetBSD: MIMORI,v 1.4 2000/12/24 09:25:25 ur Exp $
+#	$NetBSD: MIMORI,v 1.5 2001/06/13 15:37:27 soda Exp $
 #	NetBSD: GENERIC,v 1.31 2000/06/09 05:33:02 soda Exp 
 #
 #	MIMORI -- My NEC RISCstation 2250 (ur)
@@ -7,6 +7,9 @@
 include		"arch/arc/conf/std.arc"
 
 maxusers	32		# estimated number of users
+
+# Platform support
+options 	PLATFORM_NEC_RD94		# NEC RISCstation 2250
 
 # Standard system options
 
@@ -72,6 +75,7 @@ options 	SOFTDEP		# FFS soft updates support.
 options 	NFSSERVER	# Network File System server
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
+
 # Networking options
 #options 	GATEWAY		# IP packet forwarding
 options 	INET		# IP + ICMP + TCP + UDP
@@ -120,8 +124,17 @@ cpu*		at mainbus0
 
 #### Jazz-Internal bus devices
 
-jazzio*		at mainbus0	# Jazz-Internal bus.
-aclock0 	at jazzio?
+# PLATFORM_ACER_PICA_61
+# PLATFORM_MICROSOFT_JAZZ
+# PLATFORM_NEC_JC94
+# PLATFORM_NEC_R94
+# PLATFORM_NEC_R96
+# PLATFORM_NEC_RAX94
+# PLATFORM_NEC_RD94
+jazzio*		at mainbus0	# Jazz-Internal bus host bridge.
+
+timer0		at jazzio?
+mcclock0 	at jazzio?
 #pc0		at jazzio?
 #opms0		at jazzio?
 #vga0		at jazzio?	# Jazz localbus VGA
@@ -134,19 +147,28 @@ sn0		at jazzio?
 fdc0		at jazzio?
 fd*		at fdc? drive ?
 
-#siop0	at jazzio?
-#scsibus* 	at siop?
+#oosiop0 	at jazzio?			# NCR53C700 SCSI
+#oosiop1 	at jazzio?
+#scsibus* 	at oosiop?
 
 #### PCI bus devices
 
+# PLATFORM_NEC_JC94
+# PLATFORM_NEC_RAX94
+# PLATFORM_NEC_RD94
 necpb*		at mainbus0	# NEC RISCstation PCI host bridge.
 pci*		at necpb?
 
 #pcivga* 	at pci? dev ? function ?
-#siop*		at pci? dev ? function ?
-#scsibus* 	at siop?
-#de*		at pci? dev ? function ?
+tga*		at pci? dev ? function ?	# DEC ZLXp-E[123] Graphics
 
+ahc*		at pci? dev ? function ?	# Adaptec [23]94x, aic78x0 SCSI
+scsibus*	at ahc?
+
+#siop*		at pci? dev ? function ?	# NCR/Symbios 53c8xx SCSI
+#scsibus* 	at siop?
+
+#de*		at pci? dev ? function ?
 ex*		at pci? dev ? function ?	# 3Com 90x[B]
 fxp*		at pci? dev ? function ?	# Intel EtherExpress PRO
 le*		at pci? dev ? function ?	# PCnet-PCI
@@ -165,10 +187,6 @@ tlp*		at pci? dev ? function ?	# DECchip 21x4x (and clones)
 pciide*		at pci ? dev ? function ? flags 0x0000
 wd*		at pciide? channel ? drive ? flags 0x0000
 atapibus*	at pciide? channel ?
-
-tga*		at pci? dev ? function ?	# DEC ZLXp-E[123] Graphics
-ahc*		at pci? dev ? function ?	# Adaptec [23]94x, aic78x0 SCSI
-scsibus*	at ahc?
 
 #### MII/PHY support
 
@@ -233,6 +251,7 @@ pseudo-device	ipip		2	# IP Encapsulation within IP (RFC 2003)
 pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
 #pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
+#pseudo-device	vlan			# IEEE 802.1q encapsulation
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
