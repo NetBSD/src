@@ -1,4 +1,4 @@
-/*	$NetBSD: paths.c,v 1.14 2000/11/10 18:19:06 simonb Exp $	 */
+/*	$NetBSD: paths.c,v 1.15 2001/05/24 17:41:42 christos Exp $	 */
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -46,7 +46,6 @@
 #include <sys/mount.h>
 #include <sys/mbuf.h>
 #include <sys/resource.h>
-#include <uvm/uvm_param.h>
 #include <machine/cpu.h>
 
 #include "debug.h"
