@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.238 1997/07/10 03:10:58 cgd Exp $	*/
+/*	$NetBSD: machdep.c,v 1.239 1997/07/10 04:07:00 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -1727,18 +1727,12 @@ i386_memio_map(t, bpa, size, cacheable, bshp)
 	/*
 	 * Pick the appropriate extent map.
 	 */
-	switch (t) {
-	case I386_BUS_SPACE_IO:
+	if (t == I386_BUS_SPACE_IO)
 		ex = ioport_ex;
-		break;
-
-	case I386_BUS_SPACE_MEM:
+	else if (t == I386_BUS_SPACE_MEM)
 		ex = iomem_ex;
-		break;
-
-	default:
+	else
 		panic("i386_memio_map: bad bus space tag");
-	}
 
 	/*
 	 * Before we go any further, let's make sure that this
@@ -1815,18 +1809,12 @@ i386_memio_alloc(t, rstart, rend, size, alignment, boundary, cacheable,
 	/*
 	 * Pick the appropriate extent map.
 	 */
-	switch (t) {
-	case I386_BUS_SPACE_IO:
+	if (t == I386_BUS_SPACE_IO)
 		ex = ioport_ex;
-		break;
-
-	case I386_BUS_SPACE_MEM:
+	else if (t == I386_BUS_SPACE_MEM)
 		ex = iomem_ex;
-		break;
-
-	default:
+	else
 		panic("i386_memio_alloc: bad bus space tag");
-	}
 
 	/*
 	 * Sanity check the allocation against the extent's boundaries.
@@ -1920,13 +1908,10 @@ i386_memio_unmap(t, bsh, size)
 	/*
 	 * Find the correct extent and bus physical address.
 	 */
-	switch (t) {
-	case I386_BUS_SPACE_IO:
+	if (t == I386_BUS_SPACE_IO) {
 		ex = ioport_ex;
 		bpa = bsh;
-		break;
-
-	case I386_BUS_SPACE_MEM:
+	} else if (t == I386_BUS_SPACE_MEM) {
 		ex = iomem_ex;
 		va = i386_trunc_page(bsh);
 		endva = i386_round_page(bsh + size);
@@ -1942,11 +1927,8 @@ i386_memio_unmap(t, bsh, size)
 		 * Free the kernel virtual mapping.
 		 */
 		kmem_free(kernel_map, va, endva - va);
-		break;
-
-	default:
+	} else
 		panic("i386_memio_unmap: bad bus space tag");
-	}
 
 	if (extent_free(ex, bpa, size,
 	    EX_NOWAIT | (ioport_malloc_safe ? EX_MALLOCOK : 0))) {
