@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.226 2003/04/13 09:54:41 jmmv Exp $
+#	$NetBSD: NetBSD.dist,v 1.227 2003/04/14 05:21:47 salo Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -383,6 +383,7 @@
 ./usr/share/locale/ru_RU.CP866
 ./usr/share/locale/ru_RU.ISO8859-5
 ./usr/share/locale/ru_RU.KOI8-R
+./usr/share/locale/sk
 ./usr/share/locale/sk_SK.ISO8859-2
 ./usr/share/locale/sl
 ./usr/share/locale/sl/LC_MESSAGES
@@ -708,6 +709,7 @@
 ./usr/share/nls/nl
 ./usr/share/nls/no
 ./usr/share/nls/pl
+./usr/share/nls/sk
 ./usr/share/nls/sv
 ./usr/share/sendmail
 ./usr/share/sendmail/cf
