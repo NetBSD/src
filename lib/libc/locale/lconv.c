@@ -33,13 +33,13 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)lconv.c	5.2 (Berkeley) 2/24/91";*/
-static char *rcsid = "$Id: lconv.c,v 1.3 1993/08/26 00:45:41 jtc Exp $";
+static char *rcsid = "$Id: lconv.c,v 1.4 1993/12/22 09:38:20 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <limits.h>
 #include <locale.h>
 
-char	empty[] = "";
+static char empty[] = "";
 
 /*
  * Default (C) locale conversion.
