@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.434 2004/09/10 03:04:03 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.435 2004/09/10 03:05:16 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -7129,3 +7129,8 @@ distrib/notes/amiga/hardware			1.45
 	Clarify Apollo-accelerator-modifed-mainboard-SCSI vs.
 	Apollo-accelerator-provided-SCSI support status.
 	[is, ticket #817]
+
+distrib/notes/common/xfer			1.50
+
+	We dont build split sets anymore... dont confuse users.
+	[is, ticket #818]
