@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_pptp_pxy.c,v 1.1.1.1 2004/12/31 11:30:45 martti Exp $	*/
+/*	$NetBSD: ip_pptp_pxy.c,v 1.1.1.2 2005/02/08 06:53:28 martti Exp $	*/
 
 /*
  * Copyright (C) 2002-2003 by Darren Reed
@@ -6,7 +6,7 @@
  * Simple PPTP transparent proxy for in-kernel use.  For use with the NAT
  * code.
  *
- * Id: ip_pptp_pxy.c,v 2.10.2.5 2004/06/07 14:20:05 darrenr Exp
+ * Id: ip_pptp_pxy.c,v 2.10.2.6 2004/11/25 15:37:37 darrenr Exp
  *
  */
 #define	IPF_PPTP_PROXY
@@ -120,7 +120,7 @@ nat_t *nat;
 	fi.fin_flx &= ~FI_TCPUDP;
 	fi.fin_flx |= FI_IGNORE;
 
-	nat2 = nat_new(&fi, ipn, &pptp->pptp_nat, 0, NAT_OUTBOUND);
+	nat2 = nat_new(&fi, ipn, &pptp->pptp_nat, NAT_SLAVE, NAT_OUTBOUND);
 	pptp->pptp_nat = nat2;
 	if (nat2 != NULL) {
 		(void) nat_proto(&fi, nat2, 0);

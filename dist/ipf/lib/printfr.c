@@ -1,11 +1,11 @@
-/*	$NetBSD: printfr.c,v 1.1.1.2 2004/07/23 05:34:36 martti Exp $	*/
+/*	$NetBSD: printfr.c,v 1.1.1.3 2005/02/08 06:53:17 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: printfr.c,v 1.43.2.4 2004/04/20 11:51:33 darrenr Exp
+ * Id: printfr.c,v 1.43.2.8 2005/01/09 01:53:11 darrenr Exp
  */
 
 #include "ipf.h"
@@ -169,10 +169,12 @@ ioctlfunc_t	iocfunc;
 			printifname(",", fp->fr_ifnames[1], fp->fr_ifas[1]);
 		putchar(' ');
 
-		if (*fp->fr_dif.fd_ifname)
+		if (*fp->fr_dif.fd_ifname || (fp->fr_flags & FR_DUP))
 			print_toif("dup-to", &fp->fr_dif);
 		if (*fp->fr_tif.fd_ifname)
 			print_toif("to", &fp->fr_tif);
+		if (*fp->fr_rif.fd_ifname)
+			print_toif("reply-to", &fp->fr_rif);
 		if (fp->fr_flags & FR_FASTROUTE)
 			printf("fastroute ");
 
@@ -366,7 +368,7 @@ ioctlfunc_t	iocfunc;
 
 	if (fp->fr_flags & FR_KEEPSTATE) {
 		printf(" keep state");
-		if ((fp->fr_flags & (FR_STSTRICT|FR_NEWISN|FR_NOICMPERR)) ||
+		if ((fp->fr_flags & (FR_STSTRICT|FR_NEWISN|FR_NOICMPERR|FR_STATESYNC)) ||
 		    (fp->fr_statemax != 0) || (fp->fr_age[0] != 0)) {
 			char *comma = "";
 			printf(" (");
@@ -384,6 +386,10 @@ ioctlfunc_t	iocfunc;
 			}
 			if (fp->fr_flags & FR_NOICMPERR) {
 				printf("%sno-icmp-err", comma);
+				comma = ",";
+			}
+			if (fp->fr_flags & FR_STATESYNC) {
+				printf("%ssync", comma);
 				comma = ",";
 			}
 			if (fp->fr_age[0] || fp->fr_age[1])
@@ -412,8 +418,20 @@ ioctlfunc_t	iocfunc;
 		printf(" head %s", fp->fr_grhead);
 	if (*fp->fr_group != '\0')
 		printf(" group %s", fp->fr_group);
-	if (fp->fr_logtag != FR_NOLOGTAG)
-		printf(" log-tag %u", fp->fr_logtag);
+	if (fp->fr_logtag != FR_NOLOGTAG || *fp->fr_nattag.ipt_tag) {
+		char *s = "";
+
+		printf(" set-tag(");
+		if (fp->fr_logtag != FR_NOLOGTAG) {
+			printf("log=%u", fp->fr_logtag);
+			s = ", ";
+		}
+		if (*fp->fr_nattag.ipt_tag) {
+			printf("%snat=%-.*s", s, IPFTAG_LEN,
+				fp->fr_nattag.ipt_tag);
+		}
+		printf(")");
+	}
 	if (fp->fr_pps)
 		printf(" pps %d", fp->fr_pps);
 	(void)putchar('\n');

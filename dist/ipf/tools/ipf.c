@@ -1,4 +1,4 @@
-/*	$NetBSD: ipf.c,v 1.1.1.2 2004/07/23 05:34:47 martti Exp $	*/
+/*	$NetBSD: ipf.c,v 1.1.1.3 2005/02/08 06:53:23 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -21,7 +21,7 @@
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)ipf.c	1.23 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ipf.c,v 1.35.2.2 2004/04/16 23:58:25 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ipf.c,v 1.35.2.3 2004/12/15 18:27:17 darrenr Exp";
 #endif
 
 #if !defined(__SVR4) && defined(__GNUC__)
@@ -33,7 +33,7 @@ extern	int	optind;
 extern	frentry_t *frtop;
 
 
-void	frsync __P((void));
+void	ipf_frsync __P((void));
 void	zerostats __P((void));
 int	main __P((int, char *[]));
 
@@ -144,7 +144,7 @@ char *argv[];
 				exit(1);
 			break;
 		case 'y' :
-			frsync();
+			ipf_frsync();
 			break;
 		case 'z' :
 			opts ^= OPT_ZERORULEST;
@@ -440,7 +440,7 @@ static void swapactive()
 }
 
 
-void frsync()
+void ipf_frsync()
 {
 	int frsyn = 0;
 

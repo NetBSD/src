@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_state.h,v 1.1.1.1 2004/12/31 11:30:48 martti Exp $	*/
+/*	$NetBSD: ip_state.h,v 1.1.1.2 2005/02/08 06:53:30 martti Exp $	*/
 
 /*
  * Copyright (C) 1995-2001 by Darren Reed.
@@ -6,7 +6,7 @@
  * See the IPFILTER.LICENCE file for details on licencing.
  *
  * @(#)ip_state.h	1.3 1/12/96 (C) 1995 Darren Reed
- * Id: ip_state.h,v 2.68.2.1 2004/06/30 11:26:12 darrenr Exp
+ * Id: ip_state.h,v 2.68.2.2 2004/10/31 18:44:39 darrenr Exp
  */
 #ifndef	__IP_STATE_H__
 #define	__IP_STATE_H__
@@ -119,6 +119,7 @@ typedef struct ipstate {
 #define	IS_STRICT			   0x20000
 #define	IS_ISNSYN			   0x40000
 #define	IS_ISNACK			   0x80000
+#define	IS_STATESYNC			   0x100000
 /*
  * IS_SC flags are for scan-operations that need to be recognised in state.
  */

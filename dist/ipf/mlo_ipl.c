@@ -1,4 +1,4 @@
-/*	$NetBSD: mlo_ipl.c,v 1.1.1.1 2004/03/28 08:55:48 martti Exp $	*/
+/*	$NetBSD: mlo_ipl.c,v 1.1.1.2 2005/02/08 06:53:03 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -62,7 +62,7 @@ struct	cdevsw	ipldevsw =
 	iplopen,		/* open */
 	iplclose,		/* close */
 	iplread,		/* read */
-	(void *)nullop,		/* write */
+	iplwrite,		/* write */
 	iplioctl,		/* ioctl */
 	(void *)nullop,		/* stop */
 	(void *)NULL,		/* tty */

@@ -1,4 +1,4 @@
-/*	$NetBSD: gethost.c,v 1.1.1.1 2004/03/28 08:56:18 martti Exp $	*/
+/*	$NetBSD: gethost.c,v 1.1.1.2 2005/02/08 06:53:15 martti Exp $	*/
 
 #include "ipf.h"
 
@@ -14,6 +14,9 @@ u_32_t *hostp;
 		*hostp = htonl(0xfedcba98);
 		return 0;
 	}
+
+	if (!strcmp(name, "<thishost>"))
+		name = thishost;
 
 	h = gethostbyname(name);
 	if (h != NULL) {
