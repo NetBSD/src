@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.30 2000/07/09 06:44:57 itojun Exp $	*/
+/*	$NetBSD: time.h,v 1.31 2001/04/30 01:13:21 lukem Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -90,7 +90,7 @@ struct timezone {
 			(vvp)->tv_sec++;				\
 			(vvp)->tv_usec -= 1000000;			\
 		}							\
-	} while (0)
+	} while (/* CONSTCOND */ 0)
 #define	timersub(tvp, uvp, vvp)						\
 	do {								\
 		(vvp)->tv_sec = (tvp)->tv_sec - (uvp)->tv_sec;		\
@@ -99,7 +99,7 @@ struct timezone {
 			(vvp)->tv_sec--;				\
 			(vvp)->tv_usec += 1000000;			\
 		}							\
-	} while (0)
+	} while (/* CONSTCOND */ 0)
 
 /* Operations on timespecs. */
 #define	timespecclear(tsp)		(tsp)->tv_sec = (tsp)->tv_nsec = 0
@@ -116,7 +116,7 @@ struct timezone {
 			(vsp)->tv_sec++;				\
 			(vsp)->tv_nsec -= 1000000000L;			\
 		}							\
-	} while (0)
+	} while (/* CONSTCOND */ 0)
 #define	timespecsub(tsp, usp, vsp)					\
 	do {								\
 		(vsp)->tv_sec = (tsp)->tv_sec - (usp)->tv_sec;		\
@@ -125,7 +125,7 @@ struct timezone {
 			(vsp)->tv_sec--;				\
 			(vsp)->tv_nsec += 1000000000L;			\
 		}							\
-	} while (0)
+	} while (/* CONSTCOND */ 0)
 
 /*
  * Names of the interval timers, and structure

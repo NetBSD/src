@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.h,v 1.59 2001/02/26 16:35:41 lukem Exp $	*/
+/*	$NetBSD: malloc.h,v 1.60 2001/04/30 01:13:21 lukem Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -397,7 +397,7 @@ do {									\
 		kbp->kb_next = *(caddr_t *)(space);			\
 	}								\
 	splx(s);							\
-} while (0)
+} while (/* CONSTCOND */ 0)
 
 #define	FREE(addr, type)						\
 do {									\
