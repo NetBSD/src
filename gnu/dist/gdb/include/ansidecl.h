@@ -146,7 +146,9 @@ So instead we use the macro below and test it against specific values.  */
 #define PTRCONST	void *const
 #define LONG_DOUBLE	long double
 
+#ifndef PARAMS
 #define PARAMS(ARGS)		ARGS
+#endif
 #define VPARAMS(ARGS)		ARGS
 #define VA_START(VA_LIST, VAR)	va_start(VA_LIST, VAR)
 
