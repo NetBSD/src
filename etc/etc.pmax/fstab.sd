@@ -1,0 +1,5 @@
+#	$NetBSD: fstab.sd,v 1.1 2001/08/26 11:55:39 simonb Exp $
+#
+/dev/sd0a	/		ffs	rw 1 1
+#/dev/sd0d	/var		ffs	rw 1 2
+#/dev/sd0h	/usr		ffs	rw 1 3
