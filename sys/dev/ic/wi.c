@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.15 2001/06/02 15:49:16 toshii Exp $	*/
+/*	$NetBSD: wi.c,v 1.16 2001/06/04 03:34:47 toshii Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -647,7 +647,8 @@ static int wi_read_record(sc, ltv)
 
 	/* Now read the data. */
 	ptr = &ltv->wi_val;
-	CSR_READ_MULTI_STREAM_2(sc, WI_DATA1, ptr, ltv->wi_len - 1);
+	if (ltv->wi_len > 1)
+		CSR_READ_MULTI_STREAM_2(sc, WI_DATA1, ptr, ltv->wi_len - 1);
 
 	if (sc->sc_prism2) {
 		int v;
@@ -774,7 +775,8 @@ static int wi_write_record(sc, ltv)
 
 	/* Write data */
 	ptr = &ltv->wi_val;
-	CSR_WRITE_MULTI_STREAM_2(sc, WI_DATA1, ptr, ltv->wi_len - 1);
+	if (ltv->wi_len > 1)
+		CSR_WRITE_MULTI_STREAM_2(sc, WI_DATA1, ptr, ltv->wi_len - 1);
 
 	if (wi_cmd(sc, WI_CMD_ACCESS|WI_ACCESS_WRITE, ltv->wi_type))
 		return(EIO);
