@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -34,7 +34,7 @@
 #include "kadmin_locl.h"
 #include <sl.h>
 
-RCSID("$Id: kadmin.c,v 1.1.1.1 2000/06/16 18:32:07 thorpej Exp $");
+RCSID("$Id: kadmin.c,v 1.1.1.1.2.1 2001/04/05 23:24:01 he Exp $");
 
 static char *config_file;
 static char *keyfile;
@@ -141,6 +141,7 @@ static SL_cmd commands[] = {
 	"privileges",	get_privs,	"privileges",
 	"Shows which kinds of operations you are allowed to perform."
     },
+    { "privs" },
     { 
 	"list",		list_princs,	"list expression...", 
 	"Lists principals in a terse format. The same as `get -t'." 
@@ -148,6 +149,7 @@ static SL_cmd commands[] = {
     { "help",		help, "help"},
     { "?"},
     { "exit",		exit_kadmin, "exit"},
+    { "quit" },
     { NULL}
 };
 
@@ -183,6 +185,24 @@ get_privs(int argc, char **argv)
     char str[128];
     kadm5_ret_t ret;
     
+    int help_flag = 0;
+    struct getargs args[] = {
+	{ "help",	'h',	arg_flag,	NULL }
+    };
+    int num_args = sizeof(args) / sizeof(args[0]);
+    int optind = 0;
+
+    args[0].value = &help_flag;
+
+    if(getarg(args, num_args, argc, argv, &optind)) {
+	arg_printusage (args, num_args, "privileges", NULL);
+	return 0;
+    }
+    if(help_flag) {
+	arg_printusage (args, num_args, "privileges", NULL);
+	return 0;
+    }
+
     ret = kadm5_get_privs(kadm_handle, &privs);
     if(ret)
 	krb5_warn(context, ret, "kadm5_get_privs");
@@ -204,7 +224,9 @@ main(int argc, char **argv)
 
     set_progname(argv[0]);
 
-    krb5_init_context(&context);
+    ret = krb5_init_context(&context);
+    if (ret)
+	errx (1, "krb5_init_context failed: %d", ret);
 
     while((e = getarg(args, num_args, argc, argv, &optind)))
 	errx(1, "error at argument `%s'", argv[optind]);
@@ -268,6 +290,12 @@ main(int argc, char **argv)
     
     if(ret)
 	krb5_err(context, 1, ret, "kadm5_init_with_password");
+
+    signal(SIGINT, SIG_IGN); /* ignore signals for now, the sl command
+                                parser will handle SIGINT its own way;
+                                we should really take care of this in
+                                each function, f.i `get' might be
+                                interruptable, but not `create' */
     if (argc != 0) {
 	ret = sl_command (actual_cmds, argc, argv);
 	if(ret == -1)

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 1998, 1999 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,8 +33,9 @@
 
 #include "krb5_locl.h"
 #include <getarg.h>
+#include <err.h>
 
-RCSID("$Id: prog_setup.c,v 1.1.1.1 2000/06/16 18:33:01 thorpej Exp $");
+RCSID("$Id: prog_setup.c,v 1.1.1.1.2.1 2001/04/05 23:24:03 he Exp $");
 
 void
 krb5_std_usage(int code, struct getargs *args, int num_args)
@@ -48,13 +49,16 @@ krb5_program_setup(krb5_context *context, int argc, char **argv,
 		   struct getargs *args, int num_args, 
 		   void (*usage)(int, struct getargs*, int))
 {
+    krb5_error_code ret;
     int optind = 0;
 
     if(usage == NULL)
 	usage = krb5_std_usage;
 
     set_progname(argv[0]);
-    krb5_init_context(context);
+    ret = krb5_init_context(context);
+    if (ret)
+	errx (1, "krb5_init_context failed: %d", ret);
     
     if(getarg(args, num_args, argc, argv, &optind))
 	(*usage)(1, args, num_args);
