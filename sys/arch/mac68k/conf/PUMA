@@ -1,4 +1,4 @@
-#	$NetBSD: PUMA,v 1.17 1996/11/19 00:38:06 scottr Exp $
+#	$NetBSD: PUMA,v 1.18 1997/01/31 06:02:21 thorpej Exp $
 #
 # PUMA
 
@@ -6,19 +6,22 @@ include "arch/mac68k/conf/std.mac68k"
 
 maxusers	16
 
-# Filesystem options
-options		FIFO		# POSIX fifo support (in all filesystems)
 options		DDB
-options		FFS
-options		MFS		# memory-based filesystem
+
+# Filesystem
+file-system	FFS
+file-system	MFS		# memory-based filesystem
+file-system	NFSCLIENT	# Sun NFS-compatible filesystem
+file-system	NULLFS		# Null (formerly loop-back) filesystem
+file-system	UNION		# Union filesystem
+file-system	CD9660		# ISO-9660 w/ RockRidge
+file-system	KERNFS		# kernel data-structure filesystem
+file-system	FDESC		# user file descriptor filesystem
+file-system	PROCFS		# Process filesystem
+
+# File system options
+options		FIFO		# POSIX fifo support (in all filesystems)
 options		NFSSERVER	# Sun NFS-compatible filesystem
-options		NFSCLIENT	# Sun NFS-compatible filesystem
-options		NULLFS		# Null (formerly loop-back) filesystem
-options		UNION		# Union filesystem
-options		CD9660		# ISO-9660 w/ RockRidge
-options		KERNFS		# kernel data-structure filesystem
-options		FDESC		# user file descriptor filesystem
-options		PROCFS		# Process filesystem
 
 options		LKM		# Loadable Kernel Modules
 
