@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.13 2002/02/20 00:10:17 thorpej Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.14 2002/02/20 02:32:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -250,55 +250,6 @@ map_chunk(pd, pt, va, pa, size, acc, flg)
 #endif
 	return(size);
 }
-
-/* cats versions have larger 2 l2pt's next to each other */
-void
-map_entry(pagetable, va, pa)
-	vaddr_t pagetable;
-	vaddr_t va;
-	paddr_t pa;
-{
-#ifndef cats
-	((pt_entry_t *)pagetable)[((va >> PGSHIFT) & 0x000003ff)] =
-	    L2_PTE((pa & PG_FRAME), AP_KRW);
-#else
-	((pt_entry_t *)pagetable)[((va >> PGSHIFT) & 0x000007ff)] =
-	    L2_PTE((pa & PG_FRAME), AP_KRW);
-#endif	
-}
-
-
-void
-map_entry_nc(pagetable, va, pa)
-	vaddr_t pagetable;
-	vaddr_t va;
-	paddr_t pa;
-{
-#ifndef cats
-	((pt_entry_t *)pagetable)[((va >> PGSHIFT) & 0x000003ff)] =
-	    L2_PTE_NC_NB((pa & PG_FRAME), AP_KRW);
-#else
-	((pt_entry_t *)pagetable)[((va >> PGSHIFT) & 0x000007ff)] =
-	    L2_PTE_NC_NB((pa & PG_FRAME), AP_KRW);
-#endif
-}
-
-
-void
-map_entry_ro(pagetable, va, pa)
-	vaddr_t pagetable;
-	vaddr_t va;
-	paddr_t pa;
-{
-#ifndef cats
-	((pt_entry_t *)pagetable)[((va >> PGSHIFT) & 0x000003ff)] =
-	    L2_PTE((pa & PG_FRAME), AP_KR);
-#else
-	((pt_entry_t *)pagetable)[((va >> PGSHIFT) & 0x000007ff)] =
-	    L2_PTE((pa & PG_FRAME), AP_KR);
-#endif
-}
-
 
 /*
  * void cpu_startup(void)
