@@ -1,14 +1,16 @@
 #	@(#)Makefile	6.2 (Berkeley) 6/30/90
 
 DIR=	usd/16.ex
+DOC=	16.ex
+
 SRCS=	ex.rm
-MACROS=	-msU
+MACROS=	-ms
 CLEANFILES=summary.*
 
-paper.${PRINTER}: ${SRCS} summary.${PRINTER}
+.include <bsd.doc.mk>
+
+${DOC}.${PRINTER}: ${SRCS} ${DOC}.summary.${PRINTER}
 	${ROFF} ${SRCS} > ${.TARGET}
 
-summary.${PRINTER}: ex.summary
+${DOC}.summary.${PRINTER}: ex.summary
 	${TBL} ex.summary | ${ROFF} > ${.TARGET}
-
-.include <bsd.doc.mk>
