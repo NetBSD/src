@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.52 2000/08/09 16:39:56 tv Exp $ */
+/*	$NetBSD: apm.c,v 1.53 2000/08/13 22:26:27 augustss Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -221,6 +221,8 @@ int	apm_standbys, apm_userstandbys, apm_suspends, apm_battlow;
 int	apm_damn_fool_bios, apm_op_inprog;
 int	apm_evindex;
 
+static int apm_spl;		/* saved spl while suspended */
+
 #ifdef APMDEBUG
 int	apmcall_debug(int, struct bioscallregs *, int);
 
@@ -397,6 +399,8 @@ apm_suspend(sc)
 	}
 	sc->sc_power_state = PWR_SUSPEND;
 
+	apm_spl = splhigh();
+
 	dopowerhooks(PWR_SUSPEND);
 
 	/* XXX cgd */
@@ -416,6 +420,8 @@ apm_standby(sc)
 		return;
 	}
 	sc->sc_power_state = PWR_STANDBY;
+
+	apm_spl = splhigh();
 
 	dopowerhooks(PWR_STANDBY);
 
@@ -445,6 +451,9 @@ apm_resume(sc, regs)
 
 	inittodr(time.tv_sec);
 	dopowerhooks(PWR_RESUME);
+
+	splx(apm_spl);
+
 	apm_record_event(sc, regs->BX);
 }
 
