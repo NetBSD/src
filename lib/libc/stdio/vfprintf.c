@@ -1,4 +1,4 @@
-/*	$NetBSD: vfprintf.c,v 1.32 1999/09/20 04:39:33 lukem Exp $	*/
+/*	$NetBSD: vfprintf.c,v 1.32.8.1 2001/12/09 19:25:52 he Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -41,7 +41,7 @@
 #if 0
 static char *sccsid = "@(#)vfprintf.c	5.50 (Berkeley) 12/16/92";
 #else
-__RCSID("$NetBSD: vfprintf.c,v 1.32 1999/09/20 04:39:33 lukem Exp $");
+__RCSID("$NetBSD: vfprintf.c,v 1.32.8.1 2001/12/09 19:25:52 he Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -778,12 +778,12 @@ cvt(value, ndigits, flags, sign, decpt, ch, length)
 		mode = 2;		/* ndigits significant digits */
 	}
 
-	if (value < 0) {
+	digits = __dtoa(value, mode, ndigits, decpt, &dsgn, &rve);
+	if (dsgn) {
 		value = -value;
 		*sign = '-';
 	} else
 		*sign = '\000';
-	digits = __dtoa(value, mode, ndigits, decpt, &dsgn, &rve);
 	if ((ch != 'g' && ch != 'G') || flags & ALT) {	/* Print trailing zeros */
 		bp = digits + ndigits;
 		if (ch == 'f') {
