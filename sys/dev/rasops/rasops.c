@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.7 1999/05/15 12:54:53 ad Exp $ */
+/*	 $NetBSD: rasops.c,v 1.8 1999/05/15 12:56:46 ad Exp $ */
 
 /*
  * Copyright (c) 1999 Andy Doran <ad@NetBSD.org>
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.7 1999/05/15 12:54:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.8 1999/05/15 12:56:46 ad Exp $");
 
 #include "rasops_glue.h"
 
@@ -116,11 +116,15 @@ rasops_init(ri, wantrows, wantcols, clear, center)
 		}
 		
 		if (wsfont_lock(cookie, &ri->ri_font, 
-		    WSFONT_L2R, WSFONT_L2R) < 0) {
+		    WSFONT_L2R, WSFONT_L2R) <= 0) {
 			printf("rasops_init: couldn't lock font\n");
 			return (-1);
 		}
-		
+
+#ifdef DIAGNOSTIC	
+		if (ri->ri_font == NULL)
+			panic("rasops_init: locked font, but got no pointer\n");
+#endif		
 		ri->ri_wsfcookie = cookie;
 	}
 #endif
@@ -307,6 +311,11 @@ rasops_mapchar(cookie, c, cp)
 	struct rasops_info *ri;
 	
 	ri = (struct rasops_info *)cookie;
+
+#ifdef DIAGNOSTIC	
+	if (ri->ri_font == NULL)
+		panic("rasops_mapchar: no font selected\n");
+#endif		
 	
 	if (c < ri->ri_font->firstchar) {
 		*cp = ' ';
