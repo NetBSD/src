@@ -1,4 +1,4 @@
-/*	$NetBSD: symbol.c,v 1.28 2003/05/30 15:43:34 christos Exp $	 */
+/*	$NetBSD: symbol.c,v 1.29 2003/07/15 07:38:29 skrll Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -261,76 +261,76 @@ const Elf_Sym *
 _rtld_symlook_default(const char *name, unsigned long hash,
     const Obj_Entry *refobj, const Obj_Entry **defobj_out, bool in_plt)
 {
-    const Elf_Sym *def;
-    const Elf_Sym *symp;
-    const Obj_Entry *obj;
-    const Obj_Entry *defobj;
-    const Objlist_Entry *elm;
-    def = NULL;
-    defobj = NULL;
+	const Elf_Sym *def;
+	const Elf_Sym *symp;
+	const Obj_Entry *obj;
+	const Obj_Entry *defobj;
+	const Objlist_Entry *elm;
+	def = NULL;
+	defobj = NULL;
 
-    /* Look first in the referencing object if linked symbolically. */
-    if (refobj->symbolic) {
-	symp = _rtld_symlook_obj(name, hash, refobj, in_plt);
-	if (symp != NULL) {
-	    def = symp;
-	    defobj = refobj;
+	/* Look first in the referencing object if linked symbolically. */
+	if (refobj->symbolic) {
+		symp = _rtld_symlook_obj(name, hash, refobj, in_plt);
+		if (symp != NULL) {
+			def = symp;
+			defobj = refobj;
+		}
 	}
-    }
 
-    /* Search all objects loaded at program start up. */
-    if (def == NULL || ELF_ST_BIND(def->st_info) == STB_WEAK) {
-	symp = _rtld_symlook_list(name, hash, &_rtld_list_main, &obj, in_plt);
-	if (symp != NULL &&
-	  (def == NULL || ELF_ST_BIND(symp->st_info) != STB_WEAK)) {
-	    def = symp;
-	    defobj = obj;
+	/* Search all objects loaded at program start up. */
+	if (def == NULL || ELF_ST_BIND(def->st_info) == STB_WEAK) {
+		symp = _rtld_symlook_list(name, hash, &_rtld_list_main, &obj, in_plt);
+		if (symp != NULL &&
+		  (def == NULL || ELF_ST_BIND(symp->st_info) != STB_WEAK)) {
+			def = symp;
+			defobj = obj;
+		}
 	}
-    }
 
-    /* Search all dlopened DAGs containing the referencing object. */
-    SIMPLEQ_FOREACH(elm, &refobj->dldags, link) {
-	if (def != NULL && ELF_ST_BIND(def->st_info) != STB_WEAK)
-	    break;
-	symp = _rtld_symlook_list(name, hash, &elm->obj->dagmembers, &obj,
-	    in_plt);
-	if (symp != NULL &&
-	  (def == NULL || ELF_ST_BIND(symp->st_info) != STB_WEAK)) {
-	    def = symp;
-	    defobj = obj;
+	/* Search all dlopened DAGs containing the referencing object. */
+	SIMPLEQ_FOREACH(elm, &refobj->dldags, link) {
+		if (def != NULL && ELF_ST_BIND(def->st_info) != STB_WEAK)
+			break;
+		symp = _rtld_symlook_list(name, hash, &elm->obj->dagmembers, &obj,
+		    in_plt);
+		if (symp != NULL &&
+		    (def == NULL || ELF_ST_BIND(symp->st_info) != STB_WEAK)) {
+			def = symp;
+			defobj = obj;
+		}
 	}
-    }
 
-    /* Search all DAGs whose roots are RTLD_GLOBAL objects. */
-    SIMPLEQ_FOREACH(elm, &_rtld_list_global, link) {
-       if (def != NULL && ELF_ST_BIND(def->st_info) != STB_WEAK)
-           break;
-       symp = _rtld_symlook_list(name, hash, &elm->obj->dagmembers, &obj,
-	   in_plt);
-	if (symp != NULL &&
-	  (def == NULL || ELF_ST_BIND(symp->st_info) != STB_WEAK)) {
-	    def = symp;
-	    defobj = obj;
+	/* Search all DAGs whose roots are RTLD_GLOBAL objects. */
+	SIMPLEQ_FOREACH(elm, &_rtld_list_global, link) {
+		if (def != NULL && ELF_ST_BIND(def->st_info) != STB_WEAK)
+			break;
+		symp = _rtld_symlook_list(name, hash, &elm->obj->dagmembers, &obj,
+		    in_plt);
+		if (symp != NULL &&
+		    (def == NULL || ELF_ST_BIND(symp->st_info) != STB_WEAK)) {
+			def = symp;
+			defobj = obj;
+		}
 	}
-    }
 
 #ifdef notyet
-    /*
-     * Search the dynamic linker itself, and possibly resolve the
-     * symbol from there.  This is how the application links to
-     * dynamic linker services such as dlopen.  Only the values listed
-     * in the "exports" array can be resolved from the dynamic linker.
-     */
-    if (def == NULL || ELF_ST_BIND(def->st_info) == STB_WEAK) {
-	symp = _rtld_symlook_obj(name, hash, &_rtld_obj_rtld, in_plt);
-	if (symp != NULL && is_exported(symp)) {
-	    def = symp;
-	    defobj = &_rltd_obj_rtld;
+	/*
+	 * Search the dynamic linker itself, and possibly resolve the
+	 * symbol from there.  This is how the application links to
+	 * dynamic linker services such as dlopen.  Only the values listed
+	 * in the "exports" array can be resolved from the dynamic linker.
+	 */
+	if (def == NULL || ELF_ST_BIND(def->st_info) == STB_WEAK) {
+		symp = _rtld_symlook_obj(name, hash, &_rtld_obj_rtld, in_plt);
+		if (symp != NULL && is_exported(symp)) {
+			def = symp;
+			defobj = &_rltd_obj_rtld;
+		}
 	}
-    }
 #endif
 
-    if (def != NULL)
-	*defobj_out = defobj;
-    return def;
+	if (def != NULL)
+		*defobj_out = defobj;
+	return def;
 }
