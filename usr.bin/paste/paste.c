@@ -1,6 +1,8 @@
+/*	$NetBSD: paste.c,v 1.3 1997/01/09 14:43:21 tls Exp $	*/
+
 /*
- * Copyright (c) 1989 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Adam S. Moskowitz of Menlo Consulting.
@@ -35,14 +37,14 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1989 The Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1989, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)paste.c	5.7 (Berkeley) 10/30/90";*/
-static char rcsid[] = "$Id: paste.c,v 1.2 1993/08/01 18:10:14 mycroft Exp $";
+/*static char sccsid[] = "from: @(#)paste.c	8.1 (Berkeley) 6/6/93";*/
+static char rcsid[] = "$NetBSD: paste.c,v 1.3 1997/01/09 14:43:21 tls Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>

@@ -1,6 +1,8 @@
+/*	$NetBSD: renice.c,v 1.4 1997/01/09 14:39:12 tls Exp $	*/
+
 /*
- * Copyright (c) 1983 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1983, 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,19 +34,20 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1989 The Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1983, 1989, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)renice.c	5.3 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: renice.c,v 1.3 1993/12/02 19:52:15 pk Exp $";
+/*static char sccsid[] = "from: @(#)renice.c	8.1 (Berkeley) 6/9/93";*/
+static char rcsid[] = "$NetBSD: renice.c,v 1.4 1997/01/09 14:39:12 tls Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/resource.h>
+
 #include <stdio.h>
 #include <pwd.h>
 
