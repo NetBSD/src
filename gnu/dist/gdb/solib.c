@@ -695,7 +695,7 @@ elf_locate_base ()
   if (target_read_memory (dyninfo_addr, buf, dyninfo_sect_size))
     return 0;
 
-  /* Find the DT_DEBUG entry in the the .dynamic section.
+  /* Find the DT_DEBUG entry in the .dynamic section.
      For mips elf we look for DT_MIPS_RLD_MAP, mips elf apparently has
      no DT_DEBUG entries.  */
 #ifndef TARGET_ELF64
