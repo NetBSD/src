@@ -1,4 +1,4 @@
-/*	$NetBSD: sh_console.cpp,v 1.2 2001/03/13 16:31:31 uch Exp $	*/
+/*	$NetBSD: sh_console.cpp,v 1.3 2001/03/15 17:24:47 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,17 +39,21 @@
 #include <hpcmenu.h>
 #include <sh3/sh_console.h>
 
+#define BI_CNUSE_SCI		2
+#define BI_CNUSE_SCIF		3
+#define BI_CNUSE_HD64461COM	4
+
 SHConsole *SHConsole::_instance = 0;
 
 struct SHConsole::console_info
 SHConsole::_console_info[] = {
-	{ PLATID_CPU_SH_3_7709   , PLATID_MACH_HP_LX_620                   , SCIFPrint },
-	{ PLATID_CPU_SH_3_7709   , PLATID_MACH_HP_LX_620JP                 , SCIFPrint },
-	{ PLATID_CPU_SH_3_7709A  , PLATID_MACH_HP_JORNADA_680              , SCIFPrint },
-	{ PLATID_CPU_SH_3_7709A  , PLATID_MACH_HP_JORNADA_680JP            , SCIFPrint },
-	{ PLATID_CPU_SH_3_7709A  , PLATID_MACH_HP_JORNADA_690              , SCIFPrint },
-	{ PLATID_CPU_SH_3_7709A  , PLATID_MACH_HP_JORNADA_690JP            , SCIFPrint },
-	{ PLATID_CPU_SH_3_7709   , PLATID_MACH_HITACHI_PERSONA_HPW230JC    , 0 }, // HD64461 Serial module
+	{ PLATID_CPU_SH_3_7709   , PLATID_MACH_HP_LX_620                   , SCIFPrint, BI_CNUSE_SCIF },
+	{ PLATID_CPU_SH_3_7709   , PLATID_MACH_HP_LX_620JP                 , SCIFPrint, BI_CNUSE_SCIF },
+	{ PLATID_CPU_SH_3_7709A  , PLATID_MACH_HP_JORNADA_680              , SCIFPrint, BI_CNUSE_SCIF },
+	{ PLATID_CPU_SH_3_7709A  , PLATID_MACH_HP_JORNADA_680JP            , SCIFPrint, BI_CNUSE_SCIF },
+	{ PLATID_CPU_SH_3_7709A  , PLATID_MACH_HP_JORNADA_690              , SCIFPrint, BI_CNUSE_SCIF },
+	{ PLATID_CPU_SH_3_7709A  , PLATID_MACH_HP_JORNADA_690JP            , SCIFPrint, BI_CNUSE_SCIF },
+	{ PLATID_CPU_SH_3_7709   , PLATID_MACH_HITACHI_PERSONA_HPW230JC    , 0        , BI_CNUSE_HD64461COM },
 	{ 0, 0, 0 } // terminator.
 };
 
@@ -86,6 +90,7 @@ SHConsole::init()
 	for (; tab->cpu; tab++) {
 		if (tab->cpu == cpu && tab->machine == machine) {
 			_print = tab->print;
+			_boot_console = tab->boot_console;
 			break;
 		}
 	}

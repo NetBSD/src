@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: sh_arch.h,v 1.2 2001/02/21 16:01:54 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: sh_arch.h,v 1.3 2001/03/15 17:24:47 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -98,6 +98,8 @@ protected:
 public:
 	BOOL init(void);
 	BOOL setupLoader(void);
+	paddr_t setupBootInfo(Loader &);
+
 	void systemInfo(void);
 	void jump(kaddr_t info, kaddr_t pvce);
 
