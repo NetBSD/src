@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.115 2002/06/01 23:50:59 lukem Exp $	*/
+/*	$NetBSD: tulip.c,v 1.116 2002/07/08 18:43:54 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.115 2002/06/01 23:50:59 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.116 2002/07/08 18:43:54 mycroft Exp $");
 
 #include "bpfilter.h"
 
@@ -3521,8 +3521,10 @@ tlp_21140_reset(sc)
 	}
 
 	/* If there were no sequences, just lower the pins. */
-	if (tm->tm_reset_length == 0 && tm->tm_gp_length == 0)
+	if (tm->tm_reset_length == 0 && tm->tm_gp_length == 0) {
+		delay(10);
 		TULIP_WRITE(sc, CSR_GPP, 0);
+	}
 }
 
 /*
@@ -5158,15 +5160,14 @@ tlp_2114x_nway_auto(sc)
 
 	tlp_idle(sc, OPMODE_ST|OPMODE_SR);
 
-	sc->sc_opmode &= ~(OPMODE_PS|OPMODE_PCS|OPMODE_SCR|OPMODE_TTM);
-	sc->sc_opmode |= OPMODE_FD|OPMODE_HBD;
+	sc->sc_opmode &= ~(OPMODE_PS|OPMODE_PCS|OPMODE_SCR);
+	sc->sc_opmode |= OPMODE_TTM|OPMODE_FD|OPMODE_HBD;
 	TULIP_WRITE(sc, CSR_OPMODE, sc->sc_opmode);
 
 	TULIP_WRITE(sc, CSR_SIACONN, 0);
 	delay(1000);
-	TULIP_WRITE(sc, CSR_SIACONN, SIACONN_SRL);
-
 	TULIP_WRITE(sc, CSR_SIATXRX, 0x3ffff);
+	TULIP_WRITE(sc, CSR_SIACONN, SIACONN_SRL);
 
 	siastat = TULIP_READ(sc, CSR_SIASTAT);
 	siastat &= ~(SIASTAT_ANS|SIASTAT_LPC|SIASTAT_TRA|SIASTAT_ARA|SIASTAT_LS100|SIASTAT_LS10|SIASTAT_MRA);
