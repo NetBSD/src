@@ -1,4 +1,4 @@
-/*	$NetBSD: xencons.c,v 1.2 2005/03/09 22:39:21 bouyer Exp $	*/
+/*	$NetBSD: xencons.c,v 1.3 2005/03/10 00:31:48 xtraeme Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.2 2005/03/09 22:39:21 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.3 2005/03/10 00:31:48 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -51,7 +51,9 @@ __KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.2 2005/03/09 22:39:21 bouyer Exp $");
 
 #include <dev/cons.h>
 
+#ifdef DDB
 #include <ddb/db_output.h>	/* XXX for db_max_line */
+#endif
 
 static int xencons_isconsole = 0;
 static struct xencons_softc *xencons_console_device;
@@ -146,9 +148,11 @@ xencons_attach(struct device *parent, struct device *self, void *aux)
 		    sc->sc_dev.dv_xname, maj, sc->sc_dev.dv_unit);
 
 		sc->sc_tty->t_dev = cn_tab->cn_dev;
-	
+
+#ifdef DDB
 		/* Set db_max_line to avoid paging. */
 		db_max_line = 0x7fffffff;
+#endif
 
 		if (xen_start_info.flags & SIF_INITDOMAIN) {
 			int irq = bind_virq_to_irq(VIRQ_CONSOLE);
