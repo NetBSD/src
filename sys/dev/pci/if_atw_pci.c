@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atw_pci.c,v 1.5 2004/01/29 10:25:49 dyoung Exp $	*/
+/*	$NetBSD: if_atw_pci.c,v 1.6 2004/02/17 21:20:55 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atw_pci.c,v 1.5 2004/01/29 10:25:49 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atw_pci.c,v 1.6 2004/02/17 21:20:55 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h> 
@@ -71,6 +71,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_atw_pci.c,v 1.5 2004/01/29 10:25:49 dyoung Exp $"
 #include <machine/intr.h>
 
 #include <dev/ic/atwreg.h>
+#include <dev/ic/rf3000reg.h>
+#include <dev/ic/si4136reg.h>
 #include <dev/ic/atwvar.h>
 
 #include <dev/pci/pcivar.h>

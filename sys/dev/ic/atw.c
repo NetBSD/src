@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.23 2004/01/29 10:25:49 dyoung Exp $	*/
+/*	$NetBSD: atw.c,v 1.24 2004/02/17 21:20:55 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.23 2004/01/29 10:25:49 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.24 2004/02/17 21:20:55 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -78,6 +78,8 @@ __KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.23 2004/01/29 10:25:49 dyoung Exp $");
 #include <machine/intr.h>
 
 #include <dev/ic/atwreg.h>
+#include <dev/ic/rf3000reg.h>
+#include <dev/ic/si4136reg.h>
 #include <dev/ic/atwvar.h>
 #include <dev/ic/smc93cx6var.h>
 
@@ -1714,8 +1716,11 @@ atw_rf3000_read(struct atw_softc *sc, u_int addr, u_int *val)
 static int
 atw_si4126_write(struct atw_softc *sc, u_int addr, u_int val)
 {
-	u_int32_t reg;
+	u_int32_t bits, reg;
 	int i;
+
+	KASSERT((addr & ~PRESHIFT(SI4126_TWI_ADDR_MASK)) == 0);
+	KASSERT((val & ~PRESHIFT(SI4126_TWI_DATA_MASK)) == 0);
 
 	for (i = 1000; --i >= 0; ) {
 		if (ATW_ISSET(sc, ATW_SYNCTL, ATW_SYNCTL_RD|ATW_SYNCTL_WR) == 0)
@@ -1729,8 +1734,10 @@ atw_si4126_write(struct atw_softc *sc, u_int addr, u_int val)
 		return ETIMEDOUT;
 	}
 
-	reg = sc->sc_synctl_wr |
-	    LSHIFT(((val & 0x3ffff) << 4) | (addr & 0xf), ATW_SYNCTL_DATA_MASK);
+	bits = LSHIFT(val, SI4126_TWI_DATA_MASK) |
+	       LSHIFT(addr, SI4126_TWI_ADDR_MASK);
+
+	reg = sc->sc_synctl_wr | LSHIFT(bits, ATW_SYNCTL_DATA_MASK);
 
 	ATW_WRITE(sc, ATW_SYNCTL, reg);
 
@@ -1764,6 +1771,8 @@ atw_si4126_read(struct atw_softc *sc, u_int addr, u_int *val)
 	u_int32_t reg;
 	int i;
 
+	KASSERT((addr & ~PRESHIFT(SI4126_TWI_ADDR_MASK)) == 0);
+
 	for (i = 1000; --i >= 0; ) {
 		if (ATW_ISSET(sc, ATW_SYNCTL, ATW_SYNCTL_RD|ATW_SYNCTL_WR) == 0)
 			break;
@@ -1776,7 +1785,7 @@ atw_si4126_read(struct atw_softc *sc, u_int addr, u_int *val)
 		return ETIMEDOUT;
 	}
 
-	reg = sc->sc_synctl_rd | LSHIFT(addr & 0xf, ATW_SYNCTL_DATA_MASK);
+	reg = sc->sc_synctl_rd | LSHIFT(addr, ATW_SYNCTL_DATA_MASK);
 
 	ATW_WRITE(sc, ATW_SYNCTL, reg);
 
