@@ -1,4 +1,4 @@
-/*	$NetBSD: ps.c,v 1.35 2000/04/10 06:37:37 chs Exp $	*/
+/*	$NetBSD: ps.c,v 1.36 2000/04/15 04:40:46 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: ps.c,v 1.35 2000/04/10 06:37:37 chs Exp $");
+__RCSID("$NetBSD: ps.c,v 1.36 2000/04/15 04:40:46 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -218,19 +218,26 @@ main(argc, argv)
 			struct stat sb;
 			char *ttypath, pathbuf[MAXPATHLEN];
 
-			if (strcmp(ttname, "co") == 0)
+			flag = 0;
+			if (strcmp(ttname, "?") == 0)
+				flag = KERN_PROC_TTY_NODEV;
+			else if (strcmp(ttname, "-") == 0)
+				flag = KERN_PROC_TTY_REVOKE;
+			else if (strcmp(ttname, "co") == 0)
 				ttypath = _PATH_CONSOLE;
 			else if (*ttname != '/')
 				(void)snprintf(ttypath = pathbuf,
 				    sizeof(pathbuf), "%s%s", _PATH_TTY, ttname);
 			else
 				ttypath = ttname;
-			if (stat(ttypath, &sb) == -1)
-				err(1, "%s", ttypath);
-			if (!S_ISCHR(sb.st_mode))
-				errx(1, "%s: not a terminal", ttypath);
 			what = KERN_PROC_TTY;
-			flag = sb.st_rdev;
+			if (flag == 0) {
+				if (stat(ttypath, &sb) == -1)
+					err(1, "%s", ttypath);
+				if (!S_ISCHR(sb.st_mode))
+					errx(1, "%s: not a terminal", ttypath);
+				flag = sb.st_rdev;
+			}
 			break;
 		}
 		case 'U':
