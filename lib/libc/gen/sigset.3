@@ -1,4 +1,4 @@
-.\"	$NetBSD: sigset.3,v 1.1 2003/01/15 23:55:43 kleink Exp $
+.\"	$NetBSD: sigset.3,v 1.2 2003/01/16 00:33:12 wiz Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -76,7 +76,7 @@ is changed accordingly, and
 is removed from the process' signal mask.
 Also, if
 .Fa disp
-is the address of handler function,
+is the address of a handler function,
 .Fa sig
 will be added to the process' signal mask during execution of the handler.
 .Pp
@@ -115,7 +115,7 @@ The argument
 is not a valid signal number.
 .It Bq Er EINVAL
 An attempt is made to ignore a signal that cannot be ignored,
-sich as
+such as
 .Dv SIGKILL
 or
 .Dv SIGSTOP .
