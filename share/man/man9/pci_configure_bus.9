@@ -1,4 +1,4 @@
-.\"	$NetBSD: pci_configure_bus.9,v 1.6 2002/02/21 16:26:27 kleink Exp $
+.\"	$NetBSD: pci_configure_bus.9,v 1.7 2002/02/21 20:27:35 kleink Exp $
 .\"
 .\" Copyright 2001 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -101,7 +101,7 @@ non-prefetchable region.  The
 argument indicates the number of the first bus to be configured.  The
 .Fa cacheline_size
 argument is used to configure the PCI Cache Line Size Register; it
-should be the size of the largest D-cache line on the system.
+should be the size, in bytes, of the largest D-cache line on the system.
 .Pp
 An implementation may choose to not have full configuration performed
 by
