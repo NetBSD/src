@@ -1,4 +1,4 @@
-/*	$NetBSD: rz.c,v 1.28.4.1 1997/10/26 21:20:40 mellon Exp $	*/
+/*	$NetBSD: rz.c,v 1.28.4.2 1997/11/09 20:09:28 mellon Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -38,18 +38,17 @@
  *	@(#)rz.c	8.1 (Berkeley) 7/29/93
  */
 
-#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: rz.c,v 1.28.4.1 1997/10/26 21:20:40 mellon Exp $");
-
 /*
  * SCSI CCS (Command Command Set) disk driver.
  * NOTE: The name was changed from "sd" to "rz" for DEC naming compatibility.
  * I guess I can't avoid confusion someplace.
  */
-
 #include "rz.h"
+#include "rnd.h"		/* is random device-driver configured? */
+
 #if NRZ > 0
 
+#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
@@ -65,23 +64,52 @@ __KERNEL_RCSID(0, "$NetBSD: rz.c,v 1.28.4.1 1997/10/26 21:20:40 mellon Exp $");
 #include <sys/syslog.h>
 #include <sys/device.h>
 
+#if NRND > 0
+#include <sys/rnd.h>
+#endif	/* NRND */
+
 #include <ufs/ffs/fs.h>
 
-#include <pmax/dev/device.h>
+#include <pmax/dev/device.h>		/* 4.4bsdpmax driver definitions */
 #include <pmax/dev/scsi.h>
+
+#include <dev/scsipi/scsi_all.h>	/* MI SCSI defs for mode-sense */
+#include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsipiconf.h>
+#include <dev/scsipi/scsi_disk.h>	/* disk-specific sense data */
+#include <dev/scsipi/scsipi_disk.h>	/* disk-specific sense data */
+#include <dev/scsipi/scsipi_debug.h>
+
 
 #include <sys/conf.h>
 #include <machine/conf.h>
 
+#define	SDRETRIES	4
+
 struct rz_softc;
+struct scsi_mode_sense_data;
+struct disk_parms;
+
 int	rzprobe __P((void /*register struct pmax_scsi_device*/ *sd));
 void	rzgetdefaultlabel __P((struct rz_softc *, struct disklabel *lp));
-void	rzgetgeom __P((struct rz_softc *, struct disklabel *lp));
 void	rzstart __P((int unit));
 void	rzdone __P((int unit, int error, int resid, int status));
 void	rzgetinfo __P((dev_t dev));
 int	rzsize __P((dev_t dev));
 
+/* Machinery for format and drive inquiry commands. */
+int	rz_command __P((struct rz_softc *sc, 
+			struct scsipi_generic *scsipi_cmd, int cmdlen,
+			u_char *data_addr, int data_len,
+			int nretries,	int timeout,  
+			struct buf *bp, u_int flags));
+
+static int rz_mode_sense __P((struct rz_softc *sd,
+	struct scsi_mode_sense_data *scsipi_sense,
+	int page, int pagelen, int flags));
+static int rz_getsize __P((struct rz_softc *sc, int flags));
+void	rzgetgeom __P((struct rz_softc *, int flags));
+void	rz_setlabelgeom __P((struct disklabel *lp, struct disk_parms *dp));
 
 
 struct	pmax_driver rzdriver = {
@@ -130,7 +158,7 @@ readdisklabel __P((dev_t dev, void (*strat) __P((struct buf *bp)),
 extern char *
 compat_label __P((dev_t dev, void (*strat) __P((struct buf *bp)),
 		  struct disklabel *lp, struct cpu_disklabel *osdep));
-#endif
+#endif	/* COMPAT_ULTRIX */
 
 struct rzstats {
 	long	rzresets;
@@ -160,7 +188,19 @@ struct	rz_softc {
 	ScsiGroup1Cmd sc_rwcmd;		/* SCSI cmd if not in "format" mode */
 	struct	scsi_fmt_cdb sc_cdb;	/* SCSI cmd if in "format" mode */
 	struct	scsi_fmt_sense sc_sense;	/* sense data from last cmd */
-	u_char	sc_capbuf[8];		/* buffer for SCSI_READ_CAPACITY */
+	struct disk_parms {
+		u_char heads;		/* number of heads */
+		u_short cyls;		/* number of cylinders */
+		u_char sectors;		/* number of sectors/track */
+		int blksize;		/* number of bytes/sector */
+		u_long disksize;	/* total number sectors */
+	} params;
+	u_char	sc_capbuf[128];		/* buffer for SCSI_READ_CAPACITY */
+
+#if NRND > 0
+	rndsource_element_t rnd_source;
+#endif	/* NRND */
+
 } rz_softc[NRZ];
 
 /* sc_flags values */
@@ -173,6 +213,7 @@ struct	rz_softc {
 #define	RZF_REMOVEABLE		0x0040	/* disk is removable */
 #define	RZF_TRYSYNC		0x0080	/* try synchronous operation */
 #define	RZF_NOERR		0x0100	/* don't print error messages */
+#define	RZF_FAKEGEOM		0x02000 /* couldn't get geometry */
 
 #ifdef DEBUG
 #define RZB_ERROR	0x01
@@ -184,6 +225,12 @@ int	rzdebug = RZB_ERROR;
 #define	rzunit(x)	(minor(x) >> 3)
 #define rzpart(x)	(minor(x) & 0x7)
 #define	b_cylin		b_resid
+
+struct scsi_mode_sense_data {
+	struct scsi_mode_header header;
+	struct scsi_blk_desc blk_desc;
+	union scsi_disk_pages pages;
+};
 
 /*
  * Table of scsi commands users are allowed to access via "format" mode.
@@ -225,7 +272,7 @@ static int
 rzready(sc)
 	register struct rz_softc *sc;
 {
-	register int tries, i;
+	register int tries;
 	ScsiClass7Sense *sp;
 
 	/* don't print SCSI errors */
@@ -301,20 +348,39 @@ rzready(sc)
 	/* print SCSI errors */
 	sc->sc_flags &= ~RZF_NOERR;
 
-	/* find out how big a disk this is */
+	/* find out how big a disk this is. Punt on error. */
+	if (rz_getsize(sc, 0) == 0) {
+		return 0;
+	}
+
+	/*XXX perhaps move to end of  rzready()? */
+	rzgetgeom(sc, SCSI_SILENT);
+
+	return (1);
+}
+
+
+int
+rz_getsize(sc, flags)
+	struct rz_softc *sc;
+	int flags;
+{
+	register int i;
+
 	sc->sc_cdb.len = sizeof(ScsiGroup1Cmd);
 	scsiGroup1Cmd(SCSI_READ_CAPACITY, sc->sc_rwcmd.unitNumber, 0, 0,
 		(ScsiGroup1Cmd *)sc->sc_cdb.cdb);
 	sc->sc_buf.b_flags = B_BUSY | B_PHYS | B_READ;
-	sc->sc_buf.b_bcount = sizeof(sc->sc_capbuf);
+	sc->sc_buf.b_bcount = 8; /* XXX 8 was sizeof(sc->sc_capbuf). */
 	sc->sc_buf.b_un.b_addr = (caddr_t)sc->sc_capbuf;
 	sc->sc_buf.b_actf = (struct buf *)0;
 	sc->sc_tab.b_actf = &sc->sc_buf;
 	sc->sc_flags |= RZF_ALTCMD;
 	rzstart(sc->sc_cmd.unit);
 	sc->sc_flags &= ~RZF_ALTCMD;
-	if (biowait(&sc->sc_buf) || sc->sc_buf.b_resid != 0)
+	if (biowait(&sc->sc_buf) || sc->sc_buf.b_resid != 0) {
 		return (0);
+	}
 	sc->sc_blks = ((sc->sc_capbuf[0] << 24) | (sc->sc_capbuf[1] << 16) |
 		(sc->sc_capbuf[2] << 8) | sc->sc_capbuf[3]) + 1;
 	sc->sc_blksize = (sc->sc_capbuf[4] << 24) | (sc->sc_capbuf[5] << 16) |
@@ -325,8 +391,9 @@ rzready(sc)
 		++sc->sc_bshift;
 	sc->sc_blks <<= sc->sc_bshift;
 
-	return (1);
+	return (sc->sc_blks);
 }
+
 
 /*
  * Test to see if device is present.
@@ -339,6 +406,7 @@ rzprobe(xxxsd)
 	register struct pmax_scsi_device *sd = xxxsd;
 	register struct rz_softc *sc = &rz_softc[sd->sd_unit];
 	register int i;
+	register struct disk_parms *dp = &sc->params;
 	ScsiInquiryData inqbuf;
 
 	if (sd->sd_unit >= NRZ)
@@ -402,6 +470,7 @@ rzprobe(xxxsd)
 	printf("rz%d at %s%d drive %d slave %d", sd->sd_unit,
 		sd->sd_cdriver->d_name, sd->sd_ctlr, sd->sd_drive,
 		sd->sd_slave);
+
 	if (inqbuf.version < 1 || i < 36)
 		printf(" type 0x%x, qual 0x%x, ver %d",
 			inqbuf.type, inqbuf.qualifier, inqbuf.version);
@@ -425,7 +494,14 @@ rzprobe(xxxsd)
 		revl[i+1] = 0;
 		printf(" %s %s rev %s", vid, pid, revl);
 	}
-	printf(", %d %d byte blocks\n", sc->sc_blks, sc->sc_blksize);
+
+	if (sc->sc_flags & RZF_FAKEGEOM)
+		printf("; using fake geometry");
+        printf("\nrz%d: %ldMB, %d cyl, %d head, %d sec, %d bytes/sect x %ld sectors\n",
+	    sd->sd_unit,
+	    dp->disksize / (1048576 / dp->blksize), dp->cyls,
+	    dp->heads, dp->sectors, dp->blksize, dp->disksize);
+
 	if (!inqbuf.rmb && sc->sc_blksize != DEV_BSIZE) {
 		if (sc->sc_blksize < DEV_BSIZE) {
 			printf("rz%d: need %d byte blocks - drive ignored\n",
@@ -445,6 +521,13 @@ rzprobe(xxxsd)
 
 	sd->sd_devp = &sc->sc_dev;				/* XXX */
 	TAILQ_INSERT_TAIL(&alldevs, &sc->sc_dev, dv_list);	/* XXX */
+
+#if NRND > 0
+	/*
+	 * attach the device into the random source list
+	 */
+	rnd_attach_source(&sd->rnd_source, sd->sc_dev.dv_xname, RND_TYPE_DISK);
+#endif	/* NRND */
 
 	return (1);
 
@@ -698,6 +781,10 @@ rzdone(unit, error, resid, status)
 
 	disk_unbusy(&sc->sc_dkdev, (bp->b_bcount - resid));
 
+#if NRND > 0
+	rnd_add_uint32(&sd->rnd_source, xs->bp->b_blkno);
+#endif	/* NRND */
+
 	if (sc->sc_flags & RZF_SENSEINPROGRESS) {
 		sc->sc_flags &= ~RZF_SENSEINPROGRESS;
 		sc->sc_tab.b_actf = bp = bp->b_actf;	/* remove sc_errbuf */
@@ -829,7 +916,7 @@ rzgetinfo(dev)
 	/*
 	 * If this is an installation diskimage, the label geometry 
 	 * is from a vnd(4) diskimage, not the real SCSI disk, and so
-	 * the RAW_PART info is wrong.  Fake up an entry for RAW_PART.
+	 the RAW_PART info is wrong.  Fake up an entry for RAW_PART.
 	 */
 	if (msg == NULL &&
 	    strncmp(lp->d_typename, "install diskimag", 16) == 0 &&
@@ -843,7 +930,8 @@ rzgetinfo(dev)
 	    lp->d_partitions[RAW_PART].p_size != sc->sc_blks) {
 		printf("rz%d: WARNING: %s\n", unit,
 		       "install diskimage, recomputing label.");
-		rzgetgeom(sc, lp);
+		/* recompute label and rawpart size from softc params. */
+		rz_setlabelgeom(lp, &sc->params);
 		lp->d_partitions[RAW_PART].p_size = sc->sc_blks;
 		lp->d_partitions[RAW_PART].p_fstype = FS_UNUSED;
 		lp->d_checksum = dkcksum(lp);
@@ -854,7 +942,6 @@ rzgetinfo(dev)
 	printf("rz%d: WARNING: %s\n", unit, msg);
 
 
-
 #ifdef	COMPAT_ULTRIX
 	/*
 	 * No native label, try and substitute  Ultrix label
@@ -863,10 +950,13 @@ rzgetinfo(dev)
 	if (msg == NULL) {
 	  	printf("rz%d: WARNING: using ULTRIX partition information",
 		       unit);
+		/* Ultrix labels have no geom info. Use softc params. */
+		rz_setlabelgeom(lp, &sc->params);
 		return;
 	}
 	printf("rz%d: WARNING: trying Ultrix label, %s\n", unit, msg);
-#endif
+#endif	/* COMPAT_ULTRIX */
+
 	/*
 	 * No label found. Concoct one from compile-time default.
 	 */
@@ -1130,6 +1220,7 @@ rzioctl(dev, cmd, data, flag, p)
 	/*NOTREACHED*/
 }
 
+
 int
 rzsize(dev)
 	dev_t dev;
@@ -1159,19 +1250,228 @@ rzsize(dev)
 	return (size);
 }
 
-void
-rzgetgeom(sc, lp)
+/*
+ * Send a SCSI command to a target drive, using
+ * the 4.4bsd/pmax driver formatting support  RZ_ALTCMD machinery.
+ * Used as a substitute for the  MI scsi scsipi_command().
+ * 
+ * Returns byte count returned by cmd, computed as datalen - resid.
+*/
+int
+rz_command (sc, scsi_cmd, cmdlen, data_addr, datalen, 
+	    nretries, timeout, bp, flags)
 	struct rz_softc *sc;
-	struct disklabel *lp;
+	struct scsipi_generic *scsi_cmd;
+	int cmdlen;
+	u_char *data_addr;
+	int datalen;
+	int nretries;
+	int timeout;
+	struct buf *bp;
+	u_int flags;
+{
+	int retried = 0;
+	register int recvlen;
+
+	/* check command and expected response fit in sc format-cmd fields */
+	if (cmdlen > sizeof(sc->sc_cdb) ||
+	   datalen > sizeof(sc->sc_capbuf)) {
+	  printf("rz: size %d %d too big for %d %d\n",
+	      sizeof(sc->sc_cdb), sizeof(sc->sc_capbuf), 
+	      cmdlen, datalen);
+		return(-1);	/* XXX */
+	}
+	bzero(sc->sc_capbuf, datalen);
+
+again:
+	/* copy request into cdb */
+	bcopy(scsi_cmd, &sc->sc_cdb.cdb, cmdlen);
+
+	/* stolen from the old rz get-drive-size code. */
+
+	sc->sc_buf.b_flags = B_BUSY | B_PHYS | B_READ;
+	sc->sc_buf.b_bcount = /*sizeof(sc->sc_capbuf)*/ datalen;
+	sc->sc_buf.b_un.b_addr = (caddr_t)sc->sc_capbuf;
+	sc->sc_buf.b_actf = (struct buf *)0;
+	sc->sc_tab.b_actf = &sc->sc_buf;
+	sc->sc_flags |= RZF_ALTCMD;
+	rzstart(sc->sc_cmd.unit);
+	sc->sc_flags &= ~RZF_ALTCMD;
+	DELAY(timeout);
+	if (biowait(&sc->sc_buf)) {
+		return (-1);
+	}
+
+	recvlen = datalen - sc->sc_buf.b_resid;
+	/* XXX old test was sc->sc_buf.b_resid != 0 */
+	if (recvlen == 0) {
+
+		DELAY(timeout);
+		if (retried++ < nretries) 
+			goto again;	
+		return (recvlen);
+
+	}
+
+	/* Result is in capbuf */
+	bcopy(&sc->sc_capbuf, data_addr, recvlen);
+	return(recvlen);
+}
+
+
+
+
+/*
+ * mode-sense code,  lifted from dev/scsipi/sd.c.
+ * Returns 0 on no error.
+ */
+static int
+rz_mode_sense(sd, scsipi_sense, page, pagelen, flags)
+	struct rz_softc *sd;
+	struct scsi_mode_sense_data *scsipi_sense;
+	int page, pagelen, flags;
+{
+	struct scsi_mode_sense scsipi_cmd;
+	register int nbytes;
+
+	/*
+	 * Make sure the sense buffer is clean before we do
+	 * the mode sense, so that checks for bogus values of
+	 * 0 will work in case the mode sense fails.
+	 */
+	bzero(scsipi_sense, sizeof(*scsipi_sense));
+
+	bzero(&scsipi_cmd, sizeof(scsipi_cmd));
+	scsipi_cmd.opcode = SCSI_MODE_SENSE;
+	scsipi_cmd.page = page;
+	scsipi_cmd.length = 0x20;	/* XXX verbatim from MI scsi sd.c */
+
+	/*
+	 * If the command worked, use the results to fill out
+	 * the parameter structure
+	 */
+	nbytes = rz_command(sd,
+	    (struct scsipi_generic *)&scsipi_cmd, sizeof(scsipi_cmd),
+	    (u_char *)scsipi_sense, 
+	     sizeof(*scsipi_sense),	/* actual size of data buffer */
+	    SDRETRIES, 6000, NULL, flags | SCSI_DATA_IN | SCSI_SILENT);
+
+	/*
+	 * the MI scsipi_cmd.len always sets cmd.length to 0x20 bytes.
+	 * sizeof(*scsip_sense) is 44, causing a 12-byte residual error
+	 *  with the pmax rz.c driver. 
+	 * So ask for sizeof(*scsipi_sense) but make sure we got at least
+	 *  0x20 bytes back instead.
+	 */
+
+#if defined(RZ_DEBUG)
+	printf("rz_mode_sense: page %d,rz_command, nbytes %d\n", page, nbytes);
+#endif
+	if (nbytes <= 0)
+		return (-1);
+
+	if (nbytes < pagelen)
+		return (pagelen);
+
+	/* We got at least as much as the caller wanted. Return 0 as OK. */
+	return(0);
+}
+
+
+void
+rzgetgeom(sc,  flags)
+	struct rz_softc *sc;
+	int flags;
 {
 
-	/* XXX Fill in from doing mode-page sense of page 4, if supported. */
-	lp->d_secsize = DEV_BSIZE;
-	lp->d_ntracks = 64 ;
-	lp->d_nsectors = 32 ;
-	lp->d_ncylinders = sc->sc_blks / ( lp->d_ntracks * lp->d_nsectors) ;
-	lp->d_secpercyl = lp->d_ntracks * lp->d_nsectors;
-	lp->d_secperunit = sc->sc_blks;
+	struct disk_parms *dp = &sc->params;
+	struct scsi_mode_sense_data scsipi_sense;
+	u_long sectors;
+	int page;
+	int error;
+
+	if ((error = rz_mode_sense(sc, &scsipi_sense, page = 4, 
+		sizeof(scsipi_sense.pages.rigid_geometry), flags)) == 0) {
+		SC_DEBUG(sc_link, SDEV_DB3,
+		    ("%d cyls, %d heads, %d precomp, %d red_write, %d land_zone\n",
+		    _3btol(scsipi_sense.pages.rigid_geometry.ncyl),
+		    scsipi_sense.pages.rigid_geometry.nheads,
+		    _2btol(scsipi_sense.pages.rigid_geometry.st_cyl_wp),
+		    _2btol(scsipi_sense.pages.rigid_geometry.st_cyl_rwc),
+		    _2btol(scsipi_sense.pages.rigid_geometry.land_zone)));
+
+		/*
+		 * KLUDGE!! (for zone recorded disks)
+		 * give a number of sectors so that sec * trks * cyls
+		 * is <= disk_size
+		 * can lead to wasted space! THINK ABOUT THIS !
+		 */
+		dp->heads = scsipi_sense.pages.rigid_geometry.nheads;
+		dp->cyls = _3btol(scsipi_sense.pages.rigid_geometry.ncyl);
+		dp->blksize = _3btol(scsipi_sense.blk_desc.blklen);
+
+		if (dp->heads == 0 || dp->cyls == 0)
+			goto fake_it;
+
+		if (dp->blksize == 0)
+			dp->blksize = 512;
+
+		/* XXX */sectors = rz_getsize(sc, flags);
+		dp->disksize = sectors;
+		sectors /= (dp->heads * dp->cyls);
+		dp->sectors = sectors;	/* XXX dubious on SCSI */
+
+		return ;
+	}
+
+	if ((error = rz_mode_sense(sc, &scsipi_sense, page = 5,
+		sizeof(scsipi_sense.pages.flex_geometry), flags)) == 0) {
+		dp->heads = scsipi_sense.pages.flex_geometry.nheads;
+		dp->cyls = _2btol(scsipi_sense.pages.flex_geometry.ncyl);
+		dp->blksize = _3btol(scsipi_sense.blk_desc.blklen);
+		dp->sectors = scsipi_sense.pages.flex_geometry.ph_sec_tr;
+		dp->disksize = dp->heads * dp->cyls * dp->sectors;
+
+		if (dp->disksize == 0)
+			goto fake_it;
+
+		if (dp->blksize == 0)
+			dp->blksize = 512;
+
+		return;
+	}
+
+fake_it:
+	sc->sc_flags |= RZF_FAKEGEOM;
+
+	/*
+	 * use adaptec standard fictitious geometry
+	 * this depends on which controller (e.g. 1542C is
+	 * different. but we have to put SOMETHING here..)
+	 */
+	sectors = /*scsipi_size(sd->sc_link, flags);*/ sc->sc_blks;
+	dp->heads = 64;
+	dp->sectors = 32;
+	dp->cyls = sectors / (64 * 32);
+	dp->blksize = 512;
+	dp->disksize = sectors;
+	return;
+}
+
+/*
+ * set fake or Ultrix label geometry info from softc params.
+ */
+void
+rz_setlabelgeom(lp, dp)
+	struct disklabel *lp;
+	struct disk_parms *dp;
+{
+	lp->d_secsize = dp->blksize;
+	lp->d_nsectors =  dp->sectors;
+	lp->d_ntracks = dp->heads;
+	lp->d_ncylinders = dp->cyls;
+	lp->d_secpercyl = lp->d_ntracks * lp->d_nsectors;	/* XXX */
+	lp->d_secperunit = dp->disksize;
 }
 
 void
@@ -1193,7 +1493,7 @@ rzgetdefaultlabel(sc, lp)
 	else
 		strncpy(lp->d_typename, "SCSI disk", 16);
 
-	rzgetgeom(sc, lp);
+	rz_setlabelgeom(lp, &sc->params);
 	lp->d_rpm = 3600;
 	lp->d_interleave = 1;
 	lp->d_flags = 0;
@@ -1220,6 +1520,10 @@ rzgetdefaultlabel(sc, lp)
 		} else if ((pp->p_size + pp->p_offset) > sc->sc_blks)
 			pp->p_size = sc->sc_blks - pp->p_offset;
 	}
+
+	/* set geometry info from softc info. */
+	rz_setlabelgeom(lp, &sc->params);
+
 	/*XXX redundancy */
 	lp->d_partitions[RAW_PART].p_size = sc->sc_blks;
 	lp->d_partitions[RAW_PART].p_fstype = FS_UNUSED;
@@ -1311,4 +1615,4 @@ rzdump(dev, blkno, va, size)
 	}
 	return (0);
 }
-#endif
+#endif /* NRZ */
