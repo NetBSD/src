@@ -1,4 +1,4 @@
-/*	$NetBSD: dc.c,v 1.53 1999/12/03 13:07:35 simonb Exp $	*/
+/*	$NetBSD: dc.c,v 1.54 1999/12/23 15:34:17 ad Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.53 1999/12/03 13:07:35 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.54 1999/12/23 15:34:17 ad Exp $");
 
 /*
  * devDC7085.c --
@@ -399,7 +399,7 @@ dc_kbd_init(sc, dev)
 	(void) cold_dcparam(&ctty, &cterm, sc);
 	DELAY(10000);
 
-	KBDReset(ctty.t_dev, dcPutc);
+	lk_reset(ctty.t_dev, dcPutc);
 	DELAY(10000);
 
 	splx(s);
@@ -427,7 +427,7 @@ dc_mouse_init(sc, dev)
 	 * mouse tracking required by Xservers.
 	 */
 	DELAY(10000);
-	MouseInit(ctty.t_dev, dcPutc, dcGetc);
+	lk_mouseinit(ctty.t_dev, dcPutc, dcGetc);
 	DELAY(10000);
 
 	splx(s);
@@ -802,7 +802,7 @@ dcrint(sc)
 					return;
 				}
 #if NRASTERCONSOLE > 0
-				if ((cp = kbdMapChar(cc, &cl)) == NULL)
+				if ((cp = lk_mapchar(cc, &cl)) == NULL)
 					return;
 				while (cl--)
 					rcons_input(0, *cp++);
