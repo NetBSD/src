@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.462 2001/09/16 07:33:31 manu Exp $
+#	$NetBSD: files,v 1.463 2001/09/18 09:09:57 onoe Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -328,8 +328,6 @@ file	dev/ic/an.c			an
 # AMD 79c930-based 802.11 cards
 device	awi: arp, wlan, ifnet
 file	dev/ic/awi.c			awi
-file	dev/ic/awi_wep.c		awi
-file	dev/ic/awi_wicfg.c		awi
 file	dev/ic/am79c930.c		awi
 
 # Lucent & Intersil WaveLan IEEE (802.11)
@@ -984,6 +982,7 @@ file	net/if_gif.c			gif			needs-flag
 file	net/if_gre.c			gre			needs-count	
 file	net/if_hippisubr.c		hippi			needs-flag
 file	net/if_ieee1394subr.c		ieee1394
+file	net/if_ieee80211subr.c		wlan
 file	net/if_loop.c			loop			needs-count
 file	net/if_media.c
 file	net/if_ppp.c			ppp			needs-count
