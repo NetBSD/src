@@ -3042,7 +3042,7 @@ macro_build_jalr (icnt, ep)
      int icnt;
      expressionS *ep;
 {
-  char *f;
+  char *f = NULL;
   
   if (HAVE_NEWABI)
     {

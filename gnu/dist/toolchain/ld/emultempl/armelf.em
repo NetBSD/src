@@ -198,7 +198,10 @@ PARSE_AND_LIST_PROLOGUE='
 # for --no-pipeline-knowledge.  There is no case to handle 'n' here
 # however, so instead it will be passed back to parse_args() in
 # lexsup.c where it will be handled.
-PARSE_AND_LIST_SHORTOPTS=pn
+#
+# XXX - this seems to not work.  for instance, the "-non_shared" flag is
+# a parsed as "-n -o n_shared" with "pn" instead of just "p" below.
+PARSE_AND_LIST_SHORTOPTS=p
 
 PARSE_AND_LIST_LONGOPTS='
   { "no-pipeline-knowledge", no_argument, NULL, '\'p\''},

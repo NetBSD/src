@@ -149,9 +149,8 @@ gld${EMULATION_NAME}_find_so (inp)
      lang_input_statement_type *inp;
 {
   search_dirs_type *search;
-  char *found;
+  char *found = NULL;
   char *alc;
-  struct stat st;
 
   if (! inp->search_dirs_flag
       || ! inp->is_archive
@@ -969,6 +968,12 @@ struct ld_emulation_xfer_struct ld_${EMULATION_NAME}_emulation =
   gld${EMULATION_NAME}_create_output_section_statements,
   NULL, /* open_dynamic_library */
   NULL, /* place_orphan */
-  gld${EMULATION_NAME}_set_symbols
+  gld${EMULATION_NAME}_set_symbols,
+  NULL,	/* parse args */
+  NULL,	/* unrecognized file */
+  NULL,	/* list options */
+  NULL,	/* recognized file */
+  NULL,	/* find_potential_libraries */
+  NULL	/* new_vers_pattern */
 };
 EOF

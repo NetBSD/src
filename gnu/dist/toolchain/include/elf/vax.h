@@ -1,5 +1,6 @@
-/* MC68k ELF support for BFD.
-   Copyright (C) 1998 Free Software Foundation, Inc.
+/* VAX ELF support for BFD.
+   Copyright (C) 2002 Free Software Foundation, Inc.
+   Contributed by Matt Thomas <matt@3am-software.com>.
 
    This file is part of BFD, the Binary File Descriptor library.
 

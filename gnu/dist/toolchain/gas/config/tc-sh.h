@@ -1,5 +1,5 @@
 /* This file is tc-sh.h
-   Copyright 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000
+   Copyright 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002
    Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
@@ -20,11 +20,6 @@
    Boston, MA 02111-1307, USA.  */
 
 #define TC_SH
-
-/* Set the endianness we are using.  Default to little endian.  */
-#ifndef TARGET_BYTES_BIG_ENDIAN
-#define TARGET_BYTES_BIG_ENDIAN 0
-#endif
 
 #define TARGET_ARCH bfd_arch_sh
 
@@ -58,7 +53,13 @@ extern void sh_handle_align PARAMS ((fragS *));
 
 /* We need to force out some relocations when relaxing.  */
 #define TC_FORCE_RELOCATION(fix) sh_force_relocation (fix)
-extern int sh_force_relocation ();
+
+/* The type fixS is defined (to struct fix) in write.h, but write.h uses
+   definitions from this file.  To avoid problems with including write.h
+   after the "right" definitions, don't; just forward-declare struct fix
+   here.  */
+struct fix;
+extern int sh_force_relocation PARAMS ((struct fix *));
 
 #ifdef OBJ_ELF
 #define obj_fix_adjustable(fixP) sh_fix_adjustable(fixP)
@@ -67,7 +68,12 @@ extern boolean sh_fix_adjustable PARAMS ((struct fix *));
 
 /* This arranges for gas/write.c to not apply a relocation if
    obj_fix_adjustable() says it is not adjustable.  */
-#define TC_FIX_ADJUSTABLE(fixP) obj_fix_adjustable (fixP)
+/* ??? fixups with symbols in SEC_MERGE sections are marked with
+   obj_fix_adjustable and have a non-section symbol, as in
+   "vwxyz"+1 in execute/string-opt-6.c .  Maybe the test of
+   (symbol_used_in_reloc_p should be done in the machine-independent code.  */
+#define TC_FIX_ADJUSTABLE(fixP) \
+  (! symbol_used_in_reloc_p (fixP->fx_addsy) && obj_fix_adjustable (fixP))
 #endif
 
 #define MD_PCREL_FROM_SECTION(FIXP, SEC) md_pcrel_from_section (FIXP, SEC)
@@ -75,7 +81,9 @@ extern long md_pcrel_from_section PARAMS ((struct fix *, segT));
 
 #define IGNORE_NONSTANDARD_ESCAPES
 
-#define LISTING_HEADER (!target_big_endian ? "Hitachi Super-H GAS Little Endian" : "Hitachi Super-H GAS Big Endian")
+#define LISTING_HEADER \
+  (!target_big_endian \
+   ? "Hitachi Super-H GAS Little Endian" : "Hitachi Super-H GAS Big Endian")
 
 #define md_operand(x)
 
@@ -144,7 +152,7 @@ extern int tc_coff_sizemachdep PARAMS ((fragS *));
 #endif
 
 /* We align most sections to a 16 byte boundary.  */
-#define SUB_SEGMENT_ALIGN(SEG)				\
+#define SUB_SEGMENT_ALIGN(SEG, FRCHAIN)			\
   (strncmp (SEG_NAME (SEG), ".stabstr", 8) == 0		\
    ? 0							\
    : ((strncmp (SEG_NAME (SEG), ".stab", 5) == 0	\
@@ -160,11 +168,10 @@ extern int tc_coff_sizemachdep PARAMS ((fragS *));
 
 /* Whether or not the target is big endian */
 extern int target_big_endian;
-
-#ifdef TE_NetBSD
-#define TARGET_FORMAT (!target_big_endian ? "elf32-shl-nbsd" : "elf32-sh-nbsd")
-#elif defined(TE_LINUX)
+#ifdef TE_LINUX
 #define TARGET_FORMAT (!target_big_endian ? "elf32-sh-linux" : "elf32-shbig-linux")
+#elif defined(TE_NetBSD)
+#define TARGET_FORMAT (!target_big_endian ? "elf32-shl-nbsd" : "elf32-sh-nbsd")
 #else
 #define TARGET_FORMAT (!target_big_endian ? "elf32-shl" : "elf32-sh")
 #endif
@@ -207,5 +214,19 @@ extern void sh_elf_final_processing PARAMS ((void));
 	   && ! S_IS_WEAK ((FIX)->fx_addsy)			\
 	   && S_IS_DEFINED ((FIX)->fx_addsy)			\
 	   && ! S_IS_COMMON ((FIX)->fx_addsy))))
+
+#define md_parse_name(name, exprP, nextcharP) \
+  sh_parse_name ((name), (exprP), (nextcharP))
+int sh_parse_name PARAMS ((char const *name,
+			   expressionS *exprP,
+			   char *nextchar));
+
+#define TC_CONS_FIX_NEW(FRAG, OFF, LEN, EXP) \
+  sh_cons_fix_new ((FRAG), (OFF), (LEN), (EXP))
+void sh_cons_fix_new PARAMS ((fragS *, int, int, expressionS *));
+
+/* This is used to construct expressions out of @GOTOFF, @PLT and @GOT
+   symbols.  The relocation type is stored in X_md.  */
+#define O_PIC_reloc O_md1
 
 #endif /* OBJ_ELF */

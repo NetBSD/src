@@ -102,7 +102,7 @@ static void sh64_find_section_for_address PARAMS ((bfd *, asection *, PTR));
 #endif /* ELF_ARCH */
 
 #define GOT_BIAS (-((long)-32768))
-#define INCLUDE_SHMEDIA
+#define INCLUDE_SHMEDIA		1
 #include "elf32-sh.c"
 
 /* Set the SHF_SH5_ISA32 flag for ISA SHmedia code sections, and pass
