@@ -1,11 +1,11 @@
-# $NetBSD: ENIWETOK,v 1.29 2000/11/12 06:52:37 mycroft Exp $
+# $NetBSD: ENIWETOK,v 1.30 2000/11/26 17:44:07 ad Exp $
 # From: GENERIC,v 1.168 2000/10/19 14:35:44 ad Exp
 #
 # Mycroft's AS200.
 
 include	"arch/alpha/conf/std.alpha"
 
-#ident 		"ENIWETOK-$Revision: 1.29 $"
+#ident 		"ENIWETOK-$Revision: 1.30 $"
 
 maxusers 32
 
@@ -379,7 +379,7 @@ cd*	at	atapibus? drive ?		# ATAPI CD-ROM devices
 fd*	at	fdc? drive ?
 
 # Hardware RAID devices
-#lsu*	at	cac? unit ?
+#ld*	at	cac? unit ?
 
 # USB bus support
 #usb*	at uhci?
