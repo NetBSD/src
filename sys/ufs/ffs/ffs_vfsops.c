@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.98.4.1 2002/06/10 16:46:17 tv Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.98.4.2 2003/09/24 11:02:14 tron Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.98.4.1 2002/06/10 16:46:17 tv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.98.4.2 2003/09/24 11:02:14 tron Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -476,8 +476,9 @@ ffs_reload(mountp, cred, p)
 	if (VFSTOUFS(mountp)->um_flags & UFS_NEEDSWAP) {
 		ffs_sb_swap((struct fs*)bp->b_data, newfs);
 		fs->fs_flags |= FS_SWAPPED;
-	}
+	} else
 #endif
+		fs->fs_flags &= ~FS_SWAPPED;
 	if (newfs->fs_magic != FS_MAGIC || newfs->fs_bsize > MAXBSIZE ||
 	    newfs->fs_bsize < sizeof(struct fs)) {
 		brelse(bp);
@@ -680,8 +681,9 @@ ffs_mountfs(devvp, mp, p)
 	if (needswap) {
 		ffs_sb_swap((struct fs*)bp->b_data, fs);
 		fs->fs_flags |= FS_SWAPPED;
-	}
+	} else
 #endif
+		fs->fs_flags &= ~FS_SWAPPED;
 	ffs_oldfscompat(fs);
 
 	if (fs->fs_bsize > MAXBSIZE || fs->fs_bsize < sizeof(struct fs)) {
