@@ -1,4 +1,4 @@
-/*	$NetBSD: devname.c,v 1.4 1995/02/25 08:51:08 cgd Exp $	*/
+/*	$NetBSD: devname.c,v 1.5 1997/07/13 18:54:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -33,23 +33,26 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)devname.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: devname.c,v 1.4 1995/02/25 08:51:08 cgd Exp $";
+__RCSID("$NetBSD: devname.c,v 1.5 1997/07/13 18:54:19 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/types.h>
 
 #include <db.h>
-#include <err.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <paths.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
+#include <err.h>
 
 char *
 devname(dev, type)
@@ -66,7 +69,7 @@ devname(dev, type)
 
 	if (!db && !failure &&
 	    !(db = dbopen(_PATH_DEVDB, O_RDONLY, 0, DB_HASH, NULL))) {
-		_warn("warning: %s", _PATH_DEVDB);
+		warn("warning: %s", _PATH_DEVDB);
 		failure = 1;
 	}
 	if (failure)
