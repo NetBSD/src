@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.10 2003/10/22 01:53:49 fvdl Exp $	*/
+/*	$NetBSD: intr.c,v 1.11 2003/10/30 21:19:54 fvdl Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.10 2003/10/22 01:53:49 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.11 2003/10/30 21:19:54 fvdl Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -84,7 +84,10 @@ struct pic softintr_pic = {
 };
 
 #if NIOAPIC > 0
-static int intr_scan_bus(struct mp_intr_map *, int, int *);
+static int intr_scan_bus(int, int, int *);
+#if NPCI > 0
+static int intr_find_pcibridge(int, pcitag_t *, pci_chipset_tag_t *);
+#endif
 #endif
 
 /*
@@ -179,49 +182,111 @@ intr_calculatemasks(struct cpu_info *ci)
 		ci->ci_iunmask[level] = ~ci->ci_imask[level];
 }
 
+/*
+ * List to keep track of PCI buses that are probed but not known
+ * to the firmware. Used to 
+ *
+ * XXX should maintain one list, not an array and a linked list.
+ */
+#if (NPCI > 0) && (NIOAPIC > 0)
+struct intr_extra_bus {
+	int bus;
+	pcitag_t *pci_bridge_tag;
+	pci_chipset_tag_t pci_chipset_tag;
+	LIST_ENTRY(intr_extra_bus) list;
+};
+
+LIST_HEAD(, intr_extra_bus) intr_extra_buses =
+    LIST_HEAD_INITIALIZER(intr_extra_buses);
+
+
+void
+intr_add_pcibus(struct pcibus_attach_args *pba)
+{
+	struct intr_extra_bus *iebp;
+
+	iebp = malloc(sizeof(struct intr_extra_bus), M_TEMP, M_WAITOK);
+	iebp->bus = pba->pba_bus;
+	iebp->pci_chipset_tag = pba->pba_pc;
+	iebp->pci_chipset_tag = pba->pba_pc;
+	LIST_INSERT_HEAD(&intr_extra_buses, iebp, list);
+}
+
+static int
+intr_find_pcibridge(int bus, pcitag_t *pci_bridge_tag,
+		    pci_chipset_tag_t *pci_chipset_tag)
+{
+	struct intr_extra_bus *iebp;
+	struct mp_bus *mpb;
+
+	if (bus < 0)
+		return ENOENT;
+
+	if (bus < mp_nbus) {
+		mpb = &mp_busses[bus];
+		if (mpb->mb_pci_bridge_tag == NULL)
+			return ENOENT;
+		*pci_bridge_tag = *mpb->mb_pci_bridge_tag;
+		*pci_chipset_tag = mpb->mb_pci_chipset_tag;
+		return 0;
+	}
+
+	LIST_FOREACH(iebp, &intr_extra_buses, list) {
+		if (iebp->bus == bus) {
+			*pci_bridge_tag = *iebp->pci_bridge_tag;
+			*pci_chipset_tag = iebp->pci_chipset_tag;
+			return 0;
+		}
+	}
+	return ENOENT;
+}
+#endif
+
 
 /*
  * XXX if defined(MULTIPROCESSOR) && .. ?
  */
 #if NIOAPIC > 0
 int
-intr_find_mpmapping(int bus, int pin, int *handle, void *aux)
+intr_find_mpmapping(int bus, int pin, int *handle)
 {
-	struct mp_bus *mpb;
 #if NPCI > 0
 	int dev, func;
+	pcitag_t pci_bridge_tag;
+	pci_chipset_tag_t pci_chipset_tag;
 #endif
 
-	if (bus == -1)
-		return ENOENT;
-
-	if (mp_busses[bus].mb_intrs == NULL &&
-	    mp_busses[bus].mb_pci_bridge_tag == NULL)
-		return ENOENT;
-
-	dev = (int)(intptr_t)aux;
-	while (intr_scan_bus(mp_busses[bus].mb_intrs, pin, handle) != 0) {
-		mpb = &mp_busses[bus];
-		if (mpb->mb_pci_bridge_tag == NULL)
+#if NPCI > 0
+	while (intr_scan_bus(bus, pin, handle) != 0) {
+		if (intr_find_pcibridge(bus, &pci_bridge_tag,
+		    &pci_chipset_tag) < 0)
 			return ENOENT;
-		pin = PPB_INTERRUPT_SWIZZLE(pin & 3, dev);
-		pci_decompose_tag(mpb->mb_pci_chipset_tag,
-		    *mpb->mb_pci_bridge_tag, &bus, &dev, &func);
+		dev = pin >> 2;
+		pin = pin & 3;
+		pin = PPB_INTERRUPT_SWIZZLE(pin, dev);
+		pci_decompose_tag(pci_chipset_tag, pci_bridge_tag, &bus,
+		    &dev, &func);
 		pin |= (dev << 2);
 	}
-
 	return 0;
+#else
+	return intr_scan_bus(bus, pin, handle);
+#endif
 }
 
 static int
-intr_scan_bus(struct mp_intr_map *intrs, int pin, int *handle)
+intr_scan_bus(int bus, int pin, int *handle)
 {
-	struct mp_intr_map *mip;
+	struct mp_intr_map *mip, *intrs;
 
+	if (bus < 0 || bus >= mp_nbus)
+		return ENOENT;
+
+	intrs = mp_busses[bus].mb_intrs;
 	if (intrs == NULL)
 		return ENOENT;
 
-	for (mip = intrs; mip != NULL; mip=mip->next) {
+	for (mip = intrs; mip != NULL; mip = mip->next) {
 		if (mip->bus_pin == pin) {
 			*handle = mip->ioapic_ih;
 			return 0;

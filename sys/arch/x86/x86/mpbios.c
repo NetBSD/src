@@ -1,4 +1,4 @@
-/*	$NetBSD: mpbios.c,v 1.18 2003/10/29 03:40:56 mycroft Exp $	*/
+/*	$NetBSD: mpbios.c,v 1.19 2003/10/30 21:19:54 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.18 2003/10/29 03:40:56 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.19 2003/10/30 21:19:54 fvdl Exp $");
 
 #include "opt_mpacpi.h"
 #include "opt_mpbios.h"
@@ -1166,8 +1166,10 @@ mpbios_pci_attach_hook(struct device *parent, struct device *self,
 	if (mpbios_scanned == 0)
 		return ENOENT;
 
-	if (pba->pba_bus >= mp_nbus)
-		return EINVAL;
+	if (pba->pba_bus >= mp_nbus) {
+		intr_add_pcibus(pba);
+		return 0;
+	}
 
 	mpb = &mp_busses[pba->pba_bus];
 	if (mpb->mb_name != NULL) {
