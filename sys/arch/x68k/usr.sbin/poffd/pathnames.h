@@ -1,4 +1,4 @@
-/*	$NetBSD: pathnames.h,v 1.2 1998/01/05 20:52:35 perry Exp $	*/
+/*	$NetBSD: pathnames.h,v 1.3 1998/08/04 16:07:54 minoura Exp $	*/
 /*
  * Copyright (c) 1995 MINOURA Makoto.
  * All rights reserved.
@@ -34,7 +34,7 @@
 #include <paths.h>
 
 #ifndef _PATH_DEFAULT_SHUTDOWN
-#define _PATH_DEFAULT_SHUTDOWN "/sbin/shutdown -r +1"
+#define _PATH_DEFAULT_SHUTDOWN "/sbin/shutdown -p +1"
 #endif
 
 #ifndef _PATH_DEVPOW
