@@ -1,0 +1,8 @@
+#	$NetBSD: Makefile.scaled,v 1.1.1.1 2003/09/11 18:37:09 lukem Exp $
+
+FILESDIR=	${X11FONTDIR}/${FONTSUBDIR}
+.PATH:  	${X11SRCDIR.xc}/fonts/scaled/${FONTSUBDIR}
+
+FILES+=		fonts.scale
+
+.include "../Makefile.mkfontdir"

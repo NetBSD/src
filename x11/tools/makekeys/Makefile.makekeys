@@ -1,0 +1,14 @@
+#	$NetBSD: Makefile.makekeys,v 1.1.1.1 2003/09/11 18:38:50 lukem Exp $
+
+MAKEKEYSDIR!=	cd ${NETBSDSRCDIR}/x11/tools/makekeys && ${PRINTOBJDIR}
+MAKEKEYS=	${MAKEKEYSDIR}/makekeys
+
+${MAKEKEYS}:
+	(cd ${NETBSDSRCDIR}/x11/tools/makekeys && ${MAKE})
+
+DPSRCS+=	ks_tables.h
+CLEANFILES+=	ks_tables.h
+
+ks_tables.h: ${MAKEKEYS} ${X11SRCDIR.xc}/include/keysymdef.h
+	rm -f ${.TARGET}
+	${MAKEKEYS} < ${X11SRCDIR.xc}/include/keysymdef.h > ${.TARGET}
