@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socketcall.c,v 1.14 1996/04/05 00:01:50 christos Exp $	*/
+/*	$NetBSD: linux_socketcall.c,v 1.15 1996/12/22 23:02:26 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -170,7 +170,7 @@ linux_bind(p, uap, retval)
 		return error;
 
 	SCARG(&bba, s) = lba.s;
-	SCARG(&bba, name) = (caddr_t) lba.name;
+	SCARG(&bba, name) = (void *) lba.name;
 	SCARG(&bba, namelen) = lba.namelen;
 
 	return sys_bind(p, &bba, retval);
@@ -194,7 +194,7 @@ linux_connect(p, uap, retval)
 		return error;
 
 	SCARG(&bca, s) = lca.s;
-	SCARG(&bca, name) = (caddr_t) lca.name;
+	SCARG(&bca, name) = (void *) lca.name;
 	SCARG(&bca, namelen) = lca.namelen;
 
 	return sys_connect(p, &bca, retval);
@@ -398,7 +398,7 @@ linux_sendto(p, uap, retval)
 	SCARG(&bsa, buf) = lsa.msg;
 	SCARG(&bsa, len) = lsa.len;
 	SCARG(&bsa, flags) = lsa.flags;
-	SCARG(&bsa, to) = (caddr_t) lsa.to;
+	SCARG(&bsa, to) = (void *) lsa.to;
 	SCARG(&bsa, tolen) = lsa.tolen;
 
 	return sys_sendto(p, &bsa, retval);

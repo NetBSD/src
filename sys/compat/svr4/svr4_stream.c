@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stream.c,v 1.18 1996/12/06 03:24:32 christos Exp $	 */
+/*	$NetBSD: svr4_stream.c,v 1.19 1996/12/22 23:00:03 fvdl Exp $	 */
 /*
  * Copyright (c) 1994, 1996 Christos Zoulas.  All rights reserved.
  *
@@ -259,12 +259,15 @@ clean_pipe(p, path)
 	int error;
 	caddr_t sg = stackgap_init(p->p_emul);
 	size_t l = strlen(path) + 1;
+	void *tpath;
 
-	SCARG(&la, path) = stackgap_alloc(&sg, l);
+	tpath = stackgap_alloc(&sg, l);
 	SCARG(&la, ub) = stackgap_alloc(&sg, sizeof(struct stat));
 
-	if ((error = copyout(path, SCARG(&la, path), l)) != 0)
+	if ((error = copyout(path, tpath, l)) != 0)
 		return error;
+
+	SCARG(&la, path) = tpath;
 
 	if ((error = sys_lstat(p, &la, &retval)) != 0)
 		return 0;
@@ -797,7 +800,7 @@ ti_bind(fp, fd, ioc, p)
 
 	SCARG(&ba, s) = fd;
 	DPRINTF(("TI_BIND: fileno %d\n", fd));
-	SCARG(&ba, name) = (caddr_t) sup;
+	SCARG(&ba, name) = (void *) sup;
 	SCARG(&ba, namelen) = sasize;
 
 	if ((error = sys_bind(p, &ba, &retval)) != 0) {
@@ -1475,7 +1478,7 @@ svr4_sys_putmsg(p, v, retval)
 			struct sys_connect_args co;
 
 			co.s = SCARG(uap, fd);
-			co.name = (caddr_t) sup;
+			co.name = (void *) sup;
 			co.namelen = (int) sasize;
 			return sys_connect(p, &co, retval);
 		}
@@ -1625,7 +1628,7 @@ svr4_sys_getmsg(p, v, retval)
 		 */
 
 		SCARG(&ga, fdes) = SCARG(uap, fd);
-		SCARG(&ga, asa) = (caddr_t) sup;
+		SCARG(&ga, asa) = (void *) sup;
 		SCARG(&ga, alen) = flen;
 		
 		if ((error = sys_getpeername(p, &ga, retval)) != 0) {
@@ -1684,7 +1687,7 @@ svr4_sys_getmsg(p, v, retval)
 		 * We are after a listen, so we try to accept...
 		 */
 		SCARG(&aa, s) = SCARG(uap, fd);
-		SCARG(&aa, name) = (caddr_t) sup;
+		SCARG(&aa, name) = (void *) sup;
 		SCARG(&aa, anamelen) = flen;
 		
 		if ((error = sys_accept(p, &aa, retval)) != 0) {

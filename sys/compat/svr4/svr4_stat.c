@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stat.c,v 1.21 1996/04/22 01:16:07 christos Exp $	 */
+/*	$NetBSD: svr4_stat.c,v 1.22 1996/12/22 23:00:02 fvdl Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -556,6 +556,7 @@ svr4_sys_utime(p, v, retval)
 	struct sys_utimes_args ap;
 	int error;
 	caddr_t sg = stackgap_init(p->p_emul);
+	void *ttp;
 
 	SVR4_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 	SCARG(&ap, path) = SCARG(uap, path);
@@ -566,10 +567,11 @@ svr4_sys_utime(p, v, retval)
 		tbuf[0].tv_usec = 0;
 		tbuf[1].tv_sec = ub.modtime;
 		tbuf[1].tv_usec = 0;
-		SCARG(&ap, tptr) = stackgap_alloc(&sg, sizeof(tbuf));
-		error = copyout(tbuf, SCARG(&ap, tptr), sizeof(tbuf));
+		ttp = stackgap_alloc(&sg, sizeof(tbuf));
+		error = copyout(tbuf, ttp, sizeof(tbuf));
 		if (error)
 			return error;
+		SCARG(&ap, tptr) = ttp;
 	}
 	else
 		SCARG(&ap, tptr) = NULL;
