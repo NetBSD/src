@@ -1,6 +1,10 @@
-.\"	$NetBSD: legal,v 1.4.10.1 2000/11/01 03:44:40 tv Exp $
+.\"	$NetBSD: legal,v 1.4.10.2 2001/05/21 02:34:40 jhawk Exp $
 .
 .Pp
+This product includes software developed by Advanced Risc Machines Ltd.
+.Pp
 This product includes software developed by Neil Carson.
+.Pp
+This product includes software developed by the RiscBSD kernel team.
 .Pp
 This product includes software developed by Scott Stevens.
