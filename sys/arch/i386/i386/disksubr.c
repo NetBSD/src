@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.27 1998/03/17 21:27:25 cgd Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.28 1998/03/29 21:30:20 tron Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -375,8 +375,8 @@ writedisklabel(dev, strat, lp, osdep)
 		if (ourdp) {
 			/* need sector address for SCSI/IDE,
 			 cylinder for ESDI/ST506/RLL */
-			dospartoff = dp->dp_start;
-			cyl = DPCYL(dp->dp_scyl, dp->dp_ssect);
+			dospartoff = ourdp->dp_start;
+			cyl = DPCYL(ourdp->dp_scyl, ourdp->dp_ssect);
 		}
 	}
 
