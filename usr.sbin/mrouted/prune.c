@@ -1,4 +1,4 @@
-/*	$NetBSD: prune.c,v 1.5 1998/08/27 18:03:44 ross Exp $	*/
+/*	$NetBSD: prune.c,v 1.6 1999/01/23 22:44:43 hwr Exp $	*/
 
 /*
  * The mrouted program is covered by the license in the accompanying file
@@ -502,7 +502,7 @@ refresh_sg(sg, gt, st)
        lastq = quantum;
        sg->src.s_addr = st->st_origin;
        sg->grp.s_addr = gt->gt_mcastgrp;
-       ioctl(udp_socket, SIOCGETSGCNT, (char *)sg);
+       ioctl(igmp_socket, SIOCGETSGCNT, (char *)sg);
    }
 }
 
@@ -1746,7 +1746,7 @@ age_table_entry()
 	    stnp = &gt->gt_srctbl;
 	    while ((st = *stnp) != NULL) {
 		sg_req.src.s_addr = st->st_origin;
-		if (ioctl(udp_socket, SIOCGETSGCNT, (char *)&sg_req) < 0) {
+		if (ioctl(igmp_socket, SIOCGETSGCNT, (char *)&sg_req) < 0) {
 		    log(LOG_WARNING, errno, "%s (%s %s)",
 			"age_table_entry: SIOCGETSGCNT failing for",
 			inet_fmt(st->st_origin, s1),
@@ -2186,7 +2186,7 @@ accept_mtrace(src, dst, group, data, no, datalen)
      * obtain # of packets out on interface
      */
     v_req.vifi = vifi;
-    if (ioctl(udp_socket, SIOCGETVIFCNT, (char *)&v_req) >= 0)
+    if (ioctl(igmp_socket, SIOCGETVIFCNT, (char *)&v_req) >= 0)
 	resp->tr_vifout  =  htonl(v_req.ocount);
 
     /*
@@ -2203,7 +2203,7 @@ accept_mtrace(src, dst, group, data, no, datalen)
     if (gt && gt->gt_mcastgrp == group) {
 	sg_req.src.s_addr = qry->tr_src;
 	sg_req.grp.s_addr = group;
-	if (ioctl(udp_socket, SIOCGETSGCNT, (char *)&sg_req) >= 0)
+	if (ioctl(igmp_socket, SIOCGETSGCNT, (char *)&sg_req) >= 0)
 	    resp->tr_pktcnt = htonl(sg_req.pktcnt);
 
 	if (VIFM_ISSET(vifi, gt->gt_scope))
@@ -2235,7 +2235,7 @@ accept_mtrace(src, dst, group, data, no, datalen)
     } else {
 	/* get # of packets in on interface */
 	v_req.vifi = rt->rt_parent;
-	if (ioctl(udp_socket, SIOCGETVIFCNT, (char *)&v_req) >= 0)
+	if (ioctl(igmp_socket, SIOCGETVIFCNT, (char *)&v_req) >= 0)
 	    resp->tr_vifin = htonl(v_req.icount);
 
 	MASK_TO_VAL(rt->rt_originmask, resp->tr_smask);

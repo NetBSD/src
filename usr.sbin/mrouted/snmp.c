@@ -1,4 +1,4 @@
-/*	$NetBSD: snmp.c,v 1.3 1995/12/10 10:07:16 mycroft Exp $	*/
+/*	$NetBSD: snmp.c,v 1.4 1999/01/23 22:44:43 hwr Exp $	*/
 
 #include "defs.h"
 #include <netinet/in_var.h>
@@ -738,7 +738,7 @@ refresh_vif(v_req, ifnum)
    if (quantum!=lastq || v_req->vifi != ifnum) {
        lastq = quantum;
        v_req->vifi = ifnum;
-       if (ioctl(udp_socket, SIOCGETVIFCNT, (char *)v_req) < 0)
+       if (ioctl(igmp_socket, SIOCGETVIFCNT, (char *)v_req) < 0)
           v_req->icount = v_req->ocount = v_req->ibytes = v_req->obytes = 0;
    }
 }
