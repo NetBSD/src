@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.79 2003/03/24 22:13:54 seb Exp $	*/
+/*	$NetBSD: perform.c,v 1.80 2003/04/10 16:12:38 grant Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.44 1997/10/13 15:03:46 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.79 2003/03/24 22:13:54 seb Exp $");
+__RCSID("$NetBSD: perform.c,v 1.80 2003/04/10 16:12:38 grant Exp $");
 #endif
 #endif
 
@@ -242,11 +242,10 @@ pkg_do(const char *pkg)
 			 */
 
 			if (!inPlace && min_free(playpen) < sb.st_size * 4) {
-				warnx("projected size of %ld exceeds available free space.\n"
-				    "Please set your PKG_TMPDIR variable to point to a location with more\n"
-				    "free space and try again", (long) (sb.st_size * 4));
-				warnx("not extracting %s\ninto %s, sorry!",
-				    pkg, where_to);
+				warnx("projected size of %ld bytes exceeds available free space\n"
+				    "in %s. Please set your PKG_TMPDIR variable to point\n"
+				    "to a location with more free space and try again.",
+					(long) (sb.st_size * 4), playpen);
 				goto bomb;
 			}
 
