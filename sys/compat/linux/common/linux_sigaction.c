@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sigaction.c,v 1.20.2.1 2001/03/05 22:49:28 nathanw Exp $	*/
+/*	$NetBSD: linux_sigaction.c,v 1.20.2.2 2001/08/30 23:28:03 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -42,6 +42,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/filedesc.h>
 #include <sys/mount.h>
