@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconutil.c,v 1.15 2003/12/29 02:38:18 oster Exp $	*/
+/*	$NetBSD: rf_reconutil.c,v 1.16 2003/12/29 03:33:48 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -31,7 +31,7 @@
  ********************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconutil.c,v 1.15 2003/12/29 02:38:18 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconutil.c,v 1.16 2003/12/29 03:33:48 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -71,10 +71,10 @@ rf_MakeReconControl(reconDesc, fcol, scol)
 
 	/* make and zero the global reconstruction structure and the per-disk
 	 * structure */
-	RF_Calloc(reconCtrlPtr, 1, sizeof(RF_ReconCtrl_t), (RF_ReconCtrl_t *));
+	RF_Malloc(reconCtrlPtr, sizeof(RF_ReconCtrl_t), (RF_ReconCtrl_t *));
 
 	/* note: this zeros the perDiskInfo */
-	RF_Calloc(reconCtrlPtr->perDiskInfo, raidPtr->numCol, 
+	RF_Malloc(reconCtrlPtr->perDiskInfo, raidPtr->numCol *
 		  sizeof(RF_PerDiskReconCtrl_t), (RF_PerDiskReconCtrl_t *));
 	reconCtrlPtr->reconDesc = reconDesc;
 	reconCtrlPtr->fcol = fcol;

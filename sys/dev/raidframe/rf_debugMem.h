@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_debugMem.h,v 1.10 2002/09/16 23:40:57 oster Exp $	*/
+/*	$NetBSD: rf_debugMem.h,v 1.11 2003/12/29 03:33:47 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -65,17 +65,6 @@
   {                                                                         \
      RF_Malloc(__p_, __size_, __cast_);                                     \
      if (__alist_) rf_AddToAllocList(__alist_, __p_, __size_);              \
-  }
-
-#define RF_Calloc(_p_, _nel_, _elsz_, _cast_)                               \
-  {                                                                         \
-     RF_Malloc( _p_, (_nel_) * (_elsz_), _cast_);                           \
-  }
-
-#define RF_CallocAndAdd(__p,__nel,__elsz,__cast,__alist)                    \
-  {                                                                         \
-     RF_Calloc(__p, __nel, __elsz, __cast);                                 \
-     if (__alist) rf_AddToAllocList(__alist, __p, (__nel)*(__elsz));        \
   }
 
 #if RF_DEBUG_MEM
