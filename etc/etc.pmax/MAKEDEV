@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.37.4.1 2000/08/11 20:43:35 mason Exp $
+#	$NetBSD: MAKEDEV,v 1.37.4.2 2000/08/11 20:53:34 mason Exp $
 #
 #	from: @(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
@@ -83,7 +83,7 @@ minimal)
 	sh $0 std
 	sh $0 rz0 rz1 rz2 rz3 rz4 rz5 rz6 rz7 tz0 tz1
 	sh $0 rz8 rz9 rz10 rz11 rz12 rz13 rz14 tz2 tz3
-	sh $0 md0 dz0 zs0
+	sh $0 md0 dz0 zs0 pty0
 	;;
 
 std)
