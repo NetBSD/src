@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.44 1997/02/18 15:07:29 gwr Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.45 1997/02/19 00:20:52 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -76,20 +76,21 @@ configure()
 
 	/*
 	 * Now that device autoconfiguration is finished,
-	 * we can safely enable interrupts.  The variable
-	 * "cold" is used by several drivers to determine
-	 * that the interrupt level should not be changed.
-	 * When cold, interrupts are already disabled, so
-	 * normal driver spl* calls would LOWER the level.
-	 * Therefore, clear both cold and the SPL here.
+	 * we can safely enable interrupts.
+	 *
+	 * XXX - This would also be the "natrual" place to
+	 * set cold=0 but we need to leave it set until the
+	 * end so that kern_synch.c:tsleep() will not try to
+	 * use the proc0 that is not yet ready...
+	 * XXX - Maybe procinit should be earlier...
 	 */
 	printf("enabling interrupts\n");
-	cold = 0;
 	(void)spl0();
 
 	rootconf();
 	swapconf();
 	dumpconf();
+	cold = 0;
 }
 
 /****************************************************************/
