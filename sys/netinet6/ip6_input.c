@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.52 2002/05/12 15:48:39 wiz Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.53 2002/05/28 03:04:06 itojun Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.52 2002/05/12 15:48:39 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.53 2002/05/28 03:04:06 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1517,6 +1517,8 @@ ip6_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 		}
 		return (error);
 #endif
+	case IPV6CTL_MAXFRAGS:
+		return sysctl_int(oldp, oldlenp, newp, newlen, &ip6_maxfrags);
 	default:
 		return EOPNOTSUPP;
 	}
