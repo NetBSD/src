@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /* from: static char sccsid[] = "@(#)kvm.c	5.18 (Berkeley) 5/7/91"; */
-static char rcsid[] = "$Id: kvm.c,v 1.6 1993/05/20 10:30:31 cgd Exp $";
+static char rcsid[] = "$Id: kvm.c,v 1.7 1993/05/20 11:53:04 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -48,7 +48,6 @@ static char rcsid[] = "$Id: kvm.c,v 1.6 1993/05/20 10:30:31 cgd Exp $";
 #include <sys/proc.h>
 #include <sys/ioctl.h>
 #include <sys/kinfo.h>
-#include <sys/select.h>
 #include <sys/tty.h>
 #include <machine/vmparam.h>
 #include <fcntl.h>
