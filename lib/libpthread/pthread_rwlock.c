@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_rwlock.c,v 1.1.2.4 2003/01/09 19:27:52 thorpej Exp $ */
+/*	$NetBSD: pthread_rwlock.c,v 1.1.2.5 2003/01/11 09:14:35 skrll Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -249,6 +249,8 @@ pthread_rwlock_timedrdlock(pthread_rwlock_t *rwlock,
 	int retval;
 #ifdef ERRORCHECK
 	if ((rwlock == NULL) || (rwlock->ptr_magic != _PT_RWLOCK_MAGIC))
+		return EINVAL;
+	if ((abs_timeout == NULL) || (abs_timeout->tv_nsec >= 1000000000))
 		return EINVAL;
 #endif
 	self = pthread__self();
