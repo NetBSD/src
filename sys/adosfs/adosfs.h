@@ -1,4 +1,4 @@
-/*	$NetBSD: adosfs.h,v 1.19 2001/09/15 22:44:09 chs Exp $	*/
+/*	$NetBSD: adosfs.h,v 1.20 2002/05/13 23:51:19 matt Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -169,5 +169,5 @@ void adosfs_aremhash __P((struct anode *));
 
 int adosfs_lookup __P((void *));
 
-int (**adosfs_vnodeop_p) __P((void *));
+extern int (**adosfs_vnodeop_p) __P((void *));
 #endif /* _KERNEL */
