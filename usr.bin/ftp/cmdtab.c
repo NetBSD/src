@@ -1,4 +1,4 @@
-/*	$NetBSD: cmdtab.c,v 1.24 1999/07/02 08:07:41 itojun Exp $	*/
+/*	$NetBSD: cmdtab.c,v 1.25 1999/07/11 20:37:39 itojun Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmdtab.c	8.4 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmdtab.c,v 1.24 1999/07/02 08:07:41 itojun Exp $");
+__RCSID("$NetBSD: cmdtab.c,v 1.25 1999/07/11 20:37:39 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -69,6 +69,7 @@ char	domachelp[] =	"execute macro";
 #ifndef NO_EDITCOMPLETE
 char	edithelp[] =	"toggle command line editing";
 #endif /* !NO_EDITCOMPLETE */
+char	epsv4help[] =	"toggle use of EPSV/EPRT on IPv4 ftp";
 char	formhelp[] =	"set file transfer format";
 char	gatehelp[] =	"toggle gate-ftp; specify host[:port] to change proxy";
 char	globhelp[] =	"toggle metacharacter expansion of local file names";
@@ -161,6 +162,7 @@ struct cmd cmdtab[] = {
 #ifndef NO_EDITCOMPLETE
 	{ "edit",	edithelp,	0, 0, 0, CMPL0		setedit },
 #endif /* !NO_EDITCOMPLETE */
+	{ "epsv4",	epsv4help,	0, 0, 0, CMPL0		setepsv4 },
 	{ "exit",	quithelp,	0, 0, 0, CMPL0		quit },
 	{ "form",	formhelp,	0, 1, 1, CMPL0		setform },
 	{ "ftp",	connecthelp,	0, 0, 1, CMPL0		setpeer },
