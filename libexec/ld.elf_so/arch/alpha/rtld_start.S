@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.2 1999/04/18 23:12:59 thorpej Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.3 1999/04/19 00:05:00 thorpej Exp $	*/
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -40,20 +40,6 @@ LEAF_NOPROFILE(_rtld_start, 0)
 	br	pv, L1
 L1:	LDGP(pv)
 
-	/*
-	 * Save the stack pointer.  This is what we will pass to _rtld().
-	 */
-	lda	s0, 0(sp)
-
-	/*
-	 * Make room for the atexit and cleanup vectors that _rtld() will
-	 * provide to us.
-	 */
-	lda	sp, -16(sp)
-
-	/* Save ps_strings pointer */
-	mov	a3, s1
-
 	/* XXX Partially relocate ourself. */
 
 	/* Step 1 -- Figure out the displacement */
@@ -87,18 +73,30 @@ L3:	ldq	t1, 0(t9)	/* load the value */
 	bne	t1, L3		/* no, do more */
 
 	/*
-	 *  Ya!  Things are far enough so we can do some dynamic linking!
+	 * Ya!  Things are far enough so we can do some dynamic linking!
 	 */
 
-	lda	a0, -16(s0)
-	CALL(_rtld)		/* v0 = _rtld(sp); */
+	/* Sqirrel away ps_strings. */
+	mov	a3, s0
 
-	ldq	a1, -16(s0)	/* our atexit function */
-	ldq	a2, -8(s0)	/* obj_main entry */
-	lda	sp, 16(sp)	/* readjust our stack */
-	mov	s0, a0		/* stack pointer */
-	mov	s1, a3		/* ps_strings pointer */
-	mov	v0, t12
+	/*
+	 * Allocate space on the stack for the cleanup and obj_main
+	 * entries that _rtld() will provide for us.
+	 */
+	lda	sp, -16(sp)
+
+	mov	sp, a0		/* v0 = _rtld(sp); */
+	CALL(_rtld)
+
+	ldq	a1, 0(sp)	/* cleanup */
+	ldq	a2, 8(sp)	/* obj_main */
+	lda	sp, 16(sp)	/* pop stack */
+
+	mov	sp, a0		/* stack pointer */
+	mov	s0, a3		/* ps_strings */
+
+	mov	v0, pv		/* set up PV for entry point */
+
 	jsr	ra, (v0), 0	/* (*_start)(sp, cleanup, obj, ps_strings); */
 	ldgp	gp, 0(ra)
 
