@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.47 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.48 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -191,3 +191,4 @@ Changes from NetBSD 1.6 to NetBSD 1.7:
 	strsuftoll(3), strsuftollx(3): Add functions to parse numbers
 		with optional suffices and/or products.  [lukem 20021129]
 	am-utils: upgrade to 6.1b1 [christos 20021129]
+	routed: upgrade to 2.27 [christos 20021129]
