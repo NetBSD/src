@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.20 1998/10/08 20:12:52 thorpej Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.21 1998/10/08 20:44:00 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.18 1998/10/08 20:11:59 thorpej Exp 
+ *	NetBSD: pcmciadevs,v 1.19 1998/10/08 20:43:42 thorpej Exp 
  */
 
 /*-
@@ -163,7 +163,7 @@
 #define	PCMCIA_PRODUCT_SOCKET_PAGECARD	0x0003
 #define	PCMCIA_STR_SOCKET_PAGECARD	"Socket Communications PageCard"
 #define	PCMCIA_CIS_SOCKET_DUAL_RS232	{ NULL, NULL, NULL, NULL }
-#define	PCMCIA_PRODUCT_SOCKET_DUAL_RS232	0x0012
+#define	PCMCIA_PRODUCT_SOCKET_DUAL_RS232	0x0006
 #define	PCMCIA_STR_SOCKET_DUAL_RS232	"Socket Communications Dual RS232"
 
 /* TDK Products */
