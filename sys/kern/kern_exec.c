@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.81 1997/04/10 19:45:40 kleink Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.82 1997/04/23 20:18:16 mycroft Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -126,10 +126,6 @@ check_exec(p, epp)
 	/* check access.  for root we have to see if any exec bit on */
 	if ((error = VOP_ACCESS(vp, VEXEC, p->p_ucred, p)) != 0)
 		goto bad1;
-	if ((epp->ep_vap->va_mode & (S_IXUSR | S_IXGRP | S_IXOTH)) == 0) {
-		error = EACCES;
-		goto bad1;
-	}
 
 	/* try to open it */
 	if ((error = VOP_OPEN(vp, FREAD, p->p_ucred, p)) != 0)
