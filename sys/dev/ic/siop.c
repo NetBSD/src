@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.62.2.3 2005/03/17 17:49:53 tron Exp $	*/
+/*	$NetBSD: siop.c,v 1.62.2.4 2005/03/19 01:44:33 tron Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -33,7 +33,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop.c,v 1.62.2.3 2005/03/17 17:49:53 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop.c,v 1.62.2.4 2005/03/19 01:44:33 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -782,6 +782,14 @@ scintr:
 				CALL_SCRIPT(Ent_msgin_ack);
 				return 1;
 			}
+			if (msgin == MSG_IGN_WIDE_RESIDUE) {
+			/* use the extmsgdata table to get the second byte */
+				siop_cmd->cmd_tables->t_extmsgdata.count =
+				    htole32(1);
+				siop_table_sync(siop_cmd,
+				    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+				CALL_SCRIPT(Ent_get_extmsgdata);
+			}
 			if (xs)
 				scsipi_printaddr(xs->xs_periph);
 			else
@@ -825,6 +833,29 @@ scintr:
 			printf("\n");
 			}
 #endif
+			if (siop_cmd->cmd_tables->msg_in[0] ==
+			    MSG_IGN_WIDE_RESIDUE) {
+			/* we got the second byte of MSG_IGN_WIDE_RESIDUE */
+				if (siop_cmd->cmd_tables->msg_in[3] != 1)
+					printf("MSG_IGN_WIDE_RESIDUE: "
+					    "bad len %d\n",
+					    siop_cmd->cmd_tables->msg_in[3]);
+				switch (siop_iwr(&siop_cmd->cmd_c)) {
+				case SIOP_NEG_MSGOUT:
+					siop_table_sync(siop_cmd,
+					    BUS_DMASYNC_PREREAD |
+					    BUS_DMASYNC_PREWRITE);
+					CALL_SCRIPT(Ent_send_msgout);
+					return(1);
+				case SIOP_NEG_ACK:
+					CALL_SCRIPT(Ent_msgin_ack);
+					return(1);
+				default:
+					panic("invalid retval from "
+					    "siop_iwr()");
+				}
+				return(1);
+			}
 			if (siop_cmd->cmd_tables->msg_in[2] == MSG_EXT_WDTR) {
 				switch (siop_wdtr_neg(&siop_cmd->cmd_c)) {
 				case SIOP_NEG_MSGOUT:
