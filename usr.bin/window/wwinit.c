@@ -1,4 +1,4 @@
-/*	$NetBSD: wwinit.c,v 1.17 2003/08/07 11:17:40 agc Exp $	*/
+/*	$NetBSD: wwinit.c,v 1.18 2003/08/13 15:21:07 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)wwinit.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: wwinit.c,v 1.17 2003/08/07 11:17:40 agc Exp $");
+__RCSID("$NetBSD: wwinit.c,v 1.18 2003/08/13 15:21:07 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -143,7 +143,7 @@ wwinit(void)
 	switch (wwospeed) {
 	default:
 	case B0:
-		wwbaud = 0;
+		wwbaud = 9600;
 		break;
 	case B50:
 		wwbaud = 50;
@@ -200,7 +200,7 @@ wwinit(void)
 		break;
 #ifdef B57600
 	case B57600:
-		wwbaud= 57600;
+		wwbaud = 57600;
 		break;
 #endif
 #ifdef B115200
