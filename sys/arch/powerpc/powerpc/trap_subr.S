@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.54 2003/12/09 09:49:01 simonb Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.55 2004/06/08 19:07:00 kleink Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -76,8 +76,7 @@
 #else /* !defined(PPC_OEA64) */
 
 /*
- * Save/restore MPC601 MQ register.
- * Note: oea_init() relies on this instruction sequence.
+ * Restore segment registers from array.
  */
 #define	RESTORE_SRS(pmap,sr)	mtsr	0,sr; \
 	ldreg	sr,4(pmap);	mtsr	1,sr; \
