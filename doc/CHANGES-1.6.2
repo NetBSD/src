@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.171 2003/10/02 20:40:04 tron Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.172 2003/10/02 20:41:56 tron Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -2195,18 +2195,12 @@ sys/net/if_vlan.c				1.37
 	[itojun, ticket #1499]
 
 sys/netinet6/mld6.c				1.22 (via patch)
-sys/netinet6/ip6_output.c			1.54
-sys/netinet6/ip6_var.h				1.21
-sys/netinet6/nd6_nbr.c				1.39
+sys/netinet6/ip6_output.c			1.54 (via patch)
+sys/netinet6/ip6_var.h				1.21 (via patch)
+sys/netinet6/nd6_nbr.c				1.39 (via patch)
 
-	- sync up MLD declaration with RFC3542 (s/MLD6/MLD/)
-	part of advanced API update (RFC2292 -> 3542).
-	sync with latest KAME in6_ifaddr/prefix/default router manipulation.
-	behavior changes:
-	- two iocts used by ndp(8) are now obsolete (backward compat provided).
-	  use sysctl path instead.
-	- lo0 does not get ::1 automatically.  it will get ::1 when lo0 comes
-	  up.
+	Correct IPv6 MLD/DAD behavior (when sending IPv6 packets with :: as the
+	source address).
 	[itojun, ticket #1491]
 
 sys/netinet6/ip6_forward.c			1.37
