@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.25 1995/01/18 02:54:23 mycroft Exp $	*/
+/*	$NetBSD: boot.c,v 1.26 1995/01/18 15:42:30 mycroft Exp $	*/
 
 /*
  * Ported to boot 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
@@ -309,4 +309,3 @@ getbootdev(howto)
 	} else
 		putchar('\n');
 }
-
