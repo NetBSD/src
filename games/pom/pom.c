@@ -1,4 +1,4 @@
-/*	$NetBSD: pom.c,v 1.9 1998/06/13 01:09:22 jeremy Exp $	*/
+/*	$NetBSD: pom.c,v 1.10 1998/07/25 10:36:54 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -45,7 +45,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)pom.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pom.c,v 1.9 1998/06/13 01:09:22 jeremy Exp $");
+__RCSID("$NetBSD: pom.c,v 1.10 1998/07/25 10:36:54 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -69,7 +69,7 @@ __RCSID("$NetBSD: pom.c,v 1.9 1998/06/13 01:09:22 jeremy Exp $");
 #include <tzfile.h>
 
 #define	PI	  3.141592654
-#define	EPOCH	  85
+#define	EPOCH	  85		/* really 1985 */
 #define	EPSILONg  279.611371	/* solar ecliptic long at EPOCH */
 #define	RHOg	  282.680403	/* solar ecliptic long of perigee at EPOCH */
 #define	ECCEN	  0.01671542	/* solar orbit eccentricity */
@@ -106,7 +106,7 @@ main(argc, argv)
 	days = (GMT->tm_yday + 1) + ((GMT->tm_hour +
 	    (GMT->tm_min / 60.0) + (GMT->tm_sec / 3600.0)) / 24.0);
 	for (cnt = EPOCH; cnt < GMT->tm_year; ++cnt)
-		days += isleap(cnt) ? 366 : 365;
+		days += isleap(cnt + 1900) ? 366 : 365;
 	today = potm(days) + .5;
 	(void)printf("The Moon is ");
 	if ((int)today == 100)
