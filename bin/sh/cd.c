@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.18 1996/10/16 14:29:42 christos Exp $	*/
+/*	$NetBSD: cd.c,v 1.19 1996/12/22 08:34:34 cjs Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)cd.c	8.2 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: cd.c,v 1.18 1996/10/16 14:29:42 christos Exp $";
+static char rcsid[] = "$NetBSD: cd.c,v 1.19 1996/12/22 08:34:34 cjs Exp $";
 #endif
 #endif /* not lint */
 
@@ -134,17 +134,58 @@ docd(dest, print)
 	char *dest;
 	int print;
 {
+	register char *p;
+	register char *q;
+	char *component;
+	struct stat statb;
+	int first;
+	int badstat;
 
 	TRACE(("docd(\"%s\", %d) called\n", dest, print));
+
+	/*
+	 *  Check each component of the path. If we find a symlink or
+	 *  something we can't stat, clear curdir to force a getcwd()
+	 *  next time we get the value of the current directory.
+	 */
+	badstat = 0;
+	cdcomppath = stalloc(strlen(dest) + 1);
+	scopy(dest, cdcomppath);
+	STARTSTACKSTR(p);
+	if (*dest == '/') {
+		STPUTC('/', p);
+		cdcomppath++;
+	}
+	first = 1;
+	while ((q = getcomponent()) != NULL) {
+		if (q[0] == '\0' || (q[0] == '.' && q[1] == '\0'))
+			continue;
+		if (! first)
+			STPUTC('/', p);
+		first = 0;
+		component = q;
+		while (*q)
+			STPUTC(*q++, p);
+		if (equal(component, ".."))
+			continue;
+		STACKSTRNUL(p);
+		if ((lstat(stackblock(), &statb) < 0)
+		    || (S_ISLNK(statb.st_mode)))  {
+			/* print = 1; */
+			badstat = 1;
+			break;
+		}
+	}
+
 	INTOFF;
 	if (chdir(dest) < 0) {
 		INTON;
 		return -1;
 	}
-	updatepwd(dest);
+	updatepwd(badstat ? NULL : dest);
 	INTON;
 	if (print && iflag)
-		out1fmt("%s\n", stackblock());
+		out1fmt("%s\n", curdir);
 	return 0;
 }
 
@@ -191,6 +232,23 @@ updatepwd(dir)
 	char *p;
 
 	hashcd();				/* update command hash table */
+
+	/*
+	 * If our argument is NULL, we don't know the current directory
+	 * any more because we traversed a symbolic link or something
+	 * we couldn't stat().
+	 */
+	if (dir == NULL)  {
+		if (prevdir)
+			ckfree(prevdir);
+		INTOFF;
+		prevdir = curdir;
+		curdir = NULL;
+		getpwd();
+		INTON;
+		return;
+	}
+
 	cdcomppath = stalloc(strlen(dir) + 1);
 	scopy(dir, cdcomppath);
 	STARTSTACKSTR(new);
