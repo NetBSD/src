@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.48 2003/02/20 22:16:05 atatat Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.49 2003/02/23 19:13:44 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -105,6 +105,9 @@
 /*
  * The address to which unspecified mapping requests default
  */
+#ifdef _KERNEL_OPT
+#include "opt_uvm.h"
+#endif
 #define __HAVE_TOPDOWN_VM
 #ifdef USE_TOPDOWN_VM
 #define VM_DEFAULT_ADDRESS(da, sz) \

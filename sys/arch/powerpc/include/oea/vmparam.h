@@ -156,6 +156,9 @@
  * Put the stack in it's own segment and start mmaping at the
  * top of the next lower segment.
  */
+#ifdef _KERNEL_OPT
+#include "opt_uvm.h"
+#endif
 #define	__HAVE_TOPDOWN_VM
 #ifdef USE_TOPDOWN_VM
 #define	VM_DEFAULT_ADDRESS(da, sz) \
