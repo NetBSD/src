@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.112 2000/07/04 15:33:28 jdolecek Exp $	*/
+/*	$NetBSD: systm.h,v 1.113 2000/07/14 07:21:22 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -89,13 +89,13 @@ extern int securelevel;		/* system security level */
 extern const char *panicstr;	/* panic message */
 extern int doing_shutdown;	/* shutting down */
 
-extern char copyright[];	/* system copyright */
+extern const char copyright[];	/* system copyright */
 extern char cpu_model[];	/* machine/cpu model name */
 extern char machine[];		/* machine type */
 extern char machine_arch[];	/* machine architecture */
-extern char osrelease[];	/* short system version */
-extern char ostype[];		/* system type */
-extern char version[];		/* system version */
+extern const char osrelease[];	/* short system version */
+extern const char ostype[];	/* system type */
+extern const char version[];	/* system version */
 
 extern int autonicetime;        /* time (in seconds) before autoniceval */
 extern int autoniceval;         /* proc priority after autonicetime */
