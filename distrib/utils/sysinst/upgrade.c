@@ -1,4 +1,4 @@
-/*	$NetBSD: upgrade.c,v 1.1.1.1 1997/09/26 23:02:54 phil Exp $	*/
+/*	$NetBSD: upgrade.c,v 1.2 1997/10/07 04:01:34 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -55,10 +55,17 @@ void do_upgrade(void)
 	if (!yesno)
 		return;
 
-	if (find_disks_and_mem_size () < 0)
+	get_ramsize ();
+
+	if (find_disks () < 0)
 		return;
 
-	fsck_disks();
+	if (!fsck_disks())
+		return;
+
+	/* Do any md updating of the file systems ... e.g. bootblocks... */
+	if (!md_update ())
+		return;
 
 	/* Get the distribution files */
 	process_menu (MENU_distmedium);

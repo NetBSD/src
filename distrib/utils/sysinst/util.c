@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.3 1997/10/01 05:04:30 phil Exp $	*/
+/*	$NetBSD: util.c,v 1.4 1997/10/07 04:01:34 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -40,10 +40,25 @@
 
 #include <stdio.h>
 #include <unistd.h>
+#include <sys/param.h>
+#include <sys/sysctl.h>
 #include <curses.h>
 #include "defs.h"
 #include "msg_defs.h"
 #include "menu_defs.h"
+
+
+void get_ramsize(void)
+{
+	long len=sizeof(long);
+	int mib[2] = {CTL_HW, HW_PHYSMEM};
+	
+	sysctl(mib, 2, (void *)&ramsize, (size_t *)&len, NULL, 0);
+
+	/* Find out how many Megs ... round up. */
+	rammb = (ramsize + MEG - 1) / MEG;
+}
+
 
 static int asked = 0;
 
