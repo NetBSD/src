@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_r4000.S,v 1.12 1995/04/28 23:17:51 jonathan Exp $	*/
+/*	$NetBSD: locore_r4000.S,v 1.13 1995/05/05 02:45:31 mellon Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -2299,7 +2299,6 @@ LEAF(MachTLBUpdate)
 	mtc0	v1, MACH_COP_0_STATUS_REG	# Restore the status register
 END(MachTLBUpdate)
 
-#if defined(DEBUG)
 /*--------------------------------------------------------------------------
  *
  * MachTLBFind --
@@ -2410,7 +2409,6 @@ LEAF(MachGetCauseReg)
 	j	ra
 	nop
 END(MachGetCauseReg)
-#endif /* DEBUG */
 
 /*----------------------------------------------------------------------------
  *
@@ -3133,14 +3131,12 @@ LEAF(kdbpanic)
 END(kdbpanic)
 #endif /* KADB */
 
-#ifdef DEBUG
 LEAF(cpu_getregs)
 	sw	sp, 0(a0)
 	sw	ra, 4(a0)
 	j	ra
 	sw	s8, 8(a0)
 END(cpu_getregs)
-#endif /* DEBUG */
 
 /*
  * Interrupt counters for vmstat.
