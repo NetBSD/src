@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 1999/02/13 02:54:30 lukem Exp $
+#	$NetBSD: Makefile,v 1.8 1999/04/03 16:28:49 simonb Exp $
 
 LIB=	l
 SRCS=	libmain.c libyywrap.c
@@ -10,5 +10,5 @@ LINKS=	/usr/lib/libl.a /usr/lib/libfl.a
 .include <bsd.lib.mk>
 
 .if ${MKPROFILE} != "no"
-LINKS+=	/usr/lib/libl_p.a /usr/lib/libfl_p.a
+LINKS+=	${LIBDIR}/libl_p.a ${LIBDIR}/libfl_p.a
 .endif
