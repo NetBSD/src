@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.112.4.2 2001/11/17 23:18:04 scw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.112.4.3 2001/12/02 12:30:31 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -205,6 +205,9 @@ cpu_startup()
 #ifdef DEBUG
 	pmapdebug = 0;
 #endif
+
+	if (fputype != FPU_NONE)
+		m68k_make_fpu_idle_frame();
 
 	/*
 	 * Good {morning,afternoon,evening,night}.

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.100.4.2 2001/11/18 18:44:19 scw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.100.4.3 2001/12/02 12:30:35 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -238,6 +238,9 @@ cpu_startup()
 #if 0
 	rtclockinit(); /* XXX */
 #endif
+
+	if (fputype != FPU_NONE)
+		m68k_make_fpu_idle_frame();
 
 	/*
 	 * Initialize error message buffer (at end of core).

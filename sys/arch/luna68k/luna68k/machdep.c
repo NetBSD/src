@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.19.4.2 2001/11/18 18:10:20 scw Exp $ */
+/* $NetBSD: machdep.c,v 1.19.4.3 2001/12/02 12:30:32 scw Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.19.4.2 2001/11/18 18:10:20 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.19.4.3 2001/12/02 12:30:32 scw Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -249,6 +249,9 @@ cpu_startup()
 	vsize_t size;
 	char pbuf[9];
 	extern void greeting __P((void));
+
+	if (fputype != FPU_NONE)
+		m68k_make_fpu_idle_frame();
 
 	/*
 	 * Initialize the kernel crash dump header.

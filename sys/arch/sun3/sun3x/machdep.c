@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.76.4.2 2001/11/18 19:39:05 scw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.76.4.3 2001/12/02 12:30:34 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -187,6 +187,9 @@ cpu_startup()
 	int base, residual;
 	vaddr_t minaddr, maxaddr;
 	char pbuf[9];
+
+	if (fputype != FPU_NONE)
+		m68k_make_fpu_idle_frame();
 
 	/*
 	 * Initialize message buffer (for kernel printf).

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.165.2.2 2001/11/17 21:59:06 scw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.165.2.3 2001/12/02 12:30:30 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -221,6 +221,9 @@ cpu_startup()
 #endif
 	paddr_t minaddr, maxaddr;
 	paddr_t size = 0;
+
+	if (fputype != FPU_NONE)
+		m68k_make_fpu_idle_frame();
 
 	/*
 	 * Initialize error message buffer (at end of core).
