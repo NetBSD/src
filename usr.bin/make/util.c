@@ -1,15 +1,15 @@
-/*	$NetBSD: util.c,v 1.24 2000/01/06 22:23:20 wrstuden Exp $	*/
+/*	$NetBSD: util.c,v 1.25 2000/05/04 18:29:53 drochner Exp $	*/
 
 /*
  * Missing stuff from OS's
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: util.c,v 1.24 2000/01/06 22:23:20 wrstuden Exp $";
+static char rcsid[] = "$NetBSD: util.c,v 1.25 2000/05/04 18:29:53 drochner Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.24 2000/01/06 22:23:20 wrstuden Exp $");
+__RCSID("$NetBSD: util.c,v 1.25 2000/05/04 18:29:53 drochner Exp $");
 #endif
 #endif
 
@@ -366,13 +366,15 @@ signal(s, a)) __P((int))
 #include <varargs.h>
 #endif
 
+#if !defined(__osf__)
 #ifdef _IOSTRG
 #define STRFLAG	(_IOSTRG|_IOWRT)	/* no _IOWRT: avoid stdio bug */
 #else
 #if 0
 #define STRFLAG	(_IOREAD)		/* XXX: Assume svr4 stdio */
 #endif
-#endif
+#endif /* _IOSTRG */
+#endif /* __osf__ */
 
 int
 vsnprintf(s, n, fmt, args)
@@ -432,7 +434,8 @@ snprintf(va_alist)
 	return rv;
 }
 
-#if !defined(__SVR4) && !defined(__linux__) && !defined(ultrix) && !defined(__sgi)
+#if !defined(__SVR4) && !defined(__linux__) && !defined(ultrix) \
+	&& !defined(__sgi) && !defined(__osf__)
 
 int
 strftime(buf, len, fmt, tm)
