@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.390 2004/08/12 18:26:56 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.391 2004/08/12 18:27:49 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -6452,3 +6452,8 @@ lib/libpthread/pthread_rwlock.c			1.9
 	pthread_rwlock_timedrdlock/pthread_rwlock_timedwrlock:
 	fix lock/unlock inversions in ERRORCHECK.
 	[yamt, ticket #751]
+
+lib/libc/stdlib/Makefile.inc			1.57
+
+	Actually add _Exit.
+	[yamt, ticket #750]
