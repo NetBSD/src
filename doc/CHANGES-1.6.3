@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.38 2004/03/28 07:48:11 jmc Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.39 2004/03/28 08:03:02 jmc Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -236,3 +236,9 @@ gnu/lib/libstdc++/io/Makefile		1.10 via patch
 	default rules cause problems if "valarray.cc" is newer than "valarray"
 	(for example).
 	[junyoung, ticket #1611]
+
+sys/kern/kern_exit.c			1.104-1.106
+
+	Make sure that, if orphaned child is being traced, it's reparented back 
+	to the original parent before it's killed.
+	[junyoung, ticket #1615]
