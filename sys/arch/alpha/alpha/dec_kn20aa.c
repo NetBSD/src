@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_kn20aa.c,v 1.5 1996/06/12 19:00:28 cgd Exp $	*/
+/*	$NetBSD: dec_kn20aa.c,v 1.6 1996/06/12 22:06:50 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -61,8 +61,7 @@ dec_kn20aa_modelname()
 }
 
 void
-dec_kn20aa_consinit(constype)
-	char *constype;
+dec_kn20aa_consinit()
 {
 	struct ctb *ctb;
 	struct cia_config *ccp;
@@ -73,7 +72,6 @@ dec_kn20aa_consinit(constype)
 
 	ctb = (struct ctb *)(((caddr_t)hwrpb) + hwrpb->rpb_ctb_off);
 
-	printf("constype = %s\n", constype);
 	printf("ctb->ctb_term_type = 0x%lx\n", ctb->ctb_term_type);
 	printf("ctb->ctb_turboslot = 0x%lx\n", ctb->ctb_turboslot);
 
