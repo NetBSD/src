@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hippisubr.c,v 1.9 2000/12/18 19:44:34 thorpej Exp $	*/
+/*	$NetBSD: if_hippisubr.c,v 1.10 2001/01/17 00:30:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -347,7 +347,6 @@ hippi_ip_input(ifp, m)
 }
 #endif
 
-
 /*
  * Perform common duties while attaching to interface list
  */
@@ -356,7 +355,6 @@ hippi_ifattach(ifp, lla)
 	struct ifnet *ifp;
 	caddr_t lla;
 {
-	struct sockaddr_dl *sdl;
 
 	ifp->if_type = IFT_HIPPI;
 	ifp->if_addrlen = 6;  /* regular 802.3 MAC address */
@@ -366,12 +364,9 @@ hippi_ifattach(ifp, lla)
 	ifp->if_output = hippi_output;
 	ifp->if_input = hippi_input;
 	ifp->if_baudrate = IF_Mbps(800);	/* XXX double-check */
-	if ((sdl = ifp->if_sadl) &&
-	    sdl->sdl_family == AF_LINK) {
-		sdl->sdl_type = IFT_HIPPI;
-		sdl->sdl_alen = ifp->if_addrlen;
-		bcopy((caddr_t)lla, LLADDR(sdl), ifp->if_addrlen);
-	}
+
+	if_alloc_sadl(ifp);
+	memcpy(LLADDR(ifp->if_sadl), lla, ifp->if_addrlen);
 
 #if NBPFILTER > 0
 	bpfattach(ifp, DLT_HIPPI, sizeof(struct hippi_header));

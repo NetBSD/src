@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stf.c,v 1.7 2000/12/18 19:50:45 thorpej Exp $	*/
+/*	$NetBSD: if_stf.c,v 1.8 2001/01/17 00:30:52 thorpej Exp $	*/
 /*	$KAME: if_stf.c,v 1.39 2000/06/07 23:35:18 itojun Exp $	*/
 
 /*
@@ -242,6 +242,7 @@ stf_clone_create(ifc, unit)
 	sc->sc_if.if_snd.ifq_maxlen = IFQ_MAXLEN;
 #endif
 	if_attach(&sc->sc_if);
+	if_alloc_sadl(&sc->sc_if);
 #if NBPFILTER > 0
 	bpfattach(&sc->sc_if, DLT_NULL, sizeof(u_int));
 #endif

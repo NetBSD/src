@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.19 2001/01/16 15:28:27 itojun Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.20 2001/01/17 00:30:52 thorpej Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -922,6 +922,8 @@ sppp_attach(struct ifnet *ifp)
 	sp->pp_up = lcp.Up;
 	sp->pp_down = lcp.Down;
 
+	if_alloc_sadl(ifp);
+
 	sppp_lcp_init(sp);
 	sppp_ipcp_init(sp);
 	sppp_ipv6cp_init(sp);
@@ -975,6 +977,8 @@ sppp_detach(struct ifnet *ifp)
 #endif
 	);
 #endif /* __NetBSD__ */
+
+	if_free_sadl(ifp);
 }
 
 /*
