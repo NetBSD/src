@@ -1,4 +1,4 @@
-.\"	$NetBSD: tree.3,v 1.1 2003/07/07 14:39:27 yamt Exp $
+.\"	$NetBSD: tree.3,v 1.2 2003/07/09 14:40:53 wiz Exp $
 .\"	$OpenBSD: tree.3,v 1.9 2003/05/20 09:13:38 jmc Exp $
 .\"/*
 .\" * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -68,10 +68,9 @@
 .Nm RB_INIT ,
 .Nm RB_INSERT ,
 .Nm RB_REMOVE
-.Nd "implementations of splay and red-black trees"
+.Nd implementations of splay and red-black trees
 .Sh SYNOPSIS
-.Fd #include <sys/tree.h>
-.Pp
+.In sys/tree.h
 .Fn SPLAY_PROTOTYPE "NAME" "TYPE" "FIELD" "CMP"
 .Fn SPLAY_GENERATE "NAME" "TYPE" "FIELD" "CMP"
 .Fn SPLAY_ENTRY "TYPE"
@@ -242,7 +241,7 @@ The splay tree can also be initialized statically by using the
 .Fn SPLAY_INITIALIZER
 macro like this:
 .Bd -literal -offset indent
-SPLAY_HEAD(HEADNAME, TYPE) head = SPLAY_INITIALIZER(&head);
+SPLAY_HEAD(HEADNAME, TYPE) head = SPLAY_INITIALIZER(\*[Am]head);
 .Ed
 .Pp
 The
@@ -264,7 +263,7 @@ macro can be used to find a particular element in the tree.
 .Bd -literal -offset indent
 struct TYPE find, *res;
 find.key = 30;
-res = SPLAY_FIND(NAME, head, &find);
+res = SPLAY_FIND(NAME, head, \*[Am]find);
 .Ed
 .Pp
 The
@@ -275,7 +274,7 @@ and
 .Fn SPLAY_NEXT
 macros can be used to traverse the tree:
 .Bd -literal -offset indent
-for (np = SPLAY_MIN(NAME, &head); np != NULL; np = SPLAY_NEXT(NAME, &head, np))
+for (np = SPLAY_MIN(NAME, \*[Am]head); np != NULL; np = SPLAY_NEXT(NAME, \*[Am]head, np))
 .Ed
 .Pp
 Or, for simplicity, one can use the
@@ -370,7 +369,7 @@ The redblack tree can also be initialized statically by using the
 .Fn RB_INITIALIZER
 macro like this:
 .Bd -literal -offset indent
-RB_HEAD(HEADNAME, TYPE) head = RB_INITIALIZER(&head);
+RB_HEAD(HEADNAME, TYPE) head = RB_INITIALIZER(\*[Am]head);
 .Ed
 .Pp
 The
@@ -392,7 +391,7 @@ macro can be used to find a particular element in the tree.
 .Bd -literal -offset indent
 struct TYPE find, *res;
 find.key = 30;
-res = RB_FIND(NAME, head, &find);
+res = RB_FIND(NAME, head, \*[Am]find);
 .Ed
 .Pp
 The
@@ -403,7 +402,7 @@ and
 .Fn RB_NEXT
 macros can be used to traverse the tree:
 .Bd -literal -offset indent
-for (np = RB_MIN(NAME, &head); np != NULL; np = RB_NEXT(NAME, &head, np))
+for (np = RB_MIN(NAME, \*[Am]head); np != NULL; np = RB_NEXT(NAME, \*[Am]head, np))
 .Ed
 .Pp
 Or, for simplicity, one can use the
@@ -445,7 +444,7 @@ Both
 and
 .Fn SPLAY_INSERT
 return
-.Va NULL
+.Dv NULL
 if the element was inserted in the tree successfully, otherwise they
 return a pointer to the element with the colliding key.
 .Pp
@@ -454,7 +453,8 @@ Accordingly,
 and
 .Fn SPLAY_REMOVE
 return the pointer to the removed element, otherwise they return
-.Va NULL
+.Dv NULL
 to indicate an error.
 .Sh AUTHORS
-The author of the tree macros is Niels Provos.
+The author of the tree macros is
+.An Niels Provos .
