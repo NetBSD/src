@@ -1,4 +1,4 @@
-#	$NetBSD: files.isapnp,v 1.8 1998/01/12 09:27:12 thorpej Exp $
+#	$NetBSD: files.isapnp,v 1.9 1998/01/23 20:40:58 mycroft Exp $
 #
 # Config file and device description for machine-independent ISAPnP code.
 # Included by ports that need it.
@@ -28,6 +28,10 @@ file	dev/isapnp/if_ne_isapnp.c		ne_isapnp
 # serial ports/modems
 attach	com at isapnp with com_isapnp
 file	dev/isapnp/com_isapnp.c			com_isapnp
+
+# IDE disks
+attach	wdc at isapnp with wdc_isapnp
+file	dev/isapnp/wdc_isapnp.c			wdc_isapnp
 
 #
 # ISAPnP Sound hardware
