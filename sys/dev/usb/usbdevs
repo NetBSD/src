@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.249 2002/05/17 01:07:17 groo Exp $
+$NetBSD: usbdevs,v 1.250 2002/05/19 06:13:29 augustss Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -548,7 +548,7 @@ product CYPRESS THERMO		0x0002	thermometer
 product CYPRESS FMRADIO		0x1002	FM Radio
 
 /* Daisy Technology products */
-product DAISY DMC		0x6901	PhotoClip Camera
+product DAISY DMC		0x6901	PhotoClip USBMediaReader
 
 /* Dallas Semiconductor products */
 product DALLAS J6502		0x4201	J-6502 speakers
@@ -920,6 +920,7 @@ product MINOLTA X		0x4009	Dimage X
 
 /* Mitsumi products */
 product MITSUMI CDRRW		0x0000	CD-R/RW Drive
+product MITSUMI MOUSE		0x6407	Mouse
 product MITSUMI FDD		0x6901	FDD
 
 /* Mobility products */
