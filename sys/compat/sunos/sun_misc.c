@@ -42,7 +42,7 @@
  *	@(#)sun_misc.c	8.1 (Berkeley) 6/18/93
  *
  * from: Header: sun_misc.c,v 1.16 93/04/07 02:46:27 torek Exp 
- * $Id: sun_misc.c,v 1.7 1993/11/12 03:23:51 deraadt Exp $
+ * $Id: sun_misc.c,v 1.8 1993/11/20 03:08:16 deraadt Exp $
  */
 
 /*
@@ -59,6 +59,7 @@
 #include <sys/file.h>
 #include <sys/filedesc.h>
 #include <sys/ioctl.h>
+#include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/mman.h>
@@ -71,6 +72,7 @@
 #include <sys/vnode.h>
 #include <sys/uio.h>
 #include <sys/wait.h>
+#include <sys/utsname.h>
 
 #include <miscfs/specfs/specdev.h>
 
@@ -228,7 +230,7 @@ sun_sigpending(p, uap, retval)
 	return (copyout((caddr_t)&mask, (caddr_t)uap->mask, sizeof(int)));
 }
 
-/* TDR: Temporary until sys/dir.h, include/dirent.h and sys/dirent.h are fixed */
+/* XXX: Temporary until sys/dir.h, include/dirent.h and sys/dirent.h are fixed */
 struct dirent {
 	u_long	d_fileno;		/* file number of entry */
 	u_short	d_reclen;		/* length of this record */
@@ -565,7 +567,99 @@ sun_fchroot(p, uap, retval)
 /*
  * XXX: This needs cleaning up.
  */
-auditsys(...)
+sun_auditsys(...)
 {
 	return 0;
+}
+
+struct sun_utsname {
+	char    sysname[9];
+	char    nodename[9];
+	char    nodeext[65-9];
+	char    release[9];
+	char    version[9];
+	char    machine[9];
+};
+
+struct sun_uname_args {
+	struct sun_utsname *name;
+};
+sun_uname(p, uap, retval)
+	struct proc *p;
+	struct sun_uname_args *uap;
+	int *retval;
+{
+	struct sun_utsname sut;
+
+	/* first update utsname just as with NetBSD uname() */
+	bcopy(hostname, utsname.nodename, sizeof(utsname.nodename));
+	utsname.nodename[sizeof(utsname.nodename)-1] = '\0';
+
+	/* then copy it over into SunOS struct utsname */
+	bzero(&sut, sizeof(sut));
+	bcopy(utsname.sysname, sut.sysname, sizeof(sut.sysname) - 1);
+	bcopy(utsname.nodename, sut.nodename, sizeof(sut.nodename) - 1);
+	bcopy(utsname.release, sut.release, sizeof(sut.release) - 1);
+	bcopy(utsname.version, sut.version, sizeof(sut.version) - 1);
+	bcopy(utsname.machine, sut.machine, sizeof(sut.machine) - 1);
+
+	return copyout((caddr_t)&sut, (caddr_t)uap->name, sizeof(struct sun_utsname));
+}
+
+struct sun_setpgid_args {
+	int	pid;	/* target process id */
+	int	pgid;	/* target pgrp id */
+};
+int
+sun_setpgid(p, uap, retval)
+	struct proc *p;
+	struct sun_setpgid_args *uap;
+	int *retval;
+{
+	/*
+	 * difference to our setpgid call is to include backwards
+	 * compatibility to pre-setsid() binaries. Do setsid()
+	 * instead of setpgid() in those cases where the process
+	 * tries to create a new session the old way.
+	 */
+	if (!uap->pgid && (!uap->pid || uap->pid == p->p_pid))
+		return setsid(p, uap, retval);
+	else
+		return setpgid(p, uap, retval);
+}
+
+struct sun_open_args {
+	char	*fname;
+	int	fmode;
+	int	crtmode;
+};
+sun_open(p, uap, retval)
+	struct proc *p;
+	struct sun_open_args *uap;
+	int *retval;
+{
+	int l, r;
+	int noctty = uap->fmode & 0x8000;
+	int ret;
+	
+	/* convert mode into NetBSD mode */
+	l = uap->fmode;
+	r =	(l & (0x0001 | 0x0002 | 0x0008 | 0x0040 | 0x0200 | 0x0400 | 0x0800));
+	r |=	((l & (0x0004 | 0x1000 | 0x4000)) ? O_NONBLOCK : 0);
+	r |=	((l & 0x0080) ? O_SHLOCK : 0);
+	r |=	((l & 0x0100) ? O_EXLOCK : 0);
+	r |=	((l & 0x2000) ? O_FSYNC : 0);
+
+	uap->fmode = r;
+	ret = open(p, uap, retval);
+
+	if (!ret && !noctty && SESS_LEADER(p) && !(p->p_flag & SCTTY)) {
+		struct filedesc *fdp = p->p_fd;
+		struct file *fp = fdp->fd_ofiles[*retval];
+
+		/* ignore any error, just give it a try */
+		if (fp->f_type == DTYPE_VNODE)
+			(fp->f_ops->fo_ioctl)(fp, TIOCSCTTY, (caddr_t) 0, p);
+	}
+	return ret;
 }
