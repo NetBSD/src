@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.201 2003/11/04 16:57:57 mycroft Exp $
+#	$NetBSD: files.pci,v 1.202 2003/12/05 22:34:44 cube Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -515,7 +515,7 @@ attach	vr at pci
 file	dev/pci/if_vr.c			vr
 
 # SiS 900 Fast Ethernet controllers
-device	sip: ether, ifnet, arp, mii
+device	sip: ether, ifnet, arp, mii, mii_bitbang
 attach	sip at pci
 file	dev/pci/if_sip.c		sip
 
