@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.38 2000/03/26 20:54:46 kleink Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.39 2000/04/10 00:28:05 thorpej Exp $	*/
 
 /*
  *
@@ -132,7 +132,8 @@
 /*
  * flags for uvm_pagealloc_strat()
  */
-#define UVM_PGA_USERESERVE		0x0001
+#define UVM_PGA_USERESERVE	0x0001	/* ok to use reserve pages */
+#define	UVM_PGA_ZERO		0x0002	/* returned page must be zero'd */
 
 /*
  * lockflags that control the locking behavior of various functions.

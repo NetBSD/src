@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.32 2000/04/02 20:39:18 thorpej Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.33 2000/04/10 00:28:05 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -960,6 +960,15 @@ uvm_pagealloc_strat(obj, off, anon, flags, strat, free_list)
 	pg->owner_tag = NULL;
 #endif
 	UVM_PAGE_OWN(pg, "new alloc");
+
+	if (flags & UVM_PGA_ZERO) {
+		/*
+		 * This is an inline of uvm_pagezero(); this will change
+		 * when we have pre-zero'd pages.
+		 */
+		pg->flags &= ~PG_CLEAN;
+		pmap_zero_page(VM_PAGE_TO_PHYS(pg));
+	}
 
 	return(pg);
 
