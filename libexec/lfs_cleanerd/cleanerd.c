@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanerd.c,v 1.8 1998/09/11 21:21:29 pk Exp $	*/
+/*	$NetBSD: cleanerd.c,v 1.9 1998/10/07 14:56:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)cleanerd.c	8.5 (Berkeley) 6/10/95";
 #else
-__RCSID("$NetBSD: cleanerd.c,v 1.8 1998/09/11 21:21:29 pk Exp $");
+__RCSID("$NetBSD: cleanerd.c,v 1.9 1998/10/07 14:56:22 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -75,7 +75,7 @@ struct cleaner_stats {
 struct seglist { 
 	int sl_id;	/* segment number */
 	int sl_cost; 	/* cleaning cost */
-	char sl_bytes;	/* bytets in segment */
+	int sl_bytes;	/* bytes in segment */
 };
 
 struct tossstruct {
