@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.73 2001/04/29 00:22:34 fvdl Exp $	*/
+/*	$NetBSD: net.c,v 1.74 2001/05/07 11:49:52 itojun Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -840,7 +840,7 @@ mnt_net_config(void)
 {
 	char ans [5] = "y";
 	char ifconfig_fn [STRSIZE];
-	FILE *f;
+	FILE *ifconf = NULL;
 
 	if (!network_up)
 		return;
@@ -873,27 +873,28 @@ mnt_net_config(void)
 	 * it won't make trouble with IPv4 case either
 	 */
 	snprintf(ifconfig_fn, STRSIZE, "/etc/ifconfig.%s", net_dev);
-	f = target_fopen(ifconfig_fn, "w");
-	if (f != NULL) {
+	ifconf = target_fopen(ifconfig_fn, "w");
+	if (ifconf != NULL) {
 		scripting_fprintf(NULL, "cat <<EOF >>%s%s\n",
 		    target_prefix(), ifconfig_fn);
-		scripting_fprintf(f, "up\n");
+		scripting_fprintf(ifconf, "up\n");
 		scripting_fprintf(NULL, "EOF\n");
 	}
 
 	if ((net_dhcpconf & DHCPCONF_IPADDR) == 0) {
+		FILE *hosts;
+
 		/* Write IPaddr and netmask to /etc/ifconfig.if[0-9] */
-		if (f != NULL) {
+		if (ifconf != NULL) {
 			scripting_fprintf(NULL, "cat <<EOF >>%s%s\n",
 			    target_prefix(), ifconfig_fn);
 			if (*net_media != '\0')
-				scripting_fprintf(f, "%s netmask %s media %s\n",
+				scripting_fprintf(ifconf,
+				    "%s netmask %s media %s\n",
 				    net_ip, net_mask, net_media);
 			else
-				scripting_fprintf(f, "%s netmask %s\n", net_ip,
-				    net_mask);
-			
-			fclose(f);
+				scripting_fprintf(ifconf, "%s netmask %s\n",
+				    net_ip, net_mask);
 			scripting_fprintf(NULL, "EOF\n");
 		}
 
@@ -902,18 +903,19 @@ mnt_net_config(void)
 		 * Be careful not to clobber any existing contents.
 		 * Relies on ordered seach of /etc/hosts. XXX YP?
 		 */
-		f = target_fopen("/etc/hosts", "a");
-		if (f != 0) {
+		hosts = target_fopen("/etc/hosts", "a");
+		if (hosts != 0) {
 			scripting_fprintf(NULL, "cat <<EOF >>%s/etc/hosts\n",
 			    target_prefix());
-			write_etc_hosts(f);
-			(void)fclose(f);
+			write_etc_hosts(hosts);
+			(void)fclose(hosts);
 			scripting_fprintf(NULL, "EOF\n");
+
+			fclose(hosts);
 		}
 
 		add_rc_conf("defaultroute=\"%s\"\n", net_defroute);
 	} else {
-		fclose(f);
 		add_rc_conf("dhclient=YES\n");
 		add_rc_conf("dhclient_flags=\"%s\"\n", net_dev);
         }
@@ -921,10 +923,17 @@ mnt_net_config(void)
 #ifdef INET6
 	if ((net_ip6conf & IP6CONF_AUTOHOST) != 0) {
 		add_rc_conf("ip6mode=autohost\n");
-		add_rc_conf("rtsol=YES\n");
-		add_rc_conf("rtsol_flags=\"%s\"\n", net_dev);
+		if (ifconf != NULL) {
+			scripting_fprintf(NULL, "cat <<EOF >>%s%s\n",
+			    target_prefix(), ifconfig_fn);
+			scripting_fprintf(ifconf, "!rtsol %s\n", net_dev);
+			scripting_fprintf(NULL, "EOF\n");
+		}
 	}
 #endif
+
+	if (ifconf)
+		fclose(ifconf);
 
 	fflush(NULL);
 }
