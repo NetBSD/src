@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.10 1998/08/13 02:10:58 eeh Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.11 1998/08/28 20:05:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -830,11 +830,12 @@ pool_page_alloc(sz, flags, mtype)
 	int flags;
 	int mtype;
 {
+	boolean_t waitok = (flags & PR_WAITOK) ? TRUE : FALSE;
 
 #if defined(UVM)
-	return ((void *)uvm_km_alloc_poolpage());
+	return ((void *)uvm_km_alloc_poolpage(waitok));
 #else
-	return ((void *)kmem_alloc_poolpage());
+	return ((void *)kmem_alloc_poolpage(waitok));
 #endif
 }
 
