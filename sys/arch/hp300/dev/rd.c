@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.18 1996/01/10 20:54:29 thorpej Exp $	*/
+/*	$NetBSD: rd.c,v 1.19 1996/02/03 03:00:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -252,8 +252,6 @@ rdmatch(hd)
 	bzero(&rs->sc_dkdev, sizeof(rs->sc_dkdev));
 	rs->sc_dkdev.dk_name = rs->sc_xname;
 	disk_attach(&rs->sc_dkdev);
-
-		return (0);
 
 	return (1);
 }
