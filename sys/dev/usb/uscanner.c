@@ -1,4 +1,4 @@
-/*	$NetBSD: uscanner.c,v 1.28 2002/05/12 08:04:41 simonb Exp $	*/
+/*	$NetBSD: uscanner.c,v 1.28.4.1 2003/01/26 09:14:59 jmc Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.28 2002/05/12 08:04:41 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.28.4.1 2003/01/26 09:14:59 jmc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -178,8 +178,10 @@ static const struct uscan_info uscanner_devs[] = {
  {{ USB_VENDOR_EPSON, USB_PRODUCT_EPSON_610 }, 0 },
  {{ USB_VENDOR_EPSON, USB_PRODUCT_EPSON_1200 }, 0 },
  {{ USB_VENDOR_EPSON, USB_PRODUCT_EPSON_1240 }, 0 },
+ {{ USB_VENDOR_EPSON, USB_PRODUCT_EPSON_1260 }, 0 },
  {{ USB_VENDOR_EPSON, USB_PRODUCT_EPSON_1600 }, 0 },
  {{ USB_VENDOR_EPSON, USB_PRODUCT_EPSON_1640 }, 0 },
+ {{ USB_VENDOR_EPSON, USB_PRODUCT_EPSON_1660 }, 0 },
  {{ USB_VENDOR_EPSON, USB_PRODUCT_EPSON_640U }, 0 },
  {{ USB_VENDOR_EPSON, USB_PRODUCT_EPSON_1650 }, 0 },
  {{ USB_VENDOR_EPSON, USB_PRODUCT_EPSON_GT9700F }, USC_KEEP_OPEN },
