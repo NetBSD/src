@@ -1,9 +1,9 @@
-# $NetBSD: AMIGA,v 1.61 2003/04/16 20:43:29 is Exp $
+# $NetBSD: AMIGA,v 1.62 2003/07/27 20:42:41 is Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
 #
-# Created from: # NetBSD: GENERIC.in,v 1.12 2003/04/16 20:42:34 is Exp $
+# Created from: # NetBSD: GENERIC.in,v 1.13 2003/07/27 20:36:18 is Exp $
 #
 # GENERIC machine description file
 #
@@ -28,7 +28,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.61 $"
+#ident 		"GENERIC-$Revision: 1.62 $"
 
 
 maxusers	8
@@ -462,5 +462,7 @@ options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 
 pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
+
+pseudo-device	ksyms			# /dev/ksyms (kernel symbols)
 
 config	netbsd root on ? type ?
