@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.78 2000/06/27 17:52:34 mrg Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.79 2000/06/28 03:30:42 mrg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -76,8 +76,6 @@
 #include <nfs/nfs_var.h>
 
 #include <miscfs/specfs/specdev.h>
-
-#include <vm/vm.h>
 
 #include <netinet/in.h>
 #ifdef ISO
