@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.5 1999/01/29 16:10:06 castor Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.6 1999/02/16 05:06:27 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -121,6 +121,8 @@
  */
 	.set	noreorder
 	.set	mips3
+	.text
+
 /*
  *----------------------------------------------------------------------------
  *
@@ -138,8 +140,7 @@
  *
  *----------------------------------------------------------------------------
  */
-	.globl	_C_LABEL(mips3_TLBMiss)
-_C_LABEL(mips3_TLBMiss):
+VECTOR(mips3_TLBMiss, unknown)
 	.set	noat
 	dmfc0	k0, MIPS_COP_0_BAD_VADDR	# get the virtual address
 	dmfc0	k1, MIPS_COP_0_TLB_XCONTEXT
@@ -184,8 +185,7 @@ _C_LABEL(mips3_TLBMiss):
 5:
 	j	mips3_SlowFault
 	nop
-	.globl	_C_LABEL(mips3_TLBMissEnd)
-_C_LABEL(mips3_TLBMissEnd):
+VECTOR_END(mips3_TLBMiss)
 
 /*
  * mips3_XTLBMiss routine
@@ -202,8 +202,7 @@ _C_LABEL(mips3_TLBMissEnd):
  * Don't check for invalid pte's here. We load them as well and
  * let the processor trap to load the correct value after service.
  */
-	.globl	_C_LABEL(mips3_XTLBMiss)
-_C_LABEL(mips3_XTLBMiss):
+VECTOR(mips3_XTLBMiss, unknown)
 	dmfc0	k0, MIPS_COP_0_BAD_VADDR	# get the virtual address
 	dmfc0	k1, MIPS_COP_0_TLB_XCONTEXT
 	bltz	k0, 4f
@@ -247,8 +246,8 @@ _C_LABEL(mips3_XTLBMiss):
 5:
 	j	mips3_SlowFault
 	nop
-	.globl	_C_LABEL(mips3_XTLBMissEnd)
-_C_LABEL(mips3_XTLBMissEnd):
+VECTOR_END(mips3_XTLBMiss)
+
 	.set	at
 
 /*
@@ -264,8 +263,7 @@ _C_LABEL(mips3_XTLBMissEnd):
  * NOTE: This code must be relocatable!!!
  *----------------------------------------------------------------------------
  */
-	.globl	_C_LABEL(mips3_exception)
-_C_LABEL(mips3_exception):
+VECTOR(mips3_exception, unknown)
 /*
  * Find out what mode we came from and jump to the proper handler.
  */
@@ -290,8 +288,7 @@ _C_LABEL(mips3_exception):
 	j	k0				# jump to the function
 	nop
 	.set	at
-	.globl	_C_LABEL(mips3_exceptionEnd)
-_C_LABEL(mips3_exceptionEnd):
+VECTOR_END(mips3_exception)
 
 
 /*----------------------------------------------------------------------------
