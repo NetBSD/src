@@ -252,6 +252,9 @@ ppcnbsd_pc_in_sigtramp (CORE_ADDR pc, char *func_name)
 {
   int rv;
 
+  if (pc == 0)
+	return 0;
+
   rv = nbsd_pc_in_sigtramp (pc, func_name);
   if (rv)
     return rv;
@@ -282,7 +285,14 @@ ppcnbsd_frame_saved_pc (struct frame_info *fi)
 
   if (!fi->signal_handler_caller
       && (fi->next == NULL || !fi->next->signal_handler_caller))
-    return rs6000_frame_saved_pc (fi);
+    {
+      addr = rs6000_frame_saved_pc (fi);
+      if (addr)
+        return addr;
+      return read_memory_unsigned_integer (FRAME_CHAIN (fi)
+					     + tdep->lr_frame_offset,
+					   wordsize);
+  }
 
   if (ppcnbsd_where_in_sigtramp (fi->pc, sigtramp_siginfo2,
 				 sizeof(sigtramp_siginfo2)) >= 0)
@@ -314,7 +324,13 @@ ppcnbsd_frame_chain (struct frame_info *fi)
   CORE_ADDR addr;
 
   if (!fi->signal_handler_caller)
-    return rs6000_frame_chain (fi);
+    {
+      addr = rs6000_frame_chain (fi);
+      if (addr && read_memory_unsigned_integer (addr + tdep->lr_frame_offset,
+						wordsize) == 0)
+	addr = 0;
+      return addr;
+    }
 
   if (ppcnbsd_where_in_sigtramp (fi->pc, sigtramp_siginfo2,
 				 sizeof(sigtramp_siginfo2)) >= 0)
@@ -328,6 +344,14 @@ ppcnbsd_frame_chain (struct frame_info *fi)
 }
 
 static void
+ppcnbsd_init_extra_frame_info (int fromleaf, struct frame_info *fi)
+{
+	rs6000_init_extra_frame_info (fromleaf, fi);
+	fi->signal_handler_caller = 0;
+}
+
+
+static void
 ppcnbsd_init_abi (struct gdbarch_info info,
                   struct gdbarch *gdbarch)
 {
@@ -337,6 +361,7 @@ ppcnbsd_init_abi (struct gdbarch_info info,
   set_gdbarch_pc_in_sigtramp (gdbarch, ppcnbsd_pc_in_sigtramp);
   set_gdbarch_frame_chain (gdbarch, ppcnbsd_frame_chain);
   set_gdbarch_frame_saved_pc (gdbarch, ppcnbsd_frame_saved_pc);
+  set_gdbarch_init_extra_frame_info (gdbarch, ppcnbsd_init_extra_frame_info);
 
   set_solib_svr4_fetch_link_map_offsets (gdbarch,
                                 nbsd_ilp32_solib_svr4_fetch_link_map_offsets);
