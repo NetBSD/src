@@ -1,4 +1,4 @@
-/*	$NetBSD: pkill.c,v 1.4 2002/03/06 12:02:18 ad Exp $	*/
+/*	$NetBSD: pkill.c,v 1.5 2002/10/27 11:49:34 kleink Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pkill.c,v 1.4 2002/03/06 12:02:18 ad Exp $");
+__RCSID("$NetBSD: pkill.c,v 1.5 2002/10/27 11:49:34 kleink Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -156,7 +156,7 @@ main(int argc, char **argv)
 
 	criteria = 0;
 
-	while ((ch = getopt(argc, argv, "G:P:U:d:fg:lns:t:vx")) != -1)
+	while ((ch = getopt(argc, argv, "G:P:U:d:fg:lns:t:u:vx")) != -1)
 		switch (ch) {
 		case 'G':
 			makelist(&rgidlist, LT_GROUP, optarg);
