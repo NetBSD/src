@@ -1,4 +1,4 @@
-/*	$NetBSD: table.c,v 1.20 2003/04/21 08:54:42 itojun Exp $	*/
+/*	$NetBSD: table.c,v 1.21 2004/04/21 19:01:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -36,7 +36,7 @@
 #include "defs.h"
 
 #ifdef __NetBSD__
-__RCSID("$NetBSD: table.c,v 1.20 2003/04/21 08:54:42 itojun Exp $");
+__RCSID("$NetBSD: table.c,v 1.21 2004/04/21 19:01:17 christos Exp $");
 #elif defined(__FreeBSD__)
 __RCSID("$FreeBSD$");
 #else
@@ -1009,10 +1009,10 @@ rtm_lose(struct rt_msghdr *rtm,
  * then fill in the sockaddr_in provided and point it there.
  */
 static int
-get_info_gate(struct sockaddr **sap,
+get_info_gate(const struct sockaddr **sap,
 	      struct sockaddr_in *rsin)
 {
-	struct sockaddr_dl *sdl = (struct sockaddr_dl *)*sap;
+	const struct sockaddr_dl *sdl = (const struct sockaddr_dl *)*sap;
 	struct interface *ifp;
 
 	if (sdl == 0)
@@ -1031,7 +1031,7 @@ get_info_gate(struct sockaddr **sap,
 	rsin->sin_len = sizeof(*rsin);
 #endif
 	rsin->sin_family = AF_INET;
-	*sap = (struct sockaddr*)rsin;
+	*sap = (const struct sockaddr*)rsin;
 
 	return 1;
 }
