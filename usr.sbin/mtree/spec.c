@@ -1,4 +1,4 @@
-/*	$NetBSD: spec.c,v 1.57 2004/07/22 16:51:45 lukem Exp $	*/
+/*	$NetBSD: spec.c,v 1.58 2004/12/01 10:07:56 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -74,7 +74,7 @@
 #if 0
 static char sccsid[] = "@(#)spec.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: spec.c,v 1.57 2004/07/22 16:51:45 lukem Exp $");
+__RCSID("$NetBSD: spec.c,v 1.58 2004/12/01 10:07:56 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -348,7 +348,7 @@ dump_nodes(const char *dir, NODE *root, int pathlast)
 		if (MATCHFLAG(F_NLINK))
 			printf("nlink=%d ", cur->st_nlink);
 		if (MATCHFLAG(F_SLINK))
-			printf("link=%s ", cur->slink);
+			printf("link=%s ", vispath(cur->slink));
 		if (MATCHFLAG(F_SIZE))
 			printf("size=%lld ", (long long)cur->st_size);
 		if (MATCHFLAG(F_TIME))
@@ -462,6 +462,8 @@ replacenode(NODE *cur, NODE *new)
 	REPLACE(st_size);
 	REPLACE(st_mtimespec);
 	REPLACESTR(slink);
+	if (strunvis(cur->slink, new->slink) == -1)
+		mtree_err("strunvis failed on `%s'", new->slink);
 	REPLACE(st_uid);
 	REPLACE(st_gid);
 	REPLACE(st_mode);
@@ -578,6 +580,8 @@ set(char *t, NODE *ip)
 		case F_SLINK:
 			if ((ip->slink = strdup(val)) == NULL)
 				mtree_err("memory allocation error");
+			if (strunvis(ip->slink, val) == -1)
+				mtree_err("strunvis failed on `%s'", val);
 			break;
 		case F_TAGS:
 			len = strlen(val) + 3;	/* "," + str + ",\0" */

@@ -1,4 +1,4 @@
-/*	$NetBSD: create.c,v 1.45 2004/06/20 22:20:18 jmc Exp $	*/
+/*	$NetBSD: create.c,v 1.46 2004/12/01 10:07:56 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)create.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: create.c,v 1.45 2004/06/20 22:20:18 jmc Exp $");
+__RCSID("$NetBSD: create.c,v 1.46 2004/12/01 10:07:56 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -145,14 +145,13 @@ statf(FTSENT *p)
 {
 	u_int32_t len, val;
 	int fd, indent;
-	const char *name, *path;
+	const char *name;
 #if !defined(NO_MD5) || !defined(NO_RMD160) || !defined(NO_SHA1)
 	char digestbuf[41];	/* large enough for {MD5,RMD160,SHA1}File() */
 #endif
 
-	path = vispath(p->fts_name);
 	indent = printf("%s%s",
-	    S_ISDIR(p->fts_statp->st_mode) ? "" : "    ", path);
+	    S_ISDIR(p->fts_statp->st_mode) ? "" : "    ", vispath(p->fts_name));
 
 	if (indent > INDENTNAMELEN)
 		indent = MAXLINELEN;
@@ -223,7 +222,7 @@ statf(FTSENT *p)
 #endif	/* ! NO_SHA1 */
 	if (keys & F_SLINK &&
 	    (p->fts_info == FTS_SL || p->fts_info == FTS_SLNONE))
-		output(&indent, "link=%s", rlink(p->fts_accpath));
+		output(&indent, "link=%s", vispath(rlink(p->fts_accpath)));
 #if HAVE_STRUCT_STAT_ST_FLAGS
 	if (keys & F_FLAGS && p->fts_statp->st_flags != flags)
 		output(&indent, "flags=%s",
