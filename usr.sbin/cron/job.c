@@ -1,4 +1,4 @@
-/* Copyright 1988,1990,1993 by Paul Vixie
+/* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
  *
  * Distribute freely, except: don't remove my name from the source or
@@ -16,12 +16,11 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$Id: job.c,v 1.1.1.1 1994/01/05 20:40:16 jtc Exp $";
+static char rcsid[] = "$Id: job.c,v 1.1.1.2 1994/01/12 18:37:50 jtc Exp $";
 #endif
 
 
 #include "cron.h"
-#include "externs.h"
 
 
 typedef	struct _job {

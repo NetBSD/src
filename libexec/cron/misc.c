@@ -1,4 +1,4 @@
-/* Copyright 1988,1990,1993 by Paul Vixie
+/* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
  *
  * Distribute freely, except: don't remove my name from the source or
@@ -16,7 +16,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$Id: misc.c,v 1.1.1.1 1994/01/05 20:40:16 jtc Exp $";
+static char rcsid[] = "$Id: misc.c,v 1.1.1.2 1994/01/12 18:37:54 jtc Exp $";
 #endif
 
 /* vix 26jan87 [RCS has the rest of the log]
@@ -25,7 +25,6 @@ static char rcsid[] = "$Id: misc.c,v 1.1.1.1 1994/01/05 20:40:16 jtc Exp $";
 
 
 #include "cron.h"
-#include "externs.h"
 #if SYS_TIME_H
 # include <sys/time.h>
 #else
@@ -44,6 +43,9 @@ static char rcsid[] = "$Id: misc.c,v 1.1.1.1 1994/01/05 20:40:16 jtc Exp $";
 #if defined(LOG_DAEMON) && !defined(LOG_CRON)
 #define LOG_CRON LOG_DAEMON
 #endif
+
+
+static int		LogFD = ERR;
 
 
 int
@@ -259,7 +261,7 @@ acquire_daemonlock(closeflag)
 	if (!fp) {
 		char	pidfile[MAX_FNAME];
 		char	buf[MAX_TEMPSTR];
-		int	otherpid, fd;
+		int	fd, otherpid;
 
 		(void) sprintf(pidfile, PIDFILE, PIDDIR);
 		if ((-1 == (fd = open(pidfile, O_RDWR|O_CREAT, 0644)))
@@ -453,17 +455,17 @@ allowed(username)
 
 
 void
-log_it(username, pid, event, detail)
+log_it(username, xpid, event, detail)
 	char	*username;
-	int	pid;
+	int	xpid;
 	char	*event;
 	char	*detail;
 {
+	PID_T			pid = xpid;
 #if defined(LOG_FILE)
 	char			*msg;
 	TIME_T			now = time((TIME_T) 0);
 	register struct tm	*t = localtime(&now);
-	static int		log_fd = -1;
 #endif /*LOG_FILE*/
 
 #if defined(SYSLOG)
@@ -478,14 +480,14 @@ log_it(username, pid, event, detail)
 		     + strlen(detail)
 		     + MAX_TEMPSTR);
 
-	if (log_fd < OK) {
-		log_fd = open(LOG_FILE, O_WRONLY|O_APPEND|O_CREAT, 0600);
-		if (log_fd < OK) {
+	if (LogFD < OK) {
+		LogFD = open(LOG_FILE, O_WRONLY|O_APPEND|O_CREAT, 0600);
+		if (LogFD < OK) {
 			fprintf(stderr, "%s: can't open log file\n",
 				ProgramName);
 			perror(LOG_FILE);
 		} else {
-			(void) fcntl(log_fd, F_SETFD, 1);
+			(void) fcntl(LogFD, F_SETFD, 1);
 		}
 	}
 
@@ -500,10 +502,10 @@ log_it(username, pid, event, detail)
 
 	/* we have to run strlen() because sprintf() returns (char*) on old BSD
 	 */
-	if (log_fd < OK || write(log_fd, msg, strlen(msg)) < OK) {
-		fprintf(stderr, "%s: can't write to log file\n", ProgramName);
-		if (log_fd >= OK)
+	if (LogFD < OK || write(LogFD, msg, strlen(msg)) < OK) {
+		if (LogFD >= OK)
 			perror(LOG_FILE);
+		fprintf(stderr, "%s: can't write to log file\n", ProgramName);
 		write(STDERR, msg, strlen(msg));
 	}
 
@@ -534,6 +536,15 @@ log_it(username, pid, event, detail)
 			username, pid, event, detail);
 	}
 #endif
+}
+
+
+void
+log_close() {
+	if (LogFD != ERR) {
+		close(LogFD);
+		LogFD = ERR;
+	}
 }
 
 

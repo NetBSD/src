@@ -1,4 +1,4 @@
-/* Copyright 1988,1990,1993 by Paul Vixie
+/* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
  *
  * Distribute freely, except: don't remove my name from the source or
@@ -16,7 +16,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$Id: cron.c,v 1.1.1.2 1994/01/11 19:10:45 jtc Exp $";
+static char rcsid[] = "$Id: cron.c,v 1.1.1.3 1994/01/12 18:36:09 jtc Exp $";
 #endif
 
 
@@ -24,7 +24,6 @@ static char rcsid[] = "$Id: cron.c,v 1.1.1.2 1994/01/11 19:10:45 jtc Exp $";
 
 
 #include "cron.h"
-#include "externs.h"
 #include <sys/signal.h>
 #if SYS_TIME_H
 # include <sys/time.h>
@@ -41,6 +40,7 @@ static	void	usage __P((void)),
 #ifdef USE_SIGCHLD
 		sigchld_handler __P((int)),
 #endif
+		sighup_handler __P((int)),
 		parse_args __P((int c, char *v[]));
 
 
@@ -72,6 +72,7 @@ main(argc, argv)
 #else
 	(void) signal(SIGCLD, SIG_IGN);
 #endif
+	(void) signal(SIGHUP, sighup_handler);
 
 	acquire_daemonlock(0);
 	set_cron_uid();
@@ -247,10 +248,14 @@ cron_sleep() {
 static void
 sigchld_handler(x) {
 	WAIT_T		waiter;
-	int		pid;
+	PID_T		pid;
 
 	for (;;) {
+#ifdef POSIX
+		pid = waitpid(-1, &waiter, WNOHANG);
+#else
 		pid = wait3(&waiter, WNOHANG, (struct rusage *)0);
+#endif
 		switch (pid) {
 		case -1:
 			Debug(DPROC,
@@ -268,6 +273,12 @@ sigchld_handler(x) {
 	}
 }
 #endif /*USE_SIGCHLD*/
+
+
+static void
+sighup_handler(x) {
+	log_close();
+}
 
 
 static void

@@ -1,4 +1,4 @@
-/* Copyright 1988,1990,1993 by Paul Vixie
+/* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
  *
  * Distribute freely, except: don't remove my name from the source or
@@ -17,7 +17,7 @@
 
 /* cron.h - header for vixie's cron
  *
- * $Id: cron.h,v 1.1.1.2 1994/01/11 19:10:48 jtc Exp $
+ * $Id: cron.h,v 1.1.1.3 1994/01/12 18:36:21 jtc Exp $
  *
  * vix 14nov88 [rest of log is in RCS]
  * vix 14jan87 [0 or 7 can be sunday; thanks, mwm@berkeley]
@@ -38,10 +38,12 @@
 
 #include "pathnames.h"
 #include "config.h"
+#include "externs.h"
 
 	/* these are really immutable, and are
 	 *   defined for symbolic convenience only
 	 * TRUE, FALSE, and ERR must be distinct
+	 * ERR must be < OK.
 	 */
 #define TRUE		1
 #define FALSE		0
@@ -180,7 +182,6 @@ typedef	struct _cron_db {
 } cron_db;
 
 
-
 void		set_cron_uid __P((void)),
 		set_cron_cwd __P((void)),
 		load_database __P((cron_db *)),
@@ -196,7 +197,8 @@ void		set_cron_uid __P((void)),
 		free_entry __P((entry *)),
 		acquire_daemonlock __P((int)),
 		skip_comments __P((FILE *)),
-		log_it __P((char *, int, char *, char *));
+		log_it __P((char *, int, char *, char *)),
+		log_close __P((void));
 
 int		job_runqueue __P((void)),
 		set_debug_flags __P((char *)),
@@ -234,7 +236,7 @@ FILE		*cron_popen __P((char *, char *));
 #ifdef MAIN_PROGRAM
 # if !defined(LINT) && !defined(lint)
 char	*copyright[] = {
-		"@(#) Copyright 1988, 1989, 1990, 1993 by Paul Vixie",
+		"@(#) Copyright 1988,1989,1990,1993,1994 by Paul Vixie",
 		"@(#) All rights reserved"
 	};
 # endif
