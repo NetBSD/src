@@ -1,10 +1,10 @@
-.\"	$NetBSD: packages.7,v 1.15 1999/03/10 09:31:18 erh Exp $
+.\"	$NetBSD: packages.7,v 1.15.2.1 1999/12/16 22:30:49 he Exp $
 .\"
 .\" from: NetBSD: bsd.pkg.mk,v 1.89 1998/06/01 21:30:10 hubertf Exp
 .\"
 .\"	This file is in the public domain.
 .\"
-.Dd June 4, 1998
+.Dd August 30, 1999
 .Dt PACKAGES 7
 .Os
 .Sh NAME
@@ -20,8 +20,8 @@ and individual packages.
 .Sh COMMON VARIABLES
 This section documents variables that typically apply to all packages.
 Many of these may be set in
-.Xr make.conf 5 .
-.Bl -tag -indent XXXXXXXX -width XXXXXXXX
+.Xr mk.conf 5 .
+.Bl -tag -indent -width XXXXXXXXX
 .It ARCH
 The architecture, as returned by
 .Dq uname -m .
@@ -30,6 +30,22 @@ See
 .It OPSYS
 The operating system name, as returned by 
 .Dq uname -s .
+.It LOCALBASE
+Where non-X11 based packages will be installed.
+The default is
+.Pa /usr/pkg .
+.It CROSSBASE
+Where
+.Dq cross
+category packages will be installed.
+The default is
+.Pa ${LOCALBASE}/cross .
+.It X11BASE
+Where X11 is installed on the system, and where
+.Dq X11
+category packages will be installed.
+The default is
+.Pa /usr/X11R6 .
 .It DISTDIR
 Where to get gzip'd, tarballed copies of original sources.  The default is
 .Pa ${PKGSRCDIR}/distfiles .
@@ -47,6 +63,8 @@ to each package).  The default is
 .Pa ${PKGSRCDIR}/packages .
 .It GMAKE
 Set to path of GNU make if not in $PATH (default: gmake).
+.It PKG_FC
+Set to the path of the desired fortran compiler (default: f2c-f77).
 .It XMKMF
 Set to path of
 .Dq xmkmf
@@ -273,6 +291,20 @@ to retrieve distribution files.
 Says that the package uses
 .Pa libtool
 to manage building of libraries and shared objects, where applicable.
+.It LTCONFIG_OVERRIDE
+If set, override the specified
+.Pa ltconfig
+for using
+.Pa pkglibtool
+instead of the pkg's own
+.Pa libtool .
+.It LIBTOOL_OVERRIDE
+If set, override the specified
+.Pa libtool
+with our
+.Pa pkglibtool .
+.It USE_FORTRAN
+Says that the package uses a fortran compiler for building.
 .It USE_GMAKE	
 Says that the package uses
 .Pa gmake .
@@ -286,6 +318,8 @@ Says that the package uses
 .It USE_X11BASE	
 Says that the package installs itself into the X11 base directory
 .Dv ${X11BASE} .
+This is necessary for packages that install X11 fonts, application
+default files or Imake rule or template files. 
 .It USE_GTEXINFO	
 Says that the package uses gtexinfo.
 .It USE_MOTIF
@@ -358,15 +392,10 @@ stages, inclusive).  The test done to
 determine the existence of the dependency is the same as
 .Dv FETCH_DEPENDS .
 .It RUN_DEPENDS
-A list of
-.Dq path:dir
-pairs of other packages this package depends to run.
-The test done to determine the existence of the dependency is the same as
-.Dv FETCH_DEPENDS .
-This will be checked during the
-.Dq install
-stage and the name of the
-dependency will be put into the package as well.
+This definition is deprecated, and is no longer used in the packages
+collection. It should be replaced by a simple
+.Dq DEPENDS
+definition.  
 .It LIB_DEPENDS
 This definition is deprecated, and is no longer used in the packages
 collection. It should be replaced by a simple
@@ -428,6 +457,12 @@ The target to pass to make in the package when building.  The default is
 .It INSTALL_TARGET
 The target to pass to make in the package when installing.  The default is
 .Dq install .
+.It MASTER_SORT
+List of suffixes for preferred download locations to sort the MASTER_SITES
+accordingly.
+.It MASTER_SORT_REGEX
+Similar to MASTER_SORT, but takes a list of regular expressions for
+finer grained control.
 .El
 .Sh MOTIF SUPPORT
 This section documents variables related to the use and installation of
@@ -479,21 +514,41 @@ Used to print all the
 style prompts - override this
 to turn them off.  The default is
 .Pa /bin/echo .
+.It CLEAR_DIRLIST
+If set, cause the
+.Dq clean-update
+target to completely clean up and lose the list of dependent packages.  Use
+with care!
 .It DEPENDS_TARGET
 The target to execute when a package is calling a dependency.  The default
 is
 .Dq install .
+.It NOCLEAN
+If set, prevent the 
+.Dq update
+target from cleaning up after itself.
 .It PATCH_DEBUG
 If set, print out more information about the patches as it attempts to
 apply them.
 .It PKG_VERBOSE
 If set, print out more information about the automatic manual
 page handling, and package deletion (see the
-.Dq install
-and
+.Dq install,
 .Dq deinstall
+and
+.Dq update
 targets),
 and also sets PATCH_DEBUG as well.
+.It REINSTALL
+Use
+.Dq reinstall
+instead of
+.Sq ${DEPENDS_TARGET}
+as installation target for updating packages (see the
+.Dq update
+target).  Also leave out the
+.Dq clean
+target when traversing package directories.
 .El
 .Sh INSTALL VARIABLES
 This section documents variables that serve as convenient aliases.
@@ -567,8 +622,18 @@ Install the results of a build, ignoring
 flag.
 .It deinstall	
 Remove the installation.
+.It update	
+Update the installation of the current and all dependent packages that
+are installed on the system.
 .It package	
 Create a binary package other people can use.
+.It clean	
+Clean the source tree for a package.
+.It clean-depends	
+Clean the source tree for a package and the packages it depends upon.
+.It clean-update	
+Clean the source tree for a package and all dependent packages that
+are installed on the system.
 .It describe
 Try to generate a one-line description for each package for
 use in INDEX files and the like.
@@ -603,6 +668,9 @@ is:  fetch checksum extract patch configure build.
 NEVER override the
 .Dq regular
 targets unless you want to open a major can of worms.
+.Sh SEE ALSO
+.Xr make 1 ,
+.Xr mk.conf 5
 .Sh HISTORY
 This manual page is based upon the comments in the
 .Pa bsd.pkg.mk
