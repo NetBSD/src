@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.6.1.2 (Berkeley) 5/8/91
-#	$Id: Makefile,v 1.50 1995/07/13 20:42:35 thorpej Exp $
+#	$Id: Makefile,v 1.51 1995/07/14 07:01:35 cgd Exp $
 
 # not yet done: catman
 
@@ -19,7 +19,7 @@ SUBDIR+=amd
 .endif
 
 .if   make(clean) || make(cleandir)
-SUBDIR+=bad144 config.old dbsym grfinfo hilinfo iteconfig screenblank
+SUBDIR+=bad144 config.old dbsym eeprom grfinfo hilinfo iteconfig screenblank
 .elif ${MACHINE} == "amiga" || ${MACHINE} == "atari"
 SUBDIR+=iteconfig
 .elif ${MACHINE} == "hp300"
