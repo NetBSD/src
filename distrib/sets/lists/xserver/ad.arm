@@ -1,4 +1,4 @@
-# $NetBSD: md.shark,v 1.5 2004/03/28 06:48:43 jmc Exp $
+# $NetBSD: ad.arm,v 1.1 2004/03/28 06:51:12 jmc Exp $
 ./usr/X11R6/bin/Xvfb
 ./usr/X11R6/man/cat1/Xvfb.0			-unknown-		.cat
 ./usr/X11R6/man/man1/Xvfb.1			-unknown-		.man
