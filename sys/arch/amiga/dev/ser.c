@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.49 1998/07/22 19:13:02 is Exp $	*/
+/*	$NetBSD: ser.c,v 1.50 2000/03/16 16:37:21 kleink Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -181,11 +181,15 @@ sermatch(pdp, cfp, auxp)
 	struct cfdata *cfp;
 	void *auxp;
 {
+	static int ser_matched = 0;
 
-	if (matchname("ser", (char *)auxp) == 0 || cfp->cf_unit != 0)
+	/* Allow only once instance. */
+	if (matchname("ser", (char *)auxp) == 0 || ser_matched)
 		return(0);
 	if (serconsole != 0 && amiga_realconfig == 0)
 		return(0);
+
+	ser_matched = 1;
 	return(1);
 }
 

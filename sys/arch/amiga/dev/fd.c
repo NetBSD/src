@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.43 2000/02/07 20:16:48 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.44 2000/03/16 16:37:20 kleink Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -310,13 +310,17 @@ fdcmatch(pdp, cfp, auxp)
 	struct cfdata *cfp;
 	void *auxp;
 {
+	static int fdc_matched = 0;
 
-	if (matchname("fdc", auxp) == 0 || cfp->cf_unit != 0)
+	/* Allow only once instance. */
+	if (matchname("fdc", auxp) == 0 || fdc_matched)
 		return(0);
 	if ((fdc_dmap = alloc_chipmem(DMABUFSZ)) == NULL) {
 		printf("fdc: unable to allocate dma buffer\n");
 		return(0);
 	}
+
+	fdc_matched = 1;
 	return(1);
 }
 
@@ -362,15 +366,14 @@ fdmatch(pdp, cfp, auxp)
 	struct cfdata *cfp;
 	void *auxp;
 {
-
-#define cf_unit	cf_loc[FDCCF_UNIT]
 	struct fdcargs *fdap;
 
 	fdap = auxp;
-	if (cfp->cf_unit == fdap->unit || cfp->cf_unit == FDCCF_UNIT_DEFAULT)
+	if (cfp->cf_loc[FDCCF_UNIT] == fdap->unit ||
+	    cfp->cf_loc[FDCCF_UNIT] == FDCCF_UNIT_DEFAULT)
 		return(1);
+
 	return(0);
-#undef cf_unit
 }
 
 void

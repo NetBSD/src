@@ -1,4 +1,4 @@
-/*	$NetBSD: drbbc.c,v 1.5 1999/03/14 22:42:12 is Exp $	*/
+/*	$NetBSD: drbbc.c,v 1.6 2000/03/16 16:37:20 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -83,10 +83,14 @@ drbbc_match(pdp, cfp, auxp)
 	struct cfdata *cfp;
 	void *auxp;
 {
-	if (is_draco() && matchname(auxp, "drbbc") && (cfp->cf_unit == 0))
-		return (1);
-	else
+	static int drbbc_matched = 0;
+
+	/* Allow only one instance. */
+	if (!is_draco() || !matchname(auxp, "drbbc") || drbbc_matched)
 		return (0);
+
+	drbbc_matched = 1;
+	return (1);
 }
 
 void
