@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_inode.h,v 1.2 1999/05/06 15:43:19 christos Exp $	*/
+/*	$NetBSD: ntfs_inode.h,v 1.3 1999/07/26 14:02:31 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -25,11 +25,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	Id: ntfs_inode.h,v 1.3 1999/04/20 21:06:43 semenu Exp 
+ *	Id: ntfs_inode.h,v 1.4 1999/05/12 09:43:00 semenu Exp
  */
 
 /* These flags are kept in i_flag. */
-#if __FreeBSD_version >= 300000
+#if defined(__FreeBSD__)
 #define	IN_ACCESS	0x0001	/* Access time update request. */
 #define	IN_CHANGE	0x0002	/* Inode change time update request. */
 #define	IN_UPDATE	0x0004	/* Modification time update request. */
@@ -38,7 +38,7 @@
 #define	IN_SHLOCK	0x0020	/* File has shared lock. */
 #define	IN_EXLOCK	0x0040	/* File has exclusive lock. */
 #define	IN_LAZYMOD	0x0080	/* Modified, but don't write yet. */
-#else
+#else /* defined(__NetBSD__) */
 #define	IN_ACCESS	0x0001	/* Access time update request. */
 #define	IN_CHANGE	0x0002	/* Inode change time update request. */
 #define	IN_EXLOCK	0x0004	/* File has exclusive lock. */
@@ -66,7 +66,7 @@ struct ntnode {
 	u_int32_t       i_flag;
 	int		i_lock;
 	int		i_usecount;
-#if __FreeBSD_version < 300000
+#if defined(__NetBSD__)
 	pid_t		i_lockholder;
 	pid_t		i_lockwaiter;
 	int		i_lockcount;
