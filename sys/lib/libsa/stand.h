@@ -1,4 +1,4 @@
-/*	$NetBSD: stand.h,v 1.13 1996/01/13 22:25:42 leo Exp $	*/
+/*	$NetBSD: stand.h,v 1.14 1996/06/21 20:09:06 pk Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -90,6 +90,7 @@ struct open_file {
 	void		*f_devdata;	/* device specific data */
 	struct fs_ops	*f_ops;		/* pointer to file system operations */
 	void		*f_fsdata;	/* file system specific data */
+	off_t		f_offset;	/* current file offset (F_RAW) */
 };
 
 #define	SOPEN_MAX	4
