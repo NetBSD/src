@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.95 2003/03/14 05:22:50 thorpej Exp $
+#	$NetBSD: build.sh,v 1.96 2003/04/26 18:42:34 fvdl Exp $
 #
 # Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -168,8 +168,11 @@ getarch()
 	evbsh5)
 		MACHINE_ARCH=sh5el
 		;;
+	amd64)
+		MACHINE_ARCH=x86_64
+		;;
 
-	alpha|i386|sparc|sparc64|vax|x86_64)
+	alpha|i386|sparc|sparc64|vax)
 		MACHINE_ARCH=$MACHINE
 		;;
 
@@ -698,7 +701,7 @@ createmakewrapper()
 	eval cat <<EOF $makewrapout
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.95 2003/03/14 05:22:50 thorpej Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.96 2003/04/26 18:42:34 fvdl Exp $
 #
 
 EOF
