@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.173 2001/08/14 23:33:43 tv Exp $
+#	$NetBSD: bsd.own.mk,v 1.174 2001/08/15 17:50:15 tv Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -189,7 +189,7 @@ distclean:	.NOTMAIN cleandir
 cleandir:	.NOTMAIN clean
 .endif
 
-PRINTOBJDIR=	${MAKE} -V .OBJDIR
+PRINTOBJDIR=	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}\n" | ${MAKE} -B -s -f-
 
 # Define MKxxx variables (which are either yes or no) for users
 # to set in /etc/mk.conf and override on the make commandline.
