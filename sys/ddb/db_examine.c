@@ -1,4 +1,4 @@
-/*	$NetBSD: db_examine.c,v 1.19 2000/08/09 19:51:44 tv Exp $	*/
+/*	$NetBSD: db_examine.c,v 1.20 2000/12/28 07:30:06 jmc Exp $	*/
 
 /*
  * Mach Operating System
@@ -75,10 +75,11 @@ db_examine(addr, fmt, count)
 	char *		fmt;	/* format string */
 	int		count;	/* repeat count */
 {
-	int		c;
+	int		i, c;
 	db_expr_t	value;
 	int		size;
 	int		width;
+	int		bytes;
 	char *		fp;
 	char		tbuf[24];
 
@@ -123,6 +124,40 @@ db_examine(addr, fmt, count)
 				value = db_get_value(addr, size, FALSE);
 				addr += size;
 				db_printf("%-*lx", width, value);
+				break;
+			case 'm':	/* hex dump */
+				/* 
+				 * Print off in chunks of size. Try to print 16
+				 * bytes at a time into 4 columns. This 
+				 * loops modify's count extra times in order
+				 * to get the nicely formatted lines.
+				 */
+				
+				bytes = 0;
+				do {
+					for (i = 0; i < size; i++) {
+						value = 
+ 						    db_get_value(addr+bytes, 1,
+						        FALSE);
+						db_printf("%02lx", value);
+						bytes++;
+						if (!(bytes % 4))
+							db_printf(" ");
+					}
+				} while ((bytes != 16) && count--);
+				/* True up the columns before continuing */
+				for (i = 4; i >= (bytes / 4); i--)
+					db_printf ("\t");
+				/* Print chars,  use . for non-printable's. */
+				while (bytes--) {
+					value = db_get_value(addr, 1, FALSE);
+					addr += 1;
+					if (value >= ' ' && value <= '~')
+						db_printf("%c", (char)value);
+					else
+						db_printf(".");
+				}				
+				db_printf("\n");
 				break;
 			case 'z':	/* signed hex */
 				value = db_get_value(addr, size, TRUE);
