@@ -1,4 +1,4 @@
-/*	$NetBSD: md_root.c,v 1.9 1996/12/20 12:49:44 leo Exp $	*/
+/*	$NetBSD: md_root.c,v 1.10 1996/12/28 23:37:26 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -92,34 +92,34 @@ struct read_info {
 };
 
 
-static int  loaddisk __P((struct  rd_conf *, dev_t ld_dev, struct proc *));
+static int  loaddisk __P((struct  md_conf *, dev_t ld_dev, struct proc *));
 static int  ramd_norm_read __P((struct read_info *));
 
 #ifdef support_compression
 static int  cpy_uncompressed __P((caddr_t, int, struct read_info *));
-static int  rd_compressed __P((caddr_t, int, struct read_info *));
+static int  md_compressed __P((caddr_t, int, struct read_info *));
 #endif
 
 /*
  * This is called during autoconfig.
  */
 void
-rd_attach_hook(unit, rd)
+md_attach_hook(unit, md)
 int		unit;
-struct rd_conf	*rd;
+struct md_conf	*md;
 {
 	if (atari_realconfig && (unit < RAMD_NDEV) && rd_info[unit].ramd_flag) {
-		printf ("rd%d:%sauto-load on open. Size %ld bytes.\n", unit,
+		printf ("md%d:%sauto-load on open. Size %ld bytes.\n", unit,
 		    rd_info[unit].ramd_flag & RAMD_LCOMP ? " decompress/" : "",
 		    rd_info[unit].ramd_size);
-		rd->rd_type = RD_UNCONFIGURED; /* Paranoia... */
+		md->md_type = MD_UNCONFIGURED; /* Paranoia... */
 	}
 }
 
 void
-rd_open_hook(unit, rd)
+md_open_hook(unit, md)
 int		unit;
-struct rd_conf	*rd;
+struct md_conf	*md;
 {
 	struct ramd_info *ri;
 
@@ -127,25 +127,25 @@ struct rd_conf	*rd;
 		return;
 
 	ri = &rd_info[unit];
-	if (rd->rd_type != RD_UNCONFIGURED)
+	if (md->md_type != MD_UNCONFIGURED)
 		return;	/* Only configure once */
-	rd->rd_addr = malloc(ri->ramd_size, M_DEVBUF, M_WAITOK);
-	rd->rd_size = ri->ramd_size;
-	if(rd->rd_addr == NULL)
+	md->md_addr = malloc(ri->ramd_size, M_DEVBUF, M_WAITOK);
+	md->md_size = ri->ramd_size;
+	if(md->md_addr == NULL)
 		return;
 	if(ri->ramd_flag & RAMD_LOAD) {
-		if (loaddisk(rd, ri->ramd_dev, curproc)) {
-			free(rd->rd_addr, M_DEVBUF);
-			rd->rd_addr = NULL;
+		if (loaddisk(md, ri->ramd_dev, curproc)) {
+			free(md->md_addr, M_DEVBUF);
+			md->md_addr = NULL;
 			return;
 		}
 	}
-	rd->rd_type = RD_KMEM_ALLOCATED;
+	md->md_type = MD_KMEM_ALLOCATED;
 }
 
 static int
-loaddisk(rd, ld_dev, proc)
-struct rd_conf		*rd;
+loaddisk(md, ld_dev, proc)
+struct md_conf		*md;
 dev_t			ld_dev;
 struct proc		*proc;
 {
@@ -170,12 +170,12 @@ struct proc		*proc;
 	 * Setup read_info:
 	 */
 	rs.bp       = &buf;
-	rs.nbytes   = rd->rd_size;
+	rs.nbytes   = md->md_size;
 	rs.offset   = 0;
-	rs.bufp     = rd->rd_addr;
-	rs.ebufp    = rd->rd_addr + rd->rd_size;
+	rs.bufp     = md->md_addr;
+	rs.ebufp    = md->md_addr + md->md_size;
 	rs.chunk    = RAMD_CHUNK;
-	rs.media_sz = rd->rd_size;
+	rs.media_sz = md->md_size;
 	rs.strat    = bdp->d_strategy;
 
 	/*
@@ -191,7 +191,7 @@ struct proc		*proc;
 
 #ifdef support_compression
 	if(ri->ramd_flag & RAMD_LCOMP)
-		error = decompress(cpy_uncompressed, rd_compressed, &rs);
+		error = decompress(cpy_uncompressed, md_compressed, &rs);
 	else
 #endif /* support_compression */
 		error = ramd_norm_read(&rs);
@@ -281,7 +281,7 @@ int			nbyte;
  * Read a maximum of 'nbyte' bytes into 'buf'.
  */
 static int
-rd_compressed(buf, nbyte, rsp)
+md_compressed(buf, nbyte, rsp)
 caddr_t			buf;
 struct read_info	*rsp;
 int			nbyte;
