@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.21 1997/06/06 23:26:03 veego Exp $	*/
+/*	$NetBSD: machdep.c,v 1.22 1997/06/08 23:59:59 veego Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -158,8 +158,8 @@ pv_addr_t hydrascratch;
 pt_entry_t kernel_pt_table[15];
 
 /* the following is used externally (sysctl_hw) */
-char machine[] = "arm32";	/* cpu "architecture" */
-char machine_arch[] = "arm32";	/* machine == machine_arch */
+char	machine[] = MACHINE;		/* from <machine/param.h> */
+char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 
 char *boot_args;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.8 1997/06/06 23:26:07 veego Exp $	*/
+/*	$NetBSD: machdep.c,v 1.9 1997/06/09 00:00:02 veego Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -271,8 +271,8 @@ initppc(startkernel, endkernel, args)
  */
 int cpu;
 char cpu_model[80];
-char machine[] = "powerpc";		/* cpu architecture */
-char machine_arch[] = "powerpc";	/* machine == machine_arch */
+char machine[] = MACHINE;		/* from <machine/param.h> */
+char machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 
 void
 identifycpu()
