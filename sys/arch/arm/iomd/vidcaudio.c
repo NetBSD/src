@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcaudio.c,v 1.25 2003/12/31 15:40:31 bjh21 Exp $	*/
+/*	$NetBSD: vidcaudio.c,v 1.26 2003/12/31 21:24:47 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson
@@ -65,7 +65,7 @@
 
 #include <sys/param.h>	/* proc.h */
 
-__KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.25 2003/12/31 15:40:31 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.26 2003/12/31 21:24:47 bjh21 Exp $");
 
 #include <sys/audioio.h>
 #include <sys/conf.h>   /* autoconfig functions */
@@ -392,7 +392,7 @@ vidcaudio_set_params(void *addr, int setmode, int usemode,
 			sample_period = 705600 / 4 / p->sample_rate;
 			if (sample_period < 3) sample_period = 3;
 			p->hw_sample_rate =
-			    1000000 / 4 / sample_period;
+			    705600 / 4 / sample_period;
 			vidcaudio_rate(sample_period - 2);
 			vidcaudio_ctrl(SCR_SERIAL);
 			p->hw_encoding = AUDIO_ENCODING_SLINEAR_LE;
