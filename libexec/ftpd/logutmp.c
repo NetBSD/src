@@ -56,7 +56,6 @@
 #include <sys/param.h>
 
 #include <fcntl.h>
-#include <setjmp.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

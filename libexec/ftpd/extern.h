@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.49 2003/08/07 09:46:38 agc Exp $	*/
+/*	$NetBSD: extern.h,v 1.50 2004/08/09 12:56:47 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -32,7 +32,7 @@
  */
 
 /*-
- * Copyright (c) 1997-2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -310,7 +310,6 @@ GLOBAL	struct sockinet	pasv_addr;
 GLOBAL	int		connections;
 GLOBAL	struct ftpclass	curclass;
 GLOBAL	int		debug;
-GLOBAL	jmp_buf		errcatch;
 GLOBAL	char		*emailaddr;
 GLOBAL	int		form;
 GLOBAL	int		gidcount;	/* number of entries in gidlist[] */
@@ -332,7 +331,6 @@ GLOBAL	int		quietmessages;
 GLOBAL	char		remotehost[MAXHOSTNAMELEN+1];
 GLOBAL	off_t		restart_point;
 GLOBAL	char		tmpline[FTP_BUFLEN];
-GLOBAL	sig_atomic_t	transflag;
 GLOBAL	int		type;
 GLOBAL	int		usedefault;		/* for data transfers */
 GLOBAL	const char     *version;
