@@ -1,3 +1,5 @@
-/*	$NetBSD: types.h,v 1.2 1996/03/23 03:43:14 jonathan Exp $	*/
+/*	$NetBSD: types.h,v 1.3 1996/12/05 00:13:56 cgd Exp $	*/
 
 #include <mips/types.h>
+
+#define	__BROKEN_INDIRECT_CONFIG
