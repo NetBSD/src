@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.190 2002/11/29 23:48:37 lukem Exp $
+#	$NetBSD: Makefile,v 1.191 2002/12/02 08:23:41 lukem Exp $
 
 # This is the top-level makefile for building NetBSD. For an outline of
 # how to build a snapshot or release, as well as other release engineering
@@ -150,14 +150,17 @@ includes-gnu:	includes-lib
 
 # Build the system and install into DESTDIR.
 
+START_TIME!=	date
+
 build:
 .if defined(BUILD_DONE)
 	@echo "Build already installed into ${DESTDIR}"
 .else
-	@printf "Build started at: " && date
+	@echo "Build started at: ${START_TIME}"
 .for tgt in ${BUILDTARGETS}
 	@(cd ${.CURDIR} && ${MAKE} ${tgt})
 .endfor
+	@echo   "Build started at:  ${START_TIME}"
 	@printf "Build finished at: " && date
 .endif
 
