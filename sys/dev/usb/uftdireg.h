@@ -1,3 +1,5 @@
+/*	$NetBSD: uftdireg.h,v 1.2 2001/05/21 20:47:13 jhawk Exp $ */
+
 /*
  * Definitions for the FTDI USB Single Port Serial Converter - 
  * known as FTDI_SIO (Serial Input/Output application of the chipset) 
