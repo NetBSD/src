@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.6 1998/11/23 23:00:26 kenh Exp $	*/
+/*	$NetBSD: atavar.h,v 1.7 1998/12/02 10:52:24 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -38,12 +38,12 @@
 /* Datas common to drives and controller drivers */
 struct ata_drive_datas {
     u_int8_t drive; /* drive number */
-    u_int8_t drive_flags; /* bitmask for drives present/absent and cap */
+    u_int16_t drive_flags; /* bitmask for drives present/absent and cap */
 #define DRIVE_ATA   0x01
 #define DRIVE_ATAPI 0x02
 #define DRIVE (DRIVE_ATA|DRIVE_ATAPI)
 #define DRIVE_CAP32 0x04
-#define DRIVE_DMA   0x08
+#define DRIVE_DMA   0x08 
 #define DRIVE_UDMA  0x10
 #define DRIVE_MODE 0x20 /* the drive reported its mode */
 #define DRIVE_RESET 0x40 /* reset the drive state at next xfer */
@@ -55,6 +55,10 @@ struct ata_drive_datas {
     u_int8_t PIO_mode; /* Current setting of drive's PIO mode */
     u_int8_t DMA_mode; /* Current setting of drive's DMA mode */
     u_int8_t UDMA_mode; /* Current setting of drive's UDMA mode */
+    /* Supported modes for this drive */
+    u_int8_t PIO_cap; /* supported drive's PIO mode */
+    u_int8_t DMA_cap; /* supported drive's DMA mode */
+    u_int8_t UDMA_cap; /* supported drive's UDMA mode */
     /*
      * Drive state. This is drive-type (ATA or ATAPI) dependant
      * This is reset to 0 after a channel reset.
@@ -76,8 +80,18 @@ struct ata_atapi_attach {
     void *aa_bus_private; /* infos specifics to this bus */
 };
 
-
-
+/* User config flags that force (or disable) the use of a mode */
+#define ATA_CONFIG_PIO_MODES	0x0007
+#define ATA_CONFIG_PIO_SET	0x0008
+#define ATA_CONFIG_PIO_OFF	0
+#define ATA_CONFIG_DMA_MODES	0x0070
+#define ATA_CONFIG_DMA_SET	0x0080
+#define ATA_CONFIG_DMA_DISABLE	0x0070
+#define ATA_CONFIG_DMA_OFF	4
+#define ATA_CONFIG_UDMA_MODES	0x0700
+#define ATA_CONFIG_UDMA_SET	0x0800
+#define ATA_CONFIG_UDMA_DISABLE	0x0700
+#define ATA_CONFIG_UDMA_OFF	8
 
 /*
  * ATA/ATAPI commands description 
