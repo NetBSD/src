@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.10 1996/10/15 00:33:03 mark Exp $ */
+/* $NetBSD: cpu.h,v 1.11 1996/11/23 03:18:20 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -68,6 +68,9 @@
 #ifdef CPU_ARM6
 #error "CPU options CPU_ARM6 and CPU_ARM7500 are not compatible"
 #endif
+#ifdef CPU_ARM8
+#error "CPU options CPU_ARM8 and CPU_ARM7500 are not compatible"
+#endif
 #ifdef CPU_SA110
 #error "CPU options CPU_SA110 and CPU_ARM7500 are not compatible"
 #endif
@@ -79,6 +82,9 @@
 #endif
 #ifdef CPU_ARM7
 #error "CPU options CPU_SA110 and CPU_ARM7 are not compatible"
+#endif
+#ifdef CPU_ARM8
+#error "CPU options CPU_SA110 and CPU_ARM8 are not compatible"
 #endif
 #ifdef CPU_LATE_ABORT
 #error "cpu options CPU_SA110 and CPU_LATE_ABORT are not compatible"
