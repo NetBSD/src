@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_subr.c,v 1.6 1996/03/17 02:16:23 christos Exp $	*/
+/*	$NetBSD: ffs_subr.c,v 1.7 1996/09/20 22:14:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -36,12 +36,12 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <ufs/ffs/fs.h>
+#include <ufs/ffs/ffs_extern.h>
 
 #ifdef _KERNEL
-#include <sys/systm.h>
 #include <sys/vnode.h>
-#include <ufs/ffs/ffs_extern.h>
 #include <sys/buf.h>
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
