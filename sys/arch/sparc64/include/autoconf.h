@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.2 1998/08/13 02:10:44 eeh Exp $ */
+/*	$NetBSD: autoconf.h,v 1.3 1998/09/02 05:51:37 eeh Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -103,20 +103,24 @@ extern struct intrmap intrmap[];
  * peripheral buses and things like FHC bus systems.
  */
 
-/* Attach arguments presented by mainbus_attach() */
+/* 
+ * Attach arguments presented by mainbus_attach() 
+ *
+ * Large fields first followed by smaller ones to minimize stack space used.
+ */
 struct mainbus_attach_args {
 	bus_space_tag_t	ma_bustag;	/* parent bus tag */
 	bus_dma_tag_t	ma_dmatag;
 	char		*ma_name;	/* PROM node name */
-	int		ma_node;	/* PROM handle */
 	struct upa_reg	*ma_reg;	/* "reg" properties */
-	int		ma_nreg;
-	void*		*ma_address;	/* "address" properties */
-	int		ma_naddress;
+	int		*ma_address;	/* "address" properties -- 32 bits */
 	int		*ma_interrupts;	/* "interrupts" properties */
+	struct bootpath *ma_bp;		/* used for locating boot device */
+	int		ma_node;	/* PROM handle */
+	int		ma_nreg;	/* Counts for those properties */
+	int		ma_naddress;
 	int		ma_ninterrupts;
 	int		ma_pri;		/* priority (IPL) */
-	struct bootpath *ma_bp;		/* used for locating boot device */
 };
 
 /* Attach arguments presented to devices by obio_attach() (sun4 only) */
@@ -152,8 +156,8 @@ int	obio_find_rom_map __P((bus_addr_t, int,
  * getprop() obtains a property as a byte-sequence, and returns its
  * length; the others convert or make some other guarantee.
  */
-int	getproplen __P((int node, char *name));
-int	getprop __P((int node, char *name, void *buf, int bufsiz));
+long	getproplen __P((int node, char *name));
+int	getprop __P((int node, char *name, void *buf, size_t bufsiz));
 char	*getpropstring __P((int node, char *name));
 int	getpropint __P((int node, char *name, int deflt));
 
@@ -161,7 +165,7 @@ int	getpropint __P((int node, char *name, int deflt));
 extern int optionsnode;
 
 	/* new interfaces: */
-int	getpropA __P((int, char *, int, int *, void **));
+int	getpropA __P((int, char *, size_t, int *, void **));
 char	*getpropstringA __P((int, char *, char *));
 
 /*
@@ -188,7 +192,7 @@ int	matchbyname __P((struct device *, struct cfdata *cf, void *aux));
  * `clockfreq' produces a printable representation of a clock frequency
  * (this is just a frill).
  */
-char	*clockfreq __P((int freq));
+char	*clockfreq __P((long freq));
 
 #if 0
 /*

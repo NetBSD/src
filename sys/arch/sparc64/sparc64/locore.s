@@ -135,7 +135,7 @@
 #endif
 
 /* use as needed to align things on longword boundaries */
-#define	_ALIGN	.align 4
+#define	_ALIGN	.align 8
 #define ICACHE_ALIGN	.align	32
 
 /* Give this real authority: reset the machine */
@@ -2692,10 +2692,10 @@ datafault:
 	rdpr	%tl, %g7
 	dec	%g7	
 	movrlz	%g7, %g0, %g7
-	CHKPT(%g1,%g2,0x21)
+	CHKPT(%g1,%g3,0x21)
 	wrpr	%g0, %g7, %tl		! Revert to kernel mode
 #else
-	CHKPT(%g1,%g2,0x21)
+	CHKPT(%g1,%g3,0x21)
 	wrpr	%g0, 0, %tl		! Revert to kernel mode
 #endif
 	/* Finish stackframe, call C trap handler */
@@ -2727,8 +2727,7 @@ datafault:
 	bl	data_error
 	 wrpr	%g0, PSTATE_INTR, %pstate		! reenable interrupts
 	
-	mov	%o5, %o1
-	mov	%g2, %o2
+	mov	%o5, %o1				! (argument:	trap address)
 	call	_C_LABEL(data_access_fault)		! data_access_fault(type, addr, pc, &tf);
 	 add	%sp, CC64FSZ + STKB, %o3				! (argument: &tf)
 
@@ -4535,7 +4534,7 @@ _C_LABEL(prom_panic):
 	set	of_mesg, %l1
 	stx	%i0, [%l1]	! Save str
 	set	romp, %l0
-	ld	[%l0], %i4	! Load romp
+	LDPTR	[%l0], %i4	! Load romp
 
 	clr	%i1
 1:
@@ -4732,14 +4731,18 @@ dostart:
 	 */
 	cmp	%o2, 8
 	blt	1f			! Not enuff args
-	
+
+#ifdef _LP64
+	/*
+	 * First we'll see if we were loaded by a 64-bit bootloader
+	 */
 	 set	0x44444230, %l3
-	LDPTR	[%o1], %l4
+	ldx	[%o1], %l4
 	cmp	%l3, %l4		! chk magic
-	bne	1f
+	bne	%xcc, 0f
 	 nop
 	
-	LDPTR	[%o1+4], %l4	
+	ldx	[%o1+8], %l4	
 	sethi	%hi(_C_LABEL(esym)), %l3	! store _esym
 	STPTR	%l4, [%l3 + %lo(_C_LABEL(esym))]
 
@@ -4747,7 +4750,33 @@ dostart:
 	blt	1f
 	 nop
 	
-	LDPTR	[%o1+8], %l4	
+	ldx	[%o1+16], %l4	
+	sethi	%hi(_C_LABEL(ssym)), %l3	! store _esym
+	ba	1f
+	 STPTR	%l4, [%l3 + %lo(_C_LABEL(ssym))]
+0:
+	/*
+	 * Now we can try again with for a 32-bit bootloader
+	 */
+#endif
+	cmp	%o2, 8
+	blt	1f			! Not enuff args
+	
+	 set	0x44444230, %l3
+	ld	[%o1], %l4
+	cmp	%l3, %l4		! chk magic
+	bne	1f
+	 nop
+	
+	ld	[%o1+4], %l4	
+	sethi	%hi(_C_LABEL(esym)), %l3	! store _esym
+	STPTR	%l4, [%l3 + %lo(_C_LABEL(esym))]
+
+	cmp	%o2, 12
+	blt	1f
+	 nop
+	
+	ld	[%o1+8], %l4	
 	sethi	%hi(_C_LABEL(ssym)), %l3	! store _esym
 	STPTR	%l4, [%l3 + %lo(_C_LABEL(ssym))]
 1:
@@ -4827,6 +4856,7 @@ dostart:
 	ldxa	[%o1] ASI_DMMU, %o0		! then read it back
 	stxa	%g0, [%o1] ASI_DMMU
 	membar	#Sync
+	clr	%g4				! Clear data segment pointer
 	call	_C_LABEL(bootstrap)
 	 inc	%o0				! and add 1 to discover maxctx
 
@@ -4867,12 +4897,12 @@ dostart:
 
 !	call	print_dtlb			! Debug printf
 !	 nop					! delay
-#ifdef NOT_DEBUG	
+#ifdef DEBUG	
 	set	1f, %o0		! Debug printf
-	srax	%l0, 32, %o1
+	srlx	%l0, 32, %o1
 	srl	%l0, 0, %o2
 	or	%l1, TTE_L|TTE_CP|TTE_CV|TTE_P|TTE_W, %l2	! And low bits:	L=1|CP=1|CV=1|E=0|P=1|W=1(ugh)|G=0
-	srax	%l2, 32, %o3
+	srlx	%l2, 32, %o3
 	call	_C_LABEL(prom_printf)
 	 srl	%l2, 0, %o4
 	ba	2f
@@ -4913,11 +4943,11 @@ dostart:
 	membar	#Sync				! We may need more membar #Sync in here
 	flush	%l7				! Make IMMU see this too
 1:	
-#ifdef NOT_DEBUG
+#ifdef DEBUG
 	set	1f, %o0		! Debug printf
-	srax	%l0, 32, %o1
+	srlx	%l0, 32, %o1
 	srl	%l0, 0, %o2
-	srax	%l2, 32, %o3
+	srlx	%l2, 32, %o3
 	call	_C_LABEL(prom_printf)
 	 srl	%l2, 0, %o4
 	ba	2f
@@ -5026,13 +5056,14 @@ dostart:
 	set	_C_LABEL(tsb), %l0
 	LDPTR	[%l0], %l0
 	set	_C_LABEL(tsbsize), %l1
-	LDPTR	[%l1], %l1
+	ld	[%l1], %l1
 	andn	%l0, 0xfff, %l0			! Mask off size bits
 	or	%l0, %l1, %l0			! Make a TSB pointer
+!	srl	%l0, 0, %l0	! DEBUG -- make sure this is a valid pointer by zeroing the high bits
 
-#ifdef NOT_DEBUG
+#ifdef DEBUG
 	set	1f, %o0		! Debug printf
-	srax	%l0, 32, %o1
+	srlx	%l0, 32, %o1
 	call	_C_LABEL(prom_printf)
 	 srl	%l0, 0, %o2
 	ba	2f
@@ -5054,7 +5085,7 @@ dostart:
 	 mov	%l1, %o0
 	wrpr	%g0, WSTATE_KERN, %wstate
 
-#ifdef NOT_DEBUG
+#ifdef DEBUG
 	wrpr	%g0, 1, %tl			! Debug -- start at tl==3 so we'll watchdog
 	wrpr	%g0, 0x1ff, %tt			! Debug -- clear out unused trap regs
 	wrpr	%g0, 0, %tpc
@@ -5063,7 +5094,7 @@ dostart:
 #endif
 #endif
 
-#ifdef NOT_DEBUG		
+#ifdef DEBUG		
 	set	1f, %o0		! Debug printf
 	srax	%l0, 32, %o1
 	call	_C_LABEL(prom_printf)
@@ -5138,7 +5169,7 @@ _C_LABEL(openfirmware):
 	bz,pt	%icc, 1f
 	 sethi	%hi(romp), %l7
 	
-	ld	[%l7+%lo(romp)], %o4		! v9 stack, just load the addr and callit
+	LDPTR	[%l7+%lo(romp)], %o4		! v9 stack, just load the addr and callit
 	save	%sp, -CC64FSZ, %sp
 	rdpr	%pil, %i2
 	wrpr	%g0, PIL_IMP, %pil
@@ -5161,7 +5192,7 @@ _C_LABEL(openfirmware):
 	mov	%g6, %l6
 	mov	%g7, %l7
 	rdpr	%pstate, %l0
-	jmpl	%o4, %o7
+	jmpl	%i4, %o7
 	 wrpr	%g0, PSTATE_PROM|PSTATE_IE, %pstate
 	wrpr	%l0, %g0, %pstate
 	mov	%l1, %g1
@@ -5200,7 +5231,7 @@ _C_LABEL(openfirmware):
 	add	%sp, -BIAS, %sp
 	sethi	%hi(romp), %o1
 	rdpr	%pstate, %l0
-	ld	[%o1+%lo(romp)], %o1		! Do the actual call
+	LDPTR	[%o1+%lo(romp)], %o1		! Do the actual call
 	srl	%sp, 0, %sp
 	rdpr	%pil, %i2
 	mov	%i0, %o0
@@ -6414,15 +6445,16 @@ ENTRY(write_user_windows)
 #endif
 #endif
 	
-	.comm	_C_LABEL(want_resched),4
 /*
  * Masterpaddr is the p->p_addr of the last process on the processor.
  * XXX masterpaddr is almost the same as cpcb
  * XXX should delete this entirely
  */
+	_ALIGN
 	.globl	_C_LABEL(masterpaddr)
 _C_LABEL(masterpaddr):
 	POINTER	proc0
+	.comm	_C_LABEL(want_resched),4
 
 /*
  * Switch statistics (for later tweaking):
@@ -7164,6 +7196,7 @@ swtchdelay:
 	Debugger();
 #endif
 !	wrpr	%g0, 0, %cleanwin	! DEBUG
+	clr	%g4		! This needs to point to the base of the data segment
 	retl
 	 wrpr	%g0, PSTATE_INTR, %pstate
 
@@ -7227,9 +7260,9 @@ ENTRY(proc_trampoline)
 	ldx	[%sp + CC64FSZ + STKB + TF_NPC], %g2	! pc = tf->tf_npc from execve/fork
 	sllx	%g1, TSTATE_PSTATE_SHIFT, %g1	! Shift it into place
 	add	%g2, 4, %g3			! npc = pc+4
-	rdpr	%cwp, %g4			! Fixup %cwp in %tstate
+	rdpr	%cwp, %g5			! Fixup %cwp in %tstate
 	stx	%g3, [%sp + CC64FSZ + STKB + TF_NPC]
-	or	%g1, %g4, %g1
+	or	%g1, %g5, %g1
 	stx	%g2, [%sp + CC64FSZ + STKB + TF_PC]
 	stx	%g1, [%sp + CC64FSZ + STKB + TF_TSTATE]
 #ifdef NOTDEF_DEBUG
@@ -7837,8 +7870,10 @@ ENTRY(pseg_set)
 	mov	%o7, %o4
 	call	pseg_get
 	 mov	%o2, %o5
+#ifndef _LP64
 	sllx	%o0, 32, %o0
 	or	%o1, %o0, %o0
+#endif
 	cmp	%o0, %o5
 	tne	1
 	mov	%o4, %o7
@@ -8899,8 +8934,9 @@ _C_LABEL(cpu_clockrate):
 	.text
 	
 ENTRY(microtime)
+#define TRY_TICK
 #ifdef TRY_TICK
-	rdpr	%tick, %g1
+	rdpr	%tick, %o1
 	sethi	%hi(_C_LABEL(cpu_clockrate)), %o4
 	sethi	%hi(MICROPERSEC), %o2
 	ldx	[%o4 + %lo(_C_LABEL(cpu_clockrate))], %o4	! Get scale factor
@@ -8910,14 +8946,14 @@ ENTRY(microtime)
 	udivx	%o4, %o2, %o4
 	btst	0x7, %o0					! Can we use a single 64-bit store?
 	bnz,pt	%icc, 1f
-	 mulx	%g1, %o4, %g1					! Scale it: N * Hz / 1 x 10^6 = ticks
+	 mulx	%o1, %o4, %o1					! Scale it: N * Hz / 1 x 10^6 = ticks
 	retl
-	 stx	%g1, %o0
+	 stx	%o1, [%o0]
 1:	
-	srlx	%g1, 32, %o3					! Isolate high word
+	srlx	%o1, 32, %o3					! Isolate high word
 	st	%o3, [%o0]					! and store it 
 	retl
-	 st	%g1, [%o0+4]					! Save time_t low word
+	 st	%o1, [%o0+4]					! Save time_t low word
 #else
 	sethi	%hi(timerreg_4u), %g3
 	sethi	%hi(_C_LABEL(time)), %g2
@@ -8926,9 +8962,9 @@ ENTRY(microtime)
 	ld	[%g2+%lo(_C_LABEL(time))], %o2		! time.tv_sec & time.tv_usec
 	ld	[%g2+%lo(_C_LABEL(time))+4], %o3	! time.tv_sec & time.tv_usec
 	ldx	[%g3], %g7				! Load usec timer valuse
-	ld	[%g2+%lo(_C_LABEL(time))], %g4		! see if time values changed
+	ld	[%g2+%lo(_C_LABEL(time))], %g1		! see if time values changed
 	ld	[%g2+%lo(_C_LABEL(time))+4], %g5	! see if time values changed
-	cmp	%g4, %o2
+	cmp	%g1, %o2
 	bne	2b				! if time.tv_sec changed
 	 cmp	%g5, %o3
 	bne	2b				! if time.tv_usec changed
@@ -8936,8 +8972,8 @@ ENTRY(microtime)
 
 	bpos	3f				! reached limit?
 	 srl	%g7, TMR_SHIFT, %g7		! convert counter to usec
-	sethi	%hi(_C_LABEL(tick)), %g4			! bump usec by 1 tick
-	ld	[%g4+%lo(_C_LABEL(tick))], %o1
+	sethi	%hi(_C_LABEL(tick)), %g1			! bump usec by 1 tick
+	ld	[%g1+%lo(_C_LABEL(tick))], %o1
 	set	TMR_MASK, %g5
 	add	%o1, %o3, %o3
 	and	%g7, %g5, %g7
@@ -9122,21 +9158,22 @@ ENTRY(longjmp)
 #endif /* DDB */
 		
 	.data
+	_ALIGN
 #ifdef DDB
 	.globl	_C_LABEL(esym)
 _C_LABEL(esym):
-	.word	0
+	POINTER	0
 	.globl	_C_LABEL(ssym)
 _C_LABEL(ssym):
-	.word	0
+	POINTER	0
 #endif
+	.globl	_C_LABEL(proc0paddr)
+_C_LABEL(proc0paddr):
+	POINTER	_C_LABEL(u0)		! KVA of proc0 uarea
+	
 	.globl	_C_LABEL(cold)
 _C_LABEL(cold):
 	.word	1		! cold start flag
-
-	.globl	_C_LABEL(proc0paddr)
-_C_LABEL(proc0paddr):
-	.word	_C_LABEL(u0)		! KVA of proc0 uarea
 
 /* interrupt counters	XXX THESE BELONG ELSEWHERE (if anywhere) */
 	.globl	_C_LABEL(intrcnt), _C_LABEL(eintrcnt), _C_LABEL(intrnames), _C_LABEL(eintrnames)
@@ -9163,8 +9200,8 @@ _C_LABEL(intrcnt):
 	.space	4*15
 _C_LABEL(eintrcnt):
 
-	.comm	_C_LABEL(nwindows), 4
-	.comm	_C_LABEL(promvec), PTRSZ
 	.comm	_C_LABEL(curproc), PTRSZ
+	.comm	_C_LABEL(promvec), PTRSZ
+	.comm	_C_LABEL(nwindows), 4
 	.comm	_C_LABEL(qs), 32 * 8
 	.comm	_C_LABEL(whichqs), 4
