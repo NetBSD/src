@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_umap.c,v 1.14 2003/08/07 10:04:32 agc Exp $	*/
+/*	$NetBSD: mount_umap.c,v 1.15 2005/01/31 05:19:19 erh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_umap.c	8.5 (Berkeley) 4/26/95";
 #else
-__RCSID("$NetBSD: mount_umap.c,v 1.14 2003/08/07 10:04:32 agc Exp $");
+__RCSID("$NetBSD: mount_umap.c,v 1.15 2005/01/31 05:19:19 erh Exp $");
 #endif
 #endif /* not lint */
 
@@ -110,7 +110,8 @@ mount_umap(argc, argv)
 	u_long mapdata[MAPFILEENTRIES][2];
 	u_long gmapdata[GMAPFILEENTRIES][2];
 	int ch, count, gnentries, mntflags, nentries;
-	char *gmapfile, *mapfile, *source, *target, buf[20];
+	char *gmapfile, *mapfile, buf[20];
+	char source[MAXPATHLEN], target[MAXPATHLEN];
 
 	mntflags = 0;
 	mapfile = gmapfile = NULL;
@@ -135,8 +136,19 @@ mount_umap(argc, argv)
 	if (argc != 2 || mapfile == NULL || gmapfile == NULL)
 		usage();
 
-	source = argv[0];
-	target = argv[1];
+	if (realpath(argv[0], source) == NULL)        /* Check source path */
+		err(1, "realpath %s", argv[0]);
+	if (strncmp(argv[0], source, MAXPATHLEN)) {
+		warnx("\"%s\" is a relative path.", argv[0]);
+		warnx("using \"%s\" instead.", source);
+	}
+
+	if (realpath(argv[1], target) == NULL)        /* Check mounton path */
+		err(1, "realpath %s", argv[1]);
+	if (strncmp(argv[1], target, MAXPATHLEN)) {
+		warnx("\"%s\" is a relative path.", argv[1]);
+		warnx("using \"%s\" instead.", target);
+	}
 
 	/* Read in uid mapping data. */
 	if ((fp = fopen(mapfile, "r")) == NULL)
@@ -236,8 +248,8 @@ mount_umap(argc, argv)
 	args.gnentries = gnentries;
 	args.gmapdata = gmapdata;
 
-	if (mount(MOUNT_UMAP, argv[1], mntflags, &args))
-		err(1, "%s on %s", source, argv[1]);
+	if (mount(MOUNT_UMAP, target, mntflags, &args))
+		err(1, "%s on %s", source, target);
 	if (mntflags & MNT_GETARGS) {
 		printf("nentries=%d, gnentries=%d\n", args.nentries,
 		    args.gnentries);

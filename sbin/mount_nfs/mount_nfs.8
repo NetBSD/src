@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount_nfs.8,v 1.26 2005/01/21 15:49:43 yamt Exp $
+.\"	$NetBSD: mount_nfs.8,v 1.27 2005/01/31 05:19:19 erh Exp $
 .\"
 .\" Copyright (c) 1992, 1993, 1994, 1995
 .\"	The Regents of the University of California.  All rights reserved.
@@ -87,6 +87,9 @@ system call to prepare and graft a remote
 file system (rhost:path)
 on to the file system tree at the mount point
 .Ar node .
+The directory specified by
+.Ar node
+is converted to an absolute path before use.
 This command is normally executed by
 .Xr mount 8 .
 It implements the mount protocol as described in RFC 1094, Appendix A and
