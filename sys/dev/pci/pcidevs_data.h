@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.403 2002/02/04 16:57:57 junyoung Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.404 2002/02/16 16:36:37 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.400 2002/02/04 16:56:49 junyoung Exp 
+ *	NetBSD: pcidevs,v 1.401 2002/02/16 16:35:48 thorpej Exp 
  */
 
 /*
@@ -794,6 +794,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Advanced Micro Devices",
 	    "PCnet-PCI Ethernet & SCSI",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_SC520_SC,
+	    0,
+	    "Advanced Micro Devices",
+	    "Elan SC520 System Controller",
 	},
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_SC751_SC,
