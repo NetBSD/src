@@ -1,4 +1,4 @@
-/* $NetBSD: rpb.h,v 1.24 1998/06/24 01:20:43 ross Exp $ */
+/* $NetBSD: rpb.h,v 1.25 1998/06/26 21:55:38 ross Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -63,7 +63,7 @@ struct rpb {
 #define	ST_DEC_2100_A50		13		/* "Avanti" (PCI/ISA) */
 #define	ST_DEC_MUSTANG		14		/* "Mustang" (?) */
 #define	ST_DEC_KN20AA		15		/* kn20aa (PCI/EISA) */
-#define	ST_DEC_1000		17		/* "Mikasa" (PCI/ISA?) */
+#define	ST_DEC_1000		17		/* "Mikasa" (PCI/EISA) */
 #define	ST_EB66			19		/* EB66 (PCI/ISA?) */
 #define	ST_EB64P		20		/* EB64+ (PCI/ISA?) */
 #define	ST_ALPHABOOK1		21		/* Alphabook (?) */
