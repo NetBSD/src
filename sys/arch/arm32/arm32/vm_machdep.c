@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.9 1996/10/13 03:06:01 christos Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.10 1996/10/15 22:07:41 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -90,9 +90,13 @@ void	pmap_activate	__P((pmap_t /*pmap*/, struct pcb */*pcbp*/));
 extern void proc_trampoline	__P(());
 extern void child_return	__P(());
 
+pt_entry_t *pmap_pte __P((pmap_t, vm_offset_t));
+
 /*
  * Special compilation symbols
  * DEBUG_VMMACHDEP
+ * STACKCHECKS
+ * FREESWAPPEDPAGEDIRS	- bugged
  */
 
 /*
@@ -114,11 +118,13 @@ cpu_fork(p1, p2)
 	struct pcb *pcb = (struct pcb *)&p2->p_addr->u_pcb;
 	struct trapframe *tf;
 	struct switchframe *sf;
-	int loop;
 	vm_offset_t addr;
-	u_char *ptr;
 	vm_offset_t muaddr = VM_MAXUSER_ADDRESS;
 	struct vm_map *vp;
+#ifdef STACKCHECKS
+	int loop;
+	u_char *ptr;
+#endif
 
 #ifdef DEBUG_VMMACHDEP        
 	if (pmap_debug_level >= 0)
@@ -126,29 +132,34 @@ cpu_fork(p1, p2)
 		   (u_int) curproc, (u_int)&proc0);
 #endif
 
-/* Sync the pcb */
+#if 0	/* XXX */
+	/* Sync the pcb */
 	savectx(curpcb);
+#endif
 
-/* Copy the pcb */
+	/* Copy the pcb */
 	*pcb = p1->p_addr->u_pcb;
 
-/* Set up the undefined stack for the process. Note: this stack is not in use if we are forking */
+	/* 
+	 * Set up the undefined stack for the process.
+	 * Note: this stack is not in use if we are forking
+	 */
 	pcb->pcb_und_sp = (u_int)p2->p_addr + USPACE_UNDEF_STACK_TOP;
 	pcb->pcb_sp = (u_int)p2->p_addr + USPACE_SVC_STACK_TOP;
 
-/* Fill the undefined stack with a known pattern */
+#ifdef STACKCHECKS
+	/* Fill the undefined stack with a known pattern */
 
 	ptr = ((u_char *)p2->p_addr) + USPACE_UNDEF_STACK_BOTTOM;
-	for (loop = 0; loop < (USPACE_UNDEF_STACK_TOP - USPACE_UNDEF_STACK_BOTTOM); ++loop, ++ptr) {
+	for (loop = 0; loop < (USPACE_UNDEF_STACK_TOP - USPACE_UNDEF_STACK_BOTTOM); ++loop, ++ptr)
 		*ptr = 0xdd;
-	}
 
-/* Fill the kernel stack with a known pattern */
+	/* Fill the kernel stack with a known pattern */
 
 	ptr = ((u_char *)p2->p_addr) + USPACE_SVC_STACK_BOTTOM;
-	for (loop = 0; loop < (USPACE_SVC_STACK_TOP - USPACE_SVC_STACK_BOTTOM); ++loop, ++ptr) {
+	for (loop = 0; loop < (USPACE_SVC_STACK_TOP - USPACE_SVC_STACK_BOTTOM); ++loop, ++ptr)
 		*ptr = 0xdd;
-	}
+#endif
 
 /* Now ...
  * vm_fork has allocated UPAGES in kernel Vm space for us. p2->p_addr
@@ -201,6 +212,11 @@ cpu_fork(p1, p2)
 
 	*((int *)(p2->p_vmspace->vm_pmap.pm_vptpt + 0)) = 0;
 
+#ifdef CPU_SA110
+	cache_clean();
+	tlb_flush();
+#endif	/* CPU_SA110 */
+
 /* Wire down a page to cover the page table zero page and the start of the user are in */
 
 #ifdef DEBUG_VMMACHDEP
@@ -221,7 +237,7 @@ cpu_fork(p1, p2)
 	}
 #endif
 
-/* Map the system page */
+	/* Map the system page */
 
 	pmap_enter(&p2->p_vmspace->vm_pmap, 0,
 	    systempage.physical, VM_PROT_READ, TRUE);
@@ -229,7 +245,7 @@ cpu_fork(p1, p2)
 	pmap_activate(&p2->p_vmspace->vm_pmap, &up->u_pcb);
 
 #ifdef ARMFPE
-/* Initialise a new FP context for p2 and copy the context from p1 */
+	/* Initialise a new FP context for p2 and copy the context from p1 */
 	arm_fpe_core_initcontext(FP_CONTEXT(p2));
 	arm_fpe_copycontext(FP_CONTEXT(p1), FP_CONTEXT(p2));
 #endif
@@ -272,31 +288,31 @@ cpu_exit(p)
 	register struct proc *p;
 {
 #ifdef ARMFPE
-/* Abort any active FP operation and deactivate the context */
+	/* Abort any active FP operation and deactivate the context */
 	arm_fpe_core_abort(FP_CONTEXT(p), NULL, NULL);
 	arm_fpe_core_changecontext(0);
 #endif
 
-/* Report how much stack has been used - debugging */
+#ifdef STACKCHECKS
+	/* Report how much stack has been used - debugging */
 
-/*	if (p) {
+	if (p) {
 		u_char *ptr;
 		int loop;
 
 		ptr = ((u_char *)p2->p_addr) + USPACE_UNDEF_STACK_BOTTOM;
-		for (loop = 0; loop < (USPACE_UNDEF_STACK_TOP - USPACE_UNDEF_STACK_BOTTOM) && *ptr == 0xdd; ++loop, ++ptr) ;
+		for (loop = 0; loop < (USPACE_UNDEF_STACK_TOP - USPACE_UNDEF_STACK_BOTTOM)
+		    && *ptr == 0xdd; ++loop, ++ptr) ;
 		log(LOG_INFO, "%d bytes of undefined stack fill pattern\n", loop);
 		ptr = ((u_char *)p2->p_addr) + USPACE_SVC_STACK_BOTTOM;
-		for (loop = 0; loop < (USPACE_SVC_STACK_TOP - USPACE_SVC_STACK_BOTTOM) && *ptr == 0xdd; ++loop, ++ptr) ;
+		for (loop = 0; loop < (USPACE_SVC_STACK_TOP - USPACE_SVC_STACK_BOTTOM)
+		    && *ptr == 0xdd; ++loop, ++ptr) ;
 		log(LOG_INFO, "%d bytes of svc stack fill pattern\n", loop);
 
 	}
-*/
-
-/*    printf("cpu_exit: proc=%08x pid=%d comm=%s\n", p, p->p_pid, p->p_comm);*/
+#endif
 
 	cnt.v_swtch++;
-
 	switch_exit(p, &proc0);
 }
 
@@ -315,7 +331,7 @@ cpu_swapin(p)
 #ifdef FREESWAPPEDPAGEDIRS
 	printf("cpu_swapin(%08x, %d, %s, %08x)\n", (u_int)p, p->p_pid, p->p_comm, (u_int)&p->p_vmspace->vm_pmap);
 	if (p->p_vmspace->vm_pmap.pm_pdir)
-		printf("pdir = %08x\n", p->p_vmspace->vm_pmap.pm_pdir);
+		printf("pdir = %08x\n", (u_int)p->p_vmspace->vm_pmap.pm_pdir);
 	pmap_pinit(&p->p_vmspace->vm_pmap);
 	pmap_debug_level = 10;
 #endif
@@ -332,7 +348,7 @@ cpu_swapin(p)
 	}
 #endif
 
-/* Wire down a page to cover the page table zero page and the start of the user are in */
+	/* Wire down a page to cover the page table zero page and the start of the user are in */
 
 	vm_map_pageable(&p->p_vmspace->vm_map, addr, addr+NBPG, FALSE);
 
@@ -362,18 +378,16 @@ cpu_swapout(p)
 	}
 #endif
 
-/* Free the system page mapping */
+	/* Free the system page mapping */
 
 	pmap_remove(&p->p_vmspace->vm_pmap, 0, NBPG);
 
 #ifdef FREESWAPPEDPAGEDIRS
 	printf("cpu_swapout(%08x, %d, %s, %08x)\n", (u_int)p, p->p_pid, p->p_comm, (u_int)&p->p_vmspace->vm_pmap);
-	printf("p->pm_vptpt[0] = %08x pdir=%08x\n", *((int *)(p->p_vmspace->vm_pmap.pm_vptpt + 0)), p->p_vmspace->vm_pmap.pm_pdir);
+	printf("p->pm_vptpt[0] = %08x pdir=%08x\n", *((int *)(p->p_vmspace->vm_pmap.pm_vptpt + 0)), (u_int)p->p_vmspace->vm_pmap.pm_pdir);
 	pmap_freepagedir(&p->p_vmspace->vm_pmap);
 	p->p_vmspace->vm_pmap.pm_pdir = 0;
 #endif
-
-	idcflush();
 }
 
 
@@ -401,14 +415,19 @@ pagemove(from, to, size)
 	fpte = vtopte(from);
 	tpte = vtopte(to);
 
-	idcflush();
+	/*
+	 * Make sure the cache does not have dirty data for the
+	 * pages we are moving.
+	 */
+
+	cache_clean();
 
 	while (size > 0) {
 		*tpte++ = *fpte;
 		*fpte++ = 0;
 		size -= NBPG;
 	}
-	tlbflush();
+	tlb_flush();
 }
 
 extern vm_map_t phys_map;
@@ -461,14 +480,19 @@ vmapbuf(bp, len)
 	fpte = pmap_pte(vm_map_pmap(&bp->b_proc->p_vmspace->vm_map), faddr);
 	tpte = pmap_pte(vm_map_pmap(phys_map), taddr);
 
-	idcflush();
+	/*
+	 * Make sure the cache does not have dirty data for the
+	 * pages we are replacing
+	 */
+
+	cache_clean();
 
 	do {
-		*fpte = (*fpte) & ~PT_C;
+		*fpte = (*fpte) & ~(PT_C | PT_B);
 		*tpte++ = *fpte++;
 		len -= PAGE_SIZE;
 	} while (len > 0);
-	tlbflush();
+	tlb_flush();
 }
 
 /*
@@ -490,7 +514,12 @@ vunmapbuf(bp, len)
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vunmapbuf");
 
-	idcflush();
+	/*
+	 * Make sure the cache does not have dirty data for the
+	 * pages we had mapped.
+	 */
+
+	cache_clean();
 
 	addr = trunc_page(bp->b_data);
 	off = (vm_offset_t)bp->b_data - addr;
@@ -499,7 +528,7 @@ vunmapbuf(bp, len)
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = 0;
 
-	tlbflush();
+	tlb_flush();
 }
 
 /*
