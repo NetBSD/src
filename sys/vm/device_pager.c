@@ -1,3 +1,4 @@
+/* NetBSD $Id: device_pager.c,v 1.16 1994/06/27 04:55:46 cgd Exp $ */
 /*
  * Copyright (c) 1990 University of Utah.
  * Copyright (c) 1991, 1993
@@ -35,8 +36,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)device_pager.c	8.5 (Berkeley) 1/12/94
- *	$Id: device_pager.c,v 1.15 1994/05/23 03:11:20 cgd Exp $
+ *	@(#)device_pager.c	8.5 (Berkeley) 1/12/94
  */
 
 /*

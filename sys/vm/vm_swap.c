@@ -1,3 +1,4 @@
+/* NetBSD $Id: vm_swap.c,v 1.22 1994/06/27 04:55:46 cgd Exp $ */
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +31,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)vm_swap.c	8.5 (Berkeley) 2/17/94
- *	$Id: vm_swap.c,v 1.21 1994/06/22 14:02:02 pk Exp $
+ *	@(#)vm_swap.c	8.5 (Berkeley) 2/17/94
  */
 
 #include <sys/param.h>

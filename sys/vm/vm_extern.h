@@ -1,3 +1,4 @@
+/* NetBSD $Id: vm_extern.h,v 1.6 1994/06/27 04:55:46 cgd Exp $ */
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +31,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)vm_extern.h	8.2 (Berkeley) 1/12/94
- *	$Id: vm_extern.h,v 1.5 1994/05/23 03:11:35 cgd Exp $
+ *	@(#)vm_extern.h	8.2 (Berkeley) 1/12/94
  */
 
 struct buf;
