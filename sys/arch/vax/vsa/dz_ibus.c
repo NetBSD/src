@@ -1,4 +1,4 @@
-/*	$NetBSD: dz_ibus.c,v 1.19 2000/07/19 18:15:04 matt Exp $ */
+/*	$NetBSD: dz_ibus.c,v 1.20 2000/07/26 21:50:49 matt Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -59,9 +59,9 @@
 #include "ioconf.h"
 #include "lkc.h"
 
-static  int     dz_vsbus_match __P((struct device *, struct cfdata *, void *));
-static  void    dz_vsbus_attach __P((struct device *, struct device *, void *));
-static	int	dz_print __P((void *, const char *));
+static  int     dz_vsbus_match(struct device *, struct cfdata *, void *);
+static  void    dz_vsbus_attach(struct device *, struct device *, void *);
+static	int	dz_print(void *, const char *);
 
 static	vaddr_t dz_regs; /* Used for console */
 
