@@ -1,4 +1,4 @@
-/*	$NetBSD: xen.h,v 1.9.2.4 2005/01/31 17:21:16 bouyer Exp $	*/
+/*	$NetBSD: xen.h,v 1.9.2.5 2005/02/12 22:25:01 bouyer Exp $	*/
 
 /*
  *
@@ -50,9 +50,7 @@ void	xen_parse_cmdline(int, union xen_cmdline_parseinfo *);
 
 void	xenconscn_attach(void);
 
-void	xenmachmem_init(void);
 void	xenprivcmd_init(void);
-void	xenvfr_init(void);
 
 void	xenevt_event(int);
 
