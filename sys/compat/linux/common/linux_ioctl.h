@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ioctl.h,v 1.4 1996/04/05 00:01:36 christos Exp $	*/
+/*	$NetBSD: linux_ioctl.h,v 1.5 1997/03/19 05:12:16 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -36,6 +36,8 @@
 
 struct linux_sys_ioctl_args;
 int linux_ioctl_audio __P((struct proc *, struct linux_sys_ioctl_args *,
+    register_t *));
+int linux_ioctl_mixer __P((struct proc *, struct linux_sys_ioctl_args *,
     register_t *));
 int linux_machdepioctl __P((struct proc *, void *, register_t *));
 int linux_ioctl_termios __P((struct proc *, struct linux_sys_ioctl_args *,

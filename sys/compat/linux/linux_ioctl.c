@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ioctl.c,v 1.14 1996/04/05 00:01:28 christos Exp $	*/
+/*	$NetBSD: linux_ioctl.c,v 1.15 1997/03/19 05:12:15 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -68,6 +68,8 @@ linux_sys_ioctl(p, v, retval)
 	} */ *uap = v;
 
 	switch (LINUX_IOCGROUP(SCARG(uap, com))) {
+	case 'M':
+		return linux_ioctl_mixer(p, uap, retval);
 	case 'P':
 		return linux_ioctl_audio(p, uap, retval);
 	case 'T':
