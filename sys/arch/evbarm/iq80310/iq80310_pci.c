@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_pci.c,v 1.6 2002/02/08 01:42:41 briggs Exp $	*/
+/*	$NetBSD: iq80310_pci.c,v 1.7 2002/02/08 03:28:24 briggs Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -101,13 +101,13 @@ iq80310_pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 	}
 
 	switch (pa->pa_device) {
-	case 0:		/* LSI 53c1010 SCSI */
+	case 5:		/* LSI 53c1010 SCSI */
 		*ihp = XINT3_IRQ(2);
 		break;
-	case 1:		/* Intel i82544GC Gig-E #1 */
+	case 6:		/* Intel i82544GC Gig-E #1 */
 		*ihp = XINT3_IRQ(1);
 		break;
-	case 2:		/* Intel i82544GC Gig-E #2 */
+	case 7:		/* Intel i82544GC Gig-E #2 */
 		*ihp = XINT3_IRQ(4);
 		break;
 	default:
