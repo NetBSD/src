@@ -1,7 +1,7 @@
-/*	$NetBSD: extern.h,v 1.52 2000/01/31 22:01:04 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.53 2000/05/01 09:44:54 lukem Exp $	*/
 
 /*-
- * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996-2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -135,6 +135,7 @@ void	domacro __P((int, char **));
 char   *domap __P((char *));
 void	doproxy __P((int, char **));
 char   *dotrans __P((char *));
+void	fget __P((int, char **));
 int	foregroundproc __P((void));
 void	formatbuf __P((char *, size_t, const char *));
 void	ftpvis __P((char *, size_t, const char *, size_t));
