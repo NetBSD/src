@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.10 2001/02/11 15:37:13 ad Exp $	*/
+/*	$NetBSD: twe.c,v 1.11 2001/02/25 17:46:42 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -706,7 +706,7 @@ static int
 twe_status_wait(struct twe_softc *sc, u_int32_t status, int timo)
 {
 
-	for (; timo != 0; timo--) {
+	for (timo *= 10; timo != 0; timo--) {
 		if ((TWE_INL(sc, TWE_REG_STS) & status) == status)
 			break;
 		delay(100000);
