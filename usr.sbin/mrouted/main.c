@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.18 2003/03/05 21:05:39 wiz Exp $	*/
+/*	$NetBSD: main.c,v 1.19 2003/05/16 18:10:38 itojun Exp $	*/
 
 /*
  * The mrouted program is covered by the license in the accompanying file
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("@(#) $NetBSD: main.c,v 1.18 2003/03/05 21:05:39 wiz Exp $");
+__RCSID("@(#) $NetBSD: main.c,v 1.19 2003/05/16 18:10:38 itojun Exp $");
 #endif
 
 #include <err.h>
@@ -167,8 +167,8 @@ usage:	fprintf(stderr,
 #else
     (void)openlog("mrouted", LOG_PID);
 #endif
-    sprintf(versionstring, "mrouted version %d.%d",
-			PROTOCOL_VERSION, MROUTED_VERSION);
+    snprintf(versionstring, sizeof(versionstring),
+      "mrouted version %d.%d", PROTOCOL_VERSION, MROUTED_VERSION);
 
     logit(LOG_NOTICE, 0, "%s", versionstring);
 
@@ -642,7 +642,7 @@ logit(int severity, int syserr, const char *format, ...)
     time_t t;
 
     va_start(ap, format);
-    vsprintf(&fmt[10], format, ap);
+    vsnprintf(&fmt[10], sizeof(fmt) - 10, format, ap);
     va_end(ap);
     msg = (severity == LOG_WARNING) ? fmt : &fmt[10];
 

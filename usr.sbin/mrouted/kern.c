@@ -1,4 +1,4 @@
-/*	$NetBSD: kern.c,v 1.7 2003/03/05 21:05:39 wiz Exp $	*/
+/*	$NetBSD: kern.c,v 1.8 2003/05/16 18:10:38 itojun Exp $	*/
 
 /*
  * The mrouted program is covered by the license in the accompanying file
@@ -61,7 +61,7 @@ void k_set_if(u_int32_t ifa)
     if (setsockopt(igmp_socket, IPPROTO_IP, IP_MULTICAST_IF,
 		   (char *)&adr, sizeof(adr)) < 0)
 	logit(LOG_ERR, errno, "setsockopt IP_MULTICAST_IF %s",
-	    		    inet_fmt(ifa, s1));
+	    		    inet_fmt(ifa, s1, sizeof(s1)));
 }
 
 
@@ -75,7 +75,8 @@ void k_join(u_int32_t grp, u_int32_t ifa)
     if (setsockopt(igmp_socket, IPPROTO_IP, IP_ADD_MEMBERSHIP,
 		   (char *)&mreq, sizeof(mreq)) < 0)
 	logit(LOG_WARNING, errno, "can't join group %s on interface %s",
-				inet_fmt(grp, s1), inet_fmt(ifa, s2));
+				inet_fmt(grp, s1, sizeof(s1)),
+				inet_fmt(ifa, s2, sizeof(s2)));
 }
 
 
@@ -89,7 +90,8 @@ void k_leave(u_int32_t grp, u_int32_t ifa)
     if (setsockopt(igmp_socket, IPPROTO_IP, IP_DROP_MEMBERSHIP,
 		   (char *)&mreq, sizeof(mreq)) < 0)
 	logit(LOG_WARNING, errno, "can't leave group %s on interface %s",
-				inet_fmt(grp, s1), inet_fmt(ifa, s2));
+				inet_fmt(grp, s1, sizeof(s1)),
+				inet_fmt(ifa, s2, sizeof(s2)));
 }
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: igmp.c,v 1.10 2003/03/05 21:05:39 wiz Exp $	*/
+/*	$NetBSD: igmp.c,v 1.11 2003/05/16 18:10:38 itojun Exp $	*/
 
 /*
  * The mrouted program is covered by the license in the accompanying file
@@ -18,6 +18,7 @@
  */
 char		*recv_buf; 		     /* input packet buffer         */
 char		*send_buf; 		     /* output packet buffer        */
+size_t		send_buflen; 		     /* output packet buffer        */
 int		igmp_socket;		     /* socket for all network I/O  */
 u_int32_t	allhosts_group;		     /* All hosts addr in net order */
 u_int32_t	allrtrs_group;		     /* All-Routers "  in net order */
@@ -42,6 +43,7 @@ init_igmp(void)
 
     recv_buf = malloc(RECV_BUF_SIZE);
     send_buf = malloc(RECV_BUF_SIZE);
+    send_buflen = RECV_BUF_SIZE;
 
     if ((igmp_socket = socket(AF_INET, SOCK_RAW, IPPROTO_IGMP)) < 0) 
 	logit(LOG_ERR, errno, "IGMP socket");
@@ -154,7 +156,7 @@ accept_igmp(int recvlen)
     if (iphdrlen + ipdatalen != recvlen) {
 	logit(LOG_WARNING, 0,
 	    "received packet from %s shorter (%u bytes) than hdr+data length (%u+%u)",
-	    inet_fmt(src, s1), recvlen, iphdrlen, ipdatalen);
+	    inet_fmt(src, s1, sizeof(s1)), recvlen, iphdrlen, ipdatalen);
 	return;
     }
 
@@ -164,13 +166,13 @@ accept_igmp(int recvlen)
     if (igmpdatalen < 0) {
 	logit(LOG_WARNING, 0,
 	    "received IP data field too short (%u bytes) for IGMP, from %s",
-	    ipdatalen, inet_fmt(src, s1));
+	    ipdatalen, inet_fmt(src, s1, sizeof(s1)));
 	return;
     }
 
     logit(LOG_DEBUG, 0, "RECV %s from %-15s to %s",
 	packet_kind(igmp->igmp_type, igmp->igmp_code),
-	inet_fmt(src, s1), inet_fmt(dst, s2));
+	inet_fmt(src, s1, sizeof(s1)), inet_fmt(dst, s2, sizeof(s2)));
 
     switch (igmp->igmp_type) {
 
@@ -243,8 +245,8 @@ accept_igmp(int recvlen)
 		default:
 		    logit(LOG_INFO, 0,
 		     "ignoring unknown DVMRP message code %u from %s to %s",
-		     igmp->igmp_code, inet_fmt(src, s1),
-		     inet_fmt(dst, s2));
+		     igmp->igmp_code, inet_fmt(src, s1, sizeof(s1)),
+		     inet_fmt(dst, s2, sizeof(s2)));
 		    return;
 	    }
 
@@ -262,8 +264,8 @@ accept_igmp(int recvlen)
 	default:
 	    logit(LOG_INFO, 0,
 		"ignoring unknown IGMP message type %x from %s to %s",
-		igmp->igmp_type, inet_fmt(src, s1),
-		inet_fmt(dst, s2));
+		igmp->igmp_type, inet_fmt(src, s1, sizeof(s1)),
+		inet_fmt(dst, s2, sizeof(s2)));
 	    return;
     }
 }
@@ -340,12 +342,13 @@ send_igmp(u_int32_t src, u_int32_t dst, int type, int code, u_int32_t group,
 	else
 	    logit(igmp_log_level(type, code), errno,
 		"sendto to %s on %s",
-		inet_fmt(dst, s1), inet_fmt(src, s2));
+		inet_fmt(dst, s1, sizeof(s1)), inet_fmt(src, s2, sizeof(s2)));
     }
 
     if (setloop)
 	    k_set_loop(FALSE);
 
     logit(LOG_DEBUG, 0, "SENT %s from %-15s to %s",
-	packet_kind(type, code), inet_fmt(src, s1), inet_fmt(dst, s2));
+	packet_kind(type, code), inet_fmt(src, s1, sizeof(s1)),
+	inet_fmt(dst, s2, sizeof(s2)));
 }

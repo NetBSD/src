@@ -1,4 +1,4 @@
-/*	$NetBSD: mtrace.c,v 1.29 2003/03/05 22:04:59 wiz Exp $	*/
+/*	$NetBSD: mtrace.c,v 1.30 2003/05/16 18:10:37 itojun Exp $	*/
 
 /*
  * mtrace.c
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mtrace.c,v 1.29 2003/03/05 22:04:59 wiz Exp $");
+__RCSID("$NetBSD: mtrace.c,v 1.30 2003/05/16 18:10:37 itojun Exp $");
 #endif
 
 #include <sys/types.h>
@@ -514,7 +514,7 @@ send_recv(u_int32_t dst, int type, int code, int tries, struct resp_buf *save)
 	    if (igmpdatalen < 0) {
 		fprintf(stderr,
 			"IP data field too short (%u bytes) for IGMP from %s\n",
-			ipdatalen, inet_fmt(ip->ip_src.s_addr, s1));
+			ipdatalen, inet_fmt(ip->ip_src.s_addr, s1, sizeof(s1)));
 		continue;
 	    }
 
@@ -668,7 +668,7 @@ passive_mode(void)
 	if (igmpdatalen < 0) {
 	    fprintf(stderr,
 		    "IP data field too short (%u bytes) for IGMP from %s\n",
-		    ipdatalen, inet_fmt(ip->ip_src.s_addr, s1));
+		    ipdatalen, inet_fmt(ip->ip_src.s_addr, s1, sizeof(s1)));
 	    continue;
 	}
 
@@ -707,8 +707,10 @@ passive_mode(void)
 	    continue;
 
 	printf("Mtrace from %s to %s via group %s (mxhop=%d)\n",
-		inet_fmt(base.qhdr.tr_dst, s1), inet_fmt(base.qhdr.tr_src, s2),
-		inet_fmt(igmp->igmp_group.s_addr, s3), igmp->igmp_code);
+		inet_fmt(base.qhdr.tr_dst, s1, sizeof(s1)),
+		inet_fmt(base.qhdr.tr_src, s2, sizeof(s2)),
+		inet_fmt(igmp->igmp_group.s_addr, s3, sizeof(s3)),
+		igmp->igmp_code);
 	if (len == 0)
 	    continue;
 	printf("  0  ");
@@ -749,13 +751,13 @@ print_host2(u_int32_t addr1, u_int32_t addr2)
     char *name;
 
     if (numeric) {
-	printf("%s", inet_fmt(addr1, s1));
+	printf("%s", inet_fmt(addr1, s1, sizeof(s1)));
 	return ("");
     }
     name = inet_name(addr1);
     if (*name == '?' && *(name + 1) == '\0' && addr2 != 0)
 	name = inet_name(addr2);
-    printf("%s (%s)", name, inet_fmt(addr1, s1));
+    printf("%s (%s)", name, inet_fmt(addr1, s1, sizeof(s1)));
     return (name);
 }
 
@@ -1067,11 +1069,11 @@ print_stats(struct resp_buf *base, struct resp_buf *prev, struct resp_buf *new)
     printf("    Packet Statistics For     Only For Traffic\n");
     printf("%-15s %-15s  All Multicast Traffic     From %s\n",
 	   ((b->tr_inaddr & smask) == (qsrc & smask)) ? s1 : "   * * *       ",
-	   inet_fmt(base->qhdr.tr_raddr, s2), inet_fmt(qsrc, s1));
+	   inet_fmt(base->qhdr.tr_raddr, s2, sizeof(s2)), inet_fmt(qsrc, s1, sizeof(s1)));
     rtt = t_diff(resptime, new->qtime);
     ms = scale(&rtt);
     printf("     %c       __/  rtt%5d%s    Lost/Sent = Pct  Rate       To %s\n",
-	   first ? 'v' : '|', rtt, ms, inet_fmt(qgrp, s2));
+	   first ? 'v' : '|', rtt, ms, inet_fmt(qgrp, s2, sizeof(s2)));
     if (!first) {
 	hop = t_diff(resptime, qarrtime);
 	ms = scale(&hop);
@@ -1099,8 +1101,8 @@ print_stats(struct resp_buf *base, struct resp_buf *prev, struct resp_buf *new)
 	  return 1;		/* Route changed */
 
 	if ((n->tr_inaddr != n->tr_outaddr))
-	  printf("%-15s\n", inet_fmt(n->tr_inaddr, s1));
-	printf("%-15s %-14s %s\n", inet_fmt(n->tr_outaddr, s1), names[rno],
+	  printf("%-15s\n", inet_fmt(n->tr_inaddr, s1, sizeof(s1)));
+	printf("%-15s %-14s %s\n", inet_fmt(n->tr_outaddr, s1, sizeof(s1)), names[rno],
 		 flag_type(n->tr_rflags));
 
 	if (rno-- < 1) break;
@@ -1129,7 +1131,7 @@ print_stats(struct resp_buf *base, struct resp_buf *prev, struct resp_buf *new)
 	printf("     v         \\  hop%5d%s", hop, ms);
 	stat_line(b, n, FALSE, r);
     }
-    printf("%-15s %s\n", inet_fmt(qdst, s1), inet_fmt(lcl_addr, s2));
+    printf("%-15s %s\n", inet_fmt(qdst, s1, sizeof(s1)), inet_fmt(lcl_addr, s2, sizeof(s2)));
     printf("  Receiver      Query Source\n\n");
     return 0;
 }
@@ -1392,7 +1394,8 @@ Usage: mtrace [-Mlnps] [-w wait] [-m max_hops] [-q nqueries] [-g gateway]\n\
       }
 
     printf("Mtrace from %s to %s via group %s\n",
-	   inet_fmt(qsrc, s1), inet_fmt(qdst, s2), inet_fmt(qgrp, s3));
+	   inet_fmt(qsrc, s1, sizeof(s1)), inet_fmt(qdst, s2, sizeof(s2)),
+	   inet_fmt(qgrp, s3, sizeof(s3)));
 
     if ((qdst & dst_netmask) == (qsrc & dst_netmask)) {
 	printf("Source & receiver are directly connected, no path to trace\n");
@@ -1586,13 +1589,13 @@ Usage: mtrace [-Mlnps] [-w wait] [-m max_hops] [-q nqueries] [-g gateway]\n\
 	if (IN_MULTICAST(ntohl(tdst))) {
 	  if (tdst == query_cast)
 	    printf("Perhaps no local router has a route for source %s\n",
-		   inet_fmt(qsrc, s1));
+		   inet_fmt(qsrc, s1, sizeof(s1)));
 	  else
 	    printf("Perhaps receiver %s is not a member of group %s,\n"
 		"or no router local to it has a route for source %s,\n"
 		"or multicast at ttl %d doesn't reach its last-hop router"
 		" for that source\n",
-		inet_fmt(qdst, s2), inet_fmt(qgrp, s3), inet_fmt(qsrc, s1),
+		inet_fmt(qdst, s2, sizeof(s2)), inet_fmt(qgrp, s3, sizeof(s3)), inet_fmt(qsrc, s1, sizeof(s1)),
 		qttl ? qttl : MULTICAST_TTL1);
 	}
 	exit(1);
