@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_misc.c,v 1.47 1998/10/19 22:43:58 tron Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.48 1998/10/20 01:46:28 matt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -84,7 +84,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.47 1998/10/19 22:43:58 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.48 1998/10/20 01:46:28 matt Exp $");
 
 /*
  * SunOS compatibility module.
@@ -149,14 +149,14 @@ extern char *ultrix_syscallnames[];
 /*
  * Select the appropriate setregs callback for the target architecture.
  */
-#ifdef mips
+#ifdef __mips__
 #include <machine/ecoff_machdep.h>
 #define ULTRIX_EXEC_SETREGS cpu_exec_ecoff_setregs
 #endif /* mips */
 
-#ifdef vax
+#ifdef __vax__
 #define ULTRIX_EXEC_SETREGS setregs
-#endif /* mips */
+#endif /* vax */
 
 
 extern void ULTRIX_EXEC_SETREGS __P((struct proc *, struct exec_package *,

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.51 1998/09/30 21:52:25 tls Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.52 1998/10/20 01:46:27 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -95,7 +95,7 @@
 #include <netinet/in_var.h>
 #include <netinet/ip_var.h>
 
-#ifdef vax
+#ifdef __vax__
 #include <machine/mtpr.h>
 #endif
 

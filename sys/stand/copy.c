@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.c,v 1.8 1998/09/13 15:19:13 christos Exp $	*/
+/*	$NetBSD: copy.c,v 1.9 1998/10/20 01:46:28 matt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\n\
 #if 0
 static char sccsid[] = "@(#)copy.c	8.1 (Berkeley) 6/11/93";
 #else
-__RCSID("$NetBSD: copy.c,v 1.8 1998/09/13 15:19:13 christos Exp $");
+__RCSID("$NetBSD: copy.c,v 1.9 1998/10/20 01:46:28 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -77,7 +77,7 @@ main()
 				printf("Record %d: read short; expected %d, got %d\n",
 				    record, bsize, rcc);
 		}
-#ifdef vax
+#ifdef __vax__
 		/* For bug in ht driver. */
 		if (rcc > bsize)
 			rcc = bsize;

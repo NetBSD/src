@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_debug.c,v 1.8 1996/10/13 02:04:13 christos Exp $	*/
+/*	$NetBSD: clnp_debug.c,v 1.9 1998/10/20 01:46:28 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -224,7 +224,7 @@ clnp_iso_addrp(isoa)
 			struct ovl_rfc986 *o986 = (struct ovl_rfc986 *) isoa;
 			cp = clnp_hexp(&o986->o986_vers, 1, cp);
 			*cp++ = DELIM;
-#ifdef  vax
+#ifdef  __vax__
 			sprintf(cp, "%d.%d.%d.%d.%d",
 			    o986->o986_inetaddr[0] & 0xff,
 			    o986->o986_inetaddr[1] & 0xff,
