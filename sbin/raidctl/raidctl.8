@@ -1,4 +1,4 @@
-.\"     $NetBSD: raidctl.8,v 1.6 1999/03/06 11:55:29 mycroft Exp $
+.\"     $NetBSD: raidctl.8,v 1.7 1999/03/06 11:57:20 mycroft Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -153,7 +153,7 @@ Initialize (re-write) the parity on the device.  This
 be done before the RAID device is labeled and before
 filesystems are created on the RAID device, and is normally used after
 a system crash (and before a 
-.Xr fsck 8 ) Ns
+.Xr fsck 8 )
 to ensure the integrity of the parity.
 .It Fl I Ar serial_number Ar dev
 Initialize the component labels on each component of the device.  
@@ -445,8 +445,8 @@ raidctl -i raid0
 Initializing the parity in this way may also be required after an
 unclean shutdown.  Once the parity is known to be correct, 
 it is then safe to perform
-.Xr disklabel 8 , Ns
-.Xr newfs 8 , Ns
+.Xr disklabel 8 ,
+.Xr newfs 8 ,
 or
 .Xr fsck 8
 on the device or its filesystems, and then to mount the filesystems
