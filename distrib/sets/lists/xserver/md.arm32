@@ -1,3 +1,4 @@
+# $NetBSD: md.arm32,v 1.7 1999/08/01 20:08:15 abs Exp $
 ./usr/X11R6/bin/SuperProbe
 ./usr/X11R6/bin/X
 ./usr/X11R6/bin/XF86_Mono
