@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.112 2001/10/30 19:05:26 thorpej Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.113 2001/11/06 05:27:17 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -2959,7 +2959,6 @@ uvmspace_fork(vm1)
 	struct vm_map_entry *old_entry;
 	struct vm_map_entry *new_entry;
 	pmap_t new_pmap;
-	boolean_t protect_child;
 	UVMHIST_FUNC("uvmspace_fork"); UVMHIST_CALLED(maphist);
 
 	vm_map_lock(old_map);
@@ -3039,16 +3038,6 @@ uvmspace_fork(vm1)
 			/* insert entry at end of new_map's entry list */
 			uvm_map_entry_link(new_map, new_map->header.prev,
 			    new_entry);
-
-			/*
-			 * pmap_copy the mappings: this routine is optional
-			 * but if it is there it will reduce the number of
-			 * page faults in the new proc.
-			 */
-
-			pmap_copy(new_pmap, old_map->pmap, new_entry->start,
-			    (old_entry->end - old_entry->start),
-			    old_entry->start);
 
 			break;
 
@@ -3142,8 +3131,6 @@ uvmspace_fork(vm1)
 			   * resolve all copy-on-write faults now
 			   * (note that there is nothing to do if
 			   * the old mapping does not have an amap).
-			   * XXX: is it worthwhile to bother with pmap_copy
-			   * in this case?
 			   */
 			  if (old_entry->aref.ar_amap)
 			    amap_cow_now(new_map, new_entry);
@@ -3157,19 +3144,10 @@ uvmspace_fork(vm1)
 			   * if it is already "needs_copy" then the parent
 			   * has already been write-protected by a previous
 			   * fork operation.
-			   *
-			   * if we do not write-protect the parent, then
-			   * we must be sure to write-protect the child
-			   * after the pmap_copy() operation.
-			   *
-			   * XXX: pmap_copy should have some way of telling
-			   * us that it didn't do anything so we can avoid
-			   * calling pmap_protect needlessly.
 			   */
 
-			  if (old_entry->aref.ar_amap) {
-
-			    if (!UVM_ET_ISNEEDSCOPY(old_entry)) {
+			  if (old_entry->aref.ar_amap &&
+			      !UVM_ET_ISNEEDSCOPY(old_entry)) {
 			      if (old_entry->max_protection & VM_PROT_WRITE) {
 				pmap_protect(old_map->pmap,
 					     old_entry->start,
@@ -3179,46 +3157,7 @@ uvmspace_fork(vm1)
 				pmap_update(old_map->pmap);
 			      }
 			      old_entry->etype |= UVM_ET_NEEDSCOPY;
-			    }
-
-			    /*
-			     * parent must now be write-protected
-			     */
-			    protect_child = FALSE;
-			  } else {
-
-			    /*
-			     * we only need to protect the child if the
-			     * parent has write access.
-			     */
-			    if (old_entry->max_protection & VM_PROT_WRITE)
-			      protect_child = TRUE;
-			    else
-			      protect_child = FALSE;
-
 			  }
-
-			  /*
-			   * copy the mappings
-			   * XXX: need a way to tell if this does anything
-			   */
-
-			  pmap_copy(new_pmap, old_map->pmap,
-				    new_entry->start,
-				    (old_entry->end - old_entry->start),
-				    old_entry->start);
-
-			  /*
-			   * protect the child's mappings if necessary
-			   */
-			  if (protect_child) {
-			    pmap_protect(new_pmap, new_entry->start,
-					 new_entry->end,
-					 new_entry->protection &
-					          ~VM_PROT_WRITE);
-			    pmap_update(new_pmap);
-			  }
-
 			}
 			break;
 		}  /* end of switch statement */
