@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.c,v 1.16 1998/12/19 19:30:57 christos Exp $	*/
+/*	$NetBSD: lock.c,v 1.17 1999/06/27 10:00:36 tron Exp $	*/
 
 /*
  * Copyright (c) 1980, 1987, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)lock.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: lock.c,v 1.16 1998/12/19 19:30:57 christos Exp $");
+__RCSID("$NetBSD: lock.c,v 1.17 1999/06/27 10:00:36 tron Exp $");
 #endif /* not lint */
 
 /*
@@ -88,6 +88,7 @@ int	skey_auth __P((const char *));
 struct timeval	timeout;
 struct timeval	zerotime;
 struct termios	tty, ntty;
+int	notimeout;			/* no timeout at all */
 long	nexttime;			/* keep the timeout time */
 
 int
@@ -111,12 +112,16 @@ main(argc, argv)
 
 	setuid(getuid());		/* discard privs */
 
+	notimeout = 0;
 	sectimeout = TIMEOUT;
 	mypw = NULL;
 	usemine = 0;
 
-	while ((ch = getopt(argc, argv, "pt:")) != -1)
+	while ((ch = getopt(argc, argv, "npt:")) != -1)
 		switch ((char)ch) {
+		case 'n':
+			notimeout = 1;
+			break;
 		case 't':
 			if ((sectimeout = atoi(optarg)) <= 0)
 				errx(1, "illegal timeout value: %s", optarg);
@@ -181,15 +186,23 @@ main(argc, argv)
 	(void)signal(SIGINT, hi);
 	(void)signal(SIGQUIT, hi);
 	(void)signal(SIGTSTP, hi);
-	(void)signal(SIGALRM, bye);
 
-	ntimer.it_interval = zerotime;
-	ntimer.it_value = timeout;
-	setitimer(ITIMER_REAL, &ntimer, &otimer);
+	if (notimeout) {
+		(void)signal(SIGALRM, hi);
+	(void)printf("lock: %s on %s.  no timeout.\ntime now is %.20s%s%s",
+		    ttynam, hostname, ap, tzn, ap + 19);
+	}
+	else {
+		(void)signal(SIGALRM, bye);
 
-	/* header info */
+		ntimer.it_interval = zerotime;
+		ntimer.it_value = timeout;
+		setitimer(ITIMER_REAL, &ntimer, &otimer);
+
+		/* header info */
 (void)printf("lock: %s on %s. timeout in %d minutes\ntime now is %.20s%s%s",
 	    ttynam, hostname, sectimeout, ap, tzn, ap + 19);
+	}
 
 	for (;;) {
 		(void)printf("Key: ");
@@ -254,7 +267,9 @@ hi(dummy)
 {
 	struct timeval timval;
 
-	if (!gettimeofday(&timval, (struct timezone *)NULL))
+	if (notimeout)
+		(void)printf("lock: type in the unlock key.\n");
+	else if (!gettimeofday(&timval, (struct timezone *)NULL))
 (void)printf("lock: type in the unlock key. timeout in %ld:%ld minutes\n",
 	    (nexttime - timval.tv_sec) / 60, (nexttime - timval.tv_sec) % 60);
 }
