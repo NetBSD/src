@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.193 2004/02/01 12:35:59 uwe Exp $
+$NetBSD: pcmciadevs,v 1.194 2004/06/19 04:13:12 itohy Exp $
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
 /*-
@@ -431,6 +431,7 @@ product COREGA ETHER_II_PCC_T	{ "corega&spK.K.", "corega&spEtherII&spPCC-T", NUL
 product COREGA FAST_ETHER_PCC_TX	{ "corega&spK.K.", "corega&spFastEther&spPCC-TX", NULL, NULL } Corega FastEther PCC-TX
 product COREGA FETHER_PCC_TXD	{ "corega&spK.K.", "corega&spFEther&spPCC-TXD", NULL, NULL } Corega FEther PCC-TXD
 product COREGA FETHER_PCC_TXF	{ "corega", "FEther&spPCC-TXF", NULL, NULL } Corega FEther PCC-TXF
+product COREGA FETHER_II_PCC_TXD	{ "corega&spK.K.", "corega&spFEtherII&spPCC-TXD", NULL, NULL } Corega FEtherII PCC-TXD
 product COREGA WIRELESS_LAN_PCC_11	{ "corega&spK.K.", "Wireless&spLAN&spPCC-11", NULL, NULL } Corega Wireless LAN PCC-11
 product COREGA WIRELESS_LAN_PCCA_11	{ "corega&spK.K.", "Wireless&spLAN&spPCCA-11", NULL, NULL } Corega Wireless LAN PCCA-11
 product COREGA WIRELESS_LAN_PCCB_11	{ "corega_K.K.", "Wireless_LAN_PCCB-11", NULL, NULL } Corega Wireless LAN PCCB-11
