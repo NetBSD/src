@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_md.h,v 1.1.2.10 2003/01/16 03:35:47 thorpej Exp $	*/
+/*	$NetBSD: pthread_md.h,v 1.1.2.11 2003/01/17 02:42:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,6 +38,8 @@
 
 #ifndef _LIB_PTHREAD_I386_MD_H
 #define _LIB_PTHREAD_I386_MD_H
+
+#include <sys/ucontext.h>
 
 extern int (*_md_getcontext_u)(ucontext_t *);
 extern int (*_md_setcontext_u)(const ucontext_t *);
