@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mkmakefile.c	5.33 (Berkeley) 7/1/91";*/
-static char rcsid[] = "$Id: mkmakefile.c,v 1.18 1993/10/14 01:22:35 deraadt Exp $";
+static char rcsid[] = "$Id: mkmakefile.c,v 1.19 1994/01/08 10:34:01 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -239,12 +239,22 @@ read_files()
 	read_file(fname,1,0);
 	(void) sprintf(fname, "files.%s", machinename);
 	read_file(fname,1,0);
+	if (strcmp(machinearch, machinename)) {
+		(void) sprintf(fname, "../../%s/conf/files.%s", machinearch,
+		    machinearch);
+		read_file(fname,1,0);
+	}
 	(void) sprintf(fname, "files.%s", raise(ident));
 	read_file(fname,0,1);
 	(void) strcpy(fname, "../../../conf/options");
 	read_file(fname,0,0);
 	(void) sprintf(fname, "options.%s", machinename);
 	read_file(fname,0,0);
+	if (strcmp(machinearch, machinename)) {
+		(void) sprintf(fname, "../../%s/conf/options.%s", machinearch,
+		    machinearch);
+		read_file(fname,0,0);
+	}
 	(void) sprintf(fname, "options.%s", raise(ident));
 	read_file(fname,0,1);
 }

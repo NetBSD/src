@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)main.c	5.17 (Berkeley) 7/1/91";*/
-static char rcsid[] = "$Id: main.c,v 1.7 1993/10/14 01:22:31 deraadt Exp $";
+static char rcsid[] = "$Id: main.c,v 1.8 1994/01/08 10:33:57 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -151,14 +151,19 @@ usage:		fputs("usage: config [-gkp] sysname\n", stderr);
 	 * and similarly for "machine".
 	 */
 	{
-	char xxx[80];
+	char xxx[200];
 
 #ifndef NO_SYMLINK
-	(void) sprintf(xxx, "../../include", machinename);
+	(void) sprintf(xxx, "../../include");
 	(void) symlink(xxx, path("machine"));
+	(void) sprintf(xxx, "../../../%s/include", machinearch);
+	(void) symlink(xxx, path(machinearch));
 #else
 	sprintf  (xxx, "/bin/rm -rf %s; /bin/cp -r ../include %s",
 		 path("machine"), path("machine"));
+	system (xxx);
+	sprintf  (xxx, "/bin/rm -rf %s; /bin/cp -r ../../%s/include %s",
+		 path(machinearch), machinearch, path(machinearch));
 	system (xxx);
 #endif
 	}

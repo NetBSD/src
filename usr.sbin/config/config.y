@@ -104,7 +104,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)config.y	5.14 (Berkeley) 7/1/91
- *	$Id: config.y,v 1.9 1993/12/01 05:56:39 deraadt Exp $
+ *	$Id: config.y,v 1.10 1994/01/08 10:33:53 cgd Exp $
  */
 
 #include "config.h"
@@ -147,21 +147,27 @@ Config_spec:
 		if (!strcmp($2, "vax")) {
 			machine = MACHINE_VAX;
 			machinename = "vax";
+			machinearch = machinename;
 		} else if (!strcmp($2, "tahoe")) {
 			machine = MACHINE_TAHOE;
 			machinename = "tahoe";
+			machinearch = machinename;
 		} else if (!strcmp($2, "hp300")) {
 			machine = MACHINE_HP300;
 			machinename = "hp300";
+			machinearch = "m68k";
 		} else if (!strcmp($2, "i386")) {
 			machine = MACHINE_I386;
 			machinename = "i386";
+			machinearch = machinename;
 		} else if (!strcmp($2, "pc532")) {
 			machine = MACHINE_PC532;
 			machinename = "pc532";
+			machinearch = machinename;
 		} else if (!strcmp($2, "pmax")) {
 			machine = MACHINE_PMAX;
 			machinename = "pmax";
+			machinearch = machinename;
 		} else
 			yyerror("Unknown machine type");
 	      } |
