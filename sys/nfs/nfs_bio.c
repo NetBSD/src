@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.25.4.1 1996/05/25 22:40:32 fvdl Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.25.4.2 1996/07/08 20:47:04 jtc Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -908,7 +908,7 @@ nfs_doio(bp, cr, p)
 		 */
 		if (bp->b_flags & B_ASYNC)
 		    reassignbuf(bp, vp);
-		else
+		else if (error)
 		    bp->b_flags |= B_EINTR;
 	    } else {
 		if (error) {
