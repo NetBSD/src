@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_boot.c,v 1.44 1998/03/01 02:24:27 fvdl Exp $	*/
+/*	$NetBSD: nfs_boot.c,v 1.45 1998/04/25 17:41:01 matt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -261,7 +261,7 @@ send_again:
 		error = ENOBUFS;
 		goto out;
 	}
-	error = sosend(so, nam, NULL, m, NULL, 0);
+	error = (*so->so_send)(so, nam, NULL, m, NULL, 0);
 	if (error) {
 		printf("nfs_boot: sosend: %d\n", error);
 		goto out;
@@ -285,7 +285,7 @@ send_again:
 		}
 		uio.uio_resid = 1 << 16; /* ??? */
 		rcvflg = 0;
-		error = soreceive(so, &from, &uio, &m, NULL, &rcvflg);
+		error = (*so->so_receive)(so, &from, &uio, &m, NULL, &rcvflg);
 		if (error == EWOULDBLOCK) {
 			if (--secs <= 0)
 				goto send_again;
