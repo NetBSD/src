@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: nsdump - table dumping routines for debug
- *              $Revision: 1.4 $
+ *              $Revision: 1.5 $
  *
  *****************************************************************************/
 
@@ -116,7 +116,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsdump.c,v 1.4 2002/06/15 01:47:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nsdump.c,v 1.5 2002/06/15 17:59:51 thorpej Exp $");
 
 #define __NSDUMP_C__
 
@@ -238,7 +238,7 @@ AcpiNsDumpPathname (
  *
  ******************************************************************************/
 
-static ACPI_STATUS
+ACPI_STATUS
 AcpiNsDumpOneObject (
     ACPI_HANDLE             ObjHandle,
     UINT32                  Level,
@@ -773,7 +773,7 @@ AcpiNsDumpObjects (
  *
  ******************************************************************************/
 
-static ACPI_STATUS
+ACPI_STATUS
 AcpiNsDumpOneDevice (
     ACPI_HANDLE             ObjHandle,
     UINT32                  Level,

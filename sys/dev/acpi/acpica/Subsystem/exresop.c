@@ -2,7 +2,7 @@
 /******************************************************************************
  *
  * Module Name: exresop - AML Interpreter operand/object resolution
- *              $Revision: 1.4 $
+ *              $Revision: 1.5 $
  *
  *****************************************************************************/
 
@@ -116,7 +116,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exresop.c,v 1.4 2002/06/15 01:47:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exresop.c,v 1.5 2002/06/15 17:59:51 thorpej Exp $");
 
 #define __EXRESOP_C__
 
@@ -145,7 +145,7 @@ __KERNEL_RCSID(0, "$NetBSD: exresop.c,v 1.4 2002/06/15 01:47:20 thorpej Exp $");
  *
  ******************************************************************************/
 
-static ACPI_STATUS
+ACPI_STATUS
 AcpiExCheckObjectType (
     ACPI_OBJECT_TYPE        TypeNeeded,
     ACPI_OBJECT_TYPE        ThisType,
