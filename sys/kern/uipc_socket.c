@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.87 2003/09/06 22:03:10 christos Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.88 2003/09/14 23:45:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.87 2003/09/06 22:03:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.88 2003/09/14 23:45:16 christos Exp $");
 
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
@@ -1510,11 +1510,13 @@ sohasoutofband(struct socket *so)
 	ksiginfo_t ksi;
 	memset(&ksi, 0, sizeof(ksi));
 	ksi.ksi_signo = SIGURG;
+	ksi.ksi_band = POLLPRI|POLLRDBAND;
+	ksi.ksi_code = POLL_PRI;
 
 	if (so->so_pgid < 0)
-		kgsignal(-so->so_pgid, &ksi, NULL);
+		kgsignal(-so->so_pgid, &ksi, so);
 	else if (so->so_pgid > 0 && (p = pfind(so->so_pgid)) != 0)
-		kpsignal(p, &ksi, NULL);
+		kpsignal(p, &ksi, so);
 	selwakeup(&so->so_rcv.sb_sel);
 }
 
