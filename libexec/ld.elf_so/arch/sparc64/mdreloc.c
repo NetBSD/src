@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.26 2002/09/25 16:35:08 mycroft Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.27 2002/09/25 22:25:11 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2000 Eduardo Horvath.
@@ -6,7 +6,7 @@
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Paul Kranenburg.
+ * by Paul Kranenburg and by Charles M. Hannum.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -477,7 +477,7 @@ _rtld_bind(obj, reloff)
 	const Elf_Rela *rela = obj->pltrela + reloff;
 	const Elf_Sym *def;
 	const Obj_Entry *defobj;
-	Elf_Addr *where = (Elf_Addr *)(obj->relocbase + rela->r_offset);
+	Elf_Word *where = (Elf_Word *)(obj->relocbase + rela->r_offset);
 	Elf_Addr value, offset;
 
 	if (ELF_R_TYPE(obj->pltrela->r_info) == R_TYPE(JMP_SLOT)) {
@@ -508,8 +508,8 @@ _rtld_bind(obj, reloff)
 		_rtld_die();
 
 	value = (Elf_Addr)(defobj->relocbase + def->st_value);
-	rdbg(("bind now/fixup in %s --> old=%p new=%p", 
-	    defobj->strtab + def->st_name, (void *)*where, (void *)value));
+	rdbg(("bind now/fixup in %s --> new=%p", 
+	    defobj->strtab + def->st_name, (void *)value));
 
 	/*
 	 * At the PLT entry pointed at by `where', we now construct
@@ -543,7 +543,7 @@ _rtld_bind(obj, reloff)
 		/*
 		 * This entry is >32768.  Just replace the pointer.
 		 */
-		ptr[0] = value;
+		ptr[0] += value - (Elf_Addr)obj->pltgot;
 
 	} else if (offset <= (1L<<20) && offset >= -(1L<<20)) {
 		/* 
