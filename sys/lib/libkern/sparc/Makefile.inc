@@ -1,8 +1,8 @@
-#	$Id: Makefile.inc,v 1.4 1993/12/05 01:54:01 cgd Exp $
+#	$Id: Makefile.inc,v 1.5 1994/01/15 19:48:56 pk Exp $
 
 SRCS+=  __main.c imax.c imin.c lmax.c lmin.c max.c min.c ulmax.c ulmin.c \
 	bcmp.c bzero.S ffs.S strcat.c strcmp.c strcpy.c strlen.S strncmp.c \
-	strncpy.c htonl.S htons.S ntohl.S ntohs.S
+	strncpy.c htonl.S htons.S ntohl.S ntohs.S scanc.c skpc.c
 
 SRCS+=	umul.S mul.S rem.S sdiv.S udiv.S umul.S urem.S
 SRCS+=	_setjmp.S fabs.S fixunsdfsi.S modf.S mul.S saveregs.S setjmp.S umul.S
@@ -13,28 +13,25 @@ SRCS+=	frexp.c isinf.c isnan.c ldexp.c
 SRCS+=	rem.S sdiv.S udiv.S urem.S
 CLEANFILES+=rem.S sdiv.S udiv.S urem.S
 
-## Temporary hack for Theo's cross compile environment
-CFLAGS+=-I/tmp/usr/include
-
-sdiv.S: ${.CURDIR}/../../lib/libc/sparc/gen/divrem.m4
+sdiv.S: ${.CURDIR}/../../../lib/libc/arch/sparc/gen/divrem.m4
 	echo 'building ${.TARGET} from ${.ALLSRC}'
 	(echo "define(NAME,\`.div')define(OP,\`div')define(S,\`true')"; \
 	 cat ${.ALLSRC}) | m4 > ${.TARGET}
 	chmod 444 ${.TARGET}
 
-udiv.S: ${.CURDIR}/../../lib/libc/sparc/gen/divrem.m4
+udiv.S: ${.CURDIR}/../../../lib/libc/arch/sparc/gen/divrem.m4
 	@echo 'building ${.TARGET} from ${.ALLSRC}'
 	@(echo "define(NAME,\`.udiv')define(OP,\`div')define(S,\`false')"; \
 	 cat ${.ALLSRC}) | m4 > ${.TARGET}
 	@chmod 444 ${.TARGET}
 
-rem.S: ${.CURDIR}/../../lib/libc/sparc/gen/divrem.m4
+rem.S: ${.CURDIR}/../../../lib/libc/arch/sparc/gen/divrem.m4
 	echo 'building ${.TARGET} from ${.ALLSRC}'
 	(echo "define(NAME,\`.rem')define(OP,\`rem')define(S,\`true')"; \
 	 cat ${.ALLSRC}) | m4 > ${.TARGET}
 	chmod 444 ${.TARGET}
 
-urem.S: ${.CURDIR}/../../lib/libc/sparc/gen/divrem.m4
+urem.S: ${.CURDIR}/../../../lib/libc/arch/sparc/gen/divrem.m4
 	@echo 'building ${.TARGET} from ${.ALLSRC}'
 	@(echo "define(NAME,\`.urem')define(OP,\`rem')define(S,\`false')"; \
 	 cat ${.ALLSRC}) | m4 > ${.TARGET}
