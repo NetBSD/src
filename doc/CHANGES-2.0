@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.167 2004/04/29 06:11:43 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.168 2004/04/29 22:04:47 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -1699,3 +1699,12 @@ x11/bin/xdm/Makefile.xdm			1.5
 
 	Add some #defines missed in the upgrade to XFree86 4.4.x
 	[lukem, ticket #231]
+
+sys/arch/alpha/conf/GENERIC			1.241
+sys/arch/alpha/conf/ALPHA			1.192
+
+	Remove specific scsibus* at (hba device)? declarations for the new,
+	simple:
+
+	scsibus* at scsi?
+	[fair, ticket #232]
