@@ -449,3 +449,8 @@
 	- signal delivery is now working during FP instructions.
 	- mondef code resurrected and renamed to setdisplay and moved to the
 	  stand directory.
+
+
+NetBSD/arm32 source code is now merged in to the NetBSD source tree.
+All code changes are now logged via CVS and are available from the
+NetBSD source-changes mailing list.
