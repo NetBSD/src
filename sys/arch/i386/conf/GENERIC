@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.55 1996/09/09 16:30:47 mycroft Exp $
+#	$NetBSD: GENERIC,v 1.56 1996/09/09 16:37:08 mycroft Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -198,6 +198,8 @@ gus0	at isa? port 0x220 irq 7 drq 1 flags 6 # Gravis Ultra Sound (flags is recor
 
 # Joystick driver. Probe is a little strange; add only if you have one.
 #joy0	at isa? port 0x201
+
+include	"GENERIC.local"
 
 pseudo-device	loop	1		# network loopback
 pseudo-device	bpfilter 8		# packet filter

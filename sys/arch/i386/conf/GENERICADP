@@ -1,4 +1,4 @@
-#	$NetBSD: GENERICADP,v 1.28 1996/09/09 16:33:20 mycroft Exp $
+#	$NetBSD: GENERICADP,v 1.29 1996/09/09 16:37:09 mycroft Exp $
 #
 #	GENERICADP -- everything that's currently supported, except non-
 #                     Adaptec SCSI controllers.
@@ -199,6 +199,8 @@ gus0	at isa? port 0x220 irq 7 drq 1 flags 6 # Gravis Ultra Sound (flags is recor
 
 # Joystick driver. Probe is a little strange; add only if you have one.
 #joy0	at isa? port 0x201
+
+include	"GENERIC.local"
 
 pseudo-device	loop	1		# network loopback
 pseudo-device	bpfilter 8		# packet filter
