@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_disks.c,v 1.30 2000/05/29 02:57:34 oster Exp $	*/
+/*	$NetBSD: rf_disks.c,v 1.31 2000/06/02 01:17:14 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -551,6 +551,8 @@ rf_AutoConfigureDisks(raidPtr, cfgPtr, auto_config)
 				/* Didn't find it at all!! 
 				   Component must really be dead */
 				disks[r][c].status = rf_ds_failed;
+				sprintf(disks[r][c].devname,"component%d",
+					r * raidPtr->numCol + c);
 				numFailuresThisRow++;
 			}
 		}
