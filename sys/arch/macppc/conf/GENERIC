@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.19 1998/11/25 20:30:46 hwr Exp $
+#	$NetBSD: GENERIC,v 1.20 1998/12/10 20:21:28 tsubai Exp $
 #
 # POWERMAC config file
 #
@@ -11,6 +11,7 @@ maxusers	32
 #options 	UCONSOLE	# users can use TIOCCONS (for xconsole)
 #options 	INSECURE	# disable kernel security levels
 #options 	NTP		# NTP phase/frequency locked loop
+options 	KTRACE		# system call tracing via ktrace(1)
 
 options 	SYSVMSG		# System V message queues
 options 	SYSVSEM		# System V semaphores
@@ -134,11 +135,8 @@ wsmouse* at ams?
 
 mc0	at obio0			# MACE ethernet
 esp0	at obio0 flags 0x00ff		# 53c9x SCSI
-scsibus* at esp0
 
-zsc0	at obio0
-zstty0	at zsc0 channel 0
-zstty1	at zsc0 channel 1
+scsibus* at esp0
 
 sd*	at scsibus? target ? lun ?	# SCSI disks
 st*	at scsibus? target ? lun ?	# SCSI tape drives
@@ -146,6 +144,19 @@ cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 ch*	at scsibus? target ? lun ?	# SCSI autochangers
 ss*	at scsibus? target ? lun ?	# SCSI scanners
 uk*	at scsibus? target ? lun ?	# SCSI unknown
+
+zsc0	at obio0
+zstty0	at zsc0 channel 0
+zstty1	at zsc0 channel 1
+
+wdc*	at obio0 flags 0x0
+wd*	at wdc? channel ? drive ? flags 0x0000
+
+atapibus* at wdc? channel ?
+
+cd*	at atapibus? drive ? flags 0x0000	# ATAPI CD-ROM drives
+sd*	at atapibus? drive ? flags 0x0000	# ATAPI disk drives
+uk*	at atapibus? drive ? flags 0x0000	# ATAPI unknown
 
 pseudo-device	vnd		4	# disk-like interface to files
 pseudo-device	ccd		4	# concatenated/striped disk devices
