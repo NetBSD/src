@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.227 2005/01/11 18:41:59 skrll Exp $
+#	$NetBSD: files.pci,v 1.228 2005/01/12 00:05:43 reinoud Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -431,6 +431,11 @@ file	dev/pci/auich.c			auich
 device	auvia: audiobus, auconv, mulaw, ac97, aurateconv
 attach	auvia at pci
 file	dev/pci/auvia.c			auvia
+
+# ATI IXP 200/300/400 series AC'97 Audio
+device	auixp: audiobus, auconv, mulaw, ac97, aurateconv
+attach	auixp at pci
+file	dev/pci/auixp.c			auixp
 
 # NeoMagic 256 AC'97 Audio
 device	neo: audiobus, auconv, mulaw, ac97
