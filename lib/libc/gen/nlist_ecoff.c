@@ -1,4 +1,4 @@
-/*	$NetBSD: nlist_ecoff.c,v 1.1 1996/09/27 22:23:05 cgd Exp $	*/
+/*	$NetBSD: nlist_ecoff.c,v 1.2 1996/09/30 23:49:29 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)nlist.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: nlist_ecoff.c,v 1.1 1996/09/27 22:23:05 cgd Exp $";
+static char rcsid[] = "$NetBSD: nlist_ecoff.c,v 1.2 1996/09/30 23:49:29 cgd Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -62,42 +62,6 @@ static char rcsid[] = "$NetBSD: nlist_ecoff.c,v 1.1 1996/09/27 22:23:05 cgd Exp 
 #define	check(off, size)	((off < 0) || (off + size > mappedsize))
 #define	BAD			do { rv = -1; goto out; } while (0)
 #define	BADUNMAP		do { rv = -1; goto unmap; } while (0)
-
-int
-__fdnlist_is_ecoff(fd)
-	int fd;
-{
-	struct stat st;
-	struct ecoff_exechdr *exechdrp;
-	char *mappedfile;
-	size_t mappedsize;
-	int rv = -1;
-
-	if (fstat(fd, &st) < 0)
-		BAD;
-	if (st.st_size > SIZE_T_MAX) {
-		errno = EFBIG;
-		BAD;
-	}
-	mappedsize = st.st_size;
-	mappedfile = mmap(NULL, mappedsize, PROT_READ, 0, fd, 0);
-	if (mappedfile == (char *)-1)
-		BAD;
-
-	if (check(0, sizeof *exechdrp))
-		BADUNMAP;
-	exechdrp = (struct ecoff_exechdr *)&mappedfile[0];
-
-	if (ECOFF_BADMAG(exechdrp))
-		BADUNMAP;
-
-	rv = 0;
-
-unmap:
-	munmap(mappedfile, mappedsize);
-out:
-	return (rv);
-}
 
 int
 __fdnlist_ecoff(fd, list)
