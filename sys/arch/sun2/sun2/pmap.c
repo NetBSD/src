@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.1 2001/03/28 13:47:58 fredette Exp $	*/
+/*	$NetBSD: pmap.c,v 1.2 2001/03/28 14:15:11 fredette Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  * be stolen from it.  PMEGs allocated to a particular segment of a
  * pmap's virtual space will be fought over by the other pmaps.
  *
- * This pmap was once sys/arch/sun3/sun3/pmap.c revision 1.116.
+ * This pmap was once sys/arch/sun3/sun3/pmap.c revision 1.124.
  */
 
 /*
@@ -94,22 +94,16 @@
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
+#include <sys/pool.h>
 #include <sys/user.h>
 #include <sys/queue.h>
 #include <sys/kcore.h>
-
-#include <vm/vm.h>
-#include <vm/vm_kern.h>
-#include <vm/vm_prot.h>
-#include <vm/vm_page.h>
 
 #include <uvm/uvm.h>
 
 /* XXX - Pager hacks... (explain?) */
 #define PAGER_SVA (uvm.pager_sva)
 #define PAGER_EVA (uvm.pager_eva)
-
-#include <m68k/m68k.h>
 
 #include <machine/cpu.h>
 #include <machine/dvma.h>
@@ -232,6 +226,9 @@ struct pmap kernel_pmap_store;
 #define kernel_pmap (&kernel_pmap_store)
 static u_char kernel_segmap[NSEGMAP];
 
+/* memory pool for pmap structures */
+struct pool	pmap_pmap_pool;
+
 /* statistics... */
 struct pmap_stats {
 	int	ps_enter_firstpv;	/* pv heads entered */
@@ -262,13 +259,11 @@ struct pmap_stats {
 #define pmap_refcount(pmap) pmap->pm_refcount
 
 /*
- * Note that splpmap() is used in routines called at splnet() and
+ * Note that splvm() is used in routines called at splnet() and
  * MUST NOT lower the priority.  For this reason we arrange that:
  *    splimp = max(splnet,splbio)
  * Would splvm() be more natural here? (same level as splimp).
  */
-
-#define splpmap splimp
 
 #ifdef	PMAP_DEBUG
 #define	CHECK_SPL() do { \
@@ -1813,7 +1808,7 @@ pmap_bootstrap(nextva)
 	/* Initialization for pmap_next_page() */
 	avail_next = avail_start;
 
-	PAGE_SIZE = NBPG;
+	uvmexp.pagesize = NBPG;
 	uvm_setpagesize();
 
 	/* after setting up some structures */
@@ -1934,6 +1929,10 @@ pmap_init()
 {
 
 	pv_init();
+
+	/* Initialize the pmap pool. */
+	pool_init(&pmap_pmap_pool, sizeof(struct pmap), 0, 0, 0, "pmappl",
+	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_VMPMAP);
 }
 
 /*
@@ -1989,7 +1988,7 @@ pmap_create()
 {
 	pmap_t pmap;
 
-	pmap = (pmap_t) malloc(sizeof(struct pmap), M_VMPMAP, M_WAITOK);
+	pmap = pool_get(&pmap_pmap_pool, PR_WAITOK);
 	pmap_pinit(pmap);
 	return pmap;
 }
@@ -2005,7 +2004,7 @@ pmap_release(pmap)
 {
 	int s;
 
-	s = splpmap();
+	s = splvm();
 
 	if (pmap == kernel_pmap)
 		panic("pmap_release: kernel_pmap!");
@@ -2050,7 +2049,7 @@ pmap_destroy(pmap)
 	pmap_unlock(pmap);
 	if (count == 0) {
 		pmap_release(pmap);
-		free((caddr_t)pmap, M_VMPMAP);
+		pool_put(&pmap_pmap_pool, pmap);
 	}
 }
 
@@ -2096,8 +2095,6 @@ pmap_enter(pmap, va, pa, prot, flags)
 	int new_pte, s;
 	boolean_t wired = (flags & PMAP_WIRED) != 0;
 
-	if (pmap == NULL)
-		return (KERN_SUCCESS);
 #ifdef	PMAP_DEBUG
 	if ((pmap_debug & PMD_ENTER) ||
 		(va == pmap_db_watchva))
@@ -2123,7 +2120,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 	 *   be in the mmu either.
 	 *
 	 */
-	s = splpmap();
+	s = splvm();
 	if (pmap == kernel_pmap) {
 		new_pte |= PG_SYSTEM;
 		pmap_enter_kernel(va, new_pte, wired);
@@ -2131,7 +2128,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 		pmap_enter_user(pmap, va, new_pte, wired);
 	}
 	splx(s);
-	return (KERN_SUCCESS);
+	return (0);
 }
 
 static void
@@ -2527,12 +2524,12 @@ _pmap_fault(map, va, ftype)
 			 * Most pages below virtual_avail are read-only,
 			 * so I will assume it is a protection failure.
 			 */
-			return KERN_PROTECTION_FAILURE;
+			return EACCES;
 		}
 	} else {
 		/* User map.  Try reload shortcut. */
 		if (pmap_fault_reload(pmap, va, ftype))
-			return KERN_SUCCESS;
+			return 0;
 	}
 	rv = uvm_fault(map, va, 0, ftype);
 
@@ -2584,7 +2581,7 @@ pmap_fault_reload(pmap, pgva, ftype)
 		chkpte |= PG_WRITE;
 	rv = 0;
 
-	s = splpmap();
+	s = splvm();
 
 	/*
 	 * Given that we faulted on a user-space address, we will
@@ -2654,7 +2651,7 @@ pmap_clear_modify(pg)
 	pv_flags = pa_to_pvflags(pa);
 	head     = pa_to_pvhead(pa);
 
-	s = splpmap();
+	s = splvm();
 	*pv_flags |= pv_syncflags(*head);
 	rv = *pv_flags & PV_MOD;
 	*pv_flags &= ~PV_MOD;
@@ -2684,7 +2681,7 @@ pmap_is_modified(pg)
 	pv_flags = pa_to_pvflags(pa);
 	head     = pa_to_pvhead(pa);
 
-	s = splpmap();
+	s = splvm();
 	if ((*pv_flags & PV_MOD) == 0)
 		*pv_flags |= pv_syncflags(*head);
 	rv = (*pv_flags & PV_MOD);
@@ -2717,7 +2714,7 @@ pmap_clear_reference(pg)
 	pv_flags = pa_to_pvflags(pa);
 	head     = pa_to_pvhead(pa);
 
-	s = splpmap();
+	s = splvm();
 	*pv_flags |= pv_syncflags(*head);
 	rv = *pv_flags & PV_REF;
 	*pv_flags &= ~PV_REF;
@@ -2749,7 +2746,7 @@ pmap_is_referenced(pg)
 	pv_flags = pa_to_pvflags(pa);
 	head     = pa_to_pvhead(pa);
 
-	s = splpmap();
+	s = splvm();
 	if ((*pv_flags & PV_REF) == 0)
 		*pv_flags |= pv_syncflags(*head);
 	rv = (*pv_flags & PV_REF);
@@ -2801,7 +2798,7 @@ pmap_activate(p)
 	int s;
 
 	if (p == curproc) {
-		s = splpmap();
+		s = splvm();
 		_pmap_switch(pmap);
 		splx(s);
 	}
@@ -2860,7 +2857,7 @@ pmap_unwire(pmap, va)
 	ptenum = VA_PTE_NUM(va);
 	wiremask = 1 << ptenum;
 
-	s = splpmap();
+	s = splvm();
 
 	saved_ctx = get_context();
 	set_context(KERNEL_CONTEXT);
@@ -2909,7 +2906,7 @@ pmap_extract(pmap, va, pap)
 	int saved_ctx;
 
 	pte = 0;
-	s = splpmap();
+	s = splvm();
 
 	if (pmap == kernel_pmap) {
 		saved_ctx = get_context();
@@ -2966,7 +2963,7 @@ pmap_page_protect(pg, prot)
 	if (PA_IS_DEV(pa))
 		return;
 
-	s = splpmap();
+	s = splvm();
 
 #ifdef PMAP_DEBUG
 	if (pmap_debug & PMD_PROTECT)
@@ -3088,7 +3085,7 @@ pmap_protect1(pmap, sva, eva)
 	int old_ctx, s, sme;
 	boolean_t in_ctx;
 
-	s = splpmap();
+	s = splvm();
 
 #ifdef	DIAGNOSTIC
 	if (m68k_trunc_seg(sva) != m68k_trunc_seg(eva-1))
@@ -3344,7 +3341,7 @@ pmap_remove1(pmap, sva, eva)
 	int old_ctx, s, sme;
 	boolean_t in_ctx;
 
-	s = splpmap();
+	s = splvm();
 
 #ifdef	DIAGNOSTIC
 	if (m68k_trunc_seg(sva) != m68k_trunc_seg(eva-1))
@@ -3686,7 +3683,7 @@ pmap_copy_page(src, dst)
 	int s;
 	int saved_ctx;
 
-	s = splpmap();
+	s = splvm();
 
 #ifdef	PMAP_DEBUG
 	if (pmap_debug & PMD_COW)
@@ -3733,7 +3730,7 @@ pmap_zero_page(pa)
 	int s;
 	int saved_ctx;
 
-	s = splpmap();
+	s = splvm();
 
 #ifdef	PMAP_DEBUG
 	if (pmap_debug & PMD_COW)
