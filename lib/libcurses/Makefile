@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.35 2001/12/11 11:18:17 blymn Exp $
+#	$NetBSD: Makefile,v 1.36 2002/07/19 13:22:41 blymn Exp $
 #	@(#)Makefile	8.2 (Berkeley) 1/2/94
 
 CPPFLAGS+=#-DTFILE=\"/dev/ttyp0\"
@@ -14,11 +14,11 @@ SRCS=	acs.c addbytes.c addch.c addnstr.c attributes.c background.c bell.c \
 	border.c box.c clear.c clearok.c clrtobot.c clrtoeol.c color.c \
 	copywin.c cr_put.c ctrace.c cur_hash.c curs_set.c curses.c delch.c \
 	deleteln.c delwin.c erase.c flushok.c fullname.c getch.c getstr.c \
-	getyx.c id_subwins.c idlok.c inch.c inchstr.c initscr.c insch.c \
-	insdelln.c insertln.c instr.c keypad.c leaveok.c line.c longname.c \
-	meta.c move.c mvwin.c newwin.c nodelay.c notimeout.c overlay.c \
-	overwrite.c pause.c printw.c putchar.c refresh.c resize.c scanw.c \
-	screen.c scroll.c scrollok.c setterm.c standout.c timeout.c \
+	getyx.c id_subwins.c idlok.c idcok.c inch.c inchstr.c initscr.c \
+	insch.c insdelln.c insertln.c instr.c keypad.c leaveok.c line.c \
+	longname.c meta.c move.c mvwin.c newwin.c nodelay.c notimeout.c \
+	overlay.c overwrite.c pause.c printw.c putchar.c refresh.c resize.c \
+	scanw.c screen.c scroll.c scrollok.c setterm.c standout.c timeout.c \
 	toucholap.c touchwin.c tscroll.c tstp.c tty.c unctrl.c underscore.c
 
 MAN=	curses.3

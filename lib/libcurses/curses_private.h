@@ -1,4 +1,4 @@
-/*	$NetBSD: curses_private.h,v 1.23 2002/06/26 18:37:28 itojun Exp $	*/
+/*	$NetBSD: curses_private.h,v 1.24 2002/07/19 13:22:41 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 Brett Lymn
@@ -80,6 +80,11 @@ struct __ldata {
 #define __LDATASIZE	(sizeof(__LDATA))
 
 struct __line {
+#ifdef DEBUG
+#define SENTINEL_VALUE 0xaac0ffee
+	
+	unsigned int sentinel;          /* try to catch line overflows */
+#endif
 #define	__ISDIRTY	0x01		/* Line is dirty. */
 #define __ISPASTEOL	0x02		/* Cursor is past end of line */
 	unsigned int flags;
@@ -109,6 +114,7 @@ struct __window {		/* Window structure. */
 #define	__LEAVEOK	0x00000100	/* If cursor left */
 #define	__KEYPAD	0x00010000	/* If interpreting keypad codes */
 #define	__NOTIMEOUT	0x00020000	/* Wait indefinitely for func keys */
+#define __IDCHAR        0x00040000      /* insert/delete char sequences */
 	unsigned int flags;
 	int	delay;			/* delay for getch() */
 	attr_t	wattr;			/* Character attributes */
