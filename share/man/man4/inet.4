@@ -1,5 +1,5 @@
-.\" Copyright (c) 1983, 1991 The Regents of the University of California.
-.\" All rights reserved.
+.\" Copyright (c) 1983, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -29,9 +29,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     @(#)inet.4	6.6 (Berkeley) 3/28/91
+.\"     @(#)inet.4	8.1 (Berkeley) 6/5/93
 .\"
-.Dd March 28, 1991
+.Dd June 5, 1993
 .Dt INET 4
 .Os BSD 4.2
 .Sh NAME
@@ -128,7 +128,6 @@ number.
 Class B addresses use the high-order 16 bits as the network field,
 and Class C addresses have a 24-bit network part.
 Sites with a cluster of local networks and a connection to the
-.Tn DARPA
 Internet may chose to use a single network number for the cluster;
 this is done by using subnet addressing.
 The local (host) portion of the address is further subdivided
