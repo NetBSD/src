@@ -1,0 +1,6 @@
+./bin/ed
+./sbin/init
+./usr/lib/libcrypt.a
+./usr/lib/libcrypt.so.0.0
+./usr/lib/libcrypt_p.a
+./usr/lib/libcrypt_pic.a
