@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.549 2003/07/12 06:00:38 hubertf Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.550 2003/07/14 06:52:41 wiz Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.550 2003/07/12 05:59:50 hubertf Exp 
+ *	NetBSD: pcidevs,v 1.551 2003/07/14 06:51:57 wiz Exp 
  */
 
 /*
@@ -5444,6 +5444,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Matrox",
 	    "MGA G100 AGP",
+	},
+	{
+	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_G550_AGP,
+	    0,
+	    "Matrox",
+	    "MGA G550 AGP",
 	},
 	{
 	    PCI_VENDOR_MEDIAQ, PCI_PRODUCT_MEDIAQ_MQ200,
