@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs_msdos.c,v 1.1 1997/03/01 19:42:57 christos Exp $	*/
+/*	$NetBSD: newfs_msdos.c,v 1.2 1997/09/15 06:31:54 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas
@@ -34,8 +34,10 @@
  *
  * Id: mkdosfs.c,v 1.4 1997/02/22 16:06:38 peter Exp
  */
+
+#include <sys/cdefs.h>
 #ifndef lint
-static char rcsid[] = "$NetBSD: newfs_msdos.c,v 1.1 1997/03/01 19:42:57 christos Exp $";
+__RCSID("$NetBSD: newfs_msdos.c,v 1.2 1997/09/15 06:31:54 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
