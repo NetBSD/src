@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.38 1998/10/21 09:12:46 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.39 1998/11/11 19:38:27 bouyer Exp $ */
 
 
 /*
@@ -719,8 +719,8 @@ wdc_probe_caps(drvp)
 	if ((wdc->cap & (WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32)) ==
 	    (WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32)) {
 		/*
-		 * Controller claims 16 and 32 bit transferts.
-		 * Re-do an UDENTIFY with 32-bit transferts,
+		 * Controller claims 16 and 32 bit transfers.
+		 * Re-do an IDENTIFY with 32-bit transfers,
 		 * and compare results.
 		 */
 		drvp->drive_flags |= DRIVE_CAP32;
@@ -729,8 +729,7 @@ wdc_probe_caps(drvp)
 			/* Not good. fall back to 16bits */
 			drvp->drive_flags &= ~DRIVE_CAP32;
 		} else {
-			printf("%s: using 32-bits pio transfers\n",
-			    drv_dev->dv_xname);
+			printf("%s: 32-bits data port\n", drv_dev->dv_xname);
 		}
 	}
 
@@ -749,10 +748,13 @@ wdc_probe_caps(drvp)
 		 * XXX some drives report something wrong here (they claim to
 		 * support PIO mode 8 !). As mode is coded on 3 bits in
 		 * SET FEATURE, limit it to 7 (so limit i to 4).
+		 * If higther mode than 7 is found, abort.
 		 */
-		for (i = 4; i >= 0; i--) {
+		for (i = 7; i >= 0; i--) {
 			if ((params.atap_piomode_supp & (1 << i)) == 0)
 				continue;
+			if (i > 4)
+				return;
 			/*
 			 * See if mode is accepted.
 			 * If the controller can't set its PIO mode,
@@ -764,8 +766,8 @@ wdc_probe_caps(drvp)
 				   AT_POLL) != CMD_OK)
 					continue;
 			if (!printed) { 
-				printf("%s: PIO mode %d", drv_dev->dv_xname,
-				    i + 3);
+				printf("%s: drive supports PIO mode %d",
+				    drv_dev->dv_xname, i + 3);
 				sep = ",";
 				printed = 1;
 			}
