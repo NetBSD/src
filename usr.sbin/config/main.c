@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.16 1996/03/17 07:05:50 cgd Exp $	*/
+/*	$NetBSD: main.c,v 1.17 1996/03/17 11:50:13 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -322,7 +322,7 @@ do_option(ht, nppp, name, value, type)
 	register struct nvlist *nv;
 
 	/* assume it will work */
-	nv = newnv(name, value, NULL, 0);
+	nv = newnv(name, value, NULL, 0, NULL);
 	if (ht_insert(ht, name, nv) == 0) {
 		**nppp = nv;
 		*nppp = &nv->nv_next;

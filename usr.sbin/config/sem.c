@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.6 1996/03/17 07:05:58 cgd Exp $	*/
+/*	$NetBSD: sem.c,v 1.7 1996/03/17 11:50:14 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -242,8 +242,7 @@ addtoattr(l, dev)
 {
 	register struct nvlist *n;
 
-	n = newnv(NULL, NULL, dev, 0);
-	n->nv_next = l;
+	n = newnv(NULL, NULL, dev, 0, l);
 	return (n);
 }
 
@@ -281,9 +280,8 @@ defdev(dev, ispseudo, loclist, attrs)
 		loclist = NULL;	/* defattr disposes of them for us */
 		if (defattr(dev->d_name, nv))
 			goto bad;
-		nv = newnv(dev->d_name, NULL, getattr(dev->d_name), 0);
-		nv->nv_next = attrs;
-		attrs = nv;
+		attrs = newnv(dev->d_name, NULL, getattr(dev->d_name), 0,
+		    attrs);
 	}
 
 	/* Committed!  Set up fields. */
@@ -567,7 +565,7 @@ resolve(nvp, name, what, dflt, part)
 			min = (minor(dflt->nv_int) / maxpartitions) + part;
 			d = makedev(maj, min);
 		}
-		*nvp = nv = newnv(NULL, NULL, NULL, d);
+		*nvp = nv = newnv(NULL, NULL, NULL, d, NULL);
 	}
 	if (nv->nv_int != NODEV) {
 		/*

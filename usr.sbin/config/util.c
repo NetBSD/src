@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.3 1996/03/17 06:29:42 cgd Exp $	*/
+/*	$NetBSD: util.c,v 1.4 1996/03/17 11:50:16 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -119,10 +119,11 @@ path(file)
 static struct nvlist *nvhead;
 
 struct nvlist *
-newnv(name, str, ptr, i)
+newnv(name, str, ptr, i, next)
 	const char *name, *str;
 	void *ptr;
 	int i;
+	struct nvlist *next;
 {
 	register struct nvlist *nv;
 
@@ -130,7 +131,7 @@ newnv(name, str, ptr, i)
 		nv = emalloc(sizeof(*nv));
 	else
 		nvhead = nv->nv_next;
-	nv->nv_next = NULL;
+	nv->nv_next = next;
 	nv->nv_name = name;
 	if (ptr == NULL)
 		nv->nv_str = str;
