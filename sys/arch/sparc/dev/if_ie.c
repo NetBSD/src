@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.30 1997/05/24 20:16:24 pk Exp $	*/
+/*	$NetBSD: if_ie.c,v 1.31 1997/06/10 20:59:14 pk Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -411,23 +411,22 @@ iematch(parent, cf, aux)
 
 	if (strcmp(cf->cf_driver->cd_name, ra->ra_name))	/* correct name? */
 		return (0);
-	if (ca->ca_bustype == BUS_SBUS)
+
+	switch (ca->ca_bustype) {
+	case BUS_SBUS:
+	default:
 		return (0);
-
-	if (CPU_ISSUN4) {
-		/*
-		 * XXX need better probe here so we can figure out what we've got
-		 */
-		if (ca->ca_bustype == BUS_OBIO) {
-			if (probeget(ra->ra_vaddr, 1) == -1)
-				return (0);
-			return(1);
-		}
-		if (probeget(ra->ra_vaddr, 2) == -1)
-			return (0);
-
+	case BUS_OBIO:
+		if (probeget(ra->ra_vaddr, 1) != -1)
+			return (1);
+		break;
+	case BUS_VME16:
+	case BUS_VME32:
+		if (probeget(ra->ra_vaddr, 2) != -1)
+			return (1);
+		break;
 	}
-	return (1);
+	return (0);
 }
 
 /*
