@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.248.2.24 2003/01/08 01:03:23 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.248.2.25 2003/01/14 21:03:29 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.248.2.24 2003/01/08 01:03:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.248.2.25 2003/01/14 21:03:29 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2097,13 +2097,16 @@ cpu_getmcontext(l, mcp, flags)
 	 * an LWP that might or might not be curlwp, I'd like to know
 	 * about it.
 	 */
-	if (l == curlwp)
+	if (l == curlwp) {
 		gr[_REG_SP] = alpha_pal_rdusp();
-	else
+		gr[_REG_UNIQUE] = alpha_pal_rdunique();
+	} else {
 		gr[_REG_SP] = l->l_addr->u_pcb.pcb_hw.apcb_usp;
+		gr[_REG_UNIQUE] = l->l_addr->u_pcb.pcb_hw.apcb_unique;
+	}
 	gr[_REG_PC] = frame->tf_regs[FRAME_PC];
 	gr[_REG_PS] = frame->tf_regs[FRAME_PS];
-	*flags |= _UC_CPU;
+	*flags |= _UC_CPU | _UC_UNIQUE;
 
 	/* Save floating point register context, if any, and copy it. */
 	if (l->l_addr->u_pcb.pcb_fpcpu != NULL) {
@@ -2140,7 +2143,12 @@ cpu_setmcontext(l, mcp, flags)
 		frame->tf_regs[FRAME_PC] = gr[_REG_PC];
 		frame->tf_regs[FRAME_PS] = gr[_REG_PS];
 	}
-
+	if (flags & _UC_UNIQUE) {
+		if (l == curlwp)
+			alpha_pal_wrunique(gr[_REG_UNIQUE]);
+		else
+			l->l_addr->u_pcb.pcb_hw.apcb_unique = gr[_REG_UNIQUE];
+	}
 	/* Restore floating point register context, if any. */
 	if (flags & _UC_FPU) {
 		/* If we have an FP register context, get rid of it. */
