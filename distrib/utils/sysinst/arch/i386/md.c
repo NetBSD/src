@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.104 2004/07/17 10:55:04 dsl Exp $ */
+/*	$NetBSD: md.c,v 1.105 2004/07/17 19:37:00 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -561,11 +561,6 @@ nogeom:
 		bhead = biosdisk->bi_head;
 		bsec = biosdisk->bi_sec;
 	}
-	if (biosdisk != NULL && (biosdisk->bi_flags & BIFLAG_EXTINT13))
-		bsize = dlsize;
-	else
-		bsize = bcyl * bhead * bsec;
-	bcylsize = bhead * bsec;
 	return 0;
 }
 
