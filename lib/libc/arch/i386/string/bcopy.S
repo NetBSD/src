@@ -36,7 +36,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: bcopy.S,v 1.6 1996/11/12 00:50:06 jtc Exp $")
+	RCSID("$NetBSD: bcopy.S,v 1.7 2002/07/04 15:48:40 kent Exp $")
 #endif
 
 	/*
@@ -84,6 +84,29 @@ ENTRY(bcopy)
 1:
 	addl	%ecx,%edi	/* copy backwards. */
 	addl	%ecx,%esi
+#ifdef _DIAGNOSTIC
+#define _DIAGASSERT	call	_C_LABEL(__diagassert13)
+	cmpl	12(%esp),%edi	/* check pointer wraparound */
+	jae	2f
+	pushl	$diagmes1
+	pushl	$func
+	pushl	$__LINE__-4
+	pushl	$file
+	_DIAGASSERT
+	addl	$16,%esp
+	jmp	4f
+2:	
+	cmpl	16(%esp),%esi
+	jae	3f
+	pushl	$diagmes2
+	pushl	$func
+	pushl	$__LINE__-4
+	pushl	$file
+	_DIAGASSERT
+	addl	$16,%esp
+	jmp	4f
+3:
+#endif
 	std
 	andl	$3,%ecx		/* any fractional bytes? */
 	decl	%edi
@@ -96,6 +119,7 @@ ENTRY(bcopy)
 	subl	$3,%edi
 	rep
 	movsl
+4:
 #if defined(MEMCOPY) || defined(MEMMOVE)
 	movl	12(%esp),%eax
 #endif
@@ -103,3 +127,20 @@ ENTRY(bcopy)
 	popl	%esi
 	cld
 	ret
+
+#ifdef _DIAGNOSTIC
+file:
+	.asciz	__FILE__
+func:
+#if defined(MEMCOPY)
+	.asciz	"memcpy"
+#elseif defined(MEMMOVE)
+	.asciz	"memmove"
+#else
+	.asciz	"bcopy"
+#endif
+diagmes1:
+	.asciz	"src + length > src"
+diagmes2:
+	.asciz	"dst + length > dst"
+#endif	/* _DIAGNOSTIC */
