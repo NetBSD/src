@@ -1,4 +1,4 @@
-.\"	$NetBSD: sshd.8,v 1.21 2002/03/08 02:00:57 itojun Exp $
+.\"	$NetBSD: sshd.8,v 1.22 2002/03/08 02:18:11 itojun Exp $
 .\"  -*- nroff -*-
 .\"
 .\" Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -663,9 +663,7 @@ daemon.
 Additional connections will be dropped until authentication succeeds or the
 .Cm LoginGraceTime
 expires for a connection.
-The default is 10:100:10.  To set this value in your configuration file,
-you must set all three values.  Setting the middle value to 100 will set a
-hard maximum without implementing random early drop. 
+The default is 10.
 .Pp
 Alternatively, random early drop can be enabled by specifying
 the three colon separated values
