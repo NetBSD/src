@@ -1,4 +1,4 @@
-/*	$NetBSD: arcbios_tty.c,v 1.4 2002/03/17 19:40:54 atatat Exp $	*/
+/*	$NetBSD: arcbios_tty.c,v 1.4.4.1 2002/05/16 12:24:36 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arcbios_tty.c,v 1.4 2002/03/17 19:40:54 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcbios_tty.c,v 1.4.4.1 2002/05/16 12:24:36 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/user.h>
@@ -54,7 +54,20 @@ void	arcbios_tty_start(struct tty *);
 void	arcbios_tty_poll(void *);
 int	arcbios_tty_param(struct tty *, struct termios *);
 
-cdev_decl(arcbios_tty);
+dev_type_open(arcbios_ttyopen);
+dev_type_close(arcbios_ttyclose);
+dev_type_read(arcbios_ttyread);
+dev_type_write(arcbios_ttywrite);
+dev_type_ioctl(arcbios_ttyioctl);
+dev_type_stop(arcbios_ttystop);
+dev_type_tty(arcbios_ttytty);
+dev_type_poll(arcbios_ttypoll);
+
+const struct cdevsw arcbios_cdevsw = {
+	arcbios_ttyopen, arcbios_ttyclose, arcbios_ttyread, arcbios_ttywrite,
+	arcbios_ttyioctl, arcbios_ttystop, arcbios_ttytty, arcbios_ttypoll,
+	nommap, D_TTY,
+};
 
 int
 arcbios_ttyopen(dev_t dev, int flag, int mode, struct proc *p)
