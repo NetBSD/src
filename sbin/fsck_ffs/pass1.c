@@ -1,4 +1,4 @@
-/*	$NetBSD: pass1.c,v 1.32 2004/05/25 14:54:56 hannken Exp $	*/
+/*	$NetBSD: pass1.c,v 1.33 2005/01/13 15:22:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass1.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass1.c,v 1.32 2004/05/25 14:54:56 hannken Exp $");
+__RCSID("$NetBSD: pass1.c,v 1.33 2005/01/13 15:22:35 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -112,6 +112,10 @@ pass1()
 			    c * 100 / sblock->fs_ncg);
 			got_siginfo = 0;
 		}
+#ifndef SMALL
+		progress_bar(cdevname(), preen ? NULL : "phase 1",
+			    c, sblock->fs_ncg);
+#endif /* ! SMALL */
 		/*
 		 * If we are using soft updates, then we can trust the
 		 * cylinder group inode allocation maps to tell us which
@@ -190,6 +194,12 @@ pass1()
 		free(inostathead[c].il_stat);
 		inostathead[c].il_stat = info;
 	}
+#ifndef SMALL
+	if (preen)
+		progress_add(sblock->fs_ncg);
+	else
+		progress_done();
+#endif /* ! SMALL */
 	freeinodebuf();
 	do_blkswap = 0; /* has been done */
 }
