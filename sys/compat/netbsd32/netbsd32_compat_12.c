@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_12.c,v 1.9 2000/12/03 14:47:27 fvdl Exp $	*/
+/*	$NetBSD: netbsd32_compat_12.c,v 1.10 2001/02/07 13:15:54 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -137,7 +137,7 @@ compat_12_netbsd32_stat12(p, v, retval)
 		syscallarg(const netbsd32_charp) path;
 		syscallarg(netbsd32_stat12p_t) ub;
 	} */ *uap = v;
-	struct netbsd32_stat12 *sp32;
+	struct netbsd32_stat12 *sp32, sb32;
 	struct stat12 sb12;
 	struct stat12 *sp12 = &sb12;
 	struct compat_12_sys_stat_args ua;
@@ -150,11 +150,13 @@ compat_12_netbsd32_stat12(p, v, retval)
 	CHECK_ALT_EXIST(p, &sg, SCARG(&ua, path));
 
 	rv = compat_12_sys_stat(p, &ua, retval);
+	if (rv)
+		return (rv);
 
 	sp32 = (struct netbsd32_stat12 *)(u_long)SCARG(uap, ub);
-	netbsd32_stat12_to_netbsd32(sp12, sp32);
+	netbsd32_stat12_to_netbsd32(sp12, &sb32);
 
-	return (rv);
+	return (copyout(&sb32, sp32, sizeof sb32));
 }
 
 int
@@ -167,7 +169,7 @@ compat_12_netbsd32_fstat12(p, v, retval)
 		syscallarg(int) fd;
 		syscallarg(netbsd32_stat12p_t) sb;
 	} */ *uap = v;
-	struct netbsd32_stat12 *sp32;
+	struct netbsd32_stat12 *sp32, sb32;
 	struct stat12 sb12;
 	struct stat12 *sp12 = &sb12;
 	struct compat_12_sys_fstat_args ua;
@@ -176,11 +178,13 @@ compat_12_netbsd32_fstat12(p, v, retval)
 	NETBSD32TO64_UAP(fd);
 	SCARG(&ua, sb) = &sb12;
 	rv = compat_12_sys_fstat(p, &ua, retval);
+	if (rv)
+		return (rv);
 
 	sp32 = (struct netbsd32_stat12 *)(u_long)SCARG(uap, sb);
-	netbsd32_stat12_to_netbsd32(sp12, sp32);
+	netbsd32_stat12_to_netbsd32(sp12, &sb32);
 
-	return (rv);
+	return (copyout(&sb32, sp32, sizeof sb32));
 }
 
 int
@@ -193,7 +197,7 @@ compat_12_netbsd32_lstat12(p, v, retval)
 		syscallarg(const netbsd32_charp) path;
 		syscallarg(netbsd32_stat12p_t) ub;
 	} */ *uap = v;
-	struct netbsd32_stat12 *sp32;
+	struct netbsd32_stat12 *sp32, sb32;
 	struct stat12 sb12;
 	struct stat12 *sp12 = &sb12;
 	struct compat_12_sys_lstat_args ua;
@@ -206,11 +210,13 @@ compat_12_netbsd32_lstat12(p, v, retval)
 	CHECK_ALT_EXIST(p, &sg, SCARG(&ua, path));
 
 	rv = compat_12_sys_lstat(p, &ua, retval);
+	if (rv)
+		return (rv);
 
 	sp32 = (struct netbsd32_stat12 *)(u_long)SCARG(uap, ub);
-	netbsd32_stat12_to_netbsd32(sp12, sp32);
+	netbsd32_stat12_to_netbsd32(sp12, &sb32);
 
-	return (rv);
+	return (copyout(&sb32, sp32, sizeof sb32));
 }
 
 int
