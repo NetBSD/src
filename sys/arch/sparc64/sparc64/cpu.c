@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.33 2004/01/06 09:38:19 petrov Exp $ */
+/*	$NetBSD: cpu.c,v 1.34 2004/01/06 14:13:33 martin Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.33 2004/01/06 09:38:19 petrov Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.34 2004/01/06 14:13:33 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -413,7 +413,7 @@ cpu_boot_secondary_processors()
 	       mp_start, mp_start_size);
 #endif
 
-	printf("cpu0: booting secondary processors:");
+	printf("cpu0: booting secondary processors:\n");
 
 	for (ci = cpus; ci != NULL; ci = ci->ci_next) {
 		if (ci->ci_upaid == CPU_UPAID)
@@ -437,14 +437,17 @@ cpu_boot_secondary_processors()
 
 		prom_startcpu(ci->ci_node, (void *)mp_start, 0);
 
-		for (i = 0; i < 100; i++) {
+		for (i = 0; i < 2000; i++) {
 			if (cpu_args->cb_flags == 1)
 				break;
 			delay(10000);
 		}
 		setpstate(pstate);
 
-		printf(" cpu%d (%x)", ci->ci_upaid, cpu_args->cb_flags);
+		if (cpu_args->cb_flags == 0)
+			printf("cpu%d: startup failed\n", ci->ci_upaid);
+		else
+			printf(" cpu%d now spinning idle (waited %d iterations)\n", ci->ci_upaid, i);
 	}
 
 	printf("\n");
