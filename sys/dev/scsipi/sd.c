@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.124 1998/01/15 02:21:38 cgd Exp $	*/
+/*	$NetBSD: sd.c,v 1.125 1998/01/15 18:59:03 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -151,6 +151,7 @@ sdattach(parent, sd, sc_link, ops)
 	 */
 	printf("\n");
 
+#if NSD_ATAPIBUS > 0
 	/* XXX BEGIN HACK ALERT!!! */
 	if (sc_link->type == BUS_ATAPI) {
 		/*
@@ -169,6 +170,7 @@ sdattach(parent, sd, sc_link, ops)
 		    SCSI_IGNORE_NOT_READY);
 	}
 	/* XXX END HACK ALERT!!! */
+#endif /* NSD_ATAPIBUS > 0 */
 
 	if ((sd->sc_link->quirks & SDEV_NOSTARTUNIT) == 0) {
 		error = scsipi_start(sd->sc_link, SSS_START,
