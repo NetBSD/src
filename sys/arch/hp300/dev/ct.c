@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1982, 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,8 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)ct.c	7.3 (Berkeley) 5/4/91
- *	$Id: ct.c,v 1.7 1994/05/11 10:16:14 mycroft Exp $
+ *	from: @(#)ct.c	8.2 (Berkeley) 1/12/94
+ *	$Id: ct.c,v 1.8 1994/05/23 05:58:26 mycroft Exp $
  */
 
 #include "ct.h"
@@ -303,6 +303,7 @@ ctopen(dev, flag, type, p)
 /*ARGSUSED*/
 ctclose(dev, flag)
 	dev_t dev;
+	int flag;
 {
 	register struct ct_softc *sc = &ct_softc[UNIT(dev)];
 
@@ -333,6 +334,7 @@ ctclose(dev, flag)
 
 ctcommand(dev, cmd, cnt)
 	dev_t dev;
+	int cmd;
 	register int cnt;
 {
 	register struct ct_softc *sc = &ct_softc[UNIT(dev)];
@@ -779,9 +781,8 @@ done:
 /*ARGSUSED*/
 ctioctl(dev, cmd, data, flag, p)
 	dev_t dev;
-	int cmd;
+	int cmd, flag;
 	caddr_t data;
-	int flag;
 	struct proc *p;
 {
 	register struct mtop *op;

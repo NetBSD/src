@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1982, 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,8 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)nhpib.c	7.4 (Berkeley) 5/7/91
- *	$Id: nhpib.c,v 1.3 1994/05/05 10:10:31 mycroft Exp $
+ *	from: @(#)nhpib.c	8.2 (Berkeley) 1/12/94
+ *	$Id: nhpib.c,v 1.4 1994/05/23 05:59:10 mycroft Exp $
  */
 
 /*
@@ -40,14 +40,14 @@
 #include "hpib.h"
 #if NHPIB > 0
 
-#include "sys/param.h"
-#include "sys/systm.h"
-#include "sys/buf.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/buf.h>
 
-#include "device.h"
-#include "nhpibreg.h"
-#include "hpibvar.h"
-#include "dmavar.h"
+#include <hp300/dev/device.h>
+#include <hp300/dev/nhpibreg.h>
+#include <hp300/dev/hpibvar.h>
+#include <hp300/dev/dmavar.h>
 
 nhpibtype(hc)
 	register struct hp_ctlr *hc;
@@ -71,6 +71,7 @@ nhpibtype(hc)
 }
 
 nhpibreset(unit)
+	int unit;
 {
 	register struct hpib_softc *hs = &hpib_softc[unit];
 	register struct nhpibdevice *hd;
@@ -107,6 +108,7 @@ nhpibifc(hd)
 }
 
 nhpibsend(unit, slave, sec, addr, origcnt)
+	int unit, slave, sec, origcnt;
 	register char *addr;
 {
 	register struct hpib_softc *hs = &hpib_softc[unit];
@@ -158,6 +160,7 @@ senderror:
 }
 
 nhpibrecv(unit, slave, sec, addr, origcnt)
+	int unit, slave, sec, origcnt;
 	register char *addr;
 {
 	register struct hpib_softc *hs = &hpib_softc[unit];
@@ -202,6 +205,7 @@ recvbyteserror:
 
 nhpibgo(unit, slave, sec, addr, count, rw)
 	register int unit, slave;
+	int sec, count, rw;
 	char *addr;
 {
 	register struct hpib_softc *hs = &hpib_softc[unit];
@@ -324,6 +328,7 @@ nhpibppoll(unit)
 
 nhpibwait(hd, x)
 	register struct nhpibdevice *hd;
+	int x;
 {
 	register int timo = hpibtimeout;
 
@@ -334,16 +339,24 @@ nhpibwait(hd, x)
 	return(0);
 }
 
+void
 nhpibppwatch(arg)
 	void *arg;
 {
-	register int unit = (int)arg;
-	register struct hpib_softc *hs = &hpib_softc[unit];
+	register struct hpib_softc *hs;
+	register int unit;
+	extern int cold;
 
+	unit = (int)arg;
+	hs = &hpib_softc[unit];
 	if ((hs->sc_flags & HPIBF_PPOLL) == 0)
 		return;
+again:
 	if (nhpibppoll(unit) & (0x80 >> hs->sc_sq.dq_forw->dq_slave))
        		((struct nhpibdevice *)hs->sc_hc->hp_addr)->hpib_mim = MIS_BO;
+	else if (cold)
+		/* timeouts not working yet */
+		goto again;
 	else
 		timeout(nhpibppwatch, (void *)unit, 1);
 }

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1990 University of Utah.
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -35,9 +35,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: Utah Hdr: st.c 1.8 90/10/14
- *      from: @(#)st.c	7.3 (Berkeley) 5/4/91
- *	$Id: st.c,v 1.7 1994/05/11 10:16:21 mycroft Exp $
+ * from: Utah $Hdr: st.c 1.11 92/01/21$
+ *
+ *      from: @(#)st.c	8.3 (Berkeley) 1/12/94
+ *	$Id: st.c,v 1.8 1994/05/23 05:59:29 mycroft Exp $
  */
 
 /*
@@ -89,8 +90,6 @@
 #include <hp300/dev/device.h>
 #include <hp300/dev/scsireg.h>
 #include <hp300/dev/stvar.h>
-
-#define ADD_DELAY
 
 extern int scsi_test_unit_rdy();
 extern int scsi_request_sense();
@@ -194,8 +193,7 @@ int st_dmaoddretry = 0;
  * Use 0x400 for 1k (best capacity) fixed length records.
  * In st_open, if minor bit 4 set then 1k records are used.
  * If st_exblken is set to anything other then 0 we are in fixed length mode.
- * Minor bit 4 overrides any setting of st_exblklen.
- * 
+ * Minor bit 5 requests 1K fixed-length, overriding any setting of st_exblklen.
  */
 int st_exblklen = 0;
 
@@ -253,9 +251,7 @@ stident(sc, hd)
 	int ctlr, slave;
 	int i, stat, inqlen;
 	char idstr[32];
-#ifdef ADD_DELAY
 	static int havest = 0;
-#endif
 	struct st_inquiry {
 		struct	scsi_inquiry inqbuf;
 		struct  exb_inquiry exb_inquiry;
@@ -280,11 +276,25 @@ stident(sc, hd)
 	if (stat == -1)
 		goto failed;
 
-	if (st_inqbuf.inqbuf.type != 0x01 ||  /* sequential access device */
+	if ((st_inqbuf.inqbuf.type != 0x01 ||  /* sequential access device */
 	    st_inqbuf.inqbuf.qual != 0x80 ||  /* removable media */
 	    (st_inqbuf.inqbuf.version != 0x01 && /* current ANSI SCSI spec */
-	     st_inqbuf.inqbuf.version != 0x02))  /* 0x02 is for HP DAT */
+	     st_inqbuf.inqbuf.version != 0x02)) /* 0x02 is for HP DAT */
+	    &&
+	    (st_inqbuf.inqbuf.type != 0x01 ||	/* M4 ??! */
+	     /*
+	      * the M4 is a little too smart (ass?) for its own good:
+	      * qual codes:
+	      * 0x80: you can take the tape out (unit not online)
+	      * 0xf8: online and at 6250bpi
+	      * 0xf9: online and at 1600bpi
+	      */
+	     st_inqbuf.inqbuf.version != 0x09))	/* M4 tape */
+{
+printf("st: wrong specs: type %x qual %x version %d\n", st_inqbuf.inqbuf.type,
+st_inqbuf.inqbuf.qual, st_inqbuf.inqbuf.version);
 		goto failed;
+}
 
 	/* now get additonal info */
 	inqlen = 0x05 + st_inqbuf.inqbuf.len;
@@ -307,7 +317,7 @@ stident(sc, hd)
 			if (idstr[i] != ' ')
 				break;
 		idstr[i+1] = 0;
-		printf("st%d: %s %s rev %s\n", hd->hp_unit, idstr, &idstr[8],
+		printf("st%d: %s, %s rev %s\n", hd->hp_unit, idstr, &idstr[8],
 		       &idstr[24]);
 	} else if (inqlen == 5)
 		/* great it's a stupid device, doesn't know it's know name */
@@ -346,6 +356,13 @@ stident(sc, hd)
 		sc->sc_datalen[CMD_INQUIRY] = 36;
 		sc->sc_datalen[CMD_MODE_SELECT] = 12;
 		sc->sc_datalen[CMD_MODE_SENSE] = 12;
+	} else if (bcmp("123107 SCSI", &idstr[8], 11) == 0 ||
+		   bcmp("OPEN REEL TAPE", &idstr[8], 14) == 0) {
+		sc->sc_tapeid = MT_ISMFOUR;
+		sc->sc_datalen[CMD_REQUEST_SENSE] = 8;
+		sc->sc_datalen[CMD_INQUIRY] = 5;
+		sc->sc_datalen[CMD_MODE_SELECT] = 12;
+		sc->sc_datalen[CMD_MODE_SENSE] = 12;
 	} else {
 		if (idstr[8] == '\0')
 			printf("st%d: No ID, assuming Archive\n", hd->hp_unit);
@@ -364,13 +381,11 @@ stident(sc, hd)
 	stxsense(ctlr, slave, unit, sc);
 
 	scsi_delay(0);
-#ifdef ADD_DELAY
 	/* XXX if we have a tape, we must up the delays in the HA driver */
 	if (!havest) {
 		havest = 1;
 		scsi_delay(20000);
 	}
-#endif
 	return(st_inqbuf.inqbuf.type);
 failed:
 	scsi_delay(0);
@@ -390,13 +405,10 @@ stopen(dev, flag, type, p)
 	struct mode_select_data msd;
 	struct mode_sense mode;
 	int modlen;
+	int error;
 	static struct scsi_fmt_cdb modsel = {
 		6,
 		CMD_MODE_SELECT, 0, 0, 0, sizeof(msd), 0
-	};
-	static struct scsi_fmt_cdb unitready = {
-		6,
-		CMD_TEST_UNIT_READY, 0, 0, 0, 0, 0
 	};
 	static struct scsi_fmt_cdb modsense = {
 		6,
@@ -412,6 +424,11 @@ stopen(dev, flag, type, p)
 		return(ENXIO);
 	if (sc->sc_flags & STF_OPEN)
 		return(EBUSY);
+
+	/*
+	 * Be prepared to print error messages
+	 */
+	sc->sc_ctty = tprintf_open(p);
 
 	/* do a mode sense to get current */
 	modlen = sc->sc_datalen[CMD_MODE_SENSE];
@@ -445,6 +462,9 @@ stopen(dev, flag, type, p)
 	case MT_ISPYTHON:
 		sc->sc_blklen = 512;
 		break;
+	case MT_ISMFOUR:
+		sc->sc_blklen = 0;
+		break;
 	default:
 		if ((mode.md.blklen2 << 16 |
 		     mode.md.blklen1 << 8 |
@@ -471,6 +491,10 @@ stopen(dev, flag, type, p)
 	msd.blklen2 = (sc->sc_blklen >> 16) & 0xff;
 	msd.blklen1 = (sc->sc_blklen >> 8) & 0xff;
 	msd.blklen0 = sc->sc_blklen & 0xff;
+
+	/*
+	 * Do we have any density problems?
+	 */
 
 	switch (sc->sc_tapeid) {
 	case MT_ISAR:
@@ -500,6 +524,8 @@ stopen(dev, flag, type, p)
 		if (minor(dev) & STDEV_HIDENSITY)
 			uprintf("Only one density supported\n");
 		break;
+	case MT_ISMFOUR:
+		break;		/* XXX could do density select? */
 	default:
 		uprintf("Unsupported drive\n");
 		return(EIO);
@@ -547,7 +573,9 @@ retryselect:
 			uprintf("SCSI bus timeout\n");
 			return(EBUSY);
 		}
-		sleep((caddr_t)&lbolt, PZERO+1);
+		if (error = tsleep((caddr_t)&lbolt, PZERO | PCATCH, 
+		    "st_scsiwait", 0))
+			return (error);
 		goto retryselect;
 	}
 
@@ -572,6 +600,7 @@ retryselect:
 			else 
 				prtkey(UNIT(dev), sc);
 			break;
+		case MT_ISMFOUR:
 		case MT_ISAR:
 			if (xsense->sc_xsense.key & XSK_UNTATTEN)
 				stat = scsi_test_unit_rdy(ctlr, slave, unit);
@@ -629,7 +658,6 @@ retryselect:
 		return(EACCES);
 	}
 
-	sc->sc_ctty = tprintf_open(p);
 	/* save total number of blocks on tape */
 	sc->sc_numblks = mode.md.numblk2 << 16 |
 			 mode.md.numblk1 << 8 |
@@ -666,10 +694,14 @@ stclose(dev, flag)
 
 	if ((sc->sc_flags & (STF_WMODE|STF_WRTTN)) == (STF_WMODE|STF_WRTTN)) {
 		/*
-		 * XXX driver only supports cartridge tapes.
 		 * Cartridge tapes don't do double EOFs on EOT.
+		 * We assume that variable-block devices use double EOF.
 		 */
 		stcommand(dev, MTWEOF, 1); 
+		if (sc->sc_blklen == 0) {
+			stcommand(dev, MTWEOF, 1); 
+			stcommand(dev, MTBSR, 1); 
+		}
 		hit++;
 	}
 	if ((minor(dev) & STDEV_NOREWIND) == 0) {
@@ -960,7 +992,10 @@ stintr(unit, stat)
 			sc->sc_filepos++;
 			break;
 		}
-		if (xp->sc_xsense.key) {
+		if (xp->sc_xsense.key != XSK_NOSENCE
+		    && xp->sc_xsense.key != XSK_NOTUSED1
+		    && xp->sc_xsense.key != XSK_NOTUSEDC
+		    && xp->sc_xsense.key != XSK_NOTUSEDE) {
 			sterror(unit, sc, stat);
 			bp->b_flags |= B_ERROR;
 			bp->b_error = EIO;
@@ -980,7 +1015,7 @@ stintr(unit, stat)
 			}
 			/*
 			 * Variable length but read more than requested,
-			 * an error.
+			 * an error.  (XXX ??? wrong for 9 track?)
 			 */
 			if (bp->b_resid < 0) {
 				bp->b_resid = 0;
@@ -992,7 +1027,7 @@ stintr(unit, stat)
 			 * Variable length and odd, may require special
 			 * handling.
 			 */
-			if (bp->b_resid & 1 && sc->sc_tapeid != MT_ISAR) {
+			if (bp->b_resid & 1 && (sc->sc_tapeid != MT_ISAR)) {
 				/*
 				 * Normal behavior, treat as an error.
 				 */
