@@ -1,4 +1,4 @@
-/*	$NetBSD: files.c,v 1.9 1997/10/18 07:59:06 lukem Exp $	*/
+/*	$NetBSD: files.c,v 1.10 1999/07/09 06:44:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -146,6 +146,7 @@ addfile(path, optx, flags, rule)
 	fi->fi_path = path;
 	fi->fi_tail = tail;
 	fi->fi_base = intern(base);
+	fi->fi_prefix = (prefixes != NULL) ? prefixes->pf_prefix : NULL;
 	fi->fi_optx = optx;
 	fi->fi_optf = NULL;
 	fi->fi_mkrule = rule;
@@ -182,6 +183,7 @@ addobject(path, optx, flags)
 	oi->oi_srcline = currentline();
 	oi->oi_flags = flags;
 	oi->oi_path = path;
+	oi->oi_prefix = (prefixes != NULL) ? prefixes->pf_prefix : NULL;
 	oi->oi_optx = optx;
 	oi->oi_optf = NULL;
 	*nextobject = oi;

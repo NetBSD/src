@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.43 1999/07/07 00:02:09 thorpej Exp $	*/
+/*	$NetBSD: config.h,v 1.44 1999/07/09 06:44:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -255,6 +255,7 @@ struct files {
 	const char *fi_path;	/* full file path */
 	const char *fi_tail;	/* name, i.e., strrchr(fi_path, '/') + 1 */
 	const char *fi_base;	/* tail minus ".c" (or whatever) */
+	const char *fi_prefix;	/* any file prefix */
 	struct  nvlist *fi_optx;/* options expression */
 	struct  nvlist *fi_optf;/* flattened version of above, if needed */
 	const char *fi_mkrule;	/* special make rule, if any */
@@ -276,6 +277,7 @@ struct objects {
 	u_char	oi_flags;	/* as below */
 	char	oi_lastc;	/* last char from path */
 	const char *oi_path;	/* full object path */
+	const char *oi_prefix;	/* any file prefix */
 	struct  nvlist *oi_optx;/* options expression */
 	struct  nvlist *oi_optf;/* flattened version of above, if needed */
 };
@@ -287,6 +289,15 @@ struct objects {
 #define	FX_NOT		1	/* NOT expr (subexpression in nv_next) */
 #define	FX_AND		2	/* AND expr (lhs in nv_ptr, rhs in nv_next) */
 #define	FX_OR		3	/* OR expr (lhs in nv_ptr, rhs in nv_next) */
+
+/*
+ * File/object prefixes.  These are arranged in a stack, and affect
+ * the behavior of the source path.
+ */
+struct prefix {
+	struct prefix *pf_next;	/* next prefix in stack */
+	const char *pf_prefix;	/* the actual prefix */
+};
 
 /*
  * Hash tables look up name=value pairs.  The pointer value of the name
@@ -334,7 +345,9 @@ int	ndevi;			/* number of devi's (before packing) */
 int	npseudo;		/* number of pseudo's */
 
 struct	files *allfiles;	/* list of all kernel source files */
-struct	objects *allobjects;	/* list of all kernel object and library files */
+struct	objects *allobjects;	/* list of all kernel object and library
+				   files */
+struct prefix *prefixes;	/* prefix stack */
 
 struct	devi **packed;		/* arrayified table for packed devi's */
 int	npacked;		/* size of packed table, <= ndevi */
@@ -417,6 +430,9 @@ void	initsem __P((void));
 /* util.c */
 void	*emalloc __P((size_t));
 void	*erealloc __P((void *, size_t));
+char	*estrdup __P((const char *));
+void	prefix_push __P((const char *));
+void	prefix_pop __P((void));
 char	*sourcepath __P((const char *));
 void	warn __P((const char *, ...));			/* immediate warns */
 void	error __P((const char *, ...));			/* immediate errs */
