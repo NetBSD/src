@@ -57,8 +57,7 @@ ENTRY(strcat)
 	repne				/* search! */
 	scasb
 
-	decl	%edi			/* correct dst address */
-	movl	%edi,%ecx
+	leal	-1(%edi),%ecx		/* correct dst address */
 
 	.align 2,0x90
 L1:	movb	(%edx),%al		/* unroll loop, but not too much */
