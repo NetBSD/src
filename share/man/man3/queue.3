@@ -1,4 +1,4 @@
-.\"	$NetBSD: queue.3,v 1.12 2000/05/27 22:27:34 mycroft Exp $
+.\"	$NetBSD: queue.3,v 1.13 2000/05/27 22:29:03 mycroft Exp $
 .\"
 .\" Copyright (c) 1993 The Regents of the University of California.
 .\" All rights reserved.
@@ -369,7 +369,7 @@ while (LIST_FIRST(&head) != NULL)
 	LIST_REMOVE(LIST_FIRST(&head), entries);
 					/* Test for emptiness. */
 if (LIST_EMPTY(&head))
-	printf("nothing to do\n");
+	printf("nothing to do\\n");
 .Ed
 .Sh SIMPLE QUEUES
 A simple queue is headed by a structure defined by the
@@ -491,7 +491,7 @@ while (SIMPLEQ_FIRST(&head) != NULL)
 	SIMPLEQ_REMOVE_HEAD(&head, SIMPLEQ_FIRST(&head), entries);
 					/* Test for emptiness. */
 if (SIMPLEQ_EMPTY(&head))
-	printf("nothing to do\n");
+	printf("nothing to do\\n");
 .Ed
 .Sh TAIL QUEUES
 A tail queue is headed by a structure defined by the
@@ -625,7 +625,7 @@ while (TAILQ_FIRST(&head) != NULL)
 	TAILQ_REMOVE(&head, TAILQ_FIRST(&head), entries);
 					/* Test for emptiness. */
 if (TAILQ_EMPTY(&head))
-	printf("nothing to do\n");
+	printf("nothing to do\\n");
 .Ed
 .Sh CIRCULAR QUEUES
 A circular queue is headed by a structure defined by the
@@ -774,7 +774,7 @@ while (CIRCLEQ_HEAD(&head) != (void *)&head)
 	CIRCLEQ_REMOVE(&head, CIRCLEQ_HEAD(&head), entries);
 					/* Test for emptiness. */
 if (CIRCLEQ_EMPTY(&head))
-	printf("nothing to do\n");
+	printf("nothing to do\\n");
 .Ed
 .Sh HISTORY
 The
