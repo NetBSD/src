@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.5 1995/05/17 00:45:55 briggs Exp $	*/
+/*	$NetBSD: pcb.h,v 1.6 1995/06/21 03:10:44 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -88,7 +88,6 @@ struct pcb
 	int	pcb_ustp;	/* user segment table pointer (+4) */
 	int	pcb_usp;	/* user stack pointer (+8) */
 	int	pcb_regs[12];	/* D2-D7, A2-A7 (+C) */
-	int	pcb_cmap2;	/* temporary copy PTE */
 	caddr_t	pcb_onfault;	/* for copyin/out faults */
 	struct	fpframe pcb_fpregs; /* 68881/2 context save area */
 	int	pcb_exec[16];	/* exec structure for core dumps */
