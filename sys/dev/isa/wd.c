@@ -1,7 +1,7 @@
-/*	$NetBSD: wd.c,v 1.123 1995/01/03 01:31:10 mycroft Exp $	*/
+/*	$NetBSD: wd.c,v 1.124 1995/01/07 03:07:22 mycroft Exp $	*/
 
 /*
- * Copyright (c) 1994 Charles Hannum.  All rights reserved.
+ * Copyright (c) 1994, 1995 Charles Hannum.  All rights reserved.
  *
  * DMA and multi-sector PIO handling are derived from code contributed by
  * Onno van der Linden.
@@ -151,6 +151,7 @@ struct wdc_softc {
 #define	WDCF_ACTIVE	0x01	/* controller is active */
 #define	WDCF_SINGLE	0x02	/* sector at a time mode */
 #define	WDCF_ERROR	0x04	/* processing a disk error */
+#define	WDCF_WANTED	0x08	/* XXX locking for wd_get_parms() */
 	u_char	sc_status;	/* copy of status register */
 	u_char	sc_error;	/* copy of error register */
 	int	sc_iobase;	/* I/O port base */
@@ -509,6 +510,16 @@ wdcstart(wdc)
 	struct wd_softc *wd;	/* disk unit for IO */
 	struct buf *bp;
 	int nblks;
+
+	/*
+	 * XXX
+	 * This is a kluge.  See comments in wd_get_parms().
+	 */
+	if ((wdc->sc_flags & WDCF_WANTED) != 0) {
+		wdc->sc_flags &= ~WDCF_WANTED;
+		wakeup(wdc);
+		return;
+	}
 
 loop:
 	/* Is there a drive for the controller to do a transfer with? */
@@ -1180,7 +1191,25 @@ wd_get_parms(wd)
 	struct wdc_softc *wdc = (void *)wd->sc_dev.dv_parent;
 	int i;
 	char tb[DEV_BSIZE];
-    
+	int s, error;
+
+	/*
+	 * XXX
+	 * The locking done here, not to mention the length of time it may
+	 * keep the rest of the system suspended, is a kluge.  This should be
+	 * rewritten to set up a transfer and queue it through wdstart().
+	 */
+
+	s = splbio();
+
+	while ((wdc->sc_flags & WDCF_ACTIVE) != 0) {
+		wdc->sc_flags |= WDCF_WANTED;
+		if ((error = tsleep(wdc, PRIBIO | PCATCH, "wdprm", 0)) != 0) {
+			splx(s);
+			return error;
+		}
+	}
+
 	if (wdcommandshort(wdc, wd->sc_drive, WDCC_IDENTIFY) != 0 ||
 	    wait_for_drq(wdc) != 0) {
 		/*
@@ -1200,6 +1229,10 @@ wd_get_parms(wd)
 		wd->sc_params.wdp_usedmovsd = 0;
 		wd->sc_params.wdp_capabilities = 0;
 	} else {
+		strncpy(wd->sc_dk.dk_label.d_typename, "ESDI/IDE",
+		    sizeof wd->sc_dk.dk_label.d_typename);
+		wd->sc_dk.dk_label.d_type = DTYPE_ESDI;
+
 		/* Obtain parameters. */
 		insw(wdc->sc_iobase+wd_data, tb, sizeof(tb) / sizeof(short));
 		bcopy(tb, &wd->sc_params, sizeof(struct wdparams));
@@ -1210,10 +1243,6 @@ wd_get_parms(wd)
 			p = (u_short *)(wd->sc_params.wdp_model + i);
 			*p = ntohs(*p);
 		}
-
-		strncpy(wd->sc_dk.dk_label.d_typename, "ESDI/IDE",
-		    sizeof wd->sc_dk.dk_label.d_typename);
-		wd->sc_dk.dk_label.d_type = DTYPE_ESDI;
 	}
 
 #if 0
@@ -1222,9 +1251,12 @@ wd_get_parms(wd)
 	    wp->wdp_buftype, wp->wdp_bufsize, wp->wdp_model);
 #endif
     
-	/* XXX sometimes possibly needed */
+	/* Clear any leftover interrupt. */
 	(void) inb(wdc->sc_iobase+wd_status);
 
+	wdcstart(wdc);
+
+	splx(s);
 	return 0;
 }
 
