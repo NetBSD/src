@@ -1,4 +1,4 @@
-/*	$NetBSD: revnetgroup.c,v 1.2 1997/10/06 06:54:15 lukem Exp $ */
+/*	$NetBSD: revnetgroup.c,v 1.2.2.1 1997/11/28 09:37:14 mellon Exp $ */
 
 /*
  * Copyright (c) 1995
@@ -41,9 +41,10 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: revnetgroup.c,v 1.2 1997/10/06 06:54:15 lukem Exp $");
+__RCSID("$NetBSD: revnetgroup.c,v 1.2.2.1 1997/11/28 09:37:14 mellon Exp $");
 #endif
 
+#include <ctype.h>
 #include <err.h>
 #include <errno.h>
 #include <stdio.h>
@@ -51,6 +52,7 @@ __RCSID("$NetBSD: revnetgroup.c,v 1.2 1997/10/06 06:54:15 lukem Exp $");
 #include <string.h>
 
 #include "hash.h"
+#include "protos.h"
 
 int	main __P((int, char *[]));
 void	usage __P((void));
@@ -83,14 +85,14 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	FILE *fp;
-	char readbuf[LINSIZ];
 	struct group_entry *gcur;
 	struct member_entry *mcur;
-	char *host, *user, *domain;
-	int ch;
-	char *key = NULL, *data = NULL;
-	int hosts = -1, i;
+	FILE	*fp;
+	char	*p, *host, *user, *domain;
+	int	 ch, i;
+	size_t	 len;
+	char	*key;
+	int	 hosts = -1;
 
 	if (argc < 2)
 		usage();
@@ -132,20 +134,15 @@ main(argc, argv)
 	}
 
 	/* Stuff all the netgroup names and members into a hash table. */
-	while (fgets(readbuf, LINSIZ, fp)) {
-		if (readbuf[0] == '#')
+	while ((p = read_line(fp, &len, NULL)) != NULL) {
+		if (len == 0 || *p == '#')
 			continue;
-		/* handle backslash line continuations */
-		while(readbuf[strlen(readbuf) - 2] == '\\') {
-			fgets((char *)&readbuf[strlen(readbuf) - 2],
-					sizeof(readbuf) - strlen(readbuf), fp);
-		}
-		data = NULL;
-		if ((data = (char *)(strpbrk(readbuf, " \t") + 1)) < (char *)2)
-			continue;
-		key = (char *)&readbuf;
-		*(data - 1) = '\0';
-		store(gtable, key, data);
+
+		for (key = p; *p && isspace(*p) == 0; p++)
+			;
+		while (*p && isspace(*p))
+			*p++ = '\0';
+		store(gtable, key, p);
 	}
 
 	fclose(fp);
