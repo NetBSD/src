@@ -1,4 +1,4 @@
-/*	$NetBSD: wwlabel.c,v 1.5 1997/11/21 08:37:32 lukem Exp $	*/
+/*	$NetBSD: wwlabel.c,v 1.6 2002/06/14 01:06:59 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)wwlabel.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: wwlabel.c,v 1.5 1997/11/21 08:37:32 lukem Exp $");
+__RCSID("$NetBSD: wwlabel.c,v 1.6 2002/06/14 01:06:59 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -54,12 +54,7 @@ __RCSID("$NetBSD: wwlabel.c,v 1.5 1997/11/21 08:37:32 lukem Exp $");
  * Gross, but it works.
  */
 void
-wwlabel(w, f, where, l, mode)
-	struct ww *w;
-	struct ww *f;
-	int where;
-	char *l;
-	int mode;
+wwlabel(struct ww *w, struct ww *f, int where, char *l, int mode)
 {
 	int row;
 	int j;

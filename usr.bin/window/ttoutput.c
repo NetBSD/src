@@ -1,4 +1,4 @@
-/*	$NetBSD: ttoutput.c,v 1.4 1997/11/21 08:36:34 lukem Exp $	*/
+/*	$NetBSD: ttoutput.c,v 1.5 2002/06/14 01:06:55 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)ttoutput.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: ttoutput.c,v 1.4 1997/11/21 08:36:34 lukem Exp $");
+__RCSID("$NetBSD: ttoutput.c,v 1.5 2002/06/14 01:06:55 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -57,7 +57,7 @@ __RCSID("$NetBSD: ttoutput.c,v 1.4 1997/11/21 08:36:34 lukem Exp $");
  */
 
 void
-ttflush()
+ttflush(void)
 {
 	char *p;
 	int n = tt_obp - tt_ob;
@@ -92,17 +92,14 @@ ttflush()
 }
 
 void
-ttputs(s)
-	char *s;
+ttputs(char *s)
 {
 	while (*s)
 		ttputc(*s++);
 }
 
 void
-ttwrite(s, n)
-	char *s;
-	int n;
+ttwrite(char *s, int n)
 {
 	switch (n) {
 	case 0:

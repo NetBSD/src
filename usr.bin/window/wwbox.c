@@ -1,4 +1,4 @@
-/*	$NetBSD: wwbox.c,v 1.4 1997/11/21 08:36:58 lukem Exp $	*/
+/*	$NetBSD: wwbox.c,v 1.5 2002/06/14 01:06:57 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)wwbox.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: wwbox.c,v 1.4 1997/11/21 08:36:58 lukem Exp $");
+__RCSID("$NetBSD: wwbox.c,v 1.5 2002/06/14 01:06:57 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -49,10 +49,7 @@ __RCSID("$NetBSD: wwbox.c,v 1.4 1997/11/21 08:36:58 lukem Exp $");
 #include "tt.h"
 
 void
-wwbox(w, r, c, nr, nc)
-	struct ww *w;
-	int r, c;
-	int nr, nc;
+wwbox(struct ww *w, int r, int c, int nr, int nc)
 {
 	int r1, c1;
 	int i;

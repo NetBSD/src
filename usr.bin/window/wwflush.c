@@ -1,4 +1,4 @@
-/*	$NetBSD: wwflush.c,v 1.6 1997/11/21 08:37:21 lukem Exp $	*/
+/*	$NetBSD: wwflush.c,v 1.7 2002/06/14 01:06:59 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)wwflush.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: wwflush.c,v 1.6 1997/11/21 08:37:21 lukem Exp $");
+__RCSID("$NetBSD: wwflush.c,v 1.7 2002/06/14 01:06:59 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -53,7 +53,7 @@ __RCSID("$NetBSD: wwflush.c,v 1.6 1997/11/21 08:37:21 lukem Exp $");
 #include "xx.h"
 
 void
-wwflush()
+wwflush(void)
 {
 	int row, col;
 
@@ -74,7 +74,7 @@ wwflush()
 }
 
 void
-wwcheckpoint()
+wwcheckpoint(void)
 {
 	sigset_t sigset, osigset;
 
@@ -109,8 +109,7 @@ wwcheckpoint()
 }
 
 void
-wwcopyscreen(s1, s2)
-	union ww_char **s1, **s2;
+wwcopyscreen(union ww_char **s1, union ww_char **s2)
 {
 	int i;
 	int s = wwncol * sizeof **s1;
@@ -120,8 +119,7 @@ wwcopyscreen(s1, s2)
 }
 
 void
-wwalarm(dummy)
-	int dummy;
+wwalarm(int dummy)
 {
 	wwdocheckpoint = 1;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: wwclreol.c,v 1.5 1997/11/21 08:37:03 lukem Exp $	*/
+/*	$NetBSD: wwclreol.c,v 1.6 2002/06/14 01:06:57 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)wwclreol.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: wwclreol.c,v 1.5 1997/11/21 08:37:03 lukem Exp $");
+__RCSID("$NetBSD: wwclreol.c,v 1.6 2002/06/14 01:06:57 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -53,10 +53,7 @@ __RCSID("$NetBSD: wwclreol.c,v 1.5 1997/11/21 08:37:03 lukem Exp $");
  * If cleared is true, then the screen line has already been cleared.
  */
 void
-wwclreol1(w, row, col, cleared)
-	struct ww *w;
-	int row, col;
-	char cleared;
+wwclreol1(struct ww *w, int row, int col, char cleared)
 {
 	int i;
 

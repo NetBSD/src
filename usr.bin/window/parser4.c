@@ -1,4 +1,4 @@
-/*	$NetBSD: parser4.c,v 1.6 1997/11/21 08:36:15 lukem Exp $	*/
+/*	$NetBSD: parser4.c,v 1.7 2002/06/14 01:06:54 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)parser4.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: parser4.c,v 1.6 1997/11/21 08:36:15 lukem Exp $");
+__RCSID("$NetBSD: parser4.c,v 1.7 2002/06/14 01:06:54 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,10 +60,7 @@ __RCSID("$NetBSD: parser4.c,v 1.6 1997/11/21 08:36:15 lukem Exp $");
  * * / %	10
  */
 int
-p_expr3_10(level, v, flag)
-	int level;
-	struct value *v;
-	char flag;
+p_expr3_10(int level, struct value *v, char flag)
 {
 	struct value l, r;
 	int op;

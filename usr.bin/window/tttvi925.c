@@ -1,4 +1,4 @@
-/*	$NetBSD: tttvi925.c,v 1.4 1997/11/21 08:36:37 lukem Exp $	*/
+/*	$NetBSD: tttvi925.c,v 1.5 2002/06/14 01:06:55 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)tttvi925.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: tttvi925.c,v 1.4 1997/11/21 08:36:37 lukem Exp $");
+__RCSID("$NetBSD: tttvi925.c,v 1.5 2002/06/14 01:06:55 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -61,7 +61,7 @@ short tvi925_frame[16] = {
 };
 
 int
-tt_tvi925()
+tt_tvi925(void)
 {
 
 	if (tt_generic() < 0)

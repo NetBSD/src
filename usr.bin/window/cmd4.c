@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd4.c,v 1.4 1997/11/21 08:35:50 lukem Exp $	*/
+/*	$NetBSD: cmd4.c,v 1.5 2002/06/14 01:06:51 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,14 +41,14 @@
 #if 0
 static char sccsid[] = "@(#)cmd4.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: cmd4.c,v 1.4 1997/11/21 08:35:50 lukem Exp $");
+__RCSID("$NetBSD: cmd4.c,v 1.5 2002/06/14 01:06:51 wiz Exp $");
 #endif
 #endif /* not lint */
 
 #include "defs.h"
 
 void
-c_colon()
+c_colon(void)
 {
 	char oldterse = terse;
 	char buf[512];

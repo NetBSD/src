@@ -1,4 +1,4 @@
-/*	$NetBSD: wwadd.c,v 1.5 1997/11/21 08:36:54 lukem Exp $	*/
+/*	$NetBSD: wwadd.c,v 1.6 2002/06/14 01:06:57 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)wwadd.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: wwadd.c,v 1.5 1997/11/21 08:36:54 lukem Exp $");
+__RCSID("$NetBSD: wwadd.c,v 1.6 2002/06/14 01:06:57 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -51,9 +51,7 @@ __RCSID("$NetBSD: wwadd.c,v 1.5 1997/11/21 08:36:54 lukem Exp $");
  * Stick w1 behind w2.
  */
 void
-wwadd(w1, w2)
-	struct ww *w1;
-	struct ww *w2;
+wwadd(struct ww *w1, struct ww *w2)
 {
 	int i;
 	struct ww *w;

@@ -1,4 +1,4 @@
-/*	$NetBSD: wwcursor.c,v 1.5 1997/11/21 08:37:06 lukem Exp $	*/
+/*	$NetBSD: wwcursor.c,v 1.6 2002/06/14 01:06:58 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,16 +41,14 @@
 #if 0
 static char sccsid[] = "@(#)wwcursor.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: wwcursor.c,v 1.5 1997/11/21 08:37:06 lukem Exp $");
+__RCSID("$NetBSD: wwcursor.c,v 1.6 2002/06/14 01:06:58 wiz Exp $");
 #endif
 #endif /* not lint */
 
 #include "ww.h"
 
 void
-wwcursor(w, on)
-	struct ww *w;
-	int on;
+wwcursor(struct ww *w, int on)
 {
 	char *win;
 
@@ -81,8 +79,7 @@ wwcursor(w, on)
 }
 
 void
-wwsetcursormodes(new)
-	int new;
+wwsetcursormodes(int new)
 {
 	int i;
 	struct ww *w;
