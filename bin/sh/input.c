@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.33 2000/05/13 20:50:14 elric Exp $	*/
+/*	$NetBSD: input.c,v 1.34 2000/05/22 10:18:47 elric Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)input.c	8.3 (Berkeley) 6/9/95";
 #else
-__RCSID("$NetBSD: input.c,v 1.33 2000/05/13 20:50:14 elric Exp $");
+__RCSID("$NetBSD: input.c,v 1.34 2000/05/22 10:18:47 elric Exp $");
 #endif
 #endif /* not lint */
 
@@ -506,22 +506,10 @@ popallfiles() {
 /*
  * Close the file(s) that the shell is reading commands from.  Called
  * after a fork is done.
- *
- * Takes one arg, vfork, which tells it to not modify its global vars
- * as it is still running in the parent.
  */
 
 void
-closescript(int vforked) {
-	if (vforked) {
-		struct parsefile *pf;
-
-		for (pf=parsefile; pf != &basepf; pf=pf->prev)
-			close(pf->fd);
-		if (parsefile->fd > 0)
-			close(parsefile->fd);
-		return;
-	}
+closescript() {
 	popallfiles();
 	if (parsefile->fd > 0) {
 		close(parsefile->fd);
