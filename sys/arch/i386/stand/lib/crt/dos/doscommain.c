@@ -1,4 +1,4 @@
-/*	$NetBSD: doscommain.c,v 1.2 1999/04/14 10:58:00 drochner Exp $	*/
+/*	$NetBSD: doscommain.c,v 1.3 2003/07/27 07:09:17 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -106,6 +106,7 @@ doscommain()
 			case doing_arg:
 				/* ignore in the middle of arguments */
 			default:
+				break;
 			}
 			continue;
 		}
