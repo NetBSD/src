@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.80 2003/09/13 11:12:06 simonb Exp $ */
+/*	$NetBSD: apm.c,v 1.81 2003/10/27 14:11:46 junyoung Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.80 2003/09/13 11:12:06 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.81 2003/10/27 14:11:46 junyoung Exp $");
 
 #include "apm.h"
 #if NAPM > 1
@@ -146,34 +146,34 @@ struct apm_softc {
 #define	APM_UNLOCK(apmsc)						\
 	(void) lockmgr(&(apmsc)->sc_lock, LK_RELEASE, NULL)
 
-static void	apmattach __P((struct device *, struct device *, void *));
-static int	apmmatch __P((struct device *, struct cfdata *, void *));
+static void	apmattach(struct device *, struct device *, void *);
+static int	apmmatch(struct device *, struct cfdata *, void *);
 
 #if 0
-static void	apm_devpowmgt_enable __P((int, u_int));
-static void	apm_disconnect __P((void *));
+static void	apm_devpowmgt_enable(int, u_int);
+static void	apm_disconnect(void *);
 #endif
-static int	apm_event_handle __P((struct apm_softc *, struct bioscallregs *));
-static int	apm_get_event __P((struct bioscallregs *));
-static int	apm_get_powstat __P((struct bioscallregs *, u_int));
-static void	apm_get_powstate __P((u_int));
-static int	apm_periodic_check __P((struct apm_softc *));
-static void	apm_create_thread __P((void *));
-static void	apm_thread __P((void *));
-static void	apm_perror __P((const char *, struct bioscallregs *, ...))
+static int	apm_event_handle(struct apm_softc *, struct bioscallregs *);
+static int	apm_get_event(struct bioscallregs *);
+static int	apm_get_powstat(struct bioscallregs *, u_int);
+static void	apm_get_powstate(u_int);
+static int	apm_periodic_check(struct apm_softc *);
+static void	apm_create_thread(void *);
+static void	apm_thread(void *);
+static void	apm_perror(const char *, struct bioscallregs *, ...)
 		    __attribute__((__format__(__printf__,1,3)));
 #ifdef APM_POWER_PRINT
-static void	apm_power_print __P((struct apm_softc *, struct bioscallregs *));
+static void	apm_power_print(struct apm_softc *, struct bioscallregs *);
 #endif
-static void	apm_powmgt_enable __P((int));
-static void	apm_powmgt_engage __P((int, u_int));
-static int	apm_record_event __P((struct apm_softc *, u_int));
-static void	apm_get_capabilities __P((struct bioscallregs *));
-static void	apm_set_ver __P((struct apm_softc *));
-static void	apm_standby __P((struct apm_softc *));
-static const char *apm_strerror __P((int));
-static void	apm_suspend __P((struct apm_softc *));
-static void	apm_resume __P((struct apm_softc *, struct bioscallregs *));
+static void	apm_powmgt_enable(int);
+static void	apm_powmgt_engage(int, u_int);
+static int	apm_record_event(struct apm_softc *, u_int);
+static void	apm_get_capabilities(struct bioscallregs *);
+static void	apm_set_ver(struct apm_softc *);
+static void	apm_standby(struct apm_softc *);
+static const char *apm_strerror(int);
+static void	apm_suspend(struct apm_softc *);
+static void	apm_resume(struct apm_softc *, struct bioscallregs *);
 
 CFATTACH_DECL(apm, sizeof(struct apm_softc),
     apmmatch, apmattach, NULL, NULL);

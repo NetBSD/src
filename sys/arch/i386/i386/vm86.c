@@ -1,4 +1,4 @@
-/*	$NetBSD: vm86.c,v 1.35 2003/10/25 18:40:37 christos Exp $	*/
+/*	$NetBSD: vm86.c,v 1.36 2003/10/27 14:11:47 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm86.c,v 1.35 2003/10/25 18:40:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm86.c,v 1.36 2003/10/27 14:11:47 junyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,8 +64,8 @@ __KERNEL_RCSID(0, "$NetBSD: vm86.c,v 1.35 2003/10/25 18:40:37 christos Exp $");
 #include <machine/sysarch.h>
 #include <machine/vm86.h>
 
-static void fast_intxx __P((struct lwp *, int));
-static __inline int is_bitset __P((int, caddr_t));
+static void fast_intxx(struct lwp *, int);
+static __inline int is_bitset(int, caddr_t);
 
 #define	CS(tf)		(*(u_short *)&tf->tf_cs)
 #define	IP(tf)		(*(u_short *)&tf->tf_eip)

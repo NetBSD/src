@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.69 2003/09/11 19:15:13 christos Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.70 2003/10/27 14:11:47 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.69 2003/09/11 19:15:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.70 2003/10/27 14:11:47 junyoung Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_mtrr.h"
@@ -82,16 +82,16 @@ __KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.69 2003/09/11 19:15:13 christos Ex
 
 extern struct vm_map *kernel_map;
 
-int i386_iopl __P((struct lwp *, void *, register_t *));
-int i386_get_ioperm __P((struct lwp *, void *, register_t *));
-int i386_set_ioperm __P((struct lwp *, void *, register_t *));
-int i386_get_mtrr __P((struct lwp *, void *, register_t *));
-int i386_set_mtrr __P((struct lwp *, void *, register_t *));
+int i386_iopl(struct lwp *, void *, register_t *);
+int i386_get_ioperm(struct lwp *, void *, register_t *);
+int i386_set_ioperm(struct lwp *, void *, register_t *);
+int i386_get_mtrr(struct lwp *, void *, register_t *);
+int i386_set_mtrr(struct lwp *, void *, register_t *);
 
 #ifdef USER_LDT
 
 #ifdef LDT_DEBUG
-static void i386_print_ldt __P((int, const struct segment_descriptor *));
+static void i386_print_ldt(int, const struct segment_descriptor *);
 
 static void
 i386_print_ldt(i, d)

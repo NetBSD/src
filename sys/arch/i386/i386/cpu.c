@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.15 2003/07/14 22:13:10 lukem Exp $ */
+/* $NetBSD: cpu.c,v 1.16 2003/10/27 14:11:46 junyoung Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.15 2003/07/14 22:13:10 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.16 2003/10/27 14:11:46 junyoung Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -118,16 +118,16 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.15 2003/07/14 22:13:10 lukem Exp $");
 #include <i386/isa/nvram.h>
 #include <dev/isa/isareg.h>
 
-int     cpu_match __P((struct device *, struct cfdata *, void *));
-void    cpu_attach __P((struct device *, struct device *, void *));
+int     cpu_match(struct device *, struct cfdata *, void *);
+void    cpu_attach(struct device *, struct device *, void *);
 
 struct cpu_softc {
 	struct device sc_dev;		/* device tree glue */
 	struct cpu_info *sc_info;	/* pointer to CPU info */
 };
 
-int mp_cpu_start __P((struct cpu_info *)); 
-void mp_cpu_start_cleanup __P((struct cpu_info *));
+int mp_cpu_start(struct cpu_info *); 
+void mp_cpu_start_cleanup(struct cpu_info *);
 struct cpu_functions mp_cpu_funcs = { mp_cpu_start, NULL,
 				      mp_cpu_start_cleanup };
 
@@ -163,10 +163,10 @@ struct cpu_info *cpu_info[X86_MAXPROCS] = { &cpu_info_primary };
 
 u_int32_t cpus_running = 0;
 
-void    	cpu_hatch __P((void *));
-static void    	cpu_boot_secondary __P((struct cpu_info *ci));
-static void    	cpu_start_secondary __P((struct cpu_info *ci));
-static void	cpu_copy_trampoline __P((void));
+void    	cpu_hatch(void *);
+static void    	cpu_boot_secondary(struct cpu_info *ci);
+static void    	cpu_start_secondary(struct cpu_info *ci);
+static void	cpu_copy_trampoline(void);
 
 /*
  * Runs once per boot once multiprocessor goo has been detected and
