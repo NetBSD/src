@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_3maxplus.c,v 1.12 1999/03/25 01:17:52 simonb Exp $	*/
+/*	$NetBSD: dec_3maxplus.c,v 1.13 1999/03/25 03:03:59 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.12 1999/03/25 01:17:52 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.13 1999/03/25 03:03:59 simonb Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -135,6 +135,9 @@ void	dec_3maxplus_tc_reset __P((void));		/* XXX unused? */
 void
 dec_3maxplus_init()
 {
+	volatile u_int *intrp =
+	    (volatile u_int *) MIPS_PHYS_TO_KSEG1(KN03_REG_INTR);
+	register u_int intr;
 
 	platform.iobus = "tcioasic";
 
@@ -145,8 +148,13 @@ dec_3maxplus_init()
 
 	dec_3maxplus_os_init();
 
-	sprintf(cpu_model, "DECstation 5000/2%c0 (3MAXPLUS)",
-	    CPUISMIPS3 ? '6' : '4');
+	intr = *intrp;
+	if (intr & KN03_INTR_PROD_JUMPER)
+		sprintf(cpu_model, "DECstation 5000/2%c0 (3MAXPLUS)",
+		    CPUISMIPS3 ? '6' : '4');
+	else
+		sprintf(cpu_model, "DECsystem 5900%s (3MAXPLUS)",
+		    CPUISMIPS3 ? "-260" : "");
 }
 
 
