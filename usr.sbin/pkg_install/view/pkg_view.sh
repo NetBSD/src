@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# $NetBSD: pkg_view.sh,v 1.1.2.24 2003/08/21 02:48:31 jlam Exp $
+# $NetBSD: pkg_view.sh,v 1.1.2.25 2003/08/21 09:14:14 jlam Exp $
 
 #
 # Copyright (c) 2001 Alistair G. Crooks.  All rights reserved.
@@ -138,7 +138,7 @@ while [ $# -gt 0 ]; do
 			echo "Package $1 already exists in $viewstr."
 		else
 			if [ "${verbose}" = "yes" ]; then
-				echo "Adding package $1 to $viewstr in ${viewbase}."
+				echo "Adding package $1 to ${targetdir}."
 			fi
 			checkpkg $1 ${depot_pkg_dbdir}
 			dbs=`(cd ${depot_pkg_dbdir}/$1; echo +*)`
@@ -168,7 +168,7 @@ while [ $# -gt 0 ]; do
 		;;
 	check)
 		if [ "${verbose}" = "yes" ]; then
-			echo "Checking package $1 in $viewstr in ${viewbase}."
+			echo "Checking package $1 in ${targetdir}."
 		fi
 		checkpkg $1 ${depot_pkg_dbdir}
 		$linkfarmprog -c --target=${targetdir} --dir=${depot_pkg_dbdir} $1
@@ -179,7 +179,7 @@ while [ $# -gt 0 ]; do
 			echo "Package $1 does not exist in $viewstr."
 		else
 			if [ "${verbose}" = "yes" ]; then
-				echo "Deleting package $1 from $viewstr in ${viewbase}."
+				echo "Deleting package $1 from ${targetdir}."
 			fi
 			if [ -f ${pkg_dbdir}/$1/+REQUIRED_BY ]; then
 				if $cmpprog -s ${pkg_dbdir}/$1/+REQUIRED_BY /dev/null; then
