@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)make.1	5.7 (Berkeley) 7/24/91
-.\"	$Id: make.1,v 1.6 1994/03/05 00:34:56 cgd Exp $
+.\"	$Id: make.1,v 1.7 1995/01/23 20:34:59 mycroft Exp $
 .\"
 .Dd July 24, 1991
 .Dt MAKE 1
@@ -279,13 +279,13 @@ between the previous contents of the variable and the appended value.
 Variables are expanded by surrounding the variable name with either
 curly braces
 .Pq Ql {}
-or parenthesis
+or parentheses
 .Pq Ql ()
 and preceding it with
 a dollar sign
 .Pq Ql \&$ .
 If the variable name contains only a single letter, the surrounding
-braces or parenthesis are not required.
+braces or parentheses are not required.
 This shorter form is not recommended.
 .Pp
 Variable substitution occurs at two distinct times, depending on where
@@ -542,19 +542,19 @@ Test the value of an expression.
 .Oo \&! Oc Ns Ar variable
 .Op Ar operator variable ...
 .Xc
-Test the value of an variable.
+Test the value of a variable.
 .It Xo
 .Ic .ifndef
 .Oo \&! Oc Ns Ar variable
 .Op Ar operator variable ...
 .Xc
-Test the value of an variable.
+Test the value of a variable.
 .It Xo
 .Ic .ifmake
 .Oo \&! Oc Ns Ar target
 .Op Ar operator target ...
 .Xc
-Test the the target being built.
+Test the target being built.
 .It Xo
 .Ic .ifnmake
 .Oo \&! Oc Ar target
