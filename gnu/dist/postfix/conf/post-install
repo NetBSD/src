@@ -1,6 +1,7 @@
 #!/bin/sh
-#	$NetBSD: post-install,v 1.6 2004/05/31 00:46:46 heas Exp $
+#	$NetBSD: post-install,v 1.7 2004/07/28 23:19:42 heas Exp $
 #
+
 # To view the formatted manual page of this file, type:
 #	POSTFIXSOURCE/mantools/srctoman - post-install | nroff -man
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd.c,v 1.10 2004/05/31 00:46:48 heas Exp $	*/
+/*	$NetBSD: smtpd.c,v 1.11 2004/07/28 23:19:42 heas Exp $	*/
 
 /*++
 /* NAME
@@ -340,6 +340,8 @@
 /*	The number of junk commands (NOOP, VRFY, ETRN or RSET) that a remote
 /*	SMTP client can send before the Postfix SMTP server starts to
 /*	increment the error counter with each junk command.
+/* .PP
+/*	Available in Postfix version 2.1 and later:
 /* .IP "\fBsmtpd_recipient_overshoot_limit (1000)\fR"
 /*	The number of recipients that a remote SMTP client can send in
 /*	excess of the limit specified with $smtpd_recipient_limit, before
@@ -351,9 +353,6 @@
 /*	As of version 2.1, Postfix can be configured to delegate access
 /*	policy decisions to an external server that runs outside Postfix.
 /*	See the file SMTPD_POLICY_README for more information.
-/* .IP "\fBsmtpd_policy_service_timeout (100s)\fR"
-/*	The time limit for connecting to, writing to or receiving from a
-/*	delegated SMTPD policy server.
 /* .IP "\fBsmtpd_policy_service_max_idle (300s)\fR"
 /*	The time after which an idle SMTPD policy service connection is
 /*	closed.
@@ -426,7 +425,7 @@
 /* SENDER AND RECIPIENT ADDRESS VERIFICATION CONTROLS
 /* .ad
 /* .fi
-/*	Postfix version 2.1 introduces sender and address verification.
+/*	Postfix version 2.1 introduces sender and recipient address verification.
 /*	This feature is implemented by sending probe email messages that
 /*	are not actually delivered.
 /*	This feature is requested via the reject_unverified_sender and
@@ -537,7 +536,7 @@
 /*	The list of "trusted" SMTP clients that have more privileges than
 /*	"strangers".
 /* .IP "\fBmyorigin ($myhostname)\fR"
-/*	The default domain name that locally-posted mail appears to come
+/*	The domain name that locally-posted mail appears to come
 /*	from, and that locally posted mail is delivered to.
 /* .IP "\fBprocess_id (read-only)\fR"
 /*	The process ID of a Postfix command or daemon process.
@@ -814,6 +813,11 @@ static void mail_reset(SMTPD_STATE *);
 static void rcpt_reset(SMTPD_STATE *);
 static void chat_reset(SMTPD_STATE *, int);
 
+ /*
+  * This filter is applied after printable().
+  */
+#define NEUTER_CHARACTERS " <>()\\\";:@"
+
 #ifdef USE_SASL_AUTH
 
  /*
@@ -885,7 +889,7 @@ static int helo_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *argv)
     mail_reset(state);
     rcpt_reset(state);
     state->helo_name = mystrdup(printable(argv[1].strval, '?'));
-    neuter(state->helo_name, "<>()\\\";:@", '?');
+    neuter(state->helo_name, NEUTER_CHARACTERS, '?');
     /* Downgrading the protocol name breaks the unauthorized pipelining test. */
     if (strcasecmp(state->protocol, MAIL_PROTO_ESMTP) != 0
 	&& strcasecmp(state->protocol, MAIL_PROTO_SMTP) != 0) {
@@ -926,7 +930,7 @@ static int ehlo_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *argv)
     mail_reset(state);
     rcpt_reset(state);
     state->helo_name = mystrdup(printable(argv[1].strval, '?'));
-    neuter(state->helo_name, "<>()\\\";:@", '?');
+    neuter(state->helo_name, NEUTER_CHARACTERS, '?');
     if (strcasecmp(state->protocol, MAIL_PROTO_ESMTP) != 0) {
 	myfree(state->protocol);
 	state->protocol = mystrdup(MAIL_PROTO_ESMTP);
@@ -2015,7 +2019,6 @@ static int xclient_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *argv)
 	    if (s) myfree(s); \
 	    s = (v) ? mystrdup(v) : 0; \
 	} while(0)
-#define NEUTER_CHARACTERS "<>()\\\";:@"
 
     /*
      * Iterate over all attribute=value elements.
