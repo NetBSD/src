@@ -51,6 +51,8 @@ headers()
 	for (fl = ftab; fl != 0; fl = fl->f_next)
 	    if (fl->f_was_driver)
 		    do_count(fl->f_needs, fl->f_needs, 1);
+	    else if (fl->f_needs_count)
+		    do_count(fl->f_countname, fl->f_countname, 1);
 }
 
 /*
