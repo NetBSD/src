@@ -1,4 +1,4 @@
-/*	$NetBSD: wdboot.s,v 1.4 1996/12/28 23:38:09 leo Exp $	*/
+/*	$NetBSD: wdboot.s,v 1.5 2001/09/05 19:48:13 thomas Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens
@@ -32,160 +32,167 @@
 
 #include "xxboot.h"
 
+#ifdef __ELF__
+	.globl	_start, main, fill, end
+
+	.text
+_start:
+#else
 	.globl	start, main, fill, end
 
 	.text
+start:
+#endif
 /*
  * in: d3 ('DMAr' flag), d4 (SCSI target), d5 (boot pref), d7 (ACSI target)
  */
-start:
-main:	lea	pc@(regsav),a0
-	movml	d3-d5/d7,sp@-
-	movl	sp,a0@
+main:	lea	%pc@(regsav),%a0
+	movml	%d3-%d5/%d7,%sp@-
+	movl	%sp,%a0@
 
-	movw	#-1,sp@-
-	movw	#Kbshift,sp@-
+	movw	#-1,%sp@-
+	movw	#Kbshift,%sp@-
 	trap	#BIOS
-	addql	#4,sp
+	addql	#4,%sp
 
-	tstb	d5
+	tstb	%d5
 	beqs	0f			| no boot preference
-	cmpb	#0x20,d5
+	cmpb	#0x20,%d5
 	bnes	exit			| bootpref != NetBSD
 
-0:	btst	#3,d0			| Alternate?
+0:	btst	#3,%d0			| Alternate?
 	bnes	exit
-	subql	#1,d0
-	movl	d0,a3			| autoboot flag
+	subql	#1,%d0
+	movl	%d0,%a3			| autoboot flag
 	
-	movl	_membot:w,d3
-	lea	MAXBOT,a4
-	cmpl	a4,d3
+	movl	_membot:w,%d3
+	lea	MAXBOT,%a4
+	cmpl	%a4,%d3
 	bhis	exit			| membot > MAXBOT
 
-	movl	_memtop:w,d3
-	cmpl	#MINTOP,d3
+	movl	_memtop:w,%d3
+	cmpl	#MINTOP,%d3
 	blts	exit			| memtop < MINTOP
 
-	andw	#-4,d3
-	movl	d3,a0
-	movl	sp,a0@-
-	movl	a0,sp			| set new stack
+	andw	#-4,%d3
+	movl	%d3,%a0
+	movl	%sp,%a0@-
+	movl	%a0,%sp			| set new stack
 
-	movq	#NSEC,d5		| sector count
-	movq	#1,d6			| first sector
+	movq	#NSEC,%d5		| sector count
+	movq	#1,%d6			| first sector
 	bsrs	rds0
-	tstl	d0
+	tstl	%d0
 	bnes	0f
 /*
  * loader (readsector, disklabel, autoboot)
  */
-	pea	a3@			| autoboot
-	pea	a4@(LBLST-MAXBOT)	| disklabel
-	pea	pc@(rds1)		| readsector
-	jsr	a4@(BXXST-MAXBOT)
-	lea	sp@(12),sp		| NetBSD not booted
+	pea	%a3@			| autoboot
+	pea	%a4@(LBLST-MAXBOT)	| disklabel
+	pea	%pc@(rds1)		| readsector
+	jsr	%a4@(BXXST-MAXBOT)
+	lea	%sp@(12),%sp		| NetBSD not booted
 
-0:	movl	sp@,sp			| restore BIOS stack
-	tstl	d0
+0:	movl	%sp@,%sp			| restore BIOS stack
+	tstl	%d0
 	bmis	exit
-	movl	d0,sp@(8)		| new boot preference
+	movl	%d0,%sp@(8)		| new boot preference
 
-exit:	movml	sp@+,d3-d5/d7
+exit:	movml	%sp@+,%d3-%d5/%d7
 	rts
 
 /*
  * int readsec (void *buffer, u_int offset, u_int count);
  */
-rds1:	movml	d2-d7/a2-a6,sp@-
-	movl	pc@(regsav),a0
-	movml	a0@,d3-d5/d7
-	movl	sp@(48),a4		| buffer
-	movl	sp@(52),d6		| offset
-	movl	sp@(56),d3		| count
-0:	movl	#255,d5
-	cmpl	d5,d3
+rds1:	movml	%d2-%d7/%a2-%a6,%sp@-
+	movl	%pc@(regsav),%a0
+	movml	%a0@,%d3-%d5/%d7
+	movl	%sp@(48),%a4		| buffer
+	movl	%sp@(52),%d6		| offset
+	movl	%sp@(56),%d3		| count
+0:	movl	#255,%d5
+	cmpl	%d5,%d3
 	bccs	1f
-	movl	d3,d5
+	movl	%d3,%d5
 1:	bsrs	rds0
-	tstl	d0
+	tstl	%d0
 	bnes	2f
-	addl	#(255*512),a4
-	addl	d5,d6
-	subl	d5,d3
+	addl	#(255*512),%a4
+	addl	%d5,%d6
+	subl	%d5,%d3
 	bnes	0b
-2:	movml	sp@+,d2-d7/a2-a6
+2:	movml	%sp@+,%d2-%d7/%a2-%a6
 	rts
 /*
  * in:  d4 (target) d5 (count), d6 (offset), a4 (buffer)
  * out: d0 (<= 0)
  * mod: d0, d1, d2, a0, a1, a5, a6
  */
-rds0:	lea	pc@(dpar),a6
-	tstb	a6@
+rds0:	lea	%pc@(dpar),%a6
+	tstb	%a6@
 	bnes	0f
-	movb	d4,d0
-	andb	#1,d0
-	aslb	#4,d0
-	orb	#0xa0,d0
-	movb	d0,idesdh:l
-	movl	a4,a0
-	movq	#0,d1
+	movb	%d4,%d0
+	andb	#1,%d0
+	aslb	#4,%d0
+	orb	#0xa0,%d0
+	movb	%d0,idesdh:l
+	movl	%a4,%a0
+	movq	#0,%d1
 	movb	#0,idedor:l
 	movb	#0xec,idecr:l		| IDENTIFY DRIVE
 	bsrs	wait
 	bnes	err
-	movb	a4@(7),a6@		| tracks/cylinder
-	movb	a4@(13),a6@(1)		| sectors/track
-0:	movl	d6,d1
-	movq	#0,d0
-	movb	a6@(1),d0
-	movq	#0,d2
-	movb	a6@,d2
-	mulu	d0,d2
-	divu	d2,d1
-	movb	d1,idecl:l
-	lsrl	#8,d1
-	movb	d1,idech:l
-	lsrl	#8,d1
-	divu	d0,d1
-	movb	d4,d0
-	andb	#1,d0
-	aslb	#4,d0
-	orb	d0,d1
-	orb	#0xa0,d1
-	movb	d1,idesdh:l
-	swap	d1
-	addqw	#1,d1
-	movb	d1,idesn:l
-	movl	a4,a0
-	movb	d5,idesc:l
-	movw	d5,d1
-	subqw	#1,d1
+	movb	%a4@(7),%a6@		| tracks/cylinder
+	movb	%a4@(13),%a6@(1)		| sectors/track
+0:	movl	%d6,%d1
+	movq	#0,%d0
+	movb	%a6@(1),%d0
+	movq	#0,%d2
+	movb	%a6@,%d2
+	mulu	%d0,%d2
+	divu	%d2,%d1
+	movb	%d1,idecl:l
+	lsrl	#8,%d1
+	movb	%d1,idech:l
+	lsrl	#8,%d1
+	divu	%d0,%d1
+	movb	%d4,%d0
+	andb	#1,%d0
+	aslb	#4,%d0
+	orb	%d0,%d1
+	orb	#0xa0,%d1
+	movb	%d1,idesdh:l
+	swap	%d1
+	addqw	#1,%d1
+	movb	%d1,idesn:l
+	movl	%a4,%a0
+	movb	%d5,idesc:l
+	movw	%d5,%d1
+	subqw	#1,%d1
 	movb	#0,idedor:l
 	movb	#0x20,idecr:l
-wait:	movl	#0x7d0,d0
-	addl	_hz_200:w,d0
+wait:	movl	#0x7d0,%d0
+	addl	_hz_200:w,%d0
 2:	btst	#5,gpip:w
 	beqs	3f
-	cmpl	_hz_200:w,d0
+	cmpl	_hz_200:w,%d0
 	bhis	2b
-err:	movq	#-1,d0
+err:	movq	#-1,%d0
 	rts
-3:	movb	idesr:l,d0
-	btst	#0,d0
+3:	movb	idesr:l,%d0
+	btst	#0,%d0
 	bnes	err
-	btst	#3,d0
+	btst	#3,%d0
 	beqs	err
-	movq	#63,d0
-	lea	idedr:l,a1
-4:	movw	a1@,a0@+
-	movw	a1@,a0@+
-	movw	a1@,a0@+
-	movw	a1@,a0@+
-	dbra	d0,4b
-	dbra	d1,wait
-	movq	#0,d0
+	movq	#63,%d0
+	lea	idedr:l,%a1
+4:	movw	%a1@,%a0@+
+	movw	%a1@,%a0@+
+	movw	%a1@,%a0@+
+	movw	%a1@,%a0@+
+	dbra	%d0,4b
+	dbra	%d1,wait
+	movq	#0,%d0
 	rts
 
 regsav:	.long	0
