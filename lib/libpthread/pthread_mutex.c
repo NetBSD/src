@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_mutex.c,v 1.1.2.10 2002/04/11 02:51:36 nathanw Exp $	*/
+/*	$NetBSD: pthread_mutex.c,v 1.1.2.11 2002/04/26 17:45:57 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -127,6 +127,7 @@ pthread_mutex_lock(pthread_mutex_t *mutex)
 			 */
 			pthread_spinlock(self, &self->pt_statelock);
 			self->pt_state = PT_STATE_BLOCKED_QUEUE;
+			self->pt_sleepobj = mutex;
 			self->pt_sleepq = &mutex->ptm_blocked;
 			self->pt_sleeplock = &mutex->ptm_interlock;
 			pthread_spinunlock(self, &self->pt_statelock);
