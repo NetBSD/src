@@ -66,6 +66,7 @@
 #define   MPC860		  0x0050
 #define   MPC8240		  0x0081
 #define   MPC7450		  0x8000
+#define   MPC7455		  0x8001
 #define   MPC7410		  0x800c
 #define   IBM405GP		  0x4011
 #define   IBM405L		  0x4161
