@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.13 1998/10/04 01:48:15 hubertf Exp $	*/
+/*	$NetBSD: perform.c,v 1.14 1998/10/08 12:15:24 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.23 1997/10/13 15:03:53 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.13 1998/10/04 01:48:15 hubertf Exp $");
+__RCSID("$NetBSD: perform.c,v 1.14 1998/10/08 12:15:24 agc Exp $");
 #endif
 #endif
 
@@ -63,8 +63,10 @@ pkg_do(char *pkg)
 		int             len;
 
 		if (*pkg != '/') {
-			if (!getcwd(fname, FILENAME_MAX))
-				upchuck("getcwd");
+			if (!getcwd(fname, FILENAME_MAX)) {
+			    cleanup(0);
+			    err(1, "fatal error during execution: getcwd");
+			}
 			len = strlen(fname);
 			snprintf(&fname[len], FILENAME_MAX - len, "/%s", pkg);
 		} else
