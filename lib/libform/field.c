@@ -1,4 +1,4 @@
-/*	$NetBSD: field.c,v 1.16 2002/07/04 10:51:02 blymn Exp $	*/
+/*	$NetBSD: field.c,v 1.17 2002/07/29 05:17:37 blymn Exp $	*/
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
  *                         (blymn@baea.com.au, brett_lymn@yahoo.com.au)
@@ -209,8 +209,16 @@ set_field_just(FIELD *field, int justification)
 	if ((justification < MIN_JUST_STYLE) /* check justification valid */
 	    || (justification > MAX_JUST_STYLE))
 		return E_BAD_ARGUMENT;
+
+	  /* only allow justification on static, single row fields */
+	if (((fp->opts & O_STATIC) != O_STATIC) ||
+	    ((fp->rows + fp->nrows) > 1))
+		return E_BAD_ARGUMENT;
 	
 	fp->justification = justification;
+
+	_formi_init_field_xpos(fp);
+	
 	return E_OK;
 }
 

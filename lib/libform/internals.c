@@ -1,4 +1,4 @@
-/*	$NetBSD: internals.c,v 1.24 2002/07/08 10:43:37 blymn Exp $	*/
+/*	$NetBSD: internals.c,v 1.25 2002/07/29 05:17:38 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -93,6 +93,8 @@ _formi_scroll_back(FIELD *field, unsigned int amt);
 static void
 _formi_scroll_fwd(FIELD *field, unsigned int amt);
 static int
+_formi_set_cursor_xpos(FIELD *field);
+static int
 find_sow(char *str, unsigned int offset);
 static int
 find_cur_line(FIELD *cur, unsigned pos);
@@ -112,6 +114,38 @@ static int
 tab_fit_window(FIELD *field, unsigned int pos, unsigned int window);
 
 
+/*
+ * Initialise the row offset for a field, depending on the type of
+ * field it is and the type of justification used.  The justification
+ * is only used on static single line fields, everything else will
+ * have the cursor_xpos set to 0.
+ */
+void
+_formi_init_field_xpos(FIELD *field)
+{
+	  /* not static or is multi-line which are not justified, so 0 it is */
+	if (((field->opts & O_STATIC) != O_STATIC) ||
+	    ((field->rows + field->nrows) != 1)) {
+		field->cursor_xpos = 0;
+		return;
+	}
+	
+	switch (field->justification) {
+	case JUSTIFY_RIGHT:
+		field->cursor_xpos = field->cols - 1;
+		break;
+
+	case JUSTIFY_CENTER:
+		field->cursor_xpos = (field->cols - 1) / 2;
+		break;
+
+	default: /* assume left justify */
+		field->cursor_xpos = 0;
+		break;
+	}
+}
+
+	
 /*
  * Open the debug file if it is not already open....
  */
@@ -1359,11 +1393,11 @@ _formi_add_char(FIELD *field, unsigned int pos, char c)
 		field->start_line = 0;
 		field->row_count = 1;
 		field->row_xpos = 0;
-		field->cursor_xpos = 0;
 		field->cursor_ypos = 0;
 		field->lines[0].start = 0;
 		field->lines[0].end = 0;
 		field->lines[0].length = 0;
+		_formi_init_field_xpos(field);
 	}
 
 
@@ -1460,33 +1494,8 @@ _formi_add_char(FIELD *field, unsigned int pos, char c)
 	} else {
 		field->buf0_status = TRUE;
 		if ((field->rows + field->nrows) == 1) {
-			if ((field->cursor_xpos < (field->cols - 1)) ||
-			    ((field->opts & O_STATIC) != O_STATIC)) {
-				field->row_xpos++;
-				field->cursor_xpos =
-					_formi_tab_expanded_length(
-						field->buffers[0].string,
-						field->start_char,
-						field->row_xpos
-						+ field->start_char);
-				if ((field->start_char + field->row_xpos)
-				    < field->buffers[0].length)
-					field->cursor_xpos--;
-			}
-			
-			if (field->cursor_xpos > (field->cols - 1)) {
-				field->start_char =
-					tab_fit_window(field,
-						       field->start_char + field->row_xpos,
-						       field->cols);
-				field->row_xpos = pos - field->start_char + 1;
-				field->cursor_xpos =
-					_formi_tab_expanded_length(
-						field->buffers[0].string,
-						field->start_char,
-						field->row_xpos
-						+ field->start_char - 1);
-			}
+			field->row_xpos++;
+			status = _formi_set_cursor_xpos(field);
 		} else {
 			if (new_size >= field->rows) {
 				field->cursor_ypos = field->rows - 1;
@@ -1544,6 +1553,112 @@ _formi_add_char(FIELD *field, unsigned int pos, char c)
 }
 
 /*
+ * Set the position of the cursor on the screen in the row depending on
+ * where the current position in the string is and the justification
+ * that is to be applied to the field.  Justification is only applied
+ * to single row, static fields.
+ */
+static int
+_formi_set_cursor_xpos(FIELD *field)
+{
+	int just, pos;
+
+	just = field->justification;
+	pos = field->start_char + field->row_xpos
+	   + field->lines[field->start_line + field->cursor_ypos].start;
+
+#ifdef DEBUG
+	fprintf(dbg,
+	  "cursor_xpos enter: pos %d, start_char %d, row_xpos %d, xpos %d\n",
+		pos, field->start_char, field->row_xpos, field->cursor_xpos);
+#endif
+	
+	  /*
+	   * make sure we apply the correct justification to non-static
+	   * fields.
+	   */
+	if (((field->rows + field->nrows) != 1) ||
+	    ((field->opts & O_STATIC) != O_STATIC))
+		just = JUSTIFY_LEFT;
+	
+	switch (just) {
+	case JUSTIFY_RIGHT:
+		field->cursor_xpos = field->cols - 1
+			- _formi_tab_expanded_length(
+				field->buffers[0].string, 0,
+				field->buffers[0].length - 1)
+			+ _formi_tab_expanded_length(
+				field->buffers[0].string, 0,
+				field->row_xpos);
+		break;
+
+	case JUSTIFY_CENTER:
+		field->cursor_xpos = ((field->cols - 1) 
+			- _formi_tab_expanded_length(
+				field->buffers[0].string, 0,
+				field->buffers[0].length - 1) + 1) / 2
+			+ _formi_tab_expanded_length(field->buffers[0].string,
+						     0, field->row_xpos);
+		
+		if (field->cursor_xpos > (field->cols - 1))
+			field->cursor_xpos = (field->cols - 1);
+		break;
+
+	default:
+		field->cursor_xpos = _formi_tab_expanded_length(
+			field->buffers[0].string,
+			field->start_char,
+			field->row_xpos	+ field->start_char);
+		if ((field->cursor_xpos <= (field->cols - 1)) &&
+		    ((field->start_char + field->row_xpos)
+		     < field->buffers[0].length))
+			field->cursor_xpos--;
+
+		if (field->cursor_xpos > (field->cols - 1)) {
+			if ((field->opts & O_STATIC) == O_STATIC) {
+				field->start_char = 0;
+
+				if (field->row_xpos
+				    == (field->buffers[0].length - 1)) {
+					field->cursor_xpos = field->cols - 1;
+				} else {
+					field->cursor_xpos =
+						_formi_tab_expanded_length(
+						  field->buffers[0].string,
+						  field->start_char,
+						  field->row_xpos
+						    + field->start_char
+						  - 1) - 1;
+				}
+			} else {
+				field->start_char =
+					tab_fit_window(
+						field,
+						field->start_char
+						  + field->row_xpos,
+						field->cols);
+				field->row_xpos = pos - field->start_char;
+				field->cursor_xpos =
+					_formi_tab_expanded_length(
+						field->buffers[0].string,
+						field->start_char,
+						field->row_xpos
+						+ field->start_char - 1);
+			}
+			
+		}
+		break;
+	}
+	
+#ifdef DEBUG
+	fprintf(dbg,
+	  "cursor_xpos exit: pos %d, start_char %d, row_xpos %d, xpos %d\n",
+		pos, field->start_char, field->row_xpos, field->cursor_xpos);
+#endif
+	return E_OK;
+}
+
+/*
  * Manipulate the text in a field, this takes the given form and performs
  * the passed driver command on the current text field.  Returns 1 if the
  * text field was modified.
@@ -1553,7 +1668,7 @@ _formi_manipulate_field(FORM *form, int c)
 {
 	FIELD *cur;
 	char *str, saved;
-	unsigned int i, start, end, pos, row, status, old_count, size;
+	unsigned int start, end, pos, row, status, old_count, size;
 	unsigned int old_xpos, old_row_pos;
 	int len;
 	
@@ -1615,30 +1730,8 @@ _formi_manipulate_field(FORM *form, int c)
 			return E_REQUEST_DENIED;
 
 		if ((cur->rows + cur->nrows) == 1) {
-			if (saved == '\t')
-				cur->cursor_xpos += tab_size(cur, 0,
-							     cur->row_xpos
-							    + cur->start_char);
-			else
-				cur->cursor_xpos++;
 			cur->row_xpos++;
-			if (cur->cursor_xpos >= cur->cols - 1) {
-				pos = cur->row_xpos + cur->start_char;
-				cur->start_char =
-					tab_fit_window(cur,
-						       cur->start_char + cur->row_xpos,
-						       cur->cols);
-				cur->row_xpos = pos - cur->start_char;
-				cur->cursor_xpos =
-					_formi_tab_expanded_length(
-						cur->buffers[0].string,
-						cur->start_char,
-						cur->row_xpos
-						+ cur->start_char);
-				if ((cur->row_xpos + cur->start_char) <
-				    cur->buffers[0].length)
-					cur->cursor_xpos--;
-			}
+			_formi_set_cursor_xpos(cur);
 		} else {
 			if (cur->cursor_xpos >= (cur->lines[row].length - 1)) {
 				if ((row + 1) >= cur->row_count)
@@ -1701,12 +1794,7 @@ _formi_manipulate_field(FORM *form, int c)
 					return E_REQUEST_DENIED;
 			} else {
 				cur->row_xpos--;
-				cur->cursor_xpos =
-					_formi_tab_expanded_length(
-						cur->buffers[0].string,
-						cur->start_char,
-						cur->row_xpos
-						+ cur->start_char) - 1;
+				_formi_set_cursor_xpos(cur);
 			}
 		} else {
 			if ((cur->cursor_xpos == 0) &&
@@ -1828,13 +1916,12 @@ _formi_manipulate_field(FORM *form, int c)
 				cur->start_char, start);
 			if (size < cur->cols) {
 				cur->row_xpos = start - cur->start_char;
-				cur->cursor_xpos = size - 1;
 			} else {
 				cur->start_char = start;
 				cur->row_xpos = 0;
-				cur->cursor_xpos = 0;
 			}
-		} else {
+			_formi_set_cursor_xpos(cur);
+	} else {
 			  /* multiline field */
 			row = find_cur_line(cur, start);
 			cur->row_xpos = start - cur->lines[row].start;
@@ -1872,12 +1959,11 @@ _formi_manipulate_field(FORM *form, int c)
 			
 			if (start > cur->start_char) {
 				cur->row_xpos = start - cur->start_char;
-				cur->cursor_xpos = size - 1;
 			} else {
 				cur->start_char = start;
-				cur->cursor_xpos = 0;
 				cur->row_xpos = 0;
 			}
+			_formi_set_cursor_xpos(cur);
 		} else {
 			  /* multiline field */
 			row = find_cur_line(cur, start);
@@ -1906,13 +1992,13 @@ _formi_manipulate_field(FORM *form, int c)
 		cur->start_char = 0;
 		cur->start_line = 0;
 		cur->row_xpos = 0;
-		cur->cursor_xpos = 0;
+		_formi_init_field_xpos(cur);
 		cur->cursor_ypos = 0;
 		break;
 		
 	case REQ_BEG_LINE:
-		cur->cursor_xpos = 0;
 		cur->row_xpos = 0;
+		_formi_init_field_xpos(cur);
 		cur->start_char = 0;
 		break;
 			
@@ -1941,30 +2027,17 @@ _formi_manipulate_field(FORM *form, int c)
 				if ((cur->opts & O_STATIC) != O_STATIC) {
 					cur->start_char = tab_fit_window(
 						cur, end, cur->cols) + 1;
+					cur->row_xpos = cur->buffers[0].length
+						- cur->start_char;
 				} else {
-					cur->start_char = tab_fit_window(
-						cur, end, cur->cols);
+					cur->start_char = 0;
+					cur->row_xpos = cur->cols - 1;
 				}
-				cur->row_xpos = cur->buffers[0].length
-					- cur->start_char;
-				cur->cursor_xpos =
-					_formi_tab_expanded_length(
-					     cur->buffers[0].string,
-					     cur->start_char,
-					     cur->row_xpos + cur->start_char);
 			} else {
 				cur->row_xpos = end + 1;
-				cur->cursor_xpos = _formi_tab_expanded_length(
-					cur->buffers[0].string,
-					cur->start_char,
-					cur->row_xpos + cur->start_char);
-				if (((cur->opts & O_STATIC) == O_STATIC) &&
-				    ((cur->lines[row].length)
-				     == (cur->cols - 1)))
-					cur->cursor_xpos--;
-				
 				cur->start_char = 0;
 			}
+			_formi_set_cursor_xpos(cur);
 		} else {
 			cur->row_xpos = end - start;
 			cur->cursor_xpos = cur->lines[row].length - 1;
@@ -2049,17 +2122,13 @@ _formi_manipulate_field(FORM *form, int c)
 				if ((cur->rows + cur->nrows) == 1) {
 					pos = cur->row_xpos + cur->start_char;
 					cur->start_char =
-						tab_fit_window(cur,
-							       cur->start_char + cur->row_xpos,
-							       cur->cols);
+						tab_fit_window(
+							cur,
+							cur->start_char + cur->row_xpos,
+							cur->cols);
 					cur->row_xpos = pos - cur->start_char
 						- 1;
-					cur->cursor_xpos =
-						_formi_tab_expanded_length(
-							cur->buffers[0].string,
-							cur->start_char,
-							cur->row_xpos
-							+ cur->start_char);
+					_formi_set_cursor_xpos(cur);
 				} else {
 					if (cur->row_xpos == 0) {
 						if (cur->lines[row].start !=
@@ -2104,7 +2173,7 @@ _formi_manipulate_field(FORM *form, int c)
 			} else {
 				start = 0;
 				cur->row_xpos = 0;
-				cur->cursor_xpos = 0;
+				_formi_init_cursor_xpos(cur);
 			}
 		}
 		
@@ -2168,12 +2237,7 @@ _formi_manipulate_field(FORM *form, int c)
 					       cur->start_char + cur->row_xpos,
 					       cur->cols);
 			cur->row_xpos = pos - cur->start_char;
-			cur->cursor_xpos =
-				_formi_tab_expanded_length(
-					cur->buffers[0].string,
-					cur->start_char,
-					cur->row_xpos
-					+ cur->start_char);
+			_formi_set_cursor_xpos(cur);
 		} else {
 			pos = start - 1;
 			if (pos >= cur->buffers[0].length)
@@ -2221,7 +2285,8 @@ _formi_manipulate_field(FORM *form, int c)
 			  /* single line case */
 			cur->buffers[0].length = 0;
 			cur->lines[0].end = cur->lines[0].length = 0;
-			cur->cursor_xpos = cur->row_xpos = 0;
+			cur->row_xpos = 0;
+			_formi_init_field_xpos(cur);
 			cur->cursor_ypos = 0;
 		} else {
 			  /* multiline field */
@@ -2331,11 +2396,7 @@ _formi_manipulate_field(FORM *form, int c)
 			cur->row_xpos = start - cur->start_char;
 			if (cur->row_xpos > 0)
 				cur->row_xpos--;
-			cur->cursor_xpos = _formi_tab_expanded_length(
-				cur->buffers[0].string, cur->start_char,
-				cur->row_xpos);
-			if (cur->cursor_xpos > 0)
-				cur->cursor_xpos--;
+			_formi_set_cursor_xpos(cur);
 		}
 		break;
 		
@@ -2350,9 +2411,12 @@ _formi_manipulate_field(FORM *form, int c)
 		cur->buffers[0].length -= len;
 		bump_lines(cur, _FORMI_USE_CURRENT, - (int) len, TRUE);
 		
-		if (cur->cursor_xpos > cur->lines[row].length) {
+		if (cur->row_xpos > cur->lines[row].length) {
 			cur->row_xpos = cur->lines[row].end;
-			cur->cursor_xpos = cur->lines[row].length;
+			if (cur->rows + cur->nrows == 1)
+				_formi_set_cursor_xpos(cur);
+			else
+				cur->cursor_xpos = cur->lines[row].length;
 		}
 		break;
 
@@ -2364,10 +2428,6 @@ _formi_manipulate_field(FORM *form, int c)
 		cur->lines[row].end = cur->buffers[0].length;
 		cur->lines[row].length = cur->lines[row].end
 			- cur->lines[row].start;
-		
-		for (i = cur->start_char + cur->row_xpos;
-		     i < cur->buffers[0].length; i++)
-			cur->buffers[0].string[i] = cur->pad;
 		break;
 		
 	case REQ_CLR_FIELD:
@@ -2376,8 +2436,8 @@ _formi_manipulate_field(FORM *form, int c)
 		cur->row_count = 1;
 		cur->start_line = 0;
 		cur->cursor_ypos = 0;
-		cur->cursor_xpos = 0;
 		cur->row_xpos = 0;
+		_formi_init_field_xpos(cur);
 		cur->start_char = 0;
 		cur->lines[0].start = 0;
 		cur->lines[0].end = 0;
