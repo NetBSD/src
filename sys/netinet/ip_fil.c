@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.c,v 1.35 1999/08/26 02:15:35 marc Exp $	*/
+/*	$NetBSD: ip_fil.c,v 1.36 1999/08/26 02:56:59 itojun Exp $	*/
 
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
@@ -9,11 +9,19 @@
  */
 #if !defined(lint)
 #if defined(__NetBSD__)
-static const char rcsid[] = "$NetBSD: ip_fil.c,v 1.35 1999/08/26 02:15:35 marc Exp $";
+static const char rcsid[] = "$NetBSD: ip_fil.c,v 1.36 1999/08/26 02:56:59 itojun Exp $";
 #else
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-1995 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_fil.c,v 2.0.2.44.2.10 1998/11/22 01:50:22 darrenr Exp ";
 #endif
+#endif
+
+#if defined(__NetBSD__) && defined(_KERNEL)
+# ifdef _LKM
+#  define IPSEC
+# else
+#  include "opt_ipsec.h"
+# endif
 #endif
 
 #ifndef	SOLARIS
@@ -906,6 +914,9 @@ struct tcpiphdr *ti;
 	ip->ip_ttl = ip_defttl;
 # endif
 
+#ifdef IPSEC
+	m->m_pkthdr.rcvif = NULL;
+#endif
 # if defined(__FreeBSD_version) && (__FreeBSD_version >= 220000)
 	bzero((char *)&ro, sizeof(ro));
 	err = ip_output(m, (struct mbuf *)0, &ro, 0, 0);
