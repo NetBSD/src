@@ -1,4 +1,4 @@
-.\"	$NetBSD: getgrouplist.3,v 1.5 1998/02/05 18:46:41 perry Exp $
+.\"	$NetBSD: getgrouplist.3,v 1.6 1999/04/25 14:56:10 lukem Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)getgrouplist.3	8.1 (Berkeley) 6/9/93
 .\"
-.Dd June 9, 1993
+.Dd April 25, 1999
 .Dt GETGROUPLIST 3
 .Os
 .Sh NAME
@@ -48,14 +48,14 @@
 .Sh DESCRIPTION
 The
 .Fn getgrouplist
-function reads through the group file and calculates
+function reads through the group database and calculates
 the group access list for the user specified in
 .Fa name .
 The
 .Fa basegid
 is automatically included in the groups list.
 Typically this value is given as
-the group number from the password file.
+the group number from the password database.
 .Pp
 The resulting group list is returned in the integer array pointed to by
 .Fa groups .
@@ -65,6 +65,8 @@ array in the integer pointed to by
 .Fa ngroups ;
 the actual number of groups found is returned in
 .Fa ngroups .
+.Pp
+Duplicate group ids will be suppressed from the result.
 .Sh RETURN VALUES
 The
 .Fn getgrouplist
@@ -95,3 +97,11 @@ If the invoking program uses any of these routines,
 the group structure will
 be overwritten in the call to
 .Fn getgrouplist .
+.Pp
+In the case where the group array is too small and duplicate gids
+have been suppressed, the returned
+.Fa ngroups
+will be too large by a factor of the difference between the given
+size and the number of matches.
+This is not considered to be a major problem, since it's still going
+to be a smaller figure than when duplicates were not suppressed.
