@@ -1,4 +1,4 @@
-/*	$NetBSD: su.c,v 1.33.2.2 2000/01/08 18:34:50 he Exp $	*/
+/*	$NetBSD: su.c,v 1.33.2.3 2000/02/18 19:31:24 he Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)su.c	8.3 (Berkeley) 4/2/94";*/
 #else
-__RCSID("$NetBSD: su.c,v 1.33.2.2 2000/01/08 18:34:50 he Exp $");
+__RCSID("$NetBSD: su.c,v 1.33.2.3 2000/02/18 19:31:24 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -306,6 +306,7 @@ badlogin:
 		(void)setenv("HOME", pwd->pw_dir, 1);
 		(void)setenv("SHELL", shell, 1);
 	}
+	(void)setenv("SU_FROM", username, 1);
 
 	if (iscsh == YES) {
 		if (fastlogin)
