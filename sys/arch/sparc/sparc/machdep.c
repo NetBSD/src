@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.37 1994/12/06 08:34:08 deraadt Exp $ */
+/*	$NetBSD: machdep.c,v 1.38 1995/01/11 21:21:11 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -147,8 +147,10 @@ cpu_startup()
 	 */
 	printf(version);
 	/*identifycpu();*/
+#ifndef MACHINE_NONCONTIG
 	physmem = btoc(avail_end);
-	printf("real mem = %d\n", avail_end);
+#endif
+	printf("real mem = %d\n", ctob(physmem));
 
 	/*
 	 * Find out how much space we need, allocate it,
