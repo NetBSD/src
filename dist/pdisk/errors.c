@@ -27,6 +27,7 @@
 
 // for *printf()
 #include <stdio.h>
+#include <errno.h>
 
 // for exit()
 #ifndef __linux__
