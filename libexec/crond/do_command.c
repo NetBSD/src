@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: do_command.c,v 1.7 1993/09/17 03:46:48 cgd Exp $";
+static char rcsid[] = "$Id: do_command.c,v 1.8 1993/09/23 23:13:44 cgd Exp $";
 #endif
 
 
@@ -239,22 +239,34 @@ child_process(cmd, u)
 			 */
 			if (u->uid == ROOT_UID) {
 				struct stat sb;
+				char *filename, *fp;
 
-				if (0 != stat(cmd, &sb)) {
+				filename = (char *)malloc(strlen(cmd)+1);
+					/* they're checked nowhere else! */
+
+				strcpy(filename,cmd);
+				fp = filename;
+				while (*fp && !isspace(*fp))
+					fp++;
+				*fp = '\0';
+
+				if (0 != stat(filename, &sb)) {
 					fputs("crond: stat(2): ", stderr);
-					perror(cmd);
+					perror(filename);
 					_exit(ERROR_EXIT);
 				} else if (sb.st_mode & 022) {
 					fprintf(stderr,
 					"crond: %s writable by nonowner\n",
-						cmd);
+						filename);
 					_exit(ERROR_EXIT);
 				} else if (sb.st_uid != u->uid) {
 					fprintf(stderr,
 					"crond: %s owned by uid %d\n",
-						cmd, sb.st_uid);
+						filename, sb.st_uid);
 					_exit(ERROR_EXIT);
 				}
+
+				free(filename);
 			}
 
 			execle(shell, shell, "-c", cmd, (char *)0, u->envp);
