@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)dev_mkdb.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: dev_mkdb.c,v 1.8 1997/10/18 08:18:00 lukem Exp $");
+__RCSID("$NetBSD: dev_mkdb.c,v 1.9 2001/04/10 06:08:12 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -61,7 +61,7 @@ __RCSID("$NetBSD: dev_mkdb.c,v 1.8 1997/10/18 08:18:00 lukem Exp $");
 #include <string.h>
 #include <unistd.h>
 
-int	main __P((int, char **));
+int	main __P((int, char *[]));
 void	usage __P((void));
 
 int
@@ -83,7 +83,7 @@ main(argc, argv)
 	char dbtmp[MAXPATHLEN + 1], dbname[MAXPATHLEN + 1];
 
 	while ((ch = getopt(argc, argv, "")) != -1)
-		switch((char)ch) {
+		switch (ch) {
 		case '?':
 		default:
 			usage();
@@ -138,10 +138,10 @@ main(argc, argv)
 		memmove(buf, dp->d_name, dp->d_namlen);
 		buf[dp->d_namlen] = '\0';
 		data.size = dp->d_namlen + 1;
-		if ((db->put)(db, &key, &data, 0))
+		if ((*db->put)(db, &key, &data, 0))
 			err(1, "dbput %s", dbtmp);
 	}
-	(void)(db->close)(db);
+	(void)(*db->close)(db);
 	if (rename(dbtmp, dbname))
 		err(1, "rename %s to %s", dbtmp, dbname);
 	exit(0);
