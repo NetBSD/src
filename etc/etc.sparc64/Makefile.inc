@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.4 2000/08/20 14:50:02 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.5 2001/01/07 09:31:17 mrg Exp $
 #
 #	etc.sparc/Makefile.inc -- sparc-specific etc Makefile targets
 #
@@ -14,7 +14,7 @@ TOP= $(.CURDIR)/..
 
 # Add sparc64 installation directories
 MD_INSTALLATION_DIRS= \
-	installation/ramdisk installation/netboot installation/misc
+	installation/xminiroot installation/netboot installation/misc
 INSTALLATION_DIRS+=$(MD_INSTALLATION_DIRS) 
 
 snap_pre_md:
@@ -26,11 +26,18 @@ snap_pre_md:
 # Install miniroot images and auxiliary scripts to the release tree
 #
 snap_md_post:
+.if exists($(XSRCDIR)/xc/Imakefile)
+	# build X11
+.ifndef XSRC_DONE
+	(cd $(XSRCDIR); $(MAKE) release)
+.endif
+.endif
+
 	# make boot/miniroot images
 	(cd $(TOP)/distrib; ${MAKE})
 
 	# transfer images to release hierarchy
-.for dir in notes sparc64/ramdisk
+.for dir in notes sparc64/xminiroot
 	(cd $(TOP)/distrib/$(dir); ${MAKE} release)
 .endfor
 
