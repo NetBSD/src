@@ -1,4 +1,4 @@
-/*	$NetBSD: ch.c,v 1.45 2001/05/14 20:35:28 bouyer Exp $	*/
+/*	$NetBSD: ch.c,v 1.46 2001/06/19 10:43:26 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -758,7 +758,8 @@ ch_ousergetelemstatus(sc, chet, uptr)
 		error = copyout(&user_data, &uptr[i], avail);
 		if (error)
 			break;
-		(u_long)desc += desclen;
+		desc = (struct read_element_status_descriptor *)((u_long)desc
+		    + desclen);
 	}
 
  done:
