@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.10 1998/07/04 22:18:51 jonathan Exp $ */
+/* $NetBSD: wskbd.c,v 1.11 1998/07/23 14:33:02 drochner Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: wskbd.c,v 1.10 1998/07/04 22:18:51 jonathan Exp $";
+    "$NetBSD: wskbd.c,v 1.11 1998/07/23 14:33:02 drochner Exp $";
 
 /*
  * Copyright (c) 1992, 1993
@@ -490,6 +490,7 @@ wskbdopen(dev, flags, mode, p)
 	sc->sc_events.io = p;
 	wsevent_init(&sc->sc_events);		/* may cause sleep */
 
+	sc->sc_translating = 0;
 	sc->sc_ready = 1;			/* start accepting events */
 
 	/* XXX ENABLE THE DEVICE IF NOT CONSOLE? */
@@ -518,6 +519,7 @@ wskbdclose(dev, flags, mode, p)
 	/* XXX DISABLE THE DEVICE IF NOT CONSOLE? */
 
 	sc->sc_ready = 0;			/* stop accepting events */
+	sc->sc_translating = 1;
 	wsevent_fini(&sc->sc_events);
 	sc->sc_events.io = NULL;
 #endif /* NWSKBD > 0 */
@@ -808,17 +810,6 @@ wskbd_set_display(dv, displaydv)
 
 	KASSERT(sc != NULL);
 	sc->sc_displaydv = displaydv;
-}
-
-void
-wskbd_set_translation(dv, on)
-	struct device *dv;
-	int on;
-{
-	struct wskbd_softc *sc = (struct wskbd_softc *)dv;
-
-	KASSERT(sc != NULL);
-	sc->sc_translating = on;
 }
 
 /*
