@@ -1,4 +1,4 @@
-/*	$NetBSD: view.c,v 1.9 1996/09/16 06:43:42 leo Exp $	*/
+/*	$NetBSD: view.c,v 1.10 1996/09/25 15:03:43 leo Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -46,6 +46,7 @@
 #include <sys/malloc.h>
 #include <sys/queue.h>
 #include <sys/conf.h>
+#include <sys/poll.h>
 #include <machine/cpu.h>
 #include <atari/dev/grfabs_reg.h>
 #include <atari/dev/viewioctl.h>
@@ -415,14 +416,16 @@ int	off, prot;
 
 /*ARGSUSED*/
 int
-viewselect(dev, rw, p)
+viewpoll(dev, events, p)
 dev_t		dev;
-int		rw;
+int		events;
 struct proc	*p;
 {
-	if(rw == FREAD)
-		return(0);
-	return(1);
+	int revents = 0;
+
+	if (events & (POLLOUT | POLLWRNORM))
+		revents |= events & (POLLOUT | POLLWRNORM);
+	return (revents);
 }
 
 view_t	*

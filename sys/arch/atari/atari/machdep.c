@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.28 1996/08/23 11:11:51 leo Exp $	*/
+/*	$NetBSD: machdep.c,v 1.29 1996/09/25 15:03:20 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -790,8 +790,9 @@ bootsync(void)
 }
 
 void
-boot(howto)
-	register int howto;
+boot(howto, bootstr)
+	int	howto;
+	char	*bootstr;
 {
 	/* take a snap shot before clobbering any registers */
 	if (curproc)

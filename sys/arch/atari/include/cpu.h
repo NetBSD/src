@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.14 1996/09/11 00:15:48 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.15 1996/09/25 15:03:44 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -185,13 +185,6 @@ int	bounds_check_with_label __P((struct buf *, struct disklabel *, int));
 char	*fpu_describe __P((int));
 int	fpu_probe __P((void));
 
-
-/*
- * Prototypes from grfabs.c
- */
-int	grfabs_probe __P((void));
-
-
 /*
  * Prototypes from vm_machdep.c
  */
@@ -255,7 +248,6 @@ void	add_sicallback __P((si_farg, void *, void *));
 void	rem_sicallback __P((si_farg));
 struct frame;
 void	regdump __P((struct frame *, int));
-void	boot __P((int));
 void	cpu_startup __P((void));
 void	dumpsys __P((void));
 vm_offset_t reserve_dumppages __P((vm_offset_t));
