@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bootdhcp.c,v 1.19 2002/03/20 23:07:37 thorpej Exp $	*/
+/*	$NetBSD: nfs_bootdhcp.c,v 1.20 2002/05/12 12:52:58 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bootdhcp.c,v 1.19 2002/03/20 23:07:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bootdhcp.c,v 1.20 2002/05/12 12:52:58 simonb Exp $");
 
 #include "opt_nfs_boot.h"
 
@@ -341,13 +341,11 @@ bootpcheck(m, context)
 	/*
 	 * don't make first checks more expensive than necessary
 	 */
-#define ofs(what, elem) ((int)&(((what *)0)->elem))
-	if (m->m_len < ofs(struct bootp, bp_secs)) {
-		m = m_pullup(m, ofs(struct bootp, bp_secs));
+	if (m->m_len < offsetof(struct bootp, bp_sname)) {
+		m = m_pullup(m, offsetof(struct bootp, bp_sname));
 		if (m == NULL)
 			return (-1);
 	}
-#undef ofs
 	bootp = mtod(m, struct bootp*);
 
 	if (bootp->bp_op != BOOTREPLY) {
