@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.en,v 1.10 2001/07/26 22:47:34 wiz Exp $	*/
+/*	$NetBSD: msg.md.en,v 1.10.2.1 2002/06/29 23:24:11 lukem Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -80,11 +80,11 @@ you have completed your partition setups.
 Shall we continue?}
 
 message part_header
-{Part size       offset     fstype use       mount point (name)
+{Part       size     offset fstype use       mount point (name)
 ---- ---------- ---------- ------ --------- ------------------\n}
 
 message part_row
-{%3s%c %-10d %-10d %-6s %-9s %s\n}
+{%3s%c %10d %10d %6s %-9s %s\n}
 
 message ovrwrite
 {Your disk currently has at least one MacOS HFS partition.  Overwriting
@@ -157,6 +157,13 @@ message dodiskmap
 {Setting up the Disk Partition Map ...
 }
 
+message label_error
+{The new on-disk partition label does not match the one currently in-core.
+Any attempt to proceed will most likely result in damage to any pre-existing
+disk partitions. However your new Disk Partition Map has been written to
+the disk and will be available the next time NetBSD is booted. Please
+reboot immediately and restart the Installation Process.\n}
+ 
 message mapdebug
 {Partition Map:
 HFS count: %d
@@ -219,3 +226,13 @@ message parttable_fix_fixing
 
 message parttable_fix_fine
 {Partition %s%c is just fine!\n}
+ 
+message dump_line
+{%s\n}
+
+message emulbackup 
+{Either the /emul/aout or /emul directory on your system was a symbolic link
+pointing to an unmounted filesystem. It has been given a '.old' extension.
+Once you bring your upgraded system back up, you may need to take care 
+of merging the newly created /emul/aout directory with the old one.
+}
