@@ -133,7 +133,7 @@ void leattach(parent, self, args)
 	    return;
 	}
 	ler2 = le->sc_r2;
-	printf(": hardware address %s\n", ether_sprintf(le->sc_addr));
+	printf(": ether address %s\n", ether_sprintf(le->sc_addr));
 
 	/*
 	 * Setup for transmit/receive

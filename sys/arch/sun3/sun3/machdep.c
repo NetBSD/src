@@ -67,8 +67,8 @@ void identifycpu()
      * framebuffer placement problems.  could be moved later.
      */
 
-    printf("SUN3/%s\n", cpu_string);
-    /* should eventually include whether it has a VAC, etc */
+    printf("Model:\tSun 3/%s\n", cpu_string);
+    /* should eventually include whether it has a VAC, mc6888x version, etc */
 }
 
 void cpu_startup()
