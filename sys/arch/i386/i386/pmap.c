@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.52 1998/01/15 19:47:42 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.53 1998/01/20 12:48:05 drochner Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -1652,7 +1652,7 @@ pmap_pageable(pmap, sva, eva, pageable)
 
 #ifdef DEBUG
 #if defined(MACHINE_NEW_NONCONTIG)
-		if ((bank = vm_physeg_find(atop(pa), &off)) == -1)
+		if ((bank = vm_physseg_find(atop(pa), &off)) == -1)
 			return;
 
 		pv = &vm_physmem[bank].pmseg.pvent[off];
