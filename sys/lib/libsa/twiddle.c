@@ -1,4 +1,4 @@
-/*	$NetBSD: twiddle.c,v 1.2 1999/02/22 07:53:52 simonb Exp $	*/
+/*	$NetBSD: twiddle.c,v 1.3 1999/03/23 22:25:31 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -70,11 +70,6 @@ twiddle()
 {
 	static int pos;
 
-#ifdef SA_NOPUTCHAR
-	printf("%c\b", TWIDDLE_CHARS[pos++ & 3]);
-#else
 	putchar(TWIDDLE_CHARS[pos++ & 3]);
 	putchar('\b');
-#endif
-
 }
