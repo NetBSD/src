@@ -1,4 +1,4 @@
-#	$NetBSD: ALPHA,v 1.8 1995/12/20 00:14:10 cgd Exp $
+#	$NetBSD: ALPHA,v 1.9 1996/04/12 01:20:40 cgd Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
@@ -135,7 +135,7 @@ isa*	at	sio?
 # ISA devices
 clock0	at	isa? port 0x70
 pckbd0	at	isa? port 0x60 irq 1		# PC-ish ISA keyboard
-#pms0	at	isa? port 0x60 irq 12		# PS/2 auxiliary
+pms0	at	isa? port 0x60 irq 12		# PS/2 auxiliary
 com0	at	isa? port 0x3f8 irq 4		# standard serial ports
 com1	at	isa? port 0x2f8 irq 3
 lpt0	at	isa? port 0x3bc irq 7		# standard parallel port
@@ -149,6 +149,10 @@ scsibus* at	ncr?
 sd*	at	scsibus? target ? lun ?
 st*	at	scsibus? target ? lun ?
 cd*	at	scsibus? target ? lun ?
+
+# Workstation Console attachments
+wscons*	at	pcivga?
+wscons*	at	tga?
 
 pseudo-device	bpfilter
 pseudo-device	loop

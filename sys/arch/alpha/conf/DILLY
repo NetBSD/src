@@ -1,4 +1,4 @@
-#	$NetBSD: DILLY,v 1.1 1995/11/23 02:34:58 cgd Exp $
+#	$NetBSD: DILLY,v 1.2 1996/04/12 01:20:42 cgd Exp $
 #
 # Kernel for dilrod.nas.nasa.gov, and AlphaStation 600.
 
@@ -73,7 +73,7 @@ eisa*	at	pceb?
 # ISA devices
 clock0	at	isa? port 0x70
 pckbd0	at	isa? port 0x60 irq 1		# PC-ish ISA keyboard
-#pms0	at	isa? port 0x60 irq 12		# PS/2 auxiliary
+pms0	at	isa? port 0x60 irq 12		# PS/2 auxiliary
 com0	at	isa? port 0x3f8 irq 4		# standard serial ports
 com1	at	isa? port 0x2f8 irq 3
 lpt0	at	isa? port 0x3bc irq 7		# standard parallel port
@@ -88,6 +88,10 @@ sd0	at	scsibus0 target 1 lun 0
 sd*	at	scsibus? target ? lun ?
 st*	at	scsibus? target ? lun ?
 cd*	at	scsibus? target ? lun ?
+
+# Workstation Console attachments
+wscons*	at	pcivga?
+wscons*	at	tga?
 
 pseudo-device	bpfilter
 pseudo-device	loop
