@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.14 2000/12/30 18:00:18 itojun Exp $	*/
+/*	$NetBSD: main.c,v 1.15 2003/06/11 01:44:32 briggs Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.14 2000/12/30 18:00:18 itojun Exp $");
+__RCSID("$NetBSD: main.c,v 1.15 2003/06/11 01:44:32 briggs Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,6 +55,7 @@ __RCSID("$NetBSD: main.c,v 1.14 2000/12/30 18:00:18 itojun Exp $");
 #include <netinet/in.h>
 
 #include <arpa/inet.h>
+#include <arpa/tftp.h>
 
 #include <ctype.h>
 #include <fcntl.h>
@@ -77,6 +78,10 @@ struct	sockaddr_storage peeraddr;
 int	f;
 int	trace;
 int	verbose;
+int	tsize=0;
+int	tout=0;
+int	def_blksize=SEGSIZE;
+int	blksize=SEGSIZE;
 int	connected;
 char	mode[32];
 char	line[LBUFLEN];
@@ -98,6 +103,9 @@ void	setrexmt __P((int, char **));
 void	settimeout __P((int, char **));
 void	settrace __P((int, char **));
 void	setverbose __P((int, char **));
+void	setblksize __P((int, char **));
+void	settsize __P((int, char **));
+void	settimeoutopt __P((int, char **));
 void	status __P((int, char **));
 char	*tail __P((char *));
 int	main __P((int, char *[]));
@@ -121,6 +129,9 @@ struct cmd {
 
 char	vhelp[] = "toggle verbose mode";
 char	thelp[] = "toggle packet tracing";
+char	tshelp[] = "toggle extended tsize option";
+char	tohelp[] = "toggle extended timeout option";
+char	blhelp[] = "set an alternative blocksize (def. 512)";
 char	chelp[] = "connect to remote tftp";
 char	qhelp[] = "exit tftp";
 char	hhelp[] = "print help information";
@@ -140,12 +151,15 @@ struct cmd cmdtab[] = {
 	{ "get",	rhelp,		get },
 	{ "quit",	qhelp,		quit },
 	{ "verbose",	vhelp,		setverbose },
+	{ "blksize",	blhelp,		setblksize },
+	{ "tsize",	tshelp,		settsize },
 	{ "trace",	thelp,		settrace },
 	{ "status",	sthelp,		status },
 	{ "binary",     bnhelp,         setbinary },
 	{ "ascii",      ashelp,         setascii },
 	{ "rexmt",	xhelp,		setrexmt },
 	{ "timeout",	ihelp,		settimeout },
+	{ "tout",	tohelp,		settimeoutopt },
 	{ "?",		hhelp,		help },
 	{ 0 }
 };
@@ -155,10 +169,31 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
+	int	c;
+
 	f = -1;
 	strcpy(mode, "netascii");
 	signal(SIGINT, intr);
-	if (argc > 1) {
+
+	setprogname(argv[0]);
+	while ((c = getopt(argc, argv, "e")) != -1) {
+		switch (c) {
+		case 'e':
+			blksize = MAXSEGSIZE;
+			strcpy(mode, "octet");
+			tsize = 1;
+			tout = 1;
+			break;
+		default:
+			printf("usage: %s [-e] host-name [port]\n",
+				getprogname());
+			exit(1);
+		}
+	}
+	argc -= optind;
+	argv += optind;
+
+	if (argc >= 1) {
 		if (setjmp(toplevel) != 0)
 			exit(0);
 		setpeer(argc, argv);
@@ -177,7 +212,7 @@ setpeer0(host, port)
 	char *port;
 {
 	struct addrinfo hints, *res0, *res;
-	int error;
+	int error, soopt;
 	struct sockaddr_storage ss;
 	char *cause = "unknown";
 
@@ -222,6 +257,22 @@ setpeer0(host, port)
 		break;
 	}
 
+	if (f >= 0) {
+		soopt = 65536;
+		if (setsockopt(f, SOL_SOCKET, SO_SNDBUF, &soopt, sizeof(soopt))
+		    < 0) {
+			close(f);
+			f = -1;
+			cause = "setsockopt SNDBUF";
+		}
+		if (setsockopt(f, SOL_SOCKET, SO_RCVBUF, &soopt, sizeof(soopt))
+		    < 0) {
+			close(f);
+			f = -1;
+			cause = "setsockopt RCVBUF";
+		}
+	}
+
 	if (f < 0)
 		warn("%s", cause);
 	else {
@@ -245,7 +296,7 @@ setpeer(argc, argv)
 	char *argv[];
 {
 
-	if (argc < 2) {
+	if (argc < 1) {
 		strcpy(line, "Connect ");
 		printf("(to) ");
 		fgets(&line[strlen(line)], LBUFLEN-strlen(line), stdin);
@@ -253,14 +304,14 @@ setpeer(argc, argv)
 		argc = margc;
 		argv = margv;
 	}
-	if ((argc < 2) || (argc > 3)) {
-		printf("usage: %s host-name [port]\n", argv[0]);
+	if ((argc < 1) || (argc > 2)) {
+		printf("usage: %s [-e] host-name [port]\n", getprogname());
 		return;
 	}
-	if (argc == 2)
-		setpeer0(argv[1], NULL);
+	if (argc == 1)
+		setpeer0(argv[0], NULL);
 	else
-		setpeer0(argv[1], argv[2]);
+		setpeer0(argv[0], argv[1]);
 }
 
 struct	modes {
@@ -506,6 +557,33 @@ getusage(s)
 	printf("       %s file file ... file if connected\n", s);
 }
 
+void
+setblksize(argc, argv)
+	int argc;
+	char *argv[];
+{
+	int t;
+
+	if (argc < 2) {
+		strcpy(line, "blksize ");
+		printf("(blksize) ");
+		fgets(&line[strlen(line)], LBUFLEN-strlen(line), stdin);
+		makeargv();
+		argc = margc;
+		argv = margv;
+	}
+	if (argc != 2) {
+		printf("usage: %s value\n", argv[0]);
+		return;
+	}
+	t = atoi(argv[1]);
+	if (t < 8 || t > 65464)
+		printf("%s: bad value\n", argv[1]);
+	else
+		blksize = t;
+}
+
+int	def_rexmtval = TIMEOUT;
 int	rexmtval = TIMEOUT;
 
 void
@@ -748,4 +826,22 @@ setverbose(argc, argv)
 {
 	verbose = !verbose;
 	printf("Verbose mode %s.\n", verbose ? "on" : "off");
+}
+
+void
+settsize(argc, argv)
+	int argc;
+	char **argv;
+{
+	tsize = !tsize;
+	printf("Tsize mode %s.\n", tsize ? "on" : "off");
+}
+
+void
+settimeoutopt(argc, argv)
+	int argc;
+	char **argv;
+{
+	tout = !tout;
+	printf("Timeout option %s.\n", tout ? "on" : "off");
 }
