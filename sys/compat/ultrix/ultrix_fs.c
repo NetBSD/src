@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_fs.c,v 1.1 1995/12/26 04:44:37 jonathan Exp $	*/
+/*	$NetBSD: ultrix_fs.c,v 1.2 1995/12/26 10:06:14 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -31,9 +31,17 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
+#include <sys/exec.h>
+#include <sys/namei.h>
 #include <sys/mount.h>
+#include <net/if.h>
+#include <netinet/in.h>
 
+
+#include <sys/syscallargs.h>
 #include <compat/ultrix/ultrix_syscallargs.h>
+
+#include <vm/vm.h>
 
 #define	ULTRIX_MAXPATHLEN	1024
 
@@ -109,8 +117,23 @@ struct ultrix_getmnt_args {
  * Ultrix gnode-layer  filesystem codes.
  */
 #define ULTRIX_FSTYPE_UNKNOWN	0x0
-#define ULTRIX_FSTYPE_ULTRIX	0x1	/* 4.2bsd ffs */
+#define ULTRIX_FSTYPE_ULTRIX	0x1	/*  Ultrix UFS: basically 4.2bsd FFS */
 #define ULTRIX_FSTYPE_NFS	0x5	/*  NFS v2 */
+
+/*
+ * Ultrix mount(2) options
+ */
+#define ULTRIX_NM_RONLY    0x0001  /* mount read-only */
+#define ULTRIX_NM_SOFT     0x0002  /* soft mount (hard is default) */
+#define ULTRIX_NM_WSIZE    0x0004  /* set write size */
+#define ULTRIX_NM_RSIZE    0x0008  /* set read size */
+#define ULTRIX_NM_TIMEO    0x0010  /* set initial timeout */
+#define ULTRIX_NM_RETRANS  0x0020  /* set number of request retrys */
+#define ULTRIX_NM_HOSTNAME 0x0040  /* set hostname for error printf */
+#define ULTRIX_NM_PGTHRESH 0x0080  /* set page threshold for exec */
+#define ULTRIX_NM_INT      0x0100  /* allow hard mount keyboard interrupts */
+#define ULTRIX_NM_NOAC     0x0200  /* don't cache attributes */
+									
 
 /*
  * Construct an Ultrix getmnt() ultrix_fs_data from the native NetBSD
@@ -122,27 +145,41 @@ make_ultrix_mntent(sp, tem)
 	register struct ultrix_fs_data *tem;
 {
 
-	tem->ufsd_mtsize = sp->f_bsize;		/* XXX max transfer size */
+	bzero(tem, sizeof (*tem));
+
 	tem->ufsd_flags = sp->f_flags;		/* XXX translate */
+	tem->ufsd_mtsize = sp->f_bsize;		/* XXX max transfer size */
 	tem->ufsd_otsize = sp->f_iosize;
 	tem->ufsd_bsize = sp->f_bsize;
 	/*
-	 * Translate file system type. NetBSD/1.1 seems to always
-	 * have f_type zero.
+	 * Translate file system type. NetBSD/1.1 has f_type zero,
+	 * and uses an fstype string instead.
+	 * For now, map types not in Ultrix (kernfs, null, procfs...)
+	 * to UFS, since Ultrix mout will try and call mount_unknown
+	 * for ULTRIX_FSTYPE_UNKNOWN, but lacks a mount_unknown binary.
 	 */
-	tem->ufsd_fstype = ULTRIX_FSTYPE_NFS;	/* a hack */
+	tem->ufsd_fstype = ULTRIX_FSTYPE_NFS;
+	if (strcmp(sp->f_fstypename, "ffs") == 0)
+		tem->ufsd_fstype = ULTRIX_FSTYPE_ULTRIX;
 
-	tem->ufsd_gtot = 0;			/* XXX kept where? superblk? */
-	tem->ufsd_gfree = sp->f_ffree;
-	tem->ufsd_bfree = sp->f_bfree;		/* free 1k blocks */
-	tem->ufsd_bfreen = sp->f_bfree;		/* blocks available to users */
+	tem->ufsd_gtot = sp->f_files;		/* total "gnodes" */
+	tem->ufsd_gfree = sp->f_ffree;		/* free "gnodes"/
+	tem->ufsd_btot = sp->f_blocks;		/* total 1k blocks */
+	/*tem->ufsd_bfree = sp->f_bfree;	/* free 1k blocks */
+	/*tem->ufsd_bfree = sp->f_bavail;	/* free 1k blocks */
+	tem->ufsd_bfreen = sp->f_bavail;	/* blocks available to users */
 	tem->ufsd_pgthresh = 0;			/* not relevant */
 	tem->ufsd_uid = 0;			/* XXX kept where ?*/
 	tem->ufsd_dev = 0;			/* ?? */
 	tem->ufsd_exroot  = 0;			/* ?? */
 	strncpy(tem->ufsd_path, sp->f_mntonname, ULTRIX_MAXPATHLEN);
 	strncpy(tem->ufsd_devname, sp->f_mntfromname, ULTRIX_MAXPATHLEN);
+#if 0
+	/* In NetBSD-1.1, filesystem type is unused and always 0 */
 	printf("mntent: %s type %d\n", tem->ufsd_devname, tem->ufsd_fstype);
+	printf("mntent: %s tot %d free %d user%d\n",
+	 tem->ufsd_devname, sp->f_blocks, sp->f_bfree, sp->f_bavail);
+#endif
 }
 
 int
@@ -236,4 +273,164 @@ bad:
 	if (path)
 		FREE(path, M_TEMP);
 	return (error);
+}
+
+
+
+/* Old-style inet sockaddr (no len field) as passed to Ultrix mount(2) */
+struct osockaddr_in {
+	short   sin_family;
+	u_short sin_port;
+	struct  in_addr sin_addr;
+	char    sin_zero[8];
+};
+
+
+/*
+ * fstype-dependent structure passed to Ultrix mount(2) when
+ * mounting NFS filesystems
+ */
+struct	ultrix_nfs_args {
+	struct	osockaddr_in *addr;	/* file server address */
+	nfsv2fh_t *fh;			/* file handle to be mounted */
+	int	flags;			/* flags */
+	int	wsize;			/* write size in bytes */
+	int	rsize;			/* read size in bytes */
+	int	timeo;			/* initial timeout in .1 secs */
+	int	retrans;		/* times to retry send */
+	char	*hostname;		/* server's hostname */
+	char	*optstr;		/* string of nfs mount options*/
+	int	gfs_flags;		/* gnode flags (ugh) */
+	int	pg_thresh;		/* paging threshold ? */
+};
+
+
+/*
+ * fstype-dependent structure passed to Ultrix mount(2) when
+ * mounting local (4.2bsd FFS) filesystems
+ */
+struct ultrix_ufs_args {
+	u_long ufs_flags;		/* mount flags?*/
+	u_long ufs_pgthresh;		/* minimum file size to page */
+};
+
+int
+ultrix_sys_mount(p, v, retval)
+	struct proc *p;
+	void *v;
+	int *retval;
+{
+	struct ultrix_sys_mount_args *uap = v;
+
+	int error;
+	int otype = SCARG(uap, type);
+	extern char sigcode[], esigcode[];
+	char fsname[MFSNAMELEN];
+	char * fstype;
+	struct sys_mount_args nuap;
+
+#define	szsigcode	(esigcode - sigcode)
+	caddr_t usp = (caddr_t)ALIGN(PS_STRINGS - szsigcode - STACKGAPLEN);
+
+	bzero(&nuap, sizeof(nuap));
+	SCARG(&nuap, flags) = 0;
+
+	/*
+	 * Translate Ultrix integer mount codes for UFS and NFS to
+	 * NetBSD fstype strings.  Other Ultrix filesystem types
+	 *  (msdos, DEC ods-2) are not supported.
+	 */
+	if (otype == ULTRIX_FSTYPE_ULTRIX)
+		fstype = "ufs";
+	else if (otype == ULTRIX_FSTYPE_NFS)
+		fstype = "nfs";
+	else
+		return (EINVAL);
+
+	/* Translate the Ultrix mount-readonly option parameter */
+	if (SCARG(uap, rdonly))
+		SCARG(&nuap, flags) |= MNT_RDONLY;
+
+	/* Copy string-ified version of mount type back out to user space */
+	SCARG(&nuap, type) = (char *)usp;
+	if (error = copyout(fstype, SCARG(&nuap, type), strlen(fstype)+1)) {
+		return (error);
+	}
+	usp += strlen(fstype)+1;
+
+#ifdef later
+	parse ultrix mount option string and set NetBSD flags
+#endif
+	SCARG(&nuap, path) = SCARG(uap, dir);
+
+	if (otype == ULTRIX_FSTYPE_ULTRIX) {
+		/* attempt to mount a native, rather than 4.2bsd, ffs */
+		struct ufs_args ua;
+		struct nameidata nd;
+
+		ua.fspec = SCARG(uap, special);
+		bzero(&ua.export, sizeof(ua.export));
+		SCARG(&nuap, data) = usp;
+	
+		if (error = copyout(&ua, SCARG(&nuap, data), sizeof ua)) {
+			return(error);
+		}
+		/*
+		 * Ultrix mount has no MNT_UPDATE flag.
+		 * Attempt to see if this is the root we're mounting,
+		 * and if so, set MNT_UPDATE so we can mount / read-write.
+		 */
+		fsname[0] = 0;
+		if (error = copyinstr((caddr_t)SCARG(&nuap, path), fsname,
+				      sizeof fsname, (u_int*)0))
+			return(error);
+		if (strcmp(fsname, "/") == 0) {
+			SCARG(&nuap, flags) |= MNT_UPDATE;
+			printf("COMPAT_ULTRIX: mount with MNT_UPDATE on %s\n",
+			       fsname);
+		}
+	} else if (otype == ULTRIX_FSTYPE_NFS) {
+		struct ultrix_nfs_args una;
+		struct nfs_args na;
+		struct osockaddr_in osa;
+		struct sockaddr_in *sap = (struct sockaddr_in *)& osa;
+
+		bzero(&osa, sizeof(osa));
+		bzero(&una, sizeof(una));
+		if (error = copyin(SCARG(uap, data), &una, sizeof una)) {
+			return (error);
+		}
+		/*
+		 * This is the only syscall boundary the
+		 * address of the server passes, so do backwards
+		 * compatibility on 4.3style sockaddrs here.
+		 */
+		if (error = copyin(una.addr, &osa, sizeof osa)) {
+			printf("ultrix_mount: nfs copyin osa\n");
+			return (error);
+		}
+		sap->sin_family = (u_char)osa.sin_family;
+		sap->sin_len = sizeof(*sap);
+		/* allocate space above caller's stack for nfs_args */
+		SCARG(&nuap, data) = usp;
+		usp +=  sizeof (na);
+		/* allocate space above caller's stack for server sockaddr */
+		na.addr = (struct sockaddr *)usp;
+		usp += sizeof(*sap);
+		na.addrlen = sap->sin_len;
+		na.sotype = SOCK_DGRAM;
+		na.proto = IPPROTO_UDP;
+		na.fh = una.fh;
+		na.flags = /*una.flags;*/ NFSMNT_NOCONN | NFSMNT_RESVPORT;
+		na.wsize = una.wsize;
+		na.rsize = una.rsize;
+		na.timeo = una.timeo;
+		na.retrans = una.retrans;
+		na.hostname = una.hostname;
+		if (error = copyout(sap, na.addr, sizeof (*sap) ))
+			return (error);
+		if (error = copyout(&na, SCARG(&nuap, data), sizeof na))
+			return (error);
+	}
+	return (sys_mount(p, &nuap, retval));
 }

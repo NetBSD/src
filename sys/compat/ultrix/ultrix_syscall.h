@@ -12,6 +12,7 @@
 #define	ULTRIX_SYS_write	4
 #define	ULTRIX_SYS_open	5
 #define	ULTRIX_SYS_close	6
+#define	ULTRIX_SYS_owait	7
 #define	ULTRIX_SYS_creat	8
 #define	ULTRIX_SYS_link	9
 #define	ULTRIX_SYS_unlink	10
@@ -25,7 +26,7 @@
 				/* 18 is obsolete stat */
 #define	ULTRIX_SYS_lseek	19
 #define	ULTRIX_SYS_getpid	20
-				/* 21 is obsolete mount */
+#define	ULTRIX_SYS_mount	21
 				/* 22 is obsolete sysV_unmount */
 #define	ULTRIX_SYS_setuid	23
 #define	ULTRIX_SYS_getuid	24
