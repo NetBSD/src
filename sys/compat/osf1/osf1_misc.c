@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_misc.c,v 1.7 1995/10/07 06:53:04 mycroft Exp $	*/
+/*	$NetBSD: osf1_misc.c,v 1.8 1996/08/09 10:30:23 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -622,6 +622,7 @@ osf1_sys_reboot(p, v, retval)
 		return (EINVAL);
 
 	SCARG(&a, opt) = 0;
+	SCARG(&a, bootstr) = NULL;
 	if (SCARG(uap, opt) & OSF1_RB_ASKNAME)
 		SCARG(&a, opt) |= RB_ASKNAME;
 	if (SCARG(uap, opt) & OSF1_RB_SINGLE)

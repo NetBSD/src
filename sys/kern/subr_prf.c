@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.25 1996/04/22 01:38:46 christos Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.26 1996/08/09 10:30:23 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -127,7 +127,7 @@ panic(fmt, va_alist)
 #ifdef DDB
 	Debugger();
 #endif
-	boot(bootopt);
+	boot(bootopt, NULL);
 }
 
 /*

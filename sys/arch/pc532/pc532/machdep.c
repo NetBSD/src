@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.47 1996/05/03 23:22:54 phil Exp $	*/
+/*	$NetBSD: machdep.c,v 1.48 1996/08/09 10:30:23 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -496,8 +496,9 @@ struct pcb dumppcb;
 struct reg dumppcb_regs;
 
 void
-boot(howto)
+boot(howto, bootstr)
 	int howto;
+	char *bootstr;
 {
 	extern int cold;
 	extern const char *panicstr;
