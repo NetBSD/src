@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: install.sh,v 1.2 1995/10/31 18:09:04 gwr Exp $
+#	$NetBSD: install.sh,v 1.3 1995/11/01 23:53:27 gwr Exp $
 #
 # Copyright (c) 1995 Jason R. Thorpe.
 # All rights reserved.
@@ -42,26 +42,15 @@ FQDN=""					# domain name
 
 trap "umount /tmp > /dev/null 2>&1" 0
 
+#
+# Functions...
+#
+
 getresp() {
 	read resp
 	if [ "X$resp" = "X" ]; then
 		resp=$1
 	fi
-}
-
-do_mfs_mount() {
-	umount $1 > /dev/null 2>&1
-	if ! mount_mfs -s 2048 swap $1 ; then
-		cat << \__mfs_failed_1
-
-FATAL ERROR: Can't mount the memory filesystem.
-
-__mfs_failed_1
-		exit
-	fi
-
-	# Bleh.  Give mount_mfs a chance to DTRT.
-	sleep 2
 }
 
 getrootdisk() {
@@ -565,6 +554,11 @@ __install_tape_2
 	echo "Extraction complete."
 }
 
+#
+# End of functions.
+# Begin working
+#
+
 echo	""
 echo	"Welcome to the NetBSD ${VERSION} installation program."
 cat << \__welcome_banner_1
@@ -608,12 +602,17 @@ __welcome_banner_2
 		;;
 esac
 
-# We don't like it, but it sure makes a few things a lot easier.
-do_mfs_mount "/tmp"
+# Make sure root was remounted (creates /etc/fstab)
+if [ ! -f /etc/fstab ]
+then
+	echo "Need to remount root read/write first."
+	exit 1
+fi
 
 # Install the shadowed disktab file; lets us write to it for temporary
 # purposes without mounting the miniroot read-write.
-cp /etc/disktab.shadow /tmp/disktab.shadow
+# XXX: I just go ahead and remount root. -gwr
+# XXX: cp /etc/disktab.shadow /tmp/disktab.shadow
 
 while [ "X${ROOTDISK}" = "X" ]; do
 	getrootdisk
