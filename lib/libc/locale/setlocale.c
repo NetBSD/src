@@ -1,4 +1,4 @@
-/*	$NetBSD: setlocale.c,v 1.30 2000/12/23 08:22:40 itojun Exp $	*/
+/*	$NetBSD: setlocale.c,v 1.31 2000/12/24 22:24:04 itojun Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)setlocale.c	8.1 (Berkeley) 7/4/93";
 #else
-__RCSID("$NetBSD: setlocale.c,v 1.30 2000/12/23 08:22:40 itojun Exp $");
+__RCSID("$NetBSD: setlocale.c,v 1.31 2000/12/24 22:24:04 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -273,9 +273,9 @@ loadlocale(category)
 
 	switch (category) {
 	case LC_CTYPE:
-		if (_xpg4_setrunelocale(new_categories[category]) < 0)
+		if (_xpg4_setrunelocale(new_categories[category]))
 			return NULL;
-		if (__runetable_to_netbsd_ctype(new_categories[category]) < 0) {
+		if (__runetable_to_netbsd_ctype(new_categories[category])) {
 			/* very unfortunate, but need to go to "C" locale */
 			(void)_xpg4_setrunelocale("C");
 			(void)__runetable_to_netbsd_ctype("C");
