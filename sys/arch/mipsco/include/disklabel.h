@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.6 2001/07/26 22:47:35 wiz Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.7 2002/01/28 23:09:54 lukem Exp $	*/
 
 /*
  * Copyright (c) 2000 Wayne Knowles.     All rights reserved.
@@ -43,10 +43,10 @@
  * Partition 10 - whole disk
  */
 
-#define MAXPARTITIONS	8	/* XXX - NetBSD Compatibility */
-#define RAW_PART	2
 #define LABELSECTOR	1
 #define LABELOFFSET	0
+#define MAXPARTITIONS	8	/* XXX - NetBSD Compatibility */
+#define RAW_PART	2
 
 #define MIPS_PARTITIONS	16	/* Number or partitions for Mips */
 #define MIPS_NVOLDIR	15	/* Number of volume directory files */
