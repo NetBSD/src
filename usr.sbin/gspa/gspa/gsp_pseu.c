@@ -1,3 +1,4 @@
+/*	$NetBSD: gsp_pseu.c,v 1.2 1997/10/17 06:59:08 lukem Exp $	*/
 /*
  * GSP assembler - assembler directives
  *
@@ -29,6 +30,12 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: gsp_pseu.c,v 1.2 1997/10/17 06:59:08 lukem Exp $");
+#endif
+
 #include "gsp_ass.h"
 #include "gsp_code.h"
 

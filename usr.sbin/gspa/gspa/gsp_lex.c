@@ -1,3 +1,4 @@
+/*	$NetBSD: gsp_lex.c,v 1.3 1997/10/17 06:59:02 lukem Exp $	*/
 /*
  * Lexical analyser for GSP assembler
  *
@@ -29,6 +30,12 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: gsp_lex.c,v 1.3 1997/10/17 06:59:02 lukem Exp $");
+#endif
+
 #include <stdio.h>
 #include "gsp_ass.h"
 #include "y.tab.h"
@@ -43,7 +50,6 @@ char *idptr;
 
 extern YYSTYPE yylval;
 
-void ucasify(char *);
 int str_match(char *, char **);
 
 char *regnames[] = {
@@ -71,8 +77,8 @@ lex_init(char *line)
 int
 yylex()
 {
-	register int c, tok, x, len;
-	register char *lp, *ip;
+	int c, tok, x, len;
+	char *lp, *ip;
 	char *end;
 
 	lp = lineptr;
@@ -121,7 +127,7 @@ yylex()
 		   && !(isalnum(lp[1]) || lp[1] == '_') ){
 			/* reference to numeric label */
 			c = toupper(c);
-			sprintf(idptr, "%d%c", yylval.y_int, c);
+			sprintf(idptr, "%ld%c", (long)yylval.y_int, c);
 			yylval.y_id = idptr;
 			idptr += strlen(idptr) + 1;
 			++lp;
@@ -162,9 +168,9 @@ yylex()
 }
 
 void
-ucasify(register char *p)
+ucasify(char *p)
 {
-	register int c;
+	int c;
 
 	for( ; (c = *p) != 0; p++ )
 		if( islower(c) )
@@ -172,9 +178,9 @@ ucasify(register char *p)
 }
 
 int
-str_match(register char *id, char **names)
+str_match(char *id, char **names)
 {
-	register char **np;
+	char **np;
 
 	for( np = names; *np != NULL; ++np )
 		if( strcmp(id, *np) == 0 )

@@ -1,3 +1,4 @@
+/*	$NetBSD: gspahextoc.l,v 1.3 1997/10/17 06:59:19 lukem Exp $	*/
 /*
  * Copyright (c) 1995 Ignatios Souvatzis
  * All rights reserved.
@@ -29,16 +30,25 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+%{
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: gspahextoc.l,v 1.3 1997/10/17 06:59:19 lukem Exp $");
+#endif
+%}
+
 	int bufptr;
 	unsigned short buf[4096];
 
 	unsigned long binads;
 
 
-	void dumpstart __P((char *address));
-	void dumpbuf __P((void));
-	void initbuf __P((char *address));
         void checkbuf __P((void));
+	void dumpbuf __P((void));
+	void dumpstart __P((char *address));
+	void initbuf __P((char *address));
+	int main __P((int, char **));
+	int yylex __P((void));
 %%
 :[0-9A-Za-z]+	{if (bufptr>0) dumpbuf(); dumpstart(yytext+1);}
 @[0-9A-Za-z]+	{if (bufptr>0) dumpbuf(); initbuf(yytext+1);}
@@ -52,7 +62,7 @@ dumpbuf()
 	int i;
 
 	printf("\n\n\t%d, 0x%04x, 0x%04x, /* new block */", 
-	    bufptr, binads >> 16, binads & 0xffff);
+	    bufptr, (int)(binads >> 16), (int)(binads & 0xffff));
 	for (i=0; i<bufptr; ++i) {
 		if (i%8 == 0)
 			printf("\n\t");
