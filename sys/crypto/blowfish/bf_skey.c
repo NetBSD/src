@@ -1,4 +1,4 @@
-/*	$NetBSD: bf_skey.c,v 1.4 2002/02/27 01:32:17 itojun Exp $	*/
+/*	$NetBSD: bf_skey.c,v 1.5 2003/08/26 23:51:13 thorpej Exp $	*/
 /*	$KAME: bf_skey.c,v 1.5 2000/11/06 13:58:08 itojun Exp $	*/
 
 /* crypto/bf/bf_skey.c */
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bf_skey.c,v 1.4 2002/02/27 01:32:17 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bf_skey.c,v 1.5 2003/08/26 23:51:13 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/time.h>
@@ -74,16 +74,13 @@ __KERNEL_RCSID(0, "$NetBSD: bf_skey.c,v 1.4 2002/02/27 01:32:17 itojun Exp $");
 #include <crypto/blowfish/bf_pi.h>
 
 void
-BF_set_key(key, len, data)
-	BF_KEY *key;
-	int len;
-	unsigned char *data;
+BF_set_key(BF_KEY *key, int len, const unsigned char *data)
 {
 	int i;
 	BF_LONG *p, ri, in[2];
-	unsigned char *d, *end;
+	const unsigned char *d, *end;
 
-	memcpy((char *)key, (char *)&bf_init, sizeof(BF_KEY));
+	memcpy(key, &bf_init, sizeof(BF_KEY));
 	p = key->P;
 
 	if (len > ((BF_ROUNDS + 2) * 4))
