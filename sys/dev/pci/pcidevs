@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.98 1998/12/20 16:05:32 drochner Exp $
+$NetBSD: pcidevs,v 1.99 1998/12/21 13:37:00 drochner Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -847,10 +847,10 @@ product INTEL 82371AB_IDE	0x7111	82371AB IDE controller (PIIX4)
 product INTEL 82371AB_USB	0x7112	82371AB USB Host Controller (PIIX4)
 product INTEL 82371AB_PMC	0x7113	82371AB Power Management Controller (PIIX4)
 product INTEL 82443LX		0x7180	82443LX PCI AGP Controller (PAC)
-product INTEL 82443LX_AGP	0x7181	82443LX AGP Device (PAC)
-product INTEL 82443BX		0x7190	82443BX	PCI AGP Controller (PAC)
-product INTEL 82443BX_AGP	0x7191	82443BX AGP Device (PAC)
-product INTEL 82443BX_AGP_NOT   0x7192  82443BX AGP Device (PAC) (AGP disabled)
+product INTEL 82443LX_AGP	0x7181	82443LX AGP Interface (PAC)
+product INTEL 82443BX		0x7190	82443BX	Host Bridge/Controller
+product INTEL 82443BX_AGP	0x7191	82443BX AGP Interface
+product INTEL 82443BX_NOAGP	0x7192  82443BX Host Bridge/Controller (AGP disabled)
 product INTEL PCI450_PB		0x84c4	82454KX/GX PCI Bridge (PB)
 product INTEL PCI450_MC		0x84c5	82451KX/GX Memory Controller (MC)
 
