@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)resolv.h	5.15 (Berkeley) 4/3/91
- *	$Id: resolv.h,v 1.5 1994/06/13 01:16:13 jtc Exp $
+ *	$Id: resolv.h,v 1.6 1994/10/15 07:56:51 deraadt Exp $
  */
 
 #ifndef _RESOLV_H_
@@ -86,7 +86,7 @@ struct __res_state {
 	char	unused[3];
 	struct {
 		struct in_addr addr;
-		u_long mask;
+		u_int32_t mask;
 	} sort_list[MAXRESOLVSORT];
 	char	lookups[MAXDNSLUS];
 };
@@ -145,10 +145,10 @@ __BEGIN_DECLS
 int	 __dn_skipname __P((const u_char *, const u_char *));
 void	 __fp_query __P((char *, FILE *));
 char	*__hostalias __P((const char *));
-void	 __putlong __P((u_long, u_char *));
-void	 __putshort __P((u_short, u_char *));
+void	 __putlong __P((u_int32_t, u_char *));
+void	 __putshort __P((u_int16_t, u_char *));
 char	*__p_class __P((int));
-char	*__p_time __P((u_long));
+char	*__p_time __P((u_int32_t));
 char	*__p_type __P((int));
 
 int	 dn_comp __P((const u_char *, u_char *, int, u_char **, u_char **));

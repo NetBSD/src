@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)res_comp.c	6.22 (Berkeley) 3/19/91";*/
-static char *rcsid = "$Id: res_comp.c,v 1.4 1994/04/07 07:00:16 deraadt Exp $";
+static char *rcsid = "$Id: res_comp.c,v 1.5 1994/10/15 07:58:56 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -307,11 +307,11 @@ _getshort(msgp)
 	return (u);
 }
 
-u_long
+u_int32_t
 _getlong(msgp)
 	u_char *msgp;
 {
-	register u_long u;
+	register u_int32_t u;
 
 	GETLONG(u, msgp);
 	return (u);
@@ -319,10 +319,10 @@ _getlong(msgp)
 
 void
 #ifdef __STDC__
-__putshort(register u_short s, register u_char *msgp)
+__putshort(register u_int16_t s, register u_char *msgp)
 #else
 __putshort(s, msgp)
-	register u_short s;
+	register u_int16_t s;
 	register u_char *msgp;
 #endif
 {
@@ -331,7 +331,7 @@ __putshort(s, msgp)
 
 void
 __putlong(l, msgp)
-	register u_long l;
+	register u_int32_t l;
 	register u_char *msgp;
 {
 	PUTLONG(l, msgp);
