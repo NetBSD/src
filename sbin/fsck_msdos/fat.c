@@ -1,4 +1,4 @@
-/*	$NetBSD: fat.c,v 1.10 2000/04/25 23:02:51 jdolecek Exp $	*/
+/*	$NetBSD: fat.c,v 1.11 2000/04/26 16:45:02 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997 Wolfgang Solfrank
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fat.c,v 1.10 2000/04/25 23:02:51 jdolecek Exp $");
+__RCSID("$NetBSD: fat.c,v 1.11 2000/04/26 16:45:02 jdolecek Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -50,6 +50,7 @@ __RCSID("$NetBSD: fat.c,v 1.10 2000/04/25 23:02:51 jdolecek Exp $");
 static int checkclnum __P((struct bootblock *, int, cl_t, cl_t *));
 static int clustdiffer __P((cl_t, cl_t *, cl_t *, int));
 static int tryclear __P((struct bootblock *, struct fatEntry *, cl_t, cl_t *));
+static int _readfat __P((int, struct bootblock *, int, u_char **));
 
 /*
  * Check a cluster number for valid value
@@ -89,7 +90,7 @@ checkclnum(boot, fat, cl, next)
 /*
  * Read a FAT from disk. Returns 1 if successful, 0 otherwise.
  */
-int
+static int
 _readfat(fs, boot, no, buffer)
 	int fs;
 	struct bootblock *boot;
