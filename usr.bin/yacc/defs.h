@@ -1,4 +1,4 @@
-/*	$Id: defs.h,v 1.4 1994/12/24 16:57:28 cgd Exp $ */
+/*	$Id: defs.h,v 1.5 1996/03/05 00:33:19 phil Exp $ */
 
 #include <assert.h>
 #include <ctype.h>
@@ -66,6 +66,7 @@
 #define START 7
 #define UNION 8
 #define IDENT 9
+#define EXPECT 10
 
 
 /*  symbol classes  */

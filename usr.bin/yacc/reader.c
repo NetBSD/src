@@ -1,5 +1,5 @@
 #ifndef lint
-static char rcsid[] = "$Id: reader.c,v 1.3 1993/08/02 17:56:49 mycroft Exp $";
+static char rcsid[] = "$Id: reader.c,v 1.4 1996/03/05 00:33:23 phil Exp $";
 #endif /* not lint */
 
 #include "defs.h"
@@ -250,6 +250,8 @@ keyword()
 	    return (UNION);
 	if (strcmp(cache, "ident") == 0)
 	    return (IDENT);
+	if (strcmp(cache, "expect") == 0)
+	    return (EXPECT);
     }
     else
     {
@@ -935,6 +937,22 @@ declare_start()
     goal = bp;
 }
 
+handle_expect()
+{
+    register int c;
+    register int num;
+
+    c = nextc();
+    if (c == EOF) unexpected_EOF();
+    if (!isdigit(c))
+	syntax_error(lineno, line, cptr);
+    num = get_number();
+    if (num == 1)
+    	fprintf (stderr, "%s: Expect 1 shift/reduce conflict.\n", myname);
+    else
+	fprintf (stderr, "%s: Expect %d shift/reduce conflicts.\n", myname, num);
+}
+
 
 read_declarations()
 {
@@ -979,6 +997,10 @@ read_declarations()
 
 	case START:
 	    declare_start();
+	    break;
+
+	case EXPECT:
+	    handle_expect();
 	    break;
 	}
     }
