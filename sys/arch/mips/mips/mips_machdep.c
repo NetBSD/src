@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.156 2002/12/17 12:07:50 simonb Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.157 2003/01/17 23:36:16 thorpej Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -120,15 +120,17 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.156 2002/12/17 12:07:50 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.157 2003/01/17 23:36:16 thorpej Exp $");
 
 #include "opt_cputype.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/proc.h>
 #include <sys/exec.h>
 #include <sys/reboot.h>
 #include <sys/mount.h>			/* fsid_t for syscallargs */
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/sysctl.h>
 #include <sys/user.h>
@@ -137,18 +139,25 @@ __KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.156 2002/12/17 12:07:50 simonb Ex
 #include <sys/core.h>
 #include <sys/device.h>
 #include <sys/kcore.h>
+#include <sys/pool.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
+
+#include <sys/ucontext.h>
 #include <machine/kcore.h>
 #include <uvm/uvm_extern.h>
 
 #include <dev/cons.h>
 
 #include <mips/cache.h>
+#include <mips/frame.h>
 #include <mips/regnum.h>
 
 #include <mips/locore.h>
 #include <mips/psl.h>
 #include <mips/pte.h>
 #include <machine/cpu.h>
+#include <mips/userret.h>
 
 #ifdef __HAVE_BOOTINFO_H
 #include <machine/bootinfo.h>
@@ -201,7 +210,7 @@ int mips_has_r4k_mmu;
 int mips3_pg_cached;
 
 struct	user *proc0paddr;
-struct	proc *fpcurproc;
+struct	lwp  *fpcurlwp;
 struct	pcb  *curpcb;
 struct	segtab *segbase;
 
@@ -1070,12 +1079,12 @@ cpu_identify(void)
  * code by the MIPS elf abi).
  */
 void
-setregs(p, pack, stack)
-	struct proc *p;
+setregs(l, pack, stack)
+	struct lwp *l;
 	struct exec_package *pack;
 	u_long stack;
 {
-	struct frame *f = (struct frame *)p->p_md.md_regs;
+	struct frame *f = (struct frame *)l->l_md.md_regs;
 
 	memset(f, 0, sizeof(struct frame));
 	f->f_regs[SP] = (int)stack;
@@ -1094,13 +1103,13 @@ setregs(p, pack, stack)
 	f->f_regs[A0] = (int)stack;
 	f->f_regs[A1] = 0;
 	f->f_regs[A2] = 0;
-	f->f_regs[A3] = (int)p->p_psstr;
+	f->f_regs[A3] = (int)l->l_proc->p_psstr;
 
-	if ((p->p_md.md_flags & MDP_FPUSED) && p == fpcurproc)
-		fpcurproc = (struct proc *)0;
-	memset(&p->p_addr->u_pcb.pcb_fpregs, 0, sizeof(struct fpreg));
-	p->p_md.md_flags &= ~MDP_FPUSED;
-	p->p_md.md_ss_addr = 0;
+	if ((l->l_md.md_flags & MDP_FPUSED) && l == fpcurlwp)
+		fpcurlwp = (struct lwp *)0;
+	memset(&l->l_addr->u_pcb.pcb_fpregs, 0, sizeof(struct fpreg));
+	l->l_md.md_flags &= ~MDP_FPUSED;
+	l->l_md.md_ss_addr = 0;
 }
 
 /*
@@ -1448,14 +1457,14 @@ mips_init_msgbuf(void)
 }
 
 void
-savefpregs(p)
-	struct proc *p;
+savefpregs(l)
+	struct lwp *l;
 {
 #ifndef NOFPU
 	u_int32_t status, fpcsr, *fp;
 	struct frame *f;
 
-	if (p == NULL)
+	if (l == NULL)
 		return;
 	/*
 	 * turnoff interrupts enabling CP1 to read FPCSR register.
@@ -1475,13 +1484,13 @@ savefpregs(p)
 	/*
 	 * this process yielded FPA.
 	 */
-	f = (struct frame *)p->p_md.md_regs;
+	f = (struct frame *)l->l_md.md_regs;
 	f->f_regs[SR] &= ~MIPS_SR_COP_1_BIT;
 
 	/*
 	 * save FPCSR and 32bit FP register values.
 	 */
-	fp = (int *)p->p_addr->u_pcb.pcb_fpregs.r_regs;
+	fp = (int *)l->l_addr->u_pcb.pcb_fpregs.r_regs;
 	fp[32] = fpcsr;
 	__asm __volatile (
 		".set noreorder		;"
@@ -1527,14 +1536,14 @@ savefpregs(p)
 }
 
 void
-loadfpregs(p)
-	struct proc *p;
+loadfpregs(l)
+	struct lwp *l;
 {
 #ifndef NOFPU
 	u_int32_t status, *fp;
 	struct frame *f;
 
-	if (p == NULL)
+	if (l == NULL)
 		panic("loading fpregs for NULL proc");
 
 	/*
@@ -1550,8 +1559,8 @@ loadfpregs(p)
 		".set reorder		;"
 		".set at" : "=r"(status) : "i"(MIPS_SR_COP_1_BIT));
 
-	f = (struct frame *)p->p_md.md_regs;
-	fp = (int *)p->p_addr->u_pcb.pcb_fpregs.r_regs;
+	f = (struct frame *)l->l_md.md_regs;
+	fp = (int *)l->l_addr->u_pcb.pcb_fpregs.r_regs;
 	/*
 	 * load 32bit FP registers and establish processes' FP context.
 	 */
@@ -1603,4 +1612,140 @@ loadfpregs(p)
 		:: "r"(fp[32] &~ MIPS_FPU_EXCEPTION_BITS), "r"(status));
 	return;
 #endif
+}
+
+/* 
+ * Start a new LWP
+ */
+void
+startlwp(arg)
+	void *arg;
+{
+	int err;
+	ucontext_t *uc = arg;
+	struct lwp *l = curlwp;
+
+	err = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
+#if DIAGNOSTIC
+	if (err) {
+		printf("Error %d from cpu_setmcontext.", err);
+	}
+#endif
+	pool_put(&lwp_uc_pool, uc);
+
+	userret(l);
+}
+
+/*
+ * XXX This is a terrible name.
+ */
+void
+upcallret(struct lwp *l)
+{
+	userret(l);
+}
+
+void 
+cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted,
+    void *sas, void *ap, void *sp, sa_upcall_t upcall)
+{
+	struct saframe *sf, frame;
+	struct frame *f;
+
+	f = (struct frame *)l->l_md.md_regs;
+
+#if 0 /* First 4 args in regs (see below). */
+	frame.sa_type = type;
+	frame.sa_sas = sas;
+	frame.sa_events = nevents;
+	frame.sa_interrupted = ninterrupted;
+#endif
+	frame.sa_arg = ap;
+	frame.sa_upcall = upcall;
+
+	sf = (struct saframe *)sp - 1;
+	if (copyout(&frame, sf, sizeof(frame)) != 0) {
+		/* Copying onto the stack didn't work. Die. */
+		sigexit(l, SIGILL);
+		/* NOTREACHED */
+	}
+
+	f->f_regs[PC] = (u_int32_t)upcall;
+	f->f_regs[SP] = (u_int32_t)sf;
+	f->f_regs[A0] = type;
+	f->f_regs[A1] = (u_int32_t)sas;
+	f->f_regs[A2] = nevents;
+	f->f_regs[A3] = ninterrupted;
+	f->f_regs[S8] = 0;
+	f->f_regs[RA] = 0;
+	f->f_regs[T9] = (u_int32_t)upcall;  /* t9=Upcall function*/
+}
+
+
+void
+cpu_getmcontext(l, mcp, flags)
+	struct lwp *l;
+	mcontext_t *mcp;
+	unsigned int *flags;
+{
+	const struct frame *f = (struct frame *)l->l_md.md_regs;
+	__greg_t *gr = mcp->__gregs;
+
+	/* Save register context. Dont copy R0 - it is always 0 */
+	memcpy(&gr[_REG_AT], &f->f_regs[AST], sizeof(mips_reg_t) * 31);
+
+	gr[_REG_MDLO]  = f->f_regs[MULLO];
+	gr[_REG_MDHI]  = f->f_regs[MULHI];
+	gr[_REG_CAUSE] = f->f_regs[CAUSE];
+	gr[_REG_EPC]   = f->f_regs[PC];
+	gr[_REG_SR]    = f->f_regs[SR];
+
+	*flags |= _UC_CPU;
+
+	/* Save floating point register context, if any. */
+	if (l->l_md.md_flags & MDP_FPUSED) {
+		/*
+		 * If this process is the current FP owner, dump its
+		 * context to the PCB first.
+		 * XXX:  FP regs may be written to wrong location XXX
+		 */
+		if (l == fpcurlwp)
+			savefpregs(l);
+		memcpy(&mcp->__fpregs, &l->l_addr->u_pcb.pcb_fpregs.r_regs,
+		    sizeof (mcp->__fpregs));
+		*flags |= _UC_FPU;
+	}
+}
+
+int
+cpu_setmcontext(l, mcp, flags)
+	struct lwp *l;
+	const mcontext_t *mcp;
+	unsigned int flags;
+{
+	struct frame *f = (struct frame *)l->l_md.md_regs;
+	__greg_t *gr = mcp->__gregs;
+
+	/* Restore register context, if any. */
+	if (flags & _UC_CPU) {
+		/* Save register context. */
+		/* XXX:  Do we validate the addresses?? */
+		memcpy(&f->f_regs[AST], &gr[_REG_AT], sizeof(mips_reg_t) * 31);
+
+		f->f_regs[MULLO] = gr[_REG_MDLO];
+		f->f_regs[MULHI] = gr[_REG_MDHI];
+		f->f_regs[CAUSE] = gr[_REG_CAUSE];
+		f->f_regs[PC]    = gr[_REG_EPC];
+		/* Do not restore SR. */
+	}
+
+	/* Restore floating point register context, if any. */
+	if (flags & _UC_FPU) {
+		/* XXX:  FP regs may be read from wrong location XXX */
+		memcpy(&l->l_addr->u_pcb.pcb_fpregs.r_regs, &mcp->__fpregs,
+		    sizeof (mcp->__fpregs));
+		/* XXX:  Do we restore here?? */
+	}
+
+	return (0);
 }

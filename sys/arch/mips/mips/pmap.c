@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.145 2003/01/06 20:30:32 wiz Exp $	*/
+/*	$NetBSD: pmap.c,v 1.146 2003/01/17 23:36:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.145 2003/01/06 20:30:32 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.146 2003/01/17 23:36:17 thorpej Exp $");
 
 /*
  *	Manages physical address maps.
@@ -220,8 +220,9 @@ boolean_t	pmap_initialized = FALSE;
 #define PAGE_IS_MANAGED(pa)	\
 	    (pmap_initialized == TRUE && vm_physseg_find(atop(pa), NULL) != -1)
 
-#define PMAP_IS_ACTIVE(pm)	\
-	((pm) == pmap_kernel() || (pm) == curproc->p_vmspace->vm_map.pmap)
+#define PMAP_IS_ACTIVE(pm)						\
+	((pm) == pmap_kernel() || 					\
+	 (pm) == curlwp->l_proc->p_vmspace->vm_map.pmap)
 
 #define	pa_to_pvh(pa)							\
 ({									\
@@ -679,13 +680,13 @@ pmap_reference(pmap)
  *	Make a new pmap (vmspace) active for the given process.
  */
 void
-pmap_activate(p)
-	struct proc *p;
+pmap_activate(l)
+	struct lwp *l;
 {
-	pmap_t pmap = p->p_vmspace->vm_map.pmap;
+	pmap_t pmap = l->l_proc->p_vmspace->vm_map.pmap;
 
 	pmap_asid_alloc(pmap);
-	if (p == curproc) {
+	if (l == curlwp) {
 		segbase = pmap->pm_segtab;
 		MachSetPID(pmap->pm_asid);
 	}
@@ -695,10 +696,9 @@ pmap_activate(p)
  *	Make a previously active pmap (vmspace) inactive.
  */
 void
-pmap_deactivate(p)
-	struct proc *p;
+pmap_deactivate(l)
+	struct lwp *l;
 {
-
 	/* Nothing to do. */
 }
 
@@ -989,7 +989,7 @@ pmap_procwr(p, va, len)
 		   shouldn't need to do this for physical d$?
 		   should need to do this for virtual i$ if prot == EXEC?
 		 */
-		if (p == curproc && mips_pdcache_way_mask < PAGE_SIZE)	/* XXX check icache mask too? */
+		if (p == curlwp->l_proc && mips_pdcache_way_mask < PAGE_SIZE)	/* XXX check icache mask too? */
 			mips_icache_sync_range(va, len);
 		else
 			mips_icache_sync_range_index(va, len);
@@ -1825,11 +1825,12 @@ pmap_asid_alloc(pmap)
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_TLBPID)) {
-		if (curproc)
-			printf("pmap_asid_alloc: curproc %d '%s' ",
-				curproc->p_pid, curproc->p_comm);
+		if (curlwp)
+			printf("pmap_asid_alloc: curlwp %d.%d '%s' ",
+			    	curlwp->l_proc->p_pid, curlwp->l_lid,
+			    	curlwp->l_proc->p_comm);
 		else
-			printf("pmap_asid_alloc: curproc <none> ");
+			printf("pmap_asid_alloc: curlwp <none> ");
 		printf("segtab %p asid %d\n", pmap->pm_segtab, pmap->pm_asid);
 	}
 #endif

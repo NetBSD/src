@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.28 2002/05/10 20:14:40 uch Exp $	*/
+/*	$NetBSD: machdep.c,v 1.29 2003/01/17 23:39:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -269,7 +269,7 @@ initSH3(void *pc)	/* XXX return address */
 	__asm __volatile (
 		"jmp	@%0;"
 		"mov	%1, r15"
-		:: "r"(pc),"r"(proc0.p_md.md_pcb->pcb_sf.sf_r7_bank));
+		:: "r"(pc),"r"(lwp0.l_md.md_pcb->pcb_sf.sf_r7_bank));
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscall.c,v 1.3 2002/12/21 16:23:58 manu Exp $	*/
+/*	$NetBSD: linux_syscall.c,v 1.4 2003/01/17 23:18:29 thorpej Exp $	*/
 
 /*-
  * Portions Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -102,8 +102,8 @@
 #include <uvm/uvm_extern.h>
 
 void	linux_syscall_intern(struct proc *);
-static void linux_syscall_plain(register_t, struct proc *, struct frame *);
-static void linux_syscall_fancy(register_t, struct proc *, struct frame *);
+static void linux_syscall_plain(register_t, struct lwp *, struct frame *);
+static void linux_syscall_fancy(register_t, struct lwp *, struct frame *);
 
 void
 linux_syscall_intern(struct proc *p)
@@ -123,8 +123,9 @@ linux_syscall_intern(struct proc *p)
 }
 
 static void
-linux_syscall_plain(register_t code, struct proc *p, struct frame *frame)
+linux_syscall_plain(register_t code, struct lwp *l, struct frame *frame)
 {
+	struct proc *p = l->l_proc;
 	caddr_t params;
 	const struct sysent *callp;
 	int error, nsys;
@@ -170,7 +171,7 @@ linux_syscall_plain(register_t code, struct proc *p, struct frame *frame)
 
 	rval[0] = 0;
 	rval[1] = frame->f_regs[D1];
-	error = (*callp->sy_call)(p, args, rval);
+	error = (*callp->sy_call)(l, args, rval);
 
 	switch (error) {
 	case 0:
@@ -207,8 +208,9 @@ linux_syscall_plain(register_t code, struct proc *p, struct frame *frame)
 }
 
 static void
-linux_syscall_fancy(register_t code, struct proc *p, struct frame *frame)
+linux_syscall_fancy(register_t code, struct lwp *l, struct frame *frame)
 {
+	struct proc *p = l->l_proc;
 	caddr_t params;
 	const struct sysent *callp;
 	int error, nsys;
@@ -248,12 +250,12 @@ linux_syscall_fancy(register_t code, struct proc *p, struct frame *frame)
 		break;
 	}
 
-	if ((error = trace_enter(p, code, code, NULL, args, rval)) != 0)
+	if ((error = trace_enter(l, code, code, NULL, args, rval)) != 0)
 		goto bad;
 
 	rval[0] = 0;
 	rval[1] = frame->f_regs[D1];
-	error = (*callp->sy_call)(p, args, rval);
+	error = (*callp->sy_call)(l, args, rval);
 
 	switch (error) {
 	case 0:
@@ -285,5 +287,5 @@ linux_syscall_fancy(register_t code, struct proc *p, struct frame *frame)
 		break;
 	}
 
-	trace_exit(p, code, args, rval, error);
+	trace_exit(l, code, args, rval, error);
 }

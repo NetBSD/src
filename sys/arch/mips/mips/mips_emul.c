@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_emul.c,v 1.2 2002/07/21 05:47:51 gmcgarry Exp $ */
+/*	$NetBSD: mips_emul.c,v 1.3 2003/01/17 23:36:16 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999 Shuichiro URATA.  All rights reserved.
@@ -74,7 +74,7 @@ void	bcemul_swr(u_int32_t inst, struct frame *f, u_int32_t);
  * MIPS2 LL instruction emulation state
  */
 struct {
-	struct proc *proc;
+	struct lwp *lwp;
 	vaddr_t addr;
 	u_int32_t value;
 } llstate;
@@ -248,7 +248,7 @@ MachEmulateInst(status, cause, opc, frame)
 	default:
 		frame->f_regs[CAUSE] = cause;
 		frame->f_regs[BADVADDR] = opc;
-		trapsignal(curproc, SIGSEGV, opc);
+		trapsignal(curlwp, SIGSEGV, opc);
 	}
 }
 
@@ -261,7 +261,7 @@ send_sigsegv(u_int32_t vaddr, u_int32_t exccode, struct frame *frame,
 
 	frame->f_regs[CAUSE] = cause;
 	frame->f_regs[BADVADDR] = vaddr;
-	trapsignal(curproc, SIGSEGV, vaddr);
+	trapsignal(curlwp, SIGSEGV, vaddr);
 }
 
 static __inline void
@@ -292,7 +292,7 @@ MachEmulateLWC0(u_int32_t inst, struct frame *frame, u_int32_t cause)
 	if (vaddr > VM_MAX_ADDRESS || vaddr & 0x3) {
 		frame->f_regs[CAUSE] = cause;
 		frame->f_regs[BADVADDR] = vaddr;
-		trapsignal(curproc, SIGBUS, vaddr);
+		trapsignal(curlwp, SIGBUS, vaddr);
 		return;
 	}
 
@@ -303,7 +303,7 @@ MachEmulateLWC0(u_int32_t inst, struct frame *frame, u_int32_t cause)
 		return;
 	}
 
-	llstate.proc = curproc;
+	llstate.lwp = curlwp;
 	llstate.addr = vaddr;
 	llstate.value = *((u_int32_t *)t);
 
@@ -327,7 +327,7 @@ MachEmulateSWC0(u_int32_t inst, struct frame *frame, u_int32_t cause)
 	if (vaddr > VM_MAX_ADDRESS || vaddr & 0x3) {
 		frame->f_regs[CAUSE] = cause;
 		frame->f_regs[BADVADDR] = vaddr;
-		trapsignal(curproc, SIGBUS, vaddr);
+		trapsignal(curlwp, SIGBUS, vaddr);
 		return;
 	}
 
@@ -337,8 +337,8 @@ MachEmulateSWC0(u_int32_t inst, struct frame *frame, u_int32_t cause)
 	 * Check that the process and address match the last
 	 * LL instruction.
 	 */
-	if (curproc == llstate.proc && vaddr == llstate.addr) {
-		llstate.proc = NULL;
+	if (curlwp == llstate.lwp && vaddr == llstate.addr) {
+		llstate.lwp = NULL;
 		/*
 		 * Check that the data at the address hasn't changed
 		 * since the LL instruction.
@@ -375,7 +375,7 @@ MachEmulateSpecial(u_int32_t inst, struct frame *frame, u_int32_t cause)
 	default:
 		frame->f_regs[CAUSE] = cause;
 		frame->f_regs[BADVADDR] = frame->f_regs[PC];
-		trapsignal(curproc, SIGSEGV, frame->f_regs[PC]);
+		trapsignal(curlwp, SIGSEGV, frame->f_regs[PC]);
 	}
 
 	update_pc(frame, cause);
