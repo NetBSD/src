@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.104 2001/06/30 12:54:34 ragge Exp $	   */
+/*	$NetBSD: pmap.c,v 1.105 2001/08/05 06:14:22 matt Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -246,7 +246,7 @@ pmap_bootstrap()
 	 * There are also a couple of other things that must be in
 	 * physical memory and that isn't managed by the vm system.
 	 */
-	for (i = 0; i < ((unsigned)&etext - KERNBASE) >> VAX_PGSHIFT; i++)
+	for (i = 0; i < ((unsigned)&etext ^ KERNBASE) >> VAX_PGSHIFT; i++)
 		Sysmap[i].pg_prot = PROT_URKW;
 
 	/* Map System Page Table and zero it,  Sysmap already set. */
