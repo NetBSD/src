@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_bcast.c,v 1.7 2001/11/04 13:57:30 lukem Exp $	*/
+/*	$NetBSD: clnt_bcast.c,v 1.8 2002/09/23 14:12:31 mycroft Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -156,11 +156,6 @@ __rpc_getbroadifs(int af, int proto, int socktype, broadlist_t *list)
 		if (ifap->ifa_addr->sa_family != af ||
 		    !(ifap->ifa_flags & IFF_UP))
 			continue;
-#ifdef INET6
-		if ((af == AF_INET6 && !(ifap->ifa_flags & IFF_MULTICAST)) ||
-		    !(ifap->ifa_flags & IFF_BROADCAST))
-			continue;
-#endif
 		bip = (struct broadif *)malloc(sizeof *bip);
 		if (bip == NULL)
 			break;
@@ -169,16 +164,17 @@ __rpc_getbroadifs(int af, int proto, int socktype, broadlist_t *list)
 #ifdef INET6
 		    af != AF_INET6 &&
 #endif
-		    (ifap->ifa_flags & IFF_BROADCAST)) {
+		    (ifap->ifa_flags & IFF_BROADCAST) &&
+		    ifap->ifa_broadaddr) {
 			memcpy(&bip->broadaddr, ifap->ifa_broadaddr,
 			    (size_t)ifap->ifa_broadaddr->sa_len);
 			gbsin = (struct sockaddr_in *)(void *)&bip->broadaddr;
 			gbsin->sin_port =
 			    ((struct sockaddr_in *)
 			    (void *)res->ai_addr)->sin_port;
-		}
+		} else
 #ifdef INET6
-		else if (af == AF_INET6) {
+		if (af == AF_INET6 && (ifap->ifa_flags & IFF_MULTICAST)) {
 			sin6 = (struct sockaddr_in6 *)(void *)&bip->broadaddr;
 			inet_pton(af, RPCB_MULTICAST_ADDR, &sin6->sin6_addr);
 			sin6->sin6_family = af;
@@ -187,8 +183,12 @@ __rpc_getbroadifs(int af, int proto, int socktype, broadlist_t *list)
 			    ((struct sockaddr_in6 *)
 			    (void *)res->ai_addr)->sin6_port;
 			sin6->sin6_scope_id = bip->index;
-		}
+		} else
 #endif
+		{
+			free(bip);
+			continue;
+		}
 		TAILQ_INSERT_TAIL(list, bip, link);
 		count++;
 	}
