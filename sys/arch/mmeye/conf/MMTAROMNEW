@@ -1,4 +1,4 @@
-#	$NetBSD: MMTAROMNEW,v 1.3 2000/01/07 11:20:42 msaitoh Exp $
+#	$NetBSD: MMTAROMNEW,v 1.3.4.1 2000/11/05 01:03:14 tv Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -131,8 +131,8 @@ pcmcia*	at shpcic? controller ? socket ?
 #pcmcia*	at shb? 
 
 # SH PCMCIA controllers
-shpcic0	at shb? port 0xb000000a iomem 0xb8000000 iosiz 0x4000000
-shpcic1	at shb? port 0xb000000c iomem 0xb9000000 iosiz 0x4000000
+shpcic0	at shb? port 0xb000000a iomem 0xb8000000 iosiz 0x1000000
+shpcic1	at shb? port 0xb000000c iomem 0xb9000000 iosiz 0x1000000
 
 # Console Devices
 
