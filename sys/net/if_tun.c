@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.57 2002/11/26 18:51:19 christos Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.58 2002/12/25 08:40:20 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -15,7 +15,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.57 2002/11/26 18:51:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.58 2002/12/25 08:40:20 jdolecek Exp $");
 
 #include "tun.h"
 
@@ -161,6 +161,8 @@ tunattach0(sc)
 	ifp->if_oerrors = 0;
 	ifp->if_ipackets = 0;
 	ifp->if_opackets = 0;
+	ifp->if_ibytes   = 0;
+	ifp->if_obytes   = 0;
 	ifp->if_dlt = DLT_NULL;
 	IFQ_SET_READY(&ifp->if_snd);
 	if_attach(ifp);
@@ -438,6 +440,7 @@ tun_output(ifp, m0, dst, rt)
 	int		s;
 	int		error;
 #endif
+	int		mlen;
 	ALTQ_DECL(struct altq_pktattr pktattr;)
 
 	simple_lock(&tp->tun_lock);
@@ -499,8 +502,10 @@ tun_output(ifp, m0, dst, rt)
 			ifp->if_collisions++;
 			return (error);
 		}
+		mlen = m0->m_pkthdr.len;
 		splx(s);
 		ifp->if_opackets++;
+		ifp->if_obytes += mlen;
 		break;
 #endif
 	default:
@@ -841,6 +846,7 @@ tunwrite(dev, uio, ioflag)
 	IF_ENQUEUE(ifq, top);
 	splx(s);
 	ifp->if_ipackets++;
+	ifp->if_ibytes += tlen;
 	schednetisr(isr);
 	simple_unlock(&tp->tun_lock);
 	return (error);
