@@ -1,6 +1,6 @@
-/*	$NetBSD: ka410.c,v 1.13 1998/08/10 14:31:08 ragge Exp $ */
+/*	$NetBSD: ka46.c,v 1.1 1998/08/10 14:31:07 ragge Exp $ */
 /*
- * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
+ * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
  *
  * This code is derived from software contributed to Ludd by Bertram Barth.
@@ -50,6 +50,7 @@
 #include <machine/uvax.h>
 #include <machine/ka410.h>
 #include <machine/ka420.h>
+#include <machine/ka46.h>
 #include <machine/clock.h>
 #include <machine/vsbus.h>
 
@@ -57,74 +58,77 @@
 #include "ry.h"
 #include "ncr.h"
 
-static	void	ka410_conf __P((struct device*, struct device*, void*));
-static	void	ka410_steal_pages __P((void));
-static	void	ka410_memerr __P((void));
-static	int	ka410_mchk __P((caddr_t));
-static	void	ka410_halt __P((void));
-static	void	ka410_reboot __P((int));
-static	void	ka41_cache_enable __P((void));
+static	void	ka46_conf __P((struct device*, struct device*, void*));
+static	void	ka46_steal_pages __P((void));
+static	void	ka46_memerr __P((void));
+static	int	ka46_mchk __P((caddr_t));
+static	void	ka46_halt __P((void));
+static	void	ka46_reboot __P((int));
+#if 0
+static	void	ka46_cache_enable __P((void));
 
 static	caddr_t	l2cache;	/* mapped in address */
 static	long 	*cacr;		/* l2csche ctlr reg */
+#endif
+static	int *io_map;		/* Virtual address of i/o map */
 
 extern  short *clk_page;
 
 /* 
- * Declaration of 410-specific calls.
+ * Declaration of 46-specific calls.
  */
-struct	cpu_dep ka410_calls = {
-	ka410_steal_pages,
+struct	cpu_dep ka46_calls = {
+	ka46_steal_pages,
 	no_nicr_clock,
-	ka410_mchk,
-	ka410_memerr, 
-	ka410_conf,
+	ka46_mchk,
+	ka46_memerr, 
+	ka46_conf,
 	chip_clkread,
 	chip_clkwrite,
-	1,      /* ~VUPS */
-	ka410_halt,
-	ka410_reboot,
+	12,      /* ~VUPS */
+	ka46_halt,
+	ka46_reboot,
 };
 
 
 void
-ka410_conf(parent, self, aux)
+ka46_conf(parent, self, aux)
 	struct	device *parent, *self;
 	void	*aux;
 {
-	switch (vax_cputype) {
-	case VAX_TYP_UV2:
-		printf(": KA410\n");
-		break;
-
-	case VAX_TYP_CVAX:
-		printf(": KA41/42\n");
-		printf("%s: Enabling primary cache, ", self->dv_xname);
-mtpr(KA420_CADR_S2E|KA420_CADR_S1E|KA420_CADR_ISE|KA420_CADR_DSE, PR_CADR);
-		if (vax_confdata & KA420_CFG_CACHPR) {
-			printf("secondary cache\n");
-			ka41_cache_enable();
-		} else
-			printf("no secondary cache present\n");
-	}
+	printf(": KA46\n");
+#if 0
+	printf("%s: Enabling cache\n", self->dv_xname);
+	ka46_cache_enable();
+#endif
 }
 
+#if 0
 void
-ka41_cache_enable()
+ka46_cache_enable()
 {
-	*cacr = KA420_CACR_TPE; 	/* Clear any error, disable cache */
-	bzero(l2cache, KA420_CH2_SIZE); /* Clear whole cache */
-	*cacr = KA420_CACR_CEN;		/* Enable cache */
+	int i;
+
+	/* Disable and clear cache */
+	mtpr(PCSTS_FLUSH, PR_PCSTS);
+	/* Write valid parity to all cache entries */
+	for (i = 0; i < 256; i++) {
+		mtpr(i << 3, PR_PCIDX);
+		mtpr(PCTAG_PARITY, PR_PCTAG);
+	}
+	mtpr(PCSTS_FLUSH, PR_PCSTS);
+	mtpr(PCSTS_ENABLE, PR_PCSTS);
 }
+#endif
 
 void
-ka410_memerr()
+ka46_memerr()
 {
 	printf("Memory err!\n");
 }
 
 int
-ka410_mchk(addr)
+ka46_mchk(addr)
 	caddr_t addr;
 {
 	panic("Machine check");
@@ -132,17 +136,16 @@ ka410_mchk(addr)
 }
 
 void
-ka410_steal_pages()
+ka46_steal_pages()
 {
-	extern	vm_offset_t avail_start, virtual_avail;
+	extern	vm_offset_t avail_start, virtual_avail, avail_end;
         extern  int clk_adrshift, clk_tweak;
-	int	junk, parctl = 0;
+	int	junk, i;
 
-	/* Interrupt vector number in interrupt mask table */
-	inr_ni = VS3100_NI;
-	inr_sr = VS3100_SR;
-	inr_st = VS3100_ST;
-	inr_vf = VS3100_VF;
+        /* Interrupt vector number in interrupt mask table */
+        inr_ni = VS4000_NI;
+        inr_sr = VS4000_SR;
+        inr_st = VS4000_ST;
 	/* 
 	 * SCB is already copied/initialized at addr avail_start
 	 * by pmap_bootstrap(), but it's not yet mapped. Thus we use
@@ -179,78 +182,38 @@ ka410_steal_pages()
 
 	MAPPHYS(le_iomem, (NI_IOSIZE/NBPG), VM_PROT_READ|VM_PROT_WRITE);
 
-	if (((int)le_iomem & ~KERNBASE) > 0xffffff)
-		parctl = PARCTL_DMA;
-
-#if NSMG > 0
-	if ((vax_confdata & KA420_CFG_MULTU) == 0) {
-		MAPVIRT(sm_addr, (SMSIZE / NBPG));
-		pmap_map((vm_offset_t)sm_addr, (vm_offset_t)SMADDR,
-		    (vm_offset_t)SMADDR + SMSIZE, VM_PROT_READ|VM_PROT_WRITE);
-		((struct vs_cpu *)VS_REGS)->vc_vdcorg = 0;
-	}
-#endif
-#if NRD || NRX || NNCR
-	MAPVIRT(sca_regs, 1);
-	pmap_map((vm_offset_t)sca_regs, (vm_offset_t)KA410_DKC_BASE,
-	    (vm_offset_t)KA410_DKC_BASE + NBPG,
-	    VM_PROT_READ|VM_PROT_WRITE);
-
-	if (vax_boardtype == VAX_BTYP_410) {
-		MAPVIRT(dma_area, (KA410_DMA_SIZE / NBPG));
-		pmap_map((vm_offset_t)dma_area, (vm_offset_t)KA410_DMA_BASE,
-		    (vm_offset_t)KA410_DMA_BASE + KA410_DMA_SIZE,
-		    VM_PROT_READ|VM_PROT_WRITE);
-	} else {
-		MAPVIRT(dma_area, (KA420_DMA_SIZE / NBPG));
-		pmap_map((vm_offset_t)dma_area, (vm_offset_t)KA420_DMA_BASE,
-		    (vm_offset_t)KA420_DMA_BASE + KA420_DMA_SIZE,
-		    VM_PROT_READ|VM_PROT_WRITE);
-	}
-#endif
-	if ((vax_cputype == VAX_TYP_CVAX) &&
-	    (vax_confdata & KA420_CFG_CACHPR)) {
-		MAPVIRT(l2cache, (KA420_CH2_SIZE / NBPG));
-		pmap_map((vm_offset_t)l2cache, (vm_offset_t)KA420_CH2_BASE,
-		    (vm_offset_t)KA420_CH2_BASE + KA420_CH2_SIZE,
-		    VM_PROT_READ|VM_PROT_WRITE);
-		MAPVIRT(cacr, 1);
-		pmap_map((vm_offset_t)cacr, (vm_offset_t)KA420_CACR,
-		    (vm_offset_t)KA420_CACR + NBPG, VM_PROT_READ|VM_PROT_WRITE);
-	}
-		
 	/*
-	 * Clear restart and boot in progress flags
-	 * in the CPMBX. (ie. clear bits 4 and 5)
+	 * The I/O MMU maps all 16K device addressable memory to
+	 * the low 16M of the physical memory. In this way the
+	 * device operations emulate the VS3100 way.
+	 * This area must be on a 128k boundary and that causes
+	 * a slight waste of memory. We steal it from the end.
+	 *
+	 * This will be reworked the day NetBSD/vax changes to
+	 * 4K pages. (No use before that).
 	 */
-	KA410_WAT_BASE->cpmbx = (KA410_WAT_BASE->cpmbx & ~0x30);
+	{	int *lio_map;
 
-	/*
-	 * Enable memory parity error detection and clear error bits.
-	 */
-        switch (vax_cputype) {
-        case VAX_TYP_UV2:
-		KA410_CPU_BASE->ka410_mser = 1;
-                break;
-
-        case VAX_TYP_CVAX:
-		((struct vs_cpu *)VS_REGS)->vc_parctl =
-		    parctl | PARCTL_CPEN | PARCTL_DPEN ;
-		break;
-        }
+		avail_end &= ~0x3ffff;
+		lio_map = (int *)avail_end;
+		*(int *)(VS_REGS + 8) = avail_end & 0x07fe0000;
+		MAPVIRT(io_map, (0x20000 / NBPG));
+		pmap_map((vm_offset_t)io_map, (vm_offset_t)avail_end,
+		    (vm_offset_t)avail_end + 0x20000, VM_PROT_READ|VM_PROT_WRITE);
+		for (i = 0; i < 0x8000; i++)
+			lio_map[i] = 0x80000000|i;
+	}
 }
 
 static void
-ka410_halt()
+ka46_halt()
 {
-	asm("movl $0xc, (%0)"::"r"((int)clk_page + 0x38)); /* Don't ask */
 	asm("halt");
 }
 
 static void
-ka410_reboot(arg)
+ka46_reboot(arg)
 	int arg;
 {
-	asm("movl $0xc, (%0)"::"r"((int)clk_page + 0x38)); /* Don't ask */
 	asm("halt");
 }

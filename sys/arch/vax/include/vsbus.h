@@ -1,4 +1,4 @@
-/*	$NetBSD: vsbus.h,v 1.3 1998/06/07 18:34:09 ragge Exp $ */
+/*	$NetBSD: vsbus.h,v 1.4 1998/08/10 14:33:34 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -101,21 +101,25 @@ struct	vsbus_attach_args {
  */
 #define IVEC_BASE       0x20040020
 #define IVEC_SR         0x000002C0
-#define INR_SR          7
 #define IVEC_ST         0x000002C4
-#define INR_ST          6
 #define IVEC_NP         0x00000250
-#define INR_NP          5
 #define IVEC_NS         0x00000254
-#define INR_NS          4
 #define IVEC_VF         0x00000244
-#define INR_VF          3
 #define IVEC_VS         0x00000248
-#define INR_VS          2
 #define IVEC_SC         0x000003F8
-#define INR_SC          1
 #define IVEC_DC         0x000003FC
-#define INR_DC          0
+
+/*
+ * Interrupt mask bits.
+ */
+#define	VS3100_SR	7
+#define	VS3100_ST	6
+#define	VS3100_NI	5
+#define	VS3100_VF	3
+
+#define	VS4000_SR	5
+#define	VS4000_ST	4
+#define	VS4000_NI	1
 
 caddr_t	dz_regs;	/* On-board serial line */
 caddr_t	le_iomem;       /* base addr of RAM -- CPU's view */
@@ -123,6 +127,9 @@ short   *lance_csr;     /* LANCE CSR virtual address */
 int     *lance_addr;    /* Ethernet address */
 struct  vs_cpu *vs_cpu; /* Common CPU registers */
 caddr_t	sm_addr;	/* virtual address of graphic space */
+caddr_t	dma_area;	/* DMA area mapping addess */
+caddr_t	sca_regs;	/* device registers */
+int	inr_ni, inr_sr, inr_st, inr_vf; /* Interrupt register bit */
 
 void vsbus_intr_enable __P((int));
 void vsbus_intr_disable  __P((int));
