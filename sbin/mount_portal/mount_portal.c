@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_portal.c,v 1.4 1995/03/18 14:57:56 cgd Exp $	*/
+/*	$NetBSD: mount_portal.c,v 1.5 1995/06/06 19:51:19 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -46,7 +46,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount_portal.c	8.4 (Berkeley) 3/27/94";
 #else
-static char rcsid[] = "$NetBSD: mount_portal.c,v 1.4 1995/03/18 14:57:56 cgd Exp $";
+static char rcsid[] = "$NetBSD: mount_portal.c,v 1.5 1995/06/06 19:51:19 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -78,8 +78,9 @@ static void usage __P((void));
 
 static sig_atomic_t readcf;	/* Set when SIGHUP received */
 
-static void sigchld(sig)
-int sig;
+static void
+sigchld(sig)
+	int sig;
 {
 	pid_t pid;
 
@@ -87,6 +88,14 @@ int sig;
 		;
 	if (pid < 0 && errno != ECHILD)
 		syslog(LOG_WARNING, "waitpid: %s", strerror(errno));
+}
+
+static void
+sighup(sig)
+	int sig;
+{
+
+	readcf = 1;
 }
 
 int
@@ -180,6 +189,7 @@ main(argc, argv)
 	readcf = 1;
 
 	signal(SIGCHLD, sigchld);
+	signal(SIGHUP, sighup);
 
 	/*
 	 * Just loop waiting for new connections and activating them
@@ -206,8 +216,9 @@ main(argc, argv)
 		 * Will get EINTR if a signal has arrived, so just
 		 * ignore that error code
 		 */
+		FD_ZERO(&fdset);
 		FD_SET(so, &fdset);
-		rc = select(so+1, &fdset, (void *) 0, (void *) 0, (void *) 0);
+		rc = select(so+1, &fdset, (fd_set *) 0, (fd_set *) 0, (fd_set *) 0);
 		if (rc < 0) {
 			if (errno == EINTR)
 				continue;
