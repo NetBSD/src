@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.13 1998/08/09 20:15:39 perry Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.14 1998/09/01 03:20:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -58,6 +58,7 @@
 #include <sys/vnode.h>
 #include <sys/lockf.h>
 #include <sys/malloc.h>
+#include <sys/pool.h>
 #include <sys/signalvar.h>
 
 #include <vm/vm.h>
@@ -1416,7 +1417,7 @@ ext2fs_reclaim(v)
 		ip->i_devvp = 0;
 	}
 
-	FREE(vp->v_data, M_EXT2FSNODE);
+	pool_put(&ext2fs_inode_pool, vp->v_data);
 	vp->v_data = NULL;
 	return (0);
 }
