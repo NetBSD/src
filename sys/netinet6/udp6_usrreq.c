@@ -1,5 +1,5 @@
-/*	$NetBSD: udp6_usrreq.c,v 1.28 2000/05/22 15:22:36 itojun Exp $	*/
-/*	$KAME: udp6_usrreq.c,v 1.46 2000/04/17 16:16:32 itojun Exp $	*/
+/*	$NetBSD: udp6_usrreq.c,v 1.29 2000/06/05 06:38:23 itojun Exp $	*/
+/*	$KAME: udp6_usrreq.c,v 1.52 2000/06/05 00:41:58 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -547,10 +547,11 @@ udp6_ctlinput(cmd, sa, d)
 }
 
 int
-udp6_output(in6p, m, addr6, control)
+udp6_output(in6p, m, addr6, control, p)
 	register struct in6pcb *in6p;
 	register struct mbuf *m;
 	struct mbuf *addr6, *control;
+	struct proc *p;
 {
 	register u_int32_t ulen = m->m_pkthdr.len;
 	u_int32_t plen = sizeof(struct udphdr) + ulen;
@@ -561,7 +562,6 @@ udp6_output(in6p, m, addr6, control)
 	int error = 0;
 	struct ip6_pktopts opt, *stickyopt = in6p->in6p_outputopts;
 	int priv;
-	struct proc *p = curproc;	/* XXX */
 	int af, hlen;
 #ifdef INET
 	struct ip *ip;
@@ -849,7 +849,7 @@ udp6_usrreq(so, req, m, addr6, control, p)
 
 	case PRU_BIND:
 		s = splsoftnet();
-		error = in6_pcbbind(in6p, addr6);
+		error = in6_pcbbind(in6p, addr6, p);
 		splx(s);
 		break;
 
@@ -899,7 +899,7 @@ udp6_usrreq(so, req, m, addr6, control, p)
 		break;
 
 	case PRU_SEND:
-		return(udp6_output(in6p, m, addr6, control));
+		return(udp6_output(in6p, m, addr6, control, p));
 
 	case PRU_ABORT:
 		soisdisconnected(so);
