@@ -1,4 +1,4 @@
-/*	$NetBSD: ukphy.c,v 1.20 2002/09/27 20:39:27 thorpej Exp $	*/
+/*	$NetBSD: ukphy.c,v 1.21 2002/09/30 21:57:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukphy.c,v 1.20 2002/09/27 20:39:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukphy.c,v 1.21 2002/09/30 21:57:50 thorpej Exp $");
 
 #include "opt_mii.h"
 
@@ -101,10 +101,8 @@ struct mii_knowndev {
 int	ukphymatch(struct device *, struct cfdata *, void *);
 void	ukphyattach(struct device *, struct device *, void *);
 
-const struct cfattach ukphy_ca = {
-	sizeof(struct mii_softc), ukphymatch, ukphyattach, mii_phy_detach,
-	    mii_phy_activate
-};
+CFATTACH_DECL(ukphy, sizeof(struct mii_softc),
+    ukphymatch, ukphyattach, mii_phy_detach, mii_phy_activate)
 
 int	ukphy_service(struct mii_softc *, struct mii_data *, int);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: hcsc.c,v 1.10 2002/09/27 20:41:12 thorpej Exp $	*/
+/*	$NetBSD: hcsc.c,v 1.11 2002/09/30 22:33:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hcsc.c,v 1.10 2002/09/27 20:41:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hcsc.c,v 1.11 2002/09/30 22:33:19 thorpej Exp $");
 
 #include <sys/param.h>
 
@@ -119,9 +119,8 @@ struct hcsc_softc {
 	struct evcnt	sc_intrcnt;
 };
 
-const struct cfattach hcsc_ca = {
-	sizeof(struct hcsc_softc), hcsc_match, hcsc_attach
-};
+CFATTACH_DECL(hcsc, sizeof(struct hcsc_softc),
+    hcsc_match, hcsc_attach, NULL, NULL)
 
 /*
  * Card probe function
