@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.117 1996/09/18 03:33:23 briggs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.118 1996/09/27 06:55:29 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1594,7 +1594,7 @@ static romvec_t romvecs[] =
 	},
 	/*
 	 * Vectors verified for Mac Classic II and LC II
-	 * (LC III?  Other LC's?  680x0 Performas?)
+	 * (Other LC's?  680x0 Performas?)
 	 */
 	{			/* 3 */
 		"Mac Classic II ROMs",
@@ -1915,6 +1915,36 @@ static romvec_t romvecs[] =
 		(caddr_t) 0x4081c406,	/* FixDiv */
 		(caddr_t) 0x4081c312,	/* FixMul */
 	},
+	/*
+	 * Vectors verified for LC III
+	 * (Universal ROM version 0x067c)
+	 */
+	{			/* 14 */
+		"LC III ROMs",
+		(caddr_t) 0x40814912,	/* ADB interrupt */
+		(caddr_t) 0x0,		/* PM ADB interrupt */
+		(caddr_t) 0x408b2f94,	/* ADBBase + 130 interupt */
+		(caddr_t) 0x4080a360,	/* CountADBs */
+		(caddr_t) 0x4080a37a,	/* GetIndADB */
+		(caddr_t) 0x4080a3a6,	/* GetADBInfo */
+		(caddr_t) 0x4080a3ac,	/* SetADBInfo */
+		(caddr_t) 0x4080a752,	/* ADBReInit */
+		(caddr_t) 0x4080a3dc,	/* ADBOp */
+		(caddr_t) 0x0,		/* PMgrOp */
+		(caddr_t) 0x4080c05c,	/* WriteParam */
+		(caddr_t) 0x4080c086,	/* SetDateTime */
+		(caddr_t) 0x4080c5cc,	/* InitUtil */
+		(caddr_t) 0x4080b186,	/* ReadXPRam */
+		(caddr_t) 0x4080b190,	/* WriteXPRam */
+		(caddr_t) 0x408b39b6,	/* jClkNoMem */
+		(caddr_t) 0x4080a818,	/* ADBAlternateInit */
+		(caddr_t) 0x40814800,	/* Egret */
+		(caddr_t) 0x408147c4,	/* InitEgret */
+		(caddr_t) 0x408d2918,	/* ADBReInit_JTBL */
+		(caddr_t) 0x4087eb90,	/* ROMResourceMap List Head */
+		(caddr_t) 0x4081c406,	/* FixDiv */
+		(caddr_t) 0x4081c312,	/* FixMul */
+	},
 	/* Please fill these in! -BG */
 };
 
@@ -1978,7 +2008,7 @@ struct cpu_model_info cpu_models[] = {
 
 /* The LCs... */
 	{MACH_MACLCII,  "LC", " II ",  MACH_CLASSLC, &romvecs[3]},
-	{MACH_MACLCIII, "LC", " III ", MACH_CLASSLC, &romvecs[3]},
+	{MACH_MACLCIII, "LC", " III ", MACH_CLASSLC, &romvecs[14]},
 	{MACH_MACLC475, "LC", " 475 ", MACH_CLASSQ,  &romvecs[9]},
 	{MACH_MACLC520, "LC", " 520 ", MACH_CLASSLC, &romvecs[3]},
 	{MACH_MACLC575, "LC", " 575 ", MACH_CLASSLC, &romvecs[3]},
