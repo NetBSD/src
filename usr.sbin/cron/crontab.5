@@ -1,4 +1,4 @@
-.\"	$NetBSD: crontab.5,v 1.6 1997/07/20 02:54:55 mouse Exp $
+.\"	$NetBSD: crontab.5,v 1.7 1998/10/12 22:15:47 aidan Exp $
 .\"
 .\"/* Copyright 1988,1990,1993,1994 by Paul Vixie
 .\" * All rights reserved
@@ -54,7 +54,10 @@ will be part of the value assigned to
 The
 .I value
 string may be placed in quotes (single or double, but matching) to preserve
-leading or trailing blanks.
+leading or trailing blanks.  The
+.I name
+string may also be placed in quotes (single or double, but matching) to preserve
+leading, trailing or inner blanks.
 .PP
 Several environment variables are set up
 automatically by the
