@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.72 2003/02/01 06:23:46 thorpej Exp $	*/
+/*	$NetBSD: in6.c,v 1.73 2003/02/24 03:01:03 matt Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.72 2003/02/01 06:23:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.73 2003/02/24 03:01:03 matt Exp $");
 
 #include "opt_inet.h"
 
@@ -2238,7 +2238,7 @@ in6_prefixlen2mask(maskp, len)
 	struct in6_addr *maskp;
 	int len;
 {
-	u_char maskarray[8] = {0x80, 0xc0, 0xe0, 0xf0, 0xf8, 0xfc, 0xfe, 0xff};
+	static const u_char maskarray[8] = {0x80, 0xc0, 0xe0, 0xf0, 0xf8, 0xfc, 0xfe, 0xff};
 	int bytelen, bitlen, i;
 
 	/* sanity check */
