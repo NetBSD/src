@@ -48,12 +48,13 @@ static char sccsid[] = "@(#)xinstall.c	5.24 (Berkeley) 7/1/90";
 #include <pwd.h>
 #include <stdio.h>
 #include <ctype.h>
+#include <errno.h>
 #include <paths.h>
 #include "pathnames.h"
 
 static struct passwd *pp;
 static struct group *gp;
-static int docopy, dostrip, mode = 0755;
+static int docopy, dostrip, dodir, mode = 0755;
 static char *group, *owner, pathbuf[MAXPATHLEN];
 
 main(argc, argv)
@@ -67,7 +68,7 @@ main(argc, argv)
 	int ch, no_target;
 	char *to_name;
 
-	while ((ch = getopt(argc, argv, "cg:m:o:s")) != EOF)
+	while ((ch = getopt(argc, argv, "cg:m:o:sd")) != EOF)
 		switch((char)ch) {
 		case 'c':
 			docopy = 1;
@@ -89,13 +90,22 @@ main(argc, argv)
 		case 's':
 			dostrip = 1;
 			break;
+		case 'd':
+			dodir = 1;
+			break;
 		case '?':
 		default:
 			usage();
 		}
 	argc -= optind;
 	argv += optind;
-	if (argc < 2)
+
+	/* copy and strip options make no sense when creating directories */
+	if ((docopy || dostrip) && dodir)
+		usage();
+
+	/* must have at least two arguments, except when creating directories */
+	if (argc < 2 && !dodir)
 		usage();
 
 	/* get group and owner id's */
@@ -108,8 +118,15 @@ main(argc, argv)
 		exit(1);
 	}
 
+	if (dodir) {
+		for (; *argv != NULL; ++argv)
+			build(*argv);
+		exit (0);
+		/* NOTREACHED */
+	} 
+
 	no_target = stat(to_name = argv[argc - 1], &to_sb);
-	if (!no_target && (to_sb.st_mode & S_IFMT) == S_IFDIR) {
+	if (!no_target && S_ISDIR(to_sb.st_mode)) {
 		for (; *argv != to_name; ++argv)
 			install(*argv, to_name, 1);
 		exit(0);
@@ -124,7 +141,7 @@ main(argc, argv)
 			fprintf(stderr, "install: can't find %s.\n", *argv);
 			exit(1);
 		}
-		if ((to_sb.st_mode & S_IFMT) != S_IFREG) {
+		if (!S_ISREG(to_sb.st_mode)) {
 			fprintf(stderr, "install: %s isn't a regular file.\n", to_name);
 			exit(1);
 		}
@@ -157,7 +174,7 @@ install(from_name, to_name, isdir)
 			fprintf(stderr, "install: can't find %s.\n", from_name);
 			exit(1);
 		}
-		if ((from_sb.st_mode & S_IFMT) != S_IFREG) {
+		if (!S_ISREG(from_sb.st_mode)) {
 			fprintf(stderr, "install: %s isn't a regular file.\n", from_name);
 			exit(1);
 		}
@@ -252,6 +269,41 @@ strip(to_name)
 }
 
 /*
+ * build --
+ *	build directory heirarchy
+ */
+build(path)
+        char *path;
+{
+        register char *p;
+        struct stat sb;
+        int create, ch;
+
+        for (create = 0, p = path;; ++p)
+                if (!*p || *p  == '/') {
+                        ch = *p;
+                        *p = '\0';
+                        if (stat(path, &sb)) {
+                                if (errno != ENOENT || mkdir(path, 0777) < 0) {
+                                        error(path);
+                                        return(1);
+                                }
+                                create = 1;
+                        }
+                        if (!(*p = ch))
+                                break;
+                }
+
+	if ((group || owner) &&
+            chown(path, owner ? pp->pw_uid : -1, group ? gp->gr_gid : -1) ||
+            chmod(path, mode)) {
+                error(path);
+        }
+
+        return(0);
+}
+
+/*
  * error --
  *	print out an error message
  */
@@ -281,7 +333,9 @@ bad(fname)
  */
 usage()
 {
-	(void)fprintf(stderr,
-"usage: install [-cs] [-g group] [-m mode] [-o owner] file1 file2;\n\tor file1 ... fileN directory\n");
+	(void)fprintf(stderr, "\
+usage: install [-cs] [-g group] [-m mode] [-o owner] file1 file2\n\
+       install [-cs] [-g group] [-m mode] [-o owner] file1 ... fileN directory\n\
+       install  -d   [-g group] [-m mode] [-o owner] directory ...\n");
 	exit(1);
 }
