@@ -30,7 +30,7 @@
  *
  *	dp.h:  defines for the dp driver.
  *
- *	$Id: dpreg.h,v 1.1.1.1 1993/09/09 23:53:53 phil Exp $
+ *	$Id: dpreg.h,v 1.2 1993/10/01 22:59:44 phil Exp $
  */
 
 /* Most of this comes from the Minix dp driver by Bruce Culbertson. */
@@ -39,8 +39,7 @@
  */
 #define DP_CTL		0xffd00000	/* base for control registers */
 #define DP_DMA		0xffe00000	/* base for data registers */
-#define DP_DMA_EOP	(DP_DMA | A22)	/* SCSI DMA with EOP asserted */
-#define A22		(1 << 22)
+#define DP_DMA_EOP	(DP_DMA | 0xe0000) /* SCSI DMA with EOP asserted */
 #define DP_CURDATA	(DP_CTL+0)
 #define DP_OUTDATA	(DP_CTL+0)
 #define DP_ICMD		(DP_CTL+1)
@@ -68,6 +67,7 @@
 #define DP_ENABLE_DB	0x01
 #define DP_EMODE	0x40		/* enhanced mode */
 #define DP_EF_NOP	0x00		/* enhanced functions */
+#define DP_EF_ARB	0x01
 #define DP_EF_RESETIP	0x02
 #define DP_EF_START_RCV	0x04
 #define DP_EF_ISR_NEXT	0x06
@@ -77,8 +77,25 @@
 #define DP_ISR_DPHS	0x10
 #define DP_INT_MASK	(~(DP_ISR_APHS | DP_ISR_BSYERR))
 
+#define DP_PHASE_DATAO	0	/* Data out */
+#define DP_PHASE_DATAI	1	/* Data in */
+#define DP_PHASE_CMD	2	/* CMD out */
+#define DP_PHASE_STATUS	3	/* Status in */
+#define DP_PHASE_MSGO	6	/* Message out */
+#define DP_PHASE_MSGI	7	/* Message in */
+
+#define DP_PHASE_NONE	4	/* will mismatch all phases (??) */
+
+/* Driver state. Helps interrupt code decide what to do next. */
+#define DP_DVR_READY	0
+#define DP_DVR_STARTED  1
+#define DP_DVR_ARB	2
+#define DP_DVR_CMD	3
+#define DP_DVR_DATA	4
+#define DP_DVR_STAT	5
+#define DP_DVR_SENSE	6
+
 #define dp_clear_isr()			/* clear 8490 interrupts */	\
-      RD_ADR (u_char, DP_EMR_ISR);					\
       WR_ADR (u_char, DP_EMR_ISR, DP_EF_RESETIP);			\
       WR_ADR (u_char, DP_EMR_ISR, DP_EF_NOP | DP_EMR_APHS);
 
@@ -98,14 +115,9 @@
 #define ICU_DATA	(ICU_ADR+19)
 #define ICU_SCSI_BIT	0x80
 
-/* This tells when to poll and when to sleep while waiting for next
- * SCSI phase.  Sleep after command phase and out data phase.
- */
-#define SCSI_SLEEP	((1<<PH_CMD) | (1<<PH_ODATA))
-
 /* Miscellaneous
  */
-#define MAX_WAIT	2000000
+#define WAIT_MUL	1000	/* Estimate! .. for polling. */
 
 #define OK		1
 #define NOT_OK		0
