@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.47.2.21 1993/11/09 10:51:49 mycroft Exp $
+ *	$Id: machdep.c,v 1.47.2.22 1993/11/14 04:40:44 mycroft Exp $
  */
 
 #include <stddef.h>
@@ -369,13 +369,13 @@ sendsig(catcher, sig, mask, code)
 	unsigned code;
 {
 	register struct proc *p = curproc;
-	register int *regs;
+	register struct trapframe *tf;
 	register struct sigframe *fp;
 	struct sigacts *ps = p->p_sigacts;
 	int oonstack;
 	extern char sigcode[], esigcode[];
 
-	regs = p->p_regs;
+	tf = (struct trapframe *)p->p_regs;
 	oonstack = ps->ps_onstack;
 	/*
 	 * Allocate and validate space for the signal handler
@@ -389,8 +389,7 @@ sendsig(catcher, sig, mask, code)
 				- sizeof(struct sigframe));
 		ps->ps_onstack = 1;
 	} else
-		fp = (struct sigframe *)(regs[tESP]
-				- sizeof(struct sigframe));
+		fp = (struct sigframe *)(tf->tf_esp - sizeof(struct sigframe));
 
 	if ((unsigned)fp <= USRSTACK - ctob(p->p_vmspace->vm_ssize)) 
 		(void)grow(p, (unsigned)fp);
@@ -422,30 +421,31 @@ sendsig(catcher, sig, mask, code)
 	 */
 	fp->sf_sc.sc_onstack = oonstack;
 	fp->sf_sc.sc_mask = mask;
-	fp->sf_sc.sc_sp = regs[tESP];
-	fp->sf_sc.sc_fp = regs[tEBP];
-	fp->sf_sc.sc_pc = regs[tEIP];
-	fp->sf_sc.sc_ps = regs[tEFLAGS];
-	fp->sf_sc.sc_eax = regs[tEAX];
-	fp->sf_sc.sc_ebx = regs[tEBX];
-	fp->sf_sc.sc_ecx = regs[tECX];
-	fp->sf_sc.sc_edx = regs[tEDX];
-	fp->sf_sc.sc_esi = regs[tESI];
-	fp->sf_sc.sc_edi = regs[tEDI];
-	fp->sf_sc.sc_cs = regs[tCS];
-	fp->sf_sc.sc_ds = regs[tDS];
-	fp->sf_sc.sc_es = regs[tES];
-	fp->sf_sc.sc_ss = regs[tSS];
+	fp->sf_sc.sc_fp = tf->tf_ebp;
+	fp->sf_sc.sc_sp = tf->tf_esp;
+	fp->sf_sc.sc_isp = tf->tf_isp;
+	fp->sf_sc.sc_pc = tf->tf_eip;
+	fp->sf_sc.sc_ps = tf->tf_eflags;
+	fp->sf_sc.sc_eax = tf->tf_eax;
+	fp->sf_sc.sc_ebx = tf->tf_ebx;
+	fp->sf_sc.sc_ecx = tf->tf_ecx;
+	fp->sf_sc.sc_edx = tf->tf_edx;
+	fp->sf_sc.sc_esi = tf->tf_esi;
+	fp->sf_sc.sc_edi = tf->tf_edi;
+	fp->sf_sc.sc_cs = tf->tf_cs;
+	fp->sf_sc.sc_ds = tf->tf_ds;
+	fp->sf_sc.sc_es = tf->tf_es;
+	fp->sf_sc.sc_ss = tf->tf_ss;
 
 	/*
 	 * Build context to run handler in.
 	 */
-	regs[tESP] = (int)fp;
-	regs[tEIP] = (int)(((char *)PS_STRINGS) - (esigcode - sigcode));
-	regs[tCS] = _ucodesel;
-	regs[tDS] = _udatasel;
-	regs[tES] = _udatasel;
-	regs[tSS] = _udatasel;
+	tf->tf_esp = (int)fp;
+	tf->tf_eip = (int)(((char *)PS_STRINGS) - (esigcode - sigcode));
+	tf->tf_cs = _ucodesel;
+	tf->tf_ds = _udatasel;
+	tf->tf_es = _udatasel;
+	tf->tf_ss = _udatasel;
 }
 
 /*
@@ -469,7 +469,9 @@ sigreturn(p, uap, retval)
 {
 	register struct sigcontext *scp;
 	register struct sigframe *fp;
-	register int *regs = p->p_regs;
+	register struct trapframe *tf;
+
+	tf = (struct trapframe *)p->p_regs;
 
 	/*
 	 * The trampoline code hands us the context.
@@ -492,7 +494,7 @@ sigreturn(p, uap, retval)
 
 	/* compare IOPL; we can't insist that it's always 3 or the X server
 	   will fail */
-	if ((regs[tEFLAGS] & PSL_IOPL) < (scp->sc_efl & PSL_IOPL))
+	if ((tf->tf_eflags & PSL_IOPL) < (scp->sc_efl & PSL_IOPL))
 		return(EINVAL);
 
 	p->p_sigacts->ps_onstack = scp->sc_onstack & 01;
@@ -502,21 +504,21 @@ sigreturn(p, uap, retval)
 	/*
 	 * Restore signal context.
 	 */
-	regs[tEBP] = scp->sc_ebp;
-	regs[tESP] = scp->sc_esp;
-	regs[tISP] = scp->sc_isp;
-	regs[tEIP] = scp->sc_eip;
-	regs[tEFLAGS] = scp->sc_efl;
-	regs[tEAX] = scp->sc_eax;
-	regs[tEBX] = scp->sc_ebx;
-	regs[tECX] = scp->sc_ecx;
-	regs[tEDX] = scp->sc_edx;
-	regs[tESI] = scp->sc_esi;
-	regs[tEDI] = scp->sc_edi;
-	regs[tCS] = scp->sc_cs;
-	regs[tDS] = scp->sc_ds;
-	regs[tES] = scp->sc_es;
-	regs[tSS] = scp->sc_ss;
+	tf->tf_ebp = scp->sc_ebp;
+	tf->tf_esp = scp->sc_esp;
+	tf->tf_isp = scp->sc_isp;
+	tf->tf_eip = scp->sc_eip;
+	tf->tf_eflags = scp->sc_efl;
+	tf->tf_eax = scp->sc_eax;
+	tf->tf_ebx = scp->sc_ebx;
+	tf->tf_ecx = scp->sc_ecx;
+	tf->tf_edx = scp->sc_edx;
+	tf->tf_esi = scp->sc_esi;
+	tf->tf_edi = scp->sc_edi;
+	tf->tf_cs = scp->sc_cs;
+	tf->tf_ds = scp->sc_ds;
+	tf->tf_es = scp->sc_es;
+	tf->tf_ss = scp->sc_ss;
 	return(EJUSTRETURN);
 }
 
