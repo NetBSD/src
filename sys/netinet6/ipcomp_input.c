@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcomp_input.c,v 1.9 2000/02/06 12:49:46 itojun Exp $	*/
+/*	$NetBSD: ipcomp_input.c,v 1.10 2000/02/17 10:59:39 darrenr Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.
@@ -78,9 +78,6 @@
 #define IPLEN_FLIPPED
 
 #ifdef INET
-extern struct protosw inetsw[];
-extern u_char ip_protox[];
-
 void
 #if __STDC__
 ipcomp4_input(struct mbuf *m, ...)

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.40 2000/02/15 04:03:49 thorpej Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.41 2000/02/17 10:59:35 darrenr Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -153,8 +153,6 @@ static int	ip_next_mtu __P((int, int));
 /*static*/ int	ip_next_mtu __P((int, int));
 #endif
 
-extern	struct protosw inetsw[];
-
 extern	struct timeval icmperrratelim;
 
 static void icmp_mtudisc __P((struct icmp *));
@@ -293,7 +291,6 @@ icmp_input(m, va_alist)
 	struct in_ifaddr *ia;
 	void *(*ctlfunc) __P((int, struct sockaddr *, void *));
 	int code;
-	extern u_char ip_protox[];
 	int hlen;
 	va_list ap;
 

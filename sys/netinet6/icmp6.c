@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.21 2000/02/15 00:31:08 thorpej Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.22 2000/02/17 10:59:38 darrenr Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -107,8 +107,6 @@
 #include <net/net_osdep.h>
 
 extern struct domain inet6domain;
-extern struct ip6protosw inet6sw[];
-extern u_char ip6_protox[];
 
 struct icmp6stat icmp6stat;
 
