@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.15 2000/03/23 07:03:32 thorpej Exp $	*/
+/*	$NetBSD: key.c,v 1.16 2000/03/30 13:03:58 augustss Exp $	*/
 /*	$KAME: key.c,v 1.67 2000/03/05 02:38:25 itojun Exp $	*/
 
 /*
@@ -3258,8 +3258,8 @@ key_cmpspidx_withmask(spidx0, spidx1)
  */
 static int
 key_bbcmp(p1, p2, bits)
-	register caddr_t p1, p2;
-	register u_int bits;
+	caddr_t p1, p2;
+	u_int bits;
 {
 	u_int8_t mask;
 

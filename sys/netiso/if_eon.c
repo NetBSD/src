@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eon.c,v 1.28 2000/03/01 12:49:51 itojun Exp $	*/
+/*	$NetBSD: if_eon.c,v 1.29 2000/03/30 13:10:11 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -142,7 +142,7 @@ struct eon_llinfo eon_llinfo;
 void
 eonattach()
 {
-	register struct ifnet *ifp = eonif;
+	struct ifnet *ifp = eonif;
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_EON]) {
@@ -186,12 +186,12 @@ eonattach()
  */
 int
 eonioctl(ifp, cmd, data)
-	register struct ifnet *ifp;
+	struct ifnet *ifp;
 	u_long          cmd;
-	register caddr_t data;
+	caddr_t data;
 {
 	int             s = splimp();
-	register int    error = 0;
+	int    error = 0;
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_EON]) {
@@ -200,7 +200,7 @@ eonioctl(ifp, cmd, data)
 #endif
 
 	switch (cmd) {
-		register struct ifaddr *ifa;
+		struct ifaddr *ifa;
 
 	case SIOCSIFADDR:
 		if ((ifa = (struct ifaddr *) data) != NULL) {
@@ -221,12 +221,12 @@ eonioctl(ifp, cmd, data)
 void
 eoniphdr(hdr, loc, ro, class, zero)
 	struct route   *ro;
-	register struct eon_iphdr *hdr;
+	struct eon_iphdr *hdr;
 	caddr_t         loc;
 	int		class, zero;
 {
 	struct mbuf     mhead;
-	register struct sockaddr_in *sin = satosin(&ro->ro_dst);
+	struct sockaddr_in *sin = satosin(&ro->ro_dst);
 	if (zero) {
 		bzero((caddr_t) hdr, sizeof(*hdr));
 		bzero((caddr_t) ro, sizeof(*ro));
@@ -280,12 +280,12 @@ eoniphdr(hdr, loc, ro, class, zero)
 void
 eonrtrequest(cmd, rt, gate)
 	int cmd;
-	register struct rtentry *rt;
-	register struct sockaddr *gate;
+	struct rtentry *rt;
+	struct sockaddr *gate;
 {
 	unsigned long   zerodst = 0;
 	caddr_t         ipaddrloc = (caddr_t) & zerodst;
-	register struct eon_llinfo *el = (struct eon_llinfo *) rt->rt_llinfo;
+	struct eon_llinfo *el = (struct eon_llinfo *) rt->rt_llinfo;
 
 	/*
 	 * Common Housekeeping
@@ -352,13 +352,13 @@ eonrtrequest(cmd, rt, gate)
 int
 eonoutput(ifp, m, sdst, rt)
 	struct ifnet   *ifp;
-	register struct mbuf *m;	/* packet */
+	struct mbuf *m;	/* packet */
 	struct sockaddr *sdst;		/* destination addr */
 	struct rtentry *rt;
 {
 	struct sockaddr_iso *dst = (struct sockaddr_iso *) sdst;
-	register struct eon_llinfo *el;
-	register struct eon_iphdr *ei;
+	struct eon_llinfo *el;
+	struct eon_iphdr *ei;
 	struct route   *ro;
 	int             datalen;
 	struct mbuf    *mh;
@@ -377,7 +377,7 @@ eonoutput(ifp, m, sdst, rt)
 	ifp->if_opackets++;
 	if (rt == 0 || (el = (struct eon_llinfo *) rt->rt_llinfo) == 0) {
 		if (dst->siso_family == AF_LINK) {
-			register struct sockaddr_dl *sdl = (struct sockaddr_dl *) dst;
+			struct sockaddr_dl *sdl = (struct sockaddr_dl *) dst;
 
 			ipaddrloc = LLADDR(sdl);
 			alen = sdl->sdl_alen;
@@ -464,8 +464,8 @@ eoninput(m, va_alist)
 #endif
 {
 	int             iphlen;
-	register struct eon_hdr *eonhdr;
-	register struct ip *iphdr;
+	struct eon_hdr *eonhdr;
+	struct ip *iphdr;
 	struct ifnet   *eonifp;
 	int             s;
 	va_list ap;

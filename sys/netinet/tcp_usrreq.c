@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.48 2000/02/15 19:54:12 thorpej Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.49 2000/03/30 13:25:10 augustss Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -173,11 +173,11 @@ tcp_usrreq(so, req, m, nam, control, p)
 	struct mbuf *m, *nam, *control;
 	struct proc *p;
 {
-	register struct inpcb *inp;
+	struct inpcb *inp;
 #ifdef INET6
-	register struct in6pcb *in6p;
+	struct in6pcb *in6p;
 #endif
-	register struct tcpcb *tp = NULL;
+	struct tcpcb *tp = NULL;
 	int s;
 	int error = 0;
 	int ostate;
@@ -571,11 +571,11 @@ tcp_ctloutput(op, so, level, optname, mp)
 	int error = 0, s;
 	struct inpcb *inp;
 #ifdef INET6
-	register struct in6pcb *in6p;
+	struct in6pcb *in6p;
 #endif
-	register struct tcpcb *tp;
-	register struct mbuf *m;
-	register int i;
+	struct tcpcb *tp;
+	struct mbuf *m;
+	int i;
 	int family;	/* family of the socket */
 
 	family = so->so_proto->pr_domain->dom_family;
@@ -702,7 +702,7 @@ int
 tcp_attach(so)
 	struct socket *so;
 {
-	register struct tcpcb *tp;
+	struct tcpcb *tp;
 	struct inpcb *inp;
 #ifdef INET6
 	struct in6pcb *in6p;
@@ -793,7 +793,7 @@ tcp_attach(so)
  */
 struct tcpcb *
 tcp_disconnect(tp)
-	register struct tcpcb *tp;
+	struct tcpcb *tp;
 {
 	struct socket *so;
 
@@ -832,7 +832,7 @@ tcp_disconnect(tp)
  */
 struct tcpcb *
 tcp_usrclosed(tp)
-	register struct tcpcb *tp;
+	struct tcpcb *tp;
 {
 
 	switch (tp->t_state) {

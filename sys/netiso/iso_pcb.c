@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_pcb.c,v 1.18 1999/03/12 22:42:31 perry Exp $	*/
+/*	$NetBSD: iso_pcb.c,v 1.19 2000/03/30 13:10:11 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -115,7 +115,7 @@ iso_pcballoc(so, v)
 	void *v;
 {
 	struct isopcb  *head = v;
-	register struct isopcb *isop;
+	struct isopcb *isop;
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_ISO]) {
@@ -153,13 +153,13 @@ iso_pcballoc(so, v)
  */
 int
 iso_pcbbind(v, nam, p)
-	register void *v;
+	void *v;
 	struct mbuf *nam;
 	struct proc *p;
 {
-	register struct isopcb *isop = v;
-	register struct isopcb *head = isop->isop_head;
-	register struct sockaddr_iso *siso;
+	struct isopcb *isop = v;
+	struct isopcb *head = isop->isop_head;
+	struct sockaddr_iso *siso;
 	struct iso_ifaddr *ia;
 	union {
 		char            data[2];
@@ -240,7 +240,7 @@ iso_pcbbind(v, nam, p)
 		    (p == 0 || (error = suser(p->p_ucred, &p->p_acflag))))
 			return EACCES;
 	} else {
-		register char  *cp;
+		char  *cp;
 noname:
 		cp = TSEL(isop->isop_laddr);
 		isop->isop_laddr->siso_tlen = 2;
@@ -291,8 +291,8 @@ iso_pcbconnect(v, nam)
 	void *v;
 	struct mbuf    *nam;
 {
-	register struct isopcb *isop = v;
-	register struct sockaddr_iso *siso = mtod(nam, struct sockaddr_iso *);
+	struct isopcb *isop = v;
+	struct sockaddr_iso *siso = mtod(nam, struct sockaddr_iso *);
 	int             local_zero, error = 0;
 	struct iso_ifaddr *ia;
 
@@ -450,7 +450,7 @@ iso_pcbdisconnect(v)
 	void *v;
 {
 	struct isopcb  *isop = v;
-	register struct sockaddr_iso *siso;
+	struct sockaddr_iso *siso;
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_ISO]) {
@@ -500,7 +500,7 @@ iso_pcbdetach(v)
 #endif
 #ifdef TPCONS
 	if (isop->isop_chan) {
-		register struct pklcd *lcp = (struct pklcd *) isop->isop_chan;
+		struct pklcd *lcp = (struct pklcd *) isop->isop_chan;
 		if (--isop->isop_refcnt > 0)
 			return;
 		if (lcp && lcp->lcd_state == DATA_TRANSFER) {
@@ -587,11 +587,11 @@ iso_pcbdetach(v)
 void
 iso_pcbnotify(head, siso, errno, notify)
 	struct isopcb  *head;
-	register struct sockaddr_iso *siso;
+	struct sockaddr_iso *siso;
 	int             errno;
 	void (*notify) __P((struct isopcb *));
 {
-	register struct isopcb *isop;
+	struct isopcb *isop;
 	int             s = splimp();
 
 #ifdef ARGO_DEBUG
@@ -645,12 +645,12 @@ iso_pcbnotify(head, siso, errno, notify)
 struct isopcb  *
 iso_pcblookup(head, fportlen, fport, laddr)
 	struct isopcb  *head;
-	register struct sockaddr_iso *laddr;
+	struct sockaddr_iso *laddr;
 	caddr_t         fport;
 	int             fportlen;
 {
-	register struct isopcb *isop;
-	register caddr_t lp = TSEL(laddr);
+	struct isopcb *isop;
+	caddr_t lp = TSEL(laddr);
 	unsigned int    llen = laddr->siso_tlen;
 
 #ifdef ARGO_DEBUG

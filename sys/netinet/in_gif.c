@@ -1,4 +1,4 @@
-/*	$NetBSD: in_gif.c,v 1.10 2000/03/01 12:49:31 itojun Exp $	*/
+/*	$NetBSD: in_gif.c,v 1.11 2000/03/30 13:24:55 augustss Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -84,7 +84,7 @@ in_gif_output(ifp, family, m, rt)
 	struct mbuf	*m;
 	struct rtentry *rt;
 {
-	register struct gif_softc *sc = (struct gif_softc*)ifp;
+	struct gif_softc *sc = (struct gif_softc*)ifp;
 	struct sockaddr_in *dst = (struct sockaddr_in *)&sc->gif_ro.ro_dst;
 	struct sockaddr_in *sin_src = (struct sockaddr_in *)sc->gif_psrc;
 	struct sockaddr_in *sin_dst = (struct sockaddr_in *)sc->gif_pdst;

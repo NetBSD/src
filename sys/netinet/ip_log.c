@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_log.c,v 1.8 1999/12/12 11:11:17 veego Exp $	*/
+/*	$NetBSD: ip_log.c,v 1.9 2000/03/30 13:25:00 augustss Exp $	*/
 
 /*
  * Copyright (C) 1997-1998 by Darren Reed.
@@ -166,7 +166,7 @@ fr_info_t *fin;
 mb_t *m;
 {
 	ipflog_t ipfl;
-	register size_t mlen, hlen;
+	size_t mlen, hlen;
 	size_t sizes[2];
 	void *ptrs[2];
 	int types[2];

@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_input.c,v 1.12 1998/01/09 18:31:50 thorpej Exp $	*/
+/*	$NetBSD: tp_input.c,v 1.13 2000/03/30 13:10:13 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -123,7 +123,7 @@ static struct socket *tp_newsocket __P((struct socket *, struct sockaddr *,
 
 struct mbuf    *
 tp_inputprep(m)
-	register struct mbuf *m;
+	struct mbuf *m;
 {
 	int             hdrlen;
 
@@ -229,7 +229,7 @@ static u_char   tpdu_info[][4] =
  */
 
 #define WHILE_OPTIONS(P, hdr, format)\
-{	register caddr_t P = tpdu_info[(hdr)->tpdu_type][(format)] + (caddr_t)hdr;\
+{	caddr_t P = tpdu_info[(hdr)->tpdu_type][(format)] + (caddr_t)hdr;\
 	caddr_t PLIM = 1 + hdr->tpdu_li + (caddr_t)hdr;\
 	for (;; P += 2 + ((struct tp_vbp *)P)->tpv_len) {\
 		CHECK((P > PLIM), E_TP_LENGTH_INVAL, ts_inv_length,\
@@ -269,9 +269,9 @@ tp_newsocket(so, fname, cons_channel, class_to_use, netservice)
 	u_int          class_to_use;
 	u_int           netservice;
 {
-	register struct tp_pcb *tpcb = sototpcb(so);	/* old tpcb, needed
+	struct tp_pcb *tpcb = sototpcb(so);	/* old tpcb, needed
 							 * below */
-	register struct tp_pcb *newtpcb;
+	struct tp_pcb *newtpcb;
 
 	/*
 	 * sonewconn() gets a new socket structure, a new lower layer pcb and
@@ -430,8 +430,8 @@ tp_input(m, va_alist)
 	caddr_t         cons_channel;
 	int             (*dgout_routine) __P((struct mbuf *, ...));
 	int             ce_bit;
-	register struct tp_pcb *tpcb;
-	register struct tpdu *hdr;
+	struct tp_pcb *tpcb;
+	struct tpdu *hdr;
 	struct socket  *so;
 	struct tp_event e;
 	int             error;
@@ -491,7 +491,7 @@ again:
 	 */
 
 	{
-		register struct mbuf *n = m;
+		struct mbuf *n = m;
 #ifdef ARGO_DEBUG
 		int             chain_length = 0;
 #endif				/* ARGO_DEBUG */
@@ -622,7 +622,7 @@ again:
 			if (argo_debug[D_TPINPUT]) {
 				printf("CR fsufx:");
 				{
-					register int    j;
+					int    j;
 					for (j = 0; j < fsufxlen; j++) {
 						printf(" 0x%x. ", *((caddr_t) (fsufxloc + j)));
 					}
@@ -642,7 +642,7 @@ again:
 			if (argo_debug[D_TPINPUT]) {
 				printf("CR lsufx:");
 				{
-					register int    j;
+					int    j;
 					for (j = 0; j < lsufxlen; j++) {
 						printf(" 0x%x. ", *((u_char *) (lsufxloc + j)));
 					}
@@ -688,7 +688,7 @@ again:
 		case TPP_alt_class:
 			{
 				u_char         *aclass = 0;
-				register int    i;
+				int    i;
 				static u_char   bad_alt_classes[5] =
 				{~0, ~3, ~5, ~0xf, ~0x1f};
 
@@ -749,7 +749,7 @@ again:
 			IncStat(ts_inv_sufx);
 			goto respond;
 		} else {
-			register struct tp_pcb *t;
+			struct tp_pcb *t;
 			/*
 			 * The intention here is to trap all CR requests
 			 * to a given nsap, for constructing transport
@@ -1521,7 +1521,7 @@ again:
 			struct cmsghdr  x_hdr;
 		}               x;
 #define c_hdr x.x_hdr
-		register struct mbuf *n;
+		struct mbuf *n;
 
 		CHECK((max && datalen > max), E_TP_LENGTH_INVAL,
 		      ts_inv_length, respond, (max + hdr->tpdu_li + 1));
@@ -1754,7 +1754,7 @@ tp_headersize(dutype, tpcb)
 	int             dutype;
 	struct tp_pcb  *tpcb;
 {
-	register int    size = 0;
+	int    size = 0;
 
 #ifdef TPPT
 	if (tp_traceflags[D_CONN]) {

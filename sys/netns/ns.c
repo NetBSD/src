@@ -1,4 +1,4 @@
-/*	$NetBSD: ns.c,v 1.19 2000/02/02 23:28:11 thorpej Exp $	*/
+/*	$NetBSD: ns.c,v 1.20 2000/03/30 13:02:56 augustss Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -65,11 +65,11 @@ ns_control(so, cmd, data, ifp, p)
 	struct socket *so;
 	u_long cmd;
 	caddr_t data;
-	register struct ifnet *ifp;
+	struct ifnet *ifp;
 	struct proc *p;
 {
-	register struct ifreq *ifr = (struct ifreq *)data;
-	register struct ns_ifaddr *ia = 0;
+	struct ifreq *ifr = (struct ifreq *)data;
+	struct ns_ifaddr *ia = 0;
 	struct ns_aliasreq *ifra = (struct ns_aliasreq *)data;
 	struct sockaddr_ns oldaddr;
 	int error = 0, dstIsNew, hostIsNew;
@@ -245,8 +245,8 @@ ns_purgeif(ifp)
  */
 void
 ns_ifscrub(ifp, ia)
-	register struct ifnet *ifp;
-	register struct ns_ifaddr *ia; 
+	struct ifnet *ifp;
+	struct ns_ifaddr *ia; 
 {
 
 	if ((ia->ia_flags & IFA_ROUTE) == 0)
@@ -263,13 +263,13 @@ ns_ifscrub(ifp, ia)
  */
 int
 ns_ifinit(ifp, ia, sns, scrub)
-	register struct ifnet *ifp;
-	register struct ns_ifaddr *ia;
-	register struct sockaddr_ns *sns;
+	struct ifnet *ifp;
+	struct ns_ifaddr *ia;
+	struct sockaddr_ns *sns;
 	int scrub;
 {
 	struct sockaddr_ns oldaddr;
-	register union ns_host *h = &ia->ia_addr.sns_addr.x_host;
+	union ns_host *h = &ia->ia_addr.sns_addr.x_host;
 	int s = splimp(), error;
 
 	/*
@@ -339,11 +339,11 @@ bad:
  */
 struct ns_ifaddr *
 ns_iaonnetof(dst)
-	register struct ns_addr *dst;
+	struct ns_addr *dst;
 {
-	register struct ns_ifaddr *ia;
-	register struct ns_addr *compare;
-	register struct ifnet *ifp;
+	struct ns_ifaddr *ia;
+	struct ns_addr *compare;
+	struct ifnet *ifp;
 	struct ns_ifaddr *ia_maybe = 0;
 	union ns_net net = dst->x_net;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_cksum.c,v 1.5 1997/07/18 19:30:36 thorpej Exp $	*/
+/*	$NetBSD: ns_cksum.c,v 1.6 2000/03/30 13:02:57 augustss Exp $	*/
 
 /*
  * Copyright (c) 1982, 1992, 1993
@@ -51,13 +51,13 @@
 
 u_int16_t
 ns_cksum(m, len)
-	register struct mbuf *m;
-	register int len;
+	struct mbuf *m;
+	int len;
 {
-	register u_int16_t *w;
-	register int sum = 0;
-	register int mlen = 0;
-	register int sum2;
+	u_int16_t *w;
+	int sum = 0;
+	int mlen = 0;
+	int sum2;
 
 	union {
 		u_int16_t s[2];

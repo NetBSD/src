@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_state.c,v 1.22 2000/02/07 13:58:00 veego Exp $	*/
+/*	$NetBSD: ip_state.c,v 1.23 2000/03/30 13:25:04 augustss Exp $	*/
 
 /*
  * Copyright (C) 1995-1998 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 #if !defined(lint)
 #if defined(__NetBSD__)
-static const char rcsid[] = "$NetBSD: ip_state.c,v 1.22 2000/02/07 13:58:00 veego Exp $";
+static const char rcsid[] = "$NetBSD: ip_state.c,v 1.23 2000/03/30 13:25:04 augustss Exp $";
 #else
 static const char sccsid[] = "@(#)ip_state.c	1.8 6/5/96 (C) 1993-1995 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_state.c,v 2.3.2.18 2000/01/27 08:51:30 darrenr Exp";
@@ -157,8 +157,8 @@ static ips_stat_t *fr_statetstats()
 static int fr_state_flush(which)
 int which;
 {
-	register int i;
-	register ipstate_t *is, **isp;
+	int i;
+	ipstate_t *is, **isp;
 #if defined(_KERNEL) && !SOLARIS
 	int s;
 #endif
@@ -261,8 +261,8 @@ ip_t *ip;
 fr_info_t *fin;
 u_int flags;
 {
-	register ipstate_t *is;
-	register u_int hv;
+	ipstate_t *is;
+	u_int hv;
 	ipstate_t ips;
 	u_int pass;
 
@@ -312,7 +312,7 @@ u_int flags;
 	    }
 	case IPPROTO_TCP :
 	    {
-		register tcphdr_t *tcp = (tcphdr_t *)fin->fin_dp;
+		tcphdr_t *tcp = (tcphdr_t *)fin->fin_dp;
 
 		/*
 		 * The endian of the ports doesn't matter, but the ack and
@@ -349,7 +349,7 @@ u_int flags;
 	    }
 	case IPPROTO_UDP :
 	    {
-		register tcphdr_t *tcp = (tcphdr_t *)fin->fin_dp;
+		tcphdr_t *tcp = (tcphdr_t *)fin->fin_dp;
 
 		is->is_dport = tcp->th_dport;
 		is->is_sport = tcp->th_sport;
@@ -435,13 +435,13 @@ u_int flags;
  * SYN or a RST or FIN which indicate time to close up shop.
  */
 int fr_tcpstate(is, fin, ip, tcp)
-register ipstate_t *is;
+ipstate_t *is;
 fr_info_t *fin;
 ip_t *ip;
 tcphdr_t *tcp;
 {
-	register tcp_seq seq, ack, end;
-	register int ackskew;
+	tcp_seq seq, ack, end;
+	int ackskew;
 	tcpdata_t  *fdata, *tdata;
 	u_short	win, maxwin;
 	int ret = 0;
@@ -660,10 +660,10 @@ frentry_t *fr_checkicmpmatchingstate(ip, fin)
 ip_t *ip;
 fr_info_t *fin;
 {
-	register struct in_addr	dst, src;
-	register ipstate_t *is, **isp;
-	register u_short sport, dport;
-	register u_char	pr;
+	struct in_addr	dst, src;
+	ipstate_t *is, **isp;
+	u_short sport, dport;
+	u_char	pr;
 	struct icmp *ic;
 	u_short savelen;
 	fr_info_t ofin;
@@ -827,9 +827,9 @@ frentry_t *fr_checkstate(ip, fin)
 ip_t *ip;
 fr_info_t *fin;
 {
-	register struct in_addr dst, src;
-	register ipstate_t *is, **isp;
-	register u_char pr;
+	struct in_addr dst, src;
+	ipstate_t *is, **isp;
+	u_char pr;
 	u_int hv, hvm, hlen, tryagain, pass;
 	struct icmp *ic;
 	frentry_t *fr;
@@ -885,7 +885,7 @@ fr_info_t *fin;
 		break;
 	case IPPROTO_TCP :
 	    {
-		register u_short dport = tcp->th_dport, sport = tcp->th_sport;
+		u_short dport = tcp->th_dport, sport = tcp->th_sport;
 
 		tryagain = 0;
 retry_tcp:
@@ -923,7 +923,7 @@ retry_tcp:
 	    }
 	case IPPROTO_UDP :
 	    {
-		register u_short dport = tcp->th_dport, sport = tcp->th_sport;
+		u_short dport = tcp->th_dport, sport = tcp->th_sport;
 
 		tryagain = 0;
 retry_udp:
@@ -995,8 +995,8 @@ ipstate_t *is;
  */
 void fr_stateunload()
 {
-	register int i;
-	register ipstate_t *is, **isp;
+	int i;
+	ipstate_t *is, **isp;
 
 	WRITE_ENTER(&ipf_state);
 	for (i = fr_statesize - 1; i >= 0; i--)
@@ -1019,8 +1019,8 @@ void fr_stateunload()
  */
 void fr_timeoutstate()
 {
-	register int i;
-	register ipstate_t *is, **isp;
+	int i;
+	ipstate_t *is, **isp;
 #if defined(_KERNEL) && !SOLARIS
 	int s;
 #endif
@@ -1191,8 +1191,8 @@ u_int type;
 void ip_statesync(ifp)
 void *ifp;
 {
-	register ipstate_t *is;
-	register int i;
+	ipstate_t *is;
+	int i;
 
 	WRITE_ENTER(&ipf_state);
 	for (i = fr_statesize - 1; i >= 0; i--)

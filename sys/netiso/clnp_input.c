@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_input.c,v 1.19 2000/01/08 20:39:45 chopps Exp $	*/
+/*	$NetBSD: clnp_input.c,v 1.20 2000/03/30 13:10:06 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -121,7 +121,7 @@ void            x25esis_input();
 void
 clnp_init()
 {
-	register struct protosw *pr;
+	struct protosw *pr;
 
 	/*
 	 * CLNP protox initialization
@@ -160,8 +160,8 @@ clnp_init()
 void
 clnlintr()
 {
-	register struct mbuf *m;/* ptr to first mbuf of pkt */
-	register struct clnl_fixed *clnl;	/* ptr to fixed part of clnl
+	struct mbuf *m;/* ptr to first mbuf of pkt */
+	struct clnl_fixed *clnl;	/* ptr to fixed part of clnl
 						 * hdr */
 	int             s;	/* save and restore priority */
 	struct clnl_protosw *clnlsw;	/* ptr to protocol switch */
@@ -302,7 +302,7 @@ clnp_input(m, va_alist)
 {
 	struct snpa_hdr *shp;	/* subnetwork header */
 	struct ifaddr *ifa;
-	register struct clnp_fixed *clnp;	/* ptr to fixed part of
+	struct clnp_fixed *clnp;	/* ptr to fixed part of
 						 * header */
 	struct sockaddr_iso source;	/* source address of pkt */
 	struct sockaddr_iso target;	/* destination address of pkt */

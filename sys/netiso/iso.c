@@ -1,4 +1,4 @@
-/*	$NetBSD: iso.c,v 1.27 2000/02/02 23:28:10 thorpej Exp $	*/
+/*	$NetBSD: iso.c,v 1.28 2000/03/30 13:10:11 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -105,7 +105,7 @@ int             iso_interfaces = 0;	/* number of external interfaces */
  */
 int
 iso_addrmatch1(isoaa, isoab)
-	register struct iso_addr *isoaa, *isoab;	/* addresses to check */
+	struct iso_addr *isoaa, *isoab;	/* addresses to check */
 {
 	u_int           compare_len;
 
@@ -198,7 +198,7 @@ iso_netmatch(sisoa, sisob)
 {
 	u_char          bufa[sizeof(struct sockaddr_iso)];
 	u_char          bufb[sizeof(struct sockaddr_iso)];
-	register int    lena, lenb;
+	int    lena, lenb;
 
 	lena = iso_netof(&sisoa->siso_addr, bufa);
 	lenb = iso_netof(&sisob->siso_addr, bufb);
@@ -232,14 +232,14 @@ iso_netmatch(sisoa, sisob)
  */
 u_long
 iso_hashchar(buf, len)
-	register caddr_t buf;	/* buffer to pack from */
-	register int    len;	/* length of buffer */
+	caddr_t buf;	/* buffer to pack from */
+	int    len;	/* length of buffer */
 {
-	register u_long h = 0;
-	register int    i;
+	u_long h = 0;
+	int    i;
 
 	for (i = 0; i < len; i += 4) {
-		register u_long l = 0;
+		u_long l = 0;
 
 		if ((len - i) < 4) {
 			/* buffer not multiple of 4 */
@@ -289,7 +289,7 @@ iso_hash(siso, hp)
 	struct afhash  *hp;	/* RETURN: hash info here */
 {
 	u_long          buf[sizeof(struct sockaddr_iso) + 1 / 4];
-	register int    bufsize;
+	int    bufsize;
 
 
 	bzero(buf, sizeof(buf));
@@ -448,11 +448,11 @@ iso_control(so, cmd, data, ifp, p)
 	struct socket *so;
 	u_long cmd;
 	caddr_t data;
-	register struct ifnet *ifp;
+	struct ifnet *ifp;
 	struct proc *p;
 {
-	register struct iso_ifreq *ifr = (struct iso_ifreq *) data;
-	register struct iso_ifaddr *ia = 0;
+	struct iso_ifreq *ifr = (struct iso_ifreq *) data;
+	struct iso_ifaddr *ia = 0;
 	struct iso_aliasreq *ifra = (struct iso_aliasreq *) data;
 	int             error, hostIsNew, maskIsNew;
 
@@ -607,8 +607,8 @@ iso_purgeif(ifp)
  */
 void
 iso_ifscrub(ifp, ia)
-	register struct ifnet *ifp;
-	register struct iso_ifaddr *ia;
+	struct ifnet *ifp;
+	struct iso_ifaddr *ia;
 {
 	int             nsellength = ia->ia_addr.siso_tlen;
 	if ((ia->ia_flags & IFA_ROUTE) == 0)
@@ -631,8 +631,8 @@ iso_ifscrub(ifp, ia)
  */
 int
 iso_ifinit(ifp, ia, siso, scrub)
-	register struct ifnet *ifp;
-	register struct iso_ifaddr *ia;
+	struct ifnet *ifp;
+	struct iso_ifaddr *ia;
 	struct sockaddr_iso *siso;
 	int scrub;
 {
@@ -692,11 +692,11 @@ iso_ifinit(ifp, ia, siso, scrub)
 
 struct ifaddr  *
 iso_ifwithidi(addr)
-	register struct sockaddr *addr;
+	struct sockaddr *addr;
 {
-	register struct ifnet *ifp;
-	register struct ifaddr *ifa;
-	register u_int  af = addr->sa_family;
+	struct ifnet *ifp;
+	struct ifaddr *ifa;
+	u_int  af = addr->sa_family;
 
 	if (af != AF_ISO)
 		return (0);
@@ -818,11 +818,11 @@ iso_eqtype(isoaa, isoab)
  */
 struct iso_ifaddr *
 iso_localifa(siso)
-	register struct sockaddr_iso *siso;
+	struct sockaddr_iso *siso;
 {
-	register struct iso_ifaddr *ia;
-	register char  *cp1, *cp2, *cp3;
-	register struct ifnet *ifp;
+	struct iso_ifaddr *ia;
+	char  *cp1, *cp2, *cp3;
+	struct ifnet *ifp;
 	struct iso_ifaddr *ia_maybe = 0;
 	/*
 	 * We make one pass looking for both net matches and an exact

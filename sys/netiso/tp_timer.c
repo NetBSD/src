@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_timer.c,v 1.10 1996/10/13 02:04:44 christos Exp $	*/
+/*	$NetBSD: tp_timer.c,v 1.11 2000/03/30 13:10:15 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -95,7 +95,7 @@ struct tp_pcb  *tp_ftimeolist = (struct tp_pcb *) & tp_ftimeolist;
 void
 tp_timerinit()
 {
-	register int    s;
+	int    s;
 	/*
 	 * Initialize storage
 	 */
@@ -121,12 +121,12 @@ tp_timerinit()
  */
 void
 tp_etimeout(tpcb, fun, ticks)
-	register struct tp_pcb *tpcb;
+	struct tp_pcb *tpcb;
 	int             fun;	/* function to be called */
 	int             ticks;
 {
 
-	register u_int *callp;
+	u_int *callp;
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_TIMER]) {
 		printf("etimeout pcb %p state 0x%x\n", tpcb, tpcb->tp_state);
@@ -156,7 +156,7 @@ tp_etimeout(tpcb, fun, ticks)
  */
 void
 tp_euntimeout(tpcb, fun)
-	register struct tp_pcb *tpcb;
+	struct tp_pcb *tpcb;
 	int             fun;
 {
 #ifdef TPPT
@@ -188,8 +188,8 @@ tp_euntimeout(tpcb, fun)
 void
 tp_slowtimo()
 {
-	register u_int *cp;
-	register struct tp_ref *rp;
+	u_int *cp;
+	struct tp_ref *rp;
 	struct tp_pcb  *tpcb;
 	struct tp_event E;
 	int             s = splsoftnet(), t;
@@ -237,7 +237,7 @@ tp_slowtimo()
  */
 void
 tp_data_retrans(tpcb)
-	register struct tp_pcb *tpcb;
+	struct tp_pcb *tpcb;
 {
 	int             rexmt, win;
 	tpcb->tp_rttemit = 0;	/* cancel current round trip time */
@@ -284,7 +284,7 @@ tp_data_retrans(tpcb)
 void
 tp_fasttimo()
 {
-	register struct tp_pcb *t;
+	struct tp_pcb *t;
 	int             s = splsoftnet();
 	struct tp_event E;
 
@@ -316,7 +316,7 @@ tp_fasttimo()
  */
 void
 tp_ctimeout(tpcb, which, ticks)
-	register struct tp_pcb *tpcb;
+	struct tp_pcb *tpcb;
 	int             which, ticks;
 {
 
@@ -343,7 +343,7 @@ tp_ctimeout(tpcb, which, ticks)
  */
 void
 tp_ctimeout_MIN(tpcb, which, ticks)
-	register struct tp_pcb *tpcb;
+	struct tp_pcb *tpcb;
 	int             which, ticks;
 {
 #ifdef TPPT
@@ -368,7 +368,7 @@ tp_ctimeout_MIN(tpcb, which, ticks)
  */
 void
 tp_cuntimeout(tpcb, which)
-	register struct tp_pcb *tpcb;
+	struct tp_pcb *tpcb;
 	int             which;
 {
 #ifdef ARGO_DEBUG

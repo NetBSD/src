@@ -1,4 +1,4 @@
-/*	$NetBSD: in_var.h,v 1.38 2000/03/30 02:33:45 simonb Exp $	*/
+/*	$NetBSD: in_var.h,v 1.39 2000/03/30 13:24:57 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -185,7 +185,7 @@ extern	int	inetctlerrmap[];
 	/* struct in_addr addr; */ \
 	/* struct ifnet *ifp; */ \
 { \
-	register struct in_ifaddr *ia; \
+	struct in_ifaddr *ia; \
 \
 	INADDR_TO_IA(addr, ia); \
 	(ifp) = (ia == NULL) ? NULL : ia->ia_ifp; \
@@ -199,7 +199,7 @@ extern	int	inetctlerrmap[];
 	/* struct ifnet *ifp; */ \
 	/* struct in_ifaddr *ia; */ \
 { \
-	register struct ifaddr *ifa; \
+	struct ifaddr *ifa; \
 \
 	for (ifa = (ifp)->if_addrlist.tqh_first; \
 	    ifa != NULL && ifa->ifa_addr->sa_family != AF_INET; \
@@ -255,7 +255,7 @@ struct in_multistep {
 	/* struct ifnet *ifp; */ \
 	/* struct in_multi *inm; */ \
 { \
-	register struct in_ifaddr *ia; \
+	struct in_ifaddr *ia; \
 \
 	IFP_TO_IA((ifp), ia); 			/* multicast */ \
 	if (ia == NULL) \

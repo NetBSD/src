@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.c,v 1.13 1996/10/13 02:03:03 christos Exp $	*/
+/*	$NetBSD: in_cksum.c,v 1.14 2000/03/30 13:24:55 augustss Exp $	*/
 
 /*
  * Copyright (c) 1988, 1992, 1993
@@ -52,12 +52,12 @@
 
 int
 in_cksum(m, len)
-	register struct mbuf *m;
-	register int len;
+	struct mbuf *m;
+	int len;
 {
-	register u_int16_t *w;
-	register int sum = 0;
-	register int mlen = 0;
+	u_int16_t *w;
+	int sum = 0;
+	int mlen = 0;
 	int byte_swapped = 0;
 
 	union {

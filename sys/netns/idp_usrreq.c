@@ -1,4 +1,4 @@
-/*	$NetBSD: idp_usrreq.c,v 1.17 2000/02/02 23:28:11 thorpej Exp $	*/
+/*	$NetBSD: idp_usrreq.c,v 1.18 2000/03/30 13:02:56 augustss Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -77,8 +77,8 @@ idp_input(m, va_alist)
 	va_dcl
 #endif
 {
-	register struct nspcb *nsp;
-	register struct idp *idp = mtod(m, struct idp *);
+	struct nspcb *nsp;
+	struct idp *idp = mtod(m, struct idp *);
 	struct ifnet *ifp = m->m_pkthdr.rcvif;
 	va_list ap;
 
@@ -94,7 +94,7 @@ idp_input(m, va_alist)
 	 */
 	idp_ns.sns_addr = idp->idp_sna;
 	if (ns_neteqnn(idp->idp_sna.x_net, ns_zeronet) && ifp) {
-		register struct ifaddr *ifa;
+		struct ifaddr *ifa;
 
 		for (ifa = ifp->if_addrlist.tqh_first; ifa != 0;
 		    ifa = ifa->ifa_list.tqe_next) {
@@ -135,7 +135,7 @@ idp_abort(nsp)
  */
 void
 idp_drop(nsp, errno)
-	register struct nspcb *nsp;
+	struct nspcb *nsp;
 	int errno;
 {
 	struct socket *so = nsp->nsp_socket;
@@ -166,9 +166,9 @@ idp_output(m0, va_alist)
 #endif
 {
 	struct nspcb *nsp;
-	register struct mbuf *m;
-	register struct idp *idp;
-	register int len = m0->m_pkthdr.len;
+	struct mbuf *m;
+	struct idp *idp;
+	int len = m0->m_pkthdr.len;
 	struct mbuf *mprev = NULL;
 	extern int idpcksum;
 	va_list ap;
@@ -249,7 +249,7 @@ idp_ctloutput(req, so, level, name, value)
 	int name;
 	struct mbuf **value;
 {
-	register struct mbuf *m;
+	struct mbuf *m;
 	struct nspcb *nsp = sotonspcb(so);
 	int mask, error = 0;
 
@@ -284,7 +284,7 @@ idp_ctloutput(req, so, level, name, value)
 		case SO_DEFAULT_HEADERS:
 			m->m_len = sizeof(struct idp);
 			{
-				register struct idp *idp = mtod(m, struct idp *);
+				struct idp *idp = mtod(m, struct idp *);
 				idp->idp_len = 0;
 				idp->idp_sum = 0;
 				idp->idp_tc = 0;
@@ -331,7 +331,7 @@ idp_ctloutput(req, so, level, name, value)
 
 		case SO_DEFAULT_HEADERS:
 			{
-				register struct idp *idp
+				struct idp *idp
 				    = mtod(*value, struct idp *);
 				nsp->nsp_dpt = idp->idp_pt;
 			}
@@ -363,7 +363,7 @@ idp_usrreq(so, req, m, nam, control, p)
 	struct mbuf *m, *nam, *control;
 	struct proc *p;
 {
-	register struct nspcb *nsp;
+	struct nspcb *nsp;
 	int s;
 	int error = 0;
 

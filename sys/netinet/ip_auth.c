@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_auth.c,v 1.13 2000/02/01 21:29:15 veego Exp $	*/
+/*	$NetBSD: ip_auth.c,v 1.14 2000/03/30 13:24:57 augustss Exp $	*/
 
 /*
  * Copyright (C) 1998 by Darren Reed & Guido van Rooij.
@@ -9,7 +9,7 @@
  */
 #if !defined(lint)
 #if defined(__NetBSD__)
-static const char rcsid[] = "$NetBSD: ip_auth.c,v 1.13 2000/02/01 21:29:15 veego Exp $";
+static const char rcsid[] = "$NetBSD: ip_auth.c,v 1.14 2000/03/30 13:24:57 augustss Exp $";
 #else
 static const char rcsid[] = "@(#)Id: ip_auth.c,v 2.1.2.2 2000/01/16 10:12:14 darrenr Exp";
 #endif
@@ -247,7 +247,7 @@ ip_t *ip;
 	if (ip == (ip_t *)m->b_rptr)
 # endif
 	{
-		register u_short bo;
+		u_short bo;
 
 		bo = ip->ip_len;
 		ip->ip_len = htons(bo);
@@ -479,8 +479,8 @@ fr_authioctlloop:
  */
 void fr_authunload()
 {
-	register int i;
-	register frauthent_t *fae, **faep;
+	int i;
+	frauthent_t *fae, **faep;
 	mb_t *m;
 
 	WRITE_ENTER(&ipf_auth);
@@ -508,9 +508,9 @@ void fr_authunload()
  */
 void fr_authexpire()
 {
-	register int i;
-	register frauth_t *fra;
-	register frauthent_t *fae, **faep;
+	int i;
+	frauth_t *fra;
+	frauthent_t *fae, **faep;
 	mb_t *m;
 #if !SOLARIS
 	int s;

@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_debug.c,v 1.9 1998/10/20 01:46:28 matt Exp $	*/
+/*	$NetBSD: clnp_debug.c,v 1.10 2000/03/30 13:10:06 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -156,7 +156,7 @@ clnp_hexp(src, len, where)
 	int             i;
 
 	for (i = 0; i < len; i++) {
-		register int    j = ((u_char *) src)[i];
+		int    j = ((u_char *) src)[i];
 		*where++ = letters[j >> 4];
 		*where++ = letters[j & 0x0f];
 	}
@@ -258,9 +258,9 @@ clnp_iso_addrp(isoa)
 
 char *
 clnp_saddr_isop(s)
-	register struct sockaddr_iso *s;
+	struct sockaddr_iso *s;
 {
-	register char  *cp = clnp_iso_addrp(&s->siso_addr);
+	char  *cp = clnp_iso_addrp(&s->siso_addr);
 
 	while (*cp)
 		cp++;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cltp_usrreq.c,v 1.16 2000/02/02 23:28:10 thorpej Exp $	*/
+/*	$NetBSD: cltp_usrreq.c,v 1.17 2000/03/30 13:10:07 augustss Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -88,11 +88,11 @@ cltp_input(m0, va_alist)
 {
 	struct sockaddr *srcsa, *dstsa;
 	u_int           cons_channel;
-	register struct isopcb *isop;
-	register struct mbuf *m = m0;
+	struct isopcb *isop;
+	struct mbuf *m = m0;
 	struct mbuf *m_src = 0;
-	register u_char *up = mtod(m, u_char *);
-	register struct sockaddr_iso *src;
+	u_char *up = mtod(m, u_char *);
+	struct sockaddr_iso *src;
 	int             len, hdrlen = *up + 1, dlen = 0;
 	u_char         *uplim = up + hdrlen;
 	caddr_t         dtsap = NULL;
@@ -179,7 +179,7 @@ bad:
  */
 void
 cltp_notify(isop)
-	register struct isopcb *isop;
+	struct isopcb *isop;
 {
 
 	sorwakeup(isop->isop_socket);
@@ -230,11 +230,11 @@ cltp_output(m, va_alist)
 	va_dcl
 #endif
 {
-	register struct isopcb *isop;
-	register int    len;
-	register struct sockaddr_iso *siso;
+	struct isopcb *isop;
+	int    len;
+	struct sockaddr_iso *siso;
 	int             hdrlen, error = 0, docsum;
-	register u_char *up;
+	u_char *up;
 	va_list ap;
 
 	va_start(ap, m);
@@ -299,7 +299,7 @@ cltp_usrreq(so, req, m, nam, control, p)
 	struct mbuf *m, *nam, *control;
 	struct proc *p;
 {
-	register struct isopcb *isop;
+	struct isopcb *isop;
 	int s;
 	int error = 0;
 

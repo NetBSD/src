@@ -1,4 +1,4 @@
-/*	$NetBSD: spp_usrreq.c,v 1.23 2000/02/02 23:28:11 thorpej Exp $	*/
+/*	$NetBSD: spp_usrreq.c,v 1.24 2000/03/30 13:02:59 augustss Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -87,10 +87,10 @@ spp_input(m, va_alist)
 	va_dcl
 #endif
 {
-	register struct nspcb *nsp;
-	register struct sppcb *cb;
-	register struct spidp *si = mtod(m, struct spidp *);
-	register struct socket *so;
+	struct nspcb *nsp;
+	struct sppcb *cb;
+	struct spidp *si = mtod(m, struct spidp *);
+	struct socket *so;
 	short ostate = 0;
 	int dropsocket = 0;
 	va_list ap;
@@ -166,7 +166,7 @@ spp_input(m, va_alist)
 
 	case TCPS_LISTEN:{
 		struct mbuf *am;
-		register struct sockaddr_ns *sns;
+		struct sockaddr_ns *sns;
 		struct ns_addr laddr;
 
 		/*
@@ -307,13 +307,13 @@ int spprexmtthresh = 3;
  */
 int
 spp_reass(cb, si, m0)
-	register struct sppcb *cb;
-	register struct spidp *si;
-	register struct mbuf *m0;
+	struct sppcb *cb;
+	struct spidp *si;
+	struct mbuf *m0;
 {
-	register struct spidp_q *p, *q, *si_q;
-	register struct mbuf *m;
-	register struct socket *so = cb->s_nspcb->nsp_socket;
+	struct spidp_q *p, *q, *si_q;
+	struct mbuf *m;
+	struct socket *so = cb->s_nspcb->nsp_socket;
 	char packetp = cb->s_flags & SF_HI;
 	int incr;
 	char wakeup = 0;
@@ -378,7 +378,7 @@ spp_reass(cb, si, m0)
 	if (cb->s_rtt && SSEQ_GT(si->si_ack, cb->s_rtseq)) {
 		sppstat.spps_rttupdated++;
 		if (cb->s_srtt != 0) {
-			register short delta;
+			short delta;
 			delta = cb->s_rtt - (cb->s_srtt >> 3);
 			if ((cb->s_srtt += delta) <= 0)
 				cb->s_srtt = 1;
@@ -468,7 +468,7 @@ update_window:
 				return (0);
 			} /* else queue this packet; */
 		} else {
-			/*register struct socket *so = cb->s_nspcb->nsp_socket;
+			/*struct socket *so = cb->s_nspcb->nsp_socket;
 			if (so->so_state && SS_NOFDREF) {
 				ns_error(m0, NS_ERR_NOSOCK, 0);
 				(void)spp_close(cb);
@@ -704,11 +704,11 @@ spp_quench(nsp)
 #ifdef notdef
 int
 spp_fixmtu(nsp)
-register struct nspcb *nsp;
+struct nspcb *nsp;
 {
-	register struct sppcb *cb = (struct sppcb *)(nsp->nsp_pcb);
-	register struct mbuf *m;
-	register struct spidp *si;
+	struct sppcb *cb = (struct sppcb *)(nsp->nsp_pcb);
+	struct mbuf *m;
+	struct spidp *si;
 	struct ns_errp *ep;
 	struct sockbuf *sb;
 	int badseq, len;
@@ -759,11 +759,11 @@ spp_output(m0, va_alist)
 	va_dcl
 #endif
 {
-	register struct sppcb *cb = NULL;
+	struct sppcb *cb = NULL;
 	struct socket *so;
-	register struct mbuf *m = NULL;
-	register struct spidp *si = (struct spidp *) 0;
-	register struct sockbuf *sb;
+	struct mbuf *m = NULL;
+	struct spidp *si = (struct spidp *) 0;
+	struct sockbuf *sb;
 	int len = 0, win, rcv_win;
 	short span, off, recordp = 0;
 	u_short alo;
@@ -866,7 +866,7 @@ spp_output(m0, va_alist)
 		si->si_i = *cb->s_idp;
 		si->si_s = cb->s_shdr;
 		if ((cb->s_flags & SF_PI) && (cb->s_flags & SF_HO)) {
-			register struct sphdr *sh;
+			struct sphdr *sh;
 			if (m0->m_len < sizeof (*sh)) {
 				if((m0 = m_pullup(m0, sizeof(*sh))) == NULL) {
 					(void) m_free(m);
@@ -1178,9 +1178,9 @@ int spp_do_persist_panics = 0;
 
 void
 spp_setpersist(cb)
-	register struct sppcb *cb;
+	struct sppcb *cb;
 {
-	register int t = ((cb->s_srtt >> 2) + cb->s_rttvar) >> 1;
+	int t = ((cb->s_srtt >> 2) + cb->s_rttvar) >> 1;
 	extern int spp_backoff[];
 
 	if (cb->s_timer[SPPT_REXMT] && spp_do_persist_panics)
@@ -1203,9 +1203,9 @@ spp_ctloutput(req, so, level, name, value)
 	int name, level;
 	struct mbuf **value;
 {
-	register struct mbuf *m;
+	struct mbuf *m;
 	struct nspcb *nsp = sotonspcb(so);
-	register struct sppcb *cb;
+	struct sppcb *cb;
 	int mask, error = 0;
 
 	if (level != NSPROTO_SPP) {
@@ -1301,7 +1301,7 @@ spp_ctloutput(req, so, level, name, value)
 
 		case SO_DEFAULT_HEADERS:
 			{
-				register struct sphdr *sp
+				struct sphdr *sp
 						= mtod(*value, struct sphdr *);
 				cb->s_dt = sp->sp_dt;
 				cb->s_cc = sp->sp_cc & SP_EM;
@@ -1329,8 +1329,8 @@ spp_usrreq(so, req, m, nam, control, p)
 	struct mbuf *m, *nam, *control;
 	struct proc *p;
 {
-	register struct nspcb *nsp;
-	register struct sppcb *cb = NULL;
+	struct nspcb *nsp;
+	struct sppcb *cb = NULL;
 	int s;
 	int error = 0;
 	int ostate;
@@ -1576,11 +1576,11 @@ spp_usrreq_sp(so, req, m, nam, control, p)
  */
 void
 spp_template(cb)
-	register struct sppcb *cb;
+	struct sppcb *cb;
 {
-	register struct nspcb *nsp = cb->s_nspcb;
-	register struct idp *idp = cb->s_idp;
-	register struct sockbuf *sb = &(nsp->nsp_socket->so_snd);
+	struct nspcb *nsp = cb->s_nspcb;
+	struct idp *idp = cb->s_idp;
+	struct sockbuf *sb = &(nsp->nsp_socket->so_snd);
 
 	idp->idp_pt = NSPROTO_SPP;
 	idp->idp_sna = nsp->nsp_laddr;
@@ -1604,12 +1604,12 @@ spp_template(cb)
  */
 struct sppcb *
 spp_close(cb)
-	register struct sppcb *cb;
+	struct sppcb *cb;
 {
-	register struct spidp_q *s, *n;
+	struct spidp_q *s, *n;
 	struct nspcb *nsp = cb->s_nspcb;
 	struct socket *so = nsp->nsp_socket;
-	register struct mbuf *m;
+	struct mbuf *m;
 
 	for (s = cb->s_q.lh_first; s != NULL; s = n) {
 		n = s->si_q.le_next;
@@ -1633,13 +1633,13 @@ spp_close(cb)
  */
 struct sppcb *
 spp_usrclosed(cb)
-	register struct sppcb *cb;
+	struct sppcb *cb;
 {
 	return (spp_close(cb));
 }
 struct sppcb *
 spp_disconnect(cb)
-	register struct sppcb *cb;
+	struct sppcb *cb;
 {
 	return (spp_close(cb));
 }
@@ -1649,7 +1649,7 @@ spp_disconnect(cb)
  */
 struct sppcb *
 spp_drop(cb, errno)
-	register struct sppcb *cb;
+	struct sppcb *cb;
 	int errno;
 {
 	struct socket *so = cb->s_nspcb->nsp_socket;
@@ -1685,8 +1685,8 @@ int	spp_backoff[SPP_MAXRXTSHIFT+1] =
 void
 spp_fasttimo()
 {
-	register struct nspcb *nsp;
-	register struct sppcb *cb;
+	struct nspcb *nsp;
+	struct sppcb *cb;
 	int s = splsoftnet();
 
 	nsp = nspcb.nsp_next;
@@ -1710,10 +1710,10 @@ spp_fasttimo()
 void
 spp_slowtimo()
 {
-	register struct nspcb *ip, *ipnxt;
-	register struct sppcb *cb;
+	struct nspcb *ip, *ipnxt;
+	struct sppcb *cb;
 	int s = splsoftnet();
-	register long i;
+	long i;
 
 	/*
 	 * Search through tcb's and update active timers.
@@ -1752,7 +1752,7 @@ tpgone:
  */
 struct sppcb *
 spp_timers(cb, timer)
-	register struct sppcb *cb;
+	struct sppcb *cb;
 	long timer;
 {
 	long rexmt;

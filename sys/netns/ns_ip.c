@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_ip.c,v 1.25 2000/03/01 12:49:53 itojun Exp $	*/
+/*	$NetBSD: ns_ip.c,v 1.26 2000/03/30 13:02:58 augustss Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -93,8 +93,8 @@ struct ifnet_en *nsip_list;		/* list of all hosts and gateways or
 struct ifnet_en *
 nsipattach()
 {
-	register struct ifnet_en *m;
-	register struct ifnet *ifp;
+	struct ifnet_en *m;
+	struct ifnet *ifp;
 
 	if (nsipif.if_mtu == 0) {
 		ifp = &nsipif;
@@ -137,7 +137,7 @@ nsipattach()
 /* ARGSUSED */
 int
 nsipioctl(ifp, cmd, data)
-	register struct ifnet *ifp;
+	struct ifnet *ifp;
 	u_long cmd;
 	caddr_t data;
 {
@@ -181,15 +181,15 @@ idpip_input(va_alist)
 #endif
 {
 	struct ifnet *ifp;
-	register struct ip *ip;
-	register struct idp *idp;
-	register struct ifqueue *ifq = &nsintrq;
+	struct ip *ip;
+	struct idp *idp;
+	struct ifqueue *ifq = &nsintrq;
 	int len, s;
 	va_list ap;
 #if __STDC__
 	va_start(ap, m);
 #else
-	register struct mbuf *m;
+	struct mbuf *m;
 
 	va_start(ap);
 	m = va_arg(ap, struct mbuf *);
@@ -270,16 +270,16 @@ idpip_input(va_alist)
 int
 nsipoutput(ifp, m, dst, rt)
 	struct ifnet *ifp;
-	register struct mbuf *m;
+	struct mbuf *m;
 	struct sockaddr *dst;
 	struct rtentry *rt;
 {
 	struct ifnet_en *ifn = (struct ifnet_en *) ifp;
 
-	register struct ip *ip;
-	register struct route *ro = &(ifn->ifen_route);
-	register int len = 0;
-	register struct idp *idp = mtod(m, struct idp *);
+	struct ip *ip;
+	struct route *ro = &(ifn->ifen_route);
+	int len = 0;
+	struct idp *idp = mtod(m, struct idp *);
 	int error;
 
 	ifn->ifen_ifnet.if_opackets++;
@@ -344,9 +344,9 @@ struct ifreq ifr = {"nsip0"};		/* XXX */
 
 int
 nsip_route(m)
-	register struct mbuf *m;
+	struct mbuf *m;
 {
-	register struct nsip_req *rq = mtod(m, struct nsip_req *);
+	struct nsip_req *rq = mtod(m, struct nsip_req *);
 	struct sockaddr_ns *ns_dst = satosns(&rq->rq_ns);
 	struct sockaddr_in *ip_dst = satosin(&rq->rq_ip);
 	struct route ro;
@@ -373,7 +373,7 @@ nsip_route(m)
 	 * i.e., what return ip address do we use?
 	 */
 	{
-		register struct in_ifaddr *ia;
+		struct in_ifaddr *ia;
 		struct ifnet *ifp = ro.ro_rt->rt_ifp;
 
 		for (ia = in_ifaddr.tqh_first; ia != 0;
@@ -423,7 +423,7 @@ int
 nsip_free(ifp)
 	struct ifnet *ifp;
 {
-	register struct ifnet_en *ifn = (struct ifnet_en *)ifp;
+	struct ifnet_en *ifn = (struct ifnet_en *)ifp;
 	struct route *ro = & ifn->ifen_route;
 
 	if (ro->ro_rt) {
@@ -465,9 +465,9 @@ nsip_ctlinput(cmd, sa, v)
 
 void
 nsip_rtchange(dst)
-	register struct in_addr *dst;
+	struct in_addr *dst;
 {
-	register struct ifnet_en *ifn;
+	struct ifnet_en *ifn;
 
 	for (ifn = nsip_list; ifn; ifn = ifn->ifen_next) {
 		if (ifn->ifen_dst.s_addr == dst->s_addr &&

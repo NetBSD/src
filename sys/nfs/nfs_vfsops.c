@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.87 2000/03/29 03:43:34 simonb Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.88 2000/03/30 12:51:17 augustss Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -128,14 +128,14 @@ static int nfs_mount_diskless __P((struct nfs_dlmount *, const char *,
 int
 nfs_statfs(mp, sbp, p)
 	struct mount *mp;
-	register struct statfs *sbp;
+	struct statfs *sbp;
 	struct proc *p;
 {
-	register struct vnode *vp;
-	register struct nfs_statfs *sfp;
-	register caddr_t cp;
-	register u_int32_t *tl;
-	register int32_t t1, t2;
+	struct vnode *vp;
+	struct nfs_statfs *sfp;
+	caddr_t cp;
+	u_int32_t *tl;
+	int32_t t1, t2;
 	caddr_t bpos, dpos, cp2;
 	struct nfsmount *nmp = VFSTONFS(mp);
 	int error = 0, v3 = (nmp->nm_flag & NFSMNT_NFSV3), retattr;
@@ -210,15 +210,15 @@ nfs_statfs(mp, sbp, p)
  */
 int
 nfs_fsinfo(nmp, vp, cred, p)
-	register struct nfsmount *nmp;
-	register struct vnode *vp;
+	struct nfsmount *nmp;
+	struct vnode *vp;
 	struct ucred *cred;
 	struct proc *p;
 {
-	register struct nfsv3_fsinfo *fsp;
-	register caddr_t cp;
-	register int32_t t1, t2;
-	register u_int32_t *tl, pref, max;
+	struct nfsv3_fsinfo *fsp;
+	caddr_t cp;
+	int32_t t1, t2;
+	u_int32_t *tl, pref, max;
 	caddr_t bpos, dpos, cp2;
 	int error = 0, retattr;
 	struct mbuf *mreq, *mrep, *md, *mb, *mb2;
@@ -558,7 +558,7 @@ nfs_mount(mp, path, data, ndp, p)
 	if (args.version != NFS_ARGSVERSION)
 		return (EPROGMISMATCH);
 	if (mp->mnt_flag & MNT_UPDATE) {
-		register struct nfsmount *nmp = VFSTONFS(mp);
+		struct nfsmount *nmp = VFSTONFS(mp);
 
 		if (nmp == NULL)
 			return (EIO);
@@ -598,14 +598,14 @@ nfs_mount(mp, path, data, ndp, p)
  */
 int
 mountnfs(argp, mp, nam, pth, hst, vpp, p)
-	register struct nfs_args *argp;
-	register struct mount *mp;
+	struct nfs_args *argp;
+	struct mount *mp;
 	struct mbuf *nam;
 	const char *pth, *hst;
 	struct vnode **vpp;
 	struct proc *p;
 {
-	register struct nfsmount *nmp;
+	struct nfsmount *nmp;
 	struct nfsnode *np;
 	int error;
 	struct vattr attrs;
@@ -727,7 +727,7 @@ nfs_unmount(mp, mntflags, p)
 	int mntflags;
 	struct proc *p;
 {
-	register struct nfsmount *nmp;
+	struct nfsmount *nmp;
 	struct nfsnode *np;
 	struct vnode *vp;
 	int error, flags = 0;
@@ -803,7 +803,7 @@ nfs_root(mp, vpp)
 	struct mount *mp;
 	struct vnode **vpp;
 {
-	register struct vnode *vp;
+	struct vnode *vp;
 	struct nfsmount *nmp;
 	struct nfsnode *np;
 	int error;
@@ -833,7 +833,7 @@ nfs_sync(mp, waitfor, cred, p)
 	struct ucred *cred;
 	struct proc *p;
 {
-	register struct vnode *vp;
+	struct vnode *vp;
 	int error, allerror = 0;
 
 	/*
@@ -934,7 +934,7 @@ nfs_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 /* ARGSUSED */
 int
 nfs_fhtovp(mp, fhp, vpp)
-	register struct mount *mp;
+	struct mount *mp;
 	struct fid *fhp;
 	struct vnode **vpp;
 {
@@ -945,7 +945,7 @@ nfs_fhtovp(mp, fhp, vpp)
 /* ARGSUSED */
 int
 nfs_checkexp(mp, nam, exflagsp, credanonp)
-	register struct mount *mp;
+	struct mount *mp;
 	struct mbuf *nam;
 	int *exflagsp;
 	struct ucred **credanonp;

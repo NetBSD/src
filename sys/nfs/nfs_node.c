@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.32 2000/03/30 02:40:37 simonb Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.33 2000/03/30 12:51:14 augustss Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -101,12 +101,12 @@ nfs_nhdone()
  */
 u_long
 nfs_hash(fhp, fhsize)
-	register nfsfh_t *fhp;
+	nfsfh_t *fhp;
 	int fhsize;
 {
-	register u_char *fhpp;
-	register u_long fhsum;
-	register int i;
+	u_char *fhpp;
+	u_long fhsum;
+	int i;
 
 	fhpp = &fhp->fh_bytes[0];
 	fhsum = 0;
@@ -124,13 +124,13 @@ nfs_hash(fhp, fhsize)
 int
 nfs_nget(mntp, fhp, fhsize, npp)
 	struct mount *mntp;
-	register nfsfh_t *fhp;
+	nfsfh_t *fhp;
 	int fhsize;
 	struct nfsnode **npp;
 {
-	register struct nfsnode *np;
+	struct nfsnode *np;
 	struct nfsnodehashhead *nhpp;
-	register struct vnode *vp;
+	struct vnode *vp;
 	struct vnode *nvp;
 	int error;
 
@@ -186,8 +186,8 @@ nfs_inactive(v)
 		struct vnode *a_vp;
 		struct proc *a_p;
 	} */ *ap = v;
-	register struct nfsnode *np;
-	register struct sillyrename *sp;
+	struct nfsnode *np;
+	struct sillyrename *sp;
 	struct proc *p = ap->a_p;
 	extern int prtactive;
 
@@ -242,9 +242,9 @@ nfs_reclaim(v)
 	struct vop_reclaim_args /* {
 		struct vnode *a_vp;
 	} */ *ap = v;
-	register struct vnode *vp = ap->a_vp;
-	register struct nfsnode *np = VTONFS(vp);
-	register struct nfsmount *nmp = VFSTONFS(vp->v_mount);
+	struct vnode *vp = ap->a_vp;
+	struct nfsnode *np = VTONFS(vp);
+	struct nfsmount *nmp = VFSTONFS(vp->v_mount);
 	extern int prtactive;
 
 	if (prtactive && vp->v_usecount != 0)
