@@ -1,4 +1,4 @@
-/*	$NetBSD: zx.c,v 1.3 2002/09/27 20:41:38 thorpej Exp $	*/
+/*	$NetBSD: zx.c,v 1.4 2002/09/30 23:07:09 thorpej Exp $	*/
 
 /*
  *  Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zx.c,v 1.3 2002/09/27 20:41:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zx.c,v 1.4 2002/09/30 23:07:09 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -134,9 +134,8 @@ struct zx_mmo {
 	{ ZX_LD_GBL_VOFF,	ZX_OFF_LD_GBL,		0x00001000 },
 };                                                                                                                
 
-const struct cfattach zx_ca = {
-	sizeof(struct zx_softc), zx_match, zx_attach
-};
+CFATTACH_DECL(zx, sizeof(struct zx_softc),
+    zx_match, zx_attach, NULL, NULL)
 
 extern struct cfdriver zx_cd;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: stp4020.c,v 1.25 2002/09/27 20:41:36 thorpej Exp $ */
+/*	$NetBSD: stp4020.c,v 1.26 2002/09/30 23:07:08 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.25 2002/09/27 20:41:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.26 2002/09/30 23:07:08 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -139,9 +139,8 @@ static int	stp4020_statintr __P((void *));
 static void	stp4020_map_window(struct stp4020_socket *h, int win, int speed);
 static void	stp4020_calc_speed(int bus_speed, int ns, int *length, int *delay);
 
-const struct cfattach nell_ca = {
-	sizeof(struct stp4020_softc), stp4020match, stp4020attach
-};
+CFATTACH_DECL(nell, sizeof(struct stp4020_softc),
+    stp4020match, stp4020attach, NULL, NULL)
 
 #ifdef STP4020_DEBUG
 static void	stp4020_dump_regs __P((struct stp4020_socket *));

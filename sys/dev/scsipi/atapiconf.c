@@ -1,4 +1,4 @@
-/*	$NetBSD: atapiconf.c,v 1.51 2002/09/27 20:41:39 thorpej Exp $	*/
+/*	$NetBSD: atapiconf.c,v 1.52 2002/09/30 23:12:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapiconf.c,v 1.51 2002/09/27 20:41:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapiconf.c,v 1.52 2002/09/30 23:12:50 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,10 +65,8 @@ int	atapibussubmatch __P((struct device *, struct cfdata *, void *));
 
 int	atapi_probe_bus __P((struct atapibus_softc *, int));
 
-const struct cfattach atapibus_ca = {
-	sizeof(struct atapibus_softc), atapibusmatch, atapibusattach,
-	atapibusdetach, atapibusactivate,
-};
+CFATTACH_DECL(atapibus, sizeof(struct atapibus_softc),
+    atapibusmatch, atapibusattach, atapibusdetach, atapibusactivate)
 
 extern struct cfdriver atapibus_cd;
 

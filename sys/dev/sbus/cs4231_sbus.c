@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231_sbus.c,v 1.22 2002/09/27 20:41:25 thorpej Exp $	*/
+/*	$NetBSD: cs4231_sbus.c,v 1.23 2002/09/30 23:07:07 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4231_sbus.c,v 1.22 2002/09/27 20:41:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4231_sbus.c,v 1.23 2002/09/30 23:07:07 thorpej Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -88,11 +88,8 @@ struct cs4231_sbus_softc {
 static int	cs4231_sbus_match(struct device *, struct cfdata *, void *);
 static void	cs4231_sbus_attach(struct device *, struct device *, void *);
 
-const struct cfattach audiocs_sbus_ca = {
-	sizeof(struct cs4231_sbus_softc), cs4231_sbus_match, cs4231_sbus_attach
-};
-
-
+CFATTACH_DECL(audiocs_sbus, sizeof(struct cs4231_sbus_softc),
+    cs4231_sbus_match, cs4231_sbus_attach, NULL, NULL)
 
 /* audio_hw_if methods specific to apc dma */
 static int	cs4231_sbus_trigger_output(void *, void *, void *, int,
