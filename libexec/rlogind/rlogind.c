@@ -39,13 +39,13 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rlogind.c	5.53 (Berkeley) 4/20/91";*/
-static char rcsid[] = "$Id: rlogind.c,v 1.3 1994/05/19 22:54:28 pk Exp $";
+static char rcsid[] = "$Id: rlogind.c,v 1.4 1994/06/02 19:16:37 pk Exp $";
 #endif /* not lint */
 
 #ifdef KERBEROS
 /* From:
  *	$Source: /cvsroot/src/libexec/rlogind/rlogind.c,v $
- *	$Header: /cvsroot/src/libexec/rlogind/rlogind.c,v 1.3 1994/05/19 22:54:28 pk Exp $
+ *	$Header: /cvsroot/src/libexec/rlogind/rlogind.c,v 1.4 1994/06/02 19:16:37 pk Exp $
  */
 #endif
 
@@ -216,8 +216,7 @@ doit(f, fromp)
 		/*
 		 * Only the name is used below.
 		 */
-		hp = &hostent;
-		hp->h_name = inet_ntoa(fromp->sin_addr);
+		strcpy(remotehost, inet_ntoa(fromp->sin_addr));
 		hostok++;
 	} else if (check_all || local_domain(hp->h_name)) {
 		/*
@@ -233,17 +232,23 @@ doit(f, fromp)
 		    for (; hp->h_addr_list[0]; hp->h_addr_list++)
 			if (!bcmp(hp->h_addr_list[0], (caddr_t)&fromp->sin_addr,
 			    sizeof(fromp->sin_addr))) {
+				strncpy(remotehost, hp->h_name,
+					sizeof(remotehost) - 1);
+				remotehost[sizeof(remotehost) - 1] = 0;
 				hostok++;
 				break;
 			}
-	} else
+	} else {
+		strncpy(remotehost, hp->h_name, sizeof(remotehost) - 1);
+		remotehost[sizeof(remotehost) - 1] = 0;
 		hostok++;
+	}
 
 #ifdef	KERBEROS
 	if (use_kerberos) {
 		if (!hostok)
 			fatal(f, "rlogind: Host address mismatch.", 0);
-		retval = do_krb_login(hp->h_name, fromp);
+		retval = do_krb_login(remotehost, fromp);
 		if (retval == 0)
 			authenticated++;
 		else if (retval > 0)
@@ -287,7 +292,7 @@ doit(f, fromp)
 	        }
 	    }
 #endif
-	    if (do_rlogin(hp->h_name) == 0 && hostok)
+	    if (do_rlogin(remotehost) == 0 && hostok)
 		    authenticated++;
 	}
 	if (confirmed == 0) {
@@ -324,14 +329,14 @@ doit(f, fromp)
 				syslog(LOG_INFO|LOG_AUTH,
 				    "ROOT Kerberos login from %s.%s@%s on %s\n",
 				    kdata->pname, kdata->pinst, kdata->prealm,
-				    hp->h_name);
+				    remotehost);
 #endif
 
 			execl(_PATH_LOGIN, "login", "-p",
-			    "-h", hp->h_name, "-f", lusername, 0);
+			    "-h", remotehost, "-f", lusername, 0);
 		} else
 			execl(_PATH_LOGIN, "login", "-p",
-			    "-h", hp->h_name, lusername, 0);
+			    "-h", remotehost, lusername, 0);
 		fatal(STDERR_FILENO, _PATH_LOGIN, 1);
 		/*NOTREACHED*/
 	}
