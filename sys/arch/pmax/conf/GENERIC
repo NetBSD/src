@@ -2,7 +2,7 @@
 # Distribution kernel (any  model) kernel config file
 
 #
-# 	$NetBSD: GENERIC,v 1.29 1998/06/26 01:54:08 lukem Exp $
+# 	$NetBSD: GENERIC,v 1.30 1998/07/03 20:06:09 mhitch Exp $
 #
 include		"arch/pmax/conf/std.pmax"
 
@@ -93,6 +93,9 @@ options 	NFS_BOOT_BOOTP
 config		netbsd		root on ? type ?
 config		nfsnetbsd	root on ? type nfs
 
+
+mainbus0	at root
+cpu*		at mainbus0
 
 ########################################################################
 ###                   I/O bus and device options                     ###
