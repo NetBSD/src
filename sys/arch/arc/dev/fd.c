@@ -1,4 +1,6 @@
-/*	$NetBSD: fd.c,v 1.14 2000/01/23 20:08:10 soda Exp $	*/
+/*	$NetBSD: fd.c,v 1.15 2000/01/23 21:01:54 soda Exp $	*/
+/*	$OpenBSD: fd.c,v 1.5 1997/04/19 17:19:52 pefo Exp $	*/
+/*	NetBSD: fd.c,v 1.78 1995/07/04 07:23:09 mycroft Exp 	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -88,20 +90,22 @@
 #include <sys/uio.h>
 #include <sys/syslog.h>
 #include <sys/queue.h>
+#include <vm/vm.h>
 
 #include <machine/cpu.h>
 #include <machine/pio.h>
 #include <machine/autoconf.h>
 
-#include <mips/locore.h>
-#include <pica/dev/fdreg.h>
-#include <pica/dev/dma.h>
+#include <mips/locore.h> /* for mips3_HitFlushDCache() */
+#include <arc/dev/fdreg.h>
+#include <arc/dev/dma.h>
 
 #include "locators.h"
 
 
-#define FDUNIT(dev)	(minor(dev) / 8)
-#define FDTYPE(dev)	(minor(dev) % 8)
+#define FDUNIT(dev)	((dev & 0x080) >> 7)
+#define FDTYPE(dev)	((minor(dev) & 0x70) >> 4)
+#define FDPART(dev)	(minor(dev) & 0x0f)
 
 enum fdc_state {
 	DEVIDLE = 0,
@@ -139,7 +143,7 @@ struct fdc_softc {
 };
 
 /* controller driver configuration */
-int fdcprobe __P((struct device *, void *, void *));
+int fdcprobe __P((struct device *, struct cfdata *, void *));
 void fdcattach __P((struct device *, struct device *, void *));
 
 struct cfattach fdc_ca = {
@@ -207,22 +211,29 @@ struct fd_softc {
 };
 
 /* floppy driver configuration */
-int fdprobe __P((struct device *, void *, void *));
+int fdprobe __P((struct device *, struct cfdata *, void *));
 void fdattach __P((struct device *, struct device *, void *));
 
 struct cfattach fd_ca = {
 	sizeof(struct fd_softc), fdprobe, fdattach
 };
-
 extern struct cfdriver fd_cd;
 
 void fdgetdisklabel __P((struct fd_softc *));
 int fd_get_parms __P((struct fd_softc *));
 void fdstrategy __P((struct buf *));
 void fdstart __P((struct fd_softc *));
+int fdioctl __P((dev_t, u_long, caddr_t, int));
+int fddump __P((dev_t, daddr_t, caddr_t, size_t));
+int fdsize __P((dev_t));
+int fdopen __P((dev_t, int));
+int fdclose __P((dev_t, int));
+int fdwrite __P((dev_t, struct uio *));
+int fdread __P((dev_t, struct uio *));
 
 struct dkdriver fddkdriver = { fdstrategy };
 
+int fdprint __P((void *, const char *));
 struct fd_type *fd_nvtotype __P((char *, int, int));
 void fd_set_motor __P((struct fdc_softc *fdc, int reset));
 void fd_motor_off __P((void *arg));
@@ -240,7 +251,8 @@ void fdfinish __P((struct fd_softc *fd, struct buf *bp));
 int
 fdcprobe(parent, match, aux)
 	struct device *parent;
-	void *match, *aux;
+	struct cfdata *match;
+	void *aux;
 {
 	register struct confargs *ca = aux;
 	int iobase = (long)BUS_CVTADDR(ca);
@@ -330,17 +342,17 @@ fdcattach(parent, self, aux)
 int
 fdprobe(parent, match, aux)
 	struct device *parent;
-	void *match, *aux;
+	struct cfdata *match;
+	void *aux;
 {
 	struct fdc_softc *fdc = (void *)parent;
-	struct cfdata *cf = match;
 	struct fdc_attach_args *fa = aux;
 	int drive = fa->fa_drive;
 	int iobase = fdc->sc_iobase;
 	int n;
 
-	if (cf->cf_loc[FDCCF_DRIVE] != FDCCF_DRIVE_DEFAULT &&
-	    cf->cf_loc[FDCCF_DRIVE] != drive)
+	if (match->cf_loc[FDCCF_DRIVE] != FDCCF_DRIVE_DEFAULT &&
+	    match->cf_loc[FDCCF_DRIVE] != drive)
 		return 0;
 
 	/* select drive and turn on motor */
@@ -441,18 +453,6 @@ fd_nvtotype(fdc, nvraminfo, drive)
 #else
 	return &fd_types[0]; /* Use only 1.44 for now */
 #endif
-}
-
-inline struct fd_type *
-fd_dev_to_type(fd, dev)
-	struct fd_softc *fd;
-	dev_t dev;
-{
-	int type = FDTYPE(dev);
-
-	if (type > (sizeof(fd_types) / sizeof(fd_types[0])))
-		return NULL;
-	return type ? &fd_types[type - 1] : fd->sc_deftype;
 }
 
 void
@@ -600,7 +600,7 @@ fd_set_motor(fdc, reset)
 	u_char status;
 	int n;
 
-	if (fd = fdc->sc_drives.tqh_first)
+	if ((fd = fdc->sc_drives.tqh_first) != NULL)
 		status = fd->sc_drive;
 	else
 		status = 0;
@@ -684,7 +684,7 @@ out_fdc(iobase, x)
 }
 
 int
-Fdopen(dev, flags)
+fdopen(dev, flags)
 	dev_t dev;
 	int flags;
 {
@@ -698,7 +698,14 @@ Fdopen(dev, flags)
 	fd = fd_cd.cd_devs[unit];
 	if (fd == 0)
 		return ENXIO;
-	type = fd_dev_to_type(fd, dev);
+
+	if (FDTYPE(dev) > (sizeof(fd_types) / sizeof(fd_types[0])))
+		type = NULL;
+	else if(FDTYPE(dev))
+		type =  &fd_types[FDTYPE(dev) - 1];
+	else
+		type = fd->sc_deftype;
+
 	if (type == NULL)
 		return ENXIO;
 
@@ -747,7 +754,6 @@ fdcstatus(dv, n, s)
 	char *s;
 {
 	struct fdc_softc *fdc = (void *)dv->dv_parent;
-	int iobase = fdc->sc_iobase;
 	char bits[64];
 
 	if (n == 0) {
@@ -827,7 +833,7 @@ fdcintr(arg)
 	struct fd_softc *fd;
 	struct buf *bp;
 	int iobase = fdc->sc_iobase;
-	int read, head, trac, sec, i, s, nblks;
+	int read, head, sec, i, nblks;
 	struct fd_type *type;
 
 loop:
@@ -915,7 +921,7 @@ loop:
 #endif
 		 }}
 #endif
-		MachFlushDCache((vm_offset_t) (bp->b_data + fd->sc_skip),
+		mips3_FlushDCache((vm_offset_t) (bp->b_data + fd->sc_skip),
 				(vm_offset_t) fd->sc_nbytes);
 		read = bp->b_flags & B_READ ? DMA_FROM_DEV : DMA_TO_DEV;
 		DMA_START(fdc->dma, bp->b_data + fd->sc_skip, fd->sc_nbytes, read);
@@ -1067,9 +1073,9 @@ void
 fdcretry(fdc)
 	struct fdc_softc *fdc;
 {
-	char bits[64];
 	struct fd_softc *fd;
 	struct buf *bp;
+	char bits[64];
 
 	fd = fdc->sc_drives.tqh_first;
 	bp = BUFQ_FIRST(&fd->sc_q);

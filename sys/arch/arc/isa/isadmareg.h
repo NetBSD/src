@@ -1,4 +1,5 @@
-/*	$NetBSD: isadmareg.h,v 1.1.1.1 2000/01/23 20:24:29 soda Exp $	*/
+/*	$NetBSD: isadmareg.h,v 1.2 2000/01/23 21:01:59 soda Exp $	*/
+/*	NetBSD: isadmareg.h,v 1.4 1995/06/28 04:31:48 cgd Exp 	*/
 
 #include <dev/ic/i8237reg.h>
 

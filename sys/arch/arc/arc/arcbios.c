@@ -1,4 +1,6 @@
+/*	$NetBSD: arcbios.c,v 1.2 2000/01/23 21:01:50 soda Exp $	*/
 /*	$OpenBSD: arcbios.c,v 1.8 1997/05/01 15:13:28 pefo Exp $	*/
+
 /*-
  * Copyright (c) 1996 M. Warner Losh.  All rights reserved.
  * Copyright (c) 1996 Per Fogelstrom.  All rights reserved.
@@ -32,18 +34,12 @@
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/user.h>
-#include <lib/libkern/libkern.h>
-#include <machine/pte.h>
+#include <sys/kcore.h>
+#include <vm/vm.h>
+#include <dev/cons.h>
 #include <machine/cpu.h>
-#include <machine/memconf.h>
-#include <machine/param.h>
 #include <arc/arc/arcbios.h>
 #include <arc/arc/arctype.h>
-
-arc_param_blk_t *bios_base = (arc_param_blk_t *) 0x80001000;
-
-extern int	cputype;		/* Mother board type */
-extern int	physmem;		/* Total physical memory size */
 
 int Bios_Read __P((int, char *, int, int *));
 int Bios_Write __P((int, char *, int, int *));
@@ -54,12 +50,10 @@ arc_sid_t *Bios_GetSystemId __P((void));
 arc_config_t *Bios_GetChild __P((arc_config_t *));
 arc_dsp_stat_t *Bios_GetDisplayStatus __P((int));
 
-static void bios_configure_memory __P((void));
-static int get_cpu_type __P((void));
+char vendor[sizeof(((arc_sid_t *)0)->vendor) + 1];
+char prodid[sizeof(((arc_sid_t *)0)->prodid) + 1];
 
-char buf[100];	/*XXX*/
 arc_dsp_stat_t	displayinfo;		/* Save area for display status info. */
-
 static struct systypes {
 	char *sys_vend;		/* Vendor ID if name is ambigous */
 	char *sys_name;		/* May be left NULL if name is sufficient */
@@ -129,180 +123,216 @@ ARC_Call(Bios_TestUnicodeCharacter,	0x8c);
 ARC_Call(Bios_GetDisplayStatus,		0x90);
 
 /*
- *	Simple getchar/putchar interface.
+ *	BIOS based console, for early stage.
  */
 
+int  biosgetc __P((dev_t));
+void biosputc __P((dev_t, int));
+
+/* this is to fake out the console routines, while booting. */
+struct consdev bioscons = {
+	NULL, NULL, biosgetc, biosputc, nullcnpollc, NODEV, CN_DEAD
+};
+
 int
-bios_getchar()
+biosgetc(dev)
+	dev_t dev;
 {
-	char buf[4];
-	int  cnt;
+	int cnt;
+	char buf;
 
-	if(Bios_Read(0, &buf[0], 1, &cnt) != 0)
-		return(-1);
-	return(buf[0] & 255);
+	if (Bios_Read(0, &buf, 1, &cnt) != arc_ESUCCESS)
+		return (-1);
+	return (buf & 255);
 }
 
 void
-bios_putchar(c)
-char c;
+biosputc(dev, ch)
+	dev_t dev;
+	int ch;
 {
-	char buf[4];
-	int  cnt;
+	int cnt;
+	char buf;
 
-	if(c == '\n') {
-		buf[0] = '\r';
-		buf[1] = c;
-		cnt = 2;
-		if(displayinfo.CursorYPosition < displayinfo.CursorMaxYPosition)
-			displayinfo.CursorYPosition++;
-	}
-	else {
-		buf[0] = c;
-		cnt = 1;
-	}
-	Bios_Write(1, &buf[0], cnt, &cnt);
+	buf = ch;
+	Bios_Write(1, &buf, 1, &cnt);
 }
 
 void
-bios_putstring(s)
-char *s;
+bios_init_console()
 {
-	while(*s) {
-		bios_putchar(*s++);
+	static int initialized = 0;
+
+	if (!initialized) {
+		initialized = 1;
+		/* fake out the console routines, for now */
+		cn_tab = &bioscons;
 	}
 }
 
 /*
  * Get memory descriptor for the memory configuration and
  * create a layout database used by pmap init to set up
- * the memory system. Note that kernel option "MACHINE_NONCONTIG"
+ * the memory system. Note that kernel option "MACHINE_NEW_NONCONTIG"
  * must be set for systems with non contigous physical memory.
  *
  * Concatenate obvious adjecent segments.
  */
-static void
-bios_configure_memory()
+int
+bios_configure_memory(mem_reserved, mem_clusters, mem_cluster_cnt_return)
+	int *mem_reserved;
+	phys_ram_seg_t *mem_clusters;
+	int *mem_cluster_cnt_return;
 {
-	arc_mem_t *descr = 0;
-	struct mem_descriptor *m;
+	int physmem = 0;		/* Total physical memory size */
+	int mem_cluster_cnt = 0;
+
+	arc_mem_t *descr = NULL;
 	vm_offset_t seg_start, seg_end;
-	int	i;
+	int i, reserved;
 
-	descr = (arc_mem_t *)Bios_GetMemoryDescriptor(descr);
-	while(descr != 0) {
-
+	while ((descr = Bios_GetMemoryDescriptor(descr)) != NULL) {
 		seg_start = descr->BasePage * 4096;
 		seg_end = seg_start + descr->PageCount * 4096;
 
-		switch(descr->Type) {
-		case BadMemory:		/* Have no use for theese */
+#ifdef BIOS_MEMORY_DEBUG
+		printf("memory type:%d, 0x%8lx..%8lx, size:%8ld bytes\n",
+		    descr->Type, seg_start, seg_end, seg_end - seg_start);
+#endif
+
+		switch (descr->Type) {
+		case BadMemory:		/* Have no use for these */
 			break;
 
 		case ExeceptionBlock:
 		case SystemParameterBlock:
-		case FreeMemory:
-		case FirmwareTemporary:
 		case FirmwarePermanent:
-		case FreeContigous:
-			physmem += descr->PageCount * 4096;
-			m = 0;
-			for( i = 0; i < MAXMEMSEGS; i++) {
-				if(mem_layout[i].mem_size == 0) {
-					if(m == 0)
-						m = &mem_layout[i]; /* free */
-				}
-				else if(seg_end == mem_layout[i].mem_start) {
-					m = &mem_layout[i];
-					m->mem_start = seg_start;
-					m->mem_size += seg_end - seg_start;
-				}
-				else if(mem_layout[i].mem_start +
-				    mem_layout[i].mem_size == seg_start) {
-					m = &mem_layout[i];
-					m->mem_size += seg_end - seg_start;
-				}
-			}
-			if(m && m->mem_size == 0) {
-				m->mem_start = seg_start;
-				m->mem_size = seg_end - seg_start;
-			}
-			break;
+			reserved = 1;
+			goto account_it;
 
+		case FreeMemory:
 		case LoadedProgram:	/* This is the loaded kernel */
+		case FirmwareTemporary:
+		case FreeContigous:
+			reserved = 0;
+account_it:
 			physmem += descr->PageCount * 4096;
+
+			for (i = 0; i < mem_cluster_cnt; ) {
+				if (mem_reserved[i] == reserved &&
+				    mem_clusters[i].start == seg_end)
+					seg_end += mem_clusters[i].size;
+				else if (mem_reserved[i] == reserved &&
+				    mem_clusters[i].start +
+				    mem_clusters[i].size == seg_start)
+					seg_start = mem_clusters[i].start;
+				else { /* do not merge the cluster */
+					i++;
+					continue;
+				}
+				--mem_cluster_cnt;
+				mem_reserved[i] = mem_reserved[mem_cluster_cnt];
+				mem_clusters[i] = mem_clusters[mem_cluster_cnt];
+			}
+			/* assert(i == mem_cluster_cnt); */
+			if (mem_cluster_cnt >= VM_PHYSSEG_MAX) {
+				printf("VM_PHYSSEG_MAX too small\n");
+				for (;;)
+					;
+			}
+			mem_reserved[i] = reserved;
+			mem_clusters[i].start =	seg_start;
+			mem_clusters[i].size = seg_end - seg_start;
+			mem_cluster_cnt++;
 			break;
 
 		default:		/* Unknown type, leave it alone... */
 			break;
 		}
-		descr = (arc_mem_t *)Bios_GetMemoryDescriptor(descr);
 	}
 
-#if 0
-	for( i = 0; i < MAXMEMSEGS; i++) {
-	    if(mem_layout[i].mem_size) {
-		sprintf(buf, "MEM %d, 0x%x, 0x%x\n",i,
-			mem_layout[i].mem_start,
-			mem_layout[i].mem_size);
-		bios_putstring(buf);
-	    }
-	}
+#ifdef MEMORY_DEBUG
+	for (i = 0; i < mem_cluster_cnt; i++)
+		printf("mem_clusters[%d] = %d:{ 0x%8lx, 0x%8lx }\n", i,
+		    mem_reserved[i],
+		    (long)mem_clusters[i].start,
+		    (long)mem_clusters[i].size);
+	printf("physmem = %d\n", physmem);
 #endif
+
+	*mem_cluster_cnt_return = mem_cluster_cnt;
+	return (physmem);
 }
 
 /*
  * Find out system type.
  */
-static int
-get_cpu_type()
+int
+bios_ident()
 {
 	arc_config_t	*cf;
 	arc_sid_t	*sid;
 	int		i;
 
-	if((bios_base->magic != ARC_PARAM_BLK_MAGIC) &&
-	   (bios_base->magic != ARC_PARAM_BLK_MAGIC_BUG)) {
-		return(-1);	/* This is not an ARC system */
+	if ((ArcBiosBase->magic != ARC_PARAM_BLK_MAGIC) &&
+	    (ArcBiosBase->magic != ARC_PARAM_BLK_MAGIC_BUG)) {
+		return (-1);	/* This is not an ARC system */
 	}
 
-	sid = (arc_sid_t *)Bios_GetSystemId();
-	cf = (arc_config_t *)Bios_GetChild(NULL);
-	if(cf) {
-		for(i = 0; i < KNOWNSYSTEMS; i++) {
-			if(strcmp(sys_types[i].sys_name, cf->id) != 0)
+#ifdef BIOS_IDENT_DEBUG
+	bios_init_console();
+#endif
+	sid = Bios_GetSystemId();
+	if (sid) {
+		bcopy(sid->vendor, vendor, sizeof(sid->vendor));
+		vendor[sizeof(vendor) - 1] = 0;
+		bcopy(sid->prodid, prodid, sizeof(sid->prodid));
+		prodid[sizeof(prodid) - 1] = 0;
+#ifdef BIOS_IDENT_DEBUG
+		printf("BIOS Vendor  ID [%8.8s]\n", sid->vendor);
+		printf("BIOS Product ID [%02x", sid->prodid[0]);
+		for (i = 1; i < sizeof(sid->prodid); i++)
+			printf(":%02x", sid->prodid[i]);
+		printf("]\n");
+#endif
+	} else {
+		strcpy(vendor, "N/A");
+		strcpy(prodid, "N/A");
+	}
+	cf = Bios_GetChild(NULL);
+	if (cf) {
+#ifdef BIOS_IDENT_DEBUG
+		printf("BIOS System ID [%s]\n", cf->id);
+#endif
+		for (i = 0; i < KNOWNSYSTEMS; i++) {
+			if (strcmp(sys_types[i].sys_name, cf->id) != 0)
 				continue;
-			if(sys_types[i].sys_vend &&
-			    strncmp(sys_types[i].sys_vend, sid->vendor, 8) != 0)
+			if (sys_types[i].sys_vend &&
+			    strncmp(sys_types[i].sys_vend, sid->vendor,
+			    sizeof(sid->vendor)) != 0)
 				continue;
-			return(sys_types[i].sys_type);	/* Found it. */
+			return (sys_types[i].sys_type);	/* Found it. */
 		}
 	}
 
-	bios_putstring("UNIDENTIFIED ARC SYSTEM `");
-	if(cf)
-		bios_putstring(cf->id);
-	else
-		bios_putstring("????????");
-	bios_putstring("' VENDOR `");
-	sid->vendor[8] = 0;
-	bios_putstring("sid->vendor");
-	bios_putstring("'. Please contact OpenBSD (www.openbsd.org).\n");
-	while(1);
+	bios_init_console();
+	printf("UNIDENTIFIED ARC SYSTEM [%s] VENDOR [%8.8s] PRODID [%02x",
+	       cf ? cf->id : "N/A", vendor, prodid[0]);
+	for (i = 1; i < sizeof(sid->prodid); i++)
+		printf(":%02x", prodid[i]);
+	printf("]\n");
+	printf("Please contact NetBSD (mailto: port-mips@netbsd.org).\n");
+	for (;;)
+		;
 }
 
 /*
- * Incomplete version of bios_ident
+ * save various information of BIOS for future use.
  */
 void
-bios_ident()
+bios_save_info()
 {
-	cputype = get_cpu_type();
-	if(cputype < 0) {
-		return;
-	}
-	bios_configure_memory();
-	displayinfo = *(arc_dsp_stat_t *)Bios_GetDisplayStatus(1);
+	displayinfo = *Bios_GetDisplayStatus(1);
 }
 
 /*
@@ -311,10 +341,10 @@ bios_ident()
  */
 void
 bios_display_info(xpos, ypos, xsize, ysize)
-    int	*xpos;
-    int	*ypos;
-    int *xsize;
-    int *ysize;
+	int *xpos;
+	int *ypos;
+	int *xsize;
+	int *ysize;
 {
 	*xpos = displayinfo.CursorXPosition;
 	*ypos = displayinfo.CursorYPosition;
@@ -333,32 +363,27 @@ bios_load_miniroot(path, where)
 {
 	u_int file;
 	u_int count;
-	int i;
-	char s[32];
+	int error, size = 0;
+	static char mrdefault[] =
+	    {"scsi(0)disk(0)rdisk(0)partition(1)\\miniroot" };
 
-static char mrdefault[] = {"scsi(0)disk(0)rdisk(0)partition(1)\\miniroot" };
-
-	bios_putstring("Loading miniroot:");
-
-	if(path == 0)
+	if (path == 0)
 		path = mrdefault;
-	bios_putstring(path);
-	bios_putstring("\n");
+	printf("Loading miniroot: %s\n", path);
 
-	if((i = Bios_Open(path,0,&file)) != arc_ESUCCESS) {
-		sprintf(s, "Error %d. Load failed!\n", i);
-		bios_putstring(s);
-		return(-1);
+	if ((error = Bios_Open(path, 0, &file)) != arc_ESUCCESS) {
+		printf("Error %d. Load failed!\n", error);
+		return (-1);
 	}
 	do {
 
-		i = Bios_Read(file, where, 4096, &count);
-		bios_putstring(".");
+		error = Bios_Read(file, where, 4096, &count);
+		cnputc('.');
 		where += count;
-	} while((i == 0) && (count != 0));
+		size += count;
+	} while ((error == arc_ESUCCESS) && (count != 0));
 
 	Bios_Close(file);
-	bios_putstring("\nLoaded.\n");
-	return(0);
+	printf("\nLoaded.\n");
+	return (size);
 }
-

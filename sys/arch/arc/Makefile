@@ -1,32 +1,35 @@
-#	$NetBSD: Makefile,v 1.5 2000/01/23 20:07:59 soda Exp $
+#	$NetBSD: Makefile,v 1.6 2000/01/23 21:01:48 soda Exp $
+#	$OpenBSD: Makefile,v 1.5 1997/05/19 10:34:53 pefo Exp $
+#	from: @(#)Makefile	8.1 (Berkeley) 6/16/93
 
-# Makefile for pica tags file and boot blocks
+# Makefile for arc tags file and boot blocks
 
 # Find where mips source files are for inclusion in tags
 .include <../mips/Makefile.inc>
 
-TPICA=	../pica/tags
-SPICA=	../pica/pica/*.[ch] ../pica/include/*.[ch] \
-	../pica/dev/*.[ch] ../pica/ultrix/*.[ch]
-APICA=	../pica/pica/*.s
+TARC=	../arc/tags
+SARC=	../arc/algor/*.[ch] ../arc/arc/*.[ch] ../arc/dev/*.[ch] \
+	../arc/dti/*.[ch] ../arc/include/*.h ../arc/isa/*.[ch] \
+	../arc/pci/*.[ch] ../arc/pica/*.[ch]
+AARC=	../arc/arc/*.S
 
 # Directories in which to place tags links
-DPICA=	dev dist include pica
+DARC=	algor arc dev dti include isa pci pica
 
 .include "../../kern/Make.tags.inc"
 
 tags:
-	-ctags -wdtf ${TPICA} ${SPICA} ${SMIPS} ${COMM}
-	egrep "^LEAF(.*)|^[AN]LEAF(.*)|^NON_LEAF(.*)" ${APICA} ${AMIPS} | \
+	-ctags -wdtf ${TARC} ${SARC} ${SMIPS} ${COMM}
+	egrep "^LEAF(.*)|^[AN]LEAF(.*)|^NON_LEAF(.*)" ${AARC} ${AMIPS} | \
 	    sed "s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3 \1 /^\2(\3\4$$/;" \
-	    >> ${TPICA}
-	sort -o ${TPICA} ${TPICA}
+	    >> ${TARC}
+	sort -o ${TARC} ${TARC}
 
 links:
-	-for i in ${DPICA}; do \
+	-for i in ${DARC}; do \
 	    cd $$i && rm -f tags; ln -s ../tags tags; done
 
 
-SUBDIR=	include
+SUBDIR=	include stand
 
 .include <bsd.subdir.mk>

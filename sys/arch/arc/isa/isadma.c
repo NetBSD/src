@@ -1,5 +1,6 @@
+/*	$NetBSD: isadma.c,v 1.2 2000/01/23 21:01:59 soda Exp $	*/
 /*	$OpenBSD: isadma.c,v 1.2 1996/11/23 21:45:34 kstailey Exp $	*/
-/*	$NetBSD: isadma.c,v 1.1.1.1 2000/01/23 20:24:29 soda Exp $	*/
+/*	NetBSD: isadma.c,v 1.19 1996/04/29 20:03:26 christos Exp 	*/
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,15 +45,15 @@ static u_int8_t dmamode[4] = {
 	DMA37MD_WRITE | DMA37MD_LOOP
 };
 
-int isadmamatch __P((struct device *, void *, void *));
+int isadmamatch __P((struct device *, struct cfdata *, void *));
 void isadmaattach __P((struct device *, struct device *, void *));
 int isadmaprint __P((void *, const char *));
 
 struct isadma_softc {
 	struct device sc_dev;
-	bus_chipset_tag_t sc_bc;
-	bus_io_handle_t sc_ioh1;
-	bus_io_handle_t sc_ioh2;
+	bus_space_tag_t sc_iot;
+	bus_space_handle_t sc_ioh1;
+	bus_space_handle_t sc_ioh2;
 }
 
 struct cfattach isadma_ca = {
@@ -65,7 +66,8 @@ struct cfdriver isadma_cd = {
 
 isadmamatch(parent, match, aux)
 	struct device *parent;
-	void *match, *aux;
+	struct cfdata *match;
+	void *aux;
 {
 	struct isa_attach_args *ia = aux;
 
@@ -81,16 +83,16 @@ isadmaattach(parent, self, aux)
 {
 	struct isadma_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
-	bus_chipset_tag_t bc;
-	bus_io_handle_t ioh;
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
 
 	printf("\n");
 
-	bc = sc->sc_bc = ia->ia_bc;
-	if (bus_io_map(bc, IO_DMA1, DMA_NREGS, &ioh))
+	iot = sc->sc_iot = ia->ia_iot;
+	if (bus_space_map(iot, IO_DMA1, DMA_NREGS, 0, &ioh))
 		panic("isadmaattach: couldn't map I/O ports");
 	sc->sc_ioh1 = ioh;
-	if (bus_io_map(bc, IO_DMA2, DMA_NREGS*2, &ioh))
+	if (bus_space_map(iot, IO_DMA2, DMA_NREGS*2, 0, &ioh))
 		panic("isadmaattach: couldn't map I/O ports");
 	sc->sc_ioh2 = ioh;
 	isadma_sc = sc;
@@ -105,7 +107,7 @@ isadma_cascade(chan)
 	int chan;
 {
 	struct isadma_softc *sc = isadma_sc;
-	bus_chipset_tag_t bc = sc->sc_bc;
+	bus_space_tag_t iot = sc->sc_iot;
 
 #ifdef ISADMA_DEBUG
 	if (chan < 0 || chan > 7)
@@ -114,13 +116,13 @@ isadma_cascade(chan)
 
 	/* set dma channel mode, and set dma channel mode */
 	if ((chan & 4) == 0) {
-		bus_io_write_1(bc, sc->sc_ioh1, DMA1_MODE, chan | DMA37MD_CASCADE);
-		bus_io_write_1(bc, sc->sc_ioh1, DMA1_SMSK, chan);
+		bus_space_write_1(iot, sc->sc_ioh1, DMA1_MODE, chan | DMA37MD_CASCADE);
+		bus_space_write_1(iot, sc->sc_ioh1, DMA1_SMSK, chan);
 	} else {
 		chan &= 3;
 
-		bus_io_write_1(bc, sc->sc_ioh2, DMA2_MODE, chan | DMA37MD_CASCADE);
-		bus_io_write_1(bc, sc->sc_ioh2, DMA2_SMSK, chan);
+		bus_space_write_1(iot, sc->sc_ioh2, DMA2_MODE, chan | DMA37MD_CASCADE);
+		bus_space_write_1(iot, sc->sc_ioh2, DMA2_SMSK, chan);
 	}
 }
 
@@ -140,8 +142,8 @@ isadma_start(addr, nbytes, chan, flags)
 	int mflags;
 	vm_size_t size;
 	struct isadma_softc *sc = isadma_sc;
-	bus_chipset_tag_t bc = sc->sc_bc;
-	bus_io_handle_t ioh;
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh;
 
 #ifdef ISADMA_DEBUG
 	if (chan < 0 || chan > 7 ||
@@ -182,8 +184,8 @@ isadma_start(addr, nbytes, chan, flags)
 		 * byte mode channels.
 		 */
 		/* set dma channel mode, and reset address ff */
-		bus_io_write_1(bc, ioh, DMA1_MODE, chan | dmamode[flags]);
-		bus_io_write_1(bc, ioh, DMA1_FFC, 0);
+		bus_space_write_1(iot, ioh, DMA1_MODE, chan | dmamode[flags]);
+		bus_space_write_1(iot, ioh, DMA1_FFC, 0);
 
 		/* send start address */
 		waport = DMA1_CHN(chan);
@@ -196,7 +198,7 @@ isadma_start(addr, nbytes, chan, flags)
 		outb(waport + 1, nbytes>>8);
 
 		/* unmask channel */
-		bus_io_write_1(bc, ioh, DMA1_SMSK, chan | DMA37SM_CLEAR);
+		bus_space_write_1(iot, ioh, DMA1_SMSK, chan | DMA37SM_CLEAR);
 	} else {
 		ioh = sc->sc_ioh2;
 		/*
@@ -204,8 +206,8 @@ isadma_start(addr, nbytes, chan, flags)
 		 * word mode channels.
 		 */
 		/* set dma channel mode, and reset address ff */
-		bus_io_write_1(bc, ioh, DMA2_MODE, (chan & 3) | dmamode[flags]);
-		bus_io_write_1(bc, ioh, DMA2_FFC, 0);
+		bus_space_write_1(iot, ioh, DMA2_MODE, (chan & 3) | dmamode[flags]);
+		bus_space_write_1(iot, ioh, DMA2_FFC, 0);
 
 		/* send start address */
 		waport = DMA2_CHN(chan & 3);
@@ -219,7 +221,7 @@ isadma_start(addr, nbytes, chan, flags)
 		outb(waport + 2, nbytes>>8);
 
 		/* unmask channel */
-		bus_io_write_1(bc, ioh, DMA2_SMSK, (chan & 3) | DMA37SM_CLEAR);
+		bus_space_write_1(iot, ioh, DMA2_SMSK, (chan & 3) | DMA37SM_CLEAR);
 	}
 }
 
@@ -229,7 +231,7 @@ isadma_abort(chan)
 {
 	struct dma_info *di;
 	struct isadma_softc *sc = isadma_sc;
-	bus_chipset_tag_t bc = sc->sc_bc;
+	bus_space_tag_t iot = sc->sc_iot;
 
 #ifdef ISADMA_DEBUG
 	if (chan < 0 || chan > 7)
@@ -244,9 +246,9 @@ isadma_abort(chan)
 
 	/* mask channel */
 	if ((chan & 4) == 0)
-		bus_io_write_1(bc, sc->sc_ioh1, DMA1_SMSK, DMA37SM_SET | chan);
+		bus_space_write_1(iot, sc->sc_ioh1, DMA1_SMSK, DMA37SM_SET | chan);
 	else
-		bus_io_write_1(bc, sc->sc_ioh2, DMA2_SMSK, DMA37SM_SET | (chan & 3));
+		bus_space_write_1(iot, sc->sc_ioh2, DMA2_SMSK, DMA37SM_SET | (chan & 3));
 
 	isadma_unmap(di->addr, di->nbytes, 1, di->phys);
 	di->active = 0;
@@ -257,7 +259,7 @@ isadma_finished(chan)
 	int chan;
 {
 	struct isadma_softc *sc = isadma_sc;
-	bus_chipset_tag_t bc = sc->sc_bc;
+	bus_space_tag_t iot = sc->sc_iot;
 
 #ifdef ISADMA_DEBUG
 	if (chan < 0 || chan > 7)
@@ -266,9 +268,9 @@ isadma_finished(chan)
 
 	/* check that the terminal count was reached */
 	if ((chan & 4) == 0)
-		dma_finished |= bus_io_read_1(bc, sc->sc_ioh1, DMA1_SR) & 0x0f;
+		dma_finished |= bus_space_read_1(iot, sc->sc_ioh1, DMA1_SR) & 0x0f;
 	else
-		dma_finished |= (bus_io_read_1(bc, sc->sc_ioh2, DMA2_SR) & 0x0f) << 4;
+		dma_finished |= (bus_space_read_1(iot, sc->sc_ioh2, DMA2_SR) & 0x0f) << 4;
 
 	return ((dma_finished & (1 << chan)) != 0);
 }
@@ -280,7 +282,7 @@ isadma_done(chan)
 	struct dma_info *di;
 	u_char tc;
 	struct isadma_softc *sc = isadma_sc;
-	bus_chipset_tag_t bc = sc->sc_bc;
+	bus_space_tag_t iot = sc->sc_iot;
 
 #ifdef DIAGNOSTIC
 	if (chan < 0 || chan > 7)
@@ -295,18 +297,18 @@ isadma_done(chan)
 
 	/* check that the terminal count was reached */
 	if ((chan & 4) == 0)
-		tc = bus_io_read_1(bc, sc->sc_ioh1, DMA1_SR) & (1 << chan);
+		tc = bus_space_read_1(iot, sc->sc_ioh1, DMA1_SR) & (1 << chan);
 	else
-		tc = bus_io_read_1(bc, sc->sc_ioh2, DMA2_SR) & (1 << (chan & 3));
+		tc = bus_space_read_1(iot, sc->sc_ioh2, DMA2_SR) & (1 << (chan & 3));
 	if (tc == 0)
 		/* XXX probably should panic or something */
 		log(LOG_ERR, "dma channel %d not finished\n", chan);
 
 	/* mask channel */
 	if ((chan & 4) == 0)
-		bus_io_write_1(bc, sc->sc_ioh1, DMA1_SMSK, DMA37SM_SET | chan);
+		bus_space_write_1(iot, sc->sc_ioh1, DMA1_SMSK, DMA37SM_SET | chan);
 	else
-		bus_io_write_1(bc, sc->sc_ioh2, DMA2_SMSK, DMA37SM_SET | (chan & 3));
+		bus_space_write_1(iot, sc->sc_ioh2, DMA2_SMSK, DMA37SM_SET | (chan & 3));
 
 	/* XXX Will this do what we want with DMAMODE_LOOP?  */
 	if (di->flags & DMAMODE_READ)

@@ -1,10 +1,13 @@
-/*	$NetBSD: picabus.c,v 1.8 2000/01/23 20:09:23 soda Exp $	*/
+/*	$NetBSD: picabus.c,v 1.9 2000/01/23 21:02:00 soda Exp $	*/
+/*	$OpenBSD: picabus.c,v 1.7 1997/05/24 18:36:26 pefo Exp $	*/
+/*	NetBSD: tc.c,v 1.2 1995/03/08 00:39:05 cgd Exp 	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
  * All rights reserved.
  *
  * Author: Chris G. Demetriou
+ * Author: Per Fogelstrom. (Mips R4x00)
  * 
  * Permission to use, copy, modify and distribute this software and
  * its documentation is hereby granted, provided that both the copyright
@@ -29,14 +32,19 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/proc.h>
+#include <sys/user.h>
 #include <sys/device.h>
+#include <vm/vm.h>
 
+#include <machine/intr.h>
 #include <machine/cpu.h>
 #include <machine/pio.h>
 #include <machine/autoconf.h>
 
-#include <pica/pica/pica.h>
-#include <pica/pica/picatype.h>
+#include <arc/pica/pica.h>
+#include <arc/arc/arctype.h>
+#include <arc/dev/dma.h>
 
 struct pica_softc {
 	struct	device sc_dv;
@@ -45,24 +53,24 @@ struct pica_softc {
 };
 
 /* Definition of the driver for autoconfig. */
-int	picamatch(struct device *, void *, void *);
+int	picamatch(struct device *, struct cfdata *, void *);
 void	picaattach(struct device *, struct device *, void *);
 int	picaprint(void *, const char *);
 
 struct cfattach pica_ca = {
-	sizeof (struct pica_softc), picamatch, picaattach
+	sizeof(struct pica_softc), picamatch, picaattach
 };
-
 extern struct cfdriver pica_cd;
 
 void	pica_intr_establish __P((struct confargs *, int (*)(void *), void *));
 void	pica_intr_disestablish __P((struct confargs *));
 caddr_t	pica_cvtaddr __P((struct confargs *));
 int	pica_matchname __P((struct confargs *, char *));
-int	pica_iointr __P((void *));
-int	pica_clkintr __P((unsigned, unsigned, unsigned, unsigned));
+int	pica_iointr __P((unsigned int, struct clockframe *));
+int	pica_clkintr __P((unsigned int, struct clockframe *));
 
 extern int cputype;
+intr_handler_t pica_clock_handler;
 
 /*
  *  Interrupt dispatch table.
@@ -119,12 +127,42 @@ struct pica_dev acer_pica_61_cpu[] = {
 	{{ NULL,       -1, NULL, },
 	   0, NULL, (void *)NULL, },
 };
+
+struct pica_dev mips_magnum_r4000_cpu[] = {
+	{{ "dallas_rtc",0, 0, },
+	   0,			 pica_intrnull, (void *)PICA_SYS_CLOCK, },
+	{{ "lpt",	1, 0, },
+	   PICA_SYS_LB_IE_PAR1,	 pica_intrnull, (void *)PICA_SYS_PAR1, },
+	{{ "fdc",	2, 0, },
+	   PICA_SYS_LB_IE_FLOPPY,pica_intrnull, (void *)PICA_SYS_FLOPPY, },
+	{{ NULL,	3, NULL, },
+	   0, pica_intrnull, (void *)NULL, },
+	{{ NULL,	4, NULL, },
+	   0, pica_intrnull, (void *)NULL, },
+	{{ "sonic",	5, 0, },
+	   PICA_SYS_LB_IE_SONIC, pica_intrnull, (void *)PICA_SYS_SONIC, },
+	{{ "asc",	6, 0, },
+	   PICA_SYS_LB_IE_SCSI,  pica_intrnull, (void *)PICA_SYS_SCSI, },
+	{{ "pckbd",	7, 0, },
+	   PICA_SYS_LB_IE_KBD,	 pica_intrnull, (void *)PICA_SYS_KBD, },
+	{{ "pms",	8, NULL, },
+	   PICA_SYS_LB_IE_MOUSE, pica_intrnull, (void *)PICA_SYS_KBD, },
+	{{ "com",	9, 0, },
+	   PICA_SYS_LB_IE_COM1,	 pica_intrnull, (void *)PICA_SYS_COM1, },
+	{{ "com",      10, 0, },
+	   PICA_SYS_LB_IE_COM2,	 pica_intrnull, (void *)PICA_SYS_COM2, },
+	{{ "fb",       11, 0, },
+	   0,			 pica_intrnull, (void *)PICA_V_LOCAL_VIDEO, },
+	{{ NULL,       -1, NULL, },
+	   0, NULL, (void *)NULL, },
+};
 #endif
 
 struct pica_dev *pica_cpu_devs[] = {
         NULL,                   /* Unused */
 #ifdef ACER_PICA_61
         acer_pica_61_cpu,       /* Acer PICA */
+	mips_magnum_r4000_cpu,	/* Mips MAGNUM R4000 */
 #else
 	NULL,
 #endif
@@ -134,12 +172,11 @@ int npica_cpu_devs = sizeof pica_cpu_devs / sizeof pica_cpu_devs[0];
 int local_int_mask = 0;	/* Local interrupt enable mask */
 
 int
-picamatch(parent, cfdata, aux)
+picamatch(parent, match, aux)
 	struct device *parent;
-	void *cfdata;
+	struct cfdata *match;
 	void *aux;
 {
-	struct cfdata *cf = cfdata;
 	struct confargs *ca = aux;
 
         /* Make sure that we're looking for a PICA. */
@@ -147,7 +184,7 @@ picamatch(parent, cfdata, aux)
                 return (0);
 
         /* Make sure that unit exists. */
-	if (cf->cf_unit != 0 ||
+	if (match->cf_unit != 0 ||
 	    cputype > npica_cpu_devs || pica_cpu_devs[cputype] == NULL)
 		return (0);
 
@@ -181,6 +218,7 @@ picaattach(parent, self, aux)
 
 	/* Initialize PICA Dma */
 	picaDmaInit();
+
 	/* Try to configure each PICA attached device */
 	for (i = 0; sc->sc_devs[i].ps_ca.ca_slot >= 0; i++) {
 
@@ -230,6 +268,7 @@ pica_intr_establish(ca, handler, val)
 
 	slot = ca->ca_slot;
 	if(slot == 0) {		/* Slot 0 is special, clock */
+		pica_clock_handler = handler;
 		set_intr(MIPS_INT_MASK_4, pica_clkintr, 1);
 	}
 
@@ -249,14 +288,10 @@ void
 pica_intr_disestablish(ca)
 	struct confargs *ca;
 {
-	struct pica_softc *sc = pica_cd.cd_devs[0];
-
 	int slot;
 
 	slot = ca->ca_slot;
-	if(slot == 0) {		/* Slot 0 is special, clock */
-	}
-	else {
+	if(slot != 0)		 {	/* Slot 0 is special, clock */
 		local_int_mask &= ~int_table[slot].int_mask;
 		int_table[slot].int_mask = 0;
 		int_table[slot].int_hand = pica_intrnull;
@@ -269,7 +304,6 @@ pica_matchname(ca, name)
 	struct confargs *ca;
 	char *name;
 {
-
 	return (strcmp(name, ca->ca_name) == 0);
 }
 
@@ -277,7 +311,6 @@ int
 pica_intrnull(val)
 	void *val;
 {
-
 	panic("uncaught PICA intr for slot %p\n", val);
 }
 
@@ -285,8 +318,9 @@ pica_intrnull(val)
  *   Handle pica i/o interrupt.
  */
 int
-pica_iointr(val)
-	void *val;
+pica_iointr(mask, cf)
+	unsigned mask;
+	struct clockframe *cf;
 {
 	int vector;
 
@@ -300,22 +334,17 @@ pica_iointr(val)
  * Handle pica interval clock interrupt.
  */
 int
-pica_clkintr(mask, pc, statusReg, causeReg)
+pica_clkintr(mask, cf)
 	unsigned mask;
-	unsigned pc;
-	unsigned statusReg;
-	unsigned causeReg;
+	struct clockframe *cf;
 {
-	struct clockframe cf;
 	int temp;
 
-	temp = inw(PICA_SYS_IT_STAT);
-	cf.pc = pc;
-	cf.sr = statusReg;
-	hardclock(&cf);
+	temp = inw(R4030_SYS_IT_STAT);
+	(*pica_clock_handler)(cf);
 
 	/* Re-enable clock interrupts */
-	splx(MIPS_INT_MASK_4 | MIPS_SR_INT_ENAB);
+	splx(MIPS_INT_MASK_4 | MIPS_SR_INT_IE);
 
 	return(~MIPS_INT_MASK_4); /* Keep clock interrupts enabled */
 }
