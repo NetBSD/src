@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_sun.c,v 1.13 2001/10/13 15:56:15 augustss Exp $ */
+/* $NetBSD: wsemul_sun.c,v 1.14 2001/10/14 21:49:00 veego Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -33,7 +33,7 @@
 /* XXX DESCRIPTION/SOURCE OF INFORMATION */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsemul_sun.c,v 1.13 2001/10/13 15:56:15 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsemul_sun.c,v 1.14 2001/10/14 21:49:00 veego Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -603,7 +603,7 @@ wsemul_sun_translate(void *cookie, keysym_t in, char **out)
 }
 
 void
-wsemul_sun_detach(void *cookie, u_int *u_int crowp, *ccolp)
+wsemul_sun_detach(void *cookie, u_int *crowp, u_int *ccolp)
 {
 	struct wsemul_sun_emuldata *edp = cookie;
 
