@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.13 1997/06/22 07:42:49 jonathan Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.14 1998/04/23 10:32:08 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -336,6 +336,9 @@
 
 #define MIPS_COP_0_TLB_PG_MASK	$5
 #define MIPS_COP_0_TLB_WIRED	$6
+
+#define MIPS_COP_0_COUNT	$9
+#define MIPS_COP_0_COMPARE	$11
 
 #define MIPS_COP_0_CONFIG	$16
 #define MIPS_COP_0_LLADDR	$17
