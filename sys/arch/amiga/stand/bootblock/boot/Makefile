@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 2000/09/17 18:24:12 is Exp $
+#	$NetBSD: Makefile,v 1.22 2001/03/02 16:46:19 mhitch Exp $
 
 ### what we need:
 
@@ -57,20 +57,20 @@ CFLAGS= ${COPTIM} ${INCPATH} ${DEFS} -Wall #-Wstrict-prototypes
 CLEANFILES += xxboot fdboot x.out f.out xxstart.o fdstart.o libboot.a
 
 xxboot: x.out
-	${AOUT2BB} x.out $@ || nm -u x.out
+	${AOUT2BB} x.out $@ || ${NM} -u x.out
 
 fdboot: f.out
-	${AOUT2BB} f.out $@ || nm -u f.out
+	${AOUT2BB} f.out $@ || ${NM} -u f.out
 
 x.out: xxstart.o libboot.a
 	${LD} ${LDFLAGS} -r -dc -e _start -o $@ $>
-	size $@
-	nm -u $@
+	${SIZE} $@
+	${NM} -u $@
 
 f.out: fdstart.o libboot.a
 	${LD} ${LDFLAGS} -r -dc -e _start -o $@ $>
-	size $@
-	nm -u $@
+	${SIZE} $@
+	${NM} -u $@
 
 xxstart.o: ${.CURDIR}/bbstart.s
 	${CC} ${CAFLAGS} ${COPTS} -x assembler-with-cpp \
