@@ -33,11 +33,9 @@ divert(-1)
 # SUCH DAMAGE.
 #
 
-divert(0)
-VERSIONID(`@(#)hpux.m4	8.4 (Berkeley) 8/24/93')
-
-define(`QUEUE_DIR', /usr/spool/mqueue)dnl
-define(`ALIAS_FILE', /usr/lib/aliases)dnl
-define(`STATUS_FILE', /usr/lib/sendmail.st)dnl
-define(`LOCAL_MAILER_FLAGS', `m')dnl
-define(`confTIME_ZONE', `USE_TZ')dnl
+include(`../m4/cf.m4')
+VERSIONID(`@(#)osf1-cs-exposed.mc	8.1 (Berkeley) 10/15/93')
+OSTYPE(osf1)dnl
+DOMAIN(cs.exposed)dnl
+MAILER(local)dnl
+MAILER(smtp)dnl
