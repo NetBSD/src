@@ -1,4 +1,4 @@
-.\"	$NetBSD: legal.common,v 1.36 2004/08/21 22:30:56 hubertf Exp $
+.\"	$NetBSD: legal.common,v 1.37 2004/09/15 19:45:17 hubertf Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -448,8 +448,6 @@ This product includes software developed by Scott Bartram.
 This product includes software developed by Scott Stevens.
 .It
 This product includes software developed by Shingo WATANABE.
-.It
-This product includes software developed by SigmaSoft, Th. Lockert.
 .It
 This product includes software developed by Softweyr LLC, the
 University of California, Berkeley, and its contributors.
