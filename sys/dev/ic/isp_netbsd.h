@@ -1,5 +1,5 @@
-/* $NetBSD: isp_netbsd.h,v 1.7 1998/12/28 19:10:43 mjacob Exp $ */
-/* release_12_28_98_A */
+/* $NetBSD: isp_netbsd.h,v 1.8 1999/01/10 05:04:18 mjacob Exp $ */
+/* release_12_28_98_A+ */
 /*
  * NetBSD Specific definitions for the Qlogic ISP Host Adapter
  *
@@ -79,6 +79,8 @@ struct isposinfo {
 
 #define	PRINTF			printf
 #define	IDPRINTF(lev, x)	if (isp->isp_dblev >= lev) printf x
+
+#define	MEMZERO			bzero
 
 #if	defined(SCSIDEBUG)
 #define	DFLT_DBLEVEL		3
