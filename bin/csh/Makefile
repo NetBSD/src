@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 1998/04/13 14:08:27 lukem Exp $
+#	$NetBSD: Makefile,v 1.20 2002/08/19 09:56:00 lukem Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 #
 # C Shell with process control; VM/UNIX VAX Makefile
@@ -6,13 +6,15 @@
 #
 # To profile, put -DPROF in DFLAGS and -pg in COPTS, and recompile.
 
+.include <bsd.own.mk>
+
 PROG=	csh
 DFLAGS=-DBUILTIN -DFILEC -DNLS -DSHORT_STRINGS
 CPPFLAGS+=-I${.CURDIR} -I. ${DFLAGS}
 SRCS=	alloc.c char.c const.c csh.c dir.c dol.c err.c exec.c exp.c file.c \
 	func.c glob.c hist.c init.c lex.c misc.c parse.c printf.c proc.c \
 	sem.c set.c str.c strpct.c time.c
-.PATH:	${.CURDIR}/../../usr.bin/printf
+.PATH:	${NETBSDSRCDIR}/usr.bin/printf
 
 MLINKS=	csh.1 limit.1 csh.1 alias.1 csh.1 bg.1 csh.1 dirs.1 csh.1 fg.1 \
 	csh.1 foreach.1 csh.1 history.1 csh.1 jobs.1 csh.1 popd.1 \
