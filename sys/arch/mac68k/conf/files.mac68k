@@ -1,5 +1,5 @@
 #	from: @(#)files.sparc	8.1 (Berkeley) 7/19/93
-#	$Id: files.mac68k,v 1.6 1994/01/20 23:55:16 briggs Exp $
+#	$Id: files.mac68k,v 1.7 1994/01/30 00:56:39 briggs Exp $
 # files.mac68k.newconf
 # mac68k-specific configuration info
 
@@ -27,31 +27,29 @@ device	ae at nubus: ifnet, ether
 file	arch/mac68k/dev/if_ae.c		ae needs-count
 
 # scsi driver and associated stuff
-define	scsi { target = -1 }
+define	scsi {}
 
 device	ncr at mainbus: scsi
 file	arch/mac68k/dev/scsi.c		ncr
 
-device	scsibus at scsi { drive = -1 }
-file	arch/mac68k/scsi/scsiconf.c	scsibus needs-count
+device	scsibus at scsi { target = -1, lun = -1 }
+file	arch/mac68k/scsi/scsiconf.c	scsibus needs-flag
 file	arch/mac68k/scsi/scsi_base.c	scsi
-#file	arch/mac68k/scsi/scsi_ioctl.c	scsi
+file	arch/mac68k/scsi/scsi_ioctl.c	scsi
 
 device	cd at scsibus: disk
-file	arch/mac68k/scsi/cd.c		cd needs-count
+file	arch/mac68k/scsi/cd.c		cd needs-flag
 major {cd=6}
 device	ch at scsibus: disk
-file	arch/mac68k/scsi/ch.c		ch needs-count
+file	arch/mac68k/scsi/ch.c		ch needs-flag
 device	sd at scsibus: disk
-file	arch/mac68k/scsi/sd.c		sd needs-count
+file	arch/mac68k/scsi/sd.c		sd needs-flag
 major {sd=4}
 device	st at scsibus: tape
-file	arch/mac68k/scsi/st.c		st needs-count
+file	arch/mac68k/scsi/st.c		st needs-flag
 major {st=5}
-device uk at scsibus
-device su at scsibus
-file	arch/mac68k/scsi/uk.c		uk needs-count
-file	arch/mac68k/scsi/su.c		su needs-count
+file	arch/mac68k/scsi/uk.c		uk needs-flag
+file	arch/mac68k/scsi/su.c		su needs-flag
 
 file	arch/mac68k/dev/asc.c		# this should be a real device...
 file	arch/mac68k/mac68k/disksubr.c		disk
@@ -66,5 +64,4 @@ file	arch/mac68k/mac68k/machdep.c
 file	arch/mac68k/mac68k/cons.c
 file	arch/mac68k/mac68k/clock.c
 file	arch/mac68k/mac68k/autoconf.c
-file	arch/mac68k/mac68k/swapgeneric.c
 file	arch/mac68k/mac68k/itedumm.c		ite needs-count
