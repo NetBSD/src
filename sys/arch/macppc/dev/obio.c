@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.9 2000/02/08 08:08:43 tsubai Exp $	*/
+/*	$NetBSD: obio.c,v 1.10 2000/11/03 12:20:55 tsubai Exp $	*/
 
 /*-
  * Copyright (C) 1998	Internet Research Institute, Inc.
@@ -92,7 +92,7 @@ obio_attach(parent, self, aux)
 	struct confargs ca;
 	int node, child, namelen;
 	u_int reg[20];
-	int intr[5];
+	int intr[6];
 	char name[32];
 
 	switch (PCI_PRODUCT(pa->pa_id)) {
