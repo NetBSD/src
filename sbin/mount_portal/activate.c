@@ -1,4 +1,4 @@
-/*	$NetBSD: activate.c,v 1.9 2000/06/05 16:30:43 thorpej Exp $	*/
+/*	$NetBSD: activate.c,v 1.10 2001/01/10 03:33:16 lukem Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: activate.c,v 1.9 2000/06/05 16:30:43 thorpej Exp $");
+__RCSID("$NetBSD: activate.c,v 1.10 2001/01/10 03:33:16 lukem Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -155,7 +155,7 @@ send_reply(so, fd, error)
 
 		ctl = malloc(cmsgsize);
 		if (ctl == NULL) {
-			syslog(LOG_ERR, "malloc control message: %m");
+			syslog(LOG_WARNING, "malloc control message: %m");
 			return;
 		}
 		memset(ctl, 0, cmsgsize);
@@ -176,14 +176,14 @@ send_reply(so, fd, error)
 	 * Send to kernel...
 	 */
 	if ((n = sendmsg(so, &msg, MSG_EOR)) < 0)
-		syslog(LOG_ERR, "send: %m");
+		syslog(LOG_WARNING, "send: %m");
 #ifdef DEBUG
 	fprintf(stderr, "sent %d bytes\n", n);
 #endif
 	sleep(1);	/*XXX*/
 #ifdef notdef
 	if (shutdown(so, 2) < 0)
-		syslog(LOG_ERR, "shutdown: %m");
+		syslog(LOG_WARNING, "shutdown: %m");
 #endif
 	/*
 	 * Throw away the open file descriptor and control
@@ -211,7 +211,7 @@ activate(q, so)
 	 */
 	error = get_request(so, &pcred, key, sizeof(key));
 	if (error) {
-		syslog(LOG_ERR, "activate: recvmsg: %m");
+		syslog(LOG_WARNING, "activate: recvmsg: %m");
 		goto drop;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pt_tcp.c,v 1.14 2000/12/31 06:03:53 itojun Exp $	*/
+/*	$NetBSD: pt_tcp.c,v 1.15 2001/01/10 03:33:16 lukem Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pt_tcp.c,v 1.14 2000/12/31 06:03:53 itojun Exp $");
+__RCSID("$NetBSD: pt_tcp.c,v 1.15 2001/01/10 03:33:16 lukem Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -150,7 +150,7 @@ portal_tcp(pcr, key, v, kso, fdp)
 	}
 
 	if (so < 0)
-		syslog(LOG_ERR, "%s: %m", cause);
+		syslog(LOG_WARNING, "%s: %m", cause);
 		
 	freeaddrinfo(res);
 #else /* ! INET6 */
@@ -188,7 +188,7 @@ portal_tcp(pcr, key, v, kso, fdp)
 		else
 			so = socket(AF_INET, SOCK_STREAM, 0);
 		if (so < 0) {
-			syslog(LOG_ERR, "socket: %m");
+			syslog(LOG_WARNING, "socket: %m");
 			return (errno);
 		}
 
