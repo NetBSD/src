@@ -23,11 +23,12 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  *
- *	$Id: db_trace.c,v 1.6 1993/12/19 03:41:34 mycroft Exp $
+ *	$Id: db_trace.c,v 1.7 1994/04/05 19:52:16 mycroft Exp $
  */
 
-#include "param.h"
-#include "proc.h"
+#include <sys/param.h>
+#include <sys/proc.h>
+
 #include <machine/db_machdep.h>
 
 #include <ddb/db_access.h>
