@@ -1,7 +1,7 @@
-/*	$NetBSD: endian.h,v 1.27 1999/08/21 05:53:50 simonb Exp $	*/
+/*	$NetBSD: endian.h,v 1.28 2000/03/16 15:09:36 mycroft Exp $	*/
 
-#ifndef _MACHINE_ENDIAN_H_
-#define	_MACHINE_ENDIAN_H_
+#ifndef _I386_ENDIAN_H_
+#define	_I386_ENDIAN_H_
 
 #define _BYTE_ORDER _LITTLE_ENDIAN
 #include <sys/endian.h>
@@ -15,6 +15,6 @@
 #define	htonl(x)	((in_addr_t)__byte_swap_long((in_addr_t)(x)))
 #define	htons(x)	((in_port_t)__byte_swap_word((in_port_t)(x)))
 
-#endif	/* __GNUC__ */
+#endif
 
-#endif /* !_MACHINE_ENDIAN_H_ */
+#endif /* !_I386_ENDIAN_H_ */
