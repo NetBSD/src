@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.215 2004/05/20 21:04:46 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.216 2004/05/22 17:59:30 he Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -2694,3 +2694,261 @@ sys/net/if_tun.c				1.69
 
 	Initialize interface type to IFT_TUNNEL.
 	[tron, ticket #325]
+
+usr.sbin/rarpd.c				1.51
+
+	Fix handling of interface aliases if "rarpd" is not invoked
+	with "-a".
+	[tron, ticket #323]
+
+xsrc/xfree/xc/programs/xmodmap/xmodmap.man	1.1.1.6 -> 1.2
+
+	Tweak formatting so that __projectroot__ gets expanded
+	correctly.
+	[tron, ticket #330]
+
+ree/xc/doc/man/general/X.man			1.1.1.3 -> 1.2
+
+	Tweak formatting so that __projectroot__ gets expanded
+	correctly.
+	[tron, ticket #331]
+
+sys/arch/alpha/alpha/trap.c			1.93
+
+	Add missing KERNEL_PROC_UNLOCK() in upcallret().  This
+	should fix PR#22219 and maybe also PR#23731, which appears
+	to be a duplicate of PR#22219.
+	[mhitch, ticket #355]
+
+sys/arch/xen/Makefile				1.1 (new)
+sys/arch/xen/conf/Makefile.arch.inc		1.1 (new)
+sys/arch/xen/i386/hypervisor_machdep.c		1.1-1.2 (new)
+sys/arch/xen/i386/sys_machdep.c			1.1 (new)
+sys/arch/xen/include/Makefile			1.1 (new)
+sys/arch/xen/include/kernfs_machdep.h		1.1 (new)
+sys/arch/xen/include/vga_xenvar.h		1.1-1.2 (new)
+sys/arch/xen/include/xbdvar.h			1.1-1.5 (new)
+sys/arch/xen/include/xenio.h			1.1 (new)
+sys/arch/xen/include/xenkbcvar.h		1.1 (new)
+sys/arch/xen/x86/bus_space.c			1.1-1.2 (new)
+sys/arch/xen/xen/hypervisor.c			1.1-1.7 (new)
+sys/arch/xen/xen/machmem.c			1.1 (new)
+sys/arch/xen/xen/privcmd.c			1.1 (new)
+sys/arch/xen/xen/vfr.c				1.1 (new)
+sys/arch/xen/xen/vga_xen.c			1.1-1.2 (new)
+sys/arch/xen/xen/xbd.c				1.1-1.9 (new)
+sys/arch/xen/xen/xencons.c			1.1 (new)
+sys/arch/xen/xen/xenkbc.c			1.1-1.3 (new)
+sys/arch/xen/stand/Makefile			1.1 (new)
+sys/arch/xen/stand/xen12load/Makefile		1.1-1.2 (new)
+sys/arch/xen/stand/xen12load/loadelf.c		1.1 (new)
+sys/arch/xen/stand/xen12load/start.S		1.1 (new)
+sys/arch/xen/stand/xen12load/xenload.c		1.1 (new)
+sys/arch/xen/stand/xen12load/xenload.h		1.1 (new)
+sys/conf/files					1.666
+sys/arch/xen/conf/GENERIC			1.2-1.10
+sys/arch/xen/conf/Makefile.xen			1.2-1.3
+sys/arch/xen/conf/XEN				1.2-1.10
+sys/arch/xen/conf/files.compat			1.2-1.3
+sys/arch/xen/conf/files.xen			1.4-1.12
+sys/arch/xen/conf/majors.xen			1.2-1.3
+sys/arch/xen/i386/autoconf.c			1.2-1.5
+sys/arch/xen/i386/identcpu.c			1.2-1.3
+sys/arch/xen/i386/locore.S			1.3-1.5
+sys/arch/xen/i386/machdep.c			1.3-1.8
+sys/arch/xen/i386/mainbus.c			1.2-1.3
+sys/arch/xen/i386/npx.c				1.2-1.3
+sys/arch/xen/i386/npx_hv.c			1.2
+sys/arch/xen/i386/pmap.c			1.2-1.6
+sys/arch/xen/i386/spl.S				1.2
+sys/arch/xen/i386/trap.c			1.3
+sys/arch/xen/i386/vector.S			1.2-1.4
+sys/arch/xen/i386/xen_machdep.c			1.2-1.5
+sys/arch/xen/include/cpu.h			1.2-1.6
+sys/arch/xen/include/cpufunc.h			1.2-1.3
+sys/arch/xen/include/events.h			1.2-1.3
+sys/arch/xen/include/hypervisor.h		1.2-1.7
+sys/arch/xen/include/if_xennetvar.h		1.2
+sys/arch/xen/include/pmap.h			1.2-1.3
+sys/arch/xen/include/xen.h			1.2-1.7
+sys/arch/xen/include/xenfunc.h			1.2
+sys/arch/xen/include/xenpmap.h			1.2-1.3
+sys/arch/xen/include/hypervisor-ifs/block.h	1.2
+sys/arch/xen/x86/consinit.c			1.2-1.3
+sys/arch/xen/x86/intr.c				1.2
+sys/arch/xen/xen/clock.c			1.2-1.5
+sys/arch/xen/xen/events.c			1.2-1.5
+sys/arch/xen/xen/if_xennet.c			1.2-1.10
+sys/arch/xen/xen/xen_debug.c			1.2
+sys/arch/xen/i386/hypervisor.c			deleted
+sys/arch/xen/xen/console.c			deleted
+
+	Upgrade xen support:
+	 - add block device driver
+	 - network device driver bug fixes
+	 - support for vga/keyboard/mouse
+	 - support for domain0 operations
+	 - fix /dev/mem and i386_iopl, reboot, event dispatch
+	 - fix clock support, cpu speed report, lazy fpu switching
+	 - add xen12load loader
+	 - sys/arch/xen parts of build.sh release support
+	[cl, ticket #337]
+
+include/assert.h				1.16
+
+	Remove _assert() again.  As has been noted by Ben Harris,
+	this had been removed already in rev. 1.4 and was subsequently
+	reinstated by the Lite-2 import.  Nothing uses it, and it
+	pollutes user namespace.
+	[kleink, ticket #356]
+
+lib/libc/sys/pathconf.2				1.17
+
+	* Note string termination behaviour of NAME_MAX vs. PATH_MAX.
+	* Replace reference to non-existant KERN_NAME_MAX appropriately
+	  with {NAME_MAX}.
+	[kleink, ticket #357]
+
+distrib/utils/sysinst/util.c			1.118
+
+	Delete code that has been under '#if 0' for a while.
+	[dsl, ticket #358]
+
+src/distrib/utils/sysinst/defs.h		1.112
+src/distrib/utils/sysinst/install.c		1.39
+src/distrib/utils/sysinst/main.c		1.43
+src/distrib/utils/sysinst/upgrade.c		1.45
+src/distrib/utils/sysinst/util.c		1.119
+
+	Remove code to do with etc.old, instead install etc.tgz
+	into /.sysinst and use /etc/postinstall to merge.
+	[dsl, ticket #359]
+
+distrib/utils/sysinst/arch/alpha/md.h		1.18
+distrib/utils/sysinst/arch/alpha/msg.md.de	1.3
+distrib/utils/sysinst/arch/alpha/msg.md.en	1.9
+distrib/utils/sysinst/arch/alpha/msg.md.fr	1.9
+distrib/utils/sysinst/arch/alpha/msg.md.pl	1.5
+
+	Add GENERIC.MP.  Fixes PR#25244.
+	[dsl, ticket #360]
+
+distrib/utils/sysinst/arch/i386/msg.md.de	1.4
+distrib/utils/sysinst/arch/i386/msg.md.en	1.46
+distrib/utils/sysinst/arch/i386/msg.md.fr	1.37
+distrib/utils/sysinst/arch/i386/msg.md.pl	1.20
+
+	Kill message used when amd64 used an 'out of tree' toolchain.
+	[dsl, ticket #361]
+
+distrib/utils/sysinst/run.c			1.56
+
+	Don't leak an fd if malloc() fails in collect().
+	[dsl, ticket #362]
+
+distrib/utils/sysinst/Makefile			1.6
+
+	Now that the language variants are built using message
+	files, remove the last vestages of the code that supresses
+	specific languages for specific archtectures.
+	[dsl, ticket #363]
+
+distrib/utils/sysinst/disks.c			1.84
+
+	'ptn' may be ' ' so sprintf(..., "/dev/r%s%c", disk, ptn)
+	won't work!  Convert ' ' to 0 to ensure a valid device name
+	is genarated.  (This will be a problem in 'upgrade' when
+	filesystems are mounted using the targets extisting
+	/etc/fstab.)
+	[dsl, ticket #364]
+
+sys/arch/acorn32/stand/boot32/Makefile		1.3
+sys/arch/acorn32/stand/boot32/boot32.c		1.17
+sys/arch/acorn32/stand/lib/riscoscalls.h	1.3
+sys/arch/acorn32/stand/lib/srt0.S		1.2
+
+	Claim maximum available memory during boot32 startup. This
+	removes the need to explicitly set the WIMP slot size before
+	running the bootloader.
+	Conditional on BOOT_MAXIMISE_MEMORY, so as not to interfere
+	with potential future uses of libriscos.
+	Also remove references to increasing WIMP slot size, as
+	this is now meaningless.
+	[abs, ticket #365]
+
+include/stdbool.h				1.2
+
+	Make it possible to use <stdbool.h> in C++ applications.
+	Fixes PR#25597.
+	[kleink, ticket #368]
+
+sys/arch/acorn32/stand/boot32/boot32.c		1.18
+sys/arch/acorn32/stand/boot32/version		1.8
+sys/lib/libsa/Makefile				1.55
+sys/lib/libsa/stand.h				1.52
+sys/lib/libsa/qsort.c				1.1 (new)
+
+	Add qsort to libsa (taken from sys/dev/vinum/vinumqsort.c)
+	and use instead of bubblesort in acorn32 bootloader. Reduces
+	time to sort memory on A710 equipped RiscPC from over twenty
+	seconds to effectively instantaneous.  Update boot version
+	to 3.30
+	[abs, ticket #369]
+
+gnu/dist/gcc/gcc/version.c			1.8
+gnu/dist/gcc/gcc/config/arm/arm.h		1.2
+
+	Apply gcc fix for gcc PR target/14302 to fix ARM compiler
+	issues triggered by at least glib, glib2, and pkgconfig.
+
+	     2004-02-26  Richard Earnshaw  <rearnsha@arm.com>
+		   Daniel Jacobowitz  <drow@mvista.com>
+
+		   PR target/14302
+		   * arm.h (ARM_GO_IF_LEGITIMATE_ADDRESS): Don't check the mode
+		   size for minipool references.
+
+	Many thanks to Richard Earnshaw for close to instant copy
+	of the gcc patch.  Bump gcc version to "3.3.3 (NetBSD nb3
+	20040520)"
+	[abs, ticket #370]
+
+xsrc/xfree/xc/programs/xdm/socket.c		1.1.1.6 -> 1.2
+
+	Apply patch from XFree86-current:
+	Reinstate the check for request_port == 0 in
+	CreateWellKnownSockets() (Bugzilla #1376, Steve Rumble).
+	This fixes PR#25655.
+	[tron, ticket #371]
+
+dist/file/src/magic.c				1.10
+
+	Improve host portability by ordering some include conditionals
+	to match code conditionals.
+	[ross, ticket #372]
+
+share/mk/bsd.hostprog.mk			1.42
+share/mk/bsd.prog.mk				1.199
+
+	If you add a library, you need to define its DPADD symbol
+	here.  Add LIBMAGIC.
+	[ross, ticket #373]
+
+dist/ipf/man/ipfs.8				1.6
+
+	Fix formatting of some options and a typo.
+	[jmmv, ticket #375]
+
+sys/arch/i386/include/int_fmtio.h		1.5
+sys/arch/i386/include/int_limits.h		1.4
+sys/arch/i386/include/int_mwgwtypes.h		1.3
+
+	Change {u,}int_fast{8,16}_t to 32-bit types, as the previous
+	minimum-width implementation was a rather poor choice.
+
+	Note: While this is technically an ABI change I believe it
+	is a change that we can afford at this time (and to be
+	pulled up to 2.0).  The types are not widely used yet, and
+	a survey of pkgsrc has not shown uses that would be adversely
+	affected by it.
+	[kleink, #376]
