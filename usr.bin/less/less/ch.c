@@ -1,5 +1,7 @@
+/*	$NetBSD: ch.c,v 1.1.1.2 1997/04/22 13:45:13 mrg Exp $	*/
+
 /*
- * Copyright (c) 1984,1985,1989,1994,1995  Mark Nudelman
+ * Copyright (c) 1984,1985,1989,1994,1995,1996  Mark Nudelman
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,6 +34,9 @@
  */
 
 #include "less.h"
+#if MSDOS_COMPILER==WIN32C
+#include <errno.h>
+#endif
 
 public int ignore_eoi;
 
@@ -85,6 +90,9 @@ static int ch_ungotchar = -1;
 extern int autobuf;
 extern int sigs;
 extern int cbufs;
+extern int secure;
+extern constant char helpdata[];
+extern constant int size_helpdata;
 extern IFILE curr_ifile;
 #if LOGFILE
 extern int logfile;
@@ -185,23 +193,32 @@ fch_get()
 	 * If we read less than a full block, that's ok.
 	 * We use partial block and pick up the rest next time.
 	 */
-	if (ch_ungotchar == -1)
-	{
-		n = iread(ch_file, &bp->data[bp->datasize], 
-			(unsigned int)(LBUFSIZE - bp->datasize));
-	} else
+	if (ch_ungotchar != -1)
 	{
 		bp->data[bp->datasize] = ch_ungotchar;
 		n = 1;
 		ch_ungotchar = -1;
+	} else if (ch_flags & CH_HELPFILE)
+	{
+		bp->data[bp->datasize] = helpdata[ch_fpos];
+		n = 1;
+	} else
+	{
+		n = iread(ch_file, &bp->data[bp->datasize], 
+			(unsigned int)(LBUFSIZE - bp->datasize));
 	}
 
 	if (n == READ_INTR)
 		return (EOI);
 	if (n < 0)
 	{
-		error("read error", NULL_PARG);
-		clear_eol();
+#if MSDOS_COMPILER==WIN32C
+		if (errno != EPIPE)
+#endif
+		{
+			error("read error", NULL_PARG);
+			clear_eol();
+		}
 		n = 0;
 	}
 
@@ -209,7 +226,7 @@ fch_get()
 	/*
 	 * If we have a log file, write the new data to it.
 	 */
-	if (logfile >= 0 && n > 0)
+	if (!secure && logfile >= 0 && n > 0)
 		write(logfile, (char *) &bp->data[bp->datasize], n);
 #endif
 
@@ -231,12 +248,12 @@ fch_get()
 			 */
 			if (!slept)
 				ierror("Waiting for data", NULL_PARG);
-#if !MSOFTC
+#if !MSDOS_COMPILER
 	 		sleep(1);
 #endif
 			slept = TRUE;
 		}
-		if (ABORT_SIGS())
+		if (sigs)
 			return (EOI);
 	}
 
@@ -458,6 +475,8 @@ ch_length()
 {
 	if (ignore_eoi)
 		return (NULL_POSITION);
+	if (ch_flags & CH_HELPFILE)
+		return (size_helpdata);
 	return (ch_fsize);
 }
 
@@ -578,6 +597,20 @@ ch_flush()
 	ch_block = 0; /* ch_fpos / LBUFSIZE; */
 	ch_offset = 0; /* ch_fpos % LBUFSIZE; */
 
+#if 1
+	/*
+	 * This is a kludge to workaround a Linux kernel bug: files in
+	 * /proc have a size of 0 according to fstat() but have readable 
+	 * data.  They are sometimes, but not always, seekable.
+	 * Force them to be non-seekable here.
+	 */
+	if (ch_fsize == 0)
+	{
+		ch_fsize = NULL_POSITION;
+		ch_flags &= ~CH_CANSEEK;
+	}
+#endif
+
 	if (lseek(ch_file, (off_t)0, 0) == BAD_LSEEK)
 	{
 		/*
@@ -674,7 +707,7 @@ ch_init(f, flags)
 		/*
 		 * Try to seek; set CH_CANSEEK if it works.
 		 */
-		if (seekable(f))
+		if (!(flags & CH_HELPFILE) && seekable(f))
 			ch_flags |= CH_CANSEEK;
 		set_filestate(curr_ifile, (void *) thisfile);
 	}
@@ -691,7 +724,7 @@ ch_close()
 {
 	int keepstate = FALSE;
 
-	if (ch_flags & (CH_CANSEEK|CH_POPENED))
+	if (ch_flags & (CH_CANSEEK|CH_POPENED|CH_HELPFILE))
 	{
 		/*
 		 * We can seek or re-open, so we don't need to keep buffers.
@@ -707,7 +740,7 @@ ch_close()
 		 * But don't really close it if it was opened via popen(),
 		 * because pclose() wants to close it.
 		 */
-		if (!(ch_flags & CH_POPENED))
+		if (!(ch_flags & (CH_POPENED|CH_HELPFILE)))
 			close(ch_file);
 		ch_file = -1;
 	} else

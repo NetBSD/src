@@ -1,5 +1,7 @@
+/*	$NetBSD: mark.c,v 1.1.1.2 1997/04/22 13:45:32 mrg Exp $	*/
+
 /*
- * Copyright (c) 1984,1985,1989,1994,1995  Mark Nudelman
+ * Copyright (c) 1984,1985,1989,1994,1995,1996  Mark Nudelman
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -124,8 +126,7 @@ getmark(c)
 		 * Current position in the current file.
 		 */
 		m = &sm;
-		m->m_scrpos.pos = ch_tell();
-		m->m_scrpos.ln = 0;
+		get_scrpos(&m->m_scrpos);
 		m->m_ifile = curr_ifile;
 		break;
 	case '\'':
