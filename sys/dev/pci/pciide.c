@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.6.2.2 1998/06/05 10:09:14 bouyer Exp $	*/
+/*	$NetBSD: pciide.c,v 1.6.2.3 1998/06/05 17:31:37 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -705,8 +705,10 @@ void
 piix_setup_cap(sc)
 	struct pciide_softc *sc;
 {
+#if 0
 	if (sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82371AB_IDE)
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_UDMA;
+#endif
 	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA32 | WDC_CAPABILITY_PIO |
 	    WDC_CAPABILITY_DMA;
 	sc->sc_wdcdev.pio_mode = 4;
