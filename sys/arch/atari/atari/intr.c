@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.2 1997/01/27 07:50:17 leo Exp $	*/
+/*	$NetBSD: intr.c,v 1.3 1997/07/15 06:51:15 leo Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -240,13 +240,13 @@ struct intrhand	*ih;
 	switch(ih->ih_type & (AUTO_VEC|USER_VEC)) {
 		case AUTO_VEC:
 			if (vector < AVEC_MIN || vector > AVEC_MAX)
-				return (NULL);
+				return 0;
 			vec_list = &autovec_list[vector-1];
 			hard_vec = &autovects[vector-1];
 			break;
 		case USER_VEC:
 			if (vector < UVEC_MIN || vector > UVEC_MAX)
-				return (NULL);
+				return 0;
 			vec_list = &uservec_list[vector];
 			hard_vec = &uservects[vector];
 			break;
