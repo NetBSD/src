@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_dbg.c,v 1.11 2003/12/31 16:46:34 cl Exp $	*/
+/*	$NetBSD: pthread_dbg.c,v 1.12 2004/02/02 20:08:27 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_dbg.c,v 1.11 2003/12/31 16:46:34 cl Exp $");
+__RCSID("$NetBSD: pthread_dbg.c,v 1.12 2004/02/02 20:08:27 nathanw Exp $");
 
 #include <stddef.h>
 #include <stdlib.h>
@@ -53,41 +53,70 @@ __RCSID("$NetBSD: pthread_dbg.c,v 1.11 2003/12/31 16:46:34 cl Exp $");
 
 #define MIN(a,b)	((a)<(b) ? (a) : (b))
 
+#ifndef PT_FIXEDSTACKSIZE_LG
+#undef PT_STACKMASK
+#define PT_STACKMASK (proc->stackmask)
+#endif
+
 static int td__getthread(td_proc_t *proc, caddr_t addr, td_thread_t **threadp);
 static int td__getsync(td_proc_t *proc, caddr_t addr, td_sync_t **syncp);
 static int td__getstacksize(td_proc_t *proc);
-
-#ifndef PT_FIXEDSTACKSIZE_LG
-caddr_t	pt_stacksize_lg_addr = NULL;
-int	pt_stacksize_lg = -1;
-size_t	pt_stacksize;
-vaddr_t	pt_stackmask;
-#endif /* !PT_FIXEDSTACKSIZE_LG */
-
 
 int
 td_open(struct td_proc_callbacks_t *cb, void *arg, td_proc_t **procp)
 {
 	td_proc_t *proc;
-	caddr_t dbgaddr;
+	caddr_t addr;
 	int dbg;
 	int val;
 
 	proc = malloc(sizeof(*proc));
 	if (proc == NULL)
 		return TD_ERR_NOMEM;
-
 	proc->cb = cb;
 	proc->arg = arg;
 
-	val = LOOKUP(proc, "pthread__dbg", &dbgaddr);
+	val = LOOKUP(proc, "pthread__dbg", &addr);
 	if (val != 0) {
 		if (val == TD_ERR_NOSYM)
 			val = TD_ERR_NOLIB;
 		goto error;
 	}
+	proc->dbgaddr = addr;
 
-	val = READ(proc, dbgaddr, &dbg, sizeof(int));
+	val = LOOKUP(proc, "pthread__allqueue", &addr);
+	if (val != 0) {
+		if (val == TD_ERR_NOSYM)
+			val = TD_ERR_NOLIB;
+		goto error;
+	}
+	proc->allqaddr = addr;
+
+	val = LOOKUP(proc, "pthread__maxlwps", &addr);
+	if (val != 0) {
+		if (val == TD_ERR_NOSYM)
+			val = TD_ERR_NOLIB;
+		goto error;
+	}
+	proc->maxlwpsaddr = addr;
+
+	val = LOOKUP(proc, "pthread__tsd_alloc", &addr);
+	if (val != 0) {
+		if (val == TD_ERR_NOSYM)
+			val = TD_ERR_NOLIB;
+		goto error;
+	}
+	proc->tsdallocaddr = addr;
+
+	val = LOOKUP(proc, "pthread__tsd_destructors", &addr);
+	if (val != 0) {
+		if (val == TD_ERR_NOSYM)
+			val = TD_ERR_NOLIB;
+		goto error;
+	}
+	proc->tsddestaddr = addr;
+
+	val = READ(proc, addr, &dbg, sizeof(int));
 	if (val != 0)
 		goto error;
 
@@ -97,6 +126,15 @@ td_open(struct td_proc_callbacks_t *cb, void *arg, td_proc_t **procp)
 		goto error;
 	}
 
+	val = LOOKUP(proc, "pt_stacksize_lg", &addr);
+	if (val == 0)
+		proc->stacksizeaddr = addr;
+	else
+		proc->stacksizeaddr = NULL;
+	proc->stacksizelg = -1;
+	proc->stacksize = 0;
+	proc->stackmask = 0;
+
 	dbg = getpid();
 	/*
 	 * If this fails it probably means we're debugging a core file and
@@ -104,9 +142,8 @@ td_open(struct td_proc_callbacks_t *cb, void *arg, td_proc_t **procp)
 	 * If it's something else we'll lose the next time we hit WRITE,
 	 * but not before, and that's OK.
 	 */
-	WRITE(proc, dbgaddr, &dbg, sizeof(int));
+	WRITE(proc, proc->dbgaddr, &dbg, sizeof(int));
 
-	proc->allqueue = 0;
 	PTQ_INIT(&proc->threads);
 	PTQ_INIT(&proc->syncs);
 	
@@ -122,22 +159,16 @@ td_open(struct td_proc_callbacks_t *cb, void *arg, td_proc_t **procp)
 int
 td_close(td_proc_t *proc)
 {
-	caddr_t dbgaddr;
 	int dbg;
-	int val;
 	td_thread_t *t, *next;
 	td_sync_t *s, *nexts;
-
-	val = LOOKUP(proc, "pthread__dbg", &dbgaddr);
-	if (val != 0)
-		return val;
 
 	dbg = 0;
 	/*
 	 * Error returns from this write are mot really a problem;
 	 * the process doesn't exist any more.
 	 */
-	WRITE(proc, dbgaddr, &dbg, sizeof(int));
+	WRITE(proc, proc->dbgaddr, &dbg, sizeof(int));
 
 	/* Deallocate the list of thread structures */
 	for (t = PTQ_FIRST(&proc->threads); t; t = next) {
@@ -160,20 +191,11 @@ int
 td_thr_iter(td_proc_t *proc, int (*call)(td_thread_t *, void *), void *callarg)
 {
 	int val;
-	caddr_t allqaddr, next;
+	caddr_t next;
 	struct pthread_queue_t allq;
 	td_thread_t *thread;
 
-	if (proc->allqueue == 0) {
-		val = LOOKUP(proc, "pthread__allqueue", &allqaddr);
-		if (val != 0)
-			return val;
-		proc->allqueue = allqaddr;
-	} else {
-		allqaddr = proc->allqueue;
-	}
-
-	val = READ(proc, allqaddr, &allq, sizeof(allq));
+	val = READ(proc, proc->allqaddr, &allq, sizeof(allq));
 	if (val != 0)
 		return val;
 	
@@ -545,8 +567,9 @@ td_sync_info(td_sync_t *s, td_sync_info_t *info)
 	struct pthread_queue_t queue;
 	pthread_spin_t slock;
 	pthread_t taddr;
-	
-	val = READ(s->proc, s->addr, &magic, sizeof(magic));
+	td_proc_t *proc = s->proc;
+
+	val = READ(proc, s->addr, &magic, sizeof(magic));
 	if (val != 0)
 		return val;
 
@@ -569,21 +592,21 @@ td_sync_info(td_sync_t *s, td_sync_info_t *info)
 		 * volatile qualifier on pthread_spin_t, 
 		 * from __cpu_simple_lock_t.
 		 */
-		if ((val = READ(s->proc, 
+		if ((val = READ(proc, 
 		    s->addr + offsetof(struct __pthread_mutex_st, ptm_lock),
 		    (void *)&slock, sizeof(slock))) != 0)
 			return val;
 		if (slock == __SIMPLELOCK_LOCKED) {
 			info->sync_data.mutex.locked = 1;
-			if ((val = READ(s->proc, 
+			if ((val = READ(proc, 
 			    s->addr + offsetof(struct __pthread_mutex_st, 
 				ptm_owner),
 			    &taddr, sizeof(taddr))) != 0)
 				return val;
-			if ((val = td__getstacksize(s->proc)) != 0)
+			if ((val = td__getstacksize(proc)) != 0)
 				return val;
 			taddr = pthread__id(taddr);
-			td__getthread(s->proc, (void *)taddr, 
+			td__getthread(proc, (void *)taddr, 
 			    &info->sync_data.mutex.owner);
 		} else
 			info->sync_data.mutex.locked = 0;
@@ -591,7 +614,7 @@ td_sync_info(td_sync_t *s, td_sync_info_t *info)
 	case _PT_COND_MAGIC:
 		info->sync_type = TD_SYNC_COND;
 		info->sync_size = sizeof(struct __pthread_cond_st);
-		if ((val = READ(s->proc, 
+		if ((val = READ(proc, 
 		    s->addr + offsetof(struct __pthread_cond_st, ptc_waiters),
 		    &queue, sizeof(queue))) != 0)
 			return val;
@@ -601,7 +624,7 @@ td_sync_info(td_sync_t *s, td_sync_info_t *info)
 	case _PT_SPINLOCK_MAGIC:
 		info->sync_type = TD_SYNC_SPIN;
 		info->sync_size = sizeof(struct __pthread_spinlock_st);
-		if ((val = READ(s->proc, 
+		if ((val = READ(proc, 
 		    s->addr + offsetof(struct __pthread_spinlock_st, pts_spin),
 		    (void *)&slock, sizeof(slock))) != 0)
 			return val;
@@ -611,9 +634,9 @@ td_sync_info(td_sync_t *s, td_sync_info_t *info)
 	case PT_MAGIC:
 		info->sync_type = TD_SYNC_JOIN;
 		info->sync_size = sizeof(struct __pthread_st);
-		td__getthread(s->proc, s->addr,
+		td__getthread(proc, s->addr,
 		    &info->sync_data.join.thread);
-		if ((val = READ(s->proc, 
+		if ((val = READ(proc, 
 		    s->addr + offsetof(struct __pthread_st, pt_joiners),
 		    &queue, sizeof(queue))) != 0)
 			return val;
@@ -624,14 +647,14 @@ td_sync_info(td_sync_t *s, td_sync_info_t *info)
 	case (int)_PT_RWLOCK_MAGIC:
 		info->sync_type = TD_SYNC_RWLOCK;
 		info->sync_size = sizeof(struct __pthread_rwlock_st);
-		if ((val = READ(s->proc, 
+		if ((val = READ(proc, 
 		    s->addr + offsetof(struct __pthread_rwlock_st, ptr_rblocked),
 		    &queue, sizeof(queue))) != 0)
 			return val;
 		if (!PTQ_EMPTY(&queue))
 			info->sync_haswaiters = 1;
 
-		if ((val = READ(s->proc, 
+		if ((val = READ(proc, 
 		    s->addr + offsetof(struct __pthread_rwlock_st, ptr_wblocked),
 		    &queue, sizeof(queue))) != 0)
 			return val;
@@ -640,7 +663,7 @@ td_sync_info(td_sync_t *s, td_sync_info_t *info)
 
 
 		info->sync_data.rwlock.locked = 0;
-		if ((val = READ(s->proc, 
+		if ((val = READ(proc, 
 		    s->addr + offsetof(struct __pthread_rwlock_st, ptr_nreaders),
 		    &n, sizeof(n))) != 0)
 			return val;
@@ -648,13 +671,13 @@ td_sync_info(td_sync_t *s, td_sync_info_t *info)
 		if (n > 0)
 			info->sync_data.rwlock.locked = 1;
 	
-		if ((val = READ(s->proc, 
+		if ((val = READ(proc, 
 		    s->addr + offsetof(struct __pthread_rwlock_st, ptr_writer),
 		    &taddr, sizeof(taddr))) != 0)
 			return val;
 		if (taddr != 0) {
 			info->sync_data.rwlock.locked = 1;
-			td__getthread(s->proc, (void *)taddr, 
+			td__getthread(proc, (void *)taddr, 
 			    &info->sync_data.rwlock.writeowner);
 		}
 		/*FALLTHROUGH*/
@@ -769,21 +792,12 @@ int
 td_map_id2thr(td_proc_t *proc, int threadid, td_thread_t **threadp)
 {
 	int val, num;
-	caddr_t allqaddr, next;
+	caddr_t next;
 	struct pthread_queue_t allq;
 	td_thread_t *thread;
 
 
-	if (proc->allqueue == 0) {
-		val = LOOKUP(proc, "pthread__allqueue", &allqaddr);
-		if (val != 0)
-			return val;
-		proc->allqueue = allqaddr;
-	} else {
-		allqaddr = proc->allqueue;
-	}
-
-	val = READ(proc, allqaddr, &allq, sizeof(allq));
+	val = READ(proc, proc->allqaddr, &allq, sizeof(allq));
 	if (val != 0)
 		return val;
 	
@@ -857,14 +871,9 @@ int
 td_map_lwps(td_proc_t *proc)
 {
 	int i, val, nlwps;
-	caddr_t addr;
 	td_thread_t *thread;
 
-	val = LOOKUP(proc, "pthread__maxlwps", &addr);
-	if (val != 0)
-		return val;
-
-	val = READ(proc, addr, &nlwps, sizeof(nlwps));
+	val = READ(proc, proc->maxlwpsaddr, &nlwps, sizeof(nlwps));
 	if (val != 0)
 		return val;
 
@@ -884,26 +893,19 @@ int
 td_tsd_iter(td_proc_t *proc,
     int (*call)(pthread_key_t, void (*)(void *), void *), void *arg)
 {
-	caddr_t desaddr, allocaddr;
 	int val;
 	int i, allocated;
 	void (*destructor)(void *);
 
-	val = LOOKUP(proc, "pthread__tsd_alloc", &allocaddr);
-	if (val != 0)
-		return val;
-	val = LOOKUP(proc, "pthread__tsd_destructors", &desaddr);
-	if (val != 0)
-		return val;
-	
 	for (i = 0; i < PTHREAD_KEYS_MAX; i++) {
-		val = READ(proc, allocaddr + i * sizeof(int),
+		val = READ(proc, proc->tsdallocaddr + i * sizeof(int),
 		    &allocated, sizeof(allocated));
 		if (val != 0)
 			return val;
 
 		if (allocated) {
-			val = READ(proc,  desaddr + i * sizeof(destructor),
+			val = READ(proc,  proc->tsddestaddr +
+			    i * sizeof(destructor),
 			    &destructor, sizeof(destructor));
 			if (val != 0)
 				return val;
@@ -1008,22 +1010,18 @@ td_thr_tsd(td_thread_t *thread, pthread_key_t key, void **value)
 static int
 td__getstacksize(td_proc_t *proc)
 {
-#ifndef PT_FIXEDSTACKSIZE_LG
 	int lg, val;
 
-	if (pt_stacksize_lg_addr == NULL) {
-		val = LOOKUP(proc, "pt_stacksize_lg", &pt_stacksize_lg_addr);
-		if (val != 0)
-			return val;
-	}
-	val = READ(proc, pt_stacksize_lg_addr, &lg, sizeof(int));
+	if (proc->stacksizeaddr == NULL)
+		return 0;
+
+	val = READ(proc, proc->stacksizeaddr, &lg, sizeof(int));
 	if (val != 0)
-		return val;
-	if (lg != pt_stacksize_lg) {
-		pt_stacksize_lg = lg;
-		pt_stacksize = (1 << pt_stacksize_lg);
-		pt_stackmask = pt_stacksize - 1;
+		return 0;
+	if (lg != proc->stacksizelg) {
+		proc->stacksizelg = lg;
+		proc->stacksize = (1 << lg);
+		proc->stackmask = proc->stacksize - 1;
 	}
-#endif /* !PT_FIXEDSTACKSIZE_LG */
 	return 0;
 }

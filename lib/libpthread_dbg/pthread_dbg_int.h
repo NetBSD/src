@@ -6,7 +6,17 @@ struct td_proc_st {
 	struct td_proc_callbacks_t *cb;
 	void *arg;
 
-	caddr_t allqueue;
+	caddr_t dbgaddr;
+	caddr_t allqaddr;
+	caddr_t maxlwpsaddr;
+	caddr_t tsdallocaddr;
+	caddr_t tsddestaddr;
+
+	caddr_t stacksizeaddr;
+	int stacksizelg;
+	size_t stacksize;
+	vaddr_t stackmask;
+	
 	struct thread_queue_t threads;
 	struct sync_queue_t syncs;
 };
