@@ -1,4 +1,4 @@
-/*	$NetBSD: ite8181.c,v 1.8 2001/02/27 08:54:18 sato Exp $	*/
+/*	$NetBSD: ite8181.c,v 1.9 2001/03/09 08:54:18 sato Exp $	*/
 
 /*-
  * Copyright (c) 2000,2001 SATO Kazumi
@@ -431,12 +431,14 @@ ite8181_update_powerstate(sc, updates)
 	if (updates & PWRSTAT_LCD)
 		config_hook_call(CONFIG_HOOK_POWERCONTROL,
 		    CONFIG_HOOK_POWERCONTROL_LCD,
-		    (void*)!(sc->sc_powerstate & PWRSTAT_SUSPEND));
+		    (void*)!(sc->sc_powerstate & 
+				(PWRSTAT_VIDEOOFF|PWRSTAT_SUSPEND)));
 
 	if (updates & PWRSTAT_BACKLIGHT)
 		config_hook_call(CONFIG_HOOK_POWERCONTROL,
 		    CONFIG_HOOK_POWERCONTROL_LCDLIGHT,
-		    (void*)(!(sc->sc_powerstate & PWRSTAT_SUSPEND) &&
+		    (void*)(!(sc->sc_powerstate & 
+				(PWRSTAT_VIDEOOFF|PWRSTAT_SUSPEND)) &&
 			     (sc->sc_powerstate & PWRSTAT_BACKLIGHT)));
 }
 
@@ -665,6 +667,19 @@ ite8181_ioctl(v, cmd, data, flag, p)
 		 * This driver can't set color map.
 		 */
 		return (EINVAL);
+	
+	case WSDISPLAYIO_SVIDEO:
+		if (*(int *)data == WSDISPLAYIO_VIDEO_OFF)
+			sc->sc_powerstate |= PWRSTAT_VIDEOOFF;
+		else
+			sc->sc_powerstate &= ~PWRSTAT_VIDEOOFF;
+		ite8181_update_powerstate(sc, PWRSTAT_ALL);
+		return 0;
+
+	case WSDISPLAYIO_GVIDEO:
+		*(int *)data = (sc->sc_powerstate&PWRSTAT_VIDEOOFF) ? 
+				WSDISPLAYIO_VIDEO_OFF:WSDISPLAYIO_VIDEO_ON;
+		return 0;
 
 
 	case WSDISPLAYIO_GETPARAM:
