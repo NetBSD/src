@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.104 2003/09/06 22:05:49 christos Exp $	*/
+/*	$NetBSD: cpu.h,v 1.105 2003/10/09 13:46:43 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -53,6 +53,8 @@
 #include <sys/device.h>
 #include <sys/lock.h>			/* will also get LOCKDEBUG */
 #include <sys/sched.h>
+
+#include <lib/libkern/libkern.h>	/* offsetof */
 
 struct intrsource;
 
@@ -182,9 +184,20 @@ extern struct cpu_info *cpu_info_list;
 #define CPU_STOP(_ci)	        ((_ci)->ci_func->stop(_ci))
 #define CPU_START_CLEANUP(_ci)	((_ci)->ci_func->cleanup(_ci))
 
-#define curcpu()		({struct cpu_info *__ci;		\
-				  __asm __volatile("movl %%fs:4,%0":"=r" (__ci)); \
-				  __ci;})
+static struct cpu_info *curcpu(void);
+
+__inline static struct cpu_info * __attribute__((__unused__))
+curcpu()
+{
+	struct cpu_info *ci;
+
+	__asm __volatile("movl %%fs:%1, %0" :
+	    "=r" (ci) :
+	    "m"
+	    (*(struct cpuinfo * const *)offsetof(struct cpu_info, ci_self)));
+	return ci;
+}
+
 #define cpu_number() 		(curcpu()->ci_cpuid)
 
 #define CPU_IS_PRIMARY(ci)	((ci)->ci_flags & CPUF_PRIMARY)
