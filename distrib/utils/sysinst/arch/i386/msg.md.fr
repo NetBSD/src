@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.fr,v 1.5 1998/11/11 16:04:41 bouyer Exp $	*/
+/*	$NetBSD: msg.md.fr,v 1.6 1999/04/08 12:54:52 bouyer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -59,7 +59,7 @@ message wdtype
 {Quel type de disque est %s?}
 
 message sectforward
-{Est ce que votre disque fait AUTOMATIQUEMENT se suivre les secteurs ?}
+{Est ce que votre disque réassigne AUTOMATIQUEMENT les secteurs défectueux ?}
 
 message dlgeom
 {Votre disque a déjà un label BSD. Ce label montre une géométrie différente
@@ -69,41 +69,12 @@ disklabel:   %d cylindres, %d têtes, %d secteurs
 géom réelle: %d cylindres, %d têtes, %d secteurs
 }
 
-message nobiosgeom
-{Votre disque n'a pas de secteur de démarrage (Master Boot Record, alias MBR)
-valide. Ce programme lit la géométrie fictive du BIOS en
-lisant le secteur de démarrage, donc la géometrie du BIOS n'a pu etre
-déterminée ici. Les choix possibles sont :
-    -- Arrêter l'installation, pour pouvoir initialiser le secteur de
-	démarrage depuis un autre système d'exploitation, ou lire la géometrie
-	du BIOS dans la  configuration du BIOS.
-    -- Entrer la géométrie fictive, et sysinst initialisera le secteur de
-	démarrage
-
-ATTENTION : Entrer une nouvelle géométrie entraîne l'initialisation de votre
-secteur de démarrage, et la supression d'un eventuel programme de
-démarrage que vous auriez pu installer.
-}
-
-message diagcyl
-{Certains vieux BIOS ou programmes de diagnostics peuvent utiliser le dernier
-cylindre pour des tests. Cela ne devrait plus etre le cas avec des systèmes
-modernes. Si vous utilisez un vieux système, ou que vous n'etes pas certains
-s'il peut faire cela, vous pouvez exlure le dernier cylindre.
-
-Si vous excluez le dernier cylindre, les géomotries du BIOS et réelles seront
-corrigées, vous n'avez pas besoin de les entrer à nouveau.
-
-Voulez-vous exclure le dernier cylindre ?
-
-}
-
 message part_head
 {Part Début(%s)  Taille(%s)      Fin(%s) Type\n}
 
 message setbiosgeom
 {On va vous demander la géométrie. SVP entrer les valeur que vous désirez.
-Rappelez vous que le nombre de cylindre doit être <= 1023 et que le nombre
+Rappelez vous que le nombre de cylindre doit être <= 1024 et que le nombre
 de secteur doit être <=63. Si votre BIOS est configuré avec plus de 1024
 cylindre, tronquez ce nombre à 1024 ici, NetBSD saura utiliser les cylindres
 restant.
@@ -169,15 +140,14 @@ boot.}
 
 message multbsdpart
 {Il y a plusieurs partition NetBSD dans la table des partitions du secteur de
-boot.
-La partition %d sera utilisée.}
+boot. La partition %d sera utilisée.}
 
 message dofdisk
 {Configuration de la table des partition DOS ...
 }
 
 message dobad144
-{Installation de la table des bad block
+{Installation de la table des block défectueux ...
 }
 
 message dobootblks
@@ -188,8 +158,7 @@ message askfsroot
 {Je vais vous demander la taille et le point de montage de quelque partitions.
 
 Et tout d'abord la partition racine. Il vous reste %d %s de libre sur votre 
-disque.
-Taille de la partition racine ? }
+disque. Taille de la partition racine ? }
 
 message askfsswap
 {
@@ -197,17 +166,30 @@ Et maintenant la taille de swap. Il vous reste %d %s de libre sur votre disque.
 Taille du swap ? }
 
 message otherparts
-{Il vous reste de l'espace libre non alloué sur votre disque. SVP donnez la taille et le point de " montage " des partitions suivantes.
+{Il vous reste de l'espace libre non alloué sur votre disque. SVP donnez la
+taille et le point de " montage " des partitions suivantes.
 
 }
 
 message askfspart
 {La partition suivante est /dev/%s%c . Il vous reste %d %s de libre sur votre 
-disque.
-Taille de la partition ? }
+disque.  Taille de la partition ? }
 
 message cyl1024
 { Le label (liste des partitions) que vous avez entré a une partition racine
 qui se termine après la limite du BIOS de 1024 cylindres. pour être sur que
 le système puisse etre toujours démaré, cette partition doit etre entièrement
 en dessous de cette limite. Vous pouvez: }
+
+message onebiosmatch
+{Ce disque correspond au disque du BIOS suivant:
+
+BIOS #  cylinders  heads  sectors\n}
+
+message biosmultmatch
+{Ce disque correspond aux disques du BIOS suivants:
+
+  BIOS #  cylinders  heads  sectors\n}
+
+message pickdisk
+{Choisissez un disque: }
