@@ -1,4 +1,4 @@
-/*	$NetBSD: sha1.c,v 1.2 1998/05/29 16:50:14 hannken Exp $	*/
+/*	$NetBSD: sha1.c,v 1.3 1998/09/12 08:31:23 ragge Exp $	*/
 /*	$OpenBSD: sha1.c,v 1.9 1997/07/23 21:12:32 kstailey Exp $	*/
 
 /*
@@ -17,13 +17,12 @@
 
 #define SHA1HANDSOFF		/* Copies data before messing with it. */
 
-#include <sys/types.h>
+#include <sys/param.h>
 
 #if defined(_KERNEL) || defined(_STANDALONE)
 #include <sys/systm.h>
 #include <sys/sha1.h>
 #else
-#include <sys/param.h>
 #include <string.h>
 #include <sys/sha1.h>
 #endif
