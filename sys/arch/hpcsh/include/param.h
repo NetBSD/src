@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.3 2001/04/19 18:21:19 uch Exp $	*/
+/*	$NetBSD: param.h,v 1.4 2002/02/26 15:13:22 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -112,7 +112,7 @@ extern vaddr_t ram_start;
 
 /*
  * Constants related to network buffer management.
- * MCLBYTES must be no larger than CLBYTES (the software page size), and,
+ * MCLBYTES must be no larger than NBPG (the software page size), and,
  * on machines that exchange pages of input or output buffers with mbuf
  * clusters (MAPPED_MBUFS), MCLBYTES must also be an integral multiple
  * of the hardware page size.
@@ -120,13 +120,17 @@ extern vaddr_t ram_start;
 #define	MSIZE		256		/* size of an mbuf */
 
 #ifndef MCLSHIFT
-# define	MCLSHIFT	11	/* convert bytes to m_buf clusters */
+#define	MCLSHIFT	11		/* convert bytes to m_buf clusters */
+					/* 2K cluster can hold Ether frame */
 #endif	/* MCLSHIFT */
 
 #define	MCLBYTES	(1 << MCLSHIFT)	/* size of a m_buf cluster */
-#define	MCLOFSET	(MCLBYTES - 1)	/* offset within a m_buf cluster */
 
 #ifndef NMBCLUSTERS
+#if defined(_KERNEL_OPT)
+#include "opt_gateway.h"
+#endif
+
 #ifdef GATEWAY
 #define	NMBCLUSTERS	512		/* map size, max cluster allocation */
 #else

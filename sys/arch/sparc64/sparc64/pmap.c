@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.114 2002/01/02 00:51:37 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.115 2002/02/26 15:13:28 simonb Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
 /*
@@ -1471,7 +1471,7 @@ pmap_init()
 
 	BDPRINTF(PDB_BOOT1, ("pmap_init()\r\n"));
 	if (PAGE_SIZE != NBPG)
-		panic("pmap_init: CLSIZE!=1");
+		panic("pmap_init: PAGE_SIZE!=NBPG");
 
 	size = sizeof(struct pv_entry) * physmem;
 	TAILQ_INIT(&mlist);

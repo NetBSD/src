@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.7 2002/02/11 19:10:30 uch Exp $	*/
+/*	$NetBSD: param.h,v 1.8 2002/02/26 15:13:22 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -79,16 +79,13 @@
 #define	MSIZE		256		/* size of an mbuf */
 
 #ifndef MCLSHIFT
-
-# define	MCLSHIFT	11	/* convert bytes to m_buf clusters */
+#define	MCLSHIFT	11		/* convert bytes to m_buf clusters */
 					/* 2K cluster can hold Ether frame */
 #endif	/* MCLSHIFT */
 
 #define	MCLBYTES	(1 << MCLSHIFT)	/* size of a m_buf cluster */
-#define	MCLOFSET	(MCLBYTES - 1)
 
 #ifndef NMBCLUSTERS
-
 #if defined(_KERNEL_OPT)
 #include "opt_gateway.h"
 #endif
