@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.81.2.1.2.1 2005/04/02 22:26:28 he Exp $
+#	$NetBSD: Makefile,v 1.81.2.1.2.2 2005/04/06 10:09:59 he Exp $
 
 .include <bsd.own.mk>
 
@@ -70,6 +70,12 @@ SUBDIR+=	fgen
 
 .if ${MACHINE} == "hp300"
 SUBDIR+=	hp300-mkboot
+.endif
+
+.if ${MACHINE} == "amiga"
+SUBDIR+=	amiga-elf2bb
+SUBDIR+=	amiga-aout2bb
+SUBDIR+=	amiga-txlt
 .endif
 
 .endif	# ! NOSUBDIR					# }
