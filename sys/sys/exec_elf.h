@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.28 1999/10/26 19:10:26 kleink Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.29 1999/10/27 09:21:35 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -141,9 +141,9 @@ typedef	u_int16_t Elf64_Quarter;
 #define	ELFDATA2LSB	1	/* 2's complement values, LSB first */
 #define	ELFDATA2MSB	2	/* 2's complement values, MSG first */
 
-#define	PF_R		0x4
-#define	PF_W		0x2
-#define	PF_X		0x1
+#define	PF_R		0x4	/* Segment is readable */
+#define	PF_W		0x2	/* Segment is writable */
+#define	PF_X		0x1	/* Segment is executable */
 
 #define	PF_MASKPROC	0xf0000000	/* Processor-specific values */
 
@@ -304,6 +304,7 @@ typedef struct {
 
 #define	ELF_SYM_UNDEFINED	0
 
+/* Symbol bindings */
 #define	STB_LOCAL		0	/* local symbol */
 #define	STB_GLOBAL		1	/* global symbol */
 #define	STB_WEAK		2	/* weakly defined global symbol */
