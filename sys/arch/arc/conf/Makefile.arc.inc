@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile.arc.inc,v 1.10 2003/06/14 09:55:10 tsutsui Exp $
+#	$NetBSD: Makefile.arc.inc,v 1.11 2003/10/26 11:27:54 tsutsui Exp $
 
-CFLAGS+=	-mips2 -mcpu=r4000
+CFLAGS+=	-mips2
 AFLAGS+=	-mips2
 
 LINKFORMAT=	-N
