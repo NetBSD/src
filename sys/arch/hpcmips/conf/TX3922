@@ -2,7 +2,7 @@
 # Distribution kernel (TX3922 based model) kernel config file
 
 #
-#	$NetBSD: TX3922,v 1.8 2000/03/11 08:51:55 shin Exp $
+#	$NetBSD: TX3922,v 1.9 2000/03/12 15:28:12 uch Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
@@ -113,6 +113,8 @@ plumpcmcia*	at	plum?
 fb*		at	plumvideo?
 wsdisplay*	at	fb?
 wskbd*		at	skbd? mux 1
+btnmgr0		at	mainbus0
+wskbd*		at	btnmgr0 mux 1
 
 options 	WSEMUL_VT100
 options 	WSDISPLAY_DEFAULTSCREENS=4
@@ -143,4 +145,3 @@ sd*	at scsibus? target ? lun ?	# SCSI disk drives
 
 pseudo-device	loop		1	# network loopback
 pseudo-device	pty		64	# pseudo ptys
-pseudo-device	btnmgr		1	# button event handler
