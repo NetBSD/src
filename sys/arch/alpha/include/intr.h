@@ -1,7 +1,7 @@
-/* $NetBSD: intr.h,v 1.49 2001/07/27 00:25:19 thorpej Exp $ */
+/* $NetBSD: intr.h,v 1.49.10.1 2002/03/10 21:15:25 thorpej Exp $ */
 
 /*-
- * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -113,21 +113,26 @@ struct scbvec {
  * whittle it down to 3.
  */
 
-#define	IPL_NONE	1	/* disable only this interrupt */
-#define	IPL_BIO		1	/* disable block I/O interrupts */
-#define	IPL_NET		1	/* disable network interrupts */
-#define	IPL_TTY		1	/* disable terminal interrupts */
-#define	IPL_CLOCK	2	/* disable clock interrupts */
-#define	IPL_HIGH	3	/* disable all interrupts */
-#define	IPL_SERIAL	1	/* disable serial interrupts */
+#define	IPL_NONE	ALPHA_PSL_IPL_0	   /* no interrupt level */
+#define	IPL_SOFT	ALPHA_PSL_IPL_SOFT /* generic software interrupts */
+#define	IPL_SOFTCLOCK	IPL_SOFT	   /* clock software interrupts */
+#define	IPL_SOFTNET	IPL_SOFT	   /* network software interrupts */
+#define	IPL_SOFTSERIAL	IPL_SOFT	   /* serial software interrupts */
+#define	IPL_BIO		ALPHA_PSL_IPL_IO   /* block I/O interrupts */
+#define	IPL_NET		ALPHA_PSL_IPL_IO   /* network interrupts */
+#define	IPL_TTY		ALPHA_PSL_IPL_IO   /* terminal interrupts */
+#define	IPL_CLOCK	ALPHA_PSL_IPL_CLOCK/* clock interrupts */
+#define	IPL_HIGH	ALPHA_PSL_IPL_HIGH /* all interrupts */
+#define	IPL_SERIAL	ALPHA_PSL_IPL_IO   /* serial interrupts */
 
-#define	IPL_SOFTSERIAL	0	/* serial software interrupts */
-#define	IPL_SOFTNET	1	/* network software interrupts */
-#define	IPL_SOFTCLOCK	2	/* clock software interrupts */
-#define	IPL_SOFT	3	/* other software interrupts */
-#define	IPL_NSOFT	4
+#define	SI_SOFTSERIAL	0
+#define	SI_SOFTNET	1
+#define	SI_SOFTCLOCK	2
+#define	SI_SOFT		3
 
-#define	IPL_SOFTNAMES {							\
+#define	SI_NQUEUES	4
+
+#define	SI_QUEUENAMES {							\
 	"serial",							\
 	"net",								\
 	"clock",							\
@@ -165,6 +170,9 @@ _splraise(int s)
 	int cur = alpha_pal_rdps() & ALPHA_PSL_IPL_MASK;
 	return (s > cur ? alpha_pal_swpipl(s) : cur);
 }
+
+#define	splraiseipl(ipl)	_splraise((ipl))
+
 #define splsoft()		_splraise(ALPHA_PSL_IPL_SOFT)
 #define splsoftserial()		splsoft()
 #define splsoftclock()		splsoft()
@@ -253,7 +261,7 @@ struct alpha_soft_intr {
 		softintr_q;
 	struct evcnt softintr_evcnt;
 	struct simplelock softintr_slock;
-	unsigned long softintr_ipl;
+	unsigned long softintr_siq;
 };
 
 void	*softintr_establish(int, void (*)(void *), void *);
@@ -272,7 +280,7 @@ do {									\
 	if (__sih->sih_pending == 0) {					\
 		TAILQ_INSERT_TAIL(&__si->softintr_q, __sih, sih_q);	\
 		__sih->sih_pending = 1;					\
-		setsoft(__si->softintr_ipl);				\
+		setsoft(__si->softintr_siq);				\
 	}								\
 	simple_unlock(&__si->softintr_slock);				\
 	splx(__s);							\
