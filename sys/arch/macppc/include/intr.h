@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.11 2001/03/22 04:11:46 tsubai Exp $	*/
+/*	$NetBSD: intr.h,v 1.12 2001/04/13 23:30:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -121,7 +121,6 @@ extern int imask[];
 /*
  * Miscellaneous
  */
-#define splimp()	splraise(imask[IPL_IMP])
 #define splvm()		splraise(imask[IPL_IMP])
 #define	splhigh()	splraise(imask[IPL_HIGH])
 #define	splsched()	splhigh()

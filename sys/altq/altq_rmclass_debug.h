@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_rmclass_debug.h,v 1.2 2000/12/14 08:49:51 thorpej Exp $	*/
+/*	$NetBSD: altq_rmclass_debug.h,v 1.3 2001/04/13 23:29:56 thorpej Exp $	*/
 /*	$KAME: altq_rmclass_debug.h,v 1.2 2000/02/22 14:00:35 itojun Exp $	*/
 
 /*
@@ -82,7 +82,7 @@ extern int cbqtrace_count;
 	} \
 }
 
-#define	LOCK_TRACE()	splimp()
+#define	LOCK_TRACE()	splnet()
 #define	UNLOCK_TRACE(x)	splx(x)
 
 #define	CBQTRACE(func, act, obj) {		\

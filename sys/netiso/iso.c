@@ -1,4 +1,4 @@
-/*	$NetBSD: iso.c,v 1.28 2000/03/30 13:10:11 augustss Exp $	*/
+/*	$NetBSD: iso.c,v 1.29 2001/04/13 23:30:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -637,7 +637,7 @@ iso_ifinit(ifp, ia, siso, scrub)
 	int scrub;
 {
 	struct sockaddr_iso oldaddr;
-	int             s = splimp(), error, nsellength;
+	int             s = splnet(), error, nsellength;
 
 	oldaddr = ia->ia_addr;
 	ia->ia_addr = *siso;

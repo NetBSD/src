@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_cdnr.c,v 1.2 2000/12/14 08:49:50 thorpej Exp $	*/
+/*	$NetBSD: altq_cdnr.c,v 1.3 2001/04/13 23:29:55 thorpej Exp $	*/
 /*	$KAME: altq_cdnr.c,v 1.8 2000/12/14 08:12:45 thorpej Exp $	*/
 
 /*
@@ -1262,7 +1262,7 @@ cdnrioctl(dev, cmd, addr, flag, p)
 		break;
 	}
     
-	s = splimp();
+	s = splnet();
 	switch (cmd) {
 		
 	case CDNR_IF_ATTACH:
