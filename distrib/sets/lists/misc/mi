@@ -236,6 +236,7 @@
 ./usr/share/examples/supfiles/skarven.itea.unit.no
 ./usr/share/examples/supfiles/sup.au.netbsd.org
 ./usr/share/examples/supfiles/sup.de.netbsd.org
+./usr/share/examples/supfiles/sup.jp.netbsd.org
 ./usr/share/examples/supfiles/sup.netbsd.org
 ./usr/share/examples/supfiles/sup.uk.netbsd.org
 ./usr/share/sendmail/README
