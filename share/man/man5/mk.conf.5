@@ -1,4 +1,4 @@
-.\"	$NetBSD: mk.conf.5,v 1.13 2002/05/03 08:58:46 lukem Exp $
+.\"	$NetBSD: mk.conf.5,v 1.14 2002/06/17 20:22:48 skrll Exp $
 .\"
 .\"  Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\"  All rights reserved.
@@ -165,13 +165,13 @@ file, and will instead attempt to log the information to
 Please see
 .Xr packages 7
 for more variables used internally by the package system and
-.Pa /usr/pkgsrc/mk/bsd.pkg.defaults.mk
+.Pa ${PKGSRCDIR}/mk/bsd.pkg.defaults.mk
 for package-specific examples.
 .Sh FILES
 .Bl -tag -width /etc/mk.conf
 .It Pa /etc/mk.conf
 This file.
-.It Pa /usr/pkgsrc/mk/bsd.pkg.defaults.mk
+.It Pa ${PKGSRCDIR}/mk/bsd.pkg.defaults.mk
 Examples for settings regarding the pkgsrc collection.
 .El
 .Sh SEE ALSO
