@@ -1,4 +1,4 @@
-/*	$NetBSD: p9100.c,v 1.3 1999/08/02 18:00:21 matt Exp $ */
+/*	$NetBSD: p9100.c,v 1.4 1999/08/02 20:36:57 matt Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -141,6 +141,8 @@ struct p9100_softc {
 /* The Tadpole 3GX Technical Reference Manual lies.  The ramdac registers
  * are map in 4 byte increments, not 8.
  */
+#define	SCRN_RPNT_CTL_1	0x0138	/* Screen Respaint Timing Control 1 */
+#define	VIDEO_ENABLED	0x00000020
 #define	PWRUP_CNFG	0x0194	/* Power Up Configuration */
 #define	DAC_CMAP_WRIDX	0x0200	/* IBM RGB528 Palette Address (Write) */
 #define	DAC_CMAP_DATA	0x0204	/* IBM RGB528 Palette Data */
@@ -427,12 +429,18 @@ p9100unblank(struct device *dev)
 static void
 p9100_set_video(struct p9100_softc *sc, int enable)
 {
+	u_int32_t v = p9100_ctl_read_4(sc, SCRN_RPNT_CTL_1);
+	if (enable)
+		v |= VIDEO_ENABLED;
+	else
+		v &= ~VIDEO_ENABLED;
+	p9100_ctl_write_4(sc, SCRN_RPNT_CTL_1, v);
 }
 
 static int
 p9100_get_video(struct p9100_softc *sc)
 {
-	return 1;
+	return (p9100_ctl_read_4(sc, SCRN_RPNT_CTL_1) & VIDEO_ENABLED) != 0;
 }
 
 /*
