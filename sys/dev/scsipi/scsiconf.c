@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.20 1994/12/30 05:20:22 mycroft Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.21 1995/01/01 11:37:03 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -301,6 +301,9 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 
 	{T_SEQUENTIAL, T_REMOV,
 	 "TANDBERG", " TDC 3600       ", "U07",  SDEV_NOLUNS},
+	{T_SEQUENTIAL, T_REMOV,
+	 "SONY    ", "SDT-2000        ", "2.09", SDEV_NOLUNS},
+
 	{T_SEQUENTIAL, T_REMOV,
 	 "WangDAT ", "Model 1300      ", "02.4", SDEV_NOSYNCWIDE},
 	{T_SEQUENTIAL, T_REMOV,
