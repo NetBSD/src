@@ -1,4 +1,4 @@
-/*	$NetBSD: rc7500_machdep.c,v 1.22 1999/02/07 09:34:59 jonathan Exp $	*/
+/*	$NetBSD: rc7500_machdep.c,v 1.23 1999/03/29 10:02:20 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -109,7 +109,6 @@ vm_offset_t physical_start;
 vm_offset_t physical_freestart;
 vm_offset_t physical_freeend;
 vm_offset_t physical_end;
-int physical_memoryblock;
 u_int free_pages;
 int physmem = 0;
 
@@ -505,7 +504,6 @@ initarm(prom_id)
 	physical_end = bootconfig.dram[bootconfig.dramblocks - 1].address
 	    + bootconfig.dram[bootconfig.dramblocks - 1].pages * NBPG;
 	physical_freeend = physical_end;
-	physical_memoryblock = 0;
 	free_pages = bootconfig.drampages - reserv_mem / NBPG;
     
 	bootconfig.dram[0].address += reserv_mem;

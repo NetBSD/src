@@ -1,4 +1,4 @@
-/*	$NetBSD: ebsa285_machdep.c,v 1.5 1999/01/03 02:23:27 mark Exp $	*/
+/*	$NetBSD: ebsa285_machdep.c,v 1.6 1999/03/29 10:02:19 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -109,7 +109,6 @@ vm_offset_t physical_start;
 vm_offset_t physical_freestart;
 vm_offset_t physical_freeend;
 vm_offset_t physical_end;
-int physical_memoryblock;
 u_int free_pages;
 vm_offset_t pagetables_start;
 int physmem = 0;
@@ -433,7 +432,6 @@ initarm(bootinfo)
 	physical_freestart = physical_start;
 	physical_end = ebsabootinfo.bt_memend;
 	physical_freeend = physical_end;
-	physical_memoryblock = 0;
 	free_pages = (physical_end - physical_start) / NBPG;
     
 	physmem = (physical_end - physical_start) / NBPG;
