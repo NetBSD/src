@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.21 1998/07/04 22:18:47 jonathan Exp $	*/
+/*	$NetBSD: trap.c,v 1.22 1998/08/05 16:08:38 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -557,8 +557,8 @@ trap(type, code, v, frame)
 #else
 			cnt.v_soft++;
 #endif
-#include "zs.h"
-#if NZS > 0
+#include "zsc.h"
+#if NZSC > 0
 			zssoft(0);
 #endif
 		}

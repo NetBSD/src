@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.30 1998/07/04 22:18:47 jonathan Exp $	*/
+/*	$NetBSD: locore.s,v 1.31 1998/08/05 16:08:38 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -525,8 +525,8 @@ ENTRY_NOPROFILE(spurintr)	/* level 0 */
 	rte				| XXX mfpcure (x680x0 hardware bug)
 
 _zstrap:
-#include "zs.h"
-#if NZS > 0
+#include "zsc.h"
+#if NZSC > 0
 	INTERRUPT_SAVEREG
 	movw	sp@(22),sp@-		| push exception vector info
 	movw	sr,d0
@@ -811,9 +811,11 @@ _timertrap:
 	lea	sp@(16),a1		| a1 = &clockframe
 	movl	a1,sp@-
 	jbsr	_hardclock		| hardclock(&frame)
-	movl	#1,sp@
-	jbsr	_ms_modem		| ms_modem(1)
 	addql	#4,sp
+#include "ms.h"
+#if NMS > 0
+	jbsr	_ms_modem
+#endif
 #if defined(UVM)
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS | chalk up another interrupt
 #else

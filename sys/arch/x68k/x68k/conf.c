@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.13 1997/10/15 23:39:42 thorpej Exp $	*/
+/*	$NetBSD: conf.c,v 1.14 1998/08/05 16:08:37 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -156,6 +156,7 @@ cdev_decl(md);
 cdev_decl(st);
 cdev_decl(fd);
 cdev_decl(kbd);
+#include "ms.h"
 cdev_decl(ms);
 dev_decl(filedesc,open);
 #include "audio.h"
@@ -169,7 +170,7 @@ cdev_decl(tun);
 
 #include "xcom.h"
 cdev_decl(com);
-#include "zs.h"
+#include "zstty.h"
 cdev_decl(zs);
 #include "pow.h"
 cdev_decl(pow);
@@ -196,10 +197,14 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(NCD,cd),		/* 9: SCSI cdrom */
 	cdev_grf_init(NGRF,grf),	/* 10: frame buffer */
 	cdev_par_init(NPAR,par),	/* 11: parallel interface */
-	cdev_tty_init(NZS,zs),		/* 12: zs serial */
+	cdev_tty_init(NZSTTY,zs),	/* 12: zs serial */
 	cdev_ite_init(NITE,ite),	/* 13: console terminal emulator */
 	cdev_gen_init(1,kbd),		/* 14: /dev/kbd */
+#if NMS > 0
 	cdev_gen_init(1,ms),		/* 15: /dev/mouse */
+#else
+	cdev_notdef(),
+#endif
 	cdev_tty_init(NXCOM,com),	/* 16: serial port */
 	cdev_gen_init(NAUDIO,audio),	/* 17: /dev/adpcm /dev/pcm /dev/audio */
 	cdev_disk_init(NFD,fd),		/* 18: floppy disk */
