@@ -1,4 +1,4 @@
-/*	$NetBSD: link_aout.h,v 1.5 1994/10/26 00:56:01 cgd Exp $	*/
+/*	$NetBSD: link_aout.h,v 1.6 1994/12/23 20:16:59 pk Exp $	*/
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -94,11 +94,14 @@ struct nzlist {
 };
 
 #define N_AUX(p)	((p)->n_other & 0xf)
-#define N_RESERVED(p)	(((unsigned int)(p)->n_other >> 4) & 0xf)
+#define N_BIND(p)	(((unsigned int)(p)->n_other >> 4) & 0xf)
 #define N_OTHER(r, v)	(((unsigned int)(r) << 4) | ((v) & 0xf))
 
 #define AUX_OBJECT	1
 #define AUX_FUNC	2
+/*#define BIND_LOCAL	0	not used */
+/*#define BIND_GLOBAL	1	not used */
+#define BIND_WEAK	2
 
 
 /*
@@ -205,7 +208,7 @@ struct	_dynamic {
 	union {
 		struct section_dispatch_table *d_sdt;
 	} d_un;
-	struct ld_entry *d_entry;
+	struct ld_entry *d_entry;	/* XXX */
 };
 
 #define LD_VERSION_SUN		(3)
@@ -239,7 +242,9 @@ struct crt_ldso {
 	struct _dynamic	*crt_dp;	/* Main's __DYNAMIC */
 	char		**crt_ep;	/* environment strings */
 	caddr_t		crt_bp;		/* Breakpoint if run from debugger */
-	char		*crt_prog;	/* Program name */
+	char		*crt_prog;	/* Program name (v3) */
+	char		*crt_ldso;	/* Link editor name (v4) */
+	struct ld_entry	*crt_ldentry;	/* dl*() access (v4) */
 };
 
 /*
@@ -248,6 +253,7 @@ struct crt_ldso {
 #define CRT_VERSION_SUN		1
 #define CRT_VERSION_BSD_2	2
 #define CRT_VERSION_BSD_3	3
+#define CRT_VERSION_BSD_4	4
 
 
 /*
