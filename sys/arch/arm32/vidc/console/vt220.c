@@ -1,4 +1,4 @@
-/*	$NetBSD: vt220.c,v 1.11 1998/01/21 22:51:39 mark Exp $	*/
+/*	$NetBSD: vt220.c,v 1.12 1998/10/05 00:53:47 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1995 Melvyn Tang-Richardson
@@ -225,9 +225,9 @@ do_scrollup(vc)
 	else
 		vc->ycur=cdata->scrr_end;
 
-/* Do a cyclic buffer for this !!!!!!!!!!!!!! */	
+	/* Do a cyclic buffer for this !!!!!!!!!!!!!! */	
 	if ( ((vc->flags)&(LOSSY)) == 0 ) {
-/* bcopy was weird, do this for now */
+		/* bcopy was weird, do this for now */
 		int counter;
 		for ( counter=(cdata->scrr_beg+1)*vc->xchars; 
 		    counter < ((cdata->scrr_end+1)*(vc->xchars)); counter++ ) {
@@ -257,14 +257,13 @@ void
 vt_curadr(vc)
 	struct vconsole *vc;
 {
-    struct vt220_info *cdata = (struct vt220_info *)vc->data;
+	struct vt220_info *cdata = (struct vt220_info *)vc->data;
 
 #ifdef SELFTEST
-strcpy ( console_proc, "vt_curadr" );
+	strcpy ( console_proc, "vt_curadr" );
 #endif
 
-    if ( cdata->m_om )	/* relative to scrolling region */
-    {
+	if (cdata->m_om) {	/* relative to scrolling region */
 	cdata->param[0]+=cdata->scrr_beg;
 	if ( (cdata->param[0]==0) && (cdata->param[1]==0) )
 	{
@@ -310,45 +309,44 @@ strcpy ( console_proc, "vt_curadr" );
     }
 }
 
-extern void beep_generate(void);
+extern void sysbeep __P((int pitch, int period));	/* XXX elsewhere ? */
 
 void
 vt_reset_dec_priv_qm(vc)
 	struct vconsole *vc;
 {
-    struct vt220_info *cdata = (struct vt220_info *)vc->data;
+	struct vt220_info *cdata = (struct vt220_info *)vc->data;
 #ifdef SELFTEST
-strcpy ( console_proc, "vt_reset_dec_priv_qm" );
+	strcpy(console_proc, "vt_reset_dec_priv_qm");
 #endif
-    switch(cdata->param[0])
-    {
-        case 7:         /* AWM - auto wrap mode */
-		beep_generate();
+	switch(cdata->param[0]) {
+	case 7:		/* AWM - auto wrap mode */
+		sysbeep(1000, 100);
 		cdata->flags &= ~F_AWM;
 		break;
-        case 0:         /* error, ignored */
-        case 1:         /* CKM - cursor key mode */
-        case 2:         /* ANM - ansi/vt52 mode */
-        case 3:         /* COLM - column mode */
-        case 4:         /* SCLM - scrolling mode */
-        case 5:         /* SCNM - screen mode */
-        case 8:         /* ARM - auto repeat mode */
-        case 9:         /* INLM - interlace mode */
-        case 10:        /* EDM - edit mode */
-        case 11:        /* LTM - line transmit mode */
-        case 12:        /* */
-        case 13:        /* SCFDM - space compression / field delimiting */
-        case 14:        /* TEM - transmit execution mode */
-        case 15:        /* */
-        case 16:        /* EKEM - edit key execution mode */
-        case 25:        /* TCEM - text cursor enable mode */
-        case 42:        /* NRCM - 7bit NRC characters */
-            break;
+	case 0:		/* error, ignored */
+	case 1:		/* CKM - cursor key mode */
+	case 2:		/* ANM - ansi/vt52 mode */
+	case 3:		/* COLM - column mode */
+	case 4:		/* SCLM - scrolling mode */
+	case 5:		/* SCNM - screen mode */
+	case 8:		/* ARM - auto repeat mode */
+	case 9:		/* INLM - interlace mode */
+	case 10:	/* EDM - edit mode */
+	case 11:	/* LTM - line transmit mode */
+	case 12:	/* */
+	case 13:	/* SCFDM - space compression / field delimiting */
+	case 14:	/* TEM - transmit execution mode */
+	case 15:	/* */
+	case 16:	/* EKEM - edit key execution mode */
+	case 25:	/* TCEM - text cursor enable mode */
+	case 42:	/* NRCM - 7bit NRC characters */
+		break;
 
-        case 6:         /* OM - origin mode */
-            cdata->m_om = 0;
-            break;
-       }
+	case 6:		/* OM - origin mode */
+		cdata->m_om = 0;
+		break;
+	}
 }
 
 void
@@ -358,7 +356,7 @@ vt_sc(vc)
 	struct vt220_info *cdata = (struct vt220_info *)vc->data;
 
 #ifdef SELFTEST
-	strcpy ( console_proc, "vt_sc" );
+	strcpy(console_proc, "vt_sc");
 #endif
 
 	cdata->sc_G0 	= cdata->G0;
@@ -371,8 +369,8 @@ vt_sc(vc)
 	cdata->sc_ycur 	= vc->ycur;
 	cdata->sc_om 	= cdata->m_om;
 	cdata->sflags	= cdata->flags;
-/*
-	cdata->sc_attr 	= cdata->c_attr;
+
+/*	cdata->sc_attr 	= cdata->c_attr;
 	cdata->sc_awm 	= cdata->m_awm;
 	cdata->sc_sel 	= cdata->selchar;
 	cdata->sc_vtsgr = cdata->vtsgr;
@@ -385,6 +383,7 @@ vt_rc(vc)
 	struct vconsole *vc;
 {
 	struct vt220_info *cdata = (struct vt220_info *)vc->data;
+
 	cdata->G0 	= cdata->sc_G0;
 	cdata->G1 	= cdata->sc_G1;
 	cdata->G2 	= cdata->sc_G2;
@@ -396,8 +395,7 @@ vt_rc(vc)
 	cdata->m_om	= cdata->sc_om;
 	cdata->flags = cdata->sflags;
 
-/*
-	cdata->c_attr 	= cdata->sc_attr;
+/*	cdata->c_attr 	= cdata->sc_attr;
 	cdata->awm 	= cdata->sc_awm;
 	cdata->sel 	= cdata->sc_selchar;
 	cdata->vtsgr 	= cdata->sc_vtsgr;
@@ -409,19 +407,16 @@ void
 vt_clreol(vc)
 	struct vconsole *vc;
 {
-/*
-	struct vt220_info *cdata = (struct vt220_info *)vc->data;
-*/
 	int counter;
 	int x = vc->xcur;
 	int y = vc->ycur;
 
 #ifdef SELFTEST
-	strcpy ( console_proc, "vt_clreol" );
+	strcpy(console_proc, "vt_clreol");
 #endif
 
-	for ( counter=vc->xcur; counter<vc->xchars; counter++ )
-		do_render_noscroll ( ' ', vc );
+	for (counter = vc->xcur; counter < vc->xchars; counter++)
+		do_render_noscroll(' ', vc);
 
 	vc->xcur = x;
 	vc->ycur = y;
@@ -481,35 +476,34 @@ int
 vt_sel(vc)
 	struct vconsole *vc;
 {
-    struct vt220_info *cdata = (struct vt220_info *)vc->data;
-    register int counter;
-    register int x = vc->xcur;
-    register int y = vc->ycur;
+	struct vt220_info *cdata = (struct vt220_info *)vc->data;
+	int counter;
+	int x = vc->xcur;
+	int y = vc->ycur;
 
-    switch ( cdata->param[0] )
-    {
+	switch (cdata->param[0]) {
 	case 0:		/* Delete to the end of the line */
-	    for ( counter=x; counter<vc->xchars; counter++ )
-		do_render_noscroll ( ' ', vc );
-	    break;
+		for (counter = x; counter < vc->xchars; counter++)
+			do_render_noscroll(' ', vc);
+		break;
 		
 	case 1:		/* Delete to the beginning of the line */
-	    vc->xcur = 0;
-	    for ( counter=0; counter<x; counter++ )
-		do_render_noscroll ( ' ', vc );
-	    break;
+		vc->xcur = 0;
+		for (counter = 0; counter < x; counter++)
+			do_render_noscroll(' ', vc);
+		break;
 
 	case 2:		/* Delete the whole line */
 	default:
-	    vc->xcur = 0;
- 	    for ( counter=0; counter<vc->xchars; counter++ )
-		do_render_noscroll ( ' ', vc );
-	    break;
-	  }
+		vc->xcur = 0;
+		for (counter = 0; counter < vc->xchars; counter++)
+			do_render_noscroll(' ', vc);
+		break;
+	}
 
-    vc->xcur = x;
-    vc->ycur = y;
-    return 0;
+	vc->xcur = x;
+	vc->ycur = y;
+	return 0;
 }
 
 void
@@ -550,41 +544,39 @@ void
 vt_str(vc)
 	struct vconsole *vc;
 {
-    struct vt220_info *cdata = (struct vt220_info *)vc->data;
-    int counter;
+	struct vt220_info *cdata = (struct vt220_info *)vc->data;
+	int counter;
 
-    if (cdata == NULL) {
-    	return;
-    }
+	if (cdata == NULL)
+		return;
 
-    clr_params ( cdata );
+	clr_params ( cdata );
 
-    cdata->state = STATE_INIT;
-    cdata->disable_function = 1;
-    cdata->m_om = 0; /* origin mode */
-    vc->xcur = vc->ycur = 0;
-    cdata->beepoff=default_beepstate;
-    cdata->simple_cursor_store = ' ';
-    cdata->scrr_beg = 0;
-    cdata->scrr_len = vc->ychars;
-    cdata->scrr_end = vc->ychars-1;
-    cdata->simple_cursor_on = 0;
-    cdata->nfgcol = 7;
-    cdata->nbgcol = 0;
-    cdata->fgcol = cdata->nfgcol;
-    cdata->bgcol = cdata->nbgcol;
-    cdata->attribs=cdata->fgcol<<8 | cdata->bgcol<<11;
-    cdata->sc_flag = 0;                      /* save cursor position */
-    cdata->flags = F_AWM;
-    cdata->irm = 0;
+	cdata->state = STATE_INIT;
+	cdata->disable_function = 1;
+	cdata->m_om = 0;	/* origin mode */
+	vc->xcur = vc->ycur = 0;
+	cdata->beepoff=default_beepstate;
+	cdata->simple_cursor_store = ' ';
+	cdata->scrr_beg = 0;
+	cdata->scrr_len = vc->ychars;
+	cdata->scrr_end = vc->ychars-1;
+	cdata->simple_cursor_on = 0;
+	cdata->nfgcol = 7;
+	cdata->nbgcol = 0;
+	cdata->fgcol = cdata->nfgcol;
+	cdata->bgcol = cdata->nbgcol;
+	cdata->attribs=cdata->fgcol<<8 | cdata->bgcol<<11;
+	cdata->sc_flag = 0;	/* save cursor position */
+	cdata->flags = F_AWM;
+	cdata->irm = 0;
 
-    for ( counter=0; counter<MAXTABSTOPS; counter++ )
-    {
-        if ( !(counter%8) )
-                cdata->tab_stops[counter] = 1;
-        else
-                cdata->tab_stops[counter] = 0;
-    }
+	for (counter = 0; counter < MAXTABSTOPS; counter++) {
+		if (!(counter % 8))
+			cdata->tab_stops[counter] = 1;
+		else
+			cdata->tab_stops[counter] = 0;
+	}
 }
 
 void
@@ -723,7 +715,7 @@ void
 vt_stbm(vc)
 	struct vconsole *vc;
 {
-    struct vt220_info *cdata = (struct vt220_info *)vc->data;
+	struct vt220_info *cdata = (struct vt220_info *)vc->data;
 
     if((cdata->param[0] == 0) && (cdata->param[1] == 0))
     {
@@ -766,61 +758,60 @@ void
 vt_dsr(vc)
 	struct vconsole *vc;
 {
-    struct vt220_info *cdata = (struct vt220_info *)vc->data;
-    static u_char *answr = (u_char *)"\033[0n";
-    static u_char *panswr = (u_char *)"\033[?13n"; /* Printer Unattached */
-    static u_char *udkanswr = (u_char *)"\033[?21n"; /* UDK Locked */
-    static u_char *langanswr = (u_char *)"\033[?27;1n"; /* North American*/
-    static u_char buffer[16];
-    int i = 0;
+	struct vt220_info *cdata = (struct vt220_info *)vc->data;
+	static u_char *answr = (u_char *)"\033[0n";
+	static u_char *panswr = (u_char *)"\033[?13n"; /* Printer Unattached */
+	static u_char *udkanswr = (u_char *)"\033[?21n"; /* UDK Locked */
+	static u_char *langanswr = (u_char *)"\033[?27;1n"; /* North American*/
+	static u_char buffer[16];
+	int i = 0;
 
-    switch(cdata->param[0])
-    {
-            case 5:         /* return status */
-                    cdata->report_chars = answr;
-                    cdata->report_count = 4;
-                    respond(vc);
-                    break;
+	switch(cdata->param[0]) {
+	case 5:		/* return status */
+		cdata->report_chars = answr;
+		cdata->report_count = 4;
+		respond(vc);
+		break;
 
-            case 6:         /* return cursor position */
-                    buffer[i++] = 0x1b;
-                    buffer[i++] = '[';
-                    if((vc->ycur+1) > 10)
-                            buffer[i++] = ((vc->ycur+1) / 10) + '0';
-                    buffer[i++] = ((vc->ycur+1) % 10) + '0';
-                    buffer[i++] = ';';
-                    if((vc->xcur+1) > 10)
-                            buffer[i++] = ((cdata->xcur+1) / 10) + '0';
-                    buffer[i++] = ((vc->xcur+1) % 10) + '0';
-                    buffer[i++] = 'R';
-                    buffer[i++] = '\0';
+	case 6:		/* return cursor position */
+		buffer[i++] = 0x1b;
+		buffer[i++] = '[';
+		if((vc->ycur+1) > 10)
+			buffer[i++] = ((vc->ycur+1) / 10) + '0';
+		buffer[i++] = ((vc->ycur+1) % 10) + '0';
+		buffer[i++] = ';';
+		if((vc->xcur+1) > 10)
+			buffer[i++] = ((cdata->xcur+1) / 10) + '0';
+		buffer[i++] = ((vc->xcur+1) % 10) + '0';
+		buffer[i++] = 'R';
+		buffer[i++] = '\0';
 
-                    cdata->report_chars = buffer;
-                    cdata->report_count = i;
-                    respond(vc);
-                    break;
+		cdata->report_chars = buffer;
+		cdata->report_count = i;
+		respond(vc);
+		break;
 
-            case 15:        /* return printer status */
-                    cdata->report_chars = panswr;
-                    cdata->report_count = 6;
-                    respond(vc);
-                    break;
+	case 15:	/* return printer status */
+		cdata->report_chars = panswr;
+		cdata->report_count = 6;
+		respond(vc);
+		break;
 
-            case 25:        /* return udk status */
-                    cdata->report_chars = udkanswr;
-                    cdata->report_count = 6;
-                    respond(vc);
-                    break;
+	case 25:	/* return udk status */
+		cdata->report_chars = udkanswr;
+		cdata->report_count = 6;
+		respond(vc);
+		break;
 
-            case 26:        /* return language status */
-                    cdata->report_chars = langanswr;
-                    cdata->report_count = 8;
-                    respond(vc);
-                    break;
+	case 26:	/* return language status */
+		cdata->report_chars = langanswr;
+		cdata->report_count = 8;
+		respond(vc);
+		break;
 
-            default:        /* nothing else valid */
-                    break;
-    }
+	default:	/* nothing else valid */
+		break;
+	}
 }
 
 void
@@ -839,37 +830,36 @@ void
 vt_set_dec_priv_qm(vc)
 	struct vconsole *vc;
 {
-    struct vt220_info *cdata = (struct vt220_info *)vc->data;
+	struct vt220_info *cdata = (struct vt220_info *)vc->data;
 
-    switch(cdata->param[0])
-    {
-        case 7:         /* AWM - auto wrap mode */
+	switch(cdata->param[0]) {
+	case 7:		/* AWM - auto wrap mode */
 		cdata->flags |= F_AWM;
 		break;
 
 	/* Implement these */
-        case 1:         /* CKM - cursor key mode */
-        case 3:         /* COLM - column mode */
-        case 6:         /* OM - origin mode */
-        case 8:         /* ARM - auto repeat mode */
-	case 25:        /* TCEM - text cursor enable mode */
-                break;
+	case 1:         /* CKM - cursor key mode */
+	case 3:		/* COLM - column mode */
+	case 6:		/* OM - origin mode */
+	case 8:		/* ARM - auto repeat mode */
+	case 25:	/* TCEM - text cursor enable mode */
+		break;
 
-        case 0:         /* error, ignored */
-        case 2:         /* ANM - ansi/vt52 mode */
-        case 4:         /* SCLM - scrolling mode */
-        case 5:         /* SCNM - screen mode */
-        case 9:         /* INLM - interlace mode */
-        case 10:        /* EDM - edit mode */
-        case 11:        /* LTM - line transmit mode */
-        case 12:        /* */
-        case 13:        /* SCFDM - space compression / field delimiting */
-        case 14:        /* TEM - transmit execution mode */
-        case 15:        /* */
-        case 16:        /* EKEM - edit key execution mode */
-        case 42:        /* NRCM - 7bit NRC characters */
-                break;
-    }
+	case 0:		/* error, ignored */
+	case 2:		/* ANM - ansi/vt52 mode */
+	case 4:		/* SCLM - scrolling mode */
+	case 5:		/* SCNM - screen mode */
+	case 9:		/* INLM - interlace mode */
+	case 10:	/* EDM - edit mode */
+	case 11:	/* LTM - line transmit mode */
+	case 12:	/* */
+	case 13:	/* SCFDM - space compression / field delimiting */
+	case 14:	/* TEM - transmit execution mode */
+	case 15:	/* */
+	case 16:	/* EKEM - edit key execution mode */
+	case 42:	/* NRCM - 7bit NRC characters */
+		break;
+	}
 }
 
 void
@@ -916,95 +906,93 @@ void
 vt_sgr(vc)
 	struct vconsole *vc;
 {
-    struct vt220_info *cdata = (struct vt220_info *)vc->data;
-    register int i=0;
+	struct vt220_info *cdata = (struct vt220_info *)vc->data;
+	int i=0;
     
-    do
-    {
-	vc->SGR ( vc, cdata->param[i] );
-        switch ( cdata->param[i++] )
-        {
-            case 0:	/* reset to normal attributes */
-		cdata->fgcol = cdata->nfgcol;
-		cdata->bgcol = cdata->nbgcol;
-    cdata->attribs=cdata->fgcol<<8 | cdata->bgcol<<11;
-		break;
-            case 1:	/* bold */
-		cdata->attribs |= BOLD;
-		break;
-            case 4:	/* underline */
-		cdata->attribs |= UNDERLINE;
-		break;
-            case 5:	/* blinking */
-		cdata->attribs |= BLINKING;
-		break;
-            case 7:	/* reverse */
-		cdata->fgcol = cdata->nbgcol;
-		cdata->bgcol = cdata->nfgcol;
-		cdata->attribs |= REVERSE;
-    cdata->attribs&=~0x3F00;
-    cdata->attribs|=cdata->fgcol<<8 | cdata->bgcol<<11;
-		break;
-            case 22:	/* not bold */
-		cdata->attribs &= ~BOLD;
-		break;
-            case 24:	/* not underlined */
-		cdata->attribs &= ~UNDERLINE;
-		break;
-            case 25:	/* not blinking */
-		cdata->attribs &= ~BLINKING;
-		break;
-            case 27:	/* not reverse */
-		cdata->attribs &= ~REVERSE;
-		cdata->fgcol = cdata->nfgcol;
-		cdata->bgcol = cdata->nbgcol;
-    cdata->attribs&=~0x3F00;
-    cdata->attribs|=cdata->fgcol<<8 | cdata->bgcol<<11;
-            	break;
+	do {
+		vc->SGR ( vc, cdata->param[i] );
+		switch ( cdata->param[i++] ) {
+		case 0:	/* reset to normal attributes */
+			cdata->fgcol = cdata->nfgcol;
+			cdata->bgcol = cdata->nbgcol;
+			cdata->attribs=cdata->fgcol<<8 | cdata->bgcol<<11;
+			break;
+		case 1:	/* bold */
+			cdata->attribs |= BOLD;
+			break;
+		case 4:	/* underline */
+			cdata->attribs |= UNDERLINE;
+			break;
+		case 5:	/* blinking */
+			cdata->attribs |= BLINKING;
+			break;
+		case 7:	/* reverse */
+			cdata->fgcol = cdata->nbgcol;
+			cdata->bgcol = cdata->nfgcol;
+			cdata->attribs |= REVERSE;
+			cdata->attribs&=~0x3F00;
+			cdata->attribs|=cdata->fgcol<<8 | cdata->bgcol<<11;
+			break;
+		case 22:	/* not bold */
+			cdata->attribs &= ~BOLD;
+			break;
+		case 24:	/* not underlined */
+			cdata->attribs &= ~UNDERLINE;
+			break;
+		case 25:	/* not blinking */
+			cdata->attribs &= ~BLINKING;
+			break;
+		case 27:	/* not reverse */
+			cdata->attribs &= ~REVERSE;
+			cdata->fgcol = cdata->nfgcol;
+			cdata->bgcol = cdata->nbgcol;
+			cdata->attribs&=~0x3F00;
+			cdata->attribs|=cdata->fgcol<<8 | cdata->bgcol<<11;
+			break;
             	
-	    default:
-	    	if ( ( cdata->param[i-1] > 29 )&&( cdata->param[i-1] < 38 ) )
-		{
-	   		vc->SETFGCOL ( vc, cdata->param[i-1] - 30 );
-			cdata->fgcol = cdata->param[i-1] - 30;
-    cdata->attribs&=~0x3F00;
-    cdata->attribs|=cdata->fgcol<<8 | cdata->bgcol<<11;
+		default:
+			if ((cdata->param[i-1] > 29)
+			    && (cdata->param[i-1] < 38)) {
+				vc->SETFGCOL ( vc, cdata->param[i-1] - 30 );
+				cdata->fgcol = cdata->param[i-1] - 30;
+				cdata->attribs&=~0x3F00;
+				cdata->attribs |= cdata->fgcol<<8
+				    | cdata->bgcol<<11;
 
+			}
+			if ((cdata->param[i-1] > 39)
+			    && (cdata->param[i-1] < 48)) {
+				vc->SETBGCOL ( vc, cdata->param[i-1] - 40 );
+				cdata->bgcol = cdata->param[i-1] - 40;
+				cdata->attribs&=~0x3F00;
+				cdata->attribs |= cdata->fgcol<<8
+				    | cdata->bgcol<<11;
+			}
 		}
-	    	if ( ( cdata->param[i-1] > 39 )&&( cdata->param[i-1] < 48 ) )
-		{
-	    		vc->SETBGCOL ( vc, cdata->param[i-1] - 40 );
-			cdata->bgcol = cdata->param[i-1] - 40;
-    cdata->attribs&=~0x3F00;
-    cdata->attribs|=cdata->fgcol<<8 | cdata->bgcol<<11;
-		}
-	}
-    } while ( i<=cdata->parami );
+	} while ( i<=cdata->parami );
 }
 
 void
 vt_clreos(vc)
 	struct vconsole *vc;
 {
-    struct vt220_info *cdata = (struct vt220_info *)vc->data;
-    int ptr;
-    if ( vc == vconsole_current )
-        vc->R_CLREOS ( vc, cdata->param[0] );
-    else
-	vconsole_pending = vc->number;
+	struct vt220_info *cdata = (struct vt220_info *)vc->data;
+	int ptr;
 
-    switch ( cdata->param[0] )
-    {
+	if ( vc == vconsole_current )
+		vc->R_CLREOS ( vc, cdata->param[0] );
+	else
+		vconsole_pending = vc->number;
+
+	switch ( cdata->param[0] ) {
 	case 0:	/* Erase from cursor to end of screen */
-		for ( ptr=vc->xcur + vc->ycur * vc->xchars
-				; ptr<(vc->xchars*vc->ychars); ptr++ )
+		for (ptr = vc->xcur + vc->ycur * vc->xchars
+		    ; ptr<(vc->xchars*vc->ychars); ptr++)
 			vc->charmap[ptr]=0x20;
 		break;
 
 	case 1: /* Erase from start to cursor */
-		for (   ptr=0;
-			ptr<vc->ycur*vc->xchars + vc->xcur;
-			ptr++ )
+		for (ptr=0; ptr < vc->ycur*vc->xchars + vc->xcur; ptr++)
 			vc->charmap[ptr]=0x20;
 		break;
 
@@ -1016,80 +1004,78 @@ vt_clreos(vc)
 		else
 		     vconsole_pending = vc->number;
 		break;
-    }
+	}
 }
 
 void
 vt_set_ansi(vc)
 	struct vconsole *vc;
 {
-    struct vt220_info *cdata = (struct vt220_info *)vc->data;
+	struct vt220_info *cdata = (struct vt220_info *)vc->data;
 
-    switch(cdata->param[0])
-    {
-            case 0:         /* error, ignored */
-            case 1:         /* GATM - guarded area transfer mode */
-            case 2:         /* KAM - keyboard action mode */
-            case 3:         /* CRM - Control Representation mode */
-            case 20:        /* LNM - line feed / newline mode */
-                    break;
+	switch(cdata->param[0]) {
+	case 0:		/* error, ignored */
+	case 1:		/* GATM - guarded area transfer mode */
+	case 2:		/* KAM - keyboard action mode */
+	case 3:		/* CRM - Control Representation mode */
+		break;
 
-            case 4:         /* IRM - insert replacement mode */
+	case 4:		/* IRM - insert replacement mode */
 		cdata->irm = 1;
 		break;
 
-            case 5:         /* SRTM - status report transfer mode */
-            case 6:         /* ERM - erasue mode */
-            case 7:         /* VEM - vertical editing mode */
-            case 10:        /* HEM - horizontal editing mode */
-            case 11:        /* PUM - position unit mode */
-            case 12:        /* SRM - send-receive mode */
-            case 13:        /* FEAM - format effector action mode */
-            case 14:        /* FETM - format effector transfer mode */
-            case 15:        /* MATM - multiple area transfer mode */
-            case 16:        /* TTM - transfer termination */
-            case 17:        /* SATM - selected area transfer mode */
-            case 18:        /* TSM - tabulation stop mode */
-            case 19:        /* EBM - editing boundary mode */
-                    break;
-    }
+	case 5:		/* SRTM - status report transfer mode */
+	case 6:		/* ERM - erasue mode */
+	case 7:		/* VEM - vertical editing mode */
+	case 10:	/* HEM - horizontal editing mode */
+	case 11:	/* PUM - position unit mode */
+	case 12:	/* SRM - send-receive mode */
+	case 13:	/* FEAM - format effector action mode */
+	case 14:	/* FETM - format effector transfer mode */
+	case 15:	/* MATM - multiple area transfer mode */
+	case 16:	/* TTM - transfer termination */
+	case 17:	/* SATM - selected area transfer mode */
+	case 18:	/* TSM - tabulation stop mode */
+	case 19:	/* EBM - editing boundary mode */
+	case 20:	/* LNM - line feed / newline mode */
+		break;
+	}
 }
 
 void
 vt_reset_ansi(vc)
 	struct vconsole *vc;
 {
-    struct vt220_info *cdata = (struct vt220_info *)vc->data;
+	struct vt220_info *cdata = (struct vt220_info *)vc->data;
 
-    switch(cdata->param[0])
-    {
-	    /* Implement these */
-            case 0:         /* error, ignored */
-            case 1:         /* GATM - guarded area transfer mode */
-            case 2:         /* KAM - keyboard action mode */
-            case 3:         /* CRM - Control Representation mode */
-            case 20:        /* LNM - line feed / newline mode */
-                    break;
+	switch(cdata->param[0]) {
+	/* Implement these */
+	case 0:		/* error, ignored */
+	case 1:		/* GATM - guarded area transfer mode */
+	case 2:		/* KAM - keyboard action mode */
+	case 3:		/* CRM - Control Representation mode */
+		break;
 
-            case 4:         /* IRM - insert replacement mode */
+	case 4:		/* IRM - insert replacement mode */
 		cdata->irm = 0;
 		break;
 
-            case 5:         /* SRTM - status report transfer mode */
-            case 6:         /* ERM - erasue mode */
-            case 7:         /* VEM - vertical editing mode */
-            case 10:        /* HEM - horizontal editing mode */
-            case 11:        /* PUM - position unit mode */
-            case 12:        /* SRM - send-receive mode */
-            case 13:        /* FEAM - format effector action mode */
-            case 14:        /* FETM - format effector transfer mode */
-            case 15:        /* MATM - multiple area transfer mode */
-            case 16:        /* TTM - transfer termination */
-            case 17:        /* SATM - selected area transfer mode */
-            case 18:        /* TSM - tabulation stop mode */
-            case 19:        /* EBM - editing boundary mode */
-                    break;
-    }
+	case 5:		/* SRTM - status report transfer mode */
+	case 6:		/* ERM - erasue mode */
+	case 7:		/* VEM - vertical editing mode */
+	case 10:	/* HEM - horizontal editing mode */
+	case 11:	/* PUM - position unit mode */
+	case 12:	/* SRM - send-receive mode */
+	case 13:	/* FEAM - format effector action mode */
+	case 14:	/* FETM - format effector transfer mode */
+	case 15:	/* MATM - multiple area transfer mode */
+	case 16:	/* TTM - transfer termination */
+	case 17:	/* SATM - selected area transfer mode */
+	case 18:	/* TSM - tabulation stop mode */
+	case 19:	/* EBM - editing boundary mode */
+	case 20:	/* LNM - line feed / newline mode */
+		break;
+	}
 }
 
 /* DRN */
@@ -1099,34 +1085,31 @@ do_render_noscroll(c, vc)
 	char c;
 	struct vconsole *vc;
 {
-    struct vt220_info *cdata = (struct vt220_info *)vc->data;
-    /* THE RENDER STAGE **********************************/
+	struct vt220_info *cdata = (struct vt220_info *)vc->data;
+	/* THE RENDER STAGE **********************************/
 
-    if ((c>=0x20)&&(c<=0x7f))
-    {
-	if (((vc->flags)&(LOSSY))==0)
-	{
-          if ( (vc->charmap[vc->xcur+vc->ycur*vc->xchars] != c) | cdata->attribs)
-          {
-	    if ( vc==vconsole_current )
-	        vc->RENDER ( vc, c );
-	    else
-	        vconsole_pending = vc->number;
-	  }
-	  vc->charmap[ vc->xcur + vc->ycur*vc->xchars ] = c|cdata->attribs;
+	if ((c >= 0x20) && (c <= 0x7f)) {
+		if (((vc->flags) & (LOSSY)) == 0) {
+			if ((vc->charmap[vc->xcur+vc->ycur*vc->xchars] != c)
+			  | cdata->attribs) {
+				if ( vc==vconsole_current )
+					vc->RENDER ( vc, c );
+				else
+					vconsole_pending = vc->number;
+			}
+			vc->charmap[ vc->xcur + vc->ycur*vc->xchars ] =
+			    c | cdata->attribs;
+		} else {
+			if (vc == vconsole_current)
+				vc->RENDER (vc, c);
+			else
+				vconsole_pending = vc->number;
+		}
 	}
- 	else
-	{
-	    if ( vc==vconsole_current )
-	        vc->RENDER ( vc, c );
-	    else
-	        vconsole_pending = vc->number;
-        }
-    }
 
-    vc->xcur++;
+	vc->xcur++;
 
-    /*do_scrollcheck ( vc );*/
+	/*do_scrollcheck ( vc );*/
 }
 
 #ifdef SIMPLE_CURSOR
@@ -1336,7 +1319,7 @@ TERMTYPE_PUTSTRING(string, length, vc)
 					break;
 
 				case 0x07:	/* BEL */
-					beep_generate();
+					sysbeep(1000, 100);
 					if ( !cdata->beepoff )
 						c = 'G';
 					break;
