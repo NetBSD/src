@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.80 2004/10/23 16:17:56 augustss Exp $ */
+/*	$NetBSD: ehci.c,v 1.81 2004/10/24 08:52:26 augustss Exp $ */
 
 /*
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.80 2004/10/23 16:17:56 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.81 2004/10/24 08:52:26 augustss Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -797,7 +797,7 @@ ehci_idone(struct ehci_xfer *ex)
 
 	/* If there are left over TDs we need to update the toggle. */
 	if (sqtd != NULL) {
-		DPRINTF(("ehci_idone: need toggle update status=%08x nstatus=%08x\n", status, nstatus));
+		printf("ehci_idone: need toggle update status=%08x nstatus=%08x\n", status, nstatus);
 #if 0
 		ehci_dump_sqh(epipe->sqh);
 		ehci_dump_sqtds(ex->sqtdstart);
@@ -1332,10 +1332,12 @@ ehci_open(usbd_pipe_handle pipe)
 	}
 	if (speed != EHCI_QH_SPEED_HIGH) {
 		printf("%s: *** WARNING: opening low/full speed device, this "
-		       "does not work properly yet.\n",
+		       "does not work yet.\n",
 		       USBDEVNAME(sc->sc_bus.bdev));
 		DPRINTFN(1,("ehci_open: hshubaddr=%d hshubport=%d\n",
 			    hshubaddr, hshubport));
+		if (xfertype != UE_CONTROL)
+			return USBD_INVAL;
 	}
 
 	naks = 8;		/* XXX */
