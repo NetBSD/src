@@ -1,4 +1,4 @@
-/*	$NetBSD: disassem.c,v 1.13 2003/03/27 16:42:40 mycroft Exp $	*/
+/*	$NetBSD: disassem.c,v 1.14 2003/03/27 16:58:36 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe.
@@ -49,7 +49,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: disassem.c,v 1.13 2003/03/27 16:42:40 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disassem.c,v 1.14 2003/03/27 16:58:36 mycroft Exp $");
 
 #include <sys/systm.h>
 #include <arch/arm/arm/disassem.h>
@@ -119,14 +119,14 @@ static const struct arm32_insn arm32_i[] = {
     { 0x0fe000f0, 0x00c00090, "smull",	"Sdnms" },
     { 0x0fe000f0, 0x00a00090, "umlal",	"Sdnms" },
     { 0x0fe000f0, 0x00e00090, "smlal",	"Sdnms" },
-    { 0x0d700010, 0x04200000, "strt",	"daW" },
-    { 0x0d700010, 0x04300000, "ldrt",	"daW" },
-    { 0x0d700010, 0x04600000, "strbt",	"daW" },
-    { 0x0d700010, 0x04700000, "ldrbt",	"daW" },
-    { 0x0c500010, 0x04000000, "str",	"daW" },
-    { 0x0c500010, 0x04100000, "ldr",	"daW" },
-    { 0x0c500010, 0x04400000, "strb",	"daW" },
-    { 0x0c500010, 0x04500000, "ldrb",	"daW" },
+    { 0x0d700000, 0x04200000, "strt",	"daW" },
+    { 0x0d700000, 0x04300000, "ldrt",	"daW" },
+    { 0x0d700000, 0x04600000, "strbt",	"daW" },
+    { 0x0d700000, 0x04700000, "ldrbt",	"daW" },
+    { 0x0c500000, 0x04000000, "str",	"daW" },
+    { 0x0c500000, 0x04100000, "ldr",	"daW" },
+    { 0x0c500000, 0x04400000, "strb",	"daW" },
+    { 0x0c500000, 0x04500000, "ldrb",	"daW" },
     { 0x0e1f0000, 0x080d0000, "stm",	"YnWl" },/* separate out r13 base */
     { 0x0e1f0000, 0x081d0000, "ldm",	"YnWl" },/* separate out r13 base */    
     { 0x0e100000, 0x08000000, "stm",	"XnWl" },
