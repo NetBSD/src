@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.28 2003/07/26 16:04:29 mrg Exp $
+#	$NetBSD: Makefile,v 1.29 2003/07/28 22:52:10 sjg Exp $
 #	@(#)Makefile	5.2 (Berkeley) 12/28/90
 
 CPPFLAGS+= -I${.CURDIR}
@@ -16,6 +16,9 @@ WFORMAT= 1
 .if make(install)
 SUBDIR=	PSD.doc
 .endif
+.if make(obj) || make(clean)
+SUBDIR+= unit-tests
+.endif
 
 .include <bsd.prog.mk>
 .include <bsd.subdir.mk>
@@ -27,3 +30,7 @@ CPPFLAGS_main.o:= "-DMAKE_VERSION=\"${MAKE_VERSION}\""
 CPPFLAGS+= ${CPPFLAGS_${.TARGET}}
 main.o:	${OBJS:Nmain.o} ${MAKEFILE}
 COPTS.var.c+= -Wno-cast-qual
+
+# A simple unit-test driver to help catch regressions
+accept test:
+	cd ${.CURDIR}/unit-tests && ${.MAKE} TEST_MAKE=${TEST_MAKE:U../${PROG:T}} ${.TARGET}
