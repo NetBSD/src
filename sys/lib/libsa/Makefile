@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.26 1999/02/13 20:56:57 pk Exp $
+#	$NetBSD: Makefile,v 1.27 1999/02/24 19:31:03 drochner Exp $
 
 LIB=	sa
 MKPIC=	no
@@ -29,13 +29,14 @@ SRCS+=	cread.c
 .if (${SA_INCLUDE_NET} == "yes")
 # network routines
 SRCS+=	arp.c ether.c in_cksum.c net.c netif.c rpc.c
-.endif
 
 # network info services:
 SRCS+=	bootp.c rarp.c bootparam.c
 
 # boot filesystems
-SRCS+=	ufs.c nfs.c cd9660.c ustarfs.c
+SRCS+=	nfs.c tftp.c
+.endif
+SRCS+=	ufs.c cd9660.c ustarfs.c
 
 # only needed during build
 libinstall::
