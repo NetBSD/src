@@ -1,4 +1,4 @@
-/*	$NetBSD: wwtty.c,v 1.5 1997/11/21 08:37:56 lukem Exp $	*/
+/*	$NetBSD: wwtty.c,v 1.6 2002/06/14 01:07:02 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)wwtty.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: wwtty.c,v 1.5 1997/11/21 08:37:56 lukem Exp $");
+__RCSID("$NetBSD: wwtty.c,v 1.6 2002/06/14 01:07:02 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -53,9 +53,7 @@ __RCSID("$NetBSD: wwtty.c,v 1.5 1997/11/21 08:37:56 lukem Exp $");
 #include "ww.h"
 
 int
-wwgettty(d, t)
-	int d;
-	struct ww_tty *t;
+wwgettty(int d, struct ww_tty *t)
 {
 #ifdef OLD_TTY
 	if (ioctl(d, TIOCGETP, (char *)&t->ww_sgttyb) < 0)
@@ -84,9 +82,7 @@ bad:
  * it changes, to avoid unnecessary flushing of typeahead.
  */
 int
-wwsettty(d, t)
-	int d;
-	struct ww_tty *t;
+wwsettty(int d, struct ww_tty *t)
 {
 #ifdef OLD_TTY
 	int i;
@@ -127,9 +123,7 @@ bad:
  */
 
 int
-wwgetttysize(d, r, c)
-	int d;
-	int *r, *c;
+wwgetttysize(int d, int *r, int *c)
 {
 	struct winsize winsize;
 
@@ -145,8 +139,7 @@ wwgetttysize(d, r, c)
 }
 
 int
-wwsetttysize(d, r, c)
-	int d, r, c;
+wwsetttysize(int d, int r, int c)
 {
 	struct winsize winsize;
 
@@ -161,8 +154,7 @@ wwsetttysize(d, r, c)
 }
 
 int
-wwstoptty(d)
-	int d;
+wwstoptty(int d)
 {
 #if !defined(OLD_TTY) && defined(TCOOFF)
 	/* not guaranteed to work on the pty side */
@@ -178,8 +170,7 @@ wwstoptty(d)
 }
 
 int
-wwstarttty(d)
-	int d;
+wwstarttty(int d)
 {
 #if !defined(OLD_TTY) && defined(TCOON)
 	/* not guaranteed to work on the pty side */

@@ -1,4 +1,4 @@
-/*	$NetBSD: xx.c,v 1.5 1998/10/14 00:58:49 wsanchez Exp $	*/
+/*	$NetBSD: xx.c,v 1.6 2002/06/14 01:07:03 wiz Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)xx.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: xx.c,v 1.5 1998/10/14 00:58:49 wsanchez Exp $");
+__RCSID("$NetBSD: xx.c,v 1.6 2002/06/14 01:07:03 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -54,7 +54,7 @@ __RCSID("$NetBSD: xx.c,v 1.5 1998/10/14 00:58:49 wsanchez Exp $");
 #include "tt.h"
 
 int
-xxinit()
+xxinit(void)
 {
 	if (ttinit() < 0)
 		return -1;
@@ -73,7 +73,7 @@ xxinit()
 }
 
 void
-xxstart()
+xxstart(void)
 {
 	(*tt.tt_start)();
 	if (tt.tt_ntoken > 0)
@@ -82,7 +82,7 @@ xxstart()
 }
 
 void
-xxreset()
+xxreset(void)
 {
 	if (tt.tt_ntoken > 0)
 		ccreset();
@@ -91,7 +91,7 @@ xxreset()
 }
 
 void
-xxreset1()
+xxreset1(void)
 {
 	struct xx *xp, *xq;
 
@@ -104,7 +104,7 @@ xxreset1()
 }
 
 void
-xxend()
+xxend(void)
 {
 	if (tt.tt_scroll_top != 0 || tt.tt_scroll_bot != tt.tt_nrow - 1)
 		/* tt.tt_setscroll is known to be defined */
@@ -121,7 +121,7 @@ xxend()
 }
 
 struct xx *
-xxalloc()
+xxalloc(void)
 {
 	struct xx *xp;
 
@@ -142,16 +142,14 @@ xxalloc()
 }
 
 void
-xxfree(xp)
-	struct xx *xp;
+xxfree(struct xx *xp)
 {
 	xp->link = xx_freelist;
 	xx_freelist = xp;
 }
 
 void
-xxmove(row, col)
-	int row, col;
+xxmove(int row, int col)
 {
 	struct xx *xp = xx_tail;
 
@@ -164,8 +162,7 @@ xxmove(row, col)
 }
 
 void
-xxscroll(dir, top, bot)
-	int dir, top, bot;
+xxscroll(int dir, int top, int bot)
 {
 	struct xx *xp = xx_tail;
 
@@ -183,8 +180,7 @@ xxscroll(dir, top, bot)
 }
 
 void
-xxinschar(row, col, c, m)
-	int row, col, c, m;
+xxinschar(int row, int col, int c, int m)
 {
 	struct xx *xp;
 
@@ -197,8 +193,7 @@ xxinschar(row, col, c, m)
 }
 
 void
-xxinsspace(row, col)
-	int row, col;
+xxinsspace(int row, int col)
 {
 	struct xx *xp = xx_tail;
 
@@ -215,8 +210,7 @@ xxinsspace(row, col)
 }
 
 void
-xxdelchar(row, col)
-	int row, col;
+xxdelchar(int row, int col)
 {
 	struct xx *xp = xx_tail;
 
@@ -233,7 +227,7 @@ xxdelchar(row, col)
 }
 
 void
-xxclear()
+xxclear(void)
 {
 	struct xx *xp;
 
@@ -243,8 +237,7 @@ xxclear()
 }
 
 void
-xxclreos(row, col)
-	int row, col;
+xxclreos(int row, int col)
 {
 	struct xx *xp = xxalloc();
 
@@ -254,8 +247,7 @@ xxclreos(row, col)
 }
 
 void
-xxclreol(row, col)
-	int row, col;
+xxclreol(int row, int col)
 {
 	struct xx *xp = xxalloc();
 
@@ -265,10 +257,7 @@ xxclreol(row, col)
 }
 
 void
-xxwrite(row, col, p, n, m)
-	int row, col;
-	char *p;
-	int n, m;
+xxwrite(int row, int col, char *p, int n, int m)
 {
 	struct xx *xp;
 

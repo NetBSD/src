@@ -1,4 +1,4 @@
-/*	$NetBSD: xxflush.c,v 1.4 1997/11/21 08:38:05 lukem Exp $	*/
+/*	$NetBSD: xxflush.c,v 1.5 2002/06/14 01:07:03 wiz Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)xxflush.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: xxflush.c,v 1.4 1997/11/21 08:38:05 lukem Exp $");
+__RCSID("$NetBSD: xxflush.c,v 1.5 2002/06/14 01:07:03 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -50,8 +50,7 @@ __RCSID("$NetBSD: xxflush.c,v 1.4 1997/11/21 08:38:05 lukem Exp $");
 #include "tt.h"
 
 void
-xxflush(intr)
-	int intr;
+xxflush(int intr)
 {
 	struct xx *xp, *xq;
 
@@ -105,8 +104,7 @@ xxflush(intr)
 }
 
 void
-xxflush_scroll(xp)
-	struct xx *xp;
+xxflush_scroll(struct xx *xp)
 {
 	struct xx *xq;
 
