@@ -1,4 +1,4 @@
-/* $NetBSD: deflate.c,v 1.9 2002/05/07 09:06:51 tron Exp $ */
+/* $NetBSD: deflate.c,v 1.10 2002/05/29 18:15:17 christos Exp $ */
 
 /* deflate.c -- compress data using the deflation algorithm
  * Copyright (C) 1995-2002 Jean-loup Gailly.
@@ -49,7 +49,7 @@
  *
  */
 
-/* @(#) $Id: deflate.c,v 1.9 2002/05/07 09:06:51 tron Exp $ */
+/* @(#) $Id: deflate.c,v 1.10 2002/05/29 18:15:17 christos Exp $ */
 
 #include "deflate.h"
 
@@ -537,6 +537,10 @@ int ZEXPORT deflate (strm, flush)
         if (bstate == block_done) {
             if (flush == Z_PARTIAL_FLUSH) {
                 _tr_align(s);
+	    } else if (flush == Z_PACKET_FLUSH) {
+		/* Output just the 3-bit `stored' block type value,
+		   but not a zero length. */
+		_tr_stored_type_only(s);
             } else { /* FULL_FLUSH or SYNC_FLUSH */
                 _tr_stored_block(s, (char*)0, 0L, 0);
                 /* For a full flush, this empty block will be recognized
