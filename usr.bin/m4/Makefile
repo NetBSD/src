@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2001/11/14 14:22:09 tv Exp $
+#	$NetBSD: Makefile,v 1.12 2003/05/18 07:57:35 lukem Exp $
 #
 #	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
@@ -11,6 +11,4 @@ SRCS=		eval.c expr.c gnum4.c look.c main.c misc.c trace.c
 
 WARNS=1
 
-.ifndef HOSTPROG
 .include <bsd.prog.mk>
-.endif

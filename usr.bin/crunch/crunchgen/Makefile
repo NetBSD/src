@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2002/09/17 23:18:27 thorpej Exp $
+#	$NetBSD: Makefile,v 1.10 2003/05/18 07:57:33 lukem Exp $
 
 PROG=		crunchgen
 SRCS=		crunchgen.c crunched_skel.c
@@ -7,9 +7,9 @@ CLEANFILES+=	crunched_skel.c
 crunched_skel.c: mkskel.sh crunched_main.c
 	sh ${.ALLSRC} >${.TARGET}
 
-.ifndef HOSTPROG
 .include <bsd.prog.mk>
 
+.ifndef HOSTPROG
 # Native tool -- key only off TOOLCHAIN_MISSING
 .if ${TOOLCHAIN_MISSING} != "yes"
 CPPFLAGS+=	-DNEW_TOOLCHAIN

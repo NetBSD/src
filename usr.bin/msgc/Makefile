@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2002/09/19 11:31:22 lukem Exp $
+#	$NetBSD: Makefile,v 1.13 2003/05/18 07:57:36 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -29,6 +29,6 @@ FILESDIR=	/usr/share/misc
 .ifndef HOSTPROG
 LDADD+=		-ll
 DPADD+=		${LIBL}
+.endif
 
 .include <bsd.prog.mk>
-.endif

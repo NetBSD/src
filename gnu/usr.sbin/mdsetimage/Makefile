@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2003/04/11 22:46:03 thorpej Exp $
+#	$NetBSD: Makefile,v 1.14 2003/05/18 07:57:32 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -35,6 +35,4 @@ DPADD+=		${LIBINTL}
 .endif # HOSTPROG
 .endif # MKBFD != no
 
-.ifndef HOSTPROG
 .include <bsd.prog.mk>
-.endif # HOSTPROG
