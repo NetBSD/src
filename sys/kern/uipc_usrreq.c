@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.55 2002/11/25 06:32:38 itojun Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.56 2002/11/25 08:32:00 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.55 2002/11/25 06:32:38 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.56 2002/11/25 08:32:00 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -144,11 +144,8 @@ unp_setsockaddr(unp, nam)
 	else
 		sun = &sun_noname;
 	nam->m_len = sun->sun_len;
-	if (nam->m_len > MLEN) {
+	if (nam->m_len > MLEN)
 		MEXTMALLOC(nam, nam->m_len, M_WAITOK);
-		if ((nam->m_flags & M_EXT) == 0)
-			panic("MEXTMALLOC with too big size");
-	}
 	memcpy(mtod(nam, caddr_t), sun, (size_t)nam->m_len);
 }
 
@@ -164,11 +161,8 @@ unp_setpeeraddr(unp, nam)
 	else
 		sun = &sun_noname;
 	nam->m_len = sun->sun_len;
-	if (nam->m_len > MLEN) {
+	if (nam->m_len > MLEN)
 		MEXTMALLOC(nam, nam->m_len, M_WAITOK);
-		if ((nam->m_flags & M_EXT) == 0)
-			panic("MEXTMALLOC with too big size");
-	}
 	memcpy(mtod(nam, caddr_t), sun, (size_t)nam->m_len);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc_debug.c,v 1.7 2002/08/14 15:21:31 thorpej Exp $	*/
+/*	$NetBSD: kern_malloc_debug.c,v 1.8 2002/11/25 08:31:58 itojun Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Artur Grabowski <art@openbsd.org>
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc_debug.c,v 1.7 2002/08/14 15:21:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc_debug.c,v 1.8 2002/11/25 08:31:58 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -80,8 +80,13 @@ __KERNEL_RCSID(0, "$NetBSD: kern_malloc_debug.c,v 1.7 2002/08/14 15:21:31 thorpe
  * if any memory chunks of this type are used. It's ok to change the size
  * in runtime.
  */
+#if 1
 int debug_malloc_type = -1;
 int debug_malloc_size = -1;
+#else
+int debug_malloc_type = M_UVMAMAP;
+int debug_malloc_size = 0;
+#endif
 int debug_malloc_size_lo = -1;
 int debug_malloc_size_hi = -1;
 
