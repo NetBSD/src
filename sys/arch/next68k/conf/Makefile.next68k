@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.next68k,v 1.7 1999/01/15 23:21:26 thorpej Exp $
+# $NetBSD: Makefile.next68k,v 1.8 1999/07/09 09:52:59 mrg Exp $
 
 # Makefile for NetBSD
 #
@@ -66,6 +66,8 @@ LINKFLAGS=	-n -Ttext 0 -e start
 STRIPFLAGS?=	-d
 # -S is used in gnu strip, rather than -d:
 #STRIPFLAGS=	-S
+
+%INCLUDES
 
 ### Find out what to use for libkern.
 KERN_AS=	obj

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.i386,v 1.97 1999/01/28 20:04:54 christos Exp $
+#	$NetBSD: Makefile.i386,v 1.98 1999/07/09 09:52:57 mrg Exp $
 
 # Makefile for NetBSD
 #
@@ -61,6 +61,8 @@ LINKFLAGS=	-Ttext F0100000 -e start
 LINKFLAGS+=	-z
 .endif
 STRIPFLAGS=	-d
+
+%INCLUDES
 
 ### find out what to use for libkern
 KERN_AS=	obj

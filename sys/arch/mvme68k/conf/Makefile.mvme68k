@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mvme68k,v 1.39 1999/01/15 23:37:06 thorpej Exp $
+#	$NetBSD: Makefile.mvme68k,v 1.40 1999/07/09 09:52:58 mrg Exp $
 
 # Makefile for NetBSD
 #
@@ -55,6 +55,8 @@ CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} -msoft-float
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-n -Ttext 8000 -e start
 STRIPFLAGS=	-d
+
+%INCLUDES
 
 HOSTED_CC=	${CC}
 HOSTED_CPPFLAGS=${CPPFLAGS:S/^-nostdinc$//}
