@@ -1,4 +1,4 @@
-/*	$NetBSD: cap_mkdb.c,v 1.13 2001/01/28 17:34:31 jdolecek Exp $	*/
+/*	$NetBSD: cap_mkdb.c,v 1.14 2001/01/28 19:42:17 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)cap_mkdb.c	8.2 (Berkeley) 4/27/95";
 #endif
-__RCSID("$NetBSD: cap_mkdb.c,v 1.13 2001/01/28 17:34:31 jdolecek Exp $");
+__RCSID("$NetBSD: cap_mkdb.c,v 1.14 2001/01/28 19:42:17 jdolecek Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -57,9 +57,9 @@ __RCSID("$NetBSD: cap_mkdb.c,v 1.13 2001/01/28 17:34:31 jdolecek Exp $");
 #include <string.h>
 #include <unistd.h>
 
-void	db_build (char **);
-void	dounlink (void);
-void	usage (void);
+static void	db_build (char **);
+static void	dounlink (void);
+static void	usage (void);
 
 DB *capdbp;
 int verbose;
@@ -138,7 +138,7 @@ main(int argc, char *argv[])
 	exit(0);
 }
 
-void
+static void
 dounlink(void)
 {
 	if (capname != NULL)
@@ -157,7 +157,7 @@ dounlink(void)
  * Db_build() builds the name and capabilty databases according to the
  * details above.
  */
-void
+static void
 db_build(char **ifiles)
 {
 	DBT key, data;
@@ -260,7 +260,7 @@ db_build(char **ifiles)
 		(void)printf("cap_mkdb: %d capability records\n", reccnt);
 }
 
-void
+static void
 usage(void)
 {
 	(void)fprintf(stderr,
