@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.42 2000/03/28 05:07:42 simonb Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.43 2000/04/15 04:38:08 simonb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -220,6 +220,12 @@ struct ctlname {
 #define	KERN_PROC_TTY		4	/* by controlling tty */
 #define	KERN_PROC_UID		5	/* by effective uid */
 #define	KERN_PROC_RUID		6	/* by real uid */
+
+/*
+ * KERN_PROC_TTY sub-subtypes
+ */
+#define	KERN_PROC_TTY_NODEV	NODEV		/* no controlling tty */
+#define	KERN_PROC_TTY_REVOKE	((dev_t)-2)	/* revoked tty */
 
 /*
  * KERN_PROC subtype ops return arrays of augmented proc structures:
