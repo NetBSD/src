@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.36.10.1 1999/05/16 22:38:10 scottr Exp $	*/
+/*	$NetBSD: clock.c,v 1.36.10.2 1999/06/09 07:38:19 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -100,6 +100,7 @@ int	clock_debug = 0;
 #endif
 
 void	rtclock_intr __P((void));
+int	_delay __P((u_int));
 
 #define	DIFF19041970	2082844800
 #define	DIFF19701990	630720000
@@ -425,45 +426,42 @@ volatile int	delay_flag = 1;
 
 /*
  * delay(usec)
- *	Delay usec microseconds.
+ *	Delay at least usec microseconds.
  *
  * The delay_factor is scaled up by a factor of 128 to avoid loss
- * of precision for small delays.  As a result of this, note that
- * delays larger that LARGE_DELAY will be up to 128 usec too short,
- * due to adjustments for calculations involving 32 bit values.
+ * of precision for small delays.
  */
 void
 delay(usec)
-	unsigned usec;
+	u_int usec;
 {
-	volatile unsigned int cycles;
+	volatile u_int cycles;
 
 	if (usec > LARGE_DELAY)
-		cycles = (usec >> 7) * delay_factor;
+		cycles = ((usec + 127) >> 7) * delay_factor;
 	else
 		cycles = ((usec > 0 ? usec : 1) * delay_factor) >> 7;
 
-	while ((cycles-- > 0) && delay_flag);
+	(void)_delay(cycles);
 }
 
-static unsigned	dummy_delay __P((unsigned));
+static u_int	dummy_delay __P((u_int));
 /*
  * Dummy delay calibration.  Functionally identical to delay(), but
  * returns the number of times through the loop.
  */
-static unsigned
+static u_int
 dummy_delay(usec)
-	unsigned usec;
+	u_int usec;
 {
-	volatile unsigned int cycles;
+	volatile u_int cycles;
 
 	if (usec > LARGE_DELAY)
-		cycles = (usec >> 7) * delay_factor;
+		cycles = ((usec + 127) >> 7) * delay_factor;
 	else
 		cycles = ((usec > 0 ? usec : 1) * delay_factor) >> 7;
 
-	while ((cycles-- > 0) && delay_flag);
-
+	cycles = _delay(cycles);
 	return ((delay_factor >> 7) - cycles);
 }
 
@@ -482,7 +480,7 @@ delay_timer1_irq(dummy)
 void
 mac68k_calibrate_delay()
 {
-	unsigned sum;
+	u_int sum, n;
 
 	/* Disable VIA1 timer 1 interrupts and set up service routine */
 	via_reg(VIA1, vIER) = V1IF_T1;
@@ -498,46 +496,12 @@ mac68k_calibrate_delay()
 		printf("mac68k_calibrate_delay(): entering timing loop\n");
 #endif
 
-	/*
-	 * Avoid the possibility that we'll run into inconsistent for-loop
-	 * optimizations:  do this 8 times; no more, no less.  You shall
-	 * not do this 7 times unless you proceed to the 8th.  You shall
-	 * not do this 9 times.  10 is right out.  (Apologies to Monty
-	 * Python...)
-	 */
-	sum = 0;
-	delay_flag = 1;			/* 1 */
-	via_reg(VIA1, vT1C) = 0;	/* 1024 clock ticks */
-	via_reg(VIA1, vT1CH) = 4;	/* (approx 1.3 msec) */
-	sum += dummy_delay(1);
-	delay_flag = 1;			/* 2 */
-	via_reg(VIA1, vT1C) = 0;
-	via_reg(VIA1, vT1CH) = 4;
-	sum += dummy_delay(1);
-	delay_flag = 1;			/* 3 */
-	via_reg(VIA1, vT1C) = 0;
-	via_reg(VIA1, vT1CH) = 4;
-	sum += dummy_delay(1);
-	delay_flag = 1;			/* 4 */
-	via_reg(VIA1, vT1C) = 0;
-	via_reg(VIA1, vT1CH) = 4;
-	sum += dummy_delay(1);
-	delay_flag = 1;			/* 5 */
-	via_reg(VIA1, vT1C) = 0;
-	via_reg(VIA1, vT1CH) = 4;
-	sum += dummy_delay(1);
-	delay_flag = 1;			/* 6 */
-	via_reg(VIA1, vT1C) = 0;
-	via_reg(VIA1, vT1CH) = 4;
-	sum += dummy_delay(1);
-	delay_flag = 1;			/* 7 */
-	via_reg(VIA1, vT1C) = 0;
-	via_reg(VIA1, vT1CH) = 4;
-	sum += dummy_delay(1);
-	delay_flag = 1;			/* 8 */
-	via_reg(VIA1, vT1C) = 0;
-	via_reg(VIA1, vT1CH) = 4;
-	sum += dummy_delay(1);
+	for (sum = 0, n = 8; n > 0; n--) {
+		delay_flag = 1;
+		via_reg(VIA1, vT1C) = 0;	/* 1024 clock ticks */
+		via_reg(VIA1, vT1CH) = 4;	/* (approx 1.3 msec) */
+		sum += dummy_delay(1);
+	}
 
 	/* Disable timer interrupts and reset service routine */
 	via_reg(VIA1, vIER) = V1IF_T1;
