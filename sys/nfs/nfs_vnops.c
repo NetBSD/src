@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.48 1994/12/29 22:21:37 mycroft Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.49 1995/01/10 06:50:07 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1644,9 +1644,11 @@ nfs_readdirrpc(vp, uiop, cred)
 	struct dirent *savdp;
 	struct nfsmount *nmp;
 	struct nfsnode *np = VTONFS(vp);
-	long tresid;
+	long tresid, extra;
 
 	nmp = VFSTONFS(vp->v_mount);
+	extra = uiop->uio_resid & (NFS_DIRBLKSIZ - 1);
+	uiop->uio_resid -= extra;
 	tresid = uiop->uio_resid;
 	/*
 	 * Loop around doing readdir rpc's of size uio_resid or nm_rsize,
@@ -1758,6 +1760,7 @@ nfs_readdirrpc(vp, uiop, cred)
 		}
 	}
 nfsmout:
+	uiop->uio_resid += extra;
 	return (error);
 }
 
