@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.221 2000/05/31 00:43:17 cgd Exp $
+#	$NetBSD: mi,v 1.222 2000/05/31 08:02:45 enami Exp $
 ./sys			comp-sysutil-root
 ./usr/bin/addr2line	comp-miscutil-bin
 ./usr/bin/ar		comp-util-bin
@@ -4215,10 +4215,10 @@
 ./usr/share/man/man9/shutdownhook_disestablish.9		comp-kern-man
 ./usr/share/man/man9/shutdownhook_establish.9		comp-kern-man
 ./usr/share/man/man9/sleep.9		comp-kern-man
-./usr/share/man/man9/softintr.0		comp-kern-man
-./usr/share/man/man9/softintr_disestablish.0		comp-kern-man
-./usr/share/man/man9/softintr_establish.0		comp-kern-man
-./usr/share/man/man9/softintr_schedule.0		comp-kern-man
+./usr/share/man/man9/softintr.9		comp-kern-man
+./usr/share/man/man9/softintr_disestablish.9		comp-kern-man
+./usr/share/man/man9/softintr_establish.9		comp-kern-man
+./usr/share/man/man9/softintr_schedule.9		comp-kern-man
 ./usr/share/man/man9/spl.9		comp-kern-man
 ./usr/share/man/man9/spl0.9		comp-kern-man
 ./usr/share/man/man9/splbio.9		comp-kern-man
