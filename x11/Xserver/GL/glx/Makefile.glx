@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.glx,v 1.2 2003/09/30 06:41:29 lukem Exp $
+#	$NetBSD: Makefile.glx,v 1.3 2003/12/19 15:23:43 rtr Exp $
 
 .include <bsd.own.mk>
 
@@ -25,7 +25,7 @@ CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/GL/glx \
 		-I${X11SRCDIR.xc}/include/fonts \
 		-I${X11SRCDIR.xc}/lib/GL/include
 
-CPPFLAGS+=	-DIN_MODULE -DXFree86Module -DGLXEXT -DGLX_USE_MESA
+CPPFLAGS+=	-DGLXEXT -DGLX_USE_MESA
 
 .include <bsd.x11.mk>
 LIBDIR=	${XMODULEDIR}
