@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_swap.c,v 1.36.2.1 1997/02/12 12:26:28 mrg Exp $	*/
+/*	$NetBSD: vm_swap.c,v 1.36.2.2 1997/02/14 23:11:36 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -670,15 +670,3 @@ swapinit()
 		printf("leaving swapinit\n");
 #endif
 }
-
-#ifdef COMPAT_12
-/* XXX move this to compat/vm_swap_12.c */
-int
-sys_oswapon()
-{
-
-	/* need to fake a call to sys_swapon() */
-
-}
-
-#endif
