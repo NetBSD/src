@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.45 1993/09/04 05:32:18 cgd Exp $
+ *	$Id: machdep.c,v 1.46 1993/09/05 01:31:39 cgd Exp $
  */
 
 #include "npx.h"
@@ -1271,7 +1271,18 @@ _remque(element)
 
 vmunaccess() {}
 
-cpu_exec_makecmds(p, epp)
+/*
+ * cpu_exec_aout_makecmds():
+ *	cpu-dependent a.out format hook for execve().
+ * 
+ * Determine of the given exec package refers to something which we
+ * understand and, if so, set up the vmcmds for it.
+ *
+ * On the i386, old (386bsd) ZMAGIC binaries and BSDI QMAGIC binaries
+ * if COMPAT_NOMID is given as a kernel option.
+ */
+
+cpu_exec_aout_makecmds(p, epp)
 struct proc *p;
 struct exec_package *epp;
 {
@@ -1290,12 +1301,21 @@ struct exec_package *epp;
   }
 
   switch (mid << 16 | magic) {
+  /*
+   * 386BSD's ZMAGIC format:
+   */
   case (MID_ZERO << 16) | ZMAGIC:
-    error = cpu_exec_prep_oldzmagic(p, epp);
+    error = cpu_exec_aout_prep_oldzmagic(p, epp);
     break;
+
+  /*
+   * BSDI's QMAGIC format:
+   * the same as our new ZMAGIC format, but with a different magic number
+   */
   case (MID_ZERO << 16) | QMAGIC:
-    error = exec_prep_zmagic(p, epp);
+    error = exec_aout_prep_zmagic(p, epp);
     break;
+
   default:
     error = ENOEXEC;
   }
@@ -1307,8 +1327,17 @@ struct exec_package *epp;
 }
 
 #ifdef COMPAT_NOMID
+/*
+ * cpu_exec_aout_prep_oldzmagic():
+ *	Prepare the vmcmds to build a vmspace for an old (386BSD) ZMAGIC
+ *	binary.
+ *
+ * Cloned from exec_aout_prep_zmagic() in kern/exec_aout.c; a more verbose
+ * description of operation is there.
+ */
+
 int
-cpu_exec_prep_oldzmagic(p, epp)
+cpu_exec_aout_prep_oldzmagic(p, epp)
      struct proc *p;
      struct exec_package *epp;
 {
