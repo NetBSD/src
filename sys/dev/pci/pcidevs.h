@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.312.2.22 2002/11/11 22:11:31 nathanw Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.312.2.23 2002/11/26 18:17:50 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD
+ *	NetBSD: pcidevs,v 1.489 2002/11/26 18:12:27 thorpej Exp 
  */
 
 /*
@@ -506,6 +506,7 @@
 #define	PCI_VENDOR_3DO	0x1239		/* The 3D0 Company */
 #define	PCI_VENDOR_CCUBE	0x123f		/* C-Cube Microsystems */
 #define	PCI_VENDOR_AVM	0x1244		/* AVM */
+#define	PCI_VENDOR_SAMSUNGELEC2	0x1249		/* Samsung Electronics Co. Ltd. (2nd vendor ID) */
 #define	PCI_VENDOR_STALLION	0x124d		/* Stallion Technologies */
 #define	PCI_VENDOR_LINEARSYS	0x1254		/* Linear Systems */
 #define	PCI_VENDOR_ASIX	0x125b		/* ASIX Electronics */
@@ -544,6 +545,7 @@
 #define	PCI_VENDOR_ETIMEDIA	0x1409		/* eTIMedia Technology Co. Ltd. */
 #define	PCI_VENDOR_OXFORDSEMI	0x1415		/* Oxford Semiconductor Ltd. */
 #define	PCI_VENDOR_TAMARACK	0x143d		/* Tamarack Microelectronics, Inc. */
+#define	PCI_VENDOR_SAMSUNGELEC3	0x144d		/* Samsung Electronics Co. Ltd. (3rd vendor ID) */
 #define	PCI_VENDOR_ASKEY	0x144f		/* Askey Computer Corp. */
 #define	PCI_VENDOR_AVERMEDIA	0x1461		/* Avermedia Technologies */
 #define	PCI_VENDOR_AIRONET	0x14b9		/* Aironet Wireless Communications */
@@ -787,7 +789,6 @@
 #define	PCI_PRODUCT_AMD_PCNET_PCI	0x2000		/* PCnet-PCI Ethernet */
 #define	PCI_PRODUCT_AMD_PCNET_HOME	0x2001		/* PCnet-Home HomePNA Ethernet */
 #define	PCI_PRODUCT_AMD_PCSCSI_PCI	0x2020		/* PCscsi-PCI SCSI */
-#define	PCI_PRODUCT_AMD_PCNETS_PCI	0x2040		/* PCnet-PCI Ethernet & SCSI */
 #define	PCI_PRODUCT_AMD_SC520_SC	0x3000		/* Elan SC520 System Controller */
 #define	PCI_PRODUCT_AMD_SC751_SC	0x7006		/* AMD751 System Controller */
 #define	PCI_PRODUCT_AMD_SC751_PPB	0x7007		/* AMD751 PCI-to-PCI Bridge */
@@ -1187,8 +1188,7 @@
 #define	PCI_PRODUCT_DPT_SC_RAID	0xa400		/* SmartCache/SmartRAID (EATA) */
 #define	PCI_PRODUCT_DPT_I960_PPB	0xa500		/* PCI-PCI Bridge */
 #define	PCI_PRODUCT_DPT_RAID_I2O	0xa501		/* SmartRAID (I2O) */
-#define	PCI_PRODUCT_DPT_RAID_2000S	0xa501		/* Zero channel SmartRAID(I2O) */
-#define	PCI_PRODUCT_DPT_RAID_2005S	0xa511		/* Zero channel SmartRAID(I2O) SO-DIMM */
+#define	PCI_PRODUCT_DPT_RAID_2005S	0xa511		/* Zero Channel SmartRAID (I2O) */
 #define	PCI_PRODUCT_DPT_MEMCTLR	0x1012		/* Memory Controller */
 
 /* Dolphin products */
@@ -1322,6 +1322,7 @@
 #define	PCI_PRODUCT_IBM_TURBOWAYS25	0x0053		/* Turboways 25 ATM */
 #define	PCI_PRODUCT_IBM_GXT800P	0x005e		/* GXT-800P */
 #define	PCI_PRODUCT_IBM_405GP	0x0156		/* PPC 405GP PCI Bridge */
+#define	PCI_PRODUCT_IBM_133PCIX	0x01a7		/* 133 PCI-X Bridge */
 #define	PCI_PRODUCT_IBM_MPIC2	0xffff		/* MPIC-II */
 
 /* Conexant (iCompression, GlobeSpan) products */
@@ -1355,6 +1356,7 @@
 
 /* Intel products */
 #define	PCI_PRODUCT_INTEL_80312	0x030d		/* 80312 I/O Companion Chip */
+#define	PCI_PRODUCT_INTEL_80321	0x0319		/* 80321 I/O Processor */
 #define	PCI_PRODUCT_INTEL_PCEB	0x0482		/* 82375EB/SB PCI-EISA Bridge (PCEB) */
 #define	PCI_PRODUCT_INTEL_CDC	0x0483		/* 82424ZX Cache and DRAM controller (CDC) */
 #define	PCI_PRODUCT_INTEL_SIO	0x0484		/* 82378ZB System I/O (SIO) */

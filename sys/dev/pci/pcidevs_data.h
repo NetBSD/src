@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.310.2.22 2002/11/11 22:11:34 nathanw Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.310.2.23 2002/11/26 18:17:51 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD
+ *	NetBSD: pcidevs,v 1.489 2002/11/26 18:12:27 thorpej Exp 
  */
 
 /*
@@ -914,12 +914,6 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Advanced Micro Devices",
 	    "PCscsi-PCI SCSI",
-	},
-	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PCNETS_PCI,
-	    0,
-	    "Advanced Micro Devices",
-	    "PCnet-PCI Ethernet & SCSI",
 	},
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_SC520_SC,
@@ -2734,16 +2728,10 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "SmartRAID (I2O)",
 	},
 	{
-	    PCI_VENDOR_DPT, PCI_PRODUCT_DPT_RAID_2000S,
-	    0,
-	    "Distributed Processing Technology",
-	    "Zero channel SmartRAID(I2O)",
-	},
-	{
 	    PCI_VENDOR_DPT, PCI_PRODUCT_DPT_RAID_2005S,
 	    0,
 	    "Distributed Processing Technology",
-	    "Zero channel SmartRAID(I2O) SO-DIMM",
+	    "Zero Channel SmartRAID (I2O)",
 	},
 	{
 	    PCI_VENDOR_DPT, PCI_PRODUCT_DPT_MEMCTLR,
@@ -3232,6 +3220,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "PPC 405GP PCI Bridge",
 	},
 	{
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_133PCIX,
+	    0,
+	    "IBM",
+	    "133 PCI-X Bridge",
+	},
+	{
 	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_MPIC2,
 	    0,
 	    "IBM",
@@ -3344,6 +3338,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Intel",
 	    "80312 I/O Companion Chip",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80321,
+	    0,
+	    "Intel",
+	    "80321 I/O Processor",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PCEB,
@@ -10780,6 +10780,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    NULL,
 	},
 	{
+	    PCI_VENDOR_SAMSUNGELEC2, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Samsung Electronics Co. Ltd. (2nd vendor ID)",
+	    NULL,
+	},
+	{
 	    PCI_VENDOR_STALLION, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Stallion Technologies",
@@ -11005,6 +11011,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_TAMARACK, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Tamarack Microelectronics, Inc.",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_SAMSUNGELEC3, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Samsung Electronics Co. Ltd. (3rd vendor ID)",
 	    NULL,
 	},
 	{
