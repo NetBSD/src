@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.15 2004/01/10 07:41:18 dyoung Exp $	*/
+/*	$NetBSD: atw.c,v 1.16 2004/01/10 07:47:02 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.15 2004/01/10 07:41:18 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.16 2004/01/10 07:47:02 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -1204,15 +1204,16 @@ atw_init(ifp)
 	/* common 802.11 configuration */
 	ic->ic_flags &= ~IEEE80211_F_IBSSON;
 	switch (ic->ic_opmode) {
-	case IEEE80211_M_HOSTAP: /* XXX */
 	case IEEE80211_M_STA:
 		sc->sc_opmode &= ~ATW_NAR_EA;
 		break;
 	case IEEE80211_M_AHDEMO: /* XXX */
 	case IEEE80211_M_IBSS:
+		ic->ic_flags |= IEEE80211_F_IBSSON;
+		/*FALLTHROUGH*/
+	case IEEE80211_M_HOSTAP: /* XXX */
 		/* EA bit seems important for ad hoc reception. */
 		sc->sc_opmode |= ATW_NAR_EA;
-		ic->ic_flags |= IEEE80211_F_IBSSON;
 		break;
 	case IEEE80211_M_MONITOR: /* XXX */
 		break;
@@ -2932,6 +2933,8 @@ atw_linkintr(sc, linkstatus)
 	} else if (linkstatus & ATW_INTR_LINKOFF) {
 		DPRINTF(sc, ("%s: link off\n", sc->sc_dev.dv_xname));
 		switch (ic->ic_opmode) {
+		case IEEE80211_M_HOSTAP:
+			return;
 		case IEEE80211_M_IBSS:
 			if (ic->ic_flags & IEEE80211_F_SIBSS)
 				return;
