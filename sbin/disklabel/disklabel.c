@@ -43,7 +43,7 @@ char copyright[] =
 #ifndef lint
 /*static char sccsid[] = "from: @(#)disklabel.c	1.2 (Symmetric) 11/28/85";*/
 /*static char sccsid[] = "from: @(#)disklabel.c	5.20 (Berkeley) 2/9/91";*/
-static char rcsid[] = "$Id: disklabel.c,v 1.11 1994/03/21 00:56:58 cgd Exp $";
+static char rcsid[] = "$Id: disklabel.c,v 1.12 1994/06/13 14:29:08 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -51,7 +51,7 @@ static char rcsid[] = "$Id: disklabel.c,v 1.11 1994/03/21 00:56:58 cgd Exp $";
 #include <sys/errno.h>
 #include <sys/file.h>
 #include <sys/ioctl.h>
-#include <ufs/fs.h>
+#include <ufs/ffs/fs.h>
 #include <string.h>
 #define DKTYPENAMES
 #include <sys/disklabel.h>
