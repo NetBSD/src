@@ -1,4 +1,4 @@
-/*	$NetBSD: pms.c,v 1.30 1996/09/07 12:40:34 mycroft Exp $	*/
+/*	$NetBSD: pms.c,v 1.31 1996/10/11 00:27:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994 Charles Hannum.
@@ -213,7 +213,7 @@ pmsattach(parent, self, aux)
 	int irq = self->dv_cfdata->cf_loc[0];
 	isa_chipset_tag_t ic = aux;			/* XXX */
 
-	printf(" irq %d\n", irq);
+	kprintf(" irq %d\n", irq);
 
 	/* Other initialization was done by pmsprobe. */
 	sc->sc_state = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_isa.c,v 1.2 1996/08/28 23:47:27 thorpej Exp $	*/
+/*	$NetBSD: ahc_isa.c,v 1.3 1996/10/11 00:27:02 christos Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -155,7 +155,7 @@ ahc_isa_irq(bc, ioh)
 	case 15:
 		break;
 	default:
-		printf("ahc_isa_irq: illegal irq setting %d\n", intdef);
+		kprintf("ahc_isa_irq: illegal irq setting %d\n", intdef);
 		return -1;
 	}
 
@@ -182,16 +182,16 @@ ahc_isa_idstring(bc, ioh, idstring)
 	/* Check for device existence */
 	if (EISA_VENDID_NODEV(vid)) {
 #if 0
-		printf("ahc_isa_idstring: no device at 0x%lx\n",
+		kprintf("ahc_isa_idstring: no device at 0x%lx\n",
 		    ioh); /* XXX knows about ioh guts */
-		printf("\t(0x%x, 0x%x)\n", vid[0], vid[1]);
+		kprintf("\t(0x%x, 0x%x)\n", vid[0], vid[1]);
 #endif
 		return (0);
 	}
 
 	/* And check that the firmware didn't biff something badly */
 	if (EISA_VENDID_IDDELAY(vid)) {
-		printf("ahc_isa_idstring: BIOS biffed it at 0x%lx\n",
+		kprintf("ahc_isa_idstring: BIOS biffed it at 0x%lx\n",
 		    ioh);	/* XXX knows about ioh guts */
 		return (0);
 	}
@@ -238,7 +238,7 @@ ahc_isa_match(ia, iobase)
 		 * be common on machines configured to look for
 		 * ahc_eisa and ahc_isa.
 		 */
-		printf("ahc_isa_match: can't map I/O space for 0x%x\n",
+		kprintf("ahc_isa_match: can't map I/O space for 0x%x\n",
 		    iobase);
 #endif
 		return (0);
@@ -259,7 +259,7 @@ ahc_isa_match(ia, iobase)
 
 	if (ia->ia_irq != IRQUNK &&
 	    ia->ia_irq != irq) {
-		printf("ahc_isa_match: irq mismatch (kernel %d, card %d)\n",
+		kprintf("ahc_isa_match: irq mismatch (kernel %d, card %d)\n",
 		    ia->ia_irq, irq);
 		return (0);
 	}
@@ -358,7 +358,7 @@ ahc_isa_attach(parent, self, aux)
 	} else {
 		panic("ahc_isa_attach: Unknown device type %s\n", idstring);
 	}
-	printf(": %s\n", model);
+	kprintf(": %s\n", model);
 
 	ahc_construct(ahc, bc, ioh, type, AHC_FNONE);
 
@@ -367,7 +367,7 @@ ahc_isa_attach(parent, self, aux)
 	 * Tell the user what type of interrupts we're using.
 	 * usefull for debugging irq problems
 	 */
-	printf( "%s: Using %s Interrupts\n", ahc_name(ahc),
+	kprintf( "%s: Using %s Interrupts\n", ahc_name(ahc),
 	    ahc->pause & IRQMS ?  "Level Sensitive" : "Edge Triggered");
 #endif
 
@@ -421,7 +421,7 @@ ahc_isa_attach(parent, self, aux)
 		else
 			id_string = "aic7770 <= Rev C, ";
 
-		printf("%s: %s", ahc_name(ahc), id_string);
+		kprintf("%s: %s", ahc_name(ahc), id_string);
 	}
 
 	/* Setup the FIFO threshold and the bus off time */
@@ -451,7 +451,7 @@ ahc_isa_attach(parent, self, aux)
 	ahc->sc_ih = isa_intr_establish(ia->ia_ic, irq,
 	    ahc->pause & IRQMS ? IST_LEVEL : IST_EDGE, IPL_BIO, ahc_intr, ahc);
 	if (ahc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt\n",
+		kprintf("%s: couldn't establish interrupt\n",
 		       ahc->sc_dev.dv_xname);
 		ahc_free(ahc);
 		return;

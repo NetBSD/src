@@ -1,4 +1,4 @@
-/*	$NetBSD: adbsys.c,v 1.21 1996/06/21 06:10:56 scottr Exp $	*/
+/*	$NetBSD: adbsys.c,v 1.22 1996/10/11 00:24:38 christos Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -61,24 +61,24 @@ adb_complete(buffer, data_area, adb_command)
 	int error;
 
 #if defined(MRG_DEBUG)
-	printf("adb: transaction completion\n");
+	kprintf("adb: transaction completion\n");
 #endif
 
 	adbaddr = (adb_command & 0xf0) >> 4;
 	error = GetADBInfo(&adbdata, adbaddr);
 #if defined(MRG_DEBUG)
-	printf("adb: GetADBInfo returned %d\n", error);
+	kprintf("adb: GetADBInfo returned %d\n", error);
 #endif
 
 	event.addr = adbaddr;
 	event.hand_id = adbdata.devType;
 	event.def_addr = adbdata.origADBAddr;
 #if defined(MRG_DEBUG)
-	printf("adb: from %d at %d (org %d) %d:", event.addr,
+	kprintf("adb: from %d at %d (org %d) %d:", event.addr,
 		event.hand_id, event.def_addr, buffer[0]);
 	for (i = 1; i <= buffer[0]; i++)
-		printf(" %x", buffer[i]);
-	printf("\n");
+		kprintf(" %x", buffer[i]);
+	kprintf("\n");
 #endif
 
 	i = event.byte_count = buffer[0];
@@ -181,22 +181,22 @@ adb_init()
 	char buffer[9];
 
 	if ((mac68k_machine.serial_console & 0x03)) {
-		printf("adb: using serial console\n");
+		kprintf("adb: using serial console\n");
 		return;
 	}
 
 	if (!mrg_romready()) {
-		printf("adb: no ROM ADB driver in this kernel for this machine\n");
+		kprintf("adb: no ROM ADB driver in this kernel for this machine\n");
 		return;
 	}
-	printf("adb: bus subsystem\n");
+	kprintf("adb: bus subsystem\n");
 #if defined(MRG_DEBUG)
-	printf("adb: call mrg_initadbintr\n");
+	kprintf("adb: call mrg_initadbintr\n");
 #endif
 
 	mrg_initadbintr();	/* Mac ROM Glue okay to do ROM intr */
 #if defined(MRG_DEBUG)
-	printf("adb: returned from mrg_initadbintr\n");
+	kprintf("adb: returned from mrg_initadbintr\n");
 #endif
 
 	/* ADBReInit pre/post-processing */
@@ -204,13 +204,13 @@ adb_init()
 
 	/* Initialize ADB */
 #if defined(MRG_DEBUG)
-	printf("adb: calling ADBAlternateInit.\n");
+	kprintf("adb: calling ADBAlternateInit.\n");
 #endif
 
 	ADBAlternateInit();
 
 #if defined(MRG_DEBUG)
-	printf("adb: done with ADBReInit\n");
+	kprintf("adb: done with ADBReInit\n");
 #endif
 
 	extdms_init();
@@ -223,21 +223,21 @@ adb_init()
 		adbaddr = GetIndADB(&adbdata, adbindex);
 
 		/* Print out the glory */
-		printf("adb: ");
+		kprintf("adb: ");
 		switch (adbdata.origADBAddr) {
 		case ADBADDR_MAP:
 			switch (adbdata.devType) {
 			case ADB_STDKBD:
-				printf("keyboard");
+				kprintf("keyboard");
 				break;
 			case ADB_EXTKBD:
-				printf("extended keyboard");
+				kprintf("extended keyboard");
 				break;
 			case ADB_PBKBD:
-				printf("PowerBook keyboard");
+				kprintf("PowerBook keyboard");
 				break;
 			default:
-				printf("mapped device (%d)",
+				kprintf("mapped device (%d)",
 				    adbdata.devType);
 				break;
 			}
@@ -251,13 +251,13 @@ adb_init()
 				/* busy-wait until done */;
 			switch (buffer[2]) {
 			case ADBMS_100DPI:
-				printf("100 dpi mouse");
+				kprintf("100 dpi mouse");
 				break;
 			case ADBMS_200DPI:
-				printf("200 dpi mouse");
+				kprintf("200 dpi mouse");
 				break;
 			case ADBMS_USPEED:
-				printf("MicroSpeed mouse, default parameters");
+				kprintf("MicroSpeed mouse, default parameters");
 				break;
 			case ADBMS_EXTENDED:
 				extdms_done = 0;
@@ -267,40 +267,40 @@ adb_init()
 				      (adbaddr << 4) | 0xd);
 				while (!extdms_done)
 					/* busy-wait until done */;
-				printf("extended mouse "
+				kprintf("extended mouse "
 				       "<%c%c%c%c> %d-button %d dpi ",
 				       buffer[1], buffer[2],
 				       buffer[3], buffer[4],
 				       (int)buffer[8],
 				       (int)*(short *)&buffer[5]);
 				if (buffer[7] == 1)
-					printf("mouse");
+					kprintf("mouse");
 				else if (buffer[7] == 2)
-					printf("trackball");
+					kprintf("trackball");
 				else
-					printf("unknown device");
+					kprintf("unknown device");
 				break;
 			default:
-				printf("relative positioning device (mouse?) (%d)", adbdata.devType);
+				kprintf("relative positioning device (mouse?) (%d)", adbdata.devType);
 				break;
 			}
 			break;
 		case ADBADDR_ABS:
-			printf("absolute positioning device (tablet?) (%d)", adbdata.devType);
+			kprintf("absolute positioning device (tablet?) (%d)", adbdata.devType);
 			break;
 		default:
-			printf("unknown type device, (def %d, handler %d)", adbdata.origADBAddr,
+			kprintf("unknown type device, (def %d, handler %d)", adbdata.origADBAddr,
 			    adbdata.devType);
 			break;
 		}
-		printf(" at %d\n", adbaddr);
+		kprintf(" at %d\n", adbaddr);
 
 		/* Set completion routine to be MacBSD's */
 		adbinfo.siServiceRtPtr = (Ptr) adb_asmcomplete;
 		adbinfo.siDataAreaAddr = NULL;
 		error = SetADBInfo(&adbinfo, adbaddr);
 #if defined(MRG_DEBUG)
-		printf("returned %d from SetADBInfo\n", error);
+		kprintf("returned %d from SetADBInfo\n", error);
 #endif
 	}
 }
