@@ -1,6 +1,6 @@
-#	$NetBSD: files.isapnp,v 1.4 1997/04/25 15:26:13 explorer Exp $
+#	$NetBSD: files.isapnp,v 1.5 1997/07/20 20:31:12 pk Exp $
 #
-# Config.new file and device description for machine-independent ISAPnP code.
+# Config file and device description for machine-independent ISAPnP code.
 # Included by ports that need it.
 
 # XXX: We don't use locators currenly...

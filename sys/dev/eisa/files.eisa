@@ -1,6 +1,6 @@
-#	$NetBSD: files.eisa,v 1.13 1997/03/15 18:11:18 is Exp $
+#	$NetBSD: files.eisa,v 1.14 1997/07/20 20:31:34 pk Exp $
 #
-# Config.new file and device description for machine-independent EISA code.
+# Config file and device description for machine-independent EISA code.
 # Included by ports that need it.  Requires that the SCSI files be
 # defined first.
 
