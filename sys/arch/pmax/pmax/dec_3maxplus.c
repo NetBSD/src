@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3maxplus.c,v 1.33 2000/01/10 03:24:37 simonb Exp $ */
+/* $NetBSD: dec_3maxplus.c,v 1.34 2000/01/14 13:45:24 simonb Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.33 2000/01/10 03:24:37 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.34 2000/01/14 13:45:24 simonb Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -89,7 +89,6 @@ __KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.33 2000/01/10 03:24:37 simonb Exp
 #include <dev/tc/ioasicreg.h>		/* ioasic interrrupt masks */
 #include <dev/tc/ioasicvar.h>		/* ioasic_base */
 
-#include <pmax/pmax/turbochannel.h>
 #include <pmax/pmax/machdep.h>
 #include <pmax/pmax/kn03.h>
 #include <pmax/pmax/memc.h>
@@ -99,12 +98,13 @@ __KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.33 2000/01/10 03:24:37 simonb Exp
  */
 void		dec_3maxplus_init __P((void));		/* XXX */
 static void	dec_3maxplus_bus_reset __P((void));
-static void	dec_3maxplus_enable_intr __P((unsigned slotno,
-		    int (*handler)(void *), void *sc, int onoff));
-static int	dec_3maxplus_intr __P((unsigned, unsigned, unsigned, unsigned));
 static void	dec_3maxplus_cons_init __P((void));
 static void	dec_3maxplus_device_register __P((struct device *, void *));
 static void 	dec_3maxplus_errintr __P((void));
+static int	dec_3maxplus_intr __P((unsigned, unsigned, unsigned, unsigned));
+static void	dec_3maxplus_intr_establish __P((struct device *, void *,
+		    int, int (*)(void *), void *));
+static void	dec_3maxplus_intr_disestablish __P((struct device *, void *));
 
 static void	kn03_wbflush __P((void));
 static unsigned	kn03_clkread __P((void));
@@ -125,6 +125,8 @@ dec_3maxplus_init()
 	platform.cons_init = dec_3maxplus_cons_init;
 	platform.device_register = dec_3maxplus_device_register;
 	platform.iointr = dec_3maxplus_intr;
+	platform.intr_establish = dec_3maxplus_intr_establish;
+	platform.intr_disestablish = dec_3maxplus_intr_disestablish;
 	platform.memsize = memsize_scan;
 	platform.clkread = kn03_clkread;
 	/* 3MAX+ has IOASIC free-running high resolution timer */
@@ -135,7 +137,6 @@ dec_3maxplus_init()
 
 	ioasic_base = MIPS_PHYS_TO_KSEG1(KN03_SYS_ASIC);
 	mips_hardware_intr = dec_3maxplus_intr;
-	tc_enable_interrupt = dec_3maxplus_enable_intr;
    
 	/*
 	 * 3MAX+ IOASIC interrupts come through INT 0, while
@@ -202,6 +203,7 @@ dec_3maxplus_bus_reset()
 static void
 dec_3maxplus_cons_init()
 {
+	/* notyet */
 }
 
 
@@ -215,71 +217,75 @@ dec_3maxplus_device_register(dev, aux)
 
 
 /*
- *	Enable/Disable interrupts.
+ *	Enable interrupts.
  *	We pretend we actually have 8 slots even if we really have
  *	only 4: TCslots 0-2 maps to slots 0-2, TCslot3 maps to
  *	slots 3-7 (see pmax/tc/ds-asic-conf.c).
  */
 static void
-dec_3maxplus_enable_intr(slotno, handler, sc, on)
-	unsigned int slotno;
+dec_3maxplus_intr_establish(dev, cookie, level, handler, arg)
+	struct device *dev;
+	void *cookie;
+	int level;
 	int (*handler) __P((void *));
-	void *sc;
-	int on;
+	void *arg;
 {
+	int slotno = (int)cookie;
 	unsigned mask;
 
 #if 0
 	printf("3MAXPLUS: imask %x, %sabling slot %d, unit %d addr 0x%x\n",
-	       kn03_tc3_imask, (on? "en" : "dis"), slotno, unit, handler);
+	    kn03_tc3_imask, (on? "en" : "dis"), slotno, unit, handler);
 #endif
 
 	switch (slotno) {
-	case 0:
+	  case 0:
 		mask = KN03_INTR_TC_0;
 		break;
-	case 1:
+	  case 1:
 		mask = KN03_INTR_TC_1;
 		break;
-	case 2:
+	  case 2:
 		mask = KN03_INTR_TC_2;
 		break;
-	case KN03_SCSI_SLOT:
+	  case KN03_SCSI_SLOT:
 		mask = (IOASIC_INTR_SCSI | IOASIC_INTR_SCSI_PTR_LOAD |
 			IOASIC_INTR_SCSI_OVRUN | IOASIC_INTR_SCSI_READ_E);
 		break;
-	case KN03_LANCE_SLOT:
-		mask = KN03_INTR_LANCE;
-		mask |= IOASIC_INTR_LANCE_READ_E;
+	  case KN03_LANCE_SLOT:
+		mask = KN03_INTR_LANCE | IOASIC_INTR_LANCE_READ_E;
 		break;
-	case KN03_SCC0_SLOT:
+	  case KN03_SCC0_SLOT:
 		mask = KN03_INTR_SCC_0;
 		break;
-	case KN03_SCC1_SLOT:
+	  case KN03_SCC1_SLOT:
 		mask = KN03_INTR_SCC_1;
 		break;
-	case KN03_ASIC_SLOT:
+	  case KN03_ASIC_SLOT:
 		mask = KN03_INTR_ASIC;
 		break;
-	default:
+	  default:
 #ifdef DIAGNOSTIC
 		printf("warning: enabling unknown intr %x\n", slotno);
 #endif
 		goto done;
 	}
-	if (on) {
-		kn03_tc3_imask |= mask;
-		tc_slot_info[slotno].intr = handler;
-		tc_slot_info[slotno].sc = sc;
 
-	} else {
-		kn03_tc3_imask &= ~mask;
-		tc_slot_info[slotno].intr = 0;
-		tc_slot_info[slotno].sc = 0;
-	}
+	kn03_tc3_imask |= mask;
+	intrtab[slotno].ih_func = handler;
+	intrtab[slotno].ih_arg = arg;
+
 done:
 	*(u_int32_t *)(ioasic_base + IOASIC_IMSK) = kn03_tc3_imask;
 	kn03_wbflush();
+}
+
+static void
+dec_3maxplus_intr_disestablish(dev, arg)
+	struct device *dev;
+	void *arg;
+{
+	printf("dec_3maxplus_intr_distestablish: not implemented\n");
 }
 
 
@@ -376,23 +382,23 @@ dec_3maxplus_intr(mask, pc, status, cause)
 			*(u_int32_t *)(ioasic_base + IOASIC_INTR) = ~turnoff;
 
 		if ((intr & KN03_INTR_SCC_0) &&
-			tc_slot_info[KN03_SCC0_SLOT].intr) {
-			(*(tc_slot_info[KN03_SCC0_SLOT].intr))
-			(tc_slot_info[KN03_SCC0_SLOT].sc);
+		    intrtab[KN03_SCC0_SLOT].ih_func) {
+			(*(intrtab[KN03_SCC0_SLOT].ih_func))
+			    (intrtab[KN03_SCC0_SLOT].ih_arg);
 			intrcnt[SERIAL0_INTR]++;
 		}
 
 		if ((intr & KN03_INTR_SCC_1) &&
-			tc_slot_info[KN03_SCC1_SLOT].intr) {
-			(*(tc_slot_info[KN03_SCC1_SLOT].intr))
-			(tc_slot_info[KN03_SCC1_SLOT].sc);
+		    intrtab[KN03_SCC1_SLOT].ih_func) {
+			(*(intrtab[KN03_SCC1_SLOT].ih_func))
+			    (intrtab[KN03_SCC1_SLOT].ih_arg);
 			intrcnt[SERIAL1_INTR]++;
 		}
 
 		if ((intr & KN03_INTR_TC_0) &&
-			tc_slot_info[0].intr) {
-			(*(tc_slot_info[0].intr))
-			(tc_slot_info[0].sc);
+		    intrtab[0].ih_func) {
+			(*(intrtab[0].ih_func))
+			    (intrtab[0].ih_arg);
 			intrcnt[SLOT0_INTR]++;
 		}
 #ifdef DIAGNOSTIC
@@ -401,9 +407,9 @@ dec_3maxplus_intr(mask, pc, status, cause)
 #endif /*DIAGNOSTIC*/
 
 		if ((intr & KN03_INTR_TC_1) &&
-			tc_slot_info[1].intr) {
-			(*(tc_slot_info[1].intr))
-			(tc_slot_info[1].sc);
+		    intrtab[1].ih_func) {
+			(*(intrtab[1].ih_func))
+			    (intrtab[1].ih_arg);
 			intrcnt[SLOT1_INTR]++;
 		}
 #ifdef DIAGNOSTIC
@@ -412,9 +418,9 @@ dec_3maxplus_intr(mask, pc, status, cause)
 #endif /*DIAGNOSTIC*/
 
 		if ((intr & KN03_INTR_TC_2) &&
-			tc_slot_info[2].intr) {
-			(*(tc_slot_info[2].intr))
-			(tc_slot_info[2].sc);
+		    intrtab[2].ih_func) {
+			(*(intrtab[2].ih_func))
+			    (intrtab[2].ih_arg);
 			intrcnt[SLOT2_INTR]++;
 		}
 #ifdef DIAGNOSTIC
@@ -423,16 +429,16 @@ dec_3maxplus_intr(mask, pc, status, cause)
 #endif /*DIAGNOSTIC*/
 
 		if ((intr & KN03_INTR_LANCE) &&
-			tc_slot_info[KN03_LANCE_SLOT].intr) {
-			(*(tc_slot_info[KN03_LANCE_SLOT].intr))
-			(tc_slot_info[KN03_LANCE_SLOT].sc);
+		    intrtab[KN03_LANCE_SLOT].ih_func) {
+			(*(intrtab[KN03_LANCE_SLOT].ih_func))
+			    (intrtab[KN03_LANCE_SLOT].ih_arg);
 			intrcnt[LANCE_INTR]++;
 		}
 
 		if ((intr & IOASIC_INTR_SCSI) &&
-			tc_slot_info[KN03_SCSI_SLOT].intr) {
-			(*(tc_slot_info[KN03_SCSI_SLOT].intr))
-			(tc_slot_info[KN03_SCSI_SLOT].sc);
+		    intrtab[KN03_SCSI_SLOT].ih_func) {
+			(*(intrtab[KN03_SCSI_SLOT].ih_func))
+			    (intrtab[KN03_SCSI_SLOT].ih_arg);
 			intrcnt[SCSI_INTR]++;
 		}
 

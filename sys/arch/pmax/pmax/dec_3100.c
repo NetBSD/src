@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3100.c,v 1.22 2000/01/10 03:24:37 simonb Exp $ */
+/* $NetBSD: dec_3100.c,v 1.23 2000/01/14 13:45:23 simonb Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -81,7 +81,6 @@
 
 #include <mips/mips/mips_mcclock.h>	/* mcclock CPUspeed estimation */
 
-#include <pmax/pmax/turbochannel.h>
 #include <pmax/pmax/machdep.h>
 #include <pmax/pmax/kn01.h>
 
@@ -94,13 +93,13 @@
 void		dec_3100_init __P((void));		/* XXX */
 static void	dec_3100_bus_reset __P((void));
 
-static void	dec_3100_enable_intr __P((unsigned slotno,
-		    int (*handler)(void *), void *sc, int onoff));
-static int	dec_3100_intr __P((unsigned, unsigned, unsigned, unsigned));
 static void	dec_3100_cons_init __P((void));
 static void	dec_3100_device_register __P((struct device *, void *));
-
 static void	dec_3100_errintr __P((void));
+static int	dec_3100_intr __P((unsigned, unsigned, unsigned, unsigned));
+static void	dec_3100_intr_disestablish __P((struct device *, void *));
+static void	dec_3100_intr_establish __P((struct device *, void *,
+		    int, int (*)(void *), void *));
 
 #define	kn01_wbflush()	mips1_wbflush() /* XXX to be corrected XXX */
 
@@ -112,11 +111,12 @@ dec_3100_init()
 	platform.cons_init = dec_3100_cons_init;
 	platform.device_register = dec_3100_device_register;
 	platform.iointr = dec_3100_intr;
+	platform.intr_establish = dec_3100_intr_establish;
+	platform.intr_disestablish = dec_3100_intr_disestablish;
 	platform.memsize = memsize_scan;
 	/* no high resolution timer available */
 
 	mips_hardware_intr = dec_3100_intr;
-	tc_enable_interrupt = dec_3100_enable_intr;
 
 	splvec.splbio = MIPS_SPL0;
 	splvec.splnet = MIPS_SPL_0_1;
@@ -144,6 +144,7 @@ dec_3100_bus_reset()
 static void
 dec_3100_cons_init()
 {
+	/* notyet */
 }
 
 
@@ -155,31 +156,6 @@ dec_3100_device_register(dev, aux)
 	panic("dec_3100_device_register unimplemented");
 }
 
-
-/*
- * Enable an interrupt from a slot on the KN01 internal bus.
- *
- * The 4.4bsd kn01 interrupt handler hard-codes r3000 CAUSE register
- * bits to particular device interrupt handlers.  We may choose to store
- * function and softc pointers at some future point.
- */
-static void
-dec_3100_enable_intr(slotno, handler, sc, on)
-	unsigned int slotno;
-	int (*handler) __P((void* softc));
-	void *sc;
-	int on;
-{
-	/*
-	 */
-	if (on)  {
-		tc_slot_info[slotno].intr = handler;
-		tc_slot_info[slotno].sc = sc;
-	} else {
-		tc_slot_info[slotno].intr = 0;
-		tc_slot_info[slotno].sc = 0;
-	}
-}
 
 /*
  * Handle pmax (DECstation 2100/3100) interrupts.
@@ -212,7 +188,7 @@ dec_3100_intr(mask, pc, status, cause)
 #if NSII > 0
 	if (mask & MIPS_INT_MASK_0) {
 		intrcnt[SCSI_INTR]++;
-		(*tc_slot_info[3].intr)(tc_slot_info[3].sc);
+		(*intrtab[3].ih_func)(intrtab[3].ih_arg);
 	}
 #endif /* NSII */
 
@@ -224,14 +200,14 @@ dec_3100_intr(mask, pc, status, cause)
 		 * manipulating if queues should have called splimp(),
 		 * which would mask out MIPS_INT_MASK_1.
 		 */
-		(*tc_slot_info[2].intr)(tc_slot_info[2].sc);
+		(*intrtab[2].ih_func)(intrtab[2].ih_arg);
 		intrcnt[LANCE_INTR]++;
 	}
 #endif /* NLE_PMAX */
 
 #if NDC > 0
 	if (mask & MIPS_INT_MASK_2) {
-		(*tc_slot_info[1].intr)(tc_slot_info[1].sc);
+		(*intrtab[1].ih_func)(intrtab[1].ih_arg);
 		intrcnt[SERIAL0_INTR]++;
 	}
 #endif /* NDC */
@@ -243,7 +219,7 @@ dec_3100_intr(mask, pc, status, cause)
 	return (MIPS_SR_INT_IE | (status & ~cause & MIPS_HARD_INT_MASK));
 }
 
-void
+static void
 dec_3100_intr_establish(dev, cookie, level, handler, arg)
 	struct device *dev;
 	void *cookie;
@@ -251,11 +227,14 @@ dec_3100_intr_establish(dev, cookie, level, handler, arg)
 	int (*handler) __P((void *));
 	void *arg;
 {
-	dec_3100_enable_intr((u_int)cookie, handler, arg, 1);
+	int slotno = (int)cookie;
+
+	intrtab[slotno].ih_func = handler;
+	intrtab[slotno].ih_arg = arg;
 }
 
 
-void
+static void
 dec_3100_intr_disestablish(dev, arg)
 	struct device *dev;
 	void *arg;
