@@ -1,4 +1,5 @@
-#	@(#)Makefile	8.1 (Berkeley) 6/7/93
+#	from: @(#)Makefile	8.1 (Berkeley) 6/7/93
+#	$Id: Makefile,v 1.5 1993/07/30 21:40:42 mycroft Exp $
 
 M4=	m4
 #M4=	/usr/src/usr.bin/m4/obj/m4

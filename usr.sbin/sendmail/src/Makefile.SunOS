@@ -1,4 +1,5 @@
-#	@(#)Makefile	5.22 (Berkeley) 7/26/91
+#	from: @(#)Makefile	5.22 (Berkeley) 7/26/91
+#	$Id: Makefile.SunOS,v 1.2 1993/07/30 21:40:19 mycroft Exp $
 
 PROG=	sendmail
 
