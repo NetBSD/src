@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.13 2000/05/26 22:59:51 eeh Exp $	*/
+/*	$NetBSD: boot.c,v 1.14 2000/06/08 22:58:42 eeh Exp $	*/
 #define DEBUG
 /*
  * Copyright (c) 1997, 1999 Eduardo E. Horvath.  All rights reserved.
@@ -133,6 +133,7 @@ parseargs(str, howtop)
 	/* Insert the kernel name if it is not there. */
 	if (str[0] == 0 || str[0] == '-') {
 		/* Move args down the string */
+		i=0;
 		for (cp = str + strlen(kernelname); str[i]; i++)
 			cp[i] = str[i];
 		/* Copy over kernelname */
@@ -285,10 +286,6 @@ loadfile(fd, args)
 	printf(" start=0x%lx\n", (unsigned long)entry);
 
 	close(fd);
-
-	/* If we want to run the debugger, pause at the PROM here */
-	if (boothowto & RB_KDB)
-		OF_enter();
 
 	/* XXX this should be replaced w/ a mountroothook. */
 	if (floppyboot) {
