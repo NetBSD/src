@@ -1,4 +1,4 @@
-/*	$NetBSD: plcom.c,v 1.7.2.3 2004/09/21 13:14:47 skrll Exp $	*/
+/*	$NetBSD: plcom.c,v 1.7.2.4 2005/01/17 08:25:44 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 ARM Ltd
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.7.2.3 2004/09/21 13:14:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.7.2.4 2005/01/17 08:25:44 skrll Exp $");
 
 #include "opt_plcom.h"
 #include "opt_ddb.h"
@@ -624,7 +624,7 @@ plcom_shutdown(struct plcom_softc *sc)
 }
 
 int
-plcomopen(dev_t dev, int flag, int mode, struct proc *p)
+plcomopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct plcom_softc *sc;
 	struct tty *tp;
@@ -651,7 +651,7 @@ plcomopen(dev_t dev, int flag, int mode, struct proc *p)
 
 	if (ISSET(tp->t_state, TS_ISOPEN) &&
 	    ISSET(tp->t_state, TS_XCLUDE) &&
-		p->p_ucred->cr_uid != 0)
+		l->l_proc->p_ucred->cr_uid != 0)
 		return EBUSY;
 
 	s = spltty();
@@ -775,7 +775,7 @@ bad:
 }
  
 int
-plcomclose(dev_t dev, int flag, int mode, struct proc *p)
+plcomclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct plcom_softc *sc = device_lookup(&plcom_cd, PLCOMUNIT(dev));
 	struct tty *tp = sc->sc_tty;
@@ -827,7 +827,7 @@ plcomwrite(dev_t dev, struct uio *uio, int flag)
 }
 
 int
-plcompoll(dev_t dev, int events, struct proc *p)
+plcompoll(dev_t dev, int events, struct lwp *l)
 {
 	struct plcom_softc *sc = device_lookup(&plcom_cd, PLCOMUNIT(dev));
 	struct tty *tp = sc->sc_tty;
@@ -835,7 +835,7 @@ plcompoll(dev_t dev, int events, struct proc *p)
 	if (PLCOM_ISALIVE(sc) == 0)
 		return EIO;
  
-	return (*tp->t_linesw->l_poll)(tp, events, p);
+	return (*tp->t_linesw->l_poll)(tp, events, l);
 }
 
 struct tty *
@@ -848,7 +848,7 @@ plcomtty(dev_t dev)
 }
 
 int
-plcomioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+plcomioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct plcom_softc *sc = device_lookup(&plcom_cd, PLCOMUNIT(dev));
 	struct tty *tp = sc->sc_tty;
@@ -858,11 +858,11 @@ plcomioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	if (PLCOM_ISALIVE(sc) == 0)
 		return EIO;
 
-	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
+	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
 		return error;
 
-	error = ttioctl(tp, cmd, data, flag, p);
+	error = ttioctl(tp, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
 		return error;
 
@@ -893,7 +893,7 @@ plcomioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		break;
 
 	case TIOCSFLAGS:
-		error = suser(p->p_ucred, &p->p_acflag); 
+		error = suser(l->l_proc->p_ucred, &l->l_proc->p_acflag); 
 		if (error)
 			break;
 		sc->sc_swflags = *(int *)data;

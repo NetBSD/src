@@ -1,4 +1,4 @@
-/*	$NetBSD: view.c,v 1.21.6.3 2004/09/21 13:14:00 skrll Exp $	*/
+/*	$NetBSD: view.c,v 1.21.6.4 2005/01/17 08:25:44 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -38,7 +38,7 @@
  * a interface to graphics. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: view.c,v 1.21.6.3 2004/09/21 13:14:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: view.c,v 1.21.6.4 2005/01/17 08:25:44 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -301,11 +301,11 @@ colormap_t		*ucm;
 
 /*ARGSUSED*/
 int
-viewopen(dev, flags, mode, p)
+viewopen(dev, flags, mode, l)
 dev_t		dev;
 int		flags;
 int		mode;
-struct proc	*p;
+struct lwp	*l;
 {
 	dimen_t			size;
 	struct view_softc	*vu;
@@ -337,11 +337,11 @@ struct proc	*p;
 
 /*ARGSUSED*/
 int
-viewclose (dev, flags, mode, p)
+viewclose (dev, flags, mode, l)
 	dev_t		dev;
 	int 		flags;
 	int		mode;
-	struct proc	*p;
+	struct lwp	*l;
 {
 	struct view_softc *vu;
 
@@ -359,12 +359,12 @@ viewclose (dev, flags, mode, p)
 
 /*ARGSUSED*/
 int
-viewioctl (dev, cmd, data, flag, p)
+viewioctl (dev, cmd, data, flag, l)
 dev_t		dev;
 u_long		cmd;
 caddr_t		data;
 int		flag;
-struct proc	*p;
+struct lwp	*l;
 {
 	struct view_softc	*vu;
 	bmap_t			*bm;
@@ -389,7 +389,7 @@ struct proc	*p;
 	case VIOCGBMAP:
 		bm = (bmap_t *)data;
 		bcopy(vu->view->bitmap, bm, sizeof(bmap_t));
-		if (p != NOPROC) {
+		if (l != NOLWP) {
 			bm->plane      = NULL;
 			bm->hw_address = NULL;
 			bm->regs       = NULL;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0_com.c,v 1.18.2.3 2004/09/21 13:13:32 skrll Exp $ */
+/*	$NetBSD: ixp12x0_com.c,v 1.18.2.4 2005/01/17 08:25:43 skrll Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp12x0_com.c,v 1.18.2.3 2004/09/21 13:13:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp12x0_com.c,v 1.18.2.4 2005/01/17 08:25:43 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -481,10 +481,10 @@ ixpcom_shutdown(struct ixpcom_softc *sc)
 }
 
 int
-ixpcomopen(dev, flag, mode, p)
+ixpcomopen(dev, flag, mode, l)
 	dev_t dev;
 	int flag, mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct ixpcom_softc *sc;
 	struct tty *tp;
@@ -511,7 +511,7 @@ ixpcomopen(dev, flag, mode, p)
 
 	if (ISSET(tp->t_state, TS_ISOPEN) &&
 	    ISSET(tp->t_state, TS_XCLUDE) &&
-		p->p_ucred->cr_uid != 0)
+		l->l_proc->p_ucred->cr_uid != 0)
 		return (EBUSY);
 
 	s = spltty();
@@ -629,10 +629,10 @@ bad:
 }
 
 int
-ixpcomclose(dev, flag, mode, p)
+ixpcomclose(dev, flag, mode, l)
 	dev_t dev;
 	int flag, mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct ixpcom_softc *sc = device_lookup(&ixpcom_cd, COMUNIT(dev));
 	struct tty *tp = sc->sc_tty;
@@ -690,10 +690,10 @@ ixpcomwrite(dev, uio, flag)
 }
 
 int
-ixpcompoll(dev, events, p)
+ixpcompoll(dev, events, l)
 	dev_t dev;
 	int events;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct ixpcom_softc *sc = device_lookup(&ixpcom_cd, COMUNIT(dev));
 	struct tty *tp = sc->sc_tty;
@@ -701,7 +701,7 @@ ixpcompoll(dev, events, p)
 	if (COM_ISALIVE(sc) == 0)
 		return (EIO);
  
-	return ((*tp->t_linesw->l_poll)(tp, events, p));
+	return ((*tp->t_linesw->l_poll)(tp, events, l));
 }
 
 struct tty *
@@ -715,7 +715,7 @@ ixpcomtty(dev)
 }
 
 int
-ixpcomioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+ixpcomioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct ixpcom_softc *sc = device_lookup(&ixpcom_cd, COMUNIT(dev));
 	struct tty *tp = sc->sc_tty;
@@ -725,11 +725,11 @@ ixpcomioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	if (COM_ISALIVE(sc) == 0)
 		return (EIO);
 
-	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
+	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
 		return (error);
 
-	error = ttioctl(tp, cmd, data, flag, p);
+	error = ttioctl(tp, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
 		return (error);
 
@@ -752,7 +752,7 @@ ixpcomioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		break;
 
 	case TIOCSFLAGS:
-		error = suser(p->p_ucred, &p->p_acflag); 
+		error = suser(l->l_proc->p_ucred, &l->l_proc->p_acflag); 
 		if (error)
 			break;
 		sc->sc_swflags = *(int *)data;

@@ -1,4 +1,4 @@
-/*	$NetBSD: x1226.c,v 1.4.4.4 2004/09/21 13:27:46 skrll Exp $	*/
+/*	$NetBSD: x1226.c,v 1.4.4.5 2005/01/17 08:25:44 skrll Exp $	*/
 
 /*
  * Copyright (c) 2003 Shigeyuki Fukushima.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x1226.c,v 1.4.4.4 2004/09/21 13:27:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x1226.c,v 1.4.4.5 2005/01/17 08:25:44 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,7 +128,7 @@ xrtc_attach(struct device *parent, struct device *self, void *arg)
 
 /*ARGSUSED*/
 int
-xrtc_open(dev_t dev, int flag, int fmt, struct proc *p)
+xrtc_open(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	struct xrtc_softc *sc;
 
@@ -146,7 +146,7 @@ xrtc_open(dev_t dev, int flag, int fmt, struct proc *p)
 
 /*ARGSUSED*/
 int
-xrtc_close(dev_t dev, int flag, int fmt, struct proc *p)
+xrtc_close(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	struct xrtc_softc *sc;
 

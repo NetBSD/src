@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_cc.c,v 1.21.2.3 2004/09/21 13:13:59 skrll Exp $	*/
+/*	$NetBSD: ite_cc.c,v 1.21.2.4 2005/01/17 08:25:44 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite_cc.c,v 1.21.2.3 2004/09/21 13:13:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite_cc.c,v 1.21.2.4 2005/01/17 08:25:44 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -93,7 +93,7 @@ extern font_info	font_info_8x16;
 static void view_init __P((struct ite_softc *));
 static void view_deinit __P((struct ite_softc *));
 static int  itecc_ioctl __P((struct ite_softc *, u_long, caddr_t, int,
-							struct proc *));
+							struct lwp *));
 static int  ite_newsize __P((struct ite_softc *, struct itewinsize *));
 static void cursor32 __P((struct ite_softc *, int));
 static void putc8 __P((struct ite_softc *, int, int, int, int));
@@ -389,7 +389,7 @@ struct itewinsize	*winsz;
 	vs.depth  = winsz->depth;
 
 	error = (*view_cdevsw.d_ioctl)(ip->grf->g_viewdev, VIOCSSIZE,
-				       (caddr_t)&vs, 0, NOPROC);
+				       (caddr_t)&vs, 0, NOLWP);
 	view  = viewview(ip->grf->g_viewdev);
 
 	/*
@@ -457,12 +457,12 @@ struct itewinsize	*winsz;
 }
 
 int
-itecc_ioctl(ip, cmd, addr, flag, p)
+itecc_ioctl(ip, cmd, addr, flag, l)
 struct ite_softc	*ip;
 u_long			cmd;
 caddr_t			addr;
 int			flag;
-struct proc		*p;
+struct lwp		*l;
 {
 	struct winsize		ws;
 	struct itewinsize	*is;
@@ -489,18 +489,18 @@ struct proc		*p;
 			 * XXX this is messy, but works 
 			 */
 			(*ite_cdevsw.d_ioctl)(ip->grf->g_itedev, TIOCSWINSZ,
-					      (caddr_t)&ws, 0, p);
+					      (caddr_t)&ws, 0, l);
 		}
 		break;
 	case VIOCSCMAP:
 	case VIOCGCMAP:
 		/*
-		 * XXX watchout for that NOPROC. its not really the kernel
+		 * XXX watchout for that NOLWP. its not really the kernel
 		 * XXX talking these two commands don't use the proc pointer
 		 * XXX though.
 		 */
 		error = (*view_cdevsw.d_ioctl)(ip->grf->g_viewdev, cmd, addr,
-					       flag, NOPROC);
+					       flag, NOLWP);
 		break;
 	default:
 		error = EPASSTHROUGH;

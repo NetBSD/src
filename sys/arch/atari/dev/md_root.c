@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: md_root.c,v 1.18.6.3 2004/09/21 13:13:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: md_root.c,v 1.18.6.4 2005/01/17 08:25:44 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,7 +100,7 @@ struct read_info {
 };
 
 
-static int  loaddisk __P((struct  md_conf *, dev_t ld_dev, struct proc *));
+static int  loaddisk __P((struct  md_conf *, dev_t ld_dev, struct lwp *));
 static int  ramd_norm_read __P((struct read_info *));
 
 #ifdef support_compression
@@ -142,7 +142,7 @@ struct md_conf	*md;
 	if(md->md_addr == NULL)
 		return;
 	if(ri->ramd_flag & RAMD_LOAD) {
-		if (loaddisk(md, ri->ramd_dev, curproc)) {
+		if (loaddisk(md, ri->ramd_dev, curlwp)) {
 			free(md->md_addr, M_DEVBUF);
 			md->md_addr = NULL;
 			return;
@@ -152,10 +152,10 @@ struct md_conf	*md;
 }
 
 static int
-loaddisk(md, ld_dev, proc)
+loaddisk(md, ld_dev, lwp)
 struct md_conf		*md;
 dev_t			ld_dev;
-struct proc		*proc;
+struct lwp		*lwp;
 {
 	struct buf		buf;
 	int			error;
@@ -175,7 +175,7 @@ struct proc		*proc;
 	buf.b_flags = B_BUSY;
 	buf.b_dev   = ld_dev;
 	buf.b_error = 0;
-	buf.b_proc  = proc;
+	buf.b_proc  = lwp->l_proc;
 
 	/*
 	 * Setup read_info:
@@ -192,9 +192,9 @@ struct proc		*proc;
 	/*
 	 * Open device and try to get some statistics.
 	 */
-	if((error = bdp->d_open(ld_dev, FREAD | FNONBLOCK, 0, proc)) != 0)
+	if((error = bdp->d_open(ld_dev, FREAD | FNONBLOCK, 0, lwp)) != 0)
 		return(error);
-	if(bdp->d_ioctl(ld_dev, DIOCGDINFO, (caddr_t)&dl, FREAD, proc) == 0) {
+	if(bdp->d_ioctl(ld_dev, DIOCGDINFO, (caddr_t)&dl, FREAD, lwp) == 0) {
 		/* Read on a cylinder basis */
 		rs.chunk    = dl.d_secsize * dl.d_secpercyl;
 		rs.media_sz = dl.d_secperunit * dl.d_secsize;
@@ -207,7 +207,7 @@ struct proc		*proc;
 #endif /* support_compression */
 		error = ramd_norm_read(&rs);
 
-	bdp->d_close(ld_dev,FREAD | FNONBLOCK, 0, proc);
+	bdp->d_close(ld_dev,FREAD | FNONBLOCK, 0, lwp);
 	return(error);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: fb_elb.c,v 1.2.2.3 2004/09/21 13:15:07 skrll Exp $	*/
+/*	$NetBSD: fb_elb.c,v 1.2.2.4 2005/01/17 08:25:44 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fb_elb.c,v 1.2.2.3 2004/09/21 13:15:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fb_elb.c,v 1.2.2.4 2005/01/17 08:25:44 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -74,7 +74,7 @@ static int	fb_elb_probe(struct device *, struct cfdata *, void *);
 static void	fb_elb_attach(struct device *, struct device *, void *);
 void		fb_cnattach(bus_space_tag_t, bus_addr_t, void *);
 static void	fb_init(struct fb_dev *, int);
-static int	fb_ioctl(void *, u_long, caddr_t, int, struct proc *);
+static int	fb_ioctl(void *, u_long, caddr_t, int, struct lwp *);
 static paddr_t	fb_mmap(void *, off_t, int);
 static int	fb_alloc_screen(void *, const struct wsscreen_descr *, void **,
                     int *, int *, long *);
@@ -204,7 +204,7 @@ fb_init(struct fb_dev *fb, int full)
 }
 
 static int
-fb_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
+fb_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct fb_elb_softc *sc = v;
 	struct rasops_info *ri = &sc->sc_fb->fb_ri;

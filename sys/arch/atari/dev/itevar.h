@@ -1,4 +1,4 @@
-/*	$NetBSD: itevar.h,v 1.9 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: itevar.h,v 1.9.6.1 2005/01/17 08:25:44 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman (Atari modifications)
@@ -94,7 +94,7 @@ struct ite_softc {
 	int			cury;
 	int			save_cury;
 	int			(*itexx_ioctl) __P((struct ite_softc *, u_long,
-						caddr_t, int, struct proc *));
+						caddr_t, int, struct lwp *));
 };
 
 enum ite_flags {

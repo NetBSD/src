@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.22.6.3 2004/09/21 13:13:59 skrll Exp $ */
+/*	$NetBSD: lpt.c,v 1.22.6.4 2005/01/17 08:25:44 skrll Exp $ */
 
 /*
  * Copyright (c) 1996 Leo Weppelman
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.22.6.3 2004/09/21 13:13:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.22.6.4 2005/01/17 08:25:44 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -179,10 +179,10 @@ void	*auxp;
  * Reset the printer, then wait until it's selected and not busy.
  */
 int
-lpopen(dev, flag, mode, p)
+lpopen(dev, flag, mode, l)
 	dev_t		dev;
 	int		flag, mode;
-	struct proc	*p;
+	struct lwp	*l;
 {
 	int			unit = LPTUNIT(dev);
 	u_char			flags = LPTFLAGS(dev);
@@ -257,11 +257,11 @@ lptwakeup(arg)
  * Close the device, and free the local line buffer.
  */
 int
-lpclose(dev, flag, mode, p)
+lpclose(dev, flag, mode, l)
 	dev_t		dev;
 	int		flag;
 	int		mode;
-	struct proc	*p;
+	struct lwp	*l;
 {
 	int		 unit = LPTUNIT(dev);
 	struct lpt_softc *sc = lp_cd.cd_devs[unit];
@@ -426,12 +426,12 @@ int		  sr;
 }
 
 int
-lpioctl(dev, cmd, data, flag, p)
+lpioctl(dev, cmd, data, flag, l)
 	dev_t		dev;
 	u_long		cmd;
 	caddr_t		data;
 	int		flag;
-	struct proc	*p;
+	struct lwp	*l;
 {
 	int error = 0;
 

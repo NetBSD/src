@@ -1,4 +1,4 @@
-/*	$NetBSD: pvr.c,v 1.17.6.3 2004/09/21 13:14:39 skrll Exp $	*/
+/*	$NetBSD: pvr.c,v 1.17.6.4 2005/01/17 08:25:44 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt.
@@ -65,7 +65,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pvr.c,v 1.17.6.3 2004/09/21 13:14:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pvr.c,v 1.17.6.4 2005/01/17 08:25:44 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -212,7 +212,7 @@ const struct wsscreen_list pvr_screenlist = {
 	sizeof(_pvr_scrlist) / sizeof(struct wsscreen_descr *), _pvr_scrlist
 };
 
-int	pvrioctl(void *, u_long, caddr_t, int, struct proc *);
+int	pvrioctl(void *, u_long, caddr_t, int, struct lwp *);
 paddr_t	pvrmmap(void *, off_t, int);
 
 int	pvr_alloc_screen(void *, const struct wsscreen_descr *,
@@ -340,7 +340,7 @@ pvr_attach(struct device *parent, struct device *self, void *aux)
 }
 
 int
-pvrioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
+pvrioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct pvr_softc *sc = v;
 	struct fb_devconfig *dc = sc->sc_dc;
