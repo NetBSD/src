@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanerd.c,v 1.24 2000/11/11 22:40:13 perseant Exp $	*/
+/*	$NetBSD: cleanerd.c,v 1.25 2000/11/13 22:12:50 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)cleanerd.c	8.5 (Berkeley) 6/10/95";
 #else
-__RCSID("$NetBSD: cleanerd.c,v 1.24 2000/11/11 22:40:13 perseant Exp $");
+__RCSID("$NetBSD: cleanerd.c,v 1.25 2000/11/13 22:12:50 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,6 +60,7 @@ __RCSID("$NetBSD: cleanerd.c,v 1.24 2000/11/11 22:40:13 perseant Exp $");
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+#include <util.h>
 
 #include <syslog.h>
 
@@ -122,6 +123,7 @@ int	 clean_segments __P((FS_INFO *, SEGS_AND_BLOCKS *));
 unsigned long	 cost_benefit __P((FS_INFO *, SEGUSE *));
 int	 cost_compare __P((const void *, const void *));
 void	 sig_report __P((int));
+void	 just_exit __P((int));
 int	 main __P((int, char *[]));
 
 /*
@@ -191,6 +193,8 @@ main(argc, argv)
 	char *fs_name;			/* name of filesystem to clean */
 	time_t now, lasttime;
 	int loopcount;
+	char *pidname;                  /* Name of pid file base */
+	char *cp;
 
 	cmd_err = debug = do_quit = 0;
 	clean_opts = 0;
@@ -259,7 +263,22 @@ main(argc, argv)
 				fs_name);
 			exit(1);
 		}
-		if(childpid != 0) {
+		if(childpid == 0) {
+			/* Record child's pid */
+			pidname = malloc(strlen(fs_name) + 16);
+			sprintf(pidname, "lfs_cleanerd:s:%s", fs_name);
+			while((cp = strchr(pidname, '/')) != NULL)
+				*cp = '|';
+			pidfile(pidname);
+		} else {
+			/* Record parent's pid */
+			pidname = malloc(strlen(fs_name) + 16);
+			sprintf(pidname, "lfs_cleanerd:m:%s", fs_name);
+			while((cp = strchr(pidname, '/')) != NULL)
+				*cp = '|';
+			pidfile(pidname);
+			signal(SIGINT, just_exit);
+
 			wait(NULL);
 			/* If the child is looping, give up */
 			++loopcount;
@@ -931,4 +950,11 @@ sig_report(sig)
 	}
 	if (sig == SIGINT)
 		exit(0);
+}
+
+void
+just_exit(sig)
+	int sig;
+{
+	exit(0);
 }
