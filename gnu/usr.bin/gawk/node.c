@@ -3,7 +3,7 @@
  */
 
 /* 
- * Copyright (C) 1986, 1988, 1989, 1991, 1992, 1993 the Free Software Foundation, Inc.
+ * Copyright (C) 1986, 1988, 1989, 1991-1995 the Free Software Foundation, Inc.
  * 
  * This file is part of GAWK, the GNU implementation of the
  * AWK Progamming Language.
@@ -127,7 +127,7 @@ register NODE *s;
 #ifdef DEBUG
 	if (s == NULL) cant_happen();
 	if (s->type != Node_val) cant_happen();
-	if (s->flags & STR) return s;
+	if ((s->flags & STR) && (s->stfmt == -1 || s->stfmt == CONVFMTidx)) return s;
 	if (!(s->flags & NUM)) cant_happen();
 	if (s->stref != 0) ; /*cant_happen();*/
 #endif
@@ -441,6 +441,10 @@ char **string_ptr;
 		}
 		if (do_posix)
 			return ('x');
+		if (! isxdigit((*string_ptr)[1])) {
+			warning("no hex digits in \\x escape sequence");
+			return ('x');
+		}
 		i = 0;
 		while (1) {
 			if (isxdigit((c = *(*string_ptr)++))) {

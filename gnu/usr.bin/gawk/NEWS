@@ -1,3 +1,111 @@
+Changes from 2.15.5 to 2.15.6
+-----------------------------
+
+Copyrights updated on all changed files.
+
+test directory enhanced with four new tests.
+
+Gawk now generates a warning for \x without following hexadecimal digits.
+In this case, it returns 'x', not \0.
+
+Several fixes in main.c related to variable initialization:
+	CONVFMT has a default value
+	resetup is called before initializing variables
+	the varinit table fixed up a bit (see the comments)
+
+gawk.1 updated with new BUG REPORTS section.
+
+A plain `print' inside a BEGIN or END now generates a lint warning (awk.y).
+
+Small fix in iop.c:get_a_record to avoid reading uninitialized memory.
+
+awk.y:yylex now does a better job of handling things if the source file
+does not end in a newline. Probably there is more work to be done.
+
+Memory leaks fixed in awk.y, particularly in cases of duplicate function
+parameters. Also, calling a function doesn't leak memory during parsing.
+
+Empty function bodies are now allowed (awk.y).
+
+Gawk now detects duplicate parameter names in functions (awk.y).
+
+New function `error' in msg.c added for use from awk.y.
+
+eval.c:r_get_lhs now checks if its argument is a parameter on the stack,
+and pulls down the real variable. This catches more 'using an array as
+a scalar' kinds of errors.
+
+main.c recovers C alloca space after parsing, this is important for
+bison-based parsers. re.c recovers C alloca space after doing an research.
+[Changes from Pat Rankin]
+
+builtin.c now declares the random() related functions based on
+RANDOM_MISSING from config.h. [Suggested by Pat Rankin]
+
+awk.h now handles alloca correctly for HP-UX. [Kaveh Ghazi]
+
+regex.h and config/cray60 updated for Unicos 8.0. [Hal Peterson]
+
+Fixed re.c and dfa.c so that gawk no longer leaks memory when using
+lots of dynamic regexps.
+
+Removed dependency on signed chars from `idx' variable in awk.h. Gawk
+now passes its test suite if compiled with `gcc -fno-signed-char'.
+
+Fixed warning on close in io.c to go under lint control. Too many people
+have complained about the spurious message, particularly when closing a
+child pipeline early.
+
+Gawk now correctly handles RS = "" when input is from a terminal
+(iop.c:get_a_record).
+
+Config file added for GNU.
+
+gawk 'BEGIN { exit 1 } ; END { exit }' now exits 1, as it should
+(eval.c:interpret).
+
+sub and gsub now follow posix, \ escapes both & and \. Each \ must
+be doubled initially in the program to get it into the string.
+Thanks to Mike Brennan for pointing this out (builtin.c:sub_common).
+
+If FS is "", gawk behaves like mawk and nawk, making the whole record be $1.
+Yet Another Dark Corner. Sigh (field.c:def_parse_field).
+
+Gawk now correctly recomputes string values for numbers if CONVFMT has
+changed (awk.h:force_string, node.c:r_force_string).
+
+A regexp of the form `/* this looks like a comment but is not */' will
+now generate a warning from --lint (awk.y).
+
+Gawk will no longer core dump if given an empty input file (awk.y:get_src_buf,
+iop.c:optimal_bufsize).
+
+A printf format of the form %lf is handled correctly. The `l' generates
+a lint warning (builtin.c:format_tree) [Thanks to Mark Moraes].
+
+Lynxos config file added.
+
+`continue' outside a loop treated as `next' only in compatibility mode,
+instead of by default; recent att nawk chokes on this now.  `break'
+outside a loop now treated as `next' in compatibility mode (eval.c).
+
+Bug fix in string concatenation, an arbitrary number of expressions
+are allowed (eval.c).
+
+$1 += $2 now works correctly (eval.c).
+
+Changing IGNORECASE no longer resets field-splitting to FS if it was
+using FIELDWIDTHS (eval.c, field.c).
+
+Major enhancement: $0 and NF for last record read are now preserved
+into the END rule (io.c).
+
+Regexp fixes:
+	/./ now matches a newline (regex.h)
+	^ and $ match beginning and end of string only, not any embedded
+		newlines (re.c)
+	regex.c should compile and work ok on 64-bit mips/sgi machines
+
 Changes from 2.15.4 to 2.15.5
 -----------------------------
 

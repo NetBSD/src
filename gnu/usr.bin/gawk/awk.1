@@ -1,8 +1,7 @@
-.\"	$Id: awk.1,v 1.4 1994/02/17 01:21:59 jtc Exp $	-*- nroff -*-
 .ds PX \s-1POSIX\s+1
 .ds UX \s-1UNIX\s+1
 .ds AN \s-1ANSI\s+1
-.TH GAWK 1 "Dec 24 1993" "Free Software Foundation" "Utility Commands"
+.TH GAWK 1 "Nov 24 1994" "Free Software Foundation" "Utility Commands"
 .SH NAME
 gawk \- pattern scanning and processing language
 .SH SYNOPSIS
@@ -1869,9 +1868,11 @@ will issue a warning about its use if
 .B "\-W lint"
 is specified on the command line.
 .PP
-The other feature is the use of the
+The other feature is the use of either the
 .B continue
-statement outside the body of a
+or the
+.B break
+statements outside the body of a
 .BR while ,
 .BR for ,
 or
@@ -1882,8 +1883,21 @@ equivalent to the
 statement.
 .I Gawk
 will support this usage if
-.B "\-W posix"
-has not been specified.
+.B "\-W compat"
+has been specified.
+.SH ENVIRONMENT VARIABLES
+If
+.B POSIXLY_CORRECT
+exists in the environment, then
+.I gawk
+behaves exactly as if
+.B \-\-posix
+had been specified on the command line.
+If
+.B \-\-lint
+has been specified,
+.I gawk
+will issue a warning message to this effect.
 .SH BUGS
 The
 .B \-F
@@ -1925,7 +1939,8 @@ the
 and
 .B \-e
 options of the 2.11 version are no longer recognized.
-This fact will not even be documented in the manual page for version 2.16.
+This fact will not even be documented in the manual page for the next
+major version.
 .SH AUTHORS
 The original version of \*(UX
 .I awk
@@ -1945,12 +1960,34 @@ from Arnold Robbins, made
 .I gawk
 compatible with the new version of \*(UX
 .IR awk .
+Arnold Robbins is the current maintainer.
 .PP
 The initial DOS port was done by Conrad Kwok and Scott Garfinkle.
 Scott Deifik is the current DOS maintainer.  Pat Rankin did the
 port to VMS, and Michal Jaegermann did the port to the Atari ST.
 The port to OS/2 was done by Kai Uwe Rommel, with contributions and
 help from Darrel Hankerson.
+.SH BUG REPORTS
+If you find a bug in
+.IR gawk ,
+please send electronic mail to
+.BR bug-gnu-utils@prep.ai.mit.edu ,
+.I with
+a carbon copy to
+.BR arnold@gnu.ai.mit.edu .
+Please include your operating system and its revision, the version of
+.IR gawk ,
+what C compiler you used to compile it, and a test program
+and data that are as small as possible for reproducing the problem.
+.PP
+Before sending a bug report, please do two things. First, verify that
+you have the latest version of
+.IR gawk .
+Many bugs (usually subtle ones) are fixed at each release, and if
+your's is out of date, the problem may already have been solved.
+Second, please read this man page and the reference manual carefully to
+be sure that what you think is a bug really is, instead of just a quirk
+in the language.
 .SH ACKNOWLEDGEMENTS
 Brian Kernighan of Bell Labs
 provided valuable assistance during testing and debugging.

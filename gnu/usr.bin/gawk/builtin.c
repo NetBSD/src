@@ -3,7 +3,7 @@
  */
 
 /* 
- * Copyright (C) 1986, 1988, 1989, 1991, 1992, 1993 the Free Software Foundation, Inc.
+ * Copyright (C) 1986, 1988, 1989, 1991-1995 the Free Software Foundation, Inc.
  * 
  * This file is part of GAWK, the GNU implementation of the
  * AWK Progamming Language.
@@ -29,7 +29,7 @@
 #ifndef SRANDOM_PROTO
 extern void srandom P((unsigned int seed));
 #endif
-#ifndef linux
+#if defined(RANDOM_MISSING)
 extern char *initstate P((unsigned seed, char *state, int n));
 extern char *setstate P((char *state));
 extern long random P((void));
@@ -441,8 +441,18 @@ check_pos:
 		case 'l':
 			if (big)
 				break;
+			else {
+				static int warned = 0;
+				
+				if (do_lint && ! warned) {
+					warning("`l' is meaningless in awk formats; ignored");
+					warned++;
+				}
+				if (do_posix)
+					fatal("'l' is not permitted in POSIX awk formats");
+			}
 			big++;
-			goto check_pos;
+			goto retry;
 		case 'c':
 			parse_next_arg();
 			if (arg->flags & NUMBER) {
@@ -1076,7 +1086,8 @@ int global;
 		if (*scan == '&') {
 			repllen--;
 			ampersands++;
-		} else if (*scan == '\\' && *(scan+1) == '&') {
+		} else if (*scan == '\\'
+			   && (*(scan+1) == '&' || *(scan+1) == '\\')) {
 			repllen--;
 			scan++;
 		}
@@ -1095,7 +1106,7 @@ int global;
 		len = matchstart - text + repllen
 		      + ampersands * (matchend - matchstart);
 		sofar = bp - buf;
-		while ((long)(buflen - sofar - len - 1) < 0) {
+		while (buflen < (sofar + len + 1)) {
 			buflen *= 2;
 			erealloc(buf, char *, buflen, "do_sub");
 			bp = buf + sofar;
@@ -1106,7 +1117,8 @@ int global;
 			if (*scan == '&')
 				for (cp = matchstart; cp < matchend; cp++)
 					*bp++ = *cp;
-			else if (*scan == '\\' && *(scan+1) == '&') {
+			else if (*scan == '\\'
+				  && (*(scan+1) == '&' || *(scan+1) == '\\')) {
 				scan++;
 				*bp++ = *scan;
 			} else

@@ -3,7 +3,7 @@
    (Implements POSIX draft P10003.2/D11.2, except for
    internationalization features.)
 
-   Copyright (C) 1993 Free Software Foundation, Inc.
+   Copyright (C) 1993-1995 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -815,6 +815,13 @@ print_double_string (where, string1, size1, string2, size2)
       for (this_char = where - string2; this_char < size2; this_char++)
         printchar (string2[this_char]);
     }
+}
+
+void
+printchar (c)
+    int c;
+{
+    putc(c, stderr);
 }
 
 #else /* not DEBUG */
@@ -3162,7 +3169,8 @@ static int bcmp_translate _RE_ARGS((const char *s1, const char *s2,
   (FIRST_STRING_P (ptr) ? (ptr) - string1 : (ptr) - string2 + size1)
 
 /* Registers are set to a sentinel when they haven't yet matched.  */
-#define REG_UNSET_VALUE ((char *) -1)
+static char reg_unset_dummy;
+#define REG_UNSET_VALUE (&reg_unset_dummy)
 #define REG_UNSET(e) ((e) == REG_UNSET_VALUE)
 
 

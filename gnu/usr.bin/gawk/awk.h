@@ -3,7 +3,7 @@
  */
 
 /* 
- * Copyright (C) 1986, 1988, 1989, 1991, 1992, 1993 the Free Software Foundation, Inc.
+ * Copyright (C) 1986, 1988, 1989, 1991-1995 the Free Software Foundation, Inc.
  * 
  * This file is part of GAWK, the GNU implementation of the
  * AWK Progamming Language.
@@ -116,7 +116,11 @@ extern char *alloca();
 #if defined(_MSC_VER)
 #include <malloc.h>
 #else
+#ifdef __hpux
+void *alloca ();
+#else
 extern char *alloca();
+#endif /* __hpux */
 #endif /* _MSC_VER */
 #endif
 #endif /* sparc */
@@ -365,7 +369,7 @@ typedef struct exp_node {
 			char *sp;
 			size_t slen;
 			unsigned char sref;
-			char idx;
+			int idx;
 		} val;
 		struct {
 			struct exp_node *next;
@@ -632,7 +636,7 @@ extern double _msc51bug;
 #else /* not MSDOS */
 #define	force_number(n)	(_t = (n),(_t->flags & NUM) ? _t->numbr : r_force_number(_t))
 #endif /* MSDOS */
-#define	force_string(s)	(_t = (s),(_t->flags & STR) ? _t : r_force_string(_t))
+#define	force_string(s)	(_t = (s),((_t->flags & STR) && (_t->stfmt == -1 || _t->stfmt == CONVFMTidx))? _t : r_force_string(_t))
 #endif /* not DEBUG */
 
 #define	STREQ(a,b)	(*(a) == *(b) && strcmp((a), (b)) == 0)
@@ -700,6 +704,7 @@ extern void set_NF P((void));
 extern NODE **get_field P((int num, Func_ptr *assign));
 extern NODE *do_split P((NODE *tree));
 extern void set_FS P((void));
+extern void set_FS_if_not_FIELDWIDTHS P((void));
 extern void set_RS P((void));
 extern void set_FIELDWIDTHS P((void));
 /* io.c */
@@ -728,10 +733,12 @@ extern SIGTYPE catchsig P((int sig, int code));
 extern void err P((const char *s, const char *emsg, va_list argp));
 #if _MSC_VER == 510
 extern void msg P((va_list va_alist, ...));
+extern void error P((va_list va_alist, ...));
 extern void warning P((va_list va_alist, ...));
 extern void fatal P((va_list va_alist, ...));
 #else
 extern void msg ();
+extern void error ();
 extern void warning ();
 extern void fatal ();
 #endif

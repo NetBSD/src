@@ -3,7 +3,7 @@
  */
 
 /* 
- * Copyright (C) 1986, 1988, 1989, 1991, 1992, 1993 the Free Software Foundation, Inc.
+ * Copyright (C) 1986, 1988, 1989, 1991-1995 the Free Software Foundation, Inc.
  * 
  * This file is part of GAWK, the GNU implementation of the
  * AWK Progamming Language.
@@ -96,9 +96,11 @@ int fd;
 #endif
 	if (fstat(fd, &stb) == -1)
 		fatal("can't stat fd %d (%s)", fd, strerror(errno));
-	if (lseek(fd, (off_t)0, 0) == -1)
+	if (lseek(fd, (off_t)0, 0) == -1)	/* not a regular file */
 		return DEFBLKSIZE;
-	return ((int) (stb.st_size < DEFBLKSIZE ? stb.st_size : DEFBLKSIZE));
+	if (stb.st_size > 0 && stb.st_size < DEFBLKSIZE) /* small file */
+		return (stb.st_size);
+	return (DEFBLKSIZE);
 #endif	/*! TEST */
 #endif	/*! VMS */
 }
@@ -249,6 +251,7 @@ int *errcode;
 					continue;
 				} else
 					eat_whitespace = 0;
+				start = bp;	/* skip leading white space */
 			}
 			if (saw_newline && *bp == rs) {
 				bp++;
@@ -284,7 +287,7 @@ int *errcode;
 	*bp = '\0';
 	if (grRS == 0) {
 		/* there could be more newlines left, clean 'em out now */
-		while (*(iop->off) == rs && iop->off <= iop->end)
+		while (iop->off <= iop->end && *(iop->off) == rs)
 			(iop->off)++;
 
 		if (*--bp == rs)

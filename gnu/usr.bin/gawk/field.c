@@ -3,7 +3,7 @@
  */
 
 /* 
- * Copyright (C) 1986, 1988, 1989, 1991, 1992, 1993 the Free Software Foundation, Inc.
+ * Copyright (C) 1986, 1988, 1989, 1991-1995 the Free Software Foundation, Inc.
  * 
  * This file is part of GAWK, the GNU implementation of the
  * AWK Progamming Language.
@@ -297,6 +297,16 @@ NODE *n;
 		nf = 0;
 	if (len == 0)
 		return nf;
+
+	/*
+	 * Nasty special case. If FS set to "", return whole record
+	 * as first field. This is not worth a separate function.
+	 */
+	if (fs->stlen == 0) {
+		(*set)(++nf, *buf, len, n);
+		*buf += len;
+		return nf;
+	}
 
 	/* before doing anything save the char at *end */
 	sav = *end;
@@ -675,4 +685,11 @@ set_FIELDWIDTHS()
 		scan = end;
 	}
 	FIELDWIDTHS[i] = -1;
+}
+
+void
+set_FS_if_not_FIELDWIDTHS()
+{
+	if (parse_field != fw_parse_field)
+		set_FS();
 }

@@ -3,7 +3,7 @@
  */
 
 /* 
- * Copyright (C) 1986, 1988, 1989, 1991, 1992, 1993 the Free Software Foundation, Inc.
+ * Copyright (C) 1986, 1988, 1989, 1991-1995 the Free Software Foundation, Inc.
  * 
  * This file is part of GAWK, the GNU implementation of the
  * AWK Progamming Language.
@@ -43,6 +43,7 @@ static void pop_var P((NODE *np, int freeit));
 static void pop_params P((NODE *params));
 static NODE *make_param P((char *name));
 static NODE *mk_rexp P((NODE *exp));
+static int dup_parms P((NODE *func));
 
 static int want_assign;		/* lexical scanning kludge */
 static int want_regexp;		/* lexical scanning kludge */
@@ -264,6 +265,9 @@ function_prologue
 		{
 			$$ = append_right(make_param($3), $5);
 			can_return = 1;
+			/* check for duplicate parameter names */
+			if (dup_parms($$))
+				errcount++;
 		}
 	;
 
@@ -271,6 +275,11 @@ function_body
 	: l_brace statements r_brace opt_semi
 	  {
 		$$ = $2;
+		can_return = 0;
+	  }
+	| l_brace r_brace opt_semi opt_nls
+	  {
+		$$ = node((NODE *) NULL, Node_K_return, (NODE *) NULL);
 		can_return = 0;
 	  }
 	;
@@ -373,12 +382,21 @@ statement
 		{ $$ = node ($3, $1, $5); }
 	| print opt_rexpression_list output_redir statement_term
 		{
-			if ($1 == Node_K_print && $2 == NULL)
+			if ($1 == Node_K_print && $2 == NULL) {
+				static int warned = 0;
+
 				$2 = node(node(make_number(0.0),
 					       Node_field_spec,
 					       (NODE *) NULL),
 					  Node_expression_list,
 					  (NODE *) NULL);
+
+				if (do_lint && ! io_allowed && ! warned) {
+					warned = 1;
+					warning(
+	"plain `print' in BEGIN or END rule should probably be `print \"\"'");
+				}
+			}
 
 			$$ = node ($2, $1, $3);
 		}
@@ -394,12 +412,12 @@ statement
 				 * the source line
 				 */
 				errcount++;
-				msg("`next file' is a gawk extension");
+				error("`next file' is a gawk extension");
 			}
 			if (! io_allowed) {
 				/* same thing */
 				errcount++;
-				msg("`next file' used in BEGIN or END action");
+				error("`next file' used in BEGIN or END action");
 			}
 			type = Node_K_nextfile;
 		  } else {
@@ -427,7 +445,7 @@ statement
 			 * the source line
 			 */
 			errcount++;
-			msg("`delete array' is a gawk extension");
+			error("`delete array' is a gawk extension");
 		  }
 		  $$ = node (variable($2,1), Node_K_delete, (NODE *) NULL);
 		}
@@ -596,7 +614,15 @@ exp	: variable ASSIGNOP
 		  $$ = node ($1, $2, mk_rexp($3));
 		}
 	| regexp
-		{ $$ = $1; }
+		{
+		  $$ = $1;
+		  if (do_lint && tokstart[0] == '*') {
+			/* possible C comment */
+			int n = strlen(tokstart) - 1;
+			if (tokstart[n] == '*')
+				warning("regexp looks like a C comment, but is not");
+		  }
+		}
 	| '!' regexp %prec UNARY
 		{
 		  $$ = node(node(make_number(0.0),
@@ -700,6 +726,7 @@ non_post_simp_exp
 	| FUNC_CALL '(' opt_expression_list r_paren
 	  {
 		$$ = node ($3, Node_func_call, make_string($1, strlen($1)));
+		free($1);
 	  }
 	| variable
 	| INCREMENT variable
@@ -1014,9 +1041,10 @@ again:
 	if (n == 0) {
 		samefile = 0;
 		nextfile++;
-		*lexeme = '\0';
+		if (lexeme)
+			*lexeme = '\0';
 		len = 0;
-		return get_src_buf();
+		goto again;
 	}
 	lexptr = buf + SLOP;
 	lexend = lexptr + n;
@@ -1045,12 +1073,16 @@ tokexpand()
 #if DEBUG
 char
 nextc() {
+	int c;
+
 	if (lexptr && lexptr < lexend)
-		return *lexptr++;
+		c = *lexptr++;
 	else if (get_src_buf())
-		return *lexptr++;
+		c = *lexptr++;
 	else
-		return '\0';
+		c = '\0';
+
+	return c;
 }
 #else
 #define	nextc()	((lexptr && lexptr < lexend) ? \
@@ -1074,9 +1106,19 @@ yylex()
 	int low, mid, high;
 	static int did_newline = 0;
 	char *tokkey;
+	static int lasttok = 0, eof_warned = 0;
 
-	if (!nextc())
+	if (!nextc()) {
+		if (lasttok != NEWLINE) {
+			lasttok = NEWLINE;
+			if (do_lint && ! eof_warned) {
+				warning("source file does not end in newline");
+				eof_warned = 1;
+			}
+			return NEWLINE;	/* fake it */
+		}
 		return 0;
+	}
 	pushback();
 #ifdef OS2
 	/*
@@ -1119,7 +1161,7 @@ yylex()
 				pushback();
 				tokadd('\0');
 				yylval.sval = tokstart;
-				return REGEXP;
+				return lasttok = REGEXP;
 			case '\n':
 				pushback();
 				yyerror("unterminated regexp");
@@ -1140,19 +1182,37 @@ retry:
 
 	switch (c) {
 	case 0:
+		if (lasttok != NEWLINE) {
+			lasttok = NEWLINE;
+			if (do_lint && ! eof_warned) {
+				warning("source file does not end in newline");
+				eof_warned = 1;
+			}
+			return NEWLINE;	/* fake it */
+		}
 		return 0;
 
 	case '\n':
 		sourceline++;
-		return NEWLINE;
+		return lasttok = NEWLINE;
 
 	case '#':		/* it's a comment */
 		while ((c = nextc()) != '\n') {
-			if (c == '\0')
+			if (c == '\0') {
+				if (lasttok != NEWLINE) {
+					lasttok = NEWLINE;
+					if (do_lint && ! eof_warned) {
+						warning(
+				"source file does not end in newline");
+						eof_warned = 1;
+					}
+					return NEWLINE;	/* fake it */
+				}
 				return 0;
+			}
 		}
 		sourceline++;
-		return NEWLINE;
+		return lasttok = NEWLINE;
 
 	case '\\':
 #ifdef RELAXED_CONTINUATION
@@ -1182,7 +1242,7 @@ retry:
 
 	case '$':
 		want_assign = 1;
-		return '$';
+		return lasttok = '$';
 
 	case ')':
 	case ']':
@@ -1193,15 +1253,15 @@ retry:
 	case '?':
 	case '{':
 	case ',':
-		return c;
+		return lasttok = c;
 
 	case '*':
 		if ((c = nextc()) == '=') {
 			yylval.nodetypeval = Node_assign_times;
-			return ASSIGNOP;
+			return lasttok = ASSIGNOP;
 		} else if (do_posix) {
 			pushback();
-			return '*';
+			return lasttok = '*';
 		} else if (c == '*') {
 			/* make ** and **= aliases for ^ and ^= */
 			static int did_warn_op = 0, did_warn_assgn = 0;
@@ -1212,36 +1272,36 @@ retry:
 					warning("**= is not allowed by POSIX");
 				}
 				yylval.nodetypeval = Node_assign_exp;
-				return ASSIGNOP;
+				return lasttok = ASSIGNOP;
 			} else {
 				pushback();
 				if (do_lint && ! did_warn_op) {
 					did_warn_op = 1;
 					warning("** is not allowed by POSIX");
 				}
-				return '^';
+				return lasttok = '^';
 			}
 		}
 		pushback();
-		return '*';
+		return lasttok = '*';
 
 	case '/':
 		if (want_assign) {
 			if (nextc() == '=') {
 				yylval.nodetypeval = Node_assign_quotient;
-				return ASSIGNOP;
+				return lasttok = ASSIGNOP;
 			}
 			pushback();
 		}
-		return '/';
+		return lasttok = '/';
 
 	case '%':
 		if (nextc() == '=') {
 			yylval.nodetypeval = Node_assign_mod;
-			return ASSIGNOP;
+			return lasttok = ASSIGNOP;
 		}
 		pushback();
-		return '%';
+		return lasttok = '%';
 
 	case '^':
 	{
@@ -1254,73 +1314,73 @@ retry:
 				warning("operator `^=' is not supported in old awk");
 			}
 			yylval.nodetypeval = Node_assign_exp;
-			return ASSIGNOP;
+			return lasttok = ASSIGNOP;
 		}
 		pushback();
 		if (do_lint && ! did_warn_op) {
 			did_warn_op = 1;
 			warning("operator `^' is not supported in old awk");
 		}
-		return '^';
+		return lasttok = '^';
 	}
 
 	case '+':
 		if ((c = nextc()) == '=') {
 			yylval.nodetypeval = Node_assign_plus;
-			return ASSIGNOP;
+			return lasttok = ASSIGNOP;
 		}
 		if (c == '+')
-			return INCREMENT;
+			return lasttok = INCREMENT;
 		pushback();
-		return '+';
+		return lasttok = '+';
 
 	case '!':
 		if ((c = nextc()) == '=') {
 			yylval.nodetypeval = Node_notequal;
-			return RELOP;
+			return lasttok = RELOP;
 		}
 		if (c == '~') {
 			yylval.nodetypeval = Node_nomatch;
 			want_assign = 0;
-			return MATCHOP;
+			return lasttok = MATCHOP;
 		}
 		pushback();
-		return '!';
+		return lasttok = '!';
 
 	case '<':
 		if (nextc() == '=') {
 			yylval.nodetypeval = Node_leq;
-			return RELOP;
+			return lasttok = RELOP;
 		}
 		yylval.nodetypeval = Node_less;
 		pushback();
-		return '<';
+		return lasttok = '<';
 
 	case '=':
 		if (nextc() == '=') {
 			yylval.nodetypeval = Node_equal;
-			return RELOP;
+			return lasttok = RELOP;
 		}
 		yylval.nodetypeval = Node_assign;
 		pushback();
-		return ASSIGNOP;
+		return lasttok = ASSIGNOP;
 
 	case '>':
 		if ((c = nextc()) == '=') {
 			yylval.nodetypeval = Node_geq;
-			return RELOP;
+			return lasttok = RELOP;
 		} else if (c == '>') {
 			yylval.nodetypeval = Node_redirect_append;
-			return APPEND_OP;
+			return lasttok = APPEND_OP;
 		}
 		yylval.nodetypeval = Node_greater;
 		pushback();
-		return '>';
+		return lasttok = '>';
 
 	case '~':
 		yylval.nodetypeval = Node_match;
 		want_assign = 0;
-		return MATCHOP;
+		return lasttok = MATCHOP;
 
 	case '}':
 		/*
@@ -1329,11 +1389,11 @@ retry:
 		 */
 		if (did_newline) {
 			did_newline = 0;
-			return c;
+			return lasttok = c;
 		}
 		did_newline++;
 		--lexptr;	/* pick up } next time */
-		return NEWLINE;
+		return lasttok = NEWLINE;
 
 	case '"':
 		esc_seen = 0;
@@ -1360,23 +1420,23 @@ retry:
 		yylval.nodeval = make_str_node(tokstart,
 					tok - tokstart, esc_seen ? SCAN : 0);
 		yylval.nodeval->flags |= PERM;
-		return YSTRING;
+		return lasttok = YSTRING;
 
 	case '-':
 		if ((c = nextc()) == '=') {
 			yylval.nodetypeval = Node_assign_minus;
-			return ASSIGNOP;
+			return lasttok = ASSIGNOP;
 		}
 		if (c == '-')
-			return DECREMENT;
+			return lasttok = DECREMENT;
 		pushback();
-		return '-';
+		return lasttok = '-';
 
 	case '.':
 		c = nextc();
 		pushback();
 		if (!isdigit(c))
-			return '.';
+			return lasttok = '.';
 		else
 			c = '.';	/* FALL THROUGH */
 	case '0':
@@ -1432,10 +1492,16 @@ retry:
 				break;
 			c = nextc();
 		}
-		pushback();
+		if (c != 0)
+			pushback();
+		else if (do_lint && ! eof_warned) {
+			warning("source file does not end in newline");
+			eof_warned = 1;
+		}
+		tokadd('\0');
 		yylval.nodeval = make_number(atof(tokstart));
 		yylval.nodeval->flags |= PERM;
-		return YNUMBER;
+		return lasttok = YNUMBER;
 
 	case '&':
 		if ((c = nextc()) == '&') {
@@ -1458,10 +1524,10 @@ retry:
 				}
 			}
 			want_assign = 0;
-			return LEX_AND;
+			return lasttok = LEX_AND;
 		}
 		pushback();
-		return '&';
+		return lasttok = '&';
 
 	case '|':
 		if ((c = nextc()) == '|') {
@@ -1484,10 +1550,10 @@ retry:
 				}
 			}
 			want_assign = 0;
-			return LEX_OR;
+			return lasttok = LEX_OR;
 		}
 		pushback();
-		return '|';
+		return lasttok = '|';
 	}
 
 	if (c != '_' && ! isalpha(c))
@@ -1502,7 +1568,12 @@ retry:
 	tokadd('\0');
 	emalloc(tokkey, char *, tok - tokstart, "yylex");
 	memcpy(tokkey, tokstart, tok - tokstart);
-	pushback();
+	if (c != 0)
+		pushback();
+	else if (do_lint && ! eof_warned) {
+		warning("source file does not end in newline");
+		eof_warned = 1;
+	}
 
 	/* See if it is a special token.  */
 	low = 0;
@@ -1541,16 +1612,16 @@ retry:
 				yylval.nodetypeval = tokentab[mid].value;
 
 			free(tokkey);
-			return tokentab[mid].class;
+			return lasttok = tokentab[mid].class;
 		}
 	}
 
 	yylval.sval = tokkey;
 	if (*lexptr == '(')
-		return FUNC_CALL;
+		return lasttok = FUNC_CALL;
 	else {
 		want_assign = 1;
-		return NAME;
+		return lasttok = NAME;
 	}
 }
 
@@ -1758,6 +1829,45 @@ NODE *list, *new;
 	return oldlist;
 }
 
+/* return 1 if there are duplicate parameters, 0 means all ok */
+static int
+dup_parms(func)
+NODE *func;
+{
+	register NODE *np;
+	char *fname, **names;
+	int count, i, j, dups;
+	NODE *params;
+
+	fname = func->param;
+	count = func->param_cnt;
+	params = func->rnode;
+
+	if (count == 0)		/* no args, no problem */
+		return 0;
+
+	emalloc(names, char **, count * sizeof(char *), "dup_parms");
+
+	i = 0;
+	for (np = params; np != NULL; np = np->rnode)
+		names[i++] = np->param;
+
+	dups = 0;
+	for (i = 1; i < count; i++) {
+		for (j = 0; j < i; j++) {
+			if (strcmp(names[i], names[j]) == 0) {
+				dups++;
+				error(
+	"function `%s': parameter #%d, `%s', duplicates parameter #%d",
+					fname, i+1, names[j], j+1);
+			}
+		}
+	}
+
+	free(names);
+	return (dups > 0);
+}
+
 /*
  * check if name is already installed;  if so, it had better have Null value,
  * in which case def is added as the value. Otherwise, install name with def
@@ -1803,14 +1913,18 @@ int freeit;
 	}
 }
 
+/*
+ * pop parameters out of the symbol table. do this in reverse order to
+ * avoid reading freed memory if there were duplicated parameters.
+ */
 static void
 pop_params(params)
 NODE *params;
 {
-	register NODE *np;
-
-	for (np = params; np != NULL; np = np->rnode)
-		pop_var(np, 1);
+	if (params == NULL)
+		return;
+	pop_params(params->rnode);
+	pop_var(params, 1);
 }
 
 static NODE *
@@ -1827,7 +1941,7 @@ char *name;
 	return (install(name, r));
 }
 
-/* Name points to a variable name.  Make sure its in the symbol table */
+/* Name points to a variable name.  Make sure it's in the symbol table */
 NODE *
 variable(name, can_free)
 char *name;

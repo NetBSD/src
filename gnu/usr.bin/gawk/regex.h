@@ -1,7 +1,7 @@
 /* Definitions for data structures and routines for the regular
    expression library, version 0.12.
 
-   Copyright (C) 1985, 1989, 1990, 1991, 1992, 1993 Free Software Foundation, Inc.
+   Copyright (C) 1985, 1989, 1990-1995 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -157,6 +157,7 @@ extern reg_syntax_t re_syntax_options;
   (RE_BACKSLASH_ESCAPE_IN_LISTS | RE_DOT_NOT_NULL			\
    | RE_NO_BK_PARENS            | RE_NO_BK_REFS				\
    | RE_NO_BK_VBAR               | RE_NO_EMPTY_RANGES			\
+   | RE_DOT_NEWLINE							\
    | RE_UNMATCHED_RIGHT_PAREN_ORD | RE_NO_GNU_OPS)
 
 #define RE_SYNTAX_GNU_AWK 						\
@@ -480,9 +481,11 @@ extern void re_set_registers
   _RE_ARGS ((struct re_pattern_buffer *buffer, struct re_registers *regs,
              unsigned num_regs, regoff_t *starts, regoff_t *ends));
 
+#ifndef _CRAY
 /* 4.2 bsd compatibility.  */
 extern char *re_comp _RE_ARGS ((const char *));
 extern int re_exec _RE_ARGS ((const char *));
+#endif
 
 /* POSIX compatibility.  */
 extern int regcomp _RE_ARGS ((regex_t *preg, const char *pattern, int cflags));

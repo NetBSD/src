@@ -16,8 +16,6 @@ x	Generalize IGNORECASE
 		any value makes it work, not just numeric non-zero
 		make it apply to *all* string comparisons
 
-x	Fix FILENAME to have an initial value of "", not "-"
-
 In 2.17
 =======
 x	Allow RS to be a regexp.
