@@ -1,4 +1,4 @@
-.\"	$NetBSD: kqueue.2,v 1.6 2002/09/25 00:55:16 wiz Exp $
+.\"	$NetBSD: kqueue.2,v 1.7 2002/10/01 18:10:44 wiz Exp $
 .\"
 .\" Copyright (c) 2000 Jonathan Lemon
 .\" All rights reserved.
@@ -114,19 +114,22 @@ If
 is a
 .No non- Ns Dv NULL
 pointer, it specifies a maximum interval to wait
-for an event, which will be interpreted as a struct timespec.  If
+for an event, which will be interpreted as a struct timespec.
+If
 .Fa timeout
 is a
 .Dv NULL
 pointer,
 .Fn kevent
-waits indefinitely.  To effect a poll, the
+waits indefinitely.
+To effect a poll, the
 .Fa timeout
 argument should be
 .No non- Ns Dv NULL ,
 pointing to a zero-valued
 .Va timespec
-structure.  The same array may be used for the
+structure.
+The same array may be used for the
 .Fa changelist
 and
 .Fa eventlist .
@@ -176,9 +179,10 @@ The
 field can contain the following values:
 .Bl -tag -width XXXEV_ONESHOT -offset indent
 .It EV_ADD
-Adds the event to the kqueue.  Re-adding an existing event
-will modify the parameters of the original event, and not result
-in a duplicate entry.  Adding an event automatically enables it,
+Adds the event to the kqueue.
+Re-adding an existing event will modify the parameters of the original
+event, and not result in a duplicate entry.
+Adding an event automatically enables it,
 unless overridden by the EV_DISABLE flag.
 .It EV_ENABLE
 Permit
@@ -187,20 +191,21 @@ to return the event if it is triggered.
 .It EV_DISABLE
 Disable the event so
 .Fn kevent
-will not return it.  The filter itself is not disabled.
+will not return it.
+The filter itself is not disabled.
 .It EV_DELETE
-Removes the event from the kqueue.  Events which are attached to
-file descriptors are automatically deleted on the last close of
-the descriptor.
+Removes the event from the kqueue.
+Events which are attached to file descriptors are automatically deleted
+on the last close of the descriptor.
 .It EV_ONESHOT
 Causes the event to return only the first occurrence of the filter
-being triggered.  After the user retrieves the event from the kqueue,
-it is deleted.
+being triggered.
+After the user retrieves the event from the kqueue, it is deleted.
 .It EV_CLEAR
 After the event is retrieved by the user, its state is reset.
 This is useful for filters which report state transitions
-instead of the current state.  Note that some filters may automatically
-set this flag internally.
+instead of the current state.
+Note that some filters may automatically set this flag internally.
 .It EV_EOF
 Filters may set this flag to indicate filter-specific EOF condition.
 .It EV_ERROR
@@ -314,8 +319,8 @@ returning.
 .El
 .It EVFILT_WRITE
 Takes a descriptor as the identifier, and returns whenever
-it is possible to write to the descriptor.  For sockets, pipes,
-fifos, and ttys,
+it is possible to write to the descriptor.
+For sockets, pipes, fifos, and ttys,
 .Va data
 will contain the amount of space remaining in the write buffer.
 The filter will set EV_EOF when the reader disconnects, and for
@@ -349,7 +354,8 @@ Alternatively, a kevent structure may be initialized, with
 containing the descriptor of the kqueue, and the
 address of the kevent structure placed in the
 .Va aio_lio_opcode
-field of the AIO request.  However, this approach will not work on
+field of the AIO request.
+However, this approach will not work on
 architectures with 64-bit pointers, and should be considered depreciated.
 ..
 .It EVFILT_VNODE
@@ -400,7 +406,8 @@ or similar call.
 .It NOTE_TRACK
 Follow a process across
 .Fn fork
-calls.  The parent process will return with NOTE_TRACK set in the
+calls.
+The parent process will return with NOTE_TRACK set in the
 .Va fflags
 field, while the child process will return with NOTE_CHILD set in
 .Va fflags
@@ -421,10 +428,11 @@ This coexists with the
 .Fn signal
 and
 .Fn sigaction
-facilities, and has a lower precedence.  The filter will record
+facilities, and has a lower precedence.
+The filter will record
 all attempts to deliver a signal to a process, even if the signal has
-been marked as SIG_IGN.  Event notification happens after normal
-signal delivery processing.
+been marked as SIG_IGN.
+Event notification happens after normal signal delivery processing.
 .Va data
 returns the number of times the signal has occurred since the last call to
 .Fn kevent .
