@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sig.c,v 1.1.2.20 2002/11/02 00:28:16 nathanw Exp $	*/
+/*	$NetBSD: pthread_sig.c,v 1.1.2.21 2002/12/19 02:42:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -502,6 +502,9 @@ pthread__signal(pthread_t t, int sig, int code)
 	 */
 	uc = (ucontext_t *)((char *)maskp - 
 	    STACKSPACE - sizeof(ucontext_t));
+#ifdef _UC_UCONTEXT_ALIGN
+	uc = (ucontext_t *)((uintptr_t)uc & _UC_UCONTEXT_ALIGN);
+#endif
 
 	_INITCONTEXT_U(uc);
 	uc->uc_stack.ss_sp = maskp;
