@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_vt100_keys.c,v 1.2 1998/07/14 19:32:17 drochner Exp $ */
+/* $NetBSD: wsemul_vt100_keys.c,v 1.2.8.1 1999/09/18 18:24:57 he Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -169,6 +169,14 @@ wsemul_vt100_translate(cookie, in, out)
 	    case KS_Next:
 	    case KS_KP_Next:
 		*out = "\033[6~";
+		return (4);
+	    case KS_Home:
+	    case KS_KP_Home:
+		*out = "\033[7~";
+		return (4);
+	    case KS_End:
+	    case KS_KP_End:
+		*out = "\033[8~";
 		return (4);
 	    case KS_Up:
 	    case KS_KP_Up:
