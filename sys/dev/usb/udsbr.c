@@ -1,4 +1,4 @@
-/*	$NetBSD: udsbr.c,v 1.1 2002/01/02 03:21:36 augustss Exp $	*/
+/*	$NetBSD: udsbr.c,v 1.2 2002/01/02 03:44:56 augustss Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,8 +37,16 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Driver for the D-Link DSB-R100 FM radio.
+ * I apologize for the magix hex constants, but this is what happens
+ * when you have to reverse engineer the driver.
+ * Parts of the code borrowed from Linux and parts from Warner Losh's
+ * FreeBSD driver.
+ */
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udsbr.c,v 1.1 2002/01/02 03:21:36 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udsbr.c,v 1.2 2002/01/02 03:44:56 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,8 +62,6 @@ __KERNEL_RCSID(0, "$NetBSD: udsbr.c,v 1.1 2002/01/02 03:21:36 augustss Exp $");
 
 #include <dev/usb/usbdevs.h>
 
-#define UDSBR_DEBUG
-
 #ifdef UDSBR_DEBUG
 #define DPRINTF(x)	if (udsbrdebug) logprintf x
 #define DPRINTFN(n,x)	if (udsbrdebug>(n)) logprintf x
@@ -66,7 +72,6 @@ int	udsbrdebug = 0;
 #endif
 
 #define UDSBR_CONFIG_NO		1
-#define UDSBR_IFACE_IDX		0
 
 int     udsbr_get_info(void *, struct radio_info *);
 int     udsbr_set_info(void *, struct radio_info *);
@@ -83,7 +88,6 @@ struct radio_hw_if udsbr_hw_if = {
 struct udsbr_softc {
  	USBBASEDEVICE		sc_dev;
 	usbd_device_handle	sc_udev;
-	usbd_interface_handle	sc_iface;
 
 	char			sc_mute;
 	char			sc_vol;
@@ -121,7 +125,6 @@ USB_ATTACH(udsbr)
 {
 	USB_ATTACH_START(udsbr, sc, uaa);
 	usbd_device_handle	dev = uaa->device;
-	usbd_interface_handle	iface;
 	char			devinfo[1024];
 	usbd_status		err;
 
@@ -138,15 +141,7 @@ USB_ATTACH(udsbr)
 		USB_ATTACH_ERROR_RETURN;
 	}
 
-	err = usbd_device2interface_handle(dev, UDSBR_IFACE_IDX, &iface);
-	if (err) {
-		printf("%s: getting interface handle failed\n",
-		    USBDEVNAME(sc->sc_dev));
-		USB_ATTACH_ERROR_RETURN;
-	}
-
 	sc->sc_udev = dev;
-	sc->sc_iface = iface;
 
 	DPRINTFN(10, ("udsbr_attach: %p\n", sc->sc_udev));
 
@@ -230,15 +225,22 @@ void
 udsbr_setfreq(struct udsbr_softc *sc, int freq)
 {
 	DPRINTF(("udsbr_setfreq: setfreq=%d\n", freq));
-	freq = freq * 80 / 1000 + 856;
+        /*
+         * Freq now is in Hz.  We need to convert it to the frequency
+         * that the radio wants.  This frequency is 10.7MHz above
+         * the actual frequency.  We then need to convert to
+         * units of 12.5kHz.  We add one to the IFM to make rounding
+         * easier. 
+         */
+        freq = (freq + 10700001) / 12500;
 	(void)udsbr_req(sc, 0x01, (freq >> 8) & 0xff, freq & 0xff);
 	(void)udsbr_req(sc, 0x00, 0x0096, 0x00b7);
-	(void)udsbr_req(sc, 0x00, 0x0000, 0x0024);
 }
 
 int
 udsbr_status(struct udsbr_softc *sc)
 {
+	usbd_delay_ms(sc->sc_udev, 240); /* XXX wait for signal to settle */
 	return (udsbr_req(sc, 0x00, 0x0000, 0x0024));
 }
 
