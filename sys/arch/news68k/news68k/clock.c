@@ -1,4 +1,4 @@
-/*      $NetBSD: clock.c,v 1.6 2001/07/07 15:27:21 tsutsui Exp $	*/
+/*      $NetBSD: clock.c,v 1.7 2001/10/11 14:01:36 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -83,7 +83,6 @@ timer_config(initfunc)
 	cpu_initclocks_hook = initfunc;
 }
 
-
 /*
  * Set up the real-time and statistics clocks.  Leave stathz 0 only
  * if no alternative timer is available.
@@ -164,44 +163,43 @@ void
 inittodr(base)
         time_t base;
 {
-        int badbase = 0, waszero = (base == 0);
+	int badbase = 0, waszero = (base == 0);
 
-        if (base < 5 * SECYR) {
-                /*
-                 * If base is 0, assume filesystem time is just unknown
-                 * in stead of preposterous. Don't bark.
-                 */
-                if (base != 0)
-                        printf("WARNING: preposterous time in file system\n");
-                /* not going to use it anyway, if the chip is readable */
-                /* 1991/07/01	12:00:00 */
-                base = 21*SECYR + 186*SECDAY + SECDAY/2;
-                badbase = 1;
-        }
+	if (base < 5 * SECYR) {
+		/*
+		 * If base is 0, assume filesystem time is just unknown
+		 * in stead of preposterous. Don't bark.
+		 */
+		if (base != 0)
+			printf("WARNING: preposterous time in file system\n");
+		/* not going to use it anyway, if the chip is readable */
+		/* 1991/07/01	12:00:00 */
+		base = 21*SECYR + 186*SECDAY + SECDAY/2;
+		badbase = 1;
+	}
 
-        if (todr_gettime(todr_handle, (struct timeval *)&time) != 0 ||
-            time.tv_sec == 0) {
-                printf("WARNING: bad date in battery clock");
-                /*
-                 * Believe the time in the file system for lack of
-                 * anything better, resetting the clock.
-                 */
-                time.tv_sec = base;
-                if (!badbase)
-                        resettodr();
-        } else {
-                int deltat = time.tv_sec - base;
+	if (todr_gettime(todr_handle, (struct timeval *)&time) != 0 ||
+	    time.tv_sec == 0) {
+		printf("WARNING: bad date in battery clock");
+		/*
+		 * Believe the time in the file system for lack of
+		 * anything better, resetting the clock.
+		 */
+		time.tv_sec = base;
+		if (!badbase)
+			resettodr();
+	} else {
+		int deltat = time.tv_sec - base;
 
-                if (deltat < 0)
-                        deltat = -deltat;
-                if (waszero || deltat < 2 * SECDAY)
-                        return;
-                printf("WARNING: clock %s %d days",
-                    time.tv_sec < base ? "lost" : "gained", deltat / SECDAY);
-        }
-        printf(" -- CHECK AND RESET THE DATE!\n");
+		if (deltat < 0)
+			deltat = -deltat;
+		if (waszero || deltat < 2 * SECDAY)
+			return;
+		printf("WARNING: clock %s %d days",
+		    time.tv_sec < base ? "lost" : "gained", deltat / SECDAY);
+	}
+	printf(" -- CHECK AND RESET THE DATE!\n");
 }
-
 
 /*
  * Reset the clock based on the current time.
