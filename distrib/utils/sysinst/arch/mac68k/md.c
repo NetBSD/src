@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.42 2004/06/06 06:07:00 christos Exp $ */
+/*	$NetBSD: md.c,v 1.43 2004/08/14 16:06:41 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1156,11 +1156,4 @@ md_init()
 		 * Running the GENERIC Installation Kernel, so enable GENERIC
 		 */
 		sets_selected = (sets_selected & ~SET_KERNEL) | SET_KERNEL_1;
-}
-
-void
-md_set_sizemultname()
-{
-
-	set_sizemultname_meg();
 }

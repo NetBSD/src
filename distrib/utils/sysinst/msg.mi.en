@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.129 2004/07/17 11:28:16 dsl Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.130 2004/08/14 16:06:37 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -174,17 +174,16 @@ A full installation requires at least %d Megabytes without X and
 at least %d Megabytes if the X sets are included.
 }
 
-message sizechoice
-{You have elected to specify partition sizes (either for the BSD
-disklabel, or on some ports, for MBR slices). You must first choose a
-size unit to use.  Choosing megabytes will give partition sizes close
-to your choice, but aligned to cylinder boundaries. Choosing sectors
-will allow you to more accurately specify the sizes.  On modern ZBR disks,
-actual cylinder size varies across the disk and there is little real
-gain from cylinder alignment. On older disks, it is most efficient to
+message Choose_your_size_specifier
+{Choosing megabytes will give partition sizes close to your choice,
+but aligned to cylinder boundaries.  Choosing sectors will allow you
+to more accurately specify the sizes.  On modern ZBR disks, actual
+cylinder size varies across the disk and there is little real gain
+from cylinder alignment.  On older disks, it is most efficient to
 choose partition sizes that are exact multiples of your actual
 cylinder size.
-}
+
+Choose your size specifier}
 
 message defaultunit
 {Unless specified with 'M' (megabytes), 'G' (gigabytes), 'c' (cylinders)
@@ -983,7 +982,6 @@ message Hit_enter_to_continue {Hit enter to continue}
 message Choose_your_installation {Choose your installation}
 message Set_Sizes {Set sizes of NetBSD partitions}
 message Use_Existing {Use existing partition sizes}
-message Choose_your_size_specifier {Choose your size specifier}
 message Megabytes {Megabytes}
 message Cylinders {Cylinders}
 message Sectors {Sectors}
