@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.227 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.228 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -529,3 +529,5 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 		[nisimura 20031031]
 	sun2: Switch to GCC 3.3.2.  [mrg 20031104]
 	libcrypto: upgrade to 0.9.7c. [itojun 20031104]
+	amiga: Add screen types suitable for PAL displays to amidisplaycc(4) 
+		[jandberg 20031112]
