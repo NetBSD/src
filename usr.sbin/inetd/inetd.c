@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.12 1996/11/26 17:23:37 mrg Exp $	*/
+/*	$NetBSD: inetd.c,v 1.13 1996/12/04 13:37:18 mrg Exp $	*/
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
  * All rights reserved.
@@ -40,7 +40,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$Id: inetd.c,v 1.12 1996/11/26 17:23:37 mrg Exp $";
+static char rcsid[] = "$Id: inetd.c,v 1.13 1996/12/04 13:37:18 mrg Exp $";
 #endif /* not lint */
 
 /*
@@ -146,8 +146,20 @@ static char rcsid[] = "$Id: inetd.c,v 1.12 1996/11/26 17:23:37 mrg Exp $";
 
 #ifdef LIBWRAP
 # include <tcpd.h>
-int allow_severity = LOG_INFO;
-int deny_severity = LOG_WARNING;
+#ifndef LIBWRAP_ALLOW_FACILITY
+# define LIBWRAP_ALLOW_FACILITY 0 /* Don't modify our default */
+#endif
+#ifndef LIBWRAP_ALLOW_SEVERITY
+# define LIBWRAP_ALLOW_SEVERITY LOG_INFO
+#endif
+#ifndef LIBWRAP_DENY_FACILITY
+# define LIBWRAP_DENY_FACILITY 0 /* Don't modify our default */
+#endif
+#ifndef LIBWRAP_DENY_SEVERITY
+# define LIBWRAP_DENY_SEVERITY LOG_WARNING
+#endif
+int allow_severity = LIBWRAP_ALLOW_FACILITY|LIBWRAP_ALLOW_SEVERITY;
+int deny_severity = LIBWRAP_DENY_FACILITY|LIBWRAP_DENY_SEVERITY;
 #endif
 
 #define	TOOMANY		40		/* don't start more than TOOMANY */
@@ -408,29 +420,30 @@ main(argc, argv, envp)
 	request_init(&req, RQ_DAEMON, sep->se_argv[0], RQ_FILE, ctrl, NULL);
 	fromhost(&req);
 	if (!hosts_access(&req)) {
-		sp = getservbyport(ntohs(sep->se_ctrladdr_in.sin_port), "tcp");
+		sp = getservbyport(sep->se_ctrladdr_in.sin_port, sep->se_proto);
 		if (sp == NULL) {
 			(void)snprintf(buf, sizeof buf, "%d",
 			    ntohs(sep->se_ctrladdr_in.sin_port));
 			service = buf;
 		} else
 			service = sp->s_name;
-		syslog(LOG_WARNING, "refused connection from %.500s, service %s",
-		    eval_client(&req), service);
+		syslog(LOG_WARNING,
+		    "refused connection from %.500s, service %s (%s)",
+		    eval_client(&req), service, sep->se_proto);
 		shutdown(ctrl, 2);
 		close(ctrl);
 		continue;
 	}
 	if (lflag) {
-		sp = getservbyport(ntohs(sep->se_ctrladdr_in.sin_port), "tcp");
+		sp = getservbyport(sep->se_ctrladdr_in.sin_port, sep->se_proto);
 		if (sp == NULL) {
 			(void)snprintf(buf, sizeof buf, "%d",
 			    ntohs(sep->se_ctrladdr_in.sin_port));
 			service = buf;
 		} else
 			service = sp->s_name;
-		syslog(LOG_INFO, "connection from %.500s, service %s",
-		    eval_client(&req), service);
+		syslog(LOG_INFO, "connection from %.500s, service %s (%s)",
+		    eval_client(&req), service, sep->se_proto);
 	}
 #endif /* LIBWRAP */
 		} else
