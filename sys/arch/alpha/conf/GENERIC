@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.240 2004/02/13 10:05:49 wiz Exp $
+# $NetBSD: GENERIC,v 1.241 2004/04/29 07:13:03 fair Exp $
 #
 # GENERIC machine description file
 #
@@ -25,7 +25,7 @@ include		"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.240 $"
+#ident 		"GENERIC-$Revision: 1.241 $"
 
 maxusers 32
 
@@ -450,21 +450,7 @@ ray*	at	pcmcia? function ?		# Raytheon Raylink (802.11)
 wi*	at	pcmcia? function ?		# Lucent/Intersil WaveLAN/IEEE
 
 # SCSI bus support
-scsibus* at	adv?
-scsibus* at	adw?
-scsibus* at	aha?
-scsibus* at	ahb?
-scsibus* at	ahc?
-scsibus* at	aic?
-scsibus* at	asc?
-scsibus* at	bha?
-scsibus* at	dpt?
-scsibus* at	iha?
-scsibus* at	isp?
-scsibus* at	siop?
-scsibus* at	esiop?
-scsibus* at	pcscp?
-scsibus* at	uha?
+scsibus* at	scsi?
 
 # SCSI devices
 cd*	at	scsibus? target ? lun ?		# SCSI CD-ROM drives
