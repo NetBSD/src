@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 2000/03/16 14:56:19 ad Exp $
+#	$NetBSD: Makefile,v 1.24 2000/04/23 15:04:25 sommerfeld Exp $
 
 TOP=		${.CURDIR}/..
 WARNS=1
@@ -27,7 +27,9 @@ LISTS=		list
 CRUNCHCONF=	${CBIN}.conf
 MTREE=		mtree.conf
 
-DISKTYPE=	floppy3
+RAMDISKSPC=	128
+RAMDISKCYLS=	23
+RAMDISKSIZE!=	expr ${RAMDISKSPC} \* ${RAMDISKCYLS}
 
 install.sh: install.tmpl
 	sed "s/@@VERSION@@/${VER}/" < ${.ALLSRC} > ${.TARGET}
@@ -39,10 +41,11 @@ start.sh: start.tmpl
 	sed "s/@@VERSION@@/${VER}/" < ${.ALLSRC} > ${.TARGET}
 
 realall: ${AUXTARGETS} ${CBIN} ${AUXDEPENDS} ${MTREE} ${LISTS}
-	dd if=/dev/zero of=${IMAGE} count=3072
-	vnconfig -t ${DISKTYPE} -v -c ${VND_CDEV} ${IMAGE}
-	disklabel -rw ${VND_CDEV} ${DISKTYPE}
-	newfs -B le -m 0 -o space -i 3950 -c 80 ${VND_RDEV} ${DISKTYPE}
+	dd if=/dev/zero of=${IMAGE} count=${RAMDISKSIZE}
+	vnconfig -v -c ${VND_CDEV} ${IMAGE} 512/${RAMDISKSPC}/1/${RAMDISKCYLS}
+	-disklabel ${VND_CDEV} >tmplabel
+	disklabel -r -R ${VND_CDEV} tmplabel
+	newfs -B le -m 0 -o space -i 3950 -c 80 ${VND_RDEV} 
 	mount ${VND_DEV} ${MOUNT_POINT}
 	mtree -def ${.CURDIR}/${MTREE} -p ${MOUNT_POINT}/ -U
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
