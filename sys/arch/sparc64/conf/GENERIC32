@@ -1,10 +1,10 @@
-# 	$NetBSD: GENERIC32,v 1.85 2004/07/15 03:53:52 atatat Exp $
+# 	$NetBSD: GENERIC32,v 1.86 2004/08/01 10:51:33 mrg Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.85 $"
+#ident 		"GENERIC-$Revision: 1.86 $"
 
 maxusers	64
 
@@ -274,10 +274,21 @@ com*	at ebus?				# `com' driver for `su'
 kbd0	at com?					# keyboard
 ms0	at com?					# mouse
 
-# PCI serial interfaces
+## Magma Serial/Parallel driver (not tested)
+#magma*	at sbus? slot ? offset ?
+#mtty*	at magma?
+#mbpp*	at magma?
+
+## SUNW,spif Serial/Parallel driver (not tested)
+#spif*  at sbus? slot ? offset ?
+#stty*  at spif?
+#sbpp*  at spif?
+
+## PCI serial interfaces
 com*	at puc? port ?			# 16x50s on "universal" comm boards
 cy*	at pci? dev ? function ?	# Cyclades Cyclom-Y serial boards
 cz*	at pci? dev ? function ?	# Cyclades-Z multi-port serial boards
+
 
 #### Disk controllers and disks
 
