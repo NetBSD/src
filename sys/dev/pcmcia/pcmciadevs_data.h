@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.36 1999/02/19 21:49:43 abs Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.37 1999/04/27 04:52:04 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.32 1999/02/19 02:52:17 nathanw Exp 
+ *	NetBSD: pcmciadevs,v 1.34 1999/04/27 04:48:43 thorpej Exp 
  */
 
 /*-
@@ -134,6 +134,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Motorola Corporation",
 	    "Motorola Personal Messenger 100C CDPD Modem"	},
+	},
+	{
+	    PCMCIA_VENDOR_FUJITSU, PCMCIA_PRODUCT_FUJITSU_LA501,
+	    PCMCIA_CIS_FUJITSU_LA501,
+	    0,
+	    "Fujitsu Corporation",
+	    "Fujitsu Towa LA501 Ethernet"	},
 	},
 	{
 	    PCMCIA_VENDOR_IBM, PCMCIA_PRODUCT_IBM_INFOMOVER,
