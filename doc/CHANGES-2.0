@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.94 2004/04/18 02:15:06 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.95 2004/04/18 02:20:32 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -972,3 +972,16 @@ usr.bin/gzip/gzip.c				1.36
 
 	Don't try to remove an output file we haven't actually created. PR#25189
 	[mrg, ticket #146]
+
+sys/arch/hpcmips/conf/GENERIC				1.147
+sys/arch/hpcmips/conf/LROUTER				1.18
+sys/arch/hpcmips/conf/NULLCONF				1.18
+sys/arch/hpcmips/conf/VR41XX				1.18
+sys/arch/hpcmips/conf/MPC303				1.26
+sys/arch/hpcmips/conf/Makefile.hpcmips.inc		deleted
+sys/arch/hpcmips/conf/TX3912				1.50
+sys/arch/hpcmips/conf/TX3922				1.53
+sys/arch/hpcmips/conf/std.lcard				1.4
+
+	Move -mips2 to CPUFLAGS in each kernel config file.
+	[tv, ticket #147]
