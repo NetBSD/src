@@ -1,16 +1,16 @@
 #!/bin/sh
 #
-# $NetBSD: ypserv,v 1.3 2000/05/13 08:45:10 lukem Exp $
+# $NetBSD: ypserv,v 1.4 2000/06/02 22:54:13 fvdl Exp $
 #
 
 # PROVIDE: ypserv
-# REQUIRE: portmap
+# REQUIRE: rpcbind
 
 . /etc/rc.subr
 
 name="ypserv"
 command="/usr/sbin/${name}"
-required_vars="portmap"
+required_vars="rpcbind"
 start_precmd="ypserv_precmd"
 
 ypserv_precmd()
