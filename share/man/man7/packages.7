@@ -1,4 +1,4 @@
-.\"	$NetBSD: packages.7,v 1.12 1999/01/30 23:19:51 agc Exp $
+.\"	$NetBSD: packages.7,v 1.13 1999/02/17 00:47:17 hubertf Exp $
 .\"
 .\" from: NetBSD: bsd.pkg.mk,v 1.89 1998/06/01 21:30:10 hubertf Exp
 .\"
@@ -41,11 +41,6 @@ The operating system name, as returned by
 .It DISTDIR
 Where to get gzip'd, tarballed copies of original sources.  The default is
 .Pa ${PKGSRCDIR}/distfiles .
-.It PREFIX
-Where to install things in general.  The
-.Nx
-default is
-.Pa /usr/pkg .
 .It MASTER_SITES
 Primary location(s) for distribution files if not found locally.
 .It MASTER_SITE_SUBDIR
@@ -544,13 +539,6 @@ Create a binary package other people can use.
 .It describe
 Try to generate a one-line description for each package for
 use in INDEX files and the like.
-.It checkpatch
-Do a
-.Dq patch -C
-instead of a
-.Dq patch .
-Note that it may give incorrect
-results if multiple patches deal with the same file.
 .It checksum	
 Use
 .Pa files/md5
