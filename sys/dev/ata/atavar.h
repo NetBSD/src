@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.8 1998/12/04 11:17:54 bouyer Exp $	*/
+/*	$NetBSD: atavar.h,v 1.9 1998/12/16 13:02:03 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -64,6 +64,11 @@ struct ata_drive_datas {
      * This is reset to 0 after a channel reset.
      */
     u_int8_t state;
+
+    /* Number of DMA errors. reset to 0 after every successfull transferts */
+    u_int8_t n_dmaerrs;
+    /* downgrade mode after this many successive errors */
+#define NERRS_MAX 2
 
     struct device *drv_softc; /* ATA drives softc, if any */
     void* chnl_softc; /* channel softc */
@@ -139,6 +144,7 @@ int wdc_exec_command __P((struct ata_drive_datas *, struct wdc_command*));
 #define WDC_TRY_AGAIN 0x03
 
 void wdc_probe_caps __P((struct ata_drive_datas*));
+int  wdc_downgrade_mode __P((struct ata_drive_datas*));
 
 void wdc_reset_channel __P((struct ata_drive_datas *));
 

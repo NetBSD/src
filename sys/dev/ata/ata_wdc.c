@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.9 1998/11/21 15:41:41 drochner Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.10 1998/12/16 13:02:03 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -409,9 +409,11 @@ wdc_ata_bio_intr(chp, xfer)
 		    chp->wdc->sc_dev.dv_xname, chp->channel, xfer->drive,
 		    xfer->c_bcount, xfer->c_skip);
 		/* if we were using DMA, turn off DMA channel */
-		if (xfer->c_flags & C_DMA)
+		if (xfer->c_flags & C_DMA) {
 			(*chp->wdc->dma_finish)(chp->wdc->dma_arg,
 			    chp->channel, xfer->drive, dma_flags);
+			drvp->n_dmaerrs++;
+		}
 		ata_bio->error = TIMEOUT;
 		wdc_ata_bio_done(chp, xfer);
 		return 1;
@@ -423,7 +425,7 @@ wdc_ata_bio_intr(chp, xfer)
 	if (xfer->c_flags & C_DMA) {
 		if (ata_bio->flags & ATA_POLL) {
 			/*
-			 * IDE drives deassert WDCS_BSY before trasfert is
+			 * IDE drives deassert WDCS_BSY before transfert is
 			 * complete when using DMA. Polling for DRQ to deassert
 			 * is not enouth DRQ is not required to be
 			 * asserted for DMA transfers, so poll for DRDY.
@@ -433,16 +435,6 @@ wdc_ata_bio_intr(chp, xfer)
 				printf("%s:%d:%d: polled transfer timed out "
 				    "(st=0x%x)\n", chp->wdc->sc_dev.dv_xname,
 				    chp->channel, xfer->drive, chp->ch_status);
-				ata_bio->error = TIMEOUT;
-				wdc_ata_bio_done(chp, xfer);
-				return 1;
-			}
-		}
-		if (chp->ch_status & WDCS_DRQ) {
-			if (drv_err != WDC_ATA_ERR) {
-				printf("%s:%d:%d: intr with DRQ (st=0x%x)\n",
-				    chp->wdc->sc_dev.dv_xname, chp->channel,
-				    xfer->drive, chp->ch_status);
 				ata_bio->error = TIMEOUT;
 				drv_err = WDC_ATA_ERR;
 			}
@@ -454,9 +446,18 @@ wdc_ata_bio_intr(chp, xfer)
 				drv_err = WDC_ATA_ERR;
 			}
 		}
+		if (chp->ch_status & WDCS_DRQ) {
+			if (drv_err != WDC_ATA_ERR) {
+				printf("%s:%d:%d: intr with DRQ (st=0x%x)\n",
+				    chp->wdc->sc_dev.dv_xname, chp->channel,
+				    xfer->drive, chp->ch_status);
+				ata_bio->error = TIMEOUT;
+				drv_err = WDC_ATA_ERR;
+			}
+		}
 		if (drv_err != WDC_ATA_ERR)
 			goto end;
-
+		drvp->n_dmaerrs++;
 	}
 
 	/* if we had an error, end */
@@ -532,11 +533,18 @@ wdc_ata_bio_done(chp, xfer)
 	struct ata_bio *ata_bio = xfer->cmd;
 	int need_done = xfer->c_flags & C_NEEDDONE;
 	int drive = xfer->drive;
+	struct ata_drive_datas *drvp = &chp->ch_drive[drive];
 
 	WDCDEBUG_PRINT(("wdc_ata_bio_done %s:%d:%d: flags 0x%x\n",
 	    chp->wdc->sc_dev.dv_xname, chp->channel, xfer->drive, 
 	    (u_int)xfer->c_flags),
 	    DEBUG_XFERS);
+
+	if (ata_bio->error == NOERROR)
+		drvp->n_dmaerrs = 0;
+	else if (drvp->n_dmaerrs >= NERRS_MAX) {
+		wdc_downgrade_mode(drvp);
+	}
 
 	/* feed back residual bcount to our caller */
 	ata_bio->bcount = xfer->c_bcount;

@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.10 1998/11/21 15:41:42 drochner Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.11 1998/12/16 13:02:04 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -332,6 +332,8 @@ wdc_atapi_intr(chp, xfer)
 		printf("%s:%d:%d: device timeout, c_bcount=%d, c_skip%d\n",
 		    chp->wdc->sc_dev.dv_xname, chp->channel, xfer->drive,
 		    xfer->c_bcount, xfer->c_skip);
+		if (xfer->c_flags & C_DMA)
+				drvp->n_dmaerrs++;
 		sc_xfer->error = XS_TIMEOUT;
 		wdc_atapi_reset(chp, xfer);
 		return 1;
@@ -431,8 +433,9 @@ again:
 		    (xfer->c_flags & C_DMA) != 0) {
 			printf("wdc_atapi_intr: bad data phase DATAOUT");
 			if (xfer->c_flags & C_DMA) {
-				printf(", falling back to PIO\n");
-				drvp->drive_flags &= ~(DRIVE_DMA | DRIVE_UDMA);
+				(*chp->wdc->dma_finish)(chp->wdc->dma_arg,
+				    chp->channel, xfer->drive, dma_flags);
+				drvp->n_dmaerrs++;
 			}
 			sc_xfer->error = XS_TIMEOUT;
 			wdc_atapi_reset(chp, xfer);
@@ -499,8 +502,9 @@ again:
 		    (xfer->c_flags & C_DMA) != 0) {
 			printf("wdc_atapi_intr: bad data phase DATAIN");
 			if (xfer->c_flags & C_DMA) {
-				printf(", falling back to PIO\n");
-				drvp->drive_flags &= ~(DRIVE_DMA | DRIVE_UDMA);
+				(*chp->wdc->dma_finish)(chp->wdc->dma_arg,
+				    chp->channel, xfer->drive, dma_flags);
+				drvp->n_dmaerrs++;
 			}
 			sc_xfer->error = XS_TIMEOUT;
 			wdc_atapi_reset(chp, xfer);
@@ -588,6 +592,7 @@ again:
 				wdc_atapi_start(chp, xfer);
 				return 1;
 			} else if (dma_err < 0) {
+				drvp->n_dmaerrs++;
 				sc_xfer->error = XS_DRIVER_STUFFUP;
 			}
 		}
@@ -726,6 +731,7 @@ wdc_atapi_done(chp, xfer)
 {
 	struct scsipi_xfer *sc_xfer = xfer->cmd;
 	int need_done =  xfer->c_flags & C_NEEDDONE;
+	struct ata_drive_datas *drvp = &chp->ch_drive[xfer->drive];
 
 	WDCDEBUG_PRINT(("wdc_atapi_done %s:%d:%d: flags 0x%x\n",
 	    chp->wdc->sc_dev.dv_xname, chp->channel, xfer->drive,
@@ -735,6 +741,14 @@ wdc_atapi_done(chp, xfer)
 	xfer->c_skip = 0;
 	wdc_free_xfer(chp, xfer);
 	sc_xfer->flags |= ITSDONE;
+	if (sc_xfer->error == XS_NOERROR ||
+	    sc_xfer->error == XS_SENSE ||
+	    sc_xfer->error == XS_SHORTSENSE) {
+		drvp->n_dmaerrs = 0;
+	} else {
+		wdc_downgrade_mode(drvp);
+	}
+	    
 	if (need_done) {
 		WDCDEBUG_PRINT(("wdc_atapi_done: scsipi_done\n"), DEBUG_XFERS);
 		scsipi_done(sc_xfer);
