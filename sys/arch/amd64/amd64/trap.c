@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.9 2003/09/16 15:49:06 cl Exp $	*/
+/*	$NetBSD: trap.c,v 1.10 2003/09/26 21:24:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.9 2003/09/16 15:49:06 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.10 2003/09/26 21:24:34 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -313,7 +313,7 @@ copyfault:
 #ifdef TRAP_SIGDEBUG
 		printf("pid %d (%s): BUS at rip %lx addr %lx\n",
 		    p->p_pid, p->p_comm, frame->tf_rip, rcr2());
-		frame_dump(&frame);
+		frame_dump(frame);
 #endif
 		KERNEL_PROC_LOCK(l);
 		(*p->p_emul->e_trapsignal)(l, SIGBUS, type & ~T_USER);
@@ -325,7 +325,7 @@ copyfault:
 #ifdef TRAP_SIGDEBUG
 		printf("pid %d (%s): ILL at rip %lx addr %lx\n",
 		    p->p_pid, p->p_comm, frame->tf_rip, rcr2());
-		frame_dump(&frame);
+		frame_dump(frame);
 #endif
 		KERNEL_PROC_LOCK(l);
 		(*p->p_emul->e_trapsignal)(l, SIGILL, type & ~T_USER);
@@ -488,7 +488,7 @@ faultcommon:
 #ifdef TRAP_SIGDEBUG
 			printf("pid %d (%s): SEGV at rip %lx addr %lx\n",
 			    p->p_pid, p->p_comm, frame->tf_rip, va);
-			frame_dump(&frame);
+			frame_dump(frame);
 #endif
 			(*p->p_emul->e_trapsignal)(l, SIGSEGV, T_PAGEFLT);
 		}
@@ -531,11 +531,11 @@ faultcommon:
 		printf ("NMI ... going to debugger\n");
 #ifdef KGDB
 
-		if (kgdb_trap(type, &frame))
+		if (kgdb_trap(type, frame))
 			return;
 #endif
 #ifdef DDB
-		if (kdb_trap(type, 0, &frame))
+		if (kdb_trap(type, 0, frame))
 			return;
 #endif
 #endif /* KGDB || DDB */
