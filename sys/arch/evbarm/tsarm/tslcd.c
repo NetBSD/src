@@ -1,4 +1,4 @@
-/* $NetBSD: tslcd.c,v 1.1 2005/01/08 20:23:32 joff Exp $ */
+/* $NetBSD: tslcd.c,v 1.2 2005/01/09 15:48:51 joff Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tslcd.c,v 1.1 2005/01/08 20:23:32 joff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tslcd.c,v 1.2 2005/01/09 15:48:51 joff Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -138,9 +138,9 @@ tslcd_attach(parent, self, aux)
 	GPIO_SETBITS(PHDDR, 0x38);	/* Bits 3:5 of Port H to outputs */
 	GPIO_CLEARBITS(PHDR, 0x18);	/* De-assert EN, De-assert RS */
 
-	hd44780_attach_subr(&sc->sc_lcd);
-
 	printf("\n");
+
+	hd44780_attach_subr(&sc->sc_lcd);
 }
 
 static void
@@ -150,9 +150,13 @@ tslcd_writereg(hd, rs, cmd)
 	u_int8_t cmd;
 {
 	struct tslcd_softc *sc = (struct tslcd_softc *)hd->sc_dev;
-	u_int8_t ctrl = GPIO_GET(PHDR);
+	u_int8_t ctrl;
+
+	if (hd->sc_dev_ok == 0)
+		return;
 
 	/* Step 1: Apply RS & WR, Send data */
+	ctrl = GPIO_GET(PHDR);
 	GPIO_SET(PADDR, 0xff); /* set port A to outputs */
 	GPIO_SET(PADR, cmd);
 	if (rs) {
@@ -194,15 +198,19 @@ tslcd_readreg(hd, rs)
 	u_int32_t rs;
 {
 	struct tslcd_softc *sc = (struct tslcd_softc *)hd->sc_dev;
-	u_int8_t ret, ctrl = GPIO_GET(PHDR);
+	u_int8_t ret, ctrl;
+
+	if (hd->sc_dev_ok == 0)
+		return 0;
 
 	/* Step 1: Apply RS & WR, Send data */
+	ctrl = GPIO_GET(PHDR);
 	GPIO_SET(PADDR, 0x0);	/* set port A to inputs */
 	if (rs) {
+		ctrl |= 0x30;	/* de-assert WR, assert RS */
+	} else {
 		ctrl |= 0x20;	/* de-assert WR */
 		ctrl &= ~0x10;	/* de-assert RS */
-	} else {
-		ctrl |= 0x30;	/* de-assert WR, assert RS */
 	}
 	GPIO_SET(PHDR, ctrl);
 
@@ -233,7 +241,11 @@ tslcdopen(dev, flag, mode, p)
 	struct proc *p;
 {
 	struct tslcd_softc *sc = device_lookup(&tslcd_cd, minor(dev));
-	return ((sc->sc_lcd.sc_dev_ok == 0) ? ENXIO : 0);
+
+	if (sc->sc_lcd.sc_dev_ok == 0)
+		return hd44780_init(&sc->sc_lcd);
+	else
+		return 0;
 }
 
 int
@@ -263,6 +275,9 @@ tslcdwrite(dev, uio, flag)
 	int error;
 	struct hd44780_io io;
 	struct tslcd_softc *sc = device_lookup(&tslcd_cd, minor(dev));
+
+	if (sc->sc_lcd.sc_dev_ok == 0)
+		return EIO;
 
 	io.dat = 0;
 	io.len = uio->uio_resid;
