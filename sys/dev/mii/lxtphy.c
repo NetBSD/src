@@ -1,4 +1,4 @@
-/*	$NetBSD: lxtphy.c,v 1.13 1999/11/12 18:13:00 thorpej Exp $	*/
+/*	$NetBSD: lxtphy.c,v 1.14 1999/12/21 10:47:00 pk Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -255,7 +255,7 @@ lxtphy_status(sc)
 {
 	struct mii_data *mii = sc->mii_pdata;
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
-	int bmcr, csr;
+	int bmcr, bmsr, csr;
 
 	mii->mii_media_status = IFM_AVALID;
 	mii->mii_media_active = IFM_ETHER;
@@ -280,7 +280,8 @@ lxtphy_status(sc)
 		mii->mii_media_active |= IFM_LOOP;
 
 	if (bmcr & BMCR_AUTOEN) {
-		if ((csr & CSR_ACOMP) == 0) {
+		bmsr = PHY_READ(sc, MII_BMSR) | PHY_READ(sc, MII_BMSR);
+		if ((bmsr & BMSR_ACOMP) == 0) {
 			/* Erg, still trying, I guess... */
 			mii->mii_media_active |= IFM_NONE;
 			return;
