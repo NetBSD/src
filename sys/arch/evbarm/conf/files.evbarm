@@ -1,4 +1,4 @@
-#	$NetBSD: files.evbarm,v 1.8 2001/11/28 10:21:13 lukem Exp $
+#	$NetBSD: files.evbarm,v 1.9 2002/01/24 06:51:30 thorpej Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -66,8 +66,6 @@ include "dev/i2o/files.i2o"			# I2O drivers.
 include "dev/pci/files.pci"			# PCI devices
 include "dev/usb/files.usb"			# USB device
 include "dev/cardbus/files.cardbus"		# CARDBus device
-
-file	arch/evbarm/pci/pciide_machdep.c	pciide
 
 #
 # ARM evaluation board specific devices
