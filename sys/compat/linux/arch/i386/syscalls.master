@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.56 2001/03/30 17:59:46 jdolecek Exp $
+	$NetBSD: syscalls.master,v 1.57 2001/05/13 20:54:43 manu Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -149,9 +149,9 @@
 76	NOARGS		{ int compat_43_sys_getrlimit(u_int which, \
 			    struct orlimit *rlp); }
 77	NOARGS		{ int sys_getrusage(int who, struct rusage *rusage); }
-78	NOARGS		{ int sys_gettimeofday(struct timeval *tp, \
+78	STD		{ int linux_sys_gettimeofday(struct timeval *tp, \
 			    struct timezone *tzp); }
-79	NOARGS		{ int sys_settimeofday(struct timeval *tp, \
+79	STD		{ int linux_sys_settimeofday(struct timeval *tp, \
 			    struct timezone *tzp); }
 80	STD		{ int linux_sys_getgroups16(int gidsetsize, linux_gid_t *gidset); }
 81	STD		{ int linux_sys_setgroups16(int gidsetsize, linux_gid_t *gidset); }
