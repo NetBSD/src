@@ -1,4 +1,4 @@
-/* $NetBSD: installboot.c,v 1.18 1999/09/19 04:54:57 ross Exp $ */
+/* $NetBSD: installboot.c,v 1.19 1999/10/04 19:19:11 ross Exp $ */
 
 /*
  * Copyright (c) 1999 Ross Harvey.  All rights reserved.
@@ -74,7 +74,7 @@
 
 static void usage(void);
 static void clr_bootstrap(const char *disk);
-void check_sparc(const struct boot_block * const);
+void check_sparc(const struct boot_block * const, const char *);
 static u_int16_t compute_sparc(const u_int16_t *);
 static void sun_bootstrap(struct boot_block * const);
 static void set_bootstrap(const char *disk, const char *bootstrap);
@@ -268,7 +268,7 @@ set_bootstrap(const char *disk, const char *bootstrap)
 		errx(EXIT_FAILURE, "read %s: short read", disk);
 
 	if (sunflag)
-		check_sparc(&bb);
+		check_sparc(&bb, "initial");
 
 	/* fill in the updated boot block fields, and checksum boot block */
 	bb.bb_secsize = howmany(bootstrapsb.st_size, BOOT_BLOCK_BLOCKSIZE);
@@ -319,10 +319,14 @@ done:
 
 /*
  * The Sun and alpha checksums overlay, and the Sun magic number also
- * overlays the alpha checksum. Fortunately, there are a set of identity
- * transformations for the Sun checksum that can fit within bits of the
- * alpha checksum that are not overlayed. Add to the xor and algebra
- * magic a bit of carry-blocking magic, and everything Just Works.
+ * overlays the alpha checksum. If you think you are smart: stop here
+ * and do exercise one: figure out how to salt unimportant u_int16_t
+ * words in mid-sector so that the alpha and sparc checksums match,
+ * and so the Sun magic number is embedded in the alpha checksum.
+ *
+ * The last u_int64_t in the sector is the alpha arithmetic checksum.
+ * The last u_int16_t in the sector is the sun xor checksum.
+ * The penultimate u_int16_t in the sector is the sun magic number.
  *
  *	A:   511     510     509     508     507     506     505     504
  *	S:   510     511     508     509     506     507     504     505
@@ -337,68 +341,85 @@ done:
  */
 
 static void
+resum(struct boot_block * const bb, u_int16_t *bb16)
+{
+	memcpy(bb, bb16, sizeof *bb);
+	CHECKSUM_BOOT_BLOCK(bb, &bb->bb_cksum);
+	memcpy(bb16, bb, sizeof *bb);
+}
+
+static void
 sun_bootstrap(struct boot_block * const bb)
 {
 #	define BB_ADJUST_OFFSET 64
-	u_int16_t sunsum, old_3, bb16[256];
+	u_int16_t i, j, chkdelta, sunsum, bb16[256];
 
 	/*
 	 * Theory: the alpha checksum is adjusted so bits 47:32 add up
 	 * to the Sun magic number. Then, another adjustment is computed
-	 * so bits 63:48 add up to the Sun checksum. This changes the Sun
-	 * checksum, however, so compensating entries are made in bits
-	 * 15:0 to restore the original Sun value. This changes the alpha
-	 * value, but only in bits that don't overlay.
-	 *
-	 * A new carry (or lost carry) out of bit 31 would break things,
-	 * so prearrange for the alpha 31:16 bits to be 01010101...
+	 * so bits 63:48 add up to the Sun checksum, and applied in pieces
+	 * so it changes the alpha checksum but not the Sun value.
 	 *
   	 * Note: using memcpy(3) instead of a union as a strict c89/c9x
   	 * conformance experiment and to avoid a public interface delta.
 	 */
 	assert(sizeof bb16 == sizeof *bb);
 	memcpy(bb16, bb, sizeof bb16);
-	bb16[BB_ADJUST_OFFSET + 1] = 0x5555 - bb16[253]; /* carry trap */
-	memcpy(bb, bb16, sizeof bb16);
-	CHECKSUM_BOOT_BLOCK(bb, &bb->bb_cksum);
-	memcpy(bb16, bb, sizeof bb16);
+	for (i = 0; i < 8; ++i) {
+		j = BB_ADJUST_OFFSET + i;
+		if (bb16[j]) {
+			warnx("non-zero bits %04x in bytes %d..%d",
+			    bb16[j], j * 2, j * 2 + 1);
+			bb16[j] = 0;
+			resum(bb, bb16);
+		}
+	}
 	/*
 	 * Make alpha checksum <47:32> come out to the sun magic.
 	 */
 	bb16[BB_ADJUST_OFFSET + 2] = htons(SUN_DKMAGIC) - bb16[254];
-	memcpy(bb, bb16, sizeof bb16);
-	CHECKSUM_BOOT_BLOCK(bb, &bb->bb_cksum);
-	memcpy(bb16, bb, sizeof bb16);
-	sunsum = compute_sparc(bb16);	/* this is the final value */
+	resum(bb, bb16);
+	sunsum = compute_sparc(bb16);		/* might be the final value */
+	if (verbose)
+		printf("target sun checksum is %04x\n", sunsum);
 	/*
 	 * Arrange to have alpha 63:48 add up to the sparc checksum.
 	 */
-	old_3 = bb16[BB_ADJUST_OFFSET + 3];
-	bb16[BB_ADJUST_OFFSET + 3] = sunsum - bb16[255];
+	chkdelta = sunsum - bb16[255];
+	bb16[BB_ADJUST_OFFSET + 3] = chkdelta >> 1;
+	bb16[BB_ADJUST_OFFSET + 7] = chkdelta >> 1;
 	/*
-	 * The sparc checksum has changed again to a third value. Modify
-	 * the alpha 15:0 bits to restore the previous sparc checksum
-	 * that we went to all the trouble to generate.
+	 * By placing half the correction in two different u_int64_t words at
+	 * positions 63:48, the sparc sum will not change but the alpha sum
+	 * will have the full correction, but only if the target adjustment
+	 * was even. If it was odd, reverse propagate the carry one place.
 	 */
-	bb16[BB_ADJUST_OFFSET + 0] ^= (old_3 ^ bb16[BB_ADJUST_OFFSET + 3]);
-	memcpy(bb, bb16, sizeof bb16);
-	CHECKSUM_BOOT_BLOCK(bb, &bb->bb_cksum);
+	if (chkdelta & 1) {
+		if (verbose)
+			printf("target adjustment %04x was odd, correcting\n",
+			    chkdelta);
+		bb16[BB_ADJUST_OFFSET + 2] += 0x8000;
+		bb16[BB_ADJUST_OFFSET + 6] += 0x8000;
+	}
+	resum(bb, bb16);
 	if (verbose)
 		printf("final harmonized checksum: %016lx\n", bb->bb_cksum);
+	check_sparc(bb, "final");
 }
 
 void
-check_sparc(const struct boot_block * const bb)
+check_sparc(const struct boot_block * const bb, const char *when)
 {
 	u_int16_t bb16[256];
-	const char * const wmsg = "warning, initial sparc %s 0x%04x invalid,"
+	const char * const wmsg = "warning, %s sparc %s 0x%04x invalid,"
 	    " expected 0x%04x";
 
 	memcpy(bb16, bb, sizeof bb16);
 	if (compute_sparc(bb16) != bb16[255])
-		warnx(wmsg, "checksum", bb16[255], compute_sparc(bb16));
+		warnx(wmsg, when, "checksum", bb16[255], compute_sparc(bb16));
 	if (bb16[254] != htons(SUN_DKMAGIC))
-		warnx(wmsg, "magic number", bb16[254], htons(SUN_DKMAGIC));
+		warnx(wmsg, when, "magic number", bb16[254],
+		    htons(SUN_DKMAGIC));
 }
 
 static u_int16_t
