@@ -35,30 +35,30 @@ SUBDIRS=	common server client relay
 all:
 	@for dir in ${SUBDIRS}; do \
 		echo "Making all in $$dir"; \
-		(cd $$dir; $(MAKE) all); \
+		(cd $$dir; $(MAKE) all) || exit 1; \
 	 done
 
 install:
 	@for dir in ${SUBDIRS}; do \
 		echo "Installing in $$dir"; \
-		(cd $$dir; $(MAKE) install); \
+		(cd $$dir; $(MAKE) install) || exit 1; \
 	 done
 
 clean:
 	@for dir in ${SUBDIRS}; do \
 		echo "Cleaning in $$dir"; \
-		(cd $$dir; $(MAKE) clean); \
+		(cd $$dir; $(MAKE) clean) || exit 1; \
 	 done
 
 realclean:
 	@for dir in ${SUBDIRS}; do \
 		echo "Really cleaning in $$dir"; \
-		(cd $$dir; $(MAKE) realclean); \
+		(cd $$dir; $(MAKE) realclean) || exit 1; \
 	 done
 
 distclean:
 	@for dir in ${SUBDIRS}; do \
 		echo "Really, really cleaning in $$dir"; \
-		(cd $$dir; $(MAKE) distclean); \
+		(cd $$dir; $(MAKE) distclean) || exit 1; \
 	 done
 	@rm -f Makefile

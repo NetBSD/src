@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: clparse.c,v 1.1.1.4 1997/11/22 09:13:35 mellon Exp $ Copyright (c) 1997 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: clparse.c,v 1.1.1.5 1999/02/18 21:48:47 mellon Exp $ Copyright (c) 1997 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -112,16 +112,18 @@ int read_client_conf ()
 	top_level_config.send_options [DHO_DHCP_LEASE_TIME].len
 		= sizeof requested_lease_time;
 
-	if ((cfile = fopen (path_dhclient_conf, "r")) == NULL)
-		error ("Can't open %s: %m", path_dhclient_conf);
-	do {
-		token = peek_token (&val, cfile);
-		if (token == EOF)
-			break;
-		parse_client_statement (cfile, (struct interface_info *)0,
-					&top_level_config);
-	} while (1);
-	token = next_token (&val, cfile); /* Clear the peek buffer */
+	if ((cfile = fopen (path_dhclient_conf, "r")) != NULL) {
+		do {
+			token = peek_token (&val, cfile);
+			if (token == EOF)
+				break;
+			parse_client_statement (cfile,
+						(struct interface_info *)0,
+						&top_level_config);
+		} while (1);
+		token = next_token (&val, cfile); /* Clear the peek buffer */
+		fclose (cfile);
+	}
 
 	/* Set up state and config structures for clients that don't
 	   have per-interface configuration declarations. */
@@ -771,8 +773,9 @@ struct option *parse_option_decl (cfile, options)
 
 		/* Look up the option name hash table for the specified
 		   vendor. */
-		universe = (struct universe *)hash_lookup (&universe_hash,
-							   vendor, 0);
+		universe = ((struct universe *)
+			    hash_lookup (&universe_hash,
+					 (unsigned char *)vendor, 0));
 		/* If it's not there, we can't parse the rest of the
 		   declaration. */
 		if (!universe) {
@@ -788,7 +791,8 @@ struct option *parse_option_decl (cfile, options)
 	}
 
 	/* Look up the actual option info... */
-	option = (struct option *)hash_lookup (universe -> hash, val, 0);
+	option = (struct option *)hash_lookup (universe -> hash,
+					       (unsigned char *)val, 0);
 
 	/* If we didn't get an option structure, it's an undefined option. */
 	if (!option) {

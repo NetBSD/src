@@ -7,6 +7,8 @@ machine=`uname -m`
 
 if [ "$sysname" = "" ]; then
   case $uname in
+    Rhapsody)
+      sysname=rhapsody;;
     ULTRIX)
       sysname=ultrix;;
     BSD/OS)
@@ -19,6 +21,7 @@ if [ "$sysname" = "" ]; then
       case `uname -r` in
 	1*) sysname=linux-1 ;;
 	2.1*) sysname=linux-2.1 ;;
+	2.2*) sysname=linux-2.2 ;;
 	2*) sysname=linux-2.0 ;;
       esac;;
     SunOS)

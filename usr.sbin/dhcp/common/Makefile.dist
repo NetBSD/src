@@ -31,11 +31,11 @@
 
 CATMANPAGES = dhcp-options.cat5
 SRC    = raw.c parse.c nit.c icmp.c dispatch.c conflex.c upf.c bpf.c socket.c \
-	 packet.c memory.c print.c options.c inet.c convert.c \
-	 tree.c tables.c hash.c alloc.c errwarn.c inet_addr.c
+       	 lpf.c packet.c memory.c print.c options.c inet.c convert.c \
+	 tree.c tables.c hash.c alloc.c errwarn.c inet_addr.c dlpi.c
 OBJ    = raw.o parse.o nit.o icmp.o dispatch.o conflex.o upf.o bpf.o socket.o \
-	 packet.o memory.o print.o options.o inet.o convert.o \
-	 tree.o tables.o hash.o alloc.o errwarn.o inet_addr.o
+	 lpf.o packet.o memory.o print.o options.o inet.o convert.o \
+	 tree.o tables.o hash.o alloc.o errwarn.o inet_addr.o dlpi.o
 MAN    = dhcp-options.5
 
 DEBUG  = -g
