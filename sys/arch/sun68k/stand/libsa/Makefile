@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2002/05/15 04:07:43 lukem Exp $
+#	$NetBSD: Makefile,v 1.11.4.1 2002/05/31 11:23:47 tv Exp $
 
 LIB=sa
 
@@ -50,9 +50,7 @@ SRCS= ${SRC_net} ${SRC_sa} ${SRC_kern} ${SRC_here}
 libinstall::
 
 # bring in the required libgcc integer support:
-.if defined(MACHINE_ARCH) && (${MACHINE_ARCH} == "m68000")
 SRCS+= mulsi3.S divsi3.S udivsi3.S modsi3.S umodsi3.S muldi3.c
-.endif
 
 .include <bsd.own.mk>
 .undef DESTDIR=
