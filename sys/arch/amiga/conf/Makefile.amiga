@@ -1,5 +1,4 @@
-#	from: @(#)Makefile.hp300	7.10 (Berkeley) 6/27/91
-#	$Id: Makefile.amiga,v 1.3 1993/09/02 18:07:47 mw Exp $
+#	@(#)Makefile.hp300	7.10 (Berkeley) 6/27/91
 #
 # Makefile for 4.4 BSD
 #
@@ -37,6 +36,13 @@ INCLUDES= -I. -I$S/arch -I$S -I$S/sys
 COPTS=	${INCLUDES} ${IDENT} -DKERNEL -Dmc68020 -Damiga -DREFBIT
 CFLAGS=	-O -mc68020 -m68881 ${COPTS}
 
+### find out what to use for libkern
+.include "$S/lib/libkern/Makefile.inc"
+.ifndef PROF
+LIBKERN=	${KERNLIB}
+.else
+LIBKERN=	${KERNLIB_PROF}
+.endif
 # compile rules: rules are named ${TYPE}_${SUFFIX}${CONFIG_DEP}
 # where TYPE is NORMAL, DRIVER, or PROFILE}; SUFFIX is the file suffix,
 # capitalized (e.g. C for a .c file), and CONFIG_DEP is _C if the file
@@ -65,7 +71,7 @@ NORMAL_S_C=	${CPP} ${COPTS} ${PARAM} $< | ${AS} -o $@
 #	${SYSTEM_LD_HEAD}
 #	${SYSTEM_LD} swapxxx.o
 #	${SYSTEM_LD_TAIL}
-SYSTEM_OBJ=	locore.o ${OBJS} param.o ioconf.o vers.o
+SYSTEM_OBJ=	locore.o ${OBJS} param.o ioconf.o vers.o ${LIBKERN}
 #SYSTEM_DEP=	Makefile symbols.sort ${SYSTEM_OBJ}
 SYSTEM_DEP=	Makefile ${SYSTEM_OBJ}
 SYSTEM_LD_HEAD=	@echo loading $@; rm -f $@

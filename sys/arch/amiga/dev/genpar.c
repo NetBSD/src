@@ -1,5 +1,3 @@
-/*	$Id: genpar.c,v 1.2 1993/08/02 18:33:31 mycroft Exp $ */
-
 #define bset(i,b) ((i & (1<<b))?1:0)
 
 main()

@@ -35,19 +35,14 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: Utah Hdr: ite.c 1.1 90/07/09
+ * from: Utah $Hdr: ite.c 1.1 90/07/09$
+ *
  *	from: @(#)ite.c	7.6 (Berkeley) 5/16/91
-<<<<<<< ite.c
- *	$Id: ite.c,v 1.3 1993/09/02 18:08:02 mw Exp $
-||||||| 1.1.1.2
- *	$Id: ite.c,v 1.3 1993/09/02 18:08:02 mw Exp $
-=======
- *	$Id: ite.c,v 1.3 1993/09/02 18:08:02 mw Exp $
+ *	$Id: ite.c,v 1.4 1993/10/30 23:41:17 mw Exp $
  *
  * Original author: unknown
  * Amiga author:: Markus Wild
  * Other contributors: Bryan Ford (improved vt100 compability)
->>>>>>> /tmp/T4009622
  */
 
 /*
@@ -253,26 +248,8 @@ iteinit(dev)
 	ip->cursorx = 0;
 	ip->cursory = 0;
 	(*itesw[ip->type].ite_init)(ip);
-<<<<<<< ite.c
-	(*itesw[ip->type].ite_cursor)(ip, DRAW_CURSOR);
-||||||| 1.1.1.2
-	(*itesw[ip->type].ite_cursor)(ip, DRAW_CURSOR);
 
-	/* ip->rows initialized by ite_init above */
-	ip->top_margin = 0; ip->bottom_margin = ip->rows - 1;
-=======
->>>>>>> /tmp/T4009622
-
-<<<<<<< ite.c
-	/* ip->rows initialized by ite_init above */
-	ip->top_margin = 0; ip->bottom_margin = ip->rows - 1;
-
-	ip->attribute = 0;
-||||||| 1.1.1.2
-	ip->attribute = 0;
-=======
 #ifdef DO_WEIRD_ATTRIBUTES
->>>>>>> /tmp/T4009622
 	if (ip->attrbuf == NULL)
 		ip->attrbuf = (u_char *)
 			malloc(ip->rows * ip->cols, M_DEVBUF, M_WAITOK);
@@ -686,9 +663,9 @@ itefilter(c, caller)
     }
 
 
-  /* intercept Ctrl-LAlt-F1 here to switch back to original ascii-keymap.
+  /* intercept LAlt-LMeta-F1 here to switch back to original ascii-keymap.
      this should probably be configurable.. */
-  if (mod == (KBD_MOD_LALT|KBD_MOD_SHIFT) && code == 0x50)
+  if (mod == (KBD_MOD_LALT|KBD_MOD_LMETA) && c == 0x50)
     {
       bcopy (&ascii_kbdmap, &kbdmap, sizeof (struct kbdmap));
       splx (s);
@@ -770,7 +747,8 @@ itefilter(c, caller)
     }
   
   /* if not string, apply META and CTRL modifiers */
-  if (! (key.mode & KBD_MODE_STRING))
+  if (! (key.mode & KBD_MODE_STRING) 
+      && (!(key.mode & KBD_MODE_KPAD) || !kbd_ip->keypad_appmode))
     {
       if (mod & KBD_MOD_CTRL)
         code &= 0x1f;
@@ -778,12 +756,42 @@ itefilter(c, caller)
       if (mod & KBD_MOD_META)
         code |= 0x80;
     }
+  else if ((key.mode & KBD_MODE_KPAD) && kbd_ip->keypad_appmode)
+    {
+      static char *in  = "0123456789-+.\r()/*";
+      static char *out = "pqrstuvwxymlnMPQRS";
+      char *cp;
+      
+      if (caller != ITEFILT_CONSOLE && (cp = index (in, code)))
+	{
+	  /* keypad-appmode sends SS3 followed by the above translated
+	     character */
+	  itesendch (27); itesendch ('O');
+	  itesendch (out[cp - in]);
+	  splx (s);
+	  return -1;
+	}
+    }
   else
     {
       /* strings are only supported in normal tty mode, not in console mode */
       if (caller != ITEFILT_CONSOLE)
         {
+	  /* *NO* I don't like this.... */
+	  static u_char app_cursor[] = {
+	    3, 27, 'O', 'A',
+	    3, 27, 'O', 'B',
+	    3, 27, 'O', 'C',
+	    3, 27, 'O', 'D'};
+
           str = kbdmap.strings + code;
+	  /* if this is a cursor key, AND it has the default keymap setting,
+	     AND we're in app-cursor mode, switch to the above table. This
+	     is *nasty* ! */
+	  if (c >= 0x4c && c <= 0x4f && kbd_ip->cursor_appmode 
+	      && !bcmp (str, "\x03\x1b[", 3) && index ("ABCD", str[3]))
+	    str = app_cursor + 4 * (str[3] - 'A');
+
           /* using a length-byte instead of 0-termination allows to embed \0 into
              strings, although this is not used in the default keymap */
           for (i = *str++; i; i--)
@@ -969,6 +977,11 @@ ite_dnline(ip, sp, n)
      struct itesw *sp;
      int n;
 {
+  /* interesting.. if the cursor is outside the scrolling
+     region, this command is simply ignored.. */
+  if (ip->cury < ip->top_margin || ip->cury > ip->bottom_margin)
+    return;
+
   n = MIN(n, ip->bottom_margin + 1 - ip->cury);
   if (n <= ip->bottom_margin - ip->cury)
     {
@@ -987,19 +1000,21 @@ ite_inline(ip, sp, n)
      struct itesw *sp;
      int n;
 {
-  if ((ip->cury >= ip->top_margin) && (ip->cury <= ip->bottom_margin))
+  /* interesting.. if the cursor is outside the scrolling
+     region, this command is simply ignored.. */
+  if (ip->cury < ip->top_margin || ip->cury > ip->bottom_margin)
+    return;
+
+  n = MIN(n, ip->bottom_margin + 1 - ip->cury);
+  if (n <= ip->bottom_margin - ip->cury)
     {
-      n = MIN(n, ip->bottom_margin + 1 - ip->cury);
-      if (n <= ip->bottom_margin - ip->cury)
-	{
-	  (*sp->ite_scroll)(ip, ip->cury, 0, n, SCROLL_DOWN);
-	  attrmov(ip, ip->cury, 0, ip->cury + n, 0,
-		  ip->bottom_margin + 1 - ip->cury - n, ip->cols);
-	}
-      (*sp->ite_clear)(ip, ip->cury, 0, n, ip->cols);
-      attrclr(ip, ip->cury, 0, n, ip->cols);
-      (*sp->ite_cursor)(ip, DRAW_CURSOR);
+      (*sp->ite_scroll)(ip, ip->cury, 0, n, SCROLL_DOWN);
+      attrmov(ip, ip->cury, 0, ip->cury + n, 0,
+	      ip->bottom_margin + 1 - ip->cury - n, ip->cols);
     }
+  (*sp->ite_clear)(ip, ip->cury, 0, n, ip->cols);
+  attrclr(ip, ip->cury, 0, n, ip->cols);
+  (*sp->ite_cursor)(ip, DRAW_CURSOR);
 }
 
 static void inline
@@ -1007,27 +1022,14 @@ ite_lf (ip, sp)
      struct ite_softc *ip;
      struct itesw *sp;
 {
-  if (ip->inside_margins)
+  ++ip->cury;
+  if ((ip->cury == ip->bottom_margin+1) || (ip->cury == ip->rows))
     {
-      ++ip->cury;
-      if ((ip->cury == ip->bottom_margin+1) || (ip->cury == ip->rows))
-        {
-          ip->cury--;
-          (*sp->ite_scroll)(ip, ip->top_margin + 1, 0, 1, SCROLL_UP);
-          ite_clrline(ip, sp);
-        }
-      (*sp->ite_cursor)(ip, MOVE_CURSOR);
+      ip->cury--;
+      (*sp->ite_scroll)(ip, ip->top_margin + 1, 0, 1, SCROLL_UP);
+      ite_clrline(ip, sp);
     }
-  else
-    {
-      if (++ip->cury >= ip->rows) 
-        {
-          ip->cury = ip->rows - 1;
-          (*sp->ite_scroll)(ip, 1, 0, 1, SCROLL_UP);
-          ite_clrline(ip, sp);
-        }
-      (*sp->ite_cursor)(ip, MOVE_CURSOR);
-    }
+  (*sp->ite_cursor)(ip, MOVE_CURSOR);
   clr_attr(ip, ATTR_INV);
 }
 
@@ -1057,13 +1059,11 @@ ite_rlf (ip, sp)
      struct ite_softc *ip;
      struct itesw *sp;
 {
-  int top = ip->inside_margins ? ip->top_margin : 0;
-
   ip->cury--;
-  if ((ip->cury < 0) || (ip->cury == top-1))
+  if ((ip->cury < 0) || (ip->cury == ip->top_margin - 1))
     {
       ip->cury++;
-      (*sp->ite_scroll)(ip, top, 0, 1, SCROLL_DOWN);
+      (*sp->ite_scroll)(ip, ip->top_margin, 0, 1, SCROLL_DOWN);
       ite_clrline(ip, sp);
     }
   (*sp->ite_cursor)(ip, MOVE_CURSOR);
@@ -1156,7 +1156,7 @@ ite_reset(ip)
   ip->emul_level = EMUL_VT300_7;
   ip->eightbit_C1 = 0;
   ip->top_margin = 0; ip->bottom_margin = ip->rows - 1;
-  ip->inside_margins = 1;
+  ip->inside_margins = 0;
   ip->linefeed_newline = 0;
   ip->auto_wrap = 0;
   ip->cursor_appmode = 0;
@@ -1442,6 +1442,7 @@ doesc:
 		    
 		  case '8':
 		    /* screen alignment pattern... */
+		    alignment_display (ip, sp);
 		    ip->escape = 0;
 		    return;
 		    
@@ -1463,6 +1464,16 @@ doesc:
 	            if (ip->ap < ip->argbuf + ARGBUF_SIZE)
 	              *ip->ap++ = c;
 	            return;
+
+		  case BS:
+		    /* you wouldn't believe such perversion is possible?
+		       it is.. BS is allowed in between cursor sequences
+		       (at least), according to vttest.. */
+		    if (--ip->curx < 0)
+		      ip->curx = 0;
+		    else
+		      (*sp->ite_cursor)(ip, MOVE_CURSOR);
+		    break;
 
 	          case 'p':
 		    *ip->ap = 0;
@@ -1501,15 +1512,7 @@ doesc:
 			break;
 		      }
 		    ip->escape = 0;
-<<<<<<< ite.c
-		    return -1;
-||||||| 1.1.1.2
-		    return -1;
-
-=======
 		    return;
->>>>>>> /tmp/T4009622
-
 
 		  case 'n':
 		    switch (ite_zargnum(ip))
@@ -1525,27 +1528,8 @@ doesc:
 			break;
 		      }
 		    ip->escape = 0;
-<<<<<<< ite.c
-		    return -1;
-	          
-||||||| 1.1.1.2
-		    return -1;
-=======
 		    return;
->>>>>>> /tmp/T4009622
 	          
-<<<<<<< ite.c
-	          case 'h': case 'l':
-		    *ip->ap = 0;
-		    if (ip->ap == &ip->argbuf[1] && ip->argbuf[0] == '4')
-		      ip->imode = (c == 'h');	/* insert/replace mode */
-||||||| 1.1.1.2
-	          
-	          case 'h': case 'l':
-		    *ip->ap = 0;
-		    if (ip->ap == &ip->argbuf[1] && ip->argbuf[0] == '4')
-		      ip->imode = (c == 'h');	/* insert/replace mode */
-=======
   
 		  case 'x':
 		    switch (ite_zargnum(ip))
@@ -1560,7 +1544,6 @@ doesc:
 		      }
 		    ip->escape = 0;
 		    return;
->>>>>>> /tmp/T4009622
 
 
 		  case 'g':
@@ -1618,6 +1601,36 @@ doesc:
 	            return;
 
 
+		  case 'G':
+		    /* this one was *not* in my vt320 manual but in 
+		       a vt320 termcap entry.. who is right?
+		       It's supposed to set the horizontal cursor position. */
+		    *ip->ap = 0;
+		    x = atoi (ip->argbuf);
+		    if (x) x--;
+		    ip->curx = MIN(x, ip->cols - 1);
+		    ip->escape = 0;
+		    (*sp->ite_cursor)(ip, MOVE_CURSOR);
+		    clr_attr (ip, ATTR_INV);
+		    return;
+
+
+		  case 'd':
+		    /* same thing here, this one's for setting the absolute
+		       vertical cursor position. Not documented... */
+		    *ip->ap = 0;
+		    y = atoi (ip->argbuf);
+		    if (y) y--;
+		    if (ip->inside_margins)
+		      y += ip->top_margin;
+		    ip->cury = MIN(y, ip->rows - 1);
+		    ip->escape = 0;
+		    snap_cury(ip, sp);
+		    (*sp->ite_cursor)(ip, MOVE_CURSOR);
+		    clr_attr (ip, ATTR_INV);
+		    return;
+
+
 		  case 'H':
 		  case 'f':
 		    *ip->ap = 0;
@@ -1628,6 +1641,8 @@ doesc:
 		      x = atoi (cp + 1);
 		    if (x) x--;
 		    if (y) y--;
+		    if (ip->inside_margins)
+		      y += ip->top_margin;
 		    ip->cury = MIN(y, ip->rows - 1);
 		    ip->curx = MIN(x, ip->cols - 1);
 		    ip->escape = 0;
@@ -1637,17 +1652,32 @@ doesc:
 		    return;
 		    
 		  case 'A':		    
-		    n = ip->cury - ite_argnum (ip);
+		    n = ite_argnum (ip);
+		    n = ip->cury - (n ? n : 1);
 		    if (n < 0) n = 0;
-		    ip->cury = MAX(n, ip->inside_margins ? ip->top_margin : 0);
+		    if (ip->inside_margins)
+		      n = MAX(ip->top_margin, n);
+		    else if (n == ip->top_margin - 1)
+		      /* allow scrolling outside region, but don't scroll out
+			 of active region without explicit CUP */
+		      n = ip->top_margin;
+		    ip->cury = n;
 		    ip->escape = 0;
 		    (*sp->ite_cursor)(ip, MOVE_CURSOR);
 		    clr_attr (ip, ATTR_INV);
 		    return;
 		  
 		  case 'B':
-		    n = ite_argnum (ip) + ip->cury;
-		    ip->cury = MIN(n, ip->inside_margins ? ip->bottom_margin : ip->rows - 1);
+		    n = ite_argnum (ip);
+		    n = ip->cury + (n ? n : 1);
+		    n = MIN(ip->rows - 1, n);
+		    if (ip->inside_margins)
+		      n = MIN(ip->bottom_margin, n);
+		    else if (n == ip->bottom_margin + 1)
+		      /* allow scrolling outside region, but don't scroll out
+			 of active region without explicit CUP */
+		      n = ip->bottom_margin;
+		    ip->cury = n;
 		    ip->escape = 0;
 		    (*sp->ite_cursor)(ip, MOVE_CURSOR);
 		    clr_attr (ip, ATTR_INV);
@@ -1655,6 +1685,7 @@ doesc:
 		  
 		  case 'C':
 		    n = ite_argnum (ip);
+		    n = n ? n : 1;
 		    ip->curx = MIN(ip->curx + n, ip->cols - 1);
 		    ip->escape = 0;
 		    (*sp->ite_cursor)(ip, MOVE_CURSOR);
@@ -1663,6 +1694,7 @@ doesc:
 		  
 		  case 'D':
 		    n = ite_argnum (ip);
+		    n = n ? n : 1;
 		    n = ip->curx - n;
 		    ip->curx = n >= 0 ? n : 0;
 		    ip->escape = 0;
@@ -1719,27 +1751,30 @@ doesc:
 		  case 'r':
 		    *ip->ap = 0;
 		    x = atoi (ip->argbuf);
-		    y = 0;
+		    x = x ? x : 1;
+		    y = ip->rows;
 		    cp = index (ip->argbuf, ';');
 		    if (cp)
-		      y = atoi (cp + 1);
-		    if ((x > 0) || (y > 1))
 		      {
-		        if (x) x--;
-		        if (y) y--;
-		        ip->top_margin = MIN(x, ip->rows - 1);
-		        ip->bottom_margin = MIN(y, ip->rows - 1);
-			if (ip->bottom_margin < ip->top_margin)
-			  ip->bottom_margin = ip->top_margin;
+			y = atoi (cp + 1);
+			y = y ? y : ip->rows;
 		      }
-		    else
+		    if (y - x < 2)
 		      {
-			ip->top_margin = 0;
-			ip->bottom_margin = ip->rows - 1;
+			/* if illegal scrolling region, reset to defaults */
+			x = 1;
+			y = ip->rows;
 		      }
-		    ip->cury = ip->top_margin;
-		    ip->curx = 0;
-		    (*sp->ite_cursor)(ip, MOVE_CURSOR);
+		    x--;
+		    y--;
+		    ip->top_margin = MIN(x, ip->rows - 1);
+		    ip->bottom_margin = MIN(y, ip->rows - 1);
+		    if (ip->inside_margins)
+		      {
+			ip->cury = ip->top_margin;
+			ip->curx = 0;
+			(*sp->ite_cursor)(ip, MOVE_CURSOR);
+		      }
 		    ip->escape = 0;
 		    return;
 		    
@@ -1892,6 +1927,9 @@ doesc:
 
 		      case 6: /* origin mode */
 			ip->inside_margins = (c == 'h');
+			ip->curx = 0;
+			ip->cury = ip->inside_margins ? ip->top_margin : 0;
+			(*sp->ite_cursor)(ip, MOVE_CURSOR);
 			break;
 
 		      case 7: /* auto wraparound */

@@ -30,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: kbd.c,v 1.3 1993/09/02 18:08:06 mw Exp $
+ *	kbd.c
  */
 
 #include "ite.h"

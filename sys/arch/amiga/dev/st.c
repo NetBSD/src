@@ -35,9 +35,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: Utah Hdr: st.c 1.8 90/10/14
- *	from: @(#)st.c	7.3 (Berkeley) 5/4/91
- *	$Id: st.c,v 1.3 1993/09/02 18:08:16 mw Exp $
+ * from: Utah $Hdr: st.c 1.8 90/10/14$
+ *
+ *      @(#)st.c	7.3 (Berkeley) 5/4/91
  */
 
 /*
@@ -111,7 +111,7 @@ extern int stcommand (dev_t dev, u_int command, int cnt);
 extern int sterror (int unit, struct st_softc *sc, int stat);
 extern int stxsense (int ctlr, int slave, int unit, struct st_softc *sc);
 extern int prtkey (int unit, struct st_softc *sc);
-extern int dumpxsense (struct st_xsense *sensebuf);
+extern int dumpxsense (struct st_xsense *sensebuf, struct st_softc *sc);
 extern int prtmodsel (struct mode_select_data *msd, int modlen);
 extern int prtmodstat (struct mode_sense *mode);
 
@@ -156,8 +156,13 @@ struct	st_mode st_mode[NST];
  */
 static struct st_xsense {
 	struct	scsi_xsense sc_xsense;	/* data from sense */
-	struct	exb_xsense exb_xsense;	/* additional info from exabyte */
+	union {
+	    struct exb_xsense uexb_xsense; /* additional info from exabyte */
+	    struct cpr_xsense ucpr_xsense; /* additional info from caliper */
+	} u;
 } st_xsense[NST];
+#define exb_xsense u.uexb_xsense
+#define cpr_xsense u.ucpr_xsense
 
 static struct scsi_fmt_cdb stcmd[NST];
 
@@ -316,10 +321,10 @@ stident(sc, ad)
 			if (idstr[i] != ' ')
 				break;
 		idstr[i+1] = 0;
-		printf("st%d: %s >%s< rev %s\n", ad->amiga_unit, idstr, &idstr[8],
+		printf("st%d: %s %s rev %s\n", ad->amiga_unit, idstr, &idstr[8],
 		       &idstr[24]);
 	} else if (inqlen == 5)
-		/* great it's a stupid device, doesn't know it's know name */
+		/* great it's a stupid device, doesn't know it's own name */
 		idstr[0] = idstr[8] = '\0';
 	else
 		idstr[8] = '\0';
@@ -358,6 +363,12 @@ stident(sc, ad)
 		sc->sc_datalen[CMD_MODE_SENSE] = 12;
 	} else if (bcmp("5150ES", &idstr[8], 6) == 0) {
 		sc->sc_tapeid = MT_ISWANGTEK;
+		sc->sc_datalen[CMD_REQUEST_SENSE] = 14;
+		sc->sc_datalen[CMD_INQUIRY] = 36;
+		sc->sc_datalen[CMD_MODE_SELECT] = 12;
+		sc->sc_datalen[CMD_MODE_SENSE] = 12;
+	} else if (bcmp("CP150", &idstr[8], 5) == 0) {
+		sc->sc_tapeid = MT_ISCALIPER;
 		sc->sc_datalen[CMD_REQUEST_SENSE] = 14;
 		sc->sc_datalen[CMD_INQUIRY] = 36;
 		sc->sc_datalen[CMD_MODE_SELECT] = 12;
@@ -414,6 +425,7 @@ stopen(dev, flag, type, p)
 	struct mode_select_data msd;
 	struct mode_sense mode;
 	int modlen;
+	int skip_modsel = 0;
 	static struct scsi_fmt_cdb modsel = {
 		6,
 		CMD_MODE_SELECT, 0, 0, 0, sizeof(msd), 0
@@ -470,6 +482,13 @@ stopen(dev, flag, type, p)
 		sc->sc_blklen = 512;
 		break;
 	case MT_ISWANGTEK:
+	case MT_ISCALIPER:
+ 		stxsense(ctlr, slave, unit, sc);
+ 		/* Calipers can't handle a mode-select if the tape
+ 		 * isn't rewound.
+ 		 */
+ 		if (xsense->cpr_xsense.b11)
+ 			skip_modsel = 1;
 		sc->sc_blklen = 512;
 		break;
 	default:
@@ -482,6 +501,9 @@ stopen(dev, flag, type, p)
 		else
 			sc->sc_blklen = 512;
 	}
+
+	if (skip_modsel)
+		goto mode_selected;
 
 	/* setup for mode select */
 	msd.rsvd1 = 0;
@@ -511,6 +533,7 @@ stopen(dev, flag, type, p)
 			msd.density = 0x4;
 		}
 		break;
+	case MT_ISCALIPER:
 	case MT_ISWANGTEK:
 		if (minor (dev) & STDEV_HIDENSITY)
 			msd.density = 0x10;
@@ -584,6 +607,7 @@ retryselect:
 		goto retryselect;
 	}
 
+mode_selected:
 	/* drive ready ? */
 	stat = scsi_test_unit_rdy(ctlr, slave, unit);
 
@@ -620,6 +644,7 @@ retryselect:
 		case MT_ISHPDAT:
 		case MT_ISVIPER1:
 		case MT_ISPYTHON:
+		case MT_ISCALIPER:
 		case MT_ISWANGTEK:
 			if (xsense->sc_xsense.key == XSK_UNTATTEN)
 				stat = scsi_test_unit_rdy(ctlr, slave, unit);
@@ -652,7 +677,7 @@ retryselect:
 		stxsense(ctlr, slave, unit, sc);
 #ifdef DEBUG
 		if (st_debug & ST_OPEN)
-			dumpxsense(xsense);
+			dumpxsense(xsense, sc);
 #endif
 	}
 	if (stat)
@@ -1385,8 +1410,9 @@ prtkey(unit, sc)
 
 #ifdef DEBUG
 
-dumpxsense(sensebuf)
+dumpxsense(sensebuf, sc)
 	struct st_xsense *sensebuf;
+	struct st_softc *sc;
 {
         struct st_xsense *xp = sensebuf;
 
@@ -1402,29 +1428,44 @@ dumpxsense(sensebuf)
 			(xp->sc_xsense.info3<<8)|(xp->sc_xsense.info4)) );
 	printf("ASenseL 0x%x\n", xp->sc_xsense.len);
 
-	if (xp->sc_xsense.len != 0x12) /* MT_ISEXB Exabyte only ?? */
-		return;			/* What about others */
+	switch (sc->sc_tapeid) {
+	case MT_ISEXABYTE:
+		printf("ASenseC 0x%x\n", xp->exb_xsense.addsens);
+		printf("AsenseQ 0x%x\n", xp->exb_xsense.addsensq);
+		printf("R/W Errors 0x%lx\n", 
+		       (u_long)((xp->exb_xsense.rwerrcnt2<<16)|
+				(xp->exb_xsense.rwerrcnt1<<8)|
+				(xp->exb_xsense.rwerrcnt1)) );
+		printf("PF   0x%x BPE  0x%x FPE 0x%x ME   0x%x ECO 0x%x TME 0x%x TNP 0x%x BOT 0x%x\n",
+		       xp->exb_xsense.pf, xp->exb_xsense.bpe,
+		       xp->exb_xsense.fpe, xp->exb_xsense.me,
+		       xp->exb_xsense.eco, xp->exb_xsense.tme,
+		       xp->exb_xsense.tnp, xp->exb_xsense.bot);
+		printf("XFR  0x%x TMD  0x%x WP  0x%x FMKE 0x%x URE 0x%x WE1 0x%x SSE 0x%x FE  0x%x\n",
+		       xp->exb_xsense.xfr, xp->exb_xsense.tmd,
+		       xp->exb_xsense.wp, xp->exb_xsense.fmke,
+		       xp->exb_xsense.ure, xp->exb_xsense.we1,
+		       xp->exb_xsense.sse, xp->exb_xsense.fe);
+		printf("WSEB 0x%x WSEO 0x%x\n",
+		       xp->exb_xsense.wseb, xp->exb_xsense.wseo);
+		printf("Remaining Tape 0x%lx\n", 
+		       (u_long)((xp->exb_xsense.tplft2<<16)|
+				(xp->exb_xsense.tplft1<<8)|
+				(xp->exb_xsense.tplft0)) );
+		break;
 
-	printf("ASenseC 0x%x\n", xp->exb_xsense.addsens);
-	printf("AsenseQ 0x%x\n", xp->exb_xsense.addsensq);
-	printf("R/W Errors 0x%lx\n", 
-	       (u_long)((xp->exb_xsense.rwerrcnt2<<16)|
-			(xp->exb_xsense.rwerrcnt1<<8)|
-			(xp->exb_xsense.rwerrcnt1)) );
-	printf("PF   0x%x BPE  0x%x FPE 0x%x ME   0x%x ECO 0x%x TME 0x%x TNP 0x%x BOT 0x%x\n",
-	       xp->exb_xsense.pf, xp->exb_xsense.bpe, xp->exb_xsense.fpe, 
-	       xp->exb_xsense.me, xp->exb_xsense.eco, xp->exb_xsense.tme, 
-	       xp->exb_xsense.tnp, xp->exb_xsense.bot);
-	printf("XFR  0x%x TMD  0x%x WP  0x%x FMKE 0x%x URE 0x%x WE1 0x%x SSE 0x%x FE  0x%x\n",
-	       xp->exb_xsense.xfr, xp->exb_xsense.tmd, xp->exb_xsense.wp, 
-	       xp->exb_xsense.fmke, xp->exb_xsense.ure, xp->exb_xsense.we1, 
-	       xp->exb_xsense.sse, xp->exb_xsense.fe);
-	printf("WSEB 0x%x WSEO 0x%x\n",
-	       xp->exb_xsense.wseb, xp->exb_xsense.wseo);
-	printf("Remaining Tape 0x%lx\n", 
-	       (u_long)((xp->exb_xsense.tplft2<<16)|
-			(xp->exb_xsense.tplft1<<8)|
-			(xp->exb_xsense.tplft0)) );
+	case MT_ISWANGTEK:
+	case MT_ISCALIPER:
+		printf("b8 0x%x (wp 0x%x) b9 0x%x b10 0x%x b11 0x%x b12 0x%x b13 0x%x\n",
+		       xp->cpr_xsense.b8, xp->cpr_xsense.b8 & CPR_WP,
+		       xp->cpr_xsense.b9, xp->cpr_xsense.b10,
+		       xp->cpr_xsense.b11, xp->cpr_xsense.b12,
+		       xp->cpr_xsense.b13);
+		break;
+
+	default:
+		break;
+	}
 }
 
 prtmodsel(msd, modlen)

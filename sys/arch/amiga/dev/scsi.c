@@ -33,18 +33,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
-<<<<<<< scsi.c
- *	from: @(#)scsi.c	7.5 (Berkeley) 5/4/91
- *	$Id: scsi.c,v 1.3 1993/09/02 18:08:09 mw Exp $
-||||||| 1.1.1.2
- *	@(#)scsi.c	7.5 (Berkeley) 5/4/91
-=======
  *	@(#)scsi.c	7.5 (Berkeley) 5/4/91
  *
  * MULTICONTROLLER support only working for multiple controllers of the 
  * same kind at the moment !! 
  *
->>>>>>> /tmp/T4009682
  */
 
 /*
@@ -57,7 +50,7 @@
 #if NSCSI > 0
 
 #ifndef lint
-static char rcsid[] = "$Header: /cvsroot/src/sys/arch/amiga/dev/Attic/scsi.c,v 1.3 1993/09/02 18:08:09 mw Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sys/arch/amiga/dev/Attic/scsi.c,v 1.4 1993/10/30 23:41:33 mw Exp $";
 #endif
 
 #include "sys/param.h"
@@ -1245,6 +1238,24 @@ scsi_test_unit_rdy(ctlr, slave, unit)
 	return (scsiicmd(dev, slave, (u_char *)&cdb, sizeof(cdb), (u_char *)0, 0,
 			 STATUS_PHASE));
 }
+
+int
+scsi_start_stop_unit (ctlr, slave, unit, start)
+	int ctlr, slave, unit;
+{
+	register struct scsi_softc *dev = &scsi_softc[ctlr];
+	static struct scsi_cdb6 cdb = { CMD_LOADUNLOAD };
+
+	cdb.lun = unit;
+	/* we don't set the immediate bit, so we wait for the 
+	   command to succeed.
+	   We also don't touch the LoEj bit, which is primarily meant
+	   for floppies. */
+	cdb.len = start & 0x01;
+	return (scsiicmd(dev, slave, (u_char *)&cdb, sizeof(cdb), (u_char *)0, 0,
+			 STATUS_PHASE));
+}
+
 
 int
 scsi_request_sense(ctlr, slave, unit, buf, len)

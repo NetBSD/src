@@ -1,5 +1,3 @@
-/*	$Id: kbdmap.h,v 1.3 1993/09/02 18:08:08 mw Exp $ */
-
 #define NUL	0
 #define SOH	1
 #define STX	2

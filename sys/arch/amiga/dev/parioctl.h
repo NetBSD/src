@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ppiioctl.h	7.2 (Berkeley) 12/16/90
- *	$Id: parioctl.h,v 1.1.1.1 1993/09/02 16:53:41 mw Exp $
+ *	$Id: parioctl.h,v 1.2 1993/10/30 23:41:29 mw Exp $
  */
 
 #ifndef _IOCTL_

@@ -13,13 +13,9 @@
  *  3-Sep-90  Alessandro Forin (af) at Carnegie-Mellon University
  *  Created.
  * $Log: kernel_font.c.distrib,v $
- * Revision 1.1.1.1  1993/07/05 19:19:48  mw
- * sys/arch/amiga tree. This is the machdep part required to get the kernel
- * up on an A3000. There are still (very) few changes required outside the
- * arch/amiga tree, so you can't recompile the kernel yet. Support for
- * third party SCSI controllers for the A2000 is on its way. The kernel is
- * fully functional (except for a missing ethernet-driver ...). This
- * tree is based on my version #390.
+ * Revision 1.2  1993/10/30 23:41:27  mw
+ * new tree for amiga, replacing the bogous previous one.
+ * SunOS support works for a lot of executables now (static and dynamic).
  *
  * Revision 2.6  91/06/19  11:46:19  rvb
  *  File moved here from mips/PMAX since it tries to be generic;

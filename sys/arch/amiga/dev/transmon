@@ -1,0 +1,76 @@
+#!/usr/local/bin/perl
+
+# font width
+$FW=8;
+# font height
+$FH=8;
+# font name
+$FN="kernel_font";
+# font lo,hi
+$FLO=32; $FHI=255;
+
+printf "static struct MonDef monitor_defs[] = {\n";
+printf "  /*%9s, %3s, %4s, %4s\n","FQ","FLG","MW","MH";
+printf "    %3s, %3s, %3s, %3s, %3s, %3s, %3s, %3s, %3s, %3s\n",
+       "HBS","HSS","HSE","HBE","HT","VBS","VSS","VSE","VBE","VT";
+printf "    %5s, %13s, %3s, %3s, %5s, %2s, %2s, %12s, %3s, %3s*/\n\n",
+       "Depth","PAL","TX","TY","XY","FX","FY","FontData","FLo","FHi";
+
+while (<>)
+  {
+     if (/^;/)
+	{
+	  /^.*Bit,\s+([0-9]+)[^0-9]+([0-9]+)\s+Hz\s+(.*)\n/;
+	  $HF=$1; $VF=$2; $FF=$3;
+	  $FF="doublescan" if $FF eq "d";
+	  $FF="interlace"  if $FF eq "i";
+	  $l1=<STDIN>;	
+	  $l2=<STDIN>;	
+	  $l3=<STDIN>;	
+	  $l4=<STDIN>;	
+
+	  ($d,$ID,$d,$FQ,$d,$MD,$d,$FLG) = split(/\s+/,$l1);
+	  ($d,$SW,$d,$SH,$d,$MW,$d,$MH)  = split(/\s+/,$l2);
+	  ($d,$HBS,$d,$HSS,$d,$HSE,$d,$HBE,$d,$HT) = split(/\s+/,$l3);
+	  ($d,$VBS,$d,$VSS,$d,$VSE,$d,$VBE,$d,$VT) = split(/\s+/,$l4);
+
+	  # convert to chip text-mode
+	  $HBS=($HBS * 4) / $FW;
+	  $HSS=($HSS * 4) / $FW;
+	  $HSE=($HSE * 4) / $FW;
+	  $HBE=($HBE * 4) / $FW;
+	  $HT =($HT  * 4) / $FW;
+
+	  # hmm.. this flag seems to be supported only by not-yet-released
+	  # DefineMonitor programs, and I don't know what it does. It's not
+	  # used by the current BSD driver anyway.
+	  $FLG|=16;
+
+	  die "MW not multiple of FW" unless ($MW % $FW) == 0;
+	  die "MH not multiple of FH" unless ($MH % $FH) == 0;
+
+	  $FF=" ".$FF if $FF ne "";
+	  $buf1=sprintf("%dx%d (%dx%d) %.1fkHz %dHz%s", 
+			($MW/$FW,$MH/$FH,$MW,$MH,$HF/1000.,$VF,$FF));
+	  $buf2="";
+	  $buf2=" ***EXCEEDS CHIP LIMIT!!!***" if $FQ > 90000000;
+	  $mondesc[$nummon++]=$buf1.$buf2;
+	  printf " /* %s */\n",$buf1.$buf2;
+	  printf "  { %9u, %3d, %4d, %4d,\n",$FQ,$FLG,$MW,$MH;
+	  printf "    %3d, %3d, %3d, %3d, %3d, %3d, %3d, %3d, %3d, %3d,\n",
+		$HBS,$HSS,$HSE,$HBE,$HT,$VBS,$VSS,$VSE,$VBE,$VT;
+
+	  printf "    %5d, %13s, %3d, %3d, %5d, %2d, %2d, %12s, %3d, %3d },\n\n",
+		 4,"NCRStdPalette",$MW/$FW,$MH/$FH,($MW/$FW)*($MH/$FH),
+		 $FW,$FH,$FN,$FLO,$FHI;
+	}
+
+  }
+
+printf "};\n\nstatic const char *monitor_descr[] = {\n";
+while ($nummon-- > 0)
+ {
+   printf "  \"%s\",\n", $mondesc[$xx++];
+ }
+printf "};\n\n";
+

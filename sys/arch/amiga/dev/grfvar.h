@@ -35,9 +35,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: Utah Hdr: grfvar.h 1.9 91/01/21
- *	from: @(#)grfvar.h	7.3 (Berkeley) 5/7/91
- *	$Id: grfvar.h,v 1.3 1993/09/02 18:08:01 mw Exp $
+ * from: Utah $Hdr: grfvar.h 1.9 91/01/21$
+ *
+ *	@(#)grfvar.h	7.3 (Berkeley) 5/7/91
  */
 
 /* internal structure of lock page */

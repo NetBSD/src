@@ -30,8 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)dcareg.h	7.3 (Berkeley) 5/7/91
- *	$Id: kbdreg.h,v 1.2 1993/08/01 19:23:13 mycroft Exp $
+ *	@(#)dcareg.h	7.3 (Berkeley) 5/7/91
  */
 
 struct kbddevice {
