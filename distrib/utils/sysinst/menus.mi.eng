@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi.eng,v 1.7.2.7 1997/12/04 09:11:01 jonathan Exp $	*/
+/*	$NetBSD: menus.mi.eng,v 1.7.2.8 1997/12/05 13:43:45 simonb Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -66,7 +66,7 @@ menu netbsd, title "  NetBSD-@@VERSION@@ Install System";
 	option "Reboot the computer", exit,
 		action (endwin) { run_prog("/sbin/reboot"); };
 	option "Utility menu", sub menu utility;
-	option "Exit Install System", exit, action (endwin) {};
+	option "Exit Install System", exit;
 
 menu utility, title " NetBSD-@@VERSION@@ Utility", exit;
 	option "Run /bin/sh",
