@@ -40,7 +40,7 @@
 ;_sccsid:
 ;.asciz	"from: @(#)floor.s	5.1 (Berkeley) 5/17/90"
 
-RCSID("$NetBSD: s_ceil.S,v 1.3 1995/05/09 01:39:23 jtc Exp $")
+RCSID("$NetBSD: s_ceil.S,v 1.4 1999/08/15 18:45:18 kleink Exp $")
 
 | ceil(x)
 | -floor(-x), for all real x
@@ -57,7 +57,9 @@ Ldoit:
 	fintd	sp@(4),fp0	| truncate
 	fmovel	d0,fpcr		| restore old FPCR
 Lret:
+#ifndef __SVR4_ABI__
 	fmoved	fp0,sp@-
 	movel	sp@+,d0
 	movel	sp@+,d1
+#endif
 	rts
