@@ -1,12 +1,11 @@
-/* $NetBSD: if_tr_mca.c,v 1.1 2000/05/11 15:42:04 jdolecek Exp $ */
+/* $NetBSD: if_tr_mca.c,v 1.2 2000/05/28 07:18:58 gmcgarry Exp $ */
 
 /*_
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
- * Copyright (c) 1998, 1999 Gregory McGarry.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Gregory McGarry <g.mcgarry@qut.edu.au>.
+ * by Gregory McGarry <g.mcgarry@ieee.org>.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
