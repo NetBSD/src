@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)com.c	7.5 (Berkeley) 5/16/91
- *	$Id: com.c,v 1.9 1993/06/06 23:05:03 cgd Exp $
+ *	$Id: com.c,v 1.10 1993/07/07 11:00:59 deraadt Exp $
  */
 
 #include "com.h"
@@ -625,7 +625,6 @@ comcnprobe(cp)
 
 	/* initialize required fields */
 	cp->cn_dev = makedev(commajor, unit);
-	cp->cn_tp = com_tty[unit];
 #ifdef	COMCONSOLE
 	cp->cn_pri = CN_REMOTE;		/* Force a serial port console */
 #else
