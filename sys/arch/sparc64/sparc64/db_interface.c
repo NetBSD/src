@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.8 1998/09/09 02:48:15 eeh Exp $ */
+/*	$NetBSD: db_interface.c,v 1.9 1998/09/22 02:48:43 eeh Exp $ */
 
 /*
  * Mach Operating System
@@ -124,6 +124,7 @@ void db_lock __P((db_expr_t, int, db_expr_t, char *));
 void db_traptrace __P((db_expr_t, int, db_expr_t, char *));
 void db_dump_buf __P((db_expr_t, int, db_expr_t, char *));
 void db_dump_espcmd __P((db_expr_t, int, db_expr_t, char *));
+void db_watch __P((db_expr_t, int, db_expr_t, char *));
 
 static void db_dump_pmap __P((struct pmap*));
 
@@ -139,6 +140,9 @@ kdb_kbd_trap(tf)
 		kdb_trap(-1, tf);
 	}
 }
+
+/* Flip this to turn on traptrace */
+int traptrace_enabled = 0;
 
 /*
  *  kdb_trap - field a TRACE or BPT trap
@@ -157,7 +161,9 @@ kdb_trap(type, tf)
 	} ts[5];
 	extern int savetstate(struct trapstate ts[]);
 	extern void restoretstate(int tl, struct trapstate ts[]);
+	extern int trap_trace_dis;
 
+	trap_trace_dis = 1;
 	fb_unblank();
 
 	switch (type) {
@@ -170,10 +176,12 @@ kdb_trap(type, tf)
 	default:
 		printf("kernel trap %x: %s\n", type, trap_type[type & 0x1ff]);
 		if (db_recover != 0) {
+#if 0
 #ifdef	_LP64
 			/* For now, don't get into infinite DDB trap loop */
 			printf("Faulted in DDB; going to OBP...\n");
 			OF_enter();
+#endif
 #endif
 			db_error("Faulted in DDB; continuing...\n");
 			OF_enter();
@@ -182,10 +190,6 @@ kdb_trap(type, tf)
 	}
 
 	/* Should switch to kdb`s own stack here. */
-	{
-		extern int trap_trace_dis;
-		trap_trace_dis = 1;
-	}
 	write_all_windows();
 
 	ddb_regs.ddb_tf = *tf;
@@ -238,10 +242,7 @@ kdb_trap(type, tf)
 	*(struct frame *)tf->tf_out[6] = ddb_regs.ddb_fr;
 	*tf = ddb_regs.ddb_tf;
 #endif
-	{
-		extern int trap_trace_dis;
-		trap_trace_dis = 0;
-	}
+	trap_trace_dis = traptrace_enabled;
 
 	return (1);
 }
@@ -590,30 +591,30 @@ db_dump_pcb(addr, have_addr, count, modif)
 	if (have_addr) 
 		pcb = (struct pcb*) addr;
 
-	db_printf("pcb@%x sp:%x pc:%x cwp:%d pil:%d nsaved:%x onfault:%p\nlastcall:%s\nfull windows:\n",
-		  pcb, (int)pcb->pcb_sp, (int)pcb->pcb_pc, pcb->pcb_cwp,
+	db_printf("pcb@%x sp:%p pc:%p cwp:%d pil:%d nsaved:%x onfault:%p\nlastcall:%s\nfull windows:\n",
+		  pcb, pcb->pcb_sp, pcb->pcb_pc, pcb->pcb_cwp,
 		  pcb->pcb_pil, pcb->pcb_nsaved, pcb->pcb_onfault,
 		  (pcb->lastcall)?pcb->lastcall:"Null");
 	
 	for (i=0; i<pcb->pcb_nsaved; i++) {
 		db_printf("win %d: at %p:%p local, in\n", i, 
 			  pcb->pcb_rw[i+1].rw_in[6]);
-		db_printf("%8x:%8x %8x:%8x %8x:%8x %8x:%8x\n",
+		db_printf("%16lx %16lx %16lx %16lx\n",
 			  pcb->pcb_rw[i].rw_local[0],
 			  pcb->pcb_rw[i].rw_local[1],
 			  pcb->pcb_rw[i].rw_local[2],
 			  pcb->pcb_rw[i].rw_local[3]);
-		db_printf("%8x:%8x %8x:%8x %8x:%8x %8x:%8x\n",
+		db_printf("%16lx %16lx %16lx %16lx\n",
 			  pcb->pcb_rw[i].rw_local[4],
 			  pcb->pcb_rw[i].rw_local[5],
 			  pcb->pcb_rw[i].rw_local[6],
 			  pcb->pcb_rw[i].rw_local[7]);
-		db_printf("%8x:%8x %8x:%8x %8x:%8x %8x:%8x\n",
+		db_printf("%16lx %16lx %16lx %16lx\n",
 			  pcb->pcb_rw[i].rw_in[0],
 			  pcb->pcb_rw[i].rw_in[1],
 			  pcb->pcb_rw[i].rw_in[2],
 			  pcb->pcb_rw[i].rw_in[3]);
-		db_printf("%8x:%8x %8x:%8x %8x:%8x %8x:%8x\n",
+		db_printf("%16lx %16lx %16lx %16lx\n",
 			  pcb->pcb_rw[i].rw_in[4],
 			  pcb->pcb_rw[i].rw_in[5],
 			  pcb->pcb_rw[i].rw_in[6],
@@ -666,41 +667,90 @@ db_traptrace(addr, have_addr, count, modif)
 	extern struct traptrace {
 		unsigned short tl:3, ns:4, tt:9;	
 		unsigned short pid;
-		int tstate;
-		int tsp;
-		int tpc;
+		u_int tstate;
+		u_int tsp;
+		u_int tpc;
 	} trap_trace[], trap_trace_end[];
 	int i, j;
 
 	if (have_addr) {
 		i=addr;
-		db_printf("%d:%d p:%d:%d tt:%x ts:%1x sp:%p tpc:%p ", i, 
+		db_printf("%d:%d p:%d:%d tt:%x ts:%lx sp:%p tpc:%p ", i, 
 			  (int)trap_trace[i].tl, (int)trap_trace[i].pid, 
 			  (int)trap_trace[i].ns, (int)trap_trace[i].tt,
-			  (int)trap_trace[i].tstate, (int)trap_trace[i].tsp,
-			  (int)trap_trace[i].tpc);
-		db_printsym((int)trap_trace[i].tpc, DB_STGY_PROC);
+			  (u_long)trap_trace[i].tstate, (u_long)trap_trace[i].tsp,
+			  (u_long)trap_trace[i].tpc);
+		db_printsym((u_long)trap_trace[i].tpc, DB_STGY_PROC);
 		db_printf(": ");
-		if ((int)trap_trace[i].tpc && !(trap_trace[i].tpc&0x3)) {
-			db_disasm((int)trap_trace[i].tpc, 0);
+		if (trap_trace[i].tpc && !(trap_trace[i].tpc&0x3)) {
+			db_disasm((u_long)trap_trace[i].tpc, 0);
 		} else db_printf("\n");
 		return;
 	}
 
 	for (i=0; &trap_trace[i] < &trap_trace_end[0] ; i++) {
-		db_printf("%d:%d p:%d:%d tt:%x ts:%1x sp:%p tpc:%p ", i, 
+		db_printf("%d:%d p:%d:%d tt:%x ts:%lx sp:%p tpc:%p ", i, 
 			  (int)trap_trace[i].tl, (int)trap_trace[i].pid, 
 			  (int)trap_trace[i].ns, (int)trap_trace[i].tt,
-			  (int)trap_trace[i].tstate, (int)trap_trace[i].tsp,
-			  (int)trap_trace[i].tpc);
-		db_printsym((int)trap_trace[i].tpc, DB_STGY_PROC);
+			  (u_long)trap_trace[i].tstate, (u_long)trap_trace[i].tsp,
+			  (u_long)trap_trace[i].tpc);
+		db_printsym((u_long)trap_trace[i].tpc, DB_STGY_PROC);
 		db_printf(": ");
-		if ((int)trap_trace[i].tpc && !(trap_trace[i].tpc&0x3)) {
-			db_disasm((int)trap_trace[i].tpc, 0);
+		if (trap_trace[i].tpc && !(trap_trace[i].tpc&0x3)) {
+			db_disasm((u_long)trap_trace[i].tpc, 0);
 		} else db_printf("\n");
 	}
 
 }
+
+/* 
+ * Use physical or virtual watchpoint registers -- ugh
+ */
+void
+db_watch(addr, have_addr, count, modif)
+	db_expr_t addr;
+	int have_addr;
+	db_expr_t count;
+	char *modif;
+{
+	int phys = 0;
+
+#define WATCH_VR	(1L<<22)
+#define WATCH_VW	(1L<<21)
+#define WATCH_PR	(1L<<24)
+#define WATCH_PW	(1L<<23)
+#define WATCH_PM	(0xffffL<<33)
+#define WATCH_VM	(0xffffL<<25)
+
+	{
+		register char c, *cp = modif;
+		if (modif)
+			while ((c = *cp++) != 0)
+				if (c == 'p')
+					phys = 1;
+	}
+	if (have_addr) {
+		/* turn on the watchpoint */
+		int64_t tmp = ldxa(0, ASI_MCCR);
+		
+		if (phys) {
+			tmp &= ~(WATCH_PM|WATCH_PR|WATCH_PW);
+			stxa(PHYSICAL_WATCHPOINT, ASI_DMMU, addr);
+		} else {
+			tmp &= ~(WATCH_VM|WATCH_VR|WATCH_VW);
+			stxa(VIRTUAL_WATCHPOINT, ASI_DMMU, addr);
+		}
+		stxa(0, ASI_MCCR, tmp);
+	} else {
+		/* turn off the watchpoint */
+		int64_t tmp = ldxa(0, ASI_MCCR);
+		if (phys) tmp &= ~(WATCH_PM);
+		else tmp &= ~(WATCH_VM);
+		stxa(0, ASI_MCCR, tmp);
+	}
+}
+
+
 #include <sys/buf.h>
 
 void
@@ -769,6 +819,7 @@ struct db_command sparc_db_command_table[] = {
 	{ "window",	db_dump_window,	0,	0 },
 	{ "traptrace",	db_traptrace,	0,	0 },
 	{ "uvmdump",	db_uvmhistdump,	0,	0 },
+	{ "watch",	db_watch,	0,	0 },
 	{ (char *)0, }
 };
 

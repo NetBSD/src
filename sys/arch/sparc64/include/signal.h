@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.4 1998/09/17 04:51:29 thorpej Exp $ */
+/*	$NetBSD: signal.h,v 1.5 1998/09/22 02:48:43 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -65,6 +65,7 @@ typedef int sig_atomic_t;
  * All machines must have an sc_onstack and sc_mask.
  */
 #if defined(__LIBC12_SOURCE__) || defined(_KERNEL)
+/* Since we didn't start at 1.3, this is only for sparc32 code */
 struct sigcontext13 {
 	int	sc_onstack;		/* sigstack state to restore */
 	int	sc_mask;		/* signal mask to restore (old style) */
@@ -72,35 +73,22 @@ struct sigcontext13 {
 	int	sc_sp;			/* %sp to restore */
 	int	sc_pc;			/* pc to restore */
 	int	sc_npc;			/* npc to restore */
-	int	sc_psr;			/* psr to restore */
+	int	sc_psr;			/* pstate to restore */
 	int	sc_g1;			/* %g1 to restore */
 	int	sc_o0;			/* %o0 to restore */
 };
 #endif /* __LIBC12_SOURCE__ || _KERNEL */
 struct sigcontext {
-#ifdef _LP64
-	/* XXX Could just use register_t, but it's unsigned! */
-	long		sc_onstack;	/* sigstack state to restore */
-	long		__sc_mask13;	/* signal mask to restore (old style) */
-	long		sc_sp;		/* %sp to restore */
-	long		sc_pc;		/* pc to restore */
-	long		sc_npc;		/* npc to restore */
-	long		sc_psr;		/* psr to restore */
-	long		sc_g1;		/* %g1 to restore */
-	long		sc_o0;		/* %o0 to restore */
-	sigset_t	sc_mask;	/* signal mask to restore (new style) */
-#else
 	int		sc_onstack;	/* sigstack state to restore */
 	int		__sc_mask13;	/* signal mask to restore (old style) */
 	/* begin machine dependent portion */
-	int		sc_sp;		/* %sp to restore */
-	int		sc_pc;		/* pc to restore */
-	int		sc_npc;		/* npc to restore */
-	int		sc_psr;		/* psr to restore */
-	int		sc_g1;		/* %g1 to restore */
-	int		sc_o0;		/* %o0 to restore */
+	long		sc_sp;		/* %sp to restore */
+	long		sc_pc;		/* pc to restore */
+	long		sc_npc;		/* npc to restore */
+	long		sc_tstate;	/* pstate to restore */
+	long		sc_g1;		/* %g1 to restore */
+	long		sc_o0;		/* %o0 to restore */
 	sigset_t	sc_mask;	/* signal mask to restore (new style) */
-#endif /* _LP64 */
 };
 #else /* _LOCORE */
 #define	SC_SP_OFFSET	8
