@@ -1,4 +1,4 @@
-/*	$NetBSD: auth.c,v 1.1.1.1 2005/02/20 10:28:36 cube Exp $	*/
+/*	$NetBSD: auth.c,v 1.2 2005/02/20 10:47:16 cube Exp $	*/
 
 /*
  * auth.c - PPP authentication and phase control.
@@ -75,7 +75,7 @@
 #if 0
 #define RCSID	"Id: auth.c,v 1.101 2004/11/12 10:30:51 paulus Exp"
 #else
-__RCSID("$NetBSD: auth.c,v 1.1.1.1 2005/02/20 10:28:36 cube Exp $");
+__RCSID("$NetBSD: auth.c,v 1.2 2005/02/20 10:47:16 cube Exp $");
 #endif
 #endif
 
@@ -90,7 +90,13 @@ __RCSID("$NetBSD: auth.c,v 1.1.1.1 2005/02/20 10:28:36 cube Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
+#ifdef SUPPORT_UTMP
 #include <utmp.h>
+#endif
+#ifdef SUPPORT_UTMPX
+#include <utmpx.h>
+#include <util.h>
+#endif
 #include <fcntl.h>
 #if defined(_PATH_LASTLOG) && defined(__linux__)
 #include <lastlog.h>
@@ -855,7 +861,8 @@ start_networks(unit)
 
 #ifdef PPP_FILTER
     if (!demand)
-	set_filters(&pass_filter, &active_filter);
+	set_filters(&pass_filter_in, &pass_filter_out,
+		    &active_filter_in, &active_filter_out);
 #endif
     /* Start CCP and ECP */
     for (i = 0; (protp = protocols[i]) != NULL; ++i)
@@ -1629,7 +1636,12 @@ plogin(user, passwd, msg)
     tty = devnam;
     if (strncmp(tty, "/dev/", 5) == 0)
 	tty += 5;
+#ifdef SUPPORT_UTMP
     logwtmp(tty, user, ifname);		/* Add wtmp login entry */
+#endif
+#ifdef SUPPORT_UTMPX
+    logwtmpx(tty, "", "", 0, DEAD_PROCESS);	/* Wipe out utmp logout entry */
+#endif
 
 #if defined(_PATH_LASTLOG) && !defined(USE_PAM)
     if (pw != (struct passwd *)NULL) {
@@ -2427,7 +2439,7 @@ scan_authfile(f, client, server, secret, addrs, opts, filename, flags)
 	    if (ap == NULL)
 		novm("authorized addresses");
 	    ap->word = (char *) (ap + 1);
-	    strcpy(ap->word, word);
+	    strlcpy(ap->word, word, strlen(word) + 1);
 	    *app = ap;
 	    app = &ap->next;
 	}

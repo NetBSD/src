@@ -1,4 +1,4 @@
-.\"	$NetBSD: chat.8,v 1.1.1.1 2005/02/20 10:28:55 cube Exp $
+.\"	$NetBSD: chat.8,v 1.2 2005/02/20 10:47:16 cube Exp $
 .\"
 .\" -*- nroff -*-
 .\" manual page [] for chat 1.8
@@ -25,21 +25,21 @@ connection between the Point-to-Point Protocol Daemon (\fIpppd\fR) and
 the remote's \fIpppd\fR process.
 .SH OPTIONS
 .TP
-.B \-f \fI<chat file>
+.B \-f \fI\*[Lt]chat file\*[Gt]
 Read the chat script from the chat \fIfile\fR. The use of this option
 is mutually exclusive with the chat script parameters. The user must
 have read access to the file. Multiple lines are permitted in the
 file. Space or horizontal tab characters should be used to separate
 the strings.
 .TP
-.B \-t \fI<timeout>
+.B \-t \fI\*[Lt]timeout\*[Gt]
 Set the timeout for the expected string to be received. If the string
 is not received within the time limit then the reply string is not
 sent. An alternate reply may be sent or the script will fail if there
 is no alternate reply string. A failed script will cause the
 \fIchat\fR program to terminate with a non-zero error code.
 .TP
-.B \-r \fI<report file>
+.B \-r \fI\*[Lt]report file\*[Gt]
 Set the file for output of the report strings. If you use the keyword
 \fIREPORT\fR, the resulting strings are written to this file. If this
 option is not used and you still use \fIREPORT\fR keywords, the
@@ -52,7 +52,7 @@ keyword. When echoing is enabled, all output from the modem is echoed
 to \fIstderr\fR.
 .TP
 .B \-E
-Enables environment variable substituion within chat scripts using the
+Enables environment variable substitution within chat scripts using the
 standard \fI$xxx\fR syntax.
 .TP
 .B \-v
@@ -60,7 +60,8 @@ Request that the \fIchat\fR script be executed in a verbose mode. The
 \fIchat\fR program will then log the execution state of the chat
 script as well as all text received from the modem and the output
 strings sent to the modem.  The default is to log through the SYSLOG;
-the logging method may be altered with the \-S and \-s flags.
+the logging method may be altered with the \-S and \-s flags. SYSLOGs
+are logged to facility LOG_LOCAL2.
 .TP
 .B \-V
 Request that the \fIchat\fR script be executed in a stderr verbose
@@ -76,16 +77,16 @@ sent to stderr.
 .B \-S
 Do not use the SYSLOG.  By default, error messages are sent to the
 SYSLOG.  The use of \-S will prevent both log messages from '\-v' and
-error messages from being sent to the SYSLOG.
+error messages from being sent to the SYSLOG (to facility LOG_LOCAL2).
 .TP
-.B \-T \fI<phone number>
-Pass in an arbitary string, usually a phone number, that will be
+.B \-T \fI\*[Lt]phone number\*[Gt]
+Pass in an arbitrary string, usually a phone number, that will be
 substituted for the \\T substitution metacharacter in a send string.
 .TP
-.B \-U \fI<phone number 2>
+.B \-U \fI\*[Lt]phone number 2\*[Gt]
 Pass in a second string, usually a phone number, that will be
 substituted for the \\U substitution metacharacter in a send string.
-This is useful when dialing an ISDN terminal adapter that requires two 
+This is useful when dialing an ISDN terminal adapter that requires two
 numbers.
 .TP
 .B script
@@ -206,25 +207,25 @@ terminal), standard error will normally be redirected to the file
 .LP
 \fBSAY\fR strings must be enclosed in single or double quotes. If
 carriage return and line feed are needed in the string to be output,
-you must explicitely add them to your string.
+you must explicitly add them to your string.
 .LP
 The SAY strings could be used to give progress messages in sections of
 the script where you want to have 'ECHO OFF' but still let the user
 know what is happening.  An example is:
 .IP
-ABORT BUSY 
+ABORT BUSY
 .br
-ECHO OFF 
+ECHO OFF
 .br
-SAY "Dialling your ISP...\\n" 
+SAY "Dialing your ISP...\\n"
 .br
-\&'' ATDT5551212 
+\&'' ATDT5551212
 .br
 TIMEOUT 120
 .br
 SAY "Waiting up to 2 minutes for connection ... "
 .br
-CONNECT '' 
+CONNECT ''
 .br
 SAY "Connected, now logging in ...\n"
 .br
@@ -240,7 +241,7 @@ This sequence will only present the SAY strings to the user and all
 the details of the script will remain hidden. For example, if the
 above script works, the user will see:
 .IP
-Dialling your ISP...
+Dialing your ISP...
 .br
 Waiting up to 2 minutes for connection ... Connected, now logging in ...
 .br
@@ -307,7 +308,7 @@ but starting with the \fICONNECT\fR (or \fIBUSY\fR) message, everything
 will be echoed.
 .SH HANGUP
 The HANGUP options control whether a modem hangup should be considered
-as an error or not.  This option is useful in scripts for dialling
+as an error or not.  This option is useful in scripts for dialing
 systems which will hang up and call your system back.  The HANGUP
 options can be \fBON\fR or \fBOFF\fR.
 .br
@@ -420,7 +421,7 @@ Pause for a fraction of a second. The delay is 1/10th of a second.
 .I (not valid in expect.)
 .TP
 .B \\\\q
-Suppress writing the string to the SYSLOG file. The string ?????? is
+Suppress writing the string to the SYSLOG. The string ?????? is
 written to the log in its place.
 .I (not valid in expect.)
 .TP
@@ -430,7 +431,7 @@ Send or expect a carriage return.
 .B \\\\s
 Represents a space character in the string. This may be used when it
 is not desirable to quote the strings which contains spaces. The
-sequence 'HI TIM' and HI\\sTIM are the same.
+sequence 'HI\ TIM' and HI\\sTIM are the same.
 .TP
 .B \\\\t
 Send or expect a tab character.
@@ -459,7 +460,7 @@ For example, the character DC1 (17) is shown as \^^Q.
 Environment variables are available within chat scripts, if  the \fI\-E\fR
 option was specified in the command line. The metacharacter \fI$\fR is used
 to introduce the name of the environment variable to substitute. If the
-substition fails, because the requested environment variable is not set,
+substitution fails, because the requested environment variable is not set,
 \fInothing\fR is replaced for the variable.
 .SH TERMINATION CODES
 The \fIchat\fR program will terminate with the following completion
@@ -511,7 +512,7 @@ Additional information about \fIchat\fR scripts may be found with UUCP
 documentation. The \fIchat\fR script was taken from the ideas proposed
 by the scripts used by the \fIuucico\fR program.
 .LP
-uucico(1), uucp(1)
+uucp(1), uucico(8)
 .SH COPYRIGHT
 The \fIchat\fR program is in public domain. This is not the GNU public
 license. If it breaks then you get to keep both pieces.

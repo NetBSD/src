@@ -1,4 +1,4 @@
-/*	$NetBSD: pppd.h,v 1.1.1.1 2005/02/20 10:28:52 cube Exp $	*/
+/*	$NetBSD: pppd.h,v 1.2 2005/02/20 10:47:17 cube Exp $	*/
 
 /*
  * pppd.h - PPP daemon global declarations.
@@ -215,7 +215,7 @@ struct notifier {
 extern int	hungup;		/* Physical layer has disconnected */
 extern int	ifunit;		/* Interface unit number */
 extern char	ifname[];	/* Interface name */
-extern char	hostname[];	/* Our hostname */
+extern char	hostname[MAXNAMELEN];	/* Our hostname */
 extern u_char	outpacket_buf[]; /* Buffer for outgoing packets */
 extern int	devfd;		/* fd of underlying device */
 extern int	fd_ppp;		/* fd for talking PPP */
@@ -338,8 +338,13 @@ extern int       maxoctets_timeout;  /* Timeout for check of octets limit */
 #endif
 
 #ifdef PPP_FILTER
-extern struct	bpf_program pass_filter;   /* Filter for pkts to pass */
-extern struct	bpf_program active_filter; /* Filter for link-active pkts */
+/* Filter for packets to pass */
+extern struct	bpf_program pass_filter_in;
+extern struct	bpf_program pass_filter_out;
+
+/* Filter for link-active packets */
+extern struct	bpf_program active_filter_in;
+extern struct	bpf_program active_filter_out;
 #endif
 
 #ifdef MSLANMAN
@@ -495,8 +500,6 @@ void notify __P((struct notifier *, int));
 int  ppp_send_config __P((int, int, u_int32_t, int, int));
 int  ppp_recv_config __P((int, int, u_int32_t, int, int));
 void remove_pidfiles __P((void));
-void lock_db __P((void));
-void unlock_db __P((void));
 
 /* Procedures exported from tty.c. */
 void tty_init __P((void));
@@ -508,8 +511,6 @@ void print_string __P((char *, int,  void (*) (void *, char *, ...),
 		void *));	/* Format a string for output */
 int slprintf __P((char *, int, char *, ...));		/* sprintf++ */
 int vslprintf __P((char *, int, char *, va_list));	/* vsprintf++ */
-size_t strlcpy __P((char *, const char *, size_t));	/* safe strcpy */
-size_t strlcat __P((char *, const char *, size_t));	/* safe strncpy */
 void dbglog __P((char *, ...));	/* log a debug message */
 void info __P((char *, ...));	/* log an informational message */
 void notice __P((char *, ...));	/* log a notice-level message */
@@ -659,7 +660,8 @@ void logwtmp __P((const char *, const char *, const char *));
 int  get_host_seed __P((void));	/* Get host-dependent random number seed */
 int  have_route_to __P((u_int32_t)); /* Check if route to addr exists */
 #ifdef PPP_FILTER
-int  set_filters __P((struct bpf_program *pass, struct bpf_program *active));
+int  set_filters __P((struct bpf_program *pass_in, struct bpf_program *pass_out,
+	struct bpf_program *active_in, struct bpf_program *active_out));
 				/* Set filter programs in kernel */
 #endif
 #ifdef IPX_CHANGE
@@ -711,6 +713,10 @@ extern int (*allowed_address_hook) __P((u_int32_t addr));
 extern void (*ip_up_hook) __P((void));
 extern void (*ip_down_hook) __P((void));
 extern void (*ip_choose_hook) __P((u_int32_t *));
+void (*lcp_up_hook) __P((void));
+void (*lcp_down_hook) __P((void));
+void (*lcp_echo_hook) __P((int));
+void (*lcp_echoreply_hook) __P((int));
 
 extern int (*chap_check_hook) __P((void));
 extern int (*chap_passwd_hook) __P((char *user, char *passwd));

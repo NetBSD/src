@@ -1,4 +1,4 @@
-.\"	$NetBSD: pppstats.8,v 1.1.1.1 2005/02/20 10:28:34 cube Exp $
+.\"	$NetBSD: pppstats.8,v 1.2 2005/02/20 10:47:18 cube Exp $
 .\"
 .\"	@(#) Id: pppstats.8,v 1.4 2004/11/13 12:22:49 paulus Exp
 .TH PPPSTATS 8 "26 June 1995"
@@ -16,10 +16,10 @@ pppstats \- print PPP statistics
 .B \-z
 ] [
 .B \-c
-.I <count>
+.I \*[Lt]count\*[Gt]
 ] [
 .B \-w
-.I <secs>
+.I \*[Lt]secs\*[Gt]
 ] [
 .I interface
 ]
@@ -174,7 +174,7 @@ option is specified.
 When the
 .B \-z
 option is specified,
-.Nm pppstats
+.B pppstats
 instead displays the following fields, relating to the packet
 compression algorithm currently in use.  If packet compression is not
 in use, these fields will all display zeroes.  The fields displayed on

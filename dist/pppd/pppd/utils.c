@@ -1,4 +1,4 @@
-/*	$NetBSD: utils.c,v 1.1.1.1 2005/02/20 10:28:53 cube Exp $	*/
+/*	$NetBSD: utils.c,v 1.2 2005/02/20 10:47:17 cube Exp $	*/
 
 /*
  * utils.c - various utility functions used in pppd.
@@ -35,7 +35,7 @@
 #if 0
 #define RCSID	"Id: utils.c,v 1.24 2004/11/04 10:02:26 paulus Exp"
 #else
-__RCSID("$NetBSD: utils.c,v 1.1.1.1 2005/02/20 10:28:53 cube Exp $");
+__RCSID("$NetBSD: utils.c,v 1.2 2005/02/20 10:47:17 cube Exp $");
 #endif
 #endif
 
@@ -50,7 +50,6 @@ __RCSID("$NetBSD: utils.c,v 1.1.1.1 2005/02/20 10:28:53 cube Exp $");
 #include <syslog.h>
 #include <netdb.h>
 #include <time.h>
-#include <utmp.h>
 #include <pwd.h>
 #include <sys/param.h>
 #include <sys/types.h>
@@ -86,45 +85,6 @@ struct buffer_info {
     char *ptr;
     int len;
 };
-
-/*
- * strlcpy - like strcpy/strncpy, doesn't overflow destination buffer,
- * always leaves destination null-terminated (for len > 0).
- */
-size_t
-strlcpy(dest, src, len)
-    char *dest;
-    const char *src;
-    size_t len;
-{
-    size_t ret = strlen(src);
-
-    if (len != 0) {
-	if (ret < len)
-	    strcpy(dest, src);
-	else {
-	    strncpy(dest, src, len - 1);
-	    dest[len-1] = 0;
-	}
-    }
-    return ret;
-}
-
-/*
- * strlcat - like strcat/strncat, doesn't overflow destination buffer,
- * always leaves destination null-terminated (for len > 0).
- */
-size_t
-strlcat(dest, src, len)
-    char *dest;
-    const char *src;
-    size_t len;
-{
-    size_t dlen = strlen(dest);
-
-    return dlen + strlcpy(dest + dlen, src, (len > dlen? len - dlen: 0));
-}
-
 
 /*
  * slprintf - format a message into a buffer.  Like sprintf except we
@@ -208,7 +168,7 @@ vslprintf(buf, buflen, fmt, args)
 	    width = va_arg(args, int);
 	    c = *++fmt;
 	} else {
-	    while (isdigit(c)) {
+	    while (isdigit((unsigned char)c)) {
 		width = width * 10 + c - '0';
 		c = *++fmt;
 	    }
@@ -220,7 +180,7 @@ vslprintf(buf, buflen, fmt, args)
 		c = *++fmt;
 	    } else {
 		prec = 0;
-		while (isdigit(c)) {
+		while (isdigit((unsigned char)c)) {
 		    prec = prec * 10 + c - '0';
 		    c = *++fmt;
 		}
@@ -299,17 +259,15 @@ vslprintf(buf, buflen, fmt, args)
 	    str = num;
 	    break;
 #if 0	/* not used, and breaks on S/390, apparently */
-	case 'r':
+	case 'r': {
+	    va_list vlist;
 	    f = va_arg(args, char *);
-#ifndef __powerpc__
-	    n = vslprintf(buf, buflen + 1, f, va_arg(args, va_list));
-#else
-	    /* On the powerpc, a va_list is an array of 1 structure */
-	    n = vslprintf(buf, buflen + 1, f, va_arg(args, void *));
-#endif
+	    vlist = va_arg(args, va_list);
+	    n = vslprintf(buf, buflen + 1, f, vlist);
 	    buf += n;
 	    buflen -= n;
 	    continue;
+	}
 #endif
 	case 't':
 	    time(&t);

@@ -1,4 +1,4 @@
-/*	$NetBSD: fsm.c,v 1.1.1.1 2005/02/20 10:28:43 cube Exp $	*/
+/*	$NetBSD: fsm.c,v 1.2 2005/02/20 10:47:17 cube Exp $	*/
 
 /*
  * fsm.c - {Link, IP} Control Protocol Finite State Machine.
@@ -47,7 +47,7 @@
 #if 0
 #define RCSID	"Id: fsm.c,v 1.23 2004/11/13 02:28:15 paulus Exp"
 #else
-__RCSID("$NetBSD: fsm.c,v 1.1.1.1 2005/02/20 10:28:43 cube Exp $");
+__RCSID("$NetBSD: fsm.c,v 1.2 2005/02/20 10:47:17 cube Exp $");
 #endif
 #endif
 
@@ -76,6 +76,7 @@ static void fsm_rtermreq __P((fsm *, int, u_char *, int));
 static void fsm_rtermack __P((fsm *));
 static void fsm_rcoderej __P((fsm *, u_char *, int));
 static void fsm_sconfreq __P((fsm *, int));
+static void terminate_layer __P((fsm *, int));
 
 #define PROTO_NAME(f)	((f)->callbacks->proto_name)
 
@@ -317,7 +318,7 @@ fsm_timeout(arg)
     case ACKRCVD:
     case ACKSENT:
 	if (f->retransmits <= 0) {
-	    warn("%s: timeout sending Config-Requests\n", PROTO_NAME(f));
+	    warn("%s: timeout sending Config-Requests", PROTO_NAME(f));
 	    f->state = STOPPED;
 	    if( (f->flags & OPT_PASSIVE) == 0 && f->callbacks->finished )
 		(*f->callbacks->finished)(f);
