@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.78 2001/12/17 12:16:14 gehenna Exp $	*/
+/*	$NetBSD: umass.c,v 1.79 2001/12/24 13:25:52 augustss Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
  *		      Nick Hibma <n_hibma@freebsd.org>
@@ -94,9 +94,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.78 2001/12/17 12:16:14 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.79 2001/12/24 13:25:52 augustss Exp $");
 
 #include "atapibus.h"
+#include "scsibus.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,10 +121,9 @@ __KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.78 2001/12/17 12:16:14 gehenna Exp $");
 #include <dev/usb/usbdi_util.h>
 #include <dev/usb/usbdevs.h>
 
-#include <dev/usb/umassbus.h>
 #include <dev/usb/umassvar.h>
 #include <dev/usb/umass_quirks.h>
-
+#include <dev/usb/umass_scsipi.h>
 
 
 #ifdef UMASS_DEBUG
@@ -266,7 +266,7 @@ USB_ATTACH(umass)
 	const char *sWire, *sCommand;
 	char devinfo[1024];
 	usbd_status err;
-	int i, bno;
+	int i, bno, error;
 
 	usbd_devinfo(uaa->device, 0, devinfo);
 	USB_ATTACH_SETUP;
@@ -558,12 +558,40 @@ USB_ATTACH(umass)
 		}
 	}
 
-	if (umass_attach_bus(sc)) {
-		DPRINTF(UDMASS_GEN, ("%s: bus attach failed\n",
-				     USBDEVNAME(sc->sc_dev)));
+	error = 0;
+	switch (sc->sc_cmd) {
+	case UMASS_CPROTO_RBC:
+	case UMASS_CPROTO_SCSI:
+#if NSCSIBUS > 0
+		error = umass_scsi_attach(sc);
+#else
+		printf("%s: atapibus not configured\n", USBDEVNAME(sc->sc_dev));
+#endif
+		break;
+
+	case UMASS_CPROTO_UFI:
+	case UMASS_CPROTO_ATAPI:
+#if NATAPIBUS > 0
+		error = umass_atapi_attach(sc);
+#else
+		printf("%s: scsibus not configured\n", USBDEVNAME(sc->sc_dev));
+#endif
+		break;
+
+	default:
+		printf("%s: command protocol=0x%x not supported\n",
+		       USBDEVNAME(sc->sc_dev), sc->sc_cmd);
 		umass_disco(sc);
 		USB_ATTACH_ERROR_RETURN;
 	}
+	if (error) {
+		printf("%s: bus attach failed\n", USBDEVNAME(sc->sc_dev));
+		umass_disco(sc);
+		USB_ATTACH_ERROR_RETURN;
+	}
+
+	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
+			   USBDEV(sc->sc_dev));
 
 	DPRINTF(UDMASS_GEN, ("%s: Attach finished\n", USBDEVNAME(sc->sc_dev)));
 
@@ -573,6 +601,7 @@ USB_ATTACH(umass)
 USB_DETACH(umass)
 {
 	USB_DETACH_START(umass, sc);
+	struct umassbus_softc *scbus = sc->bus;
 	int rv = 0, i;
 
 	DPRINTF(UDMASS_USB, ("%s: detached\n", USBDEVNAME(sc->sc_dev)));
@@ -593,7 +622,12 @@ USB_DETACH(umass)
 	splx(s);
 #endif
 
-	rv = umass_detach_bus(sc, flags);
+	if (scbus != NULL) {
+		if (scbus->sc_child != NULL)
+			rv = config_detach(scbus->sc_child, flags);
+		free(scbus, M_DEVBUF);
+		sc->bus = NULL;
+	}
 
 	if (rv != 0)
 		return (rv);
@@ -603,7 +637,34 @@ USB_DETACH(umass)
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
 			   USBDEV(sc->sc_dev));
 
-	return (0);
+	return (rv);
+}
+
+int
+umass_activate(struct device *dev, enum devact act)
+{
+	struct umass_softc *sc = (struct umass_softc *)dev;
+	struct umassbus_softc *scbus = sc->bus;
+	int rv = 0;
+
+	DPRINTF(UDMASS_USB, ("%s: umass_activate: %d\n",
+	    USBDEVNAME(sc->sc_dev), act));
+
+	switch (act) {
+	case DVACT_ACTIVATE:
+		rv = EOPNOTSUPP;
+		break;
+
+	case DVACT_DEACTIVATE:
+		sc->sc_dying = 1;
+		if (scbus->sc_child == NULL)
+			break;
+		rv = config_deactivate(scbus->sc_child);
+		DPRINTF(UDMASS_USB, ("%s: umass_activate: child "
+		    "returned %d\n", USBDEVNAME(sc->sc_dev), rv));
+		break;
+	}
+	return (rv);
 }
 
 Static void
