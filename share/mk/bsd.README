@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.66 2000/09/30 00:23:37 itojun Exp $
+#	$NetBSD: bsd.README,v 1.67 2000/09/30 12:21:52 itojun Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -236,11 +236,10 @@ MKCRYPTO	If set to "no", no cryptography support will be built
 
 NOCRYPTO	If set, it is equivalent to setting MKCRYPTO to "no".
 
-MKCRYPTO_RSA	If set to "no", RSA support will not be built into
-		the system's cryptography libraries.  This implies
-		that SSLv2 support will not be present.  Defaults to "yes".
+MKCRYPTO_RSA	Obsoleted; no effect.  RSA functions are always built
+		(as long as MKCRYPTO is set to "yes").
 
-NOCRYPTO_RSA	If set, it is equivalent to setting MKCRYPTO_RSA to "no".
+NOCRYPTO_RSA	Obsoleted; no effect.
 
 MKCRYPTO_IDEA	If set to "yes", IDEA support will be built into
 		libcrypto_idea.a.  Defaults to "no".
