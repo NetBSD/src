@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.82 2001/05/26 10:23:47 pk Exp $	*/
+/*	$NetBSD: zs.c,v 1.83 2001/06/30 20:14:00 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -791,8 +791,8 @@ zs_abort(cs)
 #endif
 }
 
-static int  zs_getc __P((void *arg));
-static void zs_putc __P((void *arg, int c));
+int  zs_getc __P((void *arg));
+void zs_putc __P((void *arg, int c));
 
 /*
  * Polled input char.
