@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)tp_cons.c	7.8 (Berkeley) 5/9/91
- *	$Id: tp_cons.c,v 1.2 1993/05/20 05:27:31 cgd Exp $
+ *	$Id: tp_cons.c,v 1.3 1993/12/18 00:43:27 mycroft Exp $
  */
 
 /***********************************************************
@@ -77,34 +77,34 @@ SOFTWARE.
 #ifdef ISO
 #ifdef TPCONS
 
-#include "param.h"
-#include "socket.h"
-#include "domain.h"
-#include "mbuf.h"
-#include "errno.h"
-#include "time.h"
+#include <sys/param.h>
+#include <sys/socket.h>
+#include <sys/domain.h>
+#include <sys/mbuf.h>
+#include <sys/errno.h>
+#include <sys/time.h>
 
-#include "../net/if.h"
-#include "../net/route.h"
+#include <net/if.h>
+#include <net/route.h>
 
-#include "tp_param.h"
-#include "argo_debug.h"
-#include "tp_stat.h"
-#include "tp_pcb.h"
-#include "tp_trace.h"
-#include "tp_stat.h"
-#include "tp_tpdu.h"
-#include "iso.h"
-#include "iso_errno.h"
-#include "iso_pcb.h"
-#include "cons.h"
-#include "tp_seq.h"
+#include <netiso/tp_param.h>
+#include <netiso/argo_debug.h>
+#include <netiso/tp_stat.h>
+#include <netiso/tp_pcb.h>
+#include <netiso/tp_trace.h>
+#include <netiso/tp_stat.h>
+#include <netiso/tp_tpdu.h>
+#include <netiso/iso.h>
+#include <netiso/iso_errno.h>
+#include <netiso/iso_pcb.h>
+#include <netiso/cons.h>
+#include <netiso/tp_seq.h>
 
 #undef FALSE
 #undef TRUE
-#include "../netccitt/x25.h"
-#include "../netccitt/pk.h"
-#include "../netccitt/pk_var.h"
+#include <netccitt/x25.h>
+#include <netccitt/pk.h>
+#include <netccitt/pk_var.h>
 
 #include "if_cons.c"
 int tpcons_output();

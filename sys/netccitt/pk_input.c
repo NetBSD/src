@@ -36,22 +36,22 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pk_input.c	7.14 (Berkeley) 7/16/91
- *	$Id: pk_input.c,v 1.3 1993/05/20 04:12:19 cgd Exp $
+ *	$Id: pk_input.c,v 1.4 1993/12/18 00:41:34 mycroft Exp $
  */
 
-#include "param.h"
-#include "systm.h"
-#include "mbuf.h"
-#include "socket.h"
-#include "protosw.h"
-#include "socketvar.h"
-#include "errno.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/mbuf.h>
+#include <sys/socket.h>
+#include <sys/protosw.h>
+#include <sys/socketvar.h>
+#include <sys/errno.h>
 
-#include "../net/if.h"
+#include <net/if.h>
 
-#include "x25.h"
-#include "pk.h"
-#include "pk_var.h"
+#include <netccitt/x25.h>
+#include <netccitt/pk.h>
+#include <netccitt/pk_var.h>
 
 struct pkcb *
 pk_newlink (ia, llnext)

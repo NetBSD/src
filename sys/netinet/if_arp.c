@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)if_ether.c	7.13 (Berkeley) 10/31/90
- *	$Id: if_arp.c,v 1.4 1993/12/12 20:43:06 hpeyerl Exp $
+ *	$Id: if_arp.c,v 1.5 1993/12/18 00:41:48 mycroft Exp $
  */
 
 /*
@@ -42,23 +42,24 @@
  *	add "inuse/lock" bit (or ref. count) along with valid bit
  */
 
-#include "param.h"
-#include "systm.h"
-#include "malloc.h"
-#include "mbuf.h"
-#include "socket.h"
-#include "time.h"
-#include "kernel.h"
-#include "errno.h"
-#include "ioctl.h"
-#include "syslog.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/malloc.h>
+#include <sys/mbuf.h>
+#include <sys/socket.h>
+#include <sys/time.h>
+#include <sys/kernel.h>
+#include <sys/errno.h>
+#include <sys/ioctl.h>
+#include <sys/syslog.h>
 
-#include "../net/if.h"
-#include "in.h"
-#include "in_systm.h"
-#include "in_var.h"
-#include "ip.h"
-#include "if_ether.h"
+#include <net/if.h>
+
+#include <netinet/in.h>
+#include <netinet/in_systm.h>
+#include <netinet/in_var.h>
+#include <netinet/ip.h>
+#include <netinet/if_ether.h>
 
 #ifdef GATEWAY
 #define	ARPTAB_BSIZ	16		/* bucket size */

@@ -34,25 +34,25 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_bio.c	7.19 (Berkeley) 4/16/91
- *	$Id: nfs_bio.c,v 1.7 1993/09/03 23:57:21 jtc Exp $
+ *	$Id: nfs_bio.c,v 1.8 1993/12/18 00:44:53 mycroft Exp $
  */
 
-#include "param.h"
-#include "systm.h"
-#include "proc.h"
-#include "buf.h"
-#include "uio.h"
-#include "namei.h"
-#include "vnode.h"
-#include "trace.h"
-#include "mount.h"
-#include "resourcevar.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/proc.h>
+#include <sys/buf.h>
+#include <sys/uio.h>
+#include <sys/namei.h>
+#include <sys/vnode.h>
+#include <sys/trace.h>
+#include <sys/mount.h>
+#include <sys/resourcevar.h>
 
-#include "nfsnode.h"
-#include "nfsv2.h"
-#include "nfs.h"
-#include "nfsiom.h"
-#include "nfsmount.h"
+#include <nfs/nfsnode.h>
+#include <nfs/nfsv2.h>
+#include <nfs/nfs.h>
+#include <nfs/nfsiom.h>
+#include <nfs/nfsmount.h>
 
 /* True and false, how exciting */
 #define	TRUE	1

@@ -31,28 +31,28 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)in_pcb.c	7.14 (Berkeley) 4/20/91
- *	$Id: in_pcb.c,v 1.6 1993/12/06 04:59:29 hpeyerl Exp $
+ *	$Id: in_pcb.c,v 1.7 1993/12/18 00:41:53 mycroft Exp $
  */
 
-#include "param.h"
-#include "systm.h"
-#include "malloc.h"
-#include "mbuf.h"
-#include "protosw.h"
-#include "socket.h"
-#include "socketvar.h"
-#include "ioctl.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/malloc.h>
+#include <sys/mbuf.h>
+#include <sys/protosw.h>
+#include <sys/socket.h>
+#include <sys/socketvar.h>
+#include <sys/ioctl.h>
 
-#include "../net/if.h"
-#include "../net/route.h"
+#include <net/if.h>
+#include <net/route.h>
 
-#include "in.h"
-#include "in_systm.h"
-#include "ip.h"
-#include "in_pcb.h"
-#include "in_var.h"
+#include <netinet/in.h>
+#include <netinet/in_systm.h>
+#include <netinet/ip.h>
+#include <netinet/in_pcb.h>
+#include <netinet/in_var.h>
 #ifdef MULTICAST
-#include "ip_var.h"
+#include <netinet/ip_var.h>
 #endif
 
 struct	in_addr zeroin_addr;

@@ -31,47 +31,47 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)if_x25subr.c	7.14 (Berkeley) 6/26/91
- *	$Id: if_x25subr.c,v 1.2 1993/05/20 04:12:13 cgd Exp $
+ *	$Id: if_x25subr.c,v 1.3 1993/12/18 00:41:30 mycroft Exp $
  */
 
-#include "param.h"
-#include "systm.h"
-#include "malloc.h"
-#include "mbuf.h"
-#include "protosw.h"
-#include "socket.h"
-#include "socketvar.h"
-#include "ioctl.h"
-#include "errno.h"
-#include "syslog.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/malloc.h>
+#include <sys/mbuf.h>
+#include <sys/protosw.h>
+#include <sys/socket.h>
+#include <sys/socketvar.h>
+#include <sys/ioctl.h>
+#include <sys/errno.h>
+#include <sys/syslog.h>
 
-#include "../net/if.h"
-#include "../net/if_types.h"
-#include "../net/netisr.h"
-#include "../net/route.h"
+#include <net/if.h>
+#include <net/if_types.h>
+#include <net/netisr.h>
+#include <net/route.h>
 
-#include "x25.h"
-#include "x25err.h"
-#include "pk.h"
-#include "pk_var.h"
+#include <netccitt/x25.h>
+#include <netccitt/x25err.h>
+#include <netccitt/pk.h>
+#include <netccitt/pk_var.h>
 
-#include "machine/mtpr.h"
+#include <machine/mtpr.h>
 
 #ifdef INET
-#include "../netinet/in.h"
-#include "../netinet/in_var.h"
+#include <netinet/in.h>
+#include <netinet/in_var.h>
 #endif
 
 #ifdef NS
-#include "../netns/ns.h"
-#include "../netns/ns_if.h"
+#include <netns/ns.h>
+#include <netns/ns_if.h>
 #endif
 
 #ifdef ISO
 int tp_incoming();
-#include "../netiso/argo_debug.h"
-#include "../netiso/iso.h"
-#include "../netiso/iso_var.h"
+#include <netiso/argo_debug.h>
+#include <netiso/iso.h>
+#include <netiso/iso_var.h>
 #endif
 
 extern	struct ifnet loif;

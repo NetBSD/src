@@ -31,29 +31,29 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ip_output.c	7.23 (Berkeley) 11/12/90
- *	$Id: ip_output.c,v 1.7 1993/12/06 07:14:45 cgd Exp $
+ *	$Id: ip_output.c,v 1.8 1993/12/18 00:41:59 mycroft Exp $
  */
 
-#include "param.h"
-#include "malloc.h"
-#include "mbuf.h"
-#include "errno.h"
-#include "protosw.h"
-#include "socket.h"
-#include "socketvar.h"
+#include <sys/param.h>
+#include <sys/malloc.h>
+#include <sys/mbuf.h>
+#include <sys/errno.h>
+#include <sys/protosw.h>
+#include <sys/socket.h>
+#include <sys/socketvar.h>
 
-#include "../net/if.h"
-#include "../net/route.h"
+#include <net/if.h>
+#include <net/route.h>
 
-#include "in.h"
-#include "in_systm.h"
-#include "ip.h"
-#include "in_pcb.h"
-#include "in_var.h"
-#include "ip_var.h"
+#include <netinet/in.h>
+#include <netinet/in_systm.h>
+#include <netinet/ip.h>
+#include <netinet/in_pcb.h>
+#include <netinet/in_var.h>
+#include <netinet/ip_var.h>
 
 #ifdef vax
-#include "machine/mtpr.h"
+#include <machine/mtpr.h>
 #endif
 
 struct mbuf *ip_insertoptions();

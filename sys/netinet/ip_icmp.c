@@ -31,27 +31,27 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ip_icmp.c	7.15 (Berkeley) 4/20/91
- *	$Id: ip_icmp.c,v 1.3 1993/12/06 04:59:34 hpeyerl Exp $
+ *	$Id: ip_icmp.c,v 1.4 1993/12/18 00:41:56 mycroft Exp $
  */
 
-#include "param.h"
-#include "systm.h"
-#include "malloc.h"
-#include "mbuf.h"
-#include "protosw.h"
-#include "socket.h"
-#include "time.h"
-#include "kernel.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/malloc.h>
+#include <sys/mbuf.h>
+#include <sys/protosw.h>
+#include <sys/socket.h>
+#include <sys/time.h>
+#include <sys/kernel.h>
 
-#include "../net/route.h"
-#include "../net/if.h"
+#include <net/route.h>
+#include <net/if.h>
 
-#include "in.h"
-#include "in_systm.h"
-#include "in_var.h"
-#include "ip.h"
-#include "ip_icmp.h"
-#include "icmp_var.h"
+#include <netinet/in.h>
+#include <netinet/in_systm.h>
+#include <netinet/in_var.h>
+#include <netinet/ip.h>
+#include <netinet/ip_icmp.h>
+#include <netinet/icmp_var.h>
 
 /*
  * ICMP routines: error generation, receive packet processing, and

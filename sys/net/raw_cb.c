@@ -31,24 +31,25 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)raw_cb.c	7.11 (Berkeley) 6/28/90
- *	$Id: raw_cb.c,v 1.3 1993/05/22 11:42:15 cgd Exp $
+ *	$Id: raw_cb.c,v 1.4 1993/12/18 00:41:00 mycroft Exp $
  */
 
-#include "param.h"
-#include "systm.h"
-#include "mbuf.h"
-#include "socket.h"
-#include "socketvar.h"
-#include "domain.h"
-#include "protosw.h"
-#include "errno.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/mbuf.h>
+#include <sys/socket.h>
+#include <sys/socketvar.h>
+#include <sys/domain.h>
+#include <sys/protosw.h>
+#include <sys/errno.h>
 
-#include "if.h"
-#include "route.h"
-#include "raw_cb.h"
-#include "../netinet/in.h"
+#include <net/if.h>
+#include <net/route.h>
+#include <net/raw_cb.h>
 
-#include "machine/mtpr.h"
+#include <netinet/in.h>
+
+#include <machine/mtpr.h>
 
 /*
  * Routines to manage the raw protocol control blocks. 

@@ -31,17 +31,17 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)in_proto.c	7.5 (Berkeley) 6/28/90
- *	$Id: in_proto.c,v 1.4 1993/12/06 04:59:32 hpeyerl Exp $
+ *	$Id: in_proto.c,v 1.5 1993/12/18 00:41:54 mycroft Exp $
  */
 
-#include "param.h"
-#include "socket.h"
-#include "protosw.h"
-#include "domain.h"
-#include "mbuf.h"
+#include <sys/param.h>
+#include <sys/socket.h>
+#include <sys/protosw.h>
+#include <sys/domain.h>
+#include <sys/mbuf.h>
 
-#include "in.h"
-#include "in_systm.h"
+#include <netinet/in.h>
+#include <netinet/in_systm.h>
 
 /*
  * TCP/IP protocol family: IP, ICMP, UDP, TCP.

@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)tp_input.c	7.19 (Berkeley) 6/27/91
- *	$Id: tp_input.c,v 1.2 1993/05/20 05:27:40 cgd Exp $
+ *	$Id: tp_input.c,v 1.3 1993/12/18 00:43:36 mycroft Exp $
  */
 
 /***********************************************************
@@ -84,36 +84,38 @@ SOFTWARE.
  * uses the static structure tpdu_info.
  */
 
-#include "param.h"
-#include "systm.h"
-#include "mbuf.h"
-#include "socket.h"
-#include "socketvar.h"
-#include "domain.h"
-#include "protosw.h"
-#include "errno.h"
-#include "time.h"
-#include "kernel.h"
-#include "types.h"
-#include "iso.h"
-#include "iso_errno.h"
-#include "iso_pcb.h"
-#include "tp_param.h"
-#include "tp_timer.h"
-#include "tp_stat.h"
-#include "tp_pcb.h"
-#include "argo_debug.h"
-#include "tp_trace.h"
-#include "tp_tpdu.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/mbuf.h>
+#include <sys/socket.h>
+#include <sys/socketvar.h>
+#include <sys/domain.h>
+#include <sys/protosw.h>
+#include <sys/errno.h>
+#include <sys/time.h>
+#include <sys/kernel.h>
+#include <sys/types.h>
 
-#include "../net/if.h"
+#include <net/if.h>
+
+#include <netiso/iso.h>
+#include <netiso/iso_errno.h>
+#include <netiso/iso_pcb.h>
+#include <netiso/tp_param.h>
+#include <netiso/tp_timer.h>
+#include <netiso/tp_stat.h>
+#include <netiso/tp_pcb.h>
+#include <netiso/argo_debug.h>
+#include <netiso/tp_trace.h>
+#include <netiso/tp_tpdu.h>
+
 #ifdef TRUE
 #undef FALSE
 #undef TRUE
 #endif
-#include "../netccitt/x25.h"
-#include "../netccitt/pk.h"
-#include "../netccitt/pk_var.h"
+#include <netccitt/x25.h>
+#include <netccitt/pk.h>
+#include <netccitt/pk_var.h>
 
 int 	iso_check_csum(), tp_driver(), tp_headersize(), tp_error_emit();
 

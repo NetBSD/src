@@ -31,11 +31,11 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)in_cksum.c	7.3 (Berkeley) 6/28/90
- *	$Id: in_cksum.c,v 1.3 1993/05/20 03:50:04 cgd Exp $
+ *	$Id: in_cksum.c,v 1.4 1993/12/18 00:41:51 mycroft Exp $
  */
 
-#include "types.h"
-#include "mbuf.h"
+#include <sys/types.h>
+#include <sys/mbuf.h>
 
 /*
  * Checksum routine for Internet Protocol family headers (Portable Version).

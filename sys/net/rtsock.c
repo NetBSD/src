@@ -31,24 +31,24 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)rtsock.c	7.18 (Berkeley) 6/27/91
- *	$Id: rtsock.c,v 1.4 1993/09/04 00:00:20 jtc Exp $
+ *	$Id: rtsock.c,v 1.5 1993/12/18 00:41:04 mycroft Exp $
  */
 
-#include "param.h"
-#include "systm.h"
-#include "mbuf.h"
-#include "proc.h"
-#include "socket.h"
-#include "socketvar.h"
-#include "domain.h"
-#include "protosw.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/mbuf.h>
+#include <sys/proc.h>
+#include <sys/socket.h>
+#include <sys/socketvar.h>
+#include <sys/domain.h>
+#include <sys/protosw.h>
 
-#include "af.h"
-#include "if.h"
-#include "route.h"
-#include "raw_cb.h"
+#include <net/af.h>
+#include <net/if.h>
+#include <net/route.h>
+#include <net/raw_cb.h>
 
-#include "machine/mtpr.h"
+#include <machine/mtpr.h>
 
 struct sockaddr route_dst = { 2, PF_ROUTE, };
 struct sockaddr route_src = { 2, PF_ROUTE, };
@@ -494,7 +494,7 @@ struct sockaddr *gate, *mask, *src;
 	raw_input(m, &route_proto, &route_src, &route_dst);
 }
 
-#include "kinfo.h"
+#include <sys/kinfo.h>
 struct walkarg {
 	int	w_op, w_arg;
 	int	w_given, w_needed;

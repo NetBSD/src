@@ -31,20 +31,22 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)in.c	7.17 (Berkeley) 4/20/91
- *	$Id: in.c,v 1.5 1993/12/06 04:59:22 hpeyerl Exp $
+ *	$Id: in.c,v 1.6 1993/12/18 00:41:50 mycroft Exp $
  */
 
-#include "param.h"
-#include "ioctl.h"
-#include "mbuf.h"
-#include "socket.h"
-#include "socketvar.h"
-#include "in_systm.h"
-#include "net/if.h"
-#include "net/route.h"
-#include "net/af.h"
-#include "in.h"
-#include "in_var.h"
+#include <sys/param.h>
+#include <sys/ioctl.h>
+#include <sys/mbuf.h>
+#include <sys/socket.h>
+#include <sys/socketvar.h>
+
+#include <net/if.h>
+#include <net/route.h>
+#include <net/af.h>
+
+#include <netinet/in.h>
+#include <netinet/in_var.h>
+#include <netinet/in_systm.h>
 
 #ifdef INET
 /*

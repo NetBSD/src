@@ -13,20 +13,20 @@
  * 
  * October 1992
  * 
- *	$Id: msdosfs_conv.c,v 1.1 1993/08/13 11:35:34 cgd Exp $
+ *	$Id: msdosfs_conv.c,v 1.2 1993/12/18 00:50:38 mycroft Exp $
  */
 
 /*
  * System include files.
  */
-#include "param.h"
-#include "time.h"
-#include "kernel.h"		/* defines tz */
+#include <sys/param.h>
+#include <sys/time.h>
+#include <sys/kernel.h>		/* defines tz */
 
 /*
  * MSDOSFS include files.
  */
-#include "direntry.h"
+#include <msdosfs/direntry.h>
 
 /*
  * Days in each month in a regular year.

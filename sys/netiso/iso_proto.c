@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)iso_proto.c	7.8 (Berkeley) 5/6/91
- *	$Id: iso_proto.c,v 1.2 1993/05/20 05:27:21 cgd Exp $
+ *	$Id: iso_proto.c,v 1.3 1993/12/18 00:43:24 mycroft Exp $
  */
 
 /***********************************************************
@@ -67,14 +67,14 @@ SOFTWARE.
  */
 
 #ifdef	ISO
-#include "types.h"
-#include "param.h"
-#include "socket.h"
-#include "protosw.h"
-#include "domain.h"
-#include "mbuf.h"
+#include <sys/types.h>
+#include <sys/param.h>
+#include <sys/socket.h>
+#include <sys/protosw.h>
+#include <sys/domain.h>
+#include <sys/mbuf.h>
 
-#include "iso.h"
+#include <netiso/iso.h>
 
 int clnp_output(), clnp_init(),clnp_slowtimo(),clnp_drain();
 int rclnp_input(), rclnp_output(), rclnp_ctloutput(), raw_usrreq();

@@ -31,15 +31,16 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)af.c	7.6 (Berkeley) 6/28/90
- *	$Id: af.c,v 1.3 1993/05/22 11:42:05 cgd Exp $
+ *	$Id: af.c,v 1.4 1993/12/18 00:40:47 mycroft Exp $
  */
 
-#include "param.h"
-#include "mbuf.h"
-#include "protosw.h"
-#include "socket.h"
-#include "socketvar.h"
-#include "af.h"
+#include <sys/param.h>
+#include <sys/mbuf.h>
+#include <sys/protosw.h>
+#include <sys/socket.h>
+#include <sys/socketvar.h>
+
+#include <net/af.h>
 
 /*
  * Nothing in the file should be needed anymore.

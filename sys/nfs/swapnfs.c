@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfsswapvmunix.c	7.1 (Berkeley) 3/4/91
- *	$Id: swapnfs.c,v 1.2 1993/10/14 03:05:02 glass Exp $
+ *	$Id: swapnfs.c,v 1.3 1993/12/18 00:46:03 mycroft Exp $
  */
 
 /*
@@ -43,13 +43,15 @@
  * See /sys/nfs/nfsdiskless.h for details of the fields.
  */
 
-#include "../sys/param.h"
-#include "../sys/conf.h"
-#include "../sys/socket.h"
-#include "../sys/mount.h"
-#include "../net/if.h"
-#include "../nfs/nfsv2.h"
-#include "../nfs/nfsdiskless.h"
+#include <sys/param.h>
+#include <sys/conf.h>
+#include <sys/socket.h>
+#include <sys/mount.h>
+
+#include <net/if.h>
+
+#include <nfs/nfsv2.h>
+#include <nfs/nfsdiskless.h>
 
 dev_t	rootdev = NODEV;
 dev_t	argdev  = NODEV;

@@ -34,38 +34,38 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_vnops.c	7.60 (Berkeley) 5/24/91
- *	$Id: nfs_vnops.c,v 1.15 1993/12/16 16:43:36 pk Exp $
+ *	$Id: nfs_vnops.c,v 1.16 1993/12/18 00:45:55 mycroft Exp $
  */
 
 /*
  * vnode op calls for sun nfs version 2
  */
 
-#include "param.h"
-#include "proc.h"
-#include "kernel.h"
-#include "systm.h"
-#include "mount.h"
-#include "buf.h"
-#include "malloc.h"
-#include "mbuf.h"
-#include "conf.h"
-#include "namei.h"
-#include "vnode.h"
-#include "miscfs/specfs/specdev.h" /* XXX */
-#include "miscfs/fifofs/fifo.h" /* XXX */
+#include <sys/param.h>
+#include <sys/proc.h>
+#include <sys/kernel.h>
+#include <sys/systm.h>
+#include <sys/mount.h>
+#include <sys/buf.h>
+#include <sys/malloc.h>
+#include <sys/mbuf.h>
+#include <sys/conf.h>
+#include <sys/namei.h>
+#include <sys/vnode.h>
+#include <miscfs/specfs/specdev.h> /* XXX */
+#include <miscfs/fifofs/fifo.h> /* XXX */
 
-#include "../ufs/quota.h"
-#include "../ufs/inode.h"
-#include "../ufs/dir.h"
+#include <ufs/quota.h>
+#include <ufs/inode.h>
+#include <ufs/dir.h>
 
-#include "nfsv2.h"
-#include "nfs.h"
-#include "nfsnode.h"
-#include "nfsmount.h"
-#include "xdr_subs.h"
-#include "nfsm_subs.h"
-#include "nfsiom.h"
+#include <nfs/nfsv2.h>
+#include <nfs/nfs.h>
+#include <nfs/nfsnode.h>
+#include <nfs/nfsmount.h>
+#include <nfs/xdr_subs.h>
+#include <nfs/nfsm_subs.h>
+#include <nfs/nfsiom.h>
 
 /* Defs */
 #define	TRUE	1

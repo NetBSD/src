@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)tp_emit.c	7.9 (Berkeley) 5/9/91
- *	$Id: tp_emit.c,v 1.2 1993/05/20 05:27:36 cgd Exp $
+ *	$Id: tp_emit.c,v 1.3 1993/12/18 00:43:31 mycroft Exp $
  */
 
 /***********************************************************
@@ -77,35 +77,37 @@ SOFTWARE.
  * basic mechanism of separation under the 'w' tpdebug option, that's all.)
  */
 
-#include "param.h"
-#include "mbuf.h"
-#include "socket.h"
-#include "socketvar.h"
-#include "protosw.h"
-#include "errno.h"
-#include "types.h"
-#include "time.h"
-#include "iso.h"
-#include "iso_pcb.h"
-#include "argo_debug.h"
-#include "tp_timer.h"
-#include "tp_param.h"
-#include "tp_stat.h"
-#include "tp_pcb.h"
-#include "tp_tpdu.h"
-#include "tp_trace.h"
-#include "tp_meas.h"
-#include "tp_seq.h"
-#include "iso_errno.h"
+#include <sys/param.h>
+#include <sys/mbuf.h>
+#include <sys/socket.h>
+#include <sys/socketvar.h>
+#include <sys/protosw.h>
+#include <sys/errno.h>
+#include <sys/types.h>
+#include <sys/time.h>
 
-#include "../net/if.h"
+#include <net/if.h>
+
+#include <netiso/iso.h>
+#include <netiso/iso_pcb.h>
+#include <netiso/argo_debug.h>
+#include <netiso/tp_timer.h>
+#include <netiso/tp_param.h>
+#include <netiso/tp_stat.h>
+#include <netiso/tp_pcb.h>
+#include <netiso/tp_tpdu.h>
+#include <netiso/tp_trace.h>
+#include <netiso/tp_meas.h>
+#include <netiso/tp_seq.h>
+#include <netiso/iso_errno.h>
+
 #ifdef TRUE
 #undef FALSE
 #undef TRUE
 #endif
-#include "../netccitt/x25.h"
-#include "../netccitt/pk.h"
-#include "../netccitt/pk_var.h"
+#include <netccitt/x25.h>
+#include <netccitt/pk.h>
+#include <netccitt/pk_var.h>
 
 void iso_gen_csum();
 

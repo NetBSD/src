@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)tp_output.c	7.10 (Berkeley) 6/27/91
- *	$Id: tp_output.c,v 1.3 1993/09/06 18:05:06 mycroft Exp $
+ *	$Id: tp_output.c,v 1.4 1993/12/18 00:43:44 mycroft Exp $
  */
 
 /***********************************************************
@@ -66,24 +66,25 @@ SOFTWARE.
  * In here is tp_ctloutput(), the guy called by [sg]etsockopt(),
  */
 
-#include "param.h"
-#include "mbuf.h"
-#include "systm.h"
-#include "socket.h"
-#include "socketvar.h"
-#include "protosw.h"
-#include "errno.h"
-#include "time.h"
-#include "tp_param.h"
-#include "tp_user.h"
-#include "tp_stat.h"
-#include "tp_ip.h"
-#include "tp_clnp.h"
-#include "tp_timer.h"
-#include "argo_debug.h"
-#include "tp_pcb.h"
-#include "tp_trace.h"
-#include "kernel.h"
+#include <sys/param.h>
+#include <sys/mbuf.h>
+#include <sys/systm.h>
+#include <sys/socket.h>
+#include <sys/socketvar.h>
+#include <sys/protosw.h>
+#include <sys/errno.h>
+#include <sys/time.h>
+#include <sys/kernel.h>
+
+#include <netiso/tp_param.h>
+#include <netiso/tp_user.h>
+#include <netiso/tp_stat.h>
+#include <netiso/tp_ip.h>
+#include <netiso/tp_clnp.h>
+#include <netiso/tp_timer.h>
+#include <netiso/argo_debug.h>
+#include <netiso/tp_pcb.h>
+#include <netiso/tp_trace.h>
 
 #define USERFLAGSMASK_G 0x0f00643b
 #define USERFLAGSMASK_S 0x0f000432

@@ -36,24 +36,24 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)hd_input.c	7.7 (Berkeley) 5/29/91
- *	$Id: hd_input.c,v 1.4 1993/09/06 18:09:55 mycroft Exp $
+ *	$Id: hd_input.c,v 1.5 1993/12/18 00:41:21 mycroft Exp $
  */
 
-#include "param.h"
-#include "systm.h"
-#include "mbuf.h"
-#include "domain.h"
-#include "socket.h"
-#include "protosw.h"
-#include "errno.h"
-#include "time.h"
-#include "kernel.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/mbuf.h>
+#include <sys/domain.h>
+#include <sys/socket.h>
+#include <sys/protosw.h>
+#include <sys/errno.h>
+#include <sys/time.h>
+#include <sys/kernel.h>
 
-#include "../net/if.h"
+#include <net/if.h>
 
-#include "hdlc.h"
-#include "hd_var.h"
-#include "x25.h"
+#include <netccitt/hdlc.h>
+#include <netccitt/hd_var.h>
+#include <netccitt/x25.h>
 
 static int frame_reject(), rej_routine(), free_iframes();
 

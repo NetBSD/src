@@ -36,25 +36,25 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pk_acct.c	7.6 (Berkeley) 6/26/91
- *	$Id: pk_acct.c,v 1.2 1993/05/20 04:12:15 cgd Exp $
+ *	$Id: pk_acct.c,v 1.3 1993/12/18 00:41:32 mycroft Exp $
  */
 
-#include "param.h"
-#include "systm.h"
-#include "namei.h"
-#include "proc.h"
-#include "vnode.h"
-#include "kernel.h"
-#include "file.h"
-#include "socket.h"
-#include "socketvar.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/namei.h>
+#include <sys/proc.h>
+#include <sys/vnode.h>
+#include <sys/kernel.h>
+#include <sys/file.h>
+#include <sys/socket.h>
+#include <sys/socketvar.h>
 
-#include "../net/if.h"
+#include <net/if.h>
 
-#include "x25.h"
-#include "pk.h"
-#include "pk_var.h"
-#include "x25acct.h"
+#include <netccitt/x25.h>
+#include <netccitt/pk.h>
+#include <netccitt/pk_var.h>
+#include <netccitt/x25acct.h>
 
 
 struct	vnode *pkacctp;

@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)clnp_frag.c	7.12 (Berkeley) 5/6/91
- *	$Id: clnp_frag.c,v 1.2 1993/05/20 05:26:49 cgd Exp $
+ *	$Id: clnp_frag.c,v 1.3 1993/12/18 00:42:32 mycroft Exp $
  */
 
 /***********************************************************
@@ -61,22 +61,22 @@ SOFTWARE.
  * ARGO Project, Computer Sciences Dept., University of Wisconsin - Madison
  */
 
-#include "param.h"
-#include "mbuf.h"
-#include "domain.h"
-#include "protosw.h"
-#include "socket.h"
-#include "socketvar.h"
-#include "errno.h"
+#include <sys/param.h>
+#include <sys/mbuf.h>
+#include <sys/domain.h>
+#include <sys/protosw.h>
+#include <sys/socket.h>
+#include <sys/socketvar.h>
+#include <sys/errno.h>
 
-#include "../net/if.h"
-#include "../net/route.h"
+#include <net/if.h>
+#include <net/route.h>
 
-#include "iso.h"
-#include "iso_var.h"
-#include "clnp.h"
-#include "clnp_stat.h"
-#include "argo_debug.h"
+#include <netiso/iso.h>
+#include <netiso/iso_var.h>
+#include <netiso/clnp.h>
+#include <netiso/clnp_stat.h>
+#include <netiso/argo_debug.h>
 
 /* all fragments are hung off this list */
 struct clnp_fragl	*clnp_frags = NULL;
@@ -781,7 +781,7 @@ struct clnp_fragl	*cfh;		/* fragment header */
 }
 #ifdef	TROLL
 static int troll_cnt;
-#include "time.h"
+#include <sys/time.h>
 /*
  * FUNCTION:		troll_random
  *

@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)if_eon.c	7.16 (Berkeley) 6/27/91
- *	$Id: if_eon.c,v 1.2 1993/05/20 05:27:12 cgd Exp $
+ *	$Id: if_eon.c,v 1.3 1993/12/18 00:43:07 mycroft Exp $
  */
 
 /***********************************************************
@@ -73,37 +73,39 @@ SOFTWARE.
 #define NEON 1
 
 
-#include "param.h"
-#include "systm.h"
-#include "types.h"
-#include "mbuf.h"
-#include "buf.h"
-#include "protosw.h"
-#include "socket.h"
-#include "ioctl.h"
-#include "errno.h"
-#include "types.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/types.h>
+#include <sys/mbuf.h>
+#include <sys/buf.h>
+#include <sys/protosw.h>
+#include <sys/socket.h>
+#include <sys/ioctl.h>
+#include <sys/errno.h>
+#include <sys/types.h>
 
-#include "../net/if.h"
-#include "../net/if_types.h"
-#include "../net/if_dl.h"
-#include "../net/netisr.h"
-#include "../net/route.h"
-#include "machine/mtpr.h"
+#include <net/if.h>
+#include <net/if_types.h>
+#include <net/if_dl.h>
+#include <net/netisr.h>
+#include <net/route.h>
 
-#include "../netinet/in.h"
-#include "../netinet/in_systm.h"
-#include "../netinet/in_var.h"
-#include "../netinet/ip.h"
-#include "../netinet/ip_var.h"
-#include "../netinet/if_ether.h"
+#include <netinet/in.h>
+#include <netinet/in_systm.h>
+#include <netinet/in_var.h>
+#include <netinet/ip.h>
+#include <netinet/ip_var.h>
+#include <netinet/if_ether.h>
 
-#include "iso.h"
-#include "iso_var.h"
-#include "iso_snpac.h"
-#include "argo_debug.h"
-#include "iso_errno.h"
-#include "eonvar.h"
+#include <netiso/iso.h>
+#include <netiso/iso_var.h>
+#include <netiso/iso_snpac.h>
+#include <netiso/argo_debug.h>
+#include <netiso/iso_errno.h>
+#include <netiso/eonvar.h>
+
+#include <machine/mtpr.h>
+
 extern struct timeval time;
 extern struct ifnet loif;
 

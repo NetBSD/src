@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)tcp_debug.c	7.6 (Berkeley) 6/28/90
- *	$Id: tcp_debug.c,v 1.3 1993/05/22 11:42:39 cgd Exp $
+ *	$Id: tcp_debug.c,v 1.4 1993/12/18 00:42:01 mycroft Exp $
  */
 
 #ifdef TCPDEBUG
@@ -42,29 +42,29 @@
 #define	TANAMES
 #endif
 
-#include "param.h"
-#include "systm.h"
-#include "mbuf.h"
-#include "socket.h"
-#include "socketvar.h"
-#include "protosw.h"
-#include "errno.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/mbuf.h>
+#include <sys/socket.h>
+#include <sys/socketvar.h>
+#include <sys/protosw.h>
+#include <sys/errno.h>
 
-#include "../net/route.h"
-#include "../net/if.h"
+#include <net/route.h>
+#include <net/if.h>
 
-#include "in.h"
-#include "in_systm.h"
-#include "ip.h"
-#include "in_pcb.h"
-#include "ip_var.h"
-#include "tcp.h"
-#include "tcp_fsm.h"
-#include "tcp_seq.h"
-#include "tcp_timer.h"
-#include "tcp_var.h"
-#include "tcpip.h"
-#include "tcp_debug.h"
+#include <netinet/in.h>
+#include <netinet/in_systm.h>
+#include <netinet/ip.h>
+#include <netinet/in_pcb.h>
+#include <netinet/ip_var.h>
+#include <netinet/tcp.h>
+#include <netinet/tcp_fsm.h>
+#include <netinet/tcp_seq.h>
+#include <netinet/tcp_timer.h>
+#include <netinet/tcp_var.h>
+#include <netinet/tcpip.h>
+#include <netinet/tcp_debug.h>
 
 #ifdef TCPDEBUG
 int	tcpconsdebug = 0;
