@@ -2291,5 +2291,5 @@ OMAPI_OBJECT_ALLOC_DECL (dhcp_failover_state, dhcp_failover_state_t,
 OMAPI_OBJECT_ALLOC_DECL (dhcp_failover_listener, dhcp_failover_listener_t,
 			 dhcp_type_failover_listener)
 OMAPI_OBJECT_ALLOC_DECL (dhcp_failover_link, dhcp_failover_link_t,
-			 dhcp_type_failover_listener)
+			 dhcp_type_failover_link)
 #endif /* FAILOVER_PROTOCOL */
