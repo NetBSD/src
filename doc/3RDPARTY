@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.167 2003/12/10 22:48:20 itojun Exp $
+#	$NetBSD: 3RDPARTY,v 1.168 2003/12/10 23:21:14 itojun Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -96,7 +96,7 @@ Notes:
 
 Package:	bsd-family-tree
 Version:	1.73
-Current Vers:	1.73
+Current Vers:	1.75
 Maintainer:	n/a
 Archive Site:	http://www.freebsd.org/cgi/cvsweb.cgi/src/share/misc/bsd-family-tree
 Mailing List:
