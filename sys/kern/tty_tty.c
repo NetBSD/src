@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_tty.c,v 1.16.8.2 2002/01/10 20:00:13 thorpej Exp $	*/
+/*	$NetBSD: tty_tty.c,v 1.16.8.3 2002/02/21 20:32:03 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993, 1995
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_tty.c,v 1.16.8.2 2002/01/10 20:00:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_tty.c,v 1.16.8.3 2002/02/21 20:32:03 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -165,7 +165,8 @@ cttykqfilter(dev, kn)
 	dev_t dev;
 	struct knote *kn;
 {
-	struct proc *p = curproc;	/* XXXLUKEM (thorpej) */
+	/* This is called from filt_fileattach() by the attaching process. */
+	struct proc *p = curproc;
 	struct vnode *ttyvp = cttyvp(p);
 
 	if (ttyvp == NULL)
