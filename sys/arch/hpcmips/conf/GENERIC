@@ -2,11 +2,11 @@
 # Distribution kernel (NEC VR based model) kernel config file
 
 #
-# 	$NetBSD: GENERIC,v 1.66 2000/09/24 15:59:32 jdolecek Exp $
+# 	$NetBSD: GENERIC,v 1.67 2000/09/27 09:32:23 sato Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
-#ident 		"GENERIC-$Revision: 1.66 $"
+#ident 		"GENERIC-$Revision: 1.67 $"
 
 maxusers	8
 
@@ -180,6 +180,7 @@ button0 at vrgiu? platform IBM_WORKPAD id BTN_REC port 1 active 0
 button1 at vrgiu? platform NEC_MCR_510 id BTN_COVER port 3
 button1 at vrgiu? platform NEC_MCR_520 id BTN_COVER port 3
 button1 at vrgiu? platform NEC_MCR_530 id BTN_COVER port 3
+button1 at vrgiu? platform NEC_MCR_SIGMARION id BTN_COVER port 3
 button1 at vrgiu? platform NEC_MCR_7XX id BTN_COVER port 3
 button1 at vrgiu? platform NEC_MCR_3XX id BTN_COVER port 6
 button1 at vrgiu? platform NEC_MCR_500 id BTN_COVER port 6
