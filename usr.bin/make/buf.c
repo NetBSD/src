@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.c,v 1.12 1999/09/15 04:16:31 mycroft Exp $	*/
+/*	$NetBSD: buf.c,v 1.13 2002/06/15 18:24:55 wiz Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: buf.c,v 1.12 1999/09/15 04:16:31 mycroft Exp $";
+static char rcsid[] = "$NetBSD: buf.c,v 1.13 2002/06/15 18:24:55 wiz Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)buf.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: buf.c,v 1.12 1999/09/15 04:16:31 mycroft Exp $");
+__RCSID("$NetBSD: buf.c,v 1.13 2002/06/15 18:24:55 wiz Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -99,9 +99,7 @@ __RCSID("$NetBSD: buf.c,v 1.12 1999/09/15 04:16:31 mycroft Exp $");
  *-----------------------------------------------------------------------
  */
 void
-Buf_OvAddByte (bp, byte)
-    register Buffer bp;
-    int    byte;
+Buf_OvAddByte(Buffer bp, int byte)
 {
     int nbytes = 1;
     bp->left = 0;
@@ -130,10 +128,7 @@ Buf_OvAddByte (bp, byte)
  *-----------------------------------------------------------------------
  */
 void
-Buf_AddBytes (bp, numBytes, bytesPtr)
-    register Buffer bp;
-    int	    numBytes;
-    const Byte *bytesPtr;
+Buf_AddBytes(Buffer bp, int numBytes, const Byte *bytesPtr)
 {
 
     BufExpand (bp, numBytes);
@@ -162,9 +157,7 @@ Buf_AddBytes (bp, numBytes, bytesPtr)
  *-----------------------------------------------------------------------
  */
 Byte *
-Buf_GetAll (bp, numBytesPtr)
-    register Buffer bp;
-    int	    *numBytesPtr;
+Buf_GetAll(Buffer bp, int *numBytesPtr)
 {
 
     if (numBytesPtr != (int *)NULL) {
@@ -188,9 +181,7 @@ Buf_GetAll (bp, numBytesPtr)
  *-----------------------------------------------------------------------
  */
 void
-Buf_Discard (bp, numBytes)
-    register Buffer bp;
-    int	    numBytes;
+Buf_Discard(Buffer bp, int numBytes)
 {
 
     if (bp->inPtr - bp->outPtr <= numBytes) {
@@ -217,8 +208,7 @@ Buf_Discard (bp, numBytes)
  *-----------------------------------------------------------------------
  */
 int
-Buf_Size (buf)
-    Buffer  buf;
+Buf_Size(Buffer buf)
 {
     return (buf->inPtr - buf->outPtr);
 }
@@ -228,6 +218,9 @@ Buf_Size (buf)
  * Buf_Init --
  *	Initialize a buffer. If no initial size is given, a reasonable
  *	default is used.
+ *
+ * Input:
+ *	size		Initial size for the buffer
  *
  * Results:
  *	A buffer to be given to other functions in this library.
@@ -239,8 +232,7 @@ Buf_Size (buf)
  *-----------------------------------------------------------------------
  */
 Buffer
-Buf_Init (size)
-    int	    size; 	/* Initial size for the buffer */
+Buf_Init(int size)
 {
     Buffer bp;	  	/* New Buffer */
 
@@ -262,6 +254,10 @@ Buf_Init (size)
  * Buf_Destroy --
  *	Nuke a buffer and all its resources.
  *
+ * Input:
+ *	buf		Buffer to destroy
+ *	freeData	TRUE if the data should be destroyed
+ *
  * Results:
  *	None.
  *
@@ -271,9 +267,7 @@ Buf_Init (size)
  *-----------------------------------------------------------------------
  */
 void
-Buf_Destroy (buf, freeData)
-    Buffer  buf;  	/* Buffer to destroy */
-    Boolean freeData;	/* TRUE if the data should be destroyed as well */
+Buf_Destroy(Buffer buf, Boolean freeData)
 {
 
     if (freeData) {
@@ -287,6 +281,10 @@ Buf_Destroy (buf, freeData)
  * Buf_ReplaceLastByte --
  *     Replace the last byte in a buffer.
  *
+ * Input:
+ *	buf		buffer to augment
+ *	byte		byte to be written
+ *
  * Results:
  *     None.
  *
@@ -297,9 +295,7 @@ Buf_Destroy (buf, freeData)
  *-----------------------------------------------------------------------
  */
 void
-Buf_ReplaceLastByte (buf, byte)
-    Buffer buf;	/* buffer to augment */
-    int byte;	/* byte to be written */
+Buf_ReplaceLastByte(Buffer buf, int byte)
 {
     if (buf->inPtr == buf->outPtr)
         Buf_AddByte(buf, byte);

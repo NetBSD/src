@@ -1,4 +1,4 @@
-/*	$NetBSD: lstDestroy.c,v 1.8 1997/09/28 03:31:21 lukem Exp $	*/
+/*	$NetBSD: lstDestroy.c,v 1.9 2002/06/15 18:24:59 wiz Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -37,14 +37,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: lstDestroy.c,v 1.8 1997/09/28 03:31:21 lukem Exp $";
+static char rcsid[] = "$NetBSD: lstDestroy.c,v 1.9 2002/06/15 18:24:59 wiz Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)lstDestroy.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: lstDestroy.c,v 1.8 1997/09/28 03:31:21 lukem Exp $");
+__RCSID("$NetBSD: lstDestroy.c,v 1.9 2002/06/15 18:24:59 wiz Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -72,13 +72,11 @@ __RCSID("$NetBSD: lstDestroy.c,v 1.8 1997/09/28 03:31:21 lukem Exp $");
  *-----------------------------------------------------------------------
  */
 void
-Lst_Destroy (l, freeProc)
-    Lst	    	  	l;
-    register void	(*freeProc) __P((ClientData));
+Lst_Destroy(Lst l, void (*freeProc)(ClientData))
 {
-    register ListNode	ln;
-    register ListNode	tln = NilListNode;
-    register List 	list = (List)l;
+    ListNode	ln;
+    ListNode	tln = NilListNode;
+    List 	list = (List)l;
 
     if (l == NILLST || ! l) {
 	/*

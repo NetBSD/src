@@ -1,4 +1,4 @@
-/*	$NetBSD: lstIsEmpty.c,v 1.7 1997/09/28 03:31:30 lukem Exp $	*/
+/*	$NetBSD: lstIsEmpty.c,v 1.8 2002/06/15 18:25:00 wiz Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -37,14 +37,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: lstIsEmpty.c,v 1.7 1997/09/28 03:31:30 lukem Exp $";
+static char rcsid[] = "$NetBSD: lstIsEmpty.c,v 1.8 2002/06/15 18:25:00 wiz Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)lstIsEmpty.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: lstIsEmpty.c,v 1.7 1997/09/28 03:31:30 lukem Exp $");
+__RCSID("$NetBSD: lstIsEmpty.c,v 1.8 2002/06/15 18:25:00 wiz Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -72,8 +72,7 @@ __RCSID("$NetBSD: lstIsEmpty.c,v 1.7 1997/09/28 03:31:30 lukem Exp $");
  *-----------------------------------------------------------------------
  */
 Boolean
-Lst_IsEmpty (l)
-    Lst	l;
+Lst_IsEmpty(Lst l)
 {
     return ( ! LstValid (l) || LstIsEmpty(l));
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.h,v 1.6 2001/11/12 21:58:18 tv Exp $	*/
+/*	$NetBSD: dir.h,v 1.7 2002/06/15 18:24:56 wiz Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -54,20 +54,20 @@ typedef struct Path {
     Hash_Table    files;    	/* Hash table of files in directory */
 } Path;
 
-void Dir_Init __P((const char *));
-void Dir_InitDot __P((void));
-void Dir_End __P((void));
-Boolean Dir_HasWildcards __P((char *));
-void Dir_Expand __P((char *, Lst, Lst));
-char *Dir_FindFile __P((char *, Lst));
-int Dir_MTime __P((GNode *));
-Path *Dir_AddDir __P((Lst, const char *));
-char *Dir_MakeFlags __P((char *, Lst));
-void Dir_ClearPath __P((Lst));
-void Dir_Concat __P((Lst, Lst));
-void Dir_PrintDirectories __P((void));
-void Dir_PrintPath __P((Lst));
-void Dir_Destroy __P((ClientData));
-ClientData Dir_CopyDir __P((ClientData));
+void Dir_Init(const char *);
+void Dir_InitDot(void);
+void Dir_End(void);
+Boolean Dir_HasWildcards(char *);
+void Dir_Expand(char *, Lst, Lst);
+char *Dir_FindFile(char *, Lst);
+int Dir_MTime(GNode *);
+Path *Dir_AddDir(Lst, const char *);
+char *Dir_MakeFlags(char *, Lst);
+void Dir_ClearPath(Lst);
+void Dir_Concat(Lst, Lst);
+void Dir_PrintDirectories(void);
+void Dir_PrintPath(Lst);
+void Dir_Destroy(ClientData);
+ClientData Dir_CopyDir(ClientData);
 
 #endif /* _DIR */

@@ -1,4 +1,4 @@
-/*	$NetBSD: trace.c,v 1.4 2002/01/27 01:50:55 reinoud Exp $	*/
+/*	$NetBSD: trace.c,v 1.5 2002/06/15 18:24:58 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,11 +38,11 @@
 
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: trace.c,v 1.4 2002/01/27 01:50:55 reinoud Exp $";
+static char rcsid[] = "$NetBSD: trace.c,v 1.5 2002/06/15 18:24:58 wiz Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: trace.c,v 1.4 2002/01/27 01:50:55 reinoud Exp $");
+__RCSID("$NetBSD: trace.c,v 1.5 2002/06/15 18:24:58 wiz Exp $");
 #endif /* not lint */
 #endif
 
@@ -59,9 +59,10 @@ __RCSID("$NetBSD: trace.c,v 1.4 2002/01/27 01:50:55 reinoud Exp $");
  *	Trace_Log		Log an event about a particular make job.
  */
 
+#include <sys/time.h>
+
 #include <stdio.h>
 #include <unistd.h>
-#include <sys/time.h>
 
 #include "make.h"
 #include "job.h"
@@ -81,8 +82,7 @@ static const char *evname[] = {
 };
 
 void
-Trace_Init(pathname)
-	const char *pathname;
+Trace_Init(const char *pathname)
 {
 	char *p1;
 	if (pathname != NULL) {
@@ -94,9 +94,7 @@ Trace_Init(pathname)
 }
 
 void
-Trace_Log(event, job)
-	TrEvent event;
-	Job *job;
+Trace_Log(TrEvent event, Job *job)
 {
 	struct timeval rightnow;
 	
@@ -118,7 +116,7 @@ Trace_Log(event, job)
 }
 
 void
-Trace_End()
+Trace_End(void)
 {
 	if (trfile != NULL)
 		fclose(trfile);

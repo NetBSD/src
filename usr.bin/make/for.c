@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.12 2002/03/12 20:15:15 christos Exp $	*/
+/*	$NetBSD: for.c,v 1.13 2002/06/15 18:24:56 wiz Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -34,14 +34,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: for.c,v 1.12 2002/03/12 20:15:15 christos Exp $";
+static char rcsid[] = "$NetBSD: for.c,v 1.13 2002/06/15 18:24:56 wiz Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)for.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: for.c,v 1.12 2002/03/12 20:15:15 christos Exp $");
+__RCSID("$NetBSD: for.c,v 1.13 2002/06/15 18:24:56 wiz Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -56,8 +56,9 @@ __RCSID("$NetBSD: for.c,v 1.12 2002/03/12 20:15:15 christos Exp $");
  *
  */
 
-#include    <ctype.h>
 #include    <assert.h>
+#include    <ctype.h>
+
 #include    "make.h"
 #include    "hash.h"
 #include    "dir.h"
@@ -95,7 +96,7 @@ typedef struct _For {
 
 static For        accumFor;             /* Loop being accumulated */
 
-static void ForAddVar	__P((const char *, size_t));
+static void ForAddVar(const char *, size_t);
 
 
 
@@ -110,9 +111,7 @@ static void ForAddVar	__P((const char *, size_t));
  *-----------------------------------------------------------------------
  */
 static void
-ForAddVar(data, len)
-	const char *data;
-	size_t len;
+ForAddVar(const char *data, size_t len)
 {
 	Buffer buf;
 	int varlen;
@@ -135,6 +134,9 @@ ForAddVar(data, len)
  *	looks like this:
  *	    .for <variable> in <varlist>
  *
+ * Input:
+ *	line		Line to parse
+ *
  * Results:
  *	TRUE: We found a for loop, or we are inside a for loop
  *	FALSE: We did not find a for loop, or we found the end of the for
@@ -146,8 +148,7 @@ ForAddVar(data, len)
  *-----------------------------------------------------------------------
  */
 int
-For_Eval (line)
-    char    	    *line;    /* Line to parse */
+For_Eval(char *line)
 {
     char	    *ptr = line, *sub, *in, *wrd;
     int	    	    level;  	/* Level at which to report errors. */
@@ -309,7 +310,7 @@ For_Eval (line)
  *-----------------------------------------------------------------------
  */
 void
-For_Run()
+For_Run(void)
 {
     For arg;
     LstNode ln;
@@ -390,6 +391,6 @@ For_Run()
     }
     free(arg.vars);
 
-    Lst_Destroy(arg.lst, (void (*) __P((ClientData))) free);
+    Lst_Destroy(arg.lst, (void (*)(ClientData)) free);
     Buf_Destroy(arg.buf, TRUE);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: lstInit.c,v 1.7 1997/09/28 03:31:27 lukem Exp $	*/
+/*	$NetBSD: lstInit.c,v 1.8 2002/06/15 18:25:00 wiz Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -37,14 +37,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: lstInit.c,v 1.7 1997/09/28 03:31:27 lukem Exp $";
+static char rcsid[] = "$NetBSD: lstInit.c,v 1.8 2002/06/15 18:25:00 wiz Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)lstInit.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: lstInit.c,v 1.7 1997/09/28 03:31:27 lukem Exp $");
+__RCSID("$NetBSD: lstInit.c,v 1.8 2002/06/15 18:25:00 wiz Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -61,6 +61,9 @@ __RCSID("$NetBSD: lstInit.c,v 1.7 1997/09/28 03:31:27 lukem Exp $");
  * Lst_Init --
  *	Create and initialize a new list.
  *
+ * Input:
+ *	circ		TRUE if the list should be made circular
+ *
  * Results:
  *	The created list.
  *
@@ -70,10 +73,9 @@ __RCSID("$NetBSD: lstInit.c,v 1.7 1997/09/28 03:31:27 lukem Exp $");
  *-----------------------------------------------------------------------
  */
 Lst
-Lst_Init(circ)
-    Boolean		circ;	/* TRUE if the list should be made circular */
+Lst_Init(Boolean circ)
 {
-    register List	nList;
+    List	nList;
 
     PAlloc (nList, List);
 

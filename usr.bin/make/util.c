@@ -1,37 +1,32 @@
-/*	$NetBSD: util.c,v 1.31 2002/03/12 20:15:15 christos Exp $	*/
+/*	$NetBSD: util.c,v 1.32 2002/06/15 18:24:58 wiz Exp $	*/
 
 /*
  * Missing stuff from OS's
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: util.c,v 1.31 2002/03/12 20:15:15 christos Exp $";
+static char rcsid[] = "$NetBSD: util.c,v 1.32 2002/06/15 18:24:58 wiz Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.31 2002/03/12 20:15:15 christos Exp $");
+__RCSID("$NetBSD: util.c,v 1.32 2002/06/15 18:24:58 wiz Exp $");
 #endif
 #endif
+
+#include <sys/param.h>
 
 #include <errno.h>
 #include <stdio.h>
 #include <time.h>
-#include "make.h"
-#include <sys/param.h>
 
-#ifndef __STDC__
-# ifndef const
-#  define const
-# endif
-#endif
+#include "make.h"
 
 #if defined(MAKE_BOOTSTRAP) && !defined(HAVE_STRERROR)
 extern int errno, sys_nerr;
 extern char *sys_errlist[];
 
 char *
-strerror(e)
-    int e;
+strerror(int e)
 {
     static char buf[100];
     if (e < 0 || e >= sys_nerr) {
@@ -52,8 +47,7 @@ strerror(e)
  * For systems which lack this function.
  */
 char *
-strdup(str)
-    const char *str;
+strdup(const char *str)
 {
     size_t len;
     char *p;
@@ -69,12 +63,9 @@ strdup(str)
 
 #if defined(MAKE_BOOTSTRAP) && !defined(HAVE_SETENV)
 int
-setenv(name, value, dum)
-    const char *name;
-    const char *value;
-    int dum;
+setenv(const char *name, const char *value, int dum)
 {
-    register char *p;
+    char *p;
     int len = strlen(name) + strlen(value) + 2; /* = \0 */
     char *ptr = (char*) emalloc(len);
 
@@ -106,10 +97,9 @@ setenv(name, value, dum)
  *	Like strcpy, going backwards and returning the new pointer
  */
 static char *
-strrcpy(ptr, str)
-    register char *ptr, *str;
+strrcpy(char *ptr, char *str)
 {
-    register int len = strlen(str);
+    int len = strlen(str);
 
     while (len)
 	*--ptr = str[--len];
@@ -167,22 +157,20 @@ char    *sys_siglist[] = {
 #include <unistd.h>
 
 int
-killpg(pid, sig)
-    int pid, sig;
+killpg(int pid, int sig)
 {
     return kill(-pid, sig);
 }
 
 #ifndef __hpux__
 void
-srandom(seed)
-    long seed;
+srandom(long seed)
 {
     srand48(seed);
 }
 
 long
-random()
+random(void)
 {
     return lrand48();
 }
@@ -190,9 +178,7 @@ random()
 
 /* turn into bsd signals */
 void (*
-signal(s, a)) __P((int))
-    int     s;
-    void (*a) __P((int));
+signal(int s, void (*a)(int))(int)
 {
     struct sigvec osv, sv;
 
@@ -210,9 +196,7 @@ signal(s, a)) __P((int))
 
 #ifndef __hpux__
 int
-utimes(file, tvp)
-    char *file;
-    struct timeval tvp[2];
+utimes(char *file, struct timeval tvp[2])
 {
     struct utimbuf t;
 
@@ -232,9 +216,8 @@ utimes(file, tvp)
 #define ISDOT(c) ((c)[0] == '.' && (((c)[1] == '\0') || ((c)[1] == '/')))
 #define ISDOTDOT(c) ((c)[0] == '.' && ISDOT(&((c)[1])))
 
-char   *
-getwd(pathname)
-    char   *pathname;
+char *
+getwd(char *pathname)
 {
     DIR    *dp;
     struct dirent *d;
@@ -337,9 +320,7 @@ getwd(pathname)
 
 /* turn into bsd signals */
 void (*
-signal(s, a)) __P((int))
-    int     s;
-    void (*a) __P((int));
+signal(int s, void (*a)(int)))(int)
 {
     struct sigaction sa, osa;
 
@@ -355,11 +336,7 @@ signal(s, a)) __P((int))
 #endif
 
 #if defined(MAKE_BOOTSTRAP) && !defined(HAVE_VSNPRINTF)
-#ifdef __STDC__
 #include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 
 #if !defined(__osf__)
 #ifdef _IOSTRG
@@ -372,11 +349,7 @@ signal(s, a)) __P((int))
 #endif /* __osf__ */
 
 int
-vsnprintf(s, n, fmt, args)
-	char *s;
-	size_t n;
-	const char *fmt;
-	va_list args;
+vsnprintf(char *s, size_t n, const char *fmt, va_list args)
 {
 #ifdef STRFLAG
 	FILE fakebuf;
@@ -402,28 +375,12 @@ vsnprintf(s, n, fmt, args)
 }
 
 int
-#ifdef __STDC__
 snprintf(char *s, size_t n, const char *fmt, ...)
-#else
-snprintf(va_alist)
-	va_dcl
-#endif
 {
 	va_list ap;
 	int rv;
-#ifdef __STDC__
+
 	va_start(ap, fmt);
-#else
-	char *s;
-	size_t n;
-	const char *fmt;
-
-	va_start(ap);
-
-	s = va_arg(ap, char *);
-	n = va_arg(ap, size_t);
-	fmt = va_arg(ap, const char *);
-#endif
 	rv = vsnprintf(s, n, fmt, ap);
 	va_end(ap);
 	return rv;
@@ -431,11 +388,7 @@ snprintf(va_alist)
 
 #if defined(MAKE_BOOTSTRAP) && !defined(HAVE_STRFTIME)
 size_t
-strftime(buf, len, fmt, tm)
-	char *buf;
-	size_t len;
-	const char *fmt;
-	const struct tm *tm;
+strftime(char *buf, size_t len, const char *fmt, const struct tm *tm)
 {
 	static char months[][4] = {
 		"Jan", "Feb", "Mar", "Apr", "May", "Jun", 

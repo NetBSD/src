@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.27 2002/03/20 18:10:31 pk Exp $	*/
+/*	$NetBSD: targ.c,v 1.28 2002/06/15 18:24:58 wiz Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: targ.c,v 1.27 2002/03/20 18:10:31 pk Exp $";
+static char rcsid[] = "$NetBSD: targ.c,v 1.28 2002/06/15 18:24:58 wiz Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)targ.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: targ.c,v 1.27 2002/03/20 18:10:31 pk Exp $");
+__RCSID("$NetBSD: targ.c,v 1.28 2002/06/15 18:24:58 wiz Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -96,6 +96,7 @@ __RCSID("$NetBSD: targ.c,v 1.27 2002/03/20 18:10:31 pk Exp $");
 
 #include	  <stdio.h>
 #include	  <time.h>
+
 #include	  "make.h"
 #include	  "hash.h"
 #include	  "dir.h"
@@ -108,14 +109,14 @@ static Hash_Table targets;	/* a hash table of same */
 
 #define HTSIZE	191		/* initial size of hash table */
 
-static int TargPrintOnlySrc __P((ClientData, ClientData));
-static int TargPrintName __P((ClientData, ClientData));
-static int TargPrintNode __P((ClientData, ClientData));
+static int TargPrintOnlySrc(ClientData, ClientData);
+static int TargPrintName(ClientData, ClientData);
+static int TargPrintNode(ClientData, ClientData);
 #ifdef CLEANUP
-static void TargFreeGN __P((ClientData));
+static void TargFreeGN(ClientData);
 #endif
-static int TargPropagateCohort __P((ClientData, ClientData));
-static int TargPropagateNode __P((ClientData, ClientData));
+static int TargPropagateCohort(ClientData, ClientData);
+static int TargPropagateNode(ClientData, ClientData);
 
 /*-
  *-----------------------------------------------------------------------
@@ -130,7 +131,7 @@ static int TargPropagateNode __P((ClientData, ClientData));
  *-----------------------------------------------------------------------
  */
 void
-Targ_Init ()
+Targ_Init(void)
 {
     allTargets = Lst_Init (FALSE);
     Hash_InitTable (&targets, HTSIZE);
@@ -149,7 +150,7 @@ Targ_Init ()
  *-----------------------------------------------------------------------
  */
 void
-Targ_End ()
+Targ_End(void)
 {
 #ifdef CLEANUP
     Lst_Destroy(allTargets, NOFREE);
@@ -172,7 +173,7 @@ Targ_End ()
  *-----------------------------------------------------------------------
  */
 Lst
-Targ_List ()
+Targ_List(void)
 {
     return allTargets;
 }
@@ -181,6 +182,9 @@ Targ_List ()
  *-----------------------------------------------------------------------
  * Targ_NewGN  --
  *	Create and initialize a new graph node
+ *
+ * Input:
+ *	name		the name to stick in the new node
  *
  * Results:
  *	An initialized graph node with the name field filled with a copy
@@ -191,10 +195,9 @@ Targ_List ()
  *-----------------------------------------------------------------------
  */
 GNode *
-Targ_NewGN (name)
-    char           *name;	/* the name to stick in the new node */
+Targ_NewGN(char *name)
 {
-    register GNode *gn;
+    GNode *gn;
 
     gn = (GNode *) emalloc (sizeof (GNode));
     gn->name = estrdup (name);
@@ -247,8 +250,7 @@ Targ_NewGN (name)
  *-----------------------------------------------------------------------
  */
 static void
-TargFreeGN (gnp)
-    ClientData gnp;
+TargFreeGN(ClientData gnp)
 {
     GNode *gn = (GNode *) gnp;
 
@@ -279,6 +281,11 @@ TargFreeGN (gnp)
  * Targ_FindNode  --
  *	Find a node in the list using the given name for matching
  *
+ * Input:
+ *	name		the name to find
+ *	flags		flags governing events when target not
+ *			found
+ *
  * Results:
  *	The node in the list if it was. If it wasn't, return NILGNODE of
  *	flags was TARG_NOCREATE or the newly created and initialized node
@@ -289,10 +296,7 @@ TargFreeGN (gnp)
  *-----------------------------------------------------------------------
  */
 GNode *
-Targ_FindNode (name, flags)
-    char           *name;	/* the name to find */
-    int             flags;	/* flags governing events when target not
-				 * found */
+Targ_FindNode(char *name, int flags)
 {
     GNode         *gn;	      /* node in that element */
     Hash_Entry	  *he;	      /* New or used hash entry for node */
@@ -324,6 +328,10 @@ Targ_FindNode (name, flags)
  * Targ_FindList --
  *	Make a complete list of GNodes from the given list of names
  *
+ * Input:
+ *	name		list of names to find
+ *	flags		flags used if no node is found for a given name
+ *
  * Results:
  *	A complete list of graph nodes corresponding to all instances of all
  *	the names in names.
@@ -335,15 +343,12 @@ Targ_FindNode (name, flags)
  * -----------------------------------------------------------------------
  */
 Lst
-Targ_FindList (names, flags)
-    Lst        	   names;	/* list of names to find */
-    int            flags;	/* flags used if no node is found for a given
-				 * name */
+Targ_FindList(Lst names, int flags)
 {
     Lst            nodes;	/* result list */
-    register LstNode  ln;		/* name list element */
-    register GNode *gn;		/* node in tLn */
-    char    	  *name;
+    LstNode	   ln;		/* name list element */
+    GNode	   *gn;		/* node in tLn */
+    char    	   *name;
 
     nodes = Lst_Init (FALSE);
 
@@ -373,6 +378,9 @@ Targ_FindList (names, flags)
  * Targ_Ignore  --
  *	Return true if should ignore errors when creating gn
  *
+ * Input:
+ *	gn		node to check for
+ *
  * Results:
  *	TRUE if should ignore errors
  *
@@ -381,8 +389,7 @@ Targ_FindList (names, flags)
  *-----------------------------------------------------------------------
  */
 Boolean
-Targ_Ignore (gn)
-    GNode          *gn;		/* node to check for */
+Targ_Ignore(GNode *gn)
 {
     if (ignoreErrors || gn->type & OP_IGNORE) {
 	return (TRUE);
@@ -396,6 +403,9 @@ Targ_Ignore (gn)
  * Targ_Silent  --
  *	Return true if be silent when creating gn
  *
+ * Input:
+ *	gn		node to check for
+ *
  * Results:
  *	TRUE if should be silent
  *
@@ -404,8 +414,7 @@ Targ_Ignore (gn)
  *-----------------------------------------------------------------------
  */
 Boolean
-Targ_Silent (gn)
-    GNode          *gn;		/* node to check for */
+Targ_Silent(GNode *gn)
 {
     if (beSilent || gn->type & OP_SILENT) {
 	return (TRUE);
@@ -419,6 +428,9 @@ Targ_Silent (gn)
  * Targ_Precious --
  *	See if the given target is precious
  *
+ * Input:
+ *	gn		the node to check
+ *
  * Results:
  *	TRUE if it is precious. FALSE otherwise
  *
@@ -427,8 +439,7 @@ Targ_Silent (gn)
  *-----------------------------------------------------------------------
  */
 Boolean
-Targ_Precious (gn)
-    GNode          *gn;		/* the node to check */
+Targ_Precious(GNode *gn)
 {
     if (allPrecious || (gn->type & (OP_PRECIOUS|OP_DOUBLEDEP))) {
 	return (TRUE);
@@ -446,6 +457,9 @@ static GNode	  *mainTarg;	/* the main target, as set by Targ_SetMain */
  *	Set our idea of the main target we'll be creating. Used for
  *	debugging output.
  *
+ * Input:
+ *	gn		The main target we'll create
+ *
  * Results:
  *	None.
  *
@@ -454,16 +468,13 @@ static GNode	  *mainTarg;	/* the main target, as set by Targ_SetMain */
  *-----------------------------------------------------------------------
  */
 void
-Targ_SetMain (gn)
-    GNode   *gn;  	/* The main target we'll create */
+Targ_SetMain(GNode *gn)
 {
     mainTarg = gn;
 }
 
 static int
-TargPrintName (gnp, ppath)
-    ClientData     gnp;
-    ClientData	    ppath;
+TargPrintName(ClientData gnp, ClientData ppath)
 {
     GNode *gn = (GNode *) gnp;
     printf ("%s ", gn->name);
@@ -482,9 +493,7 @@ TargPrintName (gnp, ppath)
 
 
 int
-Targ_PrintCmd (cmd, dummy)
-    ClientData cmd;
-    ClientData dummy;
+Targ_PrintCmd(ClientData cmd, ClientData dummy)
 {
     printf ("\t%s\n", (char *) cmd);
     return (dummy ? 0 : 0);
@@ -505,8 +514,7 @@ Targ_PrintCmd (cmd, dummy)
  *-----------------------------------------------------------------------
  */
 char *
-Targ_FmtTime (tm)
-    time_t    tm;
+Targ_FmtTime(time_t tm)
 {
     struct tm	  	*parts;
     static char	  	buf[128];
@@ -529,18 +537,12 @@ Targ_FmtTime (tm)
  *-----------------------------------------------------------------------
  */
 void
-Targ_PrintType (type)
-    register int    type;
+Targ_PrintType(int type)
 {
-    register int    tbit;
+    int    tbit;
 
-#ifdef __STDC__
 #define PRINTBIT(attr)	case CONCAT(OP_,attr): printf("." #attr " "); break
 #define PRINTDBIT(attr) case CONCAT(OP_,attr): if (DEBUG(TARG)) printf("." #attr " "); break
-#else
-#define PRINTBIT(attr) 	case CONCAT(OP_,attr): printf(".attr "); break
-#define PRINTDBIT(attr)	case CONCAT(OP_,attr): if (DEBUG(TARG)) printf(".attr "); break
-#endif /* __STDC__ */
 
     type &= ~OP_OPMASK;
 
@@ -576,9 +578,7 @@ Targ_PrintType (type)
  *-----------------------------------------------------------------------
  */
 static int
-TargPrintNode (gnp, passp)
-    ClientData   gnp;
-    ClientData	 passp;
+TargPrintNode(ClientData gnp, ClientData passp)
 {
     GNode         *gn = (GNode *) gnp;
     int	    	  pass = *(int *) passp;
@@ -658,9 +658,7 @@ TargPrintNode (gnp, passp)
  *-----------------------------------------------------------------------
  */
 static int
-TargPrintOnlySrc(gnp, dummy)
-    ClientData 	  gnp;
-    ClientData 	  dummy;
+TargPrintOnlySrc(ClientData gnp, ClientData dummy)
 {
     GNode   	  *gn = (GNode *) gnp;
     if (OP_NOP(gn->type))
@@ -674,6 +672,10 @@ TargPrintOnlySrc(gnp, dummy)
  * Targ_PrintGraph --
  *	print the entire graph. heh heh
  *
+ * Input:
+ *	pass		Which pass this is. 1 => no processing
+ *			2 => processing done
+ *
  * Results:
  *	none
  *
@@ -682,9 +684,7 @@ TargPrintOnlySrc(gnp, dummy)
  *-----------------------------------------------------------------------
  */
 void
-Targ_PrintGraph (pass)
-    int	    pass; 	/* Which pass this is. 1 => no processing
-			 * 2 => processing done */
+Targ_PrintGraph(int pass)
 {
     printf("#*** Input graph:\n");
     Lst_ForEach (allTargets, TargPrintNode, (ClientData)&pass);
@@ -702,9 +702,7 @@ Targ_PrintGraph (pass)
 }
 
 static int
-TargPropagateCohort (cgnp, pgnp)
-    ClientData   cgnp;
-    ClientData   pgnp;
+TargPropagateCohort(ClientData cgnp, ClientData pgnp)
 {
     GNode	  *cgn = (GNode *) cgnp;
     GNode	  *pgn = (GNode *) pgnp;
@@ -714,9 +712,7 @@ TargPropagateCohort (cgnp, pgnp)
 }
 
 static int
-TargPropagateNode (gnp, junk)
-    ClientData   gnp;
-    ClientData   junk;
+TargPropagateNode(ClientData gnp, ClientData junk)
 {
     GNode	  *gn = (GNode *) gnp;
     if (gn->type & OP_DOUBLEDEP)
@@ -725,7 +721,7 @@ TargPropagateNode (gnp, junk)
 }
 
 void
-Targ_Propagate ()
+Targ_Propagate(void)
 {
     Lst_ForEach (allTargets, TargPropagateNode, (ClientData)0);
 }

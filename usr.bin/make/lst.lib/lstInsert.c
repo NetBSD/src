@@ -1,4 +1,4 @@
-/*	$NetBSD: lstInsert.c,v 1.7 1997/09/28 03:31:28 lukem Exp $	*/
+/*	$NetBSD: lstInsert.c,v 1.8 2002/06/15 18:25:00 wiz Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -37,14 +37,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: lstInsert.c,v 1.7 1997/09/28 03:31:28 lukem Exp $";
+static char rcsid[] = "$NetBSD: lstInsert.c,v 1.8 2002/06/15 18:25:00 wiz Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)lstInsert.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: lstInsert.c,v 1.7 1997/09/28 03:31:28 lukem Exp $");
+__RCSID("$NetBSD: lstInsert.c,v 1.8 2002/06/15 18:25:00 wiz Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -62,6 +62,11 @@ __RCSID("$NetBSD: lstInsert.c,v 1.7 1997/09/28 03:31:28 lukem Exp $");
  *	Insert a new node with the given piece of data before the given
  *	node in the given list.
  *
+ * Input:
+ *	l		list to manipulate
+ *	ln		node before which to insert d
+ *	d		datum to be inserted
+ *
  * Results:
  *	SUCCESS or FAILURE.
  *
@@ -72,14 +77,11 @@ __RCSID("$NetBSD: lstInsert.c,v 1.7 1997/09/28 03:31:28 lukem Exp $");
  *-----------------------------------------------------------------------
  */
 ReturnStatus
-Lst_Insert (l, ln, d)
-    Lst	    	  	l;	/* list to manipulate */
-    LstNode	  	ln;	/* node before which to insert d */
-    ClientData	  	d;	/* datum to be inserted */
+Lst_Insert(Lst l, LstNode ln, ClientData d)
 {
-    register ListNode	nLNode;	/* new lnode for d */
-    register ListNode	lNode = (ListNode)ln;
-    register List 	list = (List)l;
+    ListNode	nLNode;	/* new lnode for d */
+    ListNode	lNode = (ListNode)ln;
+    List 	list = (List)l;
 
 
     /*

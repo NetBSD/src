@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.43 2002/03/20 18:10:30 pk Exp $	*/
+/*	$NetBSD: make.h,v 1.44 2002/06/15 18:24:57 wiz Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -50,39 +50,24 @@
 
 #include <sys/types.h>
 #include <sys/param.h>
-#include <stdio.h>
-#include <string.h>
+
 #include <ctype.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 #ifdef BSD4_4
 # include <sys/cdefs.h>
 #else
-# ifndef __P
-#  if defined(__STDC__) || defined(__cplusplus)
-#   define	__P(protos)	protos		/* full-blown ANSI C */
-#  else
-#   define	__P(protos)	()		/* traditional C preprocessor */
-#  endif
-# endif
 # ifndef __GNUC__
 #  ifndef __inline
 #   define __inline
 #  endif
 # endif
-# ifndef __STDC__
-#  ifndef const
-#   define const
-#  endif
-#  ifndef volatile
-#   define volatile
-#  endif
-# endif
 #endif
 
-#if __STDC__
-#include <stdlib.h>
-#include <unistd.h>
-#endif
+
 #include "sprite.h"
 #include "lst.h"
 #include "hash.h"
@@ -394,12 +379,7 @@ extern int debug;
 #define DEBUG_FOR	0x0400
 #define DEBUG_SHELL	0x0800
 
-#ifdef __STDC__
 #define CONCAT(a,b)	a##b
-#else
-#define I(a)	  	a
-#define CONCAT(a,b)	I(a)b
-#endif /* __STDC__ */
 
 #define	DEBUG(module)	(debug & CONCAT(DEBUG_,module))
 
@@ -409,18 +389,18 @@ extern int debug;
  */
 #include "nonints.h"
 
-int Make_TimeStamp __P((GNode *, GNode *));
-Boolean Make_OODate __P((GNode *));
-Lst Make_ExpandUse __P((Lst));
-time_t Make_Recheck __P((GNode *));
-void Make_HandleUse __P((GNode *, GNode *));
-void Make_Update __P((GNode *));
-void Make_DoAllVar __P((GNode *));
-Boolean Make_Run __P((Lst));
-char * Check_Cwd_Cmd __P((char *));
-void Check_Cwd __P((char **));
-void PrintOnError __P((char *));
-void Main_ExportMAKEFLAGS __P((Boolean));
-Boolean Main_SetObjdir __P((const char *));
+int Make_TimeStamp(GNode *, GNode *);
+Boolean Make_OODate(GNode *);
+Lst Make_ExpandUse(Lst);
+time_t Make_Recheck(GNode *);
+void Make_HandleUse(GNode *, GNode *);
+void Make_Update(GNode *);
+void Make_DoAllVar(GNode *);
+Boolean Make_Run(Lst);
+char * Check_Cwd_Cmd(char *);
+void Check_Cwd(char **);
+void PrintOnError(char *);
+void Main_ExportMAKEFLAGS(Boolean);
+Boolean Main_SetObjdir(const char *);
 
 #endif /* _MAKE_H_ */

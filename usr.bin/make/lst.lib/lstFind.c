@@ -1,4 +1,4 @@
-/*	$NetBSD: lstFind.c,v 1.8 1997/09/28 03:31:23 lukem Exp $	*/
+/*	$NetBSD: lstFind.c,v 1.9 2002/06/15 18:24:59 wiz Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -37,14 +37,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: lstFind.c,v 1.8 1997/09/28 03:31:23 lukem Exp $";
+static char rcsid[] = "$NetBSD: lstFind.c,v 1.9 2002/06/15 18:24:59 wiz Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)lstFind.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: lstFind.c,v 1.8 1997/09/28 03:31:23 lukem Exp $");
+__RCSID("$NetBSD: lstFind.c,v 1.9 2002/06/15 18:24:59 wiz Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -71,10 +71,7 @@ __RCSID("$NetBSD: lstFind.c,v 1.8 1997/09/28 03:31:23 lukem Exp $");
  *-----------------------------------------------------------------------
  */
 LstNode
-Lst_Find (l, d, cProc)
-    Lst		l;
-    ClientData	d;
-    int		(*cProc) __P((ClientData, ClientData));
+Lst_Find(Lst l, ClientData d, int (*cProc)(ClientData, ClientData))
 {
     return (Lst_FindFrom (l, Lst_First(l), d, cProc));
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.49 2002/03/21 11:42:21 pk Exp $	*/
+/*	$NetBSD: make.c,v 1.50 2002/06/15 18:24:57 wiz Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: make.c,v 1.49 2002/03/21 11:42:21 pk Exp $";
+static char rcsid[] = "$NetBSD: make.c,v 1.50 2002/06/15 18:24:57 wiz Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: make.c,v 1.49 2002/03/21 11:42:21 pk Exp $");
+__RCSID("$NetBSD: make.c,v 1.50 2002/06/15 18:24:57 wiz Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -100,19 +100,23 @@ static int  	numNodes;   	/* Number of nodes to be processed. If this
 				 * is non-zero when Job_Empty() returns
 				 * TRUE, there's a cycle in the graph */
 
-static int MakeAddChild __P((ClientData, ClientData));
-static int MakeFindChild __P((ClientData, ClientData));
-static int MakeUnmark __P((ClientData, ClientData));
-static int MakeAddAllSrc __P((ClientData, ClientData));
-static int MakeTimeStamp __P((ClientData, ClientData));
-static int MakeHandleUse __P((ClientData, ClientData));
-static Boolean MakeStartJobs __P((void));
-static int MakePrintStatus __P((ClientData, ClientData));
+static int MakeAddChild(ClientData, ClientData);
+static int MakeFindChild(ClientData, ClientData);
+static int MakeUnmark(ClientData, ClientData);
+static int MakeAddAllSrc(ClientData, ClientData);
+static int MakeTimeStamp(ClientData, ClientData);
+static int MakeHandleUse(ClientData, ClientData);
+static Boolean MakeStartJobs(void);
+static int MakePrintStatus(ClientData, ClientData);
 /*-
  *-----------------------------------------------------------------------
  * Make_TimeStamp --
  *	Set the cmtime field of a parent node based on the mtime stamp in its
  *	child. Called from MakeOODate via Lst_ForEach.
+ *
+ * Input:
+ *	pgn		the current parent
+ *	cgn		the child we've just examined
  *
  * Results:
  *	Always returns 0.
@@ -123,9 +127,7 @@ static int MakePrintStatus __P((ClientData, ClientData));
  *-----------------------------------------------------------------------
  */
 int
-Make_TimeStamp (pgn, cgn)
-    GNode *pgn;	/* the current parent */
-    GNode *cgn;	/* the child we've just examined */
+Make_TimeStamp(GNode *pgn, GNode *cgn)
 {
     if (cgn->mtime > pgn->cmtime) {
 	pgn->cmtime = cgn->mtime;
@@ -133,10 +135,14 @@ Make_TimeStamp (pgn, cgn)
     return (0);
 }
 
+/*
+ * Input:
+ *	pgn		the current parent
+ *	cgn		the child we've just examined
+ *
+ */
 static int
-MakeTimeStamp (pgn, cgn)
-    ClientData pgn;	/* the current parent */
-    ClientData cgn;	/* the child we've just examined */
+MakeTimeStamp(ClientData pgn, ClientData cgn)
 {
     return Make_TimeStamp((GNode *) pgn, (GNode *) cgn);
 }
@@ -151,6 +157,9 @@ MakeTimeStamp (pgn, cgn)
  *	must be considered out-of-date since at least one of its children
  *	will have been recreated.
  *
+ * Input:
+ *	gn		the node to check
+ *
  * Results:
  *	TRUE if the node is out of date. FALSE otherwise.
  *
@@ -160,8 +169,7 @@ MakeTimeStamp (pgn, cgn)
  *-----------------------------------------------------------------------
  */
 Boolean
-Make_OODate (gn)
-    GNode *gn;	      /* the node to check */
+Make_OODate(GNode *gn)
 {
     Boolean         oodate;
 
@@ -298,6 +306,10 @@ Make_OODate (gn)
  *	Function used by Make_Run to add a child to the list l.
  *	It will only add the child if its make field is FALSE.
  *
+ * Input:
+ *	gnp		the node to add
+ *	lp		the list to which to add it
+ *
  * Results:
  *	Always returns 0
  *
@@ -306,9 +318,7 @@ Make_OODate (gn)
  *-----------------------------------------------------------------------
  */
 static int
-MakeAddChild (gnp, lp)
-    ClientData     gnp;		/* the node to add */
-    ClientData     lp;		/* the list to which to add it */
+MakeAddChild(ClientData gnp, ClientData lp)
 {
     GNode          *gn = (GNode *) gnp;
     Lst            l = (Lst) lp;
@@ -325,6 +335,9 @@ MakeAddChild (gnp, lp)
  *	Function used by Make_Run to find the pathname of a child
  *	that was already made.
  *
+ * Input:
+ *	gnp		the node to find
+ *
  * Results:
  *	Always returns 0
  *
@@ -334,9 +347,7 @@ MakeAddChild (gnp, lp)
  *-----------------------------------------------------------------------
  */
 static int
-MakeFindChild (gnp, pgnp)
-    ClientData     gnp;		/* the node to find */
-    ClientData     pgnp;
+MakeFindChild(ClientData gnp, ClientData pgnp)
 {
     GNode          *gn = (GNode *) gnp;
     GNode          *pgn = (GNode *) pgnp;
@@ -360,6 +371,10 @@ MakeFindChild (gnp, pgnp)
  *	its commands are always added to the target node, even if the
  *	target already has commands.
  *
+ * Input:
+ *	cgn		The .USE node
+ *	pgn		The target of the .USE node
+ *
  * Results:
  *	none
  *
@@ -370,9 +385,7 @@ MakeFindChild (gnp, pgnp)
  *-----------------------------------------------------------------------
  */
 void
-Make_HandleUse (cgn, pgn)
-    GNode	*cgn;	/* The .USE node */
-    GNode   	*pgn;	/* The target of the .USE node */
+Make_HandleUse(GNode *cgn, GNode *pgn)
 {
     LstNode	ln; 	/* An element in the children list */
 
@@ -445,6 +458,10 @@ Make_HandleUse (cgn, pgn)
  *	This function calls Make_HandleUse to copy the .USE node's commands,
  *	type flags and children to the parent node.
  *
+ * Input:
+ *	cgnp		the child we've just examined
+ *	pgnp		the current parent
+ *
  * Results:
  *	returns 0.
  *
@@ -454,9 +471,7 @@ Make_HandleUse (cgn, pgn)
  *-----------------------------------------------------------------------
  */
 static int
-MakeHandleUse (cgnp, pgnp)
-    ClientData	cgnp;	/* the child we've just examined */
-    ClientData	pgnp;	/* the current parent */
+MakeHandleUse(ClientData cgnp, ClientData pgnp)
 {
     GNode	*cgn = (GNode *) cgnp;
     GNode	*pgn = (GNode *) pgnp;
@@ -503,8 +518,7 @@ MakeHandleUse (cgnp, pgnp)
  *-----------------------------------------------------------------------
  */
 time_t
-Make_Recheck (gn)
-    GNode	*gn;
+Make_Recheck(GNode *gn)
 {
     time_t mtime = Dir_MTime(gn);
 
@@ -585,6 +599,9 @@ Make_Recheck (gn)
  *	a node has been dealt with and by MakeStartJobs if it finds an
  *	up-to-date node.
  *
+ * Input:
+ *	cgn		the child node
+ *
  * Results:
  *	Always returns 0
  *
@@ -607,8 +624,7 @@ Make_Recheck (gn)
  *-----------------------------------------------------------------------
  */
 void
-Make_Update (cgn)
-    GNode *cgn;	/* the child node */
+Make_Update(GNode *cgn)
 {
     GNode 	*pgn;	/* the parent node */
     char  	*cname;	/* the child's name */
@@ -748,9 +764,7 @@ Make_Update (cgn)
  *-----------------------------------------------------------------------
  */
 static int
-MakeUnmark (cgnp, pgnp)
-    ClientData	cgnp;
-    ClientData	pgnp;
+MakeUnmark(ClientData cgnp, ClientData pgnp)
 {
     GNode	*cgn = (GNode *) cgnp;
 
@@ -758,11 +772,15 @@ MakeUnmark (cgnp, pgnp)
     return (0);
 }
 
+/*
+ * Input:
+ *	cgnp		The child to add
+ *	pgnp		The parent to whose ALLSRC variable it should
+ *			be added
+ *
+ */
 static int
-MakeAddAllSrc (cgnp, pgnp)
-    ClientData	cgnp;	/* The child to add */
-    ClientData	pgnp;	/* The parent to whose ALLSRC variable it should be */
-			/* added */
+MakeAddAllSrc(ClientData cgnp, ClientData pgnp)
 {
     GNode	*cgn = (GNode *) cgnp;
     GNode	*pgn = (GNode *) pgnp;
@@ -842,8 +860,7 @@ MakeAddAllSrc (cgnp, pgnp)
  *-----------------------------------------------------------------------
  */
 void
-Make_DoAllVar (gn)
-    GNode	*gn;
+Make_DoAllVar(GNode *gn)
 {
     Lst_ForEach (gn->children, MakeUnmark, (ClientData) gn);
     Lst_ForEach (gn->children, MakeAddAllSrc, (ClientData) gn);
@@ -880,7 +897,7 @@ Make_DoAllVar (gn)
  *-----------------------------------------------------------------------
  */
 static Boolean
-MakeStartJobs ()
+MakeStartJobs(void)
 {
     GNode	*gn;
 
@@ -961,6 +978,12 @@ MakeStartJobs ()
  *	already or not created due to an error in a lower level.
  *	Callback function for Make_Run via Lst_ForEach.
  *
+ * Input:
+ *	gnp		Node to examine
+ *	cyclep		True if gn->unmade being non-zero implies a
+ *			cycle in the graph, not an error in an
+ *			inferior.
+ *
  * Results:
  *	Always returns 0.
  *
@@ -970,11 +993,7 @@ MakeStartJobs ()
  *-----------------------------------------------------------------------
  */
 static int
-MakePrintStatus(gnp, cyclep)
-    ClientData  gnp;	    /* Node to examine */
-    ClientData 	cyclep;	    /* True if gn->unmade being non-zero implies
-			     * a cycle in the graph, not an error in an
-			     * inferior */
+MakePrintStatus(ClientData gnp, ClientData cyclep)
 {
     GNode   	*gn = (GNode *) gnp;
     Boolean 	cycle = *(Boolean *) cyclep;
@@ -1014,6 +1033,10 @@ MakePrintStatus(gnp, cyclep)
  *-----------------------------------------------------------------------
  * Make_ExpandUse --
  *	Expand .USE nodes and create a new targets list
+ *
+ * Input:
+ *	targs		the initial list of targets
+ *
  * Results:
  *	The new list of targets.
  *
@@ -1022,8 +1045,7 @@ MakePrintStatus(gnp, cyclep)
  *-----------------------------------------------------------------------
  */
 Lst
-Make_ExpandUse (targs)
-    Lst             targs;	/* the initial list of targets */
+Make_ExpandUse(Lst targs)
 {
     GNode  *gn;		/* a temporary pointer */
     Lst    examine; 	/* List of targets to examine */
@@ -1115,6 +1137,9 @@ Make_ExpandUse (targs)
  *	calling on MakeStartJobs to keep the job table as full as
  *	possible.
  *
+ * Input:
+ *	targs		the initial list of targets
+ *
  * Results:
  *	TRUE if work was done. FALSE otherwise.
  *
@@ -1125,8 +1150,7 @@ Make_ExpandUse (targs)
  *-----------------------------------------------------------------------
  */
 Boolean
-Make_Run (targs)
-    Lst             targs;	/* the initial list of targets */
+Make_Run(Lst targs)
 {
     int	    	    errors; 	/* Number of errors the Job module reports */
 
