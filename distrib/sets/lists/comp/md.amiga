@@ -1,4 +1,4 @@
-# $NetBSD: md.amiga,v 1.44 2001/11/28 13:29:29 kleink Exp $
+# $NetBSD: md.amiga,v 1.45 2002/02/15 21:28:03 is Exp $
 ./usr/include/amiga	comp-c-include
 ./usr/include/amiga/_G_config.h	comp-c-include
 ./usr/include/amiga/ansi.h	comp-c-include
@@ -47,5 +47,3 @@
 ./usr/include/amiga/varargs.h	comp-c-include
 ./usr/include/amiga/vmparam.h	comp-c-include
 ./usr/include/ieeefp.h		comp-c-include
-./usr/lib/c++rt0.o		comp-cxx-lib
-./usr/lib/scrt0.o		comp-c-lib
