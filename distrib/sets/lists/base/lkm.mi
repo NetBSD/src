@@ -1,5 +1,4 @@
-# $NetBSD: lkm.mi,v 1.6 2004/01/11 10:24:58 lukem Exp $
-./usr/lkm					base-sys-usr
+# $NetBSD: lkm.mi,v 1.7 2004/01/13 06:18:53 lukem Exp $
 ./usr/lkm/adosfs.o				base-vfs-lkm
 ./usr/lkm/bsdcomp.o				base-ppp-lkm
 ./usr/lkm/cd9660.o				base-vfs-lkm
