@@ -1,4 +1,4 @@
-/*	$NetBSD: msort.c,v 1.4 2000/10/15 20:46:33 jdolecek Exp $	*/
+/*	$NetBSD: msort.c,v 1.5 2000/10/16 21:42:21 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -40,7 +40,7 @@
 #include "fsort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: msort.c,v 1.4 2000/10/15 20:46:33 jdolecek Exp $");
+__RCSID("$NetBSD: msort.c,v 1.5 2000/10/16 21:42:21 jdolecek Exp $");
 __SCCSID("@(#)msort.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -75,27 +75,29 @@ fmerge(binno, files, nfiles, get, outfp, fput, ftbl)
 	int (*get) __P((int, union f_handle, int, struct recheader *, u_char *,
 	    struct field *));
 	FILE *outfp;
-	void (*fput) __P((struct recheader *, FILE *));
+	void (*fput) __P((const struct recheader *, FILE *));
 	struct field *ftbl;
 {
 	FILE *tout;
 	int i, j, last;
-	void (*put)(struct recheader *, FILE *);
+	void (*put)(const struct recheader *, FILE *);
 	struct tempfile *l_fstack;
 
 	wts = ftbl->weights;
 	if (!UNIQUE && SINGL_FLD && ftbl->flags & F)
 		wts1 = (ftbl->flags & R) ? Rascii : ascii;
 	if (!cfilebuf)
-		cfilebuf = malloc(MAXLLEN + sizeof(TMFILE));
+		cfilebuf = malloc(DEFLLEN + sizeof(TMFILE));
 
-	i = min(16, nfiles) * LALIGN(MAXLLEN+sizeof(TMFILE));
-	if (!buffer || i > BUFSIZE) {
+	i = min(16, nfiles) * LALIGN(DEFLLEN+sizeof(TMFILE));
+	if (!buffer || i > bufsize) {
 		buffer = buffer ? realloc(buffer, i) : malloc(i);
 		if (!buffer)
 			err(2, NULL);
-		if (!SINGL_FLD)
-			linebuf = malloc(MAXLLEN);
+		if (!linebuf && !SINGL_FLD) {
+			linebuf_size = DEFLLEN;
+			linebuf = malloc(linebuf_size);
+		}
 	}
 
 	if (binno >= 0)
@@ -142,7 +144,7 @@ merge(infl0, nfiles, get, outfp, put, ftbl)
 	int infl0, nfiles;
 	int (*get) __P((int, union f_handle, int, struct recheader *, u_char *,
 	    struct field *));
-	void (*put)(struct recheader *, FILE *);
+	void (*put)(const struct recheader *, FILE *);
 	FILE *outfp;
 	struct field *ftbl;
 {
@@ -151,9 +153,9 @@ merge(infl0, nfiles, get, outfp, put, ftbl)
 	struct mfile *flist[16], *cfile;
 	for (i = j = 0; i < nfiles; i++) {
 		cfile = (MFILE *) (buffer +
-		    i * LALIGN(MAXLLEN + sizeof(TMFILE)));
+		    i * LALIGN(DEFLLEN + sizeof(TMFILE)));
 		cfile->flno = j + infl0;
-		cfile->end = cfile->rec->data + MAXLLEN;
+		cfile->end = cfile->rec->data + DEFLLEN;
 		for (c = 1; c == 1;) {
 			if (EOF == (c = get(j+infl0, dummy, nfiles,
 			   cfile->rec, cfile->end, ftbl))) {
@@ -170,7 +172,7 @@ merge(infl0, nfiles, get, outfp, put, ftbl)
 	}
 	cfile = cfilebuf;
 	cfile->flno = flist[0]->flno;
-	cfile->end = cfile->rec->data + MAXLLEN;
+	cfile->end = cfile->rec->data + DEFLLEN;
 	while (nfiles) {
 		for (c = 1; c == 1;) {
 			if (EOF == (c = get(cfile->flno, dummy, nfiles,
@@ -258,11 +260,11 @@ order(infile, get, ftbl)
 	struct recheader *crec, *prec, *trec;
 
 	if (!SINGL_FLD)
-		linebuf = malloc(MAXLLEN);
-	buffer = malloc(2 * (MAXLLEN + sizeof(TRECHEADER)));
-	end = buffer + 2 * (MAXLLEN + sizeof(TRECHEADER));
+		linebuf = malloc(DEFLLEN);
+	buffer = malloc(2 * (DEFLLEN + sizeof(TRECHEADER)));
+	end = buffer + 2 * (DEFLLEN + sizeof(TRECHEADER));
 	crec = (RECHEADER *) buffer;
-	prec = (RECHEADER *) (buffer + MAXLLEN + sizeof(TRECHEADER));
+	prec = (RECHEADER *) (buffer + DEFLLEN + sizeof(TRECHEADER));
 	wts = ftbl->weights;
 	if (SINGL_FLD && ftbl->flags & F)
 		wts1 = ftbl->flags & R ? Rascii : ascii;
