@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)main.c	8.1 (Berkeley) 6/20/93";*/
-static char rcsid[] = "$Id: main.c,v 1.10 1994/08/24 16:42:23 mycroft Exp $";
+static char rcsid[] = "$Id: main.c,v 1.11 1994/09/05 08:52:49 pk Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -170,7 +170,7 @@ main(argc, argv)
 /*
 	signal(SIGQUIT, SIG_DFL);
 */
-	openlog("getty", LOG_ODELAY|LOG_CONS, LOG_AUTH);
+	openlog("getty", LOG_ODELAY|LOG_CONS|LOG_PID, LOG_AUTH);
 	gethostname(hostname, sizeof(hostname));
 	if (hostname[0] == '\0')
 		strcpy(hostname, "Amnesiac");
