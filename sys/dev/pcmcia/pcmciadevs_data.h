@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.170 2002/06/01 21:03:38 itojun Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.171 2002/06/03 01:15:15 jonathan Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.170 2002/06/01 21:03:14 itojun Exp 
+ *	NetBSD: pcmciadevs,v 1.171 2002/06/03 01:13:01 jonathan Exp 
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -1170,6 +1170,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "D-Link DE-660+",	}
 	,
 	{
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_DLINK_DFE670TXD,
+	    PCMCIA_CIS_DLINK_DFE670TXD,
+	    0,
+	    "D-Link",
+	    "D-Link DFE-670TXD",	}
+	,
+	{
 	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_EIGERLABS_EPX_AA2000,
 	    PCMCIA_CIS_EIGERLABS_EPX_AA2000,
 	    0,
@@ -1605,6 +1612,14 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	},
 	{
 	    PCMCIA_VENDOR_DLINK_2,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    0,
+	    "D-Link",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_DLINK_3,
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
 	    0,

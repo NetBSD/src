@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.170 2002/06/01 21:03:37 itojun Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.171 2002/06/03 01:15:15 jonathan Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.170 2002/06/01 21:03:14 itojun Exp 
+ *	NetBSD: pcmciadevs,v 1.171 2002/06/03 01:13:01 jonathan Exp 
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -70,6 +70,7 @@
 #define	PCMCIA_VENDOR_QUATECH	0x0137	/* Quatech */
 #define	PCMCIA_VENDOR_COMPAQ	0x0138	/* Compaq */
 #define	PCMCIA_VENDOR_DLINK_2	0x0143	/* D-Link */
+#define	PCMCIA_VENDOR_DLINK_3	0x0149	/* D-Link */
 #define	PCMCIA_VENDOR_LINKSYS	0x0149	/* Linksys Corporation */
 #define	PCMCIA_VENDOR_NETGEAR	0x0149	/* Netgear */
 #define	PCMCIA_VENDOR_SIMPLETECH	0x014d	/* Simple Technology */
@@ -733,6 +734,9 @@
 #define	PCMCIA_CIS_DLINK_DE660PLUS	{ "D-Link", "DE-660+", NULL, NULL }
 #define	PCMCIA_PRODUCT_DLINK_DE660PLUS	-1
 #define	PCMCIA_STR_DLINK_DE660PLUS	"D-Link DE-660+"
+#define	PCMCIA_CIS_DLINK_DFE670TXD	{ "D-Link", "DFE-670TXD", NULL, NULL }
+#define	PCMCIA_PRODUCT_DLINK_DFE670TXD	-1
+#define	PCMCIA_STR_DLINK_DFE670TXD	"D-Link DFE-670TXD"
 /*
  * vendor ID of EPX_AA2000 is Fujitsu (0x0004) and product ID is 0x2000, but
  * it conflicts with Fujitsu Towa LA501 Ethernet.
