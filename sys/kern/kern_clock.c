@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.90 2004/02/13 11:36:22 wiz Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.90.2.1 2004/09/16 03:23:27 jmc Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.90 2004/02/13 11:36:22 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.90.2.1 2004/09/16 03:23:27 jmc Exp $");
 
 #include "opt_ntp.h"
 #include "opt_multiprocessor.h"
@@ -397,6 +397,7 @@ initclocks(void)
 	case 32:
 		shifthz = SHIFT_SCALE - 5;
 		break;
+	case 50:
 	case 60:
 	case 64:
 		shifthz = SHIFT_SCALE - 6;
@@ -740,6 +741,7 @@ hardclock(struct clockframe *frame)
 			}
 			break;
 
+		case 50:
 		case 100:
 			/* A factor of 1.010001111010111 gives about 1ppm
 			   error. */
