@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_iokit.c,v 1.26 2003/11/24 16:51:33 manu Exp $ */
+/*	$NetBSD: mach_iokit.c,v 1.27 2003/12/08 12:03:16 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include "opt_ktrace.h"
 #include "opt_compat_darwin.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_iokit.c,v 1.26 2003/11/24 16:51:33 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_iokit.c,v 1.27 2003/12/08 12:03:16 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -148,7 +148,8 @@ mach_io_service_get_matching_services(args)
 	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
 	rep->rep_body.msgh_descriptor_count = 1;
 	rep->rep_match.name = (mach_port_t)mr->mr_name;
-	rep->rep_match.disposition = 0x11; /* XXX */
+	rep->rep_match.disposition = MACH_MSG_TYPE_MOVE_SEND;
+	rep->rep_match.type = MACH_MSG_PORT_DESCRIPTOR;
 	rep->rep_trailer.msgh_trailer_size = 8;
 
 	*msglen = sizeof(*rep);
@@ -196,7 +197,8 @@ mach_io_iterator_next(args)
 	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
 	rep->rep_body.msgh_descriptor_count = 1;
 	rep->rep_object.name = (mach_port_t)mr->mr_name;
-	rep->rep_object.disposition = 0x11; /* XXX */
+	rep->rep_object.disposition = MACH_MSG_TYPE_MOVE_SEND;
+	rep->rep_object.type = MACH_MSG_PORT_DESCRIPTOR;
 	rep->rep_trailer.msgh_trailer_size = 8;
 
 	*msglen = sizeof(*rep);
@@ -235,7 +237,8 @@ mach_io_service_open(args)
 	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
 	rep->rep_body.msgh_descriptor_count = 1;
 	rep->rep_connect.name = (mach_port_t)mr->mr_name;
-	rep->rep_connect.disposition = 0x11; /* XXX */
+	rep->rep_connect.disposition = MACH_MSG_TYPE_MOVE_SEND;
+	rep->rep_connect.type = MACH_MSG_PORT_DESCRIPTOR;
 	rep->rep_trailer.msgh_trailer_size = 8;
 
 	*msglen = sizeof(*rep);
@@ -320,7 +323,8 @@ mach_io_connect_get_service(args)
 	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
 	rep->rep_body.msgh_descriptor_count = 1;
 	rep->rep_service.name = (mach_port_t)mr->mr_name;
-	rep->rep_service.disposition = 0x11; /* XXX */
+	rep->rep_service.disposition = MACH_MSG_TYPE_MOVE_SEND;
+	rep->rep_service.type = MACH_MSG_PORT_DESCRIPTOR;
 	rep->rep_trailer.msgh_trailer_size = 8;
 
 	*msglen = sizeof(*rep);
@@ -403,7 +407,8 @@ mach_io_registry_entry_create_iterator(args)
 	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
 	rep->rep_body.msgh_descriptor_count = 1;
 	rep->rep_iterator.name = (mach_port_t)mr->mr_name;
-	rep->rep_iterator.disposition = 0x11; /* XXX */
+	rep->rep_iterator.disposition = MACH_MSG_TYPE_MOVE_SEND;
+	rep->rep_iterator.type = MACH_MSG_PORT_DESCRIPTOR;
 	rep->rep_trailer.msgh_trailer_size = 8;
 
 	*msglen = sizeof(*rep);
@@ -483,7 +488,8 @@ mach_io_service_add_interest_notification(args)
 	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
 	rep->rep_body.msgh_descriptor_count = 1;
 	rep->rep_notification.name = (mach_port_t)mr->mr_name;
-	rep->rep_notification.disposition = 0x11; /* XXX */
+	rep->rep_notification.disposition = MACH_MSG_TYPE_MOVE_SEND;
+	rep->rep_notification.type = MACH_MSG_PORT_DESCRIPTOR;
 	rep->rep_trailer.msgh_trailer_size = 8;
 
 	*msglen = sizeof(*rep);
@@ -560,7 +566,8 @@ mach_io_registry_get_root_entry(args)
 	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
 	rep->rep_body.msgh_descriptor_count = 1;
 	rep->rep_root.name = (mach_port_t)mr->mr_name;
-	rep->rep_root.disposition = 0x11; /* XXX */
+	rep->rep_root.disposition = MACH_MSG_TYPE_MOVE_SEND;
+	rep->rep_root.type = MACH_MSG_PORT_DESCRIPTOR;
 	rep->rep_trailer.msgh_trailer_size = 8;
 
 	*msglen = sizeof(*rep);
@@ -621,7 +628,8 @@ mach_io_registry_entry_get_child_iterator(args)
 	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
 	rep->rep_body.msgh_descriptor_count = 1;
 	rep->rep_iterator.name = (mach_port_t)mr->mr_name;
-	rep->rep_iterator.disposition = 0x11; /* XXX */
+	rep->rep_iterator.disposition = MACH_MSG_TYPE_MOVE_SEND;
+	rep->rep_iterator.type = MACH_MSG_PORT_DESCRIPTOR;
 	rep->rep_trailer.msgh_trailer_size = 8;
 
 	*msglen = sizeof(*rep);
@@ -784,10 +792,9 @@ mach_io_registry_entry_get_properties(args)
 	rep->rep_body.msgh_descriptor_count = 1;
 	rep->rep_properties.address = (void *)va;
 	rep->rep_properties.size = size;
-	rep->rep_properties.deallocate = 0; /* XXX */
-	rep->rep_properties.copy = 2; /* XXX */
-	rep->rep_properties.pad1 = 1; /* XXX */
-	rep->rep_properties.type = 1; /* XXX */
+	rep->rep_properties.deallocate = 0;
+	rep->rep_properties.copy = MACH_MSG_ALLOCATE;
+	rep->rep_properties.type = MACH_MSG_OOL_DESCRIPTOR;
 	rep->rep_count = size;
 	rep->rep_trailer.msgh_trailer_size = 8;
 
@@ -872,10 +879,9 @@ mach_io_registry_entry_get_property(args)
 	rep->rep_body.msgh_descriptor_count = 1;
 	rep->rep_properties.address = (void *)va;
 	rep->rep_properties.size = size;
-	rep->rep_properties.deallocate = 0; /* XXX */
-	rep->rep_properties.copy = 2; /* XXX */
-	rep->rep_properties.pad1 = 0; /* XXX */
-	rep->rep_properties.type = 0; /* XXX */
+	rep->rep_properties.deallocate = 0;
+	rep->rep_properties.copy = MACH_MSG_ALLOCATE;
+	rep->rep_properties.type = MACH_MSG_PORT_DESCRIPTOR; /* XXX was 0 */
 	rep->rep_properties_count = size;
 	rep->rep_trailer.msgh_trailer_size = 8;
 
@@ -1232,7 +1238,8 @@ mach_io_registry_entry_from_path(args)
 	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
 	rep->rep_body.msgh_descriptor_count = 1;
 	rep->rep_entry.name = (mach_port_t)mr->mr_name;
-	rep->rep_entry.disposition = 0x11; /* XXX */
+	rep->rep_entry.disposition = MACH_MSG_TYPE_MOVE_SEND;
+	rep->rep_entry.type = MACH_MSG_PORT_DESCRIPTOR;
 	rep->rep_trailer.msgh_trailer_size = 8;
 
 	*msglen = sizeof(*rep);
@@ -1299,7 +1306,8 @@ mach_io_registry_entry_get_parent_iterator(args)
 	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
 	rep->rep_body.msgh_descriptor_count = 1;
 	rep->rep_iterator.name = (mach_port_t)mr->mr_name;
-	rep->rep_iterator.disposition = 0x11; /* XXX */
+	rep->rep_iterator.disposition = MACH_MSG_TYPE_MOVE_SEND;
+	rep->rep_iterator.type = MACH_MSG_PORT_DESCRIPTOR;
 	rep->rep_trailer.msgh_trailer_size = 8;
 
 	*msglen = sizeof(*rep);
