@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcireg.h,v 1.10 2001/11/19 02:57:16 augustss Exp $	*/
+/*	$NetBSD: ehcireg.h,v 1.11 2001/11/21 02:44:31 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -170,7 +170,9 @@
 #define EHCI_FLALIGN_ALIGN	0x1000
 
 /* No data structure may cross a page boundary. */
-#define EHCI_PAGE_SIZE		0x1000
+#define EHCI_PAGE_SIZE 0x1000
+#define EHCI_PAGE(x) ((x) &~ 0xfff)
+#define EHCI_PAGE_OFFSET(x) ((x) & 0xfff)
 
 typedef u_int32_t ehci_link_t;
 #define EHCI_LINK_TERMINATE	0x00000001
@@ -197,6 +199,7 @@ typedef struct {
 #define EHCI_SITD_ALIGN 32
 
 /* Queue Element Transfer Descriptor */
+#define EHCI_QTD_NBUFFERS 5
 typedef struct {
 	ehci_link_t	qtd_next;
 	ehci_link_t	qtd_altnext;
@@ -217,12 +220,16 @@ typedef struct {
 #define  EHCI_QTD_PID_IN	0x1
 #define  EHCI_QTD_PID_SETUP	0x2
 #define EHCI_QTD_GET_CERR(x)	(((x) >> 10) &  0x3)
+#define EHCI_QTD_SET_CERR(x)	((x) << 10)
 #define EHCI_QTD_GET_C_PAGE(x)	(((x) >> 12) &  0x7)
+#define EHCI_QTD_SET_C_PAGE(x)	((x) << 12)
 #define EHCI_QTD_GET_IOC(x)	(((x) >> 15) &  0x1)
+#define EHCI_QTD_IOC		0x00008000
 #define EHCI_QTD_GET_BYTES(x)	(((x) >> 16) &  0x7fff)
+#define EHCI_QTD_SET_BYTES(x)	((x) << 16)
 #define EHCI_QTD_GET_TOGGLE(x)	(((x) >> 31) &  0x1)
-	ehci_physaddr_t	qtd_buffer[5];
-#define EHCI_BUFFER_OFFS(x)	((x) & 0x00000fff)
+#define EHCI_QTD_TOGGLE		0x80000000
+	ehci_physaddr_t	qtd_buffer[EHCI_QTD_NBUFFERS];
 } ehci_qtd_t;
 #define EHCI_QTD_ALIGN 32
 
@@ -232,6 +239,7 @@ typedef struct {
 	u_int32_t	qh_endp;
 #define EHCI_QH_GET_ADDR(x)	(((x) >>  0) & 0x7f) /* endpoint addr */
 #define EHCI_QH_SET_ADDR(x)	(x)
+#define EHCI_QH_ADDRMASK	0x0000007f
 #define EHCI_QH_GET_INACT(x)	(((x) >>  7) & 0x01) /* inactivate on next */
 #define EHCI_QH_INACT		0x00000080
 #define EHCI_QH_GET_ENDPT(x)	(((x) >>  8) & 0x0f) /* endpoint no */
@@ -247,6 +255,7 @@ typedef struct {
 #define EHCI_QH_HRECL		0x00008000
 #define EHCI_QH_GET_MPL(x)	(((x) >> 16) & 0x7ff) /* max packet len */
 #define EHCI_QH_SET_MPL(x)	((x) << 16)
+#define EHCI_QG_MPLMASK		0x07ff0000
 #define EHCI_QH_GET_CTL(x)	(((x) >> 26) & 0x01) /* control endpoint */
 #define EHCI_QH_CTL		0x08000000
 #define EHCI_QH_GET_NRL(x)	(((x) >> 28) & 0x0f) /* NAK reload */
