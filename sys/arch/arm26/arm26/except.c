@@ -1,4 +1,4 @@
-/* $NetBSD: except.c,v 1.20 2000/12/23 15:12:54 bjh21 Exp $ */
+/* $NetBSD: except.c,v 1.21 2000/12/27 16:57:09 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.20 2000/12/23 15:12:54 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.21 2000/12/27 16:57:09 bjh21 Exp $");
 
 #include "opt_cputypes.h"
 #include "opt_ddb.h"
@@ -68,6 +68,7 @@ void syscall(struct trapframe *);
 static void data_abort_fixup(struct trapframe *);
 static vaddr_t data_abort_address(struct trapframe *);
 static vm_prot_t data_abort_atype(struct trapframe *);
+static boolean_t data_abort_usrmode(struct trapframe *);
 #ifdef DEBUG
 static void printregs(struct trapframe *tf);
 #endif
@@ -195,10 +196,9 @@ syscall(struct trapframe *tf)
 	u_quad_t sticks;
 	struct proc *p;
 	vaddr_t pc;
-	int code, regparams, nextreg;
+	int code, nargs, nregargs, nextreg, nstkargs;
 	const struct sysent *sy;
-	size_t argsize, regargsize, stkargsize;
-	char args[32]; /* XXX just enough for mmap... */
+	register_t args[8]; /* XXX just enough for mmap... */
 	register_t rval[2], or15;
 	int error;
 
@@ -238,38 +238,34 @@ syscall(struct trapframe *tf)
 	switch (code) {
 	case SYS_syscall: /* Indirect system call.  First arg is new code */
 		code = tf->tf_r0;
-		regparams = 3; nextreg = 1;
+		nregargs = 3; nextreg = 1;
 		break;
 	case SYS___syscall: /* As above, but quad_t arg */
 		if (p->p_emul->e_sysent == sysent) { /* NetBSD emulation */
 			code = tf->tf_r0; /* XXX assume little-endian */
-			regparams = 2; nextreg = 2;
+			nregargs = 2; nextreg = 2;
 			break;
 		}
 		/* FALLTHROUGH */
 	default:
-		regparams = 4; nextreg = 0;
+		nregargs = 4; nextreg = 0;
 	}
 	if (code > p->p_emul->e_nsysent)
 		sy = p->p_emul->e_sysent + p->p_emul->e_nosys;
 	else
 		sy = p->p_emul->e_sysent + code;
 
-	argsize = sy->sy_argsize;
-	if (argsize > (regparams * sizeof(int))) {
-		regargsize = regparams*sizeof(int);
-		stkargsize = argsize - regargsize;
-	} else {
-		regargsize = argsize;
-		stkargsize = 0;
-	}
+	nargs = sy->sy_argsize / sizeof(register_t);
+	nregargs = min(nregargs, nargs);
+	nstkargs = nargs - nregargs;
 
-	if (regargsize)
-		bcopy((char *)tf + nextreg * sizeof(int), args, regargsize);
+	if (nregargs > 0)
+		bcopy((register_t *)tf + nextreg, args,
+		    nregargs * sizeof(register_t));
 
-	if (stkargsize) {
-		error = copyin((caddr_t)tf->tf_r13, args + regargsize,
-			       stkargsize);
+	if (nstkargs > 0) {
+		error = copyin((caddr_t)tf->tf_r13, args + nregargs,
+			       nstkargs * sizeof(register_t));
 		if (error) {
 #ifdef SYSCALL_DEBUG
 			scdebug_call(p, code, (register_t *)args);
@@ -279,11 +275,11 @@ syscall(struct trapframe *tf)
 	}
 
 #ifdef SYSCALL_DEBUG
-	scdebug_call(p, code, (register_t *)args);
+	scdebug_call(p, code, args);
 #endif
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSCALL))
-		ktrsyscall(p, code, argsize, (register_t *)args);
+		ktrsyscall(p, code, nargs * sizeof(register_t), args);
 #endif
 
 	rval[0] = 0;
@@ -360,6 +356,7 @@ prefetch_abort_handler(struct trapframe *tf)
 		int_on();
 
 	/*
+	 * XXX Not done yet:
 	 * Check if the page being requested is already present.  If
 	 * so, call the undefined instruction handler instead (ARM3 ds
 	 * p15).
@@ -418,6 +415,7 @@ data_abort_handler(struct trapframe *tf)
 	int ret;
 	struct proc *p;
 	vm_prot_t atype;
+	boolean_t usrmode;
 	vm_map_t map;
 	struct pcb *curpcb;
 
@@ -446,7 +444,11 @@ data_abort_handler(struct trapframe *tf)
 	data_abort_fixup(tf);
 	va = data_abort_address(tf);
 	atype = data_abort_atype(tf);
-	map = va >= VM_MIN_KERNEL_ADDRESS ? kernel_map : &p->p_vmspace->vm_map;
+	usrmode = data_abort_usrmode(tf);
+	if (!usrmode && va >= VM_MIN_KERNEL_ADDRESS)
+		map = kernel_map;
+	else
+		map = &p->p_vmspace->vm_map;
 	if (pmap_fault(map->pmap, va, atype))
 		goto out;
 	for (;;) {
@@ -660,6 +662,23 @@ data_abort_atype(struct trapframe *tf)
 		return VM_PROT_READ | VM_PROT_WRITE;
 #endif
 	return VM_PROT_READ;
+}
+
+/*
+ * Work out what effective mode was in use when a data abort occurred.
+ */
+static boolean_t
+data_abort_usrmode(struct trapframe *tf)
+{
+	register_t insn;
+
+	if ((tf->tf_r15 & R15_MODE) == R15_MODE_USR)
+		return TRUE;
+	insn = *(register_t *)(tf->tf_r15 & R15_PC);
+	if ((insn & 0x0d200000) == 0x04200000)
+		/* LDR[B]T and STR[B]T */
+		return TRUE;
+	return FALSE;
 }
 
 void
