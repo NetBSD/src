@@ -1,4 +1,4 @@
-/*	$NetBSD: unstr.c,v 1.3 1995/03/23 08:29:00 cgd Exp $	*/
+/*	$NetBSD: unstr.c,v 1.4 1997/10/11 07:59:09 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -36,14 +36,18 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1991, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)unstr.c	8.1 (Berkeley) 5/31/93";
+#else
+__RCSID("$NetBSD: unstr.c,v 1.4 1997/10/11 07:59:09 lukem Exp $");
+#endif
 #endif /* not lint */
 
 /*
@@ -59,11 +63,14 @@ static char sccsid[] = "@(#)unstr.c	8.1 (Berkeley) 5/31/93";
  *	Ken Arnold		Aug 13, 1978
  */
 
-# include	<machine/endian.h>
+# include	<sys/types.h>
 # include	<sys/param.h>
-# include	"strfile.h"
-# include	<stdio.h>
+# include	<machine/endian.h>
 # include	<ctype.h>
+# include	<err.h>
+# include	<stdio.h>
+# include	<string.h>
+# include	"strfile.h"
 
 # ifndef MAXPATHLEN
 # define	MAXPATHLEN	1024
@@ -75,24 +82,23 @@ char	*Infile,			/* name of input file */
 
 FILE	*Inf, *Dataf;
 
-char	*strcat(), *strcpy();
+void	getargs __P((char *[]));
+int	main __P((int, char *[]));
+void	order_unstr __P((STRFILE *));
 
 /* ARGSUSED */
+int
 main(ac, av)
-int	ac;
-char	**av;
+	int	ac;
+	char	**av;
 {
 	static STRFILE	tbl;		/* description table */
 
 	getargs(av);
-	if ((Inf = fopen(Infile, "r")) == NULL) {
-		perror(Infile);
-		exit(1);
-	}
-	if ((Dataf = fopen(Datafile, "r")) == NULL) {
-		perror(Datafile);
-		exit(1);
-	}
+	if ((Inf = fopen(Infile, "r")) == NULL)
+		err(1, "fopen %s", Infile);
+	if ((Dataf = fopen(Datafile, "r")) == NULL)
+		err(1, "fopen %s", Datafile);
 	(void) fread((char *) &tbl, sizeof tbl, 1, Dataf);
 	tbl.str_version = ntohl(tbl.str_version);
 	tbl.str_numstr = ntohl(tbl.str_numstr);
@@ -110,8 +116,9 @@ char	**av;
 	exit(0);
 }
 
+void
 getargs(av)
-register char	*av[];
+	char	*av[];
 {
 	if (!*++av) {
 		(void) fprintf(stderr, "usage: unstr datafile\n");
@@ -122,13 +129,14 @@ register char	*av[];
 	(void) strcat(Datafile, ".dat");
 }
 
+void
 order_unstr(tbl)
-register STRFILE	*tbl;
+	STRFILE	*tbl;
 {
-	register int	i;
-	register char	*sp;
-	auto off_t	pos;
-	char		buf[BUFSIZ];
+	int	i;
+	char	*sp;
+	off_t	pos;
+	char	buf[BUFSIZ];
 
 	for (i = 0; i < tbl->str_numstr; i++) {
 		(void) fread((char *) &pos, 1, sizeof pos, Dataf);
