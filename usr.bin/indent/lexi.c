@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.9 1999/03/15 20:28:45 kristerw Exp $	*/
+/*	$NetBSD: lexi.c,v 1.10 2002/03/22 22:30:02 kristerw Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: lexi.c,v 1.9 1999/03/15 20:28:45 kristerw Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.10 2002/03/22 22:30:02 kristerw Exp $");
 #endif
 #endif				/* not lint */
 
@@ -161,7 +161,7 @@ lexi()
 
 		if (isdigit((unsigned char)*buf_ptr) ||
 		    (buf_ptr[0] == '.' && isdigit((unsigned char)buf_ptr[1]))) {
-			int     seendot = 0, seenexp = 0;
+			int     seendot = 0, seenexp = 0, seensfx = 0;
 			if (*buf_ptr == '0' &&
 			    (buf_ptr[1] == 'x' || buf_ptr[1] == 'X')) {
 				*e_token++ = *buf_ptr++;
@@ -200,13 +200,28 @@ lexi()
 				/* float constant */
 				*e_token++ = *buf_ptr++;
 			} else {
-				/* integer constant (U, L, UL, LL, ULL) */
-				if (*buf_ptr == 'U' || *buf_ptr == 'u')
-					*e_token++ = *buf_ptr++;
-				if (*buf_ptr == 'L' || *buf_ptr == 'l')
-					*e_token++ = *buf_ptr++;
-				if (*buf_ptr == 'L' || *buf_ptr == 'l')
-					*e_token++ = *buf_ptr++;
+				/* integer constant */
+				while (1) {
+					if (!(seensfx & 1) &&
+					    (*buf_ptr == 'U' ||
+					     *buf_ptr == 'u')) {
+						CHECK_SIZE_TOKEN;
+						*e_token++ = *buf_ptr++;
+						seensfx |= 1;
+						continue;
+					}
+					if (!(seensfx & 2) &&
+					    (*buf_ptr == 'L' ||
+					     *buf_ptr == 'l')) {
+						CHECK_SIZE_TOKEN;
+						if (buf_ptr[1] == buf_ptr[0])
+							*e_token++ = *buf_ptr++;
+						*e_token++ = *buf_ptr++;
+						seensfx |= 2;
+						continue;
+					}
+					break;
+				}
 			}
 		} else
 			while (chartype[(int) *buf_ptr] == alphanum) {	/* copy it over */
