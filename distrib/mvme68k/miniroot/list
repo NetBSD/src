@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.2 1999/02/20 16:21:19 scw Exp $
+#	$NetBSD: list,v 1.3 1999/03/25 15:51:17 leo Exp $
 
 # mvme68k's extras
 LINK	instbin			sbin/disklabel
@@ -44,6 +44,8 @@ COPY	${CURDIR}/../../sys/arch/mvme68k/compile/GENERIC/netbsd	netbsd
 
 # various files that we need in /etc for the install
 COPY	${DESTDIR}/etc/disktab		etc/disktab.shadow
+COPY	${DESTDIR}/etc/spwd.db		etc/spwd.db
+LINK	etc/spwd.db			etc/pwd.db
 SYMLINK	/tmp/disktab.shadow		etc/disktab
 SYMLINK	/tmp/fstab.shadow		etc/fstab
 SYMLINK	/tmp/resolv.conf.shadow		etc/resolv.conf
