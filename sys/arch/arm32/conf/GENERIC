@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.39 1998/06/02 20:41:52 mark Exp $
+#	$NetBSD: GENERIC,v 1.40 1998/06/09 01:15:49 tv Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -12,9 +12,6 @@ maxusers	32
 # Standard system options
 
 options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
-options 	SWAPPAGER	# paging; REQUIRED
-options 	VNODEPAGER	# mmap() of files
-options 	DEVPAGER	# mmap() of devices
 #options 	NTP		# NTP phase/frequency locked loop
 #options 	UVM		# Use UVM instead of Mach VM.
 
