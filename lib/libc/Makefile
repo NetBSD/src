@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.2 (Berkeley) 3/5/91
-#	$Id: Makefile,v 1.20 1993/11/14 16:48:54 pk Exp $
+#	$Id: Makefile,v 1.21 1993/12/04 02:31:56 cgd Exp $
 #
 # All library objects contain sccsid strings by default; they may be
 # excluded as a space-saving measure.  To produce a library that does
@@ -12,11 +12,11 @@
 
 LIB=c
 CFLAGS+=-DYP -DLIBC_SCCS -DSYSLIBC_SCCS
-AINC=	-I${.CURDIR}/arch/${MACHINE}
+AINC=	-I${.CURDIR}/arch/${MACHINE_ARCH}
 
-.if exists (${.CURDIR}/arch/${MACHINE}/Makefile.inc)
-.PATH:	${.CURDIR}/arch/${MACHINE}
-.include "${.CURDIR}/arch/${MACHINE}/Makefile.inc"
+.if exists (${.CURDIR}/arch/${MACHINE_ARCH}/Makefile.inc)
+.PATH:	${.CURDIR}/arch/${MACHINE_ARCH}
+.include "${.CURDIR}/arch/${MACHINE_ARCH}/Makefile.inc"
 .endif
 
 .include "${.CURDIR}/db/Makefile.inc"
@@ -46,16 +46,16 @@ copy-to-libkern-machind: ${KSRCS}
 
 copy-to-libkern-machdep: ${KMSRCS}
 .if defined(KMSRCS) && !empty(KMSRCS)
-	cp -p ${.ALLSRC} ${LIBKERN}/${MACHINE}
+	cp -p ${.ALLSRC} ${LIBKERN}/${MACHINE_ARCH}
 .endif
 .if defined(KMINCLUDES) && !empty(KMINCLUDES)
-	(cd ${.CURDIR} ; cp -p ${KMINCLUDES} ${LIBKERN}/${MACHINE})
+	(cd ${.CURDIR} ; cp -p ${KMINCLUDES} ${LIBKERN}/${MACHINE_ARCH})
 .endif
 
 rm-from-libkern:
 	for i in ${KSRCS}; do rm -f ${LIBKERN}/$$i; done
 .if defined(KMSRCS) && !empty(KMSRCS)
-	for i in ${KMSRCS}; do rm -f ${LIBKERN}/${MACHINE}/$$i; done
+	for i in ${KMSRCS}; do rm -f ${LIBKERN}/${MACHINE_ARCH}/$$i; done
 .endif
 	
 .include <bsd.lib.mk>
