@@ -1,4 +1,4 @@
-/* $NetBSD: prom.c,v 1.4 1998/09/22 00:41:13 ross Exp $ */
+/* $NetBSD: prom.c,v 1.5 1998/10/15 01:02:15 ross Exp $ */
 
 /*  
  * Mach Operating System
@@ -123,18 +123,4 @@ prom_getenv(id, buf, len)
 	buf[ret.u.retval] = '\0';
 
 	return (ret.u.retval);
-}
-
-int
-prom_open(dev, len)
-	char *dev;
-	int len;
-{
-	prom_return_t ret;
-
-	ret.bits = prom_dispatch(PROM_R_OPEN, dev, len);
-	if (ret.u.status & 0x4)
-		return (-1);
-	else
-		return (ret.u.retval);
 }
