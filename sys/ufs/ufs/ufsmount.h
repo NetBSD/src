@@ -1,4 +1,4 @@
-/*	$NetBSD: ufsmount.h,v 1.10 2002/12/01 00:12:12 matt Exp $	*/
+/*	$NetBSD: ufsmount.h,v 1.11 2003/04/02 10:39:46 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -76,6 +76,7 @@ struct ufsmount {
 	struct	mount *um_mountp;		/* filesystem vfs structure */
 	dev_t	um_dev;				/* device mounted */
 	struct	vnode *um_devvp;		/* block device mounted vnode */
+	u_long	um_fstype;
 	u_int32_t um_flags;			/* UFS-specific flags - see below */
 	union {					/* pointer to superblock */
 		struct	fs *fs;			/* FFS */
@@ -103,6 +104,13 @@ struct ufsmount {
 /* UFS-specific flags */
 #define UFS_NEEDSWAP	0x01	/* filesystem metadata need byte-swapping */
 #define UFS_ISAPPLEUFS	0x02	/* filesystem is Apple UFS */
+
+/*
+ * Filesystem types
+ */
+#define UFS1  1
+#define UFS2  2
+
 
 /*
  * Flags describing the state of quotas.

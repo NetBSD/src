@@ -1,4 +1,4 @@
-/*	$NetBSD: badsect.c,v 1.21 2003/01/24 21:55:05 fvdl Exp $	*/
+/*	$NetBSD: badsect.c,v 1.22 2003/04/02 10:39:22 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1981, 1983, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1981, 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)badsect.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: badsect.c,v 1.21 2003/01/24 21:55:05 fvdl Exp $");
+__RCSID("$NetBSD: badsect.c,v 1.22 2003/04/02 10:39:22 fvdl Exp $");
 #endif
 #endif /* not lint */
 
@@ -76,7 +76,7 @@ __RCSID("$NetBSD: badsect.c,v 1.21 2003/01/24 21:55:05 fvdl Exp $");
 
 union {
 	struct	fs fs;
-	char	fsx[SBSIZE];
+	char	fsx[SBLOCKSIZE];
 } ufs;
 #define sblock	ufs.fs
 union {
@@ -89,12 +89,15 @@ int	fso, fsi;
 int	errs;
 long	dev_bsize = 1;
 int needswap = 0;
+int is_ufs2;
 
 char buf[MAXBSIZE];
 
 void	rdfs __P((daddr_t, int, char *));
 int	chkuse __P((daddr_t, int));
 int	main __P((int, char *[]));
+
+const off_t sblock_try[] = SBLOCKSEARCH;
 
 int
 main(argc, argv)
@@ -104,6 +107,7 @@ main(argc, argv)
 	daddr_t number;
 	struct stat stbuf, devstat;
 	struct direct *dp;
+	int i;
 	DIR *dirp;
 	char name[MAXPATHLEN];
 
@@ -150,15 +154,30 @@ main(argc, argv)
 		err(1, "Cannot open `%s'", argv[1]);
 
 	fs = &sblock;
-	rdfs(SBOFF, SBSIZE, (char *)fs);
-	if (fs->fs_magic != FS_MAGIC) {
-		if(fs->fs_magic == bswap32(FS_MAGIC))
+
+	for (i = 0; sblock_try[i] != -1; i++) {
+		rdfs(sblock_try[i] / DEV_BSIZE, SBLOCKSIZE, (char *)fs);
+		switch (fs->fs_magic) {
+		case FS_UFS2_MAGIC:
+			is_ufs2 = 1;
+			/* FALLTHROUGH */
+		case FS_UFS1_MAGIC:
+			goto found;
+		case FS_UFS2_MAGIC_SWAPPED:
+			is_ufs2 = 1;
+			/* FALLTHROUGH */
+		case FS_UFS1_MAGIC_SWAPPED:
 			needswap = 1;
-		else
-			errx(1, "%s: bad superblock", name);
+			goto found;
+		default:
+			continue;
+		}
 	}
+	errx(1, "%s: bad superblock", name);
+found:
 	if (needswap)
 		ffs_sb_swap(fs, fs);
+
 	dev_bsize = fs->fs_fsize / fsbtodb(fs, 1);
 	for (argc -= 2, argv += 2; argc > 0; argc--, argv++) {
 		number = atoi(*argv);
@@ -184,7 +203,7 @@ chkuse(blkno, cnt)
 	daddr_t fsbn, bn;
 
 	fsbn = dbtofsb(fs, blkno);
-	if ((unsigned)(fsbn+cnt) > fs->fs_size) {
+	if (fsbn+cnt > fs->fs_size) {
 		warnx("block %lld out of range of file system",
 		    (long long)blkno);
 		return (1);

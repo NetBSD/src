@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_debug.c,v 1.21 2003/02/20 04:27:24 perseant Exp $	*/
+/*	$NetBSD: lfs_debug.c,v 1.22 2003/04/02 10:39:40 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
 #ifdef DEBUG
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_debug.c,v 1.21 2003/02/20 04:27:24 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_debug.c,v 1.22 2003/04/02 10:39:40 fvdl Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/namei.h>
@@ -181,7 +181,7 @@ lfs_dump_super(struct lfs *lfsp)
 }
 
 void
-lfs_dump_dinode(struct dinode *dip)
+lfs_dump_dinode(struct ufs1_dinode *dip)
 {
 	int i;
 	

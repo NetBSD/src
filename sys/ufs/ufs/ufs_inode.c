@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.35 2003/03/01 05:07:53 perseant Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.36 2003/04/02 10:39:44 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.35 2003/03/01 05:07:53 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.36 2003/04/02 10:39:44 fvdl Exp $");
 
 #include "opt_quota.h"
 
@@ -76,7 +76,8 @@ ufs_inactive(v)
 	struct vnode *vp = ap->a_vp;
 	struct inode *ip = VTOI(vp);
 	struct proc *p = ap->a_p;
-	int mode, error = 0;
+	mode_t mode;
+	int error = 0;
 
 	if (prtactive && vp->v_usecount != 0)
 		vprint("ufs_inactive: pushing active", vp);
@@ -84,17 +85,17 @@ ufs_inactive(v)
 	/*
 	 * Ignore inodes related to stale file handles.
 	 */
-	if (ip->i_ffs_mode == 0)
+	if (ip->i_mode == 0)
 		goto out;
 	if (ip->i_ffs_effnlink == 0 && DOINGSOFTDEP(vp))
 		softdep_releasefile(ip);
 
-	if (ip->i_ffs_nlink <= 0 && (vp->v_mount->mnt_flag & MNT_RDONLY) == 0) {
+	if (ip->i_nlink <= 0 && (vp->v_mount->mnt_flag & MNT_RDONLY) == 0) {
 #ifdef QUOTA
 		if (!getinoquota(ip))
 			(void)chkiq(ip, -1, NOCRED, 0);
 #endif
-		if (ip->i_ffs_size != 0) {
+		if (ip->i_size != 0) {
 			error = VOP_TRUNCATE(vp, (off_t)0, 0, NOCRED, p);
 		}
 		/*
@@ -103,9 +104,10 @@ ufs_inactive(v)
 		 * So, rather than creating a new entry point to do the
 		 * same thing, we just use softdep_change_linkcnt().
 		 */
-		ip->i_ffs_rdev = 0;
-		mode = ip->i_ffs_mode;
-		ip->i_ffs_mode = 0;
+		DIP(ip, rdev) = 0;
+		mode = ip->i_mode;
+		ip->i_mode = 0;
+		DIP(ip, mode) = 0;
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 		if (DOINGSOFTDEP(vp))
 			softdep_change_linkcnt(ip);
@@ -121,7 +123,7 @@ out:
 	 * so that it can be reused immediately.
 	 */
 
-	if (ip->i_ffs_mode == 0)
+	if (ip->i_mode == 0)
 		vrecycle(vp, NULL, p);
 	return (error);
 }

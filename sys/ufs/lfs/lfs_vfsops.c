@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.112 2003/03/28 08:03:38 perseant Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.113 2003/04/02 10:39:42 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.112 2003/03/28 08:03:38 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.113 2003/04/02 10:39:42 fvdl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -165,7 +165,9 @@ struct genfs_ops lfs_genfsops = {
 	lfs_gop_write,
 };
 
-struct pool lfs_inode_pool, lfs_inoext_pool;
+struct pool lfs_inode_pool;
+struct pool lfs_dinode_pool;
+struct pool lfs_inoext_pool;
 
 /*
  * The writer daemon.  UVM keeps track of how many dirty pages we are holding
@@ -242,6 +244,13 @@ lfs_writerd(void *arg)
 	/* NOTREACHED */
 }
 
+#if 0
+extern struct malloc_type *debug_malloc_type;
+extern int debug_malloc_size;
+extern int debug_malloc_size_lo;
+extern int debug_malloc_size_hi;
+#endif
+
 /*
  * Initialize the filesystem, most work done by ufs_init.
  */
@@ -255,12 +264,20 @@ lfs_init()
 	 */
 	pool_init(&lfs_inode_pool, sizeof(struct inode), 0, 0, 0,
 		  "lfsinopl", &pool_allocator_nointr);
+	pool_init(&lfs_dinode_pool, sizeof(struct ufs1_dinode), 0, 0, 0,
+		  "lfsdinopl", &pool_allocator_nointr);
 	pool_init(&lfs_inoext_pool, sizeof(struct lfs_inode_ext), 8, 0, 0,
 		  "lfsinoextpl", &pool_allocator_nointr);
 #ifdef DEBUG
 	memset(lfs_log, 0, sizeof(lfs_log));
 #endif
 	simple_lock_init(&lfs_subsys_lock);
+#if 0
+	debug_malloc_type = M_SEGMENT;
+	debug_malloc_size = 0;
+	debug_malloc_size_lo = 1;
+	debug_malloc_size_hi = 65536;
+#endif
 }
 
 void
@@ -487,12 +504,13 @@ update_meta(struct lfs *fs, ino_t ino, int version, daddr_t lbn,
 	 * XXX appear later to give the correct size.
 	 */
 	ip = VTOI(vp);
-	if (ip->i_ffs_size <= (lbn << fs->lfs_bshift)) {
+	if (ip->i_size <= (lbn << fs->lfs_bshift)) {
 		if (lbn < NDADDR)
-			ip->i_ffs_size = (lbn << fs->lfs_bshift) +
+			ip->i_size = ip->i_ffs1_size = (lbn << fs->lfs_bshift) +
 				(size - fs->lfs_fsize) + 1;
 		else
-			ip->i_ffs_size = (lbn << fs->lfs_bshift) + 1;
+			ip->i_size = ip->i_ffs1_size =
+			    (lbn << fs->lfs_bshift) + 1;
 	}
 
 	error = ufs_bmaparray(vp, lbn, &odaddr, &a[0], &num, NULL);
@@ -505,17 +523,17 @@ update_meta(struct lfs *fs, ino_t ino, int version, daddr_t lbn,
 	}
 	switch (num) {
 	    case 0:
-		ooff = ip->i_ffs_db[lbn];
+		ooff = ip->i_ffs1_db[lbn];
 		if (ooff == UNWRITTEN)
-			ip->i_ffs_blocks += btofsb(fs, size);
+			ip->i_ffs1_blocks += btofsb(fs, size);
 		/* XXX what about fragment extension? */
-		ip->i_ffs_db[lbn] = ndaddr;
+		ip->i_ffs1_db[lbn] = ndaddr;
 		break;
 	    case 1:
-		ooff = ip->i_ffs_ib[a[0].in_off];
+		ooff = ip->i_ffs1_ib[a[0].in_off];
 		if (ooff == UNWRITTEN)
-			ip->i_ffs_blocks += btofsb(fs, size);
-		ip->i_ffs_ib[a[0].in_off] = ndaddr;
+			ip->i_ffs1_blocks += btofsb(fs, size);
+		ip->i_ffs1_ib[a[0].in_off] = ndaddr;
 		break;
 	    default:
 		ap = &a[num - 1];
@@ -526,7 +544,7 @@ update_meta(struct lfs *fs, ino_t ino, int version, daddr_t lbn,
 		/* XXX ondisk32 */
 		ooff = ((int32_t *)bp->b_data)[ap->in_off];
 		if (ooff == UNWRITTEN)
-			ip->i_ffs_blocks += btofsb(fs, size);
+			ip->i_ffs1_blocks += btofsb(fs, size);
 		/* XXX ondisk32 */
 		((int32_t *)bp->b_data)[ap->in_off] = ndaddr;
 		(void) VOP_BWRITE(bp);
@@ -552,7 +570,7 @@ update_meta(struct lfs *fs, ino_t ino, int version, daddr_t lbn,
 	LFS_WRITESEGENTRY(sup, fs, dtosn(fs, ndaddr), bp);
 
 	/* Fix this so it can be released */
-	/* ip->i_lfs_effnblks = ip->i_ffs_blocks; */
+	/* ip->i_lfs_effnblks = ip->i_ffs1_blocks; */
 
 #ifdef DEBUG_LFS_RFW
 	/* Now look again to make sure it worked */
@@ -571,7 +589,7 @@ update_inoblk(struct lfs *fs, daddr_t offset, struct ucred *cred,
 {
 	struct vnode *devvp, *vp;
 	struct inode *ip;
-	struct dinode *dip;
+	struct ufs1_dinode *dip;
 	struct buf *dbp, *ibp;
 	int error;
 	daddr_t daddr;
@@ -591,8 +609,8 @@ update_inoblk(struct lfs *fs, daddr_t offset, struct ucred *cred,
 #endif
 		return error;
 	}
-	dip = ((struct dinode *)(dbp->b_data)) + INOPB(fs);
-	while (--dip >= (struct dinode *)dbp->b_data) {
+	dip = ((struct ufs1_dinode *)(dbp->b_data)) + INOPB(fs);
+	while (--dip >= (struct ufs1_dinode *)dbp->b_data) {
 		if (dip->di_inumber > LFS_IFILE_INUM) {
 			/* printf("ino %d version %d\n", dip->di_inumber,
 			       dip->di_gen); */
@@ -605,19 +623,21 @@ update_inoblk(struct lfs *fs, daddr_t offset, struct ucred *cred,
 				continue;
 			}
 			ip = VTOI(vp);
-			if (dip->di_size != ip->i_ffs_size)
+			if (dip->di_size != ip->i_size)
 				VOP_TRUNCATE(vp, dip->di_size, 0, NOCRED, p);
 			/* Get mode, link count, size, and times */
-			memcpy(&ip->i_din.ffs_din, dip, 
-			       offsetof(struct dinode, di_db[0]));
+			memcpy(ip->i_din.ffs1_din, dip, 
+			       offsetof(struct ufs1_dinode, di_db[0]));
 
 			/* Then the rest, except di_blocks */
-			ip->i_ffs_flags = dip->di_flags;
-			ip->i_ffs_gen = dip->di_gen;
-			ip->i_ffs_uid = dip->di_uid;
-			ip->i_ffs_gid = dip->di_gid;
+			ip->i_flags = ip->i_ffs1_flags = dip->di_flags;
+			ip->i_gen = ip->i_ffs1_gen = dip->di_gen;
+			ip->i_uid = ip->i_ffs1_uid = dip->di_uid;
+			ip->i_gid = ip->i_ffs1_gid = dip->di_gid;
 
-			ip->i_ffs_effnlink = dip->di_nlink;
+			ip->i_mode = ip->i_ffs1_mode;
+			ip->i_nlink = ip->i_ffs_effnlink = ip->i_ffs1_nlink;
+			ip->i_size = ip->i_ffs1_size;
 
 			LFS_SET_UINO(ip, IN_CHANGE | IN_MODIFIED | IN_UPDATE);
 
@@ -636,14 +656,14 @@ update_inoblk(struct lfs *fs, daddr_t offset, struct ucred *cred,
 				if (daddr > 0) {
 					LFS_SEGENTRY(sup, fs, dtosn(fs, daddr),
 						     ibp);
-					sup->su_nbytes -= DINODE_SIZE;
+					sup->su_nbytes -= sizeof (struct ufs1_dinode);
 					LFS_WRITESEGENTRY(sup, fs,
 							  dtosn(fs, daddr),
 							  ibp);
 				}
 				LFS_SEGENTRY(sup, fs, dtosn(fs, dbtofsb(fs, dbp->b_blkno)),
 					     ibp);
-				sup->su_nbytes += DINODE_SIZE;
+				sup->su_nbytes += sizeof (struct ufs1_dinode);
 				LFS_WRITESEGENTRY(sup, fs,
 						  dtosn(fs, dbtofsb(fs, dbp->b_blkno)),
 						  ibp);
@@ -1042,6 +1062,7 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 
 	ump = malloc(sizeof *ump, M_UFSMNT, M_WAITOK | M_ZERO);
 	ump->um_lfs = fs;
+	ump->um_fstype = UFS1;
 	if (sizeof(struct lfs) < LFS_SBPAD) {			/* XXX why? */
 		bp->b_flags |= B_INVAL;
 		abp->b_flags |= B_INVAL;
@@ -1511,7 +1532,7 @@ int
 lfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 {
 	struct lfs *fs;
-	struct dinode *dip;
+	struct ufs1_dinode *dip;
 	struct inode *ip;
 	struct buf *bp;
 	struct ifile *ifp;
@@ -1621,7 +1642,7 @@ lfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 			   what is there anyway */
 			if (fs->lfs_seglock > 0) {
 				struct buf **bpp;
-				struct dinode *dp;
+				struct ufs1_dinode *dp;
 				int i;
 
 				for (bpp = fs->lfs_sp->bpp;
@@ -1631,7 +1652,7 @@ lfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 						/* Inode block */
 						printf("block 0x%" PRIx64 ": ",
 						    (*bpp)->b_blkno);
-						dp = (struct dinode *)(*bpp)->b_data;
+						dp = (struct ufs1_dinode *)(*bpp)->b_data;
 						for (i = 0; i < INOPB(fs); i++)
 							if (dp[i].di_u.inumber)
 								printf("%d ", dp[i].di_u.inumber);
@@ -1646,12 +1667,12 @@ lfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 		(void)tsleep(&fs->lfs_iocount, PRIBIO + 1, "lfs ifind", 1);
 		goto again;
 	}
-	ip->i_din.ffs_din = *dip;
+	*ip->i_din.ffs1_din = *dip;
 	brelse(bp);
 
 	if (fs->lfs_version > 1) {
-		ip->i_ffs_atime = ts.tv_sec;
-		ip->i_ffs_atimensec = ts.tv_nsec;
+		ip->i_ffs1_atime = ts.tv_sec;
+		ip->i_ffs1_atimensec = ts.tv_nsec;
 	}
 
 	lfs_vinit(mp, vp);
@@ -1701,7 +1722,7 @@ lfs_vptofh(struct vnode *vp, struct fid *fhp)
 	ufhp = (struct ufid *)fhp;
 	ufhp->ufid_len = sizeof(struct ufid);
 	ufhp->ufid_ino = ip->i_number;
-	ufhp->ufid_gen = ip->i_ffs_gen;
+	ufhp->ufid_gen = ip->i_gen;
 	return (0);
 }
 
@@ -1996,9 +2017,15 @@ lfs_vinit(struct mount *mp, struct vnode *vp)
 	struct ufsmount *ump = VFSTOUFS(mp);
 	int i;
 
-	ip->i_ffs_effnlink = ip->i_ffs_nlink;
-	ip->i_lfs_effnblks = ip->i_ffs_blocks;
-	ip->i_lfs_osize = ip->i_ffs_size;
+	ip->i_mode = ip->i_ffs1_mode;
+	ip->i_ffs_effnlink = ip->i_nlink = ip->i_ffs1_nlink;
+	ip->i_lfs_osize = ip->i_size = ip->i_ffs1_size;
+	ip->i_flags = ip->i_ffs1_flags;
+	ip->i_gen = ip->i_ffs1_gen;
+	ip->i_uid = ip->i_ffs1_uid;
+	ip->i_gid = ip->i_ffs1_gid;
+
+	ip->i_lfs_effnblks = ip->i_ffs1_blocks;
 
 	/*
 	 * Initialize the vnode from the inode, check for aliases.  In all
@@ -2008,33 +2035,33 @@ lfs_vinit(struct mount *mp, struct vnode *vp)
 
 	memset(ip->i_lfs_fragsize, 0, NDADDR * sizeof(*ip->i_lfs_fragsize));
 	if (vp->v_type != VLNK ||
-	    VTOI(vp)->i_ffs_size >= vp->v_mount->mnt_maxsymlinklen) {
+	    VTOI(vp)->i_size >= vp->v_mount->mnt_maxsymlinklen) {
 		struct lfs *fs = ump->um_lfs;
 #ifdef DEBUG
-		for (i = (ip->i_ffs_size + fs->lfs_bsize - 1) >> fs->lfs_bshift;
+		for (i = (ip->i_size + fs->lfs_bsize - 1) >> fs->lfs_bshift;
 		    i < NDADDR; i++) {
-			if (ip->i_ffs_db[i] != 0) {
+			if (ip->i_ffs1_db[i] != 0) {
 inconsistent:
-				lfs_dump_dinode(&ip->i_din.ffs_din);
+				lfs_dump_dinode(ip->i_din.ffs1_din);
 				panic("inconsistent inode");
 			}
 		}
 		for ( ; i < NDADDR + NIADDR; i++) {
-			if (ip->i_ffs_ib[i - NDADDR] != 0) {
+			if (ip->i_ffs1_ib[i - NDADDR] != 0) {
 				goto inconsistent;
 			}
 		}
 #endif /* DEBUG */
 		for (i = 0; i < NDADDR; i++)
-			if (ip->i_ffs_db[i] != 0)
+			if (ip->i_ffs1_db[i] != 0)
 				ip->i_lfs_fragsize[i] = blksize(fs, ip, i);
 	}
 
 #ifdef DEBUG
 	if (vp->v_type == VNON) {
 		printf("lfs_vinit: ino %d is type VNON! (ifmt=%o)\n",
-		       ip->i_number, (ip->i_ffs_mode & IFMT) >> 12);
-		lfs_dump_dinode(&ip->i_din.ffs_din);
+		       ip->i_number, (ip->i_mode & IFMT) >> 12);
+		lfs_dump_dinode(ip->i_din.ffs1_din);
 #ifdef DDB
 		Debugger();
 #endif /* DDB */
@@ -2048,5 +2075,5 @@ inconsistent:
 	ip->i_devvp = ump->um_devvp;
 	VREF(ip->i_devvp);
 	genfs_node_init(vp, &lfs_genfsops);
-	uvm_vnp_setsize(vp, ip->i_ffs_size);
+	uvm_vnp_setsize(vp, ip->i_size);
 }

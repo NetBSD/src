@@ -1,4 +1,4 @@
-/* $NetBSD: pass4.c,v 1.7 2003/03/29 00:09:43 perseant Exp $	 */
+/* $NetBSD: pass4.c,v 1.8 2003/04/02 10:39:28 fvdl Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -62,7 +62,7 @@ pass4()
 {
 	register ino_t inumber;
 	register struct zlncnt *zlnp;
-	struct dinode *dp;
+	struct ufs1_dinode *dp;
 	struct inodesc idesc;
 	int n;
 

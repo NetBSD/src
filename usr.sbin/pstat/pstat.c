@@ -1,4 +1,4 @@
-/*	$NetBSD: pstat.c,v 1.81 2003/02/11 00:45:02 mrg Exp $	*/
+/*	$NetBSD: pstat.c,v 1.82 2003/04/02 10:39:49 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)pstat.c	8.16 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: pstat.c,v 1.81 2003/02/11 00:45:02 mrg Exp $");
+__RCSID("$NetBSD: pstat.c,v 1.82 2003/04/02 10:39:49 fvdl Exp $");
 #endif
 #endif /* not lint */
 
@@ -465,12 +465,27 @@ ufs_print(vp, ovflw)
 	int ovflw;
 {
 	struct inode inode, *ip = &inode;
+	union dinode {
+		struct ufs1_dinode dp1;
+		struct ufs2_dinode dp2;
+	} dip;
 	char flags[sizeof(ufs_flags) / sizeof(ufs_flags[0])];
 	char dev[4 + 1 + 7 + 1]; /* 12bit marjor + 20bit minor */
 	char *name;
 	mode_t type;
+	dev_t rdev;
 
 	KGETRET(VTOI(vp), &inode, sizeof(struct inode), "vnode's inode");
+	KGETRET(ip->i_din.ffs1_din, &dip, sizeof (struct ufs1_dinode),
+	    "inode's dinode");
+
+	if (ip->i_size == dip.dp1.di_size)
+		rdev = dip.dp1.di_rdev;
+	else {
+		KGETRET(ip->i_din.ffs1_din, &dip, sizeof (struct ufs2_dinode),
+		    "inode's UFS2 dinode");
+		rdev = dip.dp2.di_rdev;
+	}
 
 	/*
 	 * XXX need to to locking state.
@@ -479,18 +494,18 @@ ufs_print(vp, ovflw)
 	(void)getflags(ufs_flags, flags, ip->i_flag);
 	PRWORD(ovflw, " %*d", 7, 1, ip->i_number);
 	PRWORD(ovflw, " %*s", 6, 1, flags);
-	type = ip->i_ffs_mode & S_IFMT;
-	if (S_ISCHR(ip->i_ffs_mode) || S_ISBLK(ip->i_ffs_mode)) {
+	type = ip->i_mode & S_IFMT;
+	if (S_ISCHR(ip->i_mode) || S_ISBLK(ip->i_mode)) {
 		if (usenumflag ||
-		    (name = devname(ip->i_ffs_rdev, type)) == NULL) {
+		    (name = devname(rdev, type)) == NULL) {
 			snprintf(dev, sizeof(dev), "%d,%d",
-			    major(ip->i_ffs_rdev), minor(ip->i_ffs_rdev));
+			    major(rdev), minor(rdev));
 			name = dev;
 		}
 		PRWORD(ovflw, " %*s", 8, 1, name);
 	} else
-		PRWORD(ovflw, " %*lld", 8, 1, (long long)ip->i_ffs_size);
-	return (0);
+		PRWORD(ovflw, " %*lld", 8, 1, (long long)ip->i_size);
+	return 0;
 }
 
 int

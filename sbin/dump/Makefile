@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.30 2003/03/27 13:56:46 lukem Exp $
+#	$NetBSD: Makefile,v 1.31 2003/04/02 10:39:24 fvdl Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 #	dump.h			header file
@@ -32,5 +32,8 @@ MAN=	dump.8
 MLINKS+=dump.8 rdump.8
 
 .PATH:  ${NETBSDSRCDIR}/sys/ufs/ffs
+
+CFLAGS+=-g
+LDFLAGS+=-g
 
 .include <bsd.prog.mk>

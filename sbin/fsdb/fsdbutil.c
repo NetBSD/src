@@ -1,4 +1,4 @@
-/*	$NetBSD: fsdbutil.c,v 1.12 2002/07/20 08:36:26 grant Exp $	*/
+/*	$NetBSD: fsdbutil.c,v 1.13 2003/04/02 10:39:29 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsdbutil.c,v 1.12 2002/07/20 08:36:26 grant Exp $");
+__RCSID("$NetBSD: fsdbutil.c,v 1.13 2003/04/02 10:39:29 fvdl Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -104,15 +104,23 @@ void
 printstat(cp, inum, dp)
 	const char *cp;
 	ino_t   inum;
-	struct dinode *dp;
+	union dinode *dp;
 {
 	struct group *grp;
 	struct passwd *pw;
 	time_t  t;
 	char   *p;
+	uint64_t size, blocks;
+	uint16_t mode;
+	uint32_t rdev;
+
+	size = iswap64(DIP(dp, size));
+	blocks = is_ufs2 ? iswap64(DIP(dp, blocks)) : iswap32(DIP(dp, blocks));
+	mode = iswap16(DIP(dp, mode));
+	rdev = iswap32(DIP(dp, rdev));
 
 	printf("%s: ", cp);
-	switch (iswap16(dp->di_mode) & IFMT) {
+	switch (mode & IFMT) {
 	case IFDIR:
 		puts("directory");
 		break;
@@ -120,20 +128,19 @@ printstat(cp, inum, dp)
 		puts("regular file");
 		break;
 	case IFBLK:
-		printf("block special (%d,%d)",
-		    major(iswap32(dp->di_rdev)), minor(iswap32(dp->di_rdev)));
+		printf("block special (%d,%d)", major(rdev), minor(rdev));
 		break;
 	case IFCHR:
-		printf("character special (%d,%d)",
-		    major(iswap32(dp->di_rdev)), minor(iswap32(dp->di_rdev)));
+		printf("character special (%d,%d)", major(rdev), minor(rdev));
 		break;
 	case IFLNK:
 		fputs("symlink", stdout);
-		if (iswap64(dp->di_size) > 0 && iswap64(dp->di_size) < MAXSYMLINKLEN &&
-		    dp->di_blocks == 0)
-			printf(" to `%.*s'\n", (int)iswap64(dp->di_size),
-			    (char *)dp->di_shortlink);
-		else
+		if (size > 0 && size < sblock->fs_maxsymlinklen &&
+		    DIP(dp, blocks) == 0) {
+			p = is_ufs2 ? (char *)dp->dp2.di_db :
+			    (char *)dp->dp1.di_db;
+			printf(" to `%.*s'\n", (int)size, p);
+		} else
 			putchar('\n');
 		break;
 	case IFSOCK:
@@ -143,34 +150,34 @@ printstat(cp, inum, dp)
 		puts("fifo");
 		break;
 	}
-	printf("I=%u MODE=%o SIZE=%llu", inum, iswap16(dp->di_mode),
-	    (unsigned long long)iswap64(dp->di_size));
-	t = iswap32(dp->di_mtime);
+	printf("I=%u MODE=%o SIZE=%llu", inum, mode,
+	    (unsigned long long)size);
+	t = is_ufs2 ? iswap64(dp->dp2.di_mtime) : iswap32(dp->dp1.di_mtime);
 	p = ctime(&t);
 	printf("\n\tMTIME=%15.15s %4.4s [%d nsec]", &p[4], &p[20],
-	    iswap32(dp->di_mtimensec));
-	t = iswap32(dp->di_ctime);
+	    iswap32(DIP(dp, mtimensec)));
+	t = is_ufs2 ? iswap64(dp->dp2.di_ctime) : iswap32(dp->dp1.di_ctime);
 	p = ctime(&t);
 	printf("\n\tCTIME=%15.15s %4.4s [%d nsec]", &p[4], &p[20],
-	    iswap32(dp->di_ctimensec));
-	t = iswap32(dp->di_atime);
+	    iswap32(DIP(dp, ctimensec)));
+	t = is_ufs2 ? iswap64(dp->dp2.di_atime) : iswap32(dp->dp1.di_atime);
 	p = ctime(&t);
 	printf("\n\tATIME=%15.15s %4.4s [%d nsec]\n", &p[4], &p[20],
-	    iswap32(dp->di_atimensec));
+	    iswap32(DIP(dp,atimensec)));
 
-	if ((pw = getpwuid(iswap32(dp->di_uid))) != NULL)
+	if ((pw = getpwuid(iswap32(DIP(dp, uid)))) != NULL)
 		printf("OWNER=%s ", pw->pw_name);
 	else
-		printf("OWNUID=%u ", iswap32(dp->di_uid));
-	if ((grp = getgrgid(iswap32(dp->di_gid))) != NULL)
+		printf("OWNUID=%u ", iswap32(DIP(dp, uid)));
+	if ((grp = getgrgid(iswap32(DIP(dp, gid)))) != NULL)
 		printf("GRP=%s ", grp->gr_name);
 	else
-		printf("GID=%u ", iswap32(dp->di_gid));
+		printf("GID=%u ", iswap32(DIP(dp, gid)));
 
-	printf("LINKCNT=%hd FLAGS=0x%#x BLKCNT=0x%x GEN=0x%x\n",
-		iswap16(dp->di_nlink),
-	    iswap32(dp->di_flags), iswap32(dp->di_blocks),
-		iswap32(dp->di_gen));
+	printf("LINKCNT=%hd FLAGS=0x%#x BLKCNT=0x%llx GEN=0x%x\n",
+		iswap16(DIP(dp, nlink)),
+	    iswap32(DIP(dp, flags)), (unsigned long long)blocks,
+		iswap32(DIP(dp, gen)));
 }
 
 int
@@ -190,7 +197,7 @@ checkactivedir()
 		warnx("no current inode");
 		return 0;
 	}
-	if ((iswap16(curinode->di_mode) & IFMT) != IFDIR) {
+	if ((iswap16(DIP(curinode, mode)) & IFMT) != IFDIR) {
 		warnx("inode %d not a directory", curinum);
 		return 0;
 	}
@@ -200,9 +207,12 @@ checkactivedir()
 int
 printactive()
 {
+	uint16_t mode;
+
 	if (!checkactive())
 		return 1;
-	switch (iswap16(curinode->di_mode) & IFMT) {
+	mode = iswap16(DIP(curinode, mode));
+	switch (mode & IFMT) {
 	case IFDIR:
 	case IFREG:
 	case IFBLK:
@@ -217,8 +227,7 @@ printactive()
 		break;
 	default:
 		printf("current inode %d: screwy itype 0%o (mode 0%o)?\n",
-		    curinum, iswap16(curinode->di_mode) & IFMT,
-			iswap16(curinode->di_mode));
+		    curinum, mode & IFMT, mode);
 		break;
 	}
 	return 0;

@@ -1,8 +1,15 @@
-/*	$NetBSD: fsck.h,v 1.31 2003/03/29 22:48:38 wiz Exp $	*/
+/*	$NetBSD: fsck.h,v 1.32 2003/04/02 10:39:25 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
  *	The Regents of the University of California.  All rights reserved.
+ *
+ *
+ * This software was developed for the FreeBSD Project by Marshall
+ * Kirk McKusick and Network Associates Laboratories, the Security
+ * Research Division of Network Associates, Inc. under DARPA/SPAWAR
+ * contract N66001-01-C-8035 ("CBOSS"), as part of the DARPA CHATS
+ * research program
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -43,10 +50,32 @@
 #define	MAXBUFSPACE	40*1024	/* maximum space to allocate to buffers */
 #define	INOBUFSIZE	56*1024	/* size of buffer to read inodes in pass1 */
 
+union dinode {
+	struct ufs1_dinode dp1;
+	struct ufs2_dinode dp2;
+};
+#define       DIP(dp, field) \
+	(is_ufs2 ? (dp)->dp2.di_##field : (dp)->dp1.di_##field)
+
 #ifndef BUFSIZ
 #define BUFSIZ 1024
 #endif
 
+/*
+ * Each inode on the filesystem is described by the following structure.
+ * The linkcnt is initially set to the value in the inode. Each time it
+ * is found during the descent in passes 2, 3, and 4 the count is
+ * decremented. Any inodes whose count is non-zero after pass 4 needs to
+ * have its link count adjusted by the value remaining in ino_linkcnt.
+ */
+struct inostat {
+	char    ino_state;	/* state of inode, see below */
+	char    ino_type;	/* type of inode */
+	short   ino_linkcnt;	/* number of links not found */
+};
+/*
+ * Inode states.
+ */
 #define	USTATE	01		/* inode not allocated */
 #define	FSTATE	02		/* inode is file */
 #define	DSTATE	03		/* inode is directory */
@@ -54,6 +83,16 @@
 #define	DCLEAR	05		/* directory is to be cleared */
 #define	FCLEAR	06		/* file is to be cleared */
 #define	DMARK	07		/* used in propagate()'s traversal algorithm */
+
+/*
+ * Inode state information is contained on per cylinder group lists
+ * which are described by the following structure.
+ */
+struct inostatlist {
+	long    il_numalloced;  /* number of inodes allocated in this cg */
+	struct inostat *il_stat;/* inostat info for this cylinder group */
+} *inostathead;
+
 
 /*
  * buffer cache structure.
@@ -67,14 +106,20 @@ struct bufarea {
 	int b_flags;
 	union {
 		char *b_buf;			/* buffer space */
-		/* XXX ondisk32 */
-		int32_t *b_indir;		/* indirect block */
+		int32_t *b_indir1;		/* indirect block */
+		int64_t *b_indir2;		/* indirect block */
 		struct fs *b_fs;		/* super block */
 		struct cg *b_cg;		/* cylinder group */
+		struct ufs1_dinode *b_dinode1;	/* UFS1 inode block */
+		struct ufs2_dinode *b_dinode2;	/* UFS2 inode block */
 		struct appleufslabel *b_appleufs;		/* Apple UFS volume label */
 	} b_un;
 	char b_dirty;
 };
+
+#define       IBLK(bp, i) \
+	(is_ufs2 ?  (bp)->b_un.b_indir2[i] : (bp)->b_un.b_indir1[i])
+
 
 #define	B_INUSE 1
 
@@ -98,7 +143,7 @@ struct fs *altsblock;
 struct cg *cgrp;
 #define	sbdirty() \
 	do { \
-		memmove(sblk.b_un.b_fs, sblock, SBSIZE); \
+		memmove(sblk.b_un.b_fs, sblock, SBLOCKSIZE); \
 		if (needswap) \
 			ffs_sb_swap(sblock, sblk.b_un.b_fs); \
 		sblk.b_dirty = 1; \
@@ -125,7 +170,7 @@ struct inodesc {
 	int id_numfrags;	/* number of frags contained in block */
 	int64_t id_filesize;	/* for DATA nodes, the size of the directory */
 	int id_loc;		/* for DATA nodes, current location in dir */
-	int id_entryno;		/* for DATA nodes, current entry number */
+	int64_t id_entryno;	/* for DATA nodes, current entry number */
 	struct direct *id_dirp;	/* for DATA nodes, ptr to current entry */
 	char *id_name;		/* for DATA nodes, name to find or enter */
 	char id_type;		/* type of descriptor, DATA or ADDR */
@@ -182,10 +227,9 @@ struct inoinfo {
 	ino_t	i_dotdot;		/* inode number of `..' */
 	size_t	i_isize;		/* size of inode */
 	u_int	i_numblks;		/* size of block array in bytes */
-	/* XXX ondisk32 */
-	int32_t i_blks[1];		/* actually longer */
+	int64_t i_blks[1];		/* actually longer */
 } **inphead, **inpsort;
-long numdirs, listmax, inplast;
+long numdirs, dirhash, listmax, inplast;
 
 long	dev_bsize;		/* computed value of DEV_BSIZE */
 long	secsize;		/* actual disk sector size */
@@ -202,6 +246,7 @@ int	preen;			/* just fix normal inconsistencies */
 int	forceimage;		/* file system is an image file */
 int	doswap;			/* convert byte order */
 int	needswap;		/* need to convert byte order in memory */
+int	is_ufs2;		/* we're dealing with an UFS2 filesystem */
 int	do_blkswap;		/* need to do block addr byteswap */
 int	do_dirswap;		/* need to do dir entry byteswap */
 int	endian;			/* endian coversion */
@@ -218,10 +263,6 @@ int isappleufs;		/* filesystem is Apple UFS */
 daddr_t maxfsblock;		/* number of blocks in the file system */
 char	*blockmap;		/* ptr to primary blk allocation map */
 ino_t	maxino;			/* number of inodes in file system */
-ino_t	lastino;		/* last inode in use */
-char	*statemap;		/* ptr to inode state table */
-u_char	*typemap;		/* ptr to inode type table */
-int16_t	*lncntp;		/* ptr to link count table */
 
 int	dirblksiz;
 
@@ -232,10 +273,20 @@ extern int	lfmode;		/* lost & found directory creation mode */
 daddr_t n_blks;		/* number of blocks in use */
 ino_t n_files;		/* number of files in use */
 
+long countdirs;
+
 int	got_siginfo;		/* received a SIGINFO */
 
-#define	clearinode(dp)	(*(dp) = zino)
-struct	dinode zino;
+#define	clearinode(dp) \
+do { \
+	if (is_ufs2) 			\
+		(dp)->dp1 = ufs1_zino;	\
+	else				\
+		(dp)->dp2 = ufs2_zino;	\
+} while (0)
+
+struct	ufs1_dinode ufs1_zino;
+struct	ufs2_dinode ufs2_zino;
 
 #define	setbmap(blkno)	setbit(blockmap, blkno)
 #define	testbmap(blkno)	isset(blockmap, blkno)

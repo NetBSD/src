@@ -1,4 +1,4 @@
-/*      $NetBSD: lfs_inode.c,v 1.6 2003/01/24 21:55:06 fvdl Exp $ */
+/*      $NetBSD: lfs_inode.c,v 1.7 2003/04/02 10:39:25 fvdl Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c      8.6 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: lfs_inode.c,v 1.6 2003/01/24 21:55:06 fvdl Exp $");
+__RCSID("$NetBSD: lfs_inode.c,v 1.7 2003/04/02 10:39:25 fvdl Exp $");
 #endif
 #endif /* not lint */
 
@@ -72,6 +72,8 @@ __RCSID("$NetBSD: lfs_inode.c,v 1.6 2003/01/24 21:55:06 fvdl Exp $");
 #define	HASSUBDIRS	0x2
 
 struct lfs *sblock;
+
+int is_ufs2 = 0;
 
 /*
  * Read the superblock from disk, and check its magic number.
@@ -172,10 +174,19 @@ fs_parametrize(void)
 ino_t
 fs_maxino(void)
 {
-	return ((getino(sblock->lfs_ifile)->di_size
+	return ((getino(sblock->lfs_ifile)->dp1.di_size
 		   - (sblock->lfs_cleansz + sblock->lfs_segtabsz)
 		   * sblock->lfs_bsize)
 		  / sblock->lfs_bsize) * sblock->lfs_ifpb - 1;
+}
+
+void
+fs_mapinodes(ino_t maxino, u_int64_t *tapesz, int *anydirskipped)
+{
+	ino_t ino;
+
+	for (ino = ROOTINO; ino < maxino; ino++)
+		mapfileino(ino, tapesz, anydirskipped);
 }
 
 /*
@@ -189,7 +200,7 @@ fs_maxino(void)
 #define T_UNITS (NINDIR(fs)*NINDIR(fs))
 
 static daddr_t
-lfs_bmap(struct lfs *fs, struct dinode *idinode, daddr_t lbn)
+lfs_bmap(struct lfs *fs, struct ufs1_dinode *idinode, daddr_t lbn)
 {
 	daddr_t residue, up;
 	int off=0;
@@ -270,22 +281,24 @@ lfs_bmap(struct lfs *fs, struct dinode *idinode, daddr_t lbn)
 static struct ifile *
 lfs_ientry(ino_t ino)
 {
-    static struct ifile ifileblock[MAXIFPB];
-    static daddr_t ifblkno;
-    daddr_t lbn;
-    daddr_t blkno;
+	static struct ifile ifileblock[MAXIFPB];
+	static daddr_t ifblkno;
+	daddr_t lbn;
+	daddr_t blkno;
+	union dinode *dp;
     
-    lbn = ino/sblock->lfs_ifpb + sblock->lfs_cleansz + sblock->lfs_segtabsz;
-    blkno = lfs_bmap(sblock,getino(sblock->lfs_ifile),lbn);
-    if(blkno != ifblkno)
-	    bread(fsbtodb(sblock, blkno), (char *)ifileblock,
-		  sblock->lfs_bsize);
-    return ifileblock + (ino%sblock->lfs_ifpb);
+	lbn = ino/sblock->lfs_ifpb + sblock->lfs_cleansz + sblock->lfs_segtabsz;
+	dp = getino(sblock->lfs_ifile);
+	blkno = lfs_bmap(sblock, &dp->dp1 ,lbn);
+	if (blkno != ifblkno)
+		bread(fsbtodb(sblock, blkno), (char *)ifileblock,
+		    sblock->lfs_bsize);
+	return ifileblock + (ino % sblock->lfs_ifpb);
 }
 
 /* Search a block for a specific dinode. */
-static struct dinode *
-lfs_ifind(struct lfs *fs, ino_t ino, struct dinode *dip)
+static struct ufs1_dinode *
+lfs_ifind(struct lfs *fs, ino_t ino, struct ufs1_dinode *dip)
 {
 	register int cnt;
 
@@ -295,16 +308,16 @@ lfs_ifind(struct lfs *fs, ino_t ino, struct dinode *dip)
 	return NULL;
 }
 
-struct dinode *
+union dinode *
 getino(inum)
 	ino_t inum;
 {
 	static daddr_t inoblkno;
 	daddr_t blkno;
-	static struct dinode inoblock[MAXINOPB];
-	static struct dinode ifile_dinode; /* XXX fill this in */
-	static struct dinode empty_dinode; /* Always stays zeroed */
-	struct dinode *dp;
+	static struct ufs1_dinode inoblock[MAXBSIZE / sizeof (struct ufs1_dinode)];
+	static struct ufs1_dinode ifile_dinode; /* XXX fill this in */
+	static struct ufs1_dinode empty_dinode; /* Always stays zeroed */
+	struct ufs1_dinode *dp;
 
 	if(inum == sblock->lfs_ifile) {
 		/* Load the ifile inode if not already */
@@ -315,13 +328,13 @@ getino(inum)
 			dp = lfs_ifind(sblock, inum, inoblock);
 			ifile_dinode = *dp; /* Structure copy */
 		}
-		return &ifile_dinode;
+		return (union dinode *)&ifile_dinode;
 	}
 
 	curino = inum;
 	blkno = lfs_ientry(inum)->if_daddr;
 	if(blkno == LFS_UNUSED_DADDR)
-		return &empty_dinode;
+		return (union dinode *)&empty_dinode;
 
 	if(blkno != inoblkno) {
 		bread(fsbtodb(sblock, blkno), (char *)inoblock, 
@@ -332,5 +345,5 @@ getino(inum)
 				ffs_dinode_swap(&inoblock[i], &inoblock[i]);
 #endif
 	}
-	return lfs_ifind(sblock, inum, inoblock);
+	return (union dinode *)lfs_ifind(sblock, inum, inoblock);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: dirs.c,v 1.37 2002/05/09 02:55:50 simonb Exp $	*/
+/*	$NetBSD: dirs.c,v 1.38 2003/04/02 10:39:31 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)dirs.c	8.7 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: dirs.c,v 1.37 2002/05/09 02:55:50 simonb Exp $");
+__RCSID("$NetBSD: dirs.c,v 1.38 2003/04/02 10:39:31 fvdl Exp $");
 #endif
 #endif /* not lint */
 
@@ -88,7 +88,8 @@ static struct inotab *inotab[HASHSIZE];
  */
 struct modeinfo {
 	ino_t ino;
-	struct timeval timep[2];
+	struct timeval ctimep[2];
+	struct timeval mtimep[2];
 	mode_t mode;
 	uid_t uid;
 	gid_t gid;
@@ -126,7 +127,7 @@ struct odirect {
 	char	d_name[ODIRSIZ];
 };
 
-static struct inotab	*allocinotab __P((FILE *, ino_t, struct dinode *, long));
+static struct inotab	*allocinotab __P((FILE *, struct context *, long));
 static void		 dcvt __P((struct odirect *, struct direct *));
 static void		 flushent __P((void));
 static struct inotab	*inotablookup __P((ino_t));
@@ -149,7 +150,6 @@ extractdirs(genmode)
 {
 	FILE *mf;
 	int i, dfd, mfd;
-	struct dinode *ip;
 	struct inotab *itp;
 	struct direct nulldir;
 
@@ -193,8 +193,7 @@ extractdirs(genmode)
 	for (;;) {
 		curfile.name = "<directory file - name unknown>";
 		curfile.action = USING;
-		ip = curfile.dip;
-		if (ip == NULL || (ip->di_mode & IFMT) != IFDIR) {
+		if (curfile.mode == 0 || (curfile.mode & IFMT) != IFDIR) {
 			(void) fclose(df);
 			dirp = opendirfile(dirfile);
 			if (dirp == NULL)
@@ -207,7 +206,7 @@ extractdirs(genmode)
 				panic("Root directory is not on tape\n");
 			return;
 		}
-		itp = allocinotab(mf, curfile.ino, ip, seekpt);
+		itp = allocinotab(mf, &curfile, seekpt);
 		getfile(putdir, xtrnull);
 		putent(&nulldir);
 		flushent();
@@ -222,7 +221,7 @@ void
 skipdirs()
 {
 
-	while (curfile.dip && (curfile.dip->di_mode & IFMT) == IFDIR) {
+	while (curfile.ino && (curfile.mode & IFMT) == IFDIR) {
 		skipfile();
 	}
 }
@@ -369,8 +368,10 @@ putdir(buf, size)
 	} else {
 		for (loc = 0; loc < size; ) {
 			dp = (struct direct *)(buf + loc);
-			if (Bcvt)
-				swabst((u_char *)"ls", (u_char *) dp);
+			if (Bcvt) {
+				dp->d_ino = bswap32(dp->d_ino);
+				dp->d_reclen = bswap16(dp->d_ino);
+			}
 			if (oldinofmt && dp->d_ino != 0) {
 #				if BYTE_ORDER == BIG_ENDIAN
 					if (Bcvt)
@@ -457,7 +458,10 @@ dcvt(odp, ndp)
 {
 
 	memset(ndp, 0, (size_t)(sizeof *ndp));
-	ndp->d_ino =  odp->d_ino;
+	if (Bcvt)
+		ndp->d_ino = bswap16(odp->d_ino);
+	else
+		ndp->d_ino = odp->d_ino;
 	ndp->d_type = DT_UNKNOWN;
 	(void) strncpy(ndp->d_name, odp->d_name, ODIRSIZ);
 	ndp->d_namlen = strlen(ndp->d_name);
@@ -645,7 +649,8 @@ setdirmodes(flags)
 		} else {
 			if (!Nflag) {
 				cp = myname(ep);
-				(void) utimes(cp, node.timep);
+				(void) utimes(cp, node.ctimep);
+				(void) utimes(cp, node.mtimep);
 				(void) chown(cp, node.uid, node.gid);
 				(void) chmod(cp, node.mode);
 				(void) chflags(cp, node.flags);
@@ -723,10 +728,9 @@ inodetype(ino)
  * If requested, save its pertinent mode, owner, and time info.
  */
 static struct inotab *
-allocinotab(mf, ino, dip, aseekpt)
+allocinotab(mf, ctxp, aseekpt)
 	FILE *mf;
-	ino_t ino;
-	struct dinode *dip;
+	struct context *ctxp;
 	long aseekpt;
 {
 	struct inotab	*itp;
@@ -735,21 +739,25 @@ allocinotab(mf, ino, dip, aseekpt)
 	itp = calloc(1, sizeof(struct inotab));
 	if (itp == NULL)
 		panic("no memory directory table\n");
-	itp->t_next = inotab[INOHASH(ino)];
-	inotab[INOHASH(ino)] = itp;
-	itp->t_ino = ino;
+	itp->t_next = inotab[INOHASH(ctxp->ino)];
+	inotab[INOHASH(ctxp->ino)] = itp;
+	itp->t_ino = ctxp->ino;
 	itp->t_seekpt = aseekpt;
 	if (mf == NULL)
 		return (itp);
-	node.ino = ino;
-	node.timep[0].tv_sec = dip->di_atime;
-	node.timep[0].tv_usec = dip->di_atimensec / 1000;
-	node.timep[1].tv_sec = dip->di_mtime;
-	node.timep[1].tv_usec = dip->di_mtimensec / 1000;
-	node.mode = dip->di_mode;
-	node.flags = dip->di_flags;
-	node.uid = dip->di_uid;
-	node.gid = dip->di_gid;
+	node.ino = ctxp->ino;
+	node.mtimep[0].tv_sec = ctxp->atime_sec;
+	node.mtimep[0].tv_usec = ctxp->atime_nsec / 1000;
+	node.mtimep[1].tv_sec = ctxp->mtime_sec;
+	node.mtimep[1].tv_usec = ctxp->mtime_nsec / 1000;
+	node.ctimep[0].tv_sec = ctxp->atime_sec;
+	node.ctimep[0].tv_usec = ctxp->atime_nsec / 1000;
+	node.ctimep[1].tv_sec = ctxp->birthtime_sec;
+	node.ctimep[1].tv_usec = ctxp->birthtime_nsec / 1000;
+	node.mode = ctxp->mode;
+	node.flags = ctxp->file_flags;
+	node.uid = ctxp->uid;
+	node.gid = ctxp->gid;
 	(void) fwrite((char *)&node, 1, sizeof(struct modeinfo), mf);
 	return (itp);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: traverse.c,v 1.36 2003/01/24 21:55:06 fvdl Exp $	*/
+/*	$NetBSD: traverse.c,v 1.37 2003/04/02 10:39:24 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1988, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)traverse.c	8.7 (Berkeley) 6/15/95";
 #else
-__RCSID("$NetBSD: traverse.c,v 1.36 2003/01/24 21:55:06 fvdl Exp $");
+__RCSID("$NetBSD: traverse.c,v 1.37 2003/04/02 10:39:24 fvdl Exp $");
 #endif
 #endif /* not lint */
 
@@ -56,6 +56,7 @@ __RCSID("$NetBSD: traverse.c,v 1.36 2003/01/24 21:55:06 fvdl Exp $");
 #include <errno.h>
 #include <fts.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -64,15 +65,9 @@ __RCSID("$NetBSD: traverse.c,v 1.36 2003/01/24 21:55:06 fvdl Exp $");
 #define	HASDUMPEDFILE	0x1
 #define	HASSUBDIRS	0x2
 
-#ifdef	FS_44INODEFMT
-typedef	quad_t fsizeT;
-#else
-typedef	int32_t fsizeT;
-#endif
-
-static	int dirindir(ino_t, daddr_t, int, long *, long *, int);
-static	void dmpindir(ino_t, daddr_t, int, fsizeT *);
-static	int searchdir(ino_t, daddr_t, long, long, long *, int);
+static	int dirindir(ino_t, daddr_t, int, off_t *, u_int64_t *, int);
+static	void dmpindir(ino_t, daddr_t, int, off_t *);
+static	int searchdir(ino_t, daddr_t, long, off_t, u_int64_t *, int);
 
 /*
  * This is an estimation of the number of TP_BSIZE blocks in the file.
@@ -81,10 +76,10 @@ static	int searchdir(ino_t, daddr_t, long, long, long *, int);
  * (when some of the blocks are usually used for indirect pointers);
  * hence the estimate may be high.
  */
-long
-blockest(struct dinode *dp)
+int64_t
+blockest(union dinode *dp)
 {
-	long blkest, sizeest;
+	int64_t blkest, sizeest;
 
 	/*
 	 * dp->di_size is the size of the file in bytes.
@@ -100,11 +95,11 @@ blockest(struct dinode *dp)
 	 *	dump blocks (sizeest vs. blkest in the indirect block
 	 *	calculation).
 	 */
-	blkest = howmany(dbtob((u_int64_t)dp->di_blocks), TP_BSIZE);
-	sizeest = howmany(dp->di_size, TP_BSIZE);
+	blkest = howmany(dbtob((u_int64_t)DIP(dp, blocks)), TP_BSIZE);
+	sizeest = howmany(DIP(dp, size), TP_BSIZE);
 	if (blkest > sizeest)
 		blkest = sizeest;
-	if (dp->di_size > ufsib->ufs_bsize * NDADDR) {
+	if (DIP(dp, size) > ufsib->ufs_bsize * NDADDR) {
 		/* calculate the number of indirect blocks on the dump tape */
 		blkest +=
 			howmany(sizeest - NDADDR * ufsib->ufs_bsize / TP_BSIZE,
@@ -115,25 +110,25 @@ blockest(struct dinode *dp)
 
 /* Auxiliary macro to pick up files changed since previous dump. */
 #define	CHANGEDSINCE(dp, t) \
-	((dp)->di_mtime >= (t) || (dp)->di_ctime >= (t))
+	(DIP((dp), mtime) >= (t) || DIP((dp), ctime) >= (t))
 
 /* The WANTTODUMP macro decides whether a file should be dumped. */
 #ifdef UF_NODUMP
 #define	WANTTODUMP(dp) \
-	(CHANGEDSINCE(dp, iswap32(spcl.c_ddate)) && \
-	 (nonodump || ((dp)->di_flags & UF_NODUMP) != UF_NODUMP))
+	(CHANGEDSINCE(dp, iswap64(spcl.c_ddate)) && \
+	 (nonodump || (DIP((dp), flags) & UF_NODUMP) != UF_NODUMP))
 #else
-#define	WANTTODUMP(dp) CHANGEDSINCE(dp, iswap32(spcl.c_ddate))
+#define	WANTTODUMP(dp) CHANGEDSINCE(dp, iswap64(spcl.c_ddate))
 #endif
 
 /*
  * Determine if given inode should be dumped
  */
 void
-mapfileino(ino_t ino, long *tape_size, int *dirskipped)
+mapfileino(ino_t ino, u_int64_t *tape_size, int *dirskipped)
 {
 	int mode;
-	struct dinode *dp;
+	union dinode *dp;
 
 	/*
 	 * Skip inode if we've already marked it for dumping
@@ -141,7 +136,7 @@ mapfileino(ino_t ino, long *tape_size, int *dirskipped)
 	if (TSTINO(ino, usedinomap))
 		return;
 	dp = getino(ino);
-	if ((mode = (dp->di_mode & IFMT)) == 0)
+	if ((mode = (DIP(dp, mode) & IFMT)) == 0)
 		return;
 	/*
 	 * Put all dirs in dumpdirmap, inodes that are to be dumped in the
@@ -161,7 +156,7 @@ mapfileino(ino_t ino, long *tape_size, int *dirskipped)
 	}
 	if (mode == IFDIR) {
 #ifdef UF_NODUMP
-		if (!nonodump && (dp->di_flags & UF_NODUMP))
+		if (!nonodump && (DIP(dp, flags) & UF_NODUMP))
 			CLRINO(ino, usedinomap);
 #endif
 		*dirskipped = 1;
@@ -177,7 +172,7 @@ mapfileino(ino_t ino, long *tape_size, int *dirskipped)
  * disk may be NULL if dirv is NULL.
  */
 int
-mapfiles(ino_t maxino, long *tape_size, char *diskname, char * const *dirv)
+mapfiles(ino_t maxino, u_int64_t *tape_size, char *diskname, char * const *dirv)
 {
 	int anydirskipped = 0;
 
@@ -249,11 +244,7 @@ mapfiles(ino_t maxino, long *tape_size, char *diskname, char * const *dirv)
 		 */
 		mapfileino(ROOTINO, tape_size, &anydirskipped);
 	} else {
-		ino_t ino;
-
-		for (ino = ROOTINO; ino < maxino; ino++) {
-			mapfileino(ino, tape_size, &anydirskipped);
-		}
+		fs_mapinodes(maxino, tape_size, &anydirskipped);
 	}
 	/*
 	 * Restore gets very upset if the root is not dumped,
@@ -276,14 +267,15 @@ mapfiles(ino_t maxino, long *tape_size, char *diskname, char * const *dirv)
  * pass using this algorithm.
  */
 int
-mapdirs(ino_t maxino, long *tape_size)
+mapdirs(ino_t maxino, u_int64_t *tape_size)
 {
-	struct  dinode *dp, di;
+	union dinode *dp, di;
 	int i, isdir, nodump;
 	char *map;
 	ino_t ino;
-	long filesize;
+	off_t filesize;
 	int ret, change = 0;
+	daddr_t blk;
 
 	isdir = 0;		/* XXX just to get gcc to shut up */
 	for (map = dumpdirmap, ino = 1; ino < maxino; ino++) {
@@ -304,11 +296,21 @@ mapdirs(ino_t maxino, long *tape_size)
 			continue;
 
 		dp = getino(ino);
-		di = *dp; /* inode buf may be changed in searchdir */
-		filesize = di.di_size;
+		/*
+		 * inode buf may be changed in searchdir().
+		 */
+		if (is_ufs2)
+			di.dp2 = dp->dp2;
+		else
+			di.dp1 = dp->dp1;
+		filesize = DIP(&di, size);
 		for (ret = 0, i = 0; filesize > 0 && i < NDADDR; i++) {
-			if (di.di_db[i] != 0)
-				ret |= searchdir(ino, iswap32(di.di_db[i]),
+			if (is_ufs2)
+				blk = iswap64(di.dp2.di_db[i]);
+			else
+				blk = iswap32(di.dp1.di_db[i]);
+			if (blk != 0)
+				ret |= searchdir(ino, blk,
 					(long)ufs_dblksize(ufsib, &di, i),
 					filesize, tape_size, nodump);
 			if (ret & HASDUMPEDFILE)
@@ -317,9 +319,13 @@ mapdirs(ino_t maxino, long *tape_size)
 				filesize -= ufsib->ufs_bsize;
 		}
 		for (i = 0; filesize > 0 && i < NIADDR; i++) {
-			if (di.di_ib[i] == 0)
+			if (is_ufs2)
+				blk = iswap64(di.dp2.di_ib[i]);
+			else
+				blk = iswap32(di.dp2.di_ib[i]);
+			if (blk == 0)
 				continue;
-			ret |= dirindir(ino, di.di_ib[i], i, &filesize,
+			ret |= dirindir(ino, blk, i, &filesize,
 			    tape_size, nodump);
 		}
 		if (ret & HASDUMPEDFILE) {
@@ -348,19 +354,23 @@ mapdirs(ino_t maxino, long *tape_size)
  * require the directory to be dumped.
  */
 static int
-dirindir(ino_t ino, daddr_t blkno, int ind_level, long *filesize,
-	long *tape_size, int nodump)
+dirindir(ino_t ino, daddr_t blkno, int ind_level, off_t *filesize,
+	u_int64_t *tape_size, int nodump)
 {
 	int ret = 0;
 	int i;
-	/* XXX ondisk32 */
-	int32_t	idblk[MAXNINDIR];
+	union {
+		int64_t i64[MAXBSIZE / sizeof (int64_t)];
+		int32_t i32[MAXBSIZE / sizeof (int32_t)];
+	} idblk;
 
-	bread(fsatoda(ufsib, iswap64(blkno)), (char *)idblk,
-		(int)ufsib->ufs_bsize);
+	bread(fsatoda(ufsib, blkno), (char *)&idblk, (int)ufsib->ufs_bsize);
 	if (ind_level <= 0) {
 		for (i = 0; *filesize > 0 && i < ufsib->ufs_nindir; i++) {
-			blkno = idblk[i];
+			if (is_ufs2)
+				blkno = idblk.i64[i];
+			else
+				blkno = idblk.i32[i];
 			if (blkno != 0)
 				ret |= searchdir(ino, iswap64(blkno),
 				    ufsib->ufs_bsize, *filesize,
@@ -374,7 +384,10 @@ dirindir(ino_t ino, daddr_t blkno, int ind_level, long *filesize,
 	}
 	ind_level--;
 	for (i = 0; *filesize > 0 && i < ufsib->ufs_nindir; i++) {
-		blkno = idblk[i];
+		if (is_ufs2)
+			blkno = idblk.i64[i];
+		else
+			blkno = idblk.i32[i];
 		if (blkno != 0)
 			ret |= dirindir(ino, blkno, ind_level, filesize,
 			    tape_size, nodump);
@@ -388,15 +401,17 @@ dirindir(ino_t ino, daddr_t blkno, int ind_level, long *filesize,
  * contains any subdirectories.
  */
 static int
-searchdir(ino_t dino, daddr_t blkno, long size, long filesize,
-	long *tape_size, int nodump)
+searchdir(ino_t dino, daddr_t blkno, long size, off_t filesize,
+	u_int64_t *tape_size, int nodump)
 {
 	struct direct *dp;
-	struct dinode *ip;
+	union dinode *ip;
 	long loc, ret = 0;
-	char dblk[MAXBSIZE];
+	char *dblk;
 	ino_t ino;
 
+	if (dblk == NULL && (dblk = malloc(size)) == NULL)
+		quit("searchdir: cannot allocate indirect memory.\n");
 	bread(fsatoda(ufsib, blkno), dblk, (int)size);
 	if (filesize < size)
 		size = filesize;
@@ -426,7 +441,7 @@ searchdir(ino_t dino, daddr_t blkno, long size, long filesize,
 			 * Add back to dumpdirmap and remove from usedinomap
 			 * to propagate nodump.
 			 */
-			if ((ip->di_mode & IFMT) == IFDIR) {
+			if ((DIP(ip, mode) & IFMT) == IFDIR) {
 				SETINO(ino, dumpdirmap);
 				CLRINO(ino, usedinomap);
 				ret |= HASSUBDIRS;
@@ -453,24 +468,43 @@ searchdir(ino_t dino, daddr_t blkno, long size, long filesize,
  * Dump the contents of an inode to tape.
  */
 void
-dumpino(struct dinode *dp, ino_t ino)
+dumpino(union dinode *dp, ino_t ino)
 {
 	int ind_level, cnt;
-	fsizeT size;
+	off_t size;
 	char buf[TP_BSIZE];
+	daddr_t blk;
+	void *shortlink;
 
 	if (newtape) {
 		newtape = 0;
 		dumpmap(dumpinomap, TS_BITS, ino);
 	}
 	CLRINO(ino, dumpinomap);
-	if (needswap)
-		ffs_dinode_swap(dp, &spcl.c_dinode);
-	else
-		spcl.c_dinode = *dp;
+	if (!is_ufs2) {
+		if (needswap)
+			ffs_dinode1_swap(&dp->dp1, &spcl.c_dinode);
+		else
+			spcl.c_dinode = dp->dp1;
+	} else {
+		if (needswap)
+			ffs_dinode2_swap(&dp->dp2, &dp->dp2);
+		spcl.c_mode = dp->dp2.di_mode;
+		spcl.c_size = dp->dp2.di_size;
+		spcl.c_atime = dp->dp2.di_atime;
+		spcl.c_atimensec = dp->dp2.di_atimensec;
+		spcl.c_mtime = dp->dp2.di_mtime;
+		spcl.c_mtimensec = dp->dp2.di_mtimensec;
+		spcl.c_birthtime = dp->dp2.di_birthtime;
+		spcl.c_birthtimensec = dp->dp2.di_birthnsec;
+		spcl.c_rdev = dp->dp2.di_rdev;
+		spcl.c_file_flags = dp->dp2.di_flags;
+		spcl.c_uid = dp->dp2.di_uid;
+		spcl.c_gid = dp->dp2.di_gid;
+	}
 	spcl.c_type = iswap32(TS_INODE);
 	spcl.c_count = 0;
-	switch (dp->di_mode & IFMT) {
+	switch (DIP(dp, mode) & IFMT) {
 
 	case 0:
 		/*
@@ -482,19 +516,23 @@ dumpino(struct dinode *dp, ino_t ino)
 		/*
 		 * Check for short symbolic link.
 		 */
-		if (dp->di_size > 0 &&
+		if (DIP(dp, size) > 0 &&
 #ifdef FS_44INODEFMT
-		    (dp->di_size < ufsib->ufs_maxsymlinklen ||
-		     (ufsib->ufs_maxsymlinklen == 0 && dp->di_blocks == 0))
+		    (DIP(dp, size) < ufsib->ufs_maxsymlinklen ||
+		     (ufsib->ufs_maxsymlinklen == 0 && DIP(dp, blocks) == 0))
 #else
-		    dp->di_blocks == 0
+		    DIP(dp, blocks) == 0
 #endif
 			) {
 			spcl.c_addr[0] = 1;
 			spcl.c_count = iswap32(1);
 			writeheader(ino);
-			memmove(buf, dp->di_shortlink, (u_long)dp->di_size);
-			buf[dp->di_size] = '\0';
+			if (is_ufs2)
+				shortlink = dp->dp2.di_db;
+			else
+				shortlink = dp->dp1.di_db;
+			memmove(buf, shortlink, DIP(dp, size));
+			buf[DIP(dp, size)] = '\0';
 			writerec(buf, 0);
 			return;
 		}
@@ -502,7 +540,7 @@ dumpino(struct dinode *dp, ino_t ino)
 
 	case IFDIR:
 	case IFREG:
-		if (dp->di_size > 0)
+		if (DIP(dp, size) > 0)
 			break;
 		/* fall through */
 
@@ -514,18 +552,26 @@ dumpino(struct dinode *dp, ino_t ino)
 		return;
 
 	default:
-		msg("Warning: undefined file type 0%o\n", dp->di_mode & IFMT);
+		msg("Warning: undefined file type 0%o\n", DIP(dp, mode) & IFMT);
 		return;
 	}
-	if (dp->di_size > NDADDR * ufsib->ufs_bsize)
+	if (DIP(dp, size) > NDADDR * ufsib->ufs_bsize)
 		cnt = NDADDR * ufsib->ufs_frag;
 	else
-		cnt = howmany(dp->di_size, ufsib->ufs_fsize);
-	blksout(&dp->di_db[0], cnt, ino);
-	if ((size = dp->di_size - NDADDR * ufsib->ufs_bsize) <= 0)
+		cnt = howmany(DIP(dp, size), ufsib->ufs_fsize);
+	if (is_ufs2)
+		blksout64(&dp->dp2.di_db[0], cnt, ino);
+	else
+		blksout32(&dp->dp1.di_db[0], cnt, ino);
+
+	if ((size = DIP(dp, size) - NDADDR * ufsib->ufs_bsize) <= 0)
 		return;
 	for (ind_level = 0; ind_level < NIADDR; ind_level++) {
-		dmpindir(ino, dp->di_ib[ind_level], ind_level, &size);
+		if (is_ufs2)
+			blk = iswap64(dp->dp2.di_ib[ind_level]);
+		else
+			blk = iswap32(dp->dp1.di_ib[ind_level]);
+		dmpindir(ino, blk, ind_level, &size);
 		if (size <= 0)
 			return;
 	}
@@ -535,29 +581,40 @@ dumpino(struct dinode *dp, ino_t ino)
  * Read indirect blocks, and pass the data blocks to be dumped.
  */
 static void
-dmpindir(ino_t ino, daddr_t blk, int ind_level, fsizeT *size)
+dmpindir(ino_t ino, daddr_t blk, int ind_level, off_t *size)
 {
 	int i, cnt;
-	/* XXX ondisk32 */
-	int32_t idblk[MAXNINDIR];
+	union {
+		int32_t i32[MAXBSIZE / sizeof (int32_t)];
+		int64_t i64[MAXBSIZE / sizeof (int64_t)];
+	} idblk;
+	daddr_t iblk;
+
 
 	if (blk != 0)
-		bread(fsatoda(ufsib, iswap32(blk)), (char *)idblk,
+		bread(fsatoda(ufsib, blk), (char *)&idblk,
 			(int) ufsib->ufs_bsize);
 	else
-		memset(idblk, 0, (int)ufsib->ufs_bsize);
+		memset(&idblk, 0, (int)ufsib->ufs_bsize);
 	if (ind_level <= 0) {
 		if (*size < ufsib->ufs_nindir * ufsib->ufs_bsize)
 			cnt = howmany(*size, ufsib->ufs_fsize);
 		else
 			cnt = ufsib->ufs_nindir * ufsib->ufs_frag;
 		*size -= ufsib->ufs_nindir * ufsib->ufs_bsize;
-		blksout(&idblk[0], cnt, ino);
+		if (is_ufs2)
+			blksout64(&idblk.i64[0], cnt, ino);
+		else
+			blksout32(&idblk.i32[0], cnt, ino);
 		return;
 	}
 	ind_level--;
 	for (i = 0; i < ufsib->ufs_nindir; i++) {
-		dmpindir(ino, idblk[i], ind_level, size);
+		if (is_ufs2)
+			iblk = iswap64(idblk.i64[i]);
+		else
+			iblk = iswap32(idblk.i32[i]);
+		dmpindir(ino, iblk, ind_level, size);
 		if (*size <= 0)
 			return;
 	}
@@ -566,9 +623,8 @@ dmpindir(ino_t ino, daddr_t blk, int ind_level, fsizeT *size)
 /*
  * Collect up the data into tape record sized buffers and output them.
  */
-/* XXX ondisk32 */
 void
-blksout(int32_t *blkp, int frags, ino_t ino)
+blksout32(int32_t *blkp, int frags, ino_t ino)
 {
 	int32_t *bp;
 	int i, j, count, blks, tbperdb;
@@ -599,6 +655,38 @@ blksout(int32_t *blkp, int frags, ino_t ino)
 	}
 }
 
+void
+blksout64(int64_t *blkp, int frags, ino_t ino)
+{
+	int64_t *bp;
+	int i, j, count, blks, tbperdb;
+
+	blks = howmany(frags * ufsib->ufs_fsize, TP_BSIZE);
+	tbperdb = ufsib->ufs_bsize >> tp_bshift;
+	for (i = 0; i < blks; i += TP_NINDIR) {
+		if (i + TP_NINDIR > blks)
+			count = blks;
+		else
+			count = i + TP_NINDIR;
+		for (j = i; j < count; j++)
+			if (blkp[j / tbperdb] != 0)
+				spcl.c_addr[j - i] = 1;
+			else
+				spcl.c_addr[j - i] = 0;
+		spcl.c_count = iswap32(count - i);
+		writeheader(ino);
+		bp = &blkp[i / tbperdb];
+		for (j = i; j < count; j += tbperdb, bp++)
+			if (*bp != 0) {
+				if (j + tbperdb <= count)
+					dumpblock(iswap64(*bp), (int)ufsib->ufs_bsize);
+				else
+					dumpblock(iswap64(*bp), (count - j) * TP_BSIZE);
+			}
+		spcl.c_type = iswap32(TS_ADDR);
+	}
+}
+
 /*
  * Dump a map to the tape.
  */
@@ -624,7 +712,15 @@ writeheader(ino_t ino)
 	int32_t sum, cnt, *lp;
 
 	spcl.c_inumber = iswap32(ino);
-	spcl.c_magic = iswap32(NFS_MAGIC);
+	if (is_ufs2)
+		spcl.c_magic = iswap32(FS_UFS2_MAGIC);
+	else {
+		spcl.c_magic = iswap32(NFS_MAGIC);
+		spcl.c_old_date = iswap32(iswap64(spcl.c_date));
+		spcl.c_old_ddate = iswap32(iswap64(spcl.c_ddate));
+		spcl.c_old_tapea = iswap32(iswap64(spcl.c_tapea));
+		spcl.c_old_firstrec = iswap32(iswap64(spcl.c_firstrec));
+	}
 	spcl.c_checksum = 0;
 	lp = (int32_t *)&spcl;
 	sum = 0;

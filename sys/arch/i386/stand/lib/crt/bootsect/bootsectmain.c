@@ -1,4 +1,4 @@
-/*	$NetBSD: bootsectmain.c,v 1.4 2003/02/01 14:48:18 dsl Exp $	*/
+/*	$NetBSD: bootsectmain.c,v 1.5 2003/04/02 10:39:33 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@ int boot_biosdev; /* exported */
 int boot_biossector; /* exported */
 void bootsectmain(int, int);
 
-extern struct fraglist fraglist;
+extern struct fraglist fraglist64;
 extern char edata[], end[];
 
 extern void main(void);
@@ -70,11 +70,12 @@ bootsectmain(int biosdev, int bios_sector)
 
 	buf = (char*)(PRIM_LOADSZ * BIOSDISK_SECSIZE);
 
-	for (i = 0; i < fraglist.numentries; i++) {
-		int dblk, num;
+	for (i = 0; i < fraglist64.numentries; i++) {
+		int64_t dblk;
+		int num;
 
-		dblk = fraglist.entries[i].offset;
-		num = fraglist.entries[i].num;
+		dblk = fraglist64.entries[i].offset;
+		num = fraglist64.entries[i].num;
 
 		if (readsects(&d, dblk, num, buf, 1))
 			return; /* halts in start_bootsect.S */

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.54 2003/03/27 13:56:46 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.55 2003/04/02 10:39:24 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.54 2003/03/27 13:56:46 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.55 2003/04/02 10:39:24 fvdl Exp $");
 #endif
 #endif /* not lint */
 
@@ -98,7 +98,7 @@ main(int argc, char *argv[])
 {
 	ino_t ino;
 	int dirty;
-	struct dinode *dp;
+	union dinode *dp;
 	struct fstab *dt;
 	struct statfs *mntinfo, fsbuf;
 	char *map;
@@ -372,8 +372,10 @@ main(int argc, char *argv[])
 		signal(SIGFPE, sig);
 	if (signal(SIGBUS, SIG_IGN) != SIG_IGN)
 		signal(SIGBUS, sig);
+#if 0
 	if (signal(SIGSEGV, SIG_IGN) != SIG_IGN)
 		signal(SIGSEGV, sig);
+#endif
 	if (signal(SIGTERM, SIG_IGN) != SIG_IGN)
 		signal(SIGTERM, sig);
 	if (signal(SIGINT, interrupt) == SIG_IGN)
@@ -475,7 +477,8 @@ main(int argc, char *argv[])
 
 	if (pipeout || unlimited) {
 		tapesize += 10;	/* 10 trailer blocks */
-		msg("estimated %ld tape blocks.\n", tapesize);
+		msg("estimated %llu tape blocks.\n",
+		    (unsigned long long)tapesize);
 	} else {
 		double fetapes;
 
@@ -515,8 +518,8 @@ main(int argc, char *argv[])
 		tapesize += (etapes - 1) *
 			(howmany(mapsize * sizeof(char), TP_BSIZE) + 1);
 		tapesize += etapes + 10;	/* headers + 10 trailer blks */
-		msg("estimated %ld tape blocks on %3.2f tape(s).\n",
-		    tapesize, fetapes);
+		msg("estimated %llu tape blocks on %3.2f tape(s).\n",
+		    (unsigned long long)tapesize, fetapes);
 	}
 	/*
 	 * If the user only wants an estimate of the number of
@@ -549,7 +552,7 @@ main(int argc, char *argv[])
 		 * Skip directory inodes deleted and maybe reallocated
 		 */
 		dp = getino(ino);
-		if ((dp->di_mode & IFMT) != IFDIR)
+		if ((DIP(dp, mode) & IFMT) != IFDIR)
 			continue;
 		(void)dumpino(dp, ino);
 	}
@@ -568,7 +571,7 @@ main(int argc, char *argv[])
 		 * Skip inodes deleted and reallocated as directories.
 		 */
 		dp = getino(ino);
-		mode = dp->di_mode & IFMT;
+		mode = DIP(dp, mode) & IFMT;
 		if (mode == IFDIR)
 			continue;
 		(void)dumpino(dp, ino);

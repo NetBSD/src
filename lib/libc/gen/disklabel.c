@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.28 2002/11/11 06:24:08 thorpej Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.29 2003/04/02 10:39:21 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1983, 1987, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)disklabel.c	8.2 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: disklabel.c,v 1.28 2002/11/11 06:24:08 thorpej Exp $");
+__RCSID("$NetBSD: disklabel.c,v 1.29 2003/04/02 10:39:21 fvdl Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -149,7 +149,7 @@ getdiskbyname(name)
 	getnumdflt(dp->d_headswitch, "hs", 0);
 	getnumdflt(dp->d_trkseek, "ts", 0);
 	getnumdflt(dp->d_bbsize, "bs", BBSIZE);
-	getnumdflt(dp->d_sbsize, "sb", SBSIZE);
+	getnumdflt(dp->d_sbsize, "sb", SBLOCKSIZE);
 	strcpy(psize, "px");	/* XXX: strcpy is safe */
 	strcpy(pbsize, "bx");	/* XXX: strcpy is safe */
 	strcpy(pfsize, "fx");	/* XXX: strcpy is safe */

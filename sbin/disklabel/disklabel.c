@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.113 2003/01/16 09:44:13 kleink Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.114 2003/04/02 10:39:23 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: disklabel.c,v 1.113 2003/01/16 09:44:13 kleink Exp $");
+__RCSID("$NetBSD: disklabel.c,v 1.114 2003/04/02 10:39:23 fvdl Exp $");
 #endif
 #endif	/* not lint */
 
@@ -334,7 +334,7 @@ main(int argc, char *argv[])
 		if (lp->d_bbsize == 0)
 			lp->d_bbsize = BBSIZE;
 		if (lp->d_sbsize == 0)
-			lp->d_sbsize = SBSIZE;
+			lp->d_sbsize = SBLOCKSIZE;
 		interact(lp, f);
 		break;
 
@@ -1311,7 +1311,7 @@ getasciilabel(FILE *f, struct disklabel *lp)
 	lineno = 0;
 	errors = 0;
 	lp->d_bbsize = BBSIZE;				/* XXX */
-	lp->d_sbsize = SBSIZE;				/* XXX */
+	lp->d_sbsize = SBLOCKSIZE;			/* XXX */
 	while (fgets(line, sizeof(line) - 1, f)) {
 		lineno++;
 		if ((cp = strpbrk(line, "#\r\n")) != NULL)

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.55 2003/02/17 23:48:15 perseant Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.56 2003/04/02 10:39:38 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.55 2003/02/17 23:48:15 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.56 2003/04/02 10:39:38 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -461,10 +461,16 @@ ffs_reclaim(v)
 		struct proc *a_p;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
+	struct inode *ip = VTOI(vp);
+	struct ufsmount *ump = ip->i_ump;
 	int error;
 
 	if ((error = ufs_reclaim(vp, ap->a_p)) != 0)
 		return (error);
+	if (ump->um_fstype == UFS1)
+		pool_put(&ffs_dinode1_pool, ip->i_din.ffs1_din);
+	else
+		pool_put(&ffs_dinode2_pool, ip->i_din.ffs2_din);
 	/*
 	 * XXX MFS ends up here, too, to free an inode.  Should we create
 	 * XXX a separate pool for MFS inodes?
@@ -577,7 +583,7 @@ ffs_gop_size(struct vnode *vp, off_t size, off_t *eobp, int flags)
 	KASSERT((flags & (GOP_SIZE_READ | GOP_SIZE_WRITE)) 
 		!= (GOP_SIZE_READ | GOP_SIZE_WRITE));
 
-	olbn = lblkno(fs, ip->i_ffs_size);
+	olbn = lblkno(fs, ip->i_size);
 	nlbn = lblkno(fs, size);
 	if (nlbn < NDADDR && olbn <= nlbn) {
 		*eobp = fragroundup(fs, size);

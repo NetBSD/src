@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.54 2003/03/21 23:11:28 dsl Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.55 2003/04/02 10:39:35 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.54 2003/03/21 23:11:28 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.55 2003/04/02 10:39:35 fvdl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -119,6 +119,7 @@ struct genfs_ops ext2fs_genfsops = {
 };
 
 struct pool ext2fs_inode_pool;
+struct pool ext2fs_dinode_pool;
 
 extern u_long ext2gennumber;
 
@@ -132,6 +133,8 @@ ext2fs_init()
 	 */
 	pool_init(&ext2fs_inode_pool, sizeof(struct inode), 0, 0, 0,
 	    "ext2fsinopl", &pool_allocator_nointr);
+	pool_init(&ext2fs_dinode_pool, sizeof(struct ext2fs_dinode), 0, 0, 0,
+	    "ext2dinopl", &pool_allocator_nointr);
 }
 
 void
@@ -493,7 +496,7 @@ loop:
 		}
 		cp = (caddr_t)bp->b_data +
 		    (ino_to_fsbo(fs, ip->i_number) * EXT2_DINODE_SIZE);
-		e2fs_iload((struct ext2fs_dinode *)cp, &ip->i_din.e2fs_din);
+		e2fs_iload((struct ext2fs_dinode *)cp, ip->i_din.e2fs_din);
 		brelse(bp);
 		vput(vp);
 		simple_lock(&mntvnode_slock);
@@ -564,6 +567,7 @@ ext2fs_mountfs(devvp, mp, p)
 		goto out;
 	ump = malloc(sizeof *ump, M_UFSMNT, M_WAITOK);
 	memset(ump, 0, sizeof *ump);
+	ump->um_fstype = UFS1;
 	ump->um_e2fs = malloc(sizeof(struct m_ext2fs), M_UFSMNT, M_WAITOK);
 	memset(ump->um_e2fs, 0, sizeof(struct m_ext2fs));
 	e2fs_sbload((struct ext2fs*)bp->b_data, &ump->um_e2fs->e2fs);
@@ -891,6 +895,7 @@ ext2fs_vget(mp, ino, vpp)
 	memset(ip, 0, sizeof(struct inode));
 	vp->v_data = ip;
 	ip->i_vnode = vp;
+	ip->i_ump = ump;
 	ip->i_e2fs = fs = ump->um_e2fs;
 	ip->i_dev = dev;
 	ip->i_number = ino;
@@ -926,7 +931,7 @@ ext2fs_vget(mp, ino, vpp)
 	}
 	cp = (caddr_t)bp->b_data +
 	    (ino_to_fsbo(fs, ino) * EXT2_DINODE_SIZE);
-	e2fs_iload((struct ext2fs_dinode *)cp, &ip->i_din.e2fs_din);
+	e2fs_iload((struct ext2fs_dinode *)cp, ip->i_din.e2fs_din);
 	brelse(bp);
 
 	/* If the inode was deleted, reset all fields */

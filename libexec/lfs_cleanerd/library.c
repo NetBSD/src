@@ -1,4 +1,4 @@
-/*	$NetBSD: library.c,v 1.34 2003/02/24 08:48:18 perseant Exp $	*/
+/*	$NetBSD: library.c,v 1.35 2003/04/02 10:39:22 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)library.c	8.3 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: library.c,v 1.34 2003/02/24 08:48:18 perseant Exp $");
+__RCSID("$NetBSD: library.c,v 1.35 2003/04/02 10:39:22 fvdl Exp $");
 #endif
 #endif /* not lint */
 
@@ -184,11 +184,11 @@ get_rawblock(FS_INFO *fsp, char *buf, size_t size, daddr_t daddr)
 /*
  * Read an inode from disk.
  */
-struct dinode *
+struct ufs1_dinode *
 get_dinode(FS_INFO *fsp, ino_t ino)
 {
-        static struct dinode dino;
-        struct dinode *dip, *dib;
+        static struct ufs1_dinode dino;
+        struct ufs1_dinode *dip, *dib;
         struct lfs *lfsp;
 	BLOCK_INFO bi;
 
@@ -617,7 +617,7 @@ void
 add_inodes(FS_INFO *fsp, BLOCK_INFO *bip, int *countp, SEGSUM *sp,
 	    caddr_t seg_buf, daddr_t seg_addr)
 {
-	struct dinode *di = NULL;	/* XXX gcc */
+	struct ufs1_dinode *di = NULL;	/* XXX gcc */
 	struct lfs *lfsp;
 	IFILE *ifp;
 	BLOCK_INFO *bp;
@@ -638,7 +638,7 @@ add_inodes(FS_INFO *fsp, BLOCK_INFO *bip, int *countp, SEGSUM *sp,
 	for (i = 0; i < sp->ss_ninos; ++i) {
 		if (i % INOPB(lfsp) == 0) {
 			--daddrp;
-			di = (struct dinode *)(seg_buf + fsbtob(lfsp, 
+			di = (struct ufs1_dinode *)(seg_buf + fsbtob(lfsp, 
 				*daddrp - seg_addr));
 		} else
 			++di;

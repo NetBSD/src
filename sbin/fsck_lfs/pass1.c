@@ -1,4 +1,4 @@
-/* $NetBSD: pass1.c,v 1.14 2003/03/28 08:09:54 perseant Exp $	 */
+/* $NetBSD: pass1.c,v 1.15 2003/04/02 10:39:28 fvdl Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -94,7 +94,7 @@ pass1()
 	ino_t inumber;
 	int i;
 	struct inodesc idesc;
-	struct dinode *tinode;
+	struct ufs1_dinode *tinode;
 	struct ifile *ifp;
 	struct ubuf *bp;
 	struct ino_daddr **dins;
@@ -173,7 +173,7 @@ pass1()
 void
 checkinode(ino_t inumber, struct inodesc * idesc)
 {
-	struct dinode *dp;
+	struct ufs1_dinode *dp;
 	struct uvnode  *vp;
 	struct zlncnt *zlnp;
 	int ndb, j;
@@ -295,7 +295,7 @@ checkinode(ino_t inumber, struct inodesc * idesc)
 			printf(" (CORRECTED)\n");
 		else if (reply("CORRECT") == 0)
 			return;
-		VTOI(vp)->i_ffs_blocks = idesc->id_entryno;
+		VTOI(vp)->i_ffs1_blocks = idesc->id_entryno;
 		inodirty(VTOI(vp));
 	}
 	return;

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.44 2003/03/11 11:03:23 drochner Exp $
+#	$NetBSD: Makefile.booters,v 1.45 2003/04/02 10:39:32 fvdl Exp $
 
 .include <bsd.own.mk>
 
@@ -67,7 +67,9 @@ CLEANFILES+= machine x86
 
 machine::
 	-rm -f $@
+	-rm -f x86
 	ln -s $S/arch/i386/include $@
+	ln -s $S/arch/x86/include x86
 
 x86::
 	-rm -f $@
@@ -87,6 +89,7 @@ LIBZ=		${ZLIB}
 
 ### find out what to use for libsa
 SA_AS=		library
+SAMISCCPPFLAGS+=-DLIBSA_SUPPORT_UFS2
 SAMISCMAKEFLAGS+="SA_USE_LOADFILE=yes"
 .include "${S}/lib/libsa/Makefile.inc"
 LIBSA=		${SALIB}

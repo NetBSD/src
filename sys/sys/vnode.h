@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.106 2003/03/17 09:11:29 jdolecek Exp $	*/
+/*	$NetBSD: vnode.h,v 1.107 2003/04/02 10:39:34 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -198,6 +198,7 @@ struct vattr {
 	struct timespec	va_atime;	/* time of last access */
 	struct timespec	va_mtime;	/* time of last modification */
 	struct timespec	va_ctime;	/* time file changed */
+	struct timespec va_birthtime;	/* time file created */
 	u_long		va_gen;		/* generation number of file */
 	u_long		va_flags;	/* flags defined for file */
 	dev_t		va_rdev;	/* device the special file represents */

@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.c,v 1.36 2003/01/24 21:55:08 fvdl Exp $	*/
+/*	$NetBSD: inode.c,v 1.37 2003/04/02 10:39:25 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)inode.c	8.8 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: inode.c,v 1.36 2003/01/24 21:55:08 fvdl Exp $");
+__RCSID("$NetBSD: inode.c,v 1.37 2003/04/02 10:39:25 fvdl Exp $");
 #endif
 #endif /* not lint */
 
@@ -67,51 +67,56 @@ __RCSID("$NetBSD: inode.c,v 1.36 2003/01/24 21:55:08 fvdl Exp $");
 static ino_t startinum;
 
 static int iblock __P((struct inodesc *, long, u_int64_t));
+static void swap_dinode1(union dinode *, int);
+static void swap_dinode2(union dinode *, int);
 
 int
 ckinode(dp, idesc)
-	struct dinode *dp;
+	union dinode *dp;
 	struct inodesc *idesc;
 {
-	/* XXX ondisk32 */
-	int32_t *ap;
-	long ret, n, ndb, offset;
-	struct dinode dino;
+	int ret, offset, i;
+	union dinode dino;
 	u_int64_t sizepb;
 	int64_t remsize;
+	daddr_t ndb;
 	mode_t mode;
 	char pathbuf[MAXPATHLEN + 1];
 
 	if (idesc->id_fix != IGNORE)
 		idesc->id_fix = DONTKNOW;
 	idesc->id_entryno = 0;
-	idesc->id_filesize = iswap64(dp->di_size);
-	mode = iswap16(dp->di_mode) & IFMT;
+	idesc->id_filesize = iswap64(DIP(dp, size));
+	mode = iswap16(DIP(dp, mode)) & IFMT;
 	if (mode == IFBLK || mode == IFCHR || (mode == IFLNK &&
 	    (idesc->id_filesize < sblock->fs_maxsymlinklen ||
 	    (isappleufs && (idesc->id_filesize < APPLEUFS_MAXSYMLINKLEN)) ||
-	     (sblock->fs_maxsymlinklen == 0 && dp->di_blocks == 0))))
+	     (sblock->fs_maxsymlinklen == 0 && DIP(dp, blocks) == 0))))
 		return (KEEPON);
-	dino = *dp;
-	ndb = howmany(iswap64(dino.di_size), sblock->fs_bsize);
-	for (ap = &dino.di_db[0]; ap < &dino.di_db[NDADDR]; ap++) {
+	if (is_ufs2)
+		dino.dp2 = dp->dp2;
+	else
+		dino.dp1 = dp->dp1;
+	ndb = howmany(iswap64(DIP(&dino, size)), sblock->fs_bsize);
+	for (i = 0; i < NDADDR; i++) {
 		if (--ndb == 0 &&
-			(offset = blkoff(sblock, iswap64(dino.di_size))) != 0)
+		    (offset = blkoff(sblock, iswap64(DIP(&dino, size)))) != 0)
 			idesc->id_numfrags =
 				numfrags(sblock, fragroundup(sblock, offset));
 		else
 			idesc->id_numfrags = sblock->fs_frag;
-		if (*ap == 0) {
+		if (DIP(&dino, db[i]) == 0) {
 			if (idesc->id_type == DATA && ndb >= 0) {
 				/* An empty block in a directory XXX */
 				markclean = 0;
 				getpathname(pathbuf, idesc->id_number,
 				    idesc->id_number);
-				pfatal("DIRECTORY %s: CONTAINS EMPTY BLOCKS",
+				pfatal("DIRECTORY %s: CONTAINS EMPTY BLOCKS I",
 				    pathbuf);
+				abort();
 				if (reply("ADJUST LENGTH") == 1) {
 					dp = ginode(idesc->id_number);
-					dp->di_size = iswap64((ap - &dino.di_db[0]) *
+					DIP(dp, size) = iswap64(i *
 					    sblock->fs_bsize);
 					printf(
 					    "YOU MUST RERUN FSCK AFTERWARDS\n");
@@ -121,7 +126,10 @@ ckinode(dp, idesc)
 			}
 			continue;
 		}
-		idesc->id_blkno = iswap32(*ap);
+		if (is_ufs2)
+			idesc->id_blkno = iswap64(dino.dp2.di_db[i]);
+		else
+			idesc->id_blkno = iswap32(dino.dp1.di_db[i]);
 		if (idesc->id_type == ADDR)
 			ret = (*idesc->id_func)(idesc);
 		else
@@ -130,12 +138,15 @@ ckinode(dp, idesc)
 			return (ret);
 	}
 	idesc->id_numfrags = sblock->fs_frag;
-	remsize = iswap64(dino.di_size) - sblock->fs_bsize * NDADDR;
+	remsize = iswap64(DIP(&dino, size)) - sblock->fs_bsize * NDADDR;
 	sizepb = sblock->fs_bsize;
-	for (ap = &dino.di_ib[0], n = 1; n <= NIADDR; ap++, n++) {
-		if (*ap) {
-			idesc->id_blkno = iswap32(*ap);
-			ret = iblock(idesc, n, remsize);
+	for (i = 0; i < NIADDR; i++) {
+		if (DIP(&dino, ib[i])) {
+			if (is_ufs2)
+				idesc->id_blkno = iswap64(dino.dp2.di_ib[i]);
+			else
+				idesc->id_blkno = iswap32(dino.dp1.di_ib[i]);
+			ret = iblock(idesc, i + 1, remsize);
 			if (ret & STOP)
 				return (ret);
 		} else {
@@ -148,7 +159,9 @@ ckinode(dp, idesc)
 				    pathbuf);
 				if (reply("ADJUST LENGTH") == 1) {
 					dp = ginode(idesc->id_number);
-					dp->di_size = iswap64(iswap64(dp->di_size) - remsize);
+					DIP(dp, size) =
+					    iswap64(iswap64(DIP(dp, size))
+						- remsize);
 					remsize = 0;
 					printf(
 					    "YOU MUST RERUN FSCK AFTERWARDS\n");
@@ -170,15 +183,12 @@ iblock(idesc, ilevel, isize)
 	long ilevel;
 	u_int64_t isize;
 {
-	/* XXX ondisk32 */
-	int32_t *ap;
-	int32_t *aplim;
 	struct bufarea *bp;
 	int i, n, (*func) __P((struct inodesc *)), nif;
 	u_int64_t sizepb;
 	char buf[BUFSIZ];
 	char pathbuf[MAXPATHLEN + 1];
-	struct dinode *dp;
+	union dinode *dp;
 
 	if (idesc->id_type == ADDR) {
 		func = idesc->id_func;
@@ -192,36 +202,43 @@ iblock(idesc, ilevel, isize)
 	ilevel--;
 	for (sizepb = sblock->fs_bsize, i = 0; i < ilevel; i++)
 		sizepb *= NINDIR(sblock);
-	if (isize > sizepb * NINDIR(sblock))
+	if (howmany(isize, sizepb) > NINDIR(sblock))
 		nif = NINDIR(sblock);
 	else
 		nif = howmany(isize, sizepb);
 	if (do_blkswap) { /* swap byte order of the whole blk */
-		aplim = &bp->b_un.b_indir[nif];
-		for (ap = bp->b_un.b_indir; ap < aplim; ap++)
-			*ap = bswap32(*ap);
+		if (is_ufs2) {
+			for (i = 0; i < nif; i++)
+				bp->b_un.b_indir2[i] =
+				    bswap64(bp->b_un.b_indir2[i]);
+		} else {
+			for (i = 0; i < nif; i++)
+				bp->b_un.b_indir1[i] =
+				    bswap32(bp->b_un.b_indir2[i]);
+		}
 		dirty(bp);
 		flush(fswritefd, bp);
 	}
 	if (idesc->id_func == pass1check && nif < NINDIR(sblock)) {
-		aplim = &bp->b_un.b_indir[NINDIR(sblock)];
-		for (ap = &bp->b_un.b_indir[nif]; ap < aplim; ap++) {
-			if (*ap == 0)
+		for (i = nif; i < NINDIR(sblock); i++) {
+			if (IBLK(bp, i) == 0)
 				continue;
 			(void)snprintf(buf, sizeof(buf),
 			    "PARTIALLY TRUNCATED INODE I=%u", idesc->id_number);
 			if (dofix(idesc, buf)) {
-				*ap = 0;
+				IBLK(bp, i) = 0;
 				dirty(bp);
 			} else
 				markclean=  0;
 		}
 		flush(fswritefd, bp);
 	}
-	aplim = &bp->b_un.b_indir[nif];
-	for (ap = bp->b_un.b_indir; ap < aplim; ap++) {
-		if (*ap) {
-			idesc->id_blkno = iswap32(*ap);
+	for (i = 0; i < nif; i++) {
+		if (IBLK(bp, i)) {
+			if (is_ufs2)
+				idesc->id_blkno = iswap64(bp->b_un.b_indir2[i]);
+			else
+				idesc->id_blkno = iswap32(bp->b_un.b_indir1[i]);
 			if (ilevel == 0)
 				n = (*func)(idesc);
 			else
@@ -240,7 +257,9 @@ iblock(idesc, ilevel, isize)
 				    pathbuf);
 				if (reply("ADJUST LENGTH") == 1) {
 					dp = ginode(idesc->id_number);
-					dp->di_size = iswap64(iswap64(dp->di_size) - isize);
+					DIP(dp, size) =
+					    iswap64(iswap64(DIP(dp, size))
+						- isize);
 					isize = 0;
 					printf(
 					    "YOU MUST RERUN FSCK AFTERWARDS\n");
@@ -270,6 +289,12 @@ chkrange(blk, cnt)
 
 	if ((unsigned)(blk + cnt) > maxfsblock)
 		return (1);
+	if (cnt > sblock->fs_frag ||
+	    fragnum(sblock, blk) + cnt > sblock->fs_frag) {
+		if (debug)
+			printf("bad size: blk %lld, offset %d, size %d\n",
+			    (long long)blk, (int)fragnum(sblock, blk), cnt);
+	}
 	c = dtog(sblock, blk);
 	if (blk < cgdmin(sblock, c)) {
 		if ((blk + cnt) > cgsblock(sblock, c)) {
@@ -301,7 +326,7 @@ chkrange(blk, cnt)
 /*
  * General purpose interface for reading inodes.
  */
-struct dinode *
+union dinode *
 ginode(inumber)
 	ino_t inumber;
 {
@@ -318,28 +343,71 @@ ginode(inumber)
 		pbp = getdatablk(iblk, sblock->fs_bsize);
 		startinum = (inumber / INOPB(sblock)) * INOPB(sblock);
 	}
-	blkoff = (inumber % INOPB(sblock)) * DINODE_SIZE;
-	return ((struct dinode *)((caddr_t)pbp->b_un.b_buf + blkoff));
+	if (is_ufs2) {
+		blkoff = (inumber % INOPB(sblock)) * DINODE2_SIZE;
+		return ((union dinode *)((caddr_t)pbp->b_un.b_buf + blkoff));
+	}
+	blkoff = (inumber % INOPB(sblock)) * DINODE1_SIZE;
+	return ((union dinode *)((caddr_t)pbp->b_un.b_buf + blkoff));
+}
+
+static void
+swap_dinode1(union dinode *dp, int n)
+{
+	int i, j;
+	struct ufs1_dinode *dp1;
+
+	dp1 = (struct ufs1_dinode *)&dp->dp1;
+	for (i = 0; i < n; i++, dp1++) {
+		ffs_dinode1_swap(dp1, dp1);
+		if ((iswap16(dp1->di_mode) & IFMT) != IFLNK ||
+			(isappleufs && (iswap64(dp1->di_size) >
+			  APPLEUFS_MAXSYMLINKLEN)) ||
+			iswap64(dp1->di_size) > sblock->fs_maxsymlinklen) {
+			for (j = 0; j < (NDADDR + NIADDR); j++)
+			    dp1->di_db[j] = bswap32(dp1->di_db[j]);
+		}
+	}
+}
+
+static void
+swap_dinode2(union dinode *dp, int n)
+{
+	int i, j;
+	struct ufs2_dinode *dp2;
+
+	dp2 = (struct ufs2_dinode *)&dp->dp2;
+	for (i = 0; i < n; i++, dp2++) {
+		ffs_dinode2_swap(dp2, dp2);
+		if ((iswap16(dp2->di_mode) & IFMT) != IFLNK) {
+			for (j = 0; j < (NDADDR + NIADDR + NXADDR); j++)
+				dp2->di_extb[j] = bswap64(dp2->di_extb[j]);
+		}
+	}
 }
 
 /*
  * Special purpose version of ginode used to optimize first pass
  * over all the inodes in numerical order.
  */
-ino_t nextino, lastinum;
+ino_t nextino, lastinum, lastvalidinum;
 long readcnt, readpercg, fullcnt, inobufsize, partialcnt, partialsize;
-struct dinode *inodebuf;
+union dinode *inodebuf;
 
-struct dinode *
+union dinode *
 getnextinode(inumber)
 	ino_t inumber;
 {
 	long size;
 	daddr_t dblk;
-	static struct dinode *dp;
+	static union dinode *dp;
+	union dinode *ret;
 
-	if (inumber != nextino++ || inumber > maxino)
+	if (inumber != nextino++ || inumber > lastvalidinum) {
+		abort();
 		errx(EEXIT, "bad inode number %d to nextinode", inumber);
+	}
+
 	if (inumber >= lastinum) {
 		readcnt++;
 		dblk = fsbtodb(sblock, ino_to_fsba(sblock, lastinum));
@@ -350,39 +418,42 @@ getnextinode(inumber)
 			size = inobufsize;
 			lastinum += fullcnt;
 		}
-		(void)bread(fsreadfd, (char *)inodebuf, dblk, size); /* ??? */
+		(void)bread(fsreadfd, (caddr_t)inodebuf, dblk, size);
 		if (doswap) {
-			int i, j;
-			for (i = inumber, dp  = inodebuf; i < lastinum; i++, dp++) {
-				ffs_dinode_swap(dp, dp);
-				/* ffs_dinode_swap() doesn't swap blocks addrs */
-				if ((iswap16(dp->di_mode) & IFMT) != IFLNK ||
-					(isappleufs && (iswap64(dp->di_size) > APPLEUFS_MAXSYMLINKLEN)) ||
-					iswap64(dp->di_size) > sblock->fs_maxsymlinklen) {
-					for (j=0; j<NDADDR + NIADDR; j++)
-						dp->di_db[j] = bswap32(dp->di_db[j]);
-				}
-			}
+			if (is_ufs2)
+				swap_dinode2(inodebuf, lastinum - inumber);
+			else
+				swap_dinode1(inodebuf, lastinum - inumber);
 			bwrite(fswritefd, (char *)inodebuf, dblk, size);
 		}
-		dp = inodebuf;
+		dp = (union dinode *)inodebuf;
 	}
-	return (dp++);
+	ret = dp;
+	dp = (union dinode *)
+	    ((char *)dp + (is_ufs2 ? DINODE2_SIZE : DINODE1_SIZE));
+	return ret;
 }
 
 void
-resetinodebuf()
+setinodebuf(inum)
+	ino_t inum;
 {
 
+	if (inum % sblock->fs_ipg != 0)
+		errx(EEXIT, "bad inode number %d to setinodebuf", inum);
+
+	lastvalidinum = inum + sblock->fs_ipg - 1;
 	startinum = 0;
-	nextino = 0;
-	lastinum = 0;
+	nextino = inum;
+	lastinum = inum;
 	readcnt = 0;
+	if (inodebuf != NULL)
+		return;
 	inobufsize = blkroundup(sblock, INOBUFSIZE);
-	fullcnt = inobufsize / DINODE_SIZE;
+	fullcnt = inobufsize / (is_ufs2 ? DINODE2_SIZE : DINODE1_SIZE);
 	readpercg = sblock->fs_ipg / fullcnt;
 	partialcnt = sblock->fs_ipg % fullcnt;
-	partialsize = partialcnt * DINODE_SIZE;
+	partialsize = partialcnt * (is_ufs2 ? DINODE2_SIZE : DINODE1_SIZE);
 	if (partialcnt != 0) {
 		readpercg++;
 	} else {
@@ -390,10 +461,8 @@ resetinodebuf()
 		partialsize = inobufsize;
 	}
 	if (inodebuf == NULL &&
-	    (inodebuf = (struct dinode *)malloc((unsigned)inobufsize)) == NULL)
+	    (inodebuf = malloc((unsigned)inobufsize)) == NULL)
 		errx(EEXIT, "Cannot allocate space for inode buffer");
-	while (nextino < ROOTINO)
-		(void)getnextinode(nextino);
 }
 
 void
@@ -414,25 +483,25 @@ freeinodebuf()
  */
 void
 cacheino(dp, inumber)
-	struct dinode *dp;
+	union dinode *dp;
 	ino_t inumber;
 {
 	struct inoinfo *inp;
 	struct inoinfo **inpp;
-	unsigned int blks, extra;
+	unsigned int blks;
+	int i;
+	int64_t size;
 
-	blks = howmany(iswap64(dp->di_size), sblock->fs_bsize);
+	size = iswap64(DIP(dp, size));
+	blks = howmany(size, sblock->fs_bsize);
 	if (blks > NDADDR)
 		blks = NDADDR + NIADDR;
-	/* XXX ondisk32 */
-	if (blks > 0)
-		extra =  (blks - 1) * sizeof(int32_t);
-	else
-		extra = 0;
-	inp = (struct inoinfo *) malloc(sizeof(*inp) + extra);
+
+	inp = (struct inoinfo *) malloc(sizeof(*inp) + (blks - 1)
+					    * sizeof (int64_t));
 	if (inp == NULL)
 		return;
-	inpp = &inphead[inumber % numdirs];
+	inpp = &inphead[inumber % dirhash];
 	inp->i_nexthash = *inpp;
 	*inpp = inp;
 	inp->i_child = inp->i_sibling = inp->i_parentp = 0;
@@ -442,10 +511,13 @@ cacheino(dp, inumber)
 		inp->i_parent = (ino_t)0;
 	inp->i_dotdot = (ino_t)0;
 	inp->i_number = inumber;
-	inp->i_isize = iswap64(dp->di_size);
-	/* XXX ondisk32 */
-	inp->i_numblks = blks * sizeof(int32_t);
-	memmove(&inp->i_blks[0], &dp->di_db[0], (size_t)inp->i_numblks);
+	inp->i_isize = size;
+	inp->i_numblks = blks;
+	for (i = 0; i < (blks < NDADDR ? blks : NDADDR); i++)
+		inp->i_blks[i] = DIP(dp, db[i]);
+	if (blks > NDADDR)
+		for (i = 0; i < NIADDR; i++)
+			inp->i_blks[NDADDR + i] = DIP(dp, ib[i]);
 	if (inplast == listmax) {
 		listmax += 100;
 		inpsort = (struct inoinfo **)realloc((char *)inpsort,
@@ -465,7 +537,7 @@ getinoinfo(inumber)
 {
 	struct inoinfo *inp;
 
-	for (inp = inphead[inumber % numdirs]; inp; inp = inp->i_nexthash) {
+	for (inp = inphead[inumber % dirhash]; inp; inp = inp->i_nexthash) {
 		if (inp->i_number != inumber)
 			continue;
 		return (inp);
@@ -504,12 +576,12 @@ clri(idesc, type, flag)
 	char *type;
 	int flag;
 {
-	struct dinode *dp;
+	union dinode *dp;
 
 	dp = ginode(idesc->id_number);
 	if (flag == 1) {
 		pwarn("%s %s", type,
-		    (iswap16(dp->di_mode) & IFMT) == IFDIR ? "DIR" : "FILE");
+		    (iswap16(DIP(dp, mode)) & IFMT) == IFDIR ? "DIR" : "FILE");
 		pinode(idesc->id_number);
 	}
 	if (preen || reply("CLEAR") == 1) {
@@ -518,7 +590,7 @@ clri(idesc, type, flag)
 		n_files--;
 		(void)ckinode(dp, idesc);
 		clearinode(dp);
-		statemap[idesc->id_number] = USTATE;
+		inoinfo(idesc->id_number)->ino_state = USTATE;
 		inodirty();
 	} else
 		markclean=  0;
@@ -530,8 +602,10 @@ findname(idesc)
 {
 	struct direct *dirp = idesc->id_dirp;
 
-	if (iswap32(dirp->d_ino) != idesc->id_parent)
+	if (iswap32(dirp->d_ino) != idesc->id_parent || idesc->id_entryno < 2) {
+		idesc->id_entryno++;
 		return (KEEPON);
+	}
 	memmove(idesc->id_name, dirp->d_name, (size_t)dirp->d_namlen + 1);
 	return (STOP|FOUND);
 }
@@ -552,11 +626,25 @@ findino(idesc)
 	return (KEEPON);
 }
 
+int
+clearentry(idesc)
+      struct inodesc *idesc;
+{
+	struct direct *dirp = idesc->id_dirp;
+
+	if (dirp->d_ino != idesc->id_parent || idesc->id_entryno < 2) {
+		idesc->id_entryno++;
+		return (KEEPON);
+	}
+	dirp->d_ino = 0;
+	return (STOP|FOUND|ALTERED);
+}
+
 void
 pinode(ino)
 	ino_t ino;
 {
-	struct dinode *dp;
+	union dinode *dp;
 	char *p;
 	struct passwd *pw;
 	time_t t;
@@ -567,16 +655,16 @@ pinode(ino)
 	dp = ginode(ino);
 	printf(" OWNER=");
 #ifndef SMALL
-	if ((pw = getpwuid((int)iswap32(dp->di_uid))) != 0)
+	if ((pw = getpwuid((int)iswap32(DIP(dp, uid)))) != 0)
 		printf("%s ", pw->pw_name);
 	else
 #endif
-		printf("%u ", (unsigned)iswap32(dp->di_uid));
-	printf("MODE=%o\n", iswap16(dp->di_mode));
+		printf("%u ", (unsigned)iswap32(DIP(dp, uid)));
+	printf("MODE=%o\n", iswap16(DIP(dp, mode)));
 	if (preen)
 		printf("%s: ", cdevname());
-	printf("SIZE=%llu ", (unsigned long long)iswap64(dp->di_size));
-	t = iswap32(dp->di_mtime);
+	printf("SIZE=%llu ", (unsigned long long)iswap64(DIP(dp, size)));
+	t = iswap32(DIP(dp, mtime));
 	p = ctime(&t);
 	printf("MTIME=%12.12s %4.4s ", &p[4], &p[20]);
 }
@@ -587,17 +675,19 @@ blkerror(ino, type, blk)
 	char *type;
 	daddr_t blk;
 {
+	struct inostat *info;
 
 	pfatal("%lld %s I=%u", (long long)blk, type, ino);
 	printf("\n");
-	switch (statemap[ino]) {
+	info = inoinfo(ino);
+	switch (info->ino_state) {
 
 	case FSTATE:
-		statemap[ino] = FCLEAR;
+		info->ino_state = FCLEAR;
 		return;
 
 	case DSTATE:
-		statemap[ino] = DCLEAR;
+		info->ino_state = DCLEAR;
 		return;
 
 	case FCLEAR:
@@ -605,7 +695,7 @@ blkerror(ino, type, blk)
 		return;
 
 	default:
-		errx(EEXIT, "BAD STATE %d TO BLKERR", statemap[ino]);
+		errx(EEXIT, "BAD STATE %d TO BLKERR", info->ino_state);
 		/* NOTREACHED */
 	}
 }
@@ -619,25 +709,30 @@ allocino(request, type)
 	int type;
 {
 	ino_t ino;
-	struct dinode *dp;
+	union dinode *dp;
+	struct ufs1_dinode *dp1;
+	struct ufs2_dinode *dp2;
 	time_t t;
 	struct cg *cgp = cgrp;
 	int cg;
+	struct inostat *info;
 
 	if (request == 0)
 		request = ROOTINO;
-	else if (statemap[request] != USTATE)
+	else if (inoinfo(request)->ino_state != USTATE)
 		return (0);
-	for (ino = request; ino < maxino; ino++)
-		if (statemap[ino] == USTATE)
+	for (ino = request; ino < maxino; ino++) {
+		info = inoinfo(ino);
+		if (info->ino_state == USTATE)
 			break;
+	}
 	if (ino == maxino)
 		return (0);
 	cg = ino_to_cg(sblock, ino);
 	getblk(&cgblk, cgtod(sblock, cg), sblock->fs_cgsize);
 	memcpy(cgp, cgblk.b_un.b_cg, sblock->fs_cgsize);
 	if ((doswap && !needswap) || (!doswap && needswap))
-		swap_cg(cgblk.b_un.b_cg, cgp);
+		ffs_cg_swap(cgblk.b_un.b_cg, cgp, sblock);
 	if (!cg_chkmagic(cgp, 0))
 		pfatal("CG %d: ALLOCINO: BAD MAGIC NUMBER\n", cg);
 	if (doswap)
@@ -646,34 +741,51 @@ allocino(request, type)
 	cgp->cg_cs.cs_nifree--;
 	switch (type & IFMT) {
 	case IFDIR:
-		statemap[ino] = DSTATE;
+		info->ino_state = DSTATE;
 		cgp->cg_cs.cs_ndir++;
 		break;
 	case IFREG:
 	case IFLNK:
-		statemap[ino] = FSTATE;
+		info->ino_state = FSTATE;
 		break;
 	default:
 		return (0);
 	}
 	cgdirty();
 	dp = ginode(ino);
-	dp->di_db[0] = iswap32(allocblk((long)1));
-	if (dp->di_db[0] == 0) {
-		statemap[ino] = USTATE;
-		return (0);
+	if (is_ufs2) {
+		dp2 = &dp->dp2;
+		dp2->di_db[0] = iswap64(allocblk(1));
+		if (dp2->di_db[0] == 0) {
+			info->ino_state = USTATE;
+			return (0);
+		}
+		dp2->di_mode = iswap16(type);
+		dp2->di_flags = 0;
+		(void)time(&t);
+		dp2->di_atime = iswap64(t);
+		dp2->di_mtime = dp2->di_ctime = dp2->di_atime;
+		dp2->di_size = iswap64(sblock->fs_fsize);
+		dp2->di_blocks = iswap64(btodb(sblock->fs_fsize));
+	} else {
+		dp1 = &dp->dp1;
+		dp1->di_db[0] = iswap32(allocblk(1));
+		if (dp1->di_db[0] == 0) {
+			info->ino_state = USTATE;
+			return (0);
+		}
+		dp1->di_mode = iswap16(type);
+		dp1->di_flags = 0;
+		(void)time(&t);
+		dp1->di_atime = iswap32(t);
+		dp1->di_mtime = dp1->di_ctime = dp1->di_atime;
+		dp1->di_size = iswap64(sblock->fs_fsize);
+		dp1->di_blocks = iswap32(btodb(sblock->fs_fsize));
 	}
-	dp->di_mode = iswap16(type);
-	dp->di_flags = 0;
-	(void)time(&t);
-	dp->di_atime = iswap32(t);
-	dp->di_mtime = dp->di_ctime = dp->di_atime;
-	dp->di_size = iswap64(sblock->fs_fsize);
-	dp->di_blocks = iswap32(btodb(sblock->fs_fsize));
 	n_files++;
 	inodirty();
 	if (newinofmt)
-		typemap[ino] = IFTODT(type);
+		info->ino_type = IFTODT(type);
 	return (ino);
 }
 
@@ -685,7 +797,7 @@ freeino(ino)
 	ino_t ino;
 {
 	struct inodesc idesc;
-	struct dinode *dp;
+	union dinode *dp;
 
 	memset(&idesc, 0, sizeof(struct inodesc));
 	idesc.id_type = ADDR;
@@ -695,6 +807,6 @@ freeino(ino)
 	(void)ckinode(dp, &idesc);
 	clearinode(dp);
 	inodirty();
-	statemap[ino] = USTATE;
+	inoinfo(ino)->ino_state = USTATE;
 	n_files--;
 }

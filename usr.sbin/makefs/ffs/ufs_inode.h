@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.h,v 1.1 2002/01/07 16:56:28 lukem Exp $	*/
+/*	$NetBSD: ufs_inode.h,v 1.2 2003/04/02 10:39:49 fvdl Exp $	*/
 /* From:  NetBSD: inode.h,v 1.27 2001/12/18 10:57:23 fvdl Exp $ */
 
 /*
@@ -41,31 +41,60 @@
  *	@(#)inode.h	8.9 (Berkeley) 5/14/95
  */
 
+union dinode {
+	struct ufs1_dinode ffs1_din;
+	struct ufs2_dinode ffs2_din;
+};
 
 struct inode {
 	ino_t	  	i_number;	/* The identity of the inode. */
 	struct fs	*i_fs;		/* File system */
-	union {
-		struct	dinode ffs_din;	/* 128 bytes of the on-disk dinode. */
-	} i_din;
+	union dinode	i_din;
 	int		i_fd;		/* File descriptor */
+	uint64_t	i_size;
 };
 
-#define	i_ffs_atime		i_din.ffs_din.di_atime
-#define	i_ffs_atimensec		i_din.ffs_din.di_atimensec
-#define	i_ffs_blocks		i_din.ffs_din.di_blocks
-#define	i_ffs_ctime		i_din.ffs_din.di_ctime
-#define	i_ffs_ctimensec		i_din.ffs_din.di_ctimensec
-#define	i_ffs_db		i_din.ffs_din.di_db
-#define	i_ffs_flags		i_din.ffs_din.di_flags
-#define	i_ffs_gen		i_din.ffs_din.di_gen
-#define	i_ffs_gid		i_din.ffs_din.di_gid
-#define	i_ffs_ib		i_din.ffs_din.di_ib
-#define	i_ffs_mode		i_din.ffs_din.di_mode
-#define	i_ffs_mtime		i_din.ffs_din.di_mtime
-#define	i_ffs_mtimensec		i_din.ffs_din.di_mtimensec
-#define	i_ffs_nlink		i_din.ffs_din.di_nlink
-#define	i_ffs_rdev		i_din.ffs_din.di_rdev
-#define	i_ffs_shortlink		i_din.ffs_din.di_shortlink
-#define	i_ffs_size		i_din.ffs_din.di_size
-#define	i_ffs_uid		i_din.ffs_din.di_uid
+#define	i_ffs1_atime		i_din.ffs1_din.di_atime
+#define	i_ffs1_atimensec	i_din.ffs1_din.di_atimensec
+#define	i_ffs1_blocks		i_din.ffs1_din.di_blocks
+#define	i_ffs1_ctime		i_din.ffs1_din.di_ctime
+#define	i_ffs1_ctimensec	i_din.ffs1_din.di_ctimensec
+#define	i_ffs1_db		i_din.ffs1_din.di_db
+#define	i_ffs1_flags		i_din.ffs1_din.di_flags
+#define	i_ffs1_gen		i_din.ffs1_din.di_gen
+#define	i_ffs11_gid		i_din.ffs1_din.di_gid
+#define	i_ffs1_ib		i_din.ffs1_din.di_ib
+#define	i_ffs1_mode		i_din.ffs1_din.di_mode
+#define	i_ffs1_mtime		i_din.ffs1_din.di_mtime
+#define	i_ffs1_mtimensec	i_din.ffs1_din.di_mtimensec
+#define	i_ffs1_nlink		i_din.ffs1_din.di_nlink
+#define	i_ffs1_rdev		i_din.ffs1_din.di_rdev
+#define	i_ffs1_shortlink	i_din.ffs1_din.db
+#define	i_ffs1_size		i_din.ffs1_din.di_size
+#define	i_ffs1_uid		i_din.ffs1_din.di_uid
+
+#define	i_ffs2_atime		i_din.ffs2_din.di_atime
+#define	i_ffs2_atimensec	i_din.ffs2_din.di_atimensec
+#define	i_ffs2_blocks		i_din.ffs2_din.di_blocks
+#define	i_ffs2_ctime		i_din.ffs2_din.di_ctime
+#define	i_ffs2_ctimensec	i_din.ffs2_din.di_ctimensec
+#define	i_ffs2_birthtime	i_din.ffs2_din.di_birthtime
+#define	i_ffs2_birthnsec	i_din.ffs2_din.di_birthnsec
+#define	i_ffs2_db		i_din.ffs2_din.di_db
+#define	i_ffs2_flags		i_din.ffs2_din.di_flags
+#define	i_ffs2_gen		i_din.ffs2_din.di_gen
+#define	i_ffs21_gid		i_din.ffs2_din.di_gid
+#define	i_ffs2_ib		i_din.ffs2_din.di_ib
+#define	i_ffs2_mode		i_din.ffs2_din.di_mode
+#define	i_ffs2_mtime		i_din.ffs2_din.di_mtime
+#define	i_ffs2_mtimensec	i_din.ffs2_din.di_mtimensec
+#define	i_ffs2_nlink		i_din.ffs2_din.di_nlink
+#define	i_ffs2_rdev		i_din.ffs2_din.di_rdev
+#define	i_ffs2_shortlink	i_din.ffs2_din.db
+#define	i_ffs2_size		i_din.ffs2_din.di_size
+#define	i_ffs2_uid		i_din.ffs2_din.di_uid
+
+#undef DIP
+#define DIP(ip, field) \
+        (((ip)->i_fs->fs_magic == FS_UFS1_MAGIC) ? \
+        (ip)->i_ffs1_##field : (ip)->i_ffs2_##field)

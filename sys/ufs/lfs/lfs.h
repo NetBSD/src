@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.61 2003/03/28 08:03:38 perseant Exp $	*/
+/*	$NetBSD: lfs.h,v 1.62 2003/04/02 10:39:39 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -294,8 +294,8 @@ extern struct lfs_log_entry lfs_log[LFS_LOGLENGTH];
 	struct lfs *_fs = (ip)->i_lfs;					\
 									\
 	if ((ip)->i_flag & IN_ACCESS) {					\
-		(ip)->i_ffs_atime = (acc)->tv_sec;			\
-		(ip)->i_ffs_atimensec = (acc)->tv_nsec;			\
+		(ip)->i_ffs1_atime = (acc)->tv_sec;			\
+		(ip)->i_ffs1_atimensec = (acc)->tv_nsec;		\
 		if ((ip)->i_lfs->lfs_version > 1) {			\
 			struct buf *_ibp;				\
 			IFILE *_ifp;					\
@@ -311,13 +311,13 @@ extern struct lfs_log_entry lfs_log[LFS_LOGLENGTH];
 	}								\
 	if ((ip)->i_flag & (IN_CHANGE | IN_UPDATE)) {			\
 		if ((ip)->i_flag & IN_UPDATE) {				\
-			(ip)->i_ffs_mtime = (mod)->tv_sec;		\
-			(ip)->i_ffs_mtimensec = (mod)->tv_nsec;		\
+			(ip)->i_ffs1_mtime = (mod)->tv_sec;		\
+			(ip)->i_ffs1_mtimensec = (mod)->tv_nsec;	\
 			(ip)->i_modrev++;				\
 		}							\
 		if ((ip)->i_flag & IN_CHANGE) {				\
-			(ip)->i_ffs_ctime = (cre)->tv_sec;		\
-			(ip)->i_ffs_ctimensec = (cre)->tv_nsec;		\
+			(ip)->i_ffs1_ctime = (cre)->tv_sec;		\
+			(ip)->i_ffs1_ctimensec = (cre)->tv_nsec;	\
 		}							\
 		LFS_SET_UINO(ip, IN_MODIFIED);				\
 	}								\
@@ -767,9 +767,9 @@ struct lfs {
 #define INOPF(fs)	((fs)->lfs_inopf)
 
 #define	blksize(fs, ip, lbn) \
-	(((lbn) >= NDADDR || (ip)->i_ffs_size >= ((lbn) + 1) << (fs)->lfs_bshift) \
+	(((lbn) >= NDADDR || (ip)->i_size >= ((lbn) + 1) << (fs)->lfs_bshift) \
 	    ? (fs)->lfs_bsize \
-	    : (fragroundup(fs, blkoff(fs, (ip)->i_ffs_size))))
+	    : (fragroundup(fs, blkoff(fs, (ip)->i_size))))
 #define	blkoff(fs, loc)		((int)((loc) & (fs)->lfs_bmask))
 #define fragoff(fs, loc)    /* calculates (loc % fs->lfs_fsize) */ \
     ((int)((loc) & (fs)->lfs_ffmask))
@@ -848,7 +848,7 @@ struct segment {
 	struct buf	**cbpp;		/* pointer to next available bp */
 	struct buf	**start_bpp;	/* pointer to first bp in this set */
 	struct buf	 *ibp;		/* buffer pointer to inode page */
-	struct dinode	 *idp;		/* pointer to ifile dinode */
+	struct ufs1_dinode    *idp;          /* pointer to ifile dinode */
 	struct finfo	 *fip;		/* current fileinfo pointer */
 	struct vnode	 *vp;		/* vnode being gathered */
 	void	 *segsum;		/* segment summary info */

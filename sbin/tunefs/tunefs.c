@@ -1,4 +1,4 @@
-/*	$NetBSD: tunefs.c,v 1.26 2001/11/09 11:48:39 lukem Exp $	*/
+/*	$NetBSD: tunefs.c,v 1.27 2003/04/02 10:39:32 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)tunefs.c	8.3 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: tunefs.c,v 1.26 2001/11/09 11:48:39 lukem Exp $");
+__RCSID("$NetBSD: tunefs.c,v 1.27 2003/04/02 10:39:32 fvdl Exp $");
 #endif
 #endif /* not lint */
 
@@ -80,8 +80,12 @@ union {
 char buf[MAXBSIZE];
 
 int	fi;
-long	dev_bsize = 1;
+long	dev_bsize = 512;
 int	needswap = 0;
+int	is_ufs2 = 0;
+off_t	sblockloc;
+
+static off_t sblock_try[] = SBLOCKSEARCH;
 
 static	void	bwrite(daddr_t, char *, int, const char *);
 static	void	bread(daddr_t, char *, int, const char *);
@@ -94,7 +98,7 @@ int		main(int, char *[]);
 int
 main(int argc, char *argv[])
 {
-#define	OPTSTRINGBASE	"AFNa:d:e:g:h:k:m:o:t:"
+#define	OPTSTRINGBASE	"AFNe:g:h:m:o:"
 #ifdef TUNEFS_SOFTDEP
 	int		softdep;
 #define	OPTSTRING	OPTSTRINGBASE ## "n:"
@@ -104,11 +108,11 @@ main(int argc, char *argv[])
 	int		i, ch, Aflag, Fflag, Nflag, openflags;
 	const char	*special, *chg[2];
 	char		device[MAXPATHLEN];
-	int		maxbpg, maxcontig, minfree, rotdelay, optim, trackskew;
+	int		maxbpg, minfree, optim;
 	int		avgfilesize, avgfpdir;
 
 	Aflag = Fflag = Nflag = 0;
-	maxbpg = maxcontig = minfree = rotdelay = optim = trackskew = -1;
+	maxbpg = minfree = optim = -1;
 	avgfilesize = avgfpdir = -1;
 #ifdef TUNEFS_SOFTDEP
 	softdep = -1;
@@ -129,17 +133,6 @@ main(int argc, char *argv[])
 
 		case 'N':
 			Nflag++;
-			break;
-
-		case 'a':
-			maxcontig = getnum(optarg,
-			    "maximum contiguous block count", 1, INT_MAX);
-			break;
-
-		case 'd':
-			rotdelay = getnum(optarg,
-			    "rotational delay between contiguous blocks",
-			    0, INT_MAX);
 			break;
 
 		case 'e':
@@ -188,12 +181,6 @@ main(int argc, char *argv[])
 				    "optimization preference");
 			break;
 
-		case 'k':
-		case 't':	/* for compatibility with old syntax */
-			trackskew = getnum(optarg,
-			    "track skew in sectors", 0, INT_MAX);
-			break;
-
 		default:
 			usage();
 		}
@@ -228,10 +215,6 @@ main(int argc, char *argv[])
 	} while (/* CONSTCOND */0)
 
 	warnx("tuning %s", special);
-	CHANGEVAL(sblock.fs_maxcontig, maxcontig,
-	    "maximum contiguous block count", "");
-	CHANGEVAL(sblock.fs_rotdelay, rotdelay,
-	    "rotational delay between contiguous blocks", "ms");
 	CHANGEVAL(sblock.fs_maxbpg, maxbpg,
 	    "maximum blocks per file in a cylinder group", "");
 	CHANGEVAL(sblock.fs_minfree, minfree,
@@ -271,8 +254,6 @@ main(int argc, char *argv[])
 				warnx(OPTWARN, "space", "<", MINFREE);
 		}
 	}
-	CHANGEVAL(sblock.fs_trackskew, trackskew,
-	    "track skew in sectors", "");
 	CHANGEVAL(sblock.fs_avgfilesize, avgfilesize,
 	    "average file size", "");
 	CHANGEVAL(sblock.fs_avgfpdir, avgfpdir,
@@ -282,9 +263,6 @@ main(int argc, char *argv[])
 		fprintf(stdout, "tunefs: current settings of %s\n", special);
 		fprintf(stdout, "\tmaximum contiguous block count %d\n",
 		    sblock.fs_maxcontig);
-		fprintf(stdout,
-		    "\trotational delay between contiguous blocks %dms\n",
-		    sblock.fs_rotdelay);
 		fprintf(stdout,
 		    "\tmaximum blocks per file in a cylinder group %d\n",
 		    sblock.fs_maxbpg);
@@ -301,20 +279,18 @@ main(int argc, char *argv[])
 		fprintf(stdout,
 		    "\texpected number of files per directory: %d\n",
 		    sblock.fs_avgfpdir);
-		fprintf(stdout, "\ttrack skew %d sectors\n",
-		    sblock.fs_trackskew);
 		fprintf(stdout, "tunefs: no changes made\n");
 		exit(0);
 	}
 
-	memcpy(buf, (char *)&sblock, SBSIZE);
+	memcpy(buf, (char *)&sblock, SBLOCKSIZE);
 	if (needswap)
 		ffs_sb_swap((struct fs*)buf, (struct fs*)buf);
-	bwrite((daddr_t)SBOFF / dev_bsize, buf, SBSIZE, special);
+	bwrite(sblockloc, buf, SBLOCKSIZE, special);
 	if (Aflag)
 		for (i = 0; i < sblock.fs_ncg; i++)
 			bwrite(fsbtodb(&sblock, cgsblock(&sblock, i)),
-			    buf, SBSIZE, special);
+			    buf, SBLOCKSIZE, special);
 	close(fi);
 	exit(0);
 }
@@ -358,17 +334,34 @@ usage(void)
 static void
 getsb(struct fs *fs, const char *file)
 {
+	int i;
 
-	bread((daddr_t)SBOFF, (char *)fs, SBSIZE, file);
-	if (fs->fs_magic != FS_MAGIC) {
-		if (fs->fs_magic == bswap32(FS_MAGIC)) {
+	for (i = 0; sblock_try[i] != -1; i++) {
+		bread(sblock_try[i] / dev_bsize, (char *)fs, SBLOCKSIZE, file);
+		switch(fs->fs_magic) {
+		case FS_UFS2_MAGIC:
+			is_ufs2 = 1;
+			/*FALLTHROUGH*/
+		case FS_UFS1_MAGIC:
+			goto found;
+		case FS_UFS2_MAGIC_SWAPPED:
+			is_ufs2 = 1;
+			/*FALLTHROUGH*/
+		case FS_UFS1_MAGIC_SWAPPED:
 			warnx("%s: swapping byte order", file);
 			needswap = 1;
 			ffs_sb_swap(fs, fs);
-		} else
-			err(5, "%s: bad magic number", file);
+			goto found;
+		default:
+			break;
+		}
 	}
+	errx(5, "cannot find filesystem superblock");
+found:
+	if (is_ufs2 && fs->fs_sblockloc != sblock_try[i])
+		errx(5, "bad super block");
 	dev_bsize = fs->fs_fsize / fsbtodb(fs, 1);
+	sblockloc = sblock_try[i] / dev_bsize;
 }
 
 static void

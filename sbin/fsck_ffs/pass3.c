@@ -1,4 +1,4 @@
-/*	$NetBSD: pass3.c,v 1.13 2002/05/06 03:17:43 lukem Exp $	*/
+/*	$NetBSD: pass3.c,v 1.14 2003/04/02 10:39:26 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pass3.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: pass3.c,v 1.13 2002/05/06 03:17:43 lukem Exp $");
+__RCSID("$NetBSD: pass3.c,v 1.14 2003/04/02 10:39:26 fvdl Exp $");
 #endif
 #endif /* not lint */
 
@@ -48,16 +48,20 @@ __RCSID("$NetBSD: pass3.c,v 1.13 2002/05/06 03:17:43 lukem Exp $");
 #include <ufs/ufs/dinode.h>
 #include <ufs/ffs/fs.h>
 
+#include <dirent.h>
+
 #include "fsck.h"
 #include "extern.h"
 #include "fsutil.h"
 
 void
-pass3()
+pass3(void)
 {
-	struct inoinfo **inpp, *inp;
+	struct inoinfo *inp, **inpp;
+	int loopcnt, state;
 	ino_t orphan;
-	int loopcnt;
+	struct inodesc idesc;
+	char namebuf[MAXNAMLEN+1];
 
 	for (inpp = &inpsort[inplast - 1]; inpp >= inpsort; inpp--) {
 		if (got_siginfo) {
@@ -69,20 +73,54 @@ pass3()
 			got_siginfo = 0;
 		}
 		inp = *inpp;
+		state = inoinfo(inp->i_number)->ino_state;
 		if (inp->i_number == ROOTINO ||
-		    !(inp->i_parent == 0 || statemap[inp->i_number] == DSTATE))
+		    (inp->i_parent != 0 && state != DSTATE))
 			continue;
-		if (statemap[inp->i_number] == DCLEAR)
+		if (state == DCLEAR)
 			continue;
+		/*
+		 * If we are running with soft updates and we come
+		 * across unreferenced directories, we just leave
+		 * them in DSTATE which will cause them to be pitched
+		 * in pass 4.
+		 */
+		if (preen &&
+		    resolved && usedsoftdep && state == DSTATE) {
+			if (inp->i_dotdot >= ROOTINO)
+				inoinfo(inp->i_dotdot)->ino_linkcnt++;
+			continue;
+		}
 		for (loopcnt = 0; ; loopcnt++) {
 			orphan = inp->i_number;
 			if (inp->i_parent == 0 ||
-			    statemap[inp->i_parent] != DSTATE ||
-			    loopcnt > numdirs)
+			    inoinfo(inp->i_parent)->ino_state != DSTATE ||
+			    loopcnt > countdirs)
 				break;
 			inp = getinoinfo(inp->i_parent);
 		}
-		(void)linkup(orphan, inp->i_dotdot);
-		lncntp[lfdir]--;
+		if (loopcnt <= countdirs) {
+			if (linkup(orphan, inp->i_dotdot, NULL))
+				inoinfo(lfdir)->ino_linkcnt--;
+			continue;
+		}
+		pfatal("ORPHANED DIRECTORY LOOP DETECTED I=%lu",
+		    (u_long)orphan);
+		if (reply("RECONNECT") == 0)
+			continue;
+		memset(&idesc, 0, sizeof(struct inodesc));
+		idesc.id_type = DATA;
+		idesc.id_number = inp->i_parent;
+		idesc.id_parent = orphan;
+		idesc.id_func = findname;
+		idesc.id_name = namebuf;
+		if ((ckinode(ginode(inp->i_parent), &idesc) & FOUND) == 0)
+			pfatal("COULD NOT FIND NAME IN PARENT DIRECTORY");
+		if (linkup(orphan, inp->i_parent, namebuf)) {
+			idesc.id_func = clearentry;
+			if (ckinode(ginode(inp->i_parent), &idesc) & FOUND)
+				inoinfo(orphan)->ino_linkcnt++;
+			inoinfo(lfdir)->ino_linkcnt--;
+		}
 	}
 }

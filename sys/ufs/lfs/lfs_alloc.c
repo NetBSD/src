@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.65 2003/03/15 06:58:50 perseant Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.66 2003/04/02 10:39:40 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.65 2003/03/15 06:58:50 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.66 2003/04/02 10:39:40 fvdl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -135,16 +135,16 @@ lfs_rf_valloc(struct lfs *fs, ino_t ino, int version, struct proc *p,
 
 		*vpp = vp;
 		ip = VTOI(vp);
-		if (ip->i_ffs_gen == version)
+		if (ip->i_gen == version)
 			return 0;
-		else if (ip->i_ffs_gen < version) {
+		else if (ip->i_gen < version) {
 			VOP_TRUNCATE(vp, (off_t)0, 0, NOCRED, p);
-			ip->i_ffs_gen = version;
+			ip->i_gen = ip->i_ffs1_gen = version;
 			LFS_SET_UINO(ip, IN_CHANGE | IN_MODIFIED | IN_UPDATE);
 			return 0;
 		} else {
 			/* printf("ino %d: asked for version %d but got %d\n",
-			       ino, version, ip->i_ffs_gen); */
+			       ino, version, ip->i_ffs1_gen); */
 			vput(vp);
 			*vpp = NULLVP;
 			return EEXIST;
@@ -155,7 +155,7 @@ lfs_rf_valloc(struct lfs *fs, ino_t ino, int version, struct proc *p,
 	 * The inode is not in use.  Find it on the free list.
 	 */
 	/* If the Ifile is too short to contain this inum, extend it */
-	while (VTOI(fs->lfs_ivnode)->i_ffs_size <= (ino / 
+	while (VTOI(fs->lfs_ivnode)->i_size <= (ino / 
 		fs->lfs_ifpb + fs->lfs_cleansz + fs->lfs_segtabsz) 
 		<< fs->lfs_bshift) {
 		extend_ifile(fs, NOCRED);
@@ -194,8 +194,8 @@ lfs_rf_valloc(struct lfs *fs, ino_t ino, int version, struct proc *p,
 		 * this later if it turns out to be some other kind of file.
 		 */
 		ip = VTOI(vp);
-		ip->i_ffs_mode = IFREG;
-		ip->i_ffs_nlink = 1;
+		ip->i_mode = ip->i_ffs1_mode = IFREG;
+		ip->i_nlink = ip->i_ffs1_nlink = 1;
 		ip->i_ffs_effnlink = 1;
 		ufs_vinit(vp->v_mount, lfs_specop_p, lfs_fifoop_p, &vp);
 		ip = VTOI(vp);
@@ -233,13 +233,14 @@ extend_ifile(struct lfs *fs, struct ucred *cred)
 
 	vp = fs->lfs_ivnode;
 	ip = VTOI(vp);
-	blkno = lblkno(fs, ip->i_ffs_size);
-	if ((error = VOP_BALLOC(vp, ip->i_ffs_size, fs->lfs_bsize, cred, 0,
+	blkno = lblkno(fs, ip->i_size);
+	if ((error = VOP_BALLOC(vp, ip->i_size, fs->lfs_bsize, cred, 0,
 				&bp)) != 0) {
 		return (error);
 	}
-	ip->i_ffs_size += fs->lfs_bsize;
-	uvm_vnp_setsize(vp, ip->i_ffs_size);
+	ip->i_size += fs->lfs_bsize;
+	ip->i_ffs1_size = ip->i_size;
+	uvm_vnp_setsize(vp, ip->i_size);
 	
 	i = (blkno - fs->lfs_segtabsz - fs->lfs_cleansz) *
 		fs->lfs_ifpb;
@@ -374,13 +375,14 @@ lfs_ialloc(struct lfs *fs, struct vnode *pvp, ino_t new_ino, int new_gen,
 
 	ip = VTOI(vp);
 	LFS_SET_UINO(ip, IN_CHANGE | IN_MODIFIED);
-	/* Zero out the direct and indirect block addresses. */
-	bzero(&ip->i_din, sizeof(ip->i_din));
-	ip->i_din.ffs_din.di_inumber = new_ino;
+	/* on-disk structure has been zeroed out by lfs_vcreate */
+	ip->i_din.ffs1_din->di_inumber = new_ino;
 
 	/* Set a new generation number for this inode. */
-	if (new_gen)
-		ip->i_ffs_gen = new_gen;
+	if (new_gen) {
+		ip->i_gen = new_gen;
+		ip->i_ffs1_gen = new_gen;
+	}
 
 	/* Insert into the inode hash table. */
 	ufs_ihashins(ip);
@@ -432,6 +434,7 @@ void
 lfs_vcreate(struct mount *mp, ino_t ino, struct vnode *vp)
 {
 	struct inode *ip;
+	struct ufs1_dinode *dp;
 	struct ufsmount *ump;
 #ifdef QUOTA
 	int i;
@@ -442,25 +445,23 @@ lfs_vcreate(struct mount *mp, ino_t ino, struct vnode *vp)
 	
 	/* Initialize the inode. */
 	ip = pool_get(&lfs_inode_pool, PR_WAITOK);
+	memset(ip, 0, sizeof(*ip));
+	dp = pool_get(&lfs_dinode_pool, PR_WAITOK);
+	memset(dp, 0, sizeof(*dp));
 	ip->inode_ext.lfs = pool_get(&lfs_inoext_pool, PR_WAITOK);
 	vp->v_data = ip;
+	ip->i_din.ffs1_din = dp;
+	ip->i_ump = ump;
 	ip->i_vnode = vp;
 	ip->i_devvp = ump->um_devvp;
 	ip->i_dev = ump->um_dev;
-	ip->i_number = ip->i_din.ffs_din.di_inumber = ino;
+	ip->i_number = dp->di_inumber = ino;
 	ip->i_lfs = ump->um_lfs;
+	ip->i_lfs_effnblks = 0;
 #ifdef QUOTA
 	for (i = 0; i < MAXQUOTAS; i++)
 		ip->i_dquot[i] = NODQUOT;
 #endif
-	ip->i_lockf = 0;
-	ip->i_diroff = 0;
-	ip->i_ffs_mode = 0;
-	ip->i_ffs_size = 0;
-	ip->i_ffs_blocks = 0;
-	ip->i_lfs_effnblks = 0;
-	ip->i_flag = 0;
-
 #ifdef DEBUG_LFS_VNLOCK
 	if (ino == LFS_IFILE_INUM)
 		vp->v_vnlock->lk_wmesg = "inlock";
@@ -552,16 +553,17 @@ lfs_vfree(void *v)
 	if (old_iaddr != LFS_UNUSED_DADDR) {
 		LFS_SEGENTRY(sup, fs, dtosn(fs, old_iaddr), bp);
 #ifdef DIAGNOSTIC
-		if (sup->su_nbytes < DINODE_SIZE) {
+		if (sup->su_nbytes < sizeof (struct ufs1_dinode)) {
 			printf("lfs_vfree: negative byte count"
 			       " (segment %" PRIu32 " short by %d)\n",
 			       dtosn(fs, old_iaddr),
-			       (int)DINODE_SIZE - sup->su_nbytes);
+			       (int)sizeof (struct ufs1_dinode) -
+				    sup->su_nbytes);
 			panic("lfs_vfree: negative byte count");
-			sup->su_nbytes = DINODE_SIZE;
+			sup->su_nbytes = sizeof (struct ufs1_dinode);
 		}
 #endif
-		sup->su_nbytes -= DINODE_SIZE;
+		sup->su_nbytes -= sizeof (struct ufs1_dinode);
 		LFS_WRITESEGENTRY(sup, fs, dtosn(fs, old_iaddr), bp); /* Ifile */
 	}
 	

@@ -1,4 +1,4 @@
-/*	$NetBSD: dumplfs.c,v 1.25 2003/03/07 22:50:10 perseant Exp $	*/
+/*	$NetBSD: dumplfs.c,v 1.26 2003/04/02 10:39:47 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -45,7 +45,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)dumplfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: dumplfs.c,v 1.25 2003/03/07 22:50:10 perseant Exp $");
+__RCSID("$NetBSD: dumplfs.c,v 1.26 2003/04/02 10:39:47 fvdl Exp $");
 #endif
 #endif /* not lint */
 
@@ -69,7 +69,7 @@ __RCSID("$NetBSD: dumplfs.c,v 1.25 2003/03/07 22:50:10 perseant Exp $");
 
 static void	addseg(char *);
 static void	dump_cleaner_info(struct lfs *, void *);
-static void	dump_dinode(struct dinode *);
+static void	dump_dinode(struct ufs1_dinode *);
 static void	dump_ifile(int, struct lfs *, int, int, daddr_t);
 static int	dump_ipage_ifile(struct lfs *, int, char *, int);
 static int	dump_ipage_segusage(struct lfs *, int, char *, int);
@@ -243,7 +243,7 @@ static void
 dump_ifile(int fd, struct lfs *lfsp, int do_ientries, int do_segentries, daddr_t addr)
 {
 	char *ipage;
-	struct dinode *dip, *dpage;
+	struct ufs1_dinode *dip, *dpage;
 	/* XXX ondisk32 */
 	int32_t *addrp, *dindir, *iaddrp, *indir;
 	int block_limit, i, inum, j, nblocks, psize;
@@ -426,7 +426,7 @@ dump_ipage_segusage(struct lfs *lfsp, int i, char *pp, int tot)
 }
 
 static void
-dump_dinode(struct dinode *dip)
+dump_dinode(struct ufs1_dinode *dip)
 {
 	int i;
 	time_t at, mt, ct;
@@ -466,7 +466,7 @@ dump_sum(int fd, struct lfs *lfsp, SEGSUM *sp, int segnum, daddr_t addr)
 	int ck;
 	int numbytes, numblocks;
 	char *datap;
-	struct dinode *inop;
+	struct ufs1_dinode *inop;
 	size_t el_size;
 	u_int32_t datasum;
 	char *buf;

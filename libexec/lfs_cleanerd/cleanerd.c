@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanerd.c,v 1.46 2003/03/02 04:38:20 perseant Exp $	*/
+/*	$NetBSD: cleanerd.c,v 1.47 2003/04/02 10:39:22 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)cleanerd.c	8.5 (Berkeley) 6/10/95";
 #else
-__RCSID("$NetBSD: cleanerd.c,v 1.46 2003/03/02 04:38:20 perseant Exp $");
+__RCSID("$NetBSD: cleanerd.c,v 1.47 2003/04/02 10:39:22 fvdl Exp $");
 #endif
 #endif /* not lint */
 
@@ -703,7 +703,7 @@ add_segment(FS_INFO *fsp, struct seglist *slp, SEGS_AND_BLOCKS *sbp)
 	SEGUSE *sp;
 	struct lfs *lfsp;
 	struct tossstruct t;
-	struct dinode *dip;
+	struct ufs1_dinode *dip;
 	caddr_t seg_buf;
 	caddr_t cmp_buf, cmp_dp;
 	size_t size;
@@ -803,7 +803,7 @@ add_segment(FS_INFO *fsp, struct seglist *slp, SEGS_AND_BLOCKS *sbp)
 			 */
 			/* XXX ondisk32 */
 			if(tba[i].bi_lbn == LFS_UNUSED_LBN) {
-				dip = (struct dinode *)(seg_buf + fsbtob(lfsp, tba[i].bi_daddr - seg_addr));
+				dip = (struct ufs1_dinode *)(seg_buf + fsbtob(lfsp, tba[i].bi_daddr - seg_addr));
 				for(j=INOPB(lfsp)-1;j>=0;j--) {
 					if(dip[j].di_u.inumber == tba[i].bi_inode) {
 						tba[i].bi_bp = (char *)(dip+j);
@@ -837,7 +837,7 @@ add_segment(FS_INFO *fsp, struct seglist *slp, SEGS_AND_BLOCKS *sbp)
 	slp->sl_bytes = 0;
 	for(i=0; i<num_blocks; i++)
 		if(tba[i].bi_lbn == LFS_UNUSED_LBN)
-			slp->sl_bytes += sizeof(struct dinode);
+			slp->sl_bytes += sizeof(struct ufs1_dinode);
 		else
 			slp->sl_bytes += tba[i].bi_size;
 
@@ -866,7 +866,7 @@ add_segment(FS_INFO *fsp, struct seglist *slp, SEGS_AND_BLOCKS *sbp)
 			cmp_dp = cmp_buf;
 			for (i = 0; i < num_blocks; i++) {
 				if(tba[i].bi_lbn == LFS_UNUSED_LBN)
-					size = sizeof(struct dinode);
+					size = sizeof(struct ufs1_dinode);
 				else
 					size = tba[i].bi_size;
 				memcpy(cmp_dp, tba[i].bi_bp, size);

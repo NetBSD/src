@@ -1,4 +1,4 @@
-/* $NetBSD: vars.c,v 1.7 2003/03/28 08:09:55 perseant Exp $	 */
+/* $NetBSD: vars.c,v 1.8 2003/04/02 10:39:28 fvdl Exp $	 */
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -87,4 +87,4 @@ int lfmode;			/* lost & found directory creation mode */
 daddr_t n_blks;			/* number of blocks in use */
 ino_t n_files;			/* number of files in use */
 
-struct dinode zino;
+struct ufs1_dinode zino;

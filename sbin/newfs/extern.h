@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.8 2002/09/28 20:11:07 dbj Exp $	*/
+/*	$NetBSD: extern.h,v 1.9 2003/04/02 10:39:29 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -36,25 +36,20 @@ void mkfs(struct partition *, const char *, int, int, mode_t, uid_t, gid_t);
 extern int	mfs;		/* run as the memory based filesystem */
 extern int	Nflag;		/* run mkfs without writing file system */
 extern int	Oflag;		/* format as an 4.3BSD file system */
-extern int	fssize;		/* file system size */
-extern int	ntracks;	/* # tracks/cylinder */
-extern int	nsectors;	/* # sectors/track */
-extern int	nphyssectors;	/* # sectors/track including spares */
-extern int	secpercyl;	/* sectors per cylinder */
+extern int64_t	fssize;		/* file system size */
 extern int	sectorsize;	/* bytes/sector */
 extern int	rpm;		/* revolutions/minute of drive */
-extern int	interleave;	/* hardware sector interleave */
-extern int	trackskew;	/* sector 0 skew, per track */
 extern int	fsize;		/* fragment size */
 extern int	bsize;		/* block size */
+extern int	maxbsize;
 extern int	cpg;		/* cylinders/cylinder group */
 extern int	cpgflg;		/* cylinders/cylinder group flag was given */
 extern int	minfree;	/* free space threshold */
 extern int	opt;		/* optimization preference (space or time) */
 extern int	density;	/* number of bytes per inode */
 extern int	maxcontig;	/* max contiguous blocks to allocate */
-extern int	rotdelay;	/* rotational delay between blocks */
 extern int	maxbpg;		/* maximum blocks per file in a cyl group */
+extern int	maxblkspercg;
 extern int	nrpos;		/* # of distinguished rotational positions */
 extern int	bbsize;		/* boot block size */
 extern int	sbsize;		/* superblock size */

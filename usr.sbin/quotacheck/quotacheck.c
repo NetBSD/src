@@ -1,4 +1,4 @@
-/*	$NetBSD: quotacheck.c,v 1.24 2003/01/24 21:55:33 fvdl Exp $	*/
+/*	$NetBSD: quotacheck.c,v 1.25 2003/04/02 10:39:50 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)quotacheck.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: quotacheck.c,v 1.24 2003/01/24 21:55:33 fvdl Exp $");
+__RCSID("$NetBSD: quotacheck.c,v 1.25 2003/04/02 10:39:50 fvdl Exp $");
 #endif
 #endif /* not lint */
 
@@ -107,6 +107,15 @@ struct fileusage {
 #define FUHASH 1024	/* must be power of two */
 static struct fileusage *fuhead[MAXQUOTAS][FUHASH];
 
+
+union dinode {
+	struct ufs1_dinode dp1;
+	struct ufs2_dinode dp2;
+};
+#define DIP(dp, field) \
+	(is_ufs2 ? (dp)->dp2.di_##field : (dp)->dp1.di_##field)
+
+
 static int	aflag;		/* all file systems */
 static int	gflag;		/* check group quotas */
 static int	uflag;		/* check user quotas */
@@ -115,6 +124,7 @@ static int	fi;		/* open disk file descriptor */
 static u_long	highid[MAXQUOTAS];/* highest addid()'ed identifier per type */
 static int needswap;	/* FS is in swapped order */
 static int got_siginfo = 0; /* got a siginfo signal */
+static int is_ufs2;
 
 
 int main __P((int, char *[]));
@@ -128,11 +138,13 @@ static int getquotagid __P((void));
 static int hasquota __P((struct fstab *, int, char **));
 static struct fileusage *lookup __P((u_long, int));
 static struct fileusage *addid __P((u_long, int, const char *));
-static struct dinode *getnextinode __P((ino_t));
-static void resetinodebuf __P((void));
+static union dinode *getnextinode __P((ino_t));
+static void setinodebuf __P((ino_t));
 static void freeinodebuf __P((void));
 static void bread __P((daddr_t, char *, long));
 static void infohandler __P((int sig));
+static void swap_dinode1(union dinode *, int);
+static void swap_dinode2(union dinode *, int);
 
 int
 main(argc, argv)
@@ -268,6 +280,8 @@ needchk(fs)
 	return (NULL);
 }
 
+off_t sblock_try[] = SBLOCKSEARCH;
+
 /*
  * Scan the specified filesystem to check quota(s) present on it.
  */
@@ -279,9 +293,10 @@ chkquota(type, fsname, mntpt, v, pid)
 {
 	struct quotaname *qnp = v;
 	struct fileusage *fup;
-	struct dinode *dp;
-	int cg, i, mode, errs = 0;
+	union dinode *dp;
+	int cg, i, mode, errs = 0, inosused;
 	ino_t ino;
+	struct cg *cgp;
 
 	if (pid != NULL) {
 		switch ((*pid = fork())) {
@@ -296,7 +311,7 @@ chkquota(type, fsname, mntpt, v, pid)
 
 	if ((fi = open(fsname, O_RDONLY, 0)) < 0) {
 		warn("Cannot open %s", fsname);
-		return (1);
+		return 1;
 	}
 	if (vflag) {
 		(void)printf("*** Checking ");
@@ -310,20 +325,51 @@ chkquota(type, fsname, mntpt, v, pid)
 	signal(SIGINFO, infohandler);
 	sync();
 	dev_bsize = 1;
-	bread(SBOFF, (char *)&sblock, (long)SBSIZE);
-	if (sblock.fs_magic != FS_MAGIC) {
-		if (sblock.fs_magic== bswap32(FS_MAGIC)) {
-			needswap = 1;
-			ffs_sb_swap(&sblock, &sblock);
-		} else
-			errx(1, "%s: superblock magic number 0x%x, not 0x%x",
-				fsname, sblock.fs_magic, FS_MAGIC);
+
+	cgp = malloc(sblock.fs_cgsize);
+	if (cgp == NULL) {
+		warn("%s: can't allocate %d bytes of cg space", fsname,
+		    sblock.fs_cgsize);
+		return 1;
 	}
+
+	for (i = 0; sblock_try[i] != -1; i++) {
+		bread(sblock_try[i], (char *)&sblock, SBLOCKSIZE);
+		switch (sblock.fs_magic) {
+		case FS_UFS2_MAGIC:
+			is_ufs2 = 1;
+			/*FALLTHROUGH*/
+		case FS_UFS1_MAGIC:
+			goto found;
+		case FS_UFS2_MAGIC_SWAPPED:
+			is_ufs2 = 1;
+			/*FALLTHROUGH*/
+		case FS_UFS1_MAGIC_SWAPPED:
+			needswap = 1;
+			goto found;
+		default:
+			continue;
+		}
+	}
+	warnx("%s: superblock not found", fsname);
+	free(cgp);
+	return 1;
+found:
+	if (needswap)
+		ffs_sb_swap(&sblock, &sblock);
 	dev_bsize = sblock.fs_fsize / fsbtodb(&sblock, 1);
 	maxino = sblock.fs_ncg * sblock.fs_ipg;
-	resetinodebuf();
 	for (ino = 0, cg = 0; cg < sblock.fs_ncg; cg++) {
-		for (i = 0; i < sblock.fs_ipg; i++, ino++) {
+		setinodebuf(cg * sblock.fs_ipg);
+		if (sblock.fs_magic == FS_UFS2_MAGIC) {
+			bread(fsbtodb(&sblock, cgtod(&sblock, cg)), (char *)cgp,
+			    sblock.fs_cgsize);
+			if (needswap)
+				ffs_cg_swap(cgp, cgp, &sblock);
+			inosused = cgp->cg_initediblk;
+		} else
+			inosused = sblock.fs_ipg;
+		for (i = 0; i < inosused; i++, ino++) {
 			if (got_siginfo) {
 				fprintf(stderr,
 				    "%s: cyl group %d of %d (%d%%)\n",
@@ -335,33 +381,34 @@ chkquota(type, fsname, mntpt, v, pid)
 				continue;
 			if ((dp = getnextinode(ino)) == NULL)
 				continue;
-			if ((mode = dp->di_mode & IFMT) == 0)
+			if ((mode = DIP(dp, mode) & IFMT) == 0)
 				continue;
 			if (qnp->flags & HASGRP) {
-				fup = addid((u_long)dp->di_gid, GRPQUOTA,
+				fup = addid((u_long)DIP(dp, gid), GRPQUOTA,
 				    (char *)0);
 				fup->fu_curinodes++;
 				if (mode == IFREG || mode == IFDIR ||
 				    mode == IFLNK)
-					fup->fu_curblocks += dp->di_blocks;
+					fup->fu_curblocks += DIP(dp, blocks);
 			}
 			if (qnp->flags & HASUSR) {
-				fup = addid((u_long)dp->di_uid, USRQUOTA,
+				fup = addid((u_long)DIP(dp, uid), USRQUOTA,
 				    (char *)0);
 				fup->fu_curinodes++;
 				if (mode == IFREG || mode == IFDIR ||
 				    mode == IFLNK)
-					fup->fu_curblocks += dp->di_blocks;
+					fup->fu_curblocks += DIP(dp, blocks);
 			}
 		}
 	}
 	freeinodebuf();
+	free(cgp);
 	if (qnp->flags & HASUSR)
 		errs += update(mntpt, qnp->usrqfname, USRQUOTA);
 	if (qnp->flags & HASGRP)
 		errs += update(mntpt, qnp->grpqfname, GRPQUOTA);
 	close(fi);
-	return (errs);
+	return errs;
 }
 
 /*
@@ -583,24 +630,27 @@ addid(id, type, name)
 }
 
 /*
- * Special purpose version of ginode used to optimize pass
+ * Special purpose version of ginode used to optimize first pass
  * over all the inodes in numerical order.
  */
-static ino_t nextino, lastinum;
+static ino_t nextino, lastinum, lastvalidinum;
 static long readcnt, readpercg, fullcnt, inobufsize, partialcnt, partialsize;
-static struct dinode *inodebuf;
-#define	INOBUFSIZE	56*1024	/* size of buffer to read inodes */
+static union dinode *inodebuf;
+#define INOBUFSIZE	56*1024	/* size of buffer to read inodes */
 
-static struct dinode *
+union dinode *
 getnextinode(inumber)
 	ino_t inumber;
 {
 	long size;
 	daddr_t dblk;
-	static struct dinode *dp;
+	static union dinode *dp;
+	union dinode *ret;
 
-	if (inumber != nextino++ || inumber > maxino)
-		err(1, "bad inode number %d to nextinode", inumber);
+	if (inumber != nextino++ || inumber > lastvalidinum) {
+		errx(1, "bad inode number %d to nextinode", inumber);
+	}
+
 	if (inumber >= lastinum) {
 		readcnt++;
 		dblk = fsbtodb(&sblock, ino_to_fsba(&sblock, lastinum));
@@ -611,29 +661,40 @@ getnextinode(inumber)
 			size = inobufsize;
 			lastinum += fullcnt;
 		}
-		bread(dblk, (char *)inodebuf, size);
-		dp = inodebuf;
+		(void)bread(dblk, (caddr_t)inodebuf, size);
+		if (needswap) {
+			if (is_ufs2)
+				swap_dinode2(inodebuf, lastinum - inumber);
+			else
+				swap_dinode1(inodebuf, lastinum - inumber);
+		}
+		dp = (union dinode *)inodebuf;
 	}
-	if (needswap)
-		ffs_dinode_swap(dp, dp);
-	return (dp++);
+	ret = dp;
+	dp = (union dinode *)
+	    ((char *)dp + (is_ufs2 ? DINODE2_SIZE : DINODE1_SIZE));
+	return ret;
 }
 
-/*
- * Prepare to scan a set of inodes.
- */
-static void
-resetinodebuf()
+void
+setinodebuf(inum)
+	ino_t inum;
 {
 
-	nextino = 0;
-	lastinum = 0;
+	if (inum % sblock.fs_ipg != 0)
+		errx(1, "bad inode number %d to setinodebuf", inum);
+
+	lastvalidinum = inum + sblock.fs_ipg - 1;
+	nextino = inum;
+	lastinum = inum;
 	readcnt = 0;
+	if (inodebuf != NULL)
+		return;
 	inobufsize = blkroundup(&sblock, INOBUFSIZE);
-	fullcnt = inobufsize / sizeof(struct dinode);
+	fullcnt = inobufsize / (is_ufs2 ? DINODE2_SIZE : DINODE1_SIZE);
 	readpercg = sblock.fs_ipg / fullcnt;
 	partialcnt = sblock.fs_ipg % fullcnt;
-	partialsize = partialcnt * sizeof(struct dinode);
+	partialsize = partialcnt * (is_ufs2 ? DINODE2_SIZE : DINODE1_SIZE);
 	if (partialcnt != 0) {
 		readpercg++;
 	} else {
@@ -641,22 +702,40 @@ resetinodebuf()
 		partialsize = inobufsize;
 	}
 	if (inodebuf == NULL &&
-	   (inodebuf = malloc((u_int)inobufsize)) == NULL)
-		err(1, "%s", strerror(errno));
-	while (nextino < ROOTINO)
-		getnextinode(nextino);
+	    (inodebuf = malloc((unsigned)inobufsize)) == NULL)
+		errx(1, "Cannot allocate space for inode buffer");
 }
 
-/*
- * Free up data structures used to scan inodes.
- */
-static void
+void
 freeinodebuf()
 {
 
 	if (inodebuf != NULL)
-		free(inodebuf);
+		free((char *)inodebuf);
 	inodebuf = NULL;
+}
+
+
+static void
+swap_dinode1(union dinode *dp, int n)
+{
+	int i;
+	struct ufs1_dinode *dp1;
+
+	dp1 = (struct ufs1_dinode *)&dp->dp1;
+	for (i = 0; i < n; i++, dp1++)
+		ffs_dinode1_swap(dp1, dp1);
+}
+
+static void
+swap_dinode2(union dinode *dp, int n)
+{
+	int i;
+	struct ufs2_dinode *dp2;
+
+	dp2 = (struct ufs2_dinode *)&dp->dp2;
+	for (i = 0; i < n; i++, dp2++)
+		ffs_dinode2_swap(dp2, dp2);
 }
 
 /*

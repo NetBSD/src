@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.44 2003/02/05 21:38:43 pk Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.45 2003/04/02 10:39:37 fvdl Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.44 2003/02/05 21:38:43 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.45 2003/04/02 10:39:37 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -143,7 +143,10 @@ static	void handle_allocdirect_partdone __P((struct allocdirect *));
 static	void handle_allocindir_partdone __P((struct allocindir *));
 static	void initiate_write_filepage __P((struct pagedep *, struct buf *));
 static	void handle_written_mkdir __P((struct mkdir *, int));
-static	void initiate_write_inodeblock __P((struct inodedep *, struct buf *));
+static	void initiate_write_inodeblock_ufs1 __P((struct inodedep *,
+	     struct buf *));
+static	void initiate_write_inodeblock_ufs2 __P((struct inodedep *,
+	     struct buf *));
 static	void handle_workitem_freefile __P((struct freefile *));
 static	void handle_workitem_remove __P((struct dirrem *));
 static	struct dirrem *newdirrem __P((struct buf *, struct inode *,
@@ -152,7 +155,7 @@ static	void free_diradd __P((struct diradd *));
 static	void free_allocindir __P((struct allocindir *, struct inodedep *));
 static	void free_newdirblk __P((struct newdirblk *));
 static	int indir_trunc __P((struct inode *, daddr_t, int, daddr_t,
-	    long *));
+	    int64_t *));
 static	void deallocate_dependencies __P((struct buf *, struct inodedep *));
 static	void free_allocdirect __P((struct allocdirectlst *,
 	    struct allocdirect *, int));
@@ -677,7 +680,7 @@ softdep_process_worklist(matchmnt)
 
 		case D_FREEBLKS:
 			/* releasing blocks and/or fragments from a file */
-			if (WK_FREEBLKS(wk)->fb_fs == matchfs)
+			if (WK_FREEBLKS(wk)->fb_ump->um_fs == matchfs)
 				matchcnt += 1;
 			handle_workitem_freeblocks(WK_FREEBLKS(wk));
 			break;
@@ -980,7 +983,7 @@ top:
 	inodedep->id_ino = inum;
 	inodedep->id_state = ALLCOMPLETE;
 	inodedep->id_nlinkdelta = 0;
-	inodedep->id_savedino = NULL;
+	inodedep->id_savedino1 = NULL;
 	inodedep->id_savedsize = -1;
 	inodedep->id_buf = NULL;
 	LIST_INIT(&inodedep->id_pendinghd);
@@ -1168,7 +1171,7 @@ softdep_mount(devvp, mp, fs, cred)
 	struct fs *fs;
 	struct ucred *cred;
 {
-	struct csum cstotal;
+	struct csum_total cstotal;
 	struct cg *cgp;
 	struct buf *bp;
 	int error, cyl;
@@ -1434,7 +1437,7 @@ softdep_setup_allocdirect(ip, lbn, newblkno, oldblkno, newsize, oldsize, bp)
 		 * allocate an associated pagedep to track additions and
 		 * deletions.
 		 */
-		if ((ip->i_ffs_mode & IFMT) == IFDIR &&
+		if ((ip->i_mode & IFMT) == IFDIR &&
 		    pagedep_lookup(ip, lbn, DEPALLOC, &pagedep) == 0)
 			WORKLIST_INSERT(&bp->b_dep, &pagedep->pd_list);
 	}
@@ -1558,10 +1561,10 @@ newfreefrag(ip, blkno, size)
 		panic("newfreefrag: frag size");
 	freefrag = pool_get(&freefrag_pool, PR_WAITOK);
 	freefrag->ff_list.wk_type = D_FREEFRAG;
-	freefrag->ff_state = ip->i_ffs_uid & ~ONWORKLIST; /* XXX - used below */
+	freefrag->ff_state = ip->i_uid & ~ONWORKLIST; /* XXX - used below */
 	freefrag->ff_inum = ip->i_number;
 	freefrag->ff_fs = fs;
-	freefrag->ff_devvp = ip->i_devvp;
+	freefrag->ff_mnt = ITOV(ip)->v_mount;
 	freefrag->ff_blkno = blkno;
 	freefrag->ff_fragsize = size;
 	return (freefrag);
@@ -1575,16 +1578,18 @@ static void
 handle_workitem_freefrag(freefrag)
 	struct freefrag *freefrag;
 {
+	struct ufsmount *ump = VFSTOUFS(freefrag->ff_mnt);
 	struct inode tip;
 	struct vnode vp;
 
 	tip.i_fs = freefrag->ff_fs;
-	tip.i_devvp = freefrag->ff_devvp;
-	tip.i_dev = freefrag->ff_devvp->v_rdev;
+	tip.i_ump = ump;
+	tip.i_devvp = ump->um_devvp;
+	tip.i_dev = ump->um_devvp->v_rdev;
 	tip.i_number = freefrag->ff_inum;
-	tip.i_ffs_uid = freefrag->ff_state & ~ONWORKLIST; /* XXX - set above */
+	tip.i_uid = freefrag->ff_state & ~ONWORKLIST; /* XXX - set above */
 	vp.v_data = &tip;
-	vp.v_mount = freefrag->ff_devvp->v_specmountpoint;
+	vp.v_mount = ump->um_devvp->v_specmountpoint;
 	tip.i_vnode = &vp;
 	lockinit(&tip.i_gnode.g_glock, PVFS, "fglock", 0, 0);
 	lockmgr(&tip.i_gnode.g_glock, LK_EXCLUSIVE, NULL);
@@ -1669,7 +1674,7 @@ softdep_setup_allocindir_page(ip, lbn, bp, ptrno, newblkno, oldblkno, nbp)
 	 * allocate an associated pagedep to track additions and
 	 * deletions.
 	 */
-	if ((ip->i_ffs_mode & IFMT) == IFDIR &&
+	if ((ip->i_mode & IFMT) == IFDIR &&
 	    pagedep_lookup(ip, lbn, DEPALLOC, &pagedep) == 0)
 		WORKLIST_INSERT(&nbp->b_dep, &pagedep->pd_list);
 	WORKLIST_INSERT(&nbp->b_dep, &aip->ai_list);
@@ -1773,9 +1778,12 @@ setup_allocindir_phase2(bp, ip, aip)
 				free_allocindir(oldaip, NULL);
 			}
 			LIST_INSERT_HEAD(&indirdep->ir_deplisthd, aip, ai_next);
-			/* XXX ondisk32 */
-			((int32_t *)indirdep->ir_savebp->b_data)
-			    [aip->ai_offset] = aip->ai_oldblkno;
+			if (ip->i_ump->um_fstype == UFS1)
+				((int32_t *)indirdep->ir_savebp->b_data)
+				    [aip->ai_offset] = aip->ai_oldblkno;
+			else
+				((int64_t *)indirdep->ir_savebp->b_data)
+				    [aip->ai_offset] = aip->ai_oldblkno;
 			FREE_LOCK(&lk);
 			if (freefrag != NULL)
 				handle_workitem_freefrag(freefrag);
@@ -1792,6 +1800,8 @@ setup_allocindir_phase2(bp, ip, aip)
 		newindirdep = pool_get(&indirdep_pool, PR_WAITOK);
 		newindirdep->ir_list.wk_type = D_INDIRDEP;
 		newindirdep->ir_state = ATTACHED;
+		if (ip->i_ump->um_fstype == UFS1)
+			newindirdep->ir_state |= UFS1FMT;
 		LIST_INIT(&newindirdep->ir_deplisthd);
 		LIST_INIT(&newindirdep->ir_donehd);
 		if (bp->b_blkno == bp->b_lblkno) {
@@ -1836,9 +1846,10 @@ setup_allocindir_phase2(bp, ip, aip)
  * can release it.
  */
 void
-softdep_setup_freeblocks(ip, length)
+softdep_setup_freeblocks(ip, length, flags)
 	struct inode *ip;	/* The inode whose length is to be reduced */
 	off_t length;		/* The new length for the file */
+	int flags;
 {
 	struct freeblks *freeblks;
 	struct inodedep *inodedep;
@@ -1856,23 +1867,38 @@ softdep_setup_freeblocks(ip, length)
 	freeblks = pool_get(&freeblks_pool, PR_WAITOK);
 	bzero(freeblks, sizeof(struct freeblks));
 	freeblks->fb_list.wk_type = D_FREEBLKS;
-	freeblks->fb_uid = ip->i_ffs_uid;
+	freeblks->fb_uid = ip->i_uid;
 	freeblks->fb_previousinum = ip->i_number;
-	freeblks->fb_devvp = ip->i_devvp;
-	freeblks->fb_fs = fs;
-	freeblks->fb_oldsize = ip->i_ffs_size;
+	freeblks->fb_ump = ip->i_ump;
+	freeblks->fb_oldsize = ip->i_size;
 	freeblks->fb_newsize = length;
-	freeblks->fb_chkcnt = ip->i_ffs_blocks;
-	for (i = 0; i < NDADDR; i++) {
-		freeblks->fb_dblks[i] = ufs_rw32(ip->i_ffs_db[i], needswap);
-		ip->i_ffs_db[i] = 0;
+	freeblks->fb_chkcnt = DIP(ip, blocks);
+	if (ip->i_ump->um_fstype == UFS1) {
+		for (i = 0; i < NDADDR; i++) {
+			freeblks->fb_dblks[i] =
+			    ufs_rw32(ip->i_ffs1_db[i], needswap);
+			ip->i_ffs1_db[i] = 0;
+		}
+		for (i = 0; i < NIADDR; i++) {
+			freeblks->fb_iblks[i] =
+			     ufs_rw32(ip->i_ffs1_ib[i], needswap);
+			ip->i_ffs1_ib[i] = 0;
+		}
+	} else {
+		for (i = 0; i < NDADDR; i++) {
+			freeblks->fb_dblks[i] =
+			    ufs_rw64(ip->i_ffs2_db[i], needswap);
+			ip->i_ffs2_db[i] = 0;
+		}
+		for (i = 0; i < NIADDR; i++) {
+			freeblks->fb_iblks[i] =
+			    ufs_rw64(ip->i_ffs2_ib[i], needswap);
+			ip->i_ffs2_ib[i] = 0;
+		}
 	}
-	for (i = 0; i < NIADDR; i++) {
-		freeblks->fb_iblks[i] = ufs_rw32(ip->i_ffs_ib[i], needswap);
-		ip->i_ffs_ib[i] = 0;
-	}
-	ip->i_ffs_blocks = 0;
-	ip->i_ffs_size = 0;
+	DIP(ip, blocks) = 0;
+	ip->i_size = 0;
+	DIP(ip, size) = 0;
 	/*
 	 * If the file was removed, then the space being freed was
 	 * accounted for then (see softdep_filereleased()). If the
@@ -1889,14 +1915,29 @@ softdep_setup_freeblocks(ip, length)
 	    fsbtodb(fs, ino_to_fsba(fs, ip->i_number)),
 	    (int)fs->fs_bsize, NOCRED, &bp)) != 0)
 		softdep_error("softdep_setup_freeblocks", error);
+	if (ip->i_ump->um_fstype == UFS1) {
 #ifdef FFS_EI
-	if (needswap)
-		ffs_dinode_swap(&ip->i_din.ffs_din,
-		    (struct dinode *)bp->b_data+ino_to_fsbo(fs, ip->i_number));
-	else
+		if (needswap)
+			ffs_dinode1_swap(ip->i_din.ffs1_din,
+			    (struct ufs1_dinode *)
+				bp->b_data+ino_to_fsbo(fs, ip->i_number));
+		else
 #endif
-		*((struct dinode *)bp->b_data + ino_to_fsbo(fs, ip->i_number)) =
-		    ip->i_din.ffs_din;
+			*((struct ufs1_dinode *)
+			  bp->b_data + ino_to_fsbo(fs, ip->i_number)) =
+			    *ip->i_din.ffs1_din;
+	} else {
+#ifdef FFS_EI
+		if (needswap)
+			ffs_dinode2_swap(ip->i_din.ffs2_din,
+			    (struct ufs2_dinode *)
+				bp->b_data+ino_to_fsbo(fs, ip->i_number));
+		else
+#endif
+			*((struct ufs2_dinode *)
+			  bp->b_data + ino_to_fsbo(fs, ip->i_number)) =
+			    *ip->i_din.ffs2_din;
+	}
 	/*
 	 * Find and eliminate any inode dependencies.
 	 */
@@ -2252,9 +2293,9 @@ check_inode_unwritten(inodedep)
 	inodedep->id_buf = NULL;
 	if (inodedep->id_state & ONWORKLIST)
 		WORKLIST_REMOVE(&inodedep->id_list);
-	if (inodedep->id_savedino != NULL) {
-		FREE(inodedep->id_savedino, M_INODEDEP);
-		inodedep->id_savedino = NULL;
+	if (inodedep->id_savedino1 != NULL) {
+		FREE(inodedep->id_savedino1, M_INODEDEP);
+		inodedep->id_savedino1 = NULL;
 	}
 	if (free_inodedep(inodedep) == 0)
 		panic("check_inode_unwritten: busy inode");
@@ -2276,7 +2317,7 @@ free_inodedep(inodedep)
 	    LIST_FIRST(&inodedep->id_inowait) != NULL ||
 	    TAILQ_FIRST(&inodedep->id_inoupdt) != NULL ||
 	    TAILQ_FIRST(&inodedep->id_newinoupdt) != NULL ||
-	    inodedep->id_nlinkdelta != 0 || inodedep->id_savedino != NULL)
+	    inodedep->id_nlinkdelta != 0 || inodedep->id_savedino1 != NULL)
 		return (0);
 	LIST_REMOVE(inodedep, id_hash);
 	WORKITEM_FREE(inodedep, D_INODEDEP);
@@ -2297,24 +2338,25 @@ handle_workitem_freeblocks(freeblks)
 	struct freeblks *freeblks;
 {
 	struct inode tip;
-	struct vnode vp;
+	struct vnode vp, *devvp;
 	daddr_t bn;
 	struct fs *fs;
-	int i, level, bsize;
-	long nblocks, blocksreleased = 0;
+	int i, level, bsize, nblocks;
+	int64_t blocksreleased = 0;
 	int error, allerror = 0;
 	daddr_t baselbns[NIADDR], tmpval;
 
+	devvp = freeblks->fb_ump->um_devvp;
+	tip.i_devvp = devvp;
+	tip.i_dev = devvp->v_rdev;
 	tip.i_number = freeblks->fb_previousinum;
-	tip.i_devvp = freeblks->fb_devvp;
-	tip.i_dev = freeblks->fb_devvp->v_rdev;
-	tip.i_fs = freeblks->fb_fs;
-	tip.i_ffs_size = freeblks->fb_oldsize;
-	tip.i_ffs_uid = freeblks->fb_uid;
+	tip.i_ump = freeblks->fb_ump;
+	tip.i_fs = fs = freeblks->fb_ump->um_fs;
+	tip.i_size = freeblks->fb_oldsize;
+	tip.i_uid =  freeblks->fb_uid;
 	vp.v_data = &tip;
-	vp.v_mount = freeblks->fb_devvp->v_specmountpoint;
+	vp.v_mount = devvp->v_specmountpoint;
 	tip.i_vnode = &vp;
-	fs = freeblks->fb_fs;
 	tmpval = 1;
 	baselbns[0] = NDADDR;
 	for (i = 1; i < NIADDR; i++) {
@@ -2374,15 +2416,17 @@ indir_trunc(ip, dbn, level, lbn, countp)
 	daddr_t dbn;
 	int level;
 	daddr_t lbn;
-	long *countp;
+	int64_t *countp;
 {
 	struct buf *bp;
-	int32_t *bap;	/* XXX ondisk32 */
+	int32_t *bap1 = NULL;
+	int64_t *bap2 = NULL;
 	daddr_t nb;
 	struct fs *fs = ip->i_fs;
 	struct worklist *wk;
 	struct indirdep *indirdep;
-	int i, lbnadd, nblocks;
+	daddr_t lbnadd;
+	int i, nblocks, ufs1fmt;
 	int error, allerror = 0;
 #ifdef FFS_EI
 	const int needswap = UFS_FSNEEDSWAP(fs);
@@ -2426,10 +2470,21 @@ indir_trunc(ip, dbn, level, lbn, countp)
 	/*
 	 * Recursively free indirect blocks.
 	 */
-	bap = (int32_t *)bp->b_data;	/* XXX ondisk32 */
+	if (ip->i_ump->um_fstype == UFS1) {
+		ufs1fmt = 1;
+		bap1 = (int32_t *)bp->b_data;
+	} else {
+		ufs1fmt = 0;
+		bap2 = (int64_t *)bp->b_data;
+	}
+
 	nblocks = btodb(fs->fs_bsize);
 	for (i = NINDIR(fs) - 1; i >= 0; i--) {
-		if ((nb = ufs_rw32(bap[i], needswap)) == 0)
+		if (ufs1fmt)
+			nb = ufs_rw32(bap1[i], needswap);
+		else
+			nb = ufs_rw64(bap2[i], needswap);
+		if (nb == 0)
 			continue;
 		if (level != 0) {
 			if ((error = indir_trunc(ip, fsbtodb(fs, nb),
@@ -2504,7 +2559,7 @@ softdep_setup_directory_add(bp, dp, diroffset, newinum, newdirbp, isnewblk)
 	struct buf *bp;		/* buffer containing directory block */
 	struct inode *dp;	/* inode for directory */
 	off_t diroffset;	/* offset of new entry in directory */
-	long newinum;		/* inode referenced by new directory entry */
+	ino_t newinum;		/* inode referenced by new directory entry */
 	struct buf *newdirbp;	/* non-NULL => contents of new mkdir */
 	int isnewblk;		/* entry is in a newly allocated block */
 {
@@ -2923,7 +2978,7 @@ softdep_setup_directory_change(bp, dp, ip, newinum, isrmdir)
 	struct buf *bp;		/* buffer containing directory block */
 	struct inode *dp;	/* inode for the directory being modified */
 	struct inode *ip;	/* inode for directory entry being removed */
-	long newinum;		/* new inode number for changed entry */
+	ino_t newinum;		/* new inode number for changed entry */
 	int isrmdir;		/* indicates if doing RMDIR */
 {
 	int offset;
@@ -3039,9 +3094,9 @@ softdep_change_linkcnt(ip)
 
 	ACQUIRE_LOCK(&lk);
 	(void) inodedep_lookup(ip->i_fs, ip->i_number, DEPALLOC, &inodedep);
-	if (ip->i_ffs_nlink < ip->i_ffs_effnlink)
+	if (ip->i_nlink < ip->i_ffs_effnlink)
 		panic("softdep_change_linkcnt: bad delta");
-	inodedep->id_nlinkdelta = ip->i_ffs_nlink - ip->i_ffs_effnlink;
+	inodedep->id_nlinkdelta = ip->i_nlink - ip->i_ffs_effnlink;
 	FREE_LOCK(&lk);
 }
 
@@ -3074,7 +3129,7 @@ softdep_releasefile(ip)
 	if ((inodedep_lookup(ip->i_fs, ip->i_number, 0, &inodedep)))
 		inodedep->id_state |= SPACECOUNTED;
 	FREE_LOCK(&lk);
-	ip->i_fs->fs_pendingblocks += ip->i_ffs_blocks;
+	ip->i_fs->fs_pendingblocks += DIP(ip, blocks);
 	ip->i_fs->fs_pendinginodes += 1;
 	ip->i_flag |= IN_SPACECOUNTED;
 }
@@ -3106,11 +3161,12 @@ handle_workitem_remove(dirrem)
 	 * Normal file deletion.
 	 */
 	if ((dirrem->dm_state & RMDIR) == 0) {
-		ip->i_ffs_nlink--;
+		ip->i_nlink--;
+		DIP(ip, nlink) = ip->i_nlink;
 		ip->i_flag |= IN_CHANGE;
-		if (ip->i_ffs_nlink < ip->i_ffs_effnlink)
+		if (ip->i_nlink < ip->i_ffs_effnlink)
 			panic("handle_workitem_remove: bad file delta");
-		inodedep->id_nlinkdelta = ip->i_ffs_nlink - ip->i_ffs_effnlink;
+		inodedep->id_nlinkdelta = ip->i_nlink - ip->i_ffs_effnlink;
 		FREE_LOCK(&lk);
 		vput(vp);
 		num_dirrem -= 1;
@@ -3124,11 +3180,12 @@ handle_workitem_remove(dirrem)
 	 * truncation completes, arrange to have the reference count on
 	 * the parent decremented to account for the loss of "..".
 	 */
-	ip->i_ffs_nlink -= 2;
+	ip->i_nlink -= 2;
+	DIP(ip, nlink) -= 2;
 	ip->i_flag |= IN_CHANGE;
-	if (ip->i_ffs_nlink < ip->i_ffs_effnlink)
+	if (ip->i_nlink < ip->i_ffs_effnlink)
 		panic("handle_workitem_remove: bad dir delta");
-	inodedep->id_nlinkdelta = ip->i_ffs_nlink - ip->i_ffs_effnlink;
+	inodedep->id_nlinkdelta = ip->i_nlink - ip->i_ffs_effnlink;
 	FREE_LOCK(&lk);
 	if ((error = VOP_TRUNCATE(vp, (off_t)0, 0, p->p_ucred, p)) != 0)
 		softdep_error("handle_workitem_remove: truncate", error);
@@ -3240,6 +3297,7 @@ softdep_disk_io_initiation(bp)
 {
 	struct worklist *wk, *nextwk;
 	struct indirdep *indirdep;
+	struct inodedep *inodedep;
 	caddr_t saveddata;
 
 	/*
@@ -3261,7 +3319,11 @@ softdep_disk_io_initiation(bp)
 			continue;
 
 		case D_INODEDEP:
-			initiate_write_inodeblock(WK_INODEDEP(wk), bp);
+			inodedep = WK_INODEDEP(wk);
+			if (inodedep->id_fs->fs_magic == FS_UFS1_MAGIC)
+				initiate_write_inodeblock_ufs1(inodedep, bp);
+			else
+				initiate_write_inodeblock_ufs2(inodedep, bp);
 			continue;
 
 		case D_INDIRDEP:
@@ -3372,12 +3434,12 @@ initiate_write_filepage(pagedep, bp)
  * are manipulating its associated dependencies.
  */
 static void 
-initiate_write_inodeblock(inodedep, bp)
+initiate_write_inodeblock_ufs1(inodedep, bp)
 	struct inodedep *inodedep;
 	struct buf *bp;			/* The inode block */
 {
 	struct allocdirect *adp, *lastadp;
-	struct dinode *dp;
+	struct ufs1_dinode *dp;
 	struct fs *fs = inodedep->id_fs;
 #ifdef DIAGNOSTIC
 	daddr_t prevlbn = -1;
@@ -3390,19 +3452,19 @@ initiate_write_inodeblock(inodedep, bp)
 	if (inodedep->id_state & IOSTARTED)
 		panic("initiate_write_inodeblock: already started");
 	inodedep->id_state |= IOSTARTED;
-	dp = (struct dinode *)bp->b_data +
+	dp = (struct ufs1_dinode *)bp->b_data +
 	    ino_to_fsbo(fs, inodedep->id_ino);
 	/*
 	 * If the bitmap is not yet written, then the allocated
 	 * inode cannot be written to disk.
 	 */
 	if ((inodedep->id_state & DEPCOMPLETE) == 0) {
-		if (inodedep->id_savedino != NULL)
+		if (inodedep->id_savedino1 != NULL)
 			panic("initiate_write_inodeblock: already doing I/O");
-		MALLOC(inodedep->id_savedino, struct dinode *,
-		    sizeof(struct dinode), M_INODEDEP, M_WAITOK);
-		*inodedep->id_savedino = *dp;
-		bzero((caddr_t)dp, sizeof(struct dinode));
+		MALLOC(inodedep->id_savedino1, struct ufs1_dinode *,
+		    sizeof(struct ufs1_dinode), M_INODEDEP, M_WAITOK);
+		*inodedep->id_savedino1 = *dp;
+		bzero((caddr_t)dp, sizeof(struct ufs1_dinode));
 		return;
 	}
 	dp->di_size = ufs_rw64(dp->di_size, needswap);
@@ -3455,7 +3517,6 @@ initiate_write_inodeblock(inodedep, bp)
 	     lastadp = adp, adp = TAILQ_NEXT(adp, ad_next)) {
 		if (adp->ad_lbn >= NDADDR)
 			break;
-		/* XXX ondisk32 */
 		dp->di_db[adp->ad_lbn] = ufs_rw32((int32_t)adp->ad_oldblkno,
 		    needswap);
 		/* keep going until hitting a rollback to a frag */
@@ -3474,6 +3535,236 @@ initiate_write_inodeblock(inodedep, bp)
 			if (dp->di_ib[i] != 0 &&
 			    (deplist & ((1 << NDADDR) << i)) == 0)
 				panic("softdep_write_inodeblock: lost dep2");
+#endif /* DIAGNOSTIC */
+			dp->di_ib[i] = 0;
+		}
+		dp->di_size = ufs_rw64(dp->di_size, needswap);
+		FREE_LOCK(&lk);
+		return;
+	}
+	/*
+	 * If we have zero'ed out the last allocated block of the file,
+	 * roll back the size to the last currently allocated block.
+	 * We know that this last allocated block is a full-sized as
+	 * we already checked for fragments in the loop above.
+	 */
+	if (lastadp != NULL &&
+	    dp->di_size <= (lastadp->ad_lbn + 1) * fs->fs_bsize) {
+		for (i = lastadp->ad_lbn; i >= 0; i--)
+			if (dp->di_db[i] != 0)
+				break;
+		dp->di_size = (i + 1) * fs->fs_bsize;
+	}
+	dp->di_size = ufs_rw64(dp->di_size, needswap);
+	/*
+	 * The only dependencies are for indirect blocks.
+	 *
+	 * The file size for indirect block additions is not guaranteed.
+	 * Such a guarantee would be non-trivial to achieve. The conventional
+	 * synchronous write implementation also does not make this guarantee.
+	 * Fsck should catch and fix discrepancies. Arguably, the file size
+	 * can be over-estimated without destroying integrity when the file
+	 * moves into the indirect blocks (i.e., is large). If we want to
+	 * postpone fsck, we are stuck with this argument.
+	 */
+	for (; adp; adp = TAILQ_NEXT(adp, ad_next))
+		dp->di_ib[adp->ad_lbn - NDADDR] = 0;
+	FREE_LOCK(&lk);
+}
+
+static void 
+initiate_write_inodeblock_ufs2(inodedep, bp)
+	struct inodedep *inodedep;
+	struct buf *bp;			/* The inode block */
+{
+	struct allocdirect *adp, *lastadp;
+	struct ufs2_dinode *dp;
+	struct fs *fs = inodedep->id_fs;
+#ifdef DIAGNOSTIC
+	daddr_t prevlbn = -1;
+#endif
+	int deplist, i;
+#ifdef FFS_EI       
+	const int needswap = UFS_FSNEEDSWAP(fs);
+#endif                  
+
+	if (inodedep->id_state & IOSTARTED)
+		panic("initiate_write_inodeblock_ufs2: already started");
+	inodedep->id_state |= IOSTARTED;
+	fs = inodedep->id_fs;
+	dp = (struct ufs2_dinode *)bp->b_data +
+	    ino_to_fsbo(fs, inodedep->id_ino);
+	/*
+	 * If the bitmap is not yet written, then the allocated
+	 * inode cannot be written to disk.
+	 */
+	if ((inodedep->id_state & DEPCOMPLETE) == 0) {
+		if (inodedep->id_savedino2 != NULL)
+			panic("initiate_write_inodeblock_ufs2: I/O underway");
+		MALLOC(inodedep->id_savedino2, struct ufs2_dinode *,
+		    sizeof(struct ufs2_dinode), M_INODEDEP, M_WAITOK);
+		*inodedep->id_savedino2 = *dp;
+		bzero((caddr_t)dp, sizeof(struct ufs2_dinode));
+		return;
+	}
+	dp->di_size = ufs_rw64(dp->di_size, needswap);
+	/*
+	 * If no dependencies, then there is nothing to roll back.
+	 */
+	inodedep->id_savedsize = dp->di_size;
+	if (TAILQ_FIRST(&inodedep->id_inoupdt) == NULL)
+		return;
+	ACQUIRE_LOCK(&lk);
+
+#ifdef notyet
+	inodedep->id_savedextsize = dp->di_extsize;
+	if (TAILQ_FIRST(&inodedep->id_inoupdt) == NULL &&
+	    TAILQ_FIRST(&inodedep->id_extupdt) == NULL)
+		return;
+	/*
+	 * Set the ext data dependencies to busy.
+	 */
+	ACQUIRE_LOCK(&lk);
+	for (deplist = 0, adp = TAILQ_FIRST(&inodedep->id_extupdt); adp;
+	     adp = TAILQ_NEXT(adp, ad_next)) {
+#ifdef DIAGNOSTIC
+		if (deplist != 0 && prevlbn >= adp->ad_lbn) {
+			FREE_LOCK(&lk);
+			panic("softdep_write_inodeblock: lbn order");
+		}
+		prevlbn = adp->ad_lbn;
+		if (dp->di_extb[adp->ad_lbn] != adp->ad_newblkno) {
+			FREE_LOCK(&lk);
+			panic("%s: direct pointer #%jd mismatch %jd != %jd",
+			    "softdep_write_inodeblock",
+			    (intmax_t)adp->ad_lbn,
+			    (intmax_t)dp->di_extb[adp->ad_lbn],
+			    (intmax_t)adp->ad_newblkno);
+		}
+		deplist |= 1 << adp->ad_lbn;
+		if ((adp->ad_state & ATTACHED) == 0) {
+			FREE_LOCK(&lk);
+			panic("softdep_write_inodeblock: Unknown state 0x%x",
+			    adp->ad_state);
+		}
+#endif /* DIAGNOSTIC */
+		adp->ad_state &= ~ATTACHED;
+		adp->ad_state |= UNDONE;
+	}
+	/*
+	 * The on-disk inode cannot claim to be any larger than the last
+	 * fragment that has been written. Otherwise, the on-disk inode
+	 * might have fragments that were not the last block in the ext
+	 * data which would corrupt the filesystem.
+	 */
+	for (lastadp = NULL, adp = TAILQ_FIRST(&inodedep->id_extupdt); adp;
+	     lastadp = adp, adp = TAILQ_NEXT(adp, ad_next)) {
+		dp->di_extb[adp->ad_lbn] = adp->ad_oldblkno;
+		/* keep going until hitting a rollback to a frag */
+		if (adp->ad_oldsize == 0 || adp->ad_oldsize == fs->fs_bsize)
+			continue;
+		dp->di_extsize = fs->fs_bsize * adp->ad_lbn + adp->ad_oldsize;
+		for (i = adp->ad_lbn + 1; i < NXADDR; i++) {
+#ifdef DIAGNOSTIC
+			if (dp->di_extb[i] != 0 && (deplist & (1 << i)) == 0) {
+				FREE_LOCK(&lk);
+				panic("softdep_write_inodeblock: lost dep1");
+			}
+#endif /* DIAGNOSTIC */
+			dp->di_extb[i] = 0;
+		}
+		lastadp = NULL;
+		break;
+	}
+	/*
+	 * If we have zero'ed out the last allocated block of the ext
+	 * data, roll back the size to the last currently allocated block.
+	 * We know that this last allocated block is a full-sized as
+	 * we already checked for fragments in the loop above.
+	 */
+	if (lastadp != NULL &&
+	    dp->di_extsize <= (lastadp->ad_lbn + 1) * fs->fs_bsize) {
+		for (i = lastadp->ad_lbn; i >= 0; i--)
+			if (dp->di_extb[i] != 0)
+				break;
+		dp->di_extsize = (i + 1) * fs->fs_bsize;
+	}
+#endif /* notyet */
+
+	/*
+	 * Set the file data dependencies to busy.
+	 */
+	for (deplist = 0, adp = TAILQ_FIRST(&inodedep->id_inoupdt); adp;
+	     adp = TAILQ_NEXT(adp, ad_next)) {
+#ifdef DIAGNOSTIC
+		if (deplist != 0 && prevlbn >= adp->ad_lbn) {
+			FREE_LOCK(&lk);
+			panic("softdep_write_inodeblock: lbn order");
+		}
+		prevlbn = adp->ad_lbn;
+		if (adp->ad_lbn < NDADDR &&
+		    ufs_rw64(dp->di_db[adp->ad_lbn], needswap) !=
+		    adp->ad_newblkno) {
+			FREE_LOCK(&lk);
+			panic("%s: direct pointer #%" PRId64 " mismatch %"
+			    PRId64 " != %" PRId64,
+			    "softdep_write_inodeblock",
+			    adp->ad_lbn,
+			    ufs_rw64(dp->di_db[adp->ad_lbn], needswap),
+			    adp->ad_newblkno);
+		}
+		if (adp->ad_lbn >= NDADDR &&
+		    ufs_rw64(dp->di_ib[adp->ad_lbn - NDADDR], needswap) !=
+		    adp->ad_newblkno) {
+			FREE_LOCK(&lk);
+			panic("%s: indirect pointer #%" PRId64 " mismatch %"
+			    PRId64 " != %" PRId64,
+			    "softdep_write_inodeblock",
+			    adp->ad_lbn - NDADDR,
+			    ufs_rw64(dp->di_ib[adp->ad_lbn - NDADDR], needswap),
+			    adp->ad_newblkno);
+		}
+		deplist |= 1 << adp->ad_lbn;
+		if ((adp->ad_state & ATTACHED) == 0) {
+			FREE_LOCK(&lk);
+			panic("softdep_write_inodeblock: Unknown state 0x%x",
+			    adp->ad_state);
+		}
+#endif /* DIAGNOSTIC */
+		adp->ad_state &= ~ATTACHED;
+		adp->ad_state |= UNDONE;
+	}
+	/*
+	 * The on-disk inode cannot claim to be any larger than the last
+	 * fragment that has been written. Otherwise, the on-disk inode
+	 * might have fragments that were not the last block in the file
+	 * which would corrupt the filesystem.
+	 */
+	for (lastadp = NULL, adp = TAILQ_FIRST(&inodedep->id_inoupdt); adp;
+	     lastadp = adp, adp = TAILQ_NEXT(adp, ad_next)) {
+		if (adp->ad_lbn >= NDADDR)
+			break;
+		dp->di_db[adp->ad_lbn] = ufs_rw64(adp->ad_oldblkno, needswap);
+		/* keep going until hitting a rollback to a frag */
+		if (adp->ad_oldsize == 0 || adp->ad_oldsize == fs->fs_bsize)
+			continue;
+		dp->di_size = fs->fs_bsize * adp->ad_lbn + adp->ad_oldsize;
+		for (i = adp->ad_lbn + 1; i < NDADDR; i++) {
+#ifdef DIAGNOSTIC
+			if (dp->di_db[i] != 0 && (deplist & (1 << i)) == 0) {
+				FREE_LOCK(&lk);
+				panic("softdep_write_inodeblock: lost dep2");
+			}
+#endif /* DIAGNOSTIC */
+			dp->di_db[i] = 0;
+		}
+		for (i = 0; i < NIADDR; i++) {
+#ifdef DIAGNOSTIC
+			if (dp->di_ib[i] != 0 &&
+			    (deplist & ((1 << NDADDR) << i)) == 0) {
+				FREE_LOCK(&lk);
+				panic("softdep_write_inodeblock: lost dep3");
+			}
 #endif /* DIAGNOSTIC */
 			dp->di_ib[i] = 0;
 		}
@@ -3531,6 +3822,13 @@ softdep_disk_write_complete(bp)
 	struct indirdep *indirdep;
 	struct inodedep *inodedep;
 	struct bmsafemap *bmsafemap;
+
+	/*
+	 * If an error occurred while doing the write, then the data
+	 * has not hit the disk and the dependencies cannot be unrolled.
+	 */
+	if ((bp->b_flags & B_ERROR) != 0 && (bp->b_flags & B_INVAL) == 0)
+		return;
 
 #ifdef DEBUG
 	if (lk.lkt_held != -1)
@@ -3734,9 +4032,12 @@ handle_allocindir_partdone(aip)
 		LIST_INSERT_HEAD(&indirdep->ir_donehd, aip, ai_next);
 		return;
 	}
-	/* XXX ondisk32 */
-	((int32_t *)indirdep->ir_savebp->b_data)[aip->ai_offset] =
-	    aip->ai_newblkno;
+	if (indirdep->ir_state & UFS1FMT)
+		((int32_t *)indirdep->ir_savebp->b_data)[aip->ai_offset] =
+		    aip->ai_newblkno;
+	else
+		((int64_t *)indirdep->ir_savebp->b_data)[aip->ai_offset] =
+		    aip->ai_newblkno;
 	LIST_REMOVE(aip, ai_next);
 	if (aip->ai_freefrag != NULL)
 		add_to_worklist(&aip->ai_freefrag->ff_list);
@@ -3756,8 +4057,9 @@ handle_written_inodeblock(inodedep, bp)
 {
 	struct worklist *wk, *filefree;
 	struct allocdirect *adp, *nextadp;
-	struct dinode *dp;
-	int hadchanges;
+	struct ufs1_dinode *dp1 = NULL;
+	struct ufs2_dinode *dp2 = NULL;
+	int hadchanges, fstype;
 #ifdef FFS_EI
 	const int needswap = UFS_FSNEEDSWAP(inodedep->id_fs);
 #endif
@@ -3766,8 +4068,15 @@ handle_written_inodeblock(inodedep, bp)
 		panic("handle_written_inodeblock: not started");
 	inodedep->id_state &= ~IOSTARTED;
 	inodedep->id_state |= COMPLETE;
-	dp = (struct dinode *)bp->b_data +
-	    ino_to_fsbo(inodedep->id_fs, inodedep->id_ino);
+	if (inodedep->id_fs->fs_magic == FS_UFS1_MAGIC) {
+		fstype = UFS1;
+		dp1 = (struct ufs1_dinode *)bp->b_data +
+		    ino_to_fsbo(inodedep->id_fs, inodedep->id_ino);
+	} else {
+		fstype = UFS2;
+		dp2 = (struct ufs2_dinode *)bp->b_data +
+		    ino_to_fsbo(inodedep->id_fs, inodedep->id_ino);
+	}
 	/*
 	 * If we had to rollback the inode allocation because of
 	 * bitmaps being incomplete, then simply restore it.
@@ -3775,10 +4084,13 @@ handle_written_inodeblock(inodedep, bp)
 	 * all associated dependencies have been cleared and the
 	 * corresponding updates written to disk.
 	 */
-	if (inodedep->id_savedino != NULL) {
-		*dp = *inodedep->id_savedino;
-		FREE(inodedep->id_savedino, M_INODEDEP);
-		inodedep->id_savedino = NULL;
+	if (inodedep->id_savedino1 != NULL) {
+		if (fstype == UFS1)
+			*dp1 = *inodedep->id_savedino1;
+		else
+			*dp2 = *inodedep->id_savedino2;
+		FREE(inodedep->id_savedino1, M_INODEDEP);
+		inodedep->id_savedino1 = NULL;
 		if ((bp->b_flags & B_DELWRI) == 0)
 			stat_inode_bitmap++;
 		bdirty(bp);
@@ -3793,28 +4105,57 @@ handle_written_inodeblock(inodedep, bp)
 		nextadp = TAILQ_NEXT(adp, ad_next);
 		if (adp->ad_state & ATTACHED)
 			panic("handle_written_inodeblock: new entry");
-		if (adp->ad_lbn < NDADDR) {
-			if (ufs_rw32(dp->di_db[adp->ad_lbn], needswap) !=
-			    adp->ad_oldblkno)
-				panic("%s: %s #%d mismatch %d != %" PRId64,
-				    "handle_written_inodeblock",
-				    "direct pointer", (int)adp->ad_lbn,
-				    ufs_rw32(dp->di_db[adp->ad_lbn], needswap),
-				    adp->ad_oldblkno);
-			/* XXX ondisk32 */
-			dp->di_db[adp->ad_lbn] =
-			    ufs_rw32((int32_t)adp->ad_newblkno, needswap);
+		if (fstype == UFS1) {
+			if (adp->ad_lbn < NDADDR) {
+				if (ufs_rw32(dp1->di_db[adp->ad_lbn], needswap)
+				    != adp->ad_oldblkno)
+					panic("%s: %s #%d mismatch %d != %" PRId64,
+					    "handle_written_inodeblock",
+					    "direct pointer", (int)adp->ad_lbn,
+					    ufs_rw32(dp1->di_db[adp->ad_lbn],
+						     needswap),
+					    adp->ad_oldblkno);
+				dp1->di_db[adp->ad_lbn] =
+				    ufs_rw32((int32_t)adp->ad_newblkno,
+					     needswap);
+			} else {
+				if (dp1->di_ib[adp->ad_lbn - NDADDR] != 0)
+					panic("%s: %s #%d allocated as %d",
+					    "handle_written_inodeblock",
+					    "indirect pointer",
+					    (int)(adp->ad_lbn - NDADDR),
+					    ufs_rw32(dp1->di_ib[adp->ad_lbn
+								- NDADDR],
+						     needswap));
+				dp1->di_ib[adp->ad_lbn - NDADDR] =
+				    ufs_rw32((int32_t)adp->ad_newblkno,
+					     needswap);
+			}
 		} else {
-			if (dp->di_ib[adp->ad_lbn - NDADDR] != 0)
-				panic("%s: %s #%d allocated as %d",
-				    "handle_written_inodeblock",
-				    "indirect pointer",
-				    (int)(adp->ad_lbn - NDADDR),
-				    ufs_rw32(dp->di_ib[adp->ad_lbn - NDADDR],
-					needswap));
-			/* XXX ondisk32 */
-			dp->di_ib[adp->ad_lbn - NDADDR] =
-			    ufs_rw32((int32_t)adp->ad_newblkno, needswap);
+			if (adp->ad_lbn < NDADDR) {
+				if (ufs_rw64(dp2->di_db[adp->ad_lbn], needswap)
+				    != adp->ad_oldblkno)
+					panic("%s: %s #%" PRId64 " mismatch %"
+					 PRId64 " != %" PRId64,
+					    "handle_written_inodeblock",
+					    "direct pointer", adp->ad_lbn,
+					    ufs_rw64(dp2->di_db[adp->ad_lbn],
+						needswap),
+					    adp->ad_oldblkno);
+				dp2->di_db[adp->ad_lbn] =
+				    ufs_rw64(adp->ad_newblkno, needswap);
+			} else {
+				if (dp2->di_ib[adp->ad_lbn - NDADDR] != 0)
+					panic("%s: %s #%" PRId64
+					    " allocated as %" PRId64,
+					    "handle_written_inodeblock",
+					    "indirect pointer",
+					    (adp->ad_lbn - NDADDR),
+					    ufs_rw64(dp2->di_ib[adp->ad_lbn - NDADDR],
+						needswap));
+				dp2->di_ib[adp->ad_lbn - NDADDR] =
+				    ufs_rw64(adp->ad_newblkno, needswap);
+			}
 		}
 		adp->ad_state &= ~UNDONE;
 		adp->ad_state |= ATTACHED;
@@ -3827,9 +4168,18 @@ handle_written_inodeblock(inodedep, bp)
 	 */
 	if (inodedep->id_savedsize == -1)
 		panic("handle_written_inodeblock: bad size");
-	if (dp->di_size != ufs_rw64(inodedep->id_savedsize, needswap)) {
-		dp->di_size = ufs_rw64(inodedep->id_savedsize, needswap);
-		hadchanges = 1;
+	if (fstype == UFS1) {
+		if (dp1->di_size != ufs_rw64(inodedep->id_savedsize, needswap)){
+			dp1->di_size = ufs_rw64(inodedep->id_savedsize,
+						needswap);
+			hadchanges = 1;
+		}
+	} else {
+		if (dp2->di_size != ufs_rw64(inodedep->id_savedsize, needswap)){
+			dp2->di_size = ufs_rw64(inodedep->id_savedsize,
+						needswap);
+			hadchanges = 1;
+		}
 	}
 	inodedep->id_savedsize = -1;
 	/*
@@ -4077,7 +4427,7 @@ softdep_load_inodeblock(ip)
 	/*
 	 * Check for alternate nlink count.
 	 */
-	ip->i_ffs_effnlink = ip->i_ffs_nlink;
+	ip->i_ffs_effnlink = ip->i_nlink;
 	ACQUIRE_LOCK(&lk);
 	if (inodedep_lookup(ip->i_fs, ip->i_number, 0, &inodedep) == 0) {
 		FREE_LOCK(&lk);
@@ -4118,12 +4468,12 @@ softdep_update_inodeblock(ip, bp, waitfor)
 	 */
 	ACQUIRE_LOCK(&lk);
 	if (inodedep_lookup(ip->i_fs, ip->i_number, 0, &inodedep) == 0) {
-		if (ip->i_ffs_effnlink != ip->i_ffs_nlink)
+		if (ip->i_ffs_effnlink != ip->i_nlink)
 			panic("softdep_update_inodeblock: bad link count");
 		FREE_LOCK(&lk);
 		return;
 	}
-	if (inodedep->id_nlinkdelta != ip->i_ffs_nlink - ip->i_ffs_effnlink)
+	if (inodedep->id_nlinkdelta != ip->i_nlink - ip->i_ffs_effnlink)
 		panic("softdep_update_inodeblock: bad delta");
 	/*
 	 * Changes have been initiated. Anything depending on these

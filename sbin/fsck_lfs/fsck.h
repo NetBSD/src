@@ -1,4 +1,4 @@
-/* $NetBSD: fsck.h,v 1.9 2003/03/29 22:48:38 wiz Exp $	 */
+/* $NetBSD: fsck.h,v 1.10 2003/04/02 10:39:27 fvdl Exp $	 */
 
 /*
  * Copyright (c) 1997
@@ -76,7 +76,7 @@ struct ubufarea {
 		int32_t *b_indir;	/* indirect block */
 		struct lfs *b_fs;	/* super block */
 		struct cg *b_cg;/* cylinder group */
-		struct dinode *b_dinode;	/* inode block */
+		struct ufs1_dinode *b_dinode;	/* inode block */
 	}     b_un;
 	char b_dirty;
 };
@@ -180,7 +180,7 @@ struct inoinfo {
 
 ino_t allocino(ino_t, int);
 int ino_to_fsba(struct lfs *, ino_t);
-struct dinode *ginode(ino_t);
+struct ufs1_dinode *ginode(ino_t);
 struct inoinfo *getinoinfo(ino_t);
 daddr_t lfs_ino_daddr(ino_t);
 

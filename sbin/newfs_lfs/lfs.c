@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.c,v 1.26 2003/02/23 05:21:18 simonb Exp $	*/
+/*	$NetBSD: lfs.c,v 1.27 2003/04/02 10:39:31 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)lfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: lfs.c,v 1.26 2003/02/23 05:21:18 simonb Exp $");
+__RCSID("$NetBSD: lfs.c,v 1.27 2003/04/02 10:39:31 fvdl Exp $");
 #endif
 #endif /* not lint */
 
@@ -128,7 +128,7 @@ static struct lfs lfs_default =  {
 		/* dlfs_minfree */	MINFREE,
 		/* dlfs_maxfilesize */	0,
 		/* dlfs_fsbpseg */	0,
-		/* dlfs_inopb */	DFL_LFSBLOCK/sizeof(struct dinode),
+		/* dlfs_inopb */	DFL_LFSBLOCK/sizeof(struct ufs1_dinode),
 		/* dlfs_ifpb */		DFL_LFSBLOCK/sizeof(IFILE),
 		/* dlfs_sepb */		DFL_LFSBLOCK/sizeof(SEGUSE),
 		/* XXX ondisk32 */
@@ -147,7 +147,7 @@ static struct lfs lfs_default =  {
 		/* dlfs_fbmask */	DFL_LFS_FBMASK,
 		/* dlfs_blktodb */	0,
 		/* dlfs_sushift */	0,
-		/* dlfs_maxsymlinklen */	MAXSYMLINKLEN,
+		/* dlfs_maxsymlinklen */	MAXSYMLINKLEN_UFS1,
 		/* dlfs_sboffs */	{ 0 },
 		/* dlfs_nclean */       0,
 		/* dlfs_fsmnt */        { 0 },
@@ -195,7 +195,7 @@ struct direct lfs_lf_dir[] = {
         { ROOTINO, sizeof(struct direct), DT_DIR, 2, ".." },
 };
 
-static daddr_t make_dinode(ino_t, struct dinode *, int, daddr_t, struct lfs *);
+static daddr_t make_dinode(ino_t, struct ufs1_dinode *, int, daddr_t, struct lfs *);
 static void make_dir( void *, struct direct *, int);
 static void put(int, off_t, void *, size_t);
 
@@ -205,8 +205,8 @@ make_lfs(int fd, struct disklabel *lp, struct partition *partp, int minfree,
 	 int version, daddr_t start, int ibsize, int interleave,
 	 u_int32_t roll_id)
 {
-	struct dinode *dip;	/* Pointer to a disk inode */
-	struct dinode *dpagep;	/* Pointer to page of disk inodes */
+	struct ufs1_dinode *dip;	/* Pointer to a disk inode */
+	struct ufs1_dinode *dpagep;	/* Pointer to page of disk inodes */
 	CLEANERINFO *cleaninfo;	/* Segment cleaner information table */
 	FINFO file_info;	/* File info structure in summary blocks */
 	IFILE *ifile;		/* Pointer to array of ifile structures */
@@ -345,11 +345,11 @@ make_lfs(int fd, struct disklabel *lp, struct partition *partp, int minfree,
 		lfsp->lfs_ssize = ssize;
 		lfsp->lfs_ibsize = ibsize;
 	}
-	lfsp->lfs_inopb = lfsp->lfs_ibsize / sizeof(struct dinode);
+	lfsp->lfs_inopb = lfsp->lfs_ibsize / sizeof(struct ufs1_dinode);
 	lfsp->lfs_minfree = minfree;
 
 	if (version > 1) {
-		lfsp->lfs_inopf = lp->d_secsize/DINODE_SIZE;
+		lfsp->lfs_inopf = lp->d_secsize/DINODE1_SIZE;
 		lfsp->lfs_interleave = interleave;
 		if (roll_id == 0) {
 			/* Pick one; even time(NULL) would almost do */
@@ -517,7 +517,7 @@ make_lfs(int fd, struct disklabel *lp, struct partition *partp, int minfree,
 	segp->su_nbytes = ((lfsp->lfs_segtabsz + lfsp->lfs_cleansz + 1) <<
 			   lfsp->lfs_bshift) +
 		2 * roundup(DIRBLKSIZ, lfsp->lfs_fsize) +
-		3 * DINODE_SIZE;
+		3 * DINODE1_SIZE;
 	if (version == 1)
 		segp->su_olastmod = lfsp->lfs_tstamp;
 	else
@@ -578,7 +578,7 @@ make_lfs(int fd, struct disklabel *lp, struct partition *partp, int minfree,
 	/* Now create a block of disk inodes */
 	if (!(dpagep = malloc(lfsp->lfs_ibsize)))
 		fatal("%s", strerror(errno));
-	dip = (struct dinode *)dpagep;
+	dip = (struct ufs1_dinode *)dpagep;
 	memset(dip, 0, lfsp->lfs_ibsize);
 
 	/* Create a block of IFILE structures. */
@@ -752,7 +752,7 @@ make_lfs(int fd, struct disklabel *lp, struct partition *partp, int minfree,
 	make_dir(ipagep, lfs_root_dir, 
 	    sizeof(lfs_root_dir) / sizeof(struct direct));
 	*dp++ = ((u_long *)ipagep)[0];
-	dip = ((struct dinode *)dpagep) + 1;
+	dip = ((struct ufs1_dinode *)dpagep) + 1;
 	put(fd, off, ipagep, dblksize(lfsp,dip,0));
 	off += dblksize(lfsp, dip, 0);
 
@@ -760,7 +760,7 @@ make_lfs(int fd, struct disklabel *lp, struct partition *partp, int minfree,
 	make_dir(ipagep, lfs_lf_dir, 
 		sizeof(lfs_lf_dir) / sizeof(struct direct));
 	*dp++ = ((u_long *)ipagep)[0];
-	dip = ((struct dinode *)dpagep) + 2;
+	dip = ((struct ufs1_dinode *)dpagep) + 2;
 	put(fd, off, ipagep, dblksize(lfsp,dip,0));
 	off += dblksize(lfsp, dip, 0);
 
@@ -859,7 +859,7 @@ make_lfs(int fd, struct disklabel *lp, struct partition *partp, int minfree,
 	sump += sizeof(int32_t) * file_info.fi_nblocks;
 
 	/* Now, add the root directory */
-	dip = ((struct dinode *)dpagep) + 1;
+	dip = ((struct ufs1_dinode *)dpagep) + 1;
 	file_info.fi_nblocks = 1;
 	file_info.fi_version = 1;
 	file_info.fi_ino = ROOTINO;
@@ -869,7 +869,7 @@ make_lfs(int fd, struct disklabel *lp, struct partition *partp, int minfree,
 	sump += sizeof(FINFO);
 
 	/* Now, add the lost and found */
-	dip = ((struct dinode *)dpagep) + 2;
+	dip = ((struct ufs1_dinode *)dpagep) + 2;
 	file_info.fi_ino = LOSTFOUNDINO;
 	file_info.fi_lastlength = dblksize(lfsp, dip, 0);
 	memmove(sump, &file_info, sizeof(FINFO));
@@ -953,7 +953,7 @@ put(int fd, off_t off, void *p, size_t len)
  */
 
 static daddr_t
-make_dinode(ino_t ino, struct dinode *dip, int nfrags, daddr_t saddr, struct lfs *lfsp)
+make_dinode(ino_t ino, struct ufs1_dinode *dip, int nfrags, daddr_t saddr, struct lfs *lfsp)
 {
 	int fsb_per_blk, i;
 	int nblocks, bb, ibi, base, factor, lvl;

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.101 2003/04/01 14:31:50 yamt Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.102 2003/04/02 10:39:42 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.101 2003/04/01 14:31:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.102 2003/04/02 10:39:42 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -357,7 +357,7 @@ lfs_inactive(void *v)
 		struct proc *a_p;
 	} */ *ap = v;
 
-	KASSERT(VTOI(ap->a_vp)->i_ffs_nlink == VTOI(ap->a_vp)->i_ffs_effnlink);
+	KASSERT(VTOI(ap->a_vp)->i_nlink == VTOI(ap->a_vp)->i_ffs_effnlink);
 
 	lfs_unmark_vnode(ap->a_vp);
 
@@ -562,10 +562,10 @@ lfs_mknod(void *v)
 		 * inodes, so don't truncate the dev number.
 		 */
 #if 0
-		ip->i_ffs_rdev = ufs_rw32(vap->va_rdev,
+		ip->i_ffs1_rdev = ufs_rw32(vap->va_rdev,
 		    UFS_MPNEEDSWAP((*vpp)->v_mount));
 #else
-		ip->i_ffs_rdev = vap->va_rdev;
+		ip->i_ffs1_rdev = vap->va_rdev;
 #endif
 	}
 	/*
@@ -777,8 +777,8 @@ lfs_rename(void *v)
 	 * Inline the relevant section of ufs_rename here, *before*
 	 * calling SET_DIROP2.
 	 */
-	if (tvp && ((VTOI(tvp)->i_ffs_flags & (IMMUTABLE | APPEND)) ||
-	    (VTOI(tdvp)->i_ffs_flags & APPEND))) {
+	if (tvp && ((VTOI(tvp)->i_flags & (IMMUTABLE | APPEND)) ||
+	    (VTOI(tdvp)->i_flags & APPEND))) {
 		error = EPERM;
 		goto errout;
 	}
@@ -857,20 +857,20 @@ lfs_getattr(void *v)
 	 */
 	vap->va_fsid = ip->i_dev;
 	vap->va_fileid = ip->i_number;
-	vap->va_mode = ip->i_ffs_mode & ~IFMT;
-	vap->va_nlink = ip->i_ffs_nlink;
-	vap->va_uid = ip->i_ffs_uid;
-	vap->va_gid = ip->i_ffs_gid;
-	vap->va_rdev = (dev_t)ip->i_ffs_rdev;
+	vap->va_mode = ip->i_mode & ~IFMT;
+	vap->va_nlink = ip->i_nlink;
+	vap->va_uid = ip->i_uid;
+	vap->va_gid = ip->i_gid;
+	vap->va_rdev = (dev_t)ip->i_ffs1_rdev;
 	vap->va_size = vp->v_size;
-	vap->va_atime.tv_sec = ip->i_ffs_atime;
-	vap->va_atime.tv_nsec = ip->i_ffs_atimensec;
-	vap->va_mtime.tv_sec = ip->i_ffs_mtime;
-	vap->va_mtime.tv_nsec = ip->i_ffs_mtimensec;
-	vap->va_ctime.tv_sec = ip->i_ffs_ctime;
-	vap->va_ctime.tv_nsec = ip->i_ffs_ctimensec;
-	vap->va_flags = ip->i_ffs_flags;
-	vap->va_gen = ip->i_ffs_gen;
+	vap->va_atime.tv_sec = ip->i_ffs1_atime;
+	vap->va_atime.tv_nsec = ip->i_ffs1_atimensec;
+	vap->va_mtime.tv_sec = ip->i_ffs1_mtime;
+	vap->va_mtime.tv_nsec = ip->i_ffs1_mtimensec;
+	vap->va_ctime.tv_sec = ip->i_ffs1_ctime;
+	vap->va_ctime.tv_nsec = ip->i_ffs1_ctimensec;
+	vap->va_flags = ip->i_flags;
+	vap->va_gen = ip->i_gen;
 	/* this doesn't belong here */
 	if (vp->v_type == VBLK)
 		vap->va_blocksize = BLKDEV_IOSIZE;
@@ -1005,11 +1005,12 @@ lfs_reclaim(void *v)
 	struct inode *ip = VTOI(vp);
 	int error;
 
-	KASSERT(ip->i_ffs_nlink == ip->i_ffs_effnlink);
+	KASSERT(ip->i_nlink == ip->i_ffs_effnlink);
 
 	LFS_CLR_UINO(ip, IN_ALLMOD);
 	if ((error = ufs_reclaim(vp, ap->a_p)))
 		return (error);
+	pool_put(&lfs_dinode_pool, VTOI(vp)->i_din.ffs1_din);
 	pool_put(&lfs_inoext_pool, ip->inode_ext.lfs);
 	ip->inode_ext.lfs = NULL;
 	pool_put(&lfs_inode_pool, vp->v_data);
@@ -1589,7 +1590,7 @@ lfs_putpages(void *v)
 		return 0;
 	}
 
-	blkeof = blkroundup(fs, ip->i_ffs_size);
+	blkeof = blkroundup(fs, ip->i_size);
 
 	/*
 	 * Ignore requests to free pages past EOF but in the same block
@@ -1597,7 +1598,7 @@ lfs_putpages(void *v)
 	 * XXXUBC Make these pages look "active" so the pagedaemon won't
 	 * XXXUBC bother us with them again.
 	 */
-	if (!sync && ap->a_offlo >= ip->i_ffs_size && ap->a_offlo < blkeof) {
+	if (!sync && ap->a_offlo >= ip->i_size && ap->a_offlo < blkeof) {
 		origoffset = ap->a_offlo;
 		for (off = origoffset; off < blkeof; off += fs->lfs_bsize) {
 			pg = uvm_pagelookup(&vp->v_uobj, off);
@@ -1759,7 +1760,7 @@ lfs_putpages(void *v)
  
 			/* Reinitialize brand new FIP and add us to it */
 			sp->vp = vp;
-			sp->fip->fi_version = ip->i_ffs_gen;
+			sp->fip->fi_version = ip->i_gen;
 			sp->fip->fi_ino = ip->i_number;
 			/* Add us to the new segment summary. */
 			++((SEGSUM *)(sp->segsum))->ss_nfinfo;
@@ -1805,7 +1806,7 @@ lfs_putpages(void *v)
  
 	sp->fip->fi_nblocks = 0;
 	sp->fip->fi_ino = ip->i_number;
-	sp->fip->fi_version = ip->i_ffs_gen;
+	sp->fip->fi_version = ip->i_gen;
 
 	/*
 	 * Loop through genfs_putpages until all pages are gathered.
@@ -1834,7 +1835,7 @@ lfs_putpages(void *v)
 		 * (This should duplicate the fixup in lfs_gatherpages().)
 		 */
 		sp->vp = vp;
-		sp->fip->fi_version = ip->i_ffs_gen;
+		sp->fip->fi_version = ip->i_gen;
 		sp->fip->fi_ino = ip->i_number;
 		/* Add us to the new segment summary. */
 		++((SEGSUM *)(sp->segsum))->ss_nfinfo;
@@ -1916,7 +1917,7 @@ lfs_gop_size(struct vnode *vp, off_t size, off_t *eobp, int flags)
 	KASSERT((flags & (GOP_SIZE_READ | GOP_SIZE_WRITE)) 
 		!= (GOP_SIZE_READ | GOP_SIZE_WRITE));
 
-	olbn = lblkno(fs, ip->i_ffs_size);
+	olbn = lblkno(fs, ip->i_size);
 	nlbn = lblkno(fs, size);
 	if ((flags & GOP_SIZE_WRITE) && nlbn < NDADDR && olbn <= nlbn) {
 		*eobp = fragroundup(fs, size);
@@ -1939,7 +1940,7 @@ lfs_dump_vop(void *v)
 	} */ *ap = v;
 
 	vfs_vnode_print(ap->a_vp, 0, printf);
-	lfs_dump_dinode(&VTOI(ap->a_vp)->i_din.ffs_din);
+	lfs_dump_dinode(VTOI(ap->a_vp)->i_din.ffs1_din);
 }
 #endif
 

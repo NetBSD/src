@@ -1,4 +1,4 @@
-/*	$NetBSD: bbinfo.c,v 1.6 2002/05/21 16:49:19 tsutsui Exp $ */
+/*	$NetBSD: bbinfo.c,v 1.7 2003/04/02 10:39:48 fvdl Exp $ */
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: bbinfo.c,v 1.6 2002/05/21 16:49:19 tsutsui Exp $");
+__RCSID("$NetBSD: bbinfo.c,v 1.7 2003/04/02 10:39:48 fvdl Exp $");
 #endif	/* !__lint */
 
 #if HAVE_CONFIG_H
@@ -259,7 +259,8 @@ shared_bbinfo_setboot(ib_params *params, struct bbinfo_params *bbparams,
 			"%u entries of %u bytes available, %u used:",
 		    maxblk, blocks[0].blocksize, nblk);
 		for (blk_i = 0; blk_i < nblk; blk_i++)
-			printf(" %u", blocks[blk_i].block);
+			printf(" %llu",
+			    (unsigned long long)blocks[blk_i].block);
 		printf("\n%sriting bootstrap\n",
 		    (params->flags & IB_NOWRITE) ? "Not w" : "W");
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_balloc.c,v 1.10 2003/01/24 21:55:32 fvdl Exp $	*/
+/*	$NetBSD: ffs_balloc.c,v 1.11 2003/04/02 10:39:49 fvdl Exp $	*/
 /* From NetBSD: ffs_balloc.c,v 1.25 2001/08/08 08:36:36 lukem Exp */
 
 /*
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: ffs_balloc.c,v 1.10 2003/01/24 21:55:32 fvdl Exp $");
+__RCSID("$NetBSD: ffs_balloc.c,v 1.11 2003/04/02 10:39:49 fvdl Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -60,6 +60,9 @@ __RCSID("$NetBSD: ffs_balloc.c,v 1.10 2003/01/24 21:55:32 fvdl Exp $");
 #include "ffs/ufs_inode.h"
 #include "ffs/ffs_extern.h"
 
+static int ffs_balloc_ufs1(struct inode *, off_t, int, struct buf **);
+static int ffs_balloc_ufs2(struct inode *, off_t, int, struct buf **);
+
 /*
  * Balloc defines the structure of file system storage
  * by allocating the physical blocks on a device given
@@ -67,20 +70,30 @@ __RCSID("$NetBSD: ffs_balloc.c,v 1.10 2003/01/24 21:55:32 fvdl Exp $");
  *
  * Assume: flags == B_SYNC | B_CLRBUF
  */
+
 int
 ffs_balloc(struct inode *ip, off_t offset, int bufsize, struct buf **bpp)
 {
-	daddr_t lbn;
+	if (ip->i_fs->fs_magic == FS_UFS2_MAGIC)
+		return ffs_balloc_ufs2(ip, offset, bufsize, bpp);
+	else
+		return ffs_balloc_ufs1(ip, offset, bufsize, bpp);
+}
+
+static int
+ffs_balloc_ufs1(struct inode *ip, off_t offset, int bufsize, struct buf **bpp)
+{
+	daddr_t lbn, lastlbn;
 	int size;
-	daddr_t nb;
+	int32_t nb;
 	struct buf *bp, *nbp;
 	struct fs *fs = ip->i_fs;
 	struct indir indirs[NIADDR + 2];
 	daddr_t newb, pref;
-	int32_t *bap;		/* XXX ondisk32 */
+	int32_t *bap;
 	int osize, nsize, num, i, error;
-	daddr_t *allocblk, allociblk[NIADDR + 1];
-	int32_t *allocib;	/* XXX ondisk32 */
+	int32_t *allocblk, allociblk[NIADDR + 1];
+	int32_t *allocib;
 	const int needswap = UFS_FSNEEDSWAP(fs);
 
 	lbn = lblkno(fs, offset);
@@ -99,8 +112,9 @@ ffs_balloc(struct inode *ip, off_t offset, int bufsize, struct buf **bpp)
 	 * this fragment has to be extended to be a full block.
 	 */
 
-	nb = lblkno(fs, ip->i_ffs_size);
-	if (nb < NDADDR && nb < lbn) {
+	lastlbn = lblkno(fs, ip->i_ffs1_size);
+	if (lastlbn < NDADDR && lastlbn < lbn) {
+		nb = lastlbn;
 		osize = blksize(fs, ip, nb);
 		if (osize < fs->fs_bsize && osize > 0) {
 			warnx("need to ffs_realloccg; not supported!");
@@ -113,9 +127,8 @@ ffs_balloc(struct inode *ip, off_t offset, int bufsize, struct buf **bpp)
 	 */
 
 	if (lbn < NDADDR) {
-		/* XXX ondisk32 */
-		nb = ufs_rw32(ip->i_ffs_db[lbn], needswap);
-		if (nb != 0 && ip->i_ffs_size >= lblktosize(fs, lbn + 1)) {
+		nb = ufs_rw32(ip->i_ffs1_db[lbn], needswap);
+		if (nb != 0 && ip->i_ffs1_size >= lblktosize(fs, lbn + 1)) {
 
 			/*
 			 * The block is an already-allocated direct block
@@ -140,7 +153,7 @@ ffs_balloc(struct inode *ip, off_t offset, int bufsize, struct buf **bpp)
 			 * Consider need to reallocate a fragment.
 			 */
 
-			osize = fragroundup(fs, blkoff(fs, ip->i_ffs_size));
+			osize = fragroundup(fs, blkoff(fs, ip->i_ffs1_size));
 			nsize = fragroundup(fs, size);
 			if (nsize <= osize) {
 
@@ -170,12 +183,13 @@ ffs_balloc(struct inode *ip, off_t offset, int bufsize, struct buf **bpp)
 			 * allocate a new block or fragment.
 			 */
 
-			if (ip->i_ffs_size < lblktosize(fs, lbn + 1))
+			if (ip->i_ffs1_size < lblktosize(fs, lbn + 1))
 				nsize = fragroundup(fs, size);
 			else
 				nsize = fs->fs_bsize;
 			error = ffs_alloc(ip, lbn,
-			    ffs_blkpref(ip, lbn, (int)lbn, &ip->i_ffs_db[0]),
+			    ffs_blkpref_ufs1(ip, lbn, (int)lbn,
+				&ip->i_ffs1_db[0]),
 				nsize, &newb);
 			if (error)
 				return (error);
@@ -186,33 +200,36 @@ ffs_balloc(struct inode *ip, off_t offset, int bufsize, struct buf **bpp)
 				*bpp = bp;
 			}
 		}
-		/* XXX ondisk32 */
-		ip->i_ffs_db[lbn] = ufs_rw32((int32_t)newb, needswap);
+		ip->i_ffs1_db[lbn] = ufs_rw32((int32_t)newb, needswap);
 		return (0);
 	}
+
 	/*
 	 * Determine the number of levels of indirection.
 	 */
+
 	pref = 0;
 	if ((error = ufs_getlbns(ip, lbn, indirs, &num)) != 0)
-		return(error);
+		return (error);
 
 	if (num < 1) {
 		warnx("ffs_balloc: ufs_getlbns returned indirect block");
 		abort();
 	}
+
 	/*
 	 * Fetch the first indirect block allocating if necessary.
 	 */
+
 	--num;
-	nb = ufs_rw32(ip->i_ffs_ib[indirs[0].in_off], needswap);
+	nb = ufs_rw32(ip->i_ffs1_ib[indirs[0].in_off], needswap);
 	allocib = NULL;
 	allocblk = allociblk;
 	if (nb == 0) {
-		pref = ffs_blkpref(ip, lbn, 0, (int32_t *)0);
+		pref = ffs_blkpref_ufs1(ip, lbn, 0, (int32_t *)0);
 		error = ffs_alloc(ip, lbn, pref, (int)fs->fs_bsize, &newb);
 		if (error)
-			return (error);
+			return error;
 		nb = newb;
 		*allocblk++ = nb;
 		bp = getblk(ip->i_fd, ip->i_fs, indirs[1].in_lbn, fs->fs_bsize);
@@ -223,22 +240,22 @@ ffs_balloc(struct inode *ip, off_t offset, int bufsize, struct buf **bpp)
 		 * never point at garbage.
 		 */
 		if ((error = bwrite(bp)) != 0)
-			goto fail;
-		allocib = &ip->i_ffs_ib[indirs[0].in_off];
-		/* XXX ondisk32 */
+			return error;
+		allocib = &ip->i_ffs1_ib[indirs[0].in_off];
 		*allocib = ufs_rw32((int32_t)nb, needswap);
 	}
+
 	/*
 	 * Fetch through the indirect blocks, allocating as necessary.
 	 */
+
 	for (i = 1;;) {
-		error = bread(ip->i_fd, ip->i_fs, indirs[i].in_lbn,
-		    (int)fs->fs_bsize, &bp);
+		error = bread(ip->i_fd, ip->i_fs, indirs[i].in_lbn, 
+		    fs->fs_bsize, &bp);
 		if (error) {
 			brelse(bp);
-			goto fail;
+			return error;
 		}
-		/* XXX ondisk32 */
 		bap = (int32_t *)bp->b_data;
 		nb = ufs_rw32(bap[indirs[i].in_off], needswap);
 		if (i == num)
@@ -249,11 +266,11 @@ ffs_balloc(struct inode *ip, off_t offset, int bufsize, struct buf **bpp)
 			continue;
 		}
 		if (pref == 0)
-			pref = ffs_blkpref(ip, lbn, 0, (int32_t *)0);
+			pref = ffs_blkpref_ufs1(ip, lbn, 0, (int32_t *)0);
 		error = ffs_alloc(ip, lbn, pref, (int)fs->fs_bsize, &newb);
 		if (error) {
 			brelse(bp);
-			goto fail;
+			return error;
 		}
 		nb = newb;
 		*allocblk++ = nb;
@@ -265,26 +282,26 @@ ffs_balloc(struct inode *ip, off_t offset, int bufsize, struct buf **bpp)
 		 * Write synchronously so that indirect blocks
 		 * never point at garbage.
 		 */
+
 		if ((error = bwrite(nbp)) != 0) {
 			brelse(bp);
-			goto fail;
+			return error;
 		}
 		bap[indirs[i - 1].in_off] = ufs_rw32(nb, needswap);
-		/*
-		 * If required, write synchronously, otherwise use
-		 * delayed write.
-		 */
+
 		bwrite(bp);
 	}
+
 	/*
 	 * Get the data block, allocating if necessary.
 	 */
+
 	if (nb == 0) {
-		pref = ffs_blkpref(ip, lbn, indirs[num].in_off, &bap[0]);
+		pref = ffs_blkpref_ufs1(ip, lbn, indirs[num].in_off, &bap[0]);
 		error = ffs_alloc(ip, lbn, pref, (int)fs->fs_bsize, &newb);
 		if (error) {
 			brelse(bp);
-			goto fail;
+			return error;
 		}
 		nb = newb;
 		*allocblk++ = nb;
@@ -294,8 +311,8 @@ ffs_balloc(struct inode *ip, off_t offset, int bufsize, struct buf **bpp)
 			clrbuf(nbp);
 			*bpp = nbp;
 		}
-		/* XXX ondisk32 */
-		bap[indirs[num].in_off] = ufs_rw32((int32_t)nb, needswap);
+		bap[indirs[num].in_off] = ufs_rw32(nb, needswap);
+
 		/*
 		 * If required, write synchronously, otherwise use
 		 * delayed write.
@@ -305,15 +322,263 @@ ffs_balloc(struct inode *ip, off_t offset, int bufsize, struct buf **bpp)
 	}
 	brelse(bp);
 	if (bpp != NULL) {
-			error = bread(ip->i_fd, ip->i_fs, lbn,
-			    (int)fs->fs_bsize, &nbp);
-			if (error) {
-				brelse(nbp);
-				goto fail;
-			}
+		error = bread(ip->i_fd, ip->i_fs, lbn, (int)fs->fs_bsize, &nbp);
+		if (error) {
+			brelse(nbp);
+			return error;
+		}
 		*bpp = nbp;
 	}
 	return (0);
-fail:
-	return (error);
+}
+
+static int
+ffs_balloc_ufs2(struct inode *ip, off_t offset, int bufsize, struct buf **bpp)
+{
+	daddr_t lbn, lastlbn;
+	int size;
+	struct buf *bp, *nbp;
+	struct fs *fs = ip->i_fs;
+	struct indir indirs[NIADDR + 2];
+	daddr_t newb, pref, nb;
+	int64_t *bap;
+	int osize, nsize, num, i, error;
+	int64_t *allocblk, allociblk[NIADDR + 1];
+	int64_t *allocib;
+	const int needswap = UFS_FSNEEDSWAP(fs);
+
+	lbn = lblkno(fs, offset);
+	size = blkoff(fs, offset) + bufsize;
+	if (bpp != NULL) {
+		*bpp = NULL;
+	}
+
+	assert(size <= fs->fs_bsize);
+	if (lbn < 0)
+		return (EFBIG);
+
+	/*
+	 * If the next write will extend the file into a new block,
+	 * and the file is currently composed of a fragment
+	 * this fragment has to be extended to be a full block.
+	 */
+
+	lastlbn = lblkno(fs, ip->i_ffs2_size);
+	if (lastlbn < NDADDR && lastlbn < lbn) {
+		nb = lastlbn;
+		osize = blksize(fs, ip, nb);
+		if (osize < fs->fs_bsize && osize > 0) {
+			warnx("need to ffs_realloccg; not supported!");
+			abort();
+		}
+	}
+
+	/*
+	 * The first NDADDR blocks are direct blocks
+	 */
+
+	if (lbn < NDADDR) {
+		nb = ufs_rw64(ip->i_ffs2_db[lbn], needswap);
+		if (nb != 0 && ip->i_ffs2_size >= lblktosize(fs, lbn + 1)) {
+
+			/*
+			 * The block is an already-allocated direct block
+			 * and the file already extends past this block,
+			 * thus this must be a whole block.
+			 * Just read the block (if requested).
+			 */
+
+			if (bpp != NULL) {
+				error = bread(ip->i_fd, ip->i_fs, lbn,
+				    fs->fs_bsize, bpp);
+				if (error) {
+					brelse(*bpp);
+					return (error);
+				}
+			}
+			return (0);
+		}
+		if (nb != 0) {
+
+			/*
+			 * Consider need to reallocate a fragment.
+			 */
+
+			osize = fragroundup(fs, blkoff(fs, ip->i_ffs2_size));
+			nsize = fragroundup(fs, size);
+			if (nsize <= osize) {
+
+				/*
+				 * The existing block is already
+				 * at least as big as we want.
+				 * Just read the block (if requested).
+				 */
+
+				if (bpp != NULL) {
+					error = bread(ip->i_fd, ip->i_fs, lbn,
+					    osize, bpp);
+					if (error) {
+						brelse(*bpp);
+						return (error);
+					}
+				}
+				return 0;
+			} else {
+				warnx("need to ffs_realloccg; not supported!");
+				abort();
+			}
+		} else {
+
+			/*
+			 * the block was not previously allocated,
+			 * allocate a new block or fragment.
+			 */
+
+			if (ip->i_ffs2_size < lblktosize(fs, lbn + 1))
+				nsize = fragroundup(fs, size);
+			else
+				nsize = fs->fs_bsize;
+			error = ffs_alloc(ip, lbn,
+			    ffs_blkpref_ufs2(ip, lbn, (int)lbn,
+				&ip->i_ffs2_db[0]),
+				nsize, &newb);
+			if (error)
+				return (error);
+			if (bpp != NULL) {
+				bp = getblk(ip->i_fd, ip->i_fs, lbn, nsize);
+				bp->b_blkno = fsbtodb(fs, newb);
+				clrbuf(bp);
+				*bpp = bp;
+			}
+		}
+		ip->i_ffs2_db[lbn] = ufs_rw64(newb, needswap);
+		return (0);
+	}
+
+	/*
+	 * Determine the number of levels of indirection.
+	 */
+
+	pref = 0;
+	if ((error = ufs_getlbns(ip, lbn, indirs, &num)) != 0)
+		return (error);
+
+	if (num < 1) {
+		warnx("ffs_balloc: ufs_getlbns returned indirect block");
+		abort();
+	}
+
+	/*
+	 * Fetch the first indirect block allocating if necessary.
+	 */
+
+	--num;
+	nb = ufs_rw64(ip->i_ffs2_ib[indirs[0].in_off], needswap);
+	allocib = NULL;
+	allocblk = allociblk;
+	if (nb == 0) {
+		pref = ffs_blkpref_ufs2(ip, lbn, 0, (int64_t *)0);
+		error = ffs_alloc(ip, lbn, pref, (int)fs->fs_bsize, &newb);
+		if (error)
+			return error;
+		nb = newb;
+		*allocblk++ = nb;
+		bp = getblk(ip->i_fd, ip->i_fs, indirs[1].in_lbn, fs->fs_bsize);
+		bp->b_blkno = fsbtodb(fs, nb);
+		clrbuf(bp);
+		/*
+		 * Write synchronously so that indirect blocks
+		 * never point at garbage.
+		 */
+		if ((error = bwrite(bp)) != 0)
+			return error;
+		allocib = &ip->i_ffs2_ib[indirs[0].in_off];
+		*allocib = ufs_rw64(nb, needswap);
+	}
+
+	/*
+	 * Fetch through the indirect blocks, allocating as necessary.
+	 */
+
+	for (i = 1;;) {
+		error = bread(ip->i_fd, ip->i_fs, indirs[i].in_lbn, 
+		    fs->fs_bsize, &bp);
+		if (error) {
+			brelse(bp);
+			return error;
+		}
+		bap = (int64_t *)bp->b_data;
+		nb = ufs_rw64(bap[indirs[i].in_off], needswap);
+		if (i == num)
+			break;
+		i++;
+		if (nb != 0) {
+			brelse(bp);
+			continue;
+		}
+		if (pref == 0)
+			pref = ffs_blkpref_ufs2(ip, lbn, 0, (int64_t *)0);
+		error = ffs_alloc(ip, lbn, pref, (int)fs->fs_bsize, &newb);
+		if (error) {
+			brelse(bp);
+			return error;
+		}
+		nb = newb;
+		*allocblk++ = nb;
+		nbp = getblk(ip->i_fd, ip->i_fs, indirs[i].in_lbn,
+		    fs->fs_bsize);
+		nbp->b_blkno = fsbtodb(fs, nb);
+		clrbuf(nbp);
+		/*
+		 * Write synchronously so that indirect blocks
+		 * never point at garbage.
+		 */
+
+		if ((error = bwrite(nbp)) != 0) {
+			brelse(bp);
+			return error;
+		}
+		bap[indirs[i - 1].in_off] = ufs_rw64(nb, needswap);
+
+		bwrite(bp);
+	}
+
+	/*
+	 * Get the data block, allocating if necessary.
+	 */
+
+	if (nb == 0) {
+		pref = ffs_blkpref_ufs2(ip, lbn, indirs[num].in_off, &bap[0]);
+		error = ffs_alloc(ip, lbn, pref, (int)fs->fs_bsize, &newb);
+		if (error) {
+			brelse(bp);
+			return error;
+		}
+		nb = newb;
+		*allocblk++ = nb;
+		if (bpp != NULL) {
+			nbp = getblk(ip->i_fd, ip->i_fs, lbn, fs->fs_bsize);
+			nbp->b_blkno = fsbtodb(fs, nb);
+			clrbuf(nbp);
+			*bpp = nbp;
+		}
+		bap[indirs[num].in_off] = ufs_rw64(nb, needswap);
+
+		/*
+		 * If required, write synchronously, otherwise use
+		 * delayed write.
+		 */
+		bwrite(bp);
+		return (0);
+	}
+	brelse(bp);
+	if (bpp != NULL) {
+		error = bread(ip->i_fd, ip->i_fs, lbn, (int)fs->fs_bsize, &nbp);
+		if (error) {
+			brelse(nbp);
+			return error;
+		}
+		*bpp = nbp;
+	}
+	return (0);
 }

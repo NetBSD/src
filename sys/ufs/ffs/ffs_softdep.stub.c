@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.stub.c,v 1.9 2003/01/24 21:55:23 fvdl Exp $	*/
+/*	$NetBSD: ffs_softdep.stub.c,v 1.10 2003/04/02 10:39:38 fvdl Exp $	*/
 
 /*
  * Copyright 1997 Marshall Kirk McKusick. All Rights Reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.stub.c,v 1.9 2003/01/24 21:55:23 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.stub.c,v 1.10 2003/04/02 10:39:38 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -140,9 +140,10 @@ softdep_setup_allocindir_meta(nbp, ip, bp, ptrno, newblkno)
 }
 
 void
-softdep_setup_freeblocks(ip, length)
+softdep_setup_freeblocks(ip, length, flags)
 	struct inode *ip;
 	off_t length;
+	int flags;
 {
 	
 	panic("softdep_setup_freeblocks called");
@@ -160,7 +161,7 @@ softdep_setup_directory_add(bp, dp, diroffset, newinum, newdirbp, isnewblk)
 	struct buf *bp;
 	struct inode *dp;
 	off_t diroffset;
-	long newinum;
+	ino_t newinum;
 	struct buf *newdirbp;
 	int isnewblk;
 {
@@ -196,7 +197,7 @@ softdep_setup_directory_change(bp, dp, ip, newinum, isrmdir)
 	struct buf *bp;
 	struct inode *dp;
 	struct inode *ip;
-	long newinum;
+	ino_t newinum;
 	int isrmdir;
 {
 

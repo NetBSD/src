@@ -1,4 +1,4 @@
-/* $NetBSD: segwrite.c,v 1.2 2003/03/31 19:57:00 perseant Exp $ */
+/* $NetBSD: segwrite.c,v 1.3 2003/04/02 10:39:28 fvdl Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -252,7 +252,7 @@ int
 lfs_writeinode(struct lfs * fs, struct segment * sp, struct inode * ip)
 {
 	struct ubuf *bp, *ibp;
-	struct dinode *cdp;
+	struct ufs1_dinode *cdp;
 	IFILE *ifp;
 	SEGUSE *sup;
 	daddr_t daddr;
@@ -281,7 +281,7 @@ lfs_writeinode(struct lfs * fs, struct segment * sp, struct inode * ip)
 
 		/* Zero out inode numbers */
 		for (i = 0; i < INOPB(fs); ++i)
-			((struct dinode *) sp->ibp->b_data)[i].di_inumber = 0;
+			((struct ufs1_dinode *) sp->ibp->b_data)[i].di_inumber = 0;
 
 		++sp->start_bpp;
 		fs->lfs_avail -= btofsb(fs, fs->lfs_ibsize);
@@ -308,19 +308,19 @@ lfs_writeinode(struct lfs * fs, struct segment * sp, struct inode * ip)
 	 * already been gathered.
 	 */
 	if (ip->i_number == LFS_IFILE_INUM && sp->idp) {
-		*(sp->idp) = ip->i_din.ffs_din;
-		ip->i_lfs_osize = ip->i_ffs_size;
+		*(sp->idp) = *ip->i_din.ffs1_din;
+		ip->i_lfs_osize = ip->i_ffs1_size;
 		return 0;
 	}
 	bp = sp->ibp;
-	cdp = ((struct dinode *) bp->b_data) + (sp->ninodes % INOPB(fs));
-	*cdp = ip->i_din.ffs_din;
+	cdp = ((struct ufs1_dinode *) bp->b_data) + (sp->ninodes % INOPB(fs));
+	*cdp = *ip->i_din.ffs1_din;
 
 	/* If all blocks are goig to disk, update the "size on disk" */
-	ip->i_lfs_osize = ip->i_ffs_size;
+	ip->i_lfs_osize = ip->i_ffs1_size;
 
 	if (ip->i_number == LFS_IFILE_INUM)	/* We know sp->idp == NULL */
-		sp->idp = ((struct dinode *) bp->b_data) +
+		sp->idp = ((struct ufs1_dinode *) bp->b_data) +
 		    (sp->ninodes % INOPB(fs));
 	if (gotblk) {
 		LFS_LOCK_BUF(bp);
@@ -356,7 +356,7 @@ lfs_writeinode(struct lfs * fs, struct segment * sp, struct inode * ip)
 	if (daddr != LFS_UNUSED_DADDR) {
 		u_int32_t oldsn = dtosn(fs, daddr);
 		LFS_SEGENTRY(sup, fs, oldsn, bp);
-		sup->su_nbytes -= DINODE_SIZE;
+		sup->su_nbytes -= DINODE1_SIZE;
 		redo_ifile =
 		    (ino == LFS_IFILE_INUM && !(bp->b_flags & B_GATHERED));
 		if (redo_ifile)
@@ -465,21 +465,21 @@ lfs_update_single(struct lfs * fs, struct segment * sp, daddr_t lbn,
 	bb = fragstofsb(fs, numfrags(fs, size));
 	switch (num) {
 	case 0:
-		ooff = ip->i_ffs_db[lbn];
+		ooff = ip->i_ffs1_db[lbn];
 		if (ooff == UNWRITTEN)
-			ip->i_ffs_blocks += bb;
+			ip->i_ffs1_blocks += bb;
 		else {
 			/* possible fragment truncation or extension */
 			obb = btofsb(fs, ip->i_lfs_fragsize[lbn]);
-			ip->i_ffs_blocks += (bb - obb);
+			ip->i_ffs1_blocks += (bb - obb);
 		}
-		ip->i_ffs_db[lbn] = ndaddr;
+		ip->i_ffs1_db[lbn] = ndaddr;
 		break;
 	case 1:
-		ooff = ip->i_ffs_ib[a[0].in_off];
+		ooff = ip->i_ffs1_ib[a[0].in_off];
 		if (ooff == UNWRITTEN)
-			ip->i_ffs_blocks += bb;
-		ip->i_ffs_ib[a[0].in_off] = ndaddr;
+			ip->i_ffs1_blocks += bb;
+		ip->i_ffs1_ib[a[0].in_off] = ndaddr;
 		break;
 	default:
 		ap = &a[num - 1];
@@ -489,7 +489,7 @@ lfs_update_single(struct lfs * fs, struct segment * sp, daddr_t lbn,
 
 		ooff = ((ufs_daddr_t *) bp->b_data)[ap->in_off];
 		if (ooff == UNWRITTEN)
-			ip->i_ffs_blocks += bb;
+			ip->i_ffs1_blocks += bb;
 		((ufs_daddr_t *) bp->b_data)[ap->in_off] = ndaddr;
 		(void) VOP_BWRITE(bp);
 	}
@@ -770,7 +770,7 @@ lfs_writeseg(struct lfs * fs, struct segment * sp)
 	ssp = (SEGSUM *) sp->segsum;
 
 	ninos = (ssp->ss_ninos + INOPB(fs) - 1) / INOPB(fs);
-	sup->su_nbytes += ssp->ss_ninos * DINODE_SIZE;
+	sup->su_nbytes += ssp->ss_ninos * DINODE1_SIZE;
 
 	if (fs->lfs_version == 1)
 		sup->su_olastmod = write_time;

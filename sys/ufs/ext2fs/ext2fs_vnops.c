@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.43 2002/10/23 19:52:16 jdolecek Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.44 2003/04/02 10:39:35 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.43 2002/10/23 19:52:16 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.44 2003/04/02 10:39:35 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,7 +156,7 @@ ext2fs_mknod(v)
 		 * Want to be able to use this to make badblock
 		 * inodes, so don't truncate the dev number.
 		 */
-		ip->i_din.e2fs_din.e2di_rdev = h2fs32(vap->va_rdev);
+		ip->i_din.e2fs_din->e2di_rdev = h2fs32(vap->va_rdev);
 	}
 	/*
 	 * Remove inode so that it will be reloaded by VFS_VGET and
@@ -267,7 +267,7 @@ ext2fs_getattr(v)
 	vap->va_nlink = ip->i_e2fs_nlink;
 	vap->va_uid = ip->i_e2fs_uid;
 	vap->va_gid = ip->i_e2fs_gid;
-	vap->va_rdev = (dev_t)fs2h32(ip->i_din.e2fs_din.e2di_rdev);
+	vap->va_rdev = (dev_t)fs2h32(ip->i_din.e2fs_din->e2di_rdev);
 	vap->va_size = vp->v_size;
 	vap->va_atime.tv_sec = ip->i_e2fs_atime;
 	vap->va_atime.tv_nsec = 0;
@@ -1231,7 +1231,7 @@ ext2fs_symlink(v)
 	len = strlen(ap->a_target);
 	if (len < vp->v_mount->mnt_maxsymlinklen) {
 		ip = VTOI(vp);
-		memcpy((char *)ip->i_din.e2fs_din.e2di_shortlink, ap->a_target, len);
+		memcpy((char *)ip->i_din.e2fs_din->e2di_shortlink, ap->a_target, len);
 		ip->i_e2fs_size = len;
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 	} else
@@ -1262,7 +1262,7 @@ ext2fs_readlink(v)
 	isize = ip->i_e2fs_size;
 	if (isize < vp->v_mount->mnt_maxsymlinklen ||
 	    (vp->v_mount->mnt_maxsymlinklen == 0 && ip->i_e2fs_nblock == 0)) {
-		uiomove((char *)ip->i_din.e2fs_din.e2di_shortlink, isize, ap->a_uio);
+		uiomove((char *)ip->i_din.e2fs_din->e2di_shortlink, isize, ap->a_uio);
 		return (0);
 	}
 	return (VOP_READ(vp, ap->a_uio, 0, ap->a_cred));
@@ -1308,7 +1308,7 @@ ext2fs_vinit(mntp, specops, fifoops, vpp)
 	case VBLK:
 		vp->v_op = specops;
 		if ((nvp = checkalias(vp,
-		    fs2h32(ip->i_din.e2fs_din.e2di_rdev), mntp)) != NULL) {
+		    fs2h32(ip->i_din.e2fs_din->e2di_rdev), mntp)) != NULL) {
 			/*
 			 * Discard unneeded vnode, but save its inode.
 			 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: fsirand.c,v 1.19 2002/01/08 05:01:50 lukem Exp $	*/
+/*	$NetBSD: fsirand.c,v 1.20 2003/04/02 10:39:29 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsirand.c,v 1.19 2002/01/08 05:01:50 lukem Exp $");
+__RCSID("$NetBSD: fsirand.c,v 1.20 2003/04/02 10:39:29 fvdl Exp $");
 #endif /* lint */
 
 #include <sys/param.h>
@@ -70,7 +70,7 @@ static void statussig(int);
 
 int main(int, char *[]);
 
-int	needswap, ino, imax;
+int	needswap, ino, imax, is_ufs2;
 time_t	tstart;
 
 
@@ -85,6 +85,8 @@ usage(void)
 }
 
 
+static const off_t sblock_try[] = SBLOCKSEARCH;
+
 /*
  * getsblock():
  *	Return the superblock 
@@ -92,32 +94,42 @@ usage(void)
 static void
 getsblock(int fd, const char *name, struct fs *fs)
 {
+	int i;
 
-	if (lseek(fd, (off_t) SBOFF , SEEK_SET) == (off_t) -1)
-		err(1, "%s: cannot seek to superblock", name);
+	for (i = 0; sblock_try[i] != -1; i++) {
 
-	if (read(fd, fs, SBSIZE) != SBSIZE)
-		err(1, "%s: cannot read superblock", name);
+		if (lseek(fd, sblock_try[i] , SEEK_SET) == (off_t) -1)
+			continue;
 
-	if (fs->fs_magic != FS_MAGIC)  {
-		if(fs->fs_magic == bswap32(FS_MAGIC)) {
+		if (read(fd, fs, SBLOCKSIZE) != SBLOCKSIZE)
+			continue;
+
+		switch(fs->fs_magic) {
+		case FS_UFS2_MAGIC:
+			is_ufs2 = 1;
+			/* FALLTHROUGH */
+		case FS_UFS1_MAGIC:
+			goto found;
+		case FS_UFS2_MAGIC_SWAPPED:
+			is_ufs2 = 1;
+			/* FALLTHROUGH */
+		case FS_UFS1_MAGIC_SWAPPED:
 			needswap = 1;
-			ffs_sb_swap(fs, fs);
-		} else
-			errx(1, "%s: bad superblock magic number", name);
+			goto found;
+		default:
+			continue;
+		}
 	}
+
+	errx(1, "%s: can't find superblock", name);
+found:
+	if (needswap)
+		ffs_sb_swap(fs, fs);
 
 	if (fs->fs_ncg < 1)
 		errx(1, "%s: bad ncg in superblock", name);
 
-	if (fs->fs_cpg < 1)
-		errx(1, "%s: bad cpg in superblock", name);
-
-	if (fs->fs_ncg * fs->fs_cpg < fs->fs_ncyl ||
-	    (fs->fs_ncg - 1) * fs->fs_cpg >= fs->fs_ncyl)
-		errx(1, "%s: bad number of cylinders in superblock", name);
-
-	if (fs->fs_sbsize > SBSIZE)
+	if (fs->fs_sbsize > SBLOCKSIZE)
 		errx(1, "%s: superblock too large", name);
 }
 
@@ -130,13 +142,22 @@ static void
 fixinodes(int fd, struct fs *fs, struct disklabel *lab, int pflag, long xorval)
 {
 	int inopb = INOPB(fs);
-	int size = inopb * DINODE_SIZE;
+	int size;
 	caddr_t buf;
-	struct dinode *dip;
+	struct ufs1_dinode *dp1;
+	struct ufs2_dinode *dp2;
 	int i;
+
+	size = is_ufs2 ? inopb * sizeof (struct ufs2_dinode) :
+	    inopb * sizeof (struct ufs1_dinode);
 
 	if ((buf = malloc(size)) == NULL)
 		err(1, "Out of memory");
+
+	if (is_ufs2)
+		dp2 = (struct ufs2_dinode *)buf;
+	else
+		dp1 = (struct ufs1_dinode *)buf;
 
 	for (ino = 0, imax = fs->fs_ipg * fs->fs_ncg; ino < imax;) {
 		off_t sp;
@@ -150,13 +171,25 @@ fixinodes(int fd, struct fs *fs, struct disklabel *lab, int pflag, long xorval)
 			err(1, "Reading inodes %d+%d failed", ino, inopb);
 
 		for (i = 0; i < inopb; i++) {
-			dip = (struct dinode *)(buf + (i * DINODE_SIZE));
-			if (pflag)
-				printf("inode %10d   gen 0x%08x\n", ino,
-					ufs_rw32(dip->di_gen, needswap));
-			else
-				dip->di_gen = ufs_rw32(random() ^ xorval,
-				    needswap);
+			if (is_ufs2) {
+				if (pflag)
+					printf("inode %10d   gen 0x%08x\n",
+					    ino,
+					    ufs_rw32(dp2[i].di_gen, needswap));
+				else
+					dp2[i].di_gen =
+					    ufs_rw32(random() ^ xorval,
+						needswap);
+			} else {
+				if (pflag)
+					printf("inode %10d   gen 0x%08x\n",
+					    ino,
+					    ufs_rw32(dp1[i].di_gen, needswap));
+				else
+					dp1[i].di_gen =
+					    ufs_rw32(random() ^ xorval,
+						needswap);
+			}
 			if (++ino > imax)
 				errx(1, "Exceeded number of inodes");
 		}
@@ -203,7 +236,7 @@ int
 main(int argc, char *argv[])
 {
 	const char *special;
-	char buf[SBSIZE], device[MAXPATHLEN];
+	char buf[SBLOCKSIZE], device[MAXPATHLEN];
 	struct fs *fs = (struct fs *) buf;
 	struct disklabel lab;
 	long xorval;

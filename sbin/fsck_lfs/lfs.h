@@ -1,4 +1,4 @@
-/* $NetBSD: lfs.h,v 1.1 2003/03/28 08:09:53 perseant Exp $ */
+/* $NetBSD: lfs.h,v 1.2 2003/04/02 10:39:28 fvdl Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -55,7 +55,7 @@ typedef int32_t ufs_daddr_t;
 
 /* Convert between inode pointers and vnode pointers. */
 #define	VTOI(vp)	((struct inode *)(vp)->v_data)
-#define VTOD(vp)	(&VTOI(vp)->i_din.ffs_din)
+#define VTOD(vp)	(VTOI(vp)->i_din.ffs1_din)
 
 #define sbdirty()	++fsdirty
 
@@ -71,6 +71,6 @@ struct lfs *lfs_init(int, daddr_t, daddr_t, int);
 struct lfs *lfs_verify(struct lfs *, struct lfs *, struct uvnode *, int);
 int check_summary(struct lfs *, struct segsum *, ufs_daddr_t, int, struct uvnode *, void (*)(ufs_daddr_t, struct finfo *));
 ufs_daddr_t try_verify(struct lfs *, struct uvnode *, ufs_daddr_t, int);
-struct dinode *lfs_ifind(struct lfs *, ino_t, struct ubuf *);
+struct ufs1_dinode *lfs_ifind(struct lfs *, ino_t, struct ubuf *);
 void call_panic(const char *, ...);
 void my_vpanic(int, const char *, va_list);

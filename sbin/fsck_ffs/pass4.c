@@ -1,4 +1,4 @@
-/*	$NetBSD: pass4.c,v 1.16 2003/01/24 21:55:08 fvdl Exp $	*/
+/*	$NetBSD: pass4.c,v 1.17 2003/04/02 10:39:26 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pass4.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass4.c,v 1.16 2003/01/24 21:55:08 fvdl Exp $");
+__RCSID("$NetBSD: pass4.c,v 1.17 2003/04/02 10:39:26 fvdl Exp $");
 #endif
 #endif /* not lint */
 
@@ -61,30 +61,37 @@ pass4()
 {
 	ino_t inumber;
 	struct zlncnt *zlnp;
-	struct dinode *dp;
+	union dinode *dp;
 	struct inodesc idesc;
-	int n;
+	int n, i, cg;
+	struct inostat *info;
 
 	memset(&idesc, 0, sizeof(struct inodesc));
 	idesc.id_type = ADDR;
 	idesc.id_func = pass4check;
-	for (inumber = ROOTINO; inumber <= lastino; inumber++) {
+
+	for (cg = 0; cg < sblock->fs_ncg; cg++) {
 		if (got_siginfo) {
 			fprintf(stderr,
 			    "%s: phase 4: cyl group %d of %d (%d%%)\n",
-			    cdevname(), inumber, lastino,
-			    inumber * 100 / lastino);
+			    cdevname(), cg, sblock->fs_ncg,
+			    cg * 100 / sblock->fs_ncg);
 			got_siginfo = 0;
 		}
-		idesc.id_number = inumber;
-		switch (statemap[inumber]) {
-
-		case FSTATE:
-		case DFOUND:
-			n = lncntp[inumber];
-			if (n)
-				adjust(&idesc, (short)n);
-			else {
+		inumber = cg * sblock->fs_ipg;
+		for (i = 0; i < inostathead[cg].il_numalloced; i++, inumber++) {
+			if (inumber < ROOTINO)
+				continue;
+			info = inoinfo(inumber);
+			idesc.id_number = inumber;
+			switch (info->ino_state) {
+			case FSTATE:
+			case DFOUND:
+				n = info->ino_linkcnt;
+				if (n) {
+					adjust(&idesc, (short)n);
+					break;
+				}
 				for (zlnp = zlnhead; zlnp; zlnp = zlnp->next)
 					if (zlnp->zlncnt == inumber) {
 						zlnp->zlncnt = zlnhead->zlncnt;
@@ -94,30 +101,30 @@ pass4()
 						clri(&idesc, "UNREF", 1);
 						break;
 					}
-			}
-			break;
-
-		case DSTATE:
-			clri(&idesc, "UNREF", 1);
-			break;
-
-		case DCLEAR:
-			dp = ginode(inumber);
-			if (dp->di_size == 0) {
-				clri(&idesc, "ZERO LENGTH", 1);
 				break;
+
+			case DSTATE:
+				clri(&idesc, "UNREF", 1);
+				break;
+
+			case DCLEAR:
+				dp = ginode(inumber);
+				if (DIP(dp, size) == 0) {
+					clri(&idesc, "ZERO LENGTH", 1);
+					break;
+				}
+				/* fall through */
+			case FCLEAR:
+				clri(&idesc, "BAD/DUP", 1);
+				break;
+
+			case USTATE:
+				break;
+
+			default:
+				errx(EEXIT, "BAD STATE %d FOR INODE I=%d",
+				    info->ino_state, inumber);
 			}
-			/* fall through */
-		case FCLEAR:
-			clri(&idesc, "BAD/DUP", 1);
-			break;
-
-		case USTATE:
-			break;
-
-		default:
-			errx(EEXIT, "BAD STATE %d FOR INODE I=%d",
-			    statemap[inumber], inumber);
 		}
 	}
 }

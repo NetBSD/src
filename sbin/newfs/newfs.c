@@ -1,6 +1,15 @@
-/*	$NetBSD: newfs.c,v 1.63 2003/01/24 21:55:12 fvdl Exp $	*/
+/*	$NetBSD: newfs.c,v 1.64 2003/04/02 10:39:30 fvdl Exp $	*/
 
 /*
+ * Copyright (c) 2002 Networks Associates Technology, Inc.
+ * All rights reserved.
+ *
+ * This software was developed for the FreeBSD Project by Marshall
+ * Kirk McKusick and Network Associates Laboratories, the Security
+ * Research Division of Network Associates, Inc. under DARPA/SPAWAR
+ * contract N66001-01-C-8035 ("CBOSS"), as part of the DARPA CHATS
+ * research program
+ *
  * Copyright (c) 1983, 1989, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -43,7 +52,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.13 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.63 2003/01/24 21:55:12 fvdl Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.64 2003/04/02 10:39:30 fvdl Exp $");
 #endif
 #endif /* not lint */
 
@@ -133,23 +142,15 @@ int main(int, char *[]);
  * on a single cylinder. The default is to use 16 cylinders
  * per group.
  */
-#define	DESCPG		65536	/* desired fs_cpg ("infinity") */
-
-/*
- * ROTDELAY gives the minimum number of milliseconds to initiate
- * another disk transfer on the same cylinder. It is used in
- * determining the rotationally optimal layout for disk blocks
- * within a file; the default of fs_rotdelay is 0ms.
- */
-#define	ROTDELAY	0
+#define	MAXBLKSPERCG	0x7fffffff	/* desired fs_fpg ("infinity") */
 
 /*
  * MAXBLKPG determines the maximum number of data blocks which are
  * placed in a single cylinder group. The default is one indirect
  * block worth of data blocks.
  */
-/* XXX ondisk32 */
-#define	MAXBLKPG(bsize)	((bsize) / sizeof(int32_t))
+#define	MAXBLKPG_UFS1(bsize)	((bsize) / sizeof(int32_t))
+#define	MAXBLKPG_UFS2(bsize)	((bsize) / sizeof(int64_t))
 
 /*
  * Each file system has a number of inodes statically allocated.
@@ -158,47 +159,25 @@ int main(int, char *[]);
  */
 #define	NFPI		4
 
-/*
- * For each cylinder we keep track of the availability of blocks at different
- * rotational positions, so that we can lay out the data to be picked
- * up with minimum rotational latency.  NRPOS is the default number of
- * rotational positions that we distinguish.  With NRPOS of 8 the resolution
- * of our summary information is 2ms for a typical 3600 rpm drive.  Caching
- * and zoning pretty much defeats rotational optimization, so we now use a
- * default of 1.
- */
-#define	NRPOS		1	/* number distinct rotational positions */
-
 
 int	mfs;			/* run as the memory based filesystem */
 int	Nflag;			/* run without writing file system */
-int	Oflag;			/* format as an 4.3BSD file system */
-int	fssize;			/* file system size */
-int	ntracks;		/* # tracks/cylinder */
-int	nsectors;		/* # sectors/track */
-int	nphyssectors;		/* # sectors/track including spares */
-int	secpercyl;		/* sectors per cylinder */
-int	trackspares = -1;	/* spare sectors per track */
-int	cylspares = -1;		/* spare sectors per cylinder */
+int	Oflag = 1;		/* format as an 4.3BSD file system */
+int64_t	fssize;			/* file system size */
 int	sectorsize;		/* bytes/sector */
-int	rpm;			/* revolutions/minute of drive */
-int	interleave;		/* hardware sector interleave */
-int	trackskew = -1;		/* sector 0 skew, per track */
 int	fsize = 0;		/* fragment size */
 int	bsize = 0;		/* block size */
-int	cpg = DESCPG;		/* cylinders/cylinder group */
-int	cpgflg;			/* cylinders/cylinder group flag was given */
+int	maxbsize = 0;		/* maximum clustering */
+int	maxblkspercg = MAXBLKSPERCG; /* maximum blocks per cylinder group */
 int	minfree = MINFREE;	/* free space threshold */
 int	opt = DEFAULTOPT;	/* optimization preference (space or time) */
 int	density;		/* number of bytes per inode */
 int	maxcontig = 0;		/* max contiguous blocks to allocate */
-int	rotdelay = ROTDELAY;	/* rotational delay between blocks */
 int	maxbpg;			/* maximum blocks per file in a cyl group */
-int	nrpos = NRPOS;		/* # of distinguished rotational positions */
 int	avgfilesize = AVFILESIZ;/* expected average file size */
 int	avgfpdir = AFPDIR;	/* expected number of files per directory */
 int	bbsize = BBSIZE;	/* boot block size */
-int	sbsize = SBSIZE;	/* superblock size */
+int	sbsize = SBLOCKSIZE;	/* superblock size */
 int	mntflags = MNT_ASYNC;	/* flags to be passed to mount */
 u_long	memleft;		/* virtual memory available */
 caddr_t	membase;		/* start address of memory based filesystem */
@@ -252,7 +231,7 @@ main(int argc, char *argv[])
 
 	opstring = mfs ?
 	    "NT:a:b:c:d:e:f:g:h:i:m:o:p:s:u:" :
-	    "B:FINOS:T:Za:b:c:d:e:f:g:h:i:k:l:m:n:o:p:r:s:t:u:v:x:";
+	    "B:FINO:S:T:Za:b:c:d:e:f:g:h:i:l:m:o:p:r:s:u:v:";
 	while ((ch = getopt(argc, argv, opstring)) != -1)
 		switch (ch) {
 		case 'B':
@@ -277,7 +256,7 @@ main(int argc, char *argv[])
 			Nflag = 1;
 			break;
 		case 'O':
-			Oflag = 1;
+			Oflag = strsuftoi("format", optarg, 0, 2);
 			break;
 		case 'S':
 			sectorsize = strsuftoi("sector size",
@@ -300,12 +279,11 @@ main(int argc, char *argv[])
 			    optarg, MINBSIZE, MAXBSIZE);
 			break;
 		case 'c':
-			cpg = strsuftoi("cylinders per group",
+			maxblkspercg = strsuftoi("max. blocks per group",
 			    optarg, 1, INT_MAX);
-			cpgflg++;
 			break;
 		case 'd':
-			rotdelay = strsuftoi("rotational delay",
+			maxbsize = strsuftoi("maximum extent size",
 			    optarg, 0, INT_MAX);
 			break;
 		case 'e':
@@ -333,21 +311,9 @@ main(int argc, char *argv[])
 			density = strsuftoi("bytes per inode",
 			    optarg, 1, INT_MAX);
 			break;
-		case 'k':
-			trackskew = strsuftoi("track skew",
-			    optarg, 0, INT_MAX);
-			break;
-		case 'l':
-			interleave = strsuftoi("interleave",
-			    optarg, 1, INT_MAX);
-			break;
 		case 'm':
 			minfree = strsuftoi("free space %",
 			    optarg, 0, 99);
-			break;
-		case 'n':
-			nrpos = strsuftoi("rotational layout count",
-			    optarg, 1, INT_MAX);
 			break;
 		case 'o':
 			if (mfs)
@@ -367,15 +333,8 @@ main(int argc, char *argv[])
 			if (mfs) {
 				if ((mfsmode = strtol(optarg, NULL, 8)) <= 0)
 					errx(1, "bad mode `%s'", optarg);
-			} else {
-				trackspares = strsuftoi(
-				    "spare sectors per track", optarg, 0,
-				    INT_MAX);
-			}
-			break;
-		case 'r':
-			rpm = strsuftoi("revolutions per minute",
-			    optarg, 1, INT_MAX);
+			} else
+				errx(1, "unknown option 'p'");
 			break;
 		case 's':
 			llsize = strtoll(optarg, &endp, 10);
@@ -405,26 +364,20 @@ main(int argc, char *argv[])
 					llsize = -1;
 				}
 			}
-			if (llsize > INT_MAX)
+			if (llsize > LLONG_MAX)
 				errx(1, "file system size `%s' is too large.",
 				    optarg);
 			if (llsize <= 0)
 				errx(1,
 			    "`%s' is not a valid number for file system size.",
 				    optarg);
-			fssize = (int)llsize;
-			break;
-		case 't':
-			ntracks = strsuftoi("total tracks",
-			    optarg, 1, INT_MAX);
+			fssize = llsize;
 			break;
 		case 'u':
 			if (mfs)
 				mfsuid = mfs_user(optarg);
-			else {
-				nsectors = strsuftoi("sectors per track",
-				    optarg, 1, INT_MAX);
-			}
+			else
+				errx(1, "deprecated option 'u'");
 			break;
 		case 'v':
 			appleufs_volname = optarg;
@@ -433,10 +386,6 @@ main(int argc, char *argv[])
 			if (appleufs_volname[0] == '\0')
 				errx(1,"Apple UFS volume name cannot be zero length");
 			isappleufs = 1;
-			break;
-		case 'x':
-			cylspares = strsuftoi("spare sectors per cylinder",
-			    optarg, 0, INT_MAX);
 			break;
 		case '?':
 		default:
@@ -469,8 +418,8 @@ main(int argc, char *argv[])
 				err(1, "can't dup(2) image fd");
 		/* XXXLUKEM: only ftruncate() regular files ? */
 			if (ftruncate(fso, (off_t)fssize * sectorsize) == -1)
-				err(1, "can't resize %s to %d",
-				    special, fssize);
+				err(1, "can't resize %s to %lld",
+				    special, (long long)fssize);
 
 			if (Zflag) {	/* pre-zero the file */
 				char	*buf;
@@ -588,35 +537,10 @@ main(int argc, char *argv[])
 	if (fssize > pp->p_size && !mfs && !Fflag)
 		errx(1, "maximum file system size on the `%c' partition is %d",
 		    *cp, pp->p_size);
-	if (rpm == 0) {
-		rpm = lp->d_rpm;
-		if (rpm <= 0)
-			rpm = 3600;
-	}
-	if (ntracks == 0) {
-		ntracks = lp->d_ntracks;
-		if (ntracks <= 0)
-			errx(1, "no default #tracks");
-	}
-	if (nsectors == 0) {
-		nsectors = lp->d_nsectors;
-		if (nsectors <= 0)
-			errx(1, "no default #sectors/track");
-	}
 	if (sectorsize == 0) {
 		sectorsize = lp->d_secsize;
 		if (sectorsize <= 0)
 			errx(1, "no default sector size");
-	}
-	if (trackskew == -1) {
-		trackskew = lp->d_trackskew;
-		if (trackskew < 0)
-			trackskew = 0;
-	}
-	if (interleave == 0) {
-		interleave = lp->d_interleave;
-		if (interleave <= 0)
-			interleave = 1;
 	}
 
 	if (fssize < SMALL_FSSIZE) {
@@ -655,24 +579,12 @@ main(int argc, char *argv[])
 		    "because minfree is less than", MINFREE);
 		opt = FS_OPTSPACE;
 	}
-	if (trackspares == -1) {
-		trackspares = lp->d_sparespertrack;
-		if (trackspares < 0)
-			trackspares = 0;
+	if (maxbpg == 0) {
+		if (Oflag <= 1)
+			maxbpg = MAXBLKPG_UFS1(bsize);
+		else
+			maxbpg = MAXBLKPG_UFS2(bsize);
 	}
-	nphyssectors = nsectors + trackspares;
-	if (cylspares == -1) {
-		cylspares = lp->d_sparespercyl;
-		if (cylspares < 0)
-			cylspares = 0;
-	}
-	secpercyl = nsectors * ntracks - cylspares;
-	if (secpercyl != lp->d_secpercyl)
-		warnx("%s (%d) %s (%u)",
-			"Warning: calculated sectors per cylinder", secpercyl,
-			"disagrees with disk label", lp->d_secpercyl);
-	if (maxbpg == 0)
-		maxbpg = MAXBLKPG(bsize);
 #ifdef notdef /* label may be 0 if faked up by kernel */
 	bbsize = lp->d_bbsize;
 	sbsize = lp->d_sbsize;
@@ -916,7 +828,7 @@ struct help_strings {
 	{ NEWFS,	"-I \t\tdo not check that the file system type is '4.2BSD'" },
 	{ BOTH,		"-N \t\tdo not create file system, just print out "
 			    "parameters" },
-	{ NEWFS,	"-O \t\tcreate a 4.3BSD format filesystem" },
+	{ NEWFS,	"-O N\t\tfilesystem format: 0 ==> 4.3BSD, 1 ==> FFS, 2==> UFS2" },
 	{ NEWFS,	"-S secsize\tsector size" },
 #ifdef COMPAT
 	{ NEWFS,	"-T disktype\tdisk type" },
@@ -924,9 +836,8 @@ struct help_strings {
 	{ NEWFS,	"-Z \t\tpre-zero the image file (with -F)" },
 	{ BOTH,		"-a maxcontig\tmaximum contiguous blocks" },
 	{ BOTH,		"-b bsize\tblock size" },
-	{ BOTH,		"-c cpg\t\tcylinders/group" },
-	{ BOTH,		"-d rotdelay\trotational delay between contiguous "
-			    "blocks" },
+	{ BOTH,		"-c blocks\tblocks per cylinder group" },
+	{ BOTH,		"-d maxbsize\t maximum extent size" },
 	{ BOTH,		"-e maxbpg\tmaximum blocks per file in a cylinder group"
 			    },
 	{ BOTH,		"-f fsize\tfrag size" },
@@ -934,22 +845,13 @@ struct help_strings {
 	{ MFS_MOUNT,	"-g groupname\tgroup name of mount point" },
 	{ BOTH,		"-h avgfpdir\taverage files per directory" },
 	{ BOTH,		"-i density\tnumber of bytes per inode" },
-	{ NEWFS,	"-k trackskew\tsector 0 skew, per track" },
-	{ NEWFS,	"-l interleave\thardware sector interleave" },
 	{ BOTH,		"-m minfree\tminimum free space %%" },
-	{ NEWFS,	"-n nrpos\tnumber of distinguished rotational "
-			    "positions" },
 	{ BOTH,		"-o optim\toptimization preference (`space' or `time')"
 			    },
-	{ NEWFS,	"-p tracksparse\tspare sectors per track" },
 	{ MFS_MOUNT,	"-p perm\t\tpermissions (in octal)" },
 	{ BOTH,		"-s fssize\tfile system size (sectors)" },
-	{ NEWFS,	"-r rpm\t\trevolutions/minute" },
-	{ NEWFS,	"-t ntracks\ttracks/cylinder" },
-	{ NEWFS,	"-u nsectors\tsectors/track" },
 	{ MFS_MOUNT,	"-u username\tuser name of mount point" },
 	{ NEWFS,	"-v volname\tApple UFS volume name" },
-	{ NEWFS,	"-x cylspares\tspare sectors per cylinder" },
 	{ 0, NULL }
 };
 

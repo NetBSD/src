@@ -1,4 +1,4 @@
-/*	$NetBSD: makefs.h,v 1.10 2003/03/30 00:05:08 lukem Exp $	*/
+/*	$NetBSD: makefs.h,v 1.11 2003/04/02 10:39:49 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -45,6 +45,7 @@
 #define HAVE_STRUCT_STAT_ST_GEN 1
 #define HAVE_STRUCT_STAT_ST_MTIMENSEC 1
 #define HAVE_STRUCT_STATFS_F_IOSIZE 1
+#define HAVE_STRUCT_STAT_BIRTHTIME 1
 #endif
 
 #include <sys/stat.h>
@@ -150,6 +151,9 @@ typedef struct {
 	int	nrpos;		/* # of distinguished rotational positions */
 	int	avgfilesize;	/* expected average file size */
 	int	avgfpdir;	/* expected # of files per directory */
+	int	version;	/* filesystem version (1 = FFS, 2 = UFS2) */
+	int	maxbsize;	/* maximum extent size */
+	int	maxblkspercg;	/* max # of blocks per cylinder group */
 			/* XXX: support `old' file systems ? */
 } fsinfo_t;
 

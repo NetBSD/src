@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.109 2003/03/31 21:02:12 fvdl Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.110 2003/04/02 10:39:38 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.109 2003/03/31 21:02:12 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.110 2003/04/02 10:39:38 fvdl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -122,6 +122,12 @@ struct genfs_ops ffs_genfsops = {
 };
 
 struct pool ffs_inode_pool;
+struct pool ffs_dinode1_pool;
+struct pool ffs_dinode2_pool;
+
+static void ffs_oldfscompat_read(struct fs *, struct ufsmount *,
+				   daddr_t);
+static void ffs_oldfscompat_write(struct fs *, struct ufsmount *);
 
 /*
  * Called by main() when ffs is going to be mounted as root.
@@ -310,7 +316,8 @@ ffs_mount(mp, path, data, ndp, p)
 				error = ffs_flushfiles(mp, flags, p);
 			if (fs->fs_pendingblocks != 0 ||
 			    fs->fs_pendinginodes != 0) {
-				printf("%s: update error: blocks %d files %d\n",
+				printf("%s: update error: blocks %" PRId64
+				       " files %d\n",
 				    fs->fs_fsmnt, fs->fs_pendingblocks,
 				    fs->fs_pendinginodes);
 				fs->fs_pendingblocks = 0;
@@ -417,7 +424,7 @@ ffs_mount(mp, path, data, ndp, p)
 		else {
 			printf("%s: file system not clean (fs_clean=%x); please fsck(8)\n",
 			    mp->mnt_stat.f_mntfromname, fs->fs_clean);
-			printf("%s: lost blocks %d files %d\n",
+			printf("%s: lost blocks %" PRId64 " files %d\n",
 			    mp->mnt_stat.f_mntfromname, fs->fs_pendingblocks,
 			    fs->fs_pendinginodes);
 		}
@@ -451,9 +458,9 @@ ffs_reload(mountp, cred, p)
 	struct buf *bp;
 	struct fs *fs, *newfs;
 	struct partinfo dpart;
+	daddr_t sblockloc;
 	int i, blks, size, error;
 	int32_t *lp;
-	caddr_t cp;
 
 	if ((mountp->mnt_flag & MNT_RDONLY) == 0)
 		return (EINVAL);
@@ -469,16 +476,17 @@ ffs_reload(mountp, cred, p)
 	/*
 	 * Step 2: re-read superblock from disk.
 	 */
+	fs = VFSTOUFS(mountp)->um_fs;
 	if (VOP_IOCTL(devvp, DIOCGPART, &dpart, FREAD, NOCRED, p) != 0)
 		size = DEV_BSIZE;
 	else
 		size = dpart.disklab->d_secsize;
-	error = bread(devvp, (daddr_t)(SBOFF / size), SBSIZE, NOCRED, &bp);
+	error = bread(devvp, fs->fs_sblockloc / size, fs->fs_sbsize,
+		      NOCRED, &bp);
 	if (error) {
 		brelse(bp);
 		return (error);
 	}
-	fs = VFSTOUFS(mountp)->um_fs;
 	newfs = malloc(fs->fs_sbsize, M_UFSMNT, M_WAITOK);
 	memcpy(newfs, bp->b_data, fs->fs_sbsize);
 #ifdef FFS_EI
@@ -487,8 +495,10 @@ ffs_reload(mountp, cred, p)
 		fs->fs_flags |= FS_SWAPPED;
 	}
 #endif
-	if (newfs->fs_magic != FS_MAGIC || newfs->fs_bsize > MAXBSIZE ||
-	    newfs->fs_bsize < sizeof(struct fs)) {
+	if ((newfs->fs_magic != FS_UFS1_MAGIC &&	
+	     newfs->fs_magic != FS_UFS2_MAGIC)||
+	     newfs->fs_bsize > MAXBSIZE ||
+	     newfs->fs_bsize < sizeof(struct fs)) {
 		brelse(bp);
 		free(newfs, M_UFSMNT);
 		return (EIO);		/* XXX needs translation */
@@ -502,9 +512,9 @@ ffs_reload(mountp, cred, p)
 	newfs->fs_maxcluster = fs->fs_maxcluster;
 	newfs->fs_contigdirs = fs->fs_contigdirs;
 	newfs->fs_ronly = fs->fs_ronly;
+	newfs->fs_active = fs->fs_active;
+	sblockloc = fs->fs_sblockloc;
 	memcpy(fs, newfs, (u_int)fs->fs_sbsize);
-	if (fs->fs_sbsize < SBSIZE)
-		bp->b_flags |= B_INVAL;
 	brelse(bp);
 	free(newfs, M_UFSMNT);
 
@@ -546,12 +556,7 @@ ffs_reload(mountp, cred, p)
 		/* see comment about NeXT below */
 		mountp->mnt_maxsymlinklen = APPLEUFS_MAXSYMLINKLEN;
 	}
-	ffs_oldfscompat(fs);
-		/* An old fsck may have zeroed these fields, so recheck them. */
-	if (fs->fs_avgfilesize <= 0)
-		fs->fs_avgfilesize = AVFILESIZ;
-	if (fs->fs_avgfpdir <= 0)
-		fs->fs_avgfpdir = AFPDIR;
+	ffs_oldfscompat_read(fs, VFSTOUFS(mountp), fs->fs_sblockloc);
 	if (fs->fs_pendingblocks != 0 || fs->fs_pendinginodes != 0) {
 		fs->fs_pendingblocks = 0;
 		fs->fs_pendinginodes = 0;
@@ -627,16 +632,8 @@ loop:
 			vput(vp);
 			return (error);
 		}
-		cp = (caddr_t)bp->b_data +
-		    (ino_to_fsbo(fs, ip->i_number) * DINODE_SIZE);
-#ifdef FFS_EI
-		if (UFS_FSNEEDSWAP(fs))
-			ffs_dinode_swap((struct dinode *)cp,
-			    &ip->i_din.ffs_din);
-		else
-#endif
-			memcpy(&ip->i_din.ffs_din, cp, DINODE_SIZE);
-		ip->i_ffs_effnlink = ip->i_ffs_nlink;
+		ffs_load_inode(bp, ip, fs, ip->i_number);
+		ip->i_ffs_effnlink = ip->i_nlink;
 		brelse(bp);
 		vput(vp);
 		simple_lock(&mntvnode_slock);
@@ -644,6 +641,11 @@ loop:
 	simple_unlock(&mntvnode_slock);
 	return (0);
 }
+
+/*
+ * Possible superblock locations ordered from most to least likely.
+ */
+static int sblock_try[] = SBLOCKSEARCH;
 
 /*
  * Common code for mount and mountroot
@@ -660,15 +662,15 @@ ffs_mountfs(devvp, mp, p)
 	dev_t dev;
 	struct partinfo dpart;
 	void *space;
-	int blks;
+	daddr_t sblockloc, fsblockloc;
+	int blks, fstype;
 	int error, i, size, ronly;
 #ifdef FFS_EI
-	int needswap;
+	int needswap = 0;		/* keep gcc happy */
 #endif
 	int32_t *lp;
 	struct ucred *cred;
-	u_int64_t maxfilesize;					/* XXX */
-	u_int32_t sbsize;
+	u_int32_t sbsize = 8192;	/* keep gcc happy*/
 
 	dev = devvp->v_rdev;
 	cred = p ? p->p_ucred : NOCRED;
@@ -699,24 +701,56 @@ ffs_mountfs(devvp, mp, p)
 
 	bp = NULL;
 	ump = NULL;
-	error = bread(devvp, (daddr_t)(SBOFF / size), SBSIZE, cred, &bp);
-	if (error)
-		goto out;
+	fs = NULL;
+	fsblockloc = sblockloc = 0;
+	fstype = 0;
 
-	fs = (struct fs*)bp->b_data;
-	if (fs->fs_magic == FS_MAGIC) {
-		sbsize = fs->fs_sbsize;
+	/*
+	 * Try reading the superblock in each of its possible locations.		 */
+	for (i = 0; sblock_try[i] != -1; i++) {
+		error = bread(devvp, sblock_try[i] / size, SBLOCKSIZE, cred,
+			      &bp);
+		if (error)
+			goto out;
+		fs = (struct fs*)bp->b_data;
+		fsblockloc = sblockloc = sblock_try[i];
+		if (fs->fs_magic == FS_UFS1_MAGIC) {
+			sbsize = fs->fs_sbsize;
+			fstype = UFS1;
 #ifdef FFS_EI
-		needswap = 0;
-	} else if (fs->fs_magic == bswap32(FS_MAGIC)) {
-		sbsize = bswap32(fs->fs_sbsize);
-		needswap = 1;
+			needswap = 0;
+		} else if (fs->fs_magic == bswap32(FS_UFS1_MAGIC)) {
+			sbsize = bswap32(fs->fs_sbsize);
+			fstype = UFS1;
+			needswap = 1;
 #endif
-	} else {
-		error = EINVAL;
-		goto out;
+		} else if (fs->fs_magic == FS_UFS2_MAGIC) {
+			sbsize = fs->fs_sbsize;
+			fstype = UFS2;
+			fsblockloc = fs->fs_sblockloc;
+#ifdef FFS_EI
+			needswap = 0;
+		} else if (fs->fs_magic == bswap32(FS_UFS2_MAGIC)) {
+			sbsize = bswap32(fs->fs_sbsize);
+			fstype = UFS2;
+			fsblockloc = bswap64(fs->fs_sblockloc);
+			needswap = 1;
+#endif
+		} else {
+			brelse(bp);
+			bp = NULL;
+			continue;
+		}
+
+		if ((fsblockloc == sblockloc ||
+		     (fs->fs_old_flags & FS_FLAGS_UPDATED) == 0)
+		    && sbsize <= MAXBSIZE && sbsize >= sizeof(struct fs))
+			break;
+		brelse(bp);
+		bp = NULL;
 	}
-	if (sbsize > MAXBSIZE || sbsize < sizeof(struct fs)) {
+
+	if (sblock_try[i] == -1) {
 		error = EINVAL;
 		goto out;
 	}
@@ -729,37 +763,22 @@ ffs_mountfs(devvp, mp, p)
 		fs->fs_flags |= FS_SWAPPED;
 	}
 #endif
-	ffs_oldfscompat(fs);
 
-	if (fs->fs_bsize > MAXBSIZE || fs->fs_bsize < sizeof(struct fs)) {
-		error = EINVAL;
-		goto out;
-	}
-	 /* make sure cylinder group summary area is a reasonable size. */
-	if (fs->fs_cgsize == 0 || fs->fs_cpg == 0 ||
-	    fs->fs_ncg > fs->fs_ncyl / fs->fs_cpg + 1 ||
-	    fs->fs_cssize >
-	    fragroundup(fs, fs->fs_ncg * sizeof(struct csum))) {
-		error = EINVAL;		/* XXX needs translation */
-		goto out2;
-	}
 	if (fs->fs_pendingblocks != 0 || fs->fs_pendinginodes != 0) {
 		fs->fs_pendingblocks = 0;
 		fs->fs_pendinginodes = 0;
-	}
-	/* XXX updating 4.2 FFS superblocks trashes rotational layout tables */
-	if (fs->fs_postblformat == FS_42POSTBLFMT && !ronly) {
-		error = EROFS;		/* XXX what should be returned? */
-		goto out2;
 	}
 
 	ump = malloc(sizeof *ump, M_UFSMNT, M_WAITOK);
 	memset(ump, 0, sizeof *ump);
 	ump->um_fs = fs;
-	if (fs->fs_sbsize < SBSIZE)
+	ump->um_fstype = fstype;
+	if (fs->fs_sbsize < SBLOCKSIZE)
 		bp->b_flags |= B_INVAL;
 	brelse(bp);
 	bp = NULL;
+
+	ffs_oldfscompat_read(fs, ump, sblockloc);
 
 	/* First check to see if this is tagged as an Apple UFS filesystem
 	 * in the disklabel
@@ -887,10 +906,6 @@ ffs_mountfs(devvp, mp, p)
 	for (i = 0; i < MAXQUOTAS; i++)
 		ump->um_quotas[i] = NULLVP;
 	devvp->v_specmountpoint = mp;
-	ump->um_savedmaxfilesize = fs->fs_maxfilesize;		/* XXX */
-	maxfilesize = (u_int64_t)0x80000000 * fs->fs_bsize - 1;	/* XXX */
-	if (fs->fs_maxfilesize > maxfilesize)			/* XXX */
-		fs->fs_maxfilesize = maxfilesize;		/* XXX */
 	if (ronly == 0 && (fs->fs_flags & FS_DOSOFTDEP)) {
 		error = softdep_mount(devvp, mp, fs, cred);
 		if (error) {
@@ -916,32 +931,97 @@ out:
 }
 
 /*
- * Sanity checks for old file systems.
+ * Sanity checks for loading old filesystem superblocks.
+ * See ffs_oldfscompat_write below for unwound actions.
  *
- * XXX - goes away some day.
+ * XXX - Parts get retired eventually.
+ * Unfortunately new bits get added.
  */
-int
-ffs_oldfscompat(fs)
+static void
+ffs_oldfscompat_read(fs, ump, sblockloc)
 	struct fs *fs;
+	struct ufsmount *ump;
+	daddr_t sblockloc;
 {
-	int i;
+	off_t maxfilesize;
 
-	fs->fs_npsect = max(fs->fs_npsect, fs->fs_nsect);	/* XXX */
-	fs->fs_interleave = max(fs->fs_interleave, 1);		/* XXX */
-	if (fs->fs_postblformat == FS_42POSTBLFMT)		/* XXX */
-		fs->fs_nrpos = 8;				/* XXX */
-	if (fs->fs_inodefmt < FS_44INODEFMT) {			/* XXX */
-		u_int64_t sizepb = fs->fs_bsize;		/* XXX */
-								/* XXX */
-		fs->fs_maxfilesize = fs->fs_bsize * NDADDR - 1;	/* XXX */
-		for (i = 0; i < NIADDR; i++) {			/* XXX */
-			sizepb *= NINDIR(fs);			/* XXX */
-			fs->fs_maxfilesize += sizepb;		/* XXX */
-		}						/* XXX */
-		fs->fs_qbmask = ~fs->fs_bmask;			/* XXX */
-		fs->fs_qfmask = ~fs->fs_fmask;			/* XXX */
-	}							/* XXX */
-	return (0);
+	/*
+	 * If not yet done, update fs_flags location and value of fs_sblockloc.
+	 */
+	if ((fs->fs_old_flags & FS_FLAGS_UPDATED) == 0) {
+		fs->fs_flags = fs->fs_old_flags;
+		fs->fs_old_flags |= FS_FLAGS_UPDATED;
+		fs->fs_sblockloc = sblockloc;
+	}
+	/*
+	 * If not yet done, update UFS1 superblock with new wider fields.
+	 */
+	if (fs->fs_magic == FS_UFS1_MAGIC && fs->fs_size != fs->fs_old_size) {
+		fs->fs_maxbsize = fs->fs_bsize;
+		fs->fs_time = fs->fs_old_time;
+		fs->fs_size = fs->fs_old_size;
+		fs->fs_dsize = fs->fs_old_dsize;
+		fs->fs_csaddr = fs->fs_old_csaddr;
+		fs->fs_cstotal.cs_ndir = fs->fs_old_cstotal.cs_ndir;
+		fs->fs_cstotal.cs_nbfree = fs->fs_old_cstotal.cs_nbfree;
+		fs->fs_cstotal.cs_nifree = fs->fs_old_cstotal.cs_nifree;
+		fs->fs_cstotal.cs_nffree = fs->fs_old_cstotal.cs_nffree;
+	}
+	if (fs->fs_magic == FS_UFS1_MAGIC &&
+	    fs->fs_old_inodefmt < FS_44INODEFMT) {
+		fs->fs_maxfilesize = (u_quad_t) 1LL << 39;
+		fs->fs_qbmask = ~fs->fs_bmask;
+		fs->fs_qfmask = ~fs->fs_fmask;
+	}
+	if (fs->fs_magic == FS_UFS1_MAGIC) {
+		ump->um_savedmaxfilesize = fs->fs_maxfilesize;
+		maxfilesize = (u_int64_t)0x80000000 * fs->fs_bsize - 1;
+		if (fs->fs_maxfilesize > maxfilesize)
+			fs->fs_maxfilesize = maxfilesize;
+	}
+	/* Compatibility for old filesystems */
+	if (fs->fs_avgfilesize <= 0)
+		fs->fs_avgfilesize = AVFILESIZ;
+	if (fs->fs_avgfpdir <= 0)
+		fs->fs_avgfpdir = AFPDIR;
+#if 0
+	if (bigcgs) {
+		fs->fs_save_cgsize = fs->fs_cgsize;
+		fs->fs_cgsize = fs->fs_bsize;
+	}
+#endif
+}
+
+/*
+ * Unwinding superblock updates for old filesystems.
+ * See ffs_oldfscompat_read above for details.
+ *
+ * XXX - Parts get retired eventually.
+ * Unfortunately new bits get added.
+ */
+static void
+ffs_oldfscompat_write(fs, ump)
+	struct fs *fs;
+	struct ufsmount *ump;
+{
+
+	/*
+	 * Copy back UFS2 updated fields that UFS1 inspects.
+	 */
+	if (fs->fs_magic == FS_UFS1_MAGIC) {
+		fs->fs_old_time = fs->fs_time;
+		fs->fs_old_cstotal.cs_ndir = fs->fs_cstotal.cs_ndir;
+		fs->fs_old_cstotal.cs_nbfree = fs->fs_cstotal.cs_nbfree;
+		fs->fs_old_cstotal.cs_nifree = fs->fs_cstotal.cs_nifree;
+		fs->fs_old_cstotal.cs_nffree = fs->fs_cstotal.cs_nffree;
+		fs->fs_maxfilesize = ump->um_savedmaxfilesize;
+	}
+#if 0
+	if (bigcgs) {
+		fs->fs_cgsize = fs->fs_save_cgsize;
+		fs->fs_save_cgsize = 0;
+	}
+#endif
 }
 
 /*
@@ -971,7 +1051,8 @@ ffs_unmount(mp, mntflags, p)
 	ump = VFSTOUFS(mp);
 	fs = ump->um_fs;
 	if (fs->fs_pendingblocks != 0 || fs->fs_pendinginodes != 0) {
-		printf("%s: unmount pending error: blocks %d files %d\n",
+		printf("%s: unmount pending error: blocks %" PRId64
+		       " files %d\n",
 		    fs->fs_fsmnt, fs->fs_pendingblocks, fs->fs_pendinginodes);
 		fs->fs_pendingblocks = 0;
 		fs->fs_pendinginodes = 0;
@@ -1067,8 +1148,6 @@ ffs_statfs(mp, sbp, p)
 
 	ump = VFSTOUFS(mp);
 	fs = ump->um_fs;
-	if (fs->fs_magic != FS_MAGIC)
-		panic("ffs_statfs");
 #ifdef COMPAT_09
 	sbp->f_type = 1;
 #else
@@ -1202,7 +1281,6 @@ ffs_vget(mp, ino, vpp)
 	struct vnode *vp;
 	dev_t dev;
 	int error;
-	caddr_t cp;
 
 	ump = VFSTOUFS(mp);
 	dev = ump->um_dev;
@@ -1237,6 +1315,7 @@ ffs_vget(mp, ino, vpp)
 	memset(ip, 0, sizeof(struct inode));
 	vp->v_data = ip;
 	ip->i_vnode = vp;
+	ip->i_ump = ump;
 	ip->i_fs = fs = ump->um_fs;
 	ip->i_dev = dev;
 	ip->i_number = ino;
@@ -1277,17 +1356,15 @@ ffs_vget(mp, ino, vpp)
 		*vpp = NULL;
 		return (error);
 	}
-	cp = (caddr_t)bp->b_data + (ino_to_fsbo(fs, ino) * DINODE_SIZE);
-#ifdef FFS_EI
-	if (UFS_FSNEEDSWAP(fs))
-		ffs_dinode_swap((struct dinode *)cp, &ip->i_din.ffs_din);
-	else 
-#endif
-		memcpy(&ip->i_din.ffs_din, cp, DINODE_SIZE);
+	if (ip->i_ump->um_fstype == UFS1)
+		ip->i_din.ffs1_din = pool_get(&ffs_dinode1_pool, PR_WAITOK);
+	else
+		ip->i_din.ffs2_din = pool_get(&ffs_dinode2_pool, PR_WAITOK);
+	ffs_load_inode(bp, ip, fs, ino);
 	if (DOINGSOFTDEP(vp))
 		softdep_load_inodeblock(ip);
 	else
-		ip->i_ffs_effnlink = ip->i_ffs_nlink;
+		ip->i_ffs_effnlink = ip->i_nlink;
 	brelse(bp);
 
 	/*
@@ -1310,11 +1387,11 @@ ffs_vget(mp, ino, vpp)
 	 * fix until fsck has been changed to do the update.
 	 */
 
-	if (fs->fs_inodefmt < FS_44INODEFMT) {			/* XXX */
-		ip->i_ffs_uid = ip->i_din.ffs_din.di_ouid;	/* XXX */
-		ip->i_ffs_gid = ip->i_din.ffs_din.di_ogid;	/* XXX */
+	if (fs->fs_old_inodefmt < FS_44INODEFMT) {		/* XXX */
+		ip->i_uid = ip->i_ffs1_ouid;			/* XXX */
+		ip->i_gid = ip->i_ffs1_ogid;			/* XXX */
 	}							/* XXX */
-	uvm_vnp_setsize(vp, ip->i_ffs_size);
+	uvm_vnp_setsize(vp, ip->i_size);
 	*vpp = vp;
 	return (0);
 }
@@ -1362,7 +1439,7 @@ ffs_vptofh(vp, fhp)
 	ufhp = (struct ufid *)fhp;
 	ufhp->ufid_len = sizeof(struct ufid);
 	ufhp->ufid_ino = ip->i_number;
-	ufhp->ufid_gen = ip->i_ffs_gen;
+	ufhp->ufid_gen = ip->i_gen;
 	return (0);
 }
 
@@ -1377,6 +1454,10 @@ ffs_init()
 
 	pool_init(&ffs_inode_pool, sizeof(struct inode), 0, 0, 0, "ffsinopl",
 	    &pool_allocator_nointr);
+	pool_init(&ffs_dinode1_pool, sizeof(struct ufs1_dinode), 0, 0, 0,
+	    "dino1pl", &pool_allocator_nointr);
+	pool_init(&ffs_dinode2_pool, sizeof(struct ufs2_dinode), 0, 0, 0,
+	    "dino2pl", &pool_allocator_nointr);
 }
 
 void
@@ -1436,42 +1517,38 @@ ffs_sbupdate(mp, waitfor)
 {
 	struct fs *fs = mp->um_fs;
 	struct buf *bp;
-	int i, error = 0;
-	int32_t saved_nrpos = fs->fs_nrpos;
-	int64_t saved_qbmask = fs->fs_qbmask;
-	int64_t saved_qfmask = fs->fs_qfmask;
-	u_int64_t saved_maxfilesize = fs->fs_maxfilesize;
-	u_int8_t saveflag;
+	int error = 0;
+	u_int32_t saveflag;
 
-	/* Restore compatibility to old file systems.		   XXX */
-	if (fs->fs_postblformat == FS_42POSTBLFMT)		/* XXX */
-		fs->fs_nrpos = -1;		/* XXX */
-	if (fs->fs_inodefmt < FS_44INODEFMT) {			/* XXX */
-		int32_t *lp, tmp;				/* XXX */
-								/* XXX */
-		lp = (int32_t *)&fs->fs_qbmask;	/* XXX nuke qfmask too */
-		tmp = lp[4];					/* XXX */
-		for (i = 4; i > 0; i--)				/* XXX */
-			lp[i] = lp[i-1];			/* XXX */
-		lp[0] = tmp;					/* XXX */
-	}							/* XXX */
-	fs->fs_maxfilesize = mp->um_savedmaxfilesize;	/* XXX */
-
-	bp = getblk(mp->um_devvp, SBOFF >> (fs->fs_fshift - fs->fs_fsbtodb),
+	bp = getblk(mp->um_devvp,
+	    fs->fs_sblockloc >> (fs->fs_fshift - fs->fs_fsbtodb),
 	    (int)fs->fs_sbsize, 0, 0);
 	saveflag = fs->fs_flags & FS_INTERNAL;
 	fs->fs_flags &= ~FS_INTERNAL;
+
+	if (fs->fs_magic == FS_UFS1_MAGIC && fs->fs_sblockloc != SBLOCK_UFS1 &&
+	    (fs->fs_flags & FS_FLAGS_UPDATED) == 0) {
+		printf("%s: correcting fs_sblockloc from %" PRId64 " to %d\n",
+		    fs->fs_fsmnt, fs->fs_sblockloc, SBLOCK_UFS1);
+		fs->fs_sblockloc = SBLOCK_UFS1;
+	}
+
+	if (fs->fs_magic == FS_UFS2_MAGIC && fs->fs_sblockloc != SBLOCK_UFS2 &&
+	    (fs->fs_flags & FS_FLAGS_UPDATED) == 0) {
+		printf("%s: correcting fs_sblockloc from %" PRId64 " to %d\n",
+		    fs->fs_fsmnt, fs->fs_sblockloc, SBLOCK_UFS2);
+		fs->fs_sblockloc = SBLOCK_UFS2;
+	}
+
 	memcpy(bp->b_data, fs, fs->fs_sbsize);
+
+	ffs_oldfscompat_write((struct fs *)bp->b_data, mp);
 #ifdef FFS_EI
 	if (mp->um_flags & UFS_NEEDSWAP)
 		ffs_sb_swap(fs, (struct fs*)bp->b_data);
 #endif
 
 	fs->fs_flags |= saveflag;
-	fs->fs_nrpos = saved_nrpos; /* XXX */
-	fs->fs_qbmask = saved_qbmask; /* XXX */
-	fs->fs_qfmask = saved_qfmask; /* XXX */
-	fs->fs_maxfilesize = saved_maxfilesize; /* XXX */
 
 	if (waitfor == MNT_WAIT)
 		error = bwrite(bp);

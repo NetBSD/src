@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.88 2003/03/20 14:11:46 yamt Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.89 2003/04/02 10:39:42 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.88 2003/03/20 14:11:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.89 2003/04/02 10:39:42 fvdl Exp $");
 
 #ifndef LFS
 # define LFS		/* for prototypes in syscallargs.h */
@@ -264,7 +264,7 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 		return (ENOENT);
 
 	fs = VFSTOUFS(mntp)->um_lfs;
-	maxino = (fragstoblks(fs, fsbtofrags(fs, VTOI(fs->lfs_ivnode)->i_ffs_blocks)) -
+	maxino = (fragstoblks(fs, fsbtofrags(fs, VTOI(fs->lfs_ivnode)->i_ffs1_blocks)) -
 		      fs->lfs_cleansz - fs->lfs_segtabsz) * fs->lfs_ifpb;
 
 	cnt = blkcnt;
@@ -511,7 +511,7 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 		/*
 		 * XXX should account indirect blocks and ifile pages as well
 		 */
-		if (nblkwritten + lblkno(fs, ninowritten * DINODE_SIZE)
+		if (nblkwritten + lblkno(fs, ninowritten * sizeof (struct ufs1_dinode))
 		    > LFS_MARKV_MAX_BLOCKS) {
 #ifdef DEBUG_LFS
 			printf("lfs_markv: writing %d blks %d inos\n",
@@ -1067,10 +1067,10 @@ lfs_fasthashget(dev_t dev, ino_t ino, struct vnode **vpp)
 }
 
 int
-lfs_fastvget(struct mount *mp, ino_t ino, daddr_t daddr, struct vnode **vpp, struct dinode *dinp)
+lfs_fastvget(struct mount *mp, ino_t ino, daddr_t daddr, struct vnode **vpp, struct ufs1_dinode *dinp)
 {
 	struct inode *ip;
-	struct dinode *dip;
+	struct ufs1_dinode *dip;
 	struct vnode *vp;
 	struct ufsmount *ump;
 	dev_t dev;
@@ -1135,7 +1135,7 @@ lfs_fastvget(struct mount *mp, ino_t ino, daddr_t daddr, struct vnode **vpp, str
 
 	/* Read in the disk contents for the inode, copy into the inode. */
 	if (dinp) {
-		error = copyin(dinp, &ip->i_din.ffs_din, DINODE_SIZE);
+		error = copyin(dinp, ip->i_din.ffs1_din, sizeof (struct ufs1_dinode));
 		if (error) {
 			printf("lfs_fastvget: dinode copyin failed for ino %d\n", ino);
 			ufs_ihashrem(ip);
@@ -1180,10 +1180,9 @@ lfs_fastvget(struct mount *mp, ino_t ino, daddr_t daddr, struct vnode **vpp, str
 			printf("lfs_fastvget: dinode not found, retrying...\n");
 			goto again;
 		}
-		ip->i_din.ffs_din = *dip;
+		*ip->i_din.ffs1_din = *dip;
 		brelse(bp);
 	}
-
 	lfs_vinit(mp, vp);
 
 	*vpp = vp;

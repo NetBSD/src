@@ -1,4 +1,4 @@
-/* $NetBSD: pass2.c,v 1.7 2003/03/28 08:09:54 perseant Exp $	 */
+/* $NetBSD: pass2.c,v 1.8 2003/04/02 10:39:28 fvdl Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -64,12 +64,12 @@ static int blksort(const void *, const void *);
 void
 pass2()
 {
-	struct dinode *dp;
+	struct ufs1_dinode *dp;
 	struct uvnode *vp;
 	struct inoinfo **inpp, *inp;
 	struct inoinfo **inpend;
 	struct inodesc curino;
-	struct dinode dino;
+	struct ufs1_dinode dino;
 	char pathbuf[MAXPATHLEN + 1];
 
 	switch (statemap[ROOTINO]) {
@@ -158,7 +158,7 @@ pass2()
 				inodirty(VTOI(vp));
 			}
 		}
-		memset(&dino, 0, sizeof(struct dinode));
+		memset(&dino, 0, sizeof(struct ufs1_dinode));
 		dino.di_mode = IFDIR;
 		dino.di_size = inp->i_isize;
 		memcpy(&dino.di_db[0], &inp->i_blks[0], (size_t) inp->i_numblks);
@@ -207,7 +207,7 @@ pass2check(struct inodesc * idesc)
 	register struct direct *dirp = idesc->id_dirp;
 	register struct inoinfo *inp;
 	int n, entrysize, ret = 0;
-	struct dinode *dp;
+	struct ufs1_dinode *dp;
 	char *errmsg;
 	struct direct proto;
 	char namebuf[MAXPATHLEN + 1];

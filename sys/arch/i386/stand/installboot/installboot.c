@@ -1,4 +1,4 @@
-/* $NetBSD: installboot.c,v 1.17 2003/01/24 21:55:13 fvdl Exp $	 */
+/* $NetBSD: installboot.c,v 1.18 2003/04/02 10:39:32 fvdl Exp $	 */
 
 /*
  * Copyright (c) 1994 Paul Kranenburg
@@ -74,20 +74,24 @@ ino_t save_passthru __P((char *, char *, char *, unsigned int));
 static void usage __P((void));
 int main __P((int, char **));
 
+struct ofraglist *ofraglist;
 struct fraglist *fraglist;
 
 struct nlist nl[] = {
 #define X_fraglist	0
 #define X_boottimeout	1
 #define X_bootpasswd	2
+#define X_fraglist64	3
 #ifdef __ELF__
 	{{"fraglist"}},
 	{{"boottimeout"}},
 	{{"bootpasswd"}},
+	{{"fraglist64"}},
 #else
 	{{"_fraglist"}},
 	{{"_boottimeout"}},
 	{{"_bootpasswd"}},
+	{{"_fraglist64"}},
 #endif
 	{{NULL}}
 };
@@ -102,7 +106,8 @@ loadprotoblocks(fname, size)
 	size_t *size;
 {
 	int fd;
-	u_long marks[MARK_MAX], bp;
+	u_long marks[MARK_MAX], bp, value;
+	int maxentries;
 
 	fd = -1;
 
@@ -112,7 +117,8 @@ loadprotoblocks(fname, size)
 		return NULL;
 	}
 
-	if (nl[X_fraglist].n_value == 0) {
+	if (nl[X_fraglist].n_value == 0 &&
+	    nl[X_fraglist64].n_value == 0) {
 		/* fraglist is mandatory, other stuff is optional */
 		warnx("nlist: no fraglist");
 		return NULL;
@@ -129,21 +135,33 @@ loadprotoblocks(fname, size)
 		return NULL;
 	(void)close(fd);
 
-	/* NOSTRICT */
-	fraglist = (struct fraglist *) (bp + nl[X_fraglist].n_value);
-
-	if (fraglist->magic != FRAGLISTMAGIC) {
-		warnx("invalid bootblock version");
-		goto bad;
+	if (nl[X_fraglist64].n_value != 0) {
+		/* NOSTRICT */
+		value = nl[X_fraglist64].n_value;
+		fraglist = (struct fraglist *)(bp + value);
+		if (fraglist->magic != FRAGLISTMAGIC) {
+			warnx("invalid bootblock version");
+			goto bad;
+		}
+		maxentries = fraglist->maxentries;
+	} else {
+		/* NOSTRICT */
+		value = nl[X_fraglist].n_value;
+		ofraglist = (struct ofraglist *) (bp + value);
+		if (ofraglist->magic != OFRAGLISTMAGIC) {
+			warnx("invalid bootblock version");
+			goto bad;
+		}
+		maxentries = ofraglist->maxentries;
 	}
+
 	if (verbose) {
 		(void) fprintf(stderr, "%s: entry point %#lx\n", fname,
 			       marks[MARK_ENTRY]);
 		(void) fprintf(stderr, "proto bootblock size %ld\n",
 			       (long)*size);
 		(void) fprintf(stderr, "room for %d filesystem blocks"
-			       " at %#lx\n", fraglist->maxentries,
-			       nl[X_fraglist].n_value);
+			       " at %#lx\n", maxentries, value);
 	}
 	return (char *) bp;
 bad:
@@ -190,29 +208,55 @@ add_fsblk(fs, blk, blcnt)
 		(void) fprintf(stderr, "dblk: %lld, num: %lld\n",
 		    (long long)blk, (long long)nblk);
 
-	/* start new entry or append to previous? */
-	if (!fraglist->numentries ||
-	    (fraglist->entries[fraglist->numentries - 1].offset
-	     + fraglist->entries[fraglist->numentries - 1].num != blk)) {
+	/*
+	 * Can only handle 32 bits worth in the old format.
+	 */
+	if (fraglist == NULL && blk > 0xffffffff)
+		errx(1, "block %lld out of range", (long long)blk);
 
-		/* need new entry */
-	        if (fraglist->numentries > fraglist->maxentries - 1) {
-			errx(1, "not enough fragment space in bootcode");
-			return (-1);
+	if (fraglist != NULL) {
+		/* start new entry or append to previous? */
+		if (!fraglist->numentries ||
+		    (fraglist->entries[fraglist->numentries - 1].offset
+		     + fraglist->entries[fraglist->numentries - 1].num != blk)){
+	
+			/* need new entry */
+		        if (fraglist->numentries > fraglist->maxentries - 1) {
+				errx(1, "not enough fragment space in bootcode");
+				return (-1);
+			}
+	
+			fraglist->entries[fraglist->numentries].offset = blk;
+			fraglist->entries[fraglist->numentries++].num = 0;
 		}
-
-		fraglist->entries[fraglist->numentries].offset = blk;
-		fraglist->entries[fraglist->numentries++].num = 0;
+		fraglist->entries[fraglist->numentries - 1].num += nblk;
+	} else {
+		/* start new entry or append to previous? */
+		if (!ofraglist->numentries ||
+		   (ofraglist->entries[ofraglist->numentries - 1].offset
+		    +ofraglist->entries[ofraglist->numentries - 1].num != blk)){
+	
+			/* need new entry */
+		        if (ofraglist->numentries > ofraglist->maxentries - 1) {
+				errx(1, "not enough fragment space in bootcode");
+				return (-1);
+			}
+	
+			ofraglist->entries[ofraglist->numentries].offset = blk;
+			ofraglist->entries[ofraglist->numentries++].num = 0;
+		}
+		ofraglist->entries[ofraglist->numentries - 1].num += nblk;
 	}
-	fraglist->entries[fraglist->numentries - 1].num += nblk;
 
 	return (blcnt - nblk);
 }
 
 static union {
-	char c[SBSIZE];
+	char c[SBLOCKSIZE];
 	struct fs s;
 } sblock;
+
+const daddr_t sblock_try[] = SBLOCKSEARCH;
 
 int
 setup_ffs_blks(diskdev, inode)
@@ -223,11 +267,16 @@ setup_ffs_blks(diskdev, inode)
 	struct fs *fs;
 	char *buf = 0;
 	daddr_t blk;
-	/* XXX ondisk32 */
-	int32_t *ap;
-	struct dinode *ip;
+	int32_t *ap32;
+	int64_t *ap64;
+	struct ufs1_dinode *ip1;
+	struct ufs2_dinode *ip2;
 	int i, ndb;
-	int allok = 0;
+	int allok = 0, is_ufs2 = 0;
+
+	fs = NULL;
+	ip1 = NULL;
+	ip2 = NULL;
 
 	devfd = open(diskdev, O_RDONLY, 0);
 	if (devfd < 0) {
@@ -235,14 +284,24 @@ setup_ffs_blks(diskdev, inode)
 		return (1);
 	}
 	/* Read superblock */
-	if (devread(devfd, &sblock, SBLOCK, SBSIZE, "superblock"))
-		goto out;
-	fs = &sblock.s;
+	for (i = 0; sblock_try[i] != -1; i++) {
+		if (devread(devfd, &sblock, sblock_try[i] / DEV_BSIZE,
+		    SBLOCKSIZE, "superblock"))
+			continue;
+		fs = &sblock.s;
+		if (fs->fs_magic == FS_UFS1_MAGIC)
+			break;
+		if (fs->fs_magic == FS_UFS2_MAGIC) {
+			is_ufs2 = 1;
+			break;
+		}
+	}
 
-	if (fs->fs_magic != FS_MAGIC) {
+	if (sblock_try[i] == -1) {
 		warnx("invalid super block");
 		goto out;
 	}
+
 	/* Read inode */
 	if ((buf = malloc((size_t)fs->fs_bsize)) == NULL) {
 		warnx("No memory for filesystem block");
@@ -251,36 +310,64 @@ setup_ffs_blks(diskdev, inode)
 	blk = fsbtodb(fs, ino_to_fsba(fs, inode));
 	if (devread(devfd, buf, blk, (size_t)fs->fs_bsize, "inode"))
 		goto out;
-	ip = (struct dinode *)buf + ino_to_fsbo(fs, inode);
+	if (is_ufs2) {
+		ip2 = (struct ufs2_dinode *)buf + ino_to_fsbo(fs, inode);
+		ndb = (int)(ip2->di_size / DEV_BSIZE);	/* size is rounded! */
+	} else {
+		ip1 = (struct ufs1_dinode *)buf + ino_to_fsbo(fs, inode);
+		ndb = (int)(ip1->di_size / DEV_BSIZE);	/* size is rounded! */
+	}
 
 	/*
 	 * Have the inode.  Figure out how many blocks we need.
 	 */
-	ndb = (int)(ip->di_size / DEV_BSIZE);	/* size is rounded! */
 
 	if (verbose)
 		(void) fprintf(stderr, "Will load %d blocks.\n", ndb);
 
-	/*
-	 * Get the block numbers, first direct blocks
-	 */
-	ap = ip->di_db;
-	for (i = 0; i < NDADDR && *ap && ndb > 0; i++, ap++)
-		ndb = add_fsblk(fs, *ap, ndb);
-
-	if (ndb > 0) {
+	if (is_ufs2) {
 		/*
-	         * Just one level of indirections; there isn't much room
-	         * for more in the 1st-level bootblocks anyway.
-	         */
-		blk = fsbtodb(fs, ip->di_ib[0]);
-		if (devread(devfd, buf, blk, (size_t)fs->fs_bsize,
-			    "indirect block"))
-			goto out;
-		/* XXX ondisk32 */
-		ap = (int32_t *) buf;
-		for (; i < NINDIR(fs) && *ap && ndb > 0; i++, ap++) {
-			ndb = add_fsblk(fs, *ap, ndb);
+		 * Get the block numbers, first direct blocks
+		 */
+		ap64 = ip2->di_db;
+		for (i = 0; i < NDADDR && *ap64 && ndb > 0; i++, ap64++)
+			ndb = add_fsblk(fs, *ap64, ndb);
+	
+		if (ndb > 0) {
+			/*
+		         * Just one level of indirections; there isn't much room
+		         * for more in the 1st-level bootblocks anyway.
+		         */
+			blk = fsbtodb(fs, ip2->di_ib[0]);
+			if (devread(devfd, buf, blk, (size_t)fs->fs_bsize,
+				    "indirect block"))
+				goto out;
+			ap64 = (int64_t *) buf;
+			for (; i < NINDIR(fs) && *ap64 && ndb > 0; i++, ap64++){
+				ndb = add_fsblk(fs, *ap64, ndb);
+			}
+		}
+	} else {
+		/*
+		 * Get the block numbers, first direct blocks
+		 */
+		ap32 = ip1->di_db;
+		for (i = 0; i < NDADDR && *ap32 && ndb > 0; i++, ap32++)
+			ndb = add_fsblk(fs, *ap32, ndb);
+	
+		if (ndb > 0) {
+			/*
+		         * Just one level of indirections; there isn't much room
+		         * for more in the 1st-level bootblocks anyway.
+		         */
+			blk = fsbtodb(fs, ip1->di_ib[0]);
+			if (devread(devfd, buf, blk, (size_t)fs->fs_bsize,
+				    "indirect block"))
+				goto out;
+			ap32 = (int32_t *) buf;
+			for (; i < NINDIR(fs) && *ap32 && ndb > 0; i++, ap32++){
+				ndb = add_fsblk(fs, *ap32, ndb);
+			}
 		}
 	}
 
@@ -308,9 +395,12 @@ save_ffs(diskdev, bootblkname, bp, size)
 	unsigned int size;
 {
 	ino_t inode = -2;
+	int loadsz;
+
+	loadsz = fraglist != NULL ? fraglist->loadsz : ofraglist->loadsz;
 
 	/* do we need the fraglist? */
-	if (size > fraglist->loadsz * DEV_BSIZE) {
+	if (size > loadsz * DEV_BSIZE) {
 
 		inode = createfileondev(diskdev, bootblkname, bp, size);
 		if (inode == (ino_t)-1)
@@ -334,14 +424,18 @@ setup_contig_blocks(diskdev, blkno, bp, size)
 {
 	int i, ndb, rdb, db;
 	int tableblksize = 8;
+	int maxentries;
 
 	ndb = howmany(size, tableblksize * DEV_BSIZE);
 	rdb = howmany(size, DEV_BSIZE);
+
+	maxentries = fraglist != NULL ? fraglist->maxentries :
+	    ofraglist->maxentries;
 	
 	if (verbose)
 		printf("%s: block number %d, size %u table blocks: %d/%d\n",
-		       diskdev, blkno, size, ndb, fraglist->maxentries);
-	if (ndb > fraglist->maxentries) {
+		       diskdev, blkno, size, ndb, maxentries);
+	if (ndb > maxentries) {
 		errx(1, "not enough fragment space in bootcode");
 		return (-1);
 	}
@@ -354,9 +448,15 @@ setup_contig_blocks(diskdev, blkno, bp, size)
 			db = rdb;
 		rdb -= tableblksize;
 
-		fraglist->numentries = i+1;
-		fraglist->entries[i].offset = blkno;
-		fraglist->entries[i].num = db;
+		if (fraglist != NULL) {
+			fraglist->numentries = i+1;
+			fraglist->entries[i].offset = blkno;
+			fraglist->entries[i].num = db;
+		} else {
+			ofraglist->numentries = i+1;
+			ofraglist->entries[i].offset = blkno;
+			ofraglist->entries[i].num = db;
+		}
 		if (verbose)
 			printf(" %d", blkno);
 
@@ -444,6 +544,7 @@ main(argc, argv)
 	int timeout = -1;
 	char *bootpasswd = 0;
 	ino_t (*save_func) __P((char *, char *, char *, unsigned int));
+	int loadsz;
 
 	while ((c = getopt(argc, argv, "b:vnft:p:")) != -1) {
 		switch (c) {
@@ -507,7 +608,13 @@ main(argc, argv)
 		}
 	}
 
-	fraglist->numentries = 0;
+	if (fraglist != NULL) {
+		fraglist->numentries = 0;
+		loadsz = fraglist->loadsz;
+	} else {
+		ofraglist->numentries = 0;
+		loadsz = ofraglist->loadsz;
+	}
 
 	if (conblockmode)
 		save_func = save_passthru;
@@ -516,12 +623,12 @@ main(argc, argv)
 
 	if ((inode = (*save_func)(argv[optind + 1],
 				  bootblkname,
-				  bp + fraglist->loadsz * DEV_BSIZE,
-				  size - fraglist->loadsz * DEV_BSIZE))
+				  bp + loadsz * DEV_BSIZE,
+				  size - loadsz * DEV_BSIZE))
 	    == (ino_t)-1)
 		goto out;
 
-	size = fraglist->loadsz * DEV_BSIZE;
+	size = loadsz * DEV_BSIZE;
 	/* size to be written to bootsect */
 
 	devfd = open(argv[optind + 1], O_RDWR, 0);
@@ -557,8 +664,13 @@ main(argc, argv)
 	/*
          * add offset of BSD partition to fraglist entries
          */
-	for (i = 0; i < fraglist->numentries; i++)
-		fraglist->entries[i].offset += bsdoffs;
+	if (fraglist != NULL) {
+		for (i = 0; i < fraglist->numentries; i++)
+			fraglist->entries[i].offset += bsdoffs;
+	} else {
+		for (i = 0; i < ofraglist->numentries; i++)
+			ofraglist->entries[i].offset += bsdoffs;
+	}
 
 	if (!nowrite) {
 		/*

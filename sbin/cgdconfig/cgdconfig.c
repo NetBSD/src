@@ -1,4 +1,4 @@
-/* $NetBSD: cgdconfig.c,v 1.6 2003/03/24 03:12:22 elric Exp $ */
+/* $NetBSD: cgdconfig.c,v 1.7 2003/04/02 10:39:23 fvdl Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 __COPYRIGHT(
 "@(#) Copyright (c) 2002, 2003\
 	The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: cgdconfig.c,v 1.6 2003/03/24 03:12:22 elric Exp $");
+__RCSID("$NetBSD: cgdconfig.c,v 1.7 2003/04/02 10:39:23 fvdl Exp $");
 #endif
 
 #include <err.h>
@@ -599,23 +599,32 @@ verify_disklabel(int fd)
 	return disklabel_scan(&l, buf, sizeof(buf));
 }
 
+static off_t sblock_try[] = SBLOCKSEARCH;
+
 static int
 verify_ffs(int fd)
 {
 	struct	fs *fs;
-	int	ret;
-	char	buf[SBSIZE];
+	int	ret, i;
+	char	buf[SBLOCKSIZE];
 
-	ret = pread(fd, buf, SBSIZE, SBOFF);
-	fs = (struct fs *)buf;
-	if (ret == -1) {
-		warn("pread");
-		return 0;
+	for (i = 0; sblock_try[i] != -1; i++) {
+		ret = pread(fd, buf, sizeof(buf), sblock_try[i]);
+		if (ret == -1) {
+			warn("pread");
+			return 0;
+		}
+		fs = (struct fs *)buf;
+		switch (fs->fs_magic) {
+		case FS_UFS1_MAGIC:
+		case FS_UFS2_MAGIC:
+		case FS_UFS1_MAGIC_SWAPPED:
+		case FS_UFS2_MAGIC_SWAPPED:
+			return 0;
+		default:
+			continue;
+		}
 	}
-	if (fs->fs_magic == FS_MAGIC)
-		return 0;
-	if (fs->fs_magic == bswap32(FS_MAGIC))
-		return 0;
 	return 1;
 }
 

@@ -1,6 +1,15 @@
-/*	$NetBSD: dinode.h,v 1.16 2003/01/24 21:55:29 fvdl Exp $	*/
+/*	$NetBSD: dinode.h,v 1.17 2003/04/02 10:39:43 fvdl Exp $	*/
 
 /*
+ * Copyright (c) 2002 Networks Associates Technology, Inc.
+ * All rights reserved.
+ *
+ * This software was developed for the FreeBSD Project by Marshall
+ * Kirk McKusick and Network Associates Laboratories, the Security
+ * Research Division of Network Associates, Inc. under DARPA/SPAWAR
+ * contract N66001-01-C-8035 ("CBOSS"), as part of the DARPA CHATS
+ * research program
+ *
  * Copyright (c) 1982, 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
  * (c) UNIX System Laboratories, Inc.
@@ -66,10 +75,11 @@
  * are defined by types with precise widths.
  */
 
+#define NXADDR	2
 #define	NDADDR	12			/* Direct addresses in inode. */
 #define	NIADDR	3			/* Indirect addresses in inode. */
 
-struct dinode {
+struct ufs1_dinode {
 	u_int16_t	di_mode;	/*   0: IFMT, permissions; see below. */
 	int16_t		di_nlink;	/*   2: File link count. */
 	union {
@@ -93,6 +103,32 @@ struct dinode {
 	int32_t		di_spare[2];	/* 120: Reserved; currently unused */
 };
 
+struct ufs2_dinode {
+	u_int16_t	di_mode;	/*   0: IFMT, permissions; see below. */
+	int16_t		di_nlink;	/*   2: File link count. */
+	u_int32_t	di_uid;		/*   4: File owner. */
+	u_int32_t	di_gid;		/*   8: File group. */
+	u_int32_t	di_blksize;	/*  12: Inode blocksize. */
+	u_int64_t	di_size;	/*  16: File byte count. */
+	u_int64_t	di_blocks;	/*  24: Bytes actually held. */
+	int64_t		di_atime;	/*  32: Last access time. */
+	int64_t		di_mtime;	/*  40: Last modified time. */
+	int64_t		di_ctime;	/*  48: Last inode change time. */
+	int64_t		di_birthtime;	/*  56: Inode creation time. */
+	int32_t		di_mtimensec;	/*  64: Last modified time. */
+	int32_t		di_atimensec;	/*  68: Last access time. */
+	int32_t		di_ctimensec;	/*  72: Last inode change time. */
+	int32_t		di_birthnsec;	/*  76: Inode creation time. */
+	int32_t		di_gen;		/*  80: Generation number. */
+	u_int32_t	di_kernflags;	/*  84: Kernel flags. */
+	u_int32_t	di_flags;	/*  88: Status flags (chflags). */
+	int32_t		di_extsize;	/*  92: External attributes block. */
+	int64_t		di_extb[NXADDR];/*  96: External attributes block. */
+	int64_t		di_db[NDADDR];	/* 112: Direct disk blocks. */
+	int64_t		di_ib[NIADDR];	/* 208: Indirect disk blocks. */
+	int64_t		di_spare[3];	/* 232: Reserved; currently unused */
+};
+
 /*
  * The di_db fields may be overlaid with other information for
  * file types that do not have associated disk storage. Block
@@ -104,8 +140,12 @@ struct dinode {
 #define	di_ogid		di_u.oldids[1]
 #define	di_ouid		di_u.oldids[0]
 #define	di_rdev		di_db[0]
-#define	di_shortlink	di_db
-#define	MAXSYMLINKLEN	((NDADDR + NIADDR) * sizeof(int32_t))
+#define MAXSYMLINKLEN_UFS1	((NDADDR + NIADDR) * sizeof(int32_t))
+#define MAXSYMLINKLEN_UFS2	((NDADDR + NIADDR) * sizeof(int64_t))
+
+#define MAXSYMLINKLEN(ip) \
+	((ip)->i_ump->um_fstype == UFS1) ? \
+	MAXSYMLINKLEN_UFS1 : MAXSYMLINKLEN_UFS2
 
 /* NeXT used to keep short symlinks in the inode even when using
  * FS_42INODEFMT.  In that case fs->fs_maxsymlinklen is probably -1,
@@ -133,6 +173,7 @@ struct dinode {
 #define	IFWHT		0160000		/* Whiteout. */
 
 /* Size of the on-disk inode. */
-#define	DINODE_SIZE	(sizeof(struct dinode))		/* 128 */
+#define	DINODE1_SIZE	(sizeof(struct ufs1_dinode))		/* 128 */
+#define	DINODE2_SIZE	(sizeof(struct ufs2_dinode))
 
 #endif /* !_UFS_UFS_DINODE_H_ */

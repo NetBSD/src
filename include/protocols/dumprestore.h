@@ -1,4 +1,4 @@
-/*	$NetBSD: dumprestore.h,v 1.10 2003/01/24 21:55:03 fvdl Exp $	*/
+/*	$NetBSD: dumprestore.h,v 1.11 2003/04/02 10:39:21 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -64,20 +64,46 @@
 
 #define OFS_MAGIC   	(int)60011
 #define NFS_MAGIC   	(int)60012
+#ifndef FS_UFS2_MAGIC
+#define FS_UFS2_MAGIC   (int)0x19540119
+#endif
 #define CHECKSUM	(int)84446
 
 union u_spcl {
 	char dummy[TP_BSIZE];
 	struct	s_spcl {
 		int32_t	c_type;		    /* record type (see below) */
-		int32_t	c_date;		    /* date of this dump */
-		int32_t	c_ddate;	    /* date of previous dump */
+		int32_t	c_old_date;	    /* date of this dump */
+		int32_t	c_old_ddate;	    /* date of previous dump */
 		int32_t	c_volume;	    /* dump volume number */
-		int32_t	c_tapea;	    /* logical block of this record */
+		int32_t	c_old_tapea;	    /* logical block of this record */
 		ino_t	c_inumber;	    /* number of inode */
 		int32_t	c_magic;	    /* magic number (see above) */
 		int32_t	c_checksum;	    /* record checksum */
-		struct	dinode	c_dinode;   /* ownership and mode of inode */
+		union {
+			struct ufs1_dinode __uc_dinode;
+			struct {
+				u_int16_t __uc_mode;
+				int16_t __uc_spare1[3];
+				u_int64_t __uc_size;
+				int32_t __uc_old_atime;
+				int32_t __uc_atimensec;
+				int32_t __uc_old_mtime;
+				int32_t __uc_mtimensec;
+				int32_t __uc_spare2[2];
+				int32_t __uc_rdev;
+				int32_t __uc_birthtimensec;
+				int64_t __uc_birthtime;
+				int64_t __uc_atime;
+				int64_t __uc_mtime;
+				int32_t __uc_spare4[7];
+				u_int32_t __uc_file_flags;
+				int32_t __uc_spare5[2];
+				u_int32_t __uc_uid;
+				u_int32_t __uc_gid;
+				int32_t __uc_spare6[2];
+			} __uc_ino;
+		} __c_ino;
 		int32_t	c_count;	    /* number of valid c_addr entries */
 		char	c_addr[TP_NINDIR];  /* 1 => data; 0 => hole in inode */
 		char	c_label[LBLSIZE];   /* dump label */
@@ -86,11 +112,33 @@ union u_spcl {
 		char	c_dev[NAMELEN];	    /* name of dumpped device */
 		char	c_host[NAMELEN];    /* name of dumpped host */
 		int32_t	c_flags;	    /* additional information */
-		int32_t	c_firstrec;	    /* first record on volume */
-		int32_t	c_spare[32];	    /* reserved for future uses */
+		int32_t	c_old_firstrec;	    /* first record on volume */
+		int64_t c_date;		    /* date of this dump */
+		int64_t c_ddate;	    /* date of previous dump */
+		int64_t c_tapea;	    /* logical block of this record */
+		int64_t c_firstrec;	    /* first record on volume */
+		int32_t	c_spare[24];	    /* reserved for future uses */
 	} s_spcl;
 } u_spcl;
 #define spcl u_spcl.s_spcl
+
+#define c_dinode	__c_ino.__uc_dinode
+#define c_mode		__c_ino.__uc_ino.__uc_mode
+#define c_spare1	__c_ino.__uc_ino.__uc_spare1
+#define c_size		__c_ino.__uc_ino.__uc_size
+#define c_old_atime	__c_ino.__uc_ino.__uc_old_atime
+#define c_atime		__c_ino.__uc_ino.__uc_atime
+#define c_atimensec	__c_ino.__uc_ino.__uc_atimensec
+#define c_mtime		__c_ino.__uc_ino.__uc_mtime
+#define c_mtimensec	__c_ino.__uc_ino.__uc_mtimensec
+#define c_birthtime	__c_ino.__uc_ino.__uc_birthtime
+#define c_birthtimensec	__c_ino.__uc_ino.__uc_birthtimensec
+#define c_old_mtime	__c_ino.__uc_ino.__uc_old_mtime
+#define c_rdev		__c_ino.__uc_ino.__uc_rdev
+#define c_file_flags	__c_ino.__uc_ino.__uc_file_flags
+#define c_uid		__c_ino.__uc_ino.__uc_uid
+#define c_gid		__c_ino.__uc_ino.__uc_gid
+
 /*
  * special record types
  */

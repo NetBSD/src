@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk_ll.c,v 1.15 2003/02/07 00:46:08 dsl Exp $	 */
+/*	$NetBSD: biosdisk_ll.c,v 1.16 2003/04/02 10:39:33 fvdl Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -51,7 +51,7 @@ extern int int13_extension(int);
 extern int biosread(int, int, int, int, int, void *);
 extern int biosdiskreset(int);
 extern int biosextread(int, void *);
-static int do_read(struct biosdisk_ll *, int, int, char *);
+static int do_read(struct biosdisk_ll *, int64_t, int, char *);
 extern u_int vtophys(void *);
 
 /*
@@ -115,9 +115,9 @@ static int      ra_end;
 static int      ra_first;
 
 static int
-do_read(struct biosdisk_ll *d, int dblk, int num, char *buf)
+do_read(struct biosdisk_ll *d, int64_t dblk, int num, char *buf)
 {
-	int		cyl, head, sec, nsec, spc;
+	int		cyl, head, sec, nsec, spc, dblk32;
 	struct {
 		int8_t	size;
 		int8_t	resvd;
@@ -145,10 +145,11 @@ do_read(struct biosdisk_ll *d, int dblk, int num, char *buf)
 
 		return ext.cnt;
 	} else {
+		dblk32 = (int)dblk;
 		spc = d->head * d->sec;
-		cyl = dblk / spc;
-		head = (dblk % spc) / d->sec;
-		sec = dblk % d->sec;
+		cyl = dblk32 / spc;
+		head = (dblk32 % spc) / d->sec;
+		sec = dblk32 % d->sec;
 		nsec = d->sec - sec;
 
 		if (nsec > num)
@@ -169,7 +170,7 @@ do_read(struct biosdisk_ll *d, int dblk, int num, char *buf)
  */
 
 int 
-readsects(struct biosdisk_ll *d, int dblk, int num, char *buf, int cold)
+readsects(struct biosdisk_ll *d, int64_t dblk, int num, char *buf, int cold)
 {
 	while (num) {
 		int             nsec;
