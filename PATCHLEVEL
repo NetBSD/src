@@ -23,3 +23,5 @@ ensure the caller has the device open for writing (security precaution).
 end of the delay calibration routine.  Fixes a bug where the kernel
 would get a bad pointer reference and crash very early in kernels
 without DDB.
+
+[ mt(1) ] Don't attempt to set TCP_MAXSEG for remote mt.
