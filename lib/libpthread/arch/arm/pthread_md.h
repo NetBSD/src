@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_md.h,v 1.1.2.2 2002/08/06 05:39:50 thorpej Exp $	*/
+/*	$NetBSD: pthread_md.h,v 1.1.2.3 2002/12/20 15:24:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -90,18 +90,21 @@ do {									\
 	(uc)->uc_mcontext.__gregs[_REG_CPSR] = (reg)->r_cpsr;		\
 } while (/*CONSTCOND*/0)
 
+/*
+ * XXX Need to deal with VFP.
+ */
 #define	PTHREAD_UCONTEXT_TO_FPREG(freg, uc)				\
 do {									\
-	(freg)->fpr_fpsr = (uc)->uc_mcontext.__fpregs.__fp_fpsr;	\
-	memcpy((freg)->fpr, (uc)->uc_mcontext.__fpregs.__fp_fr,		\
+	(freg)->fpr_fpsr = (uc)->uc_mcontext.__fpu.__fpregs.__fp_fpsr;	\
+	memcpy((freg)->fpr, (uc)->uc_mcontext.__fpu.__fpregs.__fp_fr,	\
 	    sizeof((freg)->fpr));					\
 } while (/*CONSTCOND*/0)
 
 #define	PTHREAD_FPREG_TO_UCONTEXT(uc, freg)				\
 do {									\
-	(uc)->uc_mcontext.__fpregs.__fp_fpsr = (freg)->fpr_fpsr;	\
-	memcpy((uc)->uc_mcontext.__fpregs.__fp_fr, (freg)->fpr,		\
-	    sizeof((uc)->uc_mcontext.__fpregs.__fp_fr));		\
+	(uc)->uc_mcontext.__fpu.__fpregs.__fp_fpsr = (freg)->fpr_fpsr;	\
+	memcpy((uc)->uc_mcontext.__fpu.__fpregs.__fp_fr, (freg)->fpr,	\
+	    sizeof((uc)->uc_mcontext.__fpu.__fpregs.__fp_fr));		\
 } while (/*CONSTCOND*/0)
 
 #endif /* _LIB_PTHREAD_ARM_MD_H */
