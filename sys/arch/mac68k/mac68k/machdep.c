@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.206 1998/07/07 03:04:34 scottr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.207 1998/07/08 04:39:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -286,10 +286,12 @@ mac68k_init()
 #if defined(UVM)
 		if (low[i] <= avail_start && avail_start < high[i])
 			uvm_page_physload(atop(avail_start), atop(high[i]),
-			    atop(avail_start), atop(high[i]));
+			    atop(avail_start), atop(high[i]),
+			    VM_FREELIST_DEFAULT);
 		else
 			uvm_page_physload(atop(low[i]), atop(high[i]),
-			    atop(low[i]), atop(high[i]));
+			    atop(low[i]), atop(high[i]),
+			    VM_FREELIST_DEFAULT);
 #else
 		if (low[i] <= avail_start && avail_start < high[i])
 			vm_page_physload(atop(avail_start), atop(high[i]),
