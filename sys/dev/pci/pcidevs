@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.210 2000/04/22 17:32:02 augustss Exp $
+$NetBSD: pcidevs,v 1.211 2000/04/26 17:30:35 thorpej Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1201,6 +1201,9 @@ product OPTI 82C701	0xc701	82C701
 
 /* PC Tech products */
 product PCTECH RZ1000	0x1000	RZ1000
+
+/* PLX Technology products */
+product PLX 9060ES	0x906e	9060ES PCI bus controller
 
 /* ProLAN products - XXX better descriptions */
 product PROLAN NE2KETHER 0x1980 Ethernet
