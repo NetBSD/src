@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.15 2003/09/25 22:04:17 christos Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.16 2003/09/26 18:00:47 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.15 2003/09/25 22:04:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.16 2003/09/26 18:00:47 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ppcarch.h"
@@ -102,7 +102,7 @@ sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	/*
 	 * Copy the siginfo and ucontext onto the user's stack.
 	 */
-	if (copyout(ksi, (caddr_t)sip, sizeof(ksi)) != 0 ||
+	if (copyout(ksi, (caddr_t)sip, sizeof(*ksi)) != 0 ||
 	    copyout(&uc, (caddr_t)ucp, sizeof(uc)) != 0) {
 		/*
 		 * Process has trashed its stack; give it an illegal
