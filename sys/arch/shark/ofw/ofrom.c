@@ -1,4 +1,4 @@
-/*	$NetBSD: ofrom.c,v 1.1 2002/02/10 01:57:59 thorpej Exp $	*/
+/*	$NetBSD: ofrom.c,v 1.2 2002/03/04 23:43:01 thorpej Exp $	*/
 
 /*
  * Copyright 1998
@@ -200,6 +200,18 @@ ofromrw(dev, uio, flags)
 	physlock = 0;
 
 	return (error);
+}
+
+int
+ofromioctl(dev, cmd, data, flag, p)
+	dev_t dev;
+	u_long cmd;
+	caddr_t data;
+	int flag;
+	struct proc *p;
+{
+
+	return (ENOTTY);
 }
 
 paddr_t
