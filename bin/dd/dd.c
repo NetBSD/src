@@ -1,4 +1,4 @@
-/*	$NetBSD: dd.c,v 1.14.4.1 2000/08/26 00:54:59 matt Exp $	*/
+/*	$NetBSD: dd.c,v 1.14.4.2 2001/02/03 20:54:59 he Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)dd.c	8.5 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: dd.c,v 1.14.4.1 2000/08/26 00:54:59 matt Exp $");
+__RCSID("$NetBSD: dd.c,v 1.14.4.2 2001/02/03 20:54:59 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -93,6 +93,18 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
+	int ch;
+
+	while ((ch = getopt(argc, argv, "")) != -1) {
+		switch (ch) {
+		default:
+			errx(EXIT_FAILURE, "usage: dd [operand ...]");
+			/* NOTREACHED */
+		}
+	}
+	argc -= (optind - 1);
+	argv += (optind - 1);
+
 	jcl(argv);
 	setup();
 
