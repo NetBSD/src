@@ -1,4 +1,4 @@
-/*	$NetBSD: supcmain.c,v 1.19 2003/01/28 22:35:23 wiz Exp $	*/
+/*	$NetBSD: supcmain.c,v 1.20 2004/12/21 16:20:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -672,6 +672,10 @@ init(int argc, char **argv)
 			mytree->Tcount++;
 		}
 		c = (COLLECTION *) malloc(sizeof(COLLECTION));
+		if (c == NULL) {
+			logerr("Cannot allocate memory");
+			exit(1);
+		}
 		if (firstC == NULL)
 			firstC = c;
 		if (lastC != NULL)

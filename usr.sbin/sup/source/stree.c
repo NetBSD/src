@@ -1,4 +1,4 @@
-/*	$NetBSD: stree.c,v 1.6 2002/07/10 20:19:44 wiz Exp $	*/
+/*	$NetBSD: stree.c,v 1.7 2004/12/21 16:20:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -97,6 +97,8 @@ Tmake(char *p)
 {
 	TREE *t;
 	t = (TREE *) malloc(sizeof(TREE));
+	if (t == NULL)
+		goaway("Cannot allocate memory");
 	t->Tname = (p == NULL) ? NULL : salloc(p);
 	t->Tflags = 0;
 	t->Tuid = 0;
