@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.3 1998/08/21 14:07:03 tsubai Exp $	*/
+/*	$NetBSD: zs.c,v 1.4 1998/11/21 14:57:59 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@ int zs_major = 1;
  */
 #define ZSHARD_PRI 64
 
-#define ZS_DELAY()			delay(2)
+#define ZS_DELAY() {(void)*(volatile char *)INTEN1; delay(2);}
 
 /* The layout of this is hardware-dependent (padding, order). */
 struct zschan {
