@@ -1,4 +1,4 @@
-#	$NetBSD: rc,v 1.67 1997/03/10 09:16:13 mycroft Exp $
+#	$NetBSD: rc,v 1.68 1997/03/10 09:34:59 mycroft Exp $
 #	from: @(#)rc	8.2 (Berkeley) 3/17/94
 
 # System startup script run by init on autoboot
@@ -13,9 +13,8 @@ stty status '^T'
 trap : 2
 trap : 3	# shouldn't be needed
 
-HOME=/; export HOME
-PATH=/sbin:/bin:/usr/sbin:/usr/bin
-export PATH
+export HOME=/
+export PATH=/sbin:/bin:/usr/sbin:/usr/bin
 
 # Configure ccd devices.
 if [ -f /etc/ccd.conf ]; then
@@ -24,7 +23,7 @@ fi
 
 if [ -e /fastboot ]; then
 	echo "Fast boot: skipping disk checks."
-elif [ $1x = autobootx ]; then
+elif [ "$1" = autoboot ]; then
 	echo "Automatic boot in progress: starting file system checks."
 	fsck -p
 	case $? in
