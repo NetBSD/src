@@ -61,12 +61,15 @@ static char sccsid[] = "@(#)lpc.c	8.1 (Berkeley) 6/6/93";
  * lpc -- line printer control program
  */
 
+#define MAX_CMDLINE	200
+#define MAX_MARGV	20
 int	fromatty;
 
-char	cmdline[200];
+char	cmdline[MAX_CMDLINE];
 int	margc;
-char	*margv[20];
+char	*margv[MAX_MARGV];
 int	top;
+uid_t	uid, euid;
 
 jmp_buf	toplevel;
 
@@ -82,6 +85,9 @@ main(argc, argv)
 {
 	register struct cmd *c;
 
+	euid = geteuid();
+	uid = getuid();
+	seteuid(uid);
 	name = argv[0];
 	openlog("lpd", 0, LOG_LPR);
 
@@ -137,7 +143,7 @@ cmdscanner(top)
 			printf("lpc> ");
 			fflush(stdout);
 		}
-		if (fgets(cmdline, sizeof(cmdline), stdin) == 0)
+		if (fgets(cmdline, MAX_CMDLINE, stdin) == 0)
 			quit(0, NULL);
 		if (cmdline[0] == 0 || cmdline[0] == '\n')
 			break;
@@ -197,9 +203,10 @@ makeargv()
 {
 	register char *cp;
 	register char **argp = margv;
+	register int n = 0;
 
 	margc = 0;
-	for (cp = cmdline; *cp;) {
+	for (cp = cmdline; *cp && n < MAX_MARGV; n++) {
 		while (isspace(*cp))
 			cp++;
 		if (*cp == '\0')

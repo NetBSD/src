@@ -104,6 +104,8 @@ static void       doit __P((void));
 static void       startup __P((void));
 static void       chkhost __P((struct sockaddr_in *));
 
+uid_t	uid, euid;
+
 int
 main(argc, argv)
 	int argc;
@@ -115,6 +117,8 @@ main(argc, argv)
 	struct sockaddr_in sin, frominet;
 	int omask, lfd;
 
+	euid = geteuid();	/* these shouldn't be different */
+	uid = getuid();
 	options = 0;
 	gethostname(host, sizeof(host));
 	name = argv[0];

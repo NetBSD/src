@@ -58,7 +58,7 @@ static char sccsid[] = "@(#)printjob.c	8.2 (Berkeley) 4/16/94";
 #include <pwd.h>
 #include <unistd.h>
 #include <signal.h>
-#include <sgtty.h>
+#include <termios.h>
 #include <syslog.h>
 #include <fcntl.h>
 #include <dirent.h>
@@ -126,6 +126,7 @@ static char      *scnline __P((int, char *, int));
 static int        sendfile __P((int, char *));
 static int        sendit __P((char *));
 static void       sendmail __P((char *, int));
+static void       set_ttyflags __P((struct termios *));
 static void       setty __P((void));
 
 void
@@ -1192,6 +1193,7 @@ init()
 		XC = 0;
 	if (cgetnum(bp, "xs", &XS) < 0)
 		XS = 0;
+	cgetstr(bp, "ms", &MS);
 
 	tof = (cgetcap(bp, "fo", ':') == NULL);
 }
@@ -1296,8 +1298,8 @@ struct bauds {
 	2400,	B2400,
 	4800,	B4800,
 	9600,	B9600,
-	19200,	EXTA,
-	38400,	EXTB,
+	19200,	B19200,
+	38400,	B38400,
 	0,	0
 };
 
@@ -1307,15 +1309,18 @@ struct bauds {
 static void
 setty()
 {
-	struct sgttyb ttybuf;
 	register struct bauds *bp;
+	struct info i;
+	char **argv, **ap, *p, *val;
 
-	if (ioctl(pfd, TIOCEXCL, (char *)0) < 0) {
+	i.fd = pfd;
+	i.set = i.wset = 0;
+	if (ioctl(i.fd, TIOCEXCL, (char *)0) < 0) {
 		syslog(LOG_ERR, "%s: ioctl(TIOCEXCL): %m", printer);
 		exit(1);
 	}
-	if (ioctl(pfd, TIOCGETP, (char *)&ttybuf) < 0) {
-		syslog(LOG_ERR, "%s: ioctl(TIOCGETP): %m", printer);
+	if (tcgetattr(i.fd, &i.t) < 0) {
+		syslog(LOG_ERR, "%s: tcgetattr: %m", printer);
 		exit(1);
 	}
 	if (BR > 0) {
@@ -1326,26 +1331,63 @@ setty()
 			syslog(LOG_ERR, "%s: illegal baud rate %d", printer, BR);
 			exit(1);
 		}
-		ttybuf.sg_ispeed = ttybuf.sg_ospeed = bp->speed;
+		cfsetspeed(&i.t, bp->speed);
+		i.set = 1;
 	}
-	ttybuf.sg_flags &= ~FC;
-	ttybuf.sg_flags |= FS;
-	if (ioctl(pfd, TIOCSETP, (char *)&ttybuf) < 0) {
-		syslog(LOG_ERR, "%s: ioctl(TIOCSETP): %m", printer);
+	if (MS) {
+		if (ioctl(i.fd, TIOCGETD, &i.ldisc) < 0) {
+			syslog(LOG_ERR, "%s: ioctl(TIOCGETD): %m", printer);
+			exit(1);
+		}
+		if (ioctl(i.fd, TIOCGWINSZ, &i.win) < 0)
+			syslog(LOG_INFO, "%s: ioctl(TIOCGWINSZ): %m",
+			       printer);
+
+		argv = (char **)calloc(256, sizeof(char *));
+		if (argv == NULL) {
+			syslog(LOG_ERR, "%s: calloc: %m", printer);
+			exit(1);
+		}
+		p = strdup(MS);
+		ap = argv;
+		while ((val = strsep(&p, " \t,")) != NULL) {
+			*ap++ = strdup(val);
+		}
+
+		for (; *argv; ++argv) {
+			if (ksearch(&argv, &i))
+				continue;
+			if (msearch(&argv, &i))
+				continue;
+			syslog(LOG_INFO, "%s: unknown stty flag: %s",
+			       printer, *argv);
+		}
+	} else {
+		if (FC) {
+			sttyclearflags(&i.t, FC);
+			i.set = 1;
+		}
+		if (FS) {
+			sttysetflags(&i.t, FS);
+			i.set = 1;
+		}
+		if (XC) {
+			sttyclearlflags(&i.t, XC);
+			i.set = 1;
+		}
+		if (XS) {
+			sttysetlflags(&i.t, XC);
+			i.set = 1;
+		}
+	}
+
+	if (i.set && tcsetattr(i.fd, TCSANOW, &i.t) < 0) {
+		syslog(LOG_ERR, "%s: tcsetattr: %m", printer);
 		exit(1);
 	}
-	if (XC) {
-		if (ioctl(pfd, TIOCLBIC, &XC) < 0) {
-			syslog(LOG_ERR, "%s: ioctl(TIOCLBIC): %m", printer);
-			exit(1);
-		}
-	}
-	if (XS) {
-		if (ioctl(pfd, TIOCLBIS, &XS) < 0) {
-			syslog(LOG_ERR, "%s: ioctl(TIOCLBIS): %m", printer);
-			exit(1);
-		}
-	}
+	if (i.wset && ioctl(i.fd, TIOCSWINSZ, &i.win) < 0)
+		syslog(LOG_INFO, "%s: ioctl(TIOCSWINSZ): %m", printer);
+	return;
 }
 
 #if __STDC__

@@ -98,8 +98,14 @@ getprent(bp)
 {
 	register int c, skip = 0;
 
-	if (pfp == NULL && (pfp = fopen(_PATH_PRINTCAP, "r")) == NULL)
-		return(-1);
+	if (pfp == NULL) {
+		seteuid(euid);
+		pfp = fopen(_PATH_PRINTCAP, "r");
+		seteuid(uid);
+		if (pfp == NULL)
+			return(-1);
+	}
+
 	tbuf = bp;
 	for (;;) {
 		switch (c = getc(pfp)) {
@@ -174,15 +180,26 @@ tgetent(bp, name)
 				strcpy(bp,cp);
 				return(tnchktc());
 			} else {
+				seteuid(euid);
 				tf = open(_PATH_PRINTCAP, 0);
+				seteuid(uid);
 			}
 		} else
+			/*
+			 * don't seteuid here incase TERMCAP is set to
+			 * some file we don't have access to.
+			 */
 			tf = open(cp, 0);
 	}
-	if (tf==0)
+	if (tf == 0) {
+		seteuid(euid);
 		tf = open(_PATH_PRINTCAP, 0);
+		seteuid(uid);
+	}
 #else
+	seteuid(euid);
 	tf = open(_PATH_PRINTCAP, 0);
+	seteuid(uid);
 #endif
 	if (tf < 0)
 		return (-1);
@@ -455,4 +472,3 @@ nextc:
 	*area = cp;
 	return (str);
 }
-

@@ -67,6 +67,10 @@ static int	all = 0;		/* eliminate all files (root only) */
 static int	cur_daemon;		/* daemon's pid */
 static char	current[40];		/* active control file name */
 
+extern uid_t	uid, euid;		/* real and effective user id's */
+
+static	void	do_unlink __P((char *));
+
 void
 rmjob()
 {
@@ -112,10 +116,12 @@ rmjob()
 		person = root;
 	}
 
+	seteuid(euid);
 	if (chdir(SD) < 0)
 		fatal("cannot chdir to spool directory");
 	if ((nitems = scandir(".", &files, iscf, NULL)) < 0)
 		fatal("cannot access spool directory");
+	seteuid(uid);
 
 	if (nitems) {
 		/*
@@ -124,7 +130,9 @@ rmjob()
 		 *  (after which we have to restart the daemon).
 		 */
 		if (lockchk(LO) && chk(current)) {
+			seteuid(euid);
 			assasinated = kill(cur_daemon, SIGINT) == 0;
+			seteuid(uid);
 			if (!assasinated)
 				fatal("cannot kill printer daemon");
 		}
@@ -155,17 +163,20 @@ lockchk(s)
 	register FILE *fp;
 	register int i, n;
 
-	if ((fp = fopen(s, "r")) == NULL)
+	seteuid(euid);
+	if ((fp = fopen(s, "r")) == NULL) {
 		if (errno == EACCES)
 			fatal("can't access lock file");
 		else
 			return(0);
+	}
+	seteuid(uid);
 	if (!getline(fp)) {
 		(void) fclose(fp);
 		return(0);		/* no daemon present */
 	}
 	cur_daemon = atoi(line);
-	if (kill(cur_daemon, 0) < 0) {
+	if (kill(cur_daemon, 0) < 0 && errno != EPERM) {
 		(void) fclose(fp);
 		return(0);		/* no daemon present */
 	}
@@ -192,21 +203,32 @@ process(file)
 
 	if (!chk(file))
 		return;
+	seteuid(euid);
 	if ((cfp = fopen(file, "r")) == NULL)
 		fatal("cannot open %s", file);
+	seteuid(uid);
 	while (getline(cfp)) {
 		switch (line[0]) {
 		case 'U':  /* unlink associated files */
-			if (from != host)
-				printf("%s: ", host);
-			printf(unlink(line+1) ? "cannot dequeue %s\n" :
-				"%s dequeued\n", line+1);
+			do_unlink(file);
 		}
 	}
 	(void) fclose(cfp);
+	do_unlink(file);
+}
+
+static void
+do_unlink(file)
+	char *file;
+{
+	int	ret;
+
 	if (from != host)
 		printf("%s: ", host);
-	printf(unlink(file) ? "cannot dequeue %s\n" : "%s dequeued\n", file);
+	seteuid(euid);
+	ret = unlink(file);
+	seteuid(uid);
+	printf(ret ? "cannot dequeue %s\n" : "%s dequeued\n", file);
 }
 
 /*
@@ -232,8 +254,10 @@ chk(file)
 	/*
 	 * get the owner's name from the control file.
 	 */
+	seteuid(euid);
 	if ((cfp = fopen(file, "r")) == NULL)
 		return(0);
+	seteuid(uid);
 	while (getline(cfp)) {
 		if (line[0] == 'P')
 			break;

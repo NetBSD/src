@@ -53,7 +53,8 @@ extern char	*LF;		/* log file for error messages */
 extern char	*LO;		/* lock file name */
 extern char	*LP;		/* line printer device name */
 extern long	 MC;		/* maximum number of copies allowed */
-extern long      MX;		/* maximum number of blocks to copy */
+extern char	*MS;		/* stty flags to set if lp is a tty */
+extern long  MX;		/* maximum number of blocks to copy */
 extern char	*NF;		/* name of ditroff(1) filter (per job) */
 extern char	*OF;		/* name of output filter (created once) */
 extern long	 PL;		/* page length */

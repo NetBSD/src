@@ -75,7 +75,7 @@ static char sccsid[] = "@(#)lpr.c	8.3 (Berkeley) 3/30/94";
 
 static char	*cfname;	/* daemon control files, linked from tf's */
 static char	*class = host;	/* class title on header page */
-static char	*dfname;		/* data files */
+static char	*dfname;	/* data files */
 static char	*fonts[4];	/* troff font names */
 static char	 format = 'f';	/* format char for printing files */
 static int	 hdr = 1;	/* print header or not (default is yes) */
@@ -110,6 +110,8 @@ static void	 mktemps __P((void));
 static int	 nfile __P((char *));
 static int	 test __P((char *));
 
+uid_t	uid, euid;
+
 void
 main(argc, argv)
 	int argc;
@@ -123,6 +125,9 @@ main(argc, argv)
 	int i, f;
 	struct stat stb;
 
+	euid = geteuid();
+	uid = getuid();
+	seteuid(uid);
 	if (signal(SIGHUP, SIG_IGN) != SIG_IGN)
 		signal(SIGHUP, cleanup);
 	if (signal(SIGINT, SIG_IGN) != SIG_IGN)
@@ -295,7 +300,9 @@ main(argc, argv)
 	 */
 	mktemps();
 	tfd = nfile(tfname);
+	seteuid(euid);
 	(void) fchown(tfd, DU, -1);	/* owned by daemon for protection */
+	seteuid(uid);
 	card('H', host);
 	card('P', person);
 	if (hdr) {
@@ -346,7 +353,9 @@ main(argc, argv)
 		}
 		if (sflag)
 			printf("%s: %s: not linked, copying instead\n", name, arg);
+		seteuid(euid);
 		if ((i = open(arg, O_RDONLY)) < 0) {
+			seteuid(uid);
 			printf("%s: cannot open %s\n", name, arg);
 			continue;
 		}
@@ -354,6 +363,7 @@ main(argc, argv)
 		(void) close(i);
 		if (f && unlink(arg) < 0)
 			printf("%s: %s: not removed\n", name, arg);
+		seteuid(uid);
 	}
 
 	if (nact) {
@@ -362,6 +372,7 @@ main(argc, argv)
 		/*
 		 * Touch the control file to fix position in the queue.
 		 */
+		seteuid(euid);
 		if ((tfd = open(tfname, O_RDWR)) >= 0) {
 			char c;
 
@@ -380,6 +391,7 @@ main(argc, argv)
 			cleanup(0);
 		}
 		unlink(tfname);
+		seteuid(uid);
 		if (qflag)		/* just q things up */
 			exit(0);
 		if (!startdaemon(printer))
@@ -441,10 +453,14 @@ linked(file)
 {
 	register char *cp;
 	static char buf[BUFSIZ];
+	register int ret;
 
 	if (*file != '/') {
-		if (getwd(buf) == NULL)
+		seteuid(euid);
+		if (getcwd(buf, BUFSIZ) == NULL) {
+			seteuid(uid);
 			return(NULL);
+		}
 		while (file[0] == '.') {
 			switch (file[1]) {
 			case '/':
@@ -464,7 +480,10 @@ linked(file)
 		strcat(buf, file);
 		file = buf;
 	}
-	return(symlink(file, dfname) ? NULL : file);
+	seteuid(euid);
+	ret = symlink(file, dfname);
+	seteuid(uid);
+	return(ret ? NULL : file);
 }
 
 /*
@@ -498,6 +517,7 @@ nfile(n)
 	register int f;
 	int oldumask = umask(0);		/* should block signals */
 
+	seteuid(euid);
 	f = open(n, O_WRONLY | O_EXCL | O_CREAT, FILMOD);
 	(void) umask(oldumask);
 	if (f < 0) {
@@ -506,8 +526,9 @@ nfile(n)
 	}
 	if (fchown(f, userid, -1) < 0) {
 		printf("%s: cannot chown %s\n", name, n);
-		cleanup(0);
+		cleanup(0);	/* cleanup does exit */
 	}
+	seteuid(uid);
 	if (++n[inchar] > 'z') {
 		if (++n[inchar-2] == 't') {
 			printf("too many files - break up the job\n");
@@ -533,6 +554,7 @@ cleanup(signo)
 	signal(SIGQUIT, SIG_IGN);
 	signal(SIGTERM, SIG_IGN);
 	i = inchar;
+	seteuid(euid);
 	if (tfname)
 		do
 			unlink(tfname);
@@ -564,31 +586,34 @@ test(file)
 	register int fd;
 	register char *cp;
 
+	seteuid(euid);
 	if (access(file, 4) < 0) {
 		printf("%s: cannot access %s\n", name, file);
-		return(-1);
+		goto bad;
 	}
 	if (stat(file, &statb) < 0) {
 		printf("%s: cannot stat %s\n", name, file);
-		return(-1);
+		goto bad;
 	}
 	if ((statb.st_mode & S_IFMT) == S_IFDIR) {
 		printf("%s: %s is a directory\n", name, file);
-		return(-1);
+		goto bad;
 	}
 	if (statb.st_size == 0) {
 		printf("%s: %s is an empty file\n", name, file);
-		return(-1);
+		goto bad;
  	}
 	if ((fd = open(file, O_RDONLY)) < 0) {
 		printf("%s: cannot open %s\n", name, file);
-		return(-1);
+		goto bad;
 	}
 	if (read(fd, &execb, sizeof(execb)) == sizeof(execb) &&
 	    !N_BADMAG(execb)) {
-			printf("%s: %s is an executable program", name, file);
-			goto error1;
-		}
+			printf("%s: %s is an executable program and is unprintable",
+				name, file);
+			(void) close(fd);
+			goto bad;
+	}
 	(void) close(fd);
 	if (rflag) {
 		if ((cp = rindex(file, '/')) == NULL) {
@@ -608,10 +633,8 @@ test(file)
 		printf("%s: %s: is not removable by you\n", name, file);
 	}
 	return(0);
-
-error1:
-	printf(" and is unprintable\n");
-	(void) close(fd);
+bad:
+	seteuid(uid);
 	return(-1);
 }
 
@@ -671,6 +694,7 @@ mktemps()
 	char *lmktemp();
 
 	(void) sprintf(buf, "%s/.seq", SD);
+	seteuid(euid);
 	if ((fd = open(buf, O_RDWR|O_CREAT, 0661)) < 0) {
 		printf("%s: cannot create %s\n", name, buf);
 		exit(1);
@@ -679,6 +703,7 @@ mktemps()
 		printf("%s: cannot lock %s\n", name, buf);
 		exit(1);
 	}
+	seteuid(uid);
 	n = 0;
 	if ((len = read(fd, buf, sizeof(buf))) > 0) {
 		for (cp = buf; len--; ) {
