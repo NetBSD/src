@@ -1,4 +1,4 @@
-/*	$NetBSD: edahdi.c,v 1.3 2000/02/15 10:14:55 leo Exp $	*/
+/*	$NetBSD: edahdi.c,v 1.4 2004/11/12 10:18:46 he Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman, Waldi Ravens.
@@ -302,12 +302,12 @@ lex(value)
 				rv = T_PREV;
 				goto out;
 			default :
-				if (isspace(*c)) {
+				if (isspace((unsigned char)*c)) {
 					if (rv == T_INVAL)
 						break;
 					goto out;
 				}
-				else if (isdigit(*c)) {
+				else if (isdigit((unsigned char)*c)) {
 					*value = (10 * *value) + *c - '0';
 					rv = T_NUMBER;
 				}
@@ -334,9 +334,9 @@ get_id()
 	if (fgets(buf, sizeof(buf), stdin) == NULL)
 		return (NULL);
 	for (n = 0; n < 3; n++) {
-		if (!isalpha(buf[n]))
+		if (!isalpha((unsigned char)buf[n]))
 			return (NULL);
-		buf[n] = toupper(buf[n]);
+		buf[n] = toupper((unsigned char)buf[n]);
 	}
 	buf[3] = '\0';
 	return (buf);
