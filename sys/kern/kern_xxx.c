@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_xxx.c,v 1.44 2000/06/27 17:41:32 mrg Exp $	*/
+/*	$NetBSD: kern_xxx.c,v 1.45 2000/11/21 00:37:56 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -96,8 +96,8 @@ scdebug_call(p, code, args)
 	struct proc *p;
 	register_t code, args[];
 {
-	struct sysent *sy;
-	struct emul *em;
+	const struct sysent *sy;
+	const struct emul *em;
 	int i;
 
 	if (!(scdebug & SCDEBUG_CALLS))
@@ -133,8 +133,8 @@ scdebug_ret(p, code, error, retval)
 	int error;
 	register_t retval[];
 {
-	struct sysent *sy;
-	struct emul *em;
+	const struct sysent *sy;
+	const struct emul *em;
 
 	if (!(scdebug & SCDEBUG_RETURNS))
 		return;

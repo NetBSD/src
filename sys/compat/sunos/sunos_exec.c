@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_exec.c,v 1.21 2000/11/13 21:32:19 jdolecek Exp $	*/
+/*	$NetBSD: sunos_exec.c,v 1.22 2000/11/21 00:37:55 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1993 Theo de Raadt
@@ -83,9 +83,6 @@ struct emul emul_sunos = {
 #else
 	NULL,
 #endif
-	0,
-	copyargs,
-	setregs,
 	sunos_sigcode,
 	sunos_esigcode,
 };

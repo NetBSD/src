@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.25 2000/06/29 07:58:50 mrg Exp $	*/
+/*	$NetBSD: trap.c,v 1.26 2000/11/21 00:37:51 jdolecek Exp $	*/
 
 /*
  * This file was taken from mvme68k/mvme68k/trap.c
@@ -96,12 +96,7 @@ extern struct emul emul_sunos;
 #endif
 
 #ifdef COMPAT_LINUX
-#ifdef EXEC_AOUT
-extern struct emul emul_linux_aout;
-#endif
-#ifdef EXEC_ELF32
-extern struct emul emul_linux_elf32;
-#endif
+extern struct emul emul_linux;
 #endif
 
 int	writeback __P((struct frame *fp, int docachepush));
@@ -995,7 +990,7 @@ syscall(code, frame)
 	struct frame frame;
 {
 	caddr_t params;
-	struct sysent *callp;
+	struct const sysent *callp;
 	struct proc *p;
 	int error, opc, nsys;
 	size_t argsize;
@@ -1085,14 +1080,7 @@ syscall(code, frame)
 		callp += code;
 	argsize = callp->sy_argsize;
 #ifdef COMPAT_LINUX
-	if (0
-# ifdef EXEC_AOUT
-	    || p->p_emul == &emul_linux_aout
-# endif
-# ifdef EXEC_ELF32
-	    || p->p_emul == &emul_linux_elf32
-# endif
-	     ) {
+	if (p->p_emul == &emul_linux) {
 		/*
 		 * Linux passes the args in d1-d5
 		 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.110 2000/11/19 00:56:39 sommerfeld Exp $	*/
+/*	$NetBSD: proc.h,v 1.111 2000/11/21 00:37:56 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -91,16 +91,8 @@ struct	emul {
 	void	(*e_sendsig) __P((sig_t, int, sigset_t *, u_long));
 	int	e_nosys;		/* Offset of the nosys() syscall */
 	int	e_nsysent;		/* Number of system call entries */
-	struct sysent *e_sysent;	/* System call array */
+	const struct sysent *e_sysent;	/* System call array */
 	const char * const *e_syscallnames;	/* System call name array */
-	int	e_arglen;		/* Extra argument size in words */
-					/* Copy arguments on the new stack */
-	void	*(*e_copyargs) __P((struct exec_package *, struct ps_strings *,
-				    void *, void *));
-					/* Set registers before execution */
-	void	(*e_setregs) __P((struct proc *, struct exec_package *,
-				  u_long));
-
 	char	*e_sigcode;		/* Start of sigcode */
 	char	*e_esigcode;		/* End of sigcode */
 
@@ -187,7 +179,7 @@ struct	proc {
 	int	p_locks;		/* DEBUG: lockmgr count of held locks */
 
 	int	p_holdcnt;		/* If non-zero, don't swap. */
-	struct	emul *p_emul;		/* Emulation information */
+	const struct emul *p_emul;	/* Emulation information */
 	void	*p_emuldata;		/* Per-process emulation data, or NULL.
 					 * Malloc type M_EMULDATA */
 

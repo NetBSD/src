@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_exec.c,v 1.7 2000/11/13 21:32:17 jdolecek Exp $	*/
+/*	$NetBSD: freebsd_exec.c,v 1.8 2000/11/21 00:37:53 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -56,8 +56,7 @@
 extern struct sysent freebsd_sysent[];
 extern const char * const freebsd_syscallnames[];
 
-#ifdef EXEC_AOUT
-struct emul emul_freebsd_aout = {
+const struct emul emul_freebsd = {
 	"freebsd",
 	NULL,
 	freebsd_sendsig,
@@ -65,42 +64,24 @@ struct emul emul_freebsd_aout = {
 	FREEBSD_SYS_MAXSYSCALL,
 	freebsd_sysent,
 	freebsd_syscallnames,
-	0,
-	copyargs,
-	freebsd_setregs,
 	freebsd_sigcode,
 	freebsd_esigcode,
 };
-#endif /* EXEC_AOUT */
 
 #ifdef EXEC_ELF32
- 
-struct emul ELFNAMEEND(emul_freebsd) = {
-	"freebsd",
-	NULL,
-	freebsd_sendsig,
-	FREEBSD_SYS_syscall,
-	FREEBSD_SYS_MAXSYSCALL,
-	freebsd_sysent,
-	freebsd_syscallnames,
-	FREEBSD_ELF_AUX_ARGSIZ,
-	ELFNAME(copyargs),
-	freebsd_setregs,
-	freebsd_sigcode,
-	freebsd_esigcode,
-};
 
 int
-ELFNAME2(freebsd,probe)(p, epp, eh, itp, pos)
+ELFNAME2(freebsd,probe)(p, epp, veh, itp, pos)
 	struct proc *p;
 	struct exec_package *epp;
-	Elf_Ehdr *eh;
+	void *veh;
 	char *itp;
-	Elf_Addr *pos;
+	vaddr_t *pos;
 {
 	int error;
 	size_t i;
 	size_t phsize;
+	Elf_Ehdr *eh = (Elf_Ehdr *) veh;
 	Elf_Phdr *ph;
 	Elf_Phdr *ephp;
 	Elf_Nhdr *np;
@@ -158,7 +139,6 @@ ELFNAME2(freebsd,probe)(p, epp, eh, itp, pos)
 			return error;
 		free((void *)bp, M_TEMP);
 	}
-	epp->ep_emul = &ELFNAMEEND(emul_freebsd);
 	*pos = ELF_NO_ADDR;
 #ifdef DEBUG_FREEBSD_ELF
 	printf("freebsd_elf32_probe: returning 0\n");
@@ -216,9 +196,7 @@ exec_freebsd_aout_makecmds(p, epp)
 		error = exec_aout_prep_omagic(p, epp);
 		break;
 	}
-	if (error == 0)
-		epp->ep_emul = &emul_freebsd_aout;
-	else
+	if (error)
 		kill_vmcmds(&epp->ep_vmcmds);
 
 	return error;
