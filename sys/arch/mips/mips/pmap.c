@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.94 2000/04/21 14:10:39 shin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.95 2000/04/28 19:25:56 soren Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.94 2000/04/21 14:10:39 shin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.95 2000/04/28 19:25:56 soren Exp $");
 
 /*
  *	Manages physical address maps.
@@ -1535,8 +1535,7 @@ pmap_collect(pmap)
 }
 
 /*
- *	pmap_zero_page zeros the specified (machine independent)
- *	page.
+ *	pmap_zero_page zeros the specified page.
  */
 void
 pmap_zero_page(phys)
@@ -1604,8 +1603,76 @@ pmap_zero_page(phys)
 }
 
 /*
- *	pmap_copy_page copies the specified (machine independent)
- *	page.
+ *	pmap_zero_page_uncached zeros the specified page
+ *	using uncached accesses.
+ */
+void
+pmap_zero_page_uncached(phys)
+	paddr_t phys;
+{
+	int *p, *end;
+
+#ifdef DEBUG
+	if (pmapdebug & PDB_FOLLOW)
+		printf("pmap_zero_page_uncached(%lx)\n", phys);
+#endif
+#ifdef PARANOIADIAG
+	if (! (phys < MIPS_MAX_MEM_ADDR))
+		printf("pmap_zero_page_uncached(%lx) nonphys\n", phys);
+#endif
+
+#if defined(MIPS3) && defined(MIPS3_L2CACHE_ABSENT)
+	if (CPUISMIPS3 && !mips_L2CachePresent) {
+		/*XXX FIXME Not very sophisticated */
+		/* XXX Is this really necessary?  Can't we assure that
+		 * pages to be zeroed are already flushed?
+		 */
+		mips_flushcache_allpvh(phys);
+	}
+#endif
+	p = (int *)MIPS_PHYS_TO_KSEG1(phys);
+	end = p + PAGE_SIZE / sizeof(int);
+	/* XXX blkclr()? */
+	do {
+		p[0] = 0;
+		p[1] = 0;
+		p[2] = 0;
+		p[3] = 0;
+
+		p[4] = 0;
+		p[5] = 0;
+		p[6] = 0;
+		p[7] = 0;
+
+		p[8] = 0;
+		p[9] = 0;
+		p[10] = 0;
+		p[11] = 0;
+
+		p[12] = 0;
+		p[13] = 0;
+		p[14] = 0;
+		p[15] = 0;
+		p += 16;
+	} while (p != end);
+#if defined(MIPS3) && defined(MIPS3_L2CACHE_ABSENT)
+	/*
+	 * If we have a virtually-indexed, physically-tagged WB cache,
+	 * and no L2 cache to warn of aliased mappings,	we must force a
+	 * writeback of the destination out of the L1 cache.  If we don't,
+	 * later reads (from virtual addresses mapped to the destination PA)
+	 * might read old stale DRAM footprint, not the just-written data.
+	 */
+	if (CPUISMIPS3 && !mips_L2CachePresent) {
+		/*XXX FIXME Not very sophisticated */
+		/*	MachFlushCache();*/
+		MachFlushDCache(MIPS_PHYS_TO_KSEG0(phys), NBPG);
+	}
+#endif
+}
+
+/*
+ *	pmap_copy_page copies the specified page.
  */
 void
 pmap_copy_page(src, dst)
