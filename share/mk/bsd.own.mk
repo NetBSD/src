@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.374 2003/10/21 16:36:58 lukem Exp $
+#	$NetBSD: bsd.own.mk,v 1.375 2003/10/22 07:43:59 skrll Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -64,12 +64,12 @@ USE_TOOLS_TOOLCHAIN?=yes
 # Transitional for toolchain upgrade to GDB5.3
 #
 # not ported:
-#	${MACHINE_ARCH} == "arm"
 #	${MACHINE_ARCH} == "armeb"
 #	${MACHINE_ARCH} == "sh3eb"
 #	${MACHINE_ARCH} == "sh3el"
 #	${MACHINE_ARCH} == "vax"
 # in progress:
+#	${MACHINE_ARCH} == "arm"
 #	${MACHINE_ARCH} == "mipseb"
 #	${MACHINE_ARCH} == "mipsel"
 # working:
