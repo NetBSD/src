@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.54 1998/01/23 00:44:08 mycroft Exp $	*/
+/*	$NetBSD: pmap.c,v 1.55 1998/02/06 07:21:58 mrg Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -89,6 +89,10 @@
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 #include <vm/vm_page.h>
+
+#if defined(UVM)
+#include <uvm/uvm.h>
+#endif
 
 #include <machine/cpu.h>
 
@@ -233,7 +237,11 @@ pmap_bootstrap(virtual_start)
 	/*
 	 * set the VM page size.
 	 */
+#if defined(UVM)
+	uvm_setpagesize();
+#else
 	vm_set_page_size();
+#endif
 
 	virtual_avail = virtual_start;
 	virtual_end = VM_MAX_KERNEL_ADDRESS;
@@ -307,11 +315,19 @@ pmap_bootstrap(virtual_start)
 	 * with virtual_avail but before we call pmap_steal_memory.
 	 * [i.e. here]
 	 */
+#if defined(UVM)
+	if (avail_start < hole_start)
+		uvm_page_physload(atop(avail_start), atop(hole_start),
+			atop(avail_start), atop(hole_start));
+	uvm_page_physload(atop(hole_end), atop(avail_end), 
+			atop(hole_end), atop(avail_end));
+#else
 	if (avail_start < hole_start)
 		vm_page_physload(atop(avail_start), atop(hole_start),
 			atop(avail_start), atop(hole_start));
 	vm_page_physload(atop(hole_end), atop(avail_end), 
 			atop(hole_end), atop(avail_end));
+#endif
 #endif
 
 	pmap_update();
@@ -348,7 +364,13 @@ pmap_init()
 		npages += (vm_physmem[lcv].end - vm_physmem[lcv].start);
 	s = (vm_size_t) (sizeof(struct pv_entry) * npages + npages);
 	s = round_page(s);
+#if defined(UVM)
+	addr = (vm_offset_t) uvm_km_zalloc(kernel_map, s);
+	if (addr == NULL)
+		panic("pmap_init");
+#else
 	addr = (vm_offset_t) kmem_alloc(kernel_map, s);
+#endif
 
 	/* allocate pv_entry stuff first */
 	for (lcv = 0 ; lcv < vm_nphysseg ; lcv++) {
@@ -394,7 +416,13 @@ pmap_init()
 	npages = pmap_page_index(avail_end - 1) + 1;
 	s = (vm_size_t) (sizeof(struct pv_entry) * npages + npages);
 	s = round_page(s);
+#if defined(UVM)
+	addr = (vm_offset_t) uvm_km_zalloc(kernel_map, s);
+	if (addr == NULL)
+		panic("pmap_init");
+#else
 	addr = (vm_offset_t) kmem_alloc(kernel_map, s);
+#endif
 	pv_table = (struct pv_entry *) addr;
 	addr += sizeof(struct pv_entry) * npages;
 	pmap_attributes = (char *) addr;
@@ -421,9 +449,14 @@ pmap_alloc_pv()
 	int i;
 
 	if (pv_nfree == 0) {
+#if defined(UVM)
+		/* NOTE: can't lock kernel_map here */
+		MALLOC(pvp, struct pv_page *, NBPG, M_VMPVENT, M_WAITOK);
+#else
 		pvp = (struct pv_page *)kmem_alloc(kernel_map, NBPG);
+#endif
 		if (pvp == 0)
-			panic("pmap_alloc_pv: kmem_alloc() failed");
+			panic("pmap_alloc_pv: alloc failed");
 		pvp->pvp_pgi.pgi_freelist = pv = &pvp->pvp_pv[1];
 		for (i = NPVPPG - 2; i; i--, pv++)
 			pv->pv_next = pv + 1;
@@ -465,7 +498,11 @@ pmap_free_pv(pv)
 	case NPVPPG:
 		pv_nfree -= NPVPPG - 1;
 		TAILQ_REMOVE(&pv_page_freelist, pvp, pvp_pgi.pgi_list);
+#if defined(UVM)
+		FREE((vm_offset_t) pvp, M_VMPVENT);
+#else
 		kmem_free(kernel_map, (vm_offset_t)pvp, NBPG);
+#endif
 		break;
 	}
 }
@@ -524,7 +561,11 @@ pmap_collect_pv()
 
 	for (pvp = pv_page_collectlist.tqh_first; pvp; pvp = npvp) {
 		npvp = pvp->pvp_pgi.pgi_list.tqe_next;
+#if defined(UVM)
+		FREE((vm_offset_t) pvp, M_VMPVENT);
+#else
 		kmem_free(kernel_map, (vm_offset_t)pvp, NBPG);
+#endif
 	}
 }
 #endif
@@ -705,7 +746,11 @@ pmap_pinit(pmap)
 	 * No need to allocate page table space yet but we do need a
 	 * valid page directory table.
 	 */
+#if defined(UVM)
+	pmap->pm_pdir = (pd_entry_t *) uvm_km_zalloc(kernel_map, NBPG);
+#else
 	pmap->pm_pdir = (pd_entry_t *) kmem_alloc(kernel_map, NBPG);
+#endif
 
 	/* wire in kernel global address entries */
 	bcopy(&PTD[KPTDI], &pmap->pm_pdir[KPTDI], nkpde * sizeof(pd_entry_t));
@@ -767,7 +812,11 @@ pmap_release(pmap)
 		panic("pmap_release count");
 #endif
 
+#if defined(UVM)
+	uvm_km_free(kernel_map, (vm_offset_t)pmap->pm_pdir, NBPG);
+#else
 	kmem_free(kernel_map, (vm_offset_t)pmap->pm_pdir, NBPG);
+#endif
 }
 
 /*
@@ -1821,10 +1870,15 @@ pmap_changebit(pa, setbits, maskbits)
 			 */
 			if ((PG_RO && setbits == PG_RO) ||
 			    (PG_RW && maskbits == ~PG_RW)) {
+#if defined(UVM)
+				if (va >= uvm.pager_sva && va < uvm.pager_eva)
+					continue;
+#else
 				extern vm_offset_t pager_sva, pager_eva;
 
 				if (va >= pager_sva && va < pager_eva)
 					continue;
+#endif
 			}
 
 			pte = pmap_pte(pv->pv_pmap, va);
