@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagdegrd.c,v 1.6 2001/01/26 04:27:16 oster Exp $	*/
+/*	$NetBSD: rf_dagdegrd.c,v 1.7 2001/01/26 14:06:16 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -647,7 +647,7 @@ rf_CreateRaidCDegradedReadDAG(
 }
 #endif (RF_INCLUDE_CHAINDECLUSTER > 0)
 
-#if (RF_INCLUDE_DECL_PQ > 0) || (RF_INCLUDE_RAID6 > 0)
+#if (RF_INCLUDE_DECL_PQ > 0) || (RF_INCLUDE_RAID6 > 0) || (RF_INCLUDE_EVENODD > 0)
 /*
  * XXX move this elsewhere?
  */
@@ -1126,4 +1126,4 @@ rf_DoubleDegRead(
 	/* zero fill the target data buffers? */
 }
 
-#endif /* (RF_INCLUDE_DECL_PQ > 0) || (RF_INCLUDE_RAID6 > 0) */
+#endif /* (RF_INCLUDE_DECL_PQ > 0) || (RF_INCLUDE_RAID6 > 0) || (RF_INCLUDE_EVENODD > 0) */
