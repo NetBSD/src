@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_types.h,v 1.2.4.4 2002/12/11 06:37:33 thorpej Exp $	 */
+/*	$NetBSD: mach_types.h,v 1.2.4.5 2002/12/19 00:44:34 thorpej Exp $	 */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -55,6 +55,7 @@ typedef int mach_port_right_t;
 typedef int mach_vm_address_t;
 typedef int mach_vm_inherit_t;
 typedef int mach_vm_prot_t;
+typedef int mach_thread_state_flavor_t;
 typedef unsigned int mach_natural_t;
 typedef unsigned int mach_vm_size_t;
 typedef unsigned long mach_vm_offset_t;

@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.10.2.18 2002/12/11 06:37:51 thorpej Exp $	*/
+/*	$NetBSD: iop.c,v 1.10.2.19 2002/12/19 00:48:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.10.2.18 2002/12/11 06:37:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.10.2.19 2002/12/19 00:48:05 thorpej Exp $");
 
 #include "opt_i2o.h"
 #include "iop.h"
@@ -273,9 +273,9 @@ static inline u_int32_t
 iop_inl_msg(struct iop_softc *sc, int off)
 {
 
-	bus_space_barrier(sc->sc_iot, sc->sc_ioh, off, 4,
+	bus_space_barrier(sc->sc_msg_iot, sc->sc_msg_ioh, off, 4,
 	    BUS_SPACE_BARRIER_WRITE | BUS_SPACE_BARRIER_READ);
-	return (bus_space_read_4(sc->sc_iot, sc->sc_ioh, off));
+	return (bus_space_read_4(sc->sc_msg_iot, sc->sc_msg_ioh, off));
 }
 
 static inline void

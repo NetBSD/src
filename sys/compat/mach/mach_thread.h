@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_thread.h,v 1.2.2.2 2002/12/11 06:37:32 thorpej Exp $ */
+/*	$NetBSD: mach_thread.h,v 1.2.2.3 2002/12/19 00:44:34 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -47,6 +47,20 @@
 #include <compat/mach/mach_types.h>
 #include <compat/mach/mach_message.h>
 
+/* For mach_create_thread_child() */
+struct mach_create_thread_child_args {
+	struct proc **mctc_proc;
+	int mctc_flavor;
+	mach_natural_t *mctc_state;
+	int mctc_child_done;
+};
+
+/* For mach_sys_syscall_thread_switch() */
+#define MACH_SWITCH_OPTION_NONE	0
+#define MACH_SWITCH_OPTION_DEPRESS	1
+#define MACH_SWITCH_OPTION_WAIT	2
+#define MACH_SWITCH_OPTION_IDLE	3
+
 /* thread_policy */
 typedef int mach_policy_t;
 
@@ -66,7 +80,25 @@ typedef struct {
 	mach_msg_trailer_t rep_trailer;
 } mach_thread_policy_reply_t;
 
-int mach_thread_policy(struct proc *, mach_msg_header_t *, 
-    size_t, mach_msg_header_t *);
+/* mach_thread_create_running */
+
+typedef struct {
+	mach_msg_header_t req_msgh;
+	mach_ndr_record_t req_ndr;
+	mach_thread_state_flavor_t req_flavor;
+	mach_msg_type_number_t req_count;
+	mach_natural_t req_state[144];
+} mach_thread_create_running_request_t;
+
+typedef struct {
+	mach_msg_header_t rep_msgh;
+	mach_msg_body_t rep_body;
+	mach_msg_port_descriptor_t rep_child_act;
+	mach_msg_trailer_t rep_trailer;
+} mach_thread_create_running_reply_t;
+	
+int mach_thread_policy(struct mach_trap_args *);
+int mach_thread_create_running(struct mach_trap_args *);
+void mach_create_thread_child(void *);
 
 #endif /* _MACH_THREAD_H_ */

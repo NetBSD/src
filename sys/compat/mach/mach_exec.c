@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_exec.c,v 1.2.4.8 2002/12/11 06:37:28 thorpej Exp $	 */
+/*	$NetBSD: mach_exec.c,v 1.2.4.9 2002/12/19 00:44:32 thorpej Exp $	 */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,12 +37,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.2.4.8 2002/12/11 06:37:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.2.4.9 2002/12/19 00:44:32 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/exec.h>
+#include <sys/queue.h>
 #include <sys/exec_macho.h>
 #include <sys/malloc.h>
 
@@ -52,11 +53,17 @@ __KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.2.4.8 2002/12/11 06:37:28 thorpej Ex
 #include <uvm/uvm_param.h>
 
 #include <compat/mach/mach_types.h>
+#include <compat/mach/mach_message.h>
+#include <compat/mach/mach_port.h>
+#include <compat/mach/mach_semaphore.h>
 #include <compat/mach/mach_exec.h>
+
+static int mach_cold = 1; /* Have we initialized COMPAT_MACH structures? */
 
 static void mach_e_proc_exec(struct proc *, struct exec_package *);
 static void mach_e_proc_fork(struct proc *, struct proc *);
 static void mach_e_proc_exit(struct proc *);
+static void mach_init(void);
 
 extern char sigcode[], esigcode[];
 extern struct sysent sysent[];
@@ -217,12 +224,32 @@ mach_e_proc_init(p, vmspace)
 {
 	struct mach_emuldata *med;
 
+	/* 
+	 * Initialize various things if needed. 
+	 * XXX Not the best place for that. 
+	 */
+	if (mach_cold == 1)
+		mach_init();
+
 	if (!p->p_emuldata)
 		p->p_emuldata = malloc(sizeof(struct mach_emuldata),
 		    M_EMULDATA, M_WAITOK | M_ZERO);
 
 	med = (struct mach_emuldata *)p->p_emuldata;
 	med->med_p = 0;
+
+	LIST_INIT(&med->med_recv);
+	LIST_INIT(&med->med_send);
+	LIST_INIT(&med->med_sendonce);
+
+	med->med_bootstrap = mach_port_get(NULL);
+	med->med_kernel = mach_port_get(NULL);
+	med->med_host = mach_port_get(NULL);
+
+	/* Make sure they will not be deallocated */
+	med->med_bootstrap->mp_refcount++;
+	med->med_kernel->mp_refcount++;
+	med->med_host->mp_refcount++;
 
 	return;
 }
@@ -231,8 +258,44 @@ static void
 mach_e_proc_exit(p)
 	struct proc *p;
 {
-	free(p->p_emuldata, M_EMULDATA);
+	struct mach_emuldata *med;
+	struct mach_right *mr;
+
+	mach_semaphore_cleanup(p);
+
+	med = (struct mach_emuldata *)p->p_emuldata;
+
+	lockmgr(&mach_right_list_lock, LK_EXCLUSIVE, NULL);
+	while ((mr = LIST_FIRST(&med->med_recv)) != NULL)
+		mach_right_put_exclocked(mr);
+	while ((mr = LIST_FIRST(&med->med_send)) != NULL)
+		mach_right_put_exclocked(mr);
+	while ((mr = LIST_FIRST(&med->med_sendonce)) != NULL)
+		mach_right_put_exclocked(mr);
+	lockmgr(&mach_right_list_lock, LK_RELEASE, NULL);
+
+	med->med_bootstrap->mp_refcount--;
+	med->med_kernel->mp_refcount--;
+	med->med_host->mp_refcount--;
+
+	mach_port_put(med->med_bootstrap);
+	mach_port_put(med->med_kernel);
+	mach_port_put(med->med_host);
+
+	free(med, M_EMULDATA);
 	p->p_emuldata = NULL;
+
+	return;
+}
+
+static void
+mach_init(void)
+{
+	mach_semaphore_init();
+	mach_message_init();
+	mach_port_init();
+
+	mach_cold = 0;
 
 	return;
 }

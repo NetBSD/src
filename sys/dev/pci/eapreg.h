@@ -1,4 +1,4 @@
-/*	$NetBSD: eapreg.h,v 1.2.8.2 2002/12/11 06:38:16 thorpej Exp $	*/
+/*	$NetBSD: eapreg.h,v 1.2.8.3 2002/12/19 00:48:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -283,4 +283,5 @@
 #define EAP_ES1373_A  0x04
 #define EAP_ES1373_B  0x06
 #define EAP_CT5880_A  0x07
+#define EAP_ES1373_8  0x08
 #define EAP_ES1371_B  0x09

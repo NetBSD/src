@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_host.c,v 1.6.2.3 2002/12/11 06:37:28 thorpej Exp $ */
+/*	$NetBSD: mach_host.c,v 1.6.2.4 2002/12/19 00:44:32 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_host.c,v 1.6.2.3 2002/12/11 06:37:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_host.c,v 1.6.2.4 2002/12/19 00:44:32 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -54,152 +54,120 @@ __KERNEL_RCSID(0, "$NetBSD: mach_host.c,v 1.6.2.3 2002/12/11 06:37:28 thorpej Ex
 #include <compat/mach/mach_errno.h>
 
 int 
-mach_host_info(p, msgh, maxlen, dst)
-	struct proc *p;
-	mach_msg_header_t *msgh;
-	size_t maxlen;
-	mach_msg_header_t *dst;
+mach_host_info(args)
+	struct mach_trap_args *args;
 {
-	mach_host_info_request_t req;
-	mach_host_info_reply_t rep;
+	mach_host_info_request_t *req = args->smsg;
+	mach_host_info_reply_t *rep = args->rmsg;
+	size_t *msglen = args->rsize;
 	mach_host_info_reply_simple_t *reps;
-	int error;
-	int msglen;
 
-	if ((error = copyin(msgh, &req, sizeof(req))) != 0)
-		return error;
-
-	bzero(&rep, sizeof(rep));
-
-	rep.rep_msgh.msgh_bits = 
+	rep->rep_msgh.msgh_bits = 
 	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
-	rep.rep_msgh.msgh_size = sizeof(rep) - sizeof(rep.rep_trailer);
-	rep.rep_msgh.msgh_local_port = req.req_msgh.msgh_local_port;
-	rep.rep_msgh.msgh_id = req.req_msgh.msgh_id + 100;
-	rep.rep_trailer.msgh_trailer_size = 8;
+	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
+	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
+	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
+	rep->rep_trailer.msgh_trailer_size = 8;
 
-	msglen = sizeof(rep);
+	*msglen = sizeof(*rep);
 
-	switch(req.req_flavor) {
+	switch(req->req_flavor) {
 	case MACH_HOST_BASIC_INFO: {
 		struct mach_host_basic_info *info
-		    = (struct mach_host_basic_info *)&rep.rep_data[0];
+		    = (struct mach_host_basic_info *)&rep->rep_data[0];
 
-		DPRINTF(("mach_host_info(BASIC_INFO);\n"));
-		rep.rep_msgh.msgh_size = sizeof(*reps) 
-		    - sizeof(rep.rep_trailer) + sizeof(*info);
-		rep.rep_count = sizeof(*info) / sizeof(mach_integer_t);
+		rep->rep_msgh.msgh_size = sizeof(*reps) 
+		    - sizeof(rep->rep_trailer) + sizeof(*info);
+		rep->rep_count = sizeof(*info) / sizeof(mach_integer_t);
 		mach_host_basic_info(info);
 		/* 
 		 * XXX this is the trailer, the way it 
 		 * is filled should be improved 
 		 */
-		rep.rep_data[rep.rep_count + 1] = 8;
+		rep->rep_data[rep->rep_count + 1] = 8;
 		break;
 	}
 
 	case MACH_HOST_PRIORITY_INFO: {
 		struct mach_host_priority_info *info
-		    = (struct mach_host_priority_info *)&rep.rep_data[0];
+		    = (struct mach_host_priority_info *)&rep->rep_data[0];
 
-		DPRINTF(("mach_host_info(PRIORITY_INFO);\n"));
-		rep.rep_msgh.msgh_size = sizeof(*reps) 
-		    - sizeof(rep.rep_trailer) + sizeof(*info);
-		rep.rep_count = sizeof(*info) / sizeof(mach_integer_t);
+		rep->rep_msgh.msgh_size = sizeof(*reps) 
+		    - sizeof(rep->rep_trailer) + sizeof(*info);
+		rep->rep_count = sizeof(*info) / sizeof(mach_integer_t);
 		mach_host_priority_info(info);
 		/* 
 		 * XXX this is the trailer, the way it 
 		 * is filled should be improved 
 		 */
-		rep.rep_data[rep.rep_count + 1] = 8;
+		rep->rep_data[rep->rep_count + 1] = 8;
 		break;
 	}
 
 	case MACH_HOST_SEMAPHORE_TRAPS:
 	case MACH_HOST_MACH_MSG_TRAP:
-		DPRINTF(("mach_host_info(%s);\n",
-		    req.req_flavor == MACH_HOST_SEMAPHORE_TRAPS ?
-		    "SEMAPHORE_TRAPS" : "MACH_MSG_TRAP"));
-		reps = (mach_host_info_reply_simple_t *)&rep;
+		reps = (mach_host_info_reply_simple_t *)rep;
 		reps->rep_msgh.msgh_size = 
 		    sizeof(*reps) - sizeof(reps->rep_trailer);
 		reps->rep_trailer.msgh_trailer_size = 8;
-		msglen = sizeof(*reps);
+		*msglen = sizeof(*reps);
 		break;
 
 	case MACH_HOST_SCHED_INFO:
 	case MACH_HOST_RESOURCE_SIZES:
-		DPRINTF(("Unimplemented host_info flavor %d\n", 
-		    req.req_flavor));
+		uprintf("mach_host_info() Unimplemented host_info flavor %d\n", 
+		    req->req_flavor);
 	default:
-		uprintf("Unknown host_info flavor %d\n", req.req_flavor);
-		rep.rep_retval = native_to_mach_errno[EINVAL];
+		uprintf("Unknown host_info flavor %d\n", req->req_flavor);
+		rep->rep_retval = native_to_mach_errno[EINVAL];
 		break;
 	}
 
-	return MACH_MSG_RETURN(p, &rep, msgh, msglen, maxlen, dst);
+	return 0;
 }
 
 
 int 
-mach_host_page_size(p, msgh, maxlen, dst)
-	struct proc *p;
-	mach_msg_header_t *msgh;
-	size_t maxlen;
-	mach_msg_header_t *dst;
+mach_host_page_size(args)
+	struct mach_trap_args *args;
 {
-	mach_host_page_size_request_t req;
-	mach_host_page_size_reply_t rep;
-	int error;
+	mach_host_page_size_request_t *req = args->smsg;
+	mach_host_page_size_reply_t *rep = args->rmsg;
+	size_t *msglen = args->rsize;
 
-	if ((error = copyin(msgh, &req, sizeof(req))) != 0)
-		return error;
-
-	DPRINTF(("mach_host_page_size();\n"));
-
-	bzero(&rep, sizeof(rep));
-
-	rep.rep_msgh.msgh_bits =
+	rep->rep_msgh.msgh_bits =
 	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
-	rep.rep_msgh.msgh_size = sizeof(rep) - sizeof(rep.rep_trailer);
-	rep.rep_msgh.msgh_local_port = req.req_msgh.msgh_local_port;
-	rep.rep_msgh.msgh_id = req.req_msgh.msgh_id + 100;
-	rep.rep_page_size = PAGE_SIZE;
-	rep.rep_trailer.msgh_trailer_size = 8;
+	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
+	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
+	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
+	rep->rep_page_size = PAGE_SIZE;
+	rep->rep_trailer.msgh_trailer_size = 8;
 	
-	return MACH_MSG_RETURN(p, &rep, msgh, sizeof(rep), maxlen, dst);
+	*msglen = sizeof(*rep);
+	return 0;
 }
 
 int
-mach_host_get_clock_service(p, msgh, maxlen, dst)
-	struct proc *p;
-	mach_msg_header_t *msgh;
-	size_t maxlen;
-	mach_msg_header_t *dst;
+mach_host_get_clock_service(args)
+	struct mach_trap_args *args;
 {
-	mach_host_get_clock_service_request_t req;
-	mach_host_get_clock_service_reply_t rep;
-	int error;
+	mach_host_get_clock_service_request_t *req = args->smsg;
+	mach_host_get_clock_service_reply_t *rep = args->rmsg;
+	size_t *msglen = args->rsize;
 
-	if ((error = copyin(msgh, &req, sizeof(req))) != 0)
-		return error;
-
-	DPRINTF(("mach_host_get_clock_service();\n"));
-
-	bzero(&rep, sizeof(rep));
-
-	rep.rep_msgh.msgh_bits = 
+	rep->rep_msgh.msgh_bits = 
 	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE) |
 	    MACH_MSGH_BITS_COMPLEX;
-	rep.rep_msgh.msgh_size = sizeof(rep) - sizeof(rep.rep_trailer);
-	rep.rep_msgh.msgh_local_port = req.req_msgh.msgh_local_port;
-	rep.rep_msgh.msgh_id = req.req_msgh.msgh_id + 100;
-	rep.rep_body.msgh_descriptor_count = 1; /* XXX why? */
-	rep.rep_clock_serv.name = 0x60b; /* XXX */
-	rep.rep_clock_serv.disposition = 0x11; /* XXX */
-	rep.rep_trailer.msgh_trailer_size = 8;
+	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
+	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
+	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
+	rep->rep_body.msgh_descriptor_count = 1; /* XXX why? */
+	rep->rep_clock_serv.name = 0x60b; /* XXX */
+	rep->rep_clock_serv.disposition = 0x11; /* XXX */
+	rep->rep_trailer.msgh_trailer_size = 8;
 
-	return MACH_MSG_RETURN(p, &rep, msgh, sizeof(rep), maxlen, dst);
+	*msglen = sizeof(*rep);
+	return 0;
 }
 
 void

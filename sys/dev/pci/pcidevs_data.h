@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.310.2.24 2002/12/11 06:38:23 thorpej Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.310.2.25 2002/12/19 00:48:12 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.490 2002/12/03 06:08:00 explorer Exp 
+ *	NetBSD: pcidevs,v 1.491 2002/12/11 21:34:36 jdolecek Exp 
  */
 
 /*
@@ -4748,6 +4748,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Macronix",
 	    "MX987x5 (PMAC) 10/100 Ethernet",
+	},
+	{
+	    PCI_VENDOR_MADGE, PCI_PRODUCT_MADGE_SMARTRN2,
+	    0,
+	    "Madge Networks",
+	    "Smart 16/4 PCI Ringnode Mk2",
 	},
 	{
 	    PCI_VENDOR_MADGE, PCI_PRODUCT_MADGE_COLLAGE25,

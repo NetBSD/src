@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.86.2.26 2002/12/11 15:44:48 thorpej Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.86.2.27 2002/12/19 00:50:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.86.2.26 2002/12/11 15:44:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.86.2.27 2002/12/19 00:50:43 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_insecure.h"
@@ -280,6 +280,7 @@ int defcorenamelen = sizeof(DEFCORENAME);
 
 extern	int	kern_logsigexit;
 extern	fixpt_t	ccpu;
+extern  int	forkfsleep;
 
 #ifndef MULTIPROCESSOR
 #define sysctl_ncpus() 1
@@ -380,7 +381,24 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		}
 		return (error);
 	case KERN_MAXPROC:
-		return (sysctl_int(oldp, oldlenp, newp, newlen, &maxproc));
+	    {
+		int nmaxproc = maxproc;
+
+		error = (sysctl_int(oldp, oldlenp, newp, newlen, &nmaxproc));
+
+		if (!error && newp) {
+			if (nmaxproc < 0 || nmaxproc >= PID_MAX - PID_SKIP)
+				return (EINVAL);
+
+#ifdef __HAVE_CPU_MAXPROC
+			if (nmaxproc > cpu_maxproc())
+				return (EINVAL);
+#endif
+			maxproc = nmaxproc;
+		}
+
+		return (error);
+	    }
 	case KERN_MAXFILES:
 		return (sysctl_int(oldp, oldlenp, newp, newlen, &maxfiles));
 	case KERN_ARGMAX:
@@ -597,6 +615,28 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		return (sysctl_rdint(oldp, oldlenp, newp, LABELSECTOR));
 	case KERN_LABELOFFSET:
 		return (sysctl_rdint(oldp, oldlenp, newp, LABELOFFSET));
+	case KERN_FORKFSLEEP:
+	    {
+		/* userland sees value in ms, internally is in ticks */
+		int timo, lsleep = forkfsleep * 1000 / hz;
+
+		error = (sysctl_int(oldp, oldlenp, newp, newlen, &lsleep));
+		if (newp && !error) {
+			/* refuse negative values, and overly 'long time' */
+			if (lsleep < 0 || lsleep > MAXSLP * 1000)
+				return (EINVAL);
+
+			timo = mstohz(lsleep);
+
+			/* if the interval is >0 ms && <1 tick, use 1 tick */
+			if (lsleep != 0 && timo == 0)
+				forkfsleep = 1;
+			else
+				forkfsleep = timo;
+		}
+		return (error);
+	    }
+
 	default:
 		return (EOPNOTSUPP);
 	}

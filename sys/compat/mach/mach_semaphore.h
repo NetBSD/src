@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_bootstrap.c,v 1.2.2.3 2002/12/19 00:44:32 thorpej Exp $ */
+/*	$NetBSD: mach_semaphore.h,v 1.2.6.2 2002/12/19 00:44:34 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -36,48 +36,65 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_bootstrap.c,v 1.2.2.3 2002/12/19 00:44:32 thorpej Exp $");
+#ifndef	_MACH_SEMAPHORE_H_
+#define	_MACH_SEMAPHORE_H_
 
-#include <sys/types.h>
-#include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/signal.h>
-#include <sys/proc.h>
+#include <sys/lock.h>
+#include <sys/queue.h>
 
-#include <compat/mach/mach_types.h>
-#include <compat/mach/mach_message.h>
-#include <compat/mach/mach_bootstrap.h>
-#include <compat/mach/mach_errno.h>
+extern int mach_semaphore_cold;
 
-int 
-mach_bootstrap_look_up(args)
-	struct mach_trap_args *args;
-{
-	mach_bootstrap_look_up_request_t *req = args->smsg;
-	mach_bootstrap_look_up_reply_t *rep = args->rmsg;
-	size_t *msglen = args->rsize;
-	const char service_name[] = "lookup\21"; /* XXX Why */
-	int service_name_len;
+struct mach_waiting_proc {
+	TAILQ_ENTRY(mach_waiting_proc) mwp_list;
+	struct proc *mwp_p;
+};
 
-	/* The trailer is word aligned  */
-	service_name_len = (sizeof(service_name) + 1) & ~0x7UL; 
-	*msglen = sizeof(rep->rep_msgh) + sizeof(rep->rep_count) + 
-	    sizeof(rep->rep_bootstrap_port) + service_name_len *
-	    sizeof(rep->rep_trailer);
+struct mach_semaphore {
+	int ms_value;
+	int ms_policy;
+	LIST_ENTRY(mach_semaphore) ms_list;
+	TAILQ_HEAD(ms_waiting, mach_waiting_proc) ms_waiting;
+	struct lock ms_lock;
+};
 
-	rep->rep_msgh.msgh_bits =
-	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE) |
-	    MACH_MSGH_BITS_COMPLEX;
-	rep->rep_msgh.msgh_size = *msglen - sizeof(rep->rep_trailer);
-	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
-	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
-	rep->rep_count = 1; /* XXX Why? */
-	rep->rep_bootstrap_port = 0x21b; /* XXX Why? */
-	strcpy((char *)&rep->rep_service_name, service_name); 
-	/* XXX This is the trailer. We should find something better */
-	rep->rep_service_name[service_name_len + 7] = 8;
+/* semaphore_create */
 
-	return 0;
-}
+#define MACH_SYNC_POLICY_FIFO 0
+#define MACH_SYNC_POLICY_FIXED_PRIORITY 1
+
+typedef struct {
+	mach_msg_header_t req_msgh;
+	mach_ndr_record_t req_ndr;
+	int req_policy;
+	int req_value;
+} mach_semaphore_create_request_t;
+
+typedef struct {
+	mach_msg_header_t rep_msgh;
+	mach_msg_body_t rep_body;
+	mach_msg_port_descriptor_t rep_sem;
+	mach_msg_trailer_t rep_trailer;
+} mach_semaphore_create_reply_t;
+
+/* semaphore_destroy */
+
+typedef struct {
+	mach_msg_header_t req_msgh;
+	mach_msg_body_t req_body;
+	mach_msg_port_descriptor_t req_sem;
+} mach_semaphore_destroy_request_t;
+
+typedef struct {
+	mach_msg_header_t rep_msgh;
+	mach_ndr_record_t rep_ndr;
+	mach_kern_return_t rep_retval;
+	mach_msg_trailer_t rep_trailer;
+} mach_semaphore_destroy_reply_t;
+
+void mach_semaphore_init(void);
+void mach_semaphore_cleanup(struct proc *);
+int mach_semaphore_create(struct mach_trap_args *);
+int mach_semaphore_destroy(struct mach_trap_args *);
+
+#endif /* _MACH_SEMAPHORE_H_ */
 

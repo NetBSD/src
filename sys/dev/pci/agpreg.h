@@ -1,4 +1,4 @@
-/*	$NetBSD: agpreg.h,v 1.1.4.2 2001/09/21 22:35:53 nathanw Exp $	*/
+/*	$NetBSD: agpreg.h,v 1.1.4.3 2002/12/19 00:48:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -152,5 +152,21 @@
 #define AGP_I810_DRT_UNPOPULATED 0x00
 #define AGP_I810_DRT_POPULATED	0x01
 #define AGP_I810_GTT		0x10000
+
+/*
+ * Config registers for i830MG device 0
+ */
+#define AGP_I830_GCC0			0x50
+#define AGP_I830_GCC1			0x52
+#define AGP_I830_GCC1_DEV2		0x08
+#define AGP_I830_GCC1_DEV2_ENABLED	0x00
+#define AGP_I830_GCC1_DEV2_DISABLED	0x08
+#define AGP_I830_GCC1_GMS		0x70
+#define AGP_I830_GCC1_GMS_STOLEN_512	0x20
+#define AGP_I830_GCC1_GMS_STOLEN_1024	0x30
+#define AGP_I830_GCC1_GMS_STOLEN_8192	0x40
+#define AGP_I830_GCC1_GMASIZE		0x01
+#define AGP_I830_GCC1_GMASIZE_64	0x01
+#define AGP_I830_GCC1_GMASIZE_128	0x00
 
 #endif /* !_PCI_AGPREG_H_ */

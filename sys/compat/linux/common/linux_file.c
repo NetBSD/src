@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.37.2.12 2002/09/17 21:19:02 nathanw Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.37.2.13 2002/12/19 00:42:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.37.2.12 2002/09/17 21:19:02 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.37.2.13 2002/12/19 00:42:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -685,7 +685,6 @@ linux_sys_mknod(l, v, retval)
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
 	caddr_t sg = stackgap_init(p, 0);
-	struct sys_mkfifo_args bma;
 
 	CHECK_ALT_CREAT(p, &sg, SCARG(uap, path));
 
@@ -693,11 +692,25 @@ linux_sys_mknod(l, v, retval)
 	 * BSD handles FIFOs separately
 	 */
 	if (SCARG(uap, mode) & S_IFIFO) {
+		struct sys_mkfifo_args bma;
+
 		SCARG(&bma, path) = SCARG(uap, path);
 		SCARG(&bma, mode) = SCARG(uap, mode);
-		return sys_mkfifo(l, uap, retval);
-	} else
-		return sys_mknod(l, uap, retval);
+		return sys_mkfifo(p, &bma, retval);
+	} else {
+		struct sys_mknod_args bma;
+
+		SCARG(&bma, path) = SCARG(uap, path);
+		SCARG(&bma, mode) = SCARG(uap, mode);
+		/*
+		 * Linux device numbers uses 8 bits for minor and 8 bits
+		 * for major. Due to how we map our major and minor,
+		 * this just fints into our dev_t. Just mask off the
+		 * upper 16bit to remove any random junk.
+		 */
+		SCARG(&bma, dev) = SCARG(uap, dev) & 0xffff;
+		return sys_mknod(l, &bma, retval);
+	}
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.144.2.11 2002/11/11 22:12:07 nathanw Exp $	*/
+/*	$NetBSD: cd.c,v 1.144.2.12 2002/12/19 00:48:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.144.2.11 2002/11/11 22:12:07 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.144.2.12 2002/12/19 00:48:17 thorpej Exp $");
 
 #include "rnd.h"
 
@@ -1098,9 +1098,9 @@ cdioctl(dev, cmd, addr, flag, p)
 	struct cd_softc *cd = cd_cd.cd_devs[CDUNIT(dev)];
 	struct scsipi_periph *periph = cd->sc_periph;
 	int part = CDPART(dev);
-	int error;
+	int error = 0;
 #ifdef __HAVE_OLD_DISKLABEL
-	struct disklabel newlabel;
+	struct disklabel *newlabel = NULL;
 #endif
 
 	SC_DEBUG(cd->sc_periph, SCSIPI_DB2, ("cdioctl 0x%lx ", cmd));
@@ -1154,11 +1154,16 @@ cdioctl(dev, cmd, addr, flag, p)
 		return (0);
 #ifdef __HAVE_OLD_DISKLABEL
 	case ODIOCGDINFO:
-		newlabel = *(cd->sc_dk.dk_label);
-		if (newlabel.d_npartitions > OLDMAXPARTITIONS)
-			return ENOTTY;
-		memcpy(addr, &newlabel, sizeof (struct olddisklabel));
-		return (0);
+		newlabel = malloc(sizeof (*newlabel), M_TEMP, M_WAITOK);
+		if (newlabel == NULL)
+			return (EIO);
+		memcpy(newlabel, cd->sc_dk.dk_label, sizeof (*newlabel));
+		if (newlabel->d_npartitions > OLDMAXPARTITIONS)
+			error = ENOTTY;
+		else
+			memcpy(addr, newlabel, sizeof (struct olddisklabel));
+		free(newlabel, M_TEMP);
+		return error;
 #endif
 
 	case DIOCGPART:
@@ -1176,20 +1181,23 @@ cdioctl(dev, cmd, addr, flag, p)
 	{
 		struct disklabel *lp;
 
+		if ((flag & FWRITE) == 0)
+			return (EBADF);
+
 #ifdef __HAVE_OLD_DISKLABEL
 		if (cmd == ODIOCSDINFO || cmd == ODIOCWDINFO) {
-			memset(&newlabel, 0, sizeof newlabel);
-			memcpy(&newlabel, addr, sizeof (struct olddisklabel));
-			lp = &newlabel;
+			newlabel = malloc(sizeof (*newlabel), M_TEMP, M_WAITOK);
+			if (newlabel == NULL)
+				return (EIO);
+			memset(newlabel, 0, sizeof newlabel);
+			memcpy(newlabel, addr, sizeof (struct olddisklabel));
+			lp = newlabel;
 		} else
 #endif
 		lp = (struct disklabel *)addr;
 
-		if ((flag & FWRITE) == 0)
-			return (EBADF);
-
 		if ((error = cdlock(cd)) != 0)
-			return (error);
+			goto bad;
 		cd->flags |= CDF_LABELLING;
 
 		error = setdisklabel(cd->sc_dk.dk_label,
@@ -1201,6 +1209,11 @@ cdioctl(dev, cmd, addr, flag, p)
 
 		cd->flags &= ~CDF_LABELLING;
 		cdunlock(cd);
+bad:
+#ifdef __HAVE_OLD_DISKLABEL
+		if (newlabel != NULL)
+			free(newlabel, M_TEMP);
+#endif
 		return (error);
 	}
 
@@ -1213,11 +1226,16 @@ cdioctl(dev, cmd, addr, flag, p)
 
 #ifdef __HAVE_OLD_DISKLABEL
 	case ODIOCGDEFLABEL:
-		cdgetdefaultlabel(cd, &newlabel);
-		if (newlabel.d_npartitions > OLDMAXPARTITIONS)
-			return ENOTTY;
-		memcpy(addr, &newlabel, sizeof (struct olddisklabel));
-		return (0);
+		newlabel = malloc(sizeof (*newlabel), M_TEMP, M_WAITOK);
+		if (newlabel == NULL)
+			return (EIO);
+		cdgetdefaultlabel(cd, newlabel);
+		if (newlabel->d_npartitions > OLDMAXPARTITIONS)
+			error = ENOTTY;
+		else
+			memcpy(addr, newlabel, sizeof (struct olddisklabel));
+		free(newlabel, M_TEMP);
+		return error;
 #endif
 
 	case CDIOCPLAYTRACKS: {
@@ -2032,22 +2050,24 @@ dvd_read_disckey(cd, s)
 	dvd_struct *s;
 {
 	struct scsipi_generic cmd;
-	u_int8_t buf[4 + 2048];
+	u_int8_t *buf;
 	int error;
 
+	buf = malloc(4 + 2048, M_TEMP, M_WAITOK|M_ZERO);
+	if (buf == NULL)
+		return EIO;
 	memset(cmd.bytes, 0, 15);
-	memset(buf, 0, sizeof(buf));
 	cmd.opcode = GPCMD_READ_DVD_STRUCTURE;
 	cmd.bytes[6] = s->type;
-	_lto2b(sizeof(buf), &cmd.bytes[7]);
+	_lto2b(4 + 2048, &cmd.bytes[7]);
 
 	cmd.bytes[9] = s->disckey.agid << 6;
-	error = scsipi_command(cd->sc_periph, &cmd, 12, buf, sizeof(buf),
+	error = scsipi_command(cd->sc_periph, &cmd, 12, buf, 4 + 2048,
 	    CDRETRIES, 30000, NULL, XS_CTL_DATA_IN|XS_CTL_DATA_ONSTACK);
-	if (error)
-		return (error);
-	memcpy(s->disckey.value, &buf[4], 2048);
-	return (0);
+	if (error == 0)
+		memcpy(s->disckey.value, &buf[4], 2048);
+	free(buf, M_TEMP);
+	return error;
 }
 
 int
@@ -2082,24 +2102,28 @@ dvd_read_manufact(cd, s)
 	dvd_struct *s;
 {
 	struct scsipi_generic cmd;
-	u_int8_t buf[4 + 2048];
+	u_int8_t *buf;
 	int error;
 
+	buf = malloc(4 + 2048, M_TEMP, M_WAITOK|M_ZERO);
+	if (buf == NULL)
+		return (EIO);
 	memset(cmd.bytes, 0, 15);
-	memset(buf, 0, sizeof(buf));
 	cmd.opcode = GPCMD_READ_DVD_STRUCTURE;
 	cmd.bytes[6] = s->type;
-	_lto2b(sizeof(buf), &cmd.bytes[7]);
+	_lto2b(4 + 2048, &cmd.bytes[7]);
 
-	error = scsipi_command(cd->sc_periph, &cmd, 12, buf, sizeof(buf),
+	error = scsipi_command(cd->sc_periph, &cmd, 12, buf, 4 + 2048,
 	    CDRETRIES, 30000, NULL, XS_CTL_DATA_IN|XS_CTL_DATA_ONSTACK);
-	if (error)
-		return (error);
-	s->manufact.len = _2btol(&buf[0]);
-	if (s->manufact.len < 0 || s->manufact.len > 2048)
-		return (EIO);
-	memcpy(s->manufact.value, &buf[4], s->manufact.len);
-	return (0);
+	if (error == 0) {
+		s->manufact.len = _2btol(&buf[0]);
+		if (s->manufact.len >= 0 && s->manufact.len <= 2048)
+			memcpy(s->manufact.value, &buf[4], s->manufact.len);
+		else
+			error = EIO;
+	}
+	free(buf, M_TEMP);
+	return error;
 }
 
 int

@@ -1,4 +1,4 @@
-/* $NetBSD: dksubr.c,v 1.3.2.2 2002/10/18 02:41:27 nathanw Exp $ */
+/* $NetBSD: dksubr.c,v 1.3.2.3 2002/12/19 00:48:02 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -408,6 +408,8 @@ dk_getdefaultlabel(struct dk_intf *di, struct dk_softc *dksc,
 		      struct disklabel *lp)
 {
 	struct dk_geom *pdg = &dksc->sc_geom;
+
+	memset(lp, 0, sizeof(*lp));
 
 	lp->d_secperunit = dksc->sc_size;
 	lp->d_secsize = pdg->pdg_secsize;

@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_exec.h,v 1.2.4.5 2002/12/11 06:37:28 thorpej Exp $	 */
+/*	$NetBSD: mach_exec.h,v 1.2.4.6 2002/12/19 00:44:32 thorpej Exp $	 */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -44,7 +44,20 @@
 #include <compat/mach/mach_types.h>
 
 struct mach_emuldata {
-	mach_cproc_t med_p;
+	mach_cproc_t med_p;		/* Thread id */
+	int med_thpri;			/* Saved priority */
+	/* 
+	 * Lists for the receive, send ans send-once rights of
+	 * this process. There is also a right list for all 
+	 * process, which is protected by a lock. Theses lists
+	 * are protected by the same global lock.
+	 */
+	LIST_HEAD(med_recv, mach_right) med_recv;
+	LIST_HEAD(med_send, mach_right) med_send;
+	LIST_HEAD(med_sendonce, mach_right) med_sendonce;
+	struct mach_port *med_bootstrap;/* task bootstrap port */
+	struct mach_port *med_kernel;	/* task kernel port */
+	struct mach_port *med_host;	/* task host port */
 };
 
 int exec_mach_copyargs(struct proc *, struct exec_package *, 

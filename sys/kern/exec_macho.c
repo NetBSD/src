@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_macho.c,v 1.2.4.6 2002/12/11 06:43:01 thorpej Exp $	*/
+/*	$NetBSD: exec_macho.c,v 1.2.4.7 2002/12/19 00:50:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_macho.c,v 1.2.4.6 2002/12/11 06:43:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_macho.c,v 1.2.4.7 2002/12/19 00:50:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -205,6 +205,8 @@ exec_macho_load_segment(epp, vp, foff, ls, type)
 	if (strcmp(ls->segname, "__TEXT") != 0 &&
 	    strcmp(ls->segname, "__DATA") != 0 &&
 	    strcmp(ls->segname, "__LOCK") != 0 &&
+	    strcmp(ls->segname, "__OBJC") != 0 &&
+	    strcmp(ls->segname, "__CGSERVER") != 0 &&
 	    strcmp(ls->segname, "__LINKEDIT") != 0) {
 		DPRINTF(("Unknown exec_macho segment %s\n", ls->segname));
 		return ENOEXEC;
@@ -217,6 +219,11 @@ exec_macho_load_segment(epp, vp, foff, ls, type)
 			    (struct exec_macho_object_header *)addr;
 		}
 		if (strcmp(ls->segname, "__DATA") == 0) {
+			epp->ep_daddr = addr;
+			epp->ep_dsize = round_page(ls->vmsize);
+		}
+		if ((strcmp(ls->segname, "__OBJC") == 0) ||
+		    (strcmp(ls->segname, "__CGSERVER") == 0)) {
 			epp->ep_daddr = addr;
 			epp->ep_dsize = round_page(ls->vmsize);
 		}

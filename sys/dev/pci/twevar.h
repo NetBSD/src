@@ -1,4 +1,4 @@
-/*	$NetBSD: twevar.h,v 1.7.2.3 2002/06/20 03:45:56 nathanw Exp $	*/
+/*	$NetBSD: twevar.h,v 1.7.2.4 2002/12/19 00:48:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -62,6 +62,7 @@ struct twe_softc {
 	u_int			sc_dsize[TWE_MAX_UNITS];
 };
 #define	TWEF_AEN	0x01	/* retrieving an AEN */
+#define	TWEF_OPEN	0x02	/* control device is opened */
 
 /* Optional per-command context. */
 struct twe_context {
