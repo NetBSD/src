@@ -87,11 +87,11 @@ fnmatch(pattern, string, flags)
 	for (;;)
 		switch (c = *pattern++) {
 		case EOS:
-			return(*string == EOS);
+			return(!(*string == EOS));
 		case '?':
-			if ((test = *string++) == EOS ||
-			    test == '/' && flags & FNM_PATHNAME)
-				return(0);
+			if (((test = *string++) == EOS) ||
+			    ((test == '/') && (flags & FNM_PATHNAME)))
+				return(1);
 			break;
 		case '*':
 			c = *pattern;
@@ -102,30 +102,30 @@ fnmatch(pattern, string, flags)
 			/* optimize for pattern with * at end or before / */
 			if (c == EOS)
 				if (flags & FNM_PATHNAME)
-					return(!index(string, '/'));
+					return(index(string, '/') != NULL);
 				else
-					return(1);
-			else if (c == '/' && flags & FNM_PATHNAME) {
-				if ((string = index(string, '/')) == NULL)
 					return(0);
+			else if ((c == '/') && (flags & FNM_PATHNAME)) {
+				if ((string = index(string, '/')) == NULL)
+					return(1);
 				break;
 			}
 
 			/* general case, use recursion */
 			while ((test = *string) != EOS) {
-				if (fnmatch(pattern, string, flags))
-					return(1);
+				if (!fnmatch(pattern, string, flags))
+					return(0);
 				if (test == '/' && flags & FNM_PATHNAME)
 					break;
 				++string;
 			}
-			return(0);
+			return(1);
 		case '[':
 			if ((test = *string++) == EOS ||
 			    test == '/' && flags & FNM_PATHNAME)
-				return(0);
+				return(1);
 			if ((pattern = rangematch(pattern, test)) == NULL)
-				return(0);
+				return(1);
 			break;
 		case '\\':
 			if (flags & FNM_QUOTE) {
@@ -134,13 +134,13 @@ fnmatch(pattern, string, flags)
 					--pattern;
 				}
 				if (c != *string++)
-					return(0);
+					return(1);
 				break;
 			}
 			/* FALLTHROUGH */
 		default:
 			if (c != *string++)
-				return(0);
+				return(1);
 			break;
 		}
 }
