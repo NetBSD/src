@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpcmd.y,v 1.70 2002/07/02 02:18:01 lukem Exp $	*/
+/*	$NetBSD: ftpcmd.y,v 1.71 2002/10/12 08:35:17 darrenr Exp $	*/
 
 /*-
  * Copyright (c) 1997-2002 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
 #if 0
 static char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: ftpcmd.y,v 1.70 2002/07/02 02:18:01 lukem Exp $");
+__RCSID("$NetBSD: ftpcmd.y,v 1.71 2002/10/12 08:35:17 darrenr Exp $");
 #endif
 #endif /* not lint */
 
@@ -1799,13 +1799,13 @@ help(struct tab *ctab, const char *s)
 	}
 	c = lookup(ctab, s);
 	if (c == (struct tab *)0) {
-		reply(502, "Unknown command %s.", s);
+		reply(502, "Unknown command '%s'.", s);
 		return;
 	}
 	if (CMD_IMPLEMENTED(c))
 		reply(214, "Syntax: %s%s %s", htype, c->name, c->help);
 	else
-		reply(214, "%s%-*s\t%s; not implemented.", htype, width,
+		reply(504, "%s%-*s\t%s; not implemented.", htype, width,
 		    c->name, c->help);
 }
 
