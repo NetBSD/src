@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.94 2003/01/28 22:35:18 wiz Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.95 2003/01/31 00:26:27 thorpej Exp $	*/
 
 /*
  * Generic driver for the aic7xxx based adaptec SCSI controllers
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.94 2003/01/28 22:35:18 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.95 2003/01/31 00:26:27 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ahc.h"
@@ -635,15 +635,16 @@ ahc_createdmamem(tag, size, flags, mapp, vaddr, baddr, seg, nseg, myname, what)
 
 	if ((error = bus_dmamem_alloc(tag, size, PAGE_SIZE, 0,
 			seg, 1, nseg, BUS_DMA_NOWAIT)) != 0) {
-		printf("%s: failed to allocate DMA mem for %s, error = %d\n",
-			myname, what, error);
+		aprint_error(
+		    "%s: failed to allocate DMA mem for %s, error = %d\n",
+		    myname, what, error);
 		goto out;
 	}
 	level++;
 
 	if ((error = bus_dmamem_map(tag, seg, *nseg, size, vaddr,
 			BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
-		printf("%s: failed to map DMA mem for %s, error = %d\n",
+		aprint_error("%s: failed to map DMA mem for %s, error = %d\n",
 			myname, what, error);
 		goto out;
 	}
@@ -651,15 +652,16 @@ ahc_createdmamem(tag, size, flags, mapp, vaddr, baddr, seg, nseg, myname, what)
 
 	if ((error = bus_dmamap_create(tag, size, 1, size, 0,
 			BUS_DMA_NOWAIT | flags, mapp)) != 0) {
-                printf("%s: failed to create DMA map for %s, error = %d\n",
-			myname, what, error);
+                aprint_error(
+		    "%s: failed to create DMA map for %s, error = %d\n",
+		    myname, what, error);
 		goto out;
         }
 	level++;
 
 	if ((error = bus_dmamap_load(tag, *mapp, *vaddr, size, NULL,
 			BUS_DMA_NOWAIT)) != 0) {
-                printf("%s: failed to load DMA map for %s, error = %d\n",
+                aprint_error("%s: failed to load DMA map for %s, error = %d\n",
 			myname, what, error);
 		goto out;
         }
@@ -667,7 +669,8 @@ ahc_createdmamem(tag, size, flags, mapp, vaddr, baddr, seg, nseg, myname, what)
 	*baddr = (*mapp)->dm_segs[0].ds_addr;
 
 #ifdef AHC_DEBUG
-	printf("%s: dmamem for %s at busaddr %lx virt %lx nseg %d size %d\n",
+	aprint_debug(
+	    "%s: dmamem for %s at busaddr %lx virt %lx nseg %d size %d\n",
 	    myname, what, (unsigned long)*baddr, (unsigned long)*vaddr,
 	    *nseg, size);
 #endif
@@ -813,7 +816,7 @@ ahc_alloc(struct ahc_softc *ahc, bus_space_handle_t sh, bus_space_tag_t st,
 
 	scb_data = malloc(sizeof (struct scb_data), M_DEVBUF, M_NOWAIT|M_ZERO);
 	if (scb_data == NULL) {
-		printf("%s: cannot malloc softc!\n", ahc_name(ahc));
+		aprint_error("%s: cannot malloc softc!\n", ahc_name(ahc));
 		return -1;
 	}
 	LIST_INIT(&ahc->pending_ccbs);
@@ -3549,42 +3552,46 @@ ahc_init(struct ahc_softc *ahc)
 	 * data for any target mode initiator.
 	 */
 	if (ahc_alloc_tstate(ahc, ahc->our_id, 'A') == NULL) {
-		printf("%s: unable to allocate tmode_tstate.  "
+		aprint_error("%s: unable to allocate tmode_tstate.  "
 		       "Failing attach\n", ahc_name(ahc));
 		return (-1);
 	}
 
 	if ((ahc->features & AHC_TWIN) != 0) {
 		if (ahc_alloc_tstate(ahc, ahc->our_id_b, 'B') == NULL) {
-			printf("%s: unable to allocate tmode_tstate.  "
+			aprint_error("%s: unable to allocate tmode_tstate.  "
 			       "Failing attach\n", ahc_name(ahc));
 			return (-1);
 		}
- 		printf("Twin Channel, A SCSI Id=%d, B SCSI Id=%d, primary %c, ",
-		       ahc->our_id, ahc->our_id_b,
-		       ahc->flags & AHC_CHANNEL_B_PRIMARY? 'B': 'A');
+ 		aprint_normal(
+		    "Twin Channel, A SCSI Id=%d, B SCSI Id=%d, primary %c, ",
+		    ahc->our_id, ahc->our_id_b,
+		    ahc->flags & AHC_CHANNEL_B_PRIMARY? 'B': 'A');
 	} else {
 		if ((ahc->features & AHC_WIDE) != 0) {
-			printf("Wide ");
+			aprint_normal("Wide ");
 		} else {
-			printf("Single ");
+			aprint_normal("Single ");
 		}
-		printf("Channel %c, SCSI Id=%d, ", ahc->channel, ahc->our_id);
+		aprint_normal("Channel %c, SCSI Id=%d, ", ahc->channel,
+		    ahc->our_id);
 	}
 
 	ahc_outb(ahc, SEQ_FLAGS, 0);
 
 	if (ahc->scb_data->maxhscbs < AHC_SCB_MAX) {
 		ahc->flags |= AHC_PAGESCBS;
-		printf("%d/%d SCBs\n", ahc->scb_data->maxhscbs, AHC_SCB_MAX);
+		aprint_normal("%d/%d SCBs\n", ahc->scb_data->maxhscbs,
+		    AHC_SCB_MAX);
 	} else {
 		ahc->flags &= ~AHC_PAGESCBS;
-		printf("%d SCBs\n", ahc->scb_data->maxhscbs);
+		aprint_normal("%d SCBs\n", ahc->scb_data->maxhscbs);
 	}
 
 #ifdef AHC_DEBUG
 	if (ahc_debug & AHC_SHOWMISC) {
-		printf("%s: hardware scb %lu bytes; kernel scb %lu bytes; "
+		aprint_debug(
+		    "%s: hardware scb %lu bytes; kernel scb %lu bytes; "
 		       "ahc_dma %lu bytes\n",
 			ahc_name(ahc),
 		        (unsigned long) sizeof(struct hardware_scb),
@@ -3643,8 +3650,9 @@ ahc_init(struct ahc_softc *ahc)
 
 	/* Grab the disconnection disable table and invert it for our needs */
 	if (ahc->flags & AHC_USEDEFAULTS) {
-		printf("%s: Host Adapter Bios disabled.  Using default SCSI "
-			"device parameters\n", ahc_name(ahc));
+		aprint_normal(
+		    "%s: Host Adapter Bios disabled.  Using default SCSI "
+		    "device parameters\n", ahc_name(ahc));
 		ahc->flags |= AHC_EXTENDED_TRANS_A|AHC_EXTENDED_TRANS_B|
 			      AHC_TERM_ENB_A|AHC_TERM_ENB_B;
 		discenable = ALL_TARGETS_MASK;
@@ -3787,7 +3795,7 @@ ahc_init(struct ahc_softc *ahc)
 
 #ifdef AHC_DEBUG
 	if (ahc_debug & AHC_SHOWMISC)
-		printf("DISCENABLE == 0x%x\nULTRAENB == 0x%x\n",
+		aprint_debug("DISCENABLE == 0x%x\nULTRAENB == 0x%x\n",
 		       discenable, ultraenb);
 #endif
 
@@ -3831,7 +3839,7 @@ ahc_init(struct ahc_softc *ahc)
 	 * in "fast" mode.
          */
 #ifdef AHC_DEBUG
-	printf("%s: Downloading Sequencer Program...",
+	aprint_debug("%s: Downloading Sequencer Program...",
 	       ahc_name(ahc));
 #endif
 
