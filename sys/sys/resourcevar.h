@@ -1,4 +1,4 @@
-/*	$NetBSD: resourcevar.h,v 1.19 2003/08/07 16:34:12 agc Exp $	*/
+/*	$NetBSD: resourcevar.h,v 1.20 2004/04/04 18:18:27 pk Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -95,5 +95,7 @@ void limfree __P((struct plimit *));
 void	ruadd __P((struct rusage *, struct rusage *));
 struct	pstats *pstatscopy __P((struct pstats *));
 void 	pstatsfree __P((struct pstats *));
+extern rlim_t maxdmap;
+extern rlim_t maxsmap;
 #endif
 #endif	/* !_SYS_RESOURCEVAR_H_ */
