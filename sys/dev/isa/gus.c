@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.9 1996/02/17 04:49:50 jtk Exp $	*/
+/*	$NetBSD: gus.c,v 1.10 1996/03/01 04:08:31 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -1399,7 +1399,7 @@ gus_dmaout_dointr(sc)
 	register int port = sc->sc_iobase;
 
 	/* sc->sc_dmaoutcnt - 1 because DMA controller counts from zero?. */
-	isa_dmadone(B_WRITE,
+	isa_dmadone(DMAMODE_WRITE,
 		    sc->sc_dmaoutaddr,
 		    sc->sc_dmaoutcnt - 1,
 		    sc->sc_drq);
@@ -1909,7 +1909,7 @@ gusdmaout(sc, flags, gusaddr, buffaddr, length)
 
 	sc->sc_dmaoutaddr = (u_char *) buffaddr;
 	sc->sc_dmaoutcnt = length;
-	isa_dmastart(B_WRITE, buffaddr, length, sc->sc_drq);
+	isa_dmastart(DMAMODE_WRITE, buffaddr, length, sc->sc_drq);
 
 	/*
 	 * Set up DMA address - use the upper 16 bits ONLY
@@ -3253,7 +3253,7 @@ gus_dma_input(addr, buf, size, callback, arg)
 	    dmac |= GUSMASK_SAMPLE_INVBIT;
 	if (sc->sc_channels == 2)
 	    dmac |= GUSMASK_SAMPLE_STEREO;
-	isa_dmastart(B_READ, (caddr_t) buf, size, sc->sc_recdrq);
+	isa_dmastart(DMAMODE_READ, (caddr_t) buf, size, sc->sc_recdrq);
 
 	DMAPRINTF(("gus_dma_input isa_dmastarted\n"));
 	sc->sc_flags |= GUS_DMAIN_ACTIVE;
@@ -3280,7 +3280,7 @@ gus_dmain_intr(sc)
 
 	DMAPRINTF(("gus_dmain_intr called\n"));
 	if (sc->sc_dmainintr) {
-	    isa_dmadone(B_READ, sc->sc_dmainaddr, sc->sc_dmaincnt - 1,
+	    isa_dmadone(DMAMODE_READ, sc->sc_dmainaddr, sc->sc_dmaincnt - 1,
 			sc->sc_recdrq);
 	    callback = sc->sc_dmainintr;
 	    arg = sc->sc_inarg;

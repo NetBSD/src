@@ -1,4 +1,4 @@
-/*	$NetBSD: isadma.c,v 1.14 1996/02/22 06:21:48 mycroft Exp $	*/
+/*	$NetBSD: isadma.c,v 1.15 1996/03/01 04:08:48 mycroft Exp $	*/
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -24,8 +24,16 @@ static char bounced[8];		/* XXX */
 static u_int8_t dma_finished;
 
 /* high byte of address is stored in this port for i-th dma channel */
-static int dmapageport[8] =
-	{ 0x87, 0x83, 0x81, 0x82, 0x8f, 0x8b, 0x89, 0x8a };
+static int dmapageport[8] = {
+	0x87, 0x83, 0x81, 0x82, 0x8f, 0x8b, 0x89, 0x8a
+};
+
+static u_int8_t dmamode[4] = {
+	DMA37MD_WRITE | DMA37MD_SINGLE,
+	DMA37MD_READ | DMA37MD_SINGLE,
+	DMA37MD_WRITE | DMA37MD_LOOP,
+	DMA37MD_READ | DMA37MD_LOOP
+};
 
 /*
  * isa_dmacascade(): program 8237 DMA controller channel to accept
@@ -43,11 +51,13 @@ isa_dmacascade(chan)
 
 	/* set dma channel mode, and set dma channel mode */
 	if ((chan & 4) == 0) {
-		outb(DMA1_MODE, DMA37MD_CASCADE | chan);
+		outb(DMA1_MODE, chan | DMA37MD_CASCADE);
 		outb(DMA1_SMSK, chan);
 	} else {
-		outb(DMA2_MODE, DMA37MD_CASCADE | (chan & 3));
-		outb(DMA2_SMSK, chan & 3);
+		chan &= 3;
+
+		outb(DMA2_MODE, chan | DMA37MD_CASCADE);
+		outb(DMA2_SMSK, chan);
 	}
 }
 
@@ -82,7 +92,7 @@ isa_dmastart(flags, addr, nbytes, chan)
 		newaddr = dma_bounce[chan];
 		*(int *) newaddr = 0;	/* XXX */
 		/* copy bounce buffer on write */
-		if ((flags & B_READ) == 0)
+		if ((flags & DMAMODE_READ) == 0)
 			bcopy(addr, newaddr, nbytes);
 		addr = newaddr;
 	}
@@ -98,17 +108,17 @@ isa_dmastart(flags, addr, nbytes, chan)
 		 * byte mode channels.
 		 */
 		/* set dma channel mode, and reset address ff */
-		if (flags & B_READ)
-			outb(DMA1_MODE, chan | DMA37MD_SINGLE | DMA37MD_WRITE);
+		if (flags & DMAMODE_READ)
+			outb(DMA1_MODE, chan | dmamode[flags]);
 		else
-			outb(DMA1_MODE, chan | DMA37MD_SINGLE | DMA37MD_READ);
+			outb(DMA1_MODE, chan | dmamode[flags]);
 		outb(DMA1_FFC, 0);
 
 		/* send start address */
-		waport =  DMA1_CHN(chan);
+		waport = DMA1_CHN(chan);
+		outb(dmapageport[chan], phys>>16);
 		outb(waport, phys);
 		outb(waport, phys>>8);
-		outb(dmapageport[chan], phys>>16);
 
 		/* send count */
 		outb(waport + 1, --nbytes);
@@ -117,22 +127,25 @@ isa_dmastart(flags, addr, nbytes, chan)
 		/* unmask channel */
 		outb(DMA1_SMSK, chan | DMA37SM_CLEAR);
 	} else {
+		chan &= 3;
+
 		/*
 		 * Program one of DMA channels 4..7.  These are
 		 * word mode channels.
 		 */
 		/* set dma channel mode, and reset address ff */
-		if (flags & B_READ)
-			outb(DMA2_MODE, (chan & 3) | DMA37MD_SINGLE | DMA37MD_WRITE);
+		if (flags & DMAMODE_READ)
+			outb(DMA2_MODE, chan | dmamode[flags]);
 		else
-			outb(DMA2_MODE, (chan & 3) | DMA37MD_SINGLE | DMA37MD_READ);
+			outb(DMA2_MODE, chan | dmamode[flags]);
 		outb(DMA2_FFC, 0);
 
 		/* send start address */
-		waport = DMA2_CHN(chan & 3);
-		outb(waport, phys>>1);
-		outb(waport, phys>>9);
+		waport = DMA2_CHN(chan);
 		outb(dmapageport[chan], phys>>16);
+		phys >>= 1;
+		outb(waport, phys);
+		outb(waport, phys>>8);
 
 		/* send count */
 		nbytes >>= 1;
@@ -140,7 +153,7 @@ isa_dmastart(flags, addr, nbytes, chan)
 		outb(waport + 2, nbytes>>8);
 
 		/* unmask channel */
-		outb(DMA2_SMSK, (chan & 3) | DMA37SM_CLEAR);
+		outb(DMA2_SMSK, chan | DMA37SM_CLEAR);
 	}
 }
 

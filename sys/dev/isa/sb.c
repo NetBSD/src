@@ -1,4 +1,4 @@
-/*	$NetBSD: sb.c,v 1.30 1996/02/16 08:18:32 mycroft Exp $	*/
+/*	$NetBSD: sb.c,v 1.31 1996/03/01 04:08:45 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -247,7 +247,7 @@ sbforceintr(aux)
 	 * it is needed (and you pay the latency).  Also, you might
 	 * never need the buffer anyway.)
 	 */
-	at_dma(B_READ, &dmabuf, 1, ia->ia_drq);
+	at_dma(DMAMODE_READ, &dmabuf, 1, ia->ia_drq);
 	if (sbdsp_wdsp(iobase, SB_DSP_RDMA) == 0) {
 		(void)sbdsp_wdsp(iobase, 0);
 		(void)sbdsp_wdsp(iobase, 0);

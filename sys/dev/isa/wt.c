@@ -1,4 +1,4 @@
-/*	$NetBSD: wt.c,v 1.28 1996/01/12 00:54:23 thorpej Exp $	*/
+/*	$NetBSD: wt.c,v 1.29 1996/03/01 04:08:40 mycroft Exp $	*/
 
 /*
  * Streamer tape driver.
@@ -138,7 +138,7 @@ struct wt_softc {
 
 	void *dmavaddr;		/* virtual address of dma i/o buffer */
 	size_t dmatotal;	/* size of i/o buffer */
-	int dmaflags;		/* i/o direction, B_READ or B_WRITE */
+	int dmaflags;		/* i/o direction */
 	size_t dmacount;	/* resulting length of dma i/o */
 
 	u_short error;		/* code for error encountered */
@@ -668,7 +668,7 @@ wtintr(arg)
 	/*
 	 * Clean up dma.
 	 */
-	if ((sc->dmaflags & B_READ) &&
+	if ((sc->dmaflags & DMAMODE_READ) &&
 	    (sc->dmatotal - sc->dmacount) < sc->bsize) {
 		/* If reading short block, copy the internal buffer
 		 * to the user memory. */
@@ -682,7 +682,7 @@ wtintr(arg)
 	 */
 	if ((x & sc->NOEXCEP) == 0) {
 		WTDBPRINT(("i/o exception\n"));
-		wtsense(sc, 1, (sc->dmaflags & B_READ) ? TP_WRP : 0);
+		wtsense(sc, 1, (sc->dmaflags & DMAMODE_READ) ? TP_WRP : 0);
 		if (sc->error & (TP_EOM | TP_FIL))
 			sc->flags |= TPVOL;	/* end of file */
 		else
@@ -857,7 +857,7 @@ wtdma(sc)
 		outb(sc->SDMAPORT, 0);
 	}
 
-	if ((sc->dmaflags & B_READ) &&
+	if ((sc->dmaflags & DMAMODE_READ) &&
 	    (sc->dmatotal - sc->dmacount) < sc->bsize) {
 		/* Reading short block; do it through the internal buffer. */
 		isa_dmastart(sc->dmaflags, sc->buf, sc->bsize, sc->chan);
@@ -885,7 +885,7 @@ wtstart(sc, flag, vaddr, len)
 	sc->dmavaddr = vaddr;
 	sc->dmatotal = len;
 	sc->dmacount = 0;
-	sc->dmaflags = flag;
+	sc->dmaflags = flag & B_READ ? DMAMODE_READ : DMAMODE_WRITE;
 	wtdma(sc);
 	return 1;
 }

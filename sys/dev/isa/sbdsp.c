@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.22 1996/02/20 11:48:50 mycroft Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.23 1996/03/01 04:08:38 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -123,12 +123,13 @@ sb_printsc(struct sbdsp_softc *sc)
     
 	printf("open %d dmachan %d iobase %x\n",
 	    sc->sc_open, sc->sc_drq, sc->sc_iobase);
-	printf("itc %d imode %d otc %d omode %d encoding %x\n",
-	    sc->sc_itc, sc->sc_imode, sc->sc_otc, sc->sc_omode, sc->encoding);
+	printf("irate %d itc %d imode %d orate %d otc %d omode %d encoding %x\n",
+	    sc->sc_irate, sc->sc_itc, sc->sc_imode,
+	    sc->sc_orate, sc->sc_otc, sc->sc_omode, sc->encoding);
 	printf("outport %d inport %d spkron %d nintr %d\n",
 	    sc->out_port, sc->in_port, sc->spkr_state, sc->sc_interrupts);
-	printf("chans %x intr %x arg %x\n",
-	    sc->sc_chans, sc->sc_intr, sc->sc_arg);
+	printf("precision %d channels %d intr %x arg %x\n",
+	    sc->sc_precision, sc->sc_channels, sc->sc_intr, sc->sc_arg);
 	printf("gain: ");
 	for (i = 0; i < SB_NDEVS; i++)
 		printf("%d ", sc->gain[i]);
@@ -169,12 +170,15 @@ sbdsp_attach(sc)
 	register int iobase = sc->sc_iobase;
 
 	/* Set defaults */
-	if (ISSBPROCLASS(sc))
-		sc->sc_itc = sc->sc_otc = SBPRO_ADC_HS_MAX;
+	if (ISSB16CLASS(sc))
+		sc->sc_irate = sc->sc_orate = 8000;
+	else if (ISSBPROCLASS(sc))
+		sc->sc_itc = sc->sc_otc = SB_8K;
   	else
-		sc->sc_itc = sc->sc_otc = SBCLA_ADC_HS_MAX;
-	sc->sc_chans = 1;
-	sc->encoding = AUDIO_ENCODING_LINEAR;
+		sc->sc_itc = sc->sc_otc = SB_8K;
+	sc->sc_precision = 8;
+	sc->sc_channels = 1;
+	sc->encoding = AUDIO_ENCODING_ULAW;
 
 	(void) sbdsp_set_in_port(sc, SB_MIC_PORT);
 	(void) sbdsp_set_out_port(sc, SB_SPEAKER);
@@ -201,6 +205,18 @@ sbdsp_attach(sc)
 
 	printf(": dsp v%d.%02d\n",
 	       SBVER_MAJOR(sc->sc_model), SBVER_MINOR(sc->sc_model));
+
+#ifdef notyet
+	sbdsp_mix_write(sc, SBP_SET_IRQ, 0x04);
+	sbdsp_mix_write(sc, SBP_SET_DRQ, 0x22);
+
+	printf("sbdsp_attach: irq=%02x, drq=%02x\n",
+	    sbdsp_mix_read(sc, SBP_SET_IRQ),
+	    sbdsp_mix_read(sc, SBP_SET_DRQ));
+#else
+	if (ISSB16CLASS(sc))
+		sc->sc_model = 0x0300;
+#endif
 }
 
 /*
@@ -238,7 +254,10 @@ sbdsp_set_in_sr(addr, sr)
 {
 	register struct sbdsp_softc *sc = addr;
 
-	return (sbdsp_srtotc(sc, sr, SB_INPUT_RATE, &sc->sc_itc, &sc->sc_imode));
+	if (ISSB16CLASS(sc))
+		return (sbdsp_setrate(sc, sr, SB_INPUT_RATE, &sc->sc_irate));
+	else
+		return (sbdsp_srtotc(sc, sr, SB_INPUT_RATE, &sc->sc_itc, &sc->sc_imode));
 }
 
 u_long
@@ -247,7 +266,10 @@ sbdsp_get_in_sr(addr)
 {
 	register struct sbdsp_softc *sc = addr;
 
-	return (sbdsp_tctosr(sc, sc->sc_itc));
+	if (ISSB16CLASS(sc))
+		return (sc->sc_irate);
+	else
+		return (sbdsp_tctosr(sc, sc->sc_itc));
 }
 
 int
@@ -257,7 +279,10 @@ sbdsp_set_out_sr(addr, sr)
 {
 	register struct sbdsp_softc *sc = addr;
 
-	return (sbdsp_srtotc(sc, sr, SB_OUTPUT_RATE, &sc->sc_otc, &sc->sc_omode));
+	if (ISSB16CLASS(sc))
+		return (sbdsp_setrate(sc, sr, SB_OUTPUT_RATE, &sc->sc_orate));
+	else
+		return (sbdsp_srtotc(sc, sr, SB_OUTPUT_RATE, &sc->sc_otc, &sc->sc_omode));
 }
 
 u_long
@@ -266,7 +291,10 @@ sbdsp_get_out_sr(addr)
 {
 	register struct sbdsp_softc *sc = addr;
 
-	return (sbdsp_tctosr(sc, sc->sc_otc));
+	if (ISSB16CLASS(sc))
+		return (sc->sc_orate);
+	else
+		return (sbdsp_tctosr(sc, sc->sc_otc));
 }
 
 int
@@ -292,13 +320,13 @@ sbdsp_query_encoding(addr, fp)
 }
 
 int
-sbdsp_set_encoding(addr, enc)
+sbdsp_set_encoding(addr, encoding)
 	void *addr;
-	u_int enc;
+	u_int encoding;
 {
 	register struct sbdsp_softc *sc = addr;
 	
-	switch(enc){
+	switch (encoding) {
 	case AUDIO_ENCODING_ULAW:
 		sc->encoding = AUDIO_ENCODING_ULAW;
 		break;
@@ -308,6 +336,7 @@ sbdsp_set_encoding(addr, enc)
 	default:
 		return (EINVAL);
 	}
+
 	return (0);
 }
 
@@ -321,13 +350,22 @@ sbdsp_get_encoding(addr)
 }
 
 int
-sbdsp_set_precision(addr, prec)
+sbdsp_set_precision(addr, precision)
 	void *addr;
-	u_int prec;
+	u_int precision;
 {
+	register struct sbdsp_softc *sc = addr;
 
-	if (prec != 8)
-		return (EINVAL);
+	if (ISSB16CLASS(sc)) {
+		if (precision != 16 && precision != 8)
+			return (EINVAL);
+		sc->sc_precision = precision;
+	} else {
+		if (precision != 8)
+			return (EINVAL);
+		sc->sc_precision = precision;
+	}
+
 	return (0);
 }
 
@@ -335,36 +373,32 @@ int
 sbdsp_get_precision(addr)
 	void *addr;
 {
-	return (8);
+	register struct sbdsp_softc *sc = addr;
+
+	return (sc->sc_precision);
 }
 
 int
-sbdsp_set_channels(addr, chans)
+sbdsp_set_channels(addr, channels)
 	void *addr;
-	int chans;
+	int channels;
 {
 	register struct sbdsp_softc *sc = addr;
 
 	if (ISSBPROCLASS(sc)) {
-		if (chans != 1 && chans != 2)
+		if (channels != 1 && channels != 2)
 			return (EINVAL);
-		sc->sc_chans = chans;
-
-#if 0
-		if (rval = sbdsp_set_in_sr_real(addr, sc->sc_irate))
-			return rval;
-#endif
-
-		sbdsp_mix_write(sc, SBP_STEREO,
-				(sbdsp_mix_read(sc, SBP_STEREO) & ~SBP_PLAYMODE_MASK) |
-				(chans == 2 ? SBP_PLAYMODE_STEREO : SBP_PLAYMODE_MONO));
-		/* recording channels needs to be done right when we start
-		   DMA recording.  Just record number of channels for now
-		   and set stereo when ready. */
+		sc->sc_channels = channels;
+		sc->sc_dmadir = SB_DMA_NONE;
+		/*
+		 * XXXX
+		 * With 2 channels, SBPro can't do more than 22kHz.
+		 * No framework to check this.
+		 */
 	} else {
-		if (chans != 1)
+		if (channels != 1)
 			return (EINVAL);
-		sc->sc_chans = chans;
+		sc->sc_channels = channels;
 	}
 	
 	return (0);
@@ -376,18 +410,7 @@ sbdsp_get_channels(addr)
 {
 	register struct sbdsp_softc *sc = addr;
 	
-#if 0
-	/* recording stereo may frob the mixer output */
-	if (ISSBPROCLASS(sc)) {
-		if ((sbdsp_mix_read(sc, SBP_STEREO) & SBP_PLAYMODE_MASK) == SBP_PLAYMODE_STEREO)
-			sc->sc_chans = 2;
-		else
-			sc->sc_chans = 1;
-	} else
-		sc->sc_chans = 1;
-#endif
-
-	return (sc->sc_chans);
+	return (sc->sc_channels);
 }
 
 int
@@ -555,13 +578,19 @@ sbdsp_round_blocksize(addr, blk)
 	sc->sc_last_hs_size = 0;
 
 	/* Higher speeds need bigger blocks to avoid popping and silence gaps. */
-	if ((sc->sc_otc > SB_8K || sc->sc_itc > SB_8K) &&
-	    (blk > NBPG/2 || blk < NBPG/4))
-		blk = NBPG/2;
+	if (blk < NBPG/4 || blk > NBPG/2) {
+		if (ISSB16CLASS(sc)) {
+			if (sc->sc_orate > 8000 || sc->sc_irate > 8000)
+				blk = NBPG/2;
+		} else {
+			if (sc->sc_otc > SB_8K || sc->sc_itc < SB_8K)
+				blk = NBPG/2;
+		}
+	}
 	/* don't try to DMA too much at once, though. */
 	if (blk > NBPG)
 		blk = NBPG;
-	if (sc->sc_chans == 2)
+	if (sc->sc_channels == 2)
 		return (blk & ~1); /* must be even to preserve stereo separation */
 	else
 		return (blk);	/* Anything goes :-) */
@@ -669,6 +698,24 @@ sbdsp_reset(sc)
 		return -1;
 
 	return 0;
+}
+
+int
+sbdsp16_wait(iobase)
+	int iobase;
+{
+	register int i;
+
+	for (i = SBDSP_NPOLL; --i >= 0; ) {
+		register u_char x;
+		x = inb(iobase + SBP_DSP_WSTAT);
+		delay(10);
+		if ((x & SB_DSP_BUSY) == 0)
+			continue;
+		return 0;
+	}
+	++sberr.wdsp;
+	return -1;
 }
 
 /*
@@ -814,6 +861,24 @@ sbdsp_contdma(addr)
 	return(0);
 }
 
+int
+sbdsp_setrate(sc, sr, isdac, ratep)
+	register struct sbdsp_softc *sc;
+	int sr;
+	int isdac;
+	int *ratep;
+{
+
+	/*
+	 * XXXX
+	 * More checks here?
+	 */
+	if (sr < 5000 || sr > 44100)
+		return (EINVAL);
+	*ratep = sr;
+	return (0);
+}
+
 /*
  * Convert a linear sampling rate into the DAC time constant.
  * Set *mode to indicate the high/low-speed DMA operation.
@@ -902,7 +967,7 @@ sbdsp_tctosr(sc, tc)
 }
 
 int
-sbdsp_set_tc(sc, tc)
+sbdsp_set_timeconst(sc, tc)
 	register struct sbdsp_softc *sc;
 	int tc;
 {
@@ -912,10 +977,10 @@ sbdsp_set_tc(sc, tc)
 	 * A SBPro in stereo mode uses time constants at double the
 	 * actual rate.
 	 */
-	if (ISSBPRO(sc) && sc->sc_chans == 2)
+	if (ISSBPRO(sc) && sc->sc_channels == 2)
 		tc = 256 - ((256 - tc) / 2);
 
-	DPRINTF(("sbdsp_set_tc: sc=%p tc=%d\n", sc, tc));
+	DPRINTF(("sbdsp_set_timeconst: sc=%p tc=%d\n", sc, tc));
 
 	iobase = sc->sc_iobase;
 	if (sbdsp_wdsp(iobase, SB_DSP_TIMECONST) < 0 ||
@@ -940,15 +1005,15 @@ sbdsp_dma_input(addr, p, cc, intr, arg)
 	if (sbdspdebug > 1)
 		Dprintf("sbdsp_dma_input: cc=%d 0x%x (0x%x)\n", cc, intr, arg);
 #endif
-	if (sc->sc_chans == 2 && (cc & 1)) {
+	if (sc->sc_channels == 2 && (cc & 1)) {
 		DPRINTF(("sbdsp_dma_input: stereo input, odd bytecnt\n"));
 		return EIO;
 	}
 
 	iobase = sc->sc_iobase;
 	if (sc->sc_dmadir != SB_DMA_IN) {
-		if (ISSBPROCLASS(sc)) {
-			if (sc->sc_chans == 2) {
+		if (ISSBPRO(sc)) {
+			if (sc->sc_channels == 2) {
 				if (sbdsp_wdsp(iobase, SB_DSP_RECORD_STEREO) < 0)
 					goto badmode;
 				sbdsp_mix_write(sc, SBP_INFILTER,
@@ -963,26 +1028,45 @@ sbdsp_dma_input(addr, p, cc, intr, arg)
 			}
 		}
 
-		sbdsp_set_tc(sc, sc->sc_itc);
+		if (ISSB16CLASS(sc)) {
+			if (sbdsp_wdsp(iobase, SB_DSP16_INPUTRATE) < 0 ||
+			    sbdsp_wdsp(iobase, sc->sc_irate >> 8) < 0 ||
+			    sbdsp_wdsp(iobase, sc->sc_irate) < 0)
+				goto giveup;
+		} else
+			sbdsp_set_timeconst(sc, sc->sc_itc);
 		sc->sc_dmadir = SB_DMA_IN;
 	}
 
-	isa_dmastart(B_READ, p, cc, sc->sc_drq);
+	isa_dmastart(DMAMODE_READ, p, cc, sc->sc_drq);
 	sc->sc_intr = intr;
 	sc->sc_arg = arg;
-	sc->dmaflags = B_READ;
+	sc->dmaflags = DMAMODE_READ;
 	sc->dmaaddr = p;
-	sc->dmacnt = --cc;		/* DMA controller is strange...? */
+	sc->dmacnt = cc;		/* DMA controller is strange...? */
 
-	if (sc->sc_imode == SB_ADAC_LS) {
+	if (sc->sc_precision == 16)
+		cc >>= 1;
+	--cc;
+	if (ISSB16CLASS(sc)) {
+		if (sbdsp_wdsp(iobase, sc->sc_precision == 16 ? SB_DSP16_RDMA_16 :
+								SB_DSP16_RDMA_8) < 0 ||
+		    sbdsp_wdsp(iobase, (sc->sc_precision == 16 ? 0x10 : 0x00) |
+				       (sc->sc_channels == 2 ? 0x20 : 0x00)) < 0 ||
+		    sbdsp16_wait(iobase) ||
+		    sbdsp_wdsp(iobase, cc) < 0 ||
+		    sbdsp_wdsp(iobase, cc >> 8) < 0) {
+			DPRINTF(("sbdsp_dma_input: SB16 DMA start failed\n"));
+			goto giveup;
+		}
+	} else if (sc->sc_imode == SB_ADAC_LS) {
 		if (sbdsp_wdsp(iobase, SB_DSP_RDMA) < 0 ||
 		    sbdsp_wdsp(iobase, cc) < 0 ||
 		    sbdsp_wdsp(iobase, cc >> 8) < 0) {
 		        DPRINTF(("sbdsp_dma_input: LS DMA start failed\n"));
 			goto giveup;
 		}
-	}
-	else {
+	} else {
 		if (cc != sc->sc_last_hs_size) {
 			if (sbdsp_wdsp(iobase, SB_DSP_BLOCKSIZE) < 0 ||
 			    sbdsp_wdsp(iobase, cc) < 0 ||
@@ -1005,7 +1089,7 @@ giveup:
 
 badmode:
 	DPRINTF(("sbdsp_dma_input: can't set %s mode\n",
-		 sc->sc_chans == 2 ? "stereo" : "mono"));
+		 sc->sc_channels == 2 ? "stereo" : "mono"));
 	return EIO;
 }
 
@@ -1024,41 +1108,60 @@ sbdsp_dma_output(addr, p, cc, intr, arg)
 	if (sbdspdebug > 1)
 		Dprintf("sbdsp_dma_output: cc=%d 0x%x (0x%x)\n", cc, intr, arg);
 #endif
-	if (sc->sc_chans == 2 && (cc & 1)) {
+	if (sc->sc_channels == 2 && (cc & 1)) {
 		DPRINTF(("stereo playback odd bytes (%d)\n", cc));
 		return EIO;
 	}
 
 	iobase = sc->sc_iobase;
 	if (sc->sc_dmadir != SB_DMA_OUT) {
-		if (ISSBPROCLASS(sc)) {
+		if (ISSBPRO(sc)) {
 			/* make sure we re-set stereo mixer bit when we start
 			   output. */
 			sbdsp_mix_write(sc, SBP_STEREO,
 			    (sbdsp_mix_read(sc, SBP_STEREO) & ~SBP_PLAYMODE_MASK) |
-			    (sc->sc_chans == 2 ?  SBP_PLAYMODE_STEREO : SBP_PLAYMODE_MONO));
+			    (sc->sc_channels == 2 ?  SBP_PLAYMODE_STEREO : SBP_PLAYMODE_MONO));
 		}
 
-		sbdsp_set_tc(sc, sc->sc_otc);
+		if (ISSB16CLASS(sc)) {
+			if (sbdsp_wdsp(iobase, SB_DSP16_OUTPUTRATE) < 0 ||
+			    sbdsp_wdsp(iobase, sc->sc_orate >> 8) < 0 ||
+			    sbdsp_wdsp(iobase, sc->sc_orate) < 0)
+				goto giveup;
+		} else
+			sbdsp_set_timeconst(sc, sc->sc_otc);
 		sc->sc_dmadir = SB_DMA_OUT;
 	}
 
-	isa_dmastart(B_WRITE, p, cc, sc->sc_drq);
+	isa_dmastart(DMAMODE_WRITE, p, cc, sc->sc_drq);
 	sc->sc_intr = intr;
 	sc->sc_arg = arg;
-	sc->dmaflags = B_WRITE;
+	sc->dmaflags = DMAMODE_WRITE;
 	sc->dmaaddr = p;
-	sc->dmacnt = --cc;	/* a vagary of how DMA works, apparently. */
+	sc->dmacnt = cc;	/* a vagary of how DMA works, apparently. */
 
-	if (sc->sc_omode == SB_ADAC_LS) {
+	if (sc->sc_precision == 16)
+		cc >>= 1;
+	--cc;
+	if (ISSB16CLASS(sc)) {
+		if (sbdsp_wdsp(iobase, sc->sc_precision == 16 ? SB_DSP16_WDMA_16 :
+								SB_DSP16_WDMA_8) < 0 ||
+		    sbdsp_wdsp(iobase, (sc->sc_precision == 16 ? 0x10 : 0x00) |
+				       (sc->sc_channels == 2 ? 0x20 : 0x00)) < 0 ||
+		    sbdsp16_wait(iobase) ||
+		    sbdsp_wdsp(iobase, cc) < 0 ||
+		    sbdsp_wdsp(iobase, cc >> 8) < 0) {
+			DPRINTF(("sbdsp_dma_output: SB16 DMA start failed\n"));
+			goto giveup;
+		}
+	} else if (sc->sc_omode == SB_ADAC_LS) {
 		if (sbdsp_wdsp(iobase, SB_DSP_WDMA) < 0 ||
 		    sbdsp_wdsp(iobase, cc) < 0 ||
 		    sbdsp_wdsp(iobase, cc >> 8) < 0) {
 		        DPRINTF(("sbdsp_dma_output: LS DMA start failed\n"));
 			goto giveup;
 		}
-	}
-	else {
+	} else {
 		if (cc != sc->sc_last_hs_size) {
 			if (sbdsp_wdsp(iobase, SB_DSP_BLOCKSIZE) < 0 ||
 			    sbdsp_wdsp(iobase, cc) < 0 ||
@@ -1099,13 +1202,15 @@ sbdsp_intr(arg)
 		Dprintf("sbdsp_intr: intr=0x%x\n", sc->sc_intr);
 #endif
 	if (!isa_dmafinished(sc->sc_drq)) {
-#if 0
 		printf("sbdsp_intr: not finished\n");
-#endif
 		return 0;
 	}
 	sc->sc_interrupts++;
 	/* clear interrupt */
+#ifdef notyet
+	x = sbdsp_mix_read(sc, 0x82);
+	x = inb(sc->sc_iobase + 15);
+#endif
 	x = inb(sc->sc_iobase + SBP_DSP_RSTAT);
 	delay(10);
 #if 0
@@ -1115,15 +1220,6 @@ sbdsp_intr(arg)
 	} else
 #endif
 	if (sc->sc_intr != 0) {
-		/*
-		 * The SBPro used to develop and test this driver often
-		 * generated dma underruns--it interrupted to signal
-		 * completion of the DMA input recording block, but the
-		 * ISA DMA controller didn't think the channel was
-		 * finished.  Maybe this is just a bus speed issue, I dunno,
-		 * but it seems strange and leads to channel-flipping with
-		 * stereo recording.  Sigh.
-		 */
 		isa_dmadone(sc->dmaflags, sc->dmaaddr, sc->dmacnt, sc->sc_drq);
 		(*sc->sc_intr)(sc->sc_arg);
 	}
@@ -1172,14 +1268,14 @@ sbdsp_midi_output(sc, v)
 #endif
 
 u_int
-sbdsp_get_silence(enc)
-	int enc;
+sbdsp_get_silence(encoding)
+	int encoding;
 {
 #define ULAW_SILENCE	0x7f
 #define LINEAR_SILENCE	0
 	u_int auzero;
     
-	switch (enc) {
+	switch (encoding) {
 	case AUDIO_ENCODING_ULAW:
 		auzero = ULAW_SILENCE; 
 		break;
