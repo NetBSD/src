@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.16 1999/03/26 21:58:39 mycroft Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.17 1999/05/24 23:30:44 thorpej Exp $	*/
 
 /*
  *
@@ -128,10 +128,8 @@ uvm_pagermapin(pps, npages, aiop, waitf)
 	vsize_t size;
 	vaddr_t kva;
 	struct uvm_aiodesc *aio;
-#if !defined(PMAP_NEW)
 	vaddr_t cva;
 	struct vm_page *pp;
-#endif
 	UVMHIST_FUNC("uvm_pagermapin"); UVMHIST_CALLED(maphist);
 
 	UVMHIST_LOG(maphist,"(pps=0x%x, npages=%d, aiop=0x%x, waitf=%d)",
@@ -166,16 +164,6 @@ ReStart:
 		goto ReStart;
 	}
 
-#if defined(PMAP_NEW)
-	/*
-	 * XXX: (ab)using the pmap module to store state info for us.
-	 * (pmap stores the PAs... we fetch them back later and convert back
-	 * to pages with PHYS_TO_VM_PAGE).
-	 */
-	pmap_kenter_pgs(kva, pps, npages);
-
-#else /* PMAP_NEW */
-
 	/* got it */
 	for (cva = kva ; size != 0 ; size -= PAGE_SIZE, cva += PAGE_SIZE) {
 		pp = *pps++;
@@ -187,8 +175,6 @@ ReStart:
 		pmap_enter(vm_map_pmap(pager_map), cva, VM_PAGE_TO_PHYS(pp),
 		    VM_PROT_DEFAULT, TRUE, 0);
 	}
-
-#endif /* PMAP_NEW */
 
 	UVMHIST_LOG(maphist, "<- done (KVA=0x%x)", kva,0,0,0);
 	return(kva);
