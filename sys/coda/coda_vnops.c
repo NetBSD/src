@@ -6,7 +6,7 @@ mkdir
 rmdir
 symlink
 */
-/*	$NetBSD: coda_vnops.c,v 1.24 2001/05/28 02:50:51 chs Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.25 2001/07/03 06:46:52 chs Exp $	*/
 
 /*
  * 
@@ -156,6 +156,8 @@ const struct vnodeopv_entry_desc coda_vnodeop_entries[] = {
     { &vop_update_desc, coda_vop_error },	/* update */
     { &vop_seek_desc, genfs_seek },		/* seek */
     { &vop_poll_desc, genfs_poll },		/* poll */
+    { &vop_getpages_desc, coda_getpages },	/* getpages */
+    { &vop_putpages_desc, coda_putpages },	/* putpages */
     { NULL, NULL }
 };
 
@@ -2011,4 +2013,65 @@ make_coda_node(fid, vfsp, type)
     }
 
     return cp;
+}
+
+int
+coda_getpages(v)
+	void *v;
+{
+	struct vop_getpages_args /* {
+		struct vnode *a_vp;
+		voff_t a_offset;
+		struct vm_page **a_m;
+		int *a_count;
+		int a_centeridx;
+		vm_prot_t a_access_type;
+		int a_advice;
+		int a_flags;
+	} */ *ap = v;
+	struct vnode *vp = ap->a_vp;
+	struct cnode *cp = VTOC(vp);
+	struct proc *p = curproc;
+	struct ucred *cred = p->p_ucred;
+	int error;
+
+	/* Check for control object. */
+	if (IS_CTL_VP(vp)) {
+		return(EINVAL);
+	}
+
+	error = VOP_OPEN(vp, FREAD, cred, p);
+	if (error) {
+		return error;
+	}
+	ap->a_vp = cp->c_ovp;
+	error = VOCALL(ap->a_vp->v_op, VOFFSET(vop_getpages), ap);
+	(void) VOP_CLOSE(vp, FREAD, cred, p);
+	return error;
+}
+
+int
+coda_putpages(v)
+	void *v;
+{
+	struct vop_putpages_args /* {
+		struct vnode *a_vp;
+		voff_t a_offlo;
+		voff_t a_offhi;
+		int a_flags;
+	} */ *ap = v;
+	struct vnode *vp = ap->a_vp;
+
+	/* Check for control object. */
+	if (IS_CTL_VP(vp)) {
+		return(EINVAL);
+	}
+
+	/*
+	 * XXX
+	 * we'd like to do something useful here for msync(),
+	 * but that turns out to be hard.
+	 */
+
+	return 0;
 }

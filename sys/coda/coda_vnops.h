@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vnops.h,v 1.5 1999/10/17 23:39:16 cgd Exp $	*/
+/*	$NetBSD: coda_vnops.h,v 1.6 2001/07/03 06:46:52 chs Exp $	*/
 
 /*
  * 
@@ -76,6 +76,8 @@ int coda_unlock    __P((void *));
 int coda_islocked  __P((void *));
 int coda_vop_error   __P((void *));
 int coda_vop_nop     __P((void *));
+int coda_getpages  __P((void *));
+int coda_putpages  __P((void *));
 
 int (**coda_vnodeop_p)(void *);
 int coda_rdwr(struct vnode *vp, struct uio *uiop, enum uio_rw rw,
