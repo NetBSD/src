@@ -1,4 +1,4 @@
-.\"	$NetBSD: route.8,v 1.20 2001/01/27 04:53:13 itojun Exp $
+.\"	$NetBSD: route.8,v 1.21 2001/04/27 19:33:06 manu Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -51,10 +51,16 @@
 .Nm
 is a utility used to manually manipulate the network
 routing tables.
-It normally is not needed, as a system routing table management
-daemon such as
+Except for setting up the default route, it is normally not needed, 
+as a system routing table management daemon such as
 .Xr routed 8 ,
 should tend to this task.
+.Pp
+.Nm
+can be used to modify nearly any aspect of the routing policy, 
+except packet forwarding, which can be manipulated through the
+.Xr sysctl 8 
+command.
 .Pp
 The
 .Nm
@@ -306,6 +312,15 @@ and
 .Dv RTM_CHANGE .
 As such, only the super-user may modify
 the routing tables.
+.Sh EXAMPLES
+This sets the default route to 192.168.0.1:
+.Dl route add default 192.168.0.1
+This shows all routes, without DNS resolution (this is useful if the 
+DNS is not available):
+.Dl route -n show
+To install a static route through 10.200.0.1 to reach the network 
+192.168.1.0/28, use this:
+.Dl route add -net 192.168.1.0 -netmask 255.255.255.248 10.200.0.1
 .Sh DIAGNOSTICS
 .Bl -tag -width Ds
 .It Sy "add [host \&| network ] %s: gateway %s flags %x"
@@ -342,6 +357,7 @@ These privileges are enforced by the kernel.
 .El
 .Sh SEE ALSO
 .Xr netintro 4 ,
+.Xr sysctl 8 ,
 .Xr route 4 ,
 .Xr esis 4 ,
 .Xr routed 8
