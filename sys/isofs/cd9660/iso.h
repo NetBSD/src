@@ -1,4 +1,4 @@
-/*	$NetBSD: iso.h,v 1.19 1997/01/24 18:31:47 cgd Exp $	*/
+/*	$NetBSD: iso.h,v 1.20 1997/07/07 22:45:34 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -135,14 +135,14 @@ struct iso_extended_attributes {
 	u_char len_au			[ISODCL (247, 250)]; /* 723 */
 };
 
-static __inline int isonum_711 __P((u_char *));
-static __inline int isonum_712 __P((char *));
-static __inline int isonum_721 __P((u_char *));
-static __inline int isonum_722 __P((u_char *));
-static __inline int isonum_723 __P((u_char *));
-static __inline int isonum_731 __P((u_char *));
-static __inline int isonum_732 __P((u_char *));
-static __inline int isonum_733 __P((u_char *));
+static __inline int isonum_711 __P((u_char *)) __attribute__ ((unused));
+static __inline int isonum_712 __P((char *)) __attribute__ ((unused));
+static __inline int isonum_721 __P((u_char *)) __attribute__ ((unused));
+static __inline int isonum_722 __P((u_char *)) __attribute__ ((unused));
+static __inline int isonum_723 __P((u_char *)) __attribute__ ((unused));
+static __inline int isonum_731 __P((u_char *)) __attribute__ ((unused));
+static __inline int isonum_732 __P((u_char *)) __attribute__ ((unused));
+static __inline int isonum_733 __P((u_char *)) __attribute__ ((unused));
 
 /* 7.1.1: unsigned char */
 static __inline int
