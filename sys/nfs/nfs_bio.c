@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.36 1997/10/19 20:27:32 fvdl Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.37 1997/10/20 22:08:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -384,8 +384,8 @@ diragain:
 		if ((caddr_t)dp >= edp || (caddr_t)dp + dp->d_reclen > edp ||
 		    (en > 0 && NFS_GETCOOKIE(pdp) != ndp->dc_cookie)) {
 #ifdef DEBUG
-		    	printf("invalid cache: %p %p %p len %u off %lx %lx\n",
-				pdp, dp, edp, dp->d_reclen,
+		    	printf("invalid cache: %p %p %p off %lx %lx\n",
+				pdp, dp, edp,
 				(unsigned long)uio->uio_offset,
 				(unsigned long)NFS_GETCOOKIE(pdp));
 #endif
