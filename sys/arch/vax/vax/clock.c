@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.31 2000/01/27 17:06:55 bouyer Exp $	 */
+/*	$NetBSD: clock.c,v 1.32 2000/02/29 17:13:27 matt Exp $	 */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -45,12 +45,16 @@
 
 #include "opt_vax750.h"
 #include "opt_vax780.h"
+#include "opt_vax630.h"
 #include "opt_vax650.h"
 #include "opt_vax670.h"
 #include "opt_vax8500.h"
 #include "opt_vax8200.h"
+#include "opt_vax410.h"
+#include "opt_vax43.h"
 #include "opt_vax46.h"
-#include "opt_vax630.h"
+#include "opt_vax48.h"
+#include "opt_vax49.h"
 
 int	yeartonum __P((int));
 int	numtoyear __P((int));
@@ -250,7 +254,7 @@ generic_clkwrite()
 }
 #endif
 
-#if VAX630 || VAX410 || VAX43 || VAX8200 || VAX46
+#if VAX630 || VAX410 || VAX43 || VAX8200 || VAX46 || VAX48 || VAX49
 
 volatile short *clk_page;	/* where the chip is mapped in virtual memory */
 int	clk_adrshift;	/* how much to multiply the in-page address with */
