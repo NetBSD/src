@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.11 2003/09/27 04:44:42 matt Exp $	*/
+/*	$NetBSD: fpu.c,v 1.12 2004/04/04 17:35:15 matt Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.11 2003/09/27 04:44:42 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.12 2004/04/04 17:35:15 matt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -65,39 +65,44 @@ enable_fpu(void)
 		save_fpu_cpu();
 	}
 	KASSERT(ci->ci_fpulwp == NULL);
-	__asm __volatile ("lfd 0,0(%0); mtfsf 0xff,0" :: "b"(&pcb->pcb_fpu.fpscr));
-	__asm ("lfd 0,0(%0);"
-	     "lfd 1,8(%0);"
-	     "lfd 2,16(%0);"
-	     "lfd 3,24(%0);"
-	     "lfd 4,32(%0);"
-	     "lfd 5,40(%0);"
-	     "lfd 6,48(%0);"
-	     "lfd 7,56(%0);"
-	     "lfd 8,64(%0);"
-	     "lfd 9,72(%0);"
-	     "lfd 10,80(%0);"
-	     "lfd 11,88(%0);"
-	     "lfd 12,96(%0);"
-	     "lfd 13,104(%0);"
-	     "lfd 14,112(%0);"
-	     "lfd 15,120(%0);"
-	     "lfd 16,128(%0);"
-	     "lfd 17,136(%0);"
-	     "lfd 18,144(%0);"
-	     "lfd 19,152(%0);"
-	     "lfd 20,160(%0);"
-	     "lfd 21,168(%0);"
-	     "lfd 22,176(%0);"
-	     "lfd 23,184(%0);"
-	     "lfd 24,192(%0);"
-	     "lfd 25,200(%0);"
-	     "lfd 26,208(%0);"
-	     "lfd 27,216(%0);"
-	     "lfd 28,224(%0);"
-	     "lfd 29,232(%0);"
-	     "lfd 30,240(%0);"
-	     "lfd 31,248(%0)" :: "b"(&pcb->pcb_fpu.fpr[0]));
+	__asm __volatile (
+		"lfd	0,0(%0)\n"
+		"mtfsf	0xff,0\n"
+	    :: "b"(&pcb->pcb_fpu.fpscr));
+	__asm (
+		"lfd	0,0(%0)\n"
+		"lfd	1,8(%0)\n"
+		"lfd	2,16(%0)\n"
+		"lfd	3,24(%0)\n"
+		"lfd	4,32(%0)\n"
+		"lfd	5,40(%0)\n"
+		"lfd	6,48(%0)\n"
+		"lfd	7,56(%0)\n"
+		"lfd	8,64(%0)\n"
+		"lfd	9,72(%0)\n"
+		"lfd	10,80(%0)\n"
+		"lfd	11,88(%0)\n"
+		"lfd	12,96(%0)\n"
+		"lfd	13,104(%0)\n"
+		"lfd	14,112(%0)\n"
+		"lfd	15,120(%0)\n"
+		"lfd	16,128(%0)\n"
+		"lfd	17,136(%0)\n"
+		"lfd	18,144(%0)\n"
+		"lfd	19,152(%0)\n"
+		"lfd	20,160(%0)\n"
+		"lfd	21,168(%0)\n"
+		"lfd	22,176(%0)\n"
+		"lfd	23,184(%0)\n"
+		"lfd	24,192(%0)\n"
+		"lfd	25,200(%0)\n"
+		"lfd	26,208(%0)\n"
+		"lfd	27,216(%0)\n"
+		"lfd	28,224(%0)\n"
+		"lfd	29,232(%0)\n"
+		"lfd	30,240(%0)\n"
+		"lfd	31,248(%0)\n"
+	    :: "b"(&pcb->pcb_fpu.fpr[0]));
 	__asm __volatile ("isync");
 	tf->srr1 |= PSL_FP;
 	ci->ci_fpulwp = l;
@@ -125,39 +130,44 @@ save_fpu_cpu(void)
 		goto out;
 	}
 	pcb = &l->l_addr->u_pcb;
-	__asm ("stfd 0,0(%0);"
-	     "stfd 1,8(%0);"
-	     "stfd 2,16(%0);"
-	     "stfd 3,24(%0);"
-	     "stfd 4,32(%0);"
-	     "stfd 5,40(%0);"
-	     "stfd 6,48(%0);"
-	     "stfd 7,56(%0);"
-	     "stfd 8,64(%0);"
-	     "stfd 9,72(%0);"
-	     "stfd 10,80(%0);"
-	     "stfd 11,88(%0);"
-	     "stfd 12,96(%0);"
-	     "stfd 13,104(%0);"
-	     "stfd 14,112(%0);"
-	     "stfd 15,120(%0);"
-	     "stfd 16,128(%0);"
-	     "stfd 17,136(%0);"
-	     "stfd 18,144(%0);"
-	     "stfd 19,152(%0);"
-	     "stfd 20,160(%0);"
-	     "stfd 21,168(%0);"
-	     "stfd 22,176(%0);"
-	     "stfd 23,184(%0);"
-	     "stfd 24,192(%0);"
-	     "stfd 25,200(%0);"
-	     "stfd 26,208(%0);"
-	     "stfd 27,216(%0);"
-	     "stfd 28,224(%0);"
-	     "stfd 29,232(%0);"
-	     "stfd 30,240(%0);"
-	     "stfd 31,248(%0)" :: "b"(&pcb->pcb_fpu.fpr[0]));
-	__asm __volatile ("mffs 0; stfd 0,0(%0)" :: "b"(&pcb->pcb_fpu.fpscr));
+	__asm (
+		"stfd	0,0(%0)\n"
+		"stfd	1,8(%0)\n"
+		"stfd	2,16(%0)\n"
+		"stfd	3,24(%0)\n"
+		"stfd	4,32(%0)\n"
+		"stfd	5,40(%0)\n"
+		"stfd	6,48(%0)\n"
+		"stfd	7,56(%0)\n"
+		"stfd	8,64(%0)\n"
+		"stfd	9,72(%0)\n"
+		"stfd	10,80(%0)\n"
+		"stfd	11,88(%0)\n"
+		"stfd	12,96(%0)\n"
+		"stfd	13,104(%0)\n"
+		"stfd	14,112(%0)\n"
+		"stfd	15,120(%0)\n"
+		"stfd	16,128(%0)\n"
+		"stfd	17,136(%0)\n"
+		"stfd	18,144(%0)\n"
+		"stfd	19,152(%0)\n"
+		"stfd	20,160(%0)\n"
+		"stfd	21,168(%0)\n"
+		"stfd	22,176(%0)\n"
+		"stfd	23,184(%0)\n"
+		"stfd	24,192(%0)\n"
+		"stfd	25,200(%0)\n"
+		"stfd	26,208(%0)\n"
+		"stfd	27,216(%0)\n"
+		"stfd	28,224(%0)\n"
+		"stfd	29,232(%0)\n"
+		"stfd	30,240(%0)\n"
+		"stfd	31,248(%0)\n"
+	    :: "b"(&pcb->pcb_fpu.fpr[0]));
+	__asm __volatile (
+		"mffs	0\n"
+		"stfd	0,0(%0)\n"
+	    :: "b"(&pcb->pcb_fpu.fpscr));
 	__asm __volatile ("sync");
 	pcb->pcb_fpcpu = NULL;
 	ci->ci_fpulwp = NULL;
