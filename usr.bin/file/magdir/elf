@@ -15,6 +15,7 @@
 >4	byte		2		64-bit
 >5	byte		0		invalid byte order
 >5	byte		1		LSB
+>5	byte		2		MSB
 >>16	leshort		0		no file type,
 >>16	leshort		1		relocatable,
 >>16	leshort		2		executable,
@@ -34,7 +35,6 @@
 >>20	lelong		0		invalid version
 >>20	lelong		1		version 1
 >>36	lelong		1		MathCoPro/FPU/MAU Required
->5	byte		2		MSB
 >>16	beshort		0		no file type,
 >>16	beshort		1		relocatable,
 >>16	beshort		2		executable,
