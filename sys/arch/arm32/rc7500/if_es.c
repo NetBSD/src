@@ -1,4 +1,4 @@
-/*	$NetBSD: if_es.c,v 1.14 1998/08/08 23:58:41 mycroft Exp $	*/
+/*	$NetBSD: if_es.c,v 1.15 1999/03/16 10:55:42 mark Exp $	*/
 
 /*
  * Copyright (c) 1996, Danny C Tsen.
@@ -274,7 +274,7 @@ esinit(sc)
 	struct es_softc *sc;
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
-	register u_int iobase = sc->sc_base;
+	u_int iobase = sc->sc_base;
 	int s;
 
 	s = splnet();
@@ -339,7 +339,7 @@ esintr(arg)
 {
 	struct es_softc *sc = arg;
 	u_int intsts, intact;
-	register u_int iobase;
+	u_int iobase;
 	int n = 4;
 
 	iobase = sc->sc_base;
@@ -555,7 +555,7 @@ static void
 esrint(sc)
 	struct es_softc *sc;
 {
-	register iobase = sc->sc_base;
+	u_int iobase = sc->sc_base;
 	u_short len;
 	short cnt;
 	u_short pktctlw, pktlen, *buf;
@@ -730,7 +730,7 @@ esstart(ifp)
 	struct ifnet *ifp;
 {
 	struct es_softc *sc = ifp->if_softc;
-	register u_int iobase = sc->sc_base;
+	u_int iobase = sc->sc_base;
 	struct mbuf *m0, *m;
 	u_short *pktbuf;
 	u_short pktctlw, pktlen, len;
@@ -843,12 +843,12 @@ esstart_out:
 
 static int
 esioctl(ifp, command, data)
-	register struct ifnet *ifp;
+	struct ifnet *ifp;
 	u_long command;
 	caddr_t data;
 {
 	struct es_softc *sc = ifp->if_softc;
-	register struct ifaddr *ifa = (struct ifaddr *)data;
+	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
@@ -869,7 +869,7 @@ esioctl(ifp, command, data)
 #ifdef NS
 		case AF_NS:
 		    {
-			register struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
+			struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
 
 			if (ns_nullhost(*ina))
 				ina->x_host =
