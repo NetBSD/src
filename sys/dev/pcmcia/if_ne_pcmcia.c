@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.56 2000/02/14 23:13:49 enami Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.57 2000/02/20 03:18:15 enami Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -455,51 +455,68 @@ ne_pcmcia_attach(parent, self, aux)
 	nmedia = defmedia = 0;
 
 	psc->sc_pf = pa->pf;
-	cfe = pa->pf->cfe_head.sqh_first;
 
-	/*
-	 * XXX need to loop over all config entries?
-	 */
+	for (cfe = SIMPLEQ_FIRST(&pa->pf->cfe_head); cfe != NULL;
+	    cfe = SIMPLEQ_NEXT(cfe, cfe_list)) {
 #if 0
-	/*
-	 * Some ne2000 driver's claim to have memory; others don't.
-	 * Since I don't care, I don't check.
-	 */
+		/*
+		 * Some ne2000 driver's claim to have memory; others don't.
+		 * Since I don't care, I don't check.
+		 */
 
-	if (cfe->num_memspace != 1) {
-		printf(": unexpected number of memory spaces "
-		    " %d should be 1\n", cfe->num_memspace);
-		goto fail_1;
-	}
+		if (cfe->num_memspace != 1) {
+			printf(": unexpected number of memory spaces "
+			    " %d should be 1\n", cfe->num_memspace);
+			continue;
+		}
 #endif
 
-	if (cfe->num_iospace == 1) {
-		if (cfe->iospace[0].length != NE2000_NPORTS) {
-			printf(": unexpected I/O space configuration"
-			    " (continued)\n%s", dsc->sc_dev.dv_xname);
-			/* XXX really safe for all other cards? */
+		if (cfe->num_iospace == 1) {
+			if (cfe->iospace[0].length != NE2000_NPORTS) {
+				printf(": unexpected I/O space configuration"
+				    " (continued)\n%s", dsc->sc_dev.dv_xname);
+				/* XXX really safe for all other cards? */
+			}
+		} else if (cfe->num_iospace == 2) {
+			/*
+			 * Some cards report a separate space for NIC and ASIC.
+			 * This make some sense, but we must allocate a single
+			 * NE2000_NPORTS-sized chunk, due to brain damaged
+			 * address decoders on some of these cards.
+			 */
+			if (cfe->iospace[0].length + cfe->iospace[1].length !=
+			    NE2000_NPORTS) {
+#ifdef DIAGNOSTIC
+				printf(": unexpected I/O "
+				    "space configuration; ignored\n%s",
+				    dsc->sc_dev.dv_xname);
+#endif
+				continue;
+			}
+		} else {
+#ifdef DIAGNOSTIC
+			printf(": unexpected number of i/o spaces %d"
+			    " should be 1 or 2; ignored\n%s",
+			    cfe->num_iospace, dsc->sc_dev.dv_xname);
+#endif
+			continue;
 		}
-	} else if (cfe->num_iospace == 2) {
-		/*
-		 * Some cards report a separate space for NIC and ASIC.
-		 * This make some sense, but we must allocate a single
-		 * NE2000_NPORTS-sized chunk, due to brain damaged
-		 * address decoders on some of these cards.
-		 */
-		if ((cfe->iospace[0].length + cfe->iospace[1].length) !=
-		    NE2000_NPORTS) {
-			printf(": unexpected I/O space configuration\n");
-			goto fail_1;
+
+		if (pcmcia_io_alloc(pa->pf, cfe->iospace[0].start,
+		    NE2000_NPORTS, NE2000_NPORTS, &psc->sc_pcioh)) {
+#ifdef DIAGNOSTIC
+			printf(": can't allocate i/o space %lx; ignored\n%s",
+			    cfe->iospace[0].start, dsc->sc_dev.dv_xname);
+#endif
+			continue;
 		}
-	} else {
-		printf(": unexpected number of i/o spaces %d"
-		    " should be 1 or 2\n", cfe->num_iospace);
-		goto fail_1;
+
+		/* Ok, found. */
+		break;
 	}
 
-	if (pcmcia_io_alloc(pa->pf, cfe->iospace[0].start, NE2000_NPORTS,
-	    NE2000_NPORTS, &psc->sc_pcioh)) {
-		printf(": can't alloc i/o space\n");
+	if (cfe == NULL) {
+		printf(": no suitable config entry\n");
 		goto fail_1;
 	}
 
