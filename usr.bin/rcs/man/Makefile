@@ -21,7 +21,12 @@ MAN1=	ci.0 co.0 ident.0 merge.0 rcs.0 rcsclean.0 rcsdiff.0 \
 	rcsfreeze.0 rcsintro.0 rcsmerge.0 rlog.0 sccstorcs.0
 MAN5=	rcsfile.0
 
+.if !defined(NOMAN)
 install: ${MAN1} ${MAN5}
 	install -c -o bin -g bin -m 444 ${MAN1} ${DESTDIR}/usr/share/man/cat1
 	install -c -o bin -g bin -m 444 ${MAN5} ${DESTDIR}/usr/share/man/cat5
+.else
+install:
+.endif
+
 .include <bsd.prog.mk>
