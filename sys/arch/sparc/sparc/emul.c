@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.8 2003/07/15 00:05:04 lukem Exp $	*/
+/*	$NetBSD: emul.c,v 1.9 2004/04/13 14:00:24 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.8 2003/07/15 00:05:04 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.9 2004/04/13 14:00:24 pk Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -432,7 +432,10 @@ emulinstr(pc, tf)
 
 	switch (code.i_op3.i_op3) {
 	case IOP3_FLUSH:
-		cache_flush((caddr_t)(rs1 + rs2), 4); /*XXX*/
+		/*
+		 * A FLUSH instruction causing a T_ILLINST!
+		 * Turn it into a NOP.
+		 */
 		return 0;
 
 	default:
