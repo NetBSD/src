@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.37 1998/09/13 20:27:48 hwr Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.38 1998/12/22 02:51:32 thorpej Exp $	*/
 
 /*
  * IP multicast forwarding procedures
@@ -164,7 +164,7 @@ static vifi_t	   numvifs = 0;
 static int have_encap_tunnel = 0;
 
 /*
- * one-back cache used by ipip_input to locate a tunnel's vif
+ * one-back cache used by mrt_ipip_input to locate a tunnel's vif
  * given a datagram's src ip address.
  */
 static struct in_addr last_encap_src;
@@ -566,7 +566,7 @@ add_vif(m)
 		/* Prepare cached route entry. */
 		bzero(&vifp->v_route, sizeof(vifp->v_route));
 
-		/* Tell ipip_input() to start looking at encapsulated packets. */
+		/* Tell mrt_ipip_input() to start looking at encapsulated packets. */
 		have_encap_tunnel = 1;
 	} else {
 		/* Use the physical interface associated with the address. */
@@ -1444,9 +1444,9 @@ encap_send(ip, vifp, m)
  */
 void
 #if __STDC__
-ipip_input(struct mbuf *m, ...)
+mrt_ipip_input(struct mbuf *m, ...)
 #else
-ipip_input(m, va_alist)
+mrt_ipip_input(m, va_alist)
 	struct mbuf *m;
 	va_dcl
 #endif
