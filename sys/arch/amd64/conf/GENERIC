@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.43 2005/03/21 01:57:54 cgd Exp $
+# $NetBSD: GENERIC,v 1.44 2005/03/21 14:15:27 xtraeme Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.43 $"
+#ident 		"GENERIC-$Revision: 1.44 $"
 
 maxusers	32		# estimated number of users
 
@@ -246,6 +246,7 @@ mainbus0 at root
 #lpt* 		at acpi?		# Parallel port
 #mpu*		at acpi?		# Roland MPU-401 MIDI UART
 #pckbc*  	at acpi?		# PC keyboard controller
+#pcppi*         at acpi?                # AT-style speaker sound
 #wss* 		at acpi?		# NeoMagic 256AV in wss mode
 
 options 	MPBIOS

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.661 2005/03/03 23:02:01 tron Exp $
+# $NetBSD: GENERIC,v 1.662 2005/03/21 14:15:27 xtraeme Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.661 $"
+#ident 		"GENERIC-$Revision: 1.662 $"
 
 maxusers	32		# estimated number of users
 
@@ -329,6 +329,7 @@ cpu* at mainbus?
 #mpu*		at acpi?		# Roland MPU-401 MIDI UART
 #npx*		at acpi?		# Math coprocessor
 #pckbc*  	at acpi?		# PC keyboard controller
+#pcppi*         at acpi?                # AT-style speaker sound
 #wss* 		at acpi?		# NeoMagic 256AV in wss mode
 
 # Sony Vaio jog dial
