@@ -1,12 +1,10 @@
-#	$NetBSD: Makefile,v 1.106 1999/03/27 03:22:49 perry Exp $
+#	$NetBSD: Makefile,v 1.107 1999/04/09 15:12:22 perry Exp $
 #	from: @(#)Makefile	5.20 (Berkeley) 6/12/93
-#
-# not yet done: catman
 
-# XXX Temporary for NO_SENDMAIL
+# XXX Temporary for NO_SENDMAIL and BUILD_POSTFIX
 .include <bsd.own.mk>
 
-SUBDIR=	ac accton amd apm apmd arp bad144 bind bootp \
+SUBDIR=	ac accton amd apm apmd arp bad144 bind bootp catman \
 	chown chroot chrtbl config cron dbsym dev_mkdb \
 	dhcp diskpart dumpfs dumplfs edquota eeprom eshconfig greconfig \
 	grfconfig grfinfo gspa hilinfo inetd iostat ipf iteconfig kgmon \
