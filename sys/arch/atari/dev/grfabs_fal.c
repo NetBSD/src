@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_fal.c,v 1.3 1996/03/10 11:42:35 leo Exp $	*/
+/*	$NetBSD: grfabs_fal.c,v 1.4 1996/05/15 07:29:05 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Thomas Gerner.
@@ -39,11 +39,13 @@
 #include <sys/queue.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
+#include <sys/systm.h>
 
 #include <machine/iomap.h>
 #include <machine/video.h>
 #include <machine/mfp.h>
 #include <atari/atari/device.h>
+#include <atari/atari/stalloc.h>
 #include <atari/dev/grfabs_reg.h>
 
 /*
@@ -73,16 +75,16 @@ struct grfabs_sw fal_vid_sw = {
 };
 
 static dmode_t vid_modes[] = {
-    { {NULL,NULL}, "falauto", {   0,  0 },  0, RES_FALAUTO   , &fal_vid_sw},
-    { {NULL,NULL}, "sthigh",  { 640,400 },  1, RES_FAL_STHIGH, &fal_vid_sw},
-    { {NULL,NULL}, "stmid",   { 640,200 },  2, RES_FAL_STMID , &fal_vid_sw},
-    { {NULL,NULL}, "stlow",   { 320,200 },  4, RES_FAL_STLOW , &fal_vid_sw},
-    { {NULL,NULL}, "ttlow",   { 320,480 },  8, RES_FAL_TTLOW , &fal_vid_sw},
-    { {NULL,NULL}, "vga2",    { 640,480 },  1, RES_VGA2      , &fal_vid_sw},
-    { {NULL,NULL}, "vga4",    { 640,480 },  2, RES_VGA4      , &fal_vid_sw},
-    { {NULL,NULL}, "vga16",   { 640,480 },  4, RES_VGA16     , &fal_vid_sw},
-    { {NULL,NULL}, "vga256",  { 640,480 },  8, RES_VGA256    , &fal_vid_sw},
-    { {NULL,NULL}, "highcol", { 320,200 }, 16, RES_DIRECT    , &fal_vid_sw},
+    { {NULL,NULL}, "falauto", {   0,  0 },  0, {RES_FALAUTO   }, &fal_vid_sw},
+    { {NULL,NULL}, "sthigh",  { 640,400 },  1, {RES_FAL_STHIGH}, &fal_vid_sw},
+    { {NULL,NULL}, "stmid",   { 640,200 },  2, {RES_FAL_STMID }, &fal_vid_sw},
+    { {NULL,NULL}, "stlow",   { 320,200 },  4, {RES_FAL_STLOW }, &fal_vid_sw},
+    { {NULL,NULL}, "ttlow",   { 320,480 },  8, {RES_FAL_TTLOW }, &fal_vid_sw},
+    { {NULL,NULL}, "vga2",    { 640,480 },  1, {RES_VGA2      }, &fal_vid_sw},
+    { {NULL,NULL}, "vga4",    { 640,480 },  2, {RES_VGA4      }, &fal_vid_sw},
+    { {NULL,NULL}, "vga16",   { 640,480 },  4, {RES_VGA16     }, &fal_vid_sw},
+    { {NULL,NULL}, "vga256",  { 640,480 },  8, {RES_VGA256    }, &fal_vid_sw},
+    { {NULL,NULL}, "highcol", { 320,200 }, 16, {RES_DIRECT    }, &fal_vid_sw},
     { {NULL,NULL},  NULL,  }
 };
 
@@ -353,8 +355,6 @@ falcon_free_view(v)
 view_t *v;
 {
 	if (v) {
-		dmode_t *md = v->mode;
-
 		falcon_remove_view(v);
 		if (v->colormap != &gra_con_cmap)
 			free(v->colormap, M_DEVBUF);
@@ -484,7 +484,6 @@ alloc_bitmap(width, height, depth)
 u_long	width, height;
 u_char	depth;
 {
-	int     i;
 	u_long  total_size, bm_size;
 	void	*hw_address;
 	bmap_t	*bm;
