@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.23 2003/07/18 21:57:26 nathanw Exp $	*/
+/*	$NetBSD: pthread.c,v 1.24 2003/07/18 22:12:30 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.23 2003/07/18 21:57:26 nathanw Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.24 2003/07/18 22:12:30 nathanw Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -46,6 +46,7 @@ __RCSID("$NetBSD: pthread.c,v 1.23 2003/07/18 21:57:26 nathanw Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <syslog.h>
 #include <ucontext.h>
 #include <unistd.h>
 
@@ -75,11 +76,13 @@ static int nextthread;
 static pthread_spin_t nextthread_lock;
 static pthread_attr_t pthread_default_attr;
 
-#define PTHREAD_ERRORMODE_ABORT		1
-#define PTHREAD_ERRORMODE_PRINT       	2
-#define PTHREAD_ERRORMODE_IGNORE	3
+enum {
+	DIAGASSERT_ABORT =	1<<0,
+	DIAGASSERT_STDERR =	1<<1,
+	DIAGASSERT_SYSLOG =	1<<2
+};
 
-static int pthread__errormode;
+static int pthread__diagassert = DIAGASSERT_ABORT | DIAGASSERT_STDERR;
 
 pthread_spin_t pthread__runqueue_lock;
 struct pthread_queue_t pthread__runqueue;
@@ -114,6 +117,9 @@ void *pthread__static_lib_binder[] = {
 struct pthread_attr_private {
 	char ptap_name[PTHREAD_MAX_NAMELEN_NP];
 	void *ptap_namearg;
+	void *ptap_stackaddr;
+	size_t ptap_stacksize;
+	size_t ptap_guardsize;
 };
 
 /*
@@ -126,7 +132,7 @@ void
 pthread_init(void)
 {
 	pthread_t first;
-	char *mode;
+	char *p;
 	extern int __isthreaded;
 
 	/* Initialize locks first; they're needed elsewhere. */
@@ -154,15 +160,29 @@ pthread_init(void)
 	pthread__debug_init();
 #endif
 
-	pthread__errormode = PTHREAD_ERRORMODE_ABORT;
-	if ((mode = getenv("PTHREAD_ERRORMODE")) != NULL) {
-		if (strcasecmp(mode, "ignore") == 0)
-			pthread__errormode = PTHREAD_ERRORMODE_IGNORE;
-		else if (strcasecmp(mode, "print") == 0)
-			pthread__errormode = PTHREAD_ERRORMODE_PRINT;
-		else if (strcasecmp(mode, "abort") == 0)
-			pthread__errormode = PTHREAD_ERRORMODE_ABORT;
+	for (p = getenv("PTHREAD_DIAGASSERT"); p && *p; p++) {
+		switch (*p) {
+		case 'a':
+			pthread__diagassert |= DIAGASSERT_ABORT;
+			break;
+		case 'A':
+			pthread__diagassert &= ~DIAGASSERT_ABORT;
+			break;
+		case 'e':
+			pthread__diagassert |= DIAGASSERT_STDERR;
+			break;
+		case 'E':
+			pthread__diagassert &= ~DIAGASSERT_STDERR;
+			break;
+		case 'l':
+			pthread__diagassert |= DIAGASSERT_SYSLOG;
+			break;
+		case 'L':
+			pthread__diagassert &= ~DIAGASSERT_SYSLOG;
+			break;
+		}
 	}
+
 
 	/* Tell libc that we're here and it should role-play accordingly. */
 	__isthreaded = 1;
@@ -273,7 +293,6 @@ pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 	int ret;
 
 	PTHREADD_ADD(PTHREADD_CREATE);
-	pthread__assert(thread != NULL);
 
 	/*
 	 * It's okay to check this without a lock because there can
@@ -708,11 +727,29 @@ pthread_attr_destroy(pthread_attr_t *attr)
 {
 	struct pthread_attr_private *p;
 
-	if ((attr == NULL) || (attr->pta_magic != PT_ATTR_MAGIC))
-		return EINVAL;
-
 	if ((p = attr->pta_private) != NULL)
 		free(p);
+
+	return 0;
+}
+
+
+int
+pthread_attr_get_np(pthread_t thread, pthread_attr_t *attr)
+{
+	struct pthread_attr_private *p;
+
+	p = pthread__attr_init_private(attr);
+	if (p == NULL)
+		return ENOMEM;
+
+	attr->pta_flags = thread->pt_flags & 
+	    (PT_FLAG_DETACHED | PT_FLAG_SCOPE_SYSTEM | PT_FLAG_EXPLICIT_SCHED);
+
+	p->ptap_namearg = thread->pt_name;
+	p->ptap_stackaddr = thread->pt_stack.ss_sp;
+	p->ptap_stacksize = thread->pt_stack.ss_size;
+	p->ptap_guardsize = (size_t)sysconf(_SC_PAGESIZE);
 
 	return 0;
 }
@@ -722,10 +759,10 @@ int
 pthread_attr_getdetachstate(const pthread_attr_t *attr, int *detachstate)
 {
 
-	if ((attr == NULL) || (attr->pta_magic != PT_ATTR_MAGIC))
-		return EINVAL;
-
-	*detachstate = (attr->pta_flags & PT_FLAG_DETACHED);
+	if (attr->pta_flags & PT_FLAG_DETACHED)
+		*detachstate = PTHREAD_CREATE_DETACHED;
+	else
+		*detachstate = PTHREAD_CREATE_JOINABLE;
 
 	return 0;
 }
@@ -734,8 +771,6 @@ pthread_attr_getdetachstate(const pthread_attr_t *attr, int *detachstate)
 int
 pthread_attr_setdetachstate(pthread_attr_t *attr, int detachstate)
 {
-	if ((attr == NULL) || (attr->pta_magic != PT_ATTR_MAGIC))
-		return EINVAL;
 
 	switch (detachstate) {
 	case PTHREAD_CREATE_JOINABLE:
@@ -753,12 +788,102 @@ pthread_attr_setdetachstate(pthread_attr_t *attr, int detachstate)
 
 
 int
+pthread_attr_getguardsize(const pthread_attr_t *attr, size_t *guard)
+{
+	struct pthread_attr_private *p;
+
+	if ((p = attr->pta_private) == NULL)
+		*guard = (size_t)sysconf(_SC_PAGESIZE);
+	else
+		*guard = p->ptap_guardsize;
+
+	return 0;
+}
+
+
+int
+pthread_attr_setguardsize(pthread_attr_t *attr, size_t guard)
+{
+	struct pthread_attr_private *p;
+
+	p = pthread__attr_init_private(attr);
+	if (p == NULL)
+		return ENOMEM;
+
+	p->ptap_guardsize = guard;
+
+	return 0;
+}
+
+
+int
+pthread_attr_getinheritsched(const pthread_attr_t *attr, int *inherit)
+{
+
+	if (attr->pta_flags & PT_FLAG_EXPLICIT_SCHED)
+		*inherit = PTHREAD_EXPLICIT_SCHED;
+	else
+		*inherit = PTHREAD_INHERIT_SCHED;
+
+	return 0;
+}
+
+
+int
+pthread_attr_setinheritsched(pthread_attr_t *attr, int inherit)
+{
+
+	switch (inherit) {
+	case PTHREAD_INHERIT_SCHED:
+		attr->pta_flags &= ~PT_FLAG_EXPLICIT_SCHED;
+		break;
+	case PTHREAD_EXPLICIT_SCHED:
+		attr->pta_flags |= PT_FLAG_EXPLICIT_SCHED;
+		break;
+	default:
+		return EINVAL;
+	}
+
+	return 0;
+}
+
+
+int
+pthread_attr_getscope(const pthread_attr_t *attr, int *scope)
+{
+
+	if (attr->pta_flags & PT_FLAG_SCOPE_SYSTEM)
+		*scope = PTHREAD_SCOPE_SYSTEM;
+	else
+		*scope = PTHREAD_SCOPE_PROCESS;
+
+	return 0;
+}
+
+
+int
+pthread_attr_setscope(pthread_attr_t *attr, int scope)
+{
+
+	switch (scope) {
+	case PTHREAD_SCOPE_PROCESS:
+		attr->pta_flags &= ~PT_FLAG_SCOPE_SYSTEM;
+		break;
+	case PTHREAD_SCOPE_SYSTEM:
+		attr->pta_flags |= PT_FLAG_SCOPE_SYSTEM;
+		break;
+	default:
+		return EINVAL;
+	}
+
+	return 0;
+}
+
+
+int
 pthread_attr_setschedparam(pthread_attr_t *attr,
     const struct sched_param *param)
 {
-
-	if ((attr == NULL) || (attr->pta_magic != PT_ATTR_MAGIC))
-		return EINVAL;
 
 	if (param == NULL)
 		return EINVAL;
@@ -775,9 +900,6 @@ pthread_attr_getschedparam(const pthread_attr_t *attr,
     struct sched_param *param)
 {
 
-	if ((attr == NULL) || (attr->pta_magic != PT_ATTR_MAGIC))
-		return EINVAL;
-
 	if (param == NULL)
 		return EINVAL;
 
@@ -786,31 +908,94 @@ pthread_attr_getschedparam(const pthread_attr_t *attr,
 	return 0;
 }
 
+
 int
 pthread_attr_getstack(const pthread_attr_t *attr, void **addr, size_t *size)
 {
-	if ((attr == NULL) || (attr->pta_magic != PT_ATTR_MAGIC))
-		return EINVAL;
-	*addr = pthread__self()->pt_stack.ss_sp;
-	*size = pthread__self()->pt_stack.ss_size;
+	struct pthread_attr_private *p;
+
+	if ((p = attr->pta_private) == NULL) {
+		*addr = NULL;
+		*size = PT_STACKSIZE;
+	} else {
+		*addr = p->ptap_stackaddr;
+		*size = p->ptap_stacksize;
+	}
+
 	return 0;
 }
+
+
+int
+pthread_attr_setstack(pthread_attr_t *attr, void *addr, size_t size)
+{
+	struct pthread_attr_private *p;
+
+	p = pthread__attr_init_private(attr);
+	if (p == NULL)
+		return ENOMEM;
+
+	p->ptap_stackaddr = addr;
+	p->ptap_stacksize = size;
+
+	return 0;
+}
+
 
 int
 pthread_attr_getstacksize(const pthread_attr_t *attr, size_t *size)
 {
-	if ((attr == NULL) || (attr->pta_magic != PT_ATTR_MAGIC))
-		return EINVAL;
-	*size = pthread__self()->pt_stack.ss_size;
+	struct pthread_attr_private *p;
+
+	if ((p = attr->pta_private) == NULL)
+		*size = PT_STACKSIZE;
+	else
+		*size = p->ptap_stacksize;
+
 	return 0;
 }
+
+
+int
+pthread_attr_setstacksize(pthread_attr_t *attr, size_t size)
+{
+	struct pthread_attr_private *p;
+
+	p = pthread__attr_init_private(attr);
+	if (p == NULL)
+		return ENOMEM;
+
+	p->ptap_stacksize = size;
+
+	return 0;
+}
+
 
 int
 pthread_attr_getstackaddr(const pthread_attr_t *attr, void **addr)
 {
-	if ((attr == NULL) || (attr->pta_magic != PT_ATTR_MAGIC))
-		return EINVAL;
-	*addr = pthread__self()->pt_stack.ss_sp;
+	struct pthread_attr_private *p;
+
+	if ((p = attr->pta_private) == NULL)
+		*addr = NULL;
+	else
+		*addr = p->ptap_stackaddr;
+
+	return 0;
+}
+
+
+int
+pthread_attr_setstackaddr(pthread_attr_t *attr, void *addr)
+{
+	struct pthread_attr_private *p;
+
+	p = pthread__attr_init_private(attr);
+	if (p == NULL)
+		return ENOMEM;
+
+	p->ptap_stackaddr = addr;
+
 	return 0;
 }
 
@@ -820,9 +1005,6 @@ pthread_attr_getname_np(const pthread_attr_t *attr, char *name, size_t len,
     void **argp)
 {
 	struct pthread_attr_private *p;
-
-	if ((attr == NULL) || (attr->pta_magic != PT_ATTR_MAGIC))
-		return EINVAL;
 
 	if ((p = attr->pta_private) == NULL) {
 		name[0] = '\0';
@@ -1111,9 +1293,9 @@ void
 pthread__errorfunc(char *file, int line, char *function, char *msg)
 {
 	char buf[1024];
-	int len;
+	size_t len;
 	
-	if (pthread__errormode == PTHREAD_ERRORMODE_IGNORE)
+	if (pthread__diagassert == 0)
 		return;
 
 	/*
@@ -1121,17 +1303,22 @@ pthread__errorfunc(char *file, int line, char *function, char *msg)
 	 * end up deadlocked if the assert caller held locks.
 	 */
 	len = snprintf(buf, 1024, 
-	    "Error detected, file \"%s\", line %d%s%s%s: %s.\n",
-	    file, line,
+	    "%s: Error detected by libpthread: %s.\n"
+	    "Detected by file \"%s\", line %d%s%s%s.\n"
+	    "See pthread(3) for information.\n",
+	    getprogname(), msg, file, line,
 	    function ? ", function \"" : "",
 	    function ? function : "",
-	    function ? "\"" : "",
-	    msg);
+	    function ? "\"" : "");
 
-	write(STDERR_FILENO, buf, (size_t)len);
-	if (pthread__errormode == PTHREAD_ERRORMODE_ABORT) {
+	if (pthread__diagassert & DIAGASSERT_STDERR)
+		write(STDERR_FILENO, buf, len);
+
+	if (pthread__diagassert & DIAGASSERT_SYSLOG)
+		syslog(LOG_DEBUG | LOG_USER, "%s", buf);
+
+	if (pthread__diagassert & DIAGASSERT_ABORT) {
 		(void)kill(getpid(), SIGABRT);
-
 		_exit(1);
 	}
 }
