@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1992/3 Theo de Raadt <deraadt@fsa.ca>
+ * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -10,7 +10,10 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by Theo de Raadt.
+ * 4. The name of the author may not be used to endorse or promote
  *    products derived from this software without specific prior written
  *    permission.
  *
@@ -28,7 +31,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$Id: ypbind.c,v 1.6 1993/12/03 10:08:12 deraadt Exp $";
+static char rcsid[] = "$Id: ypbind.c,v 1.7 1994/05/25 09:55:39 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
