@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_util.h,v 1.2 1996/10/12 02:12:55 thorpej Exp $	*/
+/*	$NetBSD: compat_util.h,v 1.3 1997/10/10 01:47:01 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -40,6 +40,8 @@ void	*stackgap_alloc __P((caddr_t *, size_t));
 
 int emul_find __P((struct proc *, caddr_t *, const char *, char *,
 		   char **, int));
+
+void compat_offseterr __P((struct vnode *, char *msg));
 
 #define CHECK_ALT_EXIST(p, sgp, root, path) \
     emul_find(p, sgp, root, path, &(path), 0)
