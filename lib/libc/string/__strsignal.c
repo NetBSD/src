@@ -33,13 +33,14 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)strerror.c	5.6 (Berkeley) 5/4/91";*/
-static char *rcsid = "$Id: __strsignal.c,v 1.3 1994/10/06 18:17:54 jtc Exp $";
+static char *rcsid = "$Id: __strsignal.c,v 1.4 1994/10/10 04:53:01 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef NLS
 #define catclose	__catclose
 #define catgets		__catgets
 #define catopen		__catopen
+#define sys_siglist	__sys_siglist
 #include <nl_types.h>
 #endif
 
