@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.56 2003/09/04 09:17:06 itojun Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.57 2003/09/06 03:12:53 itojun Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.56 2003/09/04 09:17:06 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.57 2003/09/06 03:12:53 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -326,7 +326,9 @@ in6_pcbbind(v, nam, p)
 		in6_pcbstate(in6p, IN6P_BOUND);
 	}
 
-	in6p->in6p_flowinfo = sin6 ? sin6->sin6_flowinfo : 0;	/*XXX*/
+#if 0
+	in6p->in6p_flowinfo = 0;	/* XXX */
+#endif
 	return (0);
 }
 
@@ -450,11 +452,10 @@ in6_pcbconnect(v, nam)
 	in6p->in6p_faddr = sin6->sin6_addr;
 	in6p->in6p_fport = sin6->sin6_port;
 	in6_pcbstate(in6p, IN6P_CONNECTED);
-	/*
-	 * xxx kazu flowlabel is necessary for connect?
-	 * but if this line is missing, the garbage value remains.
-	 */
-	in6p->in6p_flowinfo = sin6->sin6_flowinfo;
+	in6p->in6p_flowinfo &= ~IPV6_FLOWLABEL_MASK;
+	if (ip6_auto_flowlabel)
+		in6p->in6p_flowinfo |=
+		    (htonl(ip6_flow_seq++) & IPV6_FLOWLABEL_MASK);
 #ifdef IPSEC
 	if (in6p->in6p_socket->so_type == SOCK_STREAM)
 		ipsec_pcbconn(in6p->in6p_sp);
@@ -469,6 +470,7 @@ in6_pcbdisconnect(in6p)
 	bzero((caddr_t)&in6p->in6p_faddr, sizeof(in6p->in6p_faddr));
 	in6p->in6p_fport = 0;
 	in6_pcbstate(in6p, IN6P_BOUND);
+	in6p->in6p_flowinfo &= ~IPV6_FLOWLABEL_MASK;
 	if (in6p->in6p_socket->so_state & SS_NOFDREF)
 		in6_pcbdetach(in6p);
 #ifdef IPSEC

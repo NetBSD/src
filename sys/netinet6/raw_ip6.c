@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.60 2003/09/05 23:20:49 itojun Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.61 2003/09/06 03:12:54 itojun Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.60 2003/09/05 23:20:49 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.61 2003/09/06 03:12:54 itojun Exp $");
 
 #include "opt_ipsec.h"
 
@@ -164,9 +164,6 @@ rip6_input(mp, offp, proto)
 	bzero(&rip6src, sizeof(rip6src));
 	rip6src.sin6_len = sizeof(struct sockaddr_in6);
 	rip6src.sin6_family = AF_INET6;
-#if 0 /* XXX inbound flowlabel */
-	rip6src.sin6_flowinfo = ip6->ip6_flow & IPV6_FLOWINFO_MASK;
-#endif
 	/* KAME hack: recover scopeid */
 	(void)in6_recoverscope(&rip6src, &ip6->ip6_src, m->m_pkthdr.rcvif);
 
