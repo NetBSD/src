@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.569 2002/10/11 01:00:35 thorpej Exp $
+#	$NetBSD: files,v 1.570 2002/10/11 01:52:04 thorpej Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -71,6 +71,16 @@ defflag				COMPAT_43
 defflag				COMPAT_PECOFF
 defflag	opt_compat_netbsd.h	COMPAT_09 COMPAT_10 COMPAT_11 COMPAT_12
 				COMPAT_13 COMPAT_14 COMPAT_15 COMPAT_NOMID
+
+#
+# Cryptography support.  Include this early, since several things
+# use it.
+#
+include "crypto/arc4/files.arc4"
+include "crypto/des/files.des"
+include "crypto/blowfish/files.blowfish"
+include "crypto/cast128/files.cast128"
+include "crypto/rijndael/files.rijndael"
 
 #
 # Networking protocols
@@ -202,7 +212,7 @@ define	hippi
 define	ieee1394
 define	token
 define	sppp
-define	wlan
+define	wlan: arc4
 define	crypto
 
 # devices ARPing IPv4 pull this in:
@@ -880,7 +890,7 @@ file	dev/ic/daic.c			daic
 #
 defpseudo vnd:		disk
 defpseudo ccd:		disk
-defpseudo cgd:		disk
+defpseudo cgd:		disk, des, blowfish, cast128, rijndael
 defpseudo md:		disk
 defpseudo netsmb
 
@@ -948,19 +958,6 @@ include "ufs/files.ufs"
 #
 # kernel sources
 #
-file	crypto/arc4/arc4.c		wlan
-file	crypto/des/des_ecb.c		(ipsec & ipsec_esp) | cgd
-file	crypto/des/des_setkey.c		(ipsec & ipsec_esp) | cgd
-file	crypto/des/des_enc.c		((ipsec & ipsec_esp) | cgd) &
-					    !crypto_md_des_enc
-file    crypto/des/des_cbc.c		cgd & !crypto_md_des_cbc
-file	crypto/blowfish/bf_enc.c	((ipsec & ipsec_esp) | cgd) &
-					    !crypto_md_bf_enc
-file	crypto/blowfish/bf_cbc.c	cgd & !crypto_md_bf_cbc
-file	crypto/blowfish/bf_skey.c	(ipsec & ipsec_esp) | cgd
-file	crypto/cast128/cast128.c	(ipsec & ipsec_esp) | cgd
-file	crypto/rijndael/rijndael-alg-fst.c (ipsec & ipsec_esp) | cgd
-file	crypto/rijndael/rijndael-api-fst.c (ipsec & ipsec_esp) | cgd
 file	ddb/db_access.c			ddb | kgdb
 file	ddb/db_aout.c			ddb
 file	ddb/db_break.c			ddb
