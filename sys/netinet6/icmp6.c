@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.66.2.4 2002/09/06 08:49:28 jdolecek Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.66.2.5 2002/10/10 18:44:13 jdolecek Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.66.2.4 2002/09/06 08:49:28 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.66.2.5 2002/10/10 18:44:13 jdolecek Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -532,7 +532,6 @@ icmp6_input(mp, offp, proto)
 			goto badcode;
 		}
 		goto deliver;
-		break;
 
 	case ICMP6_PACKET_TOO_BIG:
 		icmp6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_pkttoobig);
@@ -546,7 +545,6 @@ icmp6_input(mp, offp, proto)
 		 * intermediate extension headers.
 		 */
 		goto deliver;
-		break;
 
 	case ICMP6_TIME_EXCEEDED:
 		icmp6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_timeexceed);
@@ -561,7 +559,6 @@ icmp6_input(mp, offp, proto)
 			goto badcode;
 		}
 		goto deliver;
-		break;
 
 	case ICMP6_PARAM_PROB:
 		icmp6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_paramprob);
@@ -577,7 +574,6 @@ icmp6_input(mp, offp, proto)
 			goto badcode;
 		}
 		goto deliver;
-		break;
 
 	case ICMP6_ECHO_REQUEST:
 		icmp6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_echo);
@@ -892,7 +888,7 @@ icmp6_input(mp, offp, proto)
 	deliver:
 		if (icmp6_notify_error(m, off, icmp6len, code)) {
 			/* In this case, m should've been freed. */
-			return(IPPROTO_DONE);
+			return (IPPROTO_DONE);
 		}
 		break;
 
@@ -939,7 +935,7 @@ icmp6_notify_error(m, off, icmp6len, code)
 		       sizeof(*icmp6) + sizeof(struct ip6_hdr));
 	if (icmp6 == NULL) {
 		icmp6stat.icp6s_tooshort++;
-		return(-1);
+		return (-1);
 	}
 #endif
 	eip6 = (struct ip6_hdr *)(icmp6 + 1);
@@ -976,7 +972,7 @@ icmp6_notify_error(m, off, icmp6len, code)
 					       eoff, sizeof(*eh));
 				if (eh == NULL) {
 					icmp6stat.icp6s_tooshort++;
-					return(-1);
+					return (-1);
 				}
 #endif
 
@@ -1005,7 +1001,7 @@ icmp6_notify_error(m, off, icmp6len, code)
 					       eoff, sizeof(*rth));
 				if (rth == NULL) {
 					icmp6stat.icp6s_tooshort++;
-					return(-1);
+					return (-1);
 				}
 #endif
 				rthlen = (rth->ip6r_len + 1) << 3;
@@ -1031,7 +1027,7 @@ icmp6_notify_error(m, off, icmp6len, code)
 						       eoff, rthlen);
 					if (rth0 == NULL) {
 						icmp6stat.icp6s_tooshort++;
-						return(-1);
+						return (-1);
 					}
 #endif
 					/* just ignore a bogus header */
@@ -1054,7 +1050,7 @@ icmp6_notify_error(m, off, icmp6len, code)
 					       eoff, sizeof(*fh));
 				if (fh == NULL) {
 					icmp6stat.icp6s_tooshort++;
-					return(-1);
+					return (-1);
 				}
 #endif
 				/*
@@ -1089,7 +1085,7 @@ icmp6_notify_error(m, off, icmp6len, code)
 			       sizeof(*icmp6) + sizeof(struct ip6_hdr));
 		if (icmp6 == NULL) {
 			icmp6stat.icp6s_tooshort++;
-			return(-1);
+			return (-1);
 		}
 #endif
 
@@ -1157,11 +1153,11 @@ icmp6_notify_error(m, off, icmp6len, code)
 					  &ip6cp);
 		}
 	}
-	return(0);
+	return (0);
 
   freeit:
 	m_freem(m);
-	return(-1);
+	return (-1);
 }
 
 void
@@ -1450,7 +1446,7 @@ ni6_input(m, off)
 	MGETHDR(n, M_DONTWAIT, m->m_type);
 	if (n == NULL) {
 		m_freem(m);
-		return(NULL);
+		return (NULL);
 	}
 	M_COPY_PKTHDR(n, m); /* just for rcvif */
 	if (replylen > MHLEN) {
@@ -1527,13 +1523,13 @@ ni6_input(m, off)
 
 	nni6->ni_type = ICMP6_NI_REPLY;
 	m_freem(m);
-	return(n);
+	return (n);
 
   bad:
 	m_freem(m);
 	if (n)
 		m_freem(n);
-	return(NULL);
+	return (NULL);
 }
 #undef hostnamelen
 
@@ -1740,7 +1736,7 @@ ni6_addrs(ni6, m, ifpp, subj)
 		switch (ni6->ni_code) {
 		case ICMP6_NI_SUBJ_IPV6:
 			if (subj == NULL) /* must be impossible... */
-				return(0);
+				return (0);
 			subj_ip6 = (struct sockaddr_in6 *)subj;
 			break;
 		default:
@@ -1748,7 +1744,7 @@ ni6_addrs(ni6, m, ifpp, subj)
 			 * XXX: we only support IPv6 subject address for
 			 * this Qtype.
 			 */
-			return(0);
+			return (0);
 		}
 	}
 
@@ -1807,13 +1803,13 @@ ni6_addrs(ni6, m, ifpp, subj)
 		}
 		if (iffound) {
 			*ifpp = ifp;
-			return(addrsofif);
+			return (addrsofif);
 		}
 
 		addrs += addrsofif;
 	}
 
-	return(addrs);
+	return (addrs);
 }
 
 static int
@@ -1833,7 +1829,7 @@ ni6_store_addrs(ni6, nni6, ifp0, resid)
 	long time_second = time.tv_sec;
 
 	if (ifp0 == NULL && !(niflags & NI_NODEADDR_FLAG_ALL))
-		return(0);	/* needless to copy */
+		return (0);	/* needless to copy */
 
   again:
 
@@ -1898,7 +1894,7 @@ ni6_store_addrs(ni6, nni6, ifp0, resid)
 				 */
 				nni6->ni_flags |=
 					NI_NODEADDR_FLAG_TRUNCATE;
-				return(copied);
+				return (copied);
 			}
 
 			/*
@@ -1957,7 +1953,7 @@ ni6_store_addrs(ni6, nni6, ifp0, resid)
 		goto again;
 	}
 
-	return(copied);
+	return (copied);
 }
 
 /*
@@ -2683,7 +2679,7 @@ icmp6_redirect_output(m0, rt)
 	 * and truncates if not.
 	 */
 	if (m0->m_next || m0->m_pkthdr.len != m0->m_len)
-		panic("assumption failed in %s:%d\n", __FILE__, __LINE__);
+		panic("assumption failed in %s:%d", __FILE__, __LINE__);
 
 	if (len - sizeof(*nd_opt_rh) < m0->m_pkthdr.len) {
 		/* not enough room, truncate */
@@ -2843,7 +2839,7 @@ icmp6_ctloutput(op, so, level, optname, mp)
 		break;
 	}
 
-	return(error);
+	return (error);
 }
 
 /*

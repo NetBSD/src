@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.64.2.5 2002/09/28 12:54:45 jdolecek Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.64.2.6 2002/10/10 18:43:30 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.64.2.5 2002/09/28 12:54:45 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.64.2.6 2002/10/10 18:43:30 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -188,6 +188,8 @@ const struct vnodeopv_entry_desc fdesc_vnodeop_entries[] = {
 const struct vnodeopv_desc fdesc_vnodeop_opv_desc =
 	{ &fdesc_vnodeop_p, fdesc_vnodeop_entries };
 
+extern const struct cdevsw ctty_cdevsw;
+
 /*
  * Initialise cache headers
  */
@@ -197,9 +199,7 @@ fdesc_init()
 	int cttymajor;
 
 	/* locate the major number */
-	for (cttymajor = 0; cttymajor < nchrdev; cttymajor++)
-		if (cdevsw[cttymajor].d_open == cttyopen)
-			break;
+	cttymajor = cdevsw_lookup_major(&ctty_cdevsw);
 	devctty = makedev(cttymajor, 0);
 	fdhashtbl = hashinit(NFDCACHE, HASH_LIST, M_CACHE, M_NOWAIT, &fdhash);
 }
@@ -457,7 +457,7 @@ fdesc_open(v)
 		return (ENODEV);
 
 	case Fctty:
-		return (cttyopen(devctty, ap->a_mode, 0, ap->a_p));
+		return ((*ctty_cdevsw.d_open)(devctty, ap->a_mode, 0, ap->a_p));
 	case Froot:
 	case Fdevfd:
 	case Flink:
@@ -852,7 +852,7 @@ fdesc_read(v)
 	switch (VTOFDESC(vp)->fd_type) {
 	case Fctty:
 		VOP_UNLOCK(vp, 0);
-		error = cttyread(devctty, ap->a_uio, ap->a_ioflag);
+		error = (*ctty_cdevsw.d_read)(devctty, ap->a_uio, ap->a_ioflag);
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 		break;
 
@@ -880,7 +880,8 @@ fdesc_write(v)
 	switch (VTOFDESC(vp)->fd_type) {
 	case Fctty:
 		VOP_UNLOCK(vp, 0);
-		error = cttywrite(devctty, ap->a_uio, ap->a_ioflag);
+		error = (*ctty_cdevsw.d_write)(devctty, ap->a_uio,
+					       ap->a_ioflag);
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 		break;
 
@@ -908,8 +909,9 @@ fdesc_ioctl(v)
 
 	switch (VTOFDESC(ap->a_vp)->fd_type) {
 	case Fctty:
-		error = cttyioctl(devctty, ap->a_command, ap->a_data,
-				  ap->a_fflag, ap->a_p);
+		error = (*ctty_cdevsw.d_ioctl)(devctty, ap->a_command,
+					       ap->a_data, ap->a_fflag,
+					       ap->a_p);
 		break;
 
 	default:
@@ -933,7 +935,7 @@ fdesc_poll(v)
 
 	switch (VTOFDESC(ap->a_vp)->fd_type) {
 	case Fctty:
-		revents = cttypoll(devctty, ap->a_events, ap->a_p);
+		revents = (*ctty_cdevsw.d_poll)(devctty, ap->a_events, ap->a_p);
 		break;
 
 	default:
@@ -958,7 +960,7 @@ fdesc_kqfilter(v)
 
 	switch (VTOFDESC(ap->a_vp)->fd_type) {
 	case Fctty:
-		error = cttykqfilter(devctty, ap->a_kn);
+		error = (*ctty_cdevsw.d_kqfilter)(devctty, ap->a_kn);
 		break;
 
 	case Fdesc:

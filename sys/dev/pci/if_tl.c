@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.42.2.5 2002/06/23 17:47:44 jdolecek Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.42.2.6 2002/10/10 18:40:48 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.42.2.5 2002/06/23 17:47:44 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.42.2.6 2002/10/10 18:40:48 jdolecek Exp $");
 
 #undef TLDEBUG
 #define TL_PRIV_STATS
@@ -184,9 +184,8 @@ static __inline u_int8_t netsio_read(sc, bits)
 	return (tl_intreg_read_byte(sc, TL_INT_NET + TL_INT_NetSio) & bits);
 }
 
-struct cfattach tl_ca = {
-	sizeof(tl_softc_t), tl_pci_match, tl_pci_attach
-};
+CFATTACH_DECL(tl, sizeof(tl_softc_t),
+    tl_pci_match, tl_pci_attach, NULL, NULL);
 
 const struct tl_product_desc tl_compaq_products[] = {
 	{ PCI_PRODUCT_COMPAQ_N100TX, TLPHY_MEDIA_NO_10_T,
@@ -1309,7 +1308,7 @@ tbdinit:
 	if (size < ETHER_MIN_TX) {
 #ifdef DIAGNOSTIC
 		if (segment >= TL_NSEG) {
-			panic("tl_ifstart: to much segmets (%d)\n", segment);
+			panic("tl_ifstart: to much segmets (%d)", segment);
 		}
 #endif
 		/*

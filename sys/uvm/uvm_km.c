@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.50.2.4 2002/09/06 08:50:23 jdolecek Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.50.2.5 2002/10/10 18:45:06 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -134,7 +134,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.50.2.4 2002/09/06 08:50:23 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.50.2.5 2002/10/10 18:45:06 jdolecek Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -441,10 +441,15 @@ uvm_km_kmemalloc(map, obj, size, flags)
 		 */
 
 		if (__predict_false(pg == NULL)) {
-			if (flags & UVM_KMF_NOWAIT) {
+			int t;
+
+			t = uvmexp.active + uvmexp.inactive + uvmexp.free;
+			if ((flags & UVM_KMF_NOWAIT) ||
+			    ((flags & UVM_KMF_CANFAIL) &&
+			     uvmexp.swpgonly == uvmexp.swpages)) {
 				/* free everything! */
 				uvm_unmap(map, kva, kva + size);
-				return(0);
+				return (0);
 			} else {
 				uvm_wait("km_getwait2");	/* sleep here */
 				continue;

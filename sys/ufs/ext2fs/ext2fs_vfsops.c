@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.43.4.3 2002/09/06 08:50:10 jdolecek Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.43.4.4 2002/10/10 18:44:50 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.43.4.3 2002/09/06 08:50:10 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.43.4.4 2002/10/10 18:44:50 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -62,6 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.43.4.3 2002/09/06 08:50:10 jdole
 #include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/lock.h>
+#include <sys/conf.h>
 
 #include <miscfs/specfs/specdev.h>
 
@@ -224,6 +225,15 @@ ext2fs_mount(mp, path, data, ndp, p)
 	int error, flags;
 	mode_t accessmode;
 
+	if (mp->mnt_flag & MNT_GETARGS) {
+		ump = VFSTOUFS(mp);
+		if (ump == NULL)
+			return EIO;
+		args.fspec = NULL;
+		vfs_showexport(mp, &args.export, &ump->um_export);
+		return copyout(&args, data, sizeof(args));
+	}
+
 	error = copyin(data, (caddr_t)&args, sizeof (struct ufs_args));
 	if (error)
 		return (error);
@@ -295,7 +305,7 @@ ext2fs_mount(mp, path, data, ndp, p)
 		vrele(devvp);
 		return (ENOTBLK);
 	}
-	if (major(devvp->v_rdev) >= nblkdev) {
+	if (bdevsw_lookup(devvp->v_rdev) == NULL) {
 		vrele(devvp);
 		return (ENXIO);
 	}

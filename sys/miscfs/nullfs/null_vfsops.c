@@ -1,4 +1,4 @@
-/*	$NetBSD: null_vfsops.c,v 1.30.2.3 2002/09/06 08:48:37 jdolecek Exp $	*/
+/*	$NetBSD: null_vfsops.c,v 1.30.2.4 2002/10/10 18:43:32 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: null_vfsops.c,v 1.30.2.3 2002/09/06 08:48:37 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: null_vfsops.c,v 1.30.2.4 2002/10/10 18:43:32 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,6 +118,14 @@ nullfs_mount(mp, path, data, ndp, p)
 	printf("nullfs_mount(mp = %p)\n", mp);
 #endif
 
+	if (mp->mnt_flag & MNT_GETARGS) {
+		lmp = MOUNTTOLAYERMOUNT(mp);
+		if (lmp == NULL)
+			return EIO;
+		args.la.target = NULL;
+		vfs_showexport(mp, &args.la.export, &lmp->layerm_export);
+		return copyout(&args, data, sizeof(args));
+	}
 	/*
 	 * Get argument
 	 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.91.2.5 2002/09/06 08:48:48 jdolecek Exp $	*/
+/*	$NetBSD: if.c,v 1.91.2.6 2002/10/10 18:43:39 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.91.2.5 2002/09/06 08:48:48 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.91.2.6 2002/10/10 18:43:39 jdolecek Exp $");
 
 #include "opt_inet.h"
 
@@ -595,7 +595,7 @@ if_detach(ifp)
 			dp = pffinddomain(family);
 #ifdef DIAGNOSTIC
 			if (dp == NULL)
-				panic("if_detach: no domain for AF %d\n",
+				panic("if_detach: no domain for AF %d",
 				    family);
 #endif
 			purged = 0;
@@ -1513,6 +1513,8 @@ ifioctl(so, cmd, data, p)
 	case SIOCS80211NWID:
 	case SIOCS80211NWKEY:
 	case SIOCS80211POWER:
+	case SIOCS80211BSSID:
+	case SIOCS80211CHANNEL:
 		/* XXX:  need to pass proc pointer through to driver... */
 		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 			return (error);

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.91.2.6 2002/09/06 08:47:59 jdolecek Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.91.2.7 2002/10/10 18:43:12 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.91.2.6 2002/09/06 08:47:59 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.91.2.7 2002/10/10 18:43:12 jdolecek Exp $");
 
 #include "opt_ddb.h"
 #include "opt_insecure.h"
@@ -1137,7 +1137,7 @@ sysctl_file(void *vwhere, size_t *sizep)
 	/*
 	 * followed by an array of file structures
 	 */
-	for (fp = filehead.lh_first; fp != 0; fp = fp->f_list.le_next) {
+	LIST_FOREACH(fp, &filehead, f_list) {
 		if (buflen < sizeof(struct file)) {
 			*sizep = where - start;
 			return (ENOMEM);

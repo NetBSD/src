@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia.c,v 1.25.2.2 2002/06/23 17:48:21 jdolecek Exp $	*/
+/*	$NetBSD: pcmcia.c,v 1.25.2.3 2002/10/10 18:41:29 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.25.2.2 2002/06/23 17:48:21 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.25.2.3 2002/10/10 18:41:29 jdolecek Exp $");
 
 #include "opt_pcmciaverbose.h"
 
@@ -80,9 +80,8 @@ int pcmcia_card_intr __P((void *));
 int pcmcia_card_intrdebug __P((void *));
 #endif
 
-struct cfattach pcmcia_ca = {
-	sizeof(struct pcmcia_softc), pcmcia_match, pcmcia_attach
-};
+CFATTACH_DECL(pcmcia, sizeof(struct pcmcia_softc),
+    pcmcia_match, pcmcia_attach, NULL, NULL);
 
 int
 pcmcia_ccr_read(pf, ccr)
@@ -115,7 +114,7 @@ pcmcia_match(parent, match, aux)
 {
 	struct pcmciabus_attach_args *paa = aux;
 
-	if (strcmp(paa->paa_busname, match->cf_driver->cd_name)) {
+	if (strcmp(paa->paa_busname, match->cf_name)) {
 	    return 0;
 	}
 	/* if the autoconfiguration got this far, there's a socket here */
@@ -277,7 +276,7 @@ pcmcia_submatch(parent, cf, aux)
 	    cf->cf_loc[PCMCIACF_FUNCTION] != paa->pf->number)
 		return (0);
 
-	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+	return (config_match(parent, cf, aux));
 }
 
 int

@@ -27,7 +27,7 @@
  *	i4b_l2if.c - Layer 3 interface to Layer 2
  *	-------------------------------------------
  *
- *	$Id: i4b_l2if.c,v 1.2.2.2 2002/06/23 17:51:28 jdolecek Exp $ 
+ *	$Id: i4b_l2if.c,v 1.2.2.3 2002/10/10 18:44:28 jdolecek Exp $ 
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_l2if.c,v 1.2.2.2 2002/06/23 17:51:28 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_l2if.c,v 1.2.2.3 2002/10/10 18:44:28 jdolecek Exp $");
 
 #ifdef __FreeBSD__
 #include "i4bq931.h"
@@ -286,7 +286,7 @@ i4b_l3_tx_connect(call_desc_t *cd)
 	NDBGL3(L3_PRIM, "bri %d, cr = 0x%02x", cd->bri, cd->cr);
 	
 	if((m = i4b_Dgetmbuf(I_FRAME_HDRLEN + MSG_CONNECT_LEN)) == NULL)
-		panic("i4b_l3_tx_connect: can't allocate mbuf\n");
+		panic("i4b_l3_tx_connect: can't allocate mbuf");
 
 	ptr = m->m_data + I_FRAME_HDRLEN;
 	
@@ -322,7 +322,7 @@ i4b_l3_tx_release_complete(call_desc_t *cd, int send_cause_flag)
 	}
 		
 	if((m = i4b_Dgetmbuf(len)) == NULL)
-		panic("i4b_l3_tx_release_complete: can't allocate mbuf\n");
+		panic("i4b_l3_tx_release_complete: can't allocate mbuf");
 
 	ptr = m->m_data + I_FRAME_HDRLEN;
 	
@@ -355,7 +355,7 @@ i4b_l3_tx_disconnect(call_desc_t *cd)
 	NDBGL3(L3_PRIM, "bri %d, cr = 0x%02x", cd->bri, cd->cr);
 	
 	if((m = i4b_Dgetmbuf(I_FRAME_HDRLEN + MSG_DISCONNECT_LEN)) == NULL)
-		panic("i4b_l3_tx_disconnect: can't allocate mbuf\n");
+		panic("i4b_l3_tx_disconnect: can't allocate mbuf");
 
 	ptr = m->m_data + I_FRAME_HDRLEN;
 	
@@ -396,7 +396,7 @@ i4b_l3_tx_setup(call_desc_t *cd)
 	if((m = i4b_Dgetmbuf(I_FRAME_HDRLEN + MSG_SETUP_LEN + slen + dlen +
 			    (cd->bprot == BPROT_NONE ? 1 : 0))) == NULL)
 	{
-		panic("i4b_l3_tx_setup: can't allocate mbuf\n");
+		panic("i4b_l3_tx_setup: can't allocate mbuf");
 	}
 
 	cd->crflag = CRF_ORIG;		/* we are the originating side */
@@ -485,7 +485,7 @@ i4b_l3_tx_connect_ack(call_desc_t *cd)
 	NDBGL3(L3_PRIM, "bri %d, cr = 0x%02x", cd->bri, cd->cr);
 	
 	if((m = i4b_Dgetmbuf(I_FRAME_HDRLEN + MSG_CONNECT_ACK_LEN)) == NULL)
-		panic("i4b_l3_tx_connect_ack: can't allocate mbuf\n");
+		panic("i4b_l3_tx_connect_ack: can't allocate mbuf");
 
 	ptr = m->m_data + I_FRAME_HDRLEN;
 	
@@ -510,7 +510,7 @@ i4b_l3_tx_status(call_desc_t *cd, u_char q850cause)
 	NDBGL3(L3_PRIM, "bri %d, cr = 0x%02x", cd->bri, cd->cr);
 	
 	if((m = i4b_Dgetmbuf(I_FRAME_HDRLEN + MSG_STATUS_LEN)) == NULL)
-		panic("i4b_l3_tx_status: can't allocate mbuf\n");
+		panic("i4b_l3_tx_status: can't allocate mbuf");
 
 	ptr = m->m_data + I_FRAME_HDRLEN;
 	
@@ -548,7 +548,7 @@ i4b_l3_tx_release(call_desc_t *cd, int send_cause_flag)
 		len -= 4;
 
 	if((m = i4b_Dgetmbuf(len)) == NULL)
-		panic("i4b_l3_tx_release: can't allocate mbuf\n");
+		panic("i4b_l3_tx_release: can't allocate mbuf");
 
 	ptr = m->m_data + I_FRAME_HDRLEN;
 	
@@ -579,7 +579,7 @@ i4b_l3_tx_alert(call_desc_t *cd)
 	u_char *ptr;
 
 	if((m = i4b_Dgetmbuf(I_FRAME_HDRLEN + MSG_ALERT_LEN)) == NULL)
-		panic("i4b_l3_tx_alert: can't allocate mbuf\n");
+		panic("i4b_l3_tx_alert: can't allocate mbuf");
 
 	NDBGL3(L3_PRIM, "bri %d, cr = 0x%02x", cd->bri, cd->cr);
 	

@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.128.2.5 2002/09/06 08:49:59 jdolecek Exp $	*/
+/*	$NetBSD: param.h,v 1.128.2.6 2002/10/10 18:44:45 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -67,7 +67,7 @@
  * Don't forget to change conf/osrelease.sh too.
  */
 
-#define	__NetBSD_Version__	106070000	/* NetBSD 1.6G */
+#define	__NetBSD_Version__	106090000	/* NetBSD 1.6I */
 
 /*
  * Historical NetBSD #define

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_mcpair.c,v 1.4.4.1 2002/01/10 19:57:50 thorpej Exp $	*/
+/*	$NetBSD: rf_mcpair.c,v 1.4.4.2 2002/10/10 18:41:52 jdolecek Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_mcpair.c,v 1.4.4.1 2002/01/10 19:57:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_mcpair.c,v 1.4.4.2 2002/10/10 18:41:52 jdolecek Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -65,14 +65,12 @@ init_mcpair(t)
 
 	rc = rf_mutex_init(&t->mutex);
 	if (rc) {
-		RF_ERRORMSG3("Unable to init mutex file %s line %d rc=%d\n", __FILE__,
-		    __LINE__, rc);
+		rf_print_unable_to_init_mutex(__FILE__, __LINE__, rc);
 		return (rc);
 	}
 	rc = rf_cond_init(&t->cond);
 	if (rc) {
-		RF_ERRORMSG3("Unable to init cond file %s line %d rc=%d\n", __FILE__,
-		    __LINE__, rc);
+		rf_print_unable_to_init_cond(__FILE__, __LINE__, rc);
 		rf_mutex_destroy(&t->mutex);
 		return (rc);
 	}
@@ -104,8 +102,7 @@ rf_ConfigureMCPair(listp)
 	    RF_MCPAIR_INC, sizeof(RF_MCPair_t));
 	rc = rf_ShutdownCreate(listp, rf_ShutdownMCPair, NULL);
 	if (rc) {
-		RF_ERRORMSG3("Unable to add to shutdown list file %s line %d rc=%d\n",
-		    __FILE__, __LINE__, rc);
+		rf_print_unable_to_add_shutdown(__FILE__, __LINE__, rc);
 		rf_ShutdownMCPair(NULL);
 		return (rc);
 	}

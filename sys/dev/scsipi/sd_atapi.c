@@ -1,4 +1,4 @@
-/*	$NetBSD: sd_atapi.c,v 1.10.2.2 2002/01/10 19:58:26 thorpej Exp $	*/
+/*	$NetBSD: sd_atapi.c,v 1.10.2.3 2002/10/10 18:42:18 jdolecek Exp $	*/
 
 /*
  * Copyright 1998
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd_atapi.c,v 1.10.2.2 2002/01/10 19:58:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd_atapi.c,v 1.10.2.3 2002/10/10 18:42:18 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,10 +61,8 @@ __KERNEL_RCSID(0, "$NetBSD: sd_atapi.c,v 1.10.2.2 2002/01/10 19:58:26 thorpej Ex
 int	sd_atapibus_match __P((struct device *, struct cfdata *, void *));
 void	sd_atapibus_attach __P((struct device *, struct device *, void *));
 
-struct cfattach sd_atapibus_ca = {
-	sizeof(struct sd_softc), sd_atapibus_match, sd_atapibus_attach,
-	sddetach, sdactivate,
-};
+CFATTACH_DECL(sd_atapibus, sizeof(struct sd_softc),
+    sd_atapibus_match, sd_atapibus_attach, sddetach, sdactivate);
 
 struct scsipi_inquiry_pattern sd_atapibus_patterns[] = {
 	{T_DIRECT, T_FIXED,			/* do these exist? */

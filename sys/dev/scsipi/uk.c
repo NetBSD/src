@@ -1,4 +1,4 @@
-/*	$NetBSD: uk.c,v 1.30.2.2 2002/03/16 16:01:32 jdolecek Exp $	*/
+/*	$NetBSD: uk.c,v 1.30.2.3 2002/10/10 18:42:21 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uk.c,v 1.30.2.2 2002/03/16 16:01:32 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uk.c,v 1.30.2.3 2002/10/10 18:42:21 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,16 +71,22 @@ int ukactivate __P((struct device *, enum devact));
 int ukdetach __P((struct device *, int));
 
 
-struct cfattach uk_scsibus_ca = {
-	sizeof(struct uk_softc), ukmatch, ukattach, ukdetach, ukactivate,
-};
-struct cfattach uk_atapibus_ca = {
-	sizeof(struct uk_softc), ukmatch, ukattach, ukdetach, ukactivate,
-};
+CFATTACH_DECL(uk_scsibus, sizeof(struct uk_softc),
+    ukmatch, ukattach, ukdetach, ukactivate);
+
+CFATTACH_DECL(uk_atapibus, sizeof(struct uk_softc),
+    ukmatch, ukattach, ukdetach, ukactivate);
 
 extern struct cfdriver uk_cd;
 
-cdev_decl(uk);
+dev_type_open(ukopen);
+dev_type_close(ukclose);
+dev_type_ioctl(ukioctl);
+
+const struct cdevsw uk_cdevsw = {
+	ukopen, ukclose, noread, nowrite, ukioctl,
+	nostop, notty, nopoll, nommap, nokqfilter,
+};
 
 int
 ukmatch(parent, match, aux)
@@ -146,9 +152,7 @@ ukdetach(self, flags)
 	int cmaj, mn;
  
 	/* locate the major number */
-	for (cmaj = 0; cmaj <= nchrdev; cmaj++)
-		if (cdevsw[cmaj].d_open == ukopen)
-			break;
+	cmaj = cdevsw_lookup_major(&uk_cdevsw);
  
 	/* Nuke the vnodes for any open instances */
 	mn = self->dv_unit;

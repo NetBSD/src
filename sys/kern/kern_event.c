@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.1.1.1.2.17 2002/10/02 18:46:44 jdolecek Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.1.1.1.2.18 2002/10/10 18:43:05 jdolecek Exp $	*/
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
  * All rights reserved.
@@ -497,6 +497,35 @@ filt_seltrue(struct knote *kn, long hint)
 	 */
 	kn->kn_data = 0;
 	return (1);
+}
+
+/*
+ * This provides full kqfilter entry for device switch tables, which
+ * has same effect as filter using filt_seltrue() as filter method.
+ */
+static void
+filt_seltruedetach(struct knote *kn)
+{
+	/* Nothing to do */
+}
+
+static const struct filterops seltrue_filtops =
+	{ 1, NULL, filt_seltruedetach, filt_seltrue };
+
+int
+seltrue_kqfilter(dev_t dev, struct knote *kn)
+{
+	switch (kn->kn_filter) {
+	case EVFILT_READ:
+	case EVFILT_WRITE:
+		kn->kn_fop = &seltrue_filtops;
+		break;
+	default:
+		return (1);
+	}
+
+	/* Nothing more to do */
+	return (0);
 }
 
 /*

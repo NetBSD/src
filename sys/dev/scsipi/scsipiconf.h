@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.54.2.4 2002/06/23 17:48:48 jdolecek Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.54.2.5 2002/10/10 18:42:16 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -298,6 +298,10 @@ struct scsipi_channel {
 	/* callback we may have to call from completion thread */
 	void (*chan_callback) __P((struct scsipi_channel *, void *));
 	void *chan_callback_arg;
+
+	/* callback we may have to call after forking the kthread */
+	void (*chan_init_cb) __P((struct scsipi_channel *, void *));
+	void *chan_init_cb_arg;
 };
 
 /* chan_flags */

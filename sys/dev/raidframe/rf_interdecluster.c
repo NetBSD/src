@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_interdecluster.c,v 1.5.4.1 2002/01/10 19:57:48 thorpej Exp $	*/
+/*	$NetBSD: rf_interdecluster.c,v 1.5.4.2 2002/10/10 18:41:51 jdolecek Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_interdecluster.c,v 1.5.4.1 2002/01/10 19:57:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_interdecluster.c,v 1.5.4.2 2002/10/10 18:41:51 jdolecek Exp $");
 
 #include "rf_archs.h"
 
@@ -106,7 +106,6 @@ rf_ConfigureInterDecluster(
 	info->stripeUnitsPerSparingRegion = raidPtr->numCol * (raidPtr->numCol - 1);
 	info->mirrorStripeOffset = info->numSparingRegions * (raidPtr->numCol + 1);
 	layoutPtr->numStripe = info->numSparingRegions * info->stripeUnitsPerSparingRegion;
-	layoutPtr->bytesPerStripeUnit = layoutPtr->sectorsPerStripeUnit << raidPtr->logBytesPerSector;
 	layoutPtr->numDataCol = 1;
 	layoutPtr->dataSectorsPerStripe = layoutPtr->numDataCol * layoutPtr->sectorsPerStripeUnit;
 	layoutPtr->numParityCol = 1;

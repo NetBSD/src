@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.127.2.6 2002/09/06 08:49:18 jdolecek Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.127.2.7 2002/10/10 18:44:06 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.127.2.6 2002/09/06 08:49:18 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.127.2.7 2002/10/10 18:44:06 jdolecek Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -780,7 +780,7 @@ tcp_input(m, va_alist)
 	struct ip6_hdr *ip6;
 	struct in6pcb *in6p;
 #endif
-	caddr_t optp = NULL;
+	u_int8_t *optp = NULL;
 	int optlen = 0;
 	int len, tlen, toff, hdroptlen = 0;
 	struct tcpcb *tp = 0;
@@ -986,7 +986,7 @@ tcp_input(m, va_alist)
 #endif
 		KASSERT(TCP_HDR_ALIGNED_P(th));
 		optlen = off - sizeof (struct tcphdr);
-		optp = ((caddr_t)th) + sizeof(struct tcphdr);
+		optp = ((u_int8_t *)th) + sizeof(struct tcphdr);
 		/*
 		 * Do quick retrieval of timestamp options ("options
 		 * prediction?").  If timestamp is the only option and it's
@@ -1581,8 +1581,12 @@ after_listen:
 			 * Drop TCP, IP headers and TCP options then add data
 			 * to socket buffer.
 			 */
-			m_adj(m, toff + off);
-			sbappendstream(&so->so_rcv, m);
+			if (so->so_state & SS_CANTRCVMORE)
+				m_freem(m);
+			else {
+				m_adj(m, toff + off);
+				sbappendstream(&so->so_rcv, m);
+			}
 			sorwakeup(so);
 			TCP_SETUP_ACK(tp, th);
 			if (tp->t_flags & TF_ACKNOW)
@@ -2328,8 +2332,12 @@ dodata:							/* XXX */
 			tcpstat.tcps_rcvpack++;
 			tcpstat.tcps_rcvbyte += tlen;
 			ND6_HINT(tp);
-			m_adj(m, hdroptlen);
-			sbappendstream(&(so)->so_rcv, m);
+			if (so->so_state & SS_CANTRCVMORE)
+				m_freem(m);
+			else {
+				m_adj(m, hdroptlen);
+				sbappendstream(&(so)->so_rcv, m);
+			}
 			sorwakeup(so);
 		} else {
 			m_adj(m, hdroptlen);

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconbuffer.c,v 1.5.4.1 2002/01/10 19:57:57 thorpej Exp $	*/
+/*	$NetBSD: rf_reconbuffer.c,v 1.5.4.2 2002/10/10 18:41:57 jdolecek Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,14 +33,13 @@
  ***************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconbuffer.c,v 1.5.4.1 2002/01/10 19:57:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconbuffer.c,v 1.5.4.2 2002/10/10 18:41:57 jdolecek Exp $");
 
 #include "rf_raid.h"
 #include "rf_reconbuffer.h"
 #include "rf_acctrace.h"
 #include "rf_etimer.h"
 #include "rf_general.h"
-#include "rf_debugprint.h"
 #include "rf_revent.h"
 #include "rf_reconutil.h"
 #include "rf_nwayxor.h"
@@ -423,56 +422,5 @@ rf_ReleaseFloatingReconBuffer(raidPtr, row, rbuf)
 	} else {
 		rbuf->next = rcPtr->floatingRbufs;
 		rcPtr->floatingRbufs = rbuf;
-	}
-}
-/* release any disk that is waiting on a buffer for the indicated RU.
- * assumes the rb_mutex is LOCKED at entry
- */
-void 
-rf_ReleaseBufferWaiters(raidPtr, pssPtr)
-	RF_Raid_t *raidPtr;
-	RF_ReconParityStripeStatus_t *pssPtr;
-{
-	RF_CallbackDesc_t *cb1, *cb = pssPtr->bufWaitList;
-
-	Dprintf2("RECON: releasing buf waiters for psid %ld ru %d\n",
-	    (long) pssPtr->parityStripeID, pssPtr->which_ru);
-	pssPtr->flags &= ~RF_PSS_BUFFERWAIT;
-	while (cb) {
-		cb1 = cb->next;
-		cb->next = NULL;
-		rf_CauseReconEvent(raidPtr, cb->row, cb->col, (void *) 0, RF_REVENT_BUFCLEAR);	/* arg==0 => we haven't
-												 * committed a buffer */
-		rf_FreeCallbackDesc(cb);
-		cb = cb1;
-	}
-	pssPtr->bufWaitList = NULL;
-}
-/* when reconstruction is forced on an RU, there may be some disks waiting to
- * acquire a buffer for that RU.  Since we allocate a new buffer as part of
- * the forced-reconstruction process, we no longer have to wait for any
- * buffers, so we wakeup any waiter that we find in the bufferWaitList
- *
- * assumes the rb_mutex is LOCKED at entry
- */
-void 
-rf_ReleaseBufferWaiter(rcPtr, rbuf)
-	RF_ReconCtrl_t *rcPtr;
-	RF_ReconBuffer_t *rbuf;
-{
-	RF_CallbackDesc_t *cb, *cbt;
-
-	for (cbt = NULL, cb = rcPtr->bufferWaitList; cb; cbt = cb, cb = cb->next) {
-		if ((cb->callbackArg.v == rbuf->parityStripeID) && (cb->callbackArg2.v == rbuf->which_ru)) {
-			Dprintf2("RECON: Dropping row %d col %d from buffer wait list\n", cb->row, cb->col);
-			if (cbt)
-				cbt->next = cb->next;
-			else
-				rcPtr->bufferWaitList = cb->next;
-			rf_CauseReconEvent((RF_Raid_t *) rbuf->raidPtr, cb->row, cb->col, (void *) 0, RF_REVENT_BUFREADY);	/* arg==0 => no
-																 * committed buffer */
-			rf_FreeCallbackDesc(cb);
-			return;
-		}
 	}
 }

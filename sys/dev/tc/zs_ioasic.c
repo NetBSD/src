@@ -1,4 +1,4 @@
-/* $NetBSD: zs_ioasic.c,v 1.7.2.2 2002/02/11 20:10:15 jdolecek Exp $ */
+/* $NetBSD: zs_ioasic.c,v 1.7.2.3 2002/10/10 18:42:31 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.7.2.2 2002/02/11 20:10:15 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.7.2.3 2002/10/10 18:42:31 jdolecek Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -113,12 +113,6 @@ void	zs_putc __P((struct zs_chanstate *, int));
  * Some warts needed by z8530tty.c
  */
 int zs_def_cflag = (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8;
-#if defined(__alpha__) || defined(alpha)
-int zs_major = 15;
-#endif
-#if defined(pmax)
-int zs_major = 17;
-#endif
 
 /*
  * ZS chips are feeded a 7.372 MHz clock.
@@ -202,15 +196,12 @@ void	zs_ioasic_attach __P((struct device *, struct device *, void *));
 int	zs_ioasic_print __P((void *, const char *name));
 int	zs_ioasic_submatch __P((struct device *, struct cfdata *, void *));
 
-struct cfattach zsc_ioasic_ca = {
-	sizeof(struct zsc_softc), zs_ioasic_match, zs_ioasic_attach
-};
+CFATTACH_DECL(zsc_ioasic, sizeof(struct zsc_softc),
+    zs_ioasic_match, zs_ioasic_attach, NULL, NULL);
 
 /* Interrupt handlers. */
 int	zs_ioasic_hardintr __P((void *));
 void	zs_ioasic_softintr __P((void *));
-
-extern struct cfdriver ioasic_cd;
 
 /*
  * Is the zs chip present?
@@ -223,9 +214,6 @@ zs_ioasic_match(parent, cf, aux)
 {
 	struct ioasicdev_attach_args *d = aux;
 	tc_addr_t zs_addr;
-
-	if (parent->dv_cfdata->cf_driver != &ioasic_cd)
-		return (0);
 
 	/*
 	 * Make sure that we're looking for the right kind of device.
@@ -267,6 +255,7 @@ zs_ioasic_attach(parent, self, aux)
 	struct ioasicdev_attach_args *d = aux;
 	struct zshan *zc;
 	int s, channel;
+	u_long zflg;
 
 	printf("\n");
 
@@ -302,17 +291,19 @@ zs_ioasic_attach(parent, self, aux)
 
 		/*
 		 * DCD and CTS interrupts are only meaningful on
-		 * SCC 0/B.
+		 * SCC 0/B, and RTS and DTR only on B of SCC 0 & 1.
 		 *
 		 * XXX This is sorta gross.
 		 */
 		if (d->iada_offset == 0x00100000 && channel == 1) {
 			cs->cs_creg[15] |= ZSWR15_DCD_IE;
 			cs->cs_preg[15] |= ZSWR15_DCD_IE;
-			(u_long)cs->cs_private = ZIP_FLAGS_DCDCTS;
-		}
-		else
-			cs->cs_private = NULL;
+			zflg = ZIP_FLAGS_DCDCTS;
+		} else
+			zflg = 0;
+		if (channel == 1)
+			zflg |= ZIP_FLAGS_DTRRTS;
+		(u_long)cs->cs_private = zflg;
 
 		/*
 		 * Clear the master interrupt enable.
@@ -323,7 +314,6 @@ zs_ioasic_attach(parent, self, aux)
 			zs_write_reg(cs, 9, 0);
 		}
 
-#ifdef notyet /* XXX thorpej */
 		/*
 		 * Set up the flow/modem control channel pointer to
 		 * deal with the weird wiring on the TC Alpha and
@@ -333,7 +323,6 @@ zs_ioasic_attach(parent, self, aux)
 			cs->cs_ctl_chan = zs->zsc_cs[0];
 		else
 			cs->cs_ctl_chan = NULL;
-#endif
 
 		/*
 		 * Look for a child driver for this channel.
@@ -435,10 +424,10 @@ zs_ioasic_submatch(parent, cf, aux)
 		else
 			defname = "zstty"; /* 3min/3max+, DEC3000/500 */
 
-		if (strcmp(cf->cf_driver->cd_name, defname))
+		if (strcmp(cf->cf_name, defname))
 			return (0);
 	}
-	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+	return (config_match(parent, cf, aux));
 }
 
 /*
@@ -557,6 +546,10 @@ zs_set_modes(cs, cflag)
 	if ((privflags & ZIP_FLAGS_DCDCTS) == 0) {
 		cs->cs_rr0_dcd &= ~(ZSRR0_CTS|ZSRR0_DCD);
 		cs->cs_rr0_cts &= ~(ZSRR0_CTS|ZSRR0_DCD);
+	}
+	if ((privflags & ZIP_FLAGS_DTRRTS) == 0) {
+		cs->cs_wr5_dtr &= ~(ZSWR5_RTS|ZSWR5_DTR);
+		cs->cs_wr5_rts &= ~(ZSWR5_RTS|ZSWR5_DTR);
 	}
 	splx(s);
 
@@ -752,6 +745,7 @@ zs_ioasic_cninit(ioasic_addr, zs_offset, channel)
 	struct zs_chanstate *cs;
 	tc_addr_t zs_addr;
 	struct zshan *zc;
+	u_long zflg;
 
 	/*
 	 * Initialize the console finder helpers.
@@ -786,18 +780,21 @@ zs_ioasic_cninit(ioasic_addr, zs_offset, channel)
 
 	/* Initialize the pending registers. */
 	bcopy(zs_ioasic_init_reg, cs->cs_preg, 16);
-	cs->cs_preg[5] |= (ZSWR5_DTR | ZSWR5_RTS);
+	/* cs->cs_preg[5] |= (ZSWR5_DTR | ZSWR5_RTS); */
 
 	/*
 	 * DCD and CTS interrupts are only meaningful on
-	 * SCC 0/B.
+	 * SCC 0/B, and RTS and DTR only on B of SCC 0 & 1.
 	 *
 	 * XXX This is sorta gross.
 	 */
 	if (zs_offset == 0x00100000 && channel == 1)
-		(u_long)cs->cs_private = ZIP_FLAGS_DCDCTS;
+		zflg = ZIP_FLAGS_DCDCTS;
 	else
-		cs->cs_private = NULL;
+		zflg = 0;
+	if (channel == 1)
+		zflg |= ZIP_FLAGS_DTRRTS;
+	(u_long)cs->cs_private = zflg;
 
 	/* Clear the master interrupt enable. */
 	zs_write_reg(cs, 9, 0);
@@ -820,6 +817,7 @@ zs_ioasic_cnattach(ioasic_addr, zs_offset, channel)
 	int channel;
 {
 	struct zs_chanstate *cs = &zs_ioasic_conschanstate_store;
+	extern const struct cdevsw zstty_cdevsw;
 
 	zs_ioasic_cninit(ioasic_addr, zs_offset, channel);
 	cs->cs_defspeed = 9600;
@@ -828,7 +826,8 @@ zs_ioasic_cnattach(ioasic_addr, zs_offset, channel)
 	/* Point the console at the SCC. */
 	cn_tab = &zs_ioasic_cons;
 	cn_tab->cn_pri = CN_REMOTE;
-	cn_tab->cn_dev = makedev(zs_major, (zs_offset == 0x100000) ? 0 : 1);
+	cn_tab->cn_dev = makedev(cdevsw_lookup_major(&zstty_cdevsw),
+				 (zs_offset == 0x100000) ? 0 : 1);
 }
 
 /*

@@ -1,4 +1,4 @@
-/* $NetBSD: tcds.c,v 1.1.6.2 2002/01/10 19:58:44 thorpej Exp $ */
+/* $NetBSD: tcds.c,v 1.1.6.3 2002/10/10 18:42:30 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcds.c,v 1.1.6.2 2002/01/10 19:58:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcds.c,v 1.1.6.3 2002/10/10 18:42:30 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -111,9 +111,8 @@ void	tcdsattach __P((struct device *, struct device *, void *));
 int     tcdsprint __P((void *, const char *));
 int	tcdssubmatch __P((struct device *, struct cfdata *, void *));
 
-struct cfattach tcds_ca = {
-	sizeof(struct tcds_softc), tcdsmatch, tcdsattach,
-};
+CFATTACH_DECL(tcds, sizeof(struct tcds_softc),
+    tcdsmatch, tcdsattach, NULL, NULL);
 
 /*static*/ int	tcds_intr __P((void *));
 /*static*/ int	tcds_intrnull __P((void *));
@@ -228,7 +227,7 @@ tcdsattach(parent, self, aux)
 	    TCDS_CIR_GPI_2) != 0;
 
 	/*
-	 * Set up the per-slot defintions for later use.
+	 * Set up the per-slot definitions for later use.
 	 */
 
 	/* fill in common information first */
@@ -331,7 +330,7 @@ tcdssubmatch(parent, cf, aux)
 	    cf->cf_loc[TCDSCF_CHIP] != tcdsdev->tcdsda_chip)
 		return (0);
 
-	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+	return (config_match(parent, cf, aux));
 }
 
 int
@@ -390,7 +389,7 @@ tcds_intrnull(val)
 	void *val;
 {
 
-	panic("tcds_intrnull: uncaught TCDS intr for chip %lu\n",
+	panic("tcds_intrnull: uncaught TCDS intr for chip %lu",
 	    (u_long)val);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.177.2.4 2002/09/06 08:46:25 jdolecek Exp $	*/
+/*	$NetBSD: sd.c,v 1.177.2.5 2002/10/10 18:42:17 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.177.2.4 2002/09/06 08:46:25 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.177.2.5 2002/10/10 18:42:17 jdolecek Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -109,6 +109,24 @@ int	sd_interpret_sense __P((struct scsipi_xfer *));
 
 extern struct cfdriver sd_cd;
 
+dev_type_open(sdopen);
+dev_type_close(sdclose);
+dev_type_read(sdread);
+dev_type_write(sdwrite);
+dev_type_ioctl(sdioctl);
+dev_type_strategy(sdstrategy);
+dev_type_dump(sddump);
+dev_type_size(sdsize);
+
+const struct bdevsw sd_bdevsw = {
+	sdopen, sdclose, sdstrategy, sdioctl, sddump, sdsize, D_DISK
+};
+
+const struct cdevsw sd_cdevsw = {
+	sdopen, sdclose, sdread, sdwrite, sdioctl,
+	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
+};
+
 struct dkdriver sddkdriver = { sdstrategy };
 
 const struct scsipi_periphsw sd_switch = {
@@ -160,10 +178,6 @@ sdattach(parent, sd, periph, ops)
 	sd->sc_dk.dk_driver = &sddkdriver;
 	sd->sc_dk.dk_name = sd->sc_dev.dv_xname;
 	disk_attach(&sd->sc_dk);
-
-#ifdef __BROKEN_DK_ESTABLISH
-	dk_establish(&sd->sc_dk, &sd->sc_dev);		/* XXX */
-#endif
 
 	/*
 	 * Use the subdriver to request information regarding the drive.
@@ -259,12 +273,8 @@ sddetach(self, flags)
 	int s, bmaj, cmaj, i, mn;
 
 	/* locate the major number */
-	for (bmaj = 0; bmaj <= nblkdev; bmaj++)
-		if (bdevsw[bmaj].d_open == sdopen)
-			break;
-	for (cmaj = 0; cmaj <= nchrdev; cmaj++)
-		if (cdevsw[cmaj].d_open == sdopen)
-			break;
+	bmaj = bdevsw_lookup_major(&sd_bdevsw);
+	cmaj = cdevsw_lookup_major(&sd_cdevsw);
 
 	s = splbio();
 

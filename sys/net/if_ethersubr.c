@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.86.2.5 2002/09/06 08:48:51 jdolecek Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.86.2.6 2002/10/10 18:43:40 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.86.2.5 2002/09/06 08:48:51 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.86.2.6 2002/10/10 18:43:40 jdolecek Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -296,7 +296,7 @@ ether_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 	case AF_INET6:
 		if (!nd6_storelladdr(ifp, rt, m, dst, (u_char *)edst)){
 			/* something bad happened */
-			return(0);
+			return (0);
 		}
 		etype = htons(ETHERTYPE_IPV6);
 		break;

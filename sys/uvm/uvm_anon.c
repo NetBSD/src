@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_anon.c,v 1.17.2.1 2002/01/10 20:05:29 thorpej Exp $	*/
+/*	$NetBSD: uvm_anon.c,v 1.17.2.2 2002/10/10 18:45:03 jdolecek Exp $	*/
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.17.2.1 2002/01/10 20:05:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.17.2.2 2002/10/10 18:45:03 jdolecek Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -208,8 +208,11 @@ uvm_anfree(anon)
  	 * of the page has been identified and locked.
 	 */
 
-	if (pg && pg->loan_count)
+	if (pg && pg->loan_count) {
+		simple_lock(&anon->an_lock);
 		pg = uvm_anon_lockloanpg(anon);
+		simple_unlock(&anon->an_lock);
+	}
 
 	/*
 	 * if we have a resident page, we must dispose of it before freeing

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.33.4.6 2002/09/26 22:04:53 jdolecek Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.33.4.7 2002/10/10 18:44:50 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.33.4.6 2002/09/26 22:04:53 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.33.4.7 2002/10/10 18:44:50 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,7 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.33.4.6 2002/09/26 22:04:53 jdolec
 #include <sys/stat.h>
 #include <sys/buf.h>
 #include <sys/proc.h>
-#include <sys/conf.h>
 #include <sys/mount.h>
 #include <sys/namei.h>
 #include <sys/vnode.h>

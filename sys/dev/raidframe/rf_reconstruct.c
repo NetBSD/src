@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.28.2.3 2002/09/06 08:46:08 jdolecek Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.28.2.4 2002/10/10 18:41:57 jdolecek Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.28.2.3 2002/09/06 08:46:08 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.28.2.4 2002/10/10 18:41:57 jdolecek Exp $");
 
 #include <sys/time.h>
 #include <sys/buf.h>
@@ -55,9 +55,9 @@ __KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.28.2.3 2002/09/06 08:46:08 jdol
 #include "rf_etimer.h"
 #include "rf_dag.h"
 #include "rf_desc.h"
+#include "rf_debugprint.h"
 #include "rf_general.h"
 #include "rf_freelist.h"
-#include "rf_debugprint.h"
 #include "rf_driver.h"
 #include "rf_utils.h"
 #include "rf_shutdown.h"
@@ -66,7 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.28.2.3 2002/09/06 08:46:08 jdol
 
 /* setting these to -1 causes them to be set to their default values if not set by debug options */
 
-#ifdef DEBUG
+#if RF_DEBUG_RECON
 #define Dprintf(s)         if (rf_reconDebug) rf_debug_printf(s,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL)
 #define Dprintf1(s,a)         if (rf_reconDebug) rf_debug_printf(s,(void *)((unsigned long)a),NULL,NULL,NULL,NULL,NULL,NULL,NULL)
 #define Dprintf2(s,a,b)       if (rf_reconDebug) rf_debug_printf(s,(void *)((unsigned long)a),(void *)((unsigned long)b),NULL,NULL,NULL,NULL,NULL,NULL)
@@ -79,7 +79,7 @@ __KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.28.2.3 2002/09/06 08:46:08 jdol
 #define DDprintf1(s,a)         if (rf_reconDebug) rf_debug_printf(s,(void *)((unsigned long)a),NULL,NULL,NULL,NULL,NULL,NULL,NULL)
 #define DDprintf2(s,a,b)       if (rf_reconDebug) rf_debug_printf(s,(void *)((unsigned long)a),(void *)((unsigned long)b),NULL,NULL,NULL,NULL,NULL,NULL)
 
-#else /* DEBUG */
+#else /* RF_DEBUG_RECON */
 
 #define Dprintf(s) {}
 #define Dprintf1(s,a) {}
@@ -93,7 +93,7 @@ __KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.28.2.3 2002/09/06 08:46:08 jdol
 #define DDprintf1(s,a) {}
 #define DDprintf2(s,a,b) {}
 
-#endif /* DEBUG */
+#endif /* RF_DEBUG_RECON */
 
 
 static RF_FreeList_t *rf_recond_freelist;
@@ -158,28 +158,6 @@ SignalReconDone(RF_Raid_t * raidPtr)
 	RF_UNLOCK_MUTEX(raidPtr->recon_done_proc_mutex);
 }
 
-int 
-rf_RegisterReconDoneProc(
-    RF_Raid_t * raidPtr,
-    void (*proc) (RF_Raid_t *, void *),
-    void *arg,
-    RF_ReconDoneProc_t ** handlep)
-{
-	RF_ReconDoneProc_t *p;
-
-	RF_FREELIST_GET(rf_rdp_freelist, p, next, (RF_ReconDoneProc_t *));
-	if (p == NULL)
-		return (ENOMEM);
-	p->proc = proc;
-	p->arg = arg;
-	RF_LOCK_MUTEX(raidPtr->recon_done_proc_mutex);
-	p->next = raidPtr->recon_done_procs;
-	raidPtr->recon_done_procs = p;
-	RF_UNLOCK_MUTEX(raidPtr->recon_done_proc_mutex);
-	if (handlep)
-		*handlep = p;
-	return (0);
-}
 /**************************************************************************
  *
  * sets up the parameters that will be used by the reconstruction process
@@ -215,8 +193,7 @@ rf_ConfigureReconstruction(listp)
 	}
 	rc = rf_ShutdownCreate(listp, rf_ShutdownReconstruction, NULL);
 	if (rc) {
-		RF_ERRORMSG3("Unable to add to shutdown list file %s line %d rc=%d\n",
-		    __FILE__, __LINE__, rc);
+		rf_print_unable_to_add_shutdown(__FILE__, __LINE__, rc);
 		rf_ShutdownReconstruction(NULL);
 		return (rc);
 	}
@@ -418,7 +395,6 @@ rf_ReconstructInPlace(raidPtr, row, col)
 	RF_RaidDisk_t *spareDiskPtr = NULL;
 	RF_RaidReconDesc_t *reconDesc;
 	RF_LayoutSW_t *lp;
-	RF_RaidDisk_t *badDisk;
 	RF_ComponentLabel_t c_label;
 	int     numDisksDone = 0, rc;
 	struct partinfo dpart;
@@ -441,20 +417,24 @@ rf_ReconstructInPlace(raidPtr, row, col)
 			/* some component other than this has failed.
 			   Let's not make things worse than they already
 			   are... */
-			printf("RAIDFRAME: Unable to reconstruct to disk at:\n");
-			printf("      Row: %d Col: %d   Too many failures.\n",
-			       row, col);
+			printf("raid%d: Unable to reconstruct to disk at:\n",
+			       raidPtr->raidid);
+			printf("raid%d:     Row: %d Col: %d   Too many failures.\n",
+			       raidPtr->raidid, row, col);
 			RF_UNLOCK_MUTEX(raidPtr->mutex);
 			return (EINVAL);
 		}
 		if (raidPtr->Disks[row][col].status == rf_ds_reconstructing) {
-			printf("RAIDFRAME: Unable to reconstruct to disk at:\n");
-			printf("      Row: %d Col: %d   Reconstruction already occuring!\n", row, col);
+			printf("raid%d: Unable to reconstruct to disk at:\n",
+			       raidPtr->raidid);
+			printf("raid%d:    Row: %d Col: %d   Reconstruction already occuring!\n", raidPtr->raidid, row, col);
 
 			RF_UNLOCK_MUTEX(raidPtr->mutex);
 			return (EINVAL);
 		}
-
+		if (raidPtr->Disks[row][col].status == rf_ds_spared) {
+			return (EINVAL);
+		}
 
 		if (raidPtr->Disks[row][col].status != rf_ds_failed) {
 			/* "It's gone..." */
@@ -490,21 +470,16 @@ rf_ReconstructInPlace(raidPtr, row, col)
 			return (EINVAL);
 		}			
 
-		/* XXX need goop here to see if the disk is alive,
-		   and, if not, make it so...  */
-		
-
-
-		badDisk = &raidPtr->Disks[row][col];
-
 		proc = raidPtr->engine_thread;
 
 		/* This device may have been opened successfully the 
 		   first time. Close it before trying to open it again.. */
 
 		if (raidPtr->raid_cinfo[row][col].ci_vp != NULL) {
+#if 0
 			printf("Closed the open device: %s\n",
 			       raidPtr->Disks[row][col].devname);
+#endif
 			vp = raidPtr->raid_cinfo[row][col].ci_vp;
 			ac = raidPtr->Disks[row][col].auto_configured;
 			rf_close_component(raidPtr, vp, ac);
@@ -513,8 +488,10 @@ rf_ReconstructInPlace(raidPtr, row, col)
 		/* note that this disk was *not* auto_configured (any longer)*/
 		raidPtr->Disks[row][col].auto_configured = 0;
 
+#if 0
 		printf("About to (re-)open the device for rebuilding: %s\n",
 		       raidPtr->Disks[row][col].devname);
+#endif
 		
 		retcode = raidlookup(raidPtr->Disks[row][col].devname, 
 				     proc, &vp);
@@ -523,7 +500,7 @@ rf_ReconstructInPlace(raidPtr, row, col)
 			printf("raid%d: rebuilding: raidlookup on device: %s failed: %d!\n",raidPtr->raidid,
 			       raidPtr->Disks[row][col].devname, retcode);
 
-			/* XXX the component isn't responding properly... 
+			/* the component isn't responding properly... 
 			   must be still dead :-( */
 			raidPtr->reconInProgress--;
 			RF_UNLOCK_MUTEX(raidPtr->mutex);
@@ -572,9 +549,10 @@ rf_ReconstructInPlace(raidPtr, row, col)
 		spareDiskPtr = &raidPtr->Disks[row][col];
 		spareDiskPtr->status = rf_ds_used_spare;
 
-		printf("RECON: initiating in-place reconstruction on\n");
-		printf("       row %d col %d -> spare at row %d col %d\n", 
-		       row, col, row, col);
+		printf("raid%d: initiating in-place reconstruction on\n",
+		       raidPtr->raidid);
+		printf("raid%d:    row %d col %d -> spare at row %d col %d\n", 
+		       raidPtr->raidid, row, col, row, col);
 
 		RF_UNLOCK_MUTEX(raidPtr->mutex);
 		
@@ -636,7 +614,6 @@ rf_ReconstructInPlace(raidPtr, row, col)
 	}
 	RF_UNLOCK_MUTEX(raidPtr->mutex);
 	RF_SIGNAL_COND(raidPtr->waitForReconCond);
-	wakeup(&raidPtr->waitForReconCond);	
 	return (rc);
 }
 
@@ -742,9 +719,11 @@ rf_ContinueReconstructFailedDisk(reconDesc)
 
 			raidPtr->reconControl[row]->percentComplete = 
 				(raidPtr->reconControl[row]->numRUsComplete * 100 / raidPtr->reconControl[row]->numRUsTotal);
+#if RF_DEBUG_RECON
 			if (rf_prReconSched) {
 				rf_PrintReconSchedule(raidPtr->reconControl[row]->reconMap, &(raidPtr->reconControl[row]->starttime));
 			}
+#endif
 		}
 
 
@@ -767,9 +746,11 @@ rf_ContinueReconstructFailedDisk(reconDesc)
 
 			(void) ProcessReconEvent(raidPtr, row, event);	/* ignore return code */
 			raidPtr->reconControl[row]->percentComplete = 100 - (rf_UnitsLeftToReconstruct(mapPtr) * 100 / mapPtr->totalRUs);
+#if RF_DEBUG_RECON
 			if (rf_prReconSched) {
 				rf_PrintReconSchedule(raidPtr->reconControl[row]->reconMap, &(raidPtr->reconControl[row]->starttime));
 			}
+#endif
 		}
 		reconDesc->state = 5;
 
@@ -810,20 +791,23 @@ rf_ContinueReconstructFailedDisk(reconDesc)
 
 		rf_ResumeNewRequests(raidPtr);
 
-		printf("Reconstruction of disk at row %d col %d completed\n", 
-		       row, col);
+		printf("raid%d: Reconstruction of disk at row %d col %d completed\n", 
+		       raidPtr->raidid, row, col);
 		xor_s = raidPtr->accumXorTimeUs / 1000000;
 		xor_resid_us = raidPtr->accumXorTimeUs % 1000000;
-		printf("Recon time was %d.%06d seconds, accumulated XOR time was %ld us (%ld.%06ld)\n",
-		    (int) elpsd.tv_sec, (int) elpsd.tv_usec, raidPtr->accumXorTimeUs, xor_s, xor_resid_us);
-		printf("  (start time %d sec %d usec, end time %d sec %d usec)\n",
-		    (int) raidPtr->reconControl[row]->starttime.tv_sec,
-		    (int) raidPtr->reconControl[row]->starttime.tv_usec,
-		    (int) etime.tv_sec, (int) etime.tv_usec);
+		printf("raid%d: Recon time was %d.%06d seconds, accumulated XOR time was %ld us (%ld.%06ld)\n",
+		       raidPtr->raidid, 
+		       (int) elpsd.tv_sec, (int) elpsd.tv_usec, 
+		       raidPtr->accumXorTimeUs, xor_s, xor_resid_us);
+		printf("raid%d:  (start time %d sec %d usec, end time %d sec %d usec)\n",
+		       raidPtr->raidid,
+		       (int) raidPtr->reconControl[row]->starttime.tv_sec,
+		       (int) raidPtr->reconControl[row]->starttime.tv_usec,
+		       (int) etime.tv_sec, (int) etime.tv_usec);
 
 #if RF_RECON_STATS > 0
-		printf("Total head-sep stall count was %d\n",
-		    (int) reconDesc->hsStallCount);
+		printf("raid%d: Total head-sep stall count was %d\n",
+		       raidPtr->raidid, (int) reconDesc->hsStallCount);
 #endif				/* RF_RECON_STATS > 0 */
 		rf_FreeReconControl(raidPtr, row);
 		RF_Free(raidPtr->recon_tracerecs, raidPtr->numCol * sizeof(RF_AccTraceEntry_t));
@@ -869,9 +853,11 @@ ProcessReconEvent(raidPtr, frow, event)
 
 		/* a write I/O has completed */
 	case RF_REVENT_WRITEDONE:
+#if RF_DEBUG_RECON
 		if (rf_floatingRbufDebug) {
 			rf_CheckFloatingRbufCount(raidPtr, 1);
 		}
+#endif
 		sectorsPerRU = raidPtr->Layout.sectorsPerStripeUnit * raidPtr->Layout.SUsPerRU;
 		rbuf = (RF_ReconBuffer_t *) event->arg;
 		rf_FreeDiskQueueData((RF_DiskQueueData_t *) rbuf->arg);
@@ -920,9 +906,11 @@ ProcessReconEvent(raidPtr, frow, event)
 	case RF_REVENT_BUFREADY:
 		Dprintf2("RECON: BUFREADY EVENT: row %d col %d\n", frow, event->col);
 		retcode = IssueNextWriteRequest(raidPtr, frow);
+#if RF_DEBUG_RECON
 		if (rf_floatingRbufDebug) {
 			rf_CheckFloatingRbufCount(raidPtr, 1);
 		}
+#endif
 		break;
 
 		/* we need to skip the current RU entirely because it got
@@ -1675,8 +1663,10 @@ rf_UnblockRecon(raidPtr, asmap)
 	if (!pssPtr) {
 		/* printf("Warning: no pss descriptor upon unblock on psid %ld
 		 * RU %d\n",psid,which_ru); */
+#if (RF_DEBUG_RECON > 0) || (RF_DEBUG_PSS > 0)
 		if (rf_reconDebug || rf_pssDebug)
 			printf("Warning: no pss descriptor upon unblock on psid %ld RU %d\n", (long) psid, which_ru);
+#endif
 		goto out;
 	}
 	pssPtr->blockCount--;

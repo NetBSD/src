@@ -1,4 +1,4 @@
-/*	$NetBSD: ataio.h,v 1.2 1998/11/23 22:58:23 kenh Exp $	*/
+/*	$NetBSD: ataio.h,v 1.2.24.1 2002/10/10 18:44:42 jdolecek Exp $	*/
 
 #ifndef _SYS_ATAIO_H_
 #define _SYS_ATAIO_H_
@@ -22,7 +22,7 @@ typedef struct	atareq {
 	u_char	error;		/* error bits */
 } atareq_t;
 
-/* bit defintions for flags */
+/* bit definitions for flags */
 #define ATACMD_READ		0x00000001
 #define ATACMD_WRITE		0x00000002
 #define ATACMD_READREG		0x00000004

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.86.2.3 2002/09/06 08:47:48 jdolecek Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.86.2.4 2002/10/10 18:43:07 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.86.2.3 2002/09/06 08:47:48 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.86.2.4 2002/10/10 18:43:07 jdolecek Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -86,7 +86,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.86.2.3 2002/09/06 08:47:48 jdolecek 
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/map.h>
 #include <sys/filedesc.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
@@ -232,14 +231,10 @@ fork1(struct proc *p1, int flags, int exitsig, void *stack, size_t stacksize,
 	 * Allocate virtual address space for the U-area now, while it
 	 * is still easy to abort the fork operation if we're out of
 	 * kernel virtual address space.  The actual U-area pages will
-	 * be allocated and wired in vm_fork().
+	 * be allocated and wired in uvm_fork().
 	 */
 
-#ifndef USPACE_ALIGN
-#define	USPACE_ALIGN	0
-#endif
-
-	uaddr = uvm_km_valloc_align(kernel_map, USPACE, USPACE_ALIGN);
+	uaddr = uvm_uarea_alloc();
 	if (__predict_false(uaddr == 0)) {
 		(void)chgproccnt(uid, -1);
 		nprocs--;

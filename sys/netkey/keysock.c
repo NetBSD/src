@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.c,v 1.11.4.5 2002/06/23 17:51:42 jdolecek Exp $	*/
+/*	$NetBSD: keysock.c,v 1.11.4.6 2002/10/10 18:44:34 jdolecek Exp $	*/
 /*	$KAME: keysock.c,v 1.23 2000/09/22 08:26:33 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.11.4.5 2002/06/23 17:51:42 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.11.4.6 2002/10/10 18:44:34 jdolecek Exp $");
 
 #include "opt_inet.h"
 
@@ -108,7 +108,7 @@ key_usrreq(so, req, m, nam, control, p)
 			free((caddr_t)kp, M_PCB);
 			so->so_pcb = (caddr_t) 0;
 			splx(s);
-			return(error);
+			return (error);
 		}
 
 		kp->kp_promisc = kp->kp_registered = 0;
@@ -122,7 +122,7 @@ key_usrreq(so, req, m, nam, control, p)
 		so->so_options |= SO_USELOOPBACK;
 	}
 	splx(s);
-	return(error);
+	return (error);
 }
 
 /*
@@ -148,7 +148,7 @@ key_output(m, va_alist)
 	va_end(ap);
 
 	if (m == 0)
-		panic("key_output: NULL pointer was passed.\n");
+		panic("key_output: NULL pointer was passed.");
 
 	pfkeystat.out_total++;
 	pfkeystat.out_bytes += m->m_pkthdr.len;
@@ -250,9 +250,9 @@ key_sendup_mbuf(so, m, target)
 	int error = 0;
 
 	if (m == NULL)
-		panic("key_sendup_mbuf: NULL pointer was passed.\n");
+		panic("key_sendup_mbuf: NULL pointer was passed.");
 	if (so == NULL && target == KEY_SENDUP_ONE)
-		panic("key_sendup_mbuf: NULL pointer was passed.\n");
+		panic("key_sendup_mbuf: NULL pointer was passed.");
 
 	pfkeystat.in_total++;
 	pfkeystat.in_bytes += m->m_pkthdr.len;

@@ -1,4 +1,4 @@
-/*	$NetBSD: p9100.c,v 1.2.4.5 2002/09/06 08:46:16 jdolecek Exp $ */
+/*	$NetBSD: p9100.c,v 1.2.4.6 2002/10/10 18:42:07 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.2.4.5 2002/09/06 08:46:16 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.2.4.6 2002/10/10 18:42:07 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,8 +75,6 @@ __KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.2.4.5 2002/09/06 08:46:16 jdolecek Exp $
 #include <machine/tctrl.h>
 #include <sparc/dev/tctrlvar.h>/*XXX*/
 #endif
-
-#include <machine/conf.h>
 
 /* per-display variables */
 struct p9100_softc {
@@ -124,19 +122,24 @@ static void	p9100_sbus_attach(struct device *, struct device *, void *);
 static void	p9100unblank(struct device *);
 static void	p9100_shutdown(void *);
 
-/* cdevsw prototypes */
-cdev_decl(p9100);
-
-struct cfattach pnozz_ca = {
-	sizeof(struct p9100_softc), p9100_sbus_match, p9100_sbus_attach
-};
+CFATTACH_DECL(pnozz, sizeof(struct p9100_softc),
+    p9100_sbus_match, p9100_sbus_attach, NULL, NULL);
 
 extern struct cfdriver pnozz_cd;
 
+dev_type_open(p9100open);
+dev_type_ioctl(p9100ioctl);
+dev_type_mmap(p9100mmap);
+
+const struct cdevsw pnozz_cdevsw = {
+	p9100open, nullclose, noread, nowrite, p9100ioctl,
+	nostop, notty, nopoll, p9100mmap, nokqfilter,
+};
+
 /* frame buffer generic driver */
 static struct fbdriver p9100fbdriver = {
-	p9100unblank, p9100open, p9100close, p9100ioctl, p9100poll,
-	p9100mmap, p9100kqfilter
+	p9100unblank, p9100open, nullclose, p9100ioctl, nopoll,
+	p9100mmap, nokqfilter
 };
 
 static void p9100loadcmap(struct p9100_softc *, int, int);
@@ -339,12 +342,6 @@ p9100open(dev_t dev, int flags, int mode, struct proc *p)
 }
 
 int
-p9100close(dev_t dev, int flags, int mode, struct proc *p)
-{
-	return (0);
-}
-
-int
 p9100ioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 {
 	struct p9100_softc *sc = pnozz_cd.cd_devs[minor(dev)];
@@ -395,37 +392,6 @@ p9100ioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 	default:
 		return (ENOTTY);
 	}
-	return (0);
-}
-
-int
-p9100poll(dev_t dev, int events, struct proc *p)
-{
-	return seltrue(dev, events, p);
-}
-
-static void
-filt_p9100detach(struct knote *kn)
-{
-	/* Nothing to do */
-}
-
-static const struct filterops p9100_filtops =
-	{ 1, NULL, filt_p9100detach, filt_seltrue };
-
-int
-p9100kqfilter(dev_t dev, struct knote *kn)
-{
-	switch (kn->kn_filter) {
-	case EVFILT_READ:
-	case EVFILT_WRITE:
-		kn->kn_fop = &p9100_filtops;
-		break;
-	default:
-		return (1);
-	}
-
-	/* Nothing more to do */
 	return (0);
 }
 

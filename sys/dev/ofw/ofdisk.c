@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdisk.c,v 1.15.4.2 2002/01/10 19:56:23 thorpej Exp $	*/
+/*	$NetBSD: ofdisk.c,v 1.15.4.3 2002/10/10 18:40:21 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofdisk.c,v 1.15.4.2 2002/01/10 19:56:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofdisk.c,v 1.15.4.3 2002/10/10 18:40:21 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: ofdisk.c,v 1.15.4.2 2002/01/10 19:56:23 thorpej Exp 
 #include <sys/stat.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
+#include <sys/conf.h>
 
 #include <dev/ofw/openfirm.h>
 
@@ -59,22 +60,35 @@ struct ofdisk_softc {
 	char sc_name[16];
 };
 
-bdev_decl(ofdisk_);
-cdev_decl(ofdisk_);
-
 /* sc_flags */
 #define OFDF_ISFLOPPY	0x01		/* we are a floppy drive */
 
 static int ofdisk_match (struct device *, struct cfdata *, void *);
 static void ofdisk_attach (struct device *, struct device *, void *);
 
-struct cfattach ofdisk_ca = {
-	sizeof(struct ofdisk_softc), ofdisk_match, ofdisk_attach
-};
+CFATTACH_DECL(ofdisk, sizeof(struct ofdisk_softc),
+    ofdisk_match, ofdisk_attach, NULL, NULL);
 
 extern struct cfdriver ofdisk_cd;
 
-void ofdisk_strategy (struct buf *);
+dev_type_open(ofdisk_open);
+dev_type_close(ofdisk_close);
+dev_type_read(ofdisk_read);
+dev_type_write(ofdisk_write);
+dev_type_ioctl(ofdisk_ioctl);
+dev_type_strategy(ofdisk_strategy);
+dev_type_dump(ofdisk_dump);
+dev_type_size(ofdisk_size);
+
+const struct bdevsw ofdisk_bdevsw = {
+	ofdisk_open, ofdisk_close, ofdisk_strategy, ofdisk_ioctl,
+	ofdisk_dump, ofdisk_size, D_DISK
+};
+
+const struct cdevsw ofdisk_cdevsw = {
+	ofdisk_open, ofdisk_close, ofdisk_read, ofdisk_write, ofdisk_ioctl,
+	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
+};
 
 struct dkdriver ofdisk_dkdriver = { ofdisk_strategy };
 
@@ -122,9 +136,6 @@ ofdisk_attach(struct device *parent, struct device *self, void *aux)
 	of->sc_dk.dk_name = of->sc_name;
 	strcpy(of->sc_name, of->sc_dev.dv_xname);
 	disk_attach(&of->sc_dk);
-#ifdef __BROKEN_DK_ESTABLISH
-	dk_establish(&of->sc_dk, self);				/* XXX */
-#endif
 	printf("\n");
 
 	if (strcmp(child, "floppy") == 0)
@@ -166,7 +177,7 @@ ofdisk_open(dev_t dev, int flags, int fmt, struct proc *p)
 
 		strcat(path, ":0");
 
-		if (!(of->sc_ihandle = OF_open(path)))
+		if ((of->sc_ihandle = OF_open(path)) == -1)
 			return ENXIO;
 
 		/*
@@ -418,7 +429,7 @@ ofdisk_getdefaultlabel(struct ofdisk_softc *of, struct disklabel *lp)
 
 	/*
 	 * XXX Firmware bug?  Asking for block size gives a
-	 * XXX rediculous number!  So we use what the boot program
+	 * XXX ridiculous number!  So we use what the boot program
 	 * XXX uses.
 	 */
 	lp->d_secsize = DEV_BSIZE;

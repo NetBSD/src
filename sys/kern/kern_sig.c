@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.114.2.7 2002/09/06 08:47:56 jdolecek Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.114.2.8 2002/10/10 18:43:10 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.114.2.7 2002/09/06 08:47:56 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.114.2.8 2002/10/10 18:43:10 jdolecek Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -658,7 +658,7 @@ killpg1(struct proc *cp, int signum, int pgid, int all)
 		 * broadcast 
 		 */
 		proclist_lock_read();
-		for (p = allproc.lh_first; p != 0; p = p->p_list.le_next) {
+		LIST_FOREACH(p, &allproc, p_list) {
 			if (p->p_pid <= 1 || p->p_flag & P_SYSTEM || 
 			    p == cp || !CANSIGNAL(cp, pc, p, signum))
 				continue;
@@ -678,9 +678,7 @@ killpg1(struct proc *cp, int signum, int pgid, int all)
 			if (pgrp == NULL)
 				return (ESRCH);
 		}
-		for (p = pgrp->pg_members.lh_first;
-		    p != 0;
-		    p = p->p_pglist.le_next) {
+		LIST_FOREACH(p, &pgrp->pg_members, p_pglist) {
 			if (p->p_pid <= 1 || p->p_flag & P_SYSTEM ||
 			    !CANSIGNAL(cp, pc, p, signum))
 				continue;
@@ -714,8 +712,7 @@ pgsignal(struct pgrp *pgrp, int signum, int checkctty)
 	struct proc *p;
 
 	if (pgrp)
-		for (p = pgrp->pg_members.lh_first; p != 0;
-		    p = p->p_pglist.le_next)
+		LIST_FOREACH(p, &pgrp->pg_members, p_pglist)
 			if (checkctty == 0 || p->p_flag & P_CONTROLT)
 				psignal(p, signum);
 }
@@ -1097,7 +1094,7 @@ issignal(struct proc *p)
 			if (dolock)
 				SCHED_LOCK(s);
 			proc_stop(p);
-			mi_switch(p);
+			mi_switch(p, NULL);
 			SCHED_ASSERT_UNLOCKED();
 			if (dolock)
 				splx(s);
@@ -1168,7 +1165,7 @@ issignal(struct proc *p)
 				if (dolock)
 					SCHED_LOCK(s);
 				proc_stop(p);
-				mi_switch(p);
+				mi_switch(p, NULL);
 				SCHED_ASSERT_UNLOCKED();
 				if (dolock)
 					splx(s);

@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.61.2.6 2002/10/02 22:02:30 jdolecek Exp $	*/
+/*	$NetBSD: bpf.c,v 1.61.2.7 2002/10/10 18:43:38 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.61.2.6 2002/10/02 22:02:30 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.61.2.7 2002/10/10 18:43:38 jdolecek Exp $");
 
 #include "bpfilter.h"
 
@@ -55,7 +55,6 @@ __KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.61.2.6 2002/10/02 22:02:30 jdolecek Exp $"
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/ioctl.h>
-#include <sys/map.h>
 #include <sys/conf.h>
 #include <sys/vnode.h>
 
@@ -111,7 +110,6 @@ static int	bpf_movein __P((struct uio *, int, int,
 static void	bpf_attachd __P((struct bpf_d *, struct bpf_if *));
 static void	bpf_detachd __P((struct bpf_d *));
 static int	bpf_setif __P((struct bpf_d *, struct ifreq *));
-int		bpfpoll __P((dev_t, int, struct proc *));
 static __inline void
 		bpf_wakeup __P((struct bpf_d *));
 static void	catchpacket __P((struct bpf_d *, u_char *, u_int, u_int,
@@ -119,6 +117,19 @@ static void	catchpacket __P((struct bpf_d *, u_char *, u_int, u_int,
 static void	reset_d __P((struct bpf_d *));
 static int	bpf_getdltlist __P((struct bpf_d *, struct bpf_dltlist *));
 static int	bpf_setdlt __P((struct bpf_d *, u_int));
+
+dev_type_open(bpfopen);
+dev_type_close(bpfclose);
+dev_type_read(bpfread);
+dev_type_write(bpfwrite);
+dev_type_ioctl(bpfioctl);
+dev_type_poll(bpfpoll);
+dev_type_kqfilter(bpfkqfilter);
+
+const struct cdevsw bpf_cdevsw = {
+	bpfopen, bpfclose, bpfread, bpfwrite, bpfioctl,
+	nostop, notty, bpfpoll, nommap, bpfkqfilter,
+};
 
 static int
 bpf_movein(uio, linktype, mtu, mp, sockp)
@@ -1154,7 +1165,7 @@ bpf_mcpy(dst_arg, src_arg, len)
 		dst += count;
 		len -= count;
 	}
-	return(dst_arg);
+	return (dst_arg);
 }
 
 /*
@@ -1358,9 +1369,7 @@ bpfdetach(ifp)
 	int i, s, cmaj;
 
 	/* locate the major number */
-	for (cmaj = 0; cmaj <= nchrdev; cmaj++)
-		if (cdevsw[cmaj].d_open == bpfopen)
-			break;
+	cmaj = cdevsw_lookup_major(&bpf_cdevsw);
 
 	/* Nuke the vnodes for any open instances */
 	for (i = 0; i < NBPFILTER; ++i) {
@@ -1456,7 +1465,7 @@ bpf_setdlt(d, dlt)
 	struct bpf_d *d;
 	u_int dlt;
 {
-	int s;
+	int s, error, opromisc;
 	struct ifnet *ifp;
 	struct bpf_if *bp;
 
@@ -1470,9 +1479,18 @@ bpf_setdlt(d, dlt)
 	if (bp == NULL)
 		return EINVAL;
 	s = splnet();
+	opromisc = d->bd_promisc;
 	bpf_detachd(d);
 	bpf_attachd(d, bp);
 	reset_d(d);
+	if (opromisc) {
+		error = ifpromisc(bp->bif_ifp, 1);
+		if (error)
+			printf("%s: bpf_setdlt: ifpromisc failed (%d)\n",
+			    bp->bif_ifp->if_xname, error);
+		else
+			d->bd_promisc = 1;
+	}
 	splx(s);
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.67.2.5 2002/09/06 08:49:48 jdolecek Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.67.2.6 2002/10/10 18:44:38 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.67.2.5 2002/09/06 08:49:48 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.67.2.6 2002/10/10 18:44:38 jdolecek Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -380,7 +380,7 @@ nfs_disconnect(nmp)
 	}
 #ifdef DIAGNOSTIC
 	if (drain && (nmp->nm_waiters > 0))
-		panic("nfs_disconnect: waiters left after drain?\n");
+		panic("nfs_disconnect: waiters left after drain?");
 #endif
 }
 

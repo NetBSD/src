@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ste.c,v 1.3.2.3 2002/06/23 17:47:43 jdolecek Exp $	*/
+/*	$NetBSD: if_ste.c,v 1.3.2.4 2002/10/10 18:40:46 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ste.c,v 1.3.2.3 2002/06/23 17:47:43 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ste.c,v 1.3.2.4 2002/10/10 18:40:46 jdolecek Exp $");
 
 #include "bpfilter.h"
 
@@ -240,9 +240,8 @@ void	ste_attach(struct device *, struct device *, void *);
 
 int	ste_copy_small = 0;
 
-struct cfattach ste_ca = {
-	sizeof(struct ste_softc), ste_match, ste_attach,
-};
+CFATTACH_DECL(ste, sizeof(struct ste_softc),
+    ste_match, ste_attach, NULL, NULL);
 
 uint32_t ste_mii_bitbang_read(struct device *);
 void	ste_mii_bitbang_write(struct device *, uint32_t);

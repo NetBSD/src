@@ -1,4 +1,4 @@
-/*	$NetBSD: miivar.h,v 1.27.2.3 2002/06/23 17:47:25 jdolecek Exp $	*/
+/*	$NetBSD: miivar.h,v 1.27.2.4 2002/10/10 18:40:09 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 #include <sys/callout.h>
 
 /*
- * Media Independent Interface datat structure defintions.
+ * Media Independent Interface datat structure definitions.
  */
 
 struct mii_softc;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.36.2.2 2002/09/06 08:49:50 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.36.2.3 2002/10/10 18:44:41 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.36.2.2 2002/09/06 08:49:50 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.36.2.3 2002/10/10 18:44:41 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.36.2.2 2002/09/06 08:49:50 jdolece
 #include <sys/malloc.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/conf.h>
 
 #if defined(__NetBSD__)
 #include <uvm/uvm_extern.h>
@@ -285,6 +286,18 @@ ntfs_mount (
 	}
 #endif /* FreeBSD */
 
+	if (mp->mnt_flag & MNT_GETARGS) {
+		struct ntfsmount *ntmp = VFSTONTFS(mp);
+		if (ntmp == NULL)
+			return EIO;
+		args.fspec = NULL;
+		args.uid = ntmp->ntm_uid;
+		args.gid = ntmp->ntm_gid;
+		args.mode = ntmp->ntm_mode;
+		args.flag = ntmp->ntm_flag;
+		vfs_showexport(mp, &args.export, &ntmp->ntm_export);
+		return copyout(&args, data, sizeof(args));
+	}
 	/*
 	 ***
 	 * Mounting non-root file system or updating a file system
@@ -337,7 +350,7 @@ ntfs_mount (
 #ifdef __FreeBSD__
 	if (bdevsw(devvp->v_rdev) == NULL) {
 #else
-	if (major(devvp->v_rdev) >= nblkdev) {
+	if (bdevsw_lookup(devvp->v_rdev) == NULL) {
 #endif
 		err = ENXIO;
 		goto error_2;

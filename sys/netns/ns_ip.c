@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_ip.c,v 1.28.2.2 2002/09/06 08:49:46 jdolecek Exp $	*/
+/*	$NetBSD: ns_ip.c,v 1.28.2.3 2002/10/10 18:44:35 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ns_ip.c,v 1.28.2.2 2002/09/06 08:49:46 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ns_ip.c,v 1.28.2.3 2002/10/10 18:44:35 jdolecek Exp $");
 
 #include "opt_ns.h"		/* options NSIP, needed by ns_if.h */
 
@@ -345,7 +345,7 @@ void
 nsipstart(ifp)
 	struct ifnet *ifp;
 {
-	panic("nsip_start called\n");
+	panic("nsip_start called");
 }
 
 struct ifreq ifr = {"nsip0"};		/* XXX */

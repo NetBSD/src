@@ -1,4 +1,4 @@
-/*	$NetBSD: pciconf.h,v 1.2.2.3 2002/03/16 16:01:16 jdolecek Exp $	*/
+/*	$NetBSD: pciconf.h,v 1.2.2.4 2002/10/10 18:41:02 jdolecek Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -45,7 +45,9 @@ int	pci_configure_bus __P((pci_chipset_tag_t, struct extent *,
 
 /* Defined in machdep code.  Returns the interrupt line to set */
 /* args: chipset_tag, bus, dev, ipin, ptr to interrupt line */
+#ifndef pci_conf_interrupt
 void	pci_conf_interrupt __P((pci_chipset_tag_t, int, int, int, int, int *));
+#endif
 
 #define PCI_CONF_MAP_IO		0x01
 #define PCI_CONF_MAP_MEM	0x02

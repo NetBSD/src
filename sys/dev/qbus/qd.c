@@ -1,4 +1,4 @@
-/*	$NetBSD: qd.c,v 1.22.2.5 2002/10/02 21:51:40 jdolecek Exp $	*/
+/*	$NetBSD: qd.c,v 1.22.2.6 2002/10/10 18:41:38 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1988 Regents of the University of California.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qd.c,v 1.22.2.5 2002/10/02 21:51:40 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qd.c,v 1.22.2.6 2002/10/10 18:41:38 jdolecek Exp $");
 
 #include "opt_ddb.h"
 
@@ -233,8 +233,6 @@ int nNQD = NQD;
 int DMAbuf_size = DMA_BUFSIZ;
 int QDlast_DMAtype;             /* type of the last DMA operation */
 
-/* #define QDSSMAJOR	41 */	/* QDSS major device number.  We don't care! */
-
 /*
  * macro to get system time.  Used to time stamp event queue entries 
  */
@@ -329,7 +327,6 @@ extern	char *q_special[];
  */
 extern struct cdevsw *consops;
 cons_decl(qd);
-cdev_decl(qd);
 void setup_dragon __P((int));
 void init_shared __P((int));
 void clear_qd_screen __P((int));
@@ -344,6 +341,20 @@ void led_control __P((int, int, int));
 void qdstart(struct tty *);
 void qdearly(void);
 int qdpolling = 0;
+
+dev_type_open(qdopen);
+dev_type_close(qdclose);
+dev_type_read(qdread);
+dev_type_write(qdwrite);
+dev_type_ioctl(qdioctl);
+dev_type_stop(qdstop);
+dev_type_poll(qdpoll);
+dev_type_kqfilter(qdkqfilter);
+
+const struct cdevsw qd_cdevsw = {
+	qdopen, qdclose, qdread, qdwrite, qdioctl,
+	qdstop, notty, qdpoll, nommap, qdkqfilter,
+};
 
 /*
  * LK-201 state storage for input console keyboard conversion to ASCII 
@@ -442,12 +453,8 @@ qdcnprobe(cndev)
 		return;
 
 	/* Find the console device corresponding to the console QDSS */
-	for (i = 0; i < nchrdev; i++)
-		if (cdevsw[i].d_open == qdopen)  {
-			      cndev->cn_dev = makedev(i,0);
-			      cndev->cn_pri = CN_INTERNAL;
-			      return;
-		 }
+	cndev->cn_dev = makedev(cdevsw_lookup_major(&qd_cdevsw), 0);
+	cndev->cn_pri = CN_INTERNAL;
 	return;
 }
 
@@ -525,9 +532,8 @@ qdcninit(cndev)
 } /* qdcninit */
 
 /* see <sys/device.h> */
-struct cfattach qd_ca = {
-	sizeof(struct qd_softc), qd_match, qd_attach
-};
+CFATTACH_DECL(qd, sizeof(struct qd_softc),
+    qd_match, qd_attach, NULL, NULL);
 
 #define	QD_RCSR(reg) \
 	bus_space_read_2(sc->sc_iot, sc->sc_ioh, reg)
@@ -1640,6 +1646,7 @@ int
 qdwrite(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
+	int flag;
 {
 	struct tty *tp;
 	int minor_dev;
@@ -1669,6 +1676,7 @@ int
 qdread(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
+	int flag;
 {
 	struct tty *tp;
 	int minor_dev;

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_cvscan.c,v 1.5.16.2 2002/01/10 19:57:38 thorpej Exp $	*/
+/*	$NetBSD: rf_cvscan.c,v 1.5.16.3 2002/10/10 18:41:44 jdolecek Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -35,7 +35,7 @@
  ******************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_cvscan.c,v 1.5.16.2 2002/01/10 19:57:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_cvscan.c,v 1.5.16.3 2002/10/10 18:41:44 jdolecek Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 #include "rf_alloclist.h"
@@ -46,12 +46,12 @@ __KERNEL_RCSID(0, "$NetBSD: rf_cvscan.c,v 1.5.16.2 2002/01/10 19:57:38 thorpej E
 #include "rf_debugMem.h"
 #include "rf_general.h"
 
-#define DO_CHECK_STATE(_hdr_) CheckCvscanState((_hdr_), __FILE__, __LINE__)
+#define DO_CHECK_STATE(_hdr_) CheckCvscanState((_hdr_))
 
 #define pri_ok(p)  ( ((p) == RF_IO_NORMAL_PRIORITY) || ((p) == RF_IO_LOW_PRIORITY))
 
 static void 
-CheckCvscanState(RF_CvscanHeader_t * hdr, char *file, int line)
+CheckCvscanState(RF_CvscanHeader_t * hdr)
 {
 	long    i, key;
 	RF_DiskQueueData_t *tmp;
@@ -318,15 +318,6 @@ rf_CvscanPeek(void *q_in)
 ** CVSCAN( 1, infinity ) is SCAN
 **				lowest response time standard deviation
 */
-
-
-int 
-rf_CvscanConfigure()
-{
-	return (0);
-}
-
-
 
 void   *
 rf_CvscanCreate(RF_SectorCount_t sectPerDisk,

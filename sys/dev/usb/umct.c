@@ -1,4 +1,4 @@
-/*	$NetBSD: umct.c,v 1.2.6.2 2002/09/06 08:47:06 jdolecek Exp $	*/
+/*	$NetBSD: umct.c,v 1.2.6.3 2002/10/10 18:42:42 jdolecek Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umct.c,v 1.2.6.2 2002/09/06 08:47:06 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umct.c,v 1.2.6.3 2002/10/10 18:42:42 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -338,7 +338,6 @@ umct_activate(device_ptr_t self, enum devact act)
 	switch (act) {
 	case DVACT_ACTIVATE:
 		return (EOPNOTSUPP);
-		break;
 
 	case DVACT_DEACTIVATE:
 		if (sc->sc_subdev != NULL)

@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.42.4.8 2002/10/02 22:02:28 jdolecek Exp $	*/
+/*	$NetBSD: uhid.c,v 1.42.4.9 2002/10/10 18:42:38 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.42.4.8 2002/10/02 22:02:28 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.42.4.9 2002/10/10 18:42:38 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,7 +103,18 @@ struct uhid_softc {
 #define	UHID_CHUNK	128	/* chunk size for read */
 #define	UHID_BSIZE	1020	/* buffer size */
 
-cdev_decl(uhid);
+dev_type_open(uhidopen);
+dev_type_close(uhidclose);
+dev_type_read(uhidread);
+dev_type_write(uhidwrite);
+dev_type_ioctl(uhidioctl);
+dev_type_poll(uhidpoll);
+dev_type_kqfilter(uhidkqfilter);
+
+const struct cdevsw uhid_cdevsw = {
+	uhidopen, uhidclose, uhidread, uhidwrite, uhidioctl,
+	nostop, notty, uhidpoll, nommap, uhidkqfilter,
+};
 
 Static void uhid_intr(struct uhidev *, void *, u_int len);
 
@@ -157,7 +168,6 @@ uhid_activate(device_ptr_t self, enum devact act)
 	switch (act) {
 	case DVACT_ACTIVATE:
 		return (EOPNOTSUPP);
-		break;
 
 	case DVACT_DEACTIVATE:
 		sc->sc_dying = 1;
@@ -189,9 +199,13 @@ uhid_detach(struct device *self, int flags)
 	}
 
 	/* locate the major number */
+#if defined(__NetBSD__)
+	maj = cdevsw_lookup_major(&uhid_cdevsw);
+#elif defined(__OpenBSD__)
 	for (maj = 0; maj < nchrdev; maj++)
 		if (cdevsw[maj].d_open == uhidopen)
 			break;
+#endif
 
 	/* Nuke the vnodes for any open instances (calls close). */
 	mn = self->dv_unit;

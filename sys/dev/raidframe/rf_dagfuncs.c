@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagfuncs.c,v 1.7.4.1 2002/01/10 19:57:41 thorpej Exp $	*/
+/*	$NetBSD: rf_dagfuncs.c,v 1.7.4.2 2002/10/10 18:41:46 jdolecek Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagfuncs.c,v 1.7.4.1 2002/01/10 19:57:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagfuncs.c,v 1.7.4.2 2002/10/10 18:41:46 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -228,21 +228,6 @@ rf_ParityLogOverwriteFunc(node)
 	}
 	return (0);
 }
-#else				/* RF_INCLUDE_PARITYLOGGING > 0 */
-
-int 
-rf_ParityLogUpdateFunc(node)
-	RF_DagNode_t *node;
-{
-	return (0);
-}
-int 
-rf_ParityLogOverwriteFunc(node)
-	RF_DagNode_t *node;
-{
-	return (0);
-}
-#endif				/* RF_INCLUDE_PARITYLOGGING > 0 */
 
 int 
 rf_ParityLogUpdateUndoFunc(node)
@@ -257,6 +242,8 @@ rf_ParityLogOverwriteUndoFunc(node)
 {
 	return (0);
 }
+#endif				/* RF_INCLUDE_PARITYLOGGING > 0 */
+
 /*****************************************************************************************
  * the execution function associated with a NOP node
  ****************************************************************************************/
@@ -708,7 +695,7 @@ rf_longword_bxor(src, dest, len, bp)
 	return (0);
 }
 
-
+#if 0
 /*
    dst = a ^ b ^ c;
    a may equal dst
@@ -893,3 +880,4 @@ rf_bxor3(dst, a, b, c, len, bp)
 	return (rf_longword_bxor3((unsigned long *) dst, (unsigned long *) a,
 		(unsigned long *) b, (unsigned long *) c, len >> RF_LONGSHIFT, bp));
 }
+#endif

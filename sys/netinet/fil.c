@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.47.2.3 2002/06/23 17:50:39 jdolecek Exp $	*/
+/*	$NetBSD: fil.c,v 1.47.2.4 2002/10/10 18:43:51 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -100,10 +100,10 @@
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.47.2.3 2002/06/23 17:50:39 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.47.2.4 2002/10/10 18:43:51 jdolecek Exp $");
 #else
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: fil.c,v 2.35.2.60 2002/04/26 10:20:34 darrenr Exp";
+static const char rcsid[] = "@(#)Id: fil.c,v 2.35.2.63 2002/08/28 12:40:08 darrenr Exp";
 #endif
 #endif
 
@@ -151,9 +151,6 @@ fr_info_t	frcache[2];
 static	int	frflushlist __P((int, minor_t, int *, frentry_t **));
 #ifdef	_KERNEL
 static	void	frsynclist __P((frentry_t *));
-#endif
-#ifndef	_KERNEL
-int		mbuflen(mb_t *);
 #endif
 
 
@@ -616,7 +613,7 @@ void *m;
 #endif
 
 		FR_VERBOSE(("%c", fr->fr_skip ? 's' :
-				  (pass & FR_PASS) ? 'p' :
+				  (pass & FR_PASS) ? 'p' : 
 				  (pass & FR_AUTH) ? 'a' :
 				  (pass & FR_ACCOUNT) ? 'A' :
 				  (pass & FR_NOMATCH) ? 'n' : 'b'));
@@ -928,7 +925,7 @@ int out;
 	fin->fin_qif = qif;
 # endif
 #endif /* _KERNEL */
-
+	
 	changed = 0;
 	fin->fin_ifp = ifp;
 	fin->fin_v = v;
@@ -1086,7 +1083,7 @@ int out;
 		fin->fin_fr = fr;
 		if ((pass & (FR_KEEPFRAG|FR_KEEPSTATE)) == FR_KEEPFRAG) {
 			if (fin->fin_fl & FI_FRAG) {
-				if (ipfr_newfrag(ip, fin, pass) == -1) {
+				if (ipfr_newfrag(ip, fin) == -1) {
 					ATOMIC_INCL(frstats[out].fr_bnfr);
 				} else {
 					ATOMIC_INCL(frstats[out].fr_nfr);
@@ -1201,7 +1198,16 @@ logit:
 		 * some operating systems.
 		 */
 		if (!out) {
-			if (pass & FR_RETICMP) {
+			if (changed == -1)
+				/*
+				 * If a packet results in a NAT error, do not
+				 * send a reset or ICMP error as it may disrupt
+				 * an existing flow.  This is the proxy saying
+				 * the content is bad so just drop the packet
+				 * silently.
+				 */
+				;
+			else if (pass & FR_RETICMP) {
 				int dst;
 
 				if ((pass & FR_RETMASK) == FR_FAKEICMP)
@@ -1511,7 +1517,7 @@ nodata:
  * SUCH DAMAGE.
  *
  *	@(#)uipc_mbuf.c	8.2 (Berkeley) 1/4/94
- * Id: fil.c,v 2.35.2.60 2002/04/26 10:20:34 darrenr Exp
+ * Id: fil.c,v 2.35.2.63 2002/08/28 12:40:08 darrenr Exp
  */
 /*
  * Copy data from an mbuf chain starting "off" bytes from the beginning,
@@ -1626,7 +1632,6 @@ frgroup_t ***fgpp;
 		fgp = &ipfgroups[0][set];
 	else
 		return NULL;
-	num &= 0xffff;
 
 	while ((fg = *fgp))
 		if (fg->fg_num == num)
@@ -1668,10 +1673,10 @@ minor_t which;
 int set;
 {
 	frgroup_t *fg, **fgp;
-
+ 
 	if (!(fg = fr_findgroup(num, flags, which, set, &fgp)))
 		return;
-
+ 
 	*fgp = fg->fg_next;
 	KFREE(fg);
 }
@@ -1703,7 +1708,7 @@ frentry_t **listp;
 
 		ATOMIC_DEC32(fp->fr_ref);
 		if (fp->fr_grhead) {
-			fr_delgroup(fp->fr_grhead, fp->fr_flags,
+			fr_delgroup(fp->fr_grhead, fp->fr_flags, 
 				    unit, set);
 			fp->fr_grhead = 0;
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.53.2.2 2002/01/10 20:01:50 thorpej Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.53.2.3 2002/10/10 18:43:36 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995 Jan-Simon Pendry.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.53.2.2 2002/01/10 20:01:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.53.2.3 2002/10/10 18:43:36 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -518,7 +518,7 @@ union_lookup(v)
 		if (cnp->cn_namelen == 1 &&
 		    cnp->cn_nameptr[0] == '.' &&
 		    *ap->a_vpp != dvp) {
-			panic("union_lookup -> . (%p) != startdir (%p)\n",
+			panic("union_lookup -> . (%p) != startdir (%p)",
 			    ap->a_vpp, dvp);
 		}
 	}
@@ -1712,9 +1712,9 @@ union_lock(v)
 #ifdef DIAGNOSTIC
 	if (un->un_flags & (UN_DRAINING|UN_DRAINED)) {
 		if (un->un_flags & UN_DRAINED)
-			panic("union: %p: warning: locking decommissioned lock\n", vp);
+			panic("union: %p: warning: locking decommissioned lock", vp);
 		if ((flags & LK_TYPE_MASK) != LK_RELEASE)
-			panic("union: %p: non-release on draining lock: %d\n",
+			panic("union: %p: non-release on draining lock: %d",
 			    vp, flags & LK_TYPE_MASK);
 		un->un_flags &= ~UN_DRAINING;
 		if ((flags & LK_REENABLE) == 0)
@@ -1810,7 +1810,7 @@ union_unlock(v)
 			curproc->p_pid > -1 && un->un_pid > -1)
 		panic("union: unlocking other process's union node");
 	if (un->un_flags & UN_DRAINED)
-		panic("union: %p: warning: unlocking decommissioned lock\n", ap->a_vp);			
+		panic("union: %p: warning: unlocking decommissioned lock", ap->a_vp);			
 #endif
 
 	un->un_flags &= ~UN_LOCKED;

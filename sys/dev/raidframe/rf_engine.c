@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_engine.c,v 1.10.4.2 2002/09/06 08:46:02 jdolecek Exp $	*/
+/*	$NetBSD: rf_engine.c,v 1.10.4.3 2002/10/10 18:41:50 jdolecek Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -55,7 +55,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_engine.c,v 1.10.4.2 2002/09/06 08:46:02 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_engine.c,v 1.10.4.3 2002/10/10 18:41:50 jdolecek Exp $");
 
 #include "rf_threadstuff.h"
 
@@ -85,9 +85,6 @@ static void DAGExecutionThread(RF_ThreadArg_t arg);
 
 /* synchronization primitives for this file.  DO_WAIT should be enclosed in a while loop. */
 
-/*
- * XXX Is this spl-ing really necessary?
- */
 #define DO_LOCK(_r_) \
 do { \
 	ks = splbio(); \
@@ -142,7 +139,7 @@ rf_ConfigureEngine(
 	if (rf_engineDebug) {
 		printf("raid%d: Creating engine thread\n", raidPtr->raidid);
 	}
-	if (RF_CREATE_THREAD(raidPtr->engine_thread, DAGExecutionThread, raidPtr,"raid")) {
+	if (RF_CREATE_ENGINE_THREAD(raidPtr->engine_thread, DAGExecutionThread, raidPtr,"raid%d",raidPtr->raidid)) {
 		RF_ERRORMSG("RAIDFRAME: Unable to create engine thread\n");
 		return (ENOMEM);
 	}
@@ -163,8 +160,7 @@ rf_ConfigureEngine(
 	}
 	rc = rf_ShutdownCreate(listp, rf_ShutdownEngine, raidPtr);
 	if (rc) {
-		RF_ERRORMSG3("Unable to add to shutdown list file %s line %d rc=%d\n", __FILE__,
-		    __LINE__, rc);
+		rf_print_unable_to_add_shutdown(__FILE__, __LINE__, rc);
 		rf_ShutdownEngine(NULL);
 	}
 	return (rc);
@@ -192,7 +188,6 @@ BranchDone(RF_DagNode_t * node)
 				return RF_FALSE;
 		return RF_TRUE;	/* node and all succedent branches aren't in
 				 * fired state */
-		break;
 	case rf_bad:
 		/* succedents can't fire */
 		return (RF_TRUE);
@@ -205,7 +200,6 @@ BranchDone(RF_DagNode_t * node)
 		/* XXX need to fix this case */
 		/* for now, assume that we're done */
 		return (RF_TRUE);
-		break;
 	default:
 		/* illegal node status */
 		RF_PANIC();
@@ -803,8 +797,12 @@ DAGExecutionThread(RF_ThreadArg_t arg)
 
 			DO_LOCK(raidPtr);
 		}
-		while (!raidPtr->shutdown_engine && raidPtr->node_queue == NULL)
-			DO_WAIT(raidPtr);
+		while (!raidPtr->shutdown_engine && 
+		       raidPtr->node_queue == NULL) {
+			DO_UNLOCK(raidPtr);
+			tsleep(&(raidPtr->node_queue), PRIBIO, "rfwcond", 0);
+			DO_LOCK(raidPtr);
+		}
 	}
 	DO_UNLOCK(raidPtr);
 

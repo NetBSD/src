@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_acctrace.c,v 1.4.16.1 2002/01/10 19:57:36 thorpej Exp $	*/
+/*	$NetBSD: rf_acctrace.c,v 1.4.16.2 2002/10/10 18:41:41 jdolecek Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,7 +34,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_acctrace.c,v 1.4.16.1 2002/01/10 19:57:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_acctrace.c,v 1.4.16.2 2002/10/10 18:41:41 jdolecek Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -52,20 +52,18 @@ __KERNEL_RCSID(0, "$NetBSD: rf_acctrace.c,v 1.4.16.1 2002/01/10 19:57:36 thorpej
 static long numTracesSoFar;
 static int accessTraceBufCount = 0;
 static RF_AccTraceEntry_t *access_tracebuf;
-static long traceCount;
 
 int     rf_stopCollectingTraces;
 RF_DECLARE_MUTEX(rf_tracing_mutex)
-	int     rf_trace_fd;
 
-	static void rf_ShutdownAccessTrace(void *);
+static void rf_ShutdownAccessTrace(void *);
 
-	static void rf_ShutdownAccessTrace(ignored)
+static void rf_ShutdownAccessTrace(ignored)
 	void   *ignored;
 {
 	if (rf_accessTraceBufSize) {
 		if (accessTraceBufCount)
-			rf_FlushAccessTraceBuf();
+				accessTraceBufCount = 0;
 		RF_Free(access_tracebuf, rf_accessTraceBufSize * sizeof(RF_AccTraceEntry_t));
 	}
 	rf_mutex_destroy(&rf_tracing_mutex);
@@ -77,22 +75,19 @@ rf_ConfigureAccessTrace(listp)
 {
 	int     rc;
 
-	numTracesSoFar = accessTraceBufCount = rf_stopCollectingTraces = 0;
+	accessTraceBufCount = rf_stopCollectingTraces = 0;
 	if (rf_accessTraceBufSize) {
 		RF_Malloc(access_tracebuf, rf_accessTraceBufSize * sizeof(RF_AccTraceEntry_t), (RF_AccTraceEntry_t *));
 		accessTraceBufCount = 0;
 	}
-	traceCount = 0;
 	numTracesSoFar = 0;
 	rc = rf_mutex_init(&rf_tracing_mutex);
 	if (rc) {
-		RF_ERRORMSG3("Unable to init mutex file %s line %d rc=%d\n", __FILE__,
-		    __LINE__, rc);
+		rf_print_unable_to_init_mutex(__FILE__, __LINE__, rc);
 	}
 	rc = rf_ShutdownCreate(listp, rf_ShutdownAccessTrace, NULL);
 	if (rc) {
-		RF_ERRORMSG3("Unable to add to shutdown list file %s line %d rc=%d\n", __FILE__,
-		    __LINE__, rc);
+		rf_print_unable_to_add_shutdown(__FILE__, __LINE__, rc);
 		if (rf_accessTraceBufSize) {
 			RF_Free(access_tracebuf, rf_accessTraceBufSize * sizeof(RF_AccTraceEntry_t));
 			rf_mutex_destroy(&rf_tracing_mutex);
@@ -151,15 +146,4 @@ rf_LogTraceRec(raid, rec)
 		acc->phys_io_us = rec->phys_io_us;
 		acc->user_reccount++;
 	}
-}
-
-
-/* assumes the tracing mutex is locked at entry.  In order to allow this to be called
- * from interrupt context, we don't do any copyouts here, but rather just wake trace
- * buffer collector thread.
- */
-void 
-rf_FlushAccessTraceBuf()
-{
-	accessTraceBufCount = 0;
 }

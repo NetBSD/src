@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.56.2.3 2002/09/06 08:47:36 jdolecek Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.56.2.4 2002/10/10 18:42:59 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.56.2.3 2002/09/06 08:47:36 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.56.2.4 2002/10/10 18:42:59 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -65,6 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.56.2.3 2002/09/06 08:47:36 jdole
 #include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/stat.h>
+#include <sys/conf.h>
 
 #include <isofs/cd9660/iso.h>
 #include <isofs/cd9660/cd9660_extern.h>
@@ -178,6 +179,15 @@ cd9660_mount(mp, path, data, ndp, p)
 	int error;
 	struct iso_mnt *imp = NULL;
 	
+	if (mp->mnt_flag & MNT_GETARGS) {
+		imp = VFSTOISOFS(mp);
+		if (imp == NULL)
+			return EIO;
+		args.fspec = NULL;
+		args.flags = imp->im_flags;
+		vfs_showexport(mp, &args.export, &imp->im_export);
+		return copyout(&args, data, sizeof(args));
+	}
 	error = copyin(data, (caddr_t)&args, sizeof (struct iso_args));
 	if (error)
 		return (error);
@@ -207,7 +217,7 @@ cd9660_mount(mp, path, data, ndp, p)
 		vrele(devvp);
 		return ENOTBLK;
 	}
-	if (major(devvp->v_rdev) >= nblkdev) {
+	if (bdevsw_lookup(devvp->v_rdev) == NULL) {
 		vrele(devvp);
 		return ENXIO;
 	}

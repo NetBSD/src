@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.132.2.8 2002/09/06 08:45:12 jdolecek Exp $
+#	$NetBSD: files.pci,v 1.132.2.9 2002/10/10 18:40:35 jdolecek Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -299,6 +299,11 @@ device	eap: audiobus, auconv, mulaw, ac97, midibus
 attach	eap at pci
 file	dev/pci/eap.c			eap
 
+# Avance Logic ALS4000 audio
+device	als: audiobus, auconv, mulaw
+attach	als at pci
+file	dev/pci/als.c			als
+
 # Intel ICH AC'97 audio
 device	auich: audiobus, auconv, mulaw, ac97, aurateconv
 attach	auich at pci
@@ -551,6 +556,14 @@ file	dev/pci/isic_pci_elsa_qs1p.c	isic_pci
 device	ifpci: isdndev, passive_isdn
 attach	ifpci at pci
 file	dev/pci/ifpci.c			ifpci
+
+# Winbond W6692
+device	iwic: isdndev, passive_isdn
+attach	iwic at pci with iwic_pci
+file	dev/pci/iwic_pci.c		iwic
+file	dev/pci/iwic_bchan.c		iwic
+file	dev/pci/iwic_dchan.c		iwic
+file	dev/pci/iwic_fsm.c		iwic
 
 # IrDA devices
 #  Toshiba Fast Infrared Type O IrDA driver

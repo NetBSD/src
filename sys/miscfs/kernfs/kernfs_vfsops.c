@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vfsops.c,v 1.40.2.2 2002/09/06 08:48:35 jdolecek Exp $	*/
+/*	$NetBSD: kernfs_vfsops.c,v 1.40.2.3 2002/10/10 18:43:31 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vfsops.c,v 1.40.2.2 2002/09/06 08:48:35 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vfsops.c,v 1.40.2.3 2002/10/10 18:43:31 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -97,7 +97,6 @@ void
 kernfs_get_rrootdev()
 {
 	static int tried = 0;
-	int cmaj;
 
 	if (tried) {
 		/* Already did it once. */
@@ -107,15 +106,13 @@ kernfs_get_rrootdev()
 
 	if (rootdev == NODEV)
 		return;
-	for (cmaj = 0; cmaj < nchrdev; cmaj++) {
-		rrootdev = makedev(cmaj, minor(rootdev));
-		if (chrtoblk(rrootdev) == rootdev) {
+	rrootdev = devsw_blk2chr(rootdev);
+	if (rrootdev != NODEV) {
 #ifdef KERNFS_DIAGNOSTIC
 	printf("kernfs_mount: rootdev = %u.%u; rrootdev = %u.%u\n",
 	    major(rootdev), minor(rootdev), major(rrootdev), minor(rrootdev));
 #endif
-			return;
-		}
+		return;
 	}
 	rrootdev = NODEV;
 	printf("kernfs_get_rrootdev: no raw root device\n");
@@ -141,6 +138,8 @@ kernfs_mount(mp, path, data, ndp, p)
 	printf("kernfs_mount(mp = %p)\n", mp);
 #endif
 
+	if (mp->mnt_flag & MNT_GETARGS)
+		return 0;
 	/*
 	 * Update is a no-op
 	 */

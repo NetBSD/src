@@ -1,4 +1,4 @@
-/* $NetBSD: if_an_pcmcia.c,v 1.10.2.1 2002/01/10 19:57:17 thorpej Exp $ */
+/* $NetBSD: if_an_pcmcia.c,v 1.10.2.2 2002/10/10 18:41:23 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_an_pcmcia.c,v 1.10.2.1 2002/01/10 19:57:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_an_pcmcia.c,v 1.10.2.2 2002/10/10 18:41:23 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,10 +84,8 @@ struct an_pcmcia_softc {
 	void *sc_powerhook;			/* power hook descriptor */
 };
 
-struct cfattach an_pcmcia_ca = {
-	sizeof(struct an_pcmcia_softc), an_pcmcia_match, an_pcmcia_attach,
-	an_pcmcia_detach, an_activate
-};
+CFATTACH_DECL(an_pcmcia, sizeof(struct an_pcmcia_softc),
+    an_pcmcia_match, an_pcmcia_attach, an_pcmcia_detach, an_activate);
 
 static struct an_pcmcia_product {
 	u_int32_t	app_vendor;	/* vendor ID */

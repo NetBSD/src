@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_paritylog.c,v 1.5.8.2 2002/06/23 17:48:36 jdolecek Exp $	*/
+/*	$NetBSD: rf_paritylog.c,v 1.5.8.3 2002/10/10 18:41:54 jdolecek Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_paritylog.c,v 1.5.8.2 2002/06/23 17:48:36 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_paritylog.c,v 1.5.8.3 2002/10/10 18:41:54 jdolecek Exp $");
 
 #include "rf_archs.h"
 
@@ -78,8 +78,7 @@ AllocParityLogCommonData(RF_Raid_t * raidPtr)
 		RF_Malloc(common, sizeof(RF_CommonLogData_t), (RF_CommonLogData_t *));
 		rc = rf_mutex_init(&common->mutex);
 		if (rc) {
-			RF_ERRORMSG3("Unable to init mutex file %s line %d rc=%d\n", __FILE__,
-			    __LINE__, rc);
+			rf_print_unable_to_init_mutex(__FILE__, __LINE__, rc);
 			RF_Free(common, sizeof(RF_CommonLogData_t));
 			common = NULL;
 		}

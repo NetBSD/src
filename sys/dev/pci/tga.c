@@ -1,4 +1,4 @@
-/* $NetBSD: tga.c,v 1.33.2.8 2002/09/06 08:45:37 jdolecek Exp $ */
+/* $NetBSD: tga.c,v 1.33.2.9 2002/10/10 18:41:14 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.33.2.8 2002/09/06 08:45:37 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.33.2.9 2002/10/10 18:41:14 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,9 +70,8 @@ int	tgamatch __P((struct device *, struct cfdata *, void *));
 void	tgaattach __P((struct device *, struct device *, void *));
 int	tgaprint __P((void *, const char *));
 
-struct cfattach tga_ca = {
-	sizeof(struct tga_softc), tgamatch, tgaattach,
-};
+CFATTACH_DECL(tga, sizeof(struct tga_softc),
+    tgamatch, tgaattach, NULL, NULL);
 
 int	tga_identify __P((struct tga_devconfig *));
 const struct tga_conf *tga_getconf __P((int));
@@ -1072,32 +1071,6 @@ tga_rop_vtov(dst, dx, dy, w, h, rop, src, sx, sy)
 		return -1;
 	}
 
-        wb = w * (dst->ri_depth / 8);
-	if (sy >= dy) {
-		ystart = 0;
-		yend = h;
-		ydir = 1;
-	} else {
-		ystart = h;
-		yend = 0;
-		ydir = -1;
-	}
-	if (sx >= dx) {      /* moving to the left */
-		xstart = 0;
-		xend = w * (dst->ri_depth / 8) - 4;
-		xdir = 1;
-	} else {             /* moving to the right */
-		xstart = wb - ( wb >= 4*64 ? 4*64 : wb >= 64 ? 64 : 4 );
-		xend = 0;
-		xdir = -1;
-	}
-#define XINC4   4
-#define XINC64  64
-#define XINC256 (64*4)
-	yinc = ydir * dst->ri_stride;
-	ystart *= dst->ri_stride;
-	yend *= dst->ri_stride;
-
 	srcb = sy * src->ri_stride + sx * (src->ri_depth/8);
 	dstb = dy * dst->ri_stride + dx * (dst->ri_depth/8);
 	tga_srcb = offset + (sy + src->ri_yorigin) * src->ri_stride + 
@@ -1105,8 +1078,31 @@ tga_rop_vtov(dst, dx, dy, w, h, rop, src, sx, sy)
 	tga_dstb = offset + (dy + dst->ri_yorigin) * dst->ri_stride + 
 		(dx + dst->ri_xorigin) * (dst->ri_depth/8);
 
-	TGAWALREG(dc, TGA_REG_GMOR, 3, 0x0007); /* Copy mode */
+	if (sy >= dy) {
+		ystart = 0;
+		yend = (h - 1) * dst->ri_stride;
+		ydir = 1;
+	} else {
+		ystart = (h - 1) * dst->ri_stride;
+		yend = 0;
+		ydir = -1;
+	}
+	yinc = ydir * dst->ri_stride;
+
+        wb = w * (dst->ri_depth / 8);
+	if (sx >= dx || (sx + w) <= dx) {	/* copy forwards */
+		xstart = 0;
+		xend = wb;
+		xdir = 1;
+	} else {				/* copy backwards */
+		xstart = wb;
+		xend = 0;
+		xdir = -1;
+	}
+
+	TGAWALREG(dc, TGA_REG_GMOR, 3, 0x0007);		/* Copy mode */
 	TGAWALREG(dc, TGA_REG_GOPR, 3, map_rop[rop]);   /* Set up the op */
+	TGAWALREG(dc, TGA_REG_GPSR, 3, 0);		/* No shift */
 
 	/*
 	 * we have 3 sizes of pixels to move in X direction:
@@ -1118,11 +1114,9 @@ tga_rop_vtov(dst, dx, dy, w, h, rop, src, sx, sy)
 	if (xdir == 1) {   /* move to the left */
 
 		for (y = ystart; (ydir * y) <= (ydir * yend); y += yinc) {
-
 			/* 4*64 byte chunks */
-			for (xleft = wb, x = xstart;
-			     x <= xend && xleft >= 4*64;
-			     x += XINC256, xleft -= XINC256) {
+			for (xleft = wb, x = xstart; xleft >= 4*64;
+			     x += 4*64, xleft -= 4*64) {
 
 				/* XXX XXX Eight writes to different addresses should fill 
 				 * XXX XXX up the write buffers on 21064 and 21164 chips,
@@ -1141,35 +1135,33 @@ tga_rop_vtov(dst, dx, dy, w, h, rop, src, sx, sy)
 			}
 
 			/* 64 byte chunks */
-			for ( ; x <= xend && xleft >= 64;
-			      x += XINC64, xleft -= XINC64) {
+			for (; xleft >= 64; x += 64, xleft -= 64) {
 				TGAWALREG(dc, TGA_REG_GCSR, 0, tga_srcb + y + x + 0 * 64);
 				TGAWALREG(dc, TGA_REG_GCDR, 0, tga_dstb + y + x + 0 * 64);
 			}
-			lastx = x; lastleft = xleft;  /* remember for CPU loop */
 
+			lastx = x; lastleft = xleft;  /* remember for CPU loop */
 		}
 		TGAWALREG(dc, TGA_REG_GOPR, 0, 0x0003); /* op -> dst = src */
 		TGAWALREG(dc, TGA_REG_GMOR, 0, 0x0000); /* Simple mode */
 
-		for (y = ystart; (ydir * y) <= (ydir * yend); y += yinc) {
-			/* 4 byte granularity */
-			for (x = lastx, xleft = lastleft;
-			     x <= xend && xleft >= 4;
-			     x += XINC4, xleft -= XINC4) {
-				*(uint32_t *)(dst->ri_bits + dstb + y + x) =
-					*(uint32_t *)(dst->ri_bits + srcb + y + x);
+		if (lastleft) {
+			for (y = ystart; (ydir * y) <= (ydir * yend); y += yinc) {
+				/* 4 byte granularity */
+				for (x = lastx, xleft = lastleft; xleft >= 4;
+				     x += 4, xleft -= 4) {
+					*(uint32_t *)(dst->ri_bits + dstb + y + x + 0 * 4) =
+						*(uint32_t *)(dst->ri_bits + srcb + y + x + 0 * 4);
+				}
 			}
 		}
 	}
 	else {    /* above move to the left, below move to the right */
 
 		for (y = ystart; (ydir * y) <= (ydir * yend); y += yinc) {
-
 			/* 4*64 byte chunks */
-			for (xleft = wb, x = xstart;
-			     x >= xend && xleft >= 4*64;
-			     x -= XINC256, xleft -= XINC256) {
+			for (xleft = wb, x = xstart; xleft >= 4*64;
+			     x -= 4*64, xleft -= 4*64) {
 
 				/* XXX XXX Eight writes to different addresses should fill 
 				 * XXX XXX up the write buffers on 21064 and 21164 chips,
@@ -1177,37 +1169,35 @@ tga_rop_vtov(dst, dx, dy, w, h, rop, src, sx, sy)
 				 * XXX XXX require further unrolling of this loop, or the
 				 * XXX XXX insertion of memory barriers.
 				 */
-				TGAWALREG(dc, TGA_REG_GCSR, 0, tga_srcb + y + x + 3 * 64);
-				TGAWALREG(dc, TGA_REG_GCDR, 0, tga_dstb + y + x + 3 * 64);
-				TGAWALREG(dc, TGA_REG_GCSR, 1, tga_srcb + y + x + 2 * 64);
-				TGAWALREG(dc, TGA_REG_GCDR, 1, tga_dstb + y + x + 2 * 64);
-				TGAWALREG(dc, TGA_REG_GCSR, 2, tga_srcb + y + x + 1 * 64);
-				TGAWALREG(dc, TGA_REG_GCDR, 2, tga_dstb + y + x + 1 * 64);
-				TGAWALREG(dc, TGA_REG_GCSR, 3, tga_srcb + y + x + 0 * 64);
-				TGAWALREG(dc, TGA_REG_GCDR, 3, tga_dstb + y + x + 0 * 64);
+				TGAWALREG(dc, TGA_REG_GCSR, 0, tga_srcb + y + x - 1 * 64);
+				TGAWALREG(dc, TGA_REG_GCDR, 0, tga_dstb + y + x - 1 * 64);
+				TGAWALREG(dc, TGA_REG_GCSR, 1, tga_srcb + y + x - 2 * 64);
+				TGAWALREG(dc, TGA_REG_GCDR, 1, tga_dstb + y + x - 2 * 64);
+				TGAWALREG(dc, TGA_REG_GCSR, 2, tga_srcb + y + x - 3 * 64);
+				TGAWALREG(dc, TGA_REG_GCDR, 2, tga_dstb + y + x - 3 * 64);
+				TGAWALREG(dc, TGA_REG_GCSR, 3, tga_srcb + y + x - 4 * 64);
+				TGAWALREG(dc, TGA_REG_GCDR, 3, tga_dstb + y + x - 4 * 64);
 			}
-
-			if (xleft) x += XINC256 - XINC64;
 
 			/* 64 byte chunks */
-			for ( ; x >= xend && xleft >= 64;
-			      x -= XINC64, xleft -= XINC64) {
-				TGAWALREG(dc, TGA_REG_GCSR, 0, tga_srcb + y + x + 0 * 64);
-				TGAWALREG(dc, TGA_REG_GCDR, 0, tga_dstb + y + x + 0 * 64);
+			for (; xleft >= 64; x -= 64, xleft -= 64) {
+				TGAWALREG(dc, TGA_REG_GCSR, 0, tga_srcb + y + x - 1 * 64);
+				TGAWALREG(dc, TGA_REG_GCDR, 0, tga_dstb + y + x - 1 * 64);
 			}
-			if (xleft) x += XINC64 - XINC4;
+
 			lastx = x; lastleft = xleft;  /* remember for CPU loop */
 		}
 		TGAWALREG(dc, TGA_REG_GOPR, 0, 0x0003); /* op -> dst = src */
 		TGAWALREG(dc, TGA_REG_GMOR, 0, 0x0000); /* Simple mode */
 
-		for (y = ystart; (ydir * y) <= (ydir * yend); y += yinc) {
-			/* 4 byte granularity */
-			for (x = lastx, xleft = lastleft;
-			     x >= xend && xleft >= 4;
-			     x -= XINC4, xleft -= XINC4) {
-				*(uint32_t *)(dst->ri_bits + dstb + y + x) =
-					*(uint32_t *)(dst->ri_bits + srcb + y + x);
+		if (lastleft) {
+			for (y = ystart; (ydir * y) <= (ydir * yend); y += yinc) {
+				/* 4 byte granularity */
+				for (x = lastx, xleft = lastleft; xleft >= 4;
+				     x -= 4, xleft -= 4) {
+					*(uint32_t *)(dst->ri_bits + dstb + y + x - 1 * 4) =
+						*(uint32_t *)(dst->ri_bits + srcb + y + x - 1 * 4);
+				}
 			}
 		}
 	}
@@ -1396,7 +1386,7 @@ tga_ramdac_wr(v, btreg, val)
 	struct tga_devconfig *dc = v;
 
 	if (btreg > BT485_REG_MAX)
-		panic("tga_ramdac_wr: reg %d out of range\n", btreg);
+		panic("tga_ramdac_wr: reg %d out of range", btreg);
 
 	TGAWREG(dc, TGA_REG_EPDR, (btreg << 9) | (0 << 8 ) | val); /* XXX */
 	TGAREGWB(dc, TGA_REG_EPDR, 1);
@@ -1412,7 +1402,7 @@ tga2_ramdac_wr(v, btreg, val)
 	bus_space_handle_t ramdac;
 
 	if (btreg > BT485_REG_MAX)
-		panic("tga_ramdac_wr: reg %d out of range\n", btreg);
+		panic("tga_ramdac_wr: reg %d out of range", btreg);
 
 	bus_space_subregion(dc->dc_memt, dc->dc_memh, TGA2_MEM_RAMDAC + 
 		(0xe << 12) + (btreg << 8), 4, &ramdac);
@@ -1483,7 +1473,7 @@ tga_ramdac_rd(v, btreg)
 	tga_reg_t rdval;
 
 	if (btreg > BT485_REG_MAX)
-		panic("tga_ramdac_rd: reg %d out of range\n", btreg);
+		panic("tga_ramdac_rd: reg %d out of range", btreg);
 
 	TGAWREG(dc, TGA_REG_EPSR, (btreg << 1) | 0x1); /* XXX */
 	TGAREGWB(dc, TGA_REG_EPSR, 1);
@@ -1502,7 +1492,7 @@ tga2_ramdac_rd(v, btreg)
 	u_int8_t retval;
 
 	if (btreg > BT485_REG_MAX)
-		panic("tga_ramdac_rd: reg %d out of range\n", btreg);
+		panic("tga_ramdac_rd: reg %d out of range", btreg);
 
 	bus_space_subregion(dc->dc_memt, dc->dc_memh, TGA2_MEM_RAMDAC + 
 		(0xe << 12) + (btreg << 8), 4, &ramdac);
@@ -1611,7 +1601,7 @@ tga2_ics9110_wr(dc, dotclock)
 	case  14300000:		/* this one is just a ref clock */
 		N = 0x03; M = 0x03; V = 0x1; X = 0x1; R = 0x3; break;
 	default:
-		panic("unrecognized clock rate %d\n", dotclock);
+		panic("unrecognized clock rate %d", dotclock);
 	}
 
 	/* XXX -- hard coded, bad */

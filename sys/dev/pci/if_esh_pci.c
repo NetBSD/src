@@ -1,4 +1,4 @@
-/*	$NetBSD: if_esh_pci.c,v 1.9.2.1 2002/01/10 19:56:38 thorpej Exp $	*/
+/*	$NetBSD: if_esh_pci.c,v 1.9.2.2 2002/10/10 18:40:41 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_esh_pci.c,v 1.9.2.1 2002/01/10 19:56:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_esh_pci.c,v 1.9.2.2 2002/10/10 18:40:41 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,9 +85,8 @@ static u_int8_t esh_pci_bist_read __P((struct esh_softc *));
 static void esh_pci_bist_write __P((struct esh_softc *, u_int8_t));
 
 
-struct cfattach esh_pci_ca = {
-	sizeof(struct esh_softc), esh_pci_match, esh_pci_attach
-};
+CFATTACH_DECL(esh_pci, sizeof(struct esh_softc),
+    esh_pci_match, esh_pci_attach, NULL, NULL);
 
 int
 esh_pci_match(parent, match, aux)

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_auth.c,v 1.19.2.3 2002/06/23 17:50:45 jdolecek Exp $	*/
+/*	$NetBSD: ip_auth.c,v 1.19.2.4 2002/10/10 18:43:54 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1998-2001 by Darren Reed & Guido van Rooij.
@@ -108,9 +108,9 @@ extern struct ifqueue   ipintrq;		/* ip packet input queue */
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_auth.c,v 1.19.2.3 2002/06/23 17:50:45 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_auth.c,v 1.19.2.4 2002/10/10 18:43:54 jdolecek Exp $");
 #else
-static const char rcsid[] = "@(#)Id: ip_auth.c,v 2.11.2.19 2002/04/23 14:57:27 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_auth.c,v 2.11.2.20 2002/06/04 14:40:42 darrenr Exp";
 #endif
 #endif
 
@@ -503,7 +503,7 @@ fr_authioctlloop:
 		/*
 		 * If we experience an error which will result in the packet
 		 * not being processed, make sure we advance to the next one.
-		 */
+		 */ 
 		if (error == ENOBUFS) {
 			fr_authused--;
 			fra->fra_index = -1;
@@ -622,7 +622,10 @@ void fr_authexpire()
 		} else
 			faep = &fae->fae_next;
 	}
-	ipauth = &fae_list->fae_fr;
+	if (fae_list != NULL)
+		ipauth = &fae_list->fae_fr;
+	else
+		ipauth = NULL;
 
 	for (frp = &fr_authlist; (fr = *frp); ) {
 		if (fr->fr_ref == 1) {

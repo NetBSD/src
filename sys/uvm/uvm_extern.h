@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.65.2.3 2002/06/23 17:52:16 jdolecek Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.65.2.4 2002/10/10 18:45:04 jdolecek Exp $	*/
 
 /*
  *
@@ -164,6 +164,7 @@ typedef off_t voff_t;		/* XXX: offset within a uvm_object */
  */
 #define UVM_KMF_NOWAIT	0x1			/* matches M_NOWAIT */
 #define UVM_KMF_VALLOC	0x2			/* allocate VA only */
+#define UVM_KMF_CANFAIL	0x4			/* caller handles failure */
 #define UVM_KMF_TRYLOCK	UVM_FLAG_TRYLOCK	/* try locking only */
 
 /*
@@ -571,6 +572,8 @@ void			uvm_init_limits __P((struct proc *));
 boolean_t		uvm_kernacc __P((caddr_t, size_t, int));
 __dead void		uvm_scheduler __P((void)) __attribute__((noreturn));
 void			uvm_swapin __P((struct proc *));
+vaddr_t			uvm_uarea_alloc(void);
+void			uvm_uarea_free(vaddr_t);
 boolean_t		uvm_useracc __P((caddr_t, size_t, int));
 int			uvm_vslock __P((struct proc *, caddr_t, size_t,
 			    vm_prot_t));

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media.c,v 1.14.2.1 2002/01/10 20:02:08 thorpej Exp $	*/
+/*	$NetBSD: if_media.c,v 1.14.2.2 2002/10/10 18:43:44 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_media.c,v 1.14.2.1 2002/01/10 20:02:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_media.c,v 1.14.2.2 2002/10/10 18:43:44 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -228,7 +228,7 @@ ifmedia_ioctl(ifp, ifr, ifm, cmd)
 	int error = 0, sticky;
 
 	if (ifp == NULL || ifr == NULL || ifm == NULL)
-		return(EINVAL);
+		return (EINVAL);
 
 	switch (cmd) {
 

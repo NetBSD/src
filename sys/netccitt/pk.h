@@ -1,4 +1,4 @@
-/*	$NetBSD: pk.h,v 1.8 2000/07/02 17:34:01 sommerfeld Exp $	*/
+/*	$NetBSD: pk.h,v 1.8.4.1 2002/10/10 18:43:51 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1984 University of British Columbia.
@@ -49,7 +49,7 @@
  *
  */
 
-/* Packet type identifier field defintions. */
+/* Packet type identifier field definitions. */
 
 #define X25_CALL                         11
 #define X25_CALL_ACCEPTED                15   

@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.340.2.8 2002/09/06 08:45:29 jdolecek Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.340.2.9 2002/10/10 18:41:06 jdolecek Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.466 2002/08/23 15:56:30 bouyer Exp 
+ *	NetBSD: pcidevs,v 1.471 2002/09/24 09:24:40 pooka Exp 
  */
 
 /*
@@ -356,6 +356,18 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Acard",
 	    "ATP860-A UDMA IDE Controller",
+	},
+	{
+	    PCI_VENDOR_ACARD, PCI_PRODUCT_ACARD_ATP865,
+	    0,
+	    "Acard",
+	    "ATP865 UDMA IDE Controller",
+	},
+	{
+	    PCI_VENDOR_ACARD, PCI_PRODUCT_ACARD_ATP865A,
+	    0,
+	    "Acard",
+	    "ATP865-A UDMA IDE Controller",
 	},
 	{
 	    PCI_VENDOR_ACARD, PCI_PRODUCT_ACARD_AEC6710,
@@ -964,6 +976,18 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "AMD762 AGP Bridge",
 	},
 	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_SC761_SC,
+	    0,
+	    "Advanced Micro Devices",
+	    "AMD761 System Controller",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_SC761_PPB,
+	    0,
+	    "Advanced Micro Devices",
+	    "AMD761 PCI-to-PCI Bridge",
+	},
+	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC766_ISA,
 	    0,
 	    "Advanced Micro Devices",
@@ -1262,6 +1286,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "ASIX Electronics",
 	    "AX88140A 10/100 Ethernet",
+	},
+	{
+	    PCI_VENDOR_ASUSTEK, PCI_PRODUCT_ASUSTEK_HFCPCI,
+	    0,
+	    "Asustek Computer",
+	    "Asustek ISDN",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH32,
@@ -2710,6 +2740,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "DMX-3191D",
 	},
 	{
+	    PCI_VENDOR_DYNALINK, PCI_PRODUCT_DYNALINK_IS64PH,
+	    0,
+	    "Dynalink",
+	    "Dynalink IS64PH ISDN Adapter",
+	},
+	{
 	    PCI_VENDOR_ELSA, PCI_PRODUCT_ELSA_QS1PCI,
 	    0,
 	    "Elsa",
@@ -3242,6 +3278,18 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Integraphics Systems",
 	    "IGA 1682",
+	},
+	{
+	    PCI_VENDOR_INTEGRAPHICS, PCI_PRODUCT_INTEGRAPHICS_CYBERPRO2000,
+	    0,
+	    "Integraphics Systems",
+	    "CyberPro 2000",
+	},
+	{
+	    PCI_VENDOR_INTEGRAPHICS, PCI_PRODUCT_INTEGRAPHICS_CYBERPRO2010,
+	    0,
+	    "Integraphics Systems",
+	    "CyberPro 2010",
 	},
 	{
 	    PCI_VENDOR_IMS, PCI_PRODUCT_IMS_8849,
@@ -7870,6 +7918,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "W89C940F Ethernet",
 	},
 	{
+	    PCI_VENDOR_WINBOND, PCI_PRODUCT_WINBOND_W6692,
+	    0,
+	    "Winbond Electronics",
+	    "W6692 ISDN",
+	},
+	{
 	    PCI_VENDOR_XIRCOM, PCI_PRODUCT_XIRCOM_X3201_3,
 	    0,
 	    "Xircom",
@@ -7957,6 +8011,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_HAUPPAUGE, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Hauppauge Computer Works",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_DYNALINK, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Dynalink",
 	    NULL,
 	},
 	{

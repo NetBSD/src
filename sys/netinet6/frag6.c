@@ -1,4 +1,4 @@
-/*	$NetBSD: frag6.c,v 1.14.2.2 2002/06/23 17:51:08 jdolecek Exp $	*/
+/*	$NetBSD: frag6.c,v 1.14.2.3 2002/10/10 18:44:12 jdolecek Exp $	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.14.2.2 2002/06/23 17:51:08 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.14.2.3 2002/10/10 18:44:12 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -340,14 +340,14 @@ frag6_input(mp, offp, proto)
 			    offset - sizeof(struct ip6_frag) +
 			    offsetof(struct ip6_frag, ip6f_offlg));
 			IP6Q_UNLOCK();
-			return(IPPROTO_DONE);
+			return (IPPROTO_DONE);
 		}
 	} else if (fragoff + frgpartlen > IPV6_MAXPACKET) {
 		icmp6_error(m, ICMP6_PARAM_PROB, ICMP6_PARAMPROB_HEADER,
 			    offset - sizeof(struct ip6_frag) +
 				offsetof(struct ip6_frag, ip6f_offlg));
 		IP6Q_UNLOCK();
-		return(IPPROTO_DONE);
+		return (IPPROTO_DONE);
 	}
 	/*
 	 * If it's the first fragment, do the above check for each
@@ -570,7 +570,7 @@ insert:
 	 * Store NXT to the original.
 	 */
 	{
-		char *prvnxtp = ip6_get_prevhdr(m, offset); /* XXX */
+		u_int8_t *prvnxtp = ip6_get_prevhdr(m, offset); /* XXX */
 		*prvnxtp = nxt;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ofisa.c,v 1.7.2.2 2002/06/23 17:47:30 jdolecek Exp $	*/
+/*	$NetBSD: ofisa.c,v 1.7.2.3 2002/10/10 18:40:19 jdolecek Exp $	*/
 
 /*
  * Copyright 1997, 1998
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofisa.c,v 1.7.2.2 2002/06/23 17:47:30 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofisa.c,v 1.7.2.3 2002/10/10 18:40:19 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,9 +54,8 @@ __KERNEL_RCSID(0, "$NetBSD: ofisa.c,v 1.7.2.2 2002/06/23 17:47:30 jdolecek Exp $
 static int	ofisamatch __P((struct device *, struct cfdata *, void *));
 static void	ofisaattach __P((struct device *, struct device *, void *));
 
-struct cfattach ofisa_ca = {
-	sizeof(struct device), ofisamatch, ofisaattach
-};
+CFATTACH_DECL(ofisa, sizeof(struct device),
+    ofisamatch, ofisaattach, NULL, NULL);
 
 extern struct cfdriver ofisa_cd;
 

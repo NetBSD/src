@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.5.4.3 2002/06/28 08:04:11 jdolecek Exp $ */
+/*	$NetBSD: cgsix.c,v 1.5.4.4 2002/10/10 18:42:22 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.5.4.3 2002/06/28 08:04:11 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.5.4.4 2002/10/10 18:42:22 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,19 +124,24 @@ __KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.5.4.3 2002/06/28 08:04:11 jdolecek Exp $
 #include <dev/wscons/wsconsio.h>
 #endif
 
-#include <machine/conf.h>
-
 static void	cg6_unblank(struct device *);
-
-/* cdevsw prototypes */
-cdev_decl(cgsix);
 
 extern struct cfdriver cgsix_cd;
 
+dev_type_open(cgsixopen);
+dev_type_close(cgsixclose);
+dev_type_ioctl(cgsixioctl);
+dev_type_mmap(cgsixmmap);
+
+const struct cdevsw cgsix_cdevsw = {
+	cgsixopen, cgsixclose, noread, nowrite, cgsixioctl,
+	nostop, notty, nopoll, cgsixmmap, nokqfilter,
+};
+
 /* frame buffer generic driver */
 static struct fbdriver cg6_fbdriver = {
-	cg6_unblank, cgsixopen, cgsixclose, cgsixioctl, cgsixpoll, cgsixmmap,
-	cgsixkqfilter
+	cg6_unblank, cgsixopen, cgsixclose, cgsixioctl, nopoll, cgsixmmap,
+	nokqfilter
 };
 
 static void cg6_reset (struct cgsix_softc *);
@@ -731,41 +736,6 @@ cgsixioctl(dev, cmd, data, flags, p)
 #endif
 		return (ENOTTY);
 	}
-	return (0);
-}
-
-int
-cgsixpoll(dev, events, p)
-	dev_t dev;
-	int events;
-	struct proc *p;
-{
-
-	return (seltrue(dev, events, p));
-}
-
-static void
-filt_cgsixdetach(struct knote *kn)
-{
-	/* Nothing to do */
-}
-
-static const struct filterops cgsix_filtops =
-	{ 1, NULL, filt_cgsixdetach, filt_seltrue };
-
-int
-cgsixkqfilter(dev_t dev, struct knote *kn)
-{
-	switch (kn->kn_filter) {
-	case EVFILT_READ:
-	case EVFILT_WRITE:
-		kn->kn_fop = &cgsix_filtops;
-		break;
-	default:
-		return (1);
-	}
-
-	/* Nothing more to do */
 	return (0);
 }
 

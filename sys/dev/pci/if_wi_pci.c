@@ -1,4 +1,4 @@
-/*      $NetBSD: if_wi_pci.c,v 1.2.2.4 2002/06/23 17:47:46 jdolecek Exp $  */
+/*      $NetBSD: if_wi_pci.c,v 1.2.2.5 2002/10/10 18:40:50 jdolecek Exp $  */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pci.c,v 1.2.2.4 2002/06/23 17:47:46 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pci.c,v 1.2.2.5 2002/10/10 18:40:50 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,9 +97,8 @@ static void	wi_pci_powerhook __P((int, void *));
 static const struct wi_pci_product
 	*wi_pci_lookup __P((struct pci_attach_args *));
 
-struct cfattach wi_pci_ca = {
-	sizeof(struct wi_pci_softc), wi_pci_match, wi_pci_attach
-};
+CFATTACH_DECL(wi_pci, sizeof(struct wi_pci_softc),
+    wi_pci_match, wi_pci_attach, NULL, NULL);
 
 const struct wi_pci_product {
 	pci_vendor_id_t		wpp_vendor;	/* vendor ID */
@@ -157,12 +156,30 @@ static void
 wi_pci_reset(sc)
 	struct wi_softc		*sc;
 {
-	bus_space_write_2(sc->sc_iot, sc->sc_ioh,
-			  WI_PCI_COR, WI_PCI_SOFT_RESET);
-	DELAY(100*1000); /* 100 m sec */
+	int i, secs, usecs;
 
-	bus_space_write_2(sc->sc_iot, sc->sc_ioh, WI_PCI_COR, 0x0);
-	DELAY(100*1000); /* 100 m sec */
+	CSR_WRITE_2(sc, WI_PCI_COR, WI_COR_SOFT_RESET);
+	DELAY(250*1000); /* 1/4 second */
+
+	CSR_WRITE_2(sc, WI_PCI_COR, WI_COR_CLEAR);
+	DELAY(500*1000); /* 1/2 second */
+
+	/* wait 2 seconds for firmware to complete initialization. */
+
+	for (i = 200000; i--; DELAY(10))
+		if (!(CSR_READ_2(sc, WI_COMMAND) & WI_CMD_BUSY))
+			break;
+ 
+	if (i < 0) {
+		printf("%s: PCI reset timed out\n", sc->sc_dev.dv_xname);
+	} else if (sc->sc_if.if_flags & IFF_DEBUG) {
+		usecs = (200000 - i) * 10;
+		secs = usecs / 1000000;
+		usecs %= 1000000;
+
+		printf("%s: PCI reset in %d.%06d seconds\n",
+                       sc->sc_dev.dv_xname, secs, usecs);
+	}
 
 	return;
 }
@@ -302,7 +319,6 @@ wi_pci_attach(parent, self, aux)
 	}
 
 	printf("%s:", sc->sc_dev.dv_xname);
-	sc->sc_ifp = &sc->sc_ethercom.ec_if;
 	if (wi_attach(sc) != 0) {
 		printf("%s: failed to attach controller\n",
 			sc->sc_dev.dv_xname);

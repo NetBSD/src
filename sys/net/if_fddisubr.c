@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fddisubr.c,v 1.40.2.3 2002/06/23 17:50:24 jdolecek Exp $	*/
+/*	$NetBSD: if_fddisubr.c,v 1.40.2.4 2002/10/10 18:43:41 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.40.2.3 2002/06/23 17:50:24 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.40.2.4 2002/10/10 18:43:41 jdolecek Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -292,7 +292,7 @@ fddi_output(ifp, m0, dst, rt0)
 	case AF_INET6:
 		if (!nd6_storelladdr(ifp, rt, m, dst, (u_char *)edst)){
 			/* something bad happened */
-			return(0);
+			return (0);
 		}
 		etype = htons(ETHERTYPE_IPV6);
 		break;

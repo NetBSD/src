@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_log.c,v 1.13.2.4 2002/09/06 08:49:15 jdolecek Exp $	*/
+/*	$NetBSD: ip_log.c,v 1.13.2.5 2002/10/10 18:43:59 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1997-2001 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_log.c,v 1.13.2.4 2002/09/06 08:49:15 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_log.c,v 1.13.2.5 2002/10/10 18:43:59 jdolecek Exp $");
 
 #include <sys/param.h>
 #if defined(KERNEL) && !defined(_KERNEL)
@@ -133,7 +133,7 @@ extern	kcondvar_t	iplwait;
 # endif
 
 iplog_t	**iplh[IPL_LOGMAX+1], *iplt[IPL_LOGMAX+1], *ipll[IPL_LOGMAX+1];
-u_32_t	iplused[IPL_LOGMAX+1];
+int	iplused[IPL_LOGMAX+1];
 static fr_info_t	iplcrc[IPL_LOGMAX+1];
 
 
@@ -195,7 +195,7 @@ mb_t *m;
 			struct icmp *icmp;
 
 			icmp = (struct icmp *)fin->fin_dp;
-
+	 
 			/*
 			 * For ICMP, if the packet is an error packet, also
 			 * include the information about the packet which
@@ -288,7 +288,7 @@ int *types, cnt;
 	iplog_t *ipl;
 	size_t len;
 	int i;
-
+ 
 	/*
 	 * Check to see if this log record has a CRC which matches the last
 	 * record logged.  If it does, just up the count on the previous one
@@ -403,7 +403,7 @@ struct uio *uio;
 		return 0;
 	if (uio->uio_resid < IPLOG_SIZE)
 		return EINVAL;
-
+ 
 	/*
 	 * Lock the log so we can snapshot the variables.  Wait for a signal
 	 * if the log is empty.

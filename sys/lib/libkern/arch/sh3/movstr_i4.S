@@ -1,7 +1,7 @@
-/*	$NetBSD: iwm_mod.h,v 1.2 1999/03/27 05:48:53 scottr Exp $	*/
+/*	$NetBSD: movstr_i4.S,v 1.1.4.2 2002/10/10 18:43:26 jdolecek Exp $	*/
 
-/*
- * Copyright (c) 1997, 1998 Hauke Fath.  All rights reserved.
+/*-
+ * Copyright (C) 2002 SHIMIZU Ryo.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -22,35 +22,51 @@
  * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef _MAC68K_FDMOD_H
-#define _MAC68K_FDMOD_H
+
+#include <machine/asm.h>
+
+ENTRY(__movstr_i4_odd)
+	add	#-8,r4
+	nop
+odd_loop:
+	mov.l	@r5+,r0
+	add	#8,r4
+	mov.l	@r5+,r1
+	dt	r6
+	mov.l	r0,@(0,r4)
+	bf/s	odd_loop
+	mov.l	r1,@(4,r4)
+
+	mov.l	@r5+,r0
+	mov.l	@r5+,r1
+	mov.l	@r5+,r2
+	mov.l	r0,@(8,r4)
+	mov.l	r1,@(12,r4)
+	rts
+	mov.l	r2,@(16,r4)
 
 
-/**
- **	IWM Loadable Kernel Module : Exported functions
- **/
 
-int     fd_mod_init __P((void));
-void    fd_mod_free __P((void));
+ENTRY(__movstr_i4_even)
+	add	#-8,r4
+	nop
+even_loop:
+	mov.l	@r5+,r0
+	add	#8,r4
+	mov.l	@r5+,r1
+	dt	r6
+	mov.l	r0,@(0,r4)
+	bf/s	even_loop
+	mov.l	r1,@(4,r4)
 
-
-/*
- * This is the exported driver interface
- * (bdevsw[] & cdevsw[] function prototypes)
- *
- * (see <sys/conf.h>
- */
-dev_type_open(fdopen);
-dev_type_close(fdclose);
-dev_type_strategy(fdstrategy);
-dev_type_read(fdread);
-dev_type_write(fdwrite);
-dev_type_ioctl(fdioctl);
-dev_type_size(fdsize);
-dev_type_dump(fddump);
+	mov.l	@r5+,r0
+	mov.l	@r5+,r1
+	mov.l	r0,@(8,r4)
+	rts
+	mov.l	r1,@(12,r4)
 
 
-#endif /* _MAC68K_FDMOD_H */
+

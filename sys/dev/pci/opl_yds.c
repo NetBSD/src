@@ -1,4 +1,4 @@
-/*	$NetBSD: opl_yds.c,v 1.1.8.1 2002/01/10 19:56:53 thorpej Exp $	*/
+/*	$NetBSD: opl_yds.c,v 1.1.8.2 2002/10/10 18:40:59 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opl_yds.c,v 1.1.8.1 2002/01/10 19:56:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opl_yds.c,v 1.1.8.2 2002/10/10 18:40:59 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,9 +68,8 @@ __KERNEL_RCSID(0, "$NetBSD: opl_yds.c,v 1.1.8.1 2002/01/10 19:56:53 thorpej Exp 
 int	opl_yds_match __P((struct device *, struct cfdata *, void *));
 void	opl_yds_attach __P((struct device *, struct device *, void *));
 
-struct cfattach opl_yds_ca = {
-	sizeof (struct opl_softc), opl_yds_match, opl_yds_attach
-};
+CFATTACH_DECL(opl_yds, sizeof (struct opl_softc),
+    opl_yds_match, opl_yds_attach, NULL, NULL);
 
 int
 opl_yds_match(parent, match, aux)

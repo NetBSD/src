@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vfsops.c,v 1.26.4.3 2002/09/06 08:48:44 jdolecek Exp $	*/
+/*	$NetBSD: union_vfsops.c,v 1.26.4.4 2002/10/10 18:43:35 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.26.4.3 2002/09/06 08:48:44 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.26.4.4 2002/10/10 18:43:35 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,6 +101,14 @@ union_mount(mp, path, data, ndp, p)
 	printf("union_mount(mp = %p)\n", mp);
 #endif
 
+	if (mp->mnt_flag & MNT_GETARGS) {
+		um = MOUNTTOUNIONMOUNT(mp);
+		if (um == NULL)
+			return EIO;
+		args.target = NULL;
+		args.mntflags = um->um_op;
+		return copyout(&args, data, sizeof(args));
+	}
 	/*
 	 * Update is a no-op
 	 */

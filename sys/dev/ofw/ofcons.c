@@ -1,4 +1,4 @@
-/*	$NetBSD: ofcons.c,v 1.13.2.3 2002/06/23 17:47:31 jdolecek Exp $	*/
+/*	$NetBSD: ofcons.c,v 1.13.2.4 2002/10/10 18:40:20 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofcons.c,v 1.13.2.3 2002/06/23 17:47:31 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofcons.c,v 1.13.2.4 2002/10/10 18:40:20 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -57,7 +57,6 @@ struct ofcons_softc {
 
 #define	OFBURSTLEN	128	/* max number of bytes to write in one chunk */
 
-cdev_decl(ofcons_);
 cons_decl(ofcons_);
 
 static int stdin, stdout;
@@ -65,11 +64,23 @@ static int stdin, stdout;
 static int ofcons_match __P((struct device *, struct cfdata *, void *));
 static void ofcons_attach __P((struct device *, struct device *, void *));
 
-struct cfattach ofcons_ca = {
-	sizeof(struct ofcons_softc), ofcons_match, ofcons_attach
-};
+CFATTACH_DECL(ofcons, sizeof(struct ofcons_softc),
+    ofcons_match, ofcons_attach, NULL, NULL);
 
 extern struct cfdriver ofcons_cd;
+
+dev_type_open(ofcons_open);
+dev_type_close(ofcons_close);
+dev_type_read(ofcons_read);
+dev_type_write(ofcons_write);
+dev_type_ioctl(ofcons_ioctl);
+dev_type_tty(ofcons_tty);
+dev_type_poll(ofcons_poll);
+
+const struct cdevsw ofcons_cdevsw = {
+	ofcons_open, ofcons_close, ofcons_read, ofcons_write, ofcons_ioctl,
+	nostop, ofcons_tty, ofcons_poll, nommap, ttykqfilter, D_TTY
+};
 
 static int ofcons_probe __P((void));
 
@@ -223,13 +234,6 @@ ofcons_tty(dev)
 	return sc->of_tty;
 }
 
-void
-ofcons_stop(tp, flag)
-	struct tty *tp;
-	int flag;
-{
-}
-
 static void
 ofcons_start(tp)
 	struct tty *tp;
@@ -322,9 +326,7 @@ ofcons_cnprobe(cd)
 	if (!ofcons_probe())
 		return;
 
-	for (maj = 0; maj < nchrdev; maj++)
-		if (cdevsw[maj].d_open == ofcons_open)
-			break;
+	maj = cdevsw_lookup_major(&ofcons_cdevsw);
 	cd->cn_dev = makedev(maj, 0);
 	cd->cn_pri = CN_INTERNAL;
 }

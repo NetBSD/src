@@ -1,4 +1,4 @@
-/* $NetBSD: if_wi_pcmcia.c,v 1.5.2.5 2002/09/06 08:45:43 jdolecek Exp $ */
+/* $NetBSD: if_wi_pcmcia.c,v 1.5.2.6 2002/10/10 18:41:27 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.5.2.5 2002/09/06 08:45:43 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.5.2.6 2002/10/10 18:41:27 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,10 +101,8 @@ struct wi_pcmcia_softc {
 static int wi_pcmcia_find __P((struct wi_pcmcia_softc *,
 	struct pcmcia_attach_args *, struct pcmcia_config_entry *));
 
-struct cfattach wi_pcmcia_ca = {
-	sizeof(struct wi_pcmcia_softc), wi_pcmcia_match, wi_pcmcia_attach,
-	wi_pcmcia_detach, wi_activate,
-};
+CFATTACH_DECL(wi_pcmcia, sizeof(struct wi_pcmcia_softc),
+    wi_pcmcia_match, wi_pcmcia_attach, wi_pcmcia_detach, wi_activate);
 
 static const struct wi_pcmcia_product {
 	u_int32_t	pp_vendor;	/* vendor ID */
@@ -226,6 +224,11 @@ static const struct wi_pcmcia_product {
 	  PCMCIA_PRODUCT_EMTAC_WLAN,
 	  PCMCIA_CIS_EMTAC_WLAN,
 	  PCMCIA_STR_EMTAC_WLAN },
+
+	{ PCMCIA_VENDOR_NETGEAR_2,
+	  PCMCIA_PRODUCT_NETGEAR_2_MA401,
+	  PCMCIA_CIS_NETGEAR_2_MA401,
+	  PCMCIA_STR_NETGEAR_2_MA401 },
 
 	{ PCMCIA_VENDOR_INTERSIL,
 	  PCMCIA_PRODUCT_GEMTEK_WLAN,
@@ -467,7 +470,6 @@ wi_pcmcia_attach(parent, self, aux)
 		goto no_interrupt;
 	}
 
-	sc->sc_ifp = &sc->sc_ethercom.ec_if;
 	if (wi_attach(sc) != 0) {
 		printf("%s: failed to attach controller\n",
 		    sc->sc_dev.dv_xname);

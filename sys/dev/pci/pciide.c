@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.121.2.6 2002/09/06 08:45:32 jdolecek Exp $	*/
+/*	$NetBSD: pciide.c,v 1.121.2.7 2002/10/10 18:41:09 jdolecek Exp $	*/
 
 
 /*
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.121.2.6 2002/09/06 08:45:32 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.121.2.7 2002/10/10 18:41:09 jdolecek Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -629,9 +629,9 @@ const struct pciide_vendor_desc pciide_vendors[] = {
 int	pciide_match __P((struct device *, struct cfdata *, void *));
 void	pciide_attach __P((struct device *, struct device *, void *));
 
-struct cfattach pciide_ca = {
-	sizeof(struct pciide_softc), pciide_match, pciide_attach
-};
+CFATTACH_DECL(pciide, sizeof(struct pciide_softc),
+    pciide_match, pciide_attach, NULL, NULL);
+
 int	pciide_chipen __P((struct pciide_softc *, struct pci_attach_args *));
 int	pciide_mapregs_compat __P(( struct pci_attach_args *,
 	    struct pciide_channel *, int, bus_size_t *, bus_size_t*));
@@ -748,7 +748,7 @@ pciide_attach(parent, self, aux)
 	    pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG)), DEBUG_PROBE);
 }
 
-/* tell wether the chip is enabled or not */
+/* tell whether the chip is enabled or not */
 int
 pciide_chipen(sc, pa)
 	struct pciide_softc *sc;
@@ -951,7 +951,7 @@ pciide_compat_intr(arg)
 #ifdef DIAGNOSTIC
 	/* should only be called for a compat channel */
 	if (cp->compat == 0)
-		panic("pciide compat intr called for non-compat chan %p\n", cp);
+		panic("pciide compat intr called for non-compat chan %p", cp);
 #endif
 	return (wdcintr(&cp->wdc_channel));
 }

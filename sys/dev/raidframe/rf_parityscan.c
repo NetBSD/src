@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_parityscan.c,v 1.9.6.3 2002/09/06 08:46:07 jdolecek Exp $	*/
+/*	$NetBSD: rf_parityscan.c,v 1.9.6.4 2002/10/10 18:41:55 jdolecek Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_parityscan.c,v 1.9.6.3 2002/09/06 08:46:07 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_parityscan.c,v 1.9.6.4 2002/10/10 18:41:55 jdolecek Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -68,7 +68,6 @@ rf_RewriteParity(raidPtr)
 	RF_AccessStripeMapHeader_t *asm_h;
 	int ret_val;
 	int rc;
-	RF_PhysDiskAddr_t pda;
 	RF_SectorNum_t i;
 
 	if (raidPtr->Layout.map->faultsTolerated == 0) {
@@ -86,8 +85,6 @@ rf_RewriteParity(raidPtr)
 
 	ret_val = 0;
 
-	pda.startSector = 0;
-	pda.numSector = raidPtr->Layout.sectorsPerStripeUnit;
 	rc = RF_PARITY_OKAY;
 
 	for (i = 0; i < raidPtr->totalSectors && 
@@ -194,7 +191,7 @@ rf_VerifyParityBasic(raidPtr, raidAddr, parityPDA, correct_it, flags)
 	int     numbytes = rf_RaidAddressToByte(raidPtr, numsector);
 	int     bytesPerStripe = numbytes * layoutPtr->numDataCol;
 	RF_DagHeader_t *rd_dag_h, *wr_dag_h;	/* read, write dag */
-	RF_DagNode_t *blockNode, *unblockNode, *wrBlock, *wrUnblock;
+	RF_DagNode_t *blockNode, *wrBlock;
 	RF_AccessStripeMapHeader_t *asm_h;
 	RF_AccessStripeMap_t *asmap;
 	RF_AllocListElem_t *alloclist;
@@ -221,7 +218,6 @@ rf_VerifyParityBasic(raidPtr, raidAddr, parityPDA, correct_it, flags)
 	rd_dag_h = rf_MakeSimpleDAG(raidPtr, stripeWidth, numbytes, buf, rf_DiskReadFunc, rf_DiskReadUndoFunc,
 	    "Rod", alloclist, flags, RF_IO_NORMAL_PRIORITY);
 	blockNode = rd_dag_h->succedents[0];
-	unblockNode = blockNode->succedents[0]->succedents[0];
 
 	/* map the stripe and fill in the PDAs in the dag */
 	asm_h = rf_MapAccess(raidPtr, startAddr, layoutPtr->dataSectorsPerStripe, buf, RF_DONT_REMAP);
@@ -271,11 +267,6 @@ rf_VerifyParityBasic(raidPtr, raidAddr, parityPDA, correct_it, flags)
 		rf_bxor(p, pbuf, numbytes, NULL);
 	}
 	for (i = 0; i < numbytes; i++) {
-#if 0
-		if (pbuf[i] != 0 || buf[bytesPerStripe + i] != 0) {
-			printf("Bytes: %d %d %d\n", i, pbuf[i], buf[bytesPerStripe + i]);
-		}
-#endif
 		if (pbuf[i] != buf[bytesPerStripe + i]) {
 			if (!correct_it)
 				RF_ERRORMSG3("Parity verify error: byte %d of parity is 0x%x should be 0x%x\n",
@@ -289,7 +280,6 @@ rf_VerifyParityBasic(raidPtr, raidAddr, parityPDA, correct_it, flags)
 		wr_dag_h = rf_MakeSimpleDAG(raidPtr, 1, numbytes, pbuf, rf_DiskWriteFunc, rf_DiskWriteUndoFunc,
 		    "Wnp", alloclist, flags, RF_IO_NORMAL_PRIORITY);
 		wrBlock = wr_dag_h->succedents[0];
-		wrUnblock = wrBlock->succedents[0]->succedents[0];
 		wrBlock->succedents[0]->params[0].p = asmap->parityInfo;
 		wrBlock->succedents[0]->params[2].v = psID;
 		wrBlock->succedents[0]->params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, 0, 0, which_ru);
@@ -333,18 +323,24 @@ rf_TryToRedirectPDA(raidPtr, pda, parity)
 	if (raidPtr->Disks[pda->row][pda->col].status == rf_ds_reconstructing) {
 		if (rf_CheckRUReconstructed(raidPtr->reconControl[pda->row]->reconMap, pda->startSector)) {
 			if (raidPtr->Layout.map->flags & RF_DISTRIBUTE_SPARE) {
+#if RF_DEBUG_VERIFYPARITY
 				RF_RowCol_t or = pda->row, oc = pda->col;
 				RF_SectorNum_t os = pda->startSector;
+#endif
 				if (parity) {
 					(raidPtr->Layout.map->MapParity) (raidPtr, pda->raidAddress, &pda->row, &pda->col, &pda->startSector, RF_REMAP);
+#if RF_DEBUG_VERIFYPARITY
 					if (rf_verifyParityDebug)
 						printf("VerifyParity: Redir P r %d c %d sect %ld -> r %d c %d sect %ld\n",
 						    or, oc, (long) os, pda->row, pda->col, (long) pda->startSector);
+#endif
 				} else {
 					(raidPtr->Layout.map->MapSector) (raidPtr, pda->raidAddress, &pda->row, &pda->col, &pda->startSector, RF_REMAP);
+#if RF_DEBUG_VERIFYPARITY
 					if (rf_verifyParityDebug)
 						printf("VerifyParity: Redir D r %d c %d sect %ld -> r %d c %d sect %ld\n",
 						    or, oc, (long) os, pda->row, pda->col, (long) pda->startSector);
+#endif
 				}
 			} else {
 				RF_RowCol_t spRow = raidPtr->Disks[pda->row][pda->col].spareRow;
@@ -376,6 +372,7 @@ rf_TryToRedirectPDA(raidPtr, pda, parity)
  * course not the case for the new parity.
  *
  ****************************************************************************************/
+#if 0
 int 
 rf_VerifyDegrModeWrite(raidPtr, asmh)
 	RF_Raid_t *raidPtr;
@@ -383,6 +380,7 @@ rf_VerifyDegrModeWrite(raidPtr, asmh)
 {
 	return (0);
 }
+#endif
 /* creates a simple DAG with a header, a block-recon node at level 1,
  * nNodes nodes at level 2, an unblock-recon node at level 3, and
  * a terminator node at level 4.  The stripe address field in

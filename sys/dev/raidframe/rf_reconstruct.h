@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.h,v 1.5.6.1 2002/01/10 19:57:59 thorpej Exp $	*/
+/*	$NetBSD: rf_reconstruct.h,v 1.5.6.2 2002/10/10 18:41:58 jdolecek Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -59,8 +59,6 @@ struct RF_ReconBuffer_s {
 	RF_StripeCount_t count;	/* counts the # of SUs installed so far */
 	int     priority;	/* used to force hi priority recon */
 	RF_RbufType_t type;	/* FORCED or FLOATING */
-	char   *arrived;	/* [x] = 1/0 if SU from disk x has/hasn't
-				 * arrived */
 	RF_ReconBuffer_t *next;	/* used for buffer management */
 	void   *arg;		/* generic field for general use */
 	RF_RowCol_t spRow, spCol;	/* spare disk to which this buf should
@@ -194,8 +192,5 @@ rf_ForceOrBlockRecon(RF_Raid_t * raidPtr, RF_AccessStripeMap_t * asmap,
     void (*cbFunc) (RF_Raid_t *, void *), void *cbArg);
 
 	int     rf_UnblockRecon(RF_Raid_t * raidPtr, RF_AccessStripeMap_t * asmap);
-
-	int     rf_RegisterReconDoneProc(RF_Raid_t * raidPtr, void (*proc) (RF_Raid_t *, void *), void *arg,
-            RF_ReconDoneProc_t ** handlep);
 
 #endif				/* !_RF__RF_RECONSTRUCT_H_ */

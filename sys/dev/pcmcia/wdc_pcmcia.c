@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.42.2.3 2002/06/23 17:48:26 jdolecek Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.42.2.4 2002/10/10 18:41:33 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.42.2.3 2002/06/23 17:48:26 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.42.2.4 2002/10/10 18:41:33 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -81,10 +81,8 @@ static int wdc_pcmcia_match	__P((struct device *, struct cfdata *, void *));
 static void wdc_pcmcia_attach	__P((struct device *, struct device *, void *));
 static int wdc_pcmcia_detach	__P((struct device *, int));
 
-struct cfattach wdc_pcmcia_ca = {
-	sizeof(struct wdc_pcmcia_softc), wdc_pcmcia_match, wdc_pcmcia_attach,
-	wdc_pcmcia_detach, wdcactivate
-};
+CFATTACH_DECL(wdc_pcmcia, sizeof(struct wdc_pcmcia_softc),
+    wdc_pcmcia_match, wdc_pcmcia_attach, wdc_pcmcia_detach, wdcactivate);
 
 const struct wdc_pcmcia_product {
 	u_int32_t	wpp_vendor;	/* vendor ID */

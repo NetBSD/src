@@ -1,4 +1,4 @@
-/*	$NetBSD: sd_scsi.c,v 1.17.2.3 2002/01/10 19:58:26 thorpej Exp $	*/
+/*	$NetBSD: sd_scsi.c,v 1.17.2.4 2002/10/10 18:42:18 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd_scsi.c,v 1.17.2.3 2002/01/10 19:58:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd_scsi.c,v 1.17.2.4 2002/10/10 18:42:18 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,10 +76,8 @@ __KERNEL_RCSID(0, "$NetBSD: sd_scsi.c,v 1.17.2.3 2002/01/10 19:58:26 thorpej Exp
 int	sd_scsibus_match __P((struct device *, struct cfdata *, void *));
 void	sd_scsibus_attach __P((struct device *, struct device *, void *));
 
-struct cfattach sd_scsibus_ca = {
-	sizeof(struct sd_softc), sd_scsibus_match, sd_scsibus_attach,
-	sddetach, sdactivate,
-};
+CFATTACH_DECL(sd_scsibus, sizeof(struct sd_softc),
+    sd_scsibus_match, sd_scsibus_attach, sddetach, sdactivate);
 
 struct scsipi_inquiry_pattern sd_scsibus_patterns[] = {
 	{T_DIRECT, T_FIXED,

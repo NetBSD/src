@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.167.2.5 2002/09/06 08:48:22 jdolecek Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.167.2.6 2002/10/10 18:43:23 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.167.2.5 2002/09/06 08:48:22 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.167.2.6 2002/10/10 18:43:23 jdolecek Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -131,7 +131,8 @@ sys_mount(p, v, retval)
 	struct nameidata nd;
 	struct vfsops *vfs;
 
-	if (dovfsusermount == 0 && (error = suser(p->p_ucred, &p->p_acflag)))
+	if (dovfsusermount == 0 && (SCARG(uap, flags) & MNT_GETARGS) == 0 &&
+	    (error = suser(p->p_ucred, &p->p_acflag)))
 		return (error);
 	/*
 	 * Get vnode to be covered
@@ -146,7 +147,7 @@ sys_mount(p, v, retval)
 	 * lock this vnode again, so make the lock resursive.
 	 */
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY | LK_SETRECURSE);
-	if (SCARG(uap, flags) & MNT_UPDATE) {
+	if (SCARG(uap, flags) & (MNT_UPDATE | MNT_GETARGS)) {
 		if ((vp->v_flag & VROOT) == 0) {
 			vput(vp);
 			return (EINVAL);
@@ -166,22 +167,24 @@ sys_mount(p, v, retval)
 		/*
 		 * In "highly secure" mode, don't let the caller do anything
 		 * but downgrade a filesystem from read-write to read-only.
-		 * (see also below; MNT_UPDATE is required.)
+		 * (see also below; MNT_UPDATE or MNT_GETARGS is required.)
 		 */
 		if (securelevel >= 2 &&
-		    (SCARG(uap, flags) !=
+		    SCARG(uap, flags) != MNT_GETARGS &&
+		    SCARG(uap, flags) !=
 		    (mp->mnt_flag | MNT_RDONLY |
-		    MNT_RELOAD | MNT_FORCE | MNT_UPDATE))) {
+		    MNT_RELOAD | MNT_FORCE | MNT_UPDATE)) {
 			vput(vp);
 			return (EPERM);
 		}
-		mp->mnt_flag |=
-		    SCARG(uap, flags) & (MNT_RELOAD | MNT_FORCE | MNT_UPDATE);
+		mp->mnt_flag |= SCARG(uap, flags) &
+		    (MNT_RELOAD | MNT_FORCE | MNT_UPDATE | MNT_GETARGS);
 		/*
 		 * Only root, or the user that did the original mount is
 		 * permitted to update it.
 		 */
-		if (mp->mnt_stat.f_owner != p->p_ucred->cr_uid &&
+		if ((mp->mnt_flag & MNT_GETARGS) == 0 &&
+		    mp->mnt_stat.f_owner != p->p_ucred->cr_uid &&
 		    (error = suser(p->p_ucred, &p->p_acflag)) != 0) {
 			vput(vp);
 			return (error);
@@ -308,13 +311,14 @@ update:
 	 * Mount the filesystem.
 	 */
 	error = VFS_MOUNT(mp, SCARG(uap, path), SCARG(uap, data), &nd, p);
-	if (mp->mnt_flag & MNT_UPDATE) {
+	if (mp->mnt_flag & (MNT_UPDATE | MNT_GETARGS)) {
 		if (mp->mnt_flag & MNT_WANTRDWR)
 			mp->mnt_flag &= ~MNT_RDONLY;
-		mp->mnt_flag &=~
-		    (MNT_UPDATE | MNT_RELOAD | MNT_FORCE | MNT_WANTRDWR);
-		if (error)
+		if (error || (mp->mnt_flag & MNT_GETARGS))
 			mp->mnt_flag = flag;
+		mp->mnt_flag &=~
+		    (MNT_UPDATE | MNT_RELOAD | MNT_FORCE | MNT_WANTRDWR |
+		     MNT_GETARGS);
 		if ((mp->mnt_flag & (MNT_RDONLY | MNT_ASYNC)) == 0) {
 			if (mp->mnt_syncer == NULL)
 				error = vfs_allocate_syncvnode(mp);
@@ -372,7 +376,7 @@ checkdirs(olddp)
 	if (VFS_ROOT(olddp->v_mountedhere, &newdp))
 		panic("mount: lost mount");
 	proclist_lock_read();
-	for (p = allproc.lh_first; p != 0; p = p->p_list.le_next) {
+	LIST_FOREACH(p, &allproc, p_list) {
 		cwdi = p->p_cwdi;
 		if (cwdi->cwdi_cdir == olddp) {
 			vrele(cwdi->cwdi_cdir);
@@ -537,7 +541,7 @@ dounmount(mp, flags, p)
 		vrele(coveredvp);
 	}
 	mp->mnt_op->vfs_refcount--;
-	if (mp->mnt_vnodelist.lh_first != NULL)
+	if (LIST_FIRST(&mp->mnt_vnodelist) != NULL)
 		panic("unmount: dangling vnode");
 	mp->mnt_flag |= MNT_GONE;
 	lockmgr(&mp->mnt_lock, LK_RELEASE | LK_INTERLOCK, &mountlist_slock);
@@ -713,9 +717,10 @@ sys_getfsstat(p, v, retval)
 	sfsp = (caddr_t)SCARG(uap, buf);
 	simple_lock(&mountlist_slock);
 	count = 0;
-	for (mp = mountlist.cqh_first; mp != (void *)&mountlist; mp = nmp) {
+	for (mp = CIRCLEQ_FIRST(&mountlist); mp != (void *)&mountlist;
+	     mp = nmp) {
 		if (vfs_busy(mp, LK_NOWAIT, &mountlist_slock)) {
-			nmp = mp->mnt_list.cqe_next;
+			nmp = CIRCLEQ_NEXT(mp, mnt_list);
 			continue;
 		}
 		if (sfsp && count < maxcount) {
@@ -731,7 +736,7 @@ sys_getfsstat(p, v, retval)
 			     SCARG(uap, flags) == 0) &&
 			    (error = VFS_STATFS(mp, sp, p)) != 0) {
 				simple_lock(&mountlist_slock);
-				nmp = mp->mnt_list.cqe_next;
+				nmp = CIRCLEQ_NEXT(mp, mnt_list);
 				vfs_unbusy(mp);
 				continue;
 			}
@@ -746,7 +751,7 @@ sys_getfsstat(p, v, retval)
 		}
 		count++;
 		simple_lock(&mountlist_slock);
-		nmp = mp->mnt_list.cqe_next;
+		nmp = CIRCLEQ_NEXT(mp, mnt_list);
 		vfs_unbusy(mp);
 	}
 	simple_unlock(&mountlist_slock);

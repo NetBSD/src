@@ -1,4 +1,4 @@
-/*	$NetBSD: trm.c,v 1.6.2.4 2002/06/23 17:48:04 jdolecek Exp $	*/
+/*	$NetBSD: trm.c,v 1.6.2.5 2002/10/10 18:41:15 jdolecek Exp $	*/
 /*
  * Device Driver for Tekram DC395U/UW/F, DC315/U
  * PCI SCSI Bus Master Host Adapter
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trm.c,v 1.6.2.4 2002/06/23 17:48:04 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trm.c,v 1.6.2.5 2002/10/10 18:41:15 jdolecek Exp $");
 
 /* #define TRM_DEBUG */
 #ifdef TRM_DEBUG
@@ -348,9 +348,8 @@ static void trm_eeprom_set_data(struct trm_softc *, u_int8_t, u_int8_t);
 static void trm_eeprom_write_cmd(struct trm_softc *, u_int8_t, u_int8_t);
 static u_int8_t trm_eeprom_get_data(struct trm_softc *, u_int8_t);
 
-struct cfattach trm_ca = {
-	sizeof(struct trm_softc), trm_probe, trm_attach
-};
+CFATTACH_DECL(trm, sizeof(struct trm_softc),
+    trm_probe, trm_attach, NULL, NULL);
 
 /* real period: */
 static const u_int8_t trm_clock_period[] = {

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_decluster.c,v 1.6.4.2 2002/06/23 17:48:34 jdolecek Exp $	*/
+/*	$NetBSD: rf_decluster.c,v 1.6.4.3 2002/10/10 18:41:47 jdolecek Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -48,7 +48,7 @@
  *--------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_decluster.c,v 1.6.4.2 2002/06/23 17:48:34 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_decluster.c,v 1.6.4.3 2002/10/10 18:41:47 jdolecek Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -59,13 +59,8 @@ __KERNEL_RCSID(0, "$NetBSD: rf_decluster.c,v 1.6.4.2 2002/06/23 17:48:34 jdolece
 #include "rf_utils.h"
 #include "rf_alloclist.h"
 #include "rf_general.h"
+#include "rf_kintf.h"
 #include "rf_shutdown.h"
-
-
-extern int rf_copyback_in_progress;	/* debug only */
-
-/* found in rf_kintf.c */
-int     rf_GetSpareTableFromDaemon(RF_SparetWait_t * req);
 
 #if (RF_INCLUDE_PARITY_DECLUSTERING > 0) || (RF_INCLUDE_PARITY_DECLUSTERING_PQ > 0)
 
@@ -287,7 +282,6 @@ rf_ConfigureDeclustered(
 	 * problems */
 
 	layoutPtr->dataSectorsPerStripe = (k - 1) * layoutPtr->sectorsPerStripeUnit;
-	layoutPtr->bytesPerStripeUnit = layoutPtr->sectorsPerStripeUnit << raidPtr->logBytesPerSector;
 	layoutPtr->numDataCol = k - 1;
 	layoutPtr->numParityCol = 1;
 
@@ -679,6 +673,7 @@ rf_InstallSpareTable(
 				 * XXX */
 	return (retcode);
 }
+#if (RF_INCLUDE_PARITY_DECLUSTERING > 0) || (RF_INCLUDE_PARITY_DECLUSTERING_PQ > 0)
 /*
  * Invoked via ioctl to install a spare table in the kernel.
  */
@@ -728,6 +723,7 @@ rf_GetNumSpareRUsDeclustered(raidPtr)
 
 	return (((RF_DeclusteredConfigInfo_t *) layoutPtr->layoutSpecificInfo)->TotSparePUsPerDisk);
 }
+#endif /* (RF_INCLUDE_PARITY_DECLUSTERING > 0)  || (RF_INCLUDE_PARITY_DECLUSTERING_PQ > 0) */
 
 void 
 rf_FreeSpareTable(raidPtr)

@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.39.2.6 2002/09/06 08:48:17 jdolecek Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.39.2.7 2002/10/10 18:43:19 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.39.2.6 2002/09/06 08:48:17 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.39.2.7 2002/10/10 18:43:19 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -440,7 +440,7 @@ sblastrecordchk(struct sockbuf *sb, const char *where)
 		printf("packet chain:\n");
 		for (m = sb->sb_mb; m != NULL; m = m->m_nextpkt)
 			printf("\t%p\n", m);
-		panic("sblastrecordchk from %s\n", where);
+		panic("sblastrecordchk from %s", where);
 	}
 }
 

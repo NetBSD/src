@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_psstatus.c,v 1.5.8.2 2002/01/10 19:57:55 thorpej Exp $	*/
+/*	$NetBSD: rf_psstatus.c,v 1.5.8.3 2002/10/10 18:41:55 jdolecek Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -37,7 +37,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_psstatus.c,v 1.5.8.2 2002/01/10 19:57:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_psstatus.c,v 1.5.8.3 2002/10/10 18:41:55 jdolecek Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -48,9 +48,15 @@ __KERNEL_RCSID(0, "$NetBSD: rf_psstatus.c,v 1.5.8.2 2002/01/10 19:57:55 thorpej 
 #include "rf_psstatus.h"
 #include "rf_shutdown.h"
 
+#if RF_DEBUG_PSS
 #define Dprintf1(s,a)         if (rf_pssDebug) rf_debug_printf(s,(void *)((unsigned long)a),NULL,NULL,NULL,NULL,NULL,NULL,NULL)
 #define Dprintf2(s,a,b)       if (rf_pssDebug) rf_debug_printf(s,(void *)((unsigned long)a),(void *)((unsigned long)b),NULL,NULL,NULL,NULL,NULL,NULL)
 #define Dprintf3(s,a,b,c)     if (rf_pssDebug) rf_debug_printf(s,(void *)((unsigned long)a),(void *)((unsigned long)b),(void *)((unsigned long)c),NULL,NULL,NULL,NULL,NULL)
+#else
+#define Dprintf1(s,a)
+#define Dprintf2(s,a,b)
+#define Dprintf3(s,a,b,c)
+#endif
 
 static void 
 RealPrintPSStatusTable(RF_Raid_t * raidPtr,
@@ -107,8 +113,7 @@ rf_ConfigurePSStatus(
 		return (ENOMEM);
 	rc = rf_ShutdownCreate(listp, rf_ShutdownPSStatus, raidPtr);
 	if (rc) {
-		RF_ERRORMSG3("Unable to add to shutdown list file %s line %d rc=%d\n",
-		    __FILE__, __LINE__, rc);
+		rf_print_unable_to_add_shutdown(__FILE__, __LINE__, rc);
 		rf_ShutdownPSStatus(raidPtr);
 		return (rc);
 	}
@@ -132,8 +137,7 @@ rf_MakeParityStripeStatusTable(raidPtr)
 	for (i = 0; i < raidPtr->pssTableSize; i++) {
 		rc = rf_mutex_init(&pssTable[i].mutex);
 		if (rc) {
-			RF_ERRORMSG3("Unable to init mutex file %s line %d rc=%d\n", __FILE__,
-			    __LINE__, rc);
+			rf_print_unable_to_init_mutex(__FILE__, __LINE__, rc);
 			/* fail and deallocate */
 			for (j = 0; j < i; j++) {
 				rf_mutex_destroy(&pssTable[i].mutex);
@@ -152,8 +156,10 @@ rf_FreeParityStripeStatusTable(raidPtr, pssTable)
 {
 	int     i;
 
+#if RF_DEBUG_PSS
 	if (rf_pssDebug)
 		RealPrintPSStatusTable(raidPtr, pssTable);
+#endif
 	for (i = 0; i < raidPtr->pssTableSize; i++) {
 		if (pssTable[i].chain) {
 			printf("ERROR: pss hash chain not null at recon shutdown\n");

@@ -1,4 +1,4 @@
-/*	$NetBSD: lkm.h,v 1.20 2001/02/25 17:44:15 mrg Exp $	*/
+/*	$NetBSD: lkm.h,v 1.20.4.1 2002/10/10 18:44:44 jdolecek Exp $	*/
 
 /*
  * Header file used by loadable kernel modules and loadable kernel module
@@ -86,14 +86,6 @@ struct lkm_vfs {
 };
 
 /*
- * Supported device module types
- */
-typedef enum devtype {
-	LM_DT_BLOCK,
-	LM_DT_CHAR
-} DEVTYPE;
-
-/*
  * Loadable device driver
  */
 struct lkm_dev {
@@ -101,16 +93,11 @@ struct lkm_dev {
 	int	lkm_ver;
 	const char *lkm_name;
 	u_long	lkm_offset;
-	DEVTYPE	lkm_devtype;
-	union {
-		void	*anon;
-		struct bdevsw	*bdev;
-		struct cdevsw	*cdev;
-	} lkm_dev;
-	union {
-		struct bdevsw	bdev;
-		struct cdevsw	cdev;
-	} lkm_olddev;
+	const char *lkm_devname;
+	const struct bdevsw	*lkm_bdev;
+	int lkm_bdevmaj;
+	const struct cdevsw	*lkm_cdev;
+	int lkm_cdevmaj;
 };
 
 /*
@@ -234,14 +221,17 @@ struct lkm_table {
 		vfsopsp				\
 	};
 
-#define	MOD_DEV(name,devtype,devslot,devp)	\
+#define	MOD_DEV(name,devname,bdevp,bdevm,cdevp,cdevm)	\
 	static struct lkm_dev _module = {	\
 		LM_DEV,				\
 		LKM_VERSION,			\
 		name,				\
-		devslot,			\
-		devtype,			\
-		{ (void *)devp }, 		\
+		-1,				\
+		devname,			\
+		bdevp,				\
+		bdevm,				\
+		cdevp,				\
+		cdevm,				\
 	};
 
 #define	MOD_COMPAT(name, compatslot,emulp)	\
@@ -401,5 +391,9 @@ struct lmc_stat {
 	u_long	private;		/* OUT: module private data */
 	int	ver;			/* OUT: lkm compile version */
 };
+
+#define	LKM_MAKEMAJOR(b, c)	((((b) & 0xffff) << 16) | ((c) & 0xffff))
+#define	LKM_BLOCK_MAJOR(v)	(int)((int16_t)(((v) >> 16) & 0xffff))
+#define	LKM_CHAR_MAJOR(v)	(int)((int16_t)((v) & 0xffff))
 
 #endif	/* !_SYS_LKM_H_ */

@@ -1,4 +1,4 @@
-/* $NetBSD: isic_pci.c,v 1.3.2.3 2002/06/23 17:47:48 jdolecek Exp $ */
+/* $NetBSD: isic_pci.c,v 1.3.2.4 2002/10/10 18:40:52 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_pci.c,v 1.3.2.3 2002/06/23 17:47:48 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_pci.c,v 1.3.2.4 2002/10/10 18:40:52 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -83,11 +83,8 @@ static void isic_pci_isdn_attach __P((struct pci_isic_softc *psc, struct pci_att
 static int isic_pci_detach(struct device *self, int flags);
 static int isic_pci_activate(struct device *self, enum devact act);
 
-struct cfattach isic_pci_ca = {
-	sizeof(struct pci_isic_softc), isic_pci_match, isic_pci_attach,
-	isic_pci_detach, isic_pci_activate
-};
-
+CFATTACH_DECL(isic_pci, sizeof(struct pci_isic_softc),
+    isic_pci_match, isic_pci_attach, isic_pci_detach, isic_pci_activate);
 
 static const struct isic_pci_product {
 	pci_vendor_id_t npp_vendor;

@@ -1,4 +1,4 @@
-/*	$NetBSD: be.c,v 1.26.2.5 2002/09/06 08:46:13 jdolecek Exp $	*/
+/*	$NetBSD: be.c,v 1.26.2.6 2002/10/10 18:42:02 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.26.2.5 2002/09/06 08:46:13 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.26.2.6 2002/10/10 18:42:02 jdolecek Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -216,9 +216,8 @@ void	be_intphy_status __P((struct be_softc *));
 int	be_intphy_service __P((struct be_softc *, struct mii_data *, int));
 
 
-struct cfattach be_ca = {
-	sizeof(struct be_softc), bematch, beattach
-};
+CFATTACH_DECL(be, sizeof(struct be_softc),
+    bematch, beattach, NULL, NULL);
 
 int
 bematch(parent, cf, aux)
@@ -228,7 +227,7 @@ bematch(parent, cf, aux)
 {
 	struct sbus_attach_args *sa = aux;
 
-	return (strcmp(cf->cf_driver->cd_name, sa->sa_name) == 0);
+	return (strcmp(cf->cf_name, sa->sa_name) == 0);
 }
 
 void

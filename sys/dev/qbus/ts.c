@@ -1,4 +1,4 @@
-/*	$NetBSD: ts.c,v 1.2.4.2 2002/09/06 08:45:53 jdolecek Exp $ */
+/*	$NetBSD: ts.c,v 1.2.4.3 2002/10/10 18:41:40 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ts.c,v 1.2.4.2 2002/09/06 08:45:53 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ts.c,v 1.2.4.3 2002/10/10 18:41:40 jdolecek Exp $");
 
 #undef	TSDEBUG
 
@@ -89,7 +89,6 @@ __KERNEL_RCSID(0, "$NetBSD: ts.c,v 1.2.4.2 2002/09/06 08:45:53 jdolecek Exp $");
 #include <sys/conf.h>
 #include <sys/errno.h>
 #include <sys/file.h>
-#include <sys/map.h>
 #include <sys/syslog.h>
 #include <sys/ioctl.h>
 #include <sys/mtio.h>
@@ -169,11 +168,24 @@ static	int tsmatch(struct device *, struct cfdata *, void *);
 static	void tsattach(struct device *, struct device *, void *);
 static	int tsready(struct uba_unit *);
 
-cdev_decl(ts);
-bdev_decl(ts);
+CFATTACH_DECL(ts, sizeof(struct ts_softc),
+    tsmatch, tsattach, NULL, NULL);
 
-struct	cfattach ts_ca = {
-	sizeof(struct ts_softc), tsmatch, tsattach
+dev_type_open(tsopen);
+dev_type_close(tsclose);
+dev_type_read(tsread);
+dev_type_write(tswrite);
+dev_type_ioctl(tsioctl);
+dev_type_strategy(tsstrategy);
+dev_type_dump(tsdump);
+
+const struct bdevsw ts_bdevsw = {
+	tsopen, tsclose, tsstrategy, tsioctl, tsdump, nosize, D_TAPE
+};
+
+const struct cdevsw ts_cdevsw = {
+	tsopen, tsclose, tsread, tswrite, tsioctl,
+	nostop, notty, nopoll, nommap, nokqfilter, D_TAPE
 };
 
 /* Bits in minor device */ 

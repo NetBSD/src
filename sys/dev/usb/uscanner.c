@@ -1,4 +1,4 @@
-/*	$NetBSD: uscanner.c,v 1.15.2.6 2002/10/02 22:02:28 jdolecek Exp $	*/
+/*	$NetBSD: uscanner.c,v 1.15.2.7 2002/10/10 18:42:50 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.15.2.6 2002/10/02 22:02:28 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.15.2.7 2002/10/10 18:42:50 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -239,7 +239,20 @@ struct uscanner_softc {
 	u_char			sc_dying;
 };
 
-#if defined(__NetBSD__) || defined(__OpenBSD__)
+#if defined(__NetBSD__)
+dev_type_open(uscanneropen);
+dev_type_close(uscannerclose);
+dev_type_read(uscannerread);
+dev_type_write(uscannerwrite);
+dev_type_ioctl(uscannerioctl);
+dev_type_poll(uscannerpoll);
+dev_type_kqfilter(uscannerkqfilter);
+
+const struct cdevsw uscanner_cdevsw = {
+	uscanneropen, uscannerclose, uscannerread, uscannerwrite,
+	uscannerioctl, nostop, notty, uscannerpoll, nommap, uscannerkqfilter,
+};
+#elif defined(__OpenBSD__)
 cdev_decl(uscanner);
 #elif defined(__FreeBSD__)
 d_open_t  uscanneropen;
@@ -601,7 +614,6 @@ uscanner_activate(device_ptr_t self, enum devact act)
 	switch (act) {
 	case DVACT_ACTIVATE:
 		return (EOPNOTSUPP);
-		break;
 
 	case DVACT_DEACTIVATE:
 		sc->sc_dying = 1;
@@ -646,9 +658,13 @@ USB_DETACH(uscanner)
 
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 	/* locate the major number */
+#if defined(__NetBSD__)
+	maj = cdevsw_lookup_major(&uscanner_cdevsw);
+#elif defined(__OpenBSD__)
 	for (maj = 0; maj < nchrdev; maj++)
 		if (cdevsw[maj].d_open == uscanneropen)
 			break;
+#endif
 
 	/* Nuke the vnodes for any open instances (calls close). */
 	mn = self->dv_unit * USB_MAX_ENDPOINTS;

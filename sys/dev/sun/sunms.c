@@ -1,4 +1,4 @@
-/*	$NetBSD: sunms.c,v 1.4.2.1 2002/01/10 19:58:35 thorpej Exp $	*/
+/*	$NetBSD: sunms.c,v 1.4.2.2 2002/10/10 18:42:24 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunms.c,v 1.4.2.1 2002/01/10 19:58:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunms.c,v 1.4.2.2 2002/10/10 18:42:24 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,12 +94,11 @@ static void	sunms_attach(struct device *, struct device *, void *);
 static int	sunmsiopen(struct device *, int mode);
 int	sunmsinput(int, struct tty *);
 
-struct cfattach ms_ca = {
-	sizeof(struct ms_softc), sunms_match, sunms_attach
-};
+CFATTACH_DECL(ms, sizeof(struct ms_softc),
+    sunms_match, sunms_attach, NULL, NULL);
 
 struct  linesw sunms_disc =
-	{ "sunms", 8, ttylopen, ttylclose, ttyerrio, ttyerrio, nullioctl,
+	{ "sunms", 8, ttylopen, ttylclose, ttyerrio, ttyerrio, ttynullioctl,
 	  sunmsinput, ttstart, nullmodem, ttpoll };	/* 8- SUNMOUSEDISC */
 
 /*
@@ -168,16 +167,19 @@ sunmsiopen(dev, flags)
 	struct tty *tp = (struct tty *)ms->ms_cs;
 	struct proc *p = curproc;
 	struct termios t;
-	int maj;
+	const struct cdevsw *cdev;
 	int error;
 
-	maj = major(tp->t_dev);
 	if (p == NULL)
 		p = &proc0;
 
+	cdev = cdevsw_lookup(tp->t_dev);
+	if (cdev == NULL)
+		return (ENXIO);
+
 	/* Open the lower device */
-	if ((error = (*cdevsw[maj].d_open)(tp->t_dev, O_NONBLOCK|flags,
-					   0/* ignored? */, p)) != 0)
+	if ((error = (*cdev->d_open)(tp->t_dev, O_NONBLOCK|flags,
+				     0/* ignored? */, p)) != 0)
 		return (error);
 
 	/* Now configure it for the console. */

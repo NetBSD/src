@@ -1,4 +1,4 @@
-/*	$NetBSD: uplcom.c,v 1.18.2.6 2002/09/06 08:47:09 jdolecek Exp $	*/
+/*	$NetBSD: uplcom.c,v 1.18.2.7 2002/10/10 18:42:43 jdolecek Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.18.2.6 2002/09/06 08:47:09 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.18.2.7 2002/10/10 18:42:43 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -397,7 +397,6 @@ uplcom_activate(device_ptr_t self, enum devact act)
 	switch (act) {
 	case DVACT_ACTIVATE:
 		return (EOPNOTSUPP);
-		break;
 
 	case DVACT_DEACTIVATE:
 		if (sc->sc_subdev != NULL)

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.151.2.6 2002/09/06 08:46:20 jdolecek Exp $	*/
+/*	$NetBSD: cd.c,v 1.151.2.7 2002/10/10 18:42:12 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.151.2.6 2002/09/06 08:46:20 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.151.2.7 2002/10/10 18:42:12 jdolecek Exp $");
 
 #include "rnd.h"
 
@@ -140,6 +140,24 @@ int	dvd_read_struct __P((struct cd_softc *, dvd_struct *));
 
 extern struct cfdriver cd_cd;
 
+dev_type_open(cdopen);
+dev_type_close(cdclose);
+dev_type_read(cdread);
+dev_type_write(cdwrite);
+dev_type_ioctl(cdioctl);
+dev_type_strategy(cdstrategy);
+dev_type_dump(cddump);
+dev_type_size(cdsize);
+
+const struct bdevsw cd_bdevsw = {
+	cdopen, cdclose, cdstrategy, cdioctl, cddump, cdsize, D_DISK
+};
+
+const struct cdevsw cd_cdevsw = {
+	cdopen, cdclose, cdread, cdwrite, cdioctl,
+	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
+};
+
 struct dkdriver cddkdriver = { cdstrategy };
 
 const struct scsipi_periphsw cd_switch = {
@@ -189,10 +207,6 @@ cdattach(parent, cd, periph, ops)
 	cd->sc_dk.dk_name = cd->sc_dev.dv_xname;
 	disk_attach(&cd->sc_dk);
 
-#ifdef __BROKEN_DK_ESTABLISH
-	dk_establish(&cd->sc_dk, &cd->sc_dev);		/* XXX */
-#endif
-
 	printf("\n");
 
 #if NRND > 0
@@ -232,12 +246,8 @@ cddetach(self, flags)
 	int s, bmaj, cmaj, i, mn;
 
 	/* locate the major number */
-	for (bmaj = 0; bmaj <= nblkdev; bmaj++)
-		if (bdevsw[bmaj].d_open == cdopen)
-			break;
-	for (cmaj = 0; cmaj <= nchrdev; cmaj++)
-		if (cdevsw[cmaj].d_open == cdopen)
-			break;
+	bmaj = bdevsw_lookup_major(&cd_bdevsw);
+	cmaj = cdevsw_lookup_major(&cd_cdevsw);
 
 	s = splbio();
 

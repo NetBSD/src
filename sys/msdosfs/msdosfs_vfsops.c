@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.74.2.3 2002/09/06 08:48:45 jdolecek Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.74.2.4 2002/10/10 18:43:36 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.74.2.3 2002/09/06 08:48:45 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.74.2.4 2002/10/10 18:43:36 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -71,6 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.74.2.3 2002/09/06 08:48:45 jdol
 #include <sys/malloc.h>
 #include <sys/dirent.h>
 #include <sys/stat.h>
+#include <sys/conf.h>
 
 #include <msdosfs/bpb.h>
 #include <msdosfs/bootsect.h>
@@ -245,6 +246,18 @@ msdosfs_mount(mp, path, data, ndp, p)
 	int error, flags;
 	mode_t accessmode;
 
+	if (mp->mnt_flag & MNT_GETARGS) {
+		pmp = VFSTOMSDOSFS(mp);
+		if (pmp == NULL)
+			return EIO;
+		args.fspec = NULL;
+		args.uid = pmp->pm_uid;
+		args.gid = pmp->pm_gid;
+		args.mask = pmp->pm_mask;
+		args.flags = pmp->pm_flags;
+		vfs_showexport(mp, &args.export, &pmp->pm_export);
+		return copyout(&args, data, sizeof(args));
+	}
 	error = copyin(data, (caddr_t)&args, sizeof(struct msdosfs_args));
 	if (error)
 		return (error);
@@ -310,7 +323,7 @@ msdosfs_mount(mp, path, data, ndp, p)
 		vrele(devvp);
 		return (ENOTBLK);
 	}
-	if (major(devvp->v_rdev) >= nblkdev) {
+	if (bdevsw_lookup(devvp->v_rdev) == NULL) {
 		vrele(devvp);
 		return (ENXIO);
 	}

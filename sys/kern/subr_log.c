@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_log.c,v 1.20.6.3 2002/06/23 17:49:34 jdolecek Exp $	*/
+/*	$NetBSD: subr_log.c,v 1.20.6.4 2002/10/10 18:43:14 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_log.c,v 1.20.6.3 2002/06/23 17:49:34 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_log.c,v 1.20.6.4 2002/10/10 18:43:14 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,6 +70,18 @@ int	log_open;			/* also used in log() */
 int	msgbufmapped;			/* is the message buffer mapped */
 int	msgbufenabled;			/* is logging to the buffer enabled */
 struct	kern_msgbuf *msgbufp;		/* the mapped buffer, itself. */
+
+dev_type_open(logopen);
+dev_type_close(logclose);
+dev_type_read(logread);
+dev_type_ioctl(logioctl);
+dev_type_poll(logpoll);
+dev_type_kqfilter(logkqfilter);
+
+const struct cdevsw log_cdevsw = {
+	logopen, logclose, logread, nowrite, logioctl,
+	nostop, notty, logpoll, nommap, logkqfilter,
+};
 
 void
 initmsgbuf(buf, bufsize)

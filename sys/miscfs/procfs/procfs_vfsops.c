@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vfsops.c,v 1.39.2.2 2002/09/06 08:48:40 jdolecek Exp $	*/
+/*	$NetBSD: procfs_vfsops.c,v 1.39.2.3 2002/10/10 18:43:34 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.39.2.2 2002/09/06 08:48:40 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.39.2.3 2002/10/10 18:43:34 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -106,6 +106,15 @@ procfs_mount(mp, path, data, ndp, p)
 	if (UIO_MX & (UIO_MX-1)) {
 		log(LOG_ERR, "procfs: invalid directory entry size");
 		return (EINVAL);
+	}
+
+	if (mp->mnt_flag & MNT_GETARGS) {
+		pmnt = VFSTOPROC(mp);
+		if (pmnt == NULL)
+			return EIO;
+		args.version = PROCFS_ARGSVERSION;
+		args.flags = pmnt->pmnt_flags;
+		return copyout(&args, data, sizeof(args));
 	}
 
 	if (mp->mnt_flag & MNT_UPDATE)

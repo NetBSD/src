@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.46.2.3 2002/03/16 16:02:22 jdolecek Exp $ */
+/* $NetBSD: device.h,v 1.46.2.4 2002/10/10 18:44:43 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -162,23 +162,46 @@ TAILQ_HEAD(evcntlist, evcnt);
     }
 
 /*
+ * Description of a configuration parent.  Each device attachment attaches
+ * to an "interface attribute", which is given in this structure.  The parent
+ * *must* carry this attribute.  Optionally, an individual device instance
+ * may also specify a specific parent device instance.
+ */
+struct cfparent {
+	const char *cfp_iattr;		/* interface attribute */
+	const char *cfp_parent;		/* optional specific parent */
+	int cfp_unit;			/* optional specific unit
+					   (-1 to wildcard) */
+};
+
+/*
  * Configuration data (i.e., data placed in ioconf.c).
  */
 struct cfdata {
-	struct	cfattach *cf_attach;	/* config attachment */
-	struct	cfdriver *cf_driver;	/* config driver */
+	const char *cf_name;		/* driver name */
+	const struct cfattach *cf_attach;/* config attachment */
 	short	cf_unit;		/* unit number */
 	short	cf_fstate;		/* finding state (below) */
 	int	*cf_loc;		/* locators (machine dependent) */
 	int	cf_flags;		/* flags from config */
-	short	*cf_parents;		/* potential parents */
-	const char **cf_locnames;	/* locator names (machine dependent) */
+	const struct cfparent *cf_pspec;/* parent specification */
+	const char * const *cf_locnames;/* locator names (machine dependent) */
 };
 #define FSTATE_NOTFOUND		0	/* has not been found */
 #define	FSTATE_FOUND		1	/* has been found */
 #define	FSTATE_STAR		2	/* duplicable */
 #define FSTATE_DSTAR		3	/* has not been found, and disabled */
 #define FSTATE_DNOTFOUND	4	/* duplicate, and disabled */
+
+/*
+ * Multiple configuration data tables may be maintained.  This structure
+ * provides the linkage.
+ */
+struct cftable {
+	struct cfdata *ct_cfdata;	/* pointer to cfdata table */
+	TAILQ_ENTRY(cftable) ct_list;	/* list linkage */
+};
+TAILQ_HEAD(cftablelist, cftable);
 
 typedef int (*cfmatch_t)(struct device *, struct cfdata *, void *);
 
@@ -205,16 +228,29 @@ struct cfattach {
 	int	(*ca_activate)(struct device *, enum devact);
 };
 
+#define	CFATTACH_DECL(name, ddsize, matfn, attfn, detfn, actfn)		\
+const struct cfattach __CONCAT(name,_ca) = {				\
+	ddsize, matfn, attfn, detfn, actfn				\
+}
+
 /* Flags given to config_detach(), and the ca_detach function. */
 #define	DETACH_FORCE	0x01		/* force detachment; hardware gone */
 #define	DETACH_QUIET	0x02		/* don't print a notice */
 
 struct cfdriver {
+	LIST_ENTRY(cfdriver) cd_list;	/* link on allcfdrivers */
 	void	**cd_devs;		/* devices found */
-	char	*cd_name;		/* device name */
+	const char *cd_name;		/* device name */
 	enum	devclass cd_class;	/* device classification */
 	int	cd_ndevs;		/* size of cd_devs array */
+	const char * const *cd_attrs;	/* attributes for this device */
 };
+LIST_HEAD(cfdriverlist, cfdriver);
+
+#define	CFDRIVER_DECL(name, class, attrs)				\
+struct cfdriver __CONCAT(name,_cd) = {					\
+	{ }, NULL, ___STRING(name), class, 0, attrs			\
+}
 
 /*
  * Configuration printing functions, and their return codes.  The second
@@ -237,19 +273,28 @@ struct pdevinit {
 
 #ifdef _KERNEL
 
+extern struct cfdriverlist allcfdrivers;/* list of all cfdrivers */
 extern struct devicelist alldevs;	/* list of all devices */
 extern struct evcntlist allevents;	/* list of all event counters */
+extern struct cftablelist allcftables;	/* list of all cfdata tables */
 extern struct device *booted_device;	/* the device we booted from */
 
 extern __volatile int config_pending; 	/* semaphore for mountroot */
 
-void configure(void);
+void	config_init(void);
+void	configure(void);
+
+int	config_cfdriver_attach(struct cfdriver *);
+int	config_cfdriver_detach(struct cfdriver *);
+
 struct cfdata *config_search(cfmatch_t, struct device *, void *);
 struct cfdata *config_rootsearch(cfmatch_t, const char *, void *);
 struct device *config_found_sm(struct device *, void *, cfprint_t, cfmatch_t);
 struct device *config_rootfound(const char *, void *);
 struct device *config_attach(struct device *, struct cfdata *, void *,
     cfprint_t);
+int config_match(struct device *, struct cfdata *, void *);
+
 void config_makeroom(int n, struct cfdriver *cd);
 int config_detach(struct device *, int);
 int config_activate(struct device *);
@@ -258,6 +303,9 @@ void config_defer(struct device *, void (*)(struct device *));
 void config_interrupts(struct device *, void (*)(struct device *));
 void config_pending_incr(void);
 void config_pending_decr(void);
+
+int config_finalize_register(struct device *, int (*)(struct device *));
+void config_finalize(void);
 
 #ifdef __HAVE_DEVICE_REGISTER
 void device_register(struct device *, void *);

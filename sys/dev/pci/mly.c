@@ -1,4 +1,4 @@
-/*	$NetBSD: mly.c,v 1.6.2.6 2002/06/23 17:47:50 jdolecek Exp $	*/
+/*	$NetBSD: mly.c,v 1.6.2.7 2002/10/10 18:40:56 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mly.c,v 1.6.2.6 2002/06/23 17:47:50 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mly.c,v 1.6.2.7 2002/10/10 18:40:56 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -161,12 +161,18 @@ static void	mly_scsipi_request(struct scsipi_channel *,
 static int	mly_user_command(struct mly_softc *, struct mly_user_command *);
 static int	mly_user_health(struct mly_softc *, struct mly_user_health *);
 
-cdev_decl(mly);
-
 extern struct	cfdriver mly_cd;
 
-struct cfattach mly_ca = {
-	sizeof(struct mly_softc), mly_match, mly_attach
+CFATTACH_DECL(mly, sizeof(struct mly_softc),
+    mly_match, mly_attach, NULL, NULL);
+
+dev_type_open(mlyopen);
+dev_type_close(mlyclose);
+dev_type_ioctl(mlyioctl);
+
+const struct cdevsw mly_cdevsw = {
+	mlyopen, mlyclose, noread, nowrite, mlyioctl,
+	nostop, notty, nopoll, nommap, nokqfilter,
 };
 
 struct mly_ident {

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hme_sbus.c,v 1.6.4.4 2002/09/06 08:46:15 jdolecek Exp $	*/
+/*	$NetBSD: if_hme_sbus.c,v 1.6.4.5 2002/10/10 18:42:05 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_hme_sbus.c,v 1.6.4.4 2002/09/06 08:46:15 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_hme_sbus.c,v 1.6.4.5 2002/10/10 18:42:05 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,9 +73,8 @@ struct hmesbus_softc {
 int	hmematch_sbus __P((struct device *, struct cfdata *, void *));
 void	hmeattach_sbus __P((struct device *, struct device *, void *));
 
-struct cfattach hme_sbus_ca = {
-	sizeof(struct hmesbus_softc), hmematch_sbus, hmeattach_sbus
-};
+CFATTACH_DECL(hme_sbus, sizeof(struct hmesbus_softc),
+    hmematch_sbus, hmeattach_sbus, NULL, NULL);
 
 int
 hmematch_sbus(parent, cf, aux)
@@ -85,7 +84,7 @@ hmematch_sbus(parent, cf, aux)
 {
 	struct sbus_attach_args *sa = aux;
 
-	return (strcmp(cf->cf_driver->cd_name, sa->sa_name) == 0 ||
+	return (strcmp(cf->cf_name, sa->sa_name) == 0 ||
 	    strcmp("SUNW,qfe", sa->sa_name) == 0 ||
 	    strcmp("SUNW,hme", sa->sa_name) == 0);
 }

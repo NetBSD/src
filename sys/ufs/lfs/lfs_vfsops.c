@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.65.4.5 2002/09/06 08:50:19 jdolecek Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.65.4.6 2002/10/10 18:44:57 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.65.4.5 2002/09/06 08:50:19 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.65.4.6 2002/10/10 18:44:57 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -96,6 +96,7 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.65.4.5 2002/09/06 08:50:19 jdolecek
 #include <sys/socket.h>
 #include <uvm/uvm_extern.h>
 #include <sys/sysctl.h>
+#include <sys/conf.h>
 
 #include <miscfs/specfs/specdev.h>
 
@@ -242,6 +243,14 @@ lfs_mount(struct mount *mp, const char *path, void *data, struct nameidata *ndp,
 	int error;
 	mode_t accessmode;
 
+	if (mp->mnt_flag & MNT_GETARGS) {
+		ump = VFSTOUFS(mp);
+		if (ump == NULL)
+			return EIO;
+		args.fspec = NULL;
+		vfs_showexport(mp, &args.export, &ump->um_export);
+		return copyout(&args, data, sizeof(args));
+	}
 	error = copyin(data, (caddr_t)&args, sizeof (struct ufs_args));
 	if (error)
 		return (error);
@@ -293,7 +302,7 @@ lfs_mount(struct mount *mp, const char *path, void *data, struct nameidata *ndp,
 		vrele(devvp);
 		return (ENOTBLK);
 	}
-	if (major(devvp->v_rdev) >= nblkdev) {
+	if (bdevsw_lookup(devvp->v_rdev) == NULL) {
 		vrele(devvp);
 		return (ENXIO);
 	}
@@ -1206,7 +1215,7 @@ lfs_unmount(struct mount *mp, int mntflags, struct proc *p)
 	if ((error = VFS_SYNC(mp, 1, p->p_ucred, p)) != 0)
 		return (error);
 	if (LIST_FIRST(&fs->lfs_ivnode->v_dirtyblkhd))
-		panic("lfs_unmount: still dirty blocks on ifile vnode\n");
+		panic("lfs_unmount: still dirty blocks on ifile vnode");
 
 	/* Explicitly write the superblock, to update serial and pflags */
 	fs->lfs_pflags |= LFS_PF_CLEAN;
@@ -1485,7 +1494,7 @@ lfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 	ufs_vinit(mp, lfs_specop_p, lfs_fifoop_p, &vp);
 #ifdef DIAGNOSTIC
 	if (vp->v_type == VNON) {
-		panic("lfs_vget: ino %d is type VNON! (ifmt %o)\n",
+		panic("lfs_vget: ino %d is type VNON! (ifmt %o)",
 		       ip->i_number, (ip->i_ffs_mode & IFMT) >> 12);
 	}
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_diskqueue.c,v 1.13.8.2 2002/09/06 08:46:01 jdolecek Exp $	*/
+/*	$NetBSD: rf_diskqueue.c,v 1.13.8.3 2002/10/10 18:41:48 jdolecek Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -66,7 +66,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_diskqueue.c,v 1.13.8.2 2002/09/06 08:46:01 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_diskqueue.c,v 1.13.8.3 2002/10/10 18:41:48 jdolecek Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -89,9 +89,19 @@ static int init_dqd(RF_DiskQueueData_t *);
 static void clean_dqd(RF_DiskQueueData_t *);
 static void rf_ShutdownDiskQueueSystem(void *);
 
+#ifndef RF_DEBUG_DISKQUEUE
+#define RF_DEBUG_DISKQUEUE 0
+#endif
+
+#if RF_DEBUG_DISKQUEUE
 #define Dprintf1(s,a)         if (rf_queueDebug) rf_debug_printf(s,(void *)((unsigned long)a),NULL,NULL,NULL,NULL,NULL,NULL,NULL)
 #define Dprintf2(s,a,b)       if (rf_queueDebug) rf_debug_printf(s,(void *)((unsigned long)a),(void *)((unsigned long)b),NULL,NULL,NULL,NULL,NULL,NULL)
 #define Dprintf3(s,a,b,c)     if (rf_queueDebug) rf_debug_printf(s,(void *)((unsigned long)a),(void *)((unsigned long)b),(void *)((unsigned long)c),NULL,NULL,NULL,NULL,NULL)
+#else
+#define Dprintf1(s,a)
+#define Dprintf2(s,a,b)
+#define Dprintf3(s,a,b,c)
+#endif
 
 /*****************************************************************************
  *
@@ -197,21 +207,18 @@ rf_ConfigureDiskQueue(
 	diskqueue->maxOutstanding = maxOutstanding;
 	diskqueue->curPriority = RF_IO_NORMAL_PRIORITY;
 	diskqueue->nextLockingOp = NULL;
-	diskqueue->unlockingOp = NULL;
 	diskqueue->numWaiting = 0;
 	diskqueue->flags = 0;
 	diskqueue->raidPtr = raidPtr;
 	diskqueue->rf_cinfo = &raidPtr->raid_cinfo[r][c];
 	rc = rf_create_managed_mutex(listp, &diskqueue->mutex);
 	if (rc) {
-		RF_ERRORMSG3("Unable to init mutex file %s line %d rc=%d\n", __FILE__,
-		    __LINE__, rc);
+		rf_print_unable_to_init_mutex(__FILE__, __LINE__, rc);
 		return (rc);
 	}
 	rc = rf_create_managed_cond(listp, &diskqueue->cond);
 	if (rc) {
-		RF_ERRORMSG3("Unable to init cond file %s line %d rc=%d\n", __FILE__,
-		    __LINE__, rc);
+		rf_print_unable_to_init_cond(__FILE__, __LINE__, rc);
 		return (rc);
 	}
 	return (0);
@@ -236,8 +243,7 @@ rf_ConfigureDiskQueueSystem(listp)
 		return (ENOMEM);
 	rc = rf_ShutdownCreate(listp, rf_ShutdownDiskQueueSystem, NULL);
 	if (rc) {
-		RF_ERRORMSG3("Unable to add to shutdown list file %s line %d rc=%d\n",
-		    __FILE__, __LINE__, rc);
+		rf_print_unable_to_add_shutdown( __FILE__, __LINE__, rc);
 		rf_ShutdownDiskQueueSystem(NULL);
 		return (rc);
 	}
@@ -346,9 +352,11 @@ rf_DiskIOEnqueue(queue, req, pri)
 	RF_ASSERT(req->type == RF_IO_TYPE_NOP || req->numSector);
 	req->priority = pri;
 
+#if RF_DEBUG_DISKQUEUE
 	if (rf_queueDebug && (req->numSector == 0)) {
 		printf("Warning: Enqueueing zero-sector access\n");
 	}
+#endif
 	/*
          * kernel
          */
@@ -408,7 +416,7 @@ rf_DiskIOComplete(queue, req, status)
 	 * locking req fails */
 	if (RF_UNLOCKING_REQ(req) || (RF_LOCKING_REQ(req) && status)) {
 		Dprintf2("DiskIOComplete: unlocking queue at r %d c %d\n", queue->row, queue->col);
-		RF_ASSERT(RF_QUEUE_LOCKED(queue) && (queue->unlockingOp == NULL));
+		RF_ASSERT(RF_QUEUE_LOCKED(queue));
 		RF_UNLOCK_QUEUE(queue);
 	}
 	queue->numOutstanding--;
@@ -532,7 +540,6 @@ rf_CreateDiskQueueData(
 	p->next = next;
 	p->tracerec = tracerec;
 	p->priority = RF_IO_NORMAL_PRIORITY;
-	p->buf2 = NULL;
 	p->raidPtr = raidPtr;
 	p->flags = flags;
 	p->b_proc = kb_proc;

@@ -1,4 +1,4 @@
-#	$NetBSD: files.ofw,v 1.11 2000/11/14 06:45:55 matt Exp $
+#	$NetBSD: files.ofw,v 1.11.4.1 2002/10/10 18:40:20 jdolecek Exp $
 #
 # First cut on Openfirmware interface
 #
@@ -34,6 +34,6 @@ attach	ofrtc at ofbus
 file	dev/ofw/ofrtc.c			ofrtc needs-flag
 
 # Generic bus support
-device	ofbus
+device	ofbus: ofbus
 attach	ofbus at ofbus
 file	dev/ofw/ofbus.c			ofbus

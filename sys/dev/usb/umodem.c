@@ -1,4 +1,4 @@
-/*	$NetBSD: umodem.c,v 1.40.2.3 2002/09/06 08:47:08 jdolecek Exp $	*/
+/*	$NetBSD: umodem.c,v 1.40.2.4 2002/10/10 18:42:42 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umodem.c,v 1.40.2.3 2002/09/06 08:47:08 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umodem.c,v 1.40.2.4 2002/10/10 18:42:42 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -725,7 +725,6 @@ umodem_activate(device_ptr_t self, enum devact act)
 	switch (act) {
 	case DVACT_ACTIVATE:
 		return (EOPNOTSUPP);
-		break;
 
 	case DVACT_DEACTIVATE:
 		sc->sc_dying = 1;

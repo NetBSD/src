@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.128.2.12 2002/09/29 09:59:15 jdolecek Exp $	*/
+/*	$NetBSD: tty.c,v 1.128.2.13 2002/10/10 18:43:17 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.128.2.12 2002/09/29 09:59:15 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.128.2.13 2002/10/10 18:43:17 jdolecek Exp $");
 
 #include "opt_uconsole.h"
 
@@ -298,6 +298,7 @@ ttyclose(struct tty *tp)
 int
 ttyinput(int c, struct tty *tp)
 {
+	const struct cdevsw *cdev;
 	int	iflag, lflag, i, error;
 	u_char	*cc;
 
@@ -441,8 +442,9 @@ ttyinput(int c, struct tty *tp)
 			if (CCEQ(cc[VSTOP], c)) {
 				if (!ISSET(tp->t_state, TS_TTSTOP)) {
 					SET(tp->t_state, TS_TTSTOP);
-					(*cdevsw[major(tp->t_dev)].d_stop)(tp,
-					   0);
+					cdev = cdevsw_lookup(tp->t_dev);
+					if (cdev != NULL)
+						(*cdev->d_stop)(tp, 0);
 					return (0);
 				}
 				if (!CCEQ(cc[VSTART], c))
@@ -976,13 +978,18 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct proc *p)
 		(*tp->t_linesw->l_rint)(*(u_char *)data, tp);
 		break;
 	case TIOCSTOP:			/* stop output, like ^S */
+	{
+		const struct cdevsw *cdev;
 		s = spltty();
 		if (!ISSET(tp->t_state, TS_TTSTOP)) {
 			SET(tp->t_state, TS_TTSTOP);
-			(*cdevsw[major(tp->t_dev)].d_stop)(tp, 0);
+			cdev = cdevsw_lookup(tp->t_dev);
+			if (cdev != NULL)
+				(*cdev->d_stop)(tp, 0);
 		}
 		splx(s);
 		break;
+	}
 	case TIOCSCTTY:			/* become controlling tty */
 		/* Session ctty vnode pointer set in vnode layer. */
 		if (!SESS_LEADER(p) ||
@@ -1117,8 +1124,12 @@ ttykqfilter(dev_t dev, struct knote *kn)
 	struct tty	*tp;
 	struct klist	*klist;
 	int		s;
+	const struct cdevsw	*cdev;
 
-	tp = (*cdevsw[major(dev)].d_tty)(dev);
+	cdev = cdevsw_lookup(dev);
+	if (cdev == NULL)
+		return (ENXIO);
+	tp = (*cdev->d_tty)(dev);
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
 		klist = &tp->t_rsel.si_klist;
@@ -1198,6 +1209,7 @@ ttywflush(struct tty *tp)
 void
 ttyflush(struct tty *tp, int rw)
 {
+	const struct cdevsw *cdev;
 	int	s;
 
 	s = spltty();
@@ -1211,7 +1223,9 @@ ttyflush(struct tty *tp, int rw)
 	}
 	if (rw & FWRITE) {
 		CLR(tp->t_state, TS_TTSTOP);
-		(*cdevsw[major(tp->t_dev)].d_stop)(tp, rw);
+		cdev = cdevsw_lookup(tp->t_dev);
+		if (cdev != NULL)
+			(*cdev->d_stop)(tp, rw);
 		FLUSHQ(&tp->t_outq);
 		wakeup((caddr_t)&tp->t_outq);
 		selnotify(&tp->t_wsel, 0);
@@ -2014,11 +2028,11 @@ ttyinfo(struct tty *tp)
 		ttyprintf(tp, "not a controlling terminal\n");
 	else if (tp->t_pgrp == NULL)
 		ttyprintf(tp, "no foreground process group\n");
-	else if ((p = tp->t_pgrp->pg_members.lh_first) == 0)
+	else if ((p = LIST_FIRST(&tp->t_pgrp->pg_members)) == 0)
 		ttyprintf(tp, "empty foreground process group\n");
 	else {
 		/* Pick interesting process. */
-		for (pick = NULL; p != NULL; p = p->p_pglist.le_next)
+		for (pick = NULL; p != NULL; p = LIST_NEXT(p, p_pglist))
 			if (proc_compare(pick, p))
 				pick = p;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mpu_yds.c,v 1.1.8.1 2002/01/10 19:56:51 thorpej Exp $	*/
+/*	$NetBSD: mpu_yds.c,v 1.1.8.2 2002/10/10 18:40:58 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpu_yds.c,v 1.1.8.1 2002/01/10 19:56:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpu_yds.c,v 1.1.8.2 2002/10/10 18:40:58 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,9 +65,8 @@ __KERNEL_RCSID(0, "$NetBSD: mpu_yds.c,v 1.1.8.1 2002/01/10 19:56:51 thorpej Exp 
 static int	mpu_yds_match __P((struct device *, struct cfdata *, void *));
 static void	mpu_yds_attach __P((struct device *, struct device *, void *));
 
-struct cfattach mpu_yds_ca = {
-	sizeof (struct mpu_softc), mpu_yds_match, mpu_yds_attach
-};
+CFATTACH_DECL(mpu_yds, sizeof (struct mpu_softc),
+    mpu_yds_match, mpu_yds_attach, NULL, NULL);
 
 static int
 mpu_yds_match(parent, match, aux)

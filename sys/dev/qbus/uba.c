@@ -1,4 +1,4 @@
-/*	$NetBSD: uba.c,v 1.57.2.2 2002/06/23 17:48:32 jdolecek Exp $	   */
+/*	$NetBSD: uba.c,v 1.57.2.3 2002/10/10 18:41:40 jdolecek Exp $	   */
 /*
  * Copyright (c) 1996 Jonathan Stone.
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
@@ -38,12 +38,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uba.c,v 1.57.2.2 2002/06/23 17:48:32 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uba.c,v 1.57.2.3 2002/10/10 18:41:40 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/systm.h>
-#include <sys/map.h>
 #include <sys/buf.h>
 #include <sys/proc.h>
 #include <sys/user.h>
@@ -263,7 +262,7 @@ ubasearch(struct device *parent, struct cfdata *cf, void *aux)
 		goto forgetit;
 
 	scb_vecref(0, 0); /* Clear vector ref */
-	i = (*cf->cf_attach->ca_match) (parent, cf, &ua);
+	i = config_match(parent, cf, &ua);
 
 	if (sc->uh_errchk)
 		if ((*sc->uh_errchk)(sc))
@@ -287,7 +286,7 @@ ubasearch(struct device *parent, struct cfdata *cf, void *aux)
 
 fail:
 	printf("%s%d at %s csr %o %s\n",
-	    cf->cf_driver->cd_name, cf->cf_unit, parent->dv_xname,
+	    cf->cf_name, cf->cf_unit, parent->dv_xname,
 	    cf->cf_loc[0], (i ? "zero vector" : "didn't interrupt"));
 
 forgetit:

@@ -1,4 +1,4 @@
-/* $NetBSD: pckbd.c,v 1.26.2.2 2002/06/23 17:48:09 jdolecek Exp $ */
+/* $NetBSD: pckbd.c,v 1.26.2.3 2002/10/10 18:41:21 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbd.c,v 1.26.2.2 2002/06/23 17:48:09 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbd.c,v 1.26.2.3 2002/10/10 18:41:21 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,9 +136,8 @@ static int pckbd_is_console __P((pckbc_tag_t, pckbc_slot_t));
 int pckbdprobe __P((struct device *, struct cfdata *, void *));
 void pckbdattach __P((struct device *, struct device *, void *));
 
-struct cfattach pckbd_ca = {
-	sizeof(struct pckbd_softc), pckbdprobe, pckbdattach,
-};
+CFATTACH_DECL(pckbd, sizeof(struct pckbd_softc),
+    pckbdprobe, pckbdattach, NULL, NULL);
 
 int	pckbd_enable __P((void *, int));
 void	pckbd_set_leds __P((void *, int));

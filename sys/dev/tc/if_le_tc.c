@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_tc.c,v 1.11.8.1 2002/01/10 19:58:40 thorpej Exp $	*/
+/*	$NetBSD: if_le_tc.c,v 1.11.8.2 2002/10/10 18:42:26 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_tc.c,v 1.11.8.1 2002/01/10 19:58:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_tc.c,v 1.11.8.2 2002/10/10 18:42:26 jdolecek Exp $");
 
 #include "opt_inet.h"
 
@@ -63,9 +63,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_le_tc.c,v 1.11.8.1 2002/01/10 19:58:40 thorpej Ex
 int	le_tc_match __P((struct device *, struct cfdata *, void *));
 void	le_tc_attach __P((struct device *, struct device *, void *));
 
-struct cfattach le_tc_ca = {
-	sizeof(struct le_softc), le_tc_match, le_tc_attach
-};
+CFATTACH_DECL(le_tc, sizeof(struct le_softc),
+    le_tc_match, le_tc_attach, NULL, NULL);
 
 #define	LE_OFFSET_RAM		0x0
 #define	LE_OFFSET_LANCE		0x100000

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_systrace.c,v 1.15.2.3 2002/09/25 13:28:17 jdolecek Exp $	*/
+/*	$NetBSD: kern_systrace.c,v 1.15.2.4 2002/10/10 18:43:12 jdolecek Exp $	*/
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.15.2.3 2002/09/25 13:28:17 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.15.2.4 2002/10/10 18:43:12 jdolecek Exp $");
 
 #include "opt_systrace.h"
 
@@ -69,7 +69,11 @@ __KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.15.2.3 2002/09/25 13:28:17 jdole
 #define	M_XDATA		M_FILE	/* XXX */
 #endif
 
+#ifdef __NetBSD__
+dev_type_open(systraceopen);
+#else
 cdev_decl(systrace);
+#endif
 
 #ifdef __NetBSD__
 int	systracef_read(struct file *, off_t *, struct uio *, struct ucred *,
@@ -180,6 +184,13 @@ struct pool systr_policy_pl;
 
 int systrace_debug = 0;
 struct lock systrace_lck;
+
+#ifdef __NetBSD__
+const struct cdevsw systrace_cdevsw = {
+	systraceopen, noclose, noread, nowrite, noioctl,
+	nostop, notty, nopoll, nommap, nokqfilter,
+};
+#endif
 
 #define DPRINTF(y)	if (systrace_debug) printf y;
 

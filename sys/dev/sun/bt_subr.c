@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_subr.c,v 1.1.6.2 2002/09/06 08:46:31 jdolecek Exp $ */
+/*	$NetBSD: bt_subr.c,v 1.1.6.3 2002/10/10 18:42:21 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bt_subr.c,v 1.1.6.2 2002/09/06 08:46:31 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bt_subr.c,v 1.1.6.3 2002/10/10 18:42:21 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -148,7 +148,7 @@ bt_putcmap(p, cm, cmsize, uspace)
 
 	start = p->index;
 	count = p->count;
-	if (start >= cmsize || start + count > cmsize)
+	if (start >= cmsize || count > cmsize - start)
 		return (EINVAL);
 
 	if (uspace) {

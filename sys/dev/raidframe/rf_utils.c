@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_utils.c,v 1.5.8.3 2002/09/06 08:46:11 jdolecek Exp $	*/
+/*	$NetBSD: rf_utils.c,v 1.5.8.4 2002/10/10 18:42:01 jdolecek Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ****************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_utils.c,v 1.5.8.3 2002/09/06 08:46:11 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_utils.c,v 1.5.8.4 2002/10/10 18:42:01 jdolecek Exp $");
 
 #include "rf_archs.h"
 #include "rf_utils.h"
@@ -56,6 +56,8 @@ rf_make_2d_array(b, k, allocList)
 	}
 	return (retval);
 }
+
+#if (RF_INCLUDE_PARITY_DECLUSTERING > 0) || (RF_INCLUDE_PARITY_DECLUSTERING_PQ > 0)
 
 void 
 rf_free_2d_array(a, b, k)
@@ -91,6 +93,7 @@ rf_free_1d_array(a, n)
 {
 	RF_Free(a, n * sizeof(RF_RowCol_t));
 }
+ 0)
 /* Euclid's algorithm:  finds and returns the greatest common divisor
  * between a and b.     (MCH)
  */
@@ -108,6 +111,7 @@ rf_gcd(m, n)
 	}
 	return (n);
 }
+#endif
 /* these convert between text and integer.  Apparently the regular C macros
  * for doing this are not available in the kernel
  */

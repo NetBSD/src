@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcomp_input.c,v 1.16.4.2 2002/09/06 08:49:34 jdolecek Exp $	*/
+/*	$NetBSD: ipcomp_input.c,v 1.16.4.3 2002/10/10 18:44:21 jdolecek Exp $	*/
 /*	$KAME: ipcomp_input.c,v 1.29 2001/09/04 08:43:19 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipcomp_input.c,v 1.16.4.2 2002/09/06 08:49:34 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipcomp_input.c,v 1.16.4.3 2002/10/10 18:44:21 jdolecek Exp $");
 
 #include "opt_inet.h"
 
@@ -259,7 +259,7 @@ ipcomp6_input(mp, offp, proto)
 	int error;
 	size_t newlen;
 	struct secasvar *sav = NULL;
-	char *prvnxtp;
+	u_int8_t *prvnxtp;
 
 	m = *mp;
 	off = *offp;

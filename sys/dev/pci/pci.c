@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.53.2.5 2002/09/06 08:45:24 jdolecek Exp $	*/
+/*	$NetBSD: pci.c,v 1.53.2.6 2002/10/10 18:41:01 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.53.2.5 2002/09/06 08:45:24 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.53.2.6 2002/10/10 18:41:01 jdolecek Exp $");
 
 #include "opt_pci.h"
 
@@ -57,9 +57,8 @@ int pci_config_dump = 0;
 int pcimatch __P((struct device *, struct cfdata *, void *));
 void pciattach __P((struct device *, struct device *, void *));
 
-struct cfattach pci_ca = {
-	sizeof(struct pci_softc), pcimatch, pciattach
-};
+CFATTACH_DECL(pci, sizeof(struct pci_softc),
+    pcimatch, pciattach, NULL, NULL);
 
 int	pciprint __P((void *, const char *));
 int	pcisubmatch __P((struct device *, struct cfdata *, void *));
@@ -98,7 +97,7 @@ pcimatch(parent, cf, aux)
 {
 	struct pcibus_attach_args *pba = aux;
 
-	if (strcmp(pba->pba_busname, cf->cf_driver->cd_name))
+	if (strcmp(pba->pba_busname, cf->cf_name))
 		return (0);
 
 	/* Check the locators */
@@ -238,7 +237,7 @@ pcisubmatch(parent, cf, aux)
 	if (cf->pcicf_function != PCI_UNK_FUNCTION &&
 	    cf->pcicf_function != pa->pa_function)
 		return (0);
-	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+	return (config_match(parent, cf, aux));
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_map.h,v 1.3.22.2 2002/09/06 08:46:04 jdolecek Exp $	*/
+/*	$NetBSD: rf_map.h,v 1.3.22.3 2002/10/10 18:41:52 jdolecek Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -58,11 +58,7 @@ RF_PhysDiskAddr_t *rf_AllocPDAList(int count);
 
 void    rf_FreePhysDiskAddr(RF_PhysDiskAddr_t * p);
 
-RF_AccessStripeMap_t *rf_AllocAccessStripeMapComponent(void);
-
 RF_AccessStripeMap_t *rf_AllocASMList(int count);
-
-void    rf_FreeAccessStripeMapComponent(RF_AccessStripeMap_t * p);
 
 void    rf_FreeAccessStripeMap(RF_AccessStripeMapHeader_t * hdr);
 

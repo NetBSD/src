@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_core.c,v 1.14.6.5 2002/09/06 08:49:26 jdolecek Exp $	*/
+/*	$NetBSD: esp_core.c,v 1.14.6.6 2002/10/10 18:44:11 jdolecek Exp $	*/
 /*	$KAME: esp_core.c,v 1.53 2001/11/27 09:47:30 sakane Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_core.c,v 1.14.6.5 2002/09/06 08:49:26 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_core.c,v 1.14.6.6 2002/10/10 18:44:11 jdolecek Exp $");
 
 #include "opt_inet.h"
 
@@ -530,7 +530,7 @@ esp_cast128_schedule(algo, sav)
 {
 
 	set_cast128_subkey((u_int32_t *)sav->sched, _KEYBUF(sav->key_enc),
-		_KEYLEN(sav->key_enc));
+	    _KEYLEN(sav->key_enc));
 	return 0;
 }
 
@@ -580,7 +580,7 @@ esp_3des_schedule(algo, sav)
 	int error;
 	des_key_schedule *p;
 	int i;
-	char *k;
+	u_int8_t *k;
 
 	p = (des_key_schedule *)sav->sched;
 	k = _KEYBUF(sav->key_enc);
@@ -702,7 +702,7 @@ esp_cbc_decrypt(m, off, sav, algo, ivlen)
 	}
 
 	/* grab iv */
-	m_copydata(m, ivoff, ivlen, iv);
+	m_copydata(m, ivoff, ivlen, (caddr_t)iv);
 
 	/* extend iv */
 	if (ivlen == blocklen)
@@ -764,7 +764,7 @@ esp_cbc_decrypt(m, off, sav, algo, ivlen)
 			sp = mtod(s, u_int8_t *) + sn;
 		} else {
 			/* body is non-continuous */
-			m_copydata(s, sn, blocklen, sbuf);
+			m_copydata(s, sn, blocklen, (caddr_t)sbuf);
 			sp = sbuf;
 		}
 
@@ -907,11 +907,11 @@ esp_cbc_encrypt(m, off, plen, sav, algo, ivlen)
 
 	/* put iv into the packet.  if we are in derived mode, use seqno. */
 	if (derived)
-		m_copydata(m, ivoff, ivlen, iv);
+		m_copydata(m, ivoff, ivlen, (caddr_t)iv);
 	else {
 		bcopy(sav->iv, iv, ivlen);
 		/* maybe it is better to overwrite dest, not source */
-		m_copyback(m, ivoff, ivlen, iv);
+		m_copyback(m, ivoff, ivlen, (caddr_t)iv);
 	}
 
 	/* extend iv */
@@ -974,7 +974,7 @@ esp_cbc_encrypt(m, off, plen, sav, algo, ivlen)
 			sp = mtod(s, u_int8_t *) + sn;
 		} else {
 			/* body is non-continuous */
-			m_copydata(s, sn, blocklen, sbuf);
+			m_copydata(s, sn, blocklen, (caddr_t)sbuf);
 			sp = sbuf;
 		}
 

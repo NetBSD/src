@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcom.c,v 1.6.8.3 2002/06/23 17:48:25 jdolecek Exp $	*/
+/*	$NetBSD: pcmcom.c,v 1.6.8.4 2002/10/10 18:41:33 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcom.c,v 1.6.8.3 2002/06/23 17:48:25 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcom.c,v 1.6.8.4 2002/10/10 18:41:33 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,10 +102,8 @@ void	pcmcom_attach __P((struct device *, struct device *, void *));
 int	pcmcom_detach __P((struct device *, int));
 int	pcmcom_activate __P((struct device *, enum devact));
 
-struct cfattach pcmcom_ca = {
-	sizeof(struct pcmcom_softc), pcmcom_match, pcmcom_attach,
-	    pcmcom_detach, pcmcom_activate
-};
+CFATTACH_DECL(pcmcom, sizeof(struct pcmcom_softc),
+    pcmcom_match, pcmcom_attach, pcmcom_detach, pcmcom_activate);
 
 const struct pcmcom_product {
 	struct pcmcia_product pp_product;
@@ -365,7 +363,7 @@ pcmcom_submatch(parent, cf, aux)
 	    cf->cf_loc[PCMCOMCF_SLAVE] != PCMCOMCF_SLAVE_DEFAULT)
 		return (0);
 
-	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+	return (config_match(parent, cf, aux));
 }
 
 int
@@ -431,10 +429,8 @@ int	com_pcmcom_match __P((struct device *, struct cfdata *, void *));
 void	com_pcmcom_attach __P((struct device *, struct device *, void *));
 
 /* No pcmcom-specific goo in the softc; it's all in the parent. */
-struct cfattach com_pcmcom_ca = {
-	sizeof(struct com_softc), com_pcmcom_match, com_pcmcom_attach,
-	    com_detach, com_activate
-};
+CFATTACH_DECL(com_pcmcom, sizeof(struct com_softc),
+    com_pcmcom_match, com_pcmcom_attach, com_detach, com_activate);
 
 int	com_pcmcom_enable __P((struct com_softc *));
 void	com_pcmcom_disable __P((struct com_softc *));

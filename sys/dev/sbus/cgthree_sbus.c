@@ -1,4 +1,4 @@
-/*	$NetBSD: cgthree_sbus.c,v 1.1.6.3 2002/09/06 08:46:14 jdolecek Exp $ */
+/*	$NetBSD: cgthree_sbus.c,v 1.1.6.4 2002/10/10 18:42:03 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgthree_sbus.c,v 1.1.6.3 2002/09/06 08:46:14 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgthree_sbus.c,v 1.1.6.4 2002/10/10 18:42:03 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,10 +125,8 @@ struct cgthree_sbus_softc {
 static int	cgthreematch_sbus(struct device *, struct cfdata *, void *);
 static void	cgthreeattach_sbus(struct device *, struct device *, void *);
 
-struct cfattach cgthree_sbus_ca = {
-	sizeof(struct cgthree_softc), cgthreematch_sbus, cgthreeattach_sbus
-};
-
+CFATTACH_DECL(cgthree_sbus, sizeof(struct cgthree_softc),
+    cgthreematch_sbus, cgthreeattach_sbus, NULL, NULL);
 
 /*
  * Match a cgthree.
@@ -141,7 +139,7 @@ cgthreematch_sbus(parent, cf, aux)
 {
 	struct sbus_attach_args *sa = aux;
 
-	return (strcmp(cf->cf_driver->cd_name, sa->sa_name) == 0);
+	return (strcmp(cf->cf_name, sa->sa_name) == 0);
 }
 
 /*

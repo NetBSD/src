@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.52.2.5 2002/09/06 08:50:27 jdolecek Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.52.2.6 2002/10/10 18:45:10 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.52.2.5 2002/09/06 08:50:27 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.52.2.6 2002/10/10 18:45:10 jdolecek Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -202,10 +202,6 @@ static struct pool vndbuf_pool;
 	pool_put(&vndbuf_pool, (void *)(vbp));				\
 }
 
-/* /dev/drum */
-bdev_decl(sw);
-cdev_decl(sw);
-
 /*
  * local variables
  */
@@ -236,6 +232,19 @@ static void sw_reg_iodone __P((struct buf *));
 static void sw_reg_start __P((struct swapdev *));
 
 static int uvm_swap_io __P((struct vm_page **, int, int, int));
+
+dev_type_read(swread);
+dev_type_write(swwrite);
+dev_type_strategy(swstrategy);
+
+const struct bdevsw swap_bdevsw = {
+	noopen, noclose, swstrategy, noioctl, nodump, nosize,
+};
+
+const struct cdevsw swap_cdevsw = {
+	nullopen, nullclose, swread, swwrite, noioctl,
+	nostop, notty, nopoll, nommap, nokqfilter
+};
 
 /*
  * uvm_swap_init: init the swap system data structures and locks
@@ -771,6 +780,7 @@ swap_on(p, sdp)
 #ifdef NFS
 	extern int (**nfsv2_vnodeop_p) __P((void *));
 #endif /* NFS */
+	const struct bdevsw *bdev;
 	dev_t dev;
 	UVMHIST_FUNC("swap_on"); UVMHIST_CALLED(pdhist);
 
@@ -809,8 +819,9 @@ swap_on(p, sdp)
 	 */
 	switch (vp->v_type) {
 	case VBLK:
-		if (bdevsw[major(dev)].d_psize == 0 ||
-		    (nblocks = (*bdevsw[major(dev)].d_psize)(dev)) == -1) {
+		bdev = bdevsw_lookup(dev);
+		if (bdev == NULL || bdev->d_psize == NULL ||
+		    (nblocks = (*bdev->d_psize)(dev)) == -1) {
 			error = ENXIO;
 			goto bad;
 		}
@@ -1033,7 +1044,7 @@ swap_off(p, sdp)
 	uvmexp.swpages -= sdp->swd_npages;
 
 	if (swaplist_find(sdp->swd_vp, 1) == NULL)
-		panic("swap_off: swapdev not in list\n");
+		panic("swap_off: swapdev not in list");
 	swaplist_trim();
 	simple_unlock(&uvm.swap_data_lock);
 

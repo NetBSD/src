@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.342.2.8 2002/09/06 08:45:27 jdolecek Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.342.2.9 2002/10/10 18:41:04 jdolecek Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.466 2002/08/23 15:56:30 bouyer Exp 
+ *	NetBSD: pcidevs,v 1.471 2002/09/24 09:24:40 pooka Exp 
  */
 
 /*
@@ -57,6 +57,7 @@
 #define	PCI_VENDOR_PEAK	0x001c		/* Peak System Technik */
 #define	PCI_VENDOR_MARTINMARIETTA	0x003d		/* Martin-Marietta Corporation */
 #define	PCI_VENDOR_HAUPPAUGE	0x0070		/* Hauppauge Computer Works */
+#define	PCI_VENDOR_DYNALINK	0x0675		/* Dynalink */
 #define	PCI_VENDOR_COMPAQ	0x0e11		/* Compaq */
 #define	PCI_VENDOR_SYMBIOS	0x1000		/* Symbios Logic */
 #define	PCI_VENDOR_ATI	0x1002		/* ATI Technologies */
@@ -664,6 +665,8 @@
 #define	PCI_PRODUCT_ACARD_ATP850U	0x0005		/* ATP850U/UF UDMA IDE Controller */
 #define	PCI_PRODUCT_ACARD_ATP860	0x0006		/* ATP860 UDMA IDE Controller */
 #define	PCI_PRODUCT_ACARD_ATP860A	0x0007		/* ATP860-A UDMA IDE Controller */
+#define	PCI_PRODUCT_ACARD_ATP865	0x0008		/* ATP865 UDMA IDE Controller */
+#define	PCI_PRODUCT_ACARD_ATP865A	0x0009		/* ATP865-A UDMA IDE Controller */
 #define	PCI_PRODUCT_ACARD_AEC6710	0x8002		/* AEC6710 SCSI */
 #define	PCI_PRODUCT_ACARD_AEC6712UW	0x8010		/* AEC6712UW SCSI */
 #define	PCI_PRODUCT_ACARD_AEC6712U	0x8020		/* AEC6712U SCSI */
@@ -791,6 +794,8 @@
 #define	PCI_PRODUCT_AMD_PBC756_USB	0x740c		/* AMD756 USB Host Controller */
 #define	PCI_PRODUCT_AMD_SC762_NB	0x700c		/* AMD762 NorthBridge */
 #define	PCI_PRODUCT_AMD_SC762_PPB	0x700d		/* AMD762 AGP Bridge */
+#define	PCI_PRODUCT_AMD_SC761_SC	0x700e		/* AMD761 System Controller */
+#define	PCI_PRODUCT_AMD_SC761_PPB	0x700f		/* AMD761 PCI-to-PCI Bridge */
 #define	PCI_PRODUCT_AMD_PBC766_ISA	0x7410		/* AMD766 SouthBridge */
 #define	PCI_PRODUCT_AMD_PBC766_IDE	0x7411		/* AMD766 IDE controller */
 #define	PCI_PRODUCT_AMD_PBC766_PMC	0x7413		/* AMD766 Power Management Controller */
@@ -851,6 +856,9 @@
 
 /* ASIX Electronics products */
 #define	PCI_PRODUCT_ASIX_AX88140A	0x1400		/* AX88140A 10/100 Ethernet */
+
+/* Asustek products */
+#define	PCI_PRODUCT_ASUSTEK_HFCPCI	0x0675		/* Asustek ISDN */
 
 /* ATI products */
 #define	PCI_PRODUCT_ATI_MACH32	0x4158		/* Mach32 */
@@ -1184,6 +1192,9 @@
 /* Domex products */
 #define	PCI_PRODUCT_DOMEX_PCISCSI	0x0001		/* DMX-3191D */
 
+/* Dynalink products */
+#define	PCI_PRODUCT_DYNALINK_IS64PH	0x1702		/* Dynalink IS64PH ISDN Adapter */
+
 /* ELSA products */
 #define	PCI_PRODUCT_ELSA_QS1PCI	0x1000		/* QuickStep 1000 ISDN card */
 
@@ -1324,6 +1335,8 @@
 /* Integraphics Systems products */
 #define	PCI_PRODUCT_INTEGRAPHICS_IGA1680	0x1680		/* IGA 1680 */
 #define	PCI_PRODUCT_INTEGRAPHICS_IGA1682	0x1682		/* IGA 1682 */
+#define	PCI_PRODUCT_INTEGRAPHICS_CYBERPRO2000	0x2000		/* CyberPro 2000 */
+#define	PCI_PRODUCT_INTEGRAPHICS_CYBERPRO2010	0x2010		/* CyberPro 2010 */
 
 /* Integrated Micro Solutions products */
 #define	PCI_PRODUCT_IMS_8849	0x8849		/* 8849 */
@@ -2290,6 +2303,7 @@
 #define	PCI_PRODUCT_WINBOND_W89C840F	0x0840		/* W89C840F 10/100 Ethernet */
 #define	PCI_PRODUCT_WINBOND_W89C940F	0x0940		/* W89C940F Ethernet */
 #define	PCI_PRODUCT_WINBOND_W89C940F_1	0x5a5a		/* W89C940F Ethernet */
+#define	PCI_PRODUCT_WINBOND_W6692	0x6692		/* W6692 ISDN */
 
 /* Xircom products */
 /* is the `-3' here just indicating revision 3, or is it really part

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.112.2.6 2002/09/06 08:49:21 jdolecek Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.112.2.7 2002/10/10 18:44:08 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.112.2.6 2002/09/06 08:49:21 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.112.2.7 2002/10/10 18:44:08 jdolecek Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -826,12 +826,13 @@ tcp_respond(tp, template, m, th0, ack, seq, flags)
 			if (!IN6_IS_ADDR_V4MAPPED(&tp->t_in6pcb->in6p_faddr))
 				panic("tcp_respond: not mapped addr");
 			if (bcmp(&ip->ip_dst,
-					&tp->t_in6pcb->in6p_faddr.s6_addr32[3],
-					sizeof(ip->ip_dst)) != 0) {
+			    &tp->t_in6pcb->in6p_faddr.s6_addr32[3],
+			    sizeof(ip->ip_dst)) != 0) {
 				panic("tcp_respond: ip_dst != in6p_faddr");
 			}
 		} else if (family == AF_INET6) {
-			if (!IN6_ARE_ADDR_EQUAL(&ip6->ip6_dst, &tp->t_in6pcb->in6p_faddr))
+			if (!IN6_ARE_ADDR_EQUAL(&ip6->ip6_dst,
+			    &tp->t_in6pcb->in6p_faddr))
 				panic("tcp_respond: ip6_dst != in6p_faddr");
 		} else
 			panic("tcp_respond: address family mismatch");
@@ -852,7 +853,7 @@ tcp_respond(tp, template, m, th0, ack, seq, flags)
 #ifdef INET6
 	case AF_INET6:
 		error = ip6_output(m, NULL, (struct route_in6 *)ro, 0, NULL,
-			NULL);
+		    NULL);
 		break;
 #endif
 	default:

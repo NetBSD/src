@@ -27,7 +27,7 @@
  *	i4b_tel.c - device driver for ISDN telephony
  *	--------------------------------------------
  *
- *	$Id: i4b_tel.c,v 1.4.2.5 2002/10/02 22:02:31 jdolecek Exp $
+ *	$Id: i4b_tel.c,v 1.4.2.6 2002/10/10 18:44:30 jdolecek Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_tel.c,v 1.4.2.5 2002/10/02 22:02:31 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_tel.c,v 1.4.2.6 2002/10/10 18:44:30 jdolecek Exp $");
 
 #include "isdntel.h"
 
@@ -195,6 +195,12 @@ int isdntelsel __P((dev_t dev, int rw, struct proc *p));
 
 #endif /* __FreeBSD__ */
 
+#ifdef __NetBSD__
+const struct cdevsw isdntel_cdevsw = {
+	isdntelopen, isdntelclose, isdntelread, isdntelwrite, isdntelioctl,
+	nostop, notty, isdntelpoll, nommap, isdntelkqfilter,
+};
+#endif /* __NetBSD__ */
 
 #if BSD > 199306 && defined(__FreeBSD__)
 

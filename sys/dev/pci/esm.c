@@ -1,4 +1,4 @@
-/*      $NetBSD: esm.c,v 1.10.4.2 2002/02/11 20:09:57 jdolecek Exp $      */
+/*      $NetBSD: esm.c,v 1.10.4.3 2002/10/10 18:40:34 jdolecek Exp $      */
 
 /*-
  * Copyright (c) 2000, 2001 Rene Hexel <rh@netbsd.org>
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.10.4.2 2002/02/11 20:09:57 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.10.4.3 2002/10/10 18:40:34 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -144,9 +144,8 @@ static void		esmch_set_format(struct esm_chinfo *,
 /* Power Management */
 void esm_powerhook(int, void *);
 
-struct cfattach esm_ca = {
-	sizeof(struct esm_softc), esm_match, esm_attach
-};
+CFATTACH_DECL(esm, sizeof(struct esm_softc),
+    esm_match, esm_attach, NULL, NULL);
 
 struct audio_hw_if esm_hw_if = {
 	esm_open,
