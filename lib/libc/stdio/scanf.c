@@ -1,4 +1,4 @@
-/*	$NetBSD: scanf.c,v 1.9 2002/05/24 22:17:20 thorpej Exp $	*/
+/*	$NetBSD: scanf.c,v 1.10 2002/05/26 14:44:00 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,40 +41,26 @@
 #if 0
 static char sccsid[] = "@(#)scanf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: scanf.c,v 1.9 2002/05/24 22:17:20 thorpej Exp $");
+__RCSID("$NetBSD: scanf.c,v 1.10 2002/05/26 14:44:00 wiz Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
 #include <errno.h>
-#include <stdio.h>
-#if __STDC__
 #include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
+#include <stdio.h>
 
 #include "local.h"
 
 int
-#if __STDC__
 scanf(char const *fmt, ...)
-#else
-scanf(fmt, va_alist)
-	char *fmt;
-	va_dcl
-#endif
 {
 	int ret;
 	va_list ap;
 
 	_DIAGASSERT(fmt != NULL);
 
-#if __STDC__
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 	ret = __svfscanf(stdin, fmt, ap);
 	va_end(ap);
 	return (ret);
