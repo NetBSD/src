@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.100 2003/09/20 05:12:45 itojun Exp $	*/
+/*	$NetBSD: key.c,v 1.101 2003/09/22 04:47:45 itojun Exp $	*/
 /*	$KAME: key.c,v 1.310 2003/09/08 02:23:44 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.100 2003/09/20 05:12:45 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.101 2003/09/22 04:47:45 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1681,6 +1681,13 @@ key_spdadd(so, m, mhp)
 		newsp = key_getspbytag(tagvalue, xpl0->sadb_x_policy_dir);
 	}
 #endif
+
+	if (newsp && (newsp->readonly || newsp->persist)) {
+		ipseclog((LOG_DEBUG,
+		    "key_spdadd: tried to alter readonly/persistent SP.\n"));
+		return key_senderror(so, m, EPERM);
+	}
+
 	if (mhp->msg->sadb_msg_type == SADB_X_SPDUPDATE) {
 		if (newsp) {
 			key_sp_dead(newsp);
@@ -1940,6 +1947,13 @@ key_spddelete(so, m, mhp)
 		return key_senderror(so, m, EINVAL);
 	}
 
+	if (sp->persist) {
+		ipseclog((LOG_DEBUG,
+		    "key_spddelete2: attempt to remove persistent SP:%u.\n",
+		    sp->id));
+		return key_senderror(so, m, EPERM);
+	}
+
 	/* save policy id to be returned. */
 	xpl0->sadb_x_policy_id = sp->id;
 
@@ -2005,8 +2019,16 @@ key_spddelete2(so, m, mhp)
 
 	/* Is there SP in SPD ? */
 	if ((sp = key_getspbyid(id)) == NULL) {
-		ipseclog((LOG_DEBUG, "key_spddelete2: no SP found id:%u.\n", id));
+		ipseclog((LOG_DEBUG, "key_spddelete2: no SP found id:%u.\n",
+		    id));
 		return key_senderror(so, m, EINVAL);
+	}
+
+	if (sp->persist) {
+		ipseclog((LOG_DEBUG,
+		    "key_spddelete2: attempt to remove persistent SP:%u.\n",
+		    id));
+		return key_senderror(so, m, EPERM);
 	}
 
 	key_sp_dead(sp);
@@ -2239,6 +2261,8 @@ key_spdflush(so, m, mhp)
 
 	for (sp = TAILQ_FIRST(&sptailq); sp; sp = nextsp) {
 		nextsp = TAILQ_NEXT(sp, tailq);
+		if (sp->persist)
+			continue;
 		if (sp->state == IPSEC_SPSTATE_DEAD)
 			continue;
 		key_sp_dead(sp);
@@ -7476,6 +7500,7 @@ key_init()
 	ip4_def_policy->policy = IPSEC_POLICY_NONE;
 	ip4_def_policy->dir = IPSEC_DIR_ANY;
 	ip4_def_policy->readonly = 1;
+	ip4_def_policy->persist = 1;
 #endif
 #ifdef INET6
 	ip6_def_policy = key_newsp(0);
@@ -7485,6 +7510,7 @@ key_init()
 	ip6_def_policy->policy = IPSEC_POLICY_NONE;
 	ip6_def_policy->dir = IPSEC_DIR_ANY;
 	ip6_def_policy->readonly = 1;
+	ip6_def_policy->persist = 1;
 #endif
 
 	callout_reset(&key_timehandler_ch, hz, key_timehandler, (void *)0);
