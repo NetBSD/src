@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.14 1997/01/13 00:40:54 mark Exp $	*/
+/*	$NetBSD: com.c,v 1.15 1997/01/14 22:59:40 mark Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -451,6 +451,7 @@ comopen(dev, flag, mode, p)
 	struct tty *tp;
 	int s;
 	int error = 0;
+	int count;
  
 	if (unit >= com_cd.cd_ndevs)
 		return ENXIO;
@@ -531,14 +532,47 @@ comopen(dev, flag, mode, p)
 			     HAYESP_LOBYTE(HAYESP_RXLOWMARK));
 		} else
 #endif
+		/*
+		 * This is a patch for bugged revision 1-4 SMC FDC37C665
+		 * I/O controllers.
+		 * If there is RX data pending when the FIFO in turned on
+		 * the RX register cannot be emptied.
+		 *
+		 * Solution:
+		 *   Make sure FIFO is off.
+		 *   Read pending data / int status etc.
+		 *   Enable FIFO.
+		 */
+		bus_space_write_1(iot, ioh, com_fifo, 0);
+		for (count = 0; count < 8; ++count)
+			(void)bus_space_read_1(iot, ioh, count);
 		if (ISSET(sc->sc_hwflags, COM_HW_FIFO))
 			/* Set the FIFO threshold based on the receive speed. */
 			bus_space_write_1(iot, ioh, com_fifo,
 			    FIFO_ENABLE | FIFO_RCV_RST | FIFO_XMT_RST |
 			    (tp->t_ispeed <= 1200 ? FIFO_TRIGGER_1 : FIFO_TRIGGER_8));
 		/* flush any pending I/O */
-		while (ISSET(bus_space_read_1(iot, ioh, com_lsr), LSR_RXRDY))
+		count = 1024;
+		while (ISSET(bus_space_read_1(iot, ioh, com_lsr), LSR_RXRDY) && count > 0) {
 			(void) bus_space_read_1(iot, ioh, com_data);
+			--count;
+		}
+		if (count == 0) {
+			/*
+			 * Read 1024 bytes from the serial chip and still data !
+			 * This means something is broken ...
+			 */
+			printf("com init error: lsr=%02x data=%02x\n",
+			    bus_space_read_1(iot, ioh, com_lsr),
+			    bus_space_read_1(iot, ioh, com_data));
+			printf("Cannot clear serial input register\n");
+			CLR(tp->t_state, TS_BUSY | TS_FLUSH);
+			CLR(tp->t_state, TS_WOPEN);
+			if (--comsopen == 0)
+				untimeout(comsoft, NULL);
+			splx(s);
+			return(ENXIO);
+		}
 		/* you turn me on, baby */
 		sc->sc_mcr = MCR_DTR | MCR_RTS;
 		if (!ISSET(sc->sc_hwflags, COM_HW_NOIEN))
