@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.25 1999/09/03 22:48:51 perseant Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.26 1999/11/06 20:33:05 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -117,16 +117,16 @@ lfs_valloc(v)
 	ino_t new_ino;
 	u_long i, max;
 	int error;
+	extern int lfs_dirvcount;
 
 	fs = VTOI(ap->a_pvp)->i_lfs;
 	
 	/*
-	 * Prevent a race getting lfs_free - XXX - KS
-	 * (this should be a proper lock, in struct lfs)
+	 * Prevent a race getting lfs_free.  We use
+	 * the ufs_hashlock here because we need that anyway for
+	 * the hash insertion later.
 	 */
-
-	while(lockmgr(&ufs_hashlock, LK_EXCLUSIVE|LK_SLEEPFAIL, 0))
-		;
+	lockmgr(&ufs_hashlock, LK_EXCLUSIVE, 0);
 
 	/* Get the head of the freelist. */
 	new_ino = fs->lfs_free;
@@ -189,7 +189,6 @@ lfs_valloc(v)
 			return (error);
 		}
 	}
-	lockmgr(&ufs_hashlock, LK_RELEASE, 0);
 
 #ifdef DIAGNOSTIC
 	if(fs->lfs_free == LFS_UNUSED_INUM)
@@ -197,8 +196,10 @@ lfs_valloc(v)
 #endif /* DIAGNOSTIC */
 	
 	/* Create a vnode to associate with the inode. */
-	if ((error = lfs_vcreate(ap->a_pvp->v_mount, new_ino, &vp)) != 0)
+	if ((error = lfs_vcreate(ap->a_pvp->v_mount, new_ino, &vp)) != 0) {
+		lockmgr(&ufs_hashlock, LK_RELEASE, 0);
 		return (error);
+	}
 	
 	ip = VTOI(vp);
 	/* Zero out the direct and indirect block addresses. */
@@ -210,6 +211,7 @@ lfs_valloc(v)
 	
 	/* Insert into the inode hash table. */
 	ufs_ihashins(ip);
+	lockmgr(&ufs_hashlock, LK_RELEASE, 0);
 	
 	error = ufs_vinit(vp->v_mount, lfs_specop_p, lfs_fifoop_p, &vp);
 	if (error) {
@@ -221,7 +223,7 @@ lfs_valloc(v)
 	*ap->a_vpp = vp;
 	if(!(vp->v_flag & VDIROP)) {
 		lfs_vref(vp);
-		++fs->lfs_dirvcount;
+		++lfs_dirvcount;
 	}
 	vp->v_flag |= VDIROP;
 	VREF(ip->i_devvp);
