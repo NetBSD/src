@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.50 2002/05/02 14:58:36 nonaka Exp $
+# $NetBSD: GENERIC,v 1.51 2002/05/02 15:17:56 nonaka Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/prep/conf/std.prep"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.50 $"
+#ident		"GENERIC-$Revision: 1.51 $"
 
 maxusers	32
 
@@ -63,6 +63,7 @@ options 	DDB		# in-kernel debugger
 # Compatibility options
 options 	COMPAT_13	# NetBSD 1.3,
 options 	COMPAT_14	# NetBSD 1.4,
+options 	COMPAT_15	# NetBSD 1.5,
 options 	COMPAT_43	# and 4.3BSD
 #options 	COMPAT_LINUX	# Linux binary compatibility
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
@@ -183,6 +184,10 @@ pcic0	at isa? port 0x3e0 iomem 0xd0000 iosiz 0x10000
 # ISA Plug-and-Play bus support
 isapnp0	at isa?
 
+# on-board I/O for IBM Personal Power Series 830 IDE controller
+obio0	at mainbus0
+
+
 # Console Devices
 
 # wscons
@@ -251,6 +256,13 @@ uk*	at scsibus? target ? lun ?	# SCSI unknown
 
 # IDE and related devices
 
+# IBM Personal Power Series 830 IDE controller
+wdc0	at obio? port 0x1f0 irq 13
+wdc1	at obio? port 0x170 irq 13
+
+# ISA Plug-and-Play IDE controllers
+wdc*	at isapnp?
+
 # PCMCIA IDE controllers
 wdc*	at pcmcia? function ?
 
@@ -303,10 +315,6 @@ ne*	at isapnp?			# NE2000-compatible Ethernet
 # PCMCIA network interfaces
 ep*	at pcmcia? function ?		# 3Com 3c589 and 3c562 Ethernet
 ne*	at pcmcia? function ?		# NE2000-compatible Ethernet
-
-mhzc*	at pcmcia? function ?		# Megahertz Ethernet/Modem combo cards
-com*	at mhzc?
-sm*	at mhzc?
 
 # MII/PHY support
 dmphy*	at mii? phy ?			# Davicom DM9101 PHYs
@@ -412,10 +420,14 @@ midi*	at pcppi?		# MIDI interface to the PC speaker
 # The spkr driver provides a simple tone interface to the built in speaker.
 spkr0	at pcppi?		# PC speaker
 
+
 # Joysticks
 
+# ISA Plug-and-Play joysticks
+joy*	at isapnp?			# Game ports (usually on audio cards)
+
 # ISA joysticks. Probe is a little strange; add only if you have one.
-joy0	at isa? port 0x201
+#joy0	at isa? port 0x201
 
 
 # Pseudo-Devices

@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.18 2002/05/02 14:58:36 nonaka Exp $
+#	$NetBSD: INSTALL,v 1.19 2002/05/02 15:17:57 nonaka Exp $
 #
 #	INSTALL -- Installation kernel
 #
@@ -103,6 +103,10 @@ pcic0	at isa? port 0x3e0 iomem 0xd0000 iosiz 0x10000
 # ISA Plug-and-Play bus support
 isapnp0 at isa?
 
+# on-board I/O for IBM Personal Power Series 830 IDE controller
+obio0	at mainbus0
+
+
 # Console Devices
 
 # wscons
@@ -159,6 +163,13 @@ cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 
 
 # IDE and related devices
+
+# IBM Personal Power Series 830 IDE controller
+wdc0	at obio? port 0x1f0 irq 13
+wdc1	at obio? port 0x170 irq 13
+
+# ISA Plug-and-Play IDE controllers
+wdc*	at isapnp?
 
 # PCMCIA IDE controllers
 wdc*	at pcmcia? function ?

@@ -1,4 +1,4 @@
-/*	$NetBSD: ibm_6050.c,v 1.4 2002/05/02 14:48:27 nonaka Exp $	*/
+/*	$NetBSD: ibm_6050.c,v 1.5 2002/05/02 15:17:59 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,6 +41,11 @@
 #include <machine/intr.h>
 #include <machine/platform.h>
 
+static const char *obiodevs_ibm_6050[] = {
+	"wdc",
+	NULL
+};
+
 struct platform platform_ibm_6050 = {
 	"IBM PPS Model 6050/6070 (E)",		/* model */
 	platform_generic_match,			/* match */
@@ -49,6 +54,7 @@ struct platform platform_ibm_6050 = {
 	ext_intr_ivr,				/* ext_intr */
 	cpu_setup_ibm_generic,			/* cpu_setup */
 	reset_prep_generic,			/* reset */
+	obiodevs_ibm_6050,			/* obiodevs */
 };
 
 void

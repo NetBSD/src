@@ -1,4 +1,4 @@
-/*	$NetBSD: platform.c,v 1.6 2002/05/02 14:58:37 nonaka Exp $	*/
+/*	$NetBSD: platform.c,v 1.7 2002/05/02 15:18:01 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -53,10 +53,15 @@ static struct platform platform_unknown = {
 	ext_intr,				/* ext_intr */
 	cpu_setup_unknown,			/* cpu_setup */
 	reset_unknown,				/* reset */
+	obiodevs_nodev,				/* obiodevs */
 };
 
 static struct plattab plattab_unknown = {
 	NULL,	0
+};
+
+const char *obiodevs_nodev[] = {
+	NULL
 };
 
 struct platform *platform = &platform_unknown;

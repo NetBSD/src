@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.9 2002/05/02 14:36:43 nonaka Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.10 2002/05/02 15:18:00 nonaka Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -33,6 +33,7 @@
 #include "opt_pci.h"
 #include "opt_residual.h"
 
+#include "obio.h"
 #include "pci.h"
 
 #include <sys/param.h>
@@ -46,6 +47,8 @@
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pciconf.h>
+
+#include <prep/dev/obiovar.h>
 
 #include <machine/platform.h>
 #include <machine/residual.h>
@@ -79,7 +82,6 @@ mainbus_match(parent, match, aux)
 
 	if (mainbus_found)
 		return 0;
-
 	return 1;
 }
 
@@ -113,6 +115,10 @@ mainbus_attach(parent, self, aux)
 	ca.ca_node = 0;
 	config_found(self, &ca, mainbus_print);
 
+#if NOBIO > 0
+	obio_reserve_resource_map();
+#endif
+
 	/*
 	 * XXX Note also that the presence of a PCI bus should
 	 * XXX _always_ be checked, and if present the bus should be
@@ -142,6 +148,18 @@ mainbus_attach(parent, self, aux)
 	mba.mba_pba.pba_bus = 0;
 	mba.mba_pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
 	config_found(self, &mba.mba_pba, mainbus_print);
+#endif
+
+#if NOBIO > 0
+	obio_reserve_resource_unmap();
+
+	if (platform->obiodevs != obiodevs_nodev) {
+		bzero(&mba, sizeof(mba));
+		mba.mba_pba.pba_busname = "obio";
+		mba.mba_pba.pba_iot = &prep_isa_io_space_tag;
+		mba.mba_pba.pba_memt = &prep_isa_mem_space_tag;
+		config_found(self, &mba.mba_pba, mainbus_print);
+	}
 #endif
 }
 
