@@ -1,4 +1,4 @@
-/*	$NetBSD: sys-bsd.c,v 1.24 1997/10/20 08:08:47 scottr Exp $	*/
+/*	$NetBSD: sys-bsd.c,v 1.25 1997/10/20 17:18:04 drochner Exp $	*/
 
 /*
  * sys-bsd.c - System-dependent procedures for setting up
@@ -22,11 +22,12 @@
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char rcsid[] = "Id: sys-bsd.c,v 1.28 1997/04/30 05:57:46 paulus Exp ";
 #else
-__RCSID("$NetBSD: sys-bsd.c,v 1.24 1997/10/20 08:08:47 scottr Exp $");
+__RCSID("$NetBSD: sys-bsd.c,v 1.25 1997/10/20 17:18:04 drochner Exp $");
 #endif
 #endif
 
