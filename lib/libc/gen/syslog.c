@@ -1,4 +1,4 @@
-/*	$NetBSD: syslog.c,v 1.20 1999/02/04 16:23:17 kleink Exp $	*/
+/*	$NetBSD: syslog.c,v 1.21 1999/03/16 13:48:00 is Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)syslog.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: syslog.c,v 1.20 1999/02/04 16:23:17 kleink Exp $");
+__RCSID("$NetBSD: syslog.c,v 1.21 1999/03/16 13:48:00 is Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -47,6 +47,7 @@ __RCSID("$NetBSD: syslog.c,v 1.20 1999/02/04 16:23:17 kleink Exp $");
 #include <sys/socket.h>
 #include <sys/syslog.h>
 #include <sys/uio.h>
+#include <sys/un.h>
 #include <netdb.h>
 
 #include <errno.h>
@@ -272,7 +273,7 @@ vsyslog(pri, fmt, ap)
 	}
 }
 
-static struct sockaddr SyslogAddr;	/* AF_LOCAL address of local logger */
+static struct sockaddr_un SyslogAddr;	/* AF_LOCAL address of local logger */
 
 static void
 openlog_unlocked(ident, logstat, logfac)
@@ -287,9 +288,9 @@ openlog_unlocked(ident, logstat, logfac)
 		LogFacility = logfac;
 
 	if (LogFile == -1) {
-		SyslogAddr.sa_family = AF_LOCAL;
-		(void)strncpy(SyslogAddr.sa_data, _PATH_LOG,
-		    sizeof(SyslogAddr.sa_data));
+		SyslogAddr.sun_family = AF_LOCAL;
+		(void)strncpy(SyslogAddr.sun_path, _PATH_LOG,
+		    sizeof(SyslogAddr.sun_path));
 		if (LogStat & LOG_NDELAY) {
 			if ((LogFile = socket(AF_LOCAL, SOCK_DGRAM, 0)) == -1)
 				return;
@@ -297,7 +298,8 @@ openlog_unlocked(ident, logstat, logfac)
 		}
 	}
 	if (LogFile != -1 && !connected) {
-		if (connect(LogFile, &SyslogAddr, sizeof(SyslogAddr)) == -1) {
+		if (connect(LogFile, (struct sockaddr *)&SyslogAddr,
+		    sizeof(SyslogAddr)) == -1) {
 			(void)close(LogFile);
 			LogFile = -1;
 		} else
