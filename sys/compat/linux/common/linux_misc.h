@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.h,v 1.5 2001/07/18 19:11:14 thorpej Exp $	*/
+/*	$NetBSD: linux_misc.h,v 1.6 2002/02/15 16:48:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -64,6 +64,19 @@ struct linux_sysinfo {
 	unsigned int mem_unit;
 	char _f[20-2*sizeof(long)-sizeof(int)];
 };
+
+#define	LINUX_RLIMIT_CPU	0
+#define	LINUX_RLIMIT_FSIZE	1
+#define	LINUX_RLIMIT_DATA	2
+#define	LINUX_RLIMIT_STACK	3
+#define	LINUX_RLIMIT_CORE	4
+#define	LINUX_RLIMIT_RSS	5
+#define	LINUX_RLIMIT_NPROC	6
+#define	LINUX_RLIMIT_NOFILE	7
+#define	LINUX_RLIMIT_MEMLOCK	8
+#define	LINUX_RLIMIT_AS		9
+#define	LINUX_RLIMIT_LOCKS	10
+#define	LINUX_RLIM_INFINITY	~0ul
 
 #ifdef _KERNEL
 __BEGIN_DECLS

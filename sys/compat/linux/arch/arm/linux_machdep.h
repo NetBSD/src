@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.h,v 1.2 2002/01/17 22:50:38 bjh21 Exp $	*/
+/*	$NetBSD: linux_machdep.h,v 1.3 2002/02/15 16:47:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -39,6 +39,8 @@
 #ifndef _ARM_LINUX_MACHDEP_H_
 #define _ARM_LINUX_MACHDEP_H_
 
+#include <compat/linux/common/linux_signal.h>
+
 struct linux_sigcontext {
 	u_int32_t	sc_trapno;
 	u_int32_t	sc_error_code;
@@ -74,12 +76,5 @@ struct linux_sigframe {
 	struct	linux_sigcontext sf_sc;
 	unsigned long	sf_extramask[LINUX__NSIG_WORDS - 1];
 };
-
-#ifdef _KERNEL
-__BEGIN_DECLS
-void linux_sendsig __P((sig_t, int, sigset_t *, u_long));
-dev_t linux_fakedev __P((dev_t));
-__END_DECLS
-#endif /* _KERNEL */
 
 #endif

@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.7 2001/09/08 07:09:44 manu Exp $  
+	$NetBSD: syscalls.master,v 1.8 2002/02/15 16:48:02 christos Exp $  
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -348,9 +348,11 @@
 187	UNIMPL		getpmsg
 188	UNIMPL		putpmsg
 189	NOARGS		{ int sys___vfork14(void); }
-190	UNIMPL		sys_getrlimit
+190	STD		{ int linux_sys_ugetrlimit(int which, \
+			    struct rlimit *rlp); }
 191	UNIMPL		/* unused */
-192	UNIMPL		mmap2
+192	STD		{ off_t linux_sys_mmap2(void *addr, size_t len, \
+			    int prot, int flags, int fd, off_t offset); }
 193	UNIMPL		truncate64
 194	UNIMPL		ftruncate64
 195	UNIMPL		stat64

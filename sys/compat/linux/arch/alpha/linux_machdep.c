@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.19 2001/11/13 02:08:33 lukem Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.20 2002/02/15 16:47:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.19 2001/11/13 02:08:33 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.20 2002/02/15 16:47:58 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -159,8 +159,8 @@ void setup_linux_rt_sigframe(tf, sig, mask)
 
 	/* Setup potentially partial signal mask in sc_mask. */
 	/* But get all of it in uc_sigmask */
-	native_to_linux_old_sigset(mask, &sigframe.uc.uc_mcontext.sc_mask);
-	native_to_linux_sigset(mask, &sigframe.uc.uc_sigmask);
+	native_to_linux_old_sigset(&sigframe.uc.uc_mcontext.sc_mask, mask);
+	native_to_linux_sigset(&sigframe.uc.uc_sigmask, mask);
 
 	sigframe.uc.uc_mcontext.sc_pc = tf->tf_regs[FRAME_PC];
 	sigframe.uc.uc_mcontext.sc_ps = ALPHA_PSL_USERMODE;
@@ -256,7 +256,7 @@ void setup_linux_sigframe(tf, sig, mask)
 	 */
 	bzero(&sigframe.sf_sc, sizeof(struct linux_ucontext));
 	sigframe.sf_sc.sc_onstack = onstack;
-	native_to_linux_old_sigset(mask, &sigframe.sf_sc.sc_mask);
+	native_to_linux_old_sigset(&sigframe.sf_sc.sc_mask, mask);
 	sigframe.sf_sc.sc_pc = tf->tf_regs[FRAME_PC];
 	sigframe.sf_sc.sc_ps = ALPHA_PSL_USERMODE;
 	frametoreg(tf, (struct reg *)sigframe.sf_sc.sc_regs);
@@ -524,8 +524,9 @@ linux_machdepioctl(p, v, retval)
 
 /* XXX XAX fix this */
 dev_t
-linux_fakedev(dev)
+linux_fakedev(dev, raw)
 	dev_t dev;
+	int raw;
 {
 	return dev;
 }

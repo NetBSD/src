@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.44 2002/01/14 23:14:42 bjh21 Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.45 2002/02/15 16:48:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.44 2002/01/14 23:14:42 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.45 2002/02/15 16:48:02 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -473,7 +473,7 @@ bsd_to_linux_stat(bsp, lsp)
 	struct linux_stat *lsp;
 {
 
-	lsp->lst_dev     = bsp->st_dev;
+	lsp->lst_dev     = linux_fakedev(bsp->st_dev, 0);
 	lsp->lst_ino     = bsp->st_ino;
 	lsp->lst_mode    = (linux_mode_t)bsp->st_mode;
 	if (bsp->st_nlink >= (1 << 15))
@@ -482,7 +482,7 @@ bsd_to_linux_stat(bsp, lsp)
 		lsp->lst_nlink = (linux_nlink_t)bsp->st_nlink;
 	lsp->lst_uid     = bsp->st_uid;
 	lsp->lst_gid     = bsp->st_gid;
-	lsp->lst_rdev    = linux_fakedev(bsp->st_rdev);
+	lsp->lst_rdev    = linux_fakedev(bsp->st_rdev, 1);
 	lsp->lst_size    = bsp->st_size;
 	lsp->lst_blksize = bsp->st_blksize;
 	lsp->lst_blocks  = bsp->st_blocks;

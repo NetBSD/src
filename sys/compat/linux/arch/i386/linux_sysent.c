@@ -1,4 +1,4 @@
-/* $NetBSD: linux_sysent.c,v 1.40 2001/11/13 02:08:41 lukem Exp $ */
+/* $NetBSD: linux_sysent.c,v 1.41 2002/02/15 16:48:00 christos Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sysent.c,v 1.40 2001/11/13 02:08:41 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sysent.c,v 1.41 2002/02/15 16:48:00 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_43.h"
@@ -178,10 +178,10 @@ struct sysent linux_sysent[] = {
 	    linux_sys_sigpending },		/* 73 = sigpending */
 	{ 2, s(struct compat_43_sys_sethostname_args), 0,
 	    compat_43_sys_sethostname },	/* 74 = sethostname */
-	{ 2, s(struct compat_43_sys_setrlimit_args), 0,
-	    compat_43_sys_setrlimit },		/* 75 = setrlimit */
-	{ 2, s(struct compat_43_sys_getrlimit_args), 0,
-	    compat_43_sys_getrlimit },		/* 76 = getrlimit */
+	{ 2, s(struct linux_sys_setrlimit_args), 0,
+	    linux_sys_setrlimit },		/* 75 = setrlimit */
+	{ 2, s(struct linux_sys_getrlimit_args), 0,
+	    linux_sys_getrlimit },		/* 76 = getrlimit */
 	{ 2, s(struct sys_getrusage_args), 0,
 	    sys_getrusage },			/* 77 = getrusage */
 	{ 2, s(struct linux_sys_gettimeofday_args), 0,
@@ -410,10 +410,10 @@ struct sysent linux_sysent[] = {
 	    linux_sys_nosys },			/* 189 = unimplemented putpmsg */
 	{ 0, 0, 0,
 	    sys___vfork14 },			/* 190 = __vfork14 */
-	{ 0, 0, 0,
-	    linux_sys_nosys },			/* 191 = unimplemented getrlimit */
-	{ 0, 0, 0,
-	    linux_sys_nosys },			/* 192 = unimplemented mmap2 */
+	{ 2, s(struct linux_sys_ugetrlimit_args), 0,
+	    linux_sys_ugetrlimit },		/* 191 = ugetrlimit */
+	{ 6, s(struct linux_sys_mmap2_args), 0,
+	    linux_sys_mmap2 },			/* 192 = mmap2 */
 	{ 2, s(struct linux_sys_truncate64_args), 0,
 	    linux_sys_truncate64 },		/* 193 = truncate64 */
 	{ 2, s(struct sys_ftruncate_args), 0,

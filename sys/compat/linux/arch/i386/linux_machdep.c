@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.68 2001/11/13 02:08:38 lukem Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.69 2002/02/15 16:48:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.68 2001/11/13 02:08:38 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.69 2002/02/15 16:48:00 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -212,7 +212,7 @@ linux_sendsig(catcher, sig, mask, code)
 	/* Linux doesn't save the onstack flag in sigframe */
 
 	/* Save signal mask. */
-	native_to_linux_old_sigset(mask, &frame.sf_sc.sc_mask);
+	native_to_linux_old_sigset(&frame.sf_sc.sc_mask, mask);
 
 	if (copyout(&frame, fp, sizeof(frame)) != 0) {
 		/*
@@ -334,7 +334,7 @@ linux_sys_sigreturn(p, v, retval)
 		p->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
 
 	/* Restore signal mask. */
-	linux_old_to_native_sigset(&context.sc_mask, &mask);
+	linux_old_to_native_sigset(&mask, &context.sc_mask);
 	(void) sigprocmask1(p, SIG_SETMASK, &mask, 0);
 
 	return (EJUSTRETURN);
@@ -481,14 +481,19 @@ linux_sys_modify_ldt(p, v, retval)
  * array for all major device numbers, and map linux_mknod too.
  */
 dev_t
-linux_fakedev(dev)
+linux_fakedev(dev, raw)
 	dev_t dev;
+	int raw;
 {
+	if (raw) {
 #if (NWSDISPLAY > 0)
-	if (major(dev) == NETBSD_WSCONS_MAJOR)
-		return makedev(LINUX_CONS_MAJOR, (minor(dev) + 1));
+		if (major(dev) == NETBSD_WSCONS_MAJOR)
+			return makedev(LINUX_CONS_MAJOR, (minor(dev) + 1));
 #endif
-	return dev;
+		return 0;
+	} else {
+		return dev;
+	}
 }
 
 #if (NWSDISPLAY > 0)

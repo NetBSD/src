@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscall.h,v 1.6 2002/01/27 15:28:22 bjh21 Exp $ */
+/* $NetBSD: linux_syscall.h,v 1.7 2002/02/15 16:47:59 christos Exp $ */
 
 /*
  * System call numbers.
@@ -465,6 +465,9 @@
 
 /* syscall: "vfork" ret: "int" args: */
 #define	LINUX_SYS_vfork	190
+
+/* syscall: "mmap2" ret: "int" args: "void *" "size_t" "int" "int" "int" "off_t" */
+#define	LINUX_SYS_mmap2	192
 
 /* syscall: "truncate64" ret: "int" args: "const char *" "off_t" */
 #define	LINUX_SYS_truncate64	193

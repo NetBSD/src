@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.36 2001/09/08 07:09:43 manu Exp $
+	$NetBSD: syscalls.master,v 1.37 2002/02/15 16:47:59 christos Exp $
 ;
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -341,8 +341,11 @@
 188	UNIMPL
 189	UNIMPL
 190	UNIMPL
-191	UNIMPL
-192	UNIMPL
+/* XXX: Dunno */
+191	STD		{ int linux_sys_ugetrlimit(int which, \
+			    struct rlimit *rlp); }
+192	STD		{ int linux_sys_mmap2(void *addr, size_t len, \
+			    int prot, int flags, int fd, off_t offset); }
 193	UNIMPL
 194	UNIMPL
 195	UNIMPL

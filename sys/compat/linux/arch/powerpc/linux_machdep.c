@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.12 2001/11/13 02:08:46 lukem Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.13 2002/02/15 16:48:02 christos Exp $ */
 
 /*-
  * Copyright (c) 1995, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.12 2001/11/13 02:08:46 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.13 2002/02/15 16:48:02 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -169,7 +169,7 @@ linux_sendsig(catcher, sig, mask, code)  /* XXX Check me */
 	memset(&sc, 0, sizeof sc);
 	sc.lsignal = (int)native_to_linux_sig[sig];
 	sc.lhandler = (unsigned long)catcher;
-	native_to_linux_old_extra_sigset(mask, &sc.lmask, &sc._unused[3]);
+	native_to_linux_old_extra_sigset(&sc.lmask, &sc._unused[3], mask);
 	sc.lregs = (struct linux_pt_regs*)fp;
 
 	/*
@@ -351,7 +351,7 @@ linux_sys_rt_sigreturn(p, v, retval)
 	/*
 	 * Grab the signal mask
 	 */
-	linux_to_native_sigset(&sigframe.luc.luc_sigmask, &mask);
+	linux_to_native_sigset(&mask, &sigframe.luc.luc_sigmask);
 	(void) sigprocmask1(p, SIG_SETMASK, &mask, 0);
 
 	return (EJUSTRETURN);
@@ -438,9 +438,8 @@ linux_sys_sigreturn(p, v, retval)
 		p->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
 
 	/* Restore signal mask. */
-	linux_old_extra_to_native_sigset(&context.lmask,
-					 &context._unused[3],
-					 &mask); 
+	linux_old_extra_to_native_sigset(&mask, &context.lmask,
+	    &context._unused[3]);
 	(void) sigprocmask1(p, SIG_SETMASK, &mask, 0);
 
 	return (EJUSTRETURN);
@@ -469,8 +468,9 @@ linux_sys_modify_ldt(p, v, retval)
  * major device numbers remapping
  */
 dev_t
-linux_fakedev(dev)
+linux_fakedev(dev, raw)
 	dev_t dev;
+	int raw;
 {
   /* XXX write me */
   return dev;

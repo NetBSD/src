@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.9 2001/11/13 02:08:41 lukem Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.10 2002/02/15 16:48:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.9 2001/11/13 02:08:41 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.10 2002/02/15 16:48:01 christos Exp $");
 
 #define COMPAT_LINUX 1
 
@@ -223,10 +223,10 @@ setup_linux_sigframe(frame, sig, mask, usp)
 
 	/* Build the signal context to be used by sigreturn. */
 #if LINUX__NSIG_WORDS > 1
-	native_to_linux_old_extra_sigset(mask,
-			&kf.sf_c.c_sc.sc_mask, kf.sf_c.c_extrasigmask);
+	native_to_linux_old_extra_sigset(&kf.sf_c.c_sc.sc_mask,
+	    kf.sf_c.c_extrasigmask, mask);
 #else
-	native_to_linux_old_sigset(mask, &kf.sf_c.c_sc.sc_mask);
+	native_to_linux_old_sigset(&kf.sf_c.c_sc.sc_mask, mask);
 #endif
 	kf.sf_c.c_sc.sc_sp = frame->f_regs[SP];
 	kf.sf_c.c_sc.sc_pc = frame->f_pc;
@@ -405,7 +405,7 @@ setup_linux_rt_sigframe(frame, sig, mask, usp, p)
 	kf.sf_info.si_uid = p->p_ucred->cr_uid;	/* Use real uid here? */
 
 	/* Build the signal context to be used by sigreturn. */
-	native_to_linux_sigset(mask, &kf.sf_uc.uc_sigmask);
+	native_to_linux_sigset(&kf.sf_uc.uc_sigmask, mask);
 	kf.sf_uc.uc_stack.ss_sp = p->p_sigctx.ps_sigstk.ss_sp;
 	kf.sf_uc.uc_stack.ss_flags =
 		(p->p_sigctx.ps_sigstk.ss_flags & SS_ONSTACK ? LINUX_SS_ONSTACK : 0) |
@@ -875,8 +875,9 @@ linux_sys_cacheflush(p, v, retval)
  * Convert NetBSD's devices to Linux's.
  */
 dev_t
-linux_fakedev(dev)
+linux_fakedev(dev, raw)
 	dev_t dev;
+	int raw;
 {
 
 	/* do nothing for now */
