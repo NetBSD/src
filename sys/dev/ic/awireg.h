@@ -1,4 +1,4 @@
-/* $NetBSD: awireg.h,v 1.5 2001/09/18 09:09:59 onoe Exp $ */
+/* $NetBSD: awireg.h,v 1.6 2002/08/05 06:55:07 onoe Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -410,6 +410,8 @@ struct awi_mib_mgt {
 	u_int8_t	aDTIM_Period;
 	u_int8_t	aATIM_Window[2];
 	u_int8_t	Wep_Required;
+#define	AWI_WEP_ON			0x10
+#define	AWI_WEP_OFF			0x00
 	u_int8_t	_Reserved1;
 	u_int8_t	aBeacon_Period[2];
 	u_int8_t	aPassive_Scan_Duration[2];

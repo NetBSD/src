@@ -1,4 +1,4 @@
-/*	$NetBSD: awi.c,v 1.42 2002/07/25 07:15:50 onoe Exp $	*/
+/*	$NetBSD: awi.c,v 1.43 2002/08/05 06:55:07 onoe Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awi.c,v 1.42 2002/07/25 07:15:50 onoe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awi.c,v 1.43 2002/08/05 06:55:07 onoe Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -213,7 +213,6 @@ awi_attach(struct awi_softc *sc)
 
 	s = splnet();
 	sc->sc_busy = 1;
-	ic->ic_state = IEEE80211_S_INIT;
 	sc->sc_substate = AWI_ST_NONE;
 	if ((error = awi_hw_init(sc)) != 0) {
 		sc->sc_invalid = 1;
@@ -237,7 +236,12 @@ awi_attach(struct awi_softc *sc)
 	IFQ_SET_READY(&ifp->if_snd);
 	memcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
 
-	ic->ic_flags = IEEE80211_F_HASWEP | IEEE80211_F_HASIBSS;
+	if (sc->sc_mib_phy.IEEE_PHY_Type == AWI_PHY_TYPE_FH)
+		ic->ic_flags = IEEE80211_F_FH;
+	else
+		ic->ic_flags = IEEE80211_F_DS;
+	ic->ic_flags |= IEEE80211_F_HASWEP | IEEE80211_F_HASIBSS;
+	ic->ic_state = IEEE80211_S_INIT;
 	ic->ic_newstate = awi_newstate;
 	ic->ic_chancheck = awi_chan_check;
 	nrate = sc->sc_mib_phy.aSuprt_Data_Rates[1];
@@ -254,6 +258,12 @@ awi_attach(struct awi_softc *sc)
 
 	if_attach(ifp);
 	ieee80211_ifattach(ifp);
+
+	/* probe request is handled by hardware */
+	ic->ic_send_mgmt[IEEE80211_FC0_SUBTYPE_PROBE_REQ
+	    >> IEEE80211_FC0_SUBTYPE_SHIFT] = NULL;
+	ic->ic_recv_mgmt[IEEE80211_FC0_SUBTYPE_PROBE_REQ
+	    >> IEEE80211_FC0_SUBTYPE_SHIFT] = NULL;
 
 	ifmedia_init(&sc->sc_media, 0, awi_media_change, awi_media_status);
 	mword = IFM_MAKEWORD(IFM_IEEE80211, IFM_AUTO, 0, 0);
@@ -439,7 +449,8 @@ awi_intr(void *arg)
 		if (status & AWI_INT_CMD)
 			awi_cmd_done(sc);
 		if (status & AWI_INT_SCAN_CMPLT) {
-			if (sc->sc_ic.ic_state == IEEE80211_S_SCAN)
+			if (sc->sc_ic.ic_state == IEEE80211_S_SCAN &&
+			    sc->sc_substate == AWI_ST_NONE)
 				ieee80211_next_scan(&sc->sc_ic.ic_if);
 		}
 	}
@@ -586,7 +597,7 @@ awi_start(struct ifnet *ifp)
 	struct awi_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct mbuf *m, *m0;
-	int len;
+	int len, dowep;
 	u_int32_t txd, frame, ntxd;
 	u_int8_t rate;
 
@@ -596,8 +607,10 @@ awi_start(struct ifnet *ifp)
 	for (;;) {
 		txd = sc->sc_txnext;
 		IF_POLL(&ic->ic_mgtq, m0);
+		dowep = 0;
 		if (m0 != NULL) {
-			if (awi_next_txd(sc, m0->m_pkthdr.len, &frame, &ntxd)) {
+			len = m0->m_pkthdr.len;
+			if (awi_next_txd(sc, len, &frame, &ntxd)) {
 				ifp->if_flags |= IFF_OACTIVE;
 				break;
 			}
@@ -616,9 +629,11 @@ awi_start(struct ifnet *ifp)
 			if (!(ifp->if_flags & IFF_LINK0) && !sc->sc_adhoc_ap)
 				len += sizeof(struct llc) -
 				    sizeof(struct ether_header);
-			if (ic->ic_flags & IEEE80211_F_WEPON)
+			if (ic->ic_flags & IEEE80211_F_WEPON) {
+				dowep = 1;
 				len += IEEE80211_WEP_IVLEN +
 				    IEEE80211_WEP_KIDLEN + IEEE80211_WEP_CRCLEN;
+			}
 			if (awi_next_txd(sc, len, &frame, &ntxd)) {
 				ifp->if_flags |= IFF_OACTIVE;
 				break;
@@ -633,22 +648,26 @@ awi_start(struct ifnet *ifp)
 				m0 = awi_ether_encap(sc, m0);
 			else
 				m0 = ieee80211_encap(ifp, m0);
-			if ((ic->ic_flags & IEEE80211_F_WEPON) && m0 != NULL)
-				m0 = ieee80211_wep_crypt(ifp, m0, 1);
 			if (m0 == NULL) {
 				ifp->if_oerrors++;
 				continue;
 			}
-#ifdef DIAGNOSTIC
-			if (m0->m_pkthdr.len != len) {
-				printf("%s: length %d should be %d\n",
-				    ifp->if_xname, m0->m_pkthdr.len, len);
-				m_freem(m0);
+		}
+		if (dowep) {
+			if ((m0 = ieee80211_wep_crypt(ifp, m0, 1)) == NULL) {
 				ifp->if_oerrors++;
 				continue;
 			}
-#endif
 		}
+#ifdef DIAGNOSTIC
+		if (m0->m_pkthdr.len != len) {
+			printf("%s: length %d should be %d\n",
+			    ifp->if_xname, m0->m_pkthdr.len, len);
+			m_freem(m0);
+			ifp->if_oerrors++;
+			continue;
+		}
+#endif
 
 		if ((ifp->if_flags & IFF_DEBUG) && (ifp->if_flags & IFF_LINK2))
 			ieee80211_dump_pkt(m0->m_data, m0->m_len,
@@ -940,7 +959,7 @@ awi_mode_init(struct awi_softc *sc)
 	else
 		ifp->if_flags |= IFF_ALLMULTI;
 	sc->sc_mib_mgt.Wep_Required =
-	    (sc->sc_ic.ic_flags & IEEE80211_F_WEPON) ? 1 : 0;
+	    (sc->sc_ic.ic_flags & IEEE80211_F_WEPON) ? AWI_WEP_ON : AWI_WEP_OFF;
 
 	if ((error = awi_mib(sc, AWI_CMD_SET_MIB, AWI_MIB_LOCAL, AWI_WAIT)) ||
 	    (error = awi_mib(sc, AWI_CMD_SET_MIB, AWI_MIB_ADDR, AWI_WAIT)) ||
@@ -1031,7 +1050,7 @@ awi_rx_int(struct awi_softc *sc)
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
 	u_int8_t state, rate, rssi;
 	u_int16_t len;
-	u_int32_t frame, next, timoff, rxoff;
+	u_int32_t frame, next, rstamp, rxoff;
 	struct mbuf *m;
 
 	rxoff = sc->sc_rxdoff;
@@ -1040,6 +1059,8 @@ awi_rx_int(struct awi_softc *sc)
 		if (state & AWI_RXD_ST_OWN)
 			break;
 		if (!(state & AWI_RXD_ST_CONSUMED)) {
+			if (sc->sc_substate != AWI_ST_NONE)
+				goto rx_next;
 			if (state & AWI_RXD_ST_RXERROR) {
 				ifp->if_ierrors++;
 				goto rx_next;
@@ -1049,7 +1070,7 @@ awi_rx_int(struct awi_softc *sc)
 			rssi   = awi_read_1(sc, rxoff + AWI_RXD_RSSI);
 			frame  = awi_read_4(sc, rxoff + AWI_RXD_START_FRAME) &
 			    0x7fff;
-			timoff = awi_read_4(sc, rxoff + AWI_RXD_LOCALTIME);
+			rstamp = awi_read_4(sc, rxoff + AWI_RXD_LOCALTIME);
 			m = awi_devget(sc, frame, len);
 			if (m == NULL) {
 				ifp->if_ierrors++;
@@ -1072,7 +1093,7 @@ awi_rx_int(struct awi_softc *sc)
 				if (m == NULL)
 					ifp->if_ierrors++;
 				else
-					ieee80211_input(ifp, m, rssi, timoff);
+					ieee80211_input(ifp, m, rssi, rstamp);
 			} else
 				sc->sc_rxpend = m;
   rx_next:
@@ -1373,6 +1394,7 @@ awi_chan_check(void *arg, u_char *chanreq)
 				    cs->cs_region;
 				memcpy(sc->sc_ic.ic_chan_avail, chanlist,
 				    sizeof(sc->sc_ic.ic_chan_avail));
+				sc->sc_ic.ic_bss.bs_chan = cs->cs_def;
 				sc->sc_cur_chan = cs->cs_def;
 				return 0;
 			}
@@ -1844,7 +1866,7 @@ awi_newstate(void *arg, enum ieee80211_state nstate)
 		case AWI_ST_SUB_SETSS:
 			sc->sc_substate = AWI_ST_SUB_SYNC;
 			if (sc->sc_cmd_inprog) {
-				if (awi_cmd_wait(sc))
+				if ((error = awi_cmd_wait(sc)) != 0)
 					break;
 			}
 			sc->sc_cmd_inprog = AWI_CMD_SYNC;
@@ -1871,7 +1893,7 @@ awi_newstate(void *arg, enum ieee80211_state nstate)
 			awi_write_2(sc, AWI_CA_SYNC_MBZ, 0);
 			awi_write_bytes(sc, AWI_CA_SYNC_TIMESTAMP,
 			    bs->bs_tstamp, 8);
-			awi_write_4(sc, AWI_CA_SYNC_REFTIME, bs->bs_timoff);
+			awi_write_4(sc, AWI_CA_SYNC_REFTIME, bs->bs_rstamp);
 			sc->sc_cur_chan = bs->bs_chan;
 			if ((error = awi_cmd(sc, AWI_CMD_SYNC, AWI_NOWAIT))
 			    != 0)

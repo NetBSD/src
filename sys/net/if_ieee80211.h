@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee80211.h,v 1.12 2001/09/19 04:09:56 onoe Exp $	*/
+/*	$NetBSD: if_ieee80211.h,v 1.13 2002/08/05 06:55:05 onoe Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -65,13 +65,16 @@ struct ieee80211_frame_addr4 {
 } __attribute__((__packed__));
 
 #define	IEEE80211_FC0_VERSION_MASK		0x03
+#define	IEEE80211_FC0_VERSION_SHIFT		0
 #define	IEEE80211_FC0_VERSION_0			0x00
 #define	IEEE80211_FC0_TYPE_MASK			0x0c
+#define	IEEE80211_FC0_TYPE_SHIFT		2
 #define	IEEE80211_FC0_TYPE_MGT			0x00
 #define	IEEE80211_FC0_TYPE_CTL			0x04
 #define	IEEE80211_FC0_TYPE_DATA			0x08
 
 #define	IEEE80211_FC0_SUBTYPE_MASK		0xf0
+#define	IEEE80211_FC0_SUBTYPE_SHIFT		4
 /* for TYPE_MGT */
 #define	IEEE80211_FC0_SUBTYPE_ASSOC_REQ		0x00
 #define	IEEE80211_FC0_SUBTYPE_ASSOC_RESP	0x10
@@ -244,27 +247,39 @@ enum ieee80211_state {
 	IEEE80211_S_RUN			/* associated */
 };
 
+/*
+ * Node specific information.
+ */
 struct ieee80211_bss {
 	TAILQ_ENTRY(ieee80211_bss)	bs_list;
+
+	/* hardware */
+	u_int8_t		bs_rssi;
+	u_int32_t		bs_rstamp;
+
+	/* header */
 	u_int8_t		bs_macaddr[IEEE80211_ADDR_LEN];
 	u_int8_t		bs_bssid[IEEE80211_ADDR_LEN];
-	u_int8_t		bs_esslen;
-	u_int8_t		bs_essid[IEEE80211_NWID_LEN];
+
+	/* beacon, probe response */
 	u_int8_t		bs_tstamp[8];
 	u_int16_t		bs_intval;
 	u_int16_t		bs_capinfo;
-	u_int16_t		bs_fhdwell;
-	u_int8_t		bs_fhindex;
-	u_int16_t		bs_associd;
-	u_int32_t		bs_timoff;
-	u_int8_t		bs_chan;
-	u_int8_t		bs_rssi;
-	u_int8_t		bs_rates[IEEE80211_RATE_SIZE];
-	u_int16_t		bs_txseq;
-	u_int16_t		bs_rxseq;
+	u_int8_t		bs_esslen;
+	u_int8_t		bs_essid[IEEE80211_NWID_LEN];
 	int			bs_nrate;
-	int			bs_fails;
-	int			bs_txrate;
+	u_int8_t		bs_rates[IEEE80211_RATE_SIZE];
+	u_int8_t		bs_chan;
+	u_int16_t		bs_fhdwell;	/* FH only */
+	u_int8_t		bs_fhindex;	/* FH only */
+
+	/* others */
+	u_int16_t		bs_associd;	/* assoc response */
+	u_int16_t		bs_txseq;	/* seq to be transmitted */
+	u_int16_t		bs_rxseq;	/* seq previous received */
+	int			bs_fails;	/* failure count to associate */
+	int			bs_txrate;	/* index to bs_rates[] */
+	void			*bs_private;	/* driver private */
 };
 
 /* bs_chan encoding for FH phy */
@@ -280,30 +295,41 @@ struct ieee80211_wepkey {
 
 struct ieee80211com {
 	struct ethercom		ic_ec;
+	void			(*ic_recv_mgmt[16])(struct ieee80211com *,
+				    struct mbuf *, int, u_int32_t);
+	int			(*ic_send_mgmt[16])(struct ieee80211com *,
+				    struct ieee80211_bss *, int);
 	int			(*ic_newstate)(void *, enum ieee80211_state);
 	int			(*ic_chancheck)(void *, u_char *);
 	u_int8_t		ic_myaddr[IEEE80211_ADDR_LEN];
 	u_int8_t		ic_sup_rates[IEEE80211_RATE_SIZE];
-	u_char			ic_chan_avail[(IEEE80211_CHAN_MAX+1)/NBBY];
-	u_char			ic_chan_active[(IEEE80211_CHAN_MAX+1)/NBBY];
+	u_char			ic_chan_avail[roundup(IEEE80211_CHAN_MAX,NBBY)];
+	u_char			ic_chan_active[roundup(IEEE80211_CHAN_MAX, NBBY)];
 	struct ifqueue		ic_mgtq;
 	int			ic_flags;
 	enum ieee80211_state	ic_state;
-	struct ieee80211_bss	ic_bss;
+	struct ieee80211_bss	ic_bss;		/* information for this node */
+	int			ic_bss_privlen;	/* size for bs_private */
 	u_int8_t		ic_ibss_chan;
-	int			ic_fixed_rate;
-	TAILQ_HEAD(, ieee80211_bss)	ic_scan;
+	int			ic_fixed_rate;	/* index to ic_sup_rates[] */
+	TAILQ_HEAD(, ieee80211_bss) ic_scan;	/* information of all nodes */
 	u_int16_t		ic_lintval;	/* listen interval */
 	int			ic_mgt_timer;	/* mgmt timeout */
 	int			ic_scan_timer;	/* scant wait */
 	int			ic_des_esslen;
 	u_int8_t		ic_des_essid[IEEE80211_NWID_LEN];
 	struct ieee80211_wepkey	ic_nw_keys[IEEE80211_WEP_NKID];
-	int			ic_wep_txkey;
+	int			ic_wep_txkey;	/* default tx key index */
 	void			*ic_wep_ctx;
 };
 #define	ic_if		ic_ec.ec_if
 #define	ic_softc	ic_ec.ec_if.if_softc
+
+#define	IEEE80211_SEND_MGMT(ic,bs,type,flag)	do {			      \
+	if ((ic)->ic_send_mgmt[(type)>>IEEE80211_FC0_SUBTYPE_SHIFT] != NULL)  \
+		(*(ic)->ic_send_mgmt[(type)>>IEEE80211_FC0_SUBTYPE_SHIFT])    \
+		    (ic,bs,flag);					      \
+} while (0)
 
 /* ic_flags */
 #define	IEEE80211_F_ASCAN	0x00000001	/* STATUS: active scan */
@@ -312,11 +338,15 @@ struct ieee80211com {
 #define	IEEE80211_F_IBSSON	0x00000200	/* CONF: IBSS creation enable */
 #define	IEEE80211_F_PMGTON	0x00000400	/* CONF: Power mgmt enable */
 #define	IEEE80211_F_ADHOC	0x00000800	/* CONF: adhoc mode */
+#define	IEEE80211_F_SCANAP	0x00001000	/* CONF: scan AP mode */
 #define	IEEE80211_F_HASWEP	0x00010000	/* CAPABILITY: WEP available */
 #define	IEEE80211_F_HASIBSS	0x00020000	/* CAPABILITY: IBSS available */
 #define	IEEE80211_F_HASPMGT	0x00040000	/* CAPABILITY: Power mgmt */
+#define	IEEE80211_F_FH		0x01000000	/* PHY: FH */
+#define	IEEE80211_F_DS		0x02000000	/* PHY: DS */
+#define	IEEE80211_F_OFDM	0x04000000	/* PHY: OFDM */
 
-/* flags for ieee80211_fix_rate */
+/* flags for ieee80211_fix_rate() */
 #define	IEEE80211_F_DOSORT	0x00000001	/* sort rate list */
 #define	IEEE80211_F_DOFRATE	0x00000002	/* use fixed rate */
 #define	IEEE80211_F_DONEGO	0x00000004	/* calc negotiated rate */
@@ -324,8 +354,9 @@ struct ieee80211com {
 
 void	ieee80211_ifattach(struct ifnet *);
 void	ieee80211_ifdetach(struct ifnet *);
-void	ieee80211_input(struct ifnet *, struct mbuf *, int, u_int);
-int	ieee80211_mgmt_output(struct ifnet *, struct mbuf *, int);
+void	ieee80211_input(struct ifnet *, struct mbuf *, int, u_int32_t);
+int	ieee80211_mgmt_output(struct ifnet *, struct ieee80211_bss *,
+    struct mbuf *, int);
 struct mbuf *ieee80211_encap(struct ifnet *, struct mbuf *);
 struct mbuf *ieee80211_decap(struct ifnet *, struct mbuf *);
 int	ieee80211_ioctl(struct ifnet *, u_long, caddr_t);
@@ -334,6 +365,7 @@ void	ieee80211_dump_pkt(u_int8_t *, int, int, int);
 void	ieee80211_watchdog(struct ifnet *);
 void	ieee80211_next_scan(struct ifnet *);
 void	ieee80211_end_scan(struct ifnet *);
+struct ieee80211_bss *ieee80211_alloc_bss(struct ieee80211com *, int);
 void	ieee80211_free_scan(struct ifnet *);
 int	ieee80211_fix_rate(struct ieee80211com *, struct ieee80211_bss *, int);
 int	ieee80211_new_state(struct ifnet *, enum ieee80211_state, int);
