@@ -1,4 +1,5 @@
-/*	$NetBSD: probe.c,v 1.4 2000/02/28 07:20:43 itojun Exp $	*/
+/*	$NetBSD: probe.c,v 1.5 2000/08/13 06:20:02 itojun Exp $	*/
+/*	$KAME: probe.c,v 1.10 2000/08/13 06:14:59 itojun Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -34,6 +35,7 @@
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <sys/uio.h>
+#include <sys/queue.h>
 
 #include <net/if.h>
 #if defined(__FreeBSD__) && __FreeBSD__ >= 3
