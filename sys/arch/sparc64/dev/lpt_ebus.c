@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_ebus.c,v 1.1 1999/06/05 05:28:36 mrg Exp $	*/
+/*	$NetBSD: lpt_ebus.c,v 1.2 1999/06/05 14:19:44 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -40,6 +40,7 @@
 
 #include <machine/bus.h>
 
+#include <sparc64/dev/ebusreg.h>
 #include <sparc64/dev/ebusvar.h>
 
 #include <dev/ic/lptvar.h>
@@ -51,6 +52,8 @@ struct cfattach lpt_ebus_ca = {
 	sizeof(struct lpt_softc), lpt_ebus_match, lpt_ebus_attach
 };
 
+#define	ROM_LPT_NAME	"ecpp"
+
 int
 lpt_ebus_match(parent, match, aux)
 	struct device *parent;
@@ -59,10 +62,10 @@ lpt_ebus_match(parent, match, aux)
 {
 	struct ebus_attach_args *ea = aux;
 
-	if (strcmp(ea->ea_name, "ecpp") == 0)
-		return (0);
+	if (strcmp(ea->ea_name, ROM_LPT_NAME) == 0)
+		return (1);
 
-	return (1);
+	return (0);
 }
 
 void
@@ -72,12 +75,30 @@ lpt_ebus_attach(parent, self, aux)
 {
 	struct lpt_softc *sc = (void *)self;
 	struct ebus_attach_args *ea = aux;
-	const char *intrstr;
+	int i;
 
-	sc->sc_iot = ea->ea_iot;
-	sc->sc_ioh = ea->ea_ioh;
+	sc->sc_iot = ea->ea_bustag;
+	/*
+	 * Use the prom address if there.
+	 */
+	if (ea->ea_naddrs)
+		sc->sc_ioh = (bus_space_handle_t)ea->ea_vaddrs[0];
+	else if (ebus_bus_map(sc->sc_iot, 0,
+			      EBUS_PADDR_FROM_REG(&ea->ea_regs[0]),
+			      ea->ea_regs[0].size,
+			      BUS_SPACE_MAP_LINEAR,
+			      0, &sc->sc_ioh) != 0) {
+		printf(": can't map register space\n");
+                return;
+	}
+	printf(" addr %p");
 
-	/* set up interrupt? */
+	for (i = 0; i < ea->ea_nintrs; i++) {
+		bus_intr_establish(ea->ea_bustag, ea->ea_intrs[i], 0,
+		    lptintr, sc);
+		printf(" vector %d", ea->ea_intrs[i]);
+	}
+	printf("\n");
 
 	lpt_attach_subr(sc);
 }
