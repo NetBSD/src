@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rmdir.c	5.3 (Berkeley) 5/31/90";*/
-static char rcsid[] = "$Id: rmdir.c,v 1.8 1993/09/10 19:07:05 jtc Exp $";
+static char rcsid[] = "$Id: rmdir.c,v 1.9 1993/09/10 19:29:13 jtc Exp $";
 #endif /* not lint */
 
 /*
@@ -83,12 +83,12 @@ main(argc, argv)
 
 	for (errors = 0; *argv; argv++) {
 		if (!delete_parent_directories) {
-			if (rmdir(*argv) < 0) {
+			if (rmdir(*argv)) {
 				warn ("%s", *argv);
 				errors = 1;
-			} 
+			}
 		} else {
-			if (rmdirp(*argv) < 0) {
+			if (rmdirp(*argv)) {
 				errors = 1;
 			}
 		}
@@ -103,6 +103,11 @@ rmdirp (path)
 {
 	char *slash;
 
+	if (rmdir (path)) {
+		warn ("%s", path);
+		return -1;
+	}
+
 	for (;;) {
 		slash = strrchr (path, '/');
 		if (slash == NULL) {
@@ -114,7 +119,7 @@ rmdirp (path)
 			slash--;
 		*++slash = '\0';
 
-		if (rmdir (path) < 0) {
+		if (rmdir (path)) {
 			warn ("%s", path);
 			return -1;
 		}
