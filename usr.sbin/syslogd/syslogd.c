@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.30 1999/12/02 16:17:30 itojun Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.31 1999/12/06 01:26:26 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -186,8 +186,7 @@ int	Debug;			/* debug flag */
 char	LocalHostName[MAXHOSTNAMELEN+1];	/* our hostname */
 char	*LocalDomain;		/* our local domain name */
 int	InetInuse = 0;		/* non-zero if INET sockets are being used */
-int	finet, finet6;		/* Internet datagram socket */
-int	LogPort;		/* port number for INET connections */
+int	*finet;			/* Internet datagram socket */
 int	Initialized = 0;	/* set when we have initialized ourselves */
 int	MarkInterval = 20 * 60;	/* interval between marks in seconds */
 int	MarkSeq = 0;		/* mark sequence number */
@@ -201,7 +200,7 @@ void	die __P((int));
 void	domark __P((int));
 void	fprintlog __P((struct filed *, int, char *));
 int	getmsgbufsize __P((void));
-int	socksetup __P((int));
+int*	socksetup __P((int));
 void	init __P((int));
 void	logerror __P((char *));
 void	logmsg __P((int, char *, char *, int));
@@ -220,7 +219,7 @@ main(argc, argv)
 	char *argv[];
 {
 	int ch, *funix, i, j, fklog, len, linesize;
-	int nfinetix, nfinet6ix, nfklogix, nfunixbaseix, nfds;
+	int *nfinetix, nfklogix, nfunixbaseix, nfds;
 	int funixsize = 0, funixmaxsize = 0;
 	struct sockaddr_un sunx, fromunix;
 	struct sockaddr_storage frominet;
@@ -319,25 +318,13 @@ main(argc, argv)
 		dprintf("listening on unix dgram socket %s\n", *pp);
 	}
 
-	if (!SecureMode) {
-		finet = socksetup(AF_INET);
-#ifdef INET6
-		finet6 = socksetup(AF_INET6);
-#else
-		finet6 = -1;
-#endif
-	}
-	else {
-		finet = -1;
-		finet6 = -1;
-	}
+	if (!SecureMode) 
+		finet = socksetup(PF_UNSPEC);
+	else
+		finet = NULL;
 
-	if (finet >= 0) {
-		dprintf("listening on inet socket\n");
-		InetInuse = 1;
-	}
-	if (finet6 >= 0) {
-		dprintf("listening on inet6 socket\n");
+	if (finet && *finet) {
+		dprintf("listening on inet and/or inet6 socket\n");
 		InetInuse = 1;
 	}
 
@@ -358,7 +345,7 @@ main(argc, argv)
 
 	/* setup pollfd set. */
 	readfds = (struct pollfd *)malloc(sizeof(struct pollfd) *
-					  (funixsize + 2));
+			(funixsize + (finet ? *finet : 0) + 1));
 	if (readfds == NULL) {
 		logerror("couldn't allocate pollfds");
 		die(0);
@@ -369,15 +356,13 @@ main(argc, argv)
 		readfds[nfklogix].fd = fklog;
 		readfds[nfklogix].events = POLLIN | POLLPRI;
 	}
-	if (finet >= 0) {
-		nfinetix = nfds++;
-		readfds[nfinetix].fd = finet;
-		readfds[nfinetix].events = POLLIN | POLLPRI;
-	}
-	if (finet6 >= 0) {
-		nfinet6ix = nfds++;
-		readfds[nfinet6ix].fd = finet6;
-		readfds[nfinet6ix].events = POLLIN | POLLPRI;
+	if (finet) {
+		nfinetix = malloc(*finet * sizeof(*nfinetix));
+		for (j = 0; j < *finet; j++) {
+			nfinetix[j] = nfds++;
+			readfds[nfinetix[j]].fd = finet[j+1];
+			readfds[nfinetix[j]].events = POLLIN | POLLPRI;
+		}
 	}
 	nfunixbaseix = nfds;
 	for (j = 0, pp = LogPaths; *pp; pp++) {
@@ -431,29 +416,20 @@ main(argc, argv)
 				logerror(buf);
 			}
 		}
-		if (finet >= 0 &&
-		    (readfds[nfinetix].revents & (POLLIN | POLLPRI))) {
-			dprintf("inet socket active\n");
-			len = sizeof(frominet);
-			i = recvfrom(finet, line, MAXLINE, 0,
-			    (struct sockaddr *)&frominet, &len);
-			if (i > 0) {
-				line[i] = '\0';
-				printline(cvthname(&frominet), line);
-			} else if (i < 0 && errno != EINTR)
-				logerror("recvfrom inet");
-		}
-		if (finet6 >= 0 &&
-		    (readfds[nfinet6ix].revents & (POLLIN | POLLPRI))) {
-			dprintf("inet6 socket active\n");
-			len = sizeof(frominet);
-			i = recvfrom(finet6, line, MAXLINE, 0,
-			    (struct sockaddr *)&frominet, &len);
-			if (i > 0) {
-				line[i] = '\0';
-				printline(cvthname(&frominet), line);
-			} else if (i < 0 && errno != EINTR)
-				logerror("recvfrom inet6");
+		if (finet) {
+			for (j = 0; j < *finet; j++) {
+		    		if (readfds[nfinetix[j]].revents & (POLLIN | POLLPRI)) {
+					dprintf("inet socket active\n");
+					len = sizeof(frominet);
+					i = recvfrom(finet[j+1], line, MAXLINE, 0,
+			    				(struct sockaddr *)&frominet, &len);
+					if (i > 0) {
+						line[i] = '\0';
+						printline(cvthname(&frominet), line);
+					} else if (i < 0 && errno != EINTR)
+						logerror("recvfrom inet");
+				}
+			}
 		}
 	}
 }
@@ -736,7 +712,7 @@ fprintlog(f, flags, msg)
 	struct iovec iov[6];
 	struct iovec *v;
 	struct addrinfo *r;
-	int l, lsent;
+	int j, l, lsent;
 	char line[MAXLINE + 1], repbuf[80], greetings[200];
 
 	v = iov;
@@ -800,16 +776,17 @@ fprintlog(f, flags, msg)
 		}
 		if (l > MAXLINE)
 			l = MAXLINE;
-		if (finet >= 0 || finet6 >= 0) {
+		if (finet && *finet) {
 			for (r = f->f_un.f_forw.f_addr; r; r = r->ai_next) {
-				if (r->ai_family == AF_INET) 
-					lsent = sendto(finet, line, l, 0, r->ai_addr, r->ai_addrlen);
-#ifdef INET6
-				if (r->ai_family == AF_INET6) 
-					lsent = sendto(finet6, line, l, 0, r->ai_addr, r->ai_addrlen);
+				for (j = 0; j < *finet; j++) {
+#if 0 
+					/* should we check AF first, or just trial and error? FWD */
+					if (r->ai_family == address_family_of(finet[j+1])) 
 #endif
-				if (lsent == l) 
-					break;
+					lsent = sendto(finet[j+1], line, l, 0, r->ai_addr, r->ai_addrlen);
+					if (lsent == l) 
+						break;
+				}
 			}
 			if (lsent != l) {
 				f->f_type = F_UNUSED;
@@ -1333,12 +1310,12 @@ getmsgbufsize()
 	return (msgbufsize);
 }
 
-int
+int *
 socksetup(af)
 	int af;
 {
-	struct addrinfo hints, *res;
-	int error, sock;
+	struct addrinfo hints, *res, *r;
+	int error, maxs, *s, *socks;
 
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_flags = AI_PASSIVE;
@@ -1350,22 +1327,42 @@ socksetup(af)
 		errno = 0;
 		die(0);
 	}
-	if (res->ai_next) 
-		logerror("resolved to multiple addr");
-	else {
-		sock = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
-		if (sock >= 0) {
-			if (bind(sock, res->ai_addr, res->ai_addrlen) < 0) {
-				close (sock);
-				sock = -1;
-				logerror("bind");
-				if (!Debug) 
-					die(0);
-			}
-       		}
+
+	/* Count max number of sockets we may open */
+	for (maxs = 0, r = res; r; r = r->ai_next, maxs++);
+	socks = malloc ((maxs+1) * sizeof(int));
+	if (!socks) {
+		logerror("couldn't allocate memory for sockets");
+		die(0);
+	}
+
+	*socks = 0;   /* num of sockets counter at start of array */
+	s = socks+1;
+	for (r = res; r; r = r->ai_next) {
+		*s = socket(r->ai_family, r->ai_socktype, r->ai_protocol);
+		if (*s < 0) {
+			logerror("socket");
+			continue;
+		}
+		if (bind(*s, r->ai_addr, r->ai_addrlen) < 0) {
+			close (*s);
+			logerror("bind");
+			continue;
+		}
+
+		*socks = *socks + 1;
+		s++;
+	}
+
+	if (*socks == 0) {
+		free (socks);
+		if(Debug)
+			return(NULL);
+		else
+			die(0);
 	}
 	if (res)
 		freeaddrinfo(res);
 
-	return(sock);
+	return(socks);
 }
