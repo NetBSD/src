@@ -1,4 +1,4 @@
-/*	$NetBSD: in.h,v 1.26 1997/10/14 00:52:39 matt Exp $	*/
+/*	$NetBSD: in.h,v 1.27 1997/10/17 21:20:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -250,7 +250,8 @@ struct ip_mreq {
 #define	IPCTL_FORWSRCRT		5	/* forward source-routed packets */
 #define	IPCTL_DIRECTEDBCAST	6	/* default broadcast behavior */
 #define	IPCTL_ALLOWSRCRT	7	/* allow/drop all source-routed pkts */
-#define	IPCTL_MAXID		8
+#define	IPCTL_SUBNETSARELOCAL	8	/* treat subnets as local addresses */
+#define	IPCTL_MAXID		9
 
 #define	IPCTL_NAMES { \
 	{ 0, 0 }, \
@@ -261,6 +262,7 @@ struct ip_mreq {
 	{ "forwsrcrt", CTLTYPE_INT }, \
 	{ "directed-broadcast", CTLTYPE_INT }, \
 	{ "allowsrcrt", CTLTYPE_INT }, \
+	{ "subnetsarelocal", CTLTYPE_INT }, \
 }
 
 
