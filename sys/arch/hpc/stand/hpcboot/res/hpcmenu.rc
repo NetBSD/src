@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcmenu.rc,v 1.7 2003/12/16 18:23:36 uwe Exp $	*/
+/*	$NetBSD: hpcmenu.rc,v 1.8 2003/12/23 15:29:36 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -85,11 +85,11 @@ STYLE WS_CHILD
 	AUTORADIOBUTTON	"sd",	IDC_MAIN_ROOT_SD,	35, 40, 22, 10
 	AUTORADIOBUTTON	"md",	IDC_MAIN_ROOT_MD,	60, 40, 22, 10
 	AUTORADIOBUTTON	"nfs",	IDC_MAIN_ROOT_NFS,	85, 40, 22, 10
-	EDITTEXT	IDC_MAIN_ROOT_MD_OPS		10, 53, 90, 12,
+	EDITTEXT	IDC_MAIN_ROOT_MD_OPS		10, 53, 100, 12,
 		WS_CHILD | WS_VISIBLE | WS_BORDER | WS_TABSTOP |
 		ES_LEFT | ES_AUTOHSCROLL
 	GROUPBOX	"root file system"	IDC_MAIN_ROOT_OPTION
-							5, 33, 105, 35
+							5, 33, 110, 35
 	// boot options
 	AUTOCHECKBOX	"boot verbosely"	IDC_MAIN_OPTION_V
 							5, 59, 120, 9
