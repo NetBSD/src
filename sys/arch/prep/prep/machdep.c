@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.29 2002/02/06 12:24:48 kleink Exp $	*/
+/*	$NetBSD: machdep.c,v 1.30 2002/02/06 12:26:02 kleink Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -775,8 +775,7 @@ mapiodev(pa, len)
 		return NULL;
 
 	for (; len > 0; len -= NBPG) {
-		pmap_kenter_pa(pmap_kernel(), taddr, faddr,
-			   VM_PROT_READ | VM_PROT_WRITE);
+		pmap_kenter_pa(taddr, faddr, VM_PROT_READ | VM_PROT_WRITE);
 		faddr += NBPG;
 		taddr += NBPG;
 	}
