@@ -7,11 +7,32 @@ Bugs to fix:
   pthread_cond_broadcast() or pthread_exit() about removing an item
   from the sleep queue. The locking protocols there need a little
   adjustment.
+- pthread_sig.c: sigaction() currently hard-codes __sigtramp_sigcontext_1:
+  this is incorrect.  Instead of calling __sigaction_sigtramp() directly,
+  libc should export a __libc_sigaction14() which sigaction() can call.
+  Also, pthread_sig.c should probably be built with __LIBC12_SOURCE__ so
+  that the signal version of sigaction(), et al can be explicit.
+- pthread_sig.c: pthread__signal_tramp() is broken.  It gets a ucontext,
+  but then hands off an empty (garbage from stack!) sigcontext to the
+  handler.  The ucontext MUST be converted to a sigcontext, the handler
+  called, and then the sigcontext converted back to ucontext, before the
+  ucontext is used to perform the sigreturn-analogue.  This is necessary
+  for e.g. C++/Java exceptions and some garbage-collectors.
+- pthread_sig.c: pthread__signal_tramp() should be changed so that it is
+  easy to add support for SA_SIGINFO later.  (Mostly a function signature
+  issue.)
+- Consider moving pthread__signal_tramp() to its own file, and building
+  it with -fasync-unwind-tables, so that DWARF2 EH unwinding works through
+  it.  (This is required for e.g. GCC's libjava.)
+- locks: Add support for RAS on uniprocessors.
+- pthread_lock.c: pthread_spin_lock() should use a loop around
+  __cpu_simple_lock_try() so that it is easy to add support for RAS.
 
 
 Interfaces/features to implement:
 - pthread_kill()
 - pthread_atfork()
+- pthread_rwlock... These are currently stubbed to MUTEX in libc!!
 - priority scheduling
 - libc integration: 
    - foo_r interfaces
