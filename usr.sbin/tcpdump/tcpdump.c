@@ -1,4 +1,4 @@
-/*	$NetBSD: tcpdump.c,v 1.14 2001/01/28 10:05:07 itojun Exp $	*/
+/*	$NetBSD: tcpdump.c,v 1.15 2001/03/01 15:13:31 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -29,7 +29,7 @@ static const char rcsid[] =
 #else
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997\n\
 The Regents of the University of California.  All rights reserved.\n");
-__RCSID("$NetBSD: tcpdump.c,v 1.14 2001/01/28 10:05:07 itojun Exp $");
+__RCSID("$NetBSD: tcpdump.c,v 1.15 2001/03/01 15:13:31 itojun Exp $");
 #endif
 #endif
 
@@ -107,7 +107,7 @@ static struct printer printers[] = {
 	{ ppp_bsdos_if_print,	DLT_PPP_BSDOS },
 	{ ppp_netbsd_serial_if_print, DLT_PPP_SERIAL },
 	{ fddi_if_print,	DLT_FDDI },
-	{ hdlc_if_print,	DLT_HDLC },
+	{ chdlc_if_print,	DLT_HDLC },
 	{ null_if_print,	DLT_NULL },
 	{ raw_if_print,		DLT_RAW },
 	{ atm_if_print,		DLT_ATM_RFC1483 },
