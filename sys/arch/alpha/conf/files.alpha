@@ -1,4 +1,4 @@
-#	$NetBSD: files.alpha,v 1.33 1996/12/28 23:10:47 pk Exp $
+#	$NetBSD: files.alpha,v 1.34 1997/01/21 09:37:17 thorpej Exp $
 #
 # alpha-specific configuration info
 
@@ -41,8 +41,6 @@ major { cd = 3 }
 major { sd = 8 }
 
 # Memory Disk
-pseudo-device md
-file	dev/md.c			md		needs-flag
 file	arch/alpha/alpha/md_root.c	memory_disk_hooks
 major { md = 6 }
 
