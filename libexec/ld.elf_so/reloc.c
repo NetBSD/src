@@ -1,4 +1,4 @@
-/*	$NetBSD: reloc.c,v 1.35 2001/04/25 12:24:50 kleink Exp $	 */
+/*	$NetBSD: reloc.c,v 1.36 2001/06/19 01:11:03 fvdl Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -147,7 +147,7 @@ _rtld_do_copy_relocations(dstobj, dodebug)
 }
 
 
-#ifndef __sparc__
+#if !defined(__sparc__) && !defined(__x86_64__)
 
 #if defined(__alpha__) || defined(__i386__) || defined(__m68k__)
 extern Elf_Addr  _GLOBAL_OFFSET_TABLE_[];
@@ -651,7 +651,7 @@ _rtld_relocate_objects(first, bind_now, dodebug)
 
 		/* Set the special PLTGOT entries. */
 		if (obj->pltgot != NULL) {
-#if defined(__i386__) || defined(__m68k__)
+#if defined(__i386__) || defined(__m68k__) || defined(__x86_64__)
 			obj->pltgot[1] = (Elf_Addr) obj;
 			obj->pltgot[2] = (Elf_Addr) & _rtld_bind_start;
 #endif
