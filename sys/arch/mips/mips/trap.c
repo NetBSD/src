@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.62 1997/06/20 05:15:36 jonathan Exp $	*/
+/*	$NetBSD: trap.c,v 1.63 1997/06/21 04:18:29 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -468,7 +468,7 @@ userret(p, pc, sticks)
 	curpriority = p->p_priority;
 }
 
-#define DELAYBRANCH(x) ((x)<0)
+#define DELAYBRANCH(x) ((int)(x)<0)
 /*
  * Process a system call.
  *
@@ -1064,7 +1064,7 @@ trapDump(msg)
 		if (trp->cause == 0)
 			break;
 		cause = (trp->cause & ((CPUISMIPS3) ?
-		    MIPS3_CR_EXC_CODE : MIPS1_CR_EXC_CODE);
+		    MIPS3_CR_EXC_CODE : MIPS1_CR_EXC_CODE));
 		printf("%s: ADR %x PC %x CR %x SR %x\n",
 			trap_type[cause >> MACH_CR_EXC_CODE_SHIFT],
 			trp->vadr, trp->pc, trp->cause, trp->status);
@@ -2351,11 +2351,11 @@ mips3_dump_tlb(first, last)
 		else {
 			printf("TLB*%2d vad 0x%08x ", tlbno, tlb.tlb_hi);
 		}
-		printf("0=0x%08x ", pfn_to_vad(tlb.tlb_lo0));
+		printf("0=0x%08lx ", pfn_to_vad(tlb.tlb_lo0));
 		printf("%c", tlb.tlb_lo0 & mips_pg_m_bit() ? 'M' : ' ');
 		printf("%c", tlb.tlb_lo0 & mips_pg_global_bit() ? 'G' : ' ');
 		printf(" atr %x ", (tlb.tlb_lo0 >> 3) & 7);
-		printf("1=0x%08x ", pfn_to_vad(tlb.tlb_lo1));
+		printf("1=0x%08lx ", pfn_to_vad(tlb.tlb_lo1));
 		printf("%c", tlb.tlb_lo1 & mips_pg_m_bit() ? 'M' : ' ');
 		printf("%c", tlb.tlb_lo1 & mips_pg_global_bit() ? 'G' : ' ');
 		printf(" atr %x ", (tlb.tlb_lo1 >> 3) & 7);
