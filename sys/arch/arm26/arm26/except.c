@@ -1,4 +1,4 @@
-/* $NetBSD: except.c,v 1.34 2001/06/02 18:09:10 chs Exp $ */
+/* $NetBSD: except.c,v 1.35 2001/06/26 19:22:02 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.34 2001/06/02 18:09:10 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.35 2001/06/26 19:22:02 bjh21 Exp $");
 
 #include "opt_cputypes.h"
 #include "opt_ddb.h"
@@ -130,60 +130,6 @@ checkvectors()
 	for (ptr = (u_int32_t *)0; ptr < (u_int32_t *)0x1c; ptr++)
 		if (*ptr != 0xe59ff114)
 			panic("CPU vectors mangled");
-}
-#endif
-
-
-#if 0
-void
-undefined_handler(struct trapframe *tf)
-{
-	u_quad_t sticks;
-	struct proc *p;
-	u_int32_t insn;
-	vaddr_t pc;
-
-	pc = tf->tf_r15 & R15_PC;
-	insn =  *(register_t *)pc;
-#ifdef CPU_ARM2
-	/*
-	 * Check if the aborted instruction was a SWI (ARM2 bug --
-	 * ARM3 data sheet p87) and call SWI handler if so.
-	 */
-	if ((insn & 0x0f000000) == 0x0f000000) {
-		swi_handler(tf);
-		return;
-	}
-#endif
-	/* Enable interrupts if they were enabled before the trap. */
-	if ((tf->tf_r15 & R15_IRQ_DISABLE) == 0)
-		int_on();
-	uvmexp.traps++;
-	p = curproc;
-	if (p == NULL)
-		p = &proc0;
-	if (p->p_addr->u_pcb.pcb_onundef_lj != NULL)
-		longjmp(p->p_addr->u_pcb.pcb_onundef_lj);
-	if ((tf->tf_r15 & R15_MODE) != R15_MODE_USR) {
-#ifdef DDB
-		if (insn == 0xe7ffffff) {
-			kdb_trap(T_BREAKPOINT, (db_regs_t *)tf);
-			return;
-		}
-#endif
-#ifdef DEBUG
-		printf("Undefined instruction:\n");
-		printregs(tf);
-		printf("pc -> ");
-		disassemble(tf->tf_r15 & R15_PC);
-#endif
-		panic("undefined instruction in kernel mode");
-	} else {
-		p->p_addr->u_pcb.pcb_tf = tf;
-		sticks = p->p_sticks;
-		trapsignal(p, SIGILL, insn);
-		userret(p, pc, sticks);
-	}
 }
 #endif
 
