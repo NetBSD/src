@@ -1,4 +1,4 @@
-/*	$NetBSD: __clone.S,v 1.1 2001/07/23 01:41:25 christos Exp $	*/
+/*	$NetBSD: __clone.S,v 1.2 2004/01/02 14:31:31 martin Exp $	*/
 
 /*-     
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -87,8 +87,10 @@ ENTRY(__clone)
 2:	ret
 	 restore %g0, %o0, %o0
 
-8:	mov	EINVAL, %o0
-9:	ERROR()
-	mov	-1, %i0
-	ret
-	 restore %g0, -1, %o0
+8:	restore	%g0, EINVAL, %o0
+	ERROR()
+	/* NOTREACHED */
+
+9:	restore %g0, %o0, %o0
+	ERROR()
+	/* NOTREACHED */
