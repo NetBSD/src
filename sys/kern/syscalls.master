@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.24 1994/10/21 00:14:36 mycroft Exp $
+	$NetBSD: syscalls.master,v 1.25 1994/12/14 16:29:57 mycroft Exp $
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
 ; NetBSD system call name/number "master" file.
@@ -330,7 +330,7 @@
 			    size_t *oldlenp, void *new, size_t newlen); }
 203	STD		{ int mlock(caddr_t addr, size_t len); }
 204	STD		{ int munlock(caddr_t addr, size_t len); }
-205	UNIMPL
+205	STD		{ int undelete(char *path); }
 206	UNIMPL
 207	UNIMPL
 208	UNIMPL

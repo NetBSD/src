@@ -869,6 +869,10 @@ struct munlock_args {
 	syscallarg(size_t) len;
 };
 
+struct undelete_args {
+	syscallarg(char *) path;
+};
+
 struct __semctl_args {
 	syscallarg(int) semid;
 	syscallarg(int) semnum;
