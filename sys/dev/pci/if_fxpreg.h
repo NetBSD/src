@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxpreg.h,v 1.6 1998/02/04 08:26:44 thorpej Exp $	*/
+/*	$NetBSD: if_fxpreg.h,v 1.7 1998/02/05 07:31:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -269,7 +269,8 @@ struct fxp_cb_tx {
  * base of the control data DMA mapping.
  */
 #define	FXP_TXDESCOFF(sc, txd)						\
-	((u_long)((txd) - (sc)->control_data->fcd_txcbs) +		\
+	(FXP_CDOFF(fcd_txcbs[0]) +					\
+	 (((u_long)(txd)) - ((u_long)&(sc)->control_data->fcd_txcbs[0])) + \
 	 offsetof(struct fxp_cb_tx, cb_status))
 
 /*
