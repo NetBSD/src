@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2002/09/18 05:41:53 lukem Exp $
+#	$NetBSD: Makefile,v 1.18 2003/09/30 04:20:24 mycroft Exp $
 
 NOMAN=		# defined
 LDSTATIC=	-static		# only static compilation makes sense here
@@ -37,34 +37,34 @@ regress:	test-empty test-nonexist \
 		test-goodaout test-truncaout
 
 test-empty:	${PROG} empty
-	${RP} empty | diff - ${OD}/empty
+	${RP} empty | diff ${OD}/empty -
 
 test-nonexist:	${PROG}
-	${RP} ${TD}/nonexistent | diff - ${OD}/nonexistent
+	${RP} ${TD}/nonexistent | diff ${OD}/nonexistent -
 
 test-nonexistshell: ${PROG} nonexistshell
-	${RP} nonexistshell | diff - ${OD}/nonexistshell
+	${RP} nonexistshell | diff ${OD}/nonexistshell -
 
 test-devnullscript: ${PROG} devnullscript
-	${RP} devnullscript | diff - ${OD}/devnullscript
+	${RP} devnullscript | diff ${OD}/devnullscript -
 
 test-badinterplen: ${PROG} badinterplen
-	${RP} badinterplen | diff - ${OD}/badinterplen
+	${RP} badinterplen | diff ${OD}/badinterplen -
 
 test-goodscript: ${PROG} goodscript
-	${RP} goodscript | diff - ${OD}/goodscript
+	${RP} goodscript | diff ${OD}/goodscript -
 
 test-scriptarg: ${PROG} scriptarg
-	${RP} scriptarg 2>&1 | diff - ${OD}/scriptarg
+	${RP} scriptarg 2>&1 | diff ${OD}/scriptarg -
 
 test-scriptarg-nospace: ${PROG} scriptarg-nospace
-	${RP} scriptarg-nospace 2>&1 | diff - ${OD}/scriptarg-nospace
+	${RP} scriptarg-nospace 2>&1 | diff ${OD}/scriptarg-nospace -
 
 goodaout: ${TD}/goodaout.c
 	${LINK.c} ${GOODAOUT_LIB} -o ${.TARGET} ${TD}/goodaout.c ${LDLIBS}
 
 test-goodaout: ${PROG} goodaout
-	${RP} goodaout | diff - ${OD}/goodaout
+	${RP} goodaout | diff ${OD}/goodaout -
 
 truncaout: goodaout
 	/bin/rm -rf truncaout
@@ -72,6 +72,6 @@ truncaout: goodaout
 	chmod a+x truncaout
 
 test-truncaout: ${PROG} truncaout
-	${RP} truncaout | diff - ${OD}/truncaout
+	${RP} truncaout | diff ${OD}/truncaout -
 
 .include <bsd.prog.mk>
