@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.50 2003/01/18 06:30:24 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.51 2003/01/19 22:36:00 rafal Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -57,6 +57,7 @@
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/kcore.h>
+#include <sys/boot_flag.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -203,7 +204,7 @@ mach_init(argc, argv, magic, btinfo)
 	caddr_t ssym;
 	vaddr_t kernend;
 	int kernstartpfn, kernendpfn;
-	int i, nsym;
+	int i, rv, nsym;
 
 #if 0
 	/* Clear the BSS segment.  XXX Is this really necessary? */
@@ -290,6 +291,42 @@ mach_init(argc, argv, magic, btinfo)
 	}
 
 	/*
+	 * Pass the args again to check for flags -- This is done
+	 * AFTER checking for OSLoadOptions to ensure that "auto"
+	 * does not override the "-s" flag.
+	 */
+
+	for (i = 0; i < argc; i++) {
+		/*
+		 * Extract out any flags passed for the kernel in the
+		 * argument string.  Warn for unknown/invalid flags,
+		 * but silently skip non-flag arguments, as they are
+		 * likely PROM environment values (if I knew those
+		 * would always precede *any* flags, then I'd say we
+		 * should warn about *all* unexpected values, but for
+		 * now this should be fine).
+		 *
+		 * Use the MI boot-flag extractor since we don't use
+		 * any special MD flags and to make sure we're up-to
+		 * date with new MI flags whenever they're added.
+		 */
+		if (argv[i][0] == '-') {
+			rv = 0;
+			BOOT_FLAG(argv[i][1], rv);
+			
+			if (rv == 0) {
+				printf("Unexpected option '%s' ignored", argv[i]);
+			} else {
+				boothowto |= rv;
+			}
+		}
+	}
+
+#ifdef DEBUG
+	boothowto |= AB_DEBUG;
+#endif
+
+	/*
 	 * When the kernel is loaded directly by the firmware, and
 	 * no explicit OSLoadPartition is set, we fall back on
 	 * SystemPartition for the boot device.
@@ -353,7 +390,6 @@ mach_init(argc, argv, magic, btinfo)
 
 	case MACH_SGI_IP32:
 #ifdef IP32
-		boothowto |= AB_DEBUG;		/* XXXrkb */
 		ip32_init();
 #else
 		unconfigured_system_type(mach_type);
