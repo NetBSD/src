@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.2 1997/03/19 16:24:39 gwr Exp $	*/
+/*	$NetBSD: lpt.c,v 1.3 1998/01/12 19:51:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Steve Woodford
@@ -129,9 +129,7 @@ struct cfattach lpt_pcc_ca = {
 	sizeof(struct lpt_softc), lpt_pcc_match, lpt_pcc_attach
 };
 
-struct cfdriver lpt_cd = {
-	NULL, "lpt", DV_DULL, NULL, 0
-};
+extern struct cfdriver lpt_cd;
 
 #define	LPTUNIT(s)	(minor(s) & 0x0f)
 #define	LPTFLAGS(s)	(minor(s) & 0xf0)

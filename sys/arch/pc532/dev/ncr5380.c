@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380.c,v 1.11 1997/03/15 18:10:18 is Exp $	*/
+/*	$NetBSD: ncr5380.c,v 1.12 1998/01/12 19:55:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -216,10 +216,6 @@ int	ncr_match __P((struct device *, struct cfdata *, void *));
  */
 #define CFNAME(n)	__CONCAT(n,cd)
 #define CFSTRING(n)	__STRING(n)
-
-struct cfdriver CFNAME(DRNAME) = {
-	NULL, CFSTRING(DRNAME), (cfmatch_t)ncr_match, ncr_attach, 
-	DV_DULL, sizeof(struct ncr_softc), NULL, 0 };
 
 int
 ncr_match(pdp, cdp, auxp)
