@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_compat.h,v 1.35 2004/03/28 09:00:56 martti Exp $	*/
+/*	$NetBSD: ip_compat.h,v 1.35.2.1 2004/03/31 20:01:57 tron Exp $	*/
 
 /*
  * Copyright (C) 1993-2001, 2003 by Darren Reed.
@@ -748,6 +748,10 @@ typedef	int		minor_t;
 typedef	u_int32_t	u_32_t;
 # define	U_32_T	1
 
+# define	COPYIN(a,b,c)	copyin((caddr_t)(a), (caddr_t)(b), (c))
+# define	COPYOUT(a,b,c)	copyout((caddr_t)(a), (caddr_t)(b), (c))
+# define	BCOPYIN(a,b,c)	bcopy((caddr_t)(a), (caddr_t)(b), (c))
+# define	BCOPYOUT(a,b,c)	bcopy((caddr_t)(a), (caddr_t)(b), (c))
 
 # define OS_RECOGNISED 1
 #endif /* __NetBSD__ */
