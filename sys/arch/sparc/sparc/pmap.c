@@ -42,7 +42,7 @@
  *	@(#)pmap.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: pmap.c,v 1.39 93/04/20 11:17:12 torek Exp 
- * $Id: pmap.c,v 1.8 1994/03/20 09:11:54 pk Exp $
+ * $Id: pmap.c,v 1.9 1994/05/05 05:58:27 deraadt Exp $
  */
 
 /*
@@ -310,7 +310,7 @@ vm_offset_t	virtual_end;	/* last free virtual page number */
 
 /*----------------------------------------------------------------*/
 
-#ifdef	sun4c
+#ifdef	SUN4C
 /*
  * Translations from dense (contiguous) pseudo physical addresses
  * (fed to the VM code, to keep it happy) to sparse (real, hardware)
@@ -449,7 +449,7 @@ init_translations()
 	return (pages);
 }
 
-#else /* sun4c */
+#else /* SUN4C */
 
 /*
  * Pages are physically contiguous, and hardware PFN == software PFN.
@@ -459,7 +459,7 @@ init_translations()
 #define	HWTOSW(pg)	(pg)
 #define	SWTOHW(pg)	(pg)
 
-#endif /* sun4c */
+#endif /* SUN4C */
 
 /* update pv_flags given a valid pte */
 #define	MR(pte) (((pte) >> PG_M_SHIFT) & (PV_MOD | PV_REF))
