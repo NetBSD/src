@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.82 2000/12/06 01:47:51 mrg Exp $	*/
+/*	$NetBSD: pmap.c,v 1.83 2000/12/10 19:33:02 eeh Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
 /*
@@ -1289,6 +1289,7 @@ remap_data:
 			int64_t data;
 
 			pmap_get_page(&pa);
+			pmap_zero_page(pa);
 			prom_map_phys(pa, NBPG, vmmap, -1);
 			data = TSB_DATA(0 /* global */,
 				TLB_8K,
