@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.6 1999/04/10 16:16:11 scw Exp $
+.\"	$NetBSD: install,v 1.7 2000/03/13 22:37:13 soren Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -82,7 +82,7 @@ Loading: Operating System
 Volume: NBSD
 
 IPL loaded at:  $003F0000
-\*>\*> BSD MVME147 tapeboot [$Revision: 1.6 $]
+\*>\*> BSD MVME147 tapeboot [$Revision: 1.7 $]
 578616+422344+55540+[46032+51284]=0x11a6e4
 Start @ 0x8000 ...
 Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.  All rights reserved.
@@ -415,7 +415,7 @@ For both boards, the boot messages are very similar:
 .Pp
 .Bd -literal -offset indent
 Start @ 0x8000 ...
-\*>\*> BSD MVME147 netboot (via sboot) [$Revision: 1.6 $]
+\*>\*> BSD MVME147 netboot (via sboot) [$Revision: 1.7 $]
 device: le0 attached to 08:00:3e:20:cb:87
 boot: client IP address: 192.168.1.4
 boot: client name: soapy
@@ -562,7 +562,7 @@ been partitioned using the RAMDISK kernel.
 Note that partition sizes and offsets are expressed
 in sectors. When you fill out the disklabel, you will
 need to specify partition types and filesystem parameters.
-If you're unsure what the these values should be, use the
+If you're unsure what these values should be, use the
 following defaults:
 .Pp
 .Dl fstype: 4.2BSD

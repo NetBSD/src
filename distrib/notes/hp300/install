@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.4 1999/01/13 07:30:04 ross Exp $	
+.\"	$NetBSD: install,v 1.5 2000/03/13 22:37:12 soren Exp $	
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -42,7 +42,7 @@ Allow you to place disklabels on additional disks.
 Note that partition sizes and offsets are expressed
 in sectors. When you fill out the disklabel, you will
 need to specify partition types and filesystem parameters.
-If you're unsure what the these values should be, use the
+If you're unsure what these values should be, use the
 following:
 .Bd -ragged
 fstype: 4.2BSD

@@ -1,4 +1,4 @@
-.\"	$NetBSD: xfer,v 1.3 1999/05/04 03:37:44 simonb Exp $	
+.\"	$NetBSD: xfer,v 1.4 2000/03/13 22:37:12 soren Exp $	
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -150,7 +150,7 @@ of the NFS server and resetting its mount daemon (mountd).
 (Both of these actions will probably require superuser
 privileges on the server.)
 .Pp
-You need to know the the numeric IP address of the NFS server,
+You need to know the numeric IP address of the NFS server,
 and, if the server is not on a network directly connected to
 the machine on which you're installing or upgrading NetBSD,
 you need to know the numeric IP address of the router closest

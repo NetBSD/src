@@ -1,4 +1,4 @@
-.\"	$NetBSD: xfer,v 1.15 1999/05/05 18:47:40 is Exp $	
+.\"	$NetBSD: xfer,v 1.16 2000/03/13 22:37:12 soren Exp $	
 .Pp
 Installation is supported from several media types, including:
 .Bl -bullet
@@ -107,7 +107,7 @@ NetBSD on.  This will probably require modifying the
 /etc/exports file of the NFS server and resetting
 mountd, acts which will require superuser privileges.
 Note the numeric IP address of the NFS server and of
-the router closest to the the new NetBSD machine,
+the router closest to the new NetBSD machine,
 if the NFS server is not on a network which is
 directly attached to the NetBSD machine.
 .Pp

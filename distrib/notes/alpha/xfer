@@ -1,4 +1,4 @@
-.\"	$NetBSD: xfer,v 1.5 1999/01/13 07:30:02 ross Exp $	
+.\"	$NetBSD: xfer,v 1.6 2000/03/13 22:37:10 soren Exp $	
 .Pp
 A large number of different media types can be used to hold the
 binary distribution sets, but they must originally be obtained
@@ -29,7 +29,7 @@ file on of the NFS server and resetting its mount daemon (mountd).
 (Both of these actions will probably require superuser
 privileges on the server.)
 .Pp
-You need to know the the numeric IP address of the NFS server,
+You need to know the numeric IP address of the NFS server,
 and, if the server is not on a network directly connected to
 the machine on which you're installing or upgrading NetBSD,
 you need to know the numeric IP address of the closest router .
