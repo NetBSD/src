@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.7 2000/10/10 20:24:53 is Exp $	*/
+/*	$NetBSD: extern.h,v 1.8 2001/11/01 08:18:01 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -90,7 +90,7 @@ void		 renameit __P((char *, char *));
 int		 reply __P((char *));
 RST_DIR		*rst_opendir __P((const char *));
 struct direct	*rst_readdir __P((RST_DIR *));
-void		 rst_closedir __P((RST_DIR *dirp));
+void		 rst_closedir __P((RST_DIR *));
 void	 	 runcmdshell __P((void));
 char		*savename __P((char *));
 void	 	 setdirmodes __P((int));
