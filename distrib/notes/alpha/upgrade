@@ -23,7 +23,7 @@ However, that doesn't mean that you're finished with the upgrade
 process.  You will probably want to update the set of device nodes
 you have in /dev.  If you've changed the contents of /dev by hand,
 you will need to be careful about this, but if not, you can just
-cd into /dev, and run the command "sh MAKEDEV all".
+cd into /dev, and run the command "sh ./MAKEDEV all".
 
 You must also deal with certain changes in the formats of some of
 the configuration files. The most notable change is that we now
