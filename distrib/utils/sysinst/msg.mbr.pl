@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mbr.pl,v 1.6 2003/07/07 12:30:21 dsl Exp $	*/
+/*	$NetBSD: msg.mbr.pl,v 1.7 2003/07/07 12:55:48 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -212,11 +212,13 @@ message dofdisk
 message wmbrfail
 {Nadpisanie MBR nie powiodlo sie. Nie moge kontynuowac.}
 
-.if BOOTSEL && 0
+.if 0
+.if BOOTSEL
 message Set_timeout_value
 {Ustaw opoznienie}
 
 message bootseltimeout
 {Opoznienie bootmenu: %d\n}
 
+.endif
 .endif
