@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.115 1999/06/09 06:59:53 scottr Exp $	*/
+/*	$NetBSD: locore.s,v 1.116 1999/06/09 15:34:08 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1499,20 +1499,23 @@ Lm68881rdone:
  * the loops will run from a single cache half-line.
  */
 	.align	8			| align to half-line boundary
+	nop				| pad to align Ldelay
+	nop
+	nop
 ENTRY(_delay)
-	movl	sp@(4),d0
-	jeq	Ldelayexit
-	movl	d0,d1
-	andl	#0xffff,d0
-	swap	d1
-	subql	#1,d0
-	andl	#0xffff,d1
+	movl	sp@(4),d0		| get iterations
+	jeq	Ldelayexit		| bail out if nothing to do
+	movql	#0,d1			| put bits 15-0 in d1 for the
+	movw	d0,d1			|   inner loop, and move bits
+	movw	#0,d0			|   31-16 to the low-order word
+	subql	#1,d1			|   of d0 for the outer loop
+	swap	d0
 Ldelay:
-	tstl	_C_LABEL(delay_flag)
+	tstl	_C_LABEL(delay_flag)	| this never changes for delay()!
+	dbeq	d1,Ldelay		|   (used only for timing purposes)
 	dbeq	d0,Ldelay
-	dbeq	d1,Ldelay
-	addql	#1,d0
-	swap	d1
+	addqw	#1,d1			| adjust end count and
+	swap	d0			|    return the longword result
 	orl	d1,d0
 Ldelayexit:
 	rts
