@@ -1,4 +1,4 @@
-/*	$NetBSD: rget.c,v 1.5 1996/03/29 23:29:20 jtc Exp $	*/
+/*	$NetBSD: rget.c,v 1.6 1997/07/13 20:15:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -36,14 +36,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)rget.c	8.1 (Berkeley) 6/4/93";
+#else
+__RCSID("$NetBSD: rget.c,v 1.6 1997/07/13 20:15:24 christos Exp $");
 #endif
-static char rcsid[] = "$NetBSD: rget.c,v 1.5 1996/03/29 23:29:20 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
+#include "local.h"
 
 /*
  * Handle getc() when the buffer ran out:

@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpnam.c,v 1.7 1997/03/16 05:00:40 lukem Exp $	*/
+/*	$NetBSD: tmpnam.c,v 1.8 1997/07/13 20:15:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -36,19 +36,20 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)tmpnam.c	8.3 (Berkeley) 3/28/94";
+#else
+__RCSID("$NetBSD: tmpnam.c,v 1.8 1997/07/13 20:15:32 christos Exp $");
 #endif
-static char rcsid[] = "$NetBSD: tmpnam.c,v 1.7 1997/03/16 05:00:40 lukem Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 
 #include <stdio.h>
 #include <unistd.h>
-
-extern char *_mktemp __P((char *));
+#include "local.h"
 
 __warn_references(tmpnam,
     "warning: tmpnam() possibly used unsafely, consider using mkstemp()");

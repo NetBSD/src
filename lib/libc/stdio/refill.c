@@ -1,4 +1,4 @@
-/*	$NetBSD: refill.c,v 1.6 1996/08/13 07:54:00 explorer Exp $	*/
+/*	$NetBSD: refill.c,v 1.7 1997/07/13 20:15:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -36,17 +36,21 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)refill.c	8.1 (Berkeley) 6/4/93";
+#else
+__RCSID("$NetBSD: refill.c,v 1.7 1997/07/13 20:15:22 christos Exp $");
 #endif
-static char rcsid[] = "$NetBSD: refill.c,v 1.6 1996/08/13 07:54:00 explorer Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include "local.h"
+
+static int lflush __P((FILE *));
 
 static int
 lflush(fp)
