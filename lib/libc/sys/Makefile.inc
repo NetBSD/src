@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.154 2005/01/02 16:43:26 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.155 2005/02/25 21:51:10 matt Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -41,52 +41,56 @@ SRCS+=	__semctl13.c
 SRCS+=	_brk.c _fork.c _getcontext.c _pipe.c _sbrk.c
 
 # modules with default implementations on all architectures:
-ASM=	access.S acct.S bind.S chdir.S chflags.S \
-	chmod.S chown.S chroot.S clock_getres.S clock_gettime.S \
+ASM=	access.S acct.S \
+	bind.S \
+	chdir.S chflags.S chmod.S chown.S chroot.S clock_getres.S \
+		clock_gettime.S \
 	dup.S dup2.S  \
 	extattrctl.S \
-	extattr_delete_fd.S extattr_delete_file.S extattr_delete_link.S \
-	extattr_get_fd.S extattr_get_file.S extattr_get_link.S \
-	extattr_list_fd.S extattr_list_file.S extattr_list_link.S \
-	extattr_set_fd.S extattr_set_file.S extattr_set_link.S \
+		extattr_delete_fd.S extattr_delete_file.S \
+		extattr_delete_link.S extattr_get_fd.S extattr_get_file.S \
+		extattr_get_link.S extattr_list_fd.S extattr_list_file.S \
+		extattr_list_link.S extattr_set_fd.S extattr_set_file.S \
+		extattr_set_link.S \
 	fchdir.S fchflags.S fchmod.S fchown.S fchroot.S \
-	fhopen.S fhstat.S fhstatvfs1.S \
-	fktrace.S flock.S fpathconf.S __fstat13.S fstatvfs1.S \
-	futimes.S __getcwd.S \
-	getdents.S getfh.S getvfsstat.S getgroups.S getitimer.S \
-	__getlogin.S getpeername.S getpgid.S getpgrp.S \
-	getpriority.S getrlimit.S getrusage.S getsid.S getsockname.S \
-	getsockopt.S gettimeofday.S ioctl.S kevent.S kqueue.S \
-	ktrace.S \
-	lchflags.S lchmod.S lchown.S __lstat13.S lfs_bmapv.S lfs_markv.S \
-	lfs_segclean.S lfs_segwait.S link.S listen.S lutimes.S \
+		fhopen.S fhstat.S fhstatvfs1.S fktrace.S \
+		flock.S fpathconf.S __fstat13.S fstatvfs1.S futimes.S \
+	__getcwd.S getdents.S getfh.S getvfsstat.S getgroups.S getitimer.S \
+		__getlogin.S getpeername.S getpgid.S getpgrp.S \
+		getpriority.S getrlimit.S getrusage.S getsid.S getsockname.S \
+		getsockopt.S gettimeofday.S \
+	ioctl.S \
+	kevent.S kqueue.S ktrace.S \
+		_ksem_close.S _ksem_destroy.S _ksem_getvalue.S _ksem_init.S \
+		_ksem_post.S _ksem_trywait.S _ksem_unlink.S _ksem_wait.S \
+		_ksem_open.S \
+	lchflags.S lchmod.S lchown.S lfs_bmapv.S lfs_markv.S lfs_segclean.S \
+		lfs_segwait.S link.S listen.S __lstat13.S lutimes.S \
+		_lwp_create.S _lwp_exit.S _lwp_self.S _lwp_wait.S \
+		_lwp_suspend.S _lwp_continue.S _lwp_wakeup.S \
+		_lwp_getprivate.S _lwp_setprivate.S \
 	madvise.S mincore.S minherit.S mkdir.S mkfifo.S mknod.S \
-	mlock.S mlockall.S mount.S mprotect.S __msgctl13.S msgget.S \
-	munlock.S munlockall.S munmap.S \
-	nfssvc.S ntp_gettime.S rasctl.S pathconf.S \
-	pmc_get_info.S pmc_control.S profil.S quotactl.S \
-	readlink.S reboot.S recvfrom.S recvmsg.S rename.S revoke.S \
-	rmdir.S semconfig.S semget.S semop.S ____semctl13.S sendmsg.S \
-	sendto.S _ksem_close.S _ksem_destroy.S _ksem_getvalue.S _ksem_init.S \
-	_ksem_post.S _ksem_trywait.S _ksem_unlink.S _ksem_wait.S _ksem_open.S \
-	setegid.S setcontext.S seteuid.S setgid.S setgroups.S setitimer.S \
-	__setlogin.S setpgid.S setpriority.S setregid.S setreuid.S setrlimit.S \
-	setsid.S setsockopt.S setuid.S \
-	__shmctl13.S shmdt.S shmget.S shutdown.S \
-	__sigaltstack14.S __sigpending14.S \
-	__sigaction_sigtramp.S __sigtimedwait.S \
-	socket.S socketpair.S __stat13.S statvfs1.S \
-	swapctl.S symlink.S umask.S undelete.S unlink.S \
-	unmount.S utimes.S utrace.S uuidgen.S vadvise.S \
-	__sysctl.S \
-	__posix_chown.S __posix_fchown.S __posix_lchown.S __posix_rename.S \
-	_lwp_create.S _lwp_exit.S _lwp_self.S _lwp_wait.S \
-	_lwp_suspend.S _lwp_continue.S _lwp_wakeup.S \
-	_lwp_getprivate.S _lwp_setprivate.S \
+		mlock.S mlockall.S mount.S mprotect.S __msgctl13.S msgget.S \
+		munlock.S munlockall.S munmap.S \
+	nfssvc.S ntp_gettime.S \
+	pathconf.S pmc_get_info.S pmc_control.S __posix_chown.S \
+		__posix_fchown.S __posix_lchown.S __posix_rename.S profil.S \
+	quotactl.S \
+	rasctl.S readlink.S reboot.S recvfrom.S recvmsg.S rename.S revoke.S \
+		rmdir.S \
 	sa_register.S sa_stacks.S sa_enable.S sa_setconcurrency.S sa_yield.S \
-	sa_preempt.S \
+		sa_preempt.S semconfig.S semget.S semop.S ____semctl13.S \
+		sendmsg.S sendto.S setegid.S setcontext.S seteuid.S setgid.S \
+		setgroups.S setitimer.S __setlogin.S setpgid.S setpriority.S \
+		setregid.S setreuid.S setrlimit.S setsid.S setsockopt.S \
+		setuid.S __shmctl13.S shmdt.S shmget.S shutdown.S \
+		__sigaltstack14.S __sigpending14.S __sigaction_sigtramp.S \
+		__sigtimedwait.S socket.S socketpair.S __stat13.S statvfs1.S \
+		swapctl.S symlink.S __sysctl.S \
 	timer_create.S timer_delete.S timer_gettime.S timer_getoverrun.S \
-	timer_settime.S
+		timer_settime.S \
+	umask.S undelete.S unlink.S unmount.S utimes.S utrace.S uuidgen.S \
+	vadvise.S
 
 WEAKASM= accept.S close.S connect.S execve.S \
 	fcntl.S fdatasync.S fsync.S fsync_range.S \
