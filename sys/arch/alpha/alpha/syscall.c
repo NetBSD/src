@@ -1,4 +1,4 @@
-/* $NetBSD: syscall.c,v 1.3.2.5 2002/12/11 05:51:56 thorpej Exp $ */
+/* $NetBSD: syscall.c,v 1.3.2.6 2002/12/16 17:26:58 nathanw Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.3.2.5 2002/12/11 05:51:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.3.2.6 2002/12/16 17:26:58 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -353,7 +353,9 @@ void
 child_return(void *arg)
 {
 	struct lwp *l = arg;
+#ifdef KTRACE
 	struct proc *p = l->l_proc;
+#endif
 
 	/*
 	 * Return values in the frame set by cpu_fork().
