@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.39.2.1 1997/11/11 06:38:28 mrg Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.39.2.2 1997/11/17 16:43:14 mrg Exp $	*/
 
 /*
  * Copyright (c) 1985, 1988, 1990, 1992, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.39.2.1 1997/11/11 06:38:28 mrg Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.39.2.2 1997/11/17 16:43:14 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -1302,13 +1302,15 @@ printaddr:
 
 		lreply(211, "");
 		lreply(211, "Class: %s", curclass.classname);
+		lreply(211, "Check PORT commands: %sabled", 
+		    curclass.checkportcmd ? "en" : "dis");
 		if (curclass.display)
 			lreply(211, "Display file: %s", curclass.display);
 		if (curclass.notify)
 			lreply(211, "Notify fileglob: %s", curclass.notify);
 		lreply(211, "Idle timeout: %d, maximum timeout: %d",
 		    curclass.timeout, curclass.maxtimeout);
-		lreply(211, "dele, mkd, rmd, umask, chmod: %sabled",
+		lreply(211, "DELE, MKD, RMD, UMASK, CHMOD commands: %sabled",
 		    curclass.modify ? "en" : "dis");
 		lreply(211, "Umask: %.04o", curclass.umask);
 		for (cp = curclass.conversions; cp != NULL; cp=cp->next) {
