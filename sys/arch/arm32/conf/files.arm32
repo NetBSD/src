@@ -53,17 +53,10 @@ file    arch/arm32/mainbus/fd.c			fdc needs-flag
 major   {fd = 17}
 
 # RAM disk driver
-device	rd
-attach	rd at mainbus
+pseudo-device	rd
 file	dev/ramdisk.c				rd needs-count
 file	arch/arm32/dev/rd_hooks.c		rd | ramdisk_hooks
 major   {rd = 18}
-
-# Old ramdisc driver
-#device	rd
-#attach rd at mainbus
-#file    arch/arm32/mainbus/old/ramdisk.c	rd needs-flag
-#major   {rd = 18}
 
 device  lpt: tty, ether, ifnet
 attach	lpt at mainbus
@@ -79,6 +72,11 @@ device  quadmouse: tty
 attach	quadmouse at mainbus
 file    arch/arm32/mainbus/qmouse.c		quadmouse needs-flag
 major   {quadmouse = 9}
+
+device  pms: tty
+attach	pms at mainbus
+file    arch/arm32/mainbus/pms.c		pms needs-flag
+major   {pms = 40}
 
 device	beep
 attach	beep at mainbus
@@ -134,6 +132,7 @@ major   {st = 25}
 major   {cd = 26}
 major   {ch = 27}
 major	{uk = 28}
+major	{ss = 29}
 
 # Generic sbic (WD3393) driver
 define	sbic
