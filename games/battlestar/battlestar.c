@@ -1,4 +1,4 @@
-/*	$NetBSD: battlestar.c,v 1.8 1999/07/28 01:45:42 hubertf Exp $	*/
+/*	$NetBSD: battlestar.c,v 1.9 1999/09/18 16:40:04 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)battlestar.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: battlestar.c,v 1.8 1999/07/28 01:45:42 hubertf Exp $");
+__RCSID("$NetBSD: battlestar.c,v 1.9 1999/09/18 16:40:04 jsm Exp $");
 #endif
 #endif				/* not lint */
 
@@ -101,6 +101,6 @@ run:
 	case 0:
 		goto start;
 	default:
-		exit(0);
+		errx(1, "bad return from cypher(): please submit a bug report");
 	}
 }
