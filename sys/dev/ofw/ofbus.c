@@ -1,4 +1,4 @@
-/*	$NetBSD: ofbus.c,v 1.5 1998/01/12 09:33:31 thorpej Exp $	*/
+/*	$NetBSD: ofbus.c,v 1.6 1998/01/26 21:48:07 cgd Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -111,30 +111,17 @@ ofbattach(parent, dev, aux)
 		else if (!strcmp(name, "ide"))
 			units = 2;
 	}
+
 	for (child = OF_child(ofp->phandle); child; child = OF_peer(child)) {
 		/*
 		 * This is a hack to skip all the entries in the tree
 		 * that aren't devices (packages, openfirmware etc.).
 		 */
-		if (OF_getprop(child, "device_type", name, sizeof name) < 0)
+		if (OF_getprop(child, "device_type", name, sizeof name) < 0 &&
+		    OF_getprop(child, "compatible", name, sizeof name) < 0)
 			continue;
 		probe.phandle = child;
 		for (probe.unit = 0; probe.unit < units; probe.unit++)
 			config_found(dev, &probe, ofbprint);
 	}
-}
-
-/*
- * Name matching routine for OpenFirmware
- */
-int
-ofnmmatch(cp1, cp2)
-	char *cp1, *cp2;
-{
-	int i;
-	
-	for (i = 0; *cp2; i++)
-		if (*cp1++ != *cp2++)
-			return 0;
-	return i;
 }
