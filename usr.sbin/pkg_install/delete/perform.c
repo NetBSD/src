@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.31.4.1 2001/03/20 18:02:40 he Exp $	*/
+/*	$NetBSD: perform.c,v 1.31.4.2 2002/02/23 18:07:21 he Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.15 1997/10/13 15:03:52 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.31.4.1 2001/03/20 18:02:40 he Exp $");
+__RCSID("$NetBSD: perform.c,v 1.31.4.2 2002/02/23 18:07:21 he Exp $");
 #endif
 #endif
 
@@ -384,8 +384,10 @@ require_find_recursive_down(lpkg_t *thislpp, package_t *plist)
 			TAILQ_INSERT_TAIL(&reqq, lpp, lp_link);
 
 			lpp2 = find_on_queue(&lpdelq, p->name);
-			if (lpp2)
+			if (lpp2) {
 				TAILQ_REMOVE(&lpdelq, lpp2, lp_link);
+				free_lpkg(lpp2);
+			}
 			lpp = alloc_lpkg(p->name);
 			TAILQ_INSERT_TAIL(&lpdelq, lpp, lp_link);
 
@@ -446,6 +448,7 @@ require_find_recursive_down(lpkg_t *thislpp, package_t *plist)
 		p = find_plist(&rPlist, PLIST_CWD);
 		if (!p) {
 			warnx("package '%s' doesn't have a prefix", lpp->lp_name);
+			free_plist(&rPlist);
 			fail = 1;
 			goto fail;
 		}
@@ -454,6 +457,7 @@ require_find_recursive_down(lpkg_t *thislpp, package_t *plist)
 		TAILQ_INSERT_HEAD(&lpfindq, thislpp, lp_link);
 
 		rc = require_find_recursive_down(lpp, &rPlist);
+		free_plist(&rPlist);
 		if (rc) {
 			fail = 1;
 			goto fail;
@@ -619,8 +623,8 @@ pkg_do(char *pkg)
 		/* Some packages aren't packed right, so we need to just ignore delete_package()'s status.  Ugh! :-( */
 		if (delete_package(FALSE, CleanDirs, &Plist) == FAIL)
 			warnx(
-			    "couldn't entirely delete package (perhaps the packing list is\n"
-			    "incorrectly specified?)");
+		"couldn't entirely delete package `%s'\n"
+		"(perhaps the packing list is incorrectly specified?)", pkg);
 	}
 	/* Remove this package from the +REQUIRED_BY list of the packages this depends on */
 	for (p = Plist.head; p; p = p->next) {
