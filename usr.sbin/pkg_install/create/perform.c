@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.30 2002/03/05 14:16:11 agc Exp $	*/
+/*	$NetBSD: perform.c,v 1.31 2002/06/09 13:23:45 yamt Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.38 1997/10/13 15:03:51 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.30 2002/03/05 14:16:11 agc Exp $");
+__RCSID("$NetBSD: perform.c,v 1.31 2002/06/09 13:23:45 yamt Exp $");
 #endif
 #endif
 
@@ -202,13 +202,6 @@ cleanup(int sig)
 	}
 	signal(SIGINT, oldint);
 	signal(SIGHUP, oldhup);
-}
-
-static int
-note_whats_installed(const char *found, char *note)
-{
-	(void) strcpy(note, found);
-	return 0;
 }
 
 int

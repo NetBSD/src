@@ -1,11 +1,11 @@
-/*	$NetBSD: str.c,v 1.36 2002/06/09 11:57:00 yamt Exp $	*/
+/*	$NetBSD: str.c,v 1.37 2002/06/09 13:23:46 yamt Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "Id: str.c,v 1.5 1997/10/08 07:48:21 charnier Exp";
 #else
-__RCSID("$NetBSD: str.c,v 1.36 2002/06/09 11:57:00 yamt Exp $");
+__RCSID("$NetBSD: str.c,v 1.37 2002/06/09 13:23:46 yamt Exp $");
 #endif
 #endif
 
@@ -420,7 +420,7 @@ pmatch(const char *pattern, const char *pkg)
  * Returns -1 on error, 1 if found, 0 otherwise.
  */
 int
-findmatchingname(const char *dir, const char *pattern, matchfn match, char *data)
+findmatchingname(const char *dir, const char *pattern, matchfn match, void *data)
 {
 	struct dirent *dp;
 	char tmp_pattern[PKG_PATTERN_MAX];
@@ -485,8 +485,9 @@ ispkgpattern(const char *pkg)
  * Also called for FTP matching
  */
 int
-findbestmatchingname_fn(const char *found, char *best)
+findbestmatchingname_fn(const char *found, void *vp)
 {
+	char *best = vp;
 	char *found_version, *best_version;
 	char found_no_sfx[PKG_PATTERN_MAX];
 	char best_no_sfx[PKG_PATTERN_MAX];
@@ -603,4 +604,36 @@ strip_txz(char *buf, char *sfx, const char *fname)
 
 	/* not found */
 	memcpy(buf, fname, len+1);
+}
+
+/*
+ * Called to see if pkg is already installed as some other version, 
+ * note found version in "note".
+ */
+int
+note_whats_installed(const char *found, void *vp)
+{
+	char *note = vp;
+
+	(void) strlcpy(note, found, FILENAME_MAX);
+	return 0;
+}
+
+/*
+ * alloc lpkg for pkg and add it to list.
+ */
+int
+add_to_list_fn(const char *pkg, void *vp)
+{
+	lpkg_head_t *pkgs = vp;
+	lpkg_t *lpp;
+	char fn[FILENAME_MAX];
+
+	snprintf(fn, sizeof(fn), "%s/%s", _pkgdb_getPKGDB_DIR(), pkg);
+	if (!isfile(fn)) {	/* might as well use sanity_check() */
+		lpp = alloc_lpkg(pkg);
+		TAILQ_INSERT_TAIL(pkgs, lpp, lp_link);
+	}
+
+	return 0;
 }

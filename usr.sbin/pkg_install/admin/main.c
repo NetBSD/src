@@ -1,8 +1,8 @@
-/*	$NetBSD: main.c,v 1.25 2002/06/09 11:57:00 yamt Exp $	*/
+/*	$NetBSD: main.c,v 1.26 2002/06/09 13:23:45 yamt Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.25 2002/06/09 11:57:00 yamt Exp $");
+__RCSID("$NetBSD: main.c,v 1.26 2002/06/09 13:23:45 yamt Exp $");
 #endif
 
 /*
@@ -51,6 +51,8 @@ void    usage(void);
 
 int     filecnt;
 int     pkgcnt;
+
+static int checkpattern_fn(const char *, void *);
 
 /*
  * Assumes CWD is in /var/db/pkg/<pkg>!
@@ -307,7 +309,7 @@ checkall(void)
 }
 
 static int
-checkpattern_fn(const char *pkg, char *data)
+checkpattern_fn(const char *pkg, void *vp)
 {
 	int     rc;
 
@@ -324,8 +326,9 @@ checkpattern_fn(const char *pkg, char *data)
 }
 
 static int
-lspattern_fn(const char *pkg, char *data)
+lspattern_fn(const char *pkg, void *vp)
 {
+	char *data = vp;
 	printf("%s/%s\n", data, pkg);
 	
 	return 0;

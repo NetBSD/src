@@ -1,11 +1,11 @@
-/*	$NetBSD: main.c,v 1.27 2001/08/21 18:38:40 yamt Exp $	*/
+/*	$NetBSD: main.c,v 1.28 2002/06/09 13:23:45 yamt Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char *rcsid = "from FreeBSD Id: main.c,v 1.14 1997/10/08 07:47:26 charnier Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.27 2001/08/21 18:38:40 yamt Exp $");
+__RCSID("$NetBSD: main.c,v 1.28 2002/06/09 13:23:45 yamt Exp $");
 #endif
 #endif
 
@@ -59,21 +59,6 @@ usage(void)
 	    "                pkg-name [pkg-name ...]",
 	    "       pkg_info -a [flags]");
 	exit(1);
-}
-
-int
-find_fn(const char *pkg, char *data)
-{
-	lpkg_t *lpp;
-	char fn[FILENAME_MAX];
-
-	snprintf(fn, sizeof(fn), "%s/%s", _pkgdb_getPKGDB_DIR(), pkg);
-	if (!isfile(fn)) {	/* might as well use sanity_check() */
-		lpp = alloc_lpkg(pkg);
-		TAILQ_INSERT_TAIL(&pkgs, lpp, lp_link);
-	}
-
-	return 0;
 }
 
 int
@@ -251,7 +236,7 @@ main(int argc, char **argv)
 				errx(1, "No matching pkg for %s.", *argv);
 		} else {
 			if (ispkgpattern(*argv)) {
-				if (findmatchingname(_pkgdb_getPKGDB_DIR(), *argv, find_fn, NULL) == 0)
+				if (findmatchingname(_pkgdb_getPKGDB_DIR(), *argv, add_to_list_fn, &pkgs) == 0)
 					errx(1, "No matching pkg for %s.", *argv);
 			} else {
 				lpp = alloc_lpkg(*argv);
