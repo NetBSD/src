@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_fs.c,v 1.2 2001/04/08 08:01:36 ross Exp $	*/
+/*	$NetBSD: netbsd32_fs.c,v 1.3 2001/04/09 09:39:10 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -600,20 +600,11 @@ netbsd32___fstat13(p, v, retval)
 	if ((u_int)fd >= fdp->fd_nfiles ||
 	    (fp = fdp->fd_ofiles[fd]) == NULL)
 		return (EBADF);
-	switch (fp->f_type) {
 
-	case DTYPE_VNODE:
-		error = vn_stat((struct vnode *)fp->f_data, &ub, p);
-		break;
+	FILE_USE(fp);
+	error = (*fp->f_ops->fo_stat)(fp->f_data, &ub, p);
+	FILE_UNUSE(fp, p);
 
-	case DTYPE_SOCKET:
-		error = soo_stat((struct socket *)fp->f_data, &ub, p);
-		break;
-
-	default:
-		panic("fstat");
-		/*NOTREACHED*/
-	}
 	if (error == 0) {
 		netbsd32_from___stat13(&ub, &sb32);
 		error = copyout(&sb32, (caddr_t)(u_long)SCARG(uap, sb), sizeof(sb32));
