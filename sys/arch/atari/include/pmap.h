@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.18 1998/05/07 07:26:05 leo Exp $	*/
+/*	$NetBSD: pmap.h,v 1.19 1998/09/02 15:01:55 leo Exp $	*/
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -82,7 +82,7 @@ typedef struct pmap *pmap_t;
 #define	PMAP_ACTIVATE(pmap, loadhw)					\
 {									\
 	if ((loadhw))							\
-		loadustp(m68k_btop((vm_offset_t)(pmap)->pm_stpa));	\
+		loadustp(m68k_btop((pmap)->pm_stpa));	\
 }
 
 /*
@@ -92,9 +92,9 @@ typedef struct pmap *pmap_t;
  */
 #define	NMEM_SEGS	8
 struct memseg {
-	vm_offset_t	start;		/* PA of first page in segment	*/
-	vm_offset_t	end;		/* PA of last  page in segment	*/
-	int		first_page;	/* relative page# of 'start'	*/
+	paddr_t	start;		/* PA of first page in segment	*/
+	paddr_t	end;		/* PA of last  page in segment	*/
+	int	first_page;	/* relative page# of 'start'	*/
 };
 
 /*
@@ -104,7 +104,7 @@ struct memseg {
 typedef struct pv_entry {
 	struct pv_entry	*pv_next;	/* next pv_entry */
 	struct pmap	*pv_pmap;	/* pmap where mapping lies */
-	vm_offset_t	pv_va;		/* virtual address for mapping */
+	vaddr_t		pv_va;		/* virtual address for mapping */
 	u_int		*pv_ptste;	/* non-zero if VA maps a PT page */
 	struct pmap	*pv_ptpmap;	/* if pv_ptste, pmap for PT page */
 	int		pv_flags;	/* flags */
@@ -156,10 +156,10 @@ struct pmap	kernel_pmap_store;
 	(curproc && \
 	 (pm) != pmap_kernel() && (pm) == curproc->p_vmspace->vm_map.pmap)
 
-void	pmap_bootstrap __P((vm_offset_t, u_int, u_int));
-void	pmap_changebit __P((vm_offset_t, int, boolean_t));
+void	pmap_bootstrap __P((psize_t, u_int, u_int));
+void	pmap_changebit __P((paddr_t, int, boolean_t));
 
-vm_offset_t	pmap_map __P((vm_offset_t, vm_offset_t, vm_offset_t, int));
+vaddr_t	pmap_map __P((vaddr_t, paddr_t, paddr_t, int));
 
 #endif	/* _KERNEL */
 

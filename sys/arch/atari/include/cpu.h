@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.24 1998/02/19 16:17:17 leo Exp $	*/
+/*	$NetBSD: cpu.h,v 1.25 1998/09/02 15:01:55 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -190,14 +190,14 @@ int	fpu_probe __P((void));
 /*
  * Prototypes from vm_machdep.c
  */
-int		badbaddr __P((caddr_t, int));
-void		consinit __P((void));
-void		cpu_set_kpc __P((struct proc *, void (*)(struct proc *)));
-void		dumpconf __P((void));
-vm_offset_t	kvtop __P((caddr_t));
-void		physaccess __P((caddr_t, caddr_t, int, int));
-void		physunaccess __P((caddr_t, int));
-void		setredzone __P((u_int *, caddr_t));
+int	badbaddr __P((caddr_t, int));
+void	consinit __P((void));
+void	cpu_set_kpc __P((struct proc *, void (*)(struct proc *)));
+void	dumpconf __P((void));
+paddr_t	kvtop __P((caddr_t));
+void	physaccess __P((caddr_t, caddr_t, int, int));
+void	physunaccess __P((caddr_t, int));
+void	setredzone __P((u_int *, caddr_t));
 
 /*
  * Prototypes from locore.s
@@ -206,18 +206,18 @@ struct fpframe;
 struct user;
 struct pcb;
 
-void	clearseg __P((vm_offset_t));
+void	clearseg __P((paddr_t));
 void	doboot __P((void));
 void	loadustp __P((int));
 void	m68881_save __P((struct fpframe *));
 void	m68881_restore __P((struct fpframe *));
-void	physcopyseg __P((vm_offset_t, vm_offset_t));
+void	physcopyseg __P((paddr_t, paddr_t));
 u_int	probeva __P((u_int, u_int));
 void	proc_trampoline __P((void));
 void	savectx __P((struct pcb *));
 int	suline __P((caddr_t, caddr_t));
 void	switch_exit __P((struct proc *));
-void	DCIAS __P((vm_offset_t));
+void	DCIAS __P((vaddr_t));
 void	DCIA __P((void));
 void	DCIS __P((void));
 void	DCIU __P((void));
@@ -225,18 +225,18 @@ void	ICIA __P((void));
 void	ICPA __P((void));
 void	PCIA __P((void));
 void	TBIA __P((void));
-void	TBIS __P((vm_offset_t));
+void	TBIS __P((vaddr_t));
 void	TBIAS __P((void));
 void	TBIAU __P((void));
 
 #if defined(M68040) || defined(M68060)
 void	DCFA __P((void));
-void	DCFP __P((vm_offset_t));
-void	DCFL __P((vm_offset_t));
-void	DCPL __P((vm_offset_t));
-void	DCPP __P((vm_offset_t));
-void	ICPL __P((vm_offset_t));
-void	ICPP __P((vm_offset_t));
+void	DCFP __P((paddr_t));
+void	DCFL __P((paddr_t));
+void	DCPL __P((paddr_t));
+void	DCPP __P((paddr_t));
+void	ICPL __P((paddr_t));
+void	ICPP __P((paddr_t));
 #endif
 
 /*
@@ -247,7 +247,7 @@ void	add_sicallback __P((si_farg, void *, void *));
 void	rem_sicallback __P((si_farg));
 void	cpu_startup __P((void));
 void	dumpsys __P((void));
-vm_offset_t reserve_dumppages __P((vm_offset_t));
+vaddr_t reserve_dumppages __P((vaddr_t));
 void	softint __P((void));
 
 
