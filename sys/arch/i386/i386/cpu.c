@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.1.2.3 2000/02/21 18:51:00 sommerfeld Exp $ */
+/* $NetBSD: cpu.c,v 1.1.2.4 2000/02/21 21:05:57 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -115,7 +115,6 @@ void    cpu_attach __P((struct device *, struct device *, void *));
 
 static struct cpu_info dummy_cpu_info; /* XXX */
 struct cpu_info *cpu_info[I386_MAXPROCS] = { &dummy_cpu_info };
-extern 
 
 void    	cpu_hatch __P((void *));
 static void    	cpu_boot_secondary __P((struct cpu_info *ci));
@@ -176,12 +175,12 @@ cpu_attach(parent, self, aux)
 			    " instead of at expected %d\n",
 			    self->dv_xname, cpu_number(), cpunum);
 		}
-		
+			
 		/* special-case boot CPU */			    /* XXX */
-		if (cpu_info[cpunum] == &dummy_cpu_info) {          /* XXX */
+		if (cpu_info[cpunum] == &dummy_cpu_info) {	    /* XXX */
 			ci->ci_curproc = dummy_cpu_info.ci_curproc; /* XXX */
-			cpu_info[cpunum] = NULL;		    /* XXX */
-		}						    /* XXX */
+			cpu_info[cpunum] = NULL; 		    /* XXX */
+		}				 		    /* XXX */
 	}
 	if (cpu_info[cpunum] != NULL)
 		panic("cpu at apic id %d already attached?", cpunum);
