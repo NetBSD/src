@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck.c,v 1.8 1996/12/05 18:30:23 christos Exp $	*/
+/*	$NetBSD: fsck.c,v 1.9 1996/12/07 19:09:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas. All rights reserved.
@@ -38,7 +38,7 @@
  *
  */
 
-static char rcsid[] = "$NetBSD: fsck.c,v 1.8 1996/12/05 18:30:23 christos Exp $";
+static char rcsid[] = "$NetBSD: fsck.c,v 1.9 1996/12/07 19:09:11 christos Exp $";
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -231,15 +231,11 @@ checkfs(vfstype, spec, mntpt, auxarg, pidp)
 	if (strcmp(vfstype, "ufs") == 0)
 		vfstype = MOUNT_UFS;
 
-	(void) snprintf(execbase, sizeof(execbase), "fsck_%s", vfstype);
-
 	maxargc = 100;
 	argv = emalloc(sizeof(char *) * maxargc);
 
 	/* construct basename of executable and argv[0] simultaneously */
-	(void)strncat(execbase,
-		     (const char *)vfstype,
-		     sizeof(execbase) - 6); /* strlen("fsck_") + \0 */ 
+	(void) snprintf(execbase, sizeof(execbase), "fsck_%s", vfstype);
 	argv[0] = vfstype;
 
 	if (options) {
