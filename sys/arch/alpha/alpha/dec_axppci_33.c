@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_axppci_33.c,v 1.8 1996/06/14 20:38:13 cgd Exp $	*/
+/*	$NetBSD: dec_axppci_33.c,v 1.9 1996/08/27 16:28:10 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,6 +28,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/termios.h>
 #include <dev/cons.h>
