@@ -24,6 +24,14 @@ makedefs: makedefs.c
 	${CC} ${CFLAGS} -o ${.TARGET} ${.CURDIR}/${.PREFIX}.c
 
 beforeinstall: 
+	@if [ ! -d ${DESTDIR}/var/games/hackdir ]; then \
+                /bin/rm -f ${DESTDIR}/var/games/hackdir ; \
+                mkdir -p ${DESTDIR}/var/games/hackdir ; \
+                chown games.games ${DESTDIR}/var/games/hackdir ; \
+                chmod 755 ${DESTDIR}/var/games/hackdir ; \
+        else \
+                true ; \
+        fi
 	install -c -o ${BINOWN} -g ${BINGRP} -m 666 /dev/null \
 	    ${DESTDIR}/var/games/hackdir/perm
 	install -c -o ${BINOWN} -g ${BINGRP} -m 666 /dev/null \

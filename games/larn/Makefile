@@ -62,6 +62,14 @@ LDADD=	-ltermcap
 HIDEGAME=hidegame
 
 beforeinstall:
+	@if [ ! -d ${DESTDIR}/usr/share/games/larn ]; then \
+                /bin/rm -f ${DESTDIR}/usr/share/games/larn ; \
+                mkdir -p ${DESTDIR}/usr/share/games/larn ; \
+                chown root.wheel ${DESTDIR}/usr/share/games/larn ; \
+                chmod 755 ${DESTDIR}/usr/share/games/larn ; \
+        else \
+                true ; \
+        fi
 	(cd ${.CURDIR}/datfiles; install -c -o ${BINOWN} -g ${BINGRP} -m 444 \
 	    larnmaze larnopts lfortune larn.help \
 	    ${DESTDIR}/usr/share/games/larn)
