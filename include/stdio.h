@@ -34,11 +34,15 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)stdio.h	5.17 (Berkeley) 6/3/91
- *	$Id: stdio.h,v 1.10 1994/01/04 05:14:14 cgd Exp $
+ *	$Id: stdio.h,v 1.11 1994/04/03 01:26:42 cgd Exp $
  */
 
 #ifndef	_STDIO_H_
 #define	_STDIO_H_
+
+#if !defined(_ANSI_SOURCE) && !defined(__STRICT_ANSI_)
+#include <sys/types.h>
+#endif
 
 #include <sys/cdefs.h>
 
@@ -52,7 +56,18 @@ typedef	_SIZE_T_	size_t;
 #define	NULL	0
 #endif
 
-typedef long fpos_t;		/* Must match off_t <sys/types.h> */
+/*      
+ * This is fairly grotesque, but pure ANSI code must not inspect the
+ * innards of an fpos_t anyway.  The library internally uses off_t,
+ * which we assume is exactly as big as eight chars.
+ */
+#if !defined(_ANSI_SOURCE) && !defined(__STRICT_ANSI__)
+typedef off_t fpos_t;
+#else
+typedef struct __sfpos {
+	long long _pos;			/* XXX must be the same as off_t */
+} fpos_t;
+#endif
 
 #define	_FSTDIO			/* Define for new stdio with functions. */
 
@@ -122,7 +137,7 @@ typedef	struct __sFILE {
 
 	/* Unix stdio files get aligned to block boundaries on fseek() */
 	int	_blksize;	/* stat.st_blksize (may be != _bf._size) */
-	int	_offset;	/* current lseek offset */
+	fpos_t	_offset;	/* current lseek offset */
 } FILE;
 
 __BEGIN_DECLS
