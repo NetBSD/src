@@ -1,4 +1,4 @@
-/*	$NetBSD: bugdev.c,v 1.2 1997/12/17 21:33:10 scw Exp $	*/
+/*	$NetBSD: bugdev.c,v 1.3 1998/06/11 19:04:57 scw Exp $	*/
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -58,7 +58,7 @@ devopen(f, fname, file)
 	register struct bugsc_softc *pp = &bugsc_softc[0];
 	int	error, i, dn = 0, pn = 0;
 	char	*dev, *cp;
-	static	char iobuf[MAXBSIZE];
+	static	char iobuf[DEV_BSIZE];
 	struct disklabel sdlabel;
 
 	dev = bugargs.arg_start;
