@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.21 2000/06/26 04:55:36 simonb Exp $	*/
+/*	$NetBSD: bus.h,v 1.22 2001/02/06 05:00:50 briggs Exp $	*/
 /*	$OpenBSD: bus.h,v 1.1 1997/10/13 10:53:42 pefo Exp $	*/
 
 /*-
@@ -114,6 +114,7 @@
 
 /*
  * Address conversion as seen from a PCI master.
+ * See Figure 3-4, page 3-6 in the MPC105 User's Manual.
  */
 #define MPC105_DIRECT_MAPPED_SPACE	0x80000000
 #define PHYS_TO_PCI_MEM(x)	((x) | MPC105_DIRECT_MAPPED_SPACE)
