@@ -1,4 +1,4 @@
-/*	$NetBSD: SYS.h,v 1.10 1997/06/17 16:35:26 jonathan Exp $ */
+/*	$NetBSD: SYS.h,v 1.11 1999/01/14 22:48:20 kleink Exp $ */
 
 /*-
  * Copyright (c) 1996 Jonathan STone
@@ -129,6 +129,6 @@
 #define PSEUDO(x,y)							\
 	PIC_SYSTRAP(x,y);						\
 	bne a3,zero,err; j ra;						\
-err:	PIC_CALL(cerror,t9);						\
+err:	PIC_CALL(__cerror,t9);						\
 	END(x)
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sbrk.S,v 1.8 1997/07/16 14:37:32 christos Exp $	*/
+/*	$NetBSD: sbrk.S,v 1.9 1999/01/14 22:48:19 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,23 +40,23 @@
 
 #include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: sbrk.S,v 1.8 1997/07/16 14:37:32 christos Exp $")
+	RCSID("$NetBSD: sbrk.S,v 1.9 1999/01/14 22:48:19 kleink Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
 
 	.globl	_end
-	.globl	curbrk
+	.globl	CURBRK
 
 	.data
-curbrk:	.long	_end
+CURBRK:	.long	_end
 	.text
 
 ENTRY(sbrk)
 #ifdef PIC
 	movl	4(%esp),%ecx
 	PIC_PROLOGUE
-	movl	PIC_GOT(curbrk),%edx
+	movl	PIC_GOT(CURBRK),%edx
 	PIC_EPILOGUE
 	movl	(%edx),%eax
 	addl	%eax,4(%esp)
@@ -64,25 +64,25 @@ ENTRY(sbrk)
 	int	$0x80
 	jc	err
 	PIC_PROLOGUE
-	movl	PIC_GOT(curbrk),%edx
+	movl	PIC_GOT(CURBRK),%edx
 	PIC_EPILOGUE
 	movl	(%edx),%eax
 	addl	%ecx,(%edx)
 	ret
 err:
-	jmp	PIC_PLT(cerror)
+	jmp	PIC_PLT(CERROR)
 
 #else
 
 	movl	4(%esp),%ecx
-	movl	curbrk,%eax
+	movl	CURBRK,%eax
 	addl	%eax,4(%esp)
 	movl	$(SYS_break),%eax
 	int	$0x80
 	jc	err
-	movl	curbrk,%eax
-	addl	%ecx,curbrk
+	movl	CURBRK,%eax
+	addl	%ecx,CURBRK
 	ret
 err:
-	jmp	cerror
+	jmp	CERROR
 #endif

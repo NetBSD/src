@@ -1,4 +1,4 @@
-/*	$NetBSD: SYS.h,v 1.5 1997/05/02 18:15:15 kleink Exp $	*/
+/*	$NetBSD: SYS.h,v 1.6 1999/01/14 22:48:19 kleink Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -37,7 +37,7 @@
 LLABEL(name,0):							\
 	LDGP(gp);						\
 	beq	a3, LLABEL(name,1);				\
-	jmp	zero, cerror;					\
+	jmp	zero, __cerror;					\
 LLABEL(name,1):
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sbrk.S,v 1.1 1998/09/11 04:56:35 eeh Exp $	*/
+/*	$NetBSD: sbrk.S,v 1.2 1999/01/14 22:48:22 kleink Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,23 +44,24 @@
 #if 0
 	.asciz "@(#)sbrk.s	8.1 (Berkeley) 6/4/93"
 #else
-	RCSID("$NetBSD: sbrk.S,v 1.1 1998/09/11 04:56:35 eeh Exp $")
+	RCSID("$NetBSD: sbrk.S,v 1.2 1999/01/14 22:48:22 kleink Exp $")
 #endif
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
 
 	.globl	_C_LABEL(end)
-	.globl	curbrk
+	.globl	_C_LABEL(__curbrk)
 
 	.data
-curbrk:	.long	_C_LABEL(end)
+_C_LABEL(__curbrk):
+	.long	_C_LABEL(end)
 	.text
 
 ENTRY(sbrk)
 #ifdef PIC
 	PIC_PROLOGUE(%o5,%o4)
-	ld	[%o5 + curbrk], %o2
+	ld	[%o5 + _C_LABEL(__curbrk)], %o2
 	ld	[%o2], %o3			! %o3 = old break
 	add	%o3, %o0, %o4			! %o4 = new break
 	mov	%o4, %o0			! copy for syscall
@@ -73,8 +74,8 @@ ENTRY(sbrk)
 	retl					! and update curbrk
 	 st	%o4, [%o2]
 #else
-	sethi	%hi(curbrk), %o2
-	ld	[%o2 + %lo(curbrk)], %o3	! %o3 = old break
+	sethi	%hi(_C_LABEL(__curbrk)), %o2
+	ld	[%o2 + %lo(_C_LABEL(__curbrk))], %o3	! %o3 = old break
 	add	%o3, %o0, %o4			! %o4 = new break
 	mov	%o4, %o0			! copy for syscall
 	mov	SYS_break, %g1
@@ -84,5 +85,5 @@ ENTRY(sbrk)
 	ERROR()
 1:
 	retl					! and update curbrk
-	 st	%o4, [%o2 + %lo(curbrk)]
+	 st	%o4, [%o2 + %lo(_C_LABEL(__curbrk))]
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: sigsuspend.S,v 1.9 1998/12/02 01:01:03 thorpej Exp $	*/
+/*	$NetBSD: sigsuspend.S,v 1.10 1999/01/14 22:48:20 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,7 +40,7 @@
 
 #include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: sigsuspend.S,v 1.9 1998/12/02 01:01:03 thorpej Exp $")
+	RCSID("$NetBSD: sigsuspend.S,v 1.10 1999/01/14 22:48:20 kleink Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
@@ -59,7 +59,7 @@ ENTRY(sigsuspend)
 	ret
 err:
 #ifdef PIC
-	jmp	PIC_PLT(cerror)
+	jmp	PIC_PLT(CERROR)
 #else
-	jmp	cerror
+	jmp	CERROR
 #endif

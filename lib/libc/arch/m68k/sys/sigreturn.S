@@ -1,4 +1,4 @@
-/*	$NetBSD: sigreturn.S,v 1.6 1998/12/02 01:01:04 thorpej Exp $	*/
+/*	$NetBSD: sigreturn.S,v 1.7 1999/01/14 22:48:20 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -43,7 +43,7 @@
 #if 0
 	RCSID("from: @(#)sigreturn.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: sigreturn.S,v 1.6 1998/12/02 01:01:04 thorpej Exp $")
+	RCSID("$NetBSD: sigreturn.S,v 1.7 1999/01/14 22:48:20 kleink Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -66,4 +66,4 @@ WARN_REFERENCES(sigreturn, \
  */
 ENTRY(sigreturn)
 	trap	#1		/* signals compat_13_sigreturn13() */
-	jra	cerror
+	jra	CERROR

@@ -1,4 +1,4 @@
-/*	$NetBSD: cerror.S,v 1.8 1998/10/01 19:20:44 kleink Exp $	*/
+/*	$NetBSD: cerror.S,v 1.9 1999/01/14 22:48:19 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,7 +40,7 @@
 
 #include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: cerror.S,v 1.8 1998/10/01 19:20:44 kleink Exp $")
+	RCSID("$NetBSD: cerror.S,v 1.9 1999/01/14 22:48:19 kleink Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
@@ -50,7 +50,7 @@
 #else
 	.globl	_C_LABEL(errno)
 #endif
-cerror:
+CERROR:
 #ifdef _REENTRANT
 	pushl	%eax
 #ifdef PIC

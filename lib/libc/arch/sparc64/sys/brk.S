@@ -1,4 +1,4 @@
-/*	$NetBSD: brk.S,v 1.1 1998/09/11 04:56:33 eeh Exp $	*/
+/*	$NetBSD: brk.S,v 1.2 1999/01/14 22:48:22 kleink Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,23 +44,24 @@
 #if 0
 	.asciz "@(#)brk.s	8.1 (Berkeley) 6/4/93"
 #else
-	RCSID("$NetBSD: brk.S,v 1.1 1998/09/11 04:56:33 eeh Exp $")
+	RCSID("$NetBSD: brk.S,v 1.2 1999/01/14 22:48:22 kleink Exp $")
 #endif
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
 
-	.globl	curbrk
-	.globl	minbrk
+	.globl	_C_LABEL(__curbrk)
+	.globl	_C_LABEL(__minbrk)
 
 	.data
-minbrk:	.long	_C_LABEL(end)		! lower brk limit; also for gmon code
+_C_LABEL(__minbrk):
+	.long	_C_LABEL(end)		! lower brk limit; also for gmon code
 	.text
 
 #ifdef PIC
 ENTRY(brk)
 	PIC_PROLOGUE(%o5,%o4)
-	ld	[%o5 + minbrk], %o4
+	ld	[%o5 + _C_LABEL(__minbrk)], %o4
 	ld	[%o4], %o1		! %o1 = minbrk
 	cmp	%o1, %o0		! if (minbrk > %o0)
 	bg,a	0f
@@ -70,26 +71,26 @@ ENTRY(brk)
 	mov	SYS_break, %g1
 	t	ST_SYSCALL
 	bcc,a	1f
-	ld	[%o5 + curbrk], %o4
+	ld	[%o5 + _C_LABEL(__curbrk)], %o4
 	ERROR()
 1:
 	retl				! success, return 0 & record new break
 	 st	%o2, [%o4]
 #else
 ENTRY(brk)
-	sethi	%hi(minbrk), %o1	! %o1 = minbrk
-	ld	[%o1 + %lo(minbrk)], %o1
-	cmp	%o1, %o0		! if (minbrk > %o0)
+	sethi	%hi(_C_LABEL(__minbrk)), %o1	! %o1 = minbrk
+	ld	[%o1 + %lo(_C_LABEL(__minbrk))], %o1
+	cmp	%o1, %o0			! if (minbrk > %o0)
 	bg,a	0f
-	 mov	%o1, %o0		!	%o0 = minbrk
+	 mov	%o1, %o0			!	%o0 = minbrk
 0:
-	mov	%o0, %o2		! save argument to syscall
+	mov	%o0, %o2			! save argument to syscall
 	mov	SYS_break, %g1
 	t	ST_SYSCALL
 	bcc,a	1f
-	 sethi	%hi(curbrk), %g1
+	 sethi	%hi(_C_LABEL(__curbrk)), %g1
 	ERROR()
 1:
 	retl				! success, return 0 & record new break
-	 st	%o2, [%g1 + %lo(curbrk)]
+	 st	%o2, [%g1 + %lo(_C_LABEL(__curbrk))]
 #endif

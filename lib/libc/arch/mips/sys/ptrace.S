@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.S,v 1.5 1996/09/17 01:32:49 jonathan Exp $	*/
+/*	$NetBSD: ptrace.S,v 1.6 1999/01/14 22:48:21 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)ptrace.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$NetBSD: ptrace.S,v 1.5 1996/09/17 01:32:49 jonathan Exp $")
+	ASMSTR("$NetBSD: ptrace.S,v 1.6 1999/01/14 22:48:21 kleink Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef ABICALLS
@@ -59,6 +59,6 @@ LEAF(ptrace)
 	bne	a3, zero, 1f
 	j	ra
 1:
-	la	t9, _C_LABEL(cerror)
+	la	t9, _C_LABEL(__cerror)
 	jr	t9
 END(ptrace)

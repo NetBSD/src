@@ -1,12 +1,13 @@
-/*	$NetBSD: brk.S,v 1.4 1998/11/24 11:14:54 tsubai Exp $	*/
+/*	$NetBSD: brk.S,v 1.5 1999/01/14 22:48:21 kleink Exp $	*/
 
 #include "SYS.h"
 
-	.globl	_ASM_LABEL(curbrk)
-	.globl	minbrk
+	.globl	_C_LABEL(__curbrk)
+	.globl	_C_LABEL(__minbrk)
 
 	.data
-minbrk:	.long	_C_LABEL(end)		# XXX not used yet
+_C_LABEL(__minbrk):
+	.long	_C_LABEL(end)		# XXX not used yet
 
 	.text
 
@@ -30,13 +31,13 @@ ENTRY(brk)
 	sc				# assume, that r5 is kept
 	bso	1f
 #ifdef PIC
-	lwz	6,_ASM_LABEL(curbrk)@got(9)
+	lwz	6,_C_LABEL(__curbrk)@got(9)
 	stw	5,0(6)
 #else
-	lis	6,_ASM_LABEL(curbrk)@ha	# record new break
-	stw	5,_ASM_LABEL(curbrk)@l(6)
+	lis	6,_C_LABEL(__curbrk)@ha	# record new break
+	stw	5,_C_LABEL(__curbrk)@l(6)
 #endif
 	blr				# return 0
 
 1:
-	b	PIC_PLT(_ASM_LABEL(cerror))
+	b	PIC_PLT(_C_LABEL(__cerror))

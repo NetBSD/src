@@ -1,4 +1,4 @@
-/*	$NetBSD: gmon.c,v 1.14 1998/11/13 15:47:09 christos Exp $	*/
+/*	$NetBSD: gmon.c,v 1.15 1999/01/14 22:48:19 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)gmon.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: gmon.c,v 1.14 1998/11/13 15:47:09 christos Exp $");
+__RCSID("$NetBSD: gmon.c,v 1.15 1999/01/14 22:48:19 kleink Exp $");
 #endif
 #endif
 
@@ -54,8 +54,7 @@ __RCSID("$NetBSD: gmon.c,v 1.14 1998/11/13 15:47:09 christos Exp $");
 #include <limits.h>
 #include <unistd.h>
 #include <err.h>
-
-extern char *minbrk __asm ("minbrk");
+#include "extern.h"
 
 struct gmonparam _gmonparam = { GMON_PROF_OFF };
 
@@ -110,7 +109,7 @@ monstartup(lowpc, highpc)
 	cp += (size_t)p->kcountsize;
 	p->froms = (u_short *)(void *)cp;
 
-	minbrk = sbrk(0);
+	__minbrk = sbrk(0);
 	p->tos[0].link = 0;
 
 	o = p->highpc - p->lowpc;

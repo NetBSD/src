@@ -1,4 +1,4 @@
-/*	$NetBSD: brk.S,v 1.4 1998/12/04 09:52:43 mycroft Exp $	*/
+/*	$NetBSD: brk.S,v 1.5 1999/01/14 22:48:19 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -42,9 +42,9 @@
 
 	.data
 	.align	0
-	.globl	minbrk
-	.type	minbrk,#object
-minbrk:
+	.globl	_C_FUNC(__minbrk)		/* XXX not a function */
+	.type	_C_FUNC(__minbrk),#object
+_C_FUNC(__minbrk):
 	.word	_end
 
 /*
@@ -93,6 +93,6 @@ Lgot:
 	.word	__GLOBAL_OFFSET_TABLE_+. - (L1+4)
 #endif
 Lminbrk:
-	.word	minbrk
+	.word	_C_FUNC(__minbrk)
 Lcurbrk:
 	.word	curbrk

@@ -1,4 +1,4 @@
-/*	$NetBSD: sbrk.S,v 1.6 1998/07/01 06:44:15 thorpej Exp $	*/
+/*	$NetBSD: sbrk.S,v 1.7 1999/01/14 22:48:20 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -43,25 +43,25 @@
 #if 0
 	RCSID("from: @(#)sbrk.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: sbrk.S,v 1.6 1998/07/01 06:44:15 thorpej Exp $")
+	RCSID("$NetBSD: sbrk.S,v 1.7 1999/01/14 22:48:20 kleink Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 	.globl	_C_LABEL(end)
-	.globl	curbrk
+	.globl	CURBRK
 
 	.data
-curbrk:	.long	_C_LABEL(end)
+CURBRK:	.long	_C_LABEL(end)
 	.text
 
 ENTRY(sbrk)
 #ifdef	PIC
 	movl	#_C_LABEL(_GLOBAL_OFFSET_TABLE_),a1
 	lea	pc@(0,a1:l),a1
-	movl	a1@(curbrk:w),a1
+	movl	a1@(CURBRK:w),a1
 	movl	a1@,d0
 #else
-	movl	curbrk,d0
+	movl	CURBRK,d0
 #endif
 	addl	d0,sp@(4)
 	movl	#SYS_break,d0
@@ -71,9 +71,9 @@ ENTRY(sbrk)
 	movl	a1@,d0
 	movl	sp@(4),a1@
 #else
-	movl	curbrk,d0
-	movl	sp@(4),curbrk
+	movl	CURBRK,d0
+	movl	sp@(4),CURBRK
 #endif
 	rts
 err:
-	jra	cerror
+	jra	CERROR

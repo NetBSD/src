@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.S,v 1.3 1995/12/13 22:18:20 thorpej Exp $	*/
+/*	$NetBSD: syscall.S,v 1.4 1999/01/14 22:48:20 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -43,7 +43,7 @@
 #if 0
 	RCSID("from: @(#)syscall.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: syscall.S,v 1.3 1995/12/13 22:18:20 thorpej Exp $")
+	RCSID("$NetBSD: syscall.S,v 1.4 1999/01/14 22:48:20 kleink Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -53,4 +53,4 @@ ENTRY(syscall)
 	jcs	err
 	rts
 err:
-	jra	cerror
+	jra	CERROR

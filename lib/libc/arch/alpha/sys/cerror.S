@@ -1,4 +1,4 @@
-/*	$NetBSD: cerror.S,v 1.4 1996/11/08 00:52:46 cgd Exp $	*/
+/*	$NetBSD: cerror.S,v 1.5 1999/01/14 22:48:19 kleink Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -36,9 +36,9 @@
 #endif
 
 #ifdef _REENTRANT
-NESTED(cerror, 0, FRAME_SIZE, ra, IM_RA|IM_V0, 0)
+NESTED(__cerror, 0, FRAME_SIZE, ra, IM_RA|IM_V0, 0)
 #else
-LEAF(cerror, 0)
+LEAF(__cerror, 0)
 #endif
 	br	t0, L1
 L1:	LDGP(t0)
@@ -62,4 +62,4 @@ L1:	LDGP(t0)
 	lda	sp, FRAME_SIZE(sp)
 #endif
 	RET
-END(cerror)
+END(__cerror)

@@ -1,4 +1,4 @@
-/*	$NetBSD: cerror.S,v 1.6 1998/07/25 03:01:45 jonathan Exp $	*/
+/*	$NetBSD: cerror.S,v 1.7 1999/01/14 22:48:20 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)cerror.s	8.1 (Berkeley) 6/16/93")
-	ASMSTR("$NetBSD: cerror.S,v 1.6 1998/07/25 03:01:45 jonathan Exp $")
+	ASMSTR("$NetBSD: cerror.S,v 1.7 1999/01/14 22:48:20 kleink Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef ABICALLS
@@ -48,7 +48,7 @@
 #endif
 
 	.globl	_C_LABEL(errno)
-LEAF(cerror)
+LEAF(__cerror)
 	.set	noreorder
 #ifdef ABICALLS
 	.cpload t9
@@ -57,4 +57,4 @@ LEAF(cerror)
 	li	v0, -1
 	j	ra
 	li	v1, -1
-END(cerror)
+END(__cerror)

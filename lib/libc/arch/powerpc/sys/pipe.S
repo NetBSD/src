@@ -1,4 +1,4 @@
-/*	$NetBSD: pipe.S,v 1.4 1998/11/24 11:14:57 tsubai Exp $	*/
+/*	$NetBSD: pipe.S,v 1.5 1999/01/14 22:48:21 kleink Exp $	*/
 
 #include "SYS.h"
 
@@ -12,4 +12,4 @@ ENTRY(pipe)
 	li	3,0
 	blr			# and return 0
 1:
-	b	PIC_PLT(_ASM_LABEL(cerror))
+	b	PIC_PLT(_C_LABEL(__cerror))
