@@ -1,4 +1,4 @@
-.\"	$NetBSD: whatis,v 1.10.10.1 2000/11/01 03:48:33 tv Exp $
+.\"	$NetBSD: whatis,v 1.10.10.2 2000/11/14 16:07:23 tv Exp $
 .
 .Nx \*V
 is the sixth release for the \*M.
@@ -12,6 +12,8 @@ Support for the JavaStation 1.
 HyperSPARCs now run reliably.
 .It
 Tadpole console and mouse now work.
+.It
+Support for the sun4/400 class of machines.
 .bullet)
 .Pp
 .Nx \*V
