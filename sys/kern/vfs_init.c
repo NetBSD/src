@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_init.c,v 1.22 2002/09/26 04:07:35 thorpej Exp $	*/
+/*	$NetBSD: vfs_init.c,v 1.23 2003/05/17 15:53:42 mjl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_init.c,v 1.22 2002/09/26 04:07:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_init.c,v 1.23 2003/05/17 15:53:42 mjl Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -187,7 +187,7 @@ vfs_opv_init_explicit(vfs_opv_desc)
 		/*
 		 * Sanity check:  is this operation listed
 		 * in the list of operations?  We check this
-		 * by seeing if its offest is zero.  Since
+		 * by seeing if its offset is zero.  Since
 		 * the default routine should always be listed
 		 * first, it should be the only one with a zero
 		 * offset.  Any other operation with a zero
