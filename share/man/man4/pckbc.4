@@ -1,4 +1,4 @@
-.\" $NetBSD: pckbc.4,v 1.6 2002/04/16 11:49:54 wiz Exp $
+.\" $NetBSD: pckbc.4,v 1.7 2003/01/05 20:58:40 jmcneill Exp $
 .Dd April 16, 2002
 .Os
 .Dt PCKBC 4
@@ -6,6 +6,7 @@
 .Nm pckbc
 .Nd PC (ISA) keyboard controller driver
 .Sh SYNOPSIS
+.Cd "pckbc* at acpi?"
 .Cd "pckbc* at isa?"
 .Cd "pckbc* at pnpbios? index ?"
 .Cd "pckbd* at pckbc? slot ?"
@@ -28,6 +29,7 @@ locator argument can be used to force unusual connections of devices to
 logical slots. This feature is for experimentation only, it will not be
 useful in normal operation.
 .Sh SEE ALSO
+.Xr acpi 4 ,
 .Xr isa 4 ,
 .Xr opms 4 ,
 .Xr pckbd 4 ,
