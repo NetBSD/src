@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.34 1998/09/05 04:54:23 mycroft Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.35 1998/11/07 01:08:00 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -152,7 +152,10 @@ readdisklabel(dev, strat, lp, osdep)
 				if (dp[i].dp_typ == DOSPTYP_386BSD) {
 					printf("WARNING: old BSD partition ID!\n");
 					ourdp = &dp[i];
-					break;
+	 				/*
+					 * If more than one matches, take last,
+					 * as our  install tool does.
+					 */
 				}
 			}
 		}
