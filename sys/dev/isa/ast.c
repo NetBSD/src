@@ -1,6 +1,7 @@
-/*	$NetBSD: ast.c,v 1.21 1996/03/09 01:03:59 cgd Exp $	*/
+/*	$NetBSD: ast.c,v 1.22 1996/03/10 09:01:20 cgd Exp $	*/
 
 /*
+ * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
  * Copyright (c) 1995 Charles Hannum.  All rights reserved.
  *
  * This code is derived from public-domain software written by
@@ -35,7 +36,7 @@
 #include <sys/param.h>
 #include <sys/device.h>
 
-#include <machine/pio.h>
+#include <machine/bus.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/comreg.h>
@@ -47,9 +48,12 @@ struct ast_softc {
 	struct device sc_dev;
 	void *sc_ih;
 
+	bus_chipset_tag_t sc_bc;
 	int sc_iobase;
+
 	int sc_alive;			/* mask of slave units attached */
 	void *sc_slaves[NSLAVES];	/* com device unit numbers */
+	bus_io_handle_t sc_slaveioh[NSLAVES];
 };
 
 int astprobe();
@@ -66,40 +70,62 @@ astprobe(parent, self, aux)
 	void *aux;
 {
 	struct isa_attach_args *ia = aux;
+	int iobase = ia->ia_iobase;
+	bus_chipset_tag_t bc = ia->ia_bc;
+	bus_io_handle_t ioh;
+	int i, rv = 1;
 
 	/*
 	 * Do the normal com probe for the first UART and assume
-	 * its presence means there is a multiport board there.
+	 * its presence, and the ability to map the other UARTS,
+	 * means there is a multiport board there.
 	 * XXX Needs more robustness.
 	 */
-	ia->ia_iosize = NSLAVES * COM_NPORTS;
-	return (comprobe1(ia->ia_iobase));
+
+	/* if the first port is in use as console, then it. */
+	if (iobase == comconsaddr && !comconsattached)
+		goto checkmappings;
+
+	if (bus_io_map(bc, iobase, COM_NPORTS, &ioh)) {
+		rv = 0;
+		goto out;
+	}
+	rv = comprobe1(bc, ioh, iobase);
+	bus_io_unmap(bc, ioh, COM_NPORTS);
+	if (rv == 0)
+		goto out;
+
+checkmappings:
+	for (i = 1; i < NSLAVES; i++) {
+		iobase += COM_NPORTS;
+
+		if (iobase == comconsaddr && !comconsattached)
+			continue;
+
+		if (bus_io_map(bc, iobase, COM_NPORTS, &ioh)) {
+			rv = 0;
+			goto out;
+		}
+		bus_io_unmap(bc, ioh, COM_NPORTS);
+	}
+
+out:
+	if (rv)
+		ia->ia_iosize = NSLAVES * COM_NPORTS;
+	return (rv);
 }
 
 int
-astsubmatch(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
-{
-	struct ast_softc *sc = (void *)parent;
-	struct cfdata *cf = match;
-	struct isa_attach_args *ia = aux;
-	struct commulti_attach_args *ca = ia->ia_aux;
-
-	if (cf->cf_loc[0] != -1 && cf->cf_loc[0] != ca->ca_slave)
-		return (0);
-	return ((*cf->cf_driver->cd_match)(parent, match, ia));
-}
-
-int
-astprint(aux, ast)
+astprint(aux, pnp)
 	void *aux;
-	char *ast;
+	char *pnp;
 {
-	struct isa_attach_args *ia = aux;
-	struct commulti_attach_args *ca = ia->ia_aux;
+	struct commulti_attach_args *ca = aux;
 
+	if (pnp)
+		printf("com at %s", pnp);
 	printf(" slave %d", ca->ca_slave);
+	return (UNCONF);
 }
 
 void
@@ -110,32 +136,41 @@ astattach(parent, self, aux)
 	struct ast_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
 	struct commulti_attach_args ca;
-	struct isa_attach_args isa;
-	int subunit;
+	int i, subunit;
 
+	sc->sc_bc = ia->ia_bc;
 	sc->sc_iobase = ia->ia_iobase;
+
+	for (i = 0; i < NSLAVES; i++)
+		if (bus_io_map(bc, sc->sc_iobase + i * COM_NPORTS, COM_NPORTS,
+		    &sc->sc_slaveioh[i]))
+			panic("astattach: couldn't map slave %d", i);
 
 	/*
 	 * Enable the master interrupt.
 	 */
-	outb(sc->sc_iobase | 0x1f, 0x80);
+	bus_io_write_1(bc, sc->sc_slaveioh[3], 7, 0x80);
 
 	printf("\n");
 
-	isa.ia_aux = &ca;
-	for (ca.ca_slave = 0; ca.ca_slave < NSLAVES; ca.ca_slave++) {
-		struct cfdata *cf;
-		isa.ia_iobase = sc->sc_iobase + COM_NPORTS * ca.ca_slave;
-		isa.ia_iosize = 0x666;
-		isa.ia_irq = IRQUNK;
-		isa.ia_drq = DRQUNK;
-		isa.ia_msize = 0;
-		if ((cf = config_search(astsubmatch, self, &isa)) != 0) {
-			subunit = cf->cf_unit;	/* can change if unit == * */
-			config_attach(self, cf, &isa, astprint);
-			sc->sc_slaves[ca.ca_slave] =
-			    cf->cf_driver->cd_devs[subunit];
-			sc->sc_alive |= 1 << ca.ca_slave;
+	for (i = 0; i < NSLAVES; i++) {
+		struct cfdata *match;
+
+		ca.ca_slave = i;
+		ca.ca_bc = sc->sc_bc;
+		ca.ca_ioh = sc->sc_slaveioh[i];
+		ca.ca_iobase = sc->sc_iobase + i * COM_NPORTS;
+		ca.ca_noien = 1;
+
+		/* mimic config_found(), but with special functionality */
+		if ((match = config_search(NULL, self, &ca)) != NULL) {
+			subunit = match->cf_unit; /* can change if unit == * */
+			config_attach(self, match, &ca, astprint);
+			sc->sc_slaves[i] = match->cf_driver->cd_devs[subunit];
+			sc->sc_alive |= 1 << i;
+		} else {
+			astprint(&ca, self->dv_xname);
+			printf(" not configured\n");
 		}
 	}
 
@@ -148,11 +183,11 @@ astintr(arg)
 	void *arg;
 {
 	struct ast_softc *sc = arg;
-	int iobase = sc->sc_iobase;
+	bus_chipset_tag_t bc = sc->sc_bc;
 	int alive = sc->sc_alive;
 	int bits;
 
-	bits = ~inb(iobase | 0x1f) & alive;
+	bits = ~bus_io_read_1(bc, sc->sc_slaveioh[3], 7) & alive;
 	if (bits == 0)
 		return (0);
 
@@ -165,7 +200,7 @@ astintr(arg)
 		TRY(2);
 		TRY(3);
 #undef TRY
-		bits = ~inb(iobase | 0x1f) & alive;
+		bits = ~bus_io_read_1(bc, sc->sc_slaveioh[3], 7) & alive;
 		if (bits == 0)
 			return (1);
  	}
