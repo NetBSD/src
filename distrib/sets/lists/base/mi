@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.253 2001/04/26 02:32:45 garbled Exp $
+# $NetBSD: mi,v 1.254 2001/04/26 02:48:21 garbled Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -1524,6 +1524,14 @@
 ./usr/share/sushi/system/securityconf/form	base-sysutil-share
 ./usr/share/sushi/system/securityconf/help	base-sysutil-share
 ./usr/share/sushi/system/securityconf/script2	base-sysutil-share
+./usr/share/sushi/system/sysctl			base-sysutil-share
+./usr/share/sushi/system/sysctl/form		base-sysutil-share
+./usr/share/sushi/system/sysctl/help		base-sysutil-share
+./usr/share/sushi/system/sysctl/preform		base-sysutil-share
+./usr/share/sushi/system/sysctl/script		base-sysutil-share
+./usr/share/sushi/system/sysctl/script1		base-sysutil-share
+./usr/share/sushi/system/sysctl/script2		base-sysutil-share
+./usr/share/sushi/system/sysctl/sysctls		base-sysutil-share
 ./usr/share/sushi/system/usermgmtconf		base-sysutil-share
 ./usr/share/sushi/system/usermgmtconf/script1	base-sysutil-share
 ./usr/share/sushi/system/usermgmtconf/form	base-sysutil-share
