@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_cout.c,v 1.7 1997/10/09 15:12:24 mycroft Exp $	*/
+/*	$NetBSD: rpc_cout.c,v 1.8 1997/10/09 15:19:48 mycroft Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -703,9 +703,9 @@ emit_single_in_line(decl, flag, rel)
 	}
 	if (flag == PUT)
 		if (rel == REL_ALIAS)
-			f_print(fout, "%s(buf,objp->%s);\n", upp_case, decl->name);
+			f_print(fout, "%s(buf, objp->%s);\n", upp_case, decl->name);
 		else
-			f_print(fout, "%s(buf,*genp++);\n", upp_case);
+			f_print(fout, "%s(buf, *genp++);\n", upp_case);
 
 	else
 		f_print(fout, "%s(buf);\n", upp_case);
