@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.13 2002/03/02 14:59:37 wiz Exp $	*/
+/*	$NetBSD: main.c,v 1.14 2002/03/04 03:07:26 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.13 2002/03/02 14:59:37 wiz Exp $");
+__RCSID("$NetBSD: main.c,v 1.14 2002/03/04 03:07:26 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -92,12 +92,12 @@ main(int argc, char *argv[])
 	 * of users to mail to.  Argp will be set to point to the
 	 * first of these users.
 	 */
-	ef = NOSTR;
+	ef = NULL;
 	to = NIL;
 	cc = NIL;
 	bcc = NIL;
 	smopts = NIL;
-	subject = NOSTR;
+	subject = NULL;
 	while ((i = getopt(argc, argv, "~EINT:b:c:dfins:u:v")) != -1) {
 		switch (i) {
 		case 'T':
@@ -211,11 +211,11 @@ Usage: mail [-EiInv] [-s subject] [-c cc-addr] [-b bcc-addr] to-addr ...\n\
 	/*
 	 * Check for inconsistent arguments.
 	 */
-	if (to == NIL && (subject != NOSTR || cc != NIL || bcc != NIL)) {
+	if (to == NIL && (subject != NULL || cc != NIL || bcc != NIL)) {
 		fputs("You must specify direct recipients with -s, -c, or -b.\n", stderr);
 		exit(1);
 	}
-	if (ef != NOSTR && to != NIL) {
+	if (ef != NULL && to != NIL) {
 		fprintf(stderr, "Cannot give -f and people to send to.\n");
 		exit(1);
 	}
@@ -245,14 +245,14 @@ Usage: mail [-EiInv] [-s subject] [-c cc-addr] [-b bcc-addr] to-addr ...\n\
 	 * Decide whether we are editing a mailbox or reading
 	 * the system mailbox, and open up the right stuff.
 	 */
-	if (ef == NOSTR)
+	if (ef == NULL)
 		ef = "%";
 	if (setfile(ef) < 0)
 		exit(1);		/* error already reported */
 	if (setjmp(hdrjmp) == 0) {
 		if ((prevint = signal(SIGINT, SIG_IGN)) != SIG_IGN)
 			signal(SIGINT, hdrstop);
-		if (value("quiet") == NOSTR)
+		if (value("quiet") == NULL)
 			printf("Mail version %s.  Type ? for help.\n",
 				version);
 		announce();

@@ -1,4 +1,4 @@
-/*	$NetBSD: names.c,v 1.11 2002/03/02 15:27:52 wiz Exp $	*/
+/*	$NetBSD: names.c,v 1.12 2002/03/04 03:07:26 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)names.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: names.c,v 1.11 2002/03/02 15:27:52 wiz Exp $");
+__RCSID("$NetBSD: names.c,v 1.12 2002/03/04 03:07:26 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -99,12 +99,12 @@ extract(char line[], int ntype)
 	struct name *begin, *np, *t;
 	char nbuf[BUFSIZ];
 
-	if (line == NOSTR || *line == '\0')
+	if (line == NULL || *line == '\0')
 		return NIL;
 	begin = NIL;
 	np = NIL;
 	cp = line;
-	while ((cp = yankword(cp, nbuf)) != NOSTR) {
+	while ((cp = yankword(cp, nbuf)) != NULL) {
 		t = nalloc(nbuf, ntype);
 		if (begin == NIL)
 			begin = t;
@@ -129,7 +129,7 @@ detract(struct name *np, int ntype)
 
 	comma = ntype & GCOMMA;
 	if (np == NIL)
-		return(NOSTR);
+		return(NULL);
 	ntype &= ~GCOMMA;
 	s = 0;
 	if (debug && comma)
@@ -142,7 +142,7 @@ detract(struct name *np, int ntype)
 			s++;
 	}
 	if (s == 0)
-		return(NOSTR);
+		return(NULL);
 	s += 2;
 	begin = salloc(s);
 	cp = begin;
@@ -172,7 +172,7 @@ yankword(char *ap, char wbuf[])
 	cp = ap;
 	for (;;) {
 		if (*cp == '\0')
-			return NOSTR;
+			return NULL;
 		if (*cp == '(') {
 			int nesting = 0;
 
@@ -290,14 +290,14 @@ outof(struct name *names, FILE *fo, struct header *hp)
 			 * share the same lseek location and trample
 			 * on one another.
 			 */
-			if ((shellcmd = value("SHELL")) == NOSTR)
+			if ((shellcmd = value("SHELL")) == NULL)
 				shellcmd = _PATH_CSHELL;
 			sigemptyset(&nset);
 			sigaddset(&nset, SIGHUP);
 			sigaddset(&nset, SIGINT);
 			sigaddset(&nset, SIGQUIT);
 			pid = start_command(shellcmd, &nset,
-				image, -1, "-c", fname, NOSTR);
+				image, -1, "-c", fname, NULL);
 			if (pid < 0) {
 				senderr++;
 				goto cant;
@@ -387,7 +387,7 @@ usermap(struct name *names)
 
 	new = NIL;
 	np = names;
-	metoo = (value("metoo") != NOSTR);
+	metoo = (value("metoo") != NULL);
 	while (np != NIL) {
 		if (np->n_name[0] == '\\') {
 			cp = np->n_flink;
@@ -493,10 +493,10 @@ unpack(struct name *np)
 	 */
 	extra = 2;
 	extra++;
-	metoo = value("metoo") != NOSTR;
+	metoo = value("metoo") != NULL;
 	if (metoo)
 		extra++;
-	verbose = value("verbose") != NOSTR;
+	verbose = value("verbose") != NULL;
 	if (verbose)
 		extra++;
 	begin = (char **) salloc((t + extra) * sizeof *begin);
@@ -510,7 +510,7 @@ unpack(struct name *np)
 	for (; n != NIL; n = n->n_flink)
 		if ((n->n_type & GDEL) == 0)
 			*ap++ = n->n_name;
-	*ap = NOSTR;
+	*ap = NULL;
 	return(begin);
 }
 

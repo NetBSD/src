@@ -1,4 +1,4 @@
-/*	$NetBSD: getname.c,v 1.7 2002/03/02 14:59:36 wiz Exp $	*/
+/*	$NetBSD: getname.c,v 1.8 2002/03/04 03:07:26 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getname.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: getname.c,v 1.7 2002/03/02 14:59:36 wiz Exp $");
+__RCSID("$NetBSD: getname.c,v 1.8 2002/03/04 03:07:26 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -48,7 +48,7 @@ __RCSID("$NetBSD: getname.c,v 1.7 2002/03/02 14:59:36 wiz Exp $");
 /* Getname / getuserid for those with hashed passwd data base). */
 
 /*
- * Search the passwd file for a uid.  Return name on success, NOSTR on failure
+ * Search the passwd file for a uid.  Return name on success, NULL on failure
  */
 const char *
 getname(int uid)
@@ -56,7 +56,7 @@ getname(int uid)
 	struct passwd *pw;
 
 	if ((pw = getpwuid(uid)) == NULL)
-		return NOSTR;
+		return NULL;
 	return pw->pw_name;
 }
 

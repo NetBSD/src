@@ -1,4 +1,4 @@
-/*	$NetBSD: send.c,v 1.15 2002/03/02 15:27:52 wiz Exp $	*/
+/*	$NetBSD: send.c,v 1.16 2002/03/04 03:07:26 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)send.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: send.c,v 1.15 2002/03/02 15:27:52 wiz Exp $");
+__RCSID("$NetBSD: send.c,v 1.16 2002/03/04 03:07:26 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -76,7 +76,7 @@ sendmessage(struct message *mp, FILE *obuf, struct ignoretab *doign,
 	/*
 	 * Compute the prefix string, without trailing whitespace
 	 */
-	if (prefix != NOSTR) {
+	if (prefix != NULL) {
 		cp2 = 0;
 		for (cp = prefix; *cp; cp++)
 			if (*cp != ' ' && *cp != '\t')
@@ -178,7 +178,7 @@ sendmessage(struct message *mp, FILE *obuf, struct ignoretab *doign,
 			 * Strip trailing whitespace from prefix
 			 * if line is blank.
 			 */
-			if (prefix != NOSTR) {
+			if (prefix != NULL) {
 				if (length > 1)
 					fputs(prefix, obuf);
 				else
@@ -195,7 +195,7 @@ sendmessage(struct message *mp, FILE *obuf, struct ignoretab *doign,
 	 */
 	if (doign == ignoreall)
 		len--;		/* skip final blank line */
-	if (prefix != NOSTR)
+	if (prefix != NULL)
 		while (len > 0) {
 			if (fgets(line, LINESIZE, ibuf) == NULL) {
 				c = 0;
@@ -247,7 +247,7 @@ statusput(struct message *mp, FILE *obuf, char *prefix)
 	*cp = 0;
 	if (statout[0])
 		fprintf(obuf, "%sStatus: %s\n",
-			prefix == NOSTR ? "" : prefix, statout);
+			prefix == NULL ? "" : prefix, statout);
 }
 
 /*
@@ -281,7 +281,7 @@ sendmail(void *v)
 	struct header head;
 
 	head.h_to = extract(str, GTO);
-	head.h_subject = NOSTR;
+	head.h_subject = NULL;
 	head.h_cc = NIL;
 	head.h_bcc = NIL;
 	head.h_smopts = NIL;
@@ -308,11 +308,11 @@ mail1(struct header *hp, int printheaders)
 	 */
 	if ((mtf = collect(hp, printheaders)) == NULL)
 		return;
-	if (value("interactive") != NOSTR) {
-		if (value("askcc") != NOSTR || value("askbcc") != NOSTR) {
-			if (value("askcc") != NOSTR)
+	if (value("interactive") != NULL) {
+		if (value("askcc") != NULL || value("askbcc") != NULL) {
+			if (value("askcc") != NULL)
 				grabh(hp, GCC);
-			if (value("askbcc") != NOSTR)
+			if (value("askbcc") != NULL)
 				grabh(hp, GBCC);
 		} else {
 			printf("EOT\n");
@@ -320,9 +320,9 @@ mail1(struct header *hp, int printheaders)
 		}
 	}
 	if (fsize(mtf) == 0) {
-		if (value("dontsendempty") != NOSTR)
+		if (value("dontsendempty") != NULL)
 			goto out;
-		if (hp->h_subject == NOSTR)
+		if (hp->h_subject == NULL)
 			printf("No message, no subject; hope that's ok\n");
 		else
 			printf("Null message body; hope that's ok\n");
@@ -358,12 +358,12 @@ mail1(struct header *hp, int printheaders)
 		char **t;
 
 		printf("Sendmail arguments:");
-		for (t = namelist; *t != NOSTR; t++)
+		for (t = namelist; *t != NULL; t++)
 			printf(" \"%s\"", *t);
 		printf("\n");
 		goto out;
 	}
-	if ((cp = value("record")) != NOSTR)
+	if ((cp = value("record")) != NULL)
 		(void) savemail(expand(cp), mtf);
 	/*
 	 * Fork, set up the temporary mail file as standard
@@ -386,7 +386,7 @@ mail1(struct header *hp, int printheaders)
 		sigaddset(&nset, SIGTTIN);
 		sigaddset(&nset, SIGTTOU);
 		prepare_child(&nset, fileno(mtf), -1);
-		if ((cp = value("sendmail")) != NOSTR)
+		if ((cp = value("sendmail")) != NULL)
 			cp = expand(cp);
 		else
 			cp = _PATH_SENDMAIL;
@@ -394,7 +394,7 @@ mail1(struct header *hp, int printheaders)
 		perror(cp);
 		_exit(1);
 	}
-	if (value("verbose") != NOSTR)
+	if (value("verbose") != NULL)
 		(void) wait_child(pid);
 	else
 		free_child(pid);
@@ -486,7 +486,7 @@ puthead(struct header *hp, FILE *fo, int w)
 	gotcha = 0;
 	if (hp->h_to != NIL && w & GTO)
 		fmt("To:", hp->h_to, fo, w&GCOMMA), gotcha++;
-	if (hp->h_subject != NOSTR && w & GSUBJECT)
+	if (hp->h_subject != NULL && w & GSUBJECT)
 		fprintf(fo, "Subject: %s\n", hp->h_subject), gotcha++;
 	if (hp->h_cc != NIL && w & GCC)
 		fmt("Cc:", hp->h_cc, fo, w&GCOMMA), gotcha++;
