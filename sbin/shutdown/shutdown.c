@@ -1,4 +1,4 @@
-/*	$NetBSD: shutdown.c,v 1.27 1998/06/06 21:18:54 thorpej Exp $	*/
+/*	$NetBSD: shutdown.c,v 1.28 1998/07/05 08:34:25 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)shutdown.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: shutdown.c,v 1.27 1998/06/06 21:18:54 thorpej Exp $");
+__RCSID("$NetBSD: shutdown.c,v 1.28 1998/07/05 08:34:25 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -288,11 +288,13 @@ timewarn(timeleft)
 	FILE *pf;
 	char wcmd[MAXPATHLEN + 4];
 
-	if (!first++)
+	if (!first++) {
 		(void)gethostname(hostname, sizeof(hostname));
+		hostname[sizeof(hostname) - 1] = '\0';
+	}
 
 	/* undoc -n option to wall suppresses normal wall banner */
-	(void)snprintf(wcmd, sizeof(wcmd), "%s -n", _PATH_WALL);
+	(void)snprintf(wcmd, sizeof wcmd, "%s -n", _PATH_WALL);
 	if (!(pf = popen(wcmd, "w"))) {
 		syslog(LOG_ERR, "shutdown: can't find %s: %m", _PATH_WALL);
 		return;
@@ -511,6 +513,7 @@ void
 finish(signo)
 	int signo;
 {
+
 	if (!killflg)
 		(void)unlink(_PATH_NOLOGIN);
 	exit(0);
@@ -519,6 +522,7 @@ finish(signo)
 void
 badtime()
 {
+
 	warnx("illegal time format");
 	usage();
 }
@@ -526,6 +530,7 @@ badtime()
 void
 usage()
 {
+
 	(void)fprintf(stderr,
 	    "usage: shutdown [-Ddfhknr] time [message ... | -]\n");
 	exit(1);
