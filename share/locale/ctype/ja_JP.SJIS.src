@@ -1,4 +1,4 @@
-/*	$NetBSD: ja_JP.SJIS.src,v 1.1 2000/12/30 02:33:16 itojun Exp $	*/
+/*	$NetBSD: ja_JP.SJIS.src,v 1.2 2001/03/26 19:56:36 tshiozak Exp $	*/
 
 /*
  *    ja_JP.SJIS locale table for BSD4.4/rune
@@ -34,6 +34,7 @@
  */
 
 ENCODING	"MSKanji"
+VARIABLE	CODESET=SJIS
 
 /*
  * ASCII byte code

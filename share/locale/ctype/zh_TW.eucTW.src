@@ -1,4 +1,4 @@
-/*	$NetBSD: zh_TW.eucTW.src,v 1.1 2000/12/30 02:33:17 itojun Exp $	*/
+/*	$NetBSD: zh_TW.eucTW.src,v 1.2 2001/03/26 19:56:38 tshiozak Exp $	*/
 /*	@(#)Japanese	8.1 (Berkeley) 6/6/93 */
 
 /*
@@ -6,6 +6,7 @@
  */
 
 ENCODING	"EUCTW"
+VARIABLE	CODESET=eucTW
 
 /*
  * Code Set 1
