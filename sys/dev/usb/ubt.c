@@ -1,4 +1,4 @@
-/*	$NetBSD: ubt.c,v 1.2 2002/08/22 10:17:46 augustss Exp $	*/
+/*	$NetBSD: ubt.c,v 1.3 2002/08/24 17:31:19 augustss Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.2 2002/08/22 10:17:46 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.3 2002/08/24 17:31:19 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,10 +56,14 @@ __KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.2 2002/08/22 10:17:46 augustss Exp $");
 #include <dev/usb/usbdi_util.h>
 #include <dev/usb/usbdevs.h>
 
+#include <dev/bluetooth/bluetooth.h>
+
+#define UBT_DEBUG
+
 #ifdef UBT_DEBUG
 #define DPRINTF(x)	if (ubtdebug) logprintf x
 #define DPRINTFN(n,x)	if (ubtdebug>(n)) logprintf x
-int	ubtdebug = 0;
+int	ubtdebug = 1;
 #else
 #define DPRINTF(x)
 #define DPRINTFN(n,x)
@@ -72,7 +76,8 @@ int	ubtdebug = 0;
 struct ubt_softc {
  	USBBASEDEVICE		sc_dev;
 	usbd_device_handle	sc_udev;
-	usbd_interface_handle	sc_ctliface;
+	usbd_interface_handle	sc_ctl_iface;
+	usbd_interface_handle	sc_isoc_iface;
 
 	int			sc_rd_addr;
 	usbd_pipe_handle	sc_rd_pipe;
@@ -111,6 +116,8 @@ USB_ATTACH(ubt)
 	USB_ATTACH_START(ubt, sc, uaa);
 	usbd_device_handle	dev = uaa->device;
 	usbd_interface_handle	iface = uaa->iface;
+	struct bt_attach_args	bt;
+	usb_interface_descriptor_t *id;
 	char			devinfo[1024];
 	usb_endpoint_descriptor_t *ed;
 	u_int8_t		epcount;
@@ -123,11 +130,14 @@ USB_ATTACH(ubt)
 	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfo);
 
 	sc->sc_udev = dev;
-	sc->sc_ctliface = iface;
+	sc->sc_ctl_iface = iface;
 
+	/* 
+	 * The control interface comes before the isoc interface
+	 * according to the spec, so we find it first.
+	 */
 	epcount = 0;
 	(void)usbd_endpoint_count(iface, &epcount);
-
 	sc->sc_rd_addr = -1;
 	sc->sc_wr_addr = -1;
 	for (i = 0; i < epcount; i++) {
@@ -152,14 +162,28 @@ USB_ATTACH(ubt)
 	}
 #endif
 
+	/* XXX works because isoc comes after ctl */
+	/* Grab isoc interface as well. */
+	for (i = 0; i < uaa->nifaces; i++) {
+		if (uaa->ifaces[i] == NULL)
+			continue;
+		id = usbd_get_interface_descriptor(uaa->ifaces[i]);
+		if (id != NULL &&
+		    id->bInterfaceClass == UICLASS_WIRELESS &&
+		    id->bInterfaceSubClass == UISUBCLASS_RF &&
+		    id->bInterfaceProtocol == UIPROTO_BLUETOOTH) {
+			sc->sc_isoc_iface = uaa->ifaces[i];
+			uaa->ifaces[i] = NULL;
+		}
+	}
+
+	printf("%s: has%s isoc data\n", USBDEVNAME(sc->sc_dev),
+	       sc->sc_isoc_iface != NULL ? "" : " no");
+
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
 			   USBDEV(sc->sc_dev));
 
-#if 0
-	sc->sc_child = config_found(self, &ia, ir_print);
-#else
-	printf("%s: driver not implemented\n", USBDEVNAME(sc->sc_dev));
-#endif
+	sc->sc_child = config_found(self, &bt, bt_print);
 
 	USB_ATTACH_SUCCESS_RETURN;
 }
