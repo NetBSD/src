@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.220 2000/05/28 19:49:50 ragge Exp $
+#	$NetBSD: mi,v 1.221 2000/05/31 00:43:17 cgd Exp $
 ./sys			comp-sysutil-root
 ./usr/bin/addr2line	comp-miscutil-bin
 ./usr/bin/ar		comp-util-bin
@@ -2687,6 +2687,10 @@
 ./usr/share/man/cat9/shutdownhook_disestablish.0		comp-kern-catman
 ./usr/share/man/cat9/shutdownhook_establish.0		comp-kern-catman
 ./usr/share/man/cat9/sleep.0		comp-kern-catman
+./usr/share/man/cat9/softintr.0		comp-kern-catman
+./usr/share/man/cat9/softintr_disestablish.0		comp-kern-catman
+./usr/share/man/cat9/softintr_establish.0		comp-kern-catman
+./usr/share/man/cat9/softintr_schedule.0		comp-kern-catman
 ./usr/share/man/cat9/spl.0		comp-kern-catman
 ./usr/share/man/cat9/spl0.0		comp-kern-catman
 ./usr/share/man/cat9/splbio.0		comp-kern-catman
@@ -4211,6 +4215,10 @@
 ./usr/share/man/man9/shutdownhook_disestablish.9		comp-kern-man
 ./usr/share/man/man9/shutdownhook_establish.9		comp-kern-man
 ./usr/share/man/man9/sleep.9		comp-kern-man
+./usr/share/man/man9/softintr.0		comp-kern-man
+./usr/share/man/man9/softintr_disestablish.0		comp-kern-man
+./usr/share/man/man9/softintr_establish.0		comp-kern-man
+./usr/share/man/man9/softintr_schedule.0		comp-kern-man
 ./usr/share/man/man9/spl.9		comp-kern-man
 ./usr/share/man/man9/spl0.9		comp-kern-man
 ./usr/share/man/man9/splbio.9		comp-kern-man
