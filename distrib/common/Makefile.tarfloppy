@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.tarfloppy,v 1.4 2002/05/02 18:02:31 lukem Exp $
+#	$NetBSD: Makefile.tarfloppy,v 1.5 2002/05/04 01:34:37 lukem Exp $
 #
 # Makefile snippet to create a set of ustar floppies.
 # Each floppy has an 8KB header, followed by part or all of the ustar archive.
@@ -8,7 +8,7 @@
 # Required variables:
 #	NETBSDSRCDIR	Top level of src tree (set by <bsd.own.mk>)
 #	FLOPPYBASE	Basename of floppies. Floppy number ${n} will
-#			be generated as ${FLOPPYBASE}${n}.fs
+#			be generated as ${FLOPPYBASE}${n}${FLOPPYSUFFIX}
 #	FLOPPYSIZE	Size of floppy in 512 byte blocks.
 #	FLOPPYFILES	Files to write to floppy.
 #			Usually set to "boot ${FLOPPYMETAFILE} netbsd"
@@ -23,12 +23,13 @@
 #				USTAR image file is in @IMAGE@.
 #	FLOPPYMAX		Maximum number of floppies to build.
 #				If 1, the final image is installed as
-#				${FLOPPYBASE}.fs instead of ${FLOPPYBASE}1.fs
+#				${FLOPPYBASE}${FLOPPYSUFFIX} instead of
+#				${FLOPPYBASE}1${FLOPPYSUFFIX}
 #	FLOPPYMETAFILE		USTAR metafile(s) (optional)
 #	FLOPPYPAD		If defined, pad the last floppy to ${FLOPPYSIZE}
+#	FLOPPYSUFFIX		Suffix of created floppies.
 #	FLOPPY_RELEASEDIR	Where to install release floppies.
 #
-
 
 .if defined(FLOPPY_BOOT)				# {
 CLEANFILES+=	boot
@@ -45,9 +46,9 @@ boot: ${FLOPPY_BOOT}
 .if defined(FLOPPY_NETBSD)				# {
 CLEANFILES+=	netbsd
 netbsd: ${FLOPPY_NETBSD}
-	@echo "Copying ${.ALLSRC} to netbsd"
-	@rm -f netbsd
-	@cp ${.ALLSRC} netbsd
+	@echo "Copying ${.ALLSRC} to ${.TARGET}"
+	@rm -f ${.TARGET}
+	@cp ${.ALLSRC} ${.TARGET}
 .endif	# FLOPPY_NETBSD					# }
 
 
@@ -60,25 +61,25 @@ ${FLOPPYMETAFILE}:
 .endif	# FLOPPYMETAFILE				# }
 
 
-${FLOPPYBASE}1.fs: ${FLOPPYFILES} ${DISTRIBDIR}/common/buildfloppies.sh
-	@echo "Creating ${FLOPPYBASE}1.fs from: ${FLOPPYFILES}"
+${FLOPPYBASE}1${FLOPPYSUFFIX}: ${FLOPPYFILES} ${DISTRIBDIR}/common/buildfloppies.sh
+	@echo "Creating ${FLOPPYBASE}1${FLOPPYSUFFIX} from: ${FLOPPYFILES}"
 	PAX=${PAX:Q} sh ${DISTRIBDIR}/common/buildfloppies.sh \
-	    ${FLOPPYMAX:D-m ${FLOPPYMAX}} \
 	    ${FLOPPYINSTBOOT:D-i ${FLOPPYINSTBOOT}} ${FLOPPYPAD:D-p} \
+	    ${FLOPPYMAX:D-m ${FLOPPYMAX}} ${FLOPPYSUFFIX:D-s ${FLOPPYSUFFIX}} \
 	    ${FLOPPYBASE} ${FLOPPYSIZE} ${FLOPPYFILES}
 
-CLEANFILES+=	${FLOPPYBASE}?.fs
+CLEANFILES+=	${FLOPPYBASE}?${FLOPPYSUFFIX}
 
 
-realall: ${FLOPPYBASE}1.fs
+realall: ${FLOPPYBASE}1${FLOPPYSUFFIX}
 
 .if defined(FLOPPY_RELEASEDIR)
-release: check_RELEASEDIR .WAIT ${FLOPPYBASE}1.fs
-	if [ -e ${FLOPPYBASE}2.fs ]; then \
-		${RELEASE_INSTALL} ${FLOPPYBASE}?.fs \
+release: check_RELEASEDIR .WAIT ${FLOPPYBASE}1${FLOPPYSUFFIX}
+	if [ -e ${FLOPPYBASE}2${FLOPPYSUFFIX} ]; then \
+		${RELEASE_INSTALL} ${FLOPPYBASE}?${FLOPPYSUFFIX} \
 		    ${RELEASEDIR}/${FLOPPY_RELEASEDIR}; \
 	else \
-		${RELEASE_INSTALL} ${FLOPPYBASE}1.fs \
-		    ${RELEASEDIR}/${FLOPPY_RELEASEDIR}/${FLOPPYBASE}.fs; \
+		${RELEASE_INSTALL} ${FLOPPYBASE}1${FLOPPYSUFFIX} \
+		    ${RELEASEDIR}/${FLOPPY_RELEASEDIR}/${FLOPPYBASE}${FLOPPYSUFFIX}; \
 	fi
 .endif
