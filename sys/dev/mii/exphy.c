@@ -1,4 +1,4 @@
-/*	$NetBSD: exphy.c,v 1.3 1998/08/12 20:56:34 thorpej Exp $	*/
+/*	$NetBSD: exphy.c,v 1.4 1998/08/12 22:27:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -259,7 +259,7 @@ exphy_status(sc)
 	struct exphy_softc *sc;
 {
 	struct mii_data *mii = sc->sc_mii.mii_pdata;
-	int bmsr, bmcr, anlpr;
+	int bmsr, bmcr, anlpar;
 
 	mii->mii_media_status = IFM_AVALID;
 	mii->mii_media_active = IFM_ETHER;
@@ -290,16 +290,16 @@ exphy_status(sc)
 			return;
 		}
 
-		anlpr = EXPHY_READ(sc, MII_ANAR) & EXPHY_READ(sc, MII_ANLPAR);
-		if (anlpr & ANLPAR_T4)
+		anlpar = EXPHY_READ(sc, MII_ANAR) & EXPHY_READ(sc, MII_ANLPAR);
+		if (anlpar & ANLPAR_T4)
 			mii->mii_media_active |= IFM_100_T4;
-		else if (anlpr & ANLPAR_TX_FD)
+		else if (anlpar & ANLPAR_TX_FD)
 			mii->mii_media_active |= IFM_100_TX|IFM_FDX;
-		else if (anlpr & ANLPAR_TX)
+		else if (anlpar & ANLPAR_TX)
 			mii->mii_media_active |= IFM_100_TX;
-		else if (anlpr & ANLPAR_10_FD)
+		else if (anlpar & ANLPAR_10_FD)
 			mii->mii_media_active |= IFM_10_T|IFM_FDX;
-		else if (anlpr & ANLPAR_10)
+		else if (anlpar & ANLPAR_10)
 			mii->mii_media_active |= IFM_10_T;
 		else
 			mii->mii_media_active |= IFM_NONE;
