@@ -3,7 +3,7 @@
 /* This file contains the UNIX-specific parts of the "elvprsv" program. */
 
 #ifndef lint
-static char rcsid[] = "$Id: prsvunix.c,v 1.2 1993/08/02 17:54:03 mycroft Exp $";
+static char prsvunix_rcsid[] = "$Id: prsvunix.c,v 1.3 1993/08/14 10:32:15 mycroft Exp $";
 #endif /* not lint */
 
 
