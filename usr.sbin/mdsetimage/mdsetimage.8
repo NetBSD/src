@@ -1,4 +1,4 @@
-.\"	$NetBSD: mdsetimage.8,v 1.2 1997/01/02 00:33:34 pk Exp $
+.\"	$NetBSD: mdsetimage.8,v 1.3 1997/09/30 06:20:17 scottr Exp $
 .\"
 .\" Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
 .\"
@@ -36,6 +36,7 @@
 .Nd set kernel RAM disk image
 .Sh SYNOPSIS
 .Nm mdsetimage
+.Op Fl T Ar address
 .Op Fl v
 .Ar kernel
 .Ar image
@@ -50,6 +51,11 @@ The file system present in
 .Ar image
 will typically be used by the kernel
 as the root file system.
+.Pp
+For a.out kernels only, the
+.Fl T
+flag specifies the starting address of kernel text.
+This flag is ignored for other kernel executable formats.
 .Pp
 If the
 .Fl v
