@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.205 2004/04/14 08:54:10 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.206 2004/04/14 15:43:27 kanaoka Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -26,11 +26,11 @@
 
 Package:	acpica
 Version:	20040211
-Current Vers:	20040311
+Current Vers:	20040402
 Maintainer:	INTEL
 Archive Site:	http://developer.intel.com/technology/IAPC/acpi/downloads.htm
 Mailing List:	acpi-devel@lists.sourceforge.net
-Responsible:	kanaoka,kochi
+Responsible:	kochi
 Notes:
 The sources were integrated into src/sys/dev/acpi/acpica/Subsystem.
 Please read src/sys/dev/acpi/acpica/README before any modification.
