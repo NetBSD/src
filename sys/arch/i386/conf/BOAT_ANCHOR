@@ -1,4 +1,4 @@
-#	$NetBSD: BOAT_ANCHOR,v 1.54 1996/03/04 03:25:48 cgd Exp $
+#	$NetBSD: BOAT_ANCHOR,v 1.55 1996/03/05 01:32:11 thorpej Exp $
 #
 #	BOAT_ANCHOR -- kernel for the 386-20 the gang uses for testing
 #
@@ -9,6 +9,11 @@ options		I386_CPU	# CPU classes; at least one is REQUIRED
 #options	I486_CPU
 #options	I586_CPU
 #options	MATH_EMULATE	# floating point emulation
+
+# Some BIOSes don't get the size of extended memory right.  If you
+# have a broken BIOS, uncomment the following and set the value
+# properly for your system.
+#options	EXTMEM_SIZE=... # size of extended memory
 
 options		DUMMY_NOPS	# speed hack; recommended
 options		XSERVER,UCONSOLE
