@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.1 2001/11/28 11:54:16 manu Exp $ */
+/*	$NetBSD: svr4_machdep.c,v 1.2 2002/03/05 14:21:32 simonb Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -79,6 +79,7 @@ svr4_setmcontext(p, mc, flags)
 	svr4_mcontext_t *mc;
 	unsigned long flags;
 {
+
 	return 0;
 }
 
@@ -88,6 +89,7 @@ svr4_getmcontext(p, mc, flags)
 	svr4_mcontext_t *mc;
 	unsigned long *flags;
 {    
+
 	return NULL;
 }
 
