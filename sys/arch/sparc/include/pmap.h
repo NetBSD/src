@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.68 2003/05/10 21:10:40 thorpej Exp $ */
+/*	$NetBSD: pmap.h,v 1.69 2003/08/12 15:13:13 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -158,6 +158,8 @@ struct pmap {
 	int		pm_gap_end;	/* no valid mapping until here */
 
 	struct pmap_statistics	pm_stats;	/* pmap statistics */
+	u_int		pm_flags;
+#define PMAP_USERCACHECLEAN	1
 };
 
 struct regmap {
@@ -265,18 +267,16 @@ void		pmap_reference __P((pmap_t));
 void		pmap_remove __P((pmap_t, vaddr_t, vaddr_t));
 #define		pmap_update(pmap)		/* nothing (yet) */
 void		pmap_virtual_space __P((vaddr_t *, vaddr_t *));
+#ifdef PMAP_GROWKERNEL
+vaddr_t		pmap_growkernel __P((vaddr_t));
+#endif
 void		pmap_redzone __P((void));
 void		kvm_uncache __P((caddr_t, int));
 struct user;
 int		mmu_pagein __P((struct pmap *pm, vaddr_t, int));
 void		pmap_writetext __P((unsigned char *, int));
 void		pmap_globalize_boot_cpuinfo __P((struct cpu_info *));
-
-static __inline void
-pmap_remove_all(struct pmap *pmap)
-{
-	/* Nothing. */
-}
+void		pmap_remove_all(struct pmap *pm);
 
 /* SUN4/SUN4C SPECIFIC DECLARATIONS */
 
