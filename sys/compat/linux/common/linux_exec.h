@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.h,v 1.19 2002/03/20 00:27:58 christos Exp $	*/
+/*	$NetBSD: linux_exec.h,v 1.20 2002/03/21 13:23:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -51,8 +51,6 @@
 #include <compat/linux/arch/mips/linux_exec.h>
 #elif defined(__arm__)
 #include <compat/linux/arch/arm/linux_exec.h>
-#else
-#error Undefined linux_exec.h machine type.
 #endif
 
 
