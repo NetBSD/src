@@ -2024,7 +2024,7 @@ char *output_mov_long_double_arm_from_fpu (/* struct rtx_def ** */);
 char *output_mov_long_double_arm_from_arm (/* struct rtx_def ** */);
 char *output_mov_double_fpu_from_arm (/* struct rtx_def ** */);
 char *output_mov_double_arm_from_fpu (/* struct rtx_def ** */);
-char *output_mov_double (/* struct rtx_def ** */);
+char *output_move_double (/* struct rtx_def ** */);
 char *output_mov_immediate (/* struct rtx_def ** */);
 char *output_add_immediate (/* struct rtx_def ** */);
 char *arithmetic_instr (/* struct rtx_def *, int */);
