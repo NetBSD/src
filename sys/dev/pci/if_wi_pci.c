@@ -1,4 +1,4 @@
-/*      $NetBSD: if_wi_pci.c,v 1.9 2002/09/27 20:40:22 thorpej Exp $  */
+/*      $NetBSD: if_wi_pci.c,v 1.10 2002/09/30 06:29:30 onoe Exp $  */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pci.c,v 1.9 2002/09/27 20:40:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pci.c,v 1.10 2002/09/30 06:29:30 onoe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -159,10 +159,10 @@ wi_pci_reset(sc)
 {
 	int i, secs, usecs;
 
-	CSR_WRITE_2(sc, WI_PCI_COR_OFFSET, WI_COR_SOFT_RESET);
+	CSR_WRITE_2(sc, WI_PCI_COR, WI_COR_SOFT_RESET);
 	DELAY(250*1000); /* 1/4 second */
 
-	CSR_WRITE_2(sc, WI_PCI_COR_OFFSET, WI_COR_CLEAR);
+	CSR_WRITE_2(sc, WI_PCI_COR, WI_COR_CLEAR);
 	DELAY(500*1000); /* 1/2 second */
 
 	/* wait 2 seconds for firmware to complete initialization. */
@@ -173,7 +173,7 @@ wi_pci_reset(sc)
  
 	if (i < 0) {
 		printf("%s: PCI reset timed out\n", sc->sc_dev.dv_xname);
-	} else if (sc->sc_ethercom.ec_if.if_flags & IFF_DEBUG) {
+	} else if (sc->sc_if.if_flags & IFF_DEBUG) {
 		usecs = (200000 - i) * 10;
 		secs = usecs / 1000000;
 		usecs %= 1000000;
@@ -320,7 +320,6 @@ wi_pci_attach(parent, self, aux)
 	}
 
 	printf("%s:", sc->sc_dev.dv_xname);
-	sc->sc_ifp = &sc->sc_ethercom.ec_if;
 	if (wi_attach(sc) != 0) {
 		printf("%s: failed to attach controller\n",
 			sc->sc_dev.dv_xname);
