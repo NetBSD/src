@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.s,v 1.5 1996/05/16 21:56:22 cgd Exp $	*/
+/*	$NetBSD: crt0.s,v 1.6 1996/09/09 01:03:38 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -44,8 +44,8 @@ $L1:
 
 LEAF(__start, 0)		/* XXX */
 	.set	noreorder
-	br	pv, 1f
-1:	SETGP(pv)
+	br	pv, L1
+L1:	SETGP(pv)
 
 	ldq	s0, 0(sp)	/* get argc from stack */
 	lda	s1, 8(sp)	/* get pointer to argv */
@@ -64,17 +64,17 @@ eprol:
 #endif
 
 	ldq	a0, 0(s1)	/* a0 = argv[0]; */
-	beq	a0, 2f		/* if it's null, then punt */
+	beq	a0, L11		/* if it's null, then punt */
 	CONST(0x2f, a1)		/* a1 = '/' */
 	CALL(strrchr)
 	addq	v0, 1, a0	/* move past the /, if there was one */
-	bne	v0, 1f		/* if a / found */
+	bne	v0, L10		/* if a / found */
 	ldq	a0, 0(s1)	/* a0 = argv[0]; */
-1:
+L10:
 	stq	a0, __progname	/* store the program name */
-2:
+L11:
 	/* call main() */
-__callmain:
+callmain:
 	mov	s0, a0
 	mov	s1, a1
 	mov	s2, a2
@@ -95,6 +95,8 @@ LEAF(moncontrol, 0)
 END(moncontrol)
 
 LEAF(_mcount, 0)
-        ret     zero, (at_reg), 1
+	.set	noat
+	ret	zero, (at_reg), 1
+	.set	at
 END(_mcount)
 #endif
