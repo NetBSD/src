@@ -1,4 +1,4 @@
-/*	$NetBSD: eso.c,v 1.30 2003/02/01 06:23:39 thorpej Exp $	*/
+/*	$NetBSD: eso.c,v 1.31 2003/02/05 00:07:34 kleink Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Klaus J. Klein
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.30 2003/02/01 06:23:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.31 2003/02/05 00:07:34 kleink Exp $");
 
 #include "mpu.h"
 
@@ -277,7 +277,7 @@ eso_attach(parent, self, aux)
 	a2mode |= ESO_MIXREG_A2MODE_NEWA1 | ESO_MIXREG_A2MODE_ASYNC;
 	eso_write_mixreg(sc, ESO_MIXREG_A2MODE, a2mode);
 	
-	/* Slave Master Volume to Hardware Volume Control Counter, unask IRQ. */
+	/* Slave Master Volume to Hardware Volume Control Counter, unmask IRQ.*/
 	mvctl = eso_read_mixreg(sc, ESO_MIXREG_MVCTL);
 	mvctl &= ~ESO_MIXREG_MVCTL_SPLIT;
 	mvctl |= ESO_MIXREG_MVCTL_HVIRQM;
