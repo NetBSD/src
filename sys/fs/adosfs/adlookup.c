@@ -1,4 +1,4 @@
-/*	$NetBSD: adlookup.c,v 1.27 2001/11/12 22:59:17 lukem Exp $	*/
+/*	$NetBSD: adlookup.c,v 1.1 2002/12/23 17:15:25 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adlookup.c,v 1.27 2001/11/12 22:59:17 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adlookup.c,v 1.1 2002/12/23 17:15:25 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,7 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: adlookup.c,v 1.27 2001/11/12 22:59:17 lukem Exp $");
 #include <sys/mount.h>
 #include <sys/time.h>
 #include <sys/queue.h>
-#include <adosfs/adosfs.h>
+#include <fs/adosfs/adosfs.h>
 
 #ifdef ADOSFS_EXACTMATCH
 #define strmatch(s1, l1, s2, l2, i) \

@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.56 2002/09/21 20:26:49 mycroft Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.1 2002/12/23 17:15:26 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.56 2002/09/21 20:26:49 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.1 2002/12/23 17:15:26 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -54,7 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.56 2002/09/21 20:26:49 mycroft Exp $"
 #include <sys/queue.h>
 #include <sys/buf.h>
 #include <sys/conf.h>
-#include <adosfs/adosfs.h>
+#include <fs/adosfs/adosfs.h>
 
 void adosfs_init __P((void));
 void adosfs_reinit __P((void));

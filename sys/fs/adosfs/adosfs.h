@@ -1,4 +1,4 @@
-/*	$NetBSD: adosfs.h,v 1.20 2002/05/13 23:51:19 matt Exp $	*/
+/*	$NetBSD: adosfs.h,v 1.1 2002/12/23 17:15:26 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps

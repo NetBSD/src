@@ -1,4 +1,4 @@
-/*	$NetBSD: advnops.c,v 1.64 2002/10/23 09:10:23 jdolecek Exp $	*/
+/*	$NetBSD: advnops.c,v 1.1 2002/12/23 17:15:26 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.64 2002/10/23 09:10:23 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.1 2002/12/23 17:15:26 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -55,7 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.64 2002/10/23 09:10:23 jdolecek Exp $"
 
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/specfs/specdev.h>
-#include <adosfs/adosfs.h>
+#include <fs/adosfs/adosfs.h>
 
 extern struct vnodeops adosfs_vnodeops;
 
