@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.170 2004/04/01 04:50:06 atatat Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.171 2004/04/06 18:52:35 atatat Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.170 2004/04/01 04:50:06 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.171 2004/04/06 18:52:35 atatat Exp $");
 
 #include "opt_defcorename.h"
 #include "opt_insecure.h"
@@ -2007,13 +2007,21 @@ sysctl_createv(struct sysctllog **log, int cflags,
 			if (cnode != NULL)
 				*cnode = pnode;
 			if (descr != NULL) {
-				if (flags & CTLFLAG_OWNDESC) {
+				/*
+				 * allow first caller to *set* a
+				 * description actually to set it
+				 */
+				if (pnode->sysctl_desc != NULL)
+					/* skip it...we've got one */;
+				else if (flags & CTLFLAG_OWNDESC) {
 					size_t l = strlen(descr) + 1;
 					char *d = malloc(l, M_SYSCTLDATA,
 							 M_WAITOK|M_CANFAIL);
 					if (d != NULL) {
 						memcpy(d, descr, l);
 						pnode->sysctl_desc = d;
+						pnode->sysctl_flags |=
+						    CTLFLAG_OWNDESC;
 					}
 				}
 				else
