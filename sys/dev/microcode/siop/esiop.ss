@@ -1,4 +1,4 @@
-;	$NetBSD: esiop.ss,v 1.9 2002/04/24 09:43:14 bouyer Exp $
+;	$NetBSD: esiop.ss,v 1.10 2002/04/25 19:34:02 bouyer Exp $
 
 ;
 ; Copyright (c) 2002 Manuel Bouyer.
@@ -46,6 +46,7 @@ ABSOLUTE t_data = 96;
 ; offsets in the per-target lun table
 ABSOLUTE target_id = 0x0;
 ABSOLUTE target_luntbl = 0x8;
+ABSOLUTE target_luntbl_tag = 0xc;
 
 ;; interrupt codes
 ; interrupts that needs a valid target/lun/tag
@@ -146,11 +147,13 @@ nextisn:
 	MOVE SCRATCHC0 | f_c_lun to SCRATCHC0; save LUN
 	CLEAR ACK and CARRY;
 	MOVE SCRATCHC2 SHL SFBR; 
-	MOVE SFBR SHL SFBR; lun * 4
+	MOVE SFBR SHL SFBR;
+	MOVE SFBR SHL SFBR; lun * 8
 	MOVE DSA0 + SFBR TO DSA0;
 	MOVE DSA1 + 0x0 TO DSA1 with carry;
 	MOVE DSA2 + 0x0 TO DSA2 with carry;
 	MOVE DSA3 + 0x0 TO DSA3 with carry;
+	LOAD SCRATCHB0, 4, from target_luntbl_tag; in case it's a tagged cmd
 	LOAD DSA0, 4, from target_luntbl; load DSA for this LUN
 	JUMP REL(waitphase), WHEN NOT MSG_IN;
 	MOVE 1, abs_msgin2, WHEN MSG_IN;
@@ -161,6 +164,7 @@ nextisn:
 	MOVE SFBR to SCRATCHA2;
 	MOVE SFBR to SCRATCHC3;
 	MOVE SCRATCHC0 | f_c_tag to SCRATCHC0; save TAG
+	CALL REL(restoredsa); switch to tag table DSA
 	MOVE 0x0 to SCRATCHA3;
 	CLEAR CARRY;
 	MOVE SCRATCHA2 SHL SCRATCHA2;
@@ -194,12 +198,11 @@ script_sched:
 	MOVE SCRATCHD3 to SFBR;
 	MOVE SFBR to DSA3;
 	LOAD DSA0,4, from o_cmd_dsa; get DSA and flags for this slot
-	MOVE DSA0 to SFBR; to avoid another load later
-	MOVE SFBR to SCRATCHA0; to avoid another load later
 	MOVE DSA0 & f_cmd_free to SFBR; check flags
 	JUMP REL(no_cmd), IF NOT 0x0;
 	MOVE DSA0 & f_cmd_ignore to SFBR;
 	JUMP REL(ignore_cmd), IF NOT 0x0;
+	LOAD SCRATCHC0, 4, FROM tlq_offset;
 ; this slot is busy, attempt to exec command
 	SELECT ATN FROM t_id, REL(reselect);
 ; select either succeeded or timed out.
@@ -207,6 +210,7 @@ script_sched:
 ; waiting for a valid phase, so we have to do it now. If not a MSG_OUT phase,
 ; this is an error anyway (we selected with ATN)
 	INT int_err, WHEN NOT MSG_OUT;
+ignore_cmd:
 	MOVE SCRATCHD0 to SFBR; restore scheduler DSA
 	MOVE SFBR to DSA0;
 	MOVE SCRATCHD1 to SFBR;
@@ -215,7 +219,6 @@ script_sched:
 	MOVE SFBR to DSA2;
 	MOVE SCRATCHD3 to SFBR;
 	MOVE SFBR to DSA3;
-ignore_cmd:
 	MOVE SCRATCHE0 + 1 to SCRATCHE0;
 	MOVE SCRATCHD0 + cmd_slot_size to SCRATCHD0; 
 	MOVE SCRATCHD1 + 0 to SCRATCHD1 WITH CARRY;
@@ -234,20 +237,23 @@ cmdr3:
 	MOVE 0xff to SCRATCHD3;
 	MOVE 0x00 to SCRATCHE0;
 handle_cmd:
-	MOVE SCRATCHA0 | f_cmd_free to SCRATCHA0; mark slot as free
-	STORE noflush SCRATCHA0, 1, FROM o_cmd_dsa;
-	MOVE SCRATCHA0 & f_cmd_ignore to SFBR;
+; to avoid race condition we have to load the DSA value before setting the
+; free flag, so we have to use a temp register.
+; use SCRATCHB0 so that we can CALL restoredsa later
+	LOAD SCRATCHB0, 4, FROM o_cmd_dsa; load DSA for this command in temp reg
+	MOVE SCRATCHB0 | f_cmd_free to SCRATCHB0; mark slot as free
+	STORE noflush SCRATCHB0, 4, FROM o_cmd_dsa;
+	MOVE SCRATCHB0 & f_cmd_ignore to SFBR;
 	JUMP REL(script_sched), IF NOT 0x00; next command if ignore
+	MOVE SCRATCHB0 & 0xfc to SCRATCHB0; clear f_cmd_*
+	CALL REL(restoredsa); and move SCRATCHB to DSA
 
 ; a NOP by default; patched with MOVE GPREG & 0xfe to GPREG on compile-time
 ; option "SIOP_SYMLED"
 led_on1:
 	NOP;
-	LOAD DSA0, 4, FROM o_cmd_dsa; reload DSA for this command
-	MOVE DSA0 & 0xfe to DSA0; clear f_cmd_free
 	MOVE 0x00 TO SCRATCHA1;
 	MOVE 0xff TO SCRATCHE1;
-	LOAD SCRATCHC0, 4, FROM tlq_offset;
 ;we can now send our identify message
 send_msgout: ; entry point for msgout after a msgin or status phase
 	SET ATN;
