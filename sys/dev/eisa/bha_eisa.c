@@ -1,4 +1,4 @@
-/*	$NetBSD: bha_eisa.c,v 1.7 1997/03/28 23:47:15 mycroft Exp $	*/
+/*	$NetBSD: bha_eisa.c,v 1.8 1997/06/06 23:30:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1996, 1997 Charles M. Hannum.  All rights reserved.
@@ -127,8 +127,11 @@ bha_eisa_attach(parent, self, aux)
 
 	sc->sc_iot = iot;
 	sc->sc_ioh = ioh;
+	sc->sc_dmat = ea->ea_dmat;
 	if (!bha_find(iot, ioh, &bpd))
 		panic("bha_eisa_attach: bha_find failed");
+
+	sc->sc_dmaflags = 0;
 
 	if (eisa_intr_map(ec, bpd.sc_irq, &ih)) {
 		printf("%s: couldn't map interrupt (%d)\n",
