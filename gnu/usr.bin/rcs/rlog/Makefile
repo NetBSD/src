@@ -1,9 +1,9 @@
-#	$Id: Makefile,v 1.2 1993/08/02 17:48:03 mycroft Exp $
+#	$Id: Makefile,v 1.3 1993/11/03 16:10:01 cgd Exp $
 
 PROG=	rlog
 CFLAGS+= -I${.CURDIR}/../lib
-LDADD=  ${LIBRCS}
-DPADD=  ${LIBRCS}
+LDADD=	${LIBRCS} -lgnumalloc
+DPADD=	${LIBRCS} /usr/lib/libgnumalloc.a
 
 .include "../../Makefile.inc"
 .include <bsd.prog.mk>
