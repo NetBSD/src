@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 1997/10/12 13:11:13 mycroft Exp $
+#	$NetBSD: Makefile,v 1.13 1999/02/18 21:22:52 scottr Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 7/19/93
 
 PROG=	su
@@ -18,14 +18,4 @@ INSTALLFLAGS=-fschg
 CPPFLAGS+=-DSKEY
 DPADD+= ${LIBSKEY}
 LDADD+= -lskey
-.endif
-
-.ifdef KERBEROS
-.ifdef AFS
-DPADD+=	${LIBKAFS}
-LDADD+=	-lkafs
-.endif
-CPPFLAGS+=-DKERBEROS
-DPADD+= ${LIBKRB} ${LIBDES}
-LDADD+= -lkrb -ldes
 .endif
