@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.136 2003/10/17 03:58:23 dyoung Exp $	*/
+/*	$NetBSD: wi.c,v 1.137 2003/10/19 22:00:54 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.136 2003/10/17 03:58:23 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.137 2003/10/19 22:00:54 dyoung Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -860,10 +860,6 @@ wi_start(struct ifnet *ifp)
 			}
 			frmhdr.wi_tx_ctl |= htole16(WI_TXCNTL_NOCRYPT);
 		}
-		m_copydata(m0, 0, sizeof(struct ieee80211_frame),
-		    (caddr_t)&frmhdr.wi_whdr);
-		m_adj(m0, sizeof(struct ieee80211_frame));
-		frmhdr.wi_dat_len = htole16(m0->m_pkthdr.len);
 #if NBPFILTER > 0
 		if (sc->sc_drvbpf) {
 			struct mbuf mb;
@@ -876,6 +872,10 @@ wi_start(struct ifnet *ifp)
 			bpf_mtap(sc->sc_drvbpf, &mb);
 		}
 #endif
+		m_copydata(m0, 0, sizeof(struct ieee80211_frame),
+		    (caddr_t)&frmhdr.wi_whdr);
+		m_adj(m0, sizeof(struct ieee80211_frame));
+		frmhdr.wi_dat_len = htole16(m0->m_pkthdr.len);
 		if (IFF_DUMPPKTS(ifp))
 			wi_dump_pkt(&frmhdr, ni, -1);
 		fid = sc->sc_txd[cur].d_fid;
