@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus_machdep.h,v 1.3 2001/03/24 00:10:42 bjh21 Exp $ */
+/* $NetBSD: podulebus_machdep.h,v 1.4 2001/06/08 22:38:07 bjh21 Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -81,6 +81,7 @@ typedef struct {
 	/* Other info */
 
 	char description[PODULE_DESCRIPTION_LENGTH + 1];
+	u_int (*read_rom)(u_int, int);
 
 	/* podule specific information provided by podulebus */
 
@@ -148,8 +149,6 @@ struct podule_attach_args {
 /* Array of podule structures, one per possible podule */
 
 extern podule_t podules[MAX_PODULES + MAX_NETSLOTS];
-
-u_int poduleread __P((u_int address, int offset, int slottype));
 
 int matchpodule __P((struct podule_attach_args *pa,
     int manufacturer, int product, int required_slot));
