@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_task.c,v 1.42 2003/11/24 20:30:19 manu Exp $ */
+/*	$NetBSD: mach_task.c,v 1.43 2003/11/27 23:44:49 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #include "opt_compat_darwin.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.42 2003/11/24 20:30:19 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.43 2003/11/27 23:44:49 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -78,18 +78,11 @@ mach_task_get_special_port(args)
 	mach_task_get_special_port_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize;
 	struct lwp *l = args->l;
+	struct lwp *tl = args->tl;
 	struct mach_emuldata *med;
 	struct mach_right *mr;
-	struct proc *tp;
-	mach_port_t mn;
-	int error;
 
-	/* Get the target process from the remote port. */
-	mn = req->req_msgh.msgh_remote_port;
-	if ((error = mach_get_target_task(l, mn, &tp, NULL)) != 0)
-		return mach_msg_error(args, error);
-
-	med = (struct mach_emuldata *)tp->p_emuldata;
+	med = (struct mach_emuldata *)tl->l_proc->p_emuldata;
 
 	switch (req->req_which_port) {
 	case MACH_TASK_KERNEL_PORT:
@@ -137,19 +130,12 @@ mach_ports_lookup(args)
 	mach_ports_lookup_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize;
 	struct lwp *l = args->l;
+	struct lwp *tl = args->tl;
 	struct mach_emuldata *med;
 	struct mach_right *mr;
-	struct proc *tp;
-	mach_port_t mn;
-
 	mach_port_name_t mnp[7];
 	vaddr_t va;
 	int error;
-
-	/* Get the target process from the remote port. */
-	mn = req->req_msgh.msgh_remote_port;
-	if ((error = mach_get_target_task(l, mn, &tp, NULL)) != 0)
-		return mach_msg_error(args, error);
 
 	/* 
 	 * This is some out of band data sent with the reply. In the 
@@ -163,7 +149,7 @@ mach_ports_lookup(args)
 	    UVM_INH_COPY, UVM_ADV_NORMAL, UVM_FLAG_COPYONW))) != 0)
 		return mach_msg_error(args, error);
 
-	med = (struct mach_emuldata *)tp->p_emuldata;
+	med = (struct mach_emuldata *)tl->l_proc->p_emuldata;
 	mnp[0] = (mach_port_name_t)MACH_PORT_DEAD;
 	mnp[3] = (mach_port_name_t)MACH_PORT_DEAD;
 	mnp[5] = (mach_port_name_t)MACH_PORT_DEAD;
@@ -213,17 +199,11 @@ mach_task_set_special_port(args)
 	mach_task_set_special_port_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize;
 	struct lwp *l = args->l;
+	struct lwp *tl = args->tl;
 	mach_port_t mn;
 	struct mach_right *mr;
 	struct mach_port *mp;
 	struct mach_emuldata *med;
-	struct proc *tp;
-	int error;
-
-	/* Get the target process from the remote port. */
-	mn = req->req_msgh.msgh_remote_port;
-	if ((error = mach_get_target_task(l, mn, &tp, NULL)) != 0)
-		return mach_msg_error(args, error);
 
 	mn = req->req_special_port.name;
 
@@ -238,7 +218,7 @@ mach_task_set_special_port(args)
 	if (mr->mr_type == MACH_PORT_TYPE_DEAD_NAME)
 		return mach_msg_error(args, EINVAL);
 
-	med = (struct mach_emuldata *)tp->p_emuldata;
+	med = (struct mach_emuldata *)tl->l_proc->p_emuldata;
 
 	switch (req->req_which_port) {
 	case MACH_TASK_KERNEL_PORT:
@@ -270,7 +250,7 @@ mach_task_set_special_port(args)
 		{
 			struct darwin_emuldata *ded;
 
-			ded = tp->p_emuldata;
+			ded = tl->l_proc->p_emuldata;
 			if (ded->ded_fakepid == 1) {
 				mach_bootstrap_port = med->med_bootstrap;
 #ifdef DEBUG_DARWIN
@@ -309,6 +289,8 @@ mach_task_threads(args)
 	mach_task_threads_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize;
 	struct lwp *l = args->l;
+	struct lwp *tl = args->tl;
+	struct proc *tp = tl->l_proc;
 	struct mach_emuldata *med;
 	int error;
 	vaddr_t va;
@@ -316,13 +298,6 @@ mach_task_threads(args)
 	int i;
 	struct mach_right *mr;
 	mach_port_name_t *mnp;
-	mach_port_t mn;
-	struct proc *tp;
-
-	/* Get the target lwp from the remote port. */
-	mn = req->req_msgh.msgh_remote_port;
-	if ((error = mach_get_target_task(l, mn, &tp, NULL)) != 0)
-		return mach_msg_error(args, error);
 
 	med = tp->p_emuldata;
 
@@ -378,20 +353,13 @@ mach_task_get_exception_ports(args)
 	mach_task_get_exception_ports_request_t *req = args->smsg;
 	mach_task_get_exception_ports_reply_t *rep = args->rmsg;
 	struct lwp *l = args->l;
+	struct lwp *tl = args->tl;
 	size_t *msglen = args->rsize;
 	struct mach_emuldata *med;
 	struct mach_right *mr;
 	int i, j, count;
-	mach_port_t mn;
-	struct proc *tp;
-	int error;
 
-	/* Get the target lwp from the remote port. */
-	mn = req->req_msgh.msgh_remote_port;
-	if ((error = mach_get_target_task(l, mn, &tp, NULL)) != 0)
-		return mach_msg_error(args, error);
-
-	med = tp->p_emuldata;
+	med = tl->l_proc->p_emuldata;
 
 	/* It always return an array of 32 ports even if only 9 can be used */
 	count = sizeof(rep->rep_old_handler) / sizeof(rep->rep_old_handler[0]);
@@ -436,18 +404,12 @@ mach_task_set_exception_ports(args)
 	mach_task_set_exception_ports_request_t *req = args->smsg;
 	mach_task_set_exception_ports_reply_t *rep = args->rmsg;
 	struct lwp *l = args->l;
+	struct lwp *tl = args->tl;
 	size_t *msglen = args->rsize;
 	struct mach_emuldata *med;
 	mach_port_name_t mn;
 	struct mach_right *mr;
 	struct mach_port *mp;
-	struct proc *tp;
-	int error;
-
-	/* Get the target lwp from the remote port. */
-	mn = req->req_msgh.msgh_remote_port;
-	if ((error = mach_get_target_task(l, mn, &tp, NULL)) != 0)
-		return mach_msg_error(args, error);
 
 	mn = req->req_new_port.name;
 	if ((mr = mach_right_check(mn, l, MACH_PORT_TYPE_SEND)) == 0)
@@ -462,7 +424,7 @@ mach_task_set_exception_ports(args)
 	mp->mp_datatype = MACH_MP_EXC_FLAGS;
 	mp->mp_data = (void *)((req->req_behavior << 16) | req->req_flavor);
 
-	med = tp->p_emuldata;
+	med = tl->l_proc->p_emuldata;
 	if (req->req_mask & MACH_EXC_MASK_BAD_ACCESS)
 		med->med_exc[MACH_EXC_BAD_ACCESS] = mp;
 	if (req->req_mask & MACH_EXC_MASK_BAD_INSTRUCTION)
@@ -508,17 +470,10 @@ mach_task_info(args)
 {
 	mach_task_info_request_t *req = args->smsg;
 	mach_task_info_reply_t *rep = args->rmsg;
-	struct lwp *l = args->l;
+	struct lwp *tl = args->tl;
 	size_t *msglen = args->rsize;
 	int count;
-	mach_port_t mn;
-	struct proc *tp;
-	int error;
-
-	/* Get the target lwp from the remote port. */
-	mn = req->req_msgh.msgh_remote_port;
-	if ((error = mach_get_target_task(l, mn, &tp, NULL)) != 0)
-		return mach_msg_error(args, error);
+	struct proc *tp = tl->l_proc;
 
 	switch(req->req_flavor) {
 	case MACH_TASK_BASIC_INFO: {	
@@ -615,18 +570,10 @@ mach_task_suspend(args)
 	mach_task_suspend_request_t *req = args->smsg;
 	mach_task_suspend_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize;
-	struct lwp *l = args->l;
+	struct lwp *tl = args->tl;
 	struct lwp *lp;
-	mach_port_t mn;
 	struct mach_emuldata *med;
-	struct proc *tp;
-	struct lwp *tl;
-	int error;
-
-	/* Get the target lwp from the remote port. */
-	mn = req->req_msgh.msgh_remote_port;
-	if ((error = mach_get_target_task(l, mn, &tp, &tl)) != 0)
-		return mach_msg_error(args, error);
+	struct proc *tp = tl->l_proc;
 	
 	med = tp->p_emuldata;
 	med->med_suspend++; /* XXX Mach also has a per thread semaphore */
@@ -645,7 +592,7 @@ mach_task_suspend(args)
 			break;
 		}
 	}
-	proc_stop(tp);
+	proc_stop(tp, 0);
 
 	rep->rep_msgh.msgh_bits =
 	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
@@ -666,17 +613,9 @@ mach_task_resume(args)
 	mach_task_resume_request_t *req = args->smsg;
 	mach_task_resume_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize;
-	struct lwp *l = args->l;
-	mach_port_t mn;
+	struct lwp *tl = args->tl;
 	struct mach_emuldata *med;
-	struct proc *tp;
-	struct lwp *tl;
-	int error;
-
-	/* Get the target lwp from the remote port. */
-	mn = req->req_msgh.msgh_remote_port;
-	if ((error = mach_get_target_task(l, mn, &tp, &tl)) != 0)
-		return mach_msg_error(args, error);
+	struct proc *tp = tl->l_proc;
 
 	med = tp->p_emuldata;
 	med->med_suspend--; /* XXX Mach also has a per thread semaphore */
@@ -762,35 +701,3 @@ mach_sys_task_for_pid(l, v, retval)
 	return 0;
 }
 
-inline int
-mach_get_target_task(l, mn, tp, tl)
-	struct lwp *l;
-	mach_port_t mn;
-	struct proc **tp;
-	struct lwp **tl;
-{
-	struct mach_right *mr;
-	struct proc *p;
-
-	if ((mr = mach_right_check(mn, l, MACH_PORT_TYPE_ALL_RIGHTS)) == 0)
-		return EPERM;
-
-	if (mr->mr_port->mp_datatype != MACH_MP_PROC) {
-#ifdef DEBUG_MACH
-		printf("non proc data on task kernel port\n");
-#endif
-		return EINVAL;
-	}
-
-	/* 
-	 * XXX There should be per-thread kernel ports to 
-	 * avoid this: We always see the same thread.
-	 */
-	p = (struct proc *)mr->mr_port->mp_data;
-	if (tp != NULL)
-		*tp = p;
-	if (tl != NULL)
-		*tl = proc_representative_lwp(p);
-
-	return 0;
-}

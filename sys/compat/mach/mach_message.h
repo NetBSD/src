@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_message.h,v 1.18 2003/11/13 13:40:39 manu Exp $	 */
+/*	$NetBSD: mach_message.h,v 1.19 2003/11/27 23:44:49 manu Exp $	 */
 
 /*-
  * Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
@@ -217,11 +217,12 @@ struct mach_short_reply {
 /* Kernel-private structures */
 
 struct mach_trap_args {
-	struct lwp *l;
-	void *smsg;
-	void *rmsg;
-	size_t ssize;
-	size_t *rsize;
+	struct lwp *l;	/* Current task (doing the Mach system call) */
+	struct lwp *tl; /* Target task  */
+	void *smsg;	/* Sent message */
+	void *rmsg;	/* Reply message */
+	size_t ssize;	/* Sent message size */
+	size_t *rsize;	/* Reply message maximum size, may be lowered */
 };
 
 struct mach_service {
