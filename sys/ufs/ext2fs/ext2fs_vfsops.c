@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.30 1999/11/15 18:49:13 fvdl Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.31 2000/01/26 16:21:34 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -74,6 +74,7 @@
 extern struct lock ufs_hashlock;
 
 int ext2fs_sbupdate __P((struct ufsmount *, int));
+static int ext2fs_checksb __P((struct ext2fs *, int));
 
 extern struct vnodeopv_desc ext2fs_vnodeop_opv_desc;
 extern struct vnodeopv_desc ext2fs_specop_opv_desc;
@@ -168,7 +169,12 @@ ext2fs_mountroot()
 	fs = ump->um_e2fs;
 	memset(fs->e2fs_fsmnt, 0, sizeof(fs->e2fs_fsmnt));
 	(void) copystr(mp->mnt_stat.f_mntonname, fs->e2fs_fsmnt,
-	    MNAMELEN - 1, 0);
+	    sizeof(fs->e2fs_fsmnt) - 1, 0);
+	if (fs->e2fs.e2fs_rev > E2FS_REV0) {
+		memset(fs->e2fs.e2fs_fsmnt, 0, sizeof(fs->e2fs.e2fs_fsmnt));
+		(void) copystr(mp->mnt_stat.f_mntonname, fs->e2fs.e2fs_fsmnt,
+		    sizeof(fs->e2fs.e2fs_fsmnt) - 1, 0);
+	}
 	(void)ext2fs_statfs(mp, &mp->mnt_stat, p);
 	vfs_unbusy(mp);
 	inittodr(fs->e2fs.e2fs_wtime);
@@ -301,8 +307,15 @@ ext2fs_mount(mp, path, data, ndp, p)
 	}
 	ump = VFSTOUFS(mp);
 	fs = ump->um_e2fs;
-	(void) copyinstr(path, fs->e2fs_fsmnt, sizeof(fs->e2fs_fsmnt) - 1, &size);
+	(void) copyinstr(path, fs->e2fs_fsmnt, sizeof(fs->e2fs_fsmnt) - 1,
+	    &size);
 	memset(fs->e2fs_fsmnt + size, 0, sizeof(fs->e2fs_fsmnt) - size);
+	if (fs->e2fs.e2fs_rev > E2FS_REV0) {
+		(void) copystr(mp->mnt_stat.f_mntonname, fs->e2fs.e2fs_fsmnt,
+		    sizeof(fs->e2fs.e2fs_fsmnt) - 1, &size);
+		memset(fs->e2fs.e2fs_fsmnt, 0,
+		    sizeof(fs->e2fs.e2fs_fsmnt) - size);
+	}
 	memcpy(mp->mnt_stat.f_mntonname, fs->e2fs_fsmnt, MNAMELEN);
 	(void) copyinstr(args.fspec, mp->mnt_stat.f_mntfromname, MNAMELEN - 1, 
 		&size);
@@ -368,27 +381,11 @@ ext2fs_reload(mountp, cred, p)
 		return (error);
 	}
 	newfs = (struct ext2fs *)bp->b_data;
-	if (fs2h16(newfs->e2fs_magic) != E2FS_MAGIC) {
+	error = ext2fs_checksb(newfs, (mountp->mnt_flag & MNT_RDONLY) != 0);
+	if (error) {
 		brelse(bp);
-		return (EIO);		/* XXX needs translation */
+		return (error);
 	}
-	if (fs2h32(newfs->e2fs_rev) != E2FS_REV) {
-#ifdef DIAGNOSTIC
-		printf("Ext2 fs: unsupported revision number: %x (expected %x)\n",
-					fs2h32(newfs->e2fs_rev), E2FS_REV);
-#endif
-		brelse(bp);
-		return (EIO);		/* XXX needs translation */
-	}
-	if (fs2h32(newfs->e2fs_log_bsize) > 2) { /* block size = 1024|2048|4096 */
-#ifdef DIAGNOSTIC
-		printf("Ext2 fs: bad block size: %d (expected <=2 for ext2 fs)\n",
-			fs2h32(newfs->e2fs_log_bsize));
-#endif
-		brelse(bp);
-		return (EIO);	   /* XXX needs translation */
-	}
-
 
 	fs = VFSTOUFS(mountp)->um_e2fs;
 	/* 
@@ -528,23 +525,9 @@ ext2fs_mountfs(devvp, mp, p)
 		error = EINVAL;		/* XXX needs translation */
 		goto out;
 	}
-	if (fs2h32(fs->e2fs_rev) != E2FS_REV) {
-#ifdef DIAGNOSTIC
-		printf("Ext2 fs: unsupported revision number: %x (expected %x)\n",
-					fs2h32(fs->e2fs_rev), E2FS_REV);
-#endif
-		error = EINVAL;		/* XXX needs translation */
+	error = ext2fs_checksb(fs, ronly);
+	if (error)
 		goto out;
-	}
-	if (fs2h32(fs->e2fs_log_bsize) > 2) { /* block size = 1024|2048|4096 */
-#ifdef DIAGNOSTIC
-		printf("Ext2 fs: bad block size: %d (expected <=2 for ext2 fs)\n",
-			fs2h32(fs->e2fs_log_bsize));
-#endif
-		error = EINVAL;	 /* XXX needs translation */
-		goto out;
-	}
-
 	ump = malloc(sizeof *ump, M_UFSMNT, M_WAITOK);
 	memset((caddr_t)ump, 0, sizeof *ump);
 	ump->um_e2fs = malloc(sizeof(struct m_ext2fs), M_UFSMNT, M_WAITOK);
@@ -1044,4 +1027,40 @@ ext2fs_cgupdate(mp, waitfor)
 	if (!allerror && error)
 		allerror = error;
 	return (allerror);
+}
+
+static int
+ext2fs_checksb(fs, ronly)
+	struct ext2fs *fs;
+	int ronly;
+{
+	if (fs2h16(fs->e2fs_magic) != E2FS_MAGIC) {
+		return (EIO);		/* XXX needs translation */
+	}
+	if (fs2h32(fs->e2fs_rev) > E2FS_REV1) {
+#ifdef DIAGNOSTIC
+		printf("Ext2 fs: unsupported revision number: %x\n",
+					fs2h32(fs->e2fs_rev));
+#endif
+		return (EIO);		/* XXX needs translation */
+	}
+	if (fs2h32(fs->e2fs_log_bsize) > 2) { /* block size = 1024|2048|4096 */
+#ifdef DIAGNOSTIC
+		printf("Ext2 fs: bad block size: %d (expected <=2 for ext2 fs)\n",
+			fs2h32(fs->e2fs_log_bsize));
+#endif
+		return (EIO);	   /* XXX needs translation */
+	}
+	if (fs2h32(fs->e2fs_rev) > E2FS_REV0) {
+		if (fs2h32(fs->e2fs_features_incompat) &
+		    ~EXT2F_INCOMPAT_SUPP) {
+			printf("Ext2 fs: unsupported optionnal feature\n");
+			return (EIO);      /* XXX needs translation */
+		}
+		if (!ronly && fs2h32(fs->e2fs_features_rocompat) &
+		    ~EXT2F_ROCOMPAT_SUPP) {
+			return (EROFS);      /* XXX needs translation */
+		}
+	}
+	return (0);
 }

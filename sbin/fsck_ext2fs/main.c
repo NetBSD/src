@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.6 1998/07/26 20:27:20 mycroft Exp $	*/
+/*	$NetBSD: main.c,v 1.7 2000/01/26 16:21:32 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 1/23/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.6 1998/07/26 20:27:20 mycroft Exp $");
+__RCSID("$NetBSD: main.c,v 1.7 2000/01/26 16:21:32 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -193,6 +193,10 @@ checkfilesys(filesys, mntpt, auxdata, child)
 	 * 1: scan inodes tallying blocks used
 	 */
 	if (preen == 0) {
+		if (sblock.e2fs.e2fs_rev > E2FS_REV0) {
+			printf("** Last Mounted on %s\n",
+			    sblock.e2fs.e2fs_fsmnt);
+		}
 		if (hotroot())
 			printf("** Root file system\n");
 		printf("** Phase 1 - Check Blocks and Sizes\n");
