@@ -1,4 +1,4 @@
-/*	$NetBSD: ftree.c,v 1.20 2002/04/20 23:36:48 lukem Exp $	*/
+/*	$NetBSD: ftree.c,v 1.20.2.1 2002/06/28 13:01:16 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -78,7 +78,7 @@
 #if 0
 static char sccsid[] = "@(#)ftree.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ftree.c,v 1.20 2002/04/20 23:36:48 lukem Exp $");
+__RCSID("$NetBSD: ftree.c,v 1.20.2.1 2002/06/28 13:01:16 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -542,11 +542,10 @@ next_file(ARCHD *arcn)
 					set_ftime(ftent->fts_path,
 					    mtime, atime, 1);
 				}
+				ftnode = ftnode->parent;
 				if (ftnode->parent == ftnode)
 					ftnode = NULL;
-				else
-					ftnode = ftnode->parent;
-				if (ftnode != NULL) {
+				else {
 					curdirlen -= strlen(ftnode->name) + 1;
 					curdir[curdirlen] = '\0';
 				}
