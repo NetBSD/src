@@ -1,4 +1,4 @@
-#	$NetBSD: IQ80310,v 1.7 2002/01/16 23:49:41 thorpej Exp $
+#	$NetBSD: IQ80310,v 1.8 2002/01/18 19:47:38 thorpej Exp $
 #
 #	IQ80310 -- Intel IQ80310 Evaluation Board Kernel
 #
@@ -101,6 +101,11 @@ options 	SHMMAXPGS=1024	# 1024 pages is the default
 #options 	MEMORY_DISK_SIZE=0	# Size in blocks
 #options 	MINIROOTSIZE=3400	# Size in blocks
 #options 	MEMORY_DISK_IS_ROOT	# use memory disk as root
+
+# Console options.  The default console is on connector J9 ("com0") at
+# 115200 baud.
+#options 	CONSPEED=9600		# Console speed
+#options 	CONUNIT=1		# Console unit (0=J9, 1=J10)
 
 # Miscellaneous kernel options
 options 	KTRACE		# system call tracing, a la ktrace(1)
