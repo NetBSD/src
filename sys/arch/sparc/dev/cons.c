@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.12 1995/04/10 10:23:49 mycroft Exp $ */
+/*	$NetBSD: cons.c,v 1.13 1995/04/25 17:52:43 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -84,13 +84,20 @@ static void cnfbdma __P((void *));
 
 extern char char_type[];
 
+/*XXX*/static struct tty *
+cntty()
+{
+	return &cons;
+}
+
 void
 consinit()
 {
 	register struct tty *tp = &cons;
 	register int in, out;
-	void zsconsole(), bwtwoconsole();
+	void zsconsole();
 
+/*XXX*/	cdevsw[0].d_tty = cntty;
 	tp->t_dev = makedev(0, 0);	/* /dev/console */
 	tp->t_ispeed = tp->t_ospeed = TTYDEF_SPEED;
 	tp->t_param = (int (*)(struct tty *, struct termios *))nullop;
