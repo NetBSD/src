@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.83.2.48 2002/04/27 20:24:47 sommerfeld Exp $	*/
+/*	$NetBSD: pmap.c,v 1.83.2.49 2002/05/19 01:15:13 sommerfeld Exp $	*/
 
 /*
  *
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.83.2.48 2002/04/27 20:24:47 sommerfeld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.83.2.49 2002/05/19 01:15:13 sommerfeld Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -1138,7 +1138,6 @@ pmap_init()
 	pj_nentries = pmap_tlb_shootdown_job_pool.pr_itemsperpage;
 	pj_nbytes =  pmap_allocator_tlb.pa_pagesz;
 	KASSERT(pj_nbytes != 0);
-	printf("pj_nbytes: %d\n", pj_nbytes);
 	pj_page = (void *)uvm_km_alloc (kernel_map, pj_nbytes);
 	if (pj_page == NULL)
 		panic("pmap_init: pj_page");
