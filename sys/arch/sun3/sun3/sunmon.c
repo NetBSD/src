@@ -1,4 +1,4 @@
-/*	$NetBSD: sunmon.c,v 1.4 1997/02/10 23:44:23 gwr Exp $	*/
+/*	$NetBSD: sunmon.c,v 1.5 1997/02/28 19:47:15 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -132,12 +132,6 @@ void sunmon_halt()
 void sunmon_reboot(bs)
 	char *bs;
 {
-#ifdef	DIAGNOSTIC
-	extern char end[];
-
-	if (bs > end)
-		bs = "?";
-#endif
 
 	(void) splhigh();
 	_mode_monitor();
