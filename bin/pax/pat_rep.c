@@ -1,4 +1,4 @@
-/*	$NetBSD: pat_rep.c,v 1.16 2002/10/23 19:39:42 christos Exp $	*/
+/*	$NetBSD: pat_rep.c,v 1.17 2002/11/29 04:54:48 rafal Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)pat_rep.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: pat_rep.c,v 1.16 2002/10/23 19:39:42 christos Exp $");
+__RCSID("$NetBSD: pat_rep.c,v 1.17 2002/11/29 04:54:48 rafal Exp $");
 #endif
 #endif /* not lint */
 
@@ -189,7 +189,19 @@ rep_add(char *str)
 	}
 
 	*pt2 = '\0';
-	rep->nstr = pt1;
+
+	/* Make sure to dup replacement, who know where it came from! */
+	if ((rep->nstr = strdup(pt1)) == NULL) {
+#ifdef NET2_REGEX
+		(void)free((char *)rep->rcmp);
+#else
+		regfree(&(rep->rcmp));
+#endif
+		(void)free((char *)rep);
+		tty_warn(1, "Unable to allocate memory for replacement string");
+		return(-1);
+	}
+
 	pt1 = pt2++;
 	rep->flgs = 0;
 
