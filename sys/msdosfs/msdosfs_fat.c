@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_fat.c,v 1.20 1995/10/15 15:34:25 ws Exp $	*/
+/*	$NetBSD: msdosfs_fat.c,v 1.21 1995/11/05 18:47:53 ws Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995 Wolfgang Solfrank.
@@ -971,11 +971,14 @@ extendfile(dep, count, bpp, ncp, flags)
 					bp = getblk(pmp->pm_devvp, cntobn(pmp, cn++),
 						    pmp->pm_bpcluster, 0, 0);
 				else {
-					bp = getblk(DETOV(dep), frcn++, pmp->pm_bpcluster, 0, 0);
+					bp = getblk(DETOV(dep), de_cn2bn(pmp, frcn++),
+					    pmp->pm_bpcluster, 0, 0);
 					/*
 					 * Do the bmap now, as in msdosfs_write
 					 */
-					if (pcbmap(dep, bp->b_lblkno, &bp->b_blkno, 0, 0))
+					if (pcbmap(dep,
+					    de_bn2cn(pmp, bp->b_lblkno),
+					    &bp->b_blkno, 0, 0))
 						bp->b_blkno = -1;
 					if (bp->b_blkno == -1)
 						panic("extendfile: pcbmap");

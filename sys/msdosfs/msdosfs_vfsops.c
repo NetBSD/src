@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.34 1995/10/30 19:06:20 ws Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.35 1995/11/05 18:47:59 ws Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995 Wolfgang Solfrank.
@@ -575,7 +575,7 @@ msdosfs_root(mp, vpp)
 	printf("msdosfs_root(); mp %08x, pmp %08x, ndep %08x, vp %08x\n",
 	    mp, pmp, ndep, DETOV(ndep));
 #endif
-	if (error = deget(pmp, MSDOSFSROOT, MSDOSFSROOT_OFS, NULL, &ndep))
+	if (error = deget(pmp, MSDOSFSROOT, MSDOSFSROOT_OFS, &ndep))
 		return (error);
 	*vpp = DETOV(ndep);
 	return (0);
@@ -701,8 +701,7 @@ msdosfs_fhtovp(mp, fhp, nam, vpp, exflagsp, credanonp)
 	np = vfs_export_lookup(mp, &pmp->pm_export, nam);
 	if (np == NULL)
 		return (EACCES);
-	error = deget(pmp, defhp->defid_dirclust, defhp->defid_dirofs,
-	    NULL, &dep);
+	error = deget(pmp, defhp->defid_dirclust, defhp->defid_dirofs, &dep);
 	if (error) {
 		*vpp = NULLVP;
 		return (error);

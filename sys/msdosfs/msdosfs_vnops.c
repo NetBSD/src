@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.39 1995/11/03 19:36:41 ws Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.40 1995/11/05 18:48:02 ws Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995 Wolfgang Solfrank.
@@ -435,13 +435,13 @@ msdosfs_read(ap)
 		} else {
 			rablock = lbn + 1;
 			if (vp->v_lastr + 1 == lbn &&
-			    rablock * pmp->pm_bpcluster < dep->de_FileSize) {
-				error = breada(vp, lbn, pmp->pm_bpcluster,
-					       rablock, pmp->pm_bpcluster, NOCRED, &bp);
-			} else {
-				error = bread(vp, lbn, pmp->pm_bpcluster, NOCRED,
-					      &bp);
-			}
+			    de_cn2off(pmp, rablock) < dep->de_FileSize)
+				error = breada(vp, de_cn2bn(pmp, lbn),
+				    pmp->pm_bpcluster, de_cn2bn(pmp, rablock),
+				    pmp->pm_bpcluster, NOCRED, &bp);
+			else
+				error = bread(vp, de_cn2bn(pmp, lbn),
+				    pmp->pm_bpcluster, NOCRED, &bp);
 			vp->v_lastr = lbn;
 		}
 		n = min(n, pmp->pm_bpcluster - bp->b_resid);
@@ -576,8 +576,9 @@ msdosfs_write(ap)
 			 * for the fat table. (see msdosfs_strategy)
 			 */
 			if (bp->b_blkno == bp->b_lblkno) {
-				if (error = pcbmap(dep, bp->b_lblkno,
-						   &bp->b_blkno, 0, 0)) 
+				if (error = pcbmap(dep,
+				    de_bn2cn(pmp, bp->b_lblkno),
+				    &bp->b_blkno, 0, 0)) 
 					bp->b_blkno = -1;
 			}
 			if (bp->b_blkno == -1) {
@@ -590,7 +591,7 @@ msdosfs_write(ap)
 			/*
 			 * The block we need to write into exists, so read it in.
 			 */
-			if (error = bread(thisvp, bn, pmp->pm_bpcluster, cred, &bp)) {
+			if (error = bread(thisvp, bn, pmp->pm_bpcluster, NOCRED, &bp)) {
 				brelse(bp);
 				break;
 			}
@@ -1729,7 +1730,8 @@ msdosfs_strategy(ap)
 	 * don't allow files with holes, so we shouldn't ever see this.
 	 */
 	if (bp->b_blkno == bp->b_lblkno) {
-		if (error = pcbmap(dep, bp->b_lblkno, &bp->b_blkno, 0, 0))
+		if (error = pcbmap(dep, de_bn2cn(dep->de_pmp, bp->b_lblkno),
+		    &bp->b_blkno, 0, 0))
 			bp->b_blkno = -1;
 		if (bp->b_blkno == -1)
 			clrbuf(bp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_lookup.c,v 1.20 1995/11/03 17:29:53 ws Exp $	*/
+/*	$NetBSD: msdosfs_lookup.c,v 1.21 1995/11/05 18:47:55 ws Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995 Wolfgang Solfrank.
@@ -429,12 +429,18 @@ found:;
 	isadir = dep->deAttributes & ATTR_DIRECTORY;
 	scn = getushort(dep->deStartCluster);
 
+	/*
+	 * Now release buf to allow deget to read the entry again.
+	 * Reserving it here and giving it to deget could result
+	 * in a deadlock.
+	 */
+	brelse(bp);
+	
 foundroot:;
 	/*
 	 * If we entered at foundroot, then we are looking for the . or ..
 	 * entry of the filesystems root directory.  isadir and scn were
-	 * setup before jumping here.  And, bp is null.  There is no buf
-	 * header.
+	 * setup before jumping here.  And, bp is already null.
 	 */
 
 	/*
@@ -448,11 +454,9 @@ foundroot:;
 		/*
 		 * Write access to directory required to delete files.
 		 */
-		if (error = VOP_ACCESS(vdp, VWRITE, cnp->cn_cred, cnp->cn_proc)) {
-			if (bp)
-				brelse(bp);
+		if (error = VOP_ACCESS(vdp, VWRITE, cnp->cn_cred, cnp->cn_proc))
 			return (error);
-		}
+
 		/*
 		 * Return pointer to current entry in dp->i_offset.
 		 * Save directory inode pointer in ndp->ni_dvp for dirremove().
@@ -460,20 +464,13 @@ foundroot:;
 		if (dp->de_StartCluster == scn && isadir) {	/* "." */
 			VREF(vdp);
 			*vpp = vdp;
-			if (bp)
-				brelse(bp);
 			return (0);
 		}
-		if (error = deget(pmp, cluster, blkoff, dep, &tdp)) {
-			if (bp)
-				brelse(bp);
+		if (error = deget(pmp, cluster, blkoff, &tdp))
 			return (error);
-		}
 		*vpp = DETOV(tdp);
 		if (!lockparent)
 			VOP_UNLOCK(vdp);
-		if (bp)
-			brelse(bp);
 		return (0);
 	}
 
@@ -485,32 +482,22 @@ foundroot:;
 	 */
 	if (nameiop == RENAME && wantparent &&
 	    (flags & ISLASTCN)) {
-		if (error = VOP_ACCESS(vdp, VWRITE, cnp->cn_cred, cnp->cn_proc)) {
-			if (bp)
-				brelse(bp);
+		if (error = VOP_ACCESS(vdp, VWRITE, cnp->cn_cred, cnp->cn_proc))
 			return (error);
-		}
+
 		/*
 		 * Careful about locking second inode.
 		 * This can only occur if the target is ".".
 		 */
-		if (dp->de_StartCluster == scn && isadir) {
-			if (bp)
-				brelse(bp);
+		if (dp->de_StartCluster == scn && isadir)
 			return (EISDIR);
-		}
-		error = deget(pmp, cluster, blkoff, dep, &tdp);
-		if (error) {
-			if (bp)
-				brelse(bp);
+
+		if (error = deget(pmp, cluster, blkoff, &tdp))
 			return (error);
-		}
 		*vpp = DETOV(tdp);
 		cnp->cn_flags |= SAVENAME;
 		if (!lockparent)
 			VOP_UNLOCK(vdp);
-		if (bp)
-			brelse(bp);
 		return (0);
 	}
 
@@ -536,17 +523,13 @@ foundroot:;
 	pdp = vdp;
 	if (flags & ISDOTDOT) {
 		VOP_UNLOCK(pdp);	/* race to get the inode */
-		if (error = deget(pmp, cluster, blkoff, dep, &tdp)) {
+		if (error = deget(pmp, cluster, blkoff, &tdp)) {
 			VOP_LOCK(pdp);
-			if (bp)
-				brelse(bp);
 			return (error);
 		}
 		if (lockparent && (flags & ISLASTCN) &&
 		    (error = VOP_LOCK(pdp))) {
 			vput(DETOV(tdp));
-			if (bp)
-				brelse(bp);
 			return (error);
 		}
 		*vpp = DETOV(tdp);
@@ -554,17 +537,12 @@ foundroot:;
 		VREF(vdp);	/* we want ourself, ie "." */
 		*vpp = vdp;
 	} else {
-		if (error = deget(pmp, cluster, blkoff, dep, &tdp)) {
-			if (bp)
-				brelse(bp);
+		if (error = deget(pmp, cluster, blkoff, &tdp))
 			return (error);
-		}
 		if (!lockparent || !(flags & ISLASTCN))
 			VOP_UNLOCK(pdp);
 		*vpp = DETOV(tdp);
 	}
-	if (bp)
-		brelse(bp);
 
 	/*
 	 * Insert name into cache if appropriate.
@@ -641,14 +619,6 @@ createde(dep, ddep, depp, cnp)
 	DE_EXTERNALIZE(ndep, dep);
 	
 	/*
-	 * If they want us to return with the denode gotten.
-	 */
-	if (depp) {
-		if (error = deget(pmp, dirclust, diroffset, ndep, depp))
-			return error;
-	}
-	
-	/*
 	 * Now write the Win95 long name
 	 */
 	if (ddep->de_fndcnt > 0) {
@@ -659,20 +629,17 @@ createde(dep, ddep, depp, cnp)
 		
 		while (--ddep->de_fndcnt >= 0) {
 			if (!(ddep->de_fndoffset & pmp->pm_crbomask)) {
-				if (error = bwrite(bp)) {
-					vput(DETOV(*depp));
+				if (error = bwrite(bp))
 					return error;
-				}
+
 				ddep->de_fndoffset -= sizeof(struct direntry);
 				if (error = pcbmap(ddep,
 				    de_cluster(pmp, ddep->de_fndoffset),
-				    &bn, &dirclust, &blsize)) {
-					vput(DETOV(*depp));
+				    &bn, &dirclust, &blsize))
 					return error;
-				}
+
 				if (error = bread(pmp->pm_devvp, bn, blsize, NOCRED, &bp)) {
 					brelse(bp);
-					vput(DETOV(*depp));
 					return error;
 				}
 				ndep = bptoep(pmp, bp, ddep->de_fndoffset);
@@ -685,10 +652,15 @@ createde(dep, ddep, depp, cnp)
 		}
 	}
 	
-	if (error = bwrite(bp)) {
-		vput(DETOV(*depp));	/* free the vnode we got on error */
+	if (error = bwrite(bp))
 		return error;
-	}
+
+	/*
+	 * If they want us to return with the denode gotten.
+	 */
+	if (depp)
+		return deget(pmp, dirclust, diroffset, depp);
+	
 	return 0;
 }
 
@@ -799,15 +771,14 @@ doscheckpath(source, target)
 	for (;;) {
 		if ((dep->de_Attributes & ATTR_DIRECTORY) == 0) {
 			error = ENOTDIR;
-			goto out;
+			break;
 		}
 		pmp = dep->de_pmp;
 		scn = dep->de_StartCluster;
 		if (error = bread(pmp->pm_devvp, cntobn(pmp, scn),
-				  pmp->pm_bpcluster, NOCRED, &bp)) {
-			brelse(bp);
+				  pmp->pm_bpcluster, NOCRED, &bp))
 			break;
-		}
+
 		ep = (struct direntry *) bp->b_data + 1;
 		if ((ep->deAttributes & ATTR_DIRECTORY) == 0 ||
 		    bcmp(ep->deName, "..         ", 11) != 0) {
@@ -822,11 +793,10 @@ doscheckpath(source, target)
 		if (scn == MSDOSFSROOT)
 			break;
 		vput(DETOV(dep));
-		/* NOTE: deget() clears dep on error */
-		error = deget(pmp, scn, 0, ep, &dep);
 		brelse(bp);
 		bp = NULL;
-		if (error)
+		/* NOTE: deget() clears dep on error */
+		if (error = deget(pmp, scn, 0, &dep))
 			break;
 	}
 out:;

@@ -1,4 +1,4 @@
-/*	$NetBSD: denode.h,v 1.17 1995/10/15 15:34:19 ws Exp $	*/
+/*	$NetBSD: denode.h,v 1.18 1995/11/05 18:47:48 ws Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995 Wolfgang Solfrank.
@@ -275,7 +275,7 @@ int	msdosfs_reallocblks __P((struct vop_reallocblks_args *));
  */
 int createde __P((struct denode *, struct denode *, struct denode **, struct componentname *));
 int deextend __P((struct denode *, u_long, struct ucred *));
-int deget __P((struct msdosfsmount *, u_long, u_long, struct direntry *, struct denode **));
+int deget __P((struct msdosfsmount *, u_long, u_long, struct denode **));
 int detrunc __P((struct denode *, u_long, int, struct ucred *, struct proc *));
 int deupdat __P((struct denode *, int));
 int doscheckpath __P((struct denode *, struct denode *));

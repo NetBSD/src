@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.16 1995/10/15 15:34:23 ws Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.17 1995/11/05 18:47:51 ws Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995 Wolfgang Solfrank.
@@ -144,40 +144,26 @@ msdosfs_hashrem(dep)
  *	       diroffset is relative to the beginning of the root directory,
  *	       otherwise it is cluster relative. 
  * diroffset - offset past begin of cluster of denode we want 
- * direntptr - address of the direntry structure of interest. If direntptr is
- *	       NULL, the block is read if necessary. 
  * depp	     - returns the address of the gotten denode.
  */
 int
-deget(pmp, dirclust, diroffset, direntptr, depp)
+deget(pmp, dirclust, diroffset, depp)
 	struct msdosfsmount *pmp;	/* so we know the maj/min number */
 	u_long dirclust;		/* cluster this dir entry came from */
 	u_long diroffset;		/* index of entry within the cluster */
-	struct direntry *direntptr;
 	struct denode **depp;		/* returns the addr of the gotten denode */
 {
 	int error;
 	extern int (**msdosfs_vnodeop_p)();
+	struct direntry *direntptr;
 	struct denode *ldep;
 	struct vnode *nvp;
 	struct buf *bp;
 
 #ifdef MSDOSFS_DEBUG
-	printf("deget(pmp %08x, dirclust %d, diroffset %x, direntptr %x, depp %08x)\n",
-	       pmp, dirclust, diroffset, direntptr, depp);
+	printf("deget(pmp %08x, dirclust %d, diroffset %x, depp %08x)\n",
+	       pmp, dirclust, diroffset, depp);
 #endif
-
-	/*
-	 * If dir entry is given and refers to a directory, convert to
-	 * canonical form
-	 */
-	if (direntptr && (direntptr->deAttributes & ATTR_DIRECTORY)) {
-		dirclust = getushort(direntptr->deStartCluster);
-		if (dirclust == MSDOSFSROOT)
-			diroffset = MSDOSFSROOT_OFS;
-		else
-			diroffset = 0;
-	}
 
 	/*
 	 * See if the denode is in the denode cache. Use the location of
@@ -250,16 +236,10 @@ deget(pmp, dirclust, diroffset, direntptr, depp)
 		/* Jan 1, 1980	 */
 		/* leave the other fields as garbage */
 	} else {
-		bp = NULL;
-		if (!direntptr) {
-			error = readep(pmp, dirclust, diroffset, &bp,
-				       &direntptr);
-			if (error)
-				return (error);
-		}
+		if (error = readep(pmp, dirclust, diroffset, &bp, &direntptr))
+			return (error);
 		DE_INTERNALIZE(ldep, direntptr);
-		if (bp)
-			brelse(bp);
+		brelse(bp);
 	}
 
 	/*
