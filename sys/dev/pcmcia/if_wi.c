@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wi.c,v 1.21.2.9 2001/05/26 16:10:03 he Exp $	*/
+/*	$NetBSD: if_wi.c,v 1.21.2.10 2002/02/23 16:52:22 he Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -599,6 +599,7 @@ void wi_inquire(xsc)
 {
 	struct wi_softc		*sc;
 	struct ifnet		*ifp;
+	int			s;
 
 	sc = xsc;
 	ifp = &sc->sc_ethercom.ec_if;
@@ -606,13 +607,19 @@ void wi_inquire(xsc)
 	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
 		return;
 
+	s = splnet();
+
 	callout_reset(&sc->wi_inquire_ch, hz * 60, wi_inquire, sc);
 
 	/* Don't do this while we're transmitting */
-	if (ifp->if_flags & IFF_OACTIVE)
+	if (ifp->if_flags & IFF_OACTIVE) {
+		splx(s);
 		return;
+	}
 
 	wi_cmd(sc, WI_CMD_INQUIRE, WI_INFO_COUNTERS);
+
+	splx(s);
 
 	return;
 }
@@ -754,8 +761,11 @@ static int wi_cmd(sc, cmd, val)
 		}
 	}
 
-	if (i == WI_TIMEOUT)
+	if (i == WI_TIMEOUT) {
+		printf("%s: wi_cmd timed out, cmd=0x%x\n",
+			sc->sc_dev.dv_xname, cmd);
 		return(ETIMEDOUT);
+	}
 
 	return(0);
 }
