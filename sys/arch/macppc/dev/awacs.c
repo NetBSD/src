@@ -1,4 +1,4 @@
-/*	$NetBSD: awacs.c,v 1.4 2001/02/26 21:07:51 wiz Exp $	*/
+/*	$NetBSD: awacs.c,v 1.5 2001/03/12 15:41:52 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -518,6 +518,8 @@ awacs_round_blocksize(h, size)
 	void *h;
 	int size;
 {
+	if (size < NBPG)
+		size = NBPG;
 	return size & ~PGOFSET;
 }
 
