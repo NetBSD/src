@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.2 1996/03/24 07:54:42 jonathan Exp $	*/
+/*	$NetBSD: cpu.h,v 1.3 1996/03/31 04:16:46 jonathan Exp $	*/
 
 #include <mips/cpu.h>
 
@@ -8,7 +8,7 @@
  */
 #define	COPY_SIGCODE		/* copy sigcode above user stack in exec */
 
-#define #define	CLKF_USERMODE(framep)	CLKF_USERMODE_R4K(framep)
+#define	CLKF_USERMODE(framep)	CLKF_USERMODE_R4K(framep)
 #define	CLKF_BASEPRI(framep)	CLKF_BASEPRI_R4K(framep)
 
 #ifdef _KERNEL
