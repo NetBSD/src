@@ -1,11 +1,11 @@
-/*	$NetBSD: __sigaction14_sigtramp.c,v 1.2 2003/01/30 02:07:32 fvdl Exp $	*/
+/*	$NetBSD: resumecontext.S,v 1.1 2003/01/30 02:07:31 fvdl Exp $	*/
 
 /*-
- * Copyright (c) 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Jason R. Thorpe.
+ * by Klaus Klein.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -17,8 +17,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
@@ -34,27 +34,35 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
+ *
+ * Modified for x86-64 by fvdl@wasabisystems.com
  */
 
-#define	__LIBC12_SOURCE__
+#include <machine/asm.h>
 
-#include <sys/types.h>
-#include <signal.h>
+#if defined(LIBC_SCCS) && !defined(lint)
+	RCSID("$NetBSD: resumecontext.S,v 1.1 2003/01/30 02:07:31 fvdl Exp $")
+#endif /* LIBC_SCCS && !lint */
 
-#include "extern.h"
+/*
+ * This assembly-language implementation differs from the (obvious)
+ * C-language implementation only in not clobbering the previous
+ * function's return address (us), which is the point of the exercise.
+ */
 
- __weak_alias(__sigaction14, __libc_sigaction14)
-
-int
-__libc_sigaction14(int sig, const struct sigaction *act, struct sigaction *oact)
-{
-	extern int __sigtramp_sigcontext_1[];
-
-	/*
-	 * Right here we should select the SA_SIGINFO trampoline
-	 * if SA_SIGINFO is set in the sigaction.
-	 */
-
-	return (__sigaction_sigtramp(sig, act, oact,
-				     __sigtramp_sigcontext_1, 1));
-}
+NENTRY(_resumecontext)	/* profiling prologue would clobber TOS */
+	leaq	-(8 + 784)(%rsp),%rdi	/* retaddr + sizeof (ucontext_t) */
+	andq	$~15,%rdi		/* align on _UC_UCONTEXT_ALIGN */
+	movq	%rdi,%rsp
+#ifdef PIC
+	call	PIC_PLT(_C_LABEL(_getcontext))
+#else
+	call	_C_LABEL(_getcontext)
+#endif
+	movq	4(%rsp),%rdi
+#ifdef PIC
+	call	PIC_PLT(_C_LABEL(setcontext))
+#else
+	call	_C_LABEL(setcontext)
+#endif
+	/* NOTREACHED */
