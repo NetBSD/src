@@ -1,4 +1,4 @@
-.\"	$NetBSD: mdsetimage.8,v 1.1 1996/10/04 00:18:58 cgd Exp $
+.\"	$NetBSD: mdsetimage.8,v 1.2 1997/01/02 00:33:34 pk Exp $
 .\"
 .\" Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
 .\"
@@ -29,22 +29,22 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .Dd October 3, 1996
-.Dt RDSETIMAGE 8
+.Dt MDSETIMAGE 8
 .Os NetBSD 1.2A
 .Sh NAME
-.Nm rdsetimage
+.Nm mdsetimage
 .Nd set kernel RAM disk image
 .Sh SYNOPSIS
-.Nm rdsetimage
+.Nm mdsetimage
 .Op Fl v
 .Ar kernel
 .Ar image
 .Sh DESCRIPTION
 The
-.Nm rdsetimage
+.Nm mdsetimage
 command copies the disk image specified by
 .Ar image
-into the RAM disk storage area in
+into the memory disk storage area in
 .Ar kernel .
 The file system present in
 .Ar image
@@ -58,5 +58,5 @@ flag is given,
 will print out status information as
 it is copying the image.
 .Sh SEE ALSO
-.Xr rd 4 ,
-.Xr rdconfig 8
+.Xr md 4 ,
+.Xr mdconfig 8

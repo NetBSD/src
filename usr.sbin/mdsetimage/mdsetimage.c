@@ -1,4 +1,4 @@
-/*	$NetBSD: mdsetimage.c,v 1.1 1996/10/04 00:18:59 cgd Exp $	*/
+/*	$NetBSD: mdsetimage.c,v 1.2 1997/01/02 00:33:35 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static char *rcsid = "$NetBSD: mdsetimage.c,v 1.1 1996/10/04 00:18:59 cgd Exp $";
+static char *rcsid = "$NetBSD: mdsetimage.c,v 1.2 1997/01/02 00:33:35 pk Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -54,14 +54,14 @@ static char *rcsid = "$NetBSD: mdsetimage.c,v 1.1 1996/10/04 00:18:59 cgd Exp $"
 
 int		main __P((int, char *[]));
 static void	usage __P((void)) __attribute__((noreturn));
-static int	find_rd_root __P((const char *, const char *, size_t,
+static int	find_md_root __P((const char *, const char *, size_t,
 		    const struct nlist *, size_t *, u_int32_t *));
 
-static struct nlist rd_root_nlist[] = {
-#define	X_RD_ROOT_IMAGE		0
-	{ "_rd_root_image" },
-#define	X_RD_ROOT_SIZE		1
-	{ "_rd_root_size" },
+static struct nlist md_root_nlist[] = {
+#define	X_MD_ROOT_IMAGE		0
+	{ "_md_root_image" },
+#define	X_MD_ROOT_SIZE		1
+	{ "_md_root_size" },
 	{ NULL }
 };
 
@@ -73,8 +73,8 @@ main(argc, argv)
 	char *argv[];
 {
 	struct stat ksb, fssb;
-	size_t rd_root_offset;
-	u_int32_t rd_root_size;
+	size_t md_root_offset;
+	u_int32_t md_root_size;
 	const char *kfile, *fsfile;
 	char *mappedkfile;
 	int ch, kfd, fsfd, rv;
@@ -99,7 +99,7 @@ main(argc, argv)
 	if ((kfd = open(kfile, O_RDWR, 0))  == -1)
 		err(1, "open %s", kfile);
 
-	if ((rv = __fdnlist(kfd, rd_root_nlist)) != 0)
+	if ((rv = __fdnlist(kfd, md_root_nlist)) != 0)
 		errx(1, "could not find symbols in %s", kfile);
 	if (verbose)
 		fprintf(stderr, "got symbols from %s\n", kfile);
@@ -115,9 +115,9 @@ main(argc, argv)
 	if (verbose)
 		fprintf(stderr, "mapped %s\n", kfile);
 
-	if (find_rd_root(kfile, mappedkfile, ksb.st_size, rd_root_nlist,
-	    &rd_root_offset, &rd_root_size) != 0)
-		errx(1, "could not find rd root buffer in %s", kfile);
+	if (find_md_root(kfile, mappedkfile, ksb.st_size, md_root_nlist,
+	    &md_root_offset, &md_root_size) != 0)
+		errx(1, "could not find md root buffer in %s", kfile);
 
 	if ((fsfd = open(fsfile, O_RDONLY, 0)) == -1)
 		err(1, "open %s", fsfile);
@@ -125,14 +125,14 @@ main(argc, argv)
 		err(1, "fstat %s", fsfile);
 	if (fssb.st_size > SIZE_T_MAX)
 		errx(1, "fs image is too big");
-	if (fssb.st_size > rd_root_size)
+	if (fssb.st_size > md_root_size)
 		errx(1, "fs image (%ld bytes) too big for buffer (%d bytes)",
-		   fssb.st_size, rd_root_size);
+		   fssb.st_size, md_root_size);
 
 	if (verbose)
 		fprintf(stderr, "copying image from %s into %s\n", fsfile,
 		    kfile);
-	if ((rv = read(fsfd, mappedkfile + rd_root_offset,
+	if ((rv = read(fsfd, mappedkfile + md_root_offset,
 	    fssb.st_size)) != fssb.st_size)
 		if (rv == -1)
 			err(1, "read %s", fsfile);
@@ -181,7 +181,7 @@ struct {
 };
 
 static int
-find_rd_root(fname, mappedfile, mappedsize, nl, rootoffp, rootsizep)
+find_md_root(fname, mappedfile, mappedsize, nl, rootoffp, rootsizep)
 	const char *fname, *mappedfile;
 	size_t mappedsize;
 	const struct nlist *nl;
@@ -206,28 +206,28 @@ find_rd_root(fname, mappedfile, mappedsize, nl, rootoffp, rootsizep)
 		    exec_formats[i].name);
 
 	if ((*exec_formats[i].findoff)(mappedfile, mappedsize,
-	    nl[X_RD_ROOT_SIZE].n_value, &rootsizeoff) != 0) {
+	    nl[X_MD_ROOT_SIZE].n_value, &rootsizeoff) != 0) {
 		warnx("couldn't find offset for %s in %s",
-		    nl[X_RD_ROOT_SIZE].n_name, fname);
+		    nl[X_MD_ROOT_SIZE].n_name, fname);
 		return (1);
 	}
 	if (verbose)
 		fprintf(stderr, "%s is at offset %#lx in %s\n",
-		    nl[X_RD_ROOT_SIZE].n_name, rootsizeoff, fname);
+		    nl[X_MD_ROOT_SIZE].n_name, rootsizeoff, fname);
 	*rootsizep = *(u_int32_t *)&mappedfile[rootsizeoff];
 	if (verbose)
 		fprintf(stderr, "%s has value %#x\n",
-		    nl[X_RD_ROOT_SIZE].n_name, *rootsizep);
+		    nl[X_MD_ROOT_SIZE].n_name, *rootsizep);
 
 	if ((*exec_formats[i].findoff)(mappedfile, mappedsize,
-	    nl[X_RD_ROOT_IMAGE].n_value, rootoffp) != 0) {
+	    nl[X_MD_ROOT_IMAGE].n_value, rootoffp) != 0) {
 		warnx("couldn't find offset for %s in %s",
-		    nl[X_RD_ROOT_IMAGE].n_name, fname);
+		    nl[X_MD_ROOT_IMAGE].n_name, fname);
 		return (1);
 	}
 	if (verbose)
 		fprintf(stderr, "%s is at offset %#lx in %s\n",
-		    nl[X_RD_ROOT_IMAGE].n_name, *rootoffp, fname);
+		    nl[X_MD_ROOT_IMAGE].n_name, *rootoffp, fname);
 
 	return (0);
 }
