@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.50 2002/07/27 23:49:47 christos Exp $	*/
+/*	$NetBSD: init.c,v 1.51 2002/08/02 14:03:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n"
 #if 0
 static char sccsid[] = "@(#)init.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: init.c,v 1.50 2002/07/27 23:49:47 christos Exp $");
+__RCSID("$NetBSD: init.c,v 1.51 2002/08/02 14:03:22 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -475,7 +475,7 @@ clear_session_logs(session_t *sp, int status)
 {
 	char *line = sp->se_device + sizeof(_PATH_DEV) - 1;
 #ifdef SUPPORT_UTMPX
-	if (logoutx(line, status))
+	if (logoutx(line, status, DEAD_PROCESS))
 		logwtmpx(line, "", "", status, DEAD_PROCESS);
 #endif
 #ifdef SUPPORT_UTMP
@@ -752,10 +752,10 @@ runcom(void)
 
 	runcom_mode = AUTOBOOT;		/* the default */
 	/* NB: should send a message to the session logger to avoid blocking. */
-#ifdef SUPPORT_WTMPX
+#ifdef SUPPORT_UTMPX
 	logwtmpx("~", "reboot", "", 0, INIT_PROCESS);
 #endif
-#ifdef SUPPORT_WTMP
+#ifdef SUPPORT_UTMP
 	logwtmp("~", "reboot", "");
 #endif
 	return (state_func_t) read_ttys;
