@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.106 2004/08/25 09:03:23 itojun Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.107 2004/09/03 18:14:09 darrenr Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.106 2004/08/25 09:03:23 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.107 2004/09/03 18:14:09 darrenr Exp $");
 
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
@@ -1599,6 +1599,10 @@ sogetopt(struct socket *so, int level, int optname, struct mbuf **mp)
 			    (val % hz) * tick;
 			break;
 		    }
+
+		case SO_OVERFLOWED:
+			*mtod(m, int *) = so->so_rcv.sb_overflowed;
+			break;
 
 		default:
 			(void)m_free(m);
