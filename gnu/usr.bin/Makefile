@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.99 2000/11/06 15:35:25 itojun Exp $
+#	$NetBSD: Makefile,v 1.100 2001/01/13 10:49:06 jdolecek Exp $
 
 # for OBJECT_FMT
 .include <bsd.own.mk>
 
 SUBDIR+=	bc binutils cvs dc diff diff3 egcs gas.new gawk gdb grep gprof
-SUBDIR+=	groff gzip ld.new rcs sdiff send-pr sort texinfo
+SUBDIR+=	groff gzip ld.new rcs sdiff send-pr texinfo
 
 SUBDIR+=	cpio
 SUBDIR+=	tar
