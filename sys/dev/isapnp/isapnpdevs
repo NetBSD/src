@@ -1,4 +1,4 @@
-$NetBSD: isapnpdevs,v 1.10 1998/11/23 20:47:51 christos Exp $
+$NetBSD: isapnpdevs,v 1.11 1998/11/26 21:45:13 hannken Exp $
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -101,6 +101,7 @@ devlogic	joy	CTL7002		Creative Vibra16CL
 devlogic	joy	ESS0001		ESS1868
 devlogic	joy	OPT0001		OPTi Audio 16
 devlogic	joy	PNPB02F		XXX broken GUS PnP
+devlogic	joy	ASB16FD		AdLib NSC 16 PNP
 devcompat	joy	PNPB02F		generic
 
 /*
@@ -153,6 +154,7 @@ devcompat	wdc	PNP0600		Western Digital Compatible Controller
  * wss
  */
 devlogic	wss	CSC0000		Windows Sound System
+devlogic	wss	ASB1611		AdLib NSC 16 PNP
 
 /*
  * ym

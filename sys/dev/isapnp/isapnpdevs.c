@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnpdevs.c,v 1.10 1998/11/23 20:49:20 christos Exp $	*/
+/*	$NetBSD: isapnpdevs.c,v 1.11 1998/11/26 21:45:13 hannken Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -127,6 +127,7 @@ static const char *isapnp_joy_devlogic[] = {
 	"ESS0001",	/* ESS1868 */
 	"OPT0001",	/* OPTi Audio 16 */
 	"PNPB02F",	/* XXX broken GUS PnP */
+	"ASB16FD",	/* AdLib NSC 16 PNP */
 	NULL
 };
 static const char *isapnp_joy_devcompat[] = {
@@ -228,6 +229,7 @@ const struct isapnp_devinfo isapnp_wdc_devinfo = {
 /* Microsoft Sound System */
 static const char *isapnp_wss_devlogic[] = {
 	"CSC0000",	/* Windows Sound System */
+	"ASB1611",	/* AdLib NSC 16 PNP */
 	NULL
 };
 static const char *isapnp_wss_devcompat[] = {
