@@ -1,4 +1,4 @@
-/*	$NetBSD: pmsvar.h,v 1.1 2001/10/05 22:27:42 reinoud Exp $	*/
+/*	$NetBSD: opmsvar.h,v 1.1 2002/04/19 01:04:40 wiz Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -34,18 +34,18 @@
  *
  * RiscBSD kernel project
  *
- * pmsvar.h
+ * opmsvar.h
  *
  * Created      : 02/02/97
  */
 
 /*
- * softc structure for the pms device
+ * softc structure for the opms device
  */
 
 #include <sys/callout.h>
 
-struct pms_softc {
+struct opms_softc {
 	struct device sc_dev;		/* device node */
 	void *sc_ih;			/* interrupt pointer */
 	bus_space_tag_t sc_iot;		/* bus tag */
@@ -54,7 +54,7 @@ struct pms_softc {
 
 	struct callout sc_watchdog_ch;
 
-	void (*sc_intenable) __P((struct pms_softc *, int));
+	void (*sc_intenable) __P((struct opms_softc *, int));
 
 	struct proc *sc_proc;
 	struct clist sc_q;
@@ -72,7 +72,7 @@ struct pms_softc {
 
 /* function prototypes used by attach routines */
 
-int pmsintr	__P((void *));
-int pmsinit	__P((struct pms_softc *));
+int opmsintr	__P((void *));
+int opmsinit	__P((struct opms_softc *));
 
-/* End of pmsvar.h */
+/* End of opmsvar.h */

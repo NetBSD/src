@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.9 2002/03/18 22:46:57 briggs Exp $	*/
+/*	$NetBSD: conf.c,v 1.10 2002/04/19 01:04:38 wiz Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -442,7 +442,7 @@ struct cdevsw cdevsw[] = {
 	cdev_vidcvid_init(NVIDCCONSOLE,vidcconsole),	/* 37: vidcconsole device */
 	cdev_notdef(),				/* 38: removed cpu device */
 	cdev_lkm_dummy(),			/* 39: reserved */
-	cdev_mouse_init(NOPMS,pms),		/* 40: PS2 mouse driver */
+	cdev_mouse_init(NOPMS,opms),		/* 40: PS2 mouse driver */
 	cdev_lkm_dummy(),			/* 41: reserved */
 	cdev_iic_init(NIIC,iic),		/* 42: IIC bus driver */
 	cdev_rtc_init(NRTC,rtc),		/* 43: RTC driver */
