@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.100 2000/05/26 21:19:55 thorpej Exp $	*/
+/*	$NetBSD: locore.S,v 1.101 2000/05/29 23:40:03 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -102,9 +102,9 @@ _C_LABEL(kernel_text):
 #endif
 
 #ifdef ENABLE_MIPS_TX3900
-	/* 
-	 * TX3922 write-through D-cache mode. 
-	 *  for TX3912, no meaning. (no write-back mode)
+	/*
+	 * TX3922 write-through D-cache mode.
+	 * for TX3912, no meaning. (no write-back mode)
 	 */
 	mfc0	t0, R3900_COP_0_CONFIG
 	li	t1, 0xffffdfff
@@ -118,7 +118,7 @@ _C_LABEL(kernel_text):
 	mtc0	t1, R3900_COP_0_CONFIG
 	nop
 #endif /* R3900_CACHE_DISABLE */
-#endif /* ENABLE_MIPS_TX3900 */	
+#endif /* ENABLE_MIPS_TX3900 */
 
 #ifdef NOFPU /* No FPU; avoid touching FPU registers */
 	li	t0, 0				# Disable interrupts and
@@ -126,7 +126,7 @@ _C_LABEL(kernel_text):
 #ifdef HPCMIPS_L1CACHE_DISABLE
 	li	t0, 0x00018c2			# XXX, KSEG0 is uncached
 	mtc0	t0, MIPS_COP_0_CONFIG
-#endif /*  HPCMIPS_L1CACHE_DISABLE */
+#endif /* HPCMIPS_L1CACHE_DISABLE */
 #else
 	li	t0, MIPS_SR_COP_1_BIT		# Disable interrupts, and
 	mtc0	t0, MIPS_COP_0_STATUS		# enable the fp coprocessor
@@ -377,7 +377,7 @@ cpu_switch_queuescan:
  */
 	li	v1, SONPROC			# p->p_stat = SONPROC
 	sb	v1, P_STAT(a0)
-	lw      t2, _C_LABEL(mips_locoresw) + MIPSX_CPU_SWITCH_RESUME
+	lw	t2, _C_LABEL(mips_locoresw) + MIPSX_CPU_SWITCH_RESUME
 	sw	a0, _C_LABEL(curproc)
 	jal	ra, t2
 	move	s7, a0				# -BDSLOT-
@@ -390,7 +390,7 @@ cpu_switch_queuescan:
 	nop
 	REG_EPILOGUE
 #endif	/* XXX XXX XXX */
-	
+
 	jal	_C_LABEL(pmap_activate)
 	move	a0, s7				# -BDSLOT-
 
@@ -1037,7 +1037,7 @@ END(_remque)
  *
  * Side effects:
  *	None.
- *	Not profiled,  skews CPU-clock measurement to uselessness.
+ *	Not profiled, skews CPU-clock measurement to uselessness.
  *
  *----------------------------------------------------------------------------
  */
@@ -1114,7 +1114,7 @@ LEAF(switchfpregs)
 
 1:
 /*
- *  Restore the floating point registers.
+ * Restore the floating point registers.
  */
 	lw	a1, P_ADDR(a1)
 	nop
@@ -1235,7 +1235,7 @@ END(savefpregs)
  * MachFPTrap --
  *
  *	Handle a floating point interrupt (r3k) or trap (r4k).
- *	the handlers  are indentical, only the reporting mechanisms differ.
+ *	the handlers are indentical, only the reporting mechanisms differ.
  *
  *	MachFPInterrupt(status, cause, pc, frame)
  *		unsigned status;
@@ -1422,12 +1422,12 @@ NESTED(stacktrace, CALLFRAME_SIZ+20, ra)
 	sw	ra, 36(sp)			# save return address
 
 	/* a0-a3 are still caller's a0-a3, pass in-place as given. */
-	sw	t0, 16(sp)			#   push caller's PC
-	sw	t1, 20(sp)			#   push caller's SP
-	sw	t2, 24(sp)			#   push caller's FP, in case
-	sw	zero, 28(sp)			#   caller's RA on stack
+	sw	t0, 16(sp)			# push caller's PC
+	sw	t1, 20(sp)			# push caller's SP
+	sw	t2, 24(sp)			# push caller's FP, in case
+	sw	zero, 28(sp)			# caller's RA on stack
 	jal	_C_LABEL(stacktrace_subr)
-	sw	v0, 32(sp)			#   push printf
+	sw	v0, 32(sp)			# push printf
 
 	lw	ra, 36(sp)
 	addu	sp, sp, CALLFRAME_SIZ+20
@@ -1453,12 +1453,12 @@ NESTED(logstacktrace, CALLFRAME_SIZ+20, ra)
 	sw	ra, 36(sp)			# save return address
 
 	/* a0-a3 are still caller's a0-a3, pass in-place as given. */
-	sw	t0, 16(sp)			#   push caller's PC
-	sw	t1, 20(sp)			#   push caller's SP
-	sw	t2, 24(sp)			#   push caller's FP, in case
-	sw	zero, 28(sp)			#   RA on stack
+	sw	t0, 16(sp)			# push caller's PC
+	sw	t1, 20(sp)			# push caller's SP
+	sw	t2, 24(sp)			# push caller's FP, in case
+	sw	zero, 28(sp)			# RA on stack
 	jal	_C_LABEL(stacktrace_subr)
-	sw	v0, 32(sp)			#   push printf
+	sw	v0, 32(sp)			# push printf
 
 	lw	ra, 36(sp)
 	addu	sp, sp, CALLFRAME_SIZ+20
