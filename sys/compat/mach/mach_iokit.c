@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_iokit.c,v 1.12 2003/04/30 07:32:16 manu Exp $ */
+/*	$NetBSD: mach_iokit.c,v 1.13 2003/04/30 18:05:47 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "opt_compat_darwin.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_iokit.c,v 1.12 2003/04/30 07:32:16 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_iokit.c,v 1.13 2003/04/30 18:05:47 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -159,7 +159,7 @@ mach_io_iterator_next(args)
 		if (dev == NULL)
 			mdi->mdi_current = TAILQ_FIRST(&alldevs);
 
-		/* And now, find the next child of mdi->mdi_parrent. */
+		/* And now, find the next child of mdi->mdi_parent. */
 		do {
 			if (dev->dv_parent == mdi->mdi_parent) {
 				mdi->mdi_current = dev;
