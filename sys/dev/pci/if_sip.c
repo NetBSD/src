@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.35 2001/06/30 22:35:05 thorpej Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.36 2001/07/07 02:32:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -78,8 +78,6 @@
  *
  *	- Support the 10-bit interface on the DP83820 (for fiber).
  *
- *	- Support jumbo packets on the DP83820.
- *
  *	- Reduce the interrupt load.
  */
 
@@ -147,8 +145,18 @@
 /*
  * Receive descriptor list size.  We have one Rx buffer per incoming
  * packet, so this logic is a little simpler.
+ *
+ * Actually, on the DP83820, we allow the packet to consume more than
+ * one buffer, in order to support jumbo Ethernet frames.  In that
+ * case, a packet may consume up to 5 buffers (assuming a 2048 byte
+ * mbuf cluster).  256 receive buffers is only 51 maximum size packets,
+ * so we'd better be quick about handling receive interrupts.
  */
+#if defined(DP83820)
+#define	SIP_NRXDESC		256
+#else
 #define	SIP_NRXDESC		128
+#endif /* DP83820 */
 #define	SIP_NRXDESC_MASK	(SIP_NRXDESC - 1)
 #define	SIP_NEXTRX(x)		(((x) + 1) & SIP_NRXDESC_MASK)
 
@@ -272,10 +280,32 @@ struct sip_softc {
 	struct sip_txsq sc_txdirtyq;	/* dirty Tx descsofts */
 
 	int	sc_rxptr;		/* next ready Rx descriptor/descsoft */
+#if defined(DP83820)
+	int	sc_rxdiscard;
+	int	sc_rxlen;
+	struct mbuf *sc_rxhead;
+	struct mbuf *sc_rxtail;
+	struct mbuf **sc_rxtailp;
+#endif /* DP83820 */
 };
 
 /* sc_flags */
 #define	SIPF_PAUSED	0x00000001	/* paused (802.3x flow control) */
+
+#ifdef DP83820
+#define	SIP_RXCHAIN_RESET(sc)						\
+do {									\
+	(sc)->sc_rxtailp = &(sc)->sc_rxhead;				\
+	*(sc)->sc_rxtailp = NULL;					\
+	(sc)->sc_rxlen = 0;						\
+} while (/*CONSTCOND*/0)
+
+#define	SIP_RXCHAIN_LINK(sc, m)						\
+do {									\
+	*(sc)->sc_rxtailp = sc->sc_rxtail = (m);			\
+	(sc)->sc_rxtailp = &(m)->m_next;				\
+} while (/*CONSTCOND*/0)
+#endif /* DP83820 */
 
 #ifdef SIP_EVENT_COUNTERS
 #define	SIP_EVCNT_INCR(ev)	(ev)->ev_count++
@@ -311,23 +341,24 @@ do {									\
 	bus_dmamap_sync((sc)->sc_dmat, (sc)->sc_cddmamap,		\
 	    SIP_CDRXOFF((x)), sizeof(struct sip_desc), (ops))
 
-/*
- * Note we rely on MCLBYTES being a power of two below.
- */
 #ifdef DP83820
 #define	SIP_INIT_RXDESC_EXTSTS	__sipd->sipd_extsts = 0;
+#define	SIP_RXBUF_LEN		(MCLBYTES - 4)
 #else
 #define	SIP_INIT_RXDESC_EXTSTS	/* nothing */
+#define	SIP_RXBUF_LEN		(MCLBYTES - 1)	/* field width */
 #endif
 #define	SIP_INIT_RXDESC(sc, x)						\
 do {									\
 	struct sip_rxsoft *__rxs = &(sc)->sc_rxsoft[(x)];		\
 	struct sip_desc *__sipd = &(sc)->sc_rxdescs[(x)];		\
 									\
-	__sipd->sipd_link = htole32(SIP_CDRXADDR((sc), SIP_NEXTRX((x)))); \
-	__sipd->sipd_bufptr = htole32(__rxs->rxs_dmamap->dm_segs[0].ds_addr); \
+	__sipd->sipd_link =						\
+	    htole32(SIP_CDRXADDR((sc), SIP_NEXTRX((x))));		\
+	__sipd->sipd_bufptr =						\
+	    htole32(__rxs->rxs_dmamap->dm_segs[0].ds_addr);		\
 	__sipd->sipd_cmdsts = htole32(CMDSTS_INTR |			\
-	    ((MCLBYTES - 1) & CMDSTS_SIZE_MASK));			\
+	    (SIP_RXBUF_LEN & CMDSTS_SIZE_MASK));			\
 	SIP_INIT_RXDESC_EXTSTS						\
 	SIP_CDRXSYNC((sc), (x), BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE); \
 } while (0)
@@ -790,9 +821,11 @@ SIP_DECL(attach)(struct device *parent, struct device *self, void *aux)
 
 #ifdef DP83820
 	/*
-	 * And the DP83820 can do VLAN tagging in hardware.
+	 * And the DP83820 can do VLAN tagging in hardware, and
+	 * support the jumbo Ethernet MTU.
 	 */
-	sc->sc_ethercom.ec_capabilities |= ETHERCAP_VLAN_HWTAGGING;
+	sc->sc_ethercom.ec_capabilities |=
+	    ETHERCAP_VLAN_HWTAGGING | ETHERCAP_JUMBO_MTU;
 
 	/*
 	 * The DP83820 can do IPv4, TCPv4, and UDPv4 checksums
@@ -937,10 +970,38 @@ SIP_DECL(start)(struct ifnet *ifp)
 		IFQ_POLL(&ifp->if_snd, m0);
 		if (m0 == NULL)
 			break;
+#ifndef DP83820
 		m = NULL;
+#endif
 
 		dmamap = txs->txs_dmamap;
 
+#ifdef DP83820
+		/*
+		 * Load the DMA map.  If this fails, the packet either
+		 * didn't fit in the allotted number of segments, or we
+		 * were short on resources.  For the too-many-segments
+		 * case, we simply report an error and drop the packet,
+		 * since we can't sanely copy a jumbo packet to a single
+		 * buffer.
+		 */
+		error = bus_dmamap_load_mbuf(sc->sc_dmat, dmamap, m0,
+		    BUS_DMA_NOWAIT);
+		if (error) {
+			if (error == EFBIG) {
+				printf("%s: Tx packet consumes too many "
+				    "DMA segments, dropping...\n",
+				    sc->sc_dev.dv_xname);
+				IFQ_DEQUEUE(&ifp->if_snd, m0);
+				m_freem(m0); 
+				continue;
+			}
+			/*
+			 * Short on resources, just stop for now.
+			 */
+			break;
+		}
+#else /* DP83820 */
 		/*
 		 * Load the DMA map.  If this fails, the packet either
 		 * didn't fit in the alloted number of segments, or we
@@ -974,6 +1035,7 @@ SIP_DECL(start)(struct ifnet *ifp)
 				break;
 			}
 		}
+#endif /* DP83820 */
 
 		/*
 		 * Ensure we have enough descriptors free to describe
@@ -994,17 +1056,21 @@ SIP_DECL(start)(struct ifnet *ifp)
 			 */
 			ifp->if_flags |= IFF_OACTIVE;
 			bus_dmamap_unload(sc->sc_dmat, dmamap);
+#ifndef DP83820
 			if (m != NULL)
 				m_freem(m);
+#endif
 			SIP_EVCNT_INCR(&sc->sc_ev_txdstall);
 			break;
 		}
 
 		IFQ_DEQUEUE(&ifp->if_snd, m0);
+#ifndef DP83820
 		if (m != NULL) {
 			m_freem(m0);
 			m0 = m;
 		}
+#endif
 
 		/*
 		 * WE ARE NOW COMMITTED TO TRANSMITTING THE PACKET.
@@ -1425,7 +1491,7 @@ SIP_DECL(rxintr)(struct sip_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct sip_rxsoft *rxs;
-	struct mbuf *m;
+	struct mbuf *m, *tailm;
 	u_int32_t cmdsts, extsts;
 	int i, len;
 
@@ -1449,12 +1515,64 @@ SIP_DECL(rxintr)(struct sip_softc *sc)
 			break;
 		}
 
+		if (__predict_false(sc->sc_rxdiscard)) {
+			SIP_INIT_RXDESC(sc, i);
+			if ((cmdsts & CMDSTS_MORE) == 0) {
+				/* Reset our state. */
+				sc->sc_rxdiscard = 0;
+			}
+			continue;
+		}
+
+		bus_dmamap_sync(sc->sc_dmat, rxs->rxs_dmamap, 0,
+		    rxs->rxs_dmamap->dm_mapsize, BUS_DMASYNC_POSTREAD);
+
+		m = rxs->rxs_mbuf;
+
 		/*
-		 * If an error occurred, update stats, clear the status
-		 * word, and leave the packet buffer in place.  It will
-		 * simply be reused the next time the ring comes around.
+		 * Add a new receive buffer to the ring.
 		 */
-		if (cmdsts & (CMDSTS_Rx_RXA|CMDSTS_Rx_LONG|CMDSTS_Rx_RUNT|
+		if (SIP_DECL(add_rxbuf)(sc, i) != 0) {
+			/*
+			 * Failed, throw away what we've done so
+			 * far, and discard the rest of the packet.
+			 */
+			ifp->if_ierrors++;
+			bus_dmamap_sync(sc->sc_dmat, rxs->rxs_dmamap, 0,
+			    rxs->rxs_dmamap->dm_mapsize, BUS_DMASYNC_PREREAD);
+			SIP_INIT_RXDESC(sc, i);
+			if (cmdsts & CMDSTS_MORE)
+				sc->sc_rxdiscard = 1;
+			if (sc->sc_rxhead != NULL)
+				m_freem(sc->sc_rxhead);
+			SIP_RXCHAIN_RESET(sc);
+			continue;
+		}
+
+		SIP_RXCHAIN_LINK(sc, m);
+
+		/*
+		 * If this is not the end of the packet, keep
+		 * looking.
+		 */
+		if (cmdsts & CMDSTS_MORE) {
+			sc->sc_rxlen += m->m_len;
+			continue;
+		}
+
+		/*
+		 * Okay, we have the entire packet now...
+		 */
+		*sc->sc_rxtailp = NULL;
+		m = sc->sc_rxhead;
+		tailm = sc->sc_rxtail;
+
+		SIP_RXCHAIN_RESET(sc);
+
+		/*
+		 * If an error occurred, update stats and drop the packet.
+		 */
+		if (cmdsts & (CMDSTS_Rx_RXA|CMDSTS_Rx_RUNT|
 		    CMDSTS_Rx_ISE|CMDSTS_Rx_CRCE|CMDSTS_Rx_FAE)) {
 			ifp->if_ierrors++;
 			if ((cmdsts & CMDSTS_Rx_RXA) != 0 &&
@@ -1466,101 +1584,66 @@ SIP_DECL(rxintr)(struct sip_softc *sc)
 #define	PRINTERR(bit, str)						\
 			if (cmdsts & (bit))				\
 				printf("%s: %s\n", sc->sc_dev.dv_xname, str)
-			PRINTERR(CMDSTS_Rx_LONG, "packet too long");
 			PRINTERR(CMDSTS_Rx_RUNT, "runt packet");
 			PRINTERR(CMDSTS_Rx_ISE, "invalid symbol error");
 			PRINTERR(CMDSTS_Rx_CRCE, "CRC error");
 			PRINTERR(CMDSTS_Rx_FAE, "frame alignment error");
 #undef PRINTERR
-			SIP_INIT_RXDESC(sc, i);
+			m_freem(m);
 			continue;
 		}
 
-		bus_dmamap_sync(sc->sc_dmat, rxs->rxs_dmamap, 0,
-		    rxs->rxs_dmamap->dm_mapsize, BUS_DMASYNC_POSTREAD);
-
 		/*
-		 * No errors; receive the packet.  Note, the DP83820
-		 * includes the CRC with every packet.
+		 * No errors.  Reset receive state.
+		 *
+		 * Note, the DP83820 includes the CRC with
+		 * every packet.
 		 */
 		len = CMDSTS_SIZE(cmdsts);
+		tailm->m_len = len - sc->sc_rxlen;
 
-#ifdef __NO_STRICT_ALIGNMENT
 		/*
 		 * If the packet is small enough to fit in a
 		 * single header mbuf, allocate one and copy
 		 * the data into it.  This greatly reduces
 		 * memory consumption when we receive lots
 		 * of small packets.
-		 *
-		 * Otherwise, we add a new buffer to the receive
-		 * chain.  If this fails, we drop the packet and
-		 * recycle the old buffer.
 		 */
-		if (SIP_DECL(copy_small) != 0 && len <= MHLEN) {
-			MGETHDR(m, M_DONTWAIT, MT_DATA);
-			if (m == NULL)
-				goto dropit;
-			memcpy(mtod(m, caddr_t),
-			    mtod(rxs->rxs_mbuf, caddr_t), len);
-			SIP_INIT_RXDESC(sc, i);
-			bus_dmamap_sync(sc->sc_dmat, rxs->rxs_dmamap, 0,
-			    rxs->rxs_dmamap->dm_mapsize,
-			    BUS_DMASYNC_PREREAD);
-		} else {
-			m = rxs->rxs_mbuf;
-			if (SIP_DECL(add_rxbuf)(sc, i) != 0) {
- dropit:
+		if (SIP_DECL(copy_small) != 0 && len <= (MHLEN - 2)) {
+			struct mbuf *nm;
+			MGETHDR(nm, M_DONTWAIT, MT_DATA);
+			if (nm == NULL) {
 				ifp->if_ierrors++;
-				SIP_INIT_RXDESC(sc, i);
-				bus_dmamap_sync(sc->sc_dmat,
-				    rxs->rxs_dmamap, 0,
-				    rxs->rxs_dmamap->dm_mapsize,
-				    BUS_DMASYNC_PREREAD);
+				m_freem(m);
 				continue;
 			}
+			nm->m_data += 2;
+			nm->m_pkthdr.len = nm->m_len = len;
+			m_copydata(m, 0, len, mtod(nm, caddr_t));
+			m_freem(m);
+			m = nm;
 		}
-#else
-		/*
-		 * The SiS 900's receive buffers must be 4-byte aligned.
-		 * But this means that the data after the Ethernet header
-		 * is misaligned.  We must allocate a new buffer and
-		 * copy the data, shifted forward 2 bytes.
-		 */
-		MGETHDR(m, M_DONTWAIT, MT_DATA);
-		if (m == NULL) {
- dropit:
-			ifp->if_ierrors++;
-			SIP_INIT_RXDESC(sc, i);
-			bus_dmamap_sync(sc->sc_dmat, rxs->rxs_dmamap, 0,
-			    rxs->rxs_dmamap->dm_mapsize, BUS_DMASYNC_PREREAD);
-			continue;
+#ifndef __NO_STRICT_ALIGNMENT
+		else {
+			/*
+			 * The DP83820's receive buffers must be 4-byte
+			 * aligned.  But this means that the data after
+			 * the Ethernet header is misaligned.  To compensate,
+			 * we have artificially shortened the buffer size
+			 * in the descriptor, and we do an overlapping copy
+			 * of the data two bytes further in (in the first
+			 * buffer of the chain only).
+			 */
+			memmove(mtod(m, caddr_t) + 2, mtod(m, caddr_t),
+			    m->m_len);
+			m->m_data += 2;
 		}
-		if (len > (MHLEN - 2)) {
-			MCLGET(m, M_DONTWAIT);
-			if ((m->m_flags & M_EXT) == 0) {
-				m_freem(m);
-				goto dropit;
-			}
-		}
-		m->m_data += 2;
-
-		/*
-		 * Note that we use clusters for incoming frames, so the
-		 * buffer is virtually contiguous.
-		 */
-		memcpy(mtod(m, caddr_t), mtod(rxs->rxs_mbuf, caddr_t), len);
-
-		/* Allow the receive descriptor to continue using its mbuf. */
-		SIP_INIT_RXDESC(sc, i);
-		bus_dmamap_sync(sc->sc_dmat, rxs->rxs_dmamap, 0,
-		    rxs->rxs_dmamap->dm_mapsize, BUS_DMASYNC_PREREAD);
-#endif /* __NO_STRICT_ALIGNMENT */
+#endif /* ! __NO_STRICT_ALIGNMENT */
 
 		ifp->if_ipackets++;
 		m->m_flags |= M_HASFCS;
 		m->m_pkthdr.rcvif = ifp;
-		m->m_pkthdr.len = m->m_len = len;
+		m->m_pkthdr.len = len;
 
 #if NBPFILTER > 0
 		/*
@@ -1667,7 +1750,7 @@ SIP_DECL(rxintr)(struct sip_softc *sc)
 		 * word, and leave the packet buffer in place.  It will
 		 * simply be reused the next time the ring comes around.
 		 */
-		if (cmdsts & (CMDSTS_Rx_RXA|CMDSTS_Rx_LONG|CMDSTS_Rx_RUNT|
+		if (cmdsts & (CMDSTS_Rx_RXA|CMDSTS_Rx_RUNT|
 		    CMDSTS_Rx_ISE|CMDSTS_Rx_CRCE|CMDSTS_Rx_FAE)) {
 			ifp->if_ierrors++;
 			if ((cmdsts & CMDSTS_Rx_RXA) != 0 &&
@@ -1679,7 +1762,6 @@ SIP_DECL(rxintr)(struct sip_softc *sc)
 #define	PRINTERR(bit, str)						\
 			if (cmdsts & (bit))				\
 				printf("%s: %s\n", sc->sc_dev.dv_xname, str)
-			PRINTERR(CMDSTS_Rx_LONG, "packet too long");
 			PRINTERR(CMDSTS_Rx_RUNT, "runt packet");
 			PRINTERR(CMDSTS_Rx_ISE, "invalid symbol error");
 			PRINTERR(CMDSTS_Rx_CRCE, "CRC error");
@@ -1950,6 +2032,10 @@ SIP_DECL(init)(struct ifnet *ifp)
 		}
 	}
 	sc->sc_rxptr = 0;
+#ifdef DP83820
+	sc->sc_rxdiscard = 0;
+	SIP_RXCHAIN_RESET(sc);
+#endif /* DP83820 */
 
 	/*
 	 * Set the configuration register; it's already initialized
@@ -2280,6 +2366,10 @@ SIP_DECL(add_rxbuf)(struct sip_softc *sc, int idx)
 		m_freem(m);
 		return (ENOBUFS);
 	}
+
+#if defined(DP83820)
+	m->m_len = SIP_RXBUF_LEN;
+#endif /* DP83820 */
 
 	if (rxs->rxs_mbuf != NULL)
 		bus_dmamap_unload(sc->sc_dmat, rxs->rxs_dmamap);
