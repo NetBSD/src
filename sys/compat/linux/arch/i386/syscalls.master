@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.68 2004/08/01 10:32:40 jdolecek Exp $
+	$NetBSD: syscalls.master,v 1.69 2004/08/01 15:34:22 jdolecek Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -370,3 +370,65 @@
 220	STD		{ int linux_sys_getdents64(int fd, \
 			    struct linux_dirent64 *dent, unsigned int count); }
 221	STD		{ int linux_sys_fcntl64(int fd, int cmd, void *arg); }
+222	UNIMPL		/* unused */
+223	UNIMPL		/* unused */
+224	UNIMPL		gettid
+225	UNIMPL		readahead
+226	UNIMPL		setxattr
+227	UNIMPL		lsetxattr
+228	UNIMPL		fsetxattr
+229	UNIMPL		getxattr
+230	UNIMPL		lgetxattr
+231	UNIMPL		fgetxattr
+232	UNIMPL		listxattr
+233	UNIMPL		llistxattr
+234	UNIMPL		flistxattr
+235	UNIMPL		removexattr
+236	UNIMPL		lremovexattr
+237	UNIMPL		fremovexattr
+238	UNIMPL		tkill
+239	UNIMPL		sendfile64
+240	UNIMPL		futex
+241	UNIMPL		sched_setaffinity
+242	UNIMPL		sched_getaffinity
+243	UNIMPL		set_thread_area
+244	UNIMPL		get_thread_area
+245	UNIMPL		io_setup
+246	UNIMPL		io_destroy
+247	UNIMPL		io_getevents
+248	UNIMPL		io_submit
+249	UNIMPL		io_cancel
+250	UNIMPL		fadvise64
+251	UNIMPL		/* unused */
+252	UNIMPL		exit_group
+253	UNIMPL		lookup_dcookie
+254	UNIMPL		epoll_create
+255	UNIMPL		epoll_ctl
+256	UNIMPL		epoll_wait
+257	UNIMPL		remap_file_pages
+258	UNIMPL		set_tid_address
+259	UNIMPL		timer_create
+260	UNIMPL		timer_settime
+261	UNIMPL		timer_gettime
+262	UNIMPL		timer_getoverrun
+263	UNIMPL		timer_delete
+264	UNIMPL		clock_settime
+265	UNIMPL		clock_gettime
+266	UNIMPL		clock_getres
+267	UNIMPL		clock_nanosleep
+268	UNIMPL		statfs64
+269	UNIMPL		fstatfs64
+270	UNIMPL		tgkill
+271	UNIMPL		utimes
+272	UNIMPL		fadvise64_64
+273	UNIMPL		vserver
+274	UNIMPL		mbind
+275	UNIMPL		get_mempolicy
+276	UNIMPL		set_mempolicy
+277	UNIMPL		mq_open
+278	UNIMPL		mq_unlink
+279	UNIMPL		mq_timedsend
+280	UNIMPL		mq_timedreceive
+281	UNIMPL		mq_notify
+282	UNIMPL		mq_getsetattr
+283	UNIMPL		sys_kexec_load
