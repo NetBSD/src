@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.29.2.5 1999/03/06 12:28:15 drochner Exp $	*/
+/*	$NetBSD: conf.c,v 1.29.2.6 1999/05/11 06:43:15 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -68,7 +68,7 @@ struct bdevsw	bdevsw[] =
 	bdev_notdef(),			/* 0: nodev */
 	bdev_notdef(),			/* 1: ULTRIX vax ht */
 	bdev_disk_init(NVND,vnd),	/* 2: vnode disk driver */
-	bdev_notdef(),			/* 3: ULTRIX vax rk*/
+	bdev_notdef(),			/* 3: ULTRIX vax rk */
 	bdev_swap_init(1,sw),		/* 4: swap pseudo-device */
 	bdev_notdef(),			/* 5: ULTRIX vax tm */
 	bdev_notdef(),			/* 6: ULTRIX vax ts */
@@ -85,8 +85,8 @@ struct bdevsw	bdevsw[] =
 	bdev_disk_init(NMD,md),		/* 17: memory disk driver */
 	bdev_tape_init(NST,st),		/* 18: SCSI tape */
 	bdev_disk_init(NSD,sd),		/* 19: SCSI disk */
-	bdev_notdef(),			/* 20: ULTRIX tz */
-	bdev_notdef(),			/* 21: ULTRIX rz */
+	bdev_notdef(),			/* 20: ULTRIX tz - tape */
+	bdev_notdef(),			/* 21: ULTRIX rz - disk and CD-ROM */
 	bdev_notdef(),			/* 22: nodev */
 	bdev_notdef(),			/* 23: ULTRIX mscp */
 
@@ -139,7 +139,6 @@ cdev_decl(pts);
 cdev_decl(ptc);
 cdev_decl(raid);
 cdev_decl(sd);
-cdev_decl(md);
 #include "ss.h"
 cdev_decl(ss);
 cdev_decl(st);
@@ -223,23 +222,23 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),		/* 52: ULTRIX its */
 	cdev_notdef(),		/* 53: nodev */
 	cdev_notdef(),		/* 54: nodev */
-	cdev_notdef(),		/* 55: ULTRIX tz SCSI tape */
-	cdev_notdef(),		/* 56: ULTRIX rz SCSI disk */
+	cdev_notdef(),		/* 55: ULTRIX tz - tape */
+	cdev_notdef(),		/* 56: ULTRIX rz - disk and CD-ROM */
 	cdev_notdef(),		/* 57: nodev */
 	cdev_notdef(),		/* 58: ULTRIX fc */
 	cdev_notdef(),		/* 59: ULTRIX fg */
-	cdev_notdef(),		/* 60: mscp, again Ultrix gross coupling to PrestoServe driver */
-	cdev_notdef(),		/* 61: mscp, again Ultrix gross coupling to PrestoServe driver */
-	cdev_notdef(),		/* 62: mscp, again Ultrix gross coupling to PrestoServe driver */
-	cdev_notdef(),		/* 63: mscp, again Ultrix gross coupling to PrestoServe driver */
-	cdev_notdef(),		/* 64: mscp, again Ultrix gross coupling to PrestoServe driver */
-	cdev_notdef(),		/* 65: mscp, again Ultrix gross coupling to PrestoServe driver */
-	cdev_notdef(),		/* 66: mscp, again Ultrix gross coupling to PrestoServe driver */
-	cdev_notdef(),		/* 67: mscp, again Ultrix gross coupling to PrestoServe driver */
+	cdev_notdef(),		/* 60: ULTRIX mscp - gross coupling to Presto */
+	cdev_notdef(),		/* 61: ULTRIX mscp - gross coupling to Presto */
+	cdev_notdef(),		/* 62: ULTRIX mscp - gross coupling to Presto */
+	cdev_notdef(),		/* 63: ULTRIX mscp - gross coupling to Presto */
+	cdev_notdef(),		/* 64: ULTRIX mscp - gross coupling to Presto */
+	cdev_notdef(),		/* 65: ULTRIX mscp - gross coupling to Presto */
+	cdev_notdef(),		/* 66: ULTRIX mscp - gross coupling to Presto */
+	cdev_notdef(),		/* 67: ULTRIX mscp - gross coupling to Presto */
 	cdev_notdef(),		/* 68: ULTRIX ld */
 	cdev_notdef(),		/* 69: ULTRIX /dev/audit */
 	cdev_notdef(),		/* 70: ULTRIX Mogul (nee' CMU) packetfilter */
-	cdev_notdef(),		/* 71: ULTRIX xcons, mips Ultrix /dev/xcons virtual console nightmare */
+	cdev_notdef(),		/* 71: ULTRIX mips xcons, virtual console nightmare */
 	cdev_notdef(),		/* 72: ULTRIX xa */
 	cdev_notdef(),		/* 73: ULTRIX utx */
 	cdev_notdef(),		/* 74: ULTRIX sp - MV2000/VS3100 */
@@ -251,10 +250,10 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),		/* 80: ULTRIX multimedia audio B */
 	cdev_notdef(),		/* 81: ULTRIX multimedia video in */
 	cdev_notdef(),		/* 82: ULTRIX multimedia video out */
-	cdev_notdef(),		/* 83: Personal DECstation fdi */
-	cdev_notdef(),		/* 84: Personal DECstation dti */
-	cdev_notdef(),		/* 85: */
-	cdev_notdef(),		/* 86: */
+	cdev_notdef(),		/* 83: ULTRIX Personal DECstation fdi */
+	cdev_notdef(),		/* 84: ULTRIX Personal DECstation dti */
+	cdev_notdef(),		/* 85: nodev */
+	cdev_notdef(),		/* 86: nodev */
 	cdev_disk_init(NCCD,ccd),	/* 87: concatenated disk driver */
 	cdev_wsdisplay_init(NWSDISPLAY,wsdisplay), /* 88: wsdisplay */
 	cdev_mouse_init(NWSKBD,wskbd),		/* 89: kbd */
@@ -265,7 +264,10 @@ struct cdevsw	cdevsw[] =
 	cdev_lkm_init(NLKM,lkm),	/* 94: loadable module driver */
 	cdev_scsibus_init(NSCSIBUS,scsibus),	/* 95: SCSI bus */
 	cdev_disk_init(NRAID,raid),	/* 96: RAIDframe disk driver */
-	cdev_disk_init(NMD,md),	/* 97: memory disk  driver */
+	cdev_disk_init(NMD,md),		/* 97: memory disk driver */
+#if 0
+	cdev_fbm_init(NPX,px),		/* 98: PixelStamp board driver */
+#endif
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -390,6 +392,7 @@ static int chrtoblktbl[] =  {
 	/* 95 */	NODEV,
 	/* 96 */	32,	/* raid */
 	/* 97 */	17,	/* md */
+	/* 98 */	NODEV,
 };
 
 /*

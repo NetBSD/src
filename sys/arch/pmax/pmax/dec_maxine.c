@@ -1,5 +1,4 @@
-/*	$NetBSD: dec_maxine.c,v 1.6.4.9 1999/04/26 07:16:12 nisimura Exp $ */
-
+/*	$NetBSD: dec_maxine.c,v 1.6.4.10 1999/05/11 06:43:16 nisimura Exp $ */
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
  *
@@ -73,7 +72,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.6.4.9 1999/04/26 07:16:12 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.6.4.10 1999/05/11 06:43:16 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,7 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.6.4.9 1999/04/26 07:16:12 nisimura 
 
 #include <pmax/pmax/pmaxtype.h>
 #include <pmax/pmax/maxine.h>		/* baseboard addresses (constants) */
-#include <pmax/pmax/dec_kn02_subr.h>	/* 3min/maxine memory errors */
+#include <pmax/pmax/memc.h>		/* memory errors */
 #include <mips/mips/mips_mcclock.h>	/* mcclock CPU speed estimation */
 
 #include <dev/tc/tcvar.h>
@@ -103,7 +102,6 @@ __KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.6.4.9 1999/04/26 07:16:12 nisimura 
 /* XXX XXX XXX */
 
 void dec_maxine_init __P((void));
-void dec_maxine_os_init __P((void));
 void dec_maxine_bus_reset __P((void));
 void dec_maxine_device_register __P((struct device *, void *));
 void dec_maxine_cons_init __P((void));
@@ -116,11 +114,11 @@ extern void prom_haltbutton __P((void));
 extern void prom_findcons __P((int *, int *, int *));
 extern int xcfb_cnattach __P((tc_addr_t));
 extern int tc_fb_cnattach __P((int));
-extern void dtopkbd_cnattach __P((tc_addr_t));
+extern void dtop_cnattach __P((tc_addr_t));
 
+static unsigned latched_cycle_cnt;	/* high resolution timer counter */
 extern char cpu_model[];
 extern int zs_major;
-extern unsigned latched_cycle_cnt;
 
 extern int _splraise_ioasic __P((int));
 extern int _spllower_ioasic __P((int));
@@ -143,24 +141,12 @@ extern volatile struct chiptime *mcclock_addr; /* XXX */
 void
 dec_maxine_init()
 {
-	platform.iobus = "tcbus";
+	platform.iobus = "tcmaxine";
 
-	platform.os_init = dec_maxine_os_init;
 	platform.bus_reset = dec_maxine_bus_reset;
 	platform.cons_init = dec_maxine_cons_init;
 	platform.device_register = dec_maxine_device_register;
 
-	dec_maxine_os_init();
-
-	sprintf(cpu_model, "Personal DECstation 5000/%d (MAXINE)", cpu_mhz);
-}
-
-/*
- * Set up OS level stuff: spls, etc.
- */
-void
-dec_maxine_os_init()
-{
 	/* clear any memory errors from probes */
 	*(volatile u_int *)MIPS_PHYS_TO_KSEG1(XINE_REG_TIMEOUT) = 0;
 	kn02ca_wbflush();
@@ -168,6 +154,9 @@ dec_maxine_os_init()
 	ioasic_base = MIPS_PHYS_TO_KSEG1(XINE_SYS_ASIC);
 	mcclock_addr = (void *)(ioasic_base + IOASIC_SLOT_8_START);
 	mips_hardware_intr = dec_maxine_intr;
+
+	/* MAXINE has 1 microsec. free-running high resolution timer */
+	clkread = kn02ca_clkread;
 
 	/*
 	 * MAXINE IOASIC interrupts come through INT 3, while
@@ -200,10 +189,8 @@ dec_maxine_os_init()
 	*(volatile u_int *)(ioasic_base + IOASIC_INTR) = 0;
 	kn02ca_wbflush();
 
-	/* MAXINE has 1 microsec. free-running high resolution timer */
-	clkread = kn02ca_clkread;
+	sprintf(cpu_model, "Personal DECstation 5000/%d (MAXINE)", cpu_mhz);
 }
-
 
 /*
  * Initalize the memory system and I/O buses.
@@ -232,10 +219,10 @@ dec_maxine_cons_init()
 
 	if (screen > 0) {
 #if NWSDISPLAY > 0
-		dtopkbd_cnattach(ioasic_base);
+		dtop_cnattach(ioasic_base);
 		if (crt == 3) {
 #if NXCFB > 0
-			xcfb_cnattach(0x08000000 + MIPS_KSEG1_START);
+			xcfb_cnattach(MIPS_PHYS_TO_KSEG1(XINE_PHYS_CFB_START));
 			return;
 #endif
 		}
@@ -283,25 +270,25 @@ dec_maxine_intr(cpumask, pc, status, cause)
 	unsigned status;
 	unsigned cause;
 {
-	void *clk = (void *)(ioasic_base + IOASIC_SLOT_8_START);
-	struct clockframe cf;
-
 	if (cpumask & MIPS_INT_MASK_4)
 		prom_haltbutton();
 
 	/* handle clock interrupts ASAP */
 	if (cpumask & MIPS_INT_MASK_1) {
-		__asm __volatile("lbu $0,48(%0)" :: "r"(clk));
+		struct clockframe cf;
+
+		__asm __volatile("lbu $0,48(%0)" ::
+			"r"(ioasic_base + IOASIC_SLOT_8_START));
+		latched_cycle_cnt =
+			*(u_int32_t *)MIPS_PHYS_TO_KSEG1(XINE_REG_FCTR);
 		cf.pc = pc;
 		cf.sr = status;
-		latched_cycle_cnt =
-		    *(u_int32_t *)MIPS_PHYS_TO_KSEG1(XINE_REG_FCTR);
 		hardclock(&cf);
 		intrcnt[HARDCLOCK]++;
-		/* keep clock interrupts enabled when we return */
-		cause &= ~MIPS_INT_MASK_1;
 		/* re-enable clock interrupt */
 		_splset(MIPS_SR_INT_IE | MIPS_INT_MASK_1);
+		/* keep clock interrupts enabled when we return */
+		cause &= ~MIPS_INT_MASK_1;
 	}
 
 	if (cpumask & MIPS_INT_MASK_3) {
@@ -361,7 +348,11 @@ dec_maxine_intr(cpumask, pc, status, cause)
 	if (cpumask & MIPS_INT_MASK_2)
 		kn02ba_memerr();
 
-	return (MIPS_SR_INT_IE | (status & ~cause & MIPS_HARD_INT_MASK));
+#if 0
+	_splset(MIPS_SR_INT_IE | (status & ~cause & MIPS_HARD_INT_MASK));
+#else
+	return ((status & ~cause & MIPS_HARD_INT_MASK) | MIPS_SR_INT_ENA_CUR);
+#endif
 }
 
 void
@@ -379,3 +370,28 @@ kn02ca_clkread()
 	cycles = *(u_int32_t *)MIPS_PHYS_TO_KSEG1(XINE_REG_FCTR);
 	return cycles - latched_cycle_cnt;
 }
+
+#define KV(x)	MIPS_PHYS_TO_KSEG1(x)
+#define C(x)	(void *)(x)
+
+static struct tc_slotdesc tc_maxine_slots[] = {
+    { KV(XINE_PHYS_TC_0_START), C(SYS_DEV_OPT0),  },	/* 0 - opt slot 0 */
+    { KV(XINE_PHYS_TC_1_START), C(SYS_DEV_OPT1),  },	/* 1 - opt slot 1 */
+    { KV(XINE_PHYS_CFB_START),  C(SYS_DEV_BOGUS), },	/* 2 - unused */
+    { KV(XINE_PHYS_TC_3_START), C(SYS_DEV_BOGUS), },	/* 3 - IOASIC */
+};
+
+static struct tc_builtin tc_ioasic_builtins[] = {
+	{ "IOCTL   ",	3, 0x0, C(SYS_DEV_BOGUS), },
+	{ "PMAG-DV ",	2, 0x0, C(SYS_DEV_BOGUS), },	/* slot 2 disguise */
+};
+
+struct tcbus_attach_args xine_tc_desc = {
+	"tc", 0,
+	TC_SPEED_12_5_MHZ,
+	4, tc_maxine_slots,
+	2, tc_ioasic_builtins,
+	ioasic_intr_establish, ioasic_intr_disestablish
+};
+
+void dtop_cnattach(addr) tc_addr_t addr; { };	/* XXX XXX XXX */

@@ -1,5 +1,5 @@
 #
-#	$NetBSD: files.pmax,v 1.56.2.11 1999/04/17 13:45:52 nisimura Exp $
+#	$NetBSD: files.pmax,v 1.56.2.12 1999/05/11 06:43:16 nisimura Exp $
 #
 # DECstation-specific configuration info
 
@@ -17,31 +17,30 @@ attach	cpu at mainbus
 file	arch/pmax/pmax/cpu.c		cpu
 
 # Model support option headers
-defopt	DEC_3100	# kn01:		DECstation 3100, 2100
-defopt	DEC_5100	# kn230:	DECsystem 5100
-defopt	DEC_3MAX	# kn02:		DECstation 5000/200
-defopt	DEC_3MIN	# kn02ba:	DECstation 5000/{120,125,133,150}
-defopt	DEC_MAXINE	# kn02ca:	DECstation 5000/{20,25,33,50}
-defopt	DEC_3MAXPLUS	# kn03:		DECstation 5000/240, 5000/260
-
-defopt	DEC_5800	# kn5800:	DECsystem 5800 isis (XMI)
-defopt	DEC_5400	# kn210:	DECsystem 5400 mipsfair (Qbus)
-defopt	DEC_5500	# kn220:	DECsystem 5500 mipsfair2 (Qbus)
+defopt 	DEC_3100	# DECstation 2100, 3100 (kn01)
+defopt 	DEC_5100	# DECsystem 5100 (kn230)
+defopt 	DEC_3MAX	# DECstation 5000/200 (kn02)
+defopt 	DEC_3MIN	# DECstation 5000/1xx (kn02ba), 5000/150 (kn04)
+defopt 	DEC_MAXINE	# Personal DECstation 5000/xx (kn02ca)
+defopt 	DEC_3MAXPLUS	# DECstation 5000/240 (kn03), 5000/260 (kn05)
+defopt	DEC_5800	# DECsystem 5800 isis (kn5800) XMI
+defopt	DEC_5400	# DECsystem 5400 mipsfair (kn210) Qbus
+defopt	DEC_5500	# DECsystem 5500 mipsfair2 (kn220) Qbus
 
 # Model dependent files
 file	arch/pmax/pmax/dec_3100.c	dec_3100
 file	arch/pmax/pmax/dec_5100.c	dec_5100
 file	arch/pmax/pmax/dec_3max.c	dec_3max
-file	arch/pmax/pmax/dec_3maxplus.c	dec_3maxplus
 file	arch/pmax/pmax/dec_3min.c	dec_3min
 file	arch/pmax/pmax/dec_maxine.c	dec_maxine
+file	arch/pmax/pmax/dec_3maxplus.c	dec_3maxplus
 #file	arch/pmax/pmax/dec_5400.c	dec_5400
 #file	arch/pmax/pmax/dec_5500.c	dec_5500
 #file	arch/pmax/pmax/dec_5800.c	dec_5800
 
 # Memory error handlers shared across models...
-file	arch/pmax/pmax/dec_kn02_subr.c	dec_3min|dec_maxine
-file	arch/pmax/pmax/dec_3max_subr.c	dec_3max|dec_3maxplus
+file	arch/pmax/pmax/memc_3min.c	dec_3min|dec_maxine
+file	arch/pmax/pmax/memc_3max.c	dec_3max|dec_3maxplus
 
 #include "dev/dec/files.dec"
 define	le_dec_subr					# XXX
@@ -58,7 +57,6 @@ file	arch/pmax/ibus/ibus_pmax.c	ibus_pmax
 include	"dev/tc/files.tc"
 attach	tc at mainbus
 file	arch/pmax/tc/tc_subr.c		tc needs-flag
-file	arch/pmax/tc/tc_machdep.c	tc
 
 # IOASIC as a TURBOchannel device for 3MIN, 3MAX+ and MAXINE
 # device defined in files.tc:
@@ -115,7 +113,8 @@ file	arch/pmax/ibus/if_le_ibus.c	le_pmax
 device	dc { line = -1 }
 attach	dc at ibus with dc_ibus
 file	arch/pmax/ibus/dc_ibus.c	dc_ibus
-file	arch/pmax/ibus/dc.c		dc
+file	arch/pmax/ibus/dc.c		dc needs-flag
+
 device	dctty: tty
 attach	dctty at dc
 file	arch/pmax/ibus/dctty.c		dctty needs-flag
@@ -130,7 +129,7 @@ device	zstty: tty
 attach	zstty at zsc
 file	dev/ic/z8530tty.c		zstty needs-flag
 
-# ACCESS.bus (desktop bus) for MAXINE keyboard and mouse
+# ACCESS.bus for MAXINE keyboard and mouse
 device	dtop {}
 attach	dtop at ioasic
 file	arch/pmax/tc/dtop.c		dtop needs-flag
@@ -184,19 +183,17 @@ file	arch/pmax/pmax/autoconf.c
 file	arch/pmax/pmax/bus_dma.c
 file	arch/pmax/pmax/bus_space.c
 file	arch/pmax/pmax/conf.c
-#file	arch/pmax/pmax/kadb.c		optional kadb
-file	arch/pmax/pmax/machdep.c
 file	arch/pmax/pmax/disksubr.c
-file	arch/pmax/stand/libsa/callvec.c
+file	arch/pmax/pmax/machdep.c
 file	arch/pmax/pmax/mainbus.c
+file	arch/pmax/pmax/promcall.c
 file	arch/pmax/pmax/sysconf.c
+file	arch/pmax/stand/lib/callvec.c
+file	dev/cons.c
+#file	arch/pmax/pmax/kadb.c		# obsolute kadb
 
 #file	arch/pmax/pmax/memcpy.c		# XXX temporary hack XXX
 #file	arch/pmax/pmax/memset.c		# XXX temporary hack XXX
-
-# Console code.
-file	dev/cons.c
-file	arch/pmax/dev/promio.c		# default console
 
 # Ultrix Binary Compatibility (COMPAT_ULTRIX)
 include "compat/ultrix/files.ultrix"

@@ -1,4 +1,4 @@
-/* $NetBSD: ioasic.c,v 1.1.2.9 1999/04/06 02:32:34 nisimura Exp $ */
+/* $NetBSD: ioasic.c,v 1.1.2.10 1999/05/11 06:43:14 nisimura Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.1.2.9 1999/04/06 02:32:34 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.1.2.10 1999/05/11 06:43:14 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,8 +58,9 @@ tc_addr_t ioasic_base;
 
 /* XXX XXX XXX */
 #define IOASIC_INTR_SCSI	0x000e0200
-#define IOASIC_INTR_DTOP	0x00000001
-#define IOASIC_INTR_FDC		0x00000090
+#define XINE_INTR_FDC		0x00000090
+#define	XINE_INTR_VINT		0x00000008
+#define XINE_INTR_DTOP		0x00000001
 #define XINE_INTR_TC_0		0x00001000
 #define XINE_INTR_TC_1		0x00000020
 #define KN03_INTR_TC_0		0x00000800
@@ -78,11 +79,12 @@ struct ioasic_dev xine_ioasic_devs[] = {
 	{ "z8530   ",	0x100000, C(SYS_DEV_SCC0),  IOASIC_INTR_SCC_0,	},
 	{ "mc146818",	0x200000, C(SYS_DEV_BOGUS), 0,			},
 	{ "isdn",	0x240000, C(SYS_DEV_ISDN),  IOASIC_INTR_ISDN,	},
-	{ "dtop",	0x280000, C(SYS_DEV_DTOP),  IOASIC_INTR_DTOP,	},
-	{ "fdc",	0x2C0000, C(SYS_DEV_FDC),   IOASIC_INTR_FDC,	},
+	{ "dtop",	0x280000, C(SYS_DEV_DTOP),  XINE_INTR_DTOP,	},
+	{ "fdc",	0x2C0000, C(SYS_DEV_FDC),   XINE_INTR_FDC,	},
 	{ "asc",	0x300000, C(SYS_DEV_SCSI),  IOASIC_INTR_SCSI	},
 	{ "(TC0)",	0x0,	  C(SYS_DEV_OPT0),  XINE_INTR_TC_0	},
 	{ "(TC1)",	0x0,	  C(SYS_DEV_OPT1),  XINE_INTR_TC_1	},
+	{ "(TC2)",	0x0,	  C(SYS_DEV_OPT2),  XINE_INTR_VINT	},
 };
 int xine_builtin_ndevs = 7;
 int xine_ioasic_ndevs = sizeof(xine_ioasic_devs)/sizeof(xine_ioasic_devs[0]);
@@ -154,19 +156,18 @@ ioasicattach(parent, self, aux)
 	int i, imsk;
 
 	sc->sc_bst = ta->ta_memt;
-	sc->sc_dmat = ta->ta_dmat;
 	if (bus_space_map(ta->ta_memt, ta->ta_addr,
 			0x400000, 0, &sc->sc_bsh)) {
 		printf("%s: unable to map device\n", sc->sc_dv.dv_xname);
 		return;
 	}
+	sc->sc_dmat = ta->ta_dmat;
 	sc->sc_cookie = ta->ta_cookie;
 
 	sc->sc_base = ta->ta_addr; /* XXX XXX XXX */
 
 	printf("\n");
 
-#if 1 /* !!! necessary? already all-0 upon booting as documented !!! */
 	/*
 	 * Turn off all device interrupt bits.
 	 * (This _does_ include TC option slot bits.
@@ -175,14 +176,9 @@ ioasicattach(parent, self, aux)
 	for (i = 0; i < ioasic_ndevs; i++)
 		imsk &= ~ioasic_devs[i].iad_intrbits;
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, IOASIC_IMSK, imsk);
-#endif
 
 #if 0
-	/* XXX correct if_le_ioasic.c XXX */
-	/*
-	 * Set up the LANCE DMA area.
-	 */
-	ioasic_lance_dma_setup(sc);
+	(void)ioasic_lance_dma_setup(sc);
 #endif
 
 	/*
@@ -199,7 +195,7 @@ ioasic_intr_establish(ioa, cookie, level, func, arg)
 	int (*func) __P((void *));
 {
 	struct ioasic_softc *sc = (void *)ioasic_cd.cd_devs[0];
-	int i, imsk, intrbits;
+	int i, intrbits;
 
 	for (i = 0; i < ioasic_ndevs; i++) {
 		if (ioasic_devs[i].iad_cookie == cookie)
@@ -212,10 +208,10 @@ found:
 	intrtab[(int)cookie].ih_arg = arg;
 	
 	intrbits = ioasic_devs[i].iad_intrbits;
+	i = bus_space_read_4(sc->sc_bst, sc->sc_bsh, IOASIC_IMSK);
+	i |= intrbits;
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, IOASIC_IMSK, i);
 	iplmask[level] |= intrbits;
-	imsk = bus_space_read_4(sc->sc_bst, sc->sc_bsh, IOASIC_IMSK);
-	imsk |= intrbits;
-	bus_space_write_4(sc->sc_bst, sc->sc_bsh, IOASIC_IMSK, imsk);
 }
 
 void
@@ -243,14 +239,14 @@ ioasic_lance_ether_address()
 #define LE_IOASIC_MEMALIGN	(128*1024)
 caddr_t le_iomem;
 
-void	ioasic_lance_dma_setup __P((struct ioasic_softc *));
-
-void
+int
 ioasic_lance_dma_setup(sc)
 	struct ioasic_softc *sc;
 {
 	bus_dma_tag_t dmat = sc->sc_dmat;
+	bus_dmamap_t le_dmam;
 	bus_dma_segment_t seg;
+	caddr_t	le_mem;
 	u_int32_t csr;
 	tc_addr_t tca;
 	int rseg;
@@ -262,48 +258,49 @@ ioasic_lance_dma_setup(sc)
 	    0, &seg, 1, &rseg, BUS_DMA_NOWAIT)) {
 		printf("%s: can't allocate DMA area for LANCE\n",
 		    sc->sc_dv.dv_xname);
-		return;
+		return 0;
 	}
 	if (bus_dmamem_map(dmat, &seg, rseg, LE_IOASIC_MEMSIZE,
-	    &le_iomem, BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) {
+	    &le_mem, BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) {
 		printf("%s: can't map DMA area for LANCE\n",
 		    sc->sc_dv.dv_xname);
 		bus_dmamem_free(dmat, &seg, rseg);
-		return;
+		return 0;
 	}
 
 	/*
 	 * Create and load the DMA map for the DMA area.
 	 */
 	if (bus_dmamap_create(dmat, LE_IOASIC_MEMSIZE, 1,
-	    LE_IOASIC_MEMSIZE, 0, BUS_DMA_NOWAIT, &sc->sc_lance_dmam)) {
+	    LE_IOASIC_MEMSIZE, 0, BUS_DMA_NOWAIT, &le_dmam)) {
 		printf("%s: can't create DMA map\n", sc->sc_dv.dv_xname);
 		goto bad;
 	}
-	if (bus_dmamap_load(dmat, sc->sc_lance_dmam,
-	    le_iomem, LE_IOASIC_MEMSIZE, NULL, BUS_DMA_NOWAIT)) {
+	if (bus_dmamap_load(dmat, le_dmam,
+	    &le_iomem, LE_IOASIC_MEMSIZE, NULL, BUS_DMA_NOWAIT)) {
 		printf("%s: can't load DMA map\n", sc->sc_dv.dv_xname);
 		goto bad;
 	}
-
-	tca = (tc_addr_t)sc->sc_lance_dmam->dm_segs[0].ds_addr;
-	if (tca != sc->sc_lance_dmam->dm_segs[0].ds_addr) {
+	tca = (tc_addr_t)le_dmam->dm_segs[0].ds_addr;
+#if 0
+	if (tca != le_dmam->dm_segs[0].ds_addr) {
 		printf("%s: bad LANCE DMA address\n", sc->sc_dv.dv_xname);
-		bus_dmamap_unload(dmat, sc->sc_lance_dmam);
+		bus_dmamap_unload(dmat, le_dmam);
 		goto bad;
 	}
+#endif
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh,
 		IOASIC_LANCE_DMAPTR,
 		((tca << 3) & ~(tc_addr_t)0x1f) | ((tca >> 29) & 0x1f));
 	csr = bus_space_read_4(sc->sc_bst, sc->sc_bsh, IOASIC_CSR);
 	csr |= IOASIC_CSR_DMAEN_LANCE;
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, IOASIC_CSR, csr);
-	return;
+	return tca;
 
  bad:
 	bus_dmamem_unmap(dmat, le_iomem, LE_IOASIC_MEMSIZE);
 	bus_dmamem_free(dmat, &seg, rseg);
-	le_iomem = 0;
+	return tca;
 }
 #else	/* old NetBSD/pmax code */
 void	ioasic_lance_dma_setup __P((void *));
