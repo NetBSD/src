@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sig.c,v 1.18 2003/09/12 00:37:17 christos Exp $	*/
+/*	$NetBSD: pthread_sig.c,v 1.19 2003/09/12 10:10:39 kleink Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_sig.c,v 1.18 2003/09/12 00:37:17 christos Exp $");
+__RCSID("$NetBSD: pthread_sig.c,v 1.19 2003/09/12 10:10:39 kleink Exp $");
 
 /* We're interposing a specific version of the signal interface. */
 #define	__LIBC12_SOURCE__
@@ -123,7 +123,7 @@ pthread__signal_init(void)
 static void
 pthread__make_siginfo(siginfo_t *si, int sig)
 {
-	(void)memset(&si, 0, sizeof(*si));
+	(void)memset(si, 0, sizeof(*si));
 	si->si_signo = sig;
 	si->si_code = SI_USER;
 	/*
