@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.69 1999/09/02 23:33:45 thorpej Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.70 2000/03/30 02:20:14 simonb Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -98,8 +98,6 @@ struct proc_target {
 #undef N
 };
 static int nproc_targets = sizeof(proc_targets) / sizeof(proc_targets[0]);
-
-static pid_t atopid __P((const char *, u_int));
 
 int	procfs_lookup	__P((void *));
 #define	procfs_create	genfs_eopnotsupp_rele
