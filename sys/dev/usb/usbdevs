@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.251 2002/05/31 21:11:56 nathanw Exp $
+$NetBSD: usbdevs,v 1.252 2002/06/13 11:11:08 dsainty Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -352,6 +352,7 @@ vendor HP2		0xf003	Hewlett Packard
 
 /* 3Com products */
 product 3COM HOMECONN		0x009d	HomeConnect USB Camera
+product 3COM 3CREB96		0x00a0	Bluetooth USB Adapter
 product 3COM 3C19250		0x03E8	3C19250 Ethernet adapter
 product 3COM USR56K		0x3021	U.S.Robotics 56000 Voice Faxmodem Pro
 product 3COM 3C460		0x11f8	HomeConnect 3C460
