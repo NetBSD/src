@@ -27,7 +27,7 @@
  *	FSM for isdnd
  *	-------------
  *
- *	$Id: fsm.c,v 1.5 2003/01/06 12:46:14 wiz Exp $ 
+ *	$Id: fsm.c,v 1.6 2003/10/06 09:43:27 itojun Exp $ 
  *
  * $FreeBSD$
  *
@@ -124,7 +124,7 @@ F_MCAI(struct cfg_entry *cep)
 
 	stop_timer(cep);
 
-	if((cep->dialin_reaction == REACT_ANSWER) &&
+	if ((cep->dialin_reaction == REACT_ANSWER) &&
 	   (cep->b1protocol == BPROT_NONE))
 	{
 		exec_answer(cep);
@@ -180,7 +180,7 @@ F_DIAL(struct cfg_entry *cep)
 {
 	DBGL(DL_STATE, (logit(LL_DBG, "F_DIAL: local dial out request")));
 
-        if(cep->dialrandincr)
+        if (cep->dialrandincr)
                 cep->randomtime = (random() & RANDOM_MASK) + cep->recoverytime;
 
 	cep->dial_count = 0;
@@ -208,11 +208,11 @@ F_DFL(struct cfg_entry *cep)
 {
 	cep->last_release_time = time(NULL);
 	
-	if(cep->dialouttype == DIALOUT_NORMAL)
+	if (cep->dialouttype == DIALOUT_NORMAL)
 	{
 		cep->dial_count++;
 	
-		if(cep->dial_count < cep->dialretries || cep->dialretries == -1) /* Added by FST <mailto:fsteevie@dds.nl> for unlimited dialing (sorry, but I needed it) */
+		if (cep->dial_count < cep->dialretries || cep->dialretries == -1) /* Added by FST <mailto:fsteevie@dds.nl> for unlimited dialing (sorry, but I needed it) */
 		{
 			/* inside normal retry cycle */
 		
@@ -225,7 +225,7 @@ F_DFL(struct cfg_entry *cep)
 	
 		/* retries exhausted */
 		
-		if(!cep->usedown)
+		if (!cep->usedown)
 		{
 			DBGL(DL_STATE, (logit(LL_DBG, "F_DFL: dial retry fail, dial retries exhausted")));
 			dialresponse(cep, DSTAT_TFAIL);
@@ -239,7 +239,7 @@ F_DFL(struct cfg_entry *cep)
 	
 		cep->down_retry_count++;
 	
-		if(cep->down_retry_count > cep->downtries)
+		if (cep->down_retry_count > cep->downtries)
 		{
 			/* set interface down */
 			DBGL(DL_STATE, (logit(LL_DBG, "F_DFL: dial retry cycle fail, setting interface down!")));
@@ -274,7 +274,7 @@ F_ACBW(struct cfg_entry *cep)
 {
 	DBGL(DL_STATE, (logit(LL_DBG, "F_ACBW: local callback, wait callback recovery time")));
 
-        if(cep->dialrandincr)
+        if (cep->dialrandincr)
                 cep->randomtime = (random() & RANDOM_MASK) + cep->recoverytime;
 
 	cep->dial_count = 0;
@@ -290,7 +290,7 @@ F_ACBR(struct cfg_entry *cep)
 {	
 	cep->dial_count++;
 
-	if(cep->dial_count < cep->dialretries || cep->dialretries == -1) /* Added by FST <mailto:fsteevie@dds.nl> for unlimited dialing (sorry, but I needed it) */
+	if (cep->dial_count < cep->dialretries || cep->dialretries == -1) /* Added by FST <mailto:fsteevie@dds.nl> for unlimited dialing (sorry, but I needed it) */
 	{
 		/* inside normal retry cycle */
 	
@@ -303,7 +303,7 @@ F_ACBR(struct cfg_entry *cep)
 
 	/* retries exhausted */
 	
-	if(!cep->usedown)
+	if (!cep->usedown)
 	{
 		DBGL(DL_STATE, (logit(LL_DBG, "F_ACBR: dial retry fail, dial retries exhausted")));
 		dialresponse(cep, DSTAT_TFAIL);
@@ -317,7 +317,7 @@ F_ACBR(struct cfg_entry *cep)
 
 	cep->down_retry_count++;
 
-	if(cep->down_retry_count > cep->downtries)
+	if (cep->down_retry_count > cep->downtries)
 	{
 		/* set interface down */
 		DBGL(DL_STATE, (logit(LL_DBG, "F_ACBR: dial retry cycle fail, setting interface down!")));
@@ -385,7 +385,7 @@ next_state(struct cfg_entry *cep, int event)
 {
 	int currstate, newstate;
 
-	if(event > N_EVENTS)
+	if (event > N_EVENTS)
 	{
 		logit(LL_ERR, "next_state: event > N_EVENTS");
 		error_exit(1, "next_state: event > N_EVENTS");
@@ -393,7 +393,7 @@ next_state(struct cfg_entry *cep, int event)
 
 	currstate = cep->state;
 
-	if(currstate > N_STATES)
+	if (currstate > N_STATES)
 	{
 		logit(LL_ERR, "next_state: currstate > N_STATES");
 		error_exit(1, "next_state: currstate > N_STATES");
@@ -401,13 +401,13 @@ next_state(struct cfg_entry *cep, int event)
 
 	newstate = state_tab[event][currstate].newstate;
 
-	if(newstate > N_STATES)
+	if (newstate > N_STATES)
 	{
 		logit(LL_ERR, "next_state: newstate > N_STATES");
 		error_exit(1, "next_state: newstate > N_STATES");
 	}
 
-	if(newstate != ST_SUSE)
+	if (newstate != ST_SUSE)
 	{
 		DBGL(DL_STATE, (logit(LL_DBG, "FSM event [%s]: [%s => %s]", event_text[event],
 				state_text[currstate],
@@ -416,7 +416,7 @@ next_state(struct cfg_entry *cep, int event)
 
         (*state_tab[event][currstate].func)(cep);
 
-	if(newstate == ST_ILL)
+	if (newstate == ST_ILL)
 	{
 		logit(LL_ERR, "FSM ILLEGAL STATE, event=%s: oldstate=%s => newstate=%s]",
 				event_text[event],
@@ -424,7 +424,7 @@ next_state(struct cfg_entry *cep, int event)
                                 state_text[newstate]);
 	}
 
-	if(newstate == ST_SUSE)
+	if (newstate == ST_SUSE)
 	{
 		DBGL(DL_STATE, (logit(LL_DBG, "FSM (SUSE) event [%s]: [%s => %s]", event_text[event],
 				state_text[currstate],

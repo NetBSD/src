@@ -27,7 +27,7 @@
  *	isdnd - holiday file handling
  *      =============================
  *
- *      $Id: holiday.c,v 1.2 2002/12/06 15:00:15 thorpej Exp $
+ *      $Id: holiday.c,v 1.3 2003/10/06 09:43:27 itojun Exp $
  *
  * $FreeBSD$
  *
@@ -77,7 +77,7 @@ init_holidays(char *filename)
 	
 	firsth = NULL;
 	
-	if((fp = fopen(filename, "r")) == NULL)
+	if ((fp = fopen(filename, "r")) == NULL)
 	{
 		logit(LL_ERR, "init_holiday: error opening holidayfile %s: %s!", filename, strerror(errno));
 		exit(1);
@@ -85,7 +85,7 @@ init_holidays(char *filename)
 
 	while((fgets(buffer, MAXBUFSZ, fp)) != NULL)
 	{
-		if(buffer[0] == '#'  || buffer[0] == ' ' ||
+		if (buffer[0] == '#'  || buffer[0] == ' ' ||
 		   buffer[0] == '\t' || buffer[0] == '\n')
 		{
 			continue;
@@ -93,10 +93,10 @@ init_holidays(char *filename)
 
 		ret = sscanf(buffer, "%d.%d.%d", &day, &month, &year);
 
-		if(ret != 3)
+		if (ret != 3)
 		{
 			ret = sscanf(buffer, "%d.%d", &day, &month);
-			if(ret != 2)
+			if (ret != 2)
 			{
 				logit(LL_ERR, "init_holiday: parse error for string [%s]!", buffer);
 				exit(1);
@@ -104,13 +104,13 @@ init_holidays(char *filename)
 			year = 0;
 		}
 
-		if((newh = (struct holiday *) malloc(sizeof(struct holiday))) == NULL)
+		if ((newh = (struct holiday *) malloc(sizeof(struct holiday))) == NULL)
 		{
 			logit(LL_ERR, "init_holiday: malloc failed for struct holiday!\n");
 			exit(1);
 		}
 
-		if(year)
+		if (year)
 		{
 			DBGL(DL_MSG, (logit(LL_DBG, "init_holidays: add %d.%d.%d", day, month, year)));
 		}
@@ -124,7 +124,7 @@ init_holidays(char *filename)
 		newh->year = year;
 		newh->next = NULL;
 		
-		if(firsth == NULL)
+		if (firsth == NULL)
 		{
 			firsth = newh;
 		}
@@ -153,10 +153,10 @@ static void
 free_holiday(struct holiday *ptr)
 {
 
-	if(ptr == NULL)
+	if (ptr == NULL)
 		return;
 
-	if(ptr->next != NULL)
+	if (ptr->next != NULL)
 		free_holiday(ptr->next);
 
 	free(ptr);
@@ -170,28 +170,28 @@ isholiday(int d, int m, int y)
 {
 	struct holiday *ch = NULL;
 
-	if(firsth == NULL)
+	if (firsth == NULL)
 		return(0);
 
 	ch = firsth;
 
-	for(;;)
+	for (;;)
 	{
-		if(ch->day == d && ch->month == m)
+		if (ch->day == d && ch->month == m)
 		{
-			if(ch->year == 0)
+			if (ch->year == 0)
 			{
 				DBGL(DL_MSG, (logit(LL_DBG, "isholiday: %d.%d is a holiday!", d, m)));
 				return(1);
 			}
-			else if(ch->year == y)
+			else if (ch->year == y)
 			{
 				DBGL(DL_MSG, (logit(LL_DBG, "isholiday: %d.%d.%d is a holiday!", d, m, y)));
 				return(1);
 			}
 		}
 
-		if(ch->next == NULL)
+		if (ch->next == NULL)
 			break;
 
 		ch = ch->next;

@@ -35,7 +35,7 @@
  *	i4b daemon - charging rates description file handling
  *	-----------------------------------------------------
  *
- *	$Id: rates.c,v 1.4 2002/12/06 15:00:16 thorpej Exp $ 
+ *	$Id: rates.c,v 1.5 2003/10/06 09:43:27 itojun Exp $ 
  *
  * $FreeBSD$
  *
@@ -61,7 +61,7 @@ int main( int argc, char **argv )
 {
 	int ret;
 	ret = readrates("/etc/isdn/isdnd.rates");
-	if(ret == ERROR)
+	if (ret == ERROR)
 		fprintf(stderr, "readrates returns [%d], [%s]\n", ret, error);
 	else
 		{
@@ -71,7 +71,7 @@ int main( int argc, char **argv )
 
 		fprintf(stderr, "readrates returns [%d]\n", ret);
 
-		for( type=0; type<4; type++ )
+		for (type = 0; type < 4; type++)
 			{
 			int unit = getrate( type );
 			fprintf(stderr, "getrate(%d) => %d\n", type, unit );
@@ -106,7 +106,7 @@ readrates(char *filename)
 	indx = 0;
 	rt = ort = NULL;
 
-	if((fp = fopen(filename, "r")) == NULL)
+	if ((fp = fopen(filename, "r")) == NULL)
 	{
 		snprintf(error, sizeof(error), "error open %s: %s", filename, sys_errlist[errno]);
 		rate_error = error;
@@ -118,7 +118,7 @@ readrates(char *filename)
 		line++;
 
 /* comments */
-		if(buffer[0] == '#'  || buffer[0] == ' ' ||
+		if (buffer[0] == '#'  || buffer[0] == ' ' ||
 		   buffer[0] == '\t' || buffer[0] == '\n')
 		{
 			continue;
@@ -151,7 +151,7 @@ readrates(char *filename)
 
 		/* day */
 		
-		if(isdigit(*bp) && *bp >= '0' && *bp <= '6')
+		if (isdigit(*bp) && *bp >= '0' && *bp <= '6')
 		{
 			indx = *bp - '0';
 
@@ -163,7 +163,7 @@ readrates(char *filename)
 			goto rate_error;
 		}
 
-		if(rates[rateindx][indx] == NULL)
+		if (rates[rateindx][indx] == NULL)
 		{
 			rt = (struct rates *)malloc(sizeof (struct rates));
 			if (rt == NULL)
@@ -191,7 +191,7 @@ readrates(char *filename)
 			int hour = 0;
 			int min = 0;
 
-			if(first)
+			if (first)
 			{
 				first = 0;
 			}
@@ -211,7 +211,7 @@ readrates(char *filename)
 			
 			/* start hour */
 			
-			if(isdigit(*bp) && isdigit(*(bp+1)))
+			if (isdigit(*bp) && isdigit(*(bp+1)))
 			{
 				hour = atoi(bp);
 				bp += 2;
@@ -224,7 +224,7 @@ readrates(char *filename)
 
 			/* point */
 			
-		  	if(*bp == '.')
+		  	if (*bp == '.')
 		  	{
 		  		bp++;
 		  	}
@@ -236,7 +236,7 @@ readrates(char *filename)
 		  	
 			/* start minute */
 			
-			if(isdigit(*bp) && isdigit(*(bp+1)))
+			if (isdigit(*bp) && isdigit(*(bp+1)))
 			{
 				min = atoi(bp);
 				bp += 2;
@@ -251,7 +251,7 @@ readrates(char *filename)
 
 			/* minus */
 			
-		  	if(*bp == '-')
+		  	if (*bp == '-')
 		  	{
 		  		bp++;
 		  	}
@@ -263,7 +263,7 @@ readrates(char *filename)
 
 			/* end hour */
 			
-			if(isdigit(*bp) && isdigit(*(bp+1)))
+			if (isdigit(*bp) && isdigit(*(bp+1)))
 			{
 				hour = atoi(bp);
 				bp += 2;
@@ -276,7 +276,7 @@ readrates(char *filename)
 
 			/* point */
 			
-		  	if(*bp == '.')
+		  	if (*bp == '.')
 		  	{
 		  		bp++;
 		  	}
@@ -288,7 +288,7 @@ readrates(char *filename)
 		  	
 			/* end minute */
 			
-			if(isdigit(*bp) && isdigit(*(bp+1)))
+			if (isdigit(*bp) && isdigit(*(bp+1)))
 			{
 				min = atoi(bp);
 				bp += 2;
@@ -300,11 +300,11 @@ readrates(char *filename)
 		  	}
 
 			/* if hour is 0 assume it means midnight */
-			if( hour == 0 )
+			if ( hour == 0 )
 				hour = 24;
 			rt->end_time = hour * 60 + min;
 
-			if( rt->end_time <= rt->start_time )
+			if ( rt->end_time <= rt->start_time )
 				{
 				snprintf(error, sizeof(error), "rates: end_time must be greater than start_time %d", line);
 				goto rate_error;
@@ -312,7 +312,7 @@ readrates(char *filename)
 
 			/* colon */
 			
-		  	if(*bp == ':')
+		  	if (*bp == ':')
 		  	{
 		  		bp++;
 		  	}
@@ -324,7 +324,7 @@ readrates(char *filename)
 
 			/* time */
 			
-			if(isdigit(*bp))
+			if (isdigit(*bp))
 			{
 				rt->rate = atoi(bp);
 				while(!isspace(*bp))
@@ -344,7 +344,7 @@ readrates(char *filename)
 	}
 
 #if DEBUG
-	if(debug_flags & DL_RATES)
+	if (debug_flags & DL_RATES)
 	{
 		for (j = 0; j < NRATES; j++)
 		{
@@ -387,75 +387,75 @@ get_current_rate(struct cfg_entry *cep, int dolog)
 {
 	int rt;
 	
-	switch(cep->unitlengthsrc)
+	switch (cep->unitlengthsrc)
 	{
-		case ULSRC_CMDL:	/* specified on commandline     */
-			if(dolog)
-				logit(LL_CHD, "%05d %s rate %d sec/unit (cmdl)",
-					cep->cdid, cep->name, unit_length);
-			return(unit_length);
-			break;
+	case ULSRC_CMDL:	/* specified on commandline     */
+		if (dolog)
+			logit(LL_CHD, "%05d %s rate %d sec/unit (cmdl)",
+				cep->cdid, cep->name, unit_length);
+		return(unit_length);
+		break;
 
-		case ULSRC_CONF:	/* get it from config file      */
-			if(dolog)
-				logit(LL_CHD, "%05d %s rate %d sec/unit (conf)",
-					cep->cdid, cep->name, cep->unitlength);
-			return(cep->unitlength);
+	case ULSRC_CONF:	/* get it from config file      */
+		if (dolog)
+			logit(LL_CHD, "%05d %s rate %d sec/unit (conf)",
+				cep->cdid, cep->name, cep->unitlength);
+		return(cep->unitlength);
 
-		case ULSRC_RATE:	/* get it dynamic from ratesfile*/
-			if(!got_rate)	/* got valid rates struct ?? */
-			{
-				if(dolog)
-					logit(LL_CHD, "%05d %s rate %d sec/unit (no ratefile)",
-						cep->cdid, cep->name, UNITLENGTH_DEFAULT);
-				return(UNITLENGTH_DEFAULT);
-			}
-			if((cep->ratetype >= NRATES) ||
-			   (cep->ratetype == INVALID_RATE))
-			{
-				if(dolog)
-					logit(LL_CHD, "%05d %s rate %d sec/unit (rate out of range)",
-						cep->cdid, cep->name, UNITLENGTH_DEFAULT);
-				return(UNITLENGTH_DEFAULT);
-			}
-			
-			if((rt = getrate(cep->ratetype)) != -1)
-			{
-				if(dolog)
-					logit(LL_CHD, "%05d %s rate %d sec/unit (rate)",
-						cep->cdid, cep->name, rt);
-				return(rt);
-			}
-
-			if(dolog)			
-				logit(LL_CHD, "%05d %s rate %d sec/unit (ratescan fail)",
+	case ULSRC_RATE:	/* get it dynamic from ratesfile*/
+		if (!got_rate)	/* got valid rates struct ?? */
+		{
+			if (dolog)
+				logit(LL_CHD, "%05d %s rate %d sec/unit (no ratefile)",
 					cep->cdid, cep->name, UNITLENGTH_DEFAULT);
-
 			return(UNITLENGTH_DEFAULT);
-			break;
-
-		case ULSRC_DYN:	/* dynamically calculated from AOC */
-			if((rt = getrate(cep->ratetype)) != -1)
-			{
-				if(dolog)
-					logit(LL_CHD, "%05d %s rate %d sec/unit (aocd, rate)",
-						cep->cdid, cep->name, rt);
-				return(rt);
-			}
-			if(dolog)
-				logit(LL_CHD, "%05d %s rate %d sec/unit (aocd, default)",
+		}
+		if ((cep->ratetype >= NRATES) ||
+		   (cep->ratetype == INVALID_RATE))
+		{
+			if (dolog)
+				logit(LL_CHD, "%05d %s rate %d sec/unit (rate out of range)",
 					cep->cdid, cep->name, UNITLENGTH_DEFAULT);
-
 			return(UNITLENGTH_DEFAULT);
-			break;
+		}
+		
+		if ((rt = getrate(cep->ratetype)) != -1)
+		{
+			if (dolog)
+				logit(LL_CHD, "%05d %s rate %d sec/unit (rate)",
+					cep->cdid, cep->name, rt);
+			return(rt);
+		}
 
-		default:
-			if(dolog)
-				logit(LL_CHD, "%05d %s rate %d sec/unit (unitlen unknown)",
-					cep->cdid, cep->name, UNITLENGTH_DEFAULT);
+		if (dolog)			
+			logit(LL_CHD, "%05d %s rate %d sec/unit (ratescan fail)",
+				cep->cdid, cep->name, UNITLENGTH_DEFAULT);
 
-			return(UNITLENGTH_DEFAULT);
-			break;
+		return(UNITLENGTH_DEFAULT);
+		break;
+
+	case ULSRC_DYN:	/* dynamically calculated from AOC */
+		if ((rt = getrate(cep->ratetype)) != -1)
+		{
+			if (dolog)
+				logit(LL_CHD, "%05d %s rate %d sec/unit (aocd, rate)",
+					cep->cdid, cep->name, rt);
+			return(rt);
+		}
+		if (dolog)
+			logit(LL_CHD, "%05d %s rate %d sec/unit (aocd, default)",
+				cep->cdid, cep->name, UNITLENGTH_DEFAULT);
+
+		return(UNITLENGTH_DEFAULT);
+		break;
+
+	default:
+		if (dolog)
+			logit(LL_CHD, "%05d %s rate %d sec/unit (unitlen unknown)",
+				cep->cdid, cep->name, UNITLENGTH_DEFAULT);
+
+		return(UNITLENGTH_DEFAULT);
+		break;
 	}
 }
 #endif /* PARSE_DEBUG_MAIN */
@@ -472,7 +472,7 @@ getrate(int rate_type )
 	register struct rates *hd;
 	int time_now;
 
-	if((!got_rate) ||
+	if ((!got_rate) ||
 	   (rate_type >= NRATES) ||
 	   (rate_type == INVALID_RATE))
 	{
@@ -490,8 +490,8 @@ getrate(int rate_type )
 	for (hd = rates[rate_type][ptr->tm_wday]; hd; hd = hd->next)
 	{
 		/* current time within window ? */
-		if((time_now >= hd->start_time ) &&
-		   (time_now < hd->end_time ))
+		if ((time_now >= hd->start_time ) &&
+		    (time_now < hd->end_time ))
 		{
 			DBGL(DL_RATES, (logit(LL_DBG, "rate=%d sec/unit (day=%d, beg=%d:%2.2d, end=%d:2.2d, current=%d:%2.2d)",
 				hd->rate,

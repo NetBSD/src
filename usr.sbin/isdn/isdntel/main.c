@@ -27,7 +27,7 @@
  *	isdntel - isdn4bsd telephone answering machine support
  *      ======================================================
  *
- *      $Id: main.c,v 1.4 2003/10/06 04:19:41 itojun Exp $ 
+ *      $Id: main.c,v 1.5 2003/10/06 09:43:27 itojun Exp $ 
  *
  * $FreeBSD$
  *
@@ -82,7 +82,7 @@ main(int argc, char **argv)
 				break;
 
 			case 't':
-				if(isdigit(*optarg))
+				if (isdigit(*optarg))
 				{
 					rrtimeout = strtoul(optarg, NULL, 10);
 				}
@@ -99,10 +99,10 @@ main(int argc, char **argv)
 		}
 	}
 
-	if(rrtimeout < 10)
+	if (rrtimeout < 10)
 		rrtimeout = 10;
 
-	if((chdir(spooldir)) != 0)
+	if ((chdir(spooldir)) != 0)
 		fatal("cannot change directory to spooldir %s!", spooldir);
 
 	init_alias(aliasfile);
@@ -119,7 +119,7 @@ main(int argc, char **argv)
 	{
 		/* if no char is available within timeout, reread spool */
 		
-		if((poll(set, 1, rrtimeout * 1000)) <= 0)
+		if ((poll(set, 1, rrtimeout * 1000)) <= 0)
 		{
 			reread();
 			continue;
@@ -138,7 +138,7 @@ main(int argc, char **argv)
 				break;
 
 			case KEY_UP:	/* up-move cursor */
-				if(cur_file && cur_file->prev)
+				if (cur_file && cur_file->prev)
 				{
 					cur_file = cur_file->prev;
 					cur_pos--;
@@ -148,7 +148,7 @@ main(int argc, char **argv)
 
 			case TAB:
 			case KEY_DOWN:	/* down-move cursor */
-				if(cur_file && cur_file->next)
+				if (cur_file && cur_file->next)
 				{
 					cur_file = cur_file->next;
 					cur_pos++;
@@ -191,7 +191,7 @@ makecurrent(int cur_pos, struct onefile *cur_file, int cold)
 
 	/* un-higlight current horizontal bar */
 
-	if(!cold && lastfile && cur_file)
+	if (!cold && lastfile && cur_file)
 	{
 		snprintf(buffer, sizeof(buffer),
 		    "%s %s %-16s %-16s %-20s %-6s%*s",
@@ -205,7 +205,7 @@ makecurrent(int cur_pos, struct onefile *cur_file, int cold)
 		wattroff(main_w, A_REVERSE);
 	}
 
-	if(cur_file == NULL)
+	if (cur_file == NULL)
 	{
 		lastpos = cur_pos_scr;
 		lastfile = cur_file;
@@ -214,7 +214,7 @@ makecurrent(int cur_pos, struct onefile *cur_file, int cold)
 		
 	/* have to scroll up or down ? */
 
-	if(cur_pos >= bot_dis)		
+	if (cur_pos >= bot_dis)		
 	{
 		/* scroll up */
 
@@ -224,7 +224,7 @@ makecurrent(int cur_pos, struct onefile *cur_file, int cold)
 	    	top_dis++;
 	    	cur_pos_scr = LINES-START_O-3;
 	}
-	else if(cur_pos < top_dis)
+	else if (cur_pos < top_dis)
 	{
 		/* scroll down */
 
@@ -296,7 +296,7 @@ fatal(char *fmt, ...)
 
 	va_start(ap, fmt);
 
-	if(curses_ready)
+	if (curses_ready)
 	{	
 		move(LINES-1, 0);
 		clrtoeol();
@@ -323,7 +323,7 @@ error(char *fmt, ...)
 
 	va_start(ap, fmt);
 
-	if(curses_ready)
+	if (curses_ready)
 	{
 		wprintw(main_w, "ERROR: ");
 		vwprintw(main_w, fmt, ap);
@@ -358,10 +358,10 @@ init_files(int inipos)
 	cur_pos = 0;
 	cur_pos_scr = 0;	
 
-	if(nofiles == 0)
+	if (nofiles == 0)
 		return;
 	
-	for(i=0; (i < nofiles) && (i < (LINES-START_O-2)); i++)
+	for (i=0; (i < nofiles) && (i < (LINES-START_O-2)); i++)
 	{
 		mvwprintw(main_w, i, 0, "%s %s", cur_file->date, cur_file->time);
 		mvwprintw(main_w, i, DST_POS, "%s", cur_file->dstnumber);
@@ -371,17 +371,17 @@ init_files(int inipos)
 
 		bot_dis++;
 
-		if((cur_file = cur_file->next) == NULL)
+		if ((cur_file = cur_file->next) == NULL)
 			break;		
 	}
 	
 	cur_file = first;
 
-	if(inipos)
+	if (inipos)
 	{
-		for(i=0; i < inipos; i++)
+		for (i = 0; i < inipos; i++)
 		{
-			if(cur_file->next != NULL)
+			if (cur_file->next != NULL)
 				cur_file = cur_file->next;
 			else
 				break;

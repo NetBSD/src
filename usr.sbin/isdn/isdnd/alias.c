@@ -30,7 +30,7 @@
  *	NOTE:	this has to stay in sync with isdntel/alias.c to be able
  *		to share a common aliasfile!
  *		
- *      $Id: alias.c,v 1.3 2003/10/06 09:18:41 itojun Exp $
+ *      $Id: alias.c,v 1.4 2003/10/06 09:43:27 itojun Exp $
  *
  * $FreeBSD$
  *
@@ -62,7 +62,7 @@ init_alias(char *filename)
 
 	firsta = NULL;
 	
-	if((fp = fopen(filename, "r")) == NULL)
+	if ((fp = fopen(filename, "r")) == NULL)
 	{
 		logit(LL_ERR, "init_alias: error opening aliasfile %s: %s!", filename, strerror(errno));
 		exit(1);
@@ -70,7 +70,7 @@ init_alias(char *filename)
 
 	while((fgets(buffer, MAXBUFSZ, fp)) != NULL)
 	{
-		if(buffer[0] == '#'  || buffer[0] == ' ' ||
+		if (buffer[0] == '#'  || buffer[0] == ' ' ||
 		   buffer[0] == '\t' || buffer[0] == '\n')
 		{
 			continue;
@@ -94,21 +94,21 @@ init_alias(char *filename)
 
 		*d = '\0';
 		
-		if((strlen(number) > 1) && (strlen(name) > 1))
+		if ((strlen(number) > 1) && (strlen(name) > 1))
 		{
-			if((newa = (struct alias *) malloc(sizeof(struct alias))) == NULL)
+			if ((newa = (struct alias *) malloc(sizeof(struct alias))) == NULL)
 			{
 				logit(LL_ERR, "init_alias: malloc failed for struct alias!\n");
 				exit(1);
 			}
 
-			if((newa->number = strdup(number)) == NULL)
+			if ((newa->number = strdup(number)) == NULL)
 			{
 				logit(LL_ERR, "init_alias: malloc failed for number alias!\n");
 				exit(1);
 			}
 
-			if((newa->name = strdup(name)) == NULL)
+			if ((newa->name = strdup(name)) == NULL)
 			{
 				logit(LL_ERR, "init_alias: malloc failed for name alias!\n");
 				exit(1);
@@ -116,7 +116,7 @@ init_alias(char *filename)
 
 			newa->next = NULL;
 			
-			if(firsta == NULL)
+			if (firsta == NULL)
 			{
 				firsta = newa;
 			}
@@ -146,16 +146,16 @@ static void
 free_alias(struct alias *ptr)
 {
 
-	if(ptr == NULL)
+	if (ptr == NULL)
 		return;
 
-	if(ptr->next != NULL)
+	if (ptr->next != NULL)
 		free_alias(ptr->next);
 
-	if(ptr->number != NULL)
+	if (ptr->number != NULL)
 		free(ptr->number);
 		
-	if(ptr->name != NULL)
+	if (ptr->name != NULL)
 		free(ptr->name);
 
 	free(ptr);
@@ -169,19 +169,19 @@ get_alias(char *number)
 {
 	struct alias *ca = NULL;
 
-	if(firsta == NULL)
+	if (firsta == NULL)
 		return(number);
 
 	ca = firsta;
 
-	for(;;)
+	for (;;)
 	{
-		if(strlen(number) == strlen(ca->number))
+		if (strlen(number) == strlen(ca->number))
 		{
-			if(!(strcmp(number, ca->number)))
+			if (!(strcmp(number, ca->number)))
 				return(ca->name);
 		}
-		if(ca->next == NULL)
+		if (ca->next == NULL)
 			break;
 		ca = ca->next;
 	}

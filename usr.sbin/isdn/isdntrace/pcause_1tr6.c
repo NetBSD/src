@@ -27,7 +27,7 @@
  *	printing cause values
  *	---------------------
  *
- *	$Id: pcause_1tr6.c,v 1.2 2001/09/16 16:34:44 wiz Exp $
+ *	$Id: pcause_1tr6.c,v 1.3 2003/10/06 09:43:28 itojun Exp $
  *
  * $FreeBSD$
  *
@@ -44,119 +44,119 @@ print_cause_1tr6(unsigned char code)
 	static char error_message[120];
 	char *e;
 
-	switch(code)
+	switch (code)
 	{
-		case CAUSE_1TR6_SHUTDN:
-			e = "normal D-channel shutdown";
-			break;
+	case CAUSE_1TR6_SHUTDN:
+		e = "normal D-channel shutdown";
+		break;
 
-		case CAUSE_1TR6_ICRV:
-			e = "invalid call reference value";
-			break;
+	case CAUSE_1TR6_ICRV:
+		e = "invalid call reference value";
+		break;
 
-		case CAUSE_1TR6_BSNI:
-			e = "bearer service not implemented";
-			break;
+	case CAUSE_1TR6_BSNI:
+		e = "bearer service not implemented";
+		break;
 
-		case CAUSE_1TR6_CIDNE:
-			e = "call identity does not exist";
-			break;
+	case CAUSE_1TR6_CIDNE:
+		e = "call identity does not exist";
+		break;
 
-		case CAUSE_1TR6_CIIU:
-			e = "call identity in use";
-			break;
+	case CAUSE_1TR6_CIIU:
+		e = "call identity in use";
+		break;
 
-		case CAUSE_1TR6_NCA:
-			e = "no channel available";
-			break;
+	case CAUSE_1TR6_NCA:
+		e = "no channel available";
+		break;
 
-		case CAUSE_1TR6_RFNI:
-			e = "requested facility not implemented";
-			break;
+	case CAUSE_1TR6_RFNI:
+		e = "requested facility not implemented";
+		break;
 
-		case CAUSE_1TR6_RFNS:
-			e = "requested facility not subscribed";
-			break;
+	case CAUSE_1TR6_RFNS:
+		e = "requested facility not subscribed";
+		break;
 
-		case CAUSE_1TR6_OCB:
-			e = "outgoing calls barred";
-			break;
+	case CAUSE_1TR6_OCB:
+		e = "outgoing calls barred";
+		break;
 
-		case CAUSE_1TR6_UAB:
-			e = "user access busy";
-			break;
+	case CAUSE_1TR6_UAB:
+		e = "user access busy";
+		break;
 
-		case CAUSE_1TR6_NECUG:
-			e = "non existent CUG";
-			break;
+	case CAUSE_1TR6_NECUG:
+		e = "non existent CUG";
+		break;
 
-		case CAUSE_1TR6_NECUG1:
-			e = "non existent CUG";
-			break;
+	case CAUSE_1TR6_NECUG1:
+		e = "non existent CUG";
+		break;
 
-		case CAUSE_1TR6_SPV:
-			e = "kommunikationsbeziehung als SPV nicht erlaubt";
-			break;
+	case CAUSE_1TR6_SPV:
+		e = "kommunikationsbeziehung als SPV nicht erlaubt";
+		break;
 
-		case CAUSE_1TR6_DNO:
-			e = "destination not obtainable";
-			break;
+	case CAUSE_1TR6_DNO:
+		e = "destination not obtainable";
+		break;
 
-		case CAUSE_1TR6_NC:
-			e = "number changed";
-			break;
+	case CAUSE_1TR6_NC:
+		e = "number changed";
+		break;
 
-		case CAUSE_1TR6_OOO:
-			e = "out of order";
-			break;
+	case CAUSE_1TR6_OOO:
+		e = "out of order";
+		break;
 
-		case CAUSE_1TR6_NUR:
-			e = "no user responding";
-			break;
+	case CAUSE_1TR6_NUR:
+		e = "no user responding";
+		break;
 
-		case CAUSE_1TR6_UB:
-			e = "user busy";
-			break;
+	case CAUSE_1TR6_UB:
+		e = "user busy";
+		break;
 
-		case CAUSE_1TR6_ICB:
-			e = "incoming calls barred";
-			break;
+	case CAUSE_1TR6_ICB:
+		e = "incoming calls barred";
+		break;
 
-		case CAUSE_1TR6_CR:
-			e = "call rejected";
-			break;
+	case CAUSE_1TR6_CR:
+		e = "call rejected";
+		break;
 
-		case CAUSE_1TR6_NCO:
-			e = "network congestion";
-			break;
+	case CAUSE_1TR6_NCO:
+		e = "network congestion";
+		break;
 
-		case CAUSE_1TR6_RUI:
-			e = "remote user initiated";
-			break;
+	case CAUSE_1TR6_RUI:
+		e = "remote user initiated";
+		break;
 
-		case CAUSE_1TR6_LPE:
-			e = "local procedure error";
-			break;
+	case CAUSE_1TR6_LPE:
+		e = "local procedure error";
+		break;
 
-		case CAUSE_1TR6_RPE:
-			e = "remote procedure error";
-			break;
+	case CAUSE_1TR6_RPE:
+		e = "remote procedure error";
+		break;
 
-		case CAUSE_1TR6_RUS:
-			e = "remote user suspended";
-			break;
+	case CAUSE_1TR6_RUS:
+		e = "remote user suspended";
+		break;
 
-		case CAUSE_1TR6_RUR:
-			e = "remote user resumed";
-			break;
+	case CAUSE_1TR6_RUR:
+		e = "remote user resumed";
+		break;
 
-		case CAUSE_1TR6_UIDL:
-			e = "user info discharded locally";
-			break;
+	case CAUSE_1TR6_UIDL:
+		e = "user info discharded locally";
+		break;
 
-		default:
-			e = "UNKNOWN error occurred";
-			break;
+	default:
+		e = "UNKNOWN error occurred";
+		break;
 	}
 
 	sprintf(error_message, "0x%02x: %s", code & 0x7f, e);	

@@ -27,7 +27,7 @@
  *	i4b daemon - logging routines
  *	-----------------------------
  *
- *	$Id: log.c,v 1.5 2003/10/06 09:18:41 itojun Exp $ 
+ *	$Id: log.c,v 1.6 2003/10/06 09:43:27 itojun Exp $ 
  *
  * $FreeBSD$
  *
@@ -71,9 +71,9 @@ init_log(void)
 {
 	int i;
 
-	if(uselogfile)
+	if (uselogfile)
 	{
-		if((logfp = fopen(logfile, "a")) == NULL)
+		if ((logfp = fopen(logfile, "a")) == NULL)
 		{
 			fprintf(stderr, "ERROR, cannot open logfile %s: %s\n",
 				logfile, strerror(errno));
@@ -87,7 +87,7 @@ init_log(void)
 	else
 	{
 #if DEBUG
-		if(do_debug && do_fork == 0 && do_fullscreen == 0)
+		if (do_debug && do_fork == 0 && do_fullscreen == 0)
 			(void)openlog("isdnd",
 				LOG_PID|LOG_NDELAY|LOG_PERROR,
 				logfacility);
@@ -99,7 +99,7 @@ init_log(void)
 
 	/* initialize the regexp array */
 
-	for(i = 0; i < MAX_RE; i++)
+	for (i = 0; i < MAX_RE; i++)
 	{
 		char *p;
 		char buf[64];
@@ -108,7 +108,7 @@ init_log(void)
 
 		rarr[i].re_flg = 0;
 
-		if((p = strdup(buf)) == NULL)
+		if ((p = strdup(buf)) == NULL)
 		{
 			logit(LL_DBG, "init_log: malloc failed: %s", strerror(errno));
 			do_exit(1);
@@ -124,7 +124,7 @@ init_log(void)
 void
 finish_log(void)
 {
-	if(uselogfile)
+	if (uselogfile)
 	{
 		fflush(logfp);
 		fclose(logfp);
@@ -161,7 +161,7 @@ logit(int what, const char *fmt, ...)
 
 	/* put log on screen ? */
 
-	if((do_fullscreen && curses_ready) &&
+	if ((do_fullscreen && curses_ready) &&
 	   ((!debug_noscreen) || (debug_noscreen && (what != LL_DBG))))
 	{
 		wprintw(lower_w, "%s %s %-.*s\n", dp, logtab[what].text,
@@ -185,11 +185,11 @@ logit(int what, const char *fmt, ...)
 #endif
 
 #ifdef I4B_EXTERNAL_MONITOR
-	if(what != LL_MER) /* don't send monitor errs, endless loop !!! */
+	if (what != LL_MER) /* don't send monitor errs, endless loop !!! */
 		monitor_evnt_log(logtab[what].pri, logtab[what].text, buffer);
 #endif
 
-	if(uselogfile)
+	if (uselogfile)
 	{
 		fprintf(logfp, "%s %s %s\n", dp, logtab[what].text, buffer);
 	}
@@ -207,7 +207,7 @@ logit(int what, const char *fmt, ...)
 
 
 #if DEBUG
-	if(what != LL_DBG) /* don't check debug logs, endless loop !!! */
+	if (what != LL_DBG) /* don't check debug logs, endless loop !!! */
 #endif
 		check_reg(buffer);
 }
@@ -236,9 +236,9 @@ check_reg(char *logstring)
 {
 	register int i;
 
-	for(i = 0; i < MAX_RE; i++)
+	for (i = 0; i < MAX_RE; i++)
 	{
-		if(rarr[i].re_flg && (!regexec(&(rarr[i].re), logstring, (size_t) 0, NULL, 0)))
+		if (rarr[i].re_flg && (!regexec(&(rarr[i].re), logstring, (size_t) 0, NULL, 0)))
 		{
 			char* argv[3];
 			argv[0] = rarr[i].re_prog;

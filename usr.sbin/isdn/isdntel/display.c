@@ -27,7 +27,7 @@
  *	isdntel - isdn4bsd telephone answering machine support
  *      ======================================================
  *
- *	$Id: display.c,v 1.2 2003/10/06 04:19:41 itojun Exp $ 
+ *	$Id: display.c,v 1.3 2003/10/06 09:43:27 itojun Exp $ 
  *
  * $FreeBSD$
  *
@@ -51,11 +51,11 @@ init_screen(void)
 	
 	curses_ready = 1;
 	
-	if((COLS < 80) || (LINES < 24))
+	if ((COLS < 80) || (LINES < 24))
 		fatal("ERROR, minimal screensize must be 80x24, is %dx%d, terminating!", COLS, LINES);
 
 	
-	if((main_w = newwin(LINES-START_O-2, COLS, START_O, 0)) == NULL)
+	if ((main_w = newwin(LINES-START_O-2, COLS, START_O, 0)) == NULL)
 		fatal("ERROR, curses init main window, terminating!");
 
 	raw();					/* raw input */
@@ -118,7 +118,7 @@ do_menu(void)
 
 	/* create a new window in the lower screen area */
 	
-	if((menu_w = newwin(WMENU_HGT, WMENU_LEN, WMENU_POSLN, WMENU_POSCO )) == NULL)
+	if ((menu_w = newwin(WMENU_HGT, WMENU_LEN, WMENU_POSLN, WMENU_POSCO )) == NULL)
 		return;
 
 	keypad(menu_w, TRUE);			/* use special keys */
@@ -135,7 +135,7 @@ do_menu(void)
 
 	/* fill the window with the menu options */
 	
-	for(mpos=0; mpos <= (WMITEMS-1); mpos++)
+	for (mpos=0; mpos <= (WMITEMS-1); mpos++)
 		mvwaddstr(menu_w, mpos + 2, 2, menu[mpos]);
 
 	/* highlight the first menu option */
@@ -147,96 +147,96 @@ do_menu(void)
 
 	/* input loop */
 	
-	for(;;)
+	for (;;)
 	{
 		wrefresh(menu_w);
 
 		c = wgetch(menu_w);
 
-		switch(c)
+		switch (c)
 		{
-			case TAB:
-			case KEY_DOWN:	/* down-move cursor */
-			case ' ':
-				mvwaddstr(menu_w, mpos + 2, 2, menu[mpos]);
-				mpos++;
-				if(mpos >= WMITEMS)
-					mpos = 0;
-				wstandout(menu_w);
-				mvwaddstr(menu_w, mpos + 2, 2, menu[mpos]);
-				wstandend(menu_w);
-				break;
+		case TAB:
+		case KEY_DOWN:	/* down-move cursor */
+		case ' ':
+			mvwaddstr(menu_w, mpos + 2, 2, menu[mpos]);
+			mpos++;
+			if (mpos >= WMITEMS)
+				mpos = 0;
+			wstandout(menu_w);
+			mvwaddstr(menu_w, mpos + 2, 2, menu[mpos]);
+			wstandend(menu_w);
+			break;
 
-			case KEY_UP:	/* up-move cursor */
-				mvwaddstr(menu_w, mpos + 2, 2, menu[mpos]);
-				if(mpos)
-					mpos--;
-				else
-					mpos = WMITEMS-1;
-				wstandout(menu_w);
-				mvwaddstr(menu_w, mpos + 2, 2, menu[mpos]);
-				wstandend(menu_w);
-				break;
+		case KEY_UP:	/* up-move cursor */
+			mvwaddstr(menu_w, mpos + 2, 2, menu[mpos]);
+			if (mpos)
+				mpos--;
+			else
+				mpos = WMITEMS-1;
+			wstandout(menu_w);
+			mvwaddstr(menu_w, mpos + 2, 2, menu[mpos]);
+			wstandend(menu_w);
+			break;
 
-			case 'R':
-			case 'r':
-				wrefresh(curscr);
-				goto mexit;
+		case 'R':
+		case 'r':
+			wrefresh(curscr);
+			goto mexit;
 
-			case 'E':
-			case 'e':
-			case 'Q':
-			case 'q':
-			case 'X':
-			case 'x':
-				do_quit(0);
-				goto mexit;
-				break;
+		case 'E':
+		case 'e':
+		case 'Q':
+		case 'q':
+		case 'X':
+		case 'x':
+			do_quit(0);
+			goto mexit;
+			break;
 
-			case 'P':
-			case 'p':
+		case 'P':
+		case 'p':
+			play(cur_file);
+			goto mexit;
+			break;
+
+		case 'D':
+		case 'd':
+			delete(cur_file);
+			goto mexit;				
+			break;
+			
+		case CR:
+		case LF:	/* exec highlighted option */
+#ifdef KEY_ENTER
+		case KEY_ENTER:
+#endif
+			switch (mpos)
+			{
+			case PLAY:
 				play(cur_file);
 				goto mexit;
 				break;
-
-			case 'D':
-			case 'd':
+			case DELETE:
 				delete(cur_file);
-				goto mexit;				
-				break;
-				
-			case CR:
-			case LF:	/* exec highlighted option */
-#ifdef KEY_ENTER
-			case KEY_ENTER:
-#endif
-				switch(mpos)
-				{
-					case PLAY:
-						play(cur_file);
-						goto mexit;
-						break;
-					case DELETE:
-						delete(cur_file);
-						goto mexit;
-						break;
-					case REREAD:
-						reread();
-						goto mexit;
-						break;
-					case REFRESH:
-						wrefresh(curscr);
-						break;
-					case EXIT:
-						do_quit(0);
-						break;
-				}
 				goto mexit;
 				break;
-		
-			default:
+			case REREAD:
+				reread();
 				goto mexit;
 				break;
+			case REFRESH:
+				wrefresh(curscr);
+				break;
+			case EXIT:
+				do_quit(0);
+				break;
+			}
+			goto mexit;
+			break;
+	
+		default:
+			goto mexit;
+			break;
 		}
 	}
 

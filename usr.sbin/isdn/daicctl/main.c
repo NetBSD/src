@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.6 2003/10/03 23:27:31 itojun Exp $ */
+/* $NetBSD: main.c,v 1.7 2003/10/06 09:43:27 itojun Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -60,29 +60,29 @@ main(int argc, char **argv)
 
 	pthrou = lflag = dflag = xflag = iflag = sflag = vflag = 0;
 	while ((ch = getopt(argc, argv, "d:xsvlp")) != -1)
-	    switch(ch) {
-		case 'd':
-			dnload = optarg;
-			dflag = 1;
-			break;
-		case 's':
-			sflag = 1;
-			break;
-		case 'l':
-			lflag = 1;
-			break;
-		case 'x':
-			xflag = 1;
-			break;
-		case 'v':
-			vflag = 1;
-			break;
-		case 'p':
-			pthrou = 1;
-			break;
-		case '?':
-		default:
-			usage();
+	    switch (ch) {
+	    case 'd':
+		dnload = optarg;
+		dflag = 1;
+		break;
+	    case 's':
+		sflag = 1;
+		break;
+	    case 'l':
+		lflag = 1;
+		break;
+	    case 'x':
+		xflag = 1;
+		break;
+	    case 'v':
+		vflag = 1;
+		break;
+	    case 'p':
+		pthrou = 1;
+		break;
+	    case '?':
+	    default:
+		usage();
 	    }
 
 	argc -= optind;

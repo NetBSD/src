@@ -30,7 +30,7 @@
  *	q.921.c - print Q.921 traces
  *	----------------------------
  *
- *	$Id: q921.c,v 1.1.1.1 2001/01/06 13:00:30 martin Exp $ 
+ *	$Id: q921.c,v 1.2 2003/10/06 09:43:28 itojun Exp $ 
  *
  * $FreeBSD$
  *
@@ -61,7 +61,7 @@ decode_lapd(char *pbuf, int n, unsigned char *buf, int dir, int raw, int printit
 	tei = buf[1] >> 1;
 	cnt++;
 
-	if(dir == FROM_TE)
+	if (dir == FROM_TE)
 		cmd = !(buf[0] & 2);
 	else
 		cmd = buf[0] & 2;
@@ -71,30 +71,30 @@ decode_lapd(char *pbuf, int n, unsigned char *buf, int dir, int raw, int printit
 		/* SAPI control procedures */
 		case 0:
 		{
-			if(printit)
+			if (printit)
 				sprintf((lbufp+strlen(lbufp)), "Q921: SAP=%d (Call Control), %c, TEI=%d, ", sap, cmd?'C':'R', tei);
 
-			if((buf[2] & 0x01) == 0)
+			if ((buf[2] & 0x01) == 0)
 			{
-				if(printit)
+				if (printit)
 					sprintf((lbufp+strlen(lbufp)), "I-Frame: ");
 
 				p_f = buf [3] & 1;
 
-				if(printit)
+				if (printit)
 					sprintf((lbufp+strlen(lbufp)), "N(S) %d N(R) %d P %d ", buf [2] >> 1, buf [3] >> 1, p_f);
 
 				cnt += 2;
 			}
-			else if((buf[2] & 0x03) == 0x01)
+			else if ((buf[2] & 0x03) == 0x01)
 			{
-				if(printit)
+				if (printit)
 					sprintf((lbufp+strlen(lbufp)), "S-Frame: ");
 
 				p_f = buf [3] & 1;
 				cmd = buf [2] & 0x0c;
 
-				if(printit)
+				if (printit)
 				{
 					if (cmd == 0)
 						sprintf((lbufp+strlen(lbufp)), "RR N(R) %d PF %d ", buf [3] >> 1, p_f);
@@ -105,15 +105,15 @@ decode_lapd(char *pbuf, int n, unsigned char *buf, int dir, int raw, int printit
 				}
 				cnt += 2;
 		  	}
-		  	else if((buf[2] & 0x03) == 0x03)
+		  	else if ((buf[2] & 0x03) == 0x03)
 			{
-		  		if(printit)
+		  		if (printit)
 					sprintf((lbufp+strlen(lbufp)), "U-Frame: ");
 
 				p_f = (buf [2] & 0x10) >> 4;
 				cmd = buf [2] & 0xec;
 
-				if(printit)
+				if (printit)
 				{
 					if (cmd == 0x6c)
 						sprintf((lbufp+strlen(lbufp)), "SABME PF %d ", p_f);
@@ -139,7 +139,7 @@ decode_lapd(char *pbuf, int n, unsigned char *buf, int dir, int raw, int printit
 		/* D channel X.25 */
 		
 		case 16:
-			if(printit)
+			if (printit)
 				sprintf((lbufp+strlen(lbufp)), "Q921: SAP=%d (X.25), %c, TEI=%d, ", sap, cmd?'C':'R', tei);
 			cnt = n;
 			goto dump;				
@@ -147,7 +147,7 @@ decode_lapd(char *pbuf, int n, unsigned char *buf, int dir, int raw, int printit
 		/* Loopback test */
 		
 		case 32:
-			if(printit)
+			if (printit)
 				sprintf((lbufp+strlen(lbufp)), "Q921: SAP=%d (Loopbacktest), %c, TEI=%d, ", sap, cmd?'C':'R', tei);
 			cnt = n;
 			goto dump;				
@@ -156,12 +156,12 @@ decode_lapd(char *pbuf, int n, unsigned char *buf, int dir, int raw, int printit
 
 		case 63:
 		{
-			if(printit)
+			if (printit)
 				sprintf((lbufp+strlen(lbufp)), "Q921: SAP=%d (TEI-Management), %c, TEI=%d, ", sap, cmd?'C':'R', tei);
 
 			if (tei != 127)
 			{
-				if(printit)
+				if (printit)
 					sprintf((lbufp+strlen(lbufp)), "ILLEGAL TEI\n");
 				cnt = n;
 				goto dump;				
@@ -169,56 +169,56 @@ decode_lapd(char *pbuf, int n, unsigned char *buf, int dir, int raw, int printit
 
 			if (buf [2] != 3 && buf [3] != 0xf)
 			{
-				if(printit)
+				if (printit)
 					sprintf((lbufp+strlen(lbufp)), "invalid format!\n");
 				cnt = n;
 				goto dump;				
 			}
 			cnt+= 2; /* UI + MEI */
 
-			if(printit)
+			if (printit)
 				sprintf((lbufp+strlen(lbufp)), "Ri=0x%04hx, ", *(short *)&buf[4]);
 			cnt += 2; /* Ri */
 			
 			switch (buf[6])
 			{
 				case 1: 
-					if(printit)
+					if (printit)
 						sprintf((lbufp+strlen(lbufp)), "IdRequest, Ai=%d", (buf [7] >> 1));
 					cnt += 2;
 					break;
 		  		case 2:
-					if(printit)
+					if (printit)
 						sprintf((lbufp+strlen(lbufp)), "IdAssign, Ai=%d", (buf [7] >> 1));
 					cnt += 2;
 					break;
 		  		case 3:
-					if(printit)
+					if (printit)
 						sprintf((lbufp+strlen(lbufp)), "IdDenied, Ai=%d", (buf [7] >> 1));
 					cnt += 2;
 					break;
 		  		case 4:
-					if(printit)
+					if (printit)
 						sprintf((lbufp+strlen(lbufp)), "IdCheckReq, Ai=%d", (buf [7] >> 1));
 					cnt += 2;
 					break;
 		  		case 5:
-					if(printit)
+					if (printit)
 						sprintf((lbufp+strlen(lbufp)), "IdCheckResp, Ai=%d", (buf [7] >> 1));
 					cnt += 2;
 					break;
 		  		case 6:
-					if(printit)
+					if (printit)
 						sprintf((lbufp+strlen(lbufp)), "IdRemove, Ai=%d", (buf [7] >> 1));
 					cnt += 2;
 					break;
 		  		case 7:
-					if(printit)
+					if (printit)
 						sprintf((lbufp+strlen(lbufp)), "IdVerify, Ai=%d", (buf [7] >> 1));
 					cnt += 2;
 					break;
 		  		default:
-					if(printit)
+					if (printit)
 						sprintf((lbufp+strlen(lbufp)), "Unknown Msg Type\n");
 					cnt = n;
 					goto dump;				
@@ -229,17 +229,17 @@ decode_lapd(char *pbuf, int n, unsigned char *buf, int dir, int raw, int printit
 		/* Illegal SAPI */
 		
 		default:
-			if(printit)
+			if (printit)
 				sprintf((lbufp+strlen(lbufp)), "Q921: ERROR, SAP=%d (Illegal SAPI), %c, TEI=%d\n", sap, cmd?'C':'R', tei);
 			cnt = n;
 			goto dump;				
 	}
 
 dump:	
-	if(printit)
+	if (printit)
 		sprintf((lbufp+strlen(lbufp)), "\n");
 
-	if(raw && printit)
+	if (raw && printit)
 	{
 		int j;
 		for (i = 0; i < cnt; i += 16)

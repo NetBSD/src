@@ -27,7 +27,7 @@
  *	exec.h - supplemental program/script execution
  *	----------------------------------------------
  *
- *	$Id: exec.c,v 1.7 2003/10/06 09:18:41 itojun Exp $ 
+ *	$Id: exec.c,v 1.8 2003/10/06 09:43:27 itojun Exp $ 
  *
  * $FreeBSD$
  *
@@ -60,21 +60,21 @@ sigchild_handler(int sig)
 	register int i;
 	pid_t pid;
 	
-	if((pid = waitpid(-1, &retstat, WNOHANG)) <= 0)
+	if ((pid = waitpid(-1, &retstat, WNOHANG)) <= 0)
 	{
 		logit(LL_ERR, "ERROR, sigchild_handler, waitpid: %s", strerror(errno));
 		error_exit(1, "ERROR, sigchild_handler, waitpid: %s", strerror(errno));
 	}
 	else
 	{
-		if(WIFEXITED(retstat))
+		if (WIFEXITED(retstat))
 		{
 			DBGL(DL_PROC, (logit(LL_DBG, "normal child (pid=%d) termination, exitstat = %d",
 				pid, WEXITSTATUS(retstat))));
 		}
-		else if(WIFSIGNALED(retstat))
+		else if (WIFSIGNALED(retstat))
 		{
-			if(WCOREDUMP(retstat))
+			if (WCOREDUMP(retstat))
 				logit(LL_WRN, "child (pid=%d) termination due to signal %d (coredump)",
 					pid, WTERMSIG(retstat));
 			else
@@ -85,11 +85,11 @@ sigchild_handler(int sig)
 
 	/* check if hangup required */
 	
-	for(i=0; i < MAX_PIDS; i++)
+	for (i=0; i < MAX_PIDS; i++)
 	{
-		if(pid_tab[i].pid == pid)
+		if (pid_tab[i].pid == pid)
 		{
-			if(pid_tab[i].cep->cdid != CDID_UNUSED)
+			if (pid_tab[i].cep->cdid != CDID_UNUSED)
 			{
 				DBGL(DL_PROC, (logit(LL_DBG, "sigchild_handler: scheduling hangup for cdid %d, pid %d",
 					pid_tab[i].cep->cdid, pid_tab[i].pid)));
@@ -118,7 +118,7 @@ exec_prog(char *prog, char **arglist)
 
 	tmp[0] = '\0';
 
-	for(a=1; arglist[a] != NULL; ++a )
+	for (a=1; arglist[a] != NULL; ++a )
 	{
 		strlcat(tmp, " ", sizeof(tmp));
 		strlcat(tmp, arglist[a], sizeof(tmp));
@@ -126,15 +126,15 @@ exec_prog(char *prog, char **arglist)
 
 	DBGL(DL_PROC, (logit(LL_DBG, "exec_prog: %s, args:%s", path, tmp)));
 	
-	switch(pid = fork())
+	switch (pid = fork())
 	{
-		case -1:		/* error */
-			logit(LL_ERR, "ERROR, exec_prog/fork: %s", strerror(errno));
-			error_exit(1, "ERROR, exec_prog/fork: %s", strerror(errno));
-		case 0:			/* child */
-			break;
-		default:		/* parent */
-			return(pid);
+	case -1:		/* error */
+		logit(LL_ERR, "ERROR, exec_prog/fork: %s", strerror(errno));
+		error_exit(1, "ERROR, exec_prog/fork: %s", strerror(errno));
+	case 0:			/* child */
+		break;
+	default:		/* parent */
+		return(pid);
 	}
 
 	/* this is the child now */
@@ -146,13 +146,13 @@ exec_prog(char *prog, char **arglist)
 	 * 3. /var/log/isdnd.log (or similar, when used)
 	 */
 	close(isdnfd);
-	if(useacctfile)
+	if (useacctfile)
 		fclose(acctfp);
-	if(uselogfile)
+	if (uselogfile)
 		fclose(logfp);
 	
 
-	if(execvp(path,arglist) < 0 )
+	if (execvp(path,arglist) < 0 )
 		_exit(127);
 
 	return(-1);
@@ -222,15 +222,15 @@ exec_answer(struct cfg_entry *cep)
 
 	/* if destination telephone number avail, add it as argument */
 	
-	if(*cep->local_phone_incoming)
+	if (*cep->local_phone_incoming)
 		argv[4] = cep->local_phone_incoming;
 
 	/* if source telephone number avail, add it as argument */
 	
-	if(*cep->real_phone_incoming)
+	if (*cep->real_phone_incoming)
 		argv[6] = cep->real_phone_incoming;
 
-	if(*cep->display)
+	if (*cep->display)
 	{
 		argv[7] = "-t";
 		argv[8] = cep->display;
@@ -245,13 +245,13 @@ exec_answer(struct cfg_entry *cep)
 		
 	/* enter pid and conf ptr entry addr into table */
 	
-	if(pid != -1)
+	if (pid != -1)
 	{
 		int i;
 		
-		for(i=0; i < MAX_PIDS; i++)
+		for (i=0; i < MAX_PIDS; i++)
 		{
-			if(pid_tab[i].pid == 0)
+			if (pid_tab[i].pid == 0)
 			{
 				pid_tab[i].pid = pid;
 				pid_tab[i].cep = cep;
@@ -271,9 +271,9 @@ check_and_kill(struct cfg_entry *cep)
 {
 	int i;
 	
-	for(i=0; i < MAX_PIDS; i++)
+	for (i=0; i < MAX_PIDS; i++)
 	{
-		if(pid_tab[i].cep == cep)
+		if (pid_tab[i].cep == cep)
 		{
 			pid_t kp;
 
@@ -303,21 +303,21 @@ upd_callstat_file(char *filename, int rotateflag)
 	
 	fp = fopen(filename, "r+");
 
-	if(fp == NULL)
+	if (fp == NULL)
 	{
 		/* file not there, create it and exit */
 		
 		logit(LL_WRN, "upd_callstat_file: creating %s", filename);
 
 		fp = fopen(filename, "w");
-		if(fp == NULL)
+		if (fp == NULL)
 		{
 			logit(LL_ERR, "ERROR, upd_callstat_file: cannot create %s, %s", filename, strerror(errno));
 			return;
 		}
 
 		ret = fprintf(fp, "%ld %ld 1", (long)now, (long)now);
-		if(ret <= 0)
+		if (ret <= 0)
 			logit(LL_ERR, "ERROR, upd_callstat_file: fprintf failed: %s", strerror(errno));
 		
 		fclose(fp);
@@ -333,7 +333,7 @@ upd_callstat_file(char *filename, int rotateflag)
 	
 	rewind(fp);
 		
-	if(ret != 3)
+	if (ret != 3)
 	{
 		/* file corrupt ? anyway, initialize */
 		
@@ -343,7 +343,7 @@ upd_callstat_file(char *filename, int rotateflag)
 		n = 0;
 	}
 
-	if(rotateflag)
+	if (rotateflag)
 	{
 		struct tm *stmp;
 		int dom;
@@ -355,7 +355,7 @@ upd_callstat_file(char *filename, int rotateflag)
 		/* get day of month for just now */
 		stmp = localtime(&now);
 		
-		if(dom != stmp->tm_mday)
+		if (dom != stmp->tm_mday)
 		{
 			FILE *nfp;
 			char buf[MAXPATHLEN];
@@ -366,14 +366,14 @@ upd_callstat_file(char *filename, int rotateflag)
 			    stmp->tm_mday);
 
 			nfp = fopen(buf, "w");
-			if(nfp == NULL)
+			if (nfp == NULL)
 			{
 				logit(LL_ERR, "ERROR, upd_callstat_file: cannot open for write %s, %s", buf, strerror(errno));
 				return;
 			}
 
 			ret = fprintf(nfp, "%ld %ld %d", (long)s, (long)l, n);
-			if(ret <= 0)
+			if (ret <= 0)
 				logit(LL_ERR, "ERROR, upd_callstat_file: fprintf failed: %s", strerror(errno));
 			
 			fclose(nfp);
@@ -395,7 +395,7 @@ upd_callstat_file(char *filename, int rotateflag)
 
 	ret = fprintf(fp, "%ld %ld %-3d", (long)s, (long)now, n);	
 
-	if(ret <= 0)
+	if (ret <= 0)
 		logit(LL_ERR, "ERROR, upd_callstat_file: fprintf failed: %s", strerror(errno));
 	
 	fclose(fp);

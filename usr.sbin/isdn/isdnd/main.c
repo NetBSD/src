@@ -27,7 +27,7 @@
  *	i4b daemon - main program entry
  *	-------------------------------
  *
- *	$Id: main.c,v 1.7 2003/10/06 09:18:41 itojun Exp $ 
+ *	$Id: main.c,v 1.8 2003/10/06 09:43:27 itojun Exp $ 
  *
  * $FreeBSD$
  *
@@ -131,113 +131,113 @@ main(int argc, char **argv)
 		switch (i)
 		{
 #ifdef I4B_EXTERNAL_MONITOR
-			case 'm':
-				inhibit_monitor = 1;
-				break;
+		case 'm':
+			inhibit_monitor = 1;
+			break;
 #endif
-				
-			case 'c':
-				configfile = optarg;
-				break;
+			
+		case 'c':
+			configfile = optarg;
+			break;
 
 #ifdef DEBUG				
-			case 'd':
-				if(*optarg == 'n')
-					debug_noscreen = 1;
-				else if((sscanf(optarg, "%i", &debug_flags)) == 1)
-					do_debug = 1;
-				else
-					usage();				
-				break;
+		case 'd':
+			if (*optarg == 'n')
+				debug_noscreen = 1;
+			else if ((sscanf(optarg, "%i", &debug_flags)) == 1)
+				do_debug = 1;
+			else
+				usage();				
+			break;
 #endif
 
-			case 'f':
-				do_fullscreen = 1;
-				do_fork = 0;			
+		case 'f':
+			do_fullscreen = 1;
+			do_fork = 0;			
 #ifndef USE_CURSES
-				fprintf(stderr, "Sorry, no fullscreen mode available - daemon compiled without USE_CURSES\n");
-				exit(1);
+			fprintf(stderr, "Sorry, no fullscreen mode available - daemon compiled without USE_CURSES\n");
+			exit(1);
 #endif
-				break;
+			break;
 
-			case 'F':
-				do_fork = 0;
-				break;
+		case 'F':
+			do_fork = 0;
+			break;
 
-			case 'l':
-				uselogfile = 1;
-				break;
+		case 'l':
+			uselogfile = 1;
+			break;
 
-			case 'L':
-				strlcpy(logfile, optarg, sizeof(logfile));
-				break;
+		case 'L':
+			strlcpy(logfile, optarg, sizeof(logfile));
+			break;
 
-			case 'P':
-				do_print = 1;
-				break;
+		case 'P':
+			do_print = 1;
+			break;
 
-			case 'r':
-				rdev = optarg;
-				do_rdev = 1;
-				break;
+		case 'r':
+			rdev = optarg;
+			do_rdev = 1;
+			break;
 
-			case 's':
-				if(isdigit(*optarg))
+		case 's':
+			if (isdigit(*optarg))
+			{
+				int facility;
+				logfacility = strtoul(optarg, NULL, 10);
+				facility = logfacility << 3;
+
+				if ((facility < LOG_KERN) ||
+				   (facility > LOG_FTP && facility < LOG_LOCAL0) ||
+				   (facility > LOG_LOCAL7))
 				{
-					int facility;
-					logfacility = strtoul(optarg, NULL, 10);
-					facility = logfacility << 3;
-
-					if((facility < LOG_KERN) ||
-					   (facility > LOG_FTP && facility < LOG_LOCAL0) ||
-					   (facility > LOG_LOCAL7))
-					{
-						fprintf(stderr, "Error, option -s has invalid logging facility %d", logfacility);
-						usage();
-					}
-					logfacility = facility;
-				}
-				else
-				{
-					fprintf(stderr, "Error: option -s requires a numeric argument!\n");
+					fprintf(stderr, "Error, option -s has invalid logging facility %d", logfacility);
 					usage();
 				}
-				break;
-
-			case 't':
-				ttype = optarg;
-				do_ttytype = 1;
-				break;
-
-			case 'u':
-				if(isdigit(*optarg))
-				{
-					unit_length = strtoul(optarg, NULL, 10);
-					if(unit_length < ULSRC_CMDLMIN)
-						unit_length = ULSRC_CMDLMIN;
-					else if(unit_length > ULSRC_CMDLMAX)
-						unit_length = ULSRC_CMDLMAX;
-					got_unitlen = 1;
-				}
-				else
-				{
-					fprintf(stderr, "Error: option -T requires a numeric argument!\n");
-					usage();
-				}
-				break;
-
-			case '?':
-			default:
+				logfacility = facility;
+			}
+			else
+			{
+				fprintf(stderr, "Error: option -s requires a numeric argument!\n");
 				usage();
-				break;
+			}
+			break;
+
+		case 't':
+			ttype = optarg;
+			do_ttytype = 1;
+			break;
+
+		case 'u':
+			if (isdigit(*optarg))
+			{
+				unit_length = strtoul(optarg, NULL, 10);
+				if (unit_length < ULSRC_CMDLMIN)
+					unit_length = ULSRC_CMDLMIN;
+				else if (unit_length > ULSRC_CMDLMAX)
+					unit_length = ULSRC_CMDLMAX;
+				got_unitlen = 1;
+			}
+			else
+			{
+				fprintf(stderr, "Error: option -T requires a numeric argument!\n");
+				usage();
+			}
+			break;
+
+		case '?':
+		default:
+			usage();
+			break;
 		}
 	}
 #ifdef DEBUG
-	if(!do_debug)
+	if (!do_debug)
 		debug_noscreen = 0;
 #endif
 
-	if(!do_print)
+	if (!do_print)
 	{
 		umask(UMASK);	/* set our umask ... */	
 	
@@ -246,9 +246,9 @@ main(int argc, char **argv)
 	
 	check_pid();	/* check if we are already running */
 
-	if(!do_print)
+	if (!do_print)
 	{
-		if(do_fork || (do_fullscreen && do_rdev)) /* daemon mode ? */
+		if (do_fork || (do_fullscreen && do_rdev)) /* daemon mode ? */
 			daemonize();
 	
 		write_pid();	/* write our pid to file */
@@ -266,7 +266,7 @@ main(int argc, char **argv)
 
 	/* open isdn device */
 	
-	if((isdnfd = open(I4BDEVICE, O_RDWR)) < 0)
+	if ((isdnfd = open(I4BDEVICE, O_RDWR)) < 0)
 	{
 		logit(LL_ERR, "main: cannot open %s: %s", I4BDEVICE, strerror(errno));
 		exit(1);
@@ -274,25 +274,25 @@ main(int argc, char **argv)
 
 	/* check kernel and userland have same version/release numbers */
 	
-	if((ioctl(isdnfd, I4B_VR_REQ, &mvr)) < 0)
+	if ((ioctl(isdnfd, I4B_VR_REQ, &mvr)) < 0)
 	{
 		logit(LL_ERR, "main: ioctl I4B_VR_REQ failed: %s", strerror(errno));
 		do_exit(1);
 	}
 
-	if(mvr.version != VERSION)
+	if (mvr.version != VERSION)
 	{
 		logit(LL_ERR, "main: version mismatch, kernel %d, daemon %d", mvr.version, VERSION);
 		do_exit(1);
 	}
 
-	if(mvr.release != REL)
+	if (mvr.release != REL)
 	{
 		logit(LL_ERR, "main: release mismatch, kernel %d, daemon %d", mvr.release, REL);
 		do_exit(1);
 	}
 
-	if(mvr.step != STEP)
+	if (mvr.step != STEP)
 	{
 		logit(LL_ERR, "main: step mismatch, kernel %d, daemon %d", mvr.step, STEP);
 		do_exit(1);
@@ -306,7 +306,7 @@ main(int argc, char **argv)
 	
 	configure(configfile, 0);
 
-	if(config_error_flag)
+	if (config_error_flag)
 	{
 		logit(LL_ERR, "there were %d error(s) in the configuration file, terminating!", config_error_flag);
 		exit(1);
@@ -326,29 +326,29 @@ main(int argc, char **argv)
 	
 	/* handle the rates stuff */
 	
-	if((i = readrates(ratesfile)) == ERROR)
+	if ((i = readrates(ratesfile)) == ERROR)
 	{
-		if(rate_error != NULL)
+		if (rate_error != NULL)
 			logit(LL_ERR, "%s", rate_error);
 		exit(1);
 	}
 
-	if(i == GOOD)
+	if (i == GOOD)
 	{
 		got_rate = 1;	/* flag, ratesfile read and ok */
 		DBGL(DL_RCCF, (logit(LL_DBG, "ratesfile %s read successfully", ratesfile)));
 	}
 	else
 	{
-		if(rate_error != NULL)
+		if (rate_error != NULL)
 			logit(LL_WRN, "%s", rate_error);
 	}
 
 	/* if writing accounting info, open file, set unbuffered */
 	
-	if(useacctfile)
+	if (useacctfile)
 	{
-		if((acctfp = fopen(acctfile, "a")) == NULL)
+		if ((acctfp = fopen(acctfile, "a")) == NULL)
 		{
 			logit(LL_ERR, "ERROR, can't open acctfile %s for writing, terminating!", acctfile);
 			exit(1);
@@ -358,7 +358,7 @@ main(int argc, char **argv)
 
 	/* initialize alias processing */
 
-	if(aliasing)
+	if (aliasing)
 		init_alias(aliasfile);
 
 	/* init holidays */
@@ -368,7 +368,7 @@ main(int argc, char **argv)
 	/* init remote monitoring */
 	
 #ifdef I4B_EXTERNAL_MONITOR
-	if(do_monitor)
+	if (do_monitor)
 	{
 		monitor_init();
 		sockfd = monitor_create_local_socket();
@@ -381,7 +381,7 @@ main(int argc, char **argv)
 	/* in case fullscreendisplay, initialize */
 
 #ifdef USE_CURSES
-	if(do_fullscreen)
+	if (do_fullscreen)
 	{
 		init_screen();
 	}
@@ -390,14 +390,14 @@ main(int argc, char **argv)
 	/* init realtime priority */
   		
 #ifdef USE_RTPRIO
-  	if(rt_prio != RTPRIO_NOTUSED)
+  	if (rt_prio != RTPRIO_NOTUSED)
   	{
   		struct rtprio rtp;
 
   		rtp.type = RTP_PRIO_REALTIME;
   		rtp.prio = rt_prio;
 
-  		if((rtprio(RTP_SET, getpid(), &rtp)) == -1)
+  		if ((rtprio(RTP_SET, getpid(), &rtp)) == -1)
   		{
 			logit(LL_ERR, "rtprio failed: %s", strerror(errno));
 			do_exit(1);
@@ -434,7 +434,7 @@ do_exit(int exitval)
 	logit(LL_DMN, "daemon terminating, exitval = %d", exitval);
 	
 #ifdef USE_CURSES
-	if(do_fullscreen && curses_ready)
+	if (do_fullscreen && curses_ready)
 		endwin();
 #endif
 
@@ -458,7 +458,7 @@ error_exit(int exitval, const char *fmt, ...)
 	logit(LL_DMN, "fatal error, daemon terminating, exitval = %d", exitval);
 	
 #ifdef USE_CURSES
-	if(do_fullscreen && curses_ready)
+	if (do_fullscreen && curses_ready)
 		endwin();
 #endif
 
@@ -466,7 +466,7 @@ error_exit(int exitval, const char *fmt, ...)
 	monitor_exit();
 #endif
 
-	if(mailto[0] && mailer[0])
+	if (mailto[0] && mailer[0])
 	{
 
 #define EXITBL 2048
@@ -518,12 +518,12 @@ mloop(
 	
  	logit(LL_DMN, "i4b isdn daemon started (pid = %d)", getpid());
  
-	for(;;)
+	for (;;)
 	{
 		FD_ZERO(&set);
 
 #ifdef USE_CURSES
-		if(do_fullscreen)
+		if (do_fullscreen)
 			FD_SET(STDIN_FILENO, &set);
 #endif
 
@@ -532,25 +532,25 @@ mloop(
 		high_selfd = isdnfd;
 		
 #ifdef I4B_EXTERNAL_MONITOR
-		if(do_monitor)
+		if (do_monitor)
 		{
 			if (localmonitor != -1) {
 				/* always watch for new connections */
 				FD_SET(localmonitor, &set);
-				if(localmonitor > high_selfd)
+				if (localmonitor > high_selfd)
 					high_selfd = localmonitor;
 			}
 #ifndef I4B_NOTCPIP_MONITOR
 			if (remotemonitor != -1) {
 				FD_SET(remotemonitor, &set);
-				if(remotemonitor > high_selfd)
+				if (remotemonitor > high_selfd)
 					high_selfd = remotemonitor;
 			}
 #endif
 
 			/* if there are client connections, let monitor module
 			 * enter them into the fdset */
-			if(accepted)
+			if (accepted)
 			{
 				monitor_prepselect(&set, &high_selfd);
 			}
@@ -562,34 +562,34 @@ mloop(
 
 		ret = select(high_selfd + 1, &set, NULL, NULL, &timeout);
 
-		if(ret > 0)
+		if (ret > 0)
 		{	
-			if(FD_ISSET(isdnfd, &set))
+			if (FD_ISSET(isdnfd, &set))
 				isdnrdhdl();
 
 #ifdef USE_CURSES
-			if(FD_ISSET(STDIN_FILENO, &set))
+			if (FD_ISSET(STDIN_FILENO, &set))
 				kbdrdhdl();
 #endif
 
 #ifdef I4B_EXTERNAL_MONITOR
-			if(do_monitor)
+			if (do_monitor)
 			{
-				if(localmonitor != -1 && FD_ISSET(localmonitor, &set))
+				if (localmonitor != -1 && FD_ISSET(localmonitor, &set))
 					monitor_handle_connect(localmonitor, 1);
 
 #ifndef I4B_NOTCPIP_MONITOR
-				if(remotemonitor != -1 && FD_ISSET(remotemonitor, &set))
+				if (remotemonitor != -1 && FD_ISSET(remotemonitor, &set))
 					monitor_handle_connect(remotemonitor, 0);
 #endif
-				if(accepted)
+				if (accepted)
 					monitor_handle_input(&set);
 			}
 #endif
 		}
-		else if(ret == -1)
+		else if (ret == -1)
 		{
-			if(errno != EINTR)
+			if (errno != EINTR)
 			{
 				logit(LL_ERR, "mloop: ERROR, select error on isdn device, errno = %d!", errno);
 				error_exit(1, "mloop: ERROR, select error on isdn device, errno = %d!", errno);
@@ -611,16 +611,16 @@ kbdrdhdl(void)
 {
 	int ch = getch();
 		
-	switch(ch)
+	switch (ch)
 	{
-		case 0x0c:	/* control L */
-			wrefresh(curscr);
-			break;
-		
-		case '\n':
-		case '\r':
-			do_menu();
-			break;
+	case 0x0c:	/* control L */
+		wrefresh(curscr);
+		break;
+	
+	case '\n':
+	case '\r':
+		do_menu();
+		break;
 	}
 }
 #endif
@@ -636,85 +636,85 @@ isdnrdhdl(void)
 	
 	register int len;
 
-	if((len = read(isdnfd, msg_rd_buf, MSG_BUF_SIZ)) > 0)
+	if ((len = read(isdnfd, msg_rd_buf, MSG_BUF_SIZ)) > 0)
 	{
-		switch(hp->type)
+		switch (hp->type)
 		{
-			case MSG_CONNECT_IND:				
-				msg_connect_ind((msg_connect_ind_t *)msg_rd_buf, len);
-				break;
-				
-			case MSG_CONNECT_ACTIVE_IND:
-				msg_connect_active_ind((msg_connect_active_ind_t *)msg_rd_buf);
-				break;
+		case MSG_CONNECT_IND:				
+			msg_connect_ind((msg_connect_ind_t *)msg_rd_buf, len);
+			break;
+			
+		case MSG_CONNECT_ACTIVE_IND:
+			msg_connect_active_ind((msg_connect_active_ind_t *)msg_rd_buf);
+			break;
 
-			case MSG_DISCONNECT_IND:
-				msg_disconnect_ind((msg_disconnect_ind_t *)msg_rd_buf);
-				break;
-				
-			case MSG_DIALOUT_IND:
-				msg_dialout((msg_dialout_ind_t *)msg_rd_buf);
-				break;
+		case MSG_DISCONNECT_IND:
+			msg_disconnect_ind((msg_disconnect_ind_t *)msg_rd_buf);
+			break;
+			
+		case MSG_DIALOUT_IND:
+			msg_dialout((msg_dialout_ind_t *)msg_rd_buf);
+			break;
 
-			case MSG_ACCT_IND:
-				msg_accounting((msg_accounting_ind_t *)msg_rd_buf);
-				break;
+		case MSG_ACCT_IND:
+			msg_accounting((msg_accounting_ind_t *)msg_rd_buf);
+			break;
 
-			case MSG_IDLE_TIMEOUT_IND:
-				msg_idle_timeout_ind((msg_idle_timeout_ind_t *)msg_rd_buf);
-				break;
+		case MSG_IDLE_TIMEOUT_IND:
+			msg_idle_timeout_ind((msg_idle_timeout_ind_t *)msg_rd_buf);
+			break;
 
-			case MSG_CHARGING_IND:
-				msg_charging_ind((msg_charging_ind_t *)msg_rd_buf);
-				break;
+		case MSG_CHARGING_IND:
+			msg_charging_ind((msg_charging_ind_t *)msg_rd_buf);
+			break;
 
-			case MSG_PROCEEDING_IND:
-				msg_proceeding_ind((msg_proceeding_ind_t *)msg_rd_buf);
-				break;
+		case MSG_PROCEEDING_IND:
+			msg_proceeding_ind((msg_proceeding_ind_t *)msg_rd_buf);
+			break;
 
-			case MSG_ALERT_IND:
-				msg_alert_ind((msg_alert_ind_t *)msg_rd_buf);
-				break;
+		case MSG_ALERT_IND:
+			msg_alert_ind((msg_alert_ind_t *)msg_rd_buf);
+			break;
 
-			case MSG_DRVRDISC_REQ:
-				msg_drvrdisc_req((msg_drvrdisc_req_t *)msg_rd_buf);
-				break;
+		case MSG_DRVRDISC_REQ:
+			msg_drvrdisc_req((msg_drvrdisc_req_t *)msg_rd_buf);
+			break;
 
-			case MSG_L12STAT_IND:
-				msg_l12stat_ind((msg_l12stat_ind_t *)msg_rd_buf);
-				break;
+		case MSG_L12STAT_IND:
+			msg_l12stat_ind((msg_l12stat_ind_t *)msg_rd_buf);
+			break;
 
-			case MSG_TEIASG_IND:
-				msg_teiasg_ind((msg_teiasg_ind_t *)msg_rd_buf);
-				break;
+		case MSG_TEIASG_IND:
+			msg_teiasg_ind((msg_teiasg_ind_t *)msg_rd_buf);
+			break;
 
-			case MSG_PDEACT_IND:
-				msg_pdeact_ind((msg_pdeact_ind_t *)msg_rd_buf);
-				break;
+		case MSG_PDEACT_IND:
+			msg_pdeact_ind((msg_pdeact_ind_t *)msg_rd_buf);
+			break;
 
-			case MSG_NEGCOMP_IND:
-				msg_negcomplete_ind((msg_negcomplete_ind_t *)msg_rd_buf);
-				break;
+		case MSG_NEGCOMP_IND:
+			msg_negcomplete_ind((msg_negcomplete_ind_t *)msg_rd_buf);
+			break;
 
-			case MSG_IFSTATE_CHANGED_IND:
-				msg_ifstatechg_ind((msg_ifstatechg_ind_t *)msg_rd_buf);
-				break;
+		case MSG_IFSTATE_CHANGED_IND:
+			msg_ifstatechg_ind((msg_ifstatechg_ind_t *)msg_rd_buf);
+			break;
 
-			case MSG_DIALOUTNUMBER_IND:
-				msg_dialoutnumber((msg_dialoutnumber_ind_t *)msg_rd_buf);
-				break;
+		case MSG_DIALOUTNUMBER_IND:
+			msg_dialoutnumber((msg_dialoutnumber_ind_t *)msg_rd_buf);
+			break;
 
-			case MSG_PACKET_IND:
-				msg_packet_ind((msg_packet_ind_t *)msg_rd_buf);
-				break;
+		case MSG_PACKET_IND:
+			msg_packet_ind((msg_packet_ind_t *)msg_rd_buf);
+			break;
 
-			case MSG_CONTR_EV_IND:
-				msg_ctrl_ev_ind((msg_ctrl_ev_ind_t *)msg_rd_buf);
-				break;
+		case MSG_CONTR_EV_IND:
+			msg_ctrl_ev_ind((msg_ctrl_ev_ind_t *)msg_rd_buf);
+			break;
 
-			default:
-				logit(LL_WRN, "ERROR, unknown message received from /dev/isdn (0x%x)", msg_rd_buf[0]);
-				break;
+		default:
+			logit(LL_WRN, "ERROR, unknown message received from /dev/isdn (0x%x)", msg_rd_buf[0]);
+			break;
 		}
 	}
 	else
@@ -743,13 +743,13 @@ rereadconfig(int dummy)
 	
 	configure(configfile, 1);
 
-	if(config_error_flag)
+	if (config_error_flag)
 	{
 		logit(LL_ERR, "rereadconfig: there were %d error(s) in the configuration file, terminating!", config_error_flag);
 		error_exit(1, "rereadconfig: there were %d error(s) in the configuration file, terminating!", config_error_flag);
 	}
 
-	if(aliasing)
+	if (aliasing)
 	{
 		/* reread alias database */
 		free_aliases();
@@ -763,7 +763,7 @@ rereadconfig(int dummy)
 void
 reopenfiles(int dummy)
 {
-        if(useacctfile)
+        if (useacctfile)
 	{
 		/* close file */
 		
@@ -772,20 +772,20 @@ reopenfiles(int dummy)
 
 	        /* if user specified a suffix, rename the old file */
 	        
-	        if(rotatesuffix[0] != '\0')
+	        if (rotatesuffix[0] != '\0')
 	        {
 	        	char filename[MAXPATHLEN];
 
 	        	snprintf(filename, sizeof(filename), "%s%s", acctfile, rotatesuffix);
 
-			if((rename(acctfile, filename)) != 0)
+			if ((rename(acctfile, filename)) != 0)
 			{
 				logit(LL_ERR, "reopenfiles: acct rename failed, cause = %s", strerror(errno));
 				error_exit(1, "reopenfiles: acct rename failed, cause = %s", strerror(errno));
 			}
 		}
 
-		if((acctfp = fopen(acctfile, "a")) == NULL)
+		if ((acctfp = fopen(acctfile, "a")) == NULL)
 		{
 			logit(LL_ERR, "ERROR, can't open acctfile %s for writing, terminating!", acctfile);
 			error_exit(1, "ERROR, can't open acctfile %s for writing, terminating!", acctfile);
@@ -793,26 +793,26 @@ reopenfiles(int dummy)
 		setvbuf(acctfp, (char *)NULL, _IONBF, 0);
 	}
 
-	if(uselogfile)
+	if (uselogfile)
 	{
 	        finish_log();
 
 	        /* if user specified a suffix, rename the old file */
 	        
-	        if(rotatesuffix[0] != '\0')
+	        if (rotatesuffix[0] != '\0')
 	        {
 	        	char filename[MAXPATHLEN];
 
 	        	snprintf(filename, sizeof(filename), "%s%s", logfile, rotatesuffix);
 
-			if((rename(logfile, filename)) != 0)
+			if ((rename(logfile, filename)) != 0)
 			{
 				logit(LL_ERR, "reopenfiles: log rename failed, cause = %s", strerror(errno));
 				error_exit(1, "reopenfiles: log rename failed, cause = %s", strerror(errno));
 			}
 		}
 
-	        if((logfp = fopen(logfile, "a")) == NULL)
+	        if ((logfp = fopen(logfile, "a")) == NULL)
 		{
 			fprintf(stderr, "ERROR, cannot open logfile %s: %s\n",
 				logfile, strerror(errno));

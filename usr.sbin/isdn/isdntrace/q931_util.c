@@ -27,7 +27,7 @@
  *	q931_util.c - utility functions to print Q.931 traces
  *	-----------------------------------------------------
  *
- *	$Id: q931_util.c,v 1.2 2003/04/06 18:20:15 wiz Exp $ 
+ *	$Id: q931_util.c,v 1.3 2003/10/06 09:43:28 itojun Exp $ 
  *
  * $FreeBSD$
  *
@@ -62,7 +62,7 @@ p_q931cause(char *pbuf, unsigned char *buf)
 	i++;
 	len--;
 	
-	if(!(buf[i-1] & 0x80))
+	if (!(buf[i-1] & 0x80))
 	{
 		r = buf[i];		
 		rflag = 1;
@@ -74,40 +74,40 @@ p_q931cause(char *pbuf, unsigned char *buf)
 
 	sprintf((pbuf+strlen(pbuf)), "\n          (location=");
 	
-	switch(ls & 0x0f)
+	switch (ls & 0x0f)
 	{
-		case 0x00:
-			sprintf((pbuf+strlen(pbuf)), "user");
-			break;
-		case 0x01:
-			sprintf((pbuf+strlen(pbuf)), "private network serving local user");
-			break;
-		case 0x02:
-			sprintf((pbuf+strlen(pbuf)), "public network serving local user");
-			break;
-		case 0x03:
-			sprintf((pbuf+strlen(pbuf)), "transit network");
-			break;
-		case 0x04:
-			sprintf((pbuf+strlen(pbuf)), "public network serving remote user");
-			break;
-		case 0x05:
-			sprintf((pbuf+strlen(pbuf)), "private network serving remote user");
-			break;
-		case 0x07:
-			sprintf((pbuf+strlen(pbuf)), "international network");
-			break;
-		case 0x0a:
-			sprintf((pbuf+strlen(pbuf)), "network beyond interworking point");
-			break;
-		default:
-			sprintf((pbuf+strlen(pbuf)), "reserved (0x%02x)", ls & 0x0f);
-			break;
+	case 0x00:
+		sprintf((pbuf+strlen(pbuf)), "user");
+		break;
+	case 0x01:
+		sprintf((pbuf+strlen(pbuf)), "private network serving local user");
+		break;
+	case 0x02:
+		sprintf((pbuf+strlen(pbuf)), "public network serving local user");
+		break;
+	case 0x03:
+		sprintf((pbuf+strlen(pbuf)), "transit network");
+		break;
+	case 0x04:
+		sprintf((pbuf+strlen(pbuf)), "public network serving remote user");
+		break;
+	case 0x05:
+		sprintf((pbuf+strlen(pbuf)), "private network serving remote user");
+		break;
+	case 0x07:
+		sprintf((pbuf+strlen(pbuf)), "international network");
+		break;
+	case 0x0a:
+		sprintf((pbuf+strlen(pbuf)), "network beyond interworking point");
+		break;
+	default:
+		sprintf((pbuf+strlen(pbuf)), "reserved (0x%02x)", ls & 0x0f);
+		break;
 	}
 
 	sprintf((pbuf+strlen(pbuf)), ", std=");
 
-	switch((ls & 0x60) >> 5)
+	switch ((ls & 0x60) >> 5)
 	{
 		case 0:
 			sprintf((pbuf+strlen(pbuf)), "CCITT");
@@ -123,11 +123,11 @@ p_q931cause(char *pbuf, unsigned char *buf)
 			break;
 	}
 
-	if(rflag)
+	if (rflag)
 	{
 		sprintf((pbuf+strlen(pbuf)), ", rec=");
 
-		switch(r & 0x7f)
+		switch (r & 0x7f)
 		{
 			case 0:
 				sprintf((pbuf+strlen(pbuf)), "Q.931");
@@ -152,7 +152,7 @@ p_q931cause(char *pbuf, unsigned char *buf)
 	i++;
 	len--;
 	
-	for(j = 0; j < len; j++)
+	for (j = 0; j < len; j++)
 		sprintf((pbuf+strlen(pbuf))," 0x%02x", buf[j+i]);
 	
 	sprintf((pbuf+strlen(pbuf)),"]");
@@ -180,7 +180,7 @@ p_q931bc(char *pbuf, unsigned char *buf)
 
 	sprintf((pbuf+strlen(pbuf)), "\n          cap=");
 	
-	switch(buf[i] & 0x1f)
+	switch (buf[i] & 0x1f)
 	{
 		case 0x00:
 			sprintf((pbuf+strlen(pbuf)), "speech");
@@ -207,7 +207,7 @@ p_q931bc(char *pbuf, unsigned char *buf)
 
 	sprintf((pbuf+strlen(pbuf)), "\n          std=");
 
-	switch((buf[i] & 0x60) >> 5)
+	switch ((buf[i] & 0x60) >> 5)
 	{
 		case 0:
 			sprintf((pbuf+strlen(pbuf)), "CCITT");
@@ -228,7 +228,7 @@ p_q931bc(char *pbuf, unsigned char *buf)
 	
 	sprintf((pbuf+strlen(pbuf)), "\n          rate=");
 	
-	switch(buf[i] & 0x1f)
+	switch (buf[i] & 0x1f)
 	{
 		case 0x00:
 			sprintf((pbuf+strlen(pbuf)), "packet mode");
@@ -259,7 +259,7 @@ p_q931bc(char *pbuf, unsigned char *buf)
 
 	sprintf((pbuf+strlen(pbuf)), "\n          mode=");
 
-	switch((buf[i] & 0x60) >> 5)
+	switch ((buf[i] & 0x60) >> 5)
 	{
 		case 0:
 			sprintf((pbuf+strlen(pbuf)), "circuit");
@@ -275,22 +275,22 @@ p_q931bc(char *pbuf, unsigned char *buf)
 	i++;
 	len--;
 
-	if(!len)
+	if (!len)
 		goto exit;
 	
-	if(mr)
+	if (mr)
 	{
 		sprintf((pbuf+strlen(pbuf)), "\n          rate multiplier=%d", buf[i] & 0x7f);
 		i++;
 		len--;
 	}
 
-	if(!len)
+	if (!len)
 		goto exit;
 	
 			sprintf((pbuf+strlen(pbuf)), "\n          layer1=");
 	
-			switch(buf[i] & 0x1f)
+			switch (buf[i] & 0x1f)
 			{
 				case 0x01:
 					sprintf((pbuf+strlen(pbuf)), "V.110");
@@ -323,19 +323,19 @@ p_q931bc(char *pbuf, unsigned char *buf)
 			i++;
 			len--;
 	
-		if(!len)
+		if (!len)
 			goto exit;
 
-	if(!(buf[i-1] & 0x80))
+	if (!(buf[i-1] & 0x80))
 		{
 			sprintf((pbuf+strlen(pbuf)), "\n          user rate=0x%02x ", buf[i] & 0x1f);
 	
-			if(buf[i] & 0x40)
+			if (buf[i] & 0x40)
 				sprintf((pbuf+strlen(pbuf)), "(async,");
 			else
 				sprintf((pbuf+strlen(pbuf)), "(sync,");		
 	
-			if(buf[i] & 0x20)
+			if (buf[i] & 0x20)
 				sprintf((pbuf+strlen(pbuf)), "in-band neg. possible)");
 			else
 				sprintf((pbuf+strlen(pbuf)), "in-band neg not possible)");
@@ -344,16 +344,16 @@ p_q931bc(char *pbuf, unsigned char *buf)
 			len--;
 		}
 	
-		if(!len)
+		if (!len)
 			goto exit;
 
-	if(!(buf[i-1] & 0x80))
+	if (!(buf[i-1] & 0x80))
 		{
 			sprintf((pbuf+strlen(pbuf)), "\n          clk/flow=0x%02x", buf[i] & 0x1f);
 	
 			sprintf((pbuf+strlen(pbuf)), "\n          intermediate rate=");
 			
-			switch((buf[i] & 0x60) >> 5)
+			switch ((buf[i] & 0x60) >> 5)
 			{
 				case 0:
 					sprintf((pbuf+strlen(pbuf)), "not used");
@@ -372,40 +372,40 @@ p_q931bc(char *pbuf, unsigned char *buf)
 			len--;
 		}
 	
-		if(!len)
+		if (!len)
 			goto exit;
 
-	if(!(buf[i-1] & 0x80))
+	if (!(buf[i-1] & 0x80))
 		{
 			sprintf((pbuf+strlen(pbuf)), "\n          hdr/mfrm/etc.=0x%02x", buf[i]);
 			i++;
 			len--;
 		}
 	
-		if(!len)
+		if (!len)
 			goto exit;
 
-	if(!(buf[i-1] & 0x80))
+	if (!(buf[i-1] & 0x80))
 		{
 			sprintf((pbuf+strlen(pbuf)), "\n          stop/data/parity=0x%02x", buf[i]);
 			i++;
 			len--;
 		}
 	
-		if(!len)
+		if (!len)
 			goto exit;
 
-	if(!(buf[i-1] & 0x80))
+	if (!(buf[i-1] & 0x80))
 		{
 			sprintf((pbuf+strlen(pbuf)), "\n          modemtype=0x%02x", buf[i]);
 			i++;
 			len--;
 		}
 
-	if(!len)
+	if (!len)
 		goto exit;
 
-		switch(buf[i] & 0x7f)
+		switch (buf[i] & 0x7f)
 		{
 			case 0x42:
 				sprintf((pbuf+strlen(pbuf)), "\n          layer2=Q.921/I.441");
@@ -420,10 +420,10 @@ p_q931bc(char *pbuf, unsigned char *buf)
 		i++;
 		len--;
 
-	if(!len)
+	if (!len)
 		goto exit;
 	
-		switch(buf[i] & 0x7f)
+		switch (buf[i] & 0x7f)
 		{
 			case 0x62:
 				sprintf((pbuf+strlen(pbuf)), "\n          layer3=Q.921/I.441");
@@ -465,7 +465,7 @@ p_q931address(char *pbuf, unsigned char *buf)
 	i++;
 	len--;
 	
-	if(!(tp & 0x80))
+	if (!(tp & 0x80))
 	{
 		ind = buf[i];		
 		indflag = 1;
@@ -473,12 +473,12 @@ p_q931address(char *pbuf, unsigned char *buf)
 		len--;
 	}
 
-	for(j = 0; j < len; j++)
+	for (j = 0; j < len; j++)
 	{
 		sprintf((pbuf+strlen(pbuf)),"%c", buf[j+i]);
 	}
 
-	switch((tp & 0x70) >> 4)
+	switch ((tp & 0x70) >> 4)
 	{
 		case 0:
 			sprintf((pbuf+strlen(pbuf)), " (type=unknown, ");
@@ -503,7 +503,7 @@ p_q931address(char *pbuf, unsigned char *buf)
 			break;
 	}
 
-	switch(tp & 0x0f)
+	switch (tp & 0x0f)
 	{
 		case 0:
 			sprintf((pbuf+strlen(pbuf)), "plan=unknown");
@@ -528,10 +528,10 @@ p_q931address(char *pbuf, unsigned char *buf)
 			break;
 	}
 
-	if(indflag)
+	if (indflag)
 	{
 		sprintf((pbuf+strlen(pbuf)), ",\n          ");
-		switch((ind & 0x60) >> 5)
+		switch ((ind & 0x60) >> 5)
 		{
 			case 0:
 				sprintf((pbuf+strlen(pbuf)), "presentation allowed, ");
@@ -547,7 +547,7 @@ p_q931address(char *pbuf, unsigned char *buf)
 				break;
 		}
 
-		switch(ind & 0x03)
+		switch (ind & 0x03)
 		{
 			case 0:
 				sprintf((pbuf+strlen(pbuf)), "screening user provided: not screened");
@@ -712,7 +712,7 @@ p_q931user_user(char *pbuf, unsigned char *buf)
 	i++;	/* index -> protocoldiscriminator */
 	pd = buf[i];
 	
-	switch(pd)
+	switch (pd)
 	{
 		case 0:
 			sprintf((pbuf+strlen(pbuf)), "(pd=user-specific");
@@ -739,13 +739,13 @@ p_q931user_user(char *pbuf, unsigned char *buf)
 			sprintf((pbuf+strlen(pbuf)), "(pd=Q.931/I.451 user network call control messages");
 			break;
 		default:
-			if(pd >= 0x10 && pd <= 0x3f)
+			if (pd >= 0x10 && pd <= 0x3f)
 				sprintf((pbuf+strlen(pbuf)), "(pd=0x%x=reserved for other L3 protocols incl. X.25", pd);
-			else if(pd >= 0x40 && pd <= 0x47)
+			else if (pd >= 0x40 && pd <= 0x47)
 				sprintf((pbuf+strlen(pbuf)), "(pd=0x%x=national use", pd);
-			else if(pd >= 0x48 && pd <= 0x4f)
+			else if (pd >= 0x48 && pd <= 0x4f)
 				sprintf((pbuf+strlen(pbuf)), "(pd=0x%x=reserved for ETSI", pd);
-			else if(pd >= 0x50 && pd <= 0xfe)
+			else if (pd >= 0x50 && pd <= 0xfe)
 				sprintf((pbuf+strlen(pbuf)), "(pd=0x%x=reserved for other L3 protocols incl. X.25", pd);
 			else
 				sprintf((pbuf+strlen(pbuf)), "(pd=0x%x=reserved", pd);
@@ -757,9 +757,9 @@ p_q931user_user(char *pbuf, unsigned char *buf)
 
 	sprintf((pbuf+strlen(pbuf)),": (");
 	
-	for(j = 0; j < len; j++)
+	for (j = 0; j < len; j++)
 	{
-		if(pd == 4)
+		if (pd == 4)
 			sprintf((pbuf+strlen(pbuf)),"%c", buf[j+i]);
 		else
 			sprintf((pbuf+strlen(pbuf)),"0x%2x", buf[j+i]);
@@ -789,7 +789,7 @@ p_q931notification(char *pbuf, unsigned char *buf)
 	i++;	/* index -> notification description */
 	nd = buf[i];
 	
-	switch(nd)
+	switch (nd)
 	{
 		case 0x80:
 			sprintf((pbuf+strlen(pbuf)), "0x%2x, user suspended", nd);
@@ -875,13 +875,13 @@ p_q931notification(char *pbuf, unsigned char *buf)
 	i++;
 	len--;
 
-	if(len)
+	if (len)
 	{
 		sprintf((pbuf+strlen(pbuf)),": (");
 		
-		for(; j < len; j++)
+		for (; j < len; j++)
 		{
-			if(nd == 4)
+			if (nd == 4)
 				sprintf((pbuf+strlen(pbuf)),"%c", buf[j+i]);
 			else
 				sprintf((pbuf+strlen(pbuf)),"0x%2x", buf[j+i]);
@@ -919,14 +919,14 @@ p_q931redir(char *pbuf, unsigned char *buf)
 	i++;
 	len--;
 	
-	if(!(tp & 0x80))
+	if (!(tp & 0x80))
 	{
 		ind = buf[i];		
 		indflag = 1;
 		i++;
 		len--;
 
-		if(!(ind & 0x80))
+		if (!(ind & 0x80))
 		{
 			reas = buf[i];		
 			reasflag = 1;
@@ -935,104 +935,104 @@ p_q931redir(char *pbuf, unsigned char *buf)
 		}
 	}
 
-	for(j = 0; j < len; j++)
+	for (j = 0; j < len; j++)
 	{
 		sprintf((pbuf+strlen(pbuf)),"%c", buf[j+i]);
 	}
 
-	switch((tp & 0x70) >> 4)
+	switch ((tp & 0x70) >> 4)
 	{
-		case 0:
-			sprintf((pbuf+strlen(pbuf)), " (type=unknown, ");
-			break;
-		case 1:
-			sprintf((pbuf+strlen(pbuf)), " (type=international, ");
-			break;
-		case 2:
-			sprintf((pbuf+strlen(pbuf)), " (type=national, ");
-			break;
-		case 3:
-			sprintf((pbuf+strlen(pbuf)), " (type=network specific, ");
-			break;
-		case 4:
-			sprintf((pbuf+strlen(pbuf)), " (type=subscriber, ");
-			break;
-		case 6:
-			sprintf((pbuf+strlen(pbuf)), " (type=abbreviated, ");
-			break;
-		default:
-			sprintf((pbuf+strlen(pbuf)), " (type=reserved (%d), ", ((tp & 0x70) >> 4));
-			break;
+	case 0:
+		sprintf((pbuf+strlen(pbuf)), " (type=unknown, ");
+		break;
+	case 1:
+		sprintf((pbuf+strlen(pbuf)), " (type=international, ");
+		break;
+	case 2:
+		sprintf((pbuf+strlen(pbuf)), " (type=national, ");
+		break;
+	case 3:
+		sprintf((pbuf+strlen(pbuf)), " (type=network specific, ");
+		break;
+	case 4:
+		sprintf((pbuf+strlen(pbuf)), " (type=subscriber, ");
+		break;
+	case 6:
+		sprintf((pbuf+strlen(pbuf)), " (type=abbreviated, ");
+		break;
+	default:
+		sprintf((pbuf+strlen(pbuf)), " (type=reserved (%d), ", ((tp & 0x70) >> 4));
+		break;
 	}
 
-	switch(tp & 0x0f)
+	switch (tp & 0x0f)
 	{
-		case 0:
-			sprintf((pbuf+strlen(pbuf)), "plan=unknown");
-			break;
-		case 1:
-			sprintf((pbuf+strlen(pbuf)), "plan=ISDN");
-			break;
-		case 3:
-			sprintf((pbuf+strlen(pbuf)), "plan=Data");
-			break;
-		case 4:
-			sprintf((pbuf+strlen(pbuf)), "plan=Telex");
-			break;
-		case 8:
-			sprintf((pbuf+strlen(pbuf)), "plan=National");
-			break;
-		case 9:
-			sprintf((pbuf+strlen(pbuf)), "plan=private");
-			break;
-		default:
-			sprintf((pbuf+strlen(pbuf)), "plan=reserved (%d)", (tp & 0x0f));
-			break;
+	case 0:
+		sprintf((pbuf+strlen(pbuf)), "plan=unknown");
+		break;
+	case 1:
+		sprintf((pbuf+strlen(pbuf)), "plan=ISDN");
+		break;
+	case 3:
+		sprintf((pbuf+strlen(pbuf)), "plan=Data");
+		break;
+	case 4:
+		sprintf((pbuf+strlen(pbuf)), "plan=Telex");
+		break;
+	case 8:
+		sprintf((pbuf+strlen(pbuf)), "plan=National");
+		break;
+	case 9:
+		sprintf((pbuf+strlen(pbuf)), "plan=private");
+		break;
+	default:
+		sprintf((pbuf+strlen(pbuf)), "plan=reserved (%d)", (tp & 0x0f));
+		break;
 	}
 
-	if(indflag)
+	if (indflag)
 	{
 		sprintf((pbuf+strlen(pbuf)), ",\n          ");
-		switch((ind & 0x60) >> 5)
+		switch ((ind & 0x60) >> 5)
 		{
-			case 0:
-				sprintf((pbuf+strlen(pbuf)), "presentation allowed");
-				break;
-			case 1:
-				sprintf((pbuf+strlen(pbuf)), "presentation restricted");
-				break;
-			case 2:
-				sprintf((pbuf+strlen(pbuf)), "number not available");
-				break;
-			case 3:
-				sprintf((pbuf+strlen(pbuf)), "reserved");
-				break;
+		case 0:
+			sprintf((pbuf+strlen(pbuf)), "presentation allowed");
+			break;
+		case 1:
+			sprintf((pbuf+strlen(pbuf)), "presentation restricted");
+			break;
+		case 2:
+			sprintf((pbuf+strlen(pbuf)), "number not available");
+			break;
+		case 3:
+			sprintf((pbuf+strlen(pbuf)), "reserved");
+			break;
 		}
 	}		
 
-	if(reasflag)
+	if (reasflag)
 	{
 		sprintf((pbuf+strlen(pbuf)), ",\n          ");
-		switch(reas & 0x0f)
+		switch (reas & 0x0f)
 		{
-			case 0:
-				sprintf((pbuf+strlen(pbuf)), "reason for diversion: unknown");
-				break;
-			case 1:
-				sprintf((pbuf+strlen(pbuf)), "reason for diversion: call forwarding busy");
-				break;
-			case 2:
-				sprintf((pbuf+strlen(pbuf)), "reason for diversion: call forwarding unconditional");
-				break;
-			case 0xa:
-				sprintf((pbuf+strlen(pbuf)), "reason for diversion: called DTE");
-				break;
-			case 0xf:
-				sprintf((pbuf+strlen(pbuf)), "reason for diversion: call forwarding unconditional");
-				break;
-			default:
-				sprintf((pbuf+strlen(pbuf)), "reason for diversion: reserved (0x%2x)",reas & 0x0f);
-				break;
+		case 0:
+			sprintf((pbuf+strlen(pbuf)), "reason for diversion: unknown");
+			break;
+		case 1:
+			sprintf((pbuf+strlen(pbuf)), "reason for diversion: call forwarding busy");
+			break;
+		case 2:
+			sprintf((pbuf+strlen(pbuf)), "reason for diversion: call forwarding unconditional");
+			break;
+		case 0xa:
+			sprintf((pbuf+strlen(pbuf)), "reason for diversion: called DTE");
+			break;
+		case 0xf:
+			sprintf((pbuf+strlen(pbuf)), "reason for diversion: call forwarding unconditional");
+			break;
+		default:
+			sprintf((pbuf+strlen(pbuf)), "reason for diversion: reserved (0x%2x)",reas & 0x0f);
+			break;
 		}
 	}		
 

@@ -27,7 +27,7 @@
  *	i4b daemon - main header file
  *	-----------------------------
  *
- *	$Id: isdnd.h,v 1.12 2003/09/05 13:31:03 pooka Exp $ 
+ *	$Id: isdnd.h,v 1.13 2003/10/06 09:43:27 itojun Exp $ 
  *
  * $FreeBSD$
  *
@@ -113,7 +113,7 @@
 #define DL_BDGT		0x0400	/* messages related to budgets		*/
 
 #ifdef DEBUG
-#define DBGL(cond, dolog) if(cond & debug_flags) dolog
+#define DBGL(cond, dolog)	if (cond & debug_flags) dolog
 #else
 #define DBGL(cond, dolog)
 #endif

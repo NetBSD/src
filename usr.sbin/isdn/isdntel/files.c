@@ -27,7 +27,7 @@
  *	isdntel - isdn4bsd telephone answering machine support
  *      ======================================================
  *
- *      $Id: files.c,v 1.3 2003/10/06 09:18:41 itojun Exp $ 
+ *      $Id: files.c,v 1.4 2003/10/06 09:43:27 itojun Exp $ 
  *
  * $FreeBSD$
  *
@@ -112,7 +112,7 @@ fill_list(void)
 
 	for (dp = readdir(dirp); dp != NULL; dp = readdir(dirp))
 	{
-		if(!isdigit(*(dp->d_name)))
+		if (!isdigit(*(dp->d_name)))
 			continue;
 
 		if ((new_entry = (struct onefile *) malloc(sizeof(struct onefile))) == NULL)
@@ -139,7 +139,7 @@ fill_list(void)
 		tmp[7] = dp->d_name[1]; /* year lsb */
 		tmp[8] = '\0';
 
-		if((new_entry->date = strdup(tmp)) == NULL)
+		if ((new_entry->date = strdup(tmp)) == NULL)
 		{
 			fatal("files.c, fill_list(): malloc date string memory failed");
 		}
@@ -154,7 +154,7 @@ fill_list(void)
 		tmp[7] = dp->d_name[11]; /* second lsb */
 		tmp[8] = '\0';
 		
-		if((new_entry->time = strdup(tmp)) == NULL)
+		if ((new_entry->time = strdup(tmp)) == NULL)
 		{
 			fatal("files.c, fill_list(): malloc time string memory failed");
 		}
@@ -169,7 +169,7 @@ fill_list(void)
 
 		*d = '\0';
 		
-		if((new_entry->dstnumber = strdup(tmp)) == NULL)
+		if ((new_entry->dstnumber = strdup(tmp)) == NULL)
 		{
 			fatal("files.c, fill_list(): malloc dstnumber string memory failed");
 		}
@@ -184,7 +184,7 @@ fill_list(void)
 
 		*d = '\0';
 		
-		if((new_entry->srcnumber = strdup(tmp)) == NULL)
+		if ((new_entry->srcnumber = strdup(tmp)) == NULL)
 		{
 			fatal("files.c, fill_list(): malloc srcnumber string memory failed");
 		}
@@ -199,7 +199,7 @@ fill_list(void)
 
 		*d = '\0';
 		
-		if((new_entry->seconds = strdup(tmp)) == NULL)
+		if ((new_entry->seconds = strdup(tmp)) == NULL)
 		{
 			fatal("files.c, fill_list(): malloc seconds string memory failed");
 		}
@@ -253,7 +253,7 @@ delete(struct onefile *this)
 {
 	char buffer[MAXPATHLEN+1];
 
-	if(this == NULL)
+	if (this == NULL)
 		return;
 		
 	snprintf(buffer, sizeof(buffer), "%s", this->fname);
@@ -288,7 +288,7 @@ play(struct onefile *this)
 {
 	char buffer[MAXPATHLEN+1];
 
-	if(this == NULL)
+	if (this == NULL)
 		return;
 		
 	snprintf(buffer, sizeof(buffer), playstring, this->fname);

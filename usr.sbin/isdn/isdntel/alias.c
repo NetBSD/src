@@ -27,7 +27,7 @@
  *	isdntel - isdn4bsd telephone answering machine support
  *      ======================================================
  *
- *      $Id: alias.c,v 1.2 2003/10/06 09:18:41 itojun Exp $ 
+ *      $Id: alias.c,v 1.3 2003/10/06 09:43:27 itojun Exp $ 
  *
  * $FreeBSD$
  *
@@ -56,12 +56,12 @@ init_alias(char *filename)
 	struct alias *newa = NULL;
 	struct alias *lasta = NULL;
 	
-	if((fp = fopen(filename, "r")) == NULL)
+	if ((fp = fopen(filename, "r")) == NULL)
 		return;
 
 	while((fgets(buffer, MAXBUFSZ, fp)) != NULL)
 	{
-		if(buffer[0] == '#'  || buffer[0] == ' ' ||
+		if (buffer[0] == '#'  || buffer[0] == ' ' ||
 		   buffer[0] == '\t' || buffer[0] == '\n')
 		{
 			continue;
@@ -85,17 +85,17 @@ init_alias(char *filename)
 
 		*d = '\0';
 		
-		if((strlen(number) > 1) && (strlen(name) > 1))
+		if ((strlen(number) > 1) && (strlen(name) > 1))
 		{
-			if((newa = (struct alias *) malloc(sizeof(struct alias))) == NULL)
+			if ((newa = (struct alias *) malloc(sizeof(struct alias))) == NULL)
 				fatal("malloc failed for struct alias");
-			if((newa->number = strdup(number)) == NULL)
+			if ((newa->number = strdup(number)) == NULL)
 				fatal("malloc failed for number alias");
-			if((newa->name = strdup(name)) == NULL)
+			if ((newa->name = strdup(name)) == NULL)
 				fatal("malloc failed for name alias");
 			newa->next = NULL;
 			
-			if(firsta == NULL)
+			if (firsta == NULL)
 			{
 				firsta = newa;
 			}
@@ -117,19 +117,19 @@ get_alias(char *number)
 {
 	struct alias *ca = NULL;
 
-	if(firsta == NULL)
+	if (firsta == NULL)
 		return(NULL);
 
 	ca = firsta;
 
-	for(;;)
+	for (;;)
 	{
-		if(strlen(number) == strlen(ca->number))
+		if (strlen(number) == strlen(ca->number))
 		{
-			if(!(strcmp(number, ca->number)))
+			if (!(strcmp(number, ca->number)))
 				return(ca->name);
 		}
-		if(ca->next == NULL)
+		if (ca->next == NULL)
 			break;
 		ca = ca->next;
 	}

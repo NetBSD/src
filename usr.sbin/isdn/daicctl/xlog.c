@@ -1,4 +1,4 @@
-/* $NetBSD: xlog.c,v 1.3 2002/04/14 11:41:43 martin Exp $ */
+/* $NetBSD: xlog.c,v 1.4 2003/10/06 09:43:27 itojun Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -143,48 +143,48 @@ xlog(int fd, int controller)
 		  case 1:
 			n = WORD(data, OFF_PAR_L1_LEN);
 			printf("B-X(%03d) ",n);
-			for(i=0; i<n && i<30; i++)
+			for (i=0; i<n && i<30; i++)
 			    printf("%02X ", data[OFF_PAR_L1_I+i]);
-			if(n>i) printf(" ...");
+			if (n>i) printf(" ...");
 			break;
 		  case 2:
 			n = WORD(data, OFF_PAR_L1_LEN);
 			printf("B-R(%03d) ", n);
-			for(i=0; i<n && i<30; i++)
+			for (i=0; i<n && i<30; i++)
 			    printf("%02X ", data[OFF_PAR_L1_I+i]);
-			if(n>i) printf(" ...");
+			if (n>i) printf(" ...");
 			break;
 		  case 3:
 			n = WORD(data, OFF_PAR_L1_LEN);
 			printf("D-X(%03d) ",n);
-			for(i=0; i<n && i<38; i++)
+			for (i=0; i<n && i<38; i++)
 			    printf("%02X ", data[OFF_PAR_L1_I+i]);
-			if(n>i) printf(" ...");
+			if (n>i) printf(" ...");
 			break;
 		  case 4:
 			n = WORD(data, OFF_PAR_L1_LEN);
 			printf("D-R(%03d) ",n);
-			for(i=0; i<n && i<38; i++)
+			for (i=0; i<n && i<38; i++)
 			    printf("%02X ", data[OFF_PAR_L1_I+i]);
-			if(n>i) printf(" ...");
+			if (n>i) printf(" ...");
 			break;
 		  case 5:
 			n = WORD(data, OFF_PAR_L2_LEN);
 			printf("SIG-EVENT(%03d)%04X - ", n, WORD(data, OFF_PAR_L2_CODE));
-			for(i=0; i<n && i<28; i++)
+			for (i=0; i<n && i<28; i++)
 			    printf("%02X ", data[OFF_PAR_L2_I+i]);
-			if(n>i) printf(" ...");
+			if (n>i) printf(" ...");
 			break;
 		  case 6:
 			code = WORD(data, OFF_PAR_L2_CODE);
-			if(code && code <= 10)
+			if (code && code <= 10)
 				printf("%s IND",ll_name[code-1]);
 			else
 				printf("UNKNOWN LL IND");
 			break;
 		  case 7:
 			code = WORD(data, OFF_PAR_L2_CODE);
-			if(code && code <= 10)
+			if (code && code <= 10)
 				printf("%s REQ",ll_name[code-1]);
 			else
 				printf("UNKNOWN LL REQ");
@@ -192,9 +192,9 @@ xlog(int fd, int controller)
 		  case 8:
 			n = WORD(data, OFF_PAR_L2_LEN);
 			printf("DEBUG%04X - ",WORD(data, OFF_PAR_L2_CODE));
-			for(i=0; i<n && i<38; i++)
+			for (i=0; i<n && i<38; i++)
 			    printf("%02X ", data[OFF_PAR_L2_I+i]);
-			if(n>i) printf(" ...");
+			if (n>i) printf(" ...");
 			break;
 		  case 9:
 			printf("MDL-ERROR(%s)",&data[OFF_PAR_TEXT]);
@@ -208,27 +208,27 @@ xlog(int fd, int controller)
 		  case 12:
 			n = WORD(data, OFF_PAR_L1_LEN);
 			printf("X-X(%03d) ",n);
-			for(i=0; i<n && i<30; i++)
+			for (i=0; i<n && i<30; i++)
 			    printf("%02X ", data[OFF_PAR_L1_I+i]);
-			if(n>i) printf(" ...");
+			if (n>i) printf(" ...");
 			break;
 		  case 13:
 			n = WORD(data, OFF_PAR_L1_LEN);
 			printf("X-R(%03d) ",n);
-			for(i=0; i<n && i<30; i++)
+			for (i=0; i<n && i<30; i++)
 			    printf("%02X ", data[OFF_PAR_L1_I+i]);
-			if(n>i) printf(" ...");
+			if (n>i) printf(" ...");
 			break;
 		  case 14:
 			code = WORD(data, OFF_PAR_L2_CODE)-1;
-			if((code &0x0f)<=10)
+			if ((code &0x0f)<=10)
 				printf("%s IND",ns_name[code &0x0f]);
 			else
 				printf("UNKNOWN NS IND");
 			break;
 		  case 15:
 			code = WORD(data, OFF_PAR_L2_CODE)-1;
-			if((code & 0x0f)<=10)
+			if ((code & 0x0f)<=10)
 				printf("%s REQ",ns_name[code &0x0f]);
 			else
 				printf("UNKNOWN NS REQ");

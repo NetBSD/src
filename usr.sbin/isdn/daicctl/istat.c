@@ -1,4 +1,4 @@
-/* $NetBSD: istat.c,v 1.3 2002/04/14 11:41:43 martin Exp $ */
+/* $NetBSD: istat.c,v 1.4 2003/10/06 09:43:27 itojun Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -130,31 +130,31 @@ istat(int fd, int controller)
 				ok = 0;
 
 			if (r.Id) {
-				switch(r.sin[1]) {
+				switch (r.sin[1]) {
 				case 0:
-				  printf("Any Service Task");
-				  break;
+					printf("Any Service Task");
+					break;
 				case 1:
-				  printf("Voice Task");
-				  break;
+					printf("Voice Task");
+					break;
 				case 2:
-				  printf("a/b Task");
-				  break;
+					printf("a/b Task");
+					break;
 				case 3:
-				  printf("X.21 Task");
-				  break;
+					printf("X.21 Task");
+					break;
 				case 4:
-				  printf("Fax G4 Task");
-				  break;
+					printf("Fax G4 Task");
+					break;
 				case 5:
-				  printf("Videotex Task");
-				  break;
+					printf("Videotex Task");
+					break;
 				case 7:
-				  printf("Transparent Data Task");
-				  break;
+					printf("Transparent Data Task");
+					break;
 				case 9:
-				  printf("Teletex 64 Task");
-				  break;
+					printf("Teletex 64 Task");
+					break;
 				}
 				printf(", Id = %02X, State = %i\n",
 				       r.Id,r.u);
@@ -177,7 +177,7 @@ printIE(ie)
 {
 	int i;
 
-	for(i = 0; i < ie[0]; i++)
+	for (i = 0; i < ie[0]; i++)
 		printf(" %02X", ie[i+1]);
 }
 
