@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.60 1999/03/29 17:33:29 mycroft Exp $	*/
+/*	$NetBSD: clock.c,v 1.61 1999/03/29 17:54:34 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -322,10 +322,10 @@ delay(n)
 	int n;
 {
 	int tick, otick;
-	static int delaytab[26] = {
-		 0,  1,  2,  4,  5,  6,  7,  8, 10, 11,
-		12, 13, 14, 16, 17, 18, 19, 20, 21, 23,
-		24, 25, 26, 27, 29, 30,
+	static const int delaytab[26] = {
+		 0,  2,  3,  4,  5,  6,  7,  9, 10, 11,
+		12, 13, 15, 16, 17, 18, 19, 21, 22, 23,
+		24, 25, 27, 28, 29, 30,
 	};
 
 	/* allow DELAY() to be used before startrtclock() */
