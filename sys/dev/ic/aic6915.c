@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6915.c,v 1.7 2002/10/22 00:01:55 fair Exp $	*/
+/*	$NetBSD: aic6915.c,v 1.8 2002/11/07 08:02:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic6915.c,v 1.7 2002/10/22 00:01:55 fair Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic6915.c,v 1.8 2002/11/07 08:02:09 thorpej Exp $");
 
 #include "bpfilter.h"
 
@@ -863,7 +863,7 @@ sf_stats_update(struct sf_softc *sc)
 	struct sf_stats stats;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	uint32_t *p;
-	int i;
+	u_int i;
 
 	p = &stats.TransmitOKFrames;
 	for (i = 0; i < (sizeof(stats) / sizeof(uint32_t)); i++) {
@@ -943,7 +943,8 @@ sf_init(struct ifnet *ifp)
 {
 	struct sf_softc *sc = ifp->if_softc;
 	struct sf_descsoft *ds;
-	int i, error = 0;
+	int error = 0;
+	u_int i;
 
 	/*
 	 * Cancel any pending I/O.

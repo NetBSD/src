@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.200 2002/10/23 09:13:15 jdolecek Exp $	*/
+/*	$NetBSD: com.c,v 1.201 2002/11/07 08:07:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.200 2002/10/23 09:13:15 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.201 2002/11/07 08:07:26 thorpej Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -1688,7 +1688,7 @@ comstart(struct tty *tp)
 
 	/* Output the first chunk of the contiguous buffer. */
 	if (!ISSET(sc->sc_hwflags, COM_HW_NO_TXPRELOAD)) {
-		int n;
+		u_int n;
 
 		n = sc->sc_tbc;
 		if (n > sc->sc_fifolen)
@@ -2159,7 +2159,7 @@ again:	do {
 
 		/* Output the next chunk of the contiguous buffer, if any. */
 		if (sc->sc_tbc > 0) {
-			int n;
+			u_int n;
 
 			n = sc->sc_tbc;
 			if (n > sc->sc_fifolen)
