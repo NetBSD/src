@@ -1,6 +1,6 @@
 #! /bin/sh
 #	@(#)stests	8.1 (Berkeley) 6/6/93
-#	$NetBSD: stests,v 1.5 2001/01/11 22:26:55 jdolecek Exp $
+#	$NetBSD: stests,v 1.6 2001/01/12 21:45:17 jdolecek Exp $
 
 # This code is derived from software contributed to Berkeley by
 # Peter McIlroy.
@@ -33,11 +33,20 @@ g=:	# -g numeric sort including e-format numbers (g=)
 M=:	# -M sort by month names (M=)
 s=:	# -s stable, do not compare raw bytes on equal keys (s=)
 y=	# -y user-specified memory size (y=-y10000)
+S=	# -S non-stable sort
 
 # Detect what features are supported, assuming bad options cause
 # errors.  Set switches accordingly.
 
-echo obsolescent and nonstandard features recognized, if any:
+cat <<!
+Note: some sort(1) implementations (for example GNU sort) may not pass these
+tests - this suite was made to fit sort(1) using (non-stable) radixsort(3),
+sort(1) using other algorithm may give different results, though still
+conform to standard.
+
+!
+
+echo Obsolescent and nonstandard features recognized, if any:
 if sort +0 </dev/null 2>/dev/null; then
 	o=
 	echo '	+1 -2'
@@ -61,9 +70,13 @@ else
 fi
 if sort -s </dev/null 2>/dev/null; then
 	s=
-	echo '	-s stable';
+	echo '	-s stable sort';
 else
 	s="not_tested -s"
+fi
+if sort -S </dev/null 2>/dev/null; then
+	S=-S
+	echo '	-S non-stable sort';
 fi
 if sort -y10000 </dev/null 2>/dev/null; then
 	y=-y10000
@@ -93,18 +106,18 @@ xsort () {
 	X="$1"
 	shift
 
-	if sort "$@" in >xx  &&  sort -c "$@" xx 
+	if sort $S "$@" in >xx &&  sort -c $S "$@" xx 
 	then 
 		if test -f out
 		then
 			cmp xx out >/dev/null && return 0
-			echo $TEST$X comparison failed
+			echo "$TEST$X comparison failed - sort $@"
 		else
 			test "`cksum -o2 <in`" = "`cksum -o2 <xx`" && return 0
-			echo $TEST$X checksum failed
+			echo "$TEST$X checksum failed - sort $@"
 		fi
 	else
-		echo "$TEST$X failed"
+		echo "$TEST$X failed - sort $@"
 	fi
 	return 1
 }
@@ -136,7 +149,7 @@ sort -c in 2>/dev/null && echo ${TEST}A failed
 
 xsort B || '"cksum"' is probably unsuitable - see comments
 
-$o sort +0 in -o in || echo ${TEST}c failed
+$o sort +0 in -o in || echo ${TEST}C failed
 
 #---------------------------------------------------------------
 TEST=02; echo $TEST	# output from -c
@@ -492,8 +505,6 @@ main(){ run(0, 011);
 !
 cc xx.c
 ./a.out >out
-cp in in.roo
-cp out out.roo
 
 xsort A -i -k 2
 
@@ -886,13 +897,13 @@ $s xsort "" -s -k1,1
 #---------------------------------------------------------------
 TEST=37; echo $TEST	# -s, multiple files
 cat <<! >in
-a 2
 c 2
+a 2
 !
 cat <<! >in1
-a 1
-b 1
 c 1
+b 1
+a 1
 !
 cat <<! >out
 c 2
@@ -901,7 +912,7 @@ a 2
 !
 
 $s sort -smru -k1,1 in in in1 in1 >xx
-$s cmp xx out >/dev/null || echo $TEST failed
+$s cmp xx out >/dev/null || echo $TEST failed - sort -smru -k1,1
 
 #---------------------------------------------------------------
 TEST=38; echo $TEST	# -s
@@ -917,7 +928,7 @@ $s awk '
 $s sort -m -s -k1,1n in in1 >out
 
 $s awk '
-	func stop()	{ print "'$TEST' failed"; exit }
+	func stop()	{ print "'$TEST' comparison failed - sort -m -s -k1,1n"; exit }
 	$1!=last1 	{ if(count!=last1 || $2!=2) stop();
 			  count = 0}
 	$1==last1 && $2!=last2 { if(count!=last1 || $2!=1) stop();
