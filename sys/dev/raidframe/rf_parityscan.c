@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_parityscan.c,v 1.23 2004/01/10 00:56:28 oster Exp $	*/
+/*	$NetBSD: rf_parityscan.c,v 1.24 2004/03/01 23:30:59 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_parityscan.c,v 1.23 2004/01/10 00:56:28 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_parityscan.c,v 1.24 2004/03/01 23:30:59 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -196,7 +196,9 @@ rf_VerifyParityBasic(RF_Raid_t *raidPtr, RF_RaidAddr_t raidAddr,
 							     raidAddr, 
 							     &which_ru);
 	int     stripeWidth = layoutPtr->numDataCol + layoutPtr->numParityCol;
+#if RF_ACC_TRACE > 0
 	RF_AccTraceEntry_t tracerec;
+#endif
 	RF_MCPair_t *mcpair;
 
 	retcode = RF_PARITY_OKAY;
@@ -235,8 +237,10 @@ rf_VerifyParityBasic(RF_Raid_t *raidPtr, RF_RaidAddr_t raidAddr,
 	blockNode->succedents[layoutPtr->numDataCol]->params[0].p = asmap->parityInfo;
 
 	/* fire off the DAG */
+#if RF_ACC_TRACE > 0
 	memset((char *) &tracerec, 0, sizeof(tracerec));
 	rd_dag_h->tracerec = &tracerec;
+#endif
 #if 0
 	if (rf_verifyParityDebug) {
 		printf("Parity verify read dag:\n");
@@ -275,8 +279,10 @@ rf_VerifyParityBasic(RF_Raid_t *raidPtr, RF_RaidAddr_t raidAddr,
 		wrBlock->succedents[0]->params[0].p = asmap->parityInfo;
 		wrBlock->succedents[0]->params[2].v = psID;
 		wrBlock->succedents[0]->params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, which_ru);
+#if RF_ACC_TRACE > 0
 		memset((char *) &tracerec, 0, sizeof(tracerec));
 		wr_dag_h->tracerec = &tracerec;
+#endif
 #if 0
 		if (rf_verifyParityDebug) {
 			printf("Parity verify write dag:\n");

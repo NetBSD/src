@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconbuffer.c,v 1.17 2004/01/02 11:52:15 hannken Exp $	*/
+/*	$NetBSD: rf_reconbuffer.c,v 1.18 2004/03/01 23:30:58 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ***************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconbuffer.c,v 1.17 2004/01/02 11:52:15 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconbuffer.c,v 1.18 2004/03/01 23:30:58 oster Exp $");
 
 #include "rf_raid.h"
 #include "rf_reconbuffer.h"
@@ -165,6 +165,7 @@ rf_SubmitReconBufferBasic(RF_ReconBuffer_t *rbuf, int keep_it,
 		RF_ETIMER_EVAL(timer);
 		raidPtr->accumXorTimeUs += RF_ETIMER_VAL_US(timer);
 		if (!keep_it) {
+#if RF_ACC_TRACE > 0
 			raidPtr->recon_tracerecs[rbuf->col].xor_us = RF_ETIMER_VAL_US(timer);
 			RF_ETIMER_STOP(raidPtr->recon_tracerecs[rbuf->col].recon_timer);
 			RF_ETIMER_EVAL(raidPtr->recon_tracerecs[rbuf->col].recon_timer);
@@ -173,6 +174,7 @@ rf_SubmitReconBufferBasic(RF_ReconBuffer_t *rbuf, int keep_it,
 			RF_ETIMER_START(raidPtr->recon_tracerecs[rbuf->col].recon_timer);
 
 			rf_LogTraceRec(raidPtr, &raidPtr->recon_tracerecs[rbuf->col]);
+#endif
 		}
 		rf_CheckForFullRbuf(raidPtr, reconCtrlPtr, pssPtr, layoutPtr->numDataCol);
 
@@ -240,6 +242,7 @@ rf_SubmitReconBufferBasic(RF_ReconBuffer_t *rbuf, int keep_it,
 		goto out;
 	}
 	Dprintf1("RECON: col %d acquired rbuf\n", rbuf->col);
+#if RF_ACC_TRACE > 0
 	RF_ETIMER_STOP(raidPtr->recon_tracerecs[rbuf->col].recon_timer);
 	RF_ETIMER_EVAL(raidPtr->recon_tracerecs[rbuf->col].recon_timer);
 	raidPtr->recon_tracerecs[rbuf->col].specific.recon.recon_return_to_submit_us +=
@@ -247,6 +250,7 @@ rf_SubmitReconBufferBasic(RF_ReconBuffer_t *rbuf, int keep_it,
 	RF_ETIMER_START(raidPtr->recon_tracerecs[rbuf->col].recon_timer);
 
 	rf_LogTraceRec(raidPtr, &raidPtr->recon_tracerecs[rbuf->col]);
+#endif
 
 	/* initialize the buffer */
 	if (t != rbuf) {

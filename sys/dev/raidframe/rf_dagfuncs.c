@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagfuncs.c,v 1.18 2004/01/10 17:04:44 oster Exp $	*/
+/*	$NetBSD: rf_dagfuncs.c,v 1.19 2004/03/01 23:30:58 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagfuncs.c,v 1.18 2004/01/10 17:04:44 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagfuncs.c,v 1.19 2004/03/01 23:30:58 oster Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -174,11 +174,15 @@ rf_ParityLogUpdateFunc(RF_DagNode_t *node)
 	RF_PhysDiskAddr_t *pda = (RF_PhysDiskAddr_t *) node->params[0].p;
 	caddr_t buf = (caddr_t) node->params[1].p;
 	RF_ParityLogData_t *logData;
+#if RF_ACC_TRACE > 0
 	RF_AccTraceEntry_t *tracerec = node->dagHdr->tracerec;
 	RF_Etimer_t timer;
+#endif
 
 	if (node->dagHdr->status == rf_enable) {
+#if RF_ACC_TRACE > 0
 		RF_ETIMER_START(timer);
+#endif
 		logData = rf_CreateParityLogData(RF_UPDATE, pda, buf,
 		    (RF_Raid_t *) (node->dagHdr->raidPtr),
 		    node->wakeFunc, (void *) node,
@@ -186,9 +190,11 @@ rf_ParityLogUpdateFunc(RF_DagNode_t *node)
 		if (logData)
 			rf_ParityLogAppend(logData, RF_FALSE, NULL, RF_FALSE);
 		else {
+#if RF_ACC_TRACE > 0
 			RF_ETIMER_STOP(timer);
 			RF_ETIMER_EVAL(timer);
 			tracerec->plog_us += RF_ETIMER_VAL_US(timer);
+#endif
 			(node->wakeFunc) (node, ENOMEM);
 		}
 	}
@@ -205,20 +211,26 @@ rf_ParityLogOverwriteFunc(RF_DagNode_t *node)
 	RF_PhysDiskAddr_t *pda = (RF_PhysDiskAddr_t *) node->params[0].p;
 	caddr_t buf = (caddr_t) node->params[1].p;
 	RF_ParityLogData_t *logData;
+#if RF_ACC_TRACE > 0
 	RF_AccTraceEntry_t *tracerec = node->dagHdr->tracerec;
 	RF_Etimer_t timer;
+#endif
 
 	if (node->dagHdr->status == rf_enable) {
+#if RF_ACC_TRACE > 0
 		RF_ETIMER_START(timer);
+#endif
 		logData = rf_CreateParityLogData(RF_OVERWRITE, pda, buf, 
 (RF_Raid_t *) (node->dagHdr->raidPtr),
 		    node->wakeFunc, (void *) node, node->dagHdr->tracerec, timer);
 		if (logData)
 			rf_ParityLogAppend(logData, RF_FALSE, NULL, RF_FALSE);
 		else {
+#if RF_ACC_TRACE > 0
 			RF_ETIMER_STOP(timer);
 			RF_ETIMER_EVAL(timer);
 			tracerec->plog_us += RF_ETIMER_VAL_US(timer);
+#endif
 			(node->wakeFunc) (node, ENOMEM);
 		}
 	}
@@ -278,7 +290,12 @@ rf_DiskReadFuncForThreads(RF_DagNode_t *node)
 	req = rf_CreateDiskQueueData(iotype, pda->startSector, pda->numSector,
 	    buf, parityStripeID, which_ru,
 	    (int (*) (void *, int)) node->wakeFunc,
-	    node, NULL, node->dagHdr->tracerec,
+	    node, NULL, 
+#if RF_ACC_TRACE > 0
+	     node->dagHdr->tracerec,
+#else
+             NULL,
+#endif
 	    (void *) (node->dagHdr->raidPtr), 0, b_proc);
 	if (!req) {
 		(node->wakeFunc) (node, ENOMEM);
@@ -314,7 +331,11 @@ rf_DiskWriteFuncForThreads(RF_DagNode_t *node)
 	    buf, parityStripeID, which_ru,
 	    (int (*) (void *, int)) node->wakeFunc,
 	    (void *) node, NULL,
+#if RF_ACC_TRACE > 0
 	    node->dagHdr->tracerec,
+#else
+	    NULL,
+#endif
 	    (void *) (node->dagHdr->raidPtr),
 	    0, b_proc);
 
@@ -343,7 +364,12 @@ rf_DiskUndoFunc(RF_DagNode_t *node)
 	    0L, 0, NULL, 0L, 0,
 	    (int (*) (void *, int)) node->wakeFunc,
 	    (void *) node,
-	    NULL, node->dagHdr->tracerec,
+	    NULL, 
+#if RF_ACC_TRACE > 0
+	     node->dagHdr->tracerec,
+#else
+	     NULL,
+#endif
 	    (void *) (node->dagHdr->raidPtr),
 	    RF_UNLOCK_DISK_QUEUE, NULL);
 	if (!req)
@@ -369,7 +395,12 @@ rf_DiskUnlockFuncForThreads(RF_DagNode_t *node)
 	    0L, 0, NULL, 0L, 0,
 	    (int (*) (void *, int)) node->wakeFunc,
 	    (void *) node,
-	    NULL, node->dagHdr->tracerec,
+	    NULL, 
+#if RF_ACC_TRACE > 0
+	    node->dagHdr->tracerec,
+#else
+	    NULL,
+#endif
 	    (void *) (node->dagHdr->raidPtr),
 	    RF_UNLOCK_DISK_QUEUE, NULL);
 	if (!req)
@@ -451,22 +482,28 @@ int
 rf_RegularXorFunc(RF_DagNode_t *node)
 {
 	RF_Raid_t *raidPtr = (RF_Raid_t *) node->params[node->numParams - 1].p;
+#if RF_ACC_TRACE > 0
 	RF_AccTraceEntry_t *tracerec = node->dagHdr->tracerec;
 	RF_Etimer_t timer;
+#endif
 	int     i, retcode;
 
 	retcode = 0;
 	if (node->dagHdr->status == rf_enable) {
 		/* don't do the XOR if the input is the same as the output */
+#if RF_ACC_TRACE > 0
 		RF_ETIMER_START(timer);
+#endif
 		for (i = 0; i < node->numParams - 1; i += 2)
 			if (node->params[i + 1].p != node->results[0]) {
 				retcode = rf_XorIntoBuffer(raidPtr, (RF_PhysDiskAddr_t *) node->params[i].p,
 							   (char *) node->params[i + 1].p, (char *) node->results[0]);
 			}
+#if RF_ACC_TRACE > 0
 		RF_ETIMER_STOP(timer);
 		RF_ETIMER_EVAL(timer);
 		tracerec->xor_us += RF_ETIMER_VAL_US(timer);
+#endif
 	}
 	return (rf_GenericWakeupFunc(node, retcode));	/* call wake func
 							 * explicitly since no
@@ -478,20 +515,26 @@ rf_SimpleXorFunc(RF_DagNode_t *node)
 {
 	RF_Raid_t *raidPtr = (RF_Raid_t *) node->params[node->numParams - 1].p;
 	int     i, retcode = 0;
+#if RF_ACC_TRACE > 0
 	RF_AccTraceEntry_t *tracerec = node->dagHdr->tracerec;
 	RF_Etimer_t timer;
+#endif
 
 	if (node->dagHdr->status == rf_enable) {
+#if RF_ACC_TRACE > 0
 		RF_ETIMER_START(timer);
+#endif
 		/* don't do the XOR if the input is the same as the output */
 		for (i = 0; i < node->numParams - 1; i += 2)
 			if (node->params[i + 1].p != node->results[0]) {
 				retcode = rf_bxor((char *) node->params[i + 1].p, (char *) node->results[0],
 				    rf_RaidAddressToByte(raidPtr, ((RF_PhysDiskAddr_t *) node->params[i].p)->numSector));
 			}
+#if RF_ACC_TRACE > 0
 		RF_ETIMER_STOP(timer);
 		RF_ETIMER_EVAL(timer);
 		tracerec->xor_us += RF_ETIMER_VAL_US(timer);
+#endif
 	}
 	return (rf_GenericWakeupFunc(node, retcode));	/* call wake func
 							 * explicitly since no
@@ -514,11 +557,15 @@ rf_RecoveryXorFunc(RF_DagNode_t *node)
 	RF_PhysDiskAddr_t *pda;
 	int     suoffset, failedSUOffset = rf_StripeUnitOffset(layoutPtr, failedPDA->startSector);
 	char   *srcbuf, *destbuf;
+#if RF_ACC_TRACE > 0
 	RF_AccTraceEntry_t *tracerec = node->dagHdr->tracerec;
 	RF_Etimer_t timer;
+#endif
 
 	if (node->dagHdr->status == rf_enable) {
+#if RF_ACC_TRACE > 0
 		RF_ETIMER_START(timer);
+#endif
 		for (i = 0; i < node->numParams - 2; i += 2)
 			if (node->params[i + 1].p != node->results[0]) {
 				pda = (RF_PhysDiskAddr_t *) node->params[i].p;
@@ -527,9 +574,11 @@ rf_RecoveryXorFunc(RF_DagNode_t *node)
 				destbuf = ((char *) node->results[0]) + rf_RaidAddressToByte(raidPtr, suoffset - failedSUOffset);
 				retcode = rf_bxor(srcbuf, destbuf, rf_RaidAddressToByte(raidPtr, pda->numSector));
 			}
+#if RF_ACC_TRACE > 0
 		RF_ETIMER_STOP(timer);
 		RF_ETIMER_EVAL(timer);
 		tracerec->xor_us += RF_ETIMER_VAL_US(timer);
+#endif
 	}
 	return (rf_GenericWakeupFunc(node, retcode));
 }

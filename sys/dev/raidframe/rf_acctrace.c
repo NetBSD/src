@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_acctrace.c,v 1.18 2004/02/29 23:10:58 oster Exp $	*/
+/*	$NetBSD: rf_acctrace.c,v 1.19 2004/03/01 23:30:57 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,7 +34,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_acctrace.c,v 1.18 2004/02/29 23:10:58 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_acctrace.c,v 1.19 2004/03/01 23:30:57 oster Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -51,16 +51,13 @@ __KERNEL_RCSID(0, "$NetBSD: rf_acctrace.c,v 1.18 2004/02/29 23:10:58 oster Exp $
 
 #if RF_ACC_TRACE > 0
 static long numTracesSoFar;
-#endif
 
 RF_DECLARE_MUTEX(rf_tracing_mutex)
 
 int 
 rf_ConfigureAccessTrace(RF_ShutdownList_t **listp)
 {
-#if RF_ACC_TRACE > 0
 	numTracesSoFar = 0;
-#endif
 	rf_mutex_init(&rf_tracing_mutex);
 	return (0);
 }
@@ -71,7 +68,6 @@ rf_ConfigureAccessTrace(RF_ShutdownList_t **listp)
 void 
 rf_LogTraceRec(RF_Raid_t *raid, RF_AccTraceEntry_t *rec)
 {
-#if RF_ACC_TRACE > 0
 	RF_AccTotals_t *acc = &raid->acc_totals;
 
 	if (((rf_maxNumTraces >= 0) && (numTracesSoFar >= rf_maxNumTraces)))
@@ -115,6 +111,6 @@ rf_LogTraceRec(RF_Raid_t *raid, RF_AccTraceEntry_t *rec)
 		acc->phys_io_us = rec->phys_io_us;
 		acc->user_reccount++;
 	}
-#endif /* RF_ACC_TRACE > 0 */
 }
+#endif /* RF_ACC_TRACE > 0 */
 
