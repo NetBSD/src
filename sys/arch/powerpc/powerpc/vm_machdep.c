@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.47 2003/02/03 17:10:12 matt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.48 2003/03/05 05:27:24 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -101,14 +101,11 @@ cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
 	if (l1->l_addr->u_pcb.pcb_fpcpu)
 		save_fpu_lwp(l1);
 #endif
-	*pcb = l1->l_addr->u_pcb;
 #ifdef ALTIVEC
-	if (l1->l_addr->u_pcb.pcb_vr != NULL) {
+	if (l1->l_addr->u_pcb.pcb_veccpu)
 		save_vec_lwp(l1);
-		pcb->pcb_vr = pool_get(&vecpool, PR_WAITOK);
-		*pcb->pcb_vr = *l1->l_addr->u_pcb.pcb_vr;
-	}
 #endif
+	*pcb = l1->l_addr->u_pcb;
 
 	pcb->pcb_pm = l2->l_proc->p_vmspace->vm_map.pmap;
 	pcb->pcb_pmreal = pcb->pcb_pm;
@@ -252,13 +249,8 @@ cpu_exit(struct lwp *l, int proc)
 		save_fpu_lwp(l);
 #endif
 #ifdef ALTIVEC
-	if (pcb->pcb_veccpu) {			/* release the AltiVEC */
+	if (pcb->pcb_veccpu)			/* release the AltiVEC */
 		save_vec_lwp(l);
-		__asm __volatile("dssall;sync"); /* stop any streams */
-/* XXX this stops streams on the current cpu, should be pcb->pcb_veccpu */
-	}
-	if (pcb->pcb_vr != NULL)
-		pool_put(&vecpool, pcb->pcb_vr);
 #endif
 
 	splsched();
@@ -297,11 +289,11 @@ cpu_coredump(l, vp, cred, chdr)
 		memset(&md_core.fpstate, 0, sizeof(md_core.fpstate));
 
 #ifdef ALTIVEC
-	if (pcb->pcb_flags & PCB_ALTIVEC) {
-		if (pcb->pcb_veccpu)
-			save_vec_lwp(l);
-		md_core.vstate = *pcb->pcb_vr;
-	} else
+	if (pcb->pcb_veccpu)
+		save_vec_lwp(l);
+	if (pcb->pcb_flags & PCB_ALTIVEC)
+		md_core.vstate = pcb->pcb_vr;
+	else
 #endif
 		memset(&md_core.vstate, 0, sizeof(md_core.vstate));
 

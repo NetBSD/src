@@ -1,4 +1,4 @@
-/*	$NetBSD: altivec.c,v 1.1 2003/02/03 17:10:09 matt Exp $	*/
+/*	$NetBSD: altivec.c,v 1.2 2003/03/05 05:27:25 matt Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -42,8 +42,6 @@
 #include <powerpc/spr.h>
 #include <powerpc/psl.h>
 
-struct pool vecpool;
-
 void
 enable_vec()
 {
@@ -51,31 +49,12 @@ enable_vec()
 	struct lwp *l = curlwp;
 	struct pcb *pcb = &l->l_addr->u_pcb;
 	struct trapframe *tf = trapframe(l);
-	struct vreg *vr = pcb->pcb_vr;
-	int msr, scratch;
+	struct vreg *vr = &pcb->pcb_vr;
+	register_t msr;
 
 	KASSERT(pcb->pcb_veccpu == NULL);
 
-	/*
-	 * Allocate a vreg structure if we haven't done so.
-	 */
-	if (!(pcb->pcb_flags & PCB_ALTIVEC)) {
-		vr = pcb->pcb_vr = pool_get(&vecpool, PR_WAITOK);
-		pcb->pcb_flags |= PCB_ALTIVEC;
-
-		/*
-		 * Initialize the vectors with NaNs
-		 */
-
-		for (scratch = 0; scratch < 32; scratch++) {
-			vr->vreg[scratch][0] = 0x7FFFDEAD;
-			vr->vreg[scratch][1] = 0x7FFFDEAD;
-			vr->vreg[scratch][2] = 0x7FFFDEAD;
-			vr->vreg[scratch][3] = 0x7FFFDEAD;
-		}
-		vr->vscr = 0;
-		vr->vrsave = tf->tf_xtra[TF_VRSAVE];
-	}
+	pcb->pcb_flags |= PCB_ALTIVEC;
 
 	/*
 	 * Enable AltiVec temporarily (and disable interrupts).
@@ -94,7 +73,7 @@ enable_vec()
 	 * since we need to use a scratch vector register)
 	 */
 	__asm __volatile("vxor %2,%2,%2; lvewx %2,%0,%1; mtvscr %2" \
-	    ::	"r"(vr), "r"(offsetof(struct vreg, vscr)), "n"(0));
+	    ::	"b"(vr), "r"(offsetof(struct vreg, vscr)), "n"(0));
 
 	/*
 	 * VRSAVE will be restored when trap frame returns
@@ -102,7 +81,7 @@ enable_vec()
 	tf->tf_xtra[TF_VRSAVE] = vr->vrsave;
 
 #define	LVX(n,vr)	__asm /*__volatile*/("lvx %2,%0,%1" \
-	    ::	"r"(vr), "r"(offsetof(struct vreg, vreg[n])), "n"(n));
+	    ::	"b"(vr), "r"(offsetof(struct vreg, vreg[n])), "n"(n));
 
 	/*
 	 * Load all 32 vector registers
@@ -141,7 +120,7 @@ save_vec_cpu(void)
 	struct pcb *pcb;
 	struct vreg *vr;
 	struct trapframe *tf;
-	int msr;
+	register_t msr;
 	
 	/*
 	 * Turn on AltiVEC, turn off interrupts.
@@ -154,11 +133,11 @@ save_vec_cpu(void)
 		goto out;
 	}
 	pcb = &l->l_addr->u_pcb;
-	vr = pcb->pcb_vr;
+	vr = &pcb->pcb_vr;
 	tf = trapframe(l);
 
 #define	STVX(n,vr)	__asm /*__volatile*/("stvx %2,%0,%1" \
-	    ::	"r"(vr), "r"(offsetof(struct vreg, vreg[n])), "n"(n));
+	    ::	"b"(vr), "r"(offsetof(struct vreg, vreg[n])), "n"(n));
 
 	/*
 	 * Save the vector registers.
@@ -178,7 +157,7 @@ save_vec_cpu(void)
 	 * since we need to use one as scratch).
 	 */
 	__asm __volatile("mfvscr %2; stvewx %2,%0,%1" \
-	    ::	"r"(vr), "r"(offsetof(struct vreg, vscr)), "n"(0));
+	    ::	"b"(vr), "r"(offsetof(struct vreg, vscr)), "n"(0));
 
 	/*
 	 * Save VRSAVE
@@ -250,7 +229,7 @@ vzeropage(paddr_t pa)
 {
 	const paddr_t ea = pa + NBPG;
 	uint32_t vec[7], *vp = (void *) roundup((uintptr_t) vec, 16);
-	uint32_t omsr, msr;
+	register_t omsr, msr;
 
 	__asm __volatile("mfmsr %0" : "=r"(omsr) :);
 
@@ -277,10 +256,10 @@ vzeropage(paddr_t pa)
 	 * Zero the page using a single cache line.
 	 */
 	do {
-		__asm("stvx %2,%0,%1" ::  "r"(pa), "r"( 0), "n"(ZERO_VEC));
-		__asm("stvxl %2,%0,%1" :: "r"(pa), "r"(16), "n"(ZERO_VEC));
-		__asm("stvx %2,%0,%1" ::  "r"(pa), "r"(32), "n"(ZERO_VEC));
-		__asm("stvxl %2,%0,%1" :: "r"(pa), "r"(48), "n"(ZERO_VEC));
+		__asm("stvx %2,%0,%1" ::  "b"(pa), "r"( 0), "n"(ZERO_VEC));
+		__asm("stvxl %2,%0,%1" :: "b"(pa), "r"(16), "n"(ZERO_VEC));
+		__asm("stvx %2,%0,%1" ::  "b"(pa), "r"(32), "n"(ZERO_VEC));
+		__asm("stvxl %2,%0,%1" :: "b"(pa), "r"(48), "n"(ZERO_VEC));
 		pa += 64;
 	} while (pa < ea);
 
@@ -309,7 +288,7 @@ vcopypage(paddr_t dst, paddr_t src)
 {
 	const paddr_t edst = dst + NBPG;
 	uint32_t vec[11], *vp = (void *) roundup((uintptr_t) vec, 16);
-	uint32_t omsr, msr;
+	register_t omsr, msr;
 
 	__asm __volatile("mfmsr %0" : "=r"(omsr) :);
 
@@ -323,8 +302,8 @@ vcopypage(paddr_t dst, paddr_t src)
 	 * Save the VEC registers we will be using before we disable
 	 * relocation.
 	 */
-	__asm("stvx %2,%1,%0" :: "r"(vp), "r"( 0), "n"(LO_VEC));
-	__asm("stvx %2,%1,%0" :: "r"(vp), "r"(16), "n"(HI_VEC));
+	__asm("stvx %2,%1,%0" :: "b"(vp), "r"( 0), "n"(LO_VEC));
+	__asm("stvx %2,%1,%0" :: "b"(vp), "r"(16), "n"(HI_VEC));
 
 	/*
 	 * Turn off data relocation (DMMU off).
@@ -337,10 +316,10 @@ vcopypage(paddr_t dst, paddr_t src)
 	 * vector registers occupy one cache line.
 	 */
 	do {
-		__asm("lvx %2,%0,%1"   :: "r"(src), "r"( 0), "n"(LO_VEC));
-		__asm("stvx %2,%0,%1"  :: "r"(dst), "r"( 0), "n"(LO_VEC));
-		__asm("lvxl %2,%0,%1"  :: "r"(src), "r"(16), "n"(HI_VEC));
-		__asm("stvxl %2,%0,%1" :: "r"(dst), "r"(16), "n"(HI_VEC));
+		__asm("lvx %2,%0,%1"   :: "b"(src), "r"( 0), "n"(LO_VEC));
+		__asm("stvx %2,%0,%1"  :: "b"(dst), "r"( 0), "n"(LO_VEC));
+		__asm("lvxl %2,%0,%1"  :: "b"(src), "r"(16), "n"(HI_VEC));
+		__asm("stvxl %2,%0,%1" :: "b"(dst), "r"(16), "n"(HI_VEC));
 		src += 32;
 		dst += 32;
 	} while (dst < edst);
@@ -354,17 +333,11 @@ vcopypage(paddr_t dst, paddr_t src)
 	/*
 	 * Restore VEC registers (now that we can access the stack again).
 	 */
-	__asm("lvx %2,%1,%0" :: "r"(vp), "r"( 0), "n"(LO_VEC));
-	__asm("lvx %2,%1,%0" :: "r"(vp), "r"(16), "n"(HI_VEC));
+	__asm("lvx %2,%1,%0" :: "b"(vp), "r"( 0), "n"(LO_VEC));
+	__asm("lvx %2,%1,%0" :: "b"(vp), "r"(16), "n"(HI_VEC));
 
 	/*
 	 * Restore old MSR (AltiVec OFF).
 	 */
 	__asm __volatile("sync; mtmsr %0; isync" :: "r"(omsr));
-}
-
-void
-init_vec(void)
-{
-	pool_init(&vecpool, sizeof(struct vreg), 16, 0, 0, "vecpl", NULL);
 }

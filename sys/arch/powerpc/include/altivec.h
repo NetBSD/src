@@ -1,4 +1,4 @@
-/*	$NetBSD: altivec.h,v 1.6 2003/01/18 06:23:29 thorpej Exp $	*/
+/*	$NetBSD: altivec.h,v 1.7 2003/03/05 05:27:25 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -49,7 +49,6 @@ void save_vec_lwp(struct lwp *);
 #ifdef MULTIPROCESSOR
 void mp_save_vec_lwp(struct lwp *);
 #endif
-void init_vec(void);
 void vzeropage(paddr_t);
 void vcopypage(paddr_t, paddr_t);	/* dst, src */
 extern struct pool vecpool;
