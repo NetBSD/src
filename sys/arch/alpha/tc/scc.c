@@ -1,4 +1,4 @@
-/* $NetBSD: scc.c,v 1.48 2000/02/03 08:13:45 nisimura Exp $ */
+/* $NetBSD: scc.c,v 1.49 2000/02/09 00:33:03 thorpej Exp $ */
 
 /*
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.48 2000/02/03 08:13:45 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.49 2000/02/09 00:33:03 thorpej Exp $");
 
 #include "opt_ddb.h"
 #ifdef alpha
@@ -385,18 +385,18 @@ scc_alphaintr(onoff)
 	int onoff;
 {
 	if (onoff) {
-		*(volatile u_int *)IOASIC_REG_IMSK(ioasic_base) |=
+		*(volatile u_int *)(ioasic_base + IOASIC_IMSK) |=
 		    IOASIC_INTR_SCC_1 | IOASIC_INTR_SCC_0;
 #if !defined(DEC_3000_300) && defined(SCC_DMA)
-		*(volatile u_int *)IOASIC_REG_CSR(ioasic_base) |=
+		*(volatile u_int *)(ioasic_base + IOASIC_CSR) |=
 		    IOASIC_CSR_DMAEN_T1 | IOASIC_CSR_DMAEN_R1 |
 		    IOASIC_CSR_DMAEN_T2 | IOASIC_CSR_DMAEN_R2;
 #endif
 	} else {
-		*(volatile u_int *)IOASIC_REG_IMSK(ioasic_base) &=
+		*(volatile u_int *)(ioasic_base + IOASIC_IMSK) &=
 		    ~(IOASIC_INTR_SCC_1 | IOASIC_INTR_SCC_0);
 #if !defined(DEC_3000_300) && defined(SCC_DMA)
-		*(volatile u_int *)IOASIC_REG_CSR(ioasic_base) &=
+		*(volatile u_int *)(ioasic_base + IOASIC_CSR) &=
 		    ~(IOASIC_CSR_DMAEN_T1 | IOASIC_CSR_DMAEN_R1 |
 		    IOASIC_CSR_DMAEN_T2 | IOASIC_CSR_DMAEN_R2);
 #endif
