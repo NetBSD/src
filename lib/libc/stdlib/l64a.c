@@ -5,7 +5,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: l64a.c,v 1.6 1997/07/21 14:08:53 jtc Exp $");
+__RCSID("$NetBSD: l64a.c,v 1.7 1998/06/14 17:28:15 kleink Exp $");
 #endif
 
 #include "namespace.h"
@@ -25,7 +25,7 @@ l64a (value)
 	int i;
 
 	if (!value) 
-		return NULL;
+		goto out;
 
 	for (i = 0; value != 0 && i < 6; i++) {
 		digit = value & 0x3f;
@@ -43,6 +43,7 @@ l64a (value)
 		s++;
 	}
 
+out:
 	*s = '\0';
 
 	return buf;
