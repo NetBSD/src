@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 1997/04/17 07:46:24 thorpej Exp $
+#	$NetBSD: Makefile,v 1.3 1998/03/02 17:07:53 drochner Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -27,6 +27,7 @@ CPPFLAGS+=	-DFIRMWORKSBUGS
 CPPFLAGS+=	-DPOWERPC_BOOT_AOUT
 CPPFLAGS+=	-DPOWERPC_BOOT_ELF
 CPPFLAGS+=	-DXCOFF_GLUE		# for booting PCI Powermacs
+CPPFLAGS+=	-DCOMPAT_386BSD_MBRPART
 
 ### find out what to use for libkern
 KERN_AS=	library
