@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.20 2003/08/07 16:27:09 agc Exp $	*/
+/*	$NetBSD: extintr.c,v 1.21 2004/03/13 07:05:54 jmc Exp $	*/
 /*      $OpenBSD: isabus.c,v 1.1 1997/10/11 11:53:00 pefo Exp $ */
 
 /*-
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.20 2003/08/07 16:27:09 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.21 2004/03/13 07:05:54 jmc Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -169,6 +169,7 @@ ext_intr()
 		*(unsigned int *)(bebox_mb_reg + CPU0_INT_MASK);
 	int_state = *(unsigned int *)(bebox_mb_reg + INT_STATE_REG);
 
+	irq = 0;
 	if (int_state & BEBOX_INTR_8259) {
 		irq = isa_intr();
 	} else if (int_state &= cpu0_int_mask) {
@@ -444,6 +445,7 @@ do_pending_int()
 	if (processing)
 		return;
 
+	irq = 0;
 	processing = 1;
 	asm volatile("mfmsr %0" : "=r"(emsr));
 	dmsr = emsr & ~PSL_EE;
