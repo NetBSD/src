@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.139 2001/03/21 22:25:55 lukem Exp $	*/
+/*	$NetBSD: conf.c,v 1.140 2001/03/26 12:33:24 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -222,8 +222,8 @@ cdev_decl(i4btel);
 /* open, close, read, write, ioctl, mmap */
 #define cdev_vmegen_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
-	0, (dev_type_poll((*))) enodev, dev_init(c,n,mmap) }
+	dev_init(c,n,write), dev_init(c,n,ioctl), dev_noimpl(stop,enodev), \
+	0, seltrue, dev_init(c,n,mmap) }
 
 #include "vmegeneric.h"
 cdev_decl(vmegeneric);

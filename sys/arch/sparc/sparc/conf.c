@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.68 2001/03/21 22:25:56 lukem Exp $ */
+/*	$NetBSD: conf.c,v 1.69 2001/03/26 12:33:25 lukem Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -216,7 +216,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 66 */
 	cdev_fb_init(NCGSIX,cgsix),	/* 67: /dev/cgsix */
 	cdev_notdef(),			/* 68 */
-	cdev_gen_init(NAUDIO,audio),	/* 69: /dev/audio */
+	cdev__ocrwip_init(NAUDIO,audio),	/* 69: /dev/audio */
 	cdev_openprom_init(1,openprom),	/* 70: /dev/openprom */
 	cdev_tctrl_init(NTCTRL,tctrl),	/* 71: /dev/tctrl */
 	cdev_i4b_init(NI4B, i4b),		/* 72: i4b main device */
@@ -248,13 +248,13 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 98 */
 	cdev_fb_init(NCGFOURTEEN,cgfourteen), /* 99: /dev/cgfourteen */
 	cdev_tty_init(NMTTY,mtty),	/* 100 */
-	cdev_gen_init(NMBPP,mbpp),	/* 101 */
+	cdev__ocrwip_init(NMBPP,mbpp),	/* 101 */
 	cdev_notdef(),			/* 102 */
 	cdev_notdef(),			/* 103 */
 	cdev_notdef(),			/* 104 */
 	cdev_bpftun_init(NBPFILTER,bpf),/* 105: packet filter */
 	cdev_notdef(),			/* 106 */
-	cdev_gen_init(NBPP,bpp),	/* 107: on-board parallel port */
+	cdev__ocrwip_init(NBPP,bpp),	/* 107: on-board parallel port */
 	cdev_notdef(),			/* 108 */
 	cdev_fb_init(NTCX,tcx),		/* 109: /dev/tcx */
 	cdev_disk_init(NVND,vnd),	/* 110: vnode disk driver */
