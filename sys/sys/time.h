@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.17 1996/02/01 00:10:36 jtc Exp $	*/
+/*	$NetBSD: time.h,v 1.18 1996/04/23 10:29:33 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -140,6 +140,7 @@ void	microtime __P((struct timeval *tv));
 
 __BEGIN_DECLS
 int	adjtime __P((const struct timeval *, struct timeval *));
+int	futimes __P((int, const struct timeval *));
 int	getitimer __P((int, struct itimerval *));
 int	gettimeofday __P((struct timeval *, struct timezone *));
 int	setitimer __P((int, const struct itimerval *, struct itimerval *));
