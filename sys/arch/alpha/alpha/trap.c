@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.18 1996/11/13 22:20:58 cgd Exp $	*/
+/*	$NetBSD: trap.c,v 1.19 1996/11/27 01:28:30 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -402,20 +402,48 @@ out:
 	return;
 
 dopanic:
-	printf("\n");
-	printf("fatal %s trap:\n", user ? "user" : "kernel");
-	printf("\n");
-	printf("    trap entry = 0x%lx\n", entry);
-	printf("    a0         = 0x%lx\n", a0);
-	printf("    a1         = 0x%lx\n", a1);
-	printf("    a2         = 0x%lx\n", a2);
-	printf("    pc         = 0x%lx\n", framep->tf_regs[FRAME_PC]);
-	printf("    ra         = 0x%lx\n", framep->tf_regs[FRAME_RA]);
-	printf("    curproc    = %p\n", curproc);
-	if (curproc != NULL)
-		printf("        pid = %d, comm = %s\n", curproc->p_pid,
-		    curproc->p_comm);
-	printf("\n");
+	{
+		const char *entryname;
+
+		switch (entry) {
+		case ALPHA_KENTRY_INT:
+			entryname = "interrupt";
+			break;
+		case ALPHA_KENTRY_ARITH:
+			entryname = "arithmetic trap";
+			break;
+		case ALPHA_KENTRY_MM:
+			entryname = "memory management fault";
+			break;
+		case ALPHA_KENTRY_IF:
+			entryname = "instruction fault";
+			break;
+		case ALPHA_KENTRY_UNA:
+			entryname = "unaligned access fault";
+			break;
+		case ALPHA_KENTRY_SYS:
+			entryname = "system call";
+			break;
+		default:
+			entryname = "???";
+			break;
+		}
+
+		printf("\n");
+		printf("fatal %s trap:\n", user ? "user" : "kernel");
+		printf("\n");
+		printf("    trap entry = 0x%lx (%s)\n", entry, entryname);
+		printf("    a0         = 0x%lx\n", a0);
+		printf("    a1         = 0x%lx\n", a1);
+		printf("    a2         = 0x%lx\n", a2);
+		printf("    pc         = 0x%lx\n", framep->tf_regs[FRAME_PC]);
+		printf("    ra         = 0x%lx\n", framep->tf_regs[FRAME_RA]);
+		printf("    curproc    = %p\n", curproc);
+		if (curproc != NULL)
+			printf("        pid = %d, comm = %s\n", curproc->p_pid,
+			    curproc->p_comm);
+		printf("\n");
+	}
 
 	/* XXX dump registers */
 	/* XXX kernel debugger */
