@@ -1,4 +1,4 @@
-/*	$NetBSD: plcom.c,v 1.5 2002/10/23 09:11:01 jdolecek Exp $	*/
+/*	$NetBSD: plcom.c,v 1.6 2003/03/08 09:47:13 he Exp $	*/
 
 /*-
  * Copyright (c) 2001 ARM Ltd
@@ -2153,7 +2153,7 @@ plcominit(bus_space_tag_t iot, bus_addr_t iobase, int rate, int frequency,
  */
 struct consdev plcomcons = {
 	NULL, NULL, plcomcngetc, plcomcnputc, plcomcnpollc, NULL,
-	NODEV, CN_NORMAL
+	NULL, NULL, NODEV, CN_NORMAL
 };
 
 
