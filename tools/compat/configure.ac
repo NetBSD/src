@@ -1,4 +1,4 @@
-#	$NetBSD: configure.ac,v 1.46 2004/07/24 16:32:01 dbj Exp $
+#	$NetBSD: configure.ac,v 1.47 2004/10/12 03:28:32 jmc Exp $
 #
 # Autoconf definition file for libnbcompat.
 #
@@ -126,6 +126,10 @@ AC_CHECK_FUNCS([htobe16, htobe32, htobe64, htole16, htole32, htole64, be16toh, b
 
 AC_CHECK_FUNCS([bswap16, bswap32, bswap64],,, [
 #include <machine/bswap.h>
+])
+
+AC_CHECK_FUNCS([fstatvfs],,, [
+#include <sys/statvfs.h>
 ])
 
 AC_CHECK_DECLS([setgroupent, setpassent],,, [
