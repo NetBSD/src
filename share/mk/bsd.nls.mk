@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.nls.mk,v 1.29 2001/08/14 07:02:13 tv Exp $
+#	$NetBSD: bsd.nls.mk,v 1.30 2001/08/14 08:28:24 tv Exp $
 
 .if !target(__initialized__)
 __initialized__:
@@ -11,11 +11,13 @@ __initialized__:
 .PHONY:		cleannls nlsinstall
 cleandir:	cleannls
 
+GENCAT?=	gencat
+
 .SUFFIXES: .cat .msg
 
 .msg.cat:
 	@rm -f ${.TARGET}
-	gencat ${.TARGET} ${.IMPSRC}
+	${GENCAT} ${.TARGET} ${.IMPSRC}
 
 .if defined(NLS) && !empty(NLS)
 NLSALL= ${NLS:.msg=.cat}
