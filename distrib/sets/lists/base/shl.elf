@@ -1,4 +1,4 @@
-# $NetBSD: shl.elf,v 1.39 2001/01/26 03:05:40 jwise Exp $
+# $NetBSD: shl.elf,v 1.40 2001/01/31 17:53:24 itojun Exp $
 # Note: libtermcap and libtermlib are hardlinked and share the same version.
 ./usr/lib/libamu.so.2		base-amd-shlib
 ./usr/lib/libasn1.so.3		base-krb5-shlib
@@ -47,11 +47,11 @@
 ./usr/lib/libutil.so.5		base-sys-shlib
 ./usr/lib/libwrap.so.0		base-net-shlib
 ./usr/lib/libz.so.0		base-sys-shlib
-./usr/lib/runemodule/libBIG5.so.3	base-rune-BIG5
-./usr/lib/runemodule/libEUC.so.3	base-rune-EUC
-./usr/lib/runemodule/libMSKanji.so.3	base-rune-MSKanji
-./usr/lib/runemodule/libUTF2.so.3	base-rune-UTF2
-./usr/lib/runemodule/libUTF8.so.3	base-rune-UTF8
-./usr/lib/runemodule/libEUCTW.so.3	base-rune-EUCTW
-./usr/lib/runemodule/libISO2022.so.3	base-rune-ISO2022
+./usr/lib/runemodule/libBIG5.so.3	base-rune-lib
+./usr/lib/runemodule/libEUC.so.3	base-rune-lib
+./usr/lib/runemodule/libMSKanji.so.3	base-rune-lib
+./usr/lib/runemodule/libUTF2.so.3	base-rune-lib
+./usr/lib/runemodule/libUTF8.so.3	base-rune-lib
+./usr/lib/runemodule/libEUCTW.so.3	base-rune-lib
+./usr/lib/runemodule/libISO2022.so.3	base-rune-lib
 ./usr/libexec/ld.elf_so		base-sys-shlib

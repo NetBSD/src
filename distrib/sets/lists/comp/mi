@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.304 2001/01/29 01:23:22 jwise Exp $
+#	$NetBSD: mi,v 1.305 2001/01/31 17:53:24 itojun Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -1317,6 +1317,13 @@
 ./usr/lib/liby_p.a		comp-c-proflib
 ./usr/lib/libz.a		comp-c-lib
 ./usr/lib/libz_p.a		comp-c-proflib
+./usr/lib/runemodule/libBIG5.a	comp-rune-lib
+./usr/lib/runemodule/libEUC.a	comp-rune-lib
+./usr/lib/runemodule/libEUCTW.a	comp-rune-lib
+./usr/lib/runemodule/libISO2022.a	comp-rune-lib
+./usr/lib/runemodule/libMSKanji.a	comp-rune-lib
+./usr/lib/runemodule/libUTF2.a	comp-rune-lib
+./usr/lib/runemodule/libUTF8.a	comp-rune-lib
 ./usr/libdata/lint/llib-lbz2.ln		comp-c-lintlib
 ./usr/libdata/lint/llib-lc.ln		comp-c-lintlib
 ./usr/libdata/lint/llib-lcompat.ln	comp-c-lintlib
