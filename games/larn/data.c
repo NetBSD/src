@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)data.c	5.3 (Berkeley) 5/13/91";*/
-static char rcsid[] = "$Id: data.c,v 1.3 1993/08/01 18:54:14 mycroft Exp $";
+static char rcsid[] = "$Id: data.c,v 1.4 1994/10/23 05:21:43 mycroft Exp $";
 #endif /* not lint */
 
 /*	data.c		Larn is copyrighted 1986 by Noah Morgan. */
@@ -357,7 +357,7 @@ char *potionhide[] = {
 " fire resistance",
 " treasure finding",
 " instant healing",
-" ure dianthroritis",
+" cure dianthroritis",
 " poison",
 " see invisible",
 "  ",
