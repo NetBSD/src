@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.12 1998/09/06 21:53:43 eeh Exp $ */
+/*	$NetBSD: trap.c,v 1.13 1998/09/07 18:23:54 eeh Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1814,9 +1814,16 @@ syscall(code, tf, pc)
 	case SYS___syscall:
 		if (callp != sysent)
 			break;
-		code = ap[_QUAD_LOWWORD];
-		ap += 2;
-		nap -= 2;
+		if (tf->tf_out[6] & 1L) {
+			/* longs *are* quadwords */
+			code = ap[0];
+			ap += 1;
+			nap -= 1;			
+		} else {
+			code = ap[_QUAD_LOWWORD];
+			ap += 2;
+			nap -= 2;
+		}
 		break;
 	}
 
@@ -1830,22 +1837,32 @@ syscall(code, tf, pc)
 #endif
 	if (code < 0 || code >= nsys)
 		callp += p->p_emul->e_nosys;
-	else if (tf->tf_out[6] & 1) {
+	else if (tf->tf_out[6] & 1L) {
+#ifndef __LP64
+#ifdef DEBUG
+		printf("syscall(): 64-bit stack on a 32-bit kernel????\n");
+		Debugger();
+#endif
+#endif
 		/* 64-bit stack -- not really supported on 32-bit kernels */
 		callp += code;
 		i = callp->sy_argsize / sizeof(register64_t);
 		if (i > nap) {	/* usually false */
-			register64_t temp;
+			register64_t temp[6];
+			int j = 0;
 #ifdef DEBUG
 			if (trapdebug&(TDB_SYSCALL|TDB_FOLLOW))
-				printf("Args %d>%d -- need to copyin\n", i , nap);
+				printf("Args64 %d>%d -- need to copyin\n", i , nap);
 #endif
 			if (i > 8)
 				panic("syscall nargs");
+			/* Read the whole block in */
 			error = copyin((caddr_t)tf->tf_out[6] + BIAS +
-				       offsetof(struct frame64, fr_argx),
+				       offsetof(struct frame64, fr_argd),
 				       (caddr_t)&temp, (i - nap) * sizeof(register64_t));
-			args.i[nap] = temp;
+			/* Copy each to the argument array */
+			for (j=0; nap+j < i; j++)
+				args.i[nap+j] = temp[j];
 			if (error) {
 #ifdef KTRACE
 				if (KTRPOINT(p, KTR_SYSCALL))
@@ -1861,7 +1878,7 @@ syscall(code, tf, pc)
 				*argp++ = *ap++;
 #ifdef DEBUG
 		if (trapdebug&(TDB_SYSCALL|TDB_FOLLOW)) {
-			for (i=0; i < callp->sy_argsize / sizeof(register_t); i++) 
+			for (i=0; i < callp->sy_argsize / sizeof(register64_t); i++) 
 				printf("arg[%d]=%x ", i, (long)(args.i[i]));
 			printf("\n");
 		}
@@ -1875,17 +1892,30 @@ syscall(code, tf, pc)
 		callp += code;
 		i = callp->sy_argsize / sizeof(register32_t);
 		if (i > nap) {	/* usually false */
-			register32_t temp;
+			register32_t temp[6];
+			int j = 0;
 #ifdef DEBUG
 			if (trapdebug&(TDB_SYSCALL|TDB_FOLLOW))
 				printf("Args %d>%d -- need to copyin\n", i , nap);
 #endif
 			if (i > 8)
 				panic("syscall nargs");
-			error = copyin((caddr_t)tf->tf_out[6] +
-			    offsetof(struct frame32, fr_argx),
-			    (caddr_t)&temp, (i - nap) * sizeof(register32_t));
-			args.i[nap] = temp;
+			/* Read the whole block in */
+			error = copyin((caddr_t)(tf->tf_out[6] +
+						 offsetof(struct frame32, fr_argx)),
+				       (caddr_t)&temp, (i - nap) * sizeof(register32_t));
+			/* Copy each to the argument array */
+			for (j=0; nap+j < i; j++)
+				args.i[nap+j] = temp[j];
+#ifdef DEBUG
+			if (trapdebug&(TDB_SYSCALL|TDB_FOLLOW))	{ 
+				int k;
+				printf("Copyin args of %d from %p:\n", j, 
+				       (caddr_t)(tf->tf_out[6] + offsetof(struct frame32, fr_argx)));
+				for (k=0; k<j; k++)
+					printf("arg %d = %p at %d val %p\n", k, (long)temp[k], nap+k, (long)args.i[nap+k]);
+			}
+#endif
 			if (error) {
 #ifdef KTRACE
 				if (KTRPOINT(p, KTR_SYSCALL))
@@ -1901,7 +1931,7 @@ syscall(code, tf, pc)
 				*argp++ = *ap++;
 #ifdef DEBUG
 		if (trapdebug&(TDB_SYSCALL|TDB_FOLLOW)) {
-			for (i=0; i < callp->sy_argsize / sizeof(register_t); i++) 
+			for (i=0; i < callp->sy_argsize / sizeof(register32_t); i++) 
 				printf("arg[%d]=%x ", i, (int)(args.i[i]));
 			printf("\n");
 		}
