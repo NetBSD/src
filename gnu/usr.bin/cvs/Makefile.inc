@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.2 2001/01/09 08:52:58 enami Exp $
+#	$NetBSD: Makefile.inc,v 1.3 2002/03/06 02:40:06 wiz Exp $
 
 .include <bsd.own.mk>
 
@@ -14,15 +14,6 @@ COBJDIR!=cd $(.CURDIR)/../libcvs && ${PRINTOBJDIR}
 
 LIBDIFF=	${DOBJDIR}/libdiff.a
 LIBCVS=		${COBJDIR}/libcvs.a
-
-# Directories to install into.
-#PFIX_LIBEXECDIR=/usr/libexec/postfix
-#PFIX_ETCDIR=	/etc/postfix
-#PFIX_EXAMPLEDIR=/usr/share/examples/postfix
-#PFIX_SBINDIR=	/usr/sbin
-
-# postfix check wants a lot of files to be owned by root
-#BINOWN=	root
 
 .if exists(${.CURDIR}/../../Makefile.inc)
 .include "${.CURDIR}/../../Makefile.inc"
