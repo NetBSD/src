@@ -1,4 +1,4 @@
-/*	$NetBSD: chpass.h,v 1.7 1997/10/18 12:48:51 lukem Exp $	*/
+/*	$NetBSD: chpass.h,v 1.8 1998/02/04 15:21:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -70,7 +70,7 @@ int	 p_login __P((char *, struct passwd *, ENTRY *));
 int	 p_passwd __P((char *, struct passwd *, ENTRY *));
 int	 p_shell __P((char *, struct passwd *, ENTRY *));
 int	 p_uid __P((char *, struct passwd *, ENTRY *));
-char    *ttoa __P((time_t));
+char    *ttoa __P((char *, size_t, time_t));
 int	 verify __P((char *, struct passwd *));
 
 #ifdef YP
