@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.22 1999/06/16 07:35:31 pk Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.23 1999/09/11 21:39:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -185,6 +185,24 @@ scsipi_wait_drain(sc_link)
 		(void) tsleep(&sc_link->pending_xfers, PRIBIO, "sxdrn", 0);
 	}
 	splx(s);
+}
+
+/*
+ * Kill off all pending xfers for a scsipi_link.
+ *
+ * Must be called at splbio().
+ */
+void
+scsipi_kill_pending(sc_link)
+	struct scsipi_link *sc_link;
+{
+	struct scsipi_xfer *xs;
+
+	while ((xs = TAILQ_FIRST(&sc_link->pending_xfers)) != NULL) {
+		xs->flags |= ITSDONE;
+		xs->error = ENODEV;
+		scsipi_done(xs);
+	}
 }
 
 /*
