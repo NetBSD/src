@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.31 2000/05/29 23:40:04 simonb Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.32 2000/06/06 17:41:11 soren Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -104,7 +104,7 @@
  *	tlbp		-- two integer ops beforehand
  *	mtc0	[PageMask,EntryHi,Cp0] -- two integer ops afterwards
  *	changing JTLB	-- two integer ops afterwards
- *	mtc0	[EPC,ErrorEPC,Status]	-- two int ops afterwards before eret
+ *	mtc0	[EPC,ErrorEPC,Status] -- two int ops afterwards before eret
  *	config.k0	-- five int ops before kseg0, ckseg0 memref
  *
  * For the IDT R4000, some hazards are:
@@ -116,7 +116,7 @@
 /*
  *============================================================================
  *
- *  Mips-III ISA support, part 1: locore exception vectors.
+ *  MIPS III ISA support, part 1: locore exception vectors.
  *  The following code is copied to the vector locations to which
  *  the CPU jumps in response to an exception or a TLB miss.
  *
@@ -172,7 +172,7 @@ VECTOR(mips3_TLBMiss, unknown)
 	ld	k0, 0(k1)			# load both 32 bit pte's at once
 3:	dsll	k1, k0, 34			# Clear soft wired, ro bits
 	dsrl	k1, k1, 34
-#if	BYTE_ORDER == _BIG_ENDIAN
+#if	BYTE_ORDER == BIG_ENDIAN
 	dmtc0	k1, MIPS_COP_0_TLB_LO1
 	dsll	k0, k0, 2
 	dsrl	k0, k0, 34
@@ -1585,7 +1585,7 @@ LEAF(mips3_FlushDCache)
 	move	t0, a0		# copy start address
 	and	a0, a0, a2	# get index into primary cache
 	addu	a1, 127		# Align
-	li	a2, 0x80000000
+	li	a2, MIPS_KSEG0_START
 	addu	a0, a0, a2
 	addu	a1, a1, a0
 	and	a0, a0, -128
@@ -1609,7 +1609,7 @@ LEAF(mips3_FlushDCache)
 	beq	a2, zero, 2f	# no secondary cache
 	addu	a2, -1
 	and	t0,t0,a2	# secondary cache index
-	li	a0, 0x80000000
+	li	a0, MIPS_KSEG0_START
 	addu	a0, a0, t0	# reduce to kseg0 address
 1:
 	cache	3, 0(a0)
@@ -1633,7 +1633,7 @@ END(mips3_FlushDCache)
  *		vaddr_t addr, len;
  *
  *	Flush data cache for range of addr to addr + len - 1.
- *	The address can be any valid viritual address as long
+ *	The address can be any valid virtual address as long
  *	as no TLB invalid traps occur. Only lines with matching
  *	addr is flushed.
  *
@@ -1707,13 +1707,9 @@ LEAF(mips3_InvalidateDCache)
 	nop
 END(mips3_InvalidateDCache)
 
-/*----------------------------------------------------------------------------
- *
- *	QED R52xx cache flushing code.
- *
- *----------------------------------------------------------------------------
+/*
+ * XXX mips/include
  */
-
 #define C_ICACHE	0
 #define C_DCACHE	1
 
@@ -1725,7 +1721,7 @@ END(mips3_InvalidateDCache)
 
 /*----------------------------------------------------------------------------
  *
- * mips5200_FlushCache -- (QED)
+ * mips3_FlushCache_2way --
  *
  *	Flush the caches. Assumes a line size of 32 bytes for speed.
  *
@@ -1737,7 +1733,7 @@ END(mips3_InvalidateDCache)
  *
  *----------------------------------------------------------------------------
  */
-LEAF(mips5200_FlushCache)
+LEAF(mips3_FlushCache_2way)
 	lw	t1, mips_L1ICacheSize
 	lw	t2, mips_L1DCacheSize
 
@@ -1781,36 +1777,37 @@ LEAF(mips5200_FlushCache)
 	bne	t0, t1, 1b
 	addu	t3, t3, 128		# Branch delay slot
 
-	lw	t2, mips_L2CacheSize
-	beq	t2, zero, 2f
-	nop
-	li	t0, MIPS_KSEG0_START
-	addu	t1, t0, t2
-	subu	t1, t1, 128
+#if 1
+        lw      t2, mips_L2CacheSize
+        beq     t2, zero, 2f
+        nop
+        li      t0, MIPS_KSEG0_START
+        addu    t1, t0, t2
+        subu    t1, t1, 128
 1:
-	cache	3,  0(t0)
-	cache	3, 32(t0)
-	cache	3, 64(t0)
-	cache	3, 96(t0)
-	bne	t0, t1, 1b
-	addu	t0, t0, 128
-2:
-	j	ra
-	nop
-END(mips5200_FlushCache)
+        cache   3, 0(t0)
+        cache   3, 32(t0)
+        cache   3, 64(t0)
+        cache   3, 96(t0)
+        bne     t0, t1, 1b
+        addu    t0, t0, 128
+2:      
+#endif
+        j       ra 
+        nop
+END(mips3_FlushCache_2way)
 
 /*----------------------------------------------------------------------------
  *
- * mips5200_FlushICache -- (QED)
+ * mips3_FlushICache_2way --
  *
- *	void mips5200_FlushICache(addr, len)
+ *	void mips3_FlushICache_2way(addr, len)
  *		vaddr_t addr; vsize_t len;
  *
  *	Flush instruction cache for range of addr to addr + len - 1.
  *	The address can be any valid address so long as no TLB misses occur.
  *
  *	Assumes a cache line size of 32 bytes for speed.
- *	Does not currently support a second level cache.
  *
  *	Addr should be a KSEG0 address, but it can be called with a KUSEG
  *	address.  To handle flushing both ways here we | in KSEG0 to avoid
@@ -1826,7 +1823,7 @@ END(mips5200_FlushCache)
  *
  *----------------------------------------------------------------------------
  */
-LEAF(mips5200_FlushICache)
+LEAF(mips3_FlushICache_2way)
 	lw	t0, mips_L1ICacheSize
 	li	t1, MIPS_KSEG0_START
 	addu	a1, 127		# Align (I $ inval of partials is ok)
@@ -1852,13 +1849,13 @@ LEAF(mips5200_FlushICache)
 
 	j	ra
 	nop
-END(mips5200_FlushICache)
+END(mips3_FlushICache_2way)
 
 /*----------------------------------------------------------------------------
  *
- * mips5200_FlushDCache --
+ * mips3_FlushDCache_2way --
  *
- *	void mips5200_FlushDCache(paddr_t addr, len)
+ *	void mips3_FlushDCache_2way(paddr_t addr, len)
  *
  *	Flush data cache for index range of addr to addr + len - 1.
  *	The address is reduced to a kseg0 index.
@@ -1872,7 +1869,7 @@ END(mips5200_FlushICache)
  *
  *----------------------------------------------------------------------------
  */
-LEAF(mips5200_FlushDCache)
+LEAF(mips3_FlushDCache_2way)
 	lw	a2, mips_L1DCacheSize
 	srl	a3, a2, 1	# two way set associative cache
 	addu	a2, a3, -1	# offset mask
@@ -1899,21 +1896,19 @@ LEAF(mips5200_FlushDCache)
 	bgtz	a1, 1b
 	addu	a3, 128		# Branch delay slot
 
-	/* no s$ support */
-
 	j	ra
 	nop
-END(mips5200_FlushDCache)
+END(mips3_FlushDCache_2way)
 
 /*----------------------------------------------------------------------------
  *
- * mips5200_HitFlushDCache -- (QED)
+ * mips3_HitFlushDCache_2way --
  *
- *	void mips5200_HitFlushDCache(addr, len)
+ *	void mips3_HitFlushDCache_2way(addr, len)
  *		vaddr_t addr, len;
  *
  *	Flush data cache for range of addr to addr + len - 1.
- *	The address can be any valid viritual address as long
+ *	The address can be any valid virtual address as long
  *	as no TLB invalid traps occur. Only lines with matching
  *	addr is flushed.
  *
@@ -1933,7 +1928,7 @@ END(mips5200_FlushDCache)
  *
  *----------------------------------------------------------------------------
  */
-LEAF(mips5200_HitFlushDCache)
+LEAF(mips3_HitFlushDCache_2way)
 	beq	a1, zero, 2f
 	addu	a1, 31		# Branch delay slot; align length
 	and	a0, a0, -32
@@ -1943,17 +1938,16 @@ LEAF(mips5200_HitFlushDCache)
 	cache	C_DCACHE|C_HWBINV,0(a0)
 	bne	a1, zero, 1b
 	addu	a0, 32		# Branch delay slot
-
 2:
 	j	ra
 	nop
-END(mips5200_HitFlushDCache)
+END(mips3_HitFlushDCache_2way)
 
 /*----------------------------------------------------------------------------
  *
- * mips5200_InvalidateDCache -- (QED)
+ * mips3_InvalidateDCache_2way --
  *
- *	void mips5200_InvalidateDCache(addr, len)
+ *	void mips3_InvalidateDCache_2way(addr, len)
  *		vaddr_t addr, len;
  *
  *	Flush data cache for range of addr to addr + len - 1.
@@ -1973,7 +1967,7 @@ END(mips5200_HitFlushDCache)
  *
  *----------------------------------------------------------------------------
  */
-LEAF(mips5200_InvalidateDCache)
+LEAF(mips3_InvalidateDCache_2way)
 	addu	a1, a1, a0		# compute ending address
 1:
 	cache	C_DCACHE|C_HINV,0(a0)
@@ -1983,7 +1977,7 @@ LEAF(mips5200_InvalidateDCache)
 
 	j	ra
 	nop
-END(mips5200_InvalidateDCache)
+END(mips3_InvalidateDCache_2way)
 
 /*----------------------------------------------------------------------------
  *
@@ -2024,7 +2018,7 @@ XLEAF(mips3_VCEI)	/* XXXX */
 	and	k1, 0x00000380			# VIndex[9..7]
 	sll	k1, k1, 5			# [14..12] <---
 	or	k0, k0, k1
-	or	k0, 0x80000000			# physical K0SEG address
+	or	k0, MIPS_KSEG0_START		# physical K0SEG address
 	lw	k1, _C_LABEL(mips_L2CacheLSize)
 	beq	k1, zero, 2f			# XXX needed?
 	subu	k1, zero, k1
