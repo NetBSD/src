@@ -1,4 +1,4 @@
-/*	$NetBSD: driver.c,v 1.10 2001/06/13 10:45:58 wiz Exp $	*/
+/*	$NetBSD: driver.c,v 1.11 2001/12/31 01:04:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -46,46 +46,46 @@ traverse_form_links(FORM *form, int direction);
 static int
 traverse_form_links(FORM *form, int direction)
 {
-	unsigned index;
+	unsigned idx;
 
-	index = form->cur_field;
+	idx = form->cur_field;
 	
 	do {
 		switch (direction) {
 		case REQ_LEFT_FIELD:
-			if (form->fields[index]->left == NULL)
+			if (form->fields[idx]->left == NULL)
 				return E_REQUEST_DENIED;
-			index = form->fields[index]->left->index;
+			idx = form->fields[idx]->left->index;
 			break;
 			
 		case REQ_RIGHT_FIELD:
-			if (form->fields[index]->right == NULL)
+			if (form->fields[idx]->right == NULL)
 				return E_REQUEST_DENIED;
-			index = form->fields[index]->right->index;
+			idx = form->fields[idx]->right->index;
 			break;
 			
 		case REQ_UP_FIELD:
-			if (form->fields[index]->up == NULL)
+			if (form->fields[idx]->up == NULL)
 				return E_REQUEST_DENIED;
-			index = form->fields[index]->up->index;
+			idx = form->fields[idx]->up->index;
 			break;
 			
 		case REQ_DOWN_FIELD:
-			if (form->fields[index]->down == NULL)
+			if (form->fields[idx]->down == NULL)
 				return E_REQUEST_DENIED;
-			index = form->fields[index]->down->index;
+			idx = form->fields[idx]->down->index;
 			break;
 
 		default:
 			return E_REQUEST_DENIED;
 		}
 
-		if ((form->fields[index]->opts & (O_ACTIVE | O_VISIBLE))
+		if ((form->fields[idx]->opts & (O_ACTIVE | O_VISIBLE))
 		    == (O_ACTIVE | O_VISIBLE)) {
-			form->cur_field = index;
+			form->cur_field = idx;
 			return E_OK;
 		}
-	} while (index != form->cur_field);
+	} while (idx != form->cur_field);
 
 	return E_REQUEST_DENIED;
 }
