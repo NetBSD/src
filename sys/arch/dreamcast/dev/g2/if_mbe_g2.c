@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mbe_g2.c,v 1.1 2002/12/27 11:43:39 tsutsui Exp $	*/
+/*	$NetBSD: if_mbe_g2.c,v 1.2 2003/01/04 18:10:18 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2002 Christian Groessler
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mbe_g2.c,v 1.1 2002/12/27 11:43:39 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mbe_g2.c,v 1.2 2003/01/04 18:10:18 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -159,6 +159,15 @@ mbe_g2_detect(iot, ioh, enaddr)
 {
 	u_int8_t eeprom[FE_EEPROM_SIZE];
 
+	/* Read the chip type */
+	if ((bus_space_read_1(iot, ioh, FE_DLCR7) & FE_D7_IDENT) !=
+	    FE_D7_IDENT_86967) {
+#ifdef LANA_DEBUG
+		printf("mbe_g2_detect: unknown chip type\n");
+#endif
+		return (0);
+	}
+
 	memset(eeprom, 0, FE_EEPROM_SIZE);
 
 	/* Get our station address from EEPROM. */
@@ -174,15 +183,6 @@ mbe_g2_detect(iot, ioh, enaddr)
 	    (enaddr[0] == 0x00 && enaddr[1] == 0x00 && enaddr[2] == 0x00)) {
 #ifdef LANA_DEBUG
 		printf("mbe_g2_detect: invalid ethernet address\n");
-#endif
-		return (0);
-	}
-
-	/* Read the chip type */
-	if ((bus_space_read_1(iot, ioh, FE_DLCR7) & FE_D7_IDENT) !=
-	    FE_D7_IDENT_86967) {
-#ifdef LANA_DEBUG
-		printf("mbe_g2_detect: unknown chip type\n");
 #endif
 		return (0);
 	}
