@@ -1,4 +1,4 @@
-.\" $NetBSD: pcmcia.4,v 1.24 2001/09/29 19:39:52 augustss Exp $
+.\" $NetBSD: pcmcia.4,v 1.25 2002/03/29 10:23:07 martin Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -55,6 +55,8 @@ support
 .Cd "pcmcia* at plumpcmcia? controller ? socket ?"
 .Ss sh3
 .Cd "pcmcia* at shpcic? controller ? socket ?"
+.Ss sparc
+.Cd "pcmcia* at nell?"
 .Sh DESCRIPTION
 .Nx
 provides machine-independent bus support and drivers for
