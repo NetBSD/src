@@ -1,4 +1,4 @@
-/*	$NetBSD: i4b_l4mgmt.c,v 1.13 2003/10/03 16:38:44 pooka Exp $	*/
+/*	$NetBSD: i4b_l4mgmt.c,v 1.14 2005/02/26 22:39:49 perry Exp $	*/
 
 /*
  * Copyright (c) 1997, 2000 Hellmuth Michaelis. All rights reserved.
@@ -29,7 +29,7 @@
  *	i4b_l4mgmt.c - layer 4 calldescriptor management utilites
  *	-----------------------------------------------------------
  *
- *	$Id: i4b_l4mgmt.c,v 1.13 2003/10/03 16:38:44 pooka Exp $ 
+ *	$Id: i4b_l4mgmt.c,v 1.14 2005/02/26 22:39:49 perry Exp $
  *
  * $FreeBSD$
  *
@@ -38,7 +38,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_l4mgmt.c,v 1.13 2003/10/03 16:38:44 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_l4mgmt.c,v 1.14 2005/02/26 22:39:49 perry Exp $");
 
 #include "isdn.h"
 
@@ -102,12 +102,12 @@ get_cdid(void)
 	int i;
 	int x;
 
-	x = splnet();   
+	x = splnet();
 
 	/* get next id */
-	
+
 	cdid_count++;
-	
+
 again:
 	if(cdid_count == CDID_UNUSED)		/* zero is invalid */
 		cdid_count++;
@@ -115,7 +115,7 @@ again:
 		cdid_count = 1;
 
 	/* check if id already in use */
-	
+
 	for(i=0; i < num_call_desc; i++)
 	{
 		if(call_desc[i].cdid == cdid_count)
@@ -126,7 +126,7 @@ again:
 	}
 
 	splx(x);
-	
+
 	return(cdid_count);
 }
 
@@ -148,7 +148,7 @@ reserve_cd(void)
 	x = splnet();
 
 	cd = NULL;
-	
+
 	for(i=0; i < num_call_desc; i++)
 	{
 		if(call_desc[i].cdid == CDID_UNUSED)
@@ -191,7 +191,7 @@ freecd_by_cd(call_desc_t *cd)
 {
 	int i;
 	int x = splnet();
-	
+
 	for(i=0; i < num_call_desc; i++)
 	{
 		if( (call_desc[i].cdid != CDID_UNUSED) &&
@@ -207,7 +207,7 @@ freecd_by_cd(call_desc_t *cd)
 	if(i == N_CALL_DESC)
 		panic("freecd_by_cd: ERROR, cd not found, cr = %d", cd->cr);
 
-	splx(x);		
+	splx(x);
 }
 
 /*
@@ -217,7 +217,7 @@ void free_all_cd_of_isdnif(int isdnif)
 {
 	int i;
 	int x = splnet();
-	
+
 	for(i=0; i < num_call_desc; i++)
 	{
 		if( (call_desc[i].cdid != CDID_UNUSED) &&
@@ -232,7 +232,7 @@ void free_all_cd_of_isdnif(int isdnif)
 		}
 	}
 
-	splx(x);		
+	splx(x);
 }
 
 /*---------------------------------------------------------------------------*
@@ -295,13 +295,13 @@ get_rand_cr(int unit)
 	register int i, j;
 	static u_char val, retval;
 	static int called = 42;
-	
+
 	val += ++called;
-	
+
 	for(i=0; i < 50 ; i++, val++)
 	{
 		int found = 1;
-		
+
 #if defined(__FreeBSD__)
 
 #ifdef RANDOMDEV
@@ -319,7 +319,7 @@ get_rand_cr(int unit)
 #endif
 
 		retval = val & 0x7f;
-		
+
 		if(retval == 0 || retval == 0x7f)
 			continue;
 
@@ -383,11 +383,11 @@ void i4b_print_cdp(call_desc_t *cdp);
 void i4b_print_cdx(int index);
 void i4b_print_cda(void);
 void i4b_print_cdaa(void);
-	
+
 /*---------------------------------------------------------------------------*
  *	print a call descriptor by cd-pointer
  *---------------------------------------------------------------------------*/
-void 
+void
 i4b_print_cdp(call_desc_t *cdp)
 {
 	if((cdp > &(call_desc[num_call_desc])) || (cdp < &(call_desc[0])))
@@ -404,7 +404,7 @@ i4b_print_cdp(call_desc_t *cdp)
 			ctrl_desc[cdp->controller].unit,
 			ctrl_desc[cdp->controller].dl_est,
 			ctrl_desc[cdp->controller].bch_state[CHAN_B1],
-			ctrl_desc[cdp->controller].bch_state[CHAN_B2]);	
+			ctrl_desc[cdp->controller].bch_state[CHAN_B2]);
 	printf("           cr = 0x%02x\n", cdp->cr);
 	printf("       crflag = %d\n", cdp->crflag);
 	printf("    channelid = %d\n", cdp->channelid);
@@ -430,7 +430,7 @@ i4b_print_cdp(call_desc_t *cdp)
 /*---------------------------------------------------------------------------*
  *	print a call descriptor by index
  *---------------------------------------------------------------------------*/
-void 
+void
 i4b_print_cdx(int index)
 {
 	if(index >= num_call_desc)
@@ -444,7 +444,7 @@ i4b_print_cdx(int index)
 /*---------------------------------------------------------------------------*
  *	print all call descriptors
  *---------------------------------------------------------------------------*/
-void 
+void
 i4b_print_cda(void)
 {
 	int i;
@@ -458,7 +458,7 @@ i4b_print_cda(void)
 /*---------------------------------------------------------------------------*
  *	print all active call descriptors
  *---------------------------------------------------------------------------*/
-void 
+void
 i4b_print_cdaa(void)
 {
 	int i;

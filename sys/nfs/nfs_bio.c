@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.127 2005/01/27 12:46:42 yamt Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.128 2005/02/26 22:39:50 perry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.127 2005/01/27 12:46:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.128 2005/02/26 22:39:50 perry Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -181,7 +181,7 @@ nfs_bioread(vp, uio, ioflag, cred, cflag)
 		case VDIR:
 			break;
 		default:
-			printf(" NQNFSNONCACHE: type %x unexpected\n",	
+			printf(" NQNFSNONCACHE: type %x unexpected\n",
 			    vp->v_type);
 		};
 	    }
@@ -249,7 +249,7 @@ diragain:
 			 */
 			if (nmp->nm_flag & NFSMNT_XLATECOOKIE)
 				return (EINVAL);
-			ndp = nfs_enterdircache(vp, uio->uio_offset, 
+			ndp = nfs_enterdircache(vp, uio->uio_offset,
 				uio->uio_offset, 0, 0);
 		}
 
@@ -369,7 +369,7 @@ diragain:
 		 * (if requested) as we go.
 		 */
 
-		while ((caddr_t)dp < ep && (caddr_t)dp + dp->d_reclen <= ep) {	
+		while ((caddr_t)dp < ep && (caddr_t)dp + dp->d_reclen <= ep) {
 			if (cflag & NFSBIO_CACHECOOKIES) {
 				nndp = nfs_enterdircache(vp, NFS_GETCOOKIE(pdp),
 				    ndp->dc_blkcookie, enn, bp->b_lblkno);
@@ -387,7 +387,7 @@ diragain:
 
 		/*
 		 * If the last requested entry was not the last in the
-		 * buffer (happens if NFS_DIRFRAGSIZ < NFS_DIRBLKSIZ),	
+		 * buffer (happens if NFS_DIRFRAGSIZ < NFS_DIRBLKSIZ),
 		 * cache the cookie of the last requested one, and
 		 * set of the offset to it.
 		 */
@@ -743,7 +743,7 @@ nfs_vinvalbuf(vp, flags, cred, p, intrflg)
 }
 
 /*
- * nfs_flushstalebuf: flush cache if it's stale. 
+ * nfs_flushstalebuf: flush cache if it's stale.
  *
  * => caller shouldn't own any pages or buffers which belong to the vnode.
  */
@@ -815,7 +815,7 @@ again:
 	if (nmp->nm_flag & NFSMNT_INT)
 		slpflag = PCATCH;
 	gotiod = FALSE;
- 
+
 	/*
 	 * Find a free iod to process this request.
 	 */
@@ -856,7 +856,7 @@ again:
 
 	/*
 	 * If we have an iod which can process the request, then queue
-	 * the buffer.  However, even if we have an iod, do not initiate 
+	 * the buffer.  However, even if we have an iod, do not initiate
 	 * queue cleaning if curproc is the pageout daemon. if the NFS mount
 	 * is via local loopback, we may put curproc (pagedaemon) to sleep
 	 * waiting for the writes to complete. But the server (ourself)
@@ -866,7 +866,7 @@ again:
 	 * let pagedaemon start loopback writes anyway?
 	 */
 	if (gotiod) {
-	  
+
 		/*
 		 * Ensure that the queue never grows too large.
 		 */

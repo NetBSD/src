@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.78 2005/02/26 05:40:42 perseant Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.79 2005/02/26 22:32:20 perry Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.78 2005/02/26 05:40:42 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.79 2005/02/26 22:32:20 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -241,7 +241,7 @@ lfs_reserveavail(struct lfs *fs, struct vnode *vp, struct vnode *vp2, int fsb)
 		LFS_SYNC_CLEANERINFO(cip, fs, bp, 0);
 		wakeup(&lfs_allclean_wakeup);
 		wakeup(&fs->lfs_nextseg);
-			
+
 		error = tsleep(&fs->lfs_avail, PCATCH | PUSER, "lfs_reserve",
 			       0);
 #if 0
@@ -345,7 +345,7 @@ lfs_bwrite(void *v)
 	return lfs_bwrite_ext(bp,0);
 }
 
-/* 
+/*
  * Determine if there is enough room currently available to write fsb
  * blocks.  We need enough blocks for the new blocks, the current
  * inode blocks (including potentially the ifile inode), a summary block,
@@ -398,12 +398,12 @@ lfs_availwait(struct lfs *fs, int fsb)
 		 */
 		LFS_CLEANERINFO(cip, fs, cbp);
 		LFS_SYNC_CLEANERINFO(cip, fs, cbp, 0);
-		
+
 #ifdef DEBUG_LFS
 		printf("lfs_availwait: out of available space, "
 		       "waiting on cleaner\n");
 #endif
-		
+
 		wakeup(&lfs_allclean_wakeup);
 		wakeup(&fs->lfs_nextseg);
 #ifdef DIAGNOSTIC
@@ -460,7 +460,7 @@ lfs_bwrite_ext(struct buf *bp, int flags)
 	if (!(bp->b_flags & B_LOCKED)) {
 		fs = VFSTOUFS(bp->b_vp->v_mount)->um_lfs;
 		fsb = fragstofsb(fs, numfrags(fs, bp->b_bcount));
-		
+
 		ip = VTOI(bp->b_vp);
 		if (flags & BW_CLEAN) {
 			LFS_SET_UINO(ip, IN_CLEANING);
@@ -476,12 +476,12 @@ lfs_bwrite_ext(struct buf *bp, int flags)
 		reassignbuf(bp, bp->b_vp);
 		splx(s);
 	}
-	
+
 	if (bp->b_flags & B_CALL)
 		bp->b_flags &= ~B_BUSY;
 	else
 		brelse(bp);
-	
+
 	return (0);
 }
 
@@ -524,8 +524,8 @@ lfs_flush(struct lfs *fs, int flags, int only_onefs)
 
 	LOCK_ASSERT(simple_lock_held(&lfs_subsys_lock));
 	KDASSERT(fs == NULL || !LFS_SEGLOCK_HELD(fs));
-	
-	if (lfs_dostats) 
+
+	if (lfs_dostats)
 		++lfs_stats.write_exceeded;
 	if (lfs_writing && flags == 0) {/* XXX flags */
 #ifdef DEBUG_LFS
@@ -537,7 +537,7 @@ lfs_flush(struct lfs *fs, int flags, int only_onefs)
 		ltsleep(&lfs_writing, PRIBIO + 1, "lfsflush", 0,
 		    &lfs_subsys_lock);
 	lfs_writing = 1;
-	
+
 	simple_unlock(&lfs_subsys_lock);
 
 	if (only_onefs) {
@@ -593,7 +593,7 @@ lfs_check(struct vnode *vp, daddr_t blkno, int flags)
 
 	error = 0;
 	ip = VTOI(vp);
-	
+
 	/* If out of buffers, wait on writer */
 	/* XXX KS - if it's the Ifile, we're probably the cleaner! */
 	if (ip->i_number == LFS_IFILE_INUM)
@@ -700,9 +700,9 @@ lfs_newbuf(struct lfs *fs, struct vnode *vp, daddr_t daddr, size_t size, int typ
 	struct buf *bp;
 	size_t nbytes;
 	int s;
-	
+
 	nbytes = roundup(size, fsbtob(fs, 1));
-	
+
 	s = splbio();
 	bp = pool_get(&bufpool, PR_WAITOK);
 	splx(s);
@@ -712,7 +712,7 @@ lfs_newbuf(struct lfs *fs, struct vnode *vp, daddr_t daddr, size_t size, int typ
 		bp->b_data = lfs_malloc(fs, nbytes, type);
 		/* memset(bp->b_data, 0, nbytes); */
 	}
-#ifdef DIAGNOSTIC	
+#ifdef DIAGNOSTIC
 	if (vp == NULL)
 		panic("vp is NULL in lfs_newbuf");
 	if (bp == NULL)
@@ -731,7 +731,7 @@ lfs_newbuf(struct lfs *fs, struct vnode *vp, daddr_t daddr, size_t size, int typ
 	bp->b_iodone = lfs_callback;
 	bp->b_flags |= B_BUSY | B_CALL | B_NOCACHE;
 	bp->b_private = fs;
-	
+
 	return (bp);
 }
 
@@ -739,7 +739,7 @@ void
 lfs_freebuf(struct lfs *fs, struct buf *bp)
 {
 	int s;
-	
+
 	s = splbio();
 	if (bp->b_vp)
 		brelvp(bp);
@@ -755,12 +755,12 @@ lfs_freebuf(struct lfs *fs, struct buf *bp)
  * Definitions for the buffer free lists.
  */
 #define BQUEUES		4		/* number of free buffer queues */
- 
+
 #define BQ_LOCKED	0		/* super-blocks &c */
 #define BQ_LRU		1		/* lru, useful buffers */
-#define BQ_AGE		2		/* rubbish */ 
+#define BQ_AGE		2		/* rubbish */
 #define BQ_EMPTY	3		/* buffer headers with no memory */
- 
+
 extern TAILQ_HEAD(bqueues, buf) bufqueues[BQUEUES];
 extern struct simplelock bqueue_slock;
 

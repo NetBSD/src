@@ -27,7 +27,7 @@
  *	i4b_l4timer.c - timer and timeout handling for layer 4
  *	--------------------------------------------------------
  *
- *	$Id: i4b_l4timer.c,v 1.4 2002/03/16 16:56:04 martin Exp $ 
+ *	$Id: i4b_l4timer.c,v 1.5 2005/02/26 22:39:49 perry Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_l4timer.c,v 1.4 2002/03/16 16:56:04 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_l4timer.c,v 1.5 2005/02/26 22:39:49 perry Exp $");
 
 #include "isdn.h"
 
@@ -84,7 +84,7 @@ T400_start(call_desc_t *cd)
 {
 	if (cd->T400 == TIMER_ACTIVE)
 		return;
-		
+
 	NDBGL4(L4_MSG, "cr = %d", cd->cr);
 	cd->T400 = TIMER_ACTIVE;
 

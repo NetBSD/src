@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_iso.c,v 1.18 2004/04/19 05:16:46 matt Exp $	*/
+/*	$NetBSD: tp_iso.c,v 1.19 2005/02/26 22:39:49 perry Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -75,7 +75,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_iso.c,v 1.18 2004/04/19 05:16:46 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_iso.c,v 1.19 2005/02/26 22:39:49 perry Exp $");
 
 #include "opt_iso.h"
 #ifdef ISO
@@ -552,7 +552,7 @@ tpclnp_input(struct mbuf *m, ...)
 				printf("tpclnp_input: FAKING %s\n",
 				       tp_stat.ts_pkt_rcvd & 0x1 ? "QUENCH" : "QUENCH2");
 				if (tp_stat.ts_pkt_rcvd & 0x1)
-					tpclnp_ctlinput(PRC_QUENCH, 
+					tpclnp_ctlinput(PRC_QUENCH,
 							(struct sockaddr *)
 							&src, NULL);
 				else

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_bswap.c,v 1.28 2004/05/25 14:54:59 hannken Exp $	*/
+/*	$NetBSD: ffs_bswap.c,v 1.29 2005/02/26 22:32:20 perry Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -35,7 +35,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_bswap.c,v 1.28 2004/05/25 14:54:59 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_bswap.c,v 1.29 2005/02/26 22:32:20 perry Exp $");
 
 #include <sys/param.h>
 #if defined(_KERNEL)
@@ -88,7 +88,7 @@ ffs_sb_swap(struct fs *o, struct fs *n)
 	n->fs_csaddr = bswap64(o->fs_csaddr);
 	n->fs_pendingblocks = bswap64(o->fs_pendingblocks);
 	n->fs_pendinginodes = bswap32(o->fs_pendinginodes);
-	
+
 	/* These fields overlap with the second half of the
 	 * historic FS_42POSTBLFMT postbl table
 	 */
@@ -166,7 +166,7 @@ ffs_csum_swap(struct csum *o, struct csum *n, int size)
 {
 	int i;
 	u_int32_t *oint, *nint;
-	
+
 	oint = (u_int32_t*)o;
 	nint = (u_int32_t*)n;
 
@@ -210,7 +210,7 @@ ffs_cg_swap(struct cg *o, struct cg *n, struct fs *fs)
 	n->cg_irotor = bswap32(o->cg_irotor);
 	for (i = 0; i < MAXFRAG; i++)
 		n->cg_frsum[i] = bswap32(o->cg_frsum[i]);
-	
+
 	if ((fs->fs_magic != FS_UFS2_MAGIC) &&
 			(fs->fs_old_postblformat == FS_42POSTBLFMT)) { /* old format */
 		struct ocg *on, *oo;
@@ -258,7 +258,7 @@ ffs_cg_swap(struct cg *o, struct cg *n, struct fs *fs)
 
 		for (i = 0; i < fs->fs_old_cpg; i++)
 			n32[i] = bswap32(o32[i]);
-		
+
 		for (i = 0; i < fs->fs_old_cpg * fs->fs_old_nrpos; i++)
 			n16[i] = bswap16(o16[i]);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.9 2004/04/29 02:17:36 jonathan Exp $ */
+/*	$NetBSD: crypto.c,v 1.10 2005/02/26 22:39:52 perry Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.9 2004/04/29 02:17:36 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.10 2005/02/26 22:39:52 perry Exp $");
 
 /* XXX FIXME: should be defopt'ed */
 #define CRYPTO_TIMING			/* enable cryptop timing stuff */
@@ -105,7 +105,7 @@ static void deferred_crypto_thread(void *arg);
 
 int	crypto_usercrypto = 1;		/* userland may open /dev/crypto */
 int	crypto_userasymcrypto = 1;	/* userland may do asym crypto reqs */
-/* 
+/*
  * cryptodevallowsoft is (intended to be) sysctl'able, controlling
  * access to hardware versus software transforms as below:
  *
@@ -142,7 +142,7 @@ MALLOC_DEFINE(M_CRYPTO_DATA, "crypto", "crypto session records");
  *
  * Requests are typically passed on the driver directly, but they
  * may also be queued for processing by a software interrupt thread,
- * cryptointr, that runs at splsoftcrypto.  This thread dispatches 
+ * cryptointr, that runs at splsoftcrypto.  This thread dispatches
  * the requests to crypto drivers (h/w or s/w) who call crypto_done
  * when a request is complete.  Hardware crypto drivers are assumed
  * to register their IRQ's as network devices so their interrupt handlers
@@ -155,7 +155,7 @@ MALLOC_DEFINE(M_CRYPTO_DATA, "crypto", "crypto session records");
  * (as opposed to a software interrupt that clients must block).
  *
  * This scheme is not intended for SMP machines.
- */ 
+ */
 static	void cryptointr(void);		/* swi thread to dispatch ops */
 static	void cryptoret(void);		/* kernel thread for callbacks*/
 static	struct proc *cryptoproc;
@@ -1022,7 +1022,7 @@ crypto_getfeat(int *featp)
 	s = splcrypto();
 
 	if (crypto_userasymcrypto == 0)
-		goto out;	  
+		goto out;
 
 	for (hid = 0; hid < crypto_drivers_num; hid++) {
 		if ((crypto_drivers[hid].cc_flags & CRYPTOCAP_F_SOFTWARE) &&

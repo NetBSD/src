@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_balloc.c,v 1.49 2005/02/26 05:40:42 perseant Exp $	*/
+/*	$NetBSD: lfs_balloc.c,v 1.50 2005/02/26 22:32:20 perry Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.49 2005/02/26 05:40:42 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.50 2005/02/26 22:32:20 perry Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -107,7 +107,7 @@ u_int64_t locked_fakequeue_count;
  * Blocks which have never been accounted for (i.e., which "do not exist")
  * have disk address 0, which is translated by ufs_bmap to the special value
  * UNASSIGNED == -1, as in the historical UFS.
- * 
+ *
  * Blocks which have been accounted for but which have not yet been written
  * to disk are given the new special disk address UNWRITTEN == -2, so that
  * they can be differentiated from completely new blocks.
@@ -136,7 +136,7 @@ lfs_balloc(void *v)
 	int bb, bcount;
 	int error, frags, i, nsize, osize, num;
 
-	vp = ap->a_vp;	
+	vp = ap->a_vp;
 	ip = VTOI(vp);
 	fs = ip->i_lfs;
 	offset = blkoff(fs, ap->a_startoffset);
@@ -146,7 +146,7 @@ lfs_balloc(void *v)
 	/* (void)lfs_check(vp, lbn, 0); */
 	bpp = ap->a_bpp;
 
-	/* 
+	/*
 	 * Three cases: it's a block beyond the end of file, it's a block in
 	 * the file that may or may not have been assigned a disk address or
 	 * we're writing an entire block.
@@ -161,10 +161,10 @@ lfs_balloc(void *v)
 	 * check if the old last block was a fragment.	If it was, we need
 	 * to rewrite it.
 	 */
-	
+
 	if (bpp)
 		*bpp = NULL;
-	
+
 	/* Bomb out immediately if there's no space left */
 	if (fs->lfs_bfree <= 0)
 		return ENOSPC;
@@ -296,7 +296,7 @@ lfs_balloc(void *v)
 					return error;
 			}
 		}
-	}	
+	}
 
 
 	/*
@@ -305,14 +305,14 @@ lfs_balloc(void *v)
 	frags = fsbtofrags(fs, bb);
 	if (bpp)
 		*bpp = bp = getblk(vp, lbn, blksize(fs, ip, lbn), 0, 0);
-	
+
 	/*
 	 * Do accounting on blocks that represent pages.
 	 */
 	if (!bpp)
 		lfs_register_block(vp, lbn);
 
-	/* 
+	/*
 	 * The block we are writing may be a brand new block
 	 * in which case we need to do accounting.
 	 *
@@ -324,11 +324,11 @@ lfs_balloc(void *v)
 		if (bpp) {
 			if (ap->a_flags & B_CLRBUF)
 				clrbuf(bp);
-		
+
 			/* Note the new address */
 			bp->b_blkno = UNWRITTEN;
 		}
-		
+
 		switch (num) {
 		    case 0:
 			ip->i_ffs1_db[lbn] = UNWRITTEN;
@@ -365,7 +365,7 @@ lfs_balloc(void *v)
 			return (biowait(bp));
 		}
 	}
-	
+
 	return (0);
 }
 

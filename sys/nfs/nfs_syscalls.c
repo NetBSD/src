@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.77 2004/06/10 12:59:57 yamt Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.78 2005/02/26 22:39:50 perry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.77 2004/06/10 12:59:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.78 2005/02/26 22:39:50 perry Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -362,7 +362,7 @@ nfsrv_sockalloc()
 {
 	struct nfssvc_sock *slp;
 	int s;
-	
+
 	slp = (struct nfssvc_sock *)
 	    malloc(sizeof (struct nfssvc_sock), M_NFSSVC, M_WAITOK);
 	memset(slp, 0, sizeof (struct nfssvc_sock));
@@ -430,7 +430,7 @@ nfssvc_addsock(fp, mynam)
 		siz = NFS_MAXPACKET + sizeof (u_long);
 	else
 		siz = NFS_MAXPACKET;
-	error = soreserve(so, siz, siz); 
+	error = soreserve(so, siz, siz);
 	if (error) {
 		m_freem(mynam);
 		return (error);
@@ -1126,7 +1126,7 @@ start_nfsio(arg)
 	void *arg;
 {
 	nfssvc_iod(curlwp);
-	
+
 	kthread_exit(0);
 }
 
@@ -1135,7 +1135,7 @@ nfs_getset_niothreads(set)
 	int set;
 {
 	int i, have, start;
-	
+
 	for (have = 0, i = 0; i < NFS_MAXASYNCDAEMON; i++)
 		if (nfs_asyncdaemon[i].nid_proc != NULL)
 			have++;

@@ -27,7 +27,7 @@
  *	i4b_q932fac.h - Q932 facility handling header file
  *	--------------------------------------------------
  *
- *	$Id: i4b_q932fac.h,v 1.1.1.1 2001/01/05 12:49:56 martin Exp $ 
+ *	$Id: i4b_q932fac.h,v 1.2 2005/02/26 22:39:49 perry Exp $
  *
  * $FreeBSD$
  *
@@ -49,7 +49,7 @@
  *		Digital Subscriber Signalling System No. one (DSS1) protocol
  *	- X.208 Specification of Abstract Syntax Notation One (ASN.1)
  *	- X.209 Specification of Basic Encoding Rules for
- *		Abstract Syntax Notation One (ASN.1) 
+ *		Abstract Syntax Notation One (ASN.1)
  *	- "ASN.1 Abstract Syntax Notation One", Walter Gora, DATACOM-Verlag
  *		1992, 3rd Edition (ISBN 3-89238-062-7) (german !)
  *
@@ -160,9 +160,9 @@ enum states {
 	ST_EXP_RU,
 	ST_EXP_RNOU,
 	ST_EXP_TOCI,
-	ST_EXP_DBID,	
-	
-	ST_EXP_NIX	
+	ST_EXP_DBID,
+
+	ST_EXP_NIX
 };
 
 /* EOF */

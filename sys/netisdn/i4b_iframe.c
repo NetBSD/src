@@ -27,7 +27,7 @@
  *	i4b_iframe.c - i frame handling routines
  *	------------------------------------------
  *
- *	$Id: i4b_iframe.c,v 1.6 2002/05/21 10:31:10 martin Exp $ 
+ *	$Id: i4b_iframe.c,v 1.7 2005/02/26 22:39:49 perry Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_iframe.c,v 1.6 2002/05/21 10:31:10 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_iframe.c,v 1.7 2005/02/26 22:39:49 perry Exp $");
 
 #ifdef __FreeBSD__
 #include "i4bq921.h"
@@ -85,7 +85,7 @@ i4b_rxd_i_frame(l2_softc_t *l2sc, struct isdn_l3_driver *drv, struct mbuf *m)
 	int ns;
 	int p;
 	int s;
-	
+
 	if(!((l2sc->tei_valid == TEI_VALID) &&
 	     (l2sc->tei == GETTEI(*(ptr+OFF_TEI)))))
 	{
@@ -103,15 +103,15 @@ i4b_rxd_i_frame(l2_softc_t *l2sc, struct isdn_l3_driver *drv, struct mbuf *m)
 	s = splnet();
 
 	l2sc->stat.rx_i++;		/* update frame count */
-	
+
 	nr = GETINR(*(ptr + OFF_INR));
 	ns = GETINS(*(ptr + OFF_INS));
 	p = GETIP(*(ptr + OFF_INR));
-	
+
 	i4b_rxd_ack(l2sc, drv, nr);		/* last packet ack */
 
 	if(l2sc->own_busy)		/* own receiver busy ? */
-	{	
+	{
 		i4b_Dfreembuf(m);	/* yes, discard information */
 
 		if(p == 1)		/* P bit == 1 ? */
@@ -125,7 +125,7 @@ i4b_rxd_i_frame(l2_softc_t *l2sc, struct isdn_l3_driver *drv, struct mbuf *m)
 		if(ns == l2sc->vr)	/* expected sequence number ? */
 		{
 			M128INC(l2sc->vr);	/* yes, update */
-			
+
 			l2sc->rej_excpt = 0;	/* clr reject exception */
 
 			m_adj(m, I_HDR_LEN);	/* strip i frame header */
@@ -162,7 +162,7 @@ i4b_rxd_i_frame(l2_softc_t *l2sc, struct isdn_l3_driver *drv, struct mbuf *m)
 	}
 
 	/* sequence number ranges as expected ? */
-	
+
 	if(i4b_l2_nr_ok(nr, l2sc->va, l2sc->vs))
 	{
 		if(l2sc->Q921_state == ST_TIMREC)
@@ -199,7 +199,7 @@ i4b_rxd_i_frame(l2_softc_t *l2sc, struct isdn_l3_driver *drv, struct mbuf *m)
 	else
 	{
 		i4b_nr_error_recovery(l2sc);	/* sequence error */
-		l2sc->Q921_state = ST_AW_EST; 
+		l2sc->Q921_state = ST_AW_EST;
 	}
 
 	splx(s);
@@ -216,7 +216,7 @@ i4b_i_frame_queued_up(l2_softc_t *l2sc)
 	int s;
 
 	s = splnet();
-	
+
 	if((l2sc->peer_busy) || (l2sc->vs == ((l2sc->va + MAX_K_VALUE) & 127)))
 	{
 		if(l2sc->peer_busy)
@@ -227,7 +227,7 @@ i4b_i_frame_queued_up(l2_softc_t *l2sc)
 		if(l2sc->vs == ((l2sc->va + MAX_K_VALUE) & 127))
 		{
 			NDBGL2(L2_I_MSG, "regen IFQUP, cause: vs=va+k!");
-		}	
+		}
 
 		/*
 		 * XXX see: Q.921, page 36, 5.6.1 ".. may retransmit an I
@@ -253,7 +253,7 @@ i4b_i_frame_queued_up(l2_softc_t *l2sc)
 	}
 
 	ptr = m->m_data;
-	
+
 	PUTSAPI(SAPI_CCP, CR_CMD_TO_NT, *(ptr + OFF_SAPI));
 	PUTTEI(l2sc->tei, *(ptr + OFF_TEI));
 
@@ -265,7 +265,7 @@ i4b_i_frame_queued_up(l2_softc_t *l2sc)
 	l2sc->driver->ph_data_req(l2sc->l1_token, m, MBUF_DONTFREE); /* free'd when ack'd ! */
 
 	l2sc->iframe_sent = 1;		/* in case we ack an I frame with another I frame */
-	
+
 	if(l2sc->ua_num != UA_EMPTY)	/* failsafe */
 	{
 		NDBGL2(L2_I_ERR, "ERROR, l2sc->ua_num: %d != UA_EMPTY", l2sc->ua_num);
@@ -277,7 +277,7 @@ i4b_i_frame_queued_up(l2_softc_t *l2sc)
 	l2sc->ua_num = l2sc->vs;	/* save frame number */
 
 	M128INC(l2sc->vs);
-	
+
 	l2sc->ack_pend = 0;
 
 	splx(s);
@@ -288,5 +288,5 @@ i4b_i_frame_queued_up(l2_softc_t *l2sc)
 		i4b_T200_start(l2sc);
 	}
 }
- 
+
 #endif /* NI4BQ921 > 0 */
