@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc_notalpha.c,v 1.70 2004/09/20 18:41:07 jdolecek Exp $	*/
+/*	$NetBSD: linux_misc_notalpha.c,v 1.71 2004/09/24 13:10:46 he Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.70 2004/09/20 18:41:07 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.71 2004/09/24 13:10:46 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,8 +81,10 @@ __KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.70 2004/09/20 18:41:07 jdo
 #define DPRINTF(a)
 #endif
 
+#ifndef __m68k__
 static void bsd_to_linux_statfs64(const struct statvfs *,
 	struct linux_statfs64  *);
+#endif
 
 /*
  * Alarm. This is a libc call which uses setitimer(2) in NetBSD.
