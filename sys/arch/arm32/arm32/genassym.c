@@ -1,4 +1,4 @@
-/* $NetBSD: genassym.c,v 1.4 1996/03/13 21:22:32 mark Exp $ */
+/* $NetBSD: genassym.c,v 1.5 1996/04/26 20:48:23 mark Exp $ */
 
 /*-
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -37,6 +37,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/resourcevar.h>
 #include <sys/device.h>
@@ -50,6 +51,7 @@
 #include <machine/vmparam.h>
 #include <machine/irqhandler.h>
 
+void
 main()
 {
 	struct proc *p = 0;
@@ -59,11 +61,9 @@ main()
 	struct sigframe *sigf = 0;
 	struct uprof *uprof = 0;
 	irqhandler_t *ih = 0;
-	struct vconsole *vc = 0;
-	struct vidc_info *vi = 0;
 	struct vmspace *vms = 0;
 
-#define	def(N,V)	printf("#define\t%s %d\n", N, V)
+#define	def(N,V)	printf("#define\t%s %d\n", N, (u_int)V)
 
 	def("UPAGES", UPAGES);
 	def("PGSHIFT", PGSHIFT);

@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.4 1996/03/13 21:25:04 mark Exp $ */
+/* $NetBSD: pmap.c,v 1.5 1996/04/26 20:48:27 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -1974,7 +1974,6 @@ pmap_pte(pmap, va)
 	pd_entry_t *pde;
 	pt_entry_t *ptp;
 	pt_entry_t *result;
-	int s;
 
 /* The pmap must be valid */
                         

@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.3 1996/03/13 21:16:15 mark Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.4 1996/04/26 20:48:31 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -202,7 +202,7 @@ cpu_fork(p1, p2)
 
 #ifdef DEBUG_VMMACHDEP
 	if (pmap_debug_level >= 0) {
-		printf("vm_map_pageable: addr=%08x\n", addr);
+		printf("vm_map_pageable: addr=%08x\n", (u_int)addr);
 	}
 #endif
 
@@ -246,11 +246,11 @@ cpu_fork(p1, p2)
 void
 cpu_set_kpc(p, pc)
 	struct proc *p;
-	u_long pc;
+	void *pc;
 {
 	struct switchframe *sf = (struct switchframe *)p->p_addr->u_pcb.pcb_sp;
 
-	sf->sf_r4 = pc;
+	sf->sf_r4 = (u_int)pc;
 	sf->sf_r5 = (u_int)p;
 }
 
@@ -309,7 +309,6 @@ cpu_swapin(p)
 	struct proc *p;
 {
 	vm_offset_t addr;
-	int loop;
 
 #ifdef DEBUG_VMMACHDEP
 	if (pmap_debug_level >= 0)

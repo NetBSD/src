@@ -1,4 +1,4 @@
-/* $NetBSD: stubs.c,v 1.4 1996/03/08 18:41:52 mark Exp $ */
+/* $NetBSD: stubs.c,v 1.5 1996/04/26 20:48:29 mark Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -92,11 +92,6 @@ extern videomemory_t videomemory;
 int
 do_mountroot()
 {
-	struct buf *bp;
-	int loop;
-	int s;
-	int type;
-	int floppysize;
 	int error;
 
 #if (NFDC > 0 && NRD > 0 && defined(RAMDISK_HOOKS))
@@ -525,7 +520,7 @@ beep_generate()
 #endif
 
 
-#if 0
+#if XXX1
 /* Debugging functions to dump the buffers linked to a vnode */
 
 void
@@ -539,9 +534,9 @@ dumpvndbuf(vp)
 	for (bp = vp->v_dirtyblkhd.lh_first; bp; bp = nbp) {
 		nbp = bp->b_vnbufs.le_next;
 
-		printf("buf=%08x\n", bp);
-		printf("flags=%08x proc=%08x bufsize=%08x dev=%04x\n", bp->b_flags, bp->b_proc, bp->b_bufsize, bp->b_dev);
-		printf("vp=%08x resid=%08x count=%08x addr=%08x\n", bp->b_vp, bp->b_resid, bp->b_bcount, bp->b_un.b_addr);
+		printf("buf=%08x\n", (u_int)bp);
+		printf("flags=%08x proc=%08x bufsize=%08x dev=%04x\n", bp->b_flags, (u_int)bp->b_proc, bp->b_bufsize, bp->b_dev);
+		printf("vp=%08x resid=%08x count=%08x addr=%08x\n", (u_int)bp->b_vp, bp->b_resid, bp->b_bcount, (u_int)bp->b_un.b_addr);
 	}
 	(void)splx(s);
 }
@@ -559,8 +554,8 @@ dumpvncbuf(vp)
 		nbp = bp->b_vnbufs.le_next;
 
 		printf("buf=%08x\n", bp);
-		printf("flags=%08x proc=%08x bufsize=%08x dev=%04x\n", bp->b_flags, bp->b_proc, bp->b_bufsize, bp->b_dev);
-		printf("vp=%08x resid=%08x count=%08x addr=%08x\n", bp->b_vp, bp->b_resid, bp->b_bcount, bp->b_un.b_addr);
+		printf("flags=%08x proc=%08x bufsize=%08x dev=%04x\n", bp->b_flags, (u_int)bp->b_proc, bp->b_bufsize, bp->b_dev);
+		printf("vp=%08x resid=%08x count=%08x addr=%08x\n", (u_int)bp->b_vp, bp->b_resid, bp->b_bcount, (u_int)bp->b_un.b_addr);
 	}
 	(void)splx(s);
 }
