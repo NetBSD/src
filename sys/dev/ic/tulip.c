@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.45 2000/03/06 10:21:46 enami Exp $	*/
+/*	$NetBSD: tulip.c,v 1.46 2000/03/06 21:02:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -2830,8 +2830,6 @@ tlp_mii_statchg(self)
 	 * and receive processes.
 	 */
 	TULIP_WRITE(sc, CSR_OPMODE, sc->sc_opmode);
-
-	/* XXX Update ifp->if_baudrate */
 }
 
 /*
@@ -2862,8 +2860,6 @@ tlp_winb_mii_statchg(self)
 	 * and receive processes.
 	 */
 	TULIP_WRITE(sc, CSR_OPMODE, sc->sc_opmode);
-
-	/* XXX Update ifp->if_baudrate */
 }
 
 /*
@@ -4855,8 +4851,6 @@ tlp_pnic_nway_statchg(self)
 	 * and receive processes.
 	 */
 	TULIP_WRITE(sc, CSR_OPMODE, sc->sc_opmode);
-
-	/* XXX Update ifp->if_baudrate */
 }
 
 void

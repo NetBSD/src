@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170.c,v 1.27 2000/03/06 10:21:46 enami Exp $	*/
+/*	$NetBSD: smc83c170.c,v 1.28 2000/03/06 21:02:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -1479,8 +1479,6 @@ epic_statchg(self)
 	 * multicast filter in case the speed changed.
 	 */
 	epic_set_mchash(sc);
-
-	/* XXX Update ifp->if_baudrate */
 }
 
 /*

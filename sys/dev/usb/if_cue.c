@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cue.c,v 1.11 2000/03/06 20:58:18 augustss Exp $	*/
+/*	$NetBSD: if_cue.c,v 1.12 2000/03/06 21:02:03 thorpej Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -606,7 +606,6 @@ USB_ATTACH(cue)
 	ifp->if_start = cue_start;
 	ifp->if_watchdog = cue_watchdog;
 	ifp->if_init = cue_init;
-	ifp->if_baudrate = 10000000;
 	ifp->if_snd.ifq_maxlen = IFQ_MAXLEN;
 
 	cue_qdat.ifp = ifp;
@@ -634,7 +633,6 @@ USB_ATTACH(cue)
 	ifp->if_ioctl = cue_ioctl;
 	ifp->if_start = cue_start;
 	ifp->if_watchdog = cue_watchdog;
-	ifp->if_baudrate = 10000000;
 	strncpy(ifp->if_xname, USBDEVNAME(sc->cue_dev), IFNAMSIZ);
 
 	/* Attach the interface. */

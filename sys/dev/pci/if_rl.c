@@ -1,4 +1,4 @@
-/* $NetBSD: if_rl.c,v 1.6 2000/02/02 17:09:38 thorpej Exp $ */
+/* $NetBSD: if_rl.c,v 1.7 2000/03/06 21:02:02 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997, 1998
@@ -607,7 +607,8 @@ void
 rl_phy_statchg(v)
 	struct device *v;
 {
-	/* XXX Update ifp->if_baudrate */
+
+	/* Nothing to do. */
 }
 
 /*
@@ -919,7 +920,6 @@ rl_attach(parent, self, aux)
 #endif
 	ifp->if_start = rl_start;
 	ifp->if_watchdog = rl_watchdog;
-	ifp->if_baudrate = 10000000;
 	ifp->if_snd.ifq_maxlen = IFQ_MAXLEN;
 
 	/*

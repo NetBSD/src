@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.27 2000/03/06 20:58:18 augustss Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.28 2000/03/06 21:02:03 thorpej Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -518,7 +518,6 @@ aue_miibus_statchg(dev)
 {
 	struct aue_softc	*sc = USBGETSOFTC(dev);
 	struct mii_data		*mii = GET_MII(sc);
-	struct ifnet		*ifp = GET_IFP(sc);
 
 	DPRINTFN(5,("%s: %s: enter\n", USBDEVNAME(sc->aue_dev), __FUNCTION__));
 
@@ -526,10 +525,8 @@ aue_miibus_statchg(dev)
 
 	if (IFM_SUBTYPE(mii->mii_media_active) == IFM_100_TX) {
 		AUE_SETBIT(sc, AUE_CTL1, AUE_CTL1_SPEEDSEL);
-		ifp->if_baudrate = 100000000;
 	} else {
 		AUE_CLRBIT(sc, AUE_CTL1, AUE_CTL1_SPEEDSEL);
-		ifp->if_baudrate = 10000000;
 	}
 
 	if ((mii->mii_media_active & IFM_GMASK) == IFM_FDX)
@@ -798,7 +795,6 @@ USB_ATTACH(aue)
 	ifp->if_start = aue_start;
 	ifp->if_watchdog = aue_watchdog;
 	ifp->if_init = aue_init;
-	ifp->if_baudrate = 10000000;
 	ifp->if_snd.ifq_maxlen = IFQ_MAXLEN;
 
 	/*
@@ -847,7 +843,6 @@ USB_ATTACH(aue)
 	ifp->if_ioctl = aue_ioctl;
 	ifp->if_start = aue_start;
 	ifp->if_watchdog = aue_watchdog;
-	ifp->if_baudrate = 10000000;
 	strncpy(ifp->if_xname, USBDEVNAME(sc->aue_dev), IFNAMSIZ);
 
 	/* Initialize MII/media info. */

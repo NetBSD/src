@@ -1,4 +1,4 @@
-/* $NetBSD: lemac.c,v 1.12 1999/05/18 23:52:56 thorpej Exp $ */
+/* $NetBSD: lemac.c,v 1.13 2000/03/06 21:02:01 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1997 Matt Thomas <matt@3am-software.com>
@@ -1041,7 +1041,6 @@ lemac_ifattach(
 	   sc->sc_lastpage * 2 + 2,
 	   lemac_modes[sc->sc_flags & LEMAC_MODE_MASK]);
 
-    ifp->if_baudrate = 10000000;
     ifp->if_softc = (void *) sc;
     ifp->if_start = lemac_ifstart;
     ifp->if_ioctl = lemac_ifioctl;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kue.c,v 1.12 2000/03/06 20:58:18 augustss Exp $	*/
+/*	$NetBSD: if_kue.c,v 1.13 2000/03/06 21:02:03 thorpej Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -661,7 +661,6 @@ USB_ATTACH(kue)
 	ifp->if_start = kue_start;
 	ifp->if_watchdog = kue_watchdog;
 	ifp->if_init = kue_init;
-	ifp->if_baudrate = 10000000;
 	ifp->if_snd.ifq_maxlen = IFQ_MAXLEN;
 
 	kue_qdat.ifp = ifp;
@@ -688,7 +687,6 @@ USB_ATTACH(kue)
 	ifp->if_ioctl = kue_ioctl;
 	ifp->if_start = kue_start;
 	ifp->if_watchdog = kue_watchdog;
-	ifp->if_baudrate = 10000000;
 	strncpy(ifp->if_xname, USBDEVNAME(sc->kue_dev), IFNAMSIZ);
 
 	/* Attach the interface. */
