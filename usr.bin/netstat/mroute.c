@@ -5,7 +5,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: mroute.c,v 1.2 1994/03/28 10:29:52 cgd Exp $";
+static char rcsid[] = "$Id: mroute.c,v 1.3 1994/04/01 09:18:14 cgd Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -34,7 +34,7 @@ char *plurales(n)
 }
 
 mroutepr(mrpaddr, mrtaddr, vifaddr)
-	off_t mrpaddr, mrtaddr, vifaddr;
+	u_long mrpaddr, mrtaddr, vifaddr;
 {
 	u_int mrtproto;
 #if BSD >= 199006
@@ -168,7 +168,7 @@ mroutepr(mrpaddr, mrtaddr, vifaddr)
 
 
 mrt_stats(mrpaddr, mstaddr)
-	off_t mrpaddr, mstaddr;
+	u_long mrpaddr, mstaddr;
 {
 	u_int mrtproto;
 	struct mrtstat mrtstat;

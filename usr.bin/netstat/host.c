@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)host.c	5.12 (Berkeley) 2/2/91";*/
-static char rcsid[] = "$Id: host.c,v 1.2 1993/08/01 18:10:55 mycroft Exp $";
+static char rcsid[] = "$Id: host.c,v 1.3 1994/04/01 09:18:06 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -45,6 +45,7 @@ static char rcsid[] = "$Id: host.c,v 1.2 1993/08/01 18:10:55 mycroft Exp $";
 #include <netinet/in.h>
 #include <netimp/if_imp.h>
 #include <netimp/if_imphost.h>
+#include <kvm.h>
 
 extern	int kmem;
 extern 	int nflag;
@@ -55,7 +56,7 @@ extern	char *inetname();
  * Symbolic addresses are shown unless the nflag is given.
  */
 hostpr(impsoftcaddr, nimpaddr)
-	off_t impsoftcaddr, nimpaddr;
+	u_long impsoftcaddr, nimpaddr;
 {
 	struct mbuf *hosts, mb;
 	struct imp_softc imp_softc;
@@ -82,7 +83,7 @@ hostpr(impsoftcaddr, nimpaddr)
 	    printf("%-5.5s %-6.6s %-8.8s %-4.4s %-9.9s %-4.4s %s\n", "Flags",
 	        "Host", "Imp", "Qcnt", "Q Address", "RFNM", "Timer");
 	    while (m) {
-		kvm_read((off_t)m, (char *)&mb, sizeof (mb));
+		kvm_read(m, (char *)&mb, sizeof (mb));
 		m = &mb;
 		mh = (struct hmbuf *)(m->m_dat);
 		if (mh->hm_count == 0) {
@@ -114,7 +115,7 @@ hostpr(impsoftcaddr, nimpaddr)
 }
 
 impstats(impsoftcaddr, nimpaddr)
-	off_t impsoftcaddr, nimpaddr;
+	u_long impsoftcaddr, nimpaddr;
 {
 	struct imp_softc imp_softc;
 	int i, nimp;

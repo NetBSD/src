@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mbuf.c	5.10 (Berkeley) 1/30/91";*/
-static char rcsid[] = "$Id: mbuf.c,v 1.3 1994/03/28 10:29:48 cgd Exp $";
+static char rcsid[] = "$Id: mbuf.c,v 1.4 1994/04/01 09:18:13 cgd Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -74,7 +74,7 @@ bool seen[256];			/* "have we seen this type yet?" */
  * Print mbuf statistics.
  */
 mbpr(mbaddr)
-	off_t mbaddr;
+	u_long mbaddr;
 {
 	register int totmem, totfree, totmbufs;
 	register int i;
