@@ -1,4 +1,4 @@
-/*	$NetBSD: isareg.h,v 1.5 1995/04/17 12:09:13 cgd Exp $	*/
+/*	$NetBSD: isareg.h,v 1.6 1998/03/22 15:44:02 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -142,7 +142,7 @@
 #define	IO_WDCSIZE	8	/* WD compatible disk controller */
 #define	IO_GAMSIZE	16	/* AT compatible game controller */
 #define	IO_ICUSIZE	16	/* 8259A interrupt controllers */
-#define	IO_KBDSIZE	16	/* 8042 Keyboard controllers */
+#define	IO_KBDSIZE	5	/* 8042 Keyboard controllers */
 #define	IO_LPTSIZE	8	/* LPT controllers, some use onl */
 #define	IO_MDASIZE	16	/* Monochrome display controller */
 #define	IO_RTCSIZE	16	/* CMOS real time clock, NMI con */
