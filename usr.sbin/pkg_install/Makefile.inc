@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.16.2.3 2002/11/24 13:49:48 tron Exp $
+# $NetBSD: Makefile.inc,v 1.16.2.4 2002/11/24 13:52:20 tron Exp $
 # Original from FreeBSD, no rcs id.
 
 .include <bsd.own.mk>
@@ -27,7 +27,7 @@ CPPFLAGS+=-I${.CURDIR}/../lib ${DEBUG} -DBINDIR='"${BINDIR}"'
 #CHGRP?= /bin/chgrp
 
 # UNDER NO CIRCUMSTANCES SHOULD THIS MAKEFILE TEST THE OUTPUT OF uname!!
-# DOING DO BREAKS CROSS COMPILING.
+# DOING SO BREAKS CROSS COMPILING.
 
 CHMOD?= /bin/chmod
 CHOWN?= /usr/sbin/chown
