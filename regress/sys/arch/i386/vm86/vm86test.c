@@ -1,4 +1,4 @@
-/* $NetBSD: vm86test.c,v 1.2 2003/09/10 15:33:08 drochner Exp $ */
+/* $NetBSD: vm86test.c,v 1.3 2003/09/11 19:14:01 christos Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -28,6 +28,7 @@
 
 #include <sys/types.h>
 #include <signal.h>
+#include <ucontext.h>
 #include <machine/segments.h>
 #include <machine/sysarch.h>
 #include <machine/vm86.h>
@@ -36,7 +37,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <err.h>
-#include <ucontext.h>
 
 void urghdl(int, siginfo_t *, void *);
 
@@ -108,8 +108,8 @@ main(int argc, char **argv)
 	memcpy(mapaddr, vmcode, sizeof(vmcode));
 
 	codeaddr = (unsigned int)mapaddr;
-	vm.substr.regs.vmsc.sc_cs = codeaddr >> 4;
-	vm.substr.regs.vmsc.sc_eip = codeaddr & 15; /* unnecessary here */
+	vm.substr.regs[_REG_CS] = codeaddr >> 4;
+	vm.substr.regs[_REG_EIP] = codeaddr & 15; /* unnecessary here */
 	vm.substr.ss_cpu_type = VCPU_586;
 	vm.int_byuser[4] = 0x03; /* vector INT 0x20 and 0x21 */
 
@@ -121,8 +121,8 @@ main(int argc, char **argv)
 		if (res < 0)
 			err (2, "sigaltstack");
 	} else {
-		vm.substr.regs.vmsc.sc_ss = codeaddr >> 4;
-		vm.substr.regs.vmsc.sc_esp = VMSIZE - (codeaddr & 15); /* hmm */
+		vm.substr.regs[_REG_SS] = codeaddr >> 4;
+		vm.substr.regs[_REG_ESP] = VMSIZE - (codeaddr & 15); /* hmm */
 	}
 
 	sa.sa_sigaction = urghdl;
