@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.53 2002/03/23 00:43:59 itojun Exp $	*/
+/*	$NetBSD: in6.c,v 1.54 2002/05/23 06:28:25 itojun Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.53 2002/03/23 00:43:59 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.54 2002/05/23 06:28:25 itojun Exp $");
 
 #include "opt_inet.h"
 
@@ -814,6 +814,7 @@ in6_control(so, cmd, data, ifp, p)
 		case IFT_ETHER:
 		case IFT_FDDI:
 		case IFT_IEEE1394:
+		case IFT_GIF:
 #if 0
 		case IFT_ATM:
 		case IFT_SLIP:
@@ -823,7 +824,6 @@ in6_control(so, cmd, data, ifp, p)
 			nd6_dad_start(&ia->ia_ifa, NULL);
 			break;
 		case IFT_FAITH:
-		case IFT_GIF:
 		case IFT_LOOP:
 		default:
 			break;
