@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.h,v 1.28 1999/09/11 08:19:27 augustss Exp $	*/
+/*	$NetBSD: usbdi.h,v 1.29 1999/09/12 08:23:42 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,8 +78,9 @@ typedef void (*usbd_callback) __P((usbd_request_handle, usbd_private_handle,
 #define USBD_EXCLUSIVE_USE	0x01
 
 /* Request flags */
+#define USBD_NO_COPY		0x01	/* do not copy data to DMA buffer */
+#define USBD_SYNCHRONOUS	0x02	/* wait for completion */
 /* in usb.h #define USBD_SHORT_XFER_OK	0x04*/	/* allow short reads */
-#define USBD_SYNCHRONOUS	0x08	/* wait for completion */
 
 #define USBD_NO_TIMEOUT 0
 #define USBD_DEFAULT_TIMEOUT 5000 /* ms = 5 s */
@@ -104,7 +105,7 @@ void usbd_setup_default_request
 void usbd_setup_isoc_request	
 	__P((usbd_request_handle reqh, usbd_pipe_handle pipe,
 	     usbd_private_handle priv, u_int16_t *frlengths,
-	     u_int32_t nframes, usbd_callback));
+	     u_int32_t nframes, u_int16_t flags, usbd_callback));
 void usbd_get_request_status
 	__P((usbd_request_handle reqh, usbd_private_handle *priv,
 	     void **buffer, u_int32_t *count, usbd_status *status));
@@ -125,6 +126,7 @@ usbd_status usbd_device2interface_handle
 usbd_device_handle usbd_pipe2device_handle __P((usbd_pipe_handle));
 void *usbd_alloc_buffer __P((usbd_request_handle req, u_int32_t size));
 void usbd_free_buffer __P((usbd_request_handle req));
+void *usbd_get_buffer __P((usbd_request_handle reqh));
 usbd_status usbd_sync_transfer	__P((usbd_request_handle req));
 usbd_status usbd_open_pipe_intr
 	__P((usbd_interface_handle iface, u_int8_t address,

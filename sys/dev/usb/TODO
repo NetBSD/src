@@ -38,8 +38,6 @@ uaudio problems:
 	implement input
 	test with more devices
 
-Preallocate buffer in ulpt.
-
 Document device driver API.
 
 Document HC driver API.
