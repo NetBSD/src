@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_conf.c,v 1.47 2000/11/27 18:04:32 jdolecek Exp $	*/
+/*	$NetBSD: exec_conf.c,v 1.48 2000/11/28 21:58:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -246,7 +246,7 @@ const struct execsw execsw[] = {
 	  { elf_probe_func: ELF64NAME2(linux,probe) },
 	  &emul_linux, 0,
 	  LINUX_ELF_AUX_ARGSIZ,
-	  LINUX_COPYARGS_FUNCTION, setregs }, /* Linux 64bit ELF bins */
+	  linux_elf64_copyargs, setregs }, /* Linux 64bit ELF bins */
 #endif
 	{ sizeof (Elf64_Ehdr), exec_elf64_makecmds, { NULL },
 	  &emul_netbsd, 0,
