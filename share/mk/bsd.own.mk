@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.120 1999/02/24 14:42:36 drochner Exp $
+#	$NetBSD: bsd.own.mk,v 1.121 1999/06/06 09:25:38 pk Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -113,6 +113,7 @@ NOPROFILE=
 .if ${MACHINE_ARCH} == "alpha" || \
     ${MACHINE_ARCH} == "mipsel" || ${MACHINE_ARCH} == "mipseb" || \
     ${MACHINE_ARCH} == "powerpc" || \
+    ${MACHINE_ARCH} == "sparc" || \
     ${MACHINE_ARCH} == "sparc64"
 OBJECT_FMT?=ELF
 .else
