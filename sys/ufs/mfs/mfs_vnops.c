@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vnops.c,v 1.7 1996/02/21 00:06:45 cgd Exp $	*/
+/*	$NetBSD: mfs_vnops.c,v 1.8 1996/03/17 02:16:32 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -297,7 +297,7 @@ mfs_inactive(v)
 	register struct mfsnode *mfsp = VTOMFS(ap->a_vp);
 
 	if (mfsp->mfs_buflist && mfsp->mfs_buflist != (struct buf *)(-1))
-		panic("mfs_inactive: not inactive (mfs_buflist %x)",
+		panic("mfs_inactive: not inactive (mfs_buflist %p)",
 			mfsp->mfs_buflist);
 	return (0);
 }
@@ -331,8 +331,8 @@ mfs_print(v)
 	} */ *ap = v;
 	register struct mfsnode *mfsp = VTOMFS(ap->a_vp);
 
-	printf("tag VT_MFS, pid %d, base %p, size %d\n", mfsp->mfs_pid,
-		mfsp->mfs_baseoff, mfsp->mfs_size);
+	printf("tag VT_MFS, pid %d, base %p, size %ld\n", mfsp->mfs_pid,
+	    mfsp->mfs_baseoff, mfsp->mfs_size);
 	return (0);
 }
 
