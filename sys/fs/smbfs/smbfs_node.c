@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_node.c,v 1.7 2003/02/23 21:33:06 jdolecek Exp $	*/
+/*	$NetBSD: smbfs_node.c,v 1.8 2003/02/23 21:55:20 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -65,6 +65,12 @@ MALLOC_DEFINE(M_SMBNODE, "SMBFS node", "SMBFS vnode private part");
 static MALLOC_DEFINE(M_SMBNODENAME, "SMBFS nname", "SMBFS node name");
 
 extern int (**smbfs_vnodeop_p) __P((void *));
+
+static struct genfs_ops smbfs_genfsops = {
+	NULL,
+	NULL,
+	genfs_compat_gop_write,
+};
 
 #if 0
 static int smbfs_hashprint(struct mount *mp);
@@ -225,6 +231,7 @@ loop:
 	LIST_INSERT_HEAD(nhpp, np, n_hash);
 	smbfs_hash_unlock(smp);
 
+	genfs_node_init(vp, &smbfs_genfsops);
 	uvm_vnp_setsize(vp, np->n_size);
 	*vpp = vp;
 	return 0;
