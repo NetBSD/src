@@ -1,3 +1,5 @@
+/*	$NetBSD: param.h,v 1.3 1994/10/26 08:02:18 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -35,8 +37,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)param.h	5.8 (Berkeley) 6/28/91
- *	$Id: param.h,v 1.2 1994/08/16 23:41:54 ragge Exp $
+ *	@(#)param.h	5.8 (Berkeley) 6/28/91
  */
 
 #ifndef PARAM_H

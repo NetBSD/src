@@ -1,3 +1,5 @@
+/*	$NetBSD: ka750.c,v 1.3 1994/10/26 08:03:12 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1982, 1986, 1988 The Regents of the University of California.
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -31,9 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)ka750.c	7.4 (Berkeley) 5/9/91
- *      also from: @(#)autoconf.c  7.20 (Berkeley) 5/9/91
- *	$Id: ka750.c,v 1.2 1994/10/08 15:48:07 ragge Exp $
+ *	@(#)ka750.c	7.4 (Berkeley) 5/9/91
+ *      @(#)autoconf.c  7.20 (Berkeley) 5/9/91
  */
 
 /* All bugs are subject to removal without further notice */

@@ -1,3 +1,5 @@
+/*	$NetBSD: mscp.h,v 1.2 1994/10/26 08:03:18 cgd Exp $	*/
+
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -33,8 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)mscp.h	7.5 (Berkeley) 6/28/90
- *	$Id: mscp.h,v 1.1 1994/08/02 20:22:06 ragge Exp $
+ *	@(#)mscp.h	7.5 (Berkeley) 6/28/90
  */
 
 /*

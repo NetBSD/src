@@ -1,3 +1,5 @@
+/*	$NetBSD: ubavar.h,v 1.2 1994/10/26 08:02:45 cgd Exp $	*/
+
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
  * All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)ubavar.h	7.7 (Berkeley) 6/28/90
- *	$Id: ubavar.h,v 1.1 1994/08/02 20:21:28 ragge Exp $
+ *	@(#)ubavar.h	7.7 (Berkeley) 6/28/90
  */
 
 /*

@@ -1,3 +1,5 @@
+/*	$NetBSD: gencons.c,v 1.3 1994/10/26 08:03:03 cgd Exp $	*/
+
 /*
  * Copyright (c) 1994 Gordon W. Ross
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -28,8 +30,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	from: kd.c,v 1.2 1994/05/05 04:46:51 gwr Exp $
- *	$Id: gencons.c,v 1.2 1994/10/08 15:48:04 ragge Exp $
+ *	kd.c,v 1.2 1994/05/05 04:46:51 gwr Exp $
  */
 
  /* All bugs are subject to removal without further notice */

@@ -1,3 +1,5 @@
+/*	$NetBSD: if_de.c,v 1.3 1994/10/26 08:01:49 cgd Exp $	*/
+
 /*
  * Copyright (c) 1982, 1986, 1989 Regents of the University of California.
  * All rights reserved.
@@ -31,7 +33,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)if_de.c	7.12 (Berkeley) 12/16/90
- *	$Id: if_de.c,v 1.2 1994/10/08 15:42:54 ragge Exp $
  */
 
 #include "de.h"

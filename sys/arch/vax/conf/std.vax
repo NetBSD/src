@@ -1,6 +1,6 @@
+#	$NetBSD: std.vax,v 1.2 1994/10/26 08:01:46 cgd Exp $
 #
 # Std vaxfiles, will be completed with Abus etc. later.
-#	$Id: std.vax,v 1.1 1994/08/02 20:19:27 ragge Exp $
 #
 machine	vax
 

@@ -1,3 +1,5 @@
+/*	$NetBSD: disksubr.c,v 1.3 1994/10/26 08:03:01 cgd Exp $	*/
+
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
  * All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)ufs_disksubr.c	7.16 (Berkeley) 5/4/91
- *	$Id: disksubr.c,v 1.2 1994/10/14 18:27:35 cgd Exp $
+ *	@(#)ufs_disksubr.c	7.16 (Berkeley) 5/4/91
  */
 
 #include "param.h"
@@ -139,7 +140,7 @@ writedisklabel(dev, strat, lp, osdep)
 }
 /*
  *	from: @(#)ufs_disksubr.c	7.16 (Berkeley) 5/4/91
- *	$Id: disksubr.c,v 1.2 1994/10/14 18:27:35 cgd Exp $
+ *	$Id: disksubr.c,v 1.3 1994/10/26 08:03:01 cgd Exp $
  */
 
 /*

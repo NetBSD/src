@@ -1,3 +1,5 @@
+/*	$NetBSD: mem.c,v 1.2 1994/10/26 08:03:15 cgd Exp $	*/
+
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -26,8 +28,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *	$Id: mem.c,v 1.1 1994/10/08 15:48:10 ragge Exp $
  */
 
  /* All bugs are subject to removal without further notice */

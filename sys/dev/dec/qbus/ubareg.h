@@ -1,3 +1,5 @@
+/*	$NetBSD: ubareg.h,v 1.2 1994/10/26 08:02:43 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -35,8 +37,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)ubareg.h	7.8 (Berkeley) 5/9/91
- *	$Id: ubareg.h,v 1.1 1994/08/02 20:21:27 ragge Exp $
+ *	@(#)ubareg.h	7.8 (Berkeley) 5/9/91
  */
 
 /*

@@ -1,3 +1,5 @@
+/*	$NetBSD: udiv.s,v 1.2 1994/10/26 08:03:34 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
  * All rights reserved.
@@ -33,8 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)udiv.s      5.6 (Berkeley) 4/15/91
- *	$Id: udiv.s,v 1.1 1994/08/02 20:22:19 ragge Exp $
+ *	@(#)udiv.s      5.6 (Berkeley) 4/15/91
  */
 
 /*

@@ -1,3 +1,5 @@
+/*	$NetBSD: endian.h,v 1.2 1994/10/26 08:02:04 cgd Exp $	*/
+
 /*
  * Copyright (c) 1987, 1991 Regents of the University of California.
  * All rights reserved.
@@ -31,7 +33,6 @@
  * SUCH DAMAGE.
  *
  *      @(#)endian.h    7.8 (Berkeley) 4/3/91
- *	$Id: endian.h,v 1.1 1994/08/02 20:20:17 ragge Exp $
  */
 
 /*

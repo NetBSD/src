@@ -1,3 +1,5 @@
+/*	$NetBSD: vmparam.h,v 1.4 1994/10/26 08:02:36 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -35,8 +37,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)vmparam.h	5.9 (Berkeley) 5/12/91
- *	$Id: vmparam.h,v 1.3 1994/10/08 15:43:59 ragge Exp $
+ *	@(#)vmparam.h	5.9 (Berkeley) 5/12/91
  */
 #ifndef ASSEMBLER
 #include <vm/vm_param.h>

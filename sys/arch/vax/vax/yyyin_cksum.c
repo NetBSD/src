@@ -1,3 +1,5 @@
+/*	$NetBSD: yyyin_cksum.c,v 1.2 1994/10/26 08:03:08 cgd Exp $	*/
+
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
  * All rights reserved.
@@ -31,7 +33,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)in_cksum.c	7.6 (Berkeley) 12/16/90
- *	$Id: yyyin_cksum.c,v 1.1 1994/08/02 20:21:55 ragge Exp $
  */
 
 #include "sys/param.h"

@@ -1,3 +1,5 @@
+/*	$NetBSD: random.s,v 1.2 1994/10/26 08:03:24 cgd Exp $	*/
+
 /*
  * Copyright (c) 1990,1993 The Regents of the University of California.
  * All rights reserved.
@@ -42,8 +44,6 @@
  * return (seed);
  *
  * The result is in (0,2^31), e.g., it's always positive.
- *
- *	$Id: random.s,v 1.1 1994/08/02 20:22:11 ragge Exp $
  */
 
 	.data

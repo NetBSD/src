@@ -1,3 +1,5 @@
+/*	$NetBSD: trap.c,v 1.4 1994/10/26 08:03:32 cgd Exp $	*/
+
 #define SCHEDDEBUG
 #undef FAULTDEBUG
 /*
@@ -28,8 +30,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *	$Id: trap.c,v 1.3 1994/10/08 15:48:19 ragge Exp $
  */
 
  /* All bugs are subject to removal without further notice */
