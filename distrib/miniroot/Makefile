@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.26 2000/03/07 08:41:35 pk Exp $
+#	$NetBSD: Makefile,v 1.27 2000/04/16 19:17:18 matt Exp $
 
 .include <bsd.own.mk>
 
-REV!=sh ${BSDSRCDIR}/sys/conf/osrelease.sh -s
+REV!=sh ${.CURDIR}/../../sys/conf/osrelease.sh -s
 
 CBIN=		instbin
 ARCHDIR=	${.CURDIR}/../${MACHINE}/miniroot
