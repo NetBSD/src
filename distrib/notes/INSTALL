@@ -440,7 +440,7 @@ Chris G. Demetriou	<cgd@NetBSD.ORG>
 Matthias Drochner	<drochner@NetBSD.ORG>
 Bernd Ernesti		<veego@NetBSD.ORG>
 Erik Fair		<fair@NetBSD.ORG>
-Hubert Feyrer		<hubert.feyrer@rz.uni-regensburg.de>
+Hubert Feyrer		<hubertf@NetBSD.ORG>
 Brian R. Gaeke		<brg@dgate.org>
 Justin Gibbs		<gibbs@NetBSD.ORG>
 Adam Glass		<glass@NetBSD.ORG>
@@ -467,6 +467,7 @@ Matthias Pfaller	<leo@marco.de>
 Chris Provenzano	<proven@NetBSD.ORG>
 Waldi Ravens		<waldi@moacs.indiv.nl.net>
 Darren Reed		<darrenr@NetBSD.ORG>
+Kazuki Sakamoto		<sakamoto@NetBSD.ORG>
 Curt Sampson		<cjs@NetBSD.ORG>
 Karl Schilke (rAT)	<rat@NetBSD.ORG>
 Thor Lancelot Simon	<tls@NetBSD.ORG>
