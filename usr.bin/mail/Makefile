@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 1997/10/11 09:34:41 mycroft Exp $
+#	$NetBSD: Makefile,v 1.14 1998/09/27 17:22:12 lukem Exp $
 #	@(#)Makefile	8.3 (Berkeley) 4/20/95
 
 PROG=	mail
@@ -9,11 +9,13 @@ EFILES=	mail.rc
 LINKS=	${BINDIR}/mail ${BINDIR}/Mail ${BINDIR}/mail ${BINDIR}/mailx
 MLINKS=	mail.1 Mail.1 mail.1 mailx.1
 
+.if !defined(NOSHARE)
 FILESDIR=/usr/share/misc
 FILES=	${.CURDIR}/misc/mail.help ${.CURDIR}/misc/mail.tildehelp
 
 .if make(install)
 SUBDIR+= USD.doc
+.endif
 .endif
 
 distribution:
