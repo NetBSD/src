@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.63.2.2 2002/10/23 12:18:12 lukem Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.63.2.3 2003/08/26 06:46:25 tron Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.63.2.2 2002/10/23 12:18:12 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.63.2.3 2003/08/26 06:46:25 tron Exp $");
 
 #include "opt_nfsserver.h"
 
@@ -1027,7 +1027,8 @@ genfs_putpages(void *v)
 	off_t endoff = ap->a_offhi;
 	off_t off;
 	int flags = ap->a_flags;
-	const int maxpages = MAXBSIZE >> PAGE_SHIFT;
+	/* Even for strange MAXPHYS, the shift rounds down to a page */
+	const int maxpages = MAXPHYS >> PAGE_SHIFT;
 	int i, s, error, npages, nback;
 	int freeflag;
 	struct vm_page *pgs[maxpages], *pg, *nextpg, *tpg, curmp, endmp;
