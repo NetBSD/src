@@ -56,7 +56,9 @@ struct preconfdata {
 static struct aconfdata aconftab[] = {
 	/* MacroSystemsUS */
 	{ "wesc",	2203,	19},	/* Warp engine */
-	{ "grfrtblt",	18260,	16}	/* Retina BLT Z3 */
+	{ "grfrtblt",	18260,	16},	/* Retina BLT Z3 */
+	/* Commodore Amiga */
+	{ "afsc",	514,	84}	/* A4091 SCSI HD Controller */
 };
 static int naconfent = sizeof(aconftab) / sizeof(struct aconfdata);
 
