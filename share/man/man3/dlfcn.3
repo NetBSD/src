@@ -1,4 +1,4 @@
-.\"	$NetBSD: dlfcn.3,v 1.12 2001/04/25 02:19:49 simonb Exp $
+.\"	$NetBSD: dlfcn.3,v 1.13 2001/06/24 01:32:29 wiz Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -81,7 +81,7 @@ The argument can either be an absolute pathname or it can be of the form
 in which case the same library search rules apply that are used for
 .Dq intrinsic
 shared library searches.
-If the first argument is 
+If the first argument is
 .Dv NULL ,
 .Fn dlopen
 returns a handle on the global symbol object. This object
@@ -101,7 +101,7 @@ If the named shared object has already
 been loaded by a previous call to
 .Fn dlopen
 .Pq and not yet unloaded by Fn dlclose ,
-a handle refering to the resident copy is returned.
+a handle referring to the resident copy is returned.
 .Pp
 .Fn dlclose
 unlinks and removes the object referred to by
@@ -126,7 +126,7 @@ is returned.
 .Pp
 .Fn dladdr
 examines all currently mapped shared objects for a symbol whose address --
-as mapped in the proces address space -- is closest to but not exceeding
+as mapped in the process address space -- is closest to but not exceeding
 the value passed in the first argument
 .Fa addr .
 The symbols of a shared object are only eligible if
