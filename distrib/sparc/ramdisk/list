@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.2 1998/06/06 06:09:15 mrg Exp $
+#	$NetBSD: list,v 1.3 1998/06/09 14:21:02 mrg Exp $
 
 # copy the crunched binary, link to it, and kill it
 COPY	${OBJDIR}/ramdiskbin		sysinst
@@ -58,6 +58,7 @@ LINK	sysinst				usr/bin/tar
 LINK	sysinst				usr/bin/tset
 LINK	sysinst				usr/mdec/installboot
 LINK	sysinst				usr/sbin/chown
+LINK	sysinst				usr/sbin/update
 
 # copy the MAKEDEV script and make some devices
 COPY    ${DESTDIR}/dev/MAKEDEV          dev/MAKEDEV
@@ -80,6 +81,9 @@ COPY	${CURDIR}/../../../../etc/master.passwd	etc/master.passwd
 COPY	${CURDIR}/../../../../etc/protocols	etc/protocols
 COPY	${CURDIR}/../../../../etc/services	etc/services
 SPECIAL	pwd_mkdb -p -d ./ etc/master.passwd
+
+# the disktab explanation file
+COPY    disktab.preinstall              etc/disktab.preinstall
 
 # and the installation scripts
 COPY	${CURDIR}/dot.profile			.profile
