@@ -1,6 +1,6 @@
-# $NetBSD: net4501,v 1.1 2002/02/20 03:15:35 thorpej Exp $
+# $NetBSD: NET4501,v 1.1 2002/02/20 07:19:50 thorpej Exp $
 #
-# net4501 -- kernel configuration for a Soekris Engineering net4501
+# NET4501 -- kernel configuration for a Soekris Engineering net4501
 # single-board computer.
 #
 #	http://www.soekris.com/
@@ -8,7 +8,7 @@
 
 include 	"arch/i386/conf/std.i386"
 
-#ident 		"net4501-$Revision: 1.1 $"
+#ident 		"NET4501-$Revision: 1.1 $"
 
 maxusers	32		# estimated number of users
 
