@@ -1,4 +1,4 @@
-.\"	$NetBSD: ypbind.8,v 1.10 1998/01/23 13:36:57 lukem Exp $
+.\"	$NetBSD: ypbind.8,v 1.11 1998/08/21 09:39:32 bouyer Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -139,6 +139,8 @@ options are inherently insecure and should be avoided.
 - binding file for <domain>.
 .Pa /var/yp/binding/<domain>.ypservers
 - explicit list of servers to bind to for <domain>.
+.Sh DIAGNOSTICS
+Messages are send to syslog daemon using facility LOG_DAEMON.
 .Sh SEE ALSO
 .Xr domainname 1 ,
 .Xr ypcat 1 ,
