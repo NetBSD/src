@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.4 1999/02/05 21:40:49 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.5 1999/02/24 16:45:14 explorer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.4 1999/02/05 21:40:49 lukem Exp $");
+__RCSID("$NetBSD: util.c,v 1.5 1999/02/24 16:45:14 explorer Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -47,6 +47,10 @@ __RCSID("$NetBSD: util.c,v 1.4 1999/02/05 21:40:49 lukem Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <syslog.h>
+
+#ifdef KERBEROS5
+#include <krb5.h>
+#endif
 
 #include "extern.h"
 
