@@ -1,4 +1,4 @@
-/*	$NetBSD: clockreg.h,v 1.3 1996/05/08 05:58:15 thorpej Exp $	*/
+/*	$NetBSD: clockreg.h,v 1.4 2000/03/18 22:33:06 scw Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -43,22 +43,23 @@
  *
  *	@(#)clockreg.h	8.1 (Berkeley) 6/11/93
  */
+#ifndef _MVME68K_CLOCKREG_H
+#define _MVME68K_CLOCKREG_H
 
 /*
- * Mostek MK48T02 clock.
+ * Mostek MK48T02 clock register offsets
  */
-struct clockreg {
-	volatile u_char	cl_csr;		/* control register */
-	volatile u_char	cl_sec;		/* seconds (0..59; BCD) */
-	volatile u_char	cl_min;		/* minutes (0..59; BCD) */
-	volatile u_char	cl_hour;	/* hour (0..23; BCD) */
-	volatile u_char	cl_wday;	/* weekday (1..7) */
-	volatile u_char	cl_mday;	/* day in month (1..31; BCD) */
-	volatile u_char	cl_month;	/* month (1..12; BCD) */
-	volatile u_char	cl_year;	/* year (0..99; BCD) */
-};
+#define MK48TREG_CSR	0	/* control register */
+#define MK48TREG_SEC	1	/* seconds (0..59; BCD) */
+#define MK48TREG_MIN	2	/* minutes (0..59; BCD) */
+#define MK48TREG_HOUR	3	/* hour (0..23; BCD) */
+#define MK48TREG_WDAY	4	/* weekday (1..7) */
+#define MK48TREG_MDAY	5	/* day in month (1..31; BCD) */
+#define MK48TREG_MONTH	6	/* month (1..12; BCD) */
+#define MK48TREG_YEAR	7	/* year (0..99; BCD) */
+#define MK48T_REGSIZE	8
 
-/* bits in cl_csr */
+/* bits in MK48TREG_CSR */
 #define	CLK_WRITE	0x80		/* want to write */
 #define	CLK_READ	0x40		/* want to read (freeze clock) */
 
@@ -71,11 +72,6 @@ struct clockreg {
 /*
  * interrupt level for clock
  */
-
 #define CLOCK_LEVEL 5
 
-/*
- * Size of the NVRAM in the Mostek clock.
- */
-#define MK48T02_SIZE	(2*1024)
-#define MK48T08_SIZE	(8*1024)
+#endif /* _MVME68K_CLOCKREG_H */

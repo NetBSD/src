@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.5 1999/02/14 17:54:28 scw Exp $	*/
+/*	$NetBSD: lpt.c,v 1.6 2000/03/18 22:33:03 scw Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -54,6 +54,7 @@
 #include <sys/syslog.h>
 
 #include <machine/cpu.h>
+#include <machine/bus.h>
 
 #include <mvme68k/dev/lptvar.h>
 
@@ -89,8 +90,9 @@ extern struct cfdriver lpt_cd;
 
 void
 lpt_attach_subr(sc)
-	struct lpt_softc *sc; 
+	struct lpt_softc *sc;
 {
+
 	sc->sc_state = 0;
 }
 
@@ -104,17 +106,20 @@ lptopen(dev, flag, mode, p)
 	int mode;
 	struct proc *p;
 {
-	int unit = LPTUNIT(dev);
-	u_char flags = LPTFLAGS(dev);
+	int unit;
+	u_char flags;
 	struct lpt_softc *sc;
 	int error;
 	int spin;
 
+	unit = LPTUNIT(dev);
+	flags = LPTFLAGS(dev);
+
 	if (unit >= lpt_cd.cd_ndevs)
-		return ENXIO;
+		return (ENXIO);
 	sc = lpt_cd.cd_devs[unit];
 	if (!sc)
-		return ENXIO;
+		return (ENXIO);
 
 #ifdef DIAGNOSTIC
 	if (sc->sc_state)
@@ -123,7 +128,7 @@ lptopen(dev, flag, mode, p)
 #endif
 
 	if (sc->sc_state)
-		return EBUSY;
+		return (EBUSY);
 
 	sc->sc_state = LPT_INIT;
 	sc->sc_flags = flags;
@@ -131,27 +136,26 @@ lptopen(dev, flag, mode, p)
 
 	if ((flags & LPT_NOPRIME) == 0) {
 		/* assert Input Prime for 100 usec to start up printer */
-		(sc->sc_funcs->lf_iprime)(sc);
+		(sc->sc_funcs->lf_iprime) (sc);
 	}
 
 	/* select fast or slow strobe depending on minor device number */
-	if ( flags & LPT_FAST_STROBE )
-		(sc->sc_funcs->lf_speed)(sc, LPT_STROBE_FAST);
+	if (flags & LPT_FAST_STROBE)
+		(sc->sc_funcs->lf_speed) (sc, LPT_STROBE_FAST);
 	else
-		(sc->sc_funcs->lf_speed)(sc, LPT_STROBE_SLOW);
+		(sc->sc_funcs->lf_speed) (sc, LPT_STROBE_SLOW);
 
 	/* wait till ready (printer running diagnostics) */
-	for (spin = 0; (sc->sc_funcs->lf_notrdy)(sc, 1); spin += STEP) {
+	for (spin = 0; (sc->sc_funcs->lf_notrdy) (sc, 1); spin += STEP) {
 		if (spin >= TIMEOUT) {
 			sc->sc_state = 0;
-			return EBUSY;
+			return (EBUSY);
 		}
-
 		/* wait 1/4 second, give up if we get a signal */
-		error = tsleep((caddr_t)sc, LPTPRI | PCATCH, "lptopen", STEP);
+		error = tsleep((caddr_t) sc, LPTPRI | PCATCH, "lptopen", STEP);
 		if (error != EWOULDBLOCK) {
 			sc->sc_state = 0;
-			return error;
+			return (error);
 		}
 	}
 
@@ -159,21 +163,23 @@ lptopen(dev, flag, mode, p)
 	sc->sc_count = 0;
 	sc->sc_state = LPT_OPEN;
 
-	if ( (sc->sc_flags & LPT_NOINTR) == 0 )
+	if ((sc->sc_flags & LPT_NOINTR) == 0)
 		lpt_wakeup(sc);
 
-	(sc->sc_funcs->lf_open)(sc, sc->sc_flags & LPT_NOINTR);
+	(sc->sc_funcs->lf_open) (sc, sc->sc_flags & LPT_NOINTR);
 
 	LPRINTF(("%s: opened\n", sc->sc_dev.dv_xname));
-	return 0;
+	return (0);
 }
 
 void
 lpt_wakeup(arg)
 	void *arg;
 {
-	struct lpt_softc *sc = arg;
+	struct lpt_softc *sc;
 	int s;
+
+	sc = arg;
 
 	s = spltty();
 	lpt_intr(sc);
@@ -192,83 +198,82 @@ lptclose(dev, flag, mode, p)
 	int mode;
 	struct proc *p;
 {
-	int unit = LPTUNIT(dev);
-	struct lpt_softc *sc = lpt_cd.cd_devs[unit];
+	struct lpt_softc *sc;
+	int unit;
+
+	unit = LPTUNIT(dev);
+	sc = lpt_cd.cd_devs[unit];
 
 	if (sc->sc_count)
 		(void) pushbytes(sc);
 
-	if ( (sc->sc_flags & LPT_NOINTR) == 0 )
+	if ((sc->sc_flags & LPT_NOINTR) == 0)
 		untimeout(lpt_wakeup, sc);
 
-	(sc->sc_funcs->lf_close)(sc);
+	(sc->sc_funcs->lf_close) (sc);
 
 	sc->sc_state = 0;
 	brelse(sc->sc_inbuf);
 
 	LPRINTF(("%s: closed\n", sc->sc_dev.dv_xname));
-	return 0;
+	return (0);
 }
 
 int
 pushbytes(sc)
 	struct lpt_softc *sc;
 {
-	int error;
+	int s, error, spin, tic;
 
 	if (sc->sc_flags & LPT_NOINTR) {
-		int spin, tic;
-
 		while (sc->sc_count > 0) {
 			spin = 0;
-			while ( (sc->sc_funcs->lf_notrdy)(sc, 0) ) {
+			while ((sc->sc_funcs->lf_notrdy) (sc, 0)) {
 				if (++spin < sc->sc_spinmax)
 					continue;
 				tic = 0;
 				/* adapt busy-wait algorithm */
 				sc->sc_spinmax++;
-				while((sc->sc_funcs->lf_notrdy)(sc,1)) {
+				while ((sc->sc_funcs->lf_notrdy) (sc, 1)) {
 					/* exponential backoff */
 					tic = tic + tic + 1;
 					if (tic > TIMEOUT)
 						tic = TIMEOUT;
-					error = tsleep((caddr_t)sc,
+					error = tsleep((caddr_t) sc,
 					    LPTPRI | PCATCH, "lptpsh", tic);
 					if (error != EWOULDBLOCK)
-						return error;
+						return (error);
 				}
 				break;
 			}
 
-			(sc->sc_funcs->lf_wrdata)(sc, *sc->sc_cp++);
+			(sc->sc_funcs->lf_wrdata) (sc, *sc->sc_cp++);
 			sc->sc_count--;
 
 			/* adapt busy-wait algorithm */
-			if (spin*2 + 16 < sc->sc_spinmax)
+			if (spin * 2 + 16 < sc->sc_spinmax)
 				sc->sc_spinmax--;
 		}
 	} else {
-		int s;
-
 		while (sc->sc_count > 0) {
 			/* if the printer is ready for a char, give it one */
 			if ((sc->sc_state & LPT_OBUSY) == 0) {
 				LPRINTF(("%s: write %d\n", sc->sc_dev.dv_xname,
-				    sc->sc_count));
+					sc->sc_count));
 				s = spltty();
 				(void) lpt_intr(sc);
 				splx(s);
 			}
-			error = tsleep((caddr_t)sc, LPTPRI | PCATCH,
+			error = tsleep((caddr_t) sc, LPTPRI | PCATCH,
 			    "lptwrite2", 0);
 			if (error)
-				return error;
+				return (error);
 		}
 	}
-	return 0;
+	return (0);
 }
 
-/* 
+/*
  * Copy a line from user space to a local buffer, then call putc to get the
  * chars moved to the output queue.
  */
@@ -278,9 +283,12 @@ lptwrite(dev, uio, flags)
 	struct uio *uio;
 	int flags;
 {
-	struct lpt_softc *sc = lpt_cd.cd_devs[LPTUNIT(dev)];
+	struct lpt_softc *sc;
 	size_t n;
-	int error = 0;
+	int error;
+
+	sc = lpt_cd.cd_devs[LPTUNIT(dev)];
+	error = 0;
 
 	while ((n = min(LPT_BSIZE, uio->uio_resid)) != 0) {
 		uiomove(sc->sc_cp = sc->sc_inbuf->b_data, n, uio);
@@ -293,10 +301,10 @@ lptwrite(dev, uio, flags)
 			 */
 			uio->uio_resid += sc->sc_count;
 			sc->sc_count = 0;
-			return error;
+			return (error);
 		}
 	}
-	return 0;
+	return (0);
 }
 
 /*
@@ -307,9 +315,10 @@ int
 lpt_intr(sc)
 	struct lpt_softc *sc;
 {
+
 	if (sc->sc_count) {
 		/* send char */
-		(sc->sc_funcs->lf_wrdata)(sc, *sc->sc_cp++);
+		(sc->sc_funcs->lf_wrdata) (sc, *sc->sc_cp++);
 		sc->sc_count--;
 		sc->sc_state |= LPT_OBUSY;
 	} else
@@ -317,12 +326,13 @@ lpt_intr(sc)
 
 	if (sc->sc_count == 0) {
 		/* none, wake up the top half to get more */
-		wakeup((caddr_t)sc);
+		wakeup((caddr_t) sc);
 	}
 
-	return 1;
+	return (1);
 }
 
+/* ARGSUSED */
 int
 lptioctl(dev, cmd, data, flag, p)
 	dev_t dev;
@@ -331,12 +341,6 @@ lptioctl(dev, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
-	int error = 0;
 
-	switch (cmd) {
-	default:
-		error = ENODEV;
-	}
-
-	return error;
+	return (ENODEV);
 }

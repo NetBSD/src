@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.35 1999/12/05 11:56:33 ragge Exp $	*/
+/*	$NetBSD: trap.c,v 1.36 2000/03/18 22:33:07 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -190,7 +190,7 @@ int mmupid = -1;
 #endif
 
 
-#define NSIR	32
+#define NSIR	8
 void (*sir_routines[NSIR])(void *);
 void *sir_args[NSIR];
 int next_sir;
@@ -717,6 +717,7 @@ writeback(fp, docachepush)
 	u_int fa;
 	caddr_t oonfault = p->p_addr->u_pcb.pcb_onfault;
 	paddr_t pa;
+	extern int suline(caddr_t, caddr_t);	/* locore.s */
 
 #ifdef DEBUG
 	if ((mmudebug & MDB_WBFOLLOW) || MDB_ISPID(p->p_pid)) {
@@ -1221,7 +1222,7 @@ allocate_sir(proc, arg)
 void
 init_sir()
 {
-	extern void netintr(void);
+	extern void netintr __P((void));
 
 	sir_routines[0] = (void (*)(void *))netintr;
 	sir_routines[1] = (void (*)(void *))softclock;

@@ -1,7 +1,7 @@
-/*	$NetBSD: pccvar.h,v 1.5 2000/03/18 22:33:04 scw Exp $	*/
+/*	$NetBSD: intr.h,v 1.2 2000/03/18 22:33:05 scw Exp $	*/
 
 /*-
- * Copyright (c) 1996, 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -36,34 +36,68 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _MVME68K_PCCVAR_H
-#define _MVME68K_PCCVAR_H
+#ifndef _MVME68K_INTR_H
+#define _MVME68K_INTR_H
+
+#include <machine/psl.h>
 
 /*
- * Structure used to attach PCC devices.
+ * These are identical to the values used by hp300, but are not meaningful
+ * to mvme68k code at this time.
  */
-struct pcc_attach_args {
-	const char	*pa_name;	/* name of device */
-	int		pa_ipl;		/* interrupt level */
-	bus_dma_tag_t	pa_dmat;
-	bus_space_tag_t	pa_bust;
-	bus_addr_t	pa_offset;
-};
+#define	IPL_NONE	0	/* disable only this interrupt */
+#define	IPL_BIO		1	/* disable block I/O interrupts */
+#define	IPL_NET		2	/* disable network interrupts */
+#define	IPL_TTY		3	/* disable terminal interrupts */
+#define	IPL_TTYNOBUF	4	/* IPL_TTY + higher ISR priority */
+#define	IPL_CLOCK	5	/* disable clock interrupts */
+#define	IPL_HIGH	6	/* disable all interrupts */
 
-/* Shorthand for locators. */
-#include "locators.h"
-#define pcccf_ipl	cf_loc[PCCCF_IPL]
+#ifdef _KERNEL
+/* spl0 requires checking for software interrupts */
+
+#define spllowersoftclock()	spl1()
+#define splsoftclock()		splraise1()
+#define splsoftnet()		splraise1()
+#define splbio()		splraise2()
+#define splnet()		splraise3()
+#define spltty()		splraise3()
+#define splimp()		splraise3()
+#define splserial()		splraise4()
+#define splclock()		splraise5()
+#define splstatclock()		splraise5()
+#define splvm()			splraise5()
+#define splhigh()		spl7()
+#define splsched()		spl7()
+
+/* watch out for side effects */
+#define splx(s)         (s & PSL_IPL ? _spl(s) : spl0())
 
 
-struct pcc_softc {
-        struct device sc_dev;
-	bus_space_tag_t sc_bust;
-	bus_space_handle_t sc_bush;
-};
+#define SIR_NET		0x1
+#define SIR_CLOCK	0x2
 
-extern struct pcc_softc *sys_pcc;
+/* Following is from next68k/intr.h */
+#define	siron(mask)	\
+	__asm __volatile ( "orb %1,%0" : "=m" (ssir) : "ir" (mask))
+#define	siroff(mask)	\
+	__asm __volatile ( "andb %1,%0" : "=m" (ssir) : "ir" (~(mask)));
 
-void	pccintr_establish __P((int, int (*)(void *), int, void *));
-void	pccintr_disestablish __P((int));
+#define setsoftint(x)	siron(x)
+#define setsoftnet()	siron(SIR_NET)
+#define setsoftclock()	siron(SIR_CLOCK)
 
-#endif /* _MVME68K_PCCVAR_H */
+
+#ifndef _LOCORE
+/*
+ * simulated software interrupt register
+ */
+extern volatile unsigned char ssir;
+
+extern void init_sir __P((void));
+extern unsigned long allocate_sir __P((void (*)(void *), void *));
+extern int spl0 __P((void));
+#endif /* !_LOCORE */
+#endif /* _KERNEL */
+
+#endif /* _MVME68K_INTR_H */

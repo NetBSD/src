@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.17 2000/01/18 19:45:28 thorpej Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.18 2000/03/18 22:33:06 scw Exp $	*/
 
 /*
  * Copyright (c) 1995 Dale Rahn.
@@ -31,6 +31,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/device.h>
 #define FSTYPENAMES
@@ -107,7 +108,7 @@ dk_establish(dk, dev)
 char *
 readdisklabel(dev, strat, lp, clp)
 	dev_t dev;
-	void (*strat)();
+	void (*strat)(struct buf *);
 	struct disklabel *lp;
 	struct cpu_disklabel *clp;
 {
@@ -220,9 +221,10 @@ setdisklabel(olp, nlp, openmask, clp)
 /*
  * Write disk label back to device after modification.
  */
+int
 writedisklabel(dev, strat, lp, clp)
 	dev_t dev;
-	void (*strat)();
+	void (*strat)(struct buf *);
 	struct disklabel *lp;
 	struct cpu_disklabel *clp;
 {
@@ -246,7 +248,7 @@ writedisklabel(dev, strat, lp, clp)
 	bp->b_cylinder = 0; /* contained in block 0 */
 	(*strat)(bp);
 
-	if (error = biowait(bp)) {
+	if ( (error = biowait(bp)) != 0 ) {
 		/* nothing */
 	} else {
 		bcopy(bp->b_data, clp, sizeof(struct cpu_disklabel));
@@ -521,8 +523,8 @@ printclp(clp, str)
 	int max, i;
 
 	printf("%s\n", str);
-	printf("magic1 %x\n", clp->magic1);
-	printf("magic2 %x\n", clp->magic2);
+	printf("magic1 %lx\n", clp->magic1);
+	printf("magic2 %lx\n", clp->magic2);
 	printf("typename %s\n", clp->vid_vd);
 	printf("secsize %x nsect %x ntrack %x ncylinders %x\n",
 	    clp->cfg_psm, clp->cfg_spt, clp->cfg_hds, clp->cfg_trk);

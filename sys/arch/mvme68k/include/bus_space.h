@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.h,v 1.4 2000/01/25 22:26:49 drochner Exp $ */
+/*	$NetBSD: bus_space.h,v 1.5 2000/03/18 22:33:05 scw Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -82,30 +82,41 @@ typedef u_long bus_size_t;
 /*
  * Access methods for bus resources and address space.
  */
-typedef volatile char *  bus_space_tag_t;
+typedef int	bus_space_tag_t;
 typedef u_long	bus_space_handle_t;
 
 /*
  * Value for the mvme68k bus space tag, not to be used directly by MI code.
  */
-#define MVME68K_INTIO_BUS_SPACE	intiobase
+#define MVME68K_INTIO_BUS_SPACE	0
+#define MVME68K_VME_BUS_SPACE	1
 
 /*
- * Mapping and unmapping operations.
+ *	int bus_space_map __P((bus_space_tag_t t, bus_addr_t addr,
+ *	    bus_size_t size, int flags, bus_space_handle_t *bshp));
+ *
+ * Map a region of bus space.
  */
-#define	bus_space_map(t, a, s, f, hp)					\
-    ((((a) >= intiobase_phys) && (((a) + (s)) < intiotop_phys)) ?	\
-     ((*(hp) = (bus_space_handle_t)((t) + ((a) - intiobase_phys))),0) :	\
-     (-1))
+int	bus_space_map __P((bus_space_tag_t, bus_addr_t, bus_size_t,
+	    int, bus_space_handle_t *));
 
-#define	bus_space_unmap(t, h, s)
-	
-#define	bus_space_subregion(t, h, o, s, hp)				\
-     (*(hp)=(h)+(o))
-
+/*
+ * Possible values for the 'flags' parameter of bus_space_map()
+ */
 #define	BUS_SPACE_MAP_CACHEABLE		0x01
 #define	BUS_SPACE_MAP_LINEAR		0x02
 #define	BUS_SPACE_MAP_PREFETCHABLE	0x04
+
+/*
+ *	void bus_space_unmap __P((bus_space_tag_t t,
+ *	    bus_space_handle_t bsh, bus_size_t size));
+ *
+ * Unmap a region of bus space.
+ */
+void	bus_space_unmap __P((bus_space_tag_t, bus_space_handle_t, bus_size_t));
+
+#define	bus_space_subregion(t, h, o, s, hp)				\
+     (*(hp)=(h)+(o))
 
 /*
  * Allocation and deallocation operations.

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.23 1999/09/17 20:04:41 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.24 2000/03/18 22:33:06 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,9 +45,7 @@
 /*
  * Setup the system to run on the current machine.
  *
- * Configure() is called at boot time.  Available
- * devices are determined (from possibilities mentioned in ioconf.c),
- * and the drivers are initialized.
+ * Configure() is called at boot time.
  */
 
 #include <sys/param.h>
@@ -60,113 +58,13 @@
 #include <sys/device.h>
 
 #include <machine/vmparam.h>
-#include <machine/autoconf.h>
 #include <machine/disklabel.h>
 #include <machine/cpu.h>
+#include <machine/autoconf.h>
 #include <machine/pte.h>
 
-#include <mvme68k/mvme68k/isr.h>
 
 struct device *booted_device;	/* boot device */
-
-void mainbus_attach __P((struct device *, struct device *, void *));
-int  mainbus_match __P((struct device *, struct cfdata *, void *));
-int  mainbus_print __P((void *, const char *));
-
-struct mainbus_softc {
-	struct device sc_dev;
-};
-
-struct cfattach mainbus_ca = {
-	sizeof(struct mainbus_softc), mainbus_match, mainbus_attach
-};
-
-#ifdef MVME147
-static	char *mainbusdevs_147[] = {
-	"pcc", NULL
-};
-#endif
-
-#ifdef MVME162
-static	char *mainbusdevs_162[] = {
-	"mc", "flash", "sram", NULL
-};
-#endif
-
-#if defined(MVME167) || defined(MVME177)
-static	char *mainbusdevs_1x7[] = {	/* includes 166, 177 */
-	"pcctwo", "vmechip", "sram", NULL
-};
-#endif
-
-int
-mainbus_match(parent, cf, args)
-	struct device *parent;
-	struct cfdata *cf;
-	void *args;
-{
-	static int mainbus_matched;
-
-	if (mainbus_matched)
-		return (0);
-
-	return ((mainbus_matched = 1));
-}
-
-void
-mainbus_attach(parent, self, args)
-	struct device *parent, *self;
-	void *args;
-{
-	char **devices;
-	int i;
-
-	printf("\n");
-
-	/*
-	 * Attach children appropriate for this CPU.
-	 */
-	switch (machineid) {
-#ifdef MVME147
-	case MVME_147:
-		devices = mainbusdevs_147;
-		break;
-#endif
-
-#ifdef MVME162
-	case MVME_162:
-		devices = mainbusdevs_162;
-		break;
-#endif
-
-#if defined(MVME167) || defined(MVME177)
-	case MVME_166:
-	case MVME_167:
-	case MVME_177:
-		devices = mainbusdevs_1x7;
-		break;
-#endif
-
-	default:
-		panic("mainbus_attach: impossible CPU type");
-	}
-
-	for (i = 0; devices[i] != NULL; ++i)
-		(void)config_found(self, devices[i], mainbus_print);
-}
-
-int
-mainbus_print(aux, cp)
-	void *aux;
-	const char *cp;
-{
-	char *devname = aux;
-
-	if (cp)
-		printf("%s at %s", devname, cp);
-
-	return (UNCONF);
-}
 
 /*
  * Determine mass storage and memory configuration for a machine.
@@ -191,32 +89,4 @@ cpu_rootconf()
 		(booted_device) ? booted_device->dv_xname : "<unknown>");
 
 	setroot(booted_device, 0);
-}
-
-/*
- * find a device matching "name" and unit number
- */
-struct device *
-getdevunit(name, unit)
-	char *name;
-	int unit;
-{
-	struct device *dev = alldevs.tqh_first;
-	char num[10], fullname[16];
-	int lunit;
-
-	/* compute length of name and decimal expansion of unit number */
-	sprintf(num, "%d", unit);
-	lunit = strlen(num);
-	if (strlen(name) + lunit >= sizeof(fullname) - 1)
-		panic("config_attach: device name too long");
-
-	strcpy(fullname, name);
-	strcat(fullname, num);
-
-	while (strcmp(dev->dv_xname, fullname) != 0) {
-		if ((dev = dev->dv_list.tqe_next) == NULL)
-			return NULL;
-	}
-	return dev;
 }
