@@ -1,3 +1,4 @@
+/*	$NetBSD: gsp_act.c,v 1.2 1997/10/17 06:58:47 lukem Exp $	*/
 /*
  * GSP assembler - semantic actions
  *
@@ -29,17 +30,24 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: gsp_act.c,v 1.2 1997/10/17 06:58:47 lukem Exp $");
+#endif
+
+#include <stdlib.h>
 #include "gsp_ass.h"
 
 void
 free_operands(operand l)
 {
-	register operand op, oq;
+	operand op, oq;
 
 	for( op = l; op != NULL; op = oq ){
 		oq = op->next;
-		if( op->type == EXPR || op->type == EA
-					&& op->mode >= M_INDEX )
+		if( op->type == EXPR ||
+		    (op->type == EA && op->mode >= M_INDEX) )
 			free_expr(op->op_u.value);
 		free(op);
 	}
@@ -59,7 +67,7 @@ add_operand(operand first, operand last)
 operand
 reg_op(int reg)
 {
-	register operand o;
+	operand o;
 
 /*	printf("reg_op reg=%d sign=%d\n", reg, sign);	*/
 	new(o);
@@ -72,7 +80,7 @@ reg_op(int reg)
 operand
 expr_op(expr val)
 {
-	register operand o;
+	operand o;
 
 /*	printf("immed len=%d\n", len);	*/
 	new(o);
@@ -85,7 +93,7 @@ expr_op(expr val)
 operand
 string_op(char *str)
 {
-	register operand o;
+	operand o;
 
 /*	printf("string_op str=%s\n", str);	*/
 	new(o);
@@ -98,7 +106,7 @@ string_op(char *str)
 operand
 abs_adr(expr adr)
 {
-	register operand o;
+	operand o;
 
 /*	printf("abs_adr len=%d\n", len);	*/
 	new(o);
@@ -112,7 +120,7 @@ abs_adr(expr adr)
 operand
 reg_ind(int reg, int mode)
 {
-	register operand o;
+	operand o;
 
 /*	printf("reg_adr r1=%d r2=%d mode=%d\n", r1, r2, mode);	*/
 	new(o);
@@ -126,8 +134,6 @@ reg_ind(int reg, int mode)
 operand
 reg_indxy(int reg, char *xy)
 {
-	register operand o;
-
 	ucasify(xy);
 	if( strcmp(xy, ".XY") != 0 )
 		perr("Register format must be .XY");
@@ -137,7 +143,7 @@ reg_indxy(int reg, char *xy)
 operand
 reg_index(int reg, expr disp)
 {
-	register operand o;
+	operand o;
 
 	o = reg_ind(reg, M_INDEX);
 	o->op_u.value = disp;
@@ -147,7 +153,7 @@ reg_index(int reg, expr disp)
 expr
 id_expr(char *id)
 {
-	register expr x;
+	expr x;
 
 /*	printf("id_expr id=%s\n", id);	*/
 	new(x);
@@ -159,7 +165,7 @@ id_expr(char *id)
 expr
 num_expr(int val)
 {
-	register expr x;
+	expr x;
 
 /*	printf("num_expr val=%d\n", val);	*/
 	new(x);
@@ -171,7 +177,7 @@ num_expr(int val)
 expr
 here_expr()
 {
-	register expr x;
+	expr x;
 
 /*	printf("here_expr()\n");	*/
 	new(x);
@@ -182,7 +188,7 @@ here_expr()
 expr
 bexpr(int op, expr l, expr r)
 {
-	register expr x;
+	expr x;
 
 /*	printf("bexpr op=%d\n", op);	*/
 	new(x);
@@ -193,7 +199,7 @@ bexpr(int op, expr l, expr r)
 }
 
 void
-free_expr(register expr x)
+free_expr(expr x)
 {
 	if( x->e_op != SYM && x->e_op != CONST && x->e_op != '.' ){
 		free_expr(x->e_left);

@@ -1,3 +1,4 @@
+/*	$NetBSD: gsp_code.h,v 1.2 1997/10/17 06:58:51 lukem Exp $	*/
 /*
  * GSP assembler - codes for assembler directives
  *
