@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)route.c	5.20 (Berkeley) 11/29/90";*/
-static char rcsid[] = "$Id: route.c,v 1.5 1993/08/01 18:10:48 mycroft Exp $";
+static char rcsid[] = "$Id: route.c,v 1.6 1994/03/06 09:45:24 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -413,15 +413,14 @@ int flags, width;
 
 	default:
 	    {
-		register u_short *s = ((u_short *)sa->sa_data), *slim;
+		register u_char *s = ((u_char *)sa->sa_data), *slim;
 
-		slim = (u_short *) sa + ((sa->sa_len + sizeof(u_short) - 1) /
-		    sizeof(u_short));
+		slim = (u_char *) sa + sa->sa_len;
 		cp = workbuf;
 		cplim = cp + sizeof(workbuf) - 6;
 		cp += sprintf(cp, "(%d)", sa->sa_family);
-		while (s < slim && cp < cplim)
-			cp += sprintf(cp, " %x", *s++);
+		for (; s < slim && cp < cplim; s += 2)
+			cp += sprintf(cp, " %02x%02x", s[0], s[1]);
 		cp = workbuf;
 	    }
 	}
