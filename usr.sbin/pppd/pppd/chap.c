@@ -18,6 +18,10 @@
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+#ifndef lint
+static char rcsid[] = "$Id: chap.c,v 1.3 1993/11/10 01:33:59 paulus Exp $";
+#endif
+
 /*
  * TODO:
  */

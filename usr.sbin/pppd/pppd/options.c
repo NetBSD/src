@@ -17,6 +17,10 @@
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+#ifndef lint
+static char rcsid[] = "$Id: options.c,v 1.2 1993/11/10 01:34:24 paulus Exp $";
+#endif
+
 #include <stdio.h>
 #include <errno.h>
 #include <unistd.h>
@@ -797,7 +801,7 @@ setasyncmap(argv)
 
     if (!number_option(*argv, &asyncmap, 16))
 	return 0;
-    lcp_wantoptions[0].asyncmap = asyncmap;
+    lcp_wantoptions[0].asyncmap |= asyncmap;
     lcp_wantoptions[0].neg_asyncmap = 1;
     return(1);
 }
@@ -892,7 +896,7 @@ setipaddr(arg)
 	    }
 	}
 	if (local != 0)
-	    ipcp_wantoptions[0].ouraddr = local;
+	    wo->ouraddr = local;
 	*colon = ':';
     }
   
@@ -913,11 +917,41 @@ setipaddr(arg)
 	    }
 	}
 	if (remote != 0)
-	    ipcp_wantoptions[0].hisaddr = remote;
+	    wo->hisaddr = remote;
     }
 
     return (1);
 }
+
+
+/*
+ * setipdefault - default our local IP address based on our hostname.
+ */
+void
+setipdefault()
+{
+    struct hostent *hp;
+    u_long local;
+    ipcp_options *wo = &ipcp_wantoptions[0];
+
+    /*
+     * If local IP address already given, don't bother.
+     */
+    if (wo->ouraddr != 0)
+	return;
+
+    /*
+     * Look up our hostname (possibly with domain name appended)
+     * and take the first IP address as our local IP address.
+     * If there isn't an IP address for our hostname, too bad.
+     */
+    if ((hp = gethostbyname(hostname)) == NULL)
+	return;
+    local = *(long *)hp->h_addr;
+    if (local != 0)
+	wo->ouraddr = local;
+}
+
 
 /*
  * setnetmask - set the netmask to be used on the interface.

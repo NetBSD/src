@@ -1,4 +1,5 @@
 .\" manual page [] for pppd 2.0
+.\" $Id: pppd.8,v 1.3 1993/11/10 01:34:29 paulus Exp $
 .\" SH section heading
 .\" SS subsection heading
 .\" LP paragraph
@@ -13,12 +14,8 @@ pppd \- Point to Point Protocol daemon
 .I options
 ] [
 .I tty_name
-[
+] [
 .I speed
-] ] [
-.I local_IP_address
-]:[
-.I remote_IP_address
 ]
 .SH DESCRIPTION
 .LP
@@ -48,11 +45,6 @@ Set the baud rate to <speed>.  On systems such as 4.4BSD and NetBSD,
 any speed can be specified.  Other systems (e.g. SunOS) allow only a
 limited set of speeds.
 .TP
-.I <local_IP_address>\fB:\fI<remote_IP_address>
-Set the local and/or remote interface IP addresses.  Either one may be
-omitted.  The IP addresses can be specified with a host name or in
-"decimal dot" notation (e.g. "150.203.23.247").
-.TP
 .B asyncmap \fI<map>
 Set the async character map to <map>.
 This map describes which control characters cannot be successfully
@@ -63,7 +55,8 @@ The argument is a 32 bit hex number
 with each bit representing a character to escape. 
 Bit 0 (00000001) represents the character 0x00;
 bit 31 (80000000) represents the character 0x1f or ^_.
-The default asyncmap is 0. 
+The default asyncmap is 0.  If multiple \fBasyncmap\fR options are
+given, the values are ORed together.
 .TP
 .B auth
 Require the peer to authenticate itself before allowing network
@@ -115,6 +108,14 @@ LCP packet is received from the peer (as for the "passive" option with
 old versions of \fIpppd\fR).
 .SH OPTIONS
 .TP
+.I <local_IP_address>\fB:\fI<remote_IP_address>
+Set the local and/or remote interface IP addresses.  Either one may be
+omitted.  The IP addresses can be specified with a host name or in
+"decimal dot" notation (e.g. "150.203.23.247").  The default local
+address is the (first) IP address of the system.  The remote address
+will be obtained from the peer if not specified in any option.  Thus,
+in simple cases, this option is not required.
+.TP
 .B -all
 Don't request or allow negotiation of any options for LCP and IPCP (use
 default values).
@@ -139,8 +140,8 @@ Don't fork to become a background process (otherwise
 will do so if a serial device is specified).
 .TP
 .B -ip
-Disable IP address negotiation (with this option, both local and
-remote IP addresses must be specified on the command line or in an
+Disable IP address negotiation (with this option, the remote IP
+address must be specified with an option on the command line or in an
 options file).
 .TP
 .B -mn
@@ -427,19 +428,41 @@ to look for a network interface on the same subnet as the remote host
 point-to-point or loopback interface).  If found, \fIpppd\fR creates a
 permanent, published ARP entry with the IP address of the remote host
 and the hardware address of the network interface found.
-.\".SH EXAMPLES
-.SH DIAGNOSTICS
+.SH EXAMPLES
 .LP
-There is, currently, only one level of debugging available.  Debugging is
-enabled by setting the -d or debug flag on the command line.  Debugging may
-also be enabled after
-.I pppd
-is running by sending a SIGUSR1 to the
-.I pppd
-process.
-Debugging may be disabled by sending a SIGUSR2 to the
-.I pppd
-process.
+In the simplest case, you can connect the serial ports of two machines
+and issue a command like
+.IP
+pppd /dev/ttya 9600 passive
+.LP
+to each machine, assuming there is no \fIgetty\fR running on the
+serial ports.  If one machine has a \fIgetty\fR running, you can use
+\fIkermit\fR or \fItip\fR on the other machine to log in to the first
+machine and issue a command like
+.IP
+pppd passive
+.LP
+Then exit from the communications program (making sure the connection
+isn't dropped), and issue a command like
+.IP
+pppd /dev/ttya 9600
+.LP
+The process of logging in to the other machine and starting \fIpppd\fR
+can be automated by using the \fBconnect\fR option to run \fIchat\fR,
+for example:
+.IP
+pppd /dev/ttya 38400 connect 'chat "" "" "login:" "username"
+"Password:" "password" "% " "exec pppd passive"'
+.LP
+If your serial connection is any more complicated than a piece of
+wire, you may need to arrange for some control characters to be
+escaped.  In particular, it is often useful to escape XON (^Q) and
+XOFF (^S), using \fBasyncmap 20000\fR.  If the path includes a telnet,
+you probably should escape ^] as well (\fBasyncmap 200a0000\fR).
+Don't use an rlogin in the path - many implementations are not
+transparent; they will remove the sequence [0xff, 0xff, 0x73, 0x73,
+followed by any 8 bytes] from the stream.
+.SH DIAGNOSTICS
 .LP
 Messages are sent to the syslog daemon using facility
 LOG_DAEMON unless
@@ -451,10 +474,19 @@ override this by defining the macro LOG_PPP to the desired facility
 and recompiling.  In order to see the error and debug messages, you
 will need to edit your /etc/syslog.conf file to direct the messages to
 the desired output device or file.
+.LP
+If enabled at compile time, debugging printout can be enabled by
+setting the -d or debug flag on the command line, or by sending a
+SIGUSR1 to the
+.I pppd
+process.
+Debugging may be disabled by sending a SIGUSR2 to the
+.I pppd
+process.
 .SH FILES
 .TP
-.B /etc/ppp/ppp\fIn\fB.pid
-Process-ID for \fIpppd\fR on ppp interface unit \fIn\fR.
+.B /var/run/ppp\fIn\fB.pid \fR(BSD), \fB/etc/ppp/ppp\fIn\fB.pid \fR(SunOS)
+Process-ID for \fIpppd\fR process on ppp interface unit \fIn\fR.
 .TP
 .B /etc/ppp/pap-secrets
 Usernames, passwords and IP addresses for PAP authentication.
