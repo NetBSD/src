@@ -1,4 +1,7 @@
-/*	$NetBSD: disklabel.h,v 1.2 2000/03/22 20:38:05 soren Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.3 2000/03/24 20:16:27 soren Exp $	*/
+
+#ifndef _MACHINE_DISKLABEL_H_
+#define _MACHINE_DISKLABEL_H_
 
 #define LABELSECTOR	1		/* sector containing label */
 #define LABELOFFSET	0		/* offset of label in sector */
@@ -15,3 +18,5 @@ struct cpu_disklabel {
         struct dkbad bad;
 };
 #endif
+
+#endif /* _MACHINE_DISKLABEL_H_ */
