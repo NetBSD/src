@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_samedomain.c,v 1.1.1.1 1999/11/20 18:54:11 veego Exp $	*/
+/*	$NetBSD: ns_samedomain.c,v 1.1.1.1.10.1 2002/11/15 00:47:45 lukem Exp $	*/
 
 /*
  * Copyright (c) 1995,1999 by Internet Software Consortium.
@@ -168,7 +168,7 @@ int
 ns_makecanon(const char *src, char *dst, size_t dstsize) {
 	size_t n = strlen(src);
 
-	if (n + sizeof "." > dstsize) {
+	if (n + sizeof "." + 1 > dstsize) {
 		errno = EMSGSIZE;
 		return (-1);
 	}
