@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.2 2002/03/17 06:28:57 simonb Exp $ */
+/* $NetBSD: machdep.c,v 1.3 2002/03/17 07:39:16 simonb Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -585,7 +585,7 @@ static void
 cswarm_setled(u_int index, char c)
 {
 	volatile u_char *led_ptr =
-	    (void *)MIPS_PHYS_TO_KSEG1(0x100a0000);	/* XXX */
+	    (void *)MIPS_PHYS_TO_KSEG1(SWARM_LEDS_PHYS);
 
 	if (index < 4)
 		led_ptr[0x20 + ((3 - index) << 3)] = c;
