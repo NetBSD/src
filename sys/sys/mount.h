@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)mount.h	7.22 (Berkeley) 6/3/91
- *	$Id: mount.h,v 1.11 1993/07/19 11:52:03 cgd Exp $
+ *	$Id: mount.h,v 1.12 1993/07/29 21:45:23 jtc Exp $
  */
 
 #ifndef _SYS_MOUNT_H_
@@ -228,7 +228,7 @@ struct mfs_args {
 	caddr_t	base;		/* base address of file system in memory */
 	u_long size;		/* size of file system */
 };
-#endif MFS
+#endif /* MFS */
 
 #if defined(NFSSERVER) || defined(NFSCLIENT)
 /*
@@ -293,7 +293,7 @@ int	vfs_lock __P((struct mount *mp));   /* lock a vfs */
 void	vfs_unlock __P((struct mount *mp)); /* unlock a vfs */
 struct	mount *getvfs __P((fsid_t *fsid));  /* return vfs given fsid */
 struct	mount *rootfs;			    /* ptr to root mount structure */
-struct	vfsops *vfssw[];		    /* mount filesystem type table */
+extern struct vfsops *vfssw[];		    /* mount filesystem type table */
 
 #else /* KERNEL */
 
