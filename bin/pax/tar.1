@@ -1,4 +1,4 @@
-.\" $NetBSD: tar.1,v 1.9 2003/04/04 19:19:43 wiz Exp $
+.\" $NetBSD: tar.1,v 1.10 2003/04/08 15:13:10 christos Exp $
 .\"
 .\" Copyright (c) 1996 SigmaSoft, Th. Lockert
 .\" All rights reserved.
@@ -39,7 +39,7 @@
 .Sh SYNOPSIS
 .Nm tar
 .Sm off
-.Oo \&- Oc {crtux} Op Fl befhjlmopqvwzHLOPXZ014578
+.Oo \&- Oc {crtux} Op Fl befhjklmopqvwzHLOPXZ014578
 .Sm on
 .Op Ar archive
 .Op Ar blocksize
@@ -117,6 +117,8 @@ Use
 .Xr bzip2 1
 for compression of the archive.
 This option is a GNU extension.
+.It Fl k , -keep-old-files
+Keep existing files; don't overwrite them from archive.
 .It Fl l , -one-file-system
 Do not cross filesystems.
 .It Fl m , -modification-time
