@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4280reg.h,v 1.2 2000/01/14 14:39:13 augustss Exp $	*/
+/*	$NetBSD: cs4280reg.h,v 1.3 2000/05/15 01:35:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Tatoku Ogaito.  All rights reserved.
@@ -280,26 +280,5 @@ struct BA1struct {
 /* AC97 Registers */
 #define CS4280_SAVE_REG_MAX  0x10
 
-/* AC97 Registers: stolen from /sys/dev/ic/ac97.c */
-#define AC97_REG_RESET                0x00
-#define AC97_REG_MASTER_VOLUME        0x02
-#define AC97_REG_HEADPHONE_VOLUME     0x04
-#define AC97_REG_MASTER_VOLUME_MONO   0x06
-#define AC97_REG_MASTER_TONE          0x08
-#define AC97_REG_PCBEEP_VOLUME        0x0a
-#define AC97_REG_PHONE_VOLUME         0x0c
-#define AC97_REG_MIC_VOLUME           0x0e
-#define AC97_REG_LINEIN_VOLUME        0x10
-#define AC97_REG_CD_VOLUME            0x12
-#define AC97_REG_VIDEO_VOLUME         0x14
-#define AC97_REG_AUX_VOLUME           0x16
-#define AC97_REG_PCMOUT_VOLUME        0x18
-#define AC97_REG_RECORD_SELECT        0x1a
-#define AC97_REG_RECORD_GAIN          0x1c
-#define AC97_REG_RECORD_GAIN_MIC      0x1e
-#define AC97_REG_GP                   0x20
-#define AC97_REG_3D_CONTROL           0x22
-#define AC97_REG_POWER                0x26
+/* for AC97_REG_POWER */
 #define   CS4280_POWER_DOWN_ALL       0x7f0f
-#define AC97_REG_VENDOR_ID1           0x7c
-#define AC97_REG_VENDOR_ID2           0x7e
