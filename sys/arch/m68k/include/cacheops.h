@@ -1,4 +1,4 @@
-/*	$NetBSD: cacheops.h,v 1.3 1998/09/02 11:16:31 leo Exp $	*/
+/*	$NetBSD: cacheops.h,v 1.4 1999/09/23 15:10:18 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifndef _M68K_CACHEOPS_H_
+#define	_M68K_CACHEOPS_H_
 
 #if notyet /* XXX */
 #include <machine/cpuconf.h>
@@ -170,3 +173,5 @@ void	_DCFP __P((paddr_t));
 #endif /* defined(M68040)||defined(M68060) */
 
 #endif
+
+#endif /* _M68K_CACHEOPS_H_ */
