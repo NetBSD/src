@@ -34,6 +34,7 @@ extern initialize_file_ftype _initialize_infptrace;
 extern initialize_file_ftype _initialize_inftarg;
 extern initialize_file_ftype _initialize_corelow;
 extern initialize_file_ftype _initialize_solib;
+extern initialize_file_ftype _initialize_ser_tcp;
 extern initialize_file_ftype _initialize_remote;
 extern initialize_file_ftype _initialize_dcache;
 extern initialize_file_ftype _initialize_sr_support;
