@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.60.2.1 2001/08/24 00:11:48 nathanw Exp $
+#	$NetBSD: Makefile,v 1.60.2.2 2001/11/14 23:42:08 thorpej Exp $
 
 LIB=	kern
 MKPIC=	no
@@ -77,6 +77,7 @@ POBJS+=	mcount.po
 # only needed during build
 libinstall::
 
+.undef DESTDIR
 .include <bsd.lib.mk>
 
 lib${LIB}.o:: ${OBJS}

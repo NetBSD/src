@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.24 1999/08/25 04:47:12 thorpej Exp $
+#	$NetBSD: Makefile,v 1.24.14.1 2001/11/14 23:42:08 thorpej Exp $
 
 LIB=	compat
 MKPIC=	no
@@ -34,4 +34,6 @@ SRCS+=	kern_ipc_10.c
 # only needed during build
 libinstall::
 
+.include <bsd.own.mk>
+.undef DESTDIR
 .include <bsd.lib.mk>
