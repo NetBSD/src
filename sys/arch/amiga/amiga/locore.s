@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.76 1997/03/16 11:04:52 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.77 1997/04/09 19:29:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1179,88 +1179,15 @@ ENTRY(qsetjmp)
 	moveq	#0,d0		| return 0
 	rts
 
-/*
- * The following primitives manipulate the run queues.
- * _whichqs tells which of the 32 queues _qs have processes
- * in them.  Setrunqueue puts processes into queues, remrunqueue
- * removes them from queues.  The running process is on no queue,
- * other processes are on a queue related to p->p_priority, divided by 4
- * actually to shrink the 0-127 range of priorities into the 32 available
- * queues.
- */
-
 	.globl	_whichqs,_qs,_cnt,_panic
 	.globl	_curproc
 	.comm	_want_resched,4
 
 /*
- * Setrunqueue(p)
- *
- * Call should be made at spl6(), and p->p_stat should be SRUN
+ * Use common m68k process manipulation routines.
  */
-ENTRY(setrunqueue)
-	movl	sp@(4),a0
-	tstl	a0@(P_BACK)
-	jeq	Lset1
-	movl	#Lset2,sp@-
-	jbsr	_panic
-Lset1:
-	clrl	d0
-	movb	a0@(P_PRIORITY),d0
-	lsrb	#2,d0
-	movl	_whichqs,d1
-	bset	d0,d1
-	movl	d1,_whichqs
-	lslb	#3,d0
-	addl	#_qs,d0
-	movl	d0,a0@(P_FORW)
-	movl	d0,a1
-	movl	a1@(P_BACK),a0@(P_BACK)
-	movl	a0,a1@(P_BACK)
-	movl	a0@(P_BACK),a1
-	movl	a0,a1@(P_FORW)
-	rts
+#include <m68k/m68k/proc_subr.s>
 
-Lset2:
-	.asciz	"setrunqueue"
-	.even
-
-/*
- * remrunqueue(p)
- *
- * Call should be made at spl6().
- */
-ENTRY(remrunqueue)
-	movl	sp@(4),a0
-	clrl	d0
-	movb	a0@(P_PRIORITY),d0
-	lsrb	#2,d0
-	movl	_whichqs,d1
-	bclr	d0,d1
-	jne	Lrem1
-	movl	#Lrem3,sp@-
-	jbsr	_panic
-Lrem1:
-	movl	d1,_whichqs
-	movl	a0@(P_FORW),a1
-	movl	a0@(P_BACK),a1@(P_BACK)
-	movl	a0@(P_BACK),a1
-	movl	a0@(P_FORW),a1@(P_FORW)
-	movl	#_qs,a1
-	movl	d0,d1
-	lslb	#3,d1
-	addl	d1,a1
-	cmpl	a1@(P_FORW),a1
-	jeq	Lrem2
-	movl	_whichqs,d1
-	bset	d0,d1
-	movl	d1,_whichqs
-Lrem2:
-	clrl	a0@(P_BACK)
-	rts
-
-Lrem3:
-	.asciz	"remrunqueue"
 Lsw0:
 	.asciz	"cpu_switch"
 	.even
