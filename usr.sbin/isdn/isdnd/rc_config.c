@@ -27,7 +27,7 @@
  *	i4b daemon - config file processing
  *	-----------------------------------
  *
- *	$Id: rc_config.c,v 1.3 2001/04/09 21:18:00 martin Exp $ 
+ *	$Id: rc_config.c,v 1.4 2001/10/19 22:57:54 tv Exp $ 
  *
  * $FreeBSD$
  *
@@ -44,7 +44,7 @@
 #include <sys/ioctl.h>
 
 #include "isdnd.h"
-#include "y.tab.h"
+#include "rc_parse.h"
 
 #include "monitor.h"
 
