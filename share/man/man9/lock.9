@@ -1,4 +1,4 @@
-.\"     $NetBSD: lock.9,v 1.1 2000/06/25 23:45:22 gmcgarry Exp $
+.\"     $NetBSD: lock.9,v 1.2 2000/07/07 01:26:13 gmcgarry Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -80,8 +80,9 @@
 .Pp
 The
 .Nm
-functions provide synchronisation capabilities for the kernel.  A number
-of different locks are available:
+functions provide synchronisation capabilities in the kernel by preventing
+multiple threads from simultaneously executing critical section of code which
+access shared data.  A number of different locks are available:
 .Pp
 .Bl -tag -width compact
 .It struct simplelock
@@ -94,7 +95,7 @@ gained.
 .El
 .Pp
 If the kernel option LOCKDEBUG is enabled, additional facilities
-are provided to record the owner of a lock.  These facilities are
+are provided to record additional lock information.  These facilities are
 provided to assist in determining deadlock occurrences.
 .Sh FUNCTIONS
 The functions which operate on simplelocks are:
@@ -103,34 +104,42 @@ The functions which operate on simplelocks are:
 .It Fn simple_lock_init "slock"
 The simplelock
 .Fa slock
-is initialised to the unlocked state.  A simplelock also may be initialised
-statically, for example,
-
+is initialised to the unlocked state.  A statically allocated simplelock
+also can be initialised with the macro SIMPLELOCK_INITIALIZER.  The
+effect is the same as the dynamic initialisation by a call to
+simple_lock_init.  For example,
+.Pp
 struct simplelock slock = SIMPLELOCK_INITIALIZER;
 .It Fn simple_lock "slock"
 The simplelock
 .Fa slock
 is locked.  If the simplelock is held then execution will
-spin until the simplelock is acquired.
+spin until the simplelock is acquired.  Care must be taken that the
+calling thread does not already hold the simplelock.  In this case, the
+simplelock can never be acquired.  If kernel option LOCKDEBUG is enabled,
+a "locking against myself" panic will occur.
 .It Fn simple_lock_try "slock"
 Try to acquire the simplelock
 .Fa slock
-without spinnning.  If the simplelock is being held by someone else
+without spinning.  If the simplelock is held by another thread
 then the return value is 0.  If the simplelock was acquired
 successfully then the return value is 1.
 .It Fn simple_lock_unlock "slock"
 The simplelock
 .Fa slock
-is unlocked.  The simplelock must be unlocked only by its owner.
+is unlocked.  The simplelock must be locked and the calling thread must
+be the one that last acquired the simplelock.  If the calling
+thread does not hold the simplelock, the simplelock will be released
+but the kernel behaviour is undefined.
 .It Fn simple_lock_freecheck "start" "end"
-Check that all simplelocks in the range
+Check that all simplelocks in the address range
 .Fa start
 to
 .Fa end
-are not held.  If a simplelock with the range is round, the kernel
-drops to the debugger.  This function is available only with kernel
-option LOCKDEBUG.  It provides a mechanism for simple simplelock
-consistency check.
+are not held.  If a simplelock within the range is found, the kernel
+enters the debugger.  This function is available only with kernel
+option LOCKDEBUG.  It provides a mechanism for basic simplelock
+consistency checks.
 .It Fn simple_lock_dump "void"
 Dump the state of all simplelocks in the kernel.  This function is
 available only with kernel option LOCKDEBUG.
@@ -222,7 +231,7 @@ Simplelock interlock.  The simplelock
 .Fa slock
 is set by the caller.  When the lock
 .Fa lock
-is acquired, the simplelock is relinquished.
+is acquired, the simplelock is released.
 .El
 .It Fn lockstatus "lock"
 Determine the status of lock
@@ -260,7 +269,7 @@ Simplelock interlock.  The simplelock
 .Fa slock
 is set by the caller.  When the lock
 .Fa lock
-is acquired, the simplelock is relinquished.
+is acquired, the simplelock is released.
 .El
 .El
 .Sh RETURN VALUES
@@ -271,12 +280,12 @@ unless one of the following is true:
 LK_FORCEUPGRADE is requested and some other process has already
 requested a lock upgrade (returns EBUSY).
 .It
-LK_WAIT is set and a sleep would be required (returns EBUSY) .
+LK_WAIT is set and a sleep would be required (returns EBUSY).
 .It
-LK_SLEEPFAIL is set and a sleep was done (returns ENOLCK) .
+LK_SLEEPFAIL is set and a sleep was done (returns ENOLCK).
 .It
 PCATCH is set in lock priority and a signal arrives (returns
-either EINTR or ERESTART if system calls is to be restarted) .
+either EINTR or ERESTART if system calls is to be restarted).
 .It
 Non-null lock timeout and timeout expires (returns EWOULDBLOCK).
 .It
