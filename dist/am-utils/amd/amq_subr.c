@@ -1,7 +1,7 @@
-/*	$NetBSD: amq_subr.c,v 1.5 2001/05/13 18:06:57 veego Exp $	*/
+/*	$NetBSD: amq_subr.c,v 1.6 2002/11/29 23:06:22 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2001 Erez Zadok
+ * Copyright (c) 1997-2002 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,9 +38,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      %W% (Berkeley) %G%
  *
- * Id: amq_subr.c,v 1.6.2.2 2001/01/12 22:43:42 ro Exp
+ * Id: amq_subr.c,v 1.12 2002/06/23 01:05:38 ib42 Exp
  *
  */
 /*
@@ -132,9 +131,7 @@ amqproc_setopt_1_svc(voidp argp, struct svc_req *rqstp)
   switch (opt->as_opt) {
 
   case AMOPT_DEBUG:
-#ifdef DEBUG
     if (debug_option(opt->as_str))
-#endif /* DEBUG */
       rc = EINVAL;
     break;
 
@@ -356,7 +353,7 @@ xdr_amq_mount_info_qelem(XDR *xdrs, qelem *qhead)
   u_int len = 0;
 
   for (mf = AM_LAST(mntfs, qhead); mf != HEAD(mntfs, qhead); mf = PREV(mntfs, mf)) {
-    if (!(mf->mf_ops->fs_flags & FS_AMQINFO))
+    if (!(mf->mf_fsflags & FS_AMQINFO))
       continue;
     len++;
   }
@@ -367,7 +364,7 @@ xdr_amq_mount_info_qelem(XDR *xdrs, qelem *qhead)
    */
   for (mf = AM_LAST(mntfs, qhead); mf != HEAD(mntfs, qhead); mf = PREV(mntfs, mf)) {
     int up;
-    if (!(mf->mf_ops->fs_flags & FS_AMQINFO))
+    if (!(mf->mf_fsflags & FS_AMQINFO))
       continue;
 
     if (!xdr_amq_string(xdrs, &mf->mf_ops->fs_type)) {

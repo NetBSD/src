@@ -1,7 +1,7 @@
-/*	$NetBSD: opts.c,v 1.3 2001/05/13 18:06:57 veego Exp $	*/
+/*	$NetBSD: opts.c,v 1.4 2002/11/29 23:06:22 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2001 Erez Zadok
+ * Copyright (c) 1997-2002 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -38,9 +38,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      %W% (Berkeley) %G%
  *
- * Id: opts.c,v 1.8.2.4 2001/01/10 03:23:11 ezk Exp
+ * Id: opts.c,v 1.23 2002/06/23 01:05:39 ib42 Exp
  *
  */
 
@@ -101,6 +100,7 @@ static int f_netgrpd(char *);
 static int f_exists(char *);
 static int f_false(char *);
 static int f_true(char *);
+static inline char *expand_options(char *key);
 
 /*
  * STATICS:
@@ -127,7 +127,7 @@ struct am_opts fs_static;	/* copy of the options to play with */
 
 
 /*
- * Options in something corresponding to frequency of use so that
+ * Options in some order corresponding to frequency of use so that
  * first-match algorithm is sped up.
  */
 static struct opt opt_fields[] = {
@@ -203,7 +203,6 @@ static struct opt opt_fields[] = {
 	0,			&opt_dkey,	0,		FALSE	},
   { S("key."),
 	0,			&opt_keyd,	0,		FALSE	},
-  /* XXX: should maptype really be a variable? I think selector. -Erez */
   { S("maptype"),
 	&fs_static.opt_maptype,	0,		0,		FALSE	},
   { S("cachedir"),
@@ -214,6 +213,8 @@ static struct opt opt_fields[] = {
 	0,			&opt_uid,	0,		FALSE	},
   { S("gid"),
 	0,			&opt_gid,	0, 		FALSE	},
+  { S("mount_type"),
+	&fs_static.opt_mount_type, 0,		0,		FALSE	},
   { S("dollar"),
 	&literal_dollar,	0,		0,		FALSE	},
   { S("var0"),
@@ -459,33 +460,99 @@ functable_lookup(char *key)
 }
 
 
+/*
+ * Fill in the global structure fs_static by
+ * cracking the string opts.  opts may be
+ * scribbled on at will.  Does NOT evaluate options.
+ * Returns 0 on error, 1 if no syntax errors were discovered.
+ */
 static int
-eval_opts(char *opts, char *mapkey)
+split_opts(char *opts, char *mapkey)
 {
-  /*
-   * Fill in the global structure fs_static by
-   * cracking the string opts.  opts may be
-   * scribbled on at will.
-   */
   char *o = opts;
   char *f;
 
   /*
    * For each user-specified option
    */
-  while (*(f = opt(&o))) {
+  for (f = opt(&o); *f; f = opt(&o)) {
     struct opt *op;
-    enum vs_opt vs_opt = VarAss;
+    char *eq = strchr(f, '=');
+    char *opt = NULL;
+
+    if (!eq)
+      continue;
+
+    if (eq[-1] == '!' ||
+	eq[1] == '=' ||
+	eq[1] == '!') {	/* != or == or =! */
+      continue;			/* we don't care about selectors */
+    }
+
+    if (eq[-1] == ':') {	/* := */
+      eq[-1] = '\0';
+    } else {
+      /* old style assignment */
+      eq[0] = '\0';
+    }
+    opt = eq + 1;
+
+    /*
+     * For each recognized option
+     */
+    for (op = opt_fields; op->name; op++) {
+      /*
+       * Check whether they match
+       */
+      if (FSTREQ(op->name, f)) {
+	if (op->sel_p) {
+	  plog(XLOG_USER, "key %s: Can't assign to a selector (%s)",
+	       mapkey, op->name);
+	  return 0;
+	}
+	*op->optp = opt;	/* actual assignment into fs_static */
+	break;			/* break out of for loop */
+      }	/* end of "if (FSTREQ(op->name, f))" statement  */
+    } /* end of "for (op = opt_fields..." statement  */
+
+    if (!op->name)
+      plog(XLOG_USER, "key %s: Unrecognized key/option \"%s\"", mapkey, f);
+  }
+
+  return 1;
+}
+
+
+/*
+ * Just evaluate selectors, which were split by split_opts.
+ * Returns 0 on error or no match, 1 if matched.
+ */
+static int
+eval_selectors(char *opts, char *mapkey)
+{
+  char *o, *old_o;
+  char *f;
+  int ret = 0;
+
+  o = old_o = strdup(opts);
+
+  /*
+   * For each user-specified option
+   */
+  for (f = opt(&o); *f; f = opt(&o)) {
+    struct opt *op;
+    enum vs_opt vs_opt;
     char *eq = strchr(f, '=');
     char *fx;
     IntFuncPtr func;
     char *opt = NULL;
+    char *arg;
 
-    if (!eq || eq[1] == '\0' || eq == f) {
+    if (!eq) {
       /*
        * No value, is it a function call?
        */
-      char *arg = strchr(f, '(');
+      arg = strchr(f, '(');
 
       if (!arg || arg[1] == '\0' || arg == f) {
 	/*
@@ -504,43 +571,54 @@ eval_opts(char *opts, char *mapkey)
       }
       *fx = '\0';
 
+      if (f[0] == '!') {
+	vs_opt = SelNE;
+	f++;
+      } else {
+	vs_opt = SelEQ;
+      }
       /*
        * look up f in functable and pass it arg.
        * func must return 0 on failure, and 1 on success.
        */
       if ((func = functable_lookup(f))) {
-	if (!(*func) (arg)) {
-	  return (0);
-	}
-	continue;
-      } else if (NSTREQ(f, "!", 1) && (func = functable_lookup(&f[1]))) {
-	/* then this is a negated prefixed function such as "!exists" */
-	plog(XLOG_INFO, "executing negated function %s", &f[1]);
-	if ((*func) (arg)) {
-	  return (0);
-	}
+	int funok;
+
+	/* this allocates memory, don't forget to free */
+	arg = expand_options(arg);
+	funok = func(arg);
+	XFREE(arg);
+
+	if (vs_opt == SelNE)
+	  funok = !funok;
+	if (!funok)
+	  goto out;
+
 	continue;
       } else {
 	plog(XLOG_USER, "key %s: unknown function \"%s\"", mapkey, f);
-	return (0);
+	goto out;
       }
-
+    } else {
+      if (eq[1] == '\0' || eq == f) {
+	/* misformed selector */
+	plog(XLOG_USER, "key %s: Bad selector \"%s\"", mapkey, f);
+	continue;
+      }
     }
 
     /*
      * Check what type of operation is happening
      * !=, =!  is SelNE
      * == is SelEQ
-     * := is VarAss
+     * =, := is VarAss
      */
     if (eq[-1] == '!') {	/* != */
       vs_opt = SelNE;
       eq[-1] = '\0';
       opt = eq + 1;
     } else if (eq[-1] == ':') {	/* := */
-      vs_opt = VarAss;
-      eq[-1] = '\0';
-      opt = eq + 1;
+      continue;
     } else if (eq[1] == '=') {	/* == */
       vs_opt = SelEQ;
       eq[0] = '\0';
@@ -549,6 +627,9 @@ eval_opts(char *opts, char *mapkey)
       vs_opt = SelNE;
       eq[0] = '\0';
       opt = eq + 2;
+    } else {
+      /* old style assignment */
+      continue;
     }
 
     /*
@@ -559,48 +640,47 @@ eval_opts(char *opts, char *mapkey)
        * Check whether they match
        */
       if (FSTREQ(op->name, f)) {
-        int selok;
-	switch (vs_opt) {
-	case SelEQ:
-	case SelNE:
-          if ((selok = (op->sel_p != NULL))) {
-            if (op->case_insensitive) {
-              selok = (STRCEQ(*op->sel_p, opt) == (vs_opt == SelNE));
-            } else {
-              selok = (STREQ(*op->sel_p, opt) == (vs_opt == SelNE));
-            }
-          }
-          if (selok) {
+	opt = expand_options(opt);
+
+	if (op->sel_p != NULL) {
+	  int selok;
+	  if (op->case_insensitive) {
+	    selok = STRCEQ(*op->sel_p, opt);
+	  } else {
+	    selok = STREQ(*op->sel_p, opt);
+	  }
+	  if (vs_opt == SelNE)
+	    selok = !selok;
+	  if (!selok) {
 	    plog(XLOG_MAP, "key %s: map selector %s (=%s) did not %smatch %s",
 		 mapkey,
 		 op->name,
 		 *op->sel_p,
 		 vs_opt == SelNE ? "mis" : "",
 		 opt);
-	    return 0;
+	    XFREE(opt);
+	    goto out;
 	  }
-	  /* check if to apply a function */
-	  if (op->fxn_p &&
-	      ((*op->fxn_p)(opt) == (vs_opt == SelNE))) {
+	  XFREE(opt);
+	}
+	/* check if to apply a function */
+	if (op->fxn_p) {
+	  int funok;
+
+	  funok = op->fxn_p(opt);
+	  if (vs_opt == SelNE)
+	    funok = !funok;
+	  if (!funok) {
 	    plog(XLOG_MAP, "key %s: map function %s did not %smatch %s",
 		 mapkey,
 		 op->name,
 		 vs_opt == SelNE ? "mis" : "",
 		 opt);
-	    return 0;
+	    XFREE(opt);
+	    goto out;
 	  }
-	  break;
-
-	case VarAss:
-	  if (op->sel_p) {
-	    plog(XLOG_USER, "key %s: Can't assign to a selector (%s)",
-		 mapkey, op->name);
-	    return 0;
-	  }
-	  *op->optp = opt;
-	  break;
-
-	} /* end of "switch (vs_opt)" statement */
+	  XFREE(opt);
+	}
 	break;			/* break out of for loop */
       }
     }
@@ -609,7 +689,12 @@ eval_opts(char *opts, char *mapkey)
       plog(XLOG_USER, "key %s: Unrecognized key/option \"%s\"", mapkey, f);
   }
 
-  return 1;
+  /* all is ok */
+  ret = 1;
+
+ out:
+  free(old_o);
+  return ret;
 }
 
 
@@ -717,9 +802,7 @@ strip_selectors(char *opts, char *mapkey)
 
     case VarAss:
       /* found the first assignment, return the string starting with it */
-#ifdef DEBUG
       dlog("found first assignment past selectors \"%s\"", o);
-#endif /* DEBUG */
       return oo;
     }
   }
@@ -743,10 +826,7 @@ f_in_network(char *arg)
     return FALSE;
 
   status = is_network_member(arg);
-#ifdef DEBUG
-    plog(XLOG_USER, "%s is %son a local network",
-	 arg, (status ? "" : "not "));
-#endif /* DEBUG */
+  dlog("%s is %son a local network", arg, (status ? "" : "not "));
   return status;
 }
 
@@ -758,9 +838,7 @@ f_netgrp(char *arg)
   int status;
 
   status = innetgr(arg, opt_host, NULL, NULL);
-#ifdef DEBUG
-  plog(XLOG_USER, "netgrp = %s status = %d host = %s", arg, status, opt_host);
-#endif /* DEBUG */
+  dlog("netgrp = %s status = %d host = %s", arg, status, opt_host);
   return status;
 }
 
@@ -772,9 +850,7 @@ f_netgrpd(char *arg)
   int status;
 
   status = innetgr(arg, opt_hostd, NULL, NULL);
-#ifdef DEBUG
-  plog(XLOG_USER, "netgrp = %s status = %d hostd = %s", arg, status, opt_hostd);
-#endif /* DEBUG */
+  dlog("netgrp = %s status = %d hostd = %s", arg, status, opt_hostd);
   return status;
 }
 
@@ -868,19 +944,17 @@ normalize_slash(char *p)
  * If sel is true then old expand selectors, otherwise
  * don't expand selectors.
  */
-static void
-expand_op(opt_apply *p, int sel_p)
+static char *
+expand_op(char *opt, int sel_p)
 {
   static const char expand_error[] = "No space to expand \"%s\"";
   char expbuf[MAXPATHLEN + 1];
   char nbuf[NLEN + 1];
   char *ep = expbuf;
-  char *cp = *p->opt;
+  char *cp = opt;
   char *dp;
   struct opt *op;
-#ifdef DEBUG
-  char *cp_orig = *p->opt;
-#endif /* DEBUG */
+  char *cp_orig = opt;
 
   while ((dp = strchr(cp, '$'))) {
     char ch;
@@ -894,7 +968,7 @@ expand_op(opt_apply *p, int sel_p)
 	strncpy(ep, cp, len);
 	ep += len;
       } else {
-	plog(XLOG_ERROR, expand_error, *p->opt);
+	plog(XLOG_ERROR, expand_error, opt);
 	goto out;
       }
     }
@@ -905,7 +979,7 @@ expand_op(opt_apply *p, int sel_p)
       if (BUFSPACE(ep, 1)) {
 	*ep++ = '$';
       } else {
-	plog(XLOG_ERROR, expand_error, *p->opt);
+	plog(XLOG_ERROR, expand_error, opt);
 	goto out;
       }
     } else if (ch == '{') {
@@ -926,7 +1000,7 @@ expand_op(opt_apply *p, int sel_p)
 	/*
 	 * Just give up
 	 */
-	plog(XLOG_USER, "No closing '}' in \"%s\"", *p->opt);
+	plog(XLOG_USER, "No closing '}' in \"%s\"", opt);
 	goto out;
       }
       len = br_p - cp;
@@ -1073,7 +1147,7 @@ expand_op(opt_apply *p, int sel_p)
 	      strcpy(ep, vptr);
 	      ep += vlen;
 	    } else {
-	      plog(XLOG_ERROR, expand_error, *p->opt);
+	      plog(XLOG_ERROR, expand_error, opt);
 	      goto out;
 	    }
 	  }
@@ -1102,13 +1176,11 @@ expand_op(opt_apply *p, int sel_p)
 	    strcpy(ep, env);
 	    ep += vlen;
 	  } else {
-	    plog(XLOG_ERROR, expand_error, *p->opt);
+	    plog(XLOG_ERROR, expand_error, opt);
 	    goto out;
 	  }
-#ifdef DEBUG
 	  amuDebug(D_STR)
 	    plog(XLOG_DEBUG, "Environment gave \"%s\" -> \"%s\"", nbuf, env);
-#endif /* DEBUG */
 	} else {
 	  plog(XLOG_USER, "Unknown sequence \"${%s}\"", nbuf);
 	}
@@ -1117,7 +1189,7 @@ expand_op(opt_apply *p, int sel_p)
       /*
        * Error, error
        */
-      plog(XLOG_USER, "Unknown $ sequence in \"%s\"", *p->opt);
+      plog(XLOG_USER, "Unknown $ sequence in \"%s\"", opt);
     }
   }
 
@@ -1125,8 +1197,8 @@ out:
   /*
    * Handle common case - no expansion
    */
-  if (cp == *p->opt) {
-    *p->opt = strdup(cp);
+  if (cp == opt) {
+    opt = strdup(cp);
   } else {
     /*
      * Finish off the expansion
@@ -1135,23 +1207,22 @@ out:
       strcpy(ep, cp);
       /* ep += strlen(ep); */
     } else {
-      plog(XLOG_ERROR, expand_error, *p->opt);
+      plog(XLOG_ERROR, expand_error, opt);
     }
 
     /*
      * Save the expansion
      */
-    *p->opt = strdup(expbuf);
+    opt = strdup(expbuf);
   }
 
-  normalize_slash(*p->opt);
+  normalize_slash(opt);
 
-#ifdef DEBUG
   amuDebug(D_STR) {
     plog(XLOG_DEBUG, "Expansion of \"%s\"...", cp_orig);
-    plog(XLOG_DEBUG, "... is \"%s\"", *p->opt);
+    plog(XLOG_DEBUG, "......... is \"%s\"", opt);
   }
-#endif /* DEBUG */
+  return opt;
 }
 
 
@@ -1162,15 +1233,15 @@ static void
 expand_opts(opt_apply *p, int sel_p)
 {
   if (*p->opt) {
-    expand_op(p, sel_p);
+    *p->opt = expand_op(*p->opt, sel_p);
   } else if (p->val) {
     /*
      * Do double expansion, remembering
      * to free the string from the first
      * expansion...
      */
-    char *s = *p->opt = expand_key(p->val);
-    expand_op(p, sel_p);
+    char *s = expand_op(p->val, TRUE);
+    *p->opt = expand_op(s, sel_p);
     XFREE(s);
   }
 }
@@ -1208,18 +1279,22 @@ free_opts(am_opts *fo)
 
 
 /*
- * Expand lookup key
+ * Expand selectors (variables that cannot be assigned to or overridden)
  */
 char *
-expand_key(char *key)
+expand_selectors(char *key)
 {
-  opt_apply oa;
+  return expand_op(key, TRUE);
+}
 
-  oa.opt = &key;
-  oa.val = 0;
-  expand_opts(&oa, TRUE);
 
-  return key;
+/*
+ * Expand options (i.e. non-selectors, see above for definition)
+ */
+static inline char *
+expand_options(char *key)
+{
+  return expand_op(key, FALSE);
 }
 
 
@@ -1278,24 +1353,27 @@ eval_fs_opts(am_opts *fo, char *opts, char *g_opts, char *path, char *key, char 
   /*
    * Expand global options
    */
-  fs_static.fs_glob = expand_key(g_opts);
+  fs_static.fs_glob = expand_selectors(g_opts);
 
   /*
    * Expand local options
    */
-  fs_static.fs_local = expand_key(opts);
+  fs_static.fs_local = expand_selectors(opts);
 
-  /*
-   * Expand default (global) options
-   */
-  if (!eval_opts(fs_static.fs_glob, key))
-    ok = FALSE;
-
-  /*
-   * Expand local options
-   */
-  if (ok && !eval_opts(fs_static.fs_local, key))
-    ok = FALSE;
+  /* break global options into fs_static fields */
+  if ((ok = split_opts(fs_static.fs_glob, key))) {
+    dlog("global split_opts ok");
+    /*
+     * evaluate local selectors
+     */
+    if ((ok = eval_selectors(fs_static.fs_local, key))) {
+      dlog("local eval_selectors ok");
+      /* if the local selectors matched, then do the local overrides */
+      ok = split_opts(fs_static.fs_local, key);
+      if (ok)
+	dlog("local split_opts ok");
+    }
+  }
 
   /*
    * Normalize remote host name.

@@ -1,7 +1,7 @@
-/*	$NetBSD: srvr_nfs.c,v 1.5 2001/05/13 18:06:57 veego Exp $	*/
+/*	$NetBSD: srvr_nfs.c,v 1.6 2002/11/29 23:06:22 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2001 Erez Zadok
+ * Copyright (c) 1997-2002 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,9 +38,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      %W% (Berkeley) %G%
  *
- * Id: srvr_nfs.c,v 1.7.2.5 2001/04/14 21:08:23 ezk Exp
+ * Id: srvr_nfs.c,v 1.18 2002/06/23 01:05:39 ib42 Exp
  *
  */
 
@@ -194,9 +193,7 @@ got_portmap(voidp pkt, int len, struct sockaddr_in *sa, struct sockaddr_in *ia, 
     nfs_private *np = (nfs_private *) fs->fs_private;
 
     if (!error && port) {
-#ifdef DEBUG
       dlog("got port (%d) for mountd on %s", (int) port, fs->fs_host);
-#endif /* DEBUG */
       /*
        * Grab the port number.  Portmap sends back
        * an u_long in native ordering, so it
@@ -207,10 +204,8 @@ got_portmap(voidp pkt, int len, struct sockaddr_in *sa, struct sockaddr_in *ia, 
       np->np_mountd_inval = FALSE;
       np->np_error = 0;
     } else {
-#ifdef DEBUG
       dlog("Error fetching port for mountd on %s", fs->fs_host);
       dlog("\t error=%d, port=%d", error, (int) port);
-#endif /* DEBUG */
       /*
        * Almost certainly no mountd running on remote host
        */
@@ -220,13 +215,9 @@ got_portmap(voidp pkt, int len, struct sockaddr_in *sa, struct sockaddr_in *ia, 
     if (fs->fs_flags & FSF_WANT)
       wakeup_srvr(fs);
   } else if (done) {
-#ifdef DEBUG
     dlog("Got portmap for old port request");
-#endif /* DEBUG */
   } else {
-#ifdef DEBUG
     dlog("portmap request timed out");
-#endif /* DEBUG */
   }
 }
 
@@ -313,9 +304,7 @@ nfs_pinged(voidp pkt, int len, struct sockaddr_in *sp, struct sockaddr_in *tsp, 
 {
   int xid = (long) idv;		/* for 64-bit archs */
   fserver *fs;
-#ifdef DEBUG
   int found_map = 0;
-#endif /* DEBUG */
 
   if (!done)
     return;
@@ -338,19 +327,15 @@ nfs_pinged(voidp pkt, int len, struct sockaddr_in *sp, struct sockaddr_in *tsp, 
 	} else {
 	  if (np->np_ping > 1)
 	    srvrlog(fs, "ok");
-#ifdef DEBUG
 	  else
 	    srvrlog(fs, "starts up");
-#endif /* DEBUG */
 	  fs->fs_flags |= FSF_VALID;
 	}
 
 	map_flush_srvr(fs);
       } else {
 	if (fs->fs_flags & FSF_VALID) {
-#ifdef DEBUG
 	  dlog("file server %s type nfs is still up", fs->fs_host);
-#endif /* DEBUG */
 	} else {
 	  if (np->np_ping > 1)
 	    srvrlog(fs, "ok");
@@ -386,17 +371,13 @@ nfs_pinged(voidp pkt, int len, struct sockaddr_in *sp, struct sockaddr_in *tsp, 
       if (np->np_mountd_inval)
 	recompute_portmap(fs);
 
-#ifdef DEBUG
       found_map++;
-#endif /* DEBUG */
       break;
     }
   }
 
-#ifdef DEBUG
   if (found_map == 0)
     dlog("Spurious ping packet");
-#endif /* DEBUG */
 }
 
 
@@ -445,19 +426,15 @@ nfs_timed_out(voidp v)
       /*
        * Known to be down
        */
-#ifdef DEBUG
       if ((fs->fs_flags & FSF_VALID) == 0)
 	srvrlog(fs, "starts down");
-#endif /* DEBUG */
       fs->fs_flags |= FSF_VALID;
     }
     if (oflags != fs->fs_flags && (fs->fs_flags & FSF_WANT))
       wakeup_srvr(fs);
   } else {
-#ifdef DEBUG
     if (np->np_ping > 1)
       dlog("%d pings to %s failed - at most %d allowed", np->np_ping, fs->fs_host, MAX_ALLOWED_PINGS);
-#endif /* DEBUG */
   }
 
   /*
@@ -515,9 +492,7 @@ nfs_keepalive(voidp v)
     break;
 
   case 0:
-#ifdef DEBUG
     dlog("Sent NFS ping to %s", fs->fs_host);
-#endif /* DEBUG */
     break;
   }
 
@@ -540,9 +515,7 @@ nfs_keepalive(voidp v)
     break;
   }
 
-#ifdef DEBUG
   dlog("NFS timeout in %d seconds", fstimeo);
-#endif /* DEBUG */
 
   fs->fs_cid = timeout(fstimeo, nfs_timed_out, (voidp) fs);
 }
@@ -608,9 +581,7 @@ start_nfs_pings(fserver *fs, int pingval)
       nfs_keepalive(fs);
     }
   } else {
-#ifdef DEBUG
     dlog("Already running pings to %s", fs->fs_host);
-#endif /* DEBUG */
   }
 }
 
@@ -642,49 +613,60 @@ find_nfs_srvr(mntfs *mf)
   mnt.mnt_opts = mf->mf_mopts;
   pingval = hasmntval(&mnt, "ping");
 
-  /*
-   * Get the NFS version from the mount options. This is used
-   * to decide the highest NFS version to try.
-   */
+  if (mf->mf_flags & MFF_NFS_SCALEDOWN) {
+    /*
+     * the server granted us a filehandle, but we were unable to mount it.
+     * therefore, scale down to NFSv2/UDP and try again.
+     */
+    nfs_version = (u_long) 2;
+    nfs_proto = "udp";
+    plog(XLOG_WARNING, "find_nfs_srvr: NFS mount failed, trying again with NFSv2/UDP");
+    mf->mf_flags &= ~MFF_NFS_SCALEDOWN;
+  } else {
+    /*
+     * Get the NFS version from the mount options. This is used
+     * to decide the highest NFS version to try.
+     */
 #ifdef MNTTAB_OPT_VERS
-  nfs_version = hasmntval(&mnt, MNTTAB_OPT_VERS);
+    nfs_version = hasmntval(&mnt, MNTTAB_OPT_VERS);
 #endif /* MNTTAB_OPT_VERS */
 
 #ifdef MNTTAB_OPT_PROTO
-  {
-    char *proto_opt = hasmnteq(&mnt, MNTTAB_OPT_PROTO);
-    if (proto_opt) {
-      char **p;
-      for (p = protocols; *p; p ++)
-	if (NSTREQ(proto_opt, *p, strlen(*p))) {
-	  nfs_proto = *p;
-	  break;
-	}
-      if (*p == NULL)
-	plog(XLOG_WARNING, "ignoring unknown protocol option for %s:%s",
-	     host, rfsname);
+    {
+      char *proto_opt = hasmnteq(&mnt, MNTTAB_OPT_PROTO);
+      if (proto_opt) {
+	char **p;
+	for (p = protocols; *p; p ++)
+	  if (NSTREQ(proto_opt, *p, strlen(*p))) {
+	    nfs_proto = *p;
+	    break;
+	  }
+	if (*p == NULL)
+	  plog(XLOG_WARNING, "ignoring unknown protocol option for %s:%s",
+	       host, rfsname);
+      }
     }
-  }
 #endif /* MNTTAB_OPT_PROTO */
 
 #ifdef HAVE_NFS_NFSV2_H
-  /* allow overriding if nfsv2 option is specified in mount options */
-  if (hasmntopt(&mnt, "nfsv2")) {
-    nfs_version = (u_long) 2;	/* nullify any ``vers=X'' statements */
-    nfs_proto = "udp";		/* nullify any ``proto=tcp'' statements */
-    plog(XLOG_WARNING, "found compatiblity option \"nfsv2\": set options vers=2,proto=udp for host %s", host);
-  }
+    /* allow overriding if nfsv2 option is specified in mount options */
+    if (hasmntopt(&mnt, "nfsv2")) {
+      nfs_version = (u_long) 2;	/* nullify any ``vers=X'' statements */
+      nfs_proto = "udp";	/* nullify any ``proto=tcp'' statements */
+      plog(XLOG_WARNING, "found compatiblity option \"nfsv2\": set options vers=2,proto=udp for host %s", host);
+    }
 #endif /* HAVE_NFS_NFSV2_H */
 
-  /* check if we globally overridden the NFS version/protocol */
-  if (gopt.nfs_vers) {
-    nfs_version = gopt.nfs_vers;
-    plog(XLOG_INFO, "find_nfs_srvr: force NFS version to %d",
-	 (int) nfs_version);
-  }
-  if (gopt.nfs_proto) {
-    nfs_proto = gopt.nfs_proto;
-    plog(XLOG_INFO, "find_nfs_srvr: force NFS protocol transport to %s", nfs_proto);
+    /* check if we globally overridden the NFS version/protocol */
+    if (gopt.nfs_vers) {
+      nfs_version = gopt.nfs_vers;
+      plog(XLOG_INFO, "find_nfs_srvr: force NFS version to %d",
+	   (int) nfs_version);
+    }
+    if (gopt.nfs_proto) {
+      nfs_proto = gopt.nfs_proto;
+      plog(XLOG_INFO, "find_nfs_srvr: force NFS protocol transport to %s", nfs_proto);
+    }
   }
 
   /*

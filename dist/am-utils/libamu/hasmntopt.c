@@ -1,7 +1,7 @@
-/*	$NetBSD: hasmntopt.c,v 1.2 2001/09/16 00:01:15 thorpej Exp $	*/
+/*	$NetBSD: hasmntopt.c,v 1.3 2002/11/29 23:06:26 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2001 Erez Zadok
+ * Copyright (c) 1997-2002 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,9 +38,8 @@ n * modification, are permitted provided that the following conditions
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      %W% (Berkeley) %G%
  *
- * Id: hasmntopt.c,v 1.3.2.1 2001/01/10 03:23:39 ezk Exp
+ * Id: hasmntopt.c,v 1.6 2002/02/02 20:59:04 ezk Exp
  *
  */
 

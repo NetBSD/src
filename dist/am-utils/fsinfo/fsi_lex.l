@@ -1,8 +1,8 @@
-/*	$NetBSD: fsi_lex.l,v 1.3 2001/05/13 18:06:59 veego Exp $	*/
+/*	$NetBSD: fsi_lex.l,v 1.4 2002/11/29 23:06:24 christos Exp $	*/
 
 %{
 /*
- * Copyright (c) 1997-2001 Erez Zadok
+ * Copyright (c) 1997-2002 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -39,9 +39,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	%W% (Berkeley) %G%
  *
- * Id: fsi_lex.l,v 1.4.2.2 2001/01/10 03:23:33 ezk Exp
+ * Id: fsi_lex.l,v 1.8 2002/02/02 20:59:02 ezk Exp
  *
  */
 
