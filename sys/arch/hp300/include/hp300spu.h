@@ -1,4 +1,4 @@
-/*	$NetBSD: hp300spu.h,v 1.9 2002/11/03 17:44:07 tsutsui Exp $	*/
+/*	$NetBSD: hp300spu.h,v 1.10 2004/08/28 19:44:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
 #define	HP_375		7	/* 50MHz 68030+32K external cache */
 #define	HP_400		8	/* 50MHz 68030+32K external cache */
 #define	HP_380		9	/* 25MHz 68040 */
-#define	HP_425		10	/* 26MHz 68040 */
+#define	HP_425		10	/* 25MHz 68040 */
 #define	HP_433		11	/* 33MHz 68040 */
 #define	HP_385		12	/* 33MHz 68040 */
 
