@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.31 1998/03/26 03:12:05 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.32 1998/11/17 22:41:06 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.31 1998/03/26 03:12:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.32 1998/11/17 22:41:06 jonathan Exp $");
 
 /*
  * Setup the system to run on the current machine.
@@ -92,9 +92,7 @@ void	findroot __P((struct device **, int *));
 
 struct devnametobdevmaj pmax_nam2blk[] = {
 	{ "rz",		21 },
-#ifdef notyet
-	{ "md",		XXX },
-#endif
+	{ "md",		17 },
 	{ NULL,		0 },
 };
 

@@ -1,4 +1,4 @@
-#	$NetBSD: files.pmax,v 1.56 1998/09/26 21:02:56 drochner Exp $
+#	$NetBSD: files.pmax,v 1.57 1998/11/17 22:41:05 jonathan Exp $
 # DECstation-specific configuration info
 
 # maxpartitions must be first item in files.${ARCH}.
@@ -116,6 +116,10 @@ include "dev/scsipi/files.scsipi"
 #major { sd = 21 }
 major { tz = 10 }
 major { rz = 21 }
+
+# Memory Disk
+file	arch/pmax/pmax/md_root.c	memory_disk_hooks
+major { md = 17 }
 
 #
 # Old 4.4bsd pmax-specific scsi driver (deprecated).
