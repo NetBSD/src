@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.10 1997/10/20 03:03:45 lukem Exp $
+#	$NetBSD: Makefile,v 1.10.2.1 1997/11/08 10:38:59 lukem Exp $
 #
 # from: @(#)Makefile.in	8.56 (Berkeley) 5/18/96
 
 WARNS=	0
-CFLAGS+=-I${.CURDIR} -I${.CURDIR}/../include
+CPPFLAGS+=-I${.CURDIR} -I${.CURDIR}/../include
 
 LDADD+= -lcurses -ltermcap
 DPADD+= ${LIBCURSES} ${LIBTERMCAP}

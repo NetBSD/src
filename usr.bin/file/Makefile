@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 1997/09/30 17:00:36 is Exp $
+#	$NetBSD: Makefile,v 1.14.2.1 1997/11/08 10:36:58 lukem Exp $
 
 FILESDIR=	/usr/share/misc
 FILES=		magic
@@ -7,7 +7,7 @@ MAGIC=		${FILESDIR}/${FILES}
 PROG=		file
 SRCS=		file.c apprentice.c fsmagic.c softmagic.c ascmagic.c is_tar.c \
 		print.c compress.c readelf.c internat.c
-CFLAGS+=	-DMAGIC='"$(MAGIC)"'
+CPPFLAGS+=	-DMAGIC='"$(MAGIC)"'
 MAN=		file.1 magic.5
 
 CLEANFILES+=	magic

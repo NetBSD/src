@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 1997/07/23 03:10:54 mrg Exp $
+#	$NetBSD: Makefile,v 1.18.2.1 1997/11/08 10:37:53 lukem Exp $
 #	from: @(#)Makefile    8.3 (Berkeley) 4/2/94
 
 
@@ -7,11 +7,11 @@ SRCS=	local_passwd.c yp_passwd.c passwd.c getpwent.c
 .PATH:  ${.CURDIR}/../../lib/libc/gen
 DPADD+= ${LIBRPCSVC} ${LIBCRYPT} ${LIBUTIL}
 LDADD+= -lrpcsvc -lcrypt -lutil
-CFLAGS+=-I${.CURDIR} -I${.CURDIR}/../../lib/libc/include -DYP
+CPPFLAGS+=-I${.CURDIR} -I${.CURDIR}/../../lib/libc/include -DYP
 
 .if defined(KERBEROS5)
 SRCS+= krb5_passwd.c
-CFLAGS+= -DKERBEROS5
+CPPFLAGS+= -DKERBEROS5
 DPADD+=	${LIBKRB5} ${LIBCRYPTO} 
 LDADD+=	-lkrb5 -lcrypto
 .endif
