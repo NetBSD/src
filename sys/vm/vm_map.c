@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_map.c,v 1.29 1997/10/16 23:29:26 christos Exp $	*/
+/*	$NetBSD: vm_map.c,v 1.30 1997/12/31 07:47:42 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -71,6 +71,10 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
+
+#ifdef SYSVSHM
+#include <sys/shm.h>
+#endif
 
 #include <vm/vm.h>
 #include <vm/vm_page.h>
@@ -199,6 +203,29 @@ vmspace_alloc(min, max, pageable)
 #endif	/* __VM_PMAP_HACK */
 	vm->vm_refcnt = 1;
 	return (vm);
+}
+
+/*
+ * Perform operations on VM space that need to happen during exec.
+ */
+void
+vmspace_exec(p)
+	struct proc *p;
+{
+	struct vmspace *ovm = p->p_vmspace;
+	vm_map_t map = &ovm->vm_map;
+
+#ifdef sparc
+	/* XXX cgd 960926: the sparc #ifdef should be a MD hook */
+	kill_user_windows(p);	/* before stack addresses go away */
+#endif
+	/* Kill shared memory and unmap old program. */
+#ifdef SYSVSHM
+	if (ovm->vm_shm)
+		shmexit(p);
+#endif
+	vm_deallocate(map, VM_MIN_ADDRESS,
+	    VM_MAXUSER_ADDRESS - VM_MIN_ADDRESS);
 }
 
 void
