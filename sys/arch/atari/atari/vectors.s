@@ -1,4 +1,4 @@
-/*	$NetBSD: vectors.s,v 1.6 1996/12/26 23:25:07 leo Exp $	*/
+/*	$NetBSD: vectors.s,v 1.7 1997/01/01 21:11:44 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah
@@ -142,7 +142,7 @@ _uservects:
 	.long	_badmfpint	|  69: Timer C
 #endif /* STATCLOCK */
 	.long	mfp_kbd		|  70: KBD/MIDI IRQ
-	.long	mfp_fd_acsi	|  71: FDC/ACSI DMA
+	.long	_intr_glue	|  71: FDC/ACSI DMA
 	.long	_badmfpint	|  72: Display enable counter
 	.long	_badmfpint	|  73: modem port 1 - XMIT error
 	.long	_badmfpint	|  74: modem port 1 - XMIT buffer empty
