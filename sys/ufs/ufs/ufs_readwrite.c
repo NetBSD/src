@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.28 2000/11/27 08:39:57 chs Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.29 2001/02/26 17:12:08 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -60,8 +60,7 @@
  */
 /* ARGSUSED */
 int
-READ(v)
-	void *v;
+READ(void *v)
 {
 	struct vop_read_args /* {
 		struct vnode *a_vp;
@@ -177,7 +176,7 @@ READ(v)
 	if (bp != NULL)
 		brelse(bp);
 
-out:
+ out:
 	if (!(vp->v_mount->mnt_flag & MNT_NOATIME)) {
 		ip->i_flag |= IN_ACCESS;
 		if ((ap->a_ioflag & IO_SYNC) == IO_SYNC)
@@ -190,8 +189,7 @@ out:
  * Vnode op for writing.
  */
 int
-WRITE(v)
-	void *v;
+WRITE(void *v)
 {
 	struct vop_write_args /* {
 		struct vnode *a_vp;
@@ -319,7 +317,7 @@ WRITE(v)
 	}
 	goto out;
 
-bcache:
+ bcache:
 #endif
 	flags = ioflag & IO_SYNC ? B_SYNC : 0;
 	while (uio->uio_resid > 0) {
@@ -382,7 +380,7 @@ bcache:
 	 * tampering.
 	 */
 #ifndef LFS_READWRITE
-out:
+ out:
 #endif
 	ip->i_flag |= IN_CHANGE | IN_UPDATE;
 	if (resid > uio->uio_resid && ap->a_cred && ap->a_cred->cr_uid != 0)
