@@ -1,4 +1,4 @@
-/*	$NetBSD: prompatch.c,v 1.1 2001/06/21 03:13:05 uwe Exp $ */
+/*	$NetBSD: prompatch.c,v 1.2 2001/09/26 20:53:09 eeh Exp $ */
 
 /*
  * Copyright (c) 2001 Valeriy E. Ushakov
@@ -151,7 +151,7 @@ prom_patch(void)
 	char *propval;
 	struct prom_patch *p;
 
-	propval = getpropstringA(prom_findroot(), "name",
+	propval = PROM_getpropstringA(prom_findroot(), "name",
 				 namebuf, sizeof(namebuf));
 	if (propval == NULL)
 		return;
