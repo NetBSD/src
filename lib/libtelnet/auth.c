@@ -1,4 +1,4 @@
-/*	$NetBSD: auth.c,v 1.8 1998/03/03 01:15:13 thorpej Exp $	*/
+/*	$NetBSD: auth.c,v 1.9 1998/07/27 01:45:09 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)auth.c	8.3 (Berkeley) 5/30/95"
 #else
-__RCSID("$NetBSD: auth.c,v 1.8 1998/03/03 01:15:13 thorpej Exp $");
+__RCSID("$NetBSD: auth.c,v 1.9 1998/07/27 01:45:09 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -104,7 +104,7 @@ extern rsaencpwd_printsub();
 #endif
 
 int auth_debug_mode = 0;
-static 	char	*Name = "Noname";
+static 	const char	*Name = "Noname";
 static	int	Server = 0;
 static	Authenticator	*authenticated = 0;
 static	int	authenticating = 0;
@@ -192,7 +192,7 @@ findauthenticator(type, way)
 
 	void
 auth_init(name, server)
-	char *name;
+	const char *name;
 	int server;
 {
 	Authenticator *ap = authenticators;
