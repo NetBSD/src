@@ -1,4 +1,4 @@
-.\"	$Id: fdisk.8,v 1.6 1994/09/23 04:30:13 mycroft Exp $	-*- nroff -*-
+.\"	$Id: fdisk.8,v 1.7 1994/09/23 05:30:09 mycroft Exp $	-*- nroff -*-
 .Dd April 4, 1993
 .Dt FDISK 8
 .\" .Os BSD 4
@@ -35,30 +35,30 @@ An example follows:
 .Bd -literal
 	******* Working on device /dev/rwd0d *******
 	parameters extracted from in-core disklabel are:
-	cylinders=769 heads=15 sectors/track=33 (495 blks/cyl)
+	cylinders=769 heads=15 sectors/track=33 (495 sectors/cylinder)
 
 	parameters to be used for BIOS calculations are:
-	cylinders=769 heads=15 sectors/track=33 (495 blks/cyl)
+	cylinders=769 heads=15 sectors/track=33 (495 sectors/cylinder)
 		
 	Warning: BIOS sector numbering starts with sector 1
 	Information from DOS bootblock is:
 	The data for partition 0 is:
-	sysid 165,(NetBSD)
-    	    start 495, size 380160 (185 Meg), flag 0
-		beg: cyl 1/ sector 1/ head 0;
-		end: cyl 768/ sector 33/ head 14
+	sysid 165 (NetBSD)
+    	    start 495, size 380160 (185 MB), flag 0
+		beg: cylinder    1, head   0, sector  1
+		end: cylinder  768, head  14, sector 33
 	The data for partition 1 is:
-	sysid 164,(unknown)
-    	    start 378180, size 2475 (1 Meg), flag 0
-		beg: cyl 764/ sector 1/ head 0;
-		end: cyl 768/ sector 33/ head 14
+	sysid 164 (unknown)
+    	    start 378180, size 2475 (1 MB), flag 0
+		beg: cylinder  764, head   0, sector  1
+		end: cylinder  768, head  14, sector 33
 	The data for partition 2 is:
 	<UNUSED>
 	The data for partition 3 is:
-	sysid 99,(ISC UNIX, other System V/386, GNU HURD or Mach)
-    	    start 380656, size 224234 (109 Meg), flag 80
-		beg: cyl 769/ sector 2/ head 0;
-		end: cyl 197/ sector 33/ head 14
+	sysid 99 (ISC UNIX, other System V/386, GNU HURD or Mach)
+    	    start 380656, size 224234 (109 MB), flag 80
+		beg: cylinder  769, head   0, sector  2
+		end: cylinder  197, head  14, sector 33
 .Ed
 .Pp
 The disk is divided into three partitions that happen to fill the disk.
