@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.58 1998/07/03 05:22:10 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.59 1998/07/08 17:30:45 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -163,7 +163,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.58 1998/07/03 05:22:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.59 1998/07/08 17:30:45 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -210,8 +210,7 @@ int pmapdebug = PDB_PARANOIA;
 
 /*
  * Given a map and a machine independent protection code,
- * convert to an alpha protection code.  NOTE:  THESE ONLY
- * INCLUDE HARDWARE PTE BITS!
+ * convert to an alpha protection code.
  */
 #define pte_prot(m, p)	(protection_codes[m == pmap_kernel() ? 0 : 1][p])
 int	protection_codes[2][8];
@@ -1602,11 +1601,12 @@ pmap_enter(pmap, va, pa, prot, wired)
 		}
 
 		/*
-		 * Check to see if the hardware protection bits
-		 * are the same.  If they are, no TLB invalidation
+		 * Check to see if the PALcode portion of the
+		 * PTE is the same.  If so, no TLB invalidation
 		 * is necessary.
 		 */
-		if (pmap_pte_prot(pte) == pte_prot(pmap, prot))
+		if (PG_PALCODE(pmap_pte_prot(pte)) ==
+		    PG_PALCODE(pte_prot(pmap, prot)))
 			tflush = FALSE;
 
 		/*
@@ -1674,8 +1674,6 @@ pmap_enter(pmap, va, pa, prot, wired)
 	}
 	if (wired)
 		npte |= PG_WIRED;
-	if (prot & VM_PROT_EXECUTE)
-		npte |= PG_EXEC;
 #ifdef DEBUG
 	if (pmapdebug & PDB_ENTER)
 		printf("pmap_enter: new pte = 0x%lx\n", npte);
@@ -1737,8 +1735,6 @@ pmap_kenter_pa(va, pa, prot)
 	 */
 	npte = ((pa >> PGSHIFT) << PG_SHIFT) | pte_prot(pmap_kernel(), prot) |
 	    PG_V | PG_WIRED;
-	if (prot & VM_PROT_EXECUTE)
-		npte |= PG_EXEC;
 
 	/*
 	 * Set the new PTE.
@@ -2409,26 +2405,38 @@ alpha_protection_init()
 	up = protection_codes[1];
 
 	for (prot = 0; prot < 8; prot++) {
+		kp[prot] = 0; up[prot] = 0;
 		switch (prot) {
 		case VM_PROT_NONE | VM_PROT_NONE | VM_PROT_NONE:
-			*kp++ = PG_ASM;
-			*up++ = 0;
+			kp[prot] |= PG_ASM;
+			up[prot] |= 0;
 			break;
-		case VM_PROT_READ | VM_PROT_NONE | VM_PROT_NONE:
+
 		case VM_PROT_READ | VM_PROT_NONE | VM_PROT_EXECUTE:
 		case VM_PROT_NONE | VM_PROT_NONE | VM_PROT_EXECUTE:
-			*kp++ = PG_ASM | PG_KRE;
-			*up++ = PG_URE | PG_KRE;
+			kp[prot] |= PG_EXEC;		/* software */
+			up[prot] |= PG_EXEC;		/* software */
+			/* FALLTHROUGH */
+
+		case VM_PROT_READ | VM_PROT_NONE | VM_PROT_NONE:
+			kp[prot] |= PG_ASM | PG_KRE;
+			up[prot] |= PG_URE | PG_KRE;
 			break;
+
 		case VM_PROT_NONE | VM_PROT_WRITE | VM_PROT_NONE:
-			*kp++ = PG_ASM | PG_KWE;
-			*up++ = PG_UWE | PG_KWE;
+			kp[prot] |= PG_ASM | PG_KWE;
+			up[prot] |= PG_UWE | PG_KWE;
 			break;
+
 		case VM_PROT_NONE | VM_PROT_WRITE | VM_PROT_EXECUTE:
-		case VM_PROT_READ | VM_PROT_WRITE | VM_PROT_NONE:
 		case VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXECUTE:
-			*kp++ = PG_ASM | PG_KWE | PG_KRE;
-			*up++ = PG_UWE | PG_URE | PG_KWE | PG_KRE;
+			kp[prot] |= PG_EXEC;		/* software */
+			up[prot] |= PG_EXEC;		/* software */
+			/* FALLTHROUGH */
+
+		case VM_PROT_READ | VM_PROT_WRITE | VM_PROT_NONE:
+			kp[prot] |= PG_ASM | PG_KWE | PG_KRE;
+			up[prot] |= PG_UWE | PG_URE | PG_KWE | PG_KRE;
 			break;
 		}
 	}
