@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_svcout.c,v 1.13 2001/03/21 19:20:18 mycroft Exp $	*/
+/*	$NetBSD: rpc_svcout.c,v 1.14 2001/03/21 20:11:01 mycroft Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)rpc_svcout.c 1.29 89/03/30 (C) 1987 SMI";
 #else
-__RCSID("$NetBSD: rpc_svcout.c,v 1.13 2001/03/21 19:20:18 mycroft Exp $");
+__RCSID("$NetBSD: rpc_svcout.c,v 1.14 2001/03/21 20:11:01 mycroft Exp $");
 #endif
 #endif
 
@@ -68,6 +68,7 @@ static void write_caller_func __P((void));
 static void write_pm_most __P((char *, int));
 static void write_rpc_svc_fg __P((char *, char *));
 static void open_log_file __P((char *, char *));
+static char *aster __P((char *));
 
 char    _errbuf[256];		/* For all messages */
 
@@ -89,7 +90,8 @@ internal_proctype(plist)
 {
 	f_print(fout, "static ");
 	ptype(plist->res_prefix, plist->res_type, 1);
-	f_print(fout, "*");
+	if (!Mflag)
+		f_print(fout, "*");
 }
 
 
@@ -123,10 +125,10 @@ write_most(infile, netflag, nomain)
 
 	f_print(fout, "\n\n");
 	if (Cflag)
-		f_print(fout, "int main( int argc, char* argv[] );\n");
+		f_print(fout, "int main(int argc, char *argv[]);\n");
 	f_print(fout, "\nint\n");
 	if (Cflag)
-		f_print(fout, "main( int argc, char* argv[] )\n");
+		f_print(fout, "main(int argc, char *argv[])\n");
 	else
 		f_print(fout, "main(argc, argv)\nint argc;\nchar *argv[];\n");
 	f_print(fout, "{\n");
@@ -318,29 +320,50 @@ write_real_program(def)
 				f_print(fout, "(");
 				/* arg name */
 				if (proc->arg_num > 1)
-					f_print(fout, "%s",
-						proc->args.argname);
+					f_print(fout, "%s ",
+					    proc->args.argname);
 				else
 					ptype(proc->args.decls->decl.prefix,
 					    proc->args.decls->decl.type, 0);
-				f_print(fout, " *argp, struct svc_req *%s)\n",
-				    RQSTP);
+				f_print(fout, "*argp, ");
+				if (Mflag) {
+					if (streq(proc->res_type, "void"))
+						f_print(fout, "char ");
+					else
+						ptype(proc->res_prefix,
+						    proc->res_type, 0);
+					f_print(fout, "%sresult, ",
+					    aster(proc->res_type));
+				}
+				f_print(fout, "struct svc_req *%s)\n", RQSTP);
 			} else {
-				f_print(fout, "(argp, %s)\n", RQSTP);
-				/* arg name */
+				f_print(fout, "(argp, ");
+				if (Mflag)
+					f_print(fout, "result, ");
+				f_print(fout, "%s)\n", RQSTP);
+				f_print(fout, "\t");
 				if (proc->arg_num > 1)
-					f_print(fout, "\t%s *argp;\n", proc->args.argname);
-				else {
-					f_print(fout, "\t");
+					f_print(fout, "%s ",
+					    proc->args.argname);
+				else
 					ptype(proc->args.decls->decl.prefix,
 					    proc->args.decls->decl.type, 0);
-					f_print(fout, " *argp;\n");
+				f_print(fout, "*argp;\n");
+				if (Mflag) {
+					f_print(fout, "\t");
+					if (streq(proc->res_type, "void"))
+						f_print(fout, "char ");
+					else
+						ptype(proc->res_prefix,
+						    proc->res_type, 0);
+					f_print(fout, "%sresult;\n",
+					    aster(proc->res_type));
 				}
-				f_print(fout, "	struct svc_req *%s;\n", RQSTP);
+				f_print(fout, "\tstruct svc_req *%s;\n", RQSTP);
 			}
 
 			f_print(fout, "{\n");
-			f_print(fout, "\treturn(");
+			f_print(fout, "\treturn (");
 			pvname_svc(proc->proc_name, vp->vers_num);
 			f_print(fout, "(");
 			if (proc->arg_num < 2) {	/* single argument */
@@ -699,7 +722,7 @@ write_msg_out()
 		f_print(fout, "void _msgout(msg)\n");
 		f_print(fout, "\tchar *msg;\n");
 	} else {
-		f_print(fout, "void _msgout(char* msg)\n");
+		f_print(fout, "void _msgout(char *msg)\n");
 	}
 	f_print(fout, "{\n");
 	f_print(fout, "#ifdef RPC_SVC_FG\n");
@@ -1041,4 +1064,15 @@ write_inetd_register(transp)
 	}
 	if (inetdflag)
 		f_print(fout, "\t}\n");
+}
+
+static char *
+aster(type)
+	char   *type;
+{
+	if (isvectordef(type, REL_ALIAS)) {
+		return ("");
+	} else {
+		return ("*");
+	}
 }
