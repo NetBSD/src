@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.115 2003/10/19 15:03:25 ragge Exp $
+# $NetBSD: GENERIC,v 1.116 2003/12/14 19:39:24 ragge Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/vax/conf/std.vax"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.115 $"
+#ident 		"GENERIC-$Revision: 1.116 $"
 
 # Here are all different supported CPU types listed.
 #options 	VAX8800		# VAX 8500, 8530, 8550, 8700, 8800
@@ -54,7 +54,6 @@ options 	KTRACE
 options 	SYSTRACE	# system call vetting via systrace(1)
 #options 	DIAGNOSTIC
 #options 	DEBUG,KMEMSTATS,PMAPDEBUG,TRAPDEBUG,LOCKDEBUG
-options 	USE_TOPDOWN_VM	# gives larger address space
 
 options 	SCSIVERBOSE		# Verbose SCSI errors
 

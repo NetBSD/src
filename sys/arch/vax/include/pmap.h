@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.59 2003/08/07 16:30:11 agc Exp $	   */
+/*	$NetBSD: pmap.h,v 1.60 2003/12/14 19:39:24 ragge Exp $	   */
 
 /* 
  * Copyright (c) 1991 Regents of the University of California.
@@ -90,9 +90,6 @@
  */
 #define LTOHPS		(PGSHIFT - VAX_PGSHIFT)
 #define LTOHPN		(1 << LTOHPS)
-#if USE_TOPDOWN_VM==0
-#define PROCPTSIZE	((MAXTSIZ + MAXDSIZ + MAXSSIZ + MMAPSPACE) / VAX_NBPG)
-#endif
 
 /*
  * Link struct if more than one process share pmap (like vfork).
