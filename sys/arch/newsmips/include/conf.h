@@ -1,3 +1,4 @@
+/*	$NetBSD: conf.h,v 1.4 1999/02/15 04:36:35 hubertf Exp $	*/
 
 #define mmread mmrw
 #define mmwrite mmrw

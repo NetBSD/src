@@ -1,3 +1,4 @@
+/*	$NetBSD: clock.c,v 1.3 1999/02/15 04:36:35 hubertf Exp $	*/
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
