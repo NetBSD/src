@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.12 1999/09/13 20:21:45 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.13 1999/09/28 05:44:21 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -200,6 +200,7 @@ static void
 ntfs_init ()
 {
 	ntfs_nthashinit();
+	ntfs_toupper_init();
 }
 
 #elif defined(__FreeBSD__)
@@ -209,6 +210,7 @@ ntfs_init (
 	struct vfsconf *vcp )
 {
 	ntfs_nthashinit();
+	ntfs_toupper_init();
 	return 0;
 }
 
