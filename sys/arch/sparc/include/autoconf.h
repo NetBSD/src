@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.22 1998/03/21 19:36:27 pk Exp $ */
+/*	$NetBSD: autoconf.h,v 1.23 1998/03/29 22:02:46 pk Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -137,7 +137,7 @@ struct obio4_attach_args {
 	int		oba_placeholder;/* obio/sbus attach args sharing */
 	bus_space_tag_t	oba_bustag;	/* parent bus tag */
 	bus_dma_tag_t	oba_dmatag;
-	void		*oba_paddr;	/* register physical address */
+	bus_addr_t	oba_paddr;	/* register physical address */
 	int		oba_pri;	/* interrupt priority (IPL) */
 	struct bootpath *oba_bp;	/* used for locating boot device */
 };
@@ -149,6 +149,7 @@ union obio_attach_args {
 	struct obio4_attach_args	uoba_oba4;	/* sun4 on-board view */
 };
 
+#if 0
 int	obio_bus_map __P((
 		bus_space_tag_t,
 		void *		/*physical addr*/,
@@ -157,10 +158,19 @@ int	obio_bus_map __P((
 		int		/*flags*/,
 		void *		/*preferred virtual address */,
 		bus_space_handle_t *));
+#endif
+
+#define obio_bus_map(t, a, o, s, f, v, hp)		\
+	bus_space_map2(t, 0, (long)(a) + o, s, f, (vm_offset_t)v, hp)
 
 /* obio specific bus flag */
 #define OBIO_BUS_MAP_USE_ROM	BUS_SPACE_MAP_BUS1
 
+/* obio bus helper that finds ROM mappings; exported for autoconf.c */
+int	obio_find_rom_map __P((bus_addr_t, bus_type_t, int,
+				bus_space_handle_t *));
+
+#if 0
 int	obio_bus_probe __P((
 		bus_space_tag_t,
 		void *				/* phys addr */,
@@ -168,7 +178,7 @@ int	obio_bus_probe __P((
 		size_t				/* size */,
 		int (*) __P((void *, void *)),	/* callback */
 		void *				/* arg */));
-
+#endif
 
 /*
  * mapiodev maps an I/O device to a virtual address, returning the address.
