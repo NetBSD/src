@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.77 2004/09/22 14:52:00 christos Exp $	*/
+/*	$NetBSD: options.c,v 1.78 2004/09/26 23:46:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: options.c,v 1.77 2004/09/22 14:52:00 christos Exp $");
+__RCSID("$NetBSD: options.c,v 1.78 2004/09/26 23:46:00 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -122,6 +122,7 @@ static int getline_error;
 #define	OPT_FORCE_LOCAL			13
 #define	OPT_INSECURE			14
 #define	OPT_STRICT			15
+#define	OPT_SPARSE			16
 
 /*
  *	Format specific routine table - MUST BE IN SORTED ORDER BY NAME
@@ -741,6 +742,7 @@ struct option tar_longopts[] = {
 						OPT_INSECURE },
 	{ "exclude",		required_argument,	0,
 						OPT_EXCLUDE },
+	{ "sparse",		no_argument,		0,	'S' },
 #if 0 /* Not implemented */
 	{ "catenate",		no_argument,		0,	'A' },	/* F */
 	{ "concatenate",	no_argument,		0,	'A' },	/* F */
@@ -767,7 +769,6 @@ struct option tar_longopts[] = {
 						OPT_REMOVE_FILES },
 	{ "same-order",		no_argument,		0,	's' },
 	{ "preserve-order",	no_argument,		0,	's' },
-	{ "sparse",		no_argument,		0,	'S' },
 	{ "null",		no_argument,		0,
 						OPT_NULL },
 	{ "totals",		no_argument,		0,
@@ -809,7 +810,7 @@ tar_options(int argc, char **argv)
 	 * process option flags
 	 */
 	while ((c = getoldopt(argc, argv,
-	    "+b:cef:hjklmopqrs:tuvwxzBC:HI:OPT:X:Z014578",
+	    "+b:cef:hjklmopqrs:tuvwxzBC:HI:OPST:X:Z014578",
 	    tar_longopts, NULL))
 	    != -1)  {
 		switch(c) {
@@ -1003,6 +1004,9 @@ tar_options(int argc, char **argv)
 			 */
 			rmleadslash = 0;
 			Aflag = 1;
+			break;
+		case 'S':
+			/* do nothing; we already generate sparse files */
 			break;
 		case 'X':
 			/*
@@ -1328,6 +1332,8 @@ struct option cpio_longopts[] = {
 	{ "swap-halfwords",	no_argument,		0,	'S' },
 	{ "insecure",		no_argument,		0,
 						OPT_INSECURE },
+	{ "sparse",		no_argument,		0,
+						OPT_SPARSE },
 
 #ifdef notyet
 /* Not implemented */
@@ -1348,8 +1354,6 @@ struct option cpio_longopts[] = {
 						OPT_ONLY_VERIFY_CRC },
 	{ "rsh-command",	required_argument,	0,
 						OPT_RSH_COMMAND },
-	{ "sparce",		no_argument,		0,
-						OPT_SPARSE },
 	{ "version",		no_argument,		0,
 						OPT_VERSION },
 #endif
@@ -1616,6 +1620,10 @@ cpio_options(int argc, char **argv)
 			break;
 		case OPT_INSECURE:
 			secure = 0;
+			break;
+
+		case OPT_SPARSE:
+			/* do nothing; we already generate sparse files */
 			break;
 		default:
 			cpio_usage();
