@@ -1,4 +1,4 @@
-/*	$NetBSD: edit.c,v 1.13 2002/03/05 21:29:30 wiz Exp $	*/
+/*	$NetBSD: edit.c,v 1.14 2002/03/06 13:45:51 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)edit.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: edit.c,v 1.13 2002/03/05 21:29:30 wiz Exp $");
+__RCSID("$NetBSD: edit.c,v 1.14 2002/03/06 13:45:51 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -50,7 +50,7 @@ __RCSID("$NetBSD: edit.c,v 1.13 2002/03/05 21:29:30 wiz Exp $");
  *
  * Perform message editing functions.
  */
-extern char *tempEdit;
+extern char *tmpdir;
 
 /*
  * Edit a message list.
@@ -150,15 +150,25 @@ run_editor(FILE *fp, off_t size, int editortype, int readonlyflag)
 	int t;
 	time_t modtime;
 	char *editcmd;
+	char tempname[PATHSIZE];
 	struct stat statb;
 
-	if ((t = creat(tempEdit, readonlyflag ? 0400 : 0600)) < 0) {
-		warn("%s", tempEdit);
+	(void)snprintf(tempname, sizeof(tempname),
+	    "%s/mail.ReXXXXXXXXXX", tmpdir);
+	if ((t = mkstemp(tempname)) == -1) {
+		warn("%s", tempname);
+		goto out;
+	}
+	if (readonlyflag && fchmod(t, 0400) == -1) {
+		close(t);
+		warn("%s", tempname);
+		(void)unlink(tempname);
 		goto out;
 	}
 	if ((nf = Fdopen(t, "w")) == NULL) {
-		warn("%s", tempEdit);
-		(void)unlink(tempEdit);
+		close(t);
+		warn("%s", tempname);
+		(void)unlink(tempname);
 		goto out;
 	}
 	if (size >= 0)
@@ -170,8 +180,8 @@ run_editor(FILE *fp, off_t size, int editortype, int readonlyflag)
 	(void)fflush(nf);
 	if (ferror(nf)) {
 		(void)Fclose(nf);
-		warn("%s", tempEdit);
-		(void)unlink(tempEdit);
+		warn("%s", tempname);
+		(void)unlink(tempname);
 		nf = NULL;
 		goto out;
 	}
@@ -180,8 +190,8 @@ run_editor(FILE *fp, off_t size, int editortype, int readonlyflag)
 	else
 		modtime = statb.st_mtime;
 	if (Fclose(nf) < 0) {
-		warn("%s", tempEdit);
-		(void)unlink(tempEdit);
+		warn("%s", tempname);
+		(void)unlink(tempname);
 		nf = NULL;
 		goto out;
 	}
@@ -189,8 +199,8 @@ run_editor(FILE *fp, off_t size, int editortype, int readonlyflag)
 	if ((editcmd =
 	         value(editortype == 'e' ? "EDITOR" : "VISUAL")) == NULL)
 		editcmd = editortype == 'e' ? _PATH_EX : _PATH_VI;
-	if (run_command(editcmd, 0, -1, -1, tempEdit, NULL, NULL) < 0) {
-		(void)unlink(tempEdit);
+	if (run_command(editcmd, 0, -1, -1, tempname, NULL, NULL) < 0) {
+		(void)unlink(tempname);
 		goto out;
 	}
 	/*
@@ -198,26 +208,26 @@ run_editor(FILE *fp, off_t size, int editortype, int readonlyflag)
 	 * temporary and return.
 	 */
 	if (readonlyflag) {
-		(void)unlink(tempEdit);
+		(void)unlink(tempname);
 		goto out;
 	}
-	if (stat(tempEdit, &statb) < 0) {
-		warn("%s", tempEdit);
+	if (stat(tempname, &statb) < 0) {
+		warn("%s", tempname);
 		goto out;
 	}
 	if (modtime == statb.st_mtime) {
-		(void)unlink(tempEdit);
+		(void)unlink(tempname);
 		goto out;
 	}
 	/*
 	 * Now switch to new file.
 	 */
-	if ((nf = Fopen(tempEdit, "a+")) == NULL) {
-		warn("%s", tempEdit);
-		(void)unlink(tempEdit);
+	if ((nf = Fopen(tempname, "a+")) == NULL) {
+		warn("%s", tempname);
+		(void)unlink(tempname);
 		goto out;
 	}
-	(void)unlink(tempEdit);
+	(void)unlink(tempname);
 out:
 	return nf;
 }

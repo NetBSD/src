@@ -1,4 +1,4 @@
-/*	$NetBSD: collect.c,v 1.26 2002/03/05 21:29:30 wiz Exp $	*/
+/*	$NetBSD: collect.c,v 1.27 2002/03/06 13:45:51 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)collect.c	8.2 (Berkeley) 4/19/94";
 #else
-__RCSID("$NetBSD: collect.c,v 1.26 2002/03/05 21:29:30 wiz Exp $");
+__RCSID("$NetBSD: collect.c,v 1.27 2002/03/06 13:45:51 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,8 +52,8 @@ __RCSID("$NetBSD: collect.c,v 1.26 2002/03/05 21:29:30 wiz Exp $");
 #include "rcv.h"
 #include "extern.h"
 
+extern char *tmpdir;
 extern char *tempMail;
-extern char *tempEdit;
 
 /*
  * Read a message from standard output and return a read file to it
@@ -83,9 +83,10 @@ collect(struct header *hp, int printheaders)
 {
 	FILE *fbuf;
 	int lc, cc, escape, eofcount;
-	int c, t;
+	int c, fd, t;
 	char linebuf[LINESIZE], *cp;
 	char getsub;
+	char tempname[PATHSIZE];
 	sigset_t nset;
 	int longline, lastlong, rc;	/* So we don't make 2 or more lines
 					   out of a long input line. */
@@ -343,11 +344,16 @@ cont:
 					break;
 				}
 
-				if ((fbuf = Fopen(tempEdit, "w+")) == NULL) {
-					warn("%s", tempEdit);
+				(void)snprintf(tempname, sizeof(tempname),
+				    "%s/ReXXXXXXXXXX", tmpdir);
+				if ((fd = mkstemp(tempname)) == -1 ||
+				    (fbuf = Fdopen(fd, "w+")) == NULL) {
+					if (fd != -1)
+						close(fd);
+					warn("%s", tempname);
 					break;
 				}
-				(void)unlink(tempEdit);
+				(void)unlink(tempname);
 
 				if ((shellcmd = value("SHELL")) == NULL)
 					shellcmd = _PATH_CSHELL;
@@ -557,12 +563,19 @@ mespipe(FILE *fp, char cmd[])
 	FILE *nf;
 	sig_t sigint = signal(SIGINT, SIG_IGN);
 	char *shellcmd;
+	int fd;
+	char tempname[PATHSIZE];
 
-	if ((nf = Fopen(tempEdit, "w+")) == NULL) {
-		warn("%s", tempEdit);
+	(void)snprintf(tempname, sizeof(tempname), "%s/ReXXXXXXXXXX",
+	    tmpdir);
+	if ((fd = mkstemp(tempname)) == -1 ||
+	    (nf = Fdopen(fd, "w+")) == NULL) {
+		if (fd != -1)
+			close(fd);
+		warn("%s", tempname);
 		goto out;
 	}
-	(void)unlink(tempEdit);
+	(void)unlink(tempname);
 	/*
 	 * stdin = current message.
 	 * stdout = new message.
