@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.39 2000/11/01 19:56:01 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.40 2001/02/04 19:52:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.7 (Berkeley) 7/19/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.39 2000/11/01 19:56:01 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.40 2001/02/04 19:52:06 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -94,6 +94,7 @@ STATIC void read_profile __P((const char *));
 STATIC char *find_dot_file __P((char *));
 int main __P((int, char **));
 
+extern int oexitstatus;
 /*
  * Main routine.  We initialize things, parse the arguments, execute
  * profiles if we're a login shell, and then call cmdloop to execute
@@ -402,8 +403,6 @@ exitcmd(argc, argv)
 	int argc;
 	char **argv;
 {
-	extern int oexitstatus;
-
 	if (stoppedjobs())
 		return 0;
 	if (argc > 1)

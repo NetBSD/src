@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.45 2000/07/27 04:09:27 cgd Exp $	*/
+/*	$NetBSD: parser.c,v 1.46 2001/02/04 19:52:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.45 2000/07/27 04:09:27 cgd Exp $");
+__RCSID("$NetBSD: parser.c,v 1.46 2001/02/04 19:52:06 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -51,6 +51,7 @@ __RCSID("$NetBSD: parser.c,v 1.45 2000/07/27 04:09:27 cgd Exp $");
 #include "parser.h"
 #include "nodes.h"
 #include "expand.h"	/* defines rmescapes() */
+#include "eval.h"	/* defines commandname */
 #include "redir.h"	/* defines copyfd() */
 #include "syntax.h"
 #include "options.h"
