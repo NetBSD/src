@@ -1,4 +1,4 @@
-.\"	$NetBSD: fs.5,v 1.7 1998/04/29 11:33:56 fair Exp $
+.\"	$NetBSD: fs.5,v 1.8 1999/03/11 04:13:24 sommerfe Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -256,11 +256,12 @@ the default value for
 .Fa fs_rotdelay
 is 2ms.
 .Pp
-Each file system has a statically allocated number of inodes.
-An inode is allocated for each
-.Dv NBPI
-bytes of disk space.
-The inode allocation strategy is extremely conservative.
+Each file system has a statically allocated number of inodes,
+determined by its size and the desired number of file data bytes per
+inode at the time it was created.  See
+.Xr newfs 8
+for details on how to set this (and other) filesystem parameters.
+By default, the inode allocation strategy is extremely conservative.
 .Pp
 .Dv MINBSIZE
 is the smallest allowable block size.
@@ -339,6 +340,8 @@ text file, and the root.
 An inode is `named' by its device/i-number pair.
 For further information, see the include file
 .Aq Pa ufs/ufs/inode.h .
+.Sh SEE ALSO
+.Xr newfs 8
 .Sh HISTORY
 A super-block structure named filsys appeared in
 .At v6 .
