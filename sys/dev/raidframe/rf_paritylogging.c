@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_paritylogging.c,v 1.9 2000/01/14 00:57:57 oster Exp $	*/
+/*	$NetBSD: rf_paritylogging.c,v 1.10 2000/02/12 16:06:27 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -201,7 +201,7 @@ rf_ConfigureParityLogging(
 
 	/* create region information structs */
 	printf("Allocating %d bytes for in-core parity region info\n",
-	       (int) rf_numParityRegions * sizeof(RF_RegionInfo_t));
+	       (int) (rf_numParityRegions * sizeof(RF_RegionInfo_t)));
 	RF_Malloc(raidPtr->regionInfo, 
 		  (rf_numParityRegions * sizeof(RF_RegionInfo_t)), 
 		  (RF_RegionInfo_t *));
@@ -332,7 +332,8 @@ rf_ConfigureParityLogging(
 	raidPtr->regionBufferPool.availBuffersIndex = 0;
 	raidPtr->regionBufferPool.emptyBuffersIndex = 0;
 	printf("Allocating %d bytes for regionBufferPool\n",
-	       raidPtr->regionBufferPool.totalBuffers * sizeof(caddr_t));
+	       (int) (raidPtr->regionBufferPool.totalBuffers * 
+		      sizeof(caddr_t)));
 	RF_Malloc(raidPtr->regionBufferPool.buffers, 
 		  raidPtr->regionBufferPool.totalBuffers * sizeof(caddr_t), 
 		  (caddr_t *));
@@ -343,7 +344,8 @@ rf_ConfigureParityLogging(
 	}
 	for (i = 0; i < raidPtr->regionBufferPool.totalBuffers; i++) {
 		printf("Allocating %d bytes for regionBufferPool#%d\n",
-		       raidPtr->regionBufferPool.bufferSize * sizeof(char), i);
+		       (int) (raidPtr->regionBufferPool.bufferSize * 
+			      sizeof(char)), i);
 		RF_Malloc(raidPtr->regionBufferPool.buffers[i], 
 			  raidPtr->regionBufferPool.bufferSize * sizeof(char),
 			  (caddr_t));
@@ -400,7 +402,8 @@ rf_ConfigureParityLogging(
 	raidPtr->parityBufferPool.availBuffersIndex = 0;
 	raidPtr->parityBufferPool.emptyBuffersIndex = 0;
 	printf("Allocating %d bytes for parityBufferPool of %d units\n",
-	       raidPtr->parityBufferPool.totalBuffers * sizeof(caddr_t),
+	       (int) (raidPtr->parityBufferPool.totalBuffers * 
+		      sizeof(caddr_t)),
 	       raidPtr->parityBufferPool.totalBuffers );
 	RF_Malloc(raidPtr->parityBufferPool.buffers, 
 		  raidPtr->parityBufferPool.totalBuffers * sizeof(caddr_t), 
@@ -412,7 +415,8 @@ rf_ConfigureParityLogging(
 	}
 	for (i = 0; i < raidPtr->parityBufferPool.totalBuffers; i++) {
 		printf("Allocating %d bytes for parityBufferPool#%d\n",
-		       raidPtr->parityBufferPool.bufferSize * sizeof(char),i);
+		       (int) (raidPtr->parityBufferPool.bufferSize * 
+			      sizeof(char)),i);
 		RF_Malloc(raidPtr->parityBufferPool.buffers[i], 
 			  raidPtr->parityBufferPool.bufferSize * sizeof(char),
 			  (caddr_t));
