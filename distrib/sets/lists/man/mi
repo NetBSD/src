@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.194 2000/01/20 19:26:45 wrstuden Exp $
+# $NetBSD: mi,v 1.195 2000/01/23 14:29:16 drochner Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/awk.info
 ./usr/share/info/bfd.info
@@ -484,6 +484,7 @@
 ./usr/share/man/cat4/sl.0
 ./usr/share/man/cat4/sm.0
 ./usr/share/man/cat4/sound.0
+./usr/share/man/cat4/speaker.0
 ./usr/share/man/cat4/spp.0
 ./usr/share/man/cat4/sqphy.0
 ./usr/share/man/cat4/ss.0
@@ -1413,6 +1414,7 @@
 ./usr/share/man/man4/sl.4
 ./usr/share/man/man4/sm.4
 ./usr/share/man/man4/sound.4
+./usr/share/man/man4/speaker.4
 ./usr/share/man/man4/spp.4
 ./usr/share/man/man4/sqphy.4
 ./usr/share/man/man4/ss.4
