@@ -1,4 +1,4 @@
-/* $NetBSD: sfb.c,v 1.3 1998/11/09 03:58:05 nisimura Exp $ */
+/* $NetBSD: sfb.c,v 1.4 1998/11/14 16:31:34 drochner Exp $ */
 
 /*
  * Copyright (c) 1998 Tohru Nishimura.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.3 1998/11/09 03:58:05 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.4 1998/11/14 16:31:34 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,7 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.3 1998/11/09 03:58:05 nisimura Exp $");
 
 #include <dev/tc/tcvar.h>
 #include <dev/ic/bt459reg.h>	
-#include <machine/sfbreg.h>
+#include <dev/tc/sfbreg.h>
 
 #include "opt_uvm.h"
 #if defined(UVM)
