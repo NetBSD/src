@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.395 2002/01/28 19:55:15 thorpej Exp $
+$NetBSD: pcidevs,v 1.396 2002/01/29 06:07:16 junyoung Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -275,7 +275,7 @@ vendor GAINBERY		0x10e6	Gainbery Computer Products
 vendor VADEM		0x10e7	Vadem
 vendor AMCIRCUITS	0x10e8	Applied Micro Circuits
 vendor ALPSELECTIC	0x10e9	Alps Electric
-vendor INTERGRAPHICS	0x10ea	Integraphics Systems
+vendor INTEGRAPHICS	0x10ea	Integraphics Systems
 vendor ARTISTSGRAPHICS	0x10eb	Artists Graphics
 vendor REALTEK		0x10ec	Realtek Semiconductor
 vendor ASCIICORP	0x10ed	ASCII Corporation
@@ -1224,6 +1224,10 @@ product INITIO I920	0x0002	INIC-920 SCSI
 product INITIO I940	0x9400	INIC-940 SCSI
 product INITIO I935	0x9401	INIC-935 SCSI
 product INITIO I950	0x9500	INIC-950 SCSI
+
+/* Integraphics Systems products */
+product INTEGRAPHICS IGA1680	0x1680	IGA 1680
+product INTEGRAPHICS IGA1682	0x1682	IGA 1682
 
 /* Integrated Micro Solutions products */
 product IMS 8849	0x8849	8849
