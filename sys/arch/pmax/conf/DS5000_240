@@ -1,7 +1,7 @@
 #
 # DECstation 5000/240 kernel config
 #
-# 	$NetBSD: DS5000_240,v 1.5 1997/01/31 01:59:11 thorpej Exp $
+# 	$NetBSD: DS5000_240,v 1.6 1997/05/29 02:22:33 mhitch Exp $
 #
 include		"arch/pmax/conf/std.pmax"
 
@@ -70,7 +70,7 @@ options		COMPAT_ULTRIX	# ultrix compatibility
 options		EXEC_ECOFF	# Ultrix RISC binaries are ECOFF format
 options		"HZ=256"	# RTC rate required
 
-config		netbsd root on rz0a type ffs swap on rz0b and rz1b dumps on rz0b
+config		netbsd root on ? type ?
 
 
 
