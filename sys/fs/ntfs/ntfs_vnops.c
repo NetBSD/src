@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vnops.c,v 1.5 2003/04/09 18:46:47 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_vnops.c,v 1.6 2003/04/10 21:57:26 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.5 2003/04/09 18:46:47 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.6 2003/04/10 21:57:26 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,11 +94,6 @@ static int	ntfs_putpages __P((struct vop_putpages_args *));
 static int	ntfs_fsync __P((struct vop_fsync_args *ap));
 #endif
 static int	ntfs_pathconf __P((void *));
-static int	ntfs_remove(void *);
-static int	ntfs_link(void *);
-static int	ntfs_rmdir(void *);
-static int	ntfs_mkdir(void *);
-static int	ntfs_rename(void *);
 
 int	ntfs_prtactive = 1;	/* 1 => print out reclaim of active vnodes */
 
@@ -900,89 +895,6 @@ ntfs_pathconf(v)
 	/* NOTREACHED */
 }
 
-static int
-ntfs_remove(void *v)
-{
-	struct vop_remove_args /* {
-		struct vnode *a_dvp;
-		struct vnode *a_vp;
-		struct componentname *a_cnp;
-	} */ *ap = v;
-
-	if (ap->a_dvp == ap->a_vp)
-		vrele(ap->a_vp);
-	else
-		vput(ap->a_vp);
-	vput(ap->a_dvp);
-	return (EOPNOTSUPP);
-}
-
-static int
-ntfs_link(void *v)
-{
-	struct vop_link_args /* {
-		struct vnode *a_dvp;
-		struct vnode *a_vp;
-		struct componentname *a_cnp;
-	} */ *ap = v;
-
-	vput(ap->a_dvp);
-	return (EOPNOTSUPP);
-}
-
-static int
-ntfs_rmdir(void *v)
-{
-	struct vop_rmdir_args /* {
-		struct vnode		*a_dvp;
-		struct vnode		*a_vp;
-		struct componentname	*a_cnp;
-	} */ *ap = v;
-
-	vput(ap->a_dvp);
-	vput(ap->a_vp);
-	return (EOPNOTSUPP);
-}
-
-static int
-ntfs_mkdir(void *v)
-{
-	struct vop_mkdir_args /* {
-		struct vnode		*a_dvp;
-		struct vnode		**a_vpp;
-		struct componentname	*a_cnp;
-		struct vattr		*a_vap;
-	} */ *ap = v;
-
-	vput(ap->a_dvp);
-	return (EOPNOTSUPP);
-}
-
-static int
-ntfs_rename(void *v)
-{
-	struct vop_rename_args  /* {
-		struct vnode		*a_fdvp;
-		struct vnode		*a_fvp;
-		struct componentname	*a_fcnp;
-		struct vnode		*a_tdvp;
-		struct vnode		*a_tvp;
-		struct componentname	*a_tcnp;
-	} */ *ap = v;
-
-	VOP_ABORTOP(ap->a_tdvp, ap->a_tcnp);
-	if (ap->a_tdvp == ap->a_tvp)
-		vrele(ap->a_tdvp);
-	else
-		vput(ap->a_tdvp);
-	if (ap->a_tvp)
-		vput(ap->a_tvp);
-	VOP_ABORTOP(ap->a_fdvp, ap->a_fcnp);
-	vrele(ap->a_fdvp);
-	vrele(ap->a_fvp);
-	return (EOPNOTSUPP);
-}
-
 /*
  * Global vfs data structures
  */
@@ -1050,11 +962,11 @@ const struct vnodeopv_entry_desc ntfs_vnodeop_entries[] = {
 	{ &vop_mmap_desc, genfs_mmap },			/* mmap */
 	{ &vop_fsync_desc, genfs_fsync },		/* fsync */
 	{ &vop_seek_desc, genfs_seek },			/* seek */
-	{ &vop_remove_desc, ntfs_remove },		/* remove */
-	{ &vop_link_desc, ntfs_link },			/* link */
-	{ &vop_rename_desc, ntfs_rename },		/* rename */
-	{ &vop_mkdir_desc, ntfs_mkdir },		/* mkdir */
-	{ &vop_rmdir_desc, ntfs_rmdir },		/* rmdir */
+	{ &vop_remove_desc, genfs_eopnotsupp },		/* remove */
+	{ &vop_link_desc, genfs_eopnotsupp },		/* link */
+	{ &vop_rename_desc, genfs_eopnotsupp },		/* rename */
+	{ &vop_mkdir_desc, genfs_eopnotsupp },		/* mkdir */
+	{ &vop_rmdir_desc, genfs_eopnotsupp },		/* rmdir */
 	{ &vop_symlink_desc, genfs_eopnotsupp },	/* symlink */
 	{ &vop_readdir_desc, (vop_t *) ntfs_readdir },	/* readdir */
 	{ &vop_readlink_desc, genfs_eopnotsupp },	/* readlink */
