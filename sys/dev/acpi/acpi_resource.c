@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_resource.c,v 1.13 2004/04/11 09:25:28 kochi Exp $	*/
+/*	$NetBSD: acpi_resource.c,v 1.14 2004/04/11 10:36:35 kochi Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_resource.c,v 1.13 2004/04/11 09:25:28 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_resource.c,v 1.14 2004/04/11 10:36:35 kochi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -383,6 +383,60 @@ acpi_resource_print(struct device *dev, struct acpi_resources *res)
 	}
 
 	printf("\n");
+}
+
+/*
+ * acpi_resource_cleanup:
+ *
+ *	Free all allocated buffers
+ */
+void
+acpi_resource_cleanup(struct acpi_resources *res)
+{
+	while (!SIMPLEQ_EMPTY(&res->ar_io)) {
+		struct acpi_io *ar;
+		ar = SIMPLEQ_FIRST(&res->ar_io);
+		SIMPLEQ_REMOVE_HEAD(&res->ar_io, ar_list);
+		AcpiOsFree(ar);
+	}
+
+	while (!SIMPLEQ_EMPTY(&res->ar_iorange)) {
+		struct acpi_iorange *ar;
+		ar = SIMPLEQ_FIRST(&res->ar_iorange);
+		SIMPLEQ_REMOVE_HEAD(&res->ar_iorange, ar_list);
+		AcpiOsFree(ar);
+	}
+
+	while (!SIMPLEQ_EMPTY(&res->ar_mem)) {
+		struct acpi_mem *ar;
+		ar = SIMPLEQ_FIRST(&res->ar_mem);
+		SIMPLEQ_REMOVE_HEAD(&res->ar_mem, ar_list);
+		AcpiOsFree(ar);
+	}
+
+	while (!SIMPLEQ_EMPTY(&res->ar_memrange)) {
+		struct acpi_memrange *ar;
+		ar = SIMPLEQ_FIRST(&res->ar_memrange);
+		SIMPLEQ_REMOVE_HEAD(&res->ar_memrange, ar_list);
+		AcpiOsFree(ar);
+	}
+
+	while (!SIMPLEQ_EMPTY(&res->ar_irq)) {
+		struct acpi_irq *ar;
+		ar = SIMPLEQ_FIRST(&res->ar_irq);
+		SIMPLEQ_REMOVE_HEAD(&res->ar_irq, ar_list);
+		AcpiOsFree(ar);
+	}
+
+	while (!SIMPLEQ_EMPTY(&res->ar_drq)) {
+		struct acpi_drq *ar;
+		ar = SIMPLEQ_FIRST(&res->ar_drq);
+		SIMPLEQ_REMOVE_HEAD(&res->ar_drq, ar_list);
+		AcpiOsFree(ar);
+	}
+
+	res->ar_nio = res->ar_niorange = res->ar_nmem = 
+	    res->ar_nmemrange = res->ar_nirq = res->ar_ndrq = 0;
 }
 
 struct acpi_io *

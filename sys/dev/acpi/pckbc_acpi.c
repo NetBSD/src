@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbc_acpi.c,v 1.13 2004/04/11 08:36:19 kochi Exp $	*/
+/*	$NetBSD: pckbc_acpi.c,v 1.14 2004/04/11 10:36:35 kochi Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_acpi.c,v 1.13 2004/04/11 08:36:19 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_acpi.c,v 1.14 2004/04/11 10:36:35 kochi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -175,7 +175,7 @@ pckbc_acpi_attach(struct device *parent,
 	irq = acpi_res_irq(&res, 0);
 	if (irq == NULL) {
 		printf("%s: unable to find irq resource\n", sc->sc_dv.dv_xname);
-		return;
+		goto out;
 	}
 	psc->sc_irq = irq->ar_irq;
 	psc->sc_ist = (irq->ar_type == ACPI_EDGE_SENSITIVE) ? IST_EDGE : IST_LEVEL;
@@ -190,7 +190,7 @@ pckbc_acpi_attach(struct device *parent,
 		if (io0 == NULL) {
 			printf("%s: unable to find i/o resources\n",
 			    sc->sc_dv.dv_xname);
-			return;
+			goto out;
 		}
 
 		if (pckbc_is_console(aa->aa_iot, io0->ar_base)) {
@@ -204,7 +204,7 @@ pckbc_acpi_attach(struct device *parent,
 			if (io1 == NULL) {
 				printf("%s: unable to find i/o resources\n",
 				    sc->sc_dv.dv_xname);
-				return;
+				goto out;
 			}
 			if (bus_space_map(aa->aa_iot, io0->ar_base,
 					  io0->ar_length, 0, &ioh_d) ||
@@ -230,6 +230,8 @@ pckbc_acpi_attach(struct device *parent,
 		config_defer(&first->sc_pckbc.sc_dv,
 			     (void(*)(struct device *))pckbc_attach);
 	}
+ out:
+	acpi_resource_cleanup(&res);
 }
 
 void
