@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.20 2005/01/19 19:41:59 xtraeme Exp $	 */
+/* $NetBSD: main.c,v 1.21 2005/04/06 04:32:59 perseant Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -187,7 +187,7 @@ checkfilesys(const char *filesys, char *mntpt, long auxdata, int child)
 		/*
 		 * 0: check segment checksums, inode ranges
 		 */
-		printf("** Phase 0 - Check Segment Summaries and Inode Free List\n");
+		printf("** Phase 0 - Check Inode Free List\n");
 	}
 	if (idaddr)
 		pwarn("-i given, skipping free list check\n");
