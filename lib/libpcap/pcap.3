@@ -1,6 +1,6 @@
-.\" $NetBSD: pcap.3,v 1.20 2004/09/27 23:02:53 dyoung Exp $
+.\" $NetBSD: pcap.3,v 1.21 2004/09/28 09:31:13 wiz Exp $
 .\
-.\" @(#) Header: /tcpdump/master/libpcap/pcap.3,v 1.51.2.9 2004/03/28 21:45:32 fenner Exp 
+.\" @(#) Header: /tcpdump/master/libpcap/pcap.3,v 1.51.2.9 2004/03/28 21:45:32 fenner Exp
 .\"
 .\" Copyright (c) 1994, 1996, 1997
 .\"	The Regents of the University of California.  All rights reserved.
@@ -679,7 +679,7 @@ If \-2 is returned from
 .Fn pcap_dispatch
 or
 .Fn pcap_loop ,
-the flag is cleared, so a subsequent call will resume reading packets. 
+the flag is cleared, so a subsequent call will resume reading packets.
 If a positive number is returned, the flag is not cleared, so a
 subsequent call will return \-2 and clear the flag.
 .Pp
@@ -692,9 +692,9 @@ Note that its calling arguments are suitable for use with
 .Fn pcap_dispatch
 or
 .Fn pcap_loop .
-If called directly, the 
+If called directly, the
 .Fa user
-parameter is of type 
+parameter is of type
 .Vt pcap_dumper_t
 as returned by
 .Fn pcap_dump_open .
@@ -1064,7 +1064,7 @@ translates a data link type name, which is a
 name with the
 .Dv DLT_
 removed, to the corresponding data link type value.  The translation
-is case-insensitive.  
+is case-insensitive.
 .Li \-1
 is returned on failure.
 .Pp
@@ -1118,7 +1118,7 @@ the error text can be obtained with
 or
 .Fn pcap_geterr .
 .Fn pcap_stats
-is supported only on live captures, not on 
+is supported only on live captures, not on
 .Dq savefiles ;
 no statistics are stored in
 .Dq savefiles ,
