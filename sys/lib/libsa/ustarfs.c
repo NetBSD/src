@@ -1,4 +1,4 @@
-/*	$NetBSD: ustarfs.c,v 1.21 2003/03/18 19:20:09 mycroft Exp $	*/
+/*	$NetBSD: ustarfs.c,v 1.22 2003/08/18 15:45:30 dsl Exp $	*/
 
 /* [Notice revision 2.2]
  * Copyright (c) 1997, 1998 Avalon Computer Systems, Inc.
@@ -391,7 +391,7 @@ init_volzero_sig(f)
 
 int
 ustarfs_open(path, f)
-	char *path;
+	const char *path;
 	struct open_file *f;
 
 {
