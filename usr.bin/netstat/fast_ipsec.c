@@ -1,4 +1,4 @@
-/*	$NetBSD: */
+/*	$NetBSD: fast_ipsec.c,v 1.3.2.4 2004/05/11 14:57:42 tron Exp $ */
 /* 	$FreeBSD: src/tools/tools/crypto/ipsecstats.c,v 1.1.4.1 2003/06/03 00:13:13 sam Exp $ */
 
 /*-
@@ -33,7 +33,7 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #ifdef __NetBSD__
-__RCSID("$NetBSD: fast_ipsec.c,v 1.3.2.3 2004/05/11 14:56:24 tron Exp $");
+__RCSID("$NetBSD: fast_ipsec.c,v 1.3.2.4 2004/05/11 14:57:42 tron Exp $");
 #endif
 #endif /* not lint*/
 
