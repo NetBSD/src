@@ -1,4 +1,4 @@
-.\" $NetBSD: isdnd.rc.5,v 1.13 2003/02/25 10:36:10 wiz Exp $
+.\" $NetBSD: isdnd.rc.5,v 1.14 2003/05/07 08:01:08 wiz Exp $
 .\"
 .\" Copyright (c) 1997, 2000 Hellmuth Michaelis. All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$Id: isdnd.rc.5,v 1.13 2003/02/25 10:36:10 wiz Exp $
+.\"	$Id: isdnd.rc.5,v 1.14 2003/05/07 08:01:08 wiz Exp $
 .\"
 .\" $FreeBSD$
 .\"
@@ -370,7 +370,7 @@ which is prepended to the string specified as a parameter to this keyword.
 The programs specified by connect and disconnect will get the following
 command line arguments: -d (device) -f (flag) [ -a (addr) ] where
 .Em device
-is the name of device, e.g. "isp0",
+is the name of device, e.g. "ippp0",
 .Em flag
 will be "up" if connection just got up, or "down" if interface changed to down
 state and
@@ -514,7 +514,7 @@ out to a remote site, the number specified here is put into the
 .Em "Calling Party Number Information Element" .
 .Pp
 This keyword is mandatory for the
-.Em ipr
+.Em irip
 user-land interfaces.
 .It Li local-phone-incoming
 The local telephone number used for verifying the destination of incoming
@@ -525,7 +525,7 @@ with the
 got from the telephone exchange.
 .Pp
 This keyword is mandatory for the
-.Em ipr
+.Em irip
 interfaces.
 .It Li name
 Defines a symbolic name for this configuration entry. Its purpose is to
@@ -543,7 +543,7 @@ and requires the remote site to always authenticate.
 This keyword is only used if
 .Em ppp-send-auth
 has been set to pap or chap for an
-.Em isp
+.Em ippp
 PPP interface.
 (optional)
 .It Li ppp-auth-rechallenge
@@ -557,7 +557,7 @@ which causes verification of the remote site's authenticity once in a while.
 This keyword is only used if
 .Em ppp-expect-auth
 has been set to chap for an
-.Em isp
+.Em ippp
 PPP interface.
 (optional)
 .It Li ppp-expect-auth
@@ -587,7 +587,7 @@ is set to
 outgoing connections will not require the remote site to authenticate itself.
 .Pp
 This keyword is only used for the
-.Em isp
+.Em ippp
 PPP interfaces.
 (optional)
 .It Li ppp-expect-name
@@ -596,7 +596,7 @@ The name that has to be provided by the remote site to prove its authenticity.
 This keyword is only used if
 .Em ppp-expect-auth
 has been set to pap or chap for an
-.Em isp
+.Em ippp
 PPP interface.
 (optional)
 .It Li ppp-expect-password
@@ -605,7 +605,7 @@ The secret that has to be provided by the remote site to prove its authenticity.
 This keyword is only used if
 .Em ppp-expect-auth
 has been set to pap or chap for an
-.Em isp
+.Em ippp
 PPP interface.
 (optional)
 .It Li ppp-send-auth
@@ -624,7 +624,7 @@ to grab name and password.
 .El
 .Pp
 This keyword is only used for the
-.Em isp
+.Em ippp
 PPP interfaces.
 (optional)
 .It Li ppp-send-name
@@ -633,7 +633,7 @@ The authentication name sent to the remote site.
 This keyword is only used if
 .Em ppp-send-auth
 has been set to pap or chap for an
-.Em isp
+.Em ippp
 PPP interface.
 (optional)
 .It Li ppp-send-password
@@ -642,7 +642,7 @@ The secret used to prove the local site's authenticity to the remote site.
 This keyword is only used if
 .Em ppp-send-auth
 has been set to pap or chap for an
-.Em isp
+.Em ippp
 PPP interface.
 (optional)
 .It Li ratetype
@@ -674,7 +674,7 @@ out to a remote site, the number specified here is put into the
 .Em "Called Party Number Information Element" .
 .Pp
 This keyword is mandatory for the
-.Em ipr
+.Em irip
 interfaces. It may be specified more than once to try to dial to several
 numbers until one succeeds.
 .It Li remote-phone-incoming
@@ -685,7 +685,7 @@ is compared against the
 .Em "Calling Party Number Information Element"
 got from the telephone exchange.
 .Pp
-This keyword is mandatory for the ipr interfaces.
+This keyword is mandatory for the irip interfaces.
 .Pp
 This keyword may have a wildcard parameter '*' to permit anyone dialing in.
 .It Li unitlength
