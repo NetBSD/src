@@ -1,4 +1,4 @@
-/*	$NetBSD: print-ether.c,v 1.7 2000/07/24 15:32:43 ad Exp $	*/
+/*	$NetBSD: print-ether.c,v 1.8 2000/07/26 10:48:15 ad Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -26,7 +26,7 @@
 static const char rcsid[] =
     "@(#) Header: print-ether.c,v 1.44 97/05/26 17:18:13 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-ether.c,v 1.7 2000/07/24 15:32:43 ad Exp $");
+__RCSID("$NetBSD: print-ether.c,v 1.8 2000/07/26 10:48:15 ad Exp $");
 #endif
 #endif
 
@@ -204,7 +204,7 @@ ether_encap_print(u_short ethertype, const u_char *p,
 		return (1);
 
 	case ETHERTYPE_VLAN:
-		printf("802.1Q vlan#%d P%d%s",
+		printf("802.1Q vlan#%d P%d%s ",
 		       ntohs(*(u_int16_t *)p) & 0xfff,
 		       ntohs(*(u_int16_t *)p) >> 13,
 		       (ntohs(*(u_int16_t *)p) & 0x1000) ? " CFI" : "");
