@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.5 2003/05/01 09:34:57 wiz Exp $
+.\"	$NetBSD: boot.8,v 1.6 2003/05/01 11:14:03 martin Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -168,11 +168,15 @@ if you do not want to boot from the device aliased to
 .Em disk ,
 see the discussion on devices above.
 .Sh FILES
-.Bl -tag -width /netbsdxx -compact
+.Bl -tag -width /usr/mdec/ofwboot.netxx -compact
 .It Pa /netbsd
 system code
-.It Pa /boot
+.It Pa /ofwboot
 system bootstrap
+.It Pa /usr/mdec/ofwboot.net
+alternate bootstrap when booting from the network, see
+.Xr diskless 8
+for details.
 .El
 .Sh EXAMPLES
 Boot from
@@ -201,15 +205,25 @@ firmware expects the
 ID to be six, and the drive must support 512-byte block reads,
 in addition to the standard 2048-byte reads.
 .Pp
-Another example:
+Use
 .Bd -literal -offset indent
 boot net -sd
 .Ed
 .Pp
 to boot single user from network and break into the kernel debugger as
 soon as possible.
+.Pp
+During installation from a different operating system
+.Bd -literal -offset indent
+boot disk:b
+.Ed
+.Pp
+is used to boot a
+.Dq miniroot
+filesystem from the swap partition.
 .Sh SEE ALSO
 .Xr disklabel 8 ,
+.Xr diskless 8 ,
 .Xr fsck 8 ,
 .Xr halt 8 ,
 .Xr init 8 ,
@@ -223,3 +237,7 @@ developed its firmware and promoted it to become
 .St - IEEE 1275 Open Firmware .
 .Pp
 .Pa http://playground.sun.com/1275/
+.Sh BUGS
+.Nx
+provides no way to boot ultra sparc systems from floppy disks.
+This is unlikely to change, due to very low demand for this feature.
