@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.11 2000/09/24 12:32:36 jdolecek Exp $	*/
+/*	$NetBSD: machdep.c,v 1.12 2000/10/02 07:57:29 wdk Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.11 2000/09/24 12:32:36 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.12 2000/10/02 07:57:29 wdk Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -284,7 +284,7 @@ mach_init(argc, argv, envp, bim, bip)
 	/*
 	 * Look at arguments passed to us and compute boothowto.
 	 */
-	boothowto = RB_SINGLE;
+	boothowto = RB_AUTOBOOT;
 	for (i = 1; i < argc; i++) {
 		for (cp = argv[i]; *cp; cp++) {
 			/* Ignore superfluous '-', if there is one */
