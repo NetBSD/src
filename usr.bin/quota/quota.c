@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1980, 1990 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1980, 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Robert Elz at The University of Melbourne.
@@ -35,14 +35,14 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1980, 1990 Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1980, 1990, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)quota.c	5.12 (Berkeley) 9/27/90";*/
-static char rcsid[] = "$Id: quota.c,v 1.4 1994/04/01 03:31:37 cgd Exp $";
+/*static char sccsid[] = "from: @(#)quota.c	8.1 (Berkeley) 6/6/93";*/
+static char rcsid[] = "$Id: quota.c,v 1.5 1994/06/13 21:33:18 mycroft Exp $";
 #endif /* not lint */
 
 /*
@@ -51,14 +51,13 @@ static char rcsid[] = "$Id: quota.c,v 1.4 1994/04/01 03:31:37 cgd Exp $";
 #include <sys/param.h>
 #include <sys/file.h>
 #include <sys/stat.h>
-#include <ufs/quota.h>
+#include <ufs/ufs/quota.h>
 #include <stdio.h>
 #include <fstab.h>
 #include <ctype.h>
 #include <pwd.h>
 #include <grp.h>
 #include <errno.h>
-#include <unistd.h>
 
 char *qfname = QUOTAFILENAME;
 char *qfextension[] = INITQFNAMES;
@@ -428,7 +427,7 @@ getprivs(id, quotatype)
 				free(qup);
 				continue;
 			}
-			lseek(fd, (id * sizeof(struct dqblk)), L_SET);
+			lseek(fd, (off_t)(id * sizeof(struct dqblk)), L_SET);
 			switch (read(fd, &qup->dqblk, sizeof(struct dqblk))) {
 			case 0:			/* EOF */
 				/*
