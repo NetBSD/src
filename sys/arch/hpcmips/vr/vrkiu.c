@@ -1,4 +1,4 @@
-/*	$NetBSD: vrkiu.c,v 1.12 2000/01/22 09:12:35 takemura Exp $	*/
+/*	$NetBSD: vrkiu.c,v 1.13 2000/01/28 15:02:11 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999 SASAKI Takesi All rights reserved.
@@ -369,50 +369,6 @@ vrkiu_initkeymap(void)
 #endif
 		}
 	}
-
-#if 0
-	if (platid_match(&platid, &platid_mask_MACH_NEC_MCR_520A)) {
-		keytrans = mobilepro_keytrans;
-#if !defined(PCKBD_LAYOUT)
-		vrkiu_keymapdata.layout = KB_US;
-#endif
-	} else if (platid_match(&platid, &platid_mask_MACH_NEC_MCR_500A)) {
-		keytrans = mobilepro750c_keytrans;
-#if !defined(PCKBD_LAYOUT)
-		vrkiu_keymapdata.layout = KB_US;
-#endif
-	} else if (platid_match(&platid, &platid_mask_MACH_NEC_MCR_700A)) {
-		keytrans = mobilepro_keytrans;
-#if !defined(PCKBD_LAYOUT)
-		vrkiu_keymapdata.layout = KB_US;
-#endif
-	} else if (platid_match(&platid, &platid_mask_MACH_NEC_MCR)) {
-		keytrans = mcr_jp_keytrans;
-#if !defined(PCKBD_LAYOUT)
-		vrkiu_keymapdata.layout = KB_JP;
-#endif
-	} else if (platid_match(&platid, &platid_mask_MACH_IBM_WORKPAD_Z50)) {
-		keytrans = z50_keytrans;
-#if !defined(PCKBD_LAYOUT)
-		vrkiu_keymapdata.layout = KB_US;
-#endif
-	} else if (platid_match(&platid, &platid_mask_MACH_SHARP_TRIPAD)) {
-		keytrans = tripad_keytrans;
-#if !defined(PCKBD_LAYOUT)
-		vrkiu_keymapdata.layout = KB_JP;
-#endif
-	} else if (platid_match(&platid, &platid_mask_MACH_NEC_MCCS)) {
-		keytrans = mccs_keytrans;
-#if !defined(PCKBD_LAYOUT)
-		vrkiu_keymapdata.layout = KB_JP;
-#endif
-	} else if (platid_match(&platid, &platid_mask_MACH_FUJITSU_INTERTOP)) {
-		keytrans = intertop_keytrans;
-#if !defined(PCKBD_LAYOUT)
-		vrkiu_keymapdata.layout = KB_JP;
-#endif
-	}
-#endif
 }
 
 /*
