@@ -1,4 +1,40 @@
-/*	$NetBSD: sbdsp.c,v 1.94 1999/02/18 15:47:29 mycroft Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.95 1999/02/18 16:09:01 mycroft Exp $	*/
+
+/*-
+ * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Charles M. Hannum.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *        This product includes software developed by the NetBSD 
+ *	  Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its 
+ *    contributors may be used to endorse or promote products derived 
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -328,8 +364,8 @@ sbdsp_attach(sc)
 	struct sbdsp_softc *sc;
 {
 	struct audio_params pparams, rparams;
-        int i;
-        u_int v;
+	int i;
+	u_int v;
 
 	/*
 	 * Create our DMA maps.
@@ -353,14 +389,14 @@ sbdsp_attach(sc)
 
 	pparams = audio_default;
 	rparams = audio_default;
-        sbdsp_set_params(sc, AUMODE_RECORD|AUMODE_PLAY, 0, &pparams, &rparams);
+	sbdsp_set_params(sc, AUMODE_RECORD|AUMODE_PLAY, 0, &pparams, &rparams);
 
 	sbdsp_set_in_ports(sc, 1 << SB_MIC_VOL);
 
 	if (sc->sc_mixer_model != SBM_NONE) {
-        	/* Reset the mixer.*/
+		/* Reset the mixer.*/
 		sbdsp_mix_write(sc, SBP_MIX_RESET, SBP_MIX_RESET);
-                /* And set our own default values */
+		/* And set our own default values */
 		for (i = 0; i < SB_NDEVS; i++) {
 			switch(i) {
 			case SB_MIC_VOL:
@@ -369,7 +405,7 @@ sbdsp_attach(sc)
 				break;
 			case SB_BASS:
 			case SB_TREBLE:
-				v = SB_ADJUST_GAIN(sc, AUDIO_MAX_GAIN/2);
+				v = SB_ADJUST_GAIN(sc, AUDIO_MAX_GAIN / 2);
 				break;
 			case SB_CD_IN_MUTE:
 			case SB_MIC_IN_MUTE:
@@ -399,8 +435,8 @@ sbdsp_attach(sc)
 	       sc->sc_model == SB_JAZZ ? ": <Jazz16>" : "");
 
 	sc->sc_fullduplex = ISSB16CLASS(sc) && 
-		sc->sc_drq8 != -1 && sc->sc_drq16 != -1 &&
-		sc->sc_drq8 != sc->sc_drq16;
+	    sc->sc_drq8 != -1 && sc->sc_drq16 != -1 &&
+	    sc->sc_drq8 != sc->sc_drq16;
 }
 
 void
@@ -479,12 +515,12 @@ sbdsp_query_encoding(addr, fp)
 		fp->precision = 8;
 		fp->flags = emul;
 		return 0;
-        }
-        if (!ISSB16CLASS(sc) && sc->sc_model != SB_JAZZ)
+	}
+	if (!ISSB16CLASS(sc) && sc->sc_model != SB_JAZZ)
 		return EINVAL;
 
-        switch(fp->index) {
-        case 4:
+	switch(fp->index) {
+	case 4:
 		strcpy(fp->name, AudioEslinear_le);
 		fp->encoding = AUDIO_ENCODING_SLINEAR_LE;
 		fp->precision = 16;
@@ -533,9 +569,8 @@ sbdsp_set_params(addr, setmode, usemode, play, rec)
 	if (sc->sc_open == SB_OPEN_MIDI)
 		return EBUSY;
 
-	model = sc->sc_model;
-	if (model > SB_16) 
-		model = SB_16;	/* later models work like SB16 */
+	/* Later models work like SB16. */
+	model = min(sc->sc_model, SB_16);
 
 	/*
 	 * Prior to the SB16, we have only one clock, so make the sample
@@ -562,7 +597,7 @@ sbdsp_set_params(addr, setmode, usemode, play, rec)
 
 		p = mode == AUMODE_PLAY ? play : rec;
 		/* Locate proper commands */
-		for(m = mode == AUMODE_PLAY ? sbpmodes : sbrmodes; 
+		for (m = mode == AUMODE_PLAY ? sbpmodes : sbrmodes; 
 		    m->model != -1; m++) {
 			if (model == m->model &&
 			    p->channels == m->channels &&
@@ -853,7 +888,7 @@ sbdsp_open(addr, flags)
 {
 	struct sbdsp_softc *sc = addr;
 
-        DPRINTF(("sbdsp_open: sc=%p\n", sc));
+	DPRINTF(("sbdsp_open: sc=%p\n", sc));
 
 	if (sc->sc_open != SB_CLOSED)
 		return EBUSY;
@@ -886,7 +921,7 @@ sbdsp_close(addr)
 {
 	struct sbdsp_softc *sc = addr;
 
-        DPRINTF(("sbdsp_close: sc=%p\n", sc));
+	DPRINTF(("sbdsp_close: sc=%p\n", sc));
 
 	sbdsp_spkroff(sc);
 	sc->spkr_state = SPKR_OFF;
@@ -1629,7 +1664,7 @@ sbdsp_mixer_set_port(addr, cp)
 	case SB_TREBLE:
 	case SB_BASS:
 		if (sc->sc_mixer_model == SBM_CT1345 ||
-                    sc->sc_mixer_model == SBM_CT1XX5) {
+		    sc->sc_mixer_model == SBM_CT1XX5) {
 			if (cp->type != AUDIO_MIXER_ENUM)
 				return EINVAL;
 			switch (cp->dev) {
@@ -1815,7 +1850,7 @@ sbdsp_mixer_get_port(addr, cp)
 	case SB_TREBLE:
 	case SB_BASS:
 		if (sc->sc_mixer_model == SBM_CT1345 ||
-                    sc->sc_mixer_model == SBM_CT1XX5) {
+		    sc->sc_mixer_model == SBM_CT1XX5) {
 			switch (cp->dev) {
 			case SB_TREBLE:
 				cp->un.ord = sbdsp_get_ifilter(addr) == SB_TREBLE;
@@ -2233,8 +2268,8 @@ sb_round_buffersize(addr, direction, size)
 int
 sb_mappage(addr, mem, off, prot)
 	void *addr;
-        void *mem;
-        int off;
+	void *mem;
+	int off;
 	int prot;
 {
 	return isa_mappage(mem, off, prot);
@@ -2264,7 +2299,7 @@ sbdsp_midi_open(addr, flags, iintr, ointr, arg)
 {
 	struct sbdsp_softc *sc = addr;
 
-        DPRINTF(("sbdsp_midi_open: sc=%p\n", sc));
+	DPRINTF(("sbdsp_midi_open: sc=%p\n", sc));
 
 	if (sc->sc_open != SB_CLOSED)
 		return EBUSY;
@@ -2291,7 +2326,7 @@ sbdsp_midi_close(addr)
 {
 	struct sbdsp_softc *sc = addr;
 
-        DPRINTF(("sbdsp_midi_close: sc=%p\n", sc));
+	DPRINTF(("sbdsp_midi_close: sc=%p\n", sc));
 
 	if (sc->sc_model >= SB_20)
 		sbdsp_reset(sc); /* exit UART mode */
