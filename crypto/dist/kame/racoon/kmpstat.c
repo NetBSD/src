@@ -1,4 +1,4 @@
-/*	$KAME: kmpstat.c,v 1.28 2001/06/01 10:14:49 sakane Exp $	*/
+/*	$KAME: kmpstat.c,v 1.29 2001/08/02 12:16:05 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
