@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.14 2002/09/06 19:26:26 matt Exp $	*/
+/*	$NetBSD: param.h,v 1.15 2003/01/19 00:25:22 matt Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -50,7 +50,7 @@
 #define	MID_MACHINE	MID_POWERPC
 
 #define	ALIGNBYTES		(sizeof(double) - 1)
-#define	ALIGN(p)		(((u_int)(p) + ALIGNBYTES) & ~ALIGNBYTES)
+#define	ALIGN(p)		(((u_long)(p) + ALIGNBYTES) & ~ALIGNBYTES)
 #define ALIGNED_POINTER(p,t)	((((u_long)(p)) & (sizeof(t)-1)) == 0)
 
 #define	PGSHIFT		12
