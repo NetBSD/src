@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_compat.c,v 1.21 1995/12/08 07:54:46 thorpej Exp $	*/
+/*	$NetBSD: hpux_compat.c,v 1.22 1995/12/09 04:05:52 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -135,7 +135,7 @@ hpux_sys_fork(p, v, retval)
 	struct hpux_sys_fork_args *uap = v;
 	int error;
 
-	error = sys_fork(p, (struct fork_args *) uap, retval);
+	error = sys_fork(p, v, retval);
 	if (error == EAGAIN)
 		error = OEAGAIN;
 	return (error);
@@ -150,7 +150,7 @@ hpux_sys_vfork(p, v, retval)
 	struct hpux_sys_vfork_args *uap = v;
 	int error;
 
-	error = sys_vfork(p, (struct vfork_args *) uap, retval);
+	error = sys_vfork(p, v, retval);
 	if (error == EAGAIN)
 		error = OEAGAIN;
 	return (error);
