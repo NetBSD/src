@@ -1,4 +1,4 @@
-/*	$NetBSD: fp.S,v 1.20 2000/05/31 00:59:27 nisimura Exp $	*/
+/*	$NetBSD: fp.S,v 1.21 2000/07/18 00:41:18 jeffs Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -110,6 +110,7 @@
 NESTED(MachEmulateFP, CALLFRAME_SIZ, ra)
 	subu	sp, sp, CALLFRAME_SIZ
 	sw	ra, CALLFRAME_RA(sp)
+	sw	a1, CALLFRAME_SIZ + 16(sp)
 	sw	a2, CALLFRAME_SIZ + 8(sp)
 /*
  * Decode the FMT field (bits 25-21) and FUNCTION field (bits 5-0).
@@ -2572,7 +2573,8 @@ fpe_trap:
 	#nop
 	sw	a2, U_PCB_FPREGS+FRAME_FSR(v0)
 #endif
-	lw	a2, CALLFRAME_SIZ + 8(sp)
+	lw	a1, CALLFRAME_SIZ + 16(sp)	# frame
+	lw	a2, CALLFRAME_SIZ + 8(sp)	# cause
 	lw	ra, CALLFRAME_RA(sp)
 	addu	sp, sp, CALLFRAME_SIZ
 	j	_C_LABEL(fpemul_sigfpe)
@@ -2588,7 +2590,8 @@ ill:
 #else
 	ctc1	a2, MIPS_FPU_CSR		# save exceptions
 #endif
-	lw	a2, CALLFRAME_SIZ + 8(sp)
+	lw	a1, CALLFRAME_SIZ + 16(sp)	# frame
+	lw	a2, CALLFRAME_SIZ + 8(sp)	# cause
 	lw	ra, CALLFRAME_RA(sp)
 	addu	sp, sp, CALLFRAME_SIZ
 	j	_C_LABEL(fpemul_sigill)
@@ -4190,7 +4193,7 @@ END(renorm_ft_d)
  *  64bit operation
  *  trap/syscall/break
  *
- * Args are same as MachFPInterrupt.
+ * Args are same as MachEmulateFP.
  * It should be used to emulate instruction in branch delay slot.
  */
 LEAF(bcemul_delay_slot)
@@ -4951,7 +4954,7 @@ END(bcemul_delay_slot)
 
 /*
  * Send SIGILL, SIGFPE.
- * Args are same as MachFPInterrupt.
+ * Args are same as MachEmulateFP.
  */
 LEAF(fpemul_sigill)
 #ifdef SOFTFLOAT
