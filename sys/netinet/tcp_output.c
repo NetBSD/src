@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.79 2002/04/27 01:47:58 thorpej Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.79.4.1 2002/06/14 17:32:59 lukem Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -142,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.79 2002/04/27 01:47:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.79.4.1 2002/06/14 17:32:59 lukem Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -197,7 +197,7 @@ extern struct mbuf *m_copypack();
  * the burst size it allows.  Default burst is 4 packets, per
  * the Internet draft.
  */
-int	tcp_cwm = 1;
+int	tcp_cwm = 0;
 int	tcp_cwm_burstsize = 4;
 
 #ifdef TCP_OUTPUT_COUNTERS
