@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.10 1998/07/09 02:43:25 mark Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.11 2000/03/16 23:21:05 darrenr Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -172,7 +172,7 @@ extern u_int cputype;
 
 #define cpu_setup(a)			cpufuncs.cf_setup(a)
 
-int	set_cpufuncs		__P(());
+int	set_cpufuncs		__P((void));
 #define ARCHITECTURE_NOT_PRESENT	1	/* known but not configured */
 #define ARCHITECTURE_NOT_SUPPORTED	2	/* not known */
 

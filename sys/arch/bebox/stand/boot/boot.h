@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.h,v 1.2 1999/06/28 01:20:44 sakamoto Exp $	*/
+/*	$NetBSD: boot.h,v 1.3 2000/03/16 23:21:10 darrenr Exp $	*/
 
 #define	TICKS_PER_SEC	(33000000 / 4)		/* 33MHz */
 #define	NS_PER_TICK	(1000000000 / TICKS_PER_SEC)
@@ -32,7 +32,7 @@ extern int cnscan __P((void));
  */
 extern int CPU1_alive;
 extern void cpu1 __P((void));
-extern void resetCPU1 __P(());
+extern void resetCPU1 __P((void));
 extern void runCPU1 __P((void *));
 extern void start_CPU1 __P((void));
 extern void wait_for __P((volatile int *));

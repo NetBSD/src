@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.16 1999/09/17 19:59:40 thorpej Exp $	*/
+/*	$NetBSD: console.c,v 1.17 2000/03/16 23:21:10 darrenr Exp $	*/
 
 /*
  * Copyright (c) 1994-1995 Melvyn Tang-Richardson
@@ -942,7 +942,7 @@ physconputstring(string, length)
  * Get a character from the physical console
  */
 
-int getkey_polled __P(());
+int getkey_polled __P((void));
 
 char
 physcongetchar(void)
