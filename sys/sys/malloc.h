@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.h,v 1.50 1999/12/04 12:33:04 ragge Exp $	*/
+/*	$NetBSD: malloc.h,v 1.51 2000/06/03 18:22:38 matt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -171,7 +171,8 @@
 #define M_DIRREM	111 	/* Directory entry deleted */
 #define	M_IP6RR		112	/* IPv6 Router Renumbering Prefix */
 #define	M_RR_ADDR	113	/* IPv6 Router Renumbering Ifid */
-#define M_LAST		114	/* Must be last type + 1 */
+#define M_SOFTINTR	114	/* Softinterrupt structures */
+#define M_LAST		115	/* Must be last type + 1 */
 
 #define	INITKMEMNAMES { \
 	"free",		/* 0 M_FREE */ \
@@ -288,7 +289,8 @@
 	"dirrem",	/* 111 M_DIRREM */ \
 	"ip6rr",	/* 112 M_IP6RR */ \
 	"rp_addr",	/* 113 M_RR_ADDR */ \
-	NULL,		/* 112 */ \
+	"softintr",	/* 114 M_SOFTINTR */ \
+	NULL,		/* 115 */ \
 }
 
 struct kmemstats {
