@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.96 2004/04/30 22:07:21 dyoung Exp $	*/
+/*	$NetBSD: bpf.c,v 1.97 2004/05/19 13:09:11 darrenr Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.96 2004/04/30 22:07:21 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.97 2004/05/19 13:09:11 darrenr Exp $");
 
 #include "bpfilter.h"
 
@@ -1377,13 +1377,7 @@ catchpacket(d, pkt, pktlen, snaplen, cpfn)
 		ROTATE_BUFFERS(d);
 		bpf_wakeup(d);
 		curlen = 0;
-	} else if (d->bd_immediate || d->bd_state == BPF_TIMED_OUT)
-		/*
-		 * Immediate mode is set, or the read timeout has
-		 * already expired during a select call.  A packet
-		 * arrived, so the reader should be woken up.
-		 */
-		bpf_wakeup(d);
+	}
 
 	/*
 	 * Append the bpf header.
@@ -1397,6 +1391,18 @@ catchpacket(d, pkt, pktlen, snaplen, cpfn)
 	 */
 	(*cpfn)((u_char *)hp + hdrlen, pkt, (hp->bh_caplen = totlen - hdrlen));
 	d->bd_slen = curlen + totlen;
+
+	/*
+	 * Call bpf_wakeup after bd_slen has been updated so that kevent(2)
+	 * will cause filt_bpfread() to be called with it adjusted.
+	 */
+	if (d->bd_immediate || d->bd_state == BPF_TIMED_OUT)
+		/*
+		 * Immediate mode is set, or the read timeout has
+		 * already expired during a select call.  A packet
+		 * arrived, so the reader should be woken up.
+		 */
+		bpf_wakeup(d);
 }
 
 /*
