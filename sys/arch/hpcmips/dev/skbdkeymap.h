@@ -1,4 +1,4 @@
-/*	$NetBSD: skbdkeymap.h,v 1.6 2000/02/27 16:28:13 uch Exp $ */
+/*	$NetBSD: skbdkeymap.h,v 1.7 2000/05/13 20:34:13 uch Exp $ */
 
 /*
  * Copyright (c) 1999, 2000, by UCHIYAMA Yasushi
@@ -98,7 +98,7 @@ const u_int8_t tc5165_telios_jp_keymap[] = {
 /*11 */	39,  26,  25,  IGN, 12,  52,  53,  67,
 /*12 */	37,  24,  11,  IGN, 10,  38,  51,  66,
 /*13 */	23,  22,  9,   IGN, IGN, 36,  50,  65,
-/*14 */	156, 43,  14,  72,  77,  IGN, IGN, 211,
+/*14 */	28,  43,  14,  72,  77,  IGN, IGN, 211,
 /*15 */	IGN, IGN, IGN, IGN, IGN, IGN, 221, IGN
 };
 
