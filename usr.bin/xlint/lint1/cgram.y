@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.28 2002/10/22 18:15:00 christos Exp $ */
+/* $NetBSD: cgram.y,v 1.29 2002/10/22 22:50:11 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.28 2002/10/22 18:15:00 christos Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.29 2002/10/22 22:50:11 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -242,6 +242,8 @@ static __inline void RESTORE(void)
 %type	<y_sym>		parameter_type_list
 %type	<y_sym>		parameter_declaration
 %type	<y_tnode>	expr
+%type	<y_tnode>	expr_stmnt_val
+%type	<y_tnode>	expr_stmnt_list
 %type	<y_tnode>	term
 %type	<y_tnode>	func_arg_list
 %type	<y_op>		point_or_arrow
@@ -1252,11 +1254,11 @@ label:
 	;
 
 comp_stmnt:
-	  compstmnt_lbrace declaration_list opt_stmnt_list compstmnt_rbrace
-	| compstmnt_lbrace opt_stmnt_list compstmnt_rbrace
+	  comp_stmnt_lbrace declaration_list opt_stmnt_list comp_stmnt_rbrace
+	| comp_stmnt_lbrace opt_stmnt_list comp_stmnt_rbrace
 	;
 
-compstmnt_lbrace:
+comp_stmnt_lbrace:
 	  T_LBRACE {
 		blklev++;
 		mblklev++;
@@ -1264,7 +1266,7 @@ compstmnt_lbrace:
 	  }
 	;
 
-compstmnt_rbrace:
+comp_stmnt_rbrace:
 	  T_RBRACE {
 		popdecl();
 		freeblk();
@@ -1289,12 +1291,28 @@ stmnt_list:
 
 expr_stmnt:
 	  expr T_SEMI {
-		expr($1, 0, 0);
+		expr($1, 0, 0, 1);
 		ftflg = 0;
 	  }
 	| T_SEMI {
 		ftflg = 0;
 	  }
+	;
+
+expr_stmnt_val:
+	  expr T_SEMI {
+		/* XXX: We should really do that only on the last name */
+		if ($1->tn_op == NAME)
+			$1->tn_sym->s_used = 1;
+		$$ = $1;
+		expr($1, 0, 0, 0);
+		ftflg = 0;
+	  }
+	;
+
+expr_stmnt_list:
+	expr_stmnt_val
+	| expr_stmnt_list expr_stmnt_val
 	;
 
 selection_stmnt:
@@ -1538,6 +1556,26 @@ term:
 			$2->tn_parn = 1;
 		$$ = $2;
 	  }
+	| T_LPARN comp_stmnt_lbrace declaration_list expr_stmnt_list {
+		blklev--;
+		mblklev--;
+		initsym = mktempsym($4->tn_type);
+		mblklev++;
+		blklev++;
+		gnuism(320);
+	} comp_stmnt_rbrace T_RPARN {
+		$$ = getnnode(initsym, 0);
+	}
+	| T_LPARN comp_stmnt_lbrace expr_stmnt_list {
+		blklev--;
+		mblklev--;
+		initsym = mktempsym($3->tn_type);
+		mblklev++;
+		blklev++;
+		gnuism(320);
+	} comp_stmnt_rbrace T_RPARN {
+		$$ = getnnode(initsym, 0);
+	}
 	| term T_INCDEC {
 		$$ = build($2 == INC ? INCAFT : DECAFT, $1, NULL);
 	  }
