@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.335 2001/04/27 07:54:23 jdolecek Exp $
+#	$NetBSD: mi,v 1.336 2001/04/28 15:51:08 kleink Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -785,6 +785,7 @@
 ./usr/include/stab.h			comp-c-include
 ./usr/include/stdarg.h			comp-c-include
 ./usr/include/stddef.h			comp-c-include
+./usr/include/stdint.h			comp-c-include
 ./usr/include/stdio.h			comp-c-include
 ./usr/include/stdlib.h			comp-c-include
 ./usr/include/string.h			comp-c-include
@@ -884,6 +885,7 @@
 ./usr/include/sys/socketvar.h		comp-c-include
 ./usr/include/sys/sockio.h		comp-c-include
 ./usr/include/sys/stat.h		comp-c-include
+./usr/include/sys/stdint.h		comp-c-include
 ./usr/include/sys/swap.h		comp-c-include
 ./usr/include/sys/syscall.h		comp-c-include
 ./usr/include/sys/syscallargs.h		comp-c-include
@@ -2600,6 +2602,7 @@
 ./usr/share/man/cat3/strsvis.0	comp-c-catman
 ./usr/share/man/cat3/strsvisx.0	comp-c-catman
 ./usr/share/man/cat3/strtod.0	comp-c-catman
+./usr/share/man/cat3/strtoimax.0	comp-c-catman
 ./usr/share/man/cat3/strtok.0	comp-c-catman
 ./usr/share/man/cat3/strtok_r.0	comp-c-catman
 ./usr/share/man/cat3/strtol.0	comp-c-catman
@@ -2607,6 +2610,7 @@
 ./usr/share/man/cat3/strtoq.0	comp-c-catman
 ./usr/share/man/cat3/strtoul.0	comp-c-catman
 ./usr/share/man/cat3/strtoull.0	comp-c-catman
+./usr/share/man/cat3/strtoumax.0	comp-c-catman
 ./usr/share/man/cat3/strtouq.0	comp-c-catman
 ./usr/share/man/cat3/strunvis.0	comp-c-catman
 ./usr/share/man/cat3/strvis.0	comp-c-catman
@@ -4546,6 +4550,7 @@
 ./usr/share/man/man3/strsvis.3		comp-c-man
 ./usr/share/man/man3/strsvisx.3		comp-c-man
 ./usr/share/man/man3/strtod.3		comp-c-man
+./usr/share/man/man3/strtoimax.3		comp-c-man
 ./usr/share/man/man3/strtok.3		comp-c-man
 ./usr/share/man/man3/strtok_r.3		comp-c-man
 ./usr/share/man/man3/strtol.3		comp-c-man
@@ -4553,6 +4558,7 @@
 ./usr/share/man/man3/strtoq.3		comp-c-man
 ./usr/share/man/man3/strtoul.3		comp-c-man
 ./usr/share/man/man3/strtoull.3		comp-c-man
+./usr/share/man/man3/strtoumax.3		comp-c-man
 ./usr/share/man/man3/strtouq.3		comp-c-man
 ./usr/share/man/man3/strunvis.3		comp-c-man
 ./usr/share/man/man3/strvis.3		comp-c-man
