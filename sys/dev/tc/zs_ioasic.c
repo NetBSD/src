@@ -1,4 +1,4 @@
-/* $NetBSD: zs_ioasic.c,v 1.2 2000/07/05 07:50:57 nisimura Exp $ */
+/* $NetBSD: zs_ioasic.c,v 1.3 2000/09/09 06:08:42 nisimura Exp $ */
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.2 2000/07/05 07:50:57 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.3 2000/09/09 06:08:42 nisimura Exp $");
 
 /*
  * Zilog Z8530 Dual UART driver (machine-dependent part).  This driver
@@ -520,10 +520,10 @@ zs_set_modes(cs, cflag)
 /*
  * Read or write the chip with suitable delays.
  */
-u_char
+u_int
 zs_read_reg(cs, reg)
 	struct zs_chanstate *cs;
-	u_char reg;
+	u_int reg;
 {
         struct zshan *zc = (void *)cs->cs_reg_csr;
 	unsigned val;
@@ -540,7 +540,7 @@ zs_read_reg(cs, reg)
 void
 zs_write_reg(cs, reg, val)
 	struct zs_chanstate *cs;
-	u_char reg, val;
+	u_int reg, val;
 {
         struct zshan *zc = (void *)cs->cs_reg_csr;
    
@@ -552,7 +552,7 @@ zs_write_reg(cs, reg, val)
 	DELAY(5);
 }
 
-u_char
+u_int
 zs_read_csr(cs)
 	struct zs_chanstate *cs;
 {
@@ -569,7 +569,7 @@ zs_read_csr(cs)
 void
 zs_write_csr(cs, val)
 	struct zs_chanstate *cs;
-	u_char val;
+	u_int val;
 {
 
 	struct zshan *zc = (void *)cs->cs_reg_csr;
@@ -579,7 +579,7 @@ zs_write_csr(cs, val)
 	DELAY(5);
 }
 
-u_char
+u_int
 zs_read_data(cs)
 	struct zs_chanstate *cs;
 {
@@ -596,7 +596,7 @@ zs_read_data(cs)
 void
 zs_write_data(cs, val)
 	struct zs_chanstate *cs;
-	u_char val;
+	u_int val;
 {
 
 	struct zshan *zc = (void *)cs->cs_reg_csr;
