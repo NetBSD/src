@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs_elf.h,v 1.8 2000/08/07 16:35:34 kleink Exp $	*/
+/*	$NetBSD: cdefs_elf.h,v 1.9 2000/12/14 18:47:30 marcus Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -32,8 +32,10 @@
 
 #if defined(__sh3__)
 #define	_C_LABEL(x)	__CONCAT(_,x)
+#define _C_LABEL_STRING(x)	"_"x
 #else
 #define	_C_LABEL(x)	x
+#define _C_LABEL_STRING(x)	x
 #endif
 
 #if __STDC__
@@ -57,21 +59,34 @@
 
 #ifndef __DO_NOT_DO_WEAK__
 #define	__weak_alias(alias,sym)						\
-    __asm__(".weak " #alias " ; " #alias " = " #sym);
+    __asm__(".weak " _C_LABEL_STRING(#alias) " ; "			\
+	    _C_LABEL_STRING(#alias) " = " _C_LABEL_STRING(#sym));
 #endif /* !__DO_NOT_DO_WEAK__ */
 #define	__weak_extern(sym)						\
-    __asm__(".weak " #sym);
+    __asm__(".weak " _C_LABEL_STRING(#sym));
 #define	__warn_references(sym,msg)					\
     __asm__(".section .gnu.warning." #sym " ; .ascii \"" msg "\" ; .text");
 
 #else /* !__STDC__ */
 
 #ifndef __DO_NOT_DO_WEAK__
+#if defined(__sh3__)
+#define __weak_alias(alias,sym) ___weak_alias(_/**/alias,_/**/sym)
+#define	___weak_alias(alias,sym)					\
+    __asm__(".weak alias ; alias = sym");
+#else
 #define	__weak_alias(alias,sym)						\
     __asm__(".weak alias ; alias = sym");
+#endif
 #endif /* !__DO_NOT_DO_WEAK__ */
+#if defined(__sh3__)
+#define __weak_extern(sym) ___weak_extern(_/**/sym)
+#define	___weak_extern(sym)						\
+    __asm__(".weak sym");
+#else
 #define	__weak_extern(sym)						\
     __asm__(".weak sym");
+#endif
 #define	__warn_references(sym,msg)					\
     __asm__(".section .gnu.warning.sym ; .ascii msg ; .text");
 
