@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_types.h,v 1.4 2003/07/17 20:51:36 nathanw Exp $	*/
+/*	$NetBSD: pthread_types.h,v 1.5 2003/09/26 22:48:23 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,9 +39,8 @@
 #ifndef _LIB_PTHREAD_TYPES_H
 #define _LIB_PTHREAD_TYPES_H
 
-#include <machine/lock.h>
-
-/* We use the "pthread_spin_t" name internally; "pthread_spinlock_t" is the
+/*
+ * We use the "pthread_spin_t" name internally; "pthread_spinlock_t" is the
  * POSIX spinlock object. 
  */
 typedef __cpu_simple_lock_t	pthread_spin_t;
