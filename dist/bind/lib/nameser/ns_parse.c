@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_parse.c,v 1.1.1.3 2002/06/20 10:30:39 itojun Exp $	*/
+/*	$NetBSD: ns_parse.c,v 1.1.1.4 2003/06/03 07:05:01 itojun Exp $	*/
 
 /*
  * Copyright (c) 1996,1999 by Internet Software Consortium.
@@ -18,7 +18,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "Id: ns_parse.c,v 8.17 2001/06/20 02:50:49 marka Exp";
+static const char rcsid[] = "Id: ns_parse.c,v 8.18 2003/04/03 06:10:10 marka Exp";
 #endif
 
 /* Import. */
@@ -134,9 +134,10 @@ ns_initparse(const u_char *msg, int msglen, ns_msg *handle) {
 int
 ns_parserr(ns_msg *handle, ns_sect section, int rrnum, ns_rr *rr) {
 	int b;
+	int tmp;
 
 	/* Make section right. */
-	if (section >= ns_s_max)
+	if ((tmp = section) < 0 || section >= ns_s_max)
 		RETERR(ENODEV);
 	if (section != handle->_sect)
 		setsection(handle, section);

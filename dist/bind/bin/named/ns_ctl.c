@@ -1,7 +1,7 @@
-/*	$NetBSD: ns_ctl.c,v 1.1.1.5 2002/06/28 05:59:31 itojun Exp $	*/
+/*	$NetBSD: ns_ctl.c,v 1.1.1.6 2003/06/03 07:04:32 itojun Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
-static const char rcsid[] = "Id: ns_ctl.c,v 8.47 2002/06/24 07:11:07 marka Exp";
+static const char rcsid[] = "Id: ns_ctl.c,v 8.48 2002/07/29 02:06:56 marka Exp";
 #endif /* not lint */
 
 /*
@@ -1128,7 +1128,7 @@ verb_args(struct ctl_sctx *ctl, struct ctl_sess *sess,
 	 */
 	cp = saved_argv[pvt->argc++];
 	tp = pvt->text;
-	while (cp && *cp != NULL)
+	while (cp && *cp != '\0')
 		if (*cp == '%' || *cp == ' ' ||
 		    !isprint((unsigned char)*cp)) {
 			if (tp >= pvt->text + sizeof(pvt->text) - 4)

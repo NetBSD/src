@@ -1,7 +1,7 @@
-/*	$NetBSD: dnsquery.c,v 1.1.1.3 2002/06/20 10:29:26 itojun Exp $	*/
+/*	$NetBSD: dnsquery.c,v 1.1.1.4 2003/06/03 07:04:25 itojun Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
-static const char rcsid[] = "Id: dnsquery.c,v 8.19 2002/04/12 03:03:48 marka Exp";
+static const char rcsid[] = "Id: dnsquery.c,v 8.19.10.1 2003/06/02 09:15:45 marka Exp";
 #endif /* not lint */
 
 /*
@@ -87,7 +87,7 @@ main(int argc, char *argv[]) {
 	int c, n;
 	int nameservers = 0, class, type, len;
 	union res_sockaddr_union q_nsaddr[MAXNS];
-	extern int optind, opterr;
+	extern int optind;
 	extern char *optarg;
 	int stream = 0, debug = 0;
 

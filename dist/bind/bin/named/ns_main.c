@@ -1,8 +1,8 @@
-/*	$NetBSD: ns_main.c,v 1.1.1.6 2002/06/28 05:59:36 itojun Exp $	*/
+/*	$NetBSD: ns_main.c,v 1.1.1.7 2003/06/03 07:04:35 itojun Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 static const char sccsid[] = "@(#)ns_main.c	4.55 (Berkeley) 7/1/91";
-static const char rcsid[] = "Id: ns_main.c,v 8.160 2002/06/24 07:06:55 marka Exp";
+static const char rcsid[] = "Id: ns_main.c,v 8.162.6.1 2003/06/02 05:59:55 marka Exp";
 #endif /* not lint */
 
 /*
@@ -143,6 +143,10 @@ char copyright[] =
 #include "named.h"
 #undef MAIN_PROGRAM
 
+#ifdef TRUCLUSTER5
+# include <clua/clua.h>
+#endif
+
 typedef void (*handler)(void);
 
 typedef struct _savedg {
@@ -195,7 +199,8 @@ static	int			sq_dowrite(struct qstream *);
 static	void			use_desired_debug(void);
 static	void			stream_write(evContext, void *, int, int);
 
-static	interface *		if_find(struct in_addr, u_int16_t port);
+static	interface *		if_find(struct in_addr, u_int16_t port,
+				        int anyport);
 
 static void			deallocate_everything(void),
 				stream_accept(evContext, void *, int,
@@ -1260,6 +1265,11 @@ getnetconf(int periodic_scan) {
 	ip_match_element ime;
 	u_char *mask_ptr;
 	struct in_addr mask;
+#ifdef TRUCLUSTER5
+	struct sockaddr clua_addr;
+	int clua_cnt, clua_tot;
+#endif
+	int clua_buf;
 
 	if (iflist_initialized) {
 		if (iflist_dont_rescan)
@@ -1289,8 +1299,19 @@ getnetconf(int periodic_scan) {
 		free_ip_match_list(local_networks);
 	local_networks = new_ip_match_list();
 
+#ifdef TRUCLUSTER5
+	/* Find out how many cluster aliases there are */
+	clua_cnt = 0;
+	clua_tot = 0;
+	while (clua_getaliasaddress(&clua_addr, &clua_cnt) == CLUA_SUCCESS)
+		clua_tot ++;
+	clua_buf = clua_tot * sizeof(ifreq);
+#else
+	clua_buf = 0;
+#endif
+
 	for (;;) {
-		buf = memget(bufsiz);
+		buf = memget(bufsiz + clua_buf);
 		if (!buf)
 			ns_panic(ns_log_default, 1, "memget(interface)");
 		ifc.ifc_len = bufsiz;
@@ -1325,9 +1346,28 @@ getnetconf(int periodic_scan) {
 		if (bufsiz > 1000000)
 			ns_panic(ns_log_default, 1,
 				"get interface configuration: maximum buffer size exceeded");
-		memput(buf, bufsiz);
+		memput(buf, bufsiz + clua_buf);
 		bufsiz += 4096;
 	}
+
+#ifdef TRUCLUSTER5
+	/* Get the cluster aliases and create interface entries for them */
+	clua_cnt = 0;
+	while (clua_tot--) {
+		memset(&ifreq, 0, sizeof (ifreq));
+		if (clua_getaliasaddress(&ifreq.ifr_addr, &clua_cnt) !=
+		    CLUA_SUCCESS)
+			/*
+			 * It is possible the count of aliases has changed; if
+			 * it has increased, they won't be found this pass.
+			 * If has decreased, stop the loop early. */
+			break;
+		strcpy(ifreq.ifr_name, "lo0");
+		memcpy(ifc.ifc_buf + ifc.ifc_len, &ifreq, sizeof (ifreq));
+		ifc.ifc_len += sizeof (ifreq);
+		bufsiz += sizeof (ifreq);
+	}
+#endif
 
 	ns_debug(ns_log_default, 2, "getnetconf: SIOCGIFCONF: ifc_len = %d",
 		 ifc.ifc_len);
@@ -1400,7 +1440,7 @@ getnetconf(int periodic_scan) {
 				 * point interfaces, then the local address
 				 * may appear more than once.
 				 */
-				ifp = if_find(ina, li->port);
+				ifp = if_find(ina, li->port, 0);
 				if (ifp != NULL) {
 					ns_debug(ns_log_default, 1,
 					  "dup interface addr [%s].%u (%s)",
@@ -1837,7 +1877,7 @@ opensocket_f() {
 	 * we'll notice we're in trouble if it goes away.
 	 */
 	ifp = if_find(server_options->query_source.sin_addr,
-		      server_options->query_source.sin_port);
+		      server_options->query_source.sin_port, 0);
 	if (ifp != NULL) {
 		ifp->flags |= INTERFACE_FORWARDING;
 		prev_ifp = ifp;
@@ -2157,7 +2197,7 @@ sq_write(struct qstream *qs, const u_char *buf, int len) {
 			return (-1);
 		}
 	}
-	__putshort(len, qs->s_wbuf_free);
+	ns_put16(len, qs->s_wbuf_free);
 	qs->s_wbuf_free += NS_INT16SZ;
 	memcpy(qs->s_wbuf_free, buf, len);
 	qs->s_wbuf_free += len;
@@ -2304,26 +2344,25 @@ net_mask(struct in_addr ina) {
 int
 aIsUs(struct in_addr addr) {
 
-	if (ina_hlong(addr) == INADDR_ANY || if_find(addr, 0) != NULL)
+	if (ina_hlong(addr) == INADDR_ANY || if_find(addr, 0, 1) != NULL)
 		return (1);
 	return (0);
 }
 
 /* interface *
- * if_find(addr, port)
+ * if_find(addr, port, anyport)
  *	scan our list of interface addresses for "addr" and port.
- *      port == 0 means match any port
  * returns:
  *	pointer to interface with this address/port, or NULL if there isn't
  *      one.
  */
 static interface *
-if_find(struct in_addr addr, u_int16_t port) {
+if_find(struct in_addr addr, u_int16_t port, int anyport) {
 	interface *ifp;
 
 	for (ifp = HEAD(iflist); ifp != NULL; ifp = NEXT(ifp, link))
 		if (ina_equal(addr, ifp->addr))
-			if (port == 0 || ifp->port == port)
+			if (anyport || ifp->port == port)
 				break;
 	return (ifp);
 }

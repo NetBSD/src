@@ -1,4 +1,4 @@
-/*	$NetBSD: logging.h,v 1.1.1.3 2002/06/20 10:30:11 itojun Exp $	*/
+/*	$NetBSD: logging.h,v 1.1.1.4 2003/06/03 07:04:47 itojun Exp $	*/
 
 /*
  * Copyright (c) 1996-1999 by Internet Software Consortium.
@@ -82,12 +82,15 @@ FILE *			log_get_stream(log_channel);
 char *			log_get_filename(log_channel);
 int			log_check_channel(log_context, int, log_channel);
 int			log_check(log_context, int, int);
-void			log_vwrite(log_context, int, int, const char *, 
-				   va_list args);
 #ifdef __GNUC__
+void			log_vwrite(log_context, int, int, const char *, 
+				   va_list args)
+				__attribute__((__format__(__printf__, 4, 0)));
 void			log_write(log_context, int, int, const char *, ...)
 				__attribute__((__format__(__printf__, 4, 5)));
 #else
+void			log_vwrite(log_context, int, int, const char *, 
+				   va_list args);
 void			log_write(log_context, int, int, const char *, ...);
 #endif
 int			log_new_context(int, char **, log_context *);

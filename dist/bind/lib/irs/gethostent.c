@@ -1,4 +1,4 @@
-/*	$NetBSD: gethostent.c,v 1.1.1.4 2002/06/20 10:30:25 itojun Exp $	*/
+/*	$NetBSD: gethostent.c,v 1.1.1.5 2003/06/03 07:04:54 itojun Exp $	*/
 
 /*
  * Copyright (c) 1996-1999 by Internet Software Consortium.
@@ -18,7 +18,7 @@
  */
 
 #if !defined(LINT) && !defined(CODECENTER)
-static const char rcsid[] = "Id: gethostent.c,v 1.32 2002/05/27 06:50:55 marka Exp";
+static const char rcsid[] = "Id: gethostent.c,v 1.32.10.1 2003/06/02 07:53:31 marka Exp";
 #endif
 
 /* Imports */
@@ -484,7 +484,7 @@ freehostent(struct hostent *he) {
 #define LIFREQ lifreq
 #endif
 
-static int
+static void
 scan_interfaces6(int *have_v4, int *have_v6) {
 	struct LIFCONF lifc;
 	struct LIFREQ lifreq;
@@ -494,12 +494,9 @@ scan_interfaces6(int *have_v4, int *have_v6) {
 	static unsigned int bufsiz = 4095;
 	int s, cpsize, n;
 
-	/* Set to zero.  Used as loop terminators below. */
-	*have_v4 = *have_v6 = 0;
-
 	/* Get interface list from system. */
 	if ((s = socket(AF_INET6, SOCK_DGRAM, 0)) == -1)
-		goto err_ret;
+		goto cleanup;
 
 	/*
 	 * Grow buffer until large enough to contain all interface
@@ -508,7 +505,7 @@ scan_interfaces6(int *have_v4, int *have_v6) {
 	for (;;) {
 		buf = memget(bufsiz);
 		if (buf == NULL)
-			goto err_ret;
+			goto cleanup;
 #ifdef SETFAMILYFLAGS
 		lifc.lifc_family = AF_UNSPEC;	/* request all families */
 		lifc.lifc_flags = 0;
@@ -528,10 +525,10 @@ scan_interfaces6(int *have_v4, int *have_v6) {
 				break;
 		}
 		if ((n == -1) && errno != EINVAL)
-			goto err_ret;
+			goto cleanup;
 
 		if (bufsiz > 1000000)
-			goto err_ret;
+			goto cleanup;
 
 		memput(buf, bufsiz);
 		bufsiz += 4096;
@@ -602,16 +599,35 @@ scan_interfaces6(int *have_v4, int *have_v6) {
 		memput(buf, bufsiz);
 	close(s);
 	/* printf("scan interface -> 4=%d 6=%d\n", *have_v4, *have_v6); */
-	return (0);
- err_ret:
+	return;
+ cleanup:
 	if (buf != NULL)
 		memput(buf, bufsiz);
 	if (s != -1)
 		close(s);
 	/* printf("scan interface -> 4=%d 6=%d\n", *have_v4, *have_v6); */
-	return (-1);
+	return;
 }
+#endif
 
+#ifdef __linux
+static void
+scan_linux6(int *have_v6) {
+	FILE *proc = NULL;
+	char address[33];
+	char name[IF_NAMESIZE+1];
+	int ifindex, prefix, flag3, flag4;
+	
+	proc = fopen("/proc/net/if_inet6", "r");
+	if (proc == NULL)
+		return;
+
+	if (fscanf(proc, "%32[a-f0-9] %x %x %x %x %16s\n",
+		   address, &ifindex, &prefix, &flag3, &flag4, name) == 6)
+		*have_v6 = 1;
+	fclose(proc);
+	return;
+}
 #endif
 
 static int
@@ -628,17 +644,21 @@ scan_interfaces(int *have_v4, int *have_v6) {
 	int s, n;
 	size_t cpsize;
 
+	/* Set to zero.  Used as loop terminators below. */
+	*have_v4 = *have_v6 = 0;
+
 #if defined(SIOCGLIFCONF) && defined(SIOCGLIFADDR) && \
     !defined(IRIX_EMUL_IOCTL_SIOCGIFCONF) 
 	/*
 	 * Try to scan the interfaces using IPv6 ioctls().
 	 */
-	if (!scan_interfaces6(have_v4, have_v6))
+	scan_interfaces6(have_v4, have_v6);
+	if (*have_v4 != 0 && *have_v6 != 0)
 		return (0);
 #endif
-
-	/* Set to zero.  Used as loop terminators below. */
-	*have_v4 = *have_v6 = 0;
+#ifdef __linux
+	scan_linux6(have_v6);
+#endif
 
 	/* Get interface list from system. */
 	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) == -1)

@@ -1,8 +1,8 @@
-/*	$NetBSD: ns_defs.h,v 1.1.1.7 2002/11/17 14:04:22 itojun Exp $	*/
+/*	$NetBSD: ns_defs.h,v 1.1.1.8 2003/06/03 07:04:32 itojun Exp $	*/
 
 /*
  *	from ns.h	4.33 (Berkeley) 8/23/90
- *	Id: ns_defs.h,v 8.121.2.1 2002/11/14 13:28:12 marka Exp
+ *	Id: ns_defs.h,v 8.124.6.1 2003/06/02 09:56:34 marka Exp
  */
 
 /*
@@ -452,7 +452,8 @@ struct qserv {
 	struct timeval	stime;		/* time first query started */
 	unsigned int	forwarder:1;	/* this entry is for a forwarder */
 	unsigned int	noedns:1;	/* don't try edns */
-	unsigned int	nretry:30;	/* # of times addr retried */
+	unsigned int	lame:1;		/* this server was lame, try it last */
+	unsigned int	nretry:29;	/* # of times addr retried */
 	u_int32_t	serial;		/* valid if Q_ZSERIAL */
 };
 
@@ -795,6 +796,7 @@ typedef struct options {
 	u_int lame_ttl;
 	int minroots;
 	u_int16_t preferred_glue;
+	u_int16_t edns_udp_size;
 	enum notify notify;
 } *options;
 
@@ -888,6 +890,7 @@ typedef enum ns_logging_categories {
 	ns_log_load,
 	ns_log_resp_checks,
 	ns_log_control,
+	ns_log_update_security,
 	ns_log_max_category
 } ns_logging_categories;
 

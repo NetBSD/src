@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.1.1.2 2002/06/20 10:30:24 itojun Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.1.1.3 2003/06/03 07:04:53 itojun Exp $	*/
 
 /*	$KAME: getaddrinfo.c,v 1.14 2001/01/06 09:41:15 jinmei Exp $	*/
 
@@ -103,16 +103,11 @@
 #include <stdarg.h>
 
 #include <irs.h>
+#include <isc/assertions.h>
 
 #include "port_after.h"
 
 #include "irs_data.h"
-
-/*
- * if we enable it, we will see duplicated addrinfo entries on reply if both
- * AAAA and A6 records are found.  disable it for default installation.
- */
-#undef T_A6
 
 #define SUCCESS 0
 #define ANY 0
@@ -194,7 +189,8 @@ static int get_portmatch __P((const struct addrinfo *, const char *));
 static int get_port __P((const struct addrinfo *, const char *, int));
 static const struct afd *find_afd __P((int));
 static int addrconfig __P((int));
-static int ip6_str2scopeid __P((char *, struct sockaddr_in6 *));
+static int ip6_str2scopeid __P((char *, struct sockaddr_in6 *,
+				u_int32_t *scopeidp));
 static struct net_data *init __P((void));
 
 struct addrinfo *hostent2addrinfo __P((struct hostent *,
@@ -299,8 +295,9 @@ str_isnumber(p)
 	if (*p == '\0')
 		return NO;
 	ep = NULL;
+	errno = 0;
 	(void)strtoul(p, &ep, 10);
-	if (ep && *ep == '\0')
+	if (errno == 0 && ep && *ep == '\0')
 		return YES;
 	else
 		return NO;
@@ -597,7 +594,7 @@ explore_fqdn(pai, hostname, servname, res)
 	char tmp[NS_MAXDNAME];
 	const char *cp;
 
-	result = NULL;
+	INSIST(res != NULL && *res == NULL);
 
 	/*
 	 * if the servname does not match socktype/protocol, ignore it.
@@ -856,13 +853,13 @@ explore_numeric_scope(pai, hostname, servname, res)
 
 	error = explore_numeric(pai, addr, servname, res);
 	if (error == 0) {
-		int scopeid;
+		u_int32_t scopeid = 0;
 
 		for (cur = *res; cur; cur = cur->ai_next) {
 			if (cur->ai_family != AF_INET6)
 				continue;
 			sin6 = (struct sockaddr_in6 *)(void *)cur->ai_addr;
-			if ((scopeid = ip6_str2scopeid(scope, sin6)) == -1) {
+			if (!ip6_str2scopeid(scope, sin6, &scopeid)) {
 				free(hostname2);
 				return(EAI_NONAME); /* XXX: is return OK? */
 			}
@@ -992,7 +989,17 @@ get_port(const struct addrinfo *ai, const char *servname, int matchonly) {
 		allownumeric = 1;
 		break;
 	case ANY:
-		allownumeric = 0;
+		switch (ai->ai_family) {
+		case AF_INET:
+#ifdef AF_INET6
+		case AF_INET6:
+#endif
+			allownumeric = 1;
+			break;
+		default:
+			allownumeric = 0;
+			break;
+		}
 		break;
 	default:
 		return EAI_SOCKTYPE;
@@ -1001,9 +1008,10 @@ get_port(const struct addrinfo *ai, const char *servname, int matchonly) {
 	if (str_isnumber(servname)) {
 		if (!allownumeric)
 			return EAI_SERVICE;
-		port = htons(atoi(servname));
+		port = atoi(servname);
 		if (port < 0 || port > 65535)
 			return EAI_SERVICE;
+		port = htons(port);
 	} else {
 		switch (ai->ai_socktype) {
 		case SOCK_DGRAM:
@@ -1077,17 +1085,17 @@ addrconfig(af)
 
 /* convert a string to a scope identifier. XXX: IPv6 specific */
 static int
-ip6_str2scopeid(scope, sin6)
-	char *scope;
-	struct sockaddr_in6 *sin6;
+ip6_str2scopeid(char *scope, struct sockaddr_in6 *sin6,
+		u_int32_t *scopeidp)
 {
-	int scopeid;
+	u_int32_t scopeid;
+	u_long lscopeid;
 	struct in6_addr *a6 = &sin6->sin6_addr;
 	char *ep;
-
+	
 	/* empty scopeid portion is invalid */
 	if (*scope == '\0')
-		return -1;
+		return (0);
 
 #ifdef USE_IFNAMELINKID
 	if (IN6_IS_ADDR_LINKLOCAL(a6) || IN6_IS_ADDR_MC_LINKLOCAL(a6)) {
@@ -1098,8 +1106,8 @@ ip6_str2scopeid(scope, sin6)
 		 */
 		scopeid = if_nametoindex(scope);
 		if (scopeid == 0)
-			goto trynumeric;
-		return(scopeid);
+		*scopeidp = scopeid;
+		return (1);
 	}
 #endif
 
@@ -1113,11 +1121,14 @@ ip6_str2scopeid(scope, sin6)
 
 	/* try to convert to a numeric id as a last resort */
 trynumeric:
-	scopeid = (int)strtoul(scope, &ep, 10);
-	if (*ep == '\0')
-		return scopeid;
-	else
-		return -1;
+	errno = 0;
+	lscopeid = strtoul(scope, &ep, 10);
+	scopeid = lscopeid & 0xffffffff;
+	if (errno == 0 && ep && *ep == '\0' && scopeid == lscopeid) {
+		*scopeidp = scopeid;
+		return (1);
+	} else
+		return (0);
 }
 
 struct addrinfo *

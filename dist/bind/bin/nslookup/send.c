@@ -1,4 +1,4 @@
-/*	$NetBSD: send.c,v 1.1.1.3 2002/06/20 10:30:07 itojun Exp $	*/
+/*	$NetBSD: send.c,v 1.1.1.4 2003/06/03 07:04:45 itojun Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989
@@ -55,7 +55,7 @@
 
 #ifndef lint
 static const char sccsid[] = "@(#)send.c	5.18 (Berkeley) 3/2/91";
-static const char rcsid[] = "Id: send.c,v 8.14 2002/05/10 04:35:09 marka Exp";
+static const char rcsid[] = "Id: send.c,v 8.14.10.1 2003/06/02 05:59:56 marka Exp";
 #endif /* not lint */
 
 /*
@@ -183,7 +183,7 @@ SendRequest(union res_sockaddr_union *nsAddrPtr, const u_char *buf,
 			/*
 			 * Send length & message
 			 */
-			__putshort(buflen, (u_char *)&len);
+			ns_put16(buflen, (u_char *)&len);
 			iov[0].iov_base = (caddr_t)&len;
 			iov[0].iov_len = INT16SZ;
 			DE_CONST(buf, iov[1].iov_base);

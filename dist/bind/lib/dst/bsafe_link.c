@@ -1,7 +1,7 @@
-/*	$NetBSD: bsafe_link.c,v 1.1.1.5 2002/06/20 10:30:14 itojun Exp $	*/
+/*	$NetBSD: bsafe_link.c,v 1.1.1.6 2003/06/03 07:04:48 itojun Exp $	*/
 
 #if defined(BSAFE) || defined(DNSSAFE)
-static const char rcsid[] = "Header: /proj/cvs/isc/bind8/src/lib/dst/bsafe_link.c,v 1.15 2001/09/25 04:50:28 marka Exp";
+static const char rcsid[] = "Header: /proj/cvs/isc/bind8/src/lib/dst/bsafe_link.c,v 1.16 2002/12/03 05:26:49 marka Exp";
 
 /*
  * Portions Copyright (c) 1995-1998 by Trusted Information Systems, Inc.
@@ -1115,6 +1115,8 @@ T_realloc(POINTER block, unsigned int len)
 }
 
 #else  /* BSAFE NOT available */
+#define	dst_bsafe_init	__dst_bsafe_init
+
 int
 dst_bsafe_init()
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: res_debug.c,v 1.1.1.5 2002/06/20 10:30:41 itojun Exp $	*/
+/*	$NetBSD: res_debug.c,v 1.1.1.6 2003/06/03 07:05:03 itojun Exp $	*/
 
 /*
  * Copyright (c) 1985
@@ -97,7 +97,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 static const char sccsid[] = "@(#)res_debug.c	8.1 (Berkeley) 6/4/93";
-static const char rcsid[] = "Id: res_debug.c,v 8.46 2002/05/21 01:57:45 marka Exp";
+static const char rcsid[] = "Id: res_debug.c,v 8.49 2003/01/30 23:32:35 marka Exp";
 #endif /* LIBC_SCCS and not lint */
 
 #include "port_before.h"
@@ -617,9 +617,6 @@ p_option(u_long option) {
 #ifdef RES_USE_EDNS0	/* KAME extension */
 	case RES_USE_EDNS0:	return "edns0";
 #endif
-#ifdef RES_USE_A6
-	case RES_USE_A6:	return "a6";
-#endif
 #ifdef RES_USE_DNAME
 	case RES_USE_DNAME:	return "dname";
 #endif
@@ -654,6 +651,31 @@ p_time(u_int32_t value) {
 const char *
 p_rcode(int rcode) {
 	return (sym_ntos(__p_rcode_syms, rcode, (int *)0));
+}
+
+/*
+ * Return a string for a res_sockaddr_union.
+ */
+const char *
+p_sockun(union res_sockaddr_union u, char *buf, size_t size) {
+	char ret[sizeof "ffff:ffff:ffff:ffff:ffff:ffff:123.123.123.123"];
+
+	switch (u.sin.sin_family) {
+	case AF_INET:
+		inet_ntop(AF_INET, &u.sin.sin_addr, ret, sizeof ret);
+		break;
+	case AF_INET6:
+		inet_ntop(AF_INET6, &u.sin6.sin6_addr, ret, sizeof ret);
+		break;
+	default:
+		sprintf(ret, "[af%d]", u.sin.sin_family);
+		break;
+	}
+	if (size > 0) {
+		strncpy(buf, ret, size - 1);
+		buf[size - 1] = '0';
+	}
+	return (buf);
 }
 
 /*
@@ -1103,8 +1125,9 @@ res_nametoclass(const char *buf, int *successp) {
 	if (strncasecmp(buf, "CLASS", 5) != 0 ||
 	    !isdigit((unsigned char)buf[5]))
 		goto done;
+	errno = 0;
 	result = strtoul(buf + 5, &endptr, 10);
-	if (*endptr == '\0' && result <= 0xffff)
+	if (errno == 0 && *endptr == '\0' && result <= 0xffff)
 		success = 1;
  done:
 	if (successp)
@@ -1125,8 +1148,9 @@ res_nametotype(const char *buf, int *successp) {
 	if (strncasecmp(buf, "type", 4) != 0 ||
 	    !isdigit((unsigned char)buf[4]))
 		goto done;
+	errno = 0;
 	result = strtoul(buf + 4, &endptr, 10);
-	if (*endptr == '\0' && result <= 0xffff)
+	if (errno == 0 && *endptr == '\0' && result <= 0xffff)
 		success = 1;
  done:
 	if (successp)
