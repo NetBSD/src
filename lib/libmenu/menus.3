@@ -1,4 +1,4 @@
-.\"	$NetBSD: menus.3,v 1.4 2001/04/29 19:07:07 wiz Exp $
+.\"	$NetBSD: menus.3,v 1.5 2001/05/23 14:58:55 blymn Exp $
 .\"
 .\" Copyright (c) 1999
 .\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
@@ -33,7 +33,7 @@
 .Dt MENUS 3
 .Os
 .Sh NAME
-.Nm menu
+.Nm menus
 .Nd menu library
 .Sh LIBRARY
 .Lb libmenu
@@ -41,29 +41,29 @@
 .Fd #include <menu.h>
 .Sh DESCRIPTION
 The
-.Xr menu 3
+.Xr menus 3
 provides a terminal independent menu system using the
 .Xr curses 3
 library.  Before using the
-.Xr menu 3
+.Xr menus 3
 functions the terminal must be set up by
 .Xr curses 3
 using the
 .Fn initscr
 function or similar.  Programs using
-.Xr menu 3
+.Xr menus 3
 functions must be linked with the
 .Xr curses 3
 library.
 .Pp
 The
-.Xr menu 3
+.Xr menus 3
 library provides facilties for defining menu items, placing a menu on the
 terminal screen, assign pre and post change operations and setting the
 attributes of both the menu and it's items.
 .Sh Defining default attributes for menus and items
 The
-.Xr menu 3
+.Xr menus 3
 library allows any settable attribute or option of both the menu and item
 objects to be defined such that any new menu or item automatically inherits
 the value as default.  Setting the default value will not affect any item or
