@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.17.4.1 1996/12/10 18:21:13 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993, 1994
@@ -141,9 +141,7 @@ struct tcpcb {
  * and thus an "ALPHA" of 0.875.  rttvar has 2 bits to the right of the
  * binary point, and is smoothed with an ALPHA of 0.75.
  */
-#define	TCP_RTT_SCALE		8	/* multiplier for srtt; 3 bits frac. */
 #define	TCP_RTT_SHIFT		3	/* shift for srtt; 3 bits frac. */
-#define	TCP_RTTVAR_SCALE	4	/* multiplier for rttvar; 2 bits */
 #define	TCP_RTTVAR_SHIFT	2	/* multiplier for rttvar; 2 bits */
 
 /*
@@ -156,7 +154,7 @@ struct tcpcb {
  * 1.5 tick we need.  But, because the bias is
  * statistical, we have to test that we don't drop below
  * the minimum feasible timer (which is 2 ticks).
- * This macro assumes that the value of TCP_RTTVAR_SCALE
+ * This macro assumes that the value of 1<<TCP_RTTVAR_SHIFT
  * is the same as the multiplier for rttvar.
  */
 #define	TCP_REXMTVAL(tp) \
