@@ -1,4 +1,4 @@
-.\"	$NetBSD: uuencode.1,v 1.5 1995/12/05 03:02:33 jtc Exp $
+.\"	$NetBSD: uuencode.1,v 1.6 1997/10/20 02:50:59 lukem Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -41,13 +41,13 @@
 .Nm uudecode
 .Nd encode/decode a binary file
 .Sh SYNOPSIS
-.Nm uuencode
+.Nm
 .Op Ar file
 .Ar name
 .Nm uudecode
 .Op Ar file ...
 .Sh DESCRIPTION
-.Nm Uuencode
+.Nm
 and
 .Nm uudecode
 are used to transmit binary files over transmission mediums
@@ -55,7 +55,7 @@ that do not support other than simple
 .Tn ASCII
 data.
 .Pp
-.Nm Uuencode
+.Nm
 reads
 .Ar file
 (or by default the standard input) and writes an encoded version
@@ -68,7 +68,7 @@ mode of the file and the operand
 for use by
 .Nm uudecode .
 .Pp
-.Nm Uudecode
+.Nm uudecode
 transforms
 .Em uuencoded
 files (or by default, the standard input) into the original form.
@@ -76,7 +76,7 @@ The resulting file is named
 .Ar name
 and will have the mode of the original file except that setuid
 and execute bits are not retained.
-.Nm Uudecode
+.Nm uudecode
 ignores any leading and trailing lines.
 .Sh EXAMPLES
 The following example packages up a source tree, compresses it,
@@ -95,7 +95,7 @@ uuencode src_tree.tar.Z \&| mail sys1!sys2!user
 The 
 .Nm uudecode
 and 
-.Nm uuencode 
+.Nm
 utilities exits 0 on success, and >0 if an error occurs.
 .Sh SEE ALSO
 .Xr compress 1 ,
@@ -106,14 +106,14 @@ utilities exits 0 on success, and >0 if an error occurs.
 The 
 .Nm uudecode
 and
-.Nm uuencode
+.Nm
 utilities conform to 
 .St -p1003.2-92 .
 .Sh HISTORY
 The
 .Nm uudecode
 and
-.Nm uuencode
+.Nm
 utilities appeared in
 .Bx 4.0 .
 .Sh BUGS
