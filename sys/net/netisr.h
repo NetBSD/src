@@ -1,4 +1,4 @@
-/* $NetBSD: netisr.h,v 1.25 2001/01/09 20:20:13 thorpej Exp $ */
+/* $NetBSD: netisr.h,v 1.26 2001/01/11 22:32:21 thorpej Exp $ */
 
 /*
  * Copyright (c) 1980, 1986, 1989, 1993
@@ -108,6 +108,9 @@
 #endif
 #if NSL > 0
 extern void slintr(void);	/* XXX XXX XXX */
+#endif
+#if NSTRIP > 0
+extern void stripintr(void);	/* XXX XXX XXX */
 #endif
 #if NPPP > 0
 #include <net/ppp_defs.h>
