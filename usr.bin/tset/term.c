@@ -136,6 +136,10 @@ askuser(dflt)
 
 		if (p = index(answer, '\n'))
 			*p = '\0';
+
+		if (!answer[0] && !dflt)
+			continue;
+
 		return (answer[0] ? answer : dflt);
 	}
 }
