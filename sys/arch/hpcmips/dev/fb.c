@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.13 2000/01/16 21:39:36 uch Exp $	*/
+/*	$NetBSD: fb.c,v 1.14 2000/01/27 06:18:03 sato Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -67,7 +67,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1999 Shin Takemura.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$Id: fb.c,v 1.13 2000/01/16 21:39:36 uch Exp $";
+    "$Id: fb.c,v 1.14 2000/01/27 06:18:03 sato Exp $";
 
 
 #include <sys/param.h>
@@ -482,11 +482,15 @@ fb_mmap(v, offset, prot)
 
 	struct fb_softc *sc = v;
 	struct fb_devconfig *dc = sc->sc_dc;
+	vaddr_t fbalign;
+	off_t fboff;
 
-	if (offset >= (dc->dc_rowbytes * dc->dc_height) || offset < 0)
+	fbalign = mips_ptob(mips_btop(dc->dc_fbaddr));
+	fboff = dc->dc_fbaddr - fbalign;
+	if (offset >= (dc->dc_rowbytes * dc->dc_height + fboff) || offset < 0)
 		return -1;
 
-	return mips_btop(dc->dc_fbaddr + offset);
+	return mips_btop(fbalign + offset);
 }
 
 int
