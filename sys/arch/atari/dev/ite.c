@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.17 1996/10/11 00:09:22 christos Exp $	*/
+/*	$NetBSD: ite.c,v 1.18 1996/10/11 20:50:34 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -222,7 +222,7 @@ void		*auxp;
 		splx(s);
 
 		iteinit(gp->g_itedev);
-		kprintf(": rows %d cols %d", ip->rows, ip->cols);
+		kprintf(": %dx%d", ip->rows, ip->cols);
 		kprintf(" repeat at (%d/100)s next at (%d/100)s",
 		    start_repeat_timeo, next_repeat_timeo);
 
@@ -344,7 +344,9 @@ itecnputc(dev, c)
 		(void)ite_on(dev, 3);
 		paniced = 1;
 	}
+	SUBR_CURSOR(ip, START_CURSOROPT);
 	iteputchar(ch, ip);
+	SUBR_CURSOR(ip, END_CURSOROPT);
 }
 
 /*
@@ -492,7 +494,6 @@ itestop(tp, flag)
 	struct tty *tp;
 	int flag;
 {
-
 }
 
 struct tty *
@@ -510,13 +511,16 @@ iteioctl(dev, cmd, addr, flag, p)
 	caddr_t		addr;
 	struct proc	*p;
 {
-	struct iterepeat *irp;
-	struct ite_softc *ip;
-	struct tty *tp;
+	struct iterepeat	*irp;
+	struct ite_softc	*ip;
+	struct tty		*tp;
+	view_t			*view;
+	struct itewinsize	*is;
 	int error;
 	
-	ip = getitesp(dev);
-	tp = ip->tp;
+	ip   = getitesp(dev);
+	tp   = ip->tp;
+	view = viewview(ip->grf->g_viewdev);
 
 	KDASSERT(tp);
 
@@ -555,8 +559,22 @@ iteioctl(dev, cmd, addr, flag, p)
 		start_repeat_timeo = irp->start;
 		next_repeat_timeo = irp->next;
 		return(0);
+	case ITEIOCGWINSZ:
+		is         = (struct itewinsize *)addr;
+		is->x      = view->display.x;
+		is->y      = view->display.y;
+		is->width  = view->display.width;
+		is->height = view->display.height;
+		is->depth  = view->bitmap->depth;
+		return(0);
+	case ITEIOCDSPWIN:
+		ip->grf->g_mode(ip->grf, GM_GRFON, NULL, 0, 0);
+		return(0);
+	case ITEIOCREMWIN:
+		ip->grf->g_mode(ip->grf, GM_GRFOFF, NULL, 0, 0);
+		return(0);
 	}
-	error = ite_grf_ioctl(ip, cmd, addr, flag, p);
+	error = (ip->itexx_ioctl)(ip, cmd, addr, flag, p);
 	if(error >= 0)
 		return(error);
 	return (ENOTTY);
@@ -662,7 +680,7 @@ static void
 ite_switch(unit)
 int	unit;
 {
-	struct ite_softc *ip;
+	struct ite_softc	*ip;
 
 	if(!(ite_confunits & (1 << unit)))
 		return;	/* Don't try unconfigured units	*/
