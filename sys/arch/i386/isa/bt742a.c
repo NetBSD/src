@@ -12,7 +12,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *      $Id: bt742a.c,v 1.8.4.4 1993/11/28 23:35:35 mycroft Exp $
+ *      $Id: bt742a.c,v 1.8.4.5 1993/11/29 00:11:09 mycroft Exp $
  */
 
 /*
@@ -1153,7 +1153,7 @@ bt_inquire_setup_information(bt)
 
 	/* Inquire Board ID to Bt742 for firmware version */
 	bt_cmd(bt, 0, sizeof(bID), 0, &bID, BT_INQUIRE);
-	printf("%s: version %c.%c, ", bt->sc_dev.dv_xname,
+	printf(": version %c.%c, ", bt->sc_dev.dv_xname,
 		bID.firm_revision, bID.firm_version);
 
 	/* Obtain setup information from Bt742. */
@@ -1167,7 +1167,7 @@ bt_inquire_setup_information(bt)
 		printf("parity, ");
 	else
 		printf("no parity, ");
-	printf("%d mbxs, %d ccbs\n", setup.num_mbx, bt->numccbs);
+	printf("%d mbxs", setup.num_mbx);
 
 	for (i = 0; i < 8; i++) {
 		if (!setup.sync[i].offset &&
