@@ -1,3 +1,4 @@
+.\"	$NetBSD: iteconfig_atari.8,v 1.1 1995/05/12 21:04:31 leo Exp $
 .\"
 .\" Copyright (c) 1994 Christian E. Hopps
 .\" All rights reserved.
@@ -27,10 +28,9 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$Id: iteconfig.8,v 1.3 1994/04/10 00:56:55 chopps Exp $
 .\"
-.Dd February 3, 1994
-.Dt ITECONFIG 8 amiga
+.Dd April 15, 1995
+.Dt ITECONFIG 8 atari
 .Os 
 .Sh NAME
 .Nm iteconfig 
@@ -38,6 +38,7 @@
 .Sh SYNOPSIS
 .Nm iteconfig
 .Op Fl i
+.Op Fl f Ar file
 .Op Fl v Ar volume
 .Op Fl p Ar pitch
 .Op Fl t Ar msec
@@ -50,7 +51,7 @@
 .Sh DESCRIPTION
 .Nm Iteconfig
 is used to modify or examine the attributes of the
-.Tn Amiga's
+.Tn Atari's
 console bell and bitmapped console display.
 The console bell's volume, pitch, and count may be
 specified, as well as
@@ -63,6 +64,11 @@ The following flags are interpreted by
 .It Fl i
 After processing all other arguments,
 print information about the console's state.
+.It Fl f
+Open and use the terminal named by
+.Ar file
+rather than the default console
+.Nm "/dev/ttye0".
 .It Fl v
 Set the volume of the console bell to
 .Ar volume ,
