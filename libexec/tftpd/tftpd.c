@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)tftpd.c	5.13 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$Id: tftpd.c,v 1.3 1993/08/01 18:28:53 mycroft Exp $";
+static char rcsid[] = "$Id: tftpd.c,v 1.4 1994/01/10 16:29:48 mycroft Exp $";
 #endif /* not lint */
 
 /*
@@ -84,6 +84,8 @@ int	fromlen;
 #define MAXARG	4
 char	*dirs[MAXARG+1];
 
+int	secure = 0;
+
 main(ac, av)
 	char **av;
 {
@@ -92,9 +94,28 @@ main(ac, av)
 	int on = 1;
 
 	ac--; av++;
-	while (ac-- > 0 && n < MAXARG)
-		dirs[n++] = *av++;
+	if (!strcmp(*av, "-s")) {
+		ac--; av++;
+		secure = 1;
+	}
 	openlog("tftpd", LOG_PID, LOG_DAEMON);
+	while (ac-- > 0) {
+		if (!secure) {
+			if (n >= MAXARG) {
+				syslog(LOG_ERR, "too many directories\n");
+				exit(1);
+			} else
+				dirs[n++] = *av;
+		}
+		if (chdir(*av++)) {
+			syslog(LOG_ERR, "%s: %m\n", av[-1]);
+			exit(1);
+		}
+	}
+	if (secure && chroot(".")) {
+		syslog(LOG_ERR, "chroot: %m\n");
+		exit(1);
+	}
 	if (ioctl(0, FIONBIO, &on) < 0) {
 		syslog(LOG_ERR, "ioctl(FIONBIO): %m\n");
 		exit(1);
@@ -270,19 +291,22 @@ validate_access(filename, mode)
 	int	fd;
 	char *cp, **dirp;
 
-	if (*filename != '/')
-		return (EACCESS);
-	/*
-	 * prevent tricksters from getting around the directory restrictions
-	 */
-	for (cp = filename + 1; *cp; cp++)
-		if(*cp == '.' && strncmp(cp-1, "/../", 4) == 0)
-			return(EACCESS);
-	for (dirp = dirs; *dirp; dirp++)
-		if (strncmp(filename, *dirp, strlen(*dirp)) == 0)
-			break;
-	if (*dirp==0 && dirp!=dirs)
-		return (EACCESS);
+	if (!secure) {
+		if (*filename != '/')
+			return (EACCESS);
+		/*
+		 * prevent tricksters from getting around the directory
+		 * restrictions
+		 */
+		for (cp = filename + 1; *cp; cp++)
+			if(*cp == '.' && strncmp(cp-1, "/../", 4) == 0)
+				return(EACCESS);
+		for (dirp = dirs; *dirp; dirp++)
+			if (strncmp(filename, *dirp, strlen(*dirp)) == 0)
+				break;
+		if (*dirp==0 && dirp!=dirs)
+			return (EACCESS);
+	}
 	if (stat(filename, &stbuf) < 0)
 		return (errno == ENOENT ? ENOTFOUND : EACCESS);
 	if (mode == RRQ) {
