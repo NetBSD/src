@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.23 1999/01/07 02:06:05 augustss Exp $	*/
+/*	$NetBSD: ohci.c,v 1.24 1999/01/10 16:38:54 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -842,6 +842,8 @@ ohci_intr_done(sc, reqh)
 		xfer->td->td_be = LE(LE(xfer->td->td_cbp) + reqh->length - 1);
 		xfer->len = reqh->length;
 		xfer->reqh = reqh;
+
+		reqh->hcpriv = xfer;
 
 		ohci_hash_add_td(sc, xfer);
 		sed->ed->ed_tailp = LE(tail->physaddr);
