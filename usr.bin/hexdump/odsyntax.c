@@ -1,4 +1,4 @@
-/*	$NetBSD: odsyntax.c,v 1.7 1997/10/18 13:54:35 mrg Exp $	*/
+/*	$NetBSD: odsyntax.c,v 1.8 1997/10/19 02:34:09 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -33,17 +33,19 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)odsyntax.c	8.2 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: odsyntax.c,v 1.7 1997/10/18 13:54:35 mrg Exp $";
+__RCSID("$NetBSD: odsyntax.c,v 1.8 1997/10/19 02:34:09 lukem Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/types.h>
 
 #include <ctype.h>
+#include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -135,11 +137,10 @@ oldsyntax(argc, argvp)
 		case 'w':
 		case '?':
 		default:
-			(void)fprintf(stderr,
-			    "od: od(1) has been deprecated for hexdump(1).\n");
+			warnx("od(1) has been deprecated for hexdump(1).");
 			if (ch != '?')
-				(void)fprintf(stderr,
-"od: hexdump(1) compatibility doesn't support the -%c option%s\n",
+				warnx(
+"hexdump(1) compatibility doesn't support the -%c option%s\n",
 				    ch, ch == 's' ? "; see strings(1)." : ".");
 			usage();
 		}
@@ -161,7 +162,7 @@ odoffset(argc, argvp)
 	int argc;
 	char ***argvp;
 {
-	register char *num, *p;
+	char *num, *p;
 	int base;
 	char *end;
 
