@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.69 1999/03/24 05:50:53 mrg Exp $	*/
+/*	$NetBSD: trap.c,v 1.70 1999/09/06 21:50:48 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -76,6 +76,7 @@
 #include <machine/pte.h>
 
 #include <m68k/fpe/fpu_emulate.h>
+#include <m68k/cacheops.h>
 
 #ifdef COMPAT_SUNOS
 #include <compat/sunos/sunos_syscall.h>

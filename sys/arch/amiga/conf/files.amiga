@@ -1,4 +1,4 @@
-#	$NetBSD: files.amiga,v 1.89 1999/07/09 02:32:28 thorpej Exp $
+#	$NetBSD: files.amiga,v 1.90 1999/09/06 21:50:47 is Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -393,6 +393,8 @@ file	arch/amiga/amiga/vm_machdep.c
 file	arch/amiga/amiga/cc.c
 file	arch/amiga/amiga/db_memrw.c	ddb
 file	arch/amiga/dev/md_root.c		memory_disk_hooks
+
+file	arch/m68k/m68k/cacheops.c
 
 major	{md = 15}	# Memory disk (for mini-kernel)
 
