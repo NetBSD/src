@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.16 1999/03/03 18:06:52 christos Exp $	*/
+/*	$NetBSD: extern.h,v 1.17 1999/08/24 07:57:06 tron Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -167,6 +167,7 @@ int ul_asc __P((u_long, char *, int, int));
 u_quad_t asc_uqd __P((char *, int, int));
 int uqd_asc __P((u_quad_t, char *, int, int));
 #endif
+int check_Aflag __P((void));
 
 /* 
  * getoldopt.c
@@ -201,6 +202,7 @@ int set_dest __P((ARCHD *, char *, int));
  */
 extern int act;
 extern FSUB *frmt;
+extern int Aflag;
 extern int cflag;
 extern int dflag;
 extern int iflag;

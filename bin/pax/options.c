@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.19 1999/03/07 01:03:32 mycroft Exp $	*/
+/*	$NetBSD: options.c,v 1.20 1999/08/24 07:57:06 tron Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: options.c,v 1.19 1999/03/07 01:03:32 mycroft Exp $");
+__RCSID("$NetBSD: options.c,v 1.20 1999/08/24 07:57:06 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -207,7 +207,7 @@ pax_options(argc, argv)
 	/*
 	 * process option flags
 	 */
-	while ((c=getopt(argc,argv,"ab:cdf:iklno:p:rs:tuvwx:zB:DE:G:HLPT:U:XYZ"))
+	while ((c=getopt(argc,argv,"ab:cdf:iklno:p:rs:tuvwx:zAB:DE:G:HLPT:U:XYZ"))
 	    != -1) {
 		switch (c) {
 		case 'a':
@@ -399,6 +399,10 @@ pax_options(argc, argv)
 			 */
 			zflag = 1;
 			gzip_program = GZIP_CMD;
+			break;
+		case 'A':
+			Aflag = 1;
+			flg |= CAF;
 			break;
 		case 'B':
 			/*
