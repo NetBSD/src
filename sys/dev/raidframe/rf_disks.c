@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_disks.c,v 1.32 2000/09/08 01:36:35 oster Exp $	*/
+/*	$NetBSD: rf_disks.c,v 1.33 2000/09/21 01:37:36 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -569,7 +569,7 @@ rf_AutoConfigureDisks(raidPtr, cfgPtr, auto_config)
 	while(ac!=NULL) {
 		if (ac->flag == 0) {
 			vn_lock(ac->vp, LK_EXCLUSIVE | LK_RETRY);
-			VOP_CLOSE(ac->vp, FREAD, NOCRED, 0);
+			VOP_CLOSE(ac->vp, FREAD | FWRITE, NOCRED, 0);
 			vput(ac->vp);
 			ac->vp = NULL;
 #if DEBUG 
