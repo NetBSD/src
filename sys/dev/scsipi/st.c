@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.35 1994/06/29 06:43:19 cgd Exp $	*/
+/*	$NetBSD: st.c,v 1.36 1994/08/09 18:50:17 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -71,7 +71,6 @@
 #include <scsi/scsiconf.h>
 
 /* Defines for device specific stuff */
-#define	PAGE_0_SENSE_DATA_SIZE	12
 #define DEF_FIXED_BSIZE  512
 #define	ST_RETRIES	4	/* only on non IO commands */
 
@@ -98,11 +97,12 @@ struct rogues {
 	char *model;
 	char *version;
 	u_int quirks;		/* valid for all modes */
+	u_int page_0_size;
+#define	MAX_PAGE_0_SIZE	64
 	struct modes modes[4];
 };
 
 /* define behaviour codes (quirks) */
-#define	ST_Q_NEEDS_PAGE_0	0x00001
 #define	ST_Q_FORCE_FIXED_MODE	0x00002
 #define	ST_Q_FORCE_VAR_MODE	0x00004
 #define	ST_Q_SENSE_HELP		0x00008	/* must do READ for good MODE SENSE */
@@ -112,7 +112,7 @@ struct rogues {
 static struct rogues gallery[] =	/* ends with an all-null entry */
 {
     {"pre-scsi", " unknown model  ", "????",
-	0,
+	0, 0,
 	{
 	    {512, ST_Q_FORCE_FIXED_MODE, 0},		/* minor 0-3 */
 	    {512, ST_Q_FORCE_FIXED_MODE, QIC_24},	/* minor 4-7 */
@@ -121,7 +121,7 @@ static struct rogues gallery[] =	/* ends with an all-null entry */
 	}
     },
     {"TANDBERG", " TDC 3600", "????",
-	ST_Q_NEEDS_PAGE_0,
+	0, 12,
 	{
 	    {0, 0, 0},					/* minor 0-3 */
 	    {0, ST_Q_FORCE_VAR_MODE, QIC_525},		/* minor 4-7 */
@@ -134,7 +134,7 @@ static struct rogues gallery[] =	/* ends with an all-null entry */
      * hear otherwise.  - mycroft, 31MAR1994
      */
     {"ARCHIVE ", "VIPER 2525 25462", "????",
-	0,
+	0, 0,
 	{
 	    {0, ST_Q_SENSE_HELP, 0},			/* minor 0-3 */
 	    {0, ST_Q_SENSE_HELP, QIC_525},		/* minor 4-7 */
@@ -147,7 +147,7 @@ static struct rogues gallery[] =	/* ends with an all-null entry */
      * needs more work.  - mycroft, 09APR1994
      */
     {"SANKYO  ", "CP525", "????",
-	0,
+	0, 0,
 	{
 	    {512, ST_Q_FORCE_FIXED_MODE, 0},		/* minor 0-3 */
 	    {512, ST_Q_FORCE_FIXED_MODE, QIC_525},	/* minor 4-7 */
@@ -156,7 +156,7 @@ static struct rogues gallery[] =	/* ends with an all-null entry */
 	}
     },
     {"ARCHIVE ", "VIPER 150", "????",
-	ST_Q_NEEDS_PAGE_0,
+	0, 12,
 	{
 	    {0, 0, 0},					/* minor 0-3 */
 	    {0, 0, QIC_150},				/* minor 4-7 */
@@ -165,7 +165,7 @@ static struct rogues gallery[] =	/* ends with an all-null entry */
 	}
     },
     {"WANGTEK ", "5525ES SCSI REV7", "????",
-	0,
+	0, 0,
 	{
 	    {0, 0, 0},					/* minor 0-3 */
 	    {0, ST_Q_BLKSIZ, QIC_525},			/* minor 4-7 */
@@ -174,7 +174,7 @@ static struct rogues gallery[] =	/* ends with an all-null entry */
 	}
     },
     {"WangDAT ", "Model 1300", "????",
-	0,
+	0, 0,
 	{
 	    {0, 0, 0},					/* minor 0-3 */
 	    {512, ST_Q_FORCE_FIXED_MODE, DDS},		/* minor 4-7 */
@@ -182,6 +182,17 @@ static struct rogues gallery[] =	/* ends with an all-null entry */
 	    {0, ST_Q_FORCE_VAR_MODE, DDS}		/* minor 12-15 */
 	}
     },
+#if 0
+    {"EXABYTE ", "EXB-8200", "????",
+	0, 5,
+	{
+	    {0, 0, 0},					/* minor 0-3 */
+	    {0, 0, 0},					/* minor 4-7 */
+	    {0, 0, 0},					/* minor 8-11 */
+	    {0, 0, 0}					/* minor 12-15 */
+	}
+    },
+#endif
     {0}
 };
 
@@ -195,6 +206,7 @@ struct st_data {
 	u_int blksiz;		/* blksiz we are using                */
 	u_int density;		/* present density                    */
 	u_int quirks;		/* quirks for the open mode           */
+	u_int page_0_size;	/* size of page 0 data		      */
 	u_int last_dsty;	/* last density openned               */
 /*--------------------device/scsi parameters----------------------------------*/
 	struct scsi_link *sc_link;	/* our link to the adpter etc.        */
@@ -216,10 +228,10 @@ struct st_data {
 #define BLKSIZE_SET_BY_USER	0x04
 #define BLKSIZE_SET_BY_QUIRK	0x08
 /*--------------------storage for sense data returned by the drive------------*/
-	u_char sense_data[12];		/*
-					 * additional sense data needed
-					 * for mode sense/select.
-					 */
+	u_char sense_data[MAX_PAGE_0_SIZE];	/*
+						 * additional sense data needed
+						 * for mode sense/select.
+						 */
 	struct buf buf_queue;		/* the queue of pending IO operations */
 	struct scsi_xfer scsi_xfer;	/* scsi xfer struct for this drive */
 	u_int xfer_block_wait;		/* is a process waiting? */
@@ -405,6 +417,7 @@ st_identify_drive(st)
 			st->rogues = finger;
 			st->drive_quirks = finger->quirks;
 			st->quirks = finger->quirks;	/* start value */
+			st->page_0_size = finger->page_0_size;
 			st_loadquirks(st);
 			break;
 		} else
@@ -1346,37 +1359,16 @@ st_mode_sense(st, flags)
 {
 	u_int scsi_sense_len;
 	int error;
-	char *scsi_sense_ptr;
 	struct scsi_mode_sense cmd;
 	struct scsi_sense {
 		struct scsi_mode_header header;
 		struct blk_desc blk_desc;
+		u_char sense_data[MAX_PAGE_0_SIZE];
 	} scsi_sense;
-
-	struct scsi_sense_page_0 {
-		struct scsi_mode_header header;
-		struct blk_desc blk_desc;
-		u_char sense_data[PAGE_0_SENSE_DATA_SIZE];
-			/* Tandberg tape drives returns page 00
-			 * with the sense data, whether or not
-			 * you want it (ie the don't like you
-			 * saying you want anything less!!!!!)
-			 * They also expect page 00
-			 * back when you issue a mode select
-			 */
-	} scsi_sense_page_0;
 	struct scsi_link *sc_link = st->sc_link;
 
-	/*
-	 * Define what sort of structure we're working with
-	 */
-	if (st->quirks & ST_Q_NEEDS_PAGE_0) {
-		scsi_sense_len = sizeof(scsi_sense_page_0);
-		scsi_sense_ptr = (char *) &scsi_sense_page_0;
-	} else {
-		scsi_sense_len = sizeof(scsi_sense);
-		scsi_sense_ptr = (char *) &scsi_sense;
-	}
+	scsi_sense_len = 12 + st->page_0_size;
+
 	/*
 	 * Set up a mode sense 
 	 */
@@ -1391,15 +1383,14 @@ st_mode_sense(st, flags)
 	 * store it away.
 	 */
 	if (error = scsi_scsi_cmd(sc_link, (struct scsi_generic *) &cmd,
-	    sizeof(cmd), (u_char *) scsi_sense_ptr, scsi_sense_len,
+	    sizeof(cmd), (u_char *) &scsi_sense, scsi_sense_len,
 	    ST_RETRIES, 5000, NULL, flags | SCSI_DATA_IN))
 		return error;
 
-	st->numblks = _3btol(((struct scsi_sense *)scsi_sense_ptr)->blk_desc.nblocks);
-	st->media_blksiz = _3btol(((struct scsi_sense *)scsi_sense_ptr)->blk_desc.blklen);
-	st->media_density = ((struct scsi_sense *) scsi_sense_ptr)->blk_desc.density;
-	if (((struct scsi_sense *) scsi_sense_ptr)->header.dev_spec &
-	    SMH_DSP_WRITE_PROT)
+	st->numblks = _3btol(scsi_sense.blk_desc.nblocks);
+	st->media_blksiz = _3btol(scsi_sense.blk_desc.blklen);
+	st->media_density = scsi_sense.blk_desc.density;
+	if (scsi_sense.header.dev_spec & SMH_DSP_WRITE_PROT)
 		st->flags |= ST_READONLY;
 	SC_DEBUG(sc_link, SDEV_DB3,
 	    ("density code 0x%x, %d-byte blocks, write-%s, ",
@@ -1407,12 +1398,9 @@ st_mode_sense(st, flags)
 	    st->flags & ST_READONLY ? "protected" : "enabled"));
 	SC_DEBUG(sc_link, SDEV_DB3,
 	    ("%sbuffered\n",
-	    ((struct scsi_sense *) scsi_sense_ptr)->header.dev_spec &
-	    SMH_DSP_BUFF_MODE ? "" : "un"));
-	if (st->quirks & ST_Q_NEEDS_PAGE_0)
-		bcopy(((struct scsi_sense_page_0 *) scsi_sense_ptr)->sense_data,
-		    st->sense_data,
-		    sizeof(((struct scsi_sense_page_0 *) scsi_sense_ptr)->sense_data));
+	    scsi_sense.header.dev_spec & SMH_DSP_BUFF_MODE ? "" : "un"));
+	if (st->page_0_size)
+		bcopy(scsi_sense.sense_data, st->sense_data, st->page_0_size);
 	sc_link->flags |= SDEV_MEDIA_LOADED;
 	return 0;
 }
@@ -1426,56 +1414,40 @@ st_mode_select(st, flags)
 	struct st_data *st;
 	int flags;
 {
-	u_int dat_len;
-	char *dat_ptr;
+	u_int scsi_select_len;
+	int error;
 	struct scsi_mode_select cmd;
-	struct dat {
+	struct scsi_select {
 		struct scsi_mode_header header;
 		struct blk_desc blk_desc;
-	} dat;
-	struct dat_page_0 {
-		struct scsi_mode_header header;
-		struct blk_desc blk_desc;
-		u_char sense_data[PAGE_0_SENSE_DATA_SIZE];
-	} dat_page_0;
+		u_char sense_data[MAX_PAGE_0_SIZE];
+	} scsi_select;
+	struct scsi_link *sc_link = st->sc_link;
 
-	/*
-	 * Define what sort of structure we're working with
-	 */
-	if (st->quirks & ST_Q_NEEDS_PAGE_0) {
-		dat_len = sizeof(dat_page_0);
-		dat_ptr = (char *) &dat_page_0;
-	} else {
-		dat_len = sizeof(dat);
-		dat_ptr = (char *) &dat;
-	}
+	scsi_select_len = 12 + st->page_0_size;
+
 	/*
 	 * Set up for a mode select
 	 */
 	bzero(&cmd, sizeof(cmd));
 	cmd.op_code = MODE_SELECT;
-	cmd.length = dat_len;
+	cmd.length = scsi_select_len;
 
-	bzero(dat_ptr, dat_len);
-	((struct dat *) dat_ptr)->header.blk_desc_len = sizeof(struct blk_desc);
-	((struct dat *) dat_ptr)->header.dev_spec |= SMH_DSP_BUFF_MODE_ON;
-	((struct dat *) dat_ptr)->blk_desc.density = st->density;
+	bzero(&scsi_select, scsi_select_len);
+	scsi_select.header.blk_desc_len = sizeof(struct blk_desc);
+	scsi_select.header.dev_spec |= SMH_DSP_BUFF_MODE_ON;
+	scsi_select.blk_desc.density = st->density;
 	if (st->flags & ST_FIXEDBLOCKS)
-		lto3b(st->blksiz, ((struct dat *) dat_ptr)->blk_desc.blklen);
-	if (st->quirks & ST_Q_NEEDS_PAGE_0) {
-		bcopy(st->sense_data,
-		    ((struct dat_page_0 *) dat_ptr)->sense_data,
-		    sizeof(((struct dat_page_0 *) dat_ptr)->sense_data));
-		/* the Tandberg tapes need the block size to */
-		/* be set on each mode sense/select. */
-	}
+		lto3b(st->blksiz, scsi_select.blk_desc.blklen);
+	if (st->page_0_size)
+		bcopy(st->sense_data, scsi_select.sense_data, st->page_0_size);
 
 	/*
 	 * do the command
 	 */
-	return scsi_scsi_cmd(st->sc_link, (struct scsi_generic *) &cmd,
-	    sizeof(cmd), (u_char *) dat_ptr, dat_len, ST_RETRIES, 5000,
-	    NULL, flags | SCSI_DATA_OUT);
+	return scsi_scsi_cmd(sc_link, (struct scsi_generic *) &cmd,
+	    sizeof(cmd), (u_char *) &scsi_select, scsi_select_len,
+	    ST_RETRIES, 5000, NULL, flags | SCSI_DATA_OUT);
 }
 
 /*
