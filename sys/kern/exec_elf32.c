@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.41 1999/01/06 11:52:53 christos Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.42 1999/02/09 20:35:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -71,6 +71,7 @@
 #include "opt_compat_linux.h"
 #include "opt_compat_ibcs2.h"
 #include "opt_compat_svr4.h"
+#include "opt_compat_freebsd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,6 +106,10 @@
 
 #ifdef COMPAT_IBCS2
 #include <compat/ibcs2/ibcs2_exec.h>
+#endif
+
+#ifdef COMPAT_FREEBSD
+#include <compat/freebsd/freebsd_exec.h>
 #endif
 
 int	ELFNAME(check_header) __P((Elf_Ehdr *, int));
@@ -145,6 +150,9 @@ struct emul ELFNAMEEND(emul_netbsd) = {
 int (*ELFNAME(probe_funcs)[]) __P((struct proc *, struct exec_package *,
     Elf_Ehdr *, char *, Elf_Addr *)) = {
 	ELFNAME2(netbsd,probe),
+#if defined(COMPAT_FREEBSD) && (ELFSIZE == 32)
+	ELFNAME2(freebsd,probe),		/* XXX not 64-bit safe */
+#endif
 #if defined(COMPAT_LINUX)
 	ELFNAME2(linux,probe),
 #endif
