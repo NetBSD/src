@@ -1,4 +1,4 @@
-/* $NetBSD: podulebusreg.h,v 1.1 2000/05/09 21:56:03 bjh21 Exp $ */
+/* $NetBSD: podulebusreg.h,v 1.2 2001/01/12 00:13:26 bjh21 Exp $ */
 
 /*
  * 2000 Ben Harris
@@ -49,14 +49,14 @@
 #define CHUNK_RISCIX_LOADER	0xa0
 #define CHUNK_HELIOS		0xa3
 #define CHUNK_DEV_LINK		0xf0
-#define CHUNK_DEV_SERIAL	0xf1
-#define CHUNK_DEV_DATE		0xf2
-#define CHUNK_DEV_MODS		0xf3
-#define CHUNK_DEV_PLACE		0xf4
-#define CHUNK_DEV_DESCR		0xf5
-#define CHUNK_DEV_PARTNO	0xf6
-#define CHUNK_DEV_EADDR		0xf7
-#define CHUNK_DEV_HWREV		0xf8
+#define CHUNK_DEV_SERIAL	0xf1 /* ASCII string */
+#define CHUNK_DEV_DATE		0xf2 /* ASCII string */
+#define CHUNK_DEV_MODS		0xf3 /* ASCII string */
+#define CHUNK_DEV_PLACE		0xf4 /* ASCII string */
+#define CHUNK_DEV_DESCR		0xf5 /* ASCII string */
+#define CHUNK_DEV_PARTNO	0xf6 /* ASCII string */
+#define CHUNK_DEV_EADDR		0xf7 /* Six bytes */
+#define CHUNK_DEV_HWREV		0xf8 /* Four-byte LE word */
 #define CHUNK_DEV_ROMCRC	0xf9
 
 #endif
