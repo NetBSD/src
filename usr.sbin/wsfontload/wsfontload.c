@@ -1,4 +1,4 @@
-/* $NetBSD: wsfontload.c,v 1.2 2000/01/05 18:46:43 ad Exp $ */
+/* $NetBSD: wsfontload.c,v 1.3 2000/01/25 01:04:07 ad Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -42,10 +42,12 @@
 
 #include <dev/wscons/wsconsio.h>
 
-#define DEFDEV "/dev/ttyEcfg"
-#define DEFWIDTH 8
-#define DEFHEIGHT 16
-#define DEFENC WSDISPLAY_FONTENC_ISO
+#define DEFDEV		"/dev/ttyEcfg"
+#define DEFWIDTH	8
+#define DEFHEIGHT	16
+#define DEFENC		WSDISPLAY_FONTENC_ISO
+#define DEFBITORDER	WSDISPLAY_FONTORDER_L2R
+#define DEFBYTEORDER	WSDISPLAY_FONTORDER_L2R
 
 int main __P((int, char**));
 static void usage __P((void));
@@ -58,7 +60,7 @@ usage()
 
 	(void)fprintf(stderr,
 		"Usage: %s [-f wsdev] [-w width] [-h height] [-e encoding]"
-		" [-N name] [fontfile]\n",
+		" [-N name] [-b] [-B] [fontfile]\n",
 		      __progname);
 	exit(1);
 }
@@ -82,8 +84,8 @@ main(argc, argv)
 	f.stride = 0;
 	f.encoding = DEFENC;
 	f.name = 0;
-	f.bitorder = WSDISPLAY_FONTORDER_L2R;
-	f.byteorder = WSDISPLAY_FONTORDER_L2R;
+	f.bitorder = DEFBITORDER;
+	f.byteorder = DEFBYTEORDER;
 
 	while ((c = getopt(argc, argv, "f:w:h:e:N:bB")) != -1) {
 		switch (c) {
