@@ -1,4 +1,4 @@
-/*	$NetBSD: print-nfs.c,v 1.9 1998/07/26 16:01:12 mycroft Exp $	*/
+/*	$NetBSD: print-nfs.c,v 1.10 1999/09/04 03:36:41 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -27,7 +27,7 @@
 static const char rcsid[] =
     "@(#) Header: print-nfs.c,v 1.65 97/08/17 13:24:22 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-nfs.c,v 1.9 1998/07/26 16:01:12 mycroft Exp $");
+__RCSID("$NetBSD: print-nfs.c,v 1.10 1999/09/04 03:36:41 itojun Exp $");
 #endif
 #endif
 
@@ -1587,5 +1587,5 @@ interp_reply(const struct rpc_msg *rp, u_int32_t proc, u_int32_t vers, int lengt
 	}
 	if (!nfserr)
 		fputs(" [|nfs]", stdout);
-trunc:
+trunc:;
 }
