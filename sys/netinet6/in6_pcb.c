@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.50 2002/08/20 22:06:04 itojun Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.51 2002/08/26 14:25:00 itojun Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.50 2002/08/20 22:06:04 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.51 2002/08/26 14:25:00 itojun Exp $");
 
 #include "opt_ipsec.h"
 
@@ -282,7 +282,7 @@ in6_pcbbind(in6p, nam, p)
 
 	if (lport == 0) {
 		int e;
-		if ((e = in6_pcbsetport(&in6p->in6p_laddr, in6p)) != 0)
+		if ((e = in6_pcbsetport(&in6p->in6p_laddr, in6p, p)) != 0)
 			return(e);
 	}
 	else
