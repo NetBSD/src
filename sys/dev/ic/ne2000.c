@@ -1,4 +1,4 @@
-/*	$NetBSD: ne2000.c,v 1.22 1999/09/27 05:25:44 enami Exp $	*/
+/*	$NetBSD: ne2000.c,v 1.23 1999/09/27 23:19:12 enami Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -149,9 +149,20 @@ ne2000_attach(nsc, myea, media, nmedia, defmedia)
 		dsc->sc_reg_map[i] = i;
 
 	/*
-	 * 8k of memory plus an additional 8k if an NE2000.
+	 * 8k of memory for NE1000, 16k for NE2000 and 24k for the
+	 * card uses DL10019.
 	 */
-	memsize = 8192 + (nsc->sc_type == NE2000_TYPE_NE2000 ? 8192 : 0);
+	switch (nsc->sc_type) {
+	case NE2000_TYPE_NE1000:
+		memsize = 8192;
+		break;
+	case NE2000_TYPE_NE2000:
+		memsize = 8192 * 2;
+		break;
+	case NE2000_TYPE_DL10019:
+		memsize = 8192 * 3;
+		break;
+	}
 
 	/*
 	 * NIC memory doens't start at zero on an NE board.

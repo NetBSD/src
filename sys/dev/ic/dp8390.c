@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390.c,v 1.26 1999/08/25 22:41:42 thorpej Exp $	*/
+/*	$NetBSD: dp8390.c,v 1.27 1999/09/27 23:19:12 enami Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -100,8 +100,10 @@ dp8390_config(sc, media, nmedia, defmedia)
 	if ((sc->mem_size < 16384) ||
 	    (sc->sc_flags & DP8390_NO_MULTI_BUFFERING))
 		sc->txb_cnt = 1;
-	else
+	else if (sc->mem_size < 8192 * 3)
 		sc->txb_cnt = 2;
+	else
+		sc->txb_cnt = 3;
 
 	sc->tx_page_start = sc->mem_start >> ED_PAGE_SHIFT;
 	sc->rec_page_start = sc->tx_page_start + sc->txb_cnt * ED_TXBUF_SIZE;
