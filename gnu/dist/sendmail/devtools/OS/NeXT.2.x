@@ -1,4 +1,4 @@
-#	$Id: NeXT.2.x,v 1.1.1.1 2000/05/03 09:27:18 itojun Exp $
+#	Id: NeXT.2.x,v 8.11 1999/12/08 06:08:07 gshapiro Exp
 define(`confBEFORE', `unistd.h dirent.h')
 define(`confMAPDEF', `-DNDBM -DNIS -DNETINFO')
 define(`confENVDEF', `-DNeXT')

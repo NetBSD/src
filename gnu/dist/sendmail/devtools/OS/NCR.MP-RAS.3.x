@@ -1,4 +1,4 @@
-#	$Id: NCR.MP-RAS.3.x,v 1.1.1.1 2000/05/03 09:27:18 itojun Exp $
+#	Id: NCR.MP-RAS.3.x,v 8.16 1999/10/25 16:32:02 ca Exp
 define(`confMAPDEF', `-DNDBM -DMAP_REGEX')
 define(`confENVDEF', `-DNCR_MP_RAS3')
 define(`confOPTIMIZE', `-O2')

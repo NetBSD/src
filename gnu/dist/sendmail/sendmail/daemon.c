@@ -15,9 +15,9 @@
 
 #ifndef lint
 # ifdef DAEMON
-static char id[] = "@(#)$Id: daemon.c,v 1.1.1.1 2000/05/03 09:27:22 itojun Exp $ (with daemon mode)";
+static char id[] = "@(#)Id: daemon.c,v 8.401 2000/03/11 20:52:46 gshapiro Exp (with daemon mode)";
 # else /* DAEMON */
-static char id[] = "@(#)$Id: daemon.c,v 1.1.1.1 2000/05/03 09:27:22 itojun Exp $ (without daemon mode)";
+static char id[] = "@(#)Id: daemon.c,v 8.401 2000/03/11 20:52:46 gshapiro Exp (without daemon mode)";
 # endif /* DAEMON */
 #endif /* ! lint */
 

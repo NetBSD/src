@@ -1,4 +1,4 @@
-#	$Id: Linux,v 1.1.1.1 2000/05/03 09:27:18 itojun Exp $
+#	Id: Linux,v 8.18 2000/04/04 22:25:21 carlalex Exp
 define(`confDEPEND_TYPE', `CC-M')
 define(`confMANROOT', `/usr/man/man')
 define(`confLIBS', `-ldl')

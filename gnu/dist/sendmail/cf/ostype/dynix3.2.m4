@@ -13,6 +13,6 @@ divert(-1)
 #
 
 divert(0)
-VERSIONID(`$Id: dynix3.2.m4,v 1.1.1.2 2000/05/03 09:27:40 itojun Exp $')
+VERSIONID(`Id: dynix3.2.m4,v 8.14 1999/04/24 05:37:41 gshapiro Exp')
 ifdef(`QUEUE_DIR',, `define(`QUEUE_DIR', /usr/spool/mqueue)')dnl
 define(`confEBINDIR', `/usr/lib')dnl

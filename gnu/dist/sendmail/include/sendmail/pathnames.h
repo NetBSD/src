@@ -9,7 +9,7 @@
  * the sendmail distribution.
  *
  *
- *	$Id: pathnames.h,v 1.1.1.1 2000/05/03 09:27:24 itojun Exp $
+ *	Id: pathnames.h,v 8.16 2000/02/01 05:49:50 gshapiro Exp
  */
 
 #ifndef _PATH_SENDMAILCF

@@ -13,7 +13,7 @@ divert(-1)
 #
 
 divert(0)
-VERSIONID(`$Id: mailertable.m4,v 1.1.1.2 2000/05/03 09:27:32 itojun Exp $')
+VERSIONID(`Id: mailertable.m4,v 8.18 1999/07/22 17:55:35 gshapiro Exp')
 divert(-1)
 
 define(`_MAILER_TABLE_', `')

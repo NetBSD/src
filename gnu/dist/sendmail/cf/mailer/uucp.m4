@@ -25,7 +25,7 @@ POPDIVERT
 ###   UUCP Mailer specification   ###
 #####################################
 
-VERSIONID(`$Id: uucp.m4,v 1.1.1.2 2000/05/03 09:27:38 itojun Exp $')
+VERSIONID(`Id: uucp.m4,v 8.38 1999/10/18 04:57:55 gshapiro Exp')
 
 #
 #  envelope and header sender rewriting

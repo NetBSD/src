@@ -8,7 +8,7 @@
 */
 
 #ifndef lint
-static char id[] = "@(#)$Id: smdb2.c,v 1.1.1.1 2000/05/03 09:27:48 itojun Exp $";
+static char id[] = "@(#)Id: smdb2.c,v 8.53 2000/03/17 07:32:43 gshapiro Exp";
 #endif /* ! lint */
 
 #include <fcntl.h>

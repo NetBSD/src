@@ -1,4 +1,4 @@
-#	$Id: BSD-OS,v 1.1.1.1 2000/05/03 09:27:18 itojun Exp $
+#	Id: BSD-OS,v 8.11 1999/05/06 19:45:40 gshapiro Exp
 define(`confMAPDEF', `-DNEWDB -DMAP_REGEX')
 define(`confENVDEF', `-DNETISO')
 define(`confLIBS', `-lutil -lkvm')

@@ -1,4 +1,4 @@
-#	$Id: SINIX.5.43,v 1.1.1.1 2000/05/03 09:27:18 itojun Exp $
+#	Id: SINIX.5.43,v 8.2 1999/04/24 05:37:59 gshapiro Exp
 define(`confCC', `/usr/bin/cc')
 define(`confENVDEF', `-W0 -D__svr4__')
 define(`confLIBS', `-lsocket -lnsl -lelf -lmproc')

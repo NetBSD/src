@@ -17,7 +17,7 @@ divert(-1)
 #
 
 divert(0)dnl
-VERSIONID(`$Id: knecht.mc,v 1.1.1.2 2000/05/03 09:27:28 itojun Exp $')
+VERSIONID(`Id: knecht.mc,v 8.37 1999/11/19 05:18:12 gshapiro Exp')
 OSTYPE(bsdi)dnl
 DOMAIN(generic)dnl
 define(`confFORWARD_PATH', `$z/.forward.$w:$z/.forward+$h:$z/.forward')dnl

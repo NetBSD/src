@@ -1,4 +1,4 @@
-#	$Id: QNX,v 1.1.1.1 2000/05/03 09:27:18 itojun Exp $
+#	Id: QNX,v 8.6 1999/04/05 20:00:39 gshapiro Exp
 PUSHDIVERT(1)
 #
 # For this Makefile to work you must compile and install the libdb package

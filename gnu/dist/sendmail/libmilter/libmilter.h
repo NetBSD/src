@@ -17,7 +17,7 @@
 # define EXTERN
 # define INIT(x)	= x
 # ifndef lint
-static char MilterlId[] = "@(#)$Id: libmilter.h,v 1.1.1.1 2000/05/03 09:27:48 itojun Exp $";
+static char MilterlId[] = "@(#)Id: libmilter.h,v 8.3 2000/02/26 01:32:13 gshapiro Exp";
 # endif /* ! lint */
 #else /* _DEFINE */
 # define EXTERN extern

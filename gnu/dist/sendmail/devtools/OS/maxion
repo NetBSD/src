@@ -1,4 +1,4 @@
-#	$Id: maxion,v 1.1.1.1 2000/05/03 09:27:19 itojun Exp $
+#	Id: maxion,v 8.8 1999/04/24 05:38:02 gshapiro Exp
 define(`confCC', `/usr/ucb/cc')
 define(`confMAPDEF', `-DNDBM -DNIS')
 define(`confLIBDIRS', `-L/usr/ucblib')

@@ -1,4 +1,4 @@
-#	$Id: AIX.4.x,v 1.1.1.1 2000/05/03 09:27:18 itojun Exp $
+#	Id: AIX.4.x,v 8.15 2000/03/15 06:14:35 gshapiro Exp
 define(`confMAPDEF', `-DNDBM -DNIS -DMAP_REGEX')
 define(`confENVDEF', `-D_AIX4')
 define(`confOPTIMIZE', `-O3 -qstrict')

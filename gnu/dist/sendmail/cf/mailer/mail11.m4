@@ -41,7 +41,7 @@ POPDIVERT
 ###   UTK-MAIL11 Mailer specification   ###
 ###########################################
 
-VERSIONID(`$Id: mail11.m4,v 1.1.1.2 2000/05/03 09:27:37 itojun Exp $')
+VERSIONID(`Id: mail11.m4,v 8.19 1999/10/18 04:57:54 gshapiro Exp')
 
 SMail11From=15
 R$+			$: $>25 $1		preprocess

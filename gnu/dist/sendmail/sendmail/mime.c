@@ -15,7 +15,7 @@
 #include <string.h>
 
 #ifndef lint
-static char id[] = "@(#)$Id: mime.c,v 1.1.1.1 2000/05/03 09:27:23 itojun Exp $";
+static char id[] = "@(#)Id: mime.c,v 8.94 1999/10/17 17:35:58 ca Exp";
 #endif /* ! lint */
 
 static int	isboundary __P((char *, char **));

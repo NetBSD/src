@@ -1,4 +1,4 @@
-#	$Id: OSF1,v 1.1.1.1 2000/05/03 09:27:18 itojun Exp $
+#	Id: OSF1,v 8.12 1999/11/12 21:19:05 rand Exp
 define(`confCC', `cc -std1 -Olimit 1000')
 define(`confMAPDEF', `-DNDBM -DNIS -DMAP_REGEX')
 define(`confLIBS', `-ldbm')

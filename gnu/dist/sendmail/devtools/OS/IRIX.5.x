@@ -1,4 +1,4 @@
-#	$Id: IRIX.5.x,v 1.1.1.1 2000/05/03 09:27:18 itojun Exp $
+#	Id: IRIX.5.x,v 8.11 1999/07/24 23:37:45 gshapiro Exp
 define(`confCC', `cc -mips2')
 define(`confMAPDEF', `-DNDBM -DNIS')
 define(`confENVDEF', `-DIRIX5')

@@ -1,4 +1,4 @@
-#	$Id: IRIX64.6.x,v 1.1.1.1 2000/05/03 09:27:18 itojun Exp $
+#	Id: IRIX64.6.x,v 8.19 2000/01/27 19:27:46 ca Exp
 define(`confCC', `cc -mips3 -n32 -OPT:Olimit=2700')
 define(`confLIBSEARCHPATH', `/lib32 /usr/lib32')
 define(`confMAPDEF', `-DNDBM -DNIS -DMAP_REGEX')

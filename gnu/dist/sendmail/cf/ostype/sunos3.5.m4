@@ -13,6 +13,6 @@ divert(-1)
 #
 
 divert(0)
-VERSIONID(`$Id: sunos3.5.m4,v 1.1.1.2 2000/05/03 09:27:43 itojun Exp $')
+VERSIONID(`Id: sunos3.5.m4,v 8.10 1999/02/07 07:26:23 gshapiro Exp')
 
 define(`confEBINDIR', `/usr/lib')dnl

@@ -1,4 +1,4 @@
-#	$Id: HP-UX.10.x,v 1.1.1.1 2000/05/03 09:27:18 itojun Exp $
+#	Id: HP-UX.10.x,v 8.14 1999/08/10 00:06:41 gshapiro Exp
 define(`confCC', `cc -Aa')
 define(`confMAPDEF', `-DNDBM -DNIS -DMAP_REGEX')
 define(`confENVDEF', `-D_HPUX_SOURCE -DV4FS')

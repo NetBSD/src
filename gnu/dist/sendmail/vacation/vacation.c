@@ -21,7 +21,7 @@ static char copyright[] =
 #endif /* ! lint */
 
 #ifndef lint
-static char id[] = "@(#)$Id: vacation.c,v 1.1.1.1 2000/05/03 09:27:48 itojun Exp $";
+static char id[] = "@(#)Id: vacation.c,v 8.68 2000/03/17 07:32:51 gshapiro Exp";
 #endif /* ! lint */
 
 #include <ctype.h>
