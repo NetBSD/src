@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_netbsd.c,v 1.8.2.2 2004/07/17 16:52:16 he Exp $	*/
+/*	$NetBSD: ipsec_netbsd.c,v 1.8.2.3 2004/08/16 05:51:01 jmc Exp $	*/
 /*	$KAME: esp_input.c,v 1.60 2001/09/04 08:43:19 itojun Exp $	*/
 /*	$KAME: ah_input.c,v 1.64 2001/09/04 08:43:19 itojun Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_netbsd.c,v 1.8.2.2 2004/07/17 16:52:16 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_netbsd.c,v 1.8.2.3 2004/08/16 05:51:01 jmc Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -497,12 +497,6 @@ SYSCTL_SETUP(sysctl_net_inet_fast_ipsec_setup, "sysctl net.inet.ipsec subtree se
 		       sysctl_fast_ipsec, 0, &ip4_esp_trans_deflev, 0,
 		       CTL_NET, PF_INET, ipproto_ipsec,
 		       IPSECCTL_DEF_ESP_TRANSLEV, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "esp_net_deflev", NULL,
-		       sysctl_fast_ipsec, 0, &ip4_esp_net_deflev, 0,
-		       CTL_NET, PF_INET, IPPROTO_ESP,
-		       IPSECCTL_DEF_ESP_NETLEV, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "esp_net_deflev", NULL,
