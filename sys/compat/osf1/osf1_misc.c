@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_misc.c,v 1.27 1999/04/27 17:56:52 cgd Exp $ */
+/* $NetBSD: osf1_misc.c,v 1.28 1999/04/27 18:45:22 cgd Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -1054,6 +1054,7 @@ cvtrusage2osf1(ru, oru)
 	struct rusage *ru;
 	struct osf1_rusage *oru;
 {
+
 	oru->ru_utime.tv_sec = ru->ru_utime.tv_sec;
 	oru->ru_utime.tv_usec = ru->ru_utime.tv_usec;
 
@@ -1082,9 +1083,64 @@ osf1_sys_madvise(p, v, retval)
 	void *v;
 	register_t *retval;
 {
+	struct osf1_sys_madvise_args *uap = v;
+	struct sys_madvise_args a;
+	int error;
 
-	/* XXX */
-	return EINVAL;
+	SCARG(&a, addr) = SCARG(uap, addr);
+	SCARG(&a, len) = SCARG(uap, len);
+
+	error = 0;
+	switch (SCARG(uap, behav)) {
+	case OSF1_MADV_NORMAL:
+		SCARG(&a, behav) = MADV_NORMAL;
+		break;
+
+	case OSF1_MADV_RANDOM:
+		SCARG(&a, behav) = MADV_RANDOM;
+		break;
+
+	case OSF1_MADV_SEQUENTIAL:
+		SCARG(&a, behav) = MADV_SEQUENTIAL;
+		break;
+
+	case OSF1_MADV_WILLNEED:
+		SCARG(&a, behav) = MADV_WILLNEED;
+		break;
+
+	case OSF1_MADV_DONTNEED_COMPAT:
+		SCARG(&a, behav) = MADV_DONTNEED;
+		break;
+
+	case OSF1_MADV_SPACEAVAIL:
+		SCARG(&a, behav) = MADV_SPACEAVAIL;
+		break;
+
+	case OSF1_MADV_DONTNEED:
+		/*
+		 * XXX not supported.  In Digital UNIX, this flushes all
+		 * XXX data in the region and replaces it with ZFOD pages.
+		 */
+		error = EINVAL;
+		break;
+
+	default:
+		error = EINVAL;
+		break;
+	}
+
+	if (error == 0) {
+		error = sys_madvise(p, &a, retval);
+
+		/*
+		 * NetBSD madvise() currently always returns ENOSYS.
+		 * Digital UNIX says that non-operational requests (i.e.
+		 * valid, but unimplemented 'behav') will return success.
+		 */
+		if (error == ENOSYS)
+			error = 0;
+	}
+	return (error);
 }
 
 int
