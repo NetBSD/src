@@ -1,4 +1,4 @@
-/*	$NetBSD: identd.c,v 1.17 2003/04/19 20:57:36 christos Exp $	*/
+/*	$NetBSD: identd.c,v 1.18 2003/05/17 21:24:38 itojun Exp $	*/
 
 /*
 ** identd.c                       A TCP/IP link identification protocol server
@@ -152,7 +152,7 @@ char *inet_ntoa(ad)
     s_ad /= 256;
     b = s_ad % 256;
     a = s_ad / 256;
-    sprintf(addr, "%d.%d.%d.%d", a, b, c, d);
+    snprintf(addr, sizeof(addr), "%d.%d.%d.%d", a, b, c, d);
     
     return addr;
 }
