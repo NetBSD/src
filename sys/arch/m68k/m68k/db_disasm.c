@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.27 2001/12/26 19:00:31 thorpej Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.28 2002/06/08 16:08:54 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -2065,7 +2065,7 @@ print_reglist(dbuf, mod, rl)
 	int mod;
 	u_short rl;
 {
-	const char *const regs[16] = {
+	static const char *const regs[16] = {
 		"d0","d1","d2","d3","d4","d5","d6","d7",
 		"a0","a1","a2","a3","a4","a5","a6","a7" };
 	int bit, list;
