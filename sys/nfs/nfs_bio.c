@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.72 2001/11/30 07:08:53 chs Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.73 2001/12/31 07:16:47 chs Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.72 2001/11/30 07:08:53 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.73 2001/12/31 07:16:47 chs Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -1002,6 +1002,7 @@ nfs_getpages(v)
 	int i, error, npages;
 	boolean_t v3 = NFS_ISV3(vp);
 	boolean_t write = (ap->a_access_type & VM_PROT_WRITE) != 0;
+	boolean_t locked = (ap->a_flags & PGO_LOCKED) != 0;
 	UVMHIST_FUNC("nfs_getpages"); UVMHIST_CALLED(ubchist);
 
 	/*
@@ -1034,7 +1035,9 @@ nfs_getpages(v)
 	lockmgr(&np->n_commitlock, LK_EXCLUSIVE, NULL);
 	nfs_del_committed_range(vp, origoffset, npages);
 	nfs_del_tobecommitted_range(vp, origoffset, npages);
-	simple_lock(&uobj->vmobjlock);
+	if (!locked) {
+		simple_lock(&uobj->vmobjlock);
+	}
 	for (i = 0; i < npages; i++) {
 		pg = pgs[i];
 		if (pg == NULL || pg == PGO_DONTCARE) {
@@ -1042,7 +1045,9 @@ nfs_getpages(v)
 		}
 		pg->flags &= ~(PG_NEEDCOMMIT|PG_RDONLY);
 	}
-	simple_unlock(&uobj->vmobjlock);
+	if (!locked) {
+		simple_unlock(&uobj->vmobjlock);
+	}
 	lockmgr(&np->n_commitlock, LK_RELEASE, NULL);
 	return 0;
 }
