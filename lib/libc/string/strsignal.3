@@ -34,7 +34,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)strerror.3	6.9 (Berkeley) 6/29/91
-.\"	$NetBSD: strsignal.3,v 1.4 1998/02/05 18:50:56 perry Exp $
+.\"	$NetBSD: strsignal.3,v 1.5 1998/03/11 08:23:39 fair Exp $
 .\"
 .Dd June 29, 1991
 .Dt STRSIGNAL 3
@@ -45,7 +45,7 @@
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
-.Fd #include <string.h>
+.Fd #include <unistd.h>
 .Ft char *
 .Fn strsignal "int sig"
 .Sh DESCRIPTION
