@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.16 2000/11/27 08:39:57 chs Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.17 2000/12/01 09:54:42 chs Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -209,11 +209,16 @@ ufs_balloc_range(vp, off, len, cred, flags)
 		if (error) {
 			goto out;
 		}
+		simple_lock(&uobj->vmobjlock);
+		uvm_lock_pageq();
 		for (i = 0; i < npages1; i++) {
 			UVMHIST_LOG(ubchist, "got pgs1[%d] %p", i, pgs1[i],0,0);
 			KASSERT((pgs1[i]->flags & PG_RELEASED) == 0);
 			pgs1[i]->flags &= ~PG_CLEAN;
+			uvm_pageactivate(pgs1[i]);
 		}
+		uvm_unlock_pageq();
+		simple_unlock(&uobj->vmobjlock);
 	}
 
 	/*
@@ -234,11 +239,16 @@ ufs_balloc_range(vp, off, len, cred, flags)
 		if (error) {
 			goto out;
 		}
+		simple_lock(&uobj->vmobjlock);
+		uvm_lock_pageq();
 		for (i = 0; i < npages2; i++) {
 			UVMHIST_LOG(ubchist, "got pgs2[%d] %p", i, pgs2[i],0,0);
 			KASSERT((pgs2[i]->flags & PG_RELEASED) == 0);
 			pgs2[i]->flags &= ~PG_CLEAN;
+			uvm_pageactivate(pgs2[i]);
 		}
+		uvm_unlock_pageq();
+		simple_unlock(&uobj->vmobjlock);
 	}
 
 	/*
