@@ -42,7 +42,7 @@
  *	@(#)pmap.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: pmap.c,v 1.39 93/04/20 11:17:12 torek Exp 
- * $Id: pmap.c,v 1.6 1994/03/03 16:14:57 pk Exp $
+ * $Id: pmap.c,v 1.7 1994/03/20 08:58:41 pk Exp $
  */
 
 /*
@@ -913,10 +913,6 @@ if(pm==NULL)panic("pv_changepte 1");
 			if (pm->pm_ctx) {
 				extern vm_offset_t pager_sva, pager_eva;
 
-				/*
-				 * Bizarreness:  we never clear PG_W on
-				 * pager pages, nor PG_NC on DVMA pages.
-				 */
 				if (bic == PG_W &&
 				    va >= pager_sva && va < pager_eva)
 					continue;
@@ -1175,6 +1171,10 @@ pmap_bootstrap(nmmu, nctx)
 	register void (*rom_setmap)(int ctx, caddr_t va, int pmeg);
 	int lastpage;
 	extern char end[];
+#ifdef DDB
+	extern char *esym;
+	char *theend = end;
+#endif
 	extern caddr_t reserve_dumppages(caddr_t);
 
 	kernel_pmap = (pmap_t)&kernel_pmap_store;
@@ -1199,11 +1199,19 @@ pmap_bootstrap(nmmu, nctx)
 	 * Allocate and clear mmu entry and context structures.
 	 */
 	p = end;
+#ifdef DDB
+	if (esym != 0)
+		theend = p = esym;
+#endif
 	mmuentry = me = (struct mmuentry *)p;
 	p += nmmu * sizeof *me;
 	ctxinfo = ci = (union ctxinfo *)p;
 	p += nctx * sizeof *ci;
+#ifdef DDB
+	bzero(theend, p - theend);
+#else
 	bzero(end, p - end);
+#endif
 
 	/*
 	 * Set up the `constants' for the call to vm_init()
