@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.3 2001/11/20 08:43:34 lukem Exp $	*/
+/*	$NetBSD: kgdb_machdep.c,v 1.4 2002/02/12 15:26:50 uch Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -91,15 +91,13 @@
 #include <machine/trap.h>
 
 /* XXX Should be in <machine/pmap.h> */
-pt_entry_t	*pmap_pte __P((pmap_t, vaddr_t));
+pt_entry_t *pmap_pte(pmap_t, vaddr_t);
 
 /*
  * Determine if the memory at va..(va+len) is valid.
  */
 int
-kgdb_acc(va, len)
-	vaddr_t va;
-	size_t len;
+kgdb_acc(vaddr_t va, size_t len)
 {
 	vaddr_t last_va;
 	pt_entry_t pte;
@@ -123,8 +121,7 @@ kgdb_acc(va, len)
  * (gdb only understands unix signal numbers).
  */
 int
-kgdb_signal(type)
-	int type;
+kgdb_signal(int type)
 {
 	switch (type) {
 	case T_NMI:
@@ -169,9 +166,7 @@ kgdb_signal(type)
  * understood by gdb.
  */
 void
-kgdb_getregs(regs, gdb_regs)
-	db_regs_t *regs;
-	kgdb_reg_t *gdb_regs;
+kgdb_getregs(db_regs_t *regs, kgdb_reg_t *gdb_regs)
 {
 
 	gdb_regs[ 0] = regs->tf_eax;
@@ -201,9 +196,7 @@ kgdb_getregs(regs, gdb_regs)
  * Reverse the above.
  */
 void
-kgdb_setregs(regs, gdb_regs)
-	db_regs_t *regs;
-	kgdb_reg_t *gdb_regs;
+kgdb_setregs(db_regs_t *regs, kgdb_reg_t *gdb_regs)
 {
 
 	regs->tf_eax    = gdb_regs[ 0];
@@ -233,8 +226,7 @@ kgdb_setregs(regs, gdb_regs)
  * noting on the console why nothing else is going on.
  */
 void
-kgdb_connect(verbose)
-	int verbose;
+kgdb_connect(int verbose)
 {
 
 	if (kgdb_dev < 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.18 2002/02/01 17:52:56 uch Exp $	*/
+/*	$NetBSD: clock.c,v 1.19 2002/02/12 15:26:48 uch Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -108,10 +108,10 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <machine/cpufunc.h>
 #include <machine/shbvar.h>
 
-void	findcpuspeed __P((void));
-int	clockintr __P((void *));
-int	gettick __P((void));
-void	rtcinit __P((void));
+void	findcpuspeed(void);
+int	clockintr(void *);
+int	gettick(void);
+void	rtcinit(void);
 
 int timer0speed;
 
@@ -137,8 +137,7 @@ startrtclock()
  * Fill in *tvp with current time with microsecond resolution.
  */
 void
-microtime(tvp)
-	struct timeval *tvp;
+microtime(struct timeval *tvp)
 {
 	int s = splclock();
 	long diff;
@@ -191,8 +190,7 @@ microtime(tvp)
 unsigned int maxwdog;
 
 int
-clockintr(arg)
-	void *arg;
+clockintr(void *arg)
 {
 	struct clockframe *frame = arg;		/* not strictly necessary */
 
@@ -237,8 +235,7 @@ gettick()
  * wave' mode counts at 2:1).
  */
 void
-delay(n)
-	int n;
+delay(int n)
 {
 	unsigned int limit, tick, otick;
 
@@ -338,8 +335,7 @@ static int timeset;
  * from a filesystem.
  */
 void
-inittodr(base)
-	time_t base;
+inittodr(time_t base)
 {
 	struct clock_ymdhms dt;
 	int doreset = 0;
@@ -478,7 +474,6 @@ resettodr()
 }
 
 void
-setstatclockrate(arg)
-	int arg;
+setstatclockrate(int arg)
 {
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: sci.c,v 1.17 2002/02/01 17:52:56 uch Exp $ */
+/* $NetBSD: sci.c,v 1.18 2002/02/12 15:26:46 uch Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -126,15 +126,15 @@
 
 #include <machine/shbvar.h>
 
-static void	scistart __P((struct tty *));
-static int	sciparam __P((struct tty *, struct termios *));
+static void	scistart(struct tty *);
+static int	sciparam(struct tty *, struct termios *);
 
-void scicnprobe __P((struct consdev *));
-void scicninit __P((struct consdev *));
-void scicnputc __P((dev_t, int));
-int scicngetc __P((dev_t));
-void scicnpoolc __P((dev_t, int));
-int sciintr __P((void *));
+void scicnprobe(struct consdev *);
+void scicninit(struct consdev *);
+void scicnputc(dev_t, int);
+int scicngetc(dev_t);
+void scicnpoolc(dev_t, int);
+int sciintr(void *);
 
 struct sci_softc {
 	struct device sc_dev;		/* boilerplate */
@@ -189,27 +189,27 @@ struct sci_softc {
 };
 
 /* controller driver configuration */
-static int sci_match __P((struct device *, struct cfdata *, void *));
-static void sci_attach __P((struct device *, struct device *, void *));
+static int sci_match(struct device *, struct cfdata *, void *);
+static void sci_attach(struct device *, struct device *, void *);
 
-void	sci_break	__P((struct sci_softc *, int));
-void	sci_iflush	__P((struct sci_softc *));
+void	sci_break(struct sci_softc *, int);
+void	sci_iflush(struct sci_softc *);
 
 #define	integrate	static inline
 #ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
-void 	scisoft	__P((void *));
+void 	scisoft(void *);
 #else
 #ifndef __NO_SOFT_SERIAL_INTERRUPT
-void 	scisoft	__P((void));
+void 	scisoft(void);
 #else
-void 	scisoft	__P((void *));
+void 	scisoft(void *);
 #endif
 #endif
-integrate void sci_rxsoft	__P((struct sci_softc *, struct tty *));
-integrate void sci_txsoft	__P((struct sci_softc *, struct tty *));
-integrate void sci_stsoft	__P((struct sci_softc *, struct tty *));
-integrate void sci_schedrx	__P((struct sci_softc *));
-void	scidiag		__P((void *));
+integrate void sci_rxsoft(struct sci_softc *, struct tty *);
+integrate void sci_txsoft(struct sci_softc *, struct tty *);
+integrate void sci_stsoft(struct sci_softc *, struct tty *);
+integrate void sci_schedrx(struct sci_softc *);
+void	scidiag(void *);
 
 #define	SCIUNIT_MASK		0x7ffff
 #define	SCIDIALOUT_MASK	0x80000
@@ -266,7 +266,7 @@ extern struct cfdriver sci_cd;
 
 cdev_decl(sci);
 
-void InitializeSci  __P((unsigned int));
+void InitializeSci (unsigned int);
 
 /*
  * following functions are debugging prupose only
@@ -275,18 +275,17 @@ void InitializeSci  __P((unsigned int));
 #define I2C_ADRS (*(volatile unsigned int *)0xa8000000)
 #define USART_ON (unsigned int)~0x08
 
-static void WaitFor __P((int));
-void sci_putc __P((unsigned char));
-unsigned char sci_getc __P((void));
-int SciErrCheck __P((void));
+static void WaitFor(int);
+void sci_putc(unsigned char);
+unsigned char sci_getc(void);
+int SciErrCheck(void);
 
 /*
  * WaitFor
  * : int mSec;
  */
 static void
-WaitFor(mSec)
-	int mSec;
+WaitFor(int mSec)
 {
 
 	/* Disable Under Flow interrupt, rising edge, 1/4 */
@@ -313,8 +312,7 @@ WaitFor(mSec)
  */
 
 void
-InitializeSci(bps)
-	unsigned int bps;
+InitializeSci(unsigned int bps)
 {
 
 	/* Initialize SCR */
@@ -349,8 +347,7 @@ InitializeSci(bps)
  *  : unsigned char c;
  */
 void
-sci_putc(c)
-	unsigned char c;
+sci_putc(unsigned char c)
 {
 
 	if (c == '\n')
@@ -411,10 +408,7 @@ sci_getc(void)
 
 
 static int
-sci_match(parent, cfp, aux)
-	struct device *parent;
-	struct cfdata *cfp;
-	void *aux;
+sci_match(struct device *parent, struct cfdata *cfp, void *aux)
 {
 	struct shb_attach_args *sa = aux;
 
@@ -427,9 +421,7 @@ sci_match(parent, cfp, aux)
 }
 
 static void
-sci_attach(parent, self, aux)
-	struct device	*parent, *self;
-	void		*aux;
+sci_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct sci_softc *sc = (struct sci_softc *)self;
 	struct tty *tp;
@@ -488,8 +480,7 @@ sci_attach(parent, self, aux)
  * Start or restart transmission.
  */
 static void
-scistart(tp)
-	struct tty *tp;
+scistart(struct tty *tp)
 {
 	struct sci_softc *sc = sci_cd.cd_devs[SCIUNIT(tp->t_dev)];
 	int s;
@@ -549,9 +540,7 @@ out:
  * making sure all the changes could be done.
  */
 static int
-sciparam(tp, t)
-	struct tty *tp;
-	struct termios *t;
+sciparam(struct tty *tp, struct termios *t)
 {
 	struct sci_softc *sc = sci_cd.cd_devs[SCIUNIT(tp->t_dev)];
 	int ospeed = t->c_ospeed;
@@ -662,8 +651,7 @@ sciparam(tp, t)
 }
 
 void
-sci_iflush(sc)
-	struct sci_softc *sc;
+sci_iflush(struct sci_softc *sc)
 {
 	unsigned char err_c;
 	volatile unsigned char c;
@@ -683,10 +671,7 @@ sci_iflush(sc)
 }
 
 int
-sciopen(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+sciopen(dev_t dev, int flag, int mode, struct proc *p)
 {
 	int unit = SCIUNIT(dev);
 	struct sci_softc *sc;
@@ -801,10 +786,7 @@ bad:
 }
 
 int
-sciclose(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+sciclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 	struct sci_softc *sc = sci_cd.cd_devs[SCIUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
@@ -823,10 +805,7 @@ sciclose(dev, flag, mode, p)
 }
 
 int
-sciread(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+sciread(dev_t dev, struct uio *uio, int flag)
 {
 	struct sci_softc *sc = sci_cd.cd_devs[SCIUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
@@ -835,10 +814,7 @@ sciread(dev, uio, flag)
 }
 
 int
-sciwrite(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+sciwrite(dev_t dev, struct uio *uio, int flag)
 {
 	struct sci_softc *sc = sci_cd.cd_devs[SCIUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
@@ -847,10 +823,7 @@ sciwrite(dev, uio, flag)
 }
 
 int
-scipoll(dev, events, p)
-	dev_t dev;
-	int events;
-	struct proc *p;
+scipoll(dev_t dev, int events, struct proc *p)
 {
 	struct sci_softc *sc = sci_cd.cd_devs[SCIUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
@@ -859,8 +832,7 @@ scipoll(dev, events, p)
 }
 
 struct tty *
-scitty(dev)
-	dev_t dev;
+scitty(dev_t dev)
 {
 	struct sci_softc *sc = sci_cd.cd_devs[SCIUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
@@ -869,12 +841,7 @@ scitty(dev)
 }
 
 int
-sciioctl(dev, cmd, data, flag, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+sciioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct sci_softc *sc = sci_cd.cd_devs[SCIUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
@@ -927,8 +894,7 @@ sciioctl(dev, cmd, data, flag, p)
 }
 
 integrate void
-sci_schedrx(sc)
-	struct sci_softc *sc;
+sci_schedrx(struct sci_softc *sc)
 {
 
 	sc->sc_rx_ready = 1;
@@ -949,9 +915,7 @@ sci_schedrx(sc)
 }
 
 void
-sci_break(sc, onoff)
-	struct sci_softc *sc;
-	int onoff;
+sci_break(struct sci_softc *sc, int onoff)
 {
 
 	if (onoff)
@@ -975,9 +939,7 @@ sci_break(sc, onoff)
  * Stop output, e.g., for ^S or output flush.
  */
 void
-scistop(tp, flag)
-	struct tty *tp;
-	int flag;
+scistop(struct tty *tp, int flag)
 {
 	struct sci_softc *sc = sci_cd.cd_devs[SCIUNIT(tp->t_dev)];
 	int s;
@@ -994,8 +956,7 @@ scistop(tp, flag)
 }
 
 void
-scidiag(arg)
-	void *arg;
+scidiag(void *arg)
 {
 	struct sci_softc *sc = arg;
 	int overflows, floods;
@@ -1016,11 +977,9 @@ scidiag(arg)
 }
 
 integrate void
-sci_rxsoft(sc, tp)
-	struct sci_softc *sc;
-	struct tty *tp;
+sci_rxsoft(struct sci_softc *sc, struct tty *tp)
 {
-	int (*rint) __P((int c, struct tty *tp)) = tp->t_linesw->l_rint;
+	int (*rint)(int c, struct tty *tp) = tp->t_linesw->l_rint;
 	u_char *get, *end;
 	u_int cc, scc;
 	u_char ssr;
@@ -1116,9 +1075,7 @@ sci_txsoft(sc, tp)
 }
 
 integrate void
-sci_stsoft(sc, tp)
-	struct sci_softc *sc;
-	struct tty *tp;
+sci_stsoft(struct sci_softc *sc, struct tty *tp)
 {
 #if 0
 /* XXX (msaitoh) */
@@ -1157,8 +1114,7 @@ sci_stsoft(sc, tp)
 
 #ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 void
-scisoft(arg)
-	void *arg;
+scisoft(void *arg)
 {
 	struct sci_softc *sc = arg;
 	struct tty *tp;
@@ -1172,8 +1128,7 @@ void
 #ifndef __NO_SOFT_SERIAL_INTERRUPT
 scisoft()
 #else
-scisoft(arg)
-	void *arg;
+scisoft(void *arg)
 #endif
 {
 	struct sci_softc	*sc;
@@ -1228,8 +1183,7 @@ scisoft(arg)
 }
 
 int
-sciintr(arg)
-	void *arg;
+sciintr(void *arg)
 {
 	struct sci_softc *sc = arg;
 	u_char *put, *end;
@@ -1465,8 +1419,7 @@ scicnprobe(cp)
 }
 
 void
-scicninit(cp)
-	struct consdev *cp;
+scicninit(struct consdev *cp)
 {
 
 	InitializeSci(scicn_speed);
@@ -1474,8 +1427,7 @@ scicninit(cp)
 }
 
 int
-scicngetc(dev)
-	dev_t dev;
+scicngetc(dev_t dev)
 {
 	int c;
 	int s;
@@ -1488,9 +1440,7 @@ scicngetc(dev)
 }
 
 void
-scicnputc(dev, c)
-	dev_t dev;
-	int c;
+scicnputc(dev_t dev, int c)
 {
 	int s;
 

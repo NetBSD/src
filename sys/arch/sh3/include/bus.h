@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.6 2001/07/19 15:32:18 thorpej Exp $	*/
+/*	$NetBSD: bus.h,v 1.7 2002/02/12 15:26:47 uch Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -112,250 +112,224 @@ typedef	int bus_space_tag_t;
 typedef	u_long bus_space_handle_t;
 
 /*
- *	int bus_space_map  __P((bus_space_tag_t t, bus_addr_t addr,
- *	    bus_size_t size, int flags, bus_space_handle_t *bshp));
+ *	int bus_space_map (bus_space_tag_t t, bus_addr_t addr,
+ *	    bus_size_t size, int flags, bus_space_handle_t *bshp);
  *
  * Map a region of bus space.
  */
 #define	BUS_SPACE_MAP_CACHEABLE		0x01
 #define	BUS_SPACE_MAP_LINEAR		0x02
 
-int bus_space_map __P((bus_space_tag_t, bus_addr_t, bus_size_t size,
-	int, bus_space_handle_t *));
+int bus_space_map(bus_space_tag_t, bus_addr_t, bus_size_t size,
+    int, bus_space_handle_t *);
 
 #ifdef SH4_PCMCIA
-int shpcmcia_memio_map __P((bus_space_tag_t, bus_addr_t, bus_size_t size,
-	int, bus_space_handle_t *));
+int shpcmcia_memio_map(bus_space_tag_t, bus_addr_t, bus_size_t size,
+    int, bus_space_handle_t *);
 
-int shpcmcia_mem_add_mapping __P((bus_addr_t, bus_size_t, int, 
-				  bus_space_handle_t *));
-void shpcmcia_memio_unmap __P((bus_space_tag_t, bus_space_handle_t,
-			       bus_size_t));
-void shpcmcia_memio_free __P((bus_space_tag_t, bus_space_handle_t,
-			      bus_size_t));
-int shpcmcia_memio_subregion __P((bus_space_tag_t, bus_space_handle_t,
-				  bus_size_t, bus_size_t,
-				  bus_space_handle_t *));
+int shpcmcia_mem_add_mapping(bus_addr_t, bus_size_t, int, 
+    bus_space_handle_t *);
+void shpcmcia_memio_unmap(bus_space_tag_t, bus_space_handle_t,
+    bus_size_t);
+void shpcmcia_memio_free(bus_space_tag_t, bus_space_handle_t,
+    bus_size_t);
+int shpcmcia_memio_subregion(bus_space_tag_t, bus_space_handle_t,
+    bus_size_t, bus_size_t, bus_space_handle_t *);
 #endif
 
 /*
- *	u_intN_t bus_space_read_N __P((bus_space_tag_t tag,
- *	    bus_space_handle_t bsh, bus_size_t offset));
+ *	u_intN_t bus_space_read_N(bus_space_tag_t tag,
+ *	    bus_space_handle_t bsh, bus_size_t offset);
  *
  * Read a 1, 2, 4, or 8 byte quantity from bus space
  * described by tag/handle/offset.
  */
 static __inline u_int8_t bus_space_read_1
-	__P((bus_space_tag_t, bus_space_handle_t, bus_size_t));
+	(bus_space_tag_t, bus_space_handle_t, bus_size_t);
 static __inline u_int16_t bus_space_read_2
-	__P((bus_space_tag_t, bus_space_handle_t, bus_size_t));
+	(bus_space_tag_t, bus_space_handle_t, bus_size_t);
 static __inline u_int32_t bus_space_read_4
-	__P((bus_space_tag_t, bus_space_handle_t, bus_size_t));
+	(bus_space_tag_t, bus_space_handle_t, bus_size_t);
 
 u_int8_t
-bus_space_read_1(tag, bsh, offset)
-	bus_space_tag_t tag;
-	bus_space_handle_t bsh;
-	bus_size_t offset;
+bus_space_read_1(bus_space_tag_t tag, bus_space_handle_t bsh,
+    bus_size_t offset)
 {
+
 	return *(volatile u_int8_t *)(bsh + offset);
 }
 
 u_int16_t
-bus_space_read_2(tag, bsh, offset)
-	bus_space_tag_t tag;
-	bus_space_handle_t bsh;
-	bus_size_t offset;
+bus_space_read_2(bus_space_tag_t tag, bus_space_handle_t bsh,
+    bus_size_t offset)
 {
+
 	return bswap16(*(volatile u_int16_t *)(bsh + offset));
 }
 
 u_int32_t
-bus_space_read_4(tag, bsh, offset)
-	bus_space_tag_t tag;
-	bus_space_handle_t bsh;
-	bus_size_t offset;
+bus_space_read_4(bus_space_tag_t tag, bus_space_handle_t bsh,
+    bus_size_t offset)
 {
+
 	return bswap32(*(volatile u_int32_t *)(bsh + offset));
 }
 
 static __inline u_int16_t bus_space_read_stream_2
-	__P((bus_space_tag_t, bus_space_handle_t, bus_size_t));
+	(bus_space_tag_t, bus_space_handle_t, bus_size_t);
 
 static __inline u_int32_t bus_space_read_stream_4
-	__P((bus_space_tag_t, bus_space_handle_t, bus_size_t));
+	(bus_space_tag_t, bus_space_handle_t, bus_size_t);
 
 u_int16_t
-bus_space_read_stream_2(tag, bsh, offset)
-	bus_space_tag_t tag;
-	bus_space_handle_t bsh;
-	bus_size_t offset;
+bus_space_read_stream_2(bus_space_tag_t tag, bus_space_handle_t bsh,
+    bus_size_t offset)
 {
+
 	return *(volatile u_int16_t *)(bsh + offset);
 }
 
 u_int32_t
-bus_space_read_stream_4(tag, bsh, offset)
-	bus_space_tag_t tag;
-	bus_space_handle_t bsh;
-	bus_size_t offset;
+bus_space_read_stream_4(bus_space_tag_t tag, bus_space_handle_t bsh,
+    bus_size_t offset)
 {
+
 	return *(volatile u_int32_t *)(bsh + offset);
 }
 
 /*
- *	void bus_space_read_multi_N __P((bus_space_tag_t tag,
+ *	void bus_space_read_multi_N(bus_space_tag_t tag,
  *	    bus_space_handle_t bsh, bus_size_t offset,
- *	    u_intN_t *addr, size_t count));
+ *	    u_intN_t *addr, size_t count);
  *
  * Read `count' 1, 2, 4, or 8 byte quantities from bus space
  * described by tag/handle/offset and copy into buffer provided.
  */
-static __inline void bus_space_read_multi_1 __P((bus_space_tag_t,
-	bus_space_handle_t, bus_size_t, u_int8_t *, bus_size_t));
-static __inline void bus_space_read_multi_2 __P((bus_space_tag_t,
-	bus_space_handle_t, bus_size_t, u_int16_t *, bus_size_t));
-static __inline void bus_space_read_multi_4 __P((bus_space_tag_t,
-	bus_space_handle_t, bus_size_t, u_int32_t *, bus_size_t));
+static __inline void bus_space_read_multi_1(bus_space_tag_t,
+    bus_space_handle_t, bus_size_t, u_int8_t *, bus_size_t);
+static __inline void bus_space_read_multi_2(bus_space_tag_t,
+    bus_space_handle_t, bus_size_t, u_int16_t *, bus_size_t);
+static __inline void bus_space_read_multi_4(bus_space_tag_t,
+    bus_space_handle_t, bus_size_t, u_int32_t *, bus_size_t);
 
 void
-bus_space_read_multi_1(tag, bsh, offset, addr, count)
-	bus_space_tag_t tag;
-	bus_space_handle_t bsh;
-	bus_size_t offset;
-	u_int8_t *addr;
-	bus_size_t count;
+bus_space_read_multi_1(bus_space_tag_t tag, bus_space_handle_t bsh,
+    bus_size_t offset, u_int8_t *addr, bus_size_t count)
 {
+
 	while (count--)
 		*addr++ = bus_space_read_1(tag, bsh, offset);
 }
 
 void
-bus_space_read_multi_2(tag, bsh, offset, addr, count)
-	bus_space_tag_t tag;
-	bus_space_handle_t bsh;
-	bus_size_t offset;
-	u_int16_t *addr;
-	bus_size_t count;
+bus_space_read_multi_2(bus_space_tag_t tag, bus_space_handle_t bsh,
+    bus_size_t offset, u_int16_t *addr, bus_size_t count)
 {
+
 	while (count--)
 		*addr++ = bus_space_read_2(tag, bsh, offset);
 }
 
 void
-bus_space_read_multi_4(tag, bsh, offset, addr, count)
-	bus_space_tag_t tag;
-	bus_space_handle_t bsh;
-	bus_size_t offset;
-	u_int32_t *addr;
-	bus_size_t count;
+bus_space_read_multi_4(bus_space_tag_t tag, bus_space_handle_t bsh,
+    bus_size_t offset, u_int32_t *addr, bus_size_t count)
 {
+
 	while (count--)
 		*addr++ = bus_space_read_4(tag, bsh, offset);
 }
 
-static __inline void bus_space_read_multi_stream_2 __P((bus_space_tag_t,
-	bus_space_handle_t, bus_size_t, u_int16_t *, bus_size_t));
-static __inline void bus_space_read_multi_stream_4 __P((bus_space_tag_t,
-	bus_space_handle_t, bus_size_t, u_int32_t *, bus_size_t));
+static __inline void bus_space_read_multi_stream_2(bus_space_tag_t,
+    bus_space_handle_t, bus_size_t, u_int16_t *, bus_size_t);
+static __inline void bus_space_read_multi_stream_4(bus_space_tag_t,
+    bus_space_handle_t, bus_size_t, u_int32_t *, bus_size_t);
 
 void
-bus_space_read_multi_stream_2(tag, bsh, offset, addr, count)
-	bus_space_tag_t tag;
-	bus_space_handle_t bsh;
-	bus_size_t offset;
-	u_int16_t *addr;
-	bus_size_t count;
+bus_space_read_multi_stream_2(bus_space_tag_t tag, bus_space_handle_t bsh,
+    bus_size_t offset, u_int16_t *addr, bus_size_t count)
 {
+
 	while (count--)
 		*addr++ = *(volatile u_int16_t *)(bsh + offset);
 }
 
 void
-bus_space_read_multi_stream_4(tag, bsh, offset, addr, count)
-	bus_space_tag_t tag;
-	bus_space_handle_t bsh;
-	bus_size_t offset;
-	u_int32_t *addr;
-	bus_size_t count;
+bus_space_read_multi_stream_4(bus_space_tag_t tag, bus_space_handle_t bsh,
+    bus_size_t offset, u_int32_t *addr, bus_size_t count)
 {
+
 	while (count--)
 		*addr++ = *(volatile u_int32_t *)(bsh + offset);
 }
 
 /*
- *	int bus_space_alloc __P((bus_space_tag_t t, bus_addr_t rstart,
+ *	int bus_space_alloc(bus_space_tag_t t, bus_addr_t rstart,
  *	    bus_addr_t rend, bus_size_t size, bus_size_t align,
  *	    bus_size_t boundary, int flags, bus_addr_t *addrp,
- *	    bus_space_handle_t *bshp));
+ *	    bus_space_handle_t *bshp);
  *
  * Allocate a region of bus space.
  */
-int sh_memio_alloc __P((bus_space_tag_t, bus_addr_t, bus_addr_t, bus_size_t,
-			bus_size_t, bus_size_t, int,
-			bus_addr_t *, bus_space_handle_t *));
+int sh_memio_alloc(bus_space_tag_t, bus_addr_t, bus_addr_t, bus_size_t,
+    bus_size_t, bus_size_t, int, bus_addr_t *, bus_space_handle_t *);
 
 #define bus_space_alloc(t, rs, re, s, a, b, f, ap, hp)			\
 	sh_memio_alloc((t), (rs), (re), (s), (a), (b), (f), (ap), (hp))
 
 /*
- *	int bus_space_free __P((bus_space_tag_t t,
- *	    bus_space_handle_t bsh, bus_size_t size));
+ *	int bus_space_free(bus_space_tag_t t,
+ *	    bus_space_handle_t bsh, bus_size_t size);
  *
  * Free a region of bus space.
  */
-void sh_memio_free __P((bus_space_tag_t, bus_space_handle_t, bus_size_t));
+void sh_memio_free(bus_space_tag_t, bus_space_handle_t, bus_size_t);
 
 #define bus_space_free(t, h, s)						\
 	sh_memio_free((t), (h), (s))
 
 /*
- *	int bus_space_unmap __P((bus_space_tag_t t,
- *	    bus_space_handle_t bsh, bus_size_t size));
+ *	int bus_space_unmap(bus_space_tag_t t,
+ *	    bus_space_handle_t bsh, bus_size_t size);
  *
  * Unmap a region of bus space.
  */
-void sh_memio_unmap __P((bus_space_tag_t, bus_space_handle_t, bus_size_t));
+void sh_memio_unmap(bus_space_tag_t, bus_space_handle_t, bus_size_t);
 
 #define bus_space_unmap(t, h, s)					\
 	sh_memio_unmap((t), (h), (s))
 
 /*
- *	int bus_space_subregion __P((bus_space_tag_t t,
+ *	int bus_space_subregion(bus_space_tag_t t,
  *	    bus_space_handle_t bsh, bus_size_t offset, bus_size_t size,
- *	    bus_space_handle_t *nbshp));
+ *	    bus_space_handle_t *nbshp);
  *
  * Get a new handle for a subregion of an already-mapped area of bus space.
  */
-int sh_memio_subregion __P((bus_space_tag_t, bus_space_handle_t,
-	    bus_size_t, bus_size_t, bus_space_handle_t *));
+int sh_memio_subregion(bus_space_tag_t, bus_space_handle_t,
+    bus_size_t, bus_size_t, bus_space_handle_t *);
 
 #define bus_space_subregion(t, h, o, s, nhp)				\
 	sh_memio_subregion((t), (h), (o), (s), (nhp))
 
 /*
- *	void bus_space_read_region_N __P((bus_space_tag_t tag,
+ *	void bus_space_read_region_N(bus_space_tag_t tag,
  *	    bus_space_handle_t bsh, bus_size_t offset,
- *	    u_intN_t *addr, size_t count));
+ *	    u_intN_t *addr, size_t count);
  *
  * Read `count' 1, 2, 4, or 8 byte quantities from bus space
  * described by tag/handle and starting at `offset' and copy into
  * buffer provided.
  */
-static __inline void bus_space_read_region_1 __P((bus_space_tag_t,
-	bus_space_handle_t, bus_size_t, u_int8_t *, bus_size_t));
-static __inline void bus_space_read_region_2 __P((bus_space_tag_t,
-	bus_space_handle_t, bus_size_t, u_int16_t *, bus_size_t));
-static __inline void bus_space_read_region_4 __P((bus_space_tag_t,
-	bus_space_handle_t, bus_size_t, u_int32_t *, bus_size_t));
+static __inline void bus_space_read_region_1(bus_space_tag_t,
+    bus_space_handle_t, bus_size_t, u_int8_t *, bus_size_t);
+static __inline void bus_space_read_region_2(bus_space_tag_t,
+    bus_space_handle_t, bus_size_t, u_int16_t *, bus_size_t);
+static __inline void bus_space_read_region_4(bus_space_tag_t,
+    bus_space_handle_t, bus_size_t, u_int32_t *, bus_size_t);
 
 void
-bus_space_read_region_1(tag, bsh, offset, addr, count)
-	bus_space_tag_t tag;
-	bus_space_handle_t bsh;
-	bus_size_t offset;
-	u_int8_t *addr;
-	bus_size_t count;
+bus_space_read_region_1(bus_space_tag_t tag, bus_space_handle_t bsh,
+    bus_size_t offset, u_int8_t *addr, bus_size_t count)
 {
 	u_int8_t *p = (u_int8_t *)(bsh + offset);
 
@@ -364,12 +338,8 @@ bus_space_read_region_1(tag, bsh, offset, addr, count)
 }
 
 void
-bus_space_read_region_2(tag, bsh, offset, addr, count)
-	bus_space_tag_t tag;
-	bus_space_handle_t bsh;
-	bus_size_t offset;
-	u_int16_t *addr;
-	bus_size_t count;
+bus_space_read_region_2(bus_space_tag_t tag, bus_space_handle_t bsh,
+    bus_size_t offset, u_int16_t *addr, bus_size_t count)
 {
 	u_int16_t *p = (u_int16_t *)(bsh + offset);
 
@@ -378,12 +348,8 @@ bus_space_read_region_2(tag, bsh, offset, addr, count)
 }
 
 void
-bus_space_read_region_4(tag, bsh, offset, addr, count)
-	bus_space_tag_t tag;
-	bus_space_handle_t bsh;
-	bus_size_t offset;
-	u_int32_t *addr;
-	bus_size_t count;
+bus_space_read_region_4(bus_space_tag_t tag, bus_space_handle_t bsh,
+    bus_size_t offset, u_int32_t *addr, bus_size_t count)
 {
 	u_int32_t *p = (u_int32_t *)(bsh + offset);
 
@@ -392,27 +358,23 @@ bus_space_read_region_4(tag, bsh, offset, addr, count)
 }
 
 /*
- *	void bus_space_write_region_N __P((bus_space_tag_t tag,
+ *	void bus_space_write_region_N(bus_space_tag_t tag,
  *	    bus_space_handle_t bsh, bus_size_t offset,
- *	    const u_intN_t *addr, size_t count));
+ *	    const u_intN_t *addr, size_t count);
  *
  * Write `count' 1, 2, 4, or 8 byte quantities from the buffer provided
  * to bus space described by tag/handle starting at `offset'.
  */
-static __inline void bus_space_write_region_1 __P((bus_space_tag_t,
-	bus_space_handle_t, bus_size_t, const u_int8_t *, bus_size_t));
-static __inline void bus_space_write_region_2 __P((bus_space_tag_t,
-	bus_space_handle_t, bus_size_t, const u_int16_t *, bus_size_t));
-static __inline void bus_space_write_region_4 __P((bus_space_tag_t,
-	bus_space_handle_t, bus_size_t, const u_int32_t *, bus_size_t));
+static __inline void bus_space_write_region_1(bus_space_tag_t,
+    bus_space_handle_t, bus_size_t, const u_int8_t *, bus_size_t);
+static __inline void bus_space_write_region_2(bus_space_tag_t,
+    bus_space_handle_t, bus_size_t, const u_int16_t *, bus_size_t);
+static __inline void bus_space_write_region_4(bus_space_tag_t,
+    bus_space_handle_t, bus_size_t, const u_int32_t *, bus_size_t);
 
 void
-bus_space_write_region_1(tag, bsh, offset, addr, count)
-	bus_space_tag_t tag;
-	bus_space_handle_t bsh;
-	bus_size_t offset;
-	const u_int8_t *addr;
-	bus_size_t count;
+bus_space_write_region_1(bus_space_tag_t tag, bus_space_handle_t bsh,
+    bus_size_t offset, const u_int8_t *addr, bus_size_t count)
 {
 	u_int8_t *p = (u_int8_t *)(bsh + offset);
 
@@ -421,12 +383,8 @@ bus_space_write_region_1(tag, bsh, offset, addr, count)
 }
 
 void
-bus_space_write_region_2(tag, bsh, offset, addr, count)
-	bus_space_tag_t tag;
-	bus_space_handle_t bsh;
-	bus_size_t offset;
-	const u_int16_t *addr;
-	bus_size_t count;
+bus_space_write_region_2(bus_space_tag_t tag, bus_space_handle_t bsh,
+    bus_size_t offset, const u_int16_t *addr, bus_size_t count)
 {
 	u_int16_t *p = (u_int16_t *)(bsh + offset);
 
@@ -435,12 +393,8 @@ bus_space_write_region_2(tag, bsh, offset, addr, count)
 }
 
 void
-bus_space_write_region_4(tag, bsh, offset, addr, count)
-	bus_space_tag_t tag;
-	bus_space_handle_t bsh;
-	bus_size_t offset;
-	const u_int32_t *addr;
-	bus_size_t count;
+bus_space_write_region_4(bus_space_tag_t tag, bus_space_handle_t bsh,
+    bus_size_t offset, const u_int32_t *addr, bus_size_t count)
 {
 	u_int32_t *p = (u_int32_t *)(bsh + offset);
 
@@ -449,228 +403,190 @@ bus_space_write_region_4(tag, bsh, offset, addr, count)
 }
 
 /*
- *	void bus_space_write_N __P((bus_space_tag_t tag,
+ *	void bus_space_write_N(bus_space_tag_t tag,
  *	    bus_space_handle_t bsh, bus_size_t offset,
- *	    u_intN_t value));
+ *	    u_intN_t value);
  *
  * Write the 1, 2, 4, or 8 byte value `value' to bus space
  * described by tag/handle/offset.
  */
-static __inline void bus_space_write_1 __P((bus_space_tag_t,
-	bus_space_handle_t, bus_size_t, u_int8_t));
-static __inline void bus_space_write_2 __P((bus_space_tag_t,
-	bus_space_handle_t, bus_size_t, u_int16_t));
-static __inline void bus_space_write_4 __P((bus_space_tag_t,
-	bus_space_handle_t, bus_size_t, u_int32_t));
+static __inline void bus_space_write_1(bus_space_tag_t,
+    bus_space_handle_t, bus_size_t, u_int8_t);
+static __inline void bus_space_write_2(bus_space_tag_t,
+    bus_space_handle_t, bus_size_t, u_int16_t);
+static __inline void bus_space_write_4(bus_space_tag_t,
+    bus_space_handle_t, bus_size_t, u_int32_t);
 
 void
-bus_space_write_1(tag, bsh, offset, value)
-	bus_space_tag_t tag;
-	bus_space_handle_t bsh;
-	bus_size_t offset;
-	u_int8_t value;
+bus_space_write_1(bus_space_tag_t tag, bus_space_handle_t bsh,
+    bus_size_t offset, u_int8_t value)
 {
+
 	*(volatile u_int8_t *)(bsh + offset) = value;
 }
 
 void
-bus_space_write_2(tag, bsh, offset, value)
-	bus_space_tag_t tag;
-	bus_space_handle_t bsh;
-	bus_size_t offset;
-	u_int16_t value;
+bus_space_write_2(bus_space_tag_t tag, bus_space_handle_t bsh,
+    bus_size_t offset, u_int16_t value)
 {
+
 	*(volatile u_int16_t *)(bsh + offset) = bswap16(value);
 }
 
 void
-bus_space_write_4(tag, bsh, offset, value)
-	bus_space_tag_t tag;
-	bus_space_handle_t bsh;
-	bus_size_t offset;
-	u_int32_t value;
+bus_space_write_4(bus_space_tag_t tag, bus_space_handle_t bsh,
+    bus_size_t offset, u_int32_t value)
 {
+
 	*(volatile u_int32_t *)(bsh + offset) = bswap32(value);
 }
 
-static __inline void bus_space_write_stream_2 __P((bus_space_tag_t,
-	bus_space_handle_t, bus_size_t, u_int16_t));
-static __inline void bus_space_write_stream_4 __P((bus_space_tag_t,
-	bus_space_handle_t, bus_size_t, u_int32_t));
+static __inline void bus_space_write_stream_2(bus_space_tag_t,
+    bus_space_handle_t, bus_size_t, u_int16_t);
+static __inline void bus_space_write_stream_4(bus_space_tag_t,
+    bus_space_handle_t, bus_size_t, u_int32_t);
 
 void
-bus_space_write_stream_2(tag, bsh, offset, value)
-	bus_space_tag_t tag;
-	bus_space_handle_t bsh;
-	bus_size_t offset;
-	u_int16_t value;
+bus_space_write_stream_2(bus_space_tag_t tag, bus_space_handle_t bsh,
+    bus_size_t offset, u_int16_t value)
 {
+
 	*(volatile u_int16_t *)(bsh + offset) = value;
 }
 
 void
-bus_space_write_stream_4(tag, bsh, offset, value)
-	bus_space_tag_t tag;
-	bus_space_handle_t bsh;
-	bus_size_t offset;
-	u_int32_t value;
+bus_space_write_stream_4(bus_space_tag_t tag, bus_space_handle_t bsh,
+    bus_size_t offset, u_int32_t value)
 {
+
 	*(volatile u_int32_t *)(bsh + offset) = value;
 }
 
 /*
- *	void bus_space_write_multi_N __P((bus_space_tag_t tag,
+ *	void bus_space_write_multi_N(bus_space_tag_t tag,
  *	    bus_space_handle_t bsh, bus_size_t offset,
- *	    const u_intN_t *addr, size_t count));
+ *	    const u_intN_t *addr, size_t count);
  *
  * Write `count' 1, 2, 4, or 8 byte quantities from the buffer
  * provided to bus space described by tag/handle/offset.
  */
-static __inline void bus_space_write_multi_1 __P((bus_space_tag_t,
-	bus_space_handle_t, bus_size_t, u_int8_t *, bus_size_t));
-static __inline void bus_space_write_multi_2 __P((bus_space_tag_t,
-	bus_space_handle_t, bus_size_t, u_int16_t *, bus_size_t));
-static __inline void bus_space_write_multi_4 __P((bus_space_tag_t,
-	bus_space_handle_t, bus_size_t, u_int32_t *, bus_size_t));
+static __inline void bus_space_write_multi_1(bus_space_tag_t,
+    bus_space_handle_t, bus_size_t, u_int8_t *, bus_size_t);
+static __inline void bus_space_write_multi_2(bus_space_tag_t,
+    bus_space_handle_t, bus_size_t, u_int16_t *, bus_size_t);
+static __inline void bus_space_write_multi_4(bus_space_tag_t,
+    bus_space_handle_t, bus_size_t, u_int32_t *, bus_size_t);
 
 void
-bus_space_write_multi_1(tag, bsh, offset, addr, count)
-	bus_space_tag_t tag;
-	bus_space_handle_t bsh;
-	bus_size_t offset;
-	u_int8_t *addr;
-	bus_size_t count;
+bus_space_write_multi_1(bus_space_tag_t tag, bus_space_handle_t bsh,
+    bus_size_t offset, u_int8_t *addr, bus_size_t count)
 {
+
 	while (count--)
 		bus_space_write_1(tag, bsh, offset, *addr++);
 }
 
 void
-bus_space_write_multi_2(tag, bsh, offset, addr, count)
-	bus_space_tag_t tag;
-	bus_space_handle_t bsh;
-	bus_size_t offset;
-	u_int16_t *addr;
-	bus_size_t count;
+bus_space_write_multi_2(bus_space_tag_t tag, bus_space_handle_t bsh,
+    bus_size_t offset, u_int16_t *addr, bus_size_t count)
 {
+
 	while (count--)
 		bus_space_write_2(tag, bsh, offset, *addr++);
 }
 
 void
-bus_space_write_multi_4(tag, bsh, offset, addr, count)
-	bus_space_tag_t tag;
-	bus_space_handle_t bsh;
-	bus_size_t offset;
-	u_int32_t *addr;
-	bus_size_t count;
+bus_space_write_multi_4(bus_space_tag_t tag, bus_space_handle_t bsh,
+    bus_size_t offset, u_int32_t *addr, bus_size_t count)
 {
+
 	while (count--)
 		bus_space_write_4(tag, bsh, offset, *addr++);
 }
 
-static __inline void bus_space_write_multi_stream_2 __P((bus_space_tag_t,
-	bus_space_handle_t, bus_size_t, u_int16_t *, bus_size_t));
-static __inline void bus_space_write_multi_stream_4 __P((bus_space_tag_t,
-	bus_space_handle_t, bus_size_t, u_int32_t *, bus_size_t));
+static __inline void bus_space_write_multi_stream_2(bus_space_tag_t,
+    bus_space_handle_t, bus_size_t, u_int16_t *, bus_size_t);
+static __inline void bus_space_write_multi_stream_4(bus_space_tag_t,
+    bus_space_handle_t, bus_size_t, u_int32_t *, bus_size_t);
 
 void
-bus_space_write_multi_stream_2(tag, bsh, offset, addr, count)
-	bus_space_tag_t tag;
-	bus_space_handle_t bsh;
-	bus_size_t offset;
-	u_int16_t *addr;
-	bus_size_t count;
+bus_space_write_multi_stream_2(bus_space_tag_t tag, bus_space_handle_t bsh,
+    bus_size_t offset, u_int16_t *addr, bus_size_t count)
 {
+
 	while (count--)
 		bus_space_write_stream_2(tag, bsh, offset, *addr++);
 }
 
 void
-bus_space_write_multi_stream_4(tag, bsh, offset, addr, count)
-	bus_space_tag_t tag;
-	bus_space_handle_t bsh;
-	bus_size_t offset;
-	u_int32_t *addr;
-	bus_size_t count;
+bus_space_write_multi_stream_4(bus_space_tag_t tag, bus_space_handle_t bsh,
+    bus_size_t offset, u_int32_t *addr, bus_size_t count)
 {
+
 	while (count--)
 		bus_space_write_stream_4(tag, bsh, offset, *addr++);
 }
 
 /*
- *	void bus_space_set_multi_N __P((bus_space_tag_t tag,
+ *	void bus_space_set_multi_N(bus_space_tag_t tag,
  *	    bus_space_handle_t bsh, bus_size_t offset, u_intN_t val,
- *	    size_t count));
+ *	    size_t count);
  *
  * Write the 1, 2, 4, or 8 byte value `val' to bus space described
  * by tag/handle/offset `count' times.
  */
-static __inline void bus_space_set_multi_1 __P((bus_space_tag_t,
-	bus_space_handle_t, bus_size_t, u_int8_t, bus_size_t));
-static __inline void bus_space_set_multi_2 __P((bus_space_tag_t,
-	bus_space_handle_t, bus_size_t, u_int16_t, bus_size_t));
-static __inline void bus_space_set_multi_4 __P((bus_space_tag_t,
-	bus_space_handle_t, bus_size_t, u_int32_t, bus_size_t));
+static __inline void bus_space_set_multi_1(bus_space_tag_t,
+    bus_space_handle_t, bus_size_t, u_int8_t, bus_size_t);
+static __inline void bus_space_set_multi_2(bus_space_tag_t,
+    bus_space_handle_t, bus_size_t, u_int16_t, bus_size_t);
+static __inline void bus_space_set_multi_4(bus_space_tag_t,
+    bus_space_handle_t, bus_size_t, u_int32_t, bus_size_t);
 
 void
-bus_space_set_multi_1(tag, bsh, offset, val, count)
-	bus_space_tag_t tag;
-	bus_space_handle_t bsh;
-	bus_size_t offset;
-	u_int8_t val;
-	bus_size_t count;
+bus_space_set_multi_1(bus_space_tag_t tag, bus_space_handle_t bsh,
+    bus_size_t offset, u_int8_t val, bus_size_t count)
 {
+
 	while (count--)
 		bus_space_write_1(tag, bsh, offset, val);
 }
 
 void
-bus_space_set_multi_2(tag, bsh, offset, val, count)
-	bus_space_tag_t tag;
-	bus_space_handle_t bsh;
-	bus_size_t offset;
-	u_int16_t val;
-	bus_size_t count;
+bus_space_set_multi_2(bus_space_tag_t tag, bus_space_handle_t bsh,
+    bus_size_t offset, u_int16_t val, bus_size_t count)
 {
+
 	while (count--)
 		bus_space_write_2(tag, bsh, offset, val);
 }
 
 void
-bus_space_set_multi_4(tag, bsh, offset, val, count)
-	bus_space_tag_t tag;
-	bus_space_handle_t bsh;
-	bus_size_t offset;
-	u_int32_t val;
-	bus_size_t count;
+bus_space_set_multi_4(bus_space_tag_t tag, bus_space_handle_t bsh,
+    bus_size_t offset, u_int32_t val, bus_size_t count)
 {
+
 	while (count--)
 		bus_space_write_4(tag, bsh, offset, val);
 }
 
 /*
- *	void bus_space_set_region_N __P((bus_space_tag_t tag,
+ *	void bus_space_set_region_N(bus_space_tag_t tag,
  *	    bus_space_handle_t bsh, bus_size_t offset, u_intN_t val,
- *	    size_t count));
+ *	    size_t count);
  *
  * Write `count' 1, 2, 4, or 8 byte value `val' to bus space described
  * by tag/handle starting at `offset'.
  */
-static __inline void bus_space_set_region_1 __P((bus_space_tag_t,
-	bus_space_handle_t, bus_size_t, u_int8_t, bus_size_t));
-static __inline void bus_space_set_region_2 __P((bus_space_tag_t,
-	bus_space_handle_t, bus_size_t, u_int16_t, bus_size_t));
-static __inline void bus_space_set_region_4 __P((bus_space_tag_t,
-	bus_space_handle_t, bus_size_t, u_int32_t, bus_size_t));
+static __inline void bus_space_set_region_1(bus_space_tag_t,
+    bus_space_handle_t, bus_size_t, u_int8_t, bus_size_t);
+static __inline void bus_space_set_region_2(bus_space_tag_t,
+    bus_space_handle_t, bus_size_t, u_int16_t, bus_size_t);
+static __inline void bus_space_set_region_4(bus_space_tag_t,
+    bus_space_handle_t, bus_size_t, u_int32_t, bus_size_t);
 
 void
-bus_space_set_region_1(tag, bsh, offset, val, count)
-	bus_space_tag_t tag;
-	bus_space_handle_t bsh;
-	bus_size_t offset;
-	u_int8_t val;
-	bus_size_t count;
+bus_space_set_region_1(bus_space_tag_t tag, bus_space_handle_t bsh,
+    bus_size_t offset, u_int8_t val, bus_size_t count)
 {
 	volatile u_int8_t *addr = (void *)(bsh + offset);
 
@@ -679,12 +595,8 @@ bus_space_set_region_1(tag, bsh, offset, val, count)
 }
 
 void
-bus_space_set_region_2(tag, bsh, offset, val, count)
-	bus_space_tag_t tag;
-	bus_space_handle_t bsh;
-	bus_size_t offset;
-	u_int16_t val;
-	bus_size_t count;
+bus_space_set_region_2(bus_space_tag_t tag, bus_space_handle_t bsh,
+    bus_size_t offset, u_int16_t val, bus_size_t count)
 {
 	volatile u_int16_t *addr = (void *)(bsh + offset);
 
@@ -694,12 +606,8 @@ bus_space_set_region_2(tag, bsh, offset, val, count)
 }
 
 void
-bus_space_set_region_4(tag, bsh, offset, val, count)
-	bus_space_tag_t tag;
-	bus_space_handle_t bsh;
-	bus_size_t offset;
-	u_int32_t val;
-	bus_size_t count;
+bus_space_set_region_4(bus_space_tag_t tag, bus_space_handle_t bsh,
+    bus_size_t offset, u_int32_t val, bus_size_t count)
 {
 	volatile u_int32_t *addr = (void *)(bsh + offset);
 
@@ -709,32 +617,27 @@ bus_space_set_region_4(tag, bsh, offset, val, count)
 }
 
 /*
- *	void bus_space_copy_region_N __P((bus_space_tag_t tag,
+ *	void bus_space_copy_region_N(bus_space_tag_t tag,
  *	    bus_space_handle_t bsh1, bus_size_t off1,
  *	    bus_space_handle_t bsh2, bus_size_t off2,
- *	    size_t count));
+ *	    size_t count);
  *
  * Copy `count' 1, 2, 4, or 8 byte values from bus space starting
  * at tag/bsh1/off1 to bus space starting at tag/bsh2/off2.
  */
-static __inline void bus_space_copy_region_1 __P((bus_space_tag_t,
-	bus_space_handle_t, bus_size_t, bus_space_handle_t, bus_size_t,
-	bus_size_t));
-static __inline void bus_space_copy_region_2 __P((bus_space_tag_t,
-	bus_space_handle_t, bus_size_t, bus_space_handle_t, bus_size_t,
-	bus_size_t));
-static __inline void bus_space_copy_region_4 __P((bus_space_tag_t,
-	bus_space_handle_t, bus_size_t, bus_space_handle_t, bus_size_t,
-	bus_size_t));
+static __inline void bus_space_copy_region_1(bus_space_tag_t,
+    bus_space_handle_t, bus_size_t, bus_space_handle_t, bus_size_t,
+    bus_size_t);
+static __inline void bus_space_copy_region_2(bus_space_tag_t,
+    bus_space_handle_t, bus_size_t, bus_space_handle_t, bus_size_t,
+    bus_size_t);
+static __inline void bus_space_copy_region_4(bus_space_tag_t,
+    bus_space_handle_t, bus_size_t, bus_space_handle_t, bus_size_t,
+    bus_size_t);
 
 void
-bus_space_copy_region_1(t, h1, o1, h2, o2, c)
-	bus_space_tag_t t;
-	bus_space_handle_t h1;
-	bus_size_t o1;
-	bus_space_handle_t h2;
-	bus_size_t o2;
-	bus_size_t c;
+bus_space_copy_region_1(bus_space_tag_t t, bus_space_handle_t h1,
+    bus_size_t o1, bus_space_handle_t h2, bus_size_t o2, bus_size_t c)
 {
 	volatile u_int8_t *addr1 = (void *)(h1 + o1);
 	volatile u_int8_t *addr2 = (void *)(h2 + o2);
@@ -751,13 +654,8 @@ bus_space_copy_region_1(t, h1, o1, h2, o2, c)
 }
 
 void
-bus_space_copy_region_2(t, h1, o1, h2, o2, c)
-	bus_space_tag_t t;
-	bus_space_handle_t h1;
-	bus_size_t o1;
-	bus_space_handle_t h2;
-	bus_size_t o2;
-	bus_size_t c;
+bus_space_copy_region_2(bus_space_tag_t t, bus_space_handle_t h1,
+    bus_size_t o1, bus_space_handle_t h2, bus_size_t o2, bus_size_t c)
 {
 	volatile u_int16_t *addr1 = (void *)(h1 + o1);
 	volatile u_int16_t *addr2 = (void *)(h2 + o2);
@@ -774,13 +672,8 @@ bus_space_copy_region_2(t, h1, o1, h2, o2, c)
 }
 
 void
-bus_space_copy_region_4(t, h1, o1, h2, o2, c)
-	bus_space_tag_t t;
-	bus_space_handle_t h1;
-	bus_size_t o1;
-	bus_space_handle_t h2;
-	bus_size_t o2;
-	bus_size_t c;
+bus_space_copy_region_4(bus_space_tag_t t, bus_space_handle_t h1,
+    bus_size_t o1, bus_space_handle_t h2, bus_size_t o2, bus_size_t c)
 {
 	volatile u_int32_t *addr1 = (void *)(h1 + o1);
 	volatile u_int32_t *addr2 = (void *)(h2 + o2);
@@ -811,9 +704,9 @@ bus_space_copy_region_4(t, h1, o1, h2, o2, c)
 /*
  * Bus read/write barrier methods.
  *
- *	void bus_space_barrier __P((bus_space_tag_t tag,
+ *	void bus_space_barrier(bus_space_tag_t tag,
  *	    bus_space_handle_t bsh, bus_size_t offset,
- *	    bus_size_t len, int flags));
+ *	    bus_size_t len, int flags);
  *
  * Note: the sh3 does not currently require barriers, but we must
  * provide the flags to MI code.
@@ -888,33 +781,33 @@ struct sh3_bus_dma_tag {
 	/*
 	 * DMA mapping methods.
 	 */
-	int	(*_dmamap_create) __P((bus_dma_tag_t, bus_size_t, int,
-		    bus_size_t, bus_size_t, int, bus_dmamap_t *));
-	void	(*_dmamap_destroy) __P((bus_dma_tag_t, bus_dmamap_t));
-	int	(*_dmamap_load) __P((bus_dma_tag_t, bus_dmamap_t, void *,
-		    bus_size_t, struct proc *, int));
-	int	(*_dmamap_load_mbuf) __P((bus_dma_tag_t, bus_dmamap_t,
-		    struct mbuf *, int));
-	int	(*_dmamap_load_uio) __P((bus_dma_tag_t, bus_dmamap_t,
-		    struct uio *, int));
-	int	(*_dmamap_load_raw) __P((bus_dma_tag_t, bus_dmamap_t,
-		    bus_dma_segment_t *, int, bus_size_t, int));
-	void	(*_dmamap_unload) __P((bus_dma_tag_t, bus_dmamap_t));
-	void	(*_dmamap_sync) __P((bus_dma_tag_t, bus_dmamap_t,
-		    bus_dmasync_op_t));
+	int	(*_dmamap_create)(bus_dma_tag_t, bus_size_t, int,
+	    bus_size_t, bus_size_t, int, bus_dmamap_t *);
+	void	(*_dmamap_destroy)(bus_dma_tag_t, bus_dmamap_t);
+	int	(*_dmamap_load)(bus_dma_tag_t, bus_dmamap_t, void *,
+	    bus_size_t, struct proc *, int);
+	int	(*_dmamap_load_mbuf)(bus_dma_tag_t, bus_dmamap_t,
+	    struct mbuf *, int);
+	int	(*_dmamap_load_uio)(bus_dma_tag_t, bus_dmamap_t,
+	    struct uio *, int);
+	int	(*_dmamap_load_raw)(bus_dma_tag_t, bus_dmamap_t,
+	    bus_dma_segment_t *, int, bus_size_t, int);
+	void	(*_dmamap_unload)(bus_dma_tag_t, bus_dmamap_t);
+	void	(*_dmamap_sync)(bus_dma_tag_t, bus_dmamap_t,
+	    bus_dmasync_op_t);
 
 	/*
 	 * DMA memory utility functions.
 	 */
-	int	(*_dmamem_alloc) __P((bus_dma_tag_t, bus_size_t, bus_size_t,
-		    bus_size_t, bus_dma_segment_t *, int, int *, int));
-	void	(*_dmamem_free) __P((bus_dma_tag_t,
-		    bus_dma_segment_t *, int));
-	int	(*_dmamem_map) __P((bus_dma_tag_t, bus_dma_segment_t *,
-		    int, size_t, caddr_t *, int));
-	void	(*_dmamem_unmap) __P((bus_dma_tag_t, caddr_t, size_t));
-	paddr_t	(*_dmamem_mmap) __P((bus_dma_tag_t, bus_dma_segment_t *,
-		    int, off_t, int, int));
+	int	(*_dmamem_alloc)(bus_dma_tag_t, bus_size_t, bus_size_t,
+	    bus_size_t, bus_dma_segment_t *, int, int *, int);
+	void	(*_dmamem_free)(bus_dma_tag_t,
+	    bus_dma_segment_t *, int);
+	int	(*_dmamem_map)(bus_dma_tag_t, bus_dma_segment_t *,
+	    int, size_t, caddr_t *, int);
+	void	(*_dmamem_unmap)(bus_dma_tag_t, caddr_t, size_t);
+	paddr_t	(*_dmamem_mmap)(bus_dma_tag_t, bus_dma_segment_t *,
+	    int, off_t, int, int);
 };
 
 #define	bus_dmamap_create(t, s, n, m, b, f, p)			\
@@ -971,36 +864,36 @@ struct sh3_bus_dmamap {
 };
 
 #ifdef _SH3_BUS_DMA_PRIVATE
-int	_bus_dmamap_create __P((bus_dma_tag_t, bus_size_t, int, bus_size_t,
-	    bus_size_t, int, bus_dmamap_t *));
-void	_bus_dmamap_destroy __P((bus_dma_tag_t, bus_dmamap_t));
-int	_bus_dmamap_load __P((bus_dma_tag_t, bus_dmamap_t, void *,
-	    bus_size_t, struct proc *, int));
-int	_bus_dmamap_load_mbuf __P((bus_dma_tag_t, bus_dmamap_t,
-	    struct mbuf *, int));
-int	_bus_dmamap_load_uio __P((bus_dma_tag_t, bus_dmamap_t,
-	    struct uio *, int));
-int	_bus_dmamap_load_raw __P((bus_dma_tag_t, bus_dmamap_t,
-	    bus_dma_segment_t *, int, bus_size_t, int));
-void	_bus_dmamap_unload __P((bus_dma_tag_t, bus_dmamap_t));
-void	_bus_dmamap_sync __P((bus_dma_tag_t, bus_dmamap_t, bus_dmasync_op_t));
+int	_bus_dmamap_create(bus_dma_tag_t, bus_size_t, int, bus_size_t,
+	    bus_size_t, int, bus_dmamap_t *);
+void	_bus_dmamap_destroy(bus_dma_tag_t, bus_dmamap_t);
+int	_bus_dmamap_load(bus_dma_tag_t, bus_dmamap_t, void *,
+	    bus_size_t, struct proc *, int);
+int	_bus_dmamap_load_mbuf(bus_dma_tag_t, bus_dmamap_t,
+	    struct mbuf *, int);
+int	_bus_dmamap_load_uio(bus_dma_tag_t, bus_dmamap_t,
+	    struct uio *, int);
+int	_bus_dmamap_load_raw(bus_dma_tag_t, bus_dmamap_t,
+	    bus_dma_segment_t *, int, bus_size_t, int);
+void	_bus_dmamap_unload(bus_dma_tag_t, bus_dmamap_t);
+void	_bus_dmamap_sync(bus_dma_tag_t, bus_dmamap_t, bus_dmasync_op_t);
 
-int	_bus_dmamem_alloc __P((bus_dma_tag_t tag, bus_size_t size,
+int	_bus_dmamem_alloc(bus_dma_tag_t tag, bus_size_t size,
 	    bus_size_t alignment, bus_size_t boundary,
-	    bus_dma_segment_t *segs, int nsegs, int *rsegs, int flags));
-void	_bus_dmamem_free __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
-	    int nsegs));
-int	_bus_dmamem_map __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
-	    int nsegs, size_t size, caddr_t *kvap, int flags));
-void	_bus_dmamem_unmap __P((bus_dma_tag_t tag, caddr_t kva,
-	    size_t size));
-paddr_t	_bus_dmamem_mmap __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
-	    int nsegs, off_t off, int prot, int flags));
+	    bus_dma_segment_t *segs, int nsegs, int *rsegs, int flags);
+void	_bus_dmamem_free(bus_dma_tag_t tag, bus_dma_segment_t *segs,
+	    int nsegs);
+int	_bus_dmamem_map(bus_dma_tag_t tag, bus_dma_segment_t *segs,
+	    int nsegs, size_t size, caddr_t *kvap, int flags);
+void	_bus_dmamem_unmap(bus_dma_tag_t tag, caddr_t kva,
+	    size_t size);
+paddr_t	_bus_dmamem_mmap(bus_dma_tag_t tag, bus_dma_segment_t *segs,
+	    int nsegs, off_t off, int prot, int flags);
 
-int	_bus_dmamem_alloc_range __P((bus_dma_tag_t tag, bus_size_t size,
+int	_bus_dmamem_alloc_range(bus_dma_tag_t tag, bus_size_t size,
 	    bus_size_t alignment, bus_size_t boundary,
 	    bus_dma_segment_t *segs, int nsegs, int *rsegs, int flags,
-	    vm_offset_t low, vm_offset_t high));
+	    vm_offset_t low, vm_offset_t high);
 #endif /* _SH3_BUS_DMA_PRIVATE */
 
 #endif /* 0 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.15 2002/02/11 18:05:17 uch Exp $	*/
+/*	$NetBSD: pmap.h,v 1.16 2002/02/12 15:26:48 uch Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -379,23 +379,23 @@ extern int pmap_pg_g;			/* do we support PG_G? */
  * prototypes
  */
 
-void		pmap_activate __P((struct proc *));
-void		pmap_bootstrap __P((vaddr_t));
-boolean_t	pmap_change_attrs __P((struct vm_page *, int, int));
-void		pmap_deactivate __P((struct proc *));
-void		pmap_page_remove  __P((struct vm_page *));
-static void	pmap_protect __P((struct pmap *, vaddr_t,
-				vaddr_t, vm_prot_t));
-void		pmap_remove __P((struct pmap *, vaddr_t, vaddr_t));
-boolean_t	pmap_test_attrs __P((struct vm_page *, int));
-void		pmap_transfer __P((struct pmap *, struct pmap *, vaddr_t,
-				   vsize_t, vaddr_t, boolean_t));
-static void	pmap_update_pg __P((vaddr_t));
-static void	pmap_update_2pg __P((vaddr_t,vaddr_t));
-void		pmap_write_protect __P((struct pmap *, vaddr_t,
-				vaddr_t, vm_prot_t));
+void		pmap_activate(struct proc *);
+void		pmap_bootstrap(vaddr_t);
+boolean_t	pmap_change_attrs(struct vm_page *, int, int);
+void		pmap_deactivate(struct proc *);
+void		pmap_page_remove (struct vm_page *);
+static void	pmap_protect(struct pmap *, vaddr_t,
+				vaddr_t, vm_prot_t);
+void		pmap_remove(struct pmap *, vaddr_t, vaddr_t);
+boolean_t	pmap_test_attrs(struct vm_page *, int);
+void		pmap_transfer(struct pmap *, struct pmap *, vaddr_t,
+				   vsize_t, vaddr_t, boolean_t);
+static void	pmap_update_pg(vaddr_t);
+static void	pmap_update_2pg(vaddr_t,vaddr_t);
+void		pmap_write_protect(struct pmap *, vaddr_t,
+				vaddr_t, vm_prot_t);
 
-vaddr_t reserve_dumppages __P((vaddr_t)); /* XXX: not a pmap fn */
+vaddr_t reserve_dumppages(vaddr_t); /* XXX: not a pmap fn */
 
 #define PMAP_GROWKERNEL		/* turn on pmap_growkernel interface */
 
@@ -428,8 +428,7 @@ vaddr_t reserve_dumppages __P((vaddr_t)); /* XXX: not a pmap fn */
  */
 
 __inline static void
-pmap_update_pg(va)
-	vaddr_t va;
+pmap_update_pg(vaddr_t va)
 {
 #ifdef SH4
 #if 1
@@ -478,11 +477,9 @@ pmap_update_2pg(va, vb)
  */
 
 __inline static void
-pmap_protect(pmap, sva, eva, prot)
-	struct pmap *pmap;
-	vaddr_t sva, eva;
-	vm_prot_t prot;
+pmap_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 {
+
 	if ((prot & VM_PROT_WRITE) == 0) {
 		if (prot & (VM_PROT_READ|VM_PROT_EXECUTE)) {
 			pmap_write_protect(pmap, sva, eva, prot);
@@ -492,9 +489,9 @@ pmap_protect(pmap, sva, eva, prot)
 	}
 }
 
-vaddr_t pmap_map __P((vaddr_t, paddr_t, paddr_t, vm_prot_t));
-paddr_t vtophys __P((vaddr_t));
-void pmap_emulate_reference __P((struct proc *, vaddr_t, int, int));
+vaddr_t pmap_map(vaddr_t, paddr_t, paddr_t, vm_prot_t);
+paddr_t vtophys(vaddr_t);
+void pmap_emulate_reference(struct proc *, vaddr_t, int, int);
 
 /* XXX */
 #define PG_U 0		/* referenced bit */

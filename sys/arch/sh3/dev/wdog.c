@@ -1,4 +1,4 @@
-/* $NetBSD: wdog.c,v 1.4 2000/10/31 02:04:12 msaitoh Exp $ */
+/* $NetBSD: wdog.c,v 1.5 2002/02/12 15:26:46 uch Exp $ */
 
 /*-
  * Copyright (C) 2000 SAITOH Masanobu.  All rights reserved.
@@ -51,9 +51,9 @@ struct wdog_softc {
 	int flags;
 };
 
-static int wdogmatch __P((struct device *, struct cfdata *, void *));
-static void wdogattach __P((struct device *, struct device *, void *));
-static int wdogintr __P((void *));
+static int wdogmatch(struct device *, struct cfdata *, void *);
+static void wdogattach(struct device *, struct device *, void *);
+static int wdogintr(void *);
 
 struct cfattach wdog_ca = {
 	sizeof(struct wdog_softc), wdogmatch, wdogattach
@@ -62,26 +62,21 @@ struct cfattach wdog_ca = {
 extern struct cfdriver wdog_cd;
 
 void
-wdog_wr_cnt(x)
-	unsigned char x;
+wdog_wr_cnt(unsigned char x)
 {
 
 	SHREG_WTCNT_W = WTCNT_W_M | (unsigned short) x;
 }
 
 void
-wdog_wr_csr(x)
-	unsigned char x;
+wdog_wr_csr(unsigned char x)
 {
 
 	SHREG_WTCSR_W = WTCSR_W_M | (unsigned short) x;
 }
 
 static int
-wdogmatch(parent, cfp, aux)
-	struct device *parent;
-	struct cfdata *cfp;
-	void *aux;
+wdogmatch(struct device *parent, struct cfdata *cfp, void *aux)
 {
 	struct shb_attach_args *sa = aux;
 
@@ -98,9 +93,7 @@ wdogmatch(parent, cfp, aux)
  */
 /* ARGSUSED */
 static void
-wdogattach(parent, self, aux)
-	struct device	*parent, *self;
-	void		*aux;
+wdogattach(struct device *parent, struct device *self, void *aux)
 {
 	struct wdog_softc *sc = (struct wdog_softc *)self;
 	struct shb_attach_args *sa = aux;
@@ -117,10 +110,7 @@ wdogattach(parent, self, aux)
 
 /*ARGSUSED*/
 int
-wdogopen(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+wdogopen(dev_t dev, int flag, int mode, struct proc *p)
 {
 	struct wdog_softc *sc = wdog_cd.cd_devs[0]; /* XXX */
 
@@ -134,10 +124,7 @@ wdogopen(dev, flag, mode, p)
 
 /*ARGSUSED*/
 int
-wdogclose(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+wdogclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 	struct wdog_softc *sc = wdog_cd.cd_devs[0]; /* XXX */
 
@@ -151,12 +138,7 @@ extern unsigned int maxwdog;
 
 /*ARGSUSED*/
 int
-wdogioctl (dev, cmd, data, flag, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+wdogioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	int error = 0;
 	int request;
@@ -205,8 +187,7 @@ wdogioctl (dev, cmd, data, flag, p)
 }
 
 int
-wdogintr(arg)
-	void *arg;
+wdogintr(void *arg)
 {
 	struct trapframe *frame = arg;
 

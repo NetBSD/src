@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.22 2002/02/11 18:03:06 uch Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.23 2002/02/12 15:26:50 uch Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -237,11 +237,7 @@ sh3_startup()
  * specified pc, psl.
  */
 void
-sendsig(catcher, sig, mask, code)
-	sig_t catcher;
-	int sig;
-	sigset_t *mask;
-	u_long code;
+sendsig(sig_t catcher, int sig, sigset_t *mask, u_long code)
 {
 	struct proc *p = curproc;
 	struct trapframe *tf;
@@ -344,10 +340,7 @@ sendsig(catcher, sig, mask, code)
  * a machine fault.
  */
 int
-sys___sigreturn14(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys___sigreturn14(struct proc *p, void *v, register_t *retval)
 {
 	struct sys___sigreturn14_args /* {
 		syscallarg(struct sigcontext *) sigcntxp;
@@ -407,10 +400,7 @@ sys___sigreturn14(p, v, retval)
  * Clear registers on exec
  */
 void
-setregs(p, pack, stack)
-	struct proc *p;
-	struct exec_package *pack;
-	u_long stack;
+setregs(struct proc *p, struct exec_package *pack, u_long stack)
 {
 	register struct pcb *pcb = &p->p_addr->u_pcb;
 	register struct trapframe *tf;

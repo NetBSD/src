@@ -1,4 +1,4 @@
-/* $NetBSD: pcic_shb.c,v 1.4 2000/09/01 10:43:33 tsubai Exp $ */
+/* $NetBSD: pcic_shb.c,v 1.5 2002/02/12 15:26:45 uch Exp $ */
 
 #define	PCICSHBDEBUG
 
@@ -80,12 +80,12 @@ int	pcicshb_debug = 1 /* XXX */ ;
 #define	DPRINTF(arg)
 #endif
 
-int	pcic_shb_probe __P((struct device *, struct cfdata *, void *));
-void	pcic_shb_attach __P((struct device *, struct device *, void *));
+int	pcic_shb_probe(struct device *, struct cfdata *, void *);
+void	pcic_shb_attach(struct device *, struct device *, void *);
 
-void	*pcic_shb_chip_intr_establish __P((pcmcia_chipset_handle_t,
-	    struct pcmcia_function *, int, int (*) (void *), void *));
-void	pcic_shb_chip_intr_disestablish __P((pcmcia_chipset_handle_t, void *));
+void	*pcic_shb_chip_intr_establish(pcmcia_chipset_handle_t,
+	    struct pcmcia_function *, int, int (*) (void *), void *);
+void	pcic_shb_chip_intr_disestablish(pcmcia_chipset_handle_t, void *);
 
 struct cfattach pcic_shb_ca = {
 	sizeof(struct shpcic_softc),
@@ -112,10 +112,7 @@ static struct pcmcia_chip_functions pcic_shb_functions = {
 };
 
 int
-pcic_shb_probe(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+pcic_shb_probe(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct shb_attach_args *ia = aux;
 #if 0
@@ -187,9 +184,7 @@ pcic_shb_probe(parent, match, aux)
 }
 
 void
-pcic_shb_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+pcic_shb_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct shpcic_softc *sc = (void *) self;
 	struct shb_attach_args *ia = aux;

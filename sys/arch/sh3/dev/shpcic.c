@@ -1,4 +1,4 @@
-/*	$NetBSD: shpcic.c,v 1.5 2001/12/15 13:23:21 soren Exp $	*/
+/*	$NetBSD: shpcic.c,v 1.6 2002/02/12 15:26:46 uch Exp $	*/
 
 #define	SHPCICDEBUG
 
@@ -70,30 +70,29 @@ int	shpcic_debug = 0;
 
 #define	SHPCIC_MEM_ALIGN	SHPCIC_MEM_PAGESIZE
 
-void	shpcic_attach_socket __P((struct shpcic_handle *));
-void	shpcic_init_socket __P((struct shpcic_handle *));
+void	shpcic_attach_socket(struct shpcic_handle *);
+void	shpcic_init_socket(struct shpcic_handle *);
 
-int	shpcic_submatch __P((struct device *, struct cfdata *, void *));
-int	shpcic_print  __P((void *arg, const char *pnp));
-int	shpcic_intr_socket __P((struct shpcic_handle *));
+int	shpcic_submatch(struct device *, struct cfdata *, void *);
+int	shpcic_print (void *, const char *);
+int	shpcic_intr_socket(struct shpcic_handle *);
 
-void	shpcic_attach_card __P((struct shpcic_handle *));
-void	shpcic_detach_card __P((struct shpcic_handle *, int));
-void	shpcic_deactivate_card __P((struct shpcic_handle *));
+void	shpcic_attach_card(struct shpcic_handle *);
+void	shpcic_detach_card(struct shpcic_handle *, int);
+void	shpcic_deactivate_card(struct shpcic_handle *);
 
-void	shpcic_chip_do_mem_map __P((struct shpcic_handle *, int));
-void	shpcic_chip_do_io_map __P((struct shpcic_handle *, int));
+void	shpcic_chip_do_mem_map(struct shpcic_handle *, int);
+void	shpcic_chip_do_io_map(struct shpcic_handle *, int);
 
-void	shpcic_create_event_thread __P((void *));
-void	shpcic_event_thread __P((void *));
+void	shpcic_create_event_thread(void *);
+void	shpcic_event_thread(void *);
 
-void	shpcic_queue_event __P((struct shpcic_handle *, int));
+void	shpcic_queue_event(struct shpcic_handle *, int);
 
-/* static void	shpcic_wait_ready __P((struct shpcic_handle *)); */
+/* static void	shpcic_wait_ready(struct shpcic_handle *); */
 
 int
-shpcic_ident_ok(ident)
-	int ident;
+shpcic_ident_ok(int ident)
 {
 	/* this is very empirical and heuristic */
 
@@ -111,16 +110,16 @@ shpcic_ident_ok(ident)
 }
 
 int
-shpcic_vendor(h)
-	struct shpcic_handle *h;
+shpcic_vendor(struct shpcic_handle *h)
 {
+
 	return (PCIC_VENDOR_HITACHI);
 }
 
 char *
-shpcic_vendor_to_string(vendor)
-	int vendor;
+shpcic_vendor_to_string(int vendor)
 {
+
 	switch (vendor) {
 	case PCIC_VENDOR_HITACHI:
 		return ("Hitachi SH");
@@ -130,8 +129,7 @@ shpcic_vendor_to_string(vendor)
 }
 
 void
-shpcic_attach(sc)
-	struct shpcic_softc *sc;
+shpcic_attach(struct shpcic_softc *sc)
 {
 	int vendor, count, i;
 
@@ -215,8 +213,7 @@ shpcic_attach(sc)
 }
 
 void
-shpcic_attach_sockets(sc)
-	struct shpcic_softc *sc;
+shpcic_attach_sockets(struct shpcic_softc *sc)
 {
 	int i;
 
@@ -226,8 +223,7 @@ shpcic_attach_sockets(sc)
 }
 
 void
-shpcic_attach_socket(h)
-	struct shpcic_handle *h;
+shpcic_attach_socket(struct shpcic_handle *h)
 {
 	struct pcmciabus_attach_args paa;
 
@@ -256,8 +252,7 @@ shpcic_attach_socket(h)
 }
 
 void
-shpcic_create_event_thread(arg)
-	void *arg;
+shpcic_create_event_thread(void *arg)
 {
 	struct shpcic_handle *h = arg;
 	const char *cs;
@@ -288,8 +283,7 @@ shpcic_create_event_thread(arg)
 }
 
 void
-shpcic_event_thread(arg)
-	void *arg;
+shpcic_event_thread(void *arg)
 {
 	struct shpcic_handle *h = arg;
 	struct shpcic_event *pe;
@@ -375,8 +369,7 @@ shpcic_event_thread(arg)
 }
 
 void
-shpcic_init_socket(h)
-	struct shpcic_handle *h;
+shpcic_init_socket(struct shpcic_handle *h)
 {
 	int reg;
 
@@ -414,10 +407,7 @@ shpcic_init_socket(h)
 }
 
 int
-shpcic_submatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+shpcic_submatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 
 	struct pcmciabus_attach_args *paa = aux;
@@ -480,9 +470,7 @@ shpcic_submatch(parent, cf, aux)
 }
 
 int
-shpcic_print(arg, pnp)
-	void *arg;
-	const char *pnp;
+shpcic_print(void *arg, const char *pnp)
 {
 	struct pcmciabus_attach_args *paa = arg;
 	struct shpcic_handle *h = (struct shpcic_handle *) paa->pch;
@@ -512,8 +500,7 @@ shpcic_print(arg, pnp)
 }
 
 int
-shpcic_intr(arg)
-	void *arg;
+shpcic_intr(void *arg)
 {
 	struct shpcic_softc *sc = arg;
 	int i, ret = 0;
@@ -528,8 +515,7 @@ shpcic_intr(arg)
 }
 
 int
-shpcic_intr_socket(h)
-	struct shpcic_handle *h;
+shpcic_intr_socket(struct shpcic_handle *h)
 {
 	int cscreg;
 
@@ -589,9 +575,7 @@ shpcic_intr_socket(h)
 }
 
 void
-shpcic_queue_event(h, event)
-	struct shpcic_handle *h;
-	int event;
+shpcic_queue_event(struct shpcic_handle *h, int event)
 {
 	struct shpcic_event *pe;
 	int s;
@@ -608,8 +592,7 @@ shpcic_queue_event(h, event)
 }
 
 void
-shpcic_attach_card(h)
-	struct shpcic_handle *h;
+shpcic_attach_card(struct shpcic_handle *h)
 {
 
 	if (!(h->flags & SHPCIC_FLAG_CARDP)) {
@@ -623,9 +606,7 @@ shpcic_attach_card(h)
 }
 
 void
-shpcic_detach_card(h, flags)
-	struct shpcic_handle *h;
-	int flags;		/* DETACH_* */
+shpcic_detach_card(struct shpcic_handle *h, int flags)
 {
 
 	if (h->flags & SHPCIC_FLAG_CARDP) {
@@ -639,8 +620,7 @@ shpcic_detach_card(h, flags)
 }
 
 void
-shpcic_deactivate_card(h)
-	struct shpcic_handle *h;
+shpcic_deactivate_card(struct shpcic_handle *h)
 {
 
 	/* call the MI deactivate function */
@@ -656,10 +636,8 @@ shpcic_deactivate_card(h)
 }
 
 int
-shpcic_chip_mem_alloc(pch, size, pcmhp)
-	pcmcia_chipset_handle_t pch;
-	bus_size_t size;
-	struct pcmcia_mem_handle *pcmhp;
+shpcic_chip_mem_alloc(pcmcia_chipset_handle_t pch, bus_size_t size,
+    struct pcmcia_mem_handle *pcmhp)
 {
 	struct shpcic_handle *h = (struct shpcic_handle *) pch;
 	bus_space_handle_t memh = 0;
@@ -705,9 +683,8 @@ shpcic_chip_mem_alloc(pch, size, pcmhp)
 }
 
 void
-shpcic_chip_mem_free(pch, pcmhp)
-	pcmcia_chipset_handle_t pch;
-	struct pcmcia_mem_handle *pcmhp;
+shpcic_chip_mem_free(pcmcia_chipset_handle_t pch,
+    struct pcmcia_mem_handle *pcmhp)
 {
 	struct shpcic_handle *h = (struct shpcic_handle *) pch;
 
@@ -715,14 +692,9 @@ shpcic_chip_mem_free(pch, pcmhp)
 }
 
 int
-shpcic_chip_mem_map(pch, kind, card_addr, size, pcmhp, offsetp, windowp)
-	pcmcia_chipset_handle_t pch;
-	int kind;
-	bus_addr_t card_addr;
-	bus_size_t size;
-	struct pcmcia_mem_handle *pcmhp;
-	bus_size_t *offsetp;
-	int *windowp;
+shpcic_chip_mem_map(pcmcia_chipset_handle_t pch, int kind,
+    bus_addr_t card_addr, bus_size_t size, struct pcmcia_mem_handle *pcmhp,
+    bus_size_t *offsetp, int *windowp)
 {
 	struct shpcic_handle *h = (struct shpcic_handle *) pch;
 	bus_addr_t busaddr;
@@ -791,9 +763,7 @@ shpcic_chip_mem_map(pch, kind, card_addr, size, pcmhp, offsetp, windowp)
 }
 
 void
-shpcic_chip_mem_unmap(pch, window)
-	pcmcia_chipset_handle_t pch;
-	int window;
+shpcic_chip_mem_unmap(pcmcia_chipset_handle_t pch, int window)
 {
 	struct shpcic_handle *h = (struct shpcic_handle *) pch;
 
@@ -804,12 +774,8 @@ shpcic_chip_mem_unmap(pch, window)
 }
 
 int
-shpcic_chip_io_alloc(pch, start, size, align, pcihp)
-	pcmcia_chipset_handle_t pch;
-	bus_addr_t start;
-	bus_size_t size;
-	bus_size_t align;
-	struct pcmcia_io_handle *pcihp;
+shpcic_chip_io_alloc(pcmcia_chipset_handle_t pch, bus_addr_t start,
+    bus_size_t size, bus_size_t align, struct pcmcia_io_handle *pcihp)
 {
 	struct shpcic_handle *h = (struct shpcic_handle *) pch;
 	bus_space_tag_t iot;
@@ -849,9 +815,8 @@ shpcic_chip_io_alloc(pch, start, size, align, pcihp)
 }
 
 void
-shpcic_chip_io_free(pch, pcihp)
-	pcmcia_chipset_handle_t pch;
-	struct pcmcia_io_handle *pcihp;
+shpcic_chip_io_free(pcmcia_chipset_handle_t pch,
+    struct pcmcia_io_handle *pcihp)
 {
 	bus_space_tag_t iot = pcihp->iot;
 	bus_space_handle_t ioh = pcihp->ioh;
@@ -864,13 +829,8 @@ shpcic_chip_io_free(pch, pcihp)
 }
 
 int
-shpcic_chip_io_map(pch, width, offset, size, pcihp, windowp)
-	pcmcia_chipset_handle_t pch;
-	int width;
-	bus_addr_t offset;
-	bus_size_t size;
-	struct pcmcia_io_handle *pcihp;
-	int *windowp;
+shpcic_chip_io_map(pcmcia_chipset_handle_t pch, int width, bus_addr_t offset,
+    bus_size_t size, struct pcmcia_io_handle *pcihp, int *windowp)
 {
 	struct shpcic_handle *h = (struct shpcic_handle *) pch;
 	bus_addr_t ioaddr = pcihp->addr + offset;
@@ -935,9 +895,7 @@ shpcic_chip_io_map(pch, width, offset, size, pcihp, windowp)
 }
 
 void
-shpcic_chip_io_unmap(pch, window)
-	pcmcia_chipset_handle_t pch;
-	int window;
+shpcic_chip_io_unmap(pcmcia_chipset_handle_t pch, int window)
 {
 	struct shpcic_handle *h = (struct shpcic_handle *) pch;
 
@@ -949,8 +907,7 @@ shpcic_chip_io_unmap(pch, window)
 
 #if 0
 static void
-shpcic_wait_ready(h)
-	struct shpcic_handle *h;
+shpcic_wait_ready(struct shpcic_handle *h)
 {
 	int i;
 
@@ -974,8 +931,7 @@ shpcic_wait_ready(h)
 #endif
 
 void
-shpcic_chip_socket_enable(pch)
-	pcmcia_chipset_handle_t pch;
+shpcic_chip_socket_enable(pcmcia_chipset_handle_t pch)
 {
 #if 0
 	struct shpcic_handle *h = (struct shpcic_handle *) pch;
@@ -1078,8 +1034,7 @@ shpcic_chip_socket_enable(pch)
 }
 
 void
-shpcic_chip_socket_disable(pch)
-	pcmcia_chipset_handle_t pch;
+shpcic_chip_socket_disable(pcmcia_chipset_handle_t pch)
 {
 #if 0
 	struct shpcic_handle *h = (struct shpcic_handle *) pch;

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.4 2000/06/29 07:44:06 mrg Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.5 2002/02/12 15:26:51 uch Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997
@@ -63,10 +63,7 @@
 #include <machine/reg.h>
 
 int
-sys_sysarch(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_sysarch(struct proc *p, void *v, register_t *retval)
 {
 #if 0 /* unused */
 	struct sys_sysarch_args /* {

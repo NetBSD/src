@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.6 2002/02/11 17:50:17 uch Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.7 2002/02/12 15:26:49 uch Exp $	*/
 
 /*-
  * Copyright (C) 2002 UCHIYAMA Yasushi.  All rights reserved.
@@ -64,10 +64,9 @@ const struct db_command db_machine_command_table[] = {
 int db_active;
 
 void
-kdb_printtrap(type, code)
-	u_int type;
-	int code;
+kdb_printtrap(u_int type, int code)
 {
+
 	db_printf("kernel mode trap: ");
 	if (type >= trap_types)
 		db_printf("type %d", type);
@@ -77,9 +76,7 @@ kdb_printtrap(type, code)
 }
 
 int
-kdb_trap(type, code, regs)
-	int type, code;
-	db_regs_t *regs;
+kdb_trap(int type, int code, db_regs_t *regs)
 {
 	int s;
 
@@ -120,6 +117,7 @@ kdb_trap(type, code, regs)
 void
 cpu_Debugger()
 {
+
 	breakpoint();
 }
 
@@ -135,8 +133,7 @@ cpu_Debugger()
 #define I_RTE	0x002b
 
 boolean_t
-inst_call(inst)
-	int inst;
+inst_call(int inst)
 {
 #if _BYTE_ORDER == BIG_ENDIAN
 	inst >>= 16;
@@ -146,8 +143,7 @@ inst_call(inst)
 }
 
 boolean_t
-inst_return(inst)
-	int inst;
+inst_return(int inst)
 {
 #if _BYTE_ORDER == BIG_ENDIAN
 	inst >>= 16;
@@ -156,8 +152,7 @@ inst_return(inst)
 }
 
 boolean_t
-inst_trap_return(inst)
-	int inst;
+inst_trap_return(int inst)
 {
 #if _BYTE_ORDER == BIG_ENDIAN
 	inst >>= 16;
@@ -166,9 +161,9 @@ inst_trap_return(inst)
 }
 
 void
-db_set_single_step(regs)
-	db_regs_t *regs;
+db_set_single_step(db_regs_t *regs)
 {
+
 	SHREG_BBRA = 0;		/* disable break */
 	SHREG_BARA = 0;		/* break address */
 	SHREG_BASRA = 0;	/* break ASID */
@@ -179,9 +174,9 @@ db_set_single_step(regs)
 }
 
 void
-db_clear_single_step(regs)
-	db_regs_t *regs;
+db_clear_single_step(db_regs_t *regs)
 {
+
 	regs->tf_ubc = 0;
 }
 

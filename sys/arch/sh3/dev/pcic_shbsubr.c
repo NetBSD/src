@@ -1,4 +1,4 @@
-/*	$NetBSD: pcic_shbsubr.c,v 1.3 2000/06/29 07:44:02 mrg Exp $	*/
+/*	$NetBSD: pcic_shbsubr.c,v 1.4 2002/02/12 15:26:45 uch Exp $	*/
 
 #define	SHPCICSUBRDEBUG
 
@@ -115,12 +115,8 @@ int	shpcicsubr_debug = 0 /* XXX */ ;
 #define	DPRINTF(arg)
 #endif
 
-void pcic_shb_bus_width_probe (sc, iot, ioh, base, length)
-	struct shpcic_softc *sc;
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	bus_addr_t base;
-	u_int32_t length;
+void pcic_shb_bus_width_probe (struct shpcic_softc *sc, bus_space_tag_t iot,
+    bus_space_handle_t ioh, bus_addr_t base, u_int32_t length)
 {
 #if 0
 	bus_space_handle_t ioh_high;
@@ -220,7 +216,7 @@ pcic_shb_chip_intr_establish(pch, pf, ipl, fct, arg)
 	pcmcia_chipset_handle_t pch;
 	struct pcmcia_function *pf;
 	int ipl;
-	int (*fct) __P((void *));
+	int (*fct)(void *);
 	void *arg;
 {
 	struct shpcic_handle *h = (struct shpcic_handle *) pch;
@@ -265,9 +261,7 @@ pcic_shb_chip_intr_establish(pch, pf, ipl, fct, arg)
 }
 
 void
-pcic_shb_chip_intr_disestablish(pch, ih)
-	pcmcia_chipset_handle_t pch;
-	void *ih;
+pcic_shb_chip_intr_disestablish(pcmcia_chipset_handle_t pch, void *ih)
 {
 	struct shpcic_handle *h = (struct shpcic_handle *) pch;
 
