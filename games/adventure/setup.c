@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.2 1995/03/21 12:05:10 cgd Exp $	*/
+/*	$NetBSD: setup.c,v 1.3 1997/10/11 01:53:35 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,15 +40,15 @@
 static char copyright[] =
 "@(#) Copyright (c) 1991, 1993\n\
 	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
+#endif				/* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)setup.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: setup.c,v 1.2 1995/03/21 12:05:10 cgd Exp $";
+static char rcsid[] = "$NetBSD: setup.c,v 1.3 1997/10/11 01:53:35 lukem Exp $";
 #endif
-#endif /* not lint */
+#endif				/* not lint */
 
 /*
  * Setup: keep the structure of the original Adventure port, but use an
@@ -64,25 +64,26 @@ static char rcsid[] = "$NetBSD: setup.c,v 1.2 1995/03/21 12:05:10 cgd Exp $";
 #define SIG2 " *      Sterday, 6 Thrimidge S.R. 1993, 15:24"
 
 #include <stdio.h>
-#include "hdr.h"        /* SEED lives in there; keep them coordinated. */
+#include "hdr.h"		/* SEED lives in there; keep them coordinated. */
 
 #define USAGE "Usage: setup file > data.c (file is typically glorkz)\n"
 
 #define YES 1
 #define NO  0
 
-void fatal();
+void    fatal();
 
-#define LINE 10         /* How many values do we get on a line? */
+#define LINE 10			/* How many values do we get on a line? */
 
 main(argc, argv)
-int argc;
-char *argv[];
+	int     argc;
+	char   *argv[];
 {
-	FILE *infile;
-	int c, count, linestart;
+	FILE   *infile;
+	int     c, count, linestart;
 
-	if (argc != 2) fatal(USAGE);
+	if (argc != 2)
+		fatal(USAGE);
 
 	if ((infile = fopen(argv[1], "r")) == NULL)
 		fatal("Can't read file %s.\n", argv[1]);
@@ -95,25 +96,23 @@ char *argv[];
 	count = 0;
 	linestart = YES;
 
-	while ((c = getc(infile)) != EOF)
-	{
-		if (linestart && c == ' ') /* Convert first spaces to tab */
-		{
+	while ((c = getc(infile)) != EOF) {
+		if (linestart && c == ' ') {	/* Convert first spaces to tab */
 			printf("0x%02x,", ('\t' ^ random()) & 0xFF);
 			while ((c = getc(infile)) == ' ' && c != EOF);
 			/* Drop the non-whitespace character through */
 			linestart = NO;
 		}
-		switch(c)
-		{
-		    case '\t':
-			linestart = NO; /* Don't need to convert spaces */
+		switch (c) {
+		case '\t':
+			linestart = NO;	/* Don't need to convert spaces */
 			break;
-		    case '\n':
-			linestart = YES; /* Ready to convert spaces again */
+		case '\n':
+			linestart = YES;	/* Ready to convert spaces
+						 * again */
 			break;
 		}
-		if (count++ % LINE == 0)   /* Finished a line? */
+		if (count++ % LINE == 0)	/* Finished a line? */
 			printf("\n\t");
 		printf("0x%02x,", (c ^ random()) & 0xFF);
 	}
@@ -123,8 +122,9 @@ char *argv[];
 }
 
 
-void fatal(format, arg)
-char *format;
+void 
+fatal(format, arg)
+	char   *format;
 {
 	fprintf(stderr, format, arg);
 	exit(1);
