@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.1 1996/09/30 16:34:57 ws Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.2 1998/01/06 08:13:08 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -61,7 +61,7 @@ cpu_fork(p1, p2)
 		save_fpu(p1);
 	*pcb = p1->p_addr->u_pcb;
 	
-	pcb->pcb_pm = &p2->p_vmspace->vm_pmap;
+	pcb->pcb_pm = p2->p_vmspace->vm_map.pmap;
 	pcb->pcb_pmreal = (struct pmap *)pmap_extract(pmap_kernel(), (vm_offset_t)pcb->pcb_pm);
 	
 	/*
