@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.48 2005/03/09 23:55:35 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.49 2005/03/10 19:34:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.48 2005/03/09 23:55:35 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.49 2005/03/10 19:34:46 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -168,9 +168,10 @@ static int		 _history_expand_command(const char *, size_t, size_t,
     char **);
 static char		*_rl_compat_sub(const char *, const char *,
     const char *, int);
-static int		 rl_complete_internal(int);
+static int		 _rl_complete_internal(int);
 static int		 _rl_qsort_string_compare(const void *, const void *);
 static int		 _rl_event_read_char(EditLine *, char *);
+static void		 _rl_update_pos(void);
 
 
 /* ARGSUSED */
@@ -303,7 +304,7 @@ rl_initialize(void)
 	li = el_line(e);
 	/* a cheesy way to get rid of const cast. */
 	rl_line_buffer = memchr(li->buffer, *li->buffer, 1);
-	rl_point = rl_end = 0;
+	_rl_update_pos();
 
 	if (rl_startup_hook)
 		(*rl_startup_hook)(NULL, 0);
@@ -1718,7 +1719,7 @@ rl_display_match_list (matches, len, max)
  * Note: '*' support is not implemented
  */
 static int
-rl_complete_internal(int what_to_do)
+_rl_complete_internal(int what_to_do)
 {
 	Function *complet_func;
 	const LineInfo *li;
@@ -1751,8 +1752,7 @@ rl_complete_internal(int what_to_do)
 
 	/* these can be used by function called in completion_matches() */
 	/* or (*rl_attempted_completion_function)() */
-	rl_point = li->cursor - li->buffer;
-	rl_end = li->lastchar - li->buffer;
+	_rl_update_pos();
 
 	if (rl_attempted_completion_function) {
 		int end = li->cursor - li->buffer;
@@ -1859,6 +1859,7 @@ rl_complete_internal(int what_to_do)
  * complete word at current point
  */
 int
+/*ARGSUSED*/
 rl_complete(int ignore, int invoking_key)
 {
 	if (h == NULL || e == NULL)
@@ -1871,11 +1872,11 @@ rl_complete(int ignore, int invoking_key)
 		el_insertstr(e, arr);
 		return (CC_REFRESH);
 	} else if (e->el_state.lastcmd == el_rl_complete_cmdnum)
-		return rl_complete_internal('?');
+		return _rl_complete_internal('?');
 	else if (_rl_complete_show_all)
-		return rl_complete_internal('!');
+		return _rl_complete_internal('!');
 	else
-		return (rl_complete_internal(TAB));
+		return _rl_complete_internal(TAB);
 }
 
 
@@ -1970,6 +1971,9 @@ rl_bind_wrapper(EditLine *el, unsigned char c)
 {
 	if (map[c] == NULL)
 	    return CC_ERROR;
+
+	_rl_update_pos();
+
 	(*map[c])(NULL, c);
 
 	/* If rl_done was set by the above call, deal with it here */
@@ -2140,4 +2144,13 @@ _rl_event_read_char(EditLine *el, char *cp)
 	if (!rl_event_hook)
 		el_set(el, EL_GETCFN, EL_BUILTIN_GETCFN);
 	return(num_read);
+}
+
+static void
+_rl_update_pos(void)
+{
+	const LineInfo *li = el_line(e);
+
+	rl_point = li->cursor - li->buffer;
+	rl_end = li->lastchar - li->buffer;
 }
