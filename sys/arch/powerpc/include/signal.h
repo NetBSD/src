@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.14 2003/09/25 22:22:36 matt Exp $	*/
+/*	$NetBSD: signal.h,v 1.15 2003/09/26 22:14:19 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -61,46 +61,16 @@ struct sigcontext {
 	sigset_t sc_mask;		/* saved signal mask (new style) */
 };
 
-#ifndef __HAVE_SIGINFO
-/*
- * The following macros are used to convert from a ucontext to sigcontext,
- * and vice-versa.  This is for building a sigcontext to deliver to old-style
- * signal handlers, and converting back (in the event the handler modifies
- * the context).
- */
-#define	_MCONTEXT_TO_SIGCONTEXT(uc, sc)					\
-do {									\
-	memcpy((sc)->sc_frame.fixreg, &(uc)->uc_mcontext.__gregs[_REG_R0], \
-	    sizeof((sc)->sc_frame.fixreg));				\
-	(sc)->sc_frame.cr     = (uc)->uc_mcontext.__gregs[_REG_CR];	\
-	(sc)->sc_frame.lr     = (uc)->uc_mcontext.__gregs[_REG_LR];	\
-	(sc)->sc_frame.srr0   = (uc)->uc_mcontext.__gregs[_REG_PC];	\
-	(sc)->sc_frame.srr1   = (uc)->uc_mcontext.__gregs[_REG_MSR];	\
-	(sc)->sc_frame.ctr    = (uc)->uc_mcontext.__gregs[_REG_CTR];	\
-	(sc)->sc_frame.xer    = (uc)->uc_mcontext.__gregs[_REG_XER];	\
-	(sc)->sc_frame.mq     = (uc)->uc_mcontext.__gregs[_REG_MQ];	\
-	(sc)->sc_frame.vrsave = (uc)->uc_mcontext.__vrf.__vrsave;	\
-	(sc)->sc_frame.spare  = 0;					\
-} while (/*CONSTCOND*/0)
-
-#define	_SIGCONTEXT_TO_MCONTEXT(sc, uc)					\
-do {									\
-	memcpy(&(uc)->uc_mcontext.__gregs[_REG_R0], (sc)->sc_frame.fixreg, \
-	    sizeof((sc)->sc_frame.fixreg));				\
-	(uc)->uc_mcontext.__gregs[_REG_CR] = (sc)->sc_frame.cr;		\
-	(uc)->uc_mcontext.__gregs[_REG_LR] = (sc)->sc_frame.lr;		\
-	(uc)->uc_mcontext.__gregs[_REG_PC] = (sc)->sc_frame.srr0;	\
-	(uc)->uc_mcontext.__gregs[_REG_MSR] = (sc)->sc_frame.srr1;	\
-	(uc)->uc_mcontext.__gregs[_REG_CTR] = (sc)->sc_frame.ctr;	\
-	(uc)->uc_mcontext.__gregs[_REG_XER] = (sc)->sc_frame.xer;	\
-	(uc)->uc_mcontext.__gregs[_REG_MQ] = (sc)->sc_frame.mq;		\
-	(uc)->uc_mcontext.__vrf.__vrsave  = (sc)->sc_frame.vrsave;	\
-} while (/*CONSTCOND*/0)
-#endif /* !__HAVE_SIGINFO */
-
 #ifdef _KERNEL
 void	sendsig_sigcontext(int, const sigset_t *, u_long);
+
+#ifdef COMPAT_16
+#define	SIGTRAMP_VALID(vers)	((vers) <= 2)
+#else
+#define	SIGTRAMP_VALID(vers)	((vers) == 0 && (vers) == 2)
 #endif
+
+#endif	/* _KERNEL */
 
 #endif	/* _NETBSD_SOURCE */
 #endif	/* !_LOCORE */
