@@ -1,6 +1,12 @@
+sys/arch/alpha/common/sgmap_common.c
+sys/arch/alpha/common/sgmap_typedep.c
+sys/arch/alpha/common/sgmap_typedep.h
+sys/arch/alpha/common/sgmapvar.h
 sys/arch/alpha/pci/apecs_dma.c
 sys/arch/alpha/pci/cia_dma.c
 sys/arch/alpha/pci/dwlpx_dma.c
 sys/arch/alpha/pci/lca_dma.c
-sys/arch/alpha/pci/pci_dma_sgmap.h
-sys/arch/alpha/pci/pci_dma_sgmap_common.c
+sys/arch/alpha/pci/pci_pte32_sgmap.c
+sys/arch/alpha/pci/pci_pte32_sgmap.h
+sys/arch/alpha/pci/pci_pte64_sgmap.c
+sys/arch/alpha/pci/pci_pte64_sgmap.h
