@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.470 2002/09/11 20:43:43 bouyer Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.471 2002/09/19 18:53:01 nathanw Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.468 2002/09/11 20:43:07 bouyer Exp 
+ *	NetBSD: pcidevs,v 1.469 2002/09/19 18:50:45 nathanw Exp 
  */
 
 /*
@@ -974,6 +974,18 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Advanced Micro Devices",
 	    "AMD762 AGP Bridge",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_SC761_SC,
+	    0,
+	    "Advanced Micro Devices",
+	    "AMD761 System Controller",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_SC761_PPB,
+	    0,
+	    "Advanced Micro Devices",
+	    "AMD761 PCI-to-PCI Bridge",
 	},
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC766_ISA,
