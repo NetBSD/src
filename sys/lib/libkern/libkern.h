@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.3 1994/10/26 06:42:26 cgd Exp $	*/
+/*	$NetBSD: libkern.h,v 1.4 1995/08/14 05:43:24 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -36,6 +36,15 @@
  */
 
 #include <sys/types.h>
+
+static __inline int imax __P((int, int));
+static __inline int imin __P((int, int));
+static __inline u_int max __P((u_int, u_int));
+static __inline u_int min __P((u_int, u_int));
+static __inline long lmax __P((long, long));
+static __inline long lmin __P((long, long));
+static __inline u_long ulmax __P((u_long, u_long));
+static __inline u_long ulmin __P((u_long, u_long));
 
 static __inline int
 imax(a, b)
