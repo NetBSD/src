@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC.MPACPI,v 1.19 2005/02/11 08:25:54 dsl Exp $
+#	$NetBSD: GENERIC.MPACPI,v 1.20 2005/02/12 13:07:27 jdolecek Exp $
 #
 #	GENERIC.MPACPI -- Generic, plus ACPI Multiprocessor support
 #
@@ -8,7 +8,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.19 $"
+#ident 		"GENERIC-$Revision: 1.20 $"
 
 maxusers	32		# estimated number of users
 
@@ -341,6 +341,7 @@ wss* 		at acpi?		# NeoMagic 256AV in wss mode
 
 #pckbc*		at pnpbios? index ?	# PC keyboard/mouse controller
 #fdc*		at pnpbios? index ?	# floppy controller
+#npx*		at pnpbios? index ?	# Math coprocessor
 
 # IDE controller on Toshiba Portege 3000 series (crippled PCI device)
 #pciide* 	at pnpbios? index ?

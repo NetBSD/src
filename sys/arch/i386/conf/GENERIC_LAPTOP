@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.132 2005/02/11 08:25:54 dsl Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.133 2005/02/12 13:07:27 jdolecek Exp $
 #	From: NetBSD: GENERIC,v 1.414 2001/07/30 19:59:05 ad Exp
 #
 #	GENERIC_LAPTOP -- GENERIC with cardbus and some USB devices enabled
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.132 $"
+#ident 		"GENERIC-$Revision: 1.133 $"
 
 maxusers	32		# estimated number of users
 
@@ -300,6 +300,7 @@ apm0	at mainbus0			# Advanced power management
 
 #pckbc*		at pnpbios? index ?	# PC keyboard/mouse controller
 #fdc*		at pnpbios? index ?	# floppy controller
+#npx*		at pnpbios? index ?	# Math coprocessor
 
 # IDE controller on Toshiba Portege 3000 series (crippled PCI device)
 #pciide*	at pnpbios? index ?
