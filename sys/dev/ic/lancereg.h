@@ -1,4 +1,4 @@
-/*	$NetBSD: lancereg.h,v 1.6 2001/08/21 16:37:38 thorpej Exp $	*/
+/*	$NetBSD: lancereg.h,v 1.7 2001/08/24 05:04:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -390,28 +390,12 @@
 #define	PORTSEL_MASK	3
 
 /* control and status register 80 (csr80) */
-#define	LE_C80_RCVFW1	0x2000		/* Receive FIFO Watermark 1 */
-#define	LE_C80_RCVFW0	0x1000		/* Receive FIFO Watermark 0 */
-					/*	00	16 bytes	*/
-					/*	01	64 bytes	*/
-					/*	10	112 bytes	*/
-					/*	11	reserved	*/
-#define	LE_C80_XMTSP1	0x0800		/* Transmit Start Point 1 */
-#define	LE_C80_XMTSP0	0x0400		/* Transmit Start Point 0 */
-					/*	00 0	20 bytes	*/
-					/*	01 0	64 bytes	*/
-					/*	10 0	128 bytes	*/
-					/*	11 0	220 max		*/
-					/*	00 >0	36 bytes	*/
-					/*	01 >0	64 bytes	*/
-					/*	10 >0	128 bytes	*/
-					/*	11 >0	store-and-fwd	*/
-#define	LE_C80_XMTFW1	0x0200		/* Transmit FIFO Watermark 1 */
-#define	LE_C80_XMTFW0	0x0100		/* Transmit FIFO Watermark 0 */
-					/*	00	16 bytes	*/
-					/*	01	64 bytes	*/
-					/*	10	108 bytes	*/
-					/*	11	reserved	*/
+#define	LE_C80_RCVFW(x)	((x) << 12)	/* Receive FIFO Watermark */
+#define	LE_C80_RCVFW_MAX 3
+#define	LE_C80_XMTSP(x)	((x) << 10)	/* Transmit Start Point */
+#define	LE_C80_XMTSP_MAX 3
+#define	LE_C80_XMTFW(x)	((x) << 8)	/* Transmit FIFO Watermark */
+#define	LE_C80_XMTFW_MAX 3
 #define	LE_C80_DMATC	0x00ff		/* DMA transfer counter */
 
 /* control and status register 116 (csr116) */
