@@ -1,5 +1,5 @@
 #! /bin/sh -
-#	$NetBSD: makesyscalls.sh,v 1.25 1998/01/09 06:07:26 thorpej Exp $
+#	$NetBSD: makesyscalls.sh,v 1.26 1998/01/09 06:17:51 thorpej Exp $
 #
 # Copyright (c) 1994,1996 Christopher G. Demetriou
 # All rights reserved.
@@ -143,7 +143,6 @@ BEGIN {
 		printf "#endif\n" > sysent
 	}
 
-	printf "/*\t\$NetBSD\$\t*/\n\n" > sysent
 	printf "\n#define\ts(type)\tsizeof(type)\n\n" > sysent
 	printf "struct sysent %s[] = {\n",switchname > sysent
 
