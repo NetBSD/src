@@ -1,4 +1,4 @@
-/*	$NetBSD: ar_io.c,v 1.28 2002/12/05 01:38:05 grant Exp $	*/
+/*	$NetBSD: ar_io.c,v 1.29 2002/12/10 18:33:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_io.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ar_io.c,v 1.28 2002/12/05 01:38:05 grant Exp $");
+__RCSID("$NetBSD: ar_io.c,v 1.29 2002/12/10 18:33:26 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -220,6 +220,22 @@ ar_open(const char *name)
 		artyp = ISPIPE;
 	else
 		artyp = ISREG;
+
+	/*
+	 * Special handling for empty files.
+	 */
+	if (artyp == ISREG && arsb.st_size == 0) {
+		switch (act) {
+		case LIST:
+		case EXTRACT:
+			return -1;
+		case APPND:
+			act = ARCHIVE;
+			return -1;
+		case ARCHIVE:
+			break;
+		}
+	}
 
 	/*
 	 * make sure we beyond any doubt that we only can unlink regular files
