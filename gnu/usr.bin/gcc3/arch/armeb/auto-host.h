@@ -389,7 +389,7 @@
 
    This macro should not be defined if the ordering is the same as for
    multi-word integers. */
-#define HOST_FLOAT_WORDS_BIG_ENDIAN 0
+/* #undef HOST_FLOAT_WORDS_BIG_ENDIAN */
 
 /* Define if you have a working <inttypes.h> header file. */
 #define HAVE_INTTYPES_H 1
