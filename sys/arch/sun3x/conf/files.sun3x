@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun3x,v 1.11 1997/02/24 01:47:08 jeremy Exp $
+#	$NetBSD: files.sun3x,v 1.12 1997/02/25 00:46:58 gwr Exp $
 
 #
 # sun3x-specific configuration info
@@ -112,6 +112,13 @@ file arch/sun3x/dev/dma.c		esp
 # device defined in sys/conf/files
 attach le at obio
 file arch/sun3x/dev/if_le.c		le
+
+# Floppy disk controller (fdc), floppy disk (fd)
+device fdc {}
+attach fdc at obio
+device fd: disk
+attach fd at fdc
+file	arch/sun3x/dev/fd.c			fdc | fd needs-flag
 
 #
 # Sun-compatible Frame Buffers (?)
