@@ -1,4 +1,4 @@
-/*	$NetBSD: cd_atapi.c,v 1.10 1998/08/31 22:28:06 cgd Exp $	*/
+/*	$NetBSD: cd_atapi.c,v 1.11 1999/09/23 11:04:34 enami Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -74,7 +74,8 @@ int	cd_atapibus_match __P((struct device *, struct cfdata *, void *));
 void	cd_atapibus_attach __P((struct device *, struct device *, void *));
 
 struct cfattach cd_atapibus_ca = {
-	sizeof(struct cd_softc), cd_atapibus_match, cd_atapibus_attach
+	sizeof(struct cd_softc), cd_atapibus_match, cd_atapibus_attach,
+	cddetach, cdactivate
 };
 
 struct scsipi_inquiry_pattern cd_atapibus_patterns[] = {

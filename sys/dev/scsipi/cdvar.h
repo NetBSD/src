@@ -1,4 +1,4 @@
-/*	$NetBSD: cdvar.h,v 1.10 1999/02/02 13:02:49 bouyer Exp $	*/
+/*	$NetBSD: cdvar.h,v 1.11 1999/09/23 11:04:34 enami Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -69,3 +69,5 @@ struct cd_ops {
 
 void cdattach __P((struct device *, struct cd_softc *, struct scsipi_link *,
     const struct cd_ops *));
+int cdactivate __P((struct device *, enum devact));
+int cddetach __P((struct device *, int));

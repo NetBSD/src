@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.73 1999/08/30 12:58:58 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.74 1999/09/23 11:04:32 enami Exp $ */
 
 
 /*
@@ -127,6 +127,7 @@ int   wdprint __P((void *, const char *));
 #define DEBUG_STATUS 0x04
 #define DEBUG_FUNCS  0x08
 #define DEBUG_PROBE  0x10
+#define DEBUG_DETACH 0x20
 #ifdef WDCDEBUG
 int wdcdebug_mask = 0;
 int wdc_nxfer = 0;
@@ -284,11 +285,9 @@ wdcattach(chp)
 		return;
 	}
 
-	if (wdcprobe(chp) == 0) {
+	if (wdcprobe(chp) == 0)
 		/* If no drives, abort attach here. */
-		wdc_delref(chp);
-		return;
-	}
+		goto out;
 
 	/* initialise global data */
 	if (inited == 0) {
@@ -377,7 +376,7 @@ wdcattach(chp)
 	/* If no drives, abort here */
 	if ((chp->ch_drive[0].drive_flags & DRIVE) == 0 &&
 	    (chp->ch_drive[1].drive_flags & DRIVE) == 0)
-		return;
+		goto out;
 
 	/*
 	 * Attach an ATAPI bus, if needed.
@@ -398,8 +397,8 @@ wdcattach(chp)
 		aa_link.aa_openings = 1;
 		aa_link.aa_drv_data = 0;
 		aa_link.aa_bus_private = NULL;
-		(void)config_found(&chp->wdc->sc_dev, (void *)&aa_link,
-		    atapi_print);
+		chp->atapibus = config_found(&chp->wdc->sc_dev,
+		    (void *)&aa_link, atapi_print);
 #endif
 	}
 
@@ -449,7 +448,124 @@ wdcattach(chp)
 			}
 		}
 	}
+
+out:
 	wdc_delref(chp);
+}
+
+/*
+ * Call activate routine of underlying devices.
+ */
+int
+wdcactivate(self, act)
+	struct device *self;
+	enum devact act;
+{
+	struct wdc_softc *wdc = (struct wdc_softc *)self;
+	struct channel_softc *chp;
+	struct device *sc;
+	int s, i, j, error = 0;
+
+	s = splbio();
+	switch (act) {
+	case DVACT_ACTIVATE:
+		error = EOPNOTSUPP;
+		break;
+
+	case DVACT_DEACTIVATE:
+		for (i = 0; i < wdc->nchannels; i++) {
+			chp = wdc->channels[i];
+
+			/*
+			 * We might call deactivate routine for
+			 * the children of atapibus twice (once via
+			 * atapibus, once directly), but since
+			 * config_deactivate maintains DVF_ACTIVE flag,
+			 * it's safe.
+			 */
+			sc = chp->atapibus;
+			if (sc != NULL) {
+				error = config_deactivate(sc);
+				if (error != 0)
+					goto out;
+			}
+
+			for (j = 0; j < 2; j++) {
+				sc = chp->ch_drive[j].drv_softc;
+				WDCDEBUG_PRINT(("wdcactivate: %s:"
+				    " deactivating %s\n", wdc->sc_dev.dv_xname,
+				    sc == NULL ? "nodrv" : sc->dv_xname),
+				    DEBUG_DETACH);
+				if (sc != NULL) {
+					error = config_deactivate(sc);
+					if (error != 0)
+						goto out;
+				}
+			}
+		}
+		break;
+	}
+
+out:
+	splx(s);
+
+#ifdef WDCDEBUG
+	if (error != 0)
+		WDCDEBUG_PRINT(("wdcactivate: %s: error %d deactivating %s\n",
+		    wdc->sc_dev.dv_xname, error, sc->dv_xname), DEBUG_DETACH);
+#endif
+	return (error);
+}
+
+int
+wdcdetach(self, flags)
+	struct device *self;
+	int flags;
+{
+	struct wdc_softc *wdc = (struct wdc_softc *)self;
+	struct channel_softc *chp;
+	struct device *sc;
+	int i, j, error = 0;
+
+	for (i = 0; i < wdc->nchannels; i++) {
+		chp = wdc->channels[i];
+
+		/*
+		 * Detach atapibus and its children.
+		 */
+		sc = chp->atapibus;
+		if (sc != NULL) {
+			WDCDEBUG_PRINT(("wdcdetach: %s: detaching %s\n",
+			    wdc->sc_dev.dv_xname, sc->dv_xname), DEBUG_DETACH);
+			error = config_detach(sc, flags);
+			if (error != 0)
+				goto out;
+		}
+
+		/*
+		 * Detach our other children.
+		 */
+		for (j = 0; j < 2; j++) {
+			sc = chp->ch_drive[j].drv_softc;
+			WDCDEBUG_PRINT(("wdcdetach: %s: detaching %s\n",
+			    wdc->sc_dev.dv_xname,
+			    sc == NULL ? "nodrv" : sc->dv_xname),
+			    DEBUG_DETACH);
+			if (sc != NULL) {
+				error = config_detach(sc, flags);
+				if (error != 0)
+					goto out;
+			}
+		}
+	}
+
+out:
+#ifdef WDCDEBUG
+	if (error != 0)
+		WDCDEBUG_PRINT(("wdcdetach: %s: error %d detaching %s\n",
+		    wdc->sc_dev.dv_xname, error, sc->dv_xname), DEBUG_DETACH);
+#endif
+	return (error);
 }
 
 /*
