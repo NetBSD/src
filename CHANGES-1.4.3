@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.3,v 1.1.2.77 2000/10/12 21:55:00 he Exp $
+#	$NetBSD: CHANGES-1.4.3,v 1.1.2.78 2000/10/13 19:04:06 he Exp $
 
 A complete list of changes from NetBSD 1.4.2 to NetBSD 1.4.3:
 
@@ -1586,3 +1586,21 @@ distrib/notes/common/main			patch
 
   Mention new system call requiring kernel upgrade before user-land
   upgrade.  Also mention format audit and fixes as a major change.
+
+domestic/lib/libkrb/klog.c			patch
+domestic/lib/libkrb/log.c			patch
+domestic/usr.sbin/kdb_init/kdb_init.c		patch
+domestic/usr.sbin/kerberos/kerberos.c		patch
+
+  Minimal Y2K fixup.  Don't expire database before 2005, and
+  correct some logging output.  Fixes PR#9095.
+
+distrib/notes/common/main			patch
+
+  Add a caveat that the compiler needs to be updated for a source
+  based upgrade.
+
+sys/ufs/mfs/mfs_vfsops.c			1.29-1.30 via patch
+
+  Move handling of outstanding I/O requests to before the check for
+  unmounting the file system.  Fixes PR#10122.
