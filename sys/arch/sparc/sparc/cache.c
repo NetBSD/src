@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.34 1997/09/26 22:17:23 pk Exp $ */
+/*	$NetBSD: cache.c,v 1.35 1997/11/10 21:20:07 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -179,6 +179,7 @@ hypersparc_cache_enable()
 {
 	int i, ls, ts;
 	u_int pcr;
+	extern u_long dvma_cachealign;
 
 	ls = CACHEINFO.c_linesize;
 	ts = CACHEINFO.c_totalsize;
@@ -196,6 +197,8 @@ hypersparc_cache_enable()
 		cache_alias_bits = CACHE_ALIAS_BITS_HS128k;
 		cache_alias_dist = CACHE_ALIAS_DIST_HS128k;
 	}
+
+	dvma_cachealign = cache_alias_dist;
 
 	/* Now reset cache tag memory if cache not yet enabled */
 	if ((pcr & HYPERSPARC_PCR_CE) == 0)
@@ -733,7 +736,7 @@ viking_pcache_flush_line(va, pa)
 #define cass	4			/* CACHEINFO.dc_associativity */
 
 	if (base == 0)
-		base = (char *)roundup((int)etext, csize);
+		base = (char *)roundup((unsigned int)etext, csize);
 
 	v = base + (((pa & cmask) >> cshift) << cshift);
 	i = 2 * cass - 1;
