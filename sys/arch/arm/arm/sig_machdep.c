@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.22 2003/10/08 00:28:41 thorpej Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.23 2004/08/21 12:07:34 rearnsha Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -45,7 +45,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.22 2003/10/08 00:28:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.23 2004/08/21 12:07:34 rearnsha Exp $");
 
 #include <sys/mount.h>		/* XXX only needed by syscallargs.h */
 #include <sys/proc.h>
@@ -170,6 +170,12 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 	tf->tf_r1 = code;
 	tf->tf_r2 = (int)&fp->sf_sc;
 	tf->tf_pc = (int)catcher;
+#ifdef THUMB_CODE
+	if (((int) catcher) & 1)
+		tf->tf_spsr |= PSR_T_bit;
+	else
+		tf->tf_spsr &= ~PSR_T_bit;
+#endif
 	tf->tf_usr_sp = (int)fp;
 	
 	switch (ps->sa_sigdesc[sig].sd_vers) {
@@ -288,6 +294,12 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	/* the trampoline uses r5 as the uc address */
 	tf->tf_r5 = (int)&fp->sf_uc;
 	tf->tf_pc = (int)catcher;
+#ifdef THUMB_CODE
+	if (((int) catcher) & 1)
+		tf->tf_spsr |= PSR_T_bit;
+	else
+		tf->tf_spsr &= ~PSR_T_bit;
+#endif
 	tf->tf_usr_sp = (int)fp;
 	tf->tf_usr_lr = (int)ps->sa_sigdesc[sig].sd_tramp;
 
