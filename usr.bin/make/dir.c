@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.26 2000/04/16 23:24:04 christos Exp $	*/
+/*	$NetBSD: dir.c,v 1.27 2001/11/11 21:36:06 tv Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: dir.c,v 1.26 2000/04/16 23:24:04 christos Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.27 2001/11/11 21:36:06 tv Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.26 2000/04/16 23:24:04 christos Exp $");
+__RCSID("$NetBSD: dir.c,v 1.27 2001/11/11 21:36:06 tv Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -885,8 +885,7 @@ DirFindDot(hasSlash, name, cp)
 	}
     }
 
-
-    if (cur && (file = DirLookup(cur, name, cp, hasSlash)) != NULL) {
+    if (cur && (file = DirLookupSubdir(cur, name)) != NULL) {
 	if (*file)
 	    return file;
 	else
