@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_common.c,v 1.4 2003/12/19 05:16:57 thorpej Exp $	*/
+/*	$NetBSD: pciide_common.c,v 1.5 2003/12/19 19:09:20 thorpej Exp $	*/
 
 
 /*
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.4 2003/12/19 05:16:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.5 2003/12/19 19:09:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -653,7 +653,7 @@ pciide_dma_init(v, channel, drive, databuf, datalen, flags)
 	    dma_maps->dmamap_table->dm_segs[0].ds_addr);
 	/* set read/write */
 	bus_space_write_1(sc->sc_dma_iot, cp->dma_iohs[IDEDMA_CMD], 0,
-	    (flags & WDC_DMA_READ) ? IDEDMA_CMD_WRITE : 0);
+	    ((flags & WDC_DMA_READ) ? IDEDMA_CMD_WRITE : 0) | cp->idedma_cmd);
 	/* remember flags */
 	dma_maps->dma_flags = flags;
 	return 0;
