@@ -1,7 +1,5 @@
-/*	$NetBSD: ibcs2_signal.h,v 1.3 1995/03/14 15:12:34 scottb Exp $	*/
-
 /*
- * Copyright (c) 1994, 1995 Scott Bartram
+ * Copyright (c) 1995 Scott Bartram
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,72 +28,14 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	_IBCS2_SIGNAL_H
-#define	_IBCS2_SIGNAL_H
+#ifndef	_IBCS2_UTIME_H
+#define	_IBCS2_UTIME_H
 
-#define IBCS2_NSIG		32
+#include <compat/ibcs2/ibcs2_types.h>
 
-#define IBCS2_SIGHUP		1
-#define IBCS2_SIGINT		2
-#define IBCS2_SIGQUIT		3
-#define IBCS2_SIGILL		4
-#define IBCS2_SIGTRAP		5
-#define IBCS2_SIGIOT		6
-#define IBCS2_SIGABRT		6
-#define IBCS2_SIGEMT		7
-#define IBCS2_SIGFPE		8
-#define IBCS2_SIGKILL		9
-#define IBCS2_SIGBUS		10
-#define IBCS2_SIGSEGV		11
-#define IBCS2_SIGSYS		12
-#define IBCS2_SIGPIPE		13
-#define IBCS2_SIGALRM		14
-#define IBCS2_SIGTERM		15
-#define IBCS2_SIGUSR1		16
-#define IBCS2_SIGUSR2		17
-#define IBCS2_SIGCLD		18
-#define IBCS2_SIGPWR		19
-#define IBCS2_SIGWINCH		20
-#define IBCS2_SIGPOLL		22
-
-/*
- * SCO-specific
- */
-#define IBCS2_SIGSTOP		23
-#define IBCS2_SIGTSTP		24
-#define IBCS2_SIGCONT		25
-#define IBCS2_SIGTTIN		26
-#define IBCS2_SIGTTOU		27
-#define IBCS2_SIGVTALRM		28
-#define IBCS2_SIGPROF		29
-
-#define IBCS2_SIG_DFL		(void(*)())0
-#define IBCS2_SIG_ERR		(void(*)())-1
-#define IBCS2_SIG_IGN		(void(*)())1
-#define IBCS2_SIG_HOLD		(void(*)())2
-
-#define IBCS2_SIG_SETMASK	0
-#define IBCS2_SIG_BLOCK		1
-#define IBCS2_SIG_UNBLOCK	2
-
-typedef long	ibcs2_sigset_t;
-
-struct ibcs2_sigaction {
-	void	(*sa_handler)();
-	long	sa_mask;
-	int	sa_flags;
+struct ibcs2_utimbuf {
+        ibcs2_time_t actime;
+	ibcs2_time_t modtime;
 };
 
-#define IBCS2_SA_NOCLDSTOP	1
-
-#define IBCS2_SIGNAL_MASK	0x0000
-#define IBCS2_SIGSET_MASK	0x0100
-#define IBCS2_SIGHOLD_MASK	0x0200
-#define IBCS2_SIGRELSE_MASK	0x0400
-#define IBCS2_SIGIGNORE_MASK	0x0800
-#define IBCS2_SIGPAUSE_MASK	0x1000
-
-#define IBCS2_SIGNO(x)		((x) & 0xff)
-#define IBCS2_SIGCALL(x)	((x) & ~0xff)
-
-#endif /* _IBCS2_SIGNAL_H */
+#endif /* _IBCS2_UTIME_H */

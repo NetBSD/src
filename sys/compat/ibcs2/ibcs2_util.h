@@ -1,7 +1,8 @@
-/*	$NetBSD: ibcs2_types.h,v 1.3 1995/03/14 15:12:46 scottb Exp $	*/
 
 /*
- * Copyright (c) 1994 Scott Bartram
+ * Copyright (c) 1994 Christos Zoulas
+ * Copyright (c) 1995 Frank van der Linden
+ * Copyright (c) 1995 Scott Bartram
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -12,10 +13,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Scott Bartram.
- * 4. The name of the author may not be used to endorse or promote products
+ * 3. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
@@ -28,28 +26,57 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * from: svr4_util.h,v 1.5 1994/11/18 02:54:31 christos Exp
+ * from: linux_util.h,v 1.2 1995/03/05 23:23:50 fvdl Exp
  */
 
-#ifndef	_IBCS2_TYPES_H
-#define	_IBCS2_TYPES_H
+/*
+ * This file is pretty much the same as Christos' svr4_util.h
+ * (for now).
+ */
 
-typedef unsigned char	ibcs2_uchar_t;
-typedef unsigned long	ibcs2_ulong_t;
+#ifndef	_IBCS2_UTIL_H_
+#define	_IBCS2_UTIL_H_
 
-typedef char *		ibcs2_caddr_t;
-typedef long		ibcs2_daddr_t;
-typedef long		ibcs2_off_t;
-typedef long		ibcs2_key_t;
-typedef unsigned short	ibcs2_uid_t;
-typedef unsigned short	ibcs2_gid_t;
-typedef short		ibcs2_nlink_t;
-typedef short		ibcs2_dev_t;
-typedef unsigned short	ibcs2_ino_t;
-typedef unsigned int	ibcs2_size_t;
-typedef long		ibcs2_time_t;
-typedef long		ibcs2_clock_t;
-typedef unsigned short	ibcs2_mode_t;
-typedef short		ibcs2_pid_t;
-typedef void		(*ibcs2_sig_t)(int);
+#include <machine/vmparam.h>
+#include <sys/exec.h>
+#include <sys/cdefs.h>
 
-#endif /* _IBCS2_TYPES_H */
+static __inline caddr_t
+stackgap_init()
+{
+	extern char     sigcode[], esigcode[];
+#define szsigcode ((caddr_t)(esigcode - sigcode))
+	return STACKGAPBASE;
+}
+
+
+static __inline void *
+stackgap_alloc(sgp, sz)
+	caddr_t	*sgp;
+	size_t   sz;
+{
+	void	*p = (void *) *sgp;
+	*sgp += ALIGN(sz);
+	return p;
+}
+
+#ifdef DEBUG_IBCS2
+#define DPRINTF(a)      printf a;
+#else
+#define DPRINTF(a)
+#endif
+
+extern const char ibcs2_emul_path[];
+
+int ibcs2_emul_find __P((struct proc *, caddr_t *, const char *, char *,
+			char **, int));
+
+#define CHECKALTEXIST(p, sgp, path) \
+    ibcs2_emul_find(p, sgp, ibcs2_emul_path, path, &(path), 0)
+
+#define CHECKALTCREAT(p, sgp, path) \
+    ibcs2_emul_find(p, sgp, ibcs2_emul_path, path, &(path), 1)
+
+#endif /* !_IBCS2_UTIL_H_ */
