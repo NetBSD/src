@@ -1,4 +1,4 @@
-/*	$NetBSD: temp.c,v 1.13 2002/03/05 21:11:47 wiz Exp $	*/
+/*	$NetBSD: temp.c,v 1.14 2002/03/06 13:45:51 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)temp.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: temp.c,v 1.13 2002/03/05 21:11:47 wiz Exp $");
+__RCSID("$NetBSD: temp.c,v 1.14 2002/03/06 13:45:51 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,7 +52,6 @@ __RCSID("$NetBSD: temp.c,v 1.13 2002/03/05 21:11:47 wiz Exp $");
  */
 
 char	*tempMail;
-char	*tempEdit;
 char	*tmpdir;
 
 void
@@ -75,7 +74,6 @@ tinit(void)
 	}
 
 	tempMail  = tempnam (tmpdir, "Rs");
-	tempEdit  = tempnam (tmpdir, "Re");
 
 	/*
 	 * It's okay to call savestr in here because main will
