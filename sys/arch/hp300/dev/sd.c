@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.31 1997/04/02 22:37:36 scottr Exp $	*/
+/*	$NetBSD: sd.c,v 1.32 1997/05/05 21:09:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Jason R. Thorpe.  All rights reserved.
@@ -58,14 +58,17 @@
 #include <hp300/dev/scsireg.h>
 #include <hp300/dev/scsivar.h>
 #include <hp300/dev/sdvar.h>
-#ifdef USELEDS
-#include <hp300/hp300/led.h>
-#endif
 
 #include <vm/vm_param.h>
 #include <vm/lock.h>
 #include <vm/vm_prot.h>
 #include <vm/pmap.h>
+
+#include "opt_useleds.h"
+
+#ifdef USELEDS
+#include <hp300/hp300/leds.h>
+#endif
 
 /*
 extern void disksort();
@@ -916,8 +919,7 @@ sdgo(arg)
 		sc->sc_stats.sdtransfers++;
 	}
 #ifdef USELEDS
-	if (inledcontrol == 0)
-		ledcontrol(0, 0, LED_DISK);
+	ledcontrol(0, 0, LED_DISK);
 #endif
 	if (scsigo(sc->sc_dev.dv_parent->dv_unit, sc->sc_target, sc->sc_lun,
 	    bp, cmd, pad) == 0) {
