@@ -1,6 +1,6 @@
-#	$NetBSD: bsd.dep.mk,v 1.14 1997/05/06 20:54:31 mycroft Exp $
+#	$NetBSD: bsd.dep.mk,v 1.15 1997/05/07 08:42:18 mycroft Exp $
 
-.PHONY:		beforedepend afterdepend cleandepend
+.PHONY:		cleandepend
 
 MKDEP?=		mkdep
 

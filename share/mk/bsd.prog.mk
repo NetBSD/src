@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.72 1997/05/06 21:29:44 mycroft Exp $
+#	$NetBSD: bsd.prog.mk,v 1.73 1997/05/07 08:42:21 mycroft Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .if exists(${.CURDIR}/../Makefile.inc)
@@ -6,7 +6,7 @@
 .endif
 
 .MAIN:		all
-.PHONY:		cleanprog afterdepend beforeinstall proginstall afterinstall
+.PHONY:		cleanprog proginstall
 
 .include <bsd.own.mk>
 
