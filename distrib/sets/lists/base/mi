@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.410 2003/05/11 19:01:27 ragge Exp $
+# $NetBSD: mi,v 1.411 2003/06/23 09:28:52 dyoung Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -1495,18 +1495,18 @@
 ./usr/share/misc/flowers		base-reference-share
 ./usr/share/misc/inter.phone		base-reference-share
 ./usr/share/misc/language		base-reference-share
-./usr/share/misc/magic			base-reference-share
-./usr/share/misc/magic.mgc		base-reference-share
-./usr/share/misc/magic.mime		base-reference-share
-./usr/share/misc/magic.mime.mgc		base-reference-share
+./usr/share/misc/magic			base-magic-share
+./usr/share/misc/magic.mgc		base-magic-share
+./usr/share/misc/magic.mime		base-magic-share
+./usr/share/misc/magic.mime.mgc		base-magic-share
 ./usr/share/misc/mail.help		base-reference-share
 ./usr/share/misc/mail.tildehelp		base-reference-share
 ./usr/share/misc/map3270		base-reference-share
 ./usr/share/misc/na.phone		base-reference-share
 ./usr/share/misc/na.postal		base-reference-share
 ./usr/share/misc/nslookup.help		base-reference-share
-./usr/share/misc/termcap		base-reference-share
-./usr/share/misc/termcap.db		base-reference-share
+./usr/share/misc/termcap		base-termcap-share
+./usr/share/misc/termcap.db		base-termcap-share
 ./usr/share/misc/units.lib		base-reference-share
 ./usr/share/misc/usb_hid_usages		base-reference-share
 ./usr/share/misc/vgrindefs.db		base-groff-share
