@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.203 2003/03/06 00:38:27 matt Exp $	*/
+/*	$NetBSD: com.c,v 1.204 2003/03/14 02:21:01 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.203 2003/03/06 00:38:27 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.204 2003/03/14 02:21:01 simonb Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -155,8 +155,8 @@ void	com_iflush(struct com_softc *);
 int	com_common_getc(dev_t, bus_space_tag_t, bus_space_handle_t);
 void	com_common_putc(dev_t, bus_space_tag_t, bus_space_handle_t, int);
 
-int cominit(bus_space_tag_t, bus_addr_t, int, int, tcflag_t,
-			     bus_space_handle_t *);
+int	cominit(bus_space_tag_t, bus_addr_t, int, int, tcflag_t,
+	    bus_space_handle_t *);
 
 int	comcngetc(dev_t);
 void	comcnputc(dev_t, int);
@@ -2260,9 +2260,8 @@ void
 com_common_putc(dev_t dev, bus_space_tag_t iot, bus_space_handle_t ioh, int c)
 {
 	int s = splserial();
-	int timo;
+	int cin, stat, timo;
 
-	int cin, stat;
 	if (com_readaheadcount < MAX_READAHEAD 
 	     && ISSET(stat = bus_space_read_1(iot, ioh, com_lsr), LSR_RXRDY)) {
 		int cn_trapped = 0;
