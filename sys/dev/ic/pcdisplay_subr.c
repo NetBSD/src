@@ -1,4 +1,4 @@
-/* $NetBSD: pcdisplay_subr.c,v 1.24 2002/07/07 10:52:18 tron Exp $ */
+/* $NetBSD: pcdisplay_subr.c,v 1.25 2002/08/25 19:11:16 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcdisplay_subr.c,v 1.24 2002/07/07 10:52:18 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcdisplay_subr.c,v 1.25 2002/08/25 19:11:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -261,7 +261,7 @@ pcdisplay_eraserows(id, startrow, nrows, fillattr)
 	bus_space_handle_t memh = scr->hdl->ph_memh;
 	bus_size_t off, count;
 	u_int16_t val;
-	int i;
+	u_int i;
 
 	off = startrow * scr->type->ncols;
 	count = nrows * scr->type->ncols;
