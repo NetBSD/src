@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia.c,v 1.53 2004/08/10 02:50:52 mycroft Exp $	*/
+/*	$NetBSD: pcmcia.c,v 1.54 2004/08/10 05:21:59 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2004 Charles M. Hannum.  All rights reserved.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.53 2004/08/10 02:50:52 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.54 2004/08/10 05:21:59 mycroft Exp $");
 
 #include "opt_pcmciaverbose.h"
 
@@ -745,10 +745,11 @@ pcmcia_config_alloc(pf, cfe)
 		    length;
 		bus_size_t skew = start & (align - 1);
 
-		if (skew)
-			printf("Drats!  I need a skew!\n");
-		if ((start & ~(align - 1)) == 0 && align < 0x400)
+		if ((start - skew) == 0 && align < 0x400) {
+			if (skew)
+				printf("Drats!  I need a skew!\n");
 			start = 0;
+		}
 
 		DPRINTF(("pcmcia_config_alloc: io %d start=%lx length=%lx align=%lx skew=%lx\n",
 		    n, (long)start, (long)length, (long)align, (long)skew));
