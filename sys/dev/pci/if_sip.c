@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.78.2.6 2005/02/04 11:46:38 skrll Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.78.2.7 2005/02/06 08:59:23 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.78.2.6 2005/02/04 11:46:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.78.2.7 2005/02/06 08:59:23 skrll Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -308,6 +308,8 @@ struct sip_softc {
 
 	struct sip_txsq sc_txfreeq;	/* free Tx descsofts */
 	struct sip_txsq sc_txdirtyq;	/* dirty Tx descsofts */
+
+	short	sc_if_flags;
 
 	int	sc_rxptr;		/* next ready Rx descriptor/descsoft */
 #if defined(DP83820)
@@ -979,6 +981,7 @@ SIP_DECL(attach)(struct device *parent, struct device *self, void *aux)
 	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
+	sc->sc_if_flags = ifp->if_flags;
 	ifp->if_ioctl = SIP_DECL(ioctl);
 	ifp->if_start = SIP_DECL(start);
 	ifp->if_watchdog = SIP_DECL(watchdog);
@@ -1551,7 +1554,22 @@ SIP_DECL(ioctl)(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case SIOCGIFMEDIA:
 		error = ifmedia_ioctl(ifp, ifr, &sc->sc_mii.mii_media, cmd);
 		break;
-
+	case SIOCSIFFLAGS:
+		/* If the interface is up and running, only modify the receive
+		 * filter when setting promiscuous or debug mode.  Otherwise
+		 * fall through to ether_ioctl, which will reset the chip.
+		 */
+#define RESETIGN (IFF_CANTCHANGE|IFF_DEBUG)
+		if (((ifp->if_flags & (IFF_UP|IFF_RUNNING))
+		    == (IFF_UP|IFF_RUNNING))
+		    && ((ifp->if_flags & (~RESETIGN))
+		    == (sc->sc_if_flags & (~RESETIGN)))) {
+			/* Set up the receive filter. */
+			(*sc->sc_model->sip_variant->sipv_set_filter)(sc);
+			break;
+#undef RESETIGN
+		}
+		/* FALLTHROUGH */
 	default:
 		error = ether_ioctl(ifp, cmd, data);
 		if (error == ENETRESET) { 
@@ -1569,6 +1587,7 @@ SIP_DECL(ioctl)(struct ifnet *ifp, u_long cmd, caddr_t data)
 	/* Try to get more packets going. */
 	SIP_DECL(start)(ifp);
 
+	sc->sc_if_flags = ifp->if_flags;
 	splx(s);
 	return (error);
 }
@@ -2542,6 +2561,7 @@ SIP_DECL(init)(struct ifnet *ifp)
 	 */
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
+	sc->sc_if_flags = ifp->if_flags;
 
  out:
 	if (error)

@@ -1,4 +1,4 @@
-/*	$NetBSD: tulipvar.h,v 1.48.6.5 2005/02/04 11:45:28 skrll Exp $	*/
+/*	$NetBSD: tulipvar.h,v 1.48.6.6 2005/02/06 08:59:23 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -449,6 +449,8 @@ struct tulip_softc {
 
 	struct tulip_txsq sc_txfreeq;	/* free Tx descsofts */
 	struct tulip_txsq sc_txdirtyq;	/* dirty Tx descsofts */
+
+	short	sc_if_flags;
 
 	int	sc_rxptr;		/* next ready RX descriptor/descsoft */
 

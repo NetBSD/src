@@ -1,4 +1,4 @@
-/*	$NetBSD: xafb.c,v 1.5.6.5 2005/01/27 09:02:48 skrll Exp $	*/
+/*	$NetBSD: xafb.c,v 1.5.6.6 2005/02/06 08:59:22 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -29,7 +29,7 @@
 /* "xa" frame buffer driver.  Currently supports 1280x1024x8 only. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xafb.c,v 1.5.6.5 2005/01/27 09:02:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xafb.c,v 1.5.6.6 2005/02/06 08:59:22 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -76,23 +76,22 @@ struct xafb_softc {
 	u_char sc_cmap_blue[256];
 };
 
-int xafb_match __P((struct device *, struct cfdata *, void *));
-void xafb_attach __P((struct device *, struct device *, void *));
+int xafb_match(struct device *, struct cfdata *, void *);
+void xafb_attach(struct device *, struct device *, void *);
 
-int xafb_common_init __P((struct xafb_devconfig *));
-int xafb_is_console __P((void));
+int xafb_common_init(struct xafb_devconfig *);
+int xafb_is_console(void);
 
-int xafb_ioctl __P((void *, u_long, caddr_t, int, struct lwp *));
-paddr_t xafb_mmap __P((void *, off_t, int));
-int xafb_alloc_screen __P((void *, const struct wsscreen_descr *,
-			   void **, int *, int *, long *));
-void xafb_free_screen __P((void *, void *));
-int xafb_show_screen __P((void *, void *, int,
-			  void (*) (void *, int, int), void *));
+int xafb_ioctl(void *, u_long, caddr_t, int, struct lwp *);
+paddr_t xafb_mmap(void *, off_t, int);
+int xafb_alloc_screen(void *, const struct wsscreen_descr *, void **, int *,
+    int *, long *);
+void xafb_free_screen(void *, void *);
+int xafb_show_screen(void *, void *, int, void (*) (void *, int, int), void *);
 
-int xafb_cnattach __P((void));
-int xafb_getcmap __P((struct xafb_softc *, struct wsdisplay_cmap *));
-int xafb_putcmap __P((struct xafb_softc *, struct wsdisplay_cmap *));
+int xafb_cnattach(void);
+int xafb_getcmap(struct xafb_softc *, struct wsdisplay_cmap *);
+int xafb_putcmap(struct xafb_softc *, struct wsdisplay_cmap *);
 
 static __inline void xafb_setcolor(struct xafb_devconfig *, int, int, int, int);
 
@@ -127,10 +126,7 @@ struct wsscreen_list xafb_screenlist = {
 };
 
 int
-xafb_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+xafb_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct apbus_attach_args *apa = aux;
 
@@ -141,9 +137,7 @@ xafb_match(parent, match, aux)
 }
 
 void
-xafb_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+xafb_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct xafb_softc *sc = (void *)self;
 	struct apbus_attach_args *apa = aux;
@@ -159,8 +153,8 @@ xafb_attach(parent, self, aux)
 		ri = &dc->dc_ri;
 		sc->sc_nscreens = 1;
 	} else {
-		dc = malloc(sizeof(struct xafb_devconfig), M_DEVBUF, M_WAITOK);
-		bzero(dc, sizeof(struct xafb_devconfig));
+		dc = malloc(sizeof(struct xafb_devconfig), M_DEVBUF,
+		    M_WAITOK|M_ZERO);
 		dc->dc_fbpaddr = (paddr_t)0x10000000;
 		dc->dc_fbbase = (void *)MIPS_PHYS_TO_KSEG1(dc->dc_fbpaddr);
 		dc->dc_reg = (void *)(apa->apa_hwbase + 0x3000);
@@ -193,9 +187,7 @@ xafb_attach(parent, self, aux)
 }
 
 void
-xafb_setcolor(dc, index, r, g, b)
-	struct xafb_devconfig *dc;
-	int index, r, g, b;
+xafb_setcolor(struct xafb_devconfig *dc, int index, int r, int g, int b)
 {
 	volatile struct xafb_reg *reg = dc->dc_reg;
 
@@ -207,8 +199,7 @@ xafb_setcolor(dc, index, r, g, b)
 }
 
 int
-xafb_common_init(dc)
-	struct xafb_devconfig *dc;
+xafb_common_init(struct xafb_devconfig *dc)
 {
 	struct rasops_info *ri = &dc->dc_ri;
 	int i;
@@ -239,7 +230,7 @@ xafb_common_init(dc)
 }
 
 int
-xafb_is_console()
+xafb_is_console(void)
 {
 	volatile u_int *dipsw = (void *)NEWS5000_DIP_SWITCH;
 
@@ -250,12 +241,7 @@ xafb_is_console()
 }
 
 int
-xafb_ioctl(v, cmd, data, flag, l)
-	void *v;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct lwp *l;
+xafb_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct xafb_softc *sc = v;
 	struct xafb_devconfig *dc = sc->sc_dc;
@@ -289,10 +275,7 @@ xafb_ioctl(v, cmd, data, flag, l)
 }
 
 paddr_t
-xafb_mmap(v, offset, prot)
-	void *v;
-	off_t offset;
-	int prot;
+xafb_mmap(void *v, off_t offset, int prot)
 {
 	struct xafb_softc *sc = v;
 	struct xafb_devconfig *dc = sc->sc_dc;
@@ -305,12 +288,8 @@ xafb_mmap(v, offset, prot)
 }
 
 int
-xafb_alloc_screen(v, scrdesc, cookiep, ccolp, crowp, attrp)
-	void *v;
-	const struct wsscreen_descr *scrdesc;
-	void **cookiep;
-	int *ccolp, *crowp;
-	long *attrp;
+xafb_alloc_screen(void *v, const struct wsscreen_descr *scrdesc,
+    void **cookiep, int *ccolp, int *crowp, long *attrp)
 {
 	struct xafb_softc *sc = v;
 	struct rasops_info *ri = &sc->sc_dc->dc_ri;
@@ -329,9 +308,7 @@ xafb_alloc_screen(v, scrdesc, cookiep, ccolp, crowp, attrp)
 }
 
 void
-xafb_free_screen(v, cookie)
-	void *v;
-	void *cookie;
+xafb_free_screen(void *v, void *cookie)
 {
 	struct xafb_softc *sc = v;
 
@@ -342,18 +319,15 @@ xafb_free_screen(v, cookie)
 }
 
 int
-xafb_show_screen(v, cookie, waitok, cb, cbarg)
-	void *v;
-	void *cookie;
-	int waitok;
-	void (*cb) __P((void *, int, int));
-	void *cbarg;
+xafb_show_screen(void *v, void *cookie, int waitok,
+    void (*cb)(void *, int, int), void *cbarg)
 {
+
 	return 0;
 }
 
 int
-xafb_cnattach()
+xafb_cnattach(void)
 {
 	struct xafb_devconfig *dc = &xafb_console_dc;
 	struct rasops_info *ri = &dc->dc_ri;
@@ -377,9 +351,7 @@ xafb_cnattach()
 }
 
 int
-xafb_getcmap(sc, cm)
-	struct xafb_softc *sc;
-	struct wsdisplay_cmap *cm;
+xafb_getcmap(struct xafb_softc *sc, struct wsdisplay_cmap *cm)
 {
 	u_int index = cm->index;
 	u_int count = cm->count;
@@ -402,9 +374,7 @@ xafb_getcmap(sc, cm)
 }
 
 int
-xafb_putcmap(sc, cm)
-	struct xafb_softc *sc;
-	struct wsdisplay_cmap *cm;
+xafb_putcmap(struct xafb_softc *sc, struct wsdisplay_cmap *cm)
 {
 	u_int index = cm->index;
 	u_int count = cm->count;

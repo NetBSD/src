@@ -1,4 +1,4 @@
-/*	$NetBSD: apbus.c,v 1.16.2.3 2004/09/21 13:19:31 skrll Exp $	*/
+/*	$NetBSD: apbus.c,v 1.16.2.4 2005/02/06 08:59:22 skrll Exp $	*/
 
 /*-
  * Copyright (C) 1999 SHIMIZU Ryo.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apbus.c,v 1.16.2.3 2004/09/21 13:19:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apbus.c,v 1.16.2.4 2005/02/06 08:59:22 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,27 +44,29 @@ __KERNEL_RCSID(0, "$NetBSD: apbus.c,v 1.16.2.3 2004/09/21 13:19:31 skrll Exp $")
 #include <machine/intr.h>
 #include <newsmips/apbus/apbusvar.h>
 
-static int  apbusmatch (struct device *, struct cfdata *, void *);
-static void apbusattach (struct device *, struct device *, void *);
-static int apbusprint (void *, const char *);
-/* static void *aptokseg0 (void *); */
-static void apbus_dma_unmapped (bus_dma_tag_t, bus_dmamap_t);
-static int apbus_dma_mapalloc (bus_dma_tag_t, bus_dmamap_t, int);
-static void apbus_dma_mapfree (bus_dma_tag_t, bus_dmamap_t);
-static void apbus_dma_mapset (bus_dma_tag_t, bus_dmamap_t);
-static int apbus_dmamap_create (bus_dma_tag_t, bus_size_t, int, bus_size_t,
-			bus_size_t, int, bus_dmamap_t *);
-static void apbus_dmamap_destroy (bus_dma_tag_t, bus_dmamap_t);
-static int apbus_dmamap_load (bus_dma_tag_t, bus_dmamap_t, void *, bus_size_t,
-			struct proc *, int);
-static int apbus_dmamap_load_mbuf (bus_dma_tag_t, bus_dmamap_t, struct mbuf *,
-			int);
-static int apbus_dmamap_load_uio (bus_dma_tag_t, bus_dmamap_t, struct uio *,
-			int);
-static int apbus_dmamap_load_raw (bus_dma_tag_t, bus_dmamap_t,
-			bus_dma_segment_t *, int, bus_size_t, int);
-static void apbus_dmamap_sync (bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
-			bus_size_t, int);
+static int  apbusmatch(struct device *, struct cfdata *, void *);
+static void apbusattach(struct device *, struct device *, void *);
+static int apbusprint(void *, const char *);
+#if 0
+static void *aptokseg0 (void *);
+#endif
+static void apbus_dma_unmapped(bus_dma_tag_t, bus_dmamap_t);
+static int apbus_dma_mapalloc(bus_dma_tag_t, bus_dmamap_t, int);
+static void apbus_dma_mapfree(bus_dma_tag_t, bus_dmamap_t);
+static void apbus_dma_mapset(bus_dma_tag_t, bus_dmamap_t);
+static int apbus_dmamap_create(bus_dma_tag_t, bus_size_t, int, bus_size_t,
+    bus_size_t, int, bus_dmamap_t *);
+static void apbus_dmamap_destroy(bus_dma_tag_t, bus_dmamap_t);
+static int apbus_dmamap_load(bus_dma_tag_t, bus_dmamap_t, void *, bus_size_t,
+    struct proc *, int);
+static int apbus_dmamap_load_mbuf(bus_dma_tag_t, bus_dmamap_t, struct mbuf *,
+    int);
+static int apbus_dmamap_load_uio(bus_dma_tag_t, bus_dmamap_t, struct uio *,
+    int);
+static int apbus_dmamap_load_raw(bus_dma_tag_t, bus_dmamap_t,
+    bus_dma_segment_t *, int, bus_size_t, int);
+static void apbus_dmamap_sync(bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
+    bus_size_t, int);
 
 #define	MAXAPDEVNUM	32
 
@@ -79,10 +81,7 @@ CFATTACH_DECL(ap, sizeof(struct apbus_softc),
 static struct newsmips_intr apintr_tab[NLEVEL];
 
 static int
-apbusmatch(parent, cfdata, aux)
-	struct device *parent;
-	struct cfdata *cfdata;
-	void *aux;
+apbusmatch(struct device *parent, struct cfdata *cfdata, void *aux)
 {
 	struct confargs *ca = aux;
 
@@ -94,10 +93,7 @@ apbusmatch(parent, cfdata, aux)
 
 
 static void
-apbusattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+apbusattach(struct device *parent, struct device *self, void *aux)
 {
 	struct apbus_attach_args child;
 	struct apbus_dev *apdev;
@@ -154,9 +150,7 @@ apbusattach(parent, self, aux)
 }
 
 int
-apbusprint(aux, pnp)
-	void *aux;
-	const char *pnp;
+apbusprint(void *aux, const char *pnp)
 {
 	struct apbus_attach_args *a = aux;
 
@@ -185,7 +179,7 @@ aptokseg0(va)
 #endif
 
 void
-apbus_wbflush()
+apbus_wbflush(void)
 {
 	volatile int *wbflush = (int *)NEWS5000_WBFLUSH;
 
@@ -196,9 +190,7 @@ apbus_wbflush()
  * called by hardware interrupt routine
  */
 int
-apbus_intr_dispatch(level, stat)
-	int level;
-	int stat;
+apbus_intr_dispatch(int level, int stat)
 {
 	struct newsmips_intr *ip;
 	struct newsmips_intrhand *ih;
@@ -218,18 +210,12 @@ apbus_intr_dispatch(level, stat)
  * register device interrupt routine
  */
 void *
-apbus_intr_establish(level, mask, priority, func, arg, name, ctlno)
-	int level;
-	int mask;
-	int priority;
-	int (*func) (void *);
-	void *arg;
-	char *name;
-	int ctlno;
+apbus_intr_establish(int level, int mask, int priority, int (*func)(void *),
+    void *arg, char *name, int ctlno)
 {
 	struct newsmips_intr *ip;
 	struct newsmips_intrhand *ih, *curih;
-	volatile u_int32_t *inten0, *inten1;
+	volatile uint32_t *inten0, *inten1;
 
 	ip = &apintr_tab[level];
 
@@ -260,11 +246,11 @@ apbus_intr_establish(level, mask, priority, func, arg, name, ctlno)
  done:
 	switch (level) {
 	case 0:
-		inten0 = (volatile u_int32_t *)NEWS5000_INTEN0;
+		inten0 = (volatile uint32_t *)NEWS5000_INTEN0;
 		*inten0 |= mask;
 		break;
 	case 1:
-		inten1 = (volatile u_int32_t *)NEWS5000_INTEN1;
+		inten1 = (volatile uint32_t *)NEWS5000_INTEN1;
 		*inten1 |= mask;
 		break;
 	}
@@ -273,9 +259,7 @@ apbus_intr_establish(level, mask, priority, func, arg, name, ctlno)
 }
 
 static void
-apbus_dma_unmapped(t, map)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
+apbus_dma_unmapped(bus_dma_tag_t t, bus_dmamap_t map)
 {
 	int seg;
 
@@ -297,10 +281,7 @@ apbus_dma_unmapped(t, map)
 static u_char apbus_dma_maptbl[APBUS_NDMAMAP];
 
 static int
-apbus_dma_mapalloc(t, map, flags)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	int flags;
+apbus_dma_mapalloc(bus_dma_tag_t t, bus_dmamap_t map, int flags)
 {
 	int i, j, cnt;
 
@@ -328,9 +309,7 @@ apbus_dma_mapalloc(t, map, flags)
 }
 
 static void
-apbus_dma_mapfree(t, map)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
+apbus_dma_mapfree(bus_dma_tag_t t, bus_dmamap_t map)
 {
 	int i, n;
 
@@ -350,9 +329,7 @@ apbus_dma_mapfree(t, map)
 }
 
 static void
-apbus_dma_mapset(t, map)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
+apbus_dma_mapset(bus_dma_tag_t t, bus_dmamap_t map)
 {
 	int i;
 	bus_addr_t addr, eaddr;
@@ -380,14 +357,8 @@ apbus_dma_mapset(t, map)
 }
 
 static int
-apbus_dmamap_create(t, size, nsegments, maxsegsz, boundary, flags, dmamp)
-	bus_dma_tag_t t;
-	bus_size_t size;
-	int nsegments;
-	bus_size_t maxsegsz;
-	bus_size_t boundary;
-	int flags;
-	bus_dmamap_t *dmamp;
+apbus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
+    bus_size_t maxsegsz, bus_size_t boundary, int flags, bus_dmamap_t *dmamp)
 {
 	int error;
 
@@ -406,23 +377,17 @@ apbus_dmamap_create(t, size, nsegments, maxsegsz, boundary, flags, dmamp)
 }
 
 static void
-apbus_dmamap_destroy(t, map)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
+apbus_dmamap_destroy(bus_dma_tag_t t, bus_dmamap_t map)
 {
+
 	if (map->_dm_flags & NEWSMIPS_DMAMAP_MAPTBL)
 		apbus_dma_mapfree(t, map);
 	_bus_dmamap_destroy(t, map);
 }
 
 static int
-apbus_dmamap_load(t, map, buf, buflen, p, flags)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	void *buf;
-	bus_size_t buflen;
-	struct proc *p;
-	int flags;
+apbus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
+    bus_size_t buflen, struct proc *p, int flags)
 {
 	int error;
 
@@ -437,11 +402,8 @@ apbus_dmamap_load(t, map, buf, buflen, p, flags)
 }
 
 static int
-apbus_dmamap_load_mbuf(t, map, m0, flags)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	struct mbuf *m0;
-	int flags;
+apbus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
+    int flags)
 {
 	int error;
 
@@ -456,11 +418,8 @@ apbus_dmamap_load_mbuf(t, map, m0, flags)
 }
 
 static int
-apbus_dmamap_load_uio(t, map, uio, flags)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	struct uio *uio;
-	int flags;
+apbus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
+    int flags)
 {
 	int error;
 
@@ -475,13 +434,8 @@ apbus_dmamap_load_uio(t, map, uio, flags)
 }
 
 static int
-apbus_dmamap_load_raw(t, map, segs, nsegs, size, flags)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	bus_dma_segment_t *segs;
-	int nsegs;
-	bus_size_t size;
-	int flags;
+apbus_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
+    bus_dma_segment_t *segs, int nsegs, bus_size_t size, int flags)
 {
 	int error;
 
@@ -496,12 +450,8 @@ apbus_dmamap_load_raw(t, map, segs, nsegs, size, flags)
 }
 
 static void
-apbus_dmamap_sync(t, map, offset, len, ops)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	bus_addr_t offset;
-	bus_size_t len;
-	int ops;
+apbus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
+    bus_size_t len, int ops)
 {
 
 	/*
@@ -529,8 +479,7 @@ struct newsmips_bus_dma_tag apbus_dma_tag = {
 };
 
 struct newsmips_bus_dma_tag *
-apbus_dmatag_init(apa)
-	struct apbus_attach_args *apa;
+apbus_dmatag_init(struct apbus_attach_args *apa)
 {
 	struct newsmips_bus_dma_tag *dmat;
 

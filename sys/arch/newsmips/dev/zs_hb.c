@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_hb.c,v 1.16.2.3 2004/09/21 13:19:32 skrll Exp $	*/
+/*	$NetBSD: zs_hb.c,v 1.16.2.4 2005/02/06 08:59:22 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_hb.c,v 1.16.2.3 2004/09/21 13:19:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_hb.c,v 1.16.2.4 2005/02/06 08:59:22 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -126,15 +126,14 @@ static u_char zs_init_reg[16] = {
 	ZSWR15_BREAK_IE,
 };
 
-static struct zschan * zs_get_chan_addr __P((int, int));
-static void zs_hb_delay __P((void));
-static int zshard_hb __P((void *));
-static int zs_getc __P((void *));
-static void zs_putc __P((void *, int));
+static struct zschan * zs_get_chan_addr(int, int);
+static void zs_hb_delay(void);
+static int zshard_hb(void *);
+static int zs_getc(void *);
+static void zs_putc(void *, int);
 
 struct zschan *
-zs_get_chan_addr(zs_unit, channel)
-	int zs_unit, channel;
+zs_get_chan_addr(int zs_unit, int channel)
 {
 	struct zsdevice *addr;
 	struct zschan *zc;
@@ -149,11 +148,11 @@ zs_get_chan_addr(zs_unit, channel)
 	} else {
 		zc = &addr->zs_chan_b;
 	}
-	return (zc);
+	return zc;
 }
 
 static void
-zs_hb_delay()
+zs_hb_delay(void)
 {
 
 	ZS_DELAY();
@@ -164,8 +163,8 @@ zs_hb_delay()
  ****************************************************************/
 
 /* Definition of the driver for autoconfig. */
-int zs_hb_match __P((struct device *, struct cfdata *, void *));
-void zs_hb_attach __P((struct device *, struct device *, void *));
+int zs_hb_match(struct device *, struct cfdata *, void *);
+void zs_hb_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(zsc_hb, sizeof(struct zsc_softc),
     zs_hb_match, zs_hb_attach, NULL, NULL);
@@ -174,10 +173,7 @@ CFATTACH_DECL(zsc_hb, sizeof(struct zsc_softc),
  * Is the zs chip present?
  */
 int
-zs_hb_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+zs_hb_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct hb_attach_args *ha = aux;
 
@@ -198,10 +194,7 @@ zs_hb_match(parent, cf, aux)
  * not set up the keyboard as ttya, etc.
  */
 void
-zs_hb_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+zs_hb_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct zsc_softc *zsc = (void *)self;
 	struct hb_attach_args *ha = aux;
@@ -251,8 +244,8 @@ zs_hb_attach(parent, self, aux)
 		cs->cs_reg_csr  = &zc->zc_csr;
 		cs->cs_reg_data = &zc->zc_data;
 
-		bcopy(zs_init_reg, cs->cs_creg, 16);
-		bcopy(zs_init_reg, cs->cs_preg, 16);
+		memcpy(cs->cs_creg, zs_init_reg, 16);
+		memcpy(cs->cs_preg, zs_init_reg, 16);
 
 		/* XXX: Get these from the EEPROM instead? */
 		/* XXX: See the mvme167 code.  Better. */
@@ -319,8 +312,7 @@ zs_hb_attach(parent, self, aux)
 }
 
 static int
-zshard_hb(arg)
-	void *arg;
+zshard_hb(void *arg)
 {
 	int rv;
 
@@ -338,8 +330,7 @@ zshard_hb(arg)
  * Polled input char.
  */
 int
-zs_getc(arg)
-	void *arg;
+zs_getc(void *arg)
 {
 	volatile struct zschan *zc = arg;
 	int s, c, rr0;
@@ -359,16 +350,14 @@ zs_getc(arg)
 	 * This is used by the kd driver to read scan codes,
 	 * so don't translate '\r' ==> '\n' here...
 	 */
-	return (c);
+	return c;
 }
 
 /*
  * Polled output char.
  */
 void
-zs_putc(arg, c)
-	void *arg;
-	int c;
+zs_putc(void *arg, int c)
 {
 	volatile struct zschan *zc = arg;
 	int s, rr0;
@@ -387,10 +376,10 @@ zs_putc(arg, c)
 
 /*****************************************************************/
 
-static void zscnprobe __P((struct consdev *));
-static void zscninit __P((struct consdev *));
-static int  zscngetc __P((dev_t));
-static void zscnputc __P((dev_t, int));
+static void zscnprobe(struct consdev *);
+static void zscninit(struct consdev *);
+static int  zscngetc(dev_t);
+static void zscnputc(dev_t, int);
 
 struct consdev consdev_zs = {
 	zscnprobe,
@@ -406,14 +395,12 @@ struct consdev consdev_zs = {
 };
 
 static void
-zscnprobe(cn)
-	struct consdev *cn;
+zscnprobe(struct consdev *cn)
 {
 }
 
 static void
-zscninit(cn)
-	struct consdev *cn;
+zscninit(struct consdev *cn)
 {
 	extern const struct cdevsw zstty_cdevsw;
 
@@ -423,17 +410,14 @@ zscninit(cn)
 }
 
 static int
-zscngetc(dev)
-	dev_t dev;
+zscngetc(dev_t dev)
 {
 
 	return zs_getc((void *)SCCPORT0A);
 }
 
 static void
-zscnputc(dev, c)
-	dev_t dev;
-	int c;
+zscnputc(dev_t dev, int c)
 {
 
 	zs_putc((void *)SCCPORT0A, c);

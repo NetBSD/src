@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_revent.c,v 1.11.6.4 2004/11/29 07:24:32 skrll Exp $	*/
+/*	$NetBSD: rf_revent.c,v 1.11.6.5 2005/02/06 08:59:23 skrll Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_revent.c,v 1.11.6.4 2004/11/29 07:24:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_revent.c,v 1.11.6.5 2005/02/06 08:59:23 skrll Exp $");
 
 #include <sys/errno.h>
 
@@ -179,6 +179,31 @@ GetReconEventDesc(RF_RowCol_t col, void *arg, RF_Revent_t type)
 	t->type = type;
 	t->next = NULL;
 	return (t);
+}
+
+/*
+  rf_DrainReconEventQueue() -- used in the event of a reconstruction
+  problem, this function simply drains all pending events from the
+  reconstruct event queue.
+ */
+
+void
+rf_DrainReconEventQueue(RF_RaidReconDesc_t *reconDesc)
+{
+	RF_ReconCtrl_t *rctrl = reconDesc->raidPtr->reconControl;
+	RF_ReconEvent_t *event;
+
+	RF_LOCK_MUTEX(rctrl->eq_mutex);
+	while (rctrl->eventQueue!=NULL) {
+		
+		event = rctrl->eventQueue;
+		rctrl->eventQueue = event->next;
+		event->next = NULL;
+		rctrl->eq_count--;
+		/* dump it */
+		rf_FreeReconEventDesc(event);
+	}
+	RF_UNLOCK_MUTEX(rctrl->eq_mutex);
 }
 
 void 
