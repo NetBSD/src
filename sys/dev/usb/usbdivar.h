@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.26 1999/08/28 21:42:35 augustss Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.27 1999/08/29 17:57:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -150,7 +150,7 @@ struct usbd_request {
 	u_int32_t		timeout;
 	usbd_status		status;
 	usbd_callback		callback;
-	char			done;
+	__volatile char		done;
 
 	usb_device_request_t	request;
 	char			isreq;
