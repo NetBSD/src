@@ -1909,7 +1909,7 @@ sh_elf_get_relocated_section_contents (output_bfd, link_info, link_order,
 #define ELF_MACHINE_CODE	EM_SH
 
 #ifndef ELF_MAXPAGESIZE
-#define ELF_MAXPAGESIZE		0x1
+#define ELF_MAXPAGESIZE		0x1000
 #endif
 
 #define elf_symbol_leading_char '_'
