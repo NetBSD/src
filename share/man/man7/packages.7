@@ -1,4 +1,4 @@
-.\"	$NetBSD: packages.7,v 1.36 2000/08/31 02:34:44 hubertf Exp $
+.\"	$NetBSD: packages.7,v 1.37 2000/10/11 14:00:58 hubertf Exp $
 .\"
 .\" from: NetBSD: bsd.pkg.mk,v 1.89 1998/06/01 21:30:10 hubertf Exp
 .\"
@@ -669,7 +669,9 @@ Generate
 .Pa files/md5
 (only do this for your own packages!).
 .It readme	
-Create a README.html file describing the category or package
+Create a README.html file describing the category or package. See
+.Pa ${PKGSRCDIR}/Packages.txt
+for more details.
 .It mirror-distfiles
 Mirror the distfile(s) if they are freely redistributable. If
 .Dv NO_SRC_ON_FTP
@@ -692,6 +694,11 @@ targets unless you want to open a major can of worms.
 .Sh SEE ALSO
 .Xr make 1 ,
 .Xr mk.conf 5
+and
+.Rs
+.%T "Documentation on the NetBSD Package System"
+.Re
+.Pa ${PKGSRCDIR}/Packages.txt
 .Sh HISTORY
 This manual page is based upon the comments in the
 .Pa bsd.pkg.mk
