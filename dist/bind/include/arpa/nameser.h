@@ -1,4 +1,4 @@
-/*	$NetBSD: nameser.h,v 1.3 2001/01/27 07:22:02 itojun Exp $	*/
+/*	$NetBSD: nameser.h,v 1.4 2002/06/20 11:43:01 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993
@@ -51,7 +51,7 @@
  */
 
 /*
- *	Id: nameser.h,v 8.41 2000/12/23 08:14:50 vixie Exp
+ *	Id: nameser.h,v 8.47 2002/04/30 03:43:53 marka Exp
  */
 
 #ifndef _ARPA_NAMESER_H_
@@ -121,7 +121,7 @@ typedef struct __ns_msg {
 	const u_char	*_sections[ns_s_max];
 	ns_sect		_sect;
 	int		_rrnum;
-	const u_char	*_ptr;
+	const u_char	*_msg_ptr;
 } ns_msg;
 
 /* Private data structure - do not use from outside library. */
@@ -205,7 +205,9 @@ typedef	enum __ns_rcode {
 	ns_r_notauth = 9,	/* Not authoritative for zone */
 	ns_r_notzone = 10,	/* Zone of record different from zone section */
 	ns_r_max = 11,
-	/* The following are TSIG extended errors */
+	/* The following are EDNS extended rcodes */
+	ns_r_badvers = 16,
+	/* The following are TSIG errors */
 	ns_r_badsig = 16,
 	ns_r_badkey = 17,
 	ns_r_badtime = 18
@@ -428,10 +430,15 @@ typedef enum __ns_cert_types {
 #define NS_NXT_MAX 127
 
 /*
+ * EDNS0 extended flags, host order.
+ */
+#define NS_OPT_DNSSEC_OK	0x8000U
+
+/*
  * Inline versions of get/put short/long.  Pointer is advanced.
  */
 #define NS_GET16(s, cp) do { \
-	register u_char *t_cp = (u_char *)(cp); \
+	register const u_char *t_cp = (const u_char *)(cp); \
 	(s) = ((u_int16_t)t_cp[0] << 8) \
 	    | ((u_int16_t)t_cp[1]) \
 	    ; \
@@ -439,7 +446,7 @@ typedef enum __ns_cert_types {
 } while (0)
 
 #define NS_GET32(l, cp) do { \
-	register u_char *t_cp = (u_char *)(cp); \
+	register const u_char *t_cp = (const u_char *)(cp); \
 	(l) = ((u_int32_t)t_cp[0] << 24) \
 	    | ((u_int32_t)t_cp[1] << 16) \
 	    | ((u_int32_t)t_cp[2] << 8) \
@@ -492,7 +499,9 @@ typedef enum __ns_cert_types {
 #define	ns_name_skip		__ns_name_skip
 #define	ns_name_rollback	__ns_name_rollback
 #define	ns_sign			__ns_sign
+#define	ns_sign2		__ns_sign2
 #define	ns_sign_tcp		__ns_sign_tcp
+#define	ns_sign_tcp2		__ns_sign_tcp2
 #define	ns_sign_tcp_init	__ns_sign_tcp_init
 #define ns_find_tsig		__ns_find_tsig
 #define	ns_verify		__ns_verify
@@ -537,8 +546,14 @@ void		ns_name_rollback __P((const u_char *, const u_char **,
 				      const u_char **));
 int		ns_sign __P((u_char *, int *, int, int, void *,
 			     const u_char *, int, u_char *, int *, time_t));
+int		ns_sign2 __P((u_char *, int *, int, int, void *,
+			      const u_char *, int, u_char *, int *, time_t,
+			      u_char **, u_char **));
 int		ns_sign_tcp __P((u_char *, int *, int, int,
 				 ns_tcp_tsig_state *, int));
+int		ns_sign_tcp2 __P((u_char *, int *, int, int,
+				  ns_tcp_tsig_state *, int,
+				  u_char **, u_char **));
 int		ns_sign_tcp_init __P((void *, const u_char *, int,
 					ns_tcp_tsig_state *));
 u_char		*ns_find_tsig __P((u_char *, u_char *));

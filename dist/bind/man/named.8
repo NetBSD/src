@@ -1,4 +1,4 @@
-.\"     $NetBSD: named.8,v 1.9 2001/09/16 16:34:24 wiz Exp $
+.\"     $NetBSD: named.8,v 1.10 2002/06/20 11:43:09 itojun Exp $
 .\"
 .\" ++Copyright++ 1985, 1996
 .\" -
@@ -94,7 +94,7 @@ or
 .Dq Fl c
 flags.
 .Pp
-.Sy NOTE:
+.Sy NOTE :
 Several of 
 .Nm "" Ns 's
 options, and much more of its behaviour, can be controlled in the configuration 
@@ -113,7 +113,7 @@ is a number determines the level of messages printed.  If negative,
 is set to 
 .Dq 1 .
 .Pp
-.Sy NOTE:
+.Sy NOTE :
 The new debugging framework is considerably more sophisticated than it
 was in older versions of 
 .Nm "" .
@@ -133,7 +133,7 @@ the port number returned by
 for service 
 .Dq Li domain .
 .Pp
-.Sy NOTE:
+.Sy NOTE :
 Previously, the syntax
 .Dq Fl p Ar port# Ns Op Ar \&/localport#
 was supported; the first port was that used when contacting 
@@ -171,7 +171,7 @@ has been compiled with
 .Li QRYLOG 
 defined.  
 .Pp
-.Sy NOTE: 
+.Sy NOTE :
 This option is deprecated in favor of the
 .Dq Li queries
 .Em logging category 
@@ -185,7 +185,7 @@ Turns recursion off in the server.  Answers can come only from local
 (primary or secondary) zones.  This can be used on root servers.
 The default is to use recursion.
 .Pp
-.Sy NOTE: 
+.Sy NOTE :
 This option can be overridden by and is deprecated in favor of the
 .Dq Li recursion 
 clause of the configuration file's
@@ -244,7 +244,7 @@ where:
 .Bl -tag -width "opt_domain  " 
 .It Ar domain
 is 
-.Dq Li \&. 
+.Dq Li .\&
 for root, 
 .Dq Li @ 
 for the current origin, or a standard domain name. If
@@ -254,7 +254,7 @@ is a standard domain name that does
 end with 
 .Dq Li \&. , 
 the current origin is appended to the domain. Domain names ending with 
-.Dq Li \&.
+.Dq Li .\&
 are unmodified.
 .It Ar opt_domain
 This field is used to define an origin for the data in an included file.
@@ -312,7 +312,7 @@ Resource records normally end at the end of a line,
 but may be continued across lines between opening and closing parentheses.
 Comments are introduced by semicolons and continue to the end of the line.
 .Pp
-.Sy NOTE:
+.Sy NOTE :
 There are other resource record types not shown here.  You should
 consult the 
 .Sy BIND 
@@ -402,19 +402,25 @@ Saves any modified dynamic zones to the file system, and shuts down the server.
 Turns on debugging; each 
 .Dv SIGUSR1 
 increments debug level.
-.Po Dv SIGEMT 
+.Po
+.Dv SIGEMT
 on older systems without 
 .Dv SIGUSR1 .
 .Pc 
 .It Dv SIGUSR2
 Turns off debugging completely.
-.Po Dv SIGFPE 
+.Po
+.Dv SIGFPE
 on older systems without 
 .Dv SIGUSR2 .
 .Pc
 .It Dv SIGWINCH
 Toggles logging of all incoming queries via 
+<<<<<<< named.8
 .Xr syslogd 8
+=======
+.Xr syslog 3
+>>>>>>> 1.1.1.4
 (requires server to have been built with the 
 .Li QRYLOG 
 option).
@@ -433,6 +439,7 @@ debug output
 nameserver statistics data
 .El
 .Sh SEE ALSO
+.Xr named.conf 5 ,
 .Xr gethostbyname 3 ,
 .Xr hostname 7 ,
 .Xr kill 1 ,
