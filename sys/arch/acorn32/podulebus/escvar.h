@@ -1,4 +1,4 @@
-/* $NetBSD: escvar.h,v 1.1 2001/10/05 22:27:55 reinoud Exp $ */
+/* $NetBSD: escvar.h,v 1.2 2002/02/18 19:55:01 bjh21 Exp $ */
 
 /*
  * Copyright (c) 1995 Daniel Widenfalk
@@ -174,13 +174,16 @@ struct	esc_softc {
 	u_char			 sc_config_flags;
 
 /* Generic DMA functions */
-	int		       (*sc_setup_dma)();
-	int		       (*sc_build_dma_chain)();
-	int		       (*sc_need_bump)();
+	int		       (*sc_setup_dma)(struct esc_softc *, void *,
+				    int, int);
+	int		       (*sc_build_dma_chain)(struct esc_softc *,
+				    struct esc_dma_chain *, void *, int);
+	int		       (*sc_need_bump)(struct esc_softc *, void *,
+				    int);
 
 /* Generic Led data */
 	int			 sc_led_status;
-	void		       (*sc_led)();
+	void		       (*sc_led)(struct esc_softc *, int);
 
 /* Nexus list */
 	struct nexus		 sc_nexus[8];
