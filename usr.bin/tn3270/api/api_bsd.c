@@ -1,4 +1,4 @@
-/*	$NetBSD: api_bsd.c,v 1.6 1998/03/10 13:49:55 christos Exp $	*/
+/*	$NetBSD: api_bsd.c,v 1.7 1998/11/06 20:00:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)api_bsd.c	4.2 (Berkeley) 4/26/91";
 #else
-__RCSID("$NetBSD: api_bsd.c,v 1.6 1998/03/10 13:49:55 christos Exp $");
+__RCSID("$NetBSD: api_bsd.c,v 1.7 1998/11/06 20:00:07 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -116,7 +116,9 @@ char	*string;		/* if non-zero, where to connect to */
 	fprintf(stderr, "%s specifies bad host name.\n", string);
 	return -1;
     }
-    bcopy(hp->h_addr, (char *)&server.sin_addr, hp->h_length);
+    if (sizeof(server.sin_addr.s_addr) < hp->h_length)
+	    hp->h_length = sizeof(server.sin_addr.s_addr);
+    (void)memcpy(&server.sin_addr.s_addr, hp->h_addr, hp->h_length);
     server.sin_port = htons(port);
 
     if (connect(sock, (struct sockaddr *)&server, sizeof server) < 0) {
