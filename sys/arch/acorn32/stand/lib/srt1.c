@@ -1,4 +1,4 @@
-/*	$NetBSD: srt1.c,v 1.1.2.2 2002/12/29 19:15:20 thorpej Exp $	*/
+/*	$NetBSD: srt1.c,v 1.1.2.3 2003/01/07 20:46:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris.
@@ -69,7 +69,7 @@ void
 __start(void)
 {
 	int argc;
-	char *args, **argv;
+	char *ro_args, *args, **argv;
 
 	/* Clear BSS */
 	memset(edata, 0, end - edata);
@@ -77,7 +77,10 @@ __start(void)
 	/* Define heap. */
 	setheap(end, (void *)(HIMEM - 0x1000));
 
-	args = os_get_env(NULL, NULL);
+	ro_args = os_get_env(NULL, NULL);
+
+	args = alloc(strlen(ro_args)+10);	/* some spare extra */
+	strcpy(args, ro_args);
 
 	argc = splitargs(args, 0, NULL);
 	argv = alloc(argc * sizeof(*argv));

@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_hfsc.h,v 1.2 2000/12/14 08:49:50 thorpej Exp $	*/
+/*	$NetBSD: altq_hfsc.h,v 1.2.4.1 2003/01/07 20:44:54 thorpej Exp $	*/
 /*	$KAME: altq_hfsc.h,v 1.6 2000/12/14 08:12:46 thorpej Exp $	*/
 
 /*
@@ -111,7 +111,7 @@ struct hfsc_delete_filter {
 	u_long			filter_handle;
 };
 
-struct class_stats {
+struct hfsc_basic_class_stats {
 	u_int			class_id;
 	u_long			class_handle;
 	struct service_curve	rsc;
@@ -141,7 +141,7 @@ struct hfsc_class_stats {
 	u_int64_t		cur_time;	/* current time */
 	u_int			hif_classes;	/* # of classes in the tree */
 	u_int			hif_packets;	/* # of packets in the tree */
-	struct class_stats	*stats;		/* pointer to stats array */
+	struct hfsc_basic_class_stats	*stats;	/* pointer to stats array */
 };
 
 #define	HFSC_IF_ATTACH		_IOW('Q', 1, struct hfsc_attach)
