@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.137 2005/03/08 04:49:35 simonb Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.137.2.1 2005/03/30 10:12:17 tron Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.137 2005/03/08 04:49:35 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.137.2.1 2005/03/30 10:12:17 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -362,37 +362,39 @@ lfs_inactive(void *v)
  * These macros are used to bracket UFS directory ops, so that we can
  * identify all the pages touched during directory ops which need to
  * be ordered and flushed atomically, so that they may be recovered.
- */
-/*
- * XXX KS - Because we have to mark nodes VDIROP in order to prevent
+ *
+ * Because we have to mark nodes VDIROP in order to prevent
  * the cache from reclaiming them while a dirop is in progress, we must
  * also manage the number of nodes so marked (otherwise we can run out).
  * We do this by setting lfs_dirvcount to the number of marked vnodes; it
  * is decremented during segment write, when VDIROP is taken off.
  */
-#define	SET_DIROP(vp)		SET_DIROP2((vp), NULL)
-#define	SET_DIROP2(vp, vp2)	lfs_set_dirop((vp), (vp2))
+#define	MARK_VNODE(vp)			lfs_mark_vnode(vp)
+#define	UNMARK_VNODE(vp)		lfs_unmark_vnode(vp)
+#define	SET_DIROP_CREATE(dvp, vpp)	lfs_set_dirop_create((dvp), (vpp))
+#define	SET_DIROP_REMOVE(dvp, vp)	lfs_set_dirop((dvp), (vp))
+static int lfs_set_dirop_create(struct vnode *, struct vnode **);
 static int lfs_set_dirop(struct vnode *, struct vnode *);
 
 static int
-lfs_set_dirop(struct vnode *vp, struct vnode *vp2)
+lfs_set_dirop(struct vnode *dvp, struct vnode *vp)
 {
 	struct lfs *fs;
 	int error;
 
-	KASSERT(VOP_ISLOCKED(vp));
-	KASSERT(vp2 == NULL || VOP_ISLOCKED(vp2));
+	KASSERT(VOP_ISLOCKED(dvp));
+	KASSERT(vp == NULL || VOP_ISLOCKED(vp));
 
-	fs = VTOI(vp)->i_lfs;
+	fs = VTOI(dvp)->i_lfs;
 	/*
 	 * LFS_NRESERVE calculates direct and indirect blocks as well
 	 * as an inode block; an overestimate in most cases.
 	 */
-	if ((error = lfs_reserve(fs, vp, vp2, LFS_NRESERVE(fs))) != 0)
+	if ((error = lfs_reserve(fs, dvp, vp, LFS_NRESERVE(fs))) != 0)
 		return (error);
 
 	if (fs->lfs_dirops == 0)
-		lfs_check(vp, LFS_UNUSED_LBN, 0);
+		lfs_check(dvp, LFS_UNUSED_LBN, 0);
 restart:
 	simple_lock(&fs->lfs_interlock);
 	if (fs->lfs_writer) {
@@ -427,36 +429,94 @@ restart:
 	simple_unlock(&fs->lfs_interlock);
 
 	/* Hold a reference so SET_ENDOP will be happy */
-	vref(vp);
-	if (vp2)
-		vref(vp2);
+	vref(dvp);
+	if (vp) {
+		vref(vp);
+		MARK_VNODE(vp);
+	}
 
+	MARK_VNODE(dvp);
 	return 0;
 
 unreserve:
-	lfs_reserve(fs, vp, vp2, -LFS_NRESERVE(fs));
+	lfs_reserve(fs, dvp, vp, -LFS_NRESERVE(fs));
 	return error;
 }
 
-#define	SET_ENDOP(fs, vp, str)	SET_ENDOP2((fs), (vp), NULL, (str))
-#define	SET_ENDOP2(fs, vp, vp2, str) {					\
-	--(fs)->lfs_dirops;						\
-	if (!(fs)->lfs_dirops) {					\
-		if ((fs)->lfs_nadirop) {				\
-			panic("SET_ENDOP: %s: no dirops but nadirop=%d", \
-			      (str), (fs)->lfs_nadirop);		\
-		}							\
-		wakeup(&(fs)->lfs_writer);				\
-		lfs_check((vp),LFS_UNUSED_LBN,0);			\
-	}								\
-	lfs_reserve((fs), vp, vp2, -LFS_NRESERVE(fs)); /* XXX */	\
-	vrele(vp);							\
-	if (vp2)							\
-		vrele(vp2);						\
+/*
+ * Get a new vnode *before* adjusting the dirop count, to avoid a deadlock
+ * in getnewvnode(), if we have a stacked filesystem mounted on top
+ * of us.
+ *
+ * NB: this means we have to clear the new vnodes on error.  Fortunately
+ * SET_ENDOP is there to do that for us.
+ */
+static int
+lfs_set_dirop_create(struct vnode *dvp, struct vnode **vpp)
+{
+	int error;
+	struct lfs *fs;
+
+	fs = VFSTOUFS(dvp->v_mount)->um_lfs;
+	if (fs->lfs_ronly)
+		return EROFS;
+	if (vpp && (error = getnewvnode(VT_LFS, dvp->v_mount, lfs_vnodeop_p, vpp))) {
+		DLOG((DLOG_ALLOC, "lfs_set_dirop_create: dvp %p error %d\n",
+		      dvp, error));
+		return error;
+	}
+	if ((error = lfs_set_dirop(dvp, NULL)) != 0) {
+		if (vpp) {
+			ungetnewvnode(*vpp);
+			*vpp = NULL;
+		}
+		return error;
+	}
+	return 0;
 }
 
-#define	MARK_VNODE(vp)		lfs_mark_vnode(vp)
-#define	UNMARK_VNODE(vp)	lfs_unmark_vnode(vp)
+#define	SET_ENDOP_BASE(fs, dvp, str)					\
+	do {								\
+		simple_lock(&(fs)->lfs_interlock);			\
+		--(fs)->lfs_dirops;					\
+		if (!(fs)->lfs_dirops) {				\
+			if ((fs)->lfs_nadirop) {			\
+				panic("SET_ENDOP: %s: no dirops but "	\
+					" nadirop=%d", (str),		\
+					(fs)->lfs_nadirop);		\
+			}						\
+			wakeup(&(fs)->lfs_writer);			\
+			simple_unlock(&(fs)->lfs_interlock);		\
+			lfs_check((dvp), LFS_UNUSED_LBN, 0);		\
+		} else							\
+			simple_unlock(&(fs)->lfs_interlock);		\
+	} while(0)
+#define SET_ENDOP_CREATE(fs, dvp, nvpp, str)				\
+	do {								\
+		UNMARK_VNODE(dvp);					\
+		if (nvpp && *nvpp)					\
+			UNMARK_VNODE(*nvpp);				\
+		/* Check for error return to stem vnode leakage */	\
+		if (nvpp && *nvpp && !((*nvpp)->v_flag & VDIROP))	\
+			ungetnewvnode(*(nvpp));				\
+		SET_ENDOP_BASE((fs), (dvp), (str));			\
+		lfs_reserve((fs), (dvp), NULL, -LFS_NRESERVE(fs));	\
+		vrele(dvp);						\
+	} while(0)
+#define SET_ENDOP_CREATE_AP(ap, str)					\
+	SET_ENDOP_CREATE(VTOI((ap)->a_dvp)->i_lfs, (ap)->a_dvp,		\
+			 (ap)->a_vpp, (str))
+#define SET_ENDOP_REMOVE(fs, dvp, ovp, str)				\
+	do {								\
+		UNMARK_VNODE(dvp);					\
+		if (ovp)						\
+			UNMARK_VNODE(ovp);				\
+		SET_ENDOP_BASE((fs), (dvp), (str));			\
+		lfs_reserve((fs), (dvp), (ovp), -LFS_NRESERVE(fs));	\
+		vrele(dvp);						\
+		if (ovp)						\
+			vrele(ovp);					\
+	} while(0)
 
 void
 lfs_mark_vnode(struct vnode *vp)
@@ -501,16 +561,12 @@ lfs_symlink(void *v)
 	} */ *ap = v;
 	int error;
 
-	if ((error = SET_DIROP(ap->a_dvp)) != 0) {
+	if ((error = SET_DIROP_CREATE(ap->a_dvp, ap->a_vpp)) != 0) {
 		vput(ap->a_dvp);
 		return error;
 	}
-	MARK_VNODE(ap->a_dvp);
 	error = ufs_symlink(ap);
-	UNMARK_VNODE(ap->a_dvp);
-	if (*(ap->a_vpp))
-		UNMARK_VNODE(*(ap->a_vpp));
-	SET_ENDOP(VTOI(ap->a_dvp)->i_lfs,ap->a_dvp,"symlink");
+	SET_ENDOP_CREATE_AP(ap, "symlink");
 	return (error);
 }
 
@@ -530,19 +586,15 @@ lfs_mknod(void *v)
 	struct mount	*mp;
 	ino_t		ino;
 
-	if ((error = SET_DIROP(ap->a_dvp)) != 0) {
+	if ((error = SET_DIROP_CREATE(ap->a_dvp, ap->a_vpp)) != 0) {
 		vput(ap->a_dvp);
 		return error;
 	}
-	MARK_VNODE(ap->a_dvp);
 	error = ufs_makeinode(MAKEIMODE(vap->va_type, vap->va_mode),
 	    ap->a_dvp, vpp, ap->a_cnp);
-	UNMARK_VNODE(ap->a_dvp);
-	if (*(ap->a_vpp))
-		UNMARK_VNODE(*(ap->a_vpp));
 
 	/* Either way we're done with the dirop at this point */
-	SET_ENDOP(VTOI(ap->a_dvp)->i_lfs,ap->a_dvp,"mknod");
+	SET_ENDOP_CREATE_AP(ap, "mknod");
 
 	if (error)
 		return (error);
@@ -608,16 +660,12 @@ lfs_create(void *v)
 	} */ *ap = v;
 	int error;
 
-	if ((error = SET_DIROP(ap->a_dvp)) != 0) {
+	if ((error = SET_DIROP_CREATE(ap->a_dvp, ap->a_vpp)) != 0) {
 		vput(ap->a_dvp);
 		return error;
 	}
-	MARK_VNODE(ap->a_dvp);
 	error = ufs_create(ap);
-	UNMARK_VNODE(ap->a_dvp);
-	if (*(ap->a_vpp))
-		UNMARK_VNODE(*(ap->a_vpp));
-	SET_ENDOP(VTOI(ap->a_dvp)->i_lfs,ap->a_dvp,"create");
+	SET_ENDOP_CREATE_AP(ap, "create");
 	return (error);
 }
 
@@ -632,16 +680,12 @@ lfs_mkdir(void *v)
 	} */ *ap = v;
 	int error;
 
-	if ((error = SET_DIROP(ap->a_dvp)) != 0) {
+	if ((error = SET_DIROP_CREATE(ap->a_dvp, ap->a_vpp)) != 0) {
 		vput(ap->a_dvp);
 		return error;
 	}
-	MARK_VNODE(ap->a_dvp);
 	error = ufs_mkdir(ap);
-	UNMARK_VNODE(ap->a_dvp);
-	if (*(ap->a_vpp))
-		UNMARK_VNODE(*(ap->a_vpp));
-	SET_ENDOP(VTOI(ap->a_dvp)->i_lfs,ap->a_dvp,"mkdir");
+	SET_ENDOP_CREATE_AP(ap, "mkdir");
 	return (error);
 }
 
@@ -658,7 +702,7 @@ lfs_remove(void *v)
 
 	dvp = ap->a_dvp;
 	vp = ap->a_vp;
-	if ((error = SET_DIROP2(dvp, vp)) != 0) {
+	if ((error = SET_DIROP_REMOVE(dvp, vp)) != 0) {
 		if (dvp == vp)
 			vrele(vp);
 		else
@@ -666,13 +710,8 @@ lfs_remove(void *v)
 		vput(dvp);
 		return error;
 	}
-	MARK_VNODE(dvp);
-	MARK_VNODE(vp);
 	error = ufs_remove(ap);
-	UNMARK_VNODE(dvp);
-	UNMARK_VNODE(vp);
-
-	SET_ENDOP2(VTOI(dvp)->i_lfs, dvp, vp, "remove");
+	SET_ENDOP_REMOVE(VTOI(dvp)->i_lfs, dvp, vp, "remove");
 	return (error);
 }
 
@@ -689,20 +728,15 @@ lfs_rmdir(void *v)
 	int error;
 
 	vp = ap->a_vp;
-	if ((error = SET_DIROP2(ap->a_dvp, ap->a_vp)) != 0) {
+	if ((error = SET_DIROP_REMOVE(ap->a_dvp, ap->a_vp)) != 0) {
 		vrele(ap->a_dvp);
 		if (ap->a_vp != ap->a_dvp)
 			VOP_UNLOCK(ap->a_dvp, 0);
 		vput(vp);
 		return error;
 	}
-	MARK_VNODE(ap->a_dvp);
-	MARK_VNODE(vp);
 	error = ufs_rmdir(ap);
-	UNMARK_VNODE(ap->a_dvp);
-	UNMARK_VNODE(vp);
-
-	SET_ENDOP2(VTOI(ap->a_dvp)->i_lfs, ap->a_dvp, vp, "rmdir");
+	SET_ENDOP_REMOVE(VTOI(ap->a_dvp)->i_lfs, ap->a_dvp, vp, "rmdir");
 	return (error);
 }
 
@@ -715,15 +749,14 @@ lfs_link(void *v)
 		struct componentname *a_cnp;
 	} */ *ap = v;
 	int error;
+	struct vnode **vpp = NULL;
 
-	if ((error = SET_DIROP(ap->a_dvp)) != 0) {
+	if ((error = SET_DIROP_CREATE(ap->a_dvp, vpp)) != 0) {
 		vput(ap->a_dvp);
 		return error;
 	}
-	MARK_VNODE(ap->a_dvp);
 	error = ufs_link(ap);
-	UNMARK_VNODE(ap->a_dvp);
-	SET_ENDOP(VTOI(ap->a_dvp)->i_lfs,ap->a_dvp,"link");
+	SET_ENDOP_CREATE(VTOI(ap->a_dvp)->i_lfs, ap->a_dvp, vpp, "link");
 	return (error);
 }
 
@@ -772,7 +805,7 @@ lfs_rename(void *v)
 	 * would leave us with an unaccounted-for number of live dirops.
 	 *
 	 * Inline the relevant section of ufs_rename here, *before*
-	 * calling SET_DIROP2.
+	 * calling SET_DIROP_REMOVE.
 	 */
 	if (tvp && ((VTOI(tvp)->i_flags & (IMMUTABLE | APPEND)) ||
 	    (VTOI(tdvp)->i_flags & APPEND))) {
@@ -802,23 +835,15 @@ lfs_rename(void *v)
 		return (VOP_REMOVE(fdvp, fvp, fcnp));
 	}
 
-	if ((error = SET_DIROP2(tdvp, tvp)) != 0)
+	if ((error = SET_DIROP_REMOVE(tdvp, tvp)) != 0)
 		goto errout;
 	MARK_VNODE(fdvp);
-	MARK_VNODE(tdvp);
 	MARK_VNODE(fvp);
-	if (tvp) {
-		MARK_VNODE(tvp);
-	}
 
 	error = ufs_rename(ap);
 	UNMARK_VNODE(fdvp);
-	UNMARK_VNODE(tdvp);
 	UNMARK_VNODE(fvp);
-	if (tvp) {
-		UNMARK_VNODE(tvp);
-	}
-	SET_ENDOP2(fs, tdvp, tvp, "rename");
+	SET_ENDOP_REMOVE(fs, tdvp, tvp, "rename");
 	return (error);
 
     errout:
@@ -1402,10 +1427,15 @@ check_dirty(struct lfs *fs, struct vnode *vp,
 	while (by_list || soff < MIN(blkeof, endoffset)) {
 		if (by_list) {
 			/*
-			 * find the first page in a block.
+			 * Find the first page in a block.  Skip
+			 * blocks outside our area of interest or beyond
+			 * the end of file.
 			 */
 			if (pages_per_block > 1) {
-				while (curpg && (curpg->offset & fs->lfs_bmask))
+				while (curpg &&
+				       ((curpg->offset & fs->lfs_bmask) ||
+				        curpg->offset >= vp->v_size ||
+				        curpg->offset >= endoffset))
 					curpg = TAILQ_NEXT(curpg, listq);
 			}
 			if (curpg == NULL)
