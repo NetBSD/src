@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.4 1998/10/09 10:41:51 itohy Exp $
+#	$NetBSD: Makefile.inc,v 1.5 1999/01/03 14:49:39 minoura Exp $
 #
 #	etc.x68k/Makefile.inc -- x68k-specific etc Makefile targets
 #
@@ -14,7 +14,7 @@ KERNOBJDIR?=	${KERNSRCDIR}/arch/${MACHINE}/compile
 KERNCONFDIR?=	${KERNSRCDIR}/arch/${MACHINE}/conf
 
 snap_md:
-.for kernel in GENERIC ALL
+.for kernel in GENERIC SMALL
 	cd ${KERNCONFDIR} && config \
 		-b ${KERNOBJDIR}/${kernel} \
 		-s ${KERNSRCDIR} \
