@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.113 1997/06/24 00:28:36 thorpej Exp $	*/
+/*	$NetBSD: sd.c,v 1.114 1997/07/02 03:51:25 phil Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -231,9 +231,9 @@ sdattach(parent, self, aux)
 	if (error || sd_get_parms(sd, SCSI_AUTOCONF) != 0)
 		printf("drive offline\n");
 	else
-	        printf("%ldMB, %d cyl, %d head, %d sec, %d bytes/sec\n",
+	        printf("%ldMB, %d cyl, %d head, %d sec, %d bytes/sec x %ld sectors\n",
 		    dp->disksize / (1048576 / dp->blksize), dp->cyls,
-		    dp->heads, dp->sectors, dp->blksize);
+		    dp->heads, dp->sectors, dp->blksize, dp->disksize);
 }
 
 /*
