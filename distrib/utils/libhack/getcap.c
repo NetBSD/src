@@ -1,4 +1,4 @@
-/*	$NetBSD: getcap.c,v 1.4 2002/02/02 15:08:06 lukem Exp $	*/
+/*	$NetBSD: getcap.c,v 1.5 2003/08/06 13:43:31 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -46,7 +46,7 @@
 #if 0
 static char sccsid[] = "@(#)getcap.c	8.3 (Berkeley) 3/25/94";
 #else
-__RCSID("$NetBSD: getcap.c,v 1.4 2002/02/02 15:08:06 lukem Exp $");
+__RCSID("$NetBSD: getcap.c,v 1.5 2003/08/06 13:43:31 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -112,18 +112,18 @@ cgetset(const char *ent)
 	if (ent == NULL) {
 		if (toprec)
 			free(toprec);
-                toprec = NULL;
-                topreclen = 0;
-                return (0);
-        }
-        topreclen = strlen(ent);
-        if ((toprec = malloc (topreclen + 1)) == NULL) {
+		toprec = NULL;
+		topreclen = 0;
+		return (0);
+	}
+	topreclen = strlen(ent);
+	toprec = strdup(ent);
+	if (toprec == NULL) {
 		errno = ENOMEM;
-                return (-1);
+		return (-1);
 	}
 	gottoprec = 0;
-        (void)strcpy(toprec, ent);	/* XXX: strcpy is safe */
-        return (0);
+	return (0);
 }
 
 /*
@@ -233,9 +233,9 @@ getent(char **cap, size_t *len, char **db_array, int fd, const char *name,
 
 	/*
 	 * Check if we have a top record from cgetset().
-         */
+	 */
 	if (depth == 0 && toprec != NULL && cgetmatch(toprec, name) == 0) {
-		if ((record = malloc (topreclen + BFRAG)) == NULL) {
+		if ((record = malloc(topreclen + BFRAG)) == NULL) {
 			errno = ENOMEM;
 			return (-2);
 		}

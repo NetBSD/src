@@ -1,4 +1,4 @@
-/*	$NetBSD: yplib.c,v 1.3 1999/09/19 19:51:11 christos Exp $	*/
+/*	$NetBSD: yplib.c,v 1.4 2003/08/06 13:43:32 itojun Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -266,7 +266,7 @@ yperr_string(incode)
 	if (incode == 0)
 		return "Success";
 
-	sprintf(err, "YP FAKE error %d\n", incode);
+	snprintf(err, sizeof(err), "YP FAKE error %d\n", incode);
 	return err;
 }
 
