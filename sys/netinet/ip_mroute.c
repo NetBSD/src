@@ -714,7 +714,7 @@ ip_mforward(ip, ifp, m)
 	u_long tunnel_src;
 
 	if (ip->ip_hl < (IP_HDR_LEN + TUNNEL_LEN) >> 2 ||
-	    (ipoptions = (u_char *)(ip + 1))[1] != IPOPT_LSRR ) {
+	    (ipoptions = (u_char *)(ip + 1))[1] != IPOPT_LSRR) {
 		/*
 		 * Packet arrived via a physical interface or was
 		 * decapsulated off an encapsulating tunnel.

@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)udp_usrreq.c	7.20 (Berkeley) 4/20/91
- *	$Id: udp_usrreq.c,v 1.11 1994/02/02 05:59:10 hpeyerl Exp $
+ *	$Id: udp_usrreq.c,v 1.12 1994/02/10 18:46:06 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -439,8 +439,8 @@ udp_output(inp, m, addr, control)
 	((struct ip *)ui)->ip_tos = inp->inp_ip.ip_tos;	/* XXX */
 	udpstat.udps_opackets++;
 	error = ip_output(m, inp->inp_options, &inp->inp_route,
-	    inp->inp_socket->so_options & (SO_DONTROUTE | SO_BROADCAST)
-	    , inp->inp_moptions );
+	    inp->inp_socket->so_options & (SO_DONTROUTE | SO_BROADCAST),
+	    inp->inp_moptions);
 
 	if (addr) {
 		in_pcbdisconnect(inp);
