@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.41 1995/05/04 00:16:40 mycroft Exp $	*/
+/*	$NetBSD: npx.c,v 1.42 1995/05/04 00:20:40 mycroft Exp $	*/
 
 #if 0
 #define iprintf(x)	printf x
@@ -566,8 +566,7 @@ npxsave()
  * Initialize floating point unit.
  *
  * This is normally called at spl0, so NPX interrupts will be caught and
- * ignored.  It is called once during boot at splhigh, but there is never any
- * state to save then.
+ * ignored.
  */
 void
 npxinit()
