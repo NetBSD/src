@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hp.c,v 1.34 2002/03/05 04:12:58 itojun Exp $	*/
+/*	$NetBSD: if_hp.c,v 1.35 2003/01/15 22:38:59 bouyer Exp $	*/
 
 /* XXX THIS DRIVER IS BROKEN.  IT WILL NOT EVEN COMPILE. */
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_hp.c,v 1.34 2002/03/05 04:12:58 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_hp.c,v 1.35 2003/01/15 22:38:59 bouyer Exp $");
 
 #include "hp.h"
 #if NHP > 0
@@ -593,6 +593,7 @@ hpstart(ifp)
 	len = total;
 	if (len < ETHER_MIN_LEN)
 		len = ETHER_MIN_LEN;
+#error broken here ! need to set to 0 the pad space in buffer !
 	outb(hpc + ds_cmd, DSCM_NODMA | DSCM_PG0 | DSCM_START);
 	outb(hpc + ds0_tbcr0, len & 0xff);
 	outb(hpc + ds0_tbcr1, (len >> 8) & 0xff);
