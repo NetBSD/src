@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.102 1996/05/15 02:34:36 briggs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.103 1996/05/18 16:01:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1381,8 +1381,6 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	/* NOTREACHED */
 }
 
-int	cpu_exec_prep_oldzmagic __P((struct proc *, struct exec_package *));
-
 int
 cpu_exec_aout_makecmds(p, epp)
 	struct proc *p;
@@ -1393,7 +1391,7 @@ cpu_exec_aout_makecmds(p, epp)
 
 #ifdef COMPAT_NOMID
 	if (execp->a_midmag == ZMAGIC)	/* i.e., MID == 0. */
-		return cpu_exec_prep_oldzmagic(p, epp);
+		return exec_aout_prep_oldzmagic(p, epp);
 #endif
 
 #ifdef COMPAT_SUNOS
@@ -1406,52 +1404,6 @@ cpu_exec_aout_makecmds(p, epp)
 #endif
 	return error;
 }
-
-#ifdef COMPAT_NOMID
-int
-cpu_exec_prep_oldzmagic(p, epp)
-	struct proc *p;
-	struct exec_package *epp;
-{
-	struct exec *execp = epp->ep_hdr;
-
-	epp->ep_taddr = 0;
-	epp->ep_tsize = execp->a_text;
-	epp->ep_daddr = epp->ep_taddr + execp->a_text;
-	epp->ep_dsize = execp->a_data + execp->a_bss;
-	epp->ep_entry = execp->a_entry;
-
-	/* check if vnode is in open for writing, because we want to
-	 * demand-page out of it.  if it is, don't do it, for various reasons */
-	if ((execp->a_text != 0 || execp->a_data != 0) &&
-	    epp->ep_vp->v_writecount != 0) {
-#ifdef DIAGNOSTIC
-		if (epp->ep_vp->v_flag & VTEXT)
-			panic("exec: a VTEXT vnode has writecount != 0\n");
-#endif
-		return ETXTBSY;
-	}
-	epp->ep_vp->v_flag |= VTEXT;
-
-	/* set up command for text segment */
-	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_pagedvn, execp->a_text,
-	    epp->ep_taddr, epp->ep_vp, NBPG,	/* should NBPG be CLBYTES? */
-	    VM_PROT_READ | VM_PROT_EXECUTE);
-
-	/* set up command for data segment */
-	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_pagedvn, execp->a_data,
-	    epp->ep_daddr, epp->ep_vp,
-	    execp->a_text + NBPG,	/* should NBPG be CLBYTES? */
-	    VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXECUTE);
-
-	/* set up command for bss segment */
-	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, execp->a_bss,
-	    epp->ep_daddr + execp->a_data, NULLVP, 0,
-	    VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXECUTE);
-
-	return exec_aout_setup_stack(p, epp);
-}
-#endif				/* COMPAT_NOMID */
 
 static char *envbuf = NULL;
 
