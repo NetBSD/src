@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.82 2000/11/08 22:41:59 eeh Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.83 2000/11/19 01:34:58 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -100,6 +100,9 @@ static int sysctl_sysvipc __P((int *, u_int, void *, size_t *));
 #endif
 static int sysctl_msgbuf __P((void *, size_t *));
 static int sysctl_doeproc __P((int *, u_int, void *, size_t *));
+#ifdef MULTIPROCESSOR
+static int sysctl_docptime __P((void *, size_t *, void *));
+#endif
 static void fill_kproc2 __P((struct proc *, struct kinfo_proc2 *));
 static int sysctl_procargs __P((int *, u_int, void *, size_t *, struct proc *));
 #if NPTY > 0
@@ -255,6 +258,36 @@ int defcorenamelen = sizeof(DEFCORENAME);
 
 extern	int	kern_logsigexit;
 extern	fixpt_t	ccpu;
+
+#ifdef MULTIPROCESSOR
+
+#ifndef CPU_INFO_FOREACH
+#define CPU_INFO_ITERATOR int
+#define CPU_INFO_FOREACH(cii, ci) cii = 0, ci = curcpu(); ci != NULL; ci = NULL
+#endif
+
+static int
+sysctl_docptime(oldp, oldlenp, newp)
+	void *oldp;
+	size_t *oldlenp;
+	void *newp;
+{
+	u_int64_t cp_time[CPUSTATES];
+	int i;
+	struct cpu_info *ci;
+	CPU_INFO_ITERATOR cii;
+
+	for (i=0; i<CPUSTATES; i++)
+		cp_time[i] = 0;
+
+	for (CPU_INFO_FOREACH(cii, ci)) {
+		for (i=0; i<CPUSTATES; i++)
+			cp_time[i] += ci->ci_schedstate.spc_cp_time[i];
+	}
+	return (sysctl_rdstruct(oldp, oldlenp, newp,
+	    cp_time, sizeof(cp_time)));
+}
+#endif
 
 /*
  * kernel related system variables.
@@ -459,10 +492,13 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	case KERN_CCPU:
 		return (sysctl_rdint(oldp, oldlenp, newp, ccpu));
 	case KERN_CP_TIME:
-		/* XXXSMP: WRONG! */
+#ifndef MULTIPROCESSOR
 		return (sysctl_rdstruct(oldp, oldlenp, newp,
 		    curcpu()->ci_schedstate.spc_cp_time,
 		    sizeof(curcpu()->ci_schedstate.spc_cp_time)));
+#else
+		return (sysctl_docptime(oldp, oldlenp, newp));
+#endif
 #if defined(SYSVMSG) || defined(SYSVSEM) || defined(SYSVSHM)
 	case KERN_SYSVIPC_INFO:
 		return (sysctl_sysvipc(name + 1, namelen - 1, oldp, oldlenp));
@@ -1619,6 +1655,12 @@ fill_kproc2(p, ki)
 		ki->p_uctime_usec = p->p_stats->p_cru.ru_utime.tv_usec +
 		    p->p_stats->p_cru.ru_stime.tv_usec;
 	}
+#ifdef MULTIPROCESSOR
+	if (p->p_cpu != NULL)
+		ki->p_cpuid = p->p_cpu->ci_cpuid;
+	else
+#endif
+		ki->p_cpuid = KI_NOCPU;
 }
 
 int
