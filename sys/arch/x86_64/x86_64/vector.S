@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.20 2003/03/06 20:58:09 fvdl Exp $	*/
+/*	$NetBSD: vector.S,v 1.21 2003/03/06 22:17:44 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -325,7 +325,7 @@ IDTVEC(intrddb)
 	pushq	$0
 	pushq	$T_BPTFLT
 	INTRENTRY
-	movl	$0xff,%eax
+	movl	$0xf,%eax
 	movq	%rax,%cr8
 	movl	$0,_C_LABEL(local_apic)+LAPIC_EOI
 	sti
