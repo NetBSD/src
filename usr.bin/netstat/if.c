@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";*/
-static char *rcsid = "$Id: if.c,v 1.9 1994/09/17 00:14:20 mycroft Exp $";
+static char *rcsid = "$Id: if.c,v 1.10 1995/06/12 03:03:07 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -112,16 +112,16 @@ intpr(interval, ifnetaddr)
 			    kread((u_long)ifnet.if_name, name, 16))
 				return;
 			name[15] = '\0';
-			ifnetaddr = (u_long)ifnet.if_next;
+			ifnetaddr = (u_long)ifnet.if_list.tqe_next;
 			if (interface != 0 && (strcmp(name, interface) != 0 ||
 			    unit != ifnet.if_unit))
 				continue;
 			cp = index(name, '\0');
 			cp += sprintf(cp, "%d", ifnet.if_unit);
-			if ((ifnet.if_flags&IFF_UP) == 0)
+			if ((ifnet.if_flags & IFF_UP) == 0)
 				*cp++ = '*';
 			*cp = '\0';
-			ifaddraddr = (u_long)ifnet.if_addrlist;
+			ifaddraddr = (u_long)ifnet.if_addrlist.tqh_first;
 		}
 		printf("%-5.5s %-5d ", name, ifnet.if_mtu);
 		if (ifaddraddr == 0) {
@@ -157,6 +157,20 @@ intpr(interval, ifnetaddr)
 #endif
 				printf("%-15.15s ",
 				    routename(sin->sin_addr.s_addr));
+
+				if (aflag) {
+					u_long multiaddr;
+					struct in_multi inm;
+		
+					multiaddr = (u_long)ifaddr.in.ia_multiaddrs.lh_first;
+					while (multiaddr != 0) {
+						kread(multiaddr, (char *)&inm,
+						    sizeof inm);
+						printf("\n%23s %-15.15s ", "",
+						    routename(inm.inm_addr.s_addr));
+						multiaddr = (u_long)inm.inm_list.le_next;
+					}
+				}
 				break;
 			case AF_NS:
 				{
@@ -197,7 +211,7 @@ intpr(interval, ifnetaddr)
 					putchar(' ');
 				break;
 			}
-			ifaddraddr = (u_long)ifaddr.ifa.ifa_next;
+			ifaddraddr = (u_long)ifaddr.ifa.ifa_list.tqe_next;
 		}
 		printf("%8d %5d %8d %5d %5d",
 		    ifnet.if_ipackets, ifnet.if_ierrors,
@@ -265,7 +279,7 @@ sidewaysintpr(interval, off)
 		ip++;
 		if (ip >= iftot + MAXIF - 2)
 			break;
-		off = (u_long) ifnet.if_next;
+		off = (u_long)ifnet.if_list.tqe_next;
 	}
 	lastif = ip;
 
@@ -335,7 +349,7 @@ loop:
 		sum->ift_oe += ip->ift_oe;
 		sum->ift_co += ip->ift_co;
 		sum->ift_dr += ip->ift_dr;
-		off = (u_long) ifnet.if_next;
+		off = (u_long)ifnet.if_list.tqe_next;
 	}
 	if (lastif - iftot > 0) {
 		printf("  %8d %5d %8d %5d %5d",

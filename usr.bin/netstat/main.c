@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";*/
-static char *rcsid = "$Id: main.c,v 1.6 1994/05/13 08:08:14 mycroft Exp $";
+static char *rcsid = "$Id: main.c,v 1.7 1995/06/12 03:03:11 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -67,12 +67,12 @@ struct nlist nl[] = {
 	{ "_mbstat" },
 #define	N_IPSTAT	1
 	{ "_ipstat" },
-#define	N_TCB		2
-	{ "_tcb" },
+#define	N_TCBTABLE	2
+	{ "_tcbtable" },
 #define	N_TCPSTAT	3
 	{ "_tcpstat" },
-#define	N_UDB		4
-	{ "_udb" },
+#define	N_UDBTABLE	4
+	{ "_udbtable" },
 #define	N_UDPSTAT	5
 	{ "_udpstat" },
 #define	N_IFNET		6
@@ -121,9 +121,11 @@ struct nlist nl[] = {
 	{ "_ip_mrtproto" },
 #define N_MRTSTAT	28
 	{ "_mrtstat" },
-#define N_MRTTABLE	29
-	{ "_mrttable" },
-#define N_VIFTABLE	30
+#define N_MFCHASHTBL	29
+	{ "_mfchashtbl" },
+#define	N_MFCHASH	30
+	{ "_mfchash" },
+#define N_VIFTABLE	31
 	{ "_viftable" },
 	"",
 };
@@ -136,9 +138,9 @@ struct protox {
 	void	(*pr_stats)();		/* statistics printing routine */
 	char	*pr_name;		/* well-known name */
 } protox[] = {
-	{ N_TCB,	N_TCPSTAT,	1,	protopr,
+	{ N_TCBTABLE,	N_TCPSTAT,	1,	protopr,
 	  tcp_stats,	"tcp" },
-	{ N_UDB,	N_UDPSTAT,	1,	protopr,
+	{ N_UDBTABLE,	N_UDPSTAT,	1,	protopr,
 	  udp_stats,	"udp" },
 	{ -1,		N_IPSTAT,	1,	0,
 	  ip_stats,	"ip" },
@@ -361,7 +363,8 @@ main(argc, argv)
 			    nl[N_MRTSTAT].n_value);
 		else
 			mroutepr(nl[N_MRTPROTO].n_value,
-			    nl[N_MRTTABLE].n_value,
+			    nl[N_MFCHASHTBL].n_value,
+			    nl[N_MFCHASH].n_value,
 			    nl[N_VIFTABLE].n_value);
 		exit(0);
 	}
