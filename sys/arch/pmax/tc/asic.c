@@ -1,4 +1,4 @@
-/*	$NetBSD: asic.c,v 1.28 1998/04/25 16:29:06 jonathan Exp $	*/
+/*	$NetBSD: asic.c,v 1.29 1998/05/21 17:41:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -202,12 +202,14 @@ ioasicattach(parent, self, aux)
 
 	/* See if the unit number is valid. */
 	switch (systype) {
+#if defined(DEC_3MAXPLUS) || defined(DEC_3MIN)
 	case DS_3MIN:
 	case DS_3MAXPLUS:
 		/* 3min ioasic addressees are the same as 3maxplus. */
 		asic_slots = kn03_ioasic_devs;
 		nslots = nkn03_ioasic_devs;
 		break;
+#endif
 
 #ifdef DEC_MAXINE
 	case DS_MAXINE:
@@ -224,11 +226,8 @@ ioasicattach(parent, self, aux)
 #endif
 
 	default:
-		break;
+		panic("ioasicattach: shouldn't be here, really...");
 	}
-
-	if (asic_slots == NULL)
-		panic("asicattach: no asic_slot map\n");
 
 	IOASIC_DPRINTF(("asicattach: %s\n", sc->sc_dv.dv_xname));
 
