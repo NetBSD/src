@@ -1,4 +1,4 @@
-/*	$NetBSD: siop_common.c,v 1.29 2002/07/18 11:59:09 wiz Exp $	*/
+/*	$NetBSD: siop_common.c,v 1.30 2002/08/29 18:23:52 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000, 2002 Manuel Bouyer.
@@ -33,7 +33,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop_common.c,v 1.29 2002/07/18 11:59:09 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop_common.c,v 1.30 2002/08/29 18:23:52 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -231,6 +231,14 @@ siop_common_reset(sc)
 	}
 	sc->mode = bus_space_read_1(sc->sc_rt, sc->sc_rh, SIOP_STEST4) &
 	    STEST4_MODE_MASK;
+
+	/*
+	 * initialise the RAM. Without this we may get scsi gross errors on
+	 * the 1010
+	 */
+	if (sc->features & SF_CHIP_RAM)
+		bus_space_set_region_4(sc->sc_ramt, sc->sc_ramh,
+			0, 0, sc->ram_size / 4);
 	sc->sc_reset(sc);
 }
 
