@@ -1,4 +1,4 @@
-/*	$NetBSD: sysconf.h,v 1.10 2001/09/18 17:37:28 uch Exp $	*/
+/*	$NetBSD: sysconf.h,v 1.11 2001/09/23 14:32:52 uch Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -54,17 +54,17 @@ struct clock_ymdhms;
 
 extern struct platform {
 	/*
+	 *	cpu_intr	-	interrupt handler
 	 *	cpu_idle	-	CPU dependend idle routine.
 	 *	cons_init 	-	console initialization
-	 *	iointr		-	I/O interrupt handler
 	 *	fb_init         -       frame buffer initialization
 	 *      mem_init        -       Count available memory
 	 *	reboot		-	reboot or powerdown
 	 *	clock		-
 	 */
+	void	(*cpu_intr)(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
 	void	(*cpu_idle)(void);
 	void	(*cons_init)(void);
-	int	(*iointr)(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
 	void	(*fb_init)(caddr_t*);
 	void	(*mem_init)(paddr_t);
 	void	(*reboot)(int, char *);
