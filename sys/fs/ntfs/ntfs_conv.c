@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_conv.c,v 1.1 2002/12/23 17:38:32 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_conv.c,v 1.2 2004/11/15 17:18:12 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -36,11 +36,11 @@
 /*
  * File name recode stuff.
  *
- * The utf-8 routines were derived from basesrc/lib/libc/locale/utf2.c.
+ * The utf-8 routines were derived from src/lib/libc/locale/utf2.c.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_conv.c,v 1.1 2002/12/23 17:38:32 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_conv.c,v 1.2 2004/11/15 17:18:12 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
