@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.2 2000/11/27 08:53:55 matt Exp $	*/
+/*	$NetBSD: pcib.c,v 1.3 2000/12/22 18:16:37 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -116,11 +116,11 @@ pcibattach(parent, self, aux)
 
 	v = pci_conf_read(pa->pa_pc, pa->pa_tag, 0x40);
 	if ((v & 0x20) == 0) {
-		printf("%s: PIRQ[0-3] not used\n");
+		printf("%s: PIRQ[0-3] not used\n", self->dv_xname);
 	} else {
 		v = pci_conf_read(pa->pa_pc, pa->pa_tag, 0x60);
 		if ((v & 0x80808080) == 0x80808080) {
-			printf("%s: PIRQ[0-3] disabled\n");
+			printf("%s: PIRQ[0-3] disabled\n", self->dv_xname);
 		} else {
 			int i;
 			printf("%s:", self->dv_xname);
