@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.33 1995/03/08 02:48:20 mycroft Exp $	*/
+/*	$NetBSD: systm.h,v 1.34 1995/03/09 15:47:44 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -129,9 +129,9 @@ void	printf __P((const char *, ...));
 int	sprintf __P((char *buf, const char *, ...));
 void	ttyprintf __P((struct tty *, const char *, ...));
 
-void	bcopy __P((const void *from, void *to, u_int len));
-void	ovbcopy __P((const void *from, void *to, u_int len));
-void	bzero __P((void *buf, u_int len));
+void	bcopy __P((const void *from, void *to, size_t len));
+void	ovbcopy __P((const void *from, void *to, size_t len));
+void	bzero __P((void *buf, size_t len));
 
 int	copystr __P((void *kfaddr, void *kdaddr, size_t len, size_t *done));
 int	copyinstr __P((void *udaddr, void *kaddr, size_t len, size_t *done));
