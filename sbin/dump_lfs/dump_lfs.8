@@ -1,4 +1,4 @@
-.\"	$NetBSD: dump_lfs.8,v 1.5 2001/12/07 19:50:20 wiz Exp $
+.\"	$NetBSD: dump_lfs.8,v 1.6 2002/01/21 18:15:08 wiz Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	 Regents of the University of California.
@@ -165,7 +165,7 @@ for more details.
 Honor the user
 .Qq nodump
 flag
-.Dp Dv UF_NODUMP
+.Pq Dv UF_NODUMP
 only for dumps at or above the given
 .Ar level .
 The default honor level is 1,
@@ -276,8 +276,8 @@ If
 .Nm
 honors the
 .Qq nodump
-flag,
-.Dp Dv UF_NODUMP
+flag
+.Pq Dv UF_NODUMP ,
 files with the
 .Qq nodump
 flag will not be backed up. If a directory has the
