@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_subr.c,v 1.5 2003/02/20 15:34:42 jdolecek Exp $	*/
+/*	$NetBSD: smbfs_subr.c,v 1.6 2003/02/21 21:46:45 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -123,7 +123,7 @@ smb_time_server2local(u_long seconds, int tzoff, struct timespec *tsp)
 /*
  * Number of seconds between 1970 and 1601 year
  */
-const int64_t DIFF1970TO1601 = 11644473600ULL;
+static const int64_t DIFF1970TO1601 = 11644473600ULL;
 
 /*
  * Time from server comes as UTC, so no need to use tz
