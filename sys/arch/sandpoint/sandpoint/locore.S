@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.2 2001/06/10 03:16:31 briggs Exp $	*/
+/*	$NetBSD: locore.S,v 1.3 2001/06/24 20:43:36 briggs Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -47,6 +47,7 @@
 #include <machine/trap.h>
 #include <machine/asm.h>
 
+#include <powerpc/spr.h>
 #include <powerpc/mpc6xx/hid.h>
 
 /*
