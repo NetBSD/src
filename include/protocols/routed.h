@@ -1,4 +1,4 @@
-/*	$NetBSD: routed.h,v 1.3 1994/10/26 00:56:50 cgd Exp $	*/
+/*	$NetBSD: routed.h,v 1.4 1995/06/20 22:22:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1989 Regents of the University of California.
@@ -45,11 +45,18 @@
  * by changing 32-bit net numbers to sockaddr's and
  * padding stuff to 32-bit boundaries.
  */
-#define	RIPVERSION	1
+#define	RIP_VERSION_0	0
+#define	RIP_VERSION_1	1
+#define	RIP_VERSION_2	2
 
 struct netinfo {
-	struct	sockaddr rip_dst;	/* destination net/host */
-	int	rip_metric;		/* cost of route */
+	u_int16_t	rip_family;
+	u_int16_t	rip_tag;
+	u_int32_t	rip_dst;		/* destination net/host */
+	/* Version 2 specific info */
+	u_int32_t	rip_netmask;
+	u_int32_t	rip_router;
+	u_int32_t	rip_metric;		/* cost of route */
 };
 
 struct rip {
