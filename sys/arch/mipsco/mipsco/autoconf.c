@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.5 2001/02/06 04:27:48 wdk Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.6 2001/03/31 00:10:03 wdk Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -78,7 +78,7 @@ extern int initcpu __P((void));		/*XXX*/
 
 void	findroot __P((struct device **, int *));
 
-struct intrhandler intrtab[MAX_INTR_COOKIES];
+struct mipsco_intrhand intrtab[MAX_INTR_COOKIES];
 struct device  *booted_device;
 static int	booted_partition;
 
@@ -94,6 +94,7 @@ cpu_configure()
 {
   	int s;
 
+	softintr_init();
 	/*
 	 * Kick off autoconfiguration
 	 */
