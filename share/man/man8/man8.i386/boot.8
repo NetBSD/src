@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.16 2000/09/28 16:18:42 hubertf Exp $
+.\"	$NetBSD: boot.8,v 1.17 2000/09/30 20:27:01 jhawk Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -36,7 +36,7 @@
 .\"
 .\"     @(#)boot_i386.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd May 12, 2000
+.Dd August 31, 2000
 .Dt BOOT 8 i386
 .Os
 .Sh NAME
@@ -234,6 +234,11 @@ boot block (written by
 .Xr reboot 8 ,
 .Xr shutdown 8
 .Sh BUGS
+This manual page documents the
+.Pa biosboot
+interface, which is used by ports other than
+.Nx Ns /i386 .
+.Pp
 Hard disks are always accessed by BIOS functions. Unit numbers are
 BIOS device numbers which might differ from numbering in the
 .Nx
@@ -251,3 +256,11 @@ is derived from the
 field of the
 .Nx
 disklabel (if it is a hard disk).
+.Pp
+Any
+.Ar filename
+specified after the boot options, e.g.:
+.Bd -unfilled -offset indent -compact
+.Cm boot -d netbsd.test
+.Ed
+is ignored, and the default kernel is booted.
