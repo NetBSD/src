@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.85 2003/10/10 02:11:58 simonb Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.86 2003/10/20 13:41:28 dsl Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -373,7 +373,7 @@ static const char *const fstypenames[] = {
 };
 #define	FSMAXTYPES	(sizeof(fstypenames) / sizeof(fstypenames[0]) - 1)
 #else
-#define	FSMAXTYPES	(FS_APPLEUFS + 1)
+#define	FSMAXTYPES	(FS_VINUM + 1)
 #endif
 
 #ifdef FSCKNAMES
