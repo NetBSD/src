@@ -1,4 +1,4 @@
-.\"	$NetBSD: pkg_admin.1,v 1.33 2004/08/13 13:38:14 wiz Exp $
+.\"	$NetBSD: pkg_admin.1,v 1.34 2004/12/15 17:17:51 wiz Exp $
 .\"
 .\" Copyright (c) 1999-2002 Hubert Feyrer.  All rights reserved.
 .\"
@@ -102,14 +102,17 @@ The following commands are supported:
 .Bl -tag -width indent
 .It Cm add Ar pkg ...
 For each listed package, write the absolute pathnames of the files listed in
-its +CONTENTS file together with the package they belong to into the package
-database.
+its
+.Pa +CONTENTS
+file together with the package they belong to into the package database.
 This should be used only by
 .Xr pkg_view 1 .
 .It Cm check Op Ar pkg ...
 Use this command to check the files belonging to some or all of the
 packages installed on the local machine against the checksum
-which was recorded in the +CONTENTS files at package installation time.
+which was recorded in the
+.Pa +CONTENTS
+files at package installation time.
 Symbolic links also have their integrity checked against the recorded
 value at package installation time.
 If no additional argument is given, the files of all installed packages
@@ -117,7 +120,9 @@ are checked, else only the named packages will be checked (wildcards can
 be used here, see
 .Xr pkg_info 1 ) .
 .Pp
-The packages' +CONTENTS files will be parsed and the
+The packages'
+.Pa +CONTENTS
+files will be parsed and the
 checksum will be checked for every file found.
 A warning message is printed if the expected checksum differs from the
 checksum of the file on disk.

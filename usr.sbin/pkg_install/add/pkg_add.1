@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_add.1,v 1.52 2004/12/15 17:12:09 wiz Exp $
+.\" $NetBSD: pkg_add.1,v 1.53 2004/12/15 17:17:51 wiz Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -74,8 +74,15 @@ option), or, failing that, use the
 .Fl M
 flag to extract the package file, and inspect its contents and scripts
 to ensure it poses no danger to your system's integrity.
-Pay particular attention to any +INSTALL, +DEINSTALL, +REQUIRE
-or +MTREE_DIRS files, and inspect the +CONTENTS file for
+Pay particular attention to any
+.Pa +INSTALL ,
+.Pa +DEINSTALL ,
+.Pa +REQUIRE ,
+or
+.Pa +MTREE_DIRS
+files, and inspect the
+.Pa +CONTENTS
+file for
 .Cm @cwd ,
 .Cm @mode
 (check for setuid),

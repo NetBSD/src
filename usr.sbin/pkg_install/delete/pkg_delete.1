@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_delete.1,v 1.34 2004/11/03 13:58:23 wiz Exp $
+.\" $NetBSD: pkg_delete.1,v 1.35 2004/12/15 17:17:51 wiz Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -54,8 +54,15 @@ For extra protection, examine all the package control files in the
 package record directory
 .Pa ( /var/db/pkg/\*[Lt]pkg-name\*[Gt]/ ) .
 Pay particular
-attention to any +INSTALL, +DEINSTALL, +REQUIRE or +MTREE_DIRS files,
-and inspect the +CONTENTS file for
+attention to any
+.Pa +INSTALL ,
+.Pa +DEINSTALL ,
+.Pa +REQUIRE ,
+or
+.Pa +MTREE_DIRS
+files, and inspect the
+.Pa +CONTENTS
+file for
 .Cm @cwd ,
 .Cm @mode
 (check for setuid),
