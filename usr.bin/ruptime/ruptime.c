@@ -1,4 +1,4 @@
-/*	$NetBSD: ruptime.c,v 1.9 2000/12/31 17:35:20 ad Exp $	*/
+/*	$NetBSD: ruptime.c,v 1.10 2001/01/05 07:14:46 mjl Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993, 1994
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993, 1994\n\
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)ruptime.c	8.2 (Berkeley) 4/5/94";*/
-__RCSID("$NetBSD: ruptime.c,v 1.9 2000/12/31 17:35:20 ad Exp $");
+__RCSID("$NetBSD: ruptime.c,v 1.10 2001/01/05 07:14:46 mjl Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -72,19 +72,17 @@ size_t nhosts;
 time_t now;
 int rflg = 1;
 
-int	 hscmp __P((const void *, const void *));
-char	*interval __P((time_t, char *));
-int	 lcmp __P((const void *, const void *));
-int	 main __P((int, char **));
-void	 morehosts __P((void));
-int	 tcmp __P((const void *, const void *));
-int	 ucmp __P((const void *, const void *));
-void	 usage __P((void));
+int	 hscmp(const void *, const void *);
+char	*interval(time_t, char *);
+int	 lcmp(const void *, const void *);
+int	 main(int, char **);
+void	 morehosts(void);
+int	 tcmp(const void *, const void *);
+int	 ucmp(const void *, const void *);
+void	 usage(void);
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	struct dirent *dp;
 	struct hs *hsp;
@@ -94,12 +92,12 @@ main(argc, argv)
 	size_t hspace;
 	int aflg, cc, ch, fd, i, maxloadav;
 	char buf[sizeof(struct whod)];
-	int (*cmp) __P((const void *, const void *));
+	int (*cmp)(const void *, const void *);
 
 	hsp = NULL;
 	aflg = 0;
 	cmp = hscmp;
-	while ((ch = getopt(argc, argv, "alrut")) != -1)
+	while ((ch = getopt(argc, argv, "alrtu")) != -1)
 		switch (ch) {
 		case 'a':
 			aflg = 1;
@@ -164,7 +162,7 @@ main(argc, argv)
 		++nhosts;
 	}
 	if (nhosts == 0)
-		errx(0, "no hosts in %s.", _PATH_RWHODIR);
+		errx(0, "no hosts in %s", _PATH_RWHODIR);
 
 	(void)time(&now);
 	qsort(hs, nhosts, sizeof (hs[0]), cmp);
@@ -193,9 +191,7 @@ main(argc, argv)
 }
 
 char *
-interval(tval, updown)
-	time_t tval;
-	char *updown;
+interval(time_t tval, char *updown)
 {
 	static char resbuf[32];
 	int days, hours, minutes;
@@ -232,8 +228,7 @@ hscmp(a1, a2)
 
 /* Load average comparison. */
 int
-lcmp(a1, a2)
-	const void *a1, *a2;
+lcmp(const void *a1, const void *a2)
 {
 	if (ISDOWN(HS(a1))) {
 		if (ISDOWN(HS(a2)))
@@ -249,8 +244,7 @@ lcmp(a1, a2)
 
 /* Number of users comparison. */
 int
-ucmp(a1, a2)
-	const void *a1, *a2;
+ucmp(const void *a1, const void *a2)
 {
 	if (ISDOWN(HS(a1))) {
 		if (ISDOWN(HS(a2)))
@@ -265,8 +259,7 @@ ucmp(a1, a2)
 
 /* Uptime comparison. */
 int
-tcmp(a1, a2)
-	const void *a1, *a2;
+tcmp(const void *a1, const void *a2)
 {
 	return (rflg * (
 		(ISDOWN(HS(a2)) ? HS(a2)->hs_wd->wd_recvtime - now
@@ -278,8 +271,8 @@ tcmp(a1, a2)
 }
 
 void
-usage()
+usage(void)
 {
-	(void)fprintf(stderr, "usage: ruptime [-alrut]\n");
+	(void)fprintf(stderr, "usage: ruptime [-alrtu]\n");
 	exit(1);
 }
