@@ -1,7 +1,7 @@
-/*	$NetBSD: util.c,v 1.7 1999/02/09 05:15:45 sommerfe Exp $	*/
+/*	$NetBSD: util.c,v 1.7.2.1 2000/10/19 16:32:19 he Exp $	*/
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.7 1999/02/09 05:15:45 sommerfe Exp $");
+__RCSID("$NetBSD: util.c,v 1.7.2.1 2000/10/19 16:32:19 he Exp $");
 #endif /* not lint */
 
 #include "EXTERN.h"
@@ -335,7 +335,7 @@ ask(va_alist)
     else
 	buf[r] = '\0';
     if (!tty2)
-	say1(buf);
+	say2("%s",buf);
 }
 #endif /* lint */
 
