@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.30 1999/01/01 19:30:03 christos Exp $
+$NetBSD: pcmciadevs,v 1.31 1999/02/19 00:43:00 nathanw Exp $
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -40,6 +40,7 @@ $NetBSD: pcmciadevs,v 1.30 1999/01/01 19:30:03 christos Exp $
  * List of known PCMCIA vendors
  */
 
+vendor FUJITSU			0x0004  Fujitsu Corporation
 vendor SANDISK			0x0045	Sandisk Corporation
 vendor NEWMEDIA			0x0057	NewMedia Corporation
 vendor IBM			0x00a4	IBM Corporation
@@ -82,6 +83,9 @@ product DAYNA COMMUNICARD_E_2	0x002f Dayna CommuniCard E
 
 /* DIGITAL Products */
 product DIGITAL MOBILE_MEDIA_CDROM 0x0d00 Digital Mobile Media CD-ROM
+
+/* Fujutsu Products */
+product FUJUTSU SCSI600		0x0401 Fujitsu SCSI 600 Interface
 
 /* Motorola Products */
 product MOTOROLA POWER144	0x0105 Motorola Power 14.4 Modem
