@@ -1,4 +1,4 @@
-/*	$NetBSD: ast.c,v 1.23 1996/03/17 00:53:04 thorpej Exp $	*/
+/*	$NetBSD: ast.c,v 1.24 1996/04/04 07:08:10 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -166,16 +166,9 @@ astattach(parent, self, aux)
 		ca.ca_iobase = sc->sc_iobase + i * COM_NPORTS;
 		ca.ca_noien = 1;
 
-		/* mimic config_found(), but with special functionality */
-		if ((match = config_search(NULL, self, &ca)) != NULL) {
-			subunit = match->cf_unit; /* can change if unit == * */
-			config_attach(self, match, &ca, astprint);
-			sc->sc_slaves[i] = match->cf_driver->cd_devs[subunit];
+		sc->sc_slaves[i] = config_found(self, &ca, astprint);
+		if (sc->sc_slaves[i] != NULL)
 			sc->sc_alive |= 1 << i;
-		} else {
-			astprint(&ca, self->dv_xname);
-			printf(" not configured\n");
-		}
 	}
 
 	sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_TTY, astintr,

@@ -1,4 +1,4 @@
-/*	$NetBSD: boca.c,v 1.10 1996/03/17 00:53:05 thorpej Exp $	*/
+/*	$NetBSD: boca.c,v 1.11 1996/04/04 07:08:16 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -161,16 +161,9 @@ bocaattach(parent, self, aux)
 		ca.ca_iobase = sc->sc_iobase + i * COM_NPORTS;
 		ca.ca_noien = 0;
 
-		/* mimic config_found(), but with special functionality */
-		if ((match = config_search(NULL, self, &ca)) != NULL) {
-			subunit = match->cf_unit; /* can change if unit == * */
-			config_attach(self, match, &ca, bocaprint);
-			sc->sc_slaves[i] = match->cf_driver->cd_devs[subunit];
+		sc->sc_slaves[i] = config_found(self, &ca, bocaprint);
+		if (sc->sc_slaves[i] != NULL)
 			sc->sc_alive |= 1 << i;
-		} else {
-			bocaprint(&ca, self->dv_xname);
-			printf(" not configured\n");
-		}
 	}
 
 	sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_TTY, bocaintr,
