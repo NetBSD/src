@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.114 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.115 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -261,7 +261,9 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 	semaphores: Fix kernel implementation, and add non-pthreads
 		version in new librt.  [thorpej 20030123]
 	diff(1), diff3(1), sdiff(1): upgraded to diffutils-2.8.1 [wiz 20030126]
-	grep(1): upgraded to 2.5.  [wiz 20030127]
+	grep(1): upgraded to 2.5.  Warning: -o is now a valid GNU grep option
+		(--only-matching (-o)), so we will not be supporting the 4.4BSD
+		-o any longer -- use -H instead.  [wiz 20030127]
 	objcopy(1): Add --redefine-syms-file option.  [simonb 20030129]
 	crunchgen(1): Use "objcopy --redefine-syms-file".  [simonb 20030129]
 	find(1): allow preceding +/- on numeric arg to -user. [jhawk 20030130]
