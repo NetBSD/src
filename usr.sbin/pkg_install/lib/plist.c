@@ -1,11 +1,11 @@
-/*	$NetBSD: plist.c,v 1.29 2001/05/21 09:17:31 agc Exp $	*/
+/*	$NetBSD: plist.c,v 1.30 2001/05/21 12:06:30 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: plist.c,v 1.24 1997/10/08 07:48:15 charnier Exp";
 #else
-__RCSID("$NetBSD: plist.c,v 1.29 2001/05/21 09:17:31 agc Exp $");
+__RCSID("$NetBSD: plist.c,v 1.30 2001/05/21 12:06:30 agc Exp $");
 #endif
 #endif
 
@@ -46,7 +46,7 @@ typedef struct cmd_t {
 static cmd_t cmdv[] = {
 	{"cwd", PLIST_CWD, 1, 1},
 	{"src", PLIST_SRC, 1, 1},
-	{"cd", PLIST_CWD, 1, 0},
+	{"cd", PLIST_CWD, 1, 1},
 	{"exec", PLIST_CMD, 1, 0},
 	{"unexec", PLIST_UNEXEC, 1, 0},
 	{"mode", PLIST_CHMOD, 1, 0},
@@ -198,7 +198,7 @@ new_plist_entry(void)
 	plist_t *ret;
 
 	if ((ret = (plist_t *) malloc(sizeof(plist_t))) == (plist_t *) NULL) {
-		err(1, "can't allocate %ld bytes", (long) sizeof(plist_t));
+		err(EXIT_FAILURE, "can't allocate %ld bytes", (long) sizeof(plist_t));
 	}
 	memset(ret, 0, sizeof(plist_t));
 	return ret;
