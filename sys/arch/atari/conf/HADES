@@ -1,12 +1,12 @@
 #
-# $NetBSD: HADES,v 1.27 2001/04/10 06:39:10 leo Exp $
+# $NetBSD: HADES,v 1.28 2001/04/10 07:03:49 leo Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from: 
 #		NetBSD: HADES.in,v 1.4 2001/04/10 06:28:38 leo Exp $
-#		NetBSD: GENERIC.in,v 1.1 2001/04/10 05:52:14 leo Exp $
+#		NetBSD: GENERIC.in,v 1.2 2001/04/10 06:46:01 leo Exp $
 
 #This configuration file is for a generic Medusa-Hades
 
@@ -14,7 +14,7 @@
 
 include "arch/atari/conf/std.hades"
 
-#ident  		"GENERIC-$Revision: 1.27 $"
+#ident  		"GENERIC-$Revision: 1.28 $"
 
 #Add support for about 16 users. This variable is used to size
 #various kernel structures.
@@ -137,6 +137,9 @@ options 	PCIVERBOSE		# verbose PCI device autoconfig messages
 #options 	KFONT_8x8		# Use 8x8 font instead of 8x16
 options 	ST_POOL_SIZE=22		# smallest that allows TT-HIGH
 
+options 	TT_SCSI			# SCSI-support for TT
+options 	TT_VIDEO		# Graphics support for TT
+
 options 	MEMORY_DISK_HOOKS	# Boot RAM-disk
 options 	DISKLABEL_NBDA		# NetBSD disklabels (required)
 options 	DISKLABEL_AHDI		# NetBSD/AHDI disklabels
@@ -159,7 +162,6 @@ pseudo-device	loop			# Loopback network
 pseudo-device	vnd		3	# 3 pseudo disks (see vnconfig)
 pseudo-device	md		2	# Boot memory disk
 
-pseudo-device	mouse		1	# mouse
 pseudo-device	bpfilter	2	# berkeley packet filters
 pseudo-device	tun		2	# network tunnel
 #pseudo-device	gre		2	# generic L3 over IP tunnel

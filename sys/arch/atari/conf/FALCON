@@ -1,12 +1,12 @@
 #
-# $NetBSD: FALCON,v 1.36 2001/04/10 06:39:10 leo Exp $
+# $NetBSD: FALCON,v 1.37 2001/04/10 07:03:49 leo Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from: 
 #		NetBSD: FALCON.in,v 1.4 2001/04/10 06:28:38 leo Exp $
-#		NetBSD: GENERIC.in,v 1.1 2001/04/10 05:52:14 leo Exp $
+#		NetBSD: GENERIC.in,v 1.2 2001/04/10 06:46:01 leo Exp $
 
 #This configuration file is for a generic ATARI-Falcon
 
@@ -17,7 +17,7 @@
 
 include "arch/atari/conf/std.atari"
 
-#ident  		"GENERIC-$Revision: 1.36 $"
+#ident  		"GENERIC-$Revision: 1.37 $"
 
 #Add support for about 16 users. This variable is used to size
 #various kernel structures.
@@ -163,7 +163,6 @@ pseudo-device	loop			# Loopback network
 pseudo-device	vnd		3	# 3 pseudo disks (see vnconfig)
 pseudo-device	md		2	# Boot memory disk
 
-pseudo-device	mouse		1	# mouse
 pseudo-device	bpfilter	2	# berkeley packet filters
 pseudo-device	tun		2	# network tunnel
 #pseudo-device	gre		2	# generic L3 over IP tunnel
