@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.51 2002/02/03 07:24:48 jmc Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.52 2002/02/18 09:10:44 jmc Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.51 2002/02/03 07:24:48 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.52 2002/02/18 09:10:44 jmc Exp $");
 
 #define DOUBLEBUF 1
 #define NO_THREAD 1
@@ -1760,8 +1760,8 @@ fwohci_ir_input(struct fwohci_softc *sc, struct fwohci_ctx *fc)
 	while (fwohci_buf_input_ppb(sc, fc, &pkt)) {
 		chan = (pkt.fp_hdr[0] & 0x00003f00) >> 8;
 		tag  = (pkt.fp_hdr[0] & 0x0000c000) >> 14;
-		DPRINTFN(1, ("fwohci_ir_input: hdr 0x%08x, tcode %d, hlen %d, "
-		    "dlen %d\n", pkt.fp_hdr[0], pkt.fp_tcode, pkt.fp_hlen,
+		DPRINTFN(1, ("fwohci_ir_input: hdr 0x%08x, tcode 0x%0x, hlen %d"
+		    ", dlen %d\n", pkt.fp_hdr[0], pkt.fp_tcode, pkt.fp_hlen,
 		    pkt.fp_dlen));
 		if (tag == IEEE1394_TAG_GASP) {
 			/*
