@@ -1,4 +1,4 @@
-/* $NetBSD: lapic.c,v 1.1.2.12 2001/01/04 04:44:32 thorpej Exp $ */
+/* $NetBSD: lapic.c,v 1.1.2.13 2001/04/30 20:36:38 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -164,11 +164,6 @@ lapic_boot_init(lapic_base)
 #endif
 	idt_vec_set(LAPIC_SPURIOUS_VECTOR, Xintrspurious);
 	idt_vec_set(LAPIC_TIMER_VECTOR, Xintrltimer);
-
-	idt_vec_set(LAPIC_SOFTCLOCK_VECTOR, Xintrsoftclock);
-	idt_vec_set(LAPIC_SOFTNET_VECTOR, Xintrsoftnet);
-	idt_vec_set(LAPIC_SOFTSER_VECTOR, Xintrsoftser);
-
 }
 
 static inline u_int32_t lapic_gettick()

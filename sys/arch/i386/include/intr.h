@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.12.10.12 2001/04/30 16:58:34 sommerfeld Exp $	*/
+/*	$NetBSD: intr.h,v 1.12.10.13 2001/04/30 20:36:38 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -83,11 +83,6 @@
 #define	IPL_TAGINTR	28
 
 #ifndef _LOCORE
-
-#ifdef MULTIPROCESSOR
-#include <machine/i82489reg.h>
-#include <machine/i82489var.h>
-#endif
 
 extern volatile u_int32_t lapic_tpr;
 volatile u_int32_t ipending;
@@ -182,20 +177,11 @@ static __inline void
 softintr(register int sir)
 {
 	__asm __volatile("orl %1, %0" : "=m"(ipending) : "ir" (1 << sir));
-#if 0
-#ifdef MULTIPROCESSOR
-	i82489_writereg(LAPIC_ICRLO,
-	    vec | LAPIC_DLMODE_FIXED | LAPIC_LVL_ASSERT | LAPIC_DEST_SELF);
-#endif
-#endif
 }
 
-#if 0
-#define	setsoftclock()	softintr(SIR_CLOCK,IPL_SOFTCLOCK)
-#define	setsoftserial()	softintr(SIR_SERIAL,IPL_SOFTSERIAL)
-#define	setsoftnet()	softintr(SIR_NET,IPL_SOFTNET)
-#endif
 #define	setsoftnet()	softintr(SIR_NET)
+
+/* XXX does ipi goo belong here, or elsewhere? */
 
 #define I386_IPI_HALT			0x00000001
 #define I386_IPI_FLUSH_FPU		0x00000002
@@ -206,6 +192,8 @@ softintr(register int sir)
 #define I386_NIPI		5
 
 #ifdef MULTIPROCESSOR
+struct cpu_info;
+
 void i386_send_ipi (struct cpu_info *, int);
 void i386_broadcast_ipi (int);
 void i386_multicast_ipi (int, int);

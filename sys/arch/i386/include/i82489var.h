@@ -1,4 +1,4 @@
-/*	$NetBSD: i82489var.h,v 1.1.2.3 2000/08/12 16:14:10 sommerfeld Exp $	*/
+/*	$NetBSD: i82489var.h,v 1.1.2.4 2001/04/30 20:36:38 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -84,18 +84,6 @@ extern void Xintripi(void);
 
 extern void Xintrltimer(void);
 #define LAPIC_TIMER_VECTOR		0xd0
-
-/*
- * Vectors to be used for self-soft-interrupts.
- */
-
-#define LAPIC_SOFTCLOCK_VECTOR		IPL_SOFTCLOCK
-#define LAPIC_SOFTNET_VECTOR		IPL_SOFTNET
-#define LAPIC_SOFTSER_VECTOR		IPL_SOFTSERIAL
-
-extern void Xintrsoftclock(void);
-extern void Xintrsoftnet(void);
-extern void Xintrsoftser(void);
 
 extern void (*apichandler[]) __P((void));
 
