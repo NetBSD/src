@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam3.h,v 1.25.4.1 1999/06/21 01:03:17 thorpej Exp $	*/
+/*	$NetBSD: vmparam3.h,v 1.25.4.2 1999/08/06 15:10:29 chs Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -122,3 +122,10 @@
 
 #define	VM_NFREELIST		1
 #define	VM_FREELIST_DEFAULT	0
+
+/*
+ * Parameters for Unified Buffer Cache.
+ */
+
+#define UBC_WINSIZE 8192
+#define UBC_NWINS 1024

@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.9.4.1 1999/06/21 01:01:04 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.9.4.2 1999/08/06 15:10:29 chs Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -104,5 +104,12 @@ struct pmap_physseg {
 
 #define	VM_NFREELIST		1
 #define	VM_FREELIST_DEFAULT	0
+
+/*
+ * Parameters for Unified Buffer Cache.
+ */
+
+#define UBC_WINSIZE 8192
+#define UBC_NWINS 1024
 
 #endif /* _MACHINE_VMPARAM_H_ */
