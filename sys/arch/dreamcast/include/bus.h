@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.9 2005/02/19 15:43:13 tsutsui Exp $	*/
+/*	$NetBSD: bus.h,v 1.10 2005/03/09 19:04:44 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -577,7 +577,7 @@ struct dreamcast_bus_dmamap {
 	 */
 	bus_size_t	_dm_size;	/* largest DMA transfer mappable */
 	int		_dm_segcnt;	/* number of segs this map can map */
-	bus_size_t	_dm_maxsegsz;	/* largest possible segment */
+	bus_size_t	_dm_maxmaxsegsz; /* fixed largest possible segment */
 	bus_size_t	_dm_boundary;	/* don't cross this */
 	int		_dm_flags;	/* misc. flags */
 
@@ -589,6 +589,7 @@ struct dreamcast_bus_dmamap {
 	int		dm_nsegs;	/* # valid segments in mapping */
 	bus_dma_segment_t dm_segs[1];	/* segments; variable length */
 	bus_size_t	dm_mapsize;	/* size of the mapping */
+	bus_size_t	dm_maxsegsz;	/* largest possible segment */
 };
 
 #endif /* _DREAMCAST_BUS_H_ */

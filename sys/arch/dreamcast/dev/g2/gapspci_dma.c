@@ -1,4 +1,4 @@
-/*	$NetBSD: gapspci_dma.c,v 1.9 2005/02/19 15:37:35 tsutsui Exp $	*/
+/*	$NetBSD: gapspci_dma.c,v 1.10 2005/03/09 19:04:44 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: gapspci_dma.c,v 1.9 2005/02/19 15:37:35 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gapspci_dma.c,v 1.10 2005/03/09 19:04:44 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h> 
@@ -170,9 +170,10 @@ gaps_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 
 	map->_dm_size = size;
 	map->_dm_segcnt = 1;
-	map->_dm_maxsegsz = maxsegsz;
+	map->_dm_maxmaxsegsz = maxsegsz;
 	map->_dm_boundary = boundary;
 	map->_dm_flags = flags & ~(BUS_DMA_WAITOK|BUS_DMA_NOWAIT);
+	map->dm_maxsegsz = maxsegsz;
 
 	if (flags & BUS_DMA_ALLOCNOW) {
 		u_long res;
@@ -230,6 +231,7 @@ gaps_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *addr,
 		 */
 		map->dm_mapsize = 0;
 		map->dm_nsegs = 0;
+		KASSERT(map->dm_maxsegsz <= map->_dm_maxmaxsegsz);
 	}
 
 	/* XXX Don't support DMA to process space right now. */
@@ -273,6 +275,7 @@ gaps_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
 		 */
 		map->dm_mapsize = 0;
 		map->dm_nsegs = 0;
+		KASSERT(map->dm_maxsegsz <= map->_dm_maxmaxsegsz);
 	}
 
 #ifdef DIAGNOSTIC
@@ -335,6 +338,7 @@ gaps_dmamap_unload(bus_dma_tag_t t, bus_dmamap_t map)
 		    map->dm_segs[0].ds_addr,
 		    map->dm_mapsize, EX_NOWAIT);
 
+		map->dm_maxsegsz = map->_dm_maxmaxsegsz;
 		map->dm_mapsize = 0;
 		map->dm_nsegs = 0;
 	}
