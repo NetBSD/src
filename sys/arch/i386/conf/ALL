@@ -1,7 +1,7 @@
 #
 #	ALL -- everything that's currently supported
 #
-#	$Id: ALL,v 1.50 1994/05/19 07:17:29 cgd Exp $
+#	$Id: ALL,v 1.51 1994/05/19 09:11:57 mycroft Exp $
 #
 
 # architecture type and name of kernel; REQUIRED
@@ -83,10 +83,8 @@ options		KERNFS
 #options	IMP	 
 options		INET
 options		NS
-options		ISO
-options		TPIP
-options		EON
-options		CCITT
+options		ISO,TPIP,EON
+options		CCITT,LLC,HDLC
 
 # packet forwarding
 options		GATEWAY
