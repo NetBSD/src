@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.160 2004/03/24 19:37:10 atatat Exp $
+#       $NetBSD: Makefile,v 1.161 2004/03/29 04:14:04 dyoung Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -27,7 +27,8 @@ MAN=	altq.9 arc4random.9 arp.9 audio.9 autoconf.9 \
 	pcmcia.9 pfil.9 physio.9 pmap.9 pmatch.9 pmc.9 \
 	pool.9 pool_cache.9 powerhook_establish.9 ppsratecheck.9 \
 	properties.9 preempt.9 \
-	radio.9 ras.9 rasops.9 ratecheck.9 resettodr.9 rnd.9 rt_timer.9 \
+	radio.9 ras.9 rasops.9 ratecheck.9 resettodr.9 rnd.9 rssadapt.9 \
+	rt_timer.9 \
 	SCHED_LOCK.9 scheduler.9 \
 	scsipi.9 setjmp.9 setrunqueue.9 shutdownhook_establish.9 \
 	signal.9 softintr.9 spl.9 store.9 suser.9 suspendsched.9 \
@@ -408,6 +409,11 @@ MLINKS+=rasops.9 rasops_init.9 \
 	rasops.9 rasops_reconfig.9
 MLINKS+=rnd.9 rnd_attach_source.9 rnd.9 rnd_detach_source.9 \
 	rnd.9 rnd_add_data.9 rnd.9 rnd_add_uint32.9
+MLINKS+=rssadapt.9 ieee80211_rssadapt_choose.9 \
+	rssadapt.9 ieee80211_rssadapt_input.9 \
+	rssadapt.9 ieee80211_rssadapt_lower_rate.9 \
+	rssadapt.9 ieee80211_rssadapt_raise_rate.9 \
+	rssadapt.9 ieee80211_rssadapt_updatestats.9
 MLINKS+=rt_timer.9 rt_timer_queue_create.9 rt_timer.9 rt_timer_queue_change.9 \
 	rt_timer.9 rt_timer_queue_destroy.9 rt_timer.9 rt_timer_add.9 \
 	rt_timer.9 rt_timer_remove_all.9

@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.689 2004/03/28 18:23:27 he Exp $
+#	$NetBSD: mi,v 1.690 2004/03/29 04:14:03 dyoung Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -4910,6 +4910,11 @@
 ./usr/share/man/cat9/hz.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/i386/bios32_service.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/i386/bioscall.0		comp-sys-catman		.cat
+./usr/share/man/cat9/ieee80211_rssadapt_choose.0	comp-sys-catman	.cat
+./usr/share/man/cat9/ieee80211_rssadapt_input.0		comp-sys-catman	.cat
+./usr/share/man/cat9/ieee80211_rssadapt_lower_rate.0	comp-sys-catman	.cat
+./usr/share/man/cat9/ieee80211_rssadapt_raise_rate.0	comp-sys-catman	.cat
+./usr/share/man/cat9/ieee80211_rssadapt_updatestats.0	comp-sys-catman	.cat
 ./usr/share/man/cat9/in4_cksum.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/in6_cksum.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/in_cksum.0			comp-sys-catman		.cat
@@ -5172,6 +5177,7 @@
 ./usr/share/man/cat9/rnd_add_uint32.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/rnd_attach_source.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/rnd_detach_source.0	comp-sys-catman		.cat
+./usr/share/man/cat9/rssadapt.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/rt_timer.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/rt_timer_add.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/rt_timer_queue_change.0	comp-sys-catman		.cat
@@ -8555,6 +8561,11 @@
 ./usr/share/man/man9/hz.9			comp-sys-man		.man
 ./usr/share/man/man9/i386/bios32_service.9	comp-sys-man		.man
 ./usr/share/man/man9/i386/bioscall.9		comp-sys-man		.man
+./usr/share/man/man9/ieee80211_rssadapt_choose.9	comp-sys-man	.man
+./usr/share/man/man9/ieee80211_rssadapt_input.9		comp-sys-man	.man
+./usr/share/man/man9/ieee80211_rssadapt_lower_rate.9	comp-sys-man	.man
+./usr/share/man/man9/ieee80211_rssadapt_raise_rate.9	comp-sys-man	.man
+./usr/share/man/man9/ieee80211_rssadapt_updatestats.9	comp-sys-man	.man
 ./usr/share/man/man9/in4_cksum.9		comp-sys-man		.man
 ./usr/share/man/man9/in6_cksum.9		comp-sys-man		.man
 ./usr/share/man/man9/in_cksum.9			comp-sys-man		.man
@@ -8817,6 +8828,7 @@
 ./usr/share/man/man9/rnd_add_uint32.9		comp-sys-man		.man
 ./usr/share/man/man9/rnd_attach_source.9	comp-sys-man		.man
 ./usr/share/man/man9/rnd_detach_source.9	comp-sys-man		.man
+./usr/share/man/man9/rssadapt.9			comp-sys-man		.man
 ./usr/share/man/man9/rt_timer.9			comp-sys-man		.man
 ./usr/share/man/man9/rt_timer_add.9		comp-sys-man		.man
 ./usr/share/man/man9/rt_timer_queue_change.9	comp-sys-man		.man
