@@ -30,13 +30,15 @@
  */
 
 #ifndef LINT
-static char *rcsid = "$Id: xdryp.c,v 1.6 1994/05/25 09:52:05 deraadt Exp $";
+static char *rcsid = "$Id: xdryp.c,v 1.7 1994/08/06 23:07:47 jtc Exp $";
 #endif
 
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <ctype.h>
 #include <rpc/rpc.h>
 #include <rpc/xdr.h>
@@ -58,10 +60,7 @@ xdr_domainname(xdrs, objp)
 XDR *xdrs;
 char *objp;
 {
-	if (!xdr_string(xdrs, &objp, YPMAXDOMAIN)) {
-		return (FALSE);
-	}
-	return (TRUE);
+	return xdr_string(xdrs, &objp, YPMAXDOMAIN);
 }
 
 bool_t
@@ -69,10 +68,7 @@ xdr_peername(xdrs, objp)
 XDR *xdrs;
 char *objp;
 {
-	if (!xdr_string(xdrs, &objp, YPMAXPEER)) {
-		return (FALSE);
-	}
-	return (TRUE);
+	return xdr_string(xdrs, &objp, YPMAXPEER);
 }
 
 bool_t
@@ -80,10 +76,7 @@ xdr_datum(xdrs, objp)
 XDR *xdrs;
 datum *objp;
 {
-	if (!xdr_bytes(xdrs, (char **)&objp->dptr, (u_int *)&objp->dsize, YPMAXRECORD)) {
-		return (FALSE);
-	}
-	return (TRUE);
+	return xdr_bytes(xdrs, (char **)&objp->dptr, (u_int *)&objp->dsize, YPMAXRECORD);
 }
 
 bool_t
@@ -91,10 +84,7 @@ xdr_mapname(xdrs, objp)
 XDR *xdrs;
 char *objp;
 {
-	if (!xdr_string(xdrs, &objp, YPMAXMAP)) {
-		return (FALSE);
-	}
-	return (TRUE);
+	return xdr_string(xdrs, &objp, YPMAXMAP);
 }
 
 bool_t
@@ -108,10 +98,7 @@ struct ypreq_key *objp;
 	if (!xdr_mapname(xdrs, objp->map)) {
 		return (FALSE);
 	}
-	if (!xdr_datum(xdrs, &objp->keydat)) {
-		return (FALSE);
-	}
-	return (TRUE);
+	return xdr_datum(xdrs, &objp->keydat);
 }
 
 bool_t
@@ -122,10 +109,7 @@ struct ypreq_nokey *objp;
 	if (!xdr_domainname(xdrs, objp->domain)) {
 		return (FALSE);
 	}
-	if (!xdr_mapname(xdrs, objp->map)) {
-		return (FALSE);
-	}
-	return (TRUE);
+	return xdr_mapname(xdrs, objp->map);
 }
 
 bool_t
@@ -133,10 +117,7 @@ xdr_yp_inaddr(xdrs, objp)
 XDR *xdrs;
 struct in_addr *objp;
 {
-	if (!xdr_opaque(xdrs, (caddr_t)&objp->s_addr, sizeof objp->s_addr)) {
-		return (FALSE);
-	}
-	return (TRUE);
+	return xdr_opaque(xdrs, (caddr_t)&objp->s_addr, sizeof objp->s_addr);
 }
 
 bool_t
@@ -147,11 +128,8 @@ struct ypbind_binding *objp;
 	if (!xdr_yp_inaddr(xdrs, &objp->ypbind_binding_addr)) {
 		return (FALSE);
 	}
-	if (!xdr_opaque(xdrs, (void *)&objp->ypbind_binding_port,
-	    sizeof objp->ypbind_binding_port)) {
-		return (FALSE);
-	}
-	return (TRUE);
+	return xdr_opaque(xdrs, (void *)&objp->ypbind_binding_port,
+	    sizeof objp->ypbind_binding_port);
 }
 
 bool_t
@@ -159,10 +137,7 @@ xdr_ypbind_resptype(xdrs, objp)
 XDR *xdrs;
 enum ypbind_resptype *objp;
 {
-	if (!xdr_enum(xdrs, (enum_t *)objp)) {
-		return (FALSE);
-	}
-	return (TRUE);
+	return xdr_enum(xdrs, (enum_t *)objp);
 }
 
 bool_t
@@ -170,10 +145,7 @@ xdr_ypstat(xdrs, objp)
 XDR *xdrs;
 enum ypbind_resptype *objp;
 {
-	if (!xdr_enum(xdrs, (enum_t *)objp)) {
-		return (FALSE);
-	}
-	return (TRUE);
+	return xdr_enum(xdrs, (enum_t *)objp);
 }
 
 bool_t
@@ -186,19 +158,13 @@ struct ypbind_resp *objp;
 	}
 	switch (objp->ypbind_status) {
 	case YPBIND_FAIL_VAL:
-		if (!xdr_u_int(xdrs, (u_int *)&objp->ypbind_respbody.ypbind_error)) {
-			return (FALSE);
-		}
-		break;
+		return xdr_u_int(xdrs, (u_int *)&objp->ypbind_respbody.ypbind_error);
 	case YPBIND_SUCC_VAL:
-		if (!xdr_ypbind_binding(xdrs, &objp->ypbind_respbody.ypbind_bindinfo)) {
-			return (FALSE);
-		}
-		break;
+		return xdr_ypbind_binding(xdrs, &objp->ypbind_respbody.ypbind_bindinfo);
 	default:
 		return (FALSE);
 	}
-	return (TRUE);
+	/* NOTREACHED */
 }
 
 bool_t
@@ -209,10 +175,7 @@ struct ypresp_val *objp;
 	if (!xdr_ypstat(xdrs, &objp->status)) {
 		return (FALSE);
 	}
-	if (!xdr_datum(xdrs, &objp->valdat)) {
-		return (FALSE);
-	}
-	return (TRUE);
+	return xdr_datum(xdrs, &objp->valdat);
 }
 
 bool_t
@@ -226,10 +189,7 @@ struct ypbind_setdom *objp;
 	if (!xdr_ypbind_binding(xdrs, &objp->ypsetdom_binding)) {
 		return (FALSE);
 	}
-	if (!xdr_u_short(xdrs, &objp->ypsetdom_vers)) {
-		return (FALSE);
-	}
-	return (TRUE);
+	return xdr_u_short(xdrs, &objp->ypsetdom_vers);
 }
 
 bool_t
@@ -243,10 +203,7 @@ struct ypresp_key_val *objp;
 	if (!xdr_datum(xdrs, &objp->valdat)) {
 		return (FALSE);
 	}
-	if (!xdr_datum(xdrs, &objp->keydat)) {
-		return (FALSE);
-	}
-	return (TRUE);
+	return xdr_datum(xdrs, &objp->keydat);
 }
 
 bool_t
@@ -259,16 +216,13 @@ struct ypresp_all *objp;
 	}
 	switch (objp->more) {
 	case TRUE:
-		if (!xdr_ypresp_key_val(xdrs, &objp->ypresp_all_u.val)) {
-			return (FALSE);
-		}
-		break;
+		return xdr_ypresp_key_val(xdrs, &objp->ypresp_all_u.val);
 	case FALSE:
-		break;
+		return (TRUE);
 	default:
 		return (FALSE);
 	}
-	return (TRUE);
+	/* NOTREACHED */
 }
 
 bool_t
@@ -281,7 +235,7 @@ u_long *objp;
 	char *key, *val;
 	int r;
 
-	bzero(&out, sizeof out);
+	memset(&out, 0, sizeof out);
 	while(1) {
 		if( !xdr_ypresp_all(xdrs, &out)) {
 			xdr_free(xdr_ypresp_all, (char *)&out);
@@ -296,11 +250,11 @@ u_long *objp;
 		switch(status) {
 		case YP_TRUE:
 			key = (char *)malloc(out.ypresp_all_u.val.keydat.dsize + 1);
-			bcopy(out.ypresp_all_u.val.keydat.dptr, key,
+			memcpy(key, out.ypresp_all_u.val.keydat.dptr,
 				out.ypresp_all_u.val.keydat.dsize);
 			key[out.ypresp_all_u.val.keydat.dsize] = '\0';
 			val = (char *)malloc(out.ypresp_all_u.val.valdat.dsize + 1);
-			bcopy(out.ypresp_all_u.val.valdat.dptr, val,
+			memcpy(val, out.ypresp_all_u.val.valdat.dptr,
 				out.ypresp_all_u.val.valdat.dsize);
 			val[out.ypresp_all_u.val.valdat.dsize] = '\0';
 			xdr_free(xdr_ypresp_all, (char *)&out);
@@ -334,10 +288,7 @@ struct ypresp_master *objp;
 	if (!xdr_ypstat(xdrs, &objp->status)) {
 		return (FALSE);
 	}
-	if (!xdr_string(xdrs, &objp->master, YPMAXPEER)) {
-		return (FALSE);
-	}
-	return (TRUE);
+	return xdr_string(xdrs, &objp->master, YPMAXPEER);
 }
 
 bool_t
@@ -345,10 +296,7 @@ xdr_ypmaplist_str(xdrs, objp)
 XDR *xdrs;
 char *objp;
 {
-	if (!xdr_string(xdrs, &objp, YPMAXMAP+1)) {
-		return (FALSE);
-	}
-	return (TRUE);
+	return xdr_string(xdrs, &objp, YPMAXMAP+1);
 }
 
 bool_t
@@ -359,11 +307,8 @@ struct ypmaplist *objp;
 	if (!xdr_ypmaplist_str(xdrs, objp->ypml_name)) {
 		return (FALSE);
 	}
-	if (!xdr_pointer(xdrs, (caddr_t *)&objp->ypml_next,
-	    sizeof(struct ypmaplist), xdr_ypmaplist)) {
-		return (FALSE);
-	}
-	return (TRUE);
+	return xdr_pointer(xdrs, (caddr_t *)&objp->ypml_next,
+	    sizeof(struct ypmaplist), xdr_ypmaplist);
 }
 
 bool_t
@@ -374,11 +319,8 @@ struct ypresp_maplist *objp;
 	if (!xdr_ypstat(xdrs, &objp->status)) {
 		return (FALSE);
 	}
-	if (!xdr_pointer(xdrs, (caddr_t *)&objp->list,
-	    sizeof(struct ypmaplist), xdr_ypmaplist)) {
-		return (FALSE);
-	}
-	return (TRUE);
+	return xdr_pointer(xdrs, (caddr_t *)&objp->list,
+	    sizeof(struct ypmaplist), xdr_ypmaplist);
 }
 
 bool_t
@@ -389,8 +331,5 @@ struct ypresp_order *objp;
 	if (!xdr_ypstat(xdrs, &objp->status)) {
 		return (FALSE);
 	}
-	if (!xdr_u_long(xdrs, &objp->ordernum)) {
-		return (FALSE);
-	}
-	return (TRUE);
+	return xdr_u_long(xdrs, &objp->ordernum);
 }

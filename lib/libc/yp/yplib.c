@@ -30,7 +30,7 @@
  */
 
 #ifndef LINT
-static char *rcsid = "$Id: yplib.c,v 1.8 1994/05/25 09:52:07 deraadt Exp $";
+static char *rcsid = "$Id: yplib.c,v 1.9 1994/08/06 23:07:50 jtc Exp $";
 #endif
 
 #include <sys/param.h>
@@ -40,7 +40,9 @@ static char *rcsid = "$Id: yplib.c,v 1.8 1994/05/25 09:52:07 deraadt Exp $";
 #include <sys/uio.h>
 #include <errno.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include <rpc/rpc.h>
 #include <rpc/xdr.h>
 #include <rpcsvc/yp_prot.h>
@@ -92,7 +94,7 @@ int vallen;
 			break;
 	if(ep==NULL) {
 		ep = (struct ypmatch_ent *)malloc(sizeof *ep);
-		bzero((char *)ep, sizeof *ep);
+		memset(ep, 0, sizeof *ep);
 		if(ypmc)
 			ep->next = ypmc;
 		ypmc = ep;
@@ -119,8 +121,8 @@ int vallen;
 	ep->keylen = keylen;
 	ep->vallen = vallen;
 
-	bcopy(key, ep->key, ep->keylen);
-	bcopy(val, ep->val, ep->vallen);
+	memcpy(ep->key, key, ep->keylen);
+	memcpy(ep->val, val, ep->vallen);
 
 	if(ep->map) {
 		if( strcmp(ep->map, map) ) {
@@ -155,7 +157,7 @@ int *vallen;
 			continue;
 		if(strcmp(ep->map, map))
 			continue;
-		if(bcmp(ep->key, key, keylen))
+		if(memcmp(ep->key, key, keylen))
 			continue;
 		if(t > ep->expire_t)
 			continue;
@@ -208,7 +210,7 @@ struct dom_binding **ypdb;
 			break;
 	if(ysd==NULL) {
 		ysd = (struct dom_binding *)malloc(sizeof *ysd);
-		bzero((char *)ysd, sizeof *ysd);
+		memset(ysd, 0, sizeof *ysd);
 		ysd->dom_socket = -1;
 		ysd->dom_vers = 0;
 		new = 1;
@@ -240,7 +242,7 @@ again:
 				goto again;
 			}
 
-			bzero(&ysd->dom_server_addr, sizeof ysd->dom_server_addr);
+			memset(&ysd->dom_server_addr, 0, sizeof ysd->dom_server_addr);
 			ysd->dom_server_addr.sin_family = AF_INET;
 			ysd->dom_server_addr.sin_len = sizeof(struct sockaddr_in);
 			ysd->dom_server_addr.sin_addr =
@@ -261,7 +263,7 @@ again:
 	}
 #endif
 	if(ysd->dom_vers==-1 || ysd->dom_vers==0) {
-		bzero((char *)&clnt_sin, sizeof clnt_sin);
+		memset(&clnt_sin, 0, sizeof clnt_sin);
 		clnt_sin.sin_family = AF_INET;
 		clnt_sin.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
 
@@ -288,7 +290,7 @@ again:
 		}
 		clnt_destroy(client);
 
-		bzero((char *)&ysd->dom_server_addr, sizeof ysd->dom_server_addr);
+		memset(&ysd->dom_server_addr, 0, sizeof ysd->dom_server_addr);
 		ysd->dom_server_addr.sin_family = AF_INET;
 		ysd->dom_server_addr.sin_port =
 			ypbr.ypbind_respbody.ypbind_bindinfo.ypbind_binding_port;
@@ -391,7 +393,7 @@ again:
 	    inkeylen, &yprv.valdat.dptr, &yprv.valdat.dsize)) {
 		*outvallen = yprv.valdat.dsize;
 		*outval = (char *)malloc(*outvallen+1);
-		bcopy(yprv.valdat.dptr, *outval, *outvallen);
+		memcpy(*outval, yprv.valdat.dptr, *outvallen);
 		(*outval)[*outvallen] = '\0';
 		return 0;
 	}
@@ -405,7 +407,7 @@ again:
 	yprk.keydat.dptr = (char *)inkey;
 	yprk.keydat.dsize = inkeylen;
 
-	bzero((char *)&yprv, sizeof yprv);
+	memset(&yprv, 0, sizeof yprv);
 
 	r = clnt_call(ysd->dom_client, YPPROC_MATCH,
 		xdr_ypreq_key, &yprk, xdr_ypresp_val, &yprv, tv);
@@ -417,7 +419,7 @@ again:
 	if( !(r=ypprot_err(yprv.status)) ) {
 		*outvallen = yprv.valdat.dsize;
 		*outval = (char *)malloc(*outvallen+1);
-		bcopy(yprv.valdat.dptr, *outval, *outvallen);
+		memcpy(*outval, yprv.valdat.dptr, *outvallen);
 		(*outval)[*outvallen] = '\0';
 #ifdef YPMATCHCACHE
 		if( strcmp(_yp_domain, indomain)==0 )
@@ -468,7 +470,7 @@ again:
 
 	yprnk.domain = indomain;
 	yprnk.map = inmap;
-	bzero((char *)&yprkv, sizeof yprkv);
+	memset(&yprkv, 0, sizeof yprkv);
 
 	r = clnt_call(ysd->dom_client, YPPROC_FIRST,
 		xdr_ypreq_nokey, &yprnk, xdr_ypresp_key_val, &yprkv, tv);
@@ -480,11 +482,11 @@ again:
 	if( !(r=ypprot_err(yprkv.status)) ) {
 		*outkeylen = yprkv.keydat.dsize;
 		*outkey = (char *)malloc(*outkeylen+1);
-		bcopy(yprkv.keydat.dptr, *outkey, *outkeylen);
+		memcpy (*outkey, yprkv.keydat.dptr, *outkeylen);
 		(*outkey)[*outkeylen] = '\0';
 		*outvallen = yprkv.valdat.dsize;
 		*outval = (char *)malloc(*outvallen+1);
-		bcopy(yprkv.valdat.dptr, *outval, *outvallen);
+		memcpy (*outval, yprkv.valdat.dptr, *outvallen);
 		(*outval)[*outvallen] = '\0';
 	}
 	xdr_free(xdr_ypresp_key_val, (char *)&yprkv);
@@ -523,7 +525,7 @@ again:
 	yprk.map = inmap;
 	yprk.keydat.dptr = inkey;
 	yprk.keydat.dsize = inkeylen;
-	bzero((char *)&yprkv, sizeof yprkv);
+	memset(&yprkv, 0, sizeof yprkv);
 
 	r = clnt_call(ysd->dom_client, YPPROC_NEXT,
 		xdr_ypreq_key, &yprk, xdr_ypresp_key_val, &yprkv, tv);
@@ -535,11 +537,11 @@ again:
 	if( !(r=ypprot_err(yprkv.status)) ) {
 		*outkeylen = yprkv.keydat.dsize;
 		*outkey = (char *)malloc(*outkeylen+1);
-		bcopy(yprkv.keydat.dptr, *outkey, *outkeylen);
+		memcpy(*outkey, yprkv.keydat.dptr, *outkeylen);
 		(*outkey)[*outkeylen] = '\0';
 		*outvallen = yprkv.valdat.dsize;
 		*outval = (char *)malloc(*outvallen+1);
-		bcopy(yprkv.valdat.dptr, *outval, *outvallen);
+		memcpy(*outval, yprkv.valdat.dptr, *outvallen);
 		(*outval)[*outvallen] = '\0';
 	}
 	xdr_free(xdr_ypresp_key_val, (char *)&yprkv);
@@ -613,7 +615,7 @@ again:
 	yprnk.domain = indomain;
 	yprnk.map = inmap;
 
-	bzero((char *)(char *)&ypro, sizeof ypro);
+	memset(&ypro, 0, sizeof ypro);
 
 	r = clnt_call(ysd->dom_client, YPPROC_ORDER,
 		xdr_ypreq_nokey, &yprnk, xdr_ypresp_order, &ypro, tv);
@@ -651,7 +653,7 @@ again:
 	yprnk.domain = indomain;
 	yprnk.map = inmap;
 
-	bzero((char *)&yprm, sizeof yprm);
+	memset(&yprm, 0, sizeof yprm);
 
 	r = clnt_call(ysd->dom_client, YPPROC_MASTER,
 		xdr_ypreq_nokey, &yprnk, xdr_ypresp_master, &yprm, tv);
@@ -684,7 +686,7 @@ again:
 	tv.tv_sec = _yplib_timeout;
 	tv.tv_usec = 0;
 
-	bzero((char *)&ypml, sizeof ypml);
+	memset(&ypml, 0, sizeof ypml);
 
 	r = clnt_call(ysd->dom_client, YPPROC_MAPLIST,
 		xdr_domainname, indomain, xdr_ypresp_maplist, &ypml, tv);
