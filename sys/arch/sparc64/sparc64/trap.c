@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.31 1999/11/06 20:24:51 eeh Exp $ */
+/*	$NetBSD: trap.c,v 1.32 1999/11/20 18:12:00 eeh Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -771,6 +771,12 @@ badtrap:
 
 	case T_CLEANWIN:
 		uprintf("T_CLEANWIN\n");	/* XXX Should not get this */
+		ADVANCE;
+		break;
+
+	case T_FLUSHWIN:
+		/* Software window flush for v8 software */
+		write_all_windows();
 		ADVANCE;
 		break;
 
