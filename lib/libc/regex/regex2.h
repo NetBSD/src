@@ -4,7 +4,7 @@
  = typedef struct {
  = 	int re_magic;
  = 	size_t re_nsub;		// number of parenthesized subexpressions
- =	const char *re_endp;	// end pointer for REG_PEND
+ = 	const char *re_endp;	// end pointer for REG_PEND
  = 	struct re_guts *re_g;	// none of your business :-)
  = } regex_t;
  = typedef struct {
@@ -131,3 +131,4 @@ struct re_guts {
 
 /* misc utilities */
 #define	OUT	(CHAR_MAX+1)	/* a non-character value */
+#define	ISWORD(c)	(isalnum(c) || (c) == '_')

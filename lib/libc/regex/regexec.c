@@ -129,8 +129,7 @@ int eflags;
 	assert(!(g->iflags&BAD));
 	if (g->iflags&BAD)		/* backstop for no-debug case */
 		return(REG_BADPAT);
-	if (eflags != GOODFLAGS(eflags))
-		return(REG_INVARG);
+	eflags = GOODFLAGS(eflags);
 
 	if (g->nstates <= CHAR_BIT*sizeof(states1) && !(eflags&REG_LARGE))
 		return(smatcher(g, (char *)string, nmatch, pmatch, eflags));

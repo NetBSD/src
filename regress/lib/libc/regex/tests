@@ -133,6 +133,8 @@ a\bc		&	abc	abc
 a\		&C	EESCAPE
 a\\bc		&	a\bc	a\bc
 \{		bC	BADRPT
+a\[b		&	a[b	a[b
+a[b		&C	EBRACK
 # trailing $ is a peculiar special case for the BRE code
 a$		&	a	a
 a$		&	a$
@@ -344,6 +346,25 @@ a(b?c)+d	-	accd	accd
 a[bc]d		-	xyzaaabcaababdacd	abd
 a[ab]c		-	aaabc	abc
 abc		s	abc	abc
+a*		&	b	@b
+
+# Let's have some fun -- try to match a C comment.
+# first the obvious, which looks okay at first glance...
+/\*.*\*/	-	/*x*/	/*x*/
+# but...
+/\*.*\*/	-	/*x*/y/*z*/	/*x*/y/*z*/
+# okay, we must not match */ inside; try to do that...
+/\*([^*]|\*[^/])*\*/	-	/*x*/	/*x*/
+/\*([^*]|\*[^/])*\*/	-	/*x*/y/*z*/	/*x*/
+# but...
+/\*([^*]|\*[^/])*\*/	-	/*x**/y/*z*/	/*x**/y/*z*/
+# and a still fancier version, which does it right (I think)...
+/\*([^*]|\*+[^*/])*\*+/	-	/*x*/	/*x*/
+/\*([^*]|\*+[^*/])*\*+/	-	/*x*/y/*z*/	/*x*/
+/\*([^*]|\*+[^*/])*\*+/	-	/*x**/y/*z*/	/*x**/
+/\*([^*]|\*+[^*/])*\*+/	-	/*x****/y/*z*/	/*x****/
+/\*([^*]|\*+[^*/])*\*+/	-	/*x**x*/y/*z*/	/*x**x*/
+/\*([^*]|\*+[^*/])*\*+/	-	/*x***x/y/*z*/	/*x***x/y/*z*/
 
 # subexpressions
 a(b)(c)d	-	abcd	abcd	b,c
@@ -439,10 +460,16 @@ a[[:>:]]	&	a-	a
 [[:<:]]a.c[[:>:]]	&	axcd-dayc-dazce-abc	abc
 [[:<:]]a.c[[:>:]]	&	axcd-dayc-dazce-abc-q	abc
 [[:<:]]a.c[[:>:]]	&	axc-dayc-dazce-abc	axc
+[[:<:]]b.c[[:>:]]	&	a_bxc-byc_d-bzc-q	bzc
+[[:<:]].x..[[:>:]]	&	y_xa_-_xb_y-_xc_-axdc	_xc_
+[[:<:]]a_b[[:>:]]	&	x_a_b
 
-# past problems
+# past problems, and suspected problems
 (A[1])|(A[2])|(A[3])|(A[4])|(A[5])|(A[6])|(A[7])|(A[8])|(A[9])|(A[A])	-	A1	A1
 abcdefghijklmnop	i	abcdefghijklmnop	abcdefghijklmnop
 abcdefghijklmnopqrstuv	i	abcdefghijklmnopqrstuv	abcdefghijklmnopqrstuv
 (ALAK)|(ALT[AB])|(CC[123]1)|(CM[123]1)|(GAMC)|(LC[23][EO ])|(SEM[1234])|(SL[ES][12])|(SLWW)|(SLF )|(SLDT)|(VWH[12])|(WH[34][EW])|(WP1[ESN])	-	CC11	CC11
 CC[13]1|a{21}[23][EO][123][Es][12]a{15}aa[34][EW]aaaaaaa[X]a	-	CC11	CC11
+Char \([a-z0-9_]*\)\[.*	b	Char xyz[k	Char xyz[k	xyz
+#-\{0,1\}[0-9]*$	b	-5	-5
+#a?b	-	ab	ab

@@ -9,7 +9,7 @@ static char *dissect __P((register struct match *m, char *start, char *stop, sop
 static char *backref __P((register struct match *m, char *start, char *stop, sopno startst, sopno stopst, sopno lev));
 static char *fast __P((register struct match *m, char *start, char *stop, sopno startst, sopno stopst));
 static char *slow __P((register struct match *m, char *start, char *stop, sopno startst, sopno stopst));
-static states step __P((register struct re_guts *g, int start, int stop, register states bef, int ch, register states aft));
+static states step __P((register struct re_guts *g, sopno start, sopno stop, register states bef, int ch, register states aft));
 #define	BOL	(OUT+1)
 #define	EOL	(BOL+1)
 #define	BOLEOL	(BOL+2)

@@ -55,8 +55,8 @@ static char nuls[10];		/* place to point scanner in event of error */
 #define	MUSTSEE(c, e)	(REQUIRE(MORE() && PEEK() == (c), e))
 #define	MUSTEAT(c, e)	(REQUIRE(MORE() && GETNEXT() == (c), e))
 #define	MUSTNOTSEE(c, e)	(REQUIRE(!MORE() || PEEK() != (c), e))
-#define	EMIT(sop, sopnd)	doemit(p, sop, (size_t)(sopnd))
-#define	INSERT(sop, pos)	doinsert(p, sop, HERE()-(pos)+1, pos)
+#define	EMIT(op, sopnd)	doemit(p, (sop)(op), (size_t)(sopnd))
+#define	INSERT(op, pos)	doinsert(p, (sop)(op), HERE()-(pos)+1, pos)
 #define	AHEAD(pos)		dofwd(p, pos, HERE()-(pos))
 #define	ASTERN(sop, pos)	EMIT(sop, HERE()-pos)
 #define	HERE()		(p->slen)
@@ -65,6 +65,8 @@ static char nuls[10];		/* place to point scanner in event of error */
 
 #ifndef NDEBUG
 static int never = 0;		/* for use in asserts; shuts lint up */
+#else
+#define	never	0		/* some <assert.h>s have bugs too */
 #endif
 
 /*
@@ -90,7 +92,13 @@ int cflags;
 	register struct parse *p = &pa;
 	register int i;
 	register size_t len;
+#ifdef REDEBUG
+#	define	GOODFLAGS(f)	(f)
+#else
+#	define	GOODFLAGS(f)	((f)&~REG_DUMP)
+#endif
 
+	cflags = GOODFLAGS(cflags);
 	if ((cflags&REG_EXTENDED) && (cflags&REG_NOSPEC))
 		return(REG_INVARG);
 
