@@ -1,4 +1,4 @@
-/*	$NetBSD: ansi.h,v 1.6 1998/08/16 17:16:56 kleink Exp $	*/
+/*	$NetBSD: ansi.h,v 1.7 2000/02/27 17:50:21 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -52,21 +52,18 @@
 #define	_BSD_SIZE_T_		unsigned int	/* sizeof() */
 #define	_BSD_SSIZE_T_		int		/* byte count or error */
 #define	_BSD_TIME_T_		long		/* time() */
-
-/*
- * Actually va_list is an array, but this wouldn't work as a #define.
- * Fortunately this is used only for formal parameters,
- * so we can use a pointer instead.
- */
-struct __gnuc_va_list__;  /* forward declaration to prohibit gcc warning XXX */
-#define	_BSD_VA_LIST_	struct __gnuc_va_list__ * /* va_list */
-
 #define	_BSD_CLOCKID_T_		int		/* clockid_t */
 #define	_BSD_TIMER_T_		int		/* timer_t */
 #define	_BSD_SUSECONDS_T_	int		/* suseconds_t */
 #define	_BSD_USECONDS_T_	unsigned int	/* useconds_t */
 #define	_BSD_INTPTR_T_		int		/* intptr_t */
 #define	_BSD_UINTPTR_T_		unsigned int	/* uintptr_t */
+
+typedef struct {
+	char __gpr, __fpr, __pad[2];
+	char *__stack, *__base;
+} __va_list;
+#define	_BSD_VA_LIST_		__va_list	/* va_list */
 
 /*
  * Runes (wchar_t) is declared to be an ``int'' instead of the more natural
