@@ -1,4 +1,4 @@
-/*	$NetBSD: dirs.c,v 1.34 2001/11/01 08:21:07 lukem Exp $	*/
+/*	$NetBSD: dirs.c,v 1.35 2001/11/01 08:21:57 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)dirs.c	8.7 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: dirs.c,v 1.34 2001/11/01 08:21:07 lukem Exp $");
+__RCSID("$NetBSD: dirs.c,v 1.35 2001/11/01 08:21:57 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -112,7 +112,7 @@ struct rstdirdesc {
  */
 static long	seekpt;
 static FILE	*df;
-//static RST_DIR	*dirp;
+static RST_DIR	*dirp;
 static char	dirfile[MAXPATHLEN] = "#";	/* No file */
 static char	modefile[MAXPATHLEN] = "#";	/* No file */
 static char	dot[2] = ".";			/* So it can be modified */
