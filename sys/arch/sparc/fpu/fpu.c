@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.9 2000/08/04 14:44:40 hannken Exp $ */
+/*	$NetBSD: fpu.c,v 1.10 2000/08/16 11:36:36 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -533,11 +533,7 @@ fpu_execute(fe, instr)
 
 	case FTOS >> 2:
 	case FTOD >> 2:
-#ifndef SUN4U
-	case FTOX >> 2:
-#else /* SUN4U */
 	case FTOQ >> 2:
-#endif /* SUN4U */
 	case FTOI >> 2:
 		DPRINTF(FPE_INSN, ("fpu_execute: FTOx\n"));
 		fpu_explode(fe, fp = &fe->fe_f1, type, rs2);
@@ -567,11 +563,7 @@ fpu_execute(fe, instr)
 	}
 	fs->fs_fsr = fsr;
 	fs->fs_regs[rd] = space[0];
-	if (type >= FTYPE_DBL
-#ifdef SUN4U
-	    || type == FTYPE_LNG
-#endif /* SUN4U */
-	    ) {
+	if (type >= FTYPE_DBL || type == FTYPE_LNG) {
 		fs->fs_regs[rd + 1] = space[1];
 		if (type > FTYPE_DBL) {
 			fs->fs_regs[rd + 2] = space[2];
