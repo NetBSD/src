@@ -1,4 +1,4 @@
-/*	$NetBSD: mroute.c,v 1.10 1996/05/11 13:51:27 mycroft Exp $	*/
+/*	$NetBSD: mroute.c,v 1.11 1997/04/03 04:46:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1989 Stephen Deering
@@ -62,7 +62,9 @@
 #include <stdlib.h>
 #include "netstat.h"
 
-char *
+static char *pktscale __P((u_long));
+
+static char *
 pktscale(n)
 	u_long n;
 {
@@ -79,7 +81,7 @@ pktscale(n)
 		n /= 1048576;
 	}
 
-	sprintf(buf, "%u%c", n, t);
+	sprintf(buf, "%lu%c", n, t);
 	return (buf);
 }
 
@@ -94,7 +96,6 @@ mroutepr(mrpaddr, mfchashtbladdr, mfchashaddr, vifaddr)
 	struct mfc *mfcp, mfc;
 	register struct vif *v;
 	register vifi_t vifi;
-	struct in_addr *grp;
 	int i;
 	int banner_printed;
 	int saved_nflag;
@@ -155,7 +156,7 @@ mroutepr(mrpaddr, mfchashtbladdr, mfchashaddr, vifaddr)
 		printf(" %3u     %3u  %5u  %-15.15s",
 		    vifi, v->v_threshold, v->v_rate_limit,
 		    routename(v->v_lcl_addr.s_addr));
-		printf("  %-15.15s  %6u  %7u\n", (v->v_flags & VIFF_TUNNEL) ?
+		printf("  %-15.15s  %6lu  %7lu\n", (v->v_flags & VIFF_TUNNEL) ?
 		    routename(v->v_rmt_addr.s_addr) : "",
 		    v->v_pkt_in, v->v_pkt_out);
 	}
@@ -236,26 +237,26 @@ mrt_stats(mrpaddr, mstaddr)
 
 	kread(mstaddr, (char *)&mrtstat, sizeof(mrtstat));
 	printf("multicast routing:\n");
-	printf("\t%d datagram%s with no route for origin\n",
+	printf("\t%ld datagram%s with no route for origin\n",
 	    mrtstat.mrts_no_route, plural(mrtstat.mrts_no_route));
-	printf("\t%d upcall%s made to mrouted\n",
+	printf("\t%ld upcall%s made to mrouted\n",
 	    mrtstat.mrts_upcalls, plural(mrtstat.mrts_upcalls));
-	printf("\t%d datagram%s with malformed tunnel options\n",
+	printf("\t%ld datagram%s with malformed tunnel options\n",
 	    mrtstat.mrts_bad_tunnel, plural(mrtstat.mrts_bad_tunnel));
-	printf("\t%d datagram%s with no room for tunnel options\n",
+	printf("\t%ld datagram%s with no room for tunnel options\n",
 	    mrtstat.mrts_cant_tunnel, plural(mrtstat.mrts_cant_tunnel));
-	printf("\t%d datagram%s arrived on wrong interface\n",
+	printf("\t%ld datagram%s arrived on wrong interface\n",
 	    mrtstat.mrts_wrong_if, plural(mrtstat.mrts_wrong_if));
-	printf("\t%d datagram%s dropped due to upcall Q overflow\n",
+	printf("\t%ld datagram%s dropped due to upcall Q overflow\n",
 	    mrtstat.mrts_upq_ovflw, plural(mrtstat.mrts_upq_ovflw));
-	printf("\t%d datagram%s dropped due to upcall socket overflow\n",
+	printf("\t%ld datagram%s dropped due to upcall socket overflow\n",
 	    mrtstat.mrts_upq_sockfull, plural(mrtstat.mrts_upq_sockfull));
-	printf("\t%d datagram%s cleaned up by the cache\n",
+	printf("\t%ld datagram%s cleaned up by the cache\n",
 	    mrtstat.mrts_cache_cleanups, plural(mrtstat.mrts_cache_cleanups));
-	printf("\t%d datagram%s dropped selectively by ratelimiter\n",
+	printf("\t%ld datagram%s dropped selectively by ratelimiter\n",
 	    mrtstat.mrts_drop_sel, plural(mrtstat.mrts_drop_sel));
-	printf("\t%d datagram%s dropped - bucket Q overflow\n",
+	printf("\t%ld datagram%s dropped - bucket Q overflow\n",
 	    mrtstat.mrts_q_overflow, plural(mrtstat.mrts_q_overflow));
-	printf("\t%d datagram%s dropped - larger than bkt size\n",
+	printf("\t%ld datagram%s dropped - larger than bkt size\n",
 	    mrtstat.mrts_pkt2large, plural(mrtstat.mrts_pkt2large));
 }

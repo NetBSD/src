@@ -1,4 +1,4 @@
-/*	$NetBSD: netstat.h,v 1.7 1997/02/28 00:14:23 jonathan Exp $	*/
+/*	$NetBSD: netstat.h,v 1.8 1997/04/03 04:46:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,7 +77,7 @@ void	impstats __P((u_long, u_long));
 
 void	intpr __P((int, u_long));
 
-void	pr_rthdr __P(());
+void	pr_rthdr __P((void));
 void	pr_family __P((int));
 void	rt_stats __P((u_long));
 char	*ns_phost __P((struct sockaddr *));
@@ -85,6 +85,9 @@ void	upHex __P((char *));
 
 char	*routename __P((u_int32_t));
 char	*netname __P((u_int32_t, u_int32_t));
+char	*atalk_print __P((const struct sockaddr *, int));
+char	*atalk_print2 __P((const struct sockaddr *, const struct sockaddr *,
+    int));
 char	*ns_print __P((struct sockaddr *));
 void	routepr __P((u_long));
 
@@ -92,6 +95,9 @@ void	nsprotopr __P((u_long, char *));
 void	spp_stats __P((u_long, char *));
 void	idp_stats __P((u_long, char *));
 void	nserr_stats __P((u_long, char *));
+
+void	atalkprotopr __P((u_long, char *));
+void	ddp_stats __P((u_long, char *));
 
 void	intpr __P((int, u_long));
 
@@ -104,7 +110,7 @@ void	iso_protopr __P((u_long, char *));
 void	iso_protopr1 __P((u_long, int));
 void	tp_protopr __P((u_long, char *));
 void	tp_inproto __P((u_long));
-void	tp_stats __P((caddr_t, caddr_t));
+void	tp_stats __P((u_long, caddr_t));
 
 void	mroutepr __P((u_long, u_long, u_long, u_long));
 void	mrt_stats __P((u_long, u_long));

@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.20 1997/03/26 01:51:27 thorpej Exp $	*/
+/*	$NetBSD: route.c,v 1.21 1997/04/03 04:46:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-static char *rcsid = "$NetBSD: route.c,v 1.20 1997/03/26 01:51:27 thorpej Exp $";
+static char *rcsid = "$NetBSD: route.c,v 1.21 1997/04/03 04:46:52 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -53,6 +53,7 @@ static char *rcsid = "$NetBSD: route.c,v 1.20 1997/03/26 01:51:27 thorpej Exp $"
 #include <net/route.h>
 #undef _KERNEL
 #include <netinet/in.h>
+#include <netatalk/at.h>
 
 #include <netns/ns.h>
 
@@ -105,13 +106,16 @@ int	NewTree = 0;
 
 static struct sockaddr *kgetsa __P((struct sockaddr *));
 static void p_tree __P((struct radix_node *));
-static void p_rtnode __P(());
-static void ntreestuff __P(());
+static void p_rtnode __P((void));
+static void ntreestuff __P((void));
 static void np_rtentry __P((struct rt_msghdr *));
 static void p_sockaddr __P((const struct sockaddr *,
 			    const struct sockaddr *, int, int));
 static void p_flags __P((int, char *));
 static void p_rtentry __P((struct rtentry *));
+static void ntreestuff __P((void));
+static u_long forgemask __P((u_long));
+static void domask __P((char *, u_long, u_long));
 
 /*
  * Print routing tables.
@@ -172,6 +176,9 @@ pr_family(af)
 	case AF_ISO:
 		afname = "ISO";
 		break;
+	case AF_APPLETALK:
+		afname = "AppleTalk";
+		break;
 	case AF_CCITT:
 		afname = "X.25";
 		break;
@@ -224,7 +231,7 @@ again:
 	kget(rn, rnode);
 	if (rnode.rn_b < 0) {
 		if (Aflag)
-			printf("%-8.8x ", rn);
+			printf("%-8.8lx ", (u_long) rn);
 		if (rnode.rn_flags & RNF_ROOT) {
 			if (Aflag)
 				printf("(root node)%s",
@@ -239,11 +246,11 @@ again:
 			    NULL, 0, 44);
 			putchar('\n');
 		}
-		if (rn = rnode.rn_dupedkey)
+		if ((rn = rnode.rn_dupedkey) != NULL)
 			goto again;
 	} else {
 		if (Aflag && do_rtent) {
-			printf("%-8.8x ", rn);
+			printf("%-8.8lx ", (u_long) rn);
 			p_rtnode();
 		}
 		rn = rnode.rn_r;
@@ -268,13 +275,14 @@ p_rtnode()
 			return;
 	} else {
 		sprintf(nbuf, "(%d)", rnode.rn_b);
-		printf("%6.6s %8.8x : %8.8x", nbuf, rnode.rn_l, rnode.rn_r);
+		printf("%6.6s %8.8lx : %8.8lx", nbuf, (u_long) rnode.rn_l,
+		    (u_long) rnode.rn_r);
 	}
 	while (rm) {
 		kget(rm, rmask);
 		sprintf(nbuf, " %d refs, ", rmask.rm_refs);
-		printf(" mk = %8.8x {(%d),%s",
-			rm, -1 - rmask.rm_b, rmask.rm_refs ? nbuf : " ");
+		printf(" mk = %8.8lx {(%d),%s", (u_long) rm,
+		    -1 - rmask.rm_b, rmask.rm_refs ? nbuf : " ");
 		if (rmask.rm_flags & RNF_NORMAL) {
 			struct radix_node rnode_aux;
 			printf(" <normal>, ");
@@ -285,7 +293,7 @@ p_rtnode()
 		    p_sockaddr(kgetsa((struct sockaddr *)rmask.rm_mask),
 				NULL, 0, -1);
 		putchar('}');
-		if (rm = rmask.rm_mklist)
+		if ((rm = rmask.rm_mklist) != NULL)
 			printf(" ->");
 	}
 	putchar('\n');
@@ -385,6 +393,15 @@ p_sockaddr(sa, mask, flags, width)
 		break;
 	    }
 
+	case AF_APPLETALK:
+	case 0:
+	    {
+		if (!(flags & RTF_HOST) && mask)
+			cp = atalk_print2(sa,mask,11);
+		else
+			cp = atalk_print(sa,11);
+		break;
+	    }
 	case AF_NS:
 		cp = ns_print((struct sockaddr *)sa);
 		break;
@@ -464,7 +481,6 @@ p_rtentry(rt)
 	register struct rtentry *rt;
 {
 	static struct ifnet ifnet, *lastif;
-	static char name[16];
 	struct sockaddr *sa, addr, mask;
 
 	if (!(sa = kgetsa(rt_key(rt))))
@@ -478,9 +494,9 @@ p_rtentry(rt)
 	p_sockaddr(&addr, &mask, rt->rt_flags, WID_DST);
 	p_sockaddr(kgetsa(rt->rt_gateway), NULL, RTF_HOST, WID_GW);
 	p_flags(rt->rt_flags, "%-6.6s ");
-	printf("%6d %8d ", rt->rt_refcnt, rt->rt_use);
+	printf("%6d %8ld ", rt->rt_refcnt, rt->rt_use);
 	if (rt->rt_rmx.rmx_mtu)
-		printf("%6d ", rt->rt_rmx.rmx_mtu);
+		printf("%6ld ", rt->rt_rmx.rmx_mtu);
 	else
 		printf("%6s ", "-");
 	if (rt->rt_ifp) {
