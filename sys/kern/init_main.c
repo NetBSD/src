@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.226 2003/11/04 10:33:15 dsl Exp $	*/
+/*	$NetBSD: init_main.c,v 1.227 2003/11/14 07:13:25 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.226 2003/11/04 10:33:15 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.227 2003/11/14 07:13:25 jonathan Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfsserver.h"
@@ -114,6 +114,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.226 2003/11/04 10:33:15 dsl Exp $");
 #include <sys/user.h>
 #include <sys/sysctl.h>
 #include <sys/event.h>
+#include <sys/mbuf.h>
 #ifdef	FAST_IPSEC
 #include <netipsec/ipsec.h>
 #endif
@@ -133,7 +134,6 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.226 2003/11/04 10:33:15 dsl Exp $");
 #include <sys/systrace.h>
 #endif
 #include <sys/domain.h>
-#include <sys/mbuf.h>
 #include <sys/namei.h>
 #if NOPENCRYPTO > 0
 #include <opencrypto/cryptodev.h>	/* XXX really  the framework */
