@@ -31,29 +31,27 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)tty_pty.c	7.21 (Berkeley) 5/30/91
- *	$Id: tty_pty.c,v 1.12.2.5 1993/11/12 16:10:48 cgd Exp $
+ *	$Id: tty_pty.c,v 1.12.2.6 1993/11/14 21:18:04 mycroft Exp $
  */
 
 /*
  * Pseudo-teletype Driver
  * (Actually two drivers, requiring two entries in 'cdevsw')
  */
-#include "pty.h"
 
-#if NPTY > 0
-#include "param.h"
-#include "systm.h"
-#include "ioctl.h"
-#include "select.h"
-#include "tty.h"
-#include "conf.h"
-#include "file.h"
-#include "proc.h"
-#include "uio.h"
-#include "kernel.h"
-#include "vnode.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/ioctl.h>
+#include <sys/select.h>
+#include <sys/tty.h>
+#include <sys/conf.h>
+#include <sys/file.h>
+#include <sys/proc.h>
+#include <sys/uio.h>
+#include <sys/kernel.h>
+#include <sys/vnode.h>
 
-#include "machine/cpu.h"
+#include <machine/cpu.h>
 
 #if NPTY == 1
 #undef NPTY
@@ -724,4 +722,3 @@ ptyioctl(dev, cmd, data, flag)
 	}
 	return (error);
 }
-#endif

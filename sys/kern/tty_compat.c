@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)tty_compat.c	7.10 (Berkeley) 5/9/91
- *	$Id: tty_compat.c,v 1.6.4.1 1993/10/18 06:46:50 deraadt Exp $
+ *	$Id: tty_compat.c,v 1.6.4.2 1993/11/14 21:18:01 mycroft Exp $
  */
 
 /* 
@@ -39,17 +39,17 @@
  */
 #if defined(COMPAT_43) || defined(COMPAT_SUNOS)
 
-#include "param.h"
-#include "systm.h"
-#include "ioctl.h"
-#include "tty.h"
-#include "termios.h"
-#include "proc.h"
-#include "file.h"
-#include "conf.h"
-#include "dkstat.h"
-#include "kernel.h"
-#include "syslog.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/ioctl.h>
+#include <sys/tty.h>
+#include <sys/termios.h>
+#include <sys/proc.h>
+#include <sys/file.h>
+#include <sys/conf.h>
+#include <sys/dkstat.h>
+#include <sys/kernel.h>
+#include <sys/syslog.h>
 
 int ttydebug = 0;
 

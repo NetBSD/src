@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)tty_tb.c	7.7 (Berkeley) 5/9/91
- *	$Id: tty_tb.c,v 1.3.4.1 1993/11/03 13:47:17 mycroft Exp $
+ *	$Id: tty_tb.c,v 1.3.4.2 1993/11/14 21:18:07 mycroft Exp $
  */
 
 #include "tb.h"
@@ -41,13 +41,10 @@
  * supplies binary coordinate data.
  */
 
-#include "param.h"
-#include "ioctl.h"
-#include "tablet.h"
-#include "tty.h"
-
-/*XXX*/
-#define t_sc T_LINEP
+#include <sys/param.h>
+#include <sys/ioctl.h>
+#include <sys/tablet.h>
+#include <sys/tty.h>
 
 /*
  * Tablet configuration table.
