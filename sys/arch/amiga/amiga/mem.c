@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.19 1998/05/07 21:01:41 kleink Exp $	*/
+/*	$NetBSD: mem.c,v 1.20 1998/07/10 20:24:34 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,6 +44,8 @@
  * Memory special file
  */
 
+#include "opt_uvm.h"
+
 #include <sys/param.h>
 #include <sys/conf.h>
 #include <sys/buf.h>
@@ -55,6 +57,9 @@
 #include <machine/cpu.h>
 
 #include <vm/vm.h>
+#if defined(UVM)
+#include <uvm/uvm_extern.h>
+#endif  
 
 extern int kernel_reload_write(struct uio *uio);
 extern u_int lowram;
@@ -147,9 +152,15 @@ mmrw(dev, uio, flags)
 		case 1:
 			v = uio->uio_offset;
 			c = min(iov->iov_len, MAXPHYS);
+#if defined(UVM)
+			if (!uvm_kernacc((caddr_t)v, c,
+			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
+				return (EFAULT);
+#else
 			if (!kernacc((caddr_t)v, c,
 			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
 				return (EFAULT);
+#endif
 			if (v < NBPG) {
 #ifdef DEBUG
 				/*
