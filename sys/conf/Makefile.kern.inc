@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.46 2003/11/20 07:08:02 lukem Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.47 2003/11/25 07:47:29 pk Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -168,9 +168,9 @@ ${_cfile:T:R}.o: ${_cfile}
 SYSTEM_OBJ?=	${MD_OBJS} ${MI_OBJS} ${OBJS} ${LIBCOMPAT} ${LIBKERN}
 SYSTEM_DEP?=	Makefile ${SYSTEM_OBJ} .gdbinit
 SYSTEM_LD_HEAD?=@rm -f $@
-SYSTEM_LD?=	${_MKSHMSG} "   link  ${.TARGET}"; \
+SYSTEM_LD?=	@${_MKSHMSG} "   link  ${.TARGET}"; \
 		${_MKSHECHO}\
-		${LD} ${LINKFLAGS} -o $@ ${SYSTEM_OBJ} ${EXTRA_OBJ} vers.o; \
+		${LD} ${LINKFLAGS} -o $@ '$${SYSTEM_OBJ}' '$${EXTRA_OBJ}' vers.o; \
 		${LD} ${LINKFLAGS} -o $@ ${SYSTEM_OBJ} ${EXTRA_OBJ} vers.o
 SYSTEM_LD_TAIL?=@${SIZE} $@; chmod 755 $@
 
