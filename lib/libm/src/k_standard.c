@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: k_standard.c,v 1.8 1999/07/02 15:37:41 simonb Exp $");
+__RCSID("$NetBSD: k_standard.c,v 1.9 2001/05/22 08:31:27 aymeric Exp $");
 #endif
 
 #include "math.h"
@@ -97,7 +97,7 @@ static double zero = 0.0;	/* used as const */
 	SET_HIGH_WORD(inf,0x7ff00000);	/* set inf to infinite */
 #endif
 
-#ifdef _USE_WRITE
+#ifndef _USE_WRITE
 	(void) fflush(stdout);
 #endif
 	exc.arg1 = x;
