@@ -1,4 +1,4 @@
-/*	$NetBSD: clri.c,v 1.17 2004/03/21 19:35:23 dsl Exp $	*/
+/*	$NetBSD: clri.c,v 1.18 2004/03/27 12:53:53 dsl Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)clri.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: clri.c,v 1.17 2004/03/21 19:35:23 dsl Exp $");
+__RCSID("$NetBSD: clri.c,v 1.18 2004/03/27 12:53:53 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -125,7 +125,7 @@ main(argc, argv)
 		}
 
 		/* check we haven't found an alternate */
-		if (sbp->fs_old_flags & FS_FLAGS_UPDATED) {
+		if (is_ufs2 || sbp->fs_old_flags & FS_FLAGS_UPDATED) {
 			if (sblockloc != ufs_rw64(sbp->fs_sblockloc, needswap))
 				continue;
 		} else {
