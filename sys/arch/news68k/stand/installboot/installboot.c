@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.2 2000/12/03 03:35:40 tsutsui Exp $ */
+/*	$NetBSD: installboot.c,v 1.3 2001/01/23 11:30:54 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,14 +36,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifdef __ELF__
-#define	BOOT_ELF
-#undef	BOOT_AOUT
-#else
-#define	BOOT_AOUT
-#undef	BOOT_ELF
-#endif
-
 #include <sys/param.h>
 #include <sys/mount.h>
 #include <sys/time.h>
@@ -62,14 +54,13 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "loadfile.h"
+
 int	verbose, nowrite;
 char	*boot, *proto, *dev;
 
 #define BOOTSECTOR_OFFSET 512
-
-#ifndef DEFAULT_ENTRY
-#define DEFAULT_ENTRY 0x3e0000
-#endif
+#define LABELOFFSET 64
 
 #if 0
 #ifdef __ELF__
@@ -97,15 +88,14 @@ struct nlist nl[] = {
 daddr_t	*block_table;		/* block number array in prototype image */
 int32_t	*block_count_p;		/* size of this array */
 int32_t	*block_size_p;		/* filesystem block size */
-int32_t	*entry_point_p;		/* entry point */
+int32_t	*entry_point_p;		/* entry_point */
 int32_t	max_block_count;
 
-char		*loadprotoblocks __P((char *, long *));
+char		*loadprotoblocks __P((char *, size_t *));
 int		loadblocknums __P((char *, int));
 static void	devread __P((int, void *, daddr_t, size_t, char *));
 static void	usage __P((void));
 int 		main __P((int, char *[]));
-
 
 static void
 usage()
@@ -123,9 +113,9 @@ main(argc, argv)
 	int	c;
 	int	devfd;
 	char	*protostore;
-	long	protosize;
+	size_t	protosize;
 	size_t	size;
-	int boot00[512/4];
+	u_int32_t boot00[BOOTSECTOR_OFFSET / sizeof(u_int32_t)];
 
 	while ((c = getopt(argc, argv, "vn")) != EOF) {
 		switch (c) {
@@ -196,7 +186,7 @@ main(argc, argv)
 	if (read(devfd, boot00, sizeof(boot00)) != sizeof(boot00))
 		err(1, "read boot00");
 
-	bzero(boot00, 64);
+	bzero(boot00, LABELOFFSET);
 	boot00[0] = 0x600001fe;	/* jra +0x200 */
 	boot00[2] = 0x0;
 	if (lseek(devfd, 0, SEEK_SET) != 0)
@@ -211,26 +201,17 @@ main(argc, argv)
 char *
 loadprotoblocks(fname, size)
 	char *fname;
-	long *size;
+	size_t *size;
 {
 	int	fd, sz;
-	char	*bp, *p;
-	struct	stat statbuf;
-#ifdef BOOT_AOUT
-	struct	exec *hp;
-#endif
-	long	off;
-#ifdef BOOT_ELF
-	Elf32_Ehdr *eh;
-	Elf32_Phdr *ph;
-#endif
+	u_long	ap, bp, st;
+	u_long	marks[MARK_MAX];
 
 	/* Locate block number array in proto file */
 	if (nlist(fname, nl) != 0) {
 		warnx("nlist: %s: symbols not found", fname);
 		return NULL;
 	}
-#ifdef BOOT_AOUT
 	if (nl[X_BLOCKTABLE].n_type != N_DATA + N_EXT) {
 		warnx("nlist: %s: wrong type", nl[X_BLOCKTABLE].n_un.n_name);
 		return NULL;
@@ -243,88 +224,61 @@ loadprotoblocks(fname, size)
 		warnx("nlist: %s: wrong type", nl[X_BLOCKSIZE].n_un.n_name);
 		return NULL;
 	}
-#endif
+	if (nl[X_ENTRY_POINT].n_type != N_DATA + N_EXT) {
+		warnx("nlist: %s: wrong type", nl[X_ENTRY_POINT].n_un.n_name);
+		return NULL;
+	}
 
-	if ((fd = open(fname, O_RDONLY)) < 0) {
-		warn("open: %s", fname);
+	marks[MARK_START] = 0;
+	if ((fd = loadfile(fname, marks, COUNT_TEXT|COUNT_DATA)) == -1)
 		return NULL;
-	}
-	if (fstat(fd, &statbuf) != 0) {
-		warn("fstat: %s", fname);
-		close(fd);
-		return NULL;
-	}
-	if ((bp = calloc(roundup(statbuf.st_size, DEV_BSIZE), 1)) == NULL) {
-		warnx("malloc: %s: no memory", fname);
-		close(fd);
-		return NULL;
-	}
-	if (read(fd, bp, statbuf.st_size) != statbuf.st_size) {
-		warn("read: %s", fname);
-		free(bp);
-		close(fd);
-		return NULL;
-	}
-	close(fd);
+	(void)close(fd);
 
-#ifdef BOOT_AOUT
-	hp = (struct exec *)bp;
-	sz = hp->a_text + hp->a_data;
+	sz = (marks[MARK_END] - marks[MARK_START]);
 	sz = roundup(sz, DEV_BSIZE);
-#endif
-#ifdef BOOT_ELF
-	eh = (Elf32_Ehdr *)bp;
-	ph = (Elf32_Phdr *)(bp + eh->e_phoff);
-	sz = 1024*7;
+	st = marks[MARK_START];
 
-	/* Find first executable psect */
-	while ((ph->p_flags & PF_X) == 0) {
-		ph++;		/* XXX check overrun (eh->e_phnum) */
-		eh->e_phnum--;
-		if (eh->e_phnum == 0) {
-			warn("%s: no executable psect", fname);
-			return NULL;
-		}
+	if ((ap = (u_long)malloc(sz)) == NULL) {
+		warn("malloc: %s", "");
+		return NULL;
 	}
-#endif
 
-	/* Calculate the symbols' location within the proto file */
-#ifdef BOOT_AOUT
-	off = N_DATOFF(*hp) - N_DATADDR(*hp) - (hp->a_entry - N_TXTADDR(*hp));
-#endif
-#ifdef BOOT_ELF
-	off = ph->p_offset - eh->e_entry;
-#endif
-	block_table = (daddr_t *)(bp + nl[X_BLOCKTABLE].n_value + off);
-	block_count_p = (int32_t *)(bp + nl[X_BLOCKCOUNT].n_value + off);
-	block_size_p = (int32_t *)(bp + nl[X_BLOCKSIZE].n_value + off);
-	entry_point_p = (int32_t *)(bp + nl[X_ENTRY_POINT].n_value + off);
+	bp = ap;
+	marks[MARK_START] = bp - st;
+	if ((fd = loadfile(fname, marks, LOAD_TEXT|LOAD_DATA)) == -1)
+		return NULL;
+	(void)close(fd);
+
+	block_table = (daddr_t *)(bp + nl[X_BLOCKTABLE].n_value - st);
+	block_count_p = (int32_t *)(bp + nl[X_BLOCKCOUNT].n_value - st);
+	block_size_p = (int32_t *)(bp + nl[X_BLOCKSIZE].n_value - st);
+	entry_point_p = (int32_t *)(bp + nl[X_ENTRY_POINT].n_value - st);
 
 	if ((int)block_table & 3) {
 		warn("%s: invalid address: block_table = %x",
 		     fname, block_table);
-		free(bp);
+		free((void *)bp);
 		close(fd);
 		return NULL;
 	}
 	if ((int)block_count_p & 3) {
 		warn("%s: invalid address: block_count_p = %x",
 		     fname, block_count_p);
-		free(bp);
+		free((void *)bp);
 		close(fd);
 		return NULL;
 	}
 	if ((int)block_size_p & 3) {
 		warn("%s: invalid address: block_size_p = %x",
 		     fname, block_size_p);
-		free(bp);
+		free((void *)bp);
 		close(fd);
 		return NULL;
 	}
 	if ((int)entry_point_p & 3) {
 		warn("%s: invalid address: entry_point_p = %x",
 		     fname, entry_point_p);
-		free(bp);
+		free((void *)bp);
 		close(fd);
 		return NULL;
 	}
@@ -335,13 +289,8 @@ loadprotoblocks(fname, size)
 	}
 
 	*size = sz;
-#ifdef BOOT_AOUT
-	p = bp + sizeof(struct exec) + 0x200;	/* XXX 0x200 */
-#endif
-#ifdef BOOT_ELF
-	p = bp + ph->p_offset + 0x200;		/* XXX 0x200 */
-#endif
-	return p;
+	ap += BOOTSECTOR_OFFSET; /* XXX */
+	return (char *)ap;
 }
 
 static void
@@ -422,17 +371,13 @@ int	devfd;
 	if (ndb > max_block_count)
 		errx(1, "%s: Too many blocks", boot);
 
+	if (verbose)
+		printf("entry point: 0x%08x\n", *entry_point_p);
+
 	/*
 	 * Register block count.
 	 */
 	*block_count_p = ndb;
-
-	/*
-	 * Register entry point.
-	 */
-	*entry_point_p = DEFAULT_ENTRY;
-	if (verbose)
-		printf("entry point: 0x%08x\n", *entry_point_p);
 
 	if (verbose)
 		printf("%s: block numbers: ", boot);
