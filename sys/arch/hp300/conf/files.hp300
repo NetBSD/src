@@ -1,4 +1,4 @@
-#	$NetBSD: files.hp300,v 1.38 1998/12/15 19:37:01 itohy Exp $
+#	$NetBSD: files.hp300,v 1.39 1999/04/19 21:22:58 kleink Exp $
 #
 # hp300-specific configuration info
 
@@ -213,6 +213,9 @@ major	{vnd = 6}
 include "compat/hpux/files.hpux"
 file	arch/hp300/hp300/hpux_machdep.c		compat_hpux
 
+# SVR4 Binary Compatibility (COMPAT_SVR4)
+include	"compat/svr4/files.svr4"
+
 # SunOS Binary Compatibility (COMPAT_SUNOS)
 include	"compat/sunos/files.sunos"
 file	arch/m68k/m68k/sunos_machdep.c	compat_sunos
@@ -220,6 +223,9 @@ file	arch/m68k/m68k/sunos_machdep.c	compat_sunos
 # Linux binary compatibility (COMPAT_LINUX)
 include "compat/linux/files.linux"
 include "compat/linux/arch/m68k/files.linux_m68k"
+
+# a.out binary compatibility (COMPAT_AOUT)
+include "compat/aout/files.aout"
 
 # OSS audio driver compatibility
 include "compat/ossaudio/files.ossaudio"
