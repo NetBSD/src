@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.62 2000/04/14 06:11:11 simonb Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.63 2000/04/24 17:40:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.62 2000/04/14 06:11:11 simonb Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.63 2000/04/24 17:40:31 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -550,6 +550,7 @@ dosum()
 	(void)printf("%9u pages inactive\n", uvmexp.inactive);
 	(void)printf("%9u pages paging\n", uvmexp.paging);
 	(void)printf("%9u pages wired\n", uvmexp.wired);
+	(void)printf("%9u zero pages\n", uvmexp.zeropages);
 	(void)printf("%9u reserve pagedaemon pages\n",
 	    uvmexp.reserve_pagedaemon);
 	(void)printf("%9u reserve kernel pages\n", uvmexp.reserve_kernel);
@@ -582,6 +583,10 @@ dosum()
 	(void)printf("%9u forks blocked parent\n", uvmexp.forks_ppwait);
 	(void)printf("%9u forks shared address space with parent\n",
 	    uvmexp.forks_sharevm);
+	(void)printf("%9u pagealloc zero wanted and avail\n",
+	    uvmexp.pga_zerohit);
+	(void)printf("%9u pagealloc zero wanted and not avail\n",
+	    uvmexp.pga_zeromiss);
 
 	(void)printf("%9u faults with no memory\n", uvmexp.fltnoram);
 	(void)printf("%9u faults with no anons\n", uvmexp.fltnoanon);
