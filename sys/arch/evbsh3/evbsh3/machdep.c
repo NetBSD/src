@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.7 2000/01/19 20:05:34 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.8 2000/02/24 19:42:36 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -520,7 +520,7 @@ dumpsys()
 /*
  * Initialize segments and descriptor tables
  */
-#define VBRINIT		((char *)0x8c000000)
+#define VBRINIT		((char *)IOM_RAM_BEGIN)
 #define Trap100Vec	(VBRINIT + 0x100)
 #define Trap600Vec	(VBRINIT + 0x600)
 #define TLBVECTOR	(VBRINIT + 0x400)
@@ -986,6 +986,10 @@ sh3_cache_on(void)
 }
 
 #include <machine/mmeye.h>
+
+ /* XXX This value depends on physical available memory */
+#define OSIMAGE_BUF_ADDR	(IOM_RAM_BEGIN + 0x00400000)
+
 void
 LoadAndReset(osimage)
 	char *osimage;
@@ -997,9 +1001,6 @@ LoadAndReset(osimage)
 	u_long csum = 0;
 	u_long csum2 = 0;
 	u_long size2;
-#define OSIMAGE_BUF_ADDR 0x8c400000 /* !!!!!! This value depends on physical
-				       available memory */
-
 
 	printf("LoadAndReset: copy start\n");
 	buf_addr = (void *)OSIMAGE_BUF_ADDR;

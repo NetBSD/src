@@ -1,4 +1,4 @@
-/*	$NetBSD: md_root.c,v 1.1 1999/09/13 10:31:29 itojun Exp $	*/
+/*	$NetBSD: md_root.c,v 1.2 2000/02/24 19:42:35 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -34,6 +34,7 @@
 #include <dev/md.h>
 
 #include "opt_mdsize.h"
+#include "opt_memsize.h"
 
 extern int boothowto;
 
@@ -49,7 +50,7 @@ extern int boothowto;
  */
 u_int32_t md_root_size = ROOTBYTES;
 #ifdef NEVER
-#define	MD_ROOT_IMAGE	0x8ce00000	/* RAM DISK image area */
+#define	MD_ROOT_IMAGE	(IOM_RAM_BEGIN +0x00e00000) /* RAM DISK image area */
 #else
 char md_root_image[ROOTBYTES] = "|This is the root ramdisk!\n";
 #endif

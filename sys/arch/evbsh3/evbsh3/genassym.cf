@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.3 1999/09/16 21:23:40 msaitoh Exp $
+#	$NetBSD: genassym.cf,v 1.4 2000/02/24 19:42:36 msaitoh Exp $
 
 #
 # Copyright (c) 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -39,6 +39,9 @@
 #	@(#)genassym.c	5.11 (Berkeley) 5/10/91
 #
 
+include "opt_memsize.h"
+include "opt_led_addr.h"
+
 include <sys/param.h>
 include <sys/proc.h>
 include <sys/resourcevar.h>
@@ -54,9 +57,6 @@ include <machine/sh3.h>
 include <machine/trap.h>
 include <machine/pmap.h>
 include <machine/vmparam.h>
-
-include "opt_memsize.h"
-include "opt_led_addr.h"
 
 define	SRUN			SRUN
 
@@ -100,10 +100,6 @@ define	SIGF_SC			offsetof(struct sigframe, sf_sc)
 define	SC_EFLAGS		offsetof(struct sigcontext, sc_ssr)
 
 define	IOM_RAM_BEGIN		IOM_RAM_BEGIN
-define	IOM_RAM_END		(unsigned int)IOM_RAM_BEGIN + IOM_RAM_SIZE - 1
-define	IOM_RAM_SIZE		IOM_RAM_SIZE
 define	IOM_ROM_BEGIN		IOM_ROM_BEGIN
-define	IOM_ROM_END		(unsigned int)IOM_ROM_BEGIN + IOM_ROM_SIZE - 1
-define	IOM_ROM_SIZE		IOM_ROM_SIZE
 
 define	LED_ADDR		LED_ADDR
