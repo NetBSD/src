@@ -50,8 +50,8 @@ if [ x$alias_subnet_mask != x ]; then
 fi
 
 if [ x$reason = xMEDIUM ]; then
-  ifconfig $interface $medium
-  ifconfig $interface inet -alias 0.0.0.0 $medium >/dev/null 2>&1
+  eval "ifconfig $interface $medium"
+  eval "ifconfig $interface inet -alias 0.0.0.0 $medium" >/dev/null 2>&1
   sleep 1
   exit_with_hooks 0
 fi
@@ -88,7 +88,7 @@ if [ x$reason = xBOUND ] || [ x$reason = xRENEW ] || \
   fi
   if [ x$old_ip_address != x ] && [ x$old_ip_address != x$new_ip_address ]
    then
-    ifconfig $interface inet -alias $old_ip_address $medium
+    eval "ifconfig $interface inet -alias $old_ip_address $medium"
     route delete $old_ip_address 127.1 >/dev/null 2>&1
     for router in $old_routers; do
       route delete default $router >/dev/null 2>&1
@@ -104,8 +104,8 @@ if [ x$reason = xBOUND ] || [ x$reason = xRENEW ] || \
   fi
   if [ x$old_ip_address = x ] || [ x$old_ip_address != x$new_ip_address ] || \
      [ x$reason = xBOUND ] || [ x$reason = xREBOOT ]; then
-    ifconfig $interface inet $new_ip_address $new_netmask_arg \
-					$new_broadcast_arg $medium
+    eval "ifconfig $interface inet $new_ip_address $new_netmask_arg \
+					$new_broadcast_arg $medium"
     route add $new_ip_address 127.1 >/dev/null 2>&1
     for router in $new_routers; do
       route add default $router >/dev/null 2>&1
@@ -133,7 +133,7 @@ if [ x$reason = xEXPIRE ] || [ x$reason = xFAIL ]; then
     route delete $alias_ip_address 127.0.0.1 > /dev/null 2>&1
   fi
   if [ x$old_ip_address != x ]; then
-    ifconfig $interface inet -alias $old_ip_address $medium
+    eval "ifconfig $interface inet -alias $old_ip_address $medium"
     route delete $old_ip_address 127.1 >/dev/null 2>&1
     for router in $old_routers; do
       route delete default $router >/dev/null 2>&1
@@ -160,8 +160,8 @@ if [ x$reason = xTIMEOUT ]; then
     ifconfig $interface inet -alias $alias_ip_address > /dev/null 2>&1
     route delete $alias_ip_address 127.0.0.1 > /dev/null 2>&1
   fi
-  ifconfig $interface inet $new_ip_address $new_netmask_arg \
-					$new_broadcast_arg $medium
+  eval "ifconfig $interface inet $new_ip_address $new_netmask_arg \
+					$new_broadcast_arg $medium"
   sleep 1
   if [ "$new_routers" != "" ]; then
     set $new_routers
@@ -184,7 +184,7 @@ if [ x$reason = xTIMEOUT ]; then
       exit_with_hooks 0
     fi
   fi
-  ifconfig $interface inet -alias $new_ip_address $medium
+  eval "ifconfig $interface inet -alias $new_ip_address $medium"
   for router in $old_routers; do
     route delete default $router >/dev/null 2>&1
   done
