@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: machdep.c 1.63 91/04/24
  *	from: @(#)machdep.c	7.16 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.22 1994/01/08 12:25:25 cgd Exp $
+ *	$Id: machdep.c,v 1.23 1994/01/08 16:07:42 mycroft Exp $
  */
 
 #include "param.h"
@@ -1553,7 +1553,7 @@ cpu_exec_aout_prep_oldzmagic(p, epp)
 
 	/* set up command for bss segment */
 	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, execp->a_bss,
-	    epp->ep_daddr + execp->a_data, 0, 0,
+	    epp->ep_daddr + execp->a_data, NULLVP, 0,
 	    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
 	return exec_aout_setup_stack(p, epp);
