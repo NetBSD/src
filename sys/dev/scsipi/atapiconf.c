@@ -1,4 +1,4 @@
-/*	$NetBSD: atapiconf.c,v 1.31 2000/02/28 09:46:25 jdolecek Exp $	*/
+/*	$NetBSD: atapiconf.c,v 1.32 2000/03/17 11:23:23 soren Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -61,8 +61,6 @@ int	atapibussubmatch __P((struct device *, struct cfdata *, void *));
 void	atapibusattach __P((struct device *, struct device *, void *));
 int	atapibusactivate __P((struct device *, enum devact));
 int	atapibusdetach __P((struct device *, int flags));
-
-int	atapiprint __P((void *, const char *));
 
 int	atapi_probe_bus __P((int, int));
 void	atapi_probedev __P((struct atapibus_softc *, int ));
