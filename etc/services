@@ -1,4 +1,4 @@
-#	$NetBSD: services,v 1.74 2004/04/15 16:42:15 jwise Exp $
+#	$NetBSD: services,v 1.75 2004/04/15 18:29:39 jwise Exp $
 #
 # Network services, Internet style
 #
@@ -180,8 +180,6 @@ https		443/tcp			# http protocol over TLS/SSL
 https		443/udp			# http protocol over TLS/SSL
 nntps		563/tcp			# nntp protocol over TLS/SSL (was snntp)
 nntps		563/udp			# nntp protocol over TLS/SSL (was snntp)
-submission      587/tcp			# Submission
-submission      587/udp			# Submission
 ldaps		636/tcp			# ldap protocol over TLS/SSL (was sldap)
 ldaps		636/udp			# ldap protocol over TLS/SSL (was sldap)
 ftps-data	989/tcp			# ftp protocol, data, over TLS/SSL
