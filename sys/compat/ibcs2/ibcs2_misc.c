@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.38 1998/08/09 20:37:54 perry Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.39 1998/09/08 20:02:51 rvb Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -373,6 +373,8 @@ ibcs2_sys_getdents(p, v, retval)
 	if ((fp->f_flag & FREAD) == 0)
 		return (EBADF);
 	vp = (struct vnode *)fp->f_data;
+	if (vp->v_type != VDIR)
+		return (EINVAL);
 	buflen = min(MAXBSIZE, SCARG(uap, nbytes));
 	buf = malloc(buflen, M_TEMP, M_WAITOK);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
