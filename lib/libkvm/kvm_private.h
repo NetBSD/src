@@ -55,7 +55,7 @@ struct __kvm {
 	struct kinfo_proc *procbase;
 	int	nbpg;		/* page size */
 	char	*swapspc;	/* (dynamic) storage for swapped pages */
-	char	*argspc;	/* (dynamic) storage for argv strings */
+	char	*argspc, *argbuf; /* (dynamic) storage for argv strings */
 	int	arglen;		/* length of the above */
 	char	**argv;		/* (dynamic) storage for argv pointers */
 	int	argc;		/* length of above (not actual # present) */
