@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_var.h,v 1.9 1995/06/12 00:48:09 mycroft Exp $	*/
+/*	$NetBSD: udp_var.h,v 1.9.2.1 1996/02/02 06:13:05 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -63,7 +63,7 @@ struct	udpstat {
 	u_long	udps_noport;		/* no socket on port */
 	u_long	udps_noportbcast;	/* of above, arrived as broadcast */
 	u_long	udps_fullsock;		/* not delivered, input socket full */
-	u_long	udpps_pcbcachemiss;	/* input packets missing pcb cache */
+	u_long	udps_pcbhashmiss;	/* input packets missing pcb hash */
 				/* output statistics: */
 	u_long	udps_opackets;		/* total output packets */
 };

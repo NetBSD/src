@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.17 1995/09/30 07:02:05 thorpej Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.17.2.1 1996/02/02 06:12:58 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -521,8 +521,18 @@ tcp_usrclosed(tp)
 		tp->t_state = TCPS_LAST_ACK;
 		break;
 	}
-	if (tp && tp->t_state >= TCPS_FIN_WAIT_2)
+	if (tp && tp->t_state >= TCPS_FIN_WAIT_2) {
 		soisdisconnected(tp->t_inpcb->inp_socket);
+		/*
+		 * If we are in FIN_WAIT_2, we arrived here because the
+		 * application did a shutdown of the send side.  Like the
+		 * case of a transition from FIN_WAIT_1 to FIN_WAIT_2 after
+		 * a full close, we start a timer to make sure sockets are
+		 * not left in FIN_WAIT_2 forever.
+		 */
+		if (tp->t_state == TCPS_FIN_WAIT_2)
+			tp->t_timer[TCPT_2MSL] = tcp_maxidle;
+	}
 	return (tp);
 }
 
