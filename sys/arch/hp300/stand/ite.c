@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1988 University of Utah.
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -35,15 +35,15 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: Utah Hdr: ite.c 1.20 91/01/21
- *	from: @(#)ite.c	7.3 (Berkeley) 5/7/91
- *	$Id: ite.c,v 1.5 1994/02/19 17:55:17 hpeyerl Exp $
+ * from: Utah $Hdr: ite.c 1.24 93/06/25$
+ *
+ *	@(#)ite.c	8.1 (Berkeley) 7/8/93
  */
 
 /*
  * Standalone Internal Terminal Emulator (CRT and keyboard)
  */
-#include "samachdep.h"
+#include <hp300/stand/samachdep.h>
 
 #ifdef ITECONSOLE
 
@@ -51,36 +51,54 @@
 #include <dev/cons.h>
 #include <hp300/dev/device.h>
 #include <hp300/dev/itevar.h>
-#include <hp300/dev/grfvar.h>
+#include <hp300/dev/grfreg.h>
 
-int nodev();
+extern int nodev();
+extern u_char ite_readbyte();
+extern int ite_writeglyph();
 
-int topcat_init(), topcat_putc();
-int topcat_clear(), topcat_cursor(), topcat_scroll();
-int gatorbox_init(), gatorbox_clear();
-int gatorbox_putc(), gatorbox_cursor(), gatorbox_scroll();
-int rbox_init(), rbox_clear();
-int rbox_putc(), rbox_cursor(), rbox_scroll();
-int dvbox_init(), dvbox_clear();
-int dvbox_putc(), dvbox_cursor(), dvbox_scroll();
+extern int topcat_init(), topcat_putc();
+extern int topcat_clear(), topcat_cursor(), topcat_scroll();
+extern int gbox_init(), gbox_clear();
+extern int gbox_putc(), gbox_cursor(), gbox_scroll();
+extern int rbox_init(), rbox_clear();
+extern int rbox_putc(), rbox_cursor(), rbox_scroll();
+extern int dvbox_init(), dvbox_clear();
+extern int dvbox_putc(), dvbox_cursor(), dvbox_scroll();
+extern int hyper_init(), hyper_clear();
+extern int hyper_putc(), hyper_cursor(), hyper_scroll();
 
 struct itesw itesw[] = {
-	topcat_init,		nodev,			topcat_clear,
-	topcat_putc,		topcat_cursor,		topcat_scroll,
-
-	gatorbox_init,		nodev,			gatorbox_clear,
-	gatorbox_putc,		gatorbox_cursor,	gatorbox_scroll,
-
-	rbox_init,		nodev,			rbox_clear,
-	rbox_putc,		rbox_cursor,		rbox_scroll,
-
-	dvbox_init,		nodev,			dvbox_clear,
-	dvbox_putc,		dvbox_cursor,		dvbox_scroll,
+	GID_TOPCAT,
+	topcat_init,	nodev,		topcat_clear,	topcat_putc,
+	topcat_cursor,	topcat_scroll,	ite_readbyte,	ite_writeglyph,
+	GID_GATORBOX,
+	gbox_init,	nodev,		gbox_clear,	gbox_putc,
+	gbox_cursor,	gbox_scroll,	ite_readbyte,	ite_writeglyph,
+	GID_RENAISSANCE,
+	rbox_init,	nodev,		rbox_clear,	rbox_putc,
+	rbox_cursor,	rbox_scroll,	ite_readbyte,	ite_writeglyph,
+	GID_LRCATSEYE,
+	topcat_init,	nodev,		topcat_clear,	topcat_putc,
+	topcat_cursor,	topcat_scroll,	ite_readbyte,	ite_writeglyph,
+	GID_HRCCATSEYE,
+	topcat_init,	nodev,		topcat_clear,	topcat_putc,
+	topcat_cursor,	topcat_scroll,	ite_readbyte,	ite_writeglyph,
+	GID_HRMCATSEYE,
+	topcat_init,	nodev,		topcat_clear,	topcat_putc,
+	topcat_cursor,	topcat_scroll,	ite_readbyte,	ite_writeglyph,
+	GID_DAVINCI,
+      	dvbox_init,	nodev,		dvbox_clear,	dvbox_putc,
+	dvbox_cursor,	dvbox_scroll,	ite_readbyte,	ite_writeglyph,
+	GID_HYPERION,
+	hyper_init,	nodev,		hyper_clear,	hyper_putc,
+	hyper_cursor,	hyper_scroll,	ite_readbyte,	ite_writeglyph,
 };
+int	nitesw = sizeof(itesw) / sizeof(itesw[0]);
 
 /* these guys need to be in initialized data */
 int itecons = -1;
-struct	ite_softc ite_softc[NITE] = { 0 };
+struct  ite_softc ite_softc[NITE] = { 0 };
 
 /*
  * Locate all bitmapped displays
@@ -95,42 +113,43 @@ iteconfig()
 
 	i = 0;
 	for (hw = sc_table; hw < &sc_table[MAXCTLRS]; hw++) {
-		if (!HW_ISDEV(hw, D_BITMAP))
+	        if (!HW_ISDEV(hw, D_BITMAP))
 			continue;
 		gr = (struct grfreg *) hw->hw_kva;
 		/* XXX: redundent but safe */
 		if (badaddr((caddr_t)gr) || gr->gr_id != GRFHWID)
 			continue;
-		switch (gr->gr_id2) {
-		case GID_GATORBOX:
-			dtype = ITE_GATORBOX;
-			break;
-		case GID_TOPCAT:
-		case GID_LRCATSEYE:
-		case GID_HRCCATSEYE:
-		case GID_HRMCATSEYE:
-			dtype = ITE_TOPCAT;
-			break;
-		case GID_RENAISSANCE:
-			dtype = ITE_RENAISSANCE;
-			break;
-		case GID_DAVINCI:
-			dtype = ITE_DAVINCI;
-			break;
-		default:
+		for (dtype = 0; dtype < nitesw; dtype++)
+			if (itesw[dtype].ite_hwid == gr->gr_id2)
+				break;
+		if (dtype == nitesw)
 			continue;
-		}
 		if (i >= NITE)
 			break;
 		ip = &ite_softc[i];
+		ip->isw = &itesw[dtype];
 		ip->regbase = (caddr_t) gr;
 		fboff = (gr->gr_fbomsb << 8) | gr->gr_fbolsb;
 		ip->fbbase = (caddr_t) (*((u_char *)ip->regbase+fboff) << 16);
 		/* DIO II: FB offset is relative to select code space */
 		if (ip->regbase >= (caddr_t)DIOIIBASE)
 			ip->fbbase += (int)ip->regbase;
+		ip->fbwidth  = gr->gr_fbwidth_h << 8 | gr->gr_fbwidth_l;
+		ip->fbheight = gr->gr_fbheight_h << 8 | gr->gr_fbheight_l;
+		ip->dwidth   = gr->gr_dwidth_h << 8 | gr->gr_dwidth_l;
+		ip->dheight  = gr->gr_dheight_h << 8 | gr->gr_dheight_l;
+		/*
+		 * XXX some displays (e.g. the davinci) appear
+		 * to return a display height greater than the
+		 * returned FB height.  Guess we should go back
+		 * to getting the display dimensions from the
+		 * fontrom...
+		 */
+		if (ip->dwidth > ip->fbwidth)
+			ip->dwidth = ip->fbwidth;
+		if (ip->dheight > ip->fbheight)
+			ip->dheight = ip->fbheight;
 		ip->flags = ITE_ALIVE|ITE_CONSOLE;
-		ip->type = dtype;
 		i++;
 	}
 }
@@ -197,8 +216,8 @@ iteinit(cp)
 	ip->cursorx = 0;
 	ip->cursory = 0;
 
-	(*itesw[ip->type].ite_init)(ip);
-	(*itesw[ip->type].ite_cursor)(ip, DRAW_CURSOR);
+	(*ip->isw->ite_init)(ip);
+	(*ip->isw->ite_cursor)(ip, DRAW_CURSOR);
 
 	itecons = ite;
 	kbdinit();
@@ -208,7 +227,7 @@ iteputchar(c)
 	register int c;
 {
 	register struct ite_softc *ip = &ite_softc[itecons];
-	register struct itesw *sp = &itesw[ip->type];
+	register struct itesw *sp = ip->isw;
 
 	c &= 0x7F;
 	switch (c) {

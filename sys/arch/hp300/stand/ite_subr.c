@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1988 University of Utah.
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -35,12 +35,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: Utah Hdr: ite_subr.c 1.1 89/02/17
- *	from: @(#)ite_subr.c	7.2 (Berkeley) 12/16/90
- *	$Id: ite_subr.c,v 1.5 1994/02/19 17:55:13 hpeyerl Exp $
+ * from: Utah $Hdr: ite_subr.c 1.2 92/01/20$
+ *
+ *	@(#)ite_subr.c	8.1 (Berkeley) 6/10/93
  */
 
-#include "samachdep.h"
+#include <hp300/stand/samachdep.h>
 
 #ifdef ITECONSOLE
 
@@ -48,21 +48,13 @@
 #include <hp300/dev/itevar.h>
 #include <hp300/dev/itereg.h>
 
-ite_devinfo(ip)
+ite_fontinfo(ip)
 	struct ite_softc *ip;
 {
-	struct fontinfo *fi;
-	struct font *fd;
+	u_long fontaddr = getword(ip, getword(ip, FONTROM) + FONTADDR);
 
-	fi = (struct fontinfo *) ((*FONTROM << 8 | *(FONTROM + 2)) + REGADDR);
-	fd = (struct font *) ((fi->haddr << 8 | fi->laddr) + REGADDR);
-
-	ip->ftheight = fd->fh;
-	ip->ftwidth  = fd->fw;
-	ip->fbwidth  = ITEREGS->fbwidth_h << 8 | ITEREGS->fbwidth_l;
-	ip->fbheight = ITEREGS->fbheight_h << 8 | ITEREGS->fbheight_l;
-	ip->dwidth   = ITEREGS->dispwidth_h << 8 | ITEREGS->dispwidth_l;
-	ip->dheight  = ITEREGS->dispheight_h << 8 | ITEREGS->dispheight_l;
+	ip->ftheight = getbyte(ip, fontaddr + FONTHEIGHT);
+	ip->ftwidth  = getbyte(ip, fontaddr + FONTWIDTH);
 	ip->rows     = ip->dheight / ip->ftheight;
 	ip->cols     = ip->dwidth / ip->ftwidth;
 
@@ -72,7 +64,7 @@ ite_devinfo(ip)
 		 */
 		ip->fontx    = ip->dwidth;
 		ip->fonty    = 0;
-		ip->cpl	     = (ip->fbwidth - ip->dwidth) / ip->ftwidth;
+		ip->cpl      = (ip->fbwidth - ip->dwidth) / ip->ftwidth;
 		ip->cblankx  = ip->dwidth;
 		ip->cblanky  = ip->fonty + ((128 / ip->cpl) +1) * ip->ftheight;
 	}
@@ -82,7 +74,7 @@ ite_devinfo(ip)
 		 */
 		ip->fontx   = 0;
 		ip->fonty   = ip->dheight;
-		ip->cpl	    = ip->fbwidth / ip->ftwidth;
+		ip->cpl     = ip->fbwidth / ip->ftwidth;
 		ip->cblankx = 0;
 		ip->cblanky = ip->fonty + ((128 / ip->cpl) + 1) * ip->ftheight;
 	}
@@ -91,40 +83,61 @@ ite_devinfo(ip)
 ite_fontinit(ip)
 	register struct ite_softc *ip;
 {
-	struct fontinfo *fi;
-	struct font *fd;
-	register u_char *fbmem, *dp;
+	int bytewidth = (((ip->ftwidth - 1) / 8) + 1);
+	int glyphsize = bytewidth * ip->ftheight;
+	u_char fontbuf[500];
+	u_char *dp, *fbmem;
+	int c, i, romp;
+
+	romp = getword(ip, getword(ip, FONTROM) + FONTADDR) + FONTDATA;
+	for (c = 0; c < 128; c++) {
+		fbmem = (u_char *)
+		    (FBBASE +
+		     (ip->fonty + (c / ip->cpl) * ip->ftheight) * ip->fbwidth +
+		     (ip->fontx + (c % ip->cpl) * ip->ftwidth));
+		dp = fontbuf;
+		for (i = 0; i < glyphsize; i++) {
+			*dp++ = getbyte(ip, romp);
+			romp += 2;
+		}
+		writeglyph(ip, fbmem, fontbuf);
+	}
+}
+
+/*
+ * Display independent versions of the readbyte and writeglyph routines.
+ */
+u_char
+ite_readbyte(ip, disp)
+	struct ite_softc *ip;
+	int disp;
+{
+	return((u_char) *(((u_char *)ip->regbase) + disp));
+}
+
+ite_writeglyph(ip, fbmem, glyphp)
+	register struct ite_softc *ip;
+	register u_char *fbmem, *glyphp;
+{
 	register int bn;
 	int c, l, b;
 
-	fi = (struct fontinfo *) ((*FONTROM << 8 | *(FONTROM + 2)) + REGADDR);
-	fd = (struct font *) ((fi->haddr << 8 | fi->laddr) + REGADDR);
-
-	dp = fd->data;
-
-	for (c = 0; c < 128; c++) {
-		fbmem = (u_char *) FBBASE +
-			(ip->fonty + (c / ip->cpl) * ip->ftheight) *
-			ip->fbwidth;
-		fbmem += ip->fontx + (c % ip->cpl) * ip->ftwidth;
-		for (l = 0; l < ip->ftheight; l++) {
-			bn = 7;
-			for (b = 0; b < ip->ftwidth; b++) {
-				if ((1 << bn) & *dp)
-					*fbmem++ = 1;
-				else
-					*fbmem++ = 0;
-				if (--bn < 0) {
-					bn = 7;
-					dp += 2;
-				}
+	for (l = 0; l < ip->ftheight; l++) {
+		bn = 7;
+		for (b = 0; b < ip->ftwidth; b++) {
+			if ((1 << bn) & *glyphp)
+				*fbmem++ = 1;
+			else
+				*fbmem++ = 0;
+			if (--bn < 0) {
+				bn = 7;
+				glyphp++;
 			}
-			if (bn < 7)
-				dp += 2;
-			fbmem -= ip->ftwidth;
-			fbmem += ip->fbwidth;
 		}
+		if (bn < 7)
+			glyphp++;
+		fbmem -= ip->ftwidth;
+		fbmem += ip->fbwidth;
 	}
-
 }
 #endif

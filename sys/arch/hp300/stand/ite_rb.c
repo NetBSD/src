@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1988 University of Utah.
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -35,19 +35,19 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: Utah Hdr: ite_rb.c 1.5 89/02/20
- *	from: @(#)ite_rb.c	7.2 (Berkeley) 12/16/90
- *	$Id: ite_rb.c,v 1.5 1994/02/19 17:55:15 hpeyerl Exp $
+ * from: Utah $Hdr: ite_rb.c 1.6 92/01/20$
+ *
+ *	@(#)ite_rb.c	8.1 (Berkeley) 6/10/93
  */
 
-#include "samachdep.h"
+#include <hp300/stand/samachdep.h>
 
 #ifdef ITECONSOLE
 
 #include <sys/param.h>
 #include <hp300/dev/itevar.h>
 #include <hp300/dev/itereg.h>
-#include <hp300/dev/grfvar.h>
+
 #include <hp300/dev/grf_rbreg.h>
 
 #define REGBASE		((struct rboxfb *)(ip->regbase))
@@ -58,7 +58,7 @@ rbox_init(ip)
 {
 	int i;
 	
-	rb_waitbusy(REGADDR);
+	rb_waitbusy(ip->regbase);
 	DELAY(3000);
 
 	REGBASE->interrupt = 0x04;
@@ -67,7 +67,7 @@ rbox_init(ip)
 	REGBASE->drive = 0x01;
 	REGBASE->vdrive = 0x0;
 
-	ite_devinfo(ip);
+	ite_fontinfo(ip);
 	
 	REGBASE->opwen = 0xFF;
 
@@ -75,17 +75,17 @@ rbox_init(ip)
 	 * Clear the framebuffer.
 	 */
 	rbox_windowmove(ip, 0, 0, 0, 0, ip->fbheight, ip->fbwidth, RR_CLEAR);
-	rb_waitbusy(REGADDR);
+	rb_waitbusy(ip->regbase);
 	
 	for(i = 0; i < 16; i++) {
-		*(REGADDR + 0x63c3 + i*4) = 0x0;
-		*(REGADDR + 0x6403 + i*4) = 0x0;
-		*(REGADDR + 0x6803 + i*4) = 0x0;
-		*(REGADDR + 0x6c03 + i*4) = 0x0;
-		*(REGADDR + 0x73c3 + i*4) = 0x0;
-		*(REGADDR + 0x7403 + i*4) = 0x0;
-		*(REGADDR + 0x7803 + i*4) = 0x0;
-		*(REGADDR + 0x7c03 + i*4) = 0x0;
+		*(ip->regbase + 0x63c3 + i*4) = 0x0;
+		*(ip->regbase + 0x6403 + i*4) = 0x0;
+		*(ip->regbase + 0x6803 + i*4) = 0x0;
+		*(ip->regbase + 0x6c03 + i*4) = 0x0;
+		*(ip->regbase + 0x73c3 + i*4) = 0x0;
+		*(ip->regbase + 0x7403 + i*4) = 0x0;
+		*(ip->regbase + 0x7803 + i*4) = 0x0;
+		*(ip->regbase + 0x7c03 + i*4) = 0x0;
 	}
 
 	REGBASE->rep_rule = 0x33;
@@ -109,7 +109,7 @@ rbox_init(ip)
 	CM2GRN[0x01].value = 0xFF;
 	CM2BLU[0x01].value = 0xFF;
 
-	REGBASE->blink = 0x00;
+ 	REGBASE->blink = 0x00;
 	REGBASE->write_enable = 0x01;
 	REGBASE->opwen = 0x00;
 	
@@ -125,7 +125,7 @@ rbox_init(ip)
 
 rbox_putc(ip, c, dy, dx, mode)
 	register struct ite_softc *ip;
-	register int dy, dx;
+        register int dy, dx;
 	int c, mode;
 {
 	rbox_windowmove(ip, charY(ip, c), charX(ip, c),
@@ -135,7 +135,7 @@ rbox_putc(ip, c, dy, dx, mode)
 
 rbox_cursor(ip, flag)
 	register struct ite_softc *ip;
-	register int flag;
+        register int flag;
 {
 	if (flag == DRAW_CURSOR)
 		draw_cursor(ip)
@@ -158,9 +158,9 @@ rbox_clear(ip, sy, sx, h, w)
 }
 
 rbox_scroll(ip, sy, sx, count, dir)
-	register struct ite_softc *ip;
-	register int sy, count;
-	int dir, sx;
+        register struct ite_softc *ip;
+        register int sy, count;
+        int dir, sx;
 {
 	register int dy = sy - count;
 	register int height = ip->rows - sy;
@@ -181,7 +181,7 @@ rbox_windowmove(ip, sy, sx, dy, dx, h, w, func)
 	if (h == 0 || w == 0)
 		return;
 	
-	rb_waitbusy(REGADDR);
+	rb_waitbusy(ip->regbase);
 	rp->rep_rule = func << 4 | func;
 	rp->source_y = sy;
 	rp->source_x = sx;

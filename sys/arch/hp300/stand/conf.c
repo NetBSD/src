@@ -31,25 +31,61 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)conf.c	8.1 (Berkeley) 6/10/93
- *	     $Id: conf.c,v 1.3 1994/01/26 02:38:21 brezak Exp $
+ * 	     $Id: conf.c,v 1.4 1994/06/19 01:49:51 hpeyerl Exp $
  */
 
 #include <sys/param.h>
+
 #include "stand.h"
 
+#ifdef NETBOOT
+
+#include <sys/socket.h>
+#include <net/if.h>
+#include <netinet/in.h>
+#include <netinet/if_ether.h>
+#include <netinet/in_systm.h>
+
+#include "net.h"
+#include "netif.h"
+#ifdef NFS
+#include "nfs.h"
+#endif
+#ifdef UFS
+#include "ufs.h"
+#endif
+#ifdef TFTP
+#include "tftp.h"
+#endif
+
+#else
+
+#define UFS
+#include "ufs.h"
+
+#endif
+
+#ifdef UFS
+/*
+ * Device configuration
+ */
 #ifdef BOOT
 #define	ctstrategy	nullsys
 #define	ctopen		nodev
 #define	ctclose		nullsys
 #else
-extern int	ctstrategy(), ctopen(), ctclose();
+extern int	ctstrategy __P((void *, int, daddr_t, u_int, char *, u_int));
+extern int	ctopen __P((struct open_file *, ...));
+extern int	ctclose __P((struct open_file *));
 #endif
 #define	ctioctl	noioctl
 
-extern int	rdstrategy(), rdopen();
+extern int	rdstrategy __P((void *, int, daddr_t, u_int, char *, u_int));
+extern int	rdopen __P((struct open_file *, ...));
 #define	rdioctl	noioctl
 
-extern int	sdstrategy(), sdopen();
+extern int	sdstrategy __P((void *, int, daddr_t, u_int, char *, u_int));
+extern int	sdopen __P((struct open_file *, ...));
 #define	sdioctl	noioctl
 
 struct devsw devsw[] = {
@@ -59,5 +95,60 @@ struct devsw devsw[] = {
 	{ "??",	nullsys,	nodev,	nullsys,	noioctl }, /*3*/
 	{ "sd",	sdstrategy,	sdopen,	nullsys,	sdioctl }, /*4*/
 };
-
 int	ndevs = (sizeof(devsw)/sizeof(devsw[0]));
+
+#else
+
+struct devsw devsw[];
+int	ndevs = 0;
+
+#endif
+
+
+/*
+ * Filesystem configuration
+ */
+struct fs_ops file_system[] = {
+#ifdef UFS
+	{ ufs_open, ufs_close, ufs_read, ufs_write, ufs_seek, ufs_stat },
+#else
+	{ null_open, null_close, null_read, null_write, null_seek, null_stat },
+#endif
+#ifdef NFS
+	{ nfs_open, nfs_close, nfs_read, nfs_write, nfs_seek, nfs_stat },
+#else
+	{ null_open, null_close, null_read, null_write, null_seek, null_stat },
+#endif
+#ifdef TFTP
+	{ tftp_open, tftp_close, tftp_read, null_write, null_seek, null_stat },
+#else
+	{ null_open, null_close, null_read, null_write, null_seek, null_stat },
+#endif
+};
+
+int nfsys = (sizeof(file_system) / sizeof(struct fs_ops));
+
+#ifdef NETBOOT
+extern struct netif_driver le_driver;
+
+struct netif_driver *netif_drivers[] = {
+	&le_driver,
+};
+int n_netif_drivers = sizeof(netif_drivers)/sizeof(netif_drivers[0]);
+#endif
+
+	
+/*
+ * Inititalize controllers
+ * 
+ * XXX this should be a table
+ */
+void ctlrinit()
+{
+#ifdef NETBOOT
+	leinit();
+#else
+	hpibinit();
+	scsiinit();
+#endif
+}

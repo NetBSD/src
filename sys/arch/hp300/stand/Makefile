@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/10/93
-#	     $Id: Makefile,v 1.6 1994/01/30 20:02:56 mycroft Exp $
+#	     $Id: Makefile,v 1.7 1994/06/19 01:49:49 hpeyerl Exp $
 
 DESTDIR=
 
@@ -7,11 +7,11 @@ DESTDIR=
 RELOC=	FFF00000
 
 CONS= -DDCACONSOLE -DITECONSOLE -DDCMCONSOLE
-DEFS= -DSTANDALONE -DCOMPAT_NOLABEL ${CONS} # -DROMPRF
+DEFS= -DSTANDALONE -DCOMPAT_NOLABEL ${CONS} -Dhp300 # -DROMPRF
 CFLAGS=	-O ${INCPATH} ${DEFS}
 
 SRCS=   autoconf.c cons.c ct.c devopen.c dca.c dcm.c fhpib.c hil.c hpib.c \
-	ite.c ite_dv.c ite_gb.c ite_rb.c ite_subr.c ite_tc.c \
+	ite.c ite_dv.c ite_gb.c ite_rb.c ite_subr.c ite_tc.c ite_hy.c \
 	nhpib.c rd.c scsi.c sd.c
 SRCS+=	conf.c machdep.c prf.c tgets.c
 
@@ -30,7 +30,7 @@ LIBKERN=	${KERNLIB}
 LIBSA=	${SA_LIB}
 
 LIBS=	${LIBSA} ${.OBJDIR}/libdrive.a \
-	${LIBKERN} ${LIBSA} 
+	${LIBSA} ${LIBKERN}
 
 BOOTS=	pboot dboot nboot dcopy tboot tcopy cat #ls
 ALL=	${BOOTS} mkboot installboot

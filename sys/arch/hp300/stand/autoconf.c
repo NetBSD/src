@@ -38,7 +38,7 @@
  * from: Utah Hdr: autoconf.c 1.16 92/05/29
  * from: @(#)autoconf.c	8.1 (Berkeley) 6/10/93
  *
- * $Id: autoconf.c,v 1.4 1994/01/26 02:38:18 brezak Exp $
+ * $Id: autoconf.c,v 1.5 1994/06/19 01:49:50 hpeyerl Exp $
  */
 
 #include <hp300/stand/samachdep.h>
@@ -48,6 +48,7 @@
 
 #include <hp300/dev/device.h>
 #include <hp300/dev/grfvar.h>
+#include <hp300/dev/grfreg.h>
 
 /*
  * Mapping of ROM MSUS types to BSD major device numbers

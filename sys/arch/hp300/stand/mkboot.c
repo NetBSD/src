@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  * from: @(#)mkboot.c	8.1 (Berkeley) 7/15/93
- *	$Id: mkboot.c,v 1.3 1994/01/26 02:38:50 brezak Exp $
+ *	$Id: mkboot.c,v 1.4 1994/06/19 01:50:09 hpeyerl Exp $
  */
 
 #ifndef lint
@@ -43,13 +43,12 @@ static char copyright[] =
 #ifndef lint
 /* from:
    static char sccsid[] = "@(#)mkboot.c	7.2 (Berkeley) 12/16/90"; */
-static char rcsid[] = "$Id: mkboot.c,v 1.3 1994/01/26 02:38:50 brezak Exp $";
+static char rcsid[] = "$Id: mkboot.c,v 1.4 1994/06/19 01:50:09 hpeyerl Exp $";
 #endif /* not lint */
 
-#include <a.out.h>
 #include <sys/param.h>
-#include <sys/exec.h>
 #include <sys/file.h>
+#include <a.out.h>
 
 #include "volhdr.h"
 
