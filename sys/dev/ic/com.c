@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.184 2001/05/02 10:32:09 scw Exp $	*/
+/*	$NetBSD: com.c,v 1.185 2001/05/30 15:24:23 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -80,9 +80,10 @@
  * Supports automatic hardware flow control on StarTech ST16C650A UART
  */
 
+#include "opt_com.h"
 #include "opt_ddb.h"
 #include "opt_ddbparam.h"
-#include "opt_com.h"
+#include "opt_kgdb.h"
 
 #include "rnd.h"
 #if NRND > 0 && defined(RND_COM)

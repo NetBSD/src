@@ -1,4 +1,4 @@
-/*	$NetBSD: com_vrip.c,v 1.7 2001/04/30 11:42:19 takemura Exp $	*/
+/*	$NetBSD: com_vrip.c,v 1.8 2001/05/30 15:24:30 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999 SASAKI Takesi. All rights reserved.
@@ -33,6 +33,8 @@
  * SUCH DAMAGE.
  *
  */
+
+#include "opt_kgdb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.156 2001/03/18 02:53:09 chs Exp $	*/
+/*	$NetBSD: trap.c,v 1.157 2001/05/30 15:24:31 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -79,6 +79,7 @@
  */
 
 #include "opt_ddb.h"
+#include "opt_kgdb.h"
 #include "opt_math_emulate.h"
 #include "opt_vm86.h"
 #include "opt_cputype.h"

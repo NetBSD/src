@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.67 2001/05/29 17:51:55 thorpej Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.68 2001/05/30 15:24:34 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -86,6 +86,7 @@
  */
 #include "opt_cputype.h"
 #include "opt_ddb.h"
+#include "opt_kgdb.h"
 
 #include <sys/cdefs.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.20 2001/05/05 01:52:56 minoura Exp $	*/
+/*	$NetBSD: com.c,v 1.21 2001/05/30 15:24:39 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,6 +77,7 @@
  */
 
 #include "opt_ddb.h"
+#include "opt_kgdb.h"
 #include "opt_com.h"
 
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.8 2001/05/02 10:32:17 scw Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.9 2001/05/30 15:24:32 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -97,6 +97,8 @@
  * The driver was massively overhauled in November 1997 by Charles Hannum,
  * fixing *many* bugs, and substantially improving performance.
  */
+
+#include "opt_kgdb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

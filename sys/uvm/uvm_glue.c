@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.48 2001/05/25 04:06:13 chs Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.49 2001/05/30 15:24:23 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,8 +66,9 @@
  * rights to redistribute these changes.
  */
 
-#include "opt_uvmhist.h"
+#include "opt_kgdb.h"
 #include "opt_sysv.h"
+#include "opt_uvmhist.h"
 
 /*
  * uvm_glue.c: glue functions
