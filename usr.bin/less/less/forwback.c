@@ -1,4 +1,4 @@
-/*	$NetBSD: forwback.c,v 1.5 1999/04/06 05:57:35 mrg Exp $	*/
+/*	$NetBSD: forwback.c,v 1.6 1999/04/06 11:53:00 mrg Exp $	*/
 
 /*
  * Copyright (c) 1984,1985,1989,1994,1995,1996,1999  Mark Nudelman
@@ -45,6 +45,7 @@ extern int top_scroll;
 extern int quiet;
 extern int sc_width, sc_height;
 extern int quit_at_eof;
+extern int more_mode;
 extern int plusoption;
 extern int forw_scroll;
 extern int back_scroll;
@@ -155,10 +156,13 @@ forw(n, pos, force, only_last, nblank)
 			pos_clear();
 			add_forw_pos(pos);
 			force = 1;
-			if (top_scroll == OPT_ONPLUS || first_time)
-				clear();
-			home();
-		} else
+			if (more_mode == 0)
+			{
+				if (top_scroll == OPT_ONPLUS || first_time)
+					clear();
+				home();
+			}
+		} else if (more_mode == 0)
 		{
 			clear_bot();
 		}
@@ -173,7 +177,7 @@ forw(n, pos, force, only_last, nblank)
 			pos_clear();
 			add_forw_pos(pos);
 			force = 1;
-			if (top_scroll)
+			if (top_scroll && more_mode == 0)
 			{
 				if (top_scroll == OPT_ONPLUS)
 					clear();
@@ -241,7 +245,8 @@ forw(n, pos, force, only_last, nblank)
 		 * start the display after the beginning of the file,
 		 * and it is not appropriate to squish in that case.
 		 */
-		if (first_time && pos == NULL_POSITION && !top_scroll && 
+		if ((first_time || more_mode) &&
+		    pos == NULL_POSITION && !top_scroll && 
 #if TAGS
 		    tagoption == NULL &&
 #endif
