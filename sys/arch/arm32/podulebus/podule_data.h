@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: podules,v 1.5 1997/02/23 03:51:19 mark Exp 
+ *	NetBSD: podules,v 1.6 1997/07/28 17:47:53 mark Exp 
  */
 
 /*
@@ -41,6 +41,7 @@ static struct podule_description podules_acorn[] = {
 	{ PODULE_ACORN_ETHER1,	"ether 1 interface" },
 	{ PODULE_ACORN_RAMROM,	"RAM/ROM podule" },
 	{ PODULE_ACORN_BBCIO,	"BBC IO interface" },
+	{ PODULE_ACORN_ST506,	"ST506 HD interface" },
 	{ PODULE_ACORN_MIDI,	"MIDI interface" },
 	{ PODULE_ACORN_ETHER2,	"ether 2 interface" },
 	{ 0x0000, NULL }
@@ -78,6 +79,11 @@ static struct podule_description podules_atomwide[] = {
 	{ 0x0000, NULL }
 };
 
+static struct podule_description podules_atomwide2[] = {
+	{ PODULE_ATOMWIDE2_SERIAL,	"serial interface" },
+	{ 0x0000, NULL }
+};
+
 static struct podule_description podules_lingenuity[] = {
 	{ PODULE_LINGENUITY_SCSI,	"16 bit SCSI interface" },
 	{ 0x0000, NULL }
@@ -98,6 +104,11 @@ static struct podule_description podules_morley[] = {
 	{ 0x0000, NULL }
 };
 
+static struct podule_description podules_vti[] = {
+	{ PODULE_VTI_SCSI,	"SCSI interface" },
+	{ 0x0000, NULL }
+};
+
 static struct podule_description podules_cumana[] = {
 	{ PODULE_CUMANA_SCSI2,	"SCSI II interface" },
 	{ PODULE_CUMANA_SCSI1,	"SCSI I interface" },
@@ -107,6 +118,11 @@ static struct podule_description podules_cumana[] = {
 
 static struct podule_description podules_ics[] = {
 	{ PODULE_ICS_IDE,	"IDE Interface" },
+	{ 0x0000, NULL }
+};
+
+static struct podule_description podules_serialport[] = {
+	{ PODULE_SERIALPORT_DUALSERIAL,	"Serial interface" },
 	{ 0x0000, NULL }
 };
 
@@ -121,14 +137,14 @@ static struct podule_description podules_aleph1[] = {
 };
 
 static struct podule_description podules_icubed[] = {
-	{ PODULE_ICUBED_ETHERH,	"etherlan 600 network slot interface" },
-	{ PODULE_ICUBED_ETHERHFLASH,	"etherlan 600 network slot interface" },
+	{ PODULE_ICUBED_ETHERLAN600,	"etherlan 600 network slot interface" },
+	{ PODULE_ICUBED_ETHERLAN600A,	"etherlan 600A network slot interface" },
 	{ PODULE_ICUBED_ETHERLAN500,	"etherlen 500 interface" },
-	{ PODULE_ICUBED_ETHERLAN500A,	"etherlen 500 interface" },
+	{ PODULE_ICUBED_ETHERLAN500A,	"etherlen 500A interface" },
 	{ PODULE_ICUBED_ETHERLAN200,	"etherlen 200 interface" },
-	{ PODULE_ICUBED_ETHERLAN200A,	"etherlen 200 interface" },
+	{ PODULE_ICUBED_ETHERLAN200A,	"etherlen 200A interface" },
 	{ PODULE_ICUBED_ETHERLAN100,	"etherlen 100 interface" },
-	{ PODULE_ICUBED_ETHERLAN100A,	"etherlen 100 interface" },
+	{ PODULE_ICUBED_ETHERLAN100A,	"etherlen 100A interface" },
 	{ 0x0000, NULL }
 };
 
@@ -150,6 +166,12 @@ static struct podule_description podules_alsystems[] = {
 	{ 0x0000, NULL }
 };
 
+static struct podule_description podules_simtec[] = {
+	{ PODULE_SIMTEC_IDE8,	"8 bit IDE interface" },
+	{ PODULE_SIMTEC_IDE,	"16 bit IDE interface" },
+	{ 0x0000, NULL }
+};
+
 static struct podule_description podules_yes[] = {
 	{ PODULE_YES_RAPIDE,	"RapIDE32 interface" },
 	{ 0x0000, NULL }
@@ -164,23 +186,27 @@ static struct podule_description podules_mcs[] = {
 struct podule_list known_podules[] = {
 	{ MANUFACTURER_ACORN, 		"Acorn Computers", 	podules_acorn },
 	{ MANUFACTURER_OLIVETTI, 	"Olivetti", 	podules_olivetti },
-	{ MANUFACTURER_WATFORD, 	"Watford", 	podules_watford },
+	{ MANUFACTURER_WATFORD, 	"Watford Electronics", 	podules_watford },
 	{ MANUFACTURER_CCONCEPTS, 	"Computer Concepts", 	podules_cconcepts },
 	{ MANUFACTURER_ARMADILLO, 	"Armadillo Systems", 	podules_armadillo },
 	{ MANUFACTURER_WILDVISION, 	"Wild Vision", 	podules_wildvision },
 	{ MANUFACTURER_ATOMWIDE, 	"Atomwide", 	podules_atomwide },
+	{ MANUFACTURER_ATOMWIDE2, 	"Atomwide", 	podules_atomwide2 },
 	{ MANUFACTURER_LINGENUITY, 	"Lingenuity", 	podules_lingenuity },
 	{ MANUFACTURER_IRLAM, 		"Irlam Instruments", 	podules_irlam },
 	{ MANUFACTURER_OAK, 		"Oak Solutions", 	podules_oak },
 	{ MANUFACTURER_MORLEY, 		"Morley", 	podules_morley },
+	{ MANUFACTURER_VTI, 		"Vertical Twist", 	podules_vti },
 	{ MANUFACTURER_CUMANA, 		"Cumana", 	podules_cumana },
 	{ MANUFACTURER_ICS, 		"ICS", 	podules_ics },
+	{ MANUFACTURER_SERIALPORT, 	"Serial Port", 	podules_serialport },
 	{ MANUFACTURER_ARXE, 		"ARXE", 	podules_arxe },
 	{ MANUFACTURER_ALEPH1, 		"Aleph 1", 	podules_aleph1 },
 	{ MANUFACTURER_ICUBED, 		"I-Cubed", 	podules_icubed },
 	{ MANUFACTURER_BRINI, 		"Brini", 	podules_brini },
 	{ MANUFACTURER_ANT, 		"ANT", 	podules_ant },
 	{ MANUFACTURER_ALSYSTEMS, 	"Alsystems", 	podules_alsystems },
+	{ MANUFACTURER_SIMTEC, 		"Simtec Electronics", 	podules_simtec },
 	{ MANUFACTURER_YES, 		"Yellowstone Educational Solutions", 	podules_yes },
 	{ MANUFACTURER_MCS, 		"MCS", 	podules_mcs },
 	{ 0, NULL, NULL }
