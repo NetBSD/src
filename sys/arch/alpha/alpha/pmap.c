@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.143 2000/08/26 03:27:45 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.144 2000/08/26 03:32:36 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -156,7 +156,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.143 2000/08/26 03:27:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.144 2000/08/26 03:32:36 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3967,7 +3967,7 @@ pmap_tlb_shootdown(pmap_t pmap, vaddr_t va, pt_entry_t pte)
 
 		pq = &pmap_tlb_shootdown_q[i];
 
-		PSJQ_LOCK(pq, s);
+		PJSQ_LOCK(pq, s);
 
 		pj = pmap_tlb_shootdown_job_get(pq);
 		pq->pq_pte |= pte;
@@ -3991,7 +3991,7 @@ pmap_tlb_shootdown(pmap_t pmap, vaddr_t va, pt_entry_t pte)
 
 		alpha_send_ipi(i, ipinum);
 
-		PSJQ_UNLOCK(pq, s);
+		PJSQ_UNLOCK(pq, s);
 	}
 }
 
@@ -4009,7 +4009,7 @@ pmap_do_tlb_shootdown(void)
 	struct pmap_tlb_shootdown_job *pj;
 	int s;
 
-	PSJQ_LOCK(pq, s);
+	PJSQ_LOCK(pq, s);
 
 	while ((pj = TAILQ_FIRST(&pq->pq_head)) != NULL) {
 		TAILQ_REMOVE(&pq->pq_head, pj, pj_list);
@@ -4020,7 +4020,7 @@ pmap_do_tlb_shootdown(void)
 	}
 	pq->pq_pte = 0;
 
-	PSJQ_UNLOCK(pq, s);
+	PJSQ_UNLOCK(pq, s);
 }
 
 /*
