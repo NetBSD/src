@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.44 2000/02/04 11:04:46 enami Exp $	*/
+/*	$NetBSD: i82365.c,v 1.45 2000/02/05 04:34:36 enami Exp $	*/
 
 #define	PCICDEBUG
 
@@ -1392,6 +1392,9 @@ pcic_chip_socket_enable(pch)
 	 * delay routine.
 	 */
 	delay(20);
+#ifdef __hpcmips__
+	pcic_delay(h, 22, "pccen3");		/* XXX */
+#endif
 
 	/* clear the reset flag */
 	intr |= PCIC_INTR_RESET;
