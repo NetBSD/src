@@ -1,5 +1,5 @@
-#	$NetBSD: Makefile,v 1.1 1998/02/01 01:58:47 thorpej Exp $
+#	$NetBSD: Makefile,v 1.2 1998/10/16 00:39:38 ross Exp $
 
-SUBDIR=	ramdisk instkernel
+SUBDIR=	ramdisk instkernel fdset cd-hd-tape
 
 .include <bsd.subdir.mk>

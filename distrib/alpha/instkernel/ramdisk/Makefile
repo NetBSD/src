@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 1998/09/05 14:46:14 lukem Exp $
+#	$NetBSD: Makefile,v 1.3 1998/10/16 00:39:38 ross Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -29,7 +29,7 @@ all: ${CBIN}
 	mount ${VND_DEV} ${MOUNT_POINT}
 	mtree -def ${.CURDIR}/${MTREE} -p ${MOUNT_POINT}/ -u
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
-	    TARGDIR=${MOUNT_POINT} sh ${TOP}/runlist.sh ${.CURDIR}/${LISTS}
+	    TARGDIR=${MOUNT_POINT} sh ${TOP}/src/runlist.sh ${.CURDIR}/${LISTS}
 	@echo ""
 	@df -i ${MOUNT_POINT}
 	@echo ""
