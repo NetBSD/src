@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.24 1999/05/15 14:22:46 drochner Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.25 1999/05/17 16:53:43 drochner Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -33,7 +33,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: wsdisplay.c,v 1.24 1999/05/15 14:22:46 drochner Exp $";
+    "$NetBSD: wsdisplay.c,v 1.25 1999/05/17 16:53:43 drochner Exp $";
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -59,6 +59,7 @@ static const char _rcsid[] __attribute__ ((unused)) =
 #include <dev/cons.h>
 
 #include "opt_wsdisplay_compat.h"
+#include "wskbd.h"
 
 struct wsscreen_internal {
 	const struct wsdisplay_emulops *emulops;
@@ -117,15 +118,17 @@ struct wsdisplay_softc {
 	struct wsscreen *sc_focus;
 
 	int	sc_isconsole;
-	struct device *sc_kbddv;
 
 	int sc_flags;
 #define SC_SWITCHPENDING 1
 	int sc_screenwanted, sc_oldscreen; /* valid with SC_SWITCHPENDING */
 
+#if NWSKBD > 0
+	struct device *sc_kbddv;
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	int sc_rawkbd;
 #endif
+#endif /* NWSKBD > 0 */
 };
 
 extern struct cfdriver wsdisplay_cd;
@@ -564,7 +567,6 @@ wsdisplay_common_attach(sc, console, scrdata, accessops, accesscookie)
 {
 	int i = 0;
 
-	sc->sc_kbddv = NULL;
 	sc->sc_isconsole = console;
 
 	if (console) {
@@ -578,8 +580,10 @@ wsdisplay_common_attach(sc, console, scrdata, accessops, accesscookie)
 		       wsdisplay_console_conf.scrdata->name,
 		       wsdisplay_console_conf.wsemul->name);
 
+#if NWSKBD > 0
 		if ((sc->sc_kbddv = wskbd_set_console_display(&sc->sc_dv)))
 			printf(", using %s", sc->sc_kbddv->dv_xname);
+#endif
 
 		sc->sc_focusidx = 0;
 		sc->sc_focus = sc->sc_scr[0];
@@ -889,6 +893,7 @@ wsdisplay_internal_ioctl(sc, scr, cmd, data, flag, p)
 	char namebuf[16];
 	struct wsdisplay_font fd;
 
+#if NWSKBD > 0
 	if (sc->sc_kbddv != NULL) {
 		/* check ioctls for keyboard */
 #ifdef WSDISPLAY_COMPAT_RAWKBD
@@ -902,13 +907,12 @@ wsdisplay_internal_ioctl(sc, scr, cmd, data, flag, p)
 			return (0);
 		}
 #endif
-/* printf("kbdcallback\n"); */
 		error = wskbd_displayioctl(sc->sc_kbddv, cmd, data, flag, p);
 		if (error >= 0)
 			return error;
 	}
+#endif /* NWSKBD > 0 */
 
-/* printf("display\n"); */
 	switch (cmd) {
 	case WSDISPLAYIO_GMODE:
 		*(u_int *)data = (scr->scr_flags & SCR_GRAPHICS ?
@@ -968,7 +972,9 @@ wsdisplay_cfg_ioctl(sc, cmd, data, flag, p)
 	int error;
 	char *type, typebuf[16], *emul, emulbuf[16];
 	void *buf;
+#if NWSKBD > 0
 	struct device *kbddv;
+#endif
 
 	switch (cmd) {
 	case WSDISPLAYIO_ADDSCREEN:
@@ -1020,6 +1026,8 @@ wsdisplay_cfg_ioctl(sc, cmd, data, flag, p)
 		free(buf, M_DEVBUF);
 #undef d
 		return (error);
+
+#if NWSKBD > 0
 	case WSDISPLAYIO_SETKEYBOARD:
 #define d ((struct wsdisplay_kbddata *)data)
 		switch (d->op) {
@@ -1051,6 +1059,8 @@ wsdisplay_cfg_ioctl(sc, cmd, data, flag, p)
 		}
 #undef d
 		return (0);
+#endif /* NWSKBD > 0 */
+
 	}
 	return (EINVAL);
 }
@@ -1592,9 +1602,7 @@ wsdisplay_kbdholdscreen(dev, hold)
 	}
 }
 
-/*
- * Calls from the glue code.
- */
+#if NWSKBD > 0
 struct device *
 wsdisplay_set_console_kbd(kbddv)
 	struct device *kbddv;
@@ -1604,6 +1612,7 @@ wsdisplay_set_console_kbd(kbddv)
 	wsdisplay_console_device->sc_kbddv = kbddv;
 	return (&wsdisplay_console_device->sc_dv);
 }
+#endif /* NWSKBD > 0 */
 
 /*
  * Console interface.
