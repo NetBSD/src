@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.3 2002/09/04 14:13:28 scw Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.4 2002/09/06 15:39:16 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -310,14 +310,14 @@ process_write_regs(struct proc *p, struct reg *regs)
 	tf->tf_caller.r61 = regs->r_intregs[61];
 	tf->tf_caller.r62 = regs->r_intregs[62];
 
-	tf->tf_caller.tr0 = regs->r_intregs[0];
-	tf->tf_caller.tr1 = regs->r_intregs[1];
-	tf->tf_caller.tr2 = regs->r_intregs[2];
-	tf->tf_caller.tr3 = regs->r_intregs[3];
-	tf->tf_caller.tr4 = regs->r_intregs[4];
-	tf->tf_callee.tr5 = regs->r_intregs[5];
-	tf->tf_callee.tr6 = regs->r_intregs[6];
-	tf->tf_callee.tr7 = regs->r_intregs[7];
+	tf->tf_caller.tr0 = regs->r_tr[0];
+	tf->tf_caller.tr1 = regs->r_tr[1];
+	tf->tf_caller.tr2 = regs->r_tr[2];
+	tf->tf_caller.tr3 = regs->r_tr[3];
+	tf->tf_caller.tr4 = regs->r_tr[4];
+	tf->tf_callee.tr5 = regs->r_tr[5];
+	tf->tf_callee.tr6 = regs->r_tr[6];
+	tf->tf_callee.tr7 = regs->r_tr[7];
 
 	tf->tf_state.sf_spc = regs->r_pc;
 	tf->tf_state.sf_usr = regs->r_usr;
