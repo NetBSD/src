@@ -5,7 +5,7 @@
 MACHINE=evbsh3
 MACHINE_ARCH=sh3el
 # just in case you forgot to specify this when you built gcc...
-CFLAGS="-D__NetBSD__ -v"
+CFLAGS="-D__NetBSD__"
 export MACHINE MACHINE_ARCH CFLAGS
 TARGET=/usr/pkg/cross/bin/shel-netbsdcoff
 
