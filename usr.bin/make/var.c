@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.56 2000/09/05 21:08:35 christos Exp $	*/
+/*	$NetBSD: var.c,v 1.57 2001/03/09 12:49:05 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: var.c,v 1.56 2000/09/05 21:08:35 christos Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.57 2001/03/09 12:49:05 itojun Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.56 2000/09/05 21:08:35 christos Exp $");
+__RCSID("$NetBSD: var.c,v 1.57 2001/03/09 12:49:05 itojun Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2584,7 +2584,7 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 	 * doesn't try to free a static pointer.
 	 * If VAR_KEEP is also set then we want to keep str as is.
 	 */
-	if (!(v->flags & VAR_KEEP)) {
+	if ((v->flags & VAR_KEEP) != 0) {
 	    if (*freePtr) {
 		free(str);
 	    }
