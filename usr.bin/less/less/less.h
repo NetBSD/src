@@ -1,5 +1,7 @@
+/*	$NetBSD: less.h,v 1.1.1.2 1997/04/22 13:45:47 mrg Exp $	*/
+
 /*
- * Copyright (c) 1984,1985,1989,1994,1995  Mark Nudelman
+ * Copyright (c) 1984,1985,1989,1994,1995,1996  Mark Nudelman
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,6 +32,13 @@
  */
 
 /*
+ * Defines for MSDOS_COMPILER.
+ */
+#define	MSOFTC		1	/* Microsoft C */
+#define	BORLANDC	2	/* Borland C */
+#define	WIN32C		3	/* Windows (Borland C) */
+
+/*
  * Include the file of compile-time options.
  * The <> make cc search for it in -I., not srcdir.
  */
@@ -52,6 +61,11 @@
 #else
 #define	VOID_POINTER	char *
 #define	void  int
+#endif
+#if HAVE_CONST
+#define	constant	const
+#else
+#define	constant
 #endif
 
 #define	public		/* PUBLIC FUNCTION */
@@ -76,6 +90,13 @@
 #if STDC_HEADERS
 #include <stdlib.h>
 #include <string.h>
+#endif
+#ifdef _OSK
+#include <modes.h>
+#include <strings.h>
+#endif
+#if MSDOS_COMPILER==WIN32C
+#include <io.h>
 #endif
 
 #if !STDC_HEADERS
@@ -130,21 +151,40 @@ typedef long		POSITION;
 /*
  * Flags for open()
  */
-#if MSOFTC || OS2
+#if MSDOS_COMPILER || OS2
 #define	OPEN_READ	(O_RDONLY|O_BINARY)
+#else
+#ifdef _OSK
+#define	OPEN_READ	(S_IREAD)
+#else
+#ifdef O_RDONLY
+#define	OPEN_READ	(O_RDONLY)
 #else
 #define	OPEN_READ	(0)
 #endif
-#if MSOFTC || OS2
+#endif
+#endif
+
+#if defined(O_WRONLY) && defined(O_APPEND)
 #define	OPEN_APPEND	(O_APPEND|O_WRONLY)
+#else
+#ifdef _OSK
+#define OPEN_APPEND	(S_IWRITE)
 #else
 #define	OPEN_APPEND	(1)
 #endif
+#endif
 
-#if MSOFTC || OS2
-#define	OPEN_TTYIN()	open("CON", O_BINARY|O_RDONLY)
+#if MSDOS_COMPILER || OS2
+#define	OPEN_TTYIN()	open("CON", OPEN_READ)
 #else
-#define	OPEN_TTYIN()	open("/dev/tty", 0)
+#define	OPEN_TTYIN()	open("/dev/tty", OPEN_READ)
+#endif
+
+#if MSDOS_COMPILER || OS2 || _OSK
+#define	SHELL_META_QUEST 0
+#else
+#define	SHELL_META_QUEST 1
 #endif
 
 /*
@@ -200,12 +240,14 @@ struct textlist
 #define	BS_CONTROL	2	/* \b treated as control char; prints as ^H */
 
 /* How should we search? */
-#define	SRCH_FORW	0001	/* Search forward from current position */
-#define	SRCH_BACK	0002	/* Search backward from current position */
-#define	SRCH_FIND_ALL	0010	/* Find and highlight all matches */
-#define	SRCH_NOMATCH	0100	/* Search for non-matching lines */
-#define	SRCH_PAST_EOF	0200	/* Search past end-of-file, into next file */
-#define	SRCH_FIRST_FILE	0400	/* Search starting at the first file */
+#define	SRCH_FORW	000001	/* Search forward from current position */
+#define	SRCH_BACK	000002	/* Search backward from current position */
+#define	SRCH_NO_MOVE	000004	/* Highlight, but don't move */
+#define	SRCH_FIND_ALL	000010	/* Find and highlight all matches */
+#define	SRCH_NO_MATCH	000100	/* Search for non-matching lines */
+#define	SRCH_PAST_EOF	000200	/* Search past end-of-file, into next file */
+#define	SRCH_FIRST_FILE	000400	/* Search starting at the first file */
+#define	SRCH_NO_REGEX	001000	/* Don't use regular expressions */
 
 #define	SRCH_REVERSE(t)	(((t) & SRCH_FORW) ? \
 				(((t) & ~SRCH_FORW) | SRCH_BACK) : \
@@ -232,7 +274,11 @@ struct textlist
 #define	CONTROL(c)	((c)&037)
 #define	ESC		CONTROL('[')
 
-#define	SIGNAL(sig,func)	signal(sig,func)
+#if _OSK_MWC32
+#define	LSIGNAL(sig,func)	os9_signal(sig,func)
+#else
+#define	LSIGNAL(sig,func)	signal(sig,func)
+#endif
 
 #define	S_INTERRUPT	01
 #define	S_STOP		02
@@ -247,7 +293,10 @@ struct textlist
 #define	CH_CANSEEK	001
 #define	CH_KEEPOPEN	002
 #define	CH_POPENED	004
+#define	CH_HELPFILE	010
 
 #define	ch_zero()	((POSITION)0)
+
+#define	FAKE_HELPFILE	"@/\\less/\\help/\\file/\\@"
 
 #include "funcs.h"
