@@ -1,11 +1,10 @@
 #	from: @(#)Makefile.inc	5.21 (Berkeley) 5/24/91
-#	$Id: Makefile.inc,v 1.58 1994/12/11 20:43:48 christos Exp $
+#	$Id: Makefile.inc,v 1.59 1994/12/12 22:41:50 jtc Exp $
 
 # gen sources
 .PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/gen ${.CURDIR}/gen
 
-SRCS+=	__err.c _errlist.c _siglist.c \
-	alarm.c assert.c clock.c closedir.c confstr.c ctermid.c ctime.c \
+SRCS+=	alarm.c assert.c clock.c closedir.c confstr.c ctermid.c ctime.c \
 	ctype_.c daemon.c devname.c difftime.c \
 	disklabel.c err.c errlist.c errno.c exec.c fnmatch.c \
 	fstab.c ftok.c fts.c \
@@ -25,6 +24,10 @@ SRCS+=	__err.c _errlist.c _siglist.c \
 	toupper_.c ualarm.c uname.c unvis.c usleep.c \
 	utime.c valloc.c vis.c wait.c wait3.c \
 	waitpid.c
+
+# indirect reference stubs, to be removed soon.
+SRCS+=	_err.c _errx.c _sys_errlist.c _sys_nerr.c _sys_siglist.c \
+	_verr.c _verrx.c _vwarn.c _vwarnx.c _warn.c _warnx.c
 
 .if   (${MACHINE_ARCH} == "m68k")
 SRCS+=	_setjmp.S alloca.S fabs.S frexp.c ldexp.S modf.S setjmp.S
