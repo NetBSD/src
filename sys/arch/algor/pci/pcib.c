@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.3 2001/06/10 09:13:07 thorpej Exp $	*/
+/*	$NetBSD: pcib.c,v 1.4 2001/06/10 09:28:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.3 2001/06/10 09:13:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.4 2001/06/10 09:28:26 thorpej Exp $");
 
 #include "opt_algor_p5064.h" 
 #include "opt_algor_p6032.h"
@@ -390,6 +390,11 @@ const struct evcnt *
 pcib_isa_intr_evcnt(void *v, int irq)
 {
 	struct pcib_softc *sc = v;
+
+#if defined(ALGOR_P5064)
+	if (sc->sc_reserved & (1 << irq))
+		return (isa_intr_evcnt(sc->sc_parent_ic, irq));
+#endif
 
 	return (&sc->sc_intrtab[irq].intr_count);
 }
