@@ -1,4 +1,4 @@
-/* $NetBSD: isp.c,v 1.92 2002/04/11 02:32:03 mjacob Exp $ */
+/* $NetBSD: isp.c,v 1.93 2002/04/20 05:05:56 mjacob Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp.c,v 1.92 2002/04/11 02:32:03 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp.c,v 1.93 2002/04/20 05:05:56 mjacob Exp $");
 
 #ifdef	__NetBSD__
 #include <dev/ic/isp_netbsd.h>
@@ -804,7 +804,7 @@ again:
 	 * of knowing how many luns we support.
 	 *
 	 * Expanded lun firmware gives you 32 luns for SCSI cards and
-	 * 65536 luns for Fibre Channel cards.
+	 * 16384 luns for Fibre Channel cards.
 	 *
 	 * It turns out that even for QLogic 2100s with ROM 1.10 and above
 	 * we do get a firmware attributes word returned in mailbox register 6.
@@ -827,7 +827,7 @@ again:
 			}
 		} else {
 			if (FCPARAM(isp)->isp_fwattr & ISP_FW_ATTR_SCCLUN) {
-				isp->isp_maxluns = 65536;
+				isp->isp_maxluns = 16384;
 			} else {
 				isp->isp_maxluns = 16;
 			}
@@ -1923,10 +1923,6 @@ isp_pdb_sync(struct ispsoftc *isp)
 			mbs.param[1] = loopid << 8;
 			mbs.param[2] = portid >> 16;
 			mbs.param[3] = portid & 0xffff;
-			if (IS_2200(isp) || IS_23XX(isp)) {
-				/* only issue a PLOGI if not logged in */
-				mbs.param[1] |= 0x1;
-			}
 			isp_mboxcmd(isp, &mbs, MBLOGALL & ~(MBOX_LOOP_ID_USED |
 			    MBOX_PORT_ID_USED | MBOX_COMMAND_ERROR));
 			if (fcp->isp_fwstate != FW_READY ||
