@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.77 2004/04/12 05:22:43 jmc Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.78 2004/04/12 05:25:32 jmc Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -546,3 +546,13 @@ sys/arch/hp300/stand/common/clock.c		1.5
 
 	Fix yet another y2k+1 bug.
 	[tsutsui, ticket #1665]
+
+sys/arch/hp300/dev/grf_gb.c			patch
+sys/arch/hp300/dev/grf_dv.c			patch
+sys/arch/hp300/dev/grf_hy.c			patch
+sys/arch/hp300/dev/grf_rb.c			patch
+sys/arch/hp300/dev/grf_tc.c			patch
+
+	Check mapped device VA by badaddr() in cnattach functions for 
+	framebuffers.
+	[tsutsui, ticket #1666]
