@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530var.h,v 1.1.1.1 1998/06/09 07:53:05 dbj Exp $	*/
+/*	$NetBSD: z8530var.h,v 1.2 1999/07/03 08:22:56 dbj Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,7 +44,7 @@
  *	@(#)zsvar.h	8.1 (Berkeley) 6/11/93
  */
 
-#define splzs() splscc()
+#define splzs() splserial()
 
 #include <dev/ic/z8530sc.h>
 
