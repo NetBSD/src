@@ -1,4 +1,4 @@
-/*	$NetBSD: quotacheck.c,v 1.13 1996/09/27 23:25:35 christos Exp $	*/
+/*	$NetBSD: quotacheck.c,v 1.14 1996/09/28 19:20:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)quotacheck.c	8.3 (Berkeley) 1/29/94";
 #else
-static char rcsid[] = "$NetBSD: quotacheck.c,v 1.13 1996/09/27 23:25:35 christos Exp $";
+static char rcsid[] = "$NetBSD: quotacheck.c,v 1.14 1996/09/28 19:20:44 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -115,7 +115,8 @@ static u_long	highid[MAXQUOTAS];/* highest addid()'ed identifier per type */
 int main __P((int, char *[]));
 static void usage __P((void));
 static void *needchk __P((struct fstab *));
-static int chkquota __P((const char *, const char *, const char *, void *));
+static int chkquota __P((const char *, const char *, const char *, void *,
+    pid_t *));
 static int update __P((const char *, const char *, int));
 static int oneof __P((char *, char *[], int));
 static int getquotagid __P((void));
@@ -138,14 +139,18 @@ main(argc, argv)
 	struct quotaname *auxdata;
 	int i, argnum, maxrun, errs;
 	long done = 0;
+	int flags = CHECK_PREEN;
 	char *name;
 	int ch;
 
 	errs = maxrun = 0;
-	while ((ch = getopt(argc, argv, "aguvl:")) != -1) {
+	while ((ch = getopt(argc, argv, "aguvdl:")) != -1) {
 		switch(ch) {
 		case 'a':
 			aflag++;
+			break;
+		case 'd':
+			flags |= CHECK_DEBUG;
 			break;
 		case 'g':
 			gflag++;
@@ -184,7 +189,7 @@ main(argc, argv)
 		endpwent();
 	}
 	if (aflag)
-		exit(checkfstab(CHECK_PREEN, maxrun, needchk, chkquota));
+		exit(checkfstab(flags, maxrun, needchk, chkquota));
 	if (setfsent() == 0)
 		err(1, "%s: can't open", FSTAB);
 	while ((fs = getfsent()) != NULL) {
@@ -194,7 +199,7 @@ main(argc, argv)
 		    (name = blockcheck(fs->fs_spec))) {
 			done |= 1 << argnum;
 			errs += chkquota(fs->fs_type, name, fs->fs_file,
-			    auxdata);
+			    auxdata, NULL);
 		}
 	}
 	endfsent();
@@ -246,9 +251,10 @@ needchk(fs)
  * Scan the specified filesystem to check quota(s) present on it.
  */
 static int
-chkquota(type, fsname, mntpt, v)
+chkquota(type, fsname, mntpt, v, pid)
 	const char *type, *fsname, *mntpt;
 	void *v;
+	pid_t *pid;
 {
 	struct quotaname *qnp = v;
 	struct fileusage *fup;
@@ -256,8 +262,19 @@ chkquota(type, fsname, mntpt, v)
 	int cg, i, mode, errs = 0;
 	ino_t ino;
 
+	if (pid != NULL) {
+		switch ((*pid = fork())) {
+		default:
+			break;
+		case 0:
+			return 0;
+		case -1:
+			err(1, "Cannot fork");
+		}
+	}
+
 	if ((fi = open(fsname, O_RDONLY, 0)) < 0) {
-		perror(fsname);
+		warn("Cannot open %s", fsname);
 		return (1);
 	}
 	if (vflag) {
