@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_misc.c,v 1.11 1995/04/22 19:49:04 christos Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.12 1995/04/25 21:51:15 mellon Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -106,8 +106,8 @@ struct emul emul_ultrix = {
 	0,
 	copyargs,
 	cpu_exec_ecoff_setregs,
-	sigcode,
-	esigcode,
+	0,
+	0,
 };
 
 #define GSI_PROG_ENV 1
