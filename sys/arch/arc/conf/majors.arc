@@ -1,3 +1,4 @@
+#	$NetBSD: majors.arc,v 1.1.2.2 2002/05/30 07:14:41 gehenna Exp $
 #
 # Device majors for arc
 #
