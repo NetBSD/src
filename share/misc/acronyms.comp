@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.4 2003/06/07 18:56:10 jmmv Exp $
+$NetBSD: acronyms.comp,v 1.5 2003/06/07 22:33:30 jmmv Exp $
 
 AGP	accelerated graphics port
 ATA	advanced technology attachment
@@ -9,9 +9,11 @@ CHS	cylinder/head/sector
 CLI	command line interface
 CRLF	carriage return line feed
 CSS	cascading style sheets
+DMA	direct memory access
 DTD	document type definition
 EISA	extended industry standard architecture
 FTP	file transfer protocol
+GIF	graphics interchange format
 GNU	gnu's not unix
 GPL	gnu/general public license
 GUI	graphics user interface
@@ -24,6 +26,7 @@ IO	input/output
 IP	internet protocol
 ISA	industry standard architecture
 JPEG	joint photographic experts group
+NAT	network address translation
 PCI	peripheral component interconnect
 PNG	portable network graphics
 RAID	redundant array of inexpensive disks
@@ -33,3 +36,4 @@ TCP	transmission control protocol
 UDP	user datagram protocol
 XML	extensible markup language
 XSL	extensible stylesheet language
+WWW	world wide web
