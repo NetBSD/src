@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.5 2000/04/27 14:06:57 bouyer Exp $	*/
+/*	$NetBSD: siop.c,v 1.6 2000/04/27 16:49:07 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -495,7 +495,7 @@ siop_intr(v)
 		if (siop_cmd)
 			printf("last msg_in=0x%x status=0x%x\n",
 			    siop_cmd->siop_table->msg_in[0],
-			    htole32(siop_cmd->siop_table->status));
+			    le32toh(siop_cmd->siop_table->status));
 		need_reset = 1;
 		}
 	}
@@ -1145,7 +1145,6 @@ siop_start(sc)
 	struct siop_cmd *siop_cmd;
 	u_int32_t *scr;
 	u_int32_t dsa;
-	u_int8_t *dsap = (u_int8_t *)&dsa;
 	int timeout;
 	int target, slot;
 	int newcmd = 0; 
@@ -1196,13 +1195,13 @@ siop_start(sc)
 			 * second octet, reg offset is the third.
 			 */
 			scr[Ent_idsa0 / 4] =
-			    htole32(0x78100000 | (dsap[0] << 8));
+			    htole32(0x78100000 | ((dsa & 0x000000ff) <<  8));
 			scr[Ent_idsa1 / 4] =
-			    htole32(0x78110000 | (dsap[1] << 8));
+			    htole32(0x78110000 | ( dsa & 0x0000ff00       ));
 			scr[Ent_idsa2 / 4] =
-			    htole32(0x78120000 | (dsap[2] << 8));
+			    htole32(0x78120000 | ((dsa & 0x00ff0000) >>  8));
 			scr[Ent_idsa3 / 4] =
-			    htole32(0x78130000 | (dsap[3] << 8));
+			    htole32(0x78130000 | ((dsa & 0xff000000) >> 16));
 			/* change status of cmd */
 			if (siop_cmd->status == CMDST_ACTIVE) {
 				if ((siop_cmd->xs->xs_control & XS_CTL_POLL)
