@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ed.c,v 1.13 1995/06/28 04:30:38 cgd Exp $	*/
+/*	$NetBSD: if_ed.c,v 1.14 1995/07/02 00:16:03 mycroft Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -320,10 +320,6 @@ ed_init(sc)
 	int i, s;
 	u_char command;
 	u_long mcaf[2];
-
-	/* Address not known. */
-	if (ifp->if_addrlist.tqh_first == 0)
-		return;
 
 	/*
 	 * Initialize the NIC in the exact order outlined in the NS manual.
