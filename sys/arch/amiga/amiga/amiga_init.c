@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.84 2003/04/01 21:26:26 thorpej Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.85 2003/04/16 20:42:34 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -33,9 +33,10 @@
 
 #include "opt_amigaccgrf.h"
 #include "opt_p5ppc68kboard.h"
+#include "opt_devreload.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.84 2003/04/01 21:26:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.85 2003/04/16 20:42:34 is Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,11 +130,13 @@ int shift_nosync;
 
 void  start_c(int, u_int, u_int, u_int, char *, u_int, u_long, u_long);
 void rollcolor(int);
+#ifdef DEVRELOAD
 static int kernel_image_magic_size(void);
 static void kernel_image_magic_copy(u_char *);
 int kernel_reload_write(struct uio *);
 extern void kernel_reload(char *, u_long, u_long, u_long, u_long,
 	u_long, u_long, u_long, u_long, u_long, u_long);
+#endif
 extern void etext(void);
 void start_c_finish(void);
 
@@ -961,6 +964,7 @@ rollcolor(color)
 	splx(s);
 }
 
+#ifdef DEVRELOAD
 /*
  * Kernel reloading code
  */
@@ -1152,3 +1156,4 @@ kernel_reload_write(uio)
 	}
 	return(0);
 }
+#endif

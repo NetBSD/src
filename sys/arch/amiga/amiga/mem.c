@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.37 2003/04/01 21:26:27 thorpej Exp $	*/
+/*	$NetBSD: mem.c,v 1.38 2003/04/16 20:42:34 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.37 2003/04/01 21:26:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.38 2003/04/16 20:42:34 is Exp $");
 
 /*
  * Memory special file
@@ -59,12 +59,16 @@ __KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.37 2003/04/01 21:26:27 thorpej Exp $");
 
 #include <uvm/uvm_extern.h>
 
+#include "opt_devreload.h"
+#ifdef DEVRELOAD
 #define	DEV_RELOAD	20	/* minor device 20  is magic memory
 				 * which you can write a kernel image to,
 				 * causing a reboot into that kernel
 				 */
 
 extern int kernel_reload_write(struct uio *uio);
+#endif
+
 extern u_int lowram;
 static caddr_t devzeropage;
 
@@ -186,13 +190,13 @@ mmrw(dev, uio, flags)
 			c = min(iov->iov_len, PAGE_SIZE);
 			error = uiomove(devzeropage, c, uio);
 			continue;
-
+#ifdef DEVRELOAD
 		case DEV_RELOAD:
 			if (uio->uio_rw == UIO_READ)
 				return 0;
 			error = kernel_reload_write(uio);
 			continue;
-
+#endif
 		default:
 			return (ENXIO);
 		}
