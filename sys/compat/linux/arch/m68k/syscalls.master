@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.5 1999/03/30 07:29:05 tron Exp $
+	$NetBSD: syscalls.master,v 1.6 1999/05/13 23:42:34 thorpej Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -226,7 +226,7 @@
 			    caddr_t ptr); }
 118	NOARGS		{ int sys_fsync(int fd); }
 119	STD		{ int linux_sys_sigreturn(void); }
-120	UNIMPL		clone
+120	STD		{ int linux_sys_clone(int flags, void *stack); }
 #if !defined(_KERNEL) || defined(COMPAT_09)
 121	NOARGS		{ int compat_09_sys_setdomainname(char *name, \
 			    int len); }
