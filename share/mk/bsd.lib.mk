@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.209 2002/11/09 08:22:04 thorpej Exp $
+#	$NetBSD: bsd.lib.mk,v 1.210 2002/11/10 18:15:29 thorpej Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -108,9 +108,6 @@ APICFLAGS ?=
 # On MIPS, all libs are compiled with ABIcalls (and are thus PIC),
 # not just sharedlibs.
 MKPICLIB= no
-
-# so turn shlib PIC flags on for ${AS}.
-AINC+=-DABICALLS
 
 .elif ${MACHINE_ARCH} == "vax" && ${OBJECT_FMT} == "ELF"
 
@@ -302,20 +299,20 @@ FFLAGS+=	${FOPTS}
 .endif
 
 .S.o .s.o:
-	@echo ${COMPILE.S:Q} ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC}
-	@${COMPILE.S} ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} -o ${.TARGET}.o
+	@echo ${COMPILE.S:Q} ${CFLAGS:M-[ID]*} ${.IMPSRC}
+	@${COMPILE.S} ${CFLAGS:M-[ID]*} ${.IMPSRC} -o ${.TARGET}.o
 	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
 .S.po .s.po:
-	@echo ${COMPILE.S:Q} -DGPROF -DPROF ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} -o ${.TARGET}
-	@${COMPILE.S} -DGPROF -DPROF ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} -o ${.TARGET}.o
+	@echo ${COMPILE.S:Q} -DGPROF -DPROF ${CFLAGS:M-[ID]*} ${.IMPSRC} -o ${.TARGET}
+	@${COMPILE.S} -DGPROF -DPROF ${CFLAGS:M-[ID]*} ${.IMPSRC} -o ${.TARGET}.o
 	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
 .S.so .s.so:
-	@echo ${COMPILE.S:Q} ${CAPICFLAGS} ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} -o ${.TARGET}
-	@${COMPILE.S} ${CAPICFLAGS} ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} -o ${.TARGET}.o
+	@echo ${COMPILE.S:Q} ${CAPICFLAGS} ${CFLAGS:M-[ID]*} ${.IMPSRC} -o ${.TARGET}
+	@${COMPILE.S} ${CAPICFLAGS} ${CFLAGS:M-[ID]*} ${.IMPSRC} -o ${.TARGET}.o
 	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
