@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.19 2003/10/18 22:24:34 christos Exp $	*/
+/*	$NetBSD: tty.c,v 1.20 2003/10/18 22:37:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)tty.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tty.c,v 1.19 2003/10/18 22:24:34 christos Exp $");
+__RCSID("$NetBSD: tty.c,v 1.20 2003/10/18 22:37:24 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -1258,7 +1258,6 @@ tty_stty(EditLine *el, int argc __attribute__((__unused__)), const char **argv)
 			assert(c-- != 0);
 			c = tty__getcharindex(c);
 			assert(c != -1);
-			printf("setting %d to %d\n", c, v);
 			tios->c_cc[c] = v;
 			continue;
 		}
