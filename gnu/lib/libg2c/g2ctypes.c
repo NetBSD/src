@@ -1,4 +1,4 @@
-/*	$NetBSD: g2ctypes.c,v 1.1 1998/08/18 17:25:33 tv Exp $	*/
+/*	$NetBSD: g2ctypes.c,v 1.2 1998/09/13 20:32:04 tv Exp $	*/
 
 /*
  * Not actually C; just fed through the preprocessor.
@@ -6,6 +6,7 @@
 
 #define TREE_CODE 1
 #include "proj.h"
+#include "tconfig.j"
 #define FFECOM_DETERMINE_TYPES 1
 #include "com.h"
 
