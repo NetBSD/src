@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86960.c,v 1.57 2003/11/02 11:07:45 wiz Exp $	*/
+/*	$NetBSD: mb86960.c,v 1.57.4.1 2005/01/24 21:41:04 he Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb86960.c,v 1.57 2003/11/02 11:07:45 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb86960.c,v 1.57.4.1 2005/01/24 21:41:04 he Exp $");
 
 /*
  * Device driver for Fujitsu MB86960A/MB86965A based Ethernet cards.
@@ -1300,7 +1300,8 @@ mb86960_ioctl(ifp, cmd, data)
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.
 			 */
-			mb86960_setmode(sc);
+			if (ifp->if_flags & IFF_RUNNING)
+				mb86960_setmode(sc);
 			error = 0;
 		}
 		break;
