@@ -1,4 +1,4 @@
-/*	$NetBSD: __clone.S,v 1.1 2002/06/03 18:31:12 fvdl Exp $	*/
+/*	$NetBSD: __clone.S,v 1.2 2002/06/06 20:51:17 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -90,9 +90,9 @@ ENTRY(__clone)
 	jmp	5f
 4:
 	addq	$8,%rsp
+5:
 	popq	%r13
 	popq	%r12
-5:
 #ifdef PIC
 	movq	PIC_GOT(CERROR),%rdx
 	jmp	*%rdx
