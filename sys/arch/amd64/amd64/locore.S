@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.10 2004/02/19 17:18:38 drochner Exp $	*/
+/*	$NetBSD: locore.S,v 1.11 2004/03/01 12:10:41 drochner Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1227,11 +1227,13 @@ syscall_return:
 	movw	TF_FS(%rsp),%fs
 	movw	TF_GS(%rsp),%gs
 	INTR_RESTORE_GPRS
+	movw	$(LSEL(LUDATA_SEL, SEL_UPL)),%r11
+	movw	%r11,%ds
 	addq	$48,%rsp
 	popq	%rcx	/* return rip */
 	addq	$8,%rsp
 	popq	%r11	/* flags as set by sysret insn */
-	movq	(%rsp),%rsp
+	movq	%ss:(%rsp),%rsp
 	sysretq
 
 #ifdef DIAGNOSTIC
