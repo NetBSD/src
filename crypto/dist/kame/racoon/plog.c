@@ -1,4 +1,4 @@
-/*	$KAME: plog.c,v 1.18 2001/08/20 06:46:28 itojun Exp $	*/
+/*	$KAME: plog.c,v 1.22 2002/04/26 00:00:10 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -123,7 +123,18 @@ void
 plog(int pri, const char *func, struct sockaddr *sa, const char *fmt, ...)
 {
 	va_list ap;
+
+	va_start(ap, fmt);
+	plogv(pri, func, sa, fmt, ap);
+	va_end(ap);
+}
+
+void
+plogv(int pri, const char *func, struct sockaddr *sa,
+	const char *fmt, ...)
+{
 	char *newfmt;
+	va_list ap;
 
 	if (pri > loglevel)
 		return;
@@ -137,31 +148,6 @@ plog(int pri, const char *func, struct sockaddr *sa, const char *fmt, ...)
 	}
 
 	va_start(ap, fmt);
-	if (logfile) {
-		log_vaprint(logp, newfmt, ap);
-	} else {
-		if (pri < ARRAYLEN(ptab))
-			vsyslog(ptab[pri].priority, newfmt, ap);
-		else
-			vsyslog(LOG_ALERT, newfmt, ap);
-	}
-	va_end(ap);
-}
-
-void
-plogv(int pri, const char *func, struct sockaddr *sa,
-	const char *fmt, va_list ap)
-{
-	char *newfmt;
-
-	if (pri > loglevel)
-		return;
-
-	newfmt = plog_common(pri, fmt, func);
-
-	if (f_foreground)
-		vprintf(newfmt, ap);
-
 	if (logfile)
 		log_vaprint(logp, newfmt, ap);
 	else {
@@ -170,6 +156,7 @@ plogv(int pri, const char *func, struct sockaddr *sa,
 		else
 			vsyslog(LOG_ALERT, newfmt, ap);
 	}
+	va_end(ap);
 }
 
 void
