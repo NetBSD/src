@@ -1,11 +1,12 @@
-/*	$NetBSD: uaudioreg.h,v 1.4 2000/01/16 09:32:56 augustss Exp $	*/
+/*	$NetBSD: uaudioreg.h,v 1.5 2000/04/27 15:26:47 augustss Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
- * Author: Lennart Augustsson <augustss@carlstedt.se>
- *         Carlstedt Research & Technology
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Lennart Augustsson (lennart@augustsson.net) at
+ * Carlstedt Research & Technology.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
