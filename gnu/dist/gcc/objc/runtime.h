@@ -29,6 +29,7 @@ Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include <stdarg.h>		/* for varargs and va_list's */
 
 #include <stdio.h>
+#include <string.h>
 #include <ctype.h>
 
 #include <stddef.h>		/* so noone else will get system versions */
