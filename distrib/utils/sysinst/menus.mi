@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi,v 1.18 2004/08/14 16:06:37 dsl Exp $	*/
+/*	$NetBSD: menus.mi,v 1.19 2004/11/11 21:24:40 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -210,9 +210,10 @@ menu sizechoice, sub menu, y=0, title MSG_Choose_your_size_specifier;
 
 menu distmedium, title MSG_Select_medium;
 	display action { umount_mnt2(); msg_display(MSG_distmedium); };
-	option MSG_ftp,	      exit, action { *(int *)arg = get_via_ftp(); };
-	option MSG_nfs,	      exit, action { *(int *)arg = get_via_nfs(); };
 	option MSG_cdrom,     exit, action { *(int *)arg = get_via_cdrom(); };
+	option MSG_ftp,	      exit, action { *(int *)arg = get_via_ftp("ftp"); };
+	option MSG_http,      exit, action { *(int *)arg = get_via_ftp("http"); };
+	option MSG_nfs,	      exit, action { *(int *)arg = get_via_nfs(); };
 	option MSG_floppy,    exit, action { *(int *)arg = get_via_floppy(); };
 	option MSG_local_fs,  exit, action { *(int *)arg = get_via_localfs(); };
 	option MSG_local_dir, exit, action { *(int *)arg = get_via_localdir();};
@@ -226,7 +227,7 @@ menu distset, title MSG_Select_your_distribution;
 menu ftpsource, title MSG_Change;
 	display action {
 		msg_clear();
-		msg_table_add(MSG_ftpsource, ftp_host, ftp_dir, set_dir,
+		msg_table_add(MSG_ftpsource, arg, ftp_host, ftp_dir, set_dir,
 		    ftp_user, strcmp(ftp_user, "ftp") == 0 || ftp_pass[0] == 0
 			? ftp_pass : msg_string(MSG_hidden),
 		    ftp_proxy);
@@ -257,10 +258,13 @@ menu ftpsource, title MSG_Change;
 	option MSG_Proxy, action
 		{ msg_prompt_win(MSG_Proxy, -1, 12, 0, 0,
 				ftp_proxy, ftp_proxy, sizeof ftp_proxy);
-		  if (strcmp(ftp_proxy, "") == 0)
+		  if (strcmp(ftp_proxy, "") == 0) {
 			unsetenv("ftp_proxy");
-		  else
+			unsetenv("http_proxy");
+		  } else {
 			setenv("ftp_proxy", ftp_proxy, 1);
+			setenv("http_proxy", ftp_proxy, 1);
+		  }
 		};
 	option MSG_Get_Distribution, exit;
 
