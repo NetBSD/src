@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.154 1999/08/28 09:22:59 augustss Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.155 1999/09/01 11:42:32 drochner Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.149 1999/08/28 09:18:08 augustss Exp 
+ *	NetBSD: pcidevs,v 1.150 1999/09/01 11:40:42 drochner Exp 
  */
 
 /*
@@ -39,6 +39,12 @@
  */
 
 struct pci_knowndev pci_knowndevs[] = {
+	{
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C985,
+	    0,
+	    "3Com",
+	    "3c985 Gigabit Ethernet",
+	},
 	{
 	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C590,
 	    0,
@@ -2062,48 +2068,6 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "NS87410",
 	},
 	{
-	    PCI_VENDOR_OLICOM, PCI_PRODUCT_OLICOM_OC2183,
-	    0,
-	    "Olicom",
-	    "Olicom OC-2183/2185 Ethernet",
-	},
-	{
-	    PCI_VENDOR_OLICOM, PCI_PRODUCT_OLICOM_OC2325,
-	    0,
-	    "Olicom",
-	    "Olicom OC-2325 Ethernet",
-	},
-	{
-	    PCI_VENDOR_OLICOM, PCI_PRODUCT_OLICOM_OC2326,
-	    0,
-	    "Olicom",
-	    "Olicom OC-2326 10/100-TX Ethernet",
-	},
-	{
-	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_EBUS,
-	    0,
-	    "Sun Microsystems",
-	    "SPARC Ebus",
-	},
-	{
-	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_HMENETWORK,
-	    0,
-	    "Sun Microsystems",
-	    "SUNW,hme compatible Ethernet",
-	},
-	{
-	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_SIMBA,
-	    0,
-	    "Sun Microsystems",
-	    "Simba PCI bridge",
-	},
-	{
-	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_US_IIi,
-	    0,
-	    "Sun Microsystems",
-	    "UltraSPARC IIi PCI",
-	},
-	{
 	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_810,
 	    0,
 	    "Symbios Logic",
@@ -2194,6 +2158,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "MagicMedia 256AV Audio",
 	},
 	{
+	    PCI_VENDOR_NETGEAR, PCI_PRODUCT_NETGEAR_GA620,
+	    0,
+	    "Netgear",
+	    "GA620 Gigabit Ethernet",
+	},
+	{
 	    PCI_VENDOR_NEXGEN, PCI_PRODUCT_NEXGEN_NX82C501,
 	    0,
 	    "NexGen Microsystems",
@@ -2234,6 +2204,24 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Oak Technology",
 	    "OTI107",
+	},
+	{
+	    PCI_VENDOR_OLICOM, PCI_PRODUCT_OLICOM_OC2183,
+	    0,
+	    "Olicom",
+	    "Olicom OC-2183/2185 Ethernet",
+	},
+	{
+	    PCI_VENDOR_OLICOM, PCI_PRODUCT_OLICOM_OC2325,
+	    0,
+	    "Olicom",
+	    "Olicom OC-2325 Ethernet",
+	},
+	{
+	    PCI_VENDOR_OLICOM, PCI_PRODUCT_OLICOM_OC2326,
+	    0,
+	    "Olicom",
+	    "Olicom OC-2326 10/100-TX Ethernet",
 	},
 	{
 	    PCI_VENDOR_OPTI, PCI_PRODUCT_OPTI_82C557,
@@ -2584,6 +2572,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "KS8920 10/100 Ethernet",
 	},
 	{
+	    PCI_VENDOR_SGI, PCI_PRODUCT_SGI_TIGON,
+	    0,
+	    "Silicon Graphics",
+	    "Tigon Gigabit Ethernet",
+	},
+	{
 	    PCI_VENDOR_SGSTHOMSON, PCI_PRODUCT_SGSTHOMSON_2000,
 	    0,
 	    "SGS Thomson Microelectric",
@@ -2722,6 +2716,36 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "SNP8023: Classifier Engine",
 	},
 	{
+	    PCI_VENDOR_SONY, PCI_PRODUCT_SONY_CXD1947A,
+	    0,
+	    "Sony",
+	    "CXD1947A FireWire Host Controller",
+	},
+	{
+	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_EBUS,
+	    0,
+	    "Sun Microsystems",
+	    "SPARC Ebus",
+	},
+	{
+	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_HMENETWORK,
+	    0,
+	    "Sun Microsystems",
+	    "SUNW,hme compatible Ethernet",
+	},
+	{
+	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_SIMBA,
+	    0,
+	    "Sun Microsystems",
+	    "Simba PCI bridge",
+	},
+	{
+	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_US_IIi,
+	    0,
+	    "Sun Microsystems",
+	    "UltraSPARC IIi PCI",
+	},
+	{
 	    PCI_VENDOR_SURECOM, PCI_PRODUCT_SURECOM_NE34,
 	    0,
 	    "Surecom Technology",
@@ -2840,12 +2864,6 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Texas Instruments",
 	    "PCI2030 PCI-CardBus Bridge",
-	},
-	{
-	    PCI_VENDOR_SONY, PCI_PRODUCT_SONY_CXD1947A,
-	    0,
-	    "Sony",
-	    "CXD1947A FireWire Host Controller",
 	},
 	{
 	    PCI_VENDOR_TOSHIBA, PCI_PRODUCT_TOSHIBA_R4X00,
@@ -6187,6 +6205,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_LMC, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "LAN Media Corporation",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_NETGEAR, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Netgear",
 	    NULL,
 	},
 	{
