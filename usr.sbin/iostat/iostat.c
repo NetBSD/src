@@ -1,4 +1,4 @@
-/*	$NetBSD: iostat.c,v 1.27 2002/06/30 00:10:35 sommerfeld Exp $	*/
+/*	$NetBSD: iostat.c,v 1.28 2002/09/18 23:18:44 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1996 John M. Vinopal
@@ -75,7 +75,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)iostat.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: iostat.c,v 1.27 2002/06/30 00:10:35 sommerfeld Exp $");
+__RCSID("$NetBSD: iostat.c,v 1.28 2002/09/18 23:18:44 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -124,7 +124,7 @@ int
 main(int argc, char *argv[])
 {
 	int ch, hdrcnt;
-	struct timeval	tv;
+	struct timespec	tv;
 
 	while ((ch = getopt(argc, argv, "Cc:dDIM:N:Tw:x")) != -1)
 		switch(ch) {
@@ -182,7 +182,7 @@ main(int argc, char *argv[])
 	selectdrives(argc, argv);
 
 	tv.tv_sec = interval;
-	tv.tv_usec = 0;
+	tv.tv_nsec = 0;
 
 	/* print a new header on sigcont */
 	(void)signal(SIGCONT, header);
@@ -199,7 +199,7 @@ main(int argc, char *argv[])
 
 		if (reps >= 0 && --reps <= 0)
 			break;
-		select(0, NULL, NULL, NULL, &tv);
+		nanosleep(&tv, NULL);
 		dkreadstats();
 	}
 	exit(0);
