@@ -1,4 +1,4 @@
-.\"	$NetBSD: systat.1,v 1.9 1997/10/19 23:36:32 lukem Exp $
+.\"	$NetBSD: systat.1,v 1.10 1999/01/28 03:28:53 mrg Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -201,7 +201,8 @@ not display time).
 .El
 .It Ic swap
 Show information about swap space usage on all the 
-swap areas compiled into the kernel.
+swap areas configured with
+.Xr swapctl 8 .
 The first column is the device name of the partition.
 The next column is the total space available in the partition.
 The 
