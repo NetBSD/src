@@ -1,4 +1,4 @@
-/*	$NetBSD: cy_isa.c,v 1.7 1997/10/20 18:43:08 thorpej Exp $	*/
+/*	$NetBSD: cy_isa.c,v 1.8 1998/01/14 12:14:47 drochner Exp $	*/
 
 /*
  * cy.c
@@ -24,7 +24,11 @@
 #include <dev/ic/cyreg.h>
 #include <dev/ic/cyvar.h>
 
+#ifdef __BROKEN_INDIRECT_CONFIG
 static int cy_probe_isa __P((struct device *, void *, void *));
+#else
+static int cy_probe_isa __P((struct device *, struct cfdata *, void *));
+#endif
 static void cy_attach_isa   __P((struct device *, struct device *, void *));
 
 struct cfattach cy_isa_ca = {
@@ -34,7 +38,12 @@ struct cfattach cy_isa_ca = {
 static int
 cy_probe_isa(parent, match, aux)
 	struct device  *parent;
-	void *match, *aux;
+#ifdef __BROKEN_INDIRECT_CONFIG
+	void *match;
+#else
+	struct cfdata *match;
+#endif
+	void *aux;
 {
 	struct isa_attach_args *ia = aux;
 	struct cy_softc sc;

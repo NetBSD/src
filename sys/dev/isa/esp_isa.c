@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_isa.c,v 1.7 1998/01/12 09:43:31 thorpej Exp $	*/
+/*	$NetBSD: esp_isa.c,v 1.8 1998/01/14 12:14:43 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -161,7 +161,11 @@
 
 #include <dev/isa/espvar.h>
 
+#ifdef __BROKEN_INDIRECT_CONFIG
 int	esp_isa_match __P((struct device *, void *, void *)); 
+#else
+int	esp_isa_match __P((struct device *, struct cfdata *, void *)); 
+#endif
 void	esp_isa_attach __P((struct device *, struct device *, void *));  
 
 struct cfattach esp_isa_ca = {
@@ -247,8 +251,7 @@ esp_find(iot, ioh, epd)
 	p1 = bus_space_read_1(iot, ioh, NCR_SIGNTR) & SIG_MASK;
 	p2 = bus_space_read_1(iot, ioh, NCR_SIGNTR) & SIG_MASK;
 
-	ESP_MISC(("%s: 0x%0x 0x%0x 0x%0x\n", epd->sc_dev.dv_xname,
-	    vers, p1, p2));
+	ESP_MISC(("esp_find: 0x%0x 0x%0x 0x%0x\n", vers, p1, p2));
 
 	if (!((p1 == M1 && p2 == M2) || (p1 == M2 && p2 == M1)))
 		return 0;
@@ -360,9 +363,13 @@ esp_init(esc, epd)
 int
 esp_isa_match(parent, match, aux)
 	struct device *parent;
-	void *match, *aux;
+#ifdef __BROKEN_INDIRECT_CONFIG
+	void *match;
+#else
+	struct cfdata *match;
+#endif
+	void *aux;
 {
-	struct ncr53c9x_softc *sc = match;
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
 	bus_space_handle_t ioh;
@@ -377,7 +384,6 @@ esp_isa_match(parent, match, aux)
 	if (bus_space_map(iot, ia->ia_iobase, ESP_ISA_IOSIZE, 0, &ioh))
 		return 0;
 
-	epd.sc_dev = sc->sc_dev;
 	rv = esp_find(iot, ioh, &epd);
 
 	bus_space_unmap(iot, ioh, ESP_ISA_IOSIZE);
@@ -385,8 +391,9 @@ esp_isa_match(parent, match, aux)
 	if (rv) {
 		if (ia->ia_irq != IRQUNK && ia->ia_irq != epd.sc_irq) {
 #ifdef DIAGNOSTIC
-		printf("%s: configured IRQ (%0d) does not match board IRQ (%0d), device not configured\n",
-		    sc->sc_dev.dv_xname, ia->ia_irq, epd.sc_irq);
+		printf("esp_isa_match: configured IRQ (%0d) does not "
+		       "match board IRQ (%0d), device not configured\n",
+		       ia->ia_irq, epd.sc_irq);
 #endif
 			return 0;
 		}
@@ -421,7 +428,6 @@ esp_isa_attach(parent, self, aux)
 		return;
 	}
 
-	epd.sc_dev = sc->sc_dev;
 	if (!esp_find(iot, ioh, &epd)) {
 		printf("%s: esp_find failed\n", sc->sc_dev.dv_xname);
 		return;
