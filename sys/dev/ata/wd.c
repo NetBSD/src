@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.238 2003/02/23 08:50:58 yamt Exp $ */
+/*	$NetBSD: wd.c,v 1.239 2003/03/21 22:40:56 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.238 2003/02/23 08:50:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.239 2003/03/21 22:40:56 thorpej Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -200,6 +200,52 @@ static void bad144intern __P((struct wd_softc *));
 int	wdlock	__P((struct wd_softc *));
 void	wdunlock	__P((struct wd_softc *));
 
+#define	WD_QUIRK_SPLIT_MOD15_WRITE	0x0001	/* must split certain writes */
+
+/*
+ * Quirk table for IDE drives.  Put more-specific matches first, since
+ * a simple globbing routine is used for matching.
+ */
+static const struct wd_quirk {
+	const char *wdq_match;		/* inquiry pattern to match */
+	int wdq_quirks;			/* drive quirks */
+} wd_quirk_table[] = {
+	/*
+	 * Some Seagate S-ATA drives have a PHY which can get confused
+	 * with the way data is packetized by some S-ATA controllers.
+	 *
+	 * The work-around is to split in two any write transfer who's
+	 * sector count % 15 == 1 (assuming 512 byte sectors).
+	 *
+	 * XXX This is an incomplete list.  There are at least a couple
+	 * XXX more model numbers.  If you have trouble with such transfers
+	 * XXX (8K is the most common) on Seagate S-ATA drives, please
+	 * XXX notify thorpej@netbsd.org.
+	 */
+	{ "ST3120023AS",
+	  WD_QUIRK_SPLIT_MOD15_WRITE },
+
+	{ NULL,
+	  0 }
+};
+
+static const struct wd_quirk *
+wd_lookup_quirks(const char *name)
+{
+	const struct wd_quirk *wdq;
+	const char *estr;
+
+	for (wdq = wd_quirk_table; wdq->wdq_match != NULL; wdq++) {
+		/*
+		 * We only want exact matches (which include matches
+		 * against globbing characters).
+		 */
+		if (pmatch(name, wdq->wdq_match, &estr) == 2)
+			return (wdq);
+	}
+	return (NULL);
+}
+
 int
 wdprobe(parent, match, aux)
 	struct device *parent;
@@ -233,6 +279,7 @@ wdattach(parent, self, aux)
 	struct ata_device *adev= aux;
 	int i, blank;
 	char buf[41], pbuf[9], c, *p, *q;
+	const struct wd_quirk *wdq;
 	WDCDEBUG_PRINT(("wdattach\n"), DEBUG_FUNCS | DEBUG_PROBE);
 
 	callout_init(&wd->sc_restart_ch);
@@ -272,6 +319,10 @@ wdattach(parent, self, aux)
 	*q++ = '\0';
 
 	printf(": <%s>\n", buf);
+
+	wdq = wd_lookup_quirks(buf);
+	if (wdq != NULL)
+		wd->sc_quirks = wdq->wdq_quirks;
 
 	if ((wd->sc_params.atap_multi & 0xff) > 1) {
 		wd->sc_multi = wd->sc_params.atap_multi & 0xff;
@@ -511,11 +562,102 @@ wdstart(arg)
 	}
 }
 
+static void
+wd_split_mod15_write(struct buf *bp)
+{
+	struct buf *obp = bp->b_private;
+	struct wd_softc *sc = wd_cd.cd_devs[DISKUNIT(obp->b_dev)];
+
+	if (__predict_false(bp->b_flags & B_ERROR) != 0) {
+		/*
+		 * Propagate the error.  If this was the first half of
+		 * the original transfer, make sure to account for that
+		 * in the residual.
+		 */
+		if (bp->b_data == obp->b_data)
+			bp->b_resid += bp->b_bcount;
+		goto done;
+	}
+
+	/*
+	 * If this was the second half of the transfer, we're all done!
+	 */
+	if (bp->b_data != obp->b_data)
+		goto done;
+
+	/*
+	 * Advance the pointer to the second half and issue that command
+	 * using the same opening.
+	 */
+	bp->b_flags = obp->b_flags | B_CALL;
+	bp->b_data += bp->b_bcount;
+	bp->b_blkno += (bp->b_bcount / 512);
+	bp->b_rawblkno += (bp->b_bcount / 512);
+	__wdstart(sc, bp);
+	return;
+
+ done:
+	obp->b_flags |= (bp->b_flags & (B_EINTR|B_ERROR));
+	obp->b_error = bp->b_error;
+	obp->b_resid = bp->b_resid;
+	pool_put(&bufpool, bp);
+	biodone(obp);
+	sc->openings++;
+	/* wddone() will call wdstart() */
+}
+
 void
 __wdstart(wd, bp)
 	struct wd_softc *wd;
 	struct buf *bp;
 {
+
+	/*
+	 * Deal with the "split mod15 write" quirk.  We just divide the
+	 * transfer in two, doing the first half and then then second half
+	 * with the same command opening.
+	 *
+	 * Note we MUST do this here, because we can't let insertion
+	 * into the bufq cause the transfers to be re-merged.
+	 */
+	if (__predict_false((wd->sc_quirks & WD_QUIRK_SPLIT_MOD15_WRITE) != 0 &&
+			    (bp->b_flags & B_READ) == 0 &&
+			    bp->b_bcount > 512 &&
+			    ((bp->b_bcount / 512) % 15) == 1)) {
+		struct buf *nbp;
+
+		/* already at splbio */
+		nbp = pool_get(&bufpool, PR_NOWAIT);
+		if (__predict_false(nbp == NULL)) {
+			/* No memory -- fail the iop. */
+			bp->b_error = ENOMEM;
+			bp->b_flags |= B_ERROR;
+			bp->b_resid = bp->b_bcount;
+			biodone(bp);
+			wd->openings++;
+			return;
+		}
+
+		BUF_INIT(nbp);
+		nbp->b_error = 0;
+		nbp->b_proc = bp->b_proc;
+		nbp->b_vp = NULLVP;
+		nbp->b_dev = bp->b_dev;
+
+		nbp->b_bcount = bp->b_bcount / 2;
+		nbp->b_bufsize = bp->b_bcount / 2;
+		nbp->b_data = bp->b_data;
+
+		nbp->b_blkno = bp->b_blkno;
+		nbp->b_rawblkno = bp->b_rawblkno;
+
+		nbp->b_flags = bp->b_flags | B_CALL;
+		nbp->b_iodone = wd_split_mod15_write;
+
+		/* Put ptr to orig buf in b_private and use new buf */
+		nbp->b_private = bp;
+		bp = nbp;
+	}
 
 	wd->sc_wdc_bio.blkno = bp->b_rawblkno;
 	wd->sc_wdc_bio.blkdone =0;
@@ -615,8 +757,14 @@ noerror:	if ((wd->sc_wdc_bio.flags & ATA_CORR) || wd->retries > 0)
 #if NRND > 0
 	rnd_add_uint32(&wd->rnd_source, bp->b_blkno);
 #endif
-	biodone(bp);
-	wd->openings++;
+	/* XXX Yuck, but we don't want to increment openings in this case */
+	if (__predict_false((bp->b_flags & B_CALL) != 0 &&
+			    bp->b_iodone == wd_split_mod15_write))
+		biodone(bp);
+	else {
+		biodone(bp);
+		wd->openings++;
+	}
 	wdstart(wd);
 }
 
