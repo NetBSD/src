@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.150 2004/01/29 12:10:07 yamt Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.151 2004/03/09 06:43:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.150 2004/01/29 12:10:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.151 2004/03/09 06:43:18 yamt Exp $");
 
 #define ivndebug(vp,str) printf("ino %d: %s\n",VTOI(vp)->i_number,(str))
 
@@ -1919,7 +1919,7 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 		    / sizeof(int32_t)) {
 			panic("lfs_writeseg: real bpp overwrite");
 		}
-		if (bpp - sp->bpp > fs->lfs_ssize / fs->lfs_fsize) {
+		if (bpp - sp->bpp > segsize(fs) / fs->lfs_fsize) {
 			panic("lfs_writeseg: theoretical bpp overwrite");
 		}
 #endif
