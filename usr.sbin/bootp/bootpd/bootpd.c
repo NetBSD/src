@@ -22,7 +22,7 @@ SOFTWARE.
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bootpd.c,v 1.18 2003/05/17 20:58:39 itojun Exp $");
+__RCSID("$NetBSD: bootpd.c,v 1.19 2003/07/14 06:08:04 itojun Exp $");
 #endif
 
 /*
@@ -626,7 +626,7 @@ ignoring request for server %s from client at %s address %s",
 			return;
 		}
 	} else {
-		strcpy(bp->bp_sname, hostname);
+		strlcpy(bp->bp_sname, hostname, sizeof(bp->bp_sname));
 	}
 
 	/* If it uses an unknown network type, ignore the request.  */
@@ -744,10 +744,10 @@ HW addr type is IEEE 802.  convert to %s and check again\n",
 	if (hp->flags.exec_file) {
 		char tst[100];
 		/* XXX - Check string lengths? -gwr */
-		strcpy (tst, hp->exec_file->string);
-		strcat (tst, " ");
-		strcat (tst, hp->hostname->string);
-		strcat (tst, " &");
+		strlcpy(tst, hp->exec_file->string, sizeof(tst));
+		strlcat(tst, " ", sizeof(tst));
+		strlcat(tst, hp->hostname->string, sizeof(tst));
+		strlcat(tst, " &", sizeof(tst));
 		if (debug)
 			report(LOG_INFO, "executing %s", tst);
 		system(tst);	/* Hope this finishes soon... */
@@ -877,10 +877,10 @@ HW addr type is IEEE 802.  convert to %s and check again\n",
 	}
 	if (bootfile) {
 		if (bootfile[0] != '/') {
-			strcat(realpath, "/");
+			strlcat(realpath, "/", sizeof(realpath));
 			realpath[sizeof(realpath) - 1] = '\0';
 		}
-		strcat(realpath, bootfile);
+		strlcat(realpath, bootfile, sizeof(realpath));
 		realpath[sizeof(realpath) - 1] = '\0';
 		bootfile = NULL;
 	}
@@ -889,8 +889,8 @@ HW addr type is IEEE 802.  convert to %s and check again\n",
 	 * First try to find the file with a ".host" suffix
 	 */
 	n = strlen(clntpath);
-	strcat(clntpath, ".");
-	strcat(clntpath, hp->hostname->string);
+	strlcat(clntpath, ".", sizeof(clntpath));
+	strlcat(clntpath, hp->hostname->string, sizeof(clntpath));
 	if (chk_access(realpath, &bootsize) < 0) {
 		clntpath[n] = 0;			/* Try it without the suffix */
 		if (chk_access(realpath, &bootsize) < 0) {
@@ -1160,7 +1160,7 @@ dovend_cmu(struct bootp *bp, struct host *hp)
 	 * domain name server, ien name server, time server
 	 */
 	vendp = (struct cmu_vend *) bp->bp_vend;
-	strcpy(vendp->v_magic, (char *)vm_cmu);
+	strlcpy(vendp->v_magic, (char *)vm_cmu, sizeof(vendp->v_magic));
 	if (hp->flags.subnet_mask) {
 		(vendp->v_smask).s_addr = hp->subnet_mask.s_addr;
 		(vendp->v_flags) |= VF_SMASK;
