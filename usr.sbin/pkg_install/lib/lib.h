@@ -1,4 +1,4 @@
-/* $NetBSD: lib.h,v 1.18 1998/10/21 09:54:09 agc Exp $ */
+/* $NetBSD: lib.h,v 1.19 1999/01/19 17:02:01 hubertf Exp $ */
 
 /* from FreeBSD Id: lib.h,v 1.25 1997/10/08 07:48:03 charnier Exp */
 
@@ -192,6 +192,16 @@ void		write_plist(package_t *, FILE *);
 void		read_plist(package_t *, FILE *);
 int		plist_cmd(char *, char **);
 int		delete_package(Boolean, Boolean, package_t *);
+
+/* Package Database */
+int		pkgdb_open(int);
+void		pkgdb_close(void);
+int		pkgdb_store(const char *, const char *);
+char*		pkgdb_retrieve(const char *);
+int		pkgdb_remove(const char *);
+char*		pkgdb_iter(void);
+char*          _pkgdb_getPKGDB_FILE(void);
+char*          _pkgdb_getPKGDB_DIR(void);
 
 /* For all */
 int		pkg_perform(char **);

@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.19 1998/10/21 09:54:09 agc Exp $	*/
+/*	$NetBSD: perform.c,v 1.20 1999/01/19 17:02:00 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.23 1997/10/13 15:03:53 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.19 1998/10/21 09:54:09 agc Exp $");
+__RCSID("$NetBSD: perform.c,v 1.20 1999/01/19 17:02:00 hubertf Exp $");
 #endif
 #endif
 
@@ -251,17 +251,42 @@ pkg_perform(char **pkgs)
 	if (CheckPkg) {
 		err_cnt += CheckForPkg(CheckPkg, tmp);
 	} else if (AllInstalled) {
-		if (!(isdir(tmp) || islinktodir(tmp))) {
-			return 1;
+	    if (!(isdir(tmp) || islinktodir(tmp)))
+		return 1;
+	    
+	    if (File2Pkg) {
+		/* Show all files with the package they belong to */
+		char *file, *pkg;
+		
+		/* pkg_info -Fa => Dump pkgdb */
+		if (pkgdb_open(1)==-1) {
+		    err(1, "cannot open pkgdb");
 		}
+		while ((file = pkgdb_iter())) {
+		    pkg = pkgdb_retrieve(file);
+		    printf("%-50s %s\n", file, pkg);
+		}
+		pkgdb_close();
+	    } else {
+		/* Show all packges with description */
 		if ((dirp = opendir(tmp)) != (DIR *) NULL) {
 			while ((dp = readdir(dirp)) != (struct dirent *) NULL) {
-				if (strcmp(dp->d_name, ".") && strcmp(dp->d_name, "..")) {
-					err_cnt += pkg_do(dp->d_name);
-				}
+				char tmp2[FILENAME_MAX];
+				
+				if (strcmp(dp->d_name, ".")==0 ||
+				    strcmp(dp->d_name, "..")==0)
+					continue;
+
+				snprintf(tmp2, FILENAME_MAX, "%s/%s",
+					 tmp, dp->d_name);
+				if (isfile(tmp2))
+					continue;
+				
+				err_cnt += pkg_do(dp->d_name);
 			}
 			(void) closedir(dirp);
 		}
+	    }
 	} else {
 		for (i = 0; pkgs[i]; i++) {
 			err_cnt += pkg_do(pkgs[i]);

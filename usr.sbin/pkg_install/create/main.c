@@ -1,11 +1,11 @@
-/*	$NetBSD: main.c,v 1.11 1998/10/26 17:39:22 agc Exp $	*/
+/*	$NetBSD: main.c,v 1.12 1999/01/19 17:01:59 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: main.c,v 1.17 1997/10/08 07:46:23 charnier Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.11 1998/10/26 17:39:22 agc Exp $");
+__RCSID("$NetBSD: main.c,v 1.12 1999/01/19 17:01:59 hubertf Exp $");
 #endif
 #endif
 
@@ -24,7 +24,7 @@ __RCSID("$NetBSD: main.c,v 1.11 1998/10/26 17:39:22 agc Exp $");
 #include "lib.h"
 #include "create.h"
 
-static char Options[] = "ORhlvf:p:P:C:c:d:i:k:r:t:X:D:m:s:b:B:";
+static char Options[] = "ORhlvFf:p:P:C:c:d:i:k:r:t:X:D:m:s:b:B:";
 
 char	*Prefix		= NULL;
 char	*Comment	= NULL;
@@ -47,6 +47,7 @@ int	Dereference	= 0;
 int	PlistOnly	= 0;
 int	RelativeLinks	= 0;
 int	ReorderDirs	= 0;
+Boolean File2Pkg	= FALSE;
 
 static void
 usage(void)

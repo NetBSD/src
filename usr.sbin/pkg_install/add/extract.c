@@ -1,11 +1,11 @@
-/*	$NetBSD: extract.c,v 1.11 1998/10/09 18:27:32 agc Exp $	*/
+/*	$NetBSD: extract.c,v 1.12 1999/01/19 17:01:57 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "FreeBSD - Id: extract.c,v 1.17 1997/10/08 07:45:35 charnier Exp";
 #else
-__RCSID("$NetBSD: extract.c,v 1.11 1998/10/09 18:27:32 agc Exp $");
+__RCSID("$NetBSD: extract.c,v 1.12 1999/01/19 17:01:57 hubertf Exp $");
 #endif
 #endif
 
@@ -116,6 +116,12 @@ extract_plist(char *home, package_t *pkg)
     last_file = NULL;
     Directory = home;
 
+    /* Open Package Database for writing */
+    if (pkgdb_open(0) == -1) {
+	cleanup(0);
+	err(1, "can't open pkgdb");
+    }
+    
     /* Do it */
     while (p) {
 	char cmd[FILENAME_MAX];
@@ -158,6 +164,33 @@ extract_plist(char *home, package_t *pkg)
 		    }
 		}
 		if (rename(p->name, try) == 0) {
+		    /* note in pkgdb */
+		    {
+			char *s, t[FILENAME_MAX], *u;
+			int rc;
+			
+			if (p->name[0] == '/')
+			    u=p->name;
+			else {
+			    snprintf(t, FILENAME_MAX, "%s/%s", Directory, p->name);
+			    u=t;
+			}
+			
+			s=pkgdb_retrieve(u);
+#ifdef PKGDB_DEBUG
+ printf("pkgdb_retrieve(\"%s\")=\"%s\"\n", t, s); /* pkgdb-debug - HF */
+#endif
+			if (s)
+			    warnx("Overwriting %s - pkg %s bogus/conflicting?\n", t, s);
+			else {
+			    rc=pkgdb_store(t, PkgName);
+#ifdef PKGDB_DEBUG
+ printf("pkgdb_store(\"%s\", \"%s\") = %d\n", t, PkgName, rc); /* pkgdb-debug - HF */
+#endif
+			    
+			}
+		    }
+		    
 		    /* try to add to list of perms to be changed and run in bulk. */
 		    if (p->name[0] == '/' || TOOBIG(p->name)) {
 			PUSHOUT(Directory);
@@ -191,6 +224,35 @@ extract_plist(char *home, package_t *pkg)
 			errx(2, "oops, miscounted strings!");
 		    }
 		    perm_count += add_count;
+
+		    /* note in pkgdb */
+		    /* XXX would be better to store in PUSHOUT, but
+		       that would probably affect too much code I prefer
+		       not to touch - HF */
+		    {
+			char *s, t[FILENAME_MAX], *u;
+			int rc;
+
+			if (p->name[0] == '/')
+			    u=p->name;
+			else {
+			    snprintf(t, FILENAME_MAX, "%s/%s", Directory, p->name);
+			    u=t;
+			}
+			
+			s=pkgdb_retrieve(t);
+#ifdef PKGDB_DEBUG
+ printf("pkgdb_retrieve(\"%s\")=\"%s\"\n", t, s); /* pkgdb-debug - HF */
+#endif
+			if (s)
+			    warnx("Overwriting %s - pkg %s bogus/conflicting?\n", t, s);
+			else {
+			    rc = pkgdb_store(t, PkgName);
+#ifdef PKGDB_DEBUG
+ printf("pkgdb_store(\"%s\", \"%s\") = %d\n", t, PkgName, rc); /* pkgdb-debug - HF */
+#endif
+                        }
+		    }
 		}
 	    }
 	    break;
@@ -250,4 +312,5 @@ extract_plist(char *home, package_t *pkg)
 	p = p->next;
     }
     PUSHOUT(Directory);
+    pkgdb_close();
 }

@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.14 1998/10/26 17:39:23 agc Exp $	*/
+/*	$NetBSD: perform.c,v 1.15 1999/01/19 17:01:59 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.38 1997/10/13 15:03:51 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.14 1998/10/26 17:39:23 agc Exp $");
+__RCSID("$NetBSD: perform.c,v 1.15 1999/01/19 17:01:59 hubertf Exp $");
 #endif
 #endif
 
@@ -280,7 +280,7 @@ pkg_perform(char **pkgs)
      * hack.  It's not a real create in progress.
      */
     if (PlistOnly) {
-	check_list(home, &plist);
+	check_list(home, &plist, basename_of(pkg));
 	write_plist(&plist, stdout);
 	exit(0);
     }
@@ -291,11 +291,9 @@ pkg_perform(char **pkgs)
     signal(SIGHUP, cleanup);
 
     /* Make first "real contents" pass over it */
-    check_list(home, &plist);
+    check_list(home, &plist, basename_of(pkg));
     (void) umask(022);	/* make sure gen'ed directories, files don't have
 			   group or other write bits. */
-    /* copy_plist(home, &plist); */
-    /* mark_plist(&plist); */
 
     /* Now put the release specific items in */
     add_plist(&plist, PLIST_CWD, ".");

@@ -1,11 +1,11 @@
-/*	$NetBSD: pen.c,v 1.13 1998/10/27 19:27:17 agc Exp $	*/
+/*	$NetBSD: pen.c,v 1.14 1999/01/19 17:02:01 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: pen.c,v 1.25 1997/10/08 07:48:12 charnier Exp";
 #else
-__RCSID("$NetBSD: pen.c,v 1.13 1998/10/27 19:27:17 agc Exp $");
+__RCSID("$NetBSD: pen.c,v 1.14 1999/01/19 17:02:01 hubertf Exp $");
 #endif
 #endif
 
@@ -38,6 +38,7 @@ __RCSID("$NetBSD: pen.c,v 1.13 1998/10/27 19:27:17 agc Exp $");
 /* For keeping track of where we are */
 static char Current[FILENAME_MAX];
 static char Previous[FILENAME_MAX];
+static int CurrentSet; /* rm -rf Current only if it's really set! */
 
 /* Backup Current and Previous into temp. strings that are later
  * restored & freed by restore_dirs
@@ -46,7 +47,7 @@ static char Previous[FILENAME_MAX];
 void
 save_dirs(char **c, char **p)
 {
-    *c=strdup(Current);
+    *c=strdup(Current);      /* XXX */
     *p=strdup(Previous);
 }
 
@@ -57,8 +58,8 @@ save_dirs(char **c, char **p)
 void
 restore_dirs(char *c, char *p)
 {
-    strcpy(Current, c);  free(c);
-    strcpy(Previous, p); free(p);
+    CurrentSet=0; strcpy(Current, c);  free(c); CurrentSet=1;
+                  strcpy(Previous, p); free(p);
 }
 
 char *
@@ -107,14 +108,22 @@ make_playpen(char *pen, size_t pensize, size_t sz)
     if (!find_play_pen(pen, pensize, sz))
 	return NULL;
 
+#if defined(NetBSD1_3) || (NetBSD <= 199713) /* values from 1.3.2 */
+    /* mkdtemp(3) is not present on 1.3.3 and below */
     if (!mktemp(pen)) {
-	cleanup(0);
-	errx(2, "can't mktemp '%s'", pen);
+        cleanup(0);
+        errx(2, "can't mktemp '%s'", pen);
     }
-    if (mkdir(pen, 0755) == FAIL) {
-	cleanup(0);
-	errx(2, "can't mkdir '%s'", pen);
+    if (mkdir(pen, 0755) == FAIL) { 
+        cleanup(0);
+        errx(2, "can't mkdir '%s'", pen);
     }
+#else
+    if (!mkdtemp(pen)) {
+	cleanup(0);
+	errx(2, "can't mkdtemp '%s'", pen);
+    }
+#endif
     if (Verbose) {
 	if (sz)
 	    fprintf(stderr, "Requested space: %lu bytes, free space: %qd bytes in %s\n", (u_long)sz, (long long)min_free(pen), pen);
@@ -136,7 +145,7 @@ make_playpen(char *pen, size_t pensize, size_t sz)
 	cleanup(0);
 	errx(2, "can't chdir to '%s'", pen);
     }
-    strcpy(Current, pen);
+    strcpy(Current, pen); CurrentSet=1;
     return Previous;
 }
 
@@ -151,12 +160,11 @@ leave_playpen(char *save)
     if (Previous[0] && chdir(Previous) == FAIL) {
 	cleanup(0);
 	errx(2, "can't chdir back to '%s'", Previous);
-    } else if (Current[0] && strcmp(Current, Previous)) {
+    } else if (CurrentSet && Current[0] && strcmp(Current, Previous)) {
         if (strcmp(Current,"/")==0) {
             fprintf(stderr,"PANIC: About to rm -rf / (not doing so, aborting)\n");
             abort();
         }
-	warnx("[Info]: about to perform \"rm -rf '%s'\"\n", Current);
 	if (vsystem("rm -rf %s", Current))
 	    warnx("couldn't remove temporary dir '%s'", Current);
 	strcpy(Current, Previous);

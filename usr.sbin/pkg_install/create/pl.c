@@ -1,11 +1,11 @@
-/*	$NetBSD: pl.c,v 1.9 1998/10/19 20:15:24 agc Exp $	*/
+/*	$NetBSD: pl.c,v 1.10 1999/01/19 17:01:59 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: pl.c,v 1.11 1997/10/08 07:46:35 charnier Exp";
 #else
-__RCSID("$NetBSD: pl.c,v 1.9 1998/10/19 20:15:24 agc Exp $");
+__RCSID("$NetBSD: pl.c,v 1.10 1999/01/19 17:01:59 hubertf Exp $");
 #endif
 #endif
 
@@ -31,7 +31,6 @@ __RCSID("$NetBSD: pl.c,v 1.9 1998/10/19 20:15:24 agc Exp $");
 
 #include "lib.h"
 #include "create.h"
-#include <errno.h>
 #include <err.h>
 #include <md5.h>
 
@@ -101,7 +100,7 @@ reorder(package_t *pkg, int dirc)
 
 /* Check a list for files that require preconversion */
 void
-check_list(char *home, package_t *pkg)
+check_list(char *home, package_t *pkg, const char *PkgName)
 {
 	struct stat	st;
 	plist_t		*tmp;
@@ -112,6 +111,12 @@ check_list(char *home, package_t *pkg)
 	char		*srcdir = NULL;
 	int		dirc;
 
+	/* Open Package Database for writing */
+	if (pkgdb_open(0) == -1) {
+	    cleanup(0);
+	    err(1, "can't open pkgdb");
+	}
+	
 	for (dirc = 0, p = pkg->head ; p ; p = p->next) {
 		switch (p->type) {
 		case PLIST_CWD:
@@ -127,6 +132,37 @@ check_list(char *home, package_t *pkg)
 			dirc++;
 			break;
 		case PLIST_FILE:
+			/*
+			 * pkgdb handling - usually, we enter files
+			 * into the pkgdb as soon as they hit the disk,
+			 * but as they are present before pkg_create
+			 * starts, it's ok to do this somewhere here 
+			 */
+			{
+			    char *s, t[FILENAME_MAX], *u;
+			    
+			    if (p->name[0] == '/')
+				u=p->name;
+			    else {
+				snprintf(t, FILENAME_MAX, "%s/%s", cwd, p->name);
+				u=t;
+			    }
+			    
+			    s=pkgdb_retrieve(u);
+#ifdef PKGDB_DEBUG
+ fprintf(stderr, "pkgdb_retrieve(\"%s\")=\"%s\"\n", t, s); /* pkgdb-debug - HF */
+#endif
+                            if (s && PlistOnly)
+				warnx("Overwriting %s - "
+				      "pkg %s bogus/conflicting?\n", t, s);
+			    else {
+				pkgdb_store(t, PkgName);
+#ifdef PKGDB_DEBUG
+ fprintf(stderr, "pkgdb_store(\"%s\", \"%s\")\n", t, PkgName); /* pkgdb-debug - HF */
+#endif
+			    }
+			}
+
 			(void) snprintf(name, sizeof(name), "%s/%s", srcdir ? srcdir : cwd, p->name);
 			if (lstat(name, &st) < 0) {
 				warnx("can't stat `%s'", name);
@@ -155,7 +191,7 @@ check_list(char *home, package_t *pkg)
 			if (MD5File(name, &buf[ChecksumHeaderLen]) != (char *) NULL) {
 				tmp = new_plist_entry();
 				tmp->name = strdup(buf);
-				tmp->type = PLIST_COMMENT;
+				tmp->type = PLIST_COMMENT; /* PLIST_MD5 - HF */
 				tmp->next = p->next;
 				tmp->prev = p;
 				p->next = tmp;
@@ -166,172 +202,10 @@ check_list(char *home, package_t *pkg)
 			break;
 		}
 	}
+
+	pkgdb_close();
+	
 	if (ReorderDirs && dirc > 0) {
 		reorder(pkg, dirc);
 	}
-}
-
-static int
-trylink(const char *from, const char *to)
-{
-	char	*cp;
-
-	if (link(from, to) == 0) {
-		return 0;
-	}
-	if (errno == ENOENT) {
-		/* try making the container directory */
-		if ((cp = strrchr(to, '/')) != (char *) NULL) {
-			vsystem("mkdir -p %.*s", (size_t)(cp - to), to);
-		}
-		return link(from, to);
-	}
-	return -1;
-}
-
-#define STARTSTRING "tar cf -"
-#define TOOBIG(str) strlen(str) + 6 + strlen(home) + where_count > maxargs
-#define PUSHOUT() /* push out string */					\
-	if (where_count > sizeof(STARTSTRING)-1) {			\
-		    strcat(where_args, "|tar xpf -");			\
-		    if (system(where_args)) {				\
-			cleanup(0);					\
-			errx(2, "can't invoke tar pipeline");		\
-		    }							\
-		    memset(where_args, 0, maxargs);			\
- 		    last_chdir = NULL;					\
-		    strcpy(where_args, STARTSTRING);			\
-		    where_count = sizeof(STARTSTRING)-1;		\
-	}
-
-/*
- * Copy unmarked files in packing list to playpen - marked files
- * have already been copied in an earlier pass through the list.
- */
-void
-copy_plist(char *home, package_t *plist)
-{
-    plist_t *p = plist->head;
-    char *where = home;
-    char *there = NULL, *mythere;
-    char *where_args, *last_chdir, *root = "/";
-    int maxargs, where_count = 0, add_count;
-    struct stat stb;
-    dev_t curdir;
-
-    maxargs = sysconf(_SC_ARG_MAX);
-    maxargs -= 64;			/* some slop for the tar cmd text,
-					   and sh -c */
-    where_args = malloc(maxargs);
-    if (!where_args) {
-	cleanup(0);
-	errx(2, "can't get argument list space");
-    }
-
-    memset(where_args, 0, maxargs);
-    strcpy(where_args, STARTSTRING);
-    where_count = sizeof(STARTSTRING)-1;
-    last_chdir = 0;
-
-    if (stat(".", &stb) == 0)
-	curdir = stb.st_dev;
-    else
-	curdir = (dev_t) -1;		/* It's ok if this is a valid dev_t;
-					   this is just a hint for an
-					   optimization. */
-
-    while (p) {
-	if (p->type == PLIST_CWD)
-	    where = p->name;
-	else if (p->type == PLIST_SRC)
-	    there = p->name;
-	else if (p->type == PLIST_IGNORE)
-	    p = p->next;
-	else if (p->type == PLIST_FILE && !p->marked) {
-	    char fn[FILENAME_MAX];
-
-
-	    /* First, look for it in the "home" dir */
-	    (void) snprintf(fn, sizeof(fn), "%s/%s", home, p->name);
-	    if (fexists(fn)) {
-		if (lstat(fn, &stb) == 0 && stb.st_dev == curdir &&
-		    S_ISREG(stb.st_mode)) {
-		    /* if we can link it to the playpen, that avoids a copy
-		       and saves time. */
-		    if (p->name[0] != '/') {
-			/* don't link abspn stuff--it doesn't come from
-			   local dir! */
-			if (trylink(fn, p->name) == 0) {
-			    p = p->next;
-			    continue;
-			}
-		    }
-		}
-		if (TOOBIG(fn)) {
-		    PUSHOUT();
-		}
-		if (p->name[0] == '/') {
-		    add_count = snprintf(&where_args[where_count],
-					 maxargs - where_count,
-					 " %s %s",
-					 last_chdir == root ? "" : "-C /",
-					 p->name);
-		    last_chdir = root;
-		} else {
-		    add_count = snprintf(&where_args[where_count],
-					 maxargs - where_count,
-					 " %s%s %s",
-					 last_chdir == home ? "" : "-C ",
-					 last_chdir == home ? "" : home,
-					 p->name);
-		    last_chdir = home;
-		}
-		if (add_count > maxargs - where_count) {
-		    cleanup(0);
-		    errx(2, "oops, miscounted strings!");
-		}
-		where_count += add_count;
-	    }
-	    /*
-	     * Otherwise, try along the actual extraction path..
-	     */
-	    else {
-		if (p->name[0] == '/')
-		    mythere = root;
-		else mythere = there;
-		(void) snprintf(fn, sizeof(fn), "%s/%s", mythere ? mythere : where, p->name);
-		if (lstat(fn, &stb) == 0 && stb.st_dev == curdir &&
-		    S_ISREG(stb.st_mode)) {
-		    /* if we can link it to the playpen, that avoids a copy
-		       and saves time. */
-		    if (trylink(fn, p->name) == 0) {
-			p = p->next;
-			continue;
-		    }
-		}
-		if (TOOBIG(p->name)) {
-		    PUSHOUT();
-		}
-		if (last_chdir == (mythere ? mythere : where))
-		    add_count = snprintf(&where_args[where_count],
-					 maxargs - where_count,
-					 " %s", p->name);
-		else
-		    add_count = snprintf(&where_args[where_count],
-					 maxargs - where_count,
-					 " -C %s %s",
-					 mythere ? mythere : where,
-					 p->name);
-		if (add_count > maxargs - where_count) {
-		    cleanup(0);
-		    errx(2, "oops, miscounted strings!");
-		}
-		where_count += add_count;
-		last_chdir = (mythere ? mythere : where);
-	    }
-	}
-	p = p->next;
-    }
-    PUSHOUT();
-    free(where_args);
 }

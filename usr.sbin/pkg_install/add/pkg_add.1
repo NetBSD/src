@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_add.1,v 1.9 1998/10/26 11:35:00 hubertf Exp $
+.\" $NetBSD: pkg_add.1,v 1.10 1999/01/19 17:01:57 hubertf Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintainance
 .\" of non-core utilities.
@@ -17,7 +17,7 @@
 .\"
 .\"     @(#)pkg_add.1
 .\"
-.Dd November 25, 1994
+.Dd January 12, 1999
 .Dt pkg_add 1
 .Os FreeBSD
 .Sh NAME
@@ -372,6 +372,9 @@ Initial work and ongoing development.
 .It "John Kohl"
 .Nx
 refinements.
+.It "Hubert Feyrer"
+.Nx
+wildcard dependency processing, pkgdb, etc.
 .El
 .Sh BUGS
 Hard links between files in a distribution are only preserved if either
