@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.38 2001/09/30 20:09:11 tron Exp $
+$NetBSD: UPDATING,v 1.39 2001/10/04 04:27:48 jmc Exp $
 
 This file is intended to be a brief introduction to the build
 process and a reference on what to do if something doesn't work.
@@ -7,6 +7,11 @@ For a more detailed description see Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20011004:
+
+	Crunchgen has been updated to work via reach-over makefiles. Updating
+	is suggested before running a snapshot build
 
 20010922:
 	The new toolchain is enabled on i386.  This new build method
