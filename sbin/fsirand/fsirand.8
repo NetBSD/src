@@ -1,4 +1,4 @@
-.\"	$NetBSD: fsirand.8,v 1.5 2001/06/05 12:42:56 wiz Exp $
+.\"	$NetBSD: fsirand.8,v 1.6 2001/08/19 14:59:39 lukem Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 7, 1997
+.Dd August 20, 2001
 .Dt FSIRAND 8
 .Os
 .Sh NAME
@@ -42,8 +42,9 @@
 .Nd install random inode generation numbers in a filesystem
 .Sh SYNOPSIS
 .Nm
-.Op Fl x Ar constant
+.Op Fl F
 .Op Fl p
+.Op Fl x Ar constant
 .Ar special
 .Sh DESCRIPTION
 .Nm
@@ -57,15 +58,27 @@ should be run on a clean and unmounted filesystem.
 .Pp
 The options are as follows:
 .Bl -tag -width indent
+.It Fl F
+Indicates that
+.Ar special
+is a file system image in a regular file.
+.It Fl p
+Print the current inode generation numbers; the filesystem is not modified.
 .It Fl x Ar constant
 Exclusive-or the given constant with the random number used in the generation
 process.
-.It Fl p
-Print the current inode generation numbers; the filesystem is not modified.
 .El
 .Pp
 .Nm
 exits zero on success, non-zero on failure.
+.Pp
+If
+.Nm
+receives a
+.Dv SIGINFO
+signal, statistics on the amount of work completed and estimated
+completion time (in minutes:seconds) will be written to the standard
+error output.
 .Sh SEE ALSO
 .Xr fsck_ffs 8 ,
 .Xr newfs 8
