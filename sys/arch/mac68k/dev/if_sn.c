@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn.c,v 1.21 1999/05/18 23:52:53 thorpej Exp $	*/
+/*	$NetBSD: if_sn.c,v 1.22 1999/05/21 21:48:28 thorpej Exp $	*/
 
 /*
  * National Semiconductor  DP8393X SONIC Driver
@@ -1019,8 +1019,7 @@ sonicrxint(sc)
 
 		orra = RBASEQ(SRO(bitmode, rda, RXPKT_SEQNO)) & RRAMASK;
 		rxpkt_ptr = SRO(bitmode, rda, RXPKT_PTRLO);
-		len = SRO(bitmode, rda, RXPKT_BYTEC) -
-			sizeof(struct ether_header) - FCSSIZE;
+		len = SRO(bitmode, rda, RXPKT_BYTEC) - FCSSIZE;
 		if (status & RCR_PRX) {
 			caddr_t pkt =
 			    sc->rbuf[orra & RBAMASK] + (rxpkt_ptr & PGOFSET);
@@ -1130,9 +1129,9 @@ sonic_read(sc, pkt, len)
 	if (ifp->if_bpf) {
 		bpf_tap(ifp->if_bpf, pkt, len);
 		if ((ifp->if_flags & IFF_PROMISC) != 0 &&
-		    (et->ether_dhost[0] & 1) == 0 && /* !mcast and !bcast */
-		    bcmp(et->ether_dhost, LLADDR(ifp->if_sadl),
-		    sizeof(et->ether_dhost)) != 0)
+		    (eh->ether_dhost[0] & 1) == 0 && /* !mcast and !bcast */
+		    bcmp(eh->ether_dhost, LLADDR(ifp->if_sadl),
+		    sizeof(eh->ether_dhost)) != 0)
 			return (0);
 	}
 #endif
@@ -1181,6 +1180,15 @@ sonic_get(sc, pkt, datalen)
 			}
 			len = MCLBYTES;
 		}
+
+		if (mp == &top) {
+			caddr_t newdata = (caddr_t)
+			    ALIGN(m->m_data + sizeof(struct ether_header)) -
+			    sizeof(struct ether_header);
+			len -= newdata - m->m_data; 
+			m->m_data = newdata;
+		}
+
 		m->m_len = len = min(datalen, len);
 
 		bcopy(pkt, mtod(m, caddr_t), (unsigned) len);
