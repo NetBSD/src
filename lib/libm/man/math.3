@@ -1,3 +1,5 @@
+.\"	$NetBSD: math.3,v 1.6 1997/04/18 07:41:16 mikel Exp $
+.\"
 .\" Copyright (c) 1985 Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -30,7 +32,6 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)math.3	6.10 (Berkeley) 5/6/91
-.\"	$Id: math.3,v 1.5 1996/03/30 01:28:55 jtc Exp $
 .\"
 .TH MATH 3 "May 6, 1991"
 .UC 4
@@ -54,48 +55,52 @@ The Fortran math library is described in ``man 3f intro''.
 .SH "LIST OF FUNCTIONS"
 .sp 2
 .nf
-.ta \w'copysign'u+2n +\w'infnan.3'u+10n +\w'inverse trigonometric func'u
+.ta \w'copysign'u+2n +\w'lgamma.3'u+10n +\w'inverse trigonometric func'u
 \fIName\fP	\fIAppears on Page\fP	\fIDescription\fP	\fIError Bound (ULPs)\fP
-.ta \w'copysign'u+4n +\w'infnan.3'u+4n +\w'inverse trigonometric function'u+6nC
+.ta \w'copysign'u+4n +\w'lgamma.3'u+4n +\w'inverse trigonometric function'u+6nC
 .sp 5p
-acos	sin.3	inverse trigonometric function	3
-acosh	asinh.3	inverse hyperbolic function	3
-asin	sin.3	inverse trigonometric function	3
+acos	acos.3	inverse trigonometric function	3
+acosh	acosh.3	inverse hyperbolic function	3
+asin	asin.3	inverse trigonometric function	3
 asinh	asinh.3	inverse hyperbolic function	3
-atan	sin.3	inverse trigonometric function	1
-atanh	asinh.3	inverse hyperbolic function	3
-atan2	sin.3	inverse trigonometric function	2
+atan	atan.3	inverse trigonometric function	1
+atanh	atanh.3	inverse hyperbolic function	3
+atan2	atan2.3	inverse trigonometric function	2
 cabs	hypot.3	complex absolute value	1
 cbrt	sqrt.3	cube root	1
-ceil	floor.3	integer no less than	0
+ceil	ceil.3	integer no less than	0
 copysign	ieee.3	copy sign bit	0
-cos	sin.3	trigonometric function	1
-cosh	sinh.3	hyperbolic function	3
+cos	cos.3	trigonometric function	1
+cosh	cosh.3	hyperbolic function	3
 erf	erf.3	error function	???
 erfc	erf.3	complementary error function	???
 exp	exp.3	exponential	1
 expm1	exp.3	exp(x)\-1	1
-fabs	floor.3	absolute value	0
+fabs	fabs.3	absolute value	0
+finite	ieee.3	test for finity	0
 floor	floor.3	integer no greater than	0
+fmod	fmod.3	remainder	???
 hypot	hypot.3	Euclidean distance	1
 ilogb	ieee.3	exponent extraction	0
-infnan	infnan.3	signals exceptions
+isinf	isinf.3	test for infinity	0
+isnan	isnan.3	test for not-a-number	0
 j0	j0.3	bessel function	???
 j1	j0.3	bessel function	???
 jn	j0.3	bessel function	???
-lgamma	lgamma.3	log gamma function
+lgamma	lgamma.3	log gamma function	???
 log	exp.3	natural logarithm	1
 log10	exp.3	logarithm to base 10	3
 log1p	exp.3	log(1+x)	1
+nextafter	ieee.3	next representable number	0
 pow	exp.3	exponential x**y	60\-500
 remainder	ieee.3	remainder	0
-rint	floor.3	round to nearest integer	0
+rint	rint.3	round to nearest integer	0
 scalbn	ieee.3	exponent adjustment	0
 sin	sin.3	trigonometric function	1
 sinh	sinh.3	hyperbolic function	3
 sqrt	sqrt.3	square root	1
-tan	sin.3	trigonometric function	3
-tanh	sinh.3	hyperbolic function	3
+tan	tan.3	trigonometric function	3
+tanh	tanh.3	hyperbolic function	3
 y0	j0.3	bessel function	???
 y1	j0.3	bessel function	???
 yn	j0.3	bessel function	???
