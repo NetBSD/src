@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.23 1999/07/22 21:27:32 thorpej Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.24 1999/07/22 22:58:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -1165,7 +1165,7 @@ uao_get(uobj, offset, pps, npagesp, centeridx, access_type, advice, flags)
 				    rv,0,0,0);
 				if (ptmp->flags & PG_WANTED)
 					/* object lock still held */
-					thread_wakeup(ptmp);
+					wakeup(ptmp);
 				ptmp->flags &= ~(PG_WANTED|PG_BUSY);
 				UVM_PAGE_OWN(ptmp, NULL);
 				uvm_lock_pageq();
