@@ -35,7 +35,7 @@ install: beforeinstall _PROGSUBDIR ${SHARED}
 	@echo installing ${FILES}
 	@-for i in ${FILES}; do \
 		cmp -s $$i ${DESTDIR}/usr/include/$$i || \
-		    install -c $$i ${DESTDIR}/usr/include/$$i; \
+		    install -c -m 644 $$i ${DESTDIR}/usr/include/$$i; \
 	done
 	@echo installing ${DIRS}
 	@-for i in ${DIRS}; do \
@@ -45,7 +45,7 @@ install: beforeinstall _PROGSUBDIR ${SHARED}
 		fi; \
 		(cd $$i; for j in *.[ih]; do \
 			cmp -s $$j ${DESTDIR}/usr/include/$$i/$$j || \
-			install -c $$j ${DESTDIR}/usr/include/$$i/$$j; \
+			install -c -m 644 $$j ${DESTDIR}/usr/include/$$i/$$j; \
 		done); \
 	done
 	@echo installing ${LFILES}
