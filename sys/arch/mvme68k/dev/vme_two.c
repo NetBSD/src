@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_two.c,v 1.12 2000/11/24 09:27:43 scw Exp $ */
+/*	$NetBSD: vme_two.c,v 1.13 2001/05/31 18:46:08 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -93,8 +93,8 @@ void vmetwo_slave_range __P((struct vmetwo_softc *, int, vme_am_t,
 			      struct mvmebus_range *));
 int vmetwo_local_isr_trampoline __P((void *));
 void vmetwo_intr_establish __P((void *, int, int, int, int,
-				int (*)(void *), void *));
-void vmetwo_intr_disestablish __P((void *, int, int, int));
+				int (*)(void *), void *, struct evcnt *));
+void vmetwo_intr_disestablish __P((void *, int, int, int, struct evcnt *));
 
 
 /* ARGSUSED */
@@ -289,7 +289,7 @@ vmetwo_attach(parent, self, aux)
 		 * interrupts
 		 */
 		vmetwo_intr_establish(sc, 7, 7, VME2_VEC_ABORT, 1,
-		    nmihand, NULL);
+		    nmihand, NULL, NULL);
 	}
 
 	mvmebus_attach(&sc->sc_mvmebus);
@@ -504,11 +504,12 @@ vmetwo_local_isr_trampoline(arg)
 }
 
 void
-vmetwo_intr_establish(csc, prior, lvl, vec, first, hand, arg)
+vmetwo_intr_establish(csc, prior, lvl, vec, first, hand, arg, evcnt)
 	void *csc;
 	int prior, lvl, vec, first;
 	int (*hand)(void *);
 	void *arg;
+	struct evcnt *evcnt;
 {
 	struct vmetwo_softc *sc = csc;
 	u_int32_t reg;
@@ -546,7 +547,7 @@ vmetwo_intr_establish(csc, prior, lvl, vec, first, hand, arg)
 	}
 
 	/* Hook the interrupt */
-	isrlink_vectored(hand, arg, prior, vec);
+	isrlink_vectored(hand, arg, prior, vec, evcnt);
 
 	/*
 	 * Do we need to tell the VMEChip2 to let the interrupt through?
@@ -554,6 +555,12 @@ vmetwo_intr_establish(csc, prior, lvl, vec, first, hand, arg)
 	 * needs doing once for each VMEbus interrupt level which is hooked)
 	 */
 	if (first) {
+		if (evcnt)
+			evcnt_attach_dynamic(evcnt, EVCNT_TYPE_INTR,
+			    isrlink_evcnt(prior),
+			    sc->sc_mvmebus.sc_dev.dv_xname,
+			    mvmebus_irq_name[lvl]);
+
 		iloffset = VME2_ILOFFSET_FROM_VECTOR(bitoff) +
 		    VME2LCSR_INTERRUPT_LEVEL_BASE;
 		ilshift = VME2_ILSHIFT_FROM_VECTOR(bitoff);
@@ -591,9 +598,10 @@ vmetwo_intr_establish(csc, prior, lvl, vec, first, hand, arg)
 }
 
 void
-vmetwo_intr_disestablish(csc, lvl, vec, last)
+vmetwo_intr_disestablish(csc, lvl, vec, last, evcnt)
 	void *csc;
 	int lvl, vec, last;
+	struct evcnt *evcnt;
 {
 	struct vmetwo_softc *sc = csc;
 	u_int32_t reg;
@@ -646,6 +654,9 @@ vmetwo_intr_disestablish(csc, lvl, vec, last)
 		/* Clear it */
 		vme2_lcsr_write(sc, VME2LCSR_LOCAL_INTERRUPT_CLEAR,
 		    VME2_LOCAL_INTERRUPT(vec));
+
+		if (evcnt)
+			evcnt_detach(evcnt);
 	}
 	/* Un-hook it */
 	isrunlink_vectored(vec);

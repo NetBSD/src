@@ -1,4 +1,4 @@
-/*	$NetBSD: pcctwo.c,v 1.11 2001/05/03 17:54:30 scw Exp $ */
+/*	$NetBSD: pcctwo.c,v 1.12 2001/05/31 18:46:08 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -47,8 +47,6 @@
 
 #include <machine/cpu.h>
 #include <machine/bus.h>
-
-#include <mvme68k/mvme68k/isr.h>
 
 #include <mvme68k/dev/mainbus.h>
 #include <mvme68k/dev/pcctworeg.h>
@@ -254,7 +252,10 @@ pcctwoattach(parent, self, args)
 		pd = mcchip_devices;
 		sc->sc_vec2icsr = pcctwo_vec2icsr_1x2;
 
-		pcctwointr_establish(MCCHIPV_ABORT, pcctwoabortintr, 7, NULL);
+		evcnt_attach_dynamic(&sc->sc_evcnt, EVCNT_TYPE_INTR,
+		    isrlink_evcnt(7), "nmi", "abort sw");
+		pcctwointr_establish(MCCHIPV_ABORT, pcctwoabortintr, 7, NULL,
+		    &sc->sc_evcnt);
 	} else
 #endif
 	{
@@ -305,10 +306,11 @@ pcctwoprint(aux, cp)
  * pcctwointr_establish: Establish PCCChip2 Interrupt
  */
 void
-pcctwointr_establish(vec, hand, lvl, arg)
+pcctwointr_establish(vec, hand, lvl, arg, evcnt)
 	int vec;
 	int (*hand) __P((void *)), lvl;
 	void *arg;
+	struct evcnt *evcnt;
 {
 	int vec2icsr;
 
@@ -331,7 +333,7 @@ pcctwointr_establish(vec, hand, lvl, arg)
 	pcc2_reg_write(sys_pcctwo, VEC2ICSR_REG(vec2icsr), 0);
 
 	/* Hook the interrupt */
-	isrlink_vectored(hand, arg, lvl, vec + PCCTWO_VECBASE);
+	isrlink_vectored(hand, arg, lvl, vec + PCCTWO_VECBASE, evcnt);
 
 	/* Enable it in hardware */
 	pcc2_reg_write(sys_pcctwo, VEC2ICSR_REG(vec2icsr),

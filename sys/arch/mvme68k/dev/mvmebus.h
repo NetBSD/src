@@ -1,4 +1,4 @@
-/*	$NetBSD: mvmebus.h,v 1.5 2000/11/24 09:27:43 scw Exp $	*/
+/*	$NetBSD: mvmebus.h,v 1.6 2001/05/31 18:46:08 scw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -107,9 +107,11 @@ struct mvmebus_softc {
 	struct mvmebus_range	*sc_masters;
 	int			sc_nslaves;
 	struct mvmebus_range	*sc_slaves;
+	struct evcnt		sc_evcnt[7];
 	void			(*sc_intr_establish)(void *, int, int, int, int,
-				    int (*)(void *), void *);
-	void			(*sc_intr_disestablish)(void *, int, int, int);
+				    int (*)(void *), void *, struct evcnt *);
+	void			(*sc_intr_disestablish)(void *, int, int, int,
+				    struct evcnt *);
 	struct vme_chipset_tag	sc_vct;
 	struct mvme68k_bus_dma_tag	sc_mvmedmat;
 };
@@ -154,5 +156,6 @@ paddr_t	mvmebus_dmamem_mmap(bus_dma_tag_t, bus_dma_segment_t *, int,
 	    off_t, int, int);
 
 extern vme_am_t _mvmebus_am_cap[];
+extern const char *mvmebus_irq_name[];
 
 #endif /* _MVMEBUS_H */

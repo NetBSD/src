@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.78 2001/05/30 15:24:35 lukem Exp $	*/
+/*	$NetBSD: locore.s,v 1.79 2001/05/31 18:46:09 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1076,47 +1076,30 @@ Lbrkpt3:
  * Interrupt handlers.
  *
  * For auto-vectored interrupts, the CPU provides the
- * vector 0x18+level.  Note we count spurious interrupts,
- * but don't do anything else with them.
+ * vector 0x18+level.
  *
- * _intrhand_autovec is the entry point for auto-vectored
+ * intrhand_autovec is the entry point for auto-vectored
  * interrupts.
  *
  * For vectored interrupts, we pull the pc, evec, and exception frame
  * and pass them to the vectored interrupt dispatcher.  The vectored
  * interrupt dispatcher will deal with strays.
  *
- * _intrhand_vectored is the entry point for vectored interrupts.
+ * intrhand_vectored is the entry point for vectored interrupts.
  */
 
 #define INTERRUPT_SAVEREG	moveml  #0xC0C0,%sp@-
 #define INTERRUPT_RESTOREREG	moveml  %sp@+,#0x0303
 
-ENTRY_NOPROFILE(spurintr)	/* Level 0 */
-	addql	#1,_C_LABEL(intrcnt)+0
-	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
-	jra	_ASM_LABEL(rei)
-
-ENTRY_NOPROFILE(intrhand_autovec)	/* Levels 1 through 6 */
+ENTRY_NOPROFILE(intrhand_autovec)	/* Levels 0 through 7 */
 	INTERRUPT_SAVEREG
-	movw	%sp@(22),%sp@-		| push exception vector
-	clrw	%sp@-
+	lea	%sp@(16),%a1		| get pointer to frame
+	movl	%a1,%sp@-
+	movl	%sp@(26),%d0
+	movl	%d0,%sp@-		| push exception vector
 	jbsr	_C_LABEL(isrdispatch_autovec) | call dispatcher
 	addql	#4,%sp
 	INTERRUPT_RESTOREREG
-	jra	_ASM_LABEL(rei)		| all done
-
-ENTRY_NOPROFILE(lev7intr)		/* Level 7: NMI */
-	addql	#1,_C_LABEL(intrcnt)+32
-	clrl	%sp@-
-	moveml	#0xFFFF,%sp@-		| save registers
-	movl	%usp,%a0		| and save
-	movl	%a0,%sp@(FR_SP)		|   the user stack pointer
-	jbsr	_C_LABEL(nmintr)	| call handler: XXX wrapper
-	movl	%sp@(FR_SP),%a0		| restore
-	movl	%a0,%usp		|   user SP
-	moveml	%sp@+,#0x7FFF		| and remaining registers
-	addql	#8,%sp			| pop SP and stack adjust
 	jra	_ASM_LABEL(rei)		| all done
 
 ENTRY_NOPROFILE(intrhand_vectored)
@@ -1843,20 +1826,10 @@ GLOBAL(intiobase_phys)
 GLOBAL(intiotop_phys)
 	.long	0		| PA of top of board's I/O registers
 
-/* interrupt counters */
+/*
+ * interrupt counters (unused due to evcnt(9). Kept here to keep vmstat happy)
+ */
 GLOBAL(intrnames)
-	.asciz	"spur"
-	.asciz	"lev1"
-	.asciz	"lev2"
-	.asciz	"lev3"
-	.asciz	"lev4"
-	.asciz	"clock"
-	.asciz	"lev6"
-	.asciz	"nmi"
-	.asciz	"statclock"
 GLOBAL(eintrnames)
-	.even
-
 GLOBAL(intrcnt)
-	.long	0,0,0,0,0,0,0,0,0,0
 GLOBAL(eintrcnt)

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.24 2001/05/30 12:28:46 mrg Exp $	*/
+/*	$NetBSD: if_le.c,v 1.25 2001/05/31 18:46:07 scw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -224,7 +224,10 @@ le_pcc_attach(parent, self, aux)
 
 	am7990_config(&lsc->sc_am7990);
 
-	pccintr_establish(PCCV_LE, am7990_intr, pa->pa_ipl, sc);
+	evcnt_attach_dynamic(&lsc->sc_evcnt, EVCNT_TYPE_INTR,
+	    pccintr_evcnt(pa->pa_ipl), "ether", sc->sc_dev.dv_xname);
+
+	pccintr_establish(PCCV_LE, am7990_intr, pa->pa_ipl, sc, &lsc->sc_evcnt);
 
 	pcc_reg_write(sys_pcc, PCCREG_LANCE_INTR_CTRL,
 	    pa->pa_ipl | PCC_IENABLE);

@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.h,v 1.4 2000/07/15 19:17:19 scw Exp $	*/
+/*	$NetBSD: isr.h,v 1.5 2001/05/31 18:46:09 scw Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -44,6 +44,7 @@
  */
 #define ISRAUTOVEC	0x18
 #define NISRAUTOVEC	8
+#define NIPLS		8
 
 /*
  * The location and size of the vectored interrupt portion
@@ -61,6 +62,7 @@ struct isr_autovec {
 	void		*isr_arg;
 	int		isr_ipl;
 	int		isr_priority;
+	struct evcnt	*isr_evcnt;
 };
 
 typedef LIST_HEAD(, isr_autovec) isr_autovec_list_t;
@@ -74,6 +76,7 @@ struct isr_vectored {
 	int		(*isr_func) __P((void *));
 	void		*isr_arg;
 	int		isr_ipl;
+	struct evcnt	*isr_evcnt;
 };
 
 /*
@@ -84,10 +87,15 @@ struct isr_vectored {
 #define ISRPRI_TTY		2
 #define ISRPRI_TTYNOBUF		3
 
+extern	struct evcnt mvme68k_irq_evcnt[];
+
 void	isrinit __P((void));
-void	isrlink_autovec __P((int (*)(void *), void *, int, int));
-void	isrlink_vectored __P((int (*)(void *), void *, int, int));
+#define isrlink_evcnt(ipl)	&mvme68k_irq_evcnt[(ipl)]
+void	isrlink_autovec __P((int (*)(void *), void *, int, int,
+	    struct evcnt *));
+void	isrlink_vectored __P((int (*)(void *), void *, int, int,
+	    struct evcnt *));
 void	isrunlink_vectored __P((int));
-void	isrdispatch_autovec __P((int));
+void	isrdispatch_autovec __P((int, void *));
 void	isrdispatch_vectored __P((int, int, void *));
 void	netintr __P((void));

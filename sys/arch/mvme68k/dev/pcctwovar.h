@@ -1,4 +1,4 @@
-/*	$NetBSD: pcctwovar.h,v 1.4 2000/11/24 09:36:41 scw Exp $	*/
+/*	$NetBSD: pcctwovar.h,v 1.5 2001/05/31 18:46:08 scw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,6 +39,9 @@
 #ifndef	_MVME68K_PCCTWOVAR_H
 #define	_MVME68K_PCCTWOVAR_H
 
+/* For isrlink_evcnt() definition */
+#include <mvme68k/mvme68k/isr.h>
+
 /*
  * Structure used to attach PCC devices.
  */
@@ -64,11 +67,16 @@ struct pcctwo_softc {
 	bus_space_tag_t		sc_bust;	/* PCCChip2's register tag */
 	bus_space_handle_t	sc_bush;	/* PCCChip2's register handle */
 	int			*sc_vec2icsr;	/* Translate vector to ICSR */
+#if defined(MVME162) || defined(MVME172)
+	struct evcnt		sc_evcnt;
+#endif
 };
 
 extern struct pcctwo_softc *sys_pcctwo;
 
-extern void pcctwointr_establish __P((int, int (*)(void *), int, void *));
+#define pcctwointr_evcnt(ipl)	isrlink_evcnt(ipl)
+extern void pcctwointr_establish __P((int, int (*)(void *), int, void *,
+		struct evcnt *));
 extern void pcctwointr_disestablish __P((int));
 
 #endif	/* _MVME68K_PCCTWOVAR_H */

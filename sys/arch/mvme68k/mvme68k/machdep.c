@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.80 2001/04/29 07:53:56 scw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.81 2001/05/31 18:46:09 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -93,7 +93,6 @@
 #include <machine/kcore.h>	/* XXX should be pulled in by sys/kcore.h */
 
 #include <mvme68k/dev/mainbus.h>
-#include <mvme68k/mvme68k/isr.h>
 #include <mvme68k/mvme68k/seglist.h>
 
 #ifdef DDB
@@ -160,7 +159,6 @@ void	cpu_init_kcore_hdr __P((void));
 u_long	cpu_dump_mempagecnt __P((void));
 int	cpu_exec_aout_makecmds __P((struct proc *, struct exec_package *));
 void	straytrap __P((int, u_short));
-void	nmintr __P((struct frame));
 
 /*
  * Machine-independent crash dump header info.
@@ -251,9 +249,6 @@ mvme68k_init()
 				 atop(phys_seg_list[i].ps_start),
 				 atop(phys_seg_list[i].ps_end), i);
 	}
-
-	/* Initialize interrupt handlers. */
-	isrinit();
 
 	switch (machineid) {
 #ifdef MVME147
@@ -1160,14 +1155,6 @@ straytrap(pc, evec)
 {
 	printf("unexpected trap (vector offset %x) from %x\n",
 	       evec & 0xFFF, pc);
-}
-
-/* XXX wrapper for locore.s; used only my level 7 autovector */
-void
-nmintr(frame)
-	struct frame frame;
-{
-	(void) nmihand(&frame);
 }
 
 /*

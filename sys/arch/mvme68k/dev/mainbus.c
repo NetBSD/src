@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.7 2000/12/03 15:37:46 scw Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.8 2001/05/31 18:46:07 scw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -83,7 +83,6 @@ static struct mainbus_devices mainbusdevs_1x7[] = {
 	{NULL, 0}
 };
 #endif
-
 
 struct mvme68k_bus_dma_tag _mainbus_dma_tag = {
 	NULL,
@@ -176,6 +175,22 @@ mainbus_attach(parent, self, args)
 
 		(void) config_found(self, &ma, mainbus_print);
 	}
+
+	/*
+	 * Attach Industry Pack modules on mvme162 and mvme172
+	 */
+#if defined(MVME162) || defined(MVME172)
+#if defined(MVME147) || defined(MVME167) || defined(MVME177)
+	if (machineid == MVME_162 || machineid == MVME_172)
+#endif
+	{
+		ma.ma_name = "ipack";
+		ma.ma_dmat = &_mainbus_dma_tag;
+		ma.ma_bust = &_mainbus_space_tag;
+		ma.ma_offset = MAINBUS_IPACK_OFFSET + intiobase_phys;
+		(void) config_found(self, &ma, mainbus_print);
+	}
+#endif
 }
 
 int
@@ -190,7 +205,7 @@ mainbus_print(aux, cp)
 	if (cp)
 		printf("%s at %s", ma->ma_name, cp);
 
-	printf(" offset 0x%lx", ma->ma_offset - intiobase_phys);
+	printf(" address 0x%lx", ma->ma_offset);
 
 	return (UNCONF);
 }

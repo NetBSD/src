@@ -1,4 +1,4 @@
-/*	$NetBSD: memc.c,v 1.2 2000/11/30 22:51:35 scw Exp $	*/
+/*	$NetBSD: memc.c,v 1.3 2001/05/31 18:46:08 scw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -49,8 +49,6 @@
 #include <machine/cpu.h>
 #include <machine/bus.h>
 
-#include <mvme68k/mvme68k/isr.h>
-
 #include <mvme68k/dev/pcctwovar.h>
 #include <mvme68k/dev/memcreg.h>
 
@@ -58,6 +56,7 @@ struct memc_softc {
 	struct device		sc_dev;
 	bus_space_tag_t		sc_bust;
 	bus_space_handle_t	sc_bush;
+	struct evcnt		sc_evcnt;
 };
 
 int memc_match(struct device *, struct cfdata *, void *);

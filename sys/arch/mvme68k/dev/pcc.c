@@ -1,4 +1,4 @@
-/*	$NetBSD: pcc.c,v 1.17 2000/12/03 15:37:46 scw Exp $	*/
+/*	$NetBSD: pcc.c,v 1.18 2001/05/31 18:46:08 scw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -78,8 +78,6 @@
 
 #include <machine/cpu.h>
 #include <machine/bus.h>
-
-#include <mvme68k/mvme68k/isr.h>
 
 #include <mvme68k/dev/mainbus.h>
 #include <mvme68k/dev/pccreg.h>
@@ -191,8 +189,11 @@ pccattach(parent, self, args)
 	    "rev %d, vecbase 0x%x\n", pcc_reg_read(sc, PCCREG_REVISION),
 	    pcc_reg_read(sc, PCCREG_VECTOR_BASE));
 
+	evcnt_attach_dynamic(&sc->sc_evcnt, EVCNT_TYPE_INTR,
+	    isrlink_evcnt(7), "nmi", "abort sw");
+
 	/* Hook up interrupt handler for abort button, and enable it */
-	pccintr_establish(PCCV_ABORT, pccintr, 7, NULL);
+	pccintr_establish(PCCV_ABORT, pccintr, 7, NULL, &sc->sc_evcnt);
 	pcc_reg_write(sc, PCCREG_ABORT_INTR_CTRL,
 	    PCC_ABORT_IEN | PCC_ABORT_ACK);
 
@@ -250,10 +251,11 @@ pccprint(aux, cp)
  * pccintr_establish: establish pcc interrupt
  */
 void
-pccintr_establish(pccvec, hand, lvl, arg)
+pccintr_establish(pccvec, hand, lvl, arg, evcnt)
 	int pccvec;
 	int (*hand) __P((void *)), lvl;
 	void *arg;
+	struct evcnt *evcnt;
 {
 
 #ifdef DEBUG
@@ -267,7 +269,7 @@ pccintr_establish(pccvec, hand, lvl, arg)
 	}
 #endif
 
-	isrlink_vectored(hand, arg, lvl, pccvec + PCC_VECBASE);
+	isrlink_vectored(hand, arg, lvl, pccvec + PCC_VECBASE, evcnt);
 }
 
 void

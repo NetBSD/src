@@ -1,4 +1,4 @@
-/*      $NetBSD: clock.c,v 1.14 2001/04/14 13:53:06 scw Exp $	*/
+/*      $NetBSD: clock.c,v 1.15 2001/05/31 18:46:09 scw Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -105,11 +105,6 @@ clock_config(dev, ca)
 
 	/* Hook up that which we need. */
 	clock_args = ca;
-
-	evcnt_attach_dynamic(&clock_profcnt, EVCNT_TYPE_INTR, NULL,
-	    dev->dv_xname, "profint");
-	evcnt_attach_dynamic(&clock_statcnt, EVCNT_TYPE_INTR, NULL,
-	    dev->dv_xname, "statint");
 
 	/* Print info about the clock. */
 	printf(": delay_divisor %d\n", delay_divisor);

@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_pcc.c,v 1.13 2000/11/24 09:27:42 scw Exp $	*/
+/*	$NetBSD: vme_pcc.c,v 1.14 2001/05/31 18:46:08 scw Exp $	*/
 
 /*-
  * Copyright (c) 1996-2000 The NetBSD Foundation, Inc.
@@ -57,8 +57,6 @@
 #include <dev/vme/vmereg.h>
 #include <dev/vme/vmevar.h>
 
-#include <mvme68k/mvme68k/isr.h>
-
 #include <mvme68k/dev/pccreg.h>
 #include <mvme68k/dev/pccvar.h>
 #include <mvme68k/dev/mvmebus.h>
@@ -79,8 +77,8 @@ extern phys_ram_seg_t mem_clusters[];
 static int vme_pcc_attached;
 
 void vme_pcc_intr_establish(void *, int, int, int, int,
-    int (*)(void *), void *);
-void vme_pcc_intr_disestablish(void *, int, int, int);
+    int (*)(void *), void *, struct evcnt *);
+void vme_pcc_intr_disestablish(void *, int, int, int, struct evcnt *);
 
 
 static struct mvmebus_range vme_pcc_masters[] = {
@@ -253,20 +251,25 @@ vme_pcc_attach(parent, self, aux)
 }
 
 void
-vme_pcc_intr_establish(csc, prior, level, vector, first, func, arg)
+vme_pcc_intr_establish(csc, prior, level, vector, first, func, arg, evcnt)
 	void *csc;
 	int prior, level, vector, first;
 	int (*func)(void *);
 	void *arg;
+	struct evcnt *evcnt;
 {
 	struct vme_pcc_softc *sc = csc;
 
 	if (prior != level)
 		panic("vme_pcc_intr_establish: cpu priority != VMEbus irq level");
 
-	isrlink_vectored(func, arg, prior, vector);
+	isrlink_vectored(func, arg, prior, vector, evcnt);
 
 	if (first) {
+		evcnt_attach_dynamic(evcnt, EVCNT_TYPE_INTR,
+		    isrlink_evcnt(prior), sc->sc_mvmebus.sc_dev.dv_xname,
+		    mvmebus_irq_name[level]);
+
 		/*
 		 * There had better not be another VMEbus master responding
 		 * to this interrupt level...
@@ -277,9 +280,10 @@ vme_pcc_intr_establish(csc, prior, level, vector, first, func, arg)
 }
 
 void
-vme_pcc_intr_disestablish(csc, level, vector, last)
+vme_pcc_intr_disestablish(csc, level, vector, last, evcnt)
 	void *csc;
 	int level, vector, last;
+	struct evcnt *evcnt;
 {
 	struct vme_pcc_softc *sc = csc;
 
@@ -288,5 +292,6 @@ vme_pcc_intr_disestablish(csc, level, vector, last)
 	if (last) {
 		vme1_reg_write(sc, VME1REG_IRQEN,
 		    vme1_reg_read(sc, VME1REG_IRQEN) & ~VME1_IRQ_VME(level));
+		evcnt_detach(evcnt);
 	}
 }
