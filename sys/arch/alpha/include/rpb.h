@@ -1,4 +1,4 @@
-/* $NetBSD: rpb.h,v 1.15 1998/01/29 22:28:52 ross Exp $ */
+/* $NetBSD: rpb.h,v 1.16 1998/02/12 02:27:48 cgd Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -39,7 +39,7 @@
 
 #ifndef	ASSEMBLER
 struct rpb {
-	struct restart_blk *rpb;		/*   0: HWRPB phys. address. */
+	u_int64_t	rpb_phys;		/*   0: HWRPB phys. address. */
 	char		rpb_magic[8];		/*   8: "HWRPB" (in ASCII) */
 	u_int64_t	rpb_version;		/*  10 */
 	u_int64_t	rpb_size;		/*  18: HWRPB size in bytes */
