@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.207 2004/07/20 22:00:29 yamt Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.208 2004/07/20 22:02:21 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.207 2004/07/20 22:00:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.208 2004/07/20 22:02:21 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_nfs.h"
@@ -2942,15 +2942,19 @@ nfs_readdirplusrpc(vp, uiop, cred)
 				    const char *cp;
 
 				    nfs_loadattrcache(&newvp, &fattr, 0, 0);
-				    dp->d_type =
-				        IFTODT(VTTOIF(np->n_vattr->va_type));
-				    ndp->ni_vp = newvp;
-				    cp = cnp->cn_nameptr + cnp->cn_namelen;
-				    cnp->cn_hash =
-					namei_hash(cnp->cn_nameptr, &cp);
-				    if (cnp->cn_namelen <= NCHNAMLEN)
-				        nfs_cache_enter(ndp->ni_dvp, ndp->ni_vp,
-						    cnp);
+				    if (bigenough) {
+					dp->d_type =
+					   IFTODT(VTTOIF(np->n_vattr->va_type));
+					if (cnp->cn_namelen <= NCHNAMLEN) {
+					    ndp->ni_vp = newvp;
+					    cp = cnp->cn_nameptr +
+						cnp->cn_namelen;
+					    cnp->cn_hash =
+					       namei_hash(cnp->cn_nameptr, &cp);
+					    nfs_cache_enter(ndp->ni_dvp,
+						ndp->ni_vp, cnp);
+					}
+				    }
 				}
 			   }
 			} else {
