@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_clntout.c,v 1.5 1997/06/06 17:27:33 jtk Exp $	*/
+/*	$NetBSD: rpc_clntout.c,v 1.6 1997/10/09 16:54:38 mycroft Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -197,24 +197,22 @@ printbody(proc)
 		    l->decl.name, l->decl.name);
 	  }
 	  f_print(fout,
-		  "\tif (clnt_call(clnt, %s, xdr_%s", proc->proc_name,
-		  proc->args.argname);
-	  f_print(fout, 
- 		  ", &arg, xdr_%s, %s%s, TIMEOUT) != RPC_SUCCESS) {\n",
+		  "\tif (clnt_call(clnt, %s, xdr_%s, &arg, xdr_%s, %s%s, TIMEOUT) != RPC_SUCCESS)\n",
+		  proc->proc_name,
+		  proc->args.argname,
  		  stringfix(proc->res_type),
 		  ampr(proc->res_type), RESULT);
 	} else {  /* single argument, new or old style */
 	      f_print(fout,
- 		      "\tif (clnt_call(clnt, %s, xdr_%s, %s%s, xdr_%s, %s%s, TIMEOUT) != RPC_SUCCESS) {\n",
+ 		      "\tif (clnt_call(clnt, %s, xdr_%s, %s%s, xdr_%s, %s%s, TIMEOUT) != RPC_SUCCESS)\n",
 		      proc->proc_name, 
 		      stringfix(proc->args.decls->decl.type), 
 		      (newstyle ? "&" : ""),
 		      (newstyle ? proc->args.decls->decl.name : "argp"),
 		      stringfix(proc->res_type),
-		      ampr(proc->res_type),RESULT);
+		      ampr(proc->res_type), RESULT);
 	    }
 	f_print(fout, "\t\treturn (NULL);\n");
-	f_print(fout, "\t}\n");
 	if (streq(proc->res_type, "void")) {
 		f_print(fout, "\treturn ((void *)%s%s);\n", 
 			ampr(proc->res_type),RESULT);
