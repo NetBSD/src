@@ -31,11 +31,10 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)wtreg.h	7.1 (Berkeley) 5/9/91
- *	$Id: wtreg.h,v 1.2 1993/05/22 08:01:50 cgd Exp $
+ *	$Id: wtreg.h,v 1.3 1994/02/15 15:08:24 mycroft Exp $
  */
 
 /*
- *
  * Copyright (c) 1989 Carnegie-Mellon University.
  * All rights reserved.
  *
@@ -62,29 +61,8 @@
  * rights to redistribute these changes.
  */
 
-/* 
- * HISTORY
- * $Log: wtreg.h,v $
- * Revision 1.2  1993/05/22 08:01:50  cgd
- * add rcsids to everything and clean up headers
- *
- * Revision 1.1.1.1  1993/03/21  09:46:00  cgd
- * initial import of 386bsd-0.1 sources
- *
- * Revision 2.2.1.1  90/01/08  13:29:25  rvb
- * 	Add Intel copyright.
- * 	[90/01/08            rvb]
- * 
- * Revision 2.2  89/09/25  12:33:09  rvb
- * 	Driver was provided by Intel 9/18/89.
- * 	[89/09/23            rvb]
- * 
- */
-
 /*
- *
  *  Copyright 1988, 1989 by Intel Corporation
- *
  */
 
 /*
