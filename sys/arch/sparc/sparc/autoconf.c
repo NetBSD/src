@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.64 1996/12/10 23:17:40 pk Exp $ */
+/*	$NetBSD: autoconf.c,v 1.65 1997/01/21 21:07:04 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1608,7 +1608,6 @@ nextsibling(node)
 	return (promvec->pv_nodeops->no_nextnode(node));
 }
 
-char    *strchr __P((const char *, int));
 u_int      hexatoi __P((const char *));
 
 /* The following recursively searches a PROM tree for a given node */
@@ -2163,25 +2162,6 @@ getdevunit(name, unit)
 			return NULL;
 	}
 	return dev;
-}
-
-
-/*
- * The $#!@$&%# kernel library doesn't have strchr or atoi. Ugh. We duplicate
- * here.
- */
-
-char *
-strchr(p, ch)			/* cribbed from libc */
-	register const char *p, ch;
-{
-	for (;; ++p) {
-		if (*p == ch)
-			return((char *)p);
-		if (!*p)
-			return((char *)NULL);
-	}
-	/* NOTREACHED */
 }
 
 u_int
