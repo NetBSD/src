@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.7 1996/06/14 20:03:00 cgd Exp $	*/
+/*	$NetBSD: boot.c,v 1.8 1996/09/17 22:00:26 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -50,9 +50,7 @@
 #define _KERNEL
 #include "include/pte.h"
 
-static int aout_exec __P((int, struct exec *, u_int64_t *));
-static int coff_exec __P((int, struct ecoff_exechdr *, u_int64_t *));
-static int loadfile __P((char *, u_int64_t *));
+int loadfile __P((char *, u_int64_t *));
 
 char boot_file[128];
 char boot_flags[128];
@@ -96,143 +94,3 @@ main()
 	(void)printf("Boot failed!  Halting...\n");
 	halt();
 }
-
-/*
- * Open 'filename', read in program and return the entry point or -1 if error.
- */
-static int
-loadfile(fname, entryp)
-	char *fname;
-	u_int64_t *entryp;
-{
-	struct devices *dp;
-	union {
-		struct exec aout;
-		struct ecoff_exechdr coff;
-	} hdr;
-	ssize_t nr;
-	int fd, rval;
-
-	/* Open the file. */
-	rval = 1;
-	if ((fd = open(fname, 0)) < 0) {
-		(void)printf("open %s: error %d\n", fname, errno);
-		goto err;
-	}
-
-	/* Read the exec header. */
-	if ((nr = read(fd, &hdr, sizeof(hdr))) != sizeof(hdr)) {
-		(void)printf("read header: error %d\n", errno);
-		goto err;
-	}
-
-#ifdef ALPHA_BOOT_ECOFF
-	if (!ECOFF_BADMAG(&hdr.coff)) {
-		rval = coff_exec(fd, &hdr.coff, entryp);
-	} else
-#endif
-#ifdef ALPHA_BOOT_AOUT
-	if (XXX) {
-		rval = aout_exec(fd, &hdr.aout, entryp) :
-	} else
-#endif
-	{
-		(void)printf("%s: unknown executable format\n", fname);
-	}
-
-err:
-	if (fd >= 0)
-		(void)close(fd);
-	return (rval);
-}
-
-#ifdef ALPHA_BOOT_AOUT
-static int
-aout_exec(fd, aout, entryp)
-	int fd;
-	struct exec *aout;
-	u_int64_t *entryp;
-{
-	size_t sz;
-
-	/* Check the magic number. */
-	if (N_GETMAGIC(*aout) != OMAGIC) {
-		(void)printf("bad magic: %o\n", N_GETMAGIC(*aout));
-		return (1);
-	}
-
-	/* Read in text, data. */
-	(void)printf("%lu+%lu", aout->a_text, aout->a_data);
-	if (lseek(fd, (off_t)N_TXTOFF(*aout), SEEK_SET) < 0) {
-		(void)printf("lseek: %d\n", errno);
-		return (1);
-	}
-	sz = aout->a_text + aout->a_data;
-	if (read(fd, (void *)aout->a_entry, sz) != sz) {
-		(void)printf("read text/data: %d\n", errno);
-		return (1);
-	}
-
-	/* Zero out bss. */
-	if (aout->a_bss != 0) {
-		(void)printf("+%lu", aout->a_bss);
-		bzero(aout->a_entry + sz, aout->a_bss);
-	}
-
-	ffp_save = aout->a_entry + aout->a_text + aout->a_data + aout->a_bss;
-	ffp_save = k0segtophys((ffp_save + PGOFSET & ~PGOFSET)) >> PGSHIFT;
-	ffp_save += 2;		/* XXX OSF/1 does this, no idea why. */
-
-	(void)printf("\n");
-	*entryp = aout->a_entry;
-	return (0);
-}
-#endif /* ALPHA_BOOT_AOUT */
-
-#ifdef ALPHA_BOOT_ECOFF
-static int
-coff_exec(fd, coff, entryp)
-	int fd;
-	struct ecoff_exechdr *coff;
-	u_int64_t *entryp;
-{
-
-	/* Read in text. */
-	(void)printf("%lu", coff->a.tsize);
-	(void)lseek(fd, ECOFF_TXTOFF(coff), 0);
-	if (read(fd, (void *)coff->a.text_start, coff->a.tsize) !=
-	    coff->a.tsize) {
-		(void)printf("read text: %d\n", errno);
-		return (1);
-	}
-
-	/* Read in data. */
-	if (coff->a.dsize != 0) {
-		(void)printf("+%lu", coff->a.dsize);
-		if (read(fd, (void *)coff->a.data_start, coff->a.dsize) !=
-		    coff->a.dsize) {
-			(void)printf("read data: %d\n", errno);
-			return (1);
-		}
-	}
-
-
-	/* Zero out bss. */
-	if (coff->a.bsize != 0) {
-		(void)printf("+%lu", coff->a.bsize);
-		bzero(coff->a.bss_start, coff->a.bsize);
-	}
-
-	ffp_save = coff->a.text_start + coff->a.tsize;
-	if (ffp_save < coff->a.data_start + coff->a.dsize)
-		ffp_save = coff->a.data_start + coff->a.dsize;
-	if (ffp_save < coff->a.bss_start + coff->a.bsize)
-		ffp_save = coff->a.bss_start + coff->a.bsize;
-	ffp_save = k0segtophys((ffp_save + PGOFSET & ~PGOFSET)) >> PGSHIFT;
-	ffp_save += 2;		/* XXX OSF/1 does this, no idea why. */
-
-	(void)printf("\n");
-	*entryp = coff->a.entry;
-	return (0);
-}
-#endif /* ALPHA_BOOT_ECOFF */
