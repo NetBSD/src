@@ -1,4 +1,4 @@
-/*	$NetBSD: plumohci.c,v 1.8 2003/07/15 02:29:30 lukem Exp $ */
+/*	$NetBSD: plumohci.c,v 1.9 2003/09/26 16:03:50 simonb Exp $ */
 
 /*-
  * Copyright (c) 2000 UCHIYAMA Yasushi
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plumohci.c,v 1.8 2003/07/15 02:29:30 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plumohci.c,v 1.9 2003/09/26 16:03:50 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -240,7 +240,7 @@ __plumohci_dmamem_alloc(bus_dma_tag_t tx, bus_size_t size,
 	error = bus_space_alloc(sc->sc.iot, PLUM_OHCI_SHMEMBASE,
 	    PLUM_OHCI_SHMEMBASE + PLUM_OHCI_SHMEMSIZE - 1,
 	    size, OHCI_PAGE_SIZE, OHCI_PAGE_SIZE, 0,
-	    (bus_addr_t*)&caddr, &bsh);
+	    (bus_addr_t *)(void *)&caddr, &bsh);
 	if (error)
 		return (1);
 

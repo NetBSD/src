@@ -1,4 +1,4 @@
-/*	$NetBSD: oosiop.c,v 1.2 2003/07/14 15:47:12 lukem Exp $	*/
+/*	$NetBSD: oosiop.c,v 1.3 2003/09/26 16:02:24 simonb Exp $	*/
 
 /*
  * Copyright (c) 2001 Shuichiro URATA.  All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oosiop.c,v 1.2 2003/07/14 15:47:12 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oosiop.c,v 1.3 2003/09/26 16:02:24 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -273,7 +273,7 @@ oosiop_alloc_cb(struct oosiop_softc *sc, int ncb)
 		return (err);
 	}
 	err = bus_dmamem_map(sc->sc_dmat, &seg, nseg, xfersize,
-	    (caddr_t *)&xfer, BUS_DMA_NOWAIT | BUS_DMA_COHERENT);
+	    (caddr_t *)(void *)&xfer, BUS_DMA_NOWAIT | BUS_DMA_COHERENT);
 	if (err) {
 		printf(": failed to map xfer block memory, err=%d\n", err);
 		return (err);
