@@ -1,4 +1,4 @@
-/*	$NetBSD: db_examine.c,v 1.5 1994/06/30 12:49:54 gwr Exp $	*/
+/*	$NetBSD: db_examine.c,v 1.6 1994/09/26 17:10:15 gwr Exp $	*/
 
 /* 
  * Mach Operating System
@@ -45,7 +45,12 @@ extern	db_addr_t db_disasm(/* db_addr_t, boolean_t */);
 			/* instruction disassembler */
 
 /*
- * Examine (print) data.
+ * Examine (print) data.  Syntax is:
+ *		x/[bhl][cdiorsuxz]*
+ * For example, the command:
+ *  	x/bxxxx
+ * should print:
+ *  	address:  01  23  45  67
  */
 /*ARGSUSED*/
 void
@@ -66,7 +71,7 @@ db_examine_cmd(addr, have_addr, count, modif)
 
 db_examine(addr, fmt, count)
 	register
-	db_addr_t	addr;
+		db_addr_t	addr;
 	char *		fmt;	/* format string */
 	int		count;	/* repeat count */
 {
@@ -75,86 +80,74 @@ db_examine(addr, fmt, count)
 	int		size;
 	int		width;
 	char *		fp;
-
+	
 	while (--count >= 0) {
 	    fp = fmt;
 	    size = 4;
 	    width = 16;
 	    while ((c = *fp++) != 0) {
-		switch (c) {
-		    case 'b':
-			size = 1;
-			width = 4;
-			break;
-		    case 'h':
-			size = 2;
-			width = 8;
-			break;
-		    case 'l':
-			size = 4;
-			width = 16;
-			break;
-		    case 'a':	/* address */
-			/* always forces a new line */
-			if (db_print_position() != 0)
-			    db_printf("\n");
-			db_prev = addr;
-			db_printsym(addr, DB_STGY_ANY);
-			db_printf(":\t");
-			break;
-		    default:
-			if (db_print_position() == 0) {
-#if 0
-			    /* If we hit a new symbol, print it */
-			    char *	name;
-			    db_expr_t	off;
-
-			    db_find_sym_and_offset(addr, &name, &off);
-			    if (off == 0)
-				db_printf("%s:\t", name);
-			    else
-				db_printf("\t\t");
-#else
-			    /* Always print the address. */
-			    db_printsym(addr, DB_STGY_ANY);
-			    db_printf(":\t");
-#endif
-
-			    db_prev = addr;
-			}
-
 			switch (c) {
-			    case 'r':	/* signed, current radix */
+		    case 'b':
+				size = 1;
+				width = 4;
+				break;
+		    case 'h':
+				size = 2;
+				width = 8;
+				break;
+		    case 'l':
+				size = 4;
+				width = 16;
+				break;
+		    case 'a':	/* address */
+				/* always forces a new line */
+				if (db_print_position() != 0)
+					db_printf("\n");
+				db_prev = addr;
+				db_printsym(addr, DB_STGY_ANY);
+				db_printf(":\t");
+				break;
+			}
+			if (db_print_position() == 0) {
+				
+				/* Always print the address. */
+				db_printsym(addr, DB_STGY_ANY);
+				db_printf(":\t");
+				
+				db_prev = addr;
+			}
+			switch (c) {
+			case 'r':	/* signed, current radix */
 				value = db_get_value(addr, size, TRUE);
 				addr += size;
 				db_printf("%-*r", width, value);
 				break;
-			    case 'x':	/* unsigned hex */
+			case 'x':	/* unsigned hex */
 				value = db_get_value(addr, size, FALSE);
 				addr += size;
 				db_printf("%-*x", width, value);
 				break;
-			    case 'z':	/* signed hex */
+			case 'z':	/* signed hex */
 				value = db_get_value(addr, size, TRUE);
 				addr += size;
 				db_printf("%-*z", width, value);
 				break;
-			    case 'd':	/* signed decimal */
+			case 'd':	/* signed decimal */
 				value = db_get_value(addr, size, TRUE);
 				addr += size;
 				db_printf("%-*d", width, value);
 				break;
-			    case 'u':	/* unsigned decimal */
+			case 'u':	/* unsigned decimal */
 				value = db_get_value(addr, size, FALSE);
 				addr += size;
 				db_printf("%-*u", width, value);
 				break;
-			    case 'o':	/* unsigned octal */
+			case 'o':	/* unsigned octal */
 				value = db_get_value(addr, size, FALSE);
 				addr += size;
 				db_printf("%-*o", width, value);
 				break;
-			    case 'c':	/* character */
+			case 'c':	/* character */
 				value = db_get_value(addr, 1, FALSE);
 				addr += 1;
 				if (value >= ' ' && value <= '~')
@@ -162,31 +155,29 @@ db_examine(addr, fmt, count)
 				else
 				    db_printf("\\%03o", value);
 				break;
-			    case 's':	/* null-terminated string */
+			case 's':	/* null-terminated string */
 				for (;;) {
 				    value = db_get_value(addr, 1, FALSE);
 				    addr += 1;
 				    if (value == 0)
-					break;
+						break;
 				    if (value >= ' ' && value <= '~')
-					db_printf("%c", value);
+						db_printf("%c", value);
 				    else
-					db_printf("\\%03o", value);
+						db_printf("\\%03o", value);
 				}
 				break;
-			    case 'i':	/* instruction */
+			case 'i':	/* instruction */
 				addr = db_disasm(addr, FALSE);
 				break;
-			    case 'I':	/* instruction, alternate form */
+			case 'I':	/* instruction, alternate form */
 				addr = db_disasm(addr, TRUE);
 				break;
-			    default:
+			default:
 				break;
 			}
 			if (db_print_position() != 0)
-			    db_end_line();
-			break;
-		}
+				db_end_line();
 	    }
 	}
 	db_next = addr;
