@@ -15,7 +15,7 @@
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
  *	from: @(#)ftpcmd.y	5.20.1.1 (Berkeley) 3/2/89
- *	$Id: ftp.y,v 1.2 1993/08/01 18:00:44 mycroft Exp $
+ *	$Id: ftp.y,v 1.3 1994/03/27 09:09:15 cgd Exp $
  */
 
 /*
@@ -27,7 +27,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)ftpcmd.y	5.20.1.1 (Berkeley) 3/2/89";*/
-static char rcsid[] = "$Id: ftp.y,v 1.2 1993/08/01 18:00:44 mycroft Exp $";
+static char rcsid[] = "$Id: ftp.y,v 1.3 1994/03/27 09:09:15 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -1148,7 +1148,7 @@ char *filename;
 		    (stbuf.st_mode&S_IFMT) != S_IFREG)
 			reply(550, "%s: not a plain file.", filename);
 		else
-			reply(213, "%lu", stbuf.st_size);
+			reply(213, "%qu", stbuf.st_size);
 		break;}
 	case TYPE_A: {
 		FILE *fin;
