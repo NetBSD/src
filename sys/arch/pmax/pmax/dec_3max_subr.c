@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_3max_subr.c,v 1.1 1998/03/25 03:57:54 jonathan Exp $	*/
+/*	$NetBSD: dec_3max_subr.c,v 1.2 1998/03/26 06:32:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3max_subr.c,v 1.1 1998/03/25 03:57:54 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3max_subr.c,v 1.2 1998/03/26 06:32:37 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -107,7 +107,6 @@ __KERNEL_RCSID(0, "$NetBSD: dec_3max_subr.c,v 1.1 1998/03/25 03:57:54 jonathan E
 void		dec_3max_init __P((void));
 void		dec_3max_os_init __P((void));
 void		dec_3max_bus_reset __P((void));
-const char*	dec_3max_model_name __P((void));
 
 void		dec_3max_enable_intr 
 		   __P ((u_int slotno, int (*handler)  __P((intr_arg_t sc)),
@@ -117,7 +116,6 @@ int		dec_3max_intr __P((u_int mask, u_int pc,
 void		dec_3max_cons_init __P((void));
 void		dec_3max_device_register __P((struct device *, void *));
 
-const char*	dec_3max_model_name __P((void));
 static void	dec_3max_errintr __P((void));
 
 
@@ -128,16 +126,14 @@ void
 dec_3max_init()
 {
 
-	platform.family = "Decstation 5000/200  (3MAX)";
-
-	platform.model = "5000/200";
-
 	platform.iobus = "tcbus";
 
 	platform.os_init = dec_3max_os_init;
 	platform.bus_reset = dec_3max_bus_reset;
 	platform.cons_init = dec_3max_cons_init;
 	platform.device_register = dec_3max_device_register;
+
+	strcpy(cpu_model, "DECstation 5000/200 (3MAX)");
 
 	dec_3max_os_init();
 }
@@ -174,7 +170,6 @@ dec_3max_os_init()
 		MIPS_PHYS_TO_KSEG1(KN02_SYS_CLOCK);
 
 	mc_cpuspeed(mcclock_addr, MIPS_INT_MASK_1);
-	strcpy(cpu_model, "5000/200");
 }
 
 
@@ -199,13 +194,6 @@ void
 dec_3max_cons_init()
 {
 }
-
-const char*
-dec_3max_model_name()
-{
-	return ("Decstation 5000/200");
-}
-
 
 void
 dec_3max_device_register(dev, aux)

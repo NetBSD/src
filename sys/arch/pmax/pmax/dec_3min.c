@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_3min.c,v 1.2 1998/03/25 06:22:19 jonathan Exp $	*/
+/*	$NetBSD: dec_3min.c,v 1.3 1998/03/26 06:32:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.2 1998/03/25 06:22:19 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.3 1998/03/26 06:32:38 thorpej Exp $");
 
 
 #include <sys/types.h>
@@ -124,7 +124,6 @@ int		dec_3min_intr __P((u_int mask, u_int pc,
 
 void		dec_3min_device_register __P((struct device *, void *));
 void		dec_3min_cons_init __P((void));
-const char*	dec_3min_model_name __P((void));
 
 
 /*
@@ -142,16 +141,14 @@ void
 dec_3min_init()
 {
 
-	platform.family = "Decstation 5000";
-
-	platform.model = "5000/1xx";
-
 	platform.iobus = "tcbus";
 
 	platform.os_init = dec_3min_os_init;
 	platform.bus_reset = dec_3min_bus_reset;
 	platform.cons_init = dec_3min_cons_init;
 	platform.device_register = dec_3min_device_register;
+
+	sprintf(cpu_model, "DECstation 5000/1%d (3MIN)", cpu_mhz);
 
 	dec_3min_os_init();
 
@@ -214,9 +211,6 @@ dec_3min_os_init()
 	*(volatile u_int *)MIPS_PHYS_TO_KSEG1(KMIN_REG_TIMEOUT) = 0;
 	wbflush();
 
-
-	sprintf(cpu_model, "5000/1%d", cpu_mhz);
-
 	/*
 	 * The kmin memory hardware seems to wrap  memory addresses
 	 * with 4Mbyte SIMMs, which causes the physmem computation
@@ -236,13 +230,6 @@ void
 dec_3min_cons_init()
 {
 	/* notyet */
-}
-
-
-const char*
-dec_3min_model_name()
-{
-	return ("Decstation 5000/1xx");
 }
 
 

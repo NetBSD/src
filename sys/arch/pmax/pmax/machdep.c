@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.110 1998/03/26 01:09:04 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.111 1998/03/26 06:32:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.110 1998/03/26 01:09:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.111 1998/03/26 06:32:38 thorpej Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -148,8 +148,6 @@ void	 	unimpl_errintr __P ((void));
 
 
 struct platform  platform = {
-	"family not set",
-	"model not set",
 	"iobus not set",
 	unimpl_os_init,
 	unimpl_bus_reset,
@@ -425,11 +423,6 @@ mach_init(argc, argv, code, cv)
 		/* NOTREACHED */
 	}
 	(*sysinit[systype].init)();
-#ifdef notyet	/* XXXjrs */
-	strcpy(cpu_model, platform.model);
-#endif
-
-
 
 	/*
 	 * Find out how much memory is available.
@@ -524,7 +517,10 @@ cpu_startup()
 	 * Good {morning,afternoon,evening,night}.
 	 */
 	printf(version);
-	printf("real mem = %d\n", ctob(physmem));
+
+	printf("%s\n", cpu_model);
+
+	printf("real mem  = %d\n", ctob(physmem));
 
 	/*
 	 * Allocate virtual address space for file I/O buffers.

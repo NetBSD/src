@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_maxine.c,v 1.2 1998/03/25 06:22:19 jonathan Exp $	*/
+/*	$NetBSD: dec_maxine.c,v 1.3 1998/03/26 06:32:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.2 1998/03/25 06:22:19 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.3 1998/03/26 06:32:38 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -112,7 +112,6 @@ void		dec_maxine_init __P((void));
 void		dec_maxine_os_init __P((void));
 void		dec_maxine_bus_reset __P((void));
 void		dec_maxine_mach_init __P((void));
-const char*	dec_maxine_model_name __P((void));
 
 void		dec_maxine_enable_intr 
 		   __P ((u_int slotno, int (*handler) __P((intr_arg_t sc)),
@@ -122,8 +121,6 @@ int		dec_maxine_intr __P((u_int mask, u_int pc,
 
 void		dec_maxine_device_register __P((struct device *, void *));
 void		dec_maxine_cons_init __P((void));
-const char*	dec_maxine_model_name __P((void));
-
 
 
 /*
@@ -138,17 +135,14 @@ void
 dec_maxine_init()
 {
 
-	platform.family = "Personal Decstation (KN02CA, KN04)";
-
-	platform.model = " maxine ???";
-
 	platform.iobus = "tcbus";
-
 
 	platform.os_init = dec_maxine_os_init;
 	platform.bus_reset = dec_maxine_bus_reset;
 	platform.cons_init = dec_maxine_cons_init;
 	platform.device_register = dec_maxine_device_register;
+
+	sprintf(cpu_model, "Personal DECstation 5000/%d (MAXINE)", cpu_mhz);
 
 	dec_maxine_os_init();
 }
@@ -194,9 +188,6 @@ dec_maxine_os_init()
 	 */
 	*(u_int *)IOASIC_REG_IMSK(ioasic_base) = XINE_IM0;
 	*(u_int *)IOASIC_REG_INTR(ioasic_base) = 0;
-
-
-	sprintf(cpu_model, "5000/%d", cpu_mhz);
 }
 
 
@@ -223,13 +214,6 @@ void
 dec_maxine_cons_init()
 {
 }
-
-const char*
-dec_maxine_model_name()
-{
-	return ("Decstation 5000/1xx");	/* XXXjrs */
-}
-
 
 void
 dec_maxine_device_register(dev, aux)
