@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.33 2001/11/12 23:49:45 lukem Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.33.10.1 2003/10/02 10:42:39 tron Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.33 2001/11/12 23:49:45 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.33.10.1 2003/10/02 10:42:39 tron Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -881,7 +881,7 @@ vlan_input(struct ifnet *ifp, struct mbuf *m)
 	if (ifv == NULL ||
 	    (ifv->ifv_if.if_flags & (IFF_UP|IFF_RUNNING)) !=
 	     (IFF_UP|IFF_RUNNING)) {
-		m_free(m);
+		m_freem(m);
 		ifp->if_noproto++;
 		return;
 	}
