@@ -1,4 +1,4 @@
-/*	$NetBSD: riscoscalls.S,v 1.3 2003/11/23 15:24:20 bjh21 Exp $	*/
+/*	$NetBSD: riscoscalls.S,v 1.4 2003/11/23 15:28:03 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -96,7 +96,6 @@ ENTRY(xosargs_read)
 	teq	r3, #0
 	strne	r2, [r3]
 	mov	r0, #0
-	; movvc	r0, #0
 	ldmdb	fp, {fp, sp, pc}
 
 ENTRY(xosargs_set)
