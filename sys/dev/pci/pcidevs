@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.19 1996/10/15 23:41:57 christos Exp $
+$NetBSD: pcidevs,v 1.20 1996/10/19 13:01:49 jonathan Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -572,6 +572,9 @@ product QLOGIC ISP1022	0x1022	ISP1022
 /* Quantum Designs products */
 product QUANTUMDESIGNS 8500	0x0001	8500
 product QUANTUMDESIGNS 8580	0x0002	8580
+
+/* Realtek (Creative Labs?) products */
+product	REALTEK	RT8029	0x8029	Ethernet
 
 /* S3 products */
 product S3 TRIO64	0x8811	Trio32/64
