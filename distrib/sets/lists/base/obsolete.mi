@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.18 2001/03/07 07:10:11 garbled Exp $
+# $NetBSD: obsolete.mi,v 1.19 2001/03/15 12:03:11 itojun Exp $
 /bin/rcorder
 /dev/log
 /etc/disklabels
@@ -17,10 +17,12 @@
 /usr/libexec/uucp/uuchk
 /usr/sbin/dig
 /usr/sbin/dnsquery
+/usr/sbin/flush
 /usr/sbin/gettable
 /usr/sbin/gifconfig
 /usr/sbin/host
 /usr/sbin/htable
+/usr/sbin/lmtp
 /usr/sbin/mbrlabel
 /usr/sbin/nfsiod
 /usr/sbin/nslookup
@@ -31,6 +33,7 @@
 /usr/sbin/scriptdump
 /usr/sbin/setkey
 /usr/sbin/smrsh
+/usr/sbin/spawn
 /usr/sbin/statmsg
 /usr/sbin/sysconfd
 /usr/sbin/sysctl
@@ -61,10 +64,10 @@
 /usr/share/man/man8/tahoe
 /usr/share/misc/getopt
 /usr/share/misc/more.help
-/usr/share/sushi/scripton/func
+/usr/share/sushi/scriptoff
 /usr/share/sushi/scriptoff/func
 /usr/share/sushi/scripton
-/usr/share/sushi/scriptoff
+/usr/share/sushi/scripton/func
 /usr/share/vi/catalog/ru_SU.KOI8-R
 /usr/share/zoneinfo/Africa/Lumumbashi
 /usr/share/zoneinfo/Asia/Aktau
