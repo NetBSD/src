@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.5 1994/11/24 17:50:49 dean Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.6 1995/01/18 06:42:56 mellon Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -74,6 +74,7 @@ int	dkn;		/* number of iostat dk numbers assigned so far */
 int	cpuspeed = 30;	/* approx # instr per usec. */
 extern	int pmax_boardtype;
 extern	tc_option_t tc_slot_info[TC_MAX_LOGICAL_SLOTS];
+extern void	(*tc_enable_interrupt)();
 
 /*
  * Determine mass storage and memory configuration for a machine.
