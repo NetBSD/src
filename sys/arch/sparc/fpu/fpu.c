@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.21 2003/10/05 21:13:23 pk Exp $ */
+/*	$NetBSD: fpu.c,v 1.22 2003/10/06 07:10:41 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.21 2003/10/05 21:13:23 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.22 2003/10/06 07:10:41 pk Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -108,21 +108,17 @@ static u_char fpu_codes_native[] = {
 	X8(FPE_FLTOVF),
 	X16(FPE_FLTINV)
 };
-#if defined(COMPAT_SUNOS) || defined(SVR4_COMPAT)
-static u_char fpu_codes_compat[] = {
+#if defined(COMPAT_SUNOS)
+static u_char fpu_codes_sunos[] = {
 	X1(FPE_FLTINEX_TRAP),
 	X2(FPE_FLTDIV_TRAP),
 	X4(FPE_FLTUND_TRAP),
 	X8(FPE_FLTOVF_TRAP),
 	X16(FPE_FLTOPERR_TRAP)
 };
-#ifdef COMPAT_SUNOS
 extern struct emul emul_sunos;
-#endif
-#ifdef COMPAT_SVR4
-extern struct emul emul_svr4;
-#endif
-#endif /* {SUNOS,SVR4}_COMPAT */
+#endif /* SUNOS_COMPAT */
+/* Note: SVR4(Solaris) FPE_* codes happen to be compatible with ours */
 
 /*
  * The FPU gave us an exception.  Clean up the mess.  Note that the
@@ -146,14 +142,11 @@ fpu_cleanup(l, fs)
 	u_char *fpu_codes;
 	ksiginfo_t ksi;
 
-	fpu_codes = (0
+	fpu_codes =
 #ifdef COMPAT_SUNOS
-			|| p->p_emul == &emul_sunos
+		(p->p_emul == &emul_sunos) ? fpu_codes_sunos :
 #endif
-#ifdef SVR4_COMPAT
-			|| p->p_emul == &emul_svr4
-#endif
-		) ? fpu_codes_compat : fpu_codes_native;
+		fpu_codes_native;
 
 	switch ((fsr >> FSR_FTT_SHIFT) & FSR_FTT_MASK) {
 
