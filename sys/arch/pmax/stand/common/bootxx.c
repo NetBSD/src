@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.24 2001/07/07 14:21:01 simonb Exp $	*/
+/*	$NetBSD: bootxx.c,v 1.25 2002/12/09 12:14:10 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -77,6 +77,7 @@
 #include <sys/param.h>
 #include <sys/exec_elf.h>
 #include <lib/libsa/stand.h>
+#include <lib/libkern/libkern.h>
 #include <machine/dec_prom.h>
 
 typedef void (*entrypt) __P((int, char **, int, const void *));

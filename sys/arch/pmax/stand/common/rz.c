@@ -1,4 +1,4 @@
-/*	$NetBSD: rz.c,v 1.18 2001/09/24 13:22:33 wiz Exp $	*/
+/*	$NetBSD: rz.c,v 1.19 2002/12/09 12:14:10 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,6 +39,7 @@
  */
 
 #include <lib/libsa/stand.h>
+#include <lib/libkern/libkern.h>
 #include <machine/dec_prom.h>
 #include <machine/stdarg.h>
 
