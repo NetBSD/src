@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.34 1995/12/09 07:39:02 mycroft Exp $	*/
+/*	$NetBSD: pmap.c,v 1.35 1996/04/03 08:21:05 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -178,6 +178,7 @@ TAILQ_HEAD(pv_page_list, pv_page) pv_page_freelist;
 int		pv_nfree;
 
 pt_entry_t *pmap_pte __P((pmap_t, vm_offset_t));
+void i386_protection_init __P((void));
 
 #if BSDVM_COMPAT
 #include <sys/msgbuf.h>
@@ -1529,6 +1530,7 @@ pmap_pageable(pmap, sva, eva, pageable)
  * Miscellaneous support routines follow
  */
 
+void
 i386_protection_init()
 {
 
