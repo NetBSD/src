@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.66 2000/12/18 23:39:44 briggs Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.67 2000/12/19 14:08:17 pk Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -444,7 +444,7 @@ ncr53c9x_init(sc, doreset)
 
 		ti->flags = ((sc->sc_cfflags & (1<<(r+16))) ? T_TAGOFF : 0) |
 			((sc->sc_minsync && !(sc->sc_cfflags & (1<<(r+8))))
-			 ? T_SYNCHOFF : 0) |
+			 ? 0 : T_SYNCHOFF) |
 			((sc->sc_cfflags & (1<<r)) ? T_RSELECTOFF : 0) |
 			T_NEED_TO_RESET;
 #ifdef DEBUG
