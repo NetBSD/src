@@ -1,40 +1,16 @@
-# Message system compiler Makefile
-#
+#	$NetBSD: Makefile,v 1.2 1997/10/11 11:39:53 mycroft Exp $
 
-SRCS = msgmain.c msgparse.y msgscan.l msgdb.c util.c avl.c
-
+PROG=	msgc
+SRCS=	msgmain.c msgparse.y msgscan.l msgdb.c util.c avl.c
 .PATH: ${.CURDIR}/../menuc
+CFLAGS+=-I. -I${.CURDIR}
+WARNS=	1
+LDADD+=	-ll
+DPADD+=	${LIBL}
 
-PROG = msgc
+CLEANFILES+= y.tab.h
 
-DATA = msg_sys.def
+FILES= msg_sys.def
+FILESDIR= /usr/share/misc
 
-DATADIR = /usr/share/misc
-
-MAN = msgc.1
-
-LDADD = -lfl
-
-WARNS = 1
-
-COPTS = -g
-
-CLEANFILES += y.tab.h
-
-CFLAGS += -I. -I${.CURDIR}
-
-.include<bsd.prog.mk>
-
-.for M in ${DATA}
-
-proginstall:: ${DESTDIR}${DATADIR}/${M}
-.if !defined(UPDATE)
-.PHONY: ${DESTDIR}${DATADIR}/${M}
-.endif
-.if !defined(BUILD)
-${DESTDIR}${DATADIR}/${M}: .MADE
-.endif
-
-${DESTDIR}${DATADIR}/${M}: ${M}
-	$(INSTALL) -c -o ${BINOWN} -g ${BINGRP} -m 444 ${.ALLSRC} ${.TARGET}
-.endfor
+.include <bsd.prog.mk>
