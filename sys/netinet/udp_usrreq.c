@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.93 2002/05/12 20:33:51 matt Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.93.4.1 2004/03/31 20:09:25 tron Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.93 2002/05/12 20:33:51 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.93.4.1 2004/03/31 20:09:25 tron Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -445,9 +445,10 @@ udp6_input(mp, offp, proto)
 	/*
 	 * Checksum extended UDP header and data.
 	 */
-	if (uh->uh_sum == 0)
+	if (uh->uh_sum == 0) {
 		udp6stat.udp6s_nosum++;
-	else if (in6_cksum(m, IPPROTO_UDP, off, ulen) != 0) {
+		goto bad;
+	} else if (in6_cksum(m, IPPROTO_UDP, off, ulen) != 0) {
 		udp6stat.udp6s_badsum++;
 		goto bad;
 	}
