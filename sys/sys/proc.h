@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.122 2001/02/26 16:32:48 lukem Exp $	*/
+/*	$NetBSD: proc.h,v 1.123 2001/02/27 22:10:27 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -426,10 +426,15 @@ int	fork1(struct proc *, int, int, void *, size_t,
 void	rqinit(void);
 int	groupmember(gid_t, struct ucred *);
 void	cpu_switch(struct proc *);
-void	cpu_wait(struct proc *);
 void	cpu_exit(struct proc *);
 void	cpu_fork(struct proc *, struct proc *, void *, size_t,
 	    void (*)(void *), void *);
+
+		/*
+		 * XXX: use __P() to allow ports to have as a #define.
+		 * XXX: we need a better way to solve this.
+		 */
+void	cpu_wait __P((struct proc *));
 
 void	child_return(void *);
 
