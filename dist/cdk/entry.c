@@ -1,9 +1,9 @@
 #include <cdk.h>
 
 /*
- * $Author: garbled $
- * $Date: 2001/01/04 20:15:30 $
- * $Revision: 1.2 $
+ * $Author: dsl $
+ * $Date: 2004/10/27 20:26:26 $
+ * $Revision: 1.3 $
  */
 
 /*
@@ -563,7 +563,7 @@ static void CDKEntryCallBack (CDKENTRY *entry, chtype character)
    /* Start checking the input. */
    if ((entry->dispType == vINT ||
 	entry->dispType == vHINT) &&
-	!isdigit((int)plainchar))
+	!isdigit(plainchar & 0xff))
    {
       Beep();
    }
@@ -572,7 +572,7 @@ static void CDKEntryCallBack (CDKENTRY *entry, chtype character)
 		entry->dispType == vLCHAR ||
 		entry->dispType == vUHCHAR ||
 		entry->dispType == vLHCHAR) &&
-		isdigit((int)plainchar))
+		isdigit(plainchar & 0xff))
    {
       Beep();
    }
@@ -593,17 +593,17 @@ static void CDKEntryCallBack (CDKENTRY *entry, chtype character)
 		entry->dispType == vUHCHAR ||
 		entry->dispType == vUMIXED ||
 		entry->dispType == vUHMIXED)
-		&& !isdigit((int)plainchar))
+		&& !isdigit(plainchar & 0xff))
 	 {
-	    plainchar = toupper (plainchar);
+	    plainchar = toupper (plainchar & 0xff);
 	 }
 	 else if ((entry->dispType == vLCHAR ||
 			entry->dispType == vLHCHAR ||
 			entry->dispType == vLMIXED ||
 			entry->dispType == vLHMIXED) &&
-			!isdigit((int)plainchar))
+			!isdigit(plainchar & 0xff))
 	 {
-	    plainchar = tolower (plainchar);
+	    plainchar = tolower (plainchar & 0xff);
 	 }
 
 	 /* Update the screen and pointer. */
