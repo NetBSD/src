@@ -1,4 +1,4 @@
-/*	$NetBSD: tape.c,v 1.40 2000/05/19 09:22:55 enami Exp $	*/
+/*	$NetBSD: tape.c,v 1.41 2000/05/23 02:27:33 enami Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.9 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: tape.c,v 1.40 2000/05/19 09:22:55 enami Exp $");
+__RCSID("$NetBSD: tape.c,v 1.41 2000/05/23 02:27:33 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -720,8 +720,17 @@ loop:
 				TP_BSIZE : size));
 		}
 		if ((size -= TP_BSIZE) <= 0) {
-			if (!(spcl.c_type == TS_BITS ||
-			    spcl.c_type == TS_CLRI)) {
+			if (spcl.c_type == TS_BITS || spcl.c_type == TS_CLRI) {
+				/*
+				 * In this case, the following expression
+				 * should always be false since the size was
+				 * initially set to spcl.c_dinode.di_size and
+				 * it is initialized to spcl.c_count * TP_BSIZE
+				 * in gethead().
+				 */
+				if (!(size == 0 && i == spcl.c_count - 1))
+					panic("inconsistent map size\n");
+			} else {
 				for (i++; i < spcl.c_count; i++)
 					if (spcl.c_addr[i])
 						readtape(junk);
