@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.146 2000/07/05 04:07:24 sommerfeld Exp $
+#	$NetBSD: GENERIC,v 1.147 2000/07/27 17:53:36 mason Exp $
 
 #
 #if 0
@@ -16,7 +16,7 @@
 
 include "arch/amiga/conf/std.amiga"
 
-#ident 		"GENERIC-$Revision: 1.146 $"
+#ident 		"GENERIC-$Revision: 1.147 $"
 
 maxusers	8
 options 	RTC_OFFSET=0
@@ -442,7 +442,7 @@ pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
 
 pseudo-device	view		4	# views (needed for grfcc)
-pseudo-device	pty		16	# pseudo ptys
+pseudo-device	pty		64	# pseudo-terminals
 
 pseudo-device	vnd		4	# vnode pseudo-disks
 pseudo-device	ccd		4	# concatenated disk devices

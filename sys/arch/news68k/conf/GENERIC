@@ -1,10 +1,10 @@
-# 	$NetBSD: GENERIC,v 1.10 2000/06/30 17:10:19 itojun Exp $
+# 	$NetBSD: GENERIC,v 1.11 2000/07/27 17:53:38 mason Exp $
 
 #	news68k GENERIC config file;
 #
 include		"arch/news68k/conf/std.news68k"
 
-#ident 		"GENERIC-$Revision: 1.10 $"
+#ident 		"GENERIC-$Revision: 1.11 $"
 
 maxusers	8
 
@@ -159,7 +159,7 @@ uk*	at scsibus? target ? lun ?		# unknown SCSI devices
 
 # Misc.
 pseudo-device	loop			# loopback interface; required
-pseudo-device	pty		32	# pseudo-terminals
+pseudo-device	pty		64	# pseudo-terminals
 pseudo-device	md		1	# memory disk device
 pseudo-device	vnd		4	# disk-like interface to files
 pseudo-device	ccd		4	# concatenated and striped disks
