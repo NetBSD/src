@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.22 1997/06/20 07:21:40 mikel Exp $	*/
+/*	$NetBSD: time.h,v 1.23 1997/08/14 15:53:43 drochner Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -163,6 +163,8 @@ int	itimerfix __P((struct timeval *tv));
 int	itimerdecr __P((struct itimerval *itp, int usec));
 void	microtime __P((struct timeval *tv));
 #else /* !_KERNEL */
+
+#ifndef _STANDALONE
 #include <time.h>
 
 #ifndef _POSIX_SOURCE
@@ -182,6 +184,8 @@ int	settimeofday __P((const struct timeval *, const struct timezone *));
 int	utimes __P((const char *, const struct timeval *));
 __END_DECLS
 #endif /* !POSIX */
+
+#endif	/* !_STANDALONE */
 
 #endif /* !_KERNEL */
 
