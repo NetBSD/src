@@ -1,8 +1,8 @@
-/*	$NetBSD: db_interface.c,v 1.32 2003/10/09 07:12:24 matt Exp $ */
+/*	$NetBSD: db_interface.c,v 1.33 2003/12/17 04:04:40 simonb Exp $ */
 /*	$OpenBSD: db_interface.c,v 1.2 1996/12/28 06:21:50 rahnds Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.32 2003/10/09 07:12:24 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.33 2003/12/17 04:04:40 simonb Exp $");
 
 #define USERACC
 
@@ -456,7 +456,7 @@ db_ppc4xx_useracc(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 	}
 	addr &= ~0x3; /* align */
 	{
-		register char c, *cp = modif;
+		char c, *cp = modif;
 		while ((c = *cp++) != 0)
 			if (c == 'i')
 				instr = 1;
