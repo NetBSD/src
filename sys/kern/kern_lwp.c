@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.1.2.3 2001/07/13 02:33:43 nathanw Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.1.2.4 2001/08/24 04:20:07 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -54,8 +54,14 @@ struct lwplist alllwp;
 struct lwplist deadlwp;
 struct lwplist zomblwp;
 
-#define DPRINTF(x)
+#define LWP_DEBUG
 
+#ifdef LWP_DEBUG
+int lwp_debug = 0;
+#define DPRINTF(x) if (lwp_debug) printf x
+#else
+#define DPRINTF(x)
+#endif
 /* ARGSUSED */
 int
 sys__lwp_create(struct lwp *l, void *v, register_t *retval)
@@ -437,6 +443,8 @@ lwp_exit(struct lwp *l)
 	int s;
 
 	DPRINTF(("lwp_exit: %d.%d exiting.\n", p->p_pid, l->l_lid));
+	DPRINTF((" nlwps: %d nrlwps %d nzlwps: %d\n", 
+	    p->p_nlwps, p->p_nrlwps, p->p_nzlwps));
 	/* 
 	 * If we are the last live LWP in a process, we need to exit
 	 * the entire process (if that's not already going on). We do

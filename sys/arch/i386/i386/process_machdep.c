@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.32.2.3 2001/08/24 00:08:33 nathanw Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.32.2.4 2001/08/24 04:19:59 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@ static __inline struct trapframe *
 process_frame(struct lwp *l)
 {
 
-	return (p->p_md.md_regs);
+	return (l->l_md.md_regs);
 }
 
 static __inline union savefpu *

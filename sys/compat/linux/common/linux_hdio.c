@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_hdio.c,v 1.1.4.1 2001/06/21 19:59:49 nathanw Exp $	*/
+/*	$NetBSD: linux_hdio.c,v 1.1.4.2 2001/08/24 04:20:03 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000 Wasabi Systems, Inc.
@@ -122,7 +122,7 @@ linux_ioctl_hdio(struct proc *p, struct linux_sys_ioctl_args *uap,
 		if (error == 0)
 			break;
 		error = ioctlf(fp, DIOCGDEFLABEL, (caddr_t)&label, p);
-		error1 = ioctlf(fp, DIOCGPART, (caddr_t)&partp, p);
+		error = ioctlf(fp, DIOCGPART, (caddr_t)&partp, p);
 		if (error != 0 && error1 != 0) {
 			error = error1;
 			break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.56.2.2 2001/08/24 00:13:28 nathanw Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.56.2.3 2001/08/24 04:20:10 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -74,6 +74,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/buf.h>
 #include <sys/mount.h>
@@ -189,7 +190,7 @@ sys_lfs_markv(struct lwp *l, void *v, register_t *retval)
 	int i, blkcnt, error;
 	fsid_t fsid;
 
-	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+	if ((error = suser(l->l_proc->p_ucred, &l->l_proc->p_acflag)) != 0)
 		return (error);
 	
 	if ((error = copyin(SCARG(uap, fsidp), &fsid, sizeof(fsid_t))) != 0)
@@ -215,7 +216,7 @@ sys_lfs_markv(struct lwp *l, void *v, register_t *retval)
 		blkiov[i].bi_size      = blkiov15[i].bi_size;
 	}
 
-	if ((error = lfs_markv(p, &fsid, blkiov, blkcnt)) == 0) {
+	if ((error = lfs_markv(l->l_proc, &fsid, blkiov, blkcnt)) == 0) {
 		for (i = 0; i < blkcnt; i++) {
 			blkiov15[i].bi_inode     = blkiov[i].bi_inode;
 			blkiov15[i].bi_lbn       = blkiov[i].bi_lbn;

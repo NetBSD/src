@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls_43.c,v 1.11.6.2 2001/08/24 00:08:44 nathanw Exp $	*/
+/*	$NetBSD: uipc_syscalls_43.c,v 1.11.6.3 2001/08/24 04:20:03 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -215,7 +215,7 @@ compat_43_sys_recvmsg(struct lwp *l, void *v, register_t *retval)
 	 * DTRT.
 	 */
 	if (omsg.msg_accrights && omsg.msg_accrightslen) {
-		caddr_t sg = stackgap_init(p->p_emul);
+		caddr_t sg = stackgap_init(l->l_proc->p_emul);
 		struct cmsg *ucmsg;
 
 		/* it was this way in 4.4BSD */
@@ -233,7 +233,7 @@ compat_43_sys_recvmsg(struct lwp *l, void *v, register_t *retval)
 		msg.msg_controllen = 0;
 	}
 
-	error = recvit(p, SCARG(uap, s), &msg,
+	error = recvit(l->l_proc, SCARG(uap, s), &msg,
 	    (caddr_t)&SCARG(uap, msg)->msg_namelen, retval);
 
 	/*
@@ -410,7 +410,8 @@ compat_43_sys_sendmsg(struct lwp *l, void *v, register_t *retval)
 		msg.msg_controllen = 0;
 	}
 
-	error = sendit(p, SCARG(uap, s), &msg, SCARG(uap, flags), retval);
+	error = sendit(l->l_proc, SCARG(uap, s), &msg, SCARG(uap, flags), 
+	    retval);
 done:
 	if (iov != aiov)
 		FREE(iov, M_IOV);

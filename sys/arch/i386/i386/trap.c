@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.154.2.3 2001/06/21 19:25:40 nathanw Exp $	*/
+/*	$NetBSD: trap.c,v 1.154.2.4 2001/08/24 04:20:00 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -330,6 +330,13 @@ copyfault:
 	case T_STKFLT|T_USER:
 	case T_ALIGNFLT|T_USER:
 	case T_NMI|T_USER:
+		printf("trap %d code %x eip %x cs %x eflags %x cr2 %x cpl %x\n",
+		    frame.tf_trapno, frame.tf_err, frame.tf_eip, frame.tf_cs,
+		    frame.tf_eflags, rcr2(), cpl);
+		printf("curproc %p%s", curproc, curproc ? " " : "\n");
+		if (curproc)
+			printf("process %d.%d\n", l->l_proc->p_pid, l->l_lid);
+
 		(*p->p_emul->e_trapsignal)(l, SIGBUS, type & ~T_USER);
 		goto out;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.233.2.5 2001/08/24 00:08:29 nathanw Exp $	*/
+/*	$NetBSD: locore.s,v 1.233.2.6 2001/08/24 04:19:57 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -744,7 +744,8 @@ NENTRY(sigcode)
  */ 	
 NENTRY(upcallcode)
 	call	SAF_UPCALL(%esp)
-	movl	$SYS_sa_yield,%eax
+	pushl	$101
+	movl	$SYS_exit,%eax
 	int	$0x80			# upcalls should not return.
 	.globl	_C_LABEL(esigcode)
 _C_LABEL(esigcode):

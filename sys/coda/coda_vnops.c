@@ -6,7 +6,7 @@ mkdir
 rmdir
 symlink
 */
-/*	$NetBSD: coda_vnops.c,v 1.23.2.3 2001/08/24 00:08:43 nathanw Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.23.2.4 2001/08/24 04:20:02 nathanw Exp $	*/
 
 /*
  * 
@@ -2016,7 +2016,7 @@ coda_getpages(v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct cnode *cp = VTOC(vp);
-	struct proc *p = curproc;
+	struct proc *p = curproc->l_proc;
 	struct ucred *cred = p->p_ucred;
 	int error;
 

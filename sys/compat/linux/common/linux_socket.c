@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.28.2.4 2001/08/24 00:08:50 nathanw Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.28.2.5 2001/08/24 04:20:03 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -263,7 +263,7 @@ linux_sys_sendto(l, v, retval)
 	if (SCARG(uap, to)) {
 		struct sockaddr *sa;
 		int error;
-		caddr_t sg = stackgap_init(p->p_emul);
+		caddr_t sg = stackgap_init(l->l_proc->p_emul);
 
 		if ((error = linux_sa_get(&sg, &sa, SCARG(uap, to),
 		    SCARG(uap, tolen))))
@@ -912,8 +912,8 @@ linux_sys_connect(l, v, retval)
 }
 
 int
-linux_sys_bind(p, v, retval)
-	struct proc *p;
+linux_sys_bind(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -928,7 +928,7 @@ linux_sys_bind(p, v, retval)
 	SCARG(&bsa, s) = SCARG(uap, s);
 	if (SCARG(uap, name)) {
 		struct sockaddr *sa;
-		caddr_t sg = stackgap_init(p->p_emul);
+		caddr_t sg = stackgap_init(l->l_proc->p_emul);
 
 		error = linux_sa_get(&sg, &sa, SCARG(uap, name),
 		    SCARG(uap, namelen));
@@ -940,12 +940,12 @@ linux_sys_bind(p, v, retval)
 		SCARG(&bsa, name) = NULL;
 	SCARG(&bsa, namelen) = SCARG(uap, namelen);
 
-	return (sys_bind(p, &bsa, retval));
+	return (sys_bind(l, &bsa, retval));
 }
 
 int
-linux_sys_getsockname(p, v, retval)
-	struct proc *p;
+linux_sys_getsockname(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -956,7 +956,7 @@ linux_sys_getsockname(p, v, retval)
 	} */ *uap = v;
 	int error;
 
-	if ((error = sys_getsockname(p, uap, retval)) != 0)
+	if ((error = sys_getsockname(l, uap, retval)) != 0)
 		return (error);
 
 	if ((error = linux_sa_put((struct osockaddr *)SCARG(uap, asa))))
@@ -966,8 +966,8 @@ linux_sys_getsockname(p, v, retval)
 }
 
 int
-linux_sys_getpeername(p, v, retval)
-	struct proc *p;
+linux_sys_getpeername(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -978,7 +978,7 @@ linux_sys_getpeername(p, v, retval)
 	} */ *uap = v;
 	int error;
 
-	if ((error = sys_getpeername(p, uap, retval)) != 0)
+	if ((error = sys_getpeername(l, uap, retval)) != 0)
 		return (error);
 
 	if ((error = linux_sa_put((struct osockaddr *)SCARG(uap, asa))))
@@ -1024,7 +1024,7 @@ linux_sa_get(sgp, sap, osa, osalen)
 	 * the situation, reject the address and write a message to system log.
 	 */
 	if (bdom == AF_INET6 && osalen < sizeof(struct sockaddr_in6)) {
-		struct proc *p = curproc;	/* XXX */
+		struct proc *p = curproc->l_proc;	/* XXX */
 		int uid = p->p_cred && p->p_ucred ? 
 				p->p_ucred->cr_uid : -1;
 
@@ -1089,8 +1089,8 @@ linux_sa_put(osa)
 }
 
 int
-linux_sys_recv(p, v, retval)
-	struct proc *p;
+linux_sys_recv(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -1110,12 +1110,12 @@ linux_sys_recv(p, v, retval)
 	SCARG(&bra, from) = NULL;
 	SCARG(&bra, fromlenaddr) = NULL;
 
-	return (sys_recvfrom(p, &bra, retval));
+	return (sys_recvfrom(l, &bra, retval));
 }
 
 int
-linux_sys_send(p, v, retval)
-	struct proc *p;
+linux_sys_send(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -1134,12 +1134,12 @@ linux_sys_send(p, v, retval)
 	SCARG(&bsa, to)		= NULL;
 	SCARG(&bsa, tolen)	= 0;
 
-	return (sys_sendto(p, &bsa, retval));
+	return (sys_sendto(l, &bsa, retval));
 }
 
 int
-linux_sys_accept(p, v, retval)
-	struct proc *p;
+linux_sys_accept(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -1155,7 +1155,7 @@ linux_sys_accept(p, v, retval)
 	SCARG(&baa, name)	= (struct sockaddr *) SCARG(uap, name);
 	SCARG(&baa, anamelen)	= (unsigned int *) SCARG(uap, anamelen);
 
-	if ((error = sys_accept(p, &baa, retval)))
+	if ((error = sys_accept(l, &baa, retval)))
 		return (error);
 
 	if (SCARG(uap, name) && (error = linux_sa_put(SCARG(uap, name))))

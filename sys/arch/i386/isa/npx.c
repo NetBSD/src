@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.74.2.3 2001/08/24 00:08:36 nathanw Exp $	*/
+/*	$NetBSD: npx.c,v 1.74.2.4 2001/08/24 04:20:01 nathanw Exp $	*/
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -446,7 +446,7 @@ npxsave1(void)
  */
 #ifdef I686_CPU
 int
-npxdna_xmm(struct proc *p)
+npxdna_xmm(struct lwp *l)
 {
 
 #ifdef DIAGNOSTIC
@@ -454,7 +454,7 @@ npxdna_xmm(struct proc *p)
 		panic("npxdna: masked");
 #endif
 
-	p->p_addr->u_pcb.pcb_cr0 &= ~CR0_TS;
+	l->l_addr->u_pcb.pcb_cr0 &= ~CR0_TS;
 	clts();
 
 	/*
@@ -463,7 +463,7 @@ npxdna_xmm(struct proc *p)
 	 * initialization).
 	 */
 	npx_nointr = 1;
-	if (npxproc != 0 && npxproc != p) {
+	if (npxproc != 0 && npxproc != l) {
 		IPRINTF(("Save"));
 		npxsave1();
 	} else {
@@ -472,13 +472,13 @@ npxdna_xmm(struct proc *p)
 		fwait();
 	}
 	npx_nointr = 0;
-	npxproc = p;
+	npxproc = l;
 
-	if ((p->p_md.md_flags & MDP_USEDFPU) == 0) {
-		fldcw(&p->p_addr->u_pcb.pcb_savefpu.sv_xmm.sv_env.en_cw);
-		p->p_md.md_flags |= MDP_USEDFPU;
+	if ((l->l_md.md_flags & MDP_USEDFPU) == 0) {
+		fldcw(&l->l_addr->u_pcb.pcb_savefpu.sv_xmm.sv_env.en_cw);
+		l->l_md.md_flags |= MDP_USEDFPU;
 	} else
-		fxrstor(&p->p_addr->u_pcb.pcb_savefpu.sv_xmm);
+		fxrstor(&l->l_addr->u_pcb.pcb_savefpu.sv_xmm);
 
 	return (1);
 }

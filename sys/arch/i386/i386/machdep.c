@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.429.2.7 2001/08/24 00:08:31 nathanw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.429.2.8 2001/08/24 04:19:58 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -1638,9 +1638,9 @@ sendsig(catcher, sig, mask, code)
 
 	if (p->p_flag & P_SA) {
 		if (code)
-			sa_upcall(l, SA_UPCALL_SIGNAL, l, NULL, sig, code);
+			sa_upcall(l, SA_UPCALL_SIGNAL, l, NULL, sig, code, NULL);
 		else
-			sa_upcall(l, SA_UPCALL_SIGNAL, NULL, l, sig, 0);
+			sa_upcall(l, SA_UPCALL_SIGNAL, NULL, l, sig, 0, NULL);
 		return;
 	}
 
@@ -1795,8 +1795,6 @@ cpu_upcall(struct lwp *l)
 
 	self_sa.sa_id = l->l_lid;
 	self_sa.sa_cpu = 0; /* XXX l->l_cpu; */
-	self_sa.sa_sig = sau->sau_sig;
-	self_sa.sa_code = sau->sau_code;
 	sas[0] = &self_sa;
 	nsas = 1;
 
@@ -1805,8 +1803,6 @@ cpu_upcall(struct lwp *l)
 		e_sa.sa_context = cpu_stashcontext(sau->sau_event);
 		e_sa.sa_id = sau->sau_event->l_lid;
 		e_sa.sa_cpu = 0; /* XXX event->l_cpu; */
-		e_sa.sa_sig = 0;
-		e_sa.sa_code = 0;
 		sas[nsas++] = &e_sa;
 		nevents = 1;
 	}
@@ -1816,8 +1812,6 @@ cpu_upcall(struct lwp *l)
 		int_sa.sa_context = cpu_stashcontext(sau->sau_interrupted);
 		int_sa.sa_id = sau->sau_interrupted->l_lid;
 		int_sa.sa_cpu = 0; /* XXX interrupted->l_cpu; */
-		int_sa.sa_sig = 0;
-		int_sa.sa_code = 0;
 		sas[nsas++] = &int_sa;
 		nint = 1;
 	}
@@ -1870,6 +1864,9 @@ cpu_upcall(struct lwp *l)
 	frame.sa_sas = sapp;
 	frame.sa_events = nevents;
 	frame.sa_interrupted = nint;
+	frame.sa_sig = sau->sau_sig;
+	frame.sa_code = sau->sau_code;
+	frame.sa_arg = sau->sau_arg;
 	frame.sa_upcall = sd->sa_upcall;
 
 	pool_put(&saupcall_pool, sau);
@@ -3261,10 +3258,6 @@ cpu_setmcontext(l, mcp, flags)
 		tf->tf_cs     = gr[_REG_CS];
 		tf->tf_esp    = gr[_REG_UESP];
 		tf->tf_ss     = gr[_REG_SS];
-#if 0 /* XXX nonzero trapno/err values will crash the box with "unknown trap" */
-		tf->tf_trapno = gr[_REG_TRAPNO];
-		tf->tf_err    = gr[_REG_ERR];
-#endif
 	}
 
 	/* Restore floating point register context, if any. */

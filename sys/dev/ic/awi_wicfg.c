@@ -1,4 +1,4 @@
-/*	$NetBSD: awi_wicfg.c,v 1.3.4.3 2001/08/24 00:09:17 nathanw Exp $	*/
+/*	$NetBSD: awi_wicfg.c,v 1.3.4.4 2001/08/24 04:20:04 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -43,6 +43,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/socket.h>
 #include <sys/errno.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.45.2.3 2001/08/24 00:12:19 nathanw Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.45.2.4 2001/08/24 04:20:09 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -245,7 +245,7 @@ route_output(m, va_alist)
 		dst = 0;
 		senderr(EPROTONOSUPPORT);
 	}
-	rtm->rtm_pid = curproc->l->proc->p_pid;
+	rtm->rtm_pid = curproc->l_proc->p_pid;
 	memset(&info, 0, sizeof(info));
 	info.rti_addrs = rtm->rtm_addrs;
 	if (rt_xaddrs((caddr_t)(rtm + 1), len + (caddr_t)rtm, &info))
