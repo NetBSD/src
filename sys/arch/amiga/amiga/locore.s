@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.41 1995/08/18 15:27:33 chopps Exp $	*/
+/*	$NetBSD: locore.s,v 1.42 1995/09/04 12:56:47 chopps Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1971,8 +1971,8 @@ Ldb2:
 
 	| ok, turn off MMU..
 Ldoreboot:
-	tstl	d1
-	jne	Lmmuoff040
+	cmpl	#MMU_68040,_mmutype	| is it 68040
+ 	jeq	Lmmuoff040
 	lea	zero,a0
 	pmove	a0@,tc			| Turn off MMU
 	lea	nullrp,a0
