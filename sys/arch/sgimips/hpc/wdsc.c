@@ -1,4 +1,4 @@
-/*	$NetBSD: wdsc.c,v 1.11 2003/07/15 03:35:53 lukem Exp $	*/
+/*	$NetBSD: wdsc.c,v 1.12 2003/12/16 11:59:04 sekiya Exp $	*/
 
 /*
  * Copyright (c) 2001 Wayne Knowles
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdsc.c,v 1.11 2003/07/15 03:35:53 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdsc.c,v 1.12 2003/12/16 11:59:04 sekiya Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,16 +127,20 @@ wdsc_attach(pdp, dp, auxp)
 	sc->sc_regt = haa->ha_st;
 	wsc->sc_dmat = haa->ha_dmat;
 
+	wsc->sc_hpcdma.hpc = haa->hpc_regs;
+
 	if ((err = bus_space_subregion(haa->ha_st, haa->ha_sh,
 					haa->ha_devoff,
-					HPC_SCSI0_DEVREGS_SIZE,
+					wsc->sc_hpcdma.hpc->scsi0_devregs_size,
 					&sc->sc_regh)) != 0) {
 		printf(": unable to map regs, err=%d\n", err);
 		return;
 	}
 
 	if (bus_dmamap_create(wsc->sc_dmat, MAX_DMA_SZ,
-			      DMA_SEGS, MAX_SEG_SZ, MAX_SEG_SZ,
+			      wsc->sc_hpcdma.hpc->scsi_dma_segs,
+			      wsc->sc_hpcdma.hpc->scsi_dma_segs_size,
+			      wsc->sc_hpcdma.hpc->scsi_dma_segs_size,
 			      BUS_DMA_WAITOK,
 			      &wsc->sc_dmamap) != 0) {
 		printf(": failed to create dmamap\n");
@@ -151,8 +155,8 @@ wdsc_attach(pdp, dp, auxp)
 	sc->sc_adapter.adapt_request = wd33c93_scsi_request;
 	sc->sc_adapter.adapt_minphys = minphys;
 
-	sc->sc_id = 7;			/* Host ID = 7 */
-	sc->sc_clkfreq = 200;		/* 20MHz Clock */
+	sc->sc_id = 0;					/* Host ID = 0 */
+	sc->sc_clkfreq = wsc->sc_hpcdma.hpc->clk_freq;
 
 	evcnt_attach_dynamic(&wsc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
 			     sc->sc_dev.dv_xname, "intr");
@@ -205,10 +209,10 @@ wdsc_dmasetup(dev, addr, len, datain, dmasize)
 		wsc->sc_flags |= WDSC_DMA_MAPLOADED;
 
 		if (datain) {
-			dsc->sc_dmacmd = HPC_DMACTL_ACTIVE;
+			dsc->sc_dmacmd = wsc->sc_hpcdma.hpc->dma_datain_cmd;
 			dsc->sc_flags |= HPCDMA_READ;
 		} else {
-			dsc->sc_dmacmd = HPC_DMACTL_ACTIVE | HPC_DMACTL_DIR;
+			dsc->sc_dmacmd = wsc->sc_hpcdma.hpc->dma_dataout_cmd;
 			dsc->sc_flags &= ~HPCDMA_READ;
 		}
 	}
