@@ -1,4 +1,4 @@
-/*	$NetBSD: print-isakmp.c,v 1.4 2000/01/02 13:15:54 itojun Exp $	*/
+/*	$NetBSD: print-isakmp.c,v 1.5 2000/04/24 13:01:24 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -36,7 +36,7 @@ static const char rcsid[] =
     "@(#) KAME Header: /cvsroot/kame/kame/kame/kame/tcpdump/print-isakmp.c,v 1.3 1999/12/01 01:41:25 itojun Exp";
 #else
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: print-isakmp.c,v 1.4 2000/01/02 13:15:54 itojun Exp $");
+__RCSID("$NetBSD: print-isakmp.c,v 1.5 2000/04/24 13:01:24 itojun Exp $");
 #endif
 #endif
 
@@ -75,6 +75,10 @@ struct rtentry;
 #include "addrtoname.h"
 #include "extract.h"                    /* must come after interface.h */
 
+#ifndef HAVE_SOCKADDR_STORAGE
+#define sockaddr_storage sockaddr
+#endif
+
 static u_char *isakmp_sa_print __P((struct isakmp_gen *, u_char *, u_int32_t,
 	u_int32_t, u_int32_t));
 static u_char *isakmp_p_print __P((struct isakmp_gen *, u_char *, u_int32_t,
@@ -84,6 +88,10 @@ static u_char *isakmp_t_print __P((struct isakmp_gen *, u_char *, u_int32_t,
 static u_char *isakmp_ke_print __P((struct isakmp_gen *, u_char *, u_int32_t,
 	u_int32_t, u_int32_t));
 static u_char *isakmp_id_print __P((struct isakmp_gen *, u_char *, u_int32_t,
+	u_int32_t, u_int32_t));
+static u_char *isakmp_cert_print __P((struct isakmp_gen *, u_char *, u_int32_t,
+	u_int32_t, u_int32_t));
+static u_char *isakmp_sig_print __P((struct isakmp_gen *, u_char *, u_int32_t,
 	u_int32_t, u_int32_t));
 static u_char *isakmp_hash_print __P((struct isakmp_gen *, u_char *,
 	u_int32_t, u_int32_t, u_int32_t));
@@ -129,10 +137,10 @@ static u_char *(*npfunc[]) __P((struct isakmp_gen *, u_char *, u_int32_t,
 	isakmp_t_print,
 	isakmp_ke_print,
 	isakmp_id_print,
-	NULL,
-	NULL,
+	isakmp_cert_print,
+	isakmp_cert_print,
 	isakmp_hash_print,
-	NULL,
+	isakmp_sig_print,
 	isakmp_nonce_print,
 	isakmp_n_print,
 	isakmp_d_print,
@@ -209,11 +217,15 @@ cookie_record(cookie_t *in, const u_char *bp2)
 			sizeof(cookiecache[ninitiator].raddr));
 
 		sin = (struct sockaddr_in *)&cookiecache[ninitiator].iaddr;
+#ifdef HAVE_SOCKADDR_SA_LEN
 		sin->sin_len = sizeof(struct sockaddr_in);
+#endif
 		sin->sin_family = AF_INET;
 		memcpy(&sin->sin_addr, &ip->ip_src, sizeof(ip->ip_src));
 		sin = (struct sockaddr_in *)&cookiecache[ninitiator].raddr;
+#ifdef HAVE_SOCKADDR_SA_LEN
 		sin->sin_len = sizeof(struct sockaddr_in);
+#endif
 		sin->sin_family = AF_INET;
 		memcpy(&sin->sin_addr, &ip->ip_dst, sizeof(ip->ip_dst));
 		break;
@@ -226,11 +238,15 @@ cookie_record(cookie_t *in, const u_char *bp2)
 
 		ip6 = (struct ip6_hdr *)bp2;
 		sin6 = (struct sockaddr_in6 *)&cookiecache[ninitiator].iaddr;
+#ifdef HAVE_SOCKADDR_SA_LEN
 		sin6->sin6_len = sizeof(struct sockaddr_in6);
+#endif
 		sin6->sin6_family = AF_INET6;
 		memcpy(&sin6->sin6_addr, &ip6->ip6_src, sizeof(ip6->ip6_src));
 		sin6 = (struct sockaddr_in6 *)&cookiecache[ninitiator].raddr;
+#ifdef HAVE_SOCKADDR_SA_LEN
 		sin6->sin6_len = sizeof(struct sockaddr_in6);
+#endif
 		sin6->sin6_family = AF_INET6;
 		memcpy(&sin6->sin6_addr, &ip6->ip6_dst, sizeof(ip6->ip6_dst));
 		break;
@@ -248,20 +264,23 @@ static int
 cookie_sidecheck(int i, const u_char *bp2, int initiator)
 {
 	struct sockaddr_storage ss;
+	struct sockaddr *sa;
 	struct ip *ip;
 	struct sockaddr_in *sin;
 #ifdef INET6
 	struct ip6_hdr *ip6;
 	struct sockaddr_in6 *sin6;
 #endif
-	struct sockaddr *sa1, *sa2;
+	int salen;
 
 	memset(&ss, 0, sizeof(ss));
 	ip = (struct ip *)bp2;
 	switch (ip->ip_v) {
 	case 4:
 		sin = (struct sockaddr_in *)&ss;
+#ifdef HAVE_SOCKADDR_SA_LEN
 		sin->sin_len = sizeof(struct sockaddr_in);
+#endif
 		sin->sin_family = AF_INET;
 		memcpy(&sin->sin_addr, &ip->ip_src, sizeof(ip->ip_src));
 		break;
@@ -269,7 +288,9 @@ cookie_sidecheck(int i, const u_char *bp2, int initiator)
 	case 6:
 		ip6 = (struct ip6_hdr *)bp2;
 		sin6 = (struct sockaddr_in6 *)&ss;
+#ifdef HAVE_SOCKADDR_SA_LEN
 		sin6->sin6_len = sizeof(struct sockaddr_in6);
+#endif
 		sin6->sin6_family = AF_INET6;
 		memcpy(&sin6->sin6_addr, &ip6->ip6_src, sizeof(ip6->ip6_src));
 		break;
@@ -278,20 +299,42 @@ cookie_sidecheck(int i, const u_char *bp2, int initiator)
 		return 0;
 	}
 
+	sa = (struct sockaddr *)&ss;
 	if (initiator) {
-		sa1 = (struct sockaddr *)&ss;
-		sa2 = (struct sockaddr *)&cookiecache[i].iaddr;
+		if (sa->sa_family != ((struct sockaddr *)&cookiecache[i].iaddr)->sa_family)
+			return 0;
+#ifdef HAVE_SOCKADDR_SA_LEN
+		salen = sa->sa_len;
+#else
+#ifdef INET6
+		if (sa->sa_family == AF_INET6)
+			salen = sizeof(struct sockaddr_in6);
+		else
+			salen = sizeof(struct sockaddr);
+#else
+		salen = sizeof(struct sockaddr);
+#endif
+#endif
+		if (memcmp(&ss, &cookiecache[i].iaddr, salen) == 0)
+			return 1;
 	} else {
-		sa1 = (struct sockaddr *)&ss;
-		sa2 = (struct sockaddr *)&cookiecache[i].raddr;
+		if (sa->sa_family != ((struct sockaddr *)&cookiecache[i].raddr)->sa_family)
+			return 0;
+#ifdef HAVE_SOCKADDR_SA_LEN
+		salen = sa->sa_len;
+#else
+#ifdef INET6
+		if (sa->sa_family == AF_INET6)
+			salen = sizeof(struct sockaddr_in6);
+		else
+			salen = sizeof(struct sockaddr);
+#else
+		salen = sizeof(struct sockaddr);
+#endif
+#endif
+		if (memcmp(&ss, &cookiecache[i].raddr, salen) == 0)
+			return 1;
 	}
-
-	if (sa1->sa_family != sa2->sa_family)
-		return 0;
-	if (sa1->sa_len != sa2->sa_len)
-		return 0;
-	if (memcmp(sa1, sa2, sa1->sa_len) == 0)
-		return 1;
 	return 0;
 }
 
@@ -459,7 +502,7 @@ static char *isakmp_p_map[] = {
 };
 
 static char *ah_p_map[] = {
-	NULL, "md5", "sha", "1des",
+	NULL, "(reserved)", "md5", "sha", "1des",
 };
 
 static char *esp_p_map[] = {
@@ -720,10 +763,47 @@ isakmp_id_print(struct isakmp_gen *ext, u_char *ep, u_int32_t phase,
 }
 
 static u_char *
+isakmp_cert_print(struct isakmp_gen *ext, u_char *ep, u_int32_t phase,
+	u_int32_t doi0, u_int32_t proto0)
+{
+	struct isakmp_pl_cert *p;
+	static char *certstr[] = {
+		"none",	"pkcs7", "pgp", "dns",
+		"x509sign", "x509ke", "kerberos", "crl",
+		"arl", "spki", "x509attr",
+	};
+
+	printf("%s:", NPSTR(ISAKMP_NPTYPE_CERT));
+
+	p = (struct isakmp_pl_cert *)ext;
+	printf(" len=%d", ntohs(ext->len) - 4);
+	printf(" type=%s", STR_OR_ID((p->encode), certstr));
+	if (2 < vflag && 4 < ntohs(ext->len)) {
+		printf(" ");
+		rawprint((caddr_t)(ext + 1), ntohs(ext->len) - 4);
+	}
+	return (u_char *)ext + ntohs(ext->len);
+}
+
+static u_char *
 isakmp_hash_print(struct isakmp_gen *ext, u_char *ep, u_int32_t phase,
 	u_int32_t doi, u_int32_t proto)
 {
 	printf("%s:", NPSTR(ISAKMP_NPTYPE_HASH));
+
+	printf(" len=%d", ntohs(ext->len) - 4);
+	if (2 < vflag && 4 < ntohs(ext->len)) {
+		printf(" ");
+		rawprint((caddr_t)(ext + 1), ntohs(ext->len) - 4);
+	}
+	return (u_char *)ext + ntohs(ext->len);
+}
+
+static u_char *
+isakmp_sig_print(struct isakmp_gen *ext, u_char *ep, u_int32_t phase,
+	u_int32_t doi, u_int32_t proto)
+{
+	printf("%s:", NPSTR(ISAKMP_NPTYPE_SIG));
 
 	printf(" len=%d", ntohs(ext->len) - 4);
 	if (2 < vflag && 4 < ntohs(ext->len)) {
