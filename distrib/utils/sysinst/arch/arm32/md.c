@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.8 1998/11/08 02:55:08 jonathan Exp $	*/
+/*	$NetBSD: md.c,v 1.9 1999/01/21 08:02:18 garbled Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -251,7 +251,7 @@ void	md_post_newfs (void)
 #if 0
 	/* XXX boot blocks ... */
 	printf(msg_string(MSG_dobootblks), diskdev);
-	run_prog_or_continue("/sbin/disklabel -B %s /dev/r%sc",
+	run_prog(0, 1, "/sbin/disklabel -B %s /dev/r%sc",
 	    "-b /usr/mdec/rzboot -s /usr/mdec/bootrz", diskdev);
 #endif
 }
@@ -264,7 +264,7 @@ void	md_copy_filesystem (void)
 
 	/* Copy the instbin(s) to the disk */
 	printf("%s", msg_string(MSG_dotar));
-	run_prog("tar --one-file-system -cf - -C / . |"
+	run_prog(0, 1, "tar --one-file-system -cf - -C / . |"
 	    "(cd /mnt ; tar --unlink -xpf - )");
 
 	/* Copy next-stage install profile into target /.profile. */
@@ -478,12 +478,12 @@ md_cleanup_install(void)
 	strncpy(realfrom, target_expand("/etc/rc.conf"), STRSIZE);
 	strncpy(realto, target_expand("/etc/rc.conf.install"), STRSIZE);
 
-	run_prog_or_die(
+	run_prog(1, 0,
 	    "sed 's/rc_configured=NO/rc_configured=YES/' < %s > %s",
 	    realfrom, realto);
-	run_prog_or_die("mv -f %s %s", realto, realfrom);
-	run_prog("rm -f %s", target_expand("/sysinst"));
-	run_prog("rm -f %s", target_expand("/.termcap"));
-	run_prog("rm -f %s", target_expand("/.profile"));
+	run_prog(1, 0, "mv -f %s %s", realto, realfrom);
+	run_prog(0, 0, "rm -f %s", target_expand("/sysinst"));
+	run_prog(0, 0, "rm -f %s", target_expand("/.termcap"));
+	run_prog(0, 0, "rm -f %s", target_expand("/.profile"));
 #endif
 }

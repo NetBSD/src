@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.31 1998/08/10 02:23:45 perry Exp $	*/
+/*	$NetBSD: util.c,v 1.32 1999/01/21 08:02:18 garbled Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -76,7 +76,7 @@ dir_exists_p(path)
 {
 	register int result;
 
-	result = (run_prog("test -d %s", path) == 0);
+	result = (run_prog(0, 0, "test -d %s", path) == 0);
 	return (result);
 }
 
@@ -86,7 +86,7 @@ file_exists_p(path)
 {
 	register int result;
 
-	result = (run_prog("test -f %s", path) == 0);
+	result = (run_prog(0, 0, "test -f %s", path) == 0);
 	return (result);
 }
 
@@ -181,7 +181,7 @@ run_makedev()
 	/* make /dev, in case the user  didn't extract it. */
 	make_target_dir("/dev");
 	target_chdir_or_die("/dev");
-	run_prog("/bin/sh MAKEDEV all");
+	run_prog(0, 0, "/bin/sh MAKEDEV all");
 
 	chdir(owd);
 	free(owd);
@@ -218,7 +218,7 @@ get_via_floppy()
 			first = 1;
 			while (!mounted || stat(fullname, &sb)) {
  				if (mounted) 
-				  run_prog("/sbin/umount /mnt2 2>/dev/null");
+				  run_prog(0, 0,"/sbin/umount /mnt2");
 				if (first)
 					msg_display(MSG_fdmount, fname);
 				else
@@ -226,7 +226,7 @@ get_via_floppy()
 				process_menu(MENU_fdok);
 				if (!yesno)
 					return 0;
-				while (run_prog("/sbin/mount -r -t %s %s /mnt2",
+				while (run_prog(0, 0, "/sbin/mount -r -t %s %s /mnt2",
 				    fdtype, fddev)) {
 					msg_display(MSG_fdremount, fname);
 					process_menu(MENU_fdremount);
@@ -236,13 +236,13 @@ get_via_floppy()
 				mounted = 1;
 				first = 0;
 			}
-			run_prog("/bin/cat %s >> %s", fullname, distname);
+			run_prog(0, 0, "/bin/cat %s >> %s", fullname, distname);
 			if (post[2] < 'z')
 				post[2]++;
 			else
 				post[2] = 'a', post[1]++;
 		}
-		run_prog("/sbin/umount /mnt2 2>/dev/null");
+		run_prog(0, 0, "/sbin/umount /mnt2");
 		mounted = 0;
 		list++;
 	}
@@ -272,10 +272,10 @@ get_via_cdrom()
 	process_menu(MENU_cdromsource);
 
 again:
-	run_prog("/sbin/umount /mnt2  2> /dev/null");
+	run_prog(0, 0, "/sbin/umount /mnt2");
 
 	/* Mount it */
-	if (run_prog("/sbin/mount -rt cd9660 /dev/%sa /mnt2", cdrom_dev)) {
+	if (run_prog(0, 0, "/sbin/mount -rt cd9660 /dev/%sa /mnt2", cdrom_dev)) {
 		msg_display(MSG_badsetdir, cdrom_dev);
 		process_menu(MENU_cdrombadmount);
 		if (!yesno)
@@ -317,10 +317,10 @@ get_via_localfs()
 	process_menu (MENU_localfssource);
 
 again:
-	run_prog("/sbin/umount /mnt2  2> /dev/null");
+	run_prog(0, 0, "/sbin/umount /mnt2");
 
 	/* Mount it */
-	if (run_prog("/sbin/mount -rt %s /dev/%s /mnt2", localfs_fs,
+	if (run_prog(0, 0, "/sbin/mount -rt %s /dev/%s /mnt2", localfs_fs,
 	    localfs_dev)) {
 
 		msg_display(MSG_localfsbadmount, localfs_dir, localfs_dev); 
@@ -474,9 +474,9 @@ extract_file(path)
 	/* now extract set files files into "./". */
 	(void)printf(msg_string(MSG_extracting), path);
 #ifdef __sparc__	/* XXX make all ports use pax! XXX */
-	tarexit = run_prog("pax -zr%spe -f %s", verbose ? "v" : "", path);
+	tarexit = run_prog(0, 1, "pax -zr%spe -f %s", verbose ? "v" : "", path);
 #else
-	tarexit = run_prog("/usr/bin/tar -xpz%s -f %s", verbose ? "v":"", path);
+	tarexit = run_prog(0, 1, "/usr/bin/tar -xpz%s -f %s", verbose ? "v":"", path);
 #endif
 
 	/* Check tarexit for errors and give warning. */
@@ -510,7 +510,7 @@ extract_dist()
 	/* reset failure/success counters */
 	memset(&tarstats, 0, sizeof(tarstats));
 
-	endwin();
+	/*endwin();*/
 	list = dist_list;
 	while (list->name) {
 		if (list->getit) {
@@ -554,7 +554,9 @@ get_and_unpack_sets(success_msg, failure_msg)
 {
 
 	/* Ensure mountpoint for distribution files exists in current root. */
-	(void) mkdir("/mnt2", S_IRWXU| S_IRGRP|S_IXGRP | S_IXOTH|S_IXOTH);
+	(void) mkdir("/mnt2", S_IRWXU| S_IRGRP|S_IXGRP | S_IROTH|S_IXOTH);
+	if (scripting)
+		(void)fprintf(script, "mkdir /mnt2\nchmod 755 /mnt2\n");
 
 	/* Find out which files to "get" if we get files. */
 	process_menu(MENU_distset);
@@ -583,11 +585,11 @@ get_and_unpack_sets(success_msg, failure_msg)
 		
 		/* Clean up dist dir (use absolute path name) */
 		if (clean_dist_dir)
-			run_prog("/bin/rm -rf %s", ext_dir);
+			run_prog(0, 0, "/bin/rm -rf %s", ext_dir);
 
 		/* Mounted dist dir? */
 		if (mnt2_mounted)
-			run_prog("/sbin/umount /mnt2");
+			run_prog(0, 0, "/sbin/umount /mnt2");
 
 		/* Install/Upgrade complete ... reboot or exit to script */
 		msg_display(success_msg);
@@ -671,3 +673,43 @@ sanity_check()
 	process_menu(MENU_ok);
 	return 1;
 }
+
+/* set reverse to 1 to default to no */
+int askyesno(int reverse)
+{
+	WINDOW *yesnowin;
+	int c, found;
+
+	yesnowin = subwin(stdscr, 5, 20, stdscr->maxy/2 - 2, stdscr->maxx/2 - 10);
+
+	box(yesnowin, '*', '*');
+	wmove(yesnowin, 2,2);
+	
+	if (reverse)
+		waddstr(yesnowin, "Yes or No: [N]");
+	else
+		waddstr(yesnowin, "Yes or No: [Y]");
+
+	wrefresh(yesnowin);
+	while ((c = getchar())) {
+		if (c == 'y' || c == 'Y') {
+			found = 1;
+			break;
+		} else if (c == 'n' || c == 'N' ) {
+			found = 0;
+			break;
+		} else if (c == '\n' || c == '\r') {
+			if (reverse)
+				found = 0;
+			else
+				found = 1;
+			break;
+		}
+	}
+	wclear(yesnowin);
+	wrefresh(yesnowin);
+	delwin(yesnowin);
+	refresh();
+	return(found);
+}
+

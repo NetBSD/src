@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.10 1998/10/25 19:15:04 phil Exp $	*/
+/*	$NetBSD: main.c,v 1.11 1999/01/21 08:02:18 garbled Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -61,6 +61,10 @@ static void cleanup __P((void));
 static void process_f_flag __P((char *));
 
 static int exit_cleanly = 0;	/* Did we finish nicely? */
+int logging;			/* are we logging everything? */
+int scripting;			/* are we building a script? */
+FILE *log;			/* log file */
+FILE *script;			/* script file */
 
 int
 main(argc, argv)
@@ -69,6 +73,9 @@ main(argc, argv)
 {
 	WINDOW *win;
 	int ch;
+
+	logging = 0; /* shut them off unless turned on by the user */
+	scripting = 0;
 
 	/* Check for TERM ... */
 	if (!getenv("TERM")) {
@@ -152,10 +159,23 @@ inthandler(notused)
 static void
 cleanup()
 {
+	time_t tloc;
 
-	endwin();
+	(void)time(&tloc);
 	unwind_mounts();
-	run_prog("/sbin/umount /mnt2 2>/dev/null");
+	run_prog(0, 0, "/sbin/umount /mnt2");
+	endwin();
+	if (logging) {
+		fprintf(log, "Log ended at: %s\n", asctime(localtime(&tloc)));
+		fflush(log);
+		fclose(log);
+	}
+	if (scripting) {
+		fprintf(script, "# Script ended at: %s\n", asctime(localtime(&tloc)));
+		fflush(script);
+		fclose(script);
+	}
+
 	if (!exit_cleanly)
 		fprintf(stderr, "\n\n sysinst terminated.\n");
 }
