@@ -1,5 +1,5 @@
-/*	$NetBSD: policy_token.l,v 1.7 2002/07/31 07:00:23 itojun Exp $	*/
-/*	$KAME: policy_token.l,v 1.11 2000/12/01 10:08:29 sakane Exp $	*/
+/*	$NetBSD: policy_token.l,v 1.8 2003/07/22 03:32:17 itojun Exp $	*/
+/*	$KAME: policy_token.l,v 1.13 2003/05/09 05:19:55 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
@@ -141,6 +141,8 @@ void
 __policy__strbuffer__init__(msg)
 	char *msg;
 {
+	if (yy_current_buffer)
+		yy_delete_buffer(yy_current_buffer);
 	strbuffer = (YY_BUFFER_STATE)yy_scan_string(msg);
 	yy_switch_to_buffer(strbuffer);
 
