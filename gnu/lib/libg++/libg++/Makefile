@@ -15,13 +15,9 @@ SRCS=	 	AllocRing.cc Obstack.cc builtin.cc \
 		sbufvscan.C stdiostream.C floatconv.C outfloat.C iomanip.C \
 		insque.c strerror.c
 
-# Use C++ compiler for everything.
-CC=		${CXX}
-.if target(depend)
-CFLAGS+=	-+
-.endif
-CFLAGS+=	-nostdinc++ -I$(.CURDIR) -I$(.CURDIR)/../g++-include \
-		-I$(.CURDIR)/../iostream -I$(.CURDIR)/../libiberty
+CXXFLAGS+=	-nostdinc++ -I$(.CURDIR)/../g++-include \
+		-I$(.CURDIR)/../iostream
+CFLAGS+=	-I$(.CURDIR) -I$(.CURDIR)/../libiberty
 NOMAN=		noman
 .PATH:		$(.CURDIR)/../iostream $(.CURDIR)/../libiberty
 

@@ -128,8 +128,15 @@ cleandir: _PROGSUBDIR
 depend: .depend _PROGSUBDIR
 .depend: ${SRCS}
 .if defined(PROG)
-	mkdep ${MKDEP} ${CFLAGS:M-[ID+]*} ${.ALLSRC:M*.c} ${.ALLSRC:M*.cc} \
-		${.ALLSRC:M*.C} ${.ALLSRC:M*.cxx}
+	rm -f .depend
+	files="${.ALLSRC:M*.c}"; \
+	if [ "$$files" != "" ]; then \
+	  mkdep -a ${MKDEP} ${CFLAGS:M-[ID]*} $$files; \
+	fi
+	files="${.ALLSRC:M*.cc} ${.ALLSRC:M*.C} ${.ALLSRC:M*.cxx}"; \
+	if [ "$$files" != "  " ]; then \
+	  mkdep -a ${MKDEP} -+ ${CXXFLAGS:M-[ID]*} $$files; \
+	fi
 .endif
 .endif
 
