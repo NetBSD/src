@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_autoconf.c,v 1.49 2000/02/01 04:01:19 danw Exp $	*/
+/*	$NetBSD: subr_autoconf.c,v 1.50 2000/03/28 17:30:10 augustss Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -139,10 +139,10 @@ configure()
  */
 static void
 mapply(m, cf)
-	register struct matchinfo *m;
-	register struct cfdata *cf;
+	struct matchinfo *m;
+	struct cfdata *cf;
 {
-	register int pri;
+	int pri;
 
 	if (m->fn != NULL)
 		pri = (*m->fn)(m->parent, cf, m->aux);
@@ -173,11 +173,11 @@ mapply(m, cf)
 struct cfdata *
 config_search(fn, parent, aux)
 	cfmatch_t fn;
-	register struct device *parent;
+	struct device *parent;
 	void *aux;
 {
-	register struct cfdata *cf;
-	register short *p;
+	struct cfdata *cf;
+	short *p;
 	struct matchinfo m;
 
 	m.fn = fn;
@@ -205,12 +205,12 @@ config_search(fn, parent, aux)
  */
 struct cfdata *
 config_rootsearch(fn, rootname, aux)
-	register cfmatch_t fn;
-	register char *rootname;
-	register void *aux;
+	cfmatch_t fn;
+	char *rootname;
+	void *aux;
 {
-	register struct cfdata *cf;
-	register short *p;
+	struct cfdata *cf;
+	short *p;
 	struct matchinfo m;
 
 	m.fn = fn;
@@ -276,8 +276,8 @@ config_rootfound(rootname, aux)
 /* just like sprintf(buf, "%d") except that it works from the end */
 static char *
 number(ep, n)
-	register char *ep;
-	register int n;
+	char *ep;
+	int n;
 {
 
 	*--ep = 0;
@@ -294,16 +294,16 @@ number(ep, n)
  */
 struct device *
 config_attach(parent, cf, aux, print)
-	register struct device *parent;
-	register struct cfdata *cf;
-	register void *aux;
+	struct device *parent;
+	struct cfdata *cf;
+	void *aux;
 	cfprint_t print;
 {
-	register struct device *dev;
-	register struct cfdriver *cd;
-	register struct cfattach *ca;
-	register size_t lname, lunit;
-	register char *xunit;
+	struct device *dev;
+	struct cfdriver *cd;
+	struct cfattach *ca;
+	size_t lname, lunit;
+	char *xunit;
 	int myunit;
 	char num[10];
 
