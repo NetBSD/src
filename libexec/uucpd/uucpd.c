@@ -1,4 +1,4 @@
-/*	$NetBSD: uucpd.c,v 1.6 1997/10/07 09:29:50 mrg Exp $	*/
+/*	$NetBSD: uucpd.c,v 1.7 1997/10/13 09:28:11 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985 The Regents of the University of California.
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985 The Regents of the University of California
 #if 0
 static char sccsid[] = "from: @(#)uucpd.c	5.10 (Berkeley) 2/26/91";
 #else
-__RCSID("$Id: uucpd.c,v 1.6 1997/10/07 09:29:50 mrg Exp $");
+__RCSID("$NetBSD: uucpd.c,v 1.7 1997/10/13 09:28:11 lukem Exp $");
 #endif
 #endif /* not lint */
 
