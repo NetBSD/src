@@ -1,4 +1,4 @@
-/*	$NetBSD: stdlib.h,v 1.62 2003/04/28 23:16:14 bjh21 Exp $	*/
+/*	$NetBSD: stdlib.h,v 1.63 2003/07/08 01:43:28 kristerw Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -287,9 +287,8 @@ long long strsuftollx(const char *, const char *, long long, long long,
 
 int	 l64a_r __P((long, char *, int));
 
-size_t	shquote __P((const char *arg, char *buf, size_t bufsize));
-size_t	shquotev __P((int argc, char * const * argv, char *buf,
-	    size_t bufsize));
+size_t	shquote __P((const char *, char *, size_t));
+size_t	shquotev __P((int, char * const *, char *, size_t));
 #endif /* _NETBSD_SOURCE */
 #endif /* _POSIX_C_SOURCE || _XOPEN_SOURCE || _NETBSD_SOURCE */
 
