@@ -1,4 +1,4 @@
-/* $NetBSD: vt220.c,v 1.6 1996/05/12 21:42:44 mark Exp $ */
+/* $NetBSD: vt220.c,v 1.6.4.1 1996/07/10 05:51:49 jtc Exp $ */
 
 /*
  * Copyright (c) 1994-1995 Melvyn Tang-Richardson
@@ -329,6 +329,10 @@ strcpy ( console_proc, "vt_curadr" );
 		return;
 	}
 	/* Limit checking */
+	cdata->param[0] = (cdata->param[0] <= 0) ? 1 : cdata->param[0];
+	cdata->param[0] = (cdata->param[0] > vc->ychars) ? vc->ychars : cdata->param[0];
+	cdata->param[1] = (cdata->param[1] <= 0) ? 1 : cdata->param[1];
+	cdata->param[1] = (cdata->param[1] >= vc->xchars) ? (vc->xchars-1) : cdata->param[1];
 
 	(cdata->param[0])--;
 	(cdata->param[1])--;
@@ -1173,7 +1177,7 @@ do_render_noscroll(c, vc)
     {
 	if (((vc->flags)&(LOSSY))==0)
 	{
-          if ( vc->charmap[vc->xcur+vc->ycur*vc->xchars] != c | cdata->attribs)
+          if ( (vc->charmap[vc->xcur+vc->ycur*vc->xchars] != c) | cdata->attribs)
           {
 	    if ( vc==vconsole_current )
 	        vc->RENDER ( vc, c );
@@ -1286,7 +1290,7 @@ do_render(c, vc)
 	{
 	    if ( cdata->irm == 0 )
 	    {
-                if(vc->charmap[vc->xcur+vc->ycur*vc->xchars]!= c | cdata->attribs )
+                if((vc->charmap[vc->xcur+vc->ycur*vc->xchars]!= c) | cdata->attribs )
                 {
 	            if ( vc==vconsole_current )
 	                vc->RENDER ( vc, c );
