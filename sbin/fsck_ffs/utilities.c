@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)utilities.c	5.30 (Berkeley) 7/26/91";*/
-static char rcsid[] = "$Id: utilities.c,v 1.5 1994/03/28 06:49:06 cgd Exp $";
+static char rcsid[] = "$Id: utilities.c,v 1.6 1994/04/09 08:53:37 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -239,7 +239,7 @@ ckfini()
 	}
 	flush(fswritefd, &cgblk);
 	free(cgblk.b_un.b_buf);
-	for (bp = bufhead.b_prev; bp != &bufhead; bp = nbp) {
+	for (bp = bufhead.b_prev; bp && bp != &bufhead; bp = nbp) {
 		cnt++;
 		flush(fswritefd, bp);
 		nbp = bp->b_prev;
