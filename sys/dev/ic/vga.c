@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.65 2003/01/20 07:28:26 simonb Exp $ */
+/* $NetBSD: vga.c,v 1.66 2003/01/27 14:46:10 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.65 2003/01/20 07:28:26 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.66 2003/01/27 14:46:10 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,12 +55,16 @@ __KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.65 2003/01/20 07:28:26 simonb Exp $");
 #include "opt_wsdisplay_compat.h"
 
 static struct wsdisplay_font _vga_builtinfont = {
-	"builtin",
-	0, 256,
-	WSDISPLAY_FONTENC_IBM,
-	8, 16, 1,
-	WSDISPLAY_FONTORDER_L2R, 0,
-	0
+	"builtin",			/* typeface name */
+	0,				/* firstchar */
+	256,				/* numbers */
+	WSDISPLAY_FONTENC_IBM,		/* encoding */
+	8,				/* width */
+	16,				/* height */
+	1,				/* stride */
+	WSDISPLAY_FONTORDER_L2R,	/* bit order */
+	0,				/* byte order */
+	NULL				/* data */
 };
 
 struct egavga_font {
@@ -291,25 +295,25 @@ egavga_getfont(struct vga_config *vc, struct vgascreen *scr, char *name,
 
 	TAILQ_FOREACH(f, &vc->vc_fontlist, next) {
 		if (wsfont_matches(f->wsfont, name,
-				   8, scr->pcs.type->fontheight, 0) &&
+		    8, scr->pcs.type->fontheight, 0) &&
 		    (!primary || vga_valid_primary_font(f))) {
 #ifdef VGAFONTDEBUG
 			if (scr != &vga_console_screen || vga_console_attached)
 				printf("vga_getfont: %s already present\n",
-				       name ? name : "<default>");
+				    name ? name : "<default>");
 #endif
 			goto found;
 		}
 	}
 
 	cookie = wsfont_find(name, 8, scr->pcs.type->fontheight, 0,
-	                     WSDISPLAY_FONTORDER_L2R, 0);
+	    WSDISPLAY_FONTORDER_L2R, 0);
 	/* XXX obey "primary" */
 	if (cookie == -1) {
 #ifdef VGAFONTDEBUG
 		if (scr != &vga_console_screen || vga_console_attached)
 			printf("vga_getfont: %s not found\n",
-			       name ? name : "<default>");
+			    name ? name : "<default>");
 #endif
 		return (0);
 	}
@@ -387,10 +391,10 @@ vga_selectfont(struct vga_config *vc, struct vgascreen *scr, char *name1,
 #ifdef VGAFONTDEBUG
 	if (scr != &vga_console_screen || vga_console_attached) {
 		printf("vga (%s): font1=%s (slot %d)", type->name,
-		       f1->wsfont->name, f1->slot);
+		    f1->wsfont->name, f1->slot);
 		if (f2)
 			printf(", font2=%s (slot %d)",
-			       f2->wsfont->name, f2->slot);
+			    f2->wsfont->name, f2->slot);
 		printf("\n");
 	}
 #endif
@@ -457,7 +461,7 @@ vga_init_screen(struct vga_config *vc, struct vgascreen *scr,
 		 * DEC firmware uses a blue background.
 		 */
 		res = vga_allocattr(scr, WSCOL_WHITE, WSCOL_BLUE,
-				     WSATTR_WSCOLORS, attrp);
+		    WSATTR_WSCOLORS, attrp);
 	else
 #endif
 	res = vga_allocattr(scr, 0, 0, 0, attrp);
@@ -490,32 +494,30 @@ vga_init(struct vga_config *vc, bus_space_tag_t iot, bus_space_tag_t memt)
 	u_int8_t mor;
 	int i;
 
-        vh->vh_iot = iot;
-        vh->vh_memt = memt;
+	vh->vh_iot = iot;
+	vh->vh_memt = memt;
 
-        if (bus_space_map(vh->vh_iot, 0x3c0, 0x10, 0, &vh->vh_ioh_vga))
-                panic("vga_init: couldn't map vga io");
+	if (bus_space_map(vh->vh_iot, 0x3c0, 0x10, 0, &vh->vh_ioh_vga))
+		panic("vga_init: couldn't map vga io");
 
 	/* read "misc output register" */
 	mor = bus_space_read_1(vh->vh_iot, vh->vh_ioh_vga, 0xc);
 	vh->vh_mono = !(mor & 1);
 
 	if (bus_space_map(vh->vh_iot, (vh->vh_mono ? 0x3b0 : 0x3d0), 0x10, 0,
-			  &vh->vh_ioh_6845))
-                panic("vga_init: couldn't map 6845 io");
+	    &vh->vh_ioh_6845))
+		panic("vga_init: couldn't map 6845 io");
 
-        if (bus_space_map(vh->vh_memt, 0xa0000, 0x20000, 0, &vh->vh_allmemh))
-                panic("vga_init: couldn't map memory");
+	if (bus_space_map(vh->vh_memt, 0xa0000, 0x20000, 0, &vh->vh_allmemh))
+		panic("vga_init: couldn't map memory");
 
-        if (bus_space_subregion(vh->vh_memt, vh->vh_allmemh,
-				(vh->vh_mono ? 0x10000 : 0x18000), 0x8000,
-				&vh->vh_memh))
-                panic("vga_init: mem subrange failed");
+	if (bus_space_subregion(vh->vh_memt, vh->vh_allmemh,
+	    (vh->vh_mono ? 0x10000 : 0x18000), 0x8000, &vh->vh_memh))
+		panic("vga_init: mem subrange failed");
 
 	/* should only reserve the space (no need to map - save KVM) */
 	vc->vc_biostag = memt;
-	if (bus_space_map(vc->vc_biostag, 0xc0000, 0x8000, 0,
-			  &vc->vc_bioshdl))
+	if (bus_space_map(vc->vc_biostag, 0xc0000, 0x8000, 0, &vc->vc_bioshdl))
 		vc->vc_biosmapped = 0;
 	else
 		vc->vc_biosmapped = 1;
@@ -585,11 +587,11 @@ vga_common_attach(struct vga_softc *sc, bus_space_tag_t iot,
 #define BUILTINFONTLOC (0)
 #endif
 	vga_builtinfont.wsfont->data =
-		malloc(256 * vga_builtinfont.wsfont->fontheight,
-		       M_DEVBUF, M_WAITOK);
+	    malloc(256 * vga_builtinfont.wsfont->fontheight,
+	    M_DEVBUF, M_WAITOK);
 	vga_readoutchars(&vc->hdl, BUILTINFONTLOC, 0, 256,
-			 vga_builtinfont.wsfont->fontheight,
-			 vga_builtinfont.wsfont->data);
+	    vga_builtinfont.wsfont->fontheight,
+	    vga_builtinfont.wsfont->data);
 
 	vc->vc_type = type;
 	vc->vc_funcs = vf;
@@ -603,7 +605,7 @@ vga_common_attach(struct vga_softc *sc, bus_space_tag_t iot,
 	aa.accessops = &vga_accessops;
 	aa.accesscookie = vc;
 
-        config_found(&sc->sc_dev, &aa, wsemuldisplaydevprint);
+	config_found(&sc->sc_dev, &aa, wsemuldisplaydevprint);
 }
 
 int
@@ -619,7 +621,7 @@ vga_cnattach(bus_space_tag_t iot, bus_space_tag_t memt, int type, int check)
 	vga_init(&vga_console_vc, iot, memt);
 #ifdef VGA_CONSOLE_SCREENTYPE
 	scr = wsdisplay_screentype_pick(vga_console_vc.hdl.vh_mono ?
-	       &vga_screenlist_mono : &vga_screenlist, VGA_CONSOLE_SCREENTYPE);
+	    &vga_screenlist_mono : &vga_screenlist, VGA_CONSOLE_SCREENTYPE);
 	if (!scr)
 		panic("vga_cnattach: invalid screen type");
 #else
@@ -644,9 +646,8 @@ vga_cnattach(bus_space_tag_t iot, bus_space_tag_t memt, int type, int check)
 	vga_init_screen(&vga_console_vc, &vga_console_screen, scr, 1, &defattr);
 
 	wsdisplay_cnattach(scr, &vga_console_screen,
-			   vga_console_screen.pcs.cursorcol,
-			   vga_console_screen.pcs.cursorrow,
-			   defattr);
+	    vga_console_screen.pcs.cursorcol,
+	    vga_console_screen.pcs.cursorrow, defattr);
 
 	vgaconsole = 1;
 	vga_console_type = type;
@@ -712,8 +713,8 @@ vga_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 		return EPASSTHROUGH;
 
 	case WSDISPLAYIO_GVIDEO:
-		*(int *)data = (vga_get_video(vc) ? WSDISPLAYIO_VIDEO_ON :
-				WSDISPLAYIO_VIDEO_OFF);
+		*(int *)data = (vga_get_video(vc) ?
+		    WSDISPLAYIO_VIDEO_ON : WSDISPLAYIO_VIDEO_OFF);
 		return 0;
 
 	case WSDISPLAYIO_SVIDEO:
@@ -770,8 +771,8 @@ vga_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
 		 * XXX We could be more clever and use video RAM.
 		 */
 		scr1->pcs.mem =
-		  malloc(scr1->pcs.type->ncols * scr1->pcs.type->nrows * 2,
-			 M_DEVBUF, M_WAITOK);
+		    malloc(scr1->pcs.type->ncols * scr1->pcs.type->nrows * 2,
+		    M_DEVBUF, M_WAITOK);
 	}
 
 	scr = malloc(sizeof(struct vgascreen), M_DEVBUF, M_WAITOK);
@@ -779,7 +780,7 @@ vga_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
 
 	if (vc->nscreens > 1) {
 		scr->pcs.mem = malloc(type->ncols * type->nrows * 2,
-				      M_DEVBUF, M_WAITOK);
+		    M_DEVBUF, M_WAITOK);
 		pcdisplay_eraserows(&scr->pcs, 0, type->nrows, *defattrp);
 	}
 
@@ -840,8 +841,7 @@ vga_usefont(struct vga_config *vc, struct egavga_font *f)
 
 loadit:
 	vga_loadchars(&vc->hdl, slot, f->wsfont->firstchar,
-		      f->wsfont->numchars, f->wsfont->fontheight,
-		      f->wsfont->data);
+	    f->wsfont->numchars, f->wsfont->fontheight, f->wsfont->data);
 	f->slot = slot;
 	vc->vc_fonts[slot] = f;
 
@@ -931,8 +931,8 @@ vga_doswitch(struct vga_config *vc)
 
 		oldscr->pcs.active = 0;
 		bus_space_read_region_2(vh->vh_memt, vh->vh_memh,
-					oldscr->pcs.dispoffset, oldscr->pcs.mem,
-					oldtype->ncols * oldtype->nrows);
+		    oldscr->pcs.dispoffset, oldscr->pcs.mem,
+		    oldtype->ncols * oldtype->nrows);
 	}
 
 	if (vc->currenttype != type) {
@@ -950,14 +950,13 @@ vga_doswitch(struct vga_config *vc)
 	}
 
 	bus_space_write_region_2(vh->vh_memt, vh->vh_memh,
-				scr->pcs.dispoffset, scr->pcs.mem,
-				type->ncols * type->nrows);
+	    scr->pcs.dispoffset, scr->pcs.mem, type->ncols * type->nrows);
 	scr->pcs.active = 1;
 
 	vc->active = scr;
 
 	pcdisplay_cursor(&scr->pcs, scr->pcs.cursoron,
-			 scr->pcs.cursorrow, scr->pcs.cursorcol);
+	    scr->pcs.cursorrow, scr->pcs.cursorcol);
 
 	vc->wantedscreen = 0;
 	if (vc->switchcb)
@@ -1047,15 +1046,14 @@ vga_copyrows(void *id, int srcrow, int dstrow, int nrows)
 				scr->pcs.dispoffset += srcrow * ncols * 2;
 			} else {
 				bus_space_copy_region_2(memt, memh,
-					scr->pcs.dispoffset + srcoff * 2,
-					memh, scr->mindispoffset,
-					nrows * ncols);
+				    scr->pcs.dispoffset + srcoff * 2,
+				    memh, scr->mindispoffset, nrows * ncols);
 				scr->pcs.dispoffset = scr->mindispoffset;
 			}
 			vga_6845_write(&scr->cfg->hdl, startadrh,
-				       scr->pcs.dispoffset >> 9);
+			    scr->pcs.dispoffset >> 9);
 			vga_6845_write(&scr->cfg->hdl, startadrl,
-				       scr->pcs.dispoffset >> 1);
+			    scr->pcs.dispoffset >> 1);
 #ifdef PCDISPLAY_SOFTCURSOR
 			if (cursoron)
 				pcdisplay_cursor(&scr->pcs, 1,
@@ -1063,13 +1061,13 @@ vga_copyrows(void *id, int srcrow, int dstrow, int nrows)
 #endif
 		} else {
 			bus_space_copy_region_2(memt, memh,
-					scr->pcs.dispoffset + srcoff * 2,
-					memh, scr->pcs.dispoffset + dstoff * 2,
-					nrows * ncols);
+			    scr->pcs.dispoffset + srcoff * 2,
+			    memh, scr->pcs.dispoffset + dstoff * 2,
+			    nrows * ncols);
 		}
 	} else
 		memcpy(&scr->pcs.mem[dstoff], &scr->pcs.mem[srcoff],
-		      nrows * ncols * 2);
+		    nrows * ncols * 2);
 }
 
 #ifdef WSCONS_SUPPORT_PCVTFONTS

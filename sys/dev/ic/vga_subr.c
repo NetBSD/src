@@ -1,4 +1,4 @@
-/* $NetBSD: vga_subr.c,v 1.11 2002/10/15 18:14:42 junyoung Exp $ */
+/* $NetBSD: vga_subr.c,v 1.12 2003/01/27 14:46:11 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_subr.c,v 1.11 2002/10/15 18:14:42 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_subr.c,v 1.12 2003/01/27 14:46:11 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,6 +54,7 @@ static void textram(struct vga_handle *);
 static void
 fontram(struct vga_handle *vh)
 {
+
 	/* program sequencer to access character generator */
 
 	vga_ts_write(vh, syncreset, 0x01);	/* synchronous reset */
@@ -71,6 +72,7 @@ fontram(struct vga_handle *vh)
 static void
 textram(struct vga_handle *vh)
 {
+
 	/* program sequencer to access video ram */
 
 	vga_ts_write(vh, syncreset, 0x01);	/* synchronous reset */
@@ -102,16 +104,15 @@ vga_loadchars(struct vga_handle *vh, int fontset, int first, int num, int lpc,
 	for (i = 0; i < num; i++)
 		for (j = 0; j < lpc; j++)
 			bus_space_write_1(vh->vh_memt, vh->vh_allmemh,
-					  offset + (i << 5) + j,
-					  data[i * lpc + j]);
+			    offset + (i << 5) + j, data[i * lpc + j]);
 
 	textram(vh);
 	splx(s);
 }
 
 void
-vga_readoutchars(struct vga_handle *vh, int fontset, int first, int num, int lpc,
-		 char *data)
+vga_readoutchars(struct vga_handle *vh, int fontset, int first, int num,
+		 int lpc, char *data)
 {
 	int offset, i, j, s;
 
@@ -123,9 +124,8 @@ vga_readoutchars(struct vga_handle *vh, int fontset, int first, int num, int lpc
 
 	for (i = 0; i < num; i++)
 		for (j = 0; j < lpc; j++)
-			data[i * lpc + j] =
-				bus_space_read_1(vh->vh_memt, vh->vh_allmemh,
-						 offset + (i << 5) + j);
+			data[i * lpc + j] = bus_space_read_1(vh->vh_memt,
+			    vh->vh_allmemh, offset + (i << 5) + j);
 
 	textram(vh);
 	splx(s);
@@ -140,10 +140,8 @@ vga_copyfont01(struct vga_handle *vh)
 	s = splhigh();
 	fontram(vh);
 
-	bus_space_copy_region_1(vh->vh_memt,
-				vh->vh_allmemh, 0,
-				vh->vh_allmemh, 1 << 13,
-				1 << 13);
+	bus_space_copy_region_1(vh->vh_memt, vh->vh_allmemh, 0,
+	    vh->vh_allmemh, 1 << 13, 1 << 13);
 
 	textram(vh);
 	splx(s);
@@ -172,6 +170,7 @@ vga_setfontset(struct vga_handle *vh, int fontset1, int fontset2)
 void
 vga_setscreentype(struct vga_handle *vh, const struct wsscreen_descr *type)
 {
+
 	vga_6845_write(vh, maxrow, type->fontheight - 1);
 
 	/* lo byte */
@@ -201,14 +200,14 @@ vga_load_builtinfont(struct vga_handle *vh, u_int8_t *font, int firstchar,
 	int numchars)
 {
 	int i, s;
-	
+
 	s = splhigh();
 	fontram(vh);
 
 	for (i = firstchar; i < firstchar + numchars; i++)
 		bus_space_read_region_1(vh->vh_memt, vh->vh_allmemh, i * 32,
-					font + i * 16, 16);
-					
+		    font + i * 16, 16);
+
 	textram(vh);
 	splx(s);
 }
