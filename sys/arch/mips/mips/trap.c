@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.116 1999/12/05 03:31:11 shin Exp $	*/
+/*	$NetBSD: trap.c,v 1.117 1999/12/22 04:54:16 jun Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.116 1999/12/05 03:31:11 shin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.117 1999/12/22 04:54:16 jun Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_inet.h"
@@ -181,7 +181,8 @@ void ast __P((unsigned));
 void dealfpu __P((unsigned, unsigned, unsigned));
 
 extern void MachEmulateFP __P((unsigned));
-extern void MachFPInterrupt __P((unsigned, unsigned, unsigned, mips_reg_t *));
+extern void MachFPInterrupt __P((unsigned, unsigned, unsigned,
+				struct frame *));
 
 /*
  * Other forward declarations.

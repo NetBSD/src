@@ -1,4 +1,4 @@
-/*	$NetBSD: fp.S,v 1.14 1999/11/18 06:47:49 jun Exp $	*/
+/*	$NetBSD: fp.S,v 1.15 1999/12/22 04:54:15 jun Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,6 +41,7 @@
 
 #include <mips/asm.h>
 #include <mips/cpuregs.h>
+#include <mips/trap.h>
 
 #include "assym.h"
 
@@ -82,11 +83,10 @@
  *	Emulate unimplemented floating point operations.
  *	This routine should only be called by MachFPInterrupt().
  *
- *	MachEmulateFP(instr)
- *		unsigned instr;
- *	MachEmulateFP(instr, frame)	: SOFTFLOAT case
- *		unsigned instr;
- *		mips_reg_t *frame;
+ *	MachEmulateFP(instr, frame, cause)
+ *		u_int32_t instr;
+ *		struct frame *frame;
+ *		u_int32_t cause;
  *
  * Results:
  *	None.
@@ -99,19 +99,17 @@
 NESTED(MachEmulateFP, CALLFRAME_SIZ, ra)
 	subu	sp, sp, CALLFRAME_SIZ
 	sw	ra, CALLFRAME_RA(sp)
+	sw	a2, CALLFRAME_SIZ + 8(sp)
 /*
  * Decode the FMT field (bits 25-21) and FUNCTION field (bits 5-0).
  */
 	srl	v0, a0, 21 - 2			# get FMT field
 	andi	v0, v0, 0x1F << 2		# mask FMT field
 #ifdef SOFTFLOAT
-	la	t0, _C_LABEL(fpcurproc)
-	lw	t0, 0(t0)
+	lw	t0, _C_LABEL(fpcurproc)
 	lw	t0, P_ADDR(t0)			# get pointer to pcb for proc
-	lw	a2, U_PCB_FPREGS+FRAME_FSR(t0)
 	lw	a3, fmt_tbl(v0)			# switch on FUNC & FMT
-	and	a2, a2, ~MIPS_FPU_EXCEPTION_UNIMPL	# clear exception
-	sw	a2, U_PCB_FPREGS+FRAME_FSR(t0)
+	lw	a2, U_PCB_FPREGS+FRAME_FSR(t0)
 #else
 	cfc1	a2, MIPS_FPU_CSR		# get exception register
 	lw	a3, fmt_tbl(v0)			# switch on FUNC & FMT
@@ -464,11 +462,9 @@ func_long_fixed_tbl:
 
 #ifdef SOFTFLOAT
 mfromc1:
-	la	t0, _C_LABEL(fpcurproc)
-	lw	t0, 0(t0)
-	lw	t0, P_ADDR(t0)			# get pointer to pcb for proc
-
+	lw	t0, _C_LABEL(fpcurproc)
 	srl	t1, a0, 11-2
+	lw	t0, P_ADDR(t0)			# get pointer to pcb for proc
 	andi	t1, t1, 0x007C
 	addu	t0, t0, t1
 
@@ -480,34 +476,30 @@ mfromc1:
 
 	sw	v0, FRAME_ZERO(t0)
 
-	move	v0, zero
 	b	done
 
 mtoc1:
+	sw	zero, FRAME_ZERO(a1)		# ensure zero has value 0
+
 	srl	t0, a0, 16-2
 	andi	t0, t0, 0x007C
 	addu	v0, a1, t0
 	lw	v0, FRAME_ZERO(v0)
 
-	la	t0, _C_LABEL(fpcurproc)
-	lw	t0, 0(t0)
-	lw	t0, P_ADDR(t0)			# get pointer to pcb for proc
-
+	lw	t0, _C_LABEL(fpcurproc)
 	srl	t1, a0, 11-2
+	lw	t0, P_ADDR(t0)			# get pointer to pcb for proc
 	andi	t1, t1, 0x007C
 	addu	t0, t0, t1
 
 	sw	v0, U_PCB_FPREGS+FRAME_FP0(t0)
 
-	move	v0, zero
 	b	done
 
 cfromc1:
-	la	t0, _C_LABEL(fpcurproc)
-	lw	t0, 0(t0)
-	lw	t0, P_ADDR(t0)			# get pointer to pcb for proc
-
+	lw	t0, _C_LABEL(fpcurproc)
 	srl	t1, a0, 11
+	lw	t0, P_ADDR(t0)			# get pointer to pcb for proc
 	andi	t1, t1, 0x001F
 	li	t2, 0x1F
 	move	v0, zero
@@ -523,28 +515,24 @@ cfinvalid:
 
 	sw	v0, FRAME_ZERO(t0)
 
-	move	v0, zero
 	b	done
 
 ctoc1:
+	sw	zero, FRAME_ZERO(a1)		# ensure zero has value 0
+
 	srl	t0, a0, 11
 	andi	t0, t0, 0x001F
-	li	t1, 0x1F	
-	move	v0, zero
+	li	t1, 0x1F
 	bne	t0, t1, done
 
 	srl	t0, a0, 16-2
 	andi	t0, t0, 0x007C
 	addu	v0, a1, t0
+	lw	t0, _C_LABEL(fpcurproc)
 	lw	v0, FRAME_ZERO(v0)
-
-	la	t0, _C_LABEL(fpcurproc)
-	lw	t0, 0(t0)
 	lw	t0, P_ADDR(t0)			# get pointer to pcb for proc
-
 	sw	v0, U_PCB_FPREGS+FRAME_FSR(t0)
 
-	move	v0, zero
 	b	done
 
 branchc1:
@@ -594,13 +582,11 @@ bcfalse:
 	li	v0, MIPS_FPU_COND_BIT
 	and	v0, v0, a2
 	beq	v0, zero, bcemul_branch
-	move	v0, zero
 	b	done
 bctrue:
 	li	v0, MIPS_FPU_COND_BIT
 	and	v0, v0, a2
 	bne	v0, zero, bcemul_branch
-	move	v0, zero
 	b	done
 bcfalse_l:
 	li	v0, MIPS_FPU_COND_BIT
@@ -609,7 +595,6 @@ bcfalse_l:
 	lw	v0, FRAME_EPC(a1)
 	addiu	v0, v0, 4
 	sw	v0, FRAME_EPC(a1)
-	move	v0, zero
 	b	done
 bctrue_l:
 	li	v0, MIPS_FPU_COND_BIT
@@ -618,25 +603,22 @@ bctrue_l:
 	lw	v0, FRAME_EPC(a1)
 	addiu	v0, v0, 4
 	sw	v0, FRAME_EPC(a1)
-	move	v0, zero
 	b	done
 
 bcemul_branch:
 	/* Fetch delay slot instruction */
-	sw	a0, 0(sp)
-	sw	a1, 4(sp)
+	sw	a1, CALLFRAME_SIZ + 4(sp)
 	lw	a0, FRAME_EPC(a1)
+	addiu	a0, a0, 4
 	jal	_C_LABEL(fuiword)
-	lw	a0, 0(sp)
-	lw	a1, 4(sp)
 
-	/* Calculate branch destination */
-	sll	t0, a0, 16
-	sra	t0, t0, 16-2
-	lw	t1, FRAME_EPC(a1)
-	addu	t1, t1, t0
-	sw	t1, FRAME_EPC(a1)
 	move	a0, v0
+	lw	a1, CALLFRAME_SIZ + 4(sp)
+	lw	a2, CALLFRAME_SIZ + 8(sp)
+
+	/* Update cause */
+	li	t0, MIPS_CR_BR_DELAY
+	or	a2, a2, t0
 
 	/* Free MachEmulateFP call frame */
 	lw	ra, CALLFRAME_RA(sp)
@@ -1589,8 +1571,7 @@ inexact_w:
 	and	v0, a2, MIPS_FPU_ENABLE_INEXACT
 	bne	v0, zero, fpe_trap
 #ifdef SOFTFLOAT
-	la	v0, _C_LABEL(fpcurproc)
-	lw	v0, 0(v0)
+	lw	v0, _C_LABEL(fpcurproc)
 	lw	v0, P_ADDR(v0)			# get pointer to pcb for proc
 	sw	a2, U_PCB_FPREGS+FRAME_FSR(v0)
 #else
@@ -1702,14 +1683,12 @@ set_cond:
 	or	a2, a2, MIPS_FPU_COND_BIT	# set condition bit
 2:
 #ifdef SOFTFLOAT
-	la	v0, _C_LABEL(fpcurproc)
-	lw	v0, 0(v0)
+	lw	v0, _C_LABEL(fpcurproc)
 	lw	v0, P_ADDR(v0)			# get pointer to pcb for proc
 	sw	a2, U_PCB_FPREGS+FRAME_FSR(v0)
 #else
 	ctc1	a2, MIPS_FPU_CSR		# save condition bit
 #endif
-	move	v0, zero
 	b	done
 
 unordered:
@@ -1727,14 +1706,12 @@ unordered:
 	bne	v0, zero, fpe_trap
 1:
 #ifdef SOFTFLOAT
-	la	v0, _C_LABEL(fpcurproc)
-	lw	v0, 0(v0)
+	lw	v0, _C_LABEL(fpcurproc)
 	lw	v0, P_ADDR(v0)			# get pointer to pcb for proc
 	sw	a2, U_PCB_FPREGS+FRAME_FSR(v0)
 #else
 	ctc1	a2, MIPS_FPU_CSR		# save condition bit
 #endif
-	move	v0, zero
 	b	done
 
 /*
@@ -1846,14 +1823,12 @@ inexact_nobias_s:
 	and	v0, a2, MIPS_FPU_ENABLE_INEXACT
 	bne	v0, zero, fpe_trap
 #ifdef SOFTFLOAT
-	la	v0, _C_LABEL(fpcurproc)
-	lw	v0, 0(v0)
+	lw	v0, _C_LABEL(fpcurproc)
 	lw	v0, P_ADDR(v0)			# get pointer to pcb for proc
 	sw	a2, U_PCB_FPREGS+FRAME_FSR(v0)
 #else
 	ctc1	a2, MIPS_FPU_CSR		# save exceptions
 #endif
-	move	v0, zero
 	b	done
 
 /*
@@ -1963,21 +1938,18 @@ underflow_s:
 5:
 	move	t1, zero			# denorm or zero exponent
 	jal	_C_LABEL(set_fd_s)		# save result
-	move	v0, zero
 	beq	t8, zero, done			# check for exact result
 	or	a2, a2, MIPS_FPU_EXCEPTION_UNDERFLOW | MIPS_FPU_STICKY_UNDERFLOW
 	or	a2, a2, MIPS_FPU_EXCEPTION_INEXACT | MIPS_FPU_STICKY_INEXACT
 	and	v0, a2, MIPS_FPU_ENABLE_INEXACT
 	bne	v0, zero, fpe_trap
 #ifdef SOFTFLOAT
-	la	v0, _C_LABEL(fpcurproc)
-	lw	v0, 0(v0)
+	lw	v0, _C_LABEL(fpcurproc)
 	lw	v0, P_ADDR(v0)			# get pointer to pcb for proc
 	sw	a2, U_PCB_FPREGS+FRAME_FSR(v0)
 #else
 	ctc1	a2, MIPS_FPU_CSR		# save exceptions
 #endif
-	move	v0, zero
 	b	done
 
 /*
@@ -2113,14 +2085,12 @@ inexact_nobias_d:
 	and	v0, a2, MIPS_FPU_ENABLE_INEXACT
 	bne	v0, zero, fpe_trap
 #ifdef SOFTFLOAT
-	la	v0, _C_LABEL(fpcurproc)
-	lw	v0, 0(v0)
+	lw	v0, _C_LABEL(fpcurproc)
 	lw	v0, P_ADDR(v0)			# get pointer to pcb for proc
 	sw	a2, U_PCB_FPREGS+FRAME_FSR(v0)
 #else
 	ctc1	a2, MIPS_FPU_CSR		# save exceptions
 #endif
-	move	v0, zero
 	b	done
 
 /*
@@ -2252,21 +2222,18 @@ underflow_d:
 5:
 	move	t1, zero			# denorm or zero exponent
 	jal	_C_LABEL(set_fd_d)		# save result
-	move	v0, zero
 	beq	t8, zero, done			# check for exact result
 	or	a2, a2, MIPS_FPU_EXCEPTION_UNDERFLOW | MIPS_FPU_STICKY_UNDERFLOW
 	or	a2, a2, MIPS_FPU_EXCEPTION_INEXACT | MIPS_FPU_STICKY_INEXACT
 	and	v0, a2, MIPS_FPU_ENABLE_INEXACT
 	bne	v0, zero, fpe_trap
 #ifdef SOFTFLOAT
-	la	v0, _C_LABEL(fpcurproc)
-	lw	v0, 0(v0)
+	lw	v0, _C_LABEL(fpcurproc)
 	lw	v0, P_ADDR(v0)			# get pointer to pcb for proc
 	sw	a2, U_PCB_FPREGS+FRAME_FSR(v0)
 #else
 	ctc1	a2, MIPS_FPU_CSR		# save exceptions
 #endif
-	move	v0, zero
 	b	done
 
 /*
@@ -2278,8 +2245,7 @@ invalid_s:					# trap invalid operation
 	and	v0, a2, MIPS_FPU_ENABLE_INVALID
 	bne	v0, zero, fpe_trap
 #ifdef SOFTFLOAT
-	la	v0, _C_LABEL(fpcurproc)
-	lw	v0, 0(v0)
+	lw	v0, _C_LABEL(fpcurproc)
 	lw	v0, P_ADDR(v0)			# get pointer to pcb for proc
 	sw	a2, U_PCB_FPREGS+FRAME_FSR(v0)
 #else
@@ -2289,7 +2255,6 @@ invalid_s:					# trap invalid operation
 	li	t1, SEXP_INF
 	li	t2, SQUIET_NAN
 	jal	_C_LABEL(set_fd_s)		# save result (in t0,t1,t2)
-	move	v0, zero
 	b	done
 
 /*
@@ -2301,8 +2266,7 @@ invalid_d:					# trap invalid operation
 	and	v0, a2, MIPS_FPU_ENABLE_INVALID
 	bne	v0, zero, fpe_trap
 #ifdef SOFTFLOAT
-	la	v0, _C_LABEL(fpcurproc)
-	lw	v0, 0(v0)
+	lw	v0, _C_LABEL(fpcurproc)
 	lw	v0, P_ADDR(v0)			# get pointer to pcb for proc
 	sw	a2, U_PCB_FPREGS+FRAME_FSR(v0)
 #else
@@ -2313,7 +2277,6 @@ invalid_d:					# trap invalid operation
 	li	t2, DQUIET_NAN0
 	li	t3, DQUIET_NAN1
 	jal	_C_LABEL(set_fd_d)		# save result (in t0,t1,t2,t3)
-	move	v0, zero
 	b	done
 
 /*
@@ -2325,8 +2288,7 @@ invalid_w:					# trap invalid operation
 	and	v0, a2, MIPS_FPU_ENABLE_INVALID
 	bne	v0, zero, fpe_trap
 #ifdef SOFTFLOAT
-	la	v0, _C_LABEL(fpcurproc)
-	lw	v0, 0(v0)
+	lw	v0, _C_LABEL(fpcurproc)
 	lw	v0, P_ADDR(v0)			# get pointer to pcb for proc
 	sw	a2, U_PCB_FPREGS+FRAME_FSR(v0)
 #else
@@ -2344,31 +2306,32 @@ invalid_w:					# trap invalid operation
  */
 fpe_trap:
 #ifdef SOFTFLOAT
-	la	v0, _C_LABEL(fpcurproc)
-	lw	v0, 0(v0)
+	lw	v0, _C_LABEL(fpcurproc)
 	lw	v0, P_ADDR(v0)			# get pointer to pcb for proc
 	sw	a2, U_PCB_FPREGS+FRAME_FSR(v0)
 #else
 	ctc1	a2, MIPS_FPU_CSR		# save exceptions
 #endif
-	li	v0, SIGFPE
-	b	done
+	lw	a2, CALLFRAME_SIZ + 8(sp)
+	lw	ra, CALLFRAME_RA(sp)
+	addu	sp, sp, CALLFRAME_SIZ
+	j	_C_LABEL(fpemul_sigfpe)
 
 /*
  * Send an illegal instruction signal to the current process.
  */
 ill:
 #ifdef SOFTFLOAT
-	la	v0, _C_LABEL(fpcurproc)
-	lw	v0, 0(v0)
+	lw	v0, _C_LABEL(fpcurproc)
 	lw	v0, P_ADDR(v0)			# get pointer to pcb for proc
 	sw	a2, U_PCB_FPREGS+FRAME_FSR(v0)
 #else
 	ctc1	a2, MIPS_FPU_CSR		# save exceptions
 #endif
-	move	a2, a0				# code = FP instruction
-	li	v0, SIGILL
-	b	done
+	lw	a2, CALLFRAME_SIZ + 8(sp)
+	lw	ra, CALLFRAME_RA(sp)
+	addu	sp, sp, CALLFRAME_SIZ
+	j	_C_LABEL(fpemul_sigill)
 
 result_ft_s:
 	move	t0, t4				# result is FT
@@ -2376,12 +2339,10 @@ result_ft_s:
 	move	t2, t6
 result_fs_s:					# result is FS
 	jal	_C_LABEL(set_fd_s)		# save result (in t0,t1,t2)
-	move	v0, zero
 	b	done
 
 result_fs_w:
 	jal	_C_LABEL(set_fd_word)		# save result (in t2)
-	move	v0, zero
 	b	done
 
 result_ft_d:
@@ -2391,8 +2352,37 @@ result_ft_d:
 	move	t3, t7
 result_fs_d:					# result is FS
 	jal	_C_LABEL(set_fd_d)		# save result (in t0,t1,t2,t3)
-	move	v0, zero
+
 done:
+/*
+ * Succeeded to emulate instruction with no error
+ * so compute the next PC.
+ */
+	lw	t0, CALLFRAME_SIZ + 8(sp)
+	lw	v0, FRAME_EPC(a1)
+	bgez	t0, 1f				# Check the branch delay bit.
+/*
+ * The instruction is in the branch delay slot so the branch will have to
+ * be emulated to get the resulting PC.
+ */
+	sw	a1, CALLFRAME_SIZ + 4(sp)
+	move	a0, a1				# 1st arg is p. to trapframe
+	move	a1, v0				# 2nd arg is instruction PC
+						# 3rd arg is FP CSR
+	move	a3, zero			# 4th arg is FALSE
+	jal	_C_LABEL(MachEmulateBranch)	# compute PC after branch
+
+	lw	a1, CALLFRAME_SIZ + 4(sp)
+	b	2f
+/*
+ * This is not in the branch delay slot so calculate the resulting
+ * PC (epc + 4) into v0.
+ */
+1:
+	addiu	v0, v0, 4			# v0 = next pc
+2:
+	sw	v0, FRAME_EPC(a1)		# save new pc
+
 	lw	ra, CALLFRAME_RA(sp)
 	addu	sp, sp, CALLFRAME_SIZ
 	j	ra
@@ -2412,11 +2402,9 @@ END(MachEmulateFP)
  */
 LEAF(get_fs_int)
 #ifdef SOFTFLOAT
-	la	t0, _C_LABEL(fpcurproc)
-	lw	t0, 0(t0)
-	lw	t0, P_ADDR(t0)			# get pointer to pcb for proc
-
+	lw	t0, _C_LABEL(fpcurproc)
 	srl	t2, a0, 11-2
+	lw	t0, P_ADDR(t0)			# get pointer to pcb for proc
 	andi	t2, t2, 0x0078			# Even regs only
 	addu	t0, t0, t2
 
@@ -2528,11 +2516,9 @@ END(get_fs_int)
  */
 LEAF(get_ft_fs_s)
 #ifdef SOFTFLOAT
-	la	t5, _C_LABEL(fpcurproc)
-	lw	t5, 0(t5)
-	lw	t5, P_ADDR(t5)			# get pointer to pcb for proc
-
+	lw	t5, _C_LABEL(fpcurproc)
 	srl	t4, a0, 16-2
+	lw	t5, P_ADDR(t5)			# get pointer to pcb for proc
 	andi	t4, t4, 0x0078			# Even regs only
 	addu	t5, t5, t4
 
@@ -2648,11 +2634,9 @@ get_ft_s_done:
  */
 XLEAF(get_fs_s)
 #ifdef SOFTFLOAT
-	la	t1, _C_LABEL(fpcurproc)
-	lw	t1, 0(t1)
-	lw	t1, P_ADDR(t1)			# get pointer to pcb for proc
-
+	lw	t1, _C_LABEL(fpcurproc)
 	srl	t0, a0, 11-2
+	lw	t1, P_ADDR(t1)			# get pointer to pcb for proc
 	andi	t0, t0, 0x0078			# Even regs only
 	addu	t1, t1, t0
 
@@ -2774,11 +2758,9 @@ END(get_ft_fs_s)
  */
 LEAF(get_ft_fs_d)
 #ifdef SOFTFLOAT
-	la	t4, _C_LABEL(fpcurproc)
-	lw	t4, 0(t4)
-	lw	t4, P_ADDR(t4)			# get pointer to pcb for proc
-
+	lw	t4, _C_LABEL(fpcurproc)
 	srl	t7, a0, 16-2
+	lw	t4, P_ADDR(t4)			# get pointer to pcb for proc
 	andi	t7, t7, 0x0078			# Even regs only
 	addu	t4, t4, t7
 
@@ -2912,11 +2894,9 @@ get_ft_d_done:
  */
 XLEAF(get_fs_d)
 #ifdef SOFTFLOAT
-	la	t0, _C_LABEL(fpcurproc)
-	lw	t0, 0(t0)
-	lw	t0, P_ADDR(t0)			# get pointer to pcb for proc
-
+	lw	t0, _C_LABEL(fpcurproc)
 	srl	t3, a0, 11-2
+	lw	t0, P_ADDR(t0)			# get pointer to pcb for proc
 	andi	t3, t3, 0x0078			# Even regs only
 	addu	t0, t0, t3
 
@@ -3053,11 +3033,9 @@ END(get_ft_fs_d)
  */
 LEAF(get_cmp_s)
 #ifdef SOFTFLOAT
-	la	t6, _C_LABEL(fpcurproc)
-	lw	t6, 0(t6)
-	lw	t6, P_ADDR(t6)			# get pointer to pcb for proc
-
+	lw	t6, _C_LABEL(fpcurproc)
 	srl	t1, a0, 11-2
+	lw	t6, P_ADDR(t6)			# get pointer to pcb for proc
 	andi	t1, t1, 0x0078			# Even regs only
 	addu	t0, t6, t1
 
@@ -3260,11 +3238,9 @@ END(get_cmp_s)
  */
 LEAF(get_cmp_d)
 #ifdef SOFTFLOAT
-	la	t6, _C_LABEL(fpcurproc)
-	lw	t6, 0(t6)
-	lw	t6, P_ADDR(t6)			# get pointer to pcb for proc
-
+	lw	t6, _C_LABEL(fpcurproc)
 	srl	t1, a0, 11-2
+	lw	t6, P_ADDR(t6)			# get pointer to pcb for proc
 	andi	t1, t1, 0x0078			# Even regs only
 	addu	t0, t6, t1
 
@@ -3510,11 +3486,9 @@ LEAF(set_fd_s)
 	or	t2, t2, t1
 XLEAF(set_fd_word)
 #ifdef SOFTFLOAT
-	la	t0, _C_LABEL(fpcurproc)
-	lw	t0, 0(t0)
-	lw	t0, P_ADDR(t0)			# get pointer to pcb for proc
-
+	lw	t0, _C_LABEL(fpcurproc)
 	srl	t1, a0, 6-2
+	lw	t0, P_ADDR(t0)			# get pointer to pcb for proc
 	andi	t1, t1, 0x0078			# Even regs only
 	addu	t0, t0, t1
 
@@ -3619,11 +3593,9 @@ LEAF(set_fd_d)
 	or	t0, t0, t1
 	or	t0, t0, t2			# set fraction
 
-	la	t2, _C_LABEL(fpcurproc)
-	lw	t2, 0(t2)
-	lw	t2, P_ADDR(t2)			# get pointer to pcb for proc
-
+	lw	t2, _C_LABEL(fpcurproc)
 	srl	t1, a0, 6-2
+	lw	t2, P_ADDR(t2)			# get pointer to pcb for proc
 	andi	t1, t1, 0x0078			# Even regs only
 	addu	t2, t2, t1
 
@@ -3962,8 +3934,13 @@ END(renorm_ft_d)
  *  COP0
  *  64bit operation
  *  trap/syscall/break
+ *
+ * Args are same as MachFPInterrupt.
+ * It should be used to emulate instruction in branch delay slot.
  */
 LEAF(bcemul_delay_slot)
+	sw	zero, FRAME_ZERO(a1)		# ensure zero has value 0
+
 	srl	t0, a0, 26-2
 	andi	t0, t0, 0x00FC
 	lw	t0, bcemul_optbl(t0)
@@ -3978,13 +3955,13 @@ bcemul_special:
 	.rdata
 bcemul_optbl:
 	.word	bcemul_special		# 0
-	.word	bcemul_ill		# 1
-	.word	bcemul_ill		# 2
-	.word	bcemul_ill		# 3
-	.word	bcemul_ill		# 4
-	.word	bcemul_ill		# 5
-	.word	bcemul_ill		# 6
-	.word	bcemul_ill		# 7
+	.word	_C_LABEL(bcemul_sigill)	# 1
+	.word	_C_LABEL(bcemul_sigill)	# 2
+	.word	_C_LABEL(bcemul_sigill)	# 3
+	.word	_C_LABEL(bcemul_sigill)	# 4
+	.word	_C_LABEL(bcemul_sigill)	# 5
+	.word	_C_LABEL(bcemul_sigill)	# 6
+	.word	_C_LABEL(bcemul_sigill)	# 7
 	.word	bcemul_addi		# 8
 	.word	bcemul_addiu		# 9
 	.word	bcemul_slti		# 10
@@ -3993,22 +3970,22 @@ bcemul_optbl:
 	.word	bcemul_ori		# 13
 	.word	bcemul_xori		# 14
 	.word	bcemul_lui		# 15
-	.word	bcemul_ill		# 16
+	.word	_C_LABEL(bcemul_sigill)	# 16
 	.word	_C_LABEL(MachEmulateFP)	# 17
-	.word	bcemul_ill		# 18
-	.word	bcemul_ill		# 19
-	.word	bcemul_ill		# 20
-	.word	bcemul_ill		# 21
-	.word	bcemul_ill		# 22
-	.word	bcemul_ill		# 23
-	.word	bcemul_ill		# 24
-	.word	bcemul_ill		# 25
-	.word	bcemul_ill		# 26
-	.word	bcemul_ill		# 27
-	.word	bcemul_ill		# 28
-	.word	bcemul_ill		# 29
-	.word	bcemul_ill		# 30
-	.word	bcemul_ill		# 31
+	.word	_C_LABEL(bcemul_sigill)	# 18
+	.word	_C_LABEL(bcemul_sigill)	# 19
+	.word	_C_LABEL(bcemul_sigill)	# 20
+	.word	_C_LABEL(bcemul_sigill)	# 21
+	.word	_C_LABEL(bcemul_sigill)	# 22
+	.word	_C_LABEL(bcemul_sigill)	# 23
+	.word	_C_LABEL(bcemul_sigill)	# 24
+	.word	_C_LABEL(bcemul_sigill)	# 25
+	.word	_C_LABEL(bcemul_sigill)	# 26
+	.word	_C_LABEL(bcemul_sigill)	# 27
+	.word	_C_LABEL(bcemul_sigill)	# 28
+	.word	_C_LABEL(bcemul_sigill)	# 29
+	.word	_C_LABEL(bcemul_sigill)	# 30
+	.word	_C_LABEL(bcemul_sigill)	# 31
 	.word	_C_LABEL(bcemul_lb)	# 32
 	.word	_C_LABEL(bcemul_lh)	# 33
 	.word	_C_LABEL(bcemul_lwl)	# 34
@@ -4016,65 +3993,65 @@ bcemul_optbl:
 	.word	_C_LABEL(bcemul_lbu)	# 36
 	.word	_C_LABEL(bcemul_lhu)	# 37
 	.word	_C_LABEL(bcemul_lwr)	# 38
-	.word	bcemul_ill		# 39
+	.word	_C_LABEL(bcemul_sigill)	# 39
 	.word	_C_LABEL(bcemul_sb)	# 40
 	.word	_C_LABEL(bcemul_sh)	# 41
 	.word	_C_LABEL(bcemul_swl)	# 42
 	.word	_C_LABEL(bcemul_sw)	# 43
-	.word	bcemul_ill		# 44
-	.word	bcemul_ill		# 45
+	.word	_C_LABEL(bcemul_sigill)	# 44
+	.word	_C_LABEL(bcemul_sigill)	# 45
 	.word	_C_LABEL(bcemul_swr)	# 46
-	.word	bcemul_ill		# 47
-	.word	bcemul_ill		# 48
+	.word	_C_LABEL(bcemul_sigill)	# 47
+	.word	_C_LABEL(bcemul_sigill)	# 48
 	.word	_C_LABEL(MachEmulateLWC1) # 49
-	.word	bcemul_ill		# 50
-	.word	bcemul_ill		# 51
-	.word	bcemul_ill		# 52
+	.word	_C_LABEL(bcemul_sigill)	# 50
+	.word	_C_LABEL(bcemul_sigill)	# 51
+	.word	_C_LABEL(bcemul_sigill)	# 52
 	.word	_C_LABEL(MachEmulateLDC1) # 53
-	.word	bcemul_ill		# 54
-	.word	bcemul_ill		# 55
-	.word	bcemul_ill		# 56
+	.word	_C_LABEL(bcemul_sigill)	# 54
+	.word	_C_LABEL(bcemul_sigill)	# 55
+	.word	_C_LABEL(bcemul_sigill)	# 56
 	.word	_C_LABEL(MachEmulateSWC1) # 57
-	.word	bcemul_ill		# 58
-	.word	bcemul_ill		# 59
-	.word	bcemul_ill		# 60
+	.word	_C_LABEL(bcemul_sigill)	# 58
+	.word	_C_LABEL(bcemul_sigill)	# 59
+	.word	_C_LABEL(bcemul_sigill)	# 60
 	.word	_C_LABEL(MachEmulateSDC1) # 61
-	.word	bcemul_ill		# 62
-	.word	bcemul_ill		# 63
+	.word	_C_LABEL(bcemul_sigill)	# 62
+	.word	_C_LABEL(bcemul_sigill)	# 63
 
 bcemul_specialtbl:
 	.word	bcemul_sll		# 0
-	.word	bcemul_ill		# 1
+	.word	_C_LABEL(bcemul_sigill)	# 1
 	.word	bcemul_srl		# 2
 	.word	bcemul_sra		# 3
 	.word	bcemul_sllv		# 4
-	.word	bcemul_ill		# 5
+	.word	_C_LABEL(bcemul_sigill)	# 5
 	.word	bcemul_srlv		# 6
 	.word	bcemul_srav		# 7
-	.word	bcemul_ill		# 8
-	.word	bcemul_ill		# 9
-	.word	bcemul_ill		# 10
-	.word	bcemul_ill		# 11
-	.word	bcemul_ill		# 12
-	.word	bcemul_ill		# 13
-	.word	bcemul_ill		# 14
+	.word	_C_LABEL(bcemul_sigill)	# 8
+	.word	_C_LABEL(bcemul_sigill)	# 9
+	.word	_C_LABEL(bcemul_sigill)	# 10
+	.word	_C_LABEL(bcemul_sigill)	# 11
+	.word	_C_LABEL(bcemul_sigill)	# 12
+	.word	_C_LABEL(bcemul_sigill)	# 13
+	.word	_C_LABEL(bcemul_sigill)	# 14
 	.word	bcemul_sync		# 15
 	.word	bcemul_mfhi		# 16
 	.word	bcemul_mthi		# 17
 	.word	bcemul_mflo		# 18
 	.word	bcemul_mtlo		# 19
-	.word	bcemul_ill		# 20
-	.word	bcemul_ill		# 21
-	.word	bcemul_ill		# 22
-	.word	bcemul_ill		# 23
+	.word	_C_LABEL(bcemul_sigill)	# 20
+	.word	_C_LABEL(bcemul_sigill)	# 21
+	.word	_C_LABEL(bcemul_sigill)	# 22
+	.word	_C_LABEL(bcemul_sigill)	# 23
 	.word	bcemul_mult		# 24
 	.word	bcemul_multu		# 25
 	.word	bcemul_div		# 26
 	.word	bcemul_divu		# 27
-	.word	bcemul_ill		# 28
-	.word	bcemul_ill		# 29
-	.word	bcemul_ill		# 30
-	.word	bcemul_ill		# 31
+	.word	_C_LABEL(bcemul_sigill)	# 28
+	.word	_C_LABEL(bcemul_sigill)	# 29
+	.word	_C_LABEL(bcemul_sigill)	# 30
+	.word	_C_LABEL(bcemul_sigill)	# 31
 	.word	bcemul_add		# 32
 	.word	bcemul_addu		# 33
 	.word	bcemul_sub		# 34
@@ -4083,30 +4060,30 @@ bcemul_specialtbl:
 	.word	bcemul_or		# 37
 	.word	bcemul_xor		# 38
 	.word	bcemul_nor		# 39
-	.word	bcemul_ill		# 40
-	.word	bcemul_ill		# 41
+	.word	_C_LABEL(bcemul_sigill)	# 40
+	.word	_C_LABEL(bcemul_sigill)	# 41
 	.word	bcemul_slt		# 42
 	.word	bcemul_sltu		# 43
-	.word	bcemul_ill		# 44
-	.word	bcemul_ill		# 45
-	.word	bcemul_ill		# 46
-	.word	bcemul_ill		# 47
-	.word	bcemul_ill		# 48
-	.word	bcemul_ill		# 49
-	.word	bcemul_ill		# 50
-	.word	bcemul_ill		# 51
-	.word	bcemul_ill		# 52
-	.word	bcemul_ill		# 53
-	.word	bcemul_ill		# 54
-	.word	bcemul_ill		# 55
-	.word	bcemul_ill		# 56
-	.word	bcemul_ill		# 57
-	.word	bcemul_ill		# 58
-	.word	bcemul_ill		# 59
-	.word	bcemul_ill		# 60
-	.word	bcemul_ill		# 61
-	.word	bcemul_ill		# 62
-	.word	bcemul_ill		# 63
+	.word	_C_LABEL(bcemul_sigill)	# 44
+	.word	_C_LABEL(bcemul_sigill)	# 45
+	.word	_C_LABEL(bcemul_sigill)	# 46
+	.word	_C_LABEL(bcemul_sigill)	# 47
+	.word	_C_LABEL(bcemul_sigill)	# 48
+	.word	_C_LABEL(bcemul_sigill)	# 49
+	.word	_C_LABEL(bcemul_sigill)	# 50
+	.word	_C_LABEL(bcemul_sigill)	# 51
+	.word	_C_LABEL(bcemul_sigill)	# 52
+	.word	_C_LABEL(bcemul_sigill)	# 53
+	.word	_C_LABEL(bcemul_sigill)	# 54
+	.word	_C_LABEL(bcemul_sigill)	# 55
+	.word	_C_LABEL(bcemul_sigill)	# 56
+	.word	_C_LABEL(bcemul_sigill)	# 57
+	.word	_C_LABEL(bcemul_sigill)	# 58
+	.word	_C_LABEL(bcemul_sigill)	# 59
+	.word	_C_LABEL(bcemul_sigill)	# 60
+	.word	_C_LABEL(bcemul_sigill)	# 61
+	.word	_C_LABEL(bcemul_sigill)	# 62
+	.word	_C_LABEL(bcemul_sigill)	# 63
 
 	.text
 
@@ -4130,14 +4107,12 @@ bcemul_addi:
 	xor	v0, v0, t0
 	srl	v0, v0, 31
 	beq	v0, zero, addiok
-	
-	li	v0, SIGFPE
-	j	ra
+
+	j	_C_LABEL(bcemul_sigfpe)
 
 addiok:
 	sw	t0, FRAME_ZERO(t1)
-	move	v0, zero
-	j	ra
+	b	bcemul_done
 
 bcemul_addiu:
 	srl	t0, a0, 21-2		# rs
@@ -4151,8 +4126,7 @@ bcemul_addiu:
 	lw	v0, FRAME_ZERO(t0)
 	addu	v0, v0, t2
 	sw	v0, FRAME_ZERO(t1)
-	move	v0, zero
-	j	ra
+	b	bcemul_done
 
 bcemul_slti:
 	srl	t0, a0, 21-2		# rs
@@ -4166,8 +4140,7 @@ bcemul_slti:
 	lw	v0, FRAME_ZERO(t0)
 	slt	v0, v0, t2
 	sw	v0, FRAME_ZERO(t1)
-	move	v0, zero
-	j	ra
+	b	bcemul_done
 
 bcemul_sltiu:
 	srl	t0, a0, 21-2		# rs
@@ -4181,8 +4154,7 @@ bcemul_sltiu:
 	lw	v0, FRAME_ZERO(t0)
 	sltu	v0, v0, t2
 	sw	v0, FRAME_ZERO(t1)
-	move	v0, zero
-	j	ra
+	b	bcemul_done
 
 bcemul_andi:
 	srl	t0, a0, 21-2		# rs
@@ -4195,8 +4167,7 @@ bcemul_andi:
 	lw	v0, FRAME_ZERO(t0)
 	and	v0, v0, t2
 	sw	v0, FRAME_ZERO(t1)
-	move	v0, zero
-	j	ra
+	b	bcemul_done
 
 bcemul_ori:
 	srl	t0, a0, 21-2		# rs
@@ -4209,8 +4180,7 @@ bcemul_ori:
 	lw	v0, FRAME_ZERO(t0)
 	or	v0, v0, t2
 	sw	v0, FRAME_ZERO(t1)
-	move	v0, zero
-	j	ra
+	b	bcemul_done
 
 bcemul_xori:
 	srl	t0, a0, 21-2		# rs
@@ -4223,8 +4193,7 @@ bcemul_xori:
 	lw	v0, FRAME_ZERO(t0)
 	xor	v0, v0, t2
 	sw	v0, FRAME_ZERO(t1)
-	move	v0, zero
-	j	ra
+	b	bcemul_done
 
 bcemul_lui:
 	srl	t0, a0, 16-2		# rt
@@ -4232,8 +4201,7 @@ bcemul_lui:
 	addu	t0, a1, t0
 	sll	v0, a0, 16
 	sw	v0, FRAME_ZERO(t0)
-	move	v0, zero
-	j	ra
+	b	bcemul_done
 
 bcemul_sll:
 	srl	t0, a0, 16-2		# rt
@@ -4247,8 +4215,7 @@ bcemul_sll:
 	lw	v0, FRAME_ZERO(t0)
 	sllv	v0, v0, t2
 	sw	v0, FRAME_ZERO(t1)
-	move	v0, zero
-	j	ra
+	b	bcemul_done
 
 bcemul_srl:
 	srl	t0, a0, 16-2		# rt
@@ -4262,8 +4229,7 @@ bcemul_srl:
 	lw	v0, FRAME_ZERO(t0)
 	srlv	v0, v0, t2
 	sw	v0, FRAME_ZERO(t1)
-	move	v0, zero
-	j	ra
+	b	bcemul_done
 
 bcemul_sra:
 	srl	t0, a0, 16-2		# rt
@@ -4277,8 +4243,7 @@ bcemul_sra:
 	lw	v0, FRAME_ZERO(t0)
 	srav	v0, v0, t2
 	sw	v0, FRAME_ZERO(t1)
-	move	v0, zero
-	j	ra
+	b	bcemul_done
 
 bcemul_sllv:
 	srl	t0, a0, 21-2		# rs
@@ -4294,8 +4259,7 @@ bcemul_sllv:
 	lw	v1, FRAME_ZERO(t1)
 	sllv	v0, v1, v0
 	sw	v0, FRAME_ZERO(t2)
-	move	v0, zero
-	j	ra
+	b	bcemul_done
 
 bcemul_srlv:
 	srl	t0, a0, 21-2		# rs
@@ -4311,8 +4275,7 @@ bcemul_srlv:
 	lw	v1, FRAME_ZERO(t1)
 	srlv	v0, v1, v0
 	sw	v0, FRAME_ZERO(t2)
-	move	v0, zero
-	j	ra
+	b	bcemul_done
 
 bcemul_srav:
 	srl	t0, a0, 21-2		# rs
@@ -4328,12 +4291,10 @@ bcemul_srav:
 	lw	v1, FRAME_ZERO(t1)
 	srav	v0, v1, v0
 	sw	v0, FRAME_ZERO(t2)
-	move	v0, zero
-	j	ra
+	b	bcemul_done
 
 bcemul_sync:
-	move	v0, zero
-	j	ra
+	b	bcemul_done
 
 bcemul_mfhi:
 	srl	t0, a0, 11-2		# rd
@@ -4341,8 +4302,7 @@ bcemul_mfhi:
 	addu	t0, a1, t0
 	lw	v0, FRAME_MULHI(a1)
 	sw	v0, FRAME_ZERO(t0)
-	move	v0, zero
-	j	ra
+	b	bcemul_done
 
 bcemul_mthi:
 	srl	t0, a0, 21-2		# rs
@@ -4350,8 +4310,7 @@ bcemul_mthi:
 	addu	t0, a1, t0
 	lw	v0, FRAME_ZERO(t0)
 	sw	v0, FRAME_MULHI(a1)
-	move	v0, zero
-	j	ra
+	b	bcemul_done
 
 bcemul_mflo:
 	srl	t0, a0, 11-2		# rd
@@ -4359,8 +4318,7 @@ bcemul_mflo:
 	addu	t0, a1, t0
 	lw	v0, FRAME_MULLO(a1)
 	sw	v0, FRAME_ZERO(t0)
-	move	v0, zero
-	j	ra
+	b	bcemul_done
 
 bcemul_mtlo:
 	srl	t0, a0, 21-2		# rs
@@ -4368,8 +4326,7 @@ bcemul_mtlo:
 	addu	t0, a1, t0
 	lw	v0, FRAME_ZERO(t0)
 	sw	v0, FRAME_MULLO(a1)
-	move	v0, zero
-	j	ra
+	b	bcemul_done
 
 bcemul_mult:
 	srl	t0, a0, 21-2		# rs
@@ -4385,8 +4342,7 @@ bcemul_mult:
 	mfhi	v1
 	sw	v0, FRAME_MULLO(a1)
 	sw	v1, FRAME_MULHI(a1)
-	move	v0, zero
-	j	ra
+	b	bcemul_done
 
 bcemul_multu:
 	srl	t0, a0, 21-2		# rs
@@ -4402,8 +4358,7 @@ bcemul_multu:
 	mfhi	v1
 	sw	v0, FRAME_MULLO(a1)
 	sw	v1, FRAME_MULHI(a1)
-	move	v0, zero
-	j	ra
+	b	bcemul_done
 
 bcemul_div:
 	srl	t0, a0, 21-2		# rs
@@ -4419,8 +4374,7 @@ bcemul_div:
 	mfhi	v1
 	sw	v0, FRAME_MULLO(a1)
 	sw	v1, FRAME_MULHI(a1)
-	move	v0, zero
-	j	ra
+	b	bcemul_done
 
 bcemul_divu:
 	srl	t0, a0, 21-2		# rs
@@ -4436,8 +4390,7 @@ bcemul_divu:
 	mfhi	v1
 	sw	v0, FRAME_MULLO(a1)
 	sw	v1, FRAME_MULHI(a1)
-	move	v0, zero
-	j	ra
+	b	bcemul_done
 
 bcemul_add:
 	srl	t0, a0, 21-2		# rs
@@ -4462,13 +4415,11 @@ bcemul_add:
 	srl	v0, v0, 31
 	beq	v0, zero, addok
 	
-	li	v0, SIGFPE
-	j	ra
+	j	_C_LABEL(bcemul_sigfpe)
 
 addok:
 	sw	t0, FRAME_ZERO(t2)
-	move	v0, zero
-	j	ra
+	b	bcemul_done
 
 bcemul_addu:
 	srl	t0, a0, 21-2		# rs
@@ -4484,8 +4435,7 @@ bcemul_addu:
 	lw	v1, FRAME_ZERO(t1)
 	addu	v0, v0, v1
 	sw	v0, FRAME_ZERO(t2)
-	move	v0, zero
-	j	ra
+	b	bcemul_done
 
 bcemul_sub:
 	srl	t0, a0, 21-2		# rs
@@ -4510,13 +4460,11 @@ bcemul_sub:
 	srl	v0, v0, 31
 	beq	v0, zero, subok
 	
-	li	v0, SIGFPE
-	j	ra
+	j	_C_LABEL(bcemul_sigfpe)
 
 subok:
 	sw	t0, FRAME_ZERO(t2)
-	move	v0, zero
-	j	ra
+	b	bcemul_done
 
 bcemul_subu:
 	srl	t0, a0, 21-2		# rs
@@ -4532,8 +4480,7 @@ bcemul_subu:
 	lw	v1, FRAME_ZERO(t1)
 	subu	v0, v0, v1
 	sw	v0, FRAME_ZERO(t2)
-	move	v0, zero
-	j	ra
+	b	bcemul_done
 
 bcemul_and:
 	srl	t0, a0, 21-2		# rs
@@ -4549,8 +4496,7 @@ bcemul_and:
 	lw	v1, FRAME_ZERO(t1)
 	and	v0, v0, v1
 	sw	v0, FRAME_ZERO(t2)
-	move	v0, zero
-	j	ra
+	b	bcemul_done
 
 bcemul_or:
 	srl	t0, a0, 21-2		# rs
@@ -4566,8 +4512,7 @@ bcemul_or:
 	lw	v1, FRAME_ZERO(t1)
 	or	v0, v0, v1
 	sw	v0, FRAME_ZERO(t2)
-	move	v0, zero
-	j	ra
+	b	bcemul_done
 
 bcemul_xor:
 	srl	t0, a0, 21-2		# rs
@@ -4583,8 +4528,7 @@ bcemul_xor:
 	lw	v1, FRAME_ZERO(t1)
 	xor	v0, v0, v1
 	sw	v0, FRAME_ZERO(t2)
-	move	v0, zero
-	j	ra
+	b	bcemul_done
 
 bcemul_nor:
 	srl	t0, a0, 21-2		# rs
@@ -4600,8 +4544,7 @@ bcemul_nor:
 	lw	v1, FRAME_ZERO(t1)
 	nor	v0, v0, v1
 	sw	v0, FRAME_ZERO(t2)
-	move	v0, zero
-	j	ra
+	b	bcemul_done
 
 bcemul_slt:
 	srl	t0, a0, 21-2		# rs
@@ -4617,8 +4560,7 @@ bcemul_slt:
 	lw	v1, FRAME_ZERO(t1)
 	slt	v0, v0, v1
 	sw	v0, FRAME_ZERO(t2)
-	move	v0, zero
-	j	ra
+	b	bcemul_done
 
 bcemul_sltu:
 	srl	t0, a0, 21-2		# rs
@@ -4634,14 +4576,80 @@ bcemul_sltu:
 	lw	v1, FRAME_ZERO(t1)
 	sltu	v0, v0, v1
 	sw	v0, FRAME_ZERO(t2)
-	move	v0, zero
+#	b	bcemul_done		# fall through to bcemul_done
+
+bcemul_done:
+/*
+ * Succeeded to emulate instruction with no error
+ * so compute the next PC.
+ */
+	subu	sp, sp, CALLFRAME_SIZ
+	sw	ra, CALLFRAME_RA(sp)
+	sw	a1, CALLFRAME_SIZ + 4(sp)
+
+	/* Fetch previous branch instruction */
+	lw	a0, FRAME_EPC(a1)
+	jal	_C_LABEL(fuiword)
+
+	lw	a1, CALLFRAME_SIZ + 4(sp)
+
+	/* Calculate branch destination */
+	sll	t0, v0, 16
+	sra	t0, t0, 16-2
+	lw	t1, FRAME_EPC(a1)
+	addiu	t0, t0, 4
+	addu	t1, t1, t0
+	sw	t1, FRAME_EPC(a1)
+
+	lw	ra, CALLFRAME_RA(sp)
+	addu	sp, sp, CALLFRAME_SIZ
 	j	ra
 
-bcemul_ill:
-
-	move	a2, a0				# code = instruction
-	li	v0, SIGILL
-	j	ra
 END(bcemul_delay_slot)
 
+#endif
+
+/*
+ * Send SIGILL, SIGFPE.
+ * Args are same as MachFPInterrupt.
+ */
+LEAF(fpemul_sigill)
+#ifdef SOFTFLOAT
+XLEAF(bcemul_sigill)
+#endif
+	li	t0, 0xFFFFFF00
+	and	a2, a2, t0
+	ori	a2, a2, T_RES_INST << MIPS_CR_EXC_CODE_SHIFT
+	sw	a2, FRAME_CAUSE(a1)
+
+	move	a2, a0				# code = instruction
+	lw	a0, _C_LABEL(curproc)		# get current process
+	li	a1, SIGILL
+	j	_C_LABEL(trapsignal)
+END(fpemul_sigill)
+
+LEAF(fpemul_sigfpe)
+	li	t0, 0xFFFFFF00
+	and	a2, a2, t0
+	ori	a2, a2, T_FPE << MIPS_CR_EXC_CODE_SHIFT
+	sw	a2, FRAME_CAUSE(a1)
+
+	move	a2, a0				# code = instruction
+	lw	a0, _C_LABEL(curproc)		# get current process
+	li	a1, SIGFPE
+	j	_C_LABEL(trapsignal)
+END(fpemul_sigfpe)
+
+#ifdef SOFTFLOAT
+LEAF(bcemul_sigfpe)
+	li	t0, 0xFFFFFF00
+	and	a2, a2, t0
+	ori	a2, a2, T_OVFLOW << MIPS_CR_EXC_CODE_SHIFT
+	sw	a2, FRAME_CAUSE(a1)
+
+	move	a2, a0				# code = instruction
+	lw	a0, _C_LABEL(curproc)		# get current process
+	li	a1, SIGFPE
+	j	_C_LABEL(trapsignal)
+END(bcemul_sigfpe)
 #endif

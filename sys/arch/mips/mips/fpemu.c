@@ -1,4 +1,4 @@
-/*	$NetBSD: fpemu.c,v 1.2 1999/11/22 02:11:09 shin Exp $ */
+/*	$NetBSD: fpemu.c,v 1.3 1999/12/22 04:54:16 jun Exp $ */
 
 /*
  * Copyright (c) 1999 Shuichiro URATA.  All rights reserved.
@@ -26,415 +26,551 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifdef SOFTFLOAT
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/device.h>
 #include <sys/proc.h>
-#include <sys/kernel.h>
-#include <sys/signalvar.h>
-#include <sys/syscall.h>
 #include <sys/user.h>
-#include <sys/buf.h>
-#include <sys/reboot.h>
-#ifdef KTRACE
-#include <sys/ktrace.h>
-#endif
 
 #include <mips/locore.h>
 #include <mips/mips_opcode.h>
 
 #include <machine/cpu.h>
-#include <mips/trap.h>
-#include <machine/psl.h>
 #include <mips/reg.h>
 #include <mips/regnum.h>			/* symbolic register indices */
+#include <mips/trap.h>
+
+static __inline void	send_sigsegv __P((u_int32_t vaddr, u_int32_t exccode,
+					struct frame *frame, u_int32_t cause));
+static __inline void	update_pc __P((struct frame *frame, u_int32_t cause));
+
+void	MachEmulateLWC1 __P((u_int32_t inst, struct frame *frame,
+				u_int32_t cause));
+void	MachEmulateLDC1 __P((u_int32_t inst, struct frame *frame,
+				u_int32_t cause));
+void	MachEmulateSWC1 __P((u_int32_t inst, struct frame *frame,
+				u_int32_t cause));
+void	MachEmulateSDC1 __P((u_int32_t inst, struct frame *frame,
+				u_int32_t cause));
+void	bcemul_lb __P((u_int32_t inst, struct frame *frame, u_int32_t cause));
+void	bcemul_lbu __P((u_int32_t inst, struct frame *frame, u_int32_t cause));
+void	bcemul_lh __P((u_int32_t inst, struct frame *frame, u_int32_t cause));
+void	bcemul_lhu __P((u_int32_t inst, struct frame *frame, u_int32_t cause));
+void	bcemul_lw __P((u_int32_t inst, struct frame *frame, u_int32_t cause));
+void	bcemul_lwl __P((u_int32_t inst, struct frame *frame, u_int32_t cause));
+void	bcemul_lwr __P((u_int32_t inst, struct frame *frame, u_int32_t cause));
+void	bcemul_sb __P((u_int32_t inst, struct frame *frame, u_int32_t cause));
+void	bcemul_sh __P((u_int32_t inst, struct frame *frame, u_int32_t cause));
+void	bcemul_sw __P((u_int32_t inst, struct frame *frame, u_int32_t cause));
+void	bcemul_swl __P((u_int32_t inst, struct frame *frame, u_int32_t cause));
+void	bcemul_swr __P((u_int32_t inst, struct frame *frame, u_int32_t cause));
+
 extern struct proc *fpcurproc;
+extern vaddr_t MachEmulateBranch __P((struct frame *, vaddr_t, unsigned, int));
 
-int	MachEmulateLWC1 __P((unsigned inst, mips_reg_t *frame));
-int	MachEmulateLDC1 __P((unsigned inst, mips_reg_t *frame));
-int	MachEmulateSWC1 __P((unsigned inst, mips_reg_t *frame));
-int	MachEmulateSDC1 __P((unsigned inst, mips_reg_t *frame));
-int	bcemul_lb __P((unsigned inst, mips_reg_t *frame));
-int	bcemul_lbu __P((unsigned inst, mips_reg_t *frame));
-int	bcemul_lh __P((unsigned inst, mips_reg_t *frame));
-int	bcemul_lhu __P((unsigned inst, mips_reg_t *frame));
-int	bcemul_lw __P((unsigned inst, mips_reg_t *frame));
-int	bcemul_lwl __P((unsigned inst, mips_reg_t *frame));
-int	bcemul_lwr __P((unsigned inst, mips_reg_t *frame));
-int	bcemul_sb __P((unsigned inst, mips_reg_t *frame));
-int	bcemul_sh __P((unsigned inst, mips_reg_t *frame));
-int	bcemul_sw __P((unsigned inst, mips_reg_t *frame));
-int	bcemul_swl __P((unsigned inst, mips_reg_t *frame));
-int	bcemul_swr __P((unsigned inst, mips_reg_t *frame));
-
-int
-MachEmulateLWC1(inst, frame)
-	unsigned inst;
-	mips_reg_t *frame;
+static __inline void
+send_sigsegv(vaddr, exccode, frame, cause)
+	u_int32_t vaddr;
+	u_int32_t exccode;
+	struct frame *frame;
+	u_int32_t cause;
 {
-	unsigned int	vaddr, x;
-	short		offset;
+	cause = (cause & 0xFFFFFF00) | (exccode << MIPS_CR_EXC_CODE_SHIFT);
 
-	offset = inst & 0xFFFF;
-
-	vaddr = frame[(inst>>21)&0x1F] + offset;
-
-	/* segment and alignment check */
-	if (vaddr & 0x80000003)
-		return SIGSEGV;
-
-	x = fuword((void *)vaddr);
-	fpcurproc->p_addr->u_pcb.pcb_fpregs.r_regs[(inst>>16)&0x1F] = x;
-
-	return 0;
+	frame->f_regs[CAUSE] = cause;
+	frame->f_regs[BADVADDR] = vaddr;
+	trapsignal(curproc, SIGSEGV, vaddr);
 }
 
-int
-MachEmulateLDC1(inst, frame)
-	unsigned inst;
-	mips_reg_t *frame;
+static __inline void
+update_pc(frame, cause)
+	struct frame *frame;
+	u_int32_t cause;
 {
-	unsigned int	vaddr, x;
-	short		offset;
-
-	offset = inst & 0xFFFF;
-
-	vaddr = frame[(inst>>21)&0x1F] + offset;
-
-	/* segment and alignment check */
-	if (vaddr & 0x80000007)
-		return SIGSEGV;
-
-	x = fuword((void *)vaddr);
-	fpcurproc->p_addr->u_pcb.pcb_fpregs.r_regs[(inst>>16)&0x1F] = x;
-	x = fuword((void *)(vaddr+4));
-	fpcurproc->p_addr->u_pcb.pcb_fpregs.r_regs[((inst>>16)&0x1F)+1] = x;
-
-	return 0;
+	if (cause & MIPS_CR_BR_DELAY)
+		frame->f_regs[PC] = MachEmulateBranch(frame, frame->f_regs[PC],
+			fpcurproc->p_addr->u_pcb.pcb_fpregs.r_regs[FSR], 0);
+	else
+		frame->f_regs[PC] += 4;
 }
 
-int
-MachEmulateSWC1(inst, frame)
-	unsigned inst;
-	mips_reg_t *frame;
+void
+MachEmulateLWC1(inst, frame, cause)
+	u_int32_t inst;
+	struct frame *frame;
+	u_int32_t cause;
 {
-	unsigned int	vaddr, x;
-	short		offset;
+	u_int32_t	vaddr;
+	int16_t		offset;
+	void		*t;
 
 	offset = inst & 0xFFFF;
-
-	vaddr = frame[(inst>>21)&0x1F] + offset;
+	vaddr = frame->f_regs[(inst>>21)&0x1F] + offset;
 
 	/* segment and alignment check */
-	if (vaddr & 0x80000003)
-		return SIGSEGV;
+	if (vaddr & 0x80000003) {
+		send_sigsegv(vaddr, T_ADDR_ERR_LD, frame, cause);
+		return;
+	}
 
-	x = fpcurproc->p_addr->u_pcb.pcb_fpregs.r_regs[(inst>>16)&0x1F];
-	suword((void *)vaddr, x);
+	t = &(fpcurproc->p_addr->u_pcb.pcb_fpregs.r_regs[(inst>>16)&0x1F]);
 
-	return 0;
+	if (copyin((void *)vaddr, t, 4) != 0) {
+		send_sigsegv(vaddr, T_TLB_LD_MISS, frame, cause);
+		return;
+	}
+
+	update_pc(frame, cause);
 }
 
-int
-MachEmulateSDC1(inst, frame)
-	unsigned inst;
-	mips_reg_t *frame;
+void
+MachEmulateLDC1(inst, frame, cause)
+	u_int32_t inst;
+	struct frame *frame;
+	u_int32_t cause;
 {
-	unsigned int	vaddr, x;
-	short		offset;
+	u_int32_t	vaddr;
+	int16_t		offset;
+	void		*t;
 
 	offset = inst & 0xFFFF;
-
-	vaddr = frame[(inst>>21)&0x1F] + offset;
+	vaddr = frame->f_regs[(inst>>21)&0x1F] + offset;
 
 	/* segment and alignment check */
-	if (vaddr & 0x80000007)
-		return SIGSEGV;
+	if (vaddr & 0x80000007) {
+		send_sigsegv(vaddr, T_ADDR_ERR_LD, frame, cause);
+		return;
+	}
 
-	x = fpcurproc->p_addr->u_pcb.pcb_fpregs.r_regs[(inst>>16)&0x1F];
-	suword((void *)vaddr, x);
-	x = fpcurproc->p_addr->u_pcb.pcb_fpregs.r_regs[((inst>>16)&0x1F)+1];
-	suword((void *)(vaddr+4), x);
+	t = &(fpcurproc->p_addr->u_pcb.pcb_fpregs.r_regs[(inst>>16)&0x1E]);
 
-	return 0;
+	if (copyin((void *)vaddr, t, 8) != 0) {
+		send_sigsegv(vaddr, T_TLB_LD_MISS, frame, cause);
+		return;
+	}
+
+	update_pc(frame, cause);
 }
 
-int
-bcemul_lb(inst, frame)
-	unsigned inst;
-	mips_reg_t *frame;
+void
+MachEmulateSWC1(inst, frame, cause)
+	u_int32_t inst;
+	struct frame *frame;
+	u_int32_t cause;
 {
-	unsigned int	vaddr, x;
-	short		offset;
+	u_int32_t	vaddr;
+	int16_t		offset;
+	void		*t;
 
 	offset = inst & 0xFFFF;
-	vaddr = frame[(inst>>21)&0x1F] + offset;
+	vaddr = frame->f_regs[(inst>>21)&0x1F] + offset;
+
+	/* segment and alignment check */
+	if (vaddr & 0x80000003) {
+		send_sigsegv(vaddr, T_ADDR_ERR_ST, frame, cause);
+		return;
+	}
+
+	t = &(fpcurproc->p_addr->u_pcb.pcb_fpregs.r_regs[(inst>>16)&0x1F]);
+
+	if (copyout(t, (void *)vaddr, 4) != 0) {
+		send_sigsegv(vaddr, T_TLB_ST_MISS, frame, cause);
+		return;
+	}
+
+	update_pc(frame, cause);
+}
+
+void
+MachEmulateSDC1(inst, frame, cause)
+	u_int32_t inst;
+	struct frame *frame;
+	u_int32_t cause;
+{
+	u_int32_t	vaddr;
+	int16_t		offset;
+	void		*t;
+
+	offset = inst & 0xFFFF;
+	vaddr = frame->f_regs[(inst>>21)&0x1F] + offset;
+
+	/* segment and alignment check */
+	if (vaddr & 0x80000007) {
+		send_sigsegv(vaddr, T_ADDR_ERR_ST, frame, cause);
+		return;
+	}
+
+	t = &(fpcurproc->p_addr->u_pcb.pcb_fpregs.r_regs[(inst>>16)&0x1E]);
+
+	if (copyout(t, (void *)vaddr, 8) != 0) {
+		send_sigsegv(vaddr, T_TLB_ST_MISS, frame, cause);
+		return;
+	}
+
+	update_pc(frame, cause);
+}
+
+void
+bcemul_lb(inst, frame, cause)
+	u_int32_t inst;
+	struct frame *frame;
+	u_int32_t cause;
+{
+	u_int32_t	vaddr;
+	int16_t		offset;
+	int8_t		x;
+
+	offset = inst & 0xFFFF;
+	vaddr = frame->f_regs[(inst>>21)&0x1F] + offset;
 
 	/* segment check */
-	if (vaddr & 0x80000000)
-		return SIGSEGV;
+	if (vaddr & 0x80000000) {
+		send_sigsegv(vaddr, T_ADDR_ERR_LD, frame, cause);
+		return;
+	}
 
-	x = fubyte((void *)vaddr);
-	if (x & 0x80)
-		x |= 0xFFFFFF00;
-	frame[(inst>>16)&0x1F] = x;
+	if (copyin((void *)vaddr, &x, 1) != 0) {
+		send_sigsegv(vaddr, T_TLB_LD_MISS, frame, cause);
+		return;
+	}
 
-	return 0;
+	frame->f_regs[(inst>>16)&0x1F] = (int32_t)x;
+
+	update_pc(frame, cause);
 }
 
-int
-bcemul_lbu(inst, frame)
-	unsigned inst;
-	mips_reg_t *frame;
+void
+bcemul_lbu(inst, frame, cause)
+	u_int32_t inst;
+	struct frame *frame;
+	u_int32_t cause;
 {
-	unsigned int	vaddr;
-	short		offset;
+	u_int32_t	vaddr;
+	int16_t		offset;
+	u_int8_t	x;
 
 	offset = inst & 0xFFFF;
-	vaddr = frame[(inst>>21)&0x1F] + offset;
+	vaddr = frame->f_regs[(inst>>21)&0x1F] + offset;
 
 	/* segment check */
-	if (vaddr & 0x80000000)
-		return SIGSEGV;
+	if (vaddr & 0x80000000) {
+		send_sigsegv(vaddr, T_ADDR_ERR_LD, frame, cause);
+		return;
+	}
 
-	frame[(inst>>16)&0x1F] = fubyte((void *)vaddr);
+	if (copyin((void *)vaddr, &x, 1) != 0) {
+		send_sigsegv(vaddr, T_TLB_LD_MISS, frame, cause);
+		return;
+	}
 
-	return 0;
+	frame->f_regs[(inst>>16)&0x1F] = (u_int32_t)x;
+
+	update_pc(frame, cause);
 }
 
-int
-bcemul_lh(inst, frame)
-	unsigned inst;
-	mips_reg_t *frame;
+void
+bcemul_lh(inst, frame, cause)
+	u_int32_t inst;
+	struct frame *frame;
+	u_int32_t cause;
 {
-	unsigned int	vaddr, x;
-	short		offset;
+	u_int32_t	vaddr;
+	int16_t		offset;
+	int16_t		x;
 
 	offset = inst & 0xFFFF;
-	vaddr = frame[(inst>>21)&0x1F] + offset;
+	vaddr = frame->f_regs[(inst>>21)&0x1F] + offset;
 
 	/* segment and alignment check */
-	if (vaddr & 0x80000001)
-		return SIGSEGV;
+	if (vaddr & 0x80000001) {
+		send_sigsegv(vaddr, T_ADDR_ERR_LD, frame, cause);
+		return;
+	}
 
-	x = fusword((void *)vaddr);
-	if (x & 0x8000)
-		x |= 0xFFFF0000;
-	frame[(inst>>16)&0x1F] = x;
+	if (copyin((void *)vaddr, &x, 2) != 0) {
+		send_sigsegv(vaddr, T_TLB_LD_MISS, frame, cause);
+		return;
+	}
 
-	return 0;
+	frame->f_regs[(inst>>16)&0x1F] = (int32_t)x;
+
+	update_pc(frame, cause);
 }
 
-int
-bcemul_lhu(inst, frame)
-	unsigned inst;
-	mips_reg_t *frame;
+void
+bcemul_lhu(inst, frame, cause)
+	u_int32_t inst;
+	struct frame *frame;
+	u_int32_t cause;
 {
-	unsigned int	vaddr;
-	short		offset;
+	u_int32_t	vaddr;
+	int16_t		offset;
+	u_int16_t	x;
 
 	offset = inst & 0xFFFF;
-	vaddr = frame[(inst>>21)&0x1F] + offset;
+	vaddr = frame->f_regs[(inst>>21)&0x1F] + offset;
 
 	/* segment and alignment check */
-	if (vaddr & 0x80000001)
-		return SIGSEGV;
+	if (vaddr & 0x80000001) {
+		send_sigsegv(vaddr, T_ADDR_ERR_LD, frame, cause);
+		return;
+	}
 
-	frame[(inst>>16)&0x1F] = fusword((void *)vaddr);
+	if (copyin((void *)vaddr, &x, 2) != 0) {
+		send_sigsegv(vaddr, T_TLB_LD_MISS, frame, cause);
+		return;
+	}
 
-	return 0;
+	frame->f_regs[(inst>>16)&0x1F] = (u_int32_t)x;
+
+	update_pc(frame, cause);
 }
 
-int
-bcemul_lw(inst, frame)
-	unsigned inst;
-	mips_reg_t *frame;
+void
+bcemul_lw(inst, frame, cause)
+	u_int32_t inst;
+	struct frame *frame;
+	u_int32_t cause;
 {
-	unsigned int	vaddr;
-	short		offset;
+	u_int32_t	vaddr;
+	int16_t		offset;
 
 	offset = inst & 0xFFFF;
-	vaddr = frame[(inst>>21)&0x1F] + offset;
+	vaddr = frame->f_regs[(inst>>21)&0x1F] + offset;
 
 	/* segment and alignment check */
-	if (vaddr & 0x80000003)
-		return SIGSEGV;
+	if (vaddr & 0x80000003) {
+		send_sigsegv(vaddr, T_ADDR_ERR_LD, frame, cause);
+		return;
+	}
 
-	frame[(inst>>16)&0x1F] = fuword((void *)vaddr);
+	if (copyin((void *)vaddr, &(frame->f_regs[(inst>>16)&0x1F]), 4) != 0) {
+		send_sigsegv(vaddr, T_TLB_LD_MISS, frame, cause);
+		return;
+	}
 
-	return 0;
+	update_pc(frame, cause);
 }
 
-int
-bcemul_lwl(inst, frame)
-	unsigned inst;
-	mips_reg_t *frame;
+void
+bcemul_lwl(inst, frame, cause)
+	u_int32_t inst;
+	struct frame *frame;
+	u_int32_t cause;
 {
-	unsigned int	vaddr, a, x, shift;
-	short		offset;
+	u_int32_t	vaddr, a, x, shift;
+	int16_t		offset;
 
 	offset = inst & 0xFFFF;
-	vaddr = frame[(inst>>21)&0x1F] + offset;
+	vaddr = frame->f_regs[(inst>>21)&0x1F] + offset;
 
 	/* segment check */
-	if (vaddr & 0x80000000)
-		return SIGSEGV;
+	if (vaddr & 0x80000000) {
+		send_sigsegv(vaddr, T_ADDR_ERR_LD, frame, cause);
+		return;
+	}
 
-	a = fuword((void *)(vaddr & ~0x3));
-	x = frame[(inst>>16)&0x1F];
+	if (copyin((void *)(vaddr & ~0x3), &a, 4) != 0) {
+		send_sigsegv(vaddr, T_TLB_LD_MISS, frame, cause);
+		return;
+	}
+
+	x = frame->f_regs[(inst>>16)&0x1F];
 
 	shift = (3 - (vaddr & 0x00000003)) * 8;
 	a <<= shift;
 	x &= ~(0xFFFFFFFFUL << shift);
 	x |= a;
 
-	frame[(inst>>16)&0x1F] = x;
+	frame->f_regs[(inst>>16)&0x1F] = x;
 
-	return 0;
+	update_pc(frame, cause);
 }
 
-int
-bcemul_lwr(inst, frame)
-	unsigned inst;
-	mips_reg_t *frame;
+void
+bcemul_lwr(inst, frame, cause)
+	u_int32_t inst;
+	struct frame *frame;
+	u_int32_t cause;
 {
-	unsigned int	vaddr, a, x, shift;
-	short		offset;
+	u_int32_t	vaddr, a, x, shift;
+	int16_t		offset;
 
 	offset = inst & 0xFFFF;
-	vaddr = frame[(inst>>21)&0x1F] + offset;
+	vaddr = frame->f_regs[(inst>>21)&0x1F] + offset;
 
 	/* segment check */
-	if (vaddr & 0x80000000)
-		return SIGSEGV;
+	if (vaddr & 0x80000000) {
+		send_sigsegv(vaddr, T_ADDR_ERR_LD, frame, cause);
+		return;
+	}
 
-	a = fuword((void *)(vaddr & ~0x3));
-	x = frame[(inst>>16)&0x1F];
+	if (copyin((void *)(vaddr & ~0x3), &a, 4) != 0) {
+		send_sigsegv(vaddr, T_TLB_LD_MISS, frame, cause);
+		return;
+	}
+
+	x = frame->f_regs[(inst>>16)&0x1F];
 
 	shift = (vaddr & 0x00000003) * 8;
 	a >>= shift;
 	x &= ~(0xFFFFFFFFUL >> shift);
 	x |= a;
 
-	frame[(inst>>16)&0x1F] = x;
+	frame->f_regs[(inst>>16)&0x1F] = x;
 
-	return 0;
+	update_pc(frame, cause);
 }
 
-int
-bcemul_sb(inst, frame)
-	unsigned inst;
-	mips_reg_t *frame;
+void
+bcemul_sb(inst, frame, cause)
+	u_int32_t inst;
+	struct frame *frame;
+	u_int32_t cause;
 {
-	unsigned int	vaddr;
-	short		offset;
+	u_int32_t	vaddr;
+	int16_t		offset;
 
 	offset = inst & 0xFFFF;
-	vaddr = frame[(inst>>21)&0x1F] + offset;
+	vaddr = frame->f_regs[(inst>>21)&0x1F] + offset;
 
 	/* segment check */
-	if (vaddr & 0x80000000)
-		return SIGSEGV;
+	if (vaddr & 0x80000000) {
+		send_sigsegv(vaddr, T_ADDR_ERR_ST, frame, cause);
+		return;
+	}
 
-	subyte((void *)vaddr, frame[(inst>>16)&0x1F]);
+	if (subyte((void *)vaddr, frame->f_regs[(inst>>16)&0x1F]) < 0) {
+		send_sigsegv(vaddr, T_TLB_ST_MISS, frame, cause);
+		return;
+	}
 
-	return 0;
+	update_pc(frame, cause);
 }
 
-int
-bcemul_sh(inst, frame)
-	unsigned inst;
-	mips_reg_t *frame;
+void
+bcemul_sh(inst, frame, cause)
+	u_int32_t inst;
+	struct frame *frame;
+	u_int32_t cause;
 {
-	unsigned int	vaddr;
-	short		offset;
+	u_int32_t	vaddr;
+	int16_t		offset;
 
 	offset = inst & 0xFFFF;
-	vaddr = frame[(inst>>21)&0x1F] + offset;
+	vaddr = frame->f_regs[(inst>>21)&0x1F] + offset;
 
-	/* segment check */
-	if (vaddr & 0x80000001)
-		return SIGSEGV;
+	/* segment and alignment check */
+	if (vaddr & 0x80000001) {
+		send_sigsegv(vaddr, T_ADDR_ERR_ST, frame, cause);
+		return;
+	}
 
-	susword((void *)vaddr, frame[(inst>>16)&0x1F]);
+	if (susword((void *)vaddr, frame->f_regs[(inst>>16)&0x1F]) < 0) {
+		send_sigsegv(vaddr, T_TLB_ST_MISS, frame, cause);
+		return;
+	}
 
-	return 0;
+	update_pc(frame, cause);
 }
 
-int
-bcemul_sw(inst, frame)
-	unsigned inst;
-	mips_reg_t *frame;
+void
+bcemul_sw(inst, frame, cause)
+	u_int32_t inst;
+	struct frame *frame;
+	u_int32_t cause;
 {
-	unsigned int	vaddr;
-	short		offset;
+	u_int32_t	vaddr;
+	int16_t		offset;
 
 	offset = inst & 0xFFFF;
-	vaddr = frame[(inst>>21)&0x1F] + offset;
+	vaddr = frame->f_regs[(inst>>21)&0x1F] + offset;
 
-	/* segment check */
-	if (vaddr & 0x80000003)
-		return SIGSEGV;
+	/* segment and alignment check */
+	if (vaddr & 0x80000003) {
+		send_sigsegv(vaddr, T_ADDR_ERR_ST, frame, cause);
+		return;
+	}
 
-	suword((void *)vaddr, frame[(inst>>16)&0x1F]);
+	if (suword((void *)vaddr, frame->f_regs[(inst>>16)&0x1F]) < 0) {
+		send_sigsegv(vaddr, T_TLB_ST_MISS, frame, cause);
+		return;
+	}
 
-	return 0;
+	update_pc(frame, cause);
 }
 
-int
-bcemul_swl(inst, frame)
-	unsigned inst;
-	mips_reg_t *frame;
+void
+bcemul_swl(inst, frame, cause)
+	u_int32_t inst;
+	struct frame *frame;
+	u_int32_t cause;
 {
-	unsigned int	vaddr, a, x, shift;
-	short		offset;
+	u_int32_t	vaddr, a, x, shift;
+	int16_t		offset;
 
 	offset = inst & 0xFFFF;
-	vaddr = frame[(inst>>21)&0x1F] + offset;
+	vaddr = frame->f_regs[(inst>>21)&0x1F] + offset;
 
 	/* segment check */
-	if (vaddr & 0x80000000)
-		return SIGSEGV;
+	if (vaddr & 0x80000000) {
+		send_sigsegv(vaddr, T_ADDR_ERR_ST, frame, cause);
+		return;
+	}
 
-	a = fuword((void *)(vaddr & ~0x3));
-	x = frame[(inst>>16)&0x1F];
+	if (copyin((void *)(vaddr & ~0x3), &a, 4) != 0) {
+		send_sigsegv(vaddr, T_TLB_ST_MISS, frame, cause);
+		return;
+	}
+
+	x = frame->f_regs[(inst>>16)&0x1F];
 
 	shift = (3 - (vaddr & 0x00000003)) * 8;
 	x >>= shift;
 	a &= ~(0xFFFFFFFFUL >> shift);
 	a |= x;
 
-	suword((void *)vaddr, a);
+	if (suword((void *)vaddr, a) < 0) {
+		send_sigsegv(vaddr, T_TLB_ST_MISS, frame, cause);
+		return;
+	}
 
-	return 0;
+	update_pc(frame, cause);
 }
 
-int
-bcemul_swr(inst, frame)
-	unsigned inst;
-	mips_reg_t *frame;
+void
+bcemul_swr(inst, frame, cause)
+	u_int32_t inst;
+	struct frame *frame;
+	u_int32_t cause;
 {
-	unsigned int	vaddr, a, x, shift;
-	short		offset;
+	u_int32_t	vaddr, a, x, shift;
+	int16_t		offset;
 
 	offset = inst & 0xFFFF;
-	vaddr = frame[(inst>>21)&0x1F] + offset;
+	vaddr = frame->f_regs[(inst>>21)&0x1F] + offset;
 
 	/* segment check */
-	if (vaddr & 0x80000000)
-		return SIGSEGV;
+	if (vaddr & 0x80000000) {
+		send_sigsegv(vaddr, T_ADDR_ERR_ST, frame, cause);
+		return;
+	}
 
-	a = fuword((void *)(vaddr & ~0x3));
-	x = frame[(inst>>16)&0x1F];
+	if (copyin((void *)(vaddr & ~0x3), &a, 4) != 0) {
+		send_sigsegv(vaddr, T_TLB_ST_MISS, frame, cause);
+		return;
+	}
+
+	x = frame->f_regs[(inst>>16)&0x1F];
 
 	shift = (vaddr & 0x00000003) * 8;
 	x <<= shift;
 	a &= ~(0xFFFFFFFFUL << shift);
 	a |= x;
 
-	suword((void *)vaddr, a);
+	if (suword((void *)vaddr, a) < 0) {
+		send_sigsegv(vaddr, T_TLB_ST_MISS, frame, cause);
+		return;
+	}
 
-	return 0;
+	update_pc(frame, cause);
 }
-#endif /* SOFTFLOAT */
