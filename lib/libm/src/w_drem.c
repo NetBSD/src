@@ -7,14 +7,13 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: w_drem.c,v 1.3 1999/07/02 15:37:44 simonb Exp $");
+__RCSID("$NetBSD: w_drem.c,v 1.4 2004/06/25 15:57:38 drochner Exp $");
 #endif
 
 #include <math.h>
 
 double
-drem(x, y)
-	double x, y;
+drem(double x, double y)
 {
 	return remainder(x, y);
 }
