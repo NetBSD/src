@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.4.6.2 2002/06/21 21:26:28 thorpej Exp $	*/
+/*	$NetBSD: proc.h,v 1.4.6.3 2002/06/22 03:44:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -42,6 +42,8 @@
 /*
  * Machine-dependent part of the proc structure for sh3.
  */
+
+#include <machine/param.h>
 
 /* Kernel stack PTE */
 struct md_upte {
