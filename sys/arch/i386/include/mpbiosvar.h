@@ -1,4 +1,4 @@
-/* $NetBSD: mpbiosvar.h,v 1.2 2002/10/01 12:57:07 fvdl Exp $ */
+/* $NetBSD: mpbiosvar.h,v 1.3 2002/10/06 20:39:33 fvdl Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -69,12 +69,14 @@ struct mp_intr_map
 	int type;		/* from mp spec intr record */
  	int flags;		/* from mp spec intr record */
 	u_int32_t redir;
+	int cpu_id;
 };
 
 #if defined(_KERNEL)
 extern int mp_verbose;
 extern struct mp_bus *mp_busses;
 extern struct mp_intr_map *mp_intrs;
+extern int mp_nintr;
 extern int mp_isa_bus, mp_eisa_bus;
 
 void mpbios_scan __P((struct device *));
