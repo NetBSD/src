@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.51 1998/12/12 16:36:24 mycroft Exp $	*/
+/*	$NetBSD: elink3.c,v 1.52 1999/02/17 03:41:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1725,7 +1725,7 @@ epioctl(ifp, cmd, data)
 			if ((error = epenable(sc)) != 0)
 				break;
 			epinit(sc);
-		} else if (sc->enabled) {
+		} else if ((ifp->if_flags & IFF_UP) != 0) {
 			/*
 			 * deal with flags changes:
 			 * IFF_MULTICAST, IFF_PROMISC.
