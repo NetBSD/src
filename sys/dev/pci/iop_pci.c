@@ -1,4 +1,4 @@
-/*	$NetBSD: iop_pci.c,v 1.13 2002/11/15 17:51:33 itojun Exp $	*/
+/*	$NetBSD: iop_pci.c,v 1.14 2003/12/09 19:43:53 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iop_pci.c,v 1.13 2002/11/15 17:51:33 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iop_pci.c,v 1.14 2003/12/09 19:43:53 ad Exp $");
 
 #include "opt_i2o.h"
 
@@ -76,6 +76,8 @@ static int
 iop_pci_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa;
+	u_int product, vendor;
+	pcireg_t reg;
 
 	pa = aux;
 
@@ -90,12 +92,23 @@ iop_pci_match(struct device *parent, struct cfdata *match, void *aux)
 		return (1);
 
 	/*
-	 * Match DPT/Adaptec boards that don't conform exactly to the spec.
+	 * Match boards that don't conform exactly to the spec.
 	 */
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_DPT && 
-	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_DPT_RAID_I2O ||
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_DPT_RAID_2005S))
+	vendor = PCI_VENDOR(pa->pa_id);
+	product = PCI_PRODUCT(pa->pa_id);
+
+	if (vendor == PCI_VENDOR_DPT && 
+	    (product == PCI_PRODUCT_DPT_RAID_I2O ||
+	    product == PCI_PRODUCT_DPT_RAID_2005S))
 		return (1);
+
+	if (vendor == PCI_VENDOR_INTEL &&
+	    (product == PCI_PRODUCT_INTEL_80960RM_2 ||
+	    product == PCI_PRODUCT_INTEL_80960_RP)) {
+		reg = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_SUBSYS_ID_REG);
+		if (PCI_VENDOR(reg) == PCI_VENDOR_PROMISE)
+			return (1);
+	}
 
 	return (0);
 }
@@ -140,7 +153,8 @@ iop_pci_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* Map the 2nd register window. */
-	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_DPT_RAID_2005S) {
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_DPT &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_DPT_RAID_2005S) {
 		i += 4;	/* next BAR */
 		if (i == PCI_MAPREG_END) {
 			printf("can't find mapping\n");
