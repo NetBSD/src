@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.34 2000/02/07 20:16:59 thorpej Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.35 2000/04/07 08:27:28 chs Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -1443,6 +1443,13 @@ sw_reg_iodone(bp)
 
 		/* pass error upward */
 		vnx->vx_error = vbp->vb_buf.b_error;
+	}
+
+	/*
+	 * disassociate this buffer from the vnode (if any).
+	 */
+	if (vbp->vb_buf.b_vp != NULLVP) {
+		brelvp(&vbp->vb_buf);
 	}
 
 	/*
