@@ -1,4 +1,4 @@
-/*	$NetBSD: netdb.h,v 1.35 2004/04/14 04:37:06 itojun Exp $	*/
+/*	$NetBSD: netdb.h,v 1.36 2004/04/14 04:37:59 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -165,7 +165,7 @@ struct	protoent {
 #if (_POSIX_C_SOURCE - 0) >= 200112L || (_XOPEN_SOURCE - 0) >= 520 || \
     defined(_NETBSD_SOURCE)
 struct addrinfo {
-	int	ai_flags;	/* AI_PASSIVE, AI_CANONNAME, AI_NUMERICHOST */
+	int	ai_flags;	/* AI_xxx */
 	int	ai_family;	/* PF_xxx */
 	int	ai_socktype;	/* SOCK_xxx */
 	int	ai_protocol;	/* 0 or IPPROTO_xxx for IPv4 and IPv6 */
