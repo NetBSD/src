@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.143 2005/01/25 12:20:32 yamt Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.144 2005/01/26 10:30:58 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.143 2005/01/25 12:20:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.144 2005/01/26 10:30:58 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1514,6 +1514,8 @@ nfs_invaldircache(vp, forcefree)
 	if (vp->v_type != VDIR)
 		panic("nfs: invaldircache: not dir");
 #endif
+
+	np->n_flag &= ~NEOFVALID;
 
 	if (!np->n_dircache)
 		return;

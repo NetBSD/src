@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.217 2005/01/21 14:31:29 yamt Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.218 2005/01/26 10:30:58 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.217 2005/01/21 14:31:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.218 2005/01/26 10:30:58 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_nfs.h"
@@ -2748,8 +2748,10 @@ nfs_readdirrpc(vp, uiop, cred)
 	 * We are now either at the end of the directory or have filled the
 	 * block.
 	 */
-	if (bigenough)
+	if (bigenough) {
 		dnp->n_direofoffset = uiop->uio_offset;
+		dnp->n_flag |= NEOFVALID;
+	}
 nfsmout:
 	return (error);
 }
@@ -2985,8 +2987,10 @@ nfs_readdirplusrpc(vp, uiop, cred)
 	 * We are now either at the end of the directory or have filled the
 	 * block.
 	 */
-	if (bigenough)
+	if (bigenough) {
 		dnp->n_direofoffset = uiop->uio_offset;
+		dnp->n_flag |= NEOFVALID;
+	}
 nfsmout:
 	if (newvp != NULLVP) {
 		if(newvp == vp)
