@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.30 2001/06/15 08:07:03 matt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.31 2001/06/23 03:10:59 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -313,8 +313,7 @@ vmaprange(p, uaddr, len, prot)
 	for (; len > 0; len -= NBPG) {
 		(void) pmap_extract(vm_map_pmap(&p->p_vmspace->vm_map),
 		    faddr, &pa);
-		pmap_enter(vm_map_pmap(phys_map), taddr, pa,
-		    prot, prot|PMAP_WIRED);
+		pmap_kenter_pa(taddr, pa, prot);
 		faddr += NBPG;
 		taddr += NBPG;
 	}
@@ -341,8 +340,7 @@ vunmaprange(kaddr, len)
 
 /*
  * Map a user I/O request into kernel virtual address space.
- * Note: the pages are already locked by uvm_vslock(), so we
- * do not need to pass an access_type to pmap_enter().
+ * Note: these pages have already been locked by uvm_vslock.
  */
 void
 vmapbuf(bp, len)
