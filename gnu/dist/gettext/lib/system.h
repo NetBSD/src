@@ -76,6 +76,7 @@ extern char *strstr PARAMS ((const char *__str, const char *__sub));
 # endif
 #endif
 
+#if 0
 #ifdef __GNUC__
 # ifndef alloca
 #  define alloca __builtin_alloca
@@ -100,6 +101,7 @@ char *alloca ();
 #   endif /* __hpux */
 #  endif
 # endif
+#endif
 #endif
 
 /* Before we define the following symbols we get the <limits.h> file if
