@@ -1,4 +1,4 @@
-.\"	$NetBSD: wmemchr.3,v 1.1 2000/12/22 04:59:41 itojun Exp $
+.\"	$NetBSD: wmemchr.3,v 1.2 2000/12/22 05:21:41 itojun Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -51,6 +51,8 @@
 .Nm wcscmp ,
 .Nm wcscpy ,
 .Nm wcscspn ,
+.Nm wcslcat ,
+.Nm wcslcpy ,
 .Nm wcslen ,
 .Nm wcsncat ,
 .Nm wcsncmp ,
@@ -84,6 +86,10 @@
 .Fn wcscpy "wchar_t *s1" "const wchar_t *s2"
 .Ft size_t
 .Fn wcscspn "const wchar_t *s1" "const wchar_t *s2"
+.Ft size_t
+.Fn wcslcat "wchar_t *s1" "const wchar_t *s2" "size_t n"
+.Ft size_t
+.Fn wcslcpy "wchar_t *s1" "const wchar_t *s2" "size_t n"
 .Ft size_t
 .Fn wcslen "const wchar_t *s"
 .Ft wchar_t *
@@ -125,4 +131,9 @@ For detailed description, refer to documents for singlebyte counterpart, like
 .Xr strspn 3 ,
 .Xr strstr 3
 .Sh STANDARDS
-The functions conform to ISO/IEC 9899:1999(E).
+The functions,
+except
+.Nm wcslcat
+and
+.Nm wcslcpy ,
+conform to ISO/IEC 9899:1999(E).

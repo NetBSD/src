@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.290 2000/12/22 04:59:41 itojun Exp $
+#	$NetBSD: mi,v 1.291 2000/12/22 05:21:40 itojun Exp $
 ./sys			comp-sysutil-root
 ./usr/bin/addr2line	comp-miscutil-bin
 ./usr/bin/ar		comp-util-bin
@@ -2809,6 +2809,8 @@
 ./usr/share/man/cat3/wcscmp.0		comp-c-catman
 ./usr/share/man/cat3/wcscpy.0		comp-c-catman
 ./usr/share/man/cat3/wcscspn.0		comp-c-catman
+./usr/share/man/cat3/wcslcat.0		comp-c-catman
+./usr/share/man/cat3/wcslcpy.0		comp-c-catman
 ./usr/share/man/cat3/wcslen.0		comp-c-catman
 ./usr/share/man/cat3/wcsncat.0		comp-c-catman
 ./usr/share/man/cat3/wcsncmp.0		comp-c-catman
@@ -4610,6 +4612,8 @@
 ./usr/share/man/man3/wcscmp.3		comp-c-man
 ./usr/share/man/man3/wcscpy.3		comp-c-man
 ./usr/share/man/man3/wcscspn.3		comp-c-man
+./usr/share/man/man3/wcslcat.3		comp-c-man
+./usr/share/man/man3/wcslcpy.3		comp-c-man
 ./usr/share/man/man3/wcslen.3		comp-c-man
 ./usr/share/man/man3/wcsncat.3		comp-c-man
 ./usr/share/man/man3/wcsncmp.3		comp-c-man
