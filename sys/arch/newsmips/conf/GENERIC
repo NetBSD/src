@@ -1,9 +1,9 @@
 #
 # NEWS3400 config file
 #
-# 	$NetBSD: GENERIC,v 1.1 1998/02/18 13:48:03 tsubai Exp $
+# 	$NetBSD: GENERIC,v 1.2 1998/03/04 22:14:13 thorpej Exp $
 #
-include		"arch/news/conf/std.news"
+include		"arch/newsmips/conf/std.newsmips"
 
 maxusers	16
 

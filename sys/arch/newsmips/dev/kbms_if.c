@@ -44,7 +44,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <machine/adrsmap.h>
-#include <news/dev/scc.h>
+#include <newsmips/dev/scc.h>
 
 typedef struct kbm_sw {
 	u_char *stat_port;	/* Status port */

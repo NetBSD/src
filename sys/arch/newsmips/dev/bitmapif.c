@@ -43,10 +43,10 @@
 
 #include <machine/framebuf.h>
 
-#include <news/dev/fbreg.h>
-#include <news/dev/vt100.h>
-#include <news/dev/fbdefs.h>
-#include <news/dev/bitmapif.h>
+#include <newsmips/dev/fbreg.h>
+#include <newsmips/dev/vt100.h>
+#include <newsmips/dev/fbdefs.h>
+#include <newsmips/dev/bitmapif.h>
 
 extern int bm_todo;
 extern int tmode;

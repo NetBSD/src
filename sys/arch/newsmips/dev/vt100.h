@@ -42,7 +42,7 @@
  *  vt100 emulator header
  */
 
-#include <news/dev/vt100esc.h>
+#include <newsmips/dev/vt100esc.h>
 
 /*
  *  terminal mode

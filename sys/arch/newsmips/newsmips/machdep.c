@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.6 1998/02/25 23:28:25 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.7 1998/03/04 22:22:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.6 1998/02/25 23:28:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.7 1998/03/04 22:22:37 thorpej Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -89,9 +89,9 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.6 1998/02/25 23:28:25 thorpej Exp $");
 
 #include <machine/adrsmap.h>
 #include <machine/machConst.h>
-#include <news/news/trap.h>
-#include <news/news/clockreg.h>
-#include <news/news/machid.h>
+#include <newsmips/newsmips/trap.h>
+#include <newsmips/newsmips/clockreg.h>
+#include <newsmips/newsmips/machid.h>
 #include <dev/cons.h>
 
 /* the following is used externally (sysctl_hw) */

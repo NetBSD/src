@@ -43,7 +43,7 @@
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <machine/keyboard.h>
-#include <news/dev/kbreg.h>
+#include <newsmips/dev/kbreg.h>
 #include <sys/malloc.h>
 
 #define KM_ASCII 0		/* XXX */

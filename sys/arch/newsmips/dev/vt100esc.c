@@ -48,13 +48,13 @@
 #include <machine/framebuf.h>
 #include <machine/keyboard.h>
 
-#include <news/dev/vt100.h>
-#include <news/dev/bitmapif.h>
-#include <news/dev/fbdefs.h>
-#include <news/dev/kbreg.h>
+#include <newsmips/dev/vt100.h>
+#include <newsmips/dev/bitmapif.h>
+#include <newsmips/dev/fbdefs.h>
+#include <newsmips/dev/kbreg.h>
 
 #if CPU_SINGLE
-#include <news/dev/scc.h>
+#include <newsmips/dev/scc.h>
 #endif
 
 #ifdef IPC_MRX

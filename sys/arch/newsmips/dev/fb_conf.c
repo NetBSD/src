@@ -52,7 +52,7 @@
 #include <sys/cdefs.h>
 #include <sys/types.h>
 #include <machine/framebuf.h>
-#include <news/dev/fbdefs.h>
+#include <newsmips/dev/fbdefs.h>
 
 #define NFBDEV (NNWB253 + NLFBM)
 

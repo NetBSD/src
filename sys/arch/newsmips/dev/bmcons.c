@@ -60,7 +60,7 @@
 #include <machine/autoconf.h>
 #include "fb.h"
 
-#include <news/dev/sccparam.h>
+#include <newsmips/dev/sccparam.h>
 
 #include <dev/cons.h>
 
@@ -864,7 +864,7 @@ cnfont(port)
 
 #ifdef CPU_SINGLE
 #include <machine/framebuf.h>
-#include <news/dev/fbdefs.h>
+#include <newsmips/dev/fbdefs.h>
 
 int lastcount;
 int start_dimmer = 1;

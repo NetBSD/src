@@ -16,10 +16,10 @@
 #include <dev/scsipi/scsiconf.h>
 #include <dev/scsipi/scsi_message.h>
 
-#include <news/dev/scsireg.h>
-#include <news/dev/scsic.h>
-#include <news/dev/dmac_0448.h>
-#include <news/dev/screg_1185.h>
+#include <newsmips/dev/scsireg.h>
+#include <newsmips/dev/scsic.h>
+#include <newsmips/dev/dmac_0448.h>
+#include <newsmips/dev/screg_1185.h>
 
 #include <machine/locore.h>
 #include <machine/adrsmap.h>

@@ -45,7 +45,7 @@
 #ifdef IPC_MRX
 #include <sys/ioctl.h>
 #include <machine/keyboard.h>
-#include <news/dev/kbreg.h>
+#include <newsmips/dev/kbreg.h>
 #else
 #include <sys/ioctl.h>
 #include <sys/param.h>
@@ -53,7 +53,7 @@
 #include <sys/types.h>
 #include <sys/proc.h>
 #include <machine/keyboard.h>
-#include <news/dev/kbreg.h>
+#include <newsmips/dev/kbreg.h>
 #endif
 
 extern int tmode;
@@ -81,7 +81,7 @@ Key_table *key_table_addr = default_table;
 #include <sys/tty.h>
 #include <sys/time.h>
 #include <machine/mouse.h>
-#include <news/dev/scc.h>
+#include <newsmips/dev/scc.h>
 
 extern int bmcnrint();
 extern void rst_dimmer_cnt __P((void));

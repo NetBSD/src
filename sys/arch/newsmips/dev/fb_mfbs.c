@@ -40,8 +40,8 @@
 
 #include <sys/param.h>
 #include <machine/framebuf.h>
-#include <news/dev/fbreg.h>
-#include <news/dev/fbdefs.h>
+#include <newsmips/dev/fbreg.h>
+#include <newsmips/dev/fbdefs.h>
 
 u_short mfbstarttab16[16] =
     {

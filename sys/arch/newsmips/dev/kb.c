@@ -52,10 +52,10 @@
 #include <machine/keyboard.h>
 #include <machine/autoconf.h>
 
-#include <news/dev/kbreg.h>
+#include <newsmips/dev/kbreg.h>
 
 #ifdef CPU_SINGLE
-#include <news/dev/scc.h>
+#include <newsmips/dev/scc.h>
 #else
 #include "../iop/iopvar.h"
 #endif

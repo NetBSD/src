@@ -54,7 +54,7 @@
 #include <machine/autoconf.h>
 #include <machine/framebuf.h>
 
-#include <news/dev/fbreg.h>
+#include <newsmips/dev/fbreg.h>
 
 #define FB_USED		1
 #define VIDEO_USED	2

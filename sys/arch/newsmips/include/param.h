@@ -1,4 +1,4 @@
-/*	from $NetBSD: param.h,v 1.1 1998/02/18 13:48:22 tsubai Exp $	*/
+/*	from $NetBSD: param.h,v 1.2 1998/03/04 22:20:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -52,8 +52,8 @@
  * Machine dependent constants for mips-based NEWS.
  */
 
-#define	_MACHINE	news
-#define	MACHINE		"news"
+#define	_MACHINE	newsmips
+#define	MACHINE		"newsmips"
 #define	MID_MACHINE	MID_MIPS
 
 #define	KERNBASE	0x80000000	/* start of kernel virtual */
