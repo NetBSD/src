@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee.h,v 1.2 2003/08/07 16:27:52 agc Exp $	*/
+/*	$NetBSD: ieee.h,v 1.3 2003/10/26 00:36:43 kleink Exp $	*/
 
 /*	$OpenBSD: ieee.h,v 1.1 1999/04/20 19:44:04 mickey Exp $	*/
 
@@ -81,11 +81,6 @@
 
 #define	DBL_EXPBITS	11
 #define	DBL_FRACBITS	52
-
-#ifdef notyet
-#define	E80_EXPBITS	15
-#define	E80_FRACBITS	64
-#endif
 
 #define	EXT_EXPBITS	15
 #define	EXT_FRACBITS	112
