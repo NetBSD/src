@@ -63,7 +63,6 @@
 
 static void x509v3_cache_extensions(X509 *x);
 
-static int ca_check(const X509 *x);
 static int check_ssl_ca(const X509 *x);
 static int check_purpose_ssl_client(const X509_PURPOSE *xp, const X509 *x, int ca);
 static int check_purpose_ssl_server(const X509_PURPOSE *xp, const X509 *x, int ca);
@@ -426,7 +425,7 @@ static void x509v3_cache_extensions(X509 *x)
 #define ns_reject(x, usage) \
 	(((x)->ex_flags & EXFLAG_NSCERT) && !((x)->ex_nscert & (usage)))
 
-static int ca_check(const X509 *x)
+static int check_ca(const X509 *x)
 {
 	/* keyUsage if present should allow cert signing */
 	if(ku_reject(x, KU_KEY_CERT_SIGN)) return 0;
@@ -435,25 +434,37 @@ static int ca_check(const X509 *x)
 		/* If basicConstraints says not a CA then say so */
 		else return 0;
 	} else {
+		/* we support V1 roots for...  uh, I don't really know why. */
 		if((x->ex_flags & V1_ROOT) == V1_ROOT) return 3;
 		/* If key usage present it must have certSign so tolerate it */
 		else if (x->ex_flags & EXFLAG_KUSAGE) return 4;
-		else return 2;
+		/* Older certificates could have Netscape-specific CA types */
+		else if (x->ex_flags & EXFLAG_NSCERT
+			 && x->ex_nscert & NS_ANY_CA) return 5;
+		/* can this still be regarded a CA certificate?  I doubt it */
+		return 0;
 	}
+}
+
+int X509_check_ca(X509 *x)
+{
+	if(!(x->ex_flags & EXFLAG_SET)) {
+		CRYPTO_w_lock(CRYPTO_LOCK_X509);
+		x509v3_cache_extensions(x);
+		CRYPTO_w_unlock(CRYPTO_LOCK_X509);
+	}
+
+	return check_ca(x);
 }
 
 /* Check SSL CA: common checks for SSL client and server */
 static int check_ssl_ca(const X509 *x)
 {
 	int ca_ret;
-	ca_ret = ca_check(x);
+	ca_ret = check_ca(x);
 	if(!ca_ret) return 0;
 	/* check nsCertType if present */
-	if(x->ex_flags & EXFLAG_NSCERT) {
-		if(x->ex_nscert & NS_SSL_CA) return ca_ret;
-		return 0;
-	}
-	if(ca_ret != 2) return ca_ret;
+	if(ca_ret != 5 || x->ex_nscert & NS_SSL_CA) return ca_ret;
 	else return 0;
 }
 
@@ -498,14 +509,10 @@ static int purpose_smime(const X509 *x, int ca)
 	if(xku_reject(x,XKU_SMIME)) return 0;
 	if(ca) {
 		int ca_ret;
-		ca_ret = ca_check(x);
+		ca_ret = check_ca(x);
 		if(!ca_ret) return 0;
 		/* check nsCertType if present */
-		if(x->ex_flags & EXFLAG_NSCERT) {
-			if(x->ex_nscert & NS_SMIME_CA) return ca_ret;
-			return 0;
-		}
-		if(ca_ret != 2) return ca_ret;
+		if(ca_ret != 5 || x->ex_nscert & NS_SMIME_CA) return ca_ret;
 		else return 0;
 	}
 	if(x->ex_flags & EXFLAG_NSCERT) {
@@ -539,7 +546,7 @@ static int check_purpose_crl_sign(const X509_PURPOSE *xp, const X509 *x, int ca)
 {
 	if(ca) {
 		int ca_ret;
-		if((ca_ret = ca_check(x)) != 2) return ca_ret;
+		if((ca_ret = check_ca(x)) != 2) return ca_ret;
 		else return 0;
 	}
 	if(ku_reject(x, KU_CRL_SIGN)) return 0;
@@ -552,17 +559,9 @@ static int check_purpose_crl_sign(const X509_PURPOSE *xp, const X509 *x, int ca)
 
 static int ocsp_helper(const X509_PURPOSE *xp, const X509 *x, int ca)
 {
-	/* Must be a valid CA */
-	if(ca) {
-		int ca_ret;
-		ca_ret = ca_check(x);
-		if(ca_ret != 2) return ca_ret;
-		if(x->ex_flags & EXFLAG_NSCERT) {
-			if(x->ex_nscert & NS_ANY_CA) return ca_ret;
-			return 0;
-		}
-		return 0;
-	}
+	/* Must be a valid CA.  Should we really support the "I don't know"
+	   value (2)? */
+	if(ca) return check_ca(x);
 	/* leaf certificate is checked in OCSP_verify() */
 	return 1;
 }
