@@ -1,4 +1,4 @@
-/*	$NetBSD: ka410.c,v 1.11 1998/06/04 19:42:14 ragge Exp $ */
+/*	$NetBSD: ka410.c,v 1.12 1998/06/07 18:34:09 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -49,6 +49,7 @@
 #include <machine/nexus.h>
 #include <machine/uvax.h>
 #include <machine/ka410.h>
+#include <machine/ka420.h>
 #include <machine/clock.h>
 #include <machine/vsbus.h>
 
@@ -60,6 +61,10 @@ static	void	ka410_memerr __P((void));
 static	int	ka410_mchk __P((caddr_t));
 static	void	ka410_halt __P((void));
 static	void	ka410_reboot __P((int));
+static	void	ka41_cache_enable __P((void));
+
+static	caddr_t	l2cache;	/* mapped in address */
+static	long 	*cacr;		/* l2csche ctlr reg */
 
 extern  short *clk_page;
 
@@ -92,10 +97,22 @@ ka410_conf(parent, self, aux)
 
 	case VAX_TYP_CVAX:
 		printf(": KA41/42\n");
-		printf("%s: Enabling primary cache\n", self->dv_xname);
-		mtpr(0xfc, PR_CADR); /* XXX */
-		/* ka41_cache_enable(); */
+		printf("%s: Enabling primary cache, ", self->dv_xname);
+mtpr(KA420_CADR_S2E|KA420_CADR_S1E|KA420_CADR_ISE|KA420_CADR_DSE, PR_CADR);
+		if (vax_confdata & KA420_CFG_CACHPR) {
+			printf("secondary cache\n");
+			ka41_cache_enable();
+		} else
+			printf("no secondary cache present\n");
 	}
+}
+
+void
+ka41_cache_enable()
+{
+	*cacr = KA420_CACR_TPE; 	/* Clear any error, disable cache */
+	bzero(l2cache, KA420_CH2_SIZE); /* Clear whole cache */
+	*cacr = KA420_CACR_CEN;		/* Enable cache */
 }
 
 void
@@ -159,13 +176,24 @@ ka410_steal_pages()
 		parctl = PARCTL_DMA;
 
 #if NSMG > 0
-	if ((vax_confdata & 0x80) == 0) { /* Video controller present */
+	if ((vax_confdata & KA420_CFG_MULTU) == 0) {
 		MAPVIRT(sm_addr, (SMSIZE / NBPG));
 		pmap_map((vm_offset_t)sm_addr, (vm_offset_t)SMADDR,
 		    (vm_offset_t)SMADDR + SMSIZE, VM_PROT_READ|VM_PROT_WRITE);
 		((struct vs_cpu *)VS_REGS)->vc_vdcorg = 0;
 	}
 #endif
+	if ((vax_cputype == VAX_TYP_CVAX) &&
+	    (vax_confdata & KA420_CFG_CACHPR)) {
+		MAPVIRT(l2cache, (KA420_CH2_SIZE / NBPG));
+		pmap_map((vm_offset_t)l2cache, (vm_offset_t)KA420_CH2_BASE,
+		    (vm_offset_t)KA420_CH2_BASE + KA420_CH2_SIZE,
+		    VM_PROT_READ|VM_PROT_WRITE);
+		MAPVIRT(cacr, 1);
+		pmap_map((vm_offset_t)cacr, (vm_offset_t)KA420_CACR,
+		    (vm_offset_t)KA420_CACR + NBPG, VM_PROT_READ|VM_PROT_WRITE);
+	}
+		
 	/*
 	 * Clear restart and boot in progress flags
 	 * in the CPMBX. (ie. clear bits 4 and 5)
