@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagdegrd.c,v 1.20 2004/03/18 16:40:05 oster Exp $	*/
+/*	$NetBSD: rf_dagdegrd.c,v 1.21 2004/03/19 15:16:18 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagdegrd.c,v 1.20 2004/03/18 16:40:05 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagdegrd.c,v 1.21 2004/03/19 15:16:18 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: rf_dagdegrd.c,v 1.20 2004/03/18 16:40:05 oster Exp $
 #include "rf_debugMem.h"
 #include "rf_general.h"
 #include "rf_dagdegrd.h"
+#include "rf_map.h"
 
 
 /******************************************************************************
@@ -271,7 +272,7 @@ rf_CreateDegradedReadDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 	int     j, paramNum;
 	RF_SectorCount_t sectorsPerSU;
 	RF_ReconUnitNum_t which_ru;
-	char   *overlappingPDAs;/* a temporary array of flags */
+	char    overlappingPDAs[RF_MAXCOL];/* a temporary array of flags */
 	RF_AccessStripeMapHeader_t *new_asm_h[2];
 	RF_PhysDiskAddr_t *pda, *parityPDA;
 	RF_StripeNum_t parityStripeID;
@@ -301,7 +302,7 @@ rf_CreateDegradedReadDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
          */
 
 	/* overlappingPDAs array must be zero'd */
-	RF_Malloc(overlappingPDAs, asmap->numStripeUnitsAccessed * sizeof(char), (char *));
+	memset(overlappingPDAs, 0, RF_MAXCOL);
 	rf_GenerateFailedAccessASMs(raidPtr, asmap, failedPDA, dag_h, new_asm_h, &nXorBufs,
 	    &rpBuf, overlappingPDAs, allocList);
 
@@ -421,7 +422,9 @@ rf_CreateDegradedReadDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 		}
 	}
 	/* make a PDA for the parity unit */
-	RF_MallocAndAdd(parityPDA, sizeof(RF_PhysDiskAddr_t), (RF_PhysDiskAddr_t *), allocList);
+	parityPDA = rf_AllocPhysDiskAddr();
+	parityPDA->next = dag_h->pda_cleanup_list;
+	dag_h->pda_cleanup_list = parityPDA;
 	parityPDA->col = asmap->parityInfo->col;
 	parityPDA->startSector = ((asmap->parityInfo->startSector / sectorsPerSU)
 	    * sectorsPerSU) + (failedPDA->startSector % sectorsPerSU);
@@ -452,15 +455,17 @@ rf_CreateDegradedReadDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 		/* any Rud nodes that overlap the failed access need to be
 		 * xored in */
 		if (overlappingPDAs[i]) {
-			RF_MallocAndAdd(pda, sizeof(RF_PhysDiskAddr_t), (RF_PhysDiskAddr_t *), allocList);
+			pda = rf_AllocPhysDiskAddr();
 			memcpy((char *) pda, (char *) tmprudNode->params[0].p, sizeof(RF_PhysDiskAddr_t));
+			/* add it into the pda_cleanup_list *after* the copy, TYVM */
+			pda->next = dag_h->pda_cleanup_list;
+			dag_h->pda_cleanup_list = pda;
 			rf_RangeRestrictPDA(raidPtr, failedPDA, pda, RF_RESTRICT_DOBUFFER, 0);
 			xorNode->params[paramNum++].p = pda;
 			xorNode->params[paramNum++].p = pda->bufPtr;
 		}
 		tmprudNode = tmprudNode->list_next;
 	}
-	RF_Free(overlappingPDAs, asmap->numStripeUnitsAccessed * sizeof(char));
 
 	/* install parity pda as last set of params to be xor'd */
 	xorNode->params[paramNum++].p = parityPDA;
