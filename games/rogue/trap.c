@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.3 1995/04/22 10:28:35 cgd Exp $	*/
+/*	$NetBSD: trap.c,v 1.4 1997/10/12 11:46:09 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -36,11 +36,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)trap.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: trap.c,v 1.3 1995/04/22 10:28:35 cgd Exp $";
+__RCSID("$NetBSD: trap.c,v 1.4 1997/10/12 11:46:09 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -77,15 +78,9 @@ char *trap_strings[TRAPS * 2] = {
 			"a gush of water hits you on the head"
 };
 
-extern short cur_level, party_room;
-extern char *new_level_message;
-extern boolean interrupted;
-extern short ring_exp;
-extern boolean sustain_strength;
-extern short blind;
-
+short
 trap_at(row, col)
-register row, col;
+	int row, col;
 {
 	short i;
 
@@ -97,8 +92,9 @@ register row, col;
 	return(NO_TRAP);
 }
 
+void
 trap_player(row, col)
-short row, col;
+	short row, col;
 {
 	short t;
 
@@ -149,6 +145,7 @@ short row, col;
 	}
 }
 
+void
 add_traps()
 {
 	short i, n, tries = 0;
@@ -193,6 +190,7 @@ add_traps()
 	}
 }
 
+void
 id_trap()
 {
 	short dir, row, col, d, t;
@@ -220,6 +218,7 @@ id_trap()
 	}
 }
 
+void
 show_traps()
 {
 	short i, j;
@@ -233,9 +232,10 @@ show_traps()
 	}
 }
 
+void
 search(n, is_auto)
-short n;
-boolean is_auto;
+	short n;
+	boolean is_auto;
 {
 	short s, i, j, row, col, t;
 	short shown = 0, found = 0;
