@@ -1,4 +1,4 @@
-#	$Id: Makefile.kc,v 1.1 1994/04/18 10:16:38 cgd Exp $
+#	$Id: Makefile.kc,v 1.2 1994/04/18 22:24:20 cgd Exp $
 
 .ifndef MOUNT_POINT
 MOUNT_POINT=	/mnt
@@ -36,7 +36,7 @@ all:
 		( cd ${.CURDIR}/../sys/arch/i386/floppy/$$b ; \
 		    make DESTDIR=${MOUNT_POINT} install ) ; \
 	done
-	umount -f ${MOUNT_POINT}
+	umount ${MOUNT_POINT}
 	vnconfig -u ${VND_DEV} ${IMAGE}
 .endif
 
