@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2001/11/26 18:19:48 jmc Exp $
+#	$NetBSD: Makefile,v 1.8 2001/12/11 03:56:24 thorpej Exp $
 
 TOP=		${.CURDIR}/../../..
 DIST=		${TOP}/dist/toolchain
@@ -60,7 +60,8 @@ stringify.sed: ${G_STRINGIFY}
 CLEANFILES+=	.depend.${f} e${f}.c
 
 e${f}.c: ${DIST}/ld/genscripts.sh ${.CURDIR}/Makefile stringify.sed
-	MACHINE= LIB_PATH=/usr/lib \
+	unset MACHINE || true; \
+	LIB_PATH=/usr/lib \
 		sh ${DIST}/ld/genscripts.sh ${DIST}/ld ${LIBDIR} /usr \
 		${G_target_alias} ${G_target_alias} ${G_target_alias} \
 		${G_EMUL} ${LIBDIR} ${f}
