@@ -1,4 +1,4 @@
-/*	$NetBSD: ioasicvar.h,v 1.15 2003/09/26 16:00:12 mycroft Exp $	*/
+/*	$NetBSD: ioasicvar.h,v 1.16 2004/08/26 18:06:20 drochner Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -44,12 +44,6 @@ struct ioasicdev_attach_args {
 	void	*iada_cookie;
 };
 
-/* Device locators. */
-#include "locators.h"
-#define	ioasiccf_offset	cf_loc[IOASICCF_OFFSET]		/* offset */
-
-#define	IOASIC_OFFSET_UNKNOWN	IOASICCF_OFFSET_DEFAULT
-
 struct ioasic_softc {
 	struct	device sc_dv;
 	bus_space_tag_t sc_bst;
@@ -70,7 +64,6 @@ const struct evcnt *ioasic_intr_evcnt __P((struct device *, void *));
 void    ioasic_intr_establish __P((struct device *, void *,
 	    int, int (*)(void *), void *));
 void    ioasic_intr_disestablish __P((struct device *, void *));
-int	ioasic_submatch __P((struct cfdata *, struct ioasicdev_attach_args *));
 void	ioasic_attach_devs __P((struct ioasic_softc *,
 	    struct ioasic_dev *, int));
 
