@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_exec.c,v 1.9 1995/05/01 19:01:45 mycroft Exp $	*/
+/*	$NetBSD: ibcs2_exec.c,v 1.10 1995/06/24 20:18:55 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -73,6 +73,8 @@ extern struct sysent ibcs2_sysent[];
 extern char *ibcs2_syscallnames[];
 extern void ibcs2_sendsig __P((sig_t, int, int, u_long));
 extern char sigcode[], esigcode[];
+
+const char ibcs2_emul_path[] = "/emul/ibcs2";
 
 struct emul emul_ibcs2 = {
 	"ibcs2",
@@ -466,14 +468,14 @@ coff_load_shlib(p, path, epp)
 	struct nameidata nd;
 	struct coff_filehdr fh, *fhp = &fh;
 	struct coff_scnhdr sh, *shp = &sh;
-	caddr_t sg = stackgap_init();
+	caddr_t sg = stackgap_init(p->p_emul);
 
 	/*
 	 * 1. open shlib file
 	 * 2. read filehdr
 	 * 3. map text, data, and bss out of it using VM_*
 	 */
-	CHECKALTEXIST(p, &sg, path);
+	IBCS2_CHECK_ALT_EXIST(p, &sg, path);
 	NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, path, p);
 	/* first get the vnode */
 	if (error = namei(&nd)) {

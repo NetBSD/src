@@ -1,4 +1,4 @@
-#	$NetBSD: files.ibcs2,v 1.1 1995/04/17 16:12:14 cgd Exp $
+#	$NetBSD: files.ibcs2,v 1.2 1995/06/24 20:18:53 christos Exp $
 #
 # Config.new file description for machine-independent IBCS-2 compat code.
 # Included by ports that need it.
@@ -17,4 +17,3 @@ file	compat/ibcs2/ibcs2_socksys.c	compat_ibcs2
 file	compat/ibcs2/ibcs2_stat.c	compat_ibcs2
 file	compat/ibcs2/ibcs2_sysent.c	compat_ibcs2
 file	compat/ibcs2/ibcs2_syscalls.c	compat_ibcs2
-file	compat/ibcs2/ibcs2_util.c	compat_ibcs2
