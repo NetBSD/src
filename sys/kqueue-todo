@@ -1,10 +1,9 @@
-#	$NetBSD: kqueue-todo,v 1.1.2.1 2001/07/10 14:20:36 lukem Exp $
+#	$NetBSD: kqueue-todo,v 1.1.2.2 2001/09/07 19:52:36 thorpej Exp $
 
 items todo from bill sommerfeld:
 	- multiple entry points
 	- events should remain across fork()
 	- rewrite sowakeup()
-	- use pool for everything. (i'm not convinced)
 	- high-level docco overview of kqueues [c.f jlemon's various papers]
 
 done:
@@ -13,6 +12,7 @@ done:
 	- need more comments in kern_event.c
 	- explain fd_knlistsize better
 	- section 9 man page for internal api
+	- use pool for everything (that it can sanely be used for)
 
 
 merge in from freebsd:
