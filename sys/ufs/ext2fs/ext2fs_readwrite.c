@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_readwrite.c,v 1.3 1997/10/23 11:41:16 bouyer Exp $	*/
+/*	$NetBSD: ext2fs_readwrite.c,v 1.4 1998/02/05 08:00:30 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1997 Manuel Bouyer.
@@ -52,6 +52,9 @@
 #include <sys/signalvar.h>
 
 #include <vm/vm.h>
+#if defined(UVM)
+#include <uvm/uvm_extern.h>
+#endif
 
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
@@ -253,9 +256,17 @@ ext2fs_write(v)
 			break;
 		if (uio->uio_offset + xfersize > ip->i_e2fs_size) {
 			ip->i_e2fs_size = uio->uio_offset + xfersize;
+#if defined(UVM)
+			uvm_vnp_setsize(vp, ip->i_e2fs_size);
+#else
 			vnode_pager_setsize(vp, ip->i_e2fs_size);
+#endif
 		}
+#if defined(UVM)
+		(void)uvm_vnp_uncache(vp);
+#else
 		(void)vnode_pager_uncache(vp);
+#endif
 
 		size = fs->e2fs_bsize - bp->b_resid;
 		if (size < xfersize)

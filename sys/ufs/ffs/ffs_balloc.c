@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_balloc.c,v 1.5 1997/07/04 20:22:15 drochner Exp $	*/
+/*	$NetBSD: ffs_balloc.c,v 1.6 1998/02/05 08:00:33 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -43,6 +43,10 @@
 #include <sys/vnode.h>
 
 #include <vm/vm.h>
+
+#if defined(UVM)
+#include <uvm/uvm_extern.h>
+#endif
 
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
@@ -94,7 +98,11 @@ ffs_balloc(ip, bn, size, cred, bpp, flags)
 			if (error)
 				return (error);
 			ip->i_ffs_size = (nb + 1) * fs->fs_bsize;
+#if defined(UVM)
+			uvm_vnp_setsize(vp, ip->i_ffs_size);
+#else
 			vnode_pager_setsize(vp, ip->i_ffs_size);
+#endif
 			ip->i_ffs_db[nb] = dbtofsb(fs, bp->b_blkno);
 			ip->i_flag |= IN_CHANGE | IN_UPDATE;
 			if (flags & B_SYNC)

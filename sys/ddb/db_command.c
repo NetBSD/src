@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.23 1997/09/11 06:55:56 scottr Exp $	*/
+/*	$NetBSD: db_command.c,v 1.24 1998/02/05 07:59:35 mrg Exp $	*/
 
 /* 
  * Mach Operating System
@@ -48,6 +48,10 @@
 #include <ddb/db_extern.h>
 
 #include <vm/vm.h>
+
+#if defined(UVM)
+#include <uvm/uvm_extern.h>
+#endif
 
 /*
  * Exported global variables
@@ -298,7 +302,11 @@ db_map_print_cmd(addr, have_addr, count, modif)
         if (modif[0] == 'f')
                 full = TRUE;
 
+#if defined(UVM)
+        uvm_map_printit((vm_map_t) addr, full, db_printf);
+#else
         _vm_map_print((vm_map_t) addr, full, db_printf);
+#endif
 }
 
 /*ARGSUSED*/
@@ -314,7 +322,31 @@ db_object_print_cmd(addr, have_addr, count, modif)
         if (modif[0] == 'f')
                 full = TRUE;
 
+#if defined(UVM)
+	uvm_object_printit((struct uvm_object *) addr, full, db_printf);
+#else
         _vm_object_print((vm_object_t) addr, full, db_printf);
+#endif
+}
+
+/*ARGSUSED*/
+void
+db_page_print_cmd(addr, have_addr, count, modif)
+	db_expr_t	addr;
+	int		have_addr;
+	db_expr_t	count;
+	char *		modif;
+{
+        boolean_t full = FALSE;
+        
+        if (modif[0] == 'f')
+                full = TRUE;
+
+#if defined(UVM)
+	uvm_page_printit((struct vm_page *) addr, full, db_printf);
+#else
+	printf("only supported by UVM\n");
+#endif
 }
 
 /*
@@ -334,6 +366,7 @@ struct db_command db_show_cmds[] = {
 	{ "watches",	db_listwatch_cmd, 	0,	NULL },
 	{ "map",	db_map_print_cmd,	0,	NULL },
 	{ "object",	db_object_print_cmd,	0,	NULL },
+	{ "page",	db_page_print_cmd,	0,	NULL },
 	{ NULL,		NULL,			0,	NULL, }
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_mem.c,v 1.16 1997/09/13 04:25:35 enami Exp $	*/
+/*	$NetBSD: procfs_mem.c,v 1.17 1998/02/05 08:00:14 mrg Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -56,8 +56,13 @@
 #include <vm/vm_kern.h>
 #include <vm/vm_page.h>
 
+#if defined(UVM)
+#include <uvm/uvm_extern.h>
+#endif
+
 #define	ISSET(t, f)	((t) & (f))
 
+#if !defined(UVM)
 static int procfs_rwmem __P((struct proc *, struct uio *));
 
 static int
@@ -198,6 +203,7 @@ procfs_rwmem(p, uio)
 
 	return (error);
 }
+#endif
 
 /*
  * Copy data in and out of the target process.
@@ -220,9 +226,20 @@ procfs_domem(curp, p, pfs, uio)
 	if ((error = procfs_checkioperm(curp, p)) != 0)
 		return (error);
 
+#if defined(UVM)
+	/* XXXCDC: how should locking work here? */
+	if ((p->p_flag & P_WEXIT) || (p->p_vmspace->vm_refcnt < 1)) 
+		return(EFAULT);
+	PHOLD(p);
+	p->p_vmspace->vm_refcnt++;  /* XXX */
+	error = uvm_io(&p->p_vmspace->vm_map, uio);
+	PRELE(p);
+	uvmspace_free(p->p_vmspace);
+#else
 	PHOLD(p);
 	error = procfs_rwmem(p, uio);
 	PRELE(p);
+#endif
 	return (error);
 }
 

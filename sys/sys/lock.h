@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.4 1997/10/09 12:49:56 mycroft Exp $	*/
+/*	$NetBSD: lock.h,v 1.5 1998/02/05 08:00:40 mrg Exp $	*/
 
 /* 
  * Copyright (c) 1995
@@ -51,6 +51,12 @@
 struct simplelock {
 	int lock_data;
 };
+#if defined(UVM) /* XXXCDC: kill typedefs later? */
+typedef struct simplelock       simple_lock_data_t;
+typedef struct simplelock       *simple_lock_t;
+typedef struct lock             lock_data_t;
+typedef struct lock             *lock_t;
+#endif
 
 /*
  * The general lock structure.  Provides for multiple shared locks,

@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_subr.c,v 1.10 1996/09/30 23:18:45 cgd Exp $	*/
+/*	$NetBSD: exec_subr.c,v 1.11 1998/02/05 07:59:45 mrg Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -40,6 +40,10 @@
 #include <sys/mman.h>
 
 #include <vm/vm.h>
+
+#if defined(UVM)
+#include <uvm/uvm.h>
+#endif
 
 /*
  * XXX cgd 960926: this module should collect simple statistics
@@ -145,9 +149,58 @@ vmcmd_map_pagedvn(p, cmd)
 	 * VTEXT.  that's handled in the routine which sets up the vmcmd to
 	 * call this routine.
 	 */
+#if defined(UVM)
+        struct uvm_object *uobj;
+	int retval;
+
+	/*
+	 * map the vnode in using uvm_map.
+	 */
+
+	/* checks imported from uvm_mmap, needed? */
+        if (cmd->ev_len == 0)
+                return(0);
+        if (cmd->ev_offset & PAGE_MASK)
+                return(EINVAL);
+	if (cmd->ev_addr & PAGE_MASK)
+		return(EINVAL);
+
+	/*
+	 * first, attach to the object
+	 */
+
+        uobj = uvn_attach((void *) cmd->ev_vp, VM_PROT_READ|VM_PROT_EXECUTE);
+        if (uobj == NULL)
+                return(ENOMEM);
+
+	/*
+	 * do the map
+	 */
+
+	retval = uvm_map(&p->p_vmspace->vm_map, &cmd->ev_addr, cmd->ev_len, 
+		uobj, cmd->ev_offset, 
+		UVM_MAPFLAG(cmd->ev_prot, VM_PROT_ALL, UVM_INH_COPY, 
+			UVM_ADV_NORMAL, UVM_FLAG_COPYONW|UVM_FLAG_FIXED));
+
+	/*
+	 * check for error
+	 */
+
+	if (retval == KERN_SUCCESS)
+		return(0);
+
+	/*
+	 * error: detach from object
+	 */
+
+	uobj->pgops->pgo_detach(uobj);
+	return(EINVAL);
+
+#else
 	return vm_mmap(&p->p_vmspace->vm_map, &cmd->ev_addr, cmd->ev_len,
 	    cmd->ev_prot, VM_PROT_ALL, MAP_FIXED|MAP_COPY, (caddr_t)cmd->ev_vp,
 	    cmd->ev_offset);
+#endif
 }
 
 /*
@@ -163,8 +216,21 @@ vmcmd_map_readvn(p, cmd)
 {
 	int error;
 
+#if defined(UVM)
+	if (cmd->ev_len == 0)
+		return(KERN_SUCCESS); /* XXXCDC: should it happen? */
+	
+	cmd->ev_addr = trunc_page(cmd->ev_addr); /* required by uvm_map */
+	error = uvm_map(&p->p_vmspace->vm_map, &cmd->ev_addr, 
+			round_page(cmd->ev_len), NULL, UVM_UNKNOWN_OFFSET, 
+			UVM_MAPFLAG(cmd->ev_prot, UVM_PROT_ALL, UVM_INH_COPY,
+			UVM_ADV_NORMAL,
+			UVM_FLAG_FIXED|UVM_FLAG_OVERLAY|UVM_FLAG_COPYONW));
+
+#else
 	error = vm_allocate(&p->p_vmspace->vm_map, &cmd->ev_addr,
 	    cmd->ev_len, 0);
+#endif
 	if (error)
 		return error;
 
@@ -174,8 +240,12 @@ vmcmd_map_readvn(p, cmd)
 	if (error)
 		return error;
 
+#if defined(UVM)
+	return(KERN_SUCCESS);
+#else
 	return vm_map_protect(&p->p_vmspace->vm_map, trunc_page(cmd->ev_addr),
 	    round_page(cmd->ev_addr + cmd->ev_len), cmd->ev_prot, FALSE);
+#endif
 }
 
 /*
@@ -191,11 +261,30 @@ vmcmd_map_zero(p, cmd)
 {
 	int error;
 
+#if defined(UVM)
+	if (cmd->ev_len == 0)
+		return(KERN_SUCCESS); /* XXXCDC: should it happen? */
+	
+	cmd->ev_addr = trunc_page(cmd->ev_addr); /* required by uvm_map */
+	error = uvm_map(&p->p_vmspace->vm_map, &cmd->ev_addr, 
+			round_page(cmd->ev_len), NULL, UVM_UNKNOWN_OFFSET, 
+			UVM_MAPFLAG(cmd->ev_prot, UVM_PROT_ALL, UVM_INH_COPY,
+			UVM_ADV_NORMAL,
+			UVM_FLAG_FIXED|UVM_FLAG_COPYONW));
+
+#else
 	error = vm_allocate(&p->p_vmspace->vm_map, &cmd->ev_addr,
 	    cmd->ev_len, 0);
+#endif
 	if (error)
 		return error;
 
-	return vm_map_protect(&p->p_vmspace->vm_map, trunc_page(cmd->ev_addr),
-	    round_page(cmd->ev_addr + cmd->ev_len), cmd->ev_prot, FALSE);
+#if !defined(UVM)
+	if (cmd->ev_prot != VM_PROT_DEFAULT)
+		return vm_map_protect(&p->p_vmspace->vm_map, 
+			trunc_page(cmd->ev_addr),
+	    		round_page(cmd->ev_addr + cmd->ev_len), 
+			cmd->ev_prot, FALSE);
+#endif
+	return(KERN_SUCCESS);
 }

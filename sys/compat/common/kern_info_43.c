@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_info_43.c,v 1.6 1996/05/18 01:24:34 christos Exp $	*/
+/*	$NetBSD: kern_info_43.c,v 1.7 1998/02/05 07:59:28 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -53,6 +53,10 @@
 #include <sys/resourcevar.h>
 #include <vm/vm.h>
 #include <sys/sysctl.h>
+
+#if defined(UVM)
+#include <uvm/uvm_extern.h>
+#endif
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
@@ -197,13 +201,21 @@ compat_43_sys_getkerninfo(p, v, retval)
 	case KINFO_METER:
 		name[0] = VM_METER;
 		error =
+#if defined(UVM)
+		    uvm_sysctl(name, 1, SCARG(uap, where), &size, NULL, 0, p);
+#else
 		    vm_sysctl(name, 1, SCARG(uap, where), &size, NULL, 0, p);
+#endif
 		break;
 
 	case KINFO_LOADAVG:
 		name[0] = VM_LOADAVG;
 		error =
+#if defined(UVM)
+		    uvm_sysctl(name, 1, SCARG(uap, where), &size, NULL, 0, p);
+#else
 		    vm_sysctl(name, 1, SCARG(uap, where), &size, NULL, 0, p);
+#endif
 		break;
 
 	case KINFO_CLOCKRATE:
