@@ -4948,7 +4948,7 @@ dostart:
 
 !	call	print_dtlb			! Debug printf
 !	 nop					! delay
-#ifdef DEBUG	
+#ifdef NODEF_DEBUG	
 	set	1f, %o0		! Debug printf
 	srlx	%l0, 32, %o1
 	srl	%l0, 0, %o2
@@ -4994,7 +4994,7 @@ dostart:
 	membar	#Sync				! We may need more membar #Sync in here
 	flush	%l7				! Make IMMU see this too
 1:	
-#ifdef DEBUG
+#ifdef NODEF_DEBUG
 	set	1f, %o0		! Debug printf
 	srlx	%l0, 32, %o1
 	srl	%l0, 0, %o2
@@ -5112,7 +5112,7 @@ dostart:
 	or	%l0, %l1, %l0			! Make a TSB pointer
 !	srl	%l0, 0, %l0	! DEBUG -- make sure this is a valid pointer by zeroing the high bits
 
-#ifdef DEBUG
+#ifdef NODEF_DEBUG
 	set	1f, %o0		! Debug printf
 	srlx	%l0, 32, %o1
 	call	_C_LABEL(prom_printf)
@@ -5136,7 +5136,7 @@ dostart:
 	 mov	%l1, %o0
 	wrpr	%g0, WSTATE_KERN, %wstate
 
-#ifdef DEBUG
+#ifdef NODEF_DEBUG
 	wrpr	%g0, 1, %tl			! Debug -- start at tl==3 so we'll watchdog
 	wrpr	%g0, 0x1ff, %tt			! Debug -- clear out unused trap regs
 	wrpr	%g0, 0, %tpc
@@ -5145,7 +5145,7 @@ dostart:
 #endif
 #endif
 
-#ifdef DEBUG		
+#ifdef NODEF_DEBUG		
 	set	1f, %o0		! Debug printf
 	srax	%l0, 32, %o1
 	call	_C_LABEL(prom_printf)
@@ -6044,7 +6044,7 @@ ENTRY(copystr)
 	sub	%o1, %o5, %o1		!	len = to - to0;
 	tst	%o3			!	if (lencopied)
 	bnz,a	3f
-	 st	%o1, [%o3]		!		*lencopied = len;
+	 STPTR	%o1, [%o3]		!		*lencopied = len;
 3:
 	retl
 	 nop
