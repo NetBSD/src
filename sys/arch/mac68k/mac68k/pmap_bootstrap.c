@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.43 1998/05/24 06:15:50 scottr Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.44 1998/06/30 04:16:01 scottr Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -555,10 +555,10 @@ void
 bootstrap_mac68k(tc)
 	int	tc;
 {
-	extern void	zs_init __P((void));
-	extern caddr_t	esym;
-	vm_offset_t	nextpa;
-	caddr_t		oldROMBase;
+	extern void zs_init __P((void));
+	extern int *esym;
+	vm_offset_t nextpa;
+	caddr_t oldROMBase;
 
 	if (mac68k_machine.do_graybars)
 		printf("Bootstrapping NetBSD/mac68k.\n");
