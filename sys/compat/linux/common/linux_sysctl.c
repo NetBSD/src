@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sysctl.c,v 1.15 2004/05/20 06:34:24 atatat Exp $	*/
+/*	$NetBSD: linux_sysctl.c,v 1.16 2004/05/25 04:29:08 atatat Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sysctl.c,v 1.15 2004/05/20 06:34:24 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sysctl.c,v 1.16 2004/05/25 04:29:08 atatat Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -202,30 +202,35 @@ SYSCTL_SETUP(sysctl_emul_linux_setup, "sysctl emul.linux subtree setup")
 		       CTL_EMUL, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "linux", NULL,
+		       CTLTYPE_NODE, "linux",
+		       SYSCTL_DESCR("Linux emulation settings"),
 		       NULL, 0, NULL, 0,
 		       CTL_EMUL, EMUL_LINUX, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "kern", NULL,
+		       CTLTYPE_NODE, "kern",
+		       SYSCTL_DESCR("Linux kernel emulation settings"),
 		       NULL, 0, NULL, 0,
 		       CTL_EMUL, EMUL_LINUX, EMUL_LINUX_KERN, CTL_EOL);
 
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_STRING, "ostype", NULL,
+		       CTLTYPE_STRING, "ostype",
+		       SYSCTL_DESCR("Linux operating system type"),
 		       NULL, 0, linux_sysname, sizeof(linux_sysname),
 		       CTL_EMUL, EMUL_LINUX, EMUL_LINUX_KERN,
 		       EMUL_LINUX_KERN_OSTYPE, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_STRING, "osrelease", NULL,
+		       CTLTYPE_STRING, "osrelease",
+		       SYSCTL_DESCR("Linux operating system release"),
 		       NULL, 0, linux_release, sizeof(linux_release),
 		       CTL_EMUL, EMUL_LINUX, EMUL_LINUX_KERN,
 		       EMUL_LINUX_KERN_OSRELEASE, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_STRING, "osversion", NULL,
+		       CTLTYPE_STRING, "osversion",
+		       SYSCTL_DESCR("Linux operating system revision"),
 		       NULL, 0, linux_version, sizeof(linux_version),
 		       CTL_EMUL, EMUL_LINUX, EMUL_LINUX_KERN,
 		       EMUL_LINUX_KERN_VERSION, CTL_EOL);

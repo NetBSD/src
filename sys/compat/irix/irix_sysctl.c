@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_sysctl.c,v 1.3 2004/03/24 15:34:52 atatat Exp $ */
+/*	$NetBSD: irix_sysctl.c,v 1.4 2004/05/25 04:29:08 atatat Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_sysctl.c,v 1.3 2004/03/24 15:34:52 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_sysctl.c,v 1.4 2004/05/25 04:29:08 atatat Exp $");
 
 #include <sys/param.h>
 #include <sys/signal.h>
@@ -45,7 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: irix_sysctl.c,v 1.3 2004/03/24 15:34:52 atatat Exp $
 
 #include <compat/irix/irix_sysctl.h>
 
-SYSCTL_SETUP(sysctl_irix_setup, "sysctl emul.irix subtree setup")
+SYSCTL_SETUP(sysctl_emul_irix_setup, "sysctl emul.irix subtree setup")
 {
 
 	sysctl_createv(clog, 0, NULL, NULL,
@@ -55,66 +55,77 @@ SYSCTL_SETUP(sysctl_irix_setup, "sysctl emul.irix subtree setup")
 		       CTL_EMUL, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "irix", NULL,
+		       CTLTYPE_NODE, "irix",
+		       SYSCTL_DESCR("IRIX emulation settings"),
 		       NULL, 0, NULL, 0,
 		       CTL_EMUL, EMUL_IRIX, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "kern", NULL,
+		       CTLTYPE_NODE, "kern",
+		       SYSCTL_DESCR("IRIX kernel emulation settings"),
 		       NULL, 0, NULL, 0,
 		       CTL_EMUL, EMUL_IRIX, EMUL_IRIX_KERN, CTL_EOL);
 
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_STRING, "vendor", NULL,
+		       CTLTYPE_STRING, "vendor",
+		       SYSCTL_DESCR("Emulated IRIX vendor name"),
 		       NULL, 0, irix_si_vendor, 128,
 		       CTL_EMUL, EMUL_IRIX, EMUL_IRIX_KERN,
 		       EMUL_IRIX_KERN_VENDOR, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_STRING, "osprovider", NULL,
+		       CTLTYPE_STRING, "osprovider",
+		       SYSCTL_DESCR("Emulated IRIX system manufacturer"),
 		       NULL, 0, irix_si_os_provider, 128,
 		       CTL_EMUL, EMUL_IRIX, EMUL_IRIX_KERN,
 		       EMUL_IRIX_KERN_OSPROVIDER, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_STRING, "osname", NULL,
+		       CTLTYPE_STRING, "osname",
+		       SYSCTL_DESCR("Emulated IRIX operating system name"),
 		       NULL, 0, irix_si_os_name, 128,
 		       CTL_EMUL, EMUL_IRIX, EMUL_IRIX_KERN,
 		       EMUL_IRIX_KERN_OSNAME, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_STRING, "hwname", NULL,
+		       CTLTYPE_STRING, "hwname",
+		       SYSCTL_DESCR("Emulated IRIX system type"),
 		       NULL, 0, irix_si_hw_name, 128,
 		       CTL_EMUL, EMUL_IRIX, EMUL_IRIX_KERN,
 		       EMUL_IRIX_KERN_HWNAME, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_STRING, "osrelmaj", NULL,
+		       CTLTYPE_STRING, "osrelmaj",
+		       SYSCTL_DESCR("Emulated IRIX major release number"),
 		       NULL, 0, irix_si_osrel_maj, 128,
 		       CTL_EMUL, EMUL_IRIX, EMUL_IRIX_KERN,
 		       EMUL_IRIX_KERN_OSRELMAJ, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_STRING, "osrelmin", NULL,
+		       CTLTYPE_STRING, "osrelmin",
+		       SYSCTL_DESCR("Emulated IRIX minor release number"),
 		       NULL, 0, irix_si_osrel_min, 128,
 		       CTL_EMUL, EMUL_IRIX, EMUL_IRIX_KERN,
 		       EMUL_IRIX_KERN_OSRELMIN, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_STRING, "osrelpatch", NULL,
+		       CTLTYPE_STRING, "osrelpatch",
+		       SYSCTL_DESCR("Emulated IRIX patch level"),
 		       NULL, 0, irix_si_osrel_patch, 128,
 		       CTL_EMUL, EMUL_IRIX, EMUL_IRIX_KERN,
 		       EMUL_IRIX_KERN_OSRELPATCH, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_STRING, "processor", NULL,
+		       CTLTYPE_STRING, "processor",
+		       SYSCTL_DESCR("Emulated IRIX processor type"),
 		       NULL, 0, irix_si_processors, 128,
 		       CTL_EMUL, EMUL_IRIX, EMUL_IRIX_KERN,
 		       EMUL_IRIX_KERN_PROCESSOR, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_STRING, "version", NULL,
+		       CTLTYPE_STRING, "version",
+		       SYSCTL_DESCR("Emulated IRIX version number"),
 		       NULL, 0, irix_si_version, 128,
 		       CTL_EMUL, EMUL_IRIX, EMUL_IRIX_KERN,
 		       EMUL_IRIX_KERN_VERSION, CTL_EOL);
