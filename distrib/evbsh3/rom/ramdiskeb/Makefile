@@ -1,7 +1,8 @@
-#	$NetBSD: Makefile,v 1.6 2002/03/28 04:33:21 lukem Exp $
+#	$NetBSD: Makefile,v 1.7 2002/04/06 18:16:09 tsutsui Exp $
 
 TOP=		${.CURDIR}/..
 WARNS=1
+DBG=		-Os
 
 .include "${TOP}/Makefile.inc"
 IMAGE=		ramdisk.fs
