@@ -37,7 +37,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)id.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: id.c,v 1.19 2003/08/07 11:14:07 agc Exp $");
+__RCSID("$NetBSD: id.c,v 1.20 2003/10/21 02:17:45 fvdl Exp $");
 #endif
 #endif /* not lint */
 
@@ -232,7 +232,7 @@ current()
 		if ((gr = getgrgid(eid)) != NULL)
 			(void)printf("(%s)", gr->gr_name);
 	}
-	if ((ngroups = getgroups(maxgroups, groups)) != NULL) {
+	if ((ngroups = getgroups(maxgroups, groups)) != 0) {
 		for (fmt = " groups=%u", lastid = -1, cnt = 0; cnt < ngroups;
 		    fmt = ",%u", lastid = id, cnt++) {
 			id = groups[cnt];
