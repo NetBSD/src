@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.3,v 1.1.2.42 2000/07/09 21:52:45 he Exp $
+#	$NetBSD: CHANGES-1.4.3,v 1.1.2.43 2000/07/13 21:25:08 he Exp $
 
 A complete list of changes from NetBSD 1.4.2 to NetBSD 1.4.3:
 
@@ -45,7 +45,7 @@ libexec/ld.aout_so/rtld.1			1.9-1.10
 distrib/notes/Makefile				patch
 distrib/notes/Makefile.inc			patch
 
-  Format HTML with latin1 characters.  Add a "release" target to
+  Format HTML with latin1 characters.  Add a ``release'' target to
   install the formatted release notes.
 
 sys/arch/arm32/conf/CATS			patch
@@ -213,7 +213,7 @@ sys/dev/pci/if_ti.c				1.6-1.7 via patch
 
 sys/msdosfs/fat.h				1.14
 
-  Correct broken "LP64 fix" introduced in last pullup, and better
+  Correct broken ``LP64 fix'' introduced in last pullup, and better
   explain sense of MSDOSFSEOF() macro.  Fixes PR#9116, PR#9206 and
   part of PR#8037.
 
@@ -229,7 +229,7 @@ sys/dev/isa/pas.c				1.47
 
 sys/netinet/ip.h				1.20-1.21
 
-  Add "__attribute__((__packed__))" to structures used to describe
+  Add ``__attribute__((__packed__))'' to structures used to describe
   on-the-wire data, to prevent egcs from making unwarranted assumptions
   about the alignment of these structures.  Fixes part of SA#2000-02.
 
@@ -566,7 +566,7 @@ distrib/sparc/bootfs.sysinst/Makefile		patch
 
 distrib/sparc/ramdisk/list			patch
 
-  Make the "ramdisk" devices, not the "floppy" devices.
+  Make the ``ramdisk'' devices, not the ``floppy'' devices.
 
 distrib/utils/sysinst/arch/vax/md.h		patch
 
@@ -677,10 +677,11 @@ sys/arch/mac68k/dev/zs.c			1.33
 usr.sbin/dhcp/common/options.c			patch
 
   Quote shell meta-characters properly in generated scripts.
+  Fixes SA#2000-008.
 
 usr.sbin/mopd/mopd/process.c			1.6-1.7
 
-  Fix bug which caused first load to fail.  Allow "big" VAXes to
+  Fix bug which caused first load to fail.  Allow ``big'' VAXes to
   be mop-booted.
 
 lib/libedit/el.c				1.17 via patch
@@ -721,7 +722,7 @@ sys/netinet/if_arp.c				1.63 partial, via patch
 
 lib/checkver					patch
 
-  Handle use of "tiny" version numbers, to allow version bumps of
+  Handle use of ``tiny'' version numbers, to allow version bumps of
   shared libraries on a release branch without reusing version
   numbers.
 
@@ -748,9 +749,9 @@ share/mk/bsd.lib.mk				1.171 via patch
 lib/checkver					1.11
 lib/libterm/Makefile				1.24
 
-  Introduce the optional "teeny" variable in shlib_version, so that
-  we don't abuse the "minor" number to optionally include the
-  "teeny" number.  Replace explicit ${SHLIB_MAJOR}.${SHLIB_MINOR}
+  Introduce the optional ``teeny'' variable in shlib_version, so that
+  we don't abuse the ``minor'' number to optionally include the
+  ``teeny'' number.  Replace explicit ${SHLIB_MAJOR}.${SHLIB_MINOR}
   with ${SHLIB_FULLVERSION}.
 
 lib/libc/string/strlcat.c			1.1-1.3
@@ -764,7 +765,7 @@ include/string.h				1.19-1.20
 distrib/sets/lists/base/shl.mi			patch
 distrib/sets/lists/comp/mi			patch
 
-  Add strlcpy() and strlcat() to libc, bump its "teeny" version
+  Add strlcpy() and strlcat() to libc, bump its ``teeny'' version
   number.
 
 usr.sbin/user/user.c				patch
@@ -778,7 +779,7 @@ sys/arch/i386/conf/GENERIC			patch
 
 sys/arch/i386/stand/dosboot/Makefile		1.14
 
-  Enable "old partition ID" compatibility by default, just as in
+  Enable ``old partition ID'' compatibility by default, just as in
   biosboot.
 
 sys/dev/pci/if_ti.c				1.3
@@ -873,7 +874,7 @@ lib/libc/sys/nanosleep.2			1.3
 distrib/notes/common/main			patch
 
   Note that we support several new PCI IDE controllers in
-  the "notable changes" section.
+  the ``notable changes'' section.
 
 distrib/sets/lists/base/md.sparc		patch
 
@@ -882,6 +883,7 @@ distrib/sets/lists/base/md.sparc		patch
 libexec/ftpd/ftpd.c				1.97
 
   Do not use user-supplied data as format string to setproctitle().
+  Fixes SA#2000-009.
 
 sys/arch/macppc/pci/pciide_machdep.c		patch
 
@@ -905,7 +907,7 @@ distrib/i386/Makefile				1.1 (new)
 etc/Makefile				1.119,1.123,1.135-1.136 via patch
 etc/etc.i386/Makefile.inc			1.15-1.16,1.21 via patch
 
-  Enhance the "make release" process:
+  Enhance the ``make release'' process:
    o Build install notes on all platforms, put into release tree
    o Document BUILD_KERNELS in etc/Makefile
    o Always build GENERIC, and install the kernel in the kernel
@@ -923,3 +925,22 @@ distrib/sparc/bootfs/Makefile			patch
 
   Use the boot loader at 3E0000 instead of 700000, to allow booting
   on machines with only 4M in the first physical memory bank.
+
+etc/etc.sparc/Makefile.inc			patch
+distrib/sparc/Makefile				patch
+etc/etc.alpha/Makefile.inc			1.1 via patch (new)
+sys/arch/alpha/stand/netboot/Makefile		patch
+etc/etc.hp300/Makefile.inc			1.7
+sys/arch/hp300/stand/Makefile			1.24
+sys/arch/hp300/stand/Makefile.inc		1.9
+sys/arch/hp300/stand/inst/Makefile		1.3
+sys/arch/hp300/stand/uboot/Makefile		1.3
+etc/etc.macppc/Makefile.inc			1.1-1.2 via patch (new)
+distrib/macppc/Makefile				patch (new)
+sys/arch/macppc/stand/ofwboot/Makefile		patch
+sys/arch/macppc/stand/Makefile			patch
+sys/arch/macppc/stand/Makefile.inc		patch
+
+  Enhance the ``make release'' process:  
+   o Make installation directories
+   o Build and install the distrib and boot bits
