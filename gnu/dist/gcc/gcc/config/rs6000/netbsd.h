@@ -59,6 +59,17 @@ Boston, MA 02111-1307, USA.  */
 #undef PTRDIFF_TYPE
 #define PTRDIFF_TYPE "int"
 
+/* Redefine some types that where redefined by rs6000 include files.  */
+
+#undef WCHAR_TYPE
+#define WCHAR_TYPE "int"
+
+#undef WCHAR_TYPE_SIZE
+#define WCHAR_TYPE_SIZE 32
+
+#undef WINT_TYPE
+#define WINT_TYPE "int"
+
 /* Undo the spec mess from sysv4.h, and just define the specs
    the way NetBSD systems actually expect.  */
 
