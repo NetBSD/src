@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.47 2001/05/02 10:32:16 scw Exp $	*/
+/*	$NetBSD: ite.c,v 1.48 2001/11/17 23:53:37 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -83,6 +83,8 @@
  * This is a very rudimentary.  Much more can be abstracted out of
  * the hardware dependent routines.
  */
+
+#include "hil.h"
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -248,7 +250,9 @@ iteon(ip, flag)
 
 	if (kbd_ite == NULL || kbd_ite == ip) {
 		kbd_ite = ip;
+#if NHIL > 0
 		kbdenable(0);		/* XXX */
+#endif
 	}
 
 	iteinit(ip);
@@ -535,6 +539,7 @@ void
 itefilter(stat, c)
 	char stat, c;
 {
+#if NHIL >0
 	static int capsmode = 0;
 	static int metamode = 0;
 	char code, *str;
@@ -592,6 +597,7 @@ itefilter(stat, c)
 			code |= 0x80;
 		(*kbd_tty->t_linesw->l_rint)(code, kbd_tty);
 	}
+#endif
 }
 
 void
@@ -840,7 +846,9 @@ ignore:
 
 	case CTRL('G'):
 		if (ip == kbd_ite)
+#if NHIL > 0
 			kbdbell(0);	/* XXX */
+#endif
 		break;
 
 	case ESC:
@@ -1005,7 +1013,9 @@ itecninit(gp, isw)
 	/*
 	 * Initialize the console keyboard.
 	 */
+#if NHIL > 0
 	kbdcninit();
+#endif
 
 	kbd_ite = ip;		/* XXX */
 }
@@ -1015,7 +1025,8 @@ int
 itecngetc(dev)
 	dev_t dev;
 {
-	int c;
+	int c = 0;
+#if NHIL > 0
 	int stat;
 
 	c = kbdgetc(&stat);
@@ -1033,6 +1044,7 @@ itecngetc(dev)
 		c = 0;
 		break;
 	}
+#endif
 	return(c);
 }
 
