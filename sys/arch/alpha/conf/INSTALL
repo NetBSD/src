@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.84 2005/02/11 08:25:53 dsl Exp $
+# $NetBSD: INSTALL,v 1.85 2005/02/18 21:05:50 dsl Exp $
 #
 # Alpha INSTALL kernel.
 
@@ -49,7 +49,7 @@ file-system	KERNFS		# Kernel variable file system (/kern)
 # Filesystem options
 #options 	NFS_V2_ONLY	# Exclude NFS3 and NQNFS code to save space
 options 	VNODE_OP_NOINLINE	# Not inlining vnode op calls saves mem
-options 	FFS_SNAPSHOT	# ffs snapshots
+#options 	FFS_NO_SNAPSHOT	# ffs snapshots
 
 # Networking options
 options 	INET		# Internet protocol suite

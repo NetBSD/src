@@ -1,4 +1,4 @@
-# 	$NetBSD: BILL-THE-CAT,v 1.29 2005/02/11 08:25:56 dsl Exp $
+# 	$NetBSD: BILL-THE-CAT,v 1.30 2005/02/18 21:05:54 dsl Exp $
 # 	From: NetBSD: GENERIC,v 1.84 1999/06/06 13:00:03 mrg Exp
 
 include "arch/sparc/conf/std.sparc"
@@ -155,7 +155,7 @@ file-system	MSDOSFS		# MS-DOS FAT filesystem(s).
 #options 	NFSSERVER	# Sun NFS-compatible filesystem server
 #options 	QUOTA		# FFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
-options 	FFS_SNAPSHOT	# ffs snapshots
+#options 	FFS_NO_SNAPSHOT	# ffs snapshots
 
 ## Network protocol support.  In most environments, INET is required.
 options 	INET		# IP (Internet Protocol) v4
