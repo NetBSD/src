@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.h,v 1.15 2003/11/09 18:56:48 christos Exp $	*/
+/*	$NetBSD: pthread.h,v 1.16 2003/12/07 20:29:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -166,6 +166,9 @@ int	pthread_barrier_wait(pthread_barrier_t *);
 int	pthread_barrier_destroy(pthread_barrier_t *);
 int	pthread_barrierattr_init(pthread_barrierattr_t *);
 int	pthread_barrierattr_destroy(pthread_barrierattr_t *);
+
+int	pthread_getschedparam(pthread_t, int *, struct sched_param *);
+int	pthread_setschedparam(pthread_t, int, const struct sched_param *);
 
 int 	*pthread__errno(void);
 __END_DECLS
