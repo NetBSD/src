@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi_util.c,v 1.17 1999/08/14 14:49:32 augustss Exp $	*/
+/*	$NetBSD: usbdi_util.c,v 1.18 1999/08/17 16:06:21 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -438,7 +438,7 @@ usbd_alloc_report_desc(ifc, descp, sizep, mem)
 	usbd_interface_handle ifc;
 	void **descp;
 	int *sizep;
-#if defined(__NetBSD__)
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 	int mem;
 #elif defined(__FreeBSD__)
 	struct malloc_type *mem;

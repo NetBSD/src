@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.16 1999/08/14 14:49:32 augustss Exp $	*/
+/*	$NetBSD: usb.c,v 1.17 1999/08/17 16:06:21 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
-#if defined(__NetBSD__)
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 #include <sys/device.h>
 #include <sys/kthread.h>
 #elif defined(__FreeBSD__)
@@ -100,7 +100,7 @@ struct usb_softc {
 	struct proc *event_thread;
 };
 
-#if defined(__NetBSD__)
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 int usbopen __P((dev_t, int, int, struct proc *));
 int usbclose __P((dev_t, int, int, struct proc *));
 int usbioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
@@ -134,7 +134,7 @@ USB_MATCH(usb)
 
 USB_ATTACH(usb)
 {
-#if defined(__NetBSD__)
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 	struct usb_softc *sc = (struct usb_softc *)self;
 #elif defined(__FreeBSD__)
 	struct usb_softc *sc = device_get_softc(self);
@@ -143,7 +143,7 @@ USB_ATTACH(usb)
 	usbd_device_handle dev;
 	usbd_status r;
 	
-#if defined(__NetBSD__)
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 	printf("\n");
 #elif defined(__FreeBSD__)
 	sc->sc_dev = self;
@@ -214,7 +214,7 @@ usb_event_thread(arg)
 	kthread_exit(0);
 }
 
-#if defined(__NetBSD__)
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 int
 usbctlprint(aux, pnp)
 	void *aux;

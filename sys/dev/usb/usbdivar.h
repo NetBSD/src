@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.22 1999/06/30 06:44:23 augustss Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.23 1999/08/17 16:06:21 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -203,7 +203,7 @@ usbd_status	usb_get_bus_handle __P((int, usbd_bus_handle *));
 
 #if defined(__NetBSD__)
 #include "locators.h"
-#elif defined(__FreeBSD__)
+#elif defined(__FreeBSD__) || defined(__OpenBSD__)
 /* XXX these values are used to statically bind some elements in the USB tree
  * to specific driver instances. This should be somehow emulated in FreeBSD
  * but can be done later on.
@@ -215,6 +215,15 @@ usbd_status	usb_get_bus_handle __P((int, usbd_bus_handle *));
 #define UHUBCF_VENDOR_DEFAULT -1
 #define UHUBCF_PRODUCT_DEFAULT -1
 #define UHUBCF_RELEASE_DEFAULT -1
+#endif
+
+#if defined (__OpenBSD__)
+#define	UHUBCF_PORT		0
+#define	UHUBCF_CONFIGURATION	1
+#define	UHUBCF_INTERFACE	2
+#define	UHUBCF_VENDOR		3
+#define	UHUBCF_PRODUCT		4
+#define	UHUBCF_RELEASE		5
 #endif
 
 #define	uhubcf_port		cf_loc[UHUBCF_PORT]
