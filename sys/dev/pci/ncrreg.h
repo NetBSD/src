@@ -1,4 +1,4 @@
-/*      $NetBSD: ncrreg.h,v 1.10 1997/01/10 05:57:14 perry Exp $      */
+/*      $NetBSD: ncrreg.h,v 1.11 1997/07/23 07:41:56 bouyer Exp $      */
 
 /**************************************************************************
 **
@@ -544,7 +544,7 @@ struct scr_tblsel {
 **	Messages
 */
 #ifdef __NetBSD__
-#include <scsi/scsi_message.h>
+#include <dev/scsipi/scsi_message.h>
 
 #define	M_COMPLETE	MSG_CMDCOMPLETE
 #define	M_EXTENDED	MSG_EXTENDED
