@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.22 2004/01/05 23:23:37 jmmv Exp $	*/
+/*	$NetBSD: main.c,v 1.23 2004/01/05 23:35:41 jmmv Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.22 2004/01/05 23:23:37 jmmv Exp $");
+__RCSID("$NetBSD: main.c,v 1.23 2004/01/05 23:35:41 jmmv Exp $");
 #endif
 #endif /* not lint */
 
@@ -97,11 +97,11 @@ usage()
 	fprintf(stderr, "usage: %s %s%s%s%s\n",
 	    prompt,
 #ifdef	AUTHENTICATION
-	    "[-4] [-6] [-8] [-E] [-K] [-L] [-N] [-S tos] [-X atype] [-a] [-c] [-d]",
-	    "\n\t[-e char] [-k realm] [-l user] [-f/-F] [-n tracefile] ",
+	    "[-4] [-6] [-8] [-E] [-K] [-L] [-N] [-S tos] [-X atype] [-a] [-c]",
+	    "\n\t[-d] [-e char] [-k realm] [-l user] [-f/-F] [-n tracefile] ",
 #else
-	    "[-4] [-6] [-8] [-E] [-L] [-N] [-S tos] [-a] [-c] [-d] [-e char] [-l user]",
-	    "\n\t[-n tracefile]",
+	    "[-4] [-6] [-8] [-E] [-L] [-N] [-S tos] [-a] [-c] [-d] [-e char]",
+	    "\n\t[-l user] [-n tracefile] ",
 #endif
 #ifdef TN3270
 # ifdef AUTHENTICATION
@@ -116,9 +116,9 @@ usage()
 	    "[-x] "
 #endif
 #if defined(IPSEC) && defined(IPSEC_POLICY_IPSEC)
-	    "[-P policy] [host-name [port]]"
+	    "\n\t[-P policy] [host-name [port]]"
 #else
-	    "[host-name [port]]"
+	    "\n\t[host-name [port]]"
 #endif
 	);
 	exit(1);
