@@ -1,4 +1,4 @@
-/*	$NetBSD: ofb.c,v 1.1 1998/10/14 12:15:11 tsubai Exp $	*/
+/*	$NetBSD: ofb.c,v 1.2 1998/10/14 13:21:10 tsubai Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -155,7 +155,7 @@ ofbattach(parent, self, aux)
 	dc->dc_raster.pixels = mapiodev(dc->dc_paddr,
 				dc->dc_linebytes * dc->dc_height);
 
-	printf(": %d x %d, %dbpp",
+	printf(": %d x %d, %dbpp\n",
 	    dc->dc_raster.width, dc->dc_raster.height, dc->dc_raster.depth);
 
 	a.console = console;
