@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.2 2002/03/05 14:21:32 simonb Exp $ */
+/*	$NetBSD: svr4_machdep.c,v 1.3 2002/04/06 18:03:17 manu Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@ svr4_setmcontext(p, mc, flags)
 	svr4_mcontext_t *mc;
 	unsigned long flags;
 {
-
+	printf("Warning: svr4_setmcontext() called\n");
 	return 0;
 }
 
@@ -89,7 +89,7 @@ svr4_getmcontext(p, mc, flags)
 	svr4_mcontext_t *mc;
 	unsigned long *flags;
 {    
-
+	printf("Warning: svr4_getmcontext() called\n");
 	return NULL;
 }
 
