@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.11 2001/04/29 22:44:36 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.12 2001/05/01 02:19:18 thorpej Exp $	*/
 
 /*
  * This file was taken from from mvme68k/include/vmparam.h and
@@ -162,9 +162,7 @@
 #define	VM_NFREELIST		1
 #define	VM_FREELIST_DEFAULT	0
 
-#define	VM_MDPAGE_MEMBERS	/* XXX nothing yet */
-#define	VM_MDPAGE_INIT(pg)	/* XXX nothing yet */
-#define	PMAP_PHYSSEG		/* XXX for now */
+#define	__HAVE_PMAP_PHYSSEG
 
 /*
  * pmap-specific data stored in the vm_physmem[] array.
