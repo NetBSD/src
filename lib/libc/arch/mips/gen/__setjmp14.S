@@ -1,4 +1,4 @@
-/*	$NetBSD: __setjmp14.S,v 1.1 1998/09/27 22:59:40 jonathan Exp $	*/
+/*	$NetBSD: __setjmp14.S,v 1.2 1999/01/15 03:53:33 castor Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -36,13 +36,15 @@
  * SUCH DAMAGE.
  */
 
+#include <machine/cdefs.h>
 #include <sys/syscall.h>
 #include <mips/regnum.h>
 #include <mips/asm.h>
+#include <machine/setjmp.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)setjmp.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$NetBSD: __setjmp14.S,v 1.1 1998/09/27 22:59:40 jonathan Exp $")
+	ASMSTR("$NetBSD: __setjmp14.S,v 1.2 1999/01/15 03:53:33 castor Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef ABICALLS
@@ -77,7 +79,7 @@ NON_LEAF(__setjmp14, SETJMP_FRAME_SIZE, ra)
 	sw	a0, SETJMP_FRAME_SIZE(sp)	# squirrel away sc
 
 	/* Get the signal mask. */
-	addu	a2, a0, 320			# &sc.sc_mask
+	addu	a2, a0, _OFFSETOF_SC_MASK	# &sc.sc_mask
 	move	a1, zero
 	jal	_C_LABEL(__sigprocmask14)	# get current signal mask
 	move	a0, zero			# (in delay slot)
@@ -97,38 +99,40 @@ NON_LEAF(__setjmp14, SETJMP_FRAME_SIZE, ra)
 
 	blt	v0, zero, botch			# check for sigaltstack() error
 
-	sw	ra, (2 * 4)(a0)			# sc_pc = return address
-	li	v0, 0xACEDBADE			# sigcontext magic number
-	sw	v0, ((ZERO + 3) * 4)(a0)	#   saved in sc_regs[0]
-	sw	s0, ((S0 + 3) * 4)(a0)
-	sw	s1, ((S1 + 3) * 4)(a0)
-	sw	s2, ((S2 + 3) * 4)(a0)
-	sw	s3, ((S3 + 3) * 4)(a0)
-	sw	s4, ((S4 + 3) * 4)(a0)
-	sw	s5, ((S5 + 3) * 4)(a0)
-	sw	s6, ((S6 + 3) * 4)(a0)
-	sw	s7, ((S7 + 3) * 4)(a0)
-	sw	gp, ((GP + 3) * 4)(a0)
-	sw	sp, ((SP + 3) * 4)(a0)
-	sw	s8, ((S8 + 3) * 4)(a0)
+	REG_PROLOGUE
+	REG_S	ra, (2 * 4)(a0)			# sc_pc = return address
+	REG_LI	v0, 0xACEDBADE			# sigcontext magic number
+	REG_S	v0, (_OFFSETOF_SC_REGS + ZERO * SZREG)(a0) #   saved in sc_regs[0]
+	REG_S	s0, (_OFFSETOF_SC_REGS + S0 * SZREG)(a0)
+	REG_S	s1, (_OFFSETOF_SC_REGS + S1 * SZREG)(a0)
+	REG_S	s2, (_OFFSETOF_SC_REGS + S2 * SZREG)(a0)
+	REG_S	s3, (_OFFSETOF_SC_REGS + S3 * SZREG)(a0)
+	REG_S	s4, (_OFFSETOF_SC_REGS + S4 * SZREG)(a0)
+	REG_S	s5, (_OFFSETOF_SC_REGS + S5 * SZREG)(a0)
+	REG_S	s6, (_OFFSETOF_SC_REGS + S6 * SZREG)(a0)
+	REG_S	s7, (_OFFSETOF_SC_REGS + S7 * SZREG)(a0)
+	REG_S	gp, (_OFFSETOF_SC_REGS + GP * SZREG)(a0)
+	REG_S	sp, (_OFFSETOF_SC_REGS + SP * SZREG)(a0)
+	REG_S	s8, (_OFFSETOF_SC_REGS + S8 * SZREG)(a0)
 	li	v0, 1				# be nice if we could tell
-	sw	v0, (37 * 4)(a0)		# sc_fpused = 1
+	sw	v0, (_OFFSETOF_SC_REGS + 34 * SZREG)(a0)	# sc_fpused = 1
 	cfc1	v0, $31
-	swc1	$f20, ((20 + 38) * 4)(a0)
-	swc1	$f21, ((21 + 38) * 4)(a0)
-	swc1	$f22, ((22 + 38) * 4)(a0)
-	swc1	$f23, ((23 + 38) * 4)(a0)
-	swc1	$f24, ((24 + 38) * 4)(a0)
-	swc1	$f25, ((25 + 38) * 4)(a0)
-	swc1	$f26, ((26 + 38) * 4)(a0)
-	swc1	$f27, ((27 + 38) * 4)(a0)
-	swc1	$f28, ((28 + 38) * 4)(a0)
-	swc1	$f29, ((29 + 38) * 4)(a0)
-	swc1	$f30, ((30 + 38) * 4)(a0)
-	swc1	$f31, ((31 + 38) * 4)(a0)
-	sw	v0, ((32 + 38) * 4)(a0)
+	swc1	$f20, (20 * 4 + _OFFSETOF_SC_FPREGS)(a0)
+	swc1	$f21, (21 * 4 + _OFFSETOF_SC_FPREGS)(a0)
+	swc1	$f22, (22 * 4 + _OFFSETOF_SC_FPREGS)(a0)
+	swc1	$f23, (23 * 4 + _OFFSETOF_SC_FPREGS)(a0)
+	swc1	$f24, (24 * 4 + _OFFSETOF_SC_FPREGS)(a0)
+	swc1	$f25, (25 * 4 + _OFFSETOF_SC_FPREGS)(a0)
+	swc1	$f26, (26 * 4 + _OFFSETOF_SC_FPREGS)(a0)
+	swc1	$f27, (27 * 4 + _OFFSETOF_SC_FPREGS)(a0)
+	swc1	$f28, (28 * 4 + _OFFSETOF_SC_FPREGS)(a0)
+	swc1	$f29, (29 * 4 + _OFFSETOF_SC_FPREGS)(a0)
+	swc1	$f30, (30 * 4 + _OFFSETOF_SC_FPREGS)(a0)
+	swc1	$f31, (31 * 4 + _OFFSETOF_SC_FPREGS)(a0)
+	sw	v0, (32 * 4 + _OFFSETOF_SC_FPREGS)(a0)
 	move	v0, zero
 	j	ra
+	REG_EPILOGUE
 END(__setjmp14)
 
 LEAF(__longjmp14)
@@ -139,7 +143,10 @@ LEAF(__longjmp14)
 	subu	sp, sp, 32
 	.cprestore 16
 #endif
-	sw	a1, ((V0 + 3) * 4)(a0)	# save return value in sc_regs[V0]
+	REG_PROLOGUE
+	/* save return value in sc_regs[V0] */
+	REG_S	a1,(_OFFSETOF_SC_REGS + V0 * SZREG)(a0)
+	REG_EPILOGUE
 	li	v0, SYS___sigreturn14
 	syscall
 botch:
