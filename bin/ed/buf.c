@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.c,v 1.18 1998/07/28 05:31:24 mycroft Exp $	*/
+/*	$NetBSD: buf.c,v 1.19 1998/11/04 13:41:32 christos Exp $	*/
 
 /* buf.c: This file contains the scratch-file buffer rountines for the
    ed line editor. */
@@ -33,7 +33,7 @@
 #if 0
 static char *rcsid = "@(#)buf.c,v 1.4 1994/02/01 00:34:35 alm Exp";
 #else
-__RCSID("$NetBSD: buf.c,v 1.18 1998/07/28 05:31:24 mycroft Exp $");
+__RCSID("$NetBSD: buf.c,v 1.19 1998/11/04 13:41:32 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -161,8 +161,8 @@ get_line_node_addr(lp)
 	if (n && cp == &buffer_head) {
 		sprintf(errmsg, "invalid address");
 		return ERR;
-	 }
-	 return n;
+	}
+	return n;
 }
 
 
@@ -175,24 +175,25 @@ get_addressed_line_node(n)
 	static long on = 0;
 
 	SPL1();
-	if (n > on)
-		if (n <= (on + addr_last) >> 1)
+	if (n > on) {
+		if (n <= (on + addr_last) >> 1) {
 			for (; on < n; on++)
 				lp = lp->q_forw;
-		else {
+		} else {
 			lp = buffer_head.q_back;
 			for (on = addr_last; on > n; on--)
 				lp = lp->q_back;
 		}
-	else
-		if (n >= on >> 1)
+	} else {
+		if (n >= on >> 1) {
 			for (; on > n; on--)
 				lp = lp->q_back;
-		else {
+		} else {
 			lp = &buffer_head;
 			for (on = 0; on < n; on++)
 				lp = lp->q_forw;
 		}
+	}
 	SPL0();
 	return lp;
 }
