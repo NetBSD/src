@@ -1,4 +1,4 @@
-/*	$NetBSD: quot.c,v 1.21 2004/01/06 13:30:56 wiz Exp $	*/
+/*	$NetBSD: quot.c,v 1.22 2004/03/21 22:07:22 dsl Exp $	*/
 
 /*
  * Copyright (C) 1991, 1994 Wolfgang Solfrank.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: quot.c,v 1.21 2004/01/06 13:30:56 wiz Exp $");
+__RCSID("$NetBSD: quot.c,v 1.22 2004/03/21 22:07:22 dsl Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -566,6 +566,7 @@ quot(name, mp)
 {
 	int fd, i;
 	struct fs *fs;
+	int sbloc;
 	
 	get_inode(-1, 0, 0);		/* flush cache */
 	inituser();
@@ -575,25 +576,37 @@ quot(name, mp)
 		return;
 	}
 
-	for (i = 0; sblock_try[i] != -1; i++) {
-		if (lseek(fd, sblock_try[i], 0) != sblock_try[i])
-			continue;
-		if (read(fd, superblock, SBLOCKSIZE) != SBLOCKSIZE)
+	for (i = 0; ; i++) {
+		sbloc = sblock_try[i];
+		if (sbloc == -1) {
+			warnx("%s: not a BSD filesystem", name);
+			close(fd);
+			return;
+		}
+		if (pread(fd, superblock, SBLOCKSIZE, sbloc) != SBLOCKSIZE)
 			continue;
 		fs = (struct fs *)superblock;
 
-		if ((fs->fs_magic == FS_UFS1_MAGIC ||
-		    (fs->fs_magic == FS_UFS2_MAGIC &&
-		     fs->fs_sblockloc == numfrags(fs, sblock_try[i]))) &&
-		    fs->fs_bsize <= MAXBSIZE &&
-		    fs->fs_bsize >= sizeof(struct fs))
-			break;
+		if (fs->fs_magic != FS_UFS1_MAGIC &&
+		    fs->fs_magic != FS_UFS2_MAGIC)
+			continue;
+
+		if (fs->fs_old_flags & FS_FLAGS_UPDATED) {
+			/* Not the main superblock */
+			if (fs->fs_sblockloc != sbloc)
+				continue;
+		} else {
+			/* might be a first alt. id blocksize 64k */
+			if (sbloc == SBLOCK_UFS2)
+				continue;
+		}
+
+		if (fs->fs_bsize > MAXBSIZE ||
+		    fs->fs_bsize < sizeof(struct fs))
+			continue;
+		break;
 	}
-	if (sblock_try[i] == -1) {
-		warnx("%s: not a BSD filesystem", name);
-		close(fd);
-		return;
-	}
+
 	ffs_oldfscompat((struct fs *)superblock);
 	printf("%s:", name);
 	if (mp)
