@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.391 2001/08/17 07:23:05 wiz Exp $
+# $NetBSD: mi,v 1.392 2001/08/17 22:25:42 thorpej Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -519,6 +519,7 @@
 ./usr/share/man/cat4/boca.0			man-sys-catman
 ./usr/share/man/cat4/bpf.0			man-sys-catman
 ./usr/share/man/cat4/brgphy.0			man-sys-catman
+./usr/share/man/cat4/bridge.0			man-sys-catman
 ./usr/share/man/cat4/bt.0			man-sys-catman
 ./usr/share/man/cat4/cac.0			man-sys-catman
 ./usr/share/man/cat4/cardbus.0			man-sys-catman
@@ -1162,6 +1163,7 @@
 ./usr/share/man/cat8/bootptest.0		man-bootserver-catman
 ./usr/share/man/cat8/bootselect.0		man-sys-catman
 ./usr/share/man/cat8/bounce.0			man-postfix-catman
+./usr/share/man/cat8/brconfig.0			man-netutil-catman
 ./usr/share/man/cat8/catman.0			man-man-catman
 ./usr/share/man/cat8/ccdconfig.0		man-sysutil-catman
 ./usr/share/man/cat8/chat.0			man-ppp-catman
@@ -2089,6 +2091,7 @@
 ./usr/share/man/man4/boca.4			man-sys-man
 ./usr/share/man/man4/bpf.4			man-sys-man
 ./usr/share/man/man4/brgphy.4			man-sys-man
+./usr/share/man/man4/bridge.4			man-sys-man
 ./usr/share/man/man4/bt.4			man-sys-man
 ./usr/share/man/man4/cac.4			man-sys-man
 ./usr/share/man/man4/cardbus.4			man-sys-man
@@ -2732,6 +2735,7 @@
 ./usr/share/man/man8/bootptest.8		man-bootserver-man
 ./usr/share/man/man8/bootselect.8		man-sys-man
 ./usr/share/man/man8/bounce.8			man-postfix-man
+./usr/share/man/man8/brconfig.8			man-netutil-man
 ./usr/share/man/man8/catman.8			man-man-man
 ./usr/share/man/man8/ccdconfig.8		man-sysutil-man
 ./usr/share/man/man8/chat.8			man-ppp-man
