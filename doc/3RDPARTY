@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.201 2004/03/28 18:02:17 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.202 2004/03/30 05:29:27 martti Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -309,7 +309,7 @@ Archive Site:	ftp://ftp.cgl.ucsf.edu/pub/hunt.shar.Z
 Responsible:	mrg
 Notes:
 
-Package:	ip-filter
+Package:	ipf
 Version:	4.1.1
 Current Vers:	4.1.1
 Maintainer:	Darren Reed
