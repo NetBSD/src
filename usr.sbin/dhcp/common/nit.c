@@ -44,7 +44,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: nit.c,v 1.1.1.8.2.1 2000/10/18 04:11:10 tv Exp $ Copyright (c) 1996-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: nit.c,v 1.1.1.8.2.2 2001/04/04 20:56:18 he Exp $ Copyright (c) 1996-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -314,7 +314,8 @@ ssize_t send_packet (interface, packet, raw, len, from, to, hto)
 
 	/* Start with the sockaddr struct... */
 	junk = (struct sockaddr *)&hh [0];
-	hbufp = ((unsigned char *)&junk -> sa_data [0]) - &buf [0];
+	hbufp = (((unsigned char *)&junk -> sa_data [0]) -
+		 (unsigned char *)&hh[0]);
 	ibufp = 0;
 
 	/* Assemble the headers... */
