@@ -1,4 +1,4 @@
-/* $NetBSD: irongate_dma.c,v 1.1 2000/06/01 20:30:30 thorpej Exp $ */
+/* $NetBSD: irongate_dma.c,v 1.2 2000/06/11 22:47:00 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: irongate_dma.c,v 1.1 2000/06/01 20:30:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irongate_dma.c,v 1.2 2000/06/11 22:47:00 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,15 +73,6 @@ __KERNEL_RCSID(0, "$NetBSD: irongate_dma.c,v 1.1 2000/06/01 20:30:30 thorpej Exp
 #include <dev/isa/isavar.h>
 
 bus_dma_tag_t irongate_dma_get_tag(bus_dma_tag_t, alpha_bus_t);
-
-int	irongate_bus_dmamap_create_pci_direct(bus_dma_tag_t, bus_size_t, int,
-	    bus_size_t, bus_size_t, int, bus_dmamap_t *);
-
-int	irongate_bus_dmamap_create_isa_direct(bus_dma_tag_t, bus_size_t, int,
-	    bus_size_t, bus_size_t, int, bus_dmamap_t *);
-
-int	irongate_bus_dmamap_create_isa_bounce(bus_dma_tag_t, bus_size_t, int,
-	    bus_size_t, bus_size_t, int, bus_dmamap_t *);
 
 void
 irongate_dma_init(struct irongate_config *icp)
