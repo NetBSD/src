@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.24 2004/03/25 15:29:26 drochner Exp $	*/
+/*	$NetBSD: machdep.c,v 1.25 2004/03/28 15:46:14 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.24 2004/03/25 15:29:26 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.25 2004/03/28 15:46:14 drochner Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_ddb.h"
@@ -402,33 +402,6 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 		       CTL_MACHDEP, CPU_DISKINFO, CTL_EOL);
 }
 
-void *
-getframe(struct lwp *l, int sig, int *onstack)
-{
-	struct proc *p = l->l_proc;
-	struct trapframe *tf = l->l_md.md_regs;
-	char *sp;
-
-	/* Do we need to jump onto the signal stack? */
-	*onstack =
-	    (p->p_sigctx.ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
-	    (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
-
-	/* Allocate space for the signal handler context. */
-	if (*onstack)
-		sp = ((caddr_t)p->p_sigctx.ps_sigstk.ss_sp +
-					  p->p_sigctx.ps_sigstk.ss_size);
-	else
-		sp = (caddr_t)tf->tf_rsp - 128;
-	/*
-	 * Round down the stackpointer to a multiple of 16 for
-	 * fxsave and the ABI.
-	 */
-	sp = (char *)((unsigned long)sp & ~15) - 8;
-
-	return (void *)sp;
-}
-
 void
 buildcontext(struct lwp *l, void *catcher, void *f)
 {
@@ -454,11 +427,29 @@ sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	struct sigacts *ps = p->p_sigacts;
 	int onstack, tocopy;
 	int sig = ksi->ksi_signo;
-	struct sigframe_siginfo *fp = getframe(l, sig, &onstack), frame;
+	struct sigframe_siginfo *fp, frame;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
 	struct trapframe *tf = l->l_md.md_regs;
+	char *sp;
 
-	fp--;
+	/* Do we need to jump onto the signal stack? */
+	onstack =
+	    (p->p_sigctx.ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
+	    (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
+
+	/* Allocate space for the signal handler context. */
+	if (onstack)
+		sp = ((caddr_t)p->p_sigctx.ps_sigstk.ss_sp +
+					  p->p_sigctx.ps_sigstk.ss_size);
+	else
+		sp = (caddr_t)tf->tf_rsp - 128;
+
+	sp -= sizeof(struct sigframe_siginfo);
+	/*
+	 * Round down the stackpointer to a multiple of 16 for
+	 * fxsave and the ABI.
+	 */
+	fp = (struct sigframe_siginfo *)(((unsigned long)sp & ~15) - 8);
 
 	/* Build stack frame for signal trampoline. */
 	switch (ps->sa_sigdesc[sig].sd_vers) {
