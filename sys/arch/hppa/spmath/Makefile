@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2002/06/05 01:04:24 fredette Exp $
+#	$NetBSD: Makefile,v 1.2 2004/06/15 07:41:36 skrll Exp $
 
 #	$OpenBSD: Makefile,v 1.4 2000/01/11 21:32:57 mickey Exp $
 
@@ -10,6 +10,8 @@ SRCS=	dfadd.c dfcmp.c dfdiv.c dfmpy.c dfrem.c dfsqrt.c dfsub.c divsfm.c \
 	fcnvfxt.c fcnvxf.c frnd.c impys.S impyu.S mpyaccs.c mpyaccu.c mpys.c \
 	mpyscv.c mpyu.c mpyucv.c setovfl.c sfadd.c sfcmp.c sfdiv.c sfmpy.c \
 	sfrem.c sfsqrt.c sfsub.c fpudispatch.c
+
+CPPFLAGS+=	${SPMATHCPPFLAGS}
 
 MACHINE=	${XMACHINE}
 MACHINE_ARCH=	${XMACHINE_ARCH}
