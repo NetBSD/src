@@ -45,9 +45,10 @@ extern char *xmalloc (), *xrealloc ();
 #endif
 
 /* Backwards compatibility, now that savestring has been removed from
-   all `public' readline header files. */
+   all `public' readline header files.  Note that the actual name of
+   this function in the old library was _rl_savestring.  */
 char *
-savestring (s)
+_rl_savestring (s)
      char *s;
 {
   return ((char *)strcpy (xmalloc (1 + (int)strlen (s)), (s)));
