@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.19 2002/05/13 20:30:10 matt Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.20 2002/11/04 08:12:30 itohy Exp $	*/
 
 /*-
  * Copyright (C) 2002 UCHIYAMA Yasushi.  All rights reserved.
@@ -520,7 +520,7 @@ db_frame_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 
 	/* Print trap frame stack */
 	db_printf("[trap frame]\n");
-	__asm__ __volatile__("stc r6_bank, %0" :: "r"(tf));
+	__asm__("stc r6_bank, %0" : "=r"(tf));
 	for (; tf != tftop; tf++) {
 		db_printf("-- %p-%p --\n", tf, tf + 1);
 		db_printf("tf_expevt\t0x%08x\n", tf->tf_expevt);
