@@ -24,11 +24,14 @@
  * rights to redistribute these changes.
  */
 /*
- * $Id: db_watch.h,v 1.2 1993/05/20 03:39:39 cgd Exp $
+ * $Id: db_watch.h,v 1.3 1994/01/08 01:01:52 mycroft Exp $
  *
  * HISTORY
  * $Log: db_watch.h,v $
- * Revision 1.2  1993/05/20 03:39:39  cgd
+ * Revision 1.3  1994/01/08 01:01:52  mycroft
+ * Rearrange some #includes.
+ *
+ * Revision 1.2  1993/05/20  03:39:39  cgd
  * add explicit rcs id
  *
  * Revision 1.1.1.1  1993/03/21  09:46:27  cgd
@@ -56,7 +59,8 @@
 #ifndef	_DDB_DB_WATCH_
 #define	_DDB_DB_WATCH_
 
-#include <vm/vm_map.h>
+#include <vm/vm.h>
+
 #include <machine/db_machdep.h>
 
 /*
