@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.103 2002/04/09 21:08:58 mycroft Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.104 2002/05/14 21:27:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: disklabel.c,v 1.103 2002/04/09 21:08:58 mycroft Exp $");
+__RCSID("$NetBSD: disklabel.c,v 1.104 2002/05/14 21:27:05 thorpej Exp $");
 #endif
 #endif	/* not lint */
 
@@ -60,7 +60,7 @@ __RCSID("$NetBSD: disklabel.c,v 1.103 2002/04/09 21:08:58 mycroft Exp $");
 #define FSTYPENAMES
 #include <sys/disklabel.h>
 #ifdef __alpha__
-#include <dev/dec/dec_boot.h>
+#include <sys/bootblock.h>
 #endif
 
 #include <ufs/ufs/dinode.h>
