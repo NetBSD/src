@@ -1,4 +1,4 @@
-/* $NetBSD: sbicreg.h,v 1.3 2001/04/21 20:47:27 rearnsha Exp $ */
+/* $NetBSD: sbicreg.h,v 1.4 2001/08/14 22:58:18 rearnsha Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -259,7 +259,7 @@
 #define	SBIC_CSR_UNK_GROUP	0x87	/* strange CDB1 */
 #define	SBIC_CSR_MIS_2		0x88	/* (I) ph mis, see low bits */
 
-#define	SBIC_PHASE(csr)		SCSI_PHASE(csr)
+#define	SBIC_PHASE(csr)		((csr) & PHASE_MASK)
 
 /*
  * Command register (command codes)
