@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.18 2004/08/23 05:37:42 thorpej Exp $ */
+/* $NetBSD: cgd.c,v 1.19 2004/08/23 05:38:15 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.18 2004/08/23 05:37:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.19 2004/08/23 05:38:15 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -418,7 +418,6 @@ cgdread(dev_t dev, struct uio *uio, int flags)
 	dksc = &cs->sc_dksc;
 	if ((dksc->sc_flags & DKF_INITED) == 0)
 		return ENXIO;
-	/* XXX see the comments about minphys in ccd.c */
 	return physio(cgdstrategy, NULL, dev, B_READ, minphys, uio);
 }
 
@@ -434,7 +433,6 @@ cgdwrite(dev_t dev, struct uio *uio, int flags)
 	dksc = &cs->sc_dksc;
 	if ((dksc->sc_flags & DKF_INITED) == 0)
 		return ENXIO;
-	/* XXX see the comments about minphys in ccd.c */
 	return physio(cgdstrategy, NULL, dev, B_WRITE, minphys, uio);
 }
 
