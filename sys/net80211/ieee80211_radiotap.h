@@ -1,5 +1,5 @@
 /* $FreeBSD: src/sys/net80211/ieee80211_radiotap.h,v 1.1 2003/09/05 22:19:32 sam Exp $ */
-/* $NetBSD: ieee80211_radiotap.h,v 1.5 2003/12/08 04:48:58 dyoung Exp $ */
+/* $NetBSD: ieee80211_radiotap.h,v 1.6 2004/03/29 04:04:48 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2003, 2004 David Young.  All rights reserved.
@@ -174,12 +174,12 @@ enum ieee80211_radiotap_type {
 
 #ifndef _KERNEL
 /* Channel flags. */
-#define IEEE80211_CHAN_TURBO    0x0010  /* Turbo channel */
-#define IEEE80211_CHAN_CCK      0x0020  /* CCK channel */
-#define IEEE80211_CHAN_OFDM     0x0040  /* OFDM channel */
-#define IEEE80211_CHAN_2GHZ     0x0080  /* 2 GHz spectrum channel. */
-#define IEEE80211_CHAN_5GHZ     0x0100  /* 5 GHz spectrum channel */
-#define IEEE80211_CHAN_PASSIVE  0x0200  /* Only passive scan allowed */
+#define	IEEE80211_CHAN_TURBO	0x0010	/* Turbo channel */
+#define	IEEE80211_CHAN_CCK	0x0020	/* CCK channel */
+#define	IEEE80211_CHAN_OFDM	0x0040	/* OFDM channel */
+#define	IEEE80211_CHAN_2GHZ	0x0080	/* 2 GHz spectrum channel. */
+#define	IEEE80211_CHAN_5GHZ	0x0100	/* 5 GHz spectrum channel */
+#define	IEEE80211_CHAN_PASSIVE	0x0200	/* Only passive scan allowed */
 #endif /* !_KERNEL */
 
 /* For IEEE80211_RADIOTAP_FLAGS */
