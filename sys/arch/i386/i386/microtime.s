@@ -1,4 +1,4 @@
-/*	$NetBSD: microtime.s,v 1.18 1998/12/01 04:31:01 thorpej Exp $	*/
+/*	$NetBSD: microtime.s,v 1.18.18.1 2000/02/20 18:16:07 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1993 The Regents of the University of California.
@@ -40,7 +40,7 @@
 #define	IRQ_BIT(irq_num)	(1 << ((irq_num) % 8))
 #define	IRQ_BYTE(irq_num)	((irq_num) / 8)
 
-ENTRY(microtime)
+ENTRY(i8254_microtime)
 	# clear registers and do whatever we can up front
 	pushl	%edi
 	pushl	%ebx
