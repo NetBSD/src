@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 1990, 1993
+ * Copyright (c) 1990, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,15 +32,16 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/* from: static char sccsid[] = "@(#)fts.c	8.2 (Berkeley) 1/2/94"; */
-static char *rcsid = "$Id: fts.c,v 1.8 1994/04/12 04:41:17 cgd Exp $";
+/* from: static char sccsid[] = "@(#)fts.c	8.4 (Berkeley) 4/16/94"; */
+static char *rcsid = "$Id: fts.c,v 1.9 1994/04/17 02:21:02 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
 #include <sys/stat.h>
-#include <fcntl.h>
+
 #include <dirent.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <fts.h>
 #include <stdlib.h>
 #include <string.h>
@@ -90,7 +91,7 @@ fts_open(argv, options, compar)
 	/* Allocate/initialize the stream */
 	if ((sp = malloc((u_int)sizeof(FTS))) == NULL)
 		return (NULL);
-	bzero(sp, sizeof(FTS));
+	memset(sp, 0, sizeof(FTS));
 	sp->fts_compar = compar;
 	sp->fts_options = options;
 
@@ -193,10 +194,10 @@ fts_load(sp, p)
 	 * known that the path will fit.
 	 */
 	len = p->fts_pathlen = p->fts_namelen;
-	bcopy(p->fts_name, sp->fts_path, len + 1);
+	memmove(sp->fts_path, p->fts_name, len + 1);
 	if ((cp = strrchr(p->fts_name, '/')) && (cp != p->fts_name || cp[1])) {
 		len = strlen(++cp);
-		bcopy(cp, p->fts_name, len + 1);
+		memmove(p->fts_name, cp, len + 1);
 		p->fts_namelen = len;
 	}
 	p->fts_accpath = p->fts_path = sp->fts_path;
@@ -391,7 +392,7 @@ next:	tmp = p;
 
 name:		t = sp->fts_path + NAPPEND(p->fts_parent);
 		*t++ = '/';
-		bcopy(p->fts_name, t, p->fts_namelen + 1);
+		memmove(t, p->fts_name, p->fts_namelen + 1);
 		return (sp->fts_cur = p);
 	}
 
@@ -691,7 +692,7 @@ mem1:				saved_errno = errno;
 			/* Build a file name for fts_stat to stat. */
 			if (ISSET(FTS_NOCHDIR)) {
 				p->fts_accpath = p->fts_path;
-				bcopy(p->fts_name, cp, p->fts_namelen + 1);
+				memmove(cp, p->fts_name, p->fts_namelen + 1);
 			} else
 				p->fts_accpath = p->fts_name;
 			/* Stat it. */
@@ -733,23 +734,18 @@ mem1:				saved_errno = errno;
 	}
 
 	/*
-	 * If descended after called from fts_children or called from
-	 * fts_read and didn't find anything, get back.  If can't get
-	 * back, done.
+	 * If descended after called from fts_children or after called from
+	 * fts_read and nothing found, get back.  At the root level we use
+	 * the saved fd; if one of fts_open()'s arguments is a relative path
+	 * to an empty directory, we wind up here with no other way back.  If
+	 * can't get back, we're done.
 	 */
-	if (descend && (!nitems || type == BCHILD)) {
-		int error;
-
-		if (cur->fts_level == FTS_ROOTLEVEL)
-			error = FCHDIR(sp, sp->fts_rfd);
-		else
-			error = CHDIR(sp, "..");
-
-		if (error) {
-			cur->fts_info = FTS_ERR;
-			SET(FTS_STOP);
-			return (NULL);
-		}
+	if (descend && (type == BCHILD || !nitems) &&
+	    (cur->fts_level == FTS_ROOTLEVEL ?
+	    FCHDIR(sp, sp->fts_rfd) : CHDIR(sp, ".."))) {
+		cur->fts_info = FTS_ERR;
+		SET(FTS_STOP);
+		return (NULL);
 	}
 
 	/* If didn't find anything, return NULL. */
@@ -797,7 +793,7 @@ fts_stat(sp, p, follow)
 		}
 	} else if (lstat(p->fts_accpath, sbp)) {
 		p->fts_errno = errno;
-err:		bzero(sbp, sizeof(struct stat));
+err:		memset(sbp, 0, sizeof(struct stat));
 		return (FTS_NS);
 	}
 
@@ -893,7 +889,7 @@ fts_alloc(sp, name, namelen)
 		return (NULL);
 
 	/* Copy the name plus the trailing NULL. */
-	bcopy(name, p->fts_name, namelen + 1);
+	memmove(p->fts_name, name, namelen + 1);
 
 	if (!ISSET(FTS_NOSTAT))
 		p->fts_statp = (struct stat *)ALIGN(p->fts_name + namelen + 2);
