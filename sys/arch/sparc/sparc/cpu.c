@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.154 2003/01/08 01:20:56 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.155 2003/01/08 17:22:09 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -140,7 +140,6 @@ struct cpu_info *alloc_cpuinfo_global_va __P((int, vsize_t *));
 struct cpu_info	*alloc_cpuinfo __P((void));
 
 int go_smp_cpus = 0;	/* non-primary cpu's wait for this to go */
-int ross_pend;		/* work around the hypersparc xcall bug */
 
 /* lock this to send IPI's */
 struct simplelock xpmsg_lock = SIMPLELOCK_INITIALIZER;
