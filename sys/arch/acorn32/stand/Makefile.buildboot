@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.buildboot,v 1.5 2003/10/26 07:25:35 lukem Exp $
+#	$NetBSD: Makefile.buildboot,v 1.6 2003/11/23 13:34:07 bjh21 Exp $
 
 S?=	${.CURDIR}/../../../..
 
@@ -32,22 +32,13 @@ CFLAGS+=	-ffreestanding
 CFLAGS+=	-Wall -Wstrict-prototypes -Wmissing-prototypes
 
 .if !make(obj) && !make(clean) && !make(cleandir)
-.BEGIN: machine ${MACHINE_ARCH}
-.NOPATH: machine ${MACHINE_ARCH}
+.BEGIN:
+	-rm -f machine ${MACHINE_ARCH}
+	ln -s $S/arch/${MACHINE}/include machine
+	ln -s $S/arch/${MACHINE_ARCH}/include ${MACHINE_ARCH}
 .endif
 
-realdepend realall: machine ${MACHINE_ARCH}
 CLEANFILES+= machine ${MACHINE_ARCH}
-
-machine::
-	-rm -f $@
-	ln -s $S/arch/acorn32/include $@
-
-${MACHINE_ARCH}::
-	-rm -f $@
-	ln -s $S/arch/${MACHINE_ARCH}/include $@
-
-${OBJS}: machine ${MACHINE_ARCH}
 
 ### find out what to use for libkern
 KERN_AS=	library
