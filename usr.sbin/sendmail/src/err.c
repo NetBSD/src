@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1983, 1995 Eric P. Allman
+ * Copyright (c) 1983, 1995, 1996 Eric P. Allman
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)err.c	8.42 (Berkeley) 11/29/95";
+static char sccsid[] = "@(#)err.c	8.52 (Berkeley) 12/1/96";
 #endif /* not lint */
 
 # include "sendmail.h"
@@ -137,7 +137,7 @@ syserr(fmt, va_alist)
 	else
 	{
 		uname = ubuf;
-		sprintf(ubuf, "UID%d", getuid());
+		snprintf(ubuf, sizeof ubuf, "UID%d", getuid());
 	}
 
 	if (LogLevel > 0)
@@ -145,10 +145,30 @@ syserr(fmt, va_alist)
 			CurEnv->e_id == NULL ? "NOQUEUE" : CurEnv->e_id,
 			uname, &MsgBuf[4]);
 # endif /* LOG */
-	if (olderrno == EMFILE)
+	switch (olderrno)
 	{
+	  case EBADF:
+	  case ENFILE:
+	  case EMFILE:
+	  case ENOTTY:
+#ifdef EFBIG
+	  case EFBIG:
+#endif
+#ifdef ESPIPE
+	  case ESPIPE:
+#endif
+#ifdef EPIPE
+	  case EPIPE:
+#endif
+#ifdef ENOBUFS
+	  case ENOBUFS:
+#endif
+#ifdef ESTALE
+	  case ESTALE:
+#endif
 		printopenfds(TRUE);
 		mci_dump_all(TRUE);
+		break;
 	}
 	if (panic)
 	{
@@ -218,7 +238,7 @@ usrerr(fmt, va_alist)
 		{
 			char buf[MAXLINE];
 
-			sprintf(buf, "Postmaster warning: %.*s",
+			snprintf(buf, sizeof buf, "Postmaster warning: %.*s",
 				sizeof buf - 22, MsgBuf + 4);
 			CurEnv->e_message = newstr(buf);
 		}
@@ -384,6 +404,11 @@ putoutmsg(msg, holdmsg, heldmsg)
 	if (!heldmsg && CurEnv->e_xfp != NULL && strchr("45", msg[0]) != NULL)
 		fprintf(CurEnv->e_xfp, "%s\n", msg);
 
+#ifdef LOG
+	if (LogLevel >= 15 && (OpMode == MD_SMTP || OpMode == MD_DAEMON))
+		syslog(LOG_INFO, "--> %s%s", msg, holdmsg ? " (held)" : "");
+#endif
+
 	if (msgcode == '8')
 		msg[0] = '0';
 
@@ -394,7 +419,7 @@ putoutmsg(msg, holdmsg, heldmsg)
 	{
 		/* save for possible future display */
 		msg[0] = msgcode;
-		strcpy(HeldMessageBuf, msg);
+		snprintf(HeldMessageBuf, sizeof HeldMessageBuf, "%s", msg);
 		return;
 	}
 
@@ -407,7 +432,7 @@ putoutmsg(msg, holdmsg, heldmsg)
 	else
 		fprintf(OutChannel, "%s\n", &msg[4]);
 	if (TrafficLogFile != NULL)
-		fprintf(TrafficLogFile, "%05d >>> %s\n", getpid(),
+		fprintf(TrafficLogFile, "%05d >>> %s\n", (int) getpid(),
 			(OpMode == MD_SMTP || OpMode == MD_DAEMON) ? msg : &msg[4]);
 	if (msg[3] == ' ')
 		(void) fflush(OutChannel);
@@ -511,7 +536,7 @@ fmtmsg(eb, to, num, eno, fmt, ap)
 		del = '-';
 	else
 		del = ' ';
-	(void) sprintf(eb, "%3.3s%c", num, del);
+	(void) snprintf(eb, spaceleft, "%3.3s%c", num, del);
 	eb += 4;
 	spaceleft -= 4;
 
@@ -600,12 +625,13 @@ errstring(errnum)
 	int errnum;
 {
 	char *dnsmsg;
+	char *bp;
 	static char buf[MAXLINE];
 # ifndef ERRLIST_PREDEFINED
 	extern char *sys_errlist[];
 	extern int sys_nerr;
 # endif
-# ifdef SMTP
+# if SMTP
 	extern char *SmtpPhase;
 # endif /* SMTP */
 
@@ -621,30 +647,45 @@ errstring(errnum)
 # if defined(DAEMON) && defined(ETIMEDOUT)
 	  case ETIMEDOUT:
 	  case ECONNRESET:
-		(void) strcpy(buf, sys_errlist[errnum]);
-		if (SmtpPhase != NULL)
-		{
-			(void) strcat(buf, " during ");
-			(void) strcat(buf, SmtpPhase);
-		}
+		bp = buf;
+		snprintf(bp, SPACELEFT(buf, bp), "%s", sys_errlist[errnum]);
+		bp += strlen(bp);
 		if (CurHostName != NULL)
 		{
-			(void) strcat(buf, " with ");
-			(void) strcat(buf, CurHostName);
+			if (errnum == ETIMEDOUT)
+			{
+				snprintf(bp, SPACELEFT(buf, bp), " with ");
+				bp += strlen(bp);
+			}
+			else
+			{
+				bp = buf;
+				snprintf(bp, SPACELEFT(buf, bp),
+					"Connection reset by ");
+				bp += strlen(bp);
+			}
+			snprintf(bp, SPACELEFT(buf, bp), "%s",
+				shortenstring(CurHostName, 203));
+			bp += strlen(buf);
+		}
+		if (SmtpPhase != NULL)
+		{
+			snprintf(bp, SPACELEFT(buf, bp), " during %s",
+				SmtpPhase);
 		}
 		return (buf);
 
 	  case EHOSTDOWN:
 		if (CurHostName == NULL)
 			break;
-		(void) sprintf(buf, "Host %s is down",
+		(void) snprintf(buf, sizeof buf, "Host %s is down",
 			shortenstring(CurHostName, 203));
 		return (buf);
 
 	  case ECONNREFUSED:
 		if (CurHostName == NULL)
 			break;
-		(void) sprintf(buf, "Connection refused by %s",
+		(void) snprintf(buf, sizeof buf, "Connection refused by %s",
 			shortenstring(CurHostName, 203));
 		return (buf);
 # endif
@@ -677,19 +718,22 @@ errstring(errnum)
 
 	if (dnsmsg != NULL)
 	{
-		(void) strcpy(buf, "Name server: ");
+		bp = buf;
+		strcpy(bp, "Name server: ");
+		bp += strlen(bp);
 		if (CurHostName != NULL)
 		{
-			(void) strcat(buf, CurHostName);
-			(void) strcat(buf, ": ");
+			snprintf(bp, SPACELEFT(buf, bp), "%s: ",
+				shortenstring(CurHostName, 203));
+			bp += strlen(bp);
 		}
-		(void) strcat(buf, dnsmsg);
+		snprintf(bp, SPACELEFT(buf, bp), "%s", dnsmsg);
 		return buf;
 	}
 
 	if (errnum > 0 && errnum < sys_nerr)
 		return (sys_errlist[errnum]);
 
-	(void) sprintf(buf, "Error %d", errnum);
+	(void) snprintf(buf, sizeof buf, "Error %d", errnum);
 	return (buf);
 }
