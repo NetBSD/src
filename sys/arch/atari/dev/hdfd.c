@@ -1,4 +1,4 @@
-/*	$NetBSD: hdfd.c,v 1.24 2000/05/16 05:45:46 thorpej Exp $	*/
+/*	$NetBSD: hdfd.c,v 1.24.4.1 2000/09/06 09:33:07 leo Exp $	*/
 
 /*-
  * Copyright (c) 1996 Leo Weppelman
@@ -235,6 +235,7 @@ struct fd_softc {
 #define	FD_OPEN		0x01		/* it's open */
 #define	FD_MOTOR	0x02		/* motor should be on */
 #define	FD_MOTOR_WAIT	0x04		/* motor coming up */
+#define	FD_HAVELAB	0x08		/* got a disklabel */
 	int		sc_cylin;	/* where we think the head is */
 
 	void		*sc_sdhook;	/* saved shutdown hook for drive. */
@@ -814,6 +815,7 @@ fdopen(dev, flags, mode, p)
 	fd->sc_type = type;
 	fd->sc_cylin = -1;
 	fd->sc_flags |= FD_OPEN;
+	fdgetdisklabel(fd, dev);
 
 	return 0;
 }
@@ -827,7 +829,7 @@ fdclose(dev, flags, mode, p)
 {
 	struct fd_softc *fd = hdfd_cd.cd_devs[FDUNIT(dev)];
 
-	fd->sc_flags &= ~FD_OPEN;
+	fd->sc_flags &= ~(FD_OPEN|FD_HAVELAB);
 	fd->sc_opts  &= ~(FDOPT_NORETRY|FDOPT_SILENT);
 	return 0;
 }
@@ -1353,6 +1355,7 @@ fdioctl(dev, cmd, addr, flag, p)
 		if ((flag & FWRITE) == 0)
 		    return EBADF;
 
+		fd->sc_flags &= ~FD_HAVELAB;   /* Invalid */
 		error = setdisklabel(&buffer, (struct disklabel *)addr, 0,NULL);
 		if (error)
 		    return error;
@@ -1472,6 +1475,10 @@ fdioctl(dev, cmd, addr, flag, p)
 			fd_formb.fd_formb_secno(i) = il[i+1];
 			fd_formb.fd_formb_secsize(i) = fd->sc_type->secsize;
 		}
+		
+		error = fdformat(dev, &fd_formb, p);
+		return error;
+
 	case FDIOCGETOPTS:		/* get drive options */
 		*(int *)addr = fd->sc_opts;
 		return 0;
@@ -1563,6 +1570,9 @@ dev_t		dev;
 	struct disklabel	*lp;
 	struct cpu_disklabel	cpulab;
 
+	if (fd->sc_flags & FD_HAVELAB)
+		return; /* Already got one */
+
 	lp   = fd->sc_dk.dk_label;
 
 	bzero(lp, sizeof(*lp));
@@ -1578,6 +1588,7 @@ dev_t		dev;
 	 */
 	if (readdisklabel(dev, fdstrategy, lp, &cpulab) != NULL)
 		fdgetdefaultlabel(fd, lp, RAW_PART);
+	fd->sc_flags |= FD_HAVELAB;
 
 	if ((FDC_BSIZE * fd->sc_type->size)
 		< (lp->d_secsize * lp->d_secperunit)) {
