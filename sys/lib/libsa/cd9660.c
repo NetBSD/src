@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660.c,v 1.1 1996/09/30 16:01:19 ws Exp $	*/
+/*	$NetBSD: cd9660.c,v 1.2 1997/01/24 00:29:19 cgd Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -38,18 +38,12 @@
  * blocksizes other than 2048 bytes, multi-extent files, etc.
  */
 #include <sys/param.h>
-
 #include <lib/libkern/libkern.h>
-
-/* THIS IS AN UGLY HACK!!!			XXX */
-struct fid;
-struct mbuf;
-struct nameidata;
-struct netexport { int x; };
-struct proc;
-struct statfs;
-struct ucred;
 #include <isofs/cd9660/iso.h>
+
+#include "stand.h"
+#include "cd9660.h"
+
 /* These once were in iso.h, but got deleted??? */
 extern __inline int
 isonum_722(p)
@@ -64,9 +58,6 @@ isonum_732(p)
 {
 	return (*p << 24)|(p[1] << 16)|(p[2] << 8)|p[3];
 }
-
-#include "stand.h"
-#include "cd9660.h"
 
 struct file {
 	off_t off;			/* Current offset within file */
