@@ -1,4 +1,4 @@
-/*	$NetBSD: sb_isapnp.c,v 1.41 2002/10/02 16:34:04 thorpej Exp $	*/
+/*	$NetBSD: sb_isapnp.c,v 1.42 2004/09/01 21:13:44 drochner Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sb_isapnp.c,v 1.41 2002/10/02 16:34:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sb_isapnp.c,v 1.42 2004/09/01 21:13:44 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -134,7 +134,7 @@ sb_isapnp_attach(parent, self, aux)
                 } else
                 	sc->sc_drq16 = ipa->ipa_drq[1].num;
         } else
-        	sc->sc_drq16 = ISACF_DRQ_DEFAULT;
+        	sc->sc_drq16 = -1;
 
 #if NMPU > 0
 	if (ipa->ipa_nio > 1) {
