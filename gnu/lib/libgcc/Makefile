@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.45 2003/06/01 02:09:31 thorpej Exp $
+#	$NetBSD: Makefile,v 1.46 2003/10/28 07:38:57 lukem Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -6,8 +6,6 @@ NOLINT=		# defined
 .include <bsd.own.mk>
 
 LIB=		gcc
-
-.cc: # disable .cc->NULL transform
 
 .if exists(${.CURDIR}/${MACHINE_ARCH}.mk) && ${MKGCC} != "no"
 .include "${.CURDIR}/${MACHINE_ARCH}.mk"
@@ -69,3 +67,5 @@ ${OBJS} ${SOBJS} ${POBJS}: ${.CURDIR}/${MACHINE_ARCH}.mk
 .else
 .include <bsd.prog.mk> # do nothing
 .endif
+
+.cc: # disable .cc->NULL transform
