@@ -5,6 +5,7 @@
 ./usr/include/machine/bsd_openprom.h
 ./usr/include/machine/cdefs.h
 ./usr/include/machine/cgtworeg.h
+./usr/include/machine/conf.h
 ./usr/include/machine/cpu.h
 ./usr/include/machine/ctlreg.h
 ./usr/include/machine/db_machdep.h

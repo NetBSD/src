@@ -476,7 +476,6 @@
 ./usr/include/limits.h
 ./usr/include/link.h
 ./usr/include/locale.h
-./usr/include/machine/conf.h
 ./usr/include/malloc.h
 ./usr/include/math.h
 ./usr/include/memory.h
