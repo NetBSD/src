@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.19 2001/03/12 23:36:09 onoe Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.20 2001/03/12 23:39:35 onoe Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -2025,7 +2025,6 @@ static void
 fwohci_selfid_init(struct fwohci_softc *sc)
 {
 	struct fwohci_buf *fb;
-	u_int32_t val;
 
 	fb = &sc->sc_buf_selfid;
 #ifdef DIAGNOSTICS
@@ -2040,8 +2039,6 @@ fwohci_selfid_init(struct fwohci_softc *sc)
 
 	OHCI_CSR_WRITE(sc, OHCI_REG_SelfIDBuffer,
 	    fb->fb_dmamap->dm_segs[0].ds_addr);
-
-	val = OHCI_CSR_READ(sc, OHCI_REG_SelfIDCount);
 }
 
 static int
@@ -2051,25 +2048,18 @@ fwohci_selfid_input(struct fwohci_softc *sc)
 	u_int32_t count, val, gen;
 	u_int32_t *buf;
 
+	buf = (u_int32_t *)sc->sc_buf_selfid.fb_buf;
 	val = OHCI_CSR_READ(sc, OHCI_REG_SelfIDCount);
+  again:
 	if (val & OHCI_SelfID_Error) {
 		printf("%s: SelfID Error\n", sc->sc_sc1394.sc1394_dev.dv_xname);
 		return -1;
 	}
 	count = OHCI_BITVAL(val, OHCI_SelfID_Size);
-	gen = OHCI_BITVAL(val, OHCI_SelfID_Gen);
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_buf_selfid.fb_dmamap,
 	    0, count << 2, BUS_DMASYNC_POSTREAD);
-
-	buf = (u_int32_t *)sc->sc_buf_selfid.fb_buf;
-	if (OHCI_BITVAL(val, OHCI_SelfID_Gen) !=
-	    OHCI_BITVAL(buf[0], OHCI_SelfID_Gen)) {
-		printf("%s: SelfID Gen mismatch (%d, %d)\n",
-		    sc->sc_sc1394.sc1394_dev.dv_xname, gen,
-		    OHCI_BITVAL(buf[0], OHCI_SelfID_Gen));
-		return -1;
-	}
+	gen = OHCI_BITVAL(buf[0], OHCI_SelfID_Gen);
 
 #ifdef FW_DEBUG
 	if (fw_verbose > 1) {
@@ -2081,6 +2071,45 @@ fwohci_selfid_input(struct fwohci_softc *sc)
 	}
 #endif /* FW_DEBUG */
 
+	for (i = 1; i < count; i += 2) {
+		if (buf[i] != ~buf[i + 1])
+			break;
+		if (buf[i] & 0x00000001)
+			continue;	/* more pkt */
+		if (buf[i] & 0x00800000)
+			continue;	/* external id */
+		sc->sc_rootid = (buf[i] & 0x3f000000) >> 24;
+		if ((buf[i] & 0x00400800) == 0x00400800)
+			sc->sc_irmid = sc->sc_rootid;
+	}
+
+	val = OHCI_CSR_READ(sc, OHCI_REG_SelfIDCount);
+	if (OHCI_BITVAL(val, OHCI_SelfID_Gen) != gen) {
+		if (OHCI_BITVAL(val, OHCI_SelfID_Gen) !=
+		    OHCI_BITVAL(buf[0], OHCI_SelfID_Gen))
+			goto again;
+		if (fw_verbose)
+			printf("%s: SelfID Gen mismatch (%d, %d)\n",
+			    sc->sc_sc1394.sc1394_dev.dv_xname, gen,
+			    OHCI_BITVAL(val, OHCI_SelfID_Gen));
+		return -1;
+	}
+	if (i != count) {
+		printf("%s: SelfID corrupted (%d, 0x%08x, 0x%08x)\n",
+		    sc->sc_sc1394.sc1394_dev.dv_xname, i, buf[i], buf[i + 1]);
+#if 1
+		if (i == 1 && buf[i] == 0 && buf[i + 1] == 0) {
+			/*
+			 * XXX: CXD3222 sometimes fails to DMA
+			 * selfid packet??
+			 */
+			sc->sc_rootid = (count - 1) / 2 - 1;
+			sc->sc_irmid = sc->sc_rootid;
+		} else
+#endif
+		return -1;
+	}
+
 	val = OHCI_CSR_READ(sc, OHCI_REG_NodeId);
 	if ((val & OHCI_NodeId_IDValid) == 0) {
 		sc->sc_nodeid = 0xffff;		/* invalid */
@@ -2090,30 +2119,6 @@ fwohci_selfid_input(struct fwohci_softc *sc)
 	}
 	sc->sc_nodeid = val & 0xffff;
 
-	for (i = 1; i < count; i += 2) {
-		if (buf[i] != ~buf[i + 1]) {
-			printf("%s: SelfID corrupted (%d, 0x%08x, 0x%08x)\n",
-			    sc->sc_sc1394.sc1394_dev.dv_xname, i,
-			    buf[i], buf[i + 1]);
-			if (i == 1 && buf[i] == 0 && buf[i + 1] == 0) {
-				/*
-				 * XXX: CXD3222 sometimes fails to DMA
-				 * selfid packet??
-				 */
-				sc->sc_rootid = (count - 1) / 2 - 1;
-				sc->sc_irmid = sc->sc_rootid;
-				break;
-			}
-			return -1;
-		}
-		if (buf[i] & 0x00000001)
-			continue;	/* more pkt */
-		if (buf[i] & 0x00800000)
-			continue;	/* external id */
-		sc->sc_rootid = (buf[i] & 0x3f000000) >> 24;
-		if ((buf[i] & 0x00400800) == 0x00400800)
-			sc->sc_irmid = sc->sc_rootid;
-	}
 #ifdef FW_DEBUG
 	if (fw_verbose)
 		printf("%s: nodeid=0x%04x(%d), rootid=%d, irmid=%d\n",
