@@ -1,5 +1,5 @@
 REM>BBBB
-REM $NetBSD: BBBB,v 1.2 2000/11/25 18:30:23 bjh21 Exp $
+REM $NetBSD: BBBB,v 1.3 2000/12/09 13:30:25 bjh21 Exp $
 REM
 REM Copyright (c) 1998, 1999, 2000 Ben Harris
 REM All rights reserved.
@@ -30,7 +30,7 @@ REM This file is part of NetBSD/arm26 -- a port of NetBSD to ARM2/3 machines.
 REM
 REM Ben's BASIC BSD Booter (allegedly)
 debug% = 1
-PRINT ">> BBBB, Revision 0.40"
+PRINT ">> BBBB, Revision 0.41"
 SYS "OS_ReadMemMapInfo" TO nbpp%, npages%
 IF debug% THEN
   PRINT "Machine has ";npages%;" pages of ";nbpp% DIV 1024;"K each.  ";
@@ -277,7 +277,7 @@ ENDPROC
 
 DEF PROCread(addr%, size%, offset%)
   LOCAL i%
-  FOR i% = 0 TO nfiles%
+  FOR i% = 0 TO nfiles% - 1
     IF file%(i%) = 0 THEN
       file%(i%) = OPENIN(file$(i%))
       IF file%(i%) = 0 THEN ERROR 1, "Couldn't open " + file$(i%)
@@ -292,6 +292,7 @@ DEF PROCread(addr%, size%, offset%)
       ELSE
         SYS "OS_GBPB", 3, file%(i%), addr%, fsiz%(i%) - offset%, offset%
         size% -= fsiz%(i%) - offset%
+        addr% += fsiz%(i%) - offset%
         offset% = 0
       ENDIF
     ENDIF
