@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlvar.h,v 1.7 2001/09/20 10:04:10 bouyer Exp $	*/
+/*	$NetBSD: if_tlvar.h,v 1.8 2003/09/30 00:35:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -35,6 +35,8 @@
  * available from www.ti.com
  */
 
+#include <dev/i2c/i2cvar.h>
+
 struct tl_product_desc {
 	u_int32_t tp_product;
 	int tp_tlphymedia;
@@ -52,7 +54,7 @@ struct tl_softc {
 	struct callout tl_tick_ch;	/* tick callout */
 	struct callout tl_restart_ch;	/* restart callout */
 	u_int8_t tl_enaddr[ETHER_ADDR_LEN];	/* hardware adress */
-	i2c_adapter_t i2cbus;		/* i2c bus, for eeprom */
+	struct i2c_controller sc_i2c;	/* i2c controller info, for eeprom */
 	mii_data_t tl_mii;		/* mii bus */
 	bus_dma_segment_t ctrl_segs; /* bus-dma memory for control blocks */
 	int ctrl_nsegs;
