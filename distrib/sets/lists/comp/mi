@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.254 2000/08/09 10:28:54 tv Exp $
+#	$NetBSD: mi,v 1.255 2000/08/13 11:03:35 wiz Exp $
 ./sys			comp-sysutil-root
 ./usr/bin/addr2line	comp-miscutil-bin
 ./usr/bin/ar		comp-util-bin
@@ -531,6 +531,8 @@
 ./usr/include/isofs/cd9660/iso.h		comp-c-include
 ./usr/include/isofs/cd9660/iso_rrip.h		comp-c-include
 ./usr/include/kadm5/admin.h	comp-c-include
+./usr/include/kadm5/kadm5-private.h	comp-c-include
+./usr/include/kadm5/kadm5-protos.h	comp-c-include
 ./usr/include/kadm5/kadm5_err.h	comp-c-include
 ./usr/include/kadm5/private.h	comp-c-include
 ./usr/include/kerberosIV/des.h	comp-c-include
@@ -570,6 +572,7 @@
 ./usr/include/krb5/resolve.h	comp-c-include
 ./usr/include/krb5/roken-common.h	comp-c-include
 ./usr/include/krb5/roken.h	comp-c-include
+./usr/include/krb5/rtbl.h	comp-c-include
 ./usr/include/krb5/sl.h	comp-c-include
 ./usr/include/krb5/ss.h	comp-c-include
 ./usr/include/kvm.h		comp-c-include
@@ -2115,7 +2118,9 @@
 ./usr/share/man/cat3/jrand48.0	comp-c-catman
 ./usr/share/man/cat3/killpg.0	comp-c-catman
 ./usr/share/man/cat3/krb5_425_conv_principal.0	comp-c-catman
+./usr/share/man/cat3/krb5_appdefault.0	comp-c-catman
 ./usr/share/man/cat3/krb5_build_principal.0	comp-c-catman
+./usr/share/man/cat3/krb5_config.0	comp-c-catman
 ./usr/share/man/cat3/krb5_free_principal.0	comp-c-catman
 ./usr/share/man/cat3/krb5_openlog.0	comp-c-catman
 ./usr/share/man/cat3/krb5_parse_name.0	comp-c-catman
@@ -2713,6 +2718,7 @@
 ./usr/share/man/cat7/operator.0		comp-c-catman
 ./usr/share/man/cat8/config.0		comp-sysutil-catman
 ./usr/share/man/cat8/kgmon.0		comp-sysutil-catman
+./usr/share/man/cat8/verify_krb5_conf.0		comp-sysutil-catman
 ./usr/share/man/cat9/ETHER_FIRST_MULTI.0		comp-kern-catman
 ./usr/share/man/cat9/ETHER_IS_MULTICAST.0		comp-kern-catman
 ./usr/share/man/cat9/ETHER_NEXT_MULTI.0		comp-kern-catman
@@ -2969,6 +2975,9 @@
 ./usr/share/man/cat9/todr_gettime.0	comp-kern-man
 ./usr/share/man/cat9/todr_setcal.0	comp-kern-man
 ./usr/share/man/cat9/todr_settime.0	comp-kern-man
+./usr/share/man/cat9/tprintf.0	comp-kern-man
+./usr/share/man/cat9/tprintf_close.0	comp-kern-man
+./usr/share/man/cat9/tprintf_open.0	comp-kern-man
 ./usr/share/man/cat9/tsleep.0		comp-kern-catman
 ./usr/share/man/cat9/ttyprintf.0		comp-kern-catman
 ./usr/share/man/cat9/uao_create.0		comp-kern-catman
@@ -3765,7 +3774,9 @@
 ./usr/share/man/man3/jrand48.3		comp-c-man
 ./usr/share/man/man3/killpg.3		comp-c-man
 ./usr/share/man/man3/krb5_425_conv_principal.3	comp-c-man
+./usr/share/man/man3/krb5_appdefault.3	comp-c-man
 ./usr/share/man/man3/krb5_build_principal.3	comp-c-man
+./usr/share/man/man3/krb5_config.3	comp-c-man
 ./usr/share/man/man3/krb5_free_principal.3	comp-c-man
 ./usr/share/man/man3/krb5_openlog.3	comp-c-man
 ./usr/share/man/man3/krb5_parse_name.3	comp-c-man
@@ -4363,6 +4374,7 @@
 ./usr/share/man/man7/operator.7		comp-c-man
 ./usr/share/man/man8/config.8		comp-sysutil-man
 ./usr/share/man/man8/kgmon.8		comp-sysutil-man
+./usr/share/man/man8/verify_krb5_conf.8		comp-sysutil-man
 ./usr/share/man/man9/ETHER_FIRST_MULTI.9		comp-kern-man
 ./usr/share/man/man9/ETHER_IS_MULTICAST.9		comp-kern-man
 ./usr/share/man/man9/ETHER_NEXT_MULTI.9		comp-kern-man
@@ -4619,6 +4631,9 @@
 ./usr/share/man/man9/todr_gettime.9	comp-kern-man
 ./usr/share/man/man9/todr_setcal.9	comp-kern-man
 ./usr/share/man/man9/todr_settime.9	comp-kern-man
+./usr/share/man/man9/tprintf.9		comp-kern-man
+./usr/share/man/man9/tprintf_close.9	comp-kern-man
+./usr/share/man/man9/tprintf_open.9	comp-kern-man
 ./usr/share/man/man9/tsleep.9		comp-kern-man
 ./usr/share/man/man9/ttyprintf.9		comp-kern-man
 ./usr/share/man/man9/uao_create.9		comp-kern-man
