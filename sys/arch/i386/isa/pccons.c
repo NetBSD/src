@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.113 1997/10/09 02:05:01 enami Exp $	*/
+/*	$NetBSD: pccons.c,v 1.113.2.1 1997/10/29 01:41:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -49,6 +49,7 @@
 #include <sys/user.h>
 #include <sys/select.h>
 #include <sys/tty.h>
+#include <sys/fcntl.h>
 #include <sys/uio.h>
 #include <sys/callout.h>
 #include <sys/systm.h>
@@ -698,9 +699,11 @@ pcioctl(dev, cmd, data, flag, p)
 #ifdef XSERVER
 	case CONSOLE_X_MODE_ON:
 		pc_xmode_on();
+		ttyflush(tp, FREAD);
 		return 0;
 	case CONSOLE_X_MODE_OFF:
 		pc_xmode_off();
+		ttyflush(tp, FREAD);
 		return 0;
 	case CONSOLE_X_BELL:
 		/*
