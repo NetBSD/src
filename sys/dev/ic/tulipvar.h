@@ -1,4 +1,4 @@
-/*	$NetBSD: tulipvar.h,v 1.10 1999/09/14 23:33:05 thorpej Exp $	*/
+/*	$NetBSD: tulipvar.h,v 1.11 1999/09/20 19:26:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -240,6 +240,9 @@ struct tulip_softc {
 	const struct tulip_txthresh_tab *sc_txth;
 	int		sc_txthresh;	/* current transmit threshold */
 
+	/* Pre-init function. */
+	void		(*sc_preinit) __P((struct tulip_softc *));
+
 	/* Filter setup function. */
 	void		(*sc_filter_setup) __P((struct tulip_softc *));
 
@@ -384,13 +387,16 @@ do {									\
 extern const struct tulip_mediasw tlp_21040_mediasw;
 extern const struct tulip_mediasw tlp_21040_tp_mediasw;
 extern const struct tulip_mediasw tlp_21040_auibnc_mediasw;
+extern const struct tulip_mediasw tlp_21041_mediasw;
 extern const struct tulip_mediasw tlp_sio_mii_mediasw;
 extern const struct tulip_mediasw tlp_pnic_mediasw;
 
 void	tlp_attach __P((struct tulip_softc *, const u_int8_t *));
 int	tlp_intr __P((void *));
 void	tlp_read_srom __P((struct tulip_softc *, int, int, u_int16_t *));
-int	tlp_srom_crcok __P((u_int8_t *));
+int	tlp_srom_crcok __P((const u_int8_t *));
+int	tlp_isv_srom __P((const u_int8_t *));
+int	tlp_isv_srom_enaddr __P((struct tulip_softc *, u_int8_t *));
 int	tlp_parse_old_srom __P((struct tulip_softc *, u_int8_t *));
 
 int	tlp_mediachange __P((struct ifnet *));

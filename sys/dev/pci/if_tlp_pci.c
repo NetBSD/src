@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.11 1999/09/17 21:55:01 thorpej Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.12 1999/09/20 19:26:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -492,6 +492,15 @@ tlp_pci_attach(parent, self, aux)
 	default:
 		tlp_read_srom(sc, 0, sizeof(sc->sc_srom) >> 2,
 		    (u_int16_t *)sc->sc_srom);
+#if 0
+		printf("SROM CONTENTS:");
+		for (i = 0; i < sizeof(sc->sc_srom); i++) {
+			if ((i % 10) == 0)
+				printf("\n\t");
+			printf("0x%02x ", sc->sc_srom[i]);
+		}
+		printf("\n");
+#endif
 	}
 
 	/*
@@ -534,6 +543,39 @@ tlp_pci_attach(parent, self, aux)
 		 * Deal with any quirks this board might have.
 		 */
 		tlp_pci_get_quirks(psc, enaddr, tlp_pci_21040_quirks);
+		break;
+
+	case TULIP_CHIP_21041:
+		/* Check for a slaved ROM on a multi-port board. */
+		tlp_pci_check_slaved(psc, TULIP_PCI_SHAREDROM,
+		    TULIP_PCI_SLAVEROM);
+		if (psc->sc_flags & TULIP_PCI_SLAVEROM)
+			memcpy(sc->sc_srom, psc->sc_master->sc_tulip.sc_srom,
+			    sizeof(sc->sc_srom));
+
+		/* Check for new format SROM. */
+		if (tlp_isv_srom_enaddr(sc, enaddr) == 0) {
+			/*
+			 * Not an ISV SROM; try the old DEC Ethernet Address
+			 * ROM format.
+			 */
+			if (tlp_parse_old_srom(sc, enaddr) == 0) {
+				printf("%s: unable to decode Ethernet "
+				    "Address ROM\n", sc->sc_dev.dv_xname);
+				return;
+			}
+		}
+
+		/*
+		 * All 21041 boards use the same media switch; they all
+		 * work basically the same!  Yippee!
+		 */
+		sc->sc_mediasw = &tlp_21041_mediasw;
+
+		/*
+		 * Deal with any quirks this board might have.
+		 */
+		/* XXX */
 		break;
 
 	case TULIP_CHIP_82C168:
