@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_param.h,v 1.18 1998/08/13 02:11:09 eeh Exp $	*/
+/*	$NetBSD: vm_param.h,v 1.19 1999/03/24 05:51:36 mrg Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -71,10 +71,6 @@
 #ifndef	_VM_PARAM_
 #define	_VM_PARAM_
 
-#if defined(_KERNEL) && !defined(_LKM)
-#include "opt_uvm.h"
-#endif
-
 #include <machine/vmparam.h>
 
 /*
@@ -96,38 +92,16 @@ typedef int	boolean_t;
  *	or PAGE_SHIFT.  The fact they are variables is hidden here so that
  *	we can easily make them constant if we so desire.
  */
-#if defined(UVM)
 #define	PAGE_SIZE	uvmexp.pagesize		/* size of page */
 #define	PAGE_MASK	uvmexp.pagemask		/* size of page - 1 */
 #define	PAGE_SHIFT	uvmexp.pageshift	/* bits to shift for pages */
-#else
-#define	PAGE_SIZE	cnt.v_page_size		/* size of page */
-#define	PAGE_MASK	page_mask		/* size of page - 1 */
-#define	PAGE_SHIFT	page_shift		/* bits to shift for pages */
-#endif /* UVM */
 #endif /* _KERNEL */
-
-#if defined(_KERNEL) && !defined(UVM)
-extern vsize_t	page_mask;
-extern int		page_shift;
-#endif
 
 /*
  * CTL_VM identifiers
  */
 #define	VM_METER	1		/* struct vmmeter */
 #define	VM_LOADAVG	2		/* struct loadavg */
-#if !defined(UVM)
-#define	VM_MAXID	3		/* number of valid vm ids */
-
-#define	CTL_VM_NAMES { \
-	{ 0, 0 }, \
-	{ "vmmeter", CTLTYPE_STRUCT }, \
-	{ "loadavg", CTLTYPE_STRUCT }, \
-}
-
-#else
-
 #define VM_UVMEXP	3		/* struct uvmexp */
 #define	VM_MAXID	4		/* number of valid vm ids */
 
@@ -137,8 +111,6 @@ extern int		page_shift;
 	{ "loadavg", CTLTYPE_STRUCT }, \
 	{ "uvmexp", CTLTYPE_STRUCT }, \
 }
-
-#endif
 
 
 /* 

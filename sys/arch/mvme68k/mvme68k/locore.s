@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.47 1999/02/28 16:49:04 scw Exp $	*/
+/*	$NetBSD: locore.s,v 1.48 1999/03/24 05:51:06 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -41,9 +41,9 @@
  *
  *	@(#)locore.s	8.6 (Berkeley) 5/27/94
  */
+
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
-#include "opt_uvm.h"
 
 #include "assym.h"
 #include <machine/asm.h>
@@ -490,11 +490,7 @@ Lmotommu2:
 Lenab1:
 /* select the software page size now */
 	lea	_ASM_LABEL(tmpstk),sp	| temporary stack
-#ifdef UVM
 	jbsr	_C_LABEL(uvm_setpagesize)  | select software page size
-#else
-	jbsr	_C_LABEL(vm_set_page_size) | select software page size
-#endif
 /* set kernel stack, user SP, and initial pcb */
 	movl	_C_LABEL(proc0paddr),a1	| get proc0 pcb addr
 	lea	a1@(USPACE-4),sp	| set kernel stack to end of area
@@ -1026,11 +1022,7 @@ Lbrkpt3:
 
 ENTRY_NOPROFILE(spurintr)	/* Level 0 */
 	addql	#1,_C_LABEL(intrcnt)+0
-#ifdef UVM
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
-#else
-	addql	#1,_C_LABEL(cnt)+V_INTR
-#endif
 	jra	_ASM_LABEL(rei)
 
 ENTRY_NOPROFILE(intrhand_autovec)	/* Levels 1 through 6 */

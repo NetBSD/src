@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.39 1999/03/23 18:02:02 mycroft Exp $	*/
+/*	$NetBSD: fault.c,v 1.40 1999/03/24 05:50:54 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -45,7 +45,6 @@
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
-#include "opt_uvm.h"
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -57,9 +56,7 @@
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 
-#if defined(UVM)
 #include <uvm/uvm_extern.h>
-#endif
 
 #include <machine/frame.h>
 #include <machine/katelib.h>
@@ -160,11 +157,7 @@ data_abort_handler(frame)
 		enable_interrupts(I32_bit);
 
 	/* Update vmmeter statistics */
-#if defined(UVM)
 	uvmexp.traps++;
-#else
-	cnt.v_trap++;
-#endif
 
 	/* Get fault address and status from the CPU */
 	fault_address = cpu_faultaddress();
@@ -421,11 +414,7 @@ copyfault:
 		    pmap_handled_emulation(map->pmap, va))
 			goto out;
 
-#if defined(UVM)
 		rv = uvm_fault(map, va, 0, ftype);
-#else
-		rv = vm_fault(map, va, ftype, FALSE);
-#endif
 		if (rv == KERN_SUCCESS)
 			goto out;
 
@@ -499,11 +488,7 @@ prefetch_abort_handler(frame)
 #endif	/* DIAGNOSTIC */
 
 	/* Update vmmeter statistics */
-#if defined(UVM)
 	uvmexp.traps++;
-#else
-	cnt.v_trap++;
-#endif
 
 	/* Call the cpu specific abort fixup routine */
 	error = cpu_prefetchabt_fixup(frame);

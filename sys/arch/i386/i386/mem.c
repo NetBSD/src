@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.38 1998/11/19 15:38:22 mrg Exp $	*/
+/*	$NetBSD: mem.c,v 1.39 1999/03/24 05:51:01 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -40,7 +40,6 @@
  *	@(#)mem.c	8.3 (Berkeley) 1/12/94
  */
 
-#include "opt_uvm.h"
 #include "opt_pmap_new.h"
 #include "opt_compat_netbsd.h"
 
@@ -60,9 +59,8 @@
 #include <machine/conf.h>
 
 #include <vm/vm.h>
-#if defined(UVM)
+
 #include <uvm/uvm_extern.h>
-#endif
 
 extern char *vmmap;            /* poor name! */
 caddr_t zeropage;
@@ -167,15 +165,9 @@ mmrw(dev, uio, flags)
 		case 1:
 			v = uio->uio_offset;
 			c = min(iov->iov_len, MAXPHYS);
-#if defined(UVM)
 			if (!uvm_kernacc((caddr_t)v, c,
 			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
 				return (EFAULT);
-#else
-			if (!kernacc((caddr_t)v, c,
-			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
-				return (EFAULT);
-#endif
 			error = uiomove((caddr_t)v, c, uio);
 			break;
 
@@ -230,13 +222,8 @@ mmmmap(dev, off, prot)
 /* minor device 1 is kernel memory */
 	case 1:
 		/* XXX - writability, executability checks? */
-#if defined(UVM)
 		if (!uvm_kernacc((caddr_t)off, NBPG, B_READ))
 			return -1;
-#else
-		if (!kernacc((caddr_t)off, NBPG, B_READ))
-			return -1;
-#endif
 		return i386_btop(vtophys((u_int)off));
 
 	default:

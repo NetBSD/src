@@ -1,4 +1,4 @@
-/*	$NetBSD: lmcaudio.c,v 1.22 1999/01/01 12:45:11 mark Exp $	*/
+/*	$NetBSD: lmcaudio.c,v 1.23 1999/03/24 05:50:57 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996, Danny C Tsen.
@@ -39,7 +39,6 @@
  * /dev/audio (partial) compatibility.
  */
 
-#include "opt_uvm.h"
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/conf.h>
@@ -53,9 +52,7 @@
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 
-#if defined(UVM)
 #include <uvm/uvm_extern.h>
-#endif
 
 #include <dev/audio_if.h>
 
@@ -244,13 +241,8 @@ lmcaudio_attach(parent, self, aux)
 
 	/* Program the silence buffer and reset the DMA channel */
 
-#if defined(UVM)
 	ag.silence = uvm_km_alloc(kernel_map, NBPG);
 	ag.beep = uvm_km_zalloc(kernel_map, NBPG);
-#else
-	ag.silence = kmem_alloc(kernel_map, NBPG);
-	ag.beep = kmem_alloc(kernel_map, NBPG);
-#endif
 	if (ag.silence == NULL || ag.beep == NULL)
 		panic("lmcaudio: Cannot allocate memory\n");
 	memset((char *)ag.silence, 0, NBPG);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ofb.c,v 1.8 1999/02/19 14:02:33 tsubai Exp $	*/
+/*	$NetBSD: ofb.c,v 1.9 1999/03/24 05:51:04 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -466,17 +466,10 @@ putcmap(sc, cm)
 	if (cm->index >= 256 || cm->count > 256 ||
 	    (cm->index + cm->count) > 256)
 		return EINVAL;
-#if defined(UVM)
 	if (!uvm_useracc(cm->red, cm->count, B_READ) ||
 	    !uvm_useracc(cm->green, cm->count, B_READ) ||
 	    !uvm_useracc(cm->blue, cm->count, B_READ))
 		return EFAULT;
-#else
-	if (!useracc(cm->red, cm->count, B_READ) ||
-	    !useracc(cm->green, cm->count, B_READ) ||
-	    !useracc(cm->blue, cm->count, B_READ))
-		return EFAULT;
-#endif
 	copyin(cm->red,   &sc->sc_cmap_red[index],   count);
 	copyin(cm->green, &sc->sc_cmap_green[index], count);
 	copyin(cm->blue,  &sc->sc_cmap_blue[index],  count);

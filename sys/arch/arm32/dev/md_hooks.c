@@ -1,4 +1,4 @@
-/*	$NetBSD: md_hooks.c,v 1.13 1999/03/17 18:59:22 sommerfe Exp $	*/
+/*	$NetBSD: md_hooks.c,v 1.14 1999/03/24 05:50:55 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -28,7 +28,6 @@
  */
 
 #include "opt_md.h"
-#include "opt_uvm.h"
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -39,9 +38,7 @@
 #include <vm/vm_map.h>
 #include <vm/vm_kern.h>
 
-#if defined(UVM)
 #include <uvm/uvm_extern.h>
-#endif
 
 #include <dev/md.h>
 
@@ -85,11 +82,7 @@ md_attach_hook(unit, md)
 #endif	/* MEMORY_DISK_SIZE */
 		if (memory_disc_size != 0) {
 			md->md_size = round_page(memory_disc_size);
-#if defined(UVM)
 			md->md_addr = (caddr_t)uvm_km_zalloc(kernel_map, memory_disc_size);
-#else
-			md->md_addr = (caddr_t)kmem_alloc(kernel_map, memory_disc_size);
-#endif
 			md->md_type = MD_KMEM_FIXED;
 			bootmd = md;
 		}

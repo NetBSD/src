@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.22 1998/11/11 06:41:24 thorpej Exp $	*/
+/*	$NetBSD: syscall.c,v 1.23 1999/03/24 05:50:55 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -43,7 +43,6 @@
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
 #include "opt_pmap_debug.h"
-#include "opt_uvm.h"
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -58,9 +57,7 @@
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 
-#if defined(UVM)
 #include <uvm/uvm_extern.h>
-#endif
 
 #include <machine/cpu.h>
 #include <machine/frame.h>
@@ -109,11 +106,7 @@ syscall(frame, code)
 	if (!(frame->tf_spsr & I32_bit))
 		enable_interrupts(I32_bit);
 
-#if defined(UVM)
 	uvmexp.syscalls++;
-#else
-	cnt.v_syscall++;
-#endif
 
 	/*
 	 * Trap SWI instructions executed in non-USR32 mode

@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.62 1998/08/13 10:06:33 kleink Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.63 1999/03/24 05:51:26 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -42,10 +42,6 @@
  * Kernel parameter filesystem (/kern)
  */
 
-#if defined(_KERNEL) && !defined(_LKM)
-#include "opt_uvm.h"
-#endif
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -66,10 +62,9 @@
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/kernfs/kernfs.h>
 
-#if defined(UVM)
 #include <vm/vm.h>
+
 #include <uvm/uvm_extern.h>
-#endif
 
 #define KSTRING	256		/* Largest I/O available via this filesystem */
 #define	UIO_MX 32
@@ -90,11 +85,7 @@ struct kern_target kern_targets[] = {
      { DT_REG, N("hz"),        &hz,          KTT_INT,      VREG, READ_MODE  },
      { DT_REG, N("loadavg"),   0,            KTT_AVENRUN,  VREG, READ_MODE  },
      { DT_REG, N("msgbuf"),    0,	     KTT_MSGBUF,   VREG, READ_MODE  },
-#if defined(UVM)
      { DT_REG, N("pagesize"),  &uvmexp.pagesize, KTT_INT,  VREG, READ_MODE  },
-#else
-     { DT_REG, N("pagesize"),  &cnt.v_page_size, KTT_INT,  VREG, READ_MODE  },
-#endif
      { DT_REG, N("physmem"),   &physmem,     KTT_INT,      VREG, READ_MODE  },
 #if 0
      { DT_DIR, N("root"),      0,            KTT_NULL,     VDIR, DIR_MODE   },

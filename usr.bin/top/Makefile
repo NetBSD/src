@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.1 1999/02/15 02:36:10 simonb Exp $
+#	$NetBSD: Makefile,v 1.2 1999/03/24 05:51:32 mrg Exp $
 
 PROG=	top
 
 WARNS=	0	# XXX
 .PATH:	${.CURDIR}/machine
 
-CPPFLAGS+=-I${.CURDIR} -I. -DORDER -DHAVE_STRERROR -DUVM
+CPPFLAGS+=-I${.CURDIR} -I. -DORDER -DHAVE_STRERROR
 SRCS=	top.c commands.c display.c screen.c username.c utils.c version.c \
 	m_netbsd13.c
 DPSRCS+=sigdesc.h

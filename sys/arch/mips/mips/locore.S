@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.65 1999/03/23 22:43:18 simonb Exp $	*/
+/*	$NetBSD: locore.S,v 1.66 1999/03/24 05:51:05 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -58,7 +58,6 @@
 #include "opt_iso.h"
 #include "opt_ns.h"
 #include "opt_ddb.h"
-#include "opt_uvm.h"
 #include "opt_compat_ultrix.h"
 
 #include <machine/cdefs.h>
@@ -273,18 +272,10 @@ NESTED(cpu_switch, CALLFRAME_SIZ, ra)
 	subu	sp, sp, CALLFRAME_SIZ
 	sw	ra, CALLFRAME_RA(sp)
 	.mask	0x80000000, -4
-#if defined(UVM)
 	lw	t0, uvmexp+UVMEXP_SWTCH
-#else
-	lw	t0, cnt+V_SWTCH
-#endif
 	lw	t1, _C_LABEL(whichqs)
 	addu	t0, t0, 1
-#if defined(UVM)
 	sw	t0, uvmexp+UVMEXP_SWTCH
-#else
-	sw	t0, cnt+V_SWTCH
-#endif
 	beq	t1, zero, _C_LABEL(idle)
 	mtc0	zero, MIPS_COP_0_STATUS
 /*
@@ -570,7 +561,6 @@ LEAF(copystrerr)
 	li	v0, EFAULT			# return EFAULT
 END(copystrerr)
 
-#if defined(UVM)
 /*
  * kcopy(const void *src, void *dst, size_t len);
  *
@@ -611,7 +601,6 @@ LEAF(kcopyerr)
 	j	ra
 	li	v0, EFAULT			# return EFAULT
 END(kcopyerr)
-#endif /* UVM */
 
 /*
  * int copyin(void *uaddr, void *kaddr, size_t len)

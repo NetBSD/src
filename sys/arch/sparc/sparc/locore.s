@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.112 1999/03/05 11:07:03 pk Exp $	*/
+/*	$NetBSD: locore.s,v 1.113 1999/03/24 05:51:11 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -51,7 +51,6 @@
  */
 
 #include "opt_ddb.h"
-#include "opt_uvm.h"
 #include "opt_compat_svr4.h"
 #include "opt_multiprocessor.h"
 
@@ -1780,11 +1779,7 @@ ctw_invalid:
 #if defined(SUN4)
 memfault_sun4:
 	TRAP_SETUP(-CCFSZ-80)
-#if defined(UVM)
 	INCR(_C_LABEL(uvmexp)+V_FAULTS)	! cnt.v_faults++ (clobbers %o0,%o1)
-#else
-	INCR(_C_LABEL(cnt)+V_FAULTS)	! cnt.v_faults++ (clobbers %o0,%o1)
-#endif
 
 	st	%g1, [%sp + CCFSZ + 20]	! save g1
 	rd	%y, %l4			! save y
@@ -1849,11 +1844,7 @@ memfault_sun4:
 memfault_sun4c:
 #if defined(SUN4C)
 	TRAP_SETUP(-CCFSZ-80)
-#if defined(UVM)
 	INCR(_C_LABEL(uvmexp)+V_FAULTS)	! cnt.v_faults++ (clobbers %o0,%o1)
-#else
-	INCR(_C_LABEL(cnt)+V_FAULTS)	! cnt.v_faults++ (clobbers %o0,%o1)
-#endif
 
 	st	%g1, [%sp + CCFSZ + 20]	! save g1
 	rd	%y, %l4			! save y
@@ -1959,11 +1950,7 @@ BARF
 	jmpl	%l5, %l7
 	 or	%l4, %lo(CPUINFO_SYNCFLTDUMP), %l4
 	TRAP_SETUP(-CCFSZ-80)
-#if defined(UVM)
 	INCR(_C_LABEL(uvmexp)+V_FAULTS)	! cnt.v_faults++ (clobbers %o0,%o1)
-#else
-	INCR(_C_LABEL(cnt)+V_FAULTS)	! cnt.v_faults++ (clobbers %o0,%o1)
-#endif
 
 	st	%g1, [%sp + CCFSZ + 20]	! save g1
 	rd	%y, %l4			! save y
@@ -2426,11 +2413,7 @@ softintr_sun44c:
 softintr_common:
 	INTR_SETUP(-CCFSZ-80)
 	std	%g2, [%sp + CCFSZ + 24]	! save registers
-#if defined(UVM)
 	INCR(_C_LABEL(uvmexp)+V_INTR)	! cnt.v_intr++; (clobbers %o0,%o1)
-#else
-	INCR(_C_LABEL(cnt)+V_INTR)	! cnt.v_intr++; (clobbers %o0,%o1)
-#endif
 	mov	%g1, %l7
 	rd	%y, %l6
 	std	%g4, [%sp + CCFSZ + 32]
@@ -2495,11 +2478,7 @@ _ENTRY(_C_LABEL(sparc_interrupt44c))
 sparc_interrupt_common:
 	INTR_SETUP(-CCFSZ-80)
 	std	%g2, [%sp + CCFSZ + 24]	! save registers
-#if defined(UVM)
 	INCR(_C_LABEL(uvmexp)+V_INTR)	! cnt.v_intr++; (clobbers %o0,%o1)
-#else
-	INCR(_C_LABEL(cnt)+V_INTR)	! cnt.v_intr++; (clobbers %o0,%o1)
-#endif
 	mov	%g1, %l7
 	rd	%y, %l6
 	std	%g4, [%sp + CCFSZ + 32]
@@ -2595,11 +2574,7 @@ zshard:
 #if defined(SUN4)
 nmi_sun4:
 	INTR_SETUP(-CCFSZ-80)
-#if defined(UVM)
 	INCR(_C_LABEL(uvmexp)+V_INTR)	! cnt.v_intr++; (clobbers %o0,%o1)
-#else
-	INCR(_C_LABEL(cnt)+V_INTR)	! cnt.v_intr++; (clobbers %o0,%o1)
-#endif
 	/*
 	 * Level 15 interrupts are nonmaskable, so with traps off,
 	 * disable all interrupts to prevent recursion.
@@ -2625,11 +2600,7 @@ nmi_sun4:
 #if defined(SUN4C)
 nmi_sun4c:
 	INTR_SETUP(-CCFSZ-80)
-#if defined(UVM)
 	INCR(_C_LABEL(uvmexp)+V_INTR)	! cnt.v_intr++; (clobbers %o0,%o1)
-#else
-	INCR(_C_LABEL(cnt)+V_INTR)	! cnt.v_intr++; (clobbers %o0,%o1)
-#endif
 	/*
 	 * Level 15 interrupts are nonmaskable, so with traps off,
 	 * disable all interrupts to prevent recursion.
@@ -2684,11 +2655,7 @@ nmi_common:
 #if defined(SUN4M)
 nmi_sun4m:
 	INTR_SETUP(-CCFSZ-80)
-#if defined(UVM)
 	INCR(_C_LABEL(uvmexp)+V_INTR)	! cnt.v_intr++; (clobbers %o0,%o1)
-#else
-	INCR(_C_LABEL(cnt)+V_INTR)	! cnt.v_intr++; (clobbers %o0,%o1)
-#endif
 
 	/* Read the Pending Interrupts register */
 	sethi	%hi(CPUINFO_VA+CPUINFO_INTREG), %l6
@@ -4556,11 +4523,7 @@ ENTRY(switchexit)
 	 */
 
 	INCR(_C_LABEL(nswitchexit))	! nswitchexit++;
-#if defined(UVM)
 	INCR(_C_LABEL(uvmexp)+V_SWTCH)	! cnt.v_switch++;
-#else
-	INCR(_C_LABEL(cnt)+V_SWTCH)	! cnt.v_switch++;
-#endif
 
 	mov	PSR_S|PSR_ET, %g1	! oldpsr = PSR_S | PSR_ET;
 	sethi	%hi(_C_LABEL(whichqs)), %g2

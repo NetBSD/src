@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.59 1999/03/22 09:17:11 ross Exp $ */
+/* $NetBSD: locore.s,v 1.60 1999/03/24 05:50:50 mrg Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,6 @@
 .stabs	__FILE__,100,0,0,kernel_text
 
 #include "opt_multiprocessor.h"
-#include "opt_uvm.h"
 #include "opt_compat_linux.h"
 
 #ifdef COMPAT_LINUX
@@ -76,7 +75,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.59 1999/03/22 09:17:11 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.60 1999/03/24 05:50:50 mrg Exp $");
 
 #ifndef EVCNT_COUNTERS
 #include <machine/intrcnt.h>
@@ -1325,7 +1324,6 @@ bcopy_ov_short:
 
 	END(bcopy)
 
-#if defined(UVM)
 /*
  * kcopy(const void *src, void *dst, size_t len);
  *
@@ -1379,7 +1377,6 @@ LEAF(kcopyerr, 0)
 	ldiq	v0, EFAULT			/* return EFAULT.	     */
 	RET
 END(kcopyerr)
-#endif /* UVM */
 
 NESTED(copyin, 3, 16, ra, IM_RA|IM_S0, 0)
 	LDGP(pv)

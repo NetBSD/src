@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.45 1999/02/02 18:37:21 ragge Exp $	     */
+/*	$NetBSD: vm_machdep.c,v 1.46 1999/03/24 05:51:17 mrg Exp $	     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -261,13 +261,8 @@ cpu_swapin(p)
 	for (i = uarea;i < uarea + USPACE;i += PAGE_SIZE) {
 		j = (u_int *)kvtopte(i);
 		if ((*j & PG_V) == 0) {
-#if defined(UVM)
 			rv = uvm_fault(kernel_map, i, 0,
 			    VM_PROT_WRITE|VM_PROT_READ);
-#else
-			rv = vm_fault(kernel_map, i,
-			    VM_PROT_WRITE|VM_PROT_READ, FALSE);
-#endif
 			if (rv != KERN_SUCCESS)
 				panic("cpu_swapin: rv %d",rv);
 		}
@@ -296,11 +291,7 @@ vmapbuf(bp, len)
 	faddr = trunc_page(bp->b_saveaddr = bp->b_data);
 	off = (vm_offset_t)bp->b_data - faddr;
 	len = round_page(off + len);
-#if defined(UVM)
 	taddr = uvm_km_valloc_wait(phys_map, len);
-#else
-	taddr = kmem_alloc_wait(phys_map, len);
-#endif
 	bp->b_data = (caddr_t)(taddr + off);
 	fmap = vm_map_pmap(&bp->b_proc->p_vmspace->vm_map);
 	tmap = vm_map_pmap(phys_map);
@@ -333,11 +324,7 @@ vunmapbuf(bp, len)
 	addr = trunc_page(bp->b_data);
 	off = (vm_offset_t)bp->b_data - addr;
 	len = round_page(off + len);
-#if defined(UVM)
 	uvm_km_free_wakeup(phys_map, addr, len);
-#else
-	kmem_free_wakeup(phys_map, addr, len);
-#endif
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.40 1998/11/11 06:41:24 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.41 1999/03/24 05:50:53 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -42,8 +42,6 @@
  *	@(#)vm_machdep.c	7.10 (Berkeley) 5/7/91
  */
 
-#include "opt_uvm.h"
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
@@ -60,9 +58,7 @@
 #include <sys/user.h>
 #include <vm/vm_kern.h>
 
-#if defined(UVM)
 #include <uvm/uvm_extern.h>
-#endif
 
 #include <machine/pte.h>
 
@@ -149,11 +145,7 @@ cpu_exit(p)
 {
 
 	(void)splhigh();
-#if defined(UVM)
 	uvmexp.swtch++;
-#else
-	cnt.v_swtch++;
-#endif
 	switch_exit(p);
 	/* NOTREACHED */
 }
@@ -368,11 +360,7 @@ vmapbuf(bp, len)
 	uva = m68k_trunc_page(bp->b_saveaddr = bp->b_data);
 	off = (vm_offset_t)bp->b_data - uva;
 	len = m68k_round_page(off + len);
-#if defined(UVM)
 	kva = uvm_km_valloc_wait(phys_map, len);
-#else
-	kva = kmem_alloc_wait(phys_map, len);
-#endif
 	bp->b_data = (caddr_t)(kva + off);
 
 	upmap = vm_map_pmap(&bp->b_proc->p_vmspace->vm_map);
@@ -410,11 +398,7 @@ vunmapbuf(bp, len)
 	 * pmap_remove() is unnecessary here, as kmem_free_wakeup()
 	 * will do it for us.
 	 */
-#if defined(UVM)
 	uvm_km_free_wakeup(phys_map, kva, len);
-#else
-	kmem_free_wakeup(phys_map, kva, len);
-#endif
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = 0;
 }

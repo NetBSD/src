@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.34 1999/01/03 02:23:28 mark Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.35 1999/03/24 05:50:55 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -45,7 +45,6 @@
 
 #include "opt_armfpe.h"
 #include "opt_pmap_debug.h"
-#include "opt_uvm.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,9 +60,7 @@
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 
-#if defined(UVM)
 #include <uvm/uvm_extern.h>
-#endif
 
 #include <machine/cpu.h>
 #include <machine/pmap.h>
@@ -225,11 +222,7 @@ cpu_exit(p)
 		log(LOG_INFO, "%d bytes of svc stack fill pattern\n", loop);
 	}
 #endif	/* STACKCHECKS */
-#if defined(UVM)
 	uvmexp.swtch++;
-#else
-	cnt.v_swtch++;
-#endif
 	switch_exit(p, &proc0);
 }
 
@@ -348,11 +341,7 @@ vmapbuf(bp, len)
 	faddr = trunc_page(bp->b_saveaddr = bp->b_data);
 	off = (vm_offset_t)bp->b_data - faddr;
 	len = round_page(off + len);
-#if defined(UVM)
 	taddr = uvm_km_valloc_wait(phys_map, len);
-#else
-	taddr = kmem_alloc_wait(phys_map, len);
-#endif
 	bp->b_data = (caddr_t)(taddr + off);
 
 	/*
@@ -408,11 +397,7 @@ vunmapbuf(bp, len)
 	addr = trunc_page(bp->b_data);
 	off = (vm_offset_t)bp->b_data - addr;
 	len = round_page(off + len);
-#if defined(UVM)
 	uvm_km_free_wakeup(phys_map, addr, len);
-#else
-	kmem_free_wakeup(phys_map, addr, len);
-#endif
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = 0;
 

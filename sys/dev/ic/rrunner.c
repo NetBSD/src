@@ -1,4 +1,4 @@
-/*	$NetBSD: rrunner.c,v 1.8 1999/01/08 19:22:35 augustss Exp $	*/
+/*	$NetBSD: rrunner.c,v 1.9 1999/03/24 05:51:20 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -62,9 +62,7 @@
 
 #include <vm/vm.h>
 
-#if defined(UVM)
 #include <uvm/uvm_extern.h>
-#endif
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -1041,21 +1039,13 @@ esh_fpread(dev, uio, ioflag)
 	/* Check for validity */
 
 	for (i = 0; i < uio->uio_iovcnt; i++) {
-#if defined(UVM) /* XXXCDC: map not locked, rethink */
+		/* XXXCDC: map not locked, rethink */
 		if (!uvm_useracc(uio->uio_iov[i].iov_base,
 				 uio->uio_iov[i].iov_len,
 				 (flags == B_READ) ? B_WRITE : B_READ)) {
 			error = EFAULT;
 			goto fpread_done;
 		}
-#else
-		if (!useracc(uio->uio_iov[i].iov_base,
-			     uio->uio_iov[i].iov_len,
-			     (flags == B_READ) ? B_WRITE : B_READ)) {
-			error = EFAULT;
-			goto fpread_done;
-		}
-#endif
 		/* Check for valid offsets and sizes */
 
 		if (((u_long) uio->uio_iov[i].iov_base & 3) != 0 || 
@@ -1072,11 +1062,7 @@ esh_fpread(dev, uio, ioflag)
 
 	for (i = 0; i < uio->uio_iovcnt; i++) {
 		iovp = &uio->uio_iov[i];
-#if defined(UVM)
 		uvm_vslock(p, iovp->iov_base, iovp->iov_len);
-#else
-		vslock(p, iovp->iov_base, iovp->iov_len);
-#endif
 	}
 
 	/* 
@@ -1162,11 +1148,7 @@ esh_fpread(dev, uio, ioflag)
 	uio->uio_resid -= di->ed_read_len;
 	for (i = 0; i < uio->uio_iovcnt; i++) {
 		iovp = &uio->uio_iov[i];
-#if defined(UVM)
 		uvm_vsunlock(p, iovp->iov_base, iovp->iov_len);
-#else
-		vsunlock(p, iovp->iov_base, iovp->iov_len);
-#endif
 	}
 
 	PRELE(p);	/* Release process info */
@@ -1221,22 +1203,13 @@ esh_fpwrite(dev, uio, ioflag)
 	/* Check for validity */
 
 	for (i = 0; i < uio->uio_iovcnt; i++) {
-#if defined(UVM) /* XXXCDC: map not locked, rethink */
+		/* XXXCDC: map not locked, rethink */
 		if (!uvm_useracc(uio->uio_iov[i].iov_base,
 				 uio->uio_iov[i].iov_len,
 				 (flags == B_READ) ? B_WRITE : B_READ)) {
 			error = EFAULT;
 			goto fpwrite_done;
 		}
-#else
-		if (!useracc(uio->uio_iov[i].iov_base,
-			     uio->uio_iov[i].iov_len,
-			     (flags == B_READ) ? B_WRITE : B_READ)) {
-			error = EFAULT;
-			goto fpwrite_done;
-		}
-#endif
-		/* Check for valid offsets and sizes */
 
 		if (((u_long) uio->uio_iov[i].iov_base & 3) != 0 || 
 		    (i < uio->uio_iovcnt - 1 && 
@@ -1252,11 +1225,7 @@ esh_fpwrite(dev, uio, ioflag)
 
 	for (i = 0; i < uio->uio_iovcnt; i++) {
 		iovp = &uio->uio_iov[i];
-#if defined(UVM)
 		uvm_vslock(p, iovp->iov_base, iovp->iov_len);
-#else
-		vslock(p, iovp->iov_base, iovp->iov_len);
-#endif
 	}
 
 	/* 
@@ -1338,11 +1307,7 @@ esh_fpwrite(dev, uio, ioflag)
 
 	for (i = 0; i < uio->uio_iovcnt; i++) {
 		iovp = &uio->uio_iov[i];
-#if defined(UVM)
 		uvm_vsunlock(p, iovp->iov_base, iovp->iov_len);
-#else
-		vsunlock(p, iovp->iov_base, iovp->iov_len);
-#endif
 	}
 
 	PRELE(p);	/* Release process info */

@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.47 1999/02/27 06:39:36 scottr Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.48 1999/03/24 05:51:05 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,12 +52,11 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.47 1999/02/27 06:39:36 scottr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.48 1999/03/24 05:51:05 mrg Exp $");
 
 #include "opt_bufcache.h"
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
-#include "opt_uvm.h"
 #include "opt_sysv.h"
 #include "opt_cputype.h"
 
@@ -91,9 +90,7 @@ __KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.47 1999/02/27 06:39:36 scottr Exp
 
 #include <vm/vm.h>
 
-#if defined(UVM)
 #include <uvm/uvm_extern.h>
-#endif
 
 #include <mips/regnum.h>		/* symbolic register indices */
 #include <mips/locore.h>
@@ -1189,9 +1186,6 @@ allocsys(v)
 		if (nswbuf > 256)
 			nswbuf = 256;		/* sanity */
 	}
-#if !defined(UVM)
-	valloc(swbuf, struct buf, nswbuf);
-#endif
 	valloc(buf, struct buf, nbuf);
 
 	return (v);

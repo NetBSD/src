@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_map.c,v 1.3 1999/02/03 05:05:03 msaitoh Exp $	*/
+/*	$NetBSD: procfs_map.c,v 1.4 1999/03/24 05:51:27 mrg Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -41,8 +41,6 @@
  *	$FreeBSD: procfs_map.c,v 1.18 1998/12/04 22:54:51 archie Exp $
  */
 
-#include "opt_uvm.h"
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
@@ -57,9 +55,7 @@
 #include <vm/vm_page.h>
 #include <vm/vm_object.h>
 
-#if defined(UVM)
 #include <uvm/uvm.h>
-#endif
 
 #define MEBUFFERSIZE 256
 
@@ -99,24 +95,15 @@ procfs_domap(curp, p, pfs, uio)
 		((uio->uio_resid > 0) && (entry != &map->header));
 		entry = entry->next) {
 
-#if defined(UVM)
 		if (UVM_ET_ISSUBMAP(entry))
 			continue;
-#else
-		if (entry->is_a_map || entry->is_sub_map)
-			continue;
-#endif
 
 		/*
 		 * format:
 		 *  start, end, resident, private resident, cow, access, type.
 		 */
 		snprintf(mebuffer, sizeof(mebuffer),
-#if defined(UVM)
 		    "0x%lx 0x%lx %c%c%c %c%c%c %s %s %d %d %d\n",
-#else
-		    "0x%lx 0x%lx %c%c%c %c%c%c %s %s %d %d\n",
-#endif
 			entry->start, entry->end,
 
 			(entry->protection & VM_PROT_READ) ? 'r' : '-',
@@ -126,17 +113,9 @@ procfs_domap(curp, p, pfs, uio)
 			(entry->max_protection & VM_PROT_WRITE) ? 'w' : '-',
 			(entry->max_protection & VM_PROT_EXECUTE) ? 'x' : '-',
 
-#if defined(UVM)
 			(entry->etype & UVM_ET_COPYONWRITE) ? "COW" : "NCOW",
 			(entry->etype & UVM_ET_NEEDSCOPY) ? "NC" : "NNC",
-#else
-			(entry->copy_on_write) ? "COW" : "NCOW",
-			(entry->needs_copy) ? "NC" : "NNC",
-#endif
-		    entry->inheritance, entry->wired_count
-#if defined(UVM)
-			, entry->advice
-#endif
+		    entry->inheritance, entry->wired_count , entry->advice
 			);
 
 

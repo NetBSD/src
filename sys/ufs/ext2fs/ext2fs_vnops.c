@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.18 1999/03/05 21:09:49 mycroft Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.19 1999/03/24 05:51:30 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -42,10 +42,6 @@
  * Modified for ext2fs by Manuel Bouyer.
  */
 
-#if defined(_KERNEL) && !defined(_LKM)
-#include "opt_uvm.h"
-#endif
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/resourcevar.h>
@@ -64,9 +60,8 @@
 #include <sys/signalvar.h>
 
 #include <vm/vm.h>
-#if defined(UVM)
+
 #include <uvm/uvm_extern.h>
-#endif
 
 #include <miscfs/fifofs/fifo.h>
 #include <miscfs/genfs/genfs.h>
@@ -429,11 +424,7 @@ ext2fs_chmod(vp, mode, cred, p)
 	ip->i_e2fs_mode |= (mode & ALLPERMS);
 	ip->i_flag |= IN_CHANGE;
 	if ((vp->v_flag & VTEXT) && (ip->i_e2fs_mode & S_ISTXT) == 0)
-#if defined(UVM)
 		(void) uvm_vnp_uncache(vp);
-#else
-		(void) vnode_pager_uncache(vp);
-#endif
 	return (0);
 }
 

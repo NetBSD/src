@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_irq.S,v 1.19 1998/09/05 04:05:31 mark Exp $	*/
+/*	$NetBSD: iomd_irq.S,v 1.20 1999/03/24 05:50:56 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -41,7 +41,6 @@
 
 #include "opt_cputypes.h"
 #include "opt_irqstats.h"
-#include "opt_uvm.h"
 
 #include "assym.h"
 #include <machine/asm.h>
@@ -360,11 +359,7 @@ ENTRY(irq_setmasks)
 	mov	pc, lr
 
 Lcnt:
-#if defined(UVM)
 	.word	_uvmexp
-#else
-	.word	_cnt
-#endif
 
 Lintrcnt:
 	.word	_intrcnt

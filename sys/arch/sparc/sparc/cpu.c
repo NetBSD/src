@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.89 1999/03/17 23:21:38 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.90 1999/03/24 05:51:11 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -61,13 +61,7 @@
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 
-#if defined(UVM)
-#include <uvm/uvm.h>
-#else
-#define uvm_km_valloc(m,s)	kmem_alloc_pageable(m,s)
-#define uvm_pglistalloc(s,l,h,a,b,m,n,f) \
-				vm_page_alloc_memory(s,l,h,a,b,m,n,f)
-#endif
+#include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
