@@ -1,4 +1,4 @@
-/* $NetBSD: seeq8005.c,v 1.32.10.1 2002/06/07 19:37:06 thorpej Exp $ */
+/* $NetBSD: seeq8005.c,v 1.32.10.2 2003/01/27 04:37:04 jmc Exp $ */
 
 /*
  * Copyright (c) 2000, 2001 Ben Harris
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: seeq8005.c,v 1.32.10.1 2002/06/07 19:37:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: seeq8005.c,v 1.32.10.2 2003/01/27 04:37:04 jmc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -159,6 +159,8 @@ static void ea_mc_reset_8005(struct seeq8005_softc *);
 static int ea_mediachange(struct ifnet *);
 static void ea_mediastatus(struct ifnet *, struct ifmediareq *);
 
+static char* padbuf = NULL;
+
 
 /*
  * Attach chip.
@@ -244,6 +246,16 @@ seeq8005_attach(struct seeq8005_softc *sc, const u_int8_t *myaddr, int *media,
 	printf("%s: %dKB packet memory, txbuf=%dKB (%d buffers), rxbuf=%dKB",
 	    sc->sc_dev.dv_xname, sc->sc_buffersize >> 10,
 	    sc->sc_tx_bufsize >> 10, sc->sc_tx_bufs, sc->sc_rx_bufsize >> 10); 
+
+	if (padbuf == NULL) {
+		padbuf = malloc(ETHER_MIN_LEN - ETHER_CRC_LEN, M_DEVBUF,
+		    M_ZERO | M_NOWAIT);
+		if (padbuf == NULL) {
+			printf("%s: can't allocate pad buffer\n",
+			    sc->sc_dev.dv_xname);
+			return;
+		}
+	}
 
 	/* Initialise ifnet structure. */
 
@@ -956,7 +968,11 @@ ea_writembuf(struct seeq8005_softc *sc, struct mbuf *m0, int bufstart)
 		len += m->m_len;
 	}
 
-	len = max(len, ETHER_MIN_LEN);
+	if (len < ETHER_MIN_LEN) {
+		ea_writebuf(sc, padbuf, bufstart + 4 + len,
+		    ETHER_MIN_LEN - len);
+		len = ETHER_MIN_LEN;
+	}
 
 	/* Follow it with a NULL packet header */
 	memset(hdr, 0, 4);
