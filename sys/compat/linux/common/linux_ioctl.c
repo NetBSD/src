@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ioctl.c,v 1.33 2003/06/20 03:54:35 christos Exp $	*/
+/*	$NetBSD: linux_ioctl.c,v 1.34 2003/06/23 21:37:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ioctl.c,v 1.33 2003/06/20 03:54:35 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ioctl.c,v 1.34 2003/06/23 21:37:27 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "sequencer.h"
@@ -96,6 +96,8 @@ linux_sys_ioctl(l, v, retval)
 		return oss_ioctl_sequencer(p, LINUX_TO_OSS(v), retval);
 	case 'P':
 		return oss_ioctl_audio(p, LINUX_TO_OSS(v), retval);
+	case 'r': /* VFAT ioctls; not yet supported */
+		return ENOSYS;
 	case 'S':
 		return linux_ioctl_cdrom(p, uap, retval);
 	case 't':
@@ -139,8 +141,6 @@ linux_sys_ioctl(l, v, retval)
 		return linux_ioctl_termios(p, uap, retval);
 #endif
 	}
-	case 'r': /* VFAT ioctls; not yet supported */
-		return (EINVAL);
 	case 0x89:
 		return linux_ioctl_socket(p, uap, retval);
 	case 0x03:
