@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)locore.s	7.3 (Berkeley) 5/13/91
- *	$Id: locore.s,v 1.27 1993/08/23 05:01:47 cgd Exp $
+ *	$Id: locore.s,v 1.28 1993/08/29 12:48:54 brezak Exp $
  */
 
 
@@ -45,6 +45,7 @@
  */
 
 #include "npx.h"
+
 #include "assym.s"
 #include "machine/psl.h"
 #include "machine/pte.h"
@@ -121,6 +122,9 @@
  * Initialization
  */
 	.data
+        .globl	_esym
+_esym:	.long	0		# ptr to end of syms
+
 	.globl	_cpu,_cold,_boothowto,_bootdev,_cyloffset,_atdevbase
 _cpu:	.long	0		# are we 386, 386sx, or 486
 _cold:	.long	1		# cold till we are not
@@ -140,7 +144,7 @@ start:	movw	$0x1234,0x472	# warm boot
 	.space	0x500		# skip over warm boot shit
 
 	/*
-	 * pass parameters on stack (howto, bootdev, unit, cyloffset)
+	 * pass parameters on stack (howto, bootdev, unit, cyloffset, esym)
 	 * note: (%esp) is return address of boot
 	 * ( if we want to hold onto /boot, it's physical %esp up to _end)
 	 */
@@ -151,6 +155,9 @@ start:	movw	$0x1234,0x472	# warm boot
 	movl	%eax,_bootdev-KERNBASE
 	movl	12(%esp),%eax
 	movl	%eax,_cyloffset-KERNBASE
+ 	movl	16(%esp),%eax
+ 	addl	$ KERNBASE,%eax
+ 	movl	%eax, _esym-KERNBASE
 
 	/* find out our CPU type. */
         pushfl
@@ -221,28 +228,48 @@ start:	movw	$0x1234,0x472	# warm boot
 	movl	%eax,_Maxmem-KERNBASE
 #endif
 
-/* find end of kernel image */
-	movl	$_end-KERNBASE,%ecx
-	addl	$NBPG-1,%ecx
-	andl	$~(NBPG-1),%ecx
-	movl	%ecx,%esi
-
-/* clear bss and memory for bootstrap pagetables. */
-	movl	$_edata-KERNBASE,%edi
-	subl	%edi,%ecx
-	addl	$(UPAGES+5)*NBPG,%ecx
 /*
  * Virtual address space of kernel:
  *
- *	text | data | bss | page dir | proc0 kernel stack | usr stk map | Sysmap
- *			     0               1       2       3             4
+!  *	text | data | bss | [syms] | page dir | proc0 kernel stack | usr stk map | Sysmap
+ *			           0               1       2       3             4
  */
+
+/* find end of kernel image */
+	movl	$_end-KERNBASE,%ecx
+	movl	%ecx,%esi
+	movl	$_edata-KERNBASE,%edi
+	subl	%edi,%ecx
+
+/* clear bss */
 	xorl	%eax,%eax	# pattern
 	cld
 	rep
 	stosb
 
-	movl	%esi,_IdlePTD-KERNBASE /*physical address of Idle Address space */
+	movl	%esi,%ecx	# if syms are not loaded
+#if	defined(DDB) && !defined(SYMTAB_SPACE)
+/* save the symbols (if loaded) */
+	cmpl	$0,_esym-KERNBASE
+	je	1f
+	movl	_esym-KERNBASE,%ecx
+	subl	$ KERNBASE,%ecx
+#endif
+1:	movl	%ecx,%edi	# edi= end || esym
+	addl	$ NBPG-1,%ecx	# page align up
+	andl	$~(NBPG-1),%ecx
+	movl	%ecx,%esi	# esi=start of tables
+	subl	%edi,%ecx
+	addl	$(UPAGES+5)*NBPG,%ecx	# size of tables
+	
+/* clear memory for bootstrap tables */
+	xorl	%eax,%eax	# pattern
+	cld
+	rep
+	stosb
+
+/* physical address of Idle Address space */
+	movl	%esi,_IdlePTD-KERNBASE
 
 #define	fillkpt		\
 1:	movl	%eax,(%ebx)	; \

@@ -1,6 +1,6 @@
 # Copyright 1990 W. Jolitz
 # 	from: @(#)Makefile.i386	7.1 5/10/91
-#	$Id: Makefile.i386,v 1.27 1993/08/27 23:58:20 brezak Exp $
+#	$Id: Makefile.i386,v 1.28 1993/08/29 12:48:10 brezak Exp $
 #
 # Makefile for NetBSD
 #
@@ -24,6 +24,8 @@ TOUCH=	touch -f -c
 LD=	/usr/bin/ld
 CC=	cc 
 CPP=	cpp
+STRIP=	strip
+DBSYM=	/usr/sbin/dbsym
 
 S=	../../../..
 I386=	../..
@@ -42,7 +44,7 @@ SYSTEM_OBJS=locore.o ${OBJS} param.o ioconf.o conf.o
 SYSTEM_DEP=Makefile symbols.sort ${SYSTEM_OBJS}
 SYSTEM_LD_HEAD= 	@echo loading $@; rm -f $@
 SYSTEM_LD= @${LD} -z -T ${LOAD_ADDRESS} -o $@ -X vers.o ${SYSTEM_OBJS}
-SYSTEM_LD_TAIL= @echo rearranging symbols; symorder symbols.sort $@; /usr/sbin/dbsym -fT ${LOAD_ADDRESS} $@; size $@; chmod 755 $@
+SYSTEM_LD_TAIL= @echo rearranging symbols; symorder symbols.sort $@; ${DBSYM} -fT ${LOAD_ADDRESS} $@; ${STRIP} -x $@; size $@; chmod 755 $@
 
 # (XXX) ok, this is weird.  but we've got a working ed, and a broken ex, and
 # the script is identical for either... -- cgd
