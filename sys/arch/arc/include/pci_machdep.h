@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.h,v 1.2 2001/01/13 10:46:18 ur Exp $ */
+/* $NetBSD: pci_machdep.h,v 1.3 2002/05/15 17:15:17 thorpej Exp $ */
 /* NetBSD: pci_machdep.h,v 1.3 1999/03/19 03:40:46 cgd Exp  */
 
 /*
@@ -53,6 +53,8 @@ struct arc_pci_chipset {
 			    struct device *, struct pcibus_attach_args *));
 	int		(*pc_bus_maxdevs) __P((pci_chipset_tag_t, int));
 	pcitag_t	(*pc_make_tag) __P((pci_chipset_tag_t, int, int, int));
+	void		(*pc_decompose_tag) __P((pci_chipset_tag_t, pcitag_t,
+			    int *, int *, int *));
 	pcireg_t	(*pc_conf_read) __P((pci_chipset_tag_t, pcitag_t,
 			    int));
 	void		(*pc_conf_write) __P((pci_chipset_tag_t, pcitag_t, int,
@@ -76,6 +78,8 @@ struct arc_pci_chipset {
     (*(c)->pc_bus_maxdevs)((c), (b))
 #define	pci_make_tag(c, b, d, f)					\
     (*(c)->pc_make_tag)((c), (b), (d), (f))
+#define	pci_decompose_tag(c, t, bp, dp, fp)				\
+    (*(c)->pc_decompose_tag)((c), (t), (bp), (dp), (fp))
 #define	pci_conf_read(c, t, r)						\
     (*(c)->pc_conf_read)((c), (t), (r))
 #define	pci_conf_write(c, t, r, v)					\
