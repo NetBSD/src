@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.3 2003/10/08 22:43:01 thorpej Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.4 2003/10/13 18:38:34 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  * General register state
  */
 #define _NGREG		26
-typedef	long		__greg_t;
+typedef	unsigned long	__greg_t;
 typedef	__greg_t	__gregset_t[_NGREG];
 
 /*
@@ -106,5 +106,53 @@ typedef struct {
  */
 #define _UC_SETSTACK	0x00010000
 #define _UC_CLRSTACK	0x00020000
+
+
+#ifdef _KERNEL
+
+/*
+ * 32bit context definitions.
+ */
+
+#define _NGREG32	19
+typedef unsigned int	__greg32_t;
+typedef __greg32_t	__gregset32_t[_NGREG32];
+
+#define _REG32_GS	0
+#define _REG32_FS	1
+#define _REG32_ES	2
+#define _REG32_DS	3
+#define _REG32_EDI	4
+#define _REG32_ESI	5
+#define _REG32_EBP	6
+#define _REG32_ESP	7
+#define _REG32_EBX	8
+#define _REG32_EDX	9
+#define _REG32_ECX	10
+#define _REG32_EAX	11
+#define _REG32_TRAPNO	12
+#define _REG32_ERR	13
+#define _REG32_EIP	14
+#define _REG32_CS	15
+#define _REG32_EFL	16
+#define _REG32_UESP	17
+#define _REG32_SS	18
+
+/*
+ * Floating point register state
+ */
+typedef struct fxsave64 __fpregset32_t;
+
+typedef struct {
+	__gregset32_t	__gregs;
+	__fpregset32_t	__fpregs;
+} mcontext32_t;
+
+#define _UC_MACHINE_PAD32	5
+
+struct trapframe;
+int check_mcontext(const mcontext_t *, struct trapframe *);
+
+#endif /* _KERNEL */
 
 #endif	/* !_AMD64_MCONTEXT_H_ */
