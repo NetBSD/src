@@ -32,7 +32,7 @@
  */
 
 #include "krb5_locl.h"
-RCSID("$Id: crypto.c,v 1.5 2001/06/19 22:39:58 assar Exp $");
+RCSID("$Id: crypto.c,v 1.6 2001/06/20 02:01:19 assar Exp $");
 
 #undef CRYPTO_DEBUG
 #ifdef CRYPTO_DEBUG
@@ -448,11 +448,11 @@ ARCFOUR_string_to_key(krb5_context context,
 	*p++ = ((char *)password.data)[i];
 	*p++ = 0;
     }
-    MD4Init (&m);
-    MD4Update (&m, s, len);
+    MD4_Init (&m);
+    MD4_Update (&m, s, len);
     key->keytype = enctype;
     krb5_data_alloc (&key->keyvalue, 16);
-    MD4Final (key->keyvalue.data, &m);
+    MD4_Final (key->keyvalue.data, &m);
     memset (s, 0, len);
     free (s);
     return 0;
@@ -872,9 +872,9 @@ RSA_MD4_checksum(krb5_context context,
 {
     MD4_CTX m;
 
-    MD4Init (&m);
-    MD4Update (&m, data, len);
-    MD4Final (C->checksum.data, &m);
+    MD4_Init (&m);
+    MD4_Update (&m, data, len);
+    MD4_Final (C->checksum.data, &m);
 }
 
 static void
@@ -890,10 +890,10 @@ RSA_MD4_DES_checksum(krb5_context context,
     unsigned char *p = cksum->checksum.data;
     
     krb5_generate_random_block(p, 8);
-    MD4Init (&md4);
-    MD4Update (&md4, p, 8);
-    MD4Update (&md4, data, len);
-    MD4Final (p + 8, &md4);
+    MD4_Init (&md4);
+    MD4_Update (&md4, p, 8);
+    MD4_Update (&md4, data, len);
+    MD4_Final (p + 8, &md4);
     memset (&ivec, 0, sizeof(ivec));
     des_cbc_encrypt((const void *)p, 
 		    (void *)p, 
@@ -2664,7 +2664,6 @@ static int
 seed_something(void)
 {
     int fd = -1;
-    size_t len;
     char buf[1024], seedfile[256];
 
     /* If there is a seed file, load it. But such a file cannot be trusted,
@@ -2684,7 +2683,7 @@ seed_something(void)
        we do not have to deal with it. */
     if (RAND_status() != 1) {
 	krb5_context context;
-	char *p;
+	const char *p;
 
 	/* Try using egd */
 	if (!krb5_init_context(&context)) {
