@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: console.cpp,v 1.5 2001/05/08 18:51:22 uch Exp $ */
+/* -*-C++-*-	$NetBSD: console.cpp,v 1.6 2001/05/21 15:54:25 uch Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -50,6 +50,12 @@ Console::Instance()
 	if (_instance == 0)
 		_instance = new Console;
 	return _instance;
+}
+
+Console::Console()
+{
+	// set default builtin console. (bicons)
+	setBootConsole(BI_CNUSE_BUILTIN);
 }
 
 void

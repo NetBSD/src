@@ -1,4 +1,4 @@
-/*	$NetBSD: sh_boot.cpp,v 1.3 2001/05/08 18:51:25 uch Exp $	*/
+/*	$NetBSD: sh_boot.cpp,v 1.4 2001/05/21 15:54:25 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -85,13 +85,16 @@ SHBoot::create()
 	BOOL(*lock_pages)(LPVOID, DWORD, PDWORD, int);
 	BOOL(*unlock_pages)(LPVOID, DWORD);
 
-	// Change console to serial if required.
+	// Setup console. this setting is passed to kernel bootinfo.
 	if (args.console == CONSOLE_SERIAL) {
 		_cons = SHConsole::Instance();
 		if (!_cons->init()) {
 			_cons = Console::Instance();
 			DPRINTF((TEXT("use LCD console instead.\n")));
 		}
+	} else {
+		_cons = Console::Instance();
+		SHConsole::selectBootConsole(*_cons, SHConsole::VIDEO);
 	}
 
 	// Architecture dependent ops.
