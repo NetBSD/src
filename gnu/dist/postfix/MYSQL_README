@@ -12,9 +12,10 @@ the mysqlclient library (and libm) to AUXLIBS, for example:
 
 make -f Makefile.init makefiles \
 	'CCARGS=-DHAS_MYSQL -I/usr/local/mysql/include' \
-	'AUXLIBS=-L/usr/local/mysql/lib -lmysqlclient -lm'
+	'AUXLIBS=-L/usr/local/mysql/lib -lmysqlclient -lz -lm'
 
-then, just run 'make'.
+then, just run 'make'. This requires libz, the compression library.
+Older mysql implementations build without libz.
 
 Postfix installations which may benefit from using mysql map types
 include sites that have a need for instantaneous updates of

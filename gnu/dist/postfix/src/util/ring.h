@@ -29,6 +29,17 @@ extern void ring_detach(RING *);
 #define ring_succ(c) ((c)->succ)
 #define ring_pred(c) ((c)->pred)
 
+ /*
+  * Typically, an application will embed a RING structure into a larger
+  * structure that also contains application-specific members. This approach
+  * gives us the best of both worlds. The application can still use the
+  * generic RING primitives for manipulating RING structures. The macro below
+  * transforms a pointer from RING structure to the structure that contains
+  * it.
+  */
+#define RING_TO_APPL(ring_ptr,app_type,ring_member) \
+    ((app_type *) (((char *) (ring_ptr)) - offsetof(app_type,ring_member)))
+
 /* LICENSE
 /* .ad
 /* .fi

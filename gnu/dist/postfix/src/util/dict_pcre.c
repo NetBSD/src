@@ -266,6 +266,7 @@ DICT   *dict_pcre_open(const char *map, int unused_flags, int dict_flags)
 	    continue;
 
 	p = vstring_str(line_buffer);
+	trimblanks(p, 0)[0] = 0;		/* Trim space at end */
 	re_delimiter = *p++;
 	regexp = p;
 

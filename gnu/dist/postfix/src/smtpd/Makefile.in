@@ -67,7 +67,7 @@ depend: $(MAKES)
 	done) | grep -v '[.][o][:][ ][/]' >$$$$ && mv $$$$ Makefile.in
 	@$(EXPORT) make -f Makefile.in Makefile 1>&2
 
-tests: smtpd_check_test smtpd_check_test2 smtpd_token_test
+tests: smtpd_check_test smtpd_check_test2 smtpd_acl_test smtpd_token_test
 
 smtpd_check_test: smtpd_check smtpd_check.in smtpd_check.ref
 	../postmap/postmap smtpd_check_access
@@ -79,6 +79,12 @@ smtpd_check_test2: smtpd_check smtpd_check.in2 smtpd_check.ref2
 	../postmap/postmap smtpd_check_access
 	./smtpd_check <smtpd_check.in2 >smtpd_check.tmp 2>&1
 	diff smtpd_check.ref2 smtpd_check.tmp
+	rm -f smtpd_check.tmp smtpd_check_access.*
+
+smtpd_acl_test: smtpd_check smtpd_acl.in smtpd_acl.ref
+	../postmap/postmap smtpd_check_access
+	./smtpd_check <smtpd_acl.in >smtpd_check.tmp 2>&1
+	diff smtpd_acl.ref smtpd_check.tmp
 	rm -f smtpd_check.tmp smtpd_check_access.*
 
 smtpd_token_test: smtpd_token smtpd_token.in smtpd_token.ref
@@ -164,6 +170,7 @@ smtpd_check.o: ../../include/mymalloc.h
 smtpd_check.o: ../../include/dict.h
 smtpd_check.o: ../../include/vstream.h
 smtpd_check.o: ../../include/htable.h
+smtpd_check.o: ../../include/ctable.h
 smtpd_check.o: ../../include/dns.h
 smtpd_check.o: ../../include/namadr_list.h
 smtpd_check.o: ../../include/domain_list.h
