@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.89 1999/12/05 18:40:46 thorpej Exp $	*/
+/*	$NetBSD: ncr.c,v 1.90 1999/12/05 19:33:13 thorpej Exp $	*/
 
 /**************************************************************************
 **
@@ -316,6 +316,11 @@
 
 #ifdef __NetBSD__
 
+#ifndef __BUS_SPACE_HAS_STREAM_METHODS
+#define	bus_space_read_stream_4		bus_space_read_4
+#define	bus_space_write_stream_4	bus_space_write_4
+#endif /* __BUS_SPACE_HAS_STREAM_METHODS */
+
 #define	INB(r) \
     INB_OFF(offsetof(struct ncr_reg, r))
 #define	INB_OFF(o) \
@@ -337,15 +342,16 @@
     bus_space_write_4 (np->sc_st, np->sc_sh, (o), (val))
 
 #define	READSCRIPT_OFF(base, off) \
-    (base ? SCR_BO(*((INT32 *)((char *)base + (off)))) :		\
-     bus_space_read_4 (np->ram_tag, np->ram_handle, off))
+    SCR_BO(base ? *((INT32 *)((char *)base + (off))) :			\
+		  bus_space_read_stream_4(np->ram_tag, np->ram_handle, off))
 
 #define	WRITESCRIPT_OFF(base, off, val) \
     do {								\
     	if (base)							\
     		*((INT32 *)((char *)base + (off))) = (SCR_BO(val));	\
     	else								\
-    		bus_space_write_4 (np->ram_tag, np->ram_handle, off, (val)); \
+    		bus_space_write_stream_4(np->ram_tag, np->ram_handle,	\
+		    off, SCR_BO(val)); \
     } while (0)
 
 #define	READSCRIPT(r) \
@@ -1518,7 +1524,7 @@ static	int	read_tekram_eeprom
 
 #if 0
 static char ident[] =
-	"\n$NetBSD: ncr.c,v 1.89 1999/12/05 18:40:46 thorpej Exp $\n";
+	"\n$NetBSD: ncr.c,v 1.90 1999/12/05 19:33:13 thorpej Exp $\n";
 #endif
 
 static const u_long	ncr_version = NCR_VERSION	* 11
