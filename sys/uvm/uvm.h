@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm.h,v 1.18 1999/11/13 00:21:17 thorpej Exp $	*/
+/*	$NetBSD: uvm.h,v 1.19 2000/04/02 20:39:18 thorpej Exp $	*/
 
 /*
  *
@@ -83,6 +83,7 @@ struct uvm {
 	struct pglist page_inactive_obj;/* pages inactive (reclaim or free) */
 	simple_lock_data_t pageqlock;	/* lock for active/inactive page q */
 	simple_lock_data_t fpageqlock;	/* lock for free page q */
+	boolean_t page_init_done;	/* TRUE if uvm_page_init() finished */
 		/* page daemon trigger */
 	int pagedaemon;			/* daemon sleeps on this */
 	struct proc *pagedaemon_proc;	/* daemon's pid */
