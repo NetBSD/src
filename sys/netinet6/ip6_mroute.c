@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_mroute.c,v 1.32 2002/06/07 04:18:12 itojun Exp $	*/
+/*	$NetBSD: ip6_mroute.c,v 1.33 2002/06/07 18:19:05 itojun Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.49 2001/07/25 09:21:18 jinmei Exp $	*/
 
 /*
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.32 2002/06/07 04:18:12 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.33 2002/06/07 18:19:05 itojun Exp $");
 
 #include "opt_inet.h"
 
@@ -1569,7 +1569,7 @@ register_send(ip6, mif, m)
 #ifdef MRT6DEBUG
 		if (mrt6debug)
 			log(LOG_WARNING,
-			    "register_send: ip_mrouter socket queue full\n");
+			    "register_send: ip6_mrouter socket queue full\n");
 #endif
 		++mrt6stat.mrt6s_upq_sockfull;
 		return ENOBUFS;
