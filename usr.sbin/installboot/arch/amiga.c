@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga.c,v 1.1 2003/01/15 06:33:13 mhitch Exp $	*/
+/*	$NetBSD: amiga.c,v 1.2 2003/04/15 14:22:14 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: amiga.c,v 1.1 2003/01/15 06:33:13 mhitch Exp $");
+__RCSID("$NetBSD: amiga.c,v 1.2 2003/04/15 14:22:14 dsl Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -61,29 +61,12 @@ __RCSID("$NetBSD: amiga.c,v 1.1 2003/01/15 06:33:13 mhitch Exp $");
 #define CMDLN_LOC 0x10
 #define CMDLN_LEN 0x20
 
-char command[CMDLN_LEN];
-
 #define CHKSUMOFFS 1
 
 u_int32_t chksum(u_int32_t *, int);
 
-int		amiga_parseopt(ib_params *, const char *);
 int		amiga_setboot(ib_params *);
 int		amiga_clearboot(ib_params *);
-
-int
-amiga_parseopt(ib_params *params, const char *option)
-{
-
-	if (strncmp("command=", option, strlen("command=")) == 0) {
-		strncpy(command, option + strlen("command="), CMDLN_LEN);
-		params->flags |= IB_COMMAND;
-		return (1);
-	}
-
-	warnx("Unknown -o option `%s'", option);
-	return (0);
-}
 
 int
 amiga_clearboot(ib_params *params)
@@ -146,7 +129,7 @@ amiga_setboot(ib_params *params)
 		if (strcmp(dline, "netbsd -ASn2") != 0) {
 			errx(1, "Old bootblock version? Can't change command line.");
 		}
-		(void)strncpy(dline, command, CMDLN_LEN-1);
+		(void)strncpy(dline, params->command, CMDLN_LEN-1);
 
 		block[1] = 0;
 		block[1] = 0xffffffff - chksum(block, sumlen);

@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.10 2002/05/20 14:38:38 lukem Exp $	*/
+/*	$NetBSD: installboot.c,v 1.11 2003/04/15 14:22:13 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: installboot.c,v 1.10 2002/05/20 14:38:38 lukem Exp $");
+__RCSID("$NetBSD: installboot.c,v 1.11 2003/04/15 14:22:13 dsl Exp $");
 #endif	/* !__lint */
 
 #include <sys/utsname.h>
@@ -49,17 +49,48 @@ __RCSID("$NetBSD: installboot.c,v 1.10 2002/05/20 14:38:38 lukem Exp $");
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stddef.h>
 #include <string.h>
 #include <unistd.h>
 
 #include "installboot.h"
 
 int		main(int, char *[]);
-static	int	getmachine(ib_params *, const char *, const char *);
-static	int	getfstype(ib_params *, const char *, const char *);
+static	void	getmachine(ib_params *, const char *, const char *);
+static	void	getfstype(ib_params *, const char *, const char *);
+static	void	parseoptions(ib_params *, const char *);
 static	void	usage(void);
+static	void	options_usage(void);
+static	void	machine_usage(void);
+static	void	fstype_usage(void);
 
 static	ib_params	installboot_params;
+
+#define OFFSET(field)    offsetof(ib_params, field)
+const struct option {
+	const char	*name;		/* Name of option */
+	ib_flags	flag;		/* Corresponding IB_xxx flag */
+	enum {				/* Type of option value... */
+		OPT_BOOL,		/* no value */
+		OPT_INT,		/* numeric value */
+		OPT_WORD,		/* space/tab/, terminated */
+		OPT_STRING		/* null terminated */
+	}		type;
+	int		offset;		/* of field in ib_params */
+} options[] = {
+	{ "alphasum",	IB_ALPHASUM,	OPT_BOOL },
+	{ "append",	IB_APPEND,	OPT_BOOL },
+	{ "command",	IB_COMMAND,	OPT_STRING,	OFFSET(command) },
+	{ "console",	IB_CONSOLE,	OPT_WORD,	OFFSET(console) },
+	{ "password",	IB_PASSWORD,	OPT_WORD,	OFFSET(password) },
+	{ "resetvideo",	IB_RESETVIDEO,	OPT_BOOL },
+	{ "speed",	IB_CONSPEED,	OPT_INT,	OFFSET(conspeed) },
+	{ "sunsum",	IB_SUNSUM,	OPT_BOOL },
+	{ "timeout",	IB_TIMEOUT,	OPT_INT,	OFFSET(timeout) },
+	{ NULL },
+};
+#undef OFFSET
+#define OPTION(params, type, opt) (*(type *)((char *)(params) + (opt)->offset))
 
 int
 main(int argc, char *argv[])
@@ -70,6 +101,7 @@ main(int argc, char *argv[])
 	int		ch, rv, mode;
 	char 		*p;
 	const char	*op;
+	ib_flags	unsupported_flags;
 
 	setprogname(argv[0]);
 	params = &installboot_params;
@@ -77,8 +109,7 @@ main(int argc, char *argv[])
 	params->fsfd = -1;
 	params->s1fd = -1;
 	if ((p = getenv("MACHINE")) != NULL)
-		if (! getmachine(params, p, "$MACHINE"))
-			exit(1);
+		getmachine(params, p, "$MACHINE");
 
 	while ((ch = getopt(argc, argv, "b:B:cm:no:t:v")) != -1) {
 		switch (ch) {
@@ -106,8 +137,7 @@ main(int argc, char *argv[])
 			break;
 
 		case 'm':
-			if (! getmachine(params, optarg, "-m"))
-				exit(1);
+			getmachine(params, optarg, "-m");
 			break;
 
 		case 'n':
@@ -115,20 +145,11 @@ main(int argc, char *argv[])
 			break;
 
 		case 'o':
-			if (params->machine == NULL)
-				errx(1,
-				    "Machine needs to be specified before -o");
-			while ((p = strsep(&optarg, ",")) != NULL) {
-				if (*p == '\0')
-					errx(1, "Empty `-o' option");
-				if (! params->machine->parseopt(params, p))
-					exit(1);
-			}
+			parseoptions(params, optarg);
 			break;
 
 		case 't':
-			if (! getfstype(params, optarg, "-t"))
-				exit(1);
+			getfstype(params, optarg, "-t");
 			break;
 
 		case 'v':
@@ -153,8 +174,36 @@ main(int argc, char *argv[])
 	if (params->machine == NULL) {
 		if (uname(&utsname) == -1)
 			err(1, "Determine uname");
-		if (! getmachine(params, utsname.machine, "uname()"))
-			exit(1);
+		getmachine(params, utsname.machine, "uname()");
+	}
+
+	/* Check that options are supported by this system */
+	unsupported_flags = params->flags & ~params->machine->valid_flags;
+	unsupported_flags &= ~(IB_VERBOSE | IB_NOWRITE |IB_CLEAR);
+	if (unsupported_flags != 0) {
+		int ndx;
+		for (ndx = 0; options[ndx].name != NULL; ndx++) {
+			if (unsupported_flags & options[ndx].flag)
+				warnx("`-o %s' is not supported for %s",
+				    options[ndx].name, params->machine->name);
+		}
+		if (unsupported_flags & IB_STAGE1START)
+			warnx("`-b bno' is not supported for %s",
+			    params->machine->name);
+		if (unsupported_flags & IB_STAGE2START)
+			warnx("`-B bno' is not supported for %s",
+			    params->machine->name);
+		exit(1);
+	}
+	/* and some illegal combinations */
+	if (params->flags & IB_STAGE1START && params->flags & IB_APPEND) {
+		warnx("Can't use `-b bno' with `-o append'");
+		exit(1);
+	}
+	if (params->flags & IB_CLEAR &&
+	    params->flags & (IB_STAGE1START | IB_STAGE2START | IB_APPEND)) {
+		warnx("Can't use `-b bno', `-B bno' or `-o append' with `-c'");
+		exit(1);
 	}
 
 	params->filesystem = argv[0];
@@ -242,44 +291,105 @@ main(int argc, char *argv[])
 	/* NOTREACHED */
 }
 
-int
-parseoptionflag(ib_params *params, const char *option, ib_flags wantflags)
+static void
+parseoptions(ib_params *params, const char *option)
 {
-	struct {
-		const char	*name;
-		ib_flags	flag;
-	} flags[] = {
-		{ "alphasum",	IB_ALPHASUM },
-		{ "append",	IB_APPEND },
-		{ "sunsum",	IB_SUNSUM },
-		{ NULL,		0 },
-	};
-
-	int	i;
+	char *cp;
+	const struct option *opt;
+	int len;
+	ulong val;
 
 	assert(params != NULL);
 	assert(option != NULL);
 
-	for (i = 0; flags[i].name != NULL; i++) {
-		if ((strcmp(flags[i].name, option) == 0) &&
-		    (wantflags & flags[i].flag)) {
-			params->flags |= flags[i].flag;
-			return (1);
+	for (;; option += len) {
+		option += strspn(option, ", \t");
+		if (*option == 0)
+			return;
+		len = strcspn(option, "=,");
+		for (opt = options; opt->name != NULL; opt++) {
+			if (memcmp(option, opt->name, len) == 0
+			    && opt->name[len] == 0)
+				break;
 		}
+		if (opt->name == NULL) {
+			len = strcspn(option, ",");
+			warnx("Unknown option `-o %.*s'", len, option);
+			break;
+		}
+		params->flags |= opt->flag;
+		if (opt->type == OPT_BOOL) {
+			if (option[len] != '=')
+				continue;
+			warnx("Option `%s' must not have a value", opt->name);
+			break;
+		}
+		if (option[len] != '=') {
+			warnx("Option `%s' must have a value", opt->name);
+			break;
+		}
+		option += len + 1;
+		len = strcspn(option, ",");
+		switch (opt->type) {
+		case OPT_STRING:
+			len = strlen(option);
+			/* FALLTHROUGH */
+		case OPT_WORD:
+			cp = strdup(option);
+			if (cp == NULL)
+				err(1, "strdup");
+			cp[len] = 0;
+			OPTION(params, char *, opt) = cp;
+			continue;
+		case OPT_INT:
+			val = strtoul(option, &cp, 0);
+			if (cp > option + len || (*cp != 0 && *cp != ','))
+				break;
+			OPTION(params, int, opt) = val;
+			if (OPTION(params, int, opt) != val)
+				/* value got truncated on int convertion */
+				break;
+			continue;
+		default:
+			errx(1, "Internal error: option `%s' has invalid type",
+				opt->name, opt->type);
+		}
+		warnx("Invalid option value `%s=%.*s'", opt->name, len, option);
+		break;
 	}
-	return (0);
+	options_usage();
+	exit(1);
 }
 
-int
-no_parseopt(ib_params *params, const char *option)
+static void
+options_usage(void)
 {
+	int ndx;
+	const char *pfx;
 
-	assert(params != NULL);
-	assert(option != NULL);
-
-		/* all options are unsupported */
-	warnx("Unsupported -o option `%s'", option);
-	return (0);
+	warnx("Valid options are:");
+	pfx = "\t";
+	for (ndx = 0; options[ndx].name != 0; ndx++) {
+		fprintf(stderr, "%s%s", pfx, options[ndx].name);
+		switch (options[ndx].type) {
+		case OPT_INT:
+			fprintf(stderr, "=number");
+			break;
+		case OPT_WORD:
+			fprintf(stderr, "=word");
+			break;
+		case OPT_STRING:
+			fprintf(stderr, "=string");
+			break;
+		default:
+			break;
+		}
+		if ((ndx % 5) == 4)
+			pfx = ",\n\t";
+		else
+			pfx = ", ";
+	}
+	fprintf(stderr, "\n");
 }
 
 int
@@ -307,21 +417,32 @@ no_clearboot(ib_params *params)
 }
 
 
-static int
+static void
 getmachine(ib_params *param, const char *mach, const char *provider)
+{
+	int	i;
+
+	assert(param != NULL);
+	assert(mach != NULL);
+	assert(provider != NULL);
+
+	for (i = 0; machines[i].name != NULL; i++) {
+		if (strcmp(machines[i].name, mach) == 0) {
+			param->machine = &machines[i];
+			return;
+		}
+	}
+	warnx("Invalid machine `%s' from %s", mach, provider);
+	machine_usage();
+	exit(1);
+}
+
+static void
+machine_usage(void)
 {
 	const char *prefix;
 	int	i;
 
-	if (param != NULL && mach != NULL && provider != NULL) {
-		for (i = 0; machines[i].name != NULL; i++) {
-			if (strcmp(machines[i].name, mach) == 0) {
-				param->machine = &machines[i];
-				return (1);
-			}
-		}
-		warnx("Invalid machine `%s' from %s", mach, provider);
-	}
 	warnx("Supported machines are:");
 #define MACHS_PER_LINE	9
 	prefix="";
@@ -335,25 +456,34 @@ getmachine(ib_params *param, const char *mach, const char *provider)
 		fprintf(stderr, "%s%s", prefix, machines[i].name);
 	}
 	fputs("\n", stderr);
-	return (0);
 }
 
-static int
+static void
 getfstype(ib_params *param, const char *fstype, const char *provider)
+{
+	int i;
+
+	assert(param != NULL);
+	assert(fstype != NULL);
+	assert(provider != NULL);
+
+	for (i = 0; fstypes[i].name != NULL; i++) {
+		if (strcmp(fstypes[i].name, fstype) == 0) {
+			param->fstype = &fstypes[i];
+			return;
+		}
+	}
+	warnx("Invalid file system type `%s' from %s", fstype, provider);
+	fstype_usage();
+	exit(1);
+}
+
+static void
+fstype_usage(void)
 {
 	const char *prefix;
 	int	i;
 
-	if (param != NULL && fstype != NULL && provider != NULL) {
-		for (i = 0; fstypes[i].name != NULL; i++) {
-			if (strcmp(fstypes[i].name, fstype) == 0) {
-				param->fstype = &fstypes[i];
-				return (1);
-			}
-		}
-		warnx("Invalid file system type `%s' from %s",
-		    fstype, provider);
-	}
 	warnx("Supported file system types are:");
 #define FSTYPES_PER_LINE	9
 	prefix="";
@@ -367,7 +497,6 @@ getfstype(ib_params *param, const char *fstype, const char *provider)
 		fprintf(stderr, "%s%s", prefix, fstypes[i].name);
 	}
 	fputs("\n", stderr);
-	return (0);
 }
 
 static void
@@ -381,7 +510,8 @@ usage(void)
 "\t\t   [-b s1start] [-B s2start] filesystem primary [secondary]\n"
 "Usage: %s -c [-nv] [-m machine] [-o options] [-t fstype] filesystem\n",
 	    prog, prog);
-	getmachine(NULL, NULL, NULL);
-	getfstype(NULL, NULL, NULL);
+	machine_usage();
+	fstype_usage();
+	options_usage();
 	exit(1);
 }

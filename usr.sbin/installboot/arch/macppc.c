@@ -1,4 +1,4 @@
-/*	$NetBSD: macppc.c,v 1.5 2002/05/20 16:05:27 lukem Exp $ */
+/*	$NetBSD: macppc.c,v 1.6 2003/04/15 14:22:14 dsl Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: macppc.c,v 1.5 2002/05/20 16:05:27 lukem Exp $");
+__RCSID("$NetBSD: macppc.c,v 1.6 2003/04/15 14:22:14 dsl Exp $");
 #endif	/* !__lint */
 
 #if HAVE_CONFIG_H
@@ -73,11 +73,6 @@ macppc_clearboot(ib_params *params)
 
 	assert(params != NULL);
 
-	if (params->flags & IB_STAGE1START) {
-		warnx("`-b bno' is not supported for %s",
-		    params->machine->name);
-		return (0);
-	}
 		/* XXX: maybe clear the apple partition map too? */
 	return (shared_bbinfo_clearboot(params, &bbparams, NULL));
 }
@@ -88,11 +83,6 @@ macppc_setboot(ib_params *params)
 
 	assert(params != NULL);
 
-	if (params->flags & IB_STAGE1START) {
-		warnx("`-b bno' is not supported for %s",
-		    params->machine->name);
-		return (0);
-	}
 	return (shared_bbinfo_setboot(params, &bbparams, writeapplepartmap));
 }
 
