@@ -1,4 +1,4 @@
-/*	$NetBSD: rune.c,v 1.15 2002/03/18 11:34:40 yamt Exp $	*/
+/*	$NetBSD: rune.c,v 1.16 2002/11/11 20:37:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)rune.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: rune.c,v 1.15 2002/03/18 11:34:40 yamt Exp $");
+__RCSID("$NetBSD: rune.c,v 1.16 2002/11/11 20:37:29 thorpej Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -90,7 +90,7 @@ static int
 readrange(_RuneLocale *rl, _RuneRange *rr, _FileRuneRange *frr, void *lastp,
 	FILE *fp)
 {
-	int i;
+	uint32_t i;
 	_RuneEntry *re;
 	_FileRuneEntry fre;
 
@@ -199,7 +199,7 @@ void
 _freeentry(_RuneRange *rr)
 {
 	_RuneEntry *re;
-	int i;
+	uint32_t i;
 
 	_DIAGASSERT(rr != NULL);
 
@@ -410,7 +410,7 @@ _Read_CTypeAsRune(fp)
 	rl->rl_variable_len = 0;
 
 	for (x = 0; x < _CACHED_RUNES; ++x) {
-		if (x > len)
+		if ((uint32_t) x > len)
 			continue;
 
 		/*
