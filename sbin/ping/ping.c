@@ -1,4 +1,4 @@
-/*	$NetBSD: ping.c,v 1.22 1997/03/11 21:22:52 christos Exp $	*/
+/*	$NetBSD: ping.c,v 1.23 1997/03/11 21:53:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -60,7 +60,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: ping.c,v 1.22 1997/03/11 21:22:52 christos Exp $";
+static char rcsid[] = "$NetBSD: ping.c,v 1.23 1997/03/11 21:53:42 christos Exp $";
 #endif
 
 #include <stdio.h>
@@ -398,17 +398,18 @@ main(int argc, char *argv[])
 		err(1, "Cannot create socket");
 
 	if (options & SO_DEBUG) {
-		if (setsockopt(s, SOL_SOCKET, SO_DEBUG, &on, sizeof(on)) == -1)
+		if (setsockopt(s, SOL_SOCKET, SO_DEBUG, (char *) &on,
+		    sizeof(on)) == -1)
 			err(1, "Can't turn on socket debugging");
 	}
 	if (options & SO_DONTROUTE) {
-		if (setsockopt(s, SOL_SOCKET, SO_DONTROUTE, &on, 
+		if (setsockopt(s, SOL_SOCKET, SO_DONTROUTE, (char *) &on, 
 		    sizeof(on)) == -1)
 			err(1, "Can't turn off socket routing");
 	}
 
 	if (options & F_HDRINCL) {
-		if (setsockopt(s, IPPROTO_IP, IP_HDRINCL, &on, 
+		if (setsockopt(s, IPPROTO_IP, IP_HDRINCL, (char *) &on, 
 		    sizeof(on)) == -1)
 			err(1, "Can't set option to include ip headers");
 
@@ -450,17 +451,17 @@ main(int argc, char *argv[])
 
 	if (moptions & MULTICAST_NOLOOP) {
 		if (setsockopt(s, IPPROTO_IP, IP_MULTICAST_LOOP, 
-		    &loop, 1) == -1)
+		    (char *) &loop, 1) == -1)
 			err(1, "Can't disable multicast loopback");
 	}
 	if (moptions & MULTICAST_TTL) {
 		if (setsockopt(s, IPPROTO_IP, IP_MULTICAST_TTL, 
-		    &ttl, 1) == -1)
+		    (char *) &ttl, 1) == -1)
 			err(1, "Can't set multicast time-to-live");
 	}
 	if (moptions & MULTICAST_IF) {
 		if (setsockopt(s, IPPROTO_IP, IP_MULTICAST_IF, 
-		    &ifaddr.sin_addr, sizeof(ifaddr.sin_addr)) == -1)
+		    (char *) &ifaddr.sin_addr, sizeof(ifaddr.sin_addr)) == -1)
 			err(1, "Can't set multicast source interface");
 	}
 
@@ -549,7 +550,13 @@ doit(void)
 			 * worst case seen, or 10 times as long as the
 			 * maximum interpacket interval, whichever is longer.
 			 */
-			sec = MAX(2*tmax, 10*interval) - diffsec(&now, &last_tx);
+			if (2 * tmax > 10 * interval)
+				sec = 2 * tmax;
+			else
+				sec = 10 * interval;
+
+			sec -= diffsec(&now, &last_tx);
+
 			if (sec <= 0)
 				finish(0);
 		}
@@ -570,7 +577,7 @@ doit(void)
 		}
 
 		fromlen  = sizeof(from);
-		cc = recvfrom(s, packet, packlen, 
+		cc = recvfrom(s, (char *) packet, packlen, 
 			      0, (struct sockaddr *)&from, 
 			      &fromlen);
 		if (cc < 0) {
