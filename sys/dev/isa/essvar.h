@@ -32,7 +32,7 @@
  */
 
 /*
-** @(#) $RCSfile: essvar.h,v $ $Revision: 1.7 $ (SHARK) $Date: 1998/08/10 15:32:18 $
+** @(#) $RCSfile: essvar.h,v $ $Revision: 1.8 $ (SHARK) $Date: 1998/08/10 20:24:26 $
 **
 **++
 **
@@ -113,7 +113,6 @@ struct ess_softc
 	isa_chipset_tag_t sc_ic;
 	bus_space_tag_t sc_iot;		/* tag */
 	bus_space_handle_t sc_ioh;	/* handle */
-	void	*sc_ih;			/* interrupt vectoring */
 
 	int	sc_iobase;		/* I/O port base address */
 
