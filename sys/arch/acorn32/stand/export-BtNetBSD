@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: export-BtNetBSD,v 1.4 2002/02/15 21:49:40 reinoud Exp $
+# $NetBSD: export-BtNetBSD,v 1.5 2002/05/09 07:18:46 jdolecek Exp $
 #
 # creates all binary files from the uue files from the source tree
 # to be run in the directory next to the directory BtNetBSD
@@ -8,6 +8,7 @@
 
 
 # remember our current directory
+cd .
 export CURDIR=${PWD}
 
 # first make sure no old BtNetBSD is around
