@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.7 1995/09/30 12:48:16 leo Exp $
+#	$NetBSD: GENERIC,v 1.7.2.1 1995/10/12 08:20:14 leo Exp $
 #
 # Generic atari
 #
@@ -102,6 +102,8 @@ pseudo-device	ppp		# ppp
 pseudo-device	pty	16	# Pseudo-tty support
 pseudo-device	loop		# Loopback network
 pseudo-device	vnd	3	# 3 pseudo disks (see vnconfig)
+pseudo-device	bpfilter 2	# berkeley packet filters
+pseudo-device	tun	2	# network tunnel
 
 #
 #The following sections describe various hardware options.
