@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.48 2001/05/01 02:53:06 thorpej Exp $ */
+/* $NetBSD: pmap.h,v 1.49 2001/05/01 05:33:13 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -195,6 +195,7 @@ void	pmap_tlb_shootdown_q_drain(u_long, boolean_t);
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 #define	pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
 
+#define	pmap_copy(dp, sp, da, l, sa)	/* nothing */
 #define	pmap_update()			/* nothing (yet) */
 
 #define	pmap_is_referenced(pg)						\

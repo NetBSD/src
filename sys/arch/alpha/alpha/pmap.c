@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.176 2001/05/01 02:53:05 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.177 2001/05/01 05:33:12 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -154,7 +154,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.176 2001/05/01 02:53:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.177 2001/05/01 05:33:12 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2136,18 +2136,8 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
  *
  *	This routine is only advisory and need not do anything.
  */
-void
-pmap_copy(pmap_t dst_pmap, pmap_t src_pmap, vaddr_t dst_addr, vsize_t len,
-    vaddr_t src_addr)
-{
-#ifdef DEBUG
-	if (pmapdebug & PDB_FOLLOW)
-		printf("pmap_copy(%p, %p, %lx, %lx, %lx)\n",
-		       dst_pmap, src_pmap, dst_addr, len, src_addr);
-#endif
-}
+/* call deleted in <machine/pmap.h> */
 
-#if 0 /* defined away in <machine/pmap.h> */
 /*
  * pmap_update:			[ INTERFACE ]
  *
@@ -2155,20 +2145,7 @@ pmap_copy(pmap_t dst_pmap, pmap_t src_pmap, vaddr_t dst_addr, vsize_t len,
  *	incorrect entries NOW, by processing any deferred
  *	pmap operations.
  */
-void
-pmap_update(void)
-{
-
-#ifdef DEBUG
-	if (pmapdebug & PDB_FOLLOW)
-		printf("pmap_update()\n");
-#endif
-
-	/*
-	 * Nothing to do; this pmap module does not defer any operations.
-	 */
-}
-#endif /* 0 */
+/* call deleted in <machine/pmap.h> */
 
 /*
  * pmap_collect:		[ INTERFACE ]
