@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: rootwindow.cpp,v 1.3 2001/05/08 18:51:24 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: rootwindow.cpp,v 1.4 2001/06/19 16:50:07 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,6 +41,7 @@
 #include <menu/tabwindow.h>
 #include <menu/rootwindow.h>
 #include <res/resource.h>
+#include "../binary/build_number.h"
 
 //
 // root window
@@ -76,13 +77,15 @@ RootWindow::~RootWindow()
 BOOL
 RootWindow::create(LPCREATESTRUCT aux)
 {
+	TCHAR app_name[32];
 	// Root window's create don't called by Window Procedure.
 	// so aux is NULL
 	HINSTANCE inst = _app._instance;
 	TCHAR *wc_name = reinterpret_cast <TCHAR *>
 	    (LoadString(inst, IDS_HPCMENU, 0, 0));
+	wsprintf(app_name, TEXT("%s Build %d"), wc_name, HPCBOOT_BUILD_NUMBER);
     
-	_window = CreateWindow(wc_name, wc_name, WS_VISIBLE,
+	_window = CreateWindow(wc_name, app_name, WS_VISIBLE,
 	    CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
 	    0, 0, inst, this);
 	if (!_window)
