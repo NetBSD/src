@@ -1,4 +1,4 @@
-/*	$NetBSD: domacro.c,v 1.17 2000/07/18 06:45:03 lukem Exp $	*/
+/*	$NetBSD: domacro.c,v 1.18 2000/12/15 02:22:51 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)domacro.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: domacro.c,v 1.17 2000/07/18 06:45:03 lukem Exp $");
+__RCSID("$NetBSD: domacro.c,v 1.18 2000/12/15 02:22:51 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -128,6 +128,7 @@ domacro(int argc, char *argv[])
 				fputs(line, ttyout);
 				putc('\n', ttyout);
 			}
+			margv[0] = c->c_name;
 			(*c->c_handler)(margc, margv);
 			if (bell && c->c_bell)
 				(void)putc('\007', ttyout);
