@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_misc.c,v 1.38 1997/10/19 00:15:31 jonathan Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.39 1998/02/19 00:46:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -81,7 +81,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.38 1997/10/19 00:15:31 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.39 1998/02/19 00:46:02 thorpej Exp $");
 
 /*
  * SunOS compatibility module.
@@ -89,6 +89,8 @@ __KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.38 1997/10/19 00:15:31 jonathan Ex
  * SunOS system calls that are implemented differently in BSD are
  * handled here.
  */
+
+#include "fs_nfs.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
