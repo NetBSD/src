@@ -1,4 +1,4 @@
-/*      $NetBSD: sa11x0_com.c,v 1.12 2001/11/20 08:43:23 lukem Exp $        */
+/*      $NetBSD: sa11x0_com.c,v 1.13 2002/01/04 16:36:41 toshii Exp $        */
 
 /*-
  * Copyright (c) 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -100,8 +100,12 @@
 #include <machine/bus.h>
 #include <hpcarm/sa11x0/sa11x0_reg.h>
 #include <hpcarm/sa11x0/sa11x0_var.h>
+#include <hpcarm/sa11x0/sa11x0_gpioreg.h>
 #include <hpcarm/sa11x0/sa11x0_comreg.h>
 #include <hpcarm/sa11x0/sa11x0_comvar.h>
+
+#include <hpc/hpc/platid.h>
+#include <hpc/include/platid_mask.h>
 
 #include "sacom.h"
 
@@ -140,6 +144,9 @@ static inline void sacom_rxsoft(struct sacom_softc *, struct tty *);
 static inline void sacom_txsoft(struct sacom_softc *, struct tty *);
 static inline void sacom_stsoft(struct sacom_softc *, struct tty *);
 static inline void sacom_schedrx(struct sacom_softc *);
+
+/* Machine specific functions */
+static void	sacom_j720_init(struct sa11x0_softc *, struct sacom_softc *);
 
 
 #define COMUNIT_MASK	0x7ffff
@@ -182,6 +189,12 @@ struct cfattach sacom_ca = {
 };
 extern struct cfdriver sacom_cd;
 
+struct platid_data sacom_platid_table[] = {
+	{ &platid_mask_MACH_HP_JORNADA_720, sacom_j720_init },
+	{ &platid_mask_MACH_HP_JORNADA_720JP, sacom_j720_init },
+	{ NULL, NULL }
+};
+
 struct consdev sacomcons = {
 	NULL, NULL, sacomcngetc, sacomcnputc, sacomcnpollc, NULL,
 	NODEV, CN_NORMAL
@@ -214,6 +227,8 @@ sacom_attach(parent, self, aux)
 {
 	struct sacom_softc *sc = (struct sacom_softc*)self;
 	struct sa11x0_attach_args *sa = aux;
+	struct platid_data *p;
+	void (*mdinit)(struct device *, struct sacom_softc *);
 
 	printf("\n");
 
@@ -240,6 +255,12 @@ sacom_attach(parent, self, aux)
 	}
 
 	sacom_attach_subr(sc);
+
+	/* Do machine specific initialization, if any */
+	if ((p = platid_search_data(&platid, sacom_platid_table)) != NULL) {
+		mdinit = p->data;
+		(mdinit)(parent, sc);
+	}
 
 	sa11x0_intr_establish(0, sa->sa_intr, 1, IPL_SERIAL, sacomintr, sc);
 }
@@ -1139,7 +1160,7 @@ sacom_filltx(sc)
 	int c, n;
 
 	n = 0;
-	while(bus_space_read_4(sacomconstag, sacomconsioh, SACOM_SR1)
+	while(bus_space_read_4(iot, ioh, SACOM_SR1)
 	      & SR1_TNF) {
 		if (n == SACOM_TXFIFOLEN || n == sc->sc_tbc)
 			break;
@@ -1485,6 +1506,16 @@ sacomintr(arg)
 	rnd_add_uint32(&sc->rnd_source, iir | lsr);
 #endif
 	return (1);
+}
+
+static void
+sacom_j720_init(struct sa11x0_softc *parent, struct sacom_softc *sc) {
+
+	/* XXX  this should be done at sc->enable function */
+	bus_space_write_4(parent->sc_iot, parent->sc_gpioh,
+	    SAGPIO_PCR, 0xa0000);
+	bus_space_write_4(parent->sc_iot, parent->sc_gpioh,
+	    SAGPIO_PSR, 0x100);
 }
 
 /* Initialization for serial console */
