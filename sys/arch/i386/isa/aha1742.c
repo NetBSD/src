@@ -14,7 +14,7 @@
  *
  * commenced: Sun Sep 27 18:14:01 PDT 1992
  *
- *      $Id: aha1742.c,v 1.14.2.4 1994/02/02 05:39:01 mycroft Exp $
+ *      $Id: aha1742.c,v 1.14.2.5 1994/02/02 11:30:48 mycroft Exp $
  */
 
 #include "ahb.h"
@@ -259,13 +259,13 @@ struct ahb_data {
 	struct ecb *immed_ecb;	/* an outstanding immediete command */
 	int numecbs;
 	struct scsi_link sc_link;
-}	*ahbdata[NAHB];
+};
 
 void ahb_send_mbox __P((struct ahb_data *, int, int, struct ecb *));
 int ahb_poll __P((struct ahb_data *, int));
 void ahb_send_immed __P((struct ahb_data *, int, u_long));
-int ahbprobe __P((struct device *, struct cfdata *, void *));
-int ahbprobe1 __P((struct device *, struct cfdata *, struct isa_attach_args *));
+int ahbprobe __P((struct device *, struct device *, void *));
+int ahbprobe1 __P((struct device *, struct ahb_data *, struct isa_attach_args *));
 void ahbattach __P((struct device *, struct device *, void *));
 u_int ahb_adapter_info __P((struct ahb_data *));
 int ahbintr __P((void *));
@@ -423,17 +423,17 @@ ahb_send_immed(ahb, target, cmd)
  * the actual probe routine to check it out.
  */
 int
-ahbprobe(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
+ahbprobe(parent, self, aux)
+	struct device *parent, *self;
 	void *aux;
 {
 	struct isa_attach_args *ia = aux;
+	struct ahb_data *ahb = (void *)self;
 	u_short port;
 	u_char byte1, byte2, byte3;
 
 	if (ia->ia_iobase != IOBASEUNK)
-		return ahbprobe1(parent, cf, aux);
+		return ahbprobe1(parent, ahb, ia);
 
 	while (ahb_slot < MAX_SLOTS) {
 		ahb_slot++;
@@ -450,7 +450,7 @@ ahbprobe(parent, cf, aux)
 			continue;
 		}
 		ia->ia_iobase = port;
-		if (ahbprobe1(parent, cf, ia))
+		if (ahbprobe1(parent, ahb, ia))
 			return 1;
 	}
 
@@ -464,41 +464,28 @@ ahbprobe(parent, cf, aux)
  * autoconf.c.
  */
 int
-ahbprobe1(parent, cf, ia)
+ahbprobe1(parent, ahb, ia)
 	struct device *parent;
-	struct cfdata *cf;
+	struct ahb_data *ahb;
 	struct isa_attach_args *ia;
 {
-	int unit = cf->cf_unit;
-	struct	ahb_data *ahb;
 
-	ahb = malloc(sizeof(struct ahb_data), M_TEMP, M_NOWAIT);
-	if (!ahb) {
-		printf("ahb%d: cannot malloc!\n", unit);
-		return 0;
-	}
-	bzero(ahb, sizeof(*ahb));
-	ahbdata[unit] = ahb;
 	ahb->baseport = ia->ia_iobase;
 
 	/*
 	 * Try initialise a unit at this location
 	 * sets up dma and bus speed, loads ahb->vect
 	 */
-	if (ahb_find(ahb) != 0) {
-		ahbdata[unit] = NULL;
-		free(ahb, M_TEMP);
+	if (ahb_find(ahb) != 0)
 		return 0;
-	}
 
 	if (ia->ia_irq == IRQUNK) {
 		ia->ia_irq = (1 << ahb->vect);
 	} else {
 		if (ia->ia_irq != (1 << ahb->vect)) {
-			printf("ahb%d: irq mismatch, %x != %x\n", unit,
-				ia->ia_irq, (1 << ahb->vect));
-			ahbdata[unit] = NULL;
-			free(ahb, M_TEMP);
+			printf("ahb%d: irq mismatch, %x != %x\n",
+				ahb->sc_dev.dv_unit, ia->ia_irq,
+				1 << ahb->vect);
 			return 0;
 		}
 	}
@@ -522,15 +509,8 @@ ahbattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	int unit = self->dv_unit;
-	struct ahb_data *ahb = ahbdata[unit];
 	struct isa_attach_args *ia = aux;
-
-	bcopy((char *)ahb + sizeof(struct device),
-	      (char *)self + sizeof(struct device),
-	      sizeof(struct ahb_data) - sizeof(struct device));
-	free(ahb, M_TEMP);
-	ahbdata[unit] = ahb = (struct ahb_data *)self;
+	struct ahb_data *ahb = (void *)self;
 
 	ahb_init(ahb);
 
