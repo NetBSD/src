@@ -1,4 +1,4 @@
-#	$NetBSD: files.amiga,v 1.43 1996/04/26 20:21:59 is Exp $
+#	$NetBSD: files.amiga,v 1.44 1996/04/27 20:51:08 veego Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -41,7 +41,7 @@ file	arch/amiga/dev/par.c		par needs-count
 # mouse
 device	ms: event
 attach	ms at mainbus
-file	arch/amiga/dev/ms.c		ms
+file	arch/amiga/dev/ms.c		ms needs-flag
 
 device	fdc { unit = -1 }
 attach	fdc at mainbus

@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.54 1996/04/21 21:09:40 veego Exp $
+#	$NetBSD: GENERIC,v 1.55 1996/04/27 20:51:07 veego Exp $
 
 #
 # GENERIC AMIGA
@@ -35,6 +35,7 @@ options		INET		# IP networking support (Required)
 #options	ISO,TPIP	# OSI
 #options	EON		# OSI tunneling over IP
 #options	CCITT,LLC,HDLC	# X.25
+#options	PPP_BSDCOMP,PPP_DEFLATE	# BSD compression for PPP
 
 #
 # File systems
@@ -223,8 +224,6 @@ sd*	at scsibus? target ? lun ?	# scsi disks
 st*	at scsibus? target ? lun ?	# scsi tapes
 cd*	at scsibus? target ? lun ?	# scsi cd's
 
-fd*	at fdc0 unit ?			# floppy drives
-
 pseudo-device	loop	1		# network loopback
 pseudo-device	sl	1		# slip
 pseudo-device	ppp	1		# ppp
@@ -235,5 +234,6 @@ pseudo-device	view	10		# views
 pseudo-device	pty	16		# pseudo terminals
 
 pseudo-device	vnd	4		# paging to files
+#pseudo-device	ccd	4		# concatenated disk devices
 
 config	netbsd swap on generic
