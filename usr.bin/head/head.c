@@ -1,4 +1,4 @@
-/*	$NetBSD: head.c,v 1.7 1997/10/18 13:15:40 mrg Exp $	*/
+/*	$NetBSD: head.c,v 1.8 1997/10/19 02:23:45 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1987, 1992, 1993
@@ -43,13 +43,14 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1987, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)head.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: head.c,v 1.7 1997/10/18 13:15:40 mrg Exp $");
+__RCSID("$NetBSD: head.c,v 1.8 1997/10/19 02:23:45 lukem Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/types.h>
 
 #include <ctype.h>
+#include <err.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -62,7 +63,6 @@ __RCSID("$NetBSD: head.c,v 1.7 1997/10/18 13:15:40 mrg Exp $");
  * Bill Joy UCB August 24, 1977
  */
 
-void err __P((int, const char *, ...));
 void head __P((FILE *, int));
 void obsolete __P((char *[]));
 void usage __P((void));
@@ -75,14 +75,14 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	register int ch;
+	int ch;
 	FILE *fp;
 	int first, linecnt;
 	char *ep;
 
 	obsolete(argv);
 	linecnt = 10;
-	while ((ch = getopt(argc, argv, "n:")) != EOF)
+	while ((ch = getopt(argc, argv, "n:")) != -1)
 		switch(ch) {
 		case 'n':
 			linecnt = strtol(optarg, &ep, 10);
@@ -119,9 +119,9 @@ main(argc, argv)
 void
 head(fp, cnt)
 	FILE *fp;
-	register int cnt;
+	int cnt;
 {
-	register int ch;
+	int ch;
 
 	while (cnt--)
 		while ((ch = getc(fp)) != EOF) {
