@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.46 2001/11/28 18:53:34 thorpej Exp $
+$NetBSD: UPDATING,v 1.47 2001/12/02 03:07:29 jmc Exp $
 
 This file is intended to be a brief introduction to the build
 process and a reference on what to do if something doesn't work.
@@ -7,6 +7,18 @@ For a more detailed description see Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+20011201:
+	In order for a sparc64 build to work you must have a working awk. If
+	you've built and installed a system with the new toolchain up to this
+	point you do not have a working awk as it's abililty to do floating
+	point is broken. 
+
+	To build:
+
+	remake and install gnu/lib/libgcc
+	remake and install gnu/usr.bin/gawk into /usr/bin (make sure it links
+	against the libgcc.a)
+
 20011128:
 	Kernel config information was changed to use defflag in
 	the various "files" files.  Bug fixes to config(8) are
