@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.100 2000/01/21 12:28:25 tsutsui Exp $
+#	$NetBSD: MAKEDEV,v 1.101 2000/02/25 02:35:49 groo Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -103,6 +103,7 @@
 #	uk*	unknown SCSI device
 #	ch*	SCSI changer
 #	cfs*	Coda file system device
+#	lm	LM7[89] hardware monitor
 #
 
 dialin=0
@@ -611,6 +612,16 @@ cfs*)
 	mknod $cfs c $major $unit
 	chown root.wheel $cfs
 	chmod 600 $cfs
+	;;
+
+lm*)
+	unit=${i#lm}
+	lm=lm$unit
+	major=67
+	rm -f $lm
+	mknod $lm c $major $unit
+	chown root.wheel $lm
+	chmod 644 $lm
 	;;
 
 scsibus*)
