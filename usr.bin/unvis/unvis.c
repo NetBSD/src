@@ -1,4 +1,4 @@
-/*	$NetBSD: unvis.c,v 1.5 1997/01/09 20:23:17 tls Exp $	*/
+/*	$NetBSD: unvis.c,v 1.6 1997/10/20 02:38:00 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -33,17 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1989, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)unvis.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: unvis.c,v 1.5 1997/01/09 20:23:17 tls Exp $";
+__RCSID("$NetBSD: unvis.c,v 1.6 1997/10/20 02:38:00 lukem Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -51,6 +51,7 @@ static char rcsid[] = "$NetBSD: unvis.c,v 1.5 1997/01/09 20:23:17 tls Exp $";
 #include <err.h>
 #include <vis.h>
 
+int	main __P((int, char **));
 void process __P((FILE *fp, const char *filename));
 
 int
@@ -61,7 +62,7 @@ main(argc, argv)
 	FILE *fp;
 	int ch;
 
-	while ((ch = getopt(argc, argv, "")) != EOF)
+	while ((ch = getopt(argc, argv, "")) != -1)
 		switch((char)ch) {
 		case '?':
 		default:
@@ -89,7 +90,7 @@ process(fp, filename)
 	FILE *fp;
 	const char *filename;
 {
-	register int offset = 0, c, ret;
+	int offset = 0, c, ret;
 	int state = 0;
 	char outc;
 
