@@ -1,4 +1,4 @@
-/*	$NetBSD: scr.c,v 1.10.4.1 2001/10/10 11:55:58 fvdl Exp $	*/
+/*	$NetBSD: scr.c,v 1.10.4.2 2001/10/13 23:25:56 fvdl Exp $	*/
 
 /*
  * Copyright 1997
@@ -1277,7 +1277,7 @@ scrioctl(devvp, cmd, data, flag, p)
     int          flag;
     struct proc  *p;
 {
-    struct scr_softc*;
+    struct scr_softc *sc;
     
     int                 error = 0;          /* error value returned */
     int                 masterDoneRetries= 0;         /* nuber of times we looked at masterDone */

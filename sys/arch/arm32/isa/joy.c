@@ -1,4 +1,4 @@
-/*	$NetBSD: joy.c,v 1.3.4.1 2001/10/10 11:55:56 fvdl Exp $	*/
+/*	$NetBSD: joy.c,v 1.3.4.2 2001/10/13 23:25:55 fvdl Exp $	*/
 
 /*
  * XXX This _really_ should be rewritten such that it doesn't
@@ -83,8 +83,6 @@
 #define JOY_TIMEOUT   2000	/* 2 milliseconds */
 #endif
 
-int		joyopen __P((dev_t, int, int, struct proc *));
-int		joyclose __P((dev_t, int, int, struct proc *));
 static int	get_tick __P((void));
 
 extern struct cfdriver joy_cd;
@@ -135,8 +133,12 @@ joyclose(devvp, flag, mode, p)
 	struct proc *p;
 {
 	struct joy_softc *sc;
+	dev_t dev;
+	int i;
 
 	sc = vdev_privdata(devvp);
+	dev = vdev_rdev(devvp);
+	i = JOYPART(dev);
 
 	sc->timeout[i] = 0;
 	return 0;
@@ -155,8 +157,10 @@ joyread(devvp, uio, flag)
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 	int s;
+	dev_t dev;
 
 	sc = vdev_privdata(devvp);
+	dev = vdev_rdev(devvp);
 	iot = sc->sc_iot;
 	ioh = sc->sc_ioh;
 
@@ -190,7 +194,7 @@ joyread(devvp, uio, flag)
 
 int
 joyioctl(devvp, cmd, data, flag, p)
-	dev_t dev;
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t data;
 	int flag;
