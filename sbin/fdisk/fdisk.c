@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.39 2000/01/31 15:54:48 soda Exp $ */
+/*	$NetBSD: fdisk.c,v 1.40 2000/05/27 19:02:54 fvdl Exp $ */
 
 /*
  * Mach Operating System
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.39 2000/01/31 15:54:48 soda Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.40 2000/05/27 19:02:54 fvdl Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1190,6 +1190,11 @@ dos(sector, cylinderp, headp, sectorp)
 	unsigned char *cylinderp, *headp, *sectorp;
 {
 	int cylinder, head;
+	int biosmaxsec;
+
+	biosmaxsec = dos_cylinders * dos_heads * dos_sectors - 1;
+	if (sector > biosmaxsec)
+		sector = biosmaxsec;
 
 	cylinder = sector / dos_cylindersectors;
 
@@ -1198,8 +1203,6 @@ dos(sector, cylinderp, headp, sectorp)
 	head = sector / dos_sectors;
 	sector -= head * dos_sectors;
 
-	if (cylinder >= MAXCYL)
-		cylinder = MAXCYL - 1;
 	*cylinderp = DOSCYL(cylinder);
 	*headp = head;
 	*sectorp = DOSSECT(sector + 1, cylinder);
