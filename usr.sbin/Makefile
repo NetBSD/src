@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.168 2001/12/15 03:23:11 thorpej Exp $
+#	$NetBSD: Makefile,v 1.169 2001/12/17 21:22:51 wiz Exp $
 #	from: @(#)Makefile	5.20 (Berkeley) 6/12/93
 
 .include <bsd.own.mk>
@@ -21,7 +21,7 @@ SUBDIR=	ac accton altq amd apm apmd arp bad144 bind bootp catman \
 	wsfontload wsmuxctl ypbind yppoll ypserv ypset zdump zic
 
 .if !defined(USE_NEW_TOOLCHAIN)
-SUBDIR+= dbsym mdsetimage
+SUBDIR+= mdsetimage
 .endif
 
 # IPv6
