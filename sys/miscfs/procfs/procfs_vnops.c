@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.92 2003/01/03 13:54:22 christos Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.93 2003/01/04 15:42:35 martin Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.92 2003/01/03 13:54:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.93 2003/01/04 15:42:35 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1088,7 +1088,7 @@ procfs_readdir(v)
 				continue;
 			d.d_fileno = PROCFS_FILENO(pfs->pfs_pid, Pfd, i - 2);
 			d.d_namlen = snprintf(d.d_name, sizeof(d.d_name),
-			    "%lld", i - 2);
+			    "%lld", (long long)(i - 2));
 			d.d_type = VREG;
 			if ((error = uiomove((caddr_t)&d, UIO_MX, uio)) != 0)
 				break;
