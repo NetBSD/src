@@ -1,4 +1,4 @@
-/*	$NetBSD: sbc.c,v 1.32.2.1 1997/11/18 07:28:04 mellon Exp $	*/
+/*	$NetBSD: sbc.c,v 1.32.2.2 1997/11/19 21:42:45 mellon Exp $	*/
 
 /*
  * Copyright (C) 1996 Scott Reynolds.  All rights reserved.
@@ -315,7 +315,7 @@ sbc_pdma_out(ncr_sc, phase, count, data)
 	goto done;
 
 interrupt:
-#ifdef DEBUG
+#ifdef SBC_DEBUG
 	if (sbc_debug & SBC_DB_INTR)
 		printf("%s: pdma_out: timeout len=%d count=%d (disconnect?)\n",
 		    ncr_sc->sc_dev.dv_xname, len, count);
@@ -382,7 +382,7 @@ sbc_pdma_in(ncr_sc, phase, count, data)
 	goto done;
 
 interrupt:
-#ifdef DEBUG
+#ifdef SBC_DEBUG
 	if (sbc_debug & SBC_DB_INTR)
 		printf("%s: pdma_in: timeout len=%d count=%d (disconnect?)\n",
 		    ncr_sc->sc_dev.dv_xname, len, count);
