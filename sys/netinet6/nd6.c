@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.21 2000/04/12 10:36:45 itojun Exp $	*/
+/*	$NetBSD: nd6.c,v 1.22 2000/04/13 14:11:06 itojun Exp $	*/
 /*	$KAME: nd6.c,v 1.41 2000/02/24 16:34:50 itojun Exp $	*/
 
 /*
@@ -881,7 +881,7 @@ nd6_nud_hint(rt, dst6)
 	}
 
 	ln = (struct llinfo_nd6 *)rt->rt_llinfo;
-	if (ln->ln_state == ND6_LLINFO_INCOMPLETE)
+	if (ln->ln_state < ND6_LLINFO_REACHABLE)
 		return;
 
 	ln->ln_state = ND6_LLINFO_REACHABLE;
