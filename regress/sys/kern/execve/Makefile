@@ -1,11 +1,12 @@
-#	$NetBSD: Makefile,v 1.11 1999/02/18 11:59:06 is Exp $
+#	$NetBSD: Makefile,v 1.12 1999/08/01 13:42:00 sommerfeld Exp $
 
 PROG=	doexec
 MKMAN=	no
 
 LDSTATIC= -static		# only static compilation makes sense here
 
-.if (defined(DESTDIR))
+.include <bsd.own.mk>		# May define DESTDIR in mk.conf..
+.if defined(DESTDIR)
 LDLIBS+= -lgcc -lc ${LIBCRTEND}
 GOODAOUT_LIB= -nostdlib -L${DESTDIR}/usr/lib ${LDSTATIC} 
 GOODAOUT_LIB+= ${LIBCRT0} ${LIBCRTBEGIN}
