@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)siop.c	7.5 (Berkeley) 5/4/91
- *	$Id: siop.c,v 1.9 1994/05/12 06:43:12 chopps Exp $
+ *	$Id: siop.c,v 1.10 1994/05/22 07:22:33 chopps Exp $
  */
 
 /*
@@ -363,7 +363,7 @@ siop_donextcmd(dev)
 #if 0
 	if (phase == STATUS_PHASE || flags & SCSI_NOMASK) 
 #else
-	if (flags & SCSI_NOMASK) 
+	if (flags & SCSI_NOMASK || siop_no_dma) 
 #endif
 		stat = siopicmd(dev, slp->target, xs->cmd, xs->cmdlen, 
 		    xs->data, xs->datalen/*, phase*/);
@@ -1037,7 +1037,7 @@ siopgo(dev, xs)
 	    SIOP_DIEN_OPC;
 #ifdef DEBUG
 	if (siop_debug & 1)
-		printf ("siopgo: target %x cmd %02x ds %x\n", dev->sc_slave, xs->cmd[0], &dev->sc_ds);
+		printf ("siopgo: target %x cmd %02x ds %x\n", dev->sc_slave, xs->cmd->opcode, &dev->sc_ds);
 #endif
 
 	siop_setup(dev, dev->sc_slave, xs->cmd, xs->cmdlen, xs->data, xs->datalen);

@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)ser.c	7.12 (Berkeley) 6/27/91
- *	$Id: ser.c,v 1.17 1994/05/16 04:55:11 chopps Exp $
+ *	$Id: ser.c,v 1.18 1994/05/22 07:22:31 chopps Exp $
  */
 /*
  * XXX This file needs major cleanup it will never ervice more than one
@@ -391,6 +391,7 @@ serwrite(dev, uio, flag)
 static u_short serbuf[SERIBUF_SIZE];
 static u_short *sbrpt = serbuf;
 static u_short *sbwpt = serbuf;
+static u_short sbovfl;
 
 /*
  * This is a replacement for the lack of a hardware fifo.  32k should be
@@ -426,7 +427,11 @@ ser_fastint()
 	 */
 	if (sbwpt + 1 == sbrpt || 
 	    (sbwpt == serbuf + SERIBUF_SIZE - 1 && sbrpt == serbuf)) {
+#if 0
 		log(LOG_WARNING, "ser_fastint: buffer overflow!");
+#else
+		++sbovfl;
+#endif
 		return;
 	}
 	/*
@@ -442,7 +447,7 @@ int
 serintr(unit)
 	int unit;
 {
-	int s1, s2;
+	int s1, s2, ovfl;
 
 	/*
 	 * Make sure we're not interrupted by another
@@ -459,12 +464,19 @@ serintr(unit)
 		 */
 		sereint(unit, *sbrpt);
 
+		ovfl = 0;
 		/* lock against ser_fastint() */
 		s2 = spl5();
 		sbrpt++;
 		if (sbrpt == serbuf + SERIBUF_SIZE)
 			sbrpt = serbuf;
+		if (sbovfl != 0) {
+			ovfl = sbovfl;
+			sbovfl = 0;
+		}
 		splx(s2);
+		if (ovfl != 0)
+			log(LOG_WARNING, "ser_fastint: %d buffer overflow!\n", ovfl);
 	}
 	splx(s1);
 }

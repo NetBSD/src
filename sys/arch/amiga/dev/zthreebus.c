@@ -111,11 +111,14 @@ zthreeattach(pdp, dp, auxp)
 	u_long lpa;
 	int i, zcnt;
 
+	if (ZTHREEAVAIL)
+	  	printf (" I/O size 0x%08x", ZTHREEAVAIL);
 #if 0
 	if (ZTHREEMEMADDR)
 		printf (" mem %08x-%08x\n",
 		  ZTHREEMEMADDR, ZTHREEMEMADDR + ZTHREEMEMSIZE - 1);
 #endif
+	printf("\n");
 
 	for (i = 0; i < ncfdev; i++) {
 		za.pa = cfdev[i].addr;
@@ -154,7 +157,7 @@ zthreeprint(auxp, pnp)
 		if (zap->manid == -1)
 			rv = UNSUPP;
 	}
-	printf(" rom: 0x%x man/pro: %d/%d", zap->pa, zap->manid, zap->prodid);
+	printf(" rom 0x%x man/pro %d/%d", zap->pa, zap->manid, zap->prodid);
 	return(rv);
 }
 
