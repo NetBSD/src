@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.6 1997/10/19 23:05:15 lukem Exp $	*/
+/*	$NetBSD: misc.c,v 1.7 2002/06/14 00:41:42 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: misc.c,v 1.6 1997/10/19 23:05:15 lukem Exp $");
+__RCSID("$NetBSD: misc.c,v 1.7 2002/06/14 00:41:42 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -50,6 +50,7 @@ __RCSID("$NetBSD: misc.c,v 1.6 1997/10/19 23:05:15 lukem Exp $");
 
 #include <errno.h>
 #include <regex.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -61,8 +62,7 @@ __RCSID("$NetBSD: misc.c,v 1.6 1997/10/19 23:05:15 lukem Exp $");
  * malloc with result test
  */
 void *
-xmalloc(size)
-	u_int size;
+xmalloc(u_int size)
 {
 	void *p;
 
@@ -75,9 +75,7 @@ xmalloc(size)
  * realloc with result test
  */
 void *
-xrealloc(p, size)
-	void *p;
-	u_int size;
+xrealloc(void *p, u_int size)
 {
 	if (p == NULL)			/* Compatibility hack. */
 		return (xmalloc(size));
@@ -93,9 +91,7 @@ xrealloc(p, size)
  * the buffer).
  */
 char *
-strregerror(errcode, preg)
-	int errcode;
-	regex_t *preg;
+strregerror(int errcode, regex_t *preg)
 {
 	static char *oe;
 	size_t s;
@@ -108,30 +104,15 @@ strregerror(errcode, preg)
 	return (oe);
 }
 
-#if __STDC__
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 /*
  * Error reporting function
  */
 void
-#if __STDC__
 err(int severity, const char *fmt, ...)
-#else
-err(severity, fmt, va_alist)
-	int severity;
-	char *fmt;
-        va_dcl
-#endif
 {
 	va_list ap;
-#if __STDC__
+
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 	(void)fprintf(stderr, "sed: ");
 	switch (severity) {
 	case WARNING:
