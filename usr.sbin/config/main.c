@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.83 2003/08/07 11:25:15 agc Exp $	*/
+/*	$NetBSD: main.c,v 1.84 2003/09/14 12:33:05 jmmv Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -277,7 +277,7 @@ main(int argc, char **argv)
 
 	removeit = 0;
 	if (is_elf(conffile)) {
-		char *tmpdir;
+		const char *tmpdir;
 		int cfd;
 
 		if (builddir == NULL) {
@@ -1230,7 +1230,8 @@ void
 logconfig_start(void)
 {
 	extern FILE *yyin;
-	char line[1024], *tmpdir;
+	char line[1024];
+	const char *tmpdir;
 	struct stat st;
 	int fd;
 
@@ -1448,7 +1449,7 @@ extract_config(const char *kname, const char *cname, int cfd)
 		    "_CFG_", 5) == 0) {
 			/* Line found */
 			char *oldptr, line[LINE_MAX + 1], uline[LINE_MAX + 1];
-			int i;
+			int j;
 
 			found = 1;
 
@@ -1460,14 +1461,14 @@ extract_config(const char *kname, const char *cname, int cfd)
 			}
 			memcpy(line, oldptr, (ptr - oldptr));
 			line[ptr - oldptr] = '\0';
-			i = strunvis(uline, line);
-			if (i == -1) {
+			j = strunvis(uline, line);
+			if (j == -1) {
 				fprintf(stderr, "config: unvis: invalid "
 				    "encoded sequence\n");
 				exit(2);
 			}
-			uline[i] = '\n';
-			if (write(cfd, uline, i + 1) == -1) {
+			uline[j] = '\n';
+			if (write(cfd, uline, j + 1) == -1) {
 				fprintf(stderr, "config: cannot write to %s: "
 				    "%s\n", cname, strerror(errno));
 				exit(2);
