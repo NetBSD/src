@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun3x,v 1.3 1997/01/18 22:02:14 gwr Exp $
+#	$NetBSD: files.sun3x,v 1.4 1997/01/21 09:50:17 thorpej Exp $
 
 #
 # sun3x-specific configuration info
@@ -165,8 +165,6 @@ file dev/sun/ms.c			ms needs-flag
 
 
 # Memory Disk for boot tape
-pseudo-device md
-file dev/md.c				md needs-flag
 file arch/sun3/dev/md_root.c		memory_disk_hooks
 
 # Major numbers for root/swap device configuration

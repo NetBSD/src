@@ -1,4 +1,4 @@
-#	$NetBSD: files.x68k,v 1.6 1997/01/08 03:59:32 oki Exp $
+#	$NetBSD: files.x68k,v 1.7 1997/01/21 09:51:51 thorpej Exp $
 #
 # new style config file for x68k architecture
 #
@@ -124,8 +124,7 @@ file	arch/x68k/dev/pow.c		pow needs-count
 file	arch/x68k/dev/dma.c		fdc|adpcm
 
 # memory disk
-pseudo-device md
-file	dev/md.c			md needs-count
+# XXX need "major" declaration here!
 
 include	"compat/sunos/files.sunos"
 file	arch/m68k/m68k/sunos_machdep.c	compat_sunos
