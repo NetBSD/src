@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.6 1995/09/18 21:31:44 pk Exp $ */
+/*	$NetBSD: bootxx.c,v 1.7 1995/09/27 09:03:13 pk Exp $ */
 
 /*
  * Copyright (c) 1994 Paul Kranenburg
@@ -33,8 +33,6 @@
 #include <sys/param.h>
 #include <sys/time.h>
 #include <a.out.h>
-#include <ufs/ufs/dinode.h>
-#include <ufs/ffs/fs.h>
 
 #include <stand.h>
 #include "promdev.h"
@@ -45,18 +43,20 @@ int netif_debug;
 /*
  * Boot device is derived from ROM provided information.
  */
-struct open_file	io;
-char			sblock[SBSIZE];
-struct fs		*fs;
-
-#if 0
-#define MAXBLOCKNUM	MINBSIZE / sizeof(daddr_t)
-#else
-#define MAXBLOCKNUM	256
-#endif
-int			maxblocknum = MAXBLOCKNUM;
-daddr_t			blocknum[MAXBLOCKNUM] = { 0 };
 const char		progname[] = "bootxx";
+struct open_file	io;
+
+/*
+ * The contents of the block_* variables below is set by installboot(8)
+ * to hold the the filesystem data of the second-stage boot program
+ * (typically `/boot'): filesystem block size, # of filesystem blocks and
+ * the block numbers themselves.
+ */
+#define MAXBLOCKNUM	256	/* enough for a 2MB boot program (bs 8K) */
+int32_t			block_size = 0;
+int32_t			block_count = MAXBLOCKNUM;
+daddr_t			block_table[MAXBLOCKNUM] = { 0 };
+
 
 void	loadboot __P((struct open_file *, caddr_t));
 
@@ -72,16 +72,6 @@ main()
 	if (devopen(&io, 0, &dummy)) {
 		panic("%s: can't open device", progname);
 	}
-
-	/*
-	 * Read superblock.
-	 */
-	if ((io.f_dev->dv_strategy)(io.f_devdata, F_READ,
-				   btodb(SBOFF), SBSIZE,
-				   (char *)&sblock, &n) || n != SBSIZE) {
-		panic("%s: can't read superblock", progname);
-	}
-	fs = (struct fs *)sblock;
 
 	(void)loadboot(&io, LOADADDR);
 	(*entry)(cputyp == CPU_SUN4 ? LOADADDR : (caddr_t)promvec);
@@ -103,23 +93,23 @@ loadboot(f, addr)
 	 * needed for sun4 architecture, but use it for all machines
 	 * to keep code size down as much as possible.
 	 */
-	buf = alloc(fs->fs_bsize);
+	buf = alloc(block_size);
 	if (buf == NULL)
 		panic("%s: alloc failed", progname);
 
-	for (i = 0; i < MAXBLOCKNUM; i++) {
-		if ((blk = blocknum[i]) == 0)
-			break;
+	for (i = 0; i < block_count; i++) {
+		if ((blk = block_table[i]) == 0)
+			panic("%s: block table corrupt", progname);
+
 #ifdef DEBUG
-		printf("%s: block # %d = %d\n", i, blk);
+		printf("%s: block # %d = %d\n", progname, i, blk);
 #endif
 		if ((f->f_dev->dv_strategy)(f->f_devdata, F_READ,
-					    fsbtodb(fs, blk), fs->fs_bsize,
-					    buf, &n)) {
+					    blk, block_size, buf, &n)) {
 			panic("%s: read failure", progname);
 		}
-		bcopy(buf, addr, fs->fs_bsize); /* copy over */
-		if (n != fs->fs_bsize)
+		bcopy(buf, addr, block_size);
+		if (n != block_size)
 			panic("%s: short read", progname);
 		if (i == 0) {
 			register int m = N_GETMAGIC(*(struct exec *)addr);
@@ -131,10 +121,5 @@ loadboot(f, addr)
 		}
 		addr += n;
 	}
-	if (blk != 0)
-		panic("%s: file too long", progname);
 
-#ifdef DEBUG
-	printf("%s: start 0x%x\n", (int)entry);
-#endif
 }
