@@ -1,4 +1,4 @@
-/*	$NetBSD: amr.c,v 1.19.2.1 2004/09/11 13:27:29 tron Exp $	*/
+/*	$NetBSD: amr.c,v 1.19.2.2 2004/11/12 06:14:28 jmc Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.19.2.1 2004/09/11 13:27:29 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.19.2.2 2004/11/12 06:14:28 jmc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,6 +136,7 @@ struct amr_pci_type {
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_AMI_MEGARAID3, AT_QUARTZ | AT_SIG },
 	{ PCI_VENDOR_DELL,  PCI_PRODUCT_DELL_PERC_4DI, AT_QUARTZ },
 	{ PCI_VENDOR_DELL,  PCI_PRODUCT_DELL_PERC_4DI_2, AT_QUARTZ },
+	{ PCI_VENDOR_DELL,  PCI_PRODUCT_DELL_PERC_4ESI, AT_QUARTZ },
 };
 
 struct amr_typestr {
