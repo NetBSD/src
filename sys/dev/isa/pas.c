@@ -1,4 +1,4 @@
-/*	$NetBSD: pas.c,v 1.19 1996/10/13 01:37:57 christos Exp $	*/
+/*	$NetBSD: pas.c,v 1.20 1996/11/12 07:39:56 mikel Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -86,18 +86,10 @@ int	pasdebug = 0;
  * most basic communications with the sb card.
  */
 struct pas_softc {
-	struct	device sc_dev;		/* base device */
-	struct	isadev sc_id;		/* ISA device */
-	void	*sc_ih;			/* interrupt vectoring */
-
-	int	sc_iobase;		/* PAS iobase */
-	int	sc_irq;			/* PAS irq */
-	int	sc_drq;			/* PAS drq */
+	struct sbdsp_softc sc_sbdsp;	/* base device, &c. */
 
 	int model;
 	int rev;
-
-	struct sbdsp_softc sc_sbdsp;
 };
 
 int	pasopen __P((dev_t, int));
@@ -350,8 +342,6 @@ pasprobe(parent, match, aux)
         }
 
 	/* Now a SoundBlaster */
-	sc->sc_iobase = ia->ia_iobase;
-	/* and set the SB iobase into the DSP as well ... */
 	sc->sc_sbdsp.sc_iobase = ia->ia_iobase;
 	if (sbdsp_reset(&sc->sc_sbdsp) < 0) {
 		DPRINTF(("pas: couldn't reset card\n"));
@@ -437,11 +427,12 @@ pasattach(parent, self, aux)
 	register int iobase = ia->ia_iobase;
 	int err;
 	
-	sc->sc_iobase = iobase;
-	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
-	    IPL_AUDIO, sbdsp_intr, &sc->sc_sbdsp);
+	sc->sc_sbdsp.sc_iobase = iobase;
+	sc->sc_sbdsp.sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq,
+	    IST_EDGE, IPL_AUDIO, sbdsp_intr, &sc->sc_sbdsp);
 
-	printf(" ProAudio Spectrum %s [rev %d] ", pasnames[sc->model], sc->rev);
+	printf(" ProAudio Spectrum %s [rev %d] ", pasnames[sc->model],
+	    sc->rev);
 	
 	sbdsp_attach(&sc->sc_sbdsp);
 
