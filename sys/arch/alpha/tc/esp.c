@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.21 1996/10/13 03:00:28 christos Exp $	*/
+/*	$NetBSD: esp.c,v 1.22 1996/10/15 21:30:19 mycroft Exp $	*/
 
 #ifdef __sparc__
 #define	SPARC_DRIVER
@@ -1198,6 +1198,7 @@ gotit:
 	 */
 	switch (sc->sc_state) {
 		struct esp_ecb *ecb;
+		struct scsi_link *sc_link;
 		struct esp_tinfo *ti;
 
 	case ESP_CONNECTED:
@@ -1208,7 +1209,7 @@ gotit:
 		case MSG_CMDCOMPLETE:
 			ESP_MSGS(("cmdcomplete "));
 			if (sc->sc_dleft < 0) {
-				struct scsi_link *sc_link = ecb->xs->sc_link;
+				sc_link = ecb->xs->sc_link;
 				printf("%s: %d extra bytes from %d:%d\n",
 				    sc->sc_dev.dv_xname, -sc->sc_dleft,
 				    sc_link->target, sc_link->lun);
