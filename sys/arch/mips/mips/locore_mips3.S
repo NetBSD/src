@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.74 2001/12/27 04:19:17 shin Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.75 2001/12/27 22:55:46 shin Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -1687,6 +1687,7 @@ LEAF_NOPROFILE(mips3_VCED)
 	eret
 	.set	at
 
+#ifdef DEBUG
 	.data
 	.globl	_C_LABEL(VCED_count)
 _C_LABEL(VCED_count):
@@ -1698,6 +1699,7 @@ _C_LABEL(VCED_epc):
 _C_LABEL(VCED_vaddr):
 	.word	0
 	.text
+#endif
 END(mips3_VCED)
 
 LEAF_NOPROFILE(mips3_VCEI)
@@ -1720,6 +1722,7 @@ LEAF_NOPROFILE(mips3_VCEI)
 	eret
 	.set	at
 
+#ifdef DEBUG
 	.data
 	.globl	_C_LABEL(VCEI_count)
 _C_LABEL(VCEI_count):
@@ -1728,6 +1731,7 @@ _C_LABEL(VCEI_count):
 _C_LABEL(VCEI_vaddr):
 	.word	0
 	.text
+#endif
 END(mips3_VCEI)
 #endif /* !MIPS3_5900 */	
 
