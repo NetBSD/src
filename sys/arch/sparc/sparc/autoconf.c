@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.203 2004/03/17 17:04:59 pk Exp $ */
+/*	$NetBSD: autoconf.c,v 1.204 2004/04/03 17:41:54 chs Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.203 2004/03/17 17:04:59 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.204 2004/04/03 17:41:54 chs Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -174,6 +174,7 @@ find_cpus()
 	int n;
 #if defined(SUN4M) || defined(SUN4D)
 	int node;
+	int unode;
 #endif
 
 	/*
@@ -190,7 +191,7 @@ find_cpus()
 		return (1);
 
 	n = 0;
-#if defined(SUN4M) || defined(SUN4D)
+#if defined(SUN4M)
 	node = findroot();
 	for (node = firstchild(node); node; node = nextsibling(node)) {
 		if (strcmp(prom_getpropstring(node, "device_type"), "cpu") != 0)
@@ -198,7 +199,24 @@ find_cpus()
 		if (n++ == 0)
 			cpu_arch = prom_getpropint(node, "sparc-version", 7);
 	}
-#endif /* SUN4M || SUN4D */
+#endif /* SUN4M */
+#if defined(SUN4D)
+	node = findroot();
+	for (node = firstchild(node); node; node = nextsibling(node)) {
+		if (strcmp(prom_getpropstring(node, "name"), "cpu-unit") != 0)
+				continue;
+		for (unode = firstchild(node); unode;
+		     unode = nextsibling(unode)) {
+			if (strcmp(prom_getpropstring(unode, "device_type"),
+				   "cpu") != 0)
+				continue;
+			if (n++ == 0)
+				cpu_arch = prom_getpropint(unode,
+							   "sparc-version", 7);
+		}
+	}
+#endif
+
 	return (n);
 }
 
