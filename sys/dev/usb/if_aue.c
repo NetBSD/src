@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.20 2000/02/02 17:09:42 thorpej Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.21 2000/02/02 20:06:55 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -543,8 +543,10 @@ aue_miibus_statchg(dev)
 	 * This turns on the 'dual link LED' bin in the auxmode
 	 * register of the Broadcom PHY.
 	 */
-	if (sc->aue_vendor == USB_VENDOR_LINKSYS &&
-	    sc->aue_product == USB_PRODUCT_LINKSYS_USB100TX) {
+	if ((sc->aue_vendor == USB_VENDOR_LINKSYS &&
+	     sc->aue_product == USB_PRODUCT_LINKSYS_USB100TX) ||
+	    (sc->aue_vendor == USB_VENDOR_DLINK &&
+	     sc->aue_product == USB_PRODUCT_DLINK_DSB650TX)) {
 		u_int16_t               auxmode;
 		auxmode = aue_miibus_readreg(dev, 0, 0x1b);
 		aue_miibus_writereg(dev, 0, 0x1b, auxmode | 0x04);
@@ -657,8 +659,10 @@ aue_reset(sc)
   	csr_write_1(sc, AUE_GPIO0, AUE_GPIO_OUT0|AUE_GPIO_SEL0|AUE_GPIO_SEL1);
   
 	/* Grrr. LinkSys has to be different from everyone else. */
-	if (sc->aue_vendor == USB_VENDOR_LINKSYS &&
-	    sc->aue_product == USB_PRODUCT_LINKSYS_USB100TX) {
+	if ((sc->aue_vendor == USB_VENDOR_LINKSYS &&
+	     sc->aue_product == USB_PRODUCT_LINKSYS_USB100TX) ||
+	    (sc->aue_vendor == USB_VENDOR_DLINK &&
+	     sc->aue_product == USB_PRODUCT_DLINK_DSB650TX)) {
 		csr_write_1(sc, AUE_GPIO0, AUE_GPIO_SEL0|AUE_GPIO_SEL1);
 		csr_write_1(sc, AUE_GPIO0, AUE_GPIO_SEL0|AUE_GPIO_SEL1|
 			AUE_GPIO_OUT0);
