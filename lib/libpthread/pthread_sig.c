@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sig.c,v 1.1.2.19 2002/10/27 23:35:01 thorpej Exp $	*/
+/*	$NetBSD: pthread_sig.c,v 1.1.2.20 2002/11/02 00:28:16 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -318,8 +318,11 @@ pthread_sigmask(int how, const sigset_t *set, sigset_t *oset)
 			__sigprocmask14(SIG_SETMASK, &pt_process_sigmask, NULL);
 		}
 	} 
-	pthread_spinunlock(self, &pt_process_siglock);
-	pthread_spinunlock(self, &self->pt_siglock);
+	if (set != NULL) {
+		if ((how == SIG_UNBLOCK) || (how == SIG_SETMASK))
+			pthread_spinunlock(self, &pt_process_siglock);
+		pthread_spinunlock(self, &self->pt_siglock);
+	}
 
 	/*
 	 * While other threads may read a process's sigmask,
