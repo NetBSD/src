@@ -33,7 +33,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)sh.1	5.1 (Berkeley) 3/7/91
-.\"	$Id: sh.1,v 1.8 1994/02/03 17:47:48 jtc Exp $
+.\"	$Id: sh.1,v 1.9 1994/05/04 23:49:12 jtc Exp $
 .\"
 .TH SH 1 "March 7, 1991"
 .UC 7
@@ -556,18 +556,18 @@ the first character of the character class.
 To include a ``]'' in a character class, make it the first character listed
 (after the ``!'', if any).
 To include a minus sign, make it the first or last character listed.
-.h "The /u Directory"
-By convention, the name ``/u/user'' refers to the home directory of the
-specified user.  There are good reasons why this feature should be supported
-by the file system (using a feature such as symbolic links) rather than
-by the shell, but
-.I ash
-is capable of performing this mapping if the file system doesn't.
-If the mapping is done by
-.IR ash ,
-setting the
-.B -f
-flag will turn it off.
+.\" .h "The /u Directory"
+.\" By convention, the name ``/u/user'' refers to the home directory of the
+.\" specified user.  There are good reasons why this feature should be supported
+.\" by the file system (using a feature such as symbolic links) rather than
+.\" by the shell, but
+.\" .I ash
+.\" is capable of performing this mapping if the file system doesn't.
+.\" If the mapping is done by
+.\" .IR ash ,
+.\" setting the
+.\" .B -f
+.\" flag will turn it off.
 .h "Character Set"
 .I Ash
 silently discards nul characters.  Any other character will be handled
@@ -612,11 +612,11 @@ the job in the background by typing
 .IR bg ,
 or you can continue it in the foreground by typing
 .IR fg .
-.h "Atty"
-If the shell variable ATTY is set, and the shell variable TERM is not
-set to ``emacs'', then \fIash\fR generates appropriate escape sequences
-to talk to
-.IR atty (1).
+.\" .h "Atty"
+.\" If the shell variable ATTY is set, and the shell variable TERM is not
+.\" set to ``emacs'', then \fIash\fR generates appropriate escape sequences
+.\" to talk to
+.\" .IR atty (1).
 .h "Exit Statuses"
 By tradition, an exit status of zero means that a command has succeeded
 and a nonzero exit status indicates that the command failed.  This is
@@ -652,21 +652,29 @@ number as the exit code for the command.
 .h "Builtin Commands"
 This concluding section lists the builtin commands which are builtin
 because they need to perform some operation that can't be performed by a
-separate process.  In addition to these, there are several other commands
-.RI ( catf ,
-.IR echo ,
-.IR expr ,
-.IR line ,
-.IR nlecho ,
-.IR test ,
-.RI  `` : '',
-and
-.IR true )
-which can optionally be compiled into the shell.  The builtin
-commands described below that accept options use the System V Release 2
+separate process.  
+.\" In addition to these, there are several other commands
+.\" .RI ( catf ,
+.\" .IR echo ,
+.\" .IR expr ,
+.\" .IR line ,
+.\" .IR nlecho ,
+.\" .IR test ,
+.\" .RI  `` : '',
+.\" and
+.\" .IR true )
+.\" which can optionally be compiled into the shell.
+The builtin commands described below that accept options use the 
+System V Release 2
 .IR getopt (3)
 syntax.
 .sp
+.b ":"
+.br
+No effect; the command does nothing and returns a zero exit code.
+.b ".\fI\h'0.1i'file"
+.br
+The commands in the specified file are read and executed by the shell.
 .b bg
 [
 .I job
@@ -695,9 +703,6 @@ In an interactive shell, the cd command will print out the name of the
 directory that it actually switched to if this is different from the
 name that the user gave.  These may be different either because
 the CDPATH mechanism was used or because a symbolic link was crossed.
-.b ".\fI\h'0.1i'file"
-.br
-The commands in the specified file are read and executed by the shell.
 .b eval
 .IR string ...
 .br
