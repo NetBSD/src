@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2002/03/16 15:54:08 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.13 2002/03/18 15:30:56 tsutsui Exp $
 
 .include "${.CURDIR}/../../../Makefile.inc"
 .include <bsd.own.mk>
@@ -13,7 +13,6 @@ LISTS=		${.CURDIR}/list ${DISTRIBDIR}/common/list.sysinst
 MTREECONF=	${DISTRIBDIR}/common/mtree.common
 IMAGEENDIAN=	be
 MAKEDEVTARGETS=	floppy
-PARSELISTENV=	PWD_MKDB=${PWD_MKDB:Q}
 IMAGEDEPENDS=	${CRUNCHBIN} \
 		dot.profile termcap.src \
 		${DESTDIR}/usr/mdec/installboot \
