@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.42 1995/04/22 20:28:40 christos Exp $ */
+/*	$NetBSD: machdep.c,v 1.43 1995/04/25 21:57:10 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -354,7 +354,8 @@ setregs(p, pack, stack, retval)
 	bzero((caddr_t)tf, sizeof *tf);
 	tf->tf_psr = psr;
 	tf->tf_pc = pack->ep_entry & ~3;
-	tf->tf_global[2] = tf->tf_global[7] = tf->tf_npc = (entry+4) & ~3;
+	tf->tf_npc = (pack->ep_entry+4) & ~3;
+	tf->tf_global[2] = tf->tf_global[7] = tf->tf_npc;
 	stack -= sizeof(struct rwindow);
 	tf->tf_out[6] = stack;
 	retval[1] = 0;
