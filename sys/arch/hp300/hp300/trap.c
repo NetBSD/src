@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.57 1998/02/16 20:58:31 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.58 1998/02/27 19:13:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -679,7 +679,7 @@ trap(type, code, v, frame)
 			if (p->p_addr->u_pcb.pcb_onfault)
 				goto copyfault;
 #if defined(UVM)
-			printf("uvm_fault(%p, 0x%lx, 0, 0x%x\n) -> 0x%x\n",
+			printf("uvm_fault(%p, 0x%lx, 0, 0x%x) -> 0x%x\n",
 			    map, va, ftype, rv);
 #else
 			printf("vm_fault(%p, %lx, %x, 0) -> %x\n",
