@@ -1,4 +1,4 @@
-/*	$NetBSD: icsidereg.h,v 1.2 2002/09/14 18:12:16 bjh21 Exp $	*/
+/*	$NetBSD: icsidereg.h,v 1.3 2002/09/15 11:00:11 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe
@@ -46,6 +46,8 @@
 #define IRQ_STATUS_REGISTER_MASK	0x01
 
 /* IDE drive registers */
+
+#define ICSIDE_MAX_CHANNELS	2
 
 /* ARCIN V5 registers */
 #define V5_IDE_BASE			0x2800	/* byte offset from base */
