@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.56 2000/10/17 03:06:44 itojun Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.57 2000/10/17 21:16:57 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -244,8 +244,10 @@ tcp_usrreq(so, req, m, nam, control, p)
 	}
 
 #ifdef DIAGNOSTIC
+#ifdef INET6
 	if (inp && in6p)
 		panic("tcp_usrreq: both inp and in6p set to non-NULL");
+#endif
 	if (req != PRU_SEND && req != PRU_SENDOOB && control)
 		panic("tcp_usrreq: unexpected control mbuf");
 #endif
