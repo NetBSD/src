@@ -1,4 +1,4 @@
-/* $NetBSD: inode.c,v 1.24 2004/07/18 20:51:30 yamt Exp $	 */
+/* $NetBSD: inode.c,v 1.25 2005/02/06 06:13:12 perry Exp $	 */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -395,7 +395,7 @@ cacheino(struct ufs1_dinode * dp, ino_t inumber)
 struct inoinfo *
 getinoinfo(ino_t inumber)
 {
-	register struct inoinfo *inp;
+	struct inoinfo *inp;
 
 	for (inp = inphead[inumber % numdirs]; inp; inp = inp->i_nexthash) {
 		if (inp->i_number != inumber)
@@ -410,9 +410,9 @@ getinoinfo(ino_t inumber)
  * Clean up all the inode cache structure.
  */
 void
-inocleanup()
+inocleanup(void)
 {
-	register struct inoinfo **inpp;
+	struct inoinfo **inpp;
 
 	if (inphead == NULL)
 		return;
@@ -484,7 +484,7 @@ clearinode(ino_t inumber)
 int
 findname(struct inodesc * idesc)
 {
-	register struct direct *dirp = idesc->id_dirp;
+	struct direct *dirp = idesc->id_dirp;
 
 	if (dirp->d_ino != idesc->id_parent)
 		return (KEEPON);
@@ -495,7 +495,7 @@ findname(struct inodesc * idesc)
 int
 findino(struct inodesc * idesc)
 {
-	register struct direct *dirp = idesc->id_dirp;
+	struct direct *dirp = idesc->id_dirp;
 
 	if (dirp->d_ino == 0)
 		return (KEEPON);
@@ -510,8 +510,8 @@ findino(struct inodesc * idesc)
 void
 pinode(ino_t ino)
 {
-	register struct ufs1_dinode *dp;
-	register char *p;
+	struct ufs1_dinode *dp;
+	char *p;
 	struct passwd *pw;
 	time_t t;
 
