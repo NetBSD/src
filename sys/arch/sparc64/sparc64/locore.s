@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.106 2000/11/09 00:35:02 eeh Exp $	*/
+/*	$NetBSD: locore.s,v 1.107 2000/12/07 00:59:42 eeh Exp $	*/
 /*
  * Copyright (c) 1996-2000 Eduardo Horvath
  * Copyright (c) 1996 Paul Kranenburg
@@ -6482,15 +6482,14 @@ _C_LABEL(sigcode):
 
 	! fpu is enabled, oh well
 	stx	%fsr, [%sp + CC64FSZ + BIAS + 0]
-	add	%sp, BIAS, %l0		! Generate a pointer so we can
+	add	%sp, BIAS+CC64FSZ+BLOCK_SIZE, %l0	! Generate a pointer so we can
 	andn	%l0, BLOCK_ALIGN, %l0	! do a block store
 	stda	%f0, [%l0] ASI_BLK_P
 	inc	BLOCK_SIZE, %l0
 	stda	%f16, [%l0] ASI_BLK_P
 1:
 	bz,pt	%icc, 2f
-	 rd	%y, %l1			! in any case, save %y
-	add	%sp, BIAS, %l0		! Generate a pointer so we can
+	 add	%sp, BIAS+CC64FSZ+BLOCK_SIZE, %l0	! Generate a pointer so we can
 	andn	%l0, BLOCK_ALIGN, %l0	! do a block store
 	add	%l0, 2*BLOCK_SIZE, %l0	! and skip what we already stored
 	stda	%f32, [%l0] ASI_BLK_P
@@ -6498,6 +6497,7 @@ _C_LABEL(sigcode):
 	stda	%f48, [%l0] ASI_BLK_P
 2:
 	membar	#StoreLoad
+	rd	%y, %l1			! in any case, save %y
 	lduw	[%fp + BIAS + 128], %o0	! sig
 	lduw	[%fp + BIAS + 128 + 4], %o1	! code
 	call	%g1			! (*sa->sa_handler)(sig,code,scp)
@@ -6514,7 +6514,7 @@ _C_LABEL(sigcode):
 	 btst	2, %l0			! test du
 
 	ldx	[%sp + CC64FSZ + BIAS + 0], %fsr
-	add	%sp, BIAS, %l0		! Generate a pointer so we can
+	add	%sp, BIAS+CC64FSZ+BLOCK_SIZE, %l0	! Generate a pointer so we can
 	andn	%l0, BLOCK_ALIGN, %l0	! do a block load
 	ldda	[%l0] ASI_BLK_P, %f0
 	inc	BLOCK_SIZE, %o0
@@ -6522,7 +6522,7 @@ _C_LABEL(sigcode):
 1:
 	bz,pt	%icc, 2f
 	 wr	%l1, %g0, %y		! in any case, restore %y
-	add	%sp, BIAS, %l0		! Generate a pointer so we can
+	add	%sp, BIAS+CC64FSZ+BLOCK_SIZE, %l0	! Generate a pointer so we can
 	andn	%l0, BLOCK_ALIGN, %l0	! do a block load
 	inc	2*BLOCK_SIZE, %o0	! and skip what we already loaded
 	ldda	[%l0] ASI_BLK_P, %f32
