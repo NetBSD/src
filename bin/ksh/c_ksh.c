@@ -1,4 +1,4 @@
-/*	$NetBSD: c_ksh.c,v 1.6 2001/06/11 01:50:48 wiz Exp $	*/
+/*	$NetBSD: c_ksh.c,v 1.7 2002/09/25 02:41:11 provos Exp $	*/
 
 /*
  * built-in Korn commands: c_*
@@ -1264,7 +1264,7 @@ c_kill(wp)
 
 			print_columns(shl_stdout, SIGNALS - 1,
 				kill_fmt_entry, (void *) &ki,
-				ki.num_width + ki.name_width + mess_width + 3);
+				ki.num_width + ki.name_width + mess_width + 3, 1);
 		}
 		return 0;
 	}
