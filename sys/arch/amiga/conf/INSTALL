@@ -1,13 +1,30 @@
-# $NetBSD: INSTALL,v 1.18 2001/11/20 12:56:20 lukem Exp $
+# $NetBSD: INSTALL,v 1.19 2002/01/14 18:56:35 jandberg Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running make in this directory.
 #
-# Created from: #NetBSD: GENERIC,v 1.161 2001/08/25 21:15:46 is Exp $
+# Created from: #NetBSD: GENERIC,v 1.166 2002/01/13 23:24:22 jandberg Exp $
 
+#GENERIC machine description file
+
+#This machine description file is used to generate the default NetBSD
+#kernel.  The generic kernel does not include all options, subsystems
+#and device drivers, but should be useful for most applications.
+
+#The machine description file can be customised for your specific
+#machine to reduce the kernel size and improve its performance.
+
+#For further information on compiling NetBSD kernels, see the config(8)
+#man page.
+
+#For further information on hardware support for this architecture, see
+#the intro(4) man page.  For further information about kernel options
+#for this architecture, see the options(4) man page.  For an explanation
+#of each device driver in this file see the section 4 man page for the
+#device.
 include "arch/amiga/conf/std.amiga"
 
-#ident		"GENERIC-$Revision: 1.18 $"
+#ident  		"GENERIC-$Revision: 1.19 $"
 
 makeoptions	COPTS="-Os"
 
@@ -146,12 +163,14 @@ options 	GRF_SUPER72	# AGA Super-72
 #enables the Hardwarecursor which does not work on some systems.
 #options 	RH_HARDWARECURSOR
 
-#wscons aware interface to amiga custom chips. Text-only console.
-#If you enable it enable also wskbd.
+#wscons aware interface to amiga custom chips.
+#If you enable it enable also wskbd. 
 
 #amidisplaycc0	at mainbus0		# wscons interface to custom chips
 #wsdisplay0	at amidisplaycc0 console ?
-#options 	WSEMUL_VT100
+#options	WSEMUL_VT100
+#options	FONT_BOLD8x16
+#options	FONT_VT220L8x10
 
 grfcc0		at mainbus0		# custom chips
 grfrt0		at zbus0		# retina II
@@ -331,6 +350,7 @@ ch*	at scsibus? target ? lun ?	# scsi autochangers
 pseudo-device	loop			# loopback network interface
 pseudo-device	sl		1	# SLIP network interfaces
 pseudo-device	ppp		1	# PPP network interfaces
+pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	tun		1	# network tunnel line discipline
 #pseudo-device	gre		2	# generic L3 over IP tunnel
 #pseudo-device	ipip		2	# IP Encapsulation within IP (RFC 2003)
@@ -340,6 +360,7 @@ pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
 #pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
+pseudo-device	bridge			# simple inter-network bridging
 
 pseudo-device	view		4	# views (needed for grfcc)
 pseudo-device	pty 2			# pseudo-terminals
