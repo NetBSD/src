@@ -6500,7 +6500,8 @@ _C_LABEL(masterpaddr):
 
 /*
  * switchexit is called only from cpu_exit() before the current process
- * has freed its kernel stack; we must free it.  (curproc is already NULL.)
+ * has freed its vmspace and kernel stack; we must schedule them to be
+ * freed.  (curproc is already NULL.)
  *
  * We lay the process to rest by changing to the `idle' kernel stack,
  * and note that the `last loaded process' is nonexistent.
@@ -6513,9 +6514,7 @@ ENTRY(switchexit)
 	restore
 #endif
 	wrpr	%g0, PSTATE_KERN, %pstate ! Make sure we're on the right globals
-	mov	%o0, %g2		! save the
-	mov	%o1, %g3		! ... three parameters
-	mov	%o2, %g4		! ... to kmem_free
+	mov	%o0, %g2		! save proc arg for exit2() call
 
 #ifdef NOTDEF_DEBUG
 	save	%sp, -CC64FSZ, %sp
@@ -6573,14 +6572,8 @@ ENTRY(switchexit)
 	SET_SP_REDZONE(%l6, %l5)
 #endif
 	wrpr	%g0, PSTATE_INTR, %pstate	! and then enable traps
-	mov	%g2, %o0		! now ready to call kmem_free
-	mov	%g3, %o1
-#if defined(UVM)
-	call	_C_LABEL(uvm_km_free)
-#else
-	call	_C_LABEL(kmem_free)
-#endif
-	 mov	%g4, %o2
+	call	_C_LABEL(exit2)			! exit2(p)
+	 mov	%g2, %o0
 
 	/*
 	 * Now fall through to `the last switch'.  %g6 was set to

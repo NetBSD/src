@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.34 1998/08/21 14:12:18 pk Exp $ */
+/*	$NetBSD: pmap.h,v 1.35 1998/09/09 00:07:55 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -265,7 +265,7 @@ void		pmap_virtual_space __P((vaddr_t *, vaddr_t *));
 void		pmap_redzone __P((void));
 void		kvm_uncache __P((caddr_t, int));
 struct user;
-void		switchexit __P((vm_map_t, struct user *, int));
+void		switchexit __P((struct proc *));
 int		mmu_pagein __P((struct pmap *pm, int, int));
 void		pmap_writetext __P((unsigned char *, int));
 
