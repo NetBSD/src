@@ -1,5 +1,3 @@
-/*	$NetBSD: vt220keys.c,v 1.2 1994/10/27 04:20:44 cgd Exp $	*/
-
 /*
  *      Trivial program to load VT220 Function keys with strings,
  *      note that the values only get sent when the key is shifted

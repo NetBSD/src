@@ -1,45 +1,46 @@
-$NetBSD: BugList,v 1.2 1994/10/27 04:19:08 cgd Exp $
 
-List of known Bugs, ToDo's etc.
---------------------------------------------------------------------------------
-                                      Last Edit-Date: [Tue Mar  1 20:17:37 1994]
+List of known bugs                    Last Edit-Date: [Tue Sep  5 17:52:05 1995]
+================================================================================
 
 
 Description:                                    Fixed/done by/date
 -------------------------------------------	--------------------------------
-Numlock repeats, so by keeping numlock
-pressed, the LED will blink. The other lock
-keys don't do this. This has shown up on
-several keyboards, including a Cherry.
+Util/keycap/man5/keycap.5 does STILL not
+build correctly when doing a make obj.
+Will there ever be a solution ... :-)
 -------------------------------------------	--------------------------------
-When switching back and forth between
-80 and 132 column mode while an X server
-is running on another vty, the status
-line is being displayed mid of a 132-
-column screen.
+NetBSD PR #404: Meta-Control-Space broken 
+with PCVT_META_ESC and PCVT_NULLCHARS set
+Meta-Control-Space should (theoretically)
+send ESC NUL if PCVT_NULLCHARS and 
+PCVT_META_ESC are defined; in reality, it
+just sends ESC. Because of the grody 
+encoding hack used by sgets() to implement
+PCVT_NULLCHARS (if the first character is
+a null, send it), there isn't a trivial 
+one-line fix. 
+How-To-Repeat: in a kernel with
+PCVT_NULLCHARS and PCVT_META_ESC, type a
+M-C-SPC to emacs.
+-------------------------------------------	--------------------------------
+when auto switching to vt0 is enabled by
+PCVT_SW0CNOUTP and the screen is switched
+from an X-vt to screen 0, the video mem
+is irrecoverably destroyed - no data loss
 -------------------------------------------	--------------------------------
 Altgr+Shift+key is not separately		They way the keyboard mapping
 mappable.					is done is subject to a sub-
 						stantial rewrite in a future
 						release
 -------------------------------------------	--------------------------------
-force 24 lines in HP-mode is not set ok
-if done from the rc.local script.
--------------------------------------------	--------------------------------
 132 column mode not working with #9 GXE
 (S3-based) (sorry, i don't have one -hm)
--------------------------------------------	--------------------------------
-no cursor update while in DDB  and
-kernel printf's
+(see discussion of 132 column mode in the
+ NotesAndHints file!)
 -------------------------------------------	--------------------------------
 WD90Cxx chip detection fails to detect
 chips other than C00,C10 and C11. C30
 chips are detected as C11s ....
--------------------------------------------	--------------------------------
-Xfree86 2.0 locks the console when started
-under NetBSD 0.9. SuperProbe and X both
-show process status "DE+" in ps. Work-
-around is to disable PCVT_USL_VT_COMPAT.
 -------------------------------------------	--------------------------------
 On one keyboard, if a "Lock" key is pressed
 the leds do not get updated and the key-
@@ -48,23 +49,8 @@ board hangs.
 HP function key labels code needs to set
 the user defined fkey string somehow!
 -------------------------------------------	--------------------------------
-I've found something weird in 132 column
-mode: (printf with 9 x tab)
-printf "\n\t\t\t\t\t\t\t\t\tGotcha"
-works ok, while one tab more
-printf "\n\t\t\t\t\t\t\t\t\t\tGotcha"
-doesn't work (it doesn't print Gotcha
-at column 80, but at column 131).
--------------------------------------------	--------------------------------
 Video 7 1024i not fully supported yet, has
 sometimes problems with some chars to displ
--------------------------------------------	--------------------------------
-When entering/leaving X from/to a 132 col
-screen, it results in garbage. Does the
-X server save ALL vga registers ??????
--------------------------------------------	--------------------------------
-pcvt was not tested in REAL (just emulated)
-CGA and EGA (mono | color) environments ..
 -------------------------------------------	--------------------------------
 The HP-Escape sequences need to be FULLY	28.12.93, -hm did a bit to supp-
 implemented					port elm. Needs MORE work !

@@ -1,5 +1,3 @@
-/*	$NetBSD: keycap.c,v 1.2 1994/10/27 04:20:23 cgd Exp $	*/
-
 /*-
  * Copyright (c) 1992, 1993 The Regents of the University of California.
  * All rights reserved.
@@ -38,7 +36,7 @@
  */
 
 static char *id =
-	"@(#)keycap.c, 3.00, Last Edit-Date: [Sun Jan  2 14:00:27 1994]";
+	"@(#)keycap.c, 3.20, Last Edit-Date: [Tue Dec 20 14:51:50 1994]";
 
 /*---------------------------------------------------------------------------*
  *

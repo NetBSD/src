@@ -1,7 +1,5 @@
-/*	$NetBSD: pcvt_ext.c,v 1.14 1995/09/10 10:45:16 fvdl Exp $	*/
-
 /*
- * Copyright (c) 1993, 1994 Hellmuth Michaelis and Joerg Wunsch
+ * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
  *
  * Copyright (C) 1992, 1993 Soeren Schmidt.
  *
@@ -37,7 +35,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  *
- * @(#)pcvt_ext.c, 3.00, Last Edit-Date: [Sun Feb 27 17:04:52 1994]
+ * @(#)pcvt_ext.c, 3.32, Last Edit-Date: [Tue Oct  3 11:19:48 1995]
  *
  */
 
@@ -46,23 +44,54 @@
  *	pcvt_ext.c	VT220 Driver Extended Support Routines
  *	------------------------------------------------------
  *
- *	written by Hellmuth Michaelis, hm@hcshh.hcs.de       and
- *	           Joerg Wunsch, joerg_wunsch@uriah.sax.de
- *
- *	-hm	splitting pcvt_sup.c
- *	-hm	adding 132 column support for S3 80c928 chipset
- *	-hm	support for keyboard scancode sets 1 and 2
- *	-hm	132 col support for Cirrus 542x from Onno van der Linden
- *	-jw/hm	all ifdef's converted to if's
- *	-hm	applied patch from Szabolcs Szigeti for TVGA 8900B and
- *		TVGA8900C to make the operating with 132 columns
  *	-hm	------------ Release 3.00 --------------
+ *	-hm	integrating NetBSD-current patches
+ *	-hm	applied Onno van der Linden's patch for Cirrus BIOS upgrade
+ *	-hm	pcvt_x_hook has to care about fkey labels now
+ *	-hm	changed some bcopyb's to bcopy's
+ *	-hm	TS_INDEX -> TS_DATA for cirrus (mail from Onno/Charles)
+ *	-jw	removed kbc_8042(), and replaced by kbd_emulate_pc()
+ *	-hm	X server patch from John Kohl <jtk@kolvir.blrc.ma.us>
+ *	-hm	applying Joerg's patch for FreeBSD 2.0
+ *	-hm	enable 132 col support for Trident TVGA8900CL
+ *	-hm	applying patch from Joerg fixing Crtat bug
+ *	-hm	removed PCVT_FAKE_SYSCONS10
+ *	-hm	fastscroll/Crtat bugfix from Lon Willett
+ *	-hm	bell patch from Thomas Eberhardt for NetBSD
+ *	-hm	multiple X server bugfixes from Lon Willett
+ *	-hm	patch from John Kohl fixing tsleep bug in usl_vt_ioctl()
+ *	-hm	bugfix: clear 25th line when switching to a force 24 lines vt
+ *	-jw	add some forward declarations
+ *	-hm	fixing MDA re-init when leaving X
+ *	-hm	patch from John Kohl fixing potential divide by 0 problem
+ *	-hm	patch from Joerg: console unavailable flag handling
+ *	-hm	bugfix: unknown cirrus board enables 132 cols
+ *	-hm	fixing NetBSD PR1123, minor typo (reported by J.T. Conklin)
+ *	-hm	adding support for Cirrus 5430 chipset
+ *	-hm	adding NetBSD-current patches from John Kohl
+ *	-hm	---------------- Release 3.30 -----------------------
+ *	-hm	patch to support Cirrus CL-GD62x5 from Martin
+ *	-hm	patch to support 132 cols for Cirrus CL-GD62x5 from Martin
+ *	-hm	patch from Frank van der Linden for keyboard state per VT
+ *	-hm	patch from Charles Hannum, bugfix of keyboard state switch
+ *	-hm	implemented KDGKBMODE keyboard ioctl
+ *	-hm	patch from John Kohl, missing kbd_setmode() in switch_screen()
+ *	-hm	---------------- Release 3.32 -----------------------
  *
  *---------------------------------------------------------------------------*/
+
+#include "vt.h"
+#if NVT > 0
 
 #include "pcvt_hdr.h"		/* global include */
 
 static int  s3testwritable( void );
+static int  et4000_col( int );
+static int  wd90c11_col( int );
+static int  tri9000_col( int );
+static int  v7_1024i_col( int );
+static int  s3_928_col( int );
+static int  cl_gd542x_col( int );
 
 /* storage to save video timing values of 80 columns text mode */
 static union {
@@ -71,7 +100,7 @@ static union {
 	u_char wd90c11[12];
 	u_char tri9000[13];
 	u_char v7_1024i[17];
-	u_char s3_928[32];	
+	u_char s3_928[32];
 	u_char cirrus[13];
 }
 savearea;
@@ -109,19 +138,19 @@ vga_chipset(void)
 /*---------------------------------------------------------------------------*
  * 	check for Western Digital / Paradise chipsets
  *---------------------------------------------------------------------------*/
-	
+
 	ptr = (u_char *)Crtat;
 
 	if(color)
 		ptr += (0xc007d - 0xb8000);
 	else
-		ptr += (0xc007d - 0xb0000);	
+		ptr += (0xc007d - 0xb0000);
 
 	if((*ptr++ == 'V') && (*ptr++ == 'G') &&
 	   (*ptr++ == 'A') && (*ptr++ == '='))
 	{
 		int wd90c10;
-		
+
 		vga_family = VGA_F_WD;
 
 		outb(addr_6845, 0x2b);
@@ -138,7 +167,7 @@ vga_chipset(void)
 		newbyte = inb(TS_DATA) & 0x40;
 		if(newbyte != 0)
 			return(VGA_WD90C00);	/* WD90C00 chip */
-		
+
 		outb(TS_DATA, oldbyte | 0x40);
 		newbyte = inb(TS_DATA) & 0x40;
 		if(newbyte == 0)
@@ -184,7 +213,7 @@ vga_chipset(void)
 
 	byte = inb(TS_DATA);	/* chipset type */
 
-	
+
 	outb(TS_INDEX, 0x0e);
 	old1byte = inb(TS_DATA);
 
@@ -225,6 +254,7 @@ vga_chipset(void)
 				return(VGA_TR9000);
 
 			case 0x33:
+				can_do_132col = 1;
 				return(VGA_TR8900CL);
 
 			case 0x83:
@@ -237,7 +267,7 @@ vga_chipset(void)
 				return(VGA_TRUNKNOWN);
 		}
 	}
-	
+
 /*---------------------------------------------------------------------------*
  *	check for Tseng Labs ET3000/4000 chipsets
  *---------------------------------------------------------------------------*/
@@ -248,7 +278,7 @@ vga_chipset(void)
 	else
 		outb(GN_DMCNTLM, 0xa0);
 
-	/* read old value */	
+	/* read old value */
 
 	if(color)
 		inb(GN_INPSTAT1C);
@@ -264,7 +294,7 @@ vga_chipset(void)
 	else
 		inb(GN_INPSTAT1M);
 	outb(ATC_INDEX, ATC_MISC);
-	newbyte = oldbyte ^ 0x10;	
+	newbyte = oldbyte ^ 0x10;
 	outb(ATC_DATAW, newbyte);
 
 	/* read back new value */
@@ -281,22 +311,22 @@ vga_chipset(void)
 	else
 		inb(GN_INPSTAT1M);
 	outb(ATC_INDEX, ATC_MISC);
-	outb(ATC_DATAW, oldbyte);	
+	outb(ATC_DATAW, oldbyte);
 
 	if(byte == newbyte)	/* ET3000 or ET4000 */
 	{
 		vga_family = VGA_F_TSENG;
-		
+
 		outb(addr_6845, CRTC_EXTSTART);
 		oldbyte = inb(addr_6845+1);
 		newbyte = oldbyte ^ 0x0f;
 		outb(addr_6845+1, newbyte);
 		byte = inb(addr_6845+1);
-		outb(addr_6845+1, oldbyte);			
+		outb(addr_6845+1, oldbyte);
 
 		if(byte == newbyte)
 		{
-			can_do_132col = 1;		
+			can_do_132col = 1;
 			return(VGA_ET4000);
 		}
 		else
@@ -310,22 +340,22 @@ vga_chipset(void)
  *---------------------------------------------------------------------------*/
 
 	outb(TS_INDEX, TS_EXTCNTL);	/* enable extensions */
-	outb(TS_DATA, 0xea);	
+	outb(TS_DATA, 0xea);
 
 	outb(addr_6845, CRTC_STARTADRH);
 	oldbyte = inb(addr_6845+1);
 
 	outb(addr_6845+1, 0x55);
-	newbyte = inb(addr_6845+1);	
+	newbyte = inb(addr_6845+1);
 
 	outb(addr_6845, CRTC_V7ID);	/* id register */
 	byte = inb(addr_6845+1);	/* read id */
-	
+
 	outb(addr_6845, CRTC_STARTADRH);
 	outb(addr_6845+1, oldbyte);
-	
+
 	outb(TS_INDEX, TS_EXTCNTL);	/* disable extensions */
-	outb(TS_DATA, 0xae);	
+	outb(TS_DATA, 0xae);
 
 	if(byte == (0x55 ^ 0xea))
 	{					/* is Video 7 */
@@ -333,7 +363,7 @@ vga_chipset(void)
 		vga_family = VGA_F_V7;
 
 		outb(TS_INDEX, TS_EXTCNTL);	/* enable extensions */
-		outb(TS_DATA, 0xea);	
+		outb(TS_DATA, 0xea);
 
 		outb(TS_INDEX, TS_V7CHIPREV);
 		byte = inb(TS_DATA);
@@ -417,7 +447,7 @@ vga_chipset(void)
 					return VGA_S3_UNKNOWN;
 			}
 		}
-	}			
+	}
 
 /*---------------------------------------------------------------------------*
  *	check for Cirrus chipsets
@@ -425,41 +455,72 @@ vga_chipset(void)
 
 	outb(TS_INDEX, 6);
 	oldbyte = inb(TS_DATA);
+
 	outb(TS_INDEX, 6);
 	outb(TS_DATA, 0x12);
+
 	outb(TS_INDEX, 6);
 	newbyte = inb(TS_DATA);
+
 	outb(addr_6845, 0x27);
 	byte = inb(addr_6845 + 1);
+
 	outb(TS_INDEX, 6);
 	outb(TS_DATA, oldbyte);
-	if (newbyte == 0x12) {
-		vga_family = VGA_F_CIR;
-		can_do_132col = 1;
-		switch ((byte & 0xfc) >> 2) {
-		case 0x22:
-			switch (byte & 3) {
-			case 0:
-				return VGA_CL_GD5402;
-			case 1:
-				return VGA_CL_GD5402r1;
-			case 2:
-				return VGA_CL_GD5420;
-			case 3:
-				return VGA_CL_GD5420r1;
-			}
-			break;
-		case 0x23:
-			return VGA_CL_GD5422;
-		case 0x25:
-			return VGA_CL_GD5424;
-		case 0x24:
-			return VGA_CL_GD5426;
-		case 0x26:
-			return VGA_CL_GD5428;
-		}
-	}
 
+	if (newbyte == 0x12)
+	{
+		vga_family = VGA_F_CIR;
+
+		switch ((byte & 0xfc) >> 2)
+		{
+			case 0x06:
+				can_do_132col = 1;
+				return VGA_CL_GD6225;
+
+			case 0x22:
+				switch (byte & 3)
+				{
+					case 0:
+						can_do_132col = 1;
+						return VGA_CL_GD5402;
+
+					case 1:
+						can_do_132col = 1;
+						return VGA_CL_GD5402r1;
+
+					case 2:
+						can_do_132col = 1;
+						return VGA_CL_GD5420;
+
+					case 3:
+						can_do_132col = 1;
+						return VGA_CL_GD5420r1;
+				}
+				break;
+			case 0x23:
+				can_do_132col = 1;
+				return VGA_CL_GD5422;
+
+			case 0x24:
+				can_do_132col = 1;
+				return VGA_CL_GD5426;
+
+			case 0x25:
+				can_do_132col = 1;
+				return VGA_CL_GD5424;
+
+			case 0x26:
+				can_do_132col = 1;
+				return VGA_CL_GD5428;
+
+			case 0x28:
+				can_do_132col = 1;
+				return VGA_CL_GD5430;
+
+		}
+		return(VGA_CL_UNKNOWN);
+	}
 	return(VGA_UNKNOWN);
 }
 
@@ -532,8 +593,17 @@ vga_string(int number)
 		"cl-gd5422",
 		"cl-gd5424",
 		"cl-gd5426",
-		"cl-gd5428"
+		"cl-gd5428",
+		"cl-gd5430",
+		"cl-gd62x5",
+		"unknown cirrus",
+						/* VGA_MAX_CHIPSET */
+		"vga_string: chipset name table ptr overflow!"
 	};
+
+	if(number > VGA_MAX_CHIPSET)		/* failsafe */
+		number = VGA_MAX_CHIPSET;
+
 	return(vga_tab[number]);
 }
 
@@ -544,10 +614,10 @@ int
 vga_col(struct video_state *svsp, int cols)
 {
 	int ret = 0;
-	
+
 	if(adaptor_type != VGA_ADAPTOR)
 		return(0);
-		
+
 	switch(vga_type)
 	{
 		case VGA_ET4000:
@@ -557,20 +627,22 @@ vga_col(struct video_state *svsp, int cols)
 		case VGA_WD90C11:
 			ret = wd90c11_col(cols);
 			break;
+
 		case VGA_TR8900B:
 		case VGA_TR8900C:
+		case VGA_TR8900CL:
 		case VGA_TR9000:
 			ret = tri9000_col(cols);
 			break;
-		
+
 		case VGA_V71024I:
 			ret = v7_1024i_col(cols);
 			break;
-			
+
 		case VGA_S3_928:
 			ret = s3_928_col(cols);
 			break;
-			
+
 		case VGA_CL_GD5402:
 		case VGA_CL_GD5402r1:
 		case VGA_CL_GD5420:
@@ -579,6 +651,8 @@ vga_col(struct video_state *svsp, int cols)
 		case VGA_CL_GD5424:
 		case VGA_CL_GD5426:
 		case VGA_CL_GD5428:
+		case VGA_CL_GD5430:
+		case VGA_CL_GD6225:
 			ret = cl_gd542x_col(cols);
 			break;
 
@@ -587,7 +661,7 @@ vga_col(struct video_state *svsp, int cols)
 #if PCVT_132GENERIC
 			ret = generic_col(cols);
 #endif /* PCVT_132GENERIC */
-	
+
 			break;
 	}
 
@@ -642,7 +716,7 @@ generic_col(int cols)
 	static volatile u_short blankstart = 1072;
 	static volatile u_short syncstart = 1112;
 	static volatile u_short syncend = 1280;
-	
+
 #else /* PCVT_EXP_132COL */
 
 	/* reduced sync-pulse width and sync delays */
@@ -651,28 +725,28 @@ generic_col(int cols)
 	static volatile u_short blankstart = 1056;
 	static volatile u_short syncstart = 1104;
 	static volatile u_short syncend = 1168;
-	
+
 #endif /* PCVT_EXP_132COL */
 
 	vga_screen_off();
-	
+
 	/* enable access to first 7 CRTC registers */
 
-	outb(addr_6845, CRTC_VSYNCE);			
+	outb(addr_6845, CRTC_VSYNCE);
 	byte = inb(addr_6845+1);
 	outb(addr_6845, CRTC_VSYNCE);
 	outb(addr_6845+1, byte & 0x7f);
-	
+
 	if(cols == SCR_COL132)		/* switch 80 -> 132 */
 	{
 		/* save state of board for 80 columns */
-		
+
 		if(!regsaved)
 		{
 			regsaved = 1;
 
 			sp = savearea.generic;
-		
+
 			outb(addr_6845, 0x00);	/* Horizontal Total */
 			*sp++ = inb(addr_6845+1);
 			outb(addr_6845, 0x01);	/* Horizontal Display End */
@@ -685,27 +759,27 @@ generic_col(int cols)
 			*sp++ = inb(addr_6845+1);
 			outb(addr_6845, 0x05);	/* Horizontal Retrace End */
 			*sp++ = inb(addr_6845+1);
-		
+
 			outb(addr_6845, 0x13);	/* Row Offset Register */
 			*sp++ = inb(addr_6845+1);
-		
+
 			outb(TS_INDEX, TS_MODE);/* Timing Sequencer */
 			*sp++ = inb(TS_DATA);
-		
+
 			if(color)
 				inb(GN_INPSTAT1C);
 			else
 				inb(GN_INPSTAT1M);
 			/* ATC Mode control */
-			outb(ATC_INDEX, ATC_MODE | ATC_ACCESS); 
+			outb(ATC_INDEX, ATC_MODE | ATC_ACCESS);
 			*sp++ = inb(ATC_DATAR);
-		
+
 			if(color)
 				inb(GN_INPSTAT1C);
 			else
 				inb(GN_INPSTAT1M);
 			/* ATC Horizontal Pixel Panning */
-			outb(ATC_INDEX, ATC_HORPIXPAN | ATC_ACCESS); 
+			outb(ATC_INDEX, ATC_HORPIXPAN | ATC_ACCESS);
 			*sp++ = inb(ATC_DATAR);
 
 			*sp++ = inb(GN_MISCOUTR); /* Misc output register */
@@ -728,20 +802,20 @@ generic_col(int cols)
 		outb(addr_6845+1,
 		     (((syncend / 8) & 0x20) * 4)
 		     | ((syncend / 8) & 0x1f));
-	
+
 		outb(addr_6845, 0x13);	/* Row Offset Register */
 		outb(addr_6845+1, 0x42);
-	
+
 		outb(TS_INDEX, TS_MODE);/* Timing Sequencer */
 		outb(TS_DATA, 0x01);	/* 8 dot char clock */
-	
+
 		if(color)
 			inb(GN_INPSTAT1C);
 		else
 			inb(GN_INPSTAT1M);
 		outb(ATC_INDEX, ATC_MODE | ATC_ACCESS); /* ATC Mode control */
 		outb(ATC_DATAW, 0x08);	/* Line graphics disable */
-	
+
 		if(color)
 			inb(GN_INPSTAT1C);
 		else
@@ -763,54 +837,54 @@ generic_col(int cols)
 			vga_screen_on();
 			return(0);
 		}
-	
+
 		sp = savearea.generic;
-		
+
 		outb(addr_6845, 0x00);	/* Horizontal Total */
 		outb(addr_6845+1, *sp++);
 		outb(addr_6845, 0x01);	/* Horizontal Display End */
 		outb(addr_6845+1, *sp++);
 		outb(addr_6845, 0x02);	/* Horizontal Blank Start */
-		outb(addr_6845+1, *sp++);		
+		outb(addr_6845+1, *sp++);
 		outb(addr_6845, 0x03);	/* Horizontal Blank End */
-		outb(addr_6845+1, *sp++);		
+		outb(addr_6845+1, *sp++);
 		outb(addr_6845, 0x04);	/* Horizontal Retrace Start */
 		outb(addr_6845+1, *sp++);
 		outb(addr_6845, 0x05);	/* Horizontal Retrace End */
 		outb(addr_6845+1, *sp++);
-	
+
 		outb(addr_6845, 0x13);	/* Row Offset Register */
 		outb(addr_6845+1, *sp++);
-	
+
 		outb(TS_INDEX, TS_MODE);/* Timing Sequencer */
 		outb(TS_DATA, *sp++);
-	
+
 		if(color)
 			inb(GN_INPSTAT1C);
 		else
 			inb(GN_INPSTAT1M);
 		/* ATC Mode control */
-		outb(ATC_INDEX, ATC_MODE | ATC_ACCESS); 
+		outb(ATC_INDEX, ATC_MODE | ATC_ACCESS);
 		outb(ATC_DATAW, *sp++);
-	
+
 		if(color)
 			inb(GN_INPSTAT1C);
 		else
 			inb(GN_INPSTAT1M);
 		/* ATC Horizontal Pixel Panning */
-		outb(ATC_INDEX, ATC_HORPIXPAN | ATC_ACCESS); 
+		outb(ATC_INDEX, ATC_HORPIXPAN | ATC_ACCESS);
 		outb(ATC_DATAW, *sp++);
 
 		outb(GN_MISCOUTW, *sp++);	/* Misc output register */
-	}			
-	
+	}
+
 	/* disable access to first 7 CRTC registers */
-	
+
 	outb(addr_6845, CRTC_VSYNCE);
 	outb(addr_6845+1, byte);
 
 	vga_screen_on();
-	
+
 	return(1);
 }
 #endif /* PCVT_132GENERIC */
@@ -825,94 +899,94 @@ et4000_col(int cols)
 	u_char byte;
 
 	vga_screen_off();
-	
+
 	/* enable access to first 7 CRTC registers */
 
-	outb(addr_6845, CRTC_VSYNCE);			
+	outb(addr_6845, CRTC_VSYNCE);
 	byte = inb(addr_6845+1);
 	outb(addr_6845, CRTC_VSYNCE);
 	outb(addr_6845+1, byte & 0x7f);
-	
+
 	if(cols == SCR_COL132)		/* switch 80 -> 132 */
 	{
 		/* save state of board for 80 columns */
-		
+
 		if(!regsaved)
 		{
 			regsaved = 1;
 
 			sp = savearea.et4000;
-		
+
 			outb(addr_6845, 0x00);	/* Horizontal Total */
 			*sp++ = inb(addr_6845+1);
 			outb(addr_6845, 0x01);	/* Horizontal Display End */
 			*sp++ = inb(addr_6845+1);
 			outb(addr_6845, 0x02);	/* Horizontal Blank Start */
 			*sp++ = inb(addr_6845+1);
-		
+
 			outb(addr_6845, 0x04);	/* Horizontal Retrace Start */
 			*sp++ = inb(addr_6845+1);
 			outb(addr_6845, 0x05);	/* Horizontal Retrace End */
 			*sp++ = inb(addr_6845+1);
-		
+
 			outb(addr_6845, 0x13);	/* Row Offset Register */
 			*sp++ = inb(addr_6845+1);
-		
+
 			outb(addr_6845, 0x34);	/* 6845 Compatibility */
 			*sp++ = inb(addr_6845+1);
-		
+
 			outb(TS_INDEX, TS_MODE);/* Timing Sequencer */
 			*sp++ = inb(TS_DATA);
-		
+
 			if(color)
 				inb(GN_INPSTAT1C);
 			else
 				inb(GN_INPSTAT1M);
 			/* ATC Mode control */
-			outb(ATC_INDEX, ATC_MODE | ATC_ACCESS); 
+			outb(ATC_INDEX, ATC_MODE | ATC_ACCESS);
 			*sp++ = inb(ATC_DATAR);
-		
+
 			if(color)
 				inb(GN_INPSTAT1C);
 			else
 				inb(GN_INPSTAT1M);
 			/* ATC Horizontal Pixel Panning */
-			outb(ATC_INDEX, ATC_HORPIXPAN | ATC_ACCESS); 
+			outb(ATC_INDEX, ATC_HORPIXPAN | ATC_ACCESS);
 			*sp++ = inb(ATC_DATAR);
 
 			*sp++ = inb(GN_MISCOUTR);	/* Misc output register */
 		}
 
 		/* setup chipset for 132 column operation */
-		
+
 		outb(addr_6845, 0x00);	/* Horizontal Total */
 		outb(addr_6845+1, 0x9f);
 		outb(addr_6845, 0x01);	/* Horizontal Display End */
 		outb(addr_6845+1, 0x83);
 		outb(addr_6845, 0x02);	/* Horizontal Blank Start */
 		outb(addr_6845+1, 0x84);
-	
+
 		outb(addr_6845, 0x04);	/* Horizontal Retrace Start */
 		outb(addr_6845+1, 0x8b);
 		outb(addr_6845, 0x05);	/* Horizontal Retrace End */
 		outb(addr_6845+1, 0x80);
-	
+
 		outb(addr_6845, 0x13);	/* Row Offset Register */
 		outb(addr_6845+1, 0x42);
-	
+
 		outb(addr_6845, 0x34);	/* 6845 Compatibility */
 		outb(addr_6845+1, 0x0a);
-	
+
 		outb(TS_INDEX, TS_MODE);/* Timing Sequencer */
 		outb(TS_DATA, 0x01);	/* 8 dot char clock */
-	
+
 		if(color)
 			inb(GN_INPSTAT1C);
 		else
 			inb(GN_INPSTAT1M);
 		outb(ATC_INDEX, ATC_MODE | ATC_ACCESS); /* ATC Mode control */
 		outb(ATC_DATAW, 0x08);	/* Line graphics disable */
-	
+
 		if(color)
 			inb(GN_INPSTAT1C);
 		else
@@ -934,58 +1008,58 @@ et4000_col(int cols)
 			vga_screen_on();
 			return(0);
 		}
-	
+
 		sp = savearea.et4000;
-		
+
 		outb(addr_6845, 0x00);	/* Horizontal Total */
 		outb(addr_6845+1, *sp++);
 
 		outb(addr_6845, 0x01);	/* Horizontal Display End */
 		outb(addr_6845+1, *sp++);
 		outb(addr_6845, 0x02);	/* Horizontal Blank Start */
-		outb(addr_6845+1, *sp++);		
+		outb(addr_6845+1, *sp++);
 
-	
+
 		outb(addr_6845, 0x04);	/* Horizontal Retrace Start */
 		outb(addr_6845+1, *sp++);
 		outb(addr_6845, 0x05);	/* Horizontal Retrace End */
 		outb(addr_6845+1, *sp++);
-	
+
 		outb(addr_6845, 0x13);	/* Row Offset Register */
 		outb(addr_6845+1, *sp++);
-	
+
 		outb(addr_6845, 0x34);	/* 6845 Compatibility */
 		outb(addr_6845+1, *sp++);
-	
+
 		outb(TS_INDEX, TS_MODE);/* Timing Sequencer */
 		outb(TS_DATA, *sp++);
-	
+
 		if(color)
 			inb(GN_INPSTAT1C);
 		else
 			inb(GN_INPSTAT1M);
 		/* ATC Mode control */
-		outb(ATC_INDEX, ATC_MODE | ATC_ACCESS); 
+		outb(ATC_INDEX, ATC_MODE | ATC_ACCESS);
 		outb(ATC_DATAW, *sp++);
-	
+
 		if(color)
 			inb(GN_INPSTAT1C);
 		else
 			inb(GN_INPSTAT1M);
 		/* ATC Horizontal Pixel Panning */
-		outb(ATC_INDEX, ATC_HORPIXPAN | ATC_ACCESS); 
+		outb(ATC_INDEX, ATC_HORPIXPAN | ATC_ACCESS);
 		outb(ATC_DATAW, *sp++);
 
 		outb(GN_MISCOUTW, *sp++);	/* Misc output register */
-	}			
-	
+	}
+
 	/* disable access to first 7 CRTC registers */
-	
+
 	outb(addr_6845, CRTC_VSYNCE);
 	outb(addr_6845+1, byte);
 
 	vga_screen_on();
-	
+
 	return(1);
 }
 
@@ -1010,10 +1084,10 @@ wd90c11_col(int cols)
 	int i;
 
 	vga_screen_off();
-	
+
 	/* enable access to first 7 CRTC registers */
 
-	outb(addr_6845, CRTC_VSYNCE);			
+	outb(addr_6845, CRTC_VSYNCE);
 	byte = inb(addr_6845+1);
 	outb(addr_6845, CRTC_VSYNCE);
 	outb(addr_6845+1, byte & 0x7f);
@@ -1021,22 +1095,22 @@ wd90c11_col(int cols)
 	/* enable access to WD/Paradise "control extensions" */
 
 	outb(GDC_INDEX, GDC_PR5GPLOCK);
-	outb(GDC_INDEX, 0x05);	
+	outb(GDC_INDEX, 0x05);
 	outb(addr_6845, CRTC_PR10);
-	outb(addr_6845, 0x85);	
+	outb(addr_6845, 0x85);
 	outb(TS_INDEX, TS_UNLOCKSEQ);
 	outb(TS_DATA, 0x48);
 
 	if(cols == SCR_COL132)		/* switch 80 -> 132 */
 	{
 		/* save state of board for 80 columns */
-		
+
 		if(!regsaved)
 		{
 			regsaved = 1;
 
 			/* save current fonts */
-			
+
 #if !PCVT_BACKUP_FONTS
 			for(i = 0; i < totalfonts; i++)
 			{
@@ -1062,7 +1136,7 @@ wd90c11_col(int cols)
 #endif /* !PCVT_BACKUP_FONTS */
 
 			sp = savearea.wd90c11;
-		
+
 			outb(addr_6845, 0x00);	/* Horizontal Total */
 			*sp++ = inb(addr_6845+1);
 			outb(addr_6845, 0x01);	/* Horizontal Display End */
@@ -1075,15 +1149,15 @@ wd90c11_col(int cols)
 			*sp++ = inb(addr_6845+1);
 			outb(addr_6845, 0x05);	/* Horizontal Retrace End */
 			*sp++ = inb(addr_6845+1);
-		
+
 			outb(addr_6845, 0x13);	/* Row Offset Register */
 			*sp++ = inb(addr_6845+1);
-		
+
 			outb(addr_6845, 0x2e);	/* misc 1 */
 			*sp++ = inb(addr_6845+1);
 			outb(addr_6845, 0x2f);	/* misc 2 */
 			*sp++ = inb(addr_6845+1);
-		
+
 			outb(TS_INDEX, 0x10);/* Timing Sequencer */
 			*sp++ = inb(TS_DATA);
 			outb(TS_INDEX, 0x12);/* Timing Sequencer */
@@ -1106,7 +1180,7 @@ wd90c11_col(int cols)
 		outb(addr_6845+1, 0x8a);
 		outb(addr_6845, 0x05);	/* Horizontal Retrace End */
 		outb(addr_6845+1, 0x1c);
-	
+
 		outb(addr_6845, 0x13);	/* Row Offset Register */
 		outb(addr_6845+1, 0x42);
 
@@ -1119,7 +1193,7 @@ wd90c11_col(int cols)
 		outb(TS_DATA, 0x21);
 		outb(TS_INDEX, 0x12);/* Timing Sequencer */
 		outb(TS_DATA, 0x14);
-		
+
 		outb(GN_MISCOUTW, (inb(GN_MISCOUTR) | 0x08));	/* Misc output register */
 
 		vsp->wd132col = 1;
@@ -1134,11 +1208,11 @@ wd90c11_col(int cols)
 			outb(addr_6845+1, byte);
 
 			/* disable access to WD/Paradise "control extensions" */
-		
+
 			outb(GDC_INDEX, GDC_PR5GPLOCK);
-			outb(GDC_INDEX, 0x00);	
+			outb(GDC_INDEX, 0x00);
 			outb(addr_6845, CRTC_PR10);
-			outb(addr_6845, 0x00);	
+			outb(addr_6845, 0x00);
 			outb(TS_INDEX, TS_UNLOCKSEQ);
 			outb(TS_DATA, 0x00);
 
@@ -1146,9 +1220,9 @@ wd90c11_col(int cols)
 
 			return(0);
 		}
-	
+
 		sp = savearea.wd90c11;
-		
+
 		outb(addr_6845, 0x00);	/* Horizontal Total */
 		outb(addr_6845+1, *sp++);
 		outb(addr_6845, 0x01);	/* Horizontal Display End */
@@ -1161,15 +1235,15 @@ wd90c11_col(int cols)
 		outb(addr_6845+1, *sp++);
 		outb(addr_6845, 0x05);	/* Horizontal Retrace End */
 		outb(addr_6845+1, *sp++);
-	
+
 		outb(addr_6845, 0x13);	/* Row Offset Register */
 		outb(addr_6845+1, *sp++);
-	
+
 		outb(addr_6845, 0x2e);	/* misc 1 */
 		outb(addr_6845+1, *sp++);
 		outb(addr_6845, 0x2f);	/* misc 2 */
 		outb(addr_6845+1, *sp++);
-	
+
 		outb(TS_INDEX, 0x10);/* Timing Sequencer */
 		outb(addr_6845+1, *sp++);
 		outb(TS_INDEX, 0x12);/* Timing Sequencer */
@@ -1178,7 +1252,7 @@ wd90c11_col(int cols)
 		outb(GN_MISCOUTW, *sp++);	/* Misc output register */
 
 		vsp->wd132col = 0;
-	}			
+	}
 
 	/* restore fonts */
 
@@ -1193,25 +1267,25 @@ wd90c11_col(int cols)
 		if(saved_charsets[i])
 			vga_move_charset(i, 0, 0);
 #endif /* !PCVT_BACKUP_FONTS */
-	
+
 	select_vga_charset(vsp->vga_charset);
 
 	/* disable access to first 7 CRTC registers */
-	
+
 	outb(addr_6845, CRTC_VSYNCE);
 	outb(addr_6845+1, byte);
 
 	/* disable access to WD/Paradise "control extensions" */
 
 	outb(GDC_INDEX, GDC_PR5GPLOCK);
-	outb(GDC_INDEX, 0x00);	
+	outb(GDC_INDEX, 0x00);
 	outb(addr_6845, CRTC_PR10);
-	outb(addr_6845, 0x00);	
+	outb(addr_6845, 0x00);
 	outb(TS_INDEX, TS_UNLOCKSEQ);
 	outb(TS_DATA, 0x00);
-	
+
 	vga_screen_on();
-	
+
 	return(1);
 }
 
@@ -1223,32 +1297,32 @@ tri9000_col(int cols)
 {
 	u_char *sp;
 	u_char byte;
-	
+
 	vga_screen_off();
 
 	/* sync reset is necessary to preserve memory contents ... */
-	
+
 	outb(TS_INDEX, TS_SYNCRESET);
 	outb(TS_DATA, 0x01);	/* synchronous reset */
 
 	/* disable protection of misc out and other regs */
 
-	outb(addr_6845, CRTC_MTEST);			
+	outb(addr_6845, CRTC_MTEST);
 	byte = inb(addr_6845+1);
 	outb(addr_6845, CRTC_MTEST);
 	outb(addr_6845+1, byte & ~0x50);
 
 	/* enable access to first 7 CRTC registers */
 
-	outb(addr_6845, CRTC_VSYNCE);			
+	outb(addr_6845, CRTC_VSYNCE);
 	byte = inb(addr_6845+1);
 	outb(addr_6845, CRTC_VSYNCE);
 	outb(addr_6845+1, byte & 0x7f);
-	
+
 	if(cols == SCR_COL132)		/* switch 80 -> 132 */
 	{
 		/* save state of board for 80 columns */
-		
+
 		if(!regsaved)
 		{
 			regsaved = 1;
@@ -1270,7 +1344,7 @@ tri9000_col(int cols)
 
 			outb(addr_6845, 0x13);
 			*sp++ = inb(addr_6845+1);
-		
+
 			outb(TS_INDEX, TS_MODE);/* Timing Sequencer */
 			*sp++ = inb(TS_DATA);
 
@@ -1283,28 +1357,28 @@ tri9000_col(int cols)
 			inb(TS_DATA);		  /* read switches to NEW */
 			outb(TS_INDEX, TS_MODEC2);
 			*sp++ = inb(TS_DATA);
-		
+
 			if(color)
 				inb(GN_INPSTAT1C);
 			else
 				inb(GN_INPSTAT1M);
 			/* ATC Mode control */
-			outb(ATC_INDEX, ATC_MODE | ATC_ACCESS); 
+			outb(ATC_INDEX, ATC_MODE | ATC_ACCESS);
 			*sp++ = inb(ATC_DATAR);
-		
+
 			if(color)
 				inb(GN_INPSTAT1C);
 			else
 				inb(GN_INPSTAT1M);
 			/* ATC Horizontal Pixel Panning */
-			outb(ATC_INDEX, ATC_HORPIXPAN | ATC_ACCESS); 
+			outb(ATC_INDEX, ATC_HORPIXPAN | ATC_ACCESS);
 			*sp++ = inb(ATC_DATAR);
 
 			*sp++ = inb(GN_MISCOUTR);	/* Misc output register */
 		}
 
 		/* setup chipset for 132 column operation */
-		
+
 		outb(addr_6845, 0x00);	/* Horizontal Total */
 		outb(addr_6845+1, 0x9b);
 		outb(addr_6845, 0x01);	/* Horizontal Display End */
@@ -1320,10 +1394,10 @@ tri9000_col(int cols)
 
 		outb(addr_6845, 0x13);	/* Row Offset Register */
 		outb(addr_6845+1, 0x42);
-	
+
 		outb(TS_INDEX, TS_MODE);/* Timing Sequencer */
 		outb(TS_DATA, 0x01);	/* 8 dot char clock */
-	
+
 		outb(TS_INDEX, TS_HWVERS);/* Hardware Version register */
 		outb(TS_DATA, 0x00);	  /* write ANYTHING switches to OLD */
 		outb(TS_INDEX, TS_MODEC2);
@@ -1333,21 +1407,21 @@ tri9000_col(int cols)
 		inb(TS_DATA);		  /* read switches to NEW */
 		outb(TS_INDEX, TS_MODEC2);
 		outb(TS_DATA, 0x01);
-	
+
 		if(color)
 			inb(GN_INPSTAT1C);
 		else
 			inb(GN_INPSTAT1M);
 		outb(ATC_INDEX, ATC_MODE | ATC_ACCESS); /* ATC Mode control */
 		outb(ATC_DATAW, 0x08);	/* Line graphics disable */
-	
+
 		if(color)
 			inb(GN_INPSTAT1C);
 		else
 			inb(GN_INPSTAT1M);
 		outb(ATC_INDEX, ATC_HORPIXPAN | ATC_ACCESS); /* ATC Horizontal Pixel Panning */
 		outb(ATC_DATAW, 0x00);
-	
+
 		outb(GN_MISCOUTW, (inb(GN_MISCOUTR) | 0x0c));	/* Misc output register */
 	}
 	else	/* switch 132 -> 80 */
@@ -1365,7 +1439,7 @@ tri9000_col(int cols)
 
 			return(0);
 		}
-	
+
 		sp = savearea.tri9000;
 
 		outb(addr_6845, 0x00);	/* Horizontal Total */
@@ -1373,9 +1447,9 @@ tri9000_col(int cols)
 		outb(addr_6845, 0x01);	/* Horizontal Display End */
 		outb(addr_6845+1, *sp++);
 		outb(addr_6845, 0x02);	/* Horizontal Blank Start */
-		outb(addr_6845+1, *sp++);		
+		outb(addr_6845+1, *sp++);
 		outb(addr_6845, 0x03);	/* Horizontal Blank End */
-		outb(addr_6845+1, *sp++);		
+		outb(addr_6845+1, *sp++);
 		outb(addr_6845, 0x04);	/* Horizontal Retrace Start */
 		outb(addr_6845+1, *sp++);
 		outb(addr_6845, 0x05);	/* Horizontal Retrace End */
@@ -1383,7 +1457,7 @@ tri9000_col(int cols)
 
 		outb(addr_6845, 0x13);	/* Row Offset Register */
 		outb(addr_6845+1, *sp++);
-	
+
 		outb(TS_INDEX, TS_MODE);/* Timing Sequencer */
 		outb(TS_DATA, *sp++);
 
@@ -1396,28 +1470,28 @@ tri9000_col(int cols)
 		inb(TS_DATA);		  /* read switches to NEW */
 		outb(TS_INDEX, TS_MODEC2);/* Timing Sequencer */
 		outb(TS_DATA, *sp++);
-	
+
 		if(color)
 			inb(GN_INPSTAT1C);
 		else
 			inb(GN_INPSTAT1M);
 		/* ATC Mode control */
-		outb(ATC_INDEX, ATC_MODE | ATC_ACCESS); 
+		outb(ATC_INDEX, ATC_MODE | ATC_ACCESS);
 		outb(ATC_DATAW, *sp++);
-	
+
 		if(color)
 			inb(GN_INPSTAT1C);
 		else
 			inb(GN_INPSTAT1M);
 		/* ATC Horizontal Pixel Panning */
-		outb(ATC_INDEX, ATC_HORPIXPAN | ATC_ACCESS); 
+		outb(ATC_INDEX, ATC_HORPIXPAN | ATC_ACCESS);
 		outb(ATC_DATAW, *sp++);
 
 		outb(GN_MISCOUTW, *sp++);	/* Misc output register */
-	}			
-	
+	}
+
 	/* disable access to first 7 CRTC registers */
-	
+
 	outb(addr_6845, CRTC_VSYNCE);
 	outb(addr_6845+1, byte);
 
@@ -1438,7 +1512,7 @@ v7_1024i_col(int cols)
 	u_char *sp;
 	u_char byte;
 	u_char save__byte;
-	
+
 	vga_screen_off();
 
 	/* enable access to first 7 CRTC registers */
@@ -1450,27 +1524,27 @@ v7_1024i_col(int cols)
 	outb(addr_6845+1, (byte | 0x80));
 
 	/* second, enable access to protected registers */
-	outb(addr_6845, CRTC_VSYNCE);			
+	outb(addr_6845, CRTC_VSYNCE);
 	save__byte = byte = inb(addr_6845+1);
 	byte |= 0x20;	/* no irq 2 */
 	byte &= 0x6f;	/* wr enable, clr irq flag */
 	outb(addr_6845, CRTC_VSYNCE);
 	outb(addr_6845+1, byte);
-	
+
 	outb(TS_INDEX, TS_EXTCNTL);	/* enable extensions */
-	outb(TS_DATA, 0xea);	
+	outb(TS_DATA, 0xea);
 
 
 	if(cols == SCR_COL132)		/* switch 80 -> 132 */
 	{
 		/* save state of board for 80 columns */
-		
+
 		if(!regsaved)
 		{
 			regsaved = 1;
 
 			sp = savearea.v7_1024i;
-		
+
 			outb(addr_6845, 0x00);	/* Horizontal Total */
 			*sp++ = inb(addr_6845+1);
 			outb(addr_6845, 0x01);	/* Horizontal Display End */
@@ -1483,52 +1557,52 @@ v7_1024i_col(int cols)
 			*sp++ = inb(addr_6845+1);
 			outb(addr_6845, 0x05);	/* Horizontal Retrace End */
 			*sp++ = inb(addr_6845+1);
-		
+
 			outb(addr_6845, 0x13);	/* Row Offset Register */
 			*sp++ = inb(addr_6845+1);
-		
+
 			outb(TS_INDEX, TS_MODE);/* Timing Sequencer */
 			*sp++ = inb(TS_DATA);
-		
+
 			if(color)
 				inb(GN_INPSTAT1C);
 			else
 				inb(GN_INPSTAT1M);
 			/* ATC Mode control */
-			outb(ATC_INDEX, ATC_MODE | ATC_ACCESS); 
+			outb(ATC_INDEX, ATC_MODE | ATC_ACCESS);
 			*sp++ = inb(ATC_DATAR);
-		
+
 			if(color)
 				inb(GN_INPSTAT1C);
 			else
 				inb(GN_INPSTAT1M);
 			/* ATC Horizontal Pixel Panning */
-			outb(ATC_INDEX, ATC_HORPIXPAN | ATC_ACCESS); 
+			outb(ATC_INDEX, ATC_HORPIXPAN | ATC_ACCESS);
 			*sp++ = inb(ATC_DATAR);
 
 			outb(TS_INDEX, 0x83);
 			*sp++ = inb(TS_DATA);
-	
+
 			outb(TS_INDEX, 0xa4);
 			*sp++ = inb(TS_DATA);
-	
+
 			outb(TS_INDEX, 0xe0);
 			*sp++ = inb(TS_DATA);
-	
+
 			outb(TS_INDEX, 0xe4);
 			*sp++ = inb(TS_DATA);
-	
+
 			outb(TS_INDEX, 0xf8);
 			*sp++ = inb(TS_DATA);
-	
+
 			outb(TS_INDEX, 0xfd);
 			*sp++ = inb(TS_DATA);
-	
+
 			*sp++ = inb(GN_MISCOUTR);	/* Misc output register */
 		}
 
 		/* setup chipset for 132 column operation */
-		
+
 		outb(addr_6845, 0x00);	/* Horizontal Total */
 		outb(addr_6845+1, 0x9c);
 		outb(addr_6845, 0x01);	/* Horizontal Display End */
@@ -1541,10 +1615,10 @@ v7_1024i_col(int cols)
 		outb(addr_6845+1, 0x89);
 		outb(addr_6845, 0x05);	/* Horizontal Retrace End */
 		outb(addr_6845+1, 0x1c);
-	
+
 		outb(addr_6845, 0x13);	/* Row Offset Register */
 		outb(addr_6845+1, 0x42);
-	
+
 		outb(TS_INDEX, TS_MODE);/* Timing Sequencer */
 		outb(TS_DATA, 0x01);	/* 8 dot char clock */
 
@@ -1554,7 +1628,7 @@ v7_1024i_col(int cols)
 			inb(GN_INPSTAT1M);
 		outb(ATC_INDEX, ATC_MODE | ATC_ACCESS); /* ATC Mode control */
 		outb(ATC_DATAW, 0x08);	/* Line graphics disable */
-	
+
 		if(color)
 			inb(GN_INPSTAT1C);
 		else
@@ -1595,7 +1669,7 @@ v7_1024i_col(int cols)
 		if(!regsaved)			/* failsafe */
 		{
 			outb(TS_INDEX, TS_EXTCNTL);	/* disable extensions */
-			outb(TS_DATA, 0xae);	
+			outb(TS_DATA, 0xae);
 
 			/* disable access to first 7 CRTC registers */
 			outb(addr_6845, CRTC_VSYNCE);
@@ -1603,42 +1677,42 @@ v7_1024i_col(int cols)
 			vga_screen_on();
 			return(0);
 		}
-	
+
 		sp = savearea.v7_1024i;
-		
+
 		outb(addr_6845, 0x00);	/* Horizontal Total */
 		outb(addr_6845+1, *sp++);
 		outb(addr_6845, 0x01);	/* Horizontal Display End */
 		outb(addr_6845+1, *sp++);
 		outb(addr_6845, 0x02);	/* Horizontal Blank Start */
-		outb(addr_6845+1, *sp++);		
+		outb(addr_6845+1, *sp++);
 		outb(addr_6845, 0x03);	/* Horizontal Blank End */
-		outb(addr_6845+1, *sp++);		
+		outb(addr_6845+1, *sp++);
 		outb(addr_6845, 0x04);	/* Horizontal Retrace Start */
 		outb(addr_6845+1, *sp++);
 		outb(addr_6845, 0x05);	/* Horizontal Retrace End */
 		outb(addr_6845+1, *sp++);
-	
+
 		outb(addr_6845, 0x13);	/* Row Offset Register */
 		outb(addr_6845+1, *sp++);
-	
+
 		outb(TS_INDEX, TS_MODE);/* Timing Sequencer */
 		outb(TS_DATA, *sp++);
-	
+
 		if(color)
 			inb(GN_INPSTAT1C);
 		else
 			inb(GN_INPSTAT1M);
 		/* ATC Mode control */
-		outb(ATC_INDEX, ATC_MODE | ATC_ACCESS); 
+		outb(ATC_INDEX, ATC_MODE | ATC_ACCESS);
 		outb(ATC_DATAW, *sp++);
-	
+
 		if(color)
 			inb(GN_INPSTAT1C);
 		else
 			inb(GN_INPSTAT1M);
 		/* ATC Horizontal Pixel Panning */
-		outb(ATC_INDEX, ATC_HORPIXPAN | ATC_ACCESS); 
+		outb(ATC_INDEX, ATC_HORPIXPAN | ATC_ACCESS);
 		outb(ATC_DATAW, *sp++);
 
 		outb(TS_INDEX, TS_SYNCRESET);
@@ -1666,18 +1740,18 @@ v7_1024i_col(int cols)
 
 		outb(TS_INDEX, TS_SYNCRESET);
 		outb(TS_DATA, 0x03);	/* clear synchronous reset */
-	}			
-	
+	}
+
 	outb(TS_INDEX, TS_EXTCNTL);	/* disable extensions */
-	outb(TS_DATA, 0xae);	
+	outb(TS_DATA, 0xae);
 
 	/* disable access to first 7 CRTC registers */
-	
+
 	outb(addr_6845, CRTC_VSYNCE);
 	outb(addr_6845+1, save__byte);
 
 	vga_screen_on();
-	
+
 	return(1);
 }
 
@@ -1691,7 +1765,7 @@ s3_928_col(int cols)
 	u_char byte;
 
 	vga_screen_off();
-	
+
 	outb(addr_6845, 0x38);
 	outb(addr_6845+1, 0x48);	/* unlock registers */
 	outb(addr_6845, 0x39);
@@ -1699,21 +1773,21 @@ s3_928_col(int cols)
 
 	/* enable access to first 7 CRTC registers */
 
-	outb(addr_6845, CRTC_VSYNCE);			
+	outb(addr_6845, CRTC_VSYNCE);
 	byte = inb(addr_6845+1);
 	outb(addr_6845, CRTC_VSYNCE);
 	outb(addr_6845+1, byte & 0x7f);
-	
+
 	if(cols == SCR_COL132)		/* switch 80 -> 132 */
 	{
 		/* save state of board for 80 columns */
-		
+
 		if(!regsaved)
 		{
 			regsaved = 1;
 
 			sp = savearea.s3_928;
-		
+
 			outb(addr_6845, 0x00);	/* Horizontal Total */
 			*sp++ = inb(addr_6845+1);
 			outb(addr_6845, 0x01);	/* Horizontal Display End */
@@ -1726,7 +1800,7 @@ s3_928_col(int cols)
 			*sp++ = inb(addr_6845+1);
 			outb(addr_6845, 0x05);	/* Horizontal Retrace End */
 			*sp++ = inb(addr_6845+1);
-		
+
 			outb(addr_6845, 0x13);	/* Row Offset Register */
 			*sp++ = inb(addr_6845+1);
 
@@ -1737,31 +1811,31 @@ s3_928_col(int cols)
 
 			outb(addr_6845, 0x42);	/* (Clock) Mode Control */
 			*sp++ = inb(addr_6845+1);
-		
+
 			outb(TS_INDEX, TS_MODE);/* Timing Sequencer */
 			*sp++ = inb(TS_DATA);
-		
+
 			if(color)
 				inb(GN_INPSTAT1C);
 			else
 				inb(GN_INPSTAT1M);
 			/* ATC Mode control */
-			outb(ATC_INDEX, ATC_MODE | ATC_ACCESS); 
+			outb(ATC_INDEX, ATC_MODE | ATC_ACCESS);
 			*sp++ = inb(ATC_DATAR);
-		
+
 			if(color)
 				inb(GN_INPSTAT1C);
 			else
 				inb(GN_INPSTAT1M);
 			/* ATC Horizontal Pixel Panning */
-			outb(ATC_INDEX, ATC_HORPIXPAN | ATC_ACCESS); 
+			outb(ATC_INDEX, ATC_HORPIXPAN | ATC_ACCESS);
 			*sp++ = inb(ATC_DATAR);
 
 			*sp++ = inb(GN_MISCOUTR);	/* Misc output register */
 		}
 
 		/* setup chipset for 132 column operation */
-		
+
 		outb(addr_6845, 0x00);	/* Horizontal Total */
 		outb(addr_6845+1, 0x9a);
 		outb(addr_6845, 0x01);	/* Horizontal Display End */
@@ -1774,28 +1848,28 @@ s3_928_col(int cols)
 		outb(addr_6845+1, 0x87);
 		outb(addr_6845, 0x05);	/* Horizontal Retrace End */
 		outb(addr_6845+1, 0x1b);
-	
+
 		outb(addr_6845, 0x13);	/* Row Offset Register */
 		outb(addr_6845+1, 0x42);
 
-		outb(addr_6845, 0x34);	
+		outb(addr_6845, 0x34);
 		outb(addr_6845+1, 0x10);/* enable data xfer pos control */
 		outb(addr_6845, 0x3b);
 		outb(addr_6845+1, 0x90);/* set data xfer pos value */
-			
+
 		outb(addr_6845, 0x42);	/* (Clock) Mode Control */
 		outb(addr_6845+1, 0x02);/* Select 40MHz Clock */
-		
+
 		outb(TS_INDEX, TS_MODE);/* Timing Sequencer */
 		outb(TS_DATA, 0x01);	/* 8 dot char clock */
-	
+
 		if(color)
 			inb(GN_INPSTAT1C);
 		else
 			inb(GN_INPSTAT1M);
 		outb(ATC_INDEX, ATC_MODE | ATC_ACCESS); /* ATC Mode control */
 		outb(ATC_DATAW, 0x08);	/* Line graphics disable */
-	
+
 		if(color)
 			inb(GN_INPSTAT1C);
 		else
@@ -1823,22 +1897,22 @@ s3_928_col(int cols)
 			vga_screen_on();
 			return(0);
 		}
-	
+
 		sp = savearea.s3_928;
-		
+
 		outb(addr_6845, 0x00);	/* Horizontal Total */
 		outb(addr_6845+1, *sp++);
 		outb(addr_6845, 0x01);	/* Horizontal Display End */
 		outb(addr_6845+1, *sp++);
 		outb(addr_6845, 0x02);	/* Horizontal Blank Start */
-		outb(addr_6845+1, *sp++);		
+		outb(addr_6845+1, *sp++);
 		outb(addr_6845, 0x03);	/* Horizontal Blank End */
-		outb(addr_6845+1, *sp++);		
+		outb(addr_6845+1, *sp++);
 		outb(addr_6845, 0x04);	/* Horizontal Retrace Start */
 		outb(addr_6845+1, *sp++);
 		outb(addr_6845, 0x05);	/* Horizontal Retrace End */
 		outb(addr_6845+1, *sp++);
-	
+
 		outb(addr_6845, 0x13);	/* Row Offset Register */
 		outb(addr_6845+1, *sp++);
 
@@ -1849,31 +1923,31 @@ s3_928_col(int cols)
 
 		outb(addr_6845, 0x42);	/* Mode control */
 		outb(addr_6845+1, *sp++);
-		
+
 		outb(TS_INDEX, TS_MODE);/* Timing Sequencer */
 		outb(TS_DATA, *sp++);
-	
+
 		if(color)
 			inb(GN_INPSTAT1C);
 		else
 			inb(GN_INPSTAT1M);
 		/* ATC Mode control */
-		outb(ATC_INDEX, ATC_MODE | ATC_ACCESS); 
+		outb(ATC_INDEX, ATC_MODE | ATC_ACCESS);
 		outb(ATC_DATAW, *sp++);
-	
+
 		if(color)
 			inb(GN_INPSTAT1C);
 		else
 			inb(GN_INPSTAT1M);
 		/* ATC Horizontal Pixel Panning */
-		outb(ATC_INDEX, ATC_HORPIXPAN | ATC_ACCESS); 
+		outb(ATC_INDEX, ATC_HORPIXPAN | ATC_ACCESS);
 		outb(ATC_DATAW, *sp++);
 
 		outb(GN_MISCOUTW, *sp++);	/* Misc output register */
-	}			
-	
+	}
+
 	/* disable access to first 7 CRTC registers */
-	
+
 	outb(addr_6845, CRTC_VSYNCE);
 	outb(addr_6845+1, byte);
 
@@ -1881,9 +1955,9 @@ s3_928_col(int cols)
 	outb(addr_6845+1, 0x00);	/* lock registers */
 	outb(addr_6845, 0x39);
 	outb(addr_6845+1, 0x00);	/* lock registers */
-	
+
 	vga_screen_on();
-	
+
 	return(1);
 }
 
@@ -1897,29 +1971,28 @@ cl_gd542x_col(int cols)
 	u_char byte;
 
 	vga_screen_off();
-	
+
 	/* enable access to first 7 CRTC registers */
 
-	outb(addr_6845, CRTC_VSYNCE);			
+	outb(addr_6845, CRTC_VSYNCE);
 	byte = inb(addr_6845+1);
 	outb(addr_6845, CRTC_VSYNCE);
 	outb(addr_6845+1, byte & 0x7f);
 
 	/* enable access to cirrus extension registers */
-
 	outb(TS_INDEX, 6);
 	outb(TS_DATA, 0x12);
-	
+
 	if(cols == SCR_COL132)		/* switch 80 -> 132 */
 	{
 		/* save state of board for 80 columns */
-		
+
 		if(!regsaved)
 		{
 			regsaved = 1;
 
 			sp = savearea.cirrus;
-		
+
 			outb(addr_6845, 0x00);	/* Horizontal Total */
 			*sp++ = inb(addr_6845+1);
 			outb(addr_6845, 0x01);	/* Horizontal Display End */
@@ -1932,28 +2005,28 @@ cl_gd542x_col(int cols)
 			*sp++ = inb(addr_6845+1);
 			outb(addr_6845, 0x05);	/* Horizontal Retrace End */
 			*sp++ = inb(addr_6845+1);
-		
+
 			outb(addr_6845, 0x13);	/* Row Offset Register */
 			*sp++ = inb(addr_6845+1);
-		
+
 			outb(TS_INDEX, TS_MODE);/* Timing Sequencer */
 			*sp++ = inb(TS_DATA);
-		
+
 
 			if(color)
 				inb(GN_INPSTAT1C);
 			else
 				inb(GN_INPSTAT1M);
 			/* ATC Mode control */
-			outb(ATC_INDEX, ATC_MODE | ATC_ACCESS); 
+			outb(ATC_INDEX, ATC_MODE | ATC_ACCESS);
 			*sp++ = inb(ATC_DATAR);
-		
+
 			if(color)
 				inb(GN_INPSTAT1C);
 			else
 				inb(GN_INPSTAT1M);
 			/* ATC Horizontal Pixel Panning */
-			outb(ATC_INDEX, ATC_HORPIXPAN | ATC_ACCESS); 
+			outb(ATC_INDEX, ATC_HORPIXPAN | ATC_ACCESS);
 			*sp++ = inb(ATC_DATAR);
 
 			/* VCLK2 Numerator Register */
@@ -1982,7 +2055,7 @@ cl_gd542x_col(int cols)
 		outb(addr_6845+1, 0x8a);
 		outb(addr_6845, 0x05);	/* Horizontal Retrace End */
 		outb(addr_6845+1, 0x9e);
-	
+
 		outb(addr_6845, 0x13);	/* Row Offset Register */
 		outb(addr_6845+1, 0x42);
 
@@ -1991,21 +2064,21 @@ cl_gd542x_col(int cols)
 		outb(TS_DATA, 0x45);
 
 		outb(TS_INDEX, 0x1d);	/* VCLK2 Denominator and */
-		outb(TS_DATA, 0x30);	/* Post-Scalar Value Register */
+		outb(TS_DATA, 0x30);   /* Post-Scalar Value Register */
 
 		/* and use it. */
 		outb(GN_MISCOUTW, (inb(GN_MISCOUTR) & ~0x0c) | (2 << 2));
 
 		outb(TS_INDEX, TS_MODE);/* Timing Sequencer */
 		outb(TS_DATA, 0x01);	/* 8 dot char clock */
-	
+
 		if(color)
 			inb(GN_INPSTAT1C);
 		else
 			inb(GN_INPSTAT1M);
 		outb(ATC_INDEX, ATC_MODE | ATC_ACCESS); /* ATC Mode control */
 		outb(ATC_DATAW, 0x08);	/* Line graphics disable */
-	
+
 		if(color)
 			inb(GN_INPSTAT1C);
 		else
@@ -2020,31 +2093,33 @@ cl_gd542x_col(int cols)
 			/* disable access to first 7 CRTC registers */
 			outb(addr_6845, CRTC_VSYNCE);
 			outb(addr_6845+1, byte);
+
 			/* disable access to cirrus extension registers */
 			outb(TS_INDEX, 6);
 			outb(TS_DATA, 0);
+
 			vga_screen_on();
 			return(0);
 		}
-	
-		sp = savearea.generic;
-		
+
+		sp = savearea.cirrus;
+
 		outb(addr_6845, 0x00);	/* Horizontal Total */
 		outb(addr_6845+1, *sp++);
 		outb(addr_6845, 0x01);	/* Horizontal Display End */
 		outb(addr_6845+1, *sp++);
 		outb(addr_6845, 0x02);	/* Horizontal Blank Start */
-		outb(addr_6845+1, *sp++);		
+		outb(addr_6845+1, *sp++);
 		outb(addr_6845, 0x03);	/* Horizontal Blank End */
-		outb(addr_6845+1, *sp++);		
+		outb(addr_6845+1, *sp++);
 		outb(addr_6845, 0x04);	/* Horizontal Retrace Start */
 		outb(addr_6845+1, *sp++);
 		outb(addr_6845, 0x05);	/* Horizontal Retrace End */
 		outb(addr_6845+1, *sp++);
-	
+
 		outb(addr_6845, 0x13);	/* Row Offset Register */
 		outb(addr_6845+1, *sp++);
-	
+
 		outb(TS_INDEX, TS_MODE);/* Timing Sequencer */
 		outb(TS_DATA, *sp++);
 
@@ -2053,15 +2128,15 @@ cl_gd542x_col(int cols)
 		else
 			inb(GN_INPSTAT1M);
 		/* ATC Mode control */
-		outb(ATC_INDEX, ATC_MODE | ATC_ACCESS); 
+		outb(ATC_INDEX, ATC_MODE | ATC_ACCESS);
 		outb(ATC_DATAW, *sp++);
-	
+
 		if(color)
 			inb(GN_INPSTAT1C);
 		else
 			inb(GN_INPSTAT1M);
 		/* ATC Horizontal Pixel Panning */
-		outb(ATC_INDEX, ATC_HORPIXPAN | ATC_ACCESS); 
+		outb(ATC_INDEX, ATC_HORPIXPAN | ATC_ACCESS);
 		outb(ATC_DATAW, *sp++);
 
 		/* VCLK2 Numerator Register */
@@ -2072,17 +2147,15 @@ cl_gd542x_col(int cols)
 		outb(TS_INDEX, 0x1d);
 		outb(TS_DATA, *sp++);
 
-		/* Misc output register */
-		outb(GN_MISCOUTW, *sp++);
-	}			
+		outb(GN_MISCOUTW, *sp++);	/* Misc output register */
+	}
 
 	/* disable access to cirrus extension registers */
-
 	outb(TS_INDEX, 6);
 	outb(TS_DATA, 0);
-	
+
 	/* disable access to first 7 CRTC registers */
-	
+
 	outb(addr_6845, CRTC_VSYNCE);
 	outb(addr_6845+1, byte);
 
@@ -2094,168 +2167,287 @@ cl_gd542x_col(int cols)
 /*---------------------------------------------------------------------------*
  *	switch screen from text mode to X-mode and vice versa
  *---------------------------------------------------------------------------*/
-#if PCVT_USL_VT_COMPAT
-static void
-pcvt_x_hook(int tografx)
+void
+switch_screen(int n, int oldgrafx, int newgrafx)
 {
-	int i;
 
 #if PCVT_SCREENSAVER
 	static unsigned saved_scrnsv_tmo = 0;
-#endif /* PCVT_SCREENSAVER*/
+#endif	/* PCVT_SCREENSAVER */
 
-#if PCVT_NETBSD
-	extern u_short *Crtat;
-#endif /* PCVT_NETBSD */
+#if !PCVT_KBD_FIFO
+	int x;
+#endif	/* !PCVT_KBD_FIFO */
 
-	/* save area for grahpics mode switch */
+	int cols = vsp->maxcol;		/* get current col val */
 
-	if(!tografx)
-	{	
-		/* into standard text mode */
-		/* step 1: restore fonts */
+	if(n < 0 || n >= totalscreens)
+		return;
+
+#if !PCVT_KBD_FIFO
+	x = spltty();			/* protect us */
+#endif	/* !PCVT_KBD_FIFO */
+
+	if(!oldgrafx && newgrafx)
+	{
+		/* switch from text to graphics */
+
+#if PCVT_SCREENSAVER
+		if((saved_scrnsv_tmo = scrnsv_timeout))
+			pcvt_set_scrnsv_tmo(0);	/* screensaver off */
+#endif /* PCVT_SCREENSAVER */
+
+		async_update(UPDATE_STOP);	/* status display off */
+	}
+
+	if(!oldgrafx)
+	{
+		/* switch from text mode */
+
+		/* video board memory -> kernel memory */
+		bcopy(vsp->Crtat, vsp->Memory,
+		      vsp->screen_rows * vsp->maxcol * CHR);
+
+		vsp->Crtat = vsp->Memory;	/* operate in memory now */
+	}
+
+	/* update global screen pointers/variables */
+	current_video_screen = n;	/* current screen no */
+
+#if !PCVT_NETBSD && !(PCVT_FREEBSD > 110 && PCVT_FREEBSD < 200)
+	pcconsp = &pccons[n];		/* current tty */
+#elif PCVT_FREEBSD > 110 && PCVT_FREEBSD < 200
+	pcconsp = pccons[n];		/* current tty */
+#elif PCVT_NETBSD > 100
+	pcconsp = vs[n].vs_tty;		/* current tty */
+#else
+	pcconsp = pc_tty[n];		/* current tty */
+#endif
+
+	vsp = &vs[n];			/* current video state ptr */
+
+	if(oldgrafx && !newgrafx)
+	{
+		/* switch from graphics to text mode */
+		unsigned i;
+
+		/* restore fonts */
 		for(i = 0; i < totalfonts; i++)
 			if(saved_charsets[i])
 				vga_move_charset(i, 0, 0);
 
-		
 #if PCVT_SCREENSAVER
-		/* step 2: activate screen saver */
+		/* activate screen saver */
 		if(saved_scrnsv_tmo)
 			pcvt_set_scrnsv_tmo(saved_scrnsv_tmo);
 #endif /* PCVT_SCREENSAVER */
 
-		/* step 3: re-initialize lost MDA information */
+		/* re-initialize lost MDA information */
 		if(adaptor_type == MDA_ADAPTOR)
 		{
-			/*
-			 * Due to the fact that HGC registers are
-			 * write-only, the Xserver can only make
-			 * guesses about the state the HGC adaptor
-			 * has been before turning on X mode. Thus,
-			 * the display must be re-enabled now, and
-			 * the cursor shape and location restored.
-			 */
-			/* enable display, text mode */
-			outb(GN_DMCNTLM, 0x28);
+		    /*
+		     * Due to the fact that HGC registers are write-only,
+		     * the Xserver can only make guesses about the state
+		     * the HGC adaptor has been before turning on X mode.
+		     * Thus, the display must be re-enabled now, and the
+		     * cursor shape and location restored.
+		     */
+		    outb(GN_DMCNTLM, 0x28); /* enable display, text mode */
+		    outb(addr_6845, CRTC_CURSORH); /* select high register */
+		    outb(addr_6845+1,
+			 ((vsp->Crtat + vsp->cur_offset) - Crtat) >> 8);
+		    outb(addr_6845, CRTC_CURSORL); /* select low register */
+		    outb(addr_6845+1,
+			 ((vsp->Crtat + vsp->cur_offset) - Crtat));
 
-			/* restore cursor mode and shape */
-			outb(addr_6845, CRTC_CURSORH);
-			outb(addr_6845+1,
-			     ((vsp->Crtat + vsp->cur_offset) - Crtat) >> 8);
-			outb(addr_6845, CRTC_CURSORL);
-			outb(addr_6845+1,
-			     ((vsp->Crtat + vsp->cur_offset) - Crtat));
-			
-			outb(addr_6845, CRTC_CURSTART);
-			outb(addr_6845+1, vsp->cursor_start);
-			outb(addr_6845, CRTC_CUREND);
-			outb(addr_6845+1, vsp->cursor_end);
+		    outb(addr_6845, CRTC_CURSTART); /* select high register */
+		    outb(addr_6845+1, vsp->cursor_start);
+		    outb(addr_6845, CRTC_CUREND); /* select low register */
+		    outb(addr_6845+1, vsp->cursor_end);
 		}
 
-		/* step 4: restore screen and re-enable text output */
+		/* make status display happy */
+		async_update(UPDATE_START);
+	}
+
+	if(!newgrafx)
+	{
+		/* to text mode */
 
 		/* kernel memory -> video board memory */
-		bcopyb(vsp->Crtat, Crtat,
-		       vsp->screen_rowsize * vsp->maxcol * CHR);
+		bcopy(vsp->Crtat, Crtat,
+		      vsp->screen_rows * vsp->maxcol * CHR);
 
-		vsp->Crtat = Crtat;	/* operate on-screen now */
+		vsp->Crtat = Crtat;		/* operate on screen now */
 
 		outb(addr_6845, CRTC_STARTADRH);
 		outb(addr_6845+1, 0);
 		outb(addr_6845, CRTC_STARTADRL);
 		outb(addr_6845+1, 0);
-	
-		/* step 5: make status display happy */
-		async_update(0);
 	}
-	else /* tografx */
-	{	
-		/* switch to graphics mode: save everything we need */
 
-		/* step 1: deactivate screensaver */
+#if !PCVT_KBD_FIFO
+	splx(x);
+#endif	/* !PCVT_KBD_FIFO */
 
-#if PCVT_SCREENSAVER
-		if(saved_scrnsv_tmo = scrnsv_timeout)
-			pcvt_set_scrnsv_tmo(0);	/* turn it off */
-#endif /* PCVT_SCREENSAVER */
+	select_vga_charset(vsp->vga_charset);
 
-		/* step 2: handle status display */
-		async_update((void *)1);	/* turn off */
+	if(vsp->maxcol != cols)
+		vga_col(vsp, vsp->maxcol);	/* select 80/132 columns */
 
-		/* step 3: disable text output and save screen contents */
+ 	outb(addr_6845, CRTC_CURSORH);	/* select high register */
+	outb(addr_6845+1, vsp->cur_offset >> 8);
+	outb(addr_6845, CRTC_CURSORL);	/* select low register */
+	outb(addr_6845+1, vsp->cur_offset);
 
-		/* video board memory -> kernel memory */
-		bcopyb(vsp->Crtat, vsp->Memory,
-		       vsp->screen_rowsize * vsp->maxcol * CHR);
-
-		vsp->Crtat = vsp->Memory;	/* operate in memory now */
+	if(vsp->cursor_on)
+	{
+		outb(addr_6845, CRTC_CURSTART);	/* select high register */
+		outb(addr_6845+1, vsp->cursor_start);
+		outb(addr_6845, CRTC_CUREND);	/* select low register */
+		outb(addr_6845+1, vsp->cursor_end);
 	}
-}
+	else
+	{
+		sw_cursor(0);
+	}
 
-void
-kbd_setmode(mode)
-	int mode;
-{
-#if PCVT_SCANSET == 2
-	unsigned char cmd;
+	if(adaptor_type == VGA_ADAPTOR)
+	{
+		unsigned i;
 
-#if PCVT_USEKBDSEC
-	cmd = COMMAND_SYSFLG | COMMAND_IRQEN;
-#else
-	cmd = COMMAND_INHOVR | COMMAND_SYSFLG | COMMAND_IRQEN;
-#endif /* PCVT_USEKBDSEC */
-	if (mode == K_RAW)
-		cmd |= COMMAND_PCSCAN;
-	kbc_8042cmd(CONTR_WRITE); 
-	outb(CONTROLLER_DATA, cmd);
-#endif /* PCVT_SCANSET == 2 */
-	if (mode == K_RAW)
-		shift_down = meta_down = altgr_down = ctrl_down = 0;
+		/* switch VGA DAC palette entries */
+		for(i = 0; i < NVGAPEL; i++)
+			vgapaletteio(i, &vsp->palette[i], 1);
+	}
+
+	if(!newgrafx)
+	{
+		update_led();	/* update led's */
+		update_hp(vsp);	/* update fkey labels, if present */
+
+		/* if we switch to a vt with force 24 lines mode and	*/
+		/* pure VT emulation and 25 rows charset, then we have	*/
+		/* to clear the last line on display ...		*/
+
+		if(vsp->force24 && (vsp->vt_pure_mode == M_PUREVT) &&
+			(vgacs[vsp->vga_charset].screen_size == SIZ_25ROWS))
+		{
+			fillw(' ', vsp->Crtat + vsp->screen_rows * vsp->maxcol,
+				vsp->maxcol);
+		}
+	}
+	kbd_setmode(vsp->kbd_state);
 }
 
 /*---------------------------------------------------------------------------*
- *	switch to virtual screen n (0 ... PCVT_NSCREENS-1), VT_USL version
+ *	Change specified vt to VT_AUTO mode
+ *	xxx Maybe this should also reset VT_GRAFX mode; since switching and
+ *	graphics modes are not going to work without VT_PROCESS mode.
+ *---------------------------------------------------------------------------*/
+static void
+set_auto_mode (struct video_state *vsx)
+{
+	unsigned ostatus = vsx->vt_status;
+	vsx->smode.mode = VT_AUTO;
+	vsx->proc = NULL;
+	vsx->pid = 0;
+	vsx->vt_status &= ~(VT_WAIT_REL|VT_WAIT_ACK);
+	if (ostatus & VT_WAIT_ACK) {
+#if 0
+		assert (!(ostatus&VT_WAIT_REL));
+		assert (vsp == vsx &&
+			vt_switch_pending == current_video_screen + 1);
+		vt_switch_pending = 0;
+#else
+		if (vsp == vsx &&
+		    vt_switch_pending == current_video_screen + 1)
+			vt_switch_pending = 0;
+#endif
+	}
+	if (ostatus&VT_WAIT_REL) {
+		int new_screen = vt_switch_pending - 1;
+#if 0
+		assert(vsp == vsx && vt_switch_pending);
+		vt_switch_pending = 0;
+		vgapage (new_screen);
+#else
+		if (vsp == vsx && vt_switch_pending) {
+			vt_switch_pending = 0;
+			vgapage (new_screen);
+		}
+#endif
+	}
+}
+
+/*---------------------------------------------------------------------------*
+ *	Exported function; to be called when a vt is closed down.
+ *
+ *	Ideally, we would like to be able to recover from an X server crash;
+ *	but in reality, if the server crashes hard while in control of the
+ *	vga board, then you're not likely to be able to use pcvt ttys
+ *	without rebooting.
+ *---------------------------------------------------------------------------*/
+void
+reset_usl_modes (struct video_state *vsx)
+{
+	/* Clear graphics mode */
+	if (vsx->vt_status & VT_GRAFX)
+	{
+		vsx->vt_status &= ~VT_GRAFX;
+		if (vsp == vsx)
+			switch_screen(current_video_screen, 1, 0);
+	}
+
+	/* Take kbd out of raw mode */
+	if(vsx->kbd_state == K_RAW)
+	{
+		if(vsx == vsp)
+			kbd_setmode(K_XLATE);
+		vsx->kbd_state = K_XLATE;
+	}
+
+	/* Clear process controlled mode */
+	set_auto_mode (vsx);
+}
+
+/*---------------------------------------------------------------------------*
+ *	switch to virtual screen n (0 ... PCVT_NSCREENS-1)
  *	(the name vgapage() stands for historical reasons)
  *---------------------------------------------------------------------------*/
 int
 vgapage(int new_screen)
 {
 	int x;
-	
+
 	if(new_screen < 0 || new_screen >= totalscreens)
 		return EINVAL;
-	
-	if(vsp->proc != pfind(vsp->pid))
-		/* XXX what is this for? */
-		vt_switch_pending = 0;
-		
-	if(vt_switch_pending)
-		return EAGAIN;
-		
-	vt_switch_pending = new_screen + 1;
-	
-	x = spltty();
-	if(vs[new_screen].vt_status & VT_WAIT_ACT)
-	{
-		wakeup((caddr_t)&vs[new_screen].smode);
-		vs[new_screen].vt_status &= ~VT_WAIT_ACT;
-	}
-	splx(x);
-
-	if(new_screen == current_video_screen)
-	{
-		vt_switch_pending = 0;
-		return 0;
-	}
 
 	/* fallback to VT_AUTO if controlling processes died */
-	if(vsp->proc
-	   && vsp->proc != pfind(vsp->pid))
-		vsp->smode.mode = VT_AUTO;
+	if(vsp->proc && vsp->proc != pfind(vsp->pid))
+		set_auto_mode(vsp);
 	if(vs[new_screen].proc
 	   && vs[new_screen].proc != pfind(vs[new_screen].pid))
-		vs[new_screen].smode.mode = VT_AUTO;
+		set_auto_mode(&vs[new_screen]);
+
+	if (!vt_switch_pending && new_screen == current_video_screen)
+		return 0;
+
+	if(vt_switch_pending && vt_switch_pending != new_screen + 1) {
+		/* Try resignaling uncooperative X-window servers */
+		if (vsp->smode.mode == VT_PROCESS) {
+			if (vsp->vt_status & VT_WAIT_REL) {
+				if(vsp->smode.relsig)
+					psignal(vsp->proc, vsp->smode.relsig);
+			} else if (vsp->vt_status & VT_WAIT_ACK) {
+				if(vsp->smode.acqsig)
+					psignal(vsp->proc, vsp->smode.acqsig);
+			}
+		}
+		return EAGAIN;
+	}
+
+	vt_switch_pending = new_screen + 1;
 
 	if(vsp->smode.mode == VT_PROCESS)
 	{
@@ -2266,25 +2458,25 @@ vgapage(int new_screen)
 	}
 	else
 	{
-		int modechange = 0;
-		
-		if((vs[new_screen].vt_status & VT_GRAFX) !=
-		   (vsp->vt_status & VT_GRAFX))
-		{
-			if(vsp->vt_status & VT_GRAFX)
-				modechange = 1;	/* to text */
-			else
-				modechange = 2;	/* to grfx */
-		}
-		
-		if(modechange == 2)
-			pcvt_x_hook(1);
-				
-		switch_screen(new_screen, vsp->vt_status & VT_GRAFX);
+		struct video_state *old_vsp = vsp;
 
-		if(modechange == 1)
-			pcvt_x_hook(0);
-				
+		switch_screen(new_screen,
+			      vsp->vt_status & VT_GRAFX,
+			      vs[new_screen].vt_status & VT_GRAFX);
+
+		x = spltty();
+		if(old_vsp->vt_status & VT_WAIT_ACT)
+		{
+			old_vsp->vt_status &= ~VT_WAIT_ACT;
+			wakeup((caddr_t)&old_vsp->smode);
+		}
+		if(vsp->vt_status & VT_WAIT_ACT)
+		{
+			vsp->vt_status &= ~VT_WAIT_ACT;
+			wakeup((caddr_t)&vsp->smode);
+		}
+		splx(x);
+
 		if(vsp->smode.mode == VT_PROCESS)
 		{
 			/* if _new_ vt is under process control... */
@@ -2293,36 +2485,106 @@ vgapage(int new_screen)
 				psignal(vsp->proc, vsp->smode.acqsig);
 		}
 		else
-			/* we are comitted */
+		{
+			/* we are committed */
 			vt_switch_pending = 0;
+
+#if PCVT_FREEBSD > 206
+			/*
+			 * XXX: If pcvt is acting as the systems console,
+			 * avoid panics going to the debugger while we are in
+			 * process mode.
+			 */
+			if(pcvt_is_console)
+				cons_unavail = 0;
+#endif
+		}
 	}
 	return 0;
 }
 
 /*---------------------------------------------------------------------------*
- *	ioctl handling for VT_USL mode
+ *	VT_USL ioctl handling 
  *---------------------------------------------------------------------------*/
 int
-usl_vt_ioctl(Dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+usl_vt_ioctl(Dev_t dev, int cmd, caddr_t data, int flag, struct proc *p)
 {
-	int i, j, error, mode;
+	int i, j, error, opri, mode;
+	struct vt_mode newmode;
 	struct video_state *vsx = &vs[minor(dev)];
-
+	
 	switch(cmd)
 	{
 
-#if PCVT_FAKE_SYSCONS10
-	case CONS_GETVERS:
-		*(int *)data = 0x100; /* fake syscons 1.0 */
-		return 0;
-#endif /* PCVT_FAKE_SYSCONS10 */
-
 	case VT_SETMODE:
-		vsp->smode = *(struct vt_mode *)data;
-		if(vsp->smode.mode == VT_PROCESS) {
-			vsp->proc = p;
-			vsp->pid = p->p_pid;
+		newmode = *(struct vt_mode *)data;
+
+		opri = spltty();
+
+		if (newmode.mode != VT_PROCESS)
+		{
+			if (vsx->smode.mode == VT_PROCESS)
+			{
+				if (vsx->proc != p)
+				{
+					splx(opri);
+					return EPERM;
+				}
+				set_auto_mode(vsx);
+			}
+			splx(opri);
+			return 0;
 		}
+
+		/*
+		 * NB: XFree86-3.1.1 does the following:
+		 *		VT_ACTIVATE (vtnum)
+		 *		VT_WAITACTIVE (vtnum)
+		 *		VT_SETMODE (VT_PROCESS)
+		 * So it is possible that the screen was switched
+		 * between the WAITACTIVE and the SETMODE (here).  This
+		 * can actually happen quite frequently, and it was
+		 * leading to dire consequences. Now it is detected by
+		 * requiring that minor(dev) match current_video_screen.
+		 * An alternative would be to operate on vs[minor(dev)]
+		 * instead of *vsp, but that would leave the server
+		 * confused, because it would believe that its vt was
+		 * currently activated.
+		 */
+		if (minor(dev) != current_video_screen)
+		{
+			splx(opri);
+			return EPERM;
+		}
+
+		/* Check for server died */
+
+		if(vsp->proc && vsp->proc != pfind(vsp->pid))
+			set_auto_mode(vsp);
+
+		/* Check for server already running */
+
+		if (vsp->smode.mode == VT_PROCESS && vsp->proc != p)
+		{
+			splx(opri);
+			return EBUSY; /* already in use on this VT */
+		}
+
+		vsp->smode = newmode;
+		vsp->proc = p;
+		vsp->pid = p->p_pid;
+
+#if PCVT_FREEBSD > 206
+		/*
+		 * XXX: If pcvt is acting as the systems console,
+		 * avoid panics going to the debugger while we are in
+		 * process mode.
+		 */
+		if(pcvt_is_console)
+			cons_unavail = (newmode.mode == VT_PROCESS);
+#endif
+
+		splx(opri);
 		return 0;
 
 	case VT_GETMODE:
@@ -2330,46 +2592,55 @@ usl_vt_ioctl(Dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		return 0;
 
 	case VT_RELDISP:
-		switch(*(int *)data) {
+		if (minor(dev) != current_video_screen)
+			return EPERM;
+		if (vsp->smode.mode != VT_PROCESS)
+			return EINVAL;
+		if (vsp->proc != p)
+			return EPERM;
+		switch(*(int *)data)
+		{
 		case VT_FALSE:
 			/* process refuses to release screen; abort */
 			if(vt_switch_pending
-			   && (vsp->vt_status & VT_WAIT_REL)) {
+			   && (vsp->vt_status & VT_WAIT_REL))
+			{
 				vsp->vt_status &= ~VT_WAIT_REL;
 				vt_switch_pending = 0;
 				return 0;
 			}
 			break;
-			
+
 		case VT_TRUE:
 			/* process releases its VT */
 			if(vt_switch_pending
-			   && minor(dev) == current_video_screen
-			   && (vsp->vt_status & VT_WAIT_REL)) {
+			   && (vsp->vt_status & VT_WAIT_REL))
+			{
 				int new_screen = vt_switch_pending - 1;
-				int modechange = 0;
-				
+				struct video_state *old_vsp = vsp;
+
 				vsp->vt_status &= ~VT_WAIT_REL;
 
-				if((vs[new_screen].vt_status & VT_GRAFX) !=
-				   (vsp->vt_status & VT_GRAFX))
-				{
-					if(vsp->vt_status & VT_GRAFX)
-						modechange = 1;	/* to text */
-					else
-						modechange = 2;	/* to grfx */
-				}
-
-				if(modechange == 2)
-					pcvt_x_hook(1);
-				
 				switch_screen(new_screen,
-					      vsp->vt_status & VT_GRAFX);
+					      vsp->vt_status & VT_GRAFX,
+					      vs[new_screen].vt_status
+					      & VT_GRAFX);
 
-				if(modechange == 1)
-					pcvt_x_hook(0);
-				
-				if(vsp->smode.mode == VT_PROCESS) {
+				opri = spltty();
+				if(old_vsp->vt_status & VT_WAIT_ACT)
+				{
+					old_vsp->vt_status &= ~VT_WAIT_ACT;
+					wakeup((caddr_t)&old_vsp->smode);
+				}
+				if(vsp->vt_status & VT_WAIT_ACT)
+				{
+					vsp->vt_status &= ~VT_WAIT_ACT;
+					wakeup((caddr_t)&vsp->smode);
+				}
+				splx(opri);
+
+				if(vsp->smode.mode == VT_PROCESS)
+				{
 					/*
 					 * if the new vt is also in process
 					 * mode, we have to wait until its
@@ -2383,17 +2654,32 @@ usl_vt_ioctl(Dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 							vsp->smode.acqsig);
 				}
 				else
-					/* we are comitted */
+				{
+					/* we are committed */
 					vt_switch_pending = 0;
+
+#if PCVT_FREEBSD > 206
+					/* XXX */
+					if(pcvt_is_console)
+						cons_unavail = 0;
+#endif
+				}
 				return 0;
 			}
 			break;
-			
+
 		case VT_ACKACQ:
 			/* new vts controlling process acknowledged */
-			if(vsp->vt_status & VT_WAIT_ACK) {
+			if(vsp->vt_status & VT_WAIT_ACK)
+			{
 				vt_switch_pending = 0;
 				vsp->vt_status &= ~VT_WAIT_ACK;
+
+#if PCVT_FREEBSD > 206
+				/* XXX */
+				if(pcvt_is_console)
+					cons_unavail = 1;
+#endif
 				return 0;
 			}
 			break;
@@ -2404,16 +2690,19 @@ usl_vt_ioctl(Dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	case VT_OPENQRY:
 		/* return free vt */
 		for(i = 0; i < PCVT_NSCREENS; i++)
-			if(!vs[i].openf) {
+		{
+			if(!vs[i].openf)
+			{
 				*(int *)data = i + 1;
 				return 0;
 			}
+		}
 		return EAGAIN;
 
 	case VT_GETACTIVE:
 		*(int *)data = current_video_screen + 1;
 		return 0;
-		
+
 	case VT_ACTIVATE:
 		return vgapage(*(int *)data - 1);
 
@@ -2421,8 +2710,7 @@ usl_vt_ioctl(Dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		/* sleep until vt switch happened */
 		i = *(int *)data - 1;
 
-		if(i != -1
-		   && (i < 0 || i >= PCVT_NSCREENS))
+		if(i != -1 && (i < 0 || i >= PCVT_NSCREENS))
 			return EINVAL;
 
 		if(i != -1 && current_video_screen == i)
@@ -2435,7 +2723,8 @@ usl_vt_ioctl(Dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			i = current_video_screen;
 			error = 0;
 			while (current_video_screen == i &&
-			       (error == 0 || error == ERESTART)) {
+			       (error == 0 || error == ERESTART))
+			{
 				vs[i].vt_status |= VT_WAIT_ACT;
 				error = tsleep((caddr_t)&vs[i].smode,
 					       PZERO | PCATCH, "waitvt", 0);
@@ -2456,26 +2745,45 @@ usl_vt_ioctl(Dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			splx(x);
 		}
 		return error;
-		
+
 	case KDENABIO:
 		/* grant the process IO access; only allowed if euid == 0 */
 	{
-		struct trapframe *fp = p->p_md.md_regs;
-		
+
+#if PCVT_NETBSD > 9 || PCVT_FREEBSD >= 200
+		struct trapframe *fp = (struct trapframe *)p->p_md.md_regs;
+#elif PCVT_NETBSD || (PCVT_FREEBSD && PCVT_FREEBSD > 102)
+		struct trapframe *fp = (struct trapframe *)p->p_regs;
+#else
+		struct syscframe *fp = (struct syscframe *)p->p_regs;
+#endif
+
 		if(suser(p->p_ucred, &p->p_acflag) != 0)
 			return (EPERM);
 
+#if PCVT_NETBSD || (PCVT_FREEBSD && PCVT_FREEBSD > 102)
 		fp->tf_eflags |= PSL_IOPL;
-	
+#else
+		fp->sf_eflags |= PSL_IOPL;
+#endif
+
 		return 0;
 	}
-		
-	
+
 	case KDDISABIO:
 		/* abandon IO access permission */
 	{
-		struct trapframe *fp = p->p_md.md_regs;
+
+#if PCVT_NETBSD > 9 || PCVT_FREEBSD >= 200
+		struct trapframe *fp = (struct trapframe *)p->p_md.md_regs;
 		fp->tf_eflags &= ~PSL_IOPL;
+#elif PCVT_NETBSD || (PCVT_FREEBSD && PCVT_FREEBSD > 102)
+		struct trapframe *fp = (struct trapframe *)p->p_regs;
+		fp->tf_eflags &= ~PSL_IOPL;
+#else
+		struct syscframe *fp = (struct syscframe *)p->p_regs;
+		fp->sf_eflags &= ~PSL_IOPL;
+#endif
 
 		return 0;
 	}
@@ -2483,7 +2791,7 @@ usl_vt_ioctl(Dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	case KDSETMODE:
 	{
 		int haschanged = 0;
-			
+
 		if(adaptor_type != VGA_ADAPTOR
 		   && adaptor_type != MDA_ADAPTOR)
 			/* X will only run on those adaptors */
@@ -2496,51 +2804,71 @@ usl_vt_ioctl(Dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			haschanged = (vsx->vt_status & VT_GRAFX) != 0;
 			vsx->vt_status &= ~VT_GRAFX;
 			if(haschanged && vsx == vsp)
-				pcvt_x_hook(0);
+				switch_screen(current_video_screen, 1, 0);
 			return 0;
-			
+
 		case KD_GRAPHICS:
+			/* xxx It might be a good idea to require that
+			   the vt be in process controlled mode here,
+			   and that the calling process is the owner */
 			haschanged = (vsx->vt_status & VT_GRAFX) == 0;
 			vsx->vt_status |= VT_GRAFX;
 			if(haschanged && vsx == vsp)
-				pcvt_x_hook(1);
+				switch_screen(current_video_screen, 0, 1);
 			return 0;
-			
+
 		}
 		return EINVAL;	/* end case KDSETMODE */
 	}
-		
+
 	case KDSETRAD:
 		/* set keyboard repeat and delay */
 		return kbdioctl(dev, KBDSTPMAT, data, flag);
 
+	case KDGKBMODE:
+		*(int *)data = vsx->kbd_state;
+		return 0;
+		
 	case KDSKBMODE:
 		mode = *(int *)data;
 		switch(mode)
 		{
-		case K_RAW:
-		case K_XLATE:
-			if (vsx->kbd_state != mode) {
-				if (vsx == vsp)
-					kbd_setmode(mode);
-				vsx->kbd_state = mode;
-			}
-			return 0;
+	  		case K_RAW:
+  			case K_XLATE:
+				if(vsx->kbd_state != mode)
+				{
+					if(vsx == vsp)
+						kbd_setmode(mode);
+					vsx->kbd_state = mode;
+				}
+  				return 0;
 		}
 		return EINVAL;	/* end KDSKBMODE */
-		
+
 	case KDMKTONE:
 		/* ring the speaker */
-		if(data) {
+		if(data)
+		{
 			int duration = *(int *)data >> 16;
 			int pitch = *(int *)data & 0xffff;
-			
+
+#if PCVT_NETBSD
+			if(pitch != 0)
+			{
+			    sysbeep(PCVT_SYSBEEPF / pitch,
+				    duration * hz / 1000);
+			}
+#else /* PCVT_NETBSD */
 			sysbeep(pitch, duration * hz / 3000);
+#endif /* PCVT_NETBSD */
+
 		}
 		else
+		{
  			sysbeep(PCVT_SYSBEEPF / 1493, hz / 4);
+ 		}
 		return 0;
-		
+
 	case KDSETLED:
 		/* set kbd LED status */
 		/* unfortunately, the LED definitions between pcvt and */
@@ -2550,7 +2878,7 @@ usl_vt_ioctl(Dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			+ (i & LED_NUM? KBD_NUMLOCK: 0)
 			+ (i & LED_SCR? KBD_SCROLLLOCK: 0);
 		return kbdioctl(dev, KBDSLOCK, (caddr_t)&j, flag);
-		
+
 	case KDGETLED:
 		/* get kbd LED status */
 		if((error = kbdioctl(dev, KBDGLOCK, (caddr_t)&j, flag)))
@@ -2568,7 +2896,8 @@ usl_vt_ioctl(Dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 	return -1;		/* inappropriate usl_vt_compat ioctl */
 }
-#endif /* PCVT_USL_VT_COMPAT */
+
+#endif	/* NVT > 0 */
 
 /* ------------------------- E O F ------------------------------------------*/
 

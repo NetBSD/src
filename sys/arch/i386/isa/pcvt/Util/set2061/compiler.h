@@ -20,7 +20,7 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  *
- * $Header: /cvsroot/src/sys/arch/i386/isa/pcvt/Util/set2061/Attic/compiler.h,v 1.1.1.1 1995/10/07 21:10:43 jtc Exp $
+ * $Header: /cvsroot/src/sys/arch/i386/isa/pcvt/Util/set2061/Attic/compiler.h,v 1.2 1995/10/07 21:45:50 jtc Exp $
  */
 
 

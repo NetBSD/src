@@ -1,7 +1,7 @@
-/*	$NetBSD: cursor.c,v 1.2 1994/10/27 04:19:38 cgd Exp $	*/
-
 /*
- * Copyright (c) 1992,1993,1994 Hellmuth Michaelis and Brian Dunford-Shore
+ * Copyright (c) 1992, 1995 Hellmuth Michaelis
+ *
+ * Copyright (c) 1992, 1994 Brian Dunford-Shore
  *
  * All rights reserved.
  *
@@ -34,10 +34,22 @@
  */
 
 static char *id =
-	"@(#)cursor.c, 3.00, Last Edit-Date: [Mon Jan 10 21:16:04 1994]";
+	"@(#)cursor.c, 3.30, Last Edit-Date: [Fri Jun 30 20:07:13 1995]";
 
+/*---------------------------------------------------------------------------*
+ *
+ *	history:
+ *
+ *	-hm	adding option -d <device>
+ *
+ *---------------------------------------------------------------------------*/
+	
 #include <stdio.h>
+#include <fcntl.h>
+#include <sys/stat.h>
 #include <machine/pcvt_ioctl.h>
+
+#define DEFAULTFD 0
 
 main(argc,argv)
 int argc;
@@ -48,15 +60,23 @@ char *argv[];
 	extern char *optarg;
 
 	struct cursorshape cursorshape;
+	int fd;
 	int c;
 	int screen = -1;
 	int start = -1;
 	int end = -1;
+	int dflag = -1;
+	char *device;
 	
-	while( (c = getopt(argc, argv, "n:s:e:")) != EOF)
+	while( (c = getopt(argc, argv, "d:n:s:e:")) != EOF)
 	{
 		switch(c)
 		{
+			case 'd':
+				device = optarg;
+				dflag = 1;
+				break;
+				
 			case 'n':
 				screen = atoi(optarg);
 				break;
@@ -79,11 +99,43 @@ char *argv[];
 	if(start == -1 || end == -1)	
 		usage();
 
+	if(dflag == -1)
+	{
+		fd = DEFAULTFD;
+	}
+	else
+	{
+		if((fd = open(device, O_RDWR)) == -1)
+		{
+			char buffer[80];
+			strcpy(buffer,"ERROR opening ");
+			strcat(buffer,device);
+			perror(buffer);
+			exit(1);
+		}
+	}
+
+	if(screen == -1)
+	{
+		struct stat stat;
+		
+		if((fstat(fd, &stat)) == -1)
+		{
+			char buffer[80];
+			strcpy(buffer,"ERROR opening ");
+			strcat(buffer,device);
+			perror(buffer);
+			exit(1);
+		}
+
+		screen = minor(stat.st_rdev);
+	}
+	
 	cursorshape.start = start;
 	cursorshape.end = end;
 	cursorshape.screen_no = screen;
 
-	if(ioctl(1, VGACURSOR, &cursorshape) == -1)
+	if(ioctl(fd, VGACURSOR, &cursorshape) == -1)
 	{
 		perror("cursor - ioctl VGACURSOR failed, error");
 		exit(1);
@@ -95,10 +147,11 @@ char *argv[];
 usage()
 {
 	fprintf(stderr,"\ncursor - set cursor shape for pcvt video driver\n");
-	fprintf(stderr,"usage: cursor -n [no] -s [line] -e [line]\n");
-	fprintf(stderr,"       -n <no>   screen no if specified, else current screen\n");
-	fprintf(stderr,"       -s <line> start scan line (topmost scan line)\n");
-	fprintf(stderr,"       -e <line> ending scan line (bottom scan line)\n\n");
+	fprintf(stderr,"usage: cursor -d [device] -n [no] -s [line] -e [line]\n");
+	fprintf(stderr,"       -d <device>   device to use (/dev/ttyvX), default current\n");
+	fprintf(stderr,"       -n <no>       screen no if specified, else current screen\n");
+	fprintf(stderr,"       -s <line>     start scan line (topmost scan line)\n");
+	fprintf(stderr,"       -e <line>     ending scan line (bottom scan line)\n\n");
 	exit(1);
 }
 

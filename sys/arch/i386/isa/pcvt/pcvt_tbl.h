@@ -1,7 +1,5 @@
-/*	$NetBSD: pcvt_tbl.h,v 1.2 1994/10/27 04:19:00 cgd Exp $	*/
-
 /*
- * Copyright (c) 1992,1993,1994 Hellmuth Michaelis
+ * Copyright (c) 1992, 1995 Hellmuth Michaelis.
  *
  * All rights reserved.
  *
@@ -31,7 +29,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  *
- * @(#)pcvt_tbl.h, 3.00, Last Edit-Date: [Sun Feb 27 17:04:53 1994]
+ * @(#)pcvt_tbl.h, 3.32, Last Edit-Date: [Tue Oct  3 11:19:49 1995]
  *
  */
 
@@ -41,6 +39,7 @@
  *	------------------------------------------------------------
  *	-hm	splitting off pccons_out.c
  *	-hm	default tables for pure mda/hcg/cga
+ *	-hm	---------------- Release 3.32 -----------------------
  *
  *	in pcvt_out.c, hooks are provided for the following charactersets:
  *
@@ -73,7 +72,7 @@
 /*===========================================================================*
  *	DEFAULT TABLES FOR MDA/HCG/CGA
  *===========================================================================*/
- 
+
 /*---------------------------------------------------------------------------*
  *	ASCII Characterset
  *---------------------------------------------------------------------------*/
