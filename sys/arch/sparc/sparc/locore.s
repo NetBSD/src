@@ -2620,7 +2620,7 @@ start_havetype:
 	stba	%l4, [%l1] ASI_SEGMAP
 	add	%l3, %l1, %l1		! highva += segsiz;
 	cmp	%l1, %l2		! done?
-	bl	0b			! no, loop
+	blu	0b			! no, loop
 	 add	%l3, %l0, %l0		! (and lowva += segsz)
 
 	/*
@@ -2646,15 +2646,35 @@ start_havetype:
 #if defined(SUN4)
 	cmp	%g4, CPU_SUN4
 	bne	2f
+#if defined(MMU_3L)
+	set	AC_IDPROM+1, %l3
+	lduba	[%l3] ASI_CONTROL, %l3
+	cmp	%l3, 0x24 ! XXX - SUN4_400
+	bne	no_3mmu
+	 set	1 << 24, %l3		! region size in bytes
+	add	%l0, 2, %l0		! get to proper half-word in RG space
+	add	%l1, 2, %l1
+0:
+	lduha	[%l0] ASI_REGMAP, %l4	! regmap[highva] = regmap[lowva];
+	stha	%l4, [%l1] ASI_REGMAP
+	add	%l3, %l1, %l1		! highva += regsiz;
+	cmp	%l1, %l2		! done?
+	blu	0b			! no, loop
+	 add	%l3, %l0, %l0		! (and lowva += regsz)
+	b,a	remap_done
+
+no_3mmu:
+#endif
 	 set	1 << 18, %l3		! segment size in bytes
 0:
 	lduha	[%l0] ASI_SEGMAP, %l4	! segmap[highva] = segmap[lowva];
 	stha	%l4, [%l1] ASI_SEGMAP
 	add	%l3, %l1, %l1		! highva += segsiz;
 	cmp	%l1, %l2		! done?
-	bl	0b			! no, loop
+	blu	0b			! no, loop
 	 add	%l3, %l0, %l0		! (and lowva += segsz)
 
+remap_done:
 	/*
 	 * Now map the interrupt enable register and clear any interrupts,
 	 * enabling NMIs.  Note that we will not take NMIs until we change
