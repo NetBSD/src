@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.52 2000/04/14 21:56:22 is Exp $	*/
+/*	$NetBSD: ser.c,v 1.53 2000/04/27 21:11:07 is Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -192,14 +192,15 @@ sermatch(pdp, cfp, auxp)
 		if (ser_matched_real)
 			return(0);
 		ser_matched_real = 1;
+	} else {
+		if (serconsole != 0)
+			return(0);
+
+		if (ser_matched != 0)
+			return(0);
+
+		ser_matched = 1;
 	}
-
-	if (serconsole != 0)
-		return(0);
-	if (ser_matched != 0)
-		return(0);
-
-	ser_matched = 1;
 	return(1);
 }
 
