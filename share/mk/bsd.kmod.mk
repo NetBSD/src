@@ -1,9 +1,8 @@
-#	$NetBSD: bsd.kmod.mk,v 1.1 1996/08/22 20:33:02 explorer Exp $
+#	$NetBSD: bsd.kmod.mk,v 1.2 1996/08/23 06:14:37 mrg Exp $
 
-#
-# This shouldn't be hard coded...  [XXX MLG]
-#
-KERN=	/sys/kern
+S!=	cd ..;pwd
+
+KERN=	$S/kern
 
 .if exists(${.CURDIR}/../Makefile.inc)
 .include "${.CURDIR}/../Makefile.inc"
@@ -18,7 +17,7 @@ KMODGRP?=	bin
 KMODMODE?=	444
 KMODDIR?=	/usr/lkm
 
-CFLAGS+=	${COPTS} -D_KERNEL -D_LKM -I. -I/sys
+CFLAGS+=	${COPTS} -D_KERNEL -D_LKM -I{.CURDIR} -I$S -I$S/arch
 
 DPSRCS+= ${SRCS:M*.h}
 OBJS+=	${SRCS:N*.h:R:S/$/.o/g}
@@ -36,7 +35,11 @@ MAN=	${KMOD}.4
 .endif
 
 .MAIN: all
-all: ${PROG} _SUBDIRUSE
+all: machine ${PROG} _SUBDIRUSE
+
+machine:
+	ln -s $S/arch/${MACHINE}/include machine
+	ln -s machine ${MACHINE}
 
 .if !target(clean)
 clean: _SUBDIRUSE
