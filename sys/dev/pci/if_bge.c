@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.13 2002/07/01 22:42:47 thorpej Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.14 2002/07/12 22:29:14 enami Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -1536,6 +1536,9 @@ static const struct bge_product {
 	{ PCI_VENDOR_ALTIMA,
 	  PCI_PRODUCT_ALTIMA_AC1000,
 	  "Altima AC1000 Gigabit Ethernet" },
+	{ PCI_VENDOR_ALTIMA,
+	  PCI_PRODUCT_ALTIMA_AC1001,
+	  "Altima AC1001 Gigabit Ethernet" },
 	{ PCI_VENDOR_ALTIMA,
 	  PCI_PRODUCT_ALTIMA_AC9100,
 	  "Altima AC9100 Gigabit Ethernet" },
