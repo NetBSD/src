@@ -1,4 +1,4 @@
-/*	$NetBSD: t3000.c,v 1.6 1997/11/22 07:28:57 lukem Exp $	*/
+/*	$NetBSD: t3000.c,v 1.7 1998/03/30 02:31:44 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)t3000.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: t3000.c,v 1.6 1997/11/22 07:28:57 lukem Exp $");
+__RCSID("$NetBSD: t3000.c,v 1.7 1998/03/30 02:31:44 mrg Exp $");
 #endif /* not lint */
 
 /*
@@ -376,7 +376,7 @@ t3000_verbose_read()
 #define setvec(vec, a) \
         vec.sv_handler = a; vec.sv_mask = vec.sv_onstack = 0
 
-static napms = 50; /* Give the t3000 50 milliseconds between characters */
+static int napms = 50; /* Give the t3000 50 milliseconds between characters */
 
 static int ringring;
 
