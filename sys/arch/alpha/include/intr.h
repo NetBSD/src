@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.6 1997/06/05 17:08:06 cgd Exp $ */
+/* $NetBSD: intr.h,v 1.7 1997/06/05 17:20:17 cgd Exp $ */
 
 /*
  * Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.
@@ -48,7 +48,7 @@
 
 /* IPL-lowering/restoring macros */
 #define splx(s)								\
-    (s == ALPHA_PSL_IPL_0 ? spl0() : alpha_pal_swpipl(s))
+    ((s) == ALPHA_PSL_IPL_0 ? spl0() : alpha_pal_swpipl(s))
 #define splsoft()               alpha_pal_swpipl(ALPHA_PSL_IPL_SOFT)
 #define splsoftclock()          splsoft()
 #define splsoftnet()            splsoft()
