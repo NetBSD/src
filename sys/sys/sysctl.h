@@ -33,7 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)sysctl.h	8.1 (Berkeley) 6/2/93
+ *	from: @(#)sysctl.h	8.1 (Berkeley) 6/2/93
+ *	$Id: sysctl.h,v 1.2 1994/05/06 22:43:52 cgd Exp $
  */
 
 #ifndef _SYS_SYSCTL_H_
