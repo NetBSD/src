@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.93 1997/08/06 12:03:37 jonathan Exp $	*/
+/*	$NetBSD: machdep.c,v 1.94 1997/08/09 05:51:59 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -85,6 +85,8 @@
 #include <machine/pte.h>
 #include <machine/autoconf.h>
 #include <mips/locore.h>		/* wbflush() */
+#include <mips/mips/mips_mcclock.h>	/* mclock CPU setimation */
+
 #ifdef DDB
 #include <mips/db_machdep.h>
 #endif
@@ -244,6 +246,8 @@ void	kn02_enable_intr __P ((u_int slotno,
 #ifdef DS5000_100
 void	kmin_enable_intr __P ((u_int slotno, int (*handler) (intr_arg_t sc),
 			     intr_arg_t sc, int onoff));
+void kmin_mcclock_cpuspeed __P((volatile struct chiptime *mcclock_addr,
+			       int clockmask));
 #endif /*DS5000_100*/
 
 #ifdef DS5000_25
@@ -285,7 +289,6 @@ struct	proc nullproc;		/* for use by switch_exit() */
 
 /* locore callback-vector setup */
 extern void mips_vector_init  __P((void));
-
 
 /*
  * Do all the stuff that locore normally does before calling main().
@@ -508,6 +511,8 @@ mach_init(argc, argv, code, cv)
 
 		mcclock_addr = (volatile struct chiptime *)
 			MIPS_PHYS_TO_KSEG1(KN01_SYS_CLOCK);
+		mc_cpuspeed(mcclock_addr, MIPS_INT_MASK_3);
+
 		strcpy(cpu_model, "3100");
 		break;
 #endif /* DS3100 */
@@ -563,6 +568,7 @@ mach_init(argc, argv, code, cv)
 			MIPS_PHYS_TO_KSEG1(KN02_SYS_CLOCK);
 
 		}
+		mc_cpuspeed(mcclock_addr, MIPS_INT_MASK_1);
 		strcpy(cpu_model, "5000/200");
 		break;
 #endif /* DS5000_200 */
@@ -594,7 +600,7 @@ mach_init(argc, argv, code, cv)
 		Mach_splstatclock = splhigh;
 		mcclock_addr = (volatile struct chiptime *)
 			MIPS_PHYS_TO_KSEG1(KMIN_SYS_CLOCK);
-
+		kmin_mcclock_cpuspeed(mcclock_addr, MIPS_INT_MASK_3);
 
 		/*
 		 * Initialize interrupts.
@@ -607,7 +613,8 @@ mach_init(argc, argv, code, cv)
 		    (u_int*)MIPS_PHYS_TO_KSEG1(KMIN_REG_TIMEOUT);
 		(*Mach_reset_addr) = 0;
 
-		strcpy(cpu_model, (CPUISMIPS3)? "5000/150": "5000/1xx");
+		sprintf(cpu_model, (CPUISMIPS3)? "5000/1%d": "5000/%d",
+			cpu_mhz);
 
 		/*
 		 * The kmin memory hardware seems to wrap  memory addresses
@@ -654,6 +661,7 @@ mach_init(argc, argv, code, cv)
 		Mach_splstatclock = cpu_spl3;
 		mcclock_addr = (volatile struct chiptime *)
 			MIPS_PHYS_TO_KSEG1(XINE_SYS_CLOCK);
+		mc_cpuspeed(mcclock_addr, MIPS_INT_MASK_1);
 
 		/*
 		 * Initialize interrupts.
@@ -665,7 +673,7 @@ mach_init(argc, argv, code, cv)
 		    (u_int*)MIPS_PHYS_TO_KSEG1(XINE_REG_TIMEOUT);
 		(*Mach_reset_addr) = 0;
 
-		strcpy(cpu_model, (CPUISMIPS3) ? "5000/50": "5000/25");
+		sprintf(cpu_model, "5000/%d", cpu_mhz);
 
 		break;
 #endif /*DS5000_25*/
@@ -699,6 +707,7 @@ mach_init(argc, argv, code, cv)
 		Mach_splstatclock = cpu_spl1;
 		mcclock_addr = (volatile struct chiptime *)
 			MIPS_PHYS_TO_KSEG1(KN03_SYS_CLOCK);
+		mc_cpuspeed(mcclock_addr, MIPS_INT_MASK_1);
 
 		asic_init(0);
 		/*
@@ -714,7 +723,7 @@ mach_init(argc, argv, code, cv)
 
 		/* clear any memory errors from probes */
 		*Mach_reset_addr = 0;
-		strcpy(cpu_model, (CPUISMIPS3) ? "5000/260" : "5000/240");
+		sprintf(cpu_model, "5000/2%d", cpu_mhz);
 		break;
 #endif /* DS5000_240 */
 
@@ -1564,6 +1573,35 @@ kmin_enable_intr(slotno, handler, sc, on)
 		tc_slot_info[slotno].sc = 0;
 	}
 }
+
+/*
+ * Count instructions between 4ms mcclock interrupt requests,
+ * using the ioasic clock-interrupt-pending bit to determine
+ * when clock ticks occur.  
+ * Set up iosiac to allow only clock interrupts, then
+ * call 
+ */
+void
+kmin_mcclock_cpuspeed(mcclock_addr, clockmask)
+	volatile struct chiptime *mcclock_addr;
+	int clockmask;
+{
+	register volatile u_int * ioasic_intrmaskp =
+		(volatile u_int *)MIPS_PHYS_TO_KSEG1(KMIN_REG_IMSK);
+
+	register int saved_imask = *ioasic_intrmaskp;
+
+	/* Allow only clock interrupts through ioasic. */
+	*ioasic_intrmaskp = KMIN_INTR_CLOCK;
+	wbflush();
+     
+	mc_cpuspeed(mcclock_addr, clockmask);
+
+	*ioasic_intrmaskp = saved_imask;
+	wbflush();
+}
+
+
 #endif /*DS5000_100*/
 
 
