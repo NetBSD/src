@@ -1,4 +1,4 @@
-/*	$NetBSD: clmpcc_pcctwo.c,v 1.6 2003/07/14 15:47:19 lukem Exp $	*/
+/*	$NetBSD: clmpcc_pcctwo.c,v 1.7 2003/11/07 19:16:01 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clmpcc_pcctwo.c,v 1.6 2003/07/14 15:47:19 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clmpcc_pcctwo.c,v 1.7 2003/11/07 19:16:01 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -174,12 +174,12 @@ clmpcc_pcctwo_iackhook(sc, which)
 	case CLMPCC_IACK_TX:
 		offset = PCC2REG_SCC_TX_PIACK;
 		break;
-#ifdef DEBUG
 	default:
+#ifdef DEBUG
 		printf("%s: Invalid IACK number '%d'\n",
 		    sc->sc_dev.dv_xname, which);
-		panic("clmpcc_pcctwo_iackhook");
 #endif
+		panic("clmpcc_pcctwo_iackhook %d", which);
 	}
 
 	foo = pcc2_reg_read(sys_pcctwo, offset);
