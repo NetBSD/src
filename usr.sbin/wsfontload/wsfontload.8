@@ -1,4 +1,4 @@
-.\"	$NetBSD: wsfontload.8,v 1.9 2000/10/03 14:20:52 bjh21 Exp $
+.\"	$NetBSD: wsfontload.8,v 1.10 2000/10/27 11:31:32 wiz Exp $
 .\"
 .Dd January 13, 1999
 .Os
@@ -94,10 +94,10 @@ No font files are provided with the wscons framework. The fonts installed by
 can be used instead, as can raw font files from other operating system
 distributions.
 .Sh EXAMPLES
-.Dl wsfontload -N myname -h 8 -e ibm /usr/share/pcvt/fonts/vt220l.808
+.Dl wsfontload -N myname -h 8 -e ibm /usr/share/wscons/fonts/vt220l.808
 .Pp
 Load the IBM-encoded 8\(mu8-font from the
-.Xr pcvt 4
+.Xr wscons 4
 distribution. This (or another 8\(mu8-font) is necessary to use the
 50-line screen type on
 .Xr vga 4
