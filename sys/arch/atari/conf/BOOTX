@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BOOTX,v 1.1 1996/05/15 12:57:33 leo Exp $
+#	$NetBSD: BOOTX,v 1.1.4.1 1996/06/18 11:18:50 leo Exp $
 #
 # BOOTX
 #
@@ -22,6 +22,11 @@ options		"M68030"	# support for 030
 options		TIMEZONE=300	# Set the timezone that the kernel will use
 options		DST=1		# Set the timezone that the kernel will use
 options		HZ=64		# Set the clock-rate (48/64/96)
+
+#
+# X11R6 related options
+#
+options		UCONSOLE	# Allow xconsole to work
 
 options		FPU_EMULATE	# Support for MC68881/MC68882 emulator
 #options	FPSP
