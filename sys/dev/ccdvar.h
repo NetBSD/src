@@ -1,4 +1,4 @@
-/*	$NetBSD: ccdvar.h,v 1.7 1995/10/09 00:46:47 thorpej Exp $	*/
+/*	$NetBSD: ccdvar.h,v 1.8 1995/10/12 21:28:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Jason R. Thorpe.
@@ -157,7 +157,7 @@ struct ccdiinfo {
 	int	ii_ndisk;	/* # of disks range is interleaved over */
 	daddr_t	ii_startblk;	/* starting scaled block # for range */
 	daddr_t	ii_startoff;	/* starting component offset (block #) */
-	char	*ii_index;	/* ordered list of components in range */
+	int	*ii_index;	/* ordered list of components in range */
 };
 
 /*
