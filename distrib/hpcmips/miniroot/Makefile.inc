@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.3 2000/02/27 12:17:00 shin Exp $
+#	$NetBSD: Makefile.inc,v 1.4 2000/03/11 09:12:34 shin Exp $
 
 VND=vnd0d
-IMAGESIZE=6144
+IMAGESIZE=8192
