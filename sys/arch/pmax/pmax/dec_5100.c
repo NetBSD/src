@@ -1,4 +1,4 @@
-/* $NetBSD: dec_5100.c,v 1.12 1999/11/19 04:34:02 simonb Exp $ */
+/* $NetBSD: dec_5100.c,v 1.13 1999/11/25 01:40:22 simonb Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -86,6 +86,7 @@ dec_5100_init()
 	platform.cons_init = dec_5100_cons_init;
 	platform.device_register = dec_5100_device_register;
 	platform.iointr = dec_5100_intr;
+	platform.memsize = memsize_scan;
 	/* no high resolution timer available */
 
 	/* set correct wbflush routine for this motherboard */
