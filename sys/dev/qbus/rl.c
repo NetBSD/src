@@ -1,4 +1,4 @@
-/*	$NetBSD: rl.c,v 1.7.2.7 2002/11/11 22:11:53 nathanw Exp $	*/
+/*	$NetBSD: rl.c,v 1.7.2.8 2003/01/03 17:08:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rl.c,v 1.7.2.7 2002/11/11 22:11:53 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rl.c,v 1.7.2.8 2003/01/03 17:08:06 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -156,8 +156,9 @@ rlcprint(void *aux, const char *name)
 	struct rlc_attach_args *ra = aux;
 
 	if (name)
-		printf("RL0%d at %s", ra->type & RLMP_DT ? '2' : '1', name);
-	printf(" drive %d", ra->hwid);
+		aprint_normal("RL0%d at %s",
+		    ra->type & RLMP_DT ? '2' : '1', name);
+	aprint_normal(" drive %d", ra->hwid);
 	return UNCONF;
 }
 

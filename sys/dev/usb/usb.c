@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.53.2.9 2002/12/11 06:38:53 thorpej Exp $	*/
+/*	$NetBSD: usb.c,v 1.53.2.10 2003/01/03 17:08:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -44,7 +44,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.53.2.9 2002/12/11 06:38:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.53.2.10 2003/01/03 17:08:21 thorpej Exp $");
+
+#include "ohci.h"
+#include "uhci.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,11 +78,11 @@ __KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.53.2.9 2002/12/11 06:38:53 thorpej Exp $")
 #define DPRINTF(x)	if (usbdebug) logprintf x
 #define DPRINTFN(n,x)	if (usbdebug>(n)) logprintf x
 int	usbdebug = 0;
-#ifdef UHCI_DEBUG
-int	uhcidebug;
+#if defined(UHCI_DEBUG) && NUHCI > 0
+extern int	uhcidebug;
 #endif
-#ifdef OHCI_DEBUG
-int	ohcidebug;
+#if defined(OHCI_DEBUG) && NOHCI > 0
+extern int	ohcidebug;
 #endif
 /*
  * 0  - do usual exploration
@@ -371,7 +374,7 @@ usbctlprint(void *aux, const char *pnp)
 {
 	/* only "usb"es can attach to host controllers */
 	if (pnp)
-		printf("usb at %s", pnp);
+		aprint_normal("usb at %s", pnp);
 
 	return (UNCONF);
 }
@@ -480,10 +483,10 @@ usbioctl(dev_t devt, u_long cmd, caddr_t data, int flag, usb_proc_ptr p)
 		if (!(flag & FWRITE))
 			return (EBADF);
 		usbdebug  = ((*(int *)data) & 0x000000ff);
-#ifdef UHCI_DEBUG
+#if defined(UHCI_DEBUG) && NUHCI > 0
 		uhcidebug = ((*(int *)data) & 0x0000ff00) >> 8;
 #endif
-#ifdef OHCI_DEBUG
+#if defined(OHCI_DEBUG) && NOHCI > 0
 		ohcidebug = ((*(int *)data) & 0x00ff0000) >> 16;
 #endif
 		break;

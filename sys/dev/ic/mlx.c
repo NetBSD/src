@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx.c,v 1.4.2.10 2002/11/11 22:09:51 nathanw Exp $	*/
+/*	$NetBSD: mlx.c,v 1.4.2.11 2003/01/03 17:07:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.4.2.10 2002/11/11 22:09:51 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.4.2.11 2003/01/03 17:07:41 thorpej Exp $");
 
 #include "ld.h"
 
@@ -661,8 +661,8 @@ mlx_print(void *aux, const char *pnp)
 	mlxa = (struct mlx_attach_args *)aux;
 
 	if (pnp != NULL)
-		printf("block device at %s", pnp);
-	printf(" unit %d", mlxa->mlxa_unit);
+		aprint_normal("block device at %s", pnp);
+	aprint_normal(" unit %d", mlxa->mlxa_unit);
 	return (UNCONF);
 }
 

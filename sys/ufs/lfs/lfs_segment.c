@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.67.2.10 2002/12/19 00:59:48 thorpej Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.67.2.11 2003/01/03 17:10:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.67.2.10 2002/12/19 00:59:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.67.2.11 2003/01/03 17:10:45 thorpej Exp $");
 
 #define ivndebug(vp,str) printf("ino %d: %s\n",VTOI(vp)->i_number,(str))
 
@@ -620,7 +620,7 @@ lfs_segwrite(struct mount *mp, int flags)
 			fs->lfs_flags &= ~LFS_IFDIRTY;
 
 			ip = VTOI(vp);
-			/* if (LIST_FIRST(&vp->v_dirtyblkhd) != NULL) */
+			if (LIST_FIRST(&vp->v_dirtyblkhd) != NULL)
 				lfs_writefile(fs, sp, vp);
 			if (ip->i_flag & IN_ALLMOD)
 				++did_ckp;

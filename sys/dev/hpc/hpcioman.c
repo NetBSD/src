@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcioman.c,v 1.4.2.5 2002/10/18 02:41:40 nathanw Exp $ */
+/*	$NetBSD: hpcioman.c,v 1.4.2.6 2003/01/03 17:07:36 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcioman.c,v 1.4.2.5 2002/10/18 02:41:40 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcioman.c,v 1.4.2.6 2003/01/03 17:07:36 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -177,7 +177,7 @@ hpcioman_print(void *aux, const char *pnp)
 	int type = hma->hma_type;
 
 	if (!pnp)  {
-		printf(" iochip %s, port %d, type %d, id %d",
+		aprint_normal(" iochip %s, port %d, type %d, id %d",
 		    hma->hma_hc ? hma->hma_hc->hc_name : "not found",
 		    hma->hma_port, type, hma->hma_id);
 		if (type == CONFIG_HOOK_BUTTONEVENT ||
@@ -185,20 +185,20 @@ hpcioman_print(void *aux, const char *pnp)
 		    type == CONFIG_HOOK_EVENT ||
 		    type == CONFIG_HOOK_PCIINTR) {
 			if (hma->hma_intr_mode & HPCIO_INTR_EDGE)
-				printf (", interrupt edge [%s%s]",
+				aprint_normal (", interrupt edge [%s%s]",
 				    (hma->hma_intr_mode&HPCIO_INTR_POSEDGE)
 				    ? "p" : "",
 				    (hma->hma_intr_mode&HPCIO_INTR_NEGEDGE)
 				    ? "n" : "");
 			else
-				printf (", interrupt level %s",
+				aprint_normal (", interrupt level %s",
 				    (hma->hma_intr_mode&HPCIO_INTR_HIGH) ?
 				    "high" : "low");
 		}
 		if (hma->hma_initvalue != -1)
-			printf(", initial value %d", hma->hma_initvalue);
+			aprint_normal(", initial value %d", hma->hma_initvalue);
 		if (hma->hma_on == 0)
-			printf(", active low");
+			aprint_normal(", active low");
 	}
 	
 	return (QUIET);

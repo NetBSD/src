@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.94.2.15 2002/12/11 06:38:02 thorpej Exp $ */
+/*	$NetBSD: wdc.c,v 1.94.2.16 2003/01/03 17:07:42 thorpej Exp $ */
 
 
 /*
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.94.2.15 2002/12/11 06:38:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.94.2.16 2003/01/03 17:07:42 thorpej Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -162,8 +162,8 @@ wdprint(aux, pnp)
 {
 	struct ata_device *adev = aux;
 	if (pnp)
-		printf("wd at %s", pnp);
-	printf(" channel %d drive %d", adev->adev_channel,
+		aprint_normal("wd at %s", pnp);
+	aprint_normal(" channel %d drive %d", adev->adev_channel,
 	    adev->adev_drv_data->drive);
 	return (UNCONF);
 }

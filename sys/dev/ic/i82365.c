@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.62.2.7 2002/12/11 06:37:53 thorpej Exp $	*/
+/*	$NetBSD: i82365.c,v 1.62.2.8 2003/01/03 17:07:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Christian E. Hopps.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.62.2.7 2002/12/11 06:37:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.62.2.8 2003/01/03 17:07:39 thorpej Exp $");
 
 #define	PCICDEBUG
 
@@ -690,20 +690,20 @@ pcic_print(arg, pnp)
 
 	/* Only "pcmcia"s can attach to "pcic"s... easy. */
 	if (pnp)
-		printf("pcmcia at %s", pnp);
+		aprint_normal("pcmcia at %s", pnp);
 
 	switch (h->sock) {
 	case C0SA:
-		printf(" controller 0 socket 0");
+		aprint_normal(" controller 0 socket 0");
 		break;
 	case C0SB:
-		printf(" controller 0 socket 1");
+		aprint_normal(" controller 0 socket 1");
 		break;
 	case C1SA:
-		printf(" controller 1 socket 0");
+		aprint_normal(" controller 1 socket 0");
 		break;
 	case C1SB:
-		printf(" controller 1 socket 1");
+		aprint_normal(" controller 1 socket 1");
 		break;
 	default:
 		panic("unknown pcic socket");

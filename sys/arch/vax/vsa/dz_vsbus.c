@@ -1,4 +1,4 @@
-/*	$NetBSD: dz_vsbus.c,v 1.20.8.5 2002/10/18 02:40:37 nathanw Exp $ */
+/*	$NetBSD: dz_vsbus.c,v 1.20.8.6 2003/01/03 16:57:16 thorpej Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -100,14 +100,14 @@ dz_print(void *aux, const char *name)
 #if NDZKBD > 0 || NDZMS > 0
 	struct dz_attach_args *dz_args = aux;
 	if (name == NULL) {
-		printf (" line %d", dz_args->line);
+		aprint_normal (" line %d", dz_args->line);
 		if (dz_args->hwflags & DZ_HWFLAG_CONSOLE)
-			printf (" (console)");
+			aprint_normal (" (console)");
 	}
 	return (QUIET);
 #else
 	if (name)
-		printf ("lkc at %s", name);
+		aprint_normal ("lkc at %s", name);
 	return (UNCONF);
 #endif
 #endif
@@ -213,10 +213,11 @@ dz_vsbus_attach(struct device *parent, struct device *self, void *aux)
 int
 dzcngetc(dev_t dev)
 {
-	int c = 0;
+	int c = 0, s;
 	int mino = minor(dev);
 	u_short rbuf;
 
+	s = spltty();
 	do {
 		while ((dz->csr & 0x80) == 0)
 			; /* Wait for char */
@@ -225,6 +226,7 @@ dzcngetc(dev_t dev)
 			continue;
 		c = rbuf & 0x7f;
 	} while (c == 17 || c == 19);		/* ignore XON/XOFF */
+	splx(s);
 
 	if (c == 13)
 		c = 10;
@@ -287,11 +289,13 @@ dzcnputc(dev_t dev, int	ch)
 {
 	int timeout = 1<<15;            /* don't hang the machine! */
 	int mino = minor(dev);
+	int s;
 	u_short tcr;
 
 	if (mfpr(PR_MAPEN) == 0)
 		return;
 
+	s = spltty();
 	tcr = dz->tcr;	/* remember which lines to scan */
 	dz->tcr = (1 << mino);
 
@@ -305,6 +309,7 @@ dzcnputc(dev_t dev, int	ch)
 			break;
 
 	dz->tcr = tcr;
+	splx(s);
 }
 
 void 
@@ -323,13 +328,17 @@ int
 dzgetc(struct dz_linestate *ls)
 {
 	int line = ls->dz_line;
+	int s;
 	u_short rbuf;
 
+	s = spltty();
 	for (;;) {
 		for(; (dz->csr & DZ_CSR_RX_DONE) == 0;);
 		rbuf = dz->rbuf;
-		if (((rbuf >> 8) & 3) == line)
+		if (((rbuf >> 8) & 3) == line) {
+			splx(s);
 			return (rbuf & 0xff);
+		}
 	}
 }
 

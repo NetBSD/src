@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.125.2.20 2002/12/29 20:56:56 thorpej Exp $	*/
+/*	$NetBSD: systm.h,v 1.125.2.21 2003/01/03 17:10:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -181,6 +181,22 @@ int	sys_nosys __P((struct lwp *, void *, register_t *));
 
 
 #ifdef _KERNEL
+void	aprint_normal __P((const char *, ...))
+    __attribute__((__format__(__printf__,1,2)));
+void	aprint_error __P((const char *, ...))
+    __attribute__((__format__(__printf__,1,2)));
+void	aprint_naive __P((const char *, ...))
+    __attribute__((__format__(__printf__,1,2)));
+void	aprint_verbose __P((const char *, ...))
+    __attribute__((__format__(__printf__,1,2)));
+void	aprint_debug __P((const char *, ...))
+    __attribute__((__format__(__printf__,1,2)));
+
+int	aprint_get_error_count __P((void));
+
+void	printf_nolog __P((const char *, ...))
+    __attribute__((__format__(__printf__,1,2)));
+
 void	printf __P((const char *, ...))
     __attribute__((__format__(__printf__,1,2)));
 int	sprintf __P((char *, const char *, ...))
@@ -191,6 +207,8 @@ void	vprintf __P((const char *, _BSD_VA_LIST_));
 int	vsprintf __P((char *, const char *, _BSD_VA_LIST_));
 int	vsnprintf __P((char *, size_t, const char *, _BSD_VA_LIST_));
 int	humanize_number __P((char *, size_t, u_int64_t, const char *, int));
+
+void	twiddle __P((void));
 #endif /* _KERNEL */
 
 void	panic __P((const char *, ...))

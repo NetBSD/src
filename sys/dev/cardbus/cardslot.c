@@ -1,4 +1,4 @@
-/*	$NetBSD: cardslot.c,v 1.13.2.5 2002/10/18 02:41:33 nathanw Exp $	*/
+/*	$NetBSD: cardslot.c,v 1.13.2.6 2003/01/03 17:07:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999 and 2000
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardslot.c,v 1.13.2.5 2002/10/18 02:41:33 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardslot.c,v 1.13.2.6 2003/01/03 17:07:34 thorpej Exp $");
 
 #include "opt_cardslot.h"
 
@@ -169,7 +169,8 @@ cardslot_cb_print(aux, pnp)
 	struct cbslot_attach_args *cba = aux;
 
 	if (pnp) {
-		printf("cardbus at %s subordinate bus %d", pnp, cba->cba_bus);
+		aprint_normal("cardbus at %s subordinate bus %d",
+		    pnp, cba->cba_bus);
 	}
 
 	return UNCONF;
@@ -204,7 +205,7 @@ cardslot_16_print(arg, pnp)
 {
 
 	if (pnp) {
-		printf("pcmciabus at %s", pnp);
+		aprint_normal("pcmciabus at %s", pnp);
 	}
 
 	return UNCONF;

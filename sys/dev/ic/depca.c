@@ -1,4 +1,4 @@
-/*	$NetBSD: depca.c,v 1.1.6.4 2002/10/18 02:41:50 nathanw Exp $	*/
+/*	$NetBSD: depca.c,v 1.1.6.5 2003/01/03 17:07:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: depca.c,v 1.1.6.4 2002/10/18 02:41:50 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: depca.c,v 1.1.6.5 2003/01/03 17:07:39 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -141,7 +141,7 @@ depca_print(void *aux, const char *pnp)
 	struct depca_attach_args *da = aux;
 
 	if (pnp)
-		printf("%s at %s", da->da_name, pnp);
+		aprint_normal("%s at %s", da->da_name, pnp);
 
 	return (UNCONF);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.16.2.15 2002/12/29 20:49:18 thorpej Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.16.2.16 2003/01/03 17:07:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.16.2.15 2002/12/29 20:49:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.16.2.16 2003/01/03 17:07:45 thorpej Exp $");
 
 #define FWOHCI_WAIT_DEBUG 1
 
@@ -738,7 +738,7 @@ fwohci_print(void *aux, const char *pnp)
 	char *name = aux;
 
 	if (pnp)
-		printf("%s at %s", name, pnp);
+		aprint_normal("%s at %s", name, pnp);
 
 	return UNCONF;
 }

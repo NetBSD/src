@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.c,v 1.3.2.6 2002/11/11 22:12:53 nathanw Exp $	*/
+/*	$NetBSD: uhidev.c,v 1.3.2.7 2003/01/03 17:08:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -267,9 +267,9 @@ uhidevprint(void *aux, const char *pnp)
 	struct uhidev_attach_arg *uha = aux;
 
 	if (pnp)
-		printf("uhid at %s", pnp);
+		aprint_normal("uhid at %s", pnp);
 	if (uha->reportid != 0)
-		printf(" reportid %d", uha->reportid);
+		aprint_normal(" reportid %d", uha->reportid);
 	return (UNCONF);
 }
 
@@ -472,17 +472,23 @@ uhidev_close(struct uhidev *scd)
 usbd_status
 uhidev_set_report(struct uhidev *scd, int type, void *data, int len)
 {
-	/* XXX */
-	char buf[100];
-	if (scd->sc_report_id) {
-		buf[0] = scd->sc_report_id;
-		memcpy(buf+1, data, len);
-		len++;
-		data = buf;
-	}
+	char *buf;
+	usbd_status retstat;
 
-	return usbd_set_report(scd->sc_parent->sc_iface, type,
-			       scd->sc_report_id, data, len);
+	if (scd->sc_report_id == 0)
+		return usbd_set_report(scd->sc_parent->sc_iface, type,
+				       scd->sc_report_id, data, len);
+
+	buf = malloc(len + 1, M_TEMP, M_WAITOK);
+	buf[0] = scd->sc_report_id;
+	memcpy(buf+1, data, len);
+
+	retstat = usbd_set_report(scd->sc_parent->sc_iface, type,
+				  scd->sc_report_id, data, len + 1);
+
+	free(buf, M_TEMP);
+
+	return retstat;
 }
 
 void

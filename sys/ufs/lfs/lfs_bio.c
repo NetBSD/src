@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.35.2.12 2002/12/29 20:57:19 thorpej Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.35.2.13 2003/01/03 17:10:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.35.2.12 2002/12/29 20:57:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.35.2.13 2003/01/03 17:10:45 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -185,7 +185,10 @@ lfs_reservebuf(struct lfs *fs, struct vnode *vp, struct vnode *vp2,
  * because the node might be modified while we sleep.
  * (eg. cached states like i_offset might be stale,
  *  the vnode might be truncated, etc..)
- * maybe we should have a way to restart the vnode op. (EVOPRESTART?)
+ * maybe we should have a way to restart the vnodeop (EVOPRESTART?)
+ * or rearrange vnodeop interface to leave vnode locking to file system
+ * specific code so that each file systems can have their own vnode locking and
+ * vnode re-using strategies.
  */
 int
 lfs_reserveavail(struct lfs *fs, struct vnode *vp, struct vnode *vp2, int fsb)
@@ -195,8 +198,7 @@ lfs_reserveavail(struct lfs *fs, struct vnode *vp, struct vnode *vp2, int fsb)
 	int error, slept;
 
 	slept = 0;
-	while (fsb > 0 && !lfs_fits(fs, fsb + fs->lfs_ravail) &&
-	    vp != fs->lfs_unlockvp) {
+	while (fsb > 0 && !lfs_fits(fs, fsb + fs->lfs_ravail)) {
 #if 0
 		/*
 		 * XXX ideally, we should unlock vnodes here
@@ -209,8 +211,7 @@ lfs_reserveavail(struct lfs *fs, struct vnode *vp, struct vnode *vp2, int fsb)
 #else
 		/*
 		 * XXX since we'll sleep for cleaner with vnode lock holding,
-		 * deadlock will occur if cleaner wants to acquire the vnode
-		 * lock.
+		 * deadlock will occur if cleaner tries to lock the vnode.
 		 * (eg. lfs_markv -> lfs_fastvget -> getnewvnode -> vclean)
 		 */
 #endif
@@ -262,8 +263,10 @@ lfs_reserve(struct lfs *fs, struct vnode *vp, struct vnode *vp2, int fsb)
 
 	KASSERT(fsb < 0 || VOP_ISLOCKED(vp));
 	KASSERT(vp2 == NULL || fsb < 0 || VOP_ISLOCKED(vp2));
+	KASSERT(vp2 == NULL || !(VTOI(vp2)->i_flag & IN_ADIROP));
+	KASSERT(vp2 == NULL || vp2 != fs->lfs_unlockvp);
 
-	cantwait = (VTOI(vp)->i_flag & IN_ADIROP);
+	cantwait = (VTOI(vp)->i_flag & IN_ADIROP) || fs->lfs_unlockvp == vp;
 #ifdef DIAGNOSTIC
 	if (cantwait) {
 		if (fsb > 0)
@@ -288,6 +291,7 @@ lfs_reserve(struct lfs *fs, struct vnode *vp, struct vnode *vp2, int fsb)
 	/*
 	 * XXX
 	 * vref vnodes here so that cleaner doesn't try to reuse them.
+	 * (see XXX comment in lfs_reserveavail)
 	 */
 	lfs_vref(vp);
 	if (vp2 != NULL) {

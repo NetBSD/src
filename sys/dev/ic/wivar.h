@@ -1,4 +1,4 @@
-/*	$NetBSD: wivar.h,v 1.4.2.16 2002/12/29 20:49:18 thorpej Exp $	*/
+/*	$NetBSD: wivar.h,v 1.4.2.17 2003/01/03 17:07:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -86,15 +86,21 @@ struct wi_softc	{
 	int			sc_txcur;
 	int			sc_tx_timer;
 	int			sc_scan_timer;
+	int			sc_syn_timer;
 
 	struct wi_counters	sc_stats;
 	u_int16_t		sc_ibss_port;
 
 	struct wi_apinfo	sc_aps[MAXAPINFO];
 	int 			sc_naps;
+
+	int			sc_false_syns;
 };
 
 #define	sc_if			sc_ic.ic_if
+
+/* maximum consecutive false change-of-BSSID indications */
+#define	WI_MAX_FALSE_SYNS		10	
 
 #define	WI_SCAN_INQWAIT			3	/* wait sec before inquire */
 #define	WI_SCAN_WAIT			5	/* maximum scan wait */

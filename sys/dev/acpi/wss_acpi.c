@@ -1,4 +1,4 @@
-/* $NetBSD: wss_acpi.c,v 1.3.2.2 2002/12/29 20:45:31 thorpej Exp $ */
+/* $NetBSD: wss_acpi.c,v 1.3.2.3 2003/01/03 17:01:12 thorpej Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wss_acpi.c,v 1.3.2.2 2002/12/29 20:45:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wss_acpi.c,v 1.3.2.3 2003/01/03 17:01:12 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,8 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: wss_acpi.c,v 1.3.2.2 2002/12/29 20:45:31 thorpej Exp
 
 int	wss_acpi_match(struct device *, struct cfdata *, void *);
 void	wss_acpi_attach(struct device *, struct device *, void *);
-
-void	wss_acpi_config_interrupts(struct device *);
 
 CFATTACH_DECL(wss_acpi, sizeof(struct wss_softc), wss_acpi_match,
     wss_acpi_attach, NULL, NULL);

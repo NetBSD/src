@@ -1,4 +1,4 @@
-/*	$NetBSD: vsbus.c,v 1.32.8.4 2002/10/18 02:40:38 nathanw Exp $ */
+/*	$NetBSD: vsbus.c,v 1.32.8.5 2003/01/03 16:57:17 thorpej Exp $ */
 /*
  * Copyright (c) 1996, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -107,7 +107,7 @@ vsbus_print(aux, name)
 {
 	struct vsbus_attach_args *va = aux;
 
-	printf(" csr 0x%lx vec %o ipl %x maskbit %d", va->va_paddr,
+	aprint_normal(" csr 0x%lx vec %o ipl %x maskbit %d", va->va_paddr,
 	    va->va_cvec & 511, va->va_br, va->va_maskno - 1);
 	return(UNCONF); 
 }

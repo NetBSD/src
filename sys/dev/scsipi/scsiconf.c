@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.156.2.19 2002/12/11 06:38:46 thorpej Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.156.2.20 2003/01/03 17:08:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.156.2.19 2002/12/11 06:38:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.156.2.20 2003/01/03 17:08:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,11 +136,11 @@ scsiprint(aux, pnp)
 
 	/* only "scsibus"es can attach to "scsi"s; easy. */
 	if (pnp)
-		printf("scsibus at %s", pnp);
+		aprint_normal("scsibus at %s", pnp);
 
 	/* don't print channel if the controller says there can be only one. */
 	if (adapt->adapt_nchannels != 1)
-		printf(" channel %d", chan->chan_channel);
+		aprint_normal(" channel %d", chan->chan_channel);
 
 	return (UNCONF);
 }
@@ -403,7 +403,7 @@ scsibusprint(aux, pnp)
 	int target, lun;
 
 	if (pnp != NULL)
-		printf("%s", pnp);
+		aprint_normal("%s", pnp);
 
 	inqbuf = &sa->sa_inqbuf;
 
@@ -417,7 +417,7 @@ scsibusprint(aux, pnp)
 	scsipi_strvis(product, 65, inqbuf->product, 16);
 	scsipi_strvis(revision, 17, inqbuf->revision, 4);
 
-	printf(" target %d lun %d: <%s, %s, %s> %s %s",
+	aprint_normal(" target %d lun %d: <%s, %s, %s> %s %s",
 	    target, lun, vendor, product, revision, dtype,
 	    inqbuf->removable ? "removable" : "fixed");
 

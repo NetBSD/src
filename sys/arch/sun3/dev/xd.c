@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.34.6.5 2002/11/11 22:05:18 nathanw Exp $	*/
+/*	$NetBSD: xd.c,v 1.34.6.6 2003/01/03 16:57:13 thorpej Exp $	*/
 
 /*
  *
@@ -511,10 +511,10 @@ xdc_print(aux, name)
 	struct xdc_attach_args *xa = aux;
 
 	if (name != NULL)
-		printf("%s: ", name);
+		aprint_normal("%s: ", name);
 
 	if (xa->driveno != -1)
-		printf(" drive %d", xa->driveno);
+		aprint_normal(" drive %d", xa->driveno);
 
 	return UNCONF;
 }

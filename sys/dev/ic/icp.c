@@ -1,4 +1,4 @@
-/*	$NetBSD: icp.c,v 1.2.2.4 2002/11/11 22:09:33 nathanw Exp $	*/
+/*	$NetBSD: icp.c,v 1.2.2.5 2003/01/03 17:07:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icp.c,v 1.2.2.4 2002/11/11 22:09:33 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icp.c,v 1.2.2.5 2003/01/03 17:07:40 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -429,9 +429,9 @@ icp_print(void *aux, const char *pnp)
 			str = "block device";
 		else
 			str = "SCSI channel";
-		printf("%s at %s", str, pnp);
+		aprint_normal("%s at %s", str, pnp);
 	}
-	printf(" unit %d", icpa->icpa_unit);
+	aprint_normal(" unit %d", icpa->icpa_unit);
 
 	return (UNCONF);
 }

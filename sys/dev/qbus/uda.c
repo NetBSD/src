@@ -1,4 +1,4 @@
-/*	$NetBSD: uda.c,v 1.38.4.4 2002/10/18 02:43:41 nathanw Exp $	*/
+/*	$NetBSD: uda.c,v 1.38.4.5 2003/01/03 17:08:07 thorpej Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1988 Regents of the University of California.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uda.c,v 1.38.4.4 2002/10/18 02:43:41 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uda.c,v 1.38.4.5 2003/01/03 17:08:07 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -108,7 +108,7 @@ int
 udaprint(void *aux, const char *name)
 {
 	if (name)
-		printf("%s: mscpbus", name);
+		aprint_normal("%s: mscpbus", name);
 	return UNCONF;
 }
 

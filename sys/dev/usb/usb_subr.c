@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.85.2.7 2002/10/18 02:44:38 nathanw Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.85.2.8 2003/01/03 17:08:22 thorpej Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.85.2.7 2002/10/18 02:44:38 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.85.2.8 2003/01/03 17:08:22 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,15 +156,21 @@ usbd_get_string_desc(usbd_device_handle dev, int sindex, int langid,
 {
 	usb_device_request_t req;
 	usbd_status err;
+	int actlen;
 
 	req.bmRequestType = UT_READ_DEVICE;
 	req.bRequest = UR_GET_DESCRIPTOR;
 	USETW2(req.wValue, UDESC_STRING, sindex);
 	USETW(req.wIndex, langid);
-	USETW(req.wLength, 1);	/* only size byte first */
-	err = usbd_do_request(dev, &req, sdesc);
+	USETW(req.wLength, 2);	/* only size byte first */
+	err = usbd_do_request_flags(dev, &req, sdesc, USBD_SHORT_XFER_OK,
+		&actlen, USBD_DEFAULT_TIMEOUT);
 	if (err)
 		return (err);
+
+	if (actlen < 1)
+		return (USBD_SHORT_XFER);
+
 	USETW(req.wLength, sdesc->bLength);	/* the whole string */
 	return (usbd_do_request(dev, &req, sdesc));
 }
@@ -1144,14 +1150,14 @@ usbd_print(void *aux, const char *pnp)
 		if (!uaa->usegeneric)
 			return (QUIET);
 		usbd_devinfo(uaa->device, 1, devinfo);
-		printf("%s, %s", devinfo, pnp);
+		aprint_normal("%s, %s", devinfo, pnp);
 	}
 	if (uaa->port != 0)
-		printf(" port %d", uaa->port);
+		aprint_normal(" port %d", uaa->port);
 	if (uaa->configno != UHUB_UNK_CONFIGURATION)
-		printf(" configuration %d", uaa->configno);
+		aprint_normal(" configuration %d", uaa->configno);
 	if (uaa->ifaceno != UHUB_UNK_INTERFACE)
-		printf(" interface %d", uaa->ifaceno);
+		aprint_normal(" interface %d", uaa->ifaceno);
 #if 0
 	/*
 	 * It gets very crowded with these locators on the attach line.
@@ -1159,11 +1165,11 @@ usbd_print(void *aux, const char *pnp)
 	 * by each driver.
 	 */
 	if (uaa->vendor != UHUB_UNK_VENDOR)
-		printf(" vendor 0x%04x", uaa->vendor);
+		aprint_normal(" vendor 0x%04x", uaa->vendor);
 	if (uaa->product != UHUB_UNK_PRODUCT)
-		printf(" product 0x%04x", uaa->product);
+		aprint_normal(" product 0x%04x", uaa->product);
 	if (uaa->release != UHUB_UNK_RELEASE)
-		printf(" release 0x%04x", uaa->release);
+		aprint_normal(" release 0x%04x", uaa->release);
 #endif
 	return (UNCONF);
 }

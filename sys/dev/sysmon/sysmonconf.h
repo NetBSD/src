@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmonconf.h,v 1.1 2000/11/05 04:06:14 thorpej Exp $	*/
+/*	$NetBSD: sysmonconf.h,v 1.1.4.1 2003/01/03 17:08:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -38,11 +38,5 @@
 
 #include "sysmon_envsys.h"
 #include "sysmon_wdog.h"
-
-#if (NSYSMON_ENVSYS > 0) || (NSYSMON_WDOG > 0)
-#define	NSYSMON	1
-#else
-#define	NSYSMON	0
-#endif
 
 #endif /* _DEV_SYSMON_SYSMONCONF_H_ */

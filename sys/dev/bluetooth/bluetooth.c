@@ -1,4 +1,4 @@
-/*	$NetBSD: bluetooth.c,v 1.1.6.2 2002/10/18 03:20:33 nathanw Exp $	*/
+/*	$NetBSD: bluetooth.c,v 1.1.6.3 2003/01/03 17:07:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@ bt_print(void *aux, const char *pnp)
 	/*struct bt_attach_args *bt = aux;*/
 
 	if (pnp != NULL)
-		printf("bthci at %s", pnp);
+		aprint_normal("bthci at %s", pnp);
 
 	return (UNCONF);
 }

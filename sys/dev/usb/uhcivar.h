@@ -1,4 +1,4 @@
-/*	$NetBSD: uhcivar.h,v 1.32.2.3 2002/10/18 02:44:33 nathanw Exp $	*/
+/*	$NetBSD: uhcivar.h,v 1.32.2.4 2003/01/03 17:08:17 thorpej Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhcivar.h,v 1.14 1999/11/17 22:33:42 n_hibma Exp $	*/
 
 /*
@@ -176,7 +176,7 @@ typedef struct uhci_softc {
 	usbd_xfer_handle sc_intr_xfer;	/* root hub interrupt transfer */
 	usb_callout_t sc_poll_handle;
 
-	char sc_vendor[16];		/* vendor string for root hub */
+	char sc_vendor[32];		/* vendor string for root hub */
 	int sc_id_vendor;		/* vendor ID for root hub */
 
 	void *sc_powerhook;		/* cookie from power hook */

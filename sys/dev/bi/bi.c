@@ -1,4 +1,4 @@
-/*	$NetBSD: bi.c,v 1.16.2.1 2001/11/14 19:14:00 nathanw Exp $ */
+/*	$NetBSD: bi.c,v 1.16.2.2 2003/01/03 17:07:32 thorpej Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bi.c,v 1.16.2.1 2001/11/14 19:14:00 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bi.c,v 1.16.2.2 2003/01/03 17:07:32 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,23 +89,23 @@ bi_print(aux, name)
 
 	if (name) {
 		if (bl->bl_nr == 0)
-			printf("unknown device 0x%x", nr);
+			aprint_normal("unknown device 0x%x", nr);
 		else
-			printf(bl->bl_name);
-		printf(" at %s", name);
+			aprint_normal(bl->bl_name);
+		aprint_normal(" at %s", name);
 	}
-	printf(" node %d", ba->ba_nodenr);
+	aprint_normal(" node %d", ba->ba_nodenr);
 	if (bl->bl_havedriver & DT_VEC)
-		printf(" vec %o", ba->ba_ivec & 511);
+		aprint_normal(" vec %o", ba->ba_ivec & 511);
 #ifdef DEBUG
 	if (bus_space_read_4(ba->ba_iot, ba->ba_ioh, BIREG_SADR) &&
 	    bus_space_read_4(ba->ba_iot, ba->ba_ioh, BIREG_EADR))
-		printf(" [sadr %x eadr %x]",
+		aprint_debug(" [sadr %x eadr %x]",
 		    bus_space_read_4(ba->ba_iot, ba->ba_ioh, BIREG_SADR),
 		    bus_space_read_4(ba->ba_iot, ba->ba_ioh, BIREG_EADR));
 #endif
 	if (bl->bl_havedriver & DT_QUIET)
-		printf("\n");
+		aprint_normal("\n");
 	return bl->bl_havedriver & DT_QUIET ? QUIET :
 	    bl->bl_havedriver & DT_HAVDRV ? UNCONF : UNSUPP;
 }

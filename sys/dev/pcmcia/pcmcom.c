@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcom.c,v 1.6.6.4 2002/10/18 02:43:35 nathanw Exp $	*/
+/*	$NetBSD: pcmcom.c,v 1.6.6.5 2003/01/03 17:08:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcom.c,v 1.6.6.4 2002/10/18 02:43:35 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcom.c,v 1.6.6.5 2003/01/03 17:08:05 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -344,9 +344,9 @@ pcmcom_print(aux, pnp)
 
 	/* only com's can attach to pcmcom's; easy... */
 	if (pnp)
-		printf("com at %s", pnp);
+		aprint_normal("com at %s", pnp);
 
-	printf(" slave %d", pca->pca_slave);
+	aprint_normal(" slave %d", pca->pca_slave);
 
 	return (UNCONF);
 }

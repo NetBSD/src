@@ -1,4 +1,4 @@
-/* $NetBSD: radio.c,v 1.3.2.7 2002/11/11 22:08:49 nathanw Exp $ */
+/* $NetBSD: radio.c,v 1.3.2.8 2003/01/03 17:07:31 thorpej Exp $ */
 /* $OpenBSD: radio.c,v 1.2 2001/12/05 10:27:06 mickey Exp $ */
 /* $RuOBSD: radio.c,v 1.7 2001/12/04 06:03:05 tm Exp $ */
 
@@ -30,7 +30,7 @@
 /* This is the /dev/radio driver from OpenBSD */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radio.c,v 1.3.2.7 2002/11/11 22:08:49 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radio.c,v 1.3.2.8 2003/01/03 17:07:31 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -169,7 +169,7 @@ int
 radioprint(void *aux, const char *pnp)
 {
 	if (pnp != NULL)
-		printf("radio at %s", pnp);
+		aprint_normal("radio at %s", pnp);
 	return (UNCONF);
 }
 

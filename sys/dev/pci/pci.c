@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.51.2.9 2002/11/11 22:11:26 nathanw Exp $	*/
+/*	$NetBSD: pci.c,v 1.51.2.10 2003/01/03 17:07:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.51.2.9 2002/11/11 22:11:26 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.51.2.10 2003/01/03 17:07:57 thorpej Exp $");
 
 #include "opt_pci.h"
 
@@ -188,9 +188,9 @@ pciprint(aux, pnp)
 
 	if (pnp) {
 		pci_devinfo(pa->pa_id, pa->pa_class, 1, devinfo);
-		printf("%s at %s", devinfo, pnp);
+		aprint_normal("%s at %s", devinfo, pnp);
 	}
-	printf(" dev %d function %d", pa->pa_device, pa->pa_function);
+	aprint_normal(" dev %d function %d", pa->pa_device, pa->pa_function);
 	if (pci_config_dump) {
 		printf(": ");
 		pci_conf_print(pa->pa_pc, pa->pa_tag, NULL);

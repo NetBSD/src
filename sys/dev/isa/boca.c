@@ -1,4 +1,4 @@
-/*	$NetBSD: boca.c,v 1.34.2.5 2002/12/11 06:38:10 thorpej Exp $	*/
+/*	$NetBSD: boca.c,v 1.34.2.6 2003/01/03 17:07:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: boca.c,v 1.34.2.5 2002/12/11 06:38:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: boca.c,v 1.34.2.6 2003/01/03 17:07:48 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -158,8 +158,8 @@ bocaprint(aux, pnp)
 	struct commulti_attach_args *ca = aux;
 
 	if (pnp)
-		printf("com at %s", pnp);
-	printf(" slave %d", ca->ca_slave);
+		aprint_normal("com at %s", pnp);
+	aprint_normal(" slave %d", ca->ca_slave);
 	return (UNCONF);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.135.2.15 2002/12/29 20:49:14 thorpej Exp $	*/
+/*	$NetBSD: audio.c,v 1.135.2.16 2003/01/03 17:07:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.135.2.15 2002/12/29 20:49:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.135.2.16 2003/01/03 17:07:30 thorpej Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -872,7 +872,7 @@ audio_calcwater(struct audio_softc *sc)
 	if (sc->sc_pr.usedlow == sc->sc_pr.usedhigh)
 		sc->sc_pr.usedlow -= sc->sc_pr.blksize;
 	sc->sc_rr.usedhigh =
-		sc->sc_pr.end - sc->sc_pr.start - sc->sc_pr.blksize;
+		sc->sc_rr.end - sc->sc_rr.start - sc->sc_rr.blksize;
 	sc->sc_rr.usedlow = 0;
 }
 
@@ -3354,7 +3354,7 @@ audioprint(void *aux, const char *pnp)
 		default:
 			panic("audioprint: unknown type %d", arg->type);
 		}
-		printf("%s at %s", type, pnp);
+		aprint_normal("%s at %s", type, pnp);
 	}
 	return (UNCONF);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtfps.c,v 1.40.24.4 2002/10/18 02:42:33 nathanw Exp $	*/
+/*	$NetBSD: rtfps.c,v 1.40.24.5 2003/01/03 17:07:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtfps.c,v 1.40.24.4 2002/10/18 02:42:33 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtfps.c,v 1.40.24.5 2003/01/03 17:07:49 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,8 +151,8 @@ rtfpsprint(aux, pnp)
 	struct commulti_attach_args *ca = aux;
 
 	if (pnp)
-		printf("com at %s", pnp);
-	printf(" slave %d", ca->ca_slave);
+		aprint_normal("com at %s", pnp);
+	aprint_normal(" slave %d", ca->ca_slave);
 	return (UNCONF);
 }
 
