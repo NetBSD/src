@@ -1,4 +1,4 @@
-/*	$NetBSD: sleep.c,v 1.10 1995/05/03 12:52:43 mycroft Exp $	*/
+/*	$NetBSD: sleep.c,v 1.11 1995/10/16 18:58:47 pk Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)sleep.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: sleep.c,v 1.10 1995/05/03 12:52:43 mycroft Exp $";
+static char rcsid[] = "$NetBSD: sleep.c,v 1.11 1995/10/16 18:58:47 pk Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -101,13 +101,13 @@ sleep(seconds)
 	sigdelset(&set, SIGALRM);
  	(void) sigsuspend(&set);
 
-	sigaction(SIGALRM, &oact, NULL);
-	sigprocmask(SIG_SETMASK, &oset, NULL);
-
 	(void) setitimer(ITIMER_REAL, &oitv, &itv);
 
 	if (timerisset(&diff))
 		timeradd(&itv.it_value, &diff, &itv.it_value);
+
+	sigprocmask(SIG_SETMASK, &oset, NULL);
+	sigaction(SIGALRM, &oact, NULL);
 
 	return (itv.it_value.tv_sec);
 }
