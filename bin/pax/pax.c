@@ -1,4 +1,4 @@
-/*	$NetBSD: pax.c,v 1.27 2003/06/23 13:06:53 grant Exp $	*/
+/*	$NetBSD: pax.c,v 1.28 2003/07/08 06:00:49 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)pax.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: pax.c,v 1.27 2003/06/23 13:06:53 grant Exp $");
+__RCSID("$NetBSD: pax.c,v 1.28 2003/07/08 06:00:49 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -107,6 +107,7 @@ int	pids;			/* preserve file uid/gid */
 int	rmleadslash = 0;	/* remove leading '/' from pathnames */
 int	exit_val;		/* exit value */
 int	docrc;			/* check/create file crc */
+int	to_stdout;		/* extract to stdout */
 char	*dirptr;		/* destination dir in a copy */
 char	*ltmfrmt;		/* -v locale time format (if any) */
 char	*argv0;			/* root of argv[0] */
