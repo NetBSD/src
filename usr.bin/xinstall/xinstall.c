@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.53 2001/10/25 15:06:12 lukem Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.54 2001/10/25 15:37:06 lukem Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #else
-__RCSID("$NetBSD: xinstall.c,v 1.53 2001/10/25 15:06:12 lukem Exp $");
+__RCSID("$NetBSD: xinstall.c,v 1.54 2001/10/25 15:37:06 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -78,7 +78,7 @@ int	mode = S_IRWXU|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH;
 char	pathbuf[MAXPATHLEN];
 uid_t	uid;
 gid_t	gid;
-char	*group, *owner, *fflags;
+char	*group, *owner, *fflags, *tags;
 FILE	*metafp;
 char	*metafile;
 u_long	fileflags;
@@ -119,7 +119,7 @@ main(int argc, char *argv[])
 	setprogname(argv[0]);
 
 	iflags = 0;
-	while ((ch = getopt(argc, argv, "cbB:df:g:l:m:M:o:prsS:U")) != -1)
+	while ((ch = getopt(argc, argv, "cbB:df:g:l:m:M:o:prsS:T:U")) != -1)
 		switch((char)ch) {
 		case 'B':
 			suffix = optarg;
@@ -206,6 +206,9 @@ main(int argc, char *argv[])
 			/* fall through; -S implies -s */
 		case 's':
 			dostrip = 1;
+			break;
+		case 'T':
+			tags = optarg;
 			break;
 		case 'U':
 			dounpriv = 1;
@@ -747,6 +750,8 @@ metadata_log(const char *path, mode_t type, u_int flags, struct timeval *tv)
 		fprintf(metafp, " gname=%s", group);
 	if (fflags)
 		fprintf(metafp, " flags=%s", fflags);
+	if (tags)
+		fprintf(metafp, " tags=%s", tags);
 	if (tv != NULL)
 		fprintf(metafp, " time=%ld.%ld", tv[1].tv_sec, tv[1].tv_usec);
 	fputc('\n', metafp);
@@ -768,11 +773,12 @@ usage(void)
 {
 
 	(void)fprintf(stderr, "\
-usage: install [-Ubcprs] [-M log] [-B suffix] [-f flags] [-m mode]\n\
+usage: install [-Ubcprs] [-M log] [-T tags] [-B suffix] [-f flags] [-m mode]\n\
 	    [-o owner] [-g group] [-l linkflags] [-S stripflags] file1 file2\n\
-       install [-Ubcprs] [-M log] [-B suffix] [-f flags] [-m mode]\n\
-	    [-o owner] [-g group] [-l linkflags] [-S stripflags] \n\
+       install [-Ubcprs] [-M log] [-T tags] [-B suffix] [-f flags] [-m mode]\n\
+	    [-o owner] [-g group] [-l linkflags] [-S stripflags]\n\
 	    file1 ... fileN directory\n\
-       install [-Up] [-M log] -d [-m mode] [-o owner] [-g group] directory ...\n");
+       install [-Up] [-M log] [-T tags] -d [-m mode]\n\
+	    [-o owner] [-g group] directory ...\n");
 	exit(1);
 }
