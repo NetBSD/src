@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_isa.c,v 1.5 1998/01/27 19:14:18 drochner Exp $ */
+/*	$NetBSD: wdc_isa.c,v 1.6 1998/03/13 16:50:07 cgd Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -150,10 +150,11 @@ wdc_isa_attach(parent, self, aux)
 		sc->sc_drq = ia->ia_drq;
 
 		sc->sc_ad.cap |= WDC_CAPABILITY_DMA;
+		sc->sc_ad.dma_arg = sc;
 		sc->sc_ad.dma_setup = &wdc_isa_dma_setup;
 		sc->sc_ad.dma_start = &wdc_isa_dma_start;
 		sc->sc_ad.dma_finish = &wdc_isa_dma_finish;
-	}	
+	}
 
 	wdcattach(&sc->sc_wdcdev, &sc->sc_ad);
 }
