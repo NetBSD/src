@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231var.h,v 1.2 2002/03/12 04:48:28 uwe Exp $	*/
+/*	$NetBSD: cs4231var.h,v 1.3 2003/02/01 13:23:28 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -117,7 +117,7 @@ int	cs4231_get_port(void *, mixer_ctrl_t *);
 int	cs4231_query_devinfo(void *, mixer_devinfo_t *);
 int	cs4231_get_props(void *);
 
-void	*cs4231_malloc(void *, int, size_t, int, int);
-void	cs4231_free(void *, void *, int);
+void	*cs4231_malloc(void *, int, size_t, struct malloc_type *, int);
+void	cs4231_free(void *, void *, struct malloc_type *);
 
 #endif /* _DEV_IC_CS4231VAR_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231.c,v 1.10 2002/08/22 20:42:22 martin Exp $	*/
+/*	$NetBSD: cs4231.c,v 1.11 2003/02/01 13:23:28 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4231.c,v 1.10 2002/08/22 20:42:22 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4231.c,v 1.11 2003/02/01 13:23:28 martin Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -185,7 +185,8 @@ cs4231_malloc(addr, direction, size, pool, flags)
 	void *addr;
 	int direction;
 	size_t size;
-	int pool, flags;
+	struct malloc_type *pool;
+	int flags;
 {
 	struct cs4231_softc *sc = addr;
 	bus_dma_tag_t dmatag = sc->sc_dmatag;
@@ -236,7 +237,7 @@ void
 cs4231_free(addr, ptr, pool)
 	void *addr;
 	void *ptr;
-	int pool;
+	struct malloc_type *pool;
 {
 	struct cs4231_softc *sc = addr;
 	bus_dma_tag_t dmatag = sc->sc_dmatag;
