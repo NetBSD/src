@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.3 1998/05/15 15:12:31 fvdl Exp $	*/
+/*	$NetBSD: md.c,v 1.4 1998/11/08 01:45:45 jonathan Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -349,7 +349,7 @@ int md_make_bsd_partitions (void)
 	(void)fprintf (f, "\t:dt=%s:ty=winchester:\\\n", disktype);
 	(void)fprintf (f, "\t:nc#%d:nt#%d:ns#%d:\\\n", dlcyl, dlhead, dlsec);
 	(void)fprintf (f, "\t:sc#%d:su#%d:\\\n", dlhead*dlsec, dlsize);
-	(void)fprintf (f, "\t:sd#%d:%s\\\n", sectorsize, doessf);
+	(void)fprintf (f, "\t:se#%d:%s\\\n", sectorsize, doessf);
 	for (i=0; i<8; i++) {
 		(void)fprintf (f, "\t:p%c#%d:o%c#%d:t%c=%s:",
 			       'a'+i, bsdlabel[i][D_SIZE],
