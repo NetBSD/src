@@ -1,4 +1,4 @@
-/*	$NetBSD: mt_misc.c,v 1.1.6.1 2001/08/08 16:13:44 nathanw Exp $	*/
+/*	$NetBSD: mt_misc.c,v 1.1.6.2 2001/09/04 02:56:16 nathanw Exp $	*/
 
 /*
  *	Define and initialize MT data for libnsl.
@@ -11,6 +11,7 @@
 #include	<rpc/rpc.h>
 #include	<sys/time.h>
 #include	<stdlib.h>
+#include	<string.h>
 
 #ifdef _REENTRANT
 
