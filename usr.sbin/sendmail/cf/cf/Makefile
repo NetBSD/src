@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25 1999/03/05 01:10:33 mycroft Exp $
+#	$NetBSD: Makefile,v 1.26 2000/01/24 06:49:29 mycroft Exp $
 #
 #	@(#)Makefile	8.19 (Berkeley) 1/14/97
 
@@ -36,14 +36,14 @@ FILES=	boat-anchor.mc chimera.mc sun-lamp.mc ihack.net.mc \
 
 FILESDIR= /usr/share/sendmail/cf
 
-all: $(ALL)
+realall: $(ALL)
 
 others: $(OTHERS)
 
 clean cleandir distclean:
 	$(RM) $(ALL) core
 
-depend:
+realdepend:
 
 distribution:
 	${INSTALL} -c -o root -g wheel -m 444 netbsd-proto.cf \
