@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.375 2000/06/24 00:37:19 thorpej Exp $
+#	$NetBSD: files,v 1.376 2000/07/04 14:27:56 onoe Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -168,6 +168,7 @@ define	fddi
 define	hippi
 define	token
 define	sppp
+define	wlan
 define	crypto
 
 # devices ARPing IPv4 pull this in:
@@ -266,6 +267,13 @@ file dev/ic/siop.c			siop
 # UltraStor SCSI controllers
 device	uha: scsi
 file	dev/ic/uha.c			uha
+
+# AMD 79c930-based 802.11 cards
+device	awi: arp, wlan, ifnet
+file	dev/ic/awi.c			awi
+file	dev/ic/awi_wep.c		awi
+file	dev/ic/awi_wicfg.c		awi
+file	dev/ic/am79c930.c		awi
 
 # 3Com Etherlink-III Ethernet controller
 device	ep: arp, ether, ifnet, mii, mii_bitbang
@@ -542,6 +550,7 @@ file coda/coda_subr.c			coda
 file coda/coda_venus.c			coda
 file coda/coda_vfsops.c			coda
 file coda/coda_vnops.c			coda
+file crypto/arc4/arc4.c			wlan
 file crypto/des/des_cbc.c		ipsec & ipsec_esp
 file crypto/des/des_ecb.c		ipsec & ipsec_esp
 file crypto/des/des_setkey.c		ipsec & ipsec_esp
@@ -780,7 +789,7 @@ file net/bsd-comp.c			ppp & ppp_bsdcomp
 file net/if.c
 file net/if_arcsubr.c			arc			needs-flag
 file net/if_atmsubr.c			atm
-file net/if_ethersubr.c			ether | fddi | netatalk | token
+file net/if_ethersubr.c			ether | fddi | netatalk | token | wlan
 file net/if_faith.c			faith			needs-count
 file net/if_fddisubr.c			fddi			needs-flag
 file net/if_gif.c			gif			needs-count
