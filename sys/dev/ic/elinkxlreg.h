@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxlreg.h,v 1.8 2001/11/11 00:24:17 christos Exp $	*/
+/*	$NetBSD: elinkxlreg.h,v 1.9 2001/11/28 23:46:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@
  * Counter in window 4 for packets with a bad start-of-stream delimiter/
  */
 #define ELINK_W4_BADSSD		0x0c
-#define ELINK_W4_UBYTESOK	0x0c
+#define ELINK_W4_UBYTESOK	0x0d
 
 /*
  * Define for extra multicast hash filter bit implemented in the 90xB
