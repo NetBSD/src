@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxpreg.h,v 1.7 1998/02/05 07:31:52 thorpej Exp $	*/
+/*	$NetBSD: if_fxpreg.h,v 1.8 1998/08/11 00:12:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -392,20 +392,3 @@ struct fxp_stats {
 #define FXP_PHY_80C24		6
 #define FXP_PHY_82555		7
 #define FXP_PHY_DP83840A	10
-
-/*
- * PHY BMCR Basic Mode Control Register
- */
-#define FXP_PHY_BMCR			0x0
-#define FXP_PHY_BMCR_FULLDUPLEX		0x0100
-#define FXP_PHY_BMCR_AUTOEN		0x1000
-#define FXP_PHY_BMCR_SPEED_100M		0x2000
-
-/*
- * DP84830 PHY, PCS Configuration Register
- */
-#define FXP_DP83840_PCR			0x17
-#define FXP_DP83840_PCR_LED4_MODE	0x0002	/* 1 = LED4 always indicates full duplex */
-#define FXP_DP83840_PCR_F_CONNECT	0x0020	/* 1 = force link disconnect function bypass */
-#define FXP_DP83840_PCR_BIT8		0x0100
-#define FXP_DP83840_PCR_BIT10		0x0400
