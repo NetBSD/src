@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.196 2004/03/26 23:18:42 petrov Exp $	*/
+/*	$NetBSD: locore.s,v 1.197 2004/04/09 19:41:57 petrov Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -67,12 +67,8 @@
 #undef	TRAPSTATS		/* Count traps */
 #undef	TRAPS_USE_IG		/* Use Interrupt Globals for all traps */
 #define	HWREF			/* Track ref/mod bits in trap handlers */
-#undef	PMAP_FPSTATE		/* Allow nesting of VIS pmap copy/zero */
-#define	NEW_FPSTATE
-#define	PMAP_PHYS_PAGE		/* Use phys ASIs for pmap copy/zero */
 #undef	DCACHE_BUG		/* Flush D$ around ASI_PHYS accesses */
 #undef	NO_TSB			/* Don't use TSB */
-#define	TICK_IS_TIME		/* Keep %tick synchronized with time */
 #undef	SCHED_DEBUG
 
 #include "opt_ddb.h"
@@ -429,13 +425,6 @@ panicstack:
 #endif
 
 /*
- * _cpcb points to the current pcb (and hence u. area).
- * Initially this is the special one.
- */
-	.globl	_C_LABEL(cpcb)
-_C_LABEL(cpcb):	POINTER	_C_LABEL(u0)
-
-/*
  * romp is the prom entry pointer
  * romtba is the prom trap table base address
  */
@@ -444,44 +433,6 @@ romp:	POINTER	0
 	.globl	romtba
 romtba:	POINTER	0
 
-
-/* NB:	 Do we really need the following around? */
-/*
- * _cputyp is the current CPU type, used to distinguish between
- * the many variations of different sun4* machines. It contains
- * the value CPU_SUN4, CPU_SUN4C, or CPU_SUN4M.
- */
-	.globl	_C_LABEL(cputyp)
-_C_LABEL(cputyp):
-	.word	1
-/*
- * _cpumod is the current CPU model, used to distinguish between variants
- * in the Sun4 and Sun4M families. See /sys/arch/sparc64/include/param.h
- * for possible values.
- */
-	.globl	_C_LABEL(cpumod)
-_C_LABEL(cpumod):
-	.word	1
-/*
- * _mmumod is the current mmu model, used to distinguish between the
- * various implementations of the SRMMU in the sun4m family of machines.
- * See /sys/arch/sparc64/include/param.h for possible values.
- */
-	.globl	_C_LABEL(mmumod)
-_C_LABEL(mmumod):
-	.word	0
-
-/*
- * There variables are pointed to by the cpp symbols PGSHIFT, NBPG,
- * and PGOFSET.
- */
-	.globl	_C_LABEL(pgshift), _C_LABEL(nbpg), _C_LABEL(pgofset)
-_C_LABEL(pgshift):
-	.word	0
-_C_LABEL(nbpg):
-	.word	0
-_C_LABEL(pgofset):
-	.word	0
 
 	_ALIGN
 
