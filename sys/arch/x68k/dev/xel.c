@@ -1,4 +1,4 @@
-/*	$NetBSD: xel.c,v 1.1.2.1 1998/12/27 15:16:56 minoura Exp $	*/
+/*	$NetBSD: xel.c,v 1.1.2.2 1999/01/31 17:10:24 minoura Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -117,30 +117,63 @@ xel_addr (parent, match, ia)
 	return 0;
 }
 
+extern int *nofault;
+
 static int
 xel_probe(addr)
 	paddr_t addr;
 {
 	u_int32_t b1, b2;
 	u_int16_t *start = (void*) INTIO_ADDR(addr);
+	label_t	faultbuf;
 	volatile u_int32_t *sram = (void*) INTIO_ADDR(XEL_RAM_ADDR_HIGHER);
 
 	if (badaddr(start))
 		return 0;
 
+	nofault = (int *) &faultbuf;
+	if (setjmp(&faultbuf)) {
+		nofault = (int *) 0;
+		return 0;
+	}
+
 	b1 = sram[0];
 	b2 = sram[1];
 	/* Try to map the Xellent local memory. */
-	/* XXX: here it panics if there's a read-only device. */
 	start[0] = XEL_MODE_RAM_HIGHER | XEL_MODE_MAP_RAM | XEL_MODE_MPU_030;
 
+#if 0
 	/* the contents should be deferent. */
-	if (b1 == sram[0] && b2 == sram[1])
+	if (b1 == sram[0] && b2 == sram[1]) {
+		nofault = (int *) 0;
 		return 0;
+	}
+#else
+	/* Try to write to the local memory. */
+	sram[0] = 0x55555555;
+	sram[1] = 0xaaaaaaaa;
+	if (sram[0] != 0x55555555 || sram[1] != 0xaaaaaaaa) {
+		sram[0] = b1;
+		sram[1] = b2;
+		nofault = (int *) 0;
+		return 0;
+	}
+	sram[0] = 0xaaaaaaaa;
+	sram[1] = 0x55555555;
+	if (sram[0] != 0xaaaaaaaa || sram[1] != 0x55555555) {
+		sram[0] = b1;
+		sram[1] = b2;
+		nofault = (int *) 0;
+		return 0;
+	}
+	sram[0] = b1;
+	sram[1] = b2;
+#endif
 
 	/* Unmap. */
 	start[0] = XEL_MODE_UNMAP_RAM | XEL_MODE_MPU_030;
 
+	nofault = (int *) 0;
 	return 1;
 }
 
