@@ -6,8 +6,8 @@ Mondo patch 1:
 
 [ kernel/sparc ] Fix several SCSI protocol errors in the "esp" driver.
 
-[ kernel/netinet ] Fix handling of long IP packets; no longer succeptible
-to the "Windows 95 death ping" bug.
+[ kernel/netinet ] Fix handling of long IP packets; no longer
+susceptible to the "Windows 95 death ping" bug.
 
 [ netstat(1) ] Display the `toolong' IP stat count, corresponding to
 netinet change above.
@@ -19,15 +19,14 @@ ensure the caller has the device open for writing (security precaution).
 
 [ eeprom(1) ] Discard setgid privileges if we don't need them.
 
-[ kernel/hp300 ] Make sure clock interrupts are disabled at the
-end of the delay calibration routine.  Fixes a bug where the kernel
-would get a bad pointer reference and crash very early in kernels
-without DDB.
+[ kernel/hp300 ] Make sure clock interrupts are disabled at the end of
+the delay calibration routine.  Fixes a bug where the kernel would get a
+bad pointer reference and crash very early in kernels without DDB.
 
 [ mt(1) ] Don't attempt to set TCP_MAXSEG for remote mt.
 
-[ kernel/scsi ] In the sd driver, start a mode sense with a clean
-sense buffer.
+[ kernel/scsi ] In the sd driver, start a mode sense with a clean sense
+buffer.
 
 [ kernel/alpha ] Fix race condition in tcds interrupt code.
 
@@ -73,7 +72,8 @@ sense buffer.
 
 [ pppd(8) ] Read TTY-specific options and fix pid file deletion bug.
 
-[ kernel/generic ] Only build ufs_quota.o if ``quota'' option is in config.
+[ kernel/generic ] Only build ufs_quota.o if ``quota'' option is in
+config.
 
 [ sendmail ] Updated to 8.8.4.
 
@@ -84,56 +84,56 @@ sense buffer.
 [ kernel/generic ] Remove possible overrun bugs in error printing code.
 
 [ dump/restore ] Make dump and restore work on alpha, fix bug restoring
-	images when current directory is on NFS.
+images when current directory is on NFS.
 
-[ kernel/sparc ] Fix bug in Sun4m ethernet driver that caused each received
-	packet to generate two interrupts rather than one.
+[ kernel/sparc ] Fix bug in Sun4m Ethernet driver that caused each
+received packet to generate two interrupts rather than one.
 
 [ distrib/mac68k ] Include new hardware and updated install notes.
 
 [ kernel/generic ] Fix ``traceroute host 7000'' bug that crashed kernel.
 
 [ distrib/atari ] Add description of HDX usage when preparing a bootable 
-	AHDI partition.
+AHDI partition.
 
 [ fsck_ffs(8) ] Fix various type size problems, and an O(n^2) algorithm.
 
 [ setuid(2) ] Document why we don't implement _POSIX_SAVED_IDS.
 
-[ select(2) ] Allow using a nfds larger than the FD_SETSIZE the kernel was
-	compiled with.
+[ select(2) ] Allow using a nfds larger than the FD_SETSIZE the kernel
+was compiled with.
 
-[ kernel/procfs ] Add a missing lock that could cause a panic when reading
-	/proc/N/mem.
+[ kernel/procfs ] Add a missing lock that could cause a panic when
+reading /proc/N/mem.
 
-[ kernel/i386 ] Use the memory size passed in by the boot block, to preserve
-	the BIOS data area.
+[ kernel/i386 ] Use the memory size passed in by the boot block, to
+preserve the BIOS data area.
 
 [ kernel/i386 ] Preserve more registers around BIOS calls in the boot
-	program, and some other minor bug fixes.
+program, and some other minor bug fixes.
 
 [ kernel/i386 ] Turn off some diagnostic code in the aha, bt, and wds
-	drivers that would occasionally cause a spurious panic.
+drivers that would occasionally cause a spurious panic.
 
 [ kernel/i386 ] Speed up in_cksum().
 
 [ ls(1) ] Fix sorting bugs.
 
-[ kernel/pci ] Probe the I/O and memory sizes correctly on cards that may
-	not permit all of the bits in the address to be set.
+[ kernel/pci ] Probe the I/O and memory sizes correctly on cards that
+may not permit all of the bits in the address to be set.
 
-[ kernel/i386 ] Fix a race condition where an AST may be delayed until the
-	next interrupt.
+[ kernel/i386 ] Fix a race condition where an AST may be delayed until
+the next interrupt.
 
-[ kernel/generic ] Don't permit a core dump if P_SUGID is set (the process
-	has changed IDs during or since the last execve(2)).
+[ kernel/generic ] Don't permit a core dump if P_SUGID is set (the
+process has changed IDs during or since the last execve(2)).
 
-[ mtree(8) ] Don't record sizes for things other than regular files.  Add
-	a `-t' option to update time stamps (rather than just complain
-	about them).
+[ mtree(8) ] Don't record sizes for things other than regular files.
+Add a `-t' option to update time stamps (rather than just complain about
+them).
 
 [ kernel/i386 ] Allow CONADDR and CONUNIT to be overridden in the config
-	file.
+file.
 
 [ select(2) ] Document EFAULT as a valid errno value.
 
@@ -142,23 +142,23 @@ sense buffer.
 [ rwhod(8) ] Fix type size problems.
 
 [ kernel/i386 ] Fix two bugs in the wds driver that caused -ASC cards to
-	fail completely.
+fail completely.
 
 [ c++(1) ] Fix libgcc so that code using exception handling links.
 
 [ openpty(3) ] Make it work correctly when called multiple times.
 
 [ restore(8) ] Add two missing byte-swaps, so it actually works across
-	endians.
+endians.
 
 [ kernel/hp300 ] Fix dca console initialization for use with a serial
-	terminal, which may require DTR and RTS.
+terminal, which may require DTR and RTS.
 
 [ kernel/i386 ] Fix com console initialization for use with a serial
-	terminal, which may require DTR and RTS.
+terminal, which may require DTR and RTS.
 
 [ setreuid(2), setregid(2) ] Implement these correctly, per SunOS and
-	other systems.
+other systems.
 
 [ kernel/generic ] Fix bogus references to user-level include files.
 
@@ -169,26 +169,26 @@ sense buffer.
 [ kernel/nfs ] Use NFS-specific malloc types, rather than M_TEMP.
 
 [ kernel/netinet ] Return EAGAIN if there are no free ports in the
-	normal user range.
+normal user range.
 
-[ kernel/netinet ] Fix several RTT scaling errors introduced with the RTT
-	rounding fixes suggested by Brakmo and Peterson.
+[ kernel/netinet ] Fix several RTT scaling errors introduced with the
+RTT rounding fixes suggested by Brakmo and Peterson.
 
-[ kernel/mvme68k ] Fix an uninitialized variable and a missing RELOC() in
-	the startup code.
+[ kernel/mvme68k ] Fix an uninitialized variable and a missing RELOC()
+in the startup code.
 
 [ kernel/sparc ] Disable rcons on the bwtwo, since it doesn't work yet.
 
 [ kernel/sparc ] Fix place offset calculation on the cgfour.
 
 [ kernel/netinet ] Ignore the reserved fragment flag when checking for
-	fragmentation.
+fragmentation.
 
 [ kernel/netinet ] Don't reset the keepalive timer if in SYN-SENT or
-	SYN-RECEIVED state and we're not ready to go to ESTABLISHED.
+SYN-RECEIVED state and we're not ready to go to ESTABLISHED.
 
 [ kernel/net* ] Eliminate SS_PRIV.  Fix many memory leaks and incorrect
-	errno values.
+errno values.
 
 [ kernel/i386 ] Fix several bugs in the ahb driver.
 
@@ -196,35 +196,35 @@ sense buffer.
 
 [ kernel/generic ] Make physio() work for UIO_SYSSPACE.
 
-[ kernel/generic ] Don't permit negative resource limits, which will cause
-	various panics.
+[ kernel/generic ] Don't permit negative resource limits, which will
+cause various panics.
 
-[ kernel/generic ] Fix a null pointer dereference when shmdt(2) is called
-	before shmat(2).
+[ kernel/generic ] Fix a null pointer dereference when shmdt(2) is
+called before shmat(2).
 
 [ kernel/generic ] Fix a deadlock when SO_{SND,RCV}BUF is called with a
-	buffer size of 0.
+buffer size of 0.
 
-[ kernel/generic ] Fix a null pointer dereference when attemption to change
-	the default route without specifying a gateway.
+[ kernel/generic ] Fix a null pointer dereference when attempting to
+change the default route without specifying a gateway.
 
 [ kernel/generic ] Fix a null pointer dereference when syncing after a
-	panic during autoconfig or while idle.
+panic during autoconfig or while idle.
 
 [ kernel/generic ] Seeking on a FIFO should return ESPIPE.
 
 [ kernel/nfs ] Make MNT_FORCE work in more cases.
 
 [ kernel/nfs ] Fix a memory leak when a file formerly mmap(2)ed on the
-	server is remove(2)d by a client.
+server is remove(2)d by a client.
 
-[ stat(2) ] S_ISFIFO(x) should not return true with sockets.  S_ISSOCK(x)
-	should not return true with fifos.
+[ stat(2) ] S_ISFIFO(x) should not return true with sockets.
+S_ISSOCK(x) should not return true with fifos.
 
 [ kernel/i386 ] Fix timing bug in floppy driver.
 
 [ kernel/msdosfs ] Fix a bug with allowed/disallowed characters in non-
-    Win95 filenames.
+Win95 filenames.
 
 [ kernel/msdosfs ] Don't extend directory when nothing is written to it.
 
@@ -232,7 +232,7 @@ sense buffer.
 
 [ kernel/generic ] Clarify section of code in sys_setitimer().
 
-[ kernel/generic ] Fix bug in SunOS emulation when using half-open pty's.
+[ kernel/generic ] Fix bug in SunOS emulation when using half-open ptys.
 
 [ kernel/bio ] Fix potential NULL-pointer dereference.
 
@@ -256,8 +256,8 @@ sense buffer.
 
 [ write(1) ] Fix a security bug.
 
-[ kernel/i386 ] Fix bug in FP exception handling that might cause a core dump
-	when there is a signal handler installed.
+[ kernel/i386 ] Fix bug in FP exception handling that might cause a core
+dump when there is a signal handler installed.
 
 [ C Library/YP ] Fix bug in ypserv and RPC timeout code.
 
@@ -267,10 +267,10 @@ sense buffer.
 
 [ kernel/scsi ] Add better support for optical disks (e.g. ZIP disks).
 
-[ kernel/i386 ] Fix bugs in ahc driver that affect chips with a small number
-	of SCBs.  Also, recognize more boards/chips.
+[ kernel/i386 ] Fix bugs in ahc driver that affect chips with a small
+number of SCBs.  Also, recognize more boards/chips.
 
-[ kernel/nfs ] Fix various possible null pointer dereferencs and array bound
-	violations.  Also, fix directory lease eviction in NQNFS.
+[ kernel/nfs ] Fix various possible null pointer dereferences and array
+bound violations.  Also, fix directory lease eviction in NQNFS.
 
 [ kernel/i386 ] Recognize more ep boards.
