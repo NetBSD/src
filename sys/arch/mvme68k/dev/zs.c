@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.12 1997/02/05 14:06:58 gwr Exp $	*/
+/*	$NetBSD: zs.c,v 1.13 1997/11/02 08:05:09 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -353,26 +353,22 @@ zs_set_modes(cs, cflag)
 	 * status interrupt to detect CTS changes.
 	 */
 	s = splzs();
-#if 0	/* XXX - See below. */
-	if (cflag & CLOCAL) {
+	if ((cflag & (CLOCAL | MDMBUF)) != 0)
 		cs->cs_rr0_dcd = 0;
-		cs->cs_preg[15] &= ~ZSWR15_DCD_IE;
-	} else {
-		/* XXX - Need to notice DCD change here... */
+	else
 		cs->cs_rr0_dcd = ZSRR0_DCD;
-		cs->cs_preg[15] |= ZSWR15_DCD_IE;
-	}
-#endif	/* XXX */
-	if (cflag & CRTSCTS) {
+	if ((cflag & CRTSCTS) != 0) {
 		cs->cs_wr5_dtr = ZSWR5_DTR;
 		cs->cs_wr5_rts = ZSWR5_RTS;
 		cs->cs_rr0_cts = ZSRR0_CTS;
-		cs->cs_preg[15] |= ZSWR15_CTS_IE;
+	} else if ((cflag & MDMBUF) != 0) {
+		cs->cs_wr5_dtr = 0;
+		cs->cs_wr5_rts = ZSWR5_DTR;
+		cs->cs_rr0_cts = ZSRR0_DCD;
 	} else {
 		cs->cs_wr5_dtr = ZSWR5_DTR | ZSWR5_RTS;
 		cs->cs_wr5_rts = 0;
 		cs->cs_rr0_cts = 0;
-		cs->cs_preg[15] &= ~ZSWR15_CTS_IE;
 	}
 	splx(s);
 
