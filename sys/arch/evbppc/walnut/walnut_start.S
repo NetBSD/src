@@ -1,4 +1,4 @@
-/*	$NetBSD: walnut_start.S,v 1.8 2003/08/03 23:26:55 eeh Exp $	*/
+/*	$NetBSD: walnut_start.S,v 1.9 2003/08/03 23:28:45 eeh Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -148,7 +148,7 @@ __start:
 	nop
 
 1:
-	mr	%r31,%r3		/* Save address of PROM info_block */
+	mflr	%r31			/* Save address of PROM info_block */
 	li	%r0,0
 	mtmsr	%r0			/* Disable FPU/MMU/exceptions */
 	isync
