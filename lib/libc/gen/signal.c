@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)signal.c	5.5 (Berkeley) 6/1/90";*/
-static char *rcsid = "$Id: signal.c,v 1.4 1993/08/26 00:45:08 jtc Exp $";
+static char *rcsid = "$Id: signal.c,v 1.5 1993/11/30 21:21:45 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -41,7 +41,7 @@ static char *rcsid = "$Id: signal.c,v 1.4 1993/08/26 00:45:08 jtc Exp $";
  */
 #include <signal.h>
 
-sigset_t _sigintr;		/* shared with siginterrupt */
+sigset_t __sigintr;		/* shared with siginterrupt */
 
 sig_t
 signal(s, a)
@@ -53,7 +53,7 @@ signal(s, a)
 	sa.sa_handler = a;
 	sigemptyset(&sa.sa_mask);
 	sa.sa_flags = 0;
-	if (!sigismember(&_sigintr, s))
+	if (!sigismember(&__sigintr, s))
 		sa.sa_flags |= SA_RESTART;
 	if (sigaction(s, &sa, &osa) < 0)
 		return (SIG_ERR);
