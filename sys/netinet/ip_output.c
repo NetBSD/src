@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.74 2000/05/10 03:31:30 itojun Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.75 2000/06/28 02:59:32 mrg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -113,8 +113,6 @@
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/systm.h>
-
-#include <vm/vm.h>
 #include <sys/proc.h>
 
 #include <net/if.h>
