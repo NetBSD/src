@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcb_svc_com.c,v 1.2 2000/06/20 13:55:12 fvdl Exp $	*/
+/*	$NetBSD: rpcb_svc_com.c,v 1.3 2000/06/22 08:09:26 fvdl Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -909,6 +909,10 @@ out:
 		free((void *) buf_alloc);
 	if (outbuf_alloc)
 		free((void *) outbuf_alloc);
+	if (na) {
+		free(na->buf);
+		free(na);
+	}
 }
 
 /*
