@@ -1,4 +1,4 @@
-.\"	$NetBSD: tcpdmatch.8,v 1.3 1998/01/09 08:11:51 perry Exp $
+.\"	$NetBSD: tcpdmatch.8,v 1.4 1999/08/31 13:58:58 itojun Exp $
 .\"
 .TH TCPDMATCH 8
 .SH NAME
@@ -98,3 +98,8 @@ Eindhoven University of Technology
 Den Dolech 2, P.O. Box 513, 
 5600 MB Eindhoven, The Netherlands
 \" @(#) tcpdmatch.8 1.5 96/02/11 17:01:35
+.SH BUGS
+If you specify FQDN hostname as client,
+they will be recognized only as IPv4 or IPv6 address,
+which should be recognized as both.
+This should be solved when getipnodebyname(3) is supplied.

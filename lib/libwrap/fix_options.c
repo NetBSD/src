@@ -1,4 +1,4 @@
-/*	$NetBSD: fix_options.c,v 1.4 1999/08/27 16:06:17 itojun Exp $	*/
+/*	$NetBSD: fix_options.c,v 1.5 1999/08/31 13:58:58 itojun Exp $	*/
 
  /*
   * Routine to disable IP-level socket options. This code was taken from 4.4BSD
@@ -12,7 +12,7 @@
 #if 0
 static char sccsid[] = "@(#) fix_options.c 1.6 97/04/08 02:29:19";
 #else
-__RCSID("$NetBSD: fix_options.c,v 1.4 1999/08/27 16:06:17 itojun Exp $");
+__RCSID("$NetBSD: fix_options.c,v 1.5 1999/08/31 13:58:58 itojun Exp $");
 #endif
 #endif
 
@@ -53,7 +53,21 @@ struct request_info *request;
     unsigned int opt;
     int     optlen;
     struct in_addr dummy;
+    struct sockaddr_storage ss;
+    int sslen;
 
+    /*
+     * check if this is AF_INET socket
+     * XXX IPv6 support?
+     */
+    sslen = sizeof(ss);
+    if (getsockname(fd, (struct sockaddr *)&ss, &sslen < 0)) {
+	syslog(LOG_ERR, "getpeername: %m");
+	clean_exit(request);
+    }
+    if (ss.ss_family != AF_INET)
+	return;
+  
     if ((ip = getprotobyname("ip")) != 0)
 	ipproto = ip->p_proto;
     else
