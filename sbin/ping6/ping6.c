@@ -1,4 +1,4 @@
-/*	$NetBSD: ping6.c,v 1.44 2002/05/30 17:02:17 thorpej Exp $	*/
+/*	$NetBSD: ping6.c,v 1.45 2002/05/30 21:32:18 itojun Exp $	*/
 /*	$KAME: ping6.c,v 1.155 2002/05/26 13:18:25 itojun Exp $	*/
 
 /*
@@ -81,7 +81,7 @@ static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping6.c,v 1.44 2002/05/30 17:02:17 thorpej Exp $");
+__RCSID("$NetBSD: ping6.c,v 1.45 2002/05/30 21:32:18 itojun Exp $");
 #endif
 #endif
 
@@ -1635,7 +1635,7 @@ pr_pack(buf, cc, mhdr)
 					comma++;
 					break;
 				case ICMP6_NI_UNKNOWN:
-					(void)printf("unknwon qtype");
+					(void)printf("unknown qtype");
 					comma++;
 					break;
 				}
