@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.52 1997/03/14 23:57:59 christos Exp $ */
+/*	$NetBSD: trap.c,v 1.53 1997/03/15 20:31:33 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -943,21 +943,6 @@ mem_access_fault4m(type, sfsr, sfva, afsr, afva, tf)
 		p->p_md.md_tf = tf;
 
 	vm = p->p_vmspace;
-#ifdef DEBUG
-	/*
-	 * mmu_pagein returns -1 if the page is already valid, in which
-	 * case we have a hard fault.. now why would *that* happen?
-	 * But it happens sporadically, and vm_fault() seems to clear it..
-	 */
-	rv = mmu_pagein4m(&vm->vm_pmap, va,
-			sfsr & SFSR_AT_STORE ? VM_PROT_WRITE : VM_PROT_READ);
-	if (rv < 0)
-		uprintf(" sfsr=%x(FT=%x,AT=%x,LVL=%x), sfva=%x, pc=%x, psr=%x\n",
-		       sfsr, (sfsr >> 2) & 7, (sfsr >> 5) & 7, (sfsr >> 8) & 3,
-		       sfva, pc, psr);
-	if (rv > 0)
-		panic("mmu_pagein4m returns %d", rv);
-#endif
 
 	/* alas! must call the horrible vm code */
 	rv = vm_fault(&vm->vm_map, (vm_offset_t)va, ftype, FALSE);
