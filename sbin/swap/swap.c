@@ -1,4 +1,4 @@
-/*	$NetBSD: swap.c,v 1.1.2.2.2.3 1997/05/09 10:44:25 mrg Exp $	*/
+/*	$NetBSD: swap.c,v 1.1.2.2.2.4 1997/05/11 04:30:19 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Matthew R. Green
@@ -43,12 +43,14 @@
  */
 
 #include <sys/param.h>
+#include <sys/stat.h>
 
 #include <vm/vm_swap.h>
 
 #include <unistd.h>
 #include <errno.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <fstab.h>
 
@@ -129,14 +131,14 @@ main(argc, argv)
 		}
 	}
 	/* SWAP_OFF_WORKS */
-	if (!aflag && /* !dflag && */ !lflag)
+	if (!aflag && /* !dflag && */ !lflag && !Aflag)
 		usage();
 
 	argv += optind;
 	if (!*argv && !lflag)
 		usage();
 	/* SWAP_OFF_WORKS */
-	if (pri && !aflag /* && !dflag */ )
+	if (pri && !aflag /* && !dflag */ && !Aflag)
 		usage();
 
 	if (lflag)
@@ -175,9 +177,9 @@ list_swap()
 	 * XXX write me.  use kflag and BLOCKSIZE to determine size??  how
 	 * does df do it?  it uses getbsize(3) ...
 	 */
-	puts("Device   Avail(k) In Use(k)");
+	puts("Device    Avail(k) In Use(k)");
 	for (; rnswap-- > 0; sep++)
-		printf("0x%-8x %-8d %-8d\n", sep->se_dev,
+		printf("%-9s %-8d %-8d\n", sep->se_dev == NODEV ? "swapfile" : devname(sep->se_dev, S_IFBLK),
 		    dbtob(sep->se_nblks)/1024, dbtob(sep->se_inuse)/1024);
 }
 
@@ -226,7 +228,7 @@ do_fstab()
 				priority = pri;
 
 			if (swapon(SWAP_ON, fp->fs_spec, (int)priority) < 0)
-				warn("swap_on all: %s", path);
+				warn("swap_on all: %s", fp->fs_spec);
 		}
 	}
 }
