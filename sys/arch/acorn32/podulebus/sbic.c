@@ -1,4 +1,4 @@
-/* $NetBSD: sbic.c,v 1.4 2002/09/27 15:35:31 provos Exp $ */
+/* $NetBSD: sbic.c,v 1.5 2002/10/04 22:46:29 bjh21 Exp $ */
 
 /*
  * Copyright (c) 2001 Richard Earnshaw
@@ -78,14 +78,16 @@
 #define UNPROTECTED_CSR
 #endif
 
+#ifndef DEBUG
 #define DEBUG
+#endif
 /* #define SBIC_DEBUG(a) a */
 
 #include "opt_ddb.h"
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.4 2002/09/27 15:35:31 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.5 2002/10/04 22:46:29 bjh21 Exp $");
 
 #include <sys/systm.h>
 #include <sys/callout.h>
