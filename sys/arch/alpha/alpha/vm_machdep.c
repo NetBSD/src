@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.54 2000/03/26 20:42:23 kleink Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.55 2000/03/29 03:49:48 simonb Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.54 2000/03/26 20:42:23 kleink Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.55 2000/03/29 03:49:48 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -352,8 +352,6 @@ pagemove(from, to, size)
 		to += NBPG;
 	}
 }
-
-extern vm_map_t phys_map;
 
 /*
  * Map a user I/O request into kernel virtual address space.
