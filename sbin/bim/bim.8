@@ -1,4 +1,4 @@
-.\"	$NetBSD: bim.8,v 1.7 2001/04/21 14:44:13 wiz Exp $
+.\"	$NetBSD: bim.8,v 1.8 2002/10/01 13:40:25 wiz Exp $
 .\"
 .\" Copyright 1997 Piermont Information Systems Inc.
 .\" All rights reserved.
@@ -45,55 +45,60 @@ bim
 .Op Fl c Ar command
 .Op Ar device
 .Sh DESCRIPTION
-The pc532 has available an autoboot ROM monitor.  This ROM monitor understands
-the
+The pc532 has available an autoboot ROM monitor.
+This ROM monitor understands the
 .Bx
-disklabel and expects a boot image directory following the
-disklabel.  Also, it expects an image partition for the storage of bootable
-images.  The image directory and the image partition is managed by
+disklabel and expects a boot image directory following the disklabel.
+Also, it expects an image partition for the storage of bootable images.
+The image directory and the image partition is managed by
 .Nm "" .
 The
 .Ar device
-is the raw disk partition that includes the disklabel.  The default
-value of
+is the raw disk partition that includes the disklabel.
+The default value of
 .Ar device
 is
 .Pa /dev/rsd0c .
 .Nm
 directly accesses both the disklabel and the image partition directly
-from the raw disk device.  It does not open the device corresponding
-to the boot partition.
+from the raw disk device.
+It does not open the device corresponding to the boot partition.
 .Pp
 The
 .Fl y
 argument assumes a yes response to any questions
 .Nm
-would normally ask the user.  It is mainly useful for
-scripting.
+would normally ask the user.
+It is mainly useful for scripting.
 .Pp
 The
 .Cm -c command
 argument allows
 .Nm
-to execute commands given via the command line.  This allows
+to execute commands given via the command line.
+This allows
 .Nm
-to be used from scripts.  The
+to be used from scripts.
+The
 .Cm -c command
-argument may be repeated up to 20 times.  The commands
-will be executed in the order given.
+argument may be repeated up to 20 times.
+The commands will be executed in the order given.
 .Sh DISK INITIALIZATION
 .Nm
 is typically used as part of the initial setup on a disk.
 The disk must be partitioned by using
 .Xr disklabel 8 ,
-making sure there is a boot boot partition.  This boot
-partition is often just after the disklabel.  It must not include
-the disklabel.  If
+making sure there is a boot boot partition.
+This boot partition is often just after the disklabel.
+It must not include the disklabel.
+If
 .Nm
-does not detect a boot image directory, it asks if the user wants
-one created.  From there, the operation of
+does not detect a boot image directory,
+it asks if the user wants one created.
+From there, the operation of
 .Nm
-is completely command driven.  The command interpreter is
+is completely command driven.
+The command interpreter is
 .Sh COMMANDS
 .Nm
 supports the following commands.
@@ -132,7 +137,8 @@ For the details on these commands, ask for help from
 .Xr disklabel 8
 .Sh AUTHORS
 Bruce Culbertson wrote the basic command interpreter for the pc532
-ROM monitor.  Philip A. Nelson took the command interpreter, modified
+ROM monitor.
+Philip A. Nelson took the command interpreter, modified
 it to be a more generic command interpreter and added the
 .Nm
 specific code.
