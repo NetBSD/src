@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.1.2.3 1998/06/05 16:17:47 bouyer Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.1.2.4 1998/06/05 17:28:22 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -279,7 +279,7 @@ again:
 			cyl = blkno;
 			head |= WDSD_CHS;
 		}
-		if (drvp->drive_flags & (DRIVE_DMA | DRIVE_DMA) &&
+		if ((drvp->drive_flags & (DRIVE_DMA | DRIVE_UDMA)) &&
 		    (ata_bio->flags & ATA_SINGLE) == 0) {
 			ata_bio->nblks = nblks;
 			ata_bio->nbytes = xfer->c_bcount;
@@ -424,7 +424,7 @@ wdc_ata_bio_intr(chp, xfer)
 		    chp->wdc->sc_dev.dv_xname, chp->channel, xfer->drive,
 		    xfer->c_bcount, xfer->c_skip);
 		/* if we were using DMA, turn off DMA channel */
-		if (drvp->drive_flags & (DRIVE_DMA | DRIVE_UDMA) &&
+		if ((drvp->drive_flags & (DRIVE_DMA | DRIVE_UDMA)) &&
 		    (ata_bio->flags & ATA_SINGLE) == 0)
 			(*chp->wdc->dma_finish)(chp->wdc->dma_arg,
 			    chp->channel, xfer->drive,
@@ -438,7 +438,7 @@ wdc_ata_bio_intr(chp, xfer)
 		ata_bio->flags |= ATA_CORR;
 
 	/* If we were using DMA, Turn off the DMA channel and check for error */
-	if (drvp->drive_flags & (DRIVE_DMA | DRIVE_UDMA) &&
+	if ((drvp->drive_flags & (DRIVE_DMA | DRIVE_UDMA)) &&
 	    (ata_bio->flags & ATA_SINGLE) == 0) {
 		if (chp->ch_status & WDCS_DRQ) {
 			printf("%s:%d:%d: intr with DRQ\n",
