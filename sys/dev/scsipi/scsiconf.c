@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *      $Id: scsiconf.c,v 1.12 1994/03/29 04:29:37 mycroft Exp $
+ *      $Id: scsiconf.c,v 1.13 1994/04/11 03:54:05 mycroft Exp $
  */
 
 /*
@@ -82,18 +82,17 @@
  * The structure of known drivers for autoconfiguration
  */
 struct scsidevs {
-	char   *devname;
+	char *devname;
 	u_int32 type;
 	boolean removable;
-	char    flags;		/* 1 show my comparisons during boot(debug) */
-	char   *manufacturer;
-	char   *model;
-	char   *version;
-};
-
+	int flags;		/* 1 show my comparisons during boot(debug) */
 #define SC_SHOWME	0x01
 #define	SC_ONE_LU	0x00
 #define	SC_MORE_LUS	0x02
+	char *manufacturer;
+	char *model;
+	char *version;
+};
 
 #if	NUK > 0
 static struct scsidevs unknowndev = {
