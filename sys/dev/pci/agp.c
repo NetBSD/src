@@ -1,4 +1,4 @@
-/*	$NetBSD: agp.c,v 1.14 2002/01/22 17:29:36 augustss Exp $	*/
+/*	$NetBSD: agp.c,v 1.14.8.1 2002/05/16 11:56:43 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -65,7 +65,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.14 2002/01/22 17:29:36 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.14.8.1 2002/05/16 11:56:43 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,7 +92,16 @@ __KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.14 2002/01/22 17:29:36 augustss Exp $");
 /* XXXfvdl get rid of this one. */
 
 extern struct cfdriver agp_cd;
-cdev_decl(agp);
+
+dev_type_open(agpopen);
+dev_type_close(agpclose);
+dev_type_ioctl(agpioctl);
+dev_type_mmap(agpmmap);
+
+const struct cdevsw agp_cdevsw = {
+	agpopen, agpclose, noread, nowrite, agpioctl,
+	nostop, notty, nopoll, agpmmap,
+};
 
 int agpmatch(struct device *, struct cfdata *, void *);
 void agpattach(struct device *, struct device *, void *);
