@@ -26,7 +26,7 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-/* @(#) $Header: /cvsroot/src/usr.bin/lex/Attic/flexdef.h,v 1.6 1993/12/06 19:29:13 jtc Exp $ (LBL) */
+/* @(#) $Header: /cvsroot/src/usr.bin/lex/Attic/flexdef.h,v 1.7 1993/12/09 19:06:10 jtc Exp $ (LBL) */
 
 #include <stdio.h>
 #include <ctype.h>
@@ -61,14 +61,14 @@
 /* Maximum line length we'll have to deal with. */
 #define MAXLINE 2048
 
-#ifndef min
-#define min(x,y) ((x) < (y) ? (x) : (y))
+#ifndef MIN
+#define MIN(x,y) ((x) < (y) ? (x) : (y))
 #endif
-#ifndef max
-#define max(x,y) ((x) > (y) ? (x) : (y))
+#ifndef MAX
+#define MAX(x,y) ((x) > (y) ? (x) : (y))
 #endif
-#ifndef abs
-#define abs(x) ((x) < 0 ? -(x) : (x))
+#ifndef ABS
+#define ABS(x) ((x) < 0 ? -(x) : (x))
 #endif
 
 
