@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_machdep.c,v 1.9 2000/05/19 05:26:18 eeh Exp $	*/
+/*	$NetBSD: ofw_machdep.c,v 1.10 2000/06/26 19:36:07 pk Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -439,6 +439,7 @@ prom_claim_phys(phys, len)
 	args.nreturns = 4;
 	args.method = ADR2CELL(&"claim");
 	args.ihandle = HDL2CELL(memh);
+	args.align = 0;
 	args.len = len;
 	args.phys_hi = HDL2CELL(phys>>32);
 	args.phys_lo = HDL2CELL(phys);
