@@ -1,4 +1,4 @@
-/*	$NetBSD: iso.h,v 1.10 1998/03/01 02:24:46 fvdl Exp $	*/
+/*	$NetBSD: iso.h,v 1.11 1999/01/31 19:43:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -189,7 +189,8 @@ struct iso_addr *iso_addr __P((const char *));
 char           *iso_ntoa __P((const struct iso_addr *));
 
 /* THESE DON'T EXIST YET */
-struct hostent *iso_gethostbyname(), *iso_gethostbyaddr();
+struct hostent *iso_gethostbyname __P((const char *));
+struct hostent *iso_gethostbyaddr __P((const char *, int, int));
 __END_DECLS
 
 #endif /* _KERNEL */
