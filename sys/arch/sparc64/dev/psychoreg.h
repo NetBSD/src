@@ -1,4 +1,4 @@
-/*	$NetBSD: psychoreg.h,v 1.10 2003/04/17 12:58:18 nakayama Exp $ */
+/*	$NetBSD: psychoreg.h,v 1.11 2003/05/17 01:48:22 nakayama Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Eduardo E. Horvath
@@ -267,15 +267,15 @@ struct psychoreg {
 
 /* PCI [a|b] control/status register */
 /* note that the sabre only has one set of PCI control/status registers */
-#define	PCICTL_MRLM	0x0000001000000000	/* Memory Read Line/Multiple */
-#define	PCICTL_SERR	0x0000000400000000	/* SERR asserted; W1C */
-#define	PCICTL_ARB_PARK	0x0000000000200000	/* PCI arbitration parking */
-#define	PCICTL_CPU_PRIO	0x0000000000100000	/* PCI arbitration parking */
-#define	PCICTL_ARB_PRIO	0x00000000000f0000	/* PCI arbitration parking */
-#define	PCICTL_ERRINTEN	0x0000000000000100	/* PCI error interrupt enable */
-#define	PCICTL_RTRYWAIT 0x0000000000000080	/* PCI error interrupt enable */
-#define	PCICTL_4ENABLE	0x000000000000000f	/* enable 4 PCI slots */
-#define	PCICTL_6ENABLE	0x000000000000003f	/* enable 6 PCI slots */
+#define	PCICTL_MRLM	0x0000001000000000LL	/* Memory Read Line/Multiple */
+#define	PCICTL_SERR	0x0000000400000000LL	/* SERR asserted; W1C */
+#define	PCICTL_ARB_PARK	0x0000000000200000LL	/* PCI arbitration parking */
+#define	PCICTL_CPU_PRIO	0x0000000000100000LL	/* PCI arbitration parking */
+#define	PCICTL_ARB_PRIO	0x00000000000f0000LL	/* PCI arbitration parking */
+#define	PCICTL_ERRINTEN	0x0000000000000100LL	/* PCI error interrupt enable */
+#define	PCICTL_RTRYWAIT 0x0000000000000080LL	/* PCI error interrupt enable */
+#define	PCICTL_4ENABLE	0x000000000000000fLL	/* enable 4 PCI slots */
+#define	PCICTL_6ENABLE	0x000000000000003fLL	/* enable 6 PCI slots */
 
 /*
  * these are the PROM structures we grovel
