@@ -1,4 +1,4 @@
-# $NetBSD: system,v 1.2 2004/12/12 08:54:34 christos Exp $
+# $NetBSD: system,v 1.3 2005/01/08 08:43:03 christos Exp $
 # $FreeBSD: src/etc/pam.d/system,v 1.1 2003/06/14 12:35:05 des Exp $
 #
 # System-wide defaults
@@ -7,19 +7,19 @@
 # auth
 #auth		sufficient	pam_opie.so		no_warn no_fake_prompts
 #auth		requisite	pam_opieaccess.so	no_warn allow_local
-#auth		sufficient	pam_krb5.so		no_warn try_first_pass
-#auth		sufficient	pam_ssh.so		no_warn try_first_pass
+auth		sufficient	pam_krb5.so		no_warn try_first_pass
+auth		sufficient	pam_ssh.so		no_warn try_first_pass
 auth		required	pam_unix.so		no_warn try_first_pass nullok
 
 # account
-#account 	required	pam_krb5.so
+account 	required	pam_krb5.so
 account		required	pam_login_access.so
 account		required	pam_unix.so
 
 # session
-#session 	optional	pam_ssh.so
+session 	optional	pam_ssh.so
 session		required	pam_lastlog.so		no_fail
 
 # password
-#password	sufficient	pam_krb5.so		no_warn try_first_pass
+password	sufficient	pam_krb5.so		no_warn try_first_pass
 password	required	pam_unix.so		no_warn try_first_pass
