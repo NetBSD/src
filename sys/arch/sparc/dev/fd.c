@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.18 1996/01/12 00:19:47 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.19 1996/01/15 00:14:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -52,6 +52,7 @@
 #include <sys/disk.h>
 #include <sys/buf.h>
 #include <sys/uio.h>
+#include <sys/stat.h>
 #include <sys/syslog.h>
 #include <sys/queue.h>
 
@@ -196,7 +197,7 @@ struct cfdriver fdcd = {
 	NULL, "fd", fdmatch, fdattach, DV_DISK, sizeof(struct fd_softc)
 };
 
-void fdgetdisklabel __P((struct fd_softc *));
+void fdgetdisklabel __P((dev_t));
 int fd_get_parms __P((struct fd_softc *));
 void fdstrategy __P((struct buf *));
 void fdstart __P((struct fd_softc *));
@@ -222,6 +223,8 @@ void	fdchwintr __P((void));
 int	fdcswintr __P((struct fdc_softc *));
 void	fdcretry __P((struct fdc_softc *fdc));
 void	fdfinish __P((struct fd_softc *fd, struct buf *bp));
+void	fd_do_eject __P((void));
+void	fd_mountroot_hook __P((struct device *));
 
 #if PIL_FDSOFT == 4
 #define IE_FDSOFT	IE_L4
@@ -398,12 +401,23 @@ fdcattach(parent, self, aux)
 	 * Openprom node, so we can as well check for the floppy boots here.
 	 */
 	if (ca->ca_ra.ra_bp &&
-	    strcmp(ca->ca_ra.ra_bp->name, OBP_FDNAME) == 0 &&
-	    ca->ca_ra.ra_bp->val[0] == 0 && 
-	    ca->ca_ra.ra_bp->val[1] == 0)
-		fa.fa_bootdev = 1;
-	else
-		fa.fa_bootdev = 0;
+	    strcmp(ca->ca_ra.ra_bp->name, OBP_FDNAME) == 0) {
+		/*
+		 * WOAH THERE!  It looks like we can get the bootpath
+		 * in a couple of different formats!!  The faked
+		 * bootpath (and some v2?) looks like /fd@0,0
+		 * but the real bootpath on some v2 OpenPROM
+		 * systems looks like /fd0.  We deal with that
+		 * bere by looking for either case.  --thorpej
+		 */
+		if (((ca->ca_ra.ra_bp->val[0] == 0) &&	/* /fd@0,0 */
+		     (ca->ca_ra.ra_bp->val[1] == 0)) ||
+		    ((ca->ca_ra.ra_bp->val[0] == -1) &&	/* /fd0 */
+		     (ca->ca_ra.ra_bp->val[1] == 0)))
+			fa.fa_bootdev = 1;  
+		else
+			fa.fa_bootdev = 0;
+	}
 
 	/* physical limit: four drives per controller. */
 	for (fa.fa_drive = 0; fa.fa_drive < 4; fa.fa_drive++) {
@@ -521,6 +535,12 @@ fdattach(parent, self, aux)
 	 */
 	if (fa->fa_bootdev)
 		bootdv = &fd->sc_dv;
+
+	/*
+	 * Establish a mountroot_hook anyway in case we booted
+	 * with RB_ASKNAME and get selected as the boot device.
+	 */
+	mountroot_hook_establish(fd_mountroot_hook, &fd->sc_dv);
 
 	/* XXX Need to do some more fiddling with sc_dk. */
 	dk_establish(&fd->sc_dk, &fd->sc_dv);
@@ -774,11 +794,12 @@ out_fdc(fdc, x)
 }
 
 int
-Fdopen(dev, flags)
+Fdopen(dev, flags, fmt, p)
 	dev_t dev;
-	int flags;
+	int flags, fmt;
+	struct proc *p;
 {
- 	int unit;
+ 	int unit, pmask;
 	struct fd_softc *fd;
 	struct fd_type *type;
 
@@ -800,17 +821,52 @@ Fdopen(dev, flags)
 	fd->sc_cylin = -1;
 	fd->sc_flags |= FD_OPEN;
 
+	/*
+	 * Only update the disklabel if we're not open anywhere else.
+	 */
+	if (fd->sc_dk.dk_openmask == 0)
+		fdgetdisklabel(dev);
+
+	pmask = (1 << DISKPART(dev));
+
+	switch (fmt) {
+	case S_IFCHR:
+		fd->sc_dk.dk_copenmask |= pmask;
+		break;
+
+	case S_IFBLK:
+		fd->sc_dk.dk_bopenmask |= pmask;
+		break;
+	}
+	fd->sc_dk.dk_openmask =
+	    fd->sc_dk.dk_copenmask | fd->sc_dk.dk_bopenmask;
+
 	return 0;
 }
 
 int
-fdclose(dev, flags)
+fdclose(dev, flags, fmt, p)
 	dev_t dev;
-	int flags;
+	int flags, fmt;
+	struct proc *p;
 {
 	struct fd_softc *fd = fdcd.cd_devs[FDUNIT(dev)];
+	int pmask = (1 << DISKPART(dev));
 
 	fd->sc_flags &= ~FD_OPEN;
+
+	switch (fmt) {
+	case S_IFCHR:
+		fd->sc_dk.dk_copenmask &= ~pmask;
+		break;
+
+	case S_IFBLK:
+		fd->sc_dk.dk_bopenmask &= ~pmask;
+		break;
+	}
+	fd->sc_dk.dk_openmask = 
+	    fd->sc_dk.dk_copenmask | fd->sc_dk.dk_bopenmask;
+
 	return 0;
 }
 
@@ -1424,17 +1480,6 @@ fdioctl(dev, cmd, addr, flag)
 
 	switch (cmd) {
 	case DIOCGDINFO:
-		bzero(fd->sc_dk.dk_label, sizeof(struct disklabel));
-		
-		fd->sc_dk.dk_label->d_secpercyl = fd->sc_type->seccyl;
-		fd->sc_dk.dk_label->d_type = DTYPE_FLOPPY;
-		fd->sc_dk.dk_label->d_secsize = FDC_BSIZE;
-
-		if (readdisklabel(dev, fdstrategy,
-				  fd->sc_dk.dk_label,
-				  fd->sc_dk.dk_cpulabel) != NULL)
-			return EINVAL;
-
 		*(struct disklabel *)addr = *(fd->sc_dk.dk_label);
 		return 0;
 
@@ -1460,9 +1505,7 @@ fdioctl(dev, cmd, addr, flag)
 		return error;
 
 	case DIOCEJECT:
-		auxregbisc(AUXIO_FDS, AUXIO_FEJ);
-		delay(10);
-		auxregbisc(AUXIO_FEJ, AUXIO_FDS);
+		fd_do_eject();
 		return 0;
 
 #ifdef DEBUG
@@ -1509,4 +1552,93 @@ fdioctl(dev, cmd, addr, flag)
 #ifdef DIAGNOSTIC
 	panic("fdioctl: impossible");
 #endif
+}
+
+void
+fdgetdisklabel(dev)
+	dev_t dev;
+{
+	int unit = FDUNIT(dev), i;
+	struct fd_softc *fd = fdcd.cd_devs[unit];
+	struct disklabel *lp = fd->sc_dk.dk_label;
+	struct cpu_disklabel *clp = fd->sc_dk.dk_cpulabel;
+
+	bzero(lp, sizeof(struct disklabel));
+	bzero(lp, sizeof(struct cpu_disklabel));
+
+	lp->d_type = DTYPE_FLOPPY;
+	lp->d_secsize = FDC_BSIZE;
+	lp->d_secpercyl = fd->sc_type->seccyl;
+	lp->d_nsectors = fd->sc_type->sectrac;
+	lp->d_ncylinders = fd->sc_type->tracks;
+	lp->d_ntracks = fd->sc_type->heads;	/* Go figure... */
+	lp->d_rpm = 3600;	/* XXX like it matters... */
+
+	strncpy(lp->d_typename, "floppy", sizeof(lp->d_typename));
+	strncpy(lp->d_packname, "fictitious", sizeof(lp->d_packname));
+	lp->d_interleave = 1;
+
+	lp->d_partitions[RAW_PART].p_offset = 0;
+	lp->d_partitions[RAW_PART].p_size = lp->d_secpercyl * lp->d_ncylinders;
+	lp->d_partitions[RAW_PART].p_fstype = FS_UNUSED;
+	lp->d_npartitions = RAW_PART + 1;
+
+	lp->d_magic = DISKMAGIC;
+	lp->d_magic2 = DISKMAGIC;
+	lp->d_checksum = dkcksum(lp);
+
+	/*
+	 * Call the generic disklabel extraction routine.  If there's
+	 * not a label there, fake it.
+	 */
+	if (readdisklabel(dev, fdstrategy, lp, clp) != NULL) {
+		strncpy(lp->d_packname, "default label",
+		    sizeof(lp->d_packname));
+		/*
+		 * Reset the partition info; it might have gotten
+		 * trashed in readdisklabel().
+		 *
+		 * XXX Why do we have to do this?  readdisklabel()
+		 * should be safe...
+		 */
+		for (i = 0; i < MAXPARTITIONS; ++i) {
+			lp->d_partitions[i].p_offset = 0;
+			if (i == RAW_PART) {
+				lp->d_partitions[i].p_size =
+				    lp->d_secpercyl * lp->d_ncylinders;
+				lp->d_partitions[i].p_fstype = FS_BSDFFS;
+			} else {
+				lp->d_partitions[i].p_size = 0;
+				lp->d_partitions[i].p_fstype = FS_UNUSED;
+			}
+		}
+		lp->d_npartitions = RAW_PART + 1;
+	}
+}
+
+void
+fd_do_eject()
+{
+
+	auxregbisc(AUXIO_FDS, AUXIO_FEJ);
+	delay(10);
+	auxregbisc(AUXIO_FEJ, AUXIO_FDS);
+}
+
+/* ARGSUSED */
+void
+fd_mountroot_hook(dev)
+	struct device *dev;
+{
+	int c;
+
+	fd_do_eject();
+	printf("Insert filesystem floppy and press return.");
+	for (;;) {
+		c = cngetc();
+		if ((c == '\r') || (c == '\n')) {
+			printf("\n");
+			return;
+		}
+	}
 }
