@@ -1,4 +1,4 @@
-/*	$NetBSD: ka680.c,v 1.5 2001/04/24 20:16:37 ragge Exp $	*/
+/*	$NetBSD: ka680.c,v 1.6 2001/05/01 11:11:47 ragge Exp $	*/
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -114,14 +114,21 @@ ka680_conf()
 	*hej = *hej;
 	hej[-1] = hej[-1];
 
-	if((vax_boardtype & 0xff) == 1) switch((vax_siedata & 0xff00) >> 8) {
-		case VAX_STYP_675: cpuname = "KA675"; break;
-		case VAX_STYP_680: cpuname = "KA680"; break;
-		case VAX_STYP_690: cpuname = "KA690"; break;
-		default: cpuname = "unknown KA680-class";
-	} else if((vax_boardtype & 0xff) == 5) {
-		cpuname = "KA681";
-	} else cpuname = "unknown NVAX class";
+	switch(vax_boardtype) {
+		case VAX_BTYP_680: switch((vax_siedata & 0xff00) >> 8) {
+			case VAX_STYP_675: cpuname = "KA675"; break;
+			case VAX_STYP_680: cpuname = "KA680"; break;
+			case VAX_STYP_690: cpuname = "KA690"; break;
+			default: cpuname = "unknown KA680-class";
+		} break;
+		case VAX_BTYP_681: switch((vax_siedata & 0xff00) >> 8) {
+			case VAX_STYP_681: cpuname = "KA681"; break;
+			case VAX_STYP_691: cpuname = "KA691"; break;
+			case VAX_STYP_694: cpuname = "KA694"; break;
+			default: cpuname = "unknown KA681-class";
+		} break;
+		default: cpuname = "unknown NVAX class";
+	}
 
 	printf("cpu0: %s, ucode rev %d\n", cpuname, vax_cpudata & 0xff);
 }
@@ -148,30 +155,48 @@ ka680_cache_enable()
 
 
 	start = 0x01400000;
-	if((vax_boardtype & 0xff) == 1) switch ((vax_siedata & 0xff00) >> 8) {
-	case VAX_STYP_675:
-		fslut = 0x01420000;
-		cslut = 0x01020000;
-		havevic = 0;
-		break;
-	case VAX_STYP_680:
-		fslut = 0x01420000;
-		cslut = 0x01020000;
-		havevic = 1;
-		break;
-	case VAX_STYP_690:
-		fslut = 0x01440000;
-		cslut = 0x01040000;
-		havevic = 1;
-		break;
-	} else if((vax_boardtype & 0xff) == 5) {
-		fslut = 0x01420000;
-		cslut = 0x01020000;
-		havevic = 1;
-	} else {
-		fslut = 0x01420000;
-		cslut = 0x01020000;
-		havevic = 0;
+	/* fallback, use smallest known cache on unknown models */
+	fslut = 0x01420000;
+	cslut = 0x01020000;
+	havevic = 0;
+  
+	switch(vax_boardtype) {
+		case VAX_BTYP_680:
+			switch((vax_siedata & 0xff00) >> 8) {
+			case VAX_STYP_675:
+				fslut = 0x01420000;
+				cslut = 0x01020000;
+				havevic = 0;
+				break;
+			case VAX_STYP_680:
+				fslut = 0x01420000;
+				cslut = 0x01020000;
+				havevic = 1;
+				break;
+			case VAX_STYP_690:
+				fslut = 0x01440000;
+				cslut = 0x01040000;
+				havevic = 1;
+				break;
+		}
+		case VAX_BTYP_681:
+			switch((vax_siedata & 0xff00) >> 8) {
+			case VAX_STYP_681:
+				fslut = 0x01420000;
+				cslut = 0x01020000;
+				havevic = 1;
+				break;
+			case VAX_STYP_691:
+				fslut = 0x01420000;
+				cslut = 0x01020000;
+				havevic = 1;
+				break;
+			case VAX_STYP_694:
+				fslut = 0x01440000;
+				cslut = 0x01040000;
+				havevic = 1;
+				break;
+		}
 	}
 
 	/* Flush cache lines */
