@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.41 2001/05/14 20:35:28 bouyer Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.42 2001/05/18 12:56:28 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -1380,7 +1380,10 @@ scsipi_complete(xs)
 			 */
 			mo.mo_target = periph->periph_target;
 			mo.mo_lun = periph->periph_lun;
-			mo.mo_openings = periph->periph_active - 1;
+			if (periph->periph_active < periph->periph_openings)
+				mo.mo_openings = periph->periph_active - 1;
+			else
+				mo.mo_openings = periph->periph_openings - 1;
 #ifdef DIAGNOSTIC
 			if (mo.mo_openings < 0) {
 				scsipi_printaddr(periph);
