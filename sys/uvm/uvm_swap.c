@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.9 1998/05/01 01:40:02 mrg Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.10 1998/06/17 07:38:28 ross Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -847,7 +847,7 @@ swap_on(p, sdp)
 	 */
 
 	sdp->swd_se.se_nblks = nblocks;
-	npages = dbtob(nblocks) / PAGE_SIZE;
+	npages = dbtob((u_int64_t)nblocks) / PAGE_SIZE;
 
 	/*
 	 * for block special files, we want to make sure that leave
