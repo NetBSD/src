@@ -1,3 +1,5 @@
+/*	$NetBSD: ffs.S,v 1.4 1995/11/17 20:21:14 thorpej Exp $	*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -36,9 +38,11 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	.text
-	/*.asciz "from: @(#)ffs.s	5.1 (Berkeley) 5/12/90"*/
-	.asciz "$Id: ffs.S,v 1.3 1994/09/09 03:09:03 mycroft Exp $"
+#if 0
+	RCSID("from: @(#)ffs.s	5.1 (Berkeley) 5/12/90")
+#else
+	RCSID("$NetBSD: ffs.S,v 1.4 1995/11/17 20:21:14 thorpej Exp $")
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 /* bit = ffs(value) */
