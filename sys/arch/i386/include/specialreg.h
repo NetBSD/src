@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.10 2000/03/24 19:06:07 thorpej Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.11 2000/03/27 23:15:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -123,16 +123,29 @@
 /*
  * Model-specific registers for the i386 family
  */
-#define MSR_P5_MC_ADDR		0x000
-#define MSR_P5_MC_TYPE		0x001
+#define MSR_P5_MC_ADDR		0x000	/* P5 only */
+#define MSR_P5_MC_TYPE		0x001	/* P5 only */
 #define MSR_TSC			0x010
+#define	MSR_CESR		0x011	/* P5 only (trap on P6) */
+#define	MSR_CTR0		0x012	/* P5 only (trap on P6) */
+#define	MSR_CTR1		0x013	/* P5 only (trap on P6) */
 #define MSR_APICBASE		0x01b
 #define MSR_EBL_CR_POWERON	0x02a
+#define	MSR_TEST_CTL		0x033
 #define MSR_BIOS_UPDT_TRIG	0x079
+#define	MSR_BBL_CR_D0		0x088	/* PII+ only */
+#define	MSR_BBL_CR_D1		0x089	/* PII+ only */
+#define	MSR_BBL_CR_D2		0x08a	/* PII+ only */
 #define MSR_BIOS_SIGN		0x08b
 #define MSR_PERFCTR0		0x0c1
 #define MSR_PERFCTR1		0x0c2
 #define MSR_MTRRcap		0x0fe
+#define	MSR_BBL_CR_ADDR		0x116	/* PII+ only */
+#define	MSR_BBL_CR_DECC		0x118	/* PII+ only */
+#define	MSR_BBL_CR_CTL		0x119	/* PII+ only */
+#define	MSR_BBL_CR_TRIG		0x11a	/* PII+ only */
+#define	MSR_BBL_CR_BUSY		0x11b	/* PII+ only */
+#define	MSR_BBL_CR_CTR3		0x11e	/* PII+ only */
 #define MSR_MCG_CAP		0x179
 #define MSR_MCG_STATUS		0x17a
 #define MSR_MCG_CTL		0x17b
@@ -144,10 +157,33 @@
 #define MSR_LASTINTFROMIP	0x1dd
 #define MSR_LASTINTTOIP		0x1de
 #define MSR_ROB_CR_BKUPTMPDR6	0x1e0
-#define MSR_MTRRVarBase		0x200
-#define MSR_MTRR64kBase		0x250
-#define MSR_MTRR16kBase		0x258
-#define MSR_MTRR4kBase		0x268
+#define	MSR_MTRRphysBase0	0x200
+#define	MSR_MTRRphysMask0	0x201
+#define	MSR_MTRRphysBase1	0x202
+#define	MSR_MTRRphysMask1	0x203
+#define	MSR_MTRRphysBase2	0x204
+#define	MSR_MTRRphysMask2	0x205
+#define	MSR_MTRRphysBase3	0x206
+#define	MSR_MTRRphysMask3	0x207
+#define	MSR_MTRRphysBase4	0x208
+#define	MSR_MTRRphysMask4	0x209
+#define	MSR_MTRRphysBase5	0x20a
+#define	MSR_MTRRphysMask5	0x20b
+#define	MSR_MTRRphysBase6	0x20c
+#define	MSR_MTRRphysMask6	0x20d
+#define	MSR_MTRRphysBase7	0x20e
+#define	MSR_MTRRphysMask7	0x20f
+#define	MSR_MTRRfix64K_00000	0x250
+#define	MSR_MTRRfix16K_80000	0x258
+#define	MSR_MTRRfix16K_A0000	0x259
+#define	MSR_MTRRfix4K_C0000	0x268
+#define	MSR_MTRRfix4K_C8000	0x269
+#define	MSR_MTRRfix4K_D0000	0x26a
+#define	MSR_MTRRfix4K_D8000	0x26b
+#define	MSR_MTRRfix4K_E0000	0x26c
+#define	MSR_MTRRfix4K_E8000	0x26d
+#define	MSR_MTRRfix4K_F0000	0x26e
+#define	MSR_MTRRfix4K_F8000	0x26f
 #define MSR_MTRRdefType		0x2ff
 #define MSR_MC0_CTL		0x400
 #define MSR_MC0_STATUS		0x401
