@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.62 2002/10/20 02:27:01 isaki Exp $ */
+/* $NetBSD: device.h,v 1.63 2002/10/23 01:06:54 christos Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -155,7 +155,7 @@ TAILQ_HEAD(evcntlist, evcnt);
 #define	EVCNT_INITIALIZER(type, parent, group, name)			\
     {									\
 	0,			/* ev_count */				\
-	{ },			/* ev_list */				\
+	{ 0 },			/* ev_list */				\
 	type,			/* ev_type */				\
 	0,			/* ev_grouplen */			\
 	0,			/* ev_namelen */			\
@@ -237,7 +237,7 @@ LIST_HEAD(cfattachlist, cfattach);
 
 #define	CFATTACH_DECL(name, ddsize, matfn, attfn, detfn, actfn)		\
 struct cfattach __CONCAT(name,_ca) = {					\
-	___STRING(name), { }, ddsize, matfn, attfn, detfn, actfn	\
+	___STRING(name), { 0 }, ddsize, matfn, attfn, detfn, actfn	\
 }
 
 /* Flags given to config_detach(), and the ca_detach function. */
@@ -257,7 +257,7 @@ LIST_HEAD(cfdriverlist, cfdriver);
 
 #define	CFDRIVER_DECL(name, class, attrs)				\
 struct cfdriver __CONCAT(name,_cd) = {					\
-	{ }, { }, NULL, ___STRING(name), class, 0, attrs		\
+	{ 0 }, { 0 }, NULL, ___STRING(name), class, 0, attrs		\
 }
 
 /*
