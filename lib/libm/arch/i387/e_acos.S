@@ -5,7 +5,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$Id: e_acos.S,v 1.3 1995/04/28 22:43:31 jtc Exp $")
+RCSID("$NetBSD: e_acos.S,v 1.4 1995/05/08 23:44:37 jtc Exp $")
 
 /* acos = atan (sqrt(1 - x^2) / x) */
 ENTRY(__ieee754_acos)
