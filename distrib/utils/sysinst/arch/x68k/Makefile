@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2003/06/27 22:20:18 dsl Exp $
+#	$NetBSD: Makefile,v 1.9 2004/03/04 10:16:07 martin Exp $
 #
 # Makefile for x68k
 #
@@ -10,7 +10,7 @@ SRCS=	menu_defs.c msg_defs.c main.c install.c upgrade.c \
 	label.c target.c md.c savenewlabel.c sizemultname.c \
 	bsddisklabel.c
 
-# Note: we have no french messages, because x68k console does not
+# Note: we have no french or german messages, because x68k console does not
 # support ISO-8859-1 (right half) character set.
 
 LANGUAGES=	en pl
