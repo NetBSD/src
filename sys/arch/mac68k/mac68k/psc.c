@@ -1,4 +1,4 @@
-/*	$NetBSD: psc.c,v 1.1.2.2 1997/11/12 02:17:37 mellon Exp $	*/
+/*	$NetBSD: psc.c,v 1.1.2.3 1997/12/20 22:54:07 perry Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
@@ -47,13 +47,13 @@ void		psc_lev5_intr __P((struct frame *));
 static void	psc_lev5_noint __P((void *));
 void		psc_lev6_intr __P((struct frame *));
 static void	psc_lev6_noint __P((void *));
+void		psc_spurintr __P((struct frame *));
 
 void	(*lev3_intrvec) __P((struct frame *));
 int	(*lev4_intrvec) __P((struct frame *));
 void	(*lev5_intrvec) __P((struct frame *));
 void	(*lev6_intrvec) __P((struct frame *));
 
-extern void	spurintr __P((struct frame *));
 extern int	zshard __P((void *));			/* from zs.c */
 
 void	(*psc3_ihandler) __P((void *)) = psc_lev3_noint;
@@ -98,7 +98,7 @@ psc_init()
 	/*
 	 * Only Quadra AVs have a PSC. On other machines, point the
 	 * level 4 interrupt to zshard(), and levels 3, 5, and 6 to
-	 * spurintr().
+	 * psc_spurintr().
 	 */
 	if (current_mac_model->class == MACH_CLASSAV) {
 		lev3_intrvec = psc_lev3_intr;
@@ -111,9 +111,15 @@ psc_init()
 		psc_reg1(PSC_LEV5_IER) = 0x03; /* disable level 5 interrupts */
 		psc_reg1(PSC_LEV6_IER) = 0x07; /* disable level 6 interrupts */
 	} else {
+		lev3_intrvec = lev5_intrvec = lev6_intrvec = psc_spurintr;
 		lev4_intrvec = (int (*)(struct frame *))zshard;
-		lev3_intrvec = lev5_intrvec = lev6_intrvec = spurintr;
 	}
+}
+
+void
+psc_spurintr(fp)
+	struct frame *fp;
+{
 }
 
 int
