@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs.h,v 1.22 1998/08/09 20:51:09 perry Exp $	*/
+/*	$NetBSD: procfs.h,v 1.23 1999/01/25 02:20:08 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -53,7 +53,8 @@ typedef enum {
 	Pctl,		/* process control */
 	Pstatus,	/* process status */
 	Pnote,		/* process notifier */
-	Pnotepg		/* process group notifier */
+	Pnotepg,	/* process group notifier */
+	Pmap		/* memory map */
 } pfstype;
 
 /*
@@ -112,6 +113,7 @@ int procfs_dofpregs __P((struct proc *, struct proc *, struct pfsnode *pfsp, str
 int procfs_domem __P((struct proc *, struct proc *, struct pfsnode *pfsp, struct uio *uio));
 int procfs_doctl __P((struct proc *, struct proc *, struct pfsnode *pfsp, struct uio *uio));
 int procfs_dostatus __P((struct proc *, struct proc *, struct pfsnode *pfsp, struct uio *uio));
+int procfs_domap __P((struct proc *, struct proc *, struct pfsnode *pfsp, struct uio *uio));
 
 int procfs_checkioperm __P((struct proc *p, struct proc *t));
 
@@ -119,6 +121,7 @@ int procfs_checkioperm __P((struct proc *p, struct proc *t));
 int procfs_validfile __P((struct proc *));
 int procfs_validfpregs __P((struct proc *));
 int procfs_validregs __P((struct proc *));
+int procfs_validmap __P((struct proc *));
 
 int procfs_rw __P((void *));
 
