@@ -1,0 +1,4 @@
+# $NetBSD: md.cesfic,v 1.1 2004/03/28 09:25:49 jmc Exp $
+./usr/X11R6/bin/Xvfb
+./usr/X11R6/man/cat1/Xvfb.0			-unknown-		.cat
+./usr/X11R6/man/man1/Xvfb.1			-unknown-		.man
