@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.46 2000/03/25 21:09:08 fvdl Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.47 2000/05/14 18:22:13 dante Exp $	*/
 
 /*
  * Generic driver for the aic7xxx based adaptec SCSI controllers
@@ -5596,7 +5596,7 @@ ahc_check_tags(struct ahc_softc *ahc, struct scsipi_xfer *xs)
 	 * should really be done by the higher level drivers.
 	 */
 	inq = (struct scsipi_inquiry_data *)xs->data;
-	if ((inq->flags & SID_CmdQue) && !(ahc_istagged_device(ahc, xs))) {
+	if ((inq->flags3 & SID_CmdQue) && !(ahc_istagged_device(ahc, xs))) {
 	        printf("%s: target %d using tagged queuing\n",
 			ahc_name(ahc), xs->sc_link->scsipi_scsi.target);
 
