@@ -1,4 +1,4 @@
-/* $NetBSD: lapic.c,v 1.1.2.6 2000/02/21 20:02:22 sommerfeld Exp $ */
+/* $NetBSD: lapic.c,v 1.1.2.7 2000/02/21 21:10:28 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -85,29 +85,26 @@ lapic_map(lapic_base)
 	int s;
 	pt_entry_t *pte;
 	vaddr_t va = (vaddr_t)&local_apic;
-	
+
 	disable_intr();
 	s = lapic_tpr;
-	/*
-	 * Map local apic.
-	 */
-	pmap_kenter_pa (va, lapic_base, VM_PROT_ALL);
 
 	/*
-	 * Mark page uncacheable.
+	 * Map local apic.  If we have a local apic, it's safe to assume
+	 * we're on a 486 or better and can use invpg and non-cacheable PTE's
 	 *
-	 * PG_N doesn't exist on 386's, so we assume that
-	 * the mainboard has wired up device space non-cacheable
-	 * on those machines.
-	 *
-	 * XXX should hand this bit to pmap_kenter_pa to
-	 * save the extra invalidate!
+	 * Whap the PTE "by hand" rather than calling pmap_kenter_pa because
+	 * the latter will attempt to invoke TLB shootdown code just as we
+	 * might have changed the value of cpu_number()..
 	 */
-	if (cpu_class != CPUCLASS_386) {
-		pte = kvtopte(va);
-		*pte |= PG_N;
-		pmap_update_pg(va);
-	}
+
+	pte = kvtopte(va);
+	*pte = lapic_base | PG_RW | PG_V | PG_N | pmap_pg_g;
+	pmap_update_pg(va);
+
+#ifdef MULTIPROCESSOR
+	cpu_init_first();	/* catch up to changed cpu_number() */
+#endif
 
 	lapic_tpr = s;
 	enable_intr();
@@ -169,10 +166,7 @@ lapic_boot_init(lapic_base)
 
 #ifdef MULTIPROCESSOR
 	idt_vec_set(LAPIC_IPI_VECTOR, Xintripi);
-	cpu_init_first();
 #endif
-	
-	
 	idt_vec_set(LAPIC_SPURIOUS_VECTOR, Xintrspurious);
 	idt_vec_set(LAPIC_TIMER_VECTOR, Xintrltimer);
 
