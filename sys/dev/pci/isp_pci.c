@@ -1,4 +1,4 @@
-/* $NetBSD: isp_pci.c,v 1.88 2003/05/03 18:11:36 wiz Exp $ */
+/* $NetBSD: isp_pci.c,v 1.89 2003/08/07 01:05:56 mjacob Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_pci.c,v 1.88 2003/05/03 18:11:36 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_pci.c,v 1.89 2003/08/07 01:05:56 mjacob Exp $");
 
 #include <dev/ic/isp_netbsd.h>
 #include <dev/pci/pcireg.h>
@@ -375,6 +375,7 @@ isp_pci_attach(struct device *parent, struct device *self, void *aux)
 	bus_space_tag_t st, iot, memt;
 	bus_space_handle_t sh, ioh, memh;
 	pci_intr_handle_t ih;
+	pcireg_t mem_type;
 	char *dstring;
 	const char *intrstr;
 	int ioh_valid, memh_valid;
@@ -382,9 +383,17 @@ isp_pci_attach(struct device *parent, struct device *self, void *aux)
 	ioh_valid = (pci_mapreg_map(pa, IO_MAP_REG,
 	    PCI_MAPREG_TYPE_IO, 0,
 	    &iot, &ioh, NULL, NULL) == 0);
-	memh_valid = (pci_mapreg_map(pa, MEM_MAP_REG,
-	    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT, 0,
-	    &memt, &memh, NULL, NULL) == 0);
+	
+	mem_type = pci_mapreg_type(pa->pa_pc, pa->pa_tag, MEM_MAP_REG);
+	if (PCI_MAPREG_TYPE(mem_type) != PCI_MAPREG_TYPE_MEM) {
+		memh_valid = 0;
+	} else if (PCI_MAPREG_MEM_TYPE(mem_type) != PCI_MAPREG_MEM_TYPE_32BIT &&
+	    PCI_MAPREG_MEM_TYPE(mem_type) != PCI_MAPREG_MEM_TYPE_64BIT) {
+		memh_valid = 0;
+	} else {
+		memh_valid = (pci_mapreg_map(pa, MEM_MAP_REG, mem_type, 0,
+		    &memt, &memh, NULL, NULL) == 0);
+	}
 	if (memh_valid) {
 		st = memt;
 		sh = memh;
@@ -410,7 +419,7 @@ isp_pci_attach(struct device *parent, struct device *self, void *aux)
 
 #ifndef	ISP_DISABLE_1020_SUPPORT
 	if (pa->pa_id == PCI_QLOGIC_ISP) {
-		dstring = ": QLogic 1020 Ultra Wide SCSI HBA\n";
+		dstring = ": QLogic 1020 Fast Wide SCSI HBA\n";
 		isp->isp_mdvec = &mdvec;
 		isp->isp_type = ISP_HA_SCSI_UNKNOWN;
 		isp->isp_param = malloc(sizeof (sdparam), M_DEVBUF, M_NOWAIT);
