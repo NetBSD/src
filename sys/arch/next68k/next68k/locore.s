@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.35 2002/05/30 21:58:56 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.36 2002/09/11 01:46:34 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -919,14 +919,14 @@ Lbrkpt3:
  * vector 0x18+level.  Note we count spurious interrupts,
  * but don't do anything else with them.
  *
- * _intrhand_autovec is the entry point for auto-vectored
+ * intrhand_autovec is the entry point for auto-vectored
  * interrupts.
  *
  * For vectored interrupts, we pull the pc, evec, and exception frame
  * and pass them to the vectored interrupt dispatcher.  The vectored
  * interrupt dispatcher will deal with strays.
  *
- * _intrhand_vectored is the entry point for vectored interrupts.
+ * intrhand_vectored is the entry point for vectored interrupts.
  */
 
 #define INTERRUPT_SAVEREG	moveml  #0xC0C0,%sp@-
@@ -938,16 +938,13 @@ ENTRY_NOPROFILE(spurintr)	/* Level 0 */
 	jra	_ASM_LABEL(rei)
 
 ENTRY_NOPROFILE(intrhand_autovec)	/* Levels 1 through 6 */
+	addql	#1,_C_LABEL(interrupt_depth)
 	INTERRUPT_SAVEREG
 	lea	%sp@(16),%a1		| get pointer to frame
 	movl	%a1,%sp@-
-	movw	%sp@(26),%d0
-	movl	%d0,%sp@-		| push exception vector info
-	movl	%sp@(26),%sp@-		| and PC
 	jbsr	_C_LABEL(isrdispatch_autovec)	| call dispatcher
-	lea	%sp@(12),%sp		| pop value args
-	INTERRUPT_RESTOREREG
-	jra	_ASM_LABEL(rei)		| all done
+	addql	#4,%sp
+	jbra	Lintrhand_exit
 
 ENTRY_NOPROFILE(lev7intr)	/* level 7: parity errors, reset key */
 	addql	#1,_C_LABEL(intrcnt)+32
@@ -963,15 +960,20 @@ ENTRY_NOPROFILE(lev7intr)	/* level 7: parity errors, reset key */
 	jra	_ASM_LABEL(rei)		| all done
 
 ENTRY_NOPROFILE(intrhand_vectored)
+	addql	#1,_C_LABEL(interrupt_depth)
 	INTERRUPT_SAVEREG
 	lea	%sp@(16),%a1		| get pointer to frame
 	movl	%a1,%sp@-
-	movw	%sp@(26),%d0
-	movl	%d0,%sp@-		| push exception vector info
-	movl	%sp@(26),%sp@-		| and PC
+	movw	%sr,%d0
+	bfextu	%d0,21,3,%d0		| Get current ipl
+	movl	%d0,%sp@-		| Push it
 	jbsr	_C_LABEL(isrdispatch_vectored)	| call dispatcher
-	lea	%sp@(12),%sp		| pop value args
+	addql	#8,%sp
+Lintrhand_exit:
 	INTERRUPT_RESTOREREG
+	subql	#1,_C_LABEL(interrupt_depth)
+
+	/* FALLTHROUGH to rei */
 	jra	_ASM_LABEL(rei)		| all done
 
 #undef INTERRUPT_SAVEREG
@@ -1650,9 +1652,10 @@ GLOBAL(intrnames)
 	.asciz	"lev6"
 	.asciz  "lev7"
 	.asciz	"nmi"
+	.asciz	"statclock"
 GLOBAL(eintrnames)
 	.even
 GLOBAL(intrcnt)
-	.long	0,0,0,0,0,0,0,0,0
+	.long	0,0,0,0,0,0,0,0,0,0
 GLOBAL(eintrcnt)
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.4 2001/05/13 16:55:39 chs Exp $	*/
+/*	$NetBSD: clock.c,v 1.5 2002/09/11 01:46:34 mycroft Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -36,9 +36,12 @@
 #include <sys/tty.h>
 
 #include <machine/psl.h>
+#include <machine/bus.h>
 #include <machine/cpu.h>
 
 #include <next68k/dev/clockreg.h>
+#include <next68k/dev/intiovar.h>
+
 #include <next68k/next68k/rtc.h>
 #include <next68k/next68k/isr.h>
 
@@ -131,13 +134,29 @@ clock_intr(arg)
      void *arg;
 {
 	volatile struct timer_reg *timer;
+	int whilecount = 0;
 
 	if (!INTR_OCCURRED(NEXT_I_TIMER)) {
 		return(0);
 	}
-	timer = (volatile struct timer_reg *)IIOV(NEXT_P_TIMER);
-	timer->csr |= TIMER_UPDATE;
-	hardclock(arg);
+
+	do {
+		static int in_hardclock = 0;
+		int s;
+		
+		timer = (volatile struct timer_reg *)IIOV(NEXT_P_TIMER);
+		timer->csr |= TIMER_UPDATE;
+
+		if (! in_hardclock) {
+			in_hardclock = 1;
+			s = splclock ();
+			hardclock(arg);
+			splx(s);
+			in_hardclock = 0;
+		}
+		if (whilecount++ > 10)
+			panic ("whilecount");
+	} while (INTR_OCCURRED(NEXT_I_TIMER));
 	return(1);
 }
 
@@ -162,7 +181,7 @@ cpu_initclocks()
 	timer->msb = (cnt >> 8);
 	timer->lsb = cnt;
 	timer->csr = TIMER_ENABLE|TIMER_UPDATE;
-	isrlink_autovec(clock_intr, NULL, NEXT_I_IPL(NEXT_I_TIMER), 0);
+	isrlink_autovec(clock_intr, NULL, NEXT_I_IPL(NEXT_I_TIMER), 0, NULL);
 	INTR_ENABLE(NEXT_I_TIMER);
 	splx(s);
 }

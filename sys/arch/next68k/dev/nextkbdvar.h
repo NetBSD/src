@@ -1,4 +1,4 @@
-/* $NetBSD: nextkbdvar.h,v 1.1 1999/01/28 11:46:23 dbj Exp $ */
+/* $NetBSD: nextkbdvar.h,v 1.2 2002/09/11 01:46:32 mycroft Exp $ */
 /*
  * Copyright (c) 1998 Matt DeBergalis
  * All rights reserved.
@@ -38,4 +38,7 @@ struct nextkbd_softc {
 	struct device *sc_wskbddev;
 
 	int enabled; /* XXX ? */
+	int sc_leds;
 };
+
+#define NEXT_WSKBD_LEDS (WSKBD_LED_CAPS)
