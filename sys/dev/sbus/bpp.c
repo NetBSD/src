@@ -1,4 +1,4 @@
-/*	$NetBSD: bpp.c,v 1.17 2002/10/23 09:13:42 jdolecek Exp $ */
+/*	$NetBSD: bpp.c,v 1.18 2002/11/26 18:49:46 christos Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpp.c,v 1.17 2002/10/23 09:13:42 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpp.c,v 1.18 2002/11/26 18:49:46 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -511,7 +511,7 @@ filt_bpprdetach(struct knote *kn)
 	int s;
 
 	s = splbpp();
-	SLIST_REMOVE(&sc->sc_rsel.si_klist, kn, knote, kn_selnext);
+	SLIST_REMOVE(&sc->sc_rsel.sel_klist, kn, knote, kn_selnext);
 	splx(s);
 }
 
@@ -532,7 +532,7 @@ filt_bppwdetach(struct knote *kn)
 	int s;
 
 	s = splbpp();
-	SLIST_REMOVE(&sc->sc_wsel.si_klist, kn, knote, kn_selnext);
+	SLIST_REMOVE(&sc->sc_wsel.sel_klist, kn, knote, kn_selnext);
 	splx(s);
 }
 
@@ -560,12 +560,12 @@ bppkqfilter(dev_t dev, struct knote *kn)
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
-		klist = &sc->sc_rsel.si_klist;
+		klist = &sc->sc_rsel.sel_klist;
 		kn->kn_fop = &bppread_filtops;
 		break;
 
 	case EVFILT_WRITE:
-		klist = &sc->sc_wsel.si_klist;
+		klist = &sc->sc_wsel.sel_klist;
 		kn->kn_fop = &bppwrite_filtops;
 		break;
 

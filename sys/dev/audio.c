@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.168 2002/11/08 05:02:07 kent Exp $	*/
+/*	$NetBSD: audio.c,v 1.169 2002/11/26 18:49:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.168 2002/11/08 05:02:07 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.169 2002/11/26 18:49:40 christos Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -1983,7 +1983,7 @@ filt_audiordetach(struct knote *kn)
 	int s;
 
 	s = splaudio();
-	SLIST_REMOVE(&sc->sc_rsel.si_klist, kn, knote, kn_selnext);
+	SLIST_REMOVE(&sc->sc_rsel.sel_klist, kn, knote, kn_selnext);
 	splx(s);
 }
 
@@ -2015,7 +2015,7 @@ filt_audiowdetach(struct knote *kn)
 	int s;
 
 	s = splaudio();
-	SLIST_REMOVE(&sc->sc_wsel.si_klist, kn, knote, kn_selnext);
+	SLIST_REMOVE(&sc->sc_wsel.sel_klist, kn, knote, kn_selnext);
 	splx(s);
 }
 
@@ -2045,12 +2045,12 @@ audio_kqfilter(struct audio_softc *sc, struct knote *kn)
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
-		klist = &sc->sc_rsel.si_klist;
+		klist = &sc->sc_rsel.sel_klist;
 		kn->kn_fop = &audioread_filtops;
 		break;
 
 	case EVFILT_WRITE:
-		klist = &sc->sc_wsel.si_klist;
+		klist = &sc->sc_wsel.sel_klist;
 		kn->kn_fop = &audiowrite_filtops;
 		break;
 
