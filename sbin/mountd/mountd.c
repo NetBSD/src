@@ -1,4 +1,4 @@
-/*	$NetBSD: mountd.c,v 1.21 1995/05/28 05:31:01 jtc Exp $	*/
+/*	$NetBSD: mountd.c,v 1.22 1995/06/02 21:04:24 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mountd.c	8.8 (Berkeley) 2/20/94";
 #else
-static char rcsid[] = "$NetBSD: mountd.c,v 1.21 1995/05/28 05:31:01 jtc Exp $";
+static char rcsid[] = "$NetBSD: mountd.c,v 1.22 1995/06/02 21:04:24 mycroft Exp $";
 #endif
 #endif not lint
 
@@ -1711,8 +1711,8 @@ parsecred(namelist, cr)
 	 */
 	cr->cr_ref = 1;
 	cr->cr_uid = -2;
-	cr->cr_groups[0] = -2;
-	cr->cr_ngroups = 1;
+	cr->cr_gid = -2;
+	cr->cr_ngroups = 0;
 	/*
 	 * Get the user's password table entry.
 	 */
@@ -1738,8 +1738,8 @@ parsecred(namelist, cr)
 		 * Convert from int's to gid_t's and compress out duplicate
 		 */
 		cr->cr_ngroups = ngroups - 1;
-		cr->cr_groups[0] = groups[0];
-		for (cnt = 2; cnt < ngroups; cnt++)
+		cr->cr_gid = groups[0];
+		for (cnt = 1; cnt < ngroups; cnt++)
 			cr->cr_groups[cnt - 1] = groups[cnt];
 		return;
 	}
