@@ -1,4 +1,4 @@
-/*	$NetBSD: mixerctl.c,v 1.3 1997/05/19 17:32:07 augustss Exp $	*/
+/*	$NetBSD: mixerctl.c,v 1.4 1997/05/23 17:55:29 augustss Exp $	*/
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -52,6 +52,7 @@ struct field {
 	char *name;
 	mixer_ctrl_t *valp;
 	mixer_devinfo_t *infp;
+	char changed;
 } *fields, *rfields;
 
 mixer_ctrl_t *values;
@@ -88,7 +89,10 @@ prfield(struct field *p, char *sep, int prvalset)
 	m = p->valp;
 	switch(m->type) {
 	case AUDIO_MIXER_ENUM:
-		fprintf(out, "%s", p->infp->un.e.member[m->un.ord].label.name);
+		for(i = 0; i < p->infp->un.e.num_mem; i++)
+			if (p->infp->un.e.member[i].ord == m->un.ord)
+				fprintf(out, "%s",
+					p->infp->un.e.member[i].label.name);
 		if (prvalset) {
 			fprintf(out, "  [ ");
 			for(i = 0; i < p->infp->un.e.num_mem; i++)
@@ -120,16 +124,13 @@ prfield(struct field *p, char *sep, int prvalset)
 	}
 }
 
-void
-rdfield(struct field *p, char *q, char *sep)
+int
+rdfield(struct field *p, char *q)
 {
 	mixer_ctrl_t *m;
-	int v, v0, v1;
+	int v, v0, v1, mask;
 	int i;
 	char *s;
-
-	if (sep)
-		prfield(p, ": ", 0);
 
 	m = p->valp;
 	switch(m->type) {
@@ -139,11 +140,13 @@ rdfield(struct field *p, char *q, char *sep)
 				break;
 		if (i < p->infp->un.e.num_mem)
 			m->un.ord = p->infp->un.e.member[i].ord;
-		else
+		else {
 			warnx("Bad enum value %s", q);
+			return 0;
+		}
 		break;
 	case AUDIO_MIXER_SET:
-		m->un.mask = 0;
+		mask = 0;
 		for(v = 0; q && *q; q = s) {
 			s = strchr(q, ',');
 			if (s)
@@ -152,10 +155,13 @@ rdfield(struct field *p, char *q, char *sep)
 				if (strcmp(p->infp->un.s.member[i].label.name, q) == 0)
 					break;
 			if (i < p->infp->un.s.num_mem) {
-				m->un.mask |= p->infp->un.s.member[i].mask;
-			} else
+				mask |= p->infp->un.s.member[i].mask;
+			} else {
 				warnx("Bad set value %s", q);
+				return 0;
+			}
 		}
+		m->un.mask = mask;
 		break;
 	case AUDIO_MIXER_VALUE:
 		if (m->un.value.num_channels == 1) {
@@ -163,6 +169,7 @@ rdfield(struct field *p, char *q, char *sep)
 				m->un.value.level[0] = v;
 			} else {
 				warnx("Bad number %s", q);
+				return 0;
 			}
 		} else {
 			if (sscanf(q, "%d,%d", &v0, &v1) == 2) {
@@ -172,18 +179,15 @@ rdfield(struct field *p, char *q, char *sep)
 				m->un.value.level[0] = m->un.value.level[1] = v;
 			} else {
 				warnx("Bad numbers %s", q);
+				return 0;
 			}
 		}
 		break;
 	default:
 		errx(1, "Invalid format.");
 	}
-
-	if (sep) {
-		fprintf(out, " -> ");
-		prfield(p, 0, 0);
-		fprintf(out, "\n");
-	}
+	p->changed = 1;
+	return 1;
 }
 
 void
@@ -194,6 +198,7 @@ main(int argc, char **argv)
 	char *file = "/dev/mixer";
 	char *sep = "=";
 	mixer_devinfo_t dinfo;
+	mixer_ctrl_t val;
 	int ndev;
 
 	prog = *argv;
@@ -302,9 +307,19 @@ main(int argc, char **argv)
 					if (p == 0)
 						warnx("field %s does not exist", *argv);
 					else {
-						rdfield(p, q, sep);
-						if (ioctl(fd, AUDIO_MIXER_WRITE, p->valp) < 0)
-							warn(NULL);
+						val = *p->valp;
+						if (rdfield(p, q)) {
+							if (ioctl(fd, AUDIO_MIXER_WRITE, p->valp) < 0)
+								warn(NULL);
+							else if (sep) {
+								*p->valp = val;
+								prfield(p, ": ", 0);
+								ioctl(fd, AUDIO_MIXER_READ, p->valp);
+								printf(" -> ");
+								prfield(p, 0, 0);
+								printf("\n");
+							}
+						}
 					}
 				} else {
 					warnx("No `=' in %s", *argv);
