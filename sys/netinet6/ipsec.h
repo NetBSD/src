@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.h,v 1.41 2003/09/22 04:47:44 itojun Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.42 2004/03/02 02:17:39 thorpej Exp $	*/
 /*	$KAME: ipsec.h,v 1.51 2001/08/05 04:52:58 itojun Exp $	*/
 
 /*
@@ -127,13 +127,22 @@ struct inpcbpolicy {
 	int priv;			/* privileged socket ? */
 
 	/* cached policy */
-	/* XXX 3 == IPSEC_DIR_MAX */
-	struct secpolicy *cache[3];
-	struct secpolicyindex cacheidx[3];
-	int cachegen[3]; 	/* cache generation #, the time we filled it */
-	int cacheflags;
+	struct {
+		struct secpolicy *cachesp;
+		struct secpolicyindex cacheidx;
+		int cachehint;		/* processing requirement hint: */
+#define	IPSEC_PCBHINT_MAYBE	0	/* IPsec processing maybe required */
+#define	IPSEC_PCBHINT_YES	1	/* IPsec processing is required */
+#define	IPSEC_PCBHINT_NO	2	/* IPsec processing not required */
+		u_int cachegen;		/* spdgen when cache filled */
+	} sp_cache[3];			/* XXX 3 == IPSEC_DIR_MAX */
+	int sp_cacheflags;
 #define IPSEC_PCBSP_CONNECTED	1
 };
+
+#define	IPSEC_PCB_SKIP_IPSEC(inpp, dir)					\
+	((inpp)->sp_cache[(dir)].cachehint == IPSEC_PCBHINT_NO &&	\
+	 (inpp)->sp_cache[(dir)].cachegen == ipsec_spdgen)
 
 /* SP acquiring list table. */
 struct secspacq {
@@ -337,7 +346,9 @@ extern int ip6_ipsec_ecn;
 
 extern int ipsec_pcbconn __P((struct inpcbpolicy *));
 extern int ipsec_pcbdisconn __P((struct inpcbpolicy *));
-extern int ipsec_invalpcbcacheall __P((void));
+extern void ipsec_invalpcbcacheall __P((void));
+
+extern u_int ipsec_spdgen;
 
 extern struct secpolicy *ipsec4_getpolicybysock
 	__P((struct mbuf *, u_int, struct socket *, int *));
