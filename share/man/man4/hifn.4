@@ -1,4 +1,4 @@
-.\"	$NetBSD: hifn.4,v 1.3 2004/04/29 08:38:37 wiz Exp $
+.\"	$NetBSD: hifn.4,v 1.4 2004/04/29 08:44:40 wiz Exp $
 .\"	$OpenBSD: hifn.4,v 1.32 2002/09/26 07:55:40 miod Exp $
 .\"	$FreeBSD: src/share/man/man4/hifn.4,v 1.1.2.2 2003/10/08 23:57:50 sam Exp $
 .\"
@@ -89,35 +89,14 @@ The Hifn
 and
 .Tn 7956
 may also supply data to the kernel
-.Xr rn 4
+.Xr rnd 4
 subsystem.
-.Sh BUGS
-The 7751 chip starts out at initialization by only supporting compression.
-A proprietary algorithm, which has been reverse engineered, is required to
-unlock the cryptographic functionality of the chip.
-It is possible for vendors to make boards which have a lock ID not known
-to the driver, but all vendors currently just use the obvious ID which is
-13 bytes of 0.
 .Sh SEE ALSO
 .Xr crypto 4 ,
-.Xr intro 4 ,
 .Xr fast_ipsec 4 ,
+.Xr intro 4 ,
 .Xr rnd 4 ,
 .Xr opencrypto 9
-.Sh CAVEATS
-The Hifn 9751 shares the same PCI ID.
-This chip is basically a 7751, but with the cryptographic functions missing.
-Instead, the 9751 is only capable of doing compression.
-Since we do not currently attempt to use any of these chips to do
-compression, the 9751-based cards are not useful.
-.Pp
-Support for the 7955 and 7956 is incomplete; the asymetric crypto
-facilities are to be added and the performance is suboptimal.
-.Pp
-Supplying data to the kernel
-.Xr rnd 4
-subsystem has been disabled, pending verification that the on-chip
-RNG is statistically adequate.
 .Sh HISTORY
 The
 .Nm
@@ -131,3 +110,24 @@ back-ported to
 .Fx 4.8 ,
 and subsequently imported into
 .Nx 2.0 .
+.Sh CAVEATS
+The Hifn 9751 shares the same PCI ID.
+This chip is basically a 7751, but with the cryptographic functions missing.
+Instead, the 9751 is only capable of doing compression.
+Since we do not currently attempt to use any of these chips to do
+compression, the 9751-based cards are not useful.
+.Pp
+Support for the 7955 and 7956 is incomplete; the asymmetric crypto
+facilities are to be added and the performance is suboptimal.
+.Pp
+Supplying data to the kernel
+.Xr rnd 4
+subsystem has been disabled, pending verification that the on-chip
+RNG is statistically adequate.
+.Sh BUGS
+The 7751 chip starts out at initialization by only supporting compression.
+A proprietary algorithm, which has been reverse engineered, is required to
+unlock the cryptographic functionality of the chip.
+It is possible for vendors to make boards which have a lock ID not known
+to the driver, but all vendors currently just use the obvious ID which is
+13 bytes of 0.
