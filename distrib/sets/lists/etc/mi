@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.103 2002/08/06 13:58:44 soren Exp $
+# $NetBSD: mi,v 1.104 2002/08/27 14:12:12 takemura Exp $
 ./.cshrc				etc-util-etc
 ./.profile				etc-util-etc
 ./dev/MAKEDEV.local			etc-sys-etc
@@ -147,6 +147,7 @@
 ./etc/rc.d/sysdb			etc-sys-rc
 ./etc/rc.d/syslogd			etc-sys-rc
 ./etc/rc.d/timed			etc-timed-rc
+./etc/rc.d/tpctl			etc-sys-rc
 ./etc/rc.d/ttys				etc-sys-rc
 ./etc/rc.d/virecover			etc-sys-rc
 ./etc/rc.d/wdogctl			etc-sysutil-rc

@@ -1,4 +1,4 @@
-# $NetBSD: form,v 1.8 2002/04/11 13:20:22 martin Exp $
+# $NetBSD: form,v 1.9 2002/08/27 14:16:01 takemura Exp $
 script:script1,do_rcshutdown	Run /etc/rc.shutdown?
 iscript:3,1,999,script2,rcshutdown_timeout	Number of seconds before terminating shutdown
 escript:15,script2,hostname	Hostname, if blank use /etc/myname
@@ -126,3 +126,5 @@ script:script1,moused		Configure moused?
 escript:15,script2,moused_flags	Flags for moused
 script:script1,wscons		Configure wscons?
 escript:15,script2,wscons_flags	Flags to pass to /etc/rc.wscons
+script:script1,tpctl		Run tpctl, touch panel calibration utility?
+escript:40,script2,tpctl_flags	Flags to pass to tpctl

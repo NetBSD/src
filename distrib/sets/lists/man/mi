@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.510 2002/08/13 11:22:03 wiz Exp $
+# $NetBSD: mi,v 1.511 2002/08/27 14:12:12 takemura Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -1710,6 +1710,7 @@
 ./usr/share/man/cat8/tftpd.0			man-netutil-catman
 ./usr/share/man/cat8/timed.0			man-timed-catman
 ./usr/share/man/cat8/timedc.0			man-timed-catman
+./usr/share/man/cat8/tpctl.0			man-sysutil-catman
 ./usr/share/man/cat8/traceroute.0		man-netutil-catman
 ./usr/share/man/cat8/traceroute6.0		man-netutil-catman
 ./usr/share/man/cat8/trivial-rewrite.0		man-postfix-catman
@@ -3453,6 +3454,7 @@
 ./usr/share/man/man8/tftpd.8			man-netutil-man
 ./usr/share/man/man8/timed.8			man-timed-man
 ./usr/share/man/man8/timedc.8			man-timed-man
+./usr/share/man/man8/tpctl.8			man-sysutil-man
 ./usr/share/man/man8/traceroute.8		man-netutil-man
 ./usr/share/man/man8/traceroute6.8		man-netutil-man
 ./usr/share/man/man8/trivial-rewrite.8		man-postfix-man
