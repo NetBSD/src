@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.194 2003/11/08 13:21:36 martin Exp $	*/
+/*	$NetBSD: locore.s,v 1.195 2003/11/08 14:04:26 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -99,6 +99,11 @@
  * area at times anyway.
  */
 #define	CCFSZ	96
+
+/* We rely on the fact that %lo(CPUINFO_VA) is zero */
+.if CPUINFO_VA & 0x1fff
+BARF
+.endif
 
 /*
  * A handy macro for maintaining instrumentation counters.
@@ -1974,10 +1979,6 @@ memfault_sun4c:
 
 #if defined(SUN4M)
 memfault_sun4m:
-	! DANGER: we use the fact that %lo(CPUINFO_VA) is zero
-.if CPUINFO_VA & 0x1fff
-BARF
-.endif
 	sethi	%hi(CPUINFO_VA), %l4
 	ld	[%l4 + %lo(CPUINFO_VA+CPUINFO_GETSYNCFLT)], %l5
 	jmpl	%l5, %l7
@@ -4106,15 +4107,14 @@ Lgandul:	nop
 	/*
 	 * Step 4: change the trap base register, now that our trap handlers
 	 * will function (they need the tables we just set up).
-	 * This depends on the fact that bzero does not use %g6.
+	 * This depends on the fact that memset does not use %g6.
 	 */
 	wr	%g6, 0, %tbr
 	nop; nop; nop			! paranoia
 
-
-	/* Clear `cpuinfo' */
-	sethi	%hi(CPUINFO_VA), %o0		! memset(&cpuinfo, 0, NBPG)
-	set	%hi(CPUINFO_STRUCTSIZE), %o2
+	/* Clear `cpuinfo': memset(&cpuinfo, 0, sizeof cpuinfo) */
+	sethi	%hi(CPUINFO_VA), %o0
+	set	CPUINFO_STRUCTSIZE, %o2
 	call	_C_LABEL(memset)
 	 clr	%o1
 
