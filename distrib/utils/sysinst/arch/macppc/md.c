@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.25 2003/05/29 17:51:29 dsl Exp $	*/
+/*	$NetBSD: md.c,v 1.26 2003/05/30 17:31:21 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -62,7 +62,7 @@
 #define	PART_USR	G
 
 int
-md_get_info()
+md_get_info(void)
 {
 	struct disklabel disklabel;
 	int fd;
@@ -110,7 +110,7 @@ md_get_info()
  * hook called before writing new disklabel.
  */
 int
-md_pre_disklabel()
+md_pre_disklabel(void)
 {
 	return 0;
 }
@@ -134,7 +134,7 @@ md_post_disklabel(void)
  * On the macppc, we use this opportunity to install the boot blocks.
  */
 int
-md_post_newfs()
+md_post_newfs(void)
 {
 	const char *bootfile = "/boot";
 
@@ -150,13 +150,13 @@ md_post_newfs()
  * some ports use this to copy the MD filesystem, we do not.
  */
 int
-md_copy_filesystem()
+md_copy_filesystem(void)
 {
 	return 0;
 }
 
 int
-md_make_bsd_partitions()
+md_make_bsd_partitions(void)
 {
 	int i, part;
 	int remain;
@@ -346,7 +346,7 @@ md_make_bsd_partitions()
 
 /* Upgrade support */
 int
-md_update()
+md_update(void)
 {
 
 	endwin();
@@ -360,31 +360,31 @@ md_update()
 }
 
 void
-md_cleanup_install()
+md_cleanup_install(void)
 {
 
 }
 
 int
-md_pre_update()
+md_pre_update(void)
 {
 	return 1;
 }
 
 void
-md_init()
+md_init(void)
 {
 }
 
 void
-md_set_sizemultname()
+md_set_sizemultname(void)
 {
 
 	set_sizemultname_meg();
 }
 
 void
-md_set_no_x()
+md_set_no_x(void)
 {
 
 	toggle_getit (8);
