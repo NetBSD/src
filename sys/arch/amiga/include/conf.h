@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.10 2002/02/27 01:19:04 christos Exp $	*/
+/*	$NetBSD: conf.h,v 1.11 2002/02/28 03:17:25 simonb Exp $	*/
 
 /*
  * Copyright (c) 1996 Bernd Ernesti.  All rights reserved.
@@ -29,7 +29,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define DEV_RELOAD	20	/* minor device 20  is magic memory
+#define	DEV_RELOAD	20	/* minor device 20  is magic memory
 				 * which you can write a kernel image to,
 				 * causing a reboot into that kernel
 				 */

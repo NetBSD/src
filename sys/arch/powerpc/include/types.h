@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.12 2001/04/28 15:41:32 kleink Exp $	*/
+/*	$NetBSD: types.h,v 1.13 2002/02/28 03:17:35 simonb Exp $	*/
 
 /*-
  * Copyright (C) 1995 Wolfgang Solfrank.
@@ -51,6 +51,6 @@ typedef	unsigned long	psize_t, vsize_t;
 
 typedef int		register_t;
 
-#define __HAVE_CPU_COUNTER
+#define	__HAVE_CPU_COUNTER
 
 #endif	/* _MACHTYPES_H_ */
