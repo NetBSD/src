@@ -1,4 +1,4 @@
-/*	$NetBSD: db_expr.c,v 1.10 2000/07/08 21:35:32 eeh Exp $	*/
+/*	$NetBSD: db_expr.c,v 1.11 2000/07/09 01:52:17 mycroft Exp $	*/
 
 /* 
  * Mach Operating System
@@ -55,7 +55,7 @@ db_term(valuep)
 		int	i, c, byte;
 
 		/* See if we can make a number out of all of it */
-		for (i=0; c = db_tok_string[i]; i++) {
+		for (i = 0; (c = db_tok_string[i]) != '\0'; i++) {
 		    byte = 0;
 		    if (c >= '0' && c <= '9')
 			    byte = c - '0';
