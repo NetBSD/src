@@ -1,5 +1,6 @@
-# $NetBSD: form,v 1.2 2001/01/21 06:57:03 garbled Exp $
+# $NetBSD: form,v 1.3 2001/08/01 04:06:06 garbled Exp $
 script:script1,do_rcshutdown	Run /etc/rc.shutdown?
+iscript:3,1,999,script2,rcshutdown_timeout	Number of seconds before terminating shutdown
 escript:15,script2,hostname	Hostname, if blank use /etc/myname
 escript:15,script2,defaultroute	Default Route, if blank use /etc/mygate
 escript:15,script2,domainname	NIS Domain Name, if blank use /etc/defaultdomain
@@ -20,6 +21,7 @@ escript:1,script2,securelevel	If non-blank, set securelevel early in boot
 script:script1,ipfilter		Start ipfiltering?
 script:script1,ipnat		Start ipnat NAT daemon?
 script:script1,ipsec		Start ipsec security daemon?
+script:script1,racoon		Start IKE daemon?
 script:script1,ipmon		Write ipfilter messages to syslog?
 escript:15,script2,ipmon_flags	Flags to pass to ipmon
 script:script1,auto_ifconfig	Automatically configure all available interfaces?
@@ -31,8 +33,11 @@ script:script1,ntpdate		Run ntpdate at boot?
 escript:15,script2,ntpdate_flags	Flags for ntpdate.
 escript:15,script2,ppp_peers	/etc/ppp/peers to call
 list:host,autohost,router	IPV6 mode
+script:script1,ip6sitelocal	IPv6 sitelocal addresses
 script:script1,rtsol		IPV6 autoconfig on non routers
 escript:15,script2,rtsol_flags	Flags to pass to rtsol
+script:script1,altqd		Run ALTQ configuration/monitoring daemon?
+escript:15,script2,altqd_flags	Flags to pass altqd
 script:script1,inetd		Run inetd?
 escript:15,script2,inetd_flags	Flags for inetd
 script:script1,rpcbind		Run rpcbind? (replaces portmap)
@@ -56,7 +61,6 @@ escript:15,script2,sshd_flags	Flags for sshd
 script:script1,routed		Run routed?
 escript:15,script2,routed_flags	Flags for routed
 script:script1,gated		Run gated?
-escript:15,script2,gated_flags	Flags for gated
 script:script1,mrouted		Run mrouted?
 escript:15,script2,mrouted_flags	Flags for mrouted
 script:script1,route6d		Run IPV6 routed?
@@ -87,9 +91,10 @@ script:script1,ypserv		Run ypserv (NIS)?
 escript:15,script2,ypserv_flags	Flags for ypserv
 script:script1,yppasswdd	Run yppasswdd (NIS)?
 escript:15,script2,yppasswdd_flags	Flags for yppasswdd
+script:script1,mountd		Run NFS mount requests daemon?
+escript:15,script2,mountd_flags	Flags for mountd
 script:script1,nfs_client	Run NFS client daemons?
 script:script1,nfs_server	Run NFS server daemons?
-escript:15,script2,mountd_flags	Flags for mountd
 escript:15,script2,nfsd_flags	Flags for nfsd
 script:script1,lockd		Run lockd?
 escript:15,script2,lockd_flags	Flags for lockd
@@ -98,12 +103,17 @@ escript:15,script2,statd_flags	Flags for statd
 script:script1,amd		Run automounter (amd)?
 escript:40,script2,amd_flags	Flags for amd
 escript:15,script2,amd_dir	Mount point for amd
-escript:15,script2,amd_master	Location of amd master map file
 script:script1,kdc		Run kerberos 5 KDC?
 escript:15,script2,kdc_flags	Flags for kerberos 5
+script:script1,isdnd		Run ISDN daemon?
+escript:15,script2,isdnd_flags	Flags for isdnd
+script:script1,isdn_autoupdown	Automatically bring isdn interfaces up?
+escript:15,script2,isdn_interfaces	List of interfaces to bring up
 script:script1,rwhod		Run rwhod?
 script:script1,apmd		Run apmd?
 escript:15,script2,apmd_flags	Flags for apmd
+script:script1,poffd		Run x68k power switch monitor?
+escript:30,script2,poffd_flags	Flags for poffd
 script:script1,screenblank	Run screenblank (i386/sparc only)?
 escript:15,script2,screenblank_flags	Flags for screenblank
 script:script1,wscons		Configure wscons?
