@@ -82,6 +82,7 @@
 #endif /* ! defined (MAXPATHLEN) */
 #endif /* HAVE_GETWD */
 
+#ifndef POSIX_HEADERS
 /* External functions.  */
 #ifndef getlogin
 extern char *getlogin ();
@@ -109,6 +110,7 @@ extern char *getwd ();
 #if HAVE_SYSCONF
 #ifndef sysconf
 extern long sysconf ();
+#endif
 #endif
 #endif
 

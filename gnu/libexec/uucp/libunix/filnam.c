@@ -74,8 +74,10 @@
 #endif
 
 /* External functions.  */
+#ifndef POSIX_HEADERS
 #ifndef lseek
 extern off_t lseek ();
+#endif
 #endif
 
 #define ZCHARS \

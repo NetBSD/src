@@ -26,7 +26,7 @@
 #include "uucp.h"
 
 #if USE_RCS_ID
-const char cusub_rcsid[] = "$Id: cusub.c,v 1.3 1995/08/24 05:19:37 jtc Exp $";
+const char cusub_rcsid[] = "$Id: cusub.c,v 1.4 1998/02/04 14:33:00 christos Exp $";
 #endif
 
 #include "uudefs.h"
@@ -319,7 +319,7 @@ fsysdep_cu (qconn, pbcmd, zlocalname)
 	usysdep_start_catch ();
       else
 	{
-	  ulog (LOG_ERROR, (const char *) NULL);
+	  ulog (LOG_ERROR, ulognone);
 	  return FALSE;
 	}
 
@@ -359,7 +359,7 @@ fsysdep_cu (qconn, pbcmd, zlocalname)
       if (errno != EINTR)
 	ulog (LOG_ERROR, "read: %s", strerror (errno));
       else
-	ulog (LOG_ERROR, (const char *) NULL);
+	ulog (LOG_ERROR, ulognone);
       return FALSE;
     }
 
@@ -925,7 +925,7 @@ zsysdep_terminal_line (zprompt)
 	{
 	  usysdep_end_catch ();
 	  /* Make sure the signal is logged.  */
-	  ulog (LOG_ERROR, (const char *) NULL);
+	  ulog (LOG_ERROR, ulognone);
 	  /* Return an empty string.  */
 	  cgot = 0;
 	  break;

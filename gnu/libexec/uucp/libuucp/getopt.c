@@ -137,6 +137,8 @@ static int last_nonopt;
    `first_nonopt' and `last_nonopt' are relocated so that they describe
    the new indices of the non-options in ARGV after they are moved.  */
 
+static void exchange P((char **));
+
 static void
 exchange (argv)
      char **argv;

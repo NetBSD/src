@@ -33,16 +33,20 @@
 
 #if HAVE_GETGRENT
 #include <grp.h>
+#ifndef POSIX_HEADERS
 #if GETGRENT_DECLARATION_OK
 #ifndef getgrent
 extern struct group *getgrent ();
 #endif
 #endif
+#endif
 #endif /* HAVE_GETGRENT */
 
+#ifndef POSIX_HEADERS
 #if GETPWNAM_DECLARATION_OK
 #ifndef getpwnam
 extern struct passwd *getpwnam ();
+#endif
 #endif
 #endif
 

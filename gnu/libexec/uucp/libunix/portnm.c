@@ -13,8 +13,10 @@
 #include <sys/socket.h>
 #endif
 
+#ifndef POSIX_HEADERS
 #ifndef ttyname
 extern char *ttyname ();
+#endif
 #endif
 
 /* Get the port name of standard input.  I assume that Unix systems

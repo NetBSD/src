@@ -26,7 +26,7 @@
 #include "uucp.h"
 
 #if USE_RCS_ID
-const char lock_rcsid[] = "$Id: lock.c,v 1.3 1995/08/24 05:19:56 jtc Exp $";
+const char lock_rcsid[] = "$Id: lock.c,v 1.4 1998/02/04 14:33:07 christos Exp $";
 #endif
 
 #include "uudefs.h"
@@ -71,8 +71,10 @@ const char lock_rcsid[] = "$Id: lock.c,v 1.3 1995/08/24 05:19:56 jtc Exp $";
 #define SEEK_SET 0
 #endif
 
+#ifndef POSIX_HEADERS
 #ifndef localtime
 extern struct tm *localtime ();
+#endif
 #endif
 
 #if HAVE_QNX_LOCKFILES

@@ -35,8 +35,10 @@
 #include <time.h>
 #endif
 
+#ifndef POSIX_HEADERS
 #ifndef ctime
 extern char *ctime ();
+#endif
 #endif
 
 /* Mail a message to a user.  */

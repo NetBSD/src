@@ -26,7 +26,7 @@
 #include "uucp.h"
 
 #if USE_RCS_ID
-const char cu_rcsid[] = "$Id: cu.c,v 1.3 1995/08/24 05:19:30 jtc Exp $";
+const char cu_rcsid[] = "$Id: cu.c,v 1.4 1998/02/04 14:32:58 christos Exp $";
 #endif
 
 #include "cu.h"
@@ -1897,7 +1897,7 @@ icutake (puuconf, argc, argv, pvar, pinfo)
       if (FGOT_SIGNAL ())
 	{
 	  /* Make sure the signal is logged.  */
-	  ulog (LOG_ERROR, (const char *) NULL);
+	  ulog (LOG_ERROR, ulognone);
 	  ucuputs ("[file receive aborted]");
 	  /* Reset the SIGINT flag so that it does not confuse us in
 	     the future.  */
@@ -2028,7 +2028,7 @@ fcusend_buf (qconn, zbufarg, cbufarg)
 	{
 	  /* Make sure the signal is logged.  */
 	  ubuffree (zsendbuf);
-	  ulog (LOG_ERROR, (const char *) NULL);
+	  ulog (LOG_ERROR, ulognone);
 	  ucuputs ("[file send aborted]");
 	  /* Reset the SIGINT flag so that it does not confuse us in
 	     the future.  */
@@ -2130,7 +2130,7 @@ fcusend_buf (qconn, zbufarg, cbufarg)
 		    {
 		      /* Make sure the signal is logged.  */
 		      ubuffree (zsendbuf);
-		      ulog (LOG_ERROR, (const char *) NULL);
+		      ulog (LOG_ERROR, ulognone);
 		      ucuputs ("[file send aborted]");
 		      /* Reset the SIGINT flag so that it does not
 			 confuse us in the future.  */

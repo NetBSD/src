@@ -293,6 +293,7 @@ extern void ulog P((enum tlog ttype, const char *zfmt, ...))
 #else
 extern void ulog ();
 #endif
+extern const char ulognone[];
 
 #undef GNUC_VERSION
 

@@ -26,7 +26,7 @@
 #include "uucnfi.h"
 
 #if USE_RCS_ID
-const char _uuconf_cmdarg_rcsid[] = "$Id: cmdarg.c,v 1.3 1995/08/24 05:20:55 jtc Exp $";
+const char _uuconf_cmdarg_rcsid[] = "$Id: cmdarg.c,v 1.4 1998/02/04 14:33:20 christos Exp $";
 #endif
 
 #include <ctype.h>
@@ -35,7 +35,9 @@ const char _uuconf_cmdarg_rcsid[] = "$Id: cmdarg.c,v 1.3 1995/08/24 05:20:55 jtc
 #if HAVE_STRCASECMP
 #undef strcasecmp
 #endif
+#ifndef POSIX_HEADERS
 extern int strcmp (), strcasecmp ();
+#endif
 
 /* Look up a command with arguments in a table and execute it.  */
 

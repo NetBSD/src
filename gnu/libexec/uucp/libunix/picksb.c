@@ -26,7 +26,7 @@
 #include "uucp.h"
 
 #if USE_RCS_ID
-const char picksb_rcsid[] = "$Id: picksb.c,v 1.3 1995/08/24 05:20:04 jtc Exp $";
+const char picksb_rcsid[] = "$Id: picksb.c,v 1.4 1998/02/04 14:33:12 christos Exp $";
 #endif
 
 #include "uudefs.h"
@@ -45,9 +45,11 @@ const char picksb_rcsid[] = "$Id: picksb.c,v 1.3 1995/08/24 05:20:04 jtc Exp $";
 #endif /* ! HAVE_DIRENT_H */
 #endif /* HAVE_OPENDIR */
 
+#ifndef POSIX_HEADERS
 #if GETPWUID_DECLARATION_OK
 #ifndef getpwuid
 extern struct passwd *getpwuid ();
+#endif
 #endif
 #endif
 

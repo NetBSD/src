@@ -55,6 +55,8 @@ Modified by Ian Lance Taylor for Taylor UUCP, June 1992, and October 1993.  */
 #endif
 
 /* Traverse one level of a directory tree.  */
+static int ftw_dir P((DIR **, int, int, char *, size_t,
+     int (*)(const char *, struct stat *, int)));
 
 static int
 ftw_dir (dirs, level, descriptors, dir, len, func)

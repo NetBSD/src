@@ -23,7 +23,6 @@
 #include "sysdep.h"
 #include "fsusg.h"
 
-int statfs ();
 
 #if HAVE_SYS_PARAM_H
 #include <sys/param.h>
@@ -89,6 +88,10 @@ int statvfs ();
 #endif
 
 #if ! STAT_NONE
+
+#ifndef POSIX_HEADERS
+extern int statfs ();
+#endif
 
 static long adjust_blocks P((long blocks, int fromsize, int tosize));
 
