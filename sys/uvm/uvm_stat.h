@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_stat.h,v 1.29 2004/03/24 07:55:01 junyoung Exp $	*/
+/*	$NetBSD: uvm_stat.h,v 1.30 2004/04/23 02:48:12 simonb Exp $	*/
 
 /*
  *
@@ -112,7 +112,7 @@ struct uvm_history_ent {
 };
 
 struct uvm_history {
-	const char *name;		/* name of this this history */
+	const char *name;		/* name of this history */
 	size_t namelen;			/* length of name, not including null */
 	LIST_ENTRY(uvm_history) list;	/* link on list of all histories */
 	int n;				/* number of entries */
