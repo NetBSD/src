@@ -1,4 +1,4 @@
-/*	$NetBSD: w.c,v 1.53 2002/10/21 10:10:26 enami Exp $	*/
+/*	$NetBSD: w.c,v 1.54 2002/10/21 10:18:23 enami Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)w.c	8.6 (Berkeley) 6/30/94";
 #else
-__RCSID("$NetBSD: w.c,v 1.53 2002/10/21 10:10:26 enami Exp $");
+__RCSID("$NetBSD: w.c,v 1.54 2002/10/21 10:18:23 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -326,8 +326,8 @@ main(int argc, char **argv)
 	argwidth -= sizeof("WHAT\n") - 1 /* NUL */;
 
 	if ((ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws) == -1 &&
-	     ioctl(STDERR_FILENO, TIOCGWINSZ, &ws) == -1 &&
-	     ioctl(STDIN_FILENO, TIOCGWINSZ, &ws) == -1) || ws.ws_col == 0)
+	    ioctl(STDERR_FILENO, TIOCGWINSZ, &ws) == -1 &&
+	    ioctl(STDIN_FILENO, TIOCGWINSZ, &ws) == -1) || ws.ws_col == 0)
 		ttywidth = 79;
 	else
 		ttywidth = ws.ws_col - 1;
@@ -337,7 +337,7 @@ main(int argc, char **argv)
 	/* sort by idle time */
 	if (sortidle && ehead != NULL) {
 		struct entry *from = ehead, *save;
-		
+
 		ehead = NULL;
 		while (from != NULL) {
 			for (nextp = &ehead;
@@ -353,7 +353,7 @@ main(int argc, char **argv)
 #if defined(SUPPORT_UTMP) && defined(SUPPORT_UTMPX)
 	else if (ehead != NULL) {
 		struct entry *from = ehead, *save;
-		
+
 		ehead = NULL;
 		while (from != NULL) {
 			for (nextp = &ehead;
@@ -367,7 +367,7 @@ main(int argc, char **argv)
 		}
 	}
 #endif
-			
+
 	if (!nflag) {
 		int	rv;
 
@@ -565,7 +565,7 @@ process(struct entry *ep)
 	 */
 	if (strncmp(ep->line, "ftp", 3) == 0) {
 		ep->ftpd_pid = strtol(ep->line + 3, NULL, 10);
-		
+
 		return;
 	}
 #endif /* SUPPORT_FTPD_UTMP */
