@@ -1,4 +1,4 @@
-#	$NetBSD: KICKME,v 1.53 1999/01/14 04:44:23 cgd Exp $
+#	$NetBSD: KICKME,v 1.54 1999/07/05 09:14:09 fvdl Exp $
 #
 #	KICKME -- 486Cx-33 development machine
 #
@@ -35,8 +35,6 @@ options 	COMPAT_13
 options 	COMPAT_43	# and 4.3BSD
 
 options 	COMPAT_LINUX	# binary compatibility with Linux
-
-options 	EXEC_ELF32	# 32-bit ELF executables (SVR4, Linux)
 
 file-system 	FFS		# UFS
 file-system 	NFS		# Network File System client
