@@ -1,4 +1,4 @@
-/*      $NetBSD: bswap.h,v 1.3 2002/08/30 10:50:06 scw Exp $	*/
+/*      $NetBSD: byte_swap.h,v 1.1 2002/08/30 10:50:07 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -35,19 +35,45 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _SH5_BSWAP_H_
-#define	_SH5_BSWAP_H_
+#ifndef _SH5_BYTESWAP_H_
+#define	_SH5_BYTESWAP_H_
 
-#define __BSWAP_RENAME
-#include <sys/bswap.h>
+#include <sys/types.h>
 
-#ifdef __GNUC__
+static __inline u_int16_t _sh5_bswap16(u_int16_t);
+static __inline u_int32_t _sh5_bswap32(u_int32_t);
+static __inline u_int64_t _sh5_bswap64(u_int64_t);
 
-#include <sh5/byte_swap.h>
-#define	bswap16(x)	_sh5_bswap16(x)
-#define	bswap32(x)	_sh5_bswap32(x)
-#define	bswap64(x)	_sh5_bswap64(x)
+static __inline u_int16_t
+_sh5_bswap16(u_int16_t x)
+{
+	u_int16_t rval;
 
-#endif /* __GNUC__ */
+	__asm __volatile ("byterev %1,%0; shlri %0, 48, %0" :
+	    "=r"(rval) : "r"(x));
 
-#endif /* _SH5_BSWAP_H_ */
+	return (rval);
+}
+
+static __inline u_int32_t
+_sh5_bswap32(u_int32_t x)
+{
+	u_int32_t rval;
+
+	__asm __volatile ("byterev %1,%0; shlri %0, 32, %0" :
+	    "=r"(rval) : "r"(x));
+
+	return (rval);
+}
+
+static __inline u_int64_t
+_sh5_bswap64(u_int64_t x)
+{
+	u_int64_t rval;
+
+	__asm __volatile ("byterev %1,%0" : "=r"(rval) : "r"(x));
+
+	return (rval);
+}
+
+#endif /* _SH5_BYTESWAP_H_ */
