@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.35 1997/07/23 21:26:40 thorpej Exp $	*/
+/*	$NetBSD: in.c,v 1.36 1998/01/05 10:31:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)in.c	8.2 (Berkeley) 11/15/93
+ *	@(#)in.c	8.4 (Berkeley) 1/9/95
  */
 
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.42 1997/10/31 02:54:08 gwr Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.43 1998/01/05 10:31:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)if_ether.c	8.1 (Berkeley) 6/10/93
+ *	@(#)if_ether.c	8.2 (Berkeley) 9/26/94
  */
 
 /*

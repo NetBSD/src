@@ -1,4 +1,4 @@
-/*	$NetBSD: ip.h,v 1.16 1996/12/11 01:55:50 mycroft Exp $	*/
+/*	$NetBSD: ip.h,v 1.17 1998/01/05 10:31:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)ip.h	8.1 (Berkeley) 6/10/93
+ *	@(#)ip.h	8.2 (Berkeley) 6/1/94
  */
 
 /*

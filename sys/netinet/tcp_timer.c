@@ -1,7 +1,7 @@
-/*	$NetBSD: tcp_timer.c,v 1.27 1997/12/31 03:31:27 thorpej Exp $	*/
+/*	$NetBSD: tcp_timer.c,v 1.28 1998/01/05 10:32:11 thorpej Exp $	*/
 
 /*
- * Copyright (c) 1982, 1986, 1988, 1990, 1993
+ * Copyright (c) 1982, 1986, 1988, 1990, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)tcp_timer.c	8.1 (Berkeley) 6/10/93
+ *	@(#)tcp_timer.c	8.2 (Berkeley) 5/24/95
  */
 
 #ifndef TUBA_INCLUDE
