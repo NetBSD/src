@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bm.c,v 1.23 2004/10/30 18:08:34 thorpej Exp $	*/
+/*	$NetBSD: if_bm.c,v 1.24 2005/01/26 20:51:47 kleink Exp $	*/
 
 /*-
  * Copyright (C) 1998, 1999, 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.23 2004/10/30 18:08:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.24 2005/01/26 20:51:47 kleink Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -68,6 +68,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.23 2004/10/30 18:08:34 thorpej Exp $");
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
 #include <dev/mii/mii_bitbang.h>
+
+#include <powerpc/spr.h>
 
 #include <machine/autoconf.h>
 #include <machine/pio.h>
@@ -341,7 +343,10 @@ bmac_init(sc)
 	if (! (sc->sc_flags & BMAC_BMACPLUS))
 		bmac_set_bits(sc, XCVRIF, ClkBit|SerialMode|COLActiveLow);
 
-	__asm __volatile ("mftb %0" : "=r"(tb));
+	if ((mfpvr() >> 16) == MPC601)
+		tb = mfrtcl();
+	else
+		tb = mftbl();
 	bmac_write_reg(sc, RSEED, tb);
 	bmac_set_bits(sc, XIFC, TxOutputEnable);
 	bmac_read_reg(sc, PAREG);
