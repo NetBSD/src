@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.90 2003/02/17 23:48:23 perseant Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.91 2003/03/15 07:20:22 perseant Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -41,10 +41,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.90 2003/02/17 23:48:23 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.91 2003/03/15 07:20:22 perseant Exp $");
 
+#ifndef _LKM
 #include "opt_quota.h"
 #include "fs_lfs.h"
+#endif /* _LKM */
 
 #include <sys/param.h>
 #include <sys/systm.h>
