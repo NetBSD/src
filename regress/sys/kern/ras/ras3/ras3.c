@@ -1,4 +1,4 @@
-/* $NetBSD: ras3.c,v 1.3 2004/01/02 22:16:43 martin Exp $ */
+/* $NetBSD: ras3.c,v 1.4 2004/01/07 19:42:22 martin Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -88,6 +88,7 @@ main(int argc, char *argv[])
 		}
 	}
 	
+	__insn_barrier();
 start:
 	count++;
 	if (count > COUNT)
@@ -97,6 +98,7 @@ start:
 		continue;
 	}
 end:
+	__insn_barrier();
 
 	return (handled != 0);
 }
