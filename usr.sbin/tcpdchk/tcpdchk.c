@@ -1,4 +1,4 @@
-/*	$NetBSD: tcpdchk.c,v 1.3 1997/10/14 05:17:35 cjs Exp $	*/
+/*	$NetBSD: tcpdchk.c,v 1.4 1997/10/17 13:49:49 lukem Exp $	*/
 
  /*
   * tcpdchk - examine all tcpd access control rules and inetd.conf entries
@@ -21,7 +21,7 @@
 #if 0
 static char sccsid[] = "@(#) tcpdchk.c 1.7 96/02/11 17:01:34";
 #else
-__RCSID("$NetBSD: tcpdchk.c,v 1.3 1997/10/14 05:17:35 cjs Exp $");
+__RCSID("$NetBSD: tcpdchk.c,v 1.4 1997/10/17 13:49:49 lukem Exp $");
 #endif
 #endif
 
@@ -106,7 +106,7 @@ char  **argv;
     /*
      * Parse the JCL.
      */
-    while ((c = getopt(argc, argv, "adi:v")) != EOF) {
+    while ((c = getopt(argc, argv, "adi:v")) != -1) {
 	switch (c) {
 	case 'a':
 	    allow_check = 1;

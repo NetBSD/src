@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.15 1997/09/19 19:24:24 leo Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.16 1997/10/17 13:49:37 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -222,7 +222,7 @@ main(argc, argv)
 	FILE *fp;
 	char *p, *line;
 
-	while ((ch = getopt(argc, argv, "dsf:m:p:")) != EOF)
+	while ((ch = getopt(argc, argv, "dsf:m:p:")) != -1)
 		switch(ch) {
 		case 'd':		/* debug */
 			Debug++;
