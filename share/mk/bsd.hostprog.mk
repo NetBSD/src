@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.hostprog.mk,v 1.3 1999/09/24 17:48:57 wrstuden Exp $
+#	$NetBSD: bsd.hostprog.mk,v 1.4 1999/11/23 13:22:38 blymn Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .if !target(__initialized__)
@@ -34,6 +34,7 @@ LIBKRB?=	/usr/lib/libkrb.a
 LIBKVM?=	/usr/lib/libkvm.a
 LIBL?=		/usr/lib/libl.a
 LIBM?=		/usr/lib/libm.a
+LIBMENU?=	/usr/lib/libmenu.a
 LIBMP?=		/usr/lib/libmp.a
 LIBNTP?=	/usr/lib/libntp.a
 LIBOBJC?=	/usr/lib/libobjc.a
