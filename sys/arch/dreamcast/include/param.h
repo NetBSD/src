@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.2 2001/01/03 18:14:47 itojun Exp $	*/
+/*	$NetBSD: param.h,v 1.3 2001/01/04 07:03:22 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -53,9 +53,8 @@
 #endif
 #endif
 
-/* will be changed to sh3el */
-#define	_MACHINE_ARCH	sh3
-#define	MACHINE_ARCH	"sh3"
+#define	_MACHINE_ARCH	sh3el
+#define	MACHINE_ARCH	"sh3el"
 
 #define	_MACHINE	dreamcast
 #define	MACHINE		"dreamcast"
