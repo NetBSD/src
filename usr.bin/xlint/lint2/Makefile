@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2000/10/11 14:46:23 is Exp $
+#	$NetBSD: Makefile,v 1.8 2001/08/14 10:18:29 tv Exp $
 
 .PATH:	${.CURDIR}/../lint1
 
@@ -10,4 +10,7 @@ LINTFLAGS=-abehrz
 WFORMAT=1		# hopeless
 BINDIR=	/usr/libexec
 
+.ifndef HOSTPROG
 .include <bsd.prog.mk>
+.endif
+
