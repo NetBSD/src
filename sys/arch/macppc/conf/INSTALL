@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.81 2004/12/09 02:46:01 briggs Exp $
+#	$NetBSD: INSTALL,v 1.82 2004/12/09 02:54:18 briggs Exp $
 #
 # config file for INSTALL FLOPPY
 #
@@ -83,6 +83,7 @@ re*	at pci? dev ? function ?	# Realtek 8139C+/8169/8169S/8110S
 rtk*	at pci? dev ? function ?	# Realtek 8129/8139
 sip*	at pci? dev ? function ?	# SiS 900/7016 Ethernet
 vr*	at pci? dev ? function ?	# VIA Rhine Fast Ethernet
+wi*	at pci? dev ? function ?	# Intersil Prism Mini-PCI (802.11b)
 adv*	at pci? dev ? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
 adw*	at pci? dev ? function ?	# AdvanSys 9x0UW[D], 3940U[2,3]W SCSI
 ahc*	at pci? dev ? function ?	# Adaptec [23]94x, aic78x0 SCSI
@@ -133,11 +134,13 @@ wdc*	at pcmcia? function ?		# PCMCIA IDE controllers
 ep*	at pcmcia? function ?		# 3Com 3c589 and 3c562 Ethernet
 mbe*	at pcmcia? function ?		# MB8696x based Ethernet
 ne*	at pcmcia? function ?		# NE2000-compatible Ethernet
+wi*	at pcmcia? function ?		# Lucent WaveLan IEEE (802.11)
 ex*	at cardbus? dev ? function ?	# 3Com 3C575TX
 tlp*	at cardbus? dev ? function ?	# DECchip 21143
 
 bm*	at obio?			# bmac ethernet
 mc*	at obio?			# MACE ethernet
+wi*	at obio?			# AirMac
 esp*	at obio? flags 0x00ff		# 53c9x SCSI
 mesh*	at obio? flags 0xffff		# MESH SCSI
 nvram*	at obio?			# nvram
