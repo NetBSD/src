@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.45 2003/01/27 00:51:12 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.46 2003/01/27 00:56:12 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -755,6 +755,8 @@ Archive Site:	ftp://ftp.gnu.org/gnu/uucp/
 Mailing List:	taylor-uucp@cirr.com
 Responsible:	jtk
 Notes:
+Only change between 1.06.1 and 1.06.2 is that uucp-doc-1.06.tar.gz
+is included in the latter.
 
 Package:	XFree86
 Version:	3.3.6/4.2.1
