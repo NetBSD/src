@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sk.c,v 1.11 2004/09/26 14:23:58 skd Exp $	*/
+/*	$NetBSD: if_sk.c,v 1.12 2004/10/30 18:09:22 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -930,8 +930,10 @@ sk_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		error = ether_ioctl(ifp, command, data);
 
 		if ( error == ENETRESET) {
-			sk_setmulti(sc_if);
-			DPRINTFN(2, ("sk_ioctl setmulti called\n"));
+			if (ifp->if_flags & IFF_RUNNING) {
+				sk_setmulti(sc_if);
+				DPRINTFN(2, ("sk_ioctl setmulti called\n"));
+			}
 			error = 0;
 		} else if ( error ) {
 			splx(s);

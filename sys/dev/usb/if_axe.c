@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.5 2004/10/26 17:20:47 augustss Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.6 2004/10/30 18:10:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.5 2004/10/26 17:20:47 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.6 2004/10/30 18:10:06 thorpej Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
@@ -1269,7 +1269,8 @@ axe_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			 * Multicast list has changed; set the hardware
 			 * filter accordingly.
 			 */
-			axe_setmulti(sc);
+			if (ifp->if_flags & IFF_RUNNING)
+				axe_setmulti(sc);
 			error = 0;
 		}
 		break;

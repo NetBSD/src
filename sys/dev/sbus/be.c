@@ -1,4 +1,4 @@
-/*	$NetBSD: be.c,v 1.43 2004/05/04 15:34:37 pk Exp $	*/
+/*	$NetBSD: be.c,v 1.44 2004/10/30 18:10:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.43 2004/05/04 15:34:37 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.44 2004/10/30 18:10:06 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -1074,7 +1074,8 @@ beioctl(ifp, cmd, data)
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.
 			 */
-			be_mcreset(sc);
+			if (ifp->if_flags & IFF_RUNNING)
+				be_mcreset(sc);
 			error = 0;
 		}
 		break;
