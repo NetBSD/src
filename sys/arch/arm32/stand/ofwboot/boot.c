@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.1 2001/11/01 22:50:18 thorpej Exp $	*/
+/*	$NetBSD: boot.c,v 1.2 2001/11/01 22:55:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@ int boothowto;
 int debug;
 
 static int ofw_version = 0;
-static char *kernels[] = { "/netbsd", "/netbsd.gz", "/netbsd.ofppc", NULL };
+static char *kernels[] = { "/netbsd", "/netbsd.gz", "/netbsd.dnard", NULL };
 
 static void
 prom2boot(dev)
