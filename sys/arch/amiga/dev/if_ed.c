@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ed.c,v 1.9 1995/05/08 02:40:51 chopps Exp $	*/
+/*	$NetBSD: if_ed.c,v 1.10 1995/05/08 02:52:21 chopps Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -185,16 +185,17 @@ edattach(parent, self, aux)
 	struct zbus_args *zap = aux;
 	struct cfdata *cf = sc->sc_dev.dv_cfdata;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
-	int i, promoff;
+	u_char *prom;
+	int i;
 
 	if (zap->manid == HYDRA_MANID) {
 		sc->mem_start = zap->va;
 		sc->nic_addr = sc->mem_start + HYDRA_NIC_BASE;
-		promoff = HYDRA_ADDRPROM;
+		prom = (u_char *)sc->mem_start + HYDRA_ADDRPROM;
 	} else {
 		sc->mem_start = zap->va + 0x8000;
-		sc->nic_addr = sc->mem_start + ASDG_NIC_BASE;
-		promoff = ASDG_ADDRPROM;
+		sc->nic_addr = zap->va + ASDG_NIC_BASE;
+		prom = (u_char *)sc->nic_addr + ASDG_ADDRPROM;
 	}
 	sc->cr_proto = ED_CR_RD2;
 	sc->tx_page_start = 0;
@@ -225,8 +226,7 @@ edattach(parent, self, aux)
 	 * read the ethernet address from the board
 	 */
 	for (i = 0; i < ETHER_ADDR_LEN; i++)
-		sc->sc_arpcom.ac_enaddr[i] =
-		    *((u_char *)(sc->mem_start + promoff + 2 * i));
+		sc->sc_arpcom.ac_enaddr[i] = *(prom + 2 * i);
 
 	/* Set interface to stopped condition (reset). */
 	ed_stop(sc);
