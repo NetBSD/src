@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.101 2004/02/28 15:44:34 simonb Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.102 2004/02/28 16:02:03 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -79,7 +79,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.101 2004/02/28 15:44:34 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.102 2004/02/28 16:02:03 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -204,7 +204,7 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 	pcb = &l->l_addr->u_pcb;
 	pcb->pcb_context[0] = (int)func;		/* S0 */
 	pcb->pcb_context[1] = (int)arg;			/* S1 */
-	pcb->pcb_context[8] = (int)f - 24;		/* SP */
+	pcb->pcb_context[8] = (int)f;			/* SP */
 	pcb->pcb_context[10] = (int)proc_trampoline;	/* RA */
 	pcb->pcb_context[11] |= PSL_LOWIPL;		/* SR */
 #ifdef IPL_ICU_MASK
