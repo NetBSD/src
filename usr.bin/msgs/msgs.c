@@ -1,4 +1,4 @@
-/*	$NetBSD: msgs.c,v 1.16 2000/07/06 14:21:47 ad Exp $	*/
+/*	$NetBSD: msgs.c,v 1.17 2001/07/01 00:20:47 mjl Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)msgs.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: msgs.c,v 1.16 2000/07/06 14:21:47 ad Exp $");
+__RCSID("$NetBSD: msgs.c,v 1.17 2001/07/01 00:20:47 mjl Exp $");
 #endif
 #endif /* not lint */
 
@@ -244,7 +244,7 @@ main(argc, argv)
 
 			default:
 				fprintf(stderr,
-					"usage: msgs [fhlopqr] [[-]number]\n");
+					"usage: msgs [cfhlopqrs] [[-]number]\n");
 				exit(1);
 			}
 		}
@@ -413,7 +413,12 @@ main(argc, argv)
 	totty = (isatty(fileno(stdout)) != 0);
 	use_pager = use_pager && totty;
 
-	snprintf(fname, sizeof (fname), "%s/%s", getenv("HOME"), MSGSRC);
+	{
+	    char *home = getenv("HOME");
+	    if(home == NULL || *home == '\0')
+		errx(1, "$HOME not set");
+	    snprintf(fname, sizeof (fname), "%s/%s", home, MSGSRC);
+	}
 	msgsrc = fopen(fname, "r");
 	if (msgsrc) {
 		newrc = NO;
