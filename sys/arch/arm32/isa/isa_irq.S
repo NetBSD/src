@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_irq.S,v 1.1 1998/06/08 17:49:44 tv Exp $	*/
+/*	$NetBSD: isa_irq.S,v 1.2 1998/06/12 23:08:52 tv Exp $	*/
 
 /*
  * Copyright 1997
@@ -83,6 +83,7 @@
 #include <arm32/isa/icu.h>
 #include <machine/asm.h>
 #include <machine/irqhandler.h>
+#include "opt_uvm.h"
 
 sp	.req	r13
 lr	.req	r14
@@ -455,7 +456,11 @@ ENTRY(irq_setmasks)
 
 
 Lcnt:
+#if defined(UVM)
+	.word	_uvmexp
+#else
 	.word	_cnt
+#endif
 
 Lintrcnt:
 	.word	_intrcnt
