@@ -1,0 +1,7 @@
+$NetBSD: version,v 1.1.2.2 2002/02/16 03:37:41 thorpej Exp $
+
+NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
+file is important - make sure the entries are appended on end, last item
+is taken as the current.
+
+1.0:	PXE boot loader, contributed by Wasabi Systems, Inc.
