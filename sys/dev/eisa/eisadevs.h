@@ -1,10 +1,10 @@
-/*	$NetBSD: eisadevs.h,v 1.17 1998/07/01 21:59:20 kleink Exp $	*/
+/*	$NetBSD: eisadevs.h,v 1.18 1999/08/19 08:06:50 tron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: eisadevs,v 1.15 1998/07/01 21:57:32 kleink Exp 
+ *	NetBSD: eisadevs,v 1.16 1999/08/19 08:06:31 tron Exp 
  */
 
 /*
@@ -84,6 +84,7 @@
 #define	EISA_PRODUCT_TCM5091	"3Com 3C509 Ethernet"
 #define	EISA_PRODUCT_TCM5092	"3Com 3C579-TP Ethernet"
 #define	EISA_PRODUCT_TCM5093	"3Com 3C579 Ethernet"
+#define	EISA_PRODUCT_TCM5094	"3Com 3C509 Ethernet Combo"
 #define	EISA_PRODUCT_TCM5920	"3Com 3C592 Etherlink III"
 #define	EISA_PRODUCT_TCM5970	"3Com 3C597 Fast Etherlink TX"
 #define	EISA_PRODUCT_TCM5971	"3Com 3C597 Fast Etherlink T4"
