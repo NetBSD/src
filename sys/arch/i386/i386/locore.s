@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.214 1999/10/25 17:26:06 drochner Exp $	*/
+/*	$NetBSD: locore.s,v 1.215 2000/01/06 18:41:24 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -2000,8 +2000,8 @@ switch_exited:
 	movl	PCB_CR3(%esi),%ecx
 	movl	%ecx,%cr3
 
-	/* Switch TSS. */
-	andl	$~0x0200,4-SEL_KPL(%eax,%edx,1)
+	/* Switch TSS. Reset "task busy" flag before */
+	andl	$~0x0200,4(%eax,%edx, 1)
 	ltr	%dx
 
 #ifdef USER_LDT
