@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck.h,v 1.20 1999/11/15 19:19:41 fvdl Exp $	*/
+/*	$NetBSD: fsck.h,v 1.20.4.1 2001/11/24 22:07:27 he Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -53,6 +53,7 @@
 #define	DFOUND	04		/* directory found during descent */
 #define	DCLEAR	05		/* directory is to be cleared */
 #define	FCLEAR	06		/* file is to be cleared */
+#define	DMARK	07		/* used in propagate()'s traversal algorithm */
 
 /*
  * buffer cache structure.
@@ -78,6 +79,7 @@ struct bufarea {
 #define	MINBUFS		5	/* minimum number of buffers required */
 struct bufarea bufhead;		/* head of list of other blks in filesys */
 struct bufarea sblk;		/* file system superblock */
+struct bufarea asblk;		/* file system superblock */
 struct bufarea cgblk;		/* cylinder group blocks */
 struct bufarea *pdirbp;		/* current directory contents */
 struct bufarea *pbp;		/* current inode block */
@@ -89,6 +91,7 @@ struct bufarea *pbp;		/* current inode block */
 	(bp)->b_flags = 0;
 
 struct fs *sblock;
+struct fs *altsblock;
 struct cg *cgrp;
 #define	sbdirty() \
 	do { \
@@ -206,9 +209,9 @@ char	*statemap;		/* ptr to inode state table */
 u_char	*typemap;		/* ptr to inode type table */
 int16_t	*lncntp;		/* ptr to link count table */
 
-ino_t	lfdir;			/* lost & found directory inode number */
-char	*lfname;		/* lost & found directory name */
-int	lfmode;			/* lost & found directory creation mode */
+extern ino_t	lfdir;		/* lost & found directory inode number */
+extern char	*lfname;	/* lost & found directory name */
+extern int	lfmode;		/* lost & found directory creation mode */
 
 ufs_daddr_t n_blks;		/* number of blocks in use */
 ufs_daddr_t n_files;		/* number of files in use */
