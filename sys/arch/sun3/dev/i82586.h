@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586.h,v 1.1 1994/12/12 18:59:05 gwr Exp $ */
+/*	$NetBSD: i82586.h,v 1.2 1995/01/26 23:23:34 gwr Exp $ */
 
 /*-
  * Copyright (c) 1992, University of Vermont and State Agricultural College.
@@ -178,6 +178,7 @@ struct ie_cmd_common {
 #define IE_STAT_COMPL	SWAP(0x8000)	/* command is completed */
 #define IE_STAT_BUSY	SWAP(0x4000)	/* command is running now */
 #define IE_STAT_OK	SWAP(0x2000)	/* command completed successfully */
+#define IE_STAT_ABORT	SWAP(0x1000)	/* command was aborted */
 
 #define IE_CMD_NOP	SWAP(0x0000)	/* NOP */
 #define IE_CMD_IASETUP	SWAP(0x0001)	/* initial address setup */

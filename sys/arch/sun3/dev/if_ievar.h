@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ievar.h,v 1.3 1995/01/24 05:50:51 gwr Exp $	*/
+/*	$NetBSD: if_ievar.h,v 1.4 1995/01/26 23:23:39 gwr Exp $	*/
 
 /*
  * Machine-dependent glue for the Intel Ethernet (ie) driver.
@@ -47,12 +47,12 @@ enum ie_hardware {
  *   it into bits 17-20 (e.g. 0x40000).    Then or it to get the
  *   address of RAM (in our example: 0xffe40000).   see the attach routine!
  *
- * XXX CONFIRM THE BELOW COMMENT
- * on the onboard ie interface the 24 bit address space is hardwired
+ * In the onboard ie interface, the 24 bit address space is hardwired
  * to be 0xff000000 -> 0xffffffff of KVA.   this means that sc_iobase
  * will be 0xff000000.   sc_maddr will be where ever we allocate RAM
  * in KVA.    note that since the SCP is at a fixed address it means
- * that we have to allocate a fixed KVA for the SCP.
+ * that we have to use some memory at a fixed KVA for the SCP.
+ * The Sun PROM leaves a page for us at the end of KVA space.
  */
 struct ie_softc {
 	struct device sc_dev;	/* device structure */
@@ -66,13 +66,12 @@ struct ie_softc {
 	u_int   sc_msize;	/* how much RAM we have/use */
 	caddr_t sc_reg;		/* KVA of card's register */
 
+	enum ie_hardware hard_type;	/* card type */
 	void    (*reset_586)();	/* card dependent reset function */
 	void    (*chan_attn)();	/* card dependent attn function */
 	void    (*run_586)();	/* card dependent "go on-line" function */
-
-	enum ie_hardware hard_type;	/* card type */
-	void (*memcopy) __P((const void *, void *, u_int));
-	void (*memzero) __P((void *, u_int));
+	void (*sc_bcopy) __P((const void *, void *, u_int));
+	void (*sc_bzero) __P((void *, u_int));
 
 	int     want_mcsetup;	/* flag for multicast setup */
 	int     promisc;	/* are we in promisc mode? */
@@ -92,8 +91,8 @@ struct ie_softc {
 	int     buf_area_sz;
 
 	/*
-         * the actual buffers (recv and xmit)
-         */
+	 * the actual buffers (recv and xmit)
+	 */
 	volatile struct ie_recv_frame_desc *rframes[MXFRAMES];
 	volatile struct ie_recv_buf_desc *rbuffs[MXRXBUF];
 	volatile char *cbuffs[MXRXBUF];
@@ -101,13 +100,17 @@ struct ie_softc {
 
 	volatile struct ie_xmit_cmd *xmit_cmds[NTXBUF];
 	volatile struct ie_xmit_buf *xmit_buffs[NTXBUF];
-	int     xmit_count;
 	u_char *xmit_cbuffs[NTXBUF];
+	int xmit_busy;
+	int xmit_free;
+	int xchead, xctail;
 
 	struct ie_en_addr mcast_addrs[MAXMCAST + 1];
 	int     mcast_count;
 
-	int     nframes, nrxbuf;
+	int nframes;      /* number of frames in use */
+	int nrxbuf;       /* number of recv buffs in use */
+
 #ifdef IEDEBUG
 	int     sc_debug;
 #endif
