@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.15 2000/02/07 11:07:19 pk Exp $
+#	$NetBSD: list,v 1.16 2000/05/02 13:59:20 sjg Exp $
 
 # Sparc extra's
 LINK	instbin			sbin/disklabel
@@ -41,7 +41,7 @@ COPYDIR	${DESTDIR}/usr/share/zoneinfo	usr/share/zoneinfo
 COPY	${CURDIR}/../../share/termcap/termcap.src usr/share/misc/termcap
 
 # copy the kernel
-COPY	${CURDIR}/../../sys/arch/sparc/compile/GENERIC_SCSI3/netbsd	netbsd
+COPY	${KERNOBJDIR:-${CURDIR}/../../sys/arch/sparc/compile/GENERIC_SCSI3}/GENERIC_SCSI3/netbsd	netbsd
 
 # various files that we need in /etc for the install
 COPY	${DESTDIR}/etc/disktab		etc/disktab.shadow
