@@ -1,4 +1,4 @@
-/*	$NetBSD: sb_ofisa.c,v 1.2 1998/07/14 01:39:34 thorpej Exp $	*/
+/*	$NetBSD: sb_ofisa.c,v 1.3 1998/08/18 17:55:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -46,6 +46,7 @@
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>
+#include <dev/midi_if.h>
 #include <dev/mulaw.h>
 
 #include <dev/ofw/openfirm.h>
