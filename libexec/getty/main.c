@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.27 1998/10/12 18:03:49 tsarna Exp $	*/
+/*	$NetBSD: main.c,v 1.28 1999/01/15 23:44:32 kml Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.1 (Berkeley) 6/20/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.27 1998/10/12 18:03:49 tsarna Exp $");
+__RCSID("$NetBSD: main.c,v 1.28 1999/01/15 23:44:32 kml Exp $");
 #endif
 #endif /* not lint */
 
@@ -337,6 +337,7 @@ main(argc, argv)
 		edithost(HE);
 		if (IM && *IM)
 			putf(IM);
+		oflush();
 		if (setjmp(timeout)) {
 			tmode.c_ispeed = tmode.c_ospeed = 0;
 			(void)tcsetattr(0, TCSANOW, &tmode);
