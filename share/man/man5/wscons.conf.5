@@ -1,0 +1,74 @@
+.\"	$NetBSD: wscons.conf.5,v 1.2.2.2 2000/09/20 20:16:25 hubertf Exp $
+.\"
+.\" Copyright notice
+.\"
+.\" The following requests are required for all man pages.
+.Dd September 2nd, 2000
+.Dt WSCONS.CONF 5
+.Os
+.Sh NAME
+.Nm wscons.conf
+.Nd workstation console config file
+.Sh SYNOPSIS
+.Nm
+.Sh DESCRIPTION
+The
+.Nm
+file defines parameters regarding to the workstation console (wscons).
+The file consists of lines starting with a keyword, and one or more arguments.
+Empty lines and lines starting with a ``#'' sign are ignored.
+
+The following keywords and arguments are recognized:
+.Pp
+.Bl -tag -width keyboard -compact
+.It Sy screen      idx scr emul
+Add and configure virtual console number
+.Sy idx
+using a screen type of
+.Sy scr
+and a
+.Sy emul
+terminal emulation (e.g. vt100). 
+.Pp
+.It Sy font        name width height enc file
+Used to load a font via
+.Xr wsfontload 8 .
+.Sy name
+gives a font name that can be used later,
+.Sy width
+can be used to specify the width of a font character in pixel, 
+.Sy height
+is the same, just for the font characters' height.
+If both are ``-'', the font's default is assumes.
+.Sy enc
+is used to declare the font's encoding, see the description on
+.Xr wsfontload 8 's
+.Ar -e
+option for more detail.
+.Sy file
+gives the absolute path to the font file.
+See
+.Xr wsfontload 8
+for more information.
+.Pp
+.It Sy keyboard    <wsconscfg -k args>
+The given argument(s) are handed off to
+``wsconscfg -k'' for attaching and configuration of keyboards. See
+.Xr wsconscfg 8
+for more information.
+.Pp
+.It Sy mux         <wsconscfg -m args>
+Used to attach and configure keyboard/mouse multiplexors. See
+.Xr wsconscfg 8
+for more information.
+.Pp
+.El
+.Sh FILES
+.Bl -tag -width /etc/wscons.conf -compact
+.It Pa /etc/wscons.conf
+.El
+.Sh SEE ALSO
+.Xr wscons 4 , 
+.Xr wsconsctl 8 ,
+.Xr wsconscfg 8 ,
+.Xr wsfontload 8
