@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.63 1998/12/18 21:38:03 thorpej Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.64 1999/01/20 03:39:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -212,14 +212,22 @@ tcp_respond(tp, ti, m, ack, seq, flags)
 	tcp_seq ack, seq;
 	int flags;
 {
-	register int tlen;
-	int win = 0;
-	struct route *ro = 0;
+	struct route iproute, *ro;
+	struct rtentry *rt;
+	struct sockaddr_in *dst;
+	int error, tlen, win = 0;
 
-	if (tp) {
+	if (tp != NULL) {
 		if ((flags & TH_RST) == 0)
 			win = sbspace(&tp->t_inpcb->inp_socket->so_rcv);
 		ro = &tp->t_inpcb->inp_route;
+#ifdef DIAGNOSTIC
+		if (!in_hosteq(ti->ti_dst, tp->t_inpcb->inp_faddr))
+			panic("tcp_respond: ti_dst != inp_faddr");
+#endif
+	} else {
+		ro = &iproute;
+		bzero(ro, sizeof(*ro));
 	}
 	if (m == 0) {
 		m = m_gethdr(M_DONTWAIT, MT_HEADER);
@@ -270,7 +278,42 @@ tcp_respond(tp, ti, m, ack, seq, flags)
 	ti->ti_sum = in_cksum(m, tlen);
 	((struct ip *)ti)->ip_len = tlen;
 	((struct ip *)ti)->ip_ttl = ip_defttl;
-	return ip_output(m, NULL, ro, 0, NULL);
+
+	/*
+	 * If we're doing Path MTU discovery, we need to set DF unless
+	 * the route's MTU is locked.  If we lack a route, we need to
+	 * look it up now.
+	 *
+	 * ip_output() could do this for us, but it's convenient to just
+	 * do it here unconditionally.
+	 */
+	if ((rt = ro->ro_rt) == NULL || (rt->rt_flags & RTF_UP) == 0) {
+		if (ro->ro_rt != NULL) {
+			RTFREE(ro->ro_rt);
+			ro->ro_rt = NULL;
+		}
+		dst = satosin(&ro->ro_dst);
+		dst->sin_family = AF_INET;
+		dst->sin_len = sizeof(*dst);
+		dst->sin_addr = ti->ti_dst;
+		rtalloc(ro);
+		if ((rt = ro->ro_rt) == NULL) {
+			m_freem(m);
+			ipstat.ips_noroute++;
+			return (EHOSTUNREACH);
+		}
+	}
+	if (ip_mtudisc != 0 && (rt->rt_rmx.rmx_locks & RTV_MTU) == 0)
+		((struct ip *)ti)->ip_off |= IP_DF;
+
+	error = ip_output(m, NULL, ro, 0, NULL);
+
+	if (ro == &iproute) {
+		RTFREE(ro->ro_rt);
+		ro->ro_rt = NULL;
+	}
+
+	return (error);
 }
 
 /*

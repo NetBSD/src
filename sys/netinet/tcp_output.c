@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.46 1998/12/16 00:33:14 thorpej Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.47 1999/01/20 03:39:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -170,8 +170,11 @@ int
 tcp_output(tp)
 	register struct tcpcb *tp;
 {
-	register struct socket *so = tp->t_inpcb->inp_socket;
-	register long len, win;
+	struct socket *so = tp->t_inpcb->inp_socket;
+	struct route *ro = &tp->t_inpcb->inp_route;
+	struct rtentry *rt;
+	struct sockaddr_in *dst;
+	long len, win;
 	int off, flags, error;
 	register struct mbuf *m;
 	register struct tcpiphdr *ti;
@@ -662,25 +665,46 @@ send:
 	 * the template, but need a way to checksum without them.
 	 */
 	m->m_pkthdr.len = hdrlen + len;
-    {
-	struct rtentry *rt;
 
 	((struct ip *)ti)->ip_len = m->m_pkthdr.len;
 	((struct ip *)ti)->ip_ttl = tp->t_inpcb->inp_ip.ip_ttl;	/* XXX */
 	((struct ip *)ti)->ip_tos = tp->t_inpcb->inp_ip.ip_tos;	/* XXX */
 
-	if (ip_mtudisc && (rt = in_pcbrtentry(tp->t_inpcb)) != 0 && 
-	    (rt->rt_rmx.rmx_locks & RTV_MTU) == 0)
+	/*
+	 * If we're doing Path MTU discovery, we need to set DF unless
+	 * the route's MTU is locked.  If we lack a route, we need to
+	 * look it up now.
+	 *
+	 * ip_output() could do this for us, but it's convenient to just
+	 * do it here unconditionally.
+	 */
+	if ((rt = ro->ro_rt) == NULL || (rt->rt_flags & RTF_UP) == 0) {
+		if (ro->ro_rt != NULL) {
+			RTFREE(ro->ro_rt);
+			ro->ro_rt = NULL;
+		}
+		dst = satosin(&ro->ro_dst);
+		dst->sin_family = AF_INET;
+		dst->sin_len = sizeof(*dst);
+		dst->sin_addr = tp->t_inpcb->inp_faddr;
+		rtalloc(ro);
+		if ((rt = ro->ro_rt) == NULL) {
+			m_freem(m);
+			ipstat.ips_noroute++;
+			error = EHOSTUNREACH;
+			goto out;
+		}
+	}
+	if (ip_mtudisc != 0 && (rt->rt_rmx.rmx_locks & RTV_MTU) == 0)
 		((struct ip *)ti)->ip_off |= IP_DF;
 
 #if BSD >= 43
-	error = ip_output(m, tp->t_inpcb->inp_options, &tp->t_inpcb->inp_route,
+	error = ip_output(m, tp->t_inpcb->inp_options, ro,
 	    so->so_options & SO_DONTROUTE, 0);
 #else
-	error = ip_output(m, (struct mbuf *)0, &tp->t_inpcb->inp_route, 
+	error = ip_output(m, (struct mbuf *)0, ro,
 	    so->so_options & SO_DONTROUTE);
 #endif
-    }
 	if (error) {
 out:
 		if (error == ENOBUFS) {
