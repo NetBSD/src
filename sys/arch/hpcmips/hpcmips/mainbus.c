@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.23 2002/10/02 05:26:48 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.24 2003/05/01 07:02:00 igy Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -72,7 +72,8 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 {
 	static const char *devnames[] = {	/* ATTACH ORDER */
 		"cpu",				/* 1. CPU */
-		"vrip", "vr4102ip", "vr4122ip",	/* 2. System BUS */
+		"vrip", "vr4102ip", "vr4122ip",
+		"vr4181ip",			/* 2. System BUS */
 		"txsim",			
 		"bivideo", "btnmgr", "hpcapm",	/* 3. misc */
 	};

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.81 2003/04/26 11:05:13 ragge Exp $	*/
+/*	$NetBSD: machdep.c,v 1.82 2003/05/01 07:01:59 igy Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura, All rights reserved.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.81 2003/04/26 11:05:13 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.82 2003/05/01 07:01:59 igy Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -89,6 +89,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.81 2003/04/26 11:05:13 ragge Exp $");
 #include "opt_kloader_kernel_path.h"
 #include "debug_hpc.h"
 #include "opt_md.h"
+#include "opt_memsize.h"
+#include "opt_no_symbolsz_entry.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -240,10 +242,13 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 	if (memcmp(eh->e_ident, ELFMAG, SELFMAG) == 0 &&
 	    eh->e_ident[EI_CLASS] == ELFCLASS) {
 		esym = end;
+#ifndef NO_SYMBOLSZ_ENTRY
 		if (eh->e_entry != 0) {
 			/* pbsdboot */
 			symbolsz = eh->e_entry;
-		} else {
+		} else
+#endif
+		{
 			/* hpcboot */
 			Elf_Shdr *sh = (void *)(end + eh->e_shoff);
 			for(i = 0; i < eh->e_shnum; i++, sh++)
@@ -442,7 +447,15 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 #endif /* DDB || KGDB */
 
 	/* Find physical memory regions. */
+#ifdef MEMSIZE
+	mem_clusters[0].start = 0;
+	mem_clusters[0].size = (paddr_t) kernend - MIPS_KSEG0_START;
+	mem_clusters[1].start = (paddr_t) kernend - MIPS_KSEG0_START;
+	mem_clusters[1].size = MEMSIZE * 0x100000 - mem_clusters[1].start;
+	mem_cluster_cnt = 2;
+#else
 	(*platform.mem_init)((paddr_t)kernend - MIPS_KSEG0_START);
+#endif
 	/* 
 	 *  Clear currently unused D-RAM area 
 	 *  (For reboot Windows CE clearly)
