@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.16 1995/06/09 20:03:05 leo Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.17 1996/02/09 21:51:39 gwr Exp $	*/
 
 /* 
  * Mach Operating System
@@ -33,7 +33,6 @@
 #include <sys/proc.h>
 #include <sys/reboot.h>
 #include <sys/systm.h> /* just for boothowto --eichin */
-#include <setjmp.h>
 
 #include <vm/vm.h>
 
@@ -41,7 +40,7 @@
 #include <machine/db_machdep.h>
 
 short	exframesize[];
-extern jmp_buf	*db_recover;
+extern label_t	*db_recover;
 
 int	db_active = 0;
 int ddb_regs_ssp;	/* system stack pointer */

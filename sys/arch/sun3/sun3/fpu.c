@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.2 1995/06/27 14:40:14 gwr Exp $	*/
+/*	$NetBSD: fpu.c,v 1.3 1996/02/09 21:52:42 gwr Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -47,8 +47,6 @@
 #include <machine/frame.h>
 #include <machine/mon.h>
 #include <machine/control.h>
-
-#include <setjmp.h>
 
 #include "interreg.h"
 
@@ -119,7 +117,7 @@ void fpu_attach(parent, self, args)
 
 int fpu_probe()
 {
-	jmp_buf	faultbuf;
+	label_t	faultbuf;
 	int null_fpframe[2];
 
 	nofault = (long *) &faultbuf;
