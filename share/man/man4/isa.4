@@ -1,4 +1,4 @@
-.\"	$NetBSD: isa.4,v 1.35 2003/03/31 19:16:49 perry Exp $
+.\"	$NetBSD: isa.4,v 1.36 2003/05/02 08:19:43 gmcgarry Exp $
 .\"
 .\" Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
 .\" Copyright (c) 1997 Jonathan Stone
@@ -293,6 +293,25 @@ Some i386 platforms use
 to attach
 .Tn ISA
 devices.
+.Sh DIAGNOSTICS
+.Bl -diag
+.It "Stray interrupt on IRQ 7"
+It means the interrupt controller reported an unmasked interrupt on IRQ
+7, but no driver attached to that IRQ `claimed' it.
+.Pp
+There are two reasons this can happen:
+.Bl -bullet
+.It
+In anything other than i386, it would almost always mean that there is a
+driver attached to the IRQ, but it is the wrong driver.
+.It
+On i386, there is the more obscure issue of `default IR7's.
+That is, when a device asserts an IRQ, but the IRQ is deasserted
+after the PIC latches the interrupt and before the CPU acknowledges
+it, the PIC just flat out lies about which IRQ it was.
+In is usually due to a suboptimally coded driver.
+.El
+.El
 .Sh SEE ALSO
 .Xr aha 4 ,
 .Xr ahc 4 ,
