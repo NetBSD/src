@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 1996, 1997, 1998, 1999 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: kx.h,v 1.1.1.2 2000/12/29 01:42:51 assar Exp $ */
+/* $Id: kx.h,v 1.1.1.3 2001/09/17 12:09:49 assar Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -107,6 +107,10 @@
 #include <sys/stropts.h>
 #endif
 
+/* defined by aix's sys/stream.h and again by arpa/nameser.h */
+
+#undef NOERROR
+
 /* as far as we know, this is only used with later versions of Slowlaris */
 #if SunOS >= 50 && defined(HAVE_SYS_STROPTS_H) && defined(HAVE_FATTACH) && defined(I_PUSH)
 #define MAY_HAVE_X11_PIPES
@@ -163,17 +167,6 @@ int verify_and_remove_cookies (int fd, int sock, int cookiesp);
 int replace_cookie(int xserver, int fd, char *filename, int cookiesp);
 
 int suspicious_address (int sock, struct sockaddr_in addr);
-
-int
-write_encrypted (int fd, void *buf, size_t len, des_key_schedule schedule,
-		 des_cblock *session, struct sockaddr_in *me,
-		 struct sockaddr_in *him);
-
-int
-read_encrypted (int fd, void *buf, size_t len, void **ret,
-		des_key_schedule schedule, des_cblock *session,
-		struct sockaddr_in *him, struct sockaddr_in *me);
-
 
 #define KX_PORT 2111
 

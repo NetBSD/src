@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: kip.h,v 1.1.1.2 2000/12/29 01:42:24 assar Exp $ */
+/* $Id: kip.h,v 1.1.1.3 2001/09/17 12:09:44 assar Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -71,6 +71,9 @@
 #include <netinet/tcp.h>
 #endif
 #include <netdb.h>
+#ifdef HAVE_ARPA_INET_H
+#include <arpa/inet.h>
+#endif
 #ifdef HAVE_SYS_SOCKIO_H
 #include <sys/sockio.h>
 #endif

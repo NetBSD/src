@@ -55,7 +55,7 @@
  * or implied warranty.
  */
 
-/* $Id: enc-proto.h,v 1.1.1.2 2000/12/29 01:42:33 assar Exp $ */
+/* $Id: enc-proto.h,v 1.1.1.3 2001/09/17 12:09:45 assar Exp $ */
 
 #if	defined(ENCRYPTION)
 Encryptions *findencryption (int);
@@ -82,7 +82,7 @@ void encrypt_display(void);
 void encrypt_enc_keyid(unsigned char*, int);
 void encrypt_end(void);
 void encrypt_gen_printsub(unsigned char*, int, unsigned char*, int);
-void encrypt_init(char*, int);
+void encrypt_init(const char*, int);
 void encrypt_is(unsigned char*, int);
 void encrypt_list_types(void);
 void encrypt_not(void);

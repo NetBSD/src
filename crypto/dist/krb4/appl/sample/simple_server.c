@@ -11,13 +11,13 @@
 
 #include "sample.h"
 
-RCSID("$Id: simple_server.c,v 1.1.1.2 2000/12/29 01:42:27 assar Exp $");
+RCSID("$Id: simple_server.c,v 1.1.1.3 2001/09/17 12:09:44 assar Exp $");
 
 static void
 usage (void)
 {
     fprintf (stderr, "Usage: %s [-p port] [-s service] [-t srvtab]\n",
-	     __progname);
+	     getprogname());
     exit (1);
 }
 
@@ -32,14 +32,14 @@ main(int argc, char **argv)
     int c;
     int sock;
     int i;
-    int len;
+    socklen_t len;
     KTEXT_ST k;
     KTEXT ktxt = &k;
     AUTH_DAT ad;
     MSG_DAT msg_data;
     des_key_schedule sched;
 
-    set_progname (argv[0]);
+    setprogname (argv[0]);
     strlcpy (service, SAMPLE_SERVICE, sizeof(service));
     strlcpy (instance, "*", sizeof(instance));
     *srvtab = '\0';

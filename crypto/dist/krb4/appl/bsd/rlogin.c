@@ -36,7 +36,7 @@
  */
 #include "bsd_locl.h"
 
-RCSID("$Id: rlogin.c,v 1.1.1.2 2000/12/29 01:42:22 assar Exp $");
+RCSID("$Id: rlogin.c,v 1.1.1.3 2001/09/17 12:09:43 assar Exp $");
 
 CREDENTIALS cred;
 Key_schedule schedule;
@@ -273,7 +273,7 @@ reader(void)
 		kludgep = 1;
 #ifndef NOENCRYPTION
 		if (doencrypt)
-			rcvcnt = des_enc_read(rem, rcvbuf,
+			rcvcnt = bsd_des_enc_read(rem, rcvbuf,
 					      sizeof(rcvbuf),
 					      schedule, &cred.session);
 		else
@@ -319,7 +319,7 @@ sendwindow(void)
 
 #ifndef NOENCRYPTION
 	if(doencrypt)
-		des_enc_write(rem, obuf, sizeof(obuf), schedule,
+		bsd_des_enc_write(rem, obuf, sizeof(obuf), schedule,
 			      &cred.session);
 	else
 #endif
@@ -411,7 +411,7 @@ writer(void)
 			if (c != escapechar) {
 #ifndef NOENCRYPTION
 				if (doencrypt)
-					des_enc_write(rem, &escapechar,1, schedule, &cred.session);
+					bsd_des_enc_write(rem, &escapechar,1, schedule, &cred.session);
 				else
 #endif
 					write(rem, &escapechar, 1);
@@ -422,7 +422,7 @@ writer(void)
 #ifdef NOENCRYPTION
 			if (write(rem, &c, 1) == 0) {
 #else
-			if (des_enc_write(rem, &c, 1, schedule, &cred.session) == 0) {
+			if (bsd_des_enc_write(rem, &c, 1, schedule, &cred.session) == 0) {
 #endif
 				warnx("line gone");
 				break;
@@ -549,7 +549,7 @@ main(int argc, char **argv)
 	one = 1;
 	host = user = NULL;
 
-	set_progname(argv[0]);
+	setprogname(argv[0]);
 
 	/* handle "rlogin host flags" */
 	if (argc > 2 && argv[1][0] != '-') {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: adm_locl.h,v 1.1.1.2 2000/12/29 01:42:18 assar Exp $ */
+/* $Id: adm_locl.h,v 1.1.1.3 2001/09/17 12:09:42 assar Exp $ */
 
 #ifndef __adm_locl_h
 #define __adm_locl_h
@@ -57,6 +57,10 @@
 #include <time.h>
 #endif /* !TIME_WITH_SYS_TIME */
 
+#ifdef HAVE_UTIME_H
+#include <utime.h>
+#endif
+
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
@@ -77,10 +81,18 @@
 
 #include <roken.h>
 
+#ifdef HAVE_OPENSSL
+#include <openssl/des.h>
+#else
 #include <des.h>
+#endif
 #include <krb.h>
 #include <krb_db.h>
 #include <kdc.h>
 #include <kadm.h>
+
+#ifdef HAVE_OPENSSL
+#define des_new_random_key des_random_key
+#endif
 
 #endif /*  __adm_locl_h */
