@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.c,v 1.4 2001/11/27 00:53:12 thorpej Exp $ */
+/* $NetBSD: podulebus.c,v 1.5 2002/02/18 13:11:07 bjh21 Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -42,6 +42,9 @@
  */
 
 #include <sys/param.h>
+
+__RCSID("$NetBSD: podulebus.c,v 1.5 2002/02/18 13:11:07 bjh21 Exp $");
+
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/conf.h>
@@ -71,7 +74,12 @@ extern struct bus_space podulebus_bs_tag;
 
 void map_section __P((vm_offset_t, vm_offset_t, vm_offset_t, int cacheable));
 u_int poduleread __P((u_int, int));
-
+int podulebusmatch(struct device *, struct cfdata *, void *);
+void podulebusattach(struct device *, struct device *, void *);
+int podulebusprint(void *, const char *);
+int podulebussubmatch(struct device *, struct cfdata *, void *);
+void podulechunkdirectory(podule_t *);
+void podulescan(struct device *);
 
 /*
  * int podulebusmatch(struct device *parent, void *match, void *aux)
@@ -119,23 +127,22 @@ podulebusprint(aux, name)
 
 
 int
-podulebussubmatch(parent, match, aux)
+podulebussubmatch(parent, cf, aux)
 	struct device *parent;
-	void *match;
+	struct cfdata *cf;
 	void *aux;
 {
-	struct cfdata *cf = match;
 	struct podule_attach_args *pa = aux;
 
 	/* Return priority 0 or 1 for wildcarded podule */
 
 	if (cf->cf_loc[PODULEBUSCF_SLOT] == PODULEBUSCF_SLOT_DEFAULT)
-		return((*cf->cf_attach->ca_match)(parent, match, aux));
+		return((*cf->cf_attach->ca_match)(parent, cf, aux));
 
 	/* Return higher priority if we match the specific podule */
 
 	else if (cf->cf_loc[PODULEBUSCF_SLOT] == pa->pa_podule_number)
-		return((*cf->cf_attach->ca_match)(parent, match, aux) * 8);
+		return((*cf->cf_attach->ca_match)(parent, cf, aux) * 8);
 
 	/* Fail */
 	return(0);
@@ -612,16 +619,6 @@ podloader_callloader(struct podulebus_attach_args *pa, u_int r0, u_int r1)
 {
 
 	panic("podloader_callloader");
-}
-
-void
-podloader_read_region(struct podulebus_attach_args *pa, u_int src,
-    u_int8_t *dest, size_t length)
-{
-
-	while (length--)
-		*dest++ = podloader_readbyte(pa, src++);
-	podloader_reset(pa);
 }
 
 /* End of podulebus.c */
