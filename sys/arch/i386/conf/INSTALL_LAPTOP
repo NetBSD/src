@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_LAPTOP,v 1.68 2004/08/10 20:50:11 mycroft Exp $
+#	$NetBSD: INSTALL_LAPTOP,v 1.69 2004/08/23 14:04:45 lukem Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -424,6 +424,7 @@ bce* 	at pci? dev ? function ?	# Broadcom 4401 10/100 Ethernet
 bge* 	at pci? dev ? function ?	# Broadcom 570x gigabit Ethernet
 ex*	at pci? dev ? function ?	# 3Com 90x[BC]
 fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
+ipw*	at pci? dev ? function ?	# Intel PRO/Wireless 2100
 ne* 	at pci? dev ? function ?	# NE2000-compatible Ethernet
 re*	at pci? dev ? function ?	# Realtek 8139C+/8169/8169S/8110S
 rtk* 	at pci? dev ? function ? 	# Realtek 8129/8139
