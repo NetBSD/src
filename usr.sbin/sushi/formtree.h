@@ -1,4 +1,4 @@
-/*      $NetBSD: formtree.h,v 1.2 2001/01/10 03:05:48 garbled Exp $       */
+/*      $NetBSD: formtree.h,v 1.3 2001/01/31 09:35:42 garbled Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -51,6 +51,7 @@
 #define DATAT_MSCRIPT	11	/* multiple selection scriptgen list */
 #define DATAT_ESCRIPT	12	/* script generated entry */
 #define DATAT_NESCRIPT	13	/* script generated uneditable field */
+#define DATAT_ISCRIPT	14	/* script generated integer field */
 
 CIRCLEQ_HEAD(cqForm, formentry);
 
@@ -63,6 +64,7 @@ typedef struct formentry {
 	int	required;
 	int	elen;
 	char	*data;
+	char	*origdata; /* to allow free */
 	char	**list; /* optional list entry */
 } FTREE_ENTRY;
 
