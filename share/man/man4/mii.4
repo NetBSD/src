@@ -1,4 +1,4 @@
-.\"	$NetBSD: mii.4,v 1.13 2001/09/22 01:34:47 wiz Exp $
+.\"	$NetBSD: mii.4,v 1.14 2002/04/02 20:45:40 augustss Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -64,6 +64,7 @@
 .Cd "tlphy*    at mii? phy ?		# ThunderLAN internal PHYs"
 .Cd "tqphy*    at mii? phy ?		# TSC Semiconductor 78Q2120 PHYs"
 .Cd "ukphy*    at mii? phy ?		# Generic/unknown PHYs"
+.Cd "urlphy*   at mii? phy ?            # Realtek RTL8150L internal PHYs"
 .Sh DESCRIPTION
 Media Independent Interface is an IEEE standard serial bus for
 connecting MACs (network controllers) to PHYs (physical media
@@ -120,4 +121,5 @@ program.
 .Xr tlphy 4 ,
 .Xr tqphy 4 ,
 .Xr ukphy 4 ,
+.Xr urlphy 4 ,
 .Xr ifconfig 8

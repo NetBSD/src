@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.253 2002/03/28 21:38:10 ichiro Exp $
+#	$NetBSD: Makefile,v 1.254 2002/04/02 20:45:40 augustss Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/18/93
 
 MAN=	acphy.4 adv.4 adw.4 agp.4 ahb.4 ahc.4 amhphy.4 an.4 aria.4 \
@@ -90,6 +90,7 @@ MLINKS+=midi.4 rmidi.4
 MLINKS+=scsi.4 atapi.4
 MLINKS+=mii.4 phy.4
 MLINKS+=usb.4 uhub.4
+MLINKS+=url.4 urlphy.4
 MLINKS+=ntwoc.4 ntwo.4
 MLINKS+=scsi.4 scsibus.4
 MLINKS+=scsi.4 atapibus.4
