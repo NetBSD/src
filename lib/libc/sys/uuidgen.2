@@ -1,4 +1,4 @@
-.\" $NetBSD: uuidgen.2,v 1.1 2004/01/29 02:00:02 tsarna Exp $
+.\" $NetBSD: uuidgen.2,v 1.2 2004/01/30 16:03:50 wiz Exp $
 .\" $FreeBSD: src/lib/libc/sys/uuidgen.2,v 1.7 2003/06/27 13:41:29 yar Exp $
 .\" Copyright (c) 2002 Marcel Moolenaar
 .\" All rights reserved.
@@ -50,10 +50,10 @@ The identifiers are generated according to the syntax and semantics of the
 DCE version 1 variant of universally unique identifiers.
 See below for a more in-depth description of the identifiers.
 When no IEEE 802
-address is available for the node field, a random multicast address is
+address is available for the node field, a random multi-cast address is
 generated for each invocation of the system call.
 According to the algorithm of generating time-based UUIDs, this will also
-force a new random clock sequence, thereby increasing the likelyhood for
+force a new random clock sequence, thereby increasing the likelihood for
 the identifier to be unique.
 .Pp
 When multiple identifiers are to be generated, the
@@ -141,6 +141,6 @@ system call is itself not part of the specification.
 The
 .Fn uuidgen
 system call first appeared in
-.Fx 5.0 ,
+.Fx 5.0
 and was subsequently added to
 .Nx 2.0 .
