@@ -1,4 +1,4 @@
-/*	$NetBSD: skeysubr.c,v 1.22 2003/03/09 00:46:07 lukem Exp $	*/
+/*	$NetBSD: skeysubr.c,v 1.23 2005/02/04 16:14:21 perry Exp $	*/
 
 /* S/KEY v1.1b (skeysubr.c)
  *
@@ -15,7 +15,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: skeysubr.c,v 1.22 2003/03/09 00:46:07 lukem Exp $");
+__RCSID("$NetBSD: skeysubr.c,v 1.23 2005/02/04 16:14:21 perry Exp $");
 
 #include <ctype.h>
 #include <stdio.h>
@@ -36,17 +36,17 @@ __RCSID("$NetBSD: skeysubr.c,v 1.22 2003/03/09 00:46:07 lukem Exp $");
 #define SKEY_HASH_DEFAULT  	 0		/* MD4 */
 #endif
 
-static void f_md4 __P((char *));
-static void f_md5 __P((char *));
-static void f_sha1 __P((char *));
-/* static void f_rmd160 __P((char *x)); */
-static int keycrunch_md4 __P((char *, const char *, const char *));
-static int keycrunch_md5 __P((char *, const char *, const char *));
-static int keycrunch_sha1 __P((char *, const char *, const char *));
-/* static int keycrunch_rmd160 __P((char *, const char *, const char *)); */
-static void lowcase __P((char *));
-static void skey_echo __P((int));
-static void trapped __P((int));
+static void f_md4(char *);
+static void f_md5(char *);
+static void f_sha1(char *);
+/* static void f_rmd160(char *x); */
+static int keycrunch_md4(char *, const char *, const char *);
+static int keycrunch_md5(char *, const char *, const char *);
+static int keycrunch_sha1(char *, const char *, const char *);
+/* static int keycrunch_rmd160(char *, const char *, const char *); */
+static void lowcase(char *);
+static void skey_echo(int);
+static void trapped(int);
 static char *mkSeedPassword(const char *, const char *, size_t *);
 
 /* Current hash type (index into skey_hash_types array) */
@@ -59,8 +59,8 @@ static int skey_hash_type = SKEY_HASH_DEFAULT;
 
 struct skey_algorithm_table {
 	const char *name;
-	int (*keycrunch) __P((char *, const char *, const char *));
-	void (*f) __P((char *));
+	int (*keycrunch)(char *, const char *, const char *);
+	void (*f)(char *);
 };
 static struct skey_algorithm_table skey_algorithm_table[] = {
 	{ "md4", keycrunch_md4, f_md4 },
