@@ -1,4 +1,4 @@
-/*	$NetBSD: lib.c,v 1.17 1998/01/05 22:00:58 cgd Exp $	*/
+/*	$NetBSD: lib.c,v 1.18 1998/10/17 17:14:01 itohy Exp $	*/
 
 /*
  *	- library routines
@@ -63,6 +63,7 @@ search_library(fd, entry)
 		symdef_library(fd, entry, member_length);
 	else
 		linear_library(fd, entry);
+	free(name);
 }
 
 /*
@@ -96,6 +97,9 @@ decode_library_subfile(fd, library_entry, subfile_offset, length_loc)
 	if (sizeof hdr1 != bytes_read)
 		errx(1, "%s: malformed library archive",
 			get_file_name(library_entry));
+
+	/* the first argument of sprintf() shall be a string */
+	hdr1.ar_fmag[0] = '\0';
 
 	if (sscanf(hdr1.ar_size, "%d", &member_length) != 1)
 		errx(1, "%s: malformatted header of archive member: %.*s",
@@ -311,6 +315,7 @@ symdef_library(fd, entry, member_length)
 					!subfile_wanted_p(subentry)) {
 				if (subentry->symbols)
 					free(subentry->symbols);
+				free(subentry->filename);
 				free(subentry);
 			} else {
 				/*
@@ -387,6 +392,7 @@ linear_library(fd, entry)
 					!subfile_wanted_p(subentry)) {
 			if (subentry->symbols)
 				free(subentry->symbols);
+			free(subentry->filename);
 			free(subentry);
 		} else {
 			read_entry_relocation(fd, subentry);
