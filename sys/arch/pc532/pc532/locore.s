@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.60 2000/05/26 21:20:06 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.61 2000/05/31 01:46:16 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1993 Philip A. Nelson.
@@ -735,7 +735,7 @@ ENTRY_NOPROFILE(idle)
 	br	0b
 
 /*
- * cpu_switch(void);
+ * void cpu_switch(struct proc *)
  * Find a runnable process and switch to it.  Wait if necessary.
  */
 KENTRY(cpu_switch, 4)
