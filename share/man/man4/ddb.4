@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.18 1998/02/06 06:06:46 perry Exp $
+.\"	$NetBSD: ddb.4,v 1.19 1998/03/24 02:05:44 fair Exp $
 .\"
 .\" Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -587,6 +587,73 @@ Warning: attempts to watch wired kernel memory may cause
 an unrecoverable error in some systems such as i386.
 Watchpoints on user addresses work the best.
 .El
+.Sh MACHINE-SPECIFIC COMMANDS
+The "glue" code that hooks
+.Nm
+into the
+.Nx
+kernel for any given port can also add machine specific commands
+to the
+.Nm
+command parser.
+All of these commands are preceded by the command word
+.Em machine
+to indicate that they are part of the machine-specific command
+set (e.g. "machine reboot").
+Some of these commands are:
+.Ss Alpha
+.Bl -tag -hang -compact
+.It halt
+call the PROM monitor to halt the CPU.
+.It reboot
+call the PROM monitor to reboot the CPU.
+.El
+.Ss Arm32
+.Bl -tag -hang -compact
+.It vmstat
+Equivalent to
+.Xr vmstat 8
+output with "-s" option (statistics).
+.It vnode
+print out a description of a vnode.
+.It intrchain
+print the list of IRQ handlers.
+.It panic
+print the current "panic" string.
+.It frame
+Given a trap frame address, print out the trap frame.
+.El
+.Ss Mips
+.Bl -tag -hang -compact
+.It halt
+call the PROM monitor to halt the CPU.
+.It tlb
+Print out the Translation Lookaside Buffer.
+.It trapdump
+Print out the Trap Log.
+Only works in
+.Nx
+kernels compiled with DEBUG option.
+.El
+.Ss Sparc
+.Bl -tag -hang -compact
+.It prom
+Drop into Sun PROM monitor.
+.El
+.Ss Sun3 and Sun3x
+.Bl -tag -hang -compact
+.It abort
+Drop into monitor via abort (allows continue).
+.It halt
+Exit to Sun PROM monitor as in
+.Xr halt 8 .
+.It reboot
+Reboot the machine as in
+.Xr reboot 8 .
+.It pgmap
+Given an address, print the address, segment map, page map, and
+Page Table Entry (PTE).
+.El
 .Sh VARIABLES
 .Nm
 accesses registers and variables as
@@ -757,6 +824,11 @@ may be explicitly activated by the debugging code in the kernel
 if
 .Cm DDB
 is configured.
+.Sh HISTORY
+The
+.Nm
+kernel debugger was written as part of the MACH project at
+Carnegie-Mellon University.
 .Sh SEE ALSO
 .Xr options 4 ,
 .Xr sysctl 8
