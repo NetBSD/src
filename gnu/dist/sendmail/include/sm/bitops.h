@@ -1,3 +1,4 @@
+/* $NetBSD: bitops.h,v 1.1.1.2 2003/06/01 14:01:32 atatat Exp $ */
 /*
  * Copyright (c) 1998-2001 Sendmail, Inc. and its suppliers.
  *	All rights reserved.

@@ -6,6 +6,7 @@
 # the sendmail distribution.
 #
 #	Id: README,v 1.21 2002/01/23 17:30:48 gshapiro Exp
+#	$NetBSD: README,v 1.1.1.2 2003/06/01 14:01:33 atatat Exp $
 #
 
 Libsm is a library of generally useful C abstractions.

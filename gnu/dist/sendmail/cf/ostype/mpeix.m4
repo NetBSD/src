@@ -11,6 +11,7 @@ divert(-1)
 
 divert(0)
 VERSIONID(`Id: mpeix.m4,v 1.1 2001/12/13 23:56:40 gshapiro Exp')
+VERSIONID(`$NetBSD: mpeix.m4,v 1.1.1.2 2003/06/01 14:01:44 atatat Exp $')
 
 ifdef(`LOCAL_MAILER_PATH',, `define(`LOCAL_MAILER_PATH', `/bin/tsmail')')dnl
 _DEFIFNOT(`LOCAL_MAILER_FLAGS', `mu9')dnl

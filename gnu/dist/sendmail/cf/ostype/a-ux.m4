@@ -14,6 +14,7 @@ divert(-1)
 
 divert(0)
 VERSIONID(`Id: a-ux.m4,v 8.2 2001/07/23 16:19:36 gshapiro Exp')
+VERSIONID(`$NetBSD: a-ux.m4,v 1.1.1.2 2003/06/01 14:01:44 atatat Exp $')
 ifdef(`QUEUE_DIR',, `define(`QUEUE_DIR', /usr/spool/mqueue)')dnl
 ifdef(`UUCP_MAILER_PATH',, `define(`UUCP_MAILER_PATH', /usr/bin/uux)')dnl
 _DEFIFNOT(`LOCAL_MAILER_FLAGS', `mn9')dnl

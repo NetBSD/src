@@ -1,3 +1,4 @@
+/* $NetBSD: sm_os_openbsd.h,v 1.1.1.2 2003/06/01 14:01:33 atatat Exp $ */
 /*
  * Copyright (c) 2000 Sendmail, Inc. and its suppliers.
  *	All rights reserved.

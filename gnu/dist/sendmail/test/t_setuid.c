@@ -1,3 +1,9 @@
+/* $NetBSD: t_setuid.c,v 1.1.1.4 2003/06/01 14:01:32 atatat Exp $ */
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: t_setuid.c,v 1.1.1.4 2003/06/01 14:01:32 atatat Exp $");
+#endif
+
 /*
  * Copyright (c) 2001 Sendmail, Inc. and its suppliers.
  *	All rights reserved.

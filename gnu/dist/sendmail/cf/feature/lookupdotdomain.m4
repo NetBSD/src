@@ -11,6 +11,7 @@ divert(-1)
 
 divert(0)
 VERSIONID(`Id: lookupdotdomain.m4,v 1.1 2000/04/13 22:32:49 ca Exp')
+VERSIONID(`$NetBSD: lookupdotdomain.m4,v 1.1.1.2 2003/06/01 14:01:43 atatat Exp $')
 divert(-1)
 
 ifdef(`_ACCESS_TABLE_',

@@ -6,6 +6,7 @@
 # the sendmail distribution.
 #
 #	Id: SECURITY,v 1.50.2.1 2002/09/23 21:28:48 ca Exp
+#	$NetBSD: SECURITY,v 1.1.1.2 2003/06/01 14:01:19 atatat Exp $
 #
 
 This file gives some hints how to configure and run sendmail for

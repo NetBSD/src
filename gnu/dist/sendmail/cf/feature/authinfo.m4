@@ -11,6 +11,7 @@ divert(-1)
 
 divert(0)
 VERSIONID(`Id: authinfo.m4,v 1.7 2001/03/16 00:51:25 gshapiro Exp')
+VERSIONID(`$NetBSD: authinfo.m4,v 1.1.1.2 2003/06/01 14:01:43 atatat Exp $')
 divert(-1)
 
 define(`_AUTHINFO_TABLE_', `')

@@ -1,5 +1,11 @@
+/* $NetBSD: sm_resolve.c,v 1.1.1.2 2003/06/01 14:01:30 atatat Exp $ */
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: sm_resolve.c,v 1.1.1.2 2003/06/01 14:01:30 atatat Exp $");
+#endif
+
 /*
- * Copyright (c) 2000-2002 Sendmail, Inc. and its suppliers.
+ * Copyright (c) 2000-2003 Sendmail, Inc. and its suppliers.
  *	All rights reserved.
  *
  * By using this file, you agree to the terms and conditions set
@@ -46,7 +52,7 @@
 # if NAMED_BIND
 #  include "sm_resolve.h"
 
-SM_RCSID("Id: sm_resolve.c,v 8.24.4.6 2002/06/25 04:22:41 ca Exp")
+SM_RCSID("Id: sm_resolve.c,v 8.24.4.7 2003/03/22 22:55:37 ca Exp")
 
 static struct stot
 {
@@ -172,10 +178,10 @@ parse_dns_reply(data, len)
 	DNS_REPLY_T *r;
 	RESOURCE_RECORD_T **rr;
 
-	r = (DNS_REPLY_T *) xalloc(sizeof(*r));
-	memset(r, 0, sizeof(*r));
+	r = (DNS_REPLY_T *) sm_malloc(sizeof(*r));
 	if (r == NULL)
 		return NULL;
+	memset(r, 0, sizeof(*r));
 
 	p = data;
 
@@ -227,12 +233,13 @@ parse_dns_reply(data, len)
 			dns_free_data(r);
 			return NULL;
 		}
-		*rr = (RESOURCE_RECORD_T *) xalloc(sizeof(**rr));
+		*rr = (RESOURCE_RECORD_T *) sm_malloc(sizeof(**rr));
 		if (*rr == NULL)
 		{
 			dns_free_data(r);
 			return NULL;
 		}
+		memset(*rr, 0, sizeof(**rr));
 		(*rr)->rr_domain = sm_strdup(host);
 		if ((*rr)->rr_domain == NULL)
 		{
@@ -274,7 +281,7 @@ parse_dns_reply(data, len)
 			}
 			l = strlen(host) + 1;
 			(*rr)->rr_u.rr_mx = (MX_RECORD_T *)
-				xalloc(sizeof(*((*rr)->rr_u.rr_mx)) + l);
+				sm_malloc(sizeof(*((*rr)->rr_u.rr_mx)) + l);
 			if ((*rr)->rr_u.rr_mx == NULL)
 			{
 				dns_free_data(r);
@@ -295,7 +302,7 @@ parse_dns_reply(data, len)
 			}
 			l = strlen(host) + 1;
 			(*rr)->rr_u.rr_srv = (SRV_RECORDT_T*)
-				xalloc(sizeof(*((*rr)->rr_u.rr_srv)) + l);
+				sm_malloc(sizeof(*((*rr)->rr_u.rr_srv)) + l);
 			if ((*rr)->rr_u.rr_srv == NULL)
 			{
 				dns_free_data(r);
@@ -330,7 +337,7 @@ parse_dns_reply(data, len)
 				dns_free_data(r);
 				return NULL;
 			}
-			(*rr)->rr_u.rr_txt = (char *) xalloc(txtlen + 1);
+			(*rr)->rr_u.rr_txt = (char *) sm_malloc(txtlen + 1);
 			if ((*rr)->rr_u.rr_txt == NULL)
 			{
 				dns_free_data(r);
@@ -341,8 +348,8 @@ parse_dns_reply(data, len)
 			break;
 
 		  default:
-			(*rr)->rr_u.rr_data = (unsigned char*) xalloc(size);
-			if (size != 0 && (*rr)->rr_u.rr_data == NULL)
+			(*rr)->rr_u.rr_data = (unsigned char*) sm_malloc(size);
+			if ((*rr)->rr_u.rr_data == NULL)
 			{
 				dns_free_data(r);
 				return NULL;

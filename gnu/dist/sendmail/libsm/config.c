@@ -1,5 +1,11 @@
+/* $NetBSD: config.c,v 1.1.1.2 2003/06/01 14:01:34 atatat Exp $ */
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: config.c,v 1.1.1.2 2003/06/01 14:01:34 atatat Exp $");
+#endif
+
 /*
- * Copyright (c) 2000-2001 Sendmail, Inc. and its suppliers.
+ * Copyright (c) 2000-2003 Sendmail, Inc. and its suppliers.
  *	All rights reserved.
  *
  * By using this file, you agree to the terms and conditions set
@@ -9,7 +15,7 @@
  */
 
 #include <sm/gen.h>
-SM_RCSID("@(#)Id: config.c,v 1.27 2002/01/23 17:30:48 gshapiro Exp")
+SM_RCSID("@(#)Id: config.c,v 1.27.2.1 2003/03/06 02:16:24 ca Exp")
 
 #include <stdlib.h>
 #include <sm/heap.h>
@@ -197,6 +203,9 @@ char *SmCompileOptions[] =
 #if SM_CONF_SETITIMER
 	"SM_CONF_SETITIMER",
 #endif /* SM_CONF_SETITIMER */
+#if SM_CONF_SIGSETJMP
+	"SM_CONF_SIGSETJMP",
+#endif /* SM_CONF_SIGSETJMP */
 #if SM_CONF_SHM
 	"SM_CONF_SHM",
 #endif /* SM_CONF_SHM */

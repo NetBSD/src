@@ -23,6 +23,7 @@ divert(-1)
 
 divert(0)dnl
 VERSIONID(`Id: generic-solaris.mc,v 8.13 2001/06/27 21:46:30 gshapiro Exp')
+VERSIONID(`$NetBSD: generic-solaris.mc,v 1.1.1.2 2003/06/01 14:01:42 atatat Exp $')
 OSTYPE(solaris2)dnl
 DOMAIN(generic)dnl
 MAILER(local)dnl

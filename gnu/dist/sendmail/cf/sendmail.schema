@@ -6,6 +6,7 @@
 # the sendmail distribution.
 #
 # Id: sendmail.schema,v 8.19.2.1 2002/11/20 23:13:27 gshapiro Exp
+# $NetBSD: sendmail.schema,v 1.1.1.2 2003/06/01 14:01:40 atatat Exp $
 
 # Note that this schema is experimental at this point as it has had little
 # public review.  Therefore, it may change in future versions.  Feedback
