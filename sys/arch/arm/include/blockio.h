@@ -1,4 +1,4 @@
-/*	$NetBSD: blockio.h,v 1.1 2001/05/30 00:16:37 bjh21 Exp $	*/
+/*	$NetBSD: blockio.h,v 1.2 2001/06/02 10:44:56 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -41,7 +41,7 @@
  */
 
 void read_multi_1(u_int, void *, u_int);
-
+void write_multi_1(u_int, const void *, u_int);
 #define read_multi_2 insw16
 #define write_multi_2 outsw16
 
