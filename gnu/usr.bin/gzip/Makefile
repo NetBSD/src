@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 1995/10/24 22:18:34 jtc Exp $
+#	$NetBSD: Makefile,v 1.18 1996/10/18 03:07:19 thorpej Exp $
 
 PROG=	gzip
 SRCS=	gzip.c zip.c deflate.c trees.c bits.c unzip.c inflate.c util.c \
@@ -25,7 +25,7 @@ LINKS+=	${BINDIR}/zdiff ${BINDIR}/zcmp
 #LINKS+= ${BINDIR}/gzip ${BINDIR}/uncompress
 
 afterinstall:
-	install -c -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
+	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
 	   ${.CURDIR}/zforce ${.CURDIR}/gzexe ${.CURDIR}/znew \
 	   ${.CURDIR}/zmore ${.CURDIR}/zdiff ${.CURDIR}/zgrep \
 	   ${DESTDIR}${BINDIR}

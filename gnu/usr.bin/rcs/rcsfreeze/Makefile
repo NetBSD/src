@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.4 1996/10/15 07:00:41 veego Exp $
+#	$NetBSD: Makefile,v 1.5 1996/10/18 03:07:39 thorpej Exp $
 
 MAN=	rcsfreeze.1
 
 afterinstall:
-	install -c -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
+	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
 		${.CURDIR}/rcsfreeze.sh ${DESTDIR}${BINDIR}/rcsfreeze
 
 .include "../../Makefile.inc"

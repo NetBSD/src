@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.dev	6.2 (Berkeley) 3/16/91
-#	$Id: Makefile.dev,v 1.14 1996/10/07 05:45:28 cgd Exp $
+#	$Id: Makefile.dev,v 1.15 1996/10/18 03:02:32 thorpej Exp $
 
 # Client Makefiles define DEVICE and FONTFILES and provide rules for
 #	individual font files
@@ -29,8 +29,8 @@ COPY=	-c
 .if !target(install)
 install:
 	for f in $(FONTFILES); do \
-		install ${COPY} -o $(FONTOWN) -g $(FONTGRP) -m $(FONTMODE) $$f \
-			$(DEVICEDIR)/$$f; \
+		${INSTALL} ${COPY} -o $(FONTOWN) -g $(FONTGRP) -m $(FONTMODE) \
+		    $$f $(DEVICEDIR)/$$f; \
 	done
 .endif
 

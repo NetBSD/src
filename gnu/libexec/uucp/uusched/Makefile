@@ -1,5 +1,5 @@
+#	$NetBSD: Makefile,v 1.6 1996/10/18 02:56:47 thorpej Exp $
 # Makefile for uusched
-# $Id: Makefile,v 1.5 1995/08/24 05:23:28 jtc Exp $
 
 BINDIR=		$(bindir)
 
@@ -13,7 +13,7 @@ uusched:	uusched.in
 		$(.CURDIR)/uusched.in > $(.TARGET)
 
 install:
-	install ${COPY} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
+	${INSTALL} ${COPY} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
 	    uusched ${DESTDIR}${BINDIR}
 
 .include <bsd.prog.mk>
