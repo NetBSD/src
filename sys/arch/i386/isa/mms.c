@@ -20,7 +20,7 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: mms.c,v 1.6.2.11 1993/10/31 16:55:30 mycroft Exp $
+ *	$Id: mms.c,v 1.6.2.12 1993/10/31 17:01:00 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -339,7 +339,7 @@ mmsintr(arg)
 		sc->sc_x += dx;
 		sc->sc_y += dy;
 
-		buffer[0] = 0x80 | (~status & BUTSTATMASK);
+		buffer[0] = 0x80 | (buttons ^ BUTSTATMASK);
 		buffer[1] = dx;
 		buffer[2] = dy;
 		buffer[3] = buffer[4] = 0;
