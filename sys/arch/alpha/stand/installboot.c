@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.2 1995/12/20 00:17:49 cgd Exp $ */
+/*	$NetBSD: installboot.c,v 1.3 1997/01/16 20:40:07 cgd Exp $ */
 
 /*
  * Copyright (c) 1994 Paul Kranenburg
@@ -38,7 +38,10 @@
 #include <ufs/ufs/dinode.h>
 #include <ufs/ufs/dir.h>
 #include <ufs/ffs/fs.h>
+#include <sys/disklabel.h>
+#include <sys/dkio.h>
 #include <err.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -56,7 +59,7 @@ int	max_block_count;
 
 
 char		*loadprotoblocks __P((char *, long *));
-int		loadblocknums __P((char *, int));
+int		loadblocknums __P((char *, int, unsigned long));
 static void	devread __P((int, void *, daddr_t, size_t, char *));
 static void	usage __P((void));
 int 		main __P((int, char *[]));
@@ -81,6 +84,9 @@ main(argc, argv)
 	long	protosize;
 	int	mib[2];
 	size_t	size;
+	struct stat disksb, bootsb;
+	struct disklabel dl;
+	unsigned long partoffset;
 
 	while ((c = getopt(argc, argv, "vn")) != EOF) {
 		switch (c) {
@@ -118,9 +124,40 @@ main(argc, argv)
 	/* Open and check raw disk device */
 	if ((devfd = open(dev, O_RDONLY, 0)) < 0)
 		err(1, "open: %s", dev);
+	if (fstat(devfd, &disksb) == -1)
+		err(1, "fstat: %s", dev);
+	if (!S_ISCHR(disksb.st_mode))
+		errx(1, "%s must be a character device node", dev);
+	if ((minor(disksb.st_rdev) % getmaxpartitions()) != getrawpartition())
+		errx(1, "%s must be the raw partition", dev);
 
 	/* Extract and load block numbers */
-	if (loadblocknums(boot, devfd) != 0)
+	if (stat(boot, &bootsb) == -1)	
+		err(1, "stat: %s", boot);
+	if (!S_ISREG(bootsb.st_mode))
+		errx(1, "%s must be a regular file", boot);
+	if ((minor(disksb.st_rdev) / getmaxpartitions()) != 
+	    (minor(bootsb.st_dev) / getmaxpartitions()))
+		errx(1, "%s must be somewhere on %s", boot, dev);
+
+	/* XXX */
+	if (ioctl(devfd, DIOCGDINFO, &dl) != -1) {
+		printf("bootsb.st_dev = 0x%lx\n", bootsb.st_dev);
+		partoffset = dl.d_partitions[minor(bootsb.st_dev) %
+		    getmaxpartitions()].p_offset;
+	} else {
+		/*
+		 * if disklabel unsupported (e.g. vnd),
+		 * partition must start at zero.
+		 */
+		if (errno != ENOTTY)
+			err(1, "read disklabel: %s", dev);
+		warnx("couldn't read label from %s, using part offset of 0",
+		    dev);
+		partoffset = 0;
+	}
+
+	if (loadblocknums(boot, devfd, partoffset) != 0)
 		exit(1);
 
 	(void)close(devfd);
@@ -277,9 +314,10 @@ devread(fd, buf, blk, size, msg)
 static char sblock[SBSIZE];
 
 int
-loadblocknums(boot, devfd)
-char	*boot;
-int	devfd;
+loadblocknums(boot, devfd, partoffset)
+	char	*boot;
+	int	devfd;
+	unsigned long partoffset;
 {
 	int		i, fd;
 	struct	stat	statbuf;
@@ -290,6 +328,8 @@ int	devfd;
 	struct dinode	*ip;
 	int		ndb;
 	int32_t		cksum;
+
+printf("partoffset = 0x%lx\n", partoffset);
 
 	/*
 	 * Open 2nd-level boot program and record the block numbers
@@ -313,7 +353,8 @@ int	devfd;
 	close(fd);
 
 	/* Read superblock */
-	devread(devfd, sblock, btodb(SBOFF), SBSIZE, "superblock");
+	devread(devfd, sblock, btodb(SBOFF) + partoffset, SBSIZE,
+	    "superblock");
 	fs = (struct fs *)sblock;
 
 	/* Read inode */
@@ -321,7 +362,7 @@ int	devfd;
 		errx(1, "No memory for filesystem block");
 
 	blk = fsbtodb(fs, ino_to_fsba(fs, statbuf.st_ino));
-	devread(devfd, buf, blk, fs->fs_bsize, "inode");
+	devread(devfd, buf, blk + partoffset, fs->fs_bsize, "inode");
 	ip = (struct dinode *)(buf) + ino_to_fsbo(fs, statbuf.st_ino);
 
 	/*
@@ -346,9 +387,9 @@ int	devfd;
 	ap = ip->di_db;
 	for (i = 0; i < NDADDR && *ap && ndb; i++, ap++, ndb--) {
 		blk = fsbtodb(fs, *ap);
-		bbinfop->blocks[i] = blk;
+		bbinfop->blocks[i] = blk + partoffset;
 		if (verbose)
-			printf("%d ", blk);
+			printf("%d ", bbinfop->blocks[i]);
 	}
 	if (verbose)
 		printf("\n");
@@ -363,13 +404,14 @@ int	devfd;
 	if (verbose)
 		printf("%s: block numbers (indirect): ", boot);
 	blk = ip->di_ib[0];
-	devread(devfd, buf, blk, fs->fs_bsize, "indirect block");
+	devread(devfd, buf, blk + partoffset, fs->fs_bsize,
+	    "indirect block");
 	ap = (daddr_t *)buf;
 	for (; i < NINDIR(fs) && *ap && ndb; i++, ap++, ndb--) {
 		blk = fsbtodb(fs, *ap);
-		bbinfop->blocks[i] = blk;
+		bbinfop->blocks[i] = blk + partoffset;
 		if (verbose)
-			printf("%d ", blk);
+			printf("%d ", bbinfop->blocks[i]);
 	}
 	if (verbose)
 		printf("\n");
