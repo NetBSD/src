@@ -1,4 +1,4 @@
-.\"	$NetBSD: sshd.8,v 1.25 2002/04/29 08:23:35 lukem Exp $
+.\"	$NetBSD: sshd.8,v 1.26 2002/05/13 02:58:19 itojun Exp $
 .\"  -*- nroff -*-
 .\"
 .\" Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -35,7 +35,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: sshd.8,v 1.177 2002/04/21 16:19:27 stevesk Exp $
+.\" $OpenBSD: sshd.8,v 1.180 2002/05/06 23:34:33 millert Exp $
 .Dd September 25, 1999
 .Dt SSHD 8
 .Os
@@ -117,14 +117,14 @@ Rhosts authentication is normally disabled
 because it is fundamentally insecure, but can be enabled in the server
 configuration file if desired.
 System security is not improved unless
-.Xr rshd 8 ,
-.Xr rlogind 8 ,
+.Nm rshd ,
+.Nm rlogind ,
 and
-.Xr rexecd 8
+.Xr rexecd
 are disabled (thus completely disabling
-.Xr rlogin 1
+.Xr rlogin
 and
-.Xr rsh 1
+.Xr rsh
 into the machine).
 .Pp
 .Ss SSH protocol version 2
@@ -572,7 +572,7 @@ the Kerberos KDC.
 To use this option, the server needs a
 Kerberos servtab which allows the verification of the KDC's identity.
 Default is
-.Dq yes .
+.Dq no .
 .It Cm KerberosOrLocalPasswd
 If set then if password authentication through Kerberos fails then
 the password will be validated via any additional local mechanism
@@ -845,7 +845,7 @@ another process will be created that has the privilege of the authenticated
 user.  The goal of privilege separation is to prevent privilege
 escalation by containing any corruption within the unprivileged processes.
 The default is
-.Dq no .
+.Dq yes .
 .It Cm VerifyReverseMapping
 Specifies whether
 .Nm

@@ -1,4 +1,4 @@
-/*	$NetBSD: monitor_wrap.c,v 1.2 2002/04/22 07:59:41 itojun Exp $	*/
+/*	$NetBSD: monitor_wrap.c,v 1.3 2002/05/13 02:58:18 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * Copyright 2002 Markus Friedl <markus@openbsd.org>
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: monitor_wrap.c,v 1.5 2002/03/25 20:12:10 stevesk Exp $");
+RCSID("$OpenBSD: monitor_wrap.c,v 1.6 2002/05/12 23:53:45 djm Exp $");
 
 #include <openssl/bn.h>
 #include <openssl/dh.h>
@@ -204,6 +204,24 @@ mm_getpwnamallow(const char *login)
 	buffer_free(&m);
 
 	return (pw);
+}
+
+char* mm_auth2_read_banner(void)
+{
+	Buffer m;
+	char *banner;
+
+	debug3("%s entering", __FUNCTION__);
+
+	buffer_init(&m);
+	mm_request_send(monitor->m_recvfd, MONITOR_REQ_AUTH2_READ_BANNER, &m);
+	buffer_clear(&m);
+
+	mm_request_receive_expect(monitor->m_recvfd, MONITOR_ANS_AUTH2_READ_BANNER, &m);
+	banner = buffer_get_string(&m, NULL);
+	buffer_free(&m);
+	
+	return (banner);
 }
 
 /* Inform the privileged process about service and style */
