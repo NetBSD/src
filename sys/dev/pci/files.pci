@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.211 2004/05/28 15:35:41 toshii Exp $
+#	$NetBSD: files.pci,v 1.212 2004/05/28 23:27:28 thorpej Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -251,7 +251,7 @@ attach	rccide at pci
 file	dev/pci/rccide.c		rccide
 
 # Silicon Image SATALink controllers
-device	satalink {[channel = -1]}: ata, pciide_common
+device	satalink {[channel = -1]}: ata, pciide_common, sata
 attach	satalink at pci
 file	dev/pci/satalink.c		satalink
 
