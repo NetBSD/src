@@ -1,4 +1,4 @@
-/* $NetBSD: ics2101var.h,v 1.3 1996/02/05 02:22:12 jtc Exp $ */
+/* $NetBSD: ics2101var.h,v 1.4 1997/09/06 14:31:35 augustss Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -40,6 +40,9 @@
 #define ICSMIX_RIGHT		1		/* Value for right channel */
 
 struct ics2101_softc {
+	bus_space_tag_t sc_iot;		/* tag */
+	bus_space_handle_t sc_selio_ioh;
+	bus_space_handle_t sc_dataio_ioh;
 	u_short sc_selio;		/* select I/O address */
 	u_short sc_dataio;		/* data I/O address */
 	int sc_flags;			/* Various flags */
