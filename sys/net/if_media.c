@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media.c,v 1.18 2002/11/12 16:54:45 chs Exp $	*/
+/*	$NetBSD: if_media.c,v 1.19 2003/07/25 19:35:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_media.c,v 1.18 2002/11/12 16:54:45 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_media.c,v 1.19 2003/07/25 19:35:57 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -225,7 +225,7 @@ ifmedia_ioctl(ifp, ifr, ifm, cmd)
 {
 	struct ifmedia_entry *match;
 	struct ifmediareq *ifmr = (struct ifmediareq *) ifr;
-	int error = 0, sticky;
+	int error = 0;
 
 	if (ifp == NULL || ifr == NULL || ifm == NULL)
 		return (EINVAL);
@@ -294,9 +294,10 @@ ifmedia_ioctl(ifp, ifr, ifm, cmd)
 	case  SIOCGIFMEDIA: 
 	{
 		struct ifmedia_entry *ep;
-		int *kptr, count;
+		size_t nwords;
 
-		kptr = NULL;		/* XXX gcc */
+		if (ifmr->ifm_count < 0)
+			return EINVAL;
 
 		ifmr->ifm_active = ifmr->ifm_current = ifm->ifm_cur ?
 		    ifm->ifm_cur->ifm_media : IFM_NONE;
@@ -304,53 +305,36 @@ ifmedia_ioctl(ifp, ifr, ifm, cmd)
 		ifmr->ifm_status = 0;
 		(*ifm->ifm_status)(ifp, ifmr);
 
-		count = 0;
+		/*
+		 * Count them so we know a-priori how much is the max we'll
+		 * need.
+		 */
 		ep = TAILQ_FIRST(&ifm->ifm_list);
+		for (nwords = 0; ep != NULL; ep = TAILQ_NEXT(ep, ifm_list))
+			nwords++;
 
 		if (ifmr->ifm_count != 0) {
-			kptr = (int *)malloc(ifmr->ifm_count * sizeof(int),
+			size_t count;
+			size_t minwords = nwords > (size_t)ifmr->ifm_count 
+			    ? (size_t)ifmr->ifm_count
+			    : nwords;
+			int *kptr = (int *)malloc(minwords * sizeof(int),
 			    M_TEMP, M_WAITOK);
-
 			/*
 			 * Get the media words from the interface's list.
 			 */
-			for (; ep != NULL && count < ifmr->ifm_count;
+			ep = TAILQ_FIRST(&ifm->ifm_list);
+			for (count = 0; ep != NULL && count < minwords;
 			    ep = TAILQ_NEXT(ep, ifm_list), count++)
 				kptr[count] = ep->ifm_media;
 
-			if (ep != NULL)
+			error = copyout(kptr, ifmr->ifm_ulist,
+			    minwords * sizeof(int));
+			if (error == 0 && ep != NULL)
 				error = E2BIG;	/* oops! */
-		}
-
-		/*
-		 * If there are more interfaces on the list, count
-		 * them.  This allows the caller to set ifmr->ifm_count
-		 * to 0 on the first call to know how much space to
-		 * callocate.
-		 */
-		for (; ep != NULL; ep = TAILQ_NEXT(ep, ifm_list))
-			count++;
-
-		/*
-		 * We do the copyout on E2BIG, because that's
-		 * just our way of telling userland that there
-		 * are more.  This is the behavior I've observed
-		 * under BSD/OS 3.0
-		 */
-		sticky = error;
-		if ((error == 0 || error == E2BIG) && ifmr->ifm_count != 0) {
-			error = copyout((caddr_t)kptr,
-			    (caddr_t)ifmr->ifm_ulist,
-			    ifmr->ifm_count * sizeof(int));
-		}
-
-		if (error == 0)
-			error = sticky;
-
-		if (ifmr->ifm_count != 0)
 			free(kptr, M_TEMP);
-
-		ifmr->ifm_count = count;
+		}
+		ifmr->ifm_count = nwords;
 		break;
 	}
 
