@@ -1,4 +1,4 @@
-/*	$NetBSD: bt.c,v 1.4 1996/03/25 07:11:15 mycroft Exp $	*/
+/*	$NetBSD: bt.c,v 1.5 1996/04/03 08:48:48 mycroft Exp $	*/
 
 #define BTDIAG
 #define integrate
@@ -221,7 +221,7 @@ bt_cmd(iobase, sc, icnt, ibuf, ocnt, obuf)
 	 * Wait for the adapter to go idle, unless it's one of
 	 * the commands which don't need this
 	 */
-	if (opcode != BT_MBX_INIT) {
+	if (opcode != BT_MBX_INIT && opcode != BT_MBO_INTR_EN) {
 		for (i = 20000; i; i--) {	/* 1 sec? */
 			sts = inb(iobase + BT_STAT_PORT);
 			if (sts & BT_STAT_IDLE)

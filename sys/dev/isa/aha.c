@@ -1,4 +1,4 @@
-/*	$NetBSD: aha.c,v 1.4 1996/03/28 18:19:07 mycroft Exp $	*/
+/*	$NetBSD: aha.c,v 1.5 1996/04/03 08:48:46 mycroft Exp $	*/
 
 #define AHADIAG
 #define integrate
@@ -221,7 +221,7 @@ aha_cmd(iobase, sc, icnt, ibuf, ocnt, obuf)
 	 * Wait for the adapter to go idle, unless it's one of
 	 * the commands which don't need this
 	 */
-	if (opcode != AHA_MBX_INIT) {
+	if (opcode != AHA_MBX_INIT && opcode != AHA_MBO_INTR_EN) {
 		for (i = 20000; i; i--) {	/* 1 sec? */
 			sts = inb(iobase + AHA_STAT_PORT);
 			if (sts & AHA_STAT_IDLE)
