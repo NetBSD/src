@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.47 1995/08/06 18:05:22 mycroft Exp $	*/
+/*	$NetBSD: npx.c,v 1.48 1995/08/06 19:31:49 mycroft Exp $	*/
 
 #if 0
 #define iprintf(x)	printf x
@@ -66,21 +66,21 @@
 /*
  * 387 and 287 Numeric Coprocessor Extension (NPX) Driver.
  *
- * We do lazy initialization and switching using the TS and EM bits in cr0.
+ * We do lazy initialization and switching using the TS bit in cr0 and the
+ * MDP_USEDFPU bit in mdproc.
+ *
  * DNA exceptions are handled like this:
  *
- * 1) If someone else has used the NPX, save its state into that process's PCB.
- * 2) If the EM bit is set, then
- *    a) if no NPX is present, return and go to the emulator.
- *    b) if a NPX is present, turn off the EM bit and initialize the NPX.
- * 3) If the EM bit is not set, reload the process's previous NPX state.
+ * 1) If there is no NPX, return and go to the emulator.
+ * 2) If someone else has used the NPX, save its state into that process's PCB.
+ * 3a) If MDP_USEDFPU is not set, set it and initialize the NPX.
+ * 3b) Otherwise, reload the process's previous NPX state.
  *
- * The actual ordering is slightly different for performance reasons.
- *
- * When a process is created or exec()s, its saved cr0 image has both the EM
- * and TS bits sets.  The EM bit is turned off when it first gets a DNA and the
- * NPX is initialized.  The TS bit is turned off when the NPX is used, and
- * turned on again later when the process's NPX state is saved.
+ * When a process is created or exec()s, its saved cr0 image has the TS bit
+ * set and the MDP_USEDFPU bit clear.  The MDP_USEDFPU bit is set when the
+ * process first gets a DNA and the NPX is initialized.  The TS bit is turned
+ * off when the NPX is used, and turned on again later when the process's NPX
+ * state is saved.
  */
 
 #define	fldcw(addr)		__asm("fldcw %0" : : "m" (*addr))
