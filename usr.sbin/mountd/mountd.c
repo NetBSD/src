@@ -1,4 +1,4 @@
-/* 	$NetBSD: mountd.c,v 1.79 2001/11/29 21:23:38 christos Exp $	 */
+/* 	$NetBSD: mountd.c,v 1.79.2.1 2003/01/06 04:52:09 jmc Exp $	 */
 
 /*
  * Copyright (c) 1989, 1993
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char     sccsid[] = "@(#)mountd.c  8.15 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mountd.c,v 1.79 2001/11/29 21:23:38 christos Exp $");
+__RCSID("$NetBSD: mountd.c,v 1.79.2.1 2003/01/06 04:52:09 jmc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -287,6 +287,7 @@ main(argc, argv)
 	int udpsock, tcpsock, udp6sock, tcp6sock;
 	int xcreated = 0, s;
 	int c, one = 1;
+	int maxrec = RPC_MAXDATASIZE;
 
 	while ((c = getopt(argc, argv, "dnr")) != -1)
 		switch (c) {
@@ -364,6 +365,8 @@ main(argc, argv)
 	udp6conf = getnetconfigent("udp6");
 	tcp6conf = getnetconfigent("tcp6");
 
+	rpc_control(RPC_SVC_CONNMAXREC_SET, &maxrec);
+
 	if (udpsock != -1 && udpconf != NULL) {
 		bindresvport(udpsock, NULL);
 		udptransp = svc_dg_create(udpsock, 0, 0);
@@ -383,7 +386,8 @@ main(argc, argv)
 	if (tcpsock != -1 && tcpconf != NULL) {
 		bindresvport(tcpsock, NULL);
 		listen(tcpsock, SOMAXCONN);
-		tcptransp = svc_vc_create(tcpsock, 0, 0);
+		tcptransp = svc_vc_create(tcpsock, RPC_MAXDATASIZE,
+		    RPC_MAXDATASIZE);
 		if (tcptransp != NULL) {
 			if (!svc_reg(tcptransp, RPCPROG_MNT, RPCMNT_VER1,
 				mntsrv, tcpconf) ||
@@ -416,7 +420,8 @@ main(argc, argv)
 	if (tcp6sock != -1 && tcp6conf != NULL) {
 		bindresvport(tcp6sock, NULL);
 		listen(tcp6sock, SOMAXCONN);
-		tcp6transp = svc_vc_create(tcp6sock, 0, 0);
+		tcp6transp = svc_vc_create(tcp6sock, RPC_MAXDATASIZE,
+		    RPC_MAXDATASIZE);
 		if (tcp6transp != NULL) {
 			if (!svc_reg(tcp6transp, RPCPROG_MNT, RPCMNT_VER1,
 				mntsrv, tcp6conf) ||
