@@ -1,7 +1,7 @@
-/*	$NetBSD: vrc4173bcu.c,v 1.3 2001/10/22 13:44:05 takemura Exp $	*/
+/*	$NetBSD: vrc4173bcu.c,v 1.4 2002/01/05 06:45:32 takemura Exp $	*/
 
 /*-
- * Copyright (c) 2001 Enami Tsugutomo.
+ * Copyright (c) 2001,2002 Enami Tsugutomo.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -55,21 +55,59 @@ static int	vrc4173bcu_match(struct device *, struct cfdata *, void *);
 static void	vrc4173bcu_attach(struct device *, struct device *, void *);
 static int	vrc4173bcu_print(void *, const char *);
 
-int vrcintr_port = 1;		/* GPIO port to which VRCINT is
-				   connected to.  XXX. */
-
-struct cfattach vrc4173bcu_ca = {
-	sizeof(struct vrc4173bcu_softc), vrc4173bcu_match, vrc4173bcu_attach,
-};
-
+/*
+ * machine dependent info
+ */
 static struct vrc4173bcu_platdep {
-	platid_t *platid;
+	platid_mask_t *platidmask;
 	u_int32_t clkmask;
+	int intr_port;	/* GPIO port to which VRCINT is connected to. XXX */
 } platdep_table[] = {
+	{
+		&platid_mask_MACH_VICTOR_INTERLINK_MPC303,
+		USE_WINCE_CLKMASK,	/* clock mask */
+		1,			/* intrrupt port# */
+	},
+	{
+		&platid_mask_MACH_VICTOR_INTERLINK_MPC304,
+		USE_WINCE_CLKMASK,	/* clock mask */
+		1,			/* intrrupt port# */
+	},
+	{
+		&platid_mask_MACH_NEC_MCR_SIGMARION2,
+		USE_WINCE_CLKMASK,	/* clock mask */
+		0,			/* intrrupt port# */
+	},
 	{
 		&platid_wild,
 		USE_WINCE_CLKMASK,	/* XXX */
+		-1,
 	},
+};
+
+struct vrc4173bcu_softc {
+	struct device sc_dev;
+
+	pci_chipset_tag_t sc_pc;
+	bus_space_tag_t sc_iot;
+	bus_space_handle_t sc_ioh;
+	bus_size_t sc_size;
+
+	bus_space_handle_t sc_icuh;	/* I/O handle for ICU. */
+	bus_space_handle_t sc_cmuh;	/* I/O handle for CMU. */
+	void *sc_ih;
+
+#define	VRC4173BCU_NINTRHAND	(16)	/* XXX */
+	struct intrhand {
+		int (*ih_func)(void *);
+		void *ih_arg;
+	} sc_intrhand[VRC4173BCU_NINTRHAND];
+
+	struct vrc4173bcu_platdep *sc_platdep;
+};
+
+struct cfattach vrc4173bcu_ca = {
+	sizeof(struct vrc4173bcu_softc), vrc4173bcu_match, vrc4173bcu_attach,
 };
 
 int
@@ -95,7 +133,6 @@ vrc4173bcu_attach(struct device *parent, struct device *self, void *aux)
 	char devinfo[256];
 	int i;
 	u_int16_t reg;
-	struct vrc4173bcu_platdep *platdep_info;
 #ifdef DEBUG
 	char buf[80];
 #endif
@@ -111,7 +148,7 @@ vrc4173bcu_attach(struct device *parent, struct device *self, void *aux)
 	csr = pci_conf_read(pc, tag, VRC4173BCU_BADR);
 	DPRINTF(("%s: base addr = 0x%08x\n", sc->sc_dev.dv_xname, csr));
 
-	platdep_info = platid_search(&platid, platdep_table,
+	sc->sc_platdep = platid_search(&platid, platdep_table,
 	    sizeof(platdep_table)/sizeof(*platdep_table),
 	    sizeof(*platdep_table));
 
@@ -136,7 +173,7 @@ vrc4173bcu_attach(struct device *parent, struct device *self, void *aux)
 	DPRINTF(("%s: base addr = %x@0x%08x\n", sc->sc_dev.dv_xname,
 	    (int)sc->sc_size, csr));
 	DPRINTF(("%s: iot = 0x%08x, ioh = 0x%08x\n", sc->sc_dev.dv_xname,
-	    (int)sc->sc_iot, sc->sc_ioh));
+	    (int)sc->sc_iot, (int)sc->sc_ioh));
 
 	/*
 	 * Map I/O space for ICU.
@@ -156,24 +193,24 @@ vrc4173bcu_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	/* assert all reset bits */
-	bus_space_write_2(sc->sc_iot, sc->sc_cmuh, VRC4173CMU_SRST,
-	    VRC4173CMU_SRST_AC97 | VRC4173CMU_SRST_USB |
-	    VRC4173CMU_SRST_CARD2 | VRC4173CMU_SRST_CARD1);
-
-	/* set clock mask */
-	if (platdep_info->clkmask == USE_WINCE_CLKMASK) {
+	/* machine dependent setup */
+	if (sc->sc_platdep->clkmask == USE_WINCE_CLKMASK) {
+		/* XXX, You can nothing! */
 		reg = bus_space_read_2(sc->sc_iot, sc->sc_cmuh,
-		    VRC4173CMU_SRST);
+		    VRC4173CMU_CLKMSK);
 		printf("%s: default clock mask is %04x\n",
 		    sc->sc_dev.dv_xname, reg);
 	} else {
+		/* assert all reset bits */
+		bus_space_write_2(sc->sc_iot, sc->sc_cmuh, VRC4173CMU_SRST,
+		    VRC4173CMU_SRST_AC97 | VRC4173CMU_SRST_USB |
+		    VRC4173CMU_SRST_CARD2 | VRC4173CMU_SRST_CARD1);
+		/* set clock mask */
 		bus_space_write_2(sc->sc_iot, sc->sc_cmuh,
-		    VRC4173CMU_CLKMSK, platdep_info->clkmask);
+		    VRC4173CMU_CLKMSK, sc->sc_platdep->clkmask);
+		/* clear reset bit */
+		bus_space_write_2(sc->sc_iot, sc->sc_cmuh, VRC4173CMU_SRST, 0);
 	}
-
-	/* clear reset bit */
-	bus_space_write_2(sc->sc_iot, sc->sc_cmuh, VRC4173CMU_SRST, 0);
 
 #ifdef DEBUG
 	reg = bus_space_read_2(sc->sc_iot, sc->sc_icuh, VRC4173ICU_SYSINT1);
@@ -228,11 +265,16 @@ vrc4173bcu_attach(struct device *parent, struct device *self, void *aux)
 	 * Establish VRCINT interrupt.  Normally connected to one of
 	 * GPIO pin in VR41xx.  XXX.
 	 */
-	sc->sc_ih = pci_vrcintr_establish(pc, vrcintr_port,
-	    vrc4173bcu_intr, sc);
-	if (sc->sc_ih != NULL)
-		printf("%s: interrupting at %p\n", sc->sc_dev.dv_xname,
-		    sc->sc_ih);
+	if (0 <= sc->sc_platdep->intr_port) {
+		sc->sc_ih = pci_vrcintr_establish(pc,
+		    sc->sc_platdep->intr_port, vrc4173bcu_intr, sc);
+		if (sc->sc_ih != NULL)
+			printf("%s: interrupting at %p\n", sc->sc_dev.dv_xname,
+			    sc->sc_ih);
+	} else {
+		printf("%s: interrupt port isn't specified\n",
+		    sc->sc_dev.dv_xname);
+	}
 }
 
 int
@@ -311,35 +353,6 @@ vrc4173bcu_intr_disestablish(struct vrc4173bcu_softc *sc, void *ihp)
 }
 
 int
-vrc4173bcu_pci_bus_devorder(pci_chipset_tag_t pc, int busno, char *devs)
-{
-	int i, bcudev;
-
-	/*
-	 * XXX, we must attach Vrc4173 BCU first.
-	 */
-
-	/* search for BCU */
-	for (bcudev = 0; bcudev < 32; bcudev++) {
-		pcitag_t tag;
-		pcireg_t id;
-		tag = pci_make_tag(pc, 0, bcudev, 0);
-		id = pci_conf_read(pc, tag, PCI_ID_REG);
-		if (PCI_VENDOR(id) == PCI_VENDOR_NEC &&
-		    PCI_PRODUCT(id) ==PCI_PRODUCT_NEC_VRC4173_BCU)
-			break;
-	}
-	if (32 <= bcudev)
-		bcudev = 0;	/* not found */
-
-	*devs++ = bcudev;	/* scan BCU first */
-	for (i = 0; i < 32; i++)
-		if (i != bcudev)
-			*devs++ = i;
-	return (i);
-}
-
-int
 vrc4173bcu_pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	pci_chipset_tag_t pc = pa->pa_pc;
@@ -362,7 +375,8 @@ vrc4173bcu_pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 	case 2:				/* CARDU1 */
 		*ihp = VRC4173ICU_PCMCIA2INTR;
 		break;
-	case 19:			/* VRC4173 */
+	case 12:			/* VRC4173 (SigmarionII) */
+	case 19:			/* VRC4173 (MP-C303) */
 		switch (func) {
 		case 2:
 			*ihp = VRC4173ICU_USBINTR;
