@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.44 2003/01/17 22:49:27 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.45 2003/04/02 03:53:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -466,7 +466,7 @@ shpcmcia_mem_add_mapping(bpa, size, type, bshp)
 	}
 #undef MODE
 
-	for (; pa < endpa; pa += NBPG, va += NBPG) {
+	for (; pa < endpa; pa += PAGE_SIZE, va += PAGE_SIZE) {
 		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE);
 		pte = __pmap_kpte_lookup(va);
 		KDASSERT(pte);
