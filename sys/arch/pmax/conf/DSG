@@ -1,7 +1,7 @@
 #
 # Stanford DSG Decstation (any  model) kernel config file
 #
-# 	$NetBSD: DSG,v 1.2 1996/09/30 02:38:17 jonathan Exp $
+# 	$NetBSD: DSG,v 1.3 1996/10/02 05:56:38 jonathan Exp $
 #
 include		"arch/pmax/conf/std.pmax"
 
@@ -83,10 +83,11 @@ options		GATEWAY		# IP packet forwarding
 #options	EON
 
 # pmax specific
-options		COMPAT_ULTRIX	# ultrix compatibility
+options		COMPAT_ULTRIX	# Ultrix compatibility
+options		EXEC_ECOFF	# RISC Ultrix executables are in ECOFF format
 options		"HZ=256"	# RTC rate required
 
-# Note that this configuration is unlikely to work, yet...
+# Note that these do not work in the same kernel, yet.
 config		netbsd root on rz0a swap on rz0b and rz1b dumps on rz0b
 #config		gennetbsd	swap generic
 
