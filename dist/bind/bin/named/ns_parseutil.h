@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_parseutil.h,v 1.2 2001/01/27 07:22:00 itojun Exp $	*/
+/*	$NetBSD: ns_parseutil.h,v 1.2.2.1 2002/06/28 11:34:24 lukem Exp $	*/
 
 /*
  * Copyright (c) 1996-2000 by Internet Software Consortium.
@@ -24,7 +24,6 @@
  * Symbol Table
  */
 
-#define SYMBOL_FREE_KEY		0x01
 #define SYMBOL_FREE_VALUE	0x02
 
 typedef union symbol_value {
@@ -54,8 +53,8 @@ void			free_symbol_table(symbol_table);
 void			dprint_symbol_table(int, symbol_table);
 int			lookup_symbol(symbol_table, const char *, int,
 				      symbol_value *);
-void			define_symbol(symbol_table, char *, int, symbol_value,
-				      unsigned int);
+void			define_symbol(symbol_table, const char *, int,
+				      symbol_value, unsigned int);
 void			undefine_symbol(symbol_table, char *, int type);
 
 /*
