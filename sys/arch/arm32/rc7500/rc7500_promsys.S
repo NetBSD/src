@@ -1,4 +1,4 @@
-/* $NetBSD: rc7500_promsys.S,v 1.1 1996/08/29 22:35:46 mark Exp $ */
+/*	$NetBSD: rc7500_promsys.S,v 1.2 1997/10/14 10:49:56 mark Exp $	*/
 
 /*
  * Copyright (c) 1996, Danny C Tsen.
@@ -32,7 +32,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
 #include <machine/asm.h>
 
 sp	.req	r13
@@ -41,41 +40,41 @@ pc	.req	r15
 
 ENTRY(prom_reboot)
 	stmdb	sp!, {lr}
-	SWI	0x06
+	swi	0x06
 	ldmia	sp!, {pc}
 
 ENTRY(prom_getenv)
 	stmdb	sp!, {lr}
-	SWI	0x07
+	swi	0x07
 	ldmia	sp!, {pc}
 
 ENTRY(prom_putchar)
 	stmdb	sp!, {lr}
-	SWI	0x08
+	swi	0x08
 	ldmia	sp!, {pc}
 
 ENTRY(prom_puts)
 	stmdb	sp!, {r0, lr}
-	SWI	0x09
+	swi	0x09
 	ldmia	sp!, {r0, pc}
 
 ENTRY(prom_getchar)
 	stmdb	sp!, {lr}
-	SWI	0x0A
+	swi	0x0a
 	ldmia	sp!, {pc}
 
 ENTRY(prom_open)
 	stmdb	sp!, {lr}
-	SWI	0x0B
+	swi	0x0b
 	ldmia	sp!, {pc}
 
 ENTRY(prom_close)
 	stmdb	sp!, {lr}
-	SWI	0x0C
+	swi	0x0c
 	ldmia	sp!, {pc}
 
 ENTRY(prom_read)
 	stmdb	sp!, {lr}
-	SWI	0x0D
+	swi	0x0d
 	ldmia	sp!, {pc}
 
