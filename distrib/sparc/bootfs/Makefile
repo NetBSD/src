@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2000/05/02 07:10:19 sjg Exp $
+#	$NetBSD: Makefile,v 1.19 2000/05/02 16:06:54 sjg Exp $
 
 TOP=		${.CURDIR}/..
 MINIROOT=	${.CURDIR}/../../miniroot
@@ -7,6 +7,7 @@ MINIROOT=	${.CURDIR}/../../miniroot
 
 .include <bsd.own.mk>	# So we use /etc/mk.conf.
 .include <bsd.kernobj.mk>
+
 KERN?=		${KERNOBJDIR}/INSTALL/netbsd
 
 MOUNT_POINT?=	/mnt
@@ -44,13 +45,14 @@ all:	netbsd.ram.gz
 	newfs -B be -m 0 -o space -i ${INO_BYTES} -c 80 ${VND_RDEV}
 	mount ${VND_DEV} ${MOUNT_POINT}
 	TOPDIR=${TOP} CURDIR=${MINIROOT} OBJDIR=${.OBJDIR} \
+	    KERNOBJDIR=${KERNOBJDIR} \
 	    TARGDIR=${MOUNT_POINT} sh ${MINIROOT}/runlist.sh ${LISTS}
 	@echo ""
 	@df -i ${MOUNT_POINT}
 	@echo ""
 	@echo "installing new bootblocks"
 	-rm -f ${MOUNT_POINT}/boot
-	/usr/mdec/binstall -v -b boot.700000 ffs ${MOUNT_POINT}
+	${MDEC}/binstall -m ${MDEC} -v -b boot.700000 ffs ${MOUNT_POINT}
 	umount ${MOUNT_POINT}
 	vnconfig -u ${VND_CDEV}
 

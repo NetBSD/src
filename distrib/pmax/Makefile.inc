@@ -1,7 +1,9 @@
-#	$NetBSD: Makefile.inc,v 1.2 1999/04/27 12:05:05 simonb Exp $
+#	$NetBSD: Makefile.inc,v 1.3 2000/05/02 16:06:53 sjg Exp $
 
-REV!=sh ${.CURDIR}/../../../sys/conf/osrelease.sh -s
-VER!=sh ${.CURDIR}/../../../sys/conf/osrelease.sh
+.include "../../Makefile.inc"
+
+REV!=sh ${BSDSRCDIR}/sys/conf/osrelease.sh -s
+VER!=sh ${BSDSRCDIR}/sys/conf/osrelease.sh 
 
 .if target(install) && !defined(RELEASEDIR)
 beforeinstall:
