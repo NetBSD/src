@@ -38,7 +38,7 @@
  *	from: Utah Hdr: machdep.c 1.63 91/04/24
  *	from: @(#)machdep.c	7.16 (Berkeley) 6/3/91
  *	machdep.c,v 1.3 1993/07/07 07:20:03 cgd Exp
- *	$Id: machdep.c,v 1.28 1994/05/10 05:26:16 gwr Exp $
+ *	$Id: machdep.c,v 1.29 1994/05/20 04:26:19 gwr Exp $
  */
 
 #include <sys/param.h>
@@ -61,6 +61,7 @@
 #include <sys/mount.h>
 #include <sys/user.h>
 #include <sys/exec.h>
+#include <sys/vnode.h>
 #include <sys/sysctl.h>
 #ifdef SYSVMSG
 #include <sys/msg.h>
@@ -345,6 +346,9 @@ void consinit()
 {
     extern void cninit();
     cninit();
+
+	/* XXX - Temporary hack... */
+    boothowto = RB_SINGLE | RB_NOSYNC | RB_KDB;
 
 #ifdef DDB
 	/* Well, this is where the hp300 does it... -gwr */
