@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.6 1999/01/16 03:44:42 nisimura Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.7 1999/03/23 22:15:36 simonb Exp $	*/
 
 /* 
  * Mach Operating System
@@ -32,7 +32,7 @@
 #include <mips/mips_opcode.h>
 
 #include <machine/param.h>
-#include <mips/db_machdep.h>
+#include <machine/db_machdep.h>
 #include <ddb/db_interface.h>
 #include <ddb/db_output.h>
 #include <ddb/db_variables.h>
