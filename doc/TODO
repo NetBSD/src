@@ -1,4 +1,4 @@
-#	$NetBSD: TODO,v 1.3 2003/08/10 19:47:07 jdolecek Exp $
+#	$NetBSD: TODO,v 1.4 2003/08/15 10:10:17 agc Exp $
 
 THINGS TO BE DONE:
 
@@ -53,3 +53,35 @@ Documentation:
 i386 kernel support:
      better ways of accessing BIOS, i/o space.  some exportable to
 	user space.  See mach3,linux dos emulator
+
+
+This is a list of suggested smaller projects (in no particular order):
+
++ implement Unix98 ptys
++ speed up sort(1) by using mmap(2) rather than temp files
++ autoconf version of our sed, for use in non-NetBSD pkgsrc
++ autoconf version of nawk, for use in non-NetBSD pkgsrc
++ port valgrind to NetBSD for pkgsrc, then use it to do an audit of
+  any memory leakage
++ someone investigate time taken to boot
++ help in implementing various things in pkgsrc
++ simplify some of the quirks in our build system
++ help out with scripts for tgm/autobuild
++ some PR fixing/re-categorising/investigating/closing
++ investigate zebra or quagga in gnusrc rather than routed
++ do a type-punned pointer sweep for gcc3 (and fix the problems, not
+  the symptoms)
++ kernel fine-grained locking
++ write a BSD-licensed web browser 
++ write a BSD-licensed privacy guard like gnupg or pgp
++ perhaps look at putting wonka into src/ (with uuencoded class lib?)
++ investigate ProPolice
++ document autoconf framework
++ write an overview document for openssl and certificates
++ documentation project help
++ investigate which userland utilities and daemons would benefit from
+  kqueue, and rewrite them
++ better testing in general; in particular, more regression tests
++ better LKM version checking
++ add a native scheme interpreter
++ add platform support for TenDRA compiler suite
