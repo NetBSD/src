@@ -1,4 +1,4 @@
-/*	$NetBSD: pstat.c,v 1.68 2002/02/22 05:21:01 enami Exp $	*/
+/*	$NetBSD: pstat.c,v 1.69 2002/02/22 05:43:20 enami Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)pstat.c	8.16 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: pstat.c,v 1.68 2002/02/22 05:21:01 enami Exp $");
+__RCSID("$NetBSD: pstat.c,v 1.69 2002/02/22 05:43:20 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -968,6 +968,7 @@ usage()
 {
 
 	(void)fprintf(stderr,
-	    "usage: pstat [-T|-f|-s|-t|-v] [-kn] [-M core] [-N system]\n");
+	    "usage: %s [-T|-f|-s|-t|-v] [-kn] [-M core] [-N system]\n",
+	    getprogname());
 	exit(1);
 }
