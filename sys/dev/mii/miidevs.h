@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.6 1999/05/14 11:38:05 drochner Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.7 1999/09/04 23:59:32 soren Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.6 1999/05/14 11:37:30 drochner Exp 
+ *	NetBSD: miidevs,v 1.7 1999/09/04 23:58:55 soren Exp 
  */
 
 /*-
@@ -65,10 +65,13 @@
 #define	MII_OUI_SEEQ	0x00a07d	/* Seeq */
 #define	MII_OUI_SIS	0x00e006	/* Silicon Integrated Systems */
 #define	MII_OUI_TI	0x080028	/* Texas Instruments */
-
+#define	MII_OUI_TSC	0x00c039	/* TDK Semiconductor */
 
 /* in the 79c873, AMD uses another OUI (which matches Davicom!) */
 #define	MII_OUI_xxAMD	0x00606e	/* Advanced Micro Devices */
+
+/* Some Intel 82553's use an alternative OUI. */
+#define	MII_OUI_xxINTEL	0x00f800	/* Intel */
 
 /* some vendors have the bits swapped within bytes
 	(ie, ordered as on the wire) */
@@ -104,8 +107,12 @@
 #define	MII_STR_xxICS_1890	"ICS1890 10/100 media interface"
 
 /* Intel PHYs */
+#define	MII_MODEL_xxINTEL_I82553	0x0000
+#define	MII_STR_xxINTEL_I82553	"i82553 10/100 media interface"
 #define	MII_MODEL_INTEL_I82555	0x0015
 #define	MII_STR_INTEL_I82555	"i82555 10/100 media interface"
+#define	MII_MODEL_INTEL_I82553	0x0035
+#define	MII_STR_INTEL_I82553	"i82553 10/100 media interface"
 
 /* Level 1 PHYs */
 #define	MII_MODEL_xxLEVEL1_LXT970	0x0000
@@ -136,3 +143,7 @@
 #define	MII_STR_xxTI_TLAN10T	"ThunderLAN 10baseT media interface"
 #define	MII_MODEL_xxTI_100VGPMI	0x0002
 #define	MII_STR_xxTI_100VGPMI	"ThunderLAN 100VG-AnyLan media interface"
+
+/* TDK Semiconductor PHYs */
+#define	MII_MODEL_TSC_78Q2120	0x0014
+#define	MII_STR_TSC_78Q2120	"78Q2120 10/100 media interface"
