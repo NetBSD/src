@@ -1,4 +1,4 @@
-/* $NetBSD: isp_sbus.c,v 1.32 2000/10/17 17:40:11 mjacob Exp $ */
+/* $NetBSD: isp_sbus.c,v 1.33 2000/10/22 03:04:50 mjacob Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -98,12 +98,12 @@ static struct ispmdvec mdvec = {
 	NULL,
 	NULL,
 	NULL,
-	ISP_1000_RISC_CODE,
-	BIU_BURST_ENABLE|BIU_SBUS_CONF1_FIFO_32
+	ISP_1000_RISC_CODE
 };
 
 struct isp_sbussoftc {
 	struct ispsoftc	sbus_isp;
+	struct sbusdev	sbus_sd;
 	sdparam		sbus_dev;
 	bus_space_tag_t	sbus_bustag;
 	bus_dma_tag_t	sbus_dmatag;
@@ -159,7 +159,7 @@ isp_sbus_attach(parent, self, aux)
         struct device *parent, *self;
         void *aux;
 {
-	int freq;
+	int freq, ispburst, sbusburst;
 	struct sbus_attach_args *sa = aux;
 	struct isp_sbussoftc *sbc = (struct isp_sbussoftc *) self;
 	struct ispsoftc *isp = &sbc->sbus_isp;
@@ -197,9 +197,33 @@ isp_sbus_attach(parent, self, aux)
 	sbc->sbus_mdvec.dv_clock = freq;
 
 	/*
-	 * XXX: Now figure out what the proper burst sizes, etc., to use.
+	 * Now figure out what the proper burst sizes, etc., to use.
+	 * Unfortunately, there is no ddi_dma_burstsizes here which
+	 * walks up the tree finding the limiting burst size node (if
+	 * any).
 	 */
-	sbc->sbus_mdvec.dv_conf1 |= BIU_SBUS_CONF1_FIFO_8;
+	sbusburst = ((struct sbus_softc *)parent)->sc_burst;
+	if (sbusburst == 0)
+		sbusburst = SBUS_BURST_32 - 1;
+	ispburst = getpropint(sa->sa_node, "burst-sizes", -1);
+	if (ispburst == -1) {
+		ispburst = sbusburst;
+	}
+	ispburst &= sbusburst;
+	ispburst &= ~(1 << 7);
+	ispburst &= ~(1 << 6);
+	sbc->sbus_mdvec.dv_conf1 =  0;
+	if (ispburst & (1 << 5)) {
+		sbc->sbus_mdvec.dv_conf1 = BIU_SBUS_CONF1_FIFO_32;
+	} else if (ispburst & (1 << 4)) {
+		sbc->sbus_mdvec.dv_conf1 = BIU_SBUS_CONF1_FIFO_16;
+	} else if (ispburst & (1 << 3)) {
+		sbc->sbus_mdvec.dv_conf1 =
+		    BIU_SBUS_CONF1_BURST8 | BIU_SBUS_CONF1_FIFO_8;
+	}
+	if (sbc->sbus_mdvec.dv_conf1) {
+		sbc->sbus_mdvec.dv_conf1 |= BIU_BURST_ENABLE;
+	}
 
 	/*
 	 * Some early versions of the PTI SBus adapter
@@ -260,6 +284,8 @@ isp_sbus_attach(parent, self, aux)
 	    isp_sbus_intr, sbc);
 	ENABLE_INTS(isp);
 	ISP_UNLOCK(isp);
+
+	sbus_establish(&sbc->sbus_sd, &sbc->sbus_isp.isp_osinfo._dev);
 
 	/*
 	 * do generic attach.
