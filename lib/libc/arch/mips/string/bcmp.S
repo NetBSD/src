@@ -1,4 +1,4 @@
-/*	$NetBSD: bcmp.S,v 1.5 1996/09/17 01:32:30 jonathan Exp $	*/
+/*	$NetBSD: bcmp.S,v 1.6 1997/10/20 09:31:37 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,10 +37,12 @@
  */
 
 #include <mips/asm.h>
+#define _LOCORE		/* XXX not really, just assembly-code source */
+#include <machine/endian.h>	/* LWLO/LWHI, SWLO/SWHI */
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)bcmp.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$NetBSD: bcmp.S,v 1.5 1996/09/17 01:32:30 jonathan Exp $")
+	ASMSTR("$NetBSD: bcmp.S,v 1.6 1997/10/20 09:31:37 jonathan Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef ABICALLS
@@ -49,18 +51,6 @@
 
 /* bcmp(s1, s2, n) */
 
-#ifdef MIPSEL
-#	define	LWHI	lwr
-#	define	LWLO	lwl
-#	define	SWHI	swr
-#	define	SWLO	swl
-#endif
-#ifdef MIPSEB
-#	define	LWHI	lwl
-#	define	LWLO	lwr
-#	define	SWHI	swl
-#	define	SWLO	swr
-#endif
 
 LEAF(bcmp)
 	.set	noreorder
