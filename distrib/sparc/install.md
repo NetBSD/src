@@ -1,4 +1,4 @@
-#	$NetBSD: install.md,v 1.9 1996/10/09 00:13:36 jtc Exp $
+#	$NetBSD: install.md,v 1.10 1997/06/22 22:26:42 pk Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -42,6 +42,10 @@
 
 # Machine-dependent install sets
 MDSETS="xbin xman xinc xcon"
+
+if [ "$MODE" = upgrade ]; then
+	RELOCATED_FILES_13="${RELOCATED_FILES_13} /usr/sbin/installboot /usr/mdec/installboot"
+fi
 
 md_set_term() {
 	if [ ! -z "$TERM" ]; then
