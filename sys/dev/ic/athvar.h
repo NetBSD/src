@@ -1,4 +1,4 @@
-/* $NetBSD: athvar.h,v 1.2 2003/10/13 05:23:07 dyoung Exp $ */
+/* $NetBSD: athvar.h,v 1.3 2003/10/14 17:47:03 ichiro Exp $ */
 /*-
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
  * All rights reserved.
@@ -99,6 +99,11 @@ struct ath_softc {
 	struct device		sc_dev;
 #endif
 	struct ieee80211com	sc_ic;		/* IEEE 802.11 common */
+#ifndef __FreeBSD__
+	int			(*sc_enable)(struct ath_softc *);
+	void			(*sc_disable)(struct ath_softc *);
+	void			(*sc_power)(struct ath_softc *, int);
+#endif
 	int			(*sc_newstate)(struct ieee80211com *,
 					enum ieee80211_state, int);
 #ifdef __FreeBSD__
@@ -175,15 +180,32 @@ struct ath_softc {
 	struct callout		sc_cal_ch;	/* callout handle for cals */
 	struct callout		sc_scan_ch;	/* callout handle for scan */
 	struct ath_stats	sc_stats;	/* interface statistics */
+
+#ifndef __FreeBSD__
+	void			*sc_sdhook;	/* shutdown hook */
+	void			*sc_powerhook;	/* power management hook */
+	u_int			sc_flags;	/* misc flags */
+#endif
 };
+#ifndef __FreeBSD__
+#define	ATH_ATTACHED		0x0001		/* attach has succeeded */
+#define ATH_ENABLED		0x0002		/* chip is enabled */
+
+#define	ATH_IS_ENABLED(sc)	((sc)->sc_flags & ATH_ENABLED)
+#endif
+
 #define	sc_tx_th		u_tx_rt.th
 #define	sc_rx_th		u_rx_rt.th
 
 int	ath_attach(u_int16_t, struct ath_softc *);
 int	ath_detach(struct ath_softc *);
-void	ath_resume(struct ath_softc *);
-void	ath_suspend(struct ath_softc *);
+void	ath_resume(struct ath_softc *, int);
+void	ath_suspend(struct ath_softc *, int);
 void	ath_shutdown(struct ath_softc *);
+#ifndef __FreeBSD__
+int	ath_activate(struct device *, enum devact);
+void	ath_power(int, void *);
+#endif
 #ifdef __FreeBSD__
 void	ath_intr(void *);
 #else
