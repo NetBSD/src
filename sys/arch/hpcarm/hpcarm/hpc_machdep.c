@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc_machdep.c,v 1.34 2002/02/22 04:49:21 thorpej Exp $	*/
+/*	$NetBSD: hpc_machdep.c,v 1.35 2002/02/22 18:25:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -553,7 +553,7 @@ initarm(argc, argv, bi)
 	    PD_SIZE, VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 
 	/* Map the page table that maps the kernel pages */
-	pmap_map_entry(l1pagetable, kernel_ptpt.pv_pa, kernel_ptpt.pv_pa,
+	pmap_map_entry(l1pagetable, kernel_ptpt.pv_va, kernel_ptpt.pv_pa,
 	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 
 	/* Map a page for entering idle mode */
