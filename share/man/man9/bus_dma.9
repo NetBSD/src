@@ -1,4 +1,4 @@
-.\" $NetBSD: bus_dma.9,v 1.4 1997/08/12 13:21:52 christos Exp $
+.\" $NetBSD: bus_dma.9,v 1.5 1997/08/13 15:24:59 christos Exp $
 .\"
 .\" Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -36,10 +36,10 @@
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
 .Dd Aug 11, 1997
-.Dt BUSDMA 9
+.Dt BUS_DMA 9
 .Os NetBSD
 .Sh NAME
-.Nm BUSDMA
+.Nm bus_dma
 .Nd Bus and Machine Independent DMA Mapping Interface
 .Sh SYNOPSIS
 .Fd #include <machine/bus.h>
@@ -147,7 +147,7 @@ for more details.
 .El
 .Sh FUNCTIONS
 .Bl -tag -width compact
-.It Fn bus_dmamap_create
+.It Fn bus_dmamap_create "tag" "size" "nsegments" "maxsegsz" "boundary" "flags" "dmamp"
 Allocates a DMA handle and initializes it according to the parameters
 provided. Arguments are as follows:
 .Bl -tag -width nsegments -compact
@@ -202,7 +202,7 @@ Behavior is not defined if invalid arguments are passed to
 .Fn bus_dmamap_create .
 .Pp
 Returns 0 on success, or an error code to indicate mode of failure.
-.It Fn bus_dmamap_destroy
+.It Fn bus_dmamap_destroy "tag" "dmam"
 Frees all resources associated with a given DMA handle.  Arguments are
 as follows:
 .Bl -tag -width dmam -compact
@@ -223,7 +223,7 @@ Behavior is not defined if invalid arguments are passed to
 If given valid arguments,
 .Fn bus_dmamap_destroy
 always succeeds.
-.It Fn bus_dmamap_load
+.It Fn bus_dmamap_load "tag" "dmam" "buf" "buflen" "p" "flags"
 Loads a DMA handle with mappings for a DMA transfer.  It assumes that
 all pages involved in a DMA transfer are wired. Arguments are as follows:
 .Bl -tag -width buflen -compact
@@ -272,13 +272,13 @@ Behavior is not defined if invalid arguments are passed to
 .Fn bus_dmamap_load .
 .Pp
 Returns 0 on success, or an error code to indicate mode of failure.
-.It Fn bus_dmamap_load_mbuf
+.It Fn bus_dmamap_load_mbuf "tag" "dmam" "chain" "flags"
 This is a variation of 
 .Fn bus_dmamap_load
 which maps mbuf chains
 for DMA transfers.  Mbuf chains are assumed to be in kernel
 virtual address space.
-.It Fn bus_dmamap_load_uio
+.It Fn bus_dmamap_load_uio "tag" "dmam" "uio" "flags"
 This is a variation of
 .Fn bus_dmamap_load
 which maps buffers pointed to by
@@ -291,7 +291,7 @@ If the buffers are in user address space, the buffers are assumed to be
 in
 .Fa "uio->uio_procp" Ns 's
 address space.
-.It Fn bus_dmamap_load_raw
+.It Fn bus_dmamap_load_raw "tag" "dmam" "segs" "nsegs" "size" "flags"
 This is a variation of
 .Fn bus_dmamap_load
 which maps buffers
@@ -307,7 +307,7 @@ The
 argument is the number of segments in the array.  The
 .Fa size
 argument is the size of the DMA transfer.
-.It Fn bus_dmamap_unload
+.It Fn bus_dmamap_unload "tag" "dmam"
 Deletes the mappings for a given DMA handle.  Arguments are as follows:
 .Bl -tag -width dmam -compact
 .It Fa tag
@@ -335,7 +335,7 @@ Behavior is not defined if invalid arguments are passed to
 If given valid arguments,
 .Fn bus_dmamap_unload
 always succeeds.
-.It Fn bus_dmamap_sync
+.It Fn bus_dmamap_sync "tag" "dmam" "op"
 Performs pre- and post-DMA operation cache and/or buffer synchronization.
 Arguments are as follows:
 .Bl -tag -width dmam -compact
@@ -361,7 +361,9 @@ Perform any post-write DMA cache and/or bounce operations.
 .Pp
 This function exists so that multiple read and write transfers can be
 performed with the same buffer, and so that drivers can explicitly
-inform the bus DMA code when their data is 'ready' in its DMA buffer.
+inform the
+.Nm 
+code when their data is 'ready' in its DMA buffer.
 .Pp
 An example of multiple read-write use of a single mapping
 might look like:
@@ -404,7 +406,8 @@ Behavior is not defined if invalid arguments are passed to
 If given valid arguments,
 .Fn bus_dmamap_sync
 always succeeds.
-.It Fn bus_dmamem_alloc
+.\" XXX: This does not work with all the arguments.
+.It Fn bus_dmamem_alloc "tag" "size" "alignment" "boundary" "segs" "..."
 Allocates memory that is "DMA safe" for the bus corresponding to the
 given tag.  The mapping of this memory is machine-dependent (or
 "opaque"); machine-independent code is not to assume that the
@@ -461,7 +464,7 @@ Behavior is undefined if invalid arguments are passed to
 .Fn bus_dmamem_alloc .
 .Pp
 Returns 0 on success, or an error code indicating mode of failure.
-.It Fn bus_dmamem_free
+.It Fn bus_dmamem_free "tag" "segs" "nsegs"
 Frees memory previously allocated by 
 .Fn bus_dmamem_alloc .
 Any mappings
@@ -484,7 +487,7 @@ Behavior is undefined if invalid arguments are passed to
 If given valid arguments, 
 .Fn bus_dmamem_free
 always succeeds.
-.It Fn bus_dmamem_map
+.It Fn bus_dmamem_map "tag" "segs" "nsegs" "size" "kvap" "flags"
 Maps memory allocated with
 .Fn bus_dmamem_alloc
 into kernel virtual address space.  Arguments are as follows:
@@ -528,7 +531,7 @@ Behavior is undefined if invalid arguments are passed to
 .Fn bus_dmamem_map .
 .Pp
 Returns 0 on success, or an error code indicating mode of failure.
-.It Fn bus_dmamem_unmap
+.It Fn bus_dmamem_unmap "tag" "kva" "size"
 Unmaps memory previously mapped with
 .Fn bus_dmamem_map ,
 freeing the
@@ -550,7 +553,7 @@ Behavior is undefined if invalid arguments are passed to
 If given valid arguments, 
 .Fn bus_dmamem_unmap
 always succeeds.
-.It Fn bus_dmamem_mmap
+.It Fn bus_dmamem_mmap "tag" "segs" "nsegs" "off" "prot" "flags"
 Provides support for user
 .Xr mmap 2 Ns 'ing
 of DMA-safe memory.  This function is to be called by a device
