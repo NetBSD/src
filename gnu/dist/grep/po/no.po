@@ -7,7 +7,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: GNU grep 2.2\n"
-"POT-Creation-Date: 1999-11-13 11:33-0500\n"
+"POT-Creation-Date: 2001-07-31 16:17-0400\n"
 "PO-Revision-Date: 1998-08-01 13:45+0200\n"
 "Last-Translator: Eivind Tagseth <eivindt@multinet.no>\n"
 "Language-Team: Norwegian <no@li.org>\n"
@@ -15,11 +15,18 @@ msgstr ""
 "Content-Type: text/plain; charset=ISO-8859-1\n"
 "Content-Transfer-Encoding: 8-bit\n"
 
-#: src/dfa.c:155 src/dfa.c:167 src/dfa.c:180 src/grep.c:921
+#: src/dfa.c:136 src/dfa.c:147 src/dfa.c:158 src/search.c:689
 msgid "Memory exhausted"
 msgstr "Minnet oppbrukt"
 
-#: src/dfa.c:457
+#: src/dfa.c:489 src/dfa.c:492 src/dfa.c:510 src/dfa.c:521 src/dfa.c:545
+#: src/dfa.c:604 src/dfa.c:609 src/dfa.c:622 src/dfa.c:623 src/dfa.c:1001
+#: src/dfa.c:1004 src/dfa.c:1028 src/dfa.c:1032 src/dfa.c:1033 src/dfa.c:1036
+#: src/dfa.c:1048 src/dfa.c:1049
+msgid "Unbalanced ["
+msgstr "Ubalansert ["
+
+#: src/dfa.c:741
 msgid "Unfinished \\ escape"
 msgstr "Uferdig \\-beskyttelse"
 
@@ -27,199 +34,98 @@ msgstr "Uferdig \\-beskyttelse"
 #. {M} - exact count
 #. {M,} - minimum count, maximum is infinity
 #. {M,N} - M through N
-#: src/dfa.c:590 src/dfa.c:596 src/dfa.c:606 src/dfa.c:614 src/dfa.c:629
+#: src/dfa.c:874 src/dfa.c:880 src/dfa.c:890 src/dfa.c:898 src/dfa.c:913
 msgid "unfinished repeat count"
 msgstr "uferdig gjentagelsesantall"
 
-#: src/dfa.c:603 src/dfa.c:620 src/dfa.c:628 src/dfa.c:632
+#: src/dfa.c:887 src/dfa.c:904 src/dfa.c:912 src/dfa.c:916
 msgid "malformed repeat count"
 msgstr "feilaktig gjentagelsesantall"
 
-#: src/dfa.c:697 src/dfa.c:700 src/dfa.c:727 src/dfa.c:731 src/dfa.c:732
-#: src/dfa.c:735 src/dfa.c:748 src/dfa.c:749
-msgid "Unbalanced ["
-msgstr "Ubalansert ["
-
-#: src/dfa.c:886
+#: src/dfa.c:1239
 msgid "Unbalanced ("
 msgstr "Ubalansert ("
 
-#: src/dfa.c:1007
+#: src/dfa.c:1364
 msgid "No syntax specified"
 msgstr "Ingen syntaks spesifisert"
 
-#: src/dfa.c:1015
+#: src/dfa.c:1372
 msgid "Unbalanced )"
 msgstr "Ubalansert )"
 
-#: src/dfa.c:2036
+#: src/dfa.c:2942
 msgid "out of memory"
 msgstr "tomt for minne"
 
-#: src/getopt.c:628
-#, c-format
-msgid "%s: option `%s' is ambiguous\n"
-msgstr "%s: flagget «%s» er flertydig\n"
-
-#: src/getopt.c:652
-#, c-format
-msgid "%s: option `--%s' doesn't allow an argument\n"
-msgstr "%s: flagget «--%s» tar ikke argumenter\n"
-
-#: src/getopt.c:657
-#, c-format
-msgid "%s: option `%c%s' doesn't allow an argument\n"
-msgstr "%s: flagget «%c%s» tar ikke argumenter\n"
-
-#: src/getopt.c:674 src/getopt.c:847
-#, c-format
-msgid "%s: option `%s' requires an argument\n"
-msgstr "%s: flagget «%s» trenger et argument\n"
-
-#. --option
-#: src/getopt.c:703
-#, c-format
-msgid "%s: unrecognized option `--%s'\n"
-msgstr "%s: ukjent flagg «--%s»\n"
-
-#. +option or -option
-#: src/getopt.c:707
-#, c-format
-msgid "%s: unrecognized option `%c%s'\n"
-msgstr "%s: ukjent flagg «%c%s»\n"
-
-#. 1003.2 specifies the format of this message.
-#: src/getopt.c:733
-#, c-format
-msgid "%s: illegal option -- %c\n"
-msgstr "%s: ulovlig flagg -- %c\n"
-
-#: src/getopt.c:736
-#, c-format
-msgid "%s: invalid option -- %c\n"
-msgstr "%s: ugyldig flagg -- %c\n"
-
-#. 1003.2 specifies the format of this message.
-#: src/getopt.c:766 src/getopt.c:896
-#, c-format
-msgid "%s: option requires an argument -- %c\n"
-msgstr "%s: flagget behøver et argument -- %c\n"
-
-#: src/getopt.c:813
-#, c-format
-msgid "%s: option `-W %s' is ambiguous\n"
-msgstr "%s: flagget «-W %s» er flertydig\n"
-
-#: src/getopt.c:831
-#, c-format
-msgid "%s: option `-W %s' doesn't allow an argument\n"
-msgstr "%s: flagget «-W %s» tar ikke argumenter\n"
-
-#: src/getopt1.c:132
-#, c-format
-msgid "option %s"
-msgstr "flagg %s"
-
-#: src/getopt1.c:134
-#, c-format
-msgid " with arg %s"
-msgstr " med arg %s"
-
-#: src/getopt1.c:149
-msgid "digits occur in two different argv-elements.\n"
-msgstr "tallene forekommer i to forskjellige argv-elementer.\n"
-
-#: src/getopt1.c:151
-#, c-format
-msgid "option %c\n"
-msgstr "flagg %c\n"
-
-#: src/getopt1.c:155
-msgid "option a\n"
-msgstr "flagg a\n"
-
-#: src/getopt1.c:159
-msgid "option b\n"
-msgstr "flagg b\n"
-
-#: src/getopt1.c:163
-#, c-format
-msgid "option c with value `%s'\n"
-msgstr "flagg c med verdi «%s»\n"
-
-#: src/getopt1.c:167
-#, c-format
-msgid "option d with value `%s'\n"
-msgstr "flagg d med verdi «%s»\n"
-
-#: src/getopt1.c:174
-#, c-format
-msgid "?? getopt returned character code 0%o ??\n"
-msgstr "?? getopt returnerte tegnverdien 0%o ??\n"
-
-#: src/getopt1.c:180
-msgid "non-option ARGV-elements: "
-msgstr "ARGV-elementer som ikke er flagg: "
-
-#: src/grep.c:183 src/grep.c:200 src/grep.c:300 src/grep.c:408 src/kwset.c:184
-#: src/kwset.c:190
+#: lib/obstack.c:471 src/kwset.c:171 src/kwset.c:177 src/search.c:103
+#: src/search.c:209 src/search.c:293
 msgid "memory exhausted"
 msgstr "minnet oppbrukt"
 
-#: src/grep.c:560 src/grep.c:1454
+#: src/grep.c:191
+msgid "invalid context length argument"
+msgstr "ugyldig kontekstlengde"
+
+#: src/grep.c:458
+msgid "input is too large to count"
+msgstr ""
+
+#: src/grep.c:531
 msgid "writing output"
 msgstr "skriver utdata"
 
-#: src/grep.c:792
+#: src/grep.c:804
 #, c-format
 msgid "Binary file %s matches\n"
 msgstr ""
 
-#: src/grep.c:808
+#: src/grep.c:818
 msgid "(standard input)"
 msgstr "(standard inn)"
 
-#: src/grep.c:906
-#, c-format
-msgid "%s: warning: %s: %s\n"
+#: src/grep.c:923
+#, fuzzy, c-format
+msgid "warning: %s: %s\n"
 msgstr "%s: advarsel: %s: %s\n"
 
-#: src/grep.c:907
+#: src/grep.c:924
 msgid "recursive directory loop"
 msgstr ""
 
-#: src/grep.c:958
+#: src/grep.c:972
 #, c-format
 msgid "Usage: %s [OPTION]... PATTERN [FILE]...\n"
 msgstr "Bruk: %s [FLAGG]... MØNSTER [FIL]...\n"
 
-#: src/grep.c:959
+#: src/grep.c:974
 #, c-format
 msgid "Try `%s --help' for more information.\n"
 msgstr "Prøv «%s --help» for mer informasjon.\n"
 
-#: src/grep.c:963
+#: src/grep.c:979
 #, c-format
 msgid "Usage: %s [OPTION]... PATTERN [FILE] ...\n"
 msgstr "Bruk: %s [FLAGG]... MØNSTER [FIL] ...\n"
 
-#: src/grep.c:964
+#: src/grep.c:980
 #, c-format
 msgid ""
 "Search for PATTERN in each FILE or standard input.\n"
-"Example: %s -i 'hello.*world' menu.h main.c\n"
+"Example: %s -i 'hello world' menu.h main.c\n"
 "\n"
 "Regexp selection and interpretation:\n"
 msgstr ""
 
-#: src/grep.c:969
+#: src/grep.c:985
 msgid ""
 "  -E, --extended-regexp     PATTERN is an extended regular expression\n"
 "  -F, --fixed-strings       PATTERN is a set of newline-separated strings\n"
 "  -G, --basic-regexp        PATTERN is a basic regular expression\n"
+"  -P, --perl-regexp         PATTERN is a Perl regular expression\n"
 msgstr ""
 
-#: src/grep.c:973
+#: src/grep.c:990
 #, fuzzy
 msgid ""
 "  -e, --regexp=PATTERN      use PATTERN as a regular expression\n"
@@ -243,7 +149,7 @@ msgstr ""
 "  -w, --word-regexp         MØNSTER må stemme overens med hele ord\n"
 "  -x, --line-regexp         MØNSTER må stemme overens med hele linjer\n"
 
-#: src/grep.c:980
+#: src/grep.c:997
 #, fuzzy
 msgid ""
 "\n"
@@ -261,20 +167,29 @@ msgstr ""
 "  -V, --version             vis versioninformasjon og avslutt\n"
 "      --help                vis denne helpeteksten og avslutt\n"
 
-#: src/grep.c:988
+#: src/grep.c:1005
 #, fuzzy
 msgid ""
 "\n"
 "Output control:\n"
+"  -m, --max-count=NUM       stop after NUM matches\n"
 "  -b, --byte-offset         print the byte offset with output lines\n"
 "  -n, --line-number         print line number with output lines\n"
+"      --line-buffered       flush output on every line\n"
 "  -H, --with-filename       print the filename for each match\n"
 "  -h, --no-filename         suppress the prefixing filename on output\n"
 "  -q, --quiet, --silent     suppress all normal output\n"
-"  -a, --text                do not suppress binary output\n"
+"      --binary-files=TYPE   assume that binary files are TYPE\n"
+"                            TYPE is 'binary', 'text', or 'without-match'\n"
+"  -a, --text                equivalent to --binary-files=text\n"
+"  -I                        equivalent to --binary-files=without-match\n"
 "  -d, --directories=ACTION  how to handle directories\n"
-"                            ACTION is 'read', 'recurse', or 'skip'.\n"
-"  -r, --recursive           equivalent to --directories=recurse.\n"
+"                            ACTION is 'read', 'recurse', or 'skip'\n"
+"  -R, -r, --recursive       equivalent to --directories=recurse\n"
+"      --include=PATTERN     files that match PATTERN will be examined\n"
+"      --exclude=PATTERN     files that match PATTERN will be skipped.\n"
+"      --exclude-from=FILE   files that match PATTERN in FILE will be "
+"skipped.\n"
 "  -L, --files-without-match only print FILE names containing no match\n"
 "  -l, --files-with-matches  only print FILE names containing matches\n"
 "  -c, --count               only print a count of matching lines per FILE\n"
@@ -295,16 +210,16 @@ msgstr ""
 "treff\n"
 "                            per FIL\n"
 
-#: src/grep.c:1004
+#: src/grep.c:1029
 #, fuzzy
 msgid ""
 "\n"
 "Context control:\n"
 "  -B, --before-context=NUM  print NUM lines of leading context\n"
 "  -A, --after-context=NUM   print NUM lines of trailing context\n"
-"  -C, --context[=NUM]       print NUM (default 2) lines of output context\n"
-"                            unless overridden by -A or -B\n"
+"  -C, --context=NUM         print NUM lines of output context\n"
 "  -NUM                      same as --context=NUM\n"
+"      --color, --colour     use markers to distinguish the matching string\n"
 "  -U, --binary              do not strip CR characters at EOL (MSDOS)\n"
 "  -u, --unix-byte-offsets   report offsets as if CRs were not there (MSDOS)\n"
 "\n"
@@ -323,7 +238,7 @@ msgstr ""
 "  -u, --unix-byte-offsets   rapporter posisjoner som om CRene ikke var der\n"
 "                            (MSDOS)\n"
 
-#: src/grep.c:1019
+#: src/grep.c:1044
 msgid ""
 "\n"
 "Report bugs to <bug-gnu-utils@gnu.org>.\n"
@@ -331,31 +246,36 @@ msgstr ""
 "\n"
 "Rapportér feil til <bug-gnu-utils@prep.ai.mit.edu>.\n"
 
-#: src/grep.c:1030
+#: src/grep.c:1054
 #, fuzzy
 msgid "conflicting matchers specified"
 msgstr "søkeuttrykk er allerede spesifisert"
 
-#: src/grep.c:1229 src/grep.c:1236 src/grep.c:1245
-msgid "invalid context length argument"
-msgstr "ugyldig kontekstlengde"
-
-#: src/grep.c:1296
+#: src/grep.c:1347
 msgid "unknown directories method"
 msgstr ""
 
-#: src/grep.c:1391
+#: src/grep.c:1414
+#, fuzzy
+msgid "invalid max count"
+msgstr "uferdig gjentagelsesantall"
+
+#: src/grep.c:1464
+msgid "unknown binary-files type"
+msgstr ""
+
+#: src/grep.c:1535
 #, fuzzy, c-format
 msgid "%s (GNU grep) %s\n"
 msgstr "grep (GNU grep) %s\n"
 
-#: src/grep.c:1393
+#: src/grep.c:1537
 #, fuzzy
-msgid "Copyright (C) 1988, 1992-1998, 1999 Free Software Foundation, Inc.\n"
+msgid "Copyright 1988, 1992-1999, 2000, 2001 Free Software Foundation, Inc.\n"
 msgstr ""
 "Copyright (C) 1988, 92, 93, 94, 95, 96, 97 Free Software Foundation, Inc.\n"
 
-#: src/grep.c:1395
+#: src/grep.c:1539
 msgid ""
 "This is free software; see the source for copying conditions. There is NO\n"
 "warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n"
@@ -364,12 +284,134 @@ msgstr ""
 "er INGEN garanti, ikke en gang for SALGBARHET eller EGNETHET FOR NOEN \n"
 "SPESIELL OPPGAVE.\n"
 
-#: src/obstack.c:467
-msgid "memory exhausted\n"
-msgstr "minnet oppbrukt\n"
+#: src/search.c:606
+msgid "The -P option is not supported"
+msgstr ""
+
+#: src/search.c:619
+msgid "The -P and -z options cannot be combined"
+msgstr ""
+
+#: lib/error.c:117
+msgid "Unknown system error"
+msgstr ""
+
+#: lib/getopt.c:675
+#, c-format
+msgid "%s: option `%s' is ambiguous\n"
+msgstr "%s: flagget «%s» er flertydig\n"
+
+#: lib/getopt.c:700
+#, c-format
+msgid "%s: option `--%s' doesn't allow an argument\n"
+msgstr "%s: flagget «--%s» tar ikke argumenter\n"
+
+#: lib/getopt.c:705
+#, c-format
+msgid "%s: option `%c%s' doesn't allow an argument\n"
+msgstr "%s: flagget «%c%s» tar ikke argumenter\n"
+
+#: lib/getopt.c:723 lib/getopt.c:896
+#, c-format
+msgid "%s: option `%s' requires an argument\n"
+msgstr "%s: flagget «%s» trenger et argument\n"
+
+#. --option
+#: lib/getopt.c:752
+#, c-format
+msgid "%s: unrecognized option `--%s'\n"
+msgstr "%s: ukjent flagg «--%s»\n"
+
+#. +option or -option
+#: lib/getopt.c:756
+#, c-format
+msgid "%s: unrecognized option `%c%s'\n"
+msgstr "%s: ukjent flagg «%c%s»\n"
+
+#. 1003.2 specifies the format of this message.
+#: lib/getopt.c:782
+#, c-format
+msgid "%s: illegal option -- %c\n"
+msgstr "%s: ulovlig flagg -- %c\n"
+
+#: lib/getopt.c:785
+#, c-format
+msgid "%s: invalid option -- %c\n"
+msgstr "%s: ugyldig flagg -- %c\n"
+
+#. 1003.2 specifies the format of this message.
+#: lib/getopt.c:815 lib/getopt.c:945
+#, c-format
+msgid "%s: option requires an argument -- %c\n"
+msgstr "%s: flagget behøver et argument -- %c\n"
+
+#: lib/getopt.c:862
+#, c-format
+msgid "%s: option `-W %s' is ambiguous\n"
+msgstr "%s: flagget «-W %s» er flertydig\n"
+
+#: lib/getopt.c:880
+#, c-format
+msgid "%s: option `-W %s' doesn't allow an argument\n"
+msgstr "%s: flagget «-W %s» tar ikke argumenter\n"
+
+#. Get translations for open and closing quotation marks.
+#.
+#. The message catalog should translate "`" to a left
+#. quotation mark suitable for the locale, and similarly for
+#. "'".  If the catalog has no translation,
+#. locale_quoting_style quotes `like this', and
+#. clocale_quoting_style quotes "like this".
+#.
+#. For example, an American English Unicode locale should
+#. translate "`" to U+201C (LEFT DOUBLE QUOTATION MARK), and
+#. should translate "'" to U+201D (RIGHT DOUBLE QUOTATION
+#. MARK).  A British English Unicode locale should instead
+#. translate these to U+2018 (LEFT SINGLE QUOTATION MARK) and
+#. U+2019 (RIGHT SINGLE QUOTATION MARK), respectively.
+#: lib/quotearg.c:259
+msgid "`"
+msgstr ""
+
+#: lib/quotearg.c:260
+msgid "'"
+msgstr ""
+
+#~ msgid "option %s"
+#~ msgstr "flagg %s"
+
+#~ msgid " with arg %s"
+#~ msgstr " med arg %s"
+
+#~ msgid "digits occur in two different argv-elements.\n"
+#~ msgstr "tallene forekommer i to forskjellige argv-elementer.\n"
+
+#~ msgid "option %c\n"
+#~ msgstr "flagg %c\n"
+
+#~ msgid "option a\n"
+#~ msgstr "flagg a\n"
+
+#~ msgid "option b\n"
+#~ msgstr "flagg b\n"
+
+#~ msgid "option c with value `%s'\n"
+#~ msgstr "flagg c med verdi «%s»\n"
+
+#~ msgid "option d with value `%s'\n"
+#~ msgstr "flagg d med verdi «%s»\n"
+
+#~ msgid "?? getopt returned character code 0%o ??\n"
+#~ msgstr "?? getopt returnerte tegnverdien 0%o ??\n"
+
+#~ msgid "non-option ARGV-elements: "
+#~ msgstr "ARGV-elementer som ikke er flagg: "
 
 #~ msgid "you may specify only one of -E, -F, or -G"
 #~ msgstr "du kan bare spesifisere en av -E, -F eller -G"
+
+#~ msgid "memory exhausted\n"
+#~ msgstr "minnet oppbrukt\n"
 
 #~ msgid "(standard input)\n"
 #~ msgstr "(standard inn)\n"
