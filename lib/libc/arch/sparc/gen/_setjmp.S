@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  * from: Header: _setjmp.s,v 1.1 91/07/06 16:45:53 torek Exp
- * $Id: _setjmp.S,v 1.2 1996/03/06 21:50:20 pk Exp $
+ * $Id: _setjmp.S,v 1.3 1996/11/16 20:53:15 pk Exp $
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
@@ -53,7 +53,7 @@
  * The previous signal state is NOT restored.
  */
 
-#include "DEFS.h"
+#include <machine/asm.h>
 
 ENTRY(_setjmp)
 	st	%sp, [%o0+0]	/* store caller's stack pointer */

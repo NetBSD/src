@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  * from: Header: htons.s,v 1.1 92/06/25 12:47:05 torek Exp
- * $Id: htons.S,v 1.1 1993/10/07 00:21:47 cgd Exp $
+ * $Id: htons.S,v 1.2 1996/11/16 20:53:26 pk Exp $
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
@@ -44,7 +44,7 @@
 
 /* netorder = htons(hostorder) */
 
-#include "DEFS.h"
+#include <machine/asm.h>
 
 ENTRY(htons)
 	sethi	%hi(0xffff0000), %o1

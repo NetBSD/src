@@ -35,14 +35,13 @@
  * SUCH DAMAGE.
  *
  * from: Header: cerror.s,v 1.3 92/07/02 04:17:59 torek Exp
- * $Id: cerror.S,v 1.3 1996/11/16 20:43:07 pk Exp $
+ * $Id: cerror.S,v 1.4 1996/11/16 20:53:34 pk Exp $
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	.asciz "@(#)cerror.s	8.1 (Berkeley) 6/4/93"
 #endif /* LIBC_SCCS and not lint */
 
-#include "DEFS.h"
 #include "SYS.h"
 
 #ifdef _REENTRANT

@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  * from: Header: abs.s,v 1.1 91/07/06 18:01:57 torek Exp
- * $Id: abs.S,v 1.1 1993/10/07 00:21:56 cgd Exp $
+ * $Id: abs.S,v 1.2 1996/11/16 20:53:29 pk Exp $
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
@@ -44,7 +44,7 @@
 
 /* abs - int absolute value */
 
-#include "DEFS.h"
+#include <machine/asm.h>
 
 ENTRY(abs)
 	tst	%o0
