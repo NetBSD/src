@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.3 2002/01/13 23:02:35 augustss Exp $	*/
+/*	$NetBSD: pcib.c,v 1.4 2002/03/10 03:15:24 augustss Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -104,20 +104,16 @@ icu_intr_establish(irq, type, level, func, arg)
 {
 	int i;
 
-	for (i = 0; i <= IO_ICUSIZE; i++) {
-		if (i == IO_ICUSIZE)
-			panic("too many IRQs");
-
-		if (icu[i].func != NULL)
-			continue;
-
-		icu[i].cookie_type = COBALT_COOKIE_TYPE_ICU;
-		icu[i].func = func;
-		icu[i].arg = arg;
-		break;
+	for (i = 0; i < IO_ICUSIZE; i++) {
+		if (icu[i].func == NULL) {
+			icu[i].cookie_type = COBALT_COOKIE_TYPE_ICU;
+			icu[i].func = func;
+			icu[i].arg = arg;
+			return &icu[i];
+		}
 	}
 
-	return (void *)-1;
+	panic("too many IRQs");
 }
 
 void
