@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.328 1998/10/15 11:41:28 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.329 1998/10/15 15:26:01 bad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -882,6 +882,41 @@ struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			{
 				"6x86MX", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 				"6x86MX"		/* Default */
+			},
+			NULL
+		} }
+	},
+	{
+		"CentaurHauls",
+		CPUVENDOR_IDT,
+		"IDT",
+		/* Family 4, IDT never had any of these */
+		{ {
+			CPUCLASS_486, 
+			{
+				0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0, 0,
+				"486 compatible"	/* Default */
+			},
+			NULL
+		},
+		/* Family 5 */
+		{
+			CPUCLASS_586,
+			{
+				0, 0, 0, 0, "WinChip C6", 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0,
+				"WinChip"		/* Default */
+			},
+			NULL
+		},
+		/* Family 6, not yet available from IDT */
+		{
+			CPUCLASS_686,
+			{
+				0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0, 0,
+				"Pentium Pro compatible"	/* Default */
 			},
 			NULL
 		} }
