@@ -1,4 +1,4 @@
-/*	$NetBSD: lockd.c,v 1.6 2000/06/09 14:00:53 fvdl Exp $	*/
+/*	$NetBSD: lockd.c,v 1.7 2000/08/12 18:08:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: lockd.c,v 1.6 2000/06/09 14:00:53 fvdl Exp $");
+__RCSID("$NetBSD: lockd.c,v 1.7 2000/08/12 18:08:44 thorpej Exp $");
 #endif
 
 /*
@@ -63,7 +63,7 @@ __RCSID("$NetBSD: lockd.c,v 1.6 2000/06/09 14:00:53 fvdl Exp $");
 #include <rpcsvc/sm_inter.h>
 
 #include "lockd.h"
-#include "nlm_prot.h"
+#include <rpcsvc/nlm_prot.h>
 
 int		debug_level = 0;	/* 0 = no debugging syslog() calls */
 int		_rpcsvcdirty = 0;
