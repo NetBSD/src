@@ -1,4 +1,4 @@
-/*	$NetBSD: getcom.c,v 1.7 2000/09/17 23:04:17 jsm Exp $	*/
+/*	$NetBSD: getcom.c,v 1.8 2000/09/21 09:49:03 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getcom.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: getcom.c,v 1.7 2000/09/17 23:04:17 jsm Exp $");
+__RCSID("$NetBSD: getcom.c,v 1.8 2000/09/21 09:49:03 jsm Exp $");
 #endif
 #endif				/* not lint */
 
@@ -53,6 +53,8 @@ getcom(buf, size, prompt, error)
 	for (;;) {
 		fputs(prompt, stdout);
 		if (fgets(buf, size, stdin) == 0) {
+			if (feof(stdin))
+				die();
 			clearerr(stdin);
 			continue;
 		}
