@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.18 1999/01/16 09:07:37 nisimura Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.19 1999/01/23 06:13:30 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -617,7 +617,7 @@
 #define	MIPS_R6000A	0x06	/* MIPS R6000A CPU		ISA II	*/
 #define	MIPS_R3IDT	0x07	/* IDT R3041 or RC36100 CPU	ISA I	*/ 
 #define	MIPS_R10000	0x09	/* MIPS R10000/T5 CPU		ISA IV	*/
-#define	MIPS_R4200	0x0a	/* NEC VR4200 CPU 		ISA III	*/
+#define	MIPS_R4200	0x0a	/* NEC VR4200 CPU		ISA III	*/
 #define	MIPS_R4300	0x0b	/* NEC VR4300 CPU		ISA III	*/
 #define	MIPS_R4100	0x0c	/* NEC VR4100 CPU		ISA III	*/
 #define	MIPS_R8000	0x10	/* MIPS R8000 Blackbird/TFP	ISA IV	*/
@@ -631,6 +631,7 @@
 #define	MIPS_RC64470	0x30	/* IDT RC64474/RC64475 CPU	ISA III	*/
 #define	MIPS_R3SONY	0x21	/* ? Sony R3000 based CPU	ISA I	*/
 #define	MIPS_R3NKK	0x23	/* ? NKK R3000 based CPU	ISA I	*/
+#define	MIPS_R5400	0x54	/* NEC VR5400 CPU		ISA IV	*/
 
 /*
  * FPU processor revision ID
