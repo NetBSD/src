@@ -1,4 +1,4 @@
-/*	$NetBSD: __fts13.c,v 1.12 1998/11/06 19:44:03 christos Exp $	*/
+/*	$NetBSD: __fts13.c,v 1.13 1998/11/12 16:19:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fts.c	8.6 (Berkeley) 8/14/94";
 #else
-__RCSID("$NetBSD: __fts13.c,v 1.12 1998/11/06 19:44:03 christos Exp $");
+__RCSID("$NetBSD: __fts13.c,v 1.13 1998/11/12 16:19:42 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -964,7 +964,7 @@ fts_alloc(sp, name, namelen)
 	memmove(p->fts_name, name, namelen + 1);
 
 	if (!ISSET(FTS_NOSTAT))
-		p->fts_statp = (struct STAT *)ALIGN(p->fts_name + namelen + 2);
+		p->fts_statp = (struct STAT *)ALIGN((u_long)(p->fts_name + namelen + 2));
 	p->fts_namelen = namelen;
 	p->fts_path = sp->fts_path;
 	p->fts_errno = 0;
