@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: netstart,v 1.37 1997/05/17 14:12:24 lukem Exp $
+#	$NetBSD: netstart,v 1.38 1997/05/22 21:29:49 cjs Exp $
 #	from: @(#)netstart	8.1 (Berkeley) 7/23/93
 
 if [ -f /etc/rc.conf ]; then
@@ -53,15 +53,18 @@ if [ "$net_interfaces" != NO ]; then
 	fi
 	echo -n 'configuring network interfaces:'
 	for int in $tmp; do
+		didconfig=""
 		eval `echo 'args=$ifconfig_'$int`
 		if [ -n "$args" ]; then
 			echo -n " $int"
 			ifconfig $int $args
+			didconfig=yes
 		elif [ -f /etc/ifconfig.$int ]; then
 			echo -n " $int"
 			(while read args; do
 				ifconfig $int $args
 			done) < /etc/ifconfig.$int
+			didconfig=yes
 		else
 			if [ "$net_interfaces" != DEFAULT ]; then
 				echo
@@ -71,10 +74,12 @@ if [ "$net_interfaces" != NO ]; then
 			fi
 			continue
 		fi
-		if [ "$int" = "lo0" ]; then
-			configured_lo0=yes
+		if [ -s "$didconfig" ]; then
+			if [ "$int" = "lo0" ]; then
+				configured_lo0=yes
+			fi
+			configured_interfaces="$configured_interfaces $int"
 		fi
-		configured_interfaces="$configured_interfaces $int"
 	done
 	echo '.'
 fi
