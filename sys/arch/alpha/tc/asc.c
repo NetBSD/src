@@ -1,4 +1,4 @@
-/* $NetBSD: asc.c,v 1.9 1998/05/24 23:41:42 thorpej Exp $ */
+/* $NetBSD: asc.c,v 1.10 1998/05/26 23:37:27 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -108,7 +108,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.9 1998/05/24 23:41:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.10 1998/05/26 23:37:27 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -137,22 +137,22 @@ __KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.9 1998/05/24 23:41:42 thorpej Exp $");
 #include <alpha/tc/tcdsvar.h>
 #include <alpha/tc/ascvar.h>
 
-void	ascattach	__P((struct device *, struct device *, void *));
-int	ascmatch	__P((struct device *, struct cfdata *, void *));
+int	asc_tcds_match	__P((struct device *, struct cfdata *, void *));
+void	asc_tcds_attach	__P((struct device *, struct device *, void *));
 
 /* Linkup to the rest of the kernel */
-struct cfattach asc_ca = {
-	sizeof(struct asc_softc), ascmatch, ascattach
+struct cfattach asc_tcds_ca = {
+	sizeof(struct asc_tcds_softc), asc_tcds_match, asc_tcds_attach
 };
 
-struct scsipi_adapter asc_switch = {
+struct scsipi_adapter asc_tcds_switch = {
 	ncr53c9x_scsi_cmd,
 	minphys,		/* no max at this level; handled by DMA code */
 	NULL,
 	NULL,
 };
 
-struct scsipi_device asc_dev = {
+struct scsipi_device asc_tcds_dev = {
 	NULL,			/* Use default error handler */
 	NULL,			/* have a queue, served by this */
 	NULL,			/* have no async handler */
@@ -162,33 +162,33 @@ struct scsipi_device asc_dev = {
 /*
  * Functions and the switch for the MI code.
  */
-u_char	asc_read_reg __P((struct ncr53c9x_softc *, int));
-void	asc_write_reg __P((struct ncr53c9x_softc *, int, u_char));
-int	asc_dma_isintr __P((struct ncr53c9x_softc *));
-void	asc_dma_reset __P((struct ncr53c9x_softc *));
-int	asc_dma_intr __P((struct ncr53c9x_softc *));
-int	asc_dma_setup __P((struct ncr53c9x_softc *, caddr_t *,
+u_char	asc_tcds_read_reg __P((struct ncr53c9x_softc *, int));
+void	asc_tcds_write_reg __P((struct ncr53c9x_softc *, int, u_char));
+int	asc_tcds_dma_isintr __P((struct ncr53c9x_softc *));
+void	asc_tcds_dma_reset __P((struct ncr53c9x_softc *));
+int	asc_tcds_dma_intr __P((struct ncr53c9x_softc *));
+int	asc_tcds_dma_setup __P((struct ncr53c9x_softc *, caddr_t *,
 	    size_t *, int, size_t *));
-void	asc_dma_go __P((struct ncr53c9x_softc *));
-void	asc_dma_stop __P((struct ncr53c9x_softc *));
-int	asc_dma_isactive __P((struct ncr53c9x_softc *));
-void	asc_clear_latched_intr __P((struct ncr53c9x_softc *));
+void	asc_tcds_dma_go __P((struct ncr53c9x_softc *));
+void	asc_tcds_dma_stop __P((struct ncr53c9x_softc *));
+int	asc_tcds_dma_isactive __P((struct ncr53c9x_softc *));
+void	asc_tcds_clear_latched_intr __P((struct ncr53c9x_softc *));
 
-struct ncr53c9x_glue asc_glue = {
-	asc_read_reg,
-	asc_write_reg,
-	asc_dma_isintr,
-	asc_dma_reset,
-	asc_dma_intr,
-	asc_dma_setup,
-	asc_dma_go,
-	asc_dma_stop,
-	asc_dma_isactive,
-	asc_clear_latched_intr,
+struct ncr53c9x_glue asc_tcds_glue = {
+	asc_tcds_read_reg,
+	asc_tcds_write_reg,
+	asc_tcds_dma_isintr,
+	asc_tcds_dma_reset,
+	asc_tcds_dma_intr,
+	asc_tcds_dma_setup,
+	asc_tcds_dma_go,
+	asc_tcds_dma_stop,
+	asc_tcds_dma_isactive,
+	asc_tcds_clear_latched_intr,
 };
 
 int
-ascmatch(parent, cf, aux)
+asc_tcds_match(parent, cf, aux)
 	struct device *parent;
 	struct cfdata *cf;
 	void *aux;
@@ -202,18 +202,18 @@ ascmatch(parent, cf, aux)
  * Attach this instance, and then all the sub-devices
  */
 void
-ascattach(parent, self, aux)
+asc_tcds_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
 	struct tcdsdev_attach_args *tcdsdev = aux;
-	struct asc_softc *asc = (void *)self;
+	struct asc_tcds_softc *asc = (void *)self;
 	struct ncr53c9x_softc *sc = &asc->sc_ncr53c9x;
 
 	/*
 	 * Set up glue for MI code early; we use some of it here.
 	 */
-	sc->sc_glue = &asc_glue;
+	sc->sc_glue = &asc_tcds_glue;
 
 	asc->sc_bst = tcdsdev->tcdsda_bst;
 	asc->sc_bsh = tcdsdev->tcdsda_bsh;
@@ -241,8 +241,12 @@ ascattach(parent, self, aux)
 	 */
 	sc->sc_cfg1 = sc->sc_id | NCRCFG1_PARENB;
 	sc->sc_cfg2 = NCRCFG2_SCSI2;
-	sc->sc_cfg3 = 0x4;		/* Save residual byte. XXX??? */
+	sc->sc_cfg3 = NCRCFG3_CDB;
+	if (sc->sc_freq > 25)
+		sc->sc_cfg3 |= NCRCFG3_FCLK;
 	sc->sc_rev = tcdsdev->tcdsda_variant;
+	if (tcdsdev->tcdsda_fast)
+		sc->sc_features |= NCR_F_FASTSCSI;
 
 	/*
 	 * XXX minsync and maxxfer _should_ be set up in MI code,
@@ -259,12 +263,12 @@ ascattach(parent, self, aux)
 	 * Since the chip's clock is given in MHz, we have the following
 	 * formula: 4 * period = (1000 / freq) * 4
 	 */
-	sc->sc_minsync = 1000 / sc->sc_freq;
+	sc->sc_minsync = (1000 / sc->sc_freq) * tcdsdev->tcdsda_period / 4;
 
 	sc->sc_maxxfer = 64 * 1024;
 
 	/* Do the common parts of attachment. */
-	ncr53c9x_attach(sc, &asc_switch, &asc_dev);
+	ncr53c9x_attach(sc, &asc_tcds_switch, &asc_tcds_dev);
 }
 
 /*
@@ -272,11 +276,11 @@ ascattach(parent, self, aux)
  */
 
 u_char
-asc_read_reg(sc, reg)
+asc_tcds_read_reg(sc, reg)
 	struct ncr53c9x_softc *sc;
 	int reg;
 {
-	struct asc_softc *asc = (struct asc_softc *)sc;
+	struct asc_tcds_softc *asc = (struct asc_tcds_softc *)sc;
 	u_char v;
 
 	v = bus_space_read_4(asc->sc_bst, asc->sc_bsh,
@@ -286,72 +290,72 @@ asc_read_reg(sc, reg)
 }
 
 void
-asc_write_reg(sc, reg, val)
+asc_tcds_write_reg(sc, reg, val)
 	struct ncr53c9x_softc *sc;
 	int reg;
 	u_char val;
 {
-	struct asc_softc *asc = (struct asc_softc *)sc;
+	struct asc_tcds_softc *asc = (struct asc_tcds_softc *)sc;
 
 	bus_space_write_4(asc->sc_bst, asc->sc_bsh,
 	    reg * sizeof(u_int32_t), val);
 }
 
 int
-asc_dma_isintr(sc)
+asc_tcds_dma_isintr(sc)
 	struct ncr53c9x_softc *sc;
 {
-	struct asc_softc *asc = (struct asc_softc *)sc;
+	struct asc_tcds_softc *asc = (struct asc_tcds_softc *)sc;
 
 	return (tcds_dma_isintr(asc->sc_dma));
 }
 
 void
-asc_dma_reset(sc)
+asc_tcds_dma_reset(sc)
 	struct ncr53c9x_softc *sc;
 {
-	struct asc_softc *asc = (struct asc_softc *)sc;
+	struct asc_tcds_softc *asc = (struct asc_tcds_softc *)sc;
 
 	tcds_dma_reset(asc->sc_dma);
 }
 
 int
-asc_dma_intr(sc)
+asc_tcds_dma_intr(sc)
 	struct ncr53c9x_softc *sc;
 {
-	struct asc_softc *asc = (struct asc_softc *)sc;
+	struct asc_tcds_softc *asc = (struct asc_tcds_softc *)sc;
 
 	return (tcds_dma_intr(asc->sc_dma));
 }
 
 int
-asc_dma_setup(sc, addr, len, datain, dmasize)
+asc_tcds_dma_setup(sc, addr, len, datain, dmasize)
 	struct ncr53c9x_softc *sc;
 	caddr_t *addr;
 	size_t *len;
 	int datain;
 	size_t *dmasize;
 {
-	struct asc_softc *asc = (struct asc_softc *)sc;
+	struct asc_tcds_softc *asc = (struct asc_tcds_softc *)sc;
 
 	return (tcds_dma_setup(asc->sc_dma, addr, len, datain, dmasize));
 }
 
 void
-asc_dma_go(sc)
+asc_tcds_dma_go(sc)
 	struct ncr53c9x_softc *sc;
 {
-	struct asc_softc *asc = (struct asc_softc *)sc;
+	struct asc_tcds_softc *asc = (struct asc_tcds_softc *)sc;
 
 	tcds_dma_go(asc->sc_dma);
 }
 
 void
-asc_dma_stop(sc)
+asc_tcds_dma_stop(sc)
 	struct ncr53c9x_softc *sc;
 {
 #if 0
-	struct asc_softc *asc = (struct asc_softc *)sc;
+	struct asc_tcds_softc *asc = (struct asc_tcds_softc *)sc;
 #endif
 
 	/*
@@ -360,19 +364,19 @@ asc_dma_stop(sc)
 }
 
 int
-asc_dma_isactive(sc)
+asc_tcds_dma_isactive(sc)
 	struct ncr53c9x_softc *sc;
 {
-	struct asc_softc *asc = (struct asc_softc *)sc;
+	struct asc_tcds_softc *asc = (struct asc_tcds_softc *)sc;
 
 	return (tcds_dma_isactive(asc->sc_dma));
 }
 
 void
-asc_clear_latched_intr(sc)
+asc_tcds_clear_latched_intr(sc)
 	struct ncr53c9x_softc *sc;
 {
-	struct asc_softc *asc = (struct asc_softc *)sc;
+	struct asc_tcds_softc *asc = (struct asc_tcds_softc *)sc;
 
 	/* Clear the TCDS interrupt bit. */
 	(void)tcds_scsi_isintr(asc->sc_dma, 1);
