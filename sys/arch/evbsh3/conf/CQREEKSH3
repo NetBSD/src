@@ -1,4 +1,4 @@
-#	$NetBSD: CQREEKSH3,v 1.4 1999/09/17 01:21:40 msaitoh Exp $
+#	$NetBSD: CQREEKSH3,v 1.5 2000/01/07 11:20:43 msaitoh Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -74,7 +74,7 @@ options 	COMPAT_43	# and 4.3BSD
 
 # Executable format options
 #options 	EXEC_ELF32	# 32-bit ELF executables (SVR4, Linux)
-options 	EXEC_COFF	# 32-bit ECOFF executables (sh-compiler)
+options 	EXEC_COFF	# 32-bit COFF executables (sh-compiler)
 
 # File systems
 file-system 	FFS		# UFS
