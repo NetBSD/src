@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.45 2004/05/10 20:27:42 christos Exp $
+	$NetBSD: syscalls.master,v 1.46 2004/05/11 10:54:51 drochner Exp $
 
 ;	from: @(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -37,7 +37,6 @@
 #include "opt_ntp.h"
 #include "opt_sysv.h"
 #include "opt_compat_43.h"
-#include "opt_compat_netbsd.h"
 #include "opt_posix.h"
 
 #include "fs_lfs.h"
@@ -87,12 +86,8 @@
 16	STD		{ int freebsd_sys_chown(const char *path, int uid, \
 			    int gid); }
 17	NOARGS		{ int sys_obreak(char *nsize); } break
-#ifdef COMPAT_20
 18	NOARGS		{ int compat_20_sys_getfsstat(struct statfs12 *buf, \
 			    long bufsize, int flags); }
-#else
-18	EXCL		compat_20_sys_getfsstat
-#endif
 19	NOARGS		{ long compat_43_sys_lseek(int fd, long offset, \
 			    int whence); } olseek
 20	NOARGS		{ pid_t sys_getpid_with_ppid(void); }
@@ -314,12 +309,8 @@
 			    u_int count, long *basep); } ogetdirentries
 157	STD		{ int freebsd_sys_statfs(const char *path, \
 			    struct statfs12 *buf); }
-#ifdef COMPAT_20
 158	NOARGS		{ int compat_20_sys_fstatfs(int fd, \
 			    struct statfs12 *buf); }
-#else
-158	EXCL		compat_20_sys_fstatfs
-#endif
 159	UNIMPL
 160	UNIMPL
 #ifdef NFS
@@ -564,12 +555,8 @@
 294	UNIMPL
 295	UNIMPL
 296	UNIMPL
-#ifdef COMPAT_20
 297	NOARGS		{ int compat_20_sys_fhstatfs(const fhandle_t *fhp, \
 			    struct statfs12 *buf); }
-#else
-297	EXCL		compat_20_sys_fhstatfs
-#endif
 298	NOARGS		{ int sys_fhopen(const fhandle_t *fhp, int flags); }
 299	NOARGS		{ int sys_fhstat(const fhandle_t *fhp, \
 			    struct stat *sb); }
