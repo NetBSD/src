@@ -7,7 +7,6 @@ CFLAGS+=        -I$(.CURDIR) -I$(.CURDIR)/../common \
                  -I$(.CURDIR)/.. -I$(.CURDIR)/../$(MACHINE)
 
 LINKS+=	${DESTDIR}${BINDIR}/cc ${DESTDIR}${BINDIR}/gcc
-LINKS+=	${DESTDIR}${BINDIR}/g++ ${DESTDIR}${BINDIR}/c++
 MLINKS=	gcc.1 cc.1  g++.1 c++.1
 
 .PATH:          $(.CURDIR)/../common 
@@ -15,4 +14,7 @@ MLINKS=	gcc.1 cc.1  g++.1 c++.1
 afterinstall:
 	install -c -o $(BINOWN) -g $(BINGRP) -m $(BINMODE) \
 		$(.CURDIR)/g++.script $(DESTDIR)$(BINDIR)/g++
+	@/bin/rm -rf ${DESTDIR}${BINDIR}/c++
+	@ln ${DESTDIR}${BINDIR}/g++ ${DESTDIR}${BINDIR}/c++
+	@echo ${DESTDIR}${BINDIR}/g++ -\> ${DESTDIR}${BINDIR}/c++
 .include <bsd.prog.mk>
