@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.15.4.3 1999/07/04 02:04:29 chs Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.15.4.4 1999/07/31 19:02:29 chs Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -276,7 +276,7 @@ uvm_pageout()
 void
 uvm_aiodone_daemon()
 {
-	int s;
+	int s, free;
 	struct buf *bp, *nbp;
 	UVMHIST_FUNC("uvm_aiodoned"); UVMHIST_CALLED(pdhist);
 
@@ -323,12 +323,18 @@ uvm_aiodone_daemon()
 		 * process each i/o that's done.
 		 */
 
+		free = uvmexp.free;
 		for (/*null*/; bp != NULL ; bp = nbp) {
 			if (bp->b_flags & B_PDAEMON) {
 				uvmexp.paging -= bp->b_bufsize >> PAGE_SHIFT;
 			}
 			nbp = TAILQ_NEXT(bp, b_freelist);
 			(*bp->b_iodone)(bp);
+		}
+		if (free <= uvmexp.reserve_kernel) {
+			s = uvm_lock_fpageq();
+			wakeup(&uvm.pagedaemon);
+			uvm_unlock_fpageq(s);
 		}
 	}
 }
