@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ex_cardbus.c,v 1.4 1999/10/25 19:18:10 drochner Exp $	*/
+/*	$NetBSD: if_ex_cardbus.c,v 1.5 1999/10/27 10:04:41 haya Exp $	*/
 
 /*
  * CardBus specific routines for 3Com 3C575-family CardBus ethernet adapter
@@ -72,13 +72,9 @@
 #if defined pciinc
 #include <dev/pci/pcidevs.h>
 #endif
-#if pccard
-#include <dev/pccard/cardbusvar.h>
-#include <dev/pccard/pccardcis.h>
-#else
+
 #include <dev/cardbus/cardbusvar.h>
 #include <dev/cardbus/cardbusdevs.h>
-#endif
 
 #include <dev/mii/miivar.h>
 
@@ -187,7 +183,7 @@ ex_cardbus_attach(parent, self, aux)
   bus_addr_t adr;
 
 
-  if (cardbus_mapreg_map(ct, CARDBUS_BASE0_REG, CARDBUS_MAPREG_TYPE_IO, 0,
+  if (Cardbus_mapreg_map(ct, CARDBUS_BASE0_REG, CARDBUS_MAPREG_TYPE_IO, 0,
 			 &(sc->sc_iot), &ioh, &adr, NULL)) {
     panic("io alloc in ex_attach_cardbus\n");
   }
@@ -216,7 +212,7 @@ ex_cardbus_attach(parent, self, aux)
 		CARDBUS_COMMAND_MEM_ENABLE | CARDBUS_COMMAND_MASTER_ENABLE);
 
     /* Cardbus function status window */
-    if (cardbus_mapreg_map(ct, CARDBUS_3C575BTX_FUNCSTAT_PCIREG,
+    if (Cardbus_mapreg_map(ct, CARDBUS_3C575BTX_FUNCSTAT_PCIREG,
 			   CARDBUS_MAPREG_TYPE_MEM, 0,
 			   &psc->sc_funct, &psc->sc_funch, 0, NULL)) {
       panic("mem alloc in ex_attach_cardbus\n");
