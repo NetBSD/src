@@ -13,7 +13,7 @@
  * 
  * October 1992
  * 
- *	$Id: msdosfs_vfsops.c,v 1.2 1993/09/07 15:41:33 ws Exp $
+ *	$Id: msdosfs_vfsops.c,v 1.3 1993/11/12 05:56:25 cgd Exp $
  */
 
 #include "param.h"
@@ -22,7 +22,7 @@
 #include "proc.h"
 #include "kernel.h"
 #include "vnode.h"
-#include "specdev.h"		/* defines v_rdev */
+#include "miscfs/specfs/specdev.h" /* XXX */	/* defines v_rdev */
 #include "mount.h"
 #include "buf.h"
 #include "file.h"

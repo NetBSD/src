@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: swap_pager.c 1.4 91/04/30
  *	from: @(#)swap_pager.c	7.4 (Berkeley) 5/7/91
- *	$Id: swap_pager.c,v 1.9 1993/11/10 22:43:34 cgd Exp $
+ *	$Id: swap_pager.c,v 1.10 1993/11/12 05:57:31 cgd Exp $
  */
 
 /*
@@ -52,7 +52,7 @@
 #include "buf.h"
 #include "map.h"
 #include "systm.h"
-#include "specdev.h"
+#include "miscfs/specfs/specdev.h"	 /* XXX */
 #include "vnode.h"
 #include "malloc.h"
 #include "queue.h"
