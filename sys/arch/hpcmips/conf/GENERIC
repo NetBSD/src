@@ -2,11 +2,11 @@
 # Distribution kernel (NEC VR based model) kernel config file
 
 #
-# 	$NetBSD: GENERIC,v 1.64 2000/09/10 15:48:10 sato Exp $
+# 	$NetBSD: GENERIC,v 1.65 2000/09/21 14:17:35 takemura Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
-#ident 		"GENERIC-$Revision: 1.64 $"
+#ident 		"GENERIC-$Revision: 1.65 $"
 
 maxusers	8
 
@@ -107,6 +107,7 @@ vrbcu*	at vrip? addr 0x0b000000 size 0x20
 vrrtc*	at vrip? addr 0x0b0000c0 size 0x20 intr 2
 
 vrkiu*  at vrip? addr 0x0b000180 size 0x20 intr 7
+hpckbd*	at vrkiu?
 options 	__NO_SOFT_SERIAL_INTERRUPT
 com*	at vrip? addr 0x0c000000 size 0x20 intr 9 pwctl PWCTL_COM0
 vrgiu*	at vrip? addr 0x0b000100 size 0x20 intr 8
@@ -121,7 +122,7 @@ hpcfb*		at	mqvideo?
 bivideo0	at	mainbus0
 hpcfb*		at	bivideo0
 wsdisplay*	at	hpcfb?
-wskbd*		at	vrkiu? mux 1
+wskbd*		at	hpckbd? mux 1
 wsmouse*	at	vrpiu? mux 0
 btnmgr0		at	mainbus0
 wskbd*		at	btnmgr0 mux 1
