@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.80 1999/01/24 10:12:22 pk Exp $ */
+/*	$NetBSD: trap.c,v 1.81 1999/02/23 06:47:05 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,6 +52,7 @@
 #include "opt_ktrace.h"
 #include "opt_uvm.h"
 #include "opt_compat_svr4.h"
+#include "opt_compat_aout.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,6 +91,10 @@
 #include <sparc/fpu/fpu_extern.h>
 #include <sparc/sparc/memreg.h>
 #include <sparc/sparc/cpuvar.h>
+
+#ifdef COMPAT_AOUT
+extern struct emul emul_netbsd_aout;
+#endif /* COMPAT_AOUT */
 
 extern int cold;
 
@@ -1171,7 +1176,11 @@ syscall(code, tf, pc)
 		nap--;
 		break;
 	case SYS___syscall:
-		if (callp != sysent)
+		if (callp != sysent
+#ifdef COMPAT_AOUT
+		    && p->p_emul != &emul_netbsd_aout	/* Our a.out */
+#endif
+		)
 			break;
 		code = ap[_QUAD_LOWWORD];
 		ap += 2;
