@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.86 1995/04/21 19:44:52 mycroft Exp $	*/
+/*	$NetBSD: pccons.c,v 1.87 1995/05/01 08:25:38 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -1627,7 +1627,7 @@ pc_xmode_on()
 		get_cursor_shape();
 #endif
 
-	fp = (struct trapframe *)curproc->p_md.md_regs;
+	fp = curproc->p_md.md_regs;
 	fp->tf_eflags |= PSL_IOPL;
 }
 
@@ -1645,6 +1645,6 @@ pc_xmode_off()
 #endif
 	async_update();
 
-	fp = (struct trapframe *)curproc->p_md.md_regs;
+	fp = curproc->p_md.md_regs;
 	fp->tf_eflags &= ~PSL_IOPL;
 }
