@@ -1,4 +1,4 @@
-/*	$NetBSD: divsi3.S,v 1.1 1997/10/12 21:24:03 mark Exp $	*/
+/*	$NetBSD: divsi3.S,v 1.2 1997/10/17 18:35:19 mark Exp $	*/
 
 /*
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
@@ -153,7 +153,7 @@ L_divide_b29:
 	addhs	r3, r3,r2, lsl #28
 L_divide_b28:
 	cmp	r1, r0, lsl #27
-	subhsS	r1, r1,r0, lsl #27
+	subhs	r1, r1,r0, lsl #27
 	addhs	r3, r3,r2, lsl #27
 L_divide_b27:
 	cmp	r1, r0, lsl #26
@@ -271,6 +271,7 @@ L_divide_b0:
 	cmp	ip, #0
 	rsbmi	r1, r1, #0
 	movs	ip, ip, lsl #1
+	bicmi	r0, r0, #0x80000000	/* Fix incase we divided 0x80000000 */
 	rsbmi	r0, r0, #0
 	mov	pc, lr
 
