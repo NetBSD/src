@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: mdprologue.S,v 1.6 1994/10/26 20:03:31 mycroft Exp $
+ *	$Id: mdprologue.S,v 1.7 1994/12/04 07:42:44 mycroft Exp $
  */
 
 /*
@@ -67,7 +67,7 @@ _rtl:					# crt0 calls us here
 
 	popl	%ebx
 	leave				# remove stack frame
-	ret				# let's rock
+	ret
 
  # First call to a procedure generally comes through here for
  # binding.
