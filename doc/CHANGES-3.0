@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.21 2005/03/27 17:49:26 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.22 2005/03/30 05:45:18 jmc Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -344,3 +344,6 @@ sys/dev/pci/pciconf.h				1.9
 	using pci mem space) work on cobalt.
 	[tsutsui, ticket #67]
 
+doc/README.files				patch
+
+	Update for 3.0 branch
