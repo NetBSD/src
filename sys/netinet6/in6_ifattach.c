@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_ifattach.c,v 1.30 2000/05/05 08:03:12 itojun Exp $	*/
+/*	$NetBSD: in6_ifattach.c,v 1.30.4.1 2001/02/26 15:57:18 he Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.56 2000/05/05 06:54:33 itojun Exp $	*/
 
 /*
@@ -873,7 +873,8 @@ in6_ifdetach(ifp)
 	sin6.sin6_family = AF_INET6;
 	sin6.sin6_addr = in6addr_linklocal_allnodes;
 	sin6.sin6_addr.s6_addr16[1] = htons(ifp->if_index);
-	if ((rt = rtalloc1((struct sockaddr *)&sin6, 0)) != NULL) {
+	rt = rtalloc1((struct sockaddr *)&sin6, 0);
+	if (rt && rt->rt_ifp == ifp) {
 		rtrequest(RTM_DELETE, (struct sockaddr *)rt_key(rt),
 			rt->rt_gateway, rt_mask(rt), rt->rt_flags, 0);
 		rtfree(rt);
