@@ -1,26 +1,40 @@
 	This product includes software developed by the Alice Group.
 
+	This product includes software developed by Allen Briggs.
+
 	This product includes software developed by Christopher G. Demetriou.
+
+	This product includes software developed by Bradley A. Grantham.
+
+	This product includes software developed by Takashi Hamada.
 
 	This product includes software developed by Christian E. Hopps.
 
 	This product includes software developed by Scott Reynolds.
 
+	This product includes software developed by John P. Wittkoski.
 
 Contributions:
 -------------
 
-The following people have made contributions of various sorts
-specificially for the Macintosh port (in alphabetical order):
+The following people have made contributions of various sorts specifically
+for the Macintosh port (in alphabetical order):
 
 	All of the users who have supplied us with good bug reports and
 		moral support.
+	The Alice Group (Allen K. Briggs, Chris P. Caputo, Michael L. Finch,
+		Bradley A. Grantham, and Lawrence A. Kesteloot), without
+		whom there would be no NetBSD port for the Macintosh.
 	Steven R. Allen for keeping our snapshot distributions up-to-date.
 	Stephen C. Brown for maintaining the Installer application.
+	Denton Gentry and Yanagisawa Takeshi for their work on the SONIC
+		Ethernet driver.
 	Paul Goyette, Taras Ivanenko, Ken Nakata, and Michael R. Zucca
 		for invaluable work towards supporting color X.
 	Takashi Hamada and John Wittkoski beating the direct ADB hardware
 		driver into submission.
+	David Huang for getting MACE Ethernet and basic DMA working on the
+		AV Macs. 
 	Scott Jann for acquiring a IIx and a IIci, used for building and
 		testing release sets.
 	Scott Kaplan for lending his IIci and Kensington Turbo Mouse for
