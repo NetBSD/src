@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media.h,v 1.5 1998/01/30 08:37:41 jtc Exp $	*/
+/*	$NetBSD: if_media.h,v 1.6 1998/08/03 12:42:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -129,6 +129,7 @@ int	ifmedia_ioctl __P((struct ifnet *ifp, struct ifreq *ifr,
 #define	IFM_100_T2	10		/* 100BaseT2 */
 #define	IFM_1000_FX	11		/* 1000BaseFX - gigabit over fiber */
 #define	IFM_10_STP	12		/* 10BaseT over shielded TP */
+#define	IFM_10_FL	13		/* 10BaseFL - Fiber */
 
 /*
  * Token ring
@@ -221,6 +222,7 @@ struct ifmedia_description {
 	{ IFM_100_T2,	"100baseT2" },					\
 	{ IFM_1000_FX,	"1000baseFX" },					\
 	{ IFM_10_STP,	"10baseT/STP" },				\
+	{ IFM_10_FL,	"10baseFL" },					\
 	{ 0, NULL },							\
 }
 
@@ -238,6 +240,7 @@ struct ifmedia_description {
 	{ IFM_100_T2,	"100T2" },					\
 	{ IFM_1000_FX,	"1000FX" },					\
 	{ IFM_10_STP,	"STP" },					\
+	{ IFM_10_FL,	"10FL" },					\
 	{ 0, NULL },							\
 }
 
