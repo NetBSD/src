@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxxvar.h,v 1.16 1998/04/16 07:13:57 leo Exp $	*/
+/*	$NetBSD: aic7xxxvar.h,v 1.17 1998/06/22 20:02:54 sommerfe Exp $	*/
 
 /*
  * Interface to the generic driver for the aic7xxx based adaptec
@@ -43,6 +43,9 @@
 #endif
 
 #if defined(__NetBSD__)
+
+#include "opt_ahc.h"		/* For AHC_DEBUG, AHC_TAGENABLE, AHC_BROKEN_CACHE */
+
 /*
  * convert FreeBSD's <sys/queue.h> symbols to NetBSD's
  */
