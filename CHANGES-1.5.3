@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.3,v 1.1.2.64 2002/04/22 22:33:48 he Exp $
+#	$NetBSD: CHANGES-1.5.3,v 1.1.2.65 2002/04/26 23:39:58 he Exp $
 
 A complete list of changes from NetBSD 1.5.2 to NetBSD 1.5.3:
 
@@ -2778,3 +2778,45 @@ sys/arch/macppc/macppc/conf.c			patch
 sys/arch/macppc/conf/GENERIC_MD			patch
 
   Comment out BUFPAGES, now that GENERIC defines it.
+
+lib/libc/string/strlcat.c			1.13
+lib/libc/string/strlcpy.c			1.11
+
+  Make it possible to build strlcat() and strlcpy() outside the
+  libc environment.
+
+usr.bin/ftp/ftp.c				1.118
+
+  Avoid buffer overrun on PASV response from a malicious server.
+
+crypto/dist/ssh/radix.c				patch
+crypto/dist/ssh/version.h			patch
+
+  Protect against buffer overruns when decoding KerberosIV credentials.
+  Bump NetBSD part of version string.
+
+lib/libc/gmon/gmon.c				1.18
+
+  Refuse to open gmon.out file if we are set{u,g}id, and not executing
+  as the owner/group.
+
+sys/kern/kern_descrip.c				1.86-1.88
+sys/kern/kern_exec.c				1.152
+sys/sys/filedesc.h				1.24 via patch
+
+  If a set{u,g}id binary is invoked with fd < 3 closed, open those
+  file desciptors to /dev/null.
+
+sys/kern/tty.c					1.136
+sys/kern/kern_proc.c				1.47
+
+  Use SESSHOLD and SESSRELE consistently, and add them to t_session,
+  so that we do not have dangling references.
+
+distrib/macppc/floppies/ramdisk/Makefile	patch
+
+  Reduce the number of HACKOBJS used.
+
+sys/conf/osrelease.sh				patch
+
+  Backpedal to 1.5.3_RC2; too much churn on the branch.
