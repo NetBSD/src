@@ -1,4 +1,4 @@
-/*	$NetBSD: wc.c,v 1.20 1999/03/05 22:52:09 kleink Exp $	*/
+/*	$NetBSD: wc.c,v 1.21 2001/10/19 06:09:56 yamt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1987, 1991, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1987, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)wc.c	8.2 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: wc.c,v 1.20 1999/03/05 22:52:09 kleink Exp $");
+__RCSID("$NetBSD: wc.c,v 1.21 2001/10/19 06:09:56 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -68,6 +68,8 @@ __RCSID("$NetBSD: wc.c,v 1.20 1999/03/05 22:52:09 kleink Exp $");
 #include <sys/file.h>
 #include <unistd.h>
 #include <err.h>
+#include <wchar.h>
+#include <wctype.h>
 
 #ifdef NO_QUAD
 typedef u_long wc_count_t;
@@ -80,12 +82,14 @@ typedef u_quad_t wc_count_t;
 #endif
 
 static wc_count_t	tlinect, twordct, tcharct;
-static int		doline, doword, dochar;
+static int		doline, doword, dobyte, dochar;
 static int 		rval = 0;
 
 static void	cnt __P((char *));
 static void	print_counts __P((wc_count_t, wc_count_t, wc_count_t, char *));
 static void	usage __P((void));
+static size_t do_mb __P((wchar_t *, const char *, size_t, mbstate_t *,
+		size_t *, const char *));
 int	main __P((int, char *[]));
 
 int
@@ -105,9 +109,13 @@ main(argc, argv)
 		case 'w':
 			doword = 1;
 			break;
-		case 'c':
 		case 'm':
 			dochar = 1;
+			dobyte = 0;
+			break;
+		case 'c':
+			dochar = 0;
+			dobyte = 1;
 			break;
 		case '?':
 		default:
@@ -117,8 +125,8 @@ main(argc, argv)
 	argc -= optind;
 
 	/* Wc's flags are on by default. */
-	if (doline + doword + dochar == 0)
-		doline = doword = dochar = 1;
+	if (doline + doword + dobyte + dochar == 0)
+		doline = doword = dobyte = 1;
 
 	if (!*argv) {
 		cnt(NULL);
@@ -136,17 +144,60 @@ main(argc, argv)
 	exit(rval);
 }
 
+static size_t
+do_mb(wc, p, mblen, st, cnt, file)
+	wchar_t *wc;
+	const char *p;
+	size_t mblen;
+	mbstate_t *st;
+	size_t *cnt;
+	const char *file;
+{
+	size_t r;
+	size_t c = 0;
+
+	do {
+		r = mbrtowc(wc, p, mblen, st);
+		if (r == (size_t)-1) {
+			warnx("%s: invalid byte sequence", file);
+			rval = 1;
+
+			/* XXX skip 1 byte */
+			mblen --;
+			p ++;
+			memset(st, 0, sizeof(*st));
+		}
+		else if (r == (size_t)-2)
+			break;
+		else if (r == 0)
+			r = 1;
+		c ++;
+		if (wc)
+			wc ++;
+		mblen -= r;
+		p += r;
+	} while (mblen > 0);
+
+	*cnt = c;
+
+	return r;
+}
+				
 static void
 cnt(file)
 	char *file;
 {
 	u_char *C;
+	wchar_t *WC;
 	short gotsp;
-	int len;
+	int len = 0;
 	wc_count_t linect, wordct, charct;
 	struct stat sb;
 	int fd;
 	u_char buf[MAXBSIZE];
+	wchar_t wbuf[MAXBSIZE];
+	size_t r = 0;
+	mbstate_t st;
 
 	linect = wordct = charct = 0;
 	if (file) {
@@ -158,6 +209,9 @@ cnt(file)
 	} else  {
 		fd = STDIN_FILENO;
 	}
+
+	if (dochar || doword)
+		memset(&st, 0, sizeof(st));
 	
 	if (!doword) {
 		/*
@@ -165,16 +219,20 @@ cnt(file)
 		 * faster to get lines than to get words, since
 		 * the word count requires some logic.
 		 */
-		if (doline) {
+		if (doline || dochar) {
 			while ((len = read(fd, buf, MAXBSIZE)) > 0) {
-				charct += len;
-				for (C = buf; len--; ++C)
-					if (*C == '\n')
-						++linect;
-			}
-			if (len == -1) {
-				warn ("%s", file);
-				rval = 1;
+				if (dochar) {
+					size_t wlen;
+
+					r = do_mb(0, (char *)buf, (size_t)len, &st, &wlen, file);
+					charct += wlen;
+				}
+				else if (dobyte)
+					charct += len;
+				if (doline)
+					for (C = buf; len--; ++C)
+						if (*C == '\n')
+							++linect;
 			}
 		}
 
@@ -185,7 +243,7 @@ cnt(file)
 		 * a special device in case someone adds a new type
 		 * of inode.
 		 */
-		else if (dochar) {
+		else if (dobyte) {
 			if (fstat(fd, &sb)) {
 				warn("%s", file);
 				rval = 1;
@@ -197,10 +255,6 @@ cnt(file)
 				} else {
 					while ((len = read(fd, buf, MAXBSIZE)) > 0)
 						charct += len;
-					if (len == -1) {
-						warn ("%s", file);
-						rval = 1;
-					}
 				}
 			}
 		}
@@ -210,11 +264,18 @@ cnt(file)
 		/* do it the hard way... */
 		gotsp = 1;
 		while ((len = read(fd, buf, MAXBSIZE)) > 0) {
-			charct += len;
-			for (C = buf; len--; ++C) {
-				if (isspace(*C)) {
+			size_t wlen;
+
+			r = do_mb(wbuf, (char *)buf, (size_t)len, &st, &wlen, file);
+			if (dochar) {
+				charct += wlen;
+			}
+			else if (dobyte)
+				charct += len;
+			for (WC = wbuf; wlen--; ++WC) {
+				if (iswspace(*WC)) {
 					gotsp = 1;
-					if (*C == '\n') {
+					if (*WC == L'\n') {
 						++linect;
 					}
 				} else {
@@ -233,15 +294,20 @@ cnt(file)
 				}
 			}
 		}
-		if (len == -1) {
-			warn("%s", file);
-			rval = 1;
-		}
+	}
+
+	if (len == -1) {
+		warn ("%s", file);
+		rval = 1;
+	}
+	if (dochar && r == (size_t)-2) {
+		warnx ("%s: incomplete multibyte character", file);
+		rval = 1;
 	}
 
 	print_counts(linect, wordct, charct, file ? file : 0);
 
-	/* don't bother checkint doline, doword, or dochar --- speeds
+	/* don't bother checkint doline, doword, or dobyte --- speeds
            up the common case */
 	tlinect += linect;
 	twordct += wordct;
@@ -265,7 +331,7 @@ print_counts(lines, words, chars, name)
 		printf(WCFMT, (WCCAST)lines);
 	if (doword)
 		printf(WCFMT, (WCCAST)words);
-	if (dochar)
+	if (dobyte || dochar)
 		printf(WCFMT, (WCCAST)chars);
 
 	if (name)
