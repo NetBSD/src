@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.26 2001/10/25 05:33:32 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.27 2001/10/25 08:51:50 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -231,6 +231,7 @@ extern int zflag;
 extern int Dflag;
 extern int Hflag;
 extern int Lflag;
+extern int Mflag;
 extern int Xflag;
 extern int Yflag;
 extern int Zflag;

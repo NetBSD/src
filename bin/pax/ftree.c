@@ -1,4 +1,4 @@
-/*	$NetBSD: ftree.c,v 1.11 2001/10/25 05:33:33 lukem Exp $	*/
+/*	$NetBSD: ftree.c,v 1.12 2001/10/25 08:51:51 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -37,12 +37,48 @@
  * SUCH DAMAGE.
  */
 
+/*-
+ * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Luke Mewburn of Wasabi Systems.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)ftree.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ftree.c,v 1.11 2001/10/25 05:33:33 lukem Exp $");
+__RCSID("$NetBSD: ftree.c,v 1.12 2001/10/25 08:51:51 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,6 +96,7 @@ __RCSID("$NetBSD: ftree.c,v 1.11 2001/10/25 05:33:33 lukem Exp $");
 #include "pax.h"
 #include "ftree.h"
 #include "extern.h"
+#include "mtree.h"
 
 /*
  * routines to interface with the fts library function.
@@ -83,6 +120,7 @@ static FTREE *fttail = NULL;		/* tail of linked list of file args */
 static FTREE *ftcur = NULL;		/* current file arg being processed */
 static FTSENT *ftent = NULL;		/* current file tree entry */
 static int ftree_skip;			/* when set skip to next file arg */
+static NODE *ftnode = NULL;		/* mtree(8) specfile; used by -M */
 
 static int ftree_arg(void);
 
@@ -105,6 +143,28 @@ static int ftree_arg(void);
 int
 ftree_start(void)
 {
+
+	/*
+	 * if -M is given, the list of filenames on stdin is actually
+	 * an mtree(8) specfile, so parse the specfile into a NODE *
+	 * tree at ftnode, for use by next_file()
+	 */
+	if (Mflag) {
+		if (fthead != NULL) {
+			tty_warn(1,
+	    "The -M flag is only supported when reading file list from stdin");
+			return(-1);
+		}
+		ftnode = spec(stdin);
+		if (ftnode != NULL &&
+		    (ftnode->type != F_DIR || strcmp(ftnode->name, ".") != 0)) {
+			tty_warn(1,
+			    "First node of specfile is not `.' directory");
+			return(-1);
+		}
+		return(0);
+	}
+
 	/*
 	 * set up the operation mode of fts, open the first file arg. We must
 	 * use FTS_NOCHDIR, as the user may have to open multiple archives and
@@ -214,13 +274,14 @@ ftree_sel(ARCHD *arcn)
 	/*
 	 * if -n we are done with this arg, force a skip to the next arg when
 	 * pax asks for the next file in next_file().
+	 * if -M we don't use fts(3), so the rest of this function is moot.
 	 * if -d we tell fts only to match the directory (if the arg is a dir)
 	 * and not the entire file tree rooted at that point.
 	 */
 	if (nflag)
 		ftree_skip = 1;
 
-	if (!dflag || (arcn->type != PAX_DIR))
+	if (Mflag || !dflag || (arcn->type != PAX_DIR))
 		return;
 
 	if (ftent != NULL)
@@ -344,9 +405,130 @@ ftree_arg(void)
 int
 next_file(ARCHD *arcn)
 {
-	int cnt;
-	time_t atime;
-	time_t mtime;
+	static	char	curdir[PAXPATHLEN+2], curpath[PAXPATHLEN+2];
+	static	int	curdirlen;
+
+	struct stat	statbuf;
+	FTSENT		Mftent;
+	int		cnt;
+	time_t		atime, mtime;
+	char		*curlink;
+#define MFTENT_DUMMY_DEV	UINT_MAX
+
+	curlink = NULL;
+	/*
+	 * if parsing an mtree(8) specfile, build up `dummy' ftsent
+	 * from specfile info, and jump below to complete setup of arcn.
+	 */
+	if (Mflag) {
+		if (ftnode == NULL)		/* tree is empty */
+			return (-1);
+
+						/* get current name */
+		if (snprintf(curpath, sizeof(curpath), "%s%s%s",
+		    curdir, curdirlen ? "/" : "", ftnode->name)
+		    >= sizeof(curpath)) {
+			tty_warn(1, "line %d: %s: %s",
+			    ftnode->lineno, curdir, strerror(ENAMETOOLONG));
+			return (-1);
+		}
+		ftnode->flags |= F_VISIT;	/* mark node visited */
+
+						/* construct dummy FTSENT */
+		Mftent.fts_path = curpath;
+		Mftent.fts_statp = &statbuf;
+		Mftent.fts_pointer = ftnode;
+		ftent = &Mftent;
+						/* stat existing file */
+		if (lstat(Mftent.fts_path, &statbuf) == -1) {
+						/* fake up stat buffer */
+			memset(&statbuf, 0, sizeof(statbuf));
+			statbuf.st_dev = MFTENT_DUMMY_DEV;
+			statbuf.st_ino = ftnode->lineno;
+			statbuf.st_size = 0;
+#define NODETEST(t, m)							\
+			if (!(t)) {					\
+				tty_warn(1, "line %d: %s: %s not provided", \
+				    ftnode->lineno, ftent->fts_path, m); \
+				return(-1);				\
+			}
+			statbuf.st_mode = nodetoino(ftnode->type);
+			NODETEST(ftnode->flags & F_TYPE, "type");
+			NODETEST(ftnode->flags & F_MODE, "mode");
+			if (!(ftnode->flags & F_TIME))
+				statbuf.st_mtime = starttime;
+			NODETEST(ftnode->flags & F_GID ||
+			    ftnode->flags & F_GNAME, "group");
+			NODETEST(ftnode->flags & F_UID ||
+			    ftnode->flags & F_UNAME, "user");
+			if (ftnode->type == F_BLOCK || ftnode->type == F_CHAR)
+				NODETEST(ftnode->flags & F_DEV,
+				    "device number");
+			if (ftnode->type == F_LINK)
+				NODETEST(ftnode->flags & F_SLINK, "symlink");
+			/* don't require F_FLAGS or F_SIZE */
+#undef NODETEST
+		} else if (ftnode->flags & F_TYPE && 
+		    nodetoino(ftnode->type) != (statbuf.st_mode & S_IFMT)) {
+			tty_warn(1,
+			    "line %d: %s: type mismatch: specfile %s, tree %s",
+			    ftnode->lineno, ftent->fts_path,
+			    inotype(nodetoino(ftnode->type)),
+			    inotype(statbuf.st_mode));
+			return(-1);
+		}
+		/*
+		 * override settings with those from specfile
+		 */
+		if (ftnode->flags & F_MODE) {
+			statbuf.st_mode &= ~ALLPERMS; 
+			statbuf.st_mode |= (ftnode->st_mode & ALLPERMS);
+		}
+		if (ftnode->flags & (F_GID | F_GNAME))
+			statbuf.st_gid = ftnode->st_gid;
+		if (ftnode->flags & (F_UID | F_UNAME))
+			statbuf.st_uid = ftnode->st_uid;
+		if (ftnode->flags & F_FLAGS)
+			statbuf.st_flags = ftnode->st_flags;
+		if (ftnode->flags & F_TIME)
+			statbuf.st_mtimespec = ftnode->st_mtimespec;
+		if (ftnode->flags & F_DEV)
+			statbuf.st_rdev = ftnode->st_rdev;
+		if (ftnode->flags & F_SLINK)
+			curlink = ftnode->slink;
+				/* ignore F_SIZE */
+
+		/*
+		 * find next node
+		 */
+		if (ftnode->type == F_DIR && ftnode->child != NULL) {
+					/* directory with unseen child */
+			ftnode = ftnode->child;
+			curdirlen = l_strncpy(curdir, curpath, sizeof(curdir));
+		} else do {
+			if (ftnode->next != NULL) {
+					/* next node at current level */
+				ftnode = ftnode->next;
+			} else {	/* move back to parent */
+					/* reset time only on first cd.. */
+				if (Mftent.fts_pointer == ftnode && tflag &&
+				    (get_atdir(MFTENT_DUMMY_DEV, ftnode->lineno,
+				    &mtime, &atime) == 0)) {
+					set_ftime(ftent->fts_path,
+					    mtime, atime, 1);
+				}
+				if (ftnode->parent == ftnode)
+					ftnode = NULL;
+				else
+					ftnode = ftnode->parent;
+				if (ftnode != NULL) {
+					curdirlen -= strlen(ftnode->name) + 1;
+					curdir[curdirlen] = '\0';
+				}
+			}
+		} while (ftnode != NULL && ftnode->flags & F_VISIT);
+		goto got_ftent;
+	}
 
 	/*
 	 * ftree_sel() might have set the ftree_skip flag if the user has the
@@ -440,6 +622,7 @@ next_file(ARCHD *arcn)
 			continue;
 		}
 
+ got_ftent:
 		/*
 		 * ok got a file tree node to process. copy info into arcn
 		 * structure (initialize as required)
@@ -491,10 +674,14 @@ next_file(ARCHD *arcn)
 			break;
 		case S_IFLNK:
 			arcn->type = PAX_SLK;
+			if (curlink != NULL) {
+				cnt = l_strncpy(arcn->ln_name, curlink,
+				    sizeof(arcn->ln_name));
 			/*
 			 * have to read the symlink path from the file
 			 */
-			if ((cnt = readlink(ftent->fts_path, arcn->ln_name,
+			} else if ((cnt =
+			    readlink(ftent->fts_path, arcn->ln_name,
 			    PAXPATHLEN)) < 0) {
 				syswarn(1, errno, "Unable to read symlink %s",
 				    ftent->fts_path);

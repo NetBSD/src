@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.33 2001/10/25 05:33:33 lukem Exp $	*/
+/*	$NetBSD: options.c,v 1.34 2001/10/25 08:51:51 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: options.c,v 1.33 2001/10/25 05:33:33 lukem Exp $");
+__RCSID("$NetBSD: options.c,v 1.34 2001/10/25 08:51:51 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -194,8 +194,8 @@ pax_options(int argc, char **argv)
 	/*
 	 * process option flags
 	 */
-	while ((c=getopt(argc,argv,"ab:cdf:iklno:p:rs:tuvwx:zAB:DE:G:HLOPT:U:XYZ"))
-	    != -1) {
+	while ((c = getopt(argc, argv,
+	    "ab:cdf:iklno:p:rs:tuvwx:zAB:DE:G:HLMOPT:U:XYZ")) != -1) {
 		switch (c) {
 		case 'a':
 			/*
@@ -465,6 +465,14 @@ pax_options(int argc, char **argv)
 			 */
 			Lflag = 1;
 			flg |= CLF;
+			break;
+		case 'M':
+			/*
+			 * Treat list of filenames on stdin as an
+			 * mtree(8) specfile.  Non standard option.
+			 */
+			Mflag = 1;
+			flg |= CMF;
 			break;
 		case 'O':
 			/*
@@ -1445,14 +1453,14 @@ pax_usage(void)
 	(void)fputs("[-U user] ... [-G group] ...\n           ", stderr);
 	(void)fputs("[-T [from_date][,to_date]] ... ", stderr);
 	(void)fputs(" [pattern ...]\n", stderr);
-	(void)fputs("       pax -w [-dituvzHLPX] [-b blocksize] ", stderr);
+	(void)fputs("       pax -w [-dituvzHLMPX] [-b blocksize] ", stderr);
 	(void)fputs("[[-a] [-f archive]] [-x format] \n", stderr);
 	(void)fputs("           [-B bytes] [-o options] ... ", stderr);
 	(void)fputs("[-s replstr] ... [-U user] ...", stderr);
 	(void)fputs("\n           [-G group] ... ", stderr);
 	(void)fputs("[-T [from_date][,to_date][/[c][m]]] ... ", stderr);
 	(void)fputs("[file ...]\n", stderr);
-	(void)fputs("       pax -r -w [-diklntuvzDHLPXYZ] ", stderr);
+	(void)fputs("       pax -r -w [-diklntuvzDHLMPXYZ] ", stderr);
 	(void)fputs("[-p string] ... [-s replstr] ...", stderr);
 	(void)fputs("\n           [-U user] ... [-G group] ... ", stderr);
 	(void)fputs("[-T [from_date][,to_date][/[c][m]]] ... ", stderr);
