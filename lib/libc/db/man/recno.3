@@ -1,4 +1,4 @@
-.\"	$NetBSD: recno.3,v 1.4 1995/02/27 13:23:40 cgd Exp $
+.\"	$NetBSD: recno.3,v 1.5 1995/06/13 00:53:40 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -186,10 +186,10 @@ interface to create a new record will cause the creation of multiple,
 empty records if the record number is more than one greater than the
 largest record currently in the database.
 .SH "SEE ALSO"
+.IR btree (3),
 .IR dbopen (3),
 .IR hash (3),
-.IR mpool (3),
-.IR recno (3)
+.IR mpool (3)
 .sp
 .IR "Document Processing in a Relational Database System" ,
 Michael Stonebraker, Heidi Stettner, Joseph Kalash, Antonin Guttman,
