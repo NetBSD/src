@@ -1,4 +1,4 @@
-/*	$NetBSD: traceroute.c,v 1.19 1997/10/17 13:57:02 lukem Exp $	*/
+/*	$NetBSD: traceroute.c,v 1.20 1997/10/31 23:32:24 ross Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997
@@ -29,7 +29,7 @@ static const char rcsid[] =
 #else
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997\n\
 The Regents of the University of California.  All rights reserved.\n");
-__RCSID("$NetBSD: traceroute.c,v 1.19 1997/10/17 13:57:02 lukem Exp $");
+__RCSID("$NetBSD: traceroute.c,v 1.20 1997/10/31 23:32:24 ross Exp $");
 #endif
 #endif
 
@@ -272,6 +272,7 @@ u_char	packet[512];		/* last inbound (icmp) packet */
 struct ip *outip;		/* last output (udp) packet */
 struct udphdr *outudp;		/* last output (udp) packet */
 struct outdata *outdata;	/* last output (udp) packet */
+struct outdata  outsetup;	/* setup and copy for alignment */
 
 struct icmp *outicmp;		/* last output (icmp) packet */
 
@@ -333,6 +334,7 @@ int	str2val(const char *, const char *, int, int);
 void	tvsub(struct timeval *, struct timeval *);
 __dead	void usage(void);
 int	wait_for_reply(int, struct sockaddr_in *, struct timeval *);
+void	fool_memcpy(void *dst, const void *src, size_t len);
 
 int
 main(int argc, char **argv)
@@ -859,7 +861,18 @@ main(int argc, char **argv)
 			break;
 	}
 	exit(0);
+	/*NOTREACHED*/
 }
+#if 1
+/*
+ * Without this, gcc on alpha inlines memcpy and gets alignment faults
+ */
+void
+fool_memcpy(void *dst, const void *src, size_t len)
+{
+	(void)memcpy(dst,src,len);
+}
+#endif
 
 int
 wait_for_reply(register int sock, register struct sockaddr_in *fromp,
@@ -933,9 +946,10 @@ send_probe(register int seq, int ttl, register struct timeval *tp)
 	}
 
 	/* Payload */
-	outdata->seq = seq;
-	outdata->ttl = ttl;
-	outdata->tv = *tp;
+	outsetup.seq = seq;
+	outsetup.ttl = ttl;
+	outsetup.tv  = *tp;
+	fool_memcpy((char *)outdata,(char *)&outsetup,sizeof(outsetup));
 
 	if (useicmp)
 		outicmp->icmp_seq = htons(seq);
