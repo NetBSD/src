@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.24.2.3 2004/04/21 04:32:08 jmc Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.24.2.4 2004/05/06 05:36:49 jmc Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.24.2.3 2004/04/21 04:32:08 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.24.2.4 2004/05/06 05:36:49 jmc Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
@@ -1080,7 +1080,7 @@ sysctl_kern_hostid(SYSCTLFN_ARGS)
 	int error, inthostid;
 	struct sysctlnode node;
 
-	inthostid = hostid;  /* XXX assumes sizeof int >= sizeof long */
+	inthostid = hostid;  /* XXX assumes sizeof int <= sizeof long */
 	node = *rnode;
 	node.sysctl_data = &inthostid;
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
