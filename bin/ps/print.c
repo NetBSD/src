@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.29 1996/08/15 01:41:23 explorer Exp $	*/
+/*	$NetBSD: print.c,v 1.30 1996/10/02 18:07:25 ws Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-static char rcsid[] = "$NetBSD: print.c,v 1.29 1996/08/15 01:41:23 explorer Exp $";
+static char rcsid[] = "$NetBSD: print.c,v 1.30 1996/10/02 18:07:25 ws Exp $";
 #endif
 #endif /* not lint */
 
@@ -270,6 +270,17 @@ state(k, ve)
 		*cp++ = '+';
 	*cp = '\0';
 	(void)printf("%-*s", v->width, buf);
+}
+
+void
+pnice(k, ve)
+	KINFO *k;
+	VARENT *ve;
+{
+	VAR *v;
+
+	v = ve->var;
+	(void)printf("%*d", v->width, KI_PROC(k)->p_nice - NZERO);
 }
 
 void
@@ -770,7 +781,7 @@ pvar(k, ve)
 	VAR *v;
 
 	v = ve->var;
-	printval((char *)((char *)KI_PROC(k) + v->off), v);
+	printval((char *)KI_PROC(k) + v->off, v);
 }
 
 void
@@ -781,7 +792,7 @@ evar(k, ve)
 	VAR *v;
 
 	v = ve->var;
-	printval((char *)((char *)KI_EPROC(k) + v->off), v);
+	printval((char *)KI_EPROC(k) + v->off, v);
 }
 
 void
@@ -793,7 +804,7 @@ uvar(k, ve)
 
 	v = ve->var;
 	if (k->ki_u.u_valid)
-		printval((char *)((char *)&k->ki_u + v->off), v);
+		printval((char *)&k->ki_u + v->off, v);
 	else
 		(void)printf("%*s", v->width, "-");
 }
@@ -807,7 +818,7 @@ rvar(k, ve)
 
 	v = ve->var;
 	if (k->ki_u.u_valid)
-		printval((char *)((char *)(&k->ki_u.u_ru) + v->off), v);
+		printval((char *)&k->ki_u.u_ru + v->off, v);
 	else
 		(void)printf("%*s", v->width, "-");
 }
