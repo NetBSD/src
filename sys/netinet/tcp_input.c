@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.93 1999/08/25 15:23:12 itojun Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.94 1999/08/26 00:04:30 thorpej Exp $	*/
 
 /*
 %%% portions-copyright-nrl-95
@@ -1579,7 +1579,7 @@ after_listen:
 					u_int win =
 					    min(tp->snd_wnd, tp->snd_cwnd) / 
 					    2 /	tp->t_segsz;
-					if (SEQ_LT(th->th_ack,
+					if (tcp_do_newreno && SEQ_LT(th->th_ack,
 					    tp->snd_recover)) {
 						/*
 						 * False fast retransmit after
@@ -1618,13 +1618,13 @@ after_listen:
 		 * If the congestion window was inflated to account
 		 * for the other side's cached packets, retract it.
 		 */
-		if (!tcp_do_newreno) {
+		if (tcp_do_newreno == 0) {
 			if (tp->t_dupacks >= tcprexmtthresh &&
 			    tp->snd_cwnd > tp->snd_ssthresh)
 				tp->snd_cwnd = tp->snd_ssthresh;
 			tp->t_dupacks = 0;
-		} else if (tp->t_dupacks >= tcprexmtthresh
-		    && !tcp_newreno(tp, th)) {
+		} else if (tp->t_dupacks >= tcprexmtthresh &&
+			   tcp_newreno(tp, th) == 0) {
 			tp->snd_cwnd = tp->snd_ssthresh;
 			/*
 			 * Window inflation should have left us with approx.
@@ -1634,7 +1634,7 @@ after_listen:
 			 */
 			if (SEQ_SUB(tp->snd_max, th->th_ack) < tp->snd_ssthresh)
 				tp->snd_cwnd = SEQ_SUB(tp->snd_max, th->th_ack)
-				     + tp->t_segsz;
+				    + tp->t_segsz;
 			tp->t_dupacks = 0;
 		}
 		if (SEQ_GT(th->th_ack, tp->snd_max)) {
@@ -1685,8 +1685,9 @@ after_listen:
 
 		if (cw > tp->snd_ssthresh)
 			incr = incr * incr / cw;
-		if (!tcp_do_newreno || SEQ_GEQ(th->th_ack, tp->snd_recover))
-			tp->snd_cwnd = min(cw + incr,TCP_MAXWIN<<tp->snd_scale);
+		if (tcp_do_newreno == 0 || SEQ_GEQ(th->th_ack, tp->snd_recover))
+			tp->snd_cwnd = min(cw + incr,
+			    TCP_MAXWIN << tp->snd_scale);
 		}
 		if (acked > so->so_snd.sb_cc) {
 			tp->snd_wnd -= so->so_snd.sb_cc;
