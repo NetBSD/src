@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.4 1997/10/29 00:31:06 augustss Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.5 1998/03/23 00:39:18 augustss Exp $	*/
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -266,7 +266,7 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 		if ((idat & 0xffff) < 4 || (idat & 0xffff) > 17)
 			return EINVAL;
 		tmpinfo.blocksize = 1 << (idat & 0xffff);
-		tmpinfo.hiwat = (idat >> 16) & 0xffff;
+		tmpinfo.hiwat = (idat >> 16) & 0x7fff;
 		if (tmpinfo.hiwat == 0)	/* 0 means set to max */
 			tmpinfo.hiwat = 65536;
 		(void) ioctl(fd, AUDIO_SETINFO, &tmpinfo);
@@ -276,7 +276,7 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 		u = tmpinfo.blocksize;
 		for(idat = 0; u; idat++, u >>= 1)
 			;
-		idat |= (tmpinfo.hiwat & 0xffff) << 16;
+		idat |= (tmpinfo.hiwat & 0x7fff) << 16;
 		INTARG = idat;
 		break;
 	case SNDCTL_DSP_GETFMTS:
