@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_compat.c,v 1.31 1997/04/01 19:58:59 scottr Exp $	*/
+/*	$NetBSD: hpux_compat.c,v 1.32 1997/04/27 21:40:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -417,6 +417,7 @@ hpux_sys_utssys(p, v, retval)
 	int error;
 	struct hpux_utsname	ut;
 	extern char ostype[], hostname[], osrelease[], version[];
+	extern char machine[];
 
 	switch (SCARG(uap, request)) {
 	/* uname */
@@ -437,8 +438,8 @@ hpux_sys_utssys(p, v, retval)
 		strncpy(ut.version, version, sizeof(ut.version));
 		ut.version[sizeof(ut.version) - 1] = '\0';
 
-		/* Fill in machine-dependent part of uname. */
-		hpux_cpu_uname(&ut);
+		strncpy(ut.machine, machine, sizeof(ut.machine));
+		ut.machine[sizeof(ut.machine) - 1] = '\0';
 
 		error = copyout((caddr_t)&ut,
 		    (caddr_t)SCARG(uap, uts), sizeof(ut));
