@@ -1,4 +1,4 @@
-/*	$NetBSD: sunms.c,v 1.3.4.2 2001/11/14 19:16:08 nathanw Exp $	*/
+/*	$NetBSD: sunms.c,v 1.3.4.3 2001/11/15 11:03:05 pk Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunms.c,v 1.3.4.2 2001/11/14 19:16:08 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunms.c,v 1.3.4.3 2001/11/15 11:03:05 pk Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,6 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: sunms.c,v 1.3.4.2 2001/11/14 19:16:08 nathanw Exp $"
 #include <sys/ioctl.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
+#include <sys/lwp.h>
 #include <sys/signal.h>
 #include <sys/signalvar.h>
 #include <sys/time.h>
@@ -162,14 +163,12 @@ sunmsiopen(dev, flags)
 {
 	struct ms_softc *ms = (void *) dev;
 	struct tty *tp = (struct tty *)ms->ms_cs;
-	struct proc *p = curproc;
+	struct proc *p = curproc ? curproc->l_proc : &proc0;
 	struct termios t;
 	int maj;
 	int error;
 
 	maj = major(tp->t_dev);
-	if (p == NULL)
-		p = &proc0;
 
 	/* Open the lower device */
 	if ((error = (*cdevsw[maj].d_open)(tp->t_dev, O_NONBLOCK|flags,
