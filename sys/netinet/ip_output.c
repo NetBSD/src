@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.76 2000/10/17 02:57:01 thorpej Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.77 2000/10/23 03:42:18 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -168,9 +168,6 @@ ip_output(m0, va_alist)
 	int len, off, error = 0;
 	struct route iproute;
 	struct sockaddr_in *dst;
-#if IFA_STATS
-	struct sockaddr_in src;
-#endif
 	struct in_ifaddr *ia;
 	struct mbuf *opt;
 	struct route *ro;
@@ -571,13 +568,9 @@ skip_ipsec:
 		 * search for the source address structure to
 		 * maintain output statistics.
 		 */
-		bzero((caddr_t*) &src, sizeof(src));
-		src.sin_family = AF_INET;
-		src.sin_addr.s_addr = ip->ip_src.s_addr;
-		src.sin_len = sizeof(src);
-		ia = ifatoia(ifa_ifwithladdr(sintosa(&src)));
+		INADDR_TO_IA(ip->ip_src, ia);
 		if (ia)
-			ia->ia_ifa.ifa_data.ifad_outbytes += ntohs(ip->ip_len);
+			ia->ia_ifa.ifa_data.ifad_outbytes += ip->ip_len;
 #endif
 		HTONS(ip->ip_len);
 		HTONS(ip->ip_off);
@@ -697,11 +690,7 @@ sendorfree:
 			 * search for the source address structure to
 			 * maintain output statistics.
 			 */
-			bzero((caddr_t*) &src, sizeof(src));
-			src.sin_family = AF_INET;
-			src.sin_addr.s_addr = ip->ip_src.s_addr;
-			src.sin_len = sizeof(src);
-			ia = ifatoia(ifa_ifwithladdr(sintosa(&src)));
+			INADDR_TO_IA(ip->ip_src, ia);
 			if (ia) {
 				ia->ia_ifa.ifa_data.ifad_outbytes +=
 					ntohs(ip->ip_len);
