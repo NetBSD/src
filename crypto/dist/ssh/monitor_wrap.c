@@ -1,4 +1,4 @@
-/*	$NetBSD: monitor_wrap.c,v 1.13 2005/02/13 05:57:26 christos Exp $	*/
+/*	$NetBSD: monitor_wrap.c,v 1.14 2005/02/13 18:14:04 christos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * Copyright 2002 Markus Friedl <markus@openbsd.org>
@@ -27,7 +27,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: monitor_wrap.c,v 1.39 2004/07/17 05:31:41 dtucker Exp $");
-__RCSID("$NetBSD: monitor_wrap.c,v 1.13 2005/02/13 05:57:26 christos Exp $");
+__RCSID("$NetBSD: monitor_wrap.c,v 1.14 2005/02/13 18:14:04 christos Exp $");
 
 #include <openssl/bn.h>
 #include <openssl/dh.h>
@@ -49,6 +49,9 @@ __RCSID("$NetBSD: monitor_wrap.c,v 1.13 2005/02/13 05:57:26 christos Exp $");
 #include "atomicio.h"
 #include "monitor_fdpass.h"
 #include "getput.h"
+#ifdef USE_PAM
+#include "servconf.h"
+#endif
 
 #include "auth.h"
 #include "channels.h"
@@ -66,6 +69,9 @@ extern z_stream outgoing_stream;
 extern struct monitor *pmonitor;
 extern Buffer input, output;
 extern Buffer loginmsg;
+#ifdef USE_PAM
+extern ServerOptions options;
+#endif
 
 int
 mm_is_monitor(void)
@@ -686,6 +692,129 @@ mm_session_pty_cleanup2(Session *s)
 	/* unlink pty from session */
 	s->ttyfd = -1;
 }
+
+#ifdef USE_PAM
+void
+mm_start_pam(Authctxt *authctxt)
+{
+	Buffer m;
+
+	debug3("%s entering", __func__);
+	if (!options.use_pam)
+		fatal("UsePAM=no, but ended up in %s anyway", __func__);
+
+	buffer_init(&m);
+	mm_request_send(pmonitor->m_recvfd, MONITOR_REQ_PAM_START, &m);
+
+	buffer_free(&m);
+}
+
+u_int
+mm_do_pam_account(void)
+{
+	Buffer m;
+	u_int ret;
+
+	debug3("%s entering", __func__);
+	if (!options.use_pam)
+		fatal("UsePAM=no, but ended up in %s anyway", __func__);
+
+	buffer_init(&m);
+	mm_request_send(pmonitor->m_recvfd, MONITOR_REQ_PAM_ACCOUNT, &m);
+
+	mm_request_receive_expect(pmonitor->m_recvfd,
+	    MONITOR_ANS_PAM_ACCOUNT, &m);
+	ret = buffer_get_int(&m);
+
+	buffer_free(&m);
+
+	debug3("%s returning %d", __func__, ret);
+
+	return (ret);
+}
+
+void *
+mm_sshpam_init_ctx(Authctxt *authctxt)
+{
+	Buffer m;
+	int success;
+
+	debug3("%s", __func__);
+	buffer_init(&m);
+	buffer_put_cstring(&m, authctxt->user);
+	mm_request_send(pmonitor->m_recvfd, MONITOR_REQ_PAM_INIT_CTX, &m);
+	debug3("%s: waiting for MONITOR_ANS_PAM_INIT_CTX", __func__);
+	mm_request_receive_expect(pmonitor->m_recvfd, MONITOR_ANS_PAM_INIT_CTX, &m);
+	success = buffer_get_int(&m);
+	if (success == 0) {
+		debug3("%s: pam_init_ctx failed", __func__);
+		buffer_free(&m);
+		return (NULL);
+	}
+	buffer_free(&m);
+	return (authctxt);
+}
+
+int
+mm_sshpam_query(void *ctx, char **name, char **info,
+    u_int *num, char ***prompts, u_int **echo_on)
+{
+	Buffer m;
+	int i, ret;
+
+	debug3("%s", __func__);
+	buffer_init(&m);
+	mm_request_send(pmonitor->m_recvfd, MONITOR_REQ_PAM_QUERY, &m);
+	debug3("%s: waiting for MONITOR_ANS_PAM_QUERY", __func__);
+	mm_request_receive_expect(pmonitor->m_recvfd, MONITOR_ANS_PAM_QUERY, &m);
+	ret = buffer_get_int(&m);
+	debug3("%s: pam_query returned %d", __func__, ret);
+	*name = buffer_get_string(&m, NULL);
+	*info = buffer_get_string(&m, NULL);
+	*num = buffer_get_int(&m);
+	*prompts = xmalloc((*num + 1) * sizeof(char *));
+	*echo_on = xmalloc((*num + 1) * sizeof(u_int));
+	for (i = 0; i < *num; ++i) {
+		(*prompts)[i] = buffer_get_string(&m, NULL);
+		(*echo_on)[i] = buffer_get_int(&m);
+	}
+	buffer_free(&m);
+	return (ret);
+}
+
+int
+mm_sshpam_respond(void *ctx, u_int num, char **resp)
+{
+	Buffer m;
+	int i, ret;
+
+	debug3("%s", __func__);
+	buffer_init(&m);
+	buffer_put_int(&m, num);
+	for (i = 0; i < num; ++i)
+		buffer_put_cstring(&m, resp[i]);
+	mm_request_send(pmonitor->m_recvfd, MONITOR_REQ_PAM_RESPOND, &m);
+	debug3("%s: waiting for MONITOR_ANS_PAM_RESPOND", __func__);
+	mm_request_receive_expect(pmonitor->m_recvfd, MONITOR_ANS_PAM_RESPOND, &m);
+	ret = buffer_get_int(&m);
+	debug3("%s: pam_respond returned %d", __func__, ret);
+	buffer_free(&m);
+	return (ret);
+}
+
+void
+mm_sshpam_free_ctx(void *ctxtp)
+{
+	Buffer m;
+
+	debug3("%s", __func__);
+	buffer_init(&m);
+	mm_request_send(pmonitor->m_recvfd, MONITOR_REQ_PAM_FREE_CTX, &m);
+	debug3("%s: waiting for MONITOR_ANS_PAM_FREE_CTX", __func__);
+	mm_request_receive_expect(pmonitor->m_recvfd, MONITOR_ANS_PAM_FREE_CTX, &m);
+	buffer_free(&m);
+}
+#endif /* USE_PAM */
 
 /* Request process termination */
 

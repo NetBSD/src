@@ -1,4 +1,4 @@
-/*	$NetBSD: gss-serv-krb5.c,v 1.1.1.1 2005/02/13 00:53:00 christos Exp $	*/
+/*	$NetBSD: gss-serv-krb5.c,v 1.2 2005/02/13 18:14:04 christos Exp $	*/
 /*	$OpenBSD: gss-serv-krb5.c,v 1.3 2004/07/21 10:36:23 djm Exp $	*/
 
 /*
@@ -148,6 +148,11 @@ ssh_gssapi_krb5_storecreds(ssh_gssapi_client *client)
 	client->store.filename = xstrdup(krb5_cc_get_name(krb_context, ccache));
 	client->store.envvar = "KRB5CCNAME";
 	client->store.envval = xstrdup(client->store.filename);
+
+#ifdef USE_PAM
+	if (options.use_pam)
+		do_pam_putenv(client->store.envvar, client->store.envval);
+#endif
 
 	krb5_cc_close(krb_context, ccache);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: auth.h,v 1.17 2005/02/13 05:57:26 christos Exp $	*/
+/*	$NetBSD: auth.h,v 1.18 2005/02/13 18:14:04 christos Exp $	*/
 /*	$OpenBSD: auth.h,v 1.50 2004/05/23 23:59:53 dtucker Exp $	*/
 
 /*
@@ -80,6 +80,10 @@ struct Authctxt {
  * case 'valid' is set to 0, but 'user' points to the username requested by
  * the client.
  */
+
+#ifdef USE_PAM
+#include "auth-pam.h"
+#endif
 
 struct Authmethod {
 	char	*name;
