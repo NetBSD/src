@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm32,v 1.59 1998/08/22 22:50:53 augustss Exp $
+#	$NetBSD: files.arm32,v 1.60 1998/08/26 09:32:24 augustss Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -97,7 +97,6 @@ file	dev/isa/opl_ess.c		opl_ess
 
 # XXX should pull in files.isa
 # AD1848 (CS4248, CS4231, AD1845) audio codec support; used by other drivers
-define	ad1848
 file	dev/isa/ad1848.c		ad1848 
 
 # XXX should pull in files.isa
