@@ -1,4 +1,4 @@
-/*	$NetBSD: res_query.c,v 1.1.1.1 2004/05/20 17:18:54 christos Exp $	*/
+/*	$NetBSD: res_query.c,v 1.2 2004/05/20 17:43:31 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -117,7 +117,7 @@ res_nquery(res_state statp,
 	   int anslen)		/* size of answer buffer */
 {
 	u_char buf[MAXPACKET];
-	HEADER *hp = (HEADER *) answer;
+	HEADER *hp = (HEADER *)(void *)answer;
 	int n;
 	u_int oflags;
 
@@ -211,7 +211,7 @@ res_nsearch(res_state statp,
 	    int anslen)		/* size of answer */
 {
 	const char *cp, * const *domain;
-	HEADER *hp = (HEADER *) answer;
+	HEADER *hp = (HEADER *)(void *)answer;
 	char tmp[NS_MAXDNAME];
 	u_int dots;
 	int trailing_dot, ret, saved_herrno;
@@ -379,7 +379,7 @@ res_nquerydomain(res_state statp,
 		}
 		n--;
 		if (n >= 0 && name[n] == '.') {
-			strncpy(nbuf, name, n);
+			strncpy(nbuf, name, (size_t)n);
 			nbuf[n] = '\0';
 		} else
 			longname = name;
