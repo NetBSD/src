@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.69 1995/05/03 19:39:05 mycroft Exp $	*/
+/*	$NetBSD: sd.c,v 1.70 1995/05/03 21:38:57 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -741,9 +741,9 @@ sd_reassign_blocks(sd, block)
 
 	rbdata.length_msb = 0;
 	rbdata.length_lsb = sizeof(rbdata.defect_descriptor[0]);
-	rbdata.defect_descriptor[0].dlbaddr_3 = (block >> 24) & 0xff);
-	rbdata.defect_descriptor[0].dlbaddr_2 = (block >> 16) & 0xff);
-	rbdata.defect_descriptor[0].dlbaddr_1 = (block >> 8) & 0xff);
+	rbdata.defect_descriptor[0].dlbaddr_3 = (block >> 24) & 0xff;
+	rbdata.defect_descriptor[0].dlbaddr_2 = (block >> 16) & 0xff;
+	rbdata.defect_descriptor[0].dlbaddr_1 = (block >> 8) & 0xff;
 	rbdata.defect_descriptor[0].dlbaddr_0 = block & 0xff;
 
 	return scsi_scsi_cmd(sd->sc_link, (struct scsi_generic *)&scsi_cmd,
