@@ -1,6 +1,6 @@
-.\"	$NetBSD: hardware,v 1.6 2002/08/03 21:29:41 thorpej Exp $
+.\"	$NetBSD: hardware,v 1.7 2003/01/25 23:17:21 thorpej Exp $
 .\"
-.\" Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -39,6 +39,14 @@ ARM, Ltd. Integrator
 Intel IQ80310
 .It
 Intel IQ80321
+.It
+Team ASA, Inc. Npwr
+.It
+Intel IXM1200
+.It
+Samsung SMDK2800
+.It
+ADI Engineering, Inc. BRH ("Big Red Head")
 .bullet)
 .
 .Ss2 Supported devices (ARM, Ltd. Integrator)
@@ -114,5 +122,71 @@ Intel i82542, i82543, i85244 Gigabit Ethernet
 Application Accelerator Unit
 .It
 Watchdog timer
+.bullet)
+.bullet)
+.
+.Ss2 Supported devices (Team ASA Npwr)
+The Npwr is a storage appliance based on the Intel IOP310
+I/O processor chipset.  This is an exhaustive list of devices
+supported on the Npwr as the Npwr has no expansion capability.
+.(bullet
+.Te 2 "Serial ports"
+.(bullet -compact
+On-board TI 16550 UART
+.bullet)
+.It
+.Te 2 "SCSI host adapters"
+.(bullet
+On-board LSI Logic 53c1010 Ultra160 SCSI adapter
+.bullet)
+.It
+.Te 2 "Ethernet adapters"
+.(bullet
+On-board Intel i82544 Gigabit Ethernet
+.bullet)
+.bullet)
+.
+.Ss2 Supported devices (Intel IXM1200)
+For devices that have machine-independent drivers,
+this is not an exhaustive list, but merely reflects the
+devices that have been tested on this platform.
+.(bullet -offset indent
+.Te 2 "Serial ports"
+.(bullet -compact
+IXP1200 on-chip serial port
+.bullet)
+.It
+.Te 2 "Ethernet adapters"
+.(bullet -compact
+Intel i82557, i82558, i82559, i82550
+.bullet)
+.bullet)
+.
+.Ss2 Supported devices (Samsung SMDK2800)
+For devices that have machine-independent drivers,
+this is not an exhaustive list, but merely reflects the
+devices that have been tested on this platform.
+.(bullet -offset indent
+.Te 2 "Serial ports"
+.(bullet -compact
+S3C2800 on-chip serial ports
+.bullet)
+.bullet)
+.
+.Ss2 Supported devices (ADI BRH)
+For devices that have machine-independent drivers,
+this is not an exhaustive list, but merely reflects the
+devices that have been tested on this platform.
+.(bullet -offset indent
+.Te 2 "Serial ports"
+.(bullet -compact
+On-board TI 16752 DUART
+.bullet)
+.It
+.Te 2 "Ethernet adapters"
+.(bullet -compact
+Intel i82557, i82558, i82559, i82550
+.It
+Intel i82544, i82546 Gigabit Ethernet
 .bullet)
 .bullet)
