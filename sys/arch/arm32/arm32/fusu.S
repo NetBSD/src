@@ -1,4 +1,4 @@
-/*	$NetBSD: fusu.S,v 1.6 1998/08/16 02:11:32 mark Exp $	*/
+/*	$NetBSD: fusu.S,v 1.7 1999/10/26 06:53:41 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996-1998 Mark Brinicombe.
@@ -78,7 +78,7 @@ ENTRY(fetchuserword)
 	mov	pc, lr
 
 Lcurpcb:
-	.word	_curpcb
+	.word	_C_LABEL(curpcb)
 
 Lvm_min_address:
 	.word	VM_MIN_ADDRESS
@@ -178,7 +178,7 @@ ENTRY(fuswintr)
 	beq	fusupcbfault
 #endif
 
-	add	r1, pc, #_fusubailout - . - 8
+	add	r1, pc, #_C_LABEL(fusubailout) - . - 8
 	str	r1, [r2, #PCB_ONFAULT]
 
 	ldr	r0, [r0]
@@ -190,12 +190,12 @@ ENTRY(fuswintr)
 	mov	pc, lr
 
 Lblock_userspace_access:
-	.word	_block_userspace_access
+	.word	_C_LABEL(block_userspace_access)
 
 	.data
 	.align	0
-	.global	_block_userspace_access
-_block_userspace_access:
+	.global	_C_LABEL(block_userspace_access)
+_C_LABEL(block_userspace_access):
 	.word	0
 	.text
 
@@ -246,8 +246,8 @@ fusufault:
  */
 
 /* label must be global as fault.c references it */
-	.global	_fusubailout
-_fusubailout:
+	.global	_C_LABEL(fusubailout)
+_C_LABEL(fusubailout):
 	mov	r0, #0x00000000
 	str	r0, [r2, #PCB_ONFAULT]
 	mvn	r0, #0x00000000
@@ -269,7 +269,7 @@ fusuaddrfault:
 fusupcbfault:
 	mov	r1, r0
 	add	r0, pc, #fusupcbfaulttext - . - 8
-	b	_panic
+	b	_C_LABEL(panic)
 
 fusupcbfaulttext:
 	.asciz	"Yikes - no valid PCB during fusuxxx() addr=%08x\n"
@@ -334,7 +334,7 @@ ENTRY(suswintr)
 	beq	fusupcbfault
 #endif
 
-	add	r3, pc, #_fusubailout - . - 8
+	add	r3, pc, #_C_LABEL(fusubailout) - . - 8
 	str	r3, [r2, #PCB_ONFAULT]
 
 	strb	r1, [r0, #0x0000]

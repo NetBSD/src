@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.30 1999/03/24 12:41:27 tron Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.31 1999/10/26 06:53:41 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -78,10 +78,10 @@
 	.text
 
 Lwhichqs:
-	.word	_whichqs
+	.word	_C_LABEL(whichqs)
 
 Lqs:
-	.word	_qs
+	.word	_C_LABEL(qs)
 
 /*
  * On entry
@@ -142,12 +142,12 @@ Lsetrunqueue_erg:
 	mov	r2, r1
 	mov	r1, r0
 	add	r0, pc, #Ltext1 - . - 8
-	bl	_printf
+	bl	_C_LABEL(printf)
 
 	ldr	r2, Lqs
 	ldr	r1, [r2]
 	add	r0, pc, #Ltext2 - . - 8
-	b	_panic	
+	b	_C_LABEL(panic)	
 
 Ltext1:
 	.asciz	"setrunqueue : %08x %08x\n"
@@ -208,25 +208,25 @@ ENTRY(remrunqueue)
  */
 
 Lcurproc:
-	.word	_curproc
+	.word	_C_LABEL(curproc)
 
 Lcurpcb:
-	.word	_curpcb
+	.word	_C_LABEL(curpcb)
 
 Lwant_resched:
-	.word	_want_resched
+	.word	_C_LABEL(want_resched)
 
 Lcpufuncs:	
-	.word	_cpufuncs
+	.word	_C_LABEL(cpufuncs)
 	
 	.data
-	.global	_curpcb
-_curpcb:
+	.global	_C_LABEL(curpcb)
+_C_LABEL(curpcb):
 	.word	0x00000000
 	.text
 
 Lblock_userspace_access:
-	.word	_block_userspace_access
+	.word	_C_LABEL(block_userspace_access)
 
 /*
  * Idle loop, exercised while waiting for a process to wake up.
@@ -293,9 +293,9 @@ ENTRY(cpu_switch)
 
 #ifdef spl0
 	mov	r0, #(_SPL_0)
-	bl	_splx
+	bl	_C_LABEL(splx)
 #else
-	bl	_spl0
+	bl	_C_LABEL(spl0)
 #endif
 
 	/* Push the old spl level onto the stack */
@@ -336,7 +336,7 @@ sw1:
 
 	add	r0, pc, #switchpanic - . - 8
 	mrs	r1, cpsr_all
-	bl	_panic
+	bl	_C_LABEL(panic)
 
 switchpanic:
 	.asciz	"Yikes! In cpu_switch() but not in SVC mode (%08x)\n"
@@ -562,7 +562,7 @@ Lcs_context_switched:
 #ifdef ARMFPE
 	add	r0, r1, #(USER_SIZE) & 0x00ff
 	add	r0, r0, #(USER_SIZE) & 0xff00 
-	bl	_arm_fpe_core_changecontext
+	bl	_C_LABEL(arm_fpe_core_changecontext)
 #endif
 
 	/* We can enable interrupts again */
@@ -577,7 +577,7 @@ switch_return:
 
 	/* Get the spl level from the stack and update the current spl level */
 	ldr	r0, [sp], #0x0004
-	bl	_splx
+	bl	_C_LABEL(splx)
 
 	/* cpu_switch returns the proc it switched to. */
 	mov	r0, r6
@@ -589,10 +589,10 @@ switch_return:
 	ldmfd	sp!, {r4-r7, pc}
 
 Lproc0:
-	.word	_proc0
+	.word	_C_LABEL(proc0)
 
 Lkernel_map:
-	.word	_kernel_map
+	.word	_C_LABEL(kernel_map)
 
 
 ENTRY(switch_exit)
@@ -651,7 +651,7 @@ Lse_context_switched:
 	 * Schedule the vmspace and stack to be freed.
 	 */
 	mov	r0, r3			/* exit2(p) */
-	bl	_exit2
+	bl	_C_LABEL(exit2)
 
 	/* Paranoia */
 	mov	r0, #0x00000000
@@ -662,7 +662,7 @@ Lse_context_switched:
 	b	switch_search
 
 Lcurrent_spl_level:
-	.word	_current_spl_level
+	.word	_C_LABEL(current_spl_level)
 
 ENTRY(savectx)
 	/*
