@@ -1,4 +1,4 @@
-/*	$NetBSD: wds.c,v 1.54 2003/05/03 18:11:29 wiz Exp $	*/
+/*	$NetBSD: wds.c,v 1.55 2003/05/14 12:43:26 wiz Exp $	*/
 
 /*
  * XXX
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wds.c,v 1.54 2003/05/03 18:11:29 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wds.c,v 1.55 2003/05/14 12:43:26 wiz Exp $");
 
 #include "opt_ddb.h"
 
@@ -1011,7 +1011,7 @@ wds_init(sc, isreset)
 	    sizeof(struct wds_mbx), 0, BUS_DMA_NOWAIT, &sc->sc_dmamap_mbox) ||
 	    bus_dmamap_load(sc->sc_dmat, sc->sc_dmamap_mbox, wmbx,
 	    sizeof(struct wds_mbx), NULL, BUS_DMA_NOWAIT))
-		panic("wds_ionit: can't craete or load mailbox DMA map");
+		panic("wds_ionit: can't create or load mailbox DMA map");
 
  doinit:
 	/*
