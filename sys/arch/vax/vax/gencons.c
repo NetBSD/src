@@ -1,4 +1,4 @@
-/*	$NetBSD: gencons.c,v 1.20 1999/01/19 21:04:48 ragge Exp $	*/
+/*	$NetBSD: gencons.c,v 1.21 1999/06/06 14:23:46 ragge Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -66,7 +66,11 @@ static	int pr_txdb[4] = {PR_TXDB, PR_TXDB1, PR_TXDB2, PR_TXDB3};
 static	int pr_rxdb[4] = {PR_RXDB, PR_RXDB1, PR_RXDB2, PR_RXDB3};
 
 cons_decl(gen);
+#ifdef DYNAMIC_DEVSW
+bcdev_decl(gencn);
+#else
 cdev_decl(gencn);
+#endif
 
 static	int gencnparam __P((struct tty *, struct termios *));
 static	void gencnstart __P((struct tty *));
@@ -269,6 +273,7 @@ gencnprobe(cndev)
 {
 	if ((vax_cputype < VAX_TYP_UV1) || /* All older has MTPR console */
 	    (vax_boardtype == VAX_BTYP_630) ||
+	    (vax_boardtype == VAX_BTYP_670) ||
 	    (vax_boardtype == VAX_BTYP_650)) {
 		cndev->cn_dev = makedev(25, 0);
 		cndev->cn_pri = CN_NORMAL;
