@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.29.4.1 1996/06/10 19:36:36 jtc Exp $	*/
+/*	$NetBSD: eval.c,v 1.29.4.2 1997/01/26 04:57:16 rat Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-static char sccsid[] = "$NetBSD: eval.c,v 1.29.4.1 1996/06/10 19:36:36 jtc Exp $";
+static char sccsid[] = "$NetBSD: eval.c,v 1.29.4.2 1997/01/26 04:57:16 rat Exp $";
 #endif
 #endif /* not lint */
 
@@ -127,9 +127,9 @@ SHELLPROC {
  */
 
 int
-evalcmd(argc, argv)  
+evalcmd(argc, argv)
 	int argc;
-	char **argv; 
+	char **argv;
 {
         char *p;
         char *concat;
@@ -207,8 +207,11 @@ evaltree(n, flags)
 		break;
 	case NAND:
 		evaltree(n->nbinary.ch1, EV_TESTED);
-		if (evalskip || exitstatus != 0)
+		if (evalskip || exitstatus != 0) {
+			/* don't bomb out on "set -e; false && true" */
+			flags |= EV_TESTED;
 			goto out;
+		}
 		evaltree(n->nbinary.ch2, flags);
 		break;
 	case NOR:
@@ -424,7 +427,7 @@ STATIC void
 expredir(n)
 	union node *n;
 {
-	register union node *redir;
+	union node *redir;
 
 	for (redir = n ; redir ; redir = redir->nfile.next) {
 		struct arglist fn;
@@ -682,7 +685,7 @@ evalcommand(cmd, flags, backcmd)
 
 		find_command(argv[0], &cmdentry, 1, path);
 		if (cmdentry.cmdtype == CMDUNKNOWN) {	/* command not found */
-			exitstatus = 1;
+			exitstatus = 127;
 			flushout(&errout);
 			return;
 		}
@@ -694,7 +697,7 @@ evalcommand(cmd, flags, backcmd)
 					break;
 				if ((cmdentry.u.index = find_builtin(*argv)) < 0) {
 					outfmt(&errout, "%s: not found\n", *argv);
-					exitstatus = 1;
+					exitstatus = 127;
 					flushout(&errout);
 					return;
 				}
@@ -735,10 +738,13 @@ evalcommand(cmd, flags, backcmd)
 	/* This is the child process if a fork occurred. */
 	/* Execute the command. */
 	if (cmdentry.cmdtype == CMDFUNCTION) {
+#ifdef DEBUG
 		trputs("Shell function:  ");  trargs(argv);
+#endif
 		redirect(cmd->ncmd.redirect, REDIR_PUSH);
 		saveparam = shellparam;
 		shellparam.malloc = 0;
+		shellparam.reset = 1;
 		shellparam.nparam = argc - 1;
 		shellparam.p = argv + 1;
 		shellparam.optnext = NULL;
@@ -780,7 +786,9 @@ evalcommand(cmd, flags, backcmd)
 		if (flags & EV_EXIT)
 			exitshell(exitstatus);
 	} else if (cmdentry.cmdtype == CMDBUILTIN) {
+#ifdef DEBUG
 		trputs("builtin command:  ");  trargs(argv);
+#endif
 		mode = (cmdentry.u.index == EXECCMD)? 0 : REDIR_PUSH;
 		if (flags == EV_BACKCMD) {
 			memout.nleft = 0;
@@ -816,13 +824,14 @@ cmddone:
 		}
 		handler = savehandler;
 		if (e != -1) {
-			if (e != EXERROR || cmdentry.u.index == BLTINCMD
-					       || cmdentry.u.index == DOTCMD
-					       || cmdentry.u.index == EVALCMD
+			if ((e != EXERROR && e != EXEXEC)
+			   || cmdentry.u.index == BLTINCMD
+			   || cmdentry.u.index == DOTCMD
+			   || cmdentry.u.index == EVALCMD
 #ifndef NO_HISTORY
-					       || cmdentry.u.index == HISTCMD
+			   || cmdentry.u.index == HISTCMD
 #endif
-					       || cmdentry.u.index == EXECCMD)
+			   || cmdentry.u.index == EXECCMD)
 				exraise(e);
 			FORCEINTON;
 		}
@@ -834,7 +843,9 @@ cmddone:
 			memout.buf = NULL;
 		}
 	} else {
+#ifdef DEBUG
 		trputs("normal command:  ");  trargs(argv);
+#endif
 		clearredir();
 		redirect(cmd->ncmd.redirect, 0);
 		for (sp = varlist.list ; sp ; sp = sp->next)
@@ -898,12 +909,12 @@ prehash(n)
 int
 bltincmd(argc, argv)
 	int argc;
-	char **argv; 
+	char **argv;
 {
 	listsetvar(cmdenviron);
-	/* 
+	/*
 	 * Preserve exitstatus of a previous possible redirection
-	 * as POSIX mandates 
+	 * as POSIX mandates
 	 */
 	return exitstatus;
 }
@@ -923,7 +934,7 @@ bltincmd(argc, argv)
 int
 breakcmd(argc, argv)
 	int argc;
-	char **argv; 
+	char **argv;
 {
 	int n = argc > 1 ? number(argv[1]) : 1;
 
@@ -942,9 +953,9 @@ breakcmd(argc, argv)
  */
 
 int
-returncmd(argc, argv) 
+returncmd(argc, argv)
 	int argc;
-	char **argv; 
+	char **argv;
 {
 	int ret = argc > 1 ? number(argv[1]) : oexitstatus;
 
@@ -963,27 +974,27 @@ returncmd(argc, argv)
 
 
 int
-falsecmd(argc, argv) 
+falsecmd(argc, argv)
 	int argc;
-	char **argv; 
+	char **argv;
 {
 	return 1;
 }
 
 
 int
-truecmd(argc, argv)  
+truecmd(argc, argv)
 	int argc;
-	char **argv; 
+	char **argv;
 {
 	return 0;
 }
 
 
 int
-execcmd(argc, argv) 
+execcmd(argc, argv)
 	int argc;
-	char **argv; 
+	char **argv;
 {
 	if (argc > 1) {
 		struct strlist *sp;

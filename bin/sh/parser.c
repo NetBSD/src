@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.29 1996/05/09 19:40:08 christos Exp $	*/
+/*	$NetBSD: parser.c,v 1.29.4.1 1997/01/26 04:57:35 rat Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-static char rcsid[] = "$NetBSD: parser.c,v 1.29 1996/05/09 19:40:08 christos Exp $";
+static char rcsid[] = "$NetBSD: parser.c,v 1.29.4.1 1997/01/26 04:57:35 rat Exp $";
 #endif
 #endif /* not lint */
 
@@ -72,7 +72,7 @@ static char rcsid[] = "$NetBSD: parser.c,v 1.29 1996/05/09 19:40:08 christos Exp
 #define EOFMARKLEN 79
 
 /* values returned by readtoken */
-#include "token.def"
+#include "token.h"
 
 
 
@@ -122,7 +122,7 @@ STATIC int readtoken1 __P((int, char const *, char *, int));
 STATIC int noexpand __P((char *));
 STATIC void synexpect __P((int));
 STATIC void synerror __P((char *));
-STATIC void setprompt __P((int)); 
+STATIC void setprompt __P((int));
 
 
 /*
@@ -131,7 +131,7 @@ STATIC void setprompt __P((int));
  */
 
 union node *
-parsecmd(interact) 
+parsecmd(interact)
 	int interact;
 {
 	int t;
@@ -153,7 +153,7 @@ parsecmd(interact)
 
 
 STATIC union node *
-list(nlflag) 
+list(nlflag)
 	int nlflag;
 {
 	union node *n1, *n2, *n3;
@@ -251,16 +251,10 @@ andor() {
 
 STATIC union node *
 pipeline() {
-	union node *n1, *pipenode, *notnode;
+	union node *n1, *pipenode;
 	struct nodelist *lp, *prev;
-	int negate = 0;
 
 	TRACE(("pipeline: entered\n"));
-	while (readtoken() == TNOT) {
-		TRACE(("pipeline: TNOT recognized\n"));
-		negate = !negate;
-	}
-	tokpushback++;
 	n1 = command();
 	if (readtoken() == TPIPE) {
 		pipenode = (union node *)stalloc(sizeof (struct npipe));
@@ -279,12 +273,6 @@ pipeline() {
 		n1 = pipenode;
 	}
 	tokpushback++;
-	if (negate) {
-		notnode = (union node *)stalloc(sizeof (struct nnot));
-		notnode->type = NNOT;
-		notnode->nnot.com = n1;
-		n1 = notnode;
-	}
 	return n1;
 }
 
@@ -296,17 +284,24 @@ command() {
 	union node *ap, **app;
 	union node *cp, **cpp;
 	union node *redir, **rpp;
-	int t;
+	int t, negate = 0;
 
 	checkkwd = 2;
 	redir = NULL;
 	n1 = NULL;
 	rpp = &redir;
+
 	/* Check for redirection which may precede command */
 	while (readtoken() == TREDIR) {
 		*rpp = n2 = redirnode;
 		rpp = &n2->nfile.next;
 		parsefname();
+	}
+	tokpushback++;
+
+	while (readtoken() == TNOT) {
+		TRACE(("command: TNOT recognized\n"));
+		negate = !negate;
 	}
 	tokpushback++;
 
@@ -473,12 +468,15 @@ TRACE(("expecting DO got %s %s\n", tokname[got], got == TWORD ? wordtext : ""));
 		 */
 		if (!redir)
 			synexpect(-1);
+	case TAND:
+	case TOR:
 	case TNL:
 	case TEOF:
 	case TWORD:
 	case TRP:
 		tokpushback++;
-		return simplecmd(rpp, redir);
+		n1 = simplecmd(rpp, redir);
+		goto checkneg;
 	default:
 		synexpect(-1);
 	}
@@ -500,17 +498,27 @@ TRACE(("expecting DO got %s %s\n", tokname[got], got == TWORD ? wordtext : ""));
 		}
 		n1->nredir.redirect = redir;
 	}
-	return n1;
+
+checkneg:
+	if (negate) {
+		n2 = (union node *)stalloc(sizeof (struct nnot));
+		n2->type = NNOT;
+		n2->nnot.com = n1;
+		return n2;
+	}
+	else
+		return n1;
 }
 
 
 STATIC union node *
-simplecmd(rpp, redir) 
+simplecmd(rpp, redir)
 	union node **rpp, *redir;
 	{
 	union node *args, **app;
 	union node **orig_rpp = rpp;
-	union node *n;
+	union node *n = NULL, *n2;
+	int negate = 0;
 
 	/* If we don't have any redirections already, then we must reset */
 	/* rpp to be the address of the local redir variable.  */
@@ -519,12 +527,18 @@ simplecmd(rpp, redir)
 
 	args = NULL;
 	app = &args;
-	/* 
+	/*
 	 * We save the incoming value, because we need this for shell
 	 * functions.  There can not be a redirect or an argument between
-	 * the function name and the open parenthesis.  
+	 * the function name and the open parenthesis.
 	 */
 	orig_rpp = rpp;
+
+	while (readtoken() == TNOT) {
+		TRACE(("command: TNOT recognized\n"));
+		negate = !negate;
+	}
+	tokpushback++;
 
 	for (;;) {
 		if (readtoken() == TWORD) {
@@ -549,7 +563,7 @@ simplecmd(rpp, redir)
 #endif
 			n->type = NDEFUN;
 			n->narg.next = command();
-			return n;
+			goto checkneg;
 		} else {
 			tokpushback++;
 			break;
@@ -562,7 +576,16 @@ simplecmd(rpp, redir)
 	n->ncmd.backgnd = 0;
 	n->ncmd.args = args;
 	n->ncmd.redirect = redir;
-	return n;
+
+checkneg:
+	if (negate) {
+		n2 = (union node *)stalloc(sizeof (struct nnot));
+		n2->type = NNOT;
+		n2->nnot.com = n;
+		return n2;
+	}
+	else
+		return n;
 }
 
 STATIC union node *
@@ -591,7 +614,7 @@ void fixredir(n, text, err)
 	else if (text[0] == '-' && text[1] == '\0')
 		n->ndup.dupfd = -1;
 	else {
-		
+
 		if (err)
 			synerror("Bad fd number");
 		else
@@ -683,7 +706,7 @@ readtoken() {
 #ifdef DEBUG
 	int alreadyseen = tokpushback;
 #endif
-	
+
 	top:
 	t = xxreadtoken();
 
@@ -702,12 +725,12 @@ readtoken() {
 		/*
 		 * check for keywords and aliases
 		 */
-		if (t == TWORD && !quoteflag) 
+		if (t == TWORD && !quoteflag)
 		{
-			register char * const *pp;
+			char * const *pp;
 
 			for (pp = (char **)parsekwd; *pp; pp++) {
-				if (**pp == *wordtext && equal(*pp, wordtext)) 
+				if (**pp == *wordtext && equal(*pp, wordtext))
 				{
 					lasttoken = t = pp - parsekwd + KWDOFFSET;
 					TRACE(("keyword %s recognized\n", tokname[t]));
@@ -721,7 +744,7 @@ readtoken() {
 			}
 		}
 out:
-		checkkwd = 0;
+		checkkwd = (t == TNOT) ? savecheckkwd : 0;
 	}
 #ifdef DEBUG
 	if (!alreadyseen)
@@ -755,7 +778,7 @@ out:
 
 STATIC int
 xxreadtoken() {
-	register c;
+	int c;
 
 	if (tokpushback) {
 		tokpushback = 0;
@@ -986,7 +1009,7 @@ readtoken1(firstc, syntax, eofmark, striptabs)
 						} else
 							USTPUTC(')', out);
 					} else {
-						/* 
+						/*
 						 * unbalanced parens
 						 *  (don't 2nd guess - no error)
 						 */
@@ -1054,7 +1077,7 @@ checkend: {
 		}
 		if (c == *eofmark) {
 			if (pfgets(line, sizeof line) != NULL) {
-				register char *p, *q;
+				char *p, *q;
 
 				p = line;
 				for (q = eofmark + 1 ; *q && *p == *q ; p++, q++);
@@ -1171,12 +1194,15 @@ parsesub: {
 				STPUTC(c, out);
 				c = pgetc();
 			} while (is_in_name(c));
-		} else {
-			if (! is_special(c))
-badsub:				synerror("Bad substitution");
-			USTPUTC(c, out);
-			c = pgetc();
+		} else if (is_special(c)) {
+			do {
+				USTPUTC(c, out);
+				c = pgetc();
+			} while (is_special(c));
 		}
+		else
+badsub:			synerror("Bad substitution");
+
 		STPUTC('=', out);
 		flags = 0;
 		if (subtype == 0) {
@@ -1192,7 +1218,7 @@ badsub:				synerror("Bad substitution");
 				subtype = p - types + VSNORMAL;
 				break;
 			case '%':
-			case '#': 
+			case '#':
 				{
 					int cc = c;
 					subtype = c == '#' ? VSTRIMLEFT :
@@ -1257,12 +1283,12 @@ parsebackq: {
                 /* We must read until the closing backquote, giving special
                    treatment to some slashes, and then push the string and
                    reread it as input, interpreting it normally.  */
-                register char *out;
-                register c;
+                char *out;
+                int c;
                 int savelen;
                 char *str;
 
- 
+
                 STARTSTACKSTR(out);
 		for (;;) {
 			if (needprompt) {
@@ -1297,6 +1323,11 @@ parsebackq: {
 				plinno++;
 				needprompt = doprompt;
 				break;
+
+			case PEOF:
+			        startlinno = plinno;
+				synerror("EOF in backquote substitution");
+ 				break;
 
 			default:
 				break;
@@ -1404,8 +1435,8 @@ STATIC int
 noexpand(text)
 	char *text;
 	{
-	register char *p;
-	register char c;
+	char *p;
+	char c;
 
 	p = text;
 	while ((c = *p++) != '\0') {
@@ -1427,7 +1458,7 @@ int
 goodname(name)
 	char *name;
 	{
-	register char *p;
+	char *p;
 
 	p = name;
 	if (! is_name(*p))
@@ -1447,7 +1478,7 @@ goodname(name)
  */
 
 STATIC void
-synexpect(token) 
+synexpect(token)
 	int token;
 {
 	char msg[64];
