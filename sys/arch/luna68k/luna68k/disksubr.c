@@ -1,4 +1,4 @@
-/* $NetBSD: disksubr.c,v 1.3 2000/01/18 19:43:02 thorpej Exp $ */
+/* $NetBSD: disksubr.c,v 1.4 2000/01/25 00:19:30 nisimura Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -53,8 +53,46 @@
 
 #include <dev/sun/disklabel.h>
 
+/*
+ * UniOS disklabel (== ISI disklabel) is very similar to SunOS.
+ *	SunOS				UniOS/ISI
+ *	text		128			128
+ *	(pad)		292			294
+ *	rpm		2		-
+ *	pcyl		2		badchk	2
+ *	sparecyl	2		maxblk	4
+ *	(pad)		4		dtype	2
+ *	interleave	2		ndisk	2
+ *	ncyl		2			2
+ *	acyl		2			2
+ *	ntrack		2			2
+ *	nsect		2			2
+ *	(pad)		4		bhead	2
+ *	-				ppart	2
+ *	dkpart[8]	64			64
+ *	magic		2			2
+ *	cksum		2			2
+ *
+ * Magic number value and checksum calculation are identical.  Subtil
+ * difference is partition start address; UniOS/ISI maintains sector
+ * numbers while SunOS label has cylinder number.
+ *
+ * It is found that LUNA Mach2.5 has BSD label embedded at offset 64
+ * retaining UniOS/ISI label at the end of label block.  LUNA Mach
+ * manipulates BSD disklabel in the same manner as 4.4BSD.  It's
+ * uncertain LUNA Mach can create a disklabel on fresh disks;
+ * writedisklabel fails when no BSD label is found.
+ *
+ * NetBSD/luna68k (1) creates UniOS/ISI label with BSD label
+ * embedded at offset 64, (2) reads BSD label if found, (2) falls
+ * back to reading UniOS/ISI label when no BSD label is found.  Plus,
+ * (4) reads SunOS label if found in place of UniOS/ISI label.
+ */
+
 /* XXX encoding of disk minor numbers, should be elsewhere... */
 #define dkpart(dev)		(minor(dev) & 7)
+
+#define	b_cylin	b_resid
 
 #if LABELSECTOR != 0
 #error	"Default value of LABELSECTOR no longer zero?"
@@ -101,7 +139,7 @@ readdisklabel(dev, strat, lp, clp)
 	/* next, dig out disk label */
 	bp->b_dev = dev;
 	bp->b_blkno = LABELSECTOR;
-	bp->b_cylinder = 0;
+	bp->b_cylin = 0;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_BUSY | B_READ;
 	(*strat)(bp);
@@ -117,19 +155,20 @@ readdisklabel(dev, strat, lp, clp)
 	if (error)
 		return ("disk label read error");
 
-	/* Check for a UniOS-B disk label (for PROM compatibility). */
+	/* Check for a NetBSD disk label first. */
+	dlp = (struct disklabel *)(clp->cd_block + LABELOFFSET);
+	if (dlp->d_magic == DISKMAGIC && dlp->d_magic2 == DISKMAGIC) {
+		if (dkcksum(dlp) == 0) {
+			*lp = *dlp; 	/* struct assignment */
+			return (NULL);
+		}
+		printf("NetBSD disk label corrupted");
+	}
+
+	/* Check for a UniOS/ISI disk label. */
 	slp = (struct sun_disklabel *)clp->cd_block;
 	if (slp->sl_magic == SUN_DKMAGIC) {
 		return (disklabel_om_to_bsd(clp->cd_block, lp));
-	}
-
-	/* Check for a NetBSD disk label (PROM can not boot it). */
-	dlp = (struct disklabel *)(clp->cd_block + LABELOFFSET);
-	if (dlp->d_magic == DISKMAGIC) {
-		if (dkcksum(dlp))
-			return ("NetBSD disk label corrupted");
-		*lp = *dlp; 	/* struct assignment */
-		return (NULL);
 	}
 
 	memset(clp->cd_block, 0, sizeof(clp->cd_block));
@@ -152,7 +191,7 @@ setdisklabel(olp, nlp, openmask, clp)
 	/* sanity clause */
 	if ((nlp->d_secpercyl == 0) || (nlp->d_secsize == 0) ||
 	    (nlp->d_secsize % DEV_BSIZE) != 0)
-		return(EINVAL);
+		return (EINVAL);
 
 	/* special case to allow disklabel to be invalidated */
 	if (nlp->d_magic == 0xffffffff) {
@@ -173,7 +212,7 @@ setdisklabel(olp, nlp, openmask, clp)
 		opp = &olp->d_partitions[i];
 		npp = &nlp->d_partitions[i];
 		if (npp->p_offset != opp->p_offset ||
-		    npp->p_size   <  opp->p_size)
+		    npp->p_size < opp->p_size)
 			return (EBUSY);
 	}
 
@@ -195,19 +234,16 @@ writedisklabel(dev, strat, lp, clp)
 	struct cpu_disklabel *clp;
 {
 	struct buf *bp;
+	struct disklabel *dlp;
 	int error;
+
+	/* implant NetBSD disklabel at LABELOFFSET. */
+	dlp = (struct disklabel *)(clp->cd_block + LABELOFFSET);
+	*dlp = *lp; 	/* struct assignment */
 
 	error = disklabel_bsd_to_om(lp, clp->cd_block);
 	if (error)
-		return(error);
-
-#if 0	/* XXX - Allow writing NetBSD disk labels? */
-	{
-		struct disklabel *dlp;
-		dlp = (struct disklabel *)(clp->cd_block + LABELOFFSET);
-		*dlp = *lp; 	/* struct assignment */
-	}
-#endif
+		return (error);
 
 	/* Get a buffer and copy the new label into it. */
 	bp = geteblk((int)lp->d_secsize);
@@ -216,7 +252,7 @@ writedisklabel(dev, strat, lp, clp)
 	/* Write out the updated label. */
 	bp->b_dev = dev;
 	bp->b_blkno = LABELSECTOR;
-	bp->b_cylinder = 0;
+	bp->b_cylin = 0;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_WRITE;
 	(*strat)(bp);
@@ -259,7 +295,7 @@ bounds_check_with_label(bp, lp, wlabel)
 		/* if exactly at end of disk, return an EOF */
 		if (bp->b_blkno == maxsz) {
 			bp->b_resid = bp->b_bcount;
-			return(0);
+			return (0);
 		}
 		/* or truncate if part of it fits */
 		sz = maxsz - bp->b_blkno;
@@ -271,12 +307,12 @@ bounds_check_with_label(bp, lp, wlabel)
 	}
 
 	/* calculate cylinder for disksort to order transfers with */
-	bp->b_cylinder = (bp->b_blkno + p->p_offset) / lp->d_secpercyl;
-	return(1);
+	bp->b_cylin = (bp->b_blkno + p->p_offset) / lp->d_secpercyl;
+	return (1);
 
 bad:
 	bp->b_flags |= B_ERROR;
-	return(-1);
+	return (-1);
 }
 
 /*
@@ -314,7 +350,7 @@ sun_fstypes[8] = {
 };
 
 /*
- * Given a UniOS-B disk label, set lp to a BSD disk label.
+ * Given a UniOS/ISI disk label, set lp to a BSD disk label.
  * Returns NULL on success, else an error string.
  *
  * The BSD label is cleared out before this is called.
@@ -339,17 +375,9 @@ disklabel_om_to_bsd(cp, lp)
 	while (sp1 < sp2)
 		cksum ^= *sp1++;
 	if (cksum != 0)
-		return ("UniOS-B disk label, bad checksum");
+		return ("UniOS disk label, bad checksum");
 
 	memset((caddr_t)lp, 0, sizeof(struct disklabel));
-
-#if 1
-	if (sl->sl_rpm == 0) {
-		/* it's a UniOS disk */
-		strcpy(lp->d_typename, "UniOS label !!!");
-	}
-#endif
-
 	/* Format conversion. */
 	lp->d_magic = DISKMAGIC;
 	lp->d_magic2 = DISKMAGIC;
@@ -365,17 +393,16 @@ disklabel_om_to_bsd(cp, lp)
 	lp->d_secpercyl  = secpercyl;
 	lp->d_secperunit = secpercyl * sl->sl_ncylinders;
 
-	lp->d_sparespercyl = 0;				/* XXX */
+	lp->d_sparespercyl = 0;				/* no way to know */
 	lp->d_acylinders   = sl->sl_acylinders;
-	lp->d_rpm = (sl->sl_rpm == 0) ? 3600 : sl->sl_rpm;/* XXX */
-	lp->d_interleave   = sl->sl_interleave;		/* XXX */
+	lp->d_rpm          = sl->sl_rpm;		/* UniOS - (empty) */
+	lp->d_interleave   = sl->sl_interleave;		/* UniOS - ndisk */
 
-#if 1
 	if (sl->sl_rpm == 0) {
 		/* UniOS label has blkoffset, not cyloffset */
 		secpercyl = 1;
 	}
-#endif
+
 	lp->d_npartitions = 8;
 	/* These are as defined in <ufs/ffs/fs.h> */
 	lp->d_bbsize = 8192;				/* XXX */
@@ -405,24 +432,26 @@ disklabel_om_to_bsd(cp, lp)
 			}
 		}
 	}
-#if 1
-	if (sl->sl_rpm == 0) {
-		/* Make UniOS rootfs usable as part b */
+
+	/*
+	 * XXX BandAid XXX
+	 * UniOS rootfs sits on part c which don't begin at sect 0,
+	 * and impossible to mount.  Thus, make it usable as part b.
+	 */
+	if (sl->sl_rpm == 0 && lp->d_partitions[2].p_offset != 0) {
 		lp->d_partitions[1] = lp->d_partitions[2];
 		lp->d_partitions[1].p_fstype = FS_BSDFFS;
 	}
-#endif
 
-	lp->d_checksum = 0;
 	lp->d_checksum = dkcksum(lp);
 
 	return (NULL);
 }
 
 /*
- * Given a BSD disk label, update the Sun disklabel
+ * Given a BSD disk label, update the UniOS disklabel
  * pointed to by cp with the new info.  Note that the
- * Sun disklabel may have other info we need to keep.
+ * UniOS disklabel may have other info we need to keep.
  * Returns zero or error code.
  */
 static int
@@ -433,38 +462,32 @@ disklabel_bsd_to_om(lp, cp)
 	struct sun_disklabel *sl;
 	struct partition *npp;
 	struct sun_dkpart *spp;
-	int i, secpercyl;
+	int i;
 	u_short cksum, *sp1, *sp2;
 
 	if (lp->d_secsize != 512)
 		return (EINVAL);
 
 	sl = (struct sun_disklabel *)cp;
-#if 1
-	if (sl->sl_rpm == 0) {
-		/* Never change UniOS label */
-		return (EPERM);
-	}
-#endif
+
 	/* Format conversion. */
 	memcpy(sl->sl_text, lp->d_packname, sizeof(lp->d_packname));
-	sl->sl_rpm = lp->d_rpm;
+	sl->sl_rpm = 0;					/* UniOS */
+#if 0 /* leave as was */
 	sl->sl_pcyl = lp->d_ncylinders + lp->d_acylinders;	/* XXX */
 	sl->sl_sparespercyl = lp->d_sparespercyl;
+#endif
 	sl->sl_interleave   = lp->d_interleave;
 	sl->sl_ncylinders   = lp->d_ncylinders;
 	sl->sl_acylinders   = lp->d_acylinders;
 	sl->sl_ntracks      = lp->d_ntracks;
 	sl->sl_nsectors     = lp->d_nsectors;
 
-	secpercyl = sl->sl_nsectors * sl->sl_ntracks;
 	for (i = 0; i < 8; i++) {
 		spp = &sl->sl_part[i];
 		npp = &lp->d_partitions[i];
 
-		if (npp->p_offset % secpercyl)
-			return (EINVAL);
-		spp->sdkp_cyloffset = npp->p_offset / secpercyl;
+		spp->sdkp_cyloffset = npp->p_offset;	/* UniOS */
 		spp->sdkp_nsectors = npp->p_size;
 	}
 	sl->sl_magic = SUN_DKMAGIC;
@@ -480,6 +503,7 @@ disklabel_bsd_to_om(lp, cp)
 	return (0);
 }
 
+#if 0
 /*
  * Search the bad sector table looking for the specified sector.
  * Return index if found.
@@ -504,3 +528,4 @@ isbad(bt, cyl, trk, sec)
 	}
 	return (-1);
 }
+#endif
