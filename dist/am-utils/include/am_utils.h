@@ -1,7 +1,7 @@
-/*	$NetBSD: am_utils.h,v 1.2 2000/11/20 03:19:35 wiz Exp $	*/
+/*	$NetBSD: am_utils.h,v 1.3 2001/05/13 18:07:00 veego Exp $	*/
 
 /*
- * Copyright (c) 1997-2000 Erez Zadok
+ * Copyright (c) 1997-2001 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: am_utils.h,v 1.11 2000/02/16 05:18:05 ezk Exp
+ * Id: am_utils.h,v 1.11.2.6 2001/02/23 01:03:40 ezk Exp
  *
  */
 
@@ -78,7 +78,7 @@
 # ifdef HOSTNAMESZ
 #  define MAXHOSTNAMELEN HOSTNAMESZ
 # else /* not HOSTNAMESZ */
-#  define MAXHOSTNAMELEN 64
+#  define MAXHOSTNAMELEN 256
 # endif /* not HOSTNAMESZ */
 #endif /* not MAXHOSTNAMELEN */
 
@@ -305,7 +305,6 @@ struct am_opts {
   char *opt_opts;
   char *opt_remopts;
   char *opt_pref;
-  char *opt_autopref;
   char *opt_cache;
   char *opt_rfs;
   char *opt_rhost;
@@ -509,6 +508,7 @@ extern char version[];		/* Version info */
  */
 extern AUTH *nfs_auth;		/* Dummy authorization for remote servers */
 extern FILE *logfp;		/* Log file */
+extern SVCXPRT *nfsxprt;
 extern am_node **exported_ap;	/* List of nodes */
 extern am_node *root_node;	/* Node for "root" */
 extern char *PrimNetName;	/* Name of primary connected network */
@@ -517,9 +517,9 @@ extern char *SubsNetName;	/* Name of subsidiary connected network */
 extern char *SubsNetNum;	/* Name of subsidiary connected network */
 
 extern void am_set_progname(char *pn); /* "amd" */
-extern const char * am_get_progname(void); /* "amd" */
+extern const char *am_get_progname(void); /* "amd" */
 extern void am_set_hostname(char *hn);
-extern const char * am_get_hostname(void);
+extern const char *am_get_hostname(void);
 extern pid_t am_set_mypid(void);
 extern pid_t am_mypid;
 
@@ -544,7 +544,6 @@ extern u_short nfs_port;	/* Our NFS service port */
  */
 extern CLIENT *get_mount_client(char *unused_host, struct sockaddr_in *sin, struct timeval *tv, int *sock, u_long mnt_version);
 extern RETSIGTYPE sigchld(int);
-extern SVCXPRT *nfsxprt;
 extern am_node *efs_lookuppn(am_node *, char *, int *, int);
 extern am_node *exported_ap_alloc(void);
 extern am_node *fh_to_mp(am_nfs_fh *);
@@ -578,6 +577,8 @@ extern int fwd_packet(int, voidp, int, struct sockaddr_in *, struct sockaddr_in 
 extern int get_amd_program_number(void);
 extern int getcreds(struct svc_req *, uid_t *, gid_t *, SVCXPRT *);
 extern int hasmntval(mntent_t *, char *);
+extern char *hasmnteq(mntent_t *, char *);
+extern char *haseq(char *);
 extern int is_network_member(const char *net);
 extern int islocalnet(u_long);
 extern int make_nfs_auth(void);
@@ -609,7 +610,7 @@ extern struct sockaddr_in *amu_svc_getcaller(SVCXPRT *xprt);
 extern time_t time(time_t *);
 extern void am_mounted(am_node *);
 extern void am_unmounted(am_node *);
-extern void amq_program_1(struct svc_req *rqstp, SVCXPRT * transp);
+extern void amq_program_1(struct svc_req *rqstp, SVCXPRT *transp);
 extern void amu_get_myaddress(struct in_addr *iap);
 extern void amu_release_controlling_tty(void);
 extern void compute_automounter_nfs_args(nfs_args_t *nap, mntent_t *mntp);

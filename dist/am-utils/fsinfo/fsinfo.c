@@ -1,7 +1,7 @@
-/*	$NetBSD: fsinfo.c,v 1.3 2000/11/20 00:03:15 wiz Exp $	*/
+/*	$NetBSD: fsinfo.c,v 1.4 2001/05/13 18:06:59 veego Exp $	*/
 
 /*
- * Copyright (c) 1997-2000 Erez Zadok
+ * Copyright (c) 1997-2001 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -40,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: fsinfo.c,v 1.5 2000/01/12 16:44:59 ezk Exp
+ * Id: fsinfo.c,v 1.5.2.2 2001/01/10 03:23:34 ezk Exp
  *
  */
 
@@ -236,6 +236,7 @@ main(int argc, char *argv[])
     exit(1);
   }
   hostname[sizeof(hostname) - 1] = '\0';
+
   /*
    * Get the username
    */

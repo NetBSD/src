@@ -1,7 +1,7 @@
-/*	$NetBSD: fsinfo.h,v 1.2 2000/11/21 01:35:36 wiz Exp $	*/
+/*	$NetBSD: fsinfo.h,v 1.3 2001/05/13 18:06:59 veego Exp $	*/
 
 /*
- * Copyright (c) 1997-2000 Erez Zadok
+ * Copyright (c) 1997-2001 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -40,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: fsinfo.h,v 1.4 2000/01/12 16:45:00 ezk Exp
+ * Id: fsinfo.h,v 1.4.2.2 2001/01/10 03:23:34 ezk Exp
  *
  */
 

@@ -1,7 +1,7 @@
-/*	$NetBSD: xutil.c,v 1.4 2001/01/11 02:58:05 lukem Exp $	*/
+/*	$NetBSD: xutil.c,v 1.5 2001/05/13 18:07:00 veego Exp $	*/
 
 /*
- * Copyright (c) 1997-2000 Erez Zadok
+ * Copyright (c) 1997-2001 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: xutil.c,v 1.11.2.3 2000/05/27 23:41:24 ezk Exp
+ * Id: xutil.c,v 1.11.2.6 2001/01/10 03:23:41 ezk Exp
  *
  */
 
@@ -295,8 +295,14 @@ static const char *
 expand_error(const char *f, char *e, int maxlen)
 {
 #ifndef HAVE_STRERROR
+  /*
+   * XXX: we are assuming that if a system doesn't has strerror,
+   * then it has sys_nerr.  If this assumption turns out to be wrong on
+   * some systems, we'll have to write a separate test to detect if
+   * a system has sys_nerr.  -Erez
+   */
   extern int sys_nerr;
-#endif
+#endif /* not HAVE_STRERROR */
   const char *p;
   char *q;
   int error = errno;
@@ -307,9 +313,9 @@ expand_error(const char *f, char *e, int maxlen)
       const char *errstr;
 #ifdef HAVE_STRERROR
       if (error < 0)
-#else
+#else /* not HAVE_STRERROR */
       if (error < 0 || error >= sys_nerr)
-#endif
+#endif /* not HAVE_STRERROR */
 	errstr = NULL;
       else
 #ifdef HAVE_STRERROR
@@ -474,7 +480,7 @@ real_plog(int lvl, const char *fmt, va_list vargs)
    * more than 1024 bytes, if efmt is already large, and vargs expand
    * as well.  This is not as safe as using vsnprintf().
    */
-  vsprintf(ptr, expand_error(fmt, efmt, 1024), vargs);
+  vsprintf(ptr, expand_error(fmt, efmt, 1023), vargs);
   msg[1023] = '\0';		/* null terminate, to be sure */
 #endif /* not HAVE_VSNPRINTF */
 
