@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.273 2005/02/04 17:12:03 perry Exp $
+#	$NetBSD: NetBSD.dist,v 1.274 2005/02/10 18:03:02 tnozaki Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -559,7 +559,6 @@
 ./usr/share/locale/ko
 ./usr/share/locale/ko/LC_MESSAGES
 ./usr/share/locale/ko_KR.eucKR
-./usr/share/locale/ko_KR.UTF-8
 ./usr/share/locale/lt_LT.ISO8859-4
 ./usr/share/locale/lt_LT.ISO8859-13
 ./usr/share/locale/nb
