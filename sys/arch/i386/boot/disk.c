@@ -25,7 +25,7 @@
  * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
  *
- *	$Id: disk.c,v 1.6 1994/02/20 14:05:19 mycroft Exp $
+ *	$Id: disk.c,v 1.7 1994/10/20 22:44:37 mycroft Exp $
  */
 
 #include "boot.h"
@@ -78,10 +78,12 @@ devopen()
 #else	EMBEDDED_DISKLABEL
 		Bread(dosdev, 0);
 		dptr = (struct dos_partition *)(((char *)0)+DOSPARTOFF);
+		sector = LABELSECTOR;
 		for (i = 0; i < NDOSPART; i++, dptr++)
-			if (dptr->dp_typ == DOSPTYP_386BSD)
+			if (dptr->dp_typ == DOSPTYP_386BSD) {
+				sector = dptr->dp_start + LABELSECTOR;
 				break;
-		sector = dptr->dp_start + LABELSECTOR;
+			}
 		Bread(dosdev, sector++);
 		dl=((struct disklabel *)0);
 		disklabel = *dl;	/* structure copy (maybe useful later)*/
@@ -107,7 +109,7 @@ devopen()
 			struct dkbad *dkbptr;
 
 			/* find the first readable bad144 sector */
-			/* some of this code is copied from ufs/disk_subr.c */
+			/* some of this code is copied from ufs_disksubr.c */
 			/* read a bad sector table */
 			dkbbnum = dl->d_secperunit - dl->d_nsectors;
 			if (dl->d_secsize > DEV_BSIZE)
