@@ -1,4 +1,4 @@
-/*	$NetBSD: atareg.h,v 1.9 2002/08/05 23:29:30 soren Exp $	*/
+/*	$NetBSD: atareg.h,v 1.10 2003/09/23 03:55:59 skd Exp $	*/
 
 /*
  * Drive parameter structure for ATA/ATAPI.
@@ -96,13 +96,24 @@ struct ataparams {
     u_int16_t	__reserved4[2];	
     u_int16_t	atap_queuedepth;   	/* 75: */
 #define WDC_QUEUE_DEPTH_MASK 0x0F
-    u_int16_t	__reserved5[4];   	
+    u_int16_t   atap_sata_caps;/* 76: */
+#define SATA_SIGNAL_GEN1	0x02
+#define SATA_SIGNAL_GEN2	0x04
+#define SATA_NATIVE_CMDQ	0x0100
+#define SATA_HOST_PWR_MGMT	0x0200
+    u_int16_t   atap_sata_reserved;    /* 77: */
+    u_int16_t   atap_sata_features_supp;    /* 78: */
+#define SATA_NONZERO_OFFSETS	0x02
+#define SATA_DMA_SETUP_AUTO	0x04
+#define SATA_DRIVE_PWR_MGMT	0x08
+    u_int16_t   atap_sata_features_en;    /* 79: */
     u_int16_t	atap_ata_major;  	/* 80: Major version number */
 #define	WDC_VER_ATA1	0x0002
 #define	WDC_VER_ATA2	0x0004
 #define	WDC_VER_ATA3	0x0008
 #define	WDC_VER_ATA4	0x0010
 #define	WDC_VER_ATA5	0x0020
+#define	WDC_VER_ATA6	0x0040
     u_int16_t   atap_ata_minor;  	/* 81: Minor version number */
     u_int16_t	atap_cmd_set1;    	/* 82: command set supported */
 #define WDC_CMD1_NOP	0x4000
@@ -131,6 +142,7 @@ struct ataparams {
 /* bits are the same as atap_cmd_set1 */
     u_int16_t	atap_cmd2_en;		/* 86: cmd/features enabled */
 #define	WDC_CAP_LBA48	(1L << 10)
+#define	WDC_CAP_QUEUE	(1L << 1)
 /* bits are the same as atap_cmd_set2 */
     u_int16_t	atap_cmd_def;		/* 87: cmd/features default */
 #if BYTE_ORDER == LITTLE_ENDIAN
