@@ -1,4 +1,4 @@
-/* $NetBSD: genassym.c,v 1.9 1997/01/28 05:02:30 mark Exp $ */
+/*	$NetBSD: genassym.c,v 1.10 1997/02/04 06:51:34 mark Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -65,6 +65,7 @@ main()
 	irqhandler_t *ih = 0;
 	fiqhandler_t *fh = 0;
 	struct vmspace *vms = 0;
+	struct cpu_functions *cf = 0;
 
 #define	def(N,V)	printf("#define\t%s %d\n", N, (u_int)V)
 
@@ -156,6 +157,9 @@ main()
 
 	def("PROCSIZE", sizeof(struct proc));
 	def("TRAPFRAMESIZE", sizeof(struct trapframe));
+
+	def("CF_CACHE_PURGE_ID", &cf->cf_cache_purgeID);
+	def("CF_CONTEXT_SWITCH", &cf->cf_context_switch);
 
 	exit(0);
 }
