@@ -1,4 +1,4 @@
-/*	$NetBSD: keyword.c,v 1.26.2.2 2002/04/24 04:29:58 nathanw Exp $	*/
+/*	$NetBSD: keyword.c,v 1.26.2.3 2002/04/24 21:42:30 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)keyword.c	8.5 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: keyword.c,v 1.26.2.2 2002/04/24 04:29:58 nathanw Exp $");
+__RCSID("$NetBSD: keyword.c,v 1.26.2.3 2002/04/24 21:42:30 nathanw Exp $");
 #endif
 #endif /* not lint */
 
@@ -99,7 +99,7 @@ VAR var[] = {
 	{"flags", "", "f"},
 	{"holdcnt", "HOLDCNT", NULL, LWP, pvar, 0, LOFF(l_holdcnt), INT, "d"},
 	{"ignored", "", "sigignore"},
-	{"inblk", "INBLK", NULL, 0, pvar, 0, POFF(p_uru_inblock), ULONG, "d"},
+	{"inblk", "INBLK", NULL, 0, pvar, 0, POFF(p_uru_inblock), UINT64, "lld"},
 	{"inblock", "", "inblk"},
 	{"jobc", "JOBC", NULL, 0, pvar, 0, POFF(p_jobc), SHORT, "d"},
 	{"ktrace", "KTRACE", NULL, 0, pvar, 0, POFF(p_traceflag), INT, "x"},
@@ -111,21 +111,21 @@ VAR var[] = {
 	{"logname", "", "login"},
 	{"lstart", "STARTED", NULL, LJUST, lstarted},
 	{"lstate", "STAT", NULL, LJUST|LWP, lstate},
-	{"majflt", "MAJFLT", NULL, 0, pvar, 0, POFF(p_uru_majflt), ULONG, "d"},
-	{"minflt", "MINFLT", NULL, 0, pvar, 0, POFF(p_uru_minflt), ULONG, "d"},
-	{"msgrcv", "MSGRCV", NULL, 0, pvar, 0, POFF(p_uru_msgrcv), ULONG, "d"},
-	{"msgsnd", "MSGSND", NULL, 0, pvar, 0, POFF(p_uru_msgsnd), ULONG, "d"},
+	{"majflt", "MAJFLT", NULL, 0, pvar, 0, POFF(p_uru_majflt), UINT64, "lld"},
+	{"minflt", "MINFLT", NULL, 0, pvar, 0, POFF(p_uru_minflt), UINT64, "lld"},
+	{"msgrcv", "MSGRCV", NULL, 0, pvar, 0, POFF(p_uru_msgrcv), UINT64, "lld"},
+	{"msgsnd", "MSGSND", NULL, 0, pvar, 0, POFF(p_uru_msgsnd), UINT64, "lld"},
 	{"ni", "", "nice"},
 	{"nice", "NI", NULL, 0, pnice},
-	{"nivcsw", "NIVCSW", NULL, 0, pvar, 0, POFF(p_uru_nivcsw), ULONG, "d"},
-	{"nlwp", "NLWP", NULL, 0, pvar, 0, POFF(p_nlwps), ULONG, "d"},
+	{"nivcsw", "NIVCSW", NULL, 0, pvar, 0, POFF(p_uru_nivcsw), UINT64, "lld"},
+	{"nlwp", "NLWP", NULL, 0, pvar, 0, POFF(p_nlwps), UINT64, "lld"},
 	{"nsignals", "", "nsigs"},
-	{"nsigs", "NSIGS", NULL, 0, pvar, 0, POFF(p_uru_nsignals), ULONG, "d"},
-	{"nswap", "NSWAP", NULL, 0, pvar, 0, POFF(p_uru_nswap), ULONG, "d"},
-	{"nvcsw", "NVCSW", NULL, 0, pvar, 0, POFF(p_uru_nvcsw), ULONG, "d"},
+	{"nsigs", "NSIGS", NULL, 0, pvar, 0, POFF(p_uru_nsignals), UINT64, "lld"},
+	{"nswap", "NSWAP", NULL, 0, pvar, 0, POFF(p_uru_nswap), UINT64, "lld"},
+	{"nvcsw", "NVCSW", NULL, 0, pvar, 0, POFF(p_uru_nvcsw), UINT64, "lld"},
 	/* XXX */
 	{"nwchan", "WCHAN", NULL, LWP, pvar, 0, LOFF(l_wchan), KPTR, "llx"},
-	{"oublk", "OUBLK", NULL, 0, pvar, 0, POFF(p_uru_oublock), ULONG, "d"},
+	{"oublk", "OUBLK", NULL, 0, pvar, 0, POFF(p_uru_oublock), UINT64, "lld"},
 	{"oublock", "", "oublk"},
 	/* XXX */
 	{"p_ru", "P_RU", NULL, 0, pvar, 0, POFF(p_ru), KPTR, "llx"},
@@ -143,7 +143,7 @@ VAR var[] = {
 	GID("rgid", "RGID", pvar, POFF(p_rgid)),
 	/* XXX */
 	{"rlink", "RLINK", NULL, LWP, pvar, 0, LOFF(l_back), KPTR, "llx"},
-	{"rlwp", "RLWP", NULL, 0, pvar, 0, POFF(p_nrlwps), ULONG, "d"},
+	{"rlwp", "RLWP", NULL, 0, pvar, 0, POFF(p_nrlwps), UINT64, "lld"},
 	{"rss", "RSS", NULL, 0, p_rssize},
 	{"rssize", "", "rsz"},
 	{"rsz", "RSZ", NULL, 0, rssize},
