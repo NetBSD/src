@@ -1,4 +1,4 @@
-/*      $NetBSD: advlib.h,v 1.9 1999/03/04 20:16:56 dante Exp $        */
+/*      $NetBSD: advlib.h,v 1.10 1999/06/06 17:33:18 dante Exp $        */
 
 /*
  * Definitions for low level routines and data structures
@@ -845,11 +845,11 @@ typedef struct asc_softc
 	bus_dmamap_t		sc_dmamap_control; /* maps the control structures */
 	void			*sc_ih;
 
-	struct adv_control	*sc_control; /* control structures */
+	struct adv_control	*sc_control;	/* control structures */
 
 	struct adv_ccb		*sc_ccbhash[CCB_HASH_SIZE];
 	TAILQ_HEAD(, adv_ccb)	sc_free_ccb, sc_waiting_ccb;
-	struct scsipi_link	sc_link;     /* prototype for devs */
+	struct scsipi_link	sc_link;	/* prototype for devs */
 	struct scsipi_adapter	sc_adapter;
 
 	TAILQ_HEAD(, scsipi_xfer) sc_queue;
@@ -875,6 +875,7 @@ typedef struct asc_softc
 	ASC_SCSI_BIT_ID_TYPE	cmd_qng_enabled;
 	ASC_SCSI_BIT_ID_TYPE	disc_enable;
 	ASC_SCSI_BIT_ID_TYPE	sdtr_enable;
+	u_int8_t		irq_no;
 	u_int8_t		chip_scsi_id;
 	u_int8_t		isa_dma_speed;
 	u_int8_t		isa_dma_channel;
@@ -891,7 +892,6 @@ typedef struct asc_softc
 	u_int8_t		scsi_reset_wait;
 	u_int8_t		max_total_qng;
 	u_int8_t		cur_total_qng;
-	u_int8_t		irq_no;
 	u_int8_t		last_q_shortage;
 
 	u_int8_t		cur_dvc_qng[ASC_MAX_TID + 1];
@@ -1224,7 +1224,7 @@ typedef struct asceep_config
 #define ASC_EISA_PID_IOP_MASK	(0x0C80)
 #define ASC_EISA_CFG_IOP_MASK	(0x0C86)
 
-#define ASC_GET_EISA_SLOT(iop)	((iop) & 0xF000)
+#define ASC_GET_EISA_SLOT(port_base)	((port_base) & 0xF000)
 
 #define ASC_EISA_ID_740	0x01745004UL
 #define ASC_EISA_ID_750	0x01755004UL
@@ -1326,11 +1326,13 @@ typedef struct asceep_config
 
 
 void AscInitASC_SOFTC __P((ASC_SOFTC *));
-u_int16_t AscInitFromEEP __P((ASC_SOFTC *));
+int16_t AscInitFromEEP __P((ASC_SOFTC *));
 u_int16_t AscInitFromASC_SOFTC __P((ASC_SOFTC *));
 int AscInitDriver __P((ASC_SOFTC *));
 void AscReInitLram __P((ASC_SOFTC *));
 int AscFindSignature __P((bus_space_tag_t, bus_space_handle_t));
+u_int8_t AscGetChipIRQ __P((bus_space_tag_t, bus_space_handle_t, u_int16_t));
+u_int16_t AscGetIsaDmaChannel __P((bus_space_tag_t, bus_space_handle_t));
 int AscISR __P((ASC_SOFTC *));
 int AscExeScsiQueue __P((ASC_SOFTC *, ASC_SCSI_Q *));
 void AscInquiryHandling __P((ASC_SOFTC *, u_int8_t, ASC_SCSI_INQUIRY *));
