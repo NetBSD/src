@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_et.c,v 1.11 1998/12/20 14:32:53 thomas Exp $	*/
+/*	$NetBSD: grfabs_et.c,v 1.12 1999/02/19 21:03:00 leo Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -752,17 +752,19 @@ et6000_init()
 	int		i;
 	u_char		dac_tab[] = { 0x7d,0x67, 0x5d,0x64, 0x56,0x63,
 				      0x28,0x22, 0x79,0x49, 0x6f,0x47,
-				      0x28,0x41, 0x6b,0x44, 0xfe,0xff,
-				      0x00,0x00, 0x3d,0x23, 0x79,0x2e,
-				      0xa8,0x00, 0x00,0x84 };
+				      0x28,0x41, 0x6b,0x44, 0x00,0x00,
+				      0x00,0x00, 0x5d,0x25, 0x00,0x00,
+				      0x00,0x00, 0x00,0x96 };
 
 	ba = et_priv.regkva + PCI_IOBASE;
 
-	ba[0x40] = 0x00;	/* Use standard vga addressing		*/
+
+	ba[0x40] = 0x06;	/* Use standard vga addressing		*/
 	ba[0x41] = 0x2a;	/* Performance control			*/
 	ba[0x43] = 0x02;	/* XCLK/SCLK config			*/
 	ba[0x44] = 0x11;	/* RAS/CAS config			*/
 	ba[0x46] = 0x00;	/* CRT display feature			*/
+	ba[0x47] = 0x10;
 	ba[0x58] = 0x00;	/* Video Control 1			*/
 	ba[0x59] = 0x04;	/* Video Control 2			*/
 	
@@ -771,8 +773,26 @@ et6000_init()
 	 */
 	ba[0x42] = 0x00;	/* MCLK == CLK0 */
 	ba[0x67] = 0x00;	/* Start filling from dac-reg 0 and up... */
-	for (i = 0; i < 0x0b; i++)
+	for (i = 0; i < 0x16; i++)
 		ba[0x69] = dac_tab[i];
+
+	if (ba[8] == 0x70) { /* et6100, right? */
+		volatile u_char *ma;
+		u_char	bv;
+
+		ma = et_priv.memkva;
+
+		/*
+		 * XXX Black magic to get the bloody MDRAM's to function...
+                 * XXX _Only_ tested on my card! [leo]
+		 */
+		bv = ba[45];
+		ba[0x45] = bv | 0x40;	/* Reset MDRAM's		*/
+		ba[0x45] = bv | 0x70;	/* Program latency value	*/
+		ma[0x0] = 0;		/* Yeah, right :-(		*/
+		ba[0x45] = bv;		/* Back to normal		*/
+		ba[0x44] = 0x14;	/* RAS/CAS config		*/
+	}
 }
 
 void
@@ -830,8 +850,10 @@ et_sv_reg_t	*et_regs;
 	/*
 	 * General VGA registers
 	 */
-	for(i = 0; i < 5; i++)
+	WSeq(ba, SEQ_ID_RESET, 0x01);
+	for(i = 1; i < 5; i++)
 		WSeq(ba, i, et_regs->seq[i]);
+	WSeq(ba, SEQ_ID_RESET, 0x03);
 
 	/*
 	 * Make sure we're allowed to write all crt-registers
