@@ -1,4 +1,4 @@
-/*	$NetBSD: biconsdev.c,v 1.7 2002/10/23 09:13:11 jdolecek Exp $	*/
+/*	$NetBSD: biconsdev.c,v 1.8 2003/06/29 11:20:44 ichiro Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: biconsdev.c,v 1.7 2002/10/23 09:13:11 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: biconsdev.c,v 1.8 2003/06/29 11:20:44 ichiro Exp $");
 
 #include "biconsdev.h"
 #include <sys/param.h>
@@ -168,7 +168,7 @@ biconsdev_output(struct tty *tp)
 
 
 int
-biconsdevopen(dev_t dev, int flag, int mode, struct proc *p)
+biconsdevopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct tty *tp = &biconsdev_tty[0];
 	int status;
@@ -185,7 +185,7 @@ biconsdevopen(dev_t dev, int flag, int mode, struct proc *p)
 		tp->t_state = TS_ISOPEN | TS_CARR_ON;
 		(void)(*tp->t_param)(tp, &tp->t_termios);
 		ttsetwater(tp);
-	} else if (tp->t_state & TS_XCLUDE && p->p_ucred->cr_uid != 0)
+	} else if (tp->t_state & TS_XCLUDE && l->l_proc->p_ucred->cr_uid != 0)
 		return (EBUSY);
 
 	status = (*tp->t_linesw->l_open)(dev, tp);
@@ -194,7 +194,7 @@ biconsdevopen(dev_t dev, int flag, int mode, struct proc *p)
 
 
 int
-biconsdevclose(dev_t dev, int flag, int mode, struct proc *p)
+biconsdevclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct tty *tp = &biconsdev_tty[0];
 
@@ -224,11 +224,11 @@ biconsdevwrite(dev_t dev, struct uio *uio, int flag)
 
 
 int
-biconsdevpoll(dev_t dev, int events, struct proc *p)
+biconsdevpoll(dev_t dev, int events, struct lwp *l)
 {
 	struct tty *tp = &biconsdev_tty[0];
 
-	return ((*tp->t_linesw->l_poll)(tp, events, p));
+	return ((*tp->t_linesw->l_poll)(tp, events, l));
 }
 
 
@@ -241,13 +241,13 @@ biconsdevtty(dev_t dev)
 }
 
 int
-biconsdevioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+biconsdevioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct tty *tp = &biconsdev_tty[0];
 	int error;
 
-	if ((error = tp->t_linesw->l_ioctl(tp, cmd, data, flag, p)) !=
+	if ((error = tp->t_linesw->l_ioctl(tp, cmd, data, flag, l)) !=
 	    EPASSTHROUGH)
 		return (error);
-	return (ttioctl(tp, cmd, data, flag, p));
+	return (ttioctl(tp, cmd, data, flag, l));
 }
