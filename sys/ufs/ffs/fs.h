@@ -1,4 +1,4 @@
-/*	$NetBSD: fs.h,v 1.17 2001/08/31 03:15:45 lukem Exp $	*/
+/*	$NetBSD: fs.h,v 1.18 2001/09/02 01:58:31 lukem Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -109,14 +109,17 @@
 #define	MAXMNTLEN	512
 
 /*
- * The limit on the amount of summary information per file system
- * is defined by MAXCSBUFS. It is currently parameterized for a
- * size of 128 bytes (2 million cylinder groups on machines with
- * 32-bit pointers, and 1 million on 64-bit machines). One pointer
- * is taken away to point to an array of cluster sizes that is
- * computed as cylinder groups are inspected.
+ * There is a 128-byte region in the superblock reserved for in-core
+ * pointers to summary information. Originally this included an array
+ * of pointers to blocks of struct csum; now there are just two
+ * pointers and the remaining space is padded with fs_ocsp[].
+ *
+ * NOCSPTRS determines the size of this padding. One pointer (fs_csp)
+ * is taken away to point to a contiguous array of struct csum for
+ * all cylinder groups; a second (fs_maxcluster) points to an array
+ * of cluster sizes that is computed as cylinder groups are inspected.
  */
-#define	MAXCSBUFS	((128 / sizeof(void *)) - 1)
+#define	NOCSPTRS	((128 / sizeof(void *)) - 2)
 
 /*
  * A summary of contiguous blocks of various sizes is maintained
@@ -146,9 +149,6 @@
  * from first cylinder group data blocks.  These blocks have to be
  * read in from fs_csaddr (size fs_cssize) in addition to the
  * super block.
- *
- * N.B. sizeof(struct csum) must be a power of two in order for
- * the ``fs_cs'' macro to work (see below).
  */
 struct csum {
 	int32_t	cs_ndir;		/* number of directories */
@@ -192,8 +192,8 @@ struct fs {
 	int32_t	 fs_fragshift;		/* block to frag shift */
 	int32_t	 fs_fsbtodb;		/* fsbtodb and dbtofsb shift constant */
 	int32_t	 fs_sbsize;		/* actual size of super block */
-	int32_t	 fs_csmask;		/* csum block offset */
-	int32_t	 fs_csshift;		/* csum block number */
+	int32_t	 fs_csmask;		/* csum block offset (now unused) */
+	int32_t	 fs_csshift;		/* csum block number (now unused) */
 	int32_t	 fs_nindir;		/* value of NINDIR */
 	int32_t	 fs_inopb;		/* value of INOPB */
 	int32_t	 fs_nspf;		/* value of NSPF */
@@ -229,8 +229,9 @@ struct fs {
 	u_char	 fs_fsmnt[MAXMNTLEN];	/* name mounted on */
 /* these fields retain the current block allocation info */
 	int32_t	 fs_cgrotor;		/* last cg searched */
-	struct	csum *fs_csp[MAXCSBUFS];/* list of fs_cs info buffers */
-	int32_t	 *fs_maxcluster;	/* max cluster in each cyl group */
+	void 	*fs_ocsp[NOCSPTRS];	/* padding; was list of fs_cs buffers */
+	struct csum *fs_csp;		/* cg summary info buffer for fs_cs */
+	int32_t	*fs_maxcluster;	/* max cluster in each cyl group */
 	int32_t	 fs_cpc;		/* cyl per cycle in postbl */
 	int16_t	 fs_opostbl[16][8];	/* old rotation block list head */
 	int32_t	 fs_sparecon[49];	/* reserved for future constants */
@@ -239,8 +240,8 @@ struct fs {
 	int32_t	 fs_maxsymlinklen;	/* max length of an internal symlink */
 	int32_t	 fs_inodefmt;		/* format of on-disk inodes */
 	u_int64_t fs_maxfilesize;	/* maximum representable file size */
-	int64_t	 fs_qbmask;		/* ~fs_bmask - for use with quad size */
-	int64_t	 fs_qfmask;		/* ~fs_fmask - for use with quad size */
+	int64_t	 fs_qbmask;		/* ~fs_bmask for use with 64-bit size */
+	int64_t	 fs_qfmask;		/* ~fs_fmask for use with 64-bit size */
 	int32_t	 fs_state;		/* validate fs_clean field (UNUSED) */
 	int32_t	 fs_postblformat;	/* format of positional layout tables */
 	int32_t	 fs_nrpos;		/* number of rotational positions */
@@ -320,11 +321,8 @@ struct fs {
 
 /*
  * Convert cylinder group to base address of its global summary info.
- *
- * N.B. This macro assumes that sizeof(struct csum) is a power of two.
  */
-#define	fs_cs(fs, indx) \
-	fs_csp[(indx) >> (fs)->fs_csshift][(indx) & ~(fs)->fs_csmask]
+#define	fs_cs(fs, indx)	fs_csp[indx]
 
 /*
  * Cylinder group block for a file system.
