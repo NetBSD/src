@@ -1,4 +1,4 @@
-/*	$NetBSD: exit.c,v 1.4 1995/12/28 08:52:15 thorpej Exp $	*/
+/*	$NetBSD: exit.c,v 1.5 1997/07/13 20:16:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char *sccsid = "from: @(#)exit.c	5.4 (Berkeley) 2/23/91";
 #else
-static char *rcsid = "$NetBSD: exit.c,v 1.4 1995/12/28 08:52:15 thorpej Exp $";
+__RCSID("$NetBSD: exit.c,v 1.5 1997/07/13 20:16:41 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -45,7 +46,7 @@ static char *rcsid = "$NetBSD: exit.c,v 1.4 1995/12/28 08:52:15 thorpej Exp $";
 #include <unistd.h>
 #include "atexit.h"
 
-void (*__cleanup)();
+void (*__cleanup) __P((void));
 
 /*
  * Exit, flushing stdio buffers if necessary.

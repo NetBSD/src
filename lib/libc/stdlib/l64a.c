@@ -3,8 +3,9 @@
  * Public domain.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$NetBSD: l64a.c,v 1.4 1995/05/11 23:03:44 jtc Exp $";
+__RCSID("$NetBSD: l64a.c,v 1.5 1997/07/13 20:16:44 christos Exp $");
 #endif
 
 #include <stdlib.h>
