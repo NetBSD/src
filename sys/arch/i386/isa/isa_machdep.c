@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.1 1995/04/17 12:07:11 cgd Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.2 1995/04/19 06:14:13 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -269,7 +269,30 @@ isa_intr_establish(irq, type, level, ih_fun, ih_arg)
 	 * this with interrupts enabled and don't want the real routine called
 	 * until masking is set up.
 	 */
-	fakehand.ih_level = level;
+	switch (level) {
+	case ISA_IPL_NONE:
+		fakehand.ih_level = IPL_NONE;
+		break;
+
+	case ISA_IPL_BIO:
+		fakehand.ih_level = IPL_BIO;
+		break;
+
+	case ISA_IPL_NET:
+		fakehand.ih_level = IPL_NET;
+		break;
+
+	case ISA_IPL_TTY:
+		fakehand.ih_level = IPL_TTY;
+		break;
+
+	case ISA_IPL_CLOCK:
+		fakehand.ih_level = IPL_CLOCK;
+		break;
+
+	default:
+		panic("isa_intr_establish: bad interrupt level %d", level);
+	}
 	*p = &fakehand;
 
 	intr_calculatemasks();
@@ -281,7 +304,7 @@ isa_intr_establish(irq, type, level, ih_fun, ih_arg)
 	ih->ih_arg = ih_arg;
 	ih->ih_count = 0;
 	ih->ih_next = NULL;
-	ih->ih_level = level;
+	ih->ih_level = fakehand.ih_level;
 	ih->ih_irq = irq;
 	*p = ih;
 
@@ -292,9 +315,10 @@ isa_intr_establish(irq, type, level, ih_fun, ih_arg)
  * Deregister an interrupt handler.
  */
 void
-intr_disestablish(ih)
-	struct intrhand *ih;
+isa_intr_disestablish(arg)
+	void *arg;
 {
+	struct intrhand *ih = arg;
 	int irq, mask;
 	struct intrhand **p, *q;
 
