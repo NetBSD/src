@@ -35,14 +35,14 @@
  *	i4b_avm_a1.c - AVM A1/Fritz passive card driver for isdn4bsd
  *	------------------------------------------------------------
  *
- *	$Id: isic_isa_avm_a1.c,v 1.3 2001/11/13 08:01:23 lukem Exp $ 
+ *	$Id: isic_isa_avm_a1.c,v 1.4 2002/03/24 20:35:48 martin Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:37:22 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isa_avm_a1.c,v 1.3 2001/11/13 08:01:23 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isa_avm_a1.c,v 1.4 2002/03/24 20:35:48 martin Exp $");
 
 #include "opt_isicisa.h"
 #ifdef ISICISA_AVM_A1
@@ -81,16 +81,18 @@ __KERNEL_RCSID(0, "$NetBSD: isic_isa_avm_a1.c,v 1.3 2001/11/13 08:01:23 lukem Ex
 #endif
 
 #include <netisdn/i4b_global.h>
+#include <netisdn/i4b_l2.h>
+#include <netisdn/i4b_l1l2.h>
 
 #include <dev/ic/isic_l1.h>
 #include <dev/ic/isac.h>
 #include <dev/ic/hscx.h>
 
 #ifndef __FreeBSD__
-static u_int8_t avma1_read_reg __P((struct l1_softc *sc, int what, bus_size_t offs));
-static void avma1_write_reg __P((struct l1_softc *sc, int what, bus_size_t offs, u_int8_t data));
-static void avma1_read_fifo __P((struct l1_softc *sc, int what, void *buf, size_t size));
-static void avma1_write_fifo __P((struct l1_softc *sc, int what, const void *data, size_t size));
+static u_int8_t avma1_read_reg __P((struct isic_softc *sc, int what, bus_size_t offs));
+static void avma1_write_reg __P((struct isic_softc *sc, int what, bus_size_t offs, u_int8_t data));
+static void avma1_read_fifo __P((struct isic_softc *sc, int what, void *buf, size_t size));
+static void avma1_write_fifo __P((struct isic_softc *sc, int what, const void *data, size_t size));
 #endif
 
 /*---------------------------------------------------------------------------*
@@ -124,7 +126,7 @@ avma1_read_fifo(void *buf, const void *base, size_t len)
 }
 #else
 static void
-avma1_read_fifo(struct l1_softc *sc, int what, void *buf, size_t size)
+avma1_read_fifo(struct isic_softc *sc, int what, void *buf, size_t size)
 {
 	bus_space_tag_t t = sc->sc_maps[what+4].t;
 	bus_space_handle_t h = sc->sc_maps[what+4].h;
@@ -143,7 +145,7 @@ avma1_write_fifo(void *base, const void *buf, size_t len)
 }
 #else
 static void
-avma1_write_fifo(struct l1_softc *sc, int what, const void *buf, size_t size)
+avma1_write_fifo(struct isic_softc *sc, int what, const void *buf, size_t size)
 {
 	bus_space_tag_t t = sc->sc_maps[what+4].t;
 	bus_space_handle_t h = sc->sc_maps[what+4].h;
@@ -162,7 +164,7 @@ avma1_write_reg(u_char *base, u_int offset, u_int v)
 }
 #else
 static void
-avma1_write_reg(struct l1_softc *sc, int what, bus_size_t offs, u_int8_t data)
+avma1_write_reg(struct isic_softc *sc, int what, bus_size_t offs, u_int8_t data)
 {
 	bus_space_tag_t t = sc->sc_maps[what+1].t;
 	bus_space_handle_t h = sc->sc_maps[what+1].h;
@@ -181,7 +183,7 @@ avma1_read_reg(u_char *base, u_int offset)
 }
 #else
 static u_int8_t
-avma1_read_reg(struct l1_softc *sc, int what, bus_size_t offs)
+avma1_read_reg(struct isic_softc *sc, int what, bus_size_t offs)
 {
 	bus_space_tag_t t = sc->sc_maps[what+1].t;
 	bus_space_handle_t h = sc->sc_maps[what+1].h;
@@ -196,7 +198,7 @@ avma1_read_reg(struct l1_softc *sc, int what, bus_size_t offs)
 int
 isic_probe_avma1(struct isa_device *dev)
 {
-	struct l1_softc *sc = &l1_sc[dev->id_unit];
+	struct isic_softc *sc = &l1_sc[dev->id_unit];
 	u_char savebyte;
 	u_char byte;
 	
@@ -428,7 +430,7 @@ isic_probe_avma1(struct isic_attach_args *ia)
 int
 isic_attach_avma1(struct isa_device *dev)
 {
-	struct l1_softc *sc = &l1_sc[dev->id_unit];
+	struct isic_softc *sc = &l1_sc[dev->id_unit];
 
 	/* reset the HSCX and ISAC chips */
 	
@@ -458,7 +460,7 @@ isic_attach_avma1(struct isa_device *dev)
 #else
 
 int
-isic_attach_avma1(struct l1_softc *sc)
+isic_attach_avma1(struct isic_softc *sc)
 {
 	bus_space_tag_t t = sc->sc_maps[0].t;
 	bus_space_handle_t h = sc->sc_maps[0].h;
@@ -469,10 +471,6 @@ isic_attach_avma1(struct l1_softc *sc)
 
 	sc->readfifo = avma1_read_fifo;
 	sc->writefifo = avma1_write_fifo;
-
-	/* setup card type */
-
-	sc->sc_cardtyp = CARD_TYPEP_AVMA1;
 
 	/* setup IOM bus type */
 	
