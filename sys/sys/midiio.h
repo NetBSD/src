@@ -1,4 +1,4 @@
-/*	$NetBSD: midiio.h,v 1.4 1998/08/13 00:08:53 augustss Exp $	*/
+/*	$NetBSD: midiio.h,v 1.5 1998/08/13 15:15:28 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -186,13 +186,13 @@ struct synth_info {
 #define SEQ_FULLSIZE		0xfd
 
 #define SEQ_MK_CHN_VOICE(e, unit, cmd, chan, key, vel) (\
-	(e)->arr[0] = SEQ_CHN_VOICE, (e)->arr[1] = (unit), (e)->arr[2] = (cmd),\
-	(e)->arr[3] = (chan), (e)->arr[4] = (key), (e)->arr[5] = (vel),\
-	(e)->arr[6] = 0, (e)->arr[7] = 0)
+    (e)->arr[0] = SEQ_CHN_VOICE, (e)->arr[1] = (unit), (e)->arr[2] = (cmd),\
+    (e)->arr[3] = (chan), (e)->arr[4] = (key), (e)->arr[5] = (vel),\
+    (e)->arr[6] = 0, (e)->arr[7] = 0)
 #define SEQ_MK_CHN_COMMON(e, unit, cmd, chan, p1, p2, w14) (\
-	(e)->arr[0] = SEQ_CHN_COMMON, (e)->arr[1] = (unit), (e)->arr[2] = MIDI_CTL_CHANGE,\
-	(e)->arr[3] = (chan), (e)->arr[4] = (p1), (e)->arr[5] = (p2),\
-	*(short*)&(e)->arr[6] = (w14))
+    (e)->arr[0] = SEQ_CHN_COMMON, (e)->arr[1] = (unit), (e)->arr[2] = (cmd),\
+    (e)->arr[3] = (chan), (e)->arr[4] = (p1), (e)->arr[5] = (p2),\
+    *(short*)&(e)->arr[6] = (w14))
 
 #if _QUAD_LOWWORD == 1
 /* big endian */
