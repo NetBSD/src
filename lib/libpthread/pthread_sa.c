@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sa.c,v 1.1.2.14 2001/12/30 02:20:50 nathanw Exp $	*/
+/*	$NetBSD: pthread_sa.c,v 1.1.2.15 2002/01/02 18:32:02 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -477,7 +477,7 @@ pthread__sa_start(void)
 {
 	pthread_t t;
 	stack_t upcall_stacks[PT_UPCALLSTACKS];
-	int ret, i;
+	int ret, i, errnosave;
 
 	ret = sa_register(pthread__upcall, NULL);
 	if (ret)
@@ -501,6 +501,21 @@ pthread__sa_start(void)
 	if (ret == -1)
 		err(1, "sa_stacks failed");
 
+	/* XXX 
+	 * Calling sa_enable() can mess with errno in bizzare ways,
+	 * because the kernel doesn't really return from it as a
+	 * normal system call. The kernel will launch an upcall
+	 * handler which will jump back to the inside of sa_enable()
+	 * and permit us to continue here. However, since the kernel
+	 * doesn't get a chance to set up the return-state properly,
+	 * the syscall stub may interpret the unmodified register
+	 * state as an error return and stuff an inappropriate value
+	 * into errno.
+	 *
+	 * Therefore, we need to keep errno from being changed by this
+	 * slightly weird control flow.
+	 */
+	errnosave = errno;
 	sa_enable();
-
+	errno = errnosave;
 }
