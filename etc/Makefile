@@ -1,5 +1,5 @@
-#	$NetBSD: Makefile,v 1.65 1997/02/21 08:14:08 mikel Exp $
-#	from: @(#)Makefile	8.4 (Berkeley) 1/25/94
+#	$NetBSD: Makefile,v 1.66 1997/02/25 07:37:19 mikel Exp $
+#	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	US/Pacific

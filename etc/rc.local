@@ -1,8 +1,8 @@
-#	$NetBSD: rc.local,v 1.17 1997/02/15 10:02:26 mikel Exp $
+#	$NetBSD: rc.local,v 1.18 1997/02/25 07:37:19 mikel Exp $
 #
 # site-specific startup actions, daemons
 #
-#	from: @(#)rc.local	8.1 (Berkeley) 6/10/93
+#	from: @(#)rc.local	8.3 (Berkeley) 4/28/94
 #
 
 if [ ! -f /etc/motd ]; then
