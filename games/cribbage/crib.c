@@ -1,4 +1,4 @@
-/*	$NetBSD: crib.c,v 1.17 2003/08/07 09:37:09 agc Exp $	*/
+/*	$NetBSD: crib.c,v 1.18 2004/01/26 09:58:35 jsm Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)crib.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: crib.c,v 1.17 2003/08/07 09:37:09 agc Exp $");
+__RCSID("$NetBSD: crib.c,v 1.18 2004/01/26 09:58:35 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -107,7 +107,7 @@ main(argc, argv)
 		}
 
 	initscr();
-	(void)signal(SIGINT, rint);
+	(void)signal(SIGINT, receive_intr);
 	cbreak();
 	noecho();
 
