@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.103 2000/08/11 02:27:11 thorpej Exp $
+#	$NetBSD: files.isa,v 1.104 2000/11/04 18:47:20 thorpej Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -401,6 +401,14 @@ file	dev/isa/ega.c		ega	needs-flag
 device pcdisplay: wsemuldisplaydev, pcdisplayops
 attach	pcdisplay at isa
 file	dev/isa/pcdisplay.c	pcdisplay	needs-flag
+
+# Middle Digital, Inc. PC-Weasel serial console board.
+# XXX This is a little gross... this is to conditionally compile
+# support for the PC-Weasel into the `pcdisplay' driver,
+# but we can't use an `option', because options can't have
+# attributes.
+defpseudo pcweasel: sysmon
+file dev/isa/weasel.c		pcweasel	needs-flag
 
 # PC PPI + TIMER 1 (speaker interface)
 device  pcppi {}
