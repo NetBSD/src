@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.100 2002/05/19 06:24:33 augustss Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.101 2002/06/01 23:51:04 lukem Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.100 2002/05/19 06:24:33 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.101 2002/06/01 23:51:04 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -153,9 +153,7 @@ usbd_dump_queue(usbd_pipe_handle pipe)
 	usbd_xfer_handle xfer;
 
 	printf("usbd_dump_queue: pipe=%p\n", pipe);
-	for (xfer = SIMPLEQ_FIRST(&pipe->queue);
-	     xfer;
-	     xfer = SIMPLEQ_NEXT(xfer, next)) {
+	SIMPLEQ_FOREACH(xfer, &pipe->queue, next) {
 		printf("  xfer=%p\n", xfer);
 	}
 }
@@ -268,7 +266,7 @@ usbd_close_pipe(usbd_pipe_handle pipe)
 
 	if (--pipe->refcnt != 0)
 		return (USBD_NORMAL_COMPLETION);
-	if (SIMPLEQ_FIRST(&pipe->queue) != 0)
+	if (! SIMPLEQ_EMPTY(&pipe->queue))
 		return (USBD_PENDING_REQUESTS);
 	LIST_REMOVE(pipe, next);
 	pipe->endpoint->refcnt--;
@@ -815,7 +813,7 @@ usb_transfer_complete(usbd_xfer_handle xfer)
 			       xfer, SIMPLEQ_FIRST(&pipe->queue));
 		xfer->busy_free = XFER_BUSY;
 #endif
-		SIMPLEQ_REMOVE_HEAD(&pipe->queue, xfer, next);
+		SIMPLEQ_REMOVE_HEAD(&pipe->queue, next);
 	}
 	DPRINTFN(5,("usb_transfer_complete: repeat=%d new head=%p\n", 
 		    repeat, SIMPLEQ_FIRST(&pipe->queue)));

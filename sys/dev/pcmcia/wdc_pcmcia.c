@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.48 2002/03/31 13:27:32 martin Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.49 2002/06/01 23:51:02 lukem Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.48 2002/03/31 13:27:32 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.49 2002/06/01 23:51:02 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -234,8 +234,7 @@ wdc_pcmcia_attach(parent, self, aux)
 
 	sc->sc_pf = pa->pf;
 
-	for (cfe = SIMPLEQ_FIRST(&pa->pf->cfe_head); cfe != NULL;
-	    cfe = SIMPLEQ_NEXT(cfe, cfe_list)) {
+	SIMPLEQ_FOREACH(cfe, &pa->pf->cfe_head, cfe_list) {
 		if (cfe->num_iospace != 1 && cfe->num_iospace != 2)
 			continue;
 

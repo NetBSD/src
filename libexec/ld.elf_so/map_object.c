@@ -1,4 +1,4 @@
-/*	$NetBSD: map_object.c,v 1.12 2000/11/26 05:22:15 mycroft Exp $	 */
+/*	$NetBSD: map_object.c,v 1.13 2002/06/01 23:50:53 lukem Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -289,14 +289,12 @@ _rtld_obj_free(obj)
 		obj->needed = needed->next;
 		free(needed);
 	}
-	while (SIMPLEQ_FIRST(&obj->dldags) != NULL) {
-		elm = SIMPLEQ_FIRST(&obj->dldags);
-		SIMPLEQ_REMOVE_HEAD(&obj->dldags, elm, link);
+	while ((elm = SIMPLEQ_FIRST(&obj->dldags)) != NULL) {
+		SIMPLEQ_REMOVE_HEAD(&obj->dldags, link);
 		free(elm);
 	}
-	while (SIMPLEQ_FIRST(&obj->dagmembers) != NULL) {
-		elm = SIMPLEQ_FIRST(&obj->dagmembers);
-		SIMPLEQ_REMOVE_HEAD(&obj->dagmembers, elm, link);
+	while ((elm = SIMPLEQ_FIRST(&obj->dagmembers)) != NULL) {
+		SIMPLEQ_REMOVE_HEAD(&obj->dagmembers, link);
 		free(elm);
 	}
 	free(obj);

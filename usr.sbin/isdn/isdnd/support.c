@@ -27,7 +27,7 @@
  *	i4b daemon - misc support routines
  *	----------------------------------
  *
- *	$Id: support.c,v 1.7 2002/04/10 23:35:08 martin Exp $ 
+ *	$Id: support.c,v 1.8 2002/06/01 23:51:05 lukem Exp $ 
  *
  * $FreeBSD$
  *
@@ -1122,7 +1122,7 @@ remove_all_cfg_entries()
 
 	while (!SIMPLEQ_EMPTY(&cfg_entry_list)) {
 		cep = SIMPLEQ_FIRST(&cfg_entry_list);
-		SIMPLEQ_REMOVE_HEAD(&cfg_entry_list, cep, cfgq);
+		SIMPLEQ_REMOVE_HEAD(&cfg_entry_list, cfgq);
 
 		if (cep->ppp_expect_name)
 		    free(cep->ppp_expect_name);
