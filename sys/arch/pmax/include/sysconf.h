@@ -1,4 +1,4 @@
-/* $NetBSD: sysconf.h,v 1.2.4.5 1999/11/12 11:47:26 nisimura Exp $ */
+/* $NetBSD: sysconf.h,v 1.2.4.6 1999/12/06 09:38:16 nisimura Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -68,6 +68,7 @@ struct platform {
 	void	(*cons_init) __P((void));
 	void	(*device_register) __P((struct device *, void *));
 	int	(*iointr) __P((unsigned, unsigned, unsigned, unsigned));
+	int	(*memsize) __P((caddr_t));
 	unsigned (*clkread) __P((void));
 };
 
@@ -85,8 +86,12 @@ struct sysinit {
 extern struct platform platform;
 extern struct sysinit sysinit[];
 extern int nsysinit;
-extern void platform_not_configured __P((void));
-extern void platform_not_supported __P((void));
+
+int	memsize_scan __P((caddr_t));
+int	memsize_bitmap __P((caddr_t));
+void	platform_not_configured __P((void));
+void	platform_not_supported __P((void));
+
 
 #endif /* _KERNEL */
 #endif /* !_PMAX_SYSCONF_H_ */
