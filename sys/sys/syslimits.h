@@ -1,4 +1,4 @@
-/*	$NetBSD: syslimits.h,v 1.16 1998/07/08 19:31:34 kleink Exp $	*/
+/*	$NetBSD: syslimits.h,v 1.17 1998/08/03 14:27:50 kleink Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -64,6 +64,7 @@
 #define	RE_DUP_MAX		  255	/* max RE's in interval notation */
 
 #if !defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE)
+#define	IOV_MAX			 1024	/* max # of iovec's for readv(2) etc. */
 #define	NZERO			   20	/* default "nice" */
 #endif /* !_POSIX_C_SOURCE || _XOPEN_SOURCE */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: uio.h,v 1.17 1998/07/28 17:55:38 thorpej Exp $	*/
+/*	$NetBSD: uio.h,v 1.18 1998/08/03 14:27:50 kleink Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993, 1994
@@ -65,6 +65,7 @@ struct uio {
 /*
  * Limits
  */
+/* Deprecated: use IOV_MAX from <limits.h> instead. */
 #define UIO_MAXIOV	1024		/* max 1K of iov's */
 #define UIO_SMALLIOV	8		/* 8 on stack, else malloc */
 #endif /* ! _XOPEN_SOURCE */
