@@ -1,4 +1,4 @@
-/*	$NetBSD: bim.c,v 1.2 1995/03/18 12:28:10 cgd Exp $	*/
+/*	$NetBSD: bim.c,v 1.3 1995/08/25 05:11:36 phil Exp $	*/
 
 /* 
  * Copyright (c) 1994 Philip A. Nelson.
@@ -403,7 +403,7 @@ add_image (num, args, syntax)
        close (im_file);
        return;
     }
-  im_load_adr = im_exec.a_entry & ~(__LDPGSZ-1);
+  im_load_adr = im_exec.a_entry - sizeof(im_exec); /* & ~(__LDPGSZ-1); */
   im_run_adr = im_exec.a_entry;
 
   if (im_load_adr > 0xFFFFFF)
