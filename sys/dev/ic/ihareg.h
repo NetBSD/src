@@ -1,4 +1,4 @@
-/*	$NetBSD: ihareg.h,v 1.4 2002/11/14 17:07:42 tsutsui Exp $ */
+/*	$NetBSD: ihareg.h,v 1.5 2002/12/07 10:19:31 tsutsui Exp $ */
 
 /*-
  * Device driver for the INI-9XXXU/UW or INIC-940/950 PCI SCSI Controller.
@@ -145,7 +145,6 @@
 #define TUL_SBID	0x89	       /* R   SCSI BUS ID		     */
 #define TUL_SID		0x89	       /* W   SCSI ID			     */
 #define TUL_SALVC	0x8A	       /* R   FIFO Avail Cnt/Identify Msg    */
-#define     MSG_IDENTIFY_LUNMASK 0x07
 #define TUL_STIMO	0x8A	       /* W   Sel/Resel Time Out Register    */
 #define     STIMO_250MS	153	       /*     in units of 1.6385us           */
 #define TUL_SDATI	0x8B	       /* R   SCSI Bus contents		     */
