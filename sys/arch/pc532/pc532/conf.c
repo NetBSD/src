@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.28 1996/09/05 15:46:47 mycroft Exp $	*/
+/*	$NetBSD: conf.c,v 1.29 1996/11/07 07:18:21 matthias Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -66,6 +66,12 @@ struct bdevsw	bdevsw[] =
 	bdev_disk_init(NCD,cd),		/* 4: SCSI CD-ROM */
 	bdev_disk_init(NVND,vnd),	/* 5: vnode disk driver */
 	bdev_disk_init(NCCD,ccd),	/* 6: concatenated disk driver */
+	bdev_lkm_dummy(),		/* 7 */
+	bdev_lkm_dummy(),		/* 8 */
+	bdev_lkm_dummy(),		/* 9 */
+	bdev_lkm_dummy(),		/* 10 */
+	bdev_lkm_dummy(),		/* 11 */
+	bdev_lkm_dummy(),		/* 12 */
 };
 int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 
@@ -95,6 +101,12 @@ cdev_decl(log);
 cdev_decl(scn);
 cdev_decl(rd);
 cdev_decl(st);
+#include "ss.h"
+cdev_decl(ss);
+#include "uk.h"
+cdev_decl(uk);
+#include "ch.h"
+cdev_decl(ch);
 cdev_decl(fd);
 dev_decl(filedesc,open);
 cdev_decl(cd);
@@ -125,9 +137,18 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(NVND,vnd),	/* 13: vnode disk driver */
 	cdev_bpftun_init(NBPFILTER,bpf),/* 14: Berkeley packet filter */
 	cdev_bpftun_init(NTUN,tun),	/* 15: network tunnel */
-	cdev_notdef(),			/* 16 */
+	cdev_ch_init(NCH,ch),		/* 16: SCSI autochanger */
 	cdev_lpt_init(NLPT, lpt),	/* 17: Centronics */
 	cdev_disk_init(NCCD,ccd),	/* 18: concatenated disk driver */
+	cdev_scanner_init(NSS,ss),	/* 19: SCSI scanner */
+	cdev_uk_init(NUK,uk),		/* 20: SCSI unknown */
+	cdev_lkm_init(NLKM,lkm),	/* 21: loadable module driver */
+	cdev_lkm_dummy(),		/* 22 */
+	cdev_lkm_dummy(),		/* 23 */
+	cdev_lkm_dummy(),		/* 24 */
+	cdev_lkm_dummy(),		/* 25 */
+	cdev_lkm_dummy(),		/* 26 */
+	cdev_lkm_dummy(),		/* 27 */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -185,7 +206,16 @@ static int chrtoblktbl[] = {
 	/* 15 */	NODEV,
 	/* 16 */	NODEV,
 	/* 17 */	NODEV,
-	/* 18 */	6
+	/* 18 */	6,
+	/* 19 */	NODEV,
+	/* 20 */	NODEV,
+	/* 21 */	NODEV,
+	/* 22 */	NODEV,
+	/* 23 */	NODEV,
+	/* 24 */	NODEV,
+	/* 25 */	NODEV,
+	/* 26 */	NODEV,
+	/* 27 */	NODEV
 };
 
 /*
