@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.24.2.2 2000/09/09 02:11:30 toshii Exp $	*/
+/*	$NetBSD: ucom.c,v 1.24.2.3 2000/09/12 08:43:58 toshii Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -642,8 +642,10 @@ tiocm_to_ucom(struct ucom_softc *sc, int how, int ttybits)
 		break;
 	}
 
-	ucom_dtr(sc, (sc->sc_mcr & UMCR_DTR) != 0);
-	ucom_rts(sc, (sc->sc_mcr & UMCR_RTS) != 0);
+	if (how == TIOCMSET || ISSET(combits, UMCR_DTR))
+		ucom_dtr(sc, (sc->sc_mcr & UMCR_DTR) != 0);
+	if (how == TIOCMSET || ISSET(combits, UMCR_RTS))
+		ucom_rts(sc, (sc->sc_mcr & UMCR_RTS) != 0);
 }
 
 Static int
@@ -712,9 +714,16 @@ ucom_rts(struct ucom_softc *sc, int onoff)
 void
 ucom_status_change(struct ucom_softc *sc)
 {
+	struct tty *tp = sc->sc_tty;
+	u_char old_msr;
+
 	if (sc->sc_methods->ucom_get_status != NULL) {
+		old_msr = sc->sc_msr;
 		sc->sc_methods->ucom_get_status(sc->sc_parent, sc->sc_portno,
 		    &sc->sc_lsr, &sc->sc_msr);
+		if (ISSET((sc->sc_msr ^ old_msr), UMSR_DCD))
+			(*linesw[tp->t_line].l_modem)(tp,
+			    ISSET(sc->sc_msr, UMSR_DCD));
 	} else {
 		sc->sc_lsr = 0;
 		sc->sc_msr = 0;
