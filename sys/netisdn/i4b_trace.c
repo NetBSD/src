@@ -27,7 +27,7 @@
  *	i4btrc - device driver for trace data read device
  *	---------------------------------------------------
  *
- *	$Id: i4b_trace.c,v 1.7 2002/03/16 16:56:05 martin Exp $
+ *	$Id: i4b_trace.c,v 1.8 2002/03/19 20:10:45 martin Exp $
  *
  *	last edit-date: [Fri Jan  5 11:33:47 2001]
  *
@@ -35,7 +35,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_trace.c,v 1.7 2002/03/16 16:56:05 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_trace.c,v 1.8 2002/03/19 20:10:45 martin Exp $");
 
 #include "isdntrc.h"
 
@@ -274,9 +274,9 @@ isdntrcclose(dev_t dev, int flag, int fmt, struct proc *p)
 		tx_l2sc = (l2_softc_t*)isdn_find_l2_by_bri(txunit);
 
 		if (rx_l2sc != NULL)
-			rx_l2sc->driver->n_mgmt_command(rx_l2sc->l1_token, CMR_SETTRACE, TRACE_OFF);
+			rx_l2sc->driver->mph_command_req(rx_l2sc->l1_token, CMR_SETTRACE, TRACE_OFF);
 		if (tx_l2sc != NULL)
-			tx_l2sc->driver->n_mgmt_command(tx_l2sc->l1_token, CMR_SETTRACE, TRACE_OFF);
+			tx_l2sc->driver->mph_command_req(tx_l2sc->l1_token, CMR_SETTRACE, TRACE_OFF);
 
 		x = splnet();
 		device_state[rxunit] = ST_IDLE;
@@ -287,7 +287,7 @@ isdntrcclose(dev_t dev, int flag, int fmt, struct proc *p)
 	} else {
 		l2_softc_t * l2sc = (l2_softc_t*)isdn_find_l2_by_bri(bri);
 		if (l2sc != NULL) {
-			l2sc->driver->n_mgmt_command(l2sc->l1_token, CMR_SETTRACE, TRACE_OFF);
+			l2sc->driver->mph_command_req(l2sc->l1_token, CMR_SETTRACE, TRACE_OFF);
 			x = splnet();
 			device_state[bri] = ST_IDLE;
 			splx(x);
@@ -368,7 +368,7 @@ isdntrcioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		case I4B_TRC_SET:
 			if (l2sc == NULL)
 				return ENOTTY;
-			l2sc->driver->n_mgmt_command(l2sc->l1_token, CMR_SETTRACE, (void *)*(unsigned long *)data);
+			l2sc->driver->mph_command_req(l2sc->l1_token, CMR_SETTRACE, (void *)*(unsigned long *)data);
 			break;
 
 		case I4B_TRC_SETA:
@@ -401,8 +401,8 @@ isdntrcioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 					
 				outunit = bri;
 				analyzemode = 1;
-				rx_l2sc->driver->n_mgmt_command(rx_l2sc->l1_token, CMR_SETTRACE, (void *)(unsigned long)(tsa->rxflags & (TRACE_I | TRACE_D_RX | TRACE_B_RX)));
-				tx_l2sc->driver->n_mgmt_command(tx_l2sc->l1_token, CMR_SETTRACE, (void *)(unsigned long)(tsa->txflags & (TRACE_I | TRACE_D_RX | TRACE_B_RX)));
+				rx_l2sc->driver->mph_command_req(rx_l2sc->l1_token, CMR_SETTRACE, (void *)(unsigned long)(tsa->rxflags & (TRACE_I | TRACE_D_RX | TRACE_B_RX)));
+				tx_l2sc->driver->mph_command_req(tx_l2sc->l1_token, CMR_SETTRACE, (void *)(unsigned long)(tsa->txflags & (TRACE_I | TRACE_D_RX | TRACE_B_RX)));
 			}
 			break;
 
