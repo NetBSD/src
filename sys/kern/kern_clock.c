@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.74 2001/01/17 18:21:41 thorpej Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.75 2001/05/06 13:46:34 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -314,6 +314,7 @@ long clock_cpu = 0;		/* CPU clock adjust */
 
 int	stathz;
 int	profhz;
+int	schedhz;
 int	profprocs;
 int	softclock_running;		/* 1 => softclock() is running */
 static int psdiv;			/* prof => stat divider */
