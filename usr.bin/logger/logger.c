@@ -1,4 +1,4 @@
-/*	$NetBSD: logger.c,v 1.5 1997/10/19 04:16:48 lukem Exp $	*/
+/*	$NetBSD: logger.c,v 1.6 1998/12/19 19:45:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)logger.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: logger.c,v 1.5 1997/10/19 04:16:48 lukem Exp $");
+__RCSID("$NetBSD: logger.c,v 1.6 1998/12/19 19:45:09 christos Exp $");
 #endif /* not lint */
 
 #include <errno.h>
@@ -179,7 +179,7 @@ decode(name, codetab)
 {
 	CODE *c;
 
-	if (isdigit(*name))
+	if (isdigit((unsigned char)*name))
 		return (atoi(name));
 
 	for (c = codetab; c->c_name; c++)
