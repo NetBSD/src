@@ -1,4 +1,4 @@
-/*	$NetBSD: tcsendbreak.c,v 1.3 1997/07/21 14:09:18 jtc Exp $	*/
+/*	$NetBSD: tcsendbreak.c,v 1.4 1998/03/31 09:50:01 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,19 +38,15 @@
 #if 0
 static char sccsid[] = "@(#)termios.c	8.2 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: tcsendbreak.c,v 1.3 1997/07/21 14:09:18 jtc Exp $");
+__RCSID("$NetBSD: tcsendbreak.c,v 1.4 1998/03/31 09:50:01 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 #include <sys/types.h>
 #include <sys/ioctl.h>
-#include <sys/tty.h>
 #include <sys/time.h>
-#include <sys/fcntl.h>
 
-#include <errno.h>
-#include <stdio.h>
 #include <termios.h>
 #include <unistd.h>
 
