@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.29.2.4 1999/12/20 15:08:12 he Exp $	*/
+/*	$NetBSD: perform.c,v 1.29.2.5 1999/12/20 15:12:20 he Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.44 1997/10/13 15:03:46 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.29.2.4 1999/12/20 15:08:12 he Exp $");
+__RCSID("$NetBSD: perform.c,v 1.29.2.5 1999/12/20 15:12:20 he Exp $");
 #endif
 #endif
 
@@ -47,7 +47,7 @@ static char *Home;
  * note found version in "note".
  */
 static int
-check_if_installed(const char *found, char *note)
+note_whats_installed(const char *found, char *note)
 {
 	(void) strcpy(note, found);
 	return 0;
@@ -109,7 +109,7 @@ pkg_do(char *pkg)
 	 * (Slave mode) */
 	if (!pkg) {
 		fgets(playpen, FILENAME_MAX, stdin);
-		playpen[strlen(playpen) - 1] = '\0';	/* pesky newline! */
+		playpen[strlen(playpen) - 1] = '\0';	/* remove newline! */
 		if (chdir(playpen) == FAIL) {
 			warnx("add in SLAVE mode can't chdir to %s", playpen);
 			return 1;
@@ -125,7 +125,7 @@ pkg_do(char *pkg)
 		 */
 		if (IS_URL(pkg)) {
 			if (ispkgpattern(pkg)) {
-				warnx("patterns not allowed in URLs, "
+				warnx("patterns not supported in URLs, "
 				    "please install manually!");
 				/* ... until we come up with a better solution :-/  - HF */
 				goto bomb;
@@ -139,16 +139,16 @@ pkg_do(char *pkg)
 			strcpy(pkg_fullname, pkg);
 			cfile = fopen(CONTENTS_FNAME, "r");
 			if (!cfile) {
-				warnx(
-				    "unable to open table of contents file `%s' - not a package?",
-				    CONTENTS_FNAME);
+				warnx("unable to open table of contents file `%s' - not a package?",
+				      CONTENTS_FNAME);
 				goto bomb;
 			}
 			read_plist(&Plist, cfile);
 			fclose(cfile);
-		} else {
+		} else { /* no URL */
 			strcpy(pkg_fullname, pkg);	/* copy for sanity's sake, could remove pkg_fullname */
 			if (strcmp(pkg, "-")) {
+			        /* not stdin */
 				if (!ispkgpattern(pkg_fullname)
 				    && stat(pkg_fullname, &sb) == FAIL) {
 					warnx("can't stat package file '%s'", pkg_fullname);
@@ -157,25 +157,24 @@ pkg_do(char *pkg)
 				(void) snprintf(extract_contents, sizeof(extract_contents), "--fast-read %s", CONTENTS_FNAME);
 				extract = extract_contents;
 			} else {
+			        /* some values for stdin */
 				extract = NULL;
 				sb.st_size = 100000;	/* Make up a plausible average size */
 			}
 			Home = make_playpen(playpen, sizeof(playpen), sb.st_size * 4);
 			if (!Home)
 				warnx("unable to make playpen for %ld bytes",
-				    (long) (sb.st_size * 4));
+				      (long) (sb.st_size * 4));
 			where_to = Home;
 			if (unpack(pkg_fullname, extract)) {
-				warnx(
-				    "unable to extract table of contents file from `%s' - not a package?",
-				    pkg_fullname);
+				warnx("unable to extract table of contents file from `%s' - not a package?",
+				      pkg_fullname);
 				goto bomb;
 			}
 			cfile = fopen(CONTENTS_FNAME, "r");
 			if (!cfile) {
-				warnx(
-				    "unable to open table of contents file `%s' - not a package?",
-				    CONTENTS_FNAME);
+				warnx("unable to open table of contents file `%s' - not a package?",
+				      CONTENTS_FNAME);
 				goto bomb;
 			}
 			read_plist(&Plist, cfile);
@@ -232,7 +231,7 @@ pkg_do(char *pkg)
 			}
 		}
 
-		/* Check for sanity and dependencies */
+		/* Check for sanity */
 		if (sanity_check(pkg))
 			goto bomb;
 
@@ -257,7 +256,7 @@ pkg_do(char *pkg)
 	/* Protect against old packages with bogus @name fields */
 	PkgName = (p = find_plist(&Plist, PLIST_NAME)) ? p->name : "anonymous";
 
-	/* See if we're already registered */
+	/* See if this package (exact version) is already registered */
 	(void) snprintf(LogDir, sizeof(LogDir), "%s/%s", dbdir, PkgName);
 	if ((isdir(LogDir) || islinktodir(LogDir)) && !Force) {
 		warnx("package `%s' already recorded as installed", PkgName);
@@ -278,7 +277,7 @@ pkg_do(char *pkg)
 			(void) memcpy(buf, PkgName, l);
 			(void) strcpy(&buf[l], "[0-9]*");
 
-			if (findmatchingname(dbdir, buf, check_if_installed, installed) > 0) {
+			if (findmatchingname(dbdir, buf, note_whats_installed, installed) > 0) {
 				warnx("other version '%s' already installed", installed);
 				code = 1;
 				goto success;	/* close enough for government work */
@@ -297,7 +296,7 @@ pkg_do(char *pkg)
 
 		/* was: */
 		/* if (!vsystem("/usr/sbin/pkg_info -qe '%s'", p->name)) { */
-		if (findmatchingname(dbdir, p->name, check_if_installed, installed) > 0) {
+		if (findmatchingname(dbdir, p->name, note_whats_installed, installed) > 0) {
 			warnx("Conflicting package installed, please use\n\t\"pkg_delete %s\" first to remove it!\n", installed);
 			++code;
 		}
@@ -312,27 +311,30 @@ pkg_do(char *pkg)
 		if (Verbose)
 			printf("Package `%s' depends on `%s'.\n", PkgName, p->name);
 		/* if (vsystem("/usr/sbin/pkg_info -qe '%s'", p->name)) { */
-		if (findmatchingname(dbdir, p->name, check_if_installed, installed) != 1) {
-			char    path[FILENAME_MAX], *cp = NULL;
+		if (findmatchingname(dbdir, p->name, note_whats_installed, installed) != 1) {
+			/* required pkg not found - need to pull in */
 
 			if (!Fake) {
 				if (!IS_URL(pkg) && !getenv("PKG_ADD_BASE")) {
 					/* install depending pkg from local disk */
 
+					char    path[FILENAME_MAX], *cp = NULL;
+
 					(void) snprintf(path, sizeof(path), "%s/%s.tgz", Home, p->name);
 					if (fexists(path))
 						cp = path;
 					else
-						cp = fileFindByPath(pkg, p->name);
+						cp = fileFindByPath(pkg, p->name); /* files & wildcards */
 					if (cp) {
 						if (Verbose)
 							printf("Loading it from %s.\n", cp);
 						if (vsystem("%s/pkg_add %s%s%s %s%s",
-							BINDIR,
-							Force ? "-f " : "",
-							Prefix ? "-p " : "",
-							Prefix ? Prefix : "",
-							Verbose ? "-v " : "", cp)) {
+							    BINDIR,
+							    Force ? "-f " : "",
+							    Prefix ? "-p " : "",
+							    Prefix ? Prefix : "",
+							    Verbose ? "-v " : "",
+							    cp)) {
 							warnx("autoload of dependency `%s' failed%s",
 							    cp, Force ? " (proceeding anyway)" : "!");
 							if (!Force)
@@ -343,7 +345,7 @@ pkg_do(char *pkg)
 						    p->name, Force ? " (proceeding anyway)" : "!");
 						if (!Force)
 							++code;
-					}
+					} /* cp */
 				} else {
 					/* install depending pkg via FTP */
 
@@ -355,6 +357,7 @@ pkg_do(char *pkg)
 					} else {
 						char   *saved_Current;	/* allocated/set by save_dirs(), */
 						char   *saved_Previous;	/* freed by restore_dirs() */
+						char   *cp;
 
 						save_dirs(&saved_Current, &saved_Previous);
 
@@ -386,16 +389,14 @@ pkg_do(char *pkg)
 					}
 				}
 			} else {
+			        /* fake install (???) */
 				if (Verbose)
-					printf("and was not found%s.\n", Force ? " (proceeding anyway)" : "");
-				else
-					printf("Package dependency %s for %s not found%s\n", p->name, pkg,
+					printf("Package dependency %s for %s not installed%s\n", p->name, pkg,
 					    Force ? " (proceeding anyway)" : "!");
-				if (!Force)
-					++code;
 			}
-		} else if (Verbose)
+		} else if (Verbose) {
 			printf(" - %s already installed.\n", installed);
+		}
 	}
 
 	if (code != 0)
@@ -443,7 +444,7 @@ pkg_do(char *pkg)
 			if (vsystem("%s/mtree -U -f %s -d -e -p %s", BINDIR, MTREE_FNAME, p ? p->name : "/"))
 				warnx("mtree returned a non-zero status - continuing");
 		}
-		unlink(MTREE_FNAME);
+		unlink(MTREE_FNAME); /* remove this line to tar up pkg later  - HF */
 	}
 
 	/* Run the installation script one last time? */
@@ -456,7 +457,7 @@ pkg_do(char *pkg)
 			code = 1;
 			goto fail;
 		}
-		unlink(INSTALL_FNAME);
+		unlink(INSTALL_FNAME); /* remove this line to tar up pkg later  - HF */
 	}
 
 	/* Time to record the deed? */
@@ -473,7 +474,7 @@ pkg_do(char *pkg)
 			goto success;	/* well, partial anyway */
 		}
 		(void) snprintf(LogDir, sizeof(LogDir), "%s/%s", dbdir, PkgName);
-		zapLogDir = 1;
+		zapLogDir = 1; /* LogDir contains something valid now */
 		if (Verbose)
 			printf("Attempting to record package into %s.\n", LogDir);
 		if (make_hierarchy(LogDir)) {
