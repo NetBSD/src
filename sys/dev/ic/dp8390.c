@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390.c,v 1.7.2.1 1997/11/02 20:33:16 mellon Exp $	*/
+/*	$NetBSD: dp8390.c,v 1.7.2.2 1997/11/03 00:21:33 thorpej Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -27,7 +27,6 @@
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_types.h>
-#include <net/if_media.h>
 #include <net/if_ether.h>
 
 #ifdef INET
@@ -71,9 +70,6 @@ static int		dp8390_test_mem __P((struct dp8390_softc *));
 int	dp8390_enable __P((struct dp8390_softc *));
 void	dp8390_disable __P((struct dp8390_softc *));
 
-int	dp8390_mediachange __P((struct ifnet *));
-void	dp8390_mediastatus __P((struct ifnet *, struct ifmediareq *));
-
 #define	ETHER_MIN_LEN	64
 #define ETHER_MAX_LEN	1518
 #define	ETHER_ADDR_LEN	6
@@ -84,12 +80,11 @@ int	dp8390_debug = 0;
  * Do bus-independent setup.
  */
 int
-dp8390_config(sc, media, nmedia, defmedia)
+dp8390_config(sc)
 	struct dp8390_softc *sc;
-	int *media, nmedia, defmedia;
 {
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
-	int i, rv;
+	int rv;
 
 	rv = 1;
 
@@ -126,18 +121,6 @@ dp8390_config(sc, media, nmedia, defmedia)
 	ifp->if_flags =
 	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
 
-	/* Initialize media goo. */
-	ifmedia_init(&sc->sc_media, 0, dp8390_mediachange, dp8390_mediastatus);
-	if (media != NULL) {
-		for (i = 0; i < nmedia; i++) {
-			ifmedia_add(&sc->sc_media, media[i], 0, NULL);
-			ifmedia_set(&sc->sc_media, defmedia);
-		}
-	} else {
-		ifmedia_add(&sc->sc_media, IFM_ETHER|IFM_MANUAL, 0, NULL);
-		ifmedia_set(&sc->sc_media, IFM_ETHER|IFM_MANUAL);
-	}
-
 	/* Attach the interface. */
 	if_attach(ifp);
 	ether_ifattach(ifp, sc->sc_enaddr);
@@ -152,40 +135,6 @@ dp8390_config(sc, media, nmedia, defmedia)
 	rv = 0;
 out:
 	return (rv);
-}
-
-/*
- * Media change callback.
- */
-int
-dp8390_mediachange(ifp)
-	struct ifnet *ifp;
-{
-	struct dp8390_softc *sc = ifp->if_softc;
-
-	if (sc->sc_mediachange)
-		return ((*sc->sc_mediachange)(sc));
-	return (EINVAL);
-}
-
-/*
- * Media status callback.
- */
-void
-dp8390_mediastatus(ifp, ifmr)
-	struct ifnet *ifp;
-	struct ifmediareq *ifmr;
-{
-	struct dp8390_softc *sc = ifp->if_softc;
-
-	if (sc->sc_enabled == 0) {
-		ifmr->ifm_active = IFM_ETHER | IFM_NONE;
-		ifmr->ifm_status = 0;
-		return;
-	}
-
-	if (sc->sc_mediastatus)
-		(*sc->sc_mediastatus)(sc, ifmr);
 }
 
 /*
@@ -793,7 +742,7 @@ dp8390_ioctl(ifp, cmd, data)
 	struct dp8390_softc *sc = ifp->if_softc;
 	struct ifaddr *ifa = (struct ifaddr *) data;
 	struct ifreq *ifr = (struct ifreq *) data;
-	int s, error = 0;
+	int     s, error = 0;
 
 	s = splnet();
 
@@ -884,11 +833,6 @@ dp8390_ioctl(ifp, cmd, data)
 			dp8390_init(sc);
 			error = 0;
 		}
-		break;
-
-	case SIOCGIFMEDIA:
-	case SIOCSIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, cmd);
 		break;
 
 	default:
