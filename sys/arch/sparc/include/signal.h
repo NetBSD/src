@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.4 1996/02/01 22:32:35 mycroft Exp $ */
+/*	$NetBSD: signal.h,v 1.5 1998/05/25 20:59:03 kleink Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -51,7 +51,8 @@
 typedef int sig_atomic_t;
 #endif
 
-#ifndef _ANSI_SOURCE
+#if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) && \
+    !defined(_XOPEN_SOURCE)
 #ifndef _LOCORE
 
 /*
@@ -96,5 +97,5 @@ struct sigcontext {
 #define	FPE_FLTOPERR_TRAP	0xd0	/* operand error */
 #define	FPE_FLTOVF_TRAP		0xd4	/* overflow */
 
-#endif	/* !_ANSI_SOURCE */
+#endif	/* !_ANSI_SOURCE && !_POSIX_C_SOURCE && !_XOPEN_SOURCE */
 #endif	/* !_SPARC_SIGNAL_H_ */

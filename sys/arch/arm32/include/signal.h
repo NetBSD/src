@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.5 1997/10/14 09:20:33 mark Exp $	*/
+/*	$NetBSD: signal.h,v 1.6 1998/05/25 20:59:02 kleink Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -47,9 +47,12 @@
 #define _ARM32_SIGNAL_H_
 
 #ifndef _LOCORE
-
 typedef int sig_atomic_t;
+#endif
 
+#if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) && \
+    !defined(_XOPEN_SOURCE)
+#ifndef _LOCORE
 /*
  * Information pushed on stack when a signal is delivered.
  * This is used by the kernel to restore state following
@@ -57,7 +60,7 @@ typedef int sig_atomic_t;
  * to the handler to allow it to restore state properly if
  * a non-standard exit is performed.
  */
- 
+
 struct	sigcontext {
 	int	sc_onstack;		/* sigstack state to restore */
 	int	sc_mask;		/* signal mask to restore */
@@ -82,7 +85,7 @@ struct	sigcontext {
 	unsigned int sc_pc;
 };
 
-#endif
+#endif /* !_LOCORE */
 
 /* Signals codes */
 
@@ -120,6 +123,7 @@ struct	sigcontext {
 #define SIG_CODE_SEGV_ADDR_MASK	SIG_CODE_BUS_ADDR_MASK
 #define SIG_CODE_SEGV_TYPE_MASK	SIG_CODE_BUS_TYPE_MASK
 
-#endif	/* _ARM_SIGNAL_H_ */
+#endif	/* !_ANSI_SOURCE && !_POSIX_C_SOURCE && !_XOPEN_SOURCE */
+#endif	/* !_ARM_SIGNAL_H_ */
 
 /* End of signal.h */
