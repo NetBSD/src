@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_maxine.c,v 1.6.4.4 1999/03/15 08:40:30 nisimura Exp $ */
+/*	$NetBSD: dec_maxine.c,v 1.6.4.5 1999/03/18 07:27:29 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.6.4.4 1999/03/15 08:40:30 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.6.4.5 1999/03/18 07:27:29 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -289,9 +289,10 @@ dec_maxine_intr(cpumask, pc, status, cause)
 	unsigned cause;
 {
 	struct ioasic_softc *sc = (void *)ioasic_cd.cd_devs[0];
-	u_int32_t *imsk = (u_int32_t *)sc->sc_ioasic_imsk;
-	u_int32_t *intr = (u_int32_t *)sc->sc_ioasic_intr;
-	volatile struct chiptime *clk = (void *)sc->sc_ioasic_rtc;
+	u_int32_t *imsk = (void *)(sc->sc_base + IOASIC_IMSK);
+	u_int32_t *intr = (void *)(sc->sc_base + IOASIC_INTR);
+	volatile struct chiptime *clk
+		= (void *)(sc->sc_base + IOASIC_SLOT_8_START);
 	volatile int temp;
 	struct clockframe cf;
 
@@ -329,15 +330,15 @@ dec_maxine_intr(cpumask, pc, status, cause)
 		(*intrtab[slot].ih_func)(intrtab[slot].ih_arg);	\
 	}
 
-			/* CHECKINTR(SYS_DEV_FDC, IOASIC_INTR_FDC);	*/
-			CHECKINTR(SYS_DEV_OPT0, XINE_INTR_TC_0);
-			/* CHECKINTR(SYS_DEV_ISDN, IOASIC_INTR_ISDN);	*/
-			CHECKINTR(SYS_DEV_SCSI, IOASIC_INTR_SCSI);
-			CHECKINTR(SYS_DEV_LANCE, IOASIC_INTR_LANCE);
-			CHECKINTR(SYS_DEV_SCC0, IOASIC_INTR_SCC_0);
-			/* CHECKINTR(SYS_DEV_OPT2, XINE_INTR_VINT);	*/
-			CHECKINTR(SYS_DEV_OPT1, XINE_INTR_TC_1);
 			CHECKINTR(SYS_DEV_DTOP, XINE_INTR_DTOP);
+			CHECKINTR(SYS_DEV_SCC0, IOASIC_INTR_SCC_0);
+			CHECKINTR(SYS_DEV_LANCE, IOASIC_INTR_LANCE);
+			CHECKINTR(SYS_DEV_SCSI, IOASIC_INTR_SCSI);
+			/* CHECKINTR(SYS_DEV_OPT2, XINE_INTR_VINT);	*/
+			/* CHECKINTR(SYS_DEV_ISDN, IOASIC_INTR_ISDN);	*/
+			/* CHECKINTR(SYS_DEV_FDC, IOASIC_INTR_FDC);	*/
+			CHECKINTR(SYS_DEV_OPT1, XINE_INTR_TC_1);
+			CHECKINTR(SYS_DEV_OPT0, XINE_INTR_TC_0);
 
 #define	ERRORS	(IOASIC_INTR_ISDN_OVRUN|IOASIC_INTR_ISDN_READ_E|IOASIC_INTR_SCSI_OVRUN|IOASIC_INTR_SCSI_READ_E|IOASIC_INTR_LANCE_READ_E)
 #define	PTRLOAD	(IOASIC_INTR_ISDN_PTR_LOAD|IOASIC_INTR_SCSI_PTR_LOAD)

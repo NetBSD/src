@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_3maxplus.c,v 1.9.2.5 1999/03/15 08:40:29 nisimura Exp $ */
+/*	$NetBSD: dec_3maxplus.c,v 1.9.2.6 1999/03/18 07:27:28 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.9.2.5 1999/03/15 08:40:29 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.9.2.6 1999/03/18 07:27:28 nisimura Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>	
@@ -286,9 +286,10 @@ dec_3maxplus_intr(cpumask, pc, status, cause)
 	unsigned cause;
 {
 	struct ioasic_softc *sc = (void *)ioasic_cd.cd_devs[0];
-	u_int32_t *imsk = (u_int32_t *)sc->sc_ioasic_imsk;
-	u_int32_t *intr = (u_int32_t *)sc->sc_ioasic_intr;
-	volatile struct chiptime *clk = (void *)sc->sc_ioasic_rtc;
+	u_int32_t *imsk = (void *)(sc->sc_base + IOASIC_IMSK);
+	u_int32_t *intr = (void *)(sc->sc_base + IOASIC_INTR);
+	volatile struct chiptime *clk
+		= (void *)(sc->sc_base + IOASIC_SLOT_8_START);
 	volatile int temp;
 	struct clockframe cf;
 	static int warned = 0;
@@ -344,11 +345,11 @@ dec_3maxplus_intr(cpumask, pc, status, cause)
 
 			CHECKINTR(SYS_DEV_SCC0, IOASIC_INTR_SCC_0);
 			CHECKINTR(SYS_DEV_SCC1, IOASIC_INTR_SCC_1);
+			CHECKINTR(SYS_DEV_LANCE, IOASIC_INTR_LANCE);
 			CHECKINTR(SYS_DEV_SCSI, IOASIC_INTR_SCSI);
 			CHECKINTR(SYS_DEV_OPT2, KN03_INTR_TC_2);
 			CHECKINTR(SYS_DEV_OPT1, KN03_INTR_TC_1);
 			CHECKINTR(SYS_DEV_OPT0, KN03_INTR_TC_0);
-			CHECKINTR(SYS_DEV_LANCE, IOASIC_INTR_LANCE);
 
 			if (warned > 0 && !(can_serve & KN03_INTR_PSWARN)) {
 				printf("%s\n", "Power supply ok now.");
