@@ -1,13 +1,10 @@
-#	$NetBSD: INSTALL,v 1.8 2000/09/25 11:46:38 abs Exp $
+#	$NetBSD: INSTALL,v 1.9 2000/09/25 13:54:51 abs Exp $
 #
 # INSTALL
 
 include	"arch/mac68k/conf/std.mac68k"
 
-# Saving space
-makeoptions	COPTS="-Os"		# Optimise for space. Implies -O2
-#options	VNODE_OP_NOINLINE	# Don't inline vnode op calls
-#options	NFS_V2_ONLY		# Exclude NFS3 and NQNFS code
+makeoptions 	COPTS="-Os"		# Optimise for space. Implies -O2
 
 maxusers	8		# estimated number of users
 
@@ -51,6 +48,10 @@ file-system 	NFS		# Network File System client
 file-system 	CD9660		# ISO 9660 + Rock Ridge file system
 file-system 	MSDOSFS		# MS-DOS file system
 file-system 	KERNFS		# /kern
+
+# Filesystem options
+#options 	NFS_V2_ONLY	# Exclude NFS3 and NQNFS code to save space
+#options 	VNODE_OP_NOINLINE # Save space by not inlining vnode op calls
 
 # Networking options
 options 	INET		# IP + ICMP + TCP + UDP
