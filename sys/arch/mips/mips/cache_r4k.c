@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_r4k.c,v 1.3 2001/11/18 18:46:20 thorpej Exp $	*/
+/*	$NetBSD: cache_r4k.c,v 1.4 2001/11/18 18:48:55 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -278,7 +278,7 @@ r4k_sdcache_wbinv_range_index_32(vaddr_t va, vsize_t size)
 	va = trunc_line(va);
 
 	while ((eva - va) >= (32 * 32)) {
-		cache_r4k_op_32lines_16(va,
+		cache_r4k_op_32lines_32(va,
 		    CACHE_R4K_SD|CACHEOP_R4K_INDEX_WB_INV);
 		va += (32 * 32);
 	}
