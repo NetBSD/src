@@ -1,4 +1,4 @@
-.\"	$NetBSD: postinstall,v 1.33.2.11 2002/07/29 13:52:20 lukem Exp $
+.\"	$NetBSD: postinstall,v 1.33.2.12 2002/07/29 14:01:07 lukem Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -160,7 +160,7 @@ furthermore add an
 for your
 .Aq int
 network interface,
-.ie r_mac68k \{\
+.ie rmac68k \{\
 where your on-board, NuBus or PDS interface may be
 .Li ae0 ,
 .Li mc0
@@ -169,7 +169,7 @@ or
 For example:
 .\}
 .el \{\
-.ie r_macppc \{\
+.ie rmacppc \{\
 where your on-board interfaces may be one of
 .Li mc0 ,
 .Li bm0 ,
@@ -184,10 +184,10 @@ For example:
 .
 .ds IFname de0
 .if \n[hp300]:\n[mvme68k]:\n[pmax]:\n[sparc] .ds IFname le0
-.if r_next68k .ds IFname xe0
-.if r_mac68k  .ds IFname sn0
-.if r_macppc  .ds IFname mc0
-.if r_sgimips .ds IFname sq0
+.if \n[next68k] .ds IFname xe0
+.if \n[mac68k]  .ds IFname sn0
+.if \n[macppc]  .ds IFname mc0
+.if \n[sgimips] .ds IFname sq0
 .
 .Dl ifconfig_\*[IFname]="inet 123.45.67.89 netmask 255.255.255.0"
 .Pp
@@ -211,7 +211,7 @@ for more information.
 Other files in
 .Pa /etc
 that may require modification or setting up include
-.ie r_sgimips \{\
+.ie rsgimips \{\
 .Pa /etc/mailer.conf
 and
 .Pa /etc/nsswitch.conf .
@@ -222,13 +222,13 @@ and
 and
 .Pa /etc/wscons.conf .
 .\}
-.ie r_shark \{\
+.ie rshark \{\
 .Pp
 For Digital DNARD machines you will need to edit
 .Pa /etc/ttys
 and change the console terminal type from vt100 to pc3.
 .\}
-.if r_atari \{\
+.if \n[atari] \{\
 .It
 Select the proper terminal devices
 .Pp
@@ -243,7 +243,7 @@ For the Milan, you will have to disable the
 devices.
 This is easy, just change 'on' to 'off' on the corresponding lines.
 .\}
-.if r_cats \{\
+.if \n[cats] \{\
 .Pp
 For the
 .Xr savecore 8
@@ -314,7 +314,7 @@ The
 .Xr xf86config 1
 utility can interactively create a first version of such a configuration
 file for you.
-.if r_mac68k \{\
+.if \n[mac68k] \{\
 .(tag [Color_X]
 .It [Color_X]
 Some systems are capable of supporting a color X Server in either thousands
