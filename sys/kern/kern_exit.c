@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.38 1996/02/09 18:59:29 christos Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -67,7 +67,6 @@
 #ifdef SYSVSEM
 #include <sys/sem.h>
 #endif
-#include <sys/cpu.h>
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
