@@ -38,6 +38,7 @@ i386/isa/aha1742.c	optional ahb
 i386/isa/aha1542.c	optional aha
 i386/isa/bt742a.c	optional bt
 i386/isa/ultra14f.c	optional uha
+i386/isa/wd7000.c	optional wds
 scsi/scsiconf.c		optional scbus
 scsi/st.c		optional st
 scsi/sd.c		optional sd
