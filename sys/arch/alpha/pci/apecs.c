@@ -1,7 +1,7 @@
-/*	$NetBSD: apecs.c,v 1.6 1996/04/12 04:38:33 cgd Exp $	*/
+/*	$NetBSD: apecs.c,v 1.7 1996/04/12 06:08:01 cgd Exp $	*/
 
 /*
- * Copyright (c) 1995 Carnegie-Mellon University.
+ * Copyright (c) 1995, 1996 Carnegie-Mellon University.
  * All rights reserved.
  *
  * Author: Chris G. Demetriou

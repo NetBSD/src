@@ -1,7 +1,7 @@
-/*	$NetBSD: prom_disp.s,v 1.3 1996/02/02 18:05:36 mycroft Exp $	*/
+/*	$NetBSD: prom_disp.s,v 1.4 1996/04/12 06:07:38 cgd Exp $	*/
 
 /*
- * Copyright (c) 1994, 1995 Carnegie-Mellon University.
+ * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
  * All rights reserved.
  *
  * Author: Chris G. Demetriou

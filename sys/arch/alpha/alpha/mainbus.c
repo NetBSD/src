@@ -1,7 +1,7 @@
-/*	$NetBSD: mainbus.c,v 1.8 1996/04/04 06:25:02 cgd Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.9 1996/04/12 06:07:35 cgd Exp $	*/
 
 /*
- * Copyright (c) 1994, 1995 Carnegie-Mellon University.
+ * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
  * All rights reserved.
  *
  * Author: Chris G. Demetriou

@@ -1,7 +1,7 @@
-/*	$NetBSD: tc_3000_300.c,v 1.5 1996/04/12 01:31:49 cgd Exp $	*/
+/*	$NetBSD: tc_3000_300.c,v 1.6 1996/04/12 06:09:58 cgd Exp $	*/
 
 /*
- * Copyright (c) 1994, 1995 Carnegie-Mellon University.
+ * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
  * All rights reserved.
  *
  * Author: Chris G. Demetriou
