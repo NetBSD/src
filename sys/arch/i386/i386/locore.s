@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)locore.s	7.3 (Berkeley) 5/13/91
- *	$Id: locore.s,v 1.28.2.27 1993/11/11 16:55:50 mycroft Exp $
+ *	$Id: locore.s,v 1.28.2.28 1993/11/12 15:20:38 mycroft Exp $
  */
 
 
@@ -1579,11 +1579,6 @@ ENTRY(savectx)
 	addl	$12,%esp
 	popl	%ecx
 1:
-#endif
-
-#if 0
-	movl	_CMAP2,%edx		# save temporary map PTE
-	movl	%edx,PCB_CMAP2(%ecx)	# in our context
 #endif
 
 	cmpl	$0,8(%esp)
