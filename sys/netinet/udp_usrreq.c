@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.71 2000/08/30 15:04:45 itojun Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.72 2000/10/17 03:06:44 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -131,10 +131,12 @@ int	udpcksum = 1;
 int	udpcksum = 0;		/* XXX */
 #endif
 
+#ifdef INET
 static void udp4_sendup __P((struct mbuf *, int, struct sockaddr *,
 	struct socket *));
 static int udp4_realinput __P((struct sockaddr_in *, struct sockaddr_in *,
 	struct mbuf *, int));
+#endif
 #ifdef INET6
 static void udp6_sendup __P((struct mbuf *, int, struct sockaddr *,
 	struct socket *));
@@ -143,7 +145,9 @@ static	int in6_mcmatch __P((struct in6pcb *, struct in6_addr *,
 static int udp6_realinput __P((int, struct sockaddr_in6 *,
 	struct sockaddr_in6 *, struct mbuf *, int));
 #endif
+#ifdef INET
 static	void udp_notify __P((struct inpcb *, int));
+#endif
 
 #ifndef UDBHASHSIZE
 #define	UDBHASHSIZE	128
@@ -154,10 +158,13 @@ void
 udp_init()
 {
 
+#ifdef INET
 	in_pcbinit(&udbtable, udbhashsize, udbhashsize);
+#endif
 }
 
 #ifndef UDP6
+#ifdef INET
 void
 #if __STDC__
 udp_input(struct mbuf *m, ...)
@@ -310,6 +317,7 @@ bad:
 	if (m)
 		m_freem(m);
 }
+#endif
 
 #ifdef INET6
 int
@@ -420,6 +428,7 @@ bad:
 }
 #endif
 
+#ifdef INET
 static void
 udp4_sendup(m, off, src, so)
 	struct mbuf *m;
@@ -474,6 +483,7 @@ udp4_sendup(m, off, src, so)
 			sorwakeup(so);
 	}
 }
+#endif
 
 #ifdef INET6
 static void
@@ -520,6 +530,7 @@ udp6_sendup(m, off, src, so)
 }
 #endif
 
+#ifdef INET
 static int
 udp4_realinput(src, dst, m, off)
 	struct sockaddr_in *src;
@@ -656,6 +667,7 @@ udp4_realinput(src, dst, m, off)
 bad:
 	return rcvcnt;
 }
+#endif
 
 #ifdef INET6
 static int
@@ -1127,6 +1139,7 @@ bad:
 }
 #endif /*UDP6*/
 
+#ifdef INET
 /*
  * Notify a udp user of an asynchronous error;
  * just wake up so that he can collect error status.
@@ -1462,3 +1475,4 @@ udp_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	}
 	/* NOTREACHED */
 }
+#endif
