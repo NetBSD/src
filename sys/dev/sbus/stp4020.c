@@ -1,4 +1,4 @@
-/*	$NetBSD: stp4020.c,v 1.18 2002/03/08 21:33:43 martin Exp $ */
+/*	$NetBSD: stp4020.c,v 1.18.2.1 2002/03/17 23:43:59 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.18 2002/03/08 21:33:43 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.18.2.1 2002/03/17 23:43:59 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -627,8 +627,8 @@ dummy_splraise(int ipl)
 		return splserial();	/* XXX ? */
 	case IPL_TTY:
 		return spltty();
-	case IPL_IMP:
-		return splhigh();	/* XXX ? */
+	case IPL_VM:
+		return splvm();
 	case IPL_AUDIO:
 		return splaudio();
 	case IPL_CLOCK:

@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.1 2001/06/19 00:20:32 fvdl Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.1.10.1 2002/03/17 23:43:59 thorpej Exp $	*/
 
 #define ISA_DMA_STATS
 
@@ -331,9 +331,9 @@ intr_calculatemasks()
 	 * There are tty, network and disk drivers that use free() at interrupt
 	 * time, so imp > (tty | net | bio).
 	 */
-	imask[IPL_IMP] |= imask[IPL_TTY];
+	imask[IPL_VM] |= imask[IPL_TTY];
 
-	imask[IPL_AUDIO] |= imask[IPL_IMP];
+	imask[IPL_AUDIO] |= imask[IPL_VM];
 
 	/*
 	 * Since run queues may be manipulated by both the statclock and tty,

@@ -1,4 +1,4 @@
-/*	$NetBSD: firepower_intr.c,v 1.1 2001/10/29 22:28:39 thorpej Exp $	*/
+/*	$NetBSD: firepower_intr.c,v 1.1.8.1 2002/03/17 23:43:53 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -226,14 +226,14 @@ firepower_intr_calculate_masks(void)
 	 * splvm() blocks all interrupts that use the kernel memory
 	 * allocation facilities.
 	 */
-	imask[IPL_IMP] |= imask[IPL_TTY];
+	imask[IPL_VM] |= imask[IPL_TTY];
 
 	/*
 	 * Audio devices are not allowed to perform memory allocation
 	 * in their interrupt routines, and they have fairly "real-time"
 	 * requirements, so give them a high interrupt priority.
 	 */
-	imask[IPL_AUDIO] |= imask[IPL_IMP];
+	imask[IPL_AUDIO] |= imask[IPL_VM];
 
 	/*
 	 * splclock() must block anything that uses the scheduler.

@@ -1,4 +1,4 @@
-/*	$NetBSD: shb.c,v 1.11 2002/02/28 01:57:00 uch Exp $	*/
+/*	$NetBSD: shb.c,v 1.11.4.1 2002/03/17 23:43:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.  All rights reserved.
@@ -202,9 +202,9 @@ intr_calculatemasks()
 	 * There are tty, network and disk drivers that use free() at interrupt
 	 * time, so imp > (tty | net | bio).
 	 */
-	imask[IPL_IMP] |= imask[IPL_TTY];
+	imask[IPL_VM] |= imask[IPL_TTY];
 
-	imask[IPL_AUDIO] |= imask[IPL_IMP];
+	imask[IPL_AUDIO] |= imask[IPL_VM];
 
 	/*
 	 * Since run queues may be manipulated by both the statclock and tty,

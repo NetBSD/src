@@ -1,4 +1,4 @@
-/* 	$NetBSD: intr.h,v 1.13 2001/06/04 15:34:57 ragge Exp $	*/
+/* 	$NetBSD: intr.h,v 1.13.12.1 2002/03/17 23:43:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Matt Thomas.
@@ -43,7 +43,7 @@
 #define IPL_HIGH	0x1f	/* high -- blocks all interrupts */
 #define IPL_CLOCK	0x18	/* clock */
 #define IPL_UBA		0x17	/* unibus adapters */
-#define IPL_IMP		0x17	/* memory allocation */
+#define IPL_VM		0x17	/* memory allocation */
 #define IPL_NET		0x16	/* network */
 #define IPL_BIO		0x15	/* block I/O */
 #define IPL_TTY		0x15	/* terminal */
@@ -117,7 +117,7 @@ do {								\
 #define splbio()	_splraise(IPL_BIO)		/* IPL15 */
 #define spltty()	_splraise(IPL_TTY)		/* IPL15 */
 #define splnet()	_splraise(IPL_NET)		/* IPL16 */
-#define splvm()		_splraise(IPL_IMP)		/* IPL17 */
+#define splvm()		_splraise(IPL_VM)		/* IPL17 */
 #define splclock()	_splraise(IPL_CLOCK)		/* IPL18 */
 #define splhigh()	_splraise(IPL_HIGH)		/* IPL1F */
 #define splstatclock()	splclock()

@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw.c,v 1.8 2002/03/03 11:23:02 chris Exp $	*/
+/*	$NetBSD: ofw.c,v 1.8.2.1 2002/03/17 23:43:57 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -313,9 +313,9 @@ ofw_boot(howto, bootstr)
 	printf("boot: howto=%08x curproc=%p\n", howto, curproc);
 	printf("current_mask=%08x spl_mask=%08x\n", current_mask, spl_mask);
 
-	printf("ipl_bio=%08x ipl_net=%08x ipl_tty=%08x ipl_imp=%08x\n",
+	printf("ipl_bio=%08x ipl_net=%08x ipl_tty=%08x ipl_vm=%08x\n",
 	    irqmasks[IPL_BIO], irqmasks[IPL_NET], irqmasks[IPL_TTY],
-	    irqmasks[IPL_IMP]);
+	    irqmasks[IPL_VM]);
 	printf("ipl_audio=%08x ipl_clock=%08x ipl_none=%08x\n",
 	    irqmasks[IPL_AUDIO], irqmasks[IPL_CLOCK], irqmasks[IPL_NONE]);
 
