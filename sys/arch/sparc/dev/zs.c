@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.63 1999/02/11 15:28:05 mycroft Exp $	*/
+/*	$NetBSD: zs.c,v 1.64 1999/02/14 12:44:31 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -58,8 +58,8 @@
 #include <sys/time.h>
 #include <sys/syslog.h>
 
-#include <machine/autoconf.h>
 #include <machine/bsd_openprom.h>
+#include <machine/autoconf.h>
 #include <machine/conf.h>
 #include <machine/cpu.h>
 #include <machine/eeprom.h>
@@ -854,13 +854,13 @@ prom_cninit(cn)
 
 /*
  * PROM console input putchar.
- * (dummy - this is output only)
+ * (dummy - this is output only) (WHY?????!)
  */
 static int
 prom_cngetc(dev)
 	dev_t dev;
 {
-	return (0);
+	return (prom_getchar());
 }
 
 /*
@@ -871,13 +871,8 @@ prom_cnputc(dev, c)
 	dev_t dev;
 	int c;
 {
-	char c0 = (c & 0x7f);
 
-	if (promvec->pv_romvec_vers > 2)
-		(*promvec->pv_v2devops.v2_write)
-			(*promvec->pv_v2bootargs.v2_fd1, &c0, 1);
-	else
-		(*promvec->pv_putchar)(c);
+	prom_putchar(c);
 }
 
 /*****************************************************************/
@@ -902,27 +897,24 @@ consinit()
 	int channel, zs_unit, zstty_unit;
 	int inSource, outSink;
 
-	if (promvec->pv_romvec_vers > 2) {
+	if (prom_version() > 2) {
 		/* We need to probe the PROM device tree */
 		register int node,fd;
 		char buffer[128];
-		register struct nodeops *no;
-		register struct v2devops *op;
+		char *devtype;
 		register char *cp;
 		extern int fbnode;
 
 		inSource = outSink = -1;
-		no = promvec->pv_nodeops;
-		op = &promvec->pv_v2devops;
 
 		node = findroot();
-		if (no->no_proplen(node, "stdin-path") >= sizeof(buffer)) {
+		if (getproplen(node, "stdin-path") >= sizeof(buffer)) {
 			printf("consinit: increase buffer size and recompile\n");
 			goto setup_output;
 		}
 		/* XXX: fix above */
 
-		no->no_getprop(node, "stdin-path",buffer);
+		getpropstringA(node, "stdin-path", buffer, sizeof buffer);
 
 		/*
 		 * Open an "instance" of this device.
@@ -931,16 +923,16 @@ consinit()
 		 * to cause the device to shut down somehow; for the moment,
 		 * we simply leave it open...
 		 */
-		if ((fd = op->v2_open(buffer)) == 0 ||
-		     (node = op->v2_fd_phandle(fd)) == 0) {
-			printf("consinit: bogus stdin path %s.\n",buffer);
+		if ((fd = prom_open(buffer)) == 0 ||
+		     (node = prom_instance_to_package(fd)) == 0) {
+			printf("consinit: bogus stdin path %s.\n", buffer);
 			goto setup_output;
 		}
-		if (no->no_proplen(node,"keyboard") >= 0) {
+		if (prom_node_has_property(node, "keyboard") >= 0) {
 			inSource = PROMDEV_KBD;
 			goto setup_output;
 		}
-		if (strcmp(getpropstring(node,"device_type"),"serial") != 0) {
+		if (strcmp(getpropstring(node, "device_type"), "serial") != 0) {
 			/* not a serial, not keyboard. what is it?!? */
 			inSource = -1;
 			goto setup_output;
@@ -960,29 +952,29 @@ consinit()
 #endif
 		/* XXX: only allows tty's a->z, assumes PROMDEV_TTYx contig */
 		if (cp[0]==':' && cp[1] >= 'a' && cp[1] <= 'z')
-		    inSource = PROMDEV_TTYA + (cp[1] - 'a');
+			inSource = PROMDEV_TTYA + (cp[1] - 'a');
 		/* else use rom */
 setup_output:
 		node = findroot();
-		if (no->no_proplen(node, "stdout-path") >= sizeof(buffer)) {
+		if (getproplen(node, "stdout-path") >= sizeof(buffer)) {
 			printf("consinit: increase buffer size and recompile\n");
 			goto setup_console;
 		}
 		/* XXX: fix above */
 
-		no->no_getprop(node, "stdout-path", buffer);
+		getpropstringA(node, "stdout-path", buffer, sizeof buffer);
 
-		if ((fd = op->v2_open(buffer)) == 0 ||
-		     (node = op->v2_fd_phandle(fd)) == 0) {
+		if ((fd = prom_open(buffer)) == 0 ||
+		     (node = prom_instance_to_package(fd)) == 0) {
 			printf("consinit: bogus stdout path %s.\n",buffer);
 			goto setup_output;
 		}
-		if (strcmp(getpropstring(node,"device_type"),"display") == 0) {
+		devtype = getpropstring(node, "device_type");
+		if (strcmp(devtype, "display") == 0) {
 			/* frame buffer output */
 			outSink = PROMDEV_SCREEN;
 			fbnode = node;
-		} else if (strcmp(getpropstring(node,"device_type"), "serial")
-			   != 0) {
+		} else if (strcmp(devtype, "serial") != 0) {
 			/* not screen, not serial. Whatzit? */
 			outSink = -1;
 		} else { /* serial console. which? */
@@ -1001,25 +993,27 @@ setup_output:
 				panic("consinit: bad stdout path %s",buffer);
 #endif
 			/* XXX: only allows tty's a->z, assumes PROMDEV_TTYx contig */
-			if (cp[0]==':' && cp[1] >= 'a' && cp[1] <= 'z')
-			    outSink = PROMDEV_TTYA + (cp[1] - 'a');
-			else outSink = -1;
+			outSink = (cp[0] == ':' && cp[1] >= 'a' && cp[1] <= 'z')
+				? PROMDEV_TTYA + (cp[1] - 'a')
+				: -1;
 		}
 	} else {
-		inSource = *promvec->pv_stdin;
-		outSink  = *promvec->pv_stdout;
+		/* Otherwise the stdio handles identify the device type */
+		inSource = prom_stdin();
+		outSink  = prom_stdout();
 	}
 
 setup_console:
 
 	if (inSource != outSink) {
 		printf("cninit: mismatched PROM output selector\n");
+		printf("inSource=%x; Sink=%x\n", inSource, outSink);
 	}
 
 	switch (inSource) {
 	default:
 		printf("cninit: invalid inSource=%d\n", inSource);
-		callrom();
+		prom_abort();
 		inSource = PROMDEV_KBD;
 		/* fall through */
 
