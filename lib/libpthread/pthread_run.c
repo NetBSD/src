@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_run.c,v 1.3 2003/01/19 21:58:24 thorpej Exp $	*/
+/*	$NetBSD: pthread_run.c,v 1.4 2003/01/30 01:00:58 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -70,6 +70,7 @@ sched_yield(void)
 		self = pthread__self();
 		SDPRINTF(("(sched_yield %p) yielding\n", self));
 		pthread_spinlock(self, &pthread__runqueue_lock);
+		self->pt_state = PT_STATE_RUNNABLE;
 		PTQ_INSERT_TAIL(&pthread__runqueue, self, pt_runq);
 		/*
 		 * There will always be at least one thread on the runqueue,
