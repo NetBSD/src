@@ -21,7 +21,7 @@ SOFTWARE.
 ************************************************************************/
 
 #ifndef lint
-static char rcsid[] = "$Header: /cvsroot/src/usr.sbin/bootpd/Attic/readfile.c,v 1.1.1.1 1994/06/27 21:25:48 gwr Exp $";
+static char rcsid[] = "$Id: readfile.c,v 1.2 1994/08/22 22:15:04 gwr Exp $";
 #endif
 
 
@@ -80,6 +80,7 @@ static char rcsid[] = "$Header: /cvsroot/src/usr.sbin/bootpd/Attic/readfile.c,v 
 #define E_BAD_LONGWORD		(-6)
 #define E_BAD_HWATYPE		(-7)
 #define E_BAD_PATHNAME		(-8)
+#define E_BAD_VALUE 		(-9)
 
 /* Tag idendities. */
 #define SYM_NULL		  0
@@ -115,14 +116,16 @@ static char rcsid[] = "$Header: /cvsroot/src/usr.sbin/bootpd/Attic/readfile.c,v 
 #define SYM_NIS_SERVER           31	/* RFC 1533 */
 #define SYM_NTP_SERVER           32	/* RFC 1533 */
 #define SYM_EXEC_FILE		 33	/* YORK_EX_OPTION */
+#define SYM_MSG_SIZE 		 34
+#define SYM_MIN_WAIT		 35
 /* XXX - Add new tags here */
 
-#define OP_ADDITION		  1		/* Operations on tags */
+#define OP_ADDITION		  1	/* Operations on tags */
 #define OP_DELETION		  2
 #define OP_BOOLEAN		  3
 
-#define MAXINADDRS		 16		/* Max size of an IP address list */
-#define MAXBUFLEN		 64		/* Max temp buffer space */
+#define MAXINADDRS		 16	/* Max size of an IP address list */
+#define MAXBUFLEN		256	/* Max temp buffer space */
 #define MAXENTRYLEN	       2048	/* Max size of an entire entry */
 
 
@@ -174,6 +177,8 @@ PRIVATE struct symbolmap symbol_list[] = {
 	{"ip", SYM_IPADDR},
 	{"lg", SYM_LOG_SERVER},
 	{"lp", SYM_LPR_SERVER},
+	{"ms", SYM_MSG_SIZE},
+	{"mw", SYM_MIN_WAIT},
 	{"ns", SYM_NAME_SERVER},
 	{"nt", SYM_NTP_SERVER},
 	{"ra", SYM_REPLY_ADDR},
@@ -694,6 +699,8 @@ process_entry(host, src)
 			break;
 		case E_BAD_PATHNAME:
 			msg = "bad pathname (need leading '/')";
+		case E_BAD_VALUE:
+			msg = "bad value";
 		default:
 			msg = "unkown error";
 			break;
@@ -757,6 +764,19 @@ process_entry(host, src)
 		hp->MEMBER = get_shared_string(symbol); \
 		if (hp->MEMBER == NULL) \
 			return E_SYNTAX_ERROR; \
+		hp->flags.MEMBER = TRUE; \
+	} \
+} while (0)
+
+/* Parse an integer value for MEMBER */
+#define PARSE_INT(MEMBER) do \
+{ \
+	if (optype == OP_BOOLEAN) \
+		return E_SYNTAX_ERROR; \
+	hp->flags.MEMBER = FALSE; \
+	if (optype == OP_ADDITION) { \
+		value = get_u_long(symbol); \
+		hp->MEMBER = value; \
 		hp->flags.MEMBER = TRUE; \
 	} \
 } while (0)
@@ -893,9 +913,6 @@ eval_symbol(symbol, hp)
 
 	case SYM_HOMEDIR:
 		PARSE_STR(homedir);
-		if ((hp->homedir != NULL) &&
-			(hp->homedir->string[0] != '/'))
-			return E_BAD_PATHNAME;
 		break;
 
 	case SYM_HTYPE:
@@ -1102,6 +1119,19 @@ eval_symbol(symbol, hp)
 		PARSE_STR(exec_file);
 		break;
 #endif
+
+	case SYM_MSG_SIZE:
+		PARSE_INT(msg_size);
+		if (hp->msg_size < BP_MINPKTSZ ||
+			hp->msg_size > MAX_MSG_SIZE)
+			return E_BAD_VALUE;
+		break;
+
+	case SYM_MIN_WAIT:
+		PARSE_INT(min_wait);
+		if (hp->min_wait < 0)
+			return E_BAD_VALUE;
+		break;
 
 		/* XXX - Add new tags here */
 
@@ -1479,6 +1509,9 @@ fill_defaults(hp, src)
 #ifdef	YORK_EX_OPTION
 	DUP_LINK(exec_file);
 #endif
+
+	DUP_COPY(msg_size);
+	DUP_COPY(min_wait);
 
 	/* XXX - Add new tags here */
 

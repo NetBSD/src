@@ -21,7 +21,7 @@ SOFTWARE.
 ************************************************************************/
 
 #ifndef lint
-static char rcsid[] = "$Id: bootpd.c,v 1.1.1.1 1994/06/27 21:25:49 gwr Exp $";
+static char rcsid[] = "$Id: bootpd.c,v 1.2 1994/08/22 22:14:43 gwr Exp $";
 #endif
 
 /*
@@ -94,9 +94,6 @@ static char rcsid[] = "$Id: bootpd.c,v 1.1.1.1 1994/06/27 21:25:49 gwr Exp $";
 #include "report.h"
 #include "tzone.h"
 #include "patchlevel.h"
-
-/* Local definitions: */
-#define MAXPKT			(3*512) /* Maximum packet size */
 
 #ifndef CONFIG_FILE
 #define CONFIG_FILE		"/etc/bootptab"
@@ -220,7 +217,7 @@ main(argc, argv)
 	assert(sizeof(struct bootp) == BP_MINPKTSZ);
 
 	/* Get space for receiving packets and composing replies. */
-	pktbuf = malloc(MAXPKT);
+	pktbuf = malloc(MAX_MSG_SIZE);
 	if (!pktbuf) {
 		report(LOG_ERR, "malloc failed");
 		exit(1);
@@ -524,7 +521,7 @@ main(argc, argv)
 			exit(0);
 		}
 		ra_len = sizeof(recv_addr);
-		n = recvfrom(s, pktbuf, MAXPKT, 0,
+		n = recvfrom(s, pktbuf, MAX_MSG_SIZE, 0,
 					 (struct sockaddr *) &recv_addr, &ra_len);
 		if (n <= 0) {
 			continue;
@@ -612,11 +609,10 @@ handle_request()
 	int32 bootsize = 0;
 	unsigned hlen, hashcode;
 	int32 dest;
-#ifdef	CHECK_FILE_ACCESS
 	char realpath[1024];
-	char *path;
+	char *clntpath;
+	char *homedir, *bootfile;
 	int n;
-#endif
 
 	/* XXX - SLIP init: Set bp_ciaddr = recv_addr here? */
 
@@ -639,6 +635,7 @@ ignoring request for server %s from client at %s address %s",
 		strcpy(bp->bp_sname, hostname);
 	}
 
+	/* Convert the request into a reply. */
 	bp->bp_op = BOOTREPLY;
 	if (bp->bp_ciaddr.s_addr == 0) {
 		/*
@@ -714,6 +711,21 @@ HW addr type is IEEE 802.  convert to %s and check again\n",
 			   hp->hostname->string);
 	}
 
+	/*
+	 * If there is a response delay threshold, ignore requests
+	 * with a timestamp lower than the threshold.
+	 */
+	if (hp->flags.min_wait) {
+		u_int32 t = (u_int32) ntohs(bp->bp_secs);
+		if (t < hp->min_wait) {
+			if (debug > 1)
+				report(LOG_INFO,
+					   "ignoring request due to timestamp (%d < %d)",
+					   t, hp->min_wait);
+			return;
+		}
+	}
+
 #ifdef	YORK_EX_OPTION
 	/*
 	 * The need for the "ex" tag arose out of the need to empty
@@ -785,163 +797,125 @@ HW addr type is IEEE 802.  convert to %s and check again\n",
 	 */
 
 	/*
-	 * XXX - I think the above policy is too complicated.  When the
-	 * boot file is missing, it is not obvious why bootpd will not
-	 * respond to client requests.  Define CHECK_FILE_ACCESS if you
-	 * want the original complicated policy, otherwise bootpd will
-	 * no longer check for existence of the boot file. -gwr
+	 * XXX - I don't like the policy of ignoring a client when the
+	 * boot file is not accessible.  The TFTP server might not be
+	 * running on the same machine as the BOOTP server, in which
+	 * case checking accessibility of the boot file is pointless.
+	 *
+	 * Therefore, file accessibility is now demanded ONLY if you
+	 * define CHECK_FILE_ACCESS in the Makefile options. -gwr
 	 */
 
-#ifdef	CHECK_FILE_ACCESS
-
+	/*
+	 * The "real" path is as seen by the BOOTP daemon on this
+	 * machine, while the client path is relative to the TFTP
+	 * daemon chroot directory (i.e. /tftpboot).
+	 */
 	if (hp->flags.tftpdir) {
 		strcpy(realpath, hp->tftpdir->string);
-		path = &realpath[strlen(realpath)];
+		clntpath = &realpath[strlen(realpath)];
 	} else {
-		path = realpath;
+		clntpath = realpath;
 	}
 
+	/*
+	 * Determine client's requested homedir and bootfile.
+	 */
+	homedir = NULL;
+	bootfile = NULL;
 	if (bp->bp_file[0]) {
-		/*
-		 * The client specified a file.
-		 */
-		if (bp->bp_file[0] == '/') {
-			strcpy(path, bp->bp_file);	/* Absolute pathname */
+		homedir = bp->bp_file;
+		bootfile = strrchr(homedir, '/');
+		if (bootfile) {
+			if (homedir == bootfile)
+				homedir = NULL;
+			*bootfile++ = '\0';
 		} else {
-			if (hp->flags.homedir) {
-				strcpy(path, hp->homedir->string);
-				strcat(path, "/");
-				strcat(path, bp->bp_file);
-			} else {
-				report(LOG_NOTICE,
-					   "requested file \"%s\" not found: hd unspecified",
-					   bp->bp_file);
-				return;
-			}
+			/* no "/" in the string */
+			bootfile = homedir;
+			homedir = NULL;
 		}
-	} else {
-		/*
-		 * No file specified by the client.
-		 */
-		if (hp->flags.bootfile && ((hp->bootfile->string)[0] == '/')) {
-			strcpy(path, hp->bootfile->string);
-		} else if (hp->flags.homedir && hp->flags.bootfile) {
-			strcpy(path, hp->homedir->string);
-			strcat(path, "/");
-			strcat(path, hp->bootfile->string);
-		} else {
-			bzero(bp->bp_file, sizeof(bp->bp_file));
-			goto skip_file;	/* Don't bother trying to access the file */
+		if (debug > 2) {
+			report(LOG_INFO, "requested path=\"%s\"  file=\"%s\"",
+				   (homedir) ? homedir : "",
+				   (bootfile) ? bootfile : "");
 		}
+	}
+
+	/*
+	 * Specifications in bootptab override client requested values.
+	 */
+	if (hp->flags.homedir)
+		homedir = hp->homedir->string;
+	if (hp->flags.bootfile)
+		bootfile = hp->bootfile->string;
+
+	/*
+	 * Construct bootfile path.
+	 */
+	if (homedir) {
+		if (homedir[0] != '/')
+			strcat(clntpath, "/");
+		strcat(clntpath, homedir);
+		homedir = NULL;
+	}
+	if (bootfile) {
+		if (bootfile[0] != '/')
+			strcat(clntpath, "/");
+		strcat(clntpath, bootfile);
+		bootfile = NULL;
 	}
 
 	/*
 	 * First try to find the file with a ".host" suffix
 	 */
-	n = strlen(path);
-	strcat(path, ".");
-	strcat(path, hp->hostname->string);
+	n = strlen(clntpath);
+	strcat(clntpath, ".");
+	strcat(clntpath, hp->hostname->string);
 	if (chk_access(realpath, &bootsize) < 0) {
-		path[n] = 0;			/* Try it without the suffix */
+		clntpath[n] = 0;			/* Try it without the suffix */
 		if (chk_access(realpath, &bootsize) < 0) {
+			/* neither "file.host" nor "file" was found */
+#ifdef	CHECK_FILE_ACCESS
+
 			if (bp->bp_file[0]) {
 				/*
 				 * Client wanted specific file
 				 * and we didn't have it.
 				 */
 				report(LOG_NOTICE,
-					   "requested file not found: \"%s\"", path);
+					   "requested file not found: \"%s\"", clntpath);
 				return;
-			} else {
-				/*
-				 * Client didn't ask for a specific file and we couldn't
-				 * access the default file, so just zero-out the bootfile
-				 * field in the packet and continue processing the reply.
-				 */
-				bzero(bp->bp_file, sizeof(bp->bp_file));
-				goto skip_file;
 			}
-		}
-	}
-	strcpy(bp->bp_file, path);
+			/*
+			 * Client didn't ask for a specific file and we couldn't
+			 * access the default file, so just zero-out the bootfile
+			 * field in the packet and continue processing the reply.
+			 */
+			bzero(bp->bp_file, sizeof(bp->bp_file));
+			goto null_file_name;
 
-  skip_file:
-	;
-
 #else	/* CHECK_FILE_ACCESS */
 
-	/*
-	 * This implements a simple response policy, where bootpd
-	 * will fail to respond only if it knows nothing about
-	 * the client that sent the request.  This plugs in the
-	 * boot file name but does not demand that it exist.
-	 *
-	 * If either the client or the server specifies a boot file,
-	 * build the path name for it.  Server boot file preferred.
-	 */
-	if (bp->bp_file[0] || hp->flags.bootfile) {
-		char requested_file[BP_FILE_LEN];
-		char *given_file;
-		char *p = bp->bp_file;
-		int space = BP_FILE_LEN;
-		int n;
+			/* Complain only if boot file size was needed. */
+			if (hp->flags.bootsize_auto) {
+				report(LOG_ERR, "can not determine size of file \"%s\"",
+					   clntpath);
+			}
 
-		/* Save client's requested file name. */
-		strncpy(requested_file, bp->bp_file, BP_FILE_LEN);
-
-		/* If tftpdir is set, insert it. */
-		if (hp->flags.tftpdir) {
-			n = strlen(hp->tftpdir->string);
-			if ((n+1) >= space)
-				goto nospc;
-			strcpy(p, hp->tftpdir->string);
-			p += n;
-			space -= n;
-		}
-
-		/* If homedir is set, insert it. */
-		if (hp->flags.homedir) {
-			n = strlen(hp->homedir->string);
-			if ((n+1) >= space)
-				goto nospc;
-			strcpy(p, hp->homedir->string);
-			p += n;
-			space -= n;
-		}
-
-		/* Finally, append the boot file name. */
-		if (hp->flags.bootfile)
-			given_file = hp->bootfile->string;
-		else
-			given_file = requested_file;
-		assert(given_file);
-		n = strlen(given_file);
-		if ((n+1) >= space)
-			goto nospc;
-		strcpy(p, given_file);
-		p += n;
-		space -= n;
-		*p = '\0';
-
-		if (space <= 0) {
-		nospc:
-			report(LOG_ERR, "boot file path too long (%s)",
-				   hp->hostname->string);
+#endif	/* CHECK_FILE_ACCESS */
 		}
 	}
+	strncpy(bp->bp_file, clntpath, BP_FILE_LEN);
+	if (debug > 2)
+		report(LOG_INFO, "bootfile=\"%s\"", clntpath);
 
-	/* Determine boot file size if requested. */
-	if (hp->flags.bootsize_auto) {
-		if (bp->bp_file[0] == '\0' ||
-			chk_access(bp->bp_file, &bootsize) < 0)
-		{
-			report(LOG_ERR, "can not determine boot file size for %s",
-				   hp->hostname->string);
-		}
-	}
+null_file_name:
 
-#endif /* CHECK_FILE_ACCESS */
 
+	/*
+	 * Handle vendor options based on magic number.
+	 */
 
 	if (debug > 1) {
 		report(LOG_INFO, "vendor magic field is %d.%d.%d.%d",
@@ -1018,11 +992,14 @@ sendreply(forward, dst_override)
 	struct bootp *bp = (struct bootp *) pktbuf;
 	struct in_addr dst;
 	u_short port = bootpc_port;
-#if 0
-	u_char canon_haddr[MAXHADDRLEN];
-#endif
 	unsigned char *ha;
 	int len;
+
+	/*
+	 * XXX - Should honor bp_flags "broadcast" bit here.
+	 * Temporary workaround: use the :ra=ADDR: option to
+	 * set the reply address to the broadcast address.
+	 */
 
 	/*
 	 * If the destination address was specified explicitly
@@ -1055,17 +1032,7 @@ sendreply(forward, dst_override)
 		len = bp->bp_hlen;
 		if (len > MAXHADDRLEN)
 			len = MAXHADDRLEN;
-#if 0
-		/*
-		 * XXX - Is this necessary, given that the HW address
-		 * in bp_chaddr was left as the client provided it?
-		 * Does some DEC version of TCP/IP need this? -gwr
-		 */
-		if (bp->bp_htype == HTYPE_IEEE802) {
-			haddr_conv802(ha, canon_haddr, len);
-			ha = canon_haddr;
-		}
-#endif
+
 		if (debug > 1)
 			report(LOG_INFO, "setarp %s - %s",
 				   inet_ntoa(dst), haddrtoa(ha, len));
@@ -1243,8 +1210,77 @@ dovend_rfc1048(bp, hp, bootsize)
 	static char noroom[] = "%s: No room for \"%s\" option";
 
 	vp = bp->bp_vend;
-	bytesleft = sizeof(bp->bp_vend);	/* Initial vendor area size */
-	bcopy(vm_rfc1048, vp, 4);			/* Copy in the magic cookie */
+
+	if (hp->flags.msg_size) {
+		pktlen = hp->msg_size;
+	} else {
+		/*
+		 * If the request was longer than the official length, build
+		 * a response of that same length where the additional length
+		 * is assumed to be part of the bp_vend (options) area.
+		 */
+		if (pktlen > sizeof(*bp)) {
+			if (debug > 1)
+				report(LOG_INFO, "request message length=%d", pktlen);
+		}
+		/*
+		 * Check whether the request contains the option:
+		 * Maximum DHCP Message Size (RFC1533 sec. 9.8)
+		 * and if so, override the response length with its value.
+		 * This request must lie within the first BP_VEND_LEN
+		 * bytes of the option space.
+		 */
+		{
+			byte *p, *ep;
+			byte tag, len;
+			short msgsz = 0;
+			
+			p = vp + 4;
+			ep = p + BP_VEND_LEN - 4;
+			while (p < ep) {
+				tag = *p++;
+				/* Check for tags with no data first. */
+				if (tag == TAG_PAD)
+					continue;
+				if (tag == TAG_END)
+					break;
+				/* Now scan the length byte. */
+				len = *p++;
+				switch (tag) {
+				case TAG_MAX_MSGSZ:
+					if (len == 2) {
+						bcopy(p, (char*)&msgsz, 2);
+						msgsz = ntohs(msgsz);
+					}
+					break;
+				case TAG_SUBNET_MASK:
+					/* XXX - Should preserve this if given... */
+					break;
+				} /* swtich */
+				p += len;
+			}
+
+			if (msgsz > sizeof(*bp)) {
+				if (debug > 1)
+					report(LOG_INFO, "request has DHCP msglen=%d", msgsz);
+				pktlen = msgsz;
+			}
+		}
+	}
+
+	if (pktlen < sizeof(*bp)) {
+		report(LOG_ERR, "invalid response length=%d", pktlen);
+		pktlen = sizeof(*bp);
+	}
+	bytesleft = ((byte*)bp + pktlen) - vp;
+	if (pktlen > sizeof(*bp)) {
+		if (debug > 1)
+			report(LOG_INFO, "extended reply, length=%d, options=%d",
+				   pktlen, bytesleft);
+	}
+
+	/* Copy in the magic cookie */
+	bcopy(vm_rfc1048, vp, 4);
 	vp += 4;
 	bytesleft -= 4;
 

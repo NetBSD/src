@@ -46,6 +46,9 @@ SOFTWARE.
 
 #define MAXSTRINGLEN		 80	/* Max string length */
 
+/* Local definitions: */
+#define MAX_MSG_SIZE		(3*512) /* Maximum packet size */
+
 
 /*
  * Return pointer to static string which gives full network error message.
@@ -121,6 +124,8 @@ struct flag {
 		nis_server	:1,
 		ntp_server	:1,
 		exec_file	:1,
+		msg_size	:1,
+		min_wait	:1,
 		/* XXX - Add new tags here */
 		vm_cookie	:1;
 };
@@ -176,7 +181,9 @@ struct host {
 				       RFC951 only allocates 1 byte. . . */
 			    haddr[MAXHADDRLEN];
     int32		    time_offset;
-    unsigned int	    bootsize;
+    unsigned int32	    bootsize,
+			    msg_size,
+			    min_wait;
     struct in_addr	    bootserver,
 			    iaddr,
 			    swap_server,
