@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.9 2003/04/02 10:39:29 fvdl Exp $	*/
+/*	$NetBSD: extern.h,v 1.10 2003/09/03 19:29:12 dsl Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -51,8 +51,6 @@ extern int	maxcontig;	/* max contiguous blocks to allocate */
 extern int	maxbpg;		/* maximum blocks per file in a cyl group */
 extern int	maxblkspercg;
 extern int	nrpos;		/* # of distinguished rotational positions */
-extern int	bbsize;		/* boot block size */
-extern int	sbsize;		/* superblock size */
 extern int	avgfilesize;	/* expected average file size */
 extern int	avgfpdir;	/* expected number of files per directory */
 extern u_long	memleft;	/* virtual memory available */

@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.75 2003/09/03 17:08:58 dsl Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.76 2003/09/03 19:29:13 dsl Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -73,7 +73,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.75 2003/09/03 17:08:58 dsl Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.76 2003/09/03 19:29:13 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -153,8 +153,6 @@ union {
 
 char *iobuf;
 int iobufsize;
-
-char writebuf[MAXBSIZE];
 
 int	fsi, fso;
 
@@ -563,10 +561,9 @@ mkfs(struct partition *pp, const char *fsys, int fi, int fo,
 	 * Make a copy of the superblock into the buffer that we will be
 	 * writing out in each cylinder group.
 	 */
-	memcpy(writebuf, &sblock, sbsize);
+	memcpy(iobuf, &sblock, sizeof sblock);
 	if (needswap)
-		ffs_sb_swap(&sblock, (struct fs*)writebuf);
-	memcpy(iobuf, writebuf, SBLOCKSIZE);
+		ffs_sb_swap(&sblock, (struct fs *)iobuf);
 
 	if (!mfs)
 		printf("super-block backups (for fsck -b #) at:");
@@ -587,7 +584,6 @@ mkfs(struct partition *pp, const char *fsys, int fi, int fo,
 
 	/*
 	 * Now construct the initial file system,
-	 * then write out the super-block.
 	 */
 	if (fsinit(&tv, mfsmode, mfsuid, mfsgid) == 0 && mfs)
 		errx(1, "Error making filesystem");
@@ -598,10 +594,16 @@ mkfs(struct partition *pp, const char *fsys, int fi, int fo,
 		sblock.fs_old_cstotal.cs_nifree = sblock.fs_cstotal.cs_nifree;
 		sblock.fs_old_cstotal.cs_nffree = sblock.fs_cstotal.cs_nffree;
 	}
-        memcpy(writebuf, &sblock, sbsize);
+	/*
+	 * Write out the super-block and zeros until the first cg info
+	 */
+	memset(iobuf, 0, iobufsize);
+        memcpy(iobuf, &sblock, sizeof sblock);
 	if (needswap)
-		ffs_sb_swap(&sblock, (struct fs*)writebuf);
-        wtfs(sblock.fs_sblockloc / sectorsize, sbsize, writebuf);
+		ffs_sb_swap(&sblock, (struct fs *)iobuf);
+        wtfs(sblock.fs_sblockloc / sectorsize,
+	    cgsblock(&sblock, 0) * sblock.fs_fsize - sblock.fs_sblockloc,
+	    iobuf);
 
 	/* Write out first and last cylinder summary sectors */
 	if (needswap)
