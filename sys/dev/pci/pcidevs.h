@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.535 2003/06/07 09:08:01 wiz Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.536 2003/06/07 09:15:32 wiz Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.534 2003/06/07 09:07:12 wiz Exp 
+ *	NetBSD: pcidevs,v 1.535 2003/06/07 09:15:00 wiz Exp 
  */
 
 /*
@@ -1042,6 +1042,10 @@
 #define	PCI_PRODUCT_BROOKTREE_BT849	0x0351		/* Bt849 Video Capture */
 #define	PCI_PRODUCT_BROOKTREE_BT878	0x036e		/* Bt878 Video Capture */
 #define	PCI_PRODUCT_BROOKTREE_BT879	0x036f		/* Bt879 Video Capture */
+#define	PCI_PRODUCT_BROOKTREE_BT880	0x0370		/* Bt880 Video Capture */
+#define	PCI_PRODUCT_BROOKTREE_BT878A	0x0878		/* Bt878 Video Capture (Audio Section) */
+#define	PCI_PRODUCT_BROOKTREE_BT879A	0x0879		/* Bt879 Video Capture (Audio Section) */
+#define	PCI_PRODUCT_BROOKTREE_BT880A	0x0880		/* Bt880 Video Capture (Audio Section) */
 #define	PCI_PRODUCT_BROOKTREE_BT8474	0x8474		/* Bt8474 Multichannel HDLC Controller */
 
 /* BusLogic products */
