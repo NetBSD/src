@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.55 1999/11/17 23:24:54 is Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.56 2000/01/16 15:07:48 assar Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -1013,11 +1013,11 @@ again:
 			error = copyout((caddr_t)p, &dp->kp_proc,
 					sizeof(struct proc));
 			if (error)
-				return (error);
+				goto cleanup;
 			error = copyout((caddr_t)&eproc, &dp->kp_eproc,
 					sizeof(eproc));
 			if (error)
-				return (error);
+				goto cleanup;
 			dp++;
 			buflen -= sizeof(struct kinfo_proc);
 		}
@@ -1037,6 +1037,9 @@ again:
 		*sizep = needed;
 	}
 	return (0);
+ cleanup:
+	proclist_unlock_read();
+	return (error);
 }
 
 /*
