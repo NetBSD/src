@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_param.h,v 1.19.2.1.2.1 1999/06/21 01:48:00 thorpej Exp $	*/
+/*	$NetBSD: vm_param.h,v 1.19.2.1.2.2 1999/08/11 05:39:16 chs Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -145,9 +145,9 @@ typedef int	boolean_t;
  * for either addresses or counts (i.e., 1 byte rounds to 1 page).
  */
 #define	round_page(x) \
-	((vaddr_t)((((vaddr_t)(x)) + PAGE_MASK) & ~PAGE_MASK))
+	(((x) + PAGE_MASK) & ~PAGE_MASK)
 #define	trunc_page(x) \
-	((vaddr_t)(((vaddr_t)(x)) & ~PAGE_MASK))
+	((x) & ~PAGE_MASK)
 
 extern psize_t		mem_size;	/* size of physical memory (bytes) */
 
