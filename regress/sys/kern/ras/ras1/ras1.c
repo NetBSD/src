@@ -1,4 +1,4 @@
-/* $NetBSD: ras1.c,v 1.5 2004/01/18 16:47:06 martin Exp $ */
+/* $NetBSD: ras1.c,v 1.6 2004/03/03 21:06:25 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -34,6 +34,7 @@
  */
 
 #include <errno.h>
+#include <inttypes.h>
 #include <stdio.h>
 #include <signal.h>
 #include <sys/ras.h>
@@ -54,6 +55,8 @@ handler(int sig)
 	handled++;
 }
 
+RAS_DECL(main);
+
 int
 main(void)
 {
@@ -66,8 +69,7 @@ main(void)
         itv.it_value.tv_usec = 0;
         setitimer(ITIMER_VIRTUAL, &itv, NULL);
 
-	if (rasctl((caddr_t)&&start, (caddr_t)&&end - (caddr_t)&&start,
-	    RAS_INSTALL) < 0) {
+	if (rasctl(RAS_ADDR(main), RAS_SIZE(main), RAS_INSTALL) < 0) {
 		if (errno == EOPNOTSUPP) {
 			printf("RAS is not supported on this architecture\n");
 			return 0;
@@ -75,8 +77,7 @@ main(void)
 		return (1);
 	}
 
-	__insn_barrier();
-start:
+	RAS_START(main);
 	count++;
 	if (count > COUNT)
 		goto end;
@@ -84,8 +85,8 @@ start:
 	while (!handled) {
 		continue;
 	}
-end:
-	__insn_barrier();
+ end:
+	RAS_END(main);
 
 	return (handled != 0);
 }
