@@ -1,4 +1,4 @@
-/*	$NetBSD: ess.c,v 1.5 1998/07/31 23:54:09 augustss Exp $	*/
+/*	$NetBSD: ess.c,v 1.6 1998/08/04 13:14:42 augustss Exp $	*/
 
 /*
  * Copyright 1997
@@ -71,9 +71,7 @@
 
 /*
  * TODO (falling priority):
- * - add looping DMA (copy from sbdsp.c).
- * - avoid using wired in IRQ/DRQ levels.
- * - look over how the two channels are set up, it's rather messy now.
+ * - add looping DMA for input.
  */
 
 #include <sys/param.h>
@@ -86,7 +84,7 @@
 
 #include <machine/cpu.h>
 #include <machine/intr.h>
-#include <machine/pio.h>
+#include <machine/bus.h>
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>
@@ -138,6 +136,7 @@ int	ess_set_out_channels __P((void *, int));
 
 int	ess_round_blocksize __P((void *, int));
 
+int	ess_dma_init_output __P((void *, void *, int));
 int	ess_dma_output __P((void *, void *, int, void (*)(void *), void *));
 int	ess_dma_input __P((void *, void *, int, void (*)(void *), void *));
 int	ess_halt_output __P((void *));
@@ -210,12 +209,12 @@ struct audio_device ess_device = {
 struct audio_hw_if ess_hw_if = {
 	ess_open,
 	ess_close,
-	NULL,
+	ess_drain,
 	ess_query_encoding,
 	ess_set_params,
 	ess_round_blocksize,
 	NULL,
-	NULL,
+	ess_dma_init_output,
 	NULL,
 	ess_dma_output,
 	ess_dma_input,
@@ -543,7 +542,7 @@ ess_setup(sc)
 {
 	ess_config_irq(sc);
 	ess_config_drq(sc);
-	if (sc->sc_out.drq >= 4)
+	if (IS16BITDRQ(sc->sc_out.drq))
 		ess_set_mreg_bits(sc, ESS_MREG_AUDIO2_CTRL1,
 				  ESS_AUDIO2_CTRL1_XFER_SIZE);
 	else
@@ -921,7 +920,7 @@ ess_open(addr, flags)
 	if (sc->sc_open != 0 || ess_reset(sc) != 0)
 		return ENXIO;
 
-	ess_setup(sc);
+	ess_setup(sc);		/* because we did a reset */
 
 	sc->sc_open = 1;
 
@@ -941,12 +940,26 @@ ess_close(addr)
 	sc->sc_open = 0;
 	ess_speaker_off(sc);
 	sc->spkr_state = SPKR_OFF;
-	sc->sc_in.intr = 0;
-	sc->sc_out.intr = 0;
 	ess_halt_output(sc);
 	ess_halt_input(sc);
+	sc->sc_in.intr = 0;
+	sc->sc_out.intr = 0;
 
 	DPRINTF(("ess_close: closed\n"));
+}
+
+/*
+ * Wait for FIFO to drain, and analog section to settle.
+ * XXX should check FIFO full bit.
+ */
+int
+ess_drain(addr)
+	void *addr;
+{
+	extern int hz;		/* XXX */
+
+	tsleep(addr, PWAIT | PCATCH, "essdr", hz/100); /* XXX */
+	return (0);
 }
 
 int
@@ -1279,6 +1292,21 @@ ess_set_out_channels(addr, channels)
 }
 
 int
+ess_dma_init_output(addr, buf, cc)
+	void *addr;
+	void *buf;
+	int cc;
+{
+	struct ess_softc *sc = addr;
+
+	DPRINTF(("ess_dma_init_output: buf=%p cc=%d chan=%d\n",
+		 buf, cc, sc->sc_out.drq));
+	isa_dmastart(sc->sc_ic, sc->sc_out.drq, buf,
+		     cc, NULL, DMAMODE_WRITE | DMAMODE_LOOP, BUS_DMA_NOWAIT);
+	return 0;
+}
+
+int
 ess_dma_output(addr, p, cc, intr, arg)
 	void *addr;
 	void *p;
@@ -1296,45 +1324,30 @@ ess_dma_output(addr, p, cc, intr, arg)
 	}
 #endif
 
-	isa_dmastart(sc->sc_ic, sc->sc_out.drq, p, cc,
-		     NULL, DMAMODE_WRITE, BUS_DMA_NOWAIT);
-
-	sc->sc_out.active = 1;
 	sc->sc_out.intr = intr;
 	sc->sc_out.arg = arg;
-	sc->sc_out.dmaflags = DMAMODE_WRITE;
-	sc->sc_out.dmaaddr = p;
+	if (sc->sc_out.active)
+		return (0);
 
-	if (sc->sc_out.dmacnt != cc) {
-		sc->sc_out.dmacnt = cc;
+	DPRINTF(("ess_dma_output: set up DMA\n"));
 
-		/*
-		 * If doing 16-bit DMA transfers, then the number of
-		 * transfers required is half the number of bytes to
-		 * be transferred.
-		 */
-		if (sc->sc_out.drq >= 4)
-			cc >>= 1;
+	sc->sc_out.active = 1;
 
-		/*
-		 * Program transfer count registers with 2's
-		 * complement of count.
-		 */
-		cc = -cc;
-		ess_write_mix_reg(sc, ESS_MREG_XFER_COUNTLO, cc);
-		ess_write_mix_reg(sc, ESS_MREG_XFER_COUNTHI, cc >> 8);
-	}
+	if (IS16BITDRQ(sc->sc_out.drq))
+		cc >>= 1;	/* use word count for 16 bit DMA */
+	/* Program transfer count registers with 2's complement of count. */
+	cc = -cc;
+	ess_write_mix_reg(sc, ESS_MREG_XFER_COUNTLO, cc);
+	ess_write_mix_reg(sc, ESS_MREG_XFER_COUNTHI, cc >> 8);
 
-/* REVISIT: is it really necessary to clear then set these bits to get
-the next lot of DMA to happen?  Would it be sufficient to set the bits
-the first time round and leave it at that? (No, because the chip automatically clears the FIFO_ENABLE bit after the DMA is complete.)
-*/
+	/* Start auto-init DMA */
 	ess_set_mreg_bits(sc, ESS_MREG_AUDIO2_CTRL1,
-			  ESS_AUDIO2_CTRL1_DAC_ENABLE);/* REVISIT: once only */
-	ess_set_mreg_bits(sc, ESS_MREG_AUDIO2_CTRL1,
-			  ESS_AUDIO2_CTRL1_FIFO_ENABLE);
+			  ESS_AUDIO2_CTRL1_DAC_ENABLE |
+			  ESS_AUDIO2_CTRL1_FIFO_ENABLE |
+			  ESS_AUDIO2_CTRL1_AUTO_INIT);
 #if 0
-/* REVISIT: seems like the 888 and 1888 have an interlock that
+/* XXX
+ * seems like the 888 and 1888 have an interlock that
  * prevents audio2 channel from working if audio1 channel is not
  * connected to the FIFO.
  */
@@ -1370,8 +1383,6 @@ ess_dma_input(addr, p, cc, intr, arg)
 	sc->sc_in.active = 1;
 	sc->sc_in.intr = intr;
 	sc->sc_in.arg = arg;
-	sc->sc_in.dmaflags = DMAMODE_READ;
-	sc->sc_in.dmaaddr = p;
 
 	if (sc->sc_in.dmacnt != cc)
 	{
@@ -1382,7 +1393,7 @@ ess_dma_input(addr, p, cc, intr, arg)
 		 * transfers required is half the number of bytes to
 		 * be transferred.
 		 */
-		if (sc->sc_out.drq >= 4)
+		if (IS16BITDRQ(sc->sc_out.drq))
 			cc >>= 1;
 
 		/*
@@ -1415,8 +1426,13 @@ ess_halt_output(addr)
 
 	DPRINTF(("ess_halt_output: sc=%p\n", sc));
 
+#if 0
 	ess_clear_mreg_bits(sc, ESS_MREG_AUDIO2_CTRL2,
 			    ESS_AUDIO2_CTRL2_DMA_ENABLE);
+#else
+	ess_clear_mreg_bits(sc, ESS_MREG_AUDIO2_CTRL1,
+			    ESS_AUDIO2_CTRL1_FIFO_ENABLE);
+#endif
 	return (0);
 }
 
@@ -1444,13 +1460,11 @@ ess_intr_output(arg)
 	/* clear interrupt on Audio channel 2 */
 	ess_clear_mreg_bits(sc, ESS_MREG_AUDIO2_CTRL2, 
 			    ESS_AUDIO2_CTRL2_IRQ_LATCH);
-
 	sc->sc_out.nintr++;
 
-	if (sc->sc_out.intr != 0) {
-		isa_dmadone(sc->sc_ic, sc->sc_out.drq);
+	if (sc->sc_out.intr != 0)
 		(*sc->sc_out.intr)(sc->sc_out.arg);
-	} else
+	else
 		return (0);
 
 	return (1);
@@ -1992,7 +2006,7 @@ ess_reset(sc)
 	bus_space_handle_t ioh = sc->sc_ioh;
 
 	sc->sc_in.intr = 0;
-	sc->sc_in.dmacnt = 0;
+
 	if (sc->sc_in.active) {
 		isa_dmaabort(sc->sc_ic, sc->sc_in.drq);
 		sc->sc_in.active = 0;
