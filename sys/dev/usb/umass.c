@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.94 2003/01/06 12:46:11 wiz Exp $	*/
+/*	$NetBSD: umass.c,v 1.95 2003/02/16 23:14:06 augustss Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
  *		      Nick Hibma <n_hibma@freebsd.org>
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.94 2003/01/06 12:46:11 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.95 2003/02/16 23:14:06 augustss Exp $");
 
 #include "atapibus.h"
 #include "scsibus.h"
@@ -107,7 +107,6 @@ __KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.94 2003/01/06 12:46:11 wiz Exp $");
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 #include <sys/buf.h>
 #include <sys/device.h>
-#include <sys/ioctl.h>
 #include <sys/malloc.h>
 #undef KASSERT
 #define KASSERT(cond, msg)
@@ -603,7 +602,7 @@ USB_DETACH(umass)
 {
 	USB_DETACH_START(umass, sc);
 	struct umassbus_softc *scbus = sc->bus;
-	int rv = 0, i;
+	int rv = 0, i, s;
 
 	DPRINTF(UDMASS_USB, ("%s: detached\n", USBDEVNAME(sc->sc_dev)));
 
@@ -613,15 +612,16 @@ USB_DETACH(umass)
 			usbd_abort_pipe(sc->sc_pipe[i]);
 	}
 
-#if 0
 	/* Do we really need reference counting?  Perhaps in ioctl() */
 	s = splusb();
 	if (--sc->sc_refcnt >= 0) {
+#ifdef DIAGNOSTIC
+		printf("%s: waiting for refcnt\n", USBDEVNAME(sc->sc_dev));
+#endif
 		/* Wait for processes to go away. */
 		usb_detach_wait(USBDEV(sc->sc_dev));
 	}
 	splx(s);
-#endif
 
 	if (scbus != NULL) {
 		if (scbus->sc_child != NULL)
