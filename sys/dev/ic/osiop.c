@@ -1,4 +1,4 @@
-/*	$NetBSD: osiop.c,v 1.1 2001/04/30 04:47:50 tsutsui Exp $	*/
+/*	$NetBSD: osiop.c,v 1.2 2001/05/09 16:24:43 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001 Izumi Tsutsui.  All rights reserved.
@@ -320,8 +320,8 @@ osiop_attach(sc)
 		acb++;
 	}
 
-	printf(": NCR53C710 rev %d, SCSI ID %d\n",
-	    osiop_read_1(sc, OSIOP_CTEST8) >> 4, sc->sc_id);
+	printf(": NCR53C710 rev %d, %dMHz, SCSI ID %d\n",
+	    osiop_read_1(sc, OSIOP_CTEST8) >> 4, sc->sc_clock_freq, sc->sc_id);
 
 	/*
 	 * Initialize all
