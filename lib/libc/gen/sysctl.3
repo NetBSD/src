@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.104 2002/12/18 20:13:06 wiz Exp $
+.\"	$NetBSD: sysctl.3,v 1.105 2002/12/18 20:17:43 wiz Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -392,8 +392,10 @@ system call fails due to limit on number of processes (either
 the global maxproc limit or user's one), wait for this many
 miliseconds before returning
 .Er EAGAIN
-error to process. Useful to keep heavily forking runaway
-processes in bay. Default zero (no sleep). Maximum is 20 seconds.
+error to process.
+Useful to keep heavily forking runaway processes in bay.
+Default zero (no sleep).
+Maximum is 20 seconds.
 .It Li KERN_FSYNC
 Return 1 if the POSIX 1003.1b File Synchronization Option is available
 on this system,
