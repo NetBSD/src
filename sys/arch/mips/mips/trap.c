@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.93.2.3 1998/11/14 15:49:05 drochner Exp $	*/
+/*	$NetBSD: trap.c,v 1.93.2.4 1998/11/15 16:20:49 drochner Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.93.2.3 1998/11/14 15:49:05 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.93.2.4 1998/11/15 16:20:49 drochner Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_inet.h"
@@ -508,13 +508,11 @@ trap(status, cause, vaddr, opc, frame)
 			vaddr &= ~PGOFSET;
 			MachTLBUpdate(vaddr, entry);
 			pa = pfn_to_vad(entry);
-#ifdef ATTR
-			pmap_attributes[atop(pa)] |= PMAP_ATTR_MOD;
-#else
-			if (!IS_VM_PHYSADDR(pa))
+			if (!IS_VM_PHYSADDR(pa)) {
+				printf("ktlbmod: va %x pa %lx\n", vaddr, pa);
 				panic("ktlbmod: unmanaged page");
-			PHYS_TO_VM_PAGE(pa)->flags &= ~PG_CLEAN;
-#endif
+			}
+			pmap_set_modified(pa);
 			return; /* KERN */
 		}
 		/*FALLTHROUGH*/
@@ -544,13 +542,11 @@ trap(status, cause, vaddr, opc, frame)
 			(pmap->pm_tlbpid << MIPS_TLB_PID_SHIFT);
 		MachTLBUpdate(vaddr, entry);  
 		pa = pfn_to_vad(entry);
-#ifdef ATTR
-		pmap_attributes[atop(pa)] |= PMAP_ATTR_MOD;
-#else
-		if (!IS_VM_PHYSADDR(pa))
+		if (!IS_VM_PHYSADDR(pa)) {
+			printf("utlbmod: va %x pa %lx\n", vaddr, pa);
 			panic("utlbmod: unmanaged page");
-		PHYS_TO_VM_PAGE(pa)->flags &= ~PG_CLEAN;
-#endif
+		}
+		pmap_set_modified(pa);
 		if (type & T_USER)
 			userret(p, opc, sticks);
 		return; /* GEN */
