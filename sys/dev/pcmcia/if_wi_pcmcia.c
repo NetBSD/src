@@ -1,4 +1,4 @@
-/* $NetBSD: if_wi_pcmcia.c,v 1.33 2003/03/29 16:47:27 perry Exp $ */
+/* $NetBSD: if_wi_pcmcia.c,v 1.34 2003/09/16 08:28:55 onoe Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.33 2003/03/29 16:47:27 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.34 2003/09/16 08:28:55 onoe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -284,6 +284,11 @@ static const struct wi_pcmcia_product {
 	  PCMCIA_PRODUCT_DLINK_DWL650H,
 	  PCMCIA_CIS_DLINK_DWL650H,
 	  PCMCIA_STR_DLINK_DWL650H },
+
+	{ PCMCIA_VENDOR_FUJITSU,
+	  PCMCIA_PRODUCT_FUJITSU_WL110,
+	  PCMCIA_CIS_FUJITSU_WL110,
+	  PCMCIA_STR_FUJITSU_WL110 },
 
 	{ 0,
 	  0,
