@@ -1,20 +1,27 @@
+/*	$NetBSD: hack.version.c,v 1.4 1997/10/19 16:59:25 christos Exp $	*/
+
 /*
  * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char rcsid[] = "$NetBSD: hack.version.c,v 1.3 1995/03/23 08:32:03 cgd Exp $";
-#endif /* not lint */
+__RCSID("$NetBSD: hack.version.c,v 1.4 1997/10/19 16:59:25 christos Exp $");
+#endif				/* not lint */
 
-#include	"date.h"
+#include "date.h"
+#include "hack.h"
+#include "extern.h"
 
-doversion(){
+int
+doversion()
+{
 	pline("%s 1.0.3 - last edit %s.", (
 #ifdef QUEST
-		"Quest"
+					   "Quest"
 #else
-		"Hack"
-#endif QUEST
-		), datestring);
-	return(0);
+					   "Hack"
+#endif	/* QUEST */
+					   ), datestring);
+	return (0);
 }

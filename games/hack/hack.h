@@ -1,8 +1,10 @@
+/*	$NetBSD: hack.h,v 1.4 1997/10/19 16:58:02 christos Exp $	*/
+
 /*
  * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
- *
- *	$NetBSD: hack.h,v 1.3 1995/03/23 08:30:21 cgd Exp $
  */
+#ifndef _HACK_H_
+#define _HACK_H_
 
 #include "config.h"
 #include <string.h>
@@ -10,7 +12,7 @@
 #ifndef BSD
 #define	index	strchr
 #define	rindex	strrchr
-#endif BSD
+#endif /* BSD */
 
 #define	Null(type)	((struct type *) 0)
 
@@ -34,22 +36,11 @@ typedef struct {
 #include	"def.rm.h"
 #include	"def.permonst.h"
 
-extern long *alloc();
-
-extern xchar xdnstair, ydnstair, xupstair, yupstair; /* stairs up and down. */
-
-extern xchar dlevel;
 #define	newstring(x)	(char *) alloc((unsigned)(x))
 #include "hack.onames.h"
 
 #define ON 1
 #define OFF 0
-
-extern struct obj *invent, *uwep, *uarm, *uarm2, *uarmh, *uarms, *uarmg, 
-	*uleft, *uright, *fcobj;
-extern struct obj *uchain;	/* defined iff PUNISHED */
-extern struct obj *uball;	/* defined if PUNISHED */
-struct obj *o_at(), *getobj(), *sobj_at();
 
 struct prop {
 #define	TIMEOUT		007777	/* mask */
@@ -60,7 +51,7 @@ struct prop {
 #define	RIGHT_SIDE	RIGHT_RING
 #define	BOTH_SIDES	(LEFT_SIDE | RIGHT_SIDE)
 	long p_flgs;
-	int (*p_tofn)();	/* called after timeout */
+	void (*p_tofn) __P((void));	/* called after timeout */
 };
 
 struct you {
@@ -130,34 +121,72 @@ struct you {
 	int nr_killed[CMNUM+2];		/* used for experience bookkeeping */
 };
 
-extern struct you u;
-
-extern char *traps[];
-extern char *monnam(), *Monnam(), *amonnam(), *Amonnam(),
-	*doname(), *aobjnam();
-extern char readchar();
-extern char vowels[];
-
-extern xchar curx,cury;	/* cursor location on screen */
-
-extern coord bhitpos;	/* place where thrown weapon falls to the ground */
-
-extern xchar seehx,seelx,seehy,seely; /* where to see*/
-extern char *save_cm,*killer;
-
-extern xchar dlevel, maxdlevel; /* dungeon level */
-
-extern long moves;
-
-extern int multi;
-
-
-extern char lock[];
-
-
 #define DIST(x1,y1,x2,y2)       (((x1)-(x2))*((x1)-(x2)) + ((y1)-(y2))*((y1)-(y2)))
 
 #define	PL_CSIZ		20	/* sizeof pl_character */
 #define	MAX_CARR_CAP	120	/* so that boulders can be heavier */
 #define	MAXLEVEL	40
 #define	FAR	(COLNO+2)	/* position outside screen */
+
+extern boolean in_mklev;
+extern boolean level_exists[];
+extern boolean restoring;
+extern char *CD;
+extern char *catmore;
+extern char *hname;
+extern char *hu_stat[]; /* in eat.c */
+extern char *nomovemsg;
+extern char *occtxt;
+extern char *save_cm,*killer;
+extern char *traps[];
+extern char SAVEF[];
+extern char fut_geno[60]; /* idem */
+extern char genocided[60]; /* defined in Decl.c */
+extern char lock[];
+extern char mlarge[];
+extern char morc;
+extern char nul[];
+extern char pl_character[];
+extern char plname[PL_NSIZ], pl_character[PL_CSIZ];
+extern char quitchars[];
+extern char sdir[]; /* defined in hack.c */
+extern char shtypes[]; /* = "=/)%?!["; 8 types: 7 specialized, 1 mixed */
+extern char vowels[];
+extern coord bhitpos;	/* place where thrown weapon falls to the ground */
+extern int (*afternmv) __P((void));
+extern int (*occupation) __P((void));
+extern int CO, LI; /* usually COLNO and ROWNO+2 */
+extern int bases[];
+extern int doorindex;
+extern int hackpid;
+extern int multi;
+extern int nroom;
+extern long moves;
+extern long wailmsg;
+extern schar xdir[], ydir[]; /* idem */
+extern struct gold *fgold;
+extern struct monst *mydogs;
+extern struct monst youmonst;
+extern struct obj *billobjs;
+extern struct obj *invent, *uwep, *uarm, *uarm2, *uarmh, *uarms, *uarmg;
+extern struct obj *uleft, *uright, *fcobj;
+extern struct obj *uball;	/* defined if PUNISHED */
+extern struct obj *uchain;	/* defined iff PUNISHED */
+extern struct obj zeroobj;
+extern struct permonst li_dog, dog, la_dog;
+extern struct permonst mons[CMNUM + 2];
+extern struct permonst pm_eel;
+extern struct permonst pm_ghost;
+extern struct permonst pm_mail_daemon;
+extern struct permonst pm_wizard;
+#ifndef NOWORM
+extern long wgrowtime[32];
+extern struct wseg *m_atseg;
+extern struct wseg *wsegs[32], *wheads[32];
+#endif
+extern struct you u;
+extern xchar curx, cury;	/* cursor location on screen */
+extern xchar dlevel, maxdlevel; /* dungeon level */
+extern xchar seehx,seelx,seehy,seely; /* where to see*/
+extern xchar xdnstair, ydnstair, xupstair, yupstair; /* stairs up and down. */
+#endif /* _HACK_H_ */

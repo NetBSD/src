@@ -1,14 +1,18 @@
+/*	$NetBSD: hack.shknam.c,v 1.4 1997/10/19 16:59:03 christos Exp $	*/
+
 /*
  * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char rcsid[] = "$NetBSD: hack.shknam.c,v 1.3 1995/03/23 08:31:33 cgd Exp $";
-#endif /* not lint */
+__RCSID("$NetBSD: hack.shknam.c,v 1.4 1997/10/19 16:59:03 christos Exp $");
+#endif				/* not lint */
 
 #include "hack.h"
+#include "extern.h"
 
-char *shkliquors[] = {
+char           *shkliquors[] = {
 	/* Ukraine */
 	"Njezjin", "Tsjernigof", "Gomel", "Ossipewsk", "Gorlowka",
 	/* N. Russia */
@@ -23,7 +27,7 @@ char *shkliquors[] = {
 	0
 };
 
-char *shkbooks[] = {
+char           *shkbooks[] = {
 	/* Eire */
 	"Skibbereen", "Kanturk", "Rath Luirc", "Ennistymon", "Lahinch",
 	"Loughrea", "Croagh", "Maumakeogh", "Ballyjamesduff",
@@ -35,7 +39,7 @@ char *shkbooks[] = {
 	0
 };
 
-char *shkarmors[] = {
+char           *shkarmors[] = {
 	/* Turquie */
 	"Demirci", "Kalecik", "Boyabai", "Yildizeli", "Gaziantep",
 	"Siirt", "Akhalataki", "Tirebolu", "Aksaray", "Ermenak",
@@ -46,7 +50,7 @@ char *shkarmors[] = {
 	0
 };
 
-char *shkwands[] = {
+char           *shkwands[] = {
 	/* Wales */
 	"Yr Wyddgrug", "Trallwng", "Mallwyd", "Pontarfynach",
 	"Rhaeader", "Llandrindod", "Llanfair-ym-muallt",
@@ -60,7 +64,7 @@ char *shkwands[] = {
 	0
 };
 
-char *shkrings[] = {
+char           *shkrings[] = {
 	/* Hollandse familienamen */
 	"Feyfer", "Flugi", "Gheel", "Havic", "Haynin", "Hoboken",
 	"Imbyze", "Juyn", "Kinsky", "Massis", "Matray", "Moy",
@@ -73,7 +77,7 @@ char *shkrings[] = {
 	0
 };
 
-char *shkfoods[] = {
+char           *shkfoods[] = {
 	/* Indonesia */
 	"Djasinga", "Tjibarusa", "Tjiwidej", "Pengalengan",
 	"Bandjar", "Parbalingga", "Bojolali", "Sarangan",
@@ -85,7 +89,7 @@ char *shkfoods[] = {
 	0
 };
 
-char *shkweapons[] = {
+char           *shkweapons[] = {
 	/* Perigord */
 	"Voulgezac", "Rouffiac", "Lerignac", "Touverac", "Guizengeard",
 	"Melac", "Neuvicq", "Vanzac", "Picq", "Urignac", "Corignac",
@@ -96,7 +100,7 @@ char *shkweapons[] = {
 	0
 };
 
-char *shkgeneral[] = {
+char           *shkgeneral[] = {
 	/* Suriname */
 	"Hebiwerie", "Possogroenoe", "Asidonhopo", "Manlobbi",
 	"Adjama", "Pakka Pakka", "Kabalebo", "Wonotobo",
@@ -115,31 +119,55 @@ char *shkgeneral[] = {
 };
 
 struct shk_nx {
-	char x;
-	char **xn;
-} shk_nx[] = {
-	{ POTION_SYM,	shkliquors },
-	{ SCROLL_SYM,	shkbooks },
-	{ ARMOR_SYM,	shkarmors },
-	{ WAND_SYM,	shkwands },
-	{ RING_SYM,	shkrings },
-	{ FOOD_SYM,	shkfoods },
-	{ WEAPON_SYM,	shkweapons },
-	{ 0,		shkgeneral }
+	char            x;
+	char          **xn;
+}               shk_nx[] = {
+	{
+		POTION_SYM, shkliquors
+	},
+	{
+		SCROLL_SYM, shkbooks
+	},
+	{
+		ARMOR_SYM, shkarmors
+	},
+	{
+		WAND_SYM, shkwands
+	},
+	{
+		RING_SYM, shkrings
+	},
+	{
+		FOOD_SYM, shkfoods
+	},
+	{
+		WEAPON_SYM, shkweapons
+	},
+	{
+		0, shkgeneral
+	}
 };
 
-findname(nampt, let) char *nampt; char let; {
-register struct shk_nx *p = shk_nx;
-register char **q;
-register int i;
-	while(p->x && p->x != let) p++;
+void
+findname(nampt, let)
+	char           *nampt;
+	char            let;
+{
+	struct shk_nx  *p = shk_nx;
+	char          **q;
+	int             i;
+	while (p->x && p->x != let)
+		p++;
 	q = p->xn;
-	for(i=0; i<dlevel; i++) if(!q[i]){
-		/* Not enough names, try general name */
-		if(let) findname(nampt, 0);
-		else (void) strcpy(nampt, "Dirk");
-		return;
-	}
+	for (i = 0; i < dlevel; i++)
+		if (!q[i]) {
+			/* Not enough names, try general name */
+			if (let)
+				findname(nampt, 0);
+			else
+				(void) strcpy(nampt, "Dirk");
+			return;
+		}
 	(void) strncpy(nampt, q[i], PL_NSIZ);
-	nampt[PL_NSIZ-1] = 0;
+	nampt[PL_NSIZ - 1] = 0;
 }

@@ -1,9 +1,10 @@
+/*	$NetBSD: def.wseg.h,v 1.4 1997/10/19 16:57:25 christos Exp $	*/
+
 /*
  * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
- *
- *	$NetBSD: def.wseg.h,v 1.3 1995/03/23 08:29:42 cgd Exp $
  */
-
+#ifndef _DEF_WSEG_H_
+#define _DEF_WSEG_H_
 #ifndef NOWORM
 /* worm structure */
 struct wseg {
@@ -13,4 +14,5 @@ struct wseg {
 };
 
 #define newseg()	(struct wseg *) alloc(sizeof(struct wseg))
-#endif NOWORM
+#endif /* NOWORM */
+#endif /* _DEF_WSEG_H_ */

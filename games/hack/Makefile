@@ -1,7 +1,6 @@
-#	$NetBSD: Makefile,v 1.23 1997/10/12 14:21:46 lukem Exp $
+#	$NetBSD: Makefile,v 1.24 1997/10/19 16:56:41 christos Exp $
 #	@(#)Makefile	8.2 (Berkeley) 4/27/95
 
-WARNS=	0
 PROG=	hack
 CFLAGS+=-I.
 SRCS+=	hack.onames.h
@@ -18,7 +17,7 @@ SRCS+=	alloc.c hack.Decl.c hack.apply.c hack.bones.c hack.c hack.cmd.c \
 	hack.wizard.c hack.worm.c hack.worn.c hack.zap.c rnd.c
 MAN=	hack.6
 DPADD+=	${LIBTERM} ${LIBCOMPAT}
-LDADD+=	-ltermcap -lcompat
+LDADD+=	-ltermcap
 HIDEGAME=hidegame
 CLEANFILES+=hack.onames.h makedefs
 FILES=help hh data
@@ -28,9 +27,6 @@ ${PROG}: hack.onames.h
 
 hack.onames.h: makedefs def.objects.h
 	${.OBJDIR}/makedefs ${.CURDIR}/def.objects.h > hack.onames.h
-
-makedefs: makedefs.c
-	${HOST_CC} ${HOST_CFLAGS} ${HOST_LDFLAGS} ${LDSTATIC} -o ${.TARGET} ${.CURDIR}/${.PREFIX}.c
 
 .if !exists(${DESTDIR}${FILESDIR}/perm)
 afterinstall: clobber

@@ -1,9 +1,10 @@
+/*	$NetBSD: def.trap.h,v 1.4 1997/10/19 16:57:23 christos Exp $	*/
+
 /*
  * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
- *
- *	$NetBSD: def.trap.h,v 1.3 1995/03/23 08:29:41 cgd Exp $
  */
-
+#ifndef _DEF_TRAP_H_
+#define _DEF_TRAP_H_
 struct trap {
 	struct trap *ntrap;
 	xchar tx,ty;
@@ -13,7 +14,6 @@ struct trap {
 };
 
 extern struct trap *ftrap;
-struct trap *t_at();
 #define newtrap()	(struct trap *) alloc(sizeof(struct trap))
 
 /* various kinds of traps */
@@ -28,3 +28,4 @@ struct trap *t_at();
 #define	MIMIC		8	/* used only in mklev.c */
 #define TRAPNUM 	9	/* if not less than 32, change sizeof(ttyp) */
 				/* see also mtrapseen (bit map) */
+#endif /* _DEF_TRAP_H_ */

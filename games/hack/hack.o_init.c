@@ -1,63 +1,75 @@
+/*	$NetBSD: hack.o_init.c,v 1.5 1997/10/19 16:58:37 christos Exp $	*/
+
 /*
  * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char rcsid[] = "$NetBSD: hack.o_init.c,v 1.4 1995/04/24 12:23:27 cgd Exp $";
-#endif /* not lint */
+__RCSID("$NetBSD: hack.o_init.c,v 1.5 1997/10/19 16:58:37 christos Exp $");
+#endif				/* not lint */
 
-#include	"config.h"		/* for typedefs */
-#include	"def.objects.h"
-#include	"hack.onames.h"		/* for LAST_GEM */
-#include	<string.h>
+#include <string.h>
+#include "hack.h"
+#include "extern.h"
+#include "def.objects.h"
+#include "hack.onames.h"	/* for LAST_GEM */
 
 int
-letindex(let) register char let; {
-register int i = 0;
-register char ch;
-	while((ch = obj_symbols[i++]) != 0)
-		if(ch == let) return(i);
-	return(0);
+letindex(let)
+	char            let;
+{
+	int             i = 0;
+	char            ch;
+	while ((ch = obj_symbols[i++]) != 0)
+		if (ch == let)
+			return (i);
+	return (0);
 }
 
-init_objects(){
-register int i, j, first, last, sum, end;
-register char let, *tmp;
-	/* init base; if probs given check that they add up to 100, 
-	   otherwise compute probs; shuffle descriptions */
+void
+init_objects()
+{
+	int             i, j, first, last, sum, end;
+	char            let, *tmp;
+	/*
+	 * init base; if probs given check that they add up to 100, otherwise
+	 * compute probs; shuffle descriptions
+	 */
 	end = SIZE(objects);
 	first = 0;
-	while( first < end ) {
+	while (first < end) {
 		let = objects[first].oc_olet;
-		last = first+1;
-		while(last < end && objects[last].oc_olet == let
-				&& objects[last].oc_name != NULL)
+		last = first + 1;
+		while (last < end && objects[last].oc_olet == let
+		       && objects[last].oc_name != NULL)
 			last++;
 		i = letindex(let);
-		if((!i && let != ILLOBJ_SYM) || bases[i] != 0)
+		if ((!i && let != ILLOBJ_SYM) || bases[i] != 0)
 			error("initialization error");
 		bases[i] = first;
 
-		if(let == GEM_SYM)
+		if (let == GEM_SYM)
 			setgemprobs();
-	check:
+check:
 		sum = 0;
-		for(j = first; j < last; j++) sum += objects[j].oc_prob;
-		if(sum == 0) {
-			for(j = first; j < last; j++)
-			    objects[j].oc_prob = (100+j-first)/(last-first);
+		for (j = first; j < last; j++)
+			sum += objects[j].oc_prob;
+		if (sum == 0) {
+			for (j = first; j < last; j++)
+				objects[j].oc_prob = (100 + j - first) / (last - first);
 			goto check;
 		}
-		if(sum != 100)
+		if (sum != 100)
 			error("init-prob error for %c", let);
 
-		if(objects[first].oc_descr != NULL && let != TOOL_SYM){
+		if (objects[first].oc_descr != NULL && let != TOOL_SYM) {
 			/* shuffle, also some additional descriptions */
-			while(last < end && objects[last].oc_olet == let)
+			while (last < end && objects[last].oc_olet == let)
 				last++;
 			j = last;
-			while(--j > first) {
-				i = first + rn2(j+1-first);
+			while (--j > first) {
+				i = first + rn2(j + 1 - first);
 				tmp = objects[j].oc_descr;
 				objects[j].oc_descr = objects[i].oc_descr;
 				objects[i].oc_descr = tmp;
@@ -67,99 +79,111 @@ register char let, *tmp;
 	}
 }
 
-probtype(let) register char let; {
-register int i = bases[letindex(let)];
-register int prob = rn2(100);
-	while((prob -= objects[i].oc_prob) >= 0) i++;
-	if(objects[i].oc_olet != let || !objects[i].oc_name)
+int
+probtype(let)
+	char            let;
+{
+	int             i = bases[letindex(let)];
+	int             prob = rn2(100);
+	while ((prob -= objects[i].oc_prob) >= 0)
+		i++;
+	if (objects[i].oc_olet != let || !objects[i].oc_name)
 		panic("probtype(%c) error, i=%d", let, i);
-	return(i);
+	return (i);
 }
 
+void
 setgemprobs()
 {
-	register int j,first;
-	extern xchar dlevel;
+	int             j, first;
 
 	first = bases[letindex(GEM_SYM)];
 
-	for(j = 0; j < 9-dlevel/3; j++)
-		objects[first+j].oc_prob = 0;
+	for (j = 0; j < 9 - dlevel / 3; j++)
+		objects[first + j].oc_prob = 0;
 	first += j;
-	if(first >= LAST_GEM || first >= SIZE(objects) ||
+	if (first >= LAST_GEM || first >= SIZE(objects) ||
 	    objects[first].oc_olet != GEM_SYM ||
 	    objects[first].oc_name == NULL)
 		printf("Not enough gems? - first=%d j=%d LAST_GEM=%d\n",
-			first, j, LAST_GEM);
-	for(j = first; j < LAST_GEM; j++)
-		objects[j].oc_prob = (20+j-first)/(LAST_GEM-first);
+		       first, j, LAST_GEM);
+	for (j = first; j < LAST_GEM; j++)
+		objects[j].oc_prob = (20 + j - first) / (LAST_GEM - first);
 }
 
-oinit()			/* level dependent initialization */
-{
+void
+oinit()
+{				/* level dependent initialization */
 	setgemprobs();
 }
 
-extern long *alloc();
-
-savenames(fd) register fd; {
-register int i;
-unsigned len;
+void
+savenames(fd)
+	int             fd;
+{
+	int             i;
+	unsigned        len;
 	bwrite(fd, (char *) bases, sizeof bases);
 	bwrite(fd, (char *) objects, sizeof objects);
-	/* as long as we use only one version of Hack/Quest we
-	   need not save oc_name and oc_descr, but we must save
-	   oc_uname for all objects */
-	for(i=0; i < SIZE(objects); i++) {
-		if(objects[i].oc_uname) {
-			len = strlen(objects[i].oc_uname)+1;
+	/*
+	 * as long as we use only one version of Hack/Quest we need not save
+	 * oc_name and oc_descr, but we must save oc_uname for all objects
+	 */
+	for (i = 0; i < SIZE(objects); i++) {
+		if (objects[i].oc_uname) {
+			len = strlen(objects[i].oc_uname) + 1;
 			bwrite(fd, (char *) &len, sizeof len);
 			bwrite(fd, objects[i].oc_uname, len);
 		}
 	}
 }
 
-restnames(fd) register fd; {
-register int i;
-unsigned len;
+void
+restnames(fd)
+	int             fd;
+{
+	int             i;
+	unsigned        len;
 	mread(fd, (char *) bases, sizeof bases);
 	mread(fd, (char *) objects, sizeof objects);
-	for(i=0; i < SIZE(objects); i++) if(objects[i].oc_uname) {
-		mread(fd, (char *) &len, sizeof len);
-		objects[i].oc_uname = (char *) alloc(len);
-		mread(fd, objects[i].oc_uname, len);
-	}
+	for (i = 0; i < SIZE(objects); i++)
+		if (objects[i].oc_uname) {
+			mread(fd, (char *) &len, sizeof len);
+			objects[i].oc_uname = (char *) alloc(len);
+			mread(fd, objects[i].oc_uname, len);
+		}
 }
 
-dodiscovered()				/* free after Robert Viduya */
-{
-    extern char *typename();
-    register int i, end;
-    int	ct = 0;
+int
+dodiscovered()
+{				/* free after Robert Viduya */
+	int             i, end;
+	int             ct = 0;
 
-    cornline(0, "Discoveries");
+	cornline(0, "Discoveries");
 
-    end = SIZE(objects);
-    for (i = 0; i < end; i++) {
-	if (interesting_to_discover (i)) {
-	    ct++;
-	    cornline(1, typename(i));
+	end = SIZE(objects);
+	for (i = 0; i < end; i++) {
+		if (interesting_to_discover(i)) {
+			ct++;
+			cornline(1, typename(i));
+		}
 	}
-    }
-    if (ct == 0) {
-	pline ("You haven't discovered anything yet...");
-	cornline(3, (char *) 0);
-    } else
-	cornline(2, (char *) 0);
+	if (ct == 0) {
+		pline("You haven't discovered anything yet...");
+		cornline(3, (char *) 0);
+	} else
+		cornline(2, (char *) 0);
 
-    return(0);
+	return (0);
 }
 
+int
 interesting_to_discover(i)
-register int i;
+	int             i;
 {
-    return(
-	objects[i].oc_uname != NULL ||
-	 (objects[i].oc_name_known && objects[i].oc_descr != NULL)
-    );
+	return (
+		objects[i].oc_uname != NULL ||
+		(objects[i].oc_name_known && objects[i].oc_descr != NULL)
+		);
 }

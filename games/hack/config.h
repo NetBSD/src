@@ -1,7 +1,7 @@
+/*	$NetBSD: config.h,v 1.5 1997/10/19 16:56:49 christos Exp $	*/
+
 /*
  * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
- *
- *	$NetBSD: config.h,v 1.4 1997/03/29 20:42:16 thorpej Exp $
  */
 
 #include "pathnames.h"
@@ -106,8 +106,10 @@
  *	typedef	char	schar;
  * will do when you have signed characters; otherwise use
  *	typedef	short int schar;
+ *
+ * Use short chars anyway to avoid warnings.
  */
-#ifdef __CHAR_UNSIGNED__
+#if 1
 typedef	short int	schar;
 #else
 typedef	char		schar;
@@ -143,4 +145,4 @@ typedef	xchar	boolean;		/* 0 or 1 */
 
 #define	SIZE(x)	(int)(sizeof(x) / sizeof(x[0]))
 
-#endif CONFIG
+#endif /* CONFIG */
