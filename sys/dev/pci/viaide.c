@@ -1,4 +1,4 @@
-/*	$NetBSD: viaide.c,v 1.11 2004/03/10 22:16:04 bouyer Exp $	*/
+/*	$NetBSD: viaide.c,v 1.12 2004/07/22 19:09:34 drochner Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -197,9 +197,7 @@ via_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		/*
 		 * get a PCI tag for the ISA bridge.
 		 */
-		if (pci_enumerate_bus(
-		    (struct pci_softc *)sc->sc_wdcdev.sc_dev.dv_parent,
-		    via_pcib_match, &pcib_pa) == 0)
+		if (pci_find_device(&pcib_pa, via_pcib_match) == 0)
 			goto unknown;
 		pcib_id = pcib_pa.pa_id;
 		pcib_class = pcib_pa.pa_class;
