@@ -1,4 +1,4 @@
-/*	$NetBSD: pcppi.c,v 1.1 1996/11/25 03:26:36 cgd Exp $	*/
+/*	$NetBSD: pcppi.c,v 1.2 1996/11/25 03:30:43 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -172,6 +172,8 @@ pcppiprint(aux, pnp)
 		break;
 	case PCPPI_AUX_SLOT:
 		type = "pms";
+		/* XXX XXX XXX should make sure it's there before configuring */
+		return (QUIET);
 		break;
 	default:
 		panic("pcppiprint: bad slot");
