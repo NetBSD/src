@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.23 1996/02/09 19:00:09 christos Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -491,7 +491,7 @@ sys_ioctl(p, v, retval)
 			tmp = p1->p_pgrp->pg_id;
 		}
 		error = (*fp->f_ops->fo_ioctl)
-			(fp, (int)TIOCSPGRP, (caddr_t)&tmp, p);
+			(fp, TIOCSPGRP, (caddr_t)&tmp, p);
 		break;
 
 	case FIOGETOWN:

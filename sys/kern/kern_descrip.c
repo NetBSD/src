@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.40 1996/03/14 19:01:10 christos Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.41 1996/03/29 00:25:30 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -244,7 +244,7 @@ sys_fcntl(p, v, retval)
 			return (0);
 		}
 		error = (*fp->f_ops->fo_ioctl)
-			(fp, (int)TIOCGPGRP, (caddr_t)retval, p);
+			(fp, TIOCGPGRP, (caddr_t)retval, p);
 		*retval = -*retval;
 		return (error);
 
@@ -263,7 +263,7 @@ sys_fcntl(p, v, retval)
 			SCARG(uap, arg) = (void *)(long)p1->p_pgrp->pg_id;
 		}
 		return ((*fp->f_ops->fo_ioctl)
-			(fp, (int)TIOCSPGRP, (caddr_t)&SCARG(uap, arg), p));
+			(fp, TIOCSPGRP, (caddr_t)&SCARG(uap, arg), p));
 
 	case F_SETLKW:
 		flg |= F_WAIT;
