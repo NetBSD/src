@@ -1,4 +1,4 @@
-/*	$NetBSD: bivideo.c,v 1.3 2001/02/27 08:54:17 sato Exp $	*/
+/*	$NetBSD: bivideo.c,v 1.4 2001/03/09 08:54:18 sato Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -37,7 +37,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1999 Shin Takemura.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$Id: bivideo.c,v 1.3 2001/02/27 08:54:17 sato Exp $";
+    "$Id: bivideo.c,v 1.4 2001/03/09 08:54:18 sato Exp $";
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,8 +85,9 @@ struct bivideo_softc {
 	void			*sc_powerhook;	/* power management hook */
 	int			sc_powerstate;
 #define PWRSTAT_SUSPEND		(1<<0)
-#define PWRSTAT_LCD		(1<<1)
-#define PWRSTAT_BACKLIGHT	(1<<2)
+#define PWRSTAT_VIDEOOFF	(1<<1)
+#define PWRSTAT_LCD		(1<<2)
+#define PWRSTAT_BACKLIGHT	(1<<3)
 #define PWRSTAT_ALL		(0xffffffff)
 	int			sc_brightness;
 	int			sc_brightness_save;
@@ -351,12 +352,14 @@ bivideo_update_powerstate(struct bivideo_softc *sc, int updates)
 	if (updates & PWRSTAT_LCD)
 		config_hook_call(CONFIG_HOOK_POWERCONTROL,
 		    CONFIG_HOOK_POWERCONTROL_LCD,
-		    (void*)!(sc->sc_powerstate & PWRSTAT_SUSPEND));
+		    (void*)!(sc->sc_powerstate & 
+				(PWRSTAT_VIDEOOFF|PWRSTAT_SUSPEND)));
 
 	if (updates & PWRSTAT_BACKLIGHT)
 		config_hook_call(CONFIG_HOOK_POWERCONTROL,
 		    CONFIG_HOOK_POWERCONTROL_LCDLIGHT,
-		    (void*)(!(sc->sc_powerstate & PWRSTAT_SUSPEND) &&
+		    (void*)(!(sc->sc_powerstate & 
+				(PWRSTAT_VIDEOOFF|PWRSTAT_SUSPEND)) &&
 			     (sc->sc_powerstate & PWRSTAT_BACKLIGHT)));
 }
 
@@ -395,6 +398,19 @@ bivideo_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 		 * This driver can't set color map.
 		 */
 		return (EINVAL);
+	
+	case WSDISPLAYIO_SVIDEO:
+		if (*(int *)data == WSDISPLAYIO_VIDEO_OFF)
+			sc->sc_powerstate |= PWRSTAT_VIDEOOFF;
+		else
+			sc->sc_powerstate &= ~PWRSTAT_VIDEOOFF;
+		bivideo_update_powerstate(sc, PWRSTAT_ALL);
+		return 0;
+
+	case WSDISPLAYIO_GVIDEO:
+		*(int *)data = (sc->sc_powerstate&PWRSTAT_VIDEOOFF) ? 
+				WSDISPLAYIO_VIDEO_OFF:WSDISPLAYIO_VIDEO_ON;
+		return 0;
 
 
 	case WSDISPLAYIO_GETPARAM:
