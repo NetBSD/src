@@ -1,4 +1,4 @@
-/*	$NetBSD: gapspci.c,v 1.1 2001/02/01 01:04:55 thorpej Exp $	*/
+/*	$NetBSD: gapspci.c,v 1.2 2001/02/01 19:35:04 marcus Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -67,14 +67,20 @@ struct cfattach gapspci_ca = {
 int
 gaps_match(struct device *parent, struct cfdata *match, void *aux)
 {
-  /*  	struct g2bus_attach_args *ga = aux; */
+  	struct g2bus_attach_args *ga = aux;
 	char idbuf[16];
+	bus_space_handle_t tmp_memh;
 
 	if(strcmp("gapspci", match->cf_driver->cd_name))
 		return 0;
 
-	/* FIXME */
-	memcpy(idbuf, (void *)0xa1001400, sizeof(idbuf));
+	if (bus_space_map(ga->ga_memt, 0x01001400, 0x100, 0, &tmp_memh) != 0)
+		return 0;
+
+	bus_space_read_region_1(ga->ga_memt, tmp_memh, 0,
+				idbuf, sizeof(idbuf));
+
+	bus_space_unmap(ga->ga_memt, tmp_memh, 0x100);
 
 	if(strncmp(idbuf, "GAPSPCI_BRIDGE_2", 16))
 		return 0;
@@ -92,23 +98,30 @@ gaps_attach(struct device *parent, struct device *self, void *aux)
 
 	printf(": SEGA GAPS PCI Bridge\n");
 
-	sc->sc_dmabase = 0x1840000;
 	sc->sc_memt = ga->ga_memt;
 
-  /* FIXME */	
-	*(volatile unsigned int *)(void *)(0xa1001418) = 0x5a14a501;
+	sc->sc_dmabase = 0x1840000;
+	sc->sc_dmasize = 32768;
+
+	if (bus_space_map(sc->sc_memt, 0x01001400, 0x100,
+			  0, &sc->sc_gaps_memh) != 0)
+		panic("gaps_attach: can't map GAPS register space");
+
+	bus_space_write_4(sc->sc_memt, sc->sc_gaps_memh, 0x18, 0x5a14a501);
 
 	for(i=0; i<1000000; i++)
 	  ;
 	
-	if(*(volatile unsigned int *)(void *)(0xa1001418) != 1)
-	  return;
+	if(bus_space_read_4(sc->sc_memt, sc->sc_gaps_memh, 0x18) != 1)
+		panic("gaps_attach: GAPS PCI bridge not responding");
 
-	*(volatile unsigned int *)(void *)(0xa1001420) = 0x1000000;
-	*(volatile unsigned int *)(void *)(0xa1001424) = 0x1000000;
-	*(volatile unsigned int *)(void *)(0xa1001428) = sc->sc_dmabase;
-	*(volatile unsigned int *)(void *)(0xa1001414) = 1;
-	*(volatile unsigned int *)(void *)(0xa1001434) = 1;
+	bus_space_write_4(sc->sc_memt, sc->sc_gaps_memh, 0x20, 0x1000000);
+	bus_space_write_4(sc->sc_memt, sc->sc_gaps_memh, 0x24, 0x1000000);
+	bus_space_write_4(sc->sc_memt, sc->sc_gaps_memh, 0x28, sc->sc_dmabase);
+	bus_space_write_4(sc->sc_memt, sc->sc_gaps_memh, 0x2c,
+			  sc->sc_dmabase + sc->sc_dmasize);
+	bus_space_write_4(sc->sc_memt, sc->sc_gaps_memh, 0x14, 1);
+	bus_space_write_4(sc->sc_memt, sc->sc_gaps_memh, 0x34, 1);
 
 	gaps_pci_init(sc);
 	gaps_dma_init(sc);
