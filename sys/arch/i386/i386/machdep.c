@@ -1,7 +1,7 @@
-/*	$NetBSD: machdep.c,v 1.559 2004/10/20 04:20:05 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.560 2005/03/02 11:48:03 mycroft Exp $	*/
 
 /*-
- * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 1997, 1998, 2000, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.559 2004/10/20 04:20:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.560 2005/03/02 11:48:03 mycroft Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
