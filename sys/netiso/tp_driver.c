@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_driver.c,v 1.7 1996/02/13 22:10:49 christos Exp $	*/
+/*	$NetBSD: tp_driver.c,v 1.8 1996/03/16 23:13:45 christos Exp $	*/
 
 #include "tp_states.h"
 
@@ -93,7 +93,7 @@ _Xebec_action(a, e, p)
 #endif
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_CONN]) {
-			printf("CR datalen 0x%x data 0x%x",
+			printf("CR datalen 0x%x data %p",
 				e->ev_union.EV_CR_TPDU.e_datalen,
 				e->ev_union.EV_CR_TPDU.e_data);
 		}
@@ -163,7 +163,7 @@ _Xebec_action(a, e, p)
 		if (data) {
 #ifdef ARGO_DEBUG
 			if (argo_debug[D_CONN]) {
-				printf("T_CONN_req.trans m_copy cc 0x%x\n",
+				printf("T_CONN_req.trans m_copy cc %p\n",
 				       p->tp_ucddata);
 				dump_mbuf(data, "sosnd @ T_CONN_req");
 			}
@@ -310,7 +310,7 @@ _Xebec_action(a, e, p)
 		if (p->tp_ucddata) {
 #ifdef ARGO_DEBUG
 			if (argo_debug[D_CONN]) {
-				printf("TM_retrans.trans m_copy cc 0x%x\n",
+				printf("TM_retrans.trans m_copy cc %p\n",
 					data);
 				dump_mbuf(p->tp_ucddata, "sosnd @ TM_retrans");
 			}
@@ -553,7 +553,7 @@ _Xebec_action(a, e, p)
 		if (data) {
 #ifdef ARGO_DEBUG
 			if (argo_debug[D_CONN]) {
-				printf("T_DISC_req.trans tp_ucddata 0x%x\n",
+				printf("T_DISC_req.trans tp_ucddata %p\n",
 				       p->tp_ucddata);
 				dump_mbuf(data, "ucddata @ T_DISC_req");
 			}
@@ -690,7 +690,7 @@ _Xebec_action(a, e, p)
 #endif
 #ifdef ARGO_DEBUG
 			if (argo_debug[D_XPD]) {
-				printf("T_XPD_req: sb_cc 0x%x\n", p->tp_Xsnd.sb_cc);
+				printf("T_XPD_req: sb_cc 0x%lx\n", p->tp_Xsnd.sb_cc);
 				dump_mbuf(m, "XPD req emitting M");
 			}
 #endif

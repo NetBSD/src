@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_inet.c,v 1.10 1996/02/13 22:11:02 christos Exp $	*/
+/*	$NetBSD: tp_inet.c,v 1.11 1996/03/16 23:13:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -344,7 +344,7 @@ tpip_mtu(v)
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_CONN]) {
-		printf("tpip_mtu(tpcb)\n", tpcb);
+		printf("tpip_mtu(tpcb %p)\n", tpcb);
 		printf("tpip_mtu routing to addr 0x%x\n", inp->inp_faddr.s_addr);
 	}
 #endif
@@ -443,7 +443,7 @@ tpip_output_dg(m0, va_alist)
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_EMIT]) {
-		printf("tpip_output_dg  datalen 0x%x m0 0x%x\n", datalen, m0);
+		printf("tpip_output_dg  datalen 0x%x m0 %p\n", datalen, m0);
 	}
 #endif
 
@@ -746,7 +746,7 @@ void
 dump_inaddr(addr)
 	register struct sockaddr_in *addr;
 {
-	printf("INET: port 0x%x; addr 0x%x\n", addr->sin_port, addr->sin_addr);
+	printf("INET: port 0x%x; addr 0x%x\n", addr->sin_port, addr->sin_addr.s_addr);
 }
 #endif	/* ARGO_DEBUG */
 #endif	/* INET */
