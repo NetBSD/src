@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_types.h,v 1.8 2002/12/07 15:33:01 manu Exp $	 */
+/*	$NetBSD: mach_types.h,v 1.9 2002/12/07 21:23:04 manu Exp $	 */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,6 +41,7 @@
 
 typedef int mach_port_t;
 typedef int mach_port_name_t;
+typedef int mach_port_type_t;
 typedef int mach_kern_return_t;
 typedef int mach_clock_res_t;
 typedef int mach_clock_id_t;
