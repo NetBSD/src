@@ -1,4 +1,4 @@
-/*	$NetBSD: mkioconf.c,v 1.51 1999/01/21 13:10:09 pk Exp $	*/
+/*	$NetBSD: mkioconf.c,v 1.52 1999/09/24 04:48:37 enami Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -121,8 +121,9 @@ emithdr(ofp)
 	FILE *ofp;
 {
 	FILE *ifp;
-	int n;
-	char ifn[200], buf[BUFSIZ];
+	int n, rv;
+	char ifnbuf[200], buf[BUFSIZ];
+	char *ifn;
 
 	if (fprintf(ofp, "\
 /*\n\
@@ -131,16 +132,21 @@ emithdr(ofp)
  * ioconf.c, from \"%s\"\n\
  */\n\n", conffile) < 0)
 		return (1);
-	(void)sprintf(ifn, "ioconf.incl.%s", machine);
+
+	rv = 0;
+	(void)snprintf(ifnbuf, sizeof(ifnbuf), "arch/%s/conf/ioconf.incl.%s",
+	    machine, machine);
+	ifn = sourcepath(ifnbuf);
 	if ((ifp = fopen(ifn, "r")) != NULL) {
 		while ((n = fread(buf, 1, sizeof(buf), ifp)) > 0)
-			if (fwrite(buf, 1, n, ofp) != n)
-				return (1);
-		if (ferror(ifp)) {
+			if (fwrite(buf, 1, n, ofp) != n) {
+				rv = 1;
+				break;
+			}
+		if (rv == 0 && ferror(ifp)) {
 			(void)fprintf(stderr, "config: error reading %s: %s\n",
 			    ifn, strerror(errno));
-			(void)fclose(ifp);
-			return (-1);
+			rv = -1;
 		}
 		(void)fclose(ifp);
 	} else {
@@ -149,9 +155,10 @@ emithdr(ofp)
 #include <sys/conf.h>\n\
 #include <sys/device.h>\n\
 #include <sys/mount.h>\n", ofp) < 0)
-			return (1);
+			rv = 1;
 	}
-	return (0);
+	free(ifn);
+	return (rv);
 }
 
 static int
