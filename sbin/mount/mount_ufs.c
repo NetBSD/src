@@ -38,7 +38,8 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static char sccsid[] = "@(#)mount_ufs.c	8.2 (Berkeley) 3/27/94";
+/*static char sccsid[] = "from: @(#)mount_ufs.c	8.2 (Berkeley) 3/27/94";*/
+static char *rcsid = "$Id: mount_ufs.c,v 1.1 1994/06/08 19:02:45 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -60,6 +61,7 @@ static struct mntopt mopts[] = {
 	MOPT_ASYNC,
 	MOPT_SYNC,
 	MOPT_UPDATE,
+	MOPT_RELOAD,
 	{ NULL }
 };
 

@@ -1,1 +1,0 @@
-#define NSD	7

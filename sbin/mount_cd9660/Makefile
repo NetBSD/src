@@ -1,4 +1,5 @@
-#	@(#)Makefile	8.3 (Berkeley) 3/27/94
+#	from: @(#)Makefile	8.3 (Berkeley) 3/27/94
+#	$Id: Makefile,v 1.1 1994/06/08 19:08:27 mycroft Exp $
 
 PROG=	mount_cd9660
 SRCS=	mount_cd9660.c getmntopts.c

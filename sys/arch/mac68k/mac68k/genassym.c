@@ -32,7 +32,7 @@
 */
 /*
  *	from: @(#)genassym.c	7.8 (Berkeley) 5/7/91
- *	$Id: genassym.c,v 1.8 1994/06/26 13:13:54 briggs Exp $
+ *	$Id: genassym.c,v 1.9.2.2 1994/07/07 00:25:11 briggs Exp $
  */
 
 #include <sys/param.h>
@@ -189,5 +189,9 @@ main()
 	printf("#define\tCACHE40_ON %d\n", CACHE40_ON);
 	printf("#define\tCACHE40_OFF %d\n", CACHE40_OFF);
 	printf("#define\tSG_040ISHIFT %d\n", SG_040ISHIFT);
+
+	printf("#define\tMMU_68040 %d\n", MMU_68040);
+	printf("#define\tMMU_68030 %d\n", MMU_68030);
+	printf("#define\tMMU_68851 %d\n", MMU_68851);
 	exit(0);
 }
