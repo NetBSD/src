@@ -1,4 +1,4 @@
-#	$NetBSD: majors.amiga,v 1.1.2.2 2002/05/30 07:14:41 gehenna Exp $
+#	$NetBSD: majors.amiga,v 1.1.2.3 2002/07/09 05:39:05 gehenna Exp $
 #
 # Device majors for amiga
 #
@@ -51,3 +51,5 @@ device-major	svr4_net	char 51			compat_svr4
 device-major	wd		char 52  block 17	wd
 device-major	wsdisplay	char 53			wsdisplay
 device-major	wskbd		char 54			wskbd
+device-major	clockctl	char 55			clockctl
+device-major	systrace	char 56			systrace
