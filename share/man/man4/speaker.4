@@ -1,4 +1,4 @@
-.\" $NetBSD: speaker.4,v 1.6 2001/09/11 22:52:54 wiz Exp $
+.\" $NetBSD: speaker.4,v 1.7 2001/09/22 16:21:42 wiz Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
 .\" All rights reserved.
@@ -142,6 +142,14 @@ dotted twice, it is held 9/4, and three times would give 27/8.
 .Pp
 Whitespace in play strings is simply skipped and may be used to separate
 melody sections.
+.Sh FILES
+.Bl -tag -width Pa -compact
+.It Pa /dev/speaker
+.El
+.Sh SEE ALSO
+.Xr pcppi 4
+.Sh AUTHORS
+Eric S. Raymond (esr@snark.thyrsus.com) Feb 1990
 .Sh BUGS
 Due to roundoff in the pitch tables and slop in the tone-generation and timer
 hardware (neither of which was designed for precision), neither pitch accuracy
@@ -152,11 +160,3 @@ There is no volume control.
 In play strings which are very long (longer than your system's physical I/O
 blocks) note suffixes or numbers may occasionally be parsed incorrectly due
 to crossing a block boundary.
-.Sh FILES
-.Bl -tag -width Pa -compact
-.It Pa /dev/speaker
-.El
-.Sh SEE ALSO
-.Xr pcppi 4
-.Sh AUTHORS
-Eric S. Raymond (esr@snark.thyrsus.com) Feb 1990

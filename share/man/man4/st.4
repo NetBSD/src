@@ -1,4 +1,4 @@
-.\"	$NetBSD: st.4,v 1.16 2001/09/11 22:52:54 wiz Exp $
+.\"	$NetBSD: st.4,v 1.17 2001/09/22 16:21:42 wiz Exp $
 .\"
 .\" Copyright (c) 1996
 .\"     Julian Elischer <julian@freebsd.org>.  All rights reserved.
@@ -169,7 +169,7 @@ devices run in fixed block-size mode, where most nine-track tapes
 and many new cartridge formats allow variable block-size.
 The difference between the two is as follows:
 .Bl -inset
-.It Variable block-size:
+.It Variable block-size
 Each write made to the device results in a single logical record
 written to the tape.
 One can never read or write
@@ -412,9 +412,6 @@ Mode 2, Eject on close (if capable)
 .It Pa /dev/enst0
 Mode 3, Control Mode (elsewise like mode 0)
 .El
-.Sh BUGS
-The selection of compression could possibly also be usefully done
-as with a minor device bit.
 .Sh DIAGNOSTICS
 A variety, far too many to list.
 .Sh SEE ALSO
@@ -433,3 +430,6 @@ by Charles Hannum.
 This man page was edited for
 .Nx
 by Jon Buller.
+.Sh BUGS
+The selection of compression could possibly also be usefully done
+as with a minor device bit.

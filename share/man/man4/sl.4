@@ -1,4 +1,4 @@
-.\"	$NetBSD: sl.4,v 1.6 2001/07/27 19:49:45 itojun Exp $
+.\"	$NetBSD: sl.4,v 1.7 2001/09/22 16:21:42 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -75,14 +75,14 @@ has been superceded by the Point-to-Point Protocol
 which does all of those things, and much more.
 .Sh DIAGNOSTICS
 .Bl -diag
-.It sl%d: af%d not supported.
+.It sl%d: af%d not supported .
 The interface was handed
 a message with addresses formatted in an unsuitable address
 family; the packet was dropped.
 .El
 .Sh SEE ALSO
-.Xr intro 4 ,
 .Xr inet 4 ,
+.Xr intro 4 ,
 .Xr ppp 4 ,
 .Xr slattach 8 ,
 .Xr sliplogin 8 ,
