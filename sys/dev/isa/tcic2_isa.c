@@ -1,4 +1,4 @@
-/*	$NetBSD: tcic2_isa.c,v 1.2 1999/04/08 16:14:29 bad Exp $	*/
+/*	$NetBSD: tcic2_isa.c,v 1.3 2000/06/28 16:27:57 mrg Exp $	*/
 
 #undef	TCICISADEBUG
 
@@ -40,8 +40,6 @@
 #include <sys/device.h>
 #include <sys/extent.h>
 #include <sys/malloc.h>
-
-#include <vm/vm.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>

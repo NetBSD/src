@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.105 2000/06/26 04:56:21 simonb Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.106 2000/06/28 16:27:56 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -92,7 +92,6 @@
 #include <sys/device.h>
 #include <sys/proc.h>
 #include <sys/buf.h>
-#include <vm/vm.h>
 
 #include <machine/cpu.h>
 #include <machine/intr.h>

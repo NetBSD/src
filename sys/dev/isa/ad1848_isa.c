@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848_isa.c,v 1.15 2000/06/26 04:56:20 simonb Exp $	*/
+/*	$NetBSD: ad1848_isa.c,v 1.16 2000/06/28 16:27:51 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -114,7 +114,6 @@
 #include <machine/bus.h>
 
 #include <sys/audioio.h>
-#include <vm/vm.h>
 
 #include <dev/audio_if.h>
 #include <dev/auconv.h>

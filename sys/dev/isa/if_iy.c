@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iy.c,v 1.38 2000/06/23 14:07:03 is Exp $	*/
+/*	$NetBSD: if_iy.c,v 1.39 2000/06/28 16:27:54 mrg Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
 
@@ -91,8 +91,6 @@
 #if defined(SIOCSIFMEDIA)
 #include <net/if_media.h>
 #endif
-
-#include <vm/vm.h>
 
 #include <machine/cpu.h>
 #include <machine/bus.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: isadma.c,v 1.44 2000/06/26 04:56:21 simonb Exp $	*/
+/*	$NetBSD: isadma.c,v 1.45 2000/06/28 16:27:55 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -47,9 +47,9 @@
 #include <sys/device.h>
 #include <sys/malloc.h>
 
-#include <vm/vm.h>
-
 #include <machine/bus.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
