@@ -1125,9 +1125,11 @@
 /* Define vfork as fork if vfork does not work.  */
 /* #undef vfork */
 
+#if 0
 /* Define if your processor stores words with the most significant
    byte first (like Motorola and SPARC, unlike Intel and VAX).  */
 /* #undef WORDS_BIGENDIAN */
+#endif
 
 /* Define if lex declares yytext as a char * by default, not a char[].  */
 #define YYTEXT_POINTER 1
