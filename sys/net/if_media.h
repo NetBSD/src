@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media.h,v 1.7 1998/08/06 02:19:34 thorpej Exp $	*/
+/*	$NetBSD: if_media.h,v 1.8 1998/08/06 02:38:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -229,6 +229,12 @@ int	ifmedia_ioctl __P((struct ifnet *ifp, struct ifreq *ifr,
 #define	IFM_SUBTYPE(x)	((x) & IFM_TMASK)
 #define	IFM_INST(x)	(((x) & IFM_IMASK) >> IFM_ISHIFT)
 #define	IFM_OPTIONS(x)	((x) & (IFM_OMASK|IFM_GMASK))
+
+/*
+ * Macro to create a media word.
+ */
+#define	IFM_MAKEWORD(type, subtype, options, instance)			\
+	((type) | (subtype) | (options) | ((instance) << IFM_ISHIFT))
 
 /*
  * NetBSD extension not defined in the BSDI API.  This is used in various
