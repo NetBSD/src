@@ -91,3 +91,6 @@
 /* XXX Redefine this; <sparc/sparc.h> mucks with it. */
 #undef TARGET_VERSION
 #define TARGET_VERSION fprintf (stderr, " (%s)", TARGET_NAME);
+
+/* Use sjlj exceptions. */
+#define DWARF2_UNWIND_INFO 0

@@ -409,3 +409,6 @@ dtors_section ()							\
   } while (0)
 
 /* Stuff for constructors.  End here.  */
+
+/* Use sjlj exceptions. */
+#define DWARF2_UNWIND_INFO 0
