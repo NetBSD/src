@@ -37,7 +37,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)locore.s	7.3 (Berkeley) 5/13/91
- *	$Id: locore.s,v 1.67 1994/05/13 00:50:41 cgd Exp $
+ *	$Id: locore.s,v 1.68 1994/05/18 05:12:10 cgd Exp $
  */
 
 /*
@@ -441,10 +441,10 @@ reloc_gdt:
 
 	/*
 	 * Some BIOSes leave trash in the spare segment registers.  We need to
-	 * clear them so we don't get a protection fault in swtch() later on.
-	 * Since the kernel itself does not use these except in copyin/out, it
-	 * seems best to make them null selectors so we get a trap if they are
-	 * accidentally referenced.
+	 * clear them so we don't get a protection fault in cpu_switch() later
+	 * on.  Since the kernel itself does not use these except in
+	 * copyin/out, it seems best to make them null selectors so we get a
+	 * trap if they are accidentally referenced.
 	 */
 	xorl	%ecx,%ecx
 	movl	%cx,%fs
@@ -1446,7 +1446,7 @@ ENTRY(remrq)
 #endif
 
 /*
- * When no processes are on the runq, swtch() branches to here to wait for
+ * When no processes are on the runq, cpu_switch() branches to here to wait for
  * something to come ready.
  */
 ENTRY(idle)
@@ -1463,20 +1463,20 @@ ENTRY(idle)
 	jmp	1b
 
 #ifdef DIAGNOSTIC
-ENTRY(swtch_error)
+ENTRY(switch_error)
 	pushl	$1f
 	call	_panic
 	/*NOTREACHED*/
-1:	.asciz	"swtch"
+1:	.asciz	"cpu_switch"
 #endif
 
 /*
- * swtch(void);
+ * cpu_switch(void);
  * Find a runnable process and switch to it.  Wait if necessary.  If the new
  * process is the same as the old one, we short-circuit the context save and
  * restore.
  */
-ENTRY(swtch)
+ENTRY(cpu_switch)
 	pushl	%ebx
 	pushl	%esi
 	pushl	%edi
@@ -1488,7 +1488,7 @@ ENTRY(swtch)
 	movl	_curproc,%esi
 	movl	$0,_curproc
 
-swtch_search:
+switch_search:
 	/*
 	 * First phase: find new process.
 	 *
@@ -1513,7 +1513,7 @@ sw1:	bsfl	%ecx,%ebx		# find a full q
 	movl	P_FORW(%eax),%edi	# unlink from front of process q
 #ifdef	DIAGNOSTIC
 	cmpl	%edi,%eax		# linked to self (e.g. nothing queued)?
-	je	_swtch_error		# not possible
+	je	_switch_error		# not possible
 #endif
 	movl	P_FORW(%edi),%edx
 	movl	%edx,P_FORW(%eax)
@@ -1533,9 +1533,9 @@ sw1:	bsfl	%ecx,%ebx		# find a full q
 
 #ifdef	DIAGNOSTIC
 	cmpl	%eax,P_WCHAN(%edi)	# Waiting for something?
-	jne	_swtch_error		# Yes; shouldn't be queued.
+	jne	_switch_error		# Yes; shouldn't be queued.
 	cmpb	$SRUN,P_STAT(%edi)	# In run state?
-	jne	_swtch_error		# No; shouldn't be queued.
+	jne	_switch_error		# No; shouldn't be queued.
 #endif
 
 	/* Isolate process.  XXX Is this necessary? */
@@ -1546,11 +1546,11 @@ sw1:	bsfl	%ecx,%ebx		# find a full q
 
 	/* Skip context switch if same process. */
 	cmpl	%edi,%esi
-	je	swtch_return
+	je	switch_return
 
 	/* If old process exited, don't bother. */
 	testl	%esi,%esi
-	jz	swtch_exited
+	jz	switch_exited
 
 	/*
 	 * Second phase: save old context.
@@ -1585,7 +1585,7 @@ sw1:	bsfl	%ecx,%ebx		# find a full q
 1:
 #endif
 
-swtch_exited:
+switch_exited:
 	/*
 	 * Third phase: restore saved context.
 	 *
@@ -1634,7 +1634,7 @@ swtch_exited:
 	/* Interrupts are okay again. */
 	sti
 
-swtch_return:
+switch_return:
 	/* Record new process. */
 	movl	%edi,_curproc
 
@@ -1649,12 +1649,12 @@ swtch_return:
 	ret
 
 /*
- * swtch_exit(struct proc *p);
+ * switch_exit(struct proc *p);
  * Switch to proc0's saved context and deallocate the address space and kernel
- * stack for p.  Then jump into swtch(), as if we were in proc0 all along.
+ * stack for p.  Then jump into cpu_switch(), as if we were in proc0 all along.
  */
 	.globl	_proc0,_vmspace_free,_kernel_map,_kmem_free
-ENTRY(swtch_exit)
+ENTRY(switch_exit)
 	movl	4(%esp),%edi		# old process
 	movl	$_proc0,%ebx
 
@@ -1695,15 +1695,15 @@ ENTRY(swtch_exit)
 	call	_kmem_free
 	addl	$16,%esp
 
-	/* Jump into swtch() with the right state. */
+	/* Jump into cpu_switch() with the right state. */
 	movl	%ebx,%esi
 	movl	$0,_curproc
-	jmp	swtch_search
+	jmp	switch_search
 
 /*
  * savectx(struct pcb *pcb, int altreturn);
  * Update pcb, saving current processor state and arranging for alternate
- * return in swtch() if altreturn is true.
+ * return in cpu_switch() if altreturn is true.
  */
 ENTRY(savectx)
 	pushl	%ebx
@@ -1768,7 +1768,7 @@ ENTRY(savectx)
 	call	_bcopy
 	addl	$12,%esp
 	
-1:	/* This is the parent.  The child will return from swtch(). */
+1:	/* This is the parent.  The child will return from cpu_switch(). */
 	xorl	%eax,%eax		# return 0
 	addl	$4,%esp			# drop saved _cpl on the floor
 	popl	%edi
