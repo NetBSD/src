@@ -1,4 +1,4 @@
-/*	$NetBSD: lex.c,v 1.14 2000/01/21 17:08:35 mycroft Exp $	*/
+/*	$NetBSD: lex.c,v 1.15 2000/07/06 14:12:31 ad Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)lex.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: lex.c,v 1.14 2000/01/21 17:08:35 mycroft Exp $");
+__RCSID("$NetBSD: lex.c,v 1.15 2000/07/06 14:12:31 ad Exp $");
 #endif
 #endif /* not lint */
 
@@ -232,7 +232,7 @@ commands()
 			if ((value("autoinc") != NOSTR) && (incfile() > 0))
 				printf("New mail has arrived.\n");
 			reset_on_stop = 1;
-			printf(prompt);
+			printf("%s", prompt);
 		}
 		fflush(stdout);
 		sreset();
