@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctlutil.c,v 1.9 2004/03/24 20:20:44 atatat Exp $ */
+/*	$NetBSD: sysctlgetmibinfo.c,v 1.1 2004/03/25 19:36:26 atatat Exp $ */
 
 /*-
  * Copyright (c) 2003,2004 The NetBSD Foundation, Inc.
@@ -64,13 +64,13 @@ static struct sysctlnode sysctl_mibroot = {
  * routines to handle learning and cleanup
  */
 static int compar(const void *, const void *);
-int learn_tree(int *, u_int, struct sysctlnode *);
 static void free_children(struct sysctlnode *);
 static void relearnhead(void);
-int sysctlnametomib(const char *, int *, size_t *);
-int sysctlbyname(const char *, void *, size_t *, void *, size_t);
-int sysctlgetmibinfo(const char *, int *, u_int *,
-		     char *, size_t *, struct sysctlnode **, int);
+
+/*
+ * specifically not static since sysctl(8) "borrows" it.
+ */
+int __learn_tree(int *, u_int, struct sysctlnode *);
 
 /*
  * for ordering nodes -- a query may or may not be given them in
@@ -82,106 +82,6 @@ compar(const void *a, const void *b)
 
 	return (((const struct sysctlnode *)a)->sysctl_num -
 		((const struct sysctlnode *)b)->sysctl_num);
-}
-
-/*
- * sucks in the children at a given level and attaches it to the tree.
- */
-int
-learn_tree(int *name, u_int namelen, struct sysctlnode *pnode)
-{
-	struct sysctlnode qnode;
-	int rc;
-	size_t sz;
-
-	if (pnode == NULL)
-		pnode = &sysctl_mibroot;
-	if (SYSCTL_TYPE(pnode->sysctl_flags) != CTLTYPE_NODE) {
-		errno = EINVAL;
-		return (-1);
-	}
-	if (pnode->sysctl_child != NULL)
-		return (0);
-
-	if (pnode->sysctl_clen == 0)
-		sz = SYSCTL_DEFSIZE * sizeof(struct sysctlnode);
-	else
-		sz = pnode->sysctl_clen * sizeof(struct sysctlnode);
-	pnode->sysctl_child = malloc(sz);
-	if (pnode->sysctl_child == NULL)
-		return (-1);
-
-	name[namelen] = CTL_QUERY;
-	pnode->sysctl_clen = 0;
-	pnode->sysctl_csize = 0;
-	memset(&qnode, 0, sizeof(qnode));
-	qnode.sysctl_flags = SYSCTL_VERSION;
-	rc = sysctl(name, namelen + 1, pnode->sysctl_child, &sz,
-		    &qnode, sizeof(qnode));
-	if (sz == 0) {
-		free(pnode->sysctl_child);
-		pnode->sysctl_child = NULL;
-		return (rc);
-	}
-	if (rc) {
-		free(pnode->sysctl_child);
-		pnode->sysctl_child = NULL;
-		if ((sz % sizeof(struct sysctlnode)) != 0)
-			errno = EINVAL;
-		if (errno != ENOMEM)
-			return (rc);
-	}
-
-	if (pnode->sysctl_child == NULL) {
-		pnode->sysctl_child = malloc(sz);
-		if (pnode->sysctl_child == NULL)
-			return (-1);
-
-		rc = sysctl(name, namelen + 1, pnode->sysctl_child, &sz,
-			    &qnode, sizeof(qnode));
-		if (rc) {
-			free(pnode->sysctl_child);
-			pnode->sysctl_child = NULL;
-			return (rc);
-		}
-	}
-
-	/*
-	 * how many did we get?
-	 */
-	pnode->sysctl_clen = sz / sizeof(struct sysctlnode);
-	pnode->sysctl_csize = sz / sizeof(struct sysctlnode);
-	if (pnode->sysctl_clen * sizeof(struct sysctlnode) != sz) {
-		free(pnode->sysctl_child);
-		pnode->sysctl_child = NULL;
-		errno = EINVAL;
-		return (-1);
-	}
-
-	/*
-	 * you know, the kernel doesn't really keep them in any
-	 * particular order...just like entries in a directory
-	 */
-	qsort(pnode->sysctl_child, pnode->sysctl_clen, 
-	    sizeof(struct sysctlnode), compar);
-
-	/*
-	 * rearrange parent<->child linkage
-	 */
-	for (rc = 0; rc < pnode->sysctl_clen; rc++) {
-		pnode->sysctl_child[rc].sysctl_parent = pnode;
-		if (SYSCTL_TYPE(pnode->sysctl_child[rc].sysctl_flags) ==
-		    CTLTYPE_NODE) {
-			/*
-			 * these nodes may have children, but we
-			 * haven't discovered that yet.
-			 */
-			pnode->sysctl_child[rc].sysctl_child = NULL;
-		}
-		pnode->sysctl_child[rc].sysctl_desc = NULL;
-	}
-
-	return (0);
 }
 
 /*
@@ -350,40 +250,103 @@ relearnhead(void)
 }
 
 /*
- * freebsd compatible sysctlnametomib() function, implemented as an
- * extremely thin wrapper around sysctlgetmibinfo().  i think the use
- * of size_t as the third argument is erroneous, but what can we do
- * about that?
+ * sucks in the children at a given level and attaches it to the tree.
  */
 int
-sysctlnametomib(const char *gname, int *iname, size_t *namelenp)
+__learn_tree(int *name, u_int namelen, struct sysctlnode *pnode)
 {
-	u_int unamelen;
+	struct sysctlnode qnode;
 	int rc;
+	size_t sz;
 
-	unamelen = *namelenp;
-	rc = sysctlgetmibinfo(gname, iname, &unamelen, NULL, NULL, NULL,
-			      SYSCTL_VERSION);
-	*namelenp = unamelen;
+	if (pnode == NULL)
+		pnode = &sysctl_mibroot;
+	if (SYSCTL_TYPE(pnode->sysctl_flags) != CTLTYPE_NODE) {
+		errno = EINVAL;
+		return (-1);
+	}
+	if (pnode->sysctl_child != NULL)
+		return (0);
 
-	return (rc);
-}
+	if (pnode->sysctl_clen == 0)
+		sz = SYSCTL_DEFSIZE * sizeof(struct sysctlnode);
+	else
+		sz = pnode->sysctl_clen * sizeof(struct sysctlnode);
+	pnode->sysctl_child = malloc(sz);
+	if (pnode->sysctl_child == NULL)
+		return (-1);
 
-/*
- * trivial sysctlbyname() function for the "lazy".
- */
-int
-sysctlbyname(const char *gname, void *oldp, size_t *oldlenp, void *newp,
-	     size_t newlen)
-{
-	int name[CTL_MAXNAME], rc;
-	u_int namelen;
+	name[namelen] = CTL_QUERY;
+	pnode->sysctl_clen = 0;
+	pnode->sysctl_csize = 0;
+	memset(&qnode, 0, sizeof(qnode));
+	qnode.sysctl_flags = SYSCTL_VERSION;
+	rc = sysctl(name, namelen + 1, pnode->sysctl_child, &sz,
+		    &qnode, sizeof(qnode));
+	if (sz == 0) {
+		free(pnode->sysctl_child);
+		pnode->sysctl_child = NULL;
+		return (rc);
+	}
+	if (rc) {
+		free(pnode->sysctl_child);
+		pnode->sysctl_child = NULL;
+		if ((sz % sizeof(struct sysctlnode)) != 0)
+			errno = EINVAL;
+		if (errno != ENOMEM)
+			return (rc);
+	}
 
-	rc = sysctlgetmibinfo(gname, &name[0], &namelen, NULL, NULL, NULL,
-			      SYSCTL_VERSION);
-	if (rc == 0)
-		rc = sysctl(&name[0], namelen, oldp, oldlenp, newp, newlen);
-	return (rc);
+	if (pnode->sysctl_child == NULL) {
+		pnode->sysctl_child = malloc(sz);
+		if (pnode->sysctl_child == NULL)
+			return (-1);
+
+		rc = sysctl(name, namelen + 1, pnode->sysctl_child, &sz,
+			    &qnode, sizeof(qnode));
+		if (rc) {
+			free(pnode->sysctl_child);
+			pnode->sysctl_child = NULL;
+			return (rc);
+		}
+	}
+
+	/*
+	 * how many did we get?
+	 */
+	pnode->sysctl_clen = sz / sizeof(struct sysctlnode);
+	pnode->sysctl_csize = sz / sizeof(struct sysctlnode);
+	if (pnode->sysctl_clen * sizeof(struct sysctlnode) != sz) {
+		free(pnode->sysctl_child);
+		pnode->sysctl_child = NULL;
+		errno = EINVAL;
+		return (-1);
+	}
+
+	/*
+	 * you know, the kernel doesn't really keep them in any
+	 * particular order...just like entries in a directory
+	 */
+	qsort(pnode->sysctl_child, pnode->sysctl_clen, 
+	    sizeof(struct sysctlnode), compar);
+
+	/*
+	 * rearrange parent<->child linkage
+	 */
+	for (rc = 0; rc < pnode->sysctl_clen; rc++) {
+		pnode->sysctl_child[rc].sysctl_parent = pnode;
+		if (SYSCTL_TYPE(pnode->sysctl_child[rc].sysctl_flags) ==
+		    CTLTYPE_NODE) {
+			/*
+			 * these nodes may have children, but we
+			 * haven't discovered that yet.
+			 */
+			pnode->sysctl_child[rc].sysctl_child = NULL;
+		}
+		pnode->sysctl_child[rc].sysctl_desc = NULL;
+	}
+
+	return (0);
 }
 
 /*
@@ -437,19 +400,30 @@ sysctlgetmibinfo_unlocked(const char *gname, int *iname, u_int *namelenp,
 	size_t l;
 
 	if (rnode != NULL) {
-		if (*rnode == NULL && v != SYSCTL_VERSION)
+		if (*rnode == NULL) {
 			/* XXX later deal with dealing back a sub version */
-			return (EINVAL);
-		if (SYSCTL_VERS((*rnode)->sysctl_flags) != SYSCTL_VERSION)
-			/* XXX later deal with other people's trees */
-			return (EINVAL);
-	}
-	if (rnode == NULL || *rnode == NULL)
-		pnode = &sysctl_mibroot;
-	else
-		pnode = *rnode;
+			if (v != SYSCTL_VERSION)
+				return (EINVAL);
 
-	if (sysctl_rootof(pnode) == &sysctl_mibroot)
+			pnode = &sysctl_mibroot;
+		}
+		else {
+			/* this is just someone being silly */
+			if (SYSCTL_VERS((*rnode)->sysctl_flags) != v)
+				return (EINVAL);
+
+			/* XXX later deal with other people's trees */
+			if (SYSCTL_VERS((*rnode)->sysctl_flags) !=
+			    SYSCTL_VERSION)
+				return (EINVAL);
+
+			pnode = *rnode;
+		}
+	}
+	else
+		pnode = &sysctl_mibroot;
+
+	if (pnode == &sysctl_mibroot)
 		relearnhead();
 
 	nl = ni = 0;
@@ -530,7 +504,7 @@ sysctlgetmibinfo_unlocked(const char *gname, int *iname, u_int *namelenp,
 			return (-1);
 		}
 		if (pnode->sysctl_child == NULL) {
-			if (learn_tree(name, nl, pnode) == -1) {
+			if (__learn_tree(name, nl, pnode) == -1) {
 				COPY_OUT_DATA(token, cname, csz, namelenp, nl);
 				return (-1);
 			}

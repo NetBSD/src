@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.133 2004/03/24 19:10:46 snj Exp $
+.\"	$NetBSD: sysctl.3,v 1.134 2004/03/25 19:36:26 atatat Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,10 @@
 .Dt SYSCTL 3
 .Os
 .Sh NAME
-.Nm sysctl
+.Nm sysctl ,
+.Nm sysctlbyname ,
+.Nm sysctlgetmibinfo ,
+.Nm sysctlnametomib
 .Nd get or set system information
 .Sh LIBRARY
 .Lb libc
@@ -41,7 +44,16 @@
 .In sys/param.h
 .In sys/sysctl.h
 .Ft int
-.Fn sysctl "int *name" "u_int namelen" "void *oldp" "size_t *oldlenp" "void *newp" "size_t newlen"
+.Fn sysctl "int *name" "u_int namelen" "void *oldp" "size_t *oldlenp" \
+"void *newp" "size_t newlen"
+.Ft int
+.Fn sysctlbyname "const char *sname" "void *oldp" "size_t *oldlenp" \
+"void *newp" "size_t newlen"
+.Ft int
+.Fn sysctlgetmibinfo "const char *sname" "int *name" "u_int *namelenp" \
+"char *cname" "size_t *csz" "struct sysctlnode **rnode" "int v"
+.Ft int
+.Fn sysctlnametomib "const char *sname" "int *name" "size_t *namelenp"
 .Sh DESCRIPTION
 The
 .Nm
@@ -70,6 +82,13 @@ style name, listed in
 which is a
 .Fa namelen
 length array of integers.
+.Pp
+The
+.Fn sysctlbyname
+function accepts a string representation of a MIB entry and internally
+maps it to the appropriate numeric MIB representation.
+Its semantics are otherwise no different from
+.Fn sysctl .
 .Pp
 The information is copied into the buffer specified by
 .Fa oldp .
@@ -113,6 +132,87 @@ should be set to
 and
 .Fa newlen
 set to 0.
+.Pp
+The
+.Fn sysctlnametomib
+function can be used to map the string representation of a MIB entry
+to the numeric version.
+The
+.Fa name
+argument should point to an array of integers large enough to hold the
+MIB. and
+.Fa namelenp
+should indicate the number of integer slots available.
+Following a successful translation, the size_t indicated by
+.Fa namelenp
+will be changed to show the number of slots consumed.
+.Pp
+The
+.Fn sysctlgetmibinfo
+function performs similar name translation similar to
+.Fn sysctlnametomib ,
+but also canonicalizes the name (or returns the first erroneous token
+from the string being parsed) into the space indicated by
+.Fa cname
+and
+.Fa csz .
+.Fa csz
+should indicate the size of the buffer pointed to by
+.Fa cname
+and on return, will indicate the size of the returned string including
+the trailing
+.Sq nul
+character.
+.Pp
+The
+.Fa rnode
+and
+.Fa v
+arguments to
+.Fn sysctlgetmibinfo
+are used to provide a tree for it to parse into, and to get back
+either a pointer to, or a copy of, the terminal node.
+If
+.Fa rnode
+is
+.Dv NULL ,
+.Fn sysctlgetmibinfo
+uses its own internal tree for parsing, and checks it against the
+kernel at each call, to make sure that the name-to-number mapping is
+kept up to date.  The
+.Fa v
+argument is ignored in this case.
+If
+.Fa rnode
+is not
+.Dv NULL
+but the pointer it references is, on a successful return,
+.Fa rnode
+will be adjusted to point to a copy of the terminal node.
+The
+.Fa v
+argument indicates which version of the
+.Nm
+node structure the caller wants.
+The application must later
+.Fn free
+this copy.
+If neither
+.Fa rnode
+nor the pointer it references are
+.Dv NULL ,
+the pointer is used as the address of a tree over which the parsing is
+done.
+In this last case, the tree is not checked against the kernel, no
+refreshing of the mappings is performed, and the value given by
+.Fa v
+must agree with the version indicated by the tree.
+It is recommended that applications always use
+.Dv SYSCTL_VERSION
+as the value for
+.Fa v ,
+as defined in the include file
+.Pa sys/sysctl.h .
 .Pp
 The top level names are defined with a CTL_ prefix in
 .Aq Pa sys/sysctl.h ,

@@ -1,4 +1,4 @@
-/*	$NetBSD: pathconf.c,v 1.6 2003/08/07 10:04:40 agc Exp $	*/
+/*	$NetBSD: pathconf.c,v 1.7 2004/03/25 19:36:27 atatat Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -39,7 +39,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)pathconf.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: pathconf.c,v 1.6 2003/08/07 10:04:40 agc Exp $";
+static char rcsid[] = "$NetBSD: pathconf.c,v 1.7 2004/03/25 19:36:27 atatat Exp $";
 #endif
 #endif /* not lint */
 
@@ -196,7 +196,7 @@ parse(pathname, string, flags)
  */
 findname(string, level, bufp, namelist)
 	char *string;
-	char *level;
+	const char *level;
 	char **bufp;
 	struct list *namelist;
 {

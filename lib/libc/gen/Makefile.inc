@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.127 2004/03/04 23:42:39 kleink Exp $
+#	$NetBSD: Makefile.inc,v 1.128 2004/03/25 19:36:26 atatat Exp $
 #	from: @(#)Makefile.inc	8.6 (Berkeley) 5/4/95
 
 # gen sources
@@ -22,7 +22,8 @@ SRCS+= 	_errno.c alarm.c arc4random.c assert.c basename.c clock.c closedir.c \
 	shquote.c shquotev.c sighold.c sigignore.c siginterrupt.c \
 	__siglist14.c siglist.c signal.c __signame14.c signame.c sigrelse.c \
 	sigset.c __sigsetops14.c sigsetops.c sleep.c \
-	stringlist.c sysconf.c sysctl.c syslog.c telldir.c time.c __times13.c \
+	stringlist.c sysconf.c sysctl.c sysctlbyname.c sysctlgetmibinfo.c \
+	sysctlnametomib.c syslog.c telldir.c time.c __times13.c \
 	times.c timezone.c toascii.c tolower_.c ttyname.c ttyslot.c \
 	toupper_.c ualarm.c ulimit.c uname.c unvis.c usleep.c utime.c utmp.c \
 	utmpx.c valloc.c vis.c wait.c wait3.c waitpid.c warn.c warnx.c \
@@ -120,6 +121,8 @@ MLINKS+=sigsetops.3 sigemptyset.3 sigsetops.3 sigfillset.3 \
 	sigsetops.3 sigismember.3
 MLINKS+=stringlist.3 sl_init.3 stringlist.3 sl_free.3 stringlist.3 sl_add.3 \
 	stringlist.3 sl_find.3
+MLINKS+=sysctl.3 sysctlbyname.3 sysctl.3 sysctlgetmibinfo.3 \
+	sysctl.3 sysctlnametomib.3
 MLINKS+=syslog.3 closelog.3 syslog.3 openlog.3 syslog.3 setlogmask.3 \
 	syslog.3 vsyslog.3
 MLINKS+=ttyname.3 isatty.3 ttyname.3 ttyslot.3

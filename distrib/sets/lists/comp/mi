@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.684 2004/03/24 19:37:10 atatat Exp $
+#	$NetBSD: mi,v 1.685 2004/03/25 19:36:27 atatat Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -4219,6 +4219,9 @@
 ./usr/share/man/cat3/sys_signame.0		comp-c-catman		.cat
 ./usr/share/man/cat3/sysconf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/sysctl.0			comp-c-catman		.cat
+./usr/share/man/cat3/sysctlbyname.0		comp-c-catman		.cat
+./usr/share/man/cat3/sysctlgetmibinfo.0		comp-c-catman		.cat
+./usr/share/man/cat3/sysctlnametomib.0		comp-c-catman		.cat
 ./usr/share/man/cat3/syslog.0			comp-c-catman		.cat
 ./usr/share/man/cat3/system.0			comp-c-catman		.cat
 ./usr/share/man/cat3/t_freent.0			comp-c-catman		.cat
@@ -7858,6 +7861,9 @@
 ./usr/share/man/man3/sys_signame.3		comp-c-man		.man
 ./usr/share/man/man3/sysconf.3			comp-c-man		.man
 ./usr/share/man/man3/sysctl.3			comp-c-man		.man
+./usr/share/man/man3/sysctlbyname.3		comp-c-man		.man
+./usr/share/man/man3/sysctlgetmibinfo.3		comp-c-man		.man
+./usr/share/man/man3/sysctlnametomib.3		comp-c-man		.man
 ./usr/share/man/man3/syslog.3			comp-c-man		.man
 ./usr/share/man/man3/system.3			comp-c-man		.man
 ./usr/share/man/man3/t_freent.3			comp-c-man		.man
