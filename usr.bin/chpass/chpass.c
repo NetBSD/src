@@ -1,4 +1,4 @@
-/*	$NetBSD: chpass.c,v 1.28 2003/08/07 11:13:18 agc Exp $	*/
+/*	$NetBSD: chpass.c,v 1.29 2005/02/17 17:09:48 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)chpass.c	8.4 (Berkeley) 4/2/94";
 #else 
-__RCSID("$NetBSD: chpass.c,v 1.28 2003/08/07 11:13:18 agc Exp $");
+__RCSID("$NetBSD: chpass.c,v 1.29 2005/02/17 17:09:48 xtraeme Exp $");
 #endif
 #endif /* not lint */
 
@@ -66,21 +66,18 @@ static char tempname[] = "/etc/pw.XXXXXX";
 uid_t uid;
 int use_yp;
 
-void	(*Pw_error) __P((const char *, int, int));
+void	(*Pw_error)(const char *, int, int);
 
 #ifdef	YP
-extern	int _yp_check __P((char **));	/* buried deep inside libc */
+extern	int _yp_check(char **);	/* buried deep inside libc */
 #endif
 
-void	baduser __P((void));
-void	cleanup __P((void));
-int	main __P((int, char **));
-void	usage __P((void));
+void	baduser(void);
+void	cleanup(void);
+void	usage(void);
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	enum { NEWSH, LOADENTRY, EDITENTRY } op;
 	struct passwd *pw, lpw, old_pw;
@@ -282,14 +279,14 @@ main(argc, argv)
 }
 
 void
-baduser()
+baduser(void)
 {
 
 	errx(1, "%s", strerror(EACCES));
 }
 
 void
-usage()
+usage(void)
 {
 
 	(void)fprintf(stderr,
@@ -300,7 +297,7 @@ usage()
 }
 
 void
-cleanup()
+cleanup(void)
 {
 
 	(void)unlink(tempname);
