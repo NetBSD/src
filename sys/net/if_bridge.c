@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.13 2003/05/16 04:54:55 itojun Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.14 2003/05/24 14:22:14 kristerw Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.13 2003/05/16 04:54:55 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.14 2003/05/24 14:22:14 kristerw Exp $");
 
 #include "opt_bridge_ipf.h"
 #include "bpfilter.h"
@@ -458,11 +458,15 @@ bridge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		bc = &bridge_control_table[ifd->ifd_cmd];
 
 		if (cmd == SIOCGDRVSPEC &&
-		    (bc->bc_flags & BC_F_COPYOUT) == 0)
-			return (EINVAL);
+		    (bc->bc_flags & BC_F_COPYOUT) == 0) {
+			error = EINVAL;
+			break;
+		}
 		else if (cmd == SIOCSDRVSPEC &&
-		    (bc->bc_flags & BC_F_COPYOUT) != 0)
-			return (EINVAL);
+		    (bc->bc_flags & BC_F_COPYOUT) != 0) {
+			error = EINVAL;
+			break;
+		}
 
 		if (bc->bc_flags & BC_F_SUSER) {
 			error = suser(p->p_ucred, &p->p_acflag);
