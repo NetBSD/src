@@ -1,0 +1,13 @@
+#	$NetBSD: files.procfs,v 1.1 2002/04/16 23:14:08 thorpej Exp $
+
+deffs	PROCFS
+
+file	miscfs/procfs/procfs_cmdline.c	procfs
+file	miscfs/procfs/procfs_ctl.c	procfs 
+file	miscfs/procfs/procfs_linux.c	procfs
+file	miscfs/procfs/procfs_map.c	procfs
+file	miscfs/procfs/procfs_note.c	procfs
+file	miscfs/procfs/procfs_status.c	procfs
+file	miscfs/procfs/procfs_subr.c	procfs
+file	miscfs/procfs/procfs_vfsops.c	procfs
+file	miscfs/procfs/procfs_vnops.c	procfs
