@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2002/03/05 21:16:51 thorpej Exp $
+#	$NetBSD: Makefile,v 1.3 2002/03/05 21:23:31 thorpej Exp $
 
 .include <bsd.own.mk>
 
@@ -33,5 +33,4 @@ release:
 depend includes lint regress tags:
 
 .include <bsd.kernobj.mk>
-.include <bsd.own.mk>
 .include <bsd.obj.mk>
