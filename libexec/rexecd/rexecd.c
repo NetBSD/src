@@ -1,4 +1,4 @@
-/*	$NetBSD: rexecd.c,v 1.10 2002/05/26 00:02:08 wiz Exp $	*/
+/*	$NetBSD: rexecd.c,v 1.11 2002/06/05 23:05:34 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)rexecd.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: rexecd.c,v 1.10 2002/05/26 00:02:08 wiz Exp $");
+__RCSID("$NetBSD: rexecd.c,v 1.11 2002/06/05 23:05:34 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -68,7 +68,7 @@ __RCSID("$NetBSD: rexecd.c,v 1.10 2002/05/26 00:02:08 wiz Exp $");
 void error __P((const char *, ...))
      __attribute__((__format__(__printf__, 1, 2)));
 int main __P((int, char **));
-void doit __P((int, struct sockaddr_in *));
+void doit __P((int, struct sockaddr *));
 void getstr __P((char *, int, char *));
 
 char	username[32 + 1] = "USER=";
@@ -78,7 +78,6 @@ char	path[sizeof(_PATH_DEFPATH) + sizeof("PATH=")] = "PATH=";
 char	*envinit[] = { homedir, shell, path, username, 0 };
 char	**environ;
 int	log;
-struct	sockaddr_in asin = { AF_INET };
 
 /*
  * remote execute server:
@@ -92,7 +91,7 @@ main(argc, argv)
 	int argc;
 	char **argv;
 {
-	struct sockaddr_in from;
+	struct sockaddr_storage from;
 	int fromlen, ch;
 
 	while ((ch = getopt(argc, argv, "l")) != -1)
@@ -109,14 +108,14 @@ main(argc, argv)
 	if (getpeername(0, (struct sockaddr *)&from, &fromlen) < 0)
 		err(1, "getpeername");
 
-	doit(0, &from);
+	doit(0, (struct sockaddr *)&from);
 	exit(0);
 }
 
 void
 doit(f, fromp)
 	int f;
-	struct sockaddr_in *fromp;
+	struct sockaddr *fromp;
 {
 	struct pollfd fds[2];
 	char cmdbuf[NCARGS+1], *namep;
@@ -151,20 +150,25 @@ doit(f, fromp)
 	}
 	(void)alarm(0);
 	if (port != 0) {
-		s = socket(AF_INET, SOCK_STREAM, 0);
+		s = socket(fromp->sa_family, SOCK_STREAM, 0);
 		if (s < 0) {
 			if (log)
 				syslog(LOG_ERR, "socket: %m");
 			exit(1);
 		}
-		if (bind(s, (struct sockaddr *)&asin, sizeof (asin)) < 0) {
-			if (log)
-				syslog(LOG_ERR, "bind: %m");
+		(void)alarm(60);
+		switch (fromp->sa_family) {
+		case AF_INET:
+			((struct sockaddr_in *)fromp)->sin_port = htons(port);
+			break;
+		case AF_INET6:
+			((struct sockaddr_in6 *)fromp)->sin6_port = htons(port);
+			break;
+		default:
+			syslog(LOG_ERR, "unsupported address family");
 			exit(1);
 		}
-		(void)alarm(60);
-		fromp->sin_port = htons(port);
-		if (connect(s, (struct sockaddr *)fromp, sizeof (*fromp)) < 0) {
+		if (connect(s, (struct sockaddr *)fromp, fromp->sa_len) < 0) {
 			if (log)
 				syslog(LOG_ERR, "connect: %m");
 			exit(1);
