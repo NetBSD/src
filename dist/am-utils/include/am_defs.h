@@ -1,4 +1,4 @@
-/*	$NetBSD: am_defs.h,v 1.5 2004/11/27 01:24:36 christos Exp $	*/
+/*	$NetBSD: am_defs.h,v 1.6 2004/11/28 11:15:26 jmc Exp $	*/
 
 /*
  * Copyright (c) 1997-2004 Erez Zadok
@@ -269,7 +269,13 @@ struct sigevent;
  * Actions to take if <sys/param.h> exists.
  */
 #ifdef HAVE_SYS_PARAM_H
+#ifdef __NetBSD__
+#define opaque_t	bsdopaque_t
+#endif
 # include <sys/param.h>
+#ifdef __NetBSD__
+#undef opaque_t
+#endif
 #endif /* HAVE_SYS_PARAM_H */
 
 /*
