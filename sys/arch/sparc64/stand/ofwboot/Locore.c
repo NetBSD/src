@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.6 1998/09/06 21:53:44 eeh Exp $	*/
+/*	$NetBSD: Locore.c,v 1.7 2000/05/26 22:59:51 eeh Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -378,6 +378,7 @@ OF_chain(virt, size, entry, arg, len)
 	u_int len;
 {
 	extern int64_t romp;
+	extern int debug;
 	struct {
 		cell_t name;
 		cell_t nargs;
@@ -398,9 +399,13 @@ OF_chain(virt, size, entry, arg, len)
 	args.arg = ADR2CELL(arg);
 	args.len = len;
 	openfirmware(&args);
-	printf("OF_chain: prom returned!\n");
+	if (debug) {
+		printf("OF_chain: prom returned!\n");
 
 	/* OK, firmware failed us.  Try calling prog directly */
+		printf("Calling entry(0, %p, %x, %lx, %lx)\n", arg, len,
+			(unsigned long)romp, (unsigned long)romp);
+	}
 	entry(0, arg, len, (unsigned long)romp, (unsigned long)romp);
 	panic("OF_chain: kernel returned!\n");
 	__asm("ta 2" : :);
