@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.15 1997/01/27 19:54:53 gwr Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.16 1997/04/28 21:45:47 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -80,3 +80,4 @@ void isr_soft_clear __P((int level));
 /* Bus-error tolerant access to mapped address. */
 int 	peek_byte __P((caddr_t));
 int 	peek_word __P((caddr_t));
+int 	peek_long __P((caddr_t));
