@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.4 2004/03/29 15:32:41 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.5 2004/03/29 16:01:46 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -58,3 +58,8 @@ sys/sys/param.h					patch by hand
 
 	Note 2.0_BETA in the comments as osrelease.sh picks this up.
 	[cube, ticket #11]
+
+gnu/usr.bin/groff/tmac/mdoc.local		patch by hand
+	
+	This is the correct place to bump the default OS version now
+	[wiz, private email]
