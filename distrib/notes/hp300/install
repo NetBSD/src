@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.7 2000/10/29 14:08:06 lukem Exp $
+.\"	$NetBSD: install,v 1.8 2002/05/03 04:01:45 mbw Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -32,8 +32,16 @@
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
 The miniroot's install program is very simple to use. It will guide
-you through the entire process, and is well automated. Additional
-improvements are planned for future releases.
+you through the entire process, and is well automated.  If you need to
+restart the installer, hit
+.Key Control-C
+which will return you to a shell prompt.  From there, just start it over:
+.(disp
+.No # Ic "./install"
+.disp)
+.Pp
+The experimental RAM disk-based installer is not described here, but is
+very self-explanatory.
 .Pp
 The miniroot's install program will:
 .(enum
@@ -75,18 +83,6 @@ Therefore, if the last filled partition is partition
 there are 7 partitions. Any partitions with size of 0
 may be removed from the list.
 .Pp
-If the disk is the boot disk, you
-.Em must
-offset the root partition
-.Pq Pa /
-.Pq Sq Li a
-one cylinder, as the \*M boot code
-if large enough to spill past the label area. In this case,
-the
-.Sq Li c
-partition must be fstype
-.Li boot .
-.Pp
 Anything after a
 .Sq Li #
 is a comment.
@@ -102,8 +98,10 @@ e:    81984   162176    4.2BSD     1024  8192    16   # (Cyl.  362 - 544)
 f:   102592   244160    4.2BSD     1024  4096    16   # (Cyl.  545 - 773)
 g:   949760   346752    4.2BSD     1024  8192    16   # (Cyl.  774 - 2893)
 .disp)
+.Pp
 .It
 Create file systems on target partitions.
+.Pp
 .It
 Allow you to set up your system's network configuration.
 Remember to specify host names without the domain name
@@ -115,24 +113,31 @@ If, during the process of configuring
 the network interfaces, you make a mistake, you will
 be able to re-configure that interface by simply selecting
 it for configuration again.
+.Pp
 .It
 Mount target file systems. You will be given the opportunity
 to manually edit the resulting
 .Pa /etc/fstab .
+.Pp
 .It
 Extract binary sets from the media of your choice.
+.Pp
 .It
 Copy configuration information gathered during the
 installation process to your root file system
 .Pq Pa / .
+.Pp
 .It
 Make device nodes in your root file system under
 .Pa /dev .
+.Pp
 .It
 Copy a new kernel onto your root partition
 .Pq Pa / .
+.Pp
 .It
 Install a new boot block.
+.Pp
 .It
 Check your file systems for integrity.
 .enum)
