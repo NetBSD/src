@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.49 1999/02/12 01:37:06 thorpej Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.50 1999/03/06 05:34:41 fair Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -1067,7 +1067,7 @@ tryagain:
 				cachable = fxdr_unsigned(int, *tl++);
 				reqtime += fxdr_unsigned(int, *tl++);
 				if (reqtime > time.tv_sec) {
-				    fxdr_hyper(tl, &frev);
+				    frev = fxdr_hyper(tl);
 				    nqnfs_clientlease(nmp, np, nqlflag,
 					cachable, reqtime, frev);
 				}
@@ -1227,7 +1227,7 @@ nfs_rephead(siz, nd, slp, err, cache, frev, mrq, mbp, bposp)
 			*tl++ = txdr_unsigned(nd->nd_flag & ND_LEASE);
 			*tl++ = txdr_unsigned(cache);
 			*tl++ = txdr_unsigned(nd->nd_duration);
-			txdr_hyper(frev, tl);
+			txdr_hyper(*frev, tl);
 		} else {
 			nfsm_build(tl, u_int32_t *, NFSX_UNSIGNED);
 			*tl = 0;

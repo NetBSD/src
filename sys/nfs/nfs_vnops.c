@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.97 1998/08/09 21:19:52 perry Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.98 1999/03/06 05:34:42 fair Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -730,7 +730,7 @@ nfs_setattrrpc(vp, vap, cred, procp)
 		if (vap->va_size != VNOVAL) {
 			nfsm_build(tl, u_int32_t *, 3 * NFSX_UNSIGNED);
 			*tl++ = nfs_true;
-			txdr_hyper(&vap->va_size, tl);
+			txdr_hyper(vap->va_size, tl);
 		} else {
 			nfsm_build(tl, u_int32_t *, NFSX_UNSIGNED);
 			*tl = nfs_false;
@@ -1069,7 +1069,7 @@ nfs_readrpc(vp, uiop, cred)
 		nfsm_fhtom(vp, v3);
 		nfsm_build(tl, u_int32_t *, NFSX_UNSIGNED * 3);
 		if (v3) {
-			txdr_hyper(&uiop->uio_offset, tl);
+			txdr_hyper(uiop->uio_offset, tl);
 			*(tl + 2) = txdr_unsigned(len);
 		} else {
 			*tl++ = txdr_unsigned(uiop->uio_offset);
@@ -1136,7 +1136,7 @@ nfs_writerpc(vp, uiop, cred, iomode, must_commit)
 		nfsm_fhtom(vp, v3);
 		if (v3) {
 			nfsm_build(tl, u_int32_t *, 5 * NFSX_UNSIGNED);
-			txdr_hyper(&uiop->uio_offset, tl);
+			txdr_hyper(uiop->uio_offset, tl);
 			tl += 2;
 			*tl++ = txdr_unsigned(len);
 			*tl++ = txdr_unsigned(*iomode);
@@ -2142,7 +2142,7 @@ nfs_readdirrpc(vp, uiop, cred)
 			if (v3) {
 				nfsm_dissect(tl, u_int32_t *,
 				    3 * NFSX_UNSIGNED);
-				fxdr_hyper(tl, &fileno);
+				fileno = fxdr_hyper(tl);
 				len = fxdr_unsigned(int, *(tl + 2));
 			} else {
 				nfsm_dissect(tl, u_int32_t *,
@@ -2328,7 +2328,7 @@ nfs_readdirplusrpc(vp, uiop, cred)
 		/* loop thru the dir entries, doctoring them to 4bsd form */
 		while (more_dirs && bigenough) {
 			nfsm_dissect(tl, u_int32_t *, 3 * NFSX_UNSIGNED);
-			fxdr_hyper(tl, &fileno);
+			fileno = fxdr_hyper(tl);
 			len = fxdr_unsigned(int, *(tl + 2));
 			if (len <= 0 || len > NFS_MAXNAMLEN) {
 				error = EBADRPC;
@@ -2641,7 +2641,7 @@ nfs_commit(vp, offset, cnt, cred, procp)
 	nfsm_reqhead(vp, NFSPROC_COMMIT, NFSX_FH(1));
 	nfsm_fhtom(vp, 1);
 	nfsm_build(tl, u_int32_t *, 3 * NFSX_UNSIGNED);
-	txdr_hyper(&offset, tl);
+	txdr_hyper(offset, tl);
 	tl += 2;
 	*tl = txdr_unsigned(cnt);
 	nfsm_request(vp, NFSPROC_COMMIT, procp, cred);

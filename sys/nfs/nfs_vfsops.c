@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.82 1999/03/05 07:27:58 mycroft Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.83 1999/03/06 05:34:41 fair Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -176,15 +176,15 @@ nfs_statfs(mp, sbp, p)
 	sbp->f_iosize = min(nmp->nm_rsize, nmp->nm_wsize);
 	if (v3) {
 		sbp->f_bsize = NFS_FABLKSIZE;
-		fxdr_hyper(&sfp->sf_tbytes, &tquad);
+		tquad = fxdr_hyper(&sfp->sf_tbytes);
 		sbp->f_blocks = (long)((quad_t)tquad / (quad_t)NFS_FABLKSIZE);
-		fxdr_hyper(&sfp->sf_fbytes, &tquad);
+		tquad = fxdr_hyper(&sfp->sf_fbytes);
 		sbp->f_bfree = (long)((quad_t)tquad / (quad_t)NFS_FABLKSIZE);
-		fxdr_hyper(&sfp->sf_abytes, &tquad);
+		tquad = fxdr_hyper(&sfp->sf_abytes);
 		sbp->f_bavail = (long)((quad_t)tquad / (quad_t)NFS_FABLKSIZE);
-		fxdr_hyper(&sfp->sf_tfiles, &tquad);
+		tquad = fxdr_hyper(&sfp->sf_tfiles);
 		sbp->f_files = (long)tquad;
-		fxdr_hyper(&sfp->sf_ffiles, &tquad);
+		tquad = fxdr_hyper(&sfp->sf_ffiles);
 		sbp->f_ffree = (long)tquad;
 	} else {
 		sbp->f_bsize = fxdr_unsigned(int32_t, sfp->sf_bsize);
@@ -262,7 +262,7 @@ nfs_fsinfo(nmp, vp, cred, p)
 		}
 		/* XXX */
 		nmp->nm_maxfilesize = (u_int64_t)0x80000000 * DEV_BSIZE - 1;
-		fxdr_hyper(&fsp->fs_maxfilesize, &maxfsize);
+		maxfsize = fxdr_hyper(&fsp->fs_maxfilesize);
 		if (maxfsize > 0 && maxfsize < nmp->nm_maxfilesize)
 			nmp->nm_maxfilesize = maxfsize;
 		nmp->nm_iflag |= NFSMNT_GOTFSINFO;

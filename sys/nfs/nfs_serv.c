@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.47 1999/03/05 07:27:58 mycroft Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.48 1999/03/06 05:34:41 fair Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -606,7 +606,7 @@ nfsrv_read(nfsd, slp, procp, mrq)
 	nfsm_srvmtofh(fhp);
 	if (v3) {
 		nfsm_dissect(tl, u_int32_t *, 2 * NFSX_UNSIGNED);
-		fxdr_hyper(tl, &off);
+		off = fxdr_hyper(tl);
 	} else {
 		nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED);
 		off = (off_t)fxdr_unsigned(u_int32_t, *tl);
@@ -777,7 +777,7 @@ nfsrv_write(nfsd, slp, procp, mrq)
 	nfsm_srvmtofh(fhp);
 	if (v3) {
 		nfsm_dissect(tl, u_int32_t *, 5 * NFSX_UNSIGNED);
-		fxdr_hyper(tl, &off);
+		off = fxdr_hyper(tl);
 		tl += 3;
 		stable = fxdr_unsigned(int, *tl++);
 	} else {
@@ -972,7 +972,7 @@ nfsrv_writegather(ndp, slp, procp, mrq)
 	    nfsm_srvmtofh(&nfsd->nd_fh);
 	    if (v3) {
 		nfsm_dissect(tl, u_int32_t *, 5 * NFSX_UNSIGNED);
-		fxdr_hyper(tl, &nfsd->nd_off);
+		nfsd->nd_off = fxdr_hyper(tl);
 		tl += 3;
 		nfsd->nd_stable = fxdr_unsigned(int, *tl++);
 	    } else {
@@ -2497,9 +2497,9 @@ nfsrv_readdir(nfsd, slp, procp, mrq)
 	nfsm_srvmtofh(fhp);
 	if (v3) {
 		nfsm_dissect(tl, u_int32_t *, 5 * NFSX_UNSIGNED);
-		fxdr_hyper(tl, &toff);
+		toff = fxdr_hyper(tl);
 		tl += 2;
-		fxdr_hyper(tl, &verf);
+		verf = fxdr_hyper(tl);
 		tl += 2;
 	} else {
 		nfsm_dissect(tl, u_int32_t *, 2 * NFSX_UNSIGNED);
@@ -2592,7 +2592,7 @@ again:
 			if (v3) {
 				nfsm_srvpostop_attr(getret, &at);
 				nfsm_build(tl, u_int32_t *, 4 * NFSX_UNSIGNED);
-				txdr_hyper(&at.va_filerev, tl);
+				txdr_hyper(at.va_filerev, tl);
 				tl += 2;
 			} else
 				nfsm_build(tl, u_int32_t *, 2 * NFSX_UNSIGNED);
@@ -2631,7 +2631,7 @@ again:
 	if (v3) {
 		nfsm_srvpostop_attr(getret, &at);
 		nfsm_build(tl, u_int32_t *, 2 * NFSX_UNSIGNED);
-		txdr_hyper(&at.va_filerev, tl);
+		txdr_hyper(at.va_filerev, tl);
 	}
 	mp = mp2 = mb;
 	bp = bpos;
@@ -2689,7 +2689,7 @@ again:
 			nfsm_clget;
 	
 			/* Finish off the record */
-			txdr_hyper(cookiep, &jar);
+			txdr_hyper(*cookiep, &jar);
 			if (v3) {
 				*tl = jar.nfsuquad[0];
 				bp += NFSX_UNSIGNED;
@@ -2759,9 +2759,9 @@ nfsrv_readdirplus(nfsd, slp, procp, mrq)
 	fhp = &nfh.fh_generic;
 	nfsm_srvmtofh(fhp);
 	nfsm_dissect(tl, u_int32_t *, 6 * NFSX_UNSIGNED);
-	fxdr_hyper(tl, &toff);
+	toff = fxdr_hyper(tl);
 	tl += 2;
-	fxdr_hyper(tl, &verf);
+	verf = fxdr_hyper(tl);
 	tl += 2;
 	siz = fxdr_unsigned(int, *tl++);
 	cnt = fxdr_unsigned(int, *tl);
@@ -2865,7 +2865,7 @@ again:
 				2 * NFSX_UNSIGNED);
 			nfsm_srvpostop_attr(getret, &at);
 			nfsm_build(tl, u_int32_t *, 4 * NFSX_UNSIGNED);
-			txdr_hyper(&at.va_filerev, tl);
+			txdr_hyper(at.va_filerev, tl);
 			tl += 2;
 			*tl++ = nfs_false;
 			*tl = nfs_true;
@@ -2901,7 +2901,7 @@ again:
 	nfsm_reply(cnt);
 	nfsm_srvpostop_attr(getret, &at);
 	nfsm_build(tl, u_int32_t *, 2 * NFSX_UNSIGNED);
-	txdr_hyper(&at.va_filerev, tl);
+	txdr_hyper(at.va_filerev, tl);
 	mp = mp2 = mb;
 	bp = bpos;
 	be = bp + M_TRAILINGSPACE(mp);
@@ -2954,7 +2954,7 @@ again:
 			fl.fl_fhsize = txdr_unsigned(NFSX_V3FH);
 			fl.fl_fhok = nfs_true;
 			fl.fl_postopok = nfs_true;
-			txdr_hyper(cookiep, fl.fl_off.nfsuquad);
+			txdr_hyper(*cookiep, fl.fl_off.nfsuquad);
 
 			nfsm_clget;
 			*tl = nfs_true;
@@ -3069,7 +3069,7 @@ nfsrv_commit(nfsd, slp, procp, mrq)
 	 * XXX At this time VOP_FSYNC() does not accept offset and byte
 	 * count parameters, so these arguments are useless (someday maybe).
 	 */
-	fxdr_hyper(tl, &off);
+	off = fxdr_hyper(tl);
 	tl += 2;
 	cnt = fxdr_unsigned(int, *tl);
 	error = nfsrv_fhtovp(fhp, 1, &vp, cred, slp, nam,
@@ -3148,16 +3148,16 @@ nfsrv_statfs(nfsd, slp, procp, mrq)
 	nfsm_build(sfp, struct nfs_statfs *, NFSX_STATFS(v3));
 	if (v3) {
 		tval = (u_quad_t)((quad_t)sf->f_blocks * (quad_t)sf->f_bsize);
-		txdr_hyper(&tval, &sfp->sf_tbytes);
+		txdr_hyper(tval, &sfp->sf_tbytes);
 		tval = (u_quad_t)((quad_t)sf->f_bfree * (quad_t)sf->f_bsize);
-		txdr_hyper(&tval, &sfp->sf_fbytes);
+		txdr_hyper(tval, &sfp->sf_fbytes);
 		tval = (u_quad_t)((quad_t)sf->f_bavail * (quad_t)sf->f_bsize);
-		txdr_hyper(&tval, &sfp->sf_abytes);
+		txdr_hyper(tval, &sfp->sf_abytes);
 		tval = (u_quad_t)sf->f_files;
-		txdr_hyper(&tval, &sfp->sf_tfiles);
+		txdr_hyper(tval, &sfp->sf_tfiles);
 		tval = (u_quad_t)sf->f_ffree;
-		txdr_hyper(&tval, &sfp->sf_ffiles);
-		txdr_hyper(&tval, &sfp->sf_afiles);
+		txdr_hyper(tval, &sfp->sf_ffiles);
+		txdr_hyper(tval, &sfp->sf_afiles);
 		sfp->sf_invarsec = 0;
 	} else {
 		sfp->sf_tsize = txdr_unsigned(NFS_MAXDGRAMDATA);
@@ -3236,7 +3236,7 @@ nfsrv_fsinfo(nfsd, slp, procp, mrq)
 	sip->fs_wtpref = txdr_unsigned(pref);
 	sip->fs_wtmult = txdr_unsigned(NFS_FABLKSIZE);
 	sip->fs_dtpref = txdr_unsigned(pref);
-	txdr_hyper(&maxfsize, &sip->fs_maxfilesize);
+	txdr_hyper(maxfsize, &sip->fs_maxfilesize);
 	sip->fs_timedelta.nfsv3_sec = 0;
 	sip->fs_timedelta.nfsv3_nsec = txdr_unsigned(1);
 	sip->fs_properties = txdr_unsigned(NFSV3FSINFO_LINK |

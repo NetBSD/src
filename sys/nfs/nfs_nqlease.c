@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_nqlease.c,v 1.27 1998/08/09 21:19:50 perry Exp $	*/
+/*	$NetBSD: nfs_nqlease.c,v 1.28 1999/03/06 05:34:41 fair Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -711,7 +711,7 @@ nqnfsrv_getlease(nfsd, slp, procp, mrq)
 	nfsm_build(tl, u_int32_t *, 4 * NFSX_UNSIGNED);
 	*tl++ = txdr_unsigned(cache);
 	*tl++ = txdr_unsigned(nfsd->nd_duration);
-	txdr_hyper(&frev, tl);
+	txdr_hyper(frev, tl);
 	nfsm_build(fp, struct nfs_fattr *, NFSX_V3FATTR);
 	nfsm_srvfillattr(&va, fp);
 	nfsm_srvdone;
@@ -832,7 +832,7 @@ nqnfs_getlease(vp, rwflag, cred, p)
 	cachable = fxdr_unsigned(int, *tl++);
 	reqtime += fxdr_unsigned(int, *tl++);
 	if (reqtime > time.tv_sec) {
-		fxdr_hyper(tl, &frev);
+		frev = fxdr_hyper(tl);
 		nqnfs_clientlease(nmp, np, rwflag, cachable, reqtime, frev);
 		nfsm_loadattr(vp, (struct vattr *)0);
 	} else
