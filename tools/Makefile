@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2001/11/22 19:09:42 jmc Exp $
+#	$NetBSD: Makefile,v 1.20 2001/11/29 23:51:38 thorpej Exp $
 
 .include <bsd.own.mk>
 
@@ -7,7 +7,7 @@
 SUBDIR=	mkdep .WAIT \
 	binstall .WAIT \
 		crunchgen gencat lint lint2 lorder mtree rpcgen \
-		texinfo tsort \
+		texinfo tsort makewhatis \
 	toolchain .WAIT \
 		dbsym mdsetimage \
 	yacc .WAIT \
