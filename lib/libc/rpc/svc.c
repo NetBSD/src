@@ -1,4 +1,4 @@
-/*	$NetBSD: svc.c,v 1.15 1998/11/15 17:32:45 christos Exp $	*/
+/*	$NetBSD: svc.c,v 1.16 1999/01/20 11:37:38 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)svc.c 1.44 88/02/08 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)svc.c	2.4 88/08/11 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: svc.c,v 1.15 1998/11/15 17:32:45 christos Exp $");
+__RCSID("$NetBSD: svc.c,v 1.16 1999/01/20 11:37:38 lukem Exp $");
 #endif
 #endif
 
@@ -112,6 +112,8 @@ xprt_register(xprt)
 	if (xports == NULL) {
 		xports = (SVCXPRT **)
 			mem_alloc(FD_SETSIZE * sizeof(SVCXPRT *));
+		if (xports == NULL)
+			return;
 		memset(xports, '\0', FD_SETSIZE * sizeof(SVCXPRT *));
 	}
 	if (sock < FD_SETSIZE) {
@@ -443,10 +445,12 @@ svc_getreqset(readfds)
 				prog_found = FALSE;
 				low_vers = (u_long) -1L;
 				high_vers = (u_long) 0L;
-				for (s = svc_head; s != NULL_SVC; s = s->sc_next) {
+				for (s = svc_head; s != NULL_SVC;
+				    s = s->sc_next) {
 					if (s->sc_prog == r.rq_prog) {
 						if (s->sc_vers == r.rq_vers) {
-							(*s->sc_dispatch)(&r, xprt);
+							(*s->sc_dispatch)(&r,
+							    xprt);
 							goto call_done;
 						}  /* found correct version */
 						prog_found = TRUE;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_getport.c,v 1.9 1998/11/15 17:32:42 christos Exp $	*/
+/*	$NetBSD: pmap_getport.c,v 1.10 1999/01/20 11:37:37 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)pmap_getport.c 1.9 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)pmap_getport.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: pmap_getport.c,v 1.9 1998/11/15 17:32:42 christos Exp $");
+__RCSID("$NetBSD: pmap_getport.c,v 1.10 1999/01/20 11:37:37 lukem Exp $");
 #endif
 #endif
 
@@ -100,7 +100,8 @@ pmap_getport(address, program, version, protocol)
 		}
 		CLNT_DESTROY(client);
 	}
-	(void)close(sock);
+	if (sock != -1)
+		(void)close(sock);
 	address->sin_port = 0;
 	return (port);
 }

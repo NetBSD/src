@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_prot.c,v 1.10 1998/11/15 17:32:43 christos Exp $	*/
+/*	$NetBSD: rpc_prot.c,v 1.11 1999/01/20 11:37:38 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)rpc_prot.c 1.36 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)rpc_prot.c	2.3 88/08/07 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: rpc_prot.c,v 1.10 1998/11/15 17:32:43 christos Exp $");
+__RCSID("$NetBSD: rpc_prot.c,v 1.11 1999/01/20 11:37:38 lukem Exp $");
 #endif
 #endif
 
@@ -205,7 +205,7 @@ xdr_callhdr(xdrs, cmsg)
 	    xdr_enum(xdrs, (enum_t *)&(cmsg->rm_direction)) &&
 	    xdr_u_int32_t(xdrs, &(cmsg->rm_call.cb_rpcvers)) &&
 	    xdr_u_int32_t(xdrs, &(cmsg->rm_call.cb_prog)) )
-	    return (xdr_u_int32_t(xdrs, &(cmsg->rm_call.cb_vers)));
+		return (xdr_u_int32_t(xdrs, &(cmsg->rm_call.cb_vers)));
 	return (FALSE);
 }
 
@@ -288,7 +288,7 @@ _seterr_reply(msg, error)
 		if (msg->acpted_rply.ar_stat == SUCCESS) {
 			error->re_status = RPC_SUCCESS;
 			return;
-		};
+		}
 		accepted(msg->acpted_rply.ar_stat, error);
 		break;
 

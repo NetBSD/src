@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_udp.c,v 1.15 1998/11/15 17:30:40 christos Exp $	*/
+/*	$NetBSD: clnt_udp.c,v 1.16 1999/01/20 11:37:36 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)clnt_udp.c 1.39 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)clnt_udp.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: clnt_udp.c,v 1.15 1998/11/15 17:30:40 christos Exp $");
+__RCSID("$NetBSD: clnt_udp.c,v 1.16 1999/01/20 11:37:36 lukem Exp $");
 #endif
 #endif
 
@@ -137,6 +137,10 @@ clntudp_bufcreate(raddr, program, version, wait, sockp, sendsz, recvsz)
 	struct cu_data *cu = NULL;
 	struct timeval now;
 	struct rpc_msg call_msg;
+	static u_int32_t disrupt;
+
+	if (disrupt == 0)
+		disrupt = (u_int32_t)(long)raddr;
 
 	cl = (CLIENT *)mem_alloc(sizeof(CLIENT));
 	if (cl == NULL) {
@@ -175,7 +179,8 @@ clntudp_bufcreate(raddr, program, version, wait, sockp, sendsz, recvsz)
 	cu->cu_total.tv_usec = -1;
 	cu->cu_sendsz = sendsz;
 	cu->cu_recvsz = recvsz;
-	call_msg.rm_xid = (u_int32_t)(getpid() ^ now.tv_sec ^ now.tv_usec);
+	call_msg.rm_xid =
+	    (u_int32_t)((++disrupt) ^ getpid() ^ now.tv_sec ^ now.tv_usec);
 	call_msg.rm_direction = CALL;
 	call_msg.rm_call.cb_rpcvers = RPC_MSG_VERSION;
 	call_msg.rm_call.cb_prog = (u_int32_t)program;
@@ -195,7 +200,7 @@ clntudp_bufcreate(raddr, program, version, wait, sockp, sendsz, recvsz)
 			rpc_createerr.cf_error.re_errno = errno;
 			goto fooy;
 		}
-		/* attempt to bind to prov port */
+		/* attempt to bind to priv port */
 		(void)bindresvport(*sockp, (struct sockaddr_in *)0);
 		/* the sockets rpc controls are non-blocking */
 		(void)ioctl(*sockp, FIONBIO, (char *)(void *)&dontblock);
@@ -339,7 +344,8 @@ send_again:
 		if (inlen < sizeof(u_int32_t))
 			continue;	
 		/* see if reply transaction id matches sent id */
-		if (*((u_int32_t *)(cu->cu_inbuf)) != *((u_int32_t *)(cu->cu_outbuf)))
+		if (*((u_int32_t *)(cu->cu_inbuf)) !=
+		    *((u_int32_t *)(cu->cu_outbuf)))
 			continue;	
 		/* we now assume we have the proper reply */
 		break;

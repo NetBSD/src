@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_rmt.c,v 1.17 1998/11/15 17:32:43 christos Exp $	*/
+/*	$NetBSD: pmap_rmt.c,v 1.18 1999/01/20 11:37:37 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)pmap_rmt.c 1.21 87/08/27 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)pmap_rmt.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: pmap_rmt.c,v 1.17 1998/11/15 17:32:43 christos Exp $");
+__RCSID("$NetBSD: pmap_rmt.c,v 1.18 1999/01/20 11:37:37 lukem Exp $");
 #endif
 #endif
 
@@ -90,7 +90,8 @@ static const struct timeval timeout = { 3, 0 };
  * programs to do a lookup and call in one step.
 */
 enum clnt_stat
-pmap_rmtcall(addr, prog, vers, proc, xdrargs, argsp, xdrres, resp, tout, port_ptr)
+pmap_rmtcall(addr, prog, vers, proc, xdrargs, argsp, xdrres, resp, tout,
+    port_ptr)
 	struct sockaddr_in *addr;
 	u_long prog, vers, proc;
 	xdrproc_t xdrargs, xdrres;
@@ -121,7 +122,8 @@ pmap_rmtcall(addr, prog, vers, proc, xdrargs, argsp, xdrres, resp, tout, port_pt
 	} else {
 		stat = RPC_FAILED;
 	}
-	(void)close(sock);
+	if (sock != -1)
+		(void)close(sock);
 	addr->sin_port = 0;
 	return (stat);
 }
@@ -200,7 +202,7 @@ getbroadcastnets(addrs, sock, buf)
         ifc.ifc_len = UDPMSGSIZE;
         ifc.ifc_buf = buf;
         if (ioctl(sock, SIOCGIFCONF, &ifc) < 0) {
-                warnx("getbroadcastnets: ioctl (get interface configuration)");
+                warn("getbroadcastnets: ioctl (get interface configuration)");
                 return (0);
         }
 #define max(a, b) (a > b ? a : b)
@@ -213,7 +215,7 @@ getbroadcastnets(addrs, sock, buf)
 			continue;
 		ifreq = *ifr;
                 if (ioctl(sock, SIOCGIFFLAGS, &ifreq) < 0) {
-                        warnx("getbroadcastnets: ioctl (get interface flags)");
+                        warn("getbroadcastnets: ioctl (get interface flags)");
                         continue;
                 }
                 if ((ifreq.ifr_flags & IFF_BROADCAST) &&
@@ -277,13 +279,13 @@ clnt_broadcast(prog, vers, proc, xargs, argsp, xresults, resultsp, eachresult)
 	 * preserialize the arguments into a send buffer.
 	 */
 	if ((sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
-		warnx("Cannot create socket for broadcast rpc");
+		warn("Cannot create socket for broadcast rpc");
 		stat = RPC_CANTSEND;
 		goto done_broad;
 	}
 #ifdef SO_BROADCAST
 	if (setsockopt(sock, SOL_SOCKET, SO_BROADCAST, &on, sizeof (on)) < 0) {
-		warnx("Cannot set socket option SO_BROADCAST");
+		warn("Cannot set socket option SO_BROADCAST");
 		stat = RPC_CANTSEND;
 		goto done_broad;
 	}
@@ -331,7 +333,7 @@ clnt_broadcast(prog, vers, proc, xargs, argsp, xresults, resultsp, eachresult)
 			if (sendto(sock, outbuf, outlen, 0,
 				(struct sockaddr *)(void *)&baddr,
 				sizeof (struct sockaddr)) != outlen) {
-				warnx("Cannot send broadcast packet");
+				warn("Cannot send broadcast packet");
 				stat = RPC_CANTSEND;
 				goto done_broad;
 			}
@@ -354,7 +356,7 @@ clnt_broadcast(prog, vers, proc, xargs, argsp, xresults, resultsp, eachresult)
 		case -1:  /* some kind of error */
 			if (errno == EINTR)
 				goto recv_again;
-			warnx("Broadcast poll problem");
+			warn("Broadcast poll problem");
 			stat = RPC_CANTRECV;
 			goto done_broad;
 
@@ -366,7 +368,7 @@ clnt_broadcast(prog, vers, proc, xargs, argsp, xresults, resultsp, eachresult)
 		if (inlen < 0) {
 			if (errno == EINTR)
 				goto try_again;
-			warnx("Cannot receive reply to broadcast");
+			warn("Cannot receive reply to broadcast");
 			stat = RPC_CANTRECV;
 			goto done_broad;
 		}
@@ -389,7 +391,8 @@ clnt_broadcast(prog, vers, proc, xargs, argsp, xresults, resultsp, eachresult)
 #ifdef notdef
 			/* some kind of deserialization problem ... */
 			if (msg.rm_xid == xid)
-				fprintf(stderr, "Broadcast deserialization problem");
+				fprintf(stderr,
+				    "Broadcast deserialization problem");
 			/* otherwise, just random garbage */
 #endif
 		}
@@ -407,7 +410,8 @@ clnt_broadcast(prog, vers, proc, xargs, argsp, xresults, resultsp, eachresult)
 	}
 	stat = RPC_TIMEDOUT;
 done_broad:
-	(void)close(sock);
+	if (sock != -1)
+		(void)close(sock);
 	AUTH_DESTROY(unix_auth);
 	return (stat);
 }

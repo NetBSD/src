@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_run.c,v 1.12 1998/02/13 05:52:36 lukem Exp $	*/
+/*	$NetBSD: svc_run.c,v 1.13 1999/01/20 11:37:39 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)svc_run.c 1.1 87/10/13 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)svc_run.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: svc_run.c,v 1.12 1998/02/13 05:52:36 lukem Exp $");
+__RCSID("$NetBSD: svc_run.c,v 1.13 1999/01/20 11:37:39 lukem Exp $");
 #endif
 #endif
 
@@ -69,7 +69,7 @@ svc_run()
 			if (errno == EINTR) {
 				continue;
 			}
-			warnx("svc_run: - select failed");
+			warn("svc_run: - select failed");
 			return;
 		case 0:
 			continue;

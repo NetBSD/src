@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_tcp.c,v 1.20 1999/01/20 08:40:13 lukem Exp $	*/
+/*	$NetBSD: svc_tcp.c,v 1.21 1999/01/20 11:37:39 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)svc_tcp.c 1.21 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)svc_tcp.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: svc_tcp.c,v 1.20 1999/01/20 08:40:13 lukem Exp $");
+__RCSID("$NetBSD: svc_tcp.c,v 1.21 1999/01/20 11:37:39 lukem Exp $");
 #endif
 #endif
 
@@ -146,13 +146,13 @@ svctcp_create(sock, sendsize, recvsize)
 {
 	bool_t madesock = FALSE;
 	SVCXPRT *xprt;
-	struct tcp_rendezvous *r;
+	struct tcp_rendezvous *r = NULL;
 	struct sockaddr_in addr;
 	int len = sizeof(struct sockaddr_in);
 
 	if (sock == RPC_ANYSOCK) {
 		if ((sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0) {
-			warn("svctcp_create - udp socket creation problem");
+			warn("svctcp_create - socket creation problem");
 			goto cleanup_svctcp_create;
 		}
 		madesock = TRUE;
@@ -195,6 +195,8 @@ svctcp_create(sock, sendsize, recvsize)
  cleanup_svctcp_create:
 	if (madesock)
 	       (void)close(sock);
+	if (r != NULL)
+		mem_free(r, sizeof(*r));
 	return ((SVCXPRT *)NULL);
 }
 
@@ -410,7 +412,8 @@ svctcp_getargs(xprt, xdr_args, args_ptr)
 	caddr_t args_ptr;
 {
 
-	return ((*xdr_args)(&(((struct tcp_conn *)(xprt->xp_p1))->xdrs), args_ptr));
+	return ((*xdr_args)(&(((struct tcp_conn *)(xprt->xp_p1))->xdrs),
+	    args_ptr));
 }
 
 static bool_t

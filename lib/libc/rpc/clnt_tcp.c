@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_tcp.c,v 1.15 1998/11/15 17:29:17 christos Exp $	*/
+/*	$NetBSD: clnt_tcp.c,v 1.16 1999/01/20 11:37:36 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)clnt_tcp.c 1.37 87/10/05 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)clnt_tcp.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: clnt_tcp.c,v 1.15 1998/11/15 17:29:17 christos Exp $");
+__RCSID("$NetBSD: clnt_tcp.c,v 1.16 1999/01/20 11:37:36 lukem Exp $");
 #endif
 #endif
  
@@ -127,8 +127,8 @@ struct ct_data {
  * consulted for the right port number.
  * NB: *sockp is copied into a private area.
  * NB: It is the clients responsibility to close *sockp.
- * NB: The rpch->cl_auth is set null authentication.  Caller may wish to set this
- * something more useful.
+ * NB: The rpch->cl_auth is set null authentication.  Caller may wish to set
+ * this something more useful.
  */
 CLIENT *
 clnttcp_create(raddr, prog, vers, sockp, sendsz, recvsz)
@@ -143,6 +143,10 @@ clnttcp_create(raddr, prog, vers, sockp, sendsz, recvsz)
 	struct ct_data *ct = NULL;
 	struct timeval now;
 	struct rpc_msg call_msg;
+	static u_int32_t disrupt;
+
+	if (disrupt == 0)
+		disrupt = (u_int32_t)(long)raddr;
 
 	h  = (CLIENT *)mem_alloc(sizeof(*h));
 	if (h == NULL) {
@@ -164,7 +168,8 @@ clnttcp_create(raddr, prog, vers, sockp, sendsz, recvsz)
 	 */
 	if (raddr->sin_port == 0) {
 		u_short port;
-		if ((port = pmap_getport(raddr, prog, vers, IPPROTO_TCP)) == 0) {
+		if ((port = pmap_getport(raddr, prog, vers, IPPROTO_TCP))
+		    == 0) {
 			mem_free(ct, sizeof(struct ct_data));
 			mem_free(h, sizeof(CLIENT));
 			return ((CLIENT *)NULL);
@@ -183,7 +188,8 @@ clnttcp_create(raddr, prog, vers, sockp, sendsz, recvsz)
 		    sizeof(*raddr)) < 0)) {
 			rpc_createerr.cf_stat = RPC_SYSTEMERROR;
 			rpc_createerr.cf_error.re_errno = errno;
-			(void)close(*sockp);
+			if (*sockp != -1)
+				(void)close(*sockp);
 			goto fooy;
 		}
 		ct->ct_closeit = TRUE;
@@ -203,14 +209,15 @@ clnttcp_create(raddr, prog, vers, sockp, sendsz, recvsz)
 	 * Initialize call message
 	 */
 	(void)gettimeofday(&now, (struct timezone *)0);
-	call_msg.rm_xid = (u_int32_t)(getpid() ^ now.tv_sec ^ now.tv_usec);
+	call_msg.rm_xid =
+	    (u_int32_t)((++disrupt) ^ getpid() ^ now.tv_sec ^ now.tv_usec);
 	call_msg.rm_direction = CALL;
 	call_msg.rm_call.cb_rpcvers = RPC_MSG_VERSION;
 	call_msg.rm_call.cb_prog = (u_int32_t)prog;
 	call_msg.rm_call.cb_vers = (u_int32_t)vers;
 
 	/*
-	 * pre-serialize the staic part of the call msg and stash it away
+	 * pre-serialize the static part of the call msg and stash it away
 	 */
 	xdrmem_create(&(ct->ct_xdrs), ct->ct_u.ct_mcallc, MCALL_MSG_SIZE,
 	    XDR_ENCODE);
@@ -240,7 +247,8 @@ fooy:
 	 */
 	if (ct)
 		mem_free(ct, sizeof(struct ct_data));
-	mem_free(h, sizeof(CLIENT));
+	if (h)
+		mem_free(h, sizeof(CLIENT));
 	return ((CLIENT *)NULL);
 }
 
@@ -320,7 +328,8 @@ call_again:
 	 */
 	_seterr_reply(&reply_msg, &(ct->ct_error));
 	if (ct->ct_error.re_status == RPC_SUCCESS) {
-		if (! AUTH_VALIDATE(h->cl_auth, &reply_msg.acpted_rply.ar_verf)) {
+		if (! AUTH_VALIDATE(h->cl_auth,
+		    &reply_msg.acpted_rply.ar_verf)) {
 			ct->ct_error.re_status = RPC_AUTHERROR;
 			ct->ct_error.re_why = AUTH_INVALIDRESP;
 		} else if (! (*xdr_results)(xdrs, results_ptr)) {
@@ -330,7 +339,8 @@ call_again:
 		/* free verifier ... */
 		if (reply_msg.acpted_rply.ar_verf.oa_base != NULL) {
 			xdrs->x_op = XDR_FREE;
-			(void)xdr_opaque_auth(xdrs, &(reply_msg.acpted_rply.ar_verf));
+			(void)xdr_opaque_auth(xdrs,
+			    &(reply_msg.acpted_rply.ar_verf));
 		}
 	}  /* end successful completion */
 	else {

@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_udp.c,v 1.15 1998/11/15 17:32:46 christos Exp $	*/
+/*	$NetBSD: svc_udp.c,v 1.16 1999/01/20 11:37:40 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)svc_udp.c 1.24 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)svc_udp.c	2.2 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: svc_udp.c,v 1.15 1998/11/15 17:32:46 christos Exp $");
+__RCSID("$NetBSD: svc_udp.c,v 1.16 1999/01/20 11:37:40 lukem Exp $");
 #endif
 #endif
 
@@ -119,15 +119,15 @@ svcudp_bufcreate(sock, sendsz, recvsz)
 	u_int sendsz, recvsz;
 {
 	bool_t madesock = FALSE;
-	SVCXPRT *xprt;
-	struct svcudp_data *su;
+	SVCXPRT *xprt = NULL;
+	struct svcudp_data *su = NULL;
 	struct sockaddr_in addr;
 	int len = sizeof(struct sockaddr_in);
 
 	if (sock == RPC_ANYSOCK) {
 		if ((sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
-			warnx("svcudp_create: socket creation problem");
-			return ((SVCXPRT *)NULL);
+			warn("svcudp_create: socket creation problem");
+			goto cleanup_svcudp_bufcreate;
 		}
 		madesock = TRUE;
 	}
@@ -139,25 +139,23 @@ svcudp_bufcreate(sock, sendsz, recvsz)
 		(void)bind(sock, (struct sockaddr *)(void *)&addr, len);
 	}
 	if (getsockname(sock, (struct sockaddr *)(void *)&addr, &len) != 0) {
-		warnx("svcudp_create - cannot getsockname");
-		if (madesock)
-			(void)close(sock);
-		return ((SVCXPRT *)NULL);
+		warn("svcudp_create - cannot getsockname");
+		goto cleanup_svcudp_bufcreate;
 	}
 	xprt = (SVCXPRT *)mem_alloc(sizeof(SVCXPRT));
 	if (xprt == NULL) {
 		warnx("svcudp_create: out of memory");
-		return (NULL);
+		goto cleanup_svcudp_bufcreate;
 	}
 	su = (struct svcudp_data *)mem_alloc(sizeof(*su));
 	if (su == NULL) {
 		warnx("svcudp_create: out of memory");
-		return (NULL);
+		goto cleanup_svcudp_bufcreate;
 	}
 	su->su_iosz = ((MAX(sendsz, recvsz) + 3) / 4) * 4;
 	if ((rpc_buffer(xprt) = mem_alloc(su->su_iosz)) == NULL) {
 		warnx("svcudp_create: out of memory");
-		return (NULL);
+		goto cleanup_svcudp_bufcreate;
 	}
 	xdrmem_create(
 	    &(su->su_xdrs), rpc_buffer(xprt), su->su_iosz, XDR_DECODE);
@@ -169,6 +167,14 @@ svcudp_bufcreate(sock, sendsz, recvsz)
 	xprt->xp_sock = sock;
 	xprt_register(xprt);
 	return (xprt);
+ cleanup_svcudp_bufcreate:
+	if (madesock)
+	       (void)close(sock);
+	if (su)
+		mem_free(su, sizeof(*su));
+	if (xprt)
+		mem_free(xprt, sizeof(SVCXPRT));
+	return ((SVCXPRT *)NULL);
 }
 
 SVCXPRT *
@@ -353,7 +359,8 @@ struct udp_cache {
  * the hashing function
  */
 #define CACHE_LOC(transp, xid)	\
- (xid % (u_int32_t)(SPARSENESS*((struct udp_cache *) su_data(transp)->su_cache)->uc_size))	
+	(xid % (u_int32_t)(SPARSENESS*((struct udp_cache *)\
+	    su_data(transp)->su_cache)->uc_size))	
 
 
 /*
@@ -436,7 +443,8 @@ cache_set(xprt, replylen)
 		}
 		newbuf = mem_alloc(su->su_iosz);
 		if (newbuf == NULL) {
-			CACHE_PERROR("cache_set: could not allocate new rpc_buffer");
+			CACHE_PERROR(
+			    "cache_set: could not allocate new rpc_buffer");
 			return;
 		}
 	}
@@ -447,7 +455,8 @@ cache_set(xprt, replylen)
 	victim->cache_replylen = replylen;
 	victim->cache_reply = rpc_buffer(xprt);
 	rpc_buffer(xprt) = newbuf;
-	xdrmem_create(&(su->su_xdrs), rpc_buffer(xprt), su->su_iosz, XDR_ENCODE);
+	xdrmem_create(&(su->su_xdrs), rpc_buffer(xprt), su->su_iosz,
+	    XDR_ENCODE);
 	victim->cache_xid = su->su_xid;
 	victim->cache_proc = uc->uc_proc;
 	victim->cache_vers = uc->uc_vers;
@@ -476,7 +485,7 @@ cache_get(xprt, msg, replyp, replylenp)
 	struct svcudp_data *su = su_data(xprt);
 	struct udp_cache *uc = (struct udp_cache *) su->su_cache;
 
-#	define EQADDR(a1, a2)	(memcmp(&a1, &a2, sizeof(a1)) == 0)
+#define EQADDR(a1, a2)	(memcmp(&a1, &a2, sizeof(a1)) == 0)
 
 	loc = (u_int)CACHE_LOC(xprt, su->su_xid);
 	for (ent = uc->uc_entries[loc]; ent != NULL; ent = ent->cache_next) {
@@ -500,4 +509,3 @@ cache_get(xprt, msg, replyp, replylenp)
 	uc->uc_addr = xprt->xp_raddr;
 	return(0);
 }
-

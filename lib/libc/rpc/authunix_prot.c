@@ -1,4 +1,4 @@
-/*	$NetBSD: authunix_prot.c,v 1.7 1998/02/13 05:52:14 lukem Exp $	*/
+/*	$NetBSD: authunix_prot.c,v 1.8 1999/01/20 11:37:34 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)authunix_prot.c 1.15 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)authunix_prot.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: authunix_prot.c,v 1.7 1998/02/13 05:52:14 lukem Exp $");
+__RCSID("$NetBSD: authunix_prot.c,v 1.8 1999/01/20 11:37:34 lukem Exp $");
 #endif
 #endif
 
@@ -76,4 +76,3 @@ xdr_authunix_parms(xdrs, p)
 	}
 	return (FALSE);
 }
-

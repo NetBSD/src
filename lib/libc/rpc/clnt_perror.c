@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_perror.c,v 1.15 1998/11/15 17:32:42 christos Exp $	*/
+/*	$NetBSD: clnt_perror.c,v 1.16 1999/01/20 11:37:35 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)clnt_perror.c 1.15 87/10/07 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)clnt_perror.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: clnt_perror.c,v 1.15 1998/11/15 17:32:42 christos Exp $");
+__RCSID("$NetBSD: clnt_perror.c,v 1.16 1999/01/20 11:37:35 lukem Exp $");
 #endif
 #endif
 
@@ -75,9 +75,9 @@ static char *
 _buf()
 {
 
-	if (buf == 0)
-		buf = (char *)malloc(256);
 	buflen = 256;
+	if (buf == 0)
+		buf = (char *)malloc(buflen);
 	return (buf);
 }
 
@@ -126,15 +126,13 @@ clnt_sperror(rpch, s)
 
 	case RPC_CANTSEND:
 	case RPC_CANTRECV:
-		i = snprintf(str, len, "; errno = %s",
-		    strerror(e.re_errno)); 
+		i = snprintf(str, len, "; errno = %s", strerror(e.re_errno)); 
 		str += i;
 		len -= i;
 		break;
 
 	case RPC_VERSMISMATCH:
-		i = snprintf(str, len,
-			"; low version = %u, high version = %u", 
+		i = snprintf(str, len, "; low version = %u, high version = %u", 
 			e.re_vers.low, e.re_vers.high);
 		str += i;
 		len -= i;
@@ -157,16 +155,14 @@ clnt_sperror(rpch, s)
 		break;
 
 	case RPC_PROGVERSMISMATCH:
-		i = snprintf(str, len,
-			"; low version = %u, high version = %u", 
+		i = snprintf(str, len, "; low version = %u, high version = %u", 
 			e.re_vers.low, e.re_vers.high);
 		str += i;
 		len -= i;
 		break;
 
 	default:	/* unknown */
-		i = snprintf(str, len,
-			"; s1 = %u, s2 = %u", 
+		i = snprintf(str, len, "; s1 = %u, s2 = %u", 
 			e.re_lb.s1, e.re_lb.s2);
 		str += i;
 		len -= i;
