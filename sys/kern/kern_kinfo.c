@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)kern_kinfo.c	7.17 (Berkeley) 6/26/91
- *	$Id: kern_kinfo.c,v 1.8.2.2 1993/10/18 13:10:05 deraadt Exp $
+ *	$Id: kern_kinfo.c,v 1.8.2.3 1993/10/18 14:57:42 deraadt Exp $
  */
 
 #include "param.h"
@@ -254,6 +254,8 @@ fill_eproc(p, ep)
 #endif
 	} else {
 #ifdef sparc
+		register struct vmspace *vm = p->p_vmspace;
+
 		ep->e_vm.vm_rssize = vm->vm_rssize;
 		ep->e_vm.vm_tsize = vm->vm_tsize;
 		ep->e_vm.vm_dsize = vm->vm_dsize;
