@@ -3,11 +3,11 @@
 #ifndef HEADER_E_OS2_H
 #define HEADER_E_OS2_H
 
+#include <openssl/opensslconf.h> /* OPENSSL_UNISTD */
+
 #ifdef  __cplusplus
 extern "C" {
 #endif
-
-#include <openssl/opensslconf.h> /* OPENSSL_UNISTD */
 
 #ifdef MSDOS
 # define OPENSSL_UNISTD_IO <io.h>
@@ -23,7 +23,7 @@ extern "C" {
    declared explicitely with globaldef and globalref.  On other OS:es,
    these macros are defined with something sensible. */
 
-#if defined(VMS) && !defined(__DECC)
+#if defined(VMS) && !defined(__DECC) && !defined(__DECCXX)
 # define OPENSSL_EXTERN globalref
 # define OPENSSL_GLOBAL globaldef
 #else
