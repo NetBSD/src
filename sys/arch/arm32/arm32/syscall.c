@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.37 2000/12/12 19:41:51 mycroft Exp $	*/
+/*	$NetBSD: syscall.c,v 1.38 2000/12/12 20:49:16 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -212,7 +212,8 @@ syscall(frame, code)
 		break;
 	}
 
-	callp += (code & (SYS_NSYSENT - 1));
+	code &= (SYS_NSYSENT - 1);
+	callp += code;
 	argsize = callp->sy_argsize;
 	if (argsize <= regparams)
 		args = (int *)stackargs;
