@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.209 2004/02/14 16:38:06 junyoung Exp $
+#	$NetBSD: files.pci,v 1.210 2004/03/12 13:46:52 ragge Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -698,3 +698,8 @@ file	dev/pci/if_sk.c			skc | sk
 device	bce: ether, ifnet, arp, mii
 attach	bce at pci
 file	dev/pci/if_bce.c		bce
+
+# Intel PRO/10GbE
+device	dge: ether, ifnet, arp
+attach	dge at pci
+file	dev/pci/if_dge.c		dge
