@@ -1,4 +1,4 @@
-/*	$NetBSD: mdb.c,v 1.15 2000/07/23 22:18:44 wiz Exp $	*/
+/*	$NetBSD: mdb.c,v 1.16 2000/08/15 01:01:41 hubertf Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -161,12 +161,13 @@ write_menu_file (char *initcode)
 		(void) fprintf (out_file, "#define DYNAMIC_MENUS\n\n");
 
 	(void) fprintf (out_file,
+		"struct menudesc;\n"
 		"typedef\n"
 		"struct menu_ent {\n"
 		"	char   *opt_name;\n"
 		"	int	opt_menu;\n"
 		"	int	opt_flags;\n"
-		"	int	(*opt_action)(void);\n"
+		"	int	(*opt_action)(struct menudesc *);\n"
 		"} menu_ent ;\n\n"
 		"#define OPT_SUB    1\n"
 		"#define OPT_ENDWIN 2\n"
@@ -193,6 +194,7 @@ write_menu_file (char *initcode)
 		"#define MC_NOEXITOPT 1\n"
 		"#define MC_NOBOX 2\n"
 		"#define MC_SCROLL 4\n"
+ 		"#define MC_NOSHORTCUT 16      /* don't display letter shortcuts */\n"
 		);
 
 	if (do_dynamic)
@@ -275,8 +277,8 @@ write_menu_file (char *initcode)
 		while (toptn != NULL) {
 			if (strlen(toptn->optact.code)) {
 				(void) fprintf (out_file,
-					"int opt_act_%d_%d(void);\n"
-					"int opt_act_%d_%d(void)\n"
+					"int opt_act_%d_%d(menudesc *m);\n"
+					"int opt_act_%d_%d(menudesc *m)\n"
 					"{\t%s\n\treturn %s;\n}\n\n",
 					i, j, i, j, toptn->optact.code,
 					(toptn->doexit ? "1" : "0"));
