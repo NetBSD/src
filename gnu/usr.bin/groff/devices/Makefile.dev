@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.dev	6.2 (Berkeley) 3/16/91
-#	$Id: Makefile.dev,v 1.10 1993/08/01 05:42:10 mycroft Exp $
+#	$Id: Makefile.dev,v 1.11 1993/08/15 19:14:59 mycroft Exp $
 
 # Client Makefiles define DEVICE and FONTFILES and provide rules for
 #	individual font files
@@ -28,10 +28,9 @@ COPY=	-c
 .if !target(install)
 install:
 	install -d -o $(BINOWN) -g $(BINGRP) -m 755 $(DEVICEDIR)
-	-if test -d $(.CURDIR)/generate; then \
-		install -d -o $(BINOWN) -g $(BINGRP) -m 755 \
-			$(DEVICEDIR)/generate; \
-	fi
+.if exists(${.CURDIR}/generate)
+	install -d -o $(BINOWN) -g $(BINGRP) -m 755 $(DEVICEDIR)/generate
+.endif
 	-for f in $(FONTFILES); do \
 		install ${COPY} -o $(FONTOWN) -g $(FONTGRP) -m $(FONTMODE) $$f \
 			$(DEVICEDIR)/$$f; \
