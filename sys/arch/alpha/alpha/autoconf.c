@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.c,v 1.32 1998/11/25 19:58:47 mjacob Exp $ */
+/* $NetBSD: autoconf.c,v 1.33 1999/02/23 03:20:00 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,9 +46,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.32 1998/11/25 19:58:47 mjacob Exp $");
-
-#include "opt_multiprocessor.h"
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.33 1999/02/23 03:20:00 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,13 +106,6 @@ configure()
 	 * to do restarts.
 	 */
 	hwrpb_restart_setup();
-
-#if defined(MULTIPROCESSOR)
-	/*
-	 * Spin up any secondary CPUs.
-	 */
-	cpu_run_spinup_queue();
-#endif
 }
 
 void

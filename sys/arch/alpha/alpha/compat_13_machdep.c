@@ -1,4 +1,4 @@
-/* $NetBSD: compat_13_machdep.c,v 1.3 1998/11/19 01:59:39 ross Exp $ */
+/* $NetBSD: compat_13_machdep.c,v 1.4 1999/02/23 03:20:00 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.3 1998/11/19 01:59:39 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.4 1999/02/23 03:20:00 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,6 +43,8 @@ __KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.3 1998/11/19 01:59:39 ross E
 #include <machine/cpu.h>
 #include <machine/reg.h>
 #include <machine/alpha.h>
+
+#include <alpha/alpha/cpuvar.h>
 
 /*
  * System call to cleanup state after a signal
@@ -65,7 +67,6 @@ compat_13_sys_sigreturn(p, v, retval)
 		syscallarg(struct sigcontext13 *) sigcntxp;
 	} */ *uap = v;
 	struct sigcontext13 *scp, ksc;
-	extern struct proc *fpcurproc;
 	sigset13_t mask13;
 	sigset_t mask;
 

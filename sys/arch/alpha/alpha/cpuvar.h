@@ -1,7 +1,7 @@
-/* $NetBSD: cpuvar.h,v 1.3 1998/09/29 07:05:30 thorpej Exp $ */
+/* $NetBSD: cpuvar.h,v 1.4 1999/02/23 03:20:01 thorpej Exp $ */
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,22 +37,47 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/lock.h>
+#ifndef _ALPHA_ALPHA_CPUVAR_H_
+#define	_ALPHA_ALPHA_CPUVAR_H_
 
-struct cpu_softc {
-	struct device sc_dev;		/* generic device glue */
-	struct simplelock sc_slock;	/* spin lock */
-	u_long sc_cpuid;		/* CPU ID */
-	caddr_t sc_idle_stack;		/* our idle stack */
-	u_long sc_flags;		/* flags; see below */
-	u_long sc_ipis;			/* interprocessor interrupts pending */
-	TAILQ_ENTRY(cpu_softc) sc_q;	/* processing queue */
-};
+#include <sys/lock.h>
 
 #define	CPUF_PRIMARY	0x00000001	/* CPU is primary CPU */
 
+struct cpu_info {
+	struct proc *ci_curproc;	/* current owner of the processor */
+	struct proc *ci_fpcurproc;	/* current owner of the FPU */
+	paddr_t ci_curpcb;		/* PA of current HW context */
+	struct simplelock ci_slock;	/* spin lock */
+	u_long ci_cpuid;		/* CPU ID */
+	struct proc *ci_idle_thread;	/* our idle thread */
+	u_long ci_flags;		/* flags; see below */
+	u_long ci_ipis;			/* interprocessor interrupts pending */
+	struct device *ci_dev;		/* pointer to our device */
+};
+
 #ifdef _KERNEL
-extern	unsigned long cpus_running;
-extern	struct cpu_softc **cpus;
-extern	struct cpu_softc *primary_cpu;
+
+#ifndef _LKM
+#include "opt_multiprocessor.h"
 #endif
+
+#ifdef MULTIPROCESSOR
+extern	unsigned long cpus_running;
+extern	struct cpu_info cpu_info[];
+
+/*
+ * Map per-cpu variables to the cpu_info structure.
+ * XXX alpha_pal_whami() might be expensive, here!
+ */
+#define	curproc		cpu_info[alpha_pal_whami()].ci_curproc
+#define	fpcurproc	cpu_info[alpha_pal_whami()].ci_fpcurproc
+#define	curpcb		cpu_info[alpha_pal_whami()].ci_curpcb
+#else
+extern	struct proc *fpcurproc;		/* current owner of FPU */
+extern	paddr_t curpcb;			/* PA of current HW context */
+#endif /* MULTIPROCESSOR */
+
+#endif /* _KERNEL */
+
+#endif /* _ALPHA_ALPHA_CPUVAR_H_ */

@@ -1,4 +1,4 @@
-/* $NetBSD: interrupt.c,v 1.35 1999/02/23 02:56:04 ross Exp $ */
+/* $NetBSD: interrupt.c,v 1.36 1999/02/23 03:20:01 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.35 1999/02/23 02:56:04 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.36 1999/02/23 03:20:01 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,24 +80,23 @@ interrupt(a0, a1, a2, framep)
 	case ALPHA_INTR_XPROC:	/* interprocessor interrupt */
 #if defined(MULTIPROCESSOR)
 	    {
-		struct cpu_softc *sc;
+		struct cpu_info *ci;
 		u_long pending_ipis, bit;
 
 #if 1
 		printf("CPU %lu got IPI\n", cpu_id);
 #endif
 
-		sc = cpus[cpu_id];
 #ifdef DIAGNOSTIC
-		if (sc == NULL) {
+		if (cpu_info[cpu_id].ci_dev == NULL) {
 			/* XXX panic? */
-			printf("WARNING: no cpu_softc for ID %lu\n",
+			printf("WARNING: no device for ID %lu\n",
 			    cpu_id);
 			return;
 		}
 #endif
 
-		pending_ipis = alpha_atomic_loadlatch_q(&sc->sc_ipis, 0);
+		pending_ipis = alpha_atomic_loadlatch_q(&ci->ci_ipis, 0);
 		for (bit = 0; bit < ALPHA_NIPIS; bit++)
 			if (pending_ipis & (1UL << bit))
 				(*ipifuncs[bit])();
