@@ -1,4 +1,4 @@
-/*	$Id: loan1.c,v 1.3 2004/02/15 12:50:38 yamt Exp $	*/
+/*	$Id: loan1.c,v 1.4 2004/03/02 10:13:13 yamt Exp $	*/
 
 /*-
  * Copyright (c)2004 YAMAMOTO Takashi,
@@ -37,11 +37,13 @@
 
 #define	BUFSIZE	(32 * 1024)	/* enough size to trigger sosend_loan */
 
-void testloan(void *, char, int);
+int pgsize;
+
+void testloan(void *, void *, char, int);
 int main(int, char *[]);
 
 void
-testloan(void *vp, char pat, int docheck)
+testloan(void *vp, void *vp2, char pat, int docheck)
 {
 	char buf[BUFSIZE];
 	char backup[BUFSIZE];
@@ -68,21 +70,21 @@ testloan(void *vp, char pat, int docheck)
 	if (fcntl(fds[0], F_SETFL, O_NONBLOCK))
 		err(EXIT_FAILURE, "fcntl");
 
-	nwritten = write(fds[0], vp, BUFSIZE);
+	nwritten = write(fds[0], vp + pgsize, BUFSIZE - pgsize);
 	if (nwritten == (ssize_t)-1)
 		err(EXIT_FAILURE, "write");
 
 	/* break loan */
-	memset(vp, pat, BUFSIZE);
+	memset(vp2, pat, BUFSIZE);
 
-	nread = read(fds[1], buf, BUFSIZE);
+	nread = read(fds[1], buf + pgsize, BUFSIZE - pgsize);
 	if (nread == (ssize_t)-1)
 		err(EXIT_FAILURE, "read");
 
 	if (nread != nwritten)
 		errx(EXIT_FAILURE, "short read");
 
-	if (docheck && memcmp(backup, buf, nread))
+	if (docheck && memcmp(backup, buf + pgsize, nread))
 		errx(EXIT_FAILURE, "data mismatch");
 
 	if (close(fds[0]) || close(fds[1]))
@@ -93,7 +95,12 @@ int
 main(int argc, char *argv[])
 {
 	void *vp;
+	void *vp2;
 	int fd;
+
+	pgsize = sysconf(_SC_PAGESIZE);
+	if (pgsize == -1)
+		err(EXIT_FAILURE, "_SC_PAGESIZE");
 
 	fd = open(argv[1], O_RDWR);
 	if (fd == -1)
@@ -103,9 +110,10 @@ main(int argc, char *argv[])
 	    fd, 0);
 	if (vp == MAP_FAILED)
 		err(EXIT_FAILURE, "mmap");
+	vp2 = vp;
 
-	testloan(vp, 'A', 0);
-	testloan(vp, 'B', 1);
+	testloan(vp, vp2, 'A', 0);
+	testloan(vp, vp2, 'B', 1);
 
 	if (munmap(vp, BUFSIZE))
 		err(EXIT_FAILURE, "munmap");
@@ -114,9 +122,24 @@ main(int argc, char *argv[])
 	    fd, 0);
 	if (vp == MAP_FAILED)
 		err(EXIT_FAILURE, "mmap");
+	vp2 = vp;
 
-	testloan(vp, 'C', 0);
-	testloan(vp, 'D', 1);
+	testloan(vp, vp2, 'C', 0);
+	testloan(vp, vp2, 'D', 1);
+
+	if (munmap(vp, BUFSIZE))
+		err(EXIT_FAILURE, "munmap");
+
+	vp = mmap(NULL, BUFSIZE, PROT_READ|PROT_WRITE, MAP_FILE|MAP_SHARED,
+	    fd, 0);
+	if (vp == MAP_FAILED)
+		err(EXIT_FAILURE, "mmap");
+	vp2 = mmap(NULL, BUFSIZE, PROT_READ|PROT_WRITE, MAP_FILE|MAP_SHARED,
+	    fd, 0);
+	if (vp2 == MAP_FAILED)
+		err(EXIT_FAILURE, "mmap");
+
+	testloan(vp, vp2, 'E', 1);
 
 	if (munmap(vp, BUFSIZE))
 		err(EXIT_FAILURE, "munmap");
