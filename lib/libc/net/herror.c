@@ -1,7 +1,9 @@
-/*-
+/*
+ * ++Copyright++ 1987, 1993
+ * -
  * Copyright (c) 1987, 1993
- *	The Regents of the University of California.  All rights reserved.
- *
+ *    The Regents of the University of California.  All rights reserved.
+ * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -12,12 +14,12 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
+ * 	This product includes software developed by the University of
+ * 	California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- *
+ * 
  * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -53,23 +55,28 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 static char sccsid[] = "@(#)herror.c	8.1 (Berkeley) 6/4/93";
-static char rcsid[] = "$Id: herror.c,v 1.1.1.2 1995/02/25 03:54:29 cgd Exp $";
+static char rcsid[] = "$Id: herror.c,v 1.1.1.3 1997/04/13 09:12:09 mrg Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
+#include <sys/param.h>
 #include <sys/uio.h>
 #include <netdb.h>
-#include <unistd.h>
-#include <string.h>
+#if defined(BSD) && (BSD >= 199103)
+# include <unistd.h>
+# include <string.h>
+#else
+# include "../conf/portability.h"
+#endif
 
-char	*h_errlist[] = {
-	"Error 0",
+const char *h_errlist[] = {
+	"Resolver Error 0 (no error)",
 	"Unknown host",				/* 1 HOST_NOT_FOUND */
 	"Host name lookup failure",		/* 2 TRY_AGAIN */
 	"Unknown server error",			/* 3 NO_RECOVERY */
 	"No address associated with name",	/* 4 NO_ADDRESS */
 };
-int	h_nerr = { sizeof(h_errlist)/sizeof(h_errlist[0]) };
+int	h_nerr = { sizeof h_errlist / sizeof h_errlist[0] };
 
 extern int	h_errno;
 
@@ -92,8 +99,7 @@ herror(s)
 		v->iov_len = 2;
 		v++;
 	}
-	v->iov_base = (u_int)h_errno < h_nerr ?
-	    h_errlist[h_errno] : "Unknown error";
+	v->iov_base = (char *)hstrerror(h_errno);
 	v->iov_len = strlen(v->iov_base);
 	v++;
 	v->iov_base = "\n";
@@ -101,9 +107,13 @@ herror(s)
 	writev(STDERR_FILENO, iov, (v - iov) + 1);
 }
 
-char *
+const char *
 hstrerror(err)
 	int err;
 {
-	return (u_int)err < h_nerr ? h_errlist[err] : "Unknown resolver error";
+	if (err < 0)
+		return ("Resolver internal error");
+	else if (err < h_nerr)
+		return (h_errlist[err]);
+	return ("Unknown resolver error");
 }
