@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.47 1995/10/07 06:28:48 mycroft Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.48 1996/01/30 18:21:08 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1004,10 +1004,7 @@ vgone(vp)
 	/*
 	 * Delete from old mount point vnode list, if on one.
 	 */
-	if (vp->v_mount != NULL) {
-		LIST_REMOVE(vp, v_mntvnodes);
-		vp->v_mount = NULL;
-	}
+	insmntque(vp, (struct mount *)0);
 	/*
 	 * If special device, remove it from special device alias list.
 	 */
