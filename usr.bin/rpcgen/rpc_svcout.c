@@ -29,7 +29,7 @@
  */
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rpc_svcout.c 1.6 87/06/24 (C) 1987 SMI";*/
-static char rcsid[] = "$Id: rpc_svcout.c,v 1.4 1994/12/24 17:36:16 cgd Exp $";
+static char rcsid[] = "$Id: rpc_svcout.c,v 1.5 1995/03/06 04:59:27 cgd Exp $";
 #endif
 
 /*
@@ -221,7 +221,8 @@ write_program(def, storage)
 		f_print(fout, "\t\treturn;\n");
 		f_print(fout, "\t}\n");
 
- 		f_print(fout, "\tbzero((char *)&%s, sizeof(%s));\n", ARG, ARG);
+ 		f_print(fout, "\tmemset((char *)&%s, 0, sizeof(%s));\n", ARG,
+			ARG);
 		printif("getargs", TRANSP, "(caddr_t)&", ARG);
 		printerr("decode", TRANSP);
 		f_print(fout, "\t\treturn;\n");
