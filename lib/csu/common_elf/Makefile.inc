@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.14 2002/01/13 19:59:26 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.15 2002/05/05 00:34:00 thorpej Exp $
 
 .include <bsd.own.mk>
 
@@ -14,12 +14,7 @@ CPPFLAGS+=	-I${.CURDIR}/../common_elf
 CPPFLAGS+=	-I${.CURDIR}/../../libc/dlfcn
 CPPFLAGS+=	-DDWARF2_EH
 CPPFLAGS+=	-DJCR
-
-# XXX Temporary until all ELF ports use the new toolchain.  The old
-# toolchain doesn't have support for "hidden" symbols.
-.if defined(USE_NEW_TOOLCHAIN)
 CPPFLAGS+=	-DDSO_HANDLE
-.endif
 
 .if !defined(MACHINE_ARCH) || ${MACHINE_ARCH} != "m68000"
 COPTS+=		-fPIC
