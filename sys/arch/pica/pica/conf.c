@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.8.4.1 1997/10/14 10:17:59 thorpej Exp $	*/
+/*	$NetBSD: conf.c,v 1.8.4.2 1997/10/15 22:55:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -134,7 +134,7 @@ bdev_decl(fd);
 cdev_decl(vnd);
 #include "bpfilter.h"
 cdev_decl(bpf);
-#include "com.h"
+#include "pcom.h"
 cdev_decl(com);
 #include "lpt.h"
 cdev_decl(lpt);
@@ -168,7 +168,7 @@ struct cdevsw	cdevsw[] =
 	cdev_pc_init(1,pc),		/* 14: builtin pc style console dev */
 	cdev_mouse_init(1,pms),		/* 15: builtin PS2 style mouse */
 	cdev_lpt_init(NLPT,lpt),	/* 16: lpt paralell printer interface */
-	cdev_tty_init(NCOM,com),	/* 17: com 16C450 serial interface */
+	cdev_tty_init(NPCOM,com),	/* 17: com 16C450 serial interface */
 	cdev_notdef(),			/* 18: */
 	cdev_notdef(),			/* 19: */
 	cdev_tty_init(NPTY,pts),	/* 20: pseudo-tty slave */
@@ -327,7 +327,7 @@ struct	consdev constab[] = {
 #if NPC + NVT > 0
 	cons_init(pc),
 #endif
-#if NCOM > 0
+#if NPCOM > 0
 	cons_init(com),
 #endif
 	{ 0 },
