@@ -1,4 +1,4 @@
-/*	$NetBSD: idesc.c,v 1.51 2002/10/02 04:55:51 thorpej Exp $ */
+/*	$NetBSD: idesc.c,v 1.52 2003/01/17 04:20:38 lonewolf Exp $ */
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: idesc.c,v 1.51 2002/10/02 04:55:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: idesc.c,v 1.52 2003/01/17 04:20:38 lonewolf Exp $");
 
 /*
  * A4000 IDE interface, emulating a SCSI controller
@@ -93,7 +93,6 @@ __KERNEL_RCSID(0, "$NetBSD: idesc.c,v 1.51 2002/10/02 04:55:51 thorpej Exp $");
 #include <dev/scsipi/scsipi_disk.h>
 #include <dev/scsipi/scsi_disk.h>
 #include <dev/scsipi/scsiconf.h>
-#include <dev/scsipi/atapi_all.h>
 #include <dev/ata/atareg.h>
 #include <amiga/amiga/device.h>
 #include <amiga/amiga/cia.h>
@@ -103,7 +102,7 @@ __KERNEL_RCSID(0, "$NetBSD: idesc.c,v 1.51 2002/10/02 04:55:51 thorpej Exp $");
 #endif
 #include <amiga/dev/zbusvar.h>
 
-#include <machine/cpu.h>
+#include <machine/bswap.h>
 
 #include "atapibus.h"
 #include "idesc.h"
@@ -263,7 +262,7 @@ struct idec_softc
 	struct ide_softc	sc_ide[2];
 };
 
-void ide_scsipi_request(struct scsipi_xfer *);
+void ide_scsipi_request(struct scsipi_channel *, scsipi_adapter_req_t, void *);
 
 void idescattach(struct device *, struct device *, void *);
 int idescmatch(struct device *, struct cfdata *, void *);
@@ -355,20 +354,21 @@ void
 idescattach(struct device *pdp, struct device *dp, void *auxp)
 {
 	ide_regmap_p rp;
-	struct idec_softc *sc (struct idec_softc *)dp;
+	struct idec_softc *sc = (struct idec_softc *)dp;
 	struct scsipi_adapter *adapt = &sc->sc_adapter;
 	struct scsipi_channel *chan = &sc->sc_channel;
 
 	int i;
 
-	if (is_a4000())
+	if (is_a4000()) {
 		sc->sc_cregs = rp = (ide_regmap_p) ztwomap(0xdd2020);
-	else {
+		printf(": A4000 IDE @ %p", rp);
+	} else {
 		/* Let's hope the A1200 will work with the same regs */
 		sc->sc_cregs = rp = (ide_regmap_p) ztwomap(0xda0000);
 		sc->sc_a1200 = ztwomap(0xda8000 + 0x1000);
 		sc->sc_flags |= IDECF_A1200;
-		printf(" A1200 @ %p:%p", rp, sc->sc_a1200);
+		printf(": A1200 IDE @ %p:%p", rp, sc->sc_a1200);
 	}
 
 #ifdef DEBUG
@@ -466,9 +466,20 @@ idescattach(struct device *pdp, struct device *dp, void *auxp)
 					rp->ide_data;
 				len -= 2;
 			}
-			bswap(id.atap_model, sizeof(id.atap_model));
-			bswap(id.atap_serial, sizeof(id.atap_serial));
-			bswap(id.atap_revision, sizeof(id.atap_revision));
+
+			for (i = 0; i < sizeof(id.atap_model); i += 2) {
+				p = (u_short *)(id.atap_model + i);
+				*p = ntohs(*p);
+			}
+			for (i = 0; i < sizeof(id.atap_serial); i += 2) {
+				p = (u_short *)(id.atap_serial + i);
+				*p = ntohs(*p);
+			}
+			for (i = 0; i < sizeof(id.atap_revision); i += 2) {
+				p = (u_short *)(id.atap_revision + i);
+				*p = ntohs(*p);
+			}
+			
 			strncpy(sc->sc_ide[i].sc_params.idep_model, id.atap_model,
 			    sizeof(sc->sc_ide[i].sc_params.idep_model));
 			strncpy(sc->sc_ide[i].sc_params.idep_rev, id.atap_revision,
@@ -488,7 +499,7 @@ idescattach(struct device *pdp, struct device *dp, void *auxp)
 				;
 			if (len < sizeof(id.atap_revision) - 1)
 				id.atap_revision[len] = 0;
-			bswap((char *)&id.atap_config, sizeof(id.atap_config));
+			id.atap_config = bswap16(id.atap_config);
 #ifdef DEBUG_ATAPI
 			printf("\nATAPI device: type %x", ATAPI_CFG_TYPE(id.atap_config));
 			printf(" cyls %04x heads %04x",
@@ -532,8 +543,9 @@ idescattach(struct device *pdp, struct device *dp, void *auxp)
 	chan->chan_adapter = adapt;
 	chan->chan_bustype = &scsi_bustype;
 	chan->chan_channel = 0;
-	chan->chan_ntargets = 8;
-	chan->chan_nluns = 8;
+	chan->chan_flags = 0;
+	chan->chan_ntargets = 2;
+	chan->chan_nluns = 1;
 	chan->chan_id = 7;
 
 	sc->sc_isr.isr_intr = idesc_intr;
@@ -639,7 +651,6 @@ void
 ide_scsidone(struct idec_softc *dev, int stat)
 {
 	struct scsipi_xfer *xs;
-	int s, donext;
 
 	xs = dev->sc_xs;
 #ifdef DIAGNOSTIC
@@ -671,6 +682,8 @@ ide_scsidone(struct idec_softc *dev, int stat)
 		}
 	}
 
+	dev->sc_xs = NULL; /* Not busy anymore */
+
 	scsipi_done(xs);
 }
 
@@ -678,7 +691,7 @@ int
 idegetsense(struct idec_softc *dev, struct scsipi_xfer *xs)
 {
 	struct scsipi_sense rqs;
-	struct scsipi_periph periph = xs->xs_periph;
+	struct scsipi_periph *periph = xs->xs_periph;
 
 	if (dev->sc_cur->sc_flags & IDEF_ATAPI)
 		return (0);
@@ -926,7 +939,7 @@ ideicmd(struct idec_softc *dev, int target, void *cbuf, int clen, void *buf,
 	int nblks;
 	struct scsipi_inquiry_data *inqbuf;
 	struct {
-		struct scsi_mode_header header;
+		struct scsipi_mode_header header;
 		struct scsi_blk_desc blk_desc;
 		union scsi_disk_pages pages;
 	} *mdsnbuf;
@@ -1016,7 +1029,7 @@ ideicmd(struct idec_softc *dev, int target, void *cbuf, int clen, void *buf,
 		dev->sc_stat[0] = 0;
 		return (0);
 
-	case SCSI_MODE_SENSE:
+	case MODE_SENSE:
 		mdsnbuf = (void*) buf;
 		bzero(buf, *((u_char *)cbuf + 4));
 		switch (*((u_char *)cbuf + 2) & 0x3f) {
@@ -1060,7 +1073,7 @@ ideicmd(struct idec_softc *dev, int target, void *cbuf, int clen, void *buf,
 	case SCSI_REASSIGN_BLOCKS:
 	case 0x10 /*WRITE_FILEMARKS*/:
 	case 0x11 /*SPACE*/:
-	case SCSI_MODE_SELECT:
+	case MODE_SELECT:
 	default:
 		printf ("ide: unhandled SCSI command %02x\n", *((u_char *)cbuf));
 		ide->sc_error = 0x04;
@@ -1283,7 +1296,7 @@ int ide_atapi_start(struct idec_softc *dev)
 		u_short *bf;
 		union {
 			struct scsipi_rw_big rw_big;
-			struct scsi_mode_sense_big md_big;
+			struct scsipi_mode_sense_big md_big;
 		} cmd;
 
 		/* Wait for cmd i/o phase */
@@ -1314,8 +1327,8 @@ int ide_atapi_start(struct idec_softc *dev)
 				cmd.rw_big.length[0] = 1;
 			bf = (u_short *)&cmd.rw_big;
 			break;
-		case SCSI_MODE_SENSE:
-		case SCSI_MODE_SELECT:
+		case MODE_SENSE:
+		case MODE_SELECT:
 			bzero((char *)&cmd, sizeof(cmd.md_big));
 			cmd.md_big.opcode = xs->cmd->opcode |= 0x40;
 			cmd.md_big.byte2 = xs->cmd->bytes[0];
@@ -1418,7 +1431,7 @@ ide_atapi_intr(struct idec_softc *dev)
 	int retries = 0;
 	union {
 		struct scsipi_rw_big rw_big;
-		struct scsi_mode_sense_big md_big;
+		struct scsipi_mode_sense_big md_big;
 	} cmd;
 
 	if (wait_for_unbusy(dev) < 0) {
@@ -1467,8 +1480,8 @@ again:
 				cmd.rw_big.length[0] = 1;
 			bf = (u_short *)&cmd.rw_big;
 			break;
-		case SCSI_MODE_SENSE:
-		case SCSI_MODE_SELECT:
+		case MODE_SENSE:
+		case MODE_SELECT:
 			bzero((char *)&cmd, sizeof(cmd.md_big));
 			cmd.md_big.opcode = xs->cmd->opcode |= 0x40;
 			cmd.md_big.byte2 = xs->cmd->bytes[0];
@@ -1556,7 +1569,7 @@ again:
 			xs->sense.atapi_sense = err;
 			ide->sc_flags |= IDEF_SENSE;
 			rqs.opcode = REQUEST_SENSE;
-			rqs.byte2 = xs->xs_periph_periph_lun << 5;
+			rqs.byte2 = xs->xs_periph->periph_lun << 5;
 			rqs.length = sizeof(xs->sense.scsi_sense);
 			rqs.unused[0] = rqs.unused[1] = rqs.control = 0;
 			ide_atapi_icmd(dev, xs->xs_periph->periph_target,
